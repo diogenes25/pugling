@@ -1,0 +1,6 @@
+@pugling_HostAddress = http://localhost:5069
+
+GET {{pugling_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
