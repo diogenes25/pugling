@@ -1,0 +1,41 @@
+// gehe (gehen - Infinitiv)
+{
+  "id": "de_gehen_en_go",
+  "sourceLanguage": "de",
+  "word": "gehen",
+  "targetLanguage": "en",
+  "translation": "go",
+  "partOfSpeech": "Verb",
+  "verb": {
+    "isBaseForm": true,
+    "conjugations": {
+      "Präsens": {
+        "ich": {
+          "form": "gehe",
+          "vocObjRef": "de_gehen_en_go_präsens_ich"
+        },
+        "du": {
+          "form": "gehst",
+          "vocObjRef": "de_gehen_en_go_präsens_du"
+        },
+        "ers": {
+          "form": "geht",
+          "vocObjRef": "de_gehen_en_go_präsens_er_sie_es"
+        },
+        "wir": {
+          "form": "gehen",
+          "vocObjRef": "de_gehen_en_go_präsens_wir"
+        },
+        "ihr": {
+          "form": "geht",
+          "vocObjRef": "de_gehen_en_go_präsens_ihr"
+        },
+        "sie/Sie": {
+          "form": "gehen",
+          "vocObjRef": "de_gehen_en_go_präsens_sie_sie"
+        }
+      }
+      // ... weitere Konjugationen für andere Zeiten ...
+    }
+  }
+}

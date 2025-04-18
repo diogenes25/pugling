@@ -1,9 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.13.35931.197 d17.13
+VisualStudioVersion = 17.13.35931.197
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "pugling", "pugling\pugling.csproj", "{AE57EB4A-2716-49E8-BE16-A30B1A55B49B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "puglingTest", "puglingTest\puglingTest.csproj", "{D7D9AE1D-EA9A-448A-92EC-E332442FB6F6}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +17,10 @@ Global
 		{AE57EB4A-2716-49E8-BE16-A30B1A55B49B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{AE57EB4A-2716-49E8-BE16-A30B1A55B49B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{AE57EB4A-2716-49E8-BE16-A30B1A55B49B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D7D9AE1D-EA9A-448A-92EC-E332442FB6F6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D7D9AE1D-EA9A-448A-92EC-E332442FB6F6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D7D9AE1D-EA9A-448A-92EC-E332442FB6F6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D7D9AE1D-EA9A-448A-92EC-E332442FB6F6}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

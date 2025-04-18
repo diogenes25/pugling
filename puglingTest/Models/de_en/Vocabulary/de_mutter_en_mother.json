@@ -1,0 +1,14 @@
+// Mutter
+{
+  "id": "de_mutter_en_mother",
+  "sourceLanguage": "de",
+  "word": "Mutter",
+  "targetLanguage": "en",
+  "translation": "mother",
+  "partOfSpeech": "Noun",
+  "noun": {
+    "genus": "feminin",
+    "determinedArticle": "die",
+    "undeterminedArticle": "eine"
+  }
+}

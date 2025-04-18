@@ -1,0 +1,58 @@
+﻿{
+  "id": "de_ich_gehe_mit_tom_zu_meiner_mutter",
+  "sourceSentence": "Ich gehe heute mit Tom zu meiner Mutter.",
+  "translation": "I'm going to my mother's with Tom today.",
+  "tense": "pres",
+  "components": [
+    {
+      "text": "Ich",
+      "vocabularyId": "de_ich_en_i",
+      "sentencePart": "Subject",
+      "case": "Nominativ"
+    },
+    {
+      "text": "gehe",
+      "vocabularyId": "de_gehen_en_go_praesens_ich",
+      "sentencePart": "Predicate"
+    },
+    {
+      "text": "heute",
+      "vocabularyId": "de_heute_en_today",
+      "sentencePart": "Adverbial.Time"
+    },
+    {
+      "text": "mit",
+      "vocabularyId": "de_mit_en_with",
+      "sentencePart": "Preposition"
+    },
+    {
+      "text": "Tom",
+      "vocabularyId": "de_tom_en_tom",
+      "sentencePart": "Object.Prepositional",
+      "case": "Dativ" // Durch die Präposition "mit" regiert
+    },
+    {
+      "text": "zu",
+      "vocabularyId": "de_zu_en_to",
+      "sentencePart": "Preposition"
+    },
+    {
+      "text": "meiner",
+      "vocabularyId": "de_mein_poss_dat_fem_en_my",
+      "sentencePart": "Determiner.Possessive",
+      "case": "Dativ", // Durch die Präposition "zu" regiert
+      "gender": "Femininum"
+    },
+    {
+      "text": "Mutter",
+      "vocabularyId": "de_mutter_en_mother",
+      "sentencePart": "Object.Prepositional",
+      "case": "Dativ" // Durch die Präposition "zu" regiert
+    },
+    {
+      "text": ".",
+      "vocabularyId": "de_punkt_en_period",
+      "sentencePart": "Punctuation"
+    }
+  ]
+}

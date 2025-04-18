@@ -1,0 +1,12 @@
+// meiner (mein - Possessivpronomen, Dativ Femininum)
+{
+  "id": "de_mein_poss_dat_fem_en_my",
+  "sourceLanguage": "de",
+  "word": "meiner",
+  "targetLanguage": "en",
+  "translation": "my",
+  "partOfSpeech": "Pronoun.Possessive",
+  "case": "Dativ",
+  "gender": "Femininum",
+  "reference": "ich" // Verweist auf das Pronomen "ich"
+}
