@@ -49,13 +49,10 @@
         /// </summary>
         public string SourceLanguage { get; init; }
 
-
         /// <summary>
         /// The language code of the target language (e.g., "de" for German).
         /// </summary>
         public string TargetLanguage { get; init; }
-
-        
 
         /// <summary>
         /// The part of speech of the vocabulary item (e.g., "Noun", "Verb", "Adjective", "Phrase").

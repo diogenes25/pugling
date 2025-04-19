@@ -1,6 +1,6 @@
 ﻿using pugling.Models;
 
-namespace pugling.Work
+namespace pugling.Application
 {
     /// <summary>
     /// Represents a related vocabulary item with an ID, word, and translation.

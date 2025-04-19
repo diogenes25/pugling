@@ -1,6 +1,6 @@
 ﻿using pugling.Models;
 
-namespace pugling.Work
+namespace pugling.Application
 {
     public sealed class ConjugationDetails : IConjugationDetails, IEquatable<IConjugationDetails?>
     {

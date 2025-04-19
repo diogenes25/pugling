@@ -1,6 +1,7 @@
-﻿using System.Text.RegularExpressions;
+﻿using pugling.Models;
+using System.Text.RegularExpressions;
 
-namespace pugling.Models
+namespace pugling.Application
 {
     public static class VocabularyUtil
     {
@@ -9,7 +10,7 @@ namespace pugling.Models
         /// </summary>
         /// <param name="vocabulary">Das Vocabulary-Objekt.</param>
         /// <returns>Die generierte RESTful-freundliche ID.</returns>
-        public static string GenerateRestfulId(VocabularyDto vocabulary)
+        public static string GenerateRestfulId(IVocabulary<IIdiomaticUsage, INounDetails, IVocabularyBase, IVerbDetails> vocabulary)
         {
             if (vocabulary == null)
             {

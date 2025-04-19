@@ -1,6 +1,6 @@
 ﻿using pugling.Models;
 
-namespace pugling.Work
+namespace pugling.Application
 {
     public sealed class IdiomaticUsage : IIdiomaticUsage, IEquatable<IIdiomaticUsage?>
     {
@@ -14,26 +14,15 @@ namespace pugling.Work
         /// </summary>
         public string Translation { get; private set; }
 
-        public IdiomaticUsage()
+        public IdiomaticUsage(string phrase, string translation)
         {
-        }
-
-        public static IdiomaticUsage Create(string phrase, string translation)
-        {
-            return new IdiomaticUsage
-            {
-                Phrase = phrase,
-                Translation = translation
-            };
+            Phrase = phrase;
+            Translation = translation;
         }
 
         public static IdiomaticUsage Create(IIdiomaticUsage idiomaticUsage)
         {
-            return new IdiomaticUsage
-            {
-                Phrase = idiomaticUsage.Phrase,
-                Translation = idiomaticUsage.Translation
-            };
+            return new IdiomaticUsage(phrase: idiomaticUsage.Phrase, translation: idiomaticUsage.Translation);
         }
 
         public override bool Equals(object? obj)

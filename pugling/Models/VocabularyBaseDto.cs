@@ -18,7 +18,6 @@
         /// </summary>
         public string Word { get; init; }
 
-
         /// <summary>
         /// The translation of the word or phrase into the target language. For conjugated verbs,
         /// this is the translation of the specific form (e.g., "gehe" for "ich gehe").

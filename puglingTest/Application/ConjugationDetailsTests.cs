@@ -1,9 +1,10 @@
-using pugling.Work;
+using pugling.Application;
 using pugling.Models;
 using Xunit;
 using Moq;
+using FluentAssertions;
 
-namespace puglingTest.Work
+namespace puglingTest.Application
 {
     public class ConjugationDetailsTests
     {
@@ -18,9 +19,9 @@ namespace puglingTest.Work
             var result = ConjugationDetails.Create(form, vocObjRef);
 
             // Assert
-            Assert.NotNull(result);
-            Assert.Equal(form, result.Form);
-            Assert.Equal(vocObjRef, result.VocObjRef);
+            result.Should().NotBeNull("Expected a non-null instance of ConjugationDetails.");
+            result.Form.Should().Be(form, "Expected the Form property to match the input value.");
+            result.VocObjRef.Should().Be(vocObjRef, "Expected the VocObjRef property to match the input value.");
         }
 
         [Fact]
@@ -35,9 +36,9 @@ namespace puglingTest.Work
             var result = ConjugationDetails.Create(mockDetails.Object);
 
             // Assert
-            Assert.NotNull(result);
-            Assert.Equal(mockDetails.Object.Form, result.Form);
-            Assert.Equal(mockDetails.Object.VocObjRef, result.VocObjRef);
+            result.Should().NotBeNull("Expected a non-null instance of ConjugationDetails.");
+            result.Form.Should().Be(mockDetails.Object.Form, "Expected the Form property to match the mock object's value.");
+            result.VocObjRef.Should().Be(mockDetails.Object.VocObjRef, "Expected the VocObjRef property to match the mock object's value.");
         }
 
         [Fact]
@@ -52,7 +53,7 @@ namespace puglingTest.Work
             var hashCode2 = details2.GetHashCode();
 
             // Assert
-            Assert.Equal(hashCode1, hashCode2);
+            hashCode1.Should().Be(hashCode2, "Expected the hash codes to be the same for identical values.");
         }
 
         [Fact]
@@ -67,7 +68,7 @@ namespace puglingTest.Work
             var hashCode2 = details2.GetHashCode();
 
             // Assert
-            Assert.NotEqual(hashCode1, hashCode2);
+            hashCode1.Should().NotBe(hashCode2, "Expected the hash codes to be different for different values.");
         }
 
         [Fact]
@@ -81,7 +82,7 @@ namespace puglingTest.Work
             var result = details1 == details2;
 
             // Assert
-            Assert.True(result);
+            result.Should().BeTrue("Expected the equality operator to return true for identical values.");
         }
 
         [Fact]
@@ -95,7 +96,7 @@ namespace puglingTest.Work
             var result = details1 == details2;
 
             // Assert
-            Assert.False(result);
+            result.Should().BeFalse("Expected the equality operator to return false for different values.");
         }
 
         [Fact]
@@ -109,7 +110,7 @@ namespace puglingTest.Work
             var result = details1 != details2;
 
             // Assert
-            Assert.False(result);
+            result.Should().BeFalse("Expected the inequality operator to return false for identical values.");
         }
 
         [Fact]
@@ -123,8 +124,7 @@ namespace puglingTest.Work
             var result = details1 != details2;
 
             // Assert
-            Assert.True(result, "Expected details1 and details2 to be unequal, but they were considered equal.");
+            result.Should().BeTrue("Expected the inequality operator to return true for different values.");
         }
-
     }
 }
