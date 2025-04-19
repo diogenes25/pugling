@@ -15,5 +15,4 @@
         /// </summary>
         public string Translation { get; init; }
     }
-
 }

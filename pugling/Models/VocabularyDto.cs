@@ -29,7 +29,7 @@
     ///    "exampleSentenceTense": "present"
     /// }
     /// </example>
-    public record VocabularyDto : IVocabulary<IdiomaticUsageDto, NounDetailsDto, RelatedFormDto, VerbDetailsDto>
+    public record VocabularyDto : VocabularyBaseDto, IVocabulary<IdiomaticUsageDto, NounDetailsDto, VocabularyBaseDto, VerbDetailsDto>
     {
         /// <summary>
         /// The unique identifier of the vocabulary item.
@@ -37,7 +37,7 @@
         /// For conjugated forms: {sourceLanguage}_{baseWord}_{targetLanguage}_{tense}_{person} (e.g., en_go_de_Präsens_ich)
         /// For phrases: {sourceLanguage}_{normalized_phrase}_{targetLanguage}_{normalized_translation} (e.g., de_wie_geht_es_dir_en_how_are_you)
         /// </summary>
-        public string Id { get; init; }
+        //public string Id { get; init; }
 
         /// <summary>
         /// Version of structure. This is used to ensure that the client and server are using the same.
@@ -49,21 +49,13 @@
         /// </summary>
         public string SourceLanguage { get; init; }
 
-        /// <summary>
-        /// The word or phrase in the source language.
-        /// </summary>
-        public string Word { get; init; }
 
         /// <summary>
         /// The language code of the target language (e.g., "de" for German).
         /// </summary>
         public string TargetLanguage { get; init; }
 
-        /// <summary>
-        /// The translation of the word or phrase into the target language. For conjugated verbs,
-        /// this is the translation of the specific form (e.g., "gehe" for "ich gehe").
-        /// </summary>
-        public string Translation { get; init; }
+        
 
         /// <summary>
         /// The part of speech of the vocabulary item (e.g., "Noun", "Verb", "Adjective", "Phrase").
@@ -145,7 +137,7 @@
         /// An optional array of related vocabulary items. This can be used for synonyms, antonyms,
         /// or words with a similar meaning in a different context (e.g., "laufen" and "rennen" both translate to "running").
         /// </summary>
-        public RelatedFormDto[]? RelatedForms { get; init; }
+        public VocabularyBaseDto[]? RelatedForms { get; init; }
 
         /// <summary>
         /// An optional array of idiomatic usages where the word or phrase has a different meaning
@@ -176,11 +168,4 @@
         /// </summary>
         public DateTime? UpdatedAt { get; init; }
     }
-
-  
- 
-  
-   
-
-  
 }

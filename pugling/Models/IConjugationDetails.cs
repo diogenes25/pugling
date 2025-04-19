@@ -2,7 +2,7 @@
 {
     public interface IConjugationDetails
     {
-        string Form { get;  }
+        string Form { get; }
         string? VocObjRef { get; }
     }
 }

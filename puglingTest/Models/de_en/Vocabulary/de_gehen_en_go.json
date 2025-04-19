@@ -9,33 +9,33 @@
   "verb": {
     "isBaseForm": true,
     "conjugations": {
-      "Präsens": {
+      "Prï¿½sens": {
         "ich": {
           "form": "gehe",
-          "vocObjRef": "de_gehen_en_go_präsens_ich"
+          "vocObjRef": "de_gehen_en_go_praesens_ich"
         },
         "du": {
           "form": "gehst",
-          "vocObjRef": "de_gehen_en_go_präsens_du"
+          "vocObjRef": "de_gehen_en_go_praesens_du"
         },
         "ers": {
           "form": "geht",
-          "vocObjRef": "de_gehen_en_go_präsens_er_sie_es"
+          "vocObjRef": "de_gehen_en_go_praesens_er_sie_es"
         },
         "wir": {
           "form": "gehen",
-          "vocObjRef": "de_gehen_en_go_präsens_wir"
+          "vocObjRef": "de_gehen_en_go_praesens_wir"
         },
         "ihr": {
           "form": "geht",
-          "vocObjRef": "de_gehen_en_go_präsens_ihr"
+          "vocObjRef": "de_gehen_en_go_praesens_ihr"
         },
         "sie/Sie": {
           "form": "gehen",
-          "vocObjRef": "de_gehen_en_go_präsens_sie_sie"
+          "vocObjRef": "de_gehen_en_go_praesens_sie_sie"
         }
       }
-      // ... weitere Konjugationen für andere Zeiten ...
+      // ... weitere Konjugationen fÃ¼r andere Zeiten ...
     }
   }
 }

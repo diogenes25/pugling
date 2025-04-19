@@ -7,6 +7,7 @@
     {
         // Hauptkategorien
         public const string Subject = "Subject";
+
         public const string Predicate = "Predicate";
         public const string Object = "Object";
         public const string Determiner = "Determiner";
@@ -21,17 +22,20 @@
 
         // Unterkategorien für Objekte
         public const string ObjectDirect = "Object.Direct";
+
         public const string ObjectIndirect = "Object.Indirect";
         public const string ObjectPrepositional = "Object.Prepositional";
 
         // Unterkategorien für Determiner
         public const string DeterminerArticle = "Determiner.Article";
+
         public const string DeterminerPossessive = "Determiner.Possessive";
         public const string DeterminerDemonstrative = "Determiner.Demonstrative";
         public const string DeterminerQuantifier = "Determiner.Quantifier";
 
         // Unterkategorien für Adverbial
         public const string AdverbialOfTime = "Adverbial.Time";
+
         public const string AdverbialOfPlace = "Adverbial.Place";
         public const string AdverbialOfManner = "Adverbial.Manner";
         public const string AdverbialOfReason = "Adverbial.Reason";
@@ -39,10 +43,12 @@
 
         // Unterkategorien für Complement
         public const string ComplementSubject = "Complement.Subject";
+
         public const string ComplementObject = "Complement.Object";
 
         // Weitere spezifische Rollen
         public const string AuxiliaryVerb = "Verb.Auxiliary";
+
         public const string ModalVerb = "Verb.Modal";
         public const string Particle = "Particle"; // Z.B. bei trennbaren Verben
     }

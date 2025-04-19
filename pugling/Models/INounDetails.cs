@@ -2,8 +2,8 @@
 {
     public interface INounDetails
     {
-        string? DeterminedArticle { get;  }
-        string? Genus { get;  }
+        string? DeterminedArticle { get; }
+        string? Genus { get; }
         string? UndeterminedArticle { get; }
     }
 }

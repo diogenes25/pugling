@@ -37,6 +37,4 @@
         /// </summary>
         public string? SentenceAudio { get; init; } // Optional, falls Audio-URL für den Satz vorhanden ist
     }
-
-  
 }

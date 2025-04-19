@@ -2,7 +2,6 @@
 
 namespace pugling.Models
 {
-
     public static class VocabularyUtil
     {
         /// <summary>
@@ -108,4 +107,3 @@ namespace pugling.Models
         }
     }
 }
-

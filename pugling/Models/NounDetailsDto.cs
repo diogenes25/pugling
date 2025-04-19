@@ -37,5 +37,4 @@
         /// </example>
         public string? UndeterminedArticle { get; init; }
     }
-
 }

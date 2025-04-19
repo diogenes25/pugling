@@ -1,5 +1,4 @@
-﻿
-namespace pugling.Models
+﻿namespace pugling.Models
 {
     public interface IVerbDetails
     {

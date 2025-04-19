@@ -6,7 +6,5 @@
         string? SentencePart { get; }
         string Text { get; }
         string? VocabularyId { get; }
-
-      
     }
 }

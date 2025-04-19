@@ -1,6 +1,4 @@
-﻿
-
-namespace pugling.Models
+﻿namespace pugling.Models
 {
     /// <summary>
     /// Contains specific details for verbs, including information about the base form, conjugations, and person.
