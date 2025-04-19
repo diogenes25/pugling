@@ -1,8 +1,7 @@
+using FluentAssertions;
+using Moq;
 using pugling.Application;
 using pugling.Models;
-using Xunit;
-using Moq;
-using FluentAssertions;
 
 namespace puglingTest.Application
 {

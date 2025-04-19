@@ -1,9 +1,7 @@
+using FluentAssertions;
+using Moq;
 using pugling.Application;
 using pugling.Models;
-using Xunit;
-using Moq;
-using System.Collections.Generic;
-using FluentAssertions;
 
 namespace puglingTest.Application
 {
@@ -12,7 +10,7 @@ namespace puglingTest.Application
         [Fact]
         public void Create_WithValidParameters_ReturnsExpectedInstance()
         {
-            // Arrange  
+            // Arrange
             var isBaseForm = true;
             var baseFormRef = "http://example.com/vocab/run";
             var person = "ich";
@@ -20,10 +18,10 @@ namespace puglingTest.Application
             var tense = "Präsens";
             var conjugations = new Dictionary<string, Dictionary<string, IConjugationDetails>>();
 
-            // Act  
+            // Act
             var result = VerbDetails.Create(isBaseForm, baseFormRef, person, infinitiv, tense, conjugations);
 
-            // Assert  
+            // Assert
             result.Should().NotBeNull("the created VerbDetails instance should not be null");
             result.IsBaseForm.Should().Be(isBaseForm, "the IsBaseForm property should match the input value");
             result.BaseFormRef.Should().Be(baseFormRef, "the BaseFormRef property should match the input value");
@@ -36,7 +34,7 @@ namespace puglingTest.Application
         [Fact]
         public void Create_FromIVerbDetails_ReturnsExpectedInstance()
         {
-            // Arrange  
+            // Arrange
             var mockVerbDetails = new Mock<IVerbDetails>();
             mockVerbDetails.Setup(m => m.IsBaseForm).Returns(true);
             mockVerbDetails.Setup(m => m.BaseFormRef).Returns("http://example.com/vocab/run");
@@ -45,10 +43,10 @@ namespace puglingTest.Application
             mockVerbDetails.Setup(m => m.Tense).Returns("Präsens");
             mockVerbDetails.Setup(m => m.Conjugations).Returns(new Dictionary<string, Dictionary<string, IConjugationDetails>>());
 
-            // Act  
+            // Act
             var result = VerbDetails.Create(mockVerbDetails.Object);
 
-            // Assert  
+            // Assert
             result.Should().NotBeNull("the created VerbDetails instance should not be null");
             result.IsBaseForm.Should().Be(mockVerbDetails.Object.IsBaseForm, "the IsBaseForm property should match the mock value");
             result.BaseFormRef.Should().Be(mockVerbDetails.Object.BaseFormRef, "the BaseFormRef property should match the mock value");
@@ -61,114 +59,114 @@ namespace puglingTest.Application
         [Fact]
         public void Equals_SameValues_ReturnsTrue()
         {
-            // Arrange  
+            // Arrange
             var details1 = VerbDetails.Create(true, "http://example.com/vocab/run", "ich", "laufen", "Präsens", null);
             var details2 = VerbDetails.Create(true, "http://example.com/vocab/run", "ich", "laufen", "Präsens", null);
 
-            // Act  
+            // Act
             var result = details1.Equals(details2);
 
-            // Assert  
+            // Assert
             result.Should().BeTrue("two VerbDetails instances with the same values should be equal");
         }
 
         [Fact]
         public void Equals_DifferentValues_ReturnsFalse()
         {
-            // Arrange  
+            // Arrange
             var details1 = VerbDetails.Create(true, "http://example.com/vocab/run", "ich", "laufen", "Präsens", null);
             var details2 = VerbDetails.Create(false, "http://example.com/vocab/walk", "du", "gehen", "Präteritum", null);
 
-            // Act  
+            // Act
             var result = details1.Equals(details2);
 
-            // Assert  
+            // Assert
             result.Should().BeFalse("two VerbDetails instances with different values should not be equal");
         }
 
         [Fact]
         public void GetHashCode_SameValues_ReturnsSameHashCode()
         {
-            // Arrange  
+            // Arrange
             var details1 = VerbDetails.Create(true, "http://example.com/vocab/run", "ich", "laufen", "Präsens", null);
             var details2 = VerbDetails.Create(true, "http://example.com/vocab/run", "ich", "laufen", "Präsens", null);
 
-            // Act  
+            // Act
             var hashCode1 = details1.GetHashCode();
             var hashCode2 = details2.GetHashCode();
 
-            // Assert  
+            // Assert
             hashCode1.Should().Be(hashCode2, "two VerbDetails instances with the same values should have the same hash code");
         }
 
         [Fact]
         public void GetHashCode_DifferentValues_ReturnsDifferentHashCodes()
         {
-            // Arrange  
+            // Arrange
             var details1 = VerbDetails.Create(true, "http://example.com/vocab/run", "ich", "laufen", "Präsens", null);
             var details2 = VerbDetails.Create(false, "http://example.com/vocab/walk", "du", "gehen", "Präteritum", null);
 
-            // Act  
+            // Act
             var hashCode1 = details1.GetHashCode();
             var hashCode2 = details2.GetHashCode();
 
-            // Assert  
+            // Assert
             hashCode1.Should().NotBe(hashCode2, "two VerbDetails instances with different values should have different hash codes");
         }
 
         [Fact]
         public void EqualityOperator_SameValues_ReturnsTrue()
         {
-            // Arrange  
+            // Arrange
             var details1 = VerbDetails.Create(true, "http://example.com/vocab/run", "ich", "laufen", "Präsens", null);
             var details2 = VerbDetails.Create(true, "http://example.com/vocab/run", "ich", "laufen", "Präsens", null);
 
-            // Act  
+            // Act
             var result = details1 == details2;
 
-            // Assert  
+            // Assert
             result.Should().BeTrue("two VerbDetails instances with the same values should be equal using the equality operator");
         }
 
         [Fact]
         public void EqualityOperator_DifferentValues_ReturnsFalse()
         {
-            // Arrange  
+            // Arrange
             var details1 = VerbDetails.Create(true, "http://example.com/vocab/run", "ich", "laufen", "Präsens", null);
             var details2 = VerbDetails.Create(false, "http://example.com/vocab/walk", "du", "gehen", "Präteritum", null);
 
-            // Act  
+            // Act
             var result = details1 == details2;
 
-            // Assert  
+            // Assert
             result.Should().BeFalse("two VerbDetails instances with different values should not be equal using the equality operator");
         }
 
         [Fact]
         public void InequalityOperator_SameValues_ReturnsFalse()
         {
-            // Arrange  
+            // Arrange
             var details1 = VerbDetails.Create(true, "http://example.com/vocab/run", "ich", "laufen", "Präsens", null);
             var details2 = VerbDetails.Create(true, "http://example.com/vocab/run", "ich", "laufen", "Präsens", null);
 
-            // Act  
+            // Act
             var result = details1 != details2;
 
-            // Assert  
+            // Assert
             result.Should().BeFalse("two VerbDetails instances with the same values should not be unequal using the inequality operator");
         }
 
         [Fact]
         public void InequalityOperator_DifferentValues_ReturnsTrue()
         {
-            // Arrange  
+            // Arrange
             var details1 = VerbDetails.Create(true, "http://example.com/vocab/run", "ich", "laufen", "Präsens", null);
             var details2 = VerbDetails.Create(false, "http://example.com/vocab/walk", "du", "gehen", "Präteritum", null);
 
-            // Act  
+            // Act
             var result = details1 != details2;
 
-            // Assert  
+            // Assert
             result.Should().BeTrue("two VerbDetails instances with different values should be unequal using the inequality operator");
         }
     }

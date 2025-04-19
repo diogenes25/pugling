@@ -28,7 +28,7 @@ namespace pugling.Controllers.ModelExamples
                            {
                                "Präsens", new Dictionary<string, IConjugationDetails>
                                {
-                                   { "ich", new ConjugationDetails { Form = "renne", VocObjRef = "/api/en/de/vocabularies/en_run_de_Praesens_ich.json" } }
+                                   { "ich", new ConjugationDetailsDto { Form = "renne", VocObjRef = "/api/en/de/vocabularies/en_run_de_Praesens_ich.json" } }
                                }
                            }
                        }
@@ -59,10 +59,5 @@ namespace pugling.Controllers.ModelExamples
         }
     }
 
-    // Example implementation of IConjugationDetails
-    public class ConjugationDetails : IConjugationDetails
-    {
-        public string Form { get; set; }
-        public string VocObjRef { get; set; }
-    }
+
 }

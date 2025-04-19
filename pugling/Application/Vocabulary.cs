@@ -131,6 +131,7 @@ namespace pugling.Application
                 vocabulary.SourceLanguage,
                 vocabulary.TargetLanguage)
             {
+                Version = vocabulary.Version,
                 Description = vocabulary.Description,
                 ExampleSentenceSrc = vocabulary.ExampleSentenceSrc,
                 ExampleSentenceTarget = vocabulary.ExampleSentenceTarget,

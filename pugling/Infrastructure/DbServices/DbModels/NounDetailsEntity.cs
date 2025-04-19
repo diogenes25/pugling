@@ -1,10 +1,11 @@
-﻿using pugling.Models;
+﻿using pugling.Application;
+using pugling.Models;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace pugling.Infrastructure.DbServices.DbModels
 {
-    public record NounDetailsEntity : INounDetails
+    public record NounDetailsEntity : INounDetails, IFillAndValidateable<NounDetailsEntity, NounDetails>
     {
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
@@ -37,6 +38,49 @@ namespace pugling.Infrastructure.DbServices.DbModels
             DeterminedArticle = nounDetails.DeterminedArticle;
             Genus = nounDetails.Genus;
             UndeterminedArticle = nounDetails.UndeterminedArticle;
+        }
+
+        public NounDetailsEntity FillAndValidate(NounDetails noun)
+        {
+            if (noun == null)
+            {
+                throw new ArgumentNullException(nameof(noun), "The provided noun cannot be null.");
+            }
+
+
+            DeterminedArticle = noun.DeterminedArticle;
+            Genus = noun.Genus;
+            UndeterminedArticle = noun.UndeterminedArticle ?? string.Empty;
+
+            var validateResult = this.Validate(new ValidationContext(this));
+            if (validateResult.Any())
+                throw new ArgumentException("The following constraints were violated: " + string.Join(';', validateResult.Select(r => r.ErrorMessage)));
+
+            return this;
+        }
+
+        public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+        {
+            if (string.IsNullOrWhiteSpace(DeterminedArticle) || DeterminedArticle.Length > 100)
+            {
+                yield return new ValidationResult(
+                    $"{nameof(DeterminedArticle)} must be a non-empty string with a maximum length of 100.",
+                    new[] { nameof(DeterminedArticle) });
+            }
+
+            if (string.IsNullOrWhiteSpace(Genus) || Genus.Length > 50)
+            {
+                yield return new ValidationResult(
+                    $"{nameof(Genus)} must be a non-empty string with a maximum length of 50.",
+                    new[] { nameof(Genus) });
+            }
+
+            if (UndeterminedArticle != null && UndeterminedArticle.Length > 100)
+            {
+                yield return new ValidationResult(
+                    $"{nameof(UndeterminedArticle)} must be a string with a maximum length of 100.",
+                    new[] { nameof(UndeterminedArticle) });
+            }
         }
     }
 }
