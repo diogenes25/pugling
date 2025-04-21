@@ -9,7 +9,7 @@ namespace puglingTest.Infrastructure.DbServices.DbModels
     public class VocabularyEntityTests
     {
         [Fact]
-        public void FillAndValidate_ShouldFillPropertiesCorrectly()
+        public void FillAndValidate_ShouldFillPropertiesCorrectlyTest()
         {
             // Arrange
             var vocabulary = new VocabularyDto
@@ -24,8 +24,8 @@ namespace puglingTest.Infrastructure.DbServices.DbModels
                 ExampleSentenceTense = "Present",
                 IdiomaticUsages = new[]
                 {
-                    new IdiomaticUsageDto { Phrase = "test phrase", Translation = "test translation" }
-                },
+                       new IdiomaticUsageDto { Phrase = "test phrase", Translation = "test translation" }
+                   },
                 Noun = new NounDetailsDto
                 {
                     DeterminedArticle = "der",
@@ -37,8 +37,8 @@ namespace puglingTest.Infrastructure.DbServices.DbModels
                 PronunciationAudioUrl = "http://example.com/audio.mp3",
                 RelatedForms = new[]
                 {
-                    new VocabularyBaseDto { Id = "2", Word = "related", Translation = "related_translation" }
-                },
+                       new VocabularyBaseDto { Id = "2", Word = "related", Translation = "related_translation" }
+                   },
                 SourceLanguage = "en",
                 TargetLanguage = "de",
                 UpdatedAt = DateTime.UtcNow,
@@ -92,7 +92,7 @@ namespace puglingTest.Infrastructure.DbServices.DbModels
         }
 
         [Fact]
-        public void Validate_ShouldReturnValidationErrors_WhenConstraintsAreViolated()
+        public void Validate_ShouldReturnValidationErrors_WhenConstraintsAreViolatedTest()
         {
             // Arrange
             var entity = new VocabularyEntity

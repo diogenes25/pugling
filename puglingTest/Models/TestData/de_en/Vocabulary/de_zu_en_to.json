@@ -1,4 +1,3 @@
-// zu
 {
   "id": "de_zu_en_to",
   "sourceLanguage": "de",
@@ -6,5 +5,5 @@
   "targetLanguage": "en",
   "translation": "to",
   "partOfSpeech": "Preposition",
-  "caseGoverns": "Dativ" // Information, dass diese Präposition (oft) den Dativ erfordert
+  "caseGoverns": "Dativ"
 }

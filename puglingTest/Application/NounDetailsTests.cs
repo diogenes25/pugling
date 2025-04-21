@@ -5,10 +5,17 @@ using pugling.Models;
 
 namespace puglingTest.Application
 {
+    /// <summary>
+    /// Unit tests for the <see cref="NounDetails"/> class.
+    /// </summary>
     public class NounDetailsTests
     {
+        /// <summary>
+        /// Tests that the <see cref="NounDetails.Create(string, string, string)"/> method
+        /// creates an instance with the expected values when valid parameters are provided.
+        /// </summary>
         [Fact]
-        public void Create_WithValidParameters_ReturnsExpectedInstance()
+        public void Create_WithValidParameters_ReturnsExpectedInstanceTest()
         {
             // Arrange
             var determinedArticle = "the";
@@ -25,8 +32,12 @@ namespace puglingTest.Application
             result.UndeterminedArticle.Should().Be(undeterminedArticle, "the undetermined article should match the input");
         }
 
+        /// <summary>
+        /// Tests that the <see cref="NounDetails.Create(INounDetails)"/> method
+        /// creates an instance with the expected values when an <see cref="INounDetails"/> object is provided.
+        /// </summary>
         [Fact]
-        public void Create_FromINounDetails_ReturnsExpectedInstance()
+        public void Create_FromINounDetails_ReturnsExpectedInstanceTest()
         {
             // Arrange
             var mockDetails = new Mock<INounDetails>();
@@ -44,8 +55,12 @@ namespace puglingTest.Application
             result.UndeterminedArticle.Should().Be(mockDetails.Object.UndeterminedArticle, "the undetermined article should match the mock value");
         }
 
+        /// <summary>
+        /// Tests that the <see cref="NounDetails.GetHashCode"/> method
+        /// returns the same hash code for instances with the same values.
+        /// </summary>
         [Fact]
-        public void GetHashCode_SameValues_ReturnsSameHashCode()
+        public void GetHashCode_SameValues_ReturnsSameHashCodeTest()
         {
             // Arrange
             var details1 = NounDetails.Create("the", "masculine", "a");
@@ -59,8 +74,12 @@ namespace puglingTest.Application
             hashCode1.Should().Be(hashCode2, "hash codes should be the same for instances with the same values");
         }
 
+        /// <summary>
+        /// Tests that the <see cref="NounDetails.GetHashCode"/> method
+        /// returns different hash codes for instances with different values.
+        /// </summary>
         [Fact]
-        public void GetHashCode_DifferentValues_ReturnsDifferentHashCodes()
+        public void GetHashCode_DifferentValues_ReturnsDifferentHashCodesTest()
         {
             // Arrange
             var details1 = NounDetails.Create("the", "masculine", "a");
@@ -74,8 +93,11 @@ namespace puglingTest.Application
             hashCode1.Should().NotBe(hashCode2, "hash codes should be different for instances with different values");
         }
 
+        /// <summary>
+        /// Tests that the equality operator (<c>==</c>) returns true for instances with the same values.
+        /// </summary>
         [Fact]
-        public void EqualityOperator_SameValues_ReturnsTrue()
+        public void EqualityOperator_SameValues_ReturnsTrueTest()
         {
             // Arrange
             var details1 = NounDetails.Create("the", "masculine", "a");
@@ -88,8 +110,11 @@ namespace puglingTest.Application
             result.Should().BeTrue("the equality operator should return true for instances with the same values");
         }
 
+        /// <summary>
+        /// Tests that the equality operator (<c>==</c>) returns false for instances with different values.
+        /// </summary>
         [Fact]
-        public void EqualityOperator_DifferentValues_ReturnsFalse()
+        public void EqualityOperator_DifferentValues_ReturnsFalseTest()
         {
             // Arrange
             var details1 = NounDetails.Create("the", "masculine", "a");
@@ -102,8 +127,11 @@ namespace puglingTest.Application
             result.Should().BeFalse("the equality operator should return false for instances with different values");
         }
 
+        /// <summary>
+        /// Tests that the inequality operator (<c>!=</c>) returns false for instances with the same values.
+        /// </summary>
         [Fact]
-        public void InequalityOperator_SameValues_ReturnsFalse()
+        public void InequalityOperator_SameValues_ReturnsFalseTest()
         {
             // Arrange
             var details1 = NounDetails.Create("the", "masculine", "a");
@@ -116,8 +144,11 @@ namespace puglingTest.Application
             result.Should().BeFalse("the inequality operator should return false for instances with the same values");
         }
 
+        /// <summary>
+        /// Tests that the inequality operator (<c>!=</c>) returns true for instances with different values.
+        /// </summary>
         [Fact]
-        public void InequalityOperator_DifferentValues_ReturnsTrue()
+        public void InequalityOperator_DifferentValues_ReturnsTrueTest()
         {
             // Arrange
             var details1 = NounDetails.Create("the", "masculine", "a");

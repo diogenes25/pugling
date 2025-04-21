@@ -5,10 +5,17 @@ using pugling.Models;
 
 namespace puglingTest.Application
 {
+    /// <summary>
+    /// Unit tests for the <see cref="VocabularyBase"/> class.
+    /// </summary>
     public class VocabularyBaseTests
     {
+        /// <summary>
+        /// Tests that the <see cref="VocabularyBase.Create(string, string, string)"/> method
+        /// creates an instance with the expected values when valid parameters are provided.
+        /// </summary>
         [Fact]
-        public void Create_WithValidParameters_ReturnsExpectedInstance()
+        public void Create_WithValidParameters_ReturnsExpectedInstanceTest()
         {
             // Arrange
             var id = "1";
@@ -25,8 +32,12 @@ namespace puglingTest.Application
             result.Translation.Should().Be(translation, "the Translation should match the provided value");
         }
 
+        /// <summary>
+        /// Tests that the <see cref="VocabularyBase.Create(IVocabularyBase)"/> method
+        /// creates an instance with the expected values when a valid <see cref="IVocabularyBase"/> is provided.
+        /// </summary>
         [Fact]
-        public void Create_FromIVocabularyBase_ReturnsExpectedInstance()
+        public void Create_FromIVocabularyBase_ReturnsExpectedInstanceTest()
         {
             // Arrange
             var mockVocabulary = new Mock<IVocabularyBase>();
@@ -44,8 +55,12 @@ namespace puglingTest.Application
             result.Translation.Should().Be(mockVocabulary.Object.Translation, "the Translation should match the mock's Translation");
         }
 
+        /// <summary>
+        /// Tests that the <see cref="VocabularyBase.Equals(object)"/> method
+        /// returns true when two instances have the same values.
+        /// </summary>
         [Fact]
-        public void Equals_SameValues_ReturnsTrue()
+        public void Equals_SameValues_ReturnsTrueTest()
         {
             // Arrange
             var vocab1 = VocabularyBase.Create("1", "hello", "hola");
@@ -58,8 +73,12 @@ namespace puglingTest.Application
             result.Should().BeTrue("two instances with the same values should be equal");
         }
 
+        /// <summary>
+        /// Tests that the <see cref="VocabularyBase.Equals(object)"/> method
+        /// returns false when two instances have different values.
+        /// </summary>
         [Fact]
-        public void Equals_DifferentValues_ReturnsFalse()
+        public void Equals_DifferentValues_ReturnsFalseTest()
         {
             // Arrange
             var vocab1 = VocabularyBase.Create("1", "hello", "hola");
@@ -72,8 +91,12 @@ namespace puglingTest.Application
             result.Should().BeFalse("two instances with different values should not be equal");
         }
 
+        /// <summary>
+        /// Tests that the <see cref="VocabularyBase.GetHashCode"/> method
+        /// returns the same hash code for instances with the same values.
+        /// </summary>
         [Fact]
-        public void GetHashCode_SameValues_ReturnsSameHashCode()
+        public void GetHashCode_SameValues_ReturnsSameHashCodeTest()
         {
             // Arrange
             var vocab1 = VocabularyBase.Create("1", "hello", "hola");
@@ -87,8 +110,12 @@ namespace puglingTest.Application
             hashCode1.Should().Be(hashCode2, "two instances with the same values should have the same hash code");
         }
 
+        /// <summary>
+        /// Tests that the <see cref="VocabularyBase.GetHashCode"/> method
+        /// returns different hash codes for instances with different values.
+        /// </summary>
         [Fact]
-        public void GetHashCode_DifferentValues_ReturnsDifferentHashCodes()
+        public void GetHashCode_DifferentValues_ReturnsDifferentHashCodesTest()
         {
             // Arrange
             var vocab1 = VocabularyBase.Create("1", "hello", "hola");
@@ -102,8 +129,11 @@ namespace puglingTest.Application
             hashCode1.Should().NotBe(hashCode2, "two instances with different values should have different hash codes");
         }
 
+        /// <summary>
+        /// Tests that the equality operator (==) returns true for instances with the same values.
+        /// </summary>
         [Fact]
-        public void EqualityOperator_SameValues_ReturnsTrue()
+        public void EqualityOperator_SameValues_ReturnsTrueTest()
         {
             // Arrange
             var vocab1 = VocabularyBase.Create("1", "hello", "hola");
@@ -116,8 +146,11 @@ namespace puglingTest.Application
             result.Should().BeTrue("the equality operator should return true for instances with the same values");
         }
 
+        /// <summary>
+        /// Tests that the equality operator (==) returns false for instances with different values.
+        /// </summary>
         [Fact]
-        public void EqualityOperator_DifferentValues_ReturnsFalse()
+        public void EqualityOperator_DifferentValues_ReturnsFalseTest()
         {
             // Arrange
             var vocab1 = VocabularyBase.Create("1", "hello", "hola");
@@ -130,8 +163,11 @@ namespace puglingTest.Application
             result.Should().BeFalse("the equality operator should return false for instances with different values");
         }
 
+        /// <summary>
+        /// Tests that the inequality operator (!=) returns false for instances with the same values.
+        /// </summary>
         [Fact]
-        public void InequalityOperator_SameValues_ReturnsFalse()
+        public void InequalityOperator_SameValues_ReturnsFalseTest()
         {
             // Arrange
             var vocab1 = VocabularyBase.Create("1", "hello", "hola");
@@ -144,8 +180,11 @@ namespace puglingTest.Application
             result.Should().BeFalse("the inequality operator should return false for instances with the same values");
         }
 
+        /// <summary>
+        /// Tests that the inequality operator (!=) returns true for instances with different values.
+        /// </summary>
         [Fact]
-        public void InequalityOperator_DifferentValues_ReturnsTrue()
+        public void InequalityOperator_DifferentValues_ReturnsTrueTest()
         {
             // Arrange
             var vocab1 = VocabularyBase.Create("1", "hello", "hola");

@@ -10,7 +10,7 @@ namespace puglingTest.Infrastructure.DbServices.DbModels
     public class NounDetailsEntityTests
     {
         [Fact]
-        public void Constructor_ShouldInitializePropertiesCorrectly()
+        public void Constructor_ShouldInitializePropertiesCorrectly_Test()
         {
             // Arrange
             var determinedArticle = "der";
@@ -27,7 +27,7 @@ namespace puglingTest.Infrastructure.DbServices.DbModels
         }
 
         [Fact]
-        public void Constructor_WithINounDetails_ShouldInitializePropertiesCorrectly()
+        public void Constructor_WithINounDetails_ShouldInitializePropertiesCorrectly_Test()
         {
             // Arrange
             var mockNounDetails = new Mock<INounDetails>();
@@ -45,7 +45,7 @@ namespace puglingTest.Infrastructure.DbServices.DbModels
         }
 
         [Fact]
-        public void FillAndValidate_WhenNounIsNull()
+        public void FillAndValidate_WhenNounIsNull_Test()
         {
             // Arrange
             var entity = new NounDetailsEntity();
@@ -58,7 +58,7 @@ namespace puglingTest.Infrastructure.DbServices.DbModels
         }
 
         [Fact]
-        public void FillAndValidate_ShouldThrowArgumentException_WhenValidationFails()
+        public void FillAndValidate_ShouldThrowArgumentException_WhenValidationFails_Test()
         {
             // Arrange
             var entity = new NounDetailsEntity();
@@ -77,7 +77,7 @@ namespace puglingTest.Infrastructure.DbServices.DbModels
         }
 
         [Fact]
-        public void FillAndValidate_ShouldFillPropertiesCorrectly_WhenValidationPasses()
+        public void FillAndValidate_ShouldFillPropertiesCorrectly_WhenValidationPasses_Test()
         {
             // Arrange
             var entity = new NounDetailsEntity();
@@ -99,7 +99,7 @@ namespace puglingTest.Infrastructure.DbServices.DbModels
         }
 
         [Fact]
-        public void Validate_ShouldReturnValidationErrors_WhenPropertiesAreInvalid()
+        public void Validate_ShouldReturnValidationErrors_WhenPropertiesAreInvalid_Test()
         {
             // Arrange
             var entity = new NounDetailsEntity
@@ -118,7 +118,7 @@ namespace puglingTest.Infrastructure.DbServices.DbModels
         }
 
         [Fact]
-        public void Validate_ShouldReturnNoValidationErrors_WhenPropertiesAreValid()
+        public void Validate_ShouldReturnNoValidationErrors_WhenPropertiesAreValid_Test()
         {
             // Arrange
             var entity = new NounDetailsEntity

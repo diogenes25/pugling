@@ -4,13 +4,18 @@ using System.Text.RegularExpressions;
 
 namespace pugling.Application
 {
+
+    /// <summary>
+    /// Utility class for handling vocabulary-related operations.
+    /// </summary>
     public static class VocabularyUtil
     {
         /// <summary>
-        /// Generiert eine RESTful-freundliche ID für ein Vocabulary-Objekt.
+        /// Generates a RESTful-friendly ID for a vocabulary object.
         /// </summary>
-        /// <param name="vocabulary">Das Vocabulary-Objekt.</param>
-        /// <returns>Die generierte RESTful-freundliche ID.</returns>
+        /// <param name="vocabulary">The vocabulary object.</param>
+        /// <returns>The generated RESTful-friendly ID.</returns>
+        /// <exception cref="ArgumentNullException">Thrown when the vocabulary object is null.</exception>
         public static string GenerateRestfulId(IVocabulary<IIdiomaticUsage, INounDetails, IVocabularyBase, IVerbDetails> vocabulary)
         {
             if (vocabulary == null)
@@ -33,7 +38,7 @@ namespace pugling.Application
                 }
                 else
                 {
-                    // Fallback, falls Tempus oder Person nicht URL-freundlich abgebildet werden können
+                    // Fallback if tense or person cannot be represented in a URL-friendly way
                     return $"{sourceLanguage}-{NormalizeForUrl(vocabulary.Verb.Infinitiv)}-{targetLanguage}-{vocabulary.Verb.Tense?.ToLowerInvariant()}-{vocabulary.Verb.Person?.ToLowerInvariant()?.Replace("/", "-")}";
                 }
             }
@@ -43,6 +48,11 @@ namespace pugling.Application
             }
         }
 
+        /// <summary>
+        /// Normalizes a string to make it URL-friendly.
+        /// </summary>
+        /// <param name="text">The text to normalize.</param>
+        /// <returns>The normalized text.</returns>
         private static string NormalizeForUrl(string text)
         {
             if (string.IsNullOrEmpty(text))
@@ -57,6 +67,11 @@ namespace pugling.Application
             return text;
         }
 
+        /// <summary>
+        /// Replaces German umlauts and special characters with their URL-friendly equivalents.
+        /// </summary>
+        /// <param name="text">The text containing umlauts.</param>
+        /// <returns>The text with umlauts replaced.</returns>
         private static string ReplaceUmlauts(string text)
         {
             return text.Replace("ä", "ae")
@@ -65,11 +80,21 @@ namespace pugling.Application
                        .Replace("ß", "ss");
         }
 
+        /// <summary>
+        /// Removes all non-alphanumeric characters except dashes from a string.
+        /// </summary>
+        /// <param name="text">The text to process.</param>
+        /// <returns>The processed text.</returns>
         private static string RemoveNonAlphaNumericExceptDash(string text)
         {
             return Regex.Replace(text, @"[^a-z0-9-]", "");
         }
 
+        /// <summary>
+        /// Converts a tense string into a URL-friendly format.
+        /// </summary>
+        /// <param name="tense">The tense string.</param>
+        /// <returns>The URL-friendly tense string, or null if no match is found.</returns>
         private static string GetUrlFriendlyTense(string tense)
         {
             if (string.IsNullOrEmpty(tense))
@@ -85,10 +110,15 @@ namespace pugling.Application
                 "plusquamperfekt" => "plup",
                 "futur i" => "fut1",
                 "futur ii" => "fut2",
-                _ => null, // Oder eine Standarddarstellung, wenn kein Match
+                _ => null, // Default representation if no match is found
             };
         }
 
+        /// <summary>
+        /// Converts a person string into a URL-friendly format.
+        /// </summary>
+        /// <param name="person">The person string.</param>
+        /// <returns>The URL-friendly person string, or the original string with slashes replaced if no match is found.</returns>
         private static string GetUrlFriendlyPerson(string person)
         {
             if (string.IsNullOrEmpty(person))
@@ -104,7 +134,7 @@ namespace pugling.Application
                 "wir" => "wir",
                 "ihr" => "ihr",
                 "sie" => "sie",
-                _ => person.ToLowerInvariant().Replace("/", "-"), // Fallback, falls keine direkte Entsprechung
+                _ => person.ToLowerInvariant().Replace("/", "-"), // Fallback if no direct match
             };
         }
     }

@@ -6,52 +6,110 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace pugling.Infrastructure.DbServices.DbModels
 {
+    /// <summary>
+    /// Represents a vocabulary entity with various linguistic details and validation logic.
+    /// </summary>
     public record VocabularyEntity : VocabularyBaseEntity, IVocabulary<IdiomaticUsageEntity, NounDetailsEntity, VocabularyBaseEntity, VerbDetailsEntity>, IFillAndValidateable<VocabularyEntity, Vocabulary>
     {
+        /// <summary>
+        /// Gets or sets the part of speech for the vocabulary.
+        /// </summary>
         public EPartOfSpeech PartOfSpeech { get; set; } = EPartOfSpeech.NotSet;
 
+        /// <summary>
+        /// Gets or sets the description of the vocabulary.
+        /// </summary>
         [MaxLength(1000)]
         public string? Description { get; set; }
 
+        /// <summary>
+        /// Gets or sets the example sentence in the source language.
+        /// </summary>
         [MaxLength(2000)]
         public string? ExampleSentenceSrc { get; set; }
 
+        /// <summary>
+        /// Gets or sets the example sentence in the target language.
+        /// </summary>
         [MaxLength(2000)]
         public string? ExampleSentenceTarget { get; set; }
 
+        /// <summary>
+        /// Gets or sets the tense of the example sentence.
+        /// </summary>
         [MaxLength(100)]
         public string? ExampleSentenceTense { get; set; }
 
+        /// <summary>
+        /// Gets or sets the pronunciation of the vocabulary.
+        /// </summary>
         [MaxLength(500)]
         public string? Pronunciation { get; set; }
 
+        /// <summary>
+        /// Gets or sets the URL for the pronunciation audio.
+        /// </summary>
         [Url]
         public string? PronunciationAudioUrl { get; set; }
 
+        /// <summary>
+        /// Gets or sets the source language of the vocabulary.
+        /// </summary>
         [Required]
         [MaxLength(100)]
         public string SourceLanguage { get; set; } = string.Empty;
 
+        /// <summary>
+        /// Gets or sets the target language of the vocabulary.
+        /// </summary>
         [Required]
         [MaxLength(100)]
         public string TargetLanguage { get; set; } = string.Empty;
 
+        /// <summary>
+        /// Gets or sets the last updated timestamp for the vocabulary.
+        /// </summary>
         public DateTime? UpdatedAt { get; set; }
 
+        /// <summary>
+        /// Gets or sets the version of the vocabulary entity.
+        /// </summary>
         [Required]
         [MaxLength(50)]
         public string Version { get; set; } = string.Empty;
 
+        /// <summary>
+        /// Gets or sets the idiomatic usages associated with the vocabulary.
+        /// </summary>
         public IdiomaticUsageEntity[]? IdiomaticUsages { get; set; }
 
+        /// <summary>
+        /// Gets or sets the related forms of the vocabulary.
+        /// </summary>
         public VocabularyBaseEntity[]? RelatedForms { get; set; }
 
+        /// <summary>
+        /// Gets or sets the noun details of the vocabulary.
+        /// </summary>
         public NounDetailsEntity? Noun { get; set; }
 
+        /// <summary>
+        /// Gets or sets the verb details of the vocabulary.
+        /// </summary>
         public VerbDetailsEntity? Verb { get; set; }
 
+        /// <summary>
+        /// Gets or sets the URL for the example sentence in the target language.
+        /// </summary>
         public Uri? ExampleSentenceTargetUrl { get; set; }
 
+        /// <summary>
+        /// Fills the entity with data from the provided vocabulary and validates it.
+        /// </summary>
+        /// <param name="vocabulary">The vocabulary to fill the entity with.</param>
+        /// <returns>The filled and validated <see cref="VocabularyEntity"/>.</returns>
+        /// <exception cref="ArgumentNullException">Thrown when the provided vocabulary is null.</exception>
+        /// <exception cref="ArgumentException">Thrown when validation constraints are violated.</exception>
         public VocabularyEntity FillAndValidate([NotNull] Vocabulary vocabulary)
         {
             if (vocabulary == null)
@@ -91,16 +149,18 @@ namespace pugling.Infrastructure.DbServices.DbModels
             return this;
         }
 
+        /// <summary>
+        /// Validates the entity against its constraints.
+        /// </summary>
+        /// <param name="validationContext">The validation context.</param>
+        /// <returns>A collection of validation results.</returns>
         public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
         {
             if (string.IsNullOrWhiteSpace(this.Word) || this.Word.Length > 500)
-                yield return new ValidationResult($"{nameof(this.Word)} must be non-empty and at most 500 characters.", [nameof(this.Word)]);
+                yield return new ValidationResult($"{nameof(this.Word)} must be non-empty and at most 500 characters.", new[] { nameof(this.Word) });
 
             if (string.IsNullOrWhiteSpace(this.Translation) || this.Translation.Length > 500)
-                yield return new ValidationResult($"{nameof(this.Translation)} must be non-empty and at most 500 characters.", [nameof(this.Translation)]);
-
-            //if (string.IsNullOrWhiteSpace(this.PartOfSpeech) || this.PartOfSpeech.Length > 500)
-            //    yield return new ValidationResult($"{nameof(this.PartOfSpeech)} must be non-empty and at most 500 characters.", [nameof(this.PartOfSpeech)]);
+                yield return new ValidationResult($"{nameof(this.Translation)} must be non-empty and at most 500 characters.", new[] { nameof(this.Translation) });
 
             if (this.Description?.Length > 1000)
                 yield return new ValidationResult($"{nameof(this.Description)} must be at most 1000 characters.", new[] { nameof(this.Description) });

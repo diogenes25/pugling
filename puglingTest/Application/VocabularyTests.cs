@@ -15,7 +15,7 @@ namespace puglingTest.Application
         /// creates a valid instance when provided with valid parameters.
         /// </summary>
         [Fact]
-        public void Create_WithValidParameters_ReturnsExpectedInstance()
+        public void Create_WithValidParameters_ReturnsExpectedInstanceTest()
         {
             // Arrange
             var id = "1";
@@ -43,7 +43,7 @@ namespace puglingTest.Application
         /// creates a valid instance when provided with a valid <see cref="IVocabulary{TIdiomaticUsage, TNounDetails, TVocabularyBase, TVerbDetails}"/> object.
         /// </summary>
         [Fact]
-        public void Create_FromIVocabulary_ReturnsExpectedInstance()
+        public void Create_FromIVocabulary_ReturnsExpectedInstanceTest()
         {
             // Arrange
             var mockVocabulary = new Mock<IVocabulary<IIdiomaticUsage, INounDetails, IVocabularyBase, IVerbDetails>>();
@@ -94,7 +94,7 @@ namespace puglingTest.Application
         /// when comparing two instances with the same values.
         /// </summary>
         [Fact]
-        public void Equals_WithSameValues_ReturnsTrue()
+        public void Equals_WithSameValues_ReturnsTrueTest()
         {
             // Arrange
             var vocabulary1 = Vocabulary.Create("1", "run", "laufen", pugling.Models.Constants.EPartOfSpeech.Verb, "en", "de");
@@ -112,10 +112,10 @@ namespace puglingTest.Application
         /// when comparing two instances with different values.
         /// </summary>
         [Fact]
-        public void Equals_WithDifferentValues_ReturnsFalse()
+        public void Equals_WithDifferentValues_ReturnsFalseTest()
         {
             // Arrange
-            var vocabulary1 = Vocabulary.Create("1", "run", "laufen", pugling.Models.Constants.EPartOfSpeech.Verb   , "en", "de");
+            var vocabulary1 = Vocabulary.Create("1", "run", "laufen", pugling.Models.Constants.EPartOfSpeech.Verb, "en", "de");
             var vocabulary2 = Vocabulary.Create("2", "walk", "gehen", pugling.Models.Constants.EPartOfSpeech.Verb, "en", "de");
 
             // Act
@@ -130,7 +130,7 @@ namespace puglingTest.Application
         /// for instances with the same values.
         /// </summary>
         [Fact]
-        public void GetHashCode_SameValues_ReturnsSameHashCode()
+        public void GetHashCode_SameValues_ReturnsSameHashCodeTest()
         {
             // Arrange
             var vocabulary1 = Vocabulary.Create("1", "run", "laufen", pugling.Models.Constants.EPartOfSpeech.Verb, "en", "de");
@@ -149,7 +149,7 @@ namespace puglingTest.Application
         /// for instances with different values.
         /// </summary>
         [Fact]
-        public void GetHashCode_DifferentValues_ReturnsDifferentHashCodes()
+        public void GetHashCode_DifferentValues_ReturnsDifferentHashCodesTest()
         {
             // Arrange
             var vocabulary1 = Vocabulary.Create("1", "run", "laufen", pugling.Models.Constants.EPartOfSpeech.Verb, "en", "de");
@@ -168,7 +168,7 @@ namespace puglingTest.Application
         /// when comparing two instances with the same values.
         /// </summary>
         [Fact]
-        public void EqualityOperator_SameValues_ReturnsTrue()
+        public void EqualityOperator_SameValues_ReturnsTrueTest()
         {
             // Arrange
             var vocabulary1 = Vocabulary.Create("1", "run", "laufen", pugling.Models.Constants.EPartOfSpeech.Verb, "en", "de");
@@ -186,7 +186,7 @@ namespace puglingTest.Application
         /// when comparing two instances with different values.
         /// </summary>
         [Fact]
-        public void EqualityOperator_DifferentValues_ReturnsFalse()
+        public void EqualityOperator_DifferentValues_ReturnsFalseTest()
         {
             // Arrange
             var vocabulary1 = Vocabulary.Create("1", "run", "laufen", pugling.Models.Constants.EPartOfSpeech.Verb, "en", "de");
@@ -204,7 +204,7 @@ namespace puglingTest.Application
         /// when comparing two instances with the same values.
         /// </summary>
         [Fact]
-        public void InequalityOperator_SameValues_ReturnsFalse()
+        public void InequalityOperator_SameValues_ReturnsFalseTest()
         {
             // Arrange
             var vocabulary1 = Vocabulary.Create("1", "run", "laufen", pugling.Models.Constants.EPartOfSpeech.Verb, "en", "de");
@@ -222,7 +222,7 @@ namespace puglingTest.Application
         /// when comparing two instances with different values.
         /// </summary>
         [Fact]
-        public void InequalityOperator_DifferentValues_ReturnsTrue()
+        public void InequalityOperator_DifferentValues_ReturnsTrueTest()
         {
             // Arrange
             var vocabulary1 = Vocabulary.Create("1", "run", "laufen", pugling.Models.Constants.EPartOfSpeech.Verb, "en", "de");

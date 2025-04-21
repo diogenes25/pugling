@@ -1,4 +1,3 @@
-// gehe (gehen - Infinitiv)
 {
   "id": "de_gehen_en_go",
   "sourceLanguage": "de",
@@ -9,7 +8,7 @@
   "verb": {
     "isBaseForm": true,
     "conjugations": {
-      "Pr�sens": {
+      "Praesens": {
         "ich": {
           "form": "gehe",
           "vocObjRef": "de_gehen_en_go_praesens_ich"
@@ -35,7 +34,6 @@
           "vocObjRef": "de_gehen_en_go_praesens_sie_sie"
         }
       }
-      // ... weitere Konjugationen für andere Zeiten ...
     }
   }
 }

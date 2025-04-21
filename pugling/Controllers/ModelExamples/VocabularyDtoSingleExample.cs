@@ -4,8 +4,15 @@ using Swashbuckle.AspNetCore.Filters;
 
 namespace pugling.Controllers.ModelExamples
 {
+    /// <summary>
+    /// Provides an example implementation of the <see cref="VocabularyDto"/> class for Swagger documentation.
+    /// </summary>
     public class VocabularyDtoSingleExample : IExamplesProvider<VocabularyDto>
     {
+        /// <summary>
+        /// Generates an example instance of the <see cref="VocabularyDto"/> class.
+        /// </summary>
+        /// <returns>An example <see cref="VocabularyDto"/> object.</returns>
         public VocabularyDto GetExamples()
         {
             return new VocabularyDto
@@ -20,14 +27,14 @@ namespace pugling.Controllers.ModelExamples
                 {
                     IsBaseForm = true,
                     Conjugations = new Dictionary<string, Dictionary<string, ConjugationDetailsDto>>
-                    {
                         {
-                            "Präsens", new Dictionary<string, ConjugationDetailsDto>
                             {
-                                { "ich", new ConjugationDetailsDto { Form = "renne", VocObjRef = "/api/en/de/vocabularies/en_run_de_Praesens_ich.json" } }
+                                "Präsens", new Dictionary<string, ConjugationDetailsDto>
+                                {
+                                    { "ich", new ConjugationDetailsDto { Form = "renne", VocObjRef = "/api/en/de/vocabularies/en_run_de_Praesens_ich.json" } }
+                                }
                             }
                         }
-                    }
                 },
                 ExampleSentenceSrc = "I run every morning.",
                 ExampleSentenceTarget = "Ich renne jeden Morgen.",
@@ -35,16 +42,15 @@ namespace pugling.Controllers.ModelExamples
                 Description = "To move quickly on foot.",
                 Pronunciation = "/rʌn/",
                 PronunciationAudioUrl = "https://example.com/audio/run.mp3",
-                RelatedForms =
-                [
-                    new VocabularyBaseDto { Id = "en_sprint_de", Word = "sprint", Translation = "sprinten" }
-                ],
-                IdiomaticUsages =
-                [
-                    new IdiomaticUsageDto { Phrase = "run out of time", Translation = "Die Zeit läuft ab." }
-                ]
+                RelatedForms = new[]
+                {
+                        new VocabularyBaseDto { Id = "en_sprint_de", Word = "sprint", Translation = "sprinten" }
+                    },
+                IdiomaticUsages = new[]
+                {
+                        new IdiomaticUsageDto { Phrase = "run out of time", Translation = "Die Zeit läuft ab." }
+                    }
             };
         }
-
     }
 }

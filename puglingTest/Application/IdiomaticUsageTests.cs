@@ -5,10 +5,16 @@ using pugling.Models;
 
 namespace puglingTest.Application
 {
+    /// <summary>
+    /// Contains unit tests for the <see cref="IdiomaticUsage"/> class.
+    /// </summary>
     public class IdiomaticUsageTests
     {
+        /// <summary>
+        /// Tests that creating an <see cref="IdiomaticUsage"/> instance with valid parameters returns the expected instance.
+        /// </summary>
         [Fact]
-        public void Create_WithValidParameters_ReturnsExpectedInstance()
+        public void Create_WithValidParameters_ReturnsExpectedInstanceTest()
         {
             // Arrange
             var phrase = "Break the ice";
@@ -23,8 +29,11 @@ namespace puglingTest.Application
             result.Translation.Should().Be(translation, "because the translation should match the input parameter");
         }
 
+        /// <summary>
+        /// Tests that creating an <see cref="IdiomaticUsage"/> instance from an <see cref="IIdiomaticUsage"/> returns the expected instance.
+        /// </summary>
         [Fact]
-        public void Create_FromIIdiomaticUsage_ReturnsExpectedInstance()
+        public void Create_FromIIdiomaticUsage_ReturnsExpectedInstanceTest()
         {
             // Arrange
             var mockUsage = new Mock<IIdiomaticUsage>();
@@ -40,8 +49,11 @@ namespace puglingTest.Application
             result.Translation.Should().Be(mockUsage.Object.Translation, "because the translation should match the mocked IIdiomaticUsage");
         }
 
+        /// <summary>
+        /// Tests that two <see cref="IdiomaticUsage"/> instances with the same values return the same hash code.
+        /// </summary>
         [Fact]
-        public void GetHashCode_SameValues_ReturnsSameHashCode()
+        public void GetHashCode_SameValues_ReturnsSameHashCodeTest()
         {
             // Arrange
             var usage1 = new IdiomaticUsage("Break the ice", "Romper el hielo");
@@ -55,8 +67,11 @@ namespace puglingTest.Application
             hashCode1.Should().Be(hashCode2, "because identical values should produce the same hash code");
         }
 
+        /// <summary>
+        /// Tests that two <see cref="IdiomaticUsage"/> instances with different values return different hash codes.
+        /// </summary>
         [Fact]
-        public void GetHashCode_DifferentValues_ReturnsDifferentHashCodes()
+        public void GetHashCode_DifferentValues_ReturnsDifferentHashCodesTest()
         {
             // Arrange
             var usage1 = new IdiomaticUsage("Break the ice", "Romper el hielo");
@@ -70,8 +85,11 @@ namespace puglingTest.Application
             hashCode1.Should().NotBe(hashCode2, "because different values should produce different hash codes");
         }
 
+        /// <summary>
+        /// Tests that the equality operator returns true for two <see cref="IdiomaticUsage"/> instances with the same values.
+        /// </summary>
         [Fact]
-        public void EqualityOperator_SameValues_ReturnsTrue()
+        public void EqualityOperator_SameValues_ReturnsTrueTest()
         {
             // Arrange
             var usage1 = new IdiomaticUsage("Break the ice", "Romper el hielo");
@@ -84,8 +102,11 @@ namespace puglingTest.Application
             result.Should().BeTrue("because identical values should be considered equal");
         }
 
+        /// <summary>
+        /// Tests that the equality operator returns false for two <see cref="IdiomaticUsage"/> instances with different values.
+        /// </summary>
         [Fact]
-        public void EqualityOperator_DifferentValues_ReturnsFalse()
+        public void EqualityOperator_DifferentValues_ReturnsFalseTest()
         {
             // Arrange
             var usage1 = new IdiomaticUsage("Break the ice", "Romper el hielo");
@@ -98,8 +119,11 @@ namespace puglingTest.Application
             result.Should().BeFalse("because different values should not be considered equal");
         }
 
+        /// <summary>
+        /// Tests that the inequality operator returns false for two <see cref="IdiomaticUsage"/> instances with the same values.
+        /// </summary>
         [Fact]
-        public void InequalityOperator_SameValues_ReturnsFalse()
+        public void InequalityOperator_SameValues_ReturnsFalseTest()
         {
             // Arrange
             var usage1 = new IdiomaticUsage("Break the ice", "Romper el hielo");
@@ -112,8 +136,11 @@ namespace puglingTest.Application
             result.Should().BeFalse("because identical values should not be considered unequal");
         }
 
+        /// <summary>
+        /// Tests that the inequality operator returns true for two <see cref="IdiomaticUsage"/> instances with different values.
+        /// </summary>
         [Fact]
-        public void InequalityOperator_DifferentValues_ReturnsTrue()
+        public void InequalityOperator_DifferentValues_ReturnsTrueTest()
         {
             // Arrange
             var usage1 = new IdiomaticUsage("Break the ice", "Romper el hielo");

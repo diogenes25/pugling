@@ -82,7 +82,7 @@ namespace pugling.Application
         /// <summary>
         /// Gets the version of the vocabulary item.
         /// </summary>
-        public string Version { get; private set; }
+        public string Version { get; private set; } = "1.0";
 
         /// <summary>
         /// Gets the URL for the target of the example sentence.

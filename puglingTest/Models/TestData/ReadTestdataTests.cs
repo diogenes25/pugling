@@ -1,6 +1,5 @@
 ﻿using FluentAssertions;
 using pugling.Models;
-using pugling.Models.Constants;
 using System.Text.Json;
 
 namespace puglingTest.Models.TestData
@@ -10,36 +9,52 @@ namespace puglingTest.Models.TestData
         [Fact]
         public void TestReadJsonAndDeserialize()
         {
-            // Arrange
-            var filePath = Path.Combine(AppContext.BaseDirectory, "Models", "TestData", "en_de", "Vocabulary", "en_run_noun_lauf.json");
-
-            var expected = new VocabularyDto
+            var folders = new[]
             {
-                Word = "run",
-                Translation = "Lauf",
-                PartOfSpeech = EPartOfSpeech.Noun,
-                SourceLanguage = "en",
-                TargetLanguage = "de",
+                "de_en",
+                "en_de"
             };
 
-            // Act
-            var jsonString = File.ReadAllText(filePath);
-
-            // Ensure the JSON string is valid
-            jsonString.Should().NotBeNullOrWhiteSpace("The JSON string should not be null or empty.");
-
-            // Check if the JSON structure matches the VocabularyDto
-            var options = new JsonSerializerOptions
+            foreach (var folder in folders)
             {
-                PropertyNameCaseInsensitive = true // Ensure case-insensitive deserialization
-            };
-            var result = JsonSerializer.Deserialize<VocabularyDto>(jsonString, options);
+                // Arrange
+                var directoryPath = Path.Combine(AppContext.BaseDirectory, "Models", "TestData", folder, "Vocabulary");
+                var options = new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true // Ensure case-insensitive deserialization
+                };
 
-            // Assert
-            result.Should().NotBeNull("Deserialization should produce a non-null result.");
-            result.Word.Should().Be(expected.Word, "The Word property should match the expected value.");
-            result.Translation.Should().Be(expected.Translation, "The Translation property should match the expected value.");
-            result.PartOfSpeech.Should().Be(expected.PartOfSpeech, "The PartOfSpeech property should match the expected value.");
+                // Act & Assert
+                foreach (var filePath in Directory.GetFiles(directoryPath, "*.json"))
+                {
+                    // Read the JSON file
+                    var jsonString = File.ReadAllText(filePath);
+
+                    // Ensure the JSON string is valid
+                    jsonString.Should().NotBeNullOrWhiteSpace($"The JSON string in file '{filePath}' should not be null or empty.");
+
+                    // Deserialize the JSON into VocabularyDto
+                    try
+                    {
+                        var result = JsonSerializer.Deserialize<VocabularyDto>(jsonString, options);
+
+                        // Assert the deserialization result
+                        result.Should().NotBeNull($"Deserialization of file '{filePath}' should produce a non-null result.");
+                        result.Word.Should().NotBeNullOrWhiteSpace($"The Word property in file '{filePath}' should not be null or empty.");
+                        result.Translation.Should().NotBeNullOrWhiteSpace($"The Translation property in file '{filePath}' should not be null or empty.");
+                    }
+                    catch (JsonException ex)
+                    {
+                        // Handle JSON deserialization errors
+                        throw new Exception($"Failed to deserialize JSON from file '{filePath}': {ex.Message}", ex);
+                    }
+                    catch (Exception ex)
+                    {
+                        // Handle other exceptions
+                        throw new Exception($"An unexpected error occurred while processing file '{filePath}': {ex.Message}", ex);
+                    }
+                }
+            }
         }
     }
 }

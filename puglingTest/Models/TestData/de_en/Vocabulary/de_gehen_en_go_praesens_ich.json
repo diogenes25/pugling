@@ -1,4 +1,3 @@
-// gehe (konjugierte Form)
 {
   "id": "de_gehen_en_go_praesens_ich",
   "sourceLanguage": "de",
@@ -11,6 +10,6 @@
     "baseFormRef": "de_gehen_en_go",
     "person": "ich",
     "infinitiv": "gehen",
-    "tense": "pres" // Unsere Konstante GermanTenses.Praesens -> "pres"
+    "tense": "pres"
   }
 }

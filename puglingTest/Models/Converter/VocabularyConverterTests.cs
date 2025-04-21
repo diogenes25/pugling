@@ -3,10 +3,11 @@ using pugling.Application;
 using pugling.Infrastructure.DbServices.DbModels;
 using pugling.Models;
 using pugling.Models.Converter;
+using System.Text.Json;
 
 namespace puglingTest.Models.Converter
 {
-    public class VocabularyConverterTest
+    public class VocabularyConverterTests
     {
         public static VocabularyDto CreateVocabulary() => new VocabularyDto
         {
@@ -37,7 +38,7 @@ namespace puglingTest.Models.Converter
 
 
         [Fact]
-        public void FromDtoToApp()
+        public void FromDtoToAppTest()
         {
             // Arrange
             var vocabulary = CreateVocabulary();
@@ -51,7 +52,7 @@ namespace puglingTest.Models.Converter
         }
 
         [Fact]
-        public void FromAppToDto()
+        public void FromAppToDtoTest()
         {
             // Arrange
             var vocabulary = CreateVocabulary();
@@ -66,7 +67,7 @@ namespace puglingTest.Models.Converter
         }
 
         [Fact]
-        public void FromDtoToAppToEntity()
+        public void FromDtoToAppToEntityTest()
         {
             // Arrange
             var vocabulary = CreateVocabulary();
@@ -82,7 +83,7 @@ namespace puglingTest.Models.Converter
         }
 
         [Fact]
-        public void FromEntityToAppToDto()
+        public void FromEntityToAppToDtoTest()
         {
             // Arrange
             var vocabulary = CreateVocabulary();
@@ -97,7 +98,7 @@ namespace puglingTest.Models.Converter
         }
 
         [Fact]
-        public void FromEntityToApp()
+        public void FromEntityToAppTest()
         {
             // Arrange
             var vocabulary = CreateVocabulary();
@@ -111,6 +112,50 @@ namespace puglingTest.Models.Converter
             vocabularyApp.Compare(vocabularyEntity).Should().BeTrue();
             vocabulary.Compare(vocabularyEntity).Should().BeTrue();
             vocabulary.Compare(vocabularyApp).Should().BeTrue();
+        }
+
+        [Fact]
+        public void SerializeDtoTestTest()
+        {
+            // Arrange
+            var vocabulary = CreateVocabulary();
+
+            var options = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true // Ensure case-insensitive deserialization
+            };
+
+            var jsonString = JsonSerializer.Serialize(vocabulary, options);
+            // Ensure the JSON string is valid
+            jsonString.Should().NotBeNullOrWhiteSpace($"The JSON string in file should not be null or empty.");
+            // Deserialize the JSON into VocabularyDto
+            try
+            {
+                var result = JsonSerializer.Deserialize<VocabularyDto>(jsonString, options);
+                // Assert the deserialization result
+                result.Should().NotBeNull($"Deserialization should produce a non-null result.");
+                result.Word.Should().Be(vocabulary.Word, $"The Word property should match the original vocabulary word.");
+                result.Translation.Should().Be(vocabulary.Translation, $"The Translation property should match the original vocabulary translation.");
+                result.PartOfSpeech.Should().Be(vocabulary.PartOfSpeech, $"The PartOfSpeech property should match the original vocabulary part of speech.");
+                result.SourceLanguage.Should().Be(vocabulary.SourceLanguage, $"The SourceLanguage property should match the original vocabulary source language.");
+                result.TargetLanguage.Should().Be(vocabulary.TargetLanguage, $"The TargetLanguage property should match the original vocabulary target language.");
+                result.Pronunciation.Should().Be(vocabulary.Pronunciation, $"The Pronunciation property should match the original vocabulary pronunciation.");
+                result.PronunciationAudioUrl.Should().Be(vocabulary.PronunciationAudioUrl, $"The PronunciationAudioUrl property should match the original vocabulary pronunciation audio URL.");
+                result.RelatedForms.Should().HaveCount(vocabulary.RelatedForms.Length, $"The RelatedForms property should match the original vocabulary related forms count.");
+                result.IdiomaticUsages.Should().HaveCount(vocabulary.IdiomaticUsages.Length, $"The IdiomaticUsages property should match the original vocabulary idiomatic usages count.");
+                result.ExampleSentenceSrc.Should().Be(vocabulary.ExampleSentenceSrc, $"The ExampleSentenceSrc property should match the original vocabulary example sentence source.");
+                result.ExampleSentenceTarget.Should().Be(vocabulary.ExampleSentenceTarget, $"The ExampleSentenceTarget property should match the original vocabulary example sentence target.");
+            }
+            catch (JsonException ex)
+            {
+                // Handle JSON deserialization errors
+                throw new Exception($"Failed to deserialize JSON: {ex.Message}", ex);
+            }
+            catch (Exception ex)
+            {
+                // Handle other exceptions
+                throw new Exception($"An unexpected error occurred while processing: {ex.Message}", ex);
+            }
         }
     }
 }

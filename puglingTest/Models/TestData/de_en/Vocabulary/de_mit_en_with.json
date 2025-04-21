@@ -1,4 +1,3 @@
-// mit
 {
   "id": "de_mit_en_with",
   "sourceLanguage": "de",
@@ -6,5 +5,5 @@
   "targetLanguage": "en",
   "translation": "with",
   "partOfSpeech": "Preposition",
-  "caseGoverns": "Dativ" // Information, dass diese Praeposition den Dativ erfordert
+  "caseGoverns": "Dativ"
 }

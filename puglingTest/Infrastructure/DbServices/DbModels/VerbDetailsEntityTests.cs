@@ -10,7 +10,7 @@ namespace puglingTest.Infrastructure.DbServices.DbModels
     public class VerbDetailsEntityTests
     {
         [Fact]
-        public void Constructor_ShouldInitializePropertiesCorrectly()
+        public void Constructor_ShouldInitializePropertiesCorrectly_Test()
         {
             // Arrange
             var baseFormRef = "run";
@@ -31,7 +31,7 @@ namespace puglingTest.Infrastructure.DbServices.DbModels
         }
 
         [Fact]
-        public void Constructor_WithIVerbDetails_ShouldInitializePropertiesCorrectly()
+        public void Constructor_WithIVerbDetails_ShouldInitializePropertiesCorrectly_Test()
         {
             // Arrange
             var mockVerbDetails = new Mock<IVerbDetails>();
@@ -53,7 +53,7 @@ namespace puglingTest.Infrastructure.DbServices.DbModels
         }
 
         [Fact]
-        public void FillAndValidate_ShouldBeNull_WhenVerbIsNull()
+        public void FillAndValidate_ShouldBeNull_WhenVerbIsNull_Test()
         {
             // Arrange
             var entity = new VerbDetailsEntity();
@@ -66,7 +66,7 @@ namespace puglingTest.Infrastructure.DbServices.DbModels
         }
 
         [Fact]
-        public void FillAndValidate_ShouldThrowArgumentException_WhenValidationFails()
+        public void FillAndValidate_ShouldThrowArgumentException_WhenValidationFails_Test()
         {
             // Arrange
             var entity = new VerbDetailsEntity();
@@ -85,7 +85,7 @@ namespace puglingTest.Infrastructure.DbServices.DbModels
         }
 
         [Fact]
-        public void FillAndValidate_ShouldFillPropertiesCorrectly_WhenValidationPasses()
+        public void FillAndValidate_ShouldFillPropertiesCorrectly_WhenValidationPasses_Test()
         {
             // Arrange
             var entity = new VerbDetailsEntity();
@@ -111,7 +111,7 @@ namespace puglingTest.Infrastructure.DbServices.DbModels
         }
 
         [Fact]
-        public void Validate_ShouldReturnValidationErrors_WhenPropertiesAreInvalid()
+        public void Validate_ShouldReturnValidationErrors_WhenPropertiesAreInvalid_Test()
         {
             // Arrange
             var entity = new VerbDetailsEntity
@@ -130,7 +130,7 @@ namespace puglingTest.Infrastructure.DbServices.DbModels
         }
 
         [Fact]
-        public void Validate_ShouldReturnNoValidationErrors_WhenPropertiesAreValid()
+        public void Validate_ShouldReturnNoValidationErrors_WhenPropertiesAreValid_Test()
         {
             // Arrange
             var entity = new VerbDetailsEntity

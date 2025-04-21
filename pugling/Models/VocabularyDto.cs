@@ -34,18 +34,7 @@ namespace pugling.Models
     /// }
     /// </example>
     public record VocabularyDto : VocabularyBaseDto, IVocabulary<IdiomaticUsageDto, NounDetailsDto, VocabularyBaseDto, VerbDetailsDto>
-    {
-        /// <summary>
-        /// The unique identifier of the vocabulary item.
-        /// For infinitives: {sourceLanguage}_{word}_{targetLanguage} (e.g., en_go_de)
-        /// For conjugated forms: {sourceLanguage}_{baseWord}_{targetLanguage}_{tense}_{person} (e.g., en_go_de_Präsens_ich)
-        /// For phrases: {sourceLanguage}_{normalized_phrase}_{targetLanguage}_{normalized_translation} (e.g., de_wie_geht_es_dir_en_how_are_you)
-        /// </summary>
-        /// <example>"en_go_de"</example>
-        [Required]
-        [StringLength(100)]
-        public string Id { get; init; }
-
+    {       
         /// <summary>
         /// Version of structure. This is used to ensure that the client and server are using the same.
         /// </summary>

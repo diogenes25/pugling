@@ -5,10 +5,17 @@ using pugling.Models;
 
 namespace puglingTest.Application
 {
+    /// <summary>
+    /// Unit tests for the <see cref="VerbDetails"/> class.
+    /// </summary>
     public class VerbDetailsTests
     {
+        /// <summary>
+        /// Tests that the <see cref="VerbDetails.Create(bool, string, string, string, string, Dictionary{string, Dictionary{string, IConjugationDetails}})"/> method
+        /// creates an instance with the expected property values when valid parameters are provided.
+        /// </summary>
         [Fact]
-        public void Create_WithValidParameters_ReturnsExpectedInstance()
+        public void Create_WithValidParameters_ReturnsExpectedInstanceTest()
         {
             // Arrange
             var isBaseForm = true;
@@ -31,8 +38,12 @@ namespace puglingTest.Application
             result.Conjugations.Should().BeEquivalentTo(conjugations, "the Conjugations property should match the input value");
         }
 
+        /// <summary>
+        /// Tests that the <see cref="VerbDetails.Create(IVerbDetails)"/> method
+        /// creates an instance with the expected property values when an <see cref="IVerbDetails"/> instance is provided.
+        /// </summary>
         [Fact]
-        public void Create_FromIVerbDetails_ReturnsExpectedInstance()
+        public void Create_FromIVerbDetails_ReturnsExpectedInstanceTest()
         {
             // Arrange
             var mockVerbDetails = new Mock<IVerbDetails>();
@@ -56,8 +67,12 @@ namespace puglingTest.Application
             result.Conjugations.Should().BeEquivalentTo(mockVerbDetails.Object.Conjugations, "the Conjugations property should match the mock value");
         }
 
+        /// <summary>
+        /// Tests that the <see cref="VerbDetails.Equals(object)"/> method
+        /// returns true when two instances have the same property values.
+        /// </summary>
         [Fact]
-        public void Equals_SameValues_ReturnsTrue()
+        public void Equals_SameValues_ReturnsTrueTest()
         {
             // Arrange
             var details1 = VerbDetails.Create(true, "http://example.com/vocab/run", "ich", "laufen", "Präsens", null);
@@ -70,8 +85,12 @@ namespace puglingTest.Application
             result.Should().BeTrue("two VerbDetails instances with the same values should be equal");
         }
 
+        /// <summary>
+        /// Tests that the <see cref="VerbDetails.Equals(object)"/> method
+        /// returns false when two instances have different property values.
+        /// </summary>
         [Fact]
-        public void Equals_DifferentValues_ReturnsFalse()
+        public void Equals_DifferentValues_ReturnsFalseTest()
         {
             // Arrange
             var details1 = VerbDetails.Create(true, "http://example.com/vocab/run", "ich", "laufen", "Präsens", null);
@@ -84,8 +103,12 @@ namespace puglingTest.Application
             result.Should().BeFalse("two VerbDetails instances with different values should not be equal");
         }
 
+        /// <summary>
+        /// Tests that the <see cref="VerbDetails.GetHashCode"/> method
+        /// returns the same hash code for two instances with the same property values.
+        /// </summary>
         [Fact]
-        public void GetHashCode_SameValues_ReturnsSameHashCode()
+        public void GetHashCode_SameValues_ReturnsSameHashCodeTest()
         {
             // Arrange
             var details1 = VerbDetails.Create(true, "http://example.com/vocab/run", "ich", "laufen", "Präsens", null);
@@ -99,8 +122,12 @@ namespace puglingTest.Application
             hashCode1.Should().Be(hashCode2, "two VerbDetails instances with the same values should have the same hash code");
         }
 
+        /// <summary>
+        /// Tests that the <see cref="VerbDetails.GetHashCode"/> method
+        /// returns different hash codes for two instances with different property values.
+        /// </summary>
         [Fact]
-        public void GetHashCode_DifferentValues_ReturnsDifferentHashCodes()
+        public void GetHashCode_DifferentValues_ReturnsDifferentHashCodesTest()
         {
             // Arrange
             var details1 = VerbDetails.Create(true, "http://example.com/vocab/run", "ich", "laufen", "Präsens", null);
@@ -114,8 +141,11 @@ namespace puglingTest.Application
             hashCode1.Should().NotBe(hashCode2, "two VerbDetails instances with different values should have different hash codes");
         }
 
+        /// <summary>
+        /// Tests that the equality operator (==) returns true when two instances have the same property values.
+        /// </summary>
         [Fact]
-        public void EqualityOperator_SameValues_ReturnsTrue()
+        public void EqualityOperator_SameValues_ReturnsTrueTest()
         {
             // Arrange
             var details1 = VerbDetails.Create(true, "http://example.com/vocab/run", "ich", "laufen", "Präsens", null);
@@ -128,8 +158,11 @@ namespace puglingTest.Application
             result.Should().BeTrue("two VerbDetails instances with the same values should be equal using the equality operator");
         }
 
+        /// <summary>
+        /// Tests that the equality operator (==) returns false when two instances have different property values.
+        /// </summary>
         [Fact]
-        public void EqualityOperator_DifferentValues_ReturnsFalse()
+        public void EqualityOperator_DifferentValues_ReturnsFalseTest()
         {
             // Arrange
             var details1 = VerbDetails.Create(true, "http://example.com/vocab/run", "ich", "laufen", "Präsens", null);
@@ -142,8 +175,11 @@ namespace puglingTest.Application
             result.Should().BeFalse("two VerbDetails instances with different values should not be equal using the equality operator");
         }
 
+        /// <summary>
+        /// Tests that the inequality operator (!=) returns false when two instances have the same property values.
+        /// </summary>
         [Fact]
-        public void InequalityOperator_SameValues_ReturnsFalse()
+        public void InequalityOperator_SameValues_ReturnsFalseTest()
         {
             // Arrange
             var details1 = VerbDetails.Create(true, "http://example.com/vocab/run", "ich", "laufen", "Präsens", null);
@@ -156,8 +192,11 @@ namespace puglingTest.Application
             result.Should().BeFalse("two VerbDetails instances with the same values should not be unequal using the inequality operator");
         }
 
+        /// <summary>
+        /// Tests that the inequality operator (!=) returns true when two instances have different property values.
+        /// </summary>
         [Fact]
-        public void InequalityOperator_DifferentValues_ReturnsTrue()
+        public void InequalityOperator_DifferentValues_ReturnsTrueTest()
         {
             // Arrange
             var details1 = VerbDetails.Create(true, "http://example.com/vocab/run", "ich", "laufen", "Präsens", null);
