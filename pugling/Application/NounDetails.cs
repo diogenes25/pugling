@@ -1,62 +1,84 @@
 ﻿using pugling.Models;
+using pugling.Models.Constants;
 using pugling.Models.Converter;
 
-namespace pugling.Application
+/// <summary>
+/// Represents the details of a noun, including its grammatical gender and articles.
+/// </summary>
+public sealed class NounDetails : INounDetails, IEquatable<INounDetails?>
 {
-    public sealed class NounDetails : INounDetails, IEquatable<INounDetails?>
-    {
-        public string? DeterminedArticle { get; private set; }
-        public string? Genus { get; private set; }
-        public string? UndeterminedArticle { get; private set; }
+    /// <summary>
+    /// Gets the determined article of the noun (e.g., "the").
+    /// </summary>
+    public string? DeterminedArticle { get; private set; }
 
-        public static NounDetails Create(string? determinedArticle, string? genus, string? undeterminedArticle)
+    /// <summary>
+    /// Gets the grammatical gender of the noun.
+    /// </summary>
+    public EGenus Genus { get; private set; }
+
+    /// <summary>
+    /// Gets the undetermined article of the noun (e.g., "a" or "an").
+    /// </summary>
+    public string? UndeterminedArticle { get; private set; }
+
+    /// <summary>
+    /// Creates a new instance of <see cref="NounDetails"/> with the specified properties.
+    /// </summary>
+    /// <param name="determinedArticle">The determined article of the noun.</param>
+    /// <param name="genus">The grammatical gender of the noun.</param>
+    /// <param name="undeterminedArticle">The undetermined article of the noun.</param>
+    /// <returns>A new instance of <see cref="NounDetails"/>.</returns>
+    public static NounDetails Create(string? determinedArticle, EGenus genus, string? undeterminedArticle) =>
+        new NounDetails
         {
-            return new NounDetails
-            {
-                DeterminedArticle = determinedArticle,
-                Genus = genus,
-                UndeterminedArticle = undeterminedArticle
-            };
-        }
+            DeterminedArticle = determinedArticle,
+            Genus = genus,
+            UndeterminedArticle = undeterminedArticle
+        };
 
-        public static NounDetails? Create(INounDetails? nounDetails)
+    /// <summary>
+    /// Creates a new instance of <see cref="NounDetails"/> by copying the properties from an existing <see cref="INounDetails"/> instance.
+    /// </summary>
+    /// <param name="nounDetails">The <see cref="INounDetails"/> instance to copy from.</param>
+    /// <returns>A new instance of <see cref="NounDetails"/>, or <c>null</c> if <paramref name="nounDetails"/> is <c>null</c>.</returns>
+    public static NounDetails? Create(INounDetails? nounDetails) =>
+        nounDetails == null ? null : new NounDetails
         {
-            if (nounDetails == null)
-            {
-                return null;
-            }
+            DeterminedArticle = nounDetails.DeterminedArticle,
+            Genus = nounDetails.Genus,
+            UndeterminedArticle = nounDetails.UndeterminedArticle
+        };
 
-            return new NounDetails
-            {
-                DeterminedArticle = nounDetails.DeterminedArticle,
-                Genus = nounDetails.Genus,
-                UndeterminedArticle = nounDetails.UndeterminedArticle
-            };
-        }
+    /// <inheritdoc/>
+    public override bool Equals(object? obj) => Equals(obj as INounDetails);
 
-        public override bool Equals(object? obj)
-        {
-            return Equals(obj as INounDetails);
-        }
+    /// <summary>
+    /// Determines whether the current instance is equal to another <see cref="INounDetails"/> instance.
+    /// </summary>
+    /// <param name="other">The other <see cref="INounDetails"/> instance to compare with.</param>
+    /// <returns><c>true</c> if the instances are equal; otherwise, <c>false</c>.</returns>
+    public bool Equals(INounDetails? other) => this.Compare(other);
 
-        public bool Equals(INounDetails? other)
-        {
-            return this.Compare(other);
-        }
+    /// <inheritdoc/>
+    public override int GetHashCode() =>
+        HashCode.Combine(this.DeterminedArticle, this.Genus, this.UndeterminedArticle);
 
-        public override int GetHashCode()
-        {
-            return HashCode.Combine(this.DeterminedArticle, this.Genus, this.UndeterminedArticle);
-        }
+    /// <summary>
+    /// Determines whether two <see cref="NounDetails"/> instances are equal.
+    /// </summary>
+    /// <param name="left">The first <see cref="NounDetails"/> instance.</param>
+    /// <param name="right">The second <see cref="INounDetails"/> instance.</param>
+    /// <returns><c>true</c> if the instances are equal; otherwise, <c>false</c>.</returns>
+    public static bool operator ==(NounDetails? left, INounDetails? right) =>
+        EqualityComparer<INounDetails>.Default.Equals(left, right);
 
-        public static bool operator ==(NounDetails? left, INounDetails? right)
-        {
-            return EqualityComparer<INounDetails>.Default.Equals(left, right);
-        }
-
-        public static bool operator !=(NounDetails? left, INounDetails? right)
-        {
-            return !(left == right);
-        }
-    }
+    /// <summary>
+    /// Determines whether two <see cref="NounDetails"/> instances are not equal.
+    /// </summary>
+    /// <param name="left">The first <see cref="NounDetails"/> instance.</param>
+    /// <param name="right">The second <see cref="INounDetails"/> instance.</param>
+    /// <returns><c>true</c> if the instances are not equal; otherwise, <c>false</c>.</returns>
+    public static bool operator !=(NounDetails? left, INounDetails? right) =>
+        !(left == right);
 }

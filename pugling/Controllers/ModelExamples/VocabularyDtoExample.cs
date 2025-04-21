@@ -21,8 +21,8 @@ namespace pugling.Controllers.ModelExamples
             [
                 new SwaggerExample<VocabularyDto>
                     {
-                        Name = "201 Created",
-                        Summary = "Example response for a successful creation.",
+                        Name = "201 Created Verb",
+                        Summary = "Example request/response for a successful creation of a verb.",
                         Value = new VocabularyDto
                         {
                             Id = "en_run_de",
@@ -39,7 +39,23 @@ namespace pugling.Controllers.ModelExamples
                                     {
                                         "Präsens", new Dictionary<string, ConjugationDetailsDto>
                                         {
-                                            { "ich", new ConjugationDetailsDto { Form = "renne", VocObjRef = "/api/en/de/vocabularies/en_run_de_Praesens_ich.json" } }
+                                            { "ich", new ConjugationDetailsDto { Form = "renne", VocObjRef = "/api/en/de/vocabularies/en_run_de_Praesens_ich.json" } },
+                                            {"du", new ConjugationDetailsDto { Form = "rennst", VocObjRef = "/api/en/de/vocabularies/en_run_de_Praesens_du.json" } },
+                                            {"er/sie/es", new ConjugationDetailsDto { Form = "rennt", VocObjRef = "/api/en/de/vocabularies/en_run_de_Praesens_er_sie_es.json" } },
+                                            {"wir", new ConjugationDetailsDto { Form = "rennen", VocObjRef = "/api/en/de/vocabularies/en_run_de_Praesens_wir.json" } },
+                                            {"ihr", new ConjugationDetailsDto { Form = "rennt", VocObjRef = "/api/en/de/vocabularies/en_run_de_Praesens_ihr.json" } },
+                                            {"sie/Sie", new ConjugationDetailsDto { Form = "rennen", VocObjRef = "/api/en/de/vocabularies/en_run_de_Praesens_sie_Sie.json" }}
+                                        }
+                                    },
+                                    {
+                                        "Präteritum", new Dictionary<string, ConjugationDetailsDto>
+                                        {
+                                            { "ich", new ConjugationDetailsDto { Form = "rannte", VocObjRef = "/api/en/de/vocabularies/en_run_de_Praeteritum_ich.json" } },
+                                            {"du", new ConjugationDetailsDto { Form = "ranntest", VocObjRef = "/api/en/de/vocabularies/en_run_de_Praeteritum_du.json" } },
+                                            {"er/sie/es", new ConjugationDetailsDto { Form = "rannte", VocObjRef = "/api/en/de/vocabularies/en_run_de_Praeteritum_er_sie_es.json" } },
+                                            {"wir", new ConjugationDetailsDto { Form = "rannten", VocObjRef = "/api/en/de/vocabularies/en_run_de_Praeteritum_wir.json" } },
+                                            {"ihr", new ConjugationDetailsDto { Form = "ranntet", VocObjRef = "/api/en/de/vocabularies/en_run_de_Praeteritum_ihr.json" } },
+                                            {"sie/Sie", new ConjugationDetailsDto { Form = "rannten", VocObjRef = "/api/en/de/vocabularies/en_run_de_Praeteritum_sie_Sie.json" }}
                                         }
                                     }
                                 }
@@ -57,6 +73,45 @@ namespace pugling.Controllers.ModelExamples
                             IdiomaticUsages =
                             [
                                 new IdiomaticUsageDto { Phrase = "run out of time", Translation = "Die Zeit läuft ab." }
+                            ]
+                        }
+                    },
+                    new SwaggerExample<VocabularyDto>
+                    {
+                        Name = "201 Created Noun",
+                         Summary = "Example response for a successful creation.",
+                        Value = new VocabularyDto
+                        {
+                            Id = "en_house_de",
+                            SourceLanguage = "en",
+                            TargetLanguage = "de",
+                            Word = "run",
+                            Translation = "Haus",
+                            PartOfSpeech = EPartOfSpeech.Noun,
+                            Noun = new NounDetailsDto
+                            {
+                                DeterminedArticle = "das",
+                                Genus = EGenus.Neuter,
+                                UndeterminedArticle = "ein"
+                            },
+                            ExampleSentenceSrc = "I live in a house.",
+                            ExampleSentenceTarget = "Ich wohne in einem Haus.",
+                            ExampleSentenceTense = "present",
+                            Description = "A building for human habitation.",
+                            Pronunciation = "/haʊs/",
+                            PronunciationAudioUrl = "https://example.com/audio/house.mp3",
+                            RelatedForms =
+                            [
+                                new VocabularyBaseDto { Id = "en_building_de", Word = "building", Translation = "Gebäude" },
+                                new VocabularyBaseDto { Id = "en_home_de", Word = "home", Translation = "Zuhause" },
+                                new VocabularyBaseDto { Id = "en_residence_de", Word = "residence", Translation = "Wohnsitz" },
+                                new VocabularyBaseDto { Id = "en_abode_de", Word = "abode", Translation = "Wohnung" }
+                            ],
+                            IdiomaticUsages =
+                            [
+                                new IdiomaticUsageDto { Phrase = "house of cards", Translation = "Haus aus Karten" },
+                                new IdiomaticUsageDto { Phrase = "housewarming party", Translation = "Einweihungsparty" },
+                                new IdiomaticUsageDto { Phrase = "house arrest", Translation = "Hausarrest" }
                             ]
                         }
                     },

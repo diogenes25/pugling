@@ -11,7 +11,7 @@ namespace pugling.Infrastructure.DbFile
         public VocabularyDbFileService()
         {
             // Combine the application path with the file name
-            _filePath = Path.Combine(AppContext.BaseDirectory, "vocabulariesDB.json");
+            this._filePath = Path.Combine(AppContext.BaseDirectory, "vocabulariesDB.json");
         }
 
         public async Task<VocabularyEntity> AddVocabularyAsync(VocabularyEntity vocabulary)
@@ -59,19 +59,19 @@ namespace pugling.Infrastructure.DbFile
 
         private async Task<List<VocabularyEntity>> ReadVocabulariesFromFileAsync()
         {
-            if (!File.Exists(_filePath))
+            if (!File.Exists(this._filePath))
             {
                 return [];
             }
 
-            var json = await File.ReadAllTextAsync(_filePath);
+            var json = await File.ReadAllTextAsync(this._filePath);
             return JsonSerializer.Deserialize<List<VocabularyEntity>>(json) ?? [];
         }
 
         private async Task WriteVocabulariesToFileAsync(List<VocabularyEntity> vocabularies)
         {
             var json = JsonSerializer.Serialize(vocabularies, new JsonSerializerOptions { WriteIndented = true });
-            await File.WriteAllTextAsync(_filePath, json);
+            await File.WriteAllTextAsync(this._filePath, json);
         }
     }
 }

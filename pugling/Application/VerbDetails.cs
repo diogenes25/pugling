@@ -14,7 +14,7 @@ namespace pugling.Application
         /// An optional reference (RESTful URL) to the Vocabulary item of the base form (infinitive)
         /// of the verb, if this Vocabulary item represents a conjugated form.
         /// </summary>
-        public string? BaseFormRef { get; private set; }
+        public Uri? BaseFormRef { get; private set; }
 
         /// <summary>
         /// Optional the person of the conjugated verb form (e.g., "ich", "du"). Only set if IsBaseForm is false.
@@ -35,7 +35,7 @@ namespace pugling.Application
 
         public static VerbDetails Create(
             bool isBaseForm,
-            string? baseFormRef,
+            Uri? baseFormRef,
             string? person,
             string? infinitiv,
             string? tense,
@@ -69,29 +69,23 @@ namespace pugling.Application
             };
         }
 
-        public override bool Equals(object? obj)
-        {
-            return Equals(obj as IVerbDetails);
-        }
+        public override bool Equals(object? obj) => obj is IVerbDetails other && Equals(other);
 
-        public bool Equals(IVerbDetails? other)
-        {
-            return other is not null && this.Compare(other);
-        }
+        public bool Equals(IVerbDetails? other) => this.Compare(other as VerbDetails);
 
         public override int GetHashCode()
         {
-            return HashCode.Combine(this.IsBaseForm, this.Person, this.Infinitiv, this.Tense);
+            HashCode hash = new();
+            hash.Add(this.IsBaseForm);
+            hash.Add(this.Person, StringComparer.Ordinal);
+            hash.Add(this.Infinitiv, StringComparer.Ordinal);
+            hash.Add(this.Tense, StringComparer.Ordinal);
+            return hash.ToHashCode();
         }
 
-        public static bool operator ==(VerbDetails? left, IVerbDetails? right)
-        {
-            return EqualityComparer<IVerbDetails>.Default.Equals(left, right);
-        }
+        public static bool operator ==(VerbDetails? left, IVerbDetails? right) => left?.Equals(right) ?? right is null;
 
-        public static bool operator !=(VerbDetails? left, IVerbDetails? right)
-        {
-            return !(left == right);
-        }
+        public static bool operator !=(VerbDetails? left, IVerbDetails? right) => !(left == right);
+
     }
 }

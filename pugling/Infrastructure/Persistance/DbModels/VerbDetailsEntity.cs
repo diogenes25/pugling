@@ -13,7 +13,7 @@ namespace pugling.Infrastructure.DbServices.DbModels
 
         [Required]
         [MaxLength(100)]
-        public string BaseFormRef { get; set; } = string.Empty;
+        public Uri? BaseFormRef { get; set; }
 
         [Required]
         [MaxLength(100)]
@@ -36,23 +36,23 @@ namespace pugling.Infrastructure.DbServices.DbModels
         {
         }
 
-        public VerbDetailsEntity(string baseFormRef, string infinitiv, bool isBaseForm, string person, string tense, Dictionary<string, Dictionary<string, IConjugationDetails>> conjugations)
+        public VerbDetailsEntity(Uri? baseFormRef, string infinitiv, bool isBaseForm, string person, string tense, Dictionary<string, Dictionary<string, IConjugationDetails>> conjugations)
         {
-            BaseFormRef = baseFormRef;
-            Infinitiv = infinitiv;
-            IsBaseForm = isBaseForm;
-            Person = person;
-            Tense = tense;
+            this.BaseFormRef = baseFormRef;
+            this.Infinitiv = infinitiv;
+            this.IsBaseForm = isBaseForm;
+            this.Person = person;
+            this.Tense = tense;
             //Conjugations = conjugations;
         }
 
         public VerbDetailsEntity(IVerbDetails verbDetails)
         {
-            BaseFormRef = verbDetails.BaseFormRef;
-            Infinitiv = verbDetails.Infinitiv;
-            IsBaseForm = verbDetails.IsBaseForm;
-            Person = verbDetails.Person;
-            Tense = verbDetails.Tense;
+            this.BaseFormRef = verbDetails.BaseFormRef;
+            this.Infinitiv = verbDetails.Infinitiv;
+            this.IsBaseForm = verbDetails.IsBaseForm;
+            this.Person = verbDetails.Person;
+            this.Tense = verbDetails.Tense;
             //Conjugations = verbDetails.Conjugations;
         }
 
@@ -63,11 +63,11 @@ namespace pugling.Infrastructure.DbServices.DbModels
                 return null;
             }
 
-            BaseFormRef = verb.BaseFormRef;
-            Infinitiv = verb.Infinitiv;
-            IsBaseForm = verb.IsBaseForm;
-            Person = verb.Person ?? string.Empty;
-            Tense = verb.Tense ?? string.Empty;
+            this.BaseFormRef = verb.BaseFormRef;
+            this.Infinitiv = verb.Infinitiv;
+            this.IsBaseForm = verb.IsBaseForm;
+            this.Person = verb.Person ?? string.Empty;
+            this.Tense = verb.Tense ?? string.Empty;
 
             // Assuming Conjugations need to be mapped if provided
             if (verb.Conjugations != null)
@@ -92,32 +92,32 @@ namespace pugling.Infrastructure.DbServices.DbModels
         {
             var validationResults = new List<ValidationResult>();
 
-            if (string.IsNullOrWhiteSpace(BaseFormRef) || BaseFormRef.Length > 100)
-            {
-                validationResults.Add(new ValidationResult(
-                    "BaseFormRef is either null, empty, or exceeds the maximum length of 100.",
-                    new[] { nameof(BaseFormRef) }));
-            }
+            //if (!string.IsNullOrWhiteSpace(BaseFormRef) && BaseFormRef.Length > 100)
+            //{
+            //    validationResults.Add(new ValidationResult(
+            //        "BaseFormRef is either null, empty, or exceeds the maximum length of 100.",
+            //        new[] { nameof(BaseFormRef) }));
+            //}
 
-            if (string.IsNullOrWhiteSpace(Infinitiv) || Infinitiv.Length > 100)
+            if (string.IsNullOrWhiteSpace(this.Infinitiv) || this.Infinitiv.Length > 100)
             {
                 validationResults.Add(new ValidationResult(
                     "Infinitiv is either null, empty, or exceeds the maximum length of 100.",
-                    new[] { nameof(Infinitiv) }));
+                    new[] { nameof(this.Infinitiv) }));
             }
 
-            if (!string.IsNullOrWhiteSpace(Person) && Person.Length > 50)
+            if (!string.IsNullOrWhiteSpace(this.Person) && this.Person.Length > 50)
             {
                 validationResults.Add(new ValidationResult(
                     "Person exceeds the maximum length of 50.",
-                    new[] { nameof(Person) }));
+                    new[] { nameof(this.Person) }));
             }
 
-            if (!string.IsNullOrWhiteSpace(Tense) && Tense.Length > 50)
+            if (!string.IsNullOrWhiteSpace(this.Tense) && this.Tense.Length > 50)
             {
                 validationResults.Add(new ValidationResult(
                     "Tense exceeds the maximum length of 50.",
-                    new[] { nameof(Tense) }));
+                    new[] { nameof(this.Tense) }));
             }
 
             return validationResults;

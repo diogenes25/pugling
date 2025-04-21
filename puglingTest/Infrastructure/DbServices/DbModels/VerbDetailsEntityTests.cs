@@ -13,7 +13,7 @@ namespace puglingTest.Infrastructure.DbServices.DbModels
         public void Constructor_ShouldInitializePropertiesCorrectly_Test()
         {
             // Arrange
-            var baseFormRef = "run";
+            var baseFormRef = new Uri("http://example.com/vocab/run");
             var infinitiv = "to run";
             var isBaseForm = true;
             var person = "first";
@@ -35,7 +35,7 @@ namespace puglingTest.Infrastructure.DbServices.DbModels
         {
             // Arrange
             var mockVerbDetails = new Mock<IVerbDetails>();
-            mockVerbDetails.Setup(vd => vd.BaseFormRef).Returns("run");
+            mockVerbDetails.Setup(vd => vd.BaseFormRef).Returns(new Uri("http://example.com/vocab/run"));
             mockVerbDetails.Setup(vd => vd.Infinitiv).Returns("to run");
             mockVerbDetails.Setup(vd => vd.IsBaseForm).Returns(true);
             mockVerbDetails.Setup(vd => vd.Person).Returns("first");
@@ -45,7 +45,7 @@ namespace puglingTest.Infrastructure.DbServices.DbModels
             var entity = new VerbDetailsEntity(mockVerbDetails.Object);
 
             // Assert
-            entity.BaseFormRef.Should().Be("run");
+            entity.BaseFormRef.Should().Be(new Uri("http://example.com/vocab/run"));
             entity.Infinitiv.Should().Be("to run");
             entity.IsBaseForm.Should().BeTrue();
             entity.Person.Should().Be("first");
@@ -72,8 +72,7 @@ namespace puglingTest.Infrastructure.DbServices.DbModels
             var entity = new VerbDetailsEntity();
             var verb = VerbDetails.Create(new VerbDetailsDto()
             {
-                BaseFormRef = new string('a', 101), // Exceeds max length
-                Infinitiv = "to run"
+                Infinitiv = new string('a', 101), // Exceeds max length
             });
 
             // Act
@@ -91,7 +90,7 @@ namespace puglingTest.Infrastructure.DbServices.DbModels
             var entity = new VerbDetailsEntity();
             var verb = VerbDetails.Create(new VerbDetailsDto()
             {
-                BaseFormRef = "run",
+                BaseFormRef = new Uri("http://example.com/vocab/run"),
                 Infinitiv = "to run",
                 IsBaseForm = true,
                 Person = "first",
@@ -103,7 +102,7 @@ namespace puglingTest.Infrastructure.DbServices.DbModels
 
             // Assert
             result.Should().Be(entity);
-            entity.BaseFormRef.Should().Be("run");
+            entity.BaseFormRef.Should().Be(new Uri("http://example.com/vocab/run"));
             entity.Infinitiv.Should().Be("to run");
             entity.IsBaseForm.Should().BeTrue();
             entity.Person.Should().Be("first");
@@ -116,7 +115,7 @@ namespace puglingTest.Infrastructure.DbServices.DbModels
             // Arrange
             var entity = new VerbDetailsEntity
             {
-                BaseFormRef = new string('a', 101), // Exceeds max length
+                //BaseFormRef = new string('a', 101), // Exceeds max length
                 Infinitiv = string.Empty // Invalid
             };
 
@@ -124,8 +123,8 @@ namespace puglingTest.Infrastructure.DbServices.DbModels
             var validationResults = entity.Validate(new ValidationContext(entity)).ToList();
 
             // Assert
-            validationResults.Should().HaveCount(2);
-            validationResults.Should().Contain(v => v.ErrorMessage.Contains("BaseFormRef is either null, empty, or exceeds the maximum length of 100."));
+            validationResults.Should().HaveCount(1);
+            //validationResults.Should().Contain(v => v.ErrorMessage.Contains("BaseFormRef is either null, empty, or exceeds the maximum length of 100."));
             validationResults.Should().Contain(v => v.ErrorMessage.Contains("Infinitiv is either null, empty, or exceeds the maximum length of 100."));
         }
 
@@ -135,7 +134,7 @@ namespace puglingTest.Infrastructure.DbServices.DbModels
             // Arrange
             var entity = new VerbDetailsEntity
             {
-                BaseFormRef = "run",
+                BaseFormRef = new Uri("http://example.com/vocab/run"),
                 Infinitiv = "to run",
                 IsBaseForm = true,
                 Person = "first",

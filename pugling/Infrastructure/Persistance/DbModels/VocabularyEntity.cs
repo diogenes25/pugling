@@ -172,7 +172,7 @@ namespace pugling.Infrastructure.DbServices.DbModels
                 yield return new ValidationResult($"{nameof(this.ExampleSentenceTarget)} must be at most 2000 characters.", new[] { nameof(this.ExampleSentenceTarget) });
 
             if (this.ExampleSentenceTense?.Length > 100)
-                yield return new ValidationResult($"{nameof(this.ExampleSentenceTense)} must be at most 100 characters.", new[] { nameof(this.ExampleSentenceTense) });
+                yield return new ValidationResult($"{nameof(this.ExampleSentenceTense)} must be at most 100 characters.", [nameof(this.ExampleSentenceTense)]);
 
             if (this.Pronunciation?.Length > 500)
                 yield return new ValidationResult($"{nameof(this.Pronunciation)} must be at most 500 characters.", new[] { nameof(this.Pronunciation) });

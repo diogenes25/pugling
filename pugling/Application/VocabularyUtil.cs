@@ -18,10 +18,7 @@ namespace pugling.Application
         /// <exception cref="ArgumentNullException">Thrown when the vocabulary object is null.</exception>
         public static string GenerateRestfulId(IVocabulary<IIdiomaticUsage, INounDetails, IVocabularyBase, IVerbDetails> vocabulary)
         {
-            if (vocabulary == null)
-            {
-                throw new ArgumentNullException(nameof(vocabulary));
-            }
+            ArgumentNullException.ThrowIfNull(vocabulary);
 
             string sourceLanguage = vocabulary.SourceLanguage.ToLowerInvariant();
             string targetLanguage = vocabulary.TargetLanguage.ToLowerInvariant();

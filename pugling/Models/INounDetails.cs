@@ -1,9 +1,11 @@
-﻿namespace pugling.Models
+﻿using pugling.Models.Constants;
+
+namespace pugling.Models
 {
     public interface INounDetails
     {
         string? DeterminedArticle { get; }
-        string? Genus { get; }
+        EGenus Genus { get; }
         string? UndeterminedArticle { get; }
     }
 }

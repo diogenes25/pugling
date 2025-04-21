@@ -19,7 +19,7 @@ namespace puglingTest.Application
         {
             // Arrange
             var isBaseForm = true;
-            var baseFormRef = "http://example.com/vocab/run";
+            var baseFormRef = new Uri("http://example.com/vocab/run");
             var person = "ich";
             var infinitiv = "laufen";
             var tense = "Präsens";
@@ -48,7 +48,7 @@ namespace puglingTest.Application
             // Arrange
             var mockVerbDetails = new Mock<IVerbDetails>();
             mockVerbDetails.Setup(m => m.IsBaseForm).Returns(true);
-            mockVerbDetails.Setup(m => m.BaseFormRef).Returns("http://example.com/vocab/run");
+            mockVerbDetails.Setup(m => m.BaseFormRef).Returns(new Uri("http://example.com/vocab/run"));
             mockVerbDetails.Setup(m => m.Person).Returns("ich");
             mockVerbDetails.Setup(m => m.Infinitiv).Returns("laufen");
             mockVerbDetails.Setup(m => m.Tense).Returns("Präsens");
@@ -75,8 +75,8 @@ namespace puglingTest.Application
         public void Equals_SameValues_ReturnsTrueTest()
         {
             // Arrange
-            var details1 = VerbDetails.Create(true, "http://example.com/vocab/run", "ich", "laufen", "Präsens", null);
-            var details2 = VerbDetails.Create(true, "http://example.com/vocab/run", "ich", "laufen", "Präsens", null);
+            var details1 = VerbDetails.Create(true, new Uri("http://example.com/vocab/run"), "ich", "laufen", "Präsens", null);
+            var details2 = VerbDetails.Create(true, new Uri("http://example.com/vocab/run") , "ich", "laufen", "Präsens", null);
 
             // Act
             var result = details1.Equals(details2);
@@ -93,8 +93,8 @@ namespace puglingTest.Application
         public void Equals_DifferentValues_ReturnsFalseTest()
         {
             // Arrange
-            var details1 = VerbDetails.Create(true, "http://example.com/vocab/run", "ich", "laufen", "Präsens", null);
-            var details2 = VerbDetails.Create(false, "http://example.com/vocab/walk", "du", "gehen", "Präteritum", null);
+            var details1 = VerbDetails.Create(true, new Uri("http://example.com/vocab/run"), "ich", "laufen", "Präsens", null);
+            var details2 = VerbDetails.Create(false, new Uri("http://example.com/vocab/walk"), "du", "gehen", "Präteritum", null);
 
             // Act
             var result = details1.Equals(details2);
@@ -111,8 +111,8 @@ namespace puglingTest.Application
         public void GetHashCode_SameValues_ReturnsSameHashCodeTest()
         {
             // Arrange
-            var details1 = VerbDetails.Create(true, "http://example.com/vocab/run", "ich", "laufen", "Präsens", null);
-            var details2 = VerbDetails.Create(true, "http://example.com/vocab/run", "ich", "laufen", "Präsens", null);
+            var details1 = VerbDetails.Create(true, new Uri("http://example.com/vocab/run"), "ich", "laufen", "Präsens", null);
+            var details2 = VerbDetails.Create(true, new Uri("http://example.com/vocab/run"), "ich", "laufen", "Präsens", null);
 
             // Act
             var hashCode1 = details1.GetHashCode();
@@ -130,8 +130,8 @@ namespace puglingTest.Application
         public void GetHashCode_DifferentValues_ReturnsDifferentHashCodesTest()
         {
             // Arrange
-            var details1 = VerbDetails.Create(true, "http://example.com/vocab/run", "ich", "laufen", "Präsens", null);
-            var details2 = VerbDetails.Create(false, "http://example.com/vocab/walk", "du", "gehen", "Präteritum", null);
+            var details1 = VerbDetails.Create(true, new Uri("http://example.com/vocab/run"), "ich", "laufen", "Präsens", null);
+            var details2 = VerbDetails.Create(false, new Uri("http://example.com/vocab/walk"), "du", "gehen", "Präteritum", null);
 
             // Act
             var hashCode1 = details1.GetHashCode();
@@ -148,8 +148,8 @@ namespace puglingTest.Application
         public void EqualityOperator_SameValues_ReturnsTrueTest()
         {
             // Arrange
-            var details1 = VerbDetails.Create(true, "http://example.com/vocab/run", "ich", "laufen", "Präsens", null);
-            var details2 = VerbDetails.Create(true, "http://example.com/vocab/run", "ich", "laufen", "Präsens", null);
+            var details1 = VerbDetails.Create(true, new Uri("http://example.com/vocab/run"), "ich", "laufen", "Präsens", null);
+            var details2 = VerbDetails.Create(true, new Uri("http://example.com/vocab/run"), "ich", "laufen", "Präsens", null);
 
             // Act
             var result = details1 == details2;
@@ -165,8 +165,8 @@ namespace puglingTest.Application
         public void EqualityOperator_DifferentValues_ReturnsFalseTest()
         {
             // Arrange
-            var details1 = VerbDetails.Create(true, "http://example.com/vocab/run", "ich", "laufen", "Präsens", null);
-            var details2 = VerbDetails.Create(false, "http://example.com/vocab/walk", "du", "gehen", "Präteritum", null);
+            var details1 = VerbDetails.Create(true, new Uri("http://example.com/vocab/run"), "ich", "laufen", "Präsens", null);
+            var details2 = VerbDetails.Create(false, new Uri("http://example.com/vocab/walk"), "du", "gehen", "Präteritum", null);
 
             // Act
             var result = details1 == details2;
@@ -182,8 +182,8 @@ namespace puglingTest.Application
         public void InequalityOperator_SameValues_ReturnsFalseTest()
         {
             // Arrange
-            var details1 = VerbDetails.Create(true, "http://example.com/vocab/run", "ich", "laufen", "Präsens", null);
-            var details2 = VerbDetails.Create(true, "http://example.com/vocab/run", "ich", "laufen", "Präsens", null);
+            var details1 = VerbDetails.Create(true, new Uri("http://example.com/vocab/run"), "ich", "laufen", "Präsens", null);
+            var details2 = VerbDetails.Create(true, new Uri("http://example.com/vocab/run"), "ich", "laufen", "Präsens", null);
 
             // Act
             var result = details1 != details2;
@@ -199,8 +199,8 @@ namespace puglingTest.Application
         public void InequalityOperator_DifferentValues_ReturnsTrueTest()
         {
             // Arrange
-            var details1 = VerbDetails.Create(true, "http://example.com/vocab/run", "ich", "laufen", "Präsens", null);
-            var details2 = VerbDetails.Create(false, "http://example.com/vocab/walk", "du", "gehen", "Präteritum", null);
+            var details1 = VerbDetails.Create(true, new Uri("http://example.com/vocab/run"), "ich", "laufen", "Präsens", null);
+            var details2 = VerbDetails.Create(false, new Uri("http://example.com/vocab/walk"), "du", "gehen", "Präteritum", null);
 
             // Act
             var result = details1 != details2;

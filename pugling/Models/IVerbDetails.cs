@@ -2,7 +2,7 @@
 {
     public interface IVerbDetails
     {
-        string? BaseFormRef { get; }
+        Uri? BaseFormRef { get; }
         Dictionary<string, Dictionary<string, IConjugationDetails>>? Conjugations { get; }
         string? Infinitiv { get; }
         bool IsBaseForm { get; }

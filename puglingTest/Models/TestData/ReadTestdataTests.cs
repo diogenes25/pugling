@@ -1,6 +1,7 @@
 ﻿using FluentAssertions;
 using pugling.Models;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace puglingTest.Models.TestData
 {
@@ -21,7 +22,8 @@ namespace puglingTest.Models.TestData
                 var directoryPath = Path.Combine(AppContext.BaseDirectory, "Models", "TestData", folder, "Vocabulary");
                 var options = new JsonSerializerOptions
                 {
-                    PropertyNameCaseInsensitive = true // Ensure case-insensitive deserialization
+                    PropertyNameCaseInsensitive = true, // Ensure case-insensitive deserialization
+                    Converters = { new JsonStringEnumConverter() } // Read enums as strings
                 };
 
                 // Act & Assert

@@ -2,6 +2,7 @@ using FluentAssertions;
 using pugling.Application;
 using pugling.Infrastructure.DbServices.DbModels;
 using pugling.Models;
+using pugling.Models.Constants;
 using System.ComponentModel.DataAnnotations;
 
 namespace puglingTest.Infrastructure.DbServices.DbModels
@@ -29,22 +30,19 @@ namespace puglingTest.Infrastructure.DbServices.DbModels
                 Noun = new NounDetailsDto
                 {
                     DeterminedArticle = "der",
-                    Genus = "masculine",
+                    Genus = EGenus.Masculine,
                     UndeterminedArticle = "ein"
                 },
                 PartOfSpeech = pugling.Models.Constants.EPartOfSpeech.Noun,
                 Pronunciation = "test pronunciation",
                 PronunciationAudioUrl = "http://example.com/audio.mp3",
-                RelatedForms = new[]
-                {
-                       new VocabularyBaseDto { Id = "2", Word = "related", Translation = "related_translation" }
-                   },
+                RelatedForms =                [                       new VocabularyBaseDto { Id = "2", Word = "related", Translation = "related_translation" }                   ],
                 SourceLanguage = "en",
                 TargetLanguage = "de",
                 UpdatedAt = DateTime.UtcNow,
                 Verb = new VerbDetailsDto
                 {
-                    BaseFormRef = "base",
+                    BaseFormRef = new Uri("http://example.com/vocab/run"),
                     Infinitiv = "to test",
                     IsBaseForm = true,
                     Person = "third",
@@ -71,7 +69,7 @@ namespace puglingTest.Infrastructure.DbServices.DbModels
             result.IdiomaticUsages[0].Translation.Should().Be("test translation");
             result.Noun.Should().NotBeNull();
             result.Noun!.DeterminedArticle.Should().Be("der");
-            result.Noun.Genus.Should().Be("masculine");
+            result.Noun.Genus.Should().Be(EGenus.Masculine);
             result.Noun.UndeterminedArticle.Should().Be("ein");
             result.PartOfSpeech.Should().Be(vocabulary.PartOfSpeech);
             result.Pronunciation.Should().Be(vocabulary.Pronunciation);
@@ -84,7 +82,7 @@ namespace puglingTest.Infrastructure.DbServices.DbModels
             result.TargetLanguage.Should().Be(vocabulary.TargetLanguage);
             result.UpdatedAt.Should().Be(vocabulary.UpdatedAt);
             result.Verb.Should().NotBeNull();
-            result.Verb!.BaseFormRef.Should().Be("base");
+            result.Verb!.BaseFormRef.Should().Be(new Uri("http://example.com/vocab/run"));
             result.Verb.Infinitiv.Should().Be("to test");
             result.Verb.IsBaseForm.Should().BeTrue();
             result.Verb.Person.Should().Be("third");

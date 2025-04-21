@@ -48,7 +48,7 @@ namespace pugling.Models
         /// </summary>
         /// <example>"en"</example>
         [Required]
-        [StringLength(10)]
+        [StringLength(3)]
         public required string SourceLanguage { get; init; }
 
         /// <summary>
@@ -56,7 +56,7 @@ namespace pugling.Models
         /// </summary>
         /// <example>"de"</example>
         [Required]
-        [StringLength(10)]
+        [StringLength(3)]
         public required string TargetLanguage { get; init; }
 
         /// <summary>

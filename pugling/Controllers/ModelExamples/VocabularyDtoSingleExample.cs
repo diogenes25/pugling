@@ -42,14 +42,14 @@ namespace pugling.Controllers.ModelExamples
                 Description = "To move quickly on foot.",
                 Pronunciation = "/rʌn/",
                 PronunciationAudioUrl = "https://example.com/audio/run.mp3",
-                RelatedForms = new[]
-                {
+                RelatedForms =
+                    [
                         new VocabularyBaseDto { Id = "en_sprint_de", Word = "sprint", Translation = "sprinten" }
-                    },
-                IdiomaticUsages = new[]
-                {
+                    ],
+                IdiomaticUsages =
+                    [
                         new IdiomaticUsageDto { Phrase = "run out of time", Translation = "Die Zeit läuft ab." }
-                    }
+                    ]
             };
         }
     }

@@ -13,7 +13,6 @@
                     orig.TargetLanguage == other.TargetLanguage &&
                     orig.Translation == other.Translation &&
                     orig.Verb.Compare(other.Verb) &&
-                    orig.Version == other.Version &&
                     orig.Word == other.Word;
         }
 

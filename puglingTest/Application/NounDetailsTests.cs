@@ -2,6 +2,7 @@ using FluentAssertions;
 using Moq;
 using pugling.Application;
 using pugling.Models;
+using pugling.Models.Constants;
 
 namespace puglingTest.Application
 {
@@ -19,7 +20,7 @@ namespace puglingTest.Application
         {
             // Arrange
             var determinedArticle = "the";
-            var genus = "masculine";
+            var genus = EGenus.Masculine;
             var undeterminedArticle = "a";
 
             // Act
@@ -42,7 +43,7 @@ namespace puglingTest.Application
             // Arrange
             var mockDetails = new Mock<INounDetails>();
             mockDetails.Setup(m => m.DeterminedArticle).Returns("the");
-            mockDetails.Setup(m => m.Genus).Returns("masculine");
+            mockDetails.Setup(m => m.Genus).Returns(EGenus.Masculine);
             mockDetails.Setup(m => m.UndeterminedArticle).Returns("a");
 
             // Act
@@ -63,8 +64,8 @@ namespace puglingTest.Application
         public void GetHashCode_SameValues_ReturnsSameHashCodeTest()
         {
             // Arrange
-            var details1 = NounDetails.Create("the", "masculine", "a");
-            var details2 = NounDetails.Create("the", "masculine", "a");
+            var details1 = NounDetails.Create("the", EGenus.Masculine, "a");
+            var details2 = NounDetails.Create("the", EGenus.Masculine   , "a");
 
             // Act
             var hashCode1 = details1.GetHashCode();
@@ -82,8 +83,8 @@ namespace puglingTest.Application
         public void GetHashCode_DifferentValues_ReturnsDifferentHashCodesTest()
         {
             // Arrange
-            var details1 = NounDetails.Create("the", "masculine", "a");
-            var details2 = NounDetails.Create("a", "feminine", "an");
+            var details1 = NounDetails.Create("the", EGenus.Masculine, "a");
+            var details2 = NounDetails.Create("a", EGenus.Feminine, "an");
 
             // Act
             var hashCode1 = details1.GetHashCode();
@@ -100,8 +101,8 @@ namespace puglingTest.Application
         public void EqualityOperator_SameValues_ReturnsTrueTest()
         {
             // Arrange
-            var details1 = NounDetails.Create("the", "masculine", "a");
-            var details2 = NounDetails.Create("the", "masculine", "a");
+            var details1 = NounDetails.Create("the", EGenus.Masculine, "a");
+            var details2 = NounDetails.Create("the", EGenus.Masculine, "a");
 
             // Act
             var result = details1 == details2;
@@ -117,8 +118,8 @@ namespace puglingTest.Application
         public void EqualityOperator_DifferentValues_ReturnsFalseTest()
         {
             // Arrange
-            var details1 = NounDetails.Create("the", "masculine", "a");
-            var details2 = NounDetails.Create("a", "feminine", "an");
+            var details1 = NounDetails.Create("the", EGenus.Masculine, "a");
+            var details2 = NounDetails.Create("a", EGenus.Feminine, "an");
 
             // Act
             var result = details1 == details2;
@@ -134,8 +135,8 @@ namespace puglingTest.Application
         public void InequalityOperator_SameValues_ReturnsFalseTest()
         {
             // Arrange
-            var details1 = NounDetails.Create("the", "masculine", "a");
-            var details2 = NounDetails.Create("the", "masculine", "a");
+            var details1 = NounDetails.Create("the", EGenus.Masculine, "a");
+            var details2 = NounDetails.Create("the", EGenus.Masculine, "a");
 
             // Act
             var result = details1 != details2;
@@ -151,8 +152,8 @@ namespace puglingTest.Application
         public void InequalityOperator_DifferentValues_ReturnsTrueTest()
         {
             // Arrange
-            var details1 = NounDetails.Create("the", "masculine", "a");
-            var details2 = NounDetails.Create("a", "feminine", "an");
+            var details1 = NounDetails.Create("the", EGenus.Masculine   , "a");
+            var details2 = NounDetails.Create("a", EGenus.Feminine, "an");
 
             // Act
             var result = details1 != details2;

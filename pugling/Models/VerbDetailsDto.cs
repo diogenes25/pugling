@@ -42,7 +42,7 @@
         /// <example>
         /// "/api/en/de/vocabularies/en_go_de.json"
         /// </example>
-        public string? BaseFormRef { get; init; }
+        public Uri? BaseFormRef { get; init; }
 
         /// <summary>
         /// Optional the person of the conjugated verb form (e.g., "ich", "du"). Only set if IsBaseForm is false.
@@ -91,7 +91,7 @@
         /// Converts Conjugations to the IVerbDetails interface's required type.
         /// </summary>
         Dictionary<string, Dictionary<string, IConjugationDetails>>? IVerbDetails.Conjugations =>
-            Conjugations?.ToDictionary(
+            this.Conjugations?.ToDictionary(
                 outer => outer.Key,
                 outer => outer.Value.ToDictionary(
                     inner => inner.Key,

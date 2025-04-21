@@ -1,4 +1,6 @@
-﻿namespace pugling.Models
+﻿using pugling.Models.Constants;
+
+namespace pugling.Models
 {
     /// <summary>
     /// Contains specific details for nouns, including the grammatical gender,
@@ -19,7 +21,7 @@
         /// <example>
         /// "feminin"
         /// </example>
-        public string? Genus { get; init; }
+        public EGenus Genus { get; init; }
 
         /// <summary>
         /// The determined article of the noun (e.g., "der", "die", "das"). Null if the language doesn't have determined articles or if not applicable.
