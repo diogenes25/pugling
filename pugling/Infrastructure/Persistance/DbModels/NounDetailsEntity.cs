@@ -40,13 +40,12 @@ namespace pugling.Infrastructure.DbServices.DbModels
             UndeterminedArticle = nounDetails.UndeterminedArticle;
         }
 
-        public NounDetailsEntity FillAndValidate(NounDetails noun)
+        public NounDetailsEntity? FillAndValidate(NounDetails? noun)
         {
             if (noun == null)
             {
-                throw new ArgumentNullException(nameof(noun), "The provided noun cannot be null.");
+                return null;
             }
-
 
             DeterminedArticle = noun.DeterminedArticle;
             Genus = noun.Genus;

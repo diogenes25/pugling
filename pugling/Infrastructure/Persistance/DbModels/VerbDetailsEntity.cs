@@ -59,8 +59,9 @@ namespace pugling.Infrastructure.DbServices.DbModels
         public VerbDetailsEntity? FillAndValidate(VerbDetails? verb)
         {
             if (verb == null)
+            {
                 return null;
-
+            }
 
             BaseFormRef = verb.BaseFormRef;
             Infinitiv = verb.Infinitiv;

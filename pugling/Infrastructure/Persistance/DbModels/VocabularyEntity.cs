@@ -127,6 +127,5 @@ namespace pugling.Infrastructure.DbServices.DbModels
             if (string.IsNullOrWhiteSpace(this.Version) || this.Version.Length > 50)
                 yield return new ValidationResult($"{nameof(this.Version)} must be non-empty and at most 50 characters.", new[] { nameof(this.Version) });
         }
-
     }
 }

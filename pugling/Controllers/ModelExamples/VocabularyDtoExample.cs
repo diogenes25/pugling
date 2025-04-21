@@ -3,10 +3,9 @@ using Swashbuckle.AspNetCore.Filters;
 
 namespace pugling.Controllers.ModelExamples
 {
-    // Example class for Swagger
     public class VocabularyDtoExample : IMultipleExamplesProvider<VocabularyDto>
     {
-        IEnumerable<SwaggerExample<VocabularyDto>> IMultipleExamplesProvider<VocabularyDto>.GetExamples()
+        public IEnumerable<SwaggerExample<VocabularyDto>> GetExamples()
         {
             return
        [
@@ -23,10 +22,10 @@ namespace pugling.Controllers.ModelExamples
                    Verb = new VerbDetailsDto
                    {
                        IsBaseForm = true,
-                       Conjugations = new Dictionary<string, Dictionary<string, IConjugationDetails>>
+                       Conjugations = new Dictionary<string, Dictionary<string, ConjugationDetailsDto>>
                        {
                            {
-                               "Präsens", new Dictionary<string, IConjugationDetails>
+                               "Präsens", new Dictionary<string, ConjugationDetailsDto>
                                {
                                    { "ich", new ConjugationDetailsDto { Form = "renne", VocObjRef = "/api/en/de/vocabularies/en_run_de_Praesens_ich.json" } }
                                }
@@ -58,6 +57,4 @@ namespace pugling.Controllers.ModelExamples
        ];
         }
     }
-
-
 }

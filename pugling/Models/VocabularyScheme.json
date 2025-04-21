@@ -1,0 +1,172 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "VocabularyDto",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "The unique identifier of the vocabulary item.",
+      "maxLength": 100
+    },
+    "version": {
+      "type": "string",
+      "description": "Version of structure. This is used to ensure that the client and server are using the same.",
+      "pattern": "^\\d+\\.\\d+$",
+      "default": "1.0"
+    },
+    "sourceLanguage": {
+      "type": "string",
+      "description": "The language code of the source language (e.g., 'en' for English).",
+      "maxLength": 10
+    },
+    "targetLanguage": {
+      "type": "string",
+      "description": "The language code of the target language (e.g., 'de' for German).",
+      "maxLength": 10
+    },
+    "partOfSpeech": {
+      "type": "string",
+      "description": "The part of speech of the vocabulary item (e.g., 'Noun', 'Verb', 'Adjective', 'Phrase').",
+      "maxLength": 50
+    },
+    "noun": {
+      "type": [ "object", "null" ],
+      "description": "Optional details for nouns, such as the article.",
+      "properties": {
+        "genus": {
+          "type": [ "string", "null" ],
+          "description": "The grammatical gender of the noun (e.g., 'maskulin', 'feminin', 'neutrum')."
+        },
+        "determinedArticle": {
+          "type": [ "string", "null" ],
+          "description": "The determined article of the noun (e.g., 'der', 'die', 'das')."
+        },
+        "undeterminedArticle": {
+          "type": [ "string", "null" ],
+          "description": "The undetermined article of the noun (e.g., 'ein', 'eine')."
+        }
+      }
+    },
+    "verb": {
+      "type": [ "object", "null" ],
+      "description": "Optional details for verbs, including information about the base form, conjugations, and person.",
+      "properties": {
+        "isBaseForm": {
+          "type": "boolean",
+          "description": "Indicates whether this Vocabulary item represents the base form (infinitive) of the verb."
+        },
+        "baseFormRef": {
+          "type": [ "string", "null" ],
+          "description": "Reference to the base form of the verb."
+        },
+        "person": {
+          "type": [ "string", "null" ],
+          "description": "The grammatical person of the verb."
+        },
+        "infinitiv": {
+          "type": [ "string", "null" ],
+          "description": "The infinitive form of the verb."
+        },
+        "tense": {
+          "type": [ "string", "null" ],
+          "description": "The tense of the verb."
+        },
+        "conjugations": {
+          "type": [ "object", "null" ],
+          "description": "Conjugations of the verb, structured by tense and person."
+        }
+      }
+    },
+    "description": {
+      "type": [ "string", "null" ],
+      "description": "An optional, additional description or context for the meaning of the vocabulary item.",
+      "maxLength": 500
+    },
+    "pronunciation": {
+      "type": [ "string", "null" ],
+      "description": "An optional pronunciation of the word or phrase (e.g., in IPA).",
+      "maxLength": 100
+    },
+    "exampleSentenceSrc": {
+      "type": [ "string", "null" ],
+      "description": "An optional example sentence in the source language.",
+      "maxLength": 500
+    },
+    "exampleSentenceTarget": {
+      "type": [ "string", "null" ],
+      "description": "The optional translation of the example sentence into the target language.",
+      "maxLength": 500
+    },
+    "exampleSentenceTense": {
+      "type": [ "string", "null" ],
+      "description": "The optional tense of the verb in the example sentence (e.g., 'present', 'past').",
+      "maxLength": 50
+    },
+    "relatedForms": {
+      "type": [ "array", "null" ],
+      "description": "An optional array of related vocabulary items.",
+      "items": {
+        "$ref": "#/definitions/VocabularyBaseDto"
+      }
+    },
+    "idiomaticUsages": {
+      "type": [ "array", "null" ],
+      "description": "An optional array of idiomatic usages where the word or phrase has a different meaning than its literal translation.",
+      "items": {
+        "$ref": "#/definitions/IdiomaticUsageDto"
+      }
+    },
+    "pronunciationAudioUrl": {
+      "type": [ "string", "null" ],
+      "description": "Url to the audio file for pronunciation of the word or phrase.",
+      "format": "uri"
+    },
+    "createdAt": {
+      "type": [ "string", "null" ],
+      "format": "date-time",
+      "description": "The optional timestamp of when the vocabulary item was created."
+    },
+    "updatedAt": {
+      "type": [ "string", "null" ],
+      "format": "date-time",
+      "description": "The optional timestamp of when the vocabulary item was last updated."
+    }
+  },
+  "required": [ "id", "version", "sourceLanguage", "targetLanguage", "partOfSpeech" ],
+  "definitions": {
+    "VocabularyBaseDto": {
+      "type": "object",
+      "description": "Represents a related vocabulary item.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "The unique identifier of the vocabulary item."
+        },
+        "word": {
+          "type": "string",
+          "description": "The word or phrase in the source language."
+        },
+        "translation": {
+          "type": "string",
+          "description": "The translation of the word or phrase into the target language."
+        }
+      },
+      "required": [ "id", "word", "translation" ]
+    },
+    "IdiomaticUsageDto": {
+      "type": "object",
+      "description": "Represents an idiomatic usage of a word or phrase.",
+      "properties": {
+        "phrase": {
+          "type": "string",
+          "description": "The idiomatic phrase in the source language."
+        },
+        "translation": {
+          "type": "string",
+          "description": "The translation of the idiomatic phrase in the target language."
+        }
+      },
+      "required": [ "phrase", "translation" ]
+    }
+  }
+}

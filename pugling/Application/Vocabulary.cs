@@ -1,4 +1,5 @@
 ﻿using pugling.Models;
+using pugling.Models.Converter;
 
 namespace pugling.Application
 {
@@ -136,11 +137,11 @@ namespace pugling.Application
                 ExampleSentenceSrc = vocabulary.ExampleSentenceSrc,
                 ExampleSentenceTarget = vocabulary.ExampleSentenceTarget,
                 ExampleSentenceTense = vocabulary.ExampleSentenceTense,
-                IdiomaticUsages = vocabulary.IdiomaticUsages.Select(i => IdiomaticUsage.Create(i)).ToArray(),
+                IdiomaticUsages = vocabulary.IdiomaticUsages?.Select(i => IdiomaticUsage.Create(i)).ToArray(),
                 Noun = NounDetails.Create(vocabulary.Noun),
                 Pronunciation = vocabulary.Pronunciation,
                 PronunciationAudioUrl = vocabulary.PronunciationAudioUrl,
-                RelatedForms = vocabulary.RelatedForms.Select(r => VocabularyBase.Create(r)).ToArray(),
+                RelatedForms = vocabulary.RelatedForms?.Select(r => VocabularyBase.Create(r)).ToArray(),
                 UpdatedAt = vocabulary.UpdatedAt,
                 Verb = VerbDetails.Create(vocabulary.Verb),
             };
@@ -163,16 +164,7 @@ namespace pugling.Application
         /// <returns><c>true</c> if the specified vocabulary is equal to the current object; otherwise, <c>false</c>.</returns>
         public bool Equals(IVocabulary<IdiomaticUsage, NounDetails, VocabularyBase, VerbDetails>? other)
         {
-            return other is not null &&
-                   this.Id == other.Id &&
-                   EqualityComparer<NounDetails?>.Default.Equals(this.Noun, other.Noun) &&
-                   this.PartOfSpeech == other.PartOfSpeech &&
-                   this.SourceLanguage == other.SourceLanguage &&
-                   this.TargetLanguage == other.TargetLanguage &&
-                   this.Translation == other.Translation &&
-                   EqualityComparer<VerbDetails?>.Default.Equals(this.Verb, other.Verb) &&
-                   this.Version == other.Version &&
-                   this.Word == other.Word;
+            return this.Compare(other);
         }
 
         /// <summary>

@@ -33,5 +33,6 @@ namespace pugling.Infrastructure.DbServices.DbModels
             Phrase = idiomaticUsage.Phrase;
             Translation = idiomaticUsage.Translation;
         }
+
     }
 }

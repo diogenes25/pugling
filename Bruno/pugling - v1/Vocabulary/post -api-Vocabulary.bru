@@ -1,0 +1,105 @@
+meta {
+  name: post -api-Vocabulary
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/api/Vocabulary
+  body: json
+  auth: none
+}
+
+headers {
+  accept: application/json
+  Content-Type: application/json/json
+}
+
+body:json {
+  {
+    "id": "asdf",
+    "version": "1.0",
+    "sourceLanguage": "string",
+    "targetLanguage": "string",
+    "partOfSpeech": "string",
+    "noun": {
+      "genus": "string",
+      "determinedArticle": "string",
+      "undeterminedArticle": "string"
+    },
+    "verb": {
+      "isBaseForm": true,
+      "baseFormRef": "string",
+      "person": "string",
+      "infinitiv": "string",
+      "tense": "string",
+      "conjugations": {
+        "additionalProp1": {
+          "additionalProp1": {
+            "form": "string",
+            "vocObjRef": "string"
+          },
+          "additionalProp2": {
+            "form": "string",
+            "vocObjRef": "string"
+          },
+          "additionalProp3": {
+            "form": "string",
+            "vocObjRef": "string"
+          }
+        },
+        "additionalProp2": {
+          "additionalProp1": {
+            "form": "string",
+            "vocObjRef": "string"
+          },
+          "additionalProp2": {
+            "form": "string",
+            "vocObjRef": "string"
+          },
+          "additionalProp3": {
+            "form": "string",
+            "vocObjRef": "string"
+          }
+        },
+        "additionalProp3": {
+          "additionalProp1": {
+            "form": "string",
+            "vocObjRef": "string"
+          },
+          "additionalProp2": {
+            "form": "string",
+            "vocObjRef": "string"
+          },
+          "additionalProp3": {
+            "form": "string",
+            "vocObjRef": "string"
+          }
+        }
+      }
+    },
+    "description": "string",
+    "pronunciation": "string",
+    "exampleSentenceSrc": "Moinsen",
+    "exampleSentenceTarget": "string",
+    "exampleSentenceTense": "string",
+    "relatedForms": [
+      {
+        "id": "string",
+        "word": "string",
+        "translation": "string"
+      }
+    ],
+    "idiomaticUsages": [
+      {
+        "phrase": "string",
+        "translation": "string"
+      }
+    ],
+    "pronunciationAudioUrl": "http://huhu",
+    "createdAt": "2025-04-20T22:14:10.065Z",
+    "updatedAt": "2025-04-20T22:14:10.065Z",
+    "word": "string",
+    "translation": "string"
+  }
+}

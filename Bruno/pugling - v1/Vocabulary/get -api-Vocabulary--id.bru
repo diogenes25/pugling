@@ -1,0 +1,15 @@
+meta {
+  name: get -api-Vocabulary--id
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/Vocabulary/:id
+  body: none
+  auth: none
+}
+
+params:path {
+  id: 
+}

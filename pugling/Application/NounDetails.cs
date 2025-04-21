@@ -1,4 +1,5 @@
 ﻿using pugling.Models;
+using pugling.Models.Converter;
 
 namespace pugling.Application
 {
@@ -18,8 +19,13 @@ namespace pugling.Application
             };
         }
 
-        public static NounDetails Create(INounDetails nounDetails)
+        public static NounDetails? Create(INounDetails? nounDetails)
         {
+            if (nounDetails == null)
+            {
+                return null;
+            }
+
             return new NounDetails
             {
                 DeterminedArticle = nounDetails.DeterminedArticle,
@@ -35,10 +41,7 @@ namespace pugling.Application
 
         public bool Equals(INounDetails? other)
         {
-            return other is not null &&
-                   this.DeterminedArticle == other.DeterminedArticle &&
-                   this.Genus == other.Genus &&
-                   this.UndeterminedArticle == other.UndeterminedArticle;
+            return this.Compare(other);
         }
 
         public override int GetHashCode()

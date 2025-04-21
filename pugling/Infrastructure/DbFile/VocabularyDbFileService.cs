@@ -4,16 +4,15 @@ using System.Text.Json;
 
 namespace pugling.Infrastructure.DbFile
 {
-    public class VocabularyDbFileService : IVocabularyDbService
+    public class VocabularyDbFileService : IVocabularyDbService<VocabularyEntity, VocabularyEntity>
     {
         private readonly string _filePath;
 
         public VocabularyDbFileService()
         {
             // Combine the application path with the file name
-            _filePath = Path.Combine(AppContext.BaseDirectory, "vocabularies");
+            _filePath = Path.Combine(AppContext.BaseDirectory, "vocabulariesDB.json");
         }
-
 
         public async Task<VocabularyEntity> AddVocabularyAsync(VocabularyEntity vocabulary)
         {
@@ -23,7 +22,7 @@ namespace pugling.Infrastructure.DbFile
             return vocabulary;
         }
 
-        public async Task DeleteVocabularyAsync(int id)
+        public async Task DeleteVocabularyAsync(string id)
         {
             var vocabularies = await ReadVocabulariesFromFileAsync();
             var vocabularyToRemove = vocabularies.FirstOrDefault(v => v.Id == id.ToString());
@@ -39,7 +38,7 @@ namespace pugling.Infrastructure.DbFile
             return await ReadVocabulariesFromFileAsync();
         }
 
-        public async Task<VocabularyEntity> GetVocabularyByIdAsync(int id)
+        public async Task<VocabularyEntity> GetVocabularyByIdAsync(string id)
         {
             var vocabularies = await ReadVocabulariesFromFileAsync();
             return vocabularies.FirstOrDefault(v => v.Id == id.ToString());

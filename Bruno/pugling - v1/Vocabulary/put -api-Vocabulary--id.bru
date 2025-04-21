@@ -1,0 +1,61 @@
+meta {
+  name: put -api-Vocabulary--id
+  type: http
+  seq: 3
+}
+
+put {
+  url: {{baseUrl}}/api/Vocabulary/:id
+  body: json
+  auth: none
+}
+
+params:path {
+  id: 
+}
+
+body:json {
+  {
+    "id": "",
+    "version": "",
+    "sourceLanguage": "",
+    "targetLanguage": "",
+    "partOfSpeech": "",
+    "noun": {
+      "genus": "",
+      "determinedArticle": "",
+      "undeterminedArticle": ""
+    },
+    "verb": {
+      "isBaseForm": "",
+      "baseFormRef": "",
+      "person": "",
+      "infinitiv": "",
+      "tense": "",
+      "conjugations": {}
+    },
+    "description": "",
+    "pronunciation": "",
+    "exampleSentenceSrc": "",
+    "exampleSentenceTarget": "",
+    "exampleSentenceTense": "",
+    "relatedForms": [
+      {
+        "id": "",
+        "word": "",
+        "translation": ""
+      }
+    ],
+    "idiomaticUsages": [
+      {
+        "phrase": "",
+        "translation": ""
+      }
+    ],
+    "pronunciationAudioUrl": "",
+    "createdAt": "",
+    "updatedAt": "",
+    "word": "",
+    "translation": ""
+  }
+}

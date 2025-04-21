@@ -83,6 +83,20 @@
         ///   }
         /// }
         /// </example>
-        public Dictionary<string, Dictionary<string, IConjugationDetails>>? Conjugations { get; init; }
+        public Dictionary<string, Dictionary<string, ConjugationDetailsDto>>? Conjugations { get; init; }
+
+        //Dictionary<string, Dictionary<string, IConjugationDetails>>? IVerbDetails.Conjugations => Conjugations.Select(kv=> kv.Key = k);
+
+        /// <summary>
+        /// Converts Conjugations to the IVerbDetails interface's required type.
+        /// </summary>
+        Dictionary<string, Dictionary<string, IConjugationDetails>>? IVerbDetails.Conjugations =>
+            Conjugations?.ToDictionary(
+                outer => outer.Key,
+                outer => outer.Value.ToDictionary(
+                    inner => inner.Key,
+                    inner => (IConjugationDetails)inner.Value
+                )
+            );
     }
 }

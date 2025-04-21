@@ -1,4 +1,5 @@
 ﻿using pugling.Models;
+using pugling.Models.Converter;
 
 namespace pugling.Application
 {
@@ -51,8 +52,12 @@ namespace pugling.Application
             };
         }
 
-        public static VerbDetails Create(IVerbDetails verbDetails)
+        public static VerbDetails? Create(IVerbDetails? verbDetails)
         {
+            if (verbDetails == null)
+            {
+                return null;
+            }
             return new VerbDetails
             {
                 IsBaseForm = verbDetails.IsBaseForm,
@@ -71,11 +76,7 @@ namespace pugling.Application
 
         public bool Equals(IVerbDetails? other)
         {
-            return other is not null &&
-                   this.IsBaseForm == other.IsBaseForm &&
-                   this.Person == other.Person &&
-                   this.Infinitiv == other.Infinitiv &&
-                   this.Tense == other.Tense;
+            return other is not null && this.Compare(other);
         }
 
         public override int GetHashCode()

@@ -1,4 +1,5 @@
 ﻿using pugling.Models;
+using pugling.Models.Converter;
 
 namespace pugling.Application
 {
@@ -32,9 +33,7 @@ namespace pugling.Application
 
         public bool Equals(IIdiomaticUsage? other)
         {
-            return other is not null &&
-                   this.Phrase == other.Phrase &&
-                   this.Translation == other.Translation;
+            return other is not null && this.Compare(other);
         }
 
         public override int GetHashCode()

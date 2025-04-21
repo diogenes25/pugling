@@ -1,4 +1,6 @@
-﻿namespace pugling.Models
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace pugling.Models
 {
     /// <summary>
     /// Represents a vocabulary item with information about the source and target language,
@@ -37,36 +39,47 @@
         /// For conjugated forms: {sourceLanguage}_{baseWord}_{targetLanguage}_{tense}_{person} (e.g., en_go_de_Präsens_ich)
         /// For phrases: {sourceLanguage}_{normalized_phrase}_{targetLanguage}_{normalized_translation} (e.g., de_wie_geht_es_dir_en_how_are_you)
         /// </summary>
-        //public string Id { get; init; }
+        /// <example>"en_go_de"</example>
+        [Required]
+        [StringLength(100)]
+        public string Id { get; init; }
 
         /// <summary>
         /// Version of structure. This is used to ensure that the client and server are using the same.
         /// </summary>
+        /// <example>"1.0"</example>
+        [Required]
+        [RegularExpression(@"^\d+\.\d+$", ErrorMessage = "Version must be in the format 'X.Y'.")]
         public string Version { get; init; } = "1.0";
 
         /// <summary>
         /// The language code of the source language (e.g., "en" for English).
         /// </summary>
+        /// <example>"en"</example>
+        [Required]
+        [StringLength(10)]
         public string SourceLanguage { get; init; }
 
         /// <summary>
         /// The language code of the target language (e.g., "de" for German).
         /// </summary>
+        /// <example>"de"</example>
+        [Required]
+        [StringLength(10)]
         public string TargetLanguage { get; init; }
 
         /// <summary>
         /// The part of speech of the vocabulary item (e.g., "Noun", "Verb", "Adjective", "Phrase").
         /// </summary>
+        /// <example>"Verb"</example>
+        [Required]
+        [StringLength(50)]
         public string PartOfSpeech { get; init; }
 
         /// <summary>
         /// Optional details for nouns, such as the article. Null if the vocabulary item is not a noun.
         /// </summary>
-        /// <example>
-        /// {
-        ///    "article": "der"
-        /// }
-        /// </example>
+        /// <example>{ "genus": "maskulin", "determinedArticle": "der", "undeterminedArticle": "ein" }</example>
         public NounDetailsDto? Noun { get; init; }
 
         /// <summary>
@@ -74,18 +87,16 @@
         /// Null if the vocabulary item is not a verb.
         /// </summary>
         /// <example>
-        /// // For infinitive:
         /// {
         ///    "isBaseForm": true,
-        ///    "conjugations": { ... }
-        /// }
-        /// // For conjugated form:
-        /// {
-        ///    "isBaseForm": false,
-        ///    "baseFormRef": "/api/...",
-        ///    "person": "ich",
-        ///    "infinitiv": "gehen",
-        ///    "tense": "Präsens"
+        ///    "conjugations": {
+        ///      "Präsens": {
+        ///        "ich": {
+        ///          "form": "gehe",
+        ///          "vocObjRef": "/api/en/de/vocabularies/en_go_de_Präsens_ich.json"
+        ///        }
+        ///      }
+        ///    }
         /// }
         /// </example>
         public VerbDetailsDto? Verb { get; init; }
@@ -93,47 +104,48 @@
         /// <summary>
         /// An optional, additional description or context for the meaning of the vocabulary item.
         /// </summary>
-        /// <example>
-        /// "A financial institution where one can deposit and withdraw money."
-        /// </example>
+        /// <example>"A verb used to describe movement."</example>
+        [StringLength(500)]
         public string? Description { get; init; }
 
         /// <summary>
         /// An optional pronunciation of the word or phrase (e.g., in IPA).
         /// </summary>
-        /// <example>
-        /// "/bæŋk/"
-        /// </example>
+        /// <example>"ɡoʊ"</example>
+        [StringLength(100)]
         public string? Pronunciation { get; init; }
 
         /// <summary>
         /// An optional example sentence in the source language.
         /// </summary>
-        /// <example>
-        /// "I need to go to the bank."
-        /// </example>
+        /// <example>"I go to the park."</example>
+        [StringLength(500)]
         public string? ExampleSentenceSrc { get; init; }
 
         /// <summary>
         /// The optional translation of the example sentence into the target language.
         /// </summary>
-        /// <example>
-        /// "Ich muss zur Bank gehen."
-        /// </example>
+        /// <example>"Ich gehe in den Park."</example>
+        [StringLength(500)]
         public string? ExampleSentenceTarget { get; init; }
 
         /// <summary>
         /// The optional tense of the verb in the example sentence (e.g., "present", "past").
         /// </summary>
-        /// <example>
-        /// "present"
-        /// </example>
+        /// <example>"present"</example>
+        [StringLength(50)]
         public string? ExampleSentenceTense { get; init; }
 
         /// <summary>
         /// An optional array of related vocabulary items. This can be used for synonyms, antonyms,
         /// or words with a similar meaning in a different context (e.g., "laufen" and "rennen" both translate to "running").
         /// </summary>
+        /// <example>
+        /// [
+        ///    { "id": "en_run_de", "word": "run", "translation": "laufen" },
+        ///    { "id": "en_sprint_de", "word": "sprint", "translation": "sprinten" }
+        /// ]
+        /// </example>
         public VocabularyBaseDto[]? RelatedForms { get; init; }
 
         /// <summary>
@@ -142,10 +154,8 @@
         /// </summary>
         /// <example>
         /// [
-        ///   {
-        ///     "phrase": "Wie geht es Dir?",
-        ///     "translation": "How are you?"
-        ///   }
+        ///    { "phrase": "go for it", "translation": "Mach es!" },
+        ///    { "phrase": "go ahead", "translation": "Fahr fort!" }
         /// ]
         /// </example>
         public IdiomaticUsageDto[]? IdiomaticUsages { get; init; }
@@ -153,16 +163,20 @@
         /// <summary>
         /// Url to the audio file for pronunciation of the word or phrase.
         /// </summary>
+        /// <example>"https://example.com/audio/go.mp3"</example>
+        [Url]
         public string? PronunciationAudioUrl { get; init; }
 
         /// <summary>
         /// The optional timestamp of when the vocabulary item was created.
         /// </summary>
+        /// <example>"2023-01-01T12:00:00Z"</example>
         public DateTime? CreatedAt { get; init; }
 
         /// <summary>
         /// The optional timestamp of when the vocabulary item was last updated.
         /// </summary>
+        /// <example>"2023-01-02T12:00:00Z"</example>
         public DateTime? UpdatedAt { get; init; }
     }
 }
