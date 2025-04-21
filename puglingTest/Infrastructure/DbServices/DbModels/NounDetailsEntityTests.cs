@@ -45,17 +45,16 @@ namespace puglingTest.Infrastructure.DbServices.DbModels
         }
 
         [Fact]
-        public void FillAndValidate_ShouldThrowArgumentNullException_WhenNounIsNull()
+        public void FillAndValidate_WhenNounIsNull()
         {
             // Arrange
             var entity = new NounDetailsEntity();
 
             // Act
-            Action act = () => entity.FillAndValidate(null);
+            var nullNoun = entity.FillAndValidate(null);
 
             // Assert
-            act.Should().Throw<ArgumentNullException>()
-                .WithMessage("The provided noun cannot be null. (Parameter 'noun')");
+            nullNoun.Should().BeNull();
         }
 
         [Fact]
