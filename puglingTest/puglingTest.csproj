@@ -36,4 +36,22 @@
     <Folder Include="Infrastructure\DbServices\" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="Models\TestData\en_de\Vocabulary\en_runs_verb_laeuft.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Models\TestData\en_de\Vocabulary\en_run_noun_lauf.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Models\TestData\en_de\Vocabulary\en_run_verb_fuehren.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Models\TestData\en_de\Vocabulary\en_run_verb_gelaufen_past_participle.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Models\TestData\en_de\Vocabulary\en_run_verb_laufen.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

@@ -1,5 +1,6 @@
 ﻿using pugling.Application;
 using pugling.Models;
+using pugling.Models.Constants;
 using System.ComponentModel.DataAnnotations;
 using System.Diagnostics.CodeAnalysis;
 
@@ -7,9 +8,7 @@ namespace pugling.Infrastructure.DbServices.DbModels
 {
     public record VocabularyEntity : VocabularyBaseEntity, IVocabulary<IdiomaticUsageEntity, NounDetailsEntity, VocabularyBaseEntity, VerbDetailsEntity>, IFillAndValidateable<VocabularyEntity, Vocabulary>
     {
-        [Required]
-        [MaxLength(500)]
-        public string PartOfSpeech { get; set; } = string.Empty;
+        public EPartOfSpeech PartOfSpeech { get; set; } = EPartOfSpeech.NotSet;
 
         [MaxLength(1000)]
         public string? Description { get; set; }
@@ -51,6 +50,8 @@ namespace pugling.Infrastructure.DbServices.DbModels
 
         public VerbDetailsEntity? Verb { get; set; }
 
+        public Uri? ExampleSentenceTargetUrl { get; set; }
+
         public VocabularyEntity FillAndValidate([NotNull] Vocabulary vocabulary)
         {
             if (vocabulary == null)
@@ -65,6 +66,7 @@ namespace pugling.Infrastructure.DbServices.DbModels
             this.Description = vocabulary.Description;
             this.ExampleSentenceSrc = vocabulary.ExampleSentenceSrc;
             this.ExampleSentenceTarget = vocabulary.ExampleSentenceTarget;
+            this.ExampleSentenceTargetUrl = vocabulary.ExampleSentenceTargetUrl;
             this.ExampleSentenceTense = vocabulary.ExampleSentenceTense;
             this.IdiomaticUsages = vocabulary.IdiomaticUsages?.Select(i => new IdiomaticUsageEntity(i.Phrase, i.Translation)).ToArray();
             this.Noun = new NounDetailsEntity().FillAndValidate(vocabulary.Noun);
@@ -97,8 +99,8 @@ namespace pugling.Infrastructure.DbServices.DbModels
             if (string.IsNullOrWhiteSpace(this.Translation) || this.Translation.Length > 500)
                 yield return new ValidationResult($"{nameof(this.Translation)} must be non-empty and at most 500 characters.", [nameof(this.Translation)]);
 
-            if (string.IsNullOrWhiteSpace(this.PartOfSpeech) || this.PartOfSpeech.Length > 500)
-                yield return new ValidationResult($"{nameof(this.PartOfSpeech)} must be non-empty and at most 500 characters.", [nameof(this.PartOfSpeech)]);
+            //if (string.IsNullOrWhiteSpace(this.PartOfSpeech) || this.PartOfSpeech.Length > 500)
+            //    yield return new ValidationResult($"{nameof(this.PartOfSpeech)} must be non-empty and at most 500 characters.", [nameof(this.PartOfSpeech)]);
 
             if (this.Description?.Length > 1000)
                 yield return new ValidationResult($"{nameof(this.Description)} must be at most 1000 characters.", new[] { nameof(this.Description) });

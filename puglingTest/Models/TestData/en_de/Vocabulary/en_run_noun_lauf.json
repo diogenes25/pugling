@@ -1,0 +1,12 @@
+{
+  "id": "en_run_noun_lauf",
+  "version": "1.0",
+  "sourceLanguage": "en",
+  "word": "run",
+  "translation": "Lauf",
+  "targetLanguage": "de",
+  "partOfSpeech": "Noun",
+  "exampleSentenceSrc": "I went for a run this morning.",
+  "exampleSentenceTarget": "Ich war heute Morgen laufen.",
+  "pronunciationAudioUrl": "/audio/en/run_noun.mp3"
+}

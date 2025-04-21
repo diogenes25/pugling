@@ -1,4 +1,5 @@
 ﻿using pugling.Models;
+using pugling.Models.Constants;
 using System.Text.RegularExpressions;
 
 namespace pugling.Application
@@ -21,7 +22,7 @@ namespace pugling.Application
             string targetLanguage = vocabulary.TargetLanguage.ToLowerInvariant();
             string baseWord = NormalizeForUrl(vocabulary.Word);
 
-            if (vocabulary.PartOfSpeech?.ToLowerInvariant() == "verb" && vocabulary.Verb?.IsBaseForm == false && !string.IsNullOrEmpty(vocabulary.Verb?.Infinitiv) && !string.IsNullOrEmpty(vocabulary.Verb?.Person) && !string.IsNullOrEmpty(vocabulary.Verb?.Tense))
+            if (vocabulary.PartOfSpeech == EPartOfSpeech.Verb && vocabulary.Verb?.IsBaseForm == false && !string.IsNullOrEmpty(vocabulary.Verb?.Infinitiv) && !string.IsNullOrEmpty(vocabulary.Verb?.Person) && !string.IsNullOrEmpty(vocabulary.Verb?.Tense))
             {
                 string tense = GetUrlFriendlyTense(vocabulary.Verb.Tense);
                 string person = GetUrlFriendlyPerson(vocabulary.Verb.Person);

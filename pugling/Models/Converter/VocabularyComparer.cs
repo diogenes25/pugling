@@ -1,7 +1,4 @@
-﻿using pugling.Application;
-using System.Collections;
-
-namespace pugling.Models.Converter
+﻿namespace pugling.Models.Converter
 {
     public static class VocabularyComparer
     {

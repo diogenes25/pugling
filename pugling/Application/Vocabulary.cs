@@ -1,4 +1,5 @@
 ﻿using pugling.Models;
+using pugling.Models.Constants;
 using pugling.Models.Converter;
 
 namespace pugling.Application
@@ -41,7 +42,7 @@ namespace pugling.Application
         /// <summary>
         /// Gets the part of speech of the vocabulary item.
         /// </summary>
-        public string PartOfSpeech { get; private set; }
+        public EPartOfSpeech PartOfSpeech { get; private set; }
 
         /// <summary>
         /// Gets the pronunciation of the vocabulary item.
@@ -84,6 +85,11 @@ namespace pugling.Application
         public string Version { get; private set; }
 
         /// <summary>
+        /// Gets the URL for the target of the example sentence.
+        /// </summary>
+        public Uri? ExampleSentenceTargetUrl { get; private set; }
+
+        /// <summary>
         /// Initializes a new instance of the <see cref="Vocabulary"/> class with the specified details.
         /// </summary>
         /// <param name="id">The unique identifier of the vocabulary item.</param>
@@ -92,7 +98,7 @@ namespace pugling.Application
         /// <param name="partOfSpeech">The part of speech of the vocabulary item.</param>
         /// <param name="sourceLanguage">The source language of the vocabulary item.</param>
         /// <param name="targetLanguage">The target language of the vocabulary item.</param>
-        public Vocabulary(string id, string word, string translation, string partOfSpeech, string sourceLanguage, string targetLanguage)
+        public Vocabulary(string id, string word, string translation, EPartOfSpeech partOfSpeech, string sourceLanguage, string targetLanguage)
         {
             Id = id;
             Word = word;
@@ -112,7 +118,7 @@ namespace pugling.Application
         /// <param name="sourceLanguage">The source language of the vocabulary item.</param>
         /// <param name="targetLanguage">The target language of the vocabulary item.</param>
         /// <returns>A new instance of the <see cref="Vocabulary"/> class.</returns>
-        public static Vocabulary Create(string id, string word, string translation, string partOfSpeech, string sourceLanguage, string targetLanguage)
+        public static Vocabulary Create(string id, string word, string translation, EPartOfSpeech partOfSpeech, string sourceLanguage, string targetLanguage)
         {
             return new Vocabulary(id, word, translation, partOfSpeech, sourceLanguage, targetLanguage);
         }
@@ -144,6 +150,7 @@ namespace pugling.Application
                 RelatedForms = vocabulary.RelatedForms?.Select(r => VocabularyBase.Create(r)).ToArray(),
                 UpdatedAt = vocabulary.UpdatedAt,
                 Verb = VerbDetails.Create(vocabulary.Verb),
+                ExampleSentenceTargetUrl = vocabulary.ExampleSentenceTargetUrl
             };
         }
 

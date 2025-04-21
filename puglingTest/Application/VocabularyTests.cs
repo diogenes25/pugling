@@ -21,7 +21,7 @@ namespace puglingTest.Application
             var id = "1";
             var word = "run";
             var translation = "laufen";
-            var partOfSpeech = "verb";
+            var partOfSpeech = pugling.Models.Constants.EPartOfSpeech.Verb;
             var sourceLanguage = "en";
             var targetLanguage = "de";
 
@@ -50,7 +50,7 @@ namespace puglingTest.Application
             mockVocabulary.Setup(m => m.Id).Returns("1");
             mockVocabulary.Setup(m => m.Word).Returns("run");
             mockVocabulary.Setup(m => m.Translation).Returns("laufen");
-            mockVocabulary.Setup(m => m.PartOfSpeech).Returns("verb");
+            mockVocabulary.Setup(m => m.PartOfSpeech).Returns(pugling.Models.Constants.EPartOfSpeech.Verb);
             mockVocabulary.Setup(m => m.SourceLanguage).Returns("en");
             mockVocabulary.Setup(m => m.TargetLanguage).Returns("de");
             mockVocabulary.Setup(m => m.Description).Returns("A verb meaning to move quickly.");
@@ -97,8 +97,8 @@ namespace puglingTest.Application
         public void Equals_WithSameValues_ReturnsTrue()
         {
             // Arrange
-            var vocabulary1 = Vocabulary.Create("1", "run", "laufen", "verb", "en", "de");
-            var vocabulary2 = Vocabulary.Create("1", "run", "laufen", "verb", "en", "de");
+            var vocabulary1 = Vocabulary.Create("1", "run", "laufen", pugling.Models.Constants.EPartOfSpeech.Verb, "en", "de");
+            var vocabulary2 = Vocabulary.Create("1", "run", "laufen", pugling.Models.Constants.EPartOfSpeech.Verb, "en", "de");
 
             // Act
             var result = vocabulary1.Equals(vocabulary2);
@@ -115,8 +115,8 @@ namespace puglingTest.Application
         public void Equals_WithDifferentValues_ReturnsFalse()
         {
             // Arrange
-            var vocabulary1 = Vocabulary.Create("1", "run", "laufen", "verb", "en", "de");
-            var vocabulary2 = Vocabulary.Create("2", "walk", "gehen", "verb", "en", "de");
+            var vocabulary1 = Vocabulary.Create("1", "run", "laufen", pugling.Models.Constants.EPartOfSpeech.Verb   , "en", "de");
+            var vocabulary2 = Vocabulary.Create("2", "walk", "gehen", pugling.Models.Constants.EPartOfSpeech.Verb, "en", "de");
 
             // Act
             var result = vocabulary1.Equals(vocabulary2);
@@ -133,8 +133,8 @@ namespace puglingTest.Application
         public void GetHashCode_SameValues_ReturnsSameHashCode()
         {
             // Arrange
-            var vocabulary1 = Vocabulary.Create("1", "run", "laufen", "verb", "en", "de");
-            var vocabulary2 = Vocabulary.Create("1", "run", "laufen", "verb", "en", "de");
+            var vocabulary1 = Vocabulary.Create("1", "run", "laufen", pugling.Models.Constants.EPartOfSpeech.Verb, "en", "de");
+            var vocabulary2 = Vocabulary.Create("1", "run", "laufen", pugling.Models.Constants.EPartOfSpeech.Verb, "en", "de");
 
             // Act
             var hashCode1 = vocabulary1.GetHashCode();
@@ -152,8 +152,8 @@ namespace puglingTest.Application
         public void GetHashCode_DifferentValues_ReturnsDifferentHashCodes()
         {
             // Arrange
-            var vocabulary1 = Vocabulary.Create("1", "run", "laufen", "verb", "en", "de");
-            var vocabulary2 = Vocabulary.Create("2", "walk", "gehen", "verb", "en", "de");
+            var vocabulary1 = Vocabulary.Create("1", "run", "laufen", pugling.Models.Constants.EPartOfSpeech.Verb, "en", "de");
+            var vocabulary2 = Vocabulary.Create("2", "walk", "gehen", pugling.Models.Constants.EPartOfSpeech.Verb, "en", "de");
 
             // Act
             var hashCode1 = vocabulary1.GetHashCode();
@@ -171,8 +171,8 @@ namespace puglingTest.Application
         public void EqualityOperator_SameValues_ReturnsTrue()
         {
             // Arrange
-            var vocabulary1 = Vocabulary.Create("1", "run", "laufen", "verb", "en", "de");
-            var vocabulary2 = Vocabulary.Create("1", "run", "laufen", "verb", "en", "de");
+            var vocabulary1 = Vocabulary.Create("1", "run", "laufen", pugling.Models.Constants.EPartOfSpeech.Verb, "en", "de");
+            var vocabulary2 = Vocabulary.Create("1", "run", "laufen", pugling.Models.Constants.EPartOfSpeech.Verb, "en", "de");
 
             // Act
             var result = vocabulary1 == vocabulary2;
@@ -189,8 +189,8 @@ namespace puglingTest.Application
         public void EqualityOperator_DifferentValues_ReturnsFalse()
         {
             // Arrange
-            var vocabulary1 = Vocabulary.Create("1", "run", "laufen", "verb", "en", "de");
-            var vocabulary2 = Vocabulary.Create("2", "walk", "gehen", "verb", "en", "de");
+            var vocabulary1 = Vocabulary.Create("1", "run", "laufen", pugling.Models.Constants.EPartOfSpeech.Verb, "en", "de");
+            var vocabulary2 = Vocabulary.Create("2", "walk", "gehen", pugling.Models.Constants.EPartOfSpeech.Verb, "en", "de");
 
             // Act
             var result = vocabulary1 == vocabulary2;
@@ -207,8 +207,8 @@ namespace puglingTest.Application
         public void InequalityOperator_SameValues_ReturnsFalse()
         {
             // Arrange
-            var vocabulary1 = Vocabulary.Create("1", "run", "laufen", "verb", "en", "de");
-            var vocabulary2 = Vocabulary.Create("1", "run", "laufen", "verb", "en", "de");
+            var vocabulary1 = Vocabulary.Create("1", "run", "laufen", pugling.Models.Constants.EPartOfSpeech.Verb, "en", "de");
+            var vocabulary2 = Vocabulary.Create("1", "run", "laufen", pugling.Models.Constants.EPartOfSpeech.Verb, "en", "de");
 
             // Act
             var result = vocabulary1 != vocabulary2;
@@ -225,8 +225,8 @@ namespace puglingTest.Application
         public void InequalityOperator_DifferentValues_ReturnsTrue()
         {
             // Arrange
-            var vocabulary1 = Vocabulary.Create("1", "run", "laufen", "verb", "en", "de");
-            var vocabulary2 = Vocabulary.Create("2", "walk", "gehen", "verb", "en", "de");
+            var vocabulary1 = Vocabulary.Create("1", "run", "laufen", pugling.Models.Constants.EPartOfSpeech.Verb, "en", "de");
+            var vocabulary2 = Vocabulary.Create("2", "walk", "gehen", pugling.Models.Constants.EPartOfSpeech.Verb, "en", "de");
 
             // Act
             var result = vocabulary1 != vocabulary2;

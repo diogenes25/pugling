@@ -34,7 +34,7 @@
                 Noun = vocabulary.Noun?.ToDomain(),
                 Verb = vocabulary.Verb?.ToDomain()
             };
-        }     
+        }
 
         public static IdiomaticUsageDto ToDomain(this IIdiomaticUsage idiomaticUsage)
         {

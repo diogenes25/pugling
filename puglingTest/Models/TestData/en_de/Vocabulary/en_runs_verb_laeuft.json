@@ -1,0 +1,17 @@
+{
+  "id": "en_runs_verb_laeuft",
+  "version": "1.0",
+  "sourceLanguage": "en",
+  "word": "runs",
+  "translation": "läuft",
+  "targetLanguage": "de",
+  "partOfSpeech": "Verb",
+  "verb": {
+    "baseFormRef": "en_run_verb_laufen",
+    "person": "third",
+    "tense": "present"
+  },
+  "exampleSentenceSrc": "He runs very fast.",
+  "exampleSentenceTarget": "Er läuft sehr schnell.",
+  "pronunciationAudioUrl": "/audio/en/runs.mp3"
+}

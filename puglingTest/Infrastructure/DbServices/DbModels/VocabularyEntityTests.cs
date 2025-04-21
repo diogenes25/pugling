@@ -32,7 +32,7 @@ namespace puglingTest.Infrastructure.DbServices.DbModels
                     Genus = "masculine",
                     UndeterminedArticle = "ein"
                 },
-                PartOfSpeech = "Noun",
+                PartOfSpeech = pugling.Models.Constants.EPartOfSpeech.Noun,
                 Pronunciation = "test pronunciation",
                 PronunciationAudioUrl = "http://example.com/audio.mp3",
                 RelatedForms = new[]
@@ -99,7 +99,7 @@ namespace puglingTest.Infrastructure.DbServices.DbModels
             {
                 Word = new string('a', 501), // Exceeds max length
                 Translation = string.Empty, // Must not be empty
-                PartOfSpeech = new string('a', 501), // Exceeds max length
+                PartOfSpeech = pugling.Models.Constants.EPartOfSpeech.NotSet, // Exceeds max length
                 Description = new string('b', 1001), // Exceeds max length
                 ExampleSentenceSrc = new string('c', 2001), // Exceeds max length
                 ExampleSentenceTarget = new string('d', 2001), // Exceeds max length
@@ -115,10 +115,10 @@ namespace puglingTest.Infrastructure.DbServices.DbModels
             var validationResults = entity.Validate(new ValidationContext(entity)).ToList();
 
             // Assert
-            validationResults.Should().HaveCount(12);
+            validationResults.Should().HaveCount(11);
             validationResults.Should().Contain(v => v.ErrorMessage!.Contains("Word must be non-empty and at most 500 characters."));
             validationResults.Should().Contain(v => v.ErrorMessage!.Contains("Translation must be non-empty and at most 500 characters."));
-            validationResults.Should().Contain(v => v.ErrorMessage!.Contains("PartOfSpeech must be non-empty and at most 500 characters."));
+            //validationResults.Should().Contain(v => v.ErrorMessage!.Contains("PartOfSpeech must be non-empty and at most 500 characters."));
             validationResults.Should().Contain(v => v.ErrorMessage!.Contains("Description must be at most 1000 characters."));
             validationResults.Should().Contain(v => v.ErrorMessage!.Contains("ExampleSentenceSrc must be at most 2000 characters."));
             validationResults.Should().Contain(v => v.ErrorMessage!.Contains("ExampleSentenceTarget must be at most 2000 characters."));

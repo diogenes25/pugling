@@ -1,4 +1,5 @@
 ﻿using pugling.Models;
+using pugling.Models.Constants;
 using Swashbuckle.AspNetCore.Filters;
 
 namespace pugling.Controllers.ModelExamples
@@ -18,7 +19,9 @@ namespace pugling.Controllers.ModelExamples
                    Id = "en_run_de",
                    SourceLanguage = "en",
                    TargetLanguage = "de",
-                   PartOfSpeech = "Verb",
+                   Word = "run",
+                   Translation = "rennen",
+                   PartOfSpeech = EPartOfSpeech.Verb,
                    Verb = new VerbDetailsDto
                    {
                        IsBaseForm = true,

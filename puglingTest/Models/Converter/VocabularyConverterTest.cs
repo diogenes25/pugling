@@ -3,10 +3,6 @@ using pugling.Application;
 using pugling.Infrastructure.DbServices.DbModels;
 using pugling.Models;
 using pugling.Models.Converter;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace puglingTest.Models.Converter
 {
@@ -19,7 +15,7 @@ namespace puglingTest.Models.Converter
             Word = "go",
             TargetLanguage = "de",
             Translation = "gehen",
-            PartOfSpeech = "Verb",
+            PartOfSpeech = pugling.Models.Constants.EPartOfSpeech.Verb,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow,
             Version = "1.0",
@@ -41,7 +37,8 @@ namespace puglingTest.Models.Converter
 
 
         [Fact]
-        public void FromDtoToApp(){
+        public void FromDtoToApp()
+        {
             // Arrange
             var vocabulary = CreateVocabulary();
 

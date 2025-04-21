@@ -1,3 +1,4 @@
+using pugling;
 using pugling.Application;
 using pugling.Infrastructure.DbServices;
 using pugling.Infrastructure.Persistance;
@@ -29,33 +30,7 @@ Log.Logger = new LoggerConfiguration()
 //builder.Host.UseSerilog(Log.Logger); // Use Serilog for logging
 builder.Host.UseSerilog(); // Ensure Serilog is configured for the host
 
-// Include XML comments
-var xmlFile = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
-var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
-
-builder.Services.AddSwaggerGen(options =>
-{
-    options.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
-    {
-        Title = "Vocabulary API",
-        Version = "v1",
-        Description = "API for managing vocabulary items.",
-        Contact = new Microsoft.OpenApi.Models.OpenApiContact
-        {
-            Email = "huhu@huhu.com",
-            Name = "Huhu",
-            Url = new Uri("https://example.com")
-        }
-    });
-
-    options.IncludeXmlComments(xmlPath);
-
-    // Enable examples
-    options.ExampleFilters();
-});
-
-// Register the example provider
-builder.Services.AddSwaggerExamplesFromAssemblyOf<pugling.Controllers.ModelExamples.VocabularyDtoExample>();
+builder.Services.AddSwaggerServices();
 
 var app = builder.Build();
 
@@ -63,13 +38,14 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     // https://localhost:7261/openapi/v1.json
-    app.MapOpenApi();
-    //app.UseSwagger();
+    //app.MapOpenApi();
+    app.UseSwagger();
     // Enable Swagger UI
+    //app.UseSwaggerUI();
     app.UseSwaggerUI(options =>
     {
-        options.SwaggerEndpoint("/openapi/v1.json", "PugLing API V1");
-        options.RoutePrefix = string.Empty; // Serve Swagger UI at the root (https://localhost:7261/)
+        //options.SwaggerEndpoint("/openapi/v1.json", "PugLing API V1");
+        //options.RoutePrefix = string.Empty; // Serve Swagger UI at the root (https://localhost:7261/)
         options.DocumentTitle = "PugLing API Documentation"; // Set the title of the Swagger UI page
     });
 }

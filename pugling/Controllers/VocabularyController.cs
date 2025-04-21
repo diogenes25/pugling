@@ -18,10 +18,10 @@ namespace pugling.Controllers
         /// <returns>The new created Vocabulary</returns>
         /// <response code="201">Returns the created vocabulary.</response>
         [HttpPost]
-        //[ProducesResponseType(typeof(VocabularyDto), 201)]
-        //[ProducesResponseType(400)]
+        [ProducesResponseType(typeof(VocabularyDto), 201)]
+        [ProducesResponseType(400)]
         [SwaggerRequestExample(typeof(VocabularyDto), typeof(VocabularyDtoExample))]
-        [SwaggerResponseExample(201, typeof(VocabularyDtoExample))]
+        [SwaggerResponseExample(201, typeof(VocabularyDtoSingleExample))]
         public async Task<ActionResult<VocabularyDto>> CreateAsync([FromBody] VocabularyDto vocabularyDto)
         {
             var vocabulary = await _vocabularyService.AddVocabularyAsync(vocabularyDto);

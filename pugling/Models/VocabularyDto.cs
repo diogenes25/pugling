@@ -1,4 +1,6 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using pugling.Models.Constants;
+using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
 
 namespace pugling.Models
 {
@@ -58,7 +60,7 @@ namespace pugling.Models
         /// <example>"en"</example>
         [Required]
         [StringLength(10)]
-        public string SourceLanguage { get; init; }
+        public required string SourceLanguage { get; init; }
 
         /// <summary>
         /// The language code of the target language (e.g., "de" for German).
@@ -66,15 +68,13 @@ namespace pugling.Models
         /// <example>"de"</example>
         [Required]
         [StringLength(10)]
-        public string TargetLanguage { get; init; }
+        public required string TargetLanguage { get; init; }
 
         /// <summary>
         /// The part of speech of the vocabulary item (e.g., "Noun", "Verb", "Adjective", "Phrase").
         /// </summary>
         /// <example>"Verb"</example>
-        [Required]
-        [StringLength(50)]
-        public string PartOfSpeech { get; init; }
+        public EPartOfSpeech PartOfSpeech { get; init; }
 
         /// <summary>
         /// Optional details for nouns, such as the article. Null if the vocabulary item is not a noun.
@@ -178,5 +178,12 @@ namespace pugling.Models
         /// </summary>
         /// <example>"2023-01-02T12:00:00Z"</example>
         public DateTime? UpdatedAt { get; init; }
+
+        /// <summary>
+        /// The optional URL to the example sentence in the target language.
+        /// </summary>
+        [Url]
+        [UIHint("url")]
+        public Uri? ExampleSentenceTargetUrl { get; init; }
     }
 }

@@ -1,0 +1,17 @@
+{
+  "id": "en_run_verb_fuehren",
+  "version": "1.0",
+  "sourceLanguage": "en",
+  "word": "run",
+  "translation": "führen",
+  "targetLanguage": "de",
+  "partOfSpeech": "Verb",
+  "verb": {
+    "isBaseForm": true,
+    "infinitiv": "führen"
+  },
+  "description": "To manage or operate something.",
+  "exampleSentenceSrc": "She runs a successful company.",
+  "exampleSentenceTarget": "Sie führt ein erfolgreiches Unternehmen.",
+  "pronunciationAudioUrl": "/audio/en/run_verb_alt.mp3"
+}
