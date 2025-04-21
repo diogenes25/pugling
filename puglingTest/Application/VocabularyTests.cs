@@ -57,11 +57,11 @@ namespace puglingTest.Application
             mockVocabulary.Setup(m => m.ExampleSentenceSrc).Returns("I run every morning.");
             mockVocabulary.Setup(m => m.ExampleSentenceTarget).Returns("Ich laufe jeden Morgen.");
             mockVocabulary.Setup(m => m.ExampleSentenceTense).Returns("present");
-            mockVocabulary.Setup(m => m.IdiomaticUsages).Returns(new[] { new Mock<IIdiomaticUsage>().Object });
+            mockVocabulary.Setup(m => m.IdiomaticUsages).Returns([new Mock<IIdiomaticUsage>().Object]);
             mockVocabulary.Setup(m => m.Noun).Returns(new Mock<INounDetails>().Object);
             mockVocabulary.Setup(m => m.Pronunciation).Returns("rʌn");
             mockVocabulary.Setup(m => m.PronunciationAudioUrl).Returns("http://example.com/audio/run.mp3");
-            mockVocabulary.Setup(m => m.RelatedForms).Returns(new[] { new Mock<IVocabularyBase>().Object });
+            mockVocabulary.Setup(m => m.RelatedForms).Returns([new Mock<IVocabularyBase>().Object ]);
             mockVocabulary.Setup(m => m.UpdatedAt).Returns(DateTime.UtcNow);
             mockVocabulary.Setup(m => m.Verb).Returns(new Mock<IVerbDetails>().Object);
 

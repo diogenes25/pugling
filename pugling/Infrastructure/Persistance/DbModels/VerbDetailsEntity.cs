@@ -103,21 +103,21 @@ namespace pugling.Infrastructure.DbServices.DbModels
             {
                 validationResults.Add(new ValidationResult(
                     "Infinitiv is either null, empty, or exceeds the maximum length of 100.",
-                    new[] { nameof(this.Infinitiv) }));
+                    [nameof(this.Infinitiv)]));
             }
 
             if (!string.IsNullOrWhiteSpace(this.Person) && this.Person.Length > 50)
             {
                 validationResults.Add(new ValidationResult(
                     "Person exceeds the maximum length of 50.",
-                    new[] { nameof(this.Person) }));
+                    [nameof(this.Person)]));
             }
 
             if (!string.IsNullOrWhiteSpace(this.Tense) && this.Tense.Length > 50)
             {
                 validationResults.Add(new ValidationResult(
                     "Tense exceeds the maximum length of 50.",
-                    new[] { nameof(this.Tense) }));
+                    [nameof(this.Tense)]));
             }
 
             return validationResults;

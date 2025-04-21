@@ -9,7 +9,7 @@ namespace puglingTest.Models.Converter
 {
     public class VocabularyConverterTests
     {
-        public static VocabularyDto CreateVocabulary() => new VocabularyDto
+        public static VocabularyDto CreateVocabulary() => new()
         {
             Id = "en_go_de",
             SourceLanguage = "en",

@@ -126,7 +126,7 @@ namespace pugling.Application
                 RelatedForms = vocabulary.RelatedForms?.Select(VocabularyBase.Create).ToArray(),
                 UpdatedAt = vocabulary.UpdatedAt,
                 Verb = VerbDetails.Create(vocabulary.Verb),
-                ExampleSentenceTargetUrl = vocabulary.ExampleSentenceTargetUrl
+                ExampleSentenceTargetUrl = vocabulary.ExampleSentenceTargetUrl,                
             };
 
         /// <inheritdoc />

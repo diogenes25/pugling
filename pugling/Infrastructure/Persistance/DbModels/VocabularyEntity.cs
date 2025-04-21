@@ -157,37 +157,37 @@ namespace pugling.Infrastructure.DbServices.DbModels
         public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
         {
             if (string.IsNullOrWhiteSpace(this.Word) || this.Word.Length > 500)
-                yield return new ValidationResult($"{nameof(this.Word)} must be non-empty and at most 500 characters.", new[] { nameof(this.Word) });
+                yield return new ValidationResult($"{nameof(this.Word)} must be non-empty and at most 500 characters.", [nameof(this.Word)]);
 
             if (string.IsNullOrWhiteSpace(this.Translation) || this.Translation.Length > 500)
-                yield return new ValidationResult($"{nameof(this.Translation)} must be non-empty and at most 500 characters.", new[] { nameof(this.Translation) });
+                yield return new ValidationResult($"{nameof(this.Translation)} must be non-empty and at most 500 characters.", [nameof(this.Translation)]);
 
             if (this.Description?.Length > 1000)
-                yield return new ValidationResult($"{nameof(this.Description)} must be at most 1000 characters.", new[] { nameof(this.Description) });
+                yield return new ValidationResult($"{nameof(this.Description)} must be at most 1000 characters.", [nameof(this.Description)]);
 
             if (this.ExampleSentenceSrc?.Length > 2000)
-                yield return new ValidationResult($"{nameof(this.ExampleSentenceSrc)} must be at most 2000 characters.", new[] { nameof(this.ExampleSentenceSrc) });
+                yield return new ValidationResult($"{nameof(this.ExampleSentenceSrc)} must be at most 2000 characters.", [nameof(this.ExampleSentenceSrc)]);
 
             if (this.ExampleSentenceTarget?.Length > 2000)
-                yield return new ValidationResult($"{nameof(this.ExampleSentenceTarget)} must be at most 2000 characters.", new[] { nameof(this.ExampleSentenceTarget) });
+                yield return new ValidationResult($"{nameof(this.ExampleSentenceTarget)} must be at most 2000 characters.", [nameof(this.ExampleSentenceTarget)]);
 
             if (this.ExampleSentenceTense?.Length > 100)
                 yield return new ValidationResult($"{nameof(this.ExampleSentenceTense)} must be at most 100 characters.", [nameof(this.ExampleSentenceTense)]);
 
             if (this.Pronunciation?.Length > 500)
-                yield return new ValidationResult($"{nameof(this.Pronunciation)} must be at most 500 characters.", new[] { nameof(this.Pronunciation) });
+                yield return new ValidationResult($"{nameof(this.Pronunciation)} must be at most 500 characters.", [nameof(this.Pronunciation)]);
 
             if (!string.IsNullOrWhiteSpace(this.PronunciationAudioUrl) && !Uri.IsWellFormedUriString(this.PronunciationAudioUrl, UriKind.Absolute))
-                yield return new ValidationResult($"{nameof(this.PronunciationAudioUrl)} must be a valid URL.", new[] { nameof(this.PronunciationAudioUrl) });
+                yield return new ValidationResult($"{nameof(this.PronunciationAudioUrl)} must be a valid URL.", [nameof(this.PronunciationAudioUrl)]);
 
             if (string.IsNullOrWhiteSpace(this.SourceLanguage) || this.SourceLanguage.Length > 100)
-                yield return new ValidationResult($"{nameof(this.SourceLanguage)} must be non-empty and at most 100 characters.", new[] { nameof(this.SourceLanguage) });
+                yield return new ValidationResult($"{nameof(this.SourceLanguage)} must be non-empty and at most 100 characters.", [nameof(this.SourceLanguage)]);
 
             if (string.IsNullOrWhiteSpace(this.TargetLanguage) || this.TargetLanguage.Length > 100)
-                yield return new ValidationResult($"{nameof(this.TargetLanguage)} must be non-empty and at most 100 characters.", new[] { nameof(this.TargetLanguage) });
+                yield return new ValidationResult($"{nameof(this.TargetLanguage)} must be non-empty and at most 100 characters.", [nameof(this.TargetLanguage)]);
 
             if (string.IsNullOrWhiteSpace(this.Version) || this.Version.Length > 50)
-                yield return new ValidationResult($"{nameof(this.Version)} must be non-empty and at most 50 characters.", new[] { nameof(this.Version) });
+                yield return new ValidationResult($"{nameof(this.Version)} must be non-empty and at most 50 characters.", [nameof(this.Version)]);
         }
     }
 }
