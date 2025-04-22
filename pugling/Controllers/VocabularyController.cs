@@ -3,6 +3,7 @@ using pugling.Controllers.ModelExamples;
 using pugling.Models;
 using pugling.Services;
 using Swashbuckle.AspNetCore.Filters;
+using System.Threading.Tasks;
 
 namespace pugling.Controllers
 {
@@ -36,7 +37,7 @@ namespace pugling.Controllers
         /// <response code="200">Returns the list of vocabulary items.</response>
         [HttpGet()]
         [ProducesResponseType(typeof(List<VocabularyDto>), 200)]
-        public ActionResult<VocabularyDto> GetAll()
+        public async Task<ActionResult<VocabularyDto>> GetAll()
         {
             var vocabulary = _vocabularyService.GetAllVocabulariesAsync();
             if (vocabulary == null)
@@ -103,7 +104,7 @@ namespace pugling.Controllers
         [ProducesResponseType(204)]
         [ProducesResponseType(404)]
         [ProducesResponseType(400)]
-        public ActionResult Update(string id, [FromBody] VocabularyDto vocabularyDto)
+        public async Task<ActionResult> Update(string id, [FromBody] VocabularyDto vocabularyDto)
         {
             var existingVocabulary = _vocabularyService.GetVocabularyByIdAsync(id);
             if (existingVocabulary == null)
@@ -125,10 +126,52 @@ namespace pugling.Controllers
         [HttpDelete("{id}")]
         [ProducesResponseType(204)]
         [ProducesResponseType(404)]
-        public ActionResult Delete(string id)
+        public async Task<ActionResult> Delete(string id)
         {
             var vocabulary = _vocabularyService.DeleteVocabularyAsync(id);
             return NoContent();
+        }
+
+        // PATCH: api/vocabulary/{id}
+        /// <summary>
+        /// Allows partial updates to a specific vocabulary item.
+        /// </summary>
+        [HttpPatch("{id}")]
+        [ProducesResponseType(204)]
+        [ProducesResponseType(404)]
+        [ProducesResponseType(400)]
+        public async Task<ActionResult> PartialUpdate(string id, [FromBody] VocabularyDto patchDoc)
+        {
+            var vocabulary = await _vocabularyService.GetVocabularyByIdAsync(id);
+            if (vocabulary == null)
+            {
+                return NotFound();
+            }
+            // Apply the patch
+            //patchDoc.ApplyTo(vocabulary);
+            // Update logic here
+            return NoContent();
+        }
+
+        // GET: api/vocabulary/search
+        /// <summary>
+        /// Searches for vocabulary items based on a query string.
+        /// </summary>  
+        [HttpGet("search")]
+        [ProducesResponseType(typeof(List<VocabularyDto>), 200)]
+        [ProducesResponseType(400)]
+        public async Task<ActionResult<List<VocabularyDto>>> Search([FromQuery] string query)
+        {
+            if (string.IsNullOrWhiteSpace(query))
+            {
+                return BadRequest("Query string cannot be empty.");
+            }
+            var vocabulary = await _vocabularyService.SearchVocabulariesAsync(query);
+            if (vocabulary == null || !vocabulary.Any())
+            {
+                return NotFound();
+            }
+            return Ok(vocabulary);
         }
     }
 }

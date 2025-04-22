@@ -56,6 +56,11 @@ namespace pugling.Models
         EPartOfSpeech PartOfSpeech { get; }
 
         /// <summary>
+        /// Gets the subcategory part of speech of the vocabulary item.
+        /// </summary>
+        EPartOfSpeechSubcategory? PartOfSpeechSubcategory { get; }
+
+        /// <summary>
         /// Gets the pronunciation of the vocabulary item.
         /// </summary>
         string? Pronunciation { get; }

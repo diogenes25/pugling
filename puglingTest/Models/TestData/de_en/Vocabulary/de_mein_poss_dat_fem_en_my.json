@@ -4,7 +4,8 @@
   "word": "meiner",
   "targetLanguage": "en",
   "translation": "my",
-  "partOfSpeech": "Pronoun_Possessive",
+  "partOfSpeech": "Pronoun",
+  "partOfSpeechSubcategory": "Pronoun_Possessive",
   "case": "Dativ",
   "gender": "Femininum",
   "reference": "ich"

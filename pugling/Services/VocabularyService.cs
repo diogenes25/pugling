@@ -74,5 +74,10 @@ namespace pugling.Services
                 throw;
             }
         }
+
+        public async Task<List<VocabularyDto>> SearchVocabulariesAsync(string query)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

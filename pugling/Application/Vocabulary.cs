@@ -90,6 +90,11 @@ namespace pugling.Application
         public Uri? ExampleSentenceTargetUrl { get; private init; }
 
         /// <summary>
+        /// Gets the subcategory part of speech of the vocabulary item.
+        /// </summary>
+        public EPartOfSpeechSubcategory? PartOfSpeechSubcategory { get; private init; }
+
+        /// <summary>
         /// Initializes a new instance of the <see cref="Vocabulary"/> class with the specified details.
         /// </summary>
         public Vocabulary(string id, string word, string translation, EPartOfSpeech partOfSpeech, string sourceLanguage, string targetLanguage)
@@ -126,7 +131,8 @@ namespace pugling.Application
                 RelatedForms = vocabulary.RelatedForms?.Select(VocabularyBase.Create).ToArray(),
                 UpdatedAt = vocabulary.UpdatedAt,
                 Verb = VerbDetails.Create(vocabulary.Verb),
-                ExampleSentenceTargetUrl = vocabulary.ExampleSentenceTargetUrl,                
+                ExampleSentenceTargetUrl = vocabulary.ExampleSentenceTargetUrl,
+                PartOfSpeechSubcategory = vocabulary.PartOfSpeechSubcategory
             };
 
         /// <inheritdoc />

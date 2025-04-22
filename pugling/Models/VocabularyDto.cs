@@ -1,5 +1,4 @@
 ﻿using pugling.Models.Constants;
-using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 
 namespace pugling.Models
@@ -34,7 +33,7 @@ namespace pugling.Models
     /// }
     /// </example>
     public record VocabularyDto : VocabularyBaseDto, IVocabulary<IdiomaticUsageDto, NounDetailsDto, VocabularyBaseDto, VerbDetailsDto>
-    {       
+    {
         /// <summary>
         /// Version of structure. This is used to ensure that the client and server are using the same.
         /// </summary>
@@ -174,5 +173,11 @@ namespace pugling.Models
         [Url]
         [UIHint("url")]
         public Uri? ExampleSentenceTargetUrl { get; init; }
+
+        /// <summary>
+        /// The Subcategories of the part of speech (e.g., "time" in "adverb").
+        /// </summary>
+        /// <example>"Adverb_Time"</example>
+        public EPartOfSpeechSubcategory? PartOfSpeechSubcategory { get; init; }
     }
 }

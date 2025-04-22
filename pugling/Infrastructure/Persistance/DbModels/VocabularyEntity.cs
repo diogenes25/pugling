@@ -104,6 +104,11 @@ namespace pugling.Infrastructure.DbServices.DbModels
         public Uri? ExampleSentenceTargetUrl { get; set; }
 
         /// <summary>
+        /// Gets or sets the subcategory part of speech of the vocabulary.
+        /// </summary>
+        public EPartOfSpeechSubcategory? PartOfSpeechSubcategory { get; set; }
+
+        /// <summary>
         /// Fills the entity with data from the provided vocabulary and validates it.
         /// </summary>
         /// <param name="vocabulary">The vocabulary to fill the entity with.</param>
@@ -140,6 +145,7 @@ namespace pugling.Infrastructure.DbServices.DbModels
             this.SourceLanguage = vocabulary.SourceLanguage;
             this.TargetLanguage = vocabulary.TargetLanguage;
             this.UpdatedAt = vocabulary.UpdatedAt;
+            this.PartOfSpeechSubcategory = vocabulary.PartOfSpeechSubcategory;
             this.Verb = new VerbDetailsEntity().FillAndValidate(vocabulary.Verb);
 
             var validateResult = this.Validate(new ValidationContext(this));

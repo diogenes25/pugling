@@ -4,5 +4,6 @@
   "word": "heute",
   "targetLanguage": "en",
   "translation": "today",
-  "partOfSpeech": "Adverb_Time"
+  "partOfSpeech": "Adverb",
+  "partOfSpeechSubcategory": "Adverb_Time"
 }

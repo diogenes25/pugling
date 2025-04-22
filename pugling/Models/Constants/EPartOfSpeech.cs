@@ -104,6 +104,14 @@ namespace pugling.Models.Constants
         Numeral = 18,
 
         /// <summary>
+        /// No specific part of speech is applicable.
+        /// </summary>
+        Other = 99,
+    }
+
+    public enum EPartOfSpeechSubcategory
+    {
+        /// <summary>
         /// Represents an adverb of time, which indicates when an action occurs.
         /// </summary>
         Adverb_Time = 19,
@@ -277,10 +285,5 @@ namespace pugling.Models.Constants
         /// Represents a plural noun, which refers to more than one item.
         /// </summary>
         Noun_Plural = 53,
-
-        /// <summary>
-        /// No specific part of speech is applicable.
-        /// </summary>
-        Other = 99,
     }
 }

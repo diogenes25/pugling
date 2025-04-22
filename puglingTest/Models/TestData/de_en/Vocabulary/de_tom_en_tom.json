@@ -4,5 +4,6 @@
   "word": "Tom",
   "targetLanguage": "en",
   "translation": "Tom",
-  "partOfSpeech": "Noun_Proper"
+  "partOfSpeech": "Noun",
+  "partOfSpeechSubcategory": "Noun_Proper"
 }
