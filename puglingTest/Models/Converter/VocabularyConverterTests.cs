@@ -36,7 +36,6 @@ namespace puglingTest.Models.Converter
             ExampleSentenceTense = "present"
         };
 
-
         [Fact]
         public void FromDtoToAppTest()
         {
@@ -73,7 +72,7 @@ namespace puglingTest.Models.Converter
             var vocabulary = CreateVocabulary();
 
             // Act
-            var vocabularyApp = Vocabulary.Create(vocabulary);
+            var vocabularyApp = Vocabulary.Create(vocabulary, null);
             var vocabularyEntity = new VocabularyEntity().FillAndValidate(vocabularyApp);
 
             // Assert
@@ -88,7 +87,7 @@ namespace puglingTest.Models.Converter
             // Arrange
             var vocabulary = CreateVocabulary();
             // Act
-            var vocabularyApp = Vocabulary.Create(vocabulary);
+            var vocabularyApp = Vocabulary.Create(vocabulary, null);
             var vocabularyEntity = new VocabularyEntity().FillAndValidate(vocabularyApp);
             var vocabularyDto = vocabularyEntity.ToDomain();
             // Assert
@@ -102,10 +101,11 @@ namespace puglingTest.Models.Converter
         {
             // Arrange
             var vocabulary = CreateVocabulary();
+
             // Act
-            var vocabularyApp = Vocabulary.Create(vocabulary);
+            var vocabularyApp = Vocabulary.Create(vocabulary, null);
             var vocabularyEntity = new VocabularyEntity().FillAndValidate(vocabularyApp);
-            vocabularyApp = Vocabulary.Create(vocabularyEntity);
+            vocabularyApp = Vocabulary.Create(vocabularyEntity, null);
 
             // Assert
             vocabularyApp.Id.Should().Be(vocabularyEntity.Id);

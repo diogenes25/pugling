@@ -3,7 +3,6 @@ using pugling.Controllers.ModelExamples;
 using pugling.Models;
 using pugling.Services;
 using Swashbuckle.AspNetCore.Filters;
-using System.Threading.Tasks;
 
 namespace pugling.Controllers
 {
@@ -128,7 +127,7 @@ namespace pugling.Controllers
         [ProducesResponseType(404)]
         public async Task<ActionResult> Delete(string id)
         {
-            var vocabulary = _vocabularyService.DeleteVocabularyAsync(id);
+            //var vocabulary = _vocabularyService.DeleteVocabularyAsync(id);
             return NoContent();
         }
 
@@ -156,7 +155,7 @@ namespace pugling.Controllers
         // GET: api/vocabulary/search
         /// <summary>
         /// Searches for vocabulary items based on a query string.
-        /// </summary>  
+        /// </summary>
         [HttpGet("search")]
         [ProducesResponseType(typeof(List<VocabularyDto>), 200)]
         [ProducesResponseType(400)]

@@ -61,12 +61,12 @@ namespace puglingTest.Application
             mockVocabulary.Setup(m => m.Noun).Returns(new Mock<INounDetails>().Object);
             mockVocabulary.Setup(m => m.Pronunciation).Returns("rʌn");
             mockVocabulary.Setup(m => m.PronunciationAudioUrl).Returns("http://example.com/audio/run.mp3");
-            mockVocabulary.Setup(m => m.RelatedForms).Returns([new Mock<IVocabularyBase>().Object ]);
+            mockVocabulary.Setup(m => m.RelatedForms).Returns([new Mock<IVocabularyBase>().Object]);
             mockVocabulary.Setup(m => m.UpdatedAt).Returns(DateTime.UtcNow);
             mockVocabulary.Setup(m => m.Verb).Returns(new Mock<IVerbDetails>().Object);
 
             // Act
-            var result = Vocabulary.Create(mockVocabulary.Object);
+            var result = Vocabulary.Create(mockVocabulary.Object, null);
 
             // Assert
             result.Should().NotBeNull("because a valid Vocabulary instance should be created from the mock");

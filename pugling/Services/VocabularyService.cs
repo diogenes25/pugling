@@ -1,29 +1,39 @@
-﻿using pugling.Application;
-using pugling.Infrastructure.DbServices;
-using pugling.Models;
+﻿using pugling.Models;
+using pugling.Models.Converter;
 
 namespace pugling.Services
 {
-    public class VocabularyService(IVocabularyDbService<VocabularyDto, Vocabulary> _vocabularyDbService, ILogger<VocabularyService> _logger)
+    public class VocabularyService
     {
+        private readonly VocabularyFactory _vocabularyFactory;
+        private readonly ILogger<VocabularyService> _logger;
+
+        public VocabularyService(VocabularyFactory vocabularyFactory, ILogger<VocabularyService> logger)
+        {
+            _vocabularyFactory = vocabularyFactory;
+            _logger = logger;
+        }
+
         public async Task<IEnumerable<VocabularyDto>> GetAllVocabulariesAsync()
         {
-            try
-            {
-                return await _vocabularyDbService.GetAllVocabulariesAsync();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error retrieving vocabularies");
-                throw;
-            }
+            throw new NotImplementedException();
+            //try
+            //{
+            //    return await _vocabularyDbService.GetAllVocabulariesAsync();
+            //}
+            //catch (Exception ex)
+            //{
+            //    _logger.LogError(ex, "Error retrieving vocabularies");
+            //    throw;
+            //}
         }
 
         public async Task<VocabularyDto> GetVocabularyByIdAsync(string id)
         {
             try
             {
-                return await _vocabularyDbService.GetVocabularyByIdAsync(id);
+                var vocabEntity = await _vocabularyFactory.GetVocabularyAsync(id);
+                return vocabEntity.ToDomain();
             }
             catch (Exception ex)
             {
@@ -34,11 +44,12 @@ namespace pugling.Services
 
         public async Task<VocabularyDto> AddVocabularyAsync(VocabularyDto vocabulary)
         {
-            var vocabWork = Vocabulary.Create(vocabulary);
+            var vocabWork = _vocabularyFactory.CreateVocabulary(vocabulary);
 
             try
             {
-                return await _vocabularyDbService.AddVocabularyAsync(vocabWork);
+                var voc = await vocabWork.SaveAsync(CancellationToken.None);
+                return voc.ToDomain();
             }
             catch (Exception ex)
             {
@@ -47,33 +58,33 @@ namespace pugling.Services
             }
         }
 
-        public async Task<VocabularyDto> UpdateVocabularyAsync(VocabularyDto vocabulary)
-        {
-            var vocabWork = Vocabulary.Create(vocabulary);
+        //public async Task<VocabularyDto> UpdateVocabularyAsync(VocabularyDto vocabulary)
+        //{
+        //    var vocabWork = Vocabulary.Create(vocabulary);
 
-            try
-            {
-                return await _vocabularyDbService.UpdateVocabularyAsync(vocabWork);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error updating vocabulary");
-                throw;
-            }
-        }
+        //    try
+        //    {
+        //        return await _vocabularyDbService.UpdateVocabularyAsync(vocabWork);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        _logger.LogError(ex, "Error updating vocabulary");
+        //        throw;
+        //    }
+        //}
 
-        public async Task DeleteVocabularyAsync(string id)
-        {
-            try
-            {
-                await _vocabularyDbService.DeleteVocabularyAsync(id);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error deleting vocabulary with ID {Id}", id);
-                throw;
-            }
-        }
+        //public async Task DeleteVocabularyAsync(string id)
+        //{
+        //    try
+        //    {
+        //        await _vocabularyDbService.DeleteVocabularyAsync(id);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        _logger.LogError(ex, "Error deleting vocabulary with ID {Id}", id);
+        //        throw;
+        //    }
+        //}
 
         public async Task<List<VocabularyDto>> SearchVocabulariesAsync(string query)
         {

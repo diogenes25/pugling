@@ -1,13 +1,14 @@
 ﻿using pugling.Models;
 using pugling.Models.Constants;
 using pugling.Models.Converter;
+using pugling.Services;
 
 namespace pugling.Application
 {
     /// <summary>
     /// Represents a vocabulary item with details about its usage, translation, and related forms.
     /// </summary>
-    public sealed class Vocabulary : VocabularyBase, IVocabulary<IdiomaticUsage, NounDetails, VocabularyBase, VerbDetails>, IEquatable<IVocabulary<IdiomaticUsage, NounDetails, VocabularyBase, VerbDetails>?>
+    public sealed class Vocabulary : VocabularyBase, IVocabulary<IdiomaticUsage, NounDetails, VocabularyBase, VerbDetails>, IEquatable<IVocabulary<IdiomaticUsage, NounDetails, VocabularyBase, VerbDetails>?>, ISaveable<Vocabulary>
     {
         /// <summary>
         /// Gets the description of the vocabulary item.
@@ -94,6 +95,13 @@ namespace pugling.Application
         /// </summary>
         public EPartOfSpeechSubcategory? PartOfSpeechSubcategory { get; private init; }
 
+        public ISaveableService<Vocabulary> SaveableService { get; set; }
+
+        public Vocabulary(ISaveableService<Vocabulary> saveableService)
+        {
+            this.SaveableService = saveableService;
+        }
+
         /// <summary>
         /// Initializes a new instance of the <see cref="Vocabulary"/> class with the specified details.
         /// </summary>
@@ -116,7 +124,7 @@ namespace pugling.Application
         /// <summary>
         /// Creates a new instance of the <see cref="Vocabulary"/> class from an existing <see cref="IVocabulary{TIdiomaticUsage, TNounDetails, TRelatedForm, TVerbDetails}"/>.
         /// </summary>
-        public static Vocabulary Create(IVocabulary<IIdiomaticUsage, INounDetails, IVocabularyBase, IVerbDetails> vocabulary) =>
+        public static Vocabulary Create(IVocabulary<IIdiomaticUsage, INounDetails, IVocabularyBase, IVerbDetails> vocabulary, ISaveableService<Vocabulary>? vocabularySaveServiceFile) =>
             new(vocabulary.Id, vocabulary.Word, vocabulary.Translation, vocabulary.PartOfSpeech, vocabulary.SourceLanguage, vocabulary.TargetLanguage)
             {
                 Version = vocabulary.Version,
@@ -132,7 +140,8 @@ namespace pugling.Application
                 UpdatedAt = vocabulary.UpdatedAt,
                 Verb = VerbDetails.Create(vocabulary.Verb),
                 ExampleSentenceTargetUrl = vocabulary.ExampleSentenceTargetUrl,
-                PartOfSpeechSubcategory = vocabulary.PartOfSpeechSubcategory
+                PartOfSpeechSubcategory = vocabulary.PartOfSpeechSubcategory,
+                SaveableService = vocabularySaveServiceFile
             };
 
         /// <inheritdoc />
@@ -145,6 +154,12 @@ namespace pugling.Application
         public override int GetHashCode()
         {
             return HashCode.Combine(this.Id, this.Noun, this.PartOfSpeech, this.SourceLanguage, this.TargetLanguage, this.Translation, this.Verb, this.Word);
+        }
+
+        public Task<Vocabulary> SaveAsync(CancellationToken cancellationToken)
+        {
+            return this.SaveableService.SaveCreateAsync(this, cancellationToken);
+            //return this.SaveableService.SaveUpdateAsync(this, cancellationToken);
         }
 
         public static bool operator ==(Vocabulary? left, IVocabulary<IdiomaticUsage, NounDetails, VocabularyBase, VerbDetails>? right) =>

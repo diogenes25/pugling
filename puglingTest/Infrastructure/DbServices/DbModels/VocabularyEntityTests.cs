@@ -36,7 +36,7 @@ namespace puglingTest.Infrastructure.DbServices.DbModels
                 PartOfSpeech = pugling.Models.Constants.EPartOfSpeech.Noun,
                 Pronunciation = "test pronunciation",
                 PronunciationAudioUrl = "http://example.com/audio.mp3",
-                RelatedForms =                [                       new VocabularyBaseDto { Id = "2", Word = "related", Translation = "related_translation" }                   ],
+                RelatedForms = [new VocabularyBaseDto { Id = "2", Word = "related", Translation = "related_translation" }],
                 SourceLanguage = "en",
                 TargetLanguage = "de",
                 UpdatedAt = DateTime.UtcNow,
@@ -53,7 +53,7 @@ namespace puglingTest.Infrastructure.DbServices.DbModels
             var entity = new VocabularyEntity();
 
             // Act
-            var result = entity.FillAndValidate(Vocabulary.Create(vocabulary));
+            var result = entity.FillAndValidate(Vocabulary.Create(vocabulary, null));
 
             // Assert
             result.Id.Should().Be(vocabulary.Id);

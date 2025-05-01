@@ -1,11 +1,6 @@
 using pugling;
-using pugling.Application;
-using pugling.Infrastructure.DbServices;
-using pugling.Infrastructure.Persistance;
-using pugling.Models;
 using pugling.Services;
 using Serilog;
-using Swashbuckle.AspNetCore.Filters; // Add this using directive at the top of the file
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,9 +11,11 @@ builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 
 // Register application services for Dependency Injection
-builder.Services.AddDbServices();
-builder.Services.AddScoped<IVocabularyDbService<VocabularyDto, Vocabulary>, VocabularyPersit>();
 builder.Services.AddScoped<VocabularyService>();
+// Register the DbFile services
+builder.Services.AddDbFileServices();
+// Register the DbContext with the CosmosDb settings
+//builder.Services.AddDbCosmosDbServices(builder.Configuration);
 
 // Configure Serilog
 Log.Logger = new LoggerConfiguration()

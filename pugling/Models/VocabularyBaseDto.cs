@@ -13,7 +13,7 @@ namespace pugling.Models
         /// For conjugated forms: {sourceLanguage}_{baseWord}_{targetLanguage}_{tense}_{person} (e.g., en_go_de_Präsens_ich)
         /// For phrases: {sourceLanguage}_{normalized_phrase}_{targetLanguage}_{normalized_translation} (e.g., de_wie_geht_es_dir_en_how_are_you)
         /// </summary>
-        [StringLength(50)] 
+        [StringLength(50)]
         public string Id { get; init; }
 
         /// <summary>

@@ -1,14 +1,15 @@
 ﻿using pugling.Infrastructure.DbServices;
 using pugling.Infrastructure.DbServices.DbModels;
+using pugling.Infrastructure.Persistance.DbModels;
 using System.Text.Json;
 
 namespace pugling.Infrastructure.DbFile
 {
-    public class VocabularyDbFileService : IVocabularyDbService<VocabularyEntity, VocabularyEntity>
+    public class VocabularyFileDbService : IInputOutputConverter<VocabularyEntity>
     {
         private readonly string _filePath;
 
-        public VocabularyDbFileService()
+        public VocabularyFileDbService()
         {
             // Combine the application path with the file name
             this._filePath = Path.Combine(AppContext.BaseDirectory, "vocabulariesDB.json");
@@ -20,6 +21,11 @@ namespace pugling.Infrastructure.DbFile
             vocabularies.Add(vocabulary);
             await WriteVocabulariesToFileAsync(vocabularies);
             return vocabulary;
+        }
+
+        public Task<VocabularyEntity> AddVocabularyAsync(IVocabularyEntity vocabulary)
+        {
+            throw new NotImplementedException();
         }
 
         public async Task DeleteVocabularyAsync(string id)
@@ -44,17 +50,20 @@ namespace pugling.Infrastructure.DbFile
             return vocabularies.FirstOrDefault(v => v.Id == id.ToString());
         }
 
-        public async Task<VocabularyEntity> UpdateVocabularyAsync(VocabularyEntity vocabulary)
+        public async Task<VocabularyEntity> UpdateVocabularyAsync(IVocabularyEntity vocabulary)
         {
             var vocabularies = await ReadVocabulariesFromFileAsync();
             var existingVocabulary = vocabularies.FirstOrDefault(v => v.Id == vocabulary.Id);
+
+            var convertVocabular = vocabulary as VocabularyEntity;
+
             if (existingVocabulary != null)
             {
                 vocabularies.Remove(existingVocabulary);
-                vocabularies.Add(vocabulary);
+                vocabularies.Add(convertVocabular);
                 await WriteVocabulariesToFileAsync(vocabularies);
             }
-            return vocabulary;
+            return convertVocabular;
         }
 
         private async Task<List<VocabularyEntity>> ReadVocabulariesFromFileAsync()

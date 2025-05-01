@@ -1,5 +1,5 @@
 ﻿using pugling.Application;
-using pugling.Models;
+using pugling.Infrastructure.Persistance.DbModels;
 using pugling.Models.Constants;
 using System.ComponentModel.DataAnnotations;
 using System.Diagnostics.CodeAnalysis;
@@ -9,7 +9,7 @@ namespace pugling.Infrastructure.DbServices.DbModels
     /// <summary>
     /// Represents a vocabulary entity with various linguistic details and validation logic.
     /// </summary>
-    public record VocabularyEntity : VocabularyBaseEntity, IVocabulary<IdiomaticUsageEntity, NounDetailsEntity, VocabularyBaseEntity, VerbDetailsEntity>, IFillAndValidateable<VocabularyEntity, Vocabulary>
+    public record VocabularyEntity : VocabularyBaseEntity, IVocabularyEntity
     {
         /// <summary>
         /// Gets or sets the part of speech for the vocabulary.
