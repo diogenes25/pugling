@@ -1,6 +1,10 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Moq;
 using pugling;
+using pugling.Infrastructure.DbFile;
+using pugling.Models;
 using pugling.Services;
 
 namespace puglingTest
@@ -22,7 +26,10 @@ namespace puglingTest
                 })
                 .Build();
 
-            services.AddDbCosmosDbServices(configuration);
+            //services.AddDbCosmosDbServices(configuration);
+            services.AddDbFileServices();
+            services.AddScoped<ILogger<VocabularySaveServiceFile>>(services => new Mock<ILogger<VocabularySaveServiceFile>>().Object);
+            services.AddScoped<ILogger<VocabularyService>>(services => new Mock<ILogger<VocabularyService>>().Object);
             services.AddScoped<VocabularyService>();
 
             var serv = services.BuildServiceProvider();
