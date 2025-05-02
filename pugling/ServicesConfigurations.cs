@@ -1,10 +1,6 @@
-﻿using Microsoft.Azure.Cosmos;
-using pugling.Application;
+﻿using pugling.Application;
 using pugling.Infrastructure.DbCosmosDb;
 using pugling.Infrastructure.DbFile;
-using pugling.Infrastructure.DbServices;
-using pugling.Infrastructure.DbServices.DbModels;
-using pugling.Infrastructure.Persistance;
 using pugling.Infrastructure.Persistance.DbModels;
 using pugling.Services;
 using Swashbuckle.AspNetCore.Filters;
@@ -15,10 +11,9 @@ namespace pugling
     {
         public static IServiceCollection AddDbFileServices(this IServiceCollection services)
         {
-            services.AddScoped<IInputOutputConverter<VocabularyEntity>, VocabularyFileDbService>();
+            //services.AddScoped<IInputOutputConverter<VocabularyEntity>, VocabularyFileDbService>();
             //services.AddScoped<VocabularyPersit<VocabularyEntity>>();
             //services.AddScoped<VocabularyService<VocabularyEntity>>();
-            services.AddScoped<VocabularyFactory>();
             services.AddScoped<ISaveableService<Vocabulary>, VocabularySaveServiceFile>();
             services.AddScoped<IReadableService<IVocabularyEntity>, VocabularySaveServiceFile>();
 
@@ -56,20 +51,24 @@ namespace pugling
             return services;
         }
 
-        public static IServiceCollection AddDbCosmosDbServices(this IServiceCollection services, IConfiguration configuration)
+        public static IServiceCollection AddDbCosmosDbServices(this IServiceCollection services)
         {
-            services.Configure<pugling.Infrastructure.DbCosmosDb.CosmosDbSettings>(configuration.GetSection("ConnectionStrings:CosmosDb"));
+            //var x = configuration.GetSection("CosmosDb");
+            //services.Configure<CosmosDbSettings>(configuration.GetSection("ConnectionStrings:CosmosDb"));
 
             // Register CosmosDB services
-            services.AddSingleton<CosmosClient>(sp =>
-            {
-                var configuration = sp.GetRequiredService<IConfiguration>();
-                var cosmosConnectionString = configuration.GetConnectionString("CosmosDb");
-                return new CosmosClient(cosmosConnectionString);
-            });
+            //services.AddSingleton<CosmosClient>(sp =>
+            //{
+            //    //var cosmosConnectionString = configuration.GetConnectionString("CosmosDb");
+            //    return new CosmosClient(x.GetValue("");
+            //});
             // Register the Cosmos DB service
-            services.AddScoped<IInputOutputConverter<VocabularyCosmosEntity>, VocabularyCosmosDbService>();
-            services.AddScoped<VocabularyPersit<VocabularyCosmosEntity>>();
+            services.AddSingleton<CosmosDbSettings>();
+            services.AddScoped<ISaveableService<Vocabulary>, VocabularySaveServiceCosmosDb>();
+            services.AddScoped<IReadableService<IVocabularyEntity>, VocabularyReadServiceCosmosDb>();
+
+            //services.AddScoped<IInputOutputConverter<VocabularyCosmosEntity>, VocabularyCosmosDbService>();
+            //services.AddScoped<VocabularyPersit<VocabularyCosmosEntity>>();
 
             //var x = new VocabularyPersit<VocabularyCosmosEntity>(new VocabularyCosmosDbService(), new Microsoft.Extensions.Logging.Abstractions.NullLogger<VocabularyPersit<VocabularyCosmosEntity>>());
             return services;

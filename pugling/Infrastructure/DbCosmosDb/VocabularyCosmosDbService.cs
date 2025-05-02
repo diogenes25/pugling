@@ -36,7 +36,7 @@ namespace pugling.Infrastructure.DbCosmosDb
 
         public void ConnectToCosmosDb()
         {
-            _client = new CosmosClient(_cosmosDbSettings.AccountEndpoint, _cosmosDbSettings.AccountKey);
+            _client = new CosmosClient(_cosmosDbSettings.Endpoint, _cosmosDbSettings.AccountKey);
             // Use the client...
         }
 

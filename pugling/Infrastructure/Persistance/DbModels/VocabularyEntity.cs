@@ -11,6 +11,8 @@ namespace pugling.Infrastructure.DbServices.DbModels
     /// </summary>
     public record VocabularyEntity : VocabularyBaseEntity, IVocabularyEntity
     {
+        public string id;
+
         /// <summary>
         /// Gets or sets the part of speech for the vocabulary.
         /// </summary>
@@ -152,6 +154,7 @@ namespace pugling.Infrastructure.DbServices.DbModels
             if (validateResult.Any())
                 throw new ArgumentException("The following constraints were violated: " + string.Join(';', validateResult.Select(r => r.ErrorMessage)));
 
+            id = Id;
             return this;
         }
 

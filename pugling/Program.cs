@@ -12,6 +12,8 @@ builder.Services.AddOpenApi();
 
 // Register application services for Dependency Injection
 builder.Services.AddScoped<VocabularyService>();
+builder.Services.AddScoped<VocabularyFactory>();
+
 // Register the DbFile services
 builder.Services.AddDbFileServices();
 // Register the DbContext with the CosmosDb settings

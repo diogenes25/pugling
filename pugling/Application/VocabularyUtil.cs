@@ -4,7 +4,6 @@ using System.Text.RegularExpressions;
 
 namespace pugling.Application
 {
-
     /// <summary>
     /// Utility class for handling vocabulary-related operations.
     /// </summary>

@@ -17,7 +17,7 @@ namespace pugling.Infrastructure.DbFile
             //this._filePath = Path.Combine(AppContext.BaseDirectory, "vocabulariesDB.json");
         }
 
-        public async Task<Vocabulary> SaveCreateAsync(Vocabulary vacabulary, CancellationToken cancellationToken)
+        public async Task<Vocabulary> SaveAsync(Vocabulary vacabulary, CancellationToken cancellationToken)
         {
             var vocabularyEntity = new VocabularyEntity().FillAndValidate(vacabulary);
             var vocabularyJson = JsonSerializer.Serialize(vocabularyEntity, new JsonSerializerOptions { WriteIndented = true });
@@ -40,11 +40,6 @@ namespace pugling.Infrastructure.DbFile
                 _logger.LogWarning("File not found: {FilePath}", filePath);
             }
             return Task.FromResult<Vocabulary>(null);
-        }
-
-        public Task<Vocabulary> SaveUpdateAsync(Vocabulary vacabulary, CancellationToken cancellationToken)
-        {
-            throw new NotImplementedException();
         }
 
         public Task<Vocabulary> UpdateAsync(Vocabulary vacabulary, IEnumerable<string> updatedProperties, CancellationToken cancellationToken)

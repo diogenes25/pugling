@@ -124,8 +124,9 @@ namespace pugling.Application
         /// <summary>
         /// Creates a new instance of the <see cref="Vocabulary"/> class from an existing <see cref="IVocabulary{TIdiomaticUsage, TNounDetails, TRelatedForm, TVerbDetails}"/>.
         /// </summary>
-        public static Vocabulary Create(IVocabulary<IIdiomaticUsage, INounDetails, IVocabularyBase, IVerbDetails> vocabulary, ISaveableService<Vocabulary>? vocabularySaveServiceFile) =>
-            new(vocabulary.Id, vocabulary.Word, vocabulary.Translation, vocabulary.PartOfSpeech, vocabulary.SourceLanguage, vocabulary.TargetLanguage)
+        public static Vocabulary Create(IVocabulary<IIdiomaticUsage, INounDetails, IVocabularyBase, IVerbDetails> vocabulary, ISaveableService<Vocabulary>? vocabularySaveServiceFile)
+        {
+            var result = new Vocabulary(vocabulary.Id, vocabulary.Word, vocabulary.Translation, vocabulary.PartOfSpeech, vocabulary.SourceLanguage, vocabulary.TargetLanguage)
             {
                 Version = vocabulary.Version,
                 Description = vocabulary.Description,
@@ -141,8 +142,11 @@ namespace pugling.Application
                 Verb = VerbDetails.Create(vocabulary.Verb),
                 ExampleSentenceTargetUrl = vocabulary.ExampleSentenceTargetUrl,
                 PartOfSpeechSubcategory = vocabulary.PartOfSpeechSubcategory,
-                SaveableService = vocabularySaveServiceFile
+                SaveableService = vocabularySaveServiceFile,
             };
+            result.Id = string.IsNullOrWhiteSpace(vocabulary.Id) ? VocabularyUtil.GenerateRestfulId(result) : vocabulary.Id;
+            return result;
+        }
 
         /// <inheritdoc />
         public override bool Equals(object? obj) => this.Equals(obj as IVocabulary<IdiomaticUsage, NounDetails, VocabularyBase, VerbDetails>);
@@ -158,7 +162,7 @@ namespace pugling.Application
 
         public Task<Vocabulary> SaveAsync(CancellationToken cancellationToken)
         {
-            return this.SaveableService.SaveCreateAsync(this, cancellationToken);
+            return this.SaveableService.SaveAsync(this, cancellationToken);
             //return this.SaveableService.SaveUpdateAsync(this, cancellationToken);
         }
 

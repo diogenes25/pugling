@@ -30,7 +30,14 @@ namespace pugling.Infrastructure.DbServices.DbModels
         [NotMapped]
         public Dictionary<string, Dictionary<string, ConjugationDetailsEntity>> Conjugations { get; set; } = new();
 
-        Dictionary<string, Dictionary<string, IConjugationDetails>>? IVerbDetails.Conjugations => throw new NotImplementedException();
+        Dictionary<string, Dictionary<string, IConjugationDetails>>? IVerbDetails.Conjugations =>
+            Conjugations.ToDictionary(
+                outer => outer.Key,
+                outer => outer.Value.ToDictionary(
+                    inner => inner.Key,
+                    inner => (IConjugationDetails)inner.Value
+                )
+            );
 
         public VerbDetailsEntity()
         {
@@ -99,7 +106,7 @@ namespace pugling.Infrastructure.DbServices.DbModels
             //        new[] { nameof(BaseFormRef) }));
             //}
 
-            if (string.IsNullOrWhiteSpace(this.Infinitiv) || this.Infinitiv.Length > 100)
+            if (!string.IsNullOrWhiteSpace(this.Infinitiv) && this.Infinitiv.Length > 100)
             {
                 validationResults.Add(new ValidationResult(
                     "Infinitiv is either null, empty, or exceeds the maximum length of 100.",

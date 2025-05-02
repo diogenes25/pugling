@@ -116,7 +116,7 @@ namespace puglingTest.Infrastructure.DbServices.DbModels
             var entity = new VerbDetailsEntity
             {
                 //BaseFormRef = new string('a', 101), // Exceeds max length
-                Infinitiv = string.Empty // Invalid
+                Infinitiv = new string('a', 101), // Exceeds max length
             };
 
             // Act
