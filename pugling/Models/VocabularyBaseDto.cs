@@ -28,6 +28,6 @@ namespace pugling.Models
         /// this is the translation of the specific form (e.g., "gehe" for "ich gehe").
         /// </summary>
         [StringLength(200)]
-        public string Translation { get; init; }
+        public required string Translation { get; init; }
     }
 }

@@ -64,6 +64,7 @@ namespace pugling
             //});
             // Register the Cosmos DB service
             services.AddSingleton<CosmosDbSettings>();
+            services.AddSingleton<CosmosDbContainerFactory>();
             services.AddScoped<ISaveableService<Vocabulary>, VocabularySaveServiceCosmosDb>();
             services.AddScoped<IReadableService<IVocabularyEntity>, VocabularyReadServiceCosmosDb>();
 

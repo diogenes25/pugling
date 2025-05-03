@@ -17,9 +17,9 @@ namespace pugling.Services
 
         public async Task<IVocabularyEntity> GetVocabularyAsync(string id)
         {
-            var vocabulary = await ReadableService.GetById(id);
+            var vocabularyEntity = await ReadableService.GetById(id);
 
-            return vocabulary ?? throw new KeyNotFoundException($"Vocabulary with ID {id} not found.");
+            return vocabularyEntity ?? throw new KeyNotFoundException($"Vocabulary with ID {id} not found.");
         }
     }
 }

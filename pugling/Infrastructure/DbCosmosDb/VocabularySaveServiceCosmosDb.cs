@@ -7,7 +7,7 @@ namespace pugling.Infrastructure.DbCosmosDb
     public class VocabularySaveServiceCosmosDb : ACosmosDbBase, ISaveableService<Vocabulary>
     {
         public VocabularySaveServiceCosmosDb(
-        CosmosDbSettings cosmosDbSettings,
+        CosmosDbContainerFactory cosmosDbSettings,
         ILogger<VocabularySaveServiceCosmosDb> logger) : base(cosmosDbSettings, "Vocabulary", logger)
         {
         }
@@ -18,8 +18,9 @@ namespace pugling.Infrastructure.DbCosmosDb
             vocabularyEntity.FillAndValidate(saveObj);
             try
             {
-                var response = await _container.CreateItemAsync(vocabularyEntity, new PartitionKey(vocabularyEntity.vocabularypartition), cancellationToken: cancellationToken);
-                return Vocabulary.Create(vocabularyEntity, this);
+                var response = await _container.CreateItemAsync(vocabularyEntity, new PartitionKey(vocabularyEntity.vocabularypartition), cancellationToken: cancellationToken);               
+
+                return Vocabulary.Create(response.Resource, this);
             }
             catch (CosmosException ex)
             {

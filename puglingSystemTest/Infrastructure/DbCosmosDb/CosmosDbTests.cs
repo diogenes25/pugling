@@ -1,45 +1,31 @@
 ﻿using FluentAssertions;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using Moq;
-using pugling;
-using pugling.Infrastructure.DbCosmosDb;
+using Microsoft.VisualStudio.TestPlatform.TestHost;
+using pugling.Infrastructure.Persistance.DbModels;
 using pugling.Models;
 using pugling.Models.Constants;
 using pugling.Services;
 
 namespace puglingSystemTest.Infrastructure.DbCosmosDb
 {
-    public class CosmosDbTests
+    public class CosmosDbTests : IClassFixture<CustomWebApplicationFactory<Program>>
     {
-#if DEBUG
-        [Fact]
-#elif RELEASE
-        [Fact(Skip = "This test should only run when manually started or on local maschine.")]
-#endif
+        private readonly CustomWebApplicationFactory<Program> _factory;
+
+        public CosmosDbTests(CustomWebApplicationFactory<Program> factory)
+        {
+            _factory = factory;
+        }
+
+        [Fact] //(Skip = "This test should only run when manually started or on local maschine.")]
         public async Task SaveCosmosDbAsync()
         {
-            var services = new ServiceCollection();
-
-            var configuration = new ConfigurationBuilder()
-                .SetBasePath(Directory.GetCurrentDirectory()) // Set the base path to the current directory  
-                .AddJsonFile("appsettings.Development.json", optional: false, reloadOnChange: true) // Load the JSON file  
-            .Build();
-
-            services.AddSingleton<IConfiguration>(configuration);
-
-            services.AddDbCosmosDbServices();
-            services.AddSingleton<CosmosDbSettings>();
-            services.AddScoped<ILogger<VocabularySaveServiceCosmosDb>>(services => new Mock<ILogger<VocabularySaveServiceCosmosDb>>().Object);
-            services.AddScoped<ILogger<VocabularyReadServiceCosmosDb>>(services => new Mock<ILogger<VocabularyReadServiceCosmosDb>>().Object);
-            services.AddScoped<VocabularyFactory>();
-
-            var serv = services.BuildServiceProvider();
+            var serv = _factory.CreateServiceProvider();
             var vocabularyFactory = serv.GetService<VocabularyFactory>();
 
             var vocabulary = vocabularyFactory.CreateVocabulary(new VocabularyDto()
             {
+                Id = Guid.NewGuid().ToString(),
                 SourceLanguage = "en",
                 TargetLanguage = "de",
                 Word = "go",
@@ -51,9 +37,25 @@ namespace puglingSystemTest.Infrastructure.DbCosmosDb
                 },
             });
 
-            var result = await vocabulary.SaveAsync(CancellationToken.None);
+            var vocabularySave = await vocabulary.SaveAsync(CancellationToken.None);
 
-            result.Id.Should().NotBeNullOrEmpty();
+            vocabularySave.Id.Should().NotBeNullOrEmpty();
+
+            //var vocabularyRead = await vocabularyFactory.GetVocabularyAsync("4d02195a-8f9c-4b12-91ae-8c26dd3481a3");// vocabularySave.Id);
+
+            //vocabularyRead.Should().NotBeNull();
+
+            //vocabularyRead.Id.Should().Be(vocabularySave.Id);
+        }
+
+        [Fact]
+        public async Task GetVocabularyById()
+        {
+            var serv = _factory.CreateServiceProvider();
+            var vocabularyFactory = serv.GetService<IReadableService<IVocabularyEntity>>();
+            var vocabularyRead = await vocabularyFactory.GetById("4d02195a-8f9c-4b12-91ae-8c26dd3481a3");
+            vocabularyRead.Should().NotBeNull();
+            vocabularyRead.Id.Should().Be("4d02195a-8f9c-4b12-91ae-8c26dd3481a3");
         }
     }
 }

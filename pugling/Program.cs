@@ -15,9 +15,9 @@ builder.Services.AddScoped<VocabularyService>();
 builder.Services.AddScoped<VocabularyFactory>();
 
 // Register the DbFile services
-builder.Services.AddDbFileServices();
+//builder.Services.AddDbFileServices();
 // Register the DbContext with the CosmosDb settings
-//builder.Services.AddDbCosmosDbServices(builder.Configuration);
+builder.Services.AddDbCosmosDbServices();
 
 // Configure Serilog
 Log.Logger = new LoggerConfiguration()

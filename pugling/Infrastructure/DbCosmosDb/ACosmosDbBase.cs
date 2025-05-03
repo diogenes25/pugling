@@ -6,25 +6,19 @@ namespace pugling.Infrastructure.DbCosmosDb
     {
         protected readonly ILogger<ACosmosDbBase> _logger;
 
-        public string ContainerName { get; }
+        private readonly CosmosDbContainerFactory _cosmosDbContainerFactory;
+        protected readonly Container _container;
 
-        private readonly CosmosDbSettings _cosmosDbSettings;
-        private CosmosClient _client;
-        protected Container _container;
-
-        public ACosmosDbBase(CosmosDbSettings cosmosDbSettings, string containerName, ILogger<ACosmosDbBase> logger)
+        public ACosmosDbBase(CosmosDbContainerFactory cosmosDbContainerFactory, string containerName, ILogger<ACosmosDbBase> logger)
         {
-            ContainerName = containerName;
-            _cosmosDbSettings = cosmosDbSettings;
-            _client = new CosmosClient(_cosmosDbSettings.Endpoint, _cosmosDbSettings.AccountKey);
+            _cosmosDbContainerFactory = cosmosDbContainerFactory;
+            _container = _cosmosDbContainerFactory.GetContainer(containerName);
             _logger = logger;
-            InitializeCosmosClientAndContainer();
         }
 
-        private void InitializeCosmosClientAndContainer()
+        public Container GetContainer(string containerName)
         {
-            _container = _client.GetDatabase(_cosmosDbSettings.DatabaseName)
-                 .GetContainer(ContainerName);
+            return _cosmosDbContainerFactory.GetContainer(containerName);
         }
     }
 }

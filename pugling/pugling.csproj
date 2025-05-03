@@ -10,13 +10,16 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Infrastructure\DbCosmosDb\VocabularyCosmosDbService.cs" />
     <Compile Remove="Infrastructure\DbFile\VocabularyFileDbService.cs" />
+    <Compile Remove="Infrastructure\Persistance\IInputOutputConverter.cs" />
     <Compile Remove="Infrastructure\Persistance\VocabularyPersit.cs" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.4" />
     <PackageReference Include="Microsoft.Azure.Cosmos" Version="3.49.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="Serilog.AspNetCore" Version="9.0.0" />
     <PackageReference Include="Serilog.Sinks.ApplicationInsights" Version="4.0.0" />
     <PackageReference Include="Serilog.Sinks.Console" Version="6.0.0" />

@@ -1,6 +1,7 @@
 ﻿using pugling.Models;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace pugling.Infrastructure.DbServices.DbModels
 {
@@ -8,6 +9,7 @@ namespace pugling.Infrastructure.DbServices.DbModels
     {
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        [JsonPropertyName("id")]
         public string Id { get; set; }
 
         [Required]

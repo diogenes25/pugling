@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Mvc;
 using pugling.Controllers.ModelExamples;
 using pugling.Models;
 using pugling.Services;
@@ -172,5 +173,53 @@ namespace pugling.Controllers
             }
             return Ok(vocabulary);
         }
+
+        #region verb
+        // GET: api/vocabulary/{id}/verb
+        [HttpGet("{id}/verb")]
+        public async Task<ActionResult<VerbDetailsDto>> Verb([FromRoute] string id ){
+            var vocabulary = await _vocabularyService.GetVocabularyByIdAsync(id);
+            if (vocabulary == null)
+            {
+                return NotFound();
+            }
+
+            return Ok(vocabulary.Verb);
+        }
+
+        // GET: api/vocabulary/{id}/verb/conjugations
+        [HttpGet("{id}/verb/conjugations")]
+        public async Task<ActionResult<VerbDetailsDto>> VerbConjugations([FromRoute] string id)
+        {
+            var vocabulary = await _vocabularyService.GetVocabularyByIdAsync(id);
+            if (vocabulary == null)
+            {
+                return NotFound();
+            }
+            if (vocabulary?.Verb == null)
+            {
+                return NoContent();
+            }
+
+            return Ok(vocabulary.Verb?.Conjugations);
+        }
+
+        // GET: api/vocabulary/{id}/verb/conjugations/{tense}
+        [HttpGet("{id}/verb/conjugations/{tense}")]
+        public async Task<ActionResult<Dictionary<string, ConjugationDetailsDto>>> VerbConjugationsTens([FromRoute] string id, [FromRoute] string tense)
+        {
+            var vocabulary = await _vocabularyService.GetVocabularyByIdAsync(id);
+            if (vocabulary == null)
+            {
+                return NotFound();
+            }
+            if (vocabulary?.Verb?.Conjugations == null)
+            {
+                return NoContent();
+            }
+
+            return Ok(vocabulary.Verb?.Conjugations[tense]);
+        }
+        #endregion verb
     }
 }
