@@ -21,7 +21,7 @@ namespace puglingTest.Models.Converter
             UpdatedAt = DateTime.UtcNow,
             Version = "1.0",
             Pronunciation = "/ɡoʊ/",
-            PronunciationAudioUrl = "https://example.com/audio/go.mp3",
+            PronunciationAudioUrl = new Uri("https://example.com/audio/go.mp3"),
             RelatedForms =
             [
                 new() { Id = "en_go_de", Word = "go", Translation = "gehen" }

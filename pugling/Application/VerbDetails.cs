@@ -33,6 +33,11 @@ namespace pugling.Application
 
         public Dictionary<string, Dictionary<string, IConjugationDetails>>? Conjugations { get; private set; }
 
+        /// <summary>
+        /// The parent vocabulary of the verb.
+        /// </summary>
+        public Vocabulary ParentVocabulary { get; internal set; }
+
         public static VerbDetails Create(
             bool isBaseForm,
             Uri? baseFormRef,
@@ -86,6 +91,5 @@ namespace pugling.Application
         public static bool operator ==(VerbDetails? left, IVerbDetails? right) => left?.Equals(right) ?? right is null;
 
         public static bool operator !=(VerbDetails? left, IVerbDetails? right) => !(left == right);
-
     }
 }

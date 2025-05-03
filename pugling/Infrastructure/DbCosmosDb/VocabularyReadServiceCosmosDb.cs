@@ -74,8 +74,6 @@ namespace pugling.Infrastructure.DbCosmosDb
                 _logger.LogError(ex, "Error");
                 throw;
             }
-
-
         }
     }
 }

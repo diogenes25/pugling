@@ -37,7 +37,7 @@ namespace pugling.Controllers.ModelExamples
                                 Conjugations = new Dictionary<string, Dictionary<string, ConjugationDetailsDto>>
                                 {
                                     {
-                                        "Präsens", new Dictionary<string, ConjugationDetailsDto>
+                                        "Praesens", new Dictionary<string, ConjugationDetailsDto>
                                         {
                                             { "ich", new ConjugationDetailsDto { Form = "renne", VocObjRef = "/api/en/de/vocabularies/en_run_de_Praesens_ich.json" } },
                                             {"du", new ConjugationDetailsDto { Form = "rennst", VocObjRef = "/api/en/de/vocabularies/en_run_de_Praesens_du.json" } },
@@ -65,7 +65,7 @@ namespace pugling.Controllers.ModelExamples
                             ExampleSentenceTense = "present",
                             Description = "To move quickly on foot.",
                             Pronunciation = "/rʌn/",
-                            PronunciationAudioUrl = "https://example.com/audio/run.mp3",
+                            PronunciationAudioUrl = new Uri("https://example.com/audio/run.mp3"),
                             RelatedForms =
                             [
                                 new VocabularyBaseDto { Id = "en_sprint_de", Word = "sprint", Translation = "sprinten" }
@@ -92,14 +92,14 @@ namespace pugling.Controllers.ModelExamples
                             {
                                 DeterminedArticle = "das",
                                 Genus = EGenus.Neuter,
-                                UndeterminedArticle = "ein"
+                                UndeterminedArticle = "ein",
                             },
                             ExampleSentenceSrc = "I live in a house.",
                             ExampleSentenceTarget = "Ich wohne in einem Haus.",
                             ExampleSentenceTense = "present",
                             Description = "A building for human habitation.",
                             Pronunciation = "/haʊs/",
-                            PronunciationAudioUrl = "https://example.com/audio/house.mp3",
+                            PronunciationAudioUrl = new Uri("https://example.com/audio/house.mp3"),
                             RelatedForms =
                             [
                                 new VocabularyBaseDto { Id = "en_building_de", Word = "building", Translation = "Gebäude" },

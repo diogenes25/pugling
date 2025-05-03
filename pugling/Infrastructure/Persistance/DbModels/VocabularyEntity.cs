@@ -52,7 +52,7 @@ namespace pugling.Infrastructure.DbServices.DbModels
         /// Gets or sets the URL for the pronunciation audio.
         /// </summary>
         [Url]
-        public string? PronunciationAudioUrl { get; set; }
+        public Uri? PronunciationAudioUrl { get; set; }
 
         /// <summary>
         /// Gets or sets the source language of the vocabulary.
@@ -186,8 +186,8 @@ namespace pugling.Infrastructure.DbServices.DbModels
             if (this.Pronunciation?.Length > 500)
                 yield return new ValidationResult($"{nameof(this.Pronunciation)} must be at most 500 characters.", [nameof(this.Pronunciation)]);
 
-            if (!string.IsNullOrWhiteSpace(this.PronunciationAudioUrl) && !Uri.IsWellFormedUriString(this.PronunciationAudioUrl, UriKind.Absolute))
-                yield return new ValidationResult($"{nameof(this.PronunciationAudioUrl)} must be a valid URL.", [nameof(this.PronunciationAudioUrl)]);
+            //if (this.PronunciationAudioUrl!= null)
+            //    yield return new ValidationResult($"{nameof(this.PronunciationAudioUrl)} must be a valid URL.", [nameof(this.PronunciationAudioUrl)]);
 
             if (string.IsNullOrWhiteSpace(this.SourceLanguage) || this.SourceLanguage.Length > 100)
                 yield return new ValidationResult($"{nameof(this.SourceLanguage)} must be non-empty and at most 100 characters.", [nameof(this.SourceLanguage)]);

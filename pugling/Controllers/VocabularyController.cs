@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Http.HttpResults;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using pugling.Controllers.ModelExamples;
 using pugling.Models;
 using pugling.Services;
@@ -175,9 +174,11 @@ namespace pugling.Controllers
         }
 
         #region verb
+
         // GET: api/vocabulary/{id}/verb
         [HttpGet("{id}/verb")]
-        public async Task<ActionResult<VerbDetailsDto>> Verb([FromRoute] string id ){
+        public async Task<ActionResult<VerbDetailsDto>> Verb([FromRoute] string id)
+        {
             var vocabulary = await _vocabularyService.GetVocabularyByIdAsync(id);
             if (vocabulary == null)
             {
@@ -220,6 +221,7 @@ namespace pugling.Controllers
 
             return Ok(vocabulary.Verb?.Conjugations[tense]);
         }
+
         #endregion verb
     }
 }

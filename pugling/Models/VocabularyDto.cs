@@ -153,7 +153,7 @@ namespace pugling.Models
         /// </summary>
         /// <example>"https://example.com/audio/go.mp3"</example>
         [Url]
-        public string? PronunciationAudioUrl { get; init; }
+        public Uri? PronunciationAudioUrl { get; init; }
 
         /// <summary>
         /// The optional timestamp of when the vocabulary item was created.

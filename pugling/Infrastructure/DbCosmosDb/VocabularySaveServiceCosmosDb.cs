@@ -18,7 +18,7 @@ namespace pugling.Infrastructure.DbCosmosDb
             vocabularyEntity.FillAndValidate(saveObj);
             try
             {
-                var response = await _container.CreateItemAsync(vocabularyEntity, new PartitionKey(vocabularyEntity.vocabularypartition), cancellationToken: cancellationToken);               
+                var response = await _container.CreateItemAsync(vocabularyEntity, new PartitionKey(vocabularyEntity.vocabularypartition), cancellationToken: cancellationToken);
 
                 return Vocabulary.Create(response.Resource, this);
             }

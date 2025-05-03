@@ -68,7 +68,7 @@ namespace pugling.Models
         /// <summary>
         /// Gets the URL for the pronunciation audio of the vocabulary item.
         /// </summary>
-        string? PronunciationAudioUrl { get; }
+        Uri? PronunciationAudioUrl { get; }
 
         /// <summary>
         /// Gets the array of related vocabulary forms.

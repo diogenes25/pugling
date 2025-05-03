@@ -34,8 +34,8 @@ builder.Services.AddSwaggerServices();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
+//if (app.Environment.IsDevelopment())
+//{
     // https://localhost:7261/openapi/v1.json
     //app.MapOpenApi();
     app.UseSwagger();
@@ -47,7 +47,7 @@ if (app.Environment.IsDevelopment())
         //options.RoutePrefix = string.Empty; // Serve Swagger UI at the root (https://localhost:7261/)
         options.DocumentTitle = "PugLing API Documentation"; // Set the title of the Swagger UI page
     });
-}
+//}
 
 app.UseHttpsRedirection();
 

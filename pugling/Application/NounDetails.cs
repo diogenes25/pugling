@@ -1,4 +1,5 @@
-﻿using pugling.Models;
+﻿using pugling.Application;
+using pugling.Models;
 using pugling.Models.Constants;
 using pugling.Models.Converter;
 
@@ -21,6 +22,11 @@ public sealed class NounDetails : INounDetails, IEquatable<INounDetails?>
     /// Gets the undetermined article of the noun (e.g., "a" or "an").
     /// </summary>
     public string? UndeterminedArticle { get; private set; }
+
+    /// <summary>
+    /// The parent vocabulary of the noun.
+    /// </summary>
+    public Vocabulary ParentVocabulary { get; internal set; }
 
     /// <summary>
     /// Creates a new instance of <see cref="NounDetails"/> with the specified properties.

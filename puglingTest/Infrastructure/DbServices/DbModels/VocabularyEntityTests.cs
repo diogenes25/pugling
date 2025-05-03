@@ -23,19 +23,19 @@ namespace puglingTest.Infrastructure.DbServices.DbModels
                 ExampleSentenceSrc = "This is a test sentence.",
                 ExampleSentenceTarget = "Dies ist ein Testsatz.",
                 ExampleSentenceTense = "Present",
-                IdiomaticUsages = new[]
-                {
+                IdiomaticUsages =
+                    [
                        new IdiomaticUsageDto { Phrase = "test phrase", Translation = "test translation" }
-                   },
+                    ],
                 Noun = new NounDetailsDto
                 {
                     DeterminedArticle = "der",
                     Genus = EGenus.Masculine,
                     UndeterminedArticle = "ein"
                 },
-                PartOfSpeech = pugling.Models.Constants.EPartOfSpeech.Noun,
+                PartOfSpeech = EPartOfSpeech.Noun,
                 Pronunciation = "test pronunciation",
-                PronunciationAudioUrl = "http://example.com/audio.mp3",
+                PronunciationAudioUrl = new Uri("http://example.com/audio.mp3"),
                 RelatedForms = [new VocabularyBaseDto { Id = "2", Word = "related", Translation = "related_translation" }],
                 SourceLanguage = "en",
                 TargetLanguage = "de",
@@ -103,7 +103,7 @@ namespace puglingTest.Infrastructure.DbServices.DbModels
                 ExampleSentenceTarget = new string('d', 2001), // Exceeds max length
                 ExampleSentenceTense = new string('e', 101), // Exceeds max length
                 Pronunciation = new string('f', 501), // Exceeds max length
-                PronunciationAudioUrl = "invalid_url", // Invalid URL
+                //PronunciationAudioUrl = new Uri("invalid_url"), // Invalid URL
                 SourceLanguage = "", // Empty
                 TargetLanguage = "", // Empty
                 Version = new string('g', 51) // Exceeds max length
@@ -113,7 +113,7 @@ namespace puglingTest.Infrastructure.DbServices.DbModels
             var validationResults = entity.Validate(new ValidationContext(entity)).ToList();
 
             // Assert
-            validationResults.Should().HaveCount(11);
+            validationResults.Should().HaveCount(10);
             validationResults.Should().Contain(v => v.ErrorMessage!.Contains("Word must be non-empty and at most 500 characters."));
             validationResults.Should().Contain(v => v.ErrorMessage!.Contains("Translation must be non-empty and at most 500 characters."));
             //validationResults.Should().Contain(v => v.ErrorMessage!.Contains("PartOfSpeech must be non-empty and at most 500 characters."));
@@ -122,7 +122,7 @@ namespace puglingTest.Infrastructure.DbServices.DbModels
             validationResults.Should().Contain(v => v.ErrorMessage!.Contains("ExampleSentenceTarget must be at most 2000 characters."));
             validationResults.Should().Contain(v => v.ErrorMessage!.Contains("ExampleSentenceTense must be at most 100 characters."));
             validationResults.Should().Contain(v => v.ErrorMessage!.Contains("Pronunciation must be at most 500 characters."));
-            validationResults.Should().Contain(v => v.ErrorMessage!.Contains("PronunciationAudioUrl must be a valid URL."));
+            //validationResults.Should().Contain(v => v.ErrorMessage!.Contains("PronunciationAudioUrl must be a valid URL."));
             validationResults.Should().Contain(v => v.ErrorMessage!.Contains("SourceLanguage must be non-empty and at most 100 characters."));
             validationResults.Should().Contain(v => v.ErrorMessage!.Contains("TargetLanguage must be non-empty and at most 100 characters."));
             validationResults.Should().Contain(v => v.ErrorMessage!.Contains("Version must be non-empty and at most 50 characters."));

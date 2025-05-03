@@ -21,7 +21,7 @@ namespace puglingSystemTest.Infrastructure.DbCosmosDb
         public async Task SaveCosmosDbAsync()
         {
             var serv = _factory.CreateServiceProvider();
-            var vocabularyFactory = serv.GetService<VocabularyFactory>();
+            var vocabularyFactory = serv.GetRequiredService<VocabularyFactory>();
 
             var vocabulary = vocabularyFactory.CreateVocabulary(new VocabularyDto()
             {
@@ -34,18 +34,47 @@ namespace puglingSystemTest.Infrastructure.DbCosmosDb
                 Verb = new VerbDetailsDto()
                 {
                     IsBaseForm = true,
+                    Conjugations = new Dictionary<string, Dictionary<string, ConjugationDetailsDto>>()
+                    {
+                        {
+                            "Praesens", new Dictionary<string, ConjugationDetailsDto>()
+                            {
+                                { "ich", new ConjugationDetailsDto() { Form = "gehe" } },
+                                { "du", new ConjugationDetailsDto() { Form = "gehst" } },
+                                { "er/sie/es", new ConjugationDetailsDto() { Form = "geht" } },
+                                { "wir", new ConjugationDetailsDto() { Form = "gehen" } },
+                                { "ihr", new ConjugationDetailsDto() { Form = "geht" } },
+                                { "sie/Sie", new ConjugationDetailsDto() { Form = "gehen" } }
+                            }
+                        }
+                    },
+                    BaseFormRef = new Uri("http://example.com/vocab/go"),
+                    Infinitiv = "to go",
+                    Person = "third",
+                    Tense = "Present"
                 },
+                ExampleSentenceSrc = "I go every morning.",
+                ExampleSentenceTarget = "Ich gehe jeden Morgen.",
+                ExampleSentenceTense = "present",
+                Description = "To move from one place to another.",
+                Pronunciation = "/ɡoʊ/",
+                PronunciationAudioUrl = new Uri("https://example.com/audio/go.mp3"),
+                RelatedForms =
+                [
+                    new VocabularyBaseDto() { Id = "en_come_de", Word = "come", Translation = "kommen" }
+                ],
+                IdiomaticUsages = [
+                    new IdiomaticUsageDto() { Phrase = "go for a walk", Translation = "spazieren gehen" }
+                ]
             });
+
+            vocabulary.HasUnsavedChanges.Should().BeTrue();
 
             var vocabularySave = await vocabulary.SaveAsync(CancellationToken.None);
 
+            vocabulary.HasUnsavedChanges.Should().BeFalse();
+
             vocabularySave.Id.Should().NotBeNullOrEmpty();
-
-            //var vocabularyRead = await vocabularyFactory.GetVocabularyAsync("4d02195a-8f9c-4b12-91ae-8c26dd3481a3");// vocabularySave.Id);
-
-            //vocabularyRead.Should().NotBeNull();
-
-            //vocabularyRead.Id.Should().Be(vocabularySave.Id);
         }
 
         [Fact(Skip = "This test should only run when manually started or on local maschine.")]
@@ -53,9 +82,9 @@ namespace puglingSystemTest.Infrastructure.DbCosmosDb
         {
             var serv = _factory.CreateServiceProvider();
             var vocabularyFactory = serv.GetService<IReadableService<IVocabularyEntity>>();
-            var vocabularyRead = await vocabularyFactory.GetById("4d02195a-8f9c-4b12-91ae-8c26dd3481a3");
+            var vocabularyRead = await vocabularyFactory.GetById("5327ea8b-0ed0-4472-9359-618cf6fb3a85");
             vocabularyRead.Should().NotBeNull();
-            vocabularyRead.Id.Should().Be("4d02195a-8f9c-4b12-91ae-8c26dd3481a3");
+            vocabularyRead.Id.Should().Be("5327ea8b-0ed0-4472-9359-618cf6fb3a85");
         }
     }
 }
