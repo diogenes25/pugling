@@ -17,7 +17,7 @@ namespace puglingSystemTest.Infrastructure.DbCosmosDb
             _factory = factory;
         }
 
-        [Fact] //(Skip = "This test should only run when manually started or on local maschine.")]
+        [Fact (Skip = "This test should only run when manually started or on local maschine.")]
         public async Task SaveCosmosDbAsync()
         {
             var serv = _factory.CreateServiceProvider();
@@ -77,7 +77,7 @@ namespace puglingSystemTest.Infrastructure.DbCosmosDb
             vocabularySave.Id.Should().NotBeNullOrEmpty();
         }
 
-        [Fact] // (Skip = "This test should only run when manually started or on local maschine.")]
+        [Fact (Skip = "This test should only run when manually started or on local maschine.")]
         public async Task GetVocabularyById()
         {
             var serv = _factory.CreateServiceProvider();
