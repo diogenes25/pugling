@@ -68,7 +68,7 @@ namespace pugling.Controllers.ModelExamples
                             PronunciationAudioUrl = new Uri("https://example.com/audio/run.mp3"),
                             RelatedForms =
                             [
-                                new VocabularyBaseDto { Id = "en_sprint_de", Word = "sprint", Translation = "sprinten" }
+                                new VocabularyBaseDto { Id = "en_sprint_de", Word = "sprint", Translation = "sprinten", SourceLanguage="en", TargetLanguage="de" }
                             ],
                             IdiomaticUsages =
                             [
@@ -102,10 +102,10 @@ namespace pugling.Controllers.ModelExamples
                             PronunciationAudioUrl = new Uri("https://example.com/audio/house.mp3"),
                             RelatedForms =
                             [
-                                new VocabularyBaseDto { Id = "en_building_de", Word = "building", Translation = "Gebäude" },
-                                new VocabularyBaseDto { Id = "en_home_de", Word = "home", Translation = "Zuhause" },
-                                new VocabularyBaseDto { Id = "en_residence_de", Word = "residence", Translation = "Wohnsitz" },
-                                new VocabularyBaseDto { Id = "en_abode_de", Word = "abode", Translation = "Wohnung" }
+                                new VocabularyBaseDto {Id = "en_building_de", Word = "building", Translation = "Gebäude", SourceLanguage = "en", TargetLanguage = "de"},
+                                new VocabularyBaseDto {Id = "en_home_de", Word = "home", Translation = "Zuhause", SourceLanguage = "en", TargetLanguage = "de"},
+                                new VocabularyBaseDto {Id = "en_residence_de", Word = "residence", Translation = "Wohnsitz", SourceLanguage = "en", TargetLanguage = "de"},
+                                new VocabularyBaseDto {Id = "en_abode_de", Word = "abode", Translation = "Wohnung", SourceLanguage = "en", TargetLanguage = "de"}
                             ],
                             IdiomaticUsages =
                             [

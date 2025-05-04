@@ -9,6 +9,8 @@
                 Id = vocabulary.Id,
                 Word = vocabulary.Word,
                 Translation = vocabulary.Translation,
+                SourceLanguage = vocabulary.SourceLanguage,
+                TargetLanguage = vocabulary.TargetLanguage
             };
         }
 

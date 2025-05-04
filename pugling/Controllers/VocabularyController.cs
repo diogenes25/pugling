@@ -7,7 +7,7 @@ using Swashbuckle.AspNetCore.Filters;
 namespace pugling.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/{src}/{target}/[controller]")]
     [Produces("application/json")]
     public class VocabularyController(VocabularyService _vocabularyService, ILogger<VocabularyController> _logger) : ControllerBase
     {
@@ -22,7 +22,7 @@ namespace pugling.Controllers
         [ProducesResponseType(400)]
         [SwaggerRequestExample(typeof(VocabularyDto), typeof(VocabularyDtoExample))]
         [SwaggerResponseExample(201, typeof(VocabularyDtoSingleExample))]
-        public async Task<ActionResult<VocabularyDto>> CreateAsync([FromBody] VocabularyDto vocabularyDto)
+        public async Task<ActionResult<VocabularyDto>> CreateAsync([FromRoute] string src, [FromRoute] string target, [FromBody] VocabularyDto vocabularyDto)
         {
             var vocabulary = await _vocabularyService.AddVocabularyAsync(vocabularyDto);
             return CreatedAtAction(nameof(GetById), new { id = vocabulary.Id }, vocabulary);
@@ -57,7 +57,7 @@ namespace pugling.Controllers
         [HttpGet("{id}")]
         [ProducesResponseType(typeof(VocabularyDto), 200)]
         [ProducesResponseType(404)]
-        public async Task<ActionResult<VocabularyDto>> GetById(string id)
+        public async Task<ActionResult<VocabularyDto>> GetById([FromRoute] string src, [FromRoute] string target, [FromRoute] string id)
         {
             try
             {
@@ -103,7 +103,7 @@ namespace pugling.Controllers
         [ProducesResponseType(204)]
         [ProducesResponseType(404)]
         [ProducesResponseType(400)]
-        public async Task<ActionResult> Update(string id, [FromBody] VocabularyDto vocabularyDto)
+        public async Task<ActionResult> Update([FromRoute] string src, [FromRoute] string target, [FromRoute] string id, [FromBody] VocabularyDto vocabularyDto)
         {
             var existingVocabulary = _vocabularyService.GetVocabularyByIdAsync(id);
             if (existingVocabulary == null)
@@ -125,7 +125,7 @@ namespace pugling.Controllers
         [HttpDelete("{id}")]
         [ProducesResponseType(204)]
         [ProducesResponseType(404)]
-        public async Task<ActionResult> Delete(string id)
+        public async Task<ActionResult> Delete([FromRoute] string src, [FromRoute] string target, [FromRoute] string id)
         {
             //var vocabulary = _vocabularyService.DeleteVocabularyAsync(id);
             return NoContent();
@@ -139,7 +139,7 @@ namespace pugling.Controllers
         [ProducesResponseType(204)]
         [ProducesResponseType(404)]
         [ProducesResponseType(400)]
-        public async Task<ActionResult> PartialUpdate(string id, [FromBody] VocabularyDto patchDoc)
+        public async Task<ActionResult> PartialUpdate([FromRoute] string src, [FromRoute] string target, [FromRoute] string id, [FromBody] VocabularyDto patchDoc)
         {
             var vocabulary = await _vocabularyService.GetVocabularyByIdAsync(id);
             if (vocabulary == null)
@@ -159,7 +159,7 @@ namespace pugling.Controllers
         [HttpGet("search")]
         [ProducesResponseType(typeof(List<VocabularyDto>), 200)]
         [ProducesResponseType(400)]
-        public async Task<ActionResult<List<VocabularyDto>>> Search([FromQuery] string query)
+        public async Task<ActionResult<List<VocabularyDto>>> Search([FromRoute] string src, [FromRoute] string target, [FromQuery] string query)
         {
             if (string.IsNullOrWhiteSpace(query))
             {
@@ -177,7 +177,7 @@ namespace pugling.Controllers
 
         // GET: api/vocabulary/{id}/verb
         [HttpGet("{id}/verb")]
-        public async Task<ActionResult<VerbDetailsDto>> Verb([FromRoute] string id)
+        public async Task<ActionResult<VerbDetailsDto>> Verb([FromRoute] string src, [FromRoute] string target, [FromRoute] string id)
         {
             var vocabulary = await _vocabularyService.GetVocabularyByIdAsync(id);
             if (vocabulary == null)
@@ -190,7 +190,7 @@ namespace pugling.Controllers
 
         // GET: api/vocabulary/{id}/verb/conjugations
         [HttpGet("{id}/verb/conjugations")]
-        public async Task<ActionResult<VerbDetailsDto>> VerbConjugations([FromRoute] string id)
+        public async Task<ActionResult<VerbDetailsDto>> VerbConjugations([FromRoute] string src, [FromRoute] string target, [FromRoute] string id)
         {
             var vocabulary = await _vocabularyService.GetVocabularyByIdAsync(id);
             if (vocabulary == null)
@@ -207,7 +207,7 @@ namespace pugling.Controllers
 
         // GET: api/vocabulary/{id}/verb/conjugations/{tense}
         [HttpGet("{id}/verb/conjugations/{tense}")]
-        public async Task<ActionResult<Dictionary<string, ConjugationDetailsDto>>> VerbConjugationsTens([FromRoute] string id, [FromRoute] string tense)
+        public async Task<ActionResult<Dictionary<string, ConjugationDetailsDto>>> VerbConjugationsTens([FromRoute] string src, [FromRoute] string target, [FromRoute] string id, [FromRoute] string tense)
         {
             var vocabulary = await _vocabularyService.GetVocabularyByIdAsync(id);
             if (vocabulary == null)

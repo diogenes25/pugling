@@ -2,15 +2,13 @@
 using pugling.Models.Constants;
 using pugling.Models.Converter;
 using pugling.Services;
-using System.ComponentModel;
-using System.Runtime.CompilerServices;
 
 namespace pugling.Application
 {
     /// <summary>
     /// Represents a vocabulary item with details about its usage, translation, and related forms.
     /// </summary>
-    public sealed class Vocabulary : VocabularyBase, IVocabulary<IdiomaticUsage, NounDetails, VocabularyBase, VerbDetails>, IEquatable<IVocabulary<IdiomaticUsage, NounDetails, VocabularyBase, VerbDetails>?>, ISaveable<Vocabulary>, INotifyPropertyChanged
+    public sealed class Vocabulary : VocabularyBase, IVocabulary<IdiomaticUsage, NounDetails, VocabularyBase, VerbDetails>, IEquatable<IVocabulary<IdiomaticUsage, NounDetails, VocabularyBase, VerbDetails>?>, ISaveable<Vocabulary>
     {
         /// <summary>
         /// Gets the description of the vocabulary item.
@@ -193,42 +191,6 @@ namespace pugling.Application
         private VocabularyBase[]? _relatedForms;
 
         /// <summary>
-        /// Gets the source language of the vocabulary item.
-        /// </summary>
-        public string SourceLanguage
-        {
-            get => _sourceLanguage;
-            private set
-            {
-                if (_sourceLanguage != value)
-                {
-                    _sourceLanguage = value;
-                    OnPropertyChanged();
-                }
-            }
-        }
-
-        private string _sourceLanguage;
-
-        /// <summary>
-        /// Gets the target language of the vocabulary item.
-        /// </summary>
-        public string TargetLanguage
-        {
-            get => _targetLanguage;
-            private set
-            {
-                if (_targetLanguage != value)
-                {
-                    _targetLanguage = value;
-                    OnPropertyChanged();
-                }
-            }
-        }
-
-        private string _targetLanguage;
-
-        /// <summary>
         /// Gets the last updated timestamp of the vocabulary item.
         /// </summary>
         public DateTime? UpdatedAt
@@ -322,24 +284,24 @@ namespace pugling.Application
 
         public bool HasUnsavedChanges => _changedProperties.Any();
 
-        public Vocabulary(ISaveableService<Vocabulary> saveableService)
-        {
-            this.SaveableService = saveableService;
-        }
+        //public Vocabulary(ISaveableService<Vocabulary> saveableService)
+        //{
+        //    this.SaveableService = saveableService;
+        //}
 
         #region create
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Vocabulary"/> class with the specified details.
         /// </summary>
-        public Vocabulary(string id, string word, string translation, EPartOfSpeech partOfSpeech, string sourceLanguage, string targetLanguage)
+        public Vocabulary(string id, string word, string translation, EPartOfSpeech partOfSpeech, string sourceLanguage, string targetLanguage) : base(id, word, translation, sourceLanguage, targetLanguage)
         {
-            this.Id = id;
-            this.Word = word;
-            this.Translation = translation;
+            //this.Id = id;
+            //this.Word = word;
+            //this.Translation = translation;
             this.PartOfSpeech = partOfSpeech;
-            this.SourceLanguage = sourceLanguage;
-            this.TargetLanguage = targetLanguage;
+            //this.SourceLanguage = sourceLanguage;
+            //this.TargetLanguage = targetLanguage;
         }
 
         /// <summary>
@@ -387,8 +349,6 @@ namespace pugling.Application
         }
 
         #endregion create
-
-        public event PropertyChangedEventHandler? PropertyChanged;
 
         public void SetVerb(IVerbDetails? verb)
         {
@@ -440,14 +400,6 @@ namespace pugling.Application
             }
             this.Noun = NounDetails.Create(noun);
             this.Noun.ParentVocabulary = this;
-        }
-
-        private readonly HashSet<string> _changedProperties = [];
-
-        public void OnPropertyChanged([CallerMemberName] string propertyName = "")
-        {
-            _changedProperties.Add(propertyName);
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
         public Task<Vocabulary> SaveAsync(CancellationToken cancellationToken)

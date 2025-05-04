@@ -17,7 +17,7 @@ namespace puglingSystemTest.Infrastructure.DbCosmosDb
             _factory = factory;
         }
 
-        [Fact(Skip = "This test should only run when manually started or on local maschine.")]
+        [Fact] //(Skip = "This test should only run when manually started or on local maschine.")]
         public async Task SaveCosmosDbAsync()
         {
             var serv = _factory.CreateServiceProvider();
@@ -61,7 +61,7 @@ namespace puglingSystemTest.Infrastructure.DbCosmosDb
                 PronunciationAudioUrl = new Uri("https://example.com/audio/go.mp3"),
                 RelatedForms =
                 [
-                    new VocabularyBaseDto() { Id = "en_come_de", Word = "come", Translation = "kommen" }
+                    new VocabularyBaseDto() {Id = "en_come_de", Word = "come", Translation = "kommen", SourceLanguage = "en", TargetLanguage = "de"}
                 ],
                 IdiomaticUsages = [
                     new IdiomaticUsageDto() { Phrase = "go for a walk", Translation = "spazieren gehen" }
@@ -77,7 +77,7 @@ namespace puglingSystemTest.Infrastructure.DbCosmosDb
             vocabularySave.Id.Should().NotBeNullOrEmpty();
         }
 
-        [Fact(Skip = "This test should only run when manually started or on local maschine.")]
+        [Fact] // (Skip = "This test should only run when manually started or on local maschine.")]
         public async Task GetVocabularyById()
         {
             var serv = _factory.CreateServiceProvider();

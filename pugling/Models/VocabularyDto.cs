@@ -43,22 +43,6 @@ namespace pugling.Models
         public string Version { get; init; } = "1.0";
 
         /// <summary>
-        /// The language code of the source language (e.g., "en" for English).
-        /// </summary>
-        /// <example>"en"</example>
-        [Required]
-        [StringLength(3)]
-        public required string SourceLanguage { get; init; }
-
-        /// <summary>
-        /// The language code of the target language (e.g., "de" for German).
-        /// </summary>
-        /// <example>"de"</example>
-        [Required]
-        [StringLength(3)]
-        public required string TargetLanguage { get; init; }
-
-        /// <summary>
         /// The part of speech of the vocabulary item (e.g., "Noun", "Verb", "Adjective", "Phrase").
         /// </summary>
         /// <example>"Verb"</example>

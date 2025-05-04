@@ -29,5 +29,21 @@ namespace pugling.Models
         /// </summary>
         [StringLength(200)]
         public required string Translation { get; init; }
+
+        /// <summary>
+        /// The language code of the source language (e.g., "en" for English).
+        /// </summary>
+        /// <example>"en"</example>
+        [Required]
+        [StringLength(3)]
+        public required string SourceLanguage { get; init; }
+
+        /// <summary>
+        /// The language code of the target language (e.g., "de" for German).
+        /// </summary>
+        /// <example>"de"</example>
+        [Required]
+        [StringLength(3)]
+        public required string TargetLanguage { get; init; }
     }
 }

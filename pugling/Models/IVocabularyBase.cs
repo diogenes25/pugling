@@ -19,5 +19,15 @@
         /// Gets the word associated with the related form.
         /// </summary>
         string Word { get; }
+
+        /// <summary>
+        /// Gets the source language of the vocabulary item.
+        /// </summary>
+        string SourceLanguage { get; }
+
+        /// <summary>
+        /// Gets the target language of the vocabulary item.
+        /// </summary>
+        string TargetLanguage { get; }
     }
 }

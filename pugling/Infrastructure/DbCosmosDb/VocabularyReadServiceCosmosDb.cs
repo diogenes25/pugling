@@ -32,7 +32,7 @@ namespace pugling.Infrastructure.DbCosmosDb
                     if (task.IsFaulted)
                     {
                         _logger.LogError(task.Exception, "Error retrieving item with id {Id}", id);
-                        throw task.Exception;
+                        throw new ItemNotFoundException(id);
                     }
                     if (task.IsCanceled)
                     {

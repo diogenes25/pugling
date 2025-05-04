@@ -36,7 +36,7 @@ namespace puglingTest.Infrastructure.DbServices.DbModels
                 PartOfSpeech = EPartOfSpeech.Noun,
                 Pronunciation = "test pronunciation",
                 PronunciationAudioUrl = new Uri("http://example.com/audio.mp3"),
-                RelatedForms = [new VocabularyBaseDto { Id = "2", Word = "related", Translation = "related_translation" }],
+                RelatedForms = [new VocabularyBaseDto {Id = "2", Word = "related", Translation = "related_translation", SourceLanguage = "en", TargetLanguage = "de" }],
                 SourceLanguage = "en",
                 TargetLanguage = "de",
                 UpdatedAt = DateTime.UtcNow,
@@ -113,7 +113,7 @@ namespace puglingTest.Infrastructure.DbServices.DbModels
             var validationResults = entity.Validate(new ValidationContext(entity)).ToList();
 
             // Assert
-            validationResults.Should().HaveCount(10);
+            validationResults.Should().HaveCount(8);
             validationResults.Should().Contain(v => v.ErrorMessage!.Contains("Word must be non-empty and at most 500 characters."));
             validationResults.Should().Contain(v => v.ErrorMessage!.Contains("Translation must be non-empty and at most 500 characters."));
             //validationResults.Should().Contain(v => v.ErrorMessage!.Contains("PartOfSpeech must be non-empty and at most 500 characters."));
@@ -123,8 +123,8 @@ namespace puglingTest.Infrastructure.DbServices.DbModels
             validationResults.Should().Contain(v => v.ErrorMessage!.Contains("ExampleSentenceTense must be at most 100 characters."));
             validationResults.Should().Contain(v => v.ErrorMessage!.Contains("Pronunciation must be at most 500 characters."));
             //validationResults.Should().Contain(v => v.ErrorMessage!.Contains("PronunciationAudioUrl must be a valid URL."));
-            validationResults.Should().Contain(v => v.ErrorMessage!.Contains("SourceLanguage must be non-empty and at most 100 characters."));
-            validationResults.Should().Contain(v => v.ErrorMessage!.Contains("TargetLanguage must be non-empty and at most 100 characters."));
+            //validationResults.Should().Contain(v => v.ErrorMessage!.Contains("SourceLanguage must be non-empty and at most 100 characters."));
+            //validationResults.Should().Contain(v => v.ErrorMessage!.Contains("TargetLanguage must be non-empty and at most 100 characters."));
             validationResults.Should().Contain(v => v.ErrorMessage!.Contains("Version must be non-empty and at most 50 characters."));
         }
     }

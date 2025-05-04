@@ -24,7 +24,7 @@ namespace puglingTest.Models.Converter
             PronunciationAudioUrl = new Uri("https://example.com/audio/go.mp3"),
             RelatedForms =
             [
-                new() { Id = "en_go_de", Word = "go", Translation = "gehen" }
+                new() {Id = "en_go_de", Word = "go", Translation = "gehen", SourceLanguage = "en", TargetLanguage = "de"}
             ],
             IdiomaticUsages =
             [

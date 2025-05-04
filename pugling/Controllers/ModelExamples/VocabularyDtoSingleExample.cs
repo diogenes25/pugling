@@ -44,7 +44,7 @@ namespace pugling.Controllers.ModelExamples
                 PronunciationAudioUrl = new Uri("https://example.com/audio/run.mp3"),
                 RelatedForms =
                     [
-                        new VocabularyBaseDto { Id = "en_sprint_de", Word = "sprint", Translation = "sprinten" }
+                        new VocabularyBaseDto {Id = "en_sprint_de", Word = "sprint", Translation = "sprinten", SourceLanguage = "en", TargetLanguage = "de"     }
                     ],
                 IdiomaticUsages =
                     [

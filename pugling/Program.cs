@@ -36,17 +36,17 @@ var app = builder.Build();
 // Configure the HTTP request pipeline.
 //if (app.Environment.IsDevelopment())
 //{
-    // https://localhost:7261/openapi/v1.json
-    //app.MapOpenApi();
-    app.UseSwagger();
-    // Enable Swagger UI
-    //app.UseSwaggerUI();
-    app.UseSwaggerUI(options =>
-    {
-        //options.SwaggerEndpoint("/openapi/v1.json", "PugLing API V1");
-        //options.RoutePrefix = string.Empty; // Serve Swagger UI at the root (https://localhost:7261/)
-        options.DocumentTitle = "PugLing API Documentation"; // Set the title of the Swagger UI page
-    });
+// https://localhost:7261/openapi/v1.json
+//app.MapOpenApi();
+app.UseSwagger();
+// Enable Swagger UI
+//app.UseSwaggerUI();
+app.UseSwaggerUI(options =>
+{
+    //options.SwaggerEndpoint("/openapi/v1.json", "PugLing API V1");
+    //options.RoutePrefix = string.Empty; // Serve Swagger UI at the root (https://localhost:7261/)
+    options.DocumentTitle = "PugLing API Documentation"; // Set the title of the Swagger UI page
+});
 //}
 
 app.UseHttpsRedirection();

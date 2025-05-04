@@ -55,20 +55,6 @@ namespace pugling.Infrastructure.DbServices.DbModels
         public Uri? PronunciationAudioUrl { get; set; }
 
         /// <summary>
-        /// Gets or sets the source language of the vocabulary.
-        /// </summary>
-        [Required]
-        [MaxLength(100)]
-        public string SourceLanguage { get; set; } = string.Empty;
-
-        /// <summary>
-        /// Gets or sets the target language of the vocabulary.
-        /// </summary>
-        [Required]
-        [MaxLength(100)]
-        public string TargetLanguage { get; set; } = string.Empty;
-
-        /// <summary>
         /// Gets or sets the last updated timestamp for the vocabulary.
         /// </summary>
         public DateTime? UpdatedAt { get; set; }
@@ -117,7 +103,7 @@ namespace pugling.Infrastructure.DbServices.DbModels
         /// <returns>The filled and validated <see cref="VocabularyEntity"/>.</returns>
         /// <exception cref="ArgumentNullException">Thrown when the provided vocabulary is null.</exception>
         /// <exception cref="ArgumentException">Thrown when validation constraints are violated.</exception>
-        public VocabularyEntity FillAndValidate([NotNull] Vocabulary vocabulary)
+        public virtual VocabularyEntity FillAndValidate([NotNull] Vocabulary vocabulary)
         {
             if (vocabulary == null)
             {
@@ -188,12 +174,6 @@ namespace pugling.Infrastructure.DbServices.DbModels
 
             //if (this.PronunciationAudioUrl!= null)
             //    yield return new ValidationResult($"{nameof(this.PronunciationAudioUrl)} must be a valid URL.", [nameof(this.PronunciationAudioUrl)]);
-
-            if (string.IsNullOrWhiteSpace(this.SourceLanguage) || this.SourceLanguage.Length > 100)
-                yield return new ValidationResult($"{nameof(this.SourceLanguage)} must be non-empty and at most 100 characters.", [nameof(this.SourceLanguage)]);
-
-            if (string.IsNullOrWhiteSpace(this.TargetLanguage) || this.TargetLanguage.Length > 100)
-                yield return new ValidationResult($"{nameof(this.TargetLanguage)} must be non-empty and at most 100 characters.", [nameof(this.TargetLanguage)]);
 
             if (string.IsNullOrWhiteSpace(this.Version) || this.Version.Length > 50)
                 yield return new ValidationResult($"{nameof(this.Version)} must be non-empty and at most 50 characters.", [nameof(this.Version)]);

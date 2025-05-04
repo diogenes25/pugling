@@ -76,16 +76,6 @@ namespace pugling.Models
         TVocabularyBase[]? RelatedForms { get; }
 
         /// <summary>
-        /// Gets the source language of the vocabulary item.
-        /// </summary>
-        string SourceLanguage { get; }
-
-        /// <summary>
-        /// Gets the target language of the vocabulary item.
-        /// </summary>
-        string TargetLanguage { get; }
-
-        /// <summary>
         /// Gets the date and time when the vocabulary item was last updated.
         /// </summary>
         DateTime? UpdatedAt { get; }

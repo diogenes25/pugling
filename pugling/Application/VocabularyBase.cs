@@ -1,11 +1,13 @@
 ﻿using pugling.Models;
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
 
 namespace pugling.Application
 {
     /// <summary>
     /// Represents a related vocabulary item with an ID, word, and translation.
     /// </summary>
-    public class VocabularyBase : IVocabularyBase, IEquatable<IVocabularyBase?>
+    public class VocabularyBase : IVocabularyBase, IEquatable<IVocabularyBase?>, INotifyPropertyChanged
     {
         /// <summary>
         /// Gets the ID of the related vocabulary item.
@@ -23,20 +25,57 @@ namespace pugling.Application
         public string Translation { get; protected set; }
 
         /// <summary>
+        /// Gets the source language of the vocabulary item.
+        /// </summary>
+        public string SourceLanguage
+        {
+            get => _sourceLanguage;
+            protected set
+            {
+                if (_sourceLanguage != value)
+                {
+                    _sourceLanguage = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
+        private string _sourceLanguage;
+
+        /// <summary>
+        /// Gets the target language of the vocabulary item.
+        /// </summary>
+        public string TargetLanguage
+        {
+            get => _targetLanguage;
+            protected set
+            {
+                if (_targetLanguage != value)
+                {
+                    _targetLanguage = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
+        private string _targetLanguage;
+
+        public event PropertyChangedEventHandler? PropertyChanged;
+
+        /// <summary>
         /// Creates a new instance of <see cref="VocabularyBase"/> with the specified ID, word, and translation.
         /// </summary>
         /// <param name="id">The ID of the related vocabulary item.</param>
         /// <param name="word">The word or phrase of the related vocabulary item.</param>
         /// <param name="translation">The translation of the related vocabulary item.</param>
         /// <returns>A new instance of <see cref="VocabularyBase"/>.</returns>
-        public static VocabularyBase Create(string id, string word, string translation)
+        public VocabularyBase(string id, string word, string translation, string sourcelanguage, string targetlanguae)
         {
-            return new VocabularyBase
-            {
-                Id = id,
-                Word = word,
-                Translation = translation
-            };
+            Id = id;
+            Word = word;
+            Translation = translation;
+            SourceLanguage = sourcelanguage;
+            TargetLanguage = targetlanguae;
         }
 
         /// <summary>
@@ -46,12 +85,13 @@ namespace pugling.Application
         /// <returns>A new instance of <see cref="VocabularyBase"/>.</returns>
         public static VocabularyBase Create(IVocabularyBase relatedForm)
         {
-            return new VocabularyBase
-            {
-                Id = relatedForm.Id,
-                Word = relatedForm.Word,
-                Translation = relatedForm.Translation
-            };
+            return new VocabularyBase(
+                        relatedForm.Id,
+                        relatedForm.Word,
+                        relatedForm.Translation,
+                        relatedForm.SourceLanguage,
+                        relatedForm.TargetLanguage
+                    );
         }
 
         /// <summary>
@@ -74,7 +114,9 @@ namespace pugling.Application
             return other is not null &&
                    this.Id == other.Id &&
                    this.Word == other.Word &&
-                   this.Translation == other.Translation;
+                   this.Translation == other.Translation &&
+                   this.SourceLanguage == other.SourceLanguage &&
+                     this.TargetLanguage == other.TargetLanguage;
         }
 
         /// <summary>
@@ -83,7 +125,7 @@ namespace pugling.Application
         /// <returns>A hash code for the current object.</returns>
         public override int GetHashCode()
         {
-            return HashCode.Combine(this.Id, this.Word, this.Translation);
+            return HashCode.Combine(this.Id, this.Word, this.Translation, this.SourceLanguage, this.TargetLanguage);
         }
 
         /// <summary>
@@ -106,6 +148,14 @@ namespace pugling.Application
         public static bool operator !=(VocabularyBase? left, IVocabularyBase? right)
         {
             return !(left == right);
+        }
+
+        protected readonly HashSet<string> _changedProperties = [];
+
+        public void OnPropertyChanged([CallerMemberName] string propertyName = "")
+        {
+            _changedProperties.Add(propertyName);
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
     }
 }

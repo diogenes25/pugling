@@ -21,9 +21,11 @@ namespace puglingTest.Application
             var id = "1";
             var word = "hello";
             var translation = "hola";
+            var sourceLanguage = "en";
+            var targetLanguage = "es";
 
             // Act
-            var result = VocabularyBase.Create(id, word, translation);
+            var result = new VocabularyBase(id, word, translation, sourceLanguage,targetLanguage);
 
             // Assert
             result.Should().NotBeNull("the created instance should not be null");
@@ -63,8 +65,8 @@ namespace puglingTest.Application
         public void Equals_SameValues_ReturnsTrueTest()
         {
             // Arrange
-            var vocab1 = VocabularyBase.Create("1", "hello", "hola");
-            var vocab2 = VocabularyBase.Create("1", "hello", "hola");
+            var vocab1 = new VocabularyBase("1", "hello", "hola", "en", "es");
+            var vocab2 = new VocabularyBase("1", "hello", "hola", "en", "es");
 
             // Act
             var result = vocab1.Equals(vocab2);
@@ -81,8 +83,8 @@ namespace puglingTest.Application
         public void Equals_DifferentValues_ReturnsFalseTest()
         {
             // Arrange
-            var vocab1 = VocabularyBase.Create("1", "hello", "hola");
-            var vocab2 = VocabularyBase.Create("2", "goodbye", "adios");
+            var vocab1 = new VocabularyBase("1", "hello", "hola", "en", "es");
+            var vocab2 = new VocabularyBase("2", "goodbye", "adios", "en", "es");
 
             // Act
             var result = vocab1.Equals(vocab2);
@@ -99,8 +101,8 @@ namespace puglingTest.Application
         public void GetHashCode_SameValues_ReturnsSameHashCodeTest()
         {
             // Arrange
-            var vocab1 = VocabularyBase.Create("1", "hello", "hola");
-            var vocab2 = VocabularyBase.Create("1", "hello", "hola");
+            var vocab1 = new VocabularyBase("1", "hello", "hola", "en", "es");
+            var vocab2 = new VocabularyBase("1", "hello", "hola", "en", "es");
 
             // Act
             var hashCode1 = vocab1.GetHashCode();
@@ -118,8 +120,8 @@ namespace puglingTest.Application
         public void GetHashCode_DifferentValues_ReturnsDifferentHashCodesTest()
         {
             // Arrange
-            var vocab1 = VocabularyBase.Create("1", "hello", "hola");
-            var vocab2 = VocabularyBase.Create("2", "goodbye", "adios");
+            var vocab1 = new VocabularyBase("1", "hello", "hola", "en", "es");
+            var vocab2 = new VocabularyBase("2", "goodbye", "adios", "en", "es");
 
             // Act
             var hashCode1 = vocab1.GetHashCode();
@@ -136,8 +138,8 @@ namespace puglingTest.Application
         public void EqualityOperator_SameValues_ReturnsTrueTest()
         {
             // Arrange
-            var vocab1 = VocabularyBase.Create("1", "hello", "hola");
-            var vocab2 = VocabularyBase.Create("1", "hello", "hola");
+            var vocab1 = new VocabularyBase("1", "hello", "hola", "en", "es");
+            var vocab2 = new VocabularyBase("1", "hello", "hola", "en", "es");
 
             // Act
             var result = vocab1 == vocab2;
@@ -153,8 +155,8 @@ namespace puglingTest.Application
         public void EqualityOperator_DifferentValues_ReturnsFalseTest()
         {
             // Arrange
-            var vocab1 = VocabularyBase.Create("1", "hello", "hola");
-            var vocab2 = VocabularyBase.Create("2", "goodbye", "adios");
+            var vocab1 = new VocabularyBase("1", "hello", "hola", "en", "es");
+            var vocab2 = new VocabularyBase("2", "goodbye", "adios", "en", "es");
 
             // Act
             var result = vocab1 == vocab2;
@@ -170,8 +172,8 @@ namespace puglingTest.Application
         public void InequalityOperator_SameValues_ReturnsFalseTest()
         {
             // Arrange
-            var vocab1 = VocabularyBase.Create("1", "hello", "hola");
-            var vocab2 = VocabularyBase.Create("1", "hello", "hola");
+            var vocab1 = new VocabularyBase("1", "hello", "hola", "en", "es");
+            var vocab2 = new VocabularyBase("1", "hello", "hola", "en", "es");
 
             // Act
             var result = vocab1 != vocab2;
@@ -187,8 +189,8 @@ namespace puglingTest.Application
         public void InequalityOperator_DifferentValues_ReturnsTrueTest()
         {
             // Arrange
-            var vocab1 = VocabularyBase.Create("1", "hello", "hola");
-            var vocab2 = VocabularyBase.Create("2", "goodbye", "adios");
+            var vocab1 = new VocabularyBase("1", "hello", "hola", "en", "es");
+            var vocab2 = new VocabularyBase("2", "goodbye", "adios", "en", "es");
 
             // Act
             var result = vocab1 != vocab2;

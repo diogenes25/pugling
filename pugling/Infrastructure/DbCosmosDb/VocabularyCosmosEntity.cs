@@ -1,4 +1,5 @@
-﻿using pugling.Infrastructure.DbServices.DbModels;
+﻿using pugling.Application;
+using pugling.Infrastructure.DbServices.DbModels;
 using System.Text.Json.Serialization;
 
 namespace pugling.Infrastructure.DbCosmosDb
@@ -9,5 +10,12 @@ namespace pugling.Infrastructure.DbCosmosDb
         public string vocabularypartition { get; set; } = "vocabulary";
 
         public string _ttl { get; set; } = "10000";
+
+        public new VocabularyCosmosEntity FillAndValidate(Vocabulary saveObj)
+        {
+            base.FillAndValidate(saveObj);
+            this.vocabularypartition = $"{saveObj.SourceLanguage}-{saveObj.TargetLanguage}-vocabulary";
+            return this;
+        }
     }
 }
