@@ -1,8 +1,7 @@
-﻿namespace pugling.Models
+﻿namespace pugling.Models;
+
+public interface IConjugationDetails
 {
-    public interface IConjugationDetails
-    {
-        string Form { get; }
-        string? VocObjRef { get; }
-    }
+    string Form { get; }
+    string? VocObjRef { get; }
 }

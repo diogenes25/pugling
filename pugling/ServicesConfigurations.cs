@@ -1,7 +1,7 @@
-﻿using pugling.Application;
-using pugling.Infrastructure.DbCosmosDb;
-using pugling.Infrastructure.DbFile;
-using pugling.Infrastructure.Persistance.DbModels;
+﻿using pugling.Application.Vocabularies;
+using pugling.Infrastructure.Persistance.DbCosmosDb;
+using pugling.Infrastructure.Persistance.DbFile;
+using pugling.Infrastructure.Persistance.DbModels.Vocabularies;
 using pugling.Services;
 using Swashbuckle.AspNetCore.Filters;
 

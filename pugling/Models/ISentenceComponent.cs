@@ -1,10 +1,9 @@
-﻿namespace pugling.Models
+﻿namespace pugling.Models;
+
+public interface ISentenceComponent
 {
-    public interface ISentenceComponent
-    {
-        string? Case { get; }
-        string? SentencePart { get; }
-        string Text { get; }
-        string? VocabularyId { get; }
-    }
+    string? Case { get; }
+    string? SentencePart { get; }
+    string Text { get; }
+    string? VocabularyId { get; }
 }

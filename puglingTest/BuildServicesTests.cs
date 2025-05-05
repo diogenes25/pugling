@@ -3,7 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Moq;
 using pugling;
-using pugling.Infrastructure.DbCosmosDb;
+using pugling.Infrastructure.Persistance.DbCosmosDb;
 using pugling.Services;
 
 namespace puglingTest

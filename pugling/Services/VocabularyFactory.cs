@@ -1,25 +1,24 @@
-﻿using pugling.Application;
-using pugling.Infrastructure.Persistance.DbModels;
+﻿using pugling.Application.Vocabularies;
+using pugling.Infrastructure.Persistance.DbModels.Vocabularies;
 using pugling.Models;
 
-namespace pugling.Services
+namespace pugling.Services;
+
+public class VocabularyFactory(
+ISaveableService<Vocabulary> SaveableService,
+IReadableService<IVocabularyEntity> ReadableService)
 {
-    public class VocabularyFactory(
-    ISaveableService<Vocabulary> SaveableService,
-    IReadableService<IVocabularyEntity> ReadableService)
+    public Vocabulary CreateVocabulary(string src, string target, IVocabulary<IIdiomaticUsage, INounDetails, IVocabularyBase, IVerbDetails> vocabulary)
     {
-        public Vocabulary CreateVocabulary(IVocabulary<IIdiomaticUsage, INounDetails, IVocabularyBase, IVerbDetails> vocabulary)
-        {
-            var newVocabulary = Vocabulary.Create(vocabulary, SaveableService);
-            // newVocabulary.SaveableService = SaveableService;
-            return newVocabulary;
-        }
+        var newVocabulary = Vocabulary.Create(src, target, vocabulary, SaveableService);
+        // newVocabulary.SaveableService = SaveableService;
+        return newVocabulary;
+    }
 
-        public async Task<IVocabularyEntity> GetVocabularyAsync(string id)
-        {
-            var vocabularyEntity = await ReadableService.GetById(id);
+    public async Task<IVocabularyEntity> GetVocabularyAsync(string id)
+    {
+        var vocabularyEntity = await ReadableService.GetById(id);
 
-            return vocabularyEntity ?? throw new KeyNotFoundException($"Vocabulary with ID {id} not found.");
-        }
+        return vocabularyEntity ?? throw new KeyNotFoundException($"Vocabulary with ID {id} not found.");
     }
 }

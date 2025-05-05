@@ -1,8 +1,7 @@
-﻿namespace pugling.Models
+﻿namespace pugling.Models;
+
+public interface IIdiomaticUsage
 {
-    public interface IIdiomaticUsage
-    {
-        string Phrase { get; }
-        string Translation { get; }
-    }
+    string Phrase { get; }
+    string Translation { get; }
 }

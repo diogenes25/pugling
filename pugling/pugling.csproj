@@ -10,8 +10,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="Infrastructure\DbCosmosDb\VocabularyCosmosDbService.cs" />
-    <Compile Remove="Infrastructure\DbFile\VocabularyFileDbService.cs" />
+    <Compile Remove="Infrastructure\Persistance\DbCosmosDb\VocabularyCosmosDbService.cs" />
+    <Compile Remove="Infrastructure\Persistance\DbFile\VocabularyFileDbService.cs" />
     <Compile Remove="Infrastructure\Persistance\IInputOutputConverter.cs" />
     <Compile Remove="Infrastructure\Persistance\VocabularyPersit.cs" />
   </ItemGroup>
@@ -28,11 +28,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Infrastructure\DbEntityFramework\DbContext\" />
-    <Folder Include="Infrastructure\DbEntityFramework\Migrations\" />
-    <Folder Include="Infrastructure\DbEntityFramework\Configuration\" />
-    <Folder Include="Infrastructure\DbEntityFramework\" />
-    <Folder Include="Infrastructure\DbEntityFramework\Repositories\" />
+    <Folder Include="Infrastructure\Persistance\DbEntityFramework\DbContext\" />
+    <Folder Include="Infrastructure\Persistance\DbEntityFramework\Migrations\" />
+    <Folder Include="Infrastructure\Persistance\DbEntityFramework\Configuration\" />
+    <Folder Include="Infrastructure\Persistance\DbEntityFramework\" />
+    <Folder Include="Infrastructure\Persistance\DbEntityFramework\Repositories\" />
   </ItemGroup>
 
   <ItemGroup>

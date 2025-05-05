@@ -1,11 +1,10 @@
-﻿namespace pugling.Models
+﻿namespace pugling.Models;
+
+public interface ISentence
 {
-    public interface ISentence
-    {
-        SentenceComponentDto[]? Components { get; }
-        string? SentenceAudio { get; }
-        string SourceSentence { get; }
-        string? Tense { get; }
-        string Translation { get; }
-    }
+    SentenceComponentDto[]? Components { get; }
+    string? SentenceAudio { get; }
+    string SourceSentence { get; }
+    string? Tense { get; }
+    string Translation { get; }
 }
