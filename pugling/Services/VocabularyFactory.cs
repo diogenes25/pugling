@@ -15,9 +15,9 @@ IReadableService<IVocabularyEntity> ReadableService)
         return newVocabulary;
     }
 
-    public async Task<IVocabularyEntity> GetVocabularyAsync(string id)
+    public async Task<IVocabularyEntity> GetVocabularyAsync(string srclang, string targetlang, string id)
     {
-        var vocabularyEntity = await ReadableService.GetById(id);
+        var vocabularyEntity = await ReadableService.GetById(srclang, targetlang, id);
 
         return vocabularyEntity ?? throw new KeyNotFoundException($"Vocabulary with ID {id} not found.");
     }

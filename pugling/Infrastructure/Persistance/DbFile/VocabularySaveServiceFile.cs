@@ -11,7 +11,7 @@ public class VocabularySaveServiceFile : ISaveableService<Vocabulary>, IReadable
 
     public VocabularySaveServiceFile(ILogger<VocabularySaveServiceFile> logger)
     {
-        _logger = logger;
+        this._logger = logger;
         // Combine the application path with the file name
         //this._filePath = Path.Combine(AppContext.BaseDirectory, "vocabulariesDB.json");
     }
@@ -22,7 +22,7 @@ public class VocabularySaveServiceFile : ISaveableService<Vocabulary>, IReadable
         var vocabularyJson = JsonSerializer.Serialize(vocabularyEntity, new JsonSerializerOptions { WriteIndented = true });
         var filePath = Path.Combine(AppContext.BaseDirectory, $"{vocabularyEntity.Id}.json");
         await File.WriteAllTextAsync(filePath, vocabularyJson);
-        _logger.LogInformation("Vocabulary saved to file: {FilePath}", filePath);
+        this._logger.LogInformation("Vocabulary saved to file: {FilePath}", filePath);
         return Vocabulary.Create(vacabulary.SourceLanguage, vacabulary.TargetLanguage, vocabularyEntity, this);
     }
 
@@ -32,11 +32,11 @@ public class VocabularySaveServiceFile : ISaveableService<Vocabulary>, IReadable
         if (File.Exists(filePath))
         {
             File.Delete(filePath);
-            _logger.LogInformation("Vocabulary deleted from file: {FilePath}", filePath);
+            this._logger.LogInformation("Vocabulary deleted from file: {FilePath}", filePath);
         }
         else
         {
-            _logger.LogWarning("File not found: {FilePath}", filePath);
+            this._logger.LogWarning("File not found: {FilePath}", filePath);
         }
         return Task.FromResult<Vocabulary>(null);
     }
@@ -46,7 +46,7 @@ public class VocabularySaveServiceFile : ISaveableService<Vocabulary>, IReadable
         throw new NotImplementedException();
     }
 
-    public async Task<IVocabularyEntity> GetById(string id)
+    public async Task<IVocabularyEntity> GetById(string srclang, string targetlang, string id)
     {
         var filePath = Path.Combine(AppContext.BaseDirectory, $"{id}.json");
         if (File.Exists(filePath))
@@ -57,7 +57,7 @@ public class VocabularySaveServiceFile : ISaveableService<Vocabulary>, IReadable
         }
         else
         {
-            _logger.LogWarning("File not found: {FilePath}", filePath);
+            this._logger.LogWarning("File not found: {FilePath}", filePath);
             return null;
         }
     }

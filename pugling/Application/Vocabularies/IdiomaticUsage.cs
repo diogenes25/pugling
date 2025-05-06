@@ -3,23 +3,17 @@ using pugling.Models.Converter;
 
 namespace pugling.Application.Vocabularies;
 
-public sealed class IdiomaticUsage : IIdiomaticUsage, IEquatable<IIdiomaticUsage?>
+public sealed class IdiomaticUsage(string phrase, string translation) : IIdiomaticUsage, IEquatable<IIdiomaticUsage?>
 {
     /// <summary>
     /// The idiomatic phrase in the source language.
     /// </summary>
-    public string Phrase { get; private set; }
+    public string Phrase { get; private set; } = phrase;
 
     /// <summary>
     /// The translation of the idiomatic phrase in the target language.
     /// </summary>
-    public string Translation { get; private set; }
-
-    public IdiomaticUsage(string phrase, string translation)
-    {
-        Phrase = phrase;
-        Translation = translation;
-    }
+    public string Translation { get; private set; } = translation;
 
     public static IdiomaticUsage Create(IIdiomaticUsage idiomaticUsage)
     {

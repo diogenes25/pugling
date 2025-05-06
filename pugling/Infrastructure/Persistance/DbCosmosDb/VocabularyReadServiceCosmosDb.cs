@@ -11,7 +11,7 @@ public class VocabularyReadServiceCosmosDb : ACosmosDbBase, IReadableService<IVo
     {
     }
 
-    public async Task<IVocabularyEntity> GetById(string id)
+    public async Task<IVocabularyEntity> GetById(string srclang, string targetlang, string id)
     {
         try
         {
@@ -27,7 +27,7 @@ public class VocabularyReadServiceCosmosDb : ACosmosDbBase, IReadableService<IVo
             //    throw;
             //}
 
-            var response = await _container.ReadItemAsync<VocabularyCosmosEntity>(id, new PartitionKey("vocabulary"))
+            var response = await _container.ReadItemAsync<VocabularyCosmosEntity>(id, new PartitionKey($"{srclang}-{targetlang}-vocabulary"))
             .ContinueWith(task =>
             {
                 if (task.IsFaulted)

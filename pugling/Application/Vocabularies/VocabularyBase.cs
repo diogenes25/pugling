@@ -29,13 +29,13 @@ public class VocabularyBase : IVocabularyBase, IEquatable<IVocabularyBase?>, INo
     /// </summary>
     public string SourceLanguage
     {
-        get => _sourceLanguage;
+        get => this._sourceLanguage;
         protected set
         {
-            if (_sourceLanguage != value)
+            if (this._sourceLanguage != value)
             {
-                _sourceLanguage = value;
-                OnPropertyChanged();
+                this._sourceLanguage = value;
+                this.OnPropertyChanged();
             }
         }
     }
@@ -47,13 +47,13 @@ public class VocabularyBase : IVocabularyBase, IEquatable<IVocabularyBase?>, INo
     /// </summary>
     public string TargetLanguage
     {
-        get => _targetLanguage;
+        get => this._targetLanguage;
         protected set
         {
-            if (_targetLanguage != value)
+            if (this._targetLanguage != value)
             {
-                _targetLanguage = value;
-                OnPropertyChanged();
+                this._targetLanguage = value;
+                this.OnPropertyChanged();
             }
         }
     }
@@ -71,11 +71,11 @@ public class VocabularyBase : IVocabularyBase, IEquatable<IVocabularyBase?>, INo
     /// <returns>A new instance of <see cref="VocabularyBase"/>.</returns>
     public VocabularyBase(string id, string word, string translation, string sourcelanguage, string targetlanguae)
     {
-        Id = id;
-        Word = word;
-        Translation = translation;
-        SourceLanguage = sourcelanguage;
-        TargetLanguage = targetlanguae;
+        this.Id = id;
+        this.Word = word;
+        this.Translation = translation;
+        this.SourceLanguage = sourcelanguage;
+        this.TargetLanguage = targetlanguae;
     }
 
     /// <summary>
@@ -101,7 +101,7 @@ public class VocabularyBase : IVocabularyBase, IEquatable<IVocabularyBase?>, INo
     /// <returns><c>true</c> if the specified object is equal to the current object; otherwise, <c>false</c>.</returns>
     public override bool Equals(object? obj)
     {
-        return Equals(obj as IVocabularyBase);
+        return this.Equals(obj as IVocabularyBase);
     }
 
     /// <summary>
@@ -116,7 +116,7 @@ public class VocabularyBase : IVocabularyBase, IEquatable<IVocabularyBase?>, INo
                this.Word == other.Word &&
                this.Translation == other.Translation &&
                this.SourceLanguage == other.SourceLanguage &&
-                 this.TargetLanguage == other.TargetLanguage;
+               this.TargetLanguage == other.TargetLanguage;
     }
 
     /// <summary>
@@ -150,11 +150,11 @@ public class VocabularyBase : IVocabularyBase, IEquatable<IVocabularyBase?>, INo
         return !(left == right);
     }
 
-    protected readonly HashSet<string> _changedProperties = [];
+    protected readonly HashSet<string> _changedProperties = new();
 
     public void OnPropertyChanged([CallerMemberName] string propertyName = "")
     {
-        _changedProperties.Add(propertyName);
-        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        this._changedProperties.Add(propertyName);
+        this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
     }
 }

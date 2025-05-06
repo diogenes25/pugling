@@ -12,15 +12,12 @@ public class CosmosDbTests : IClassFixture<CustomWebApplicationFactory<Program>>
 {
     private readonly CustomWebApplicationFactory<Program> _factory;
 
-    public CosmosDbTests(CustomWebApplicationFactory<Program> factory)
-    {
-        _factory = factory;
-    }
+    public CosmosDbTests(CustomWebApplicationFactory<Program> factory) => this._factory = factory;
 
-    [Fact (Skip = "This test should only run when manually started or on local maschine.")]
+    [Fact(Skip = "This test should only run when manually started or on local maschine.")]
     public async Task SaveCosmosDbAsync()
     {
-        var serv = _factory.CreateServiceProvider();
+        var serv = this._factory.CreateServiceProvider();
         var vocabularyFactory = serv.GetRequiredService<VocabularyFactory>();
 
         var vocabulary = vocabularyFactory.CreateVocabulary("en", "de", new VocabularyDto()
@@ -77,12 +74,12 @@ public class CosmosDbTests : IClassFixture<CustomWebApplicationFactory<Program>>
         vocabularySave.Id.Should().NotBeNullOrEmpty();
     }
 
-    [Fact (Skip = "This test should only run when manually started or on local maschine.")]
+    [Fact(Skip = "This test should only run when manually started or on local maschine.")]
     public async Task GetVocabularyById()
     {
-        var serv = _factory.CreateServiceProvider();
+        var serv = this._factory.CreateServiceProvider();
         var vocabularyFactory = serv.GetService<IReadableService<IVocabularyEntity>>();
-        var vocabularyRead = await vocabularyFactory.GetById("5327ea8b-0ed0-4472-9359-618cf6fb3a85");
+        var vocabularyRead = await vocabularyFactory.GetById("en", "de", "5327ea8b-0ed0-4472-9359-618cf6fb3a85");
         vocabularyRead.Should().NotBeNull();
         vocabularyRead.Id.Should().Be("5327ea8b-0ed0-4472-9359-618cf6fb3a85");
     }

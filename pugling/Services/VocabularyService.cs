@@ -3,48 +3,42 @@ using pugling.Models.Converter;
 
 namespace pugling.Services;
 
-public class VocabularyService
+public class VocabularyService(VocabularyFactory vocabularyFactory, ILogger<VocabularyService> logger)
 {
-    private readonly VocabularyFactory _vocabularyFactory;
-    private readonly ILogger<VocabularyService> _logger;
-
-    public VocabularyService(VocabularyFactory vocabularyFactory, ILogger<VocabularyService> logger)
-    {
-        _vocabularyFactory = vocabularyFactory;
-        _logger = logger;
-    }
+    private readonly VocabularyFactory _vocabularyFactory = vocabularyFactory;
+    private readonly ILogger<VocabularyService> _logger = logger;
 
     public async Task<IEnumerable<VocabularyDto>> GetAllVocabulariesAsync()
     {
         throw new NotImplementedException();
         //try
         //{
-        //    return await _vocabularyDbService.GetAllVocabulariesAsync();
+        //    return await this._vocabularyDbService.GetAllVocabulariesAsync();
         //}
         //catch (Exception ex)
         //{
-        //    _logger.LogError(ex, "Error retrieving vocabularies");
+        //    this._logger.LogError(ex, "Error retrieving vocabularies");
         //    throw;
         //}
     }
 
-    public async Task<VocabularyDto> GetVocabularyByIdAsync(string id)
+    public async Task<VocabularyDto> GetVocabularyByIdAsync(string srclang, string targetlang, string id)
     {
         try
         {
-            var vocabEntity = await _vocabularyFactory.GetVocabularyAsync(id);
+            var vocabEntity = await this._vocabularyFactory.GetVocabularyAsync(srclang, targetlang, id);
             return vocabEntity.ToDomain();
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error retrieving vocabulary with ID {Id}", id);
+            this._logger.LogError(ex, "Error retrieving vocabulary with ID {Id}", id);
             throw;
         }
     }
 
     public async Task<VocabularyDto> AddVocabularyAsync(string src, string target, VocabularyDto vocabulary)
     {
-        var vocabWork = _vocabularyFactory.CreateVocabulary(src, target, vocabulary);
+        var vocabWork = this._vocabularyFactory.CreateVocabulary(src, target, vocabulary);
 
         try
         {
@@ -53,7 +47,7 @@ public class VocabularyService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error adding vocabulary");
+            this._logger.LogError(ex, "Error adding vocabulary");
             throw;
         }
     }

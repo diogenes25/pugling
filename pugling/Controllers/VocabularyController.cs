@@ -57,11 +57,11 @@ public class VocabularyController(VocabularyService _vocabularyService, ILogger<
     [HttpGet("{id}")]
     [ProducesResponseType(typeof(VocabularyDto), 200)]
     [ProducesResponseType(404)]
-    public async Task<ActionResult<VocabularyDto>> GetById([FromRoute] string src, [FromRoute] string target, [FromRoute] string id)
+    public async Task<ActionResult<VocabularyDto>> GetById([FromRoute] string srclang, [FromRoute] string targetlang, [FromRoute] string id)
     {
         try
         {
-            var vocabulary = await _vocabularyService.GetVocabularyByIdAsync(id);
+            var vocabulary = await _vocabularyService.GetVocabularyByIdAsync(srclang, targetlang, id);
             if (vocabulary == null)
             {
                 return NotFound();
@@ -103,9 +103,9 @@ public class VocabularyController(VocabularyService _vocabularyService, ILogger<
     [ProducesResponseType(204)]
     [ProducesResponseType(404)]
     [ProducesResponseType(400)]
-    public async Task<ActionResult> Update([FromRoute] string src, [FromRoute] string target, [FromRoute] string id, [FromBody] VocabularyDto vocabularyDto)
+    public async Task<ActionResult> Update([FromRoute] string srclang, [FromRoute] string targetlang, [FromRoute] string id, [FromBody] VocabularyDto vocabularyDto)
     {
-        var existingVocabulary = _vocabularyService.GetVocabularyByIdAsync(id);
+        var existingVocabulary = _vocabularyService.GetVocabularyByIdAsync(srclang, targetlang, id);
         if (existingVocabulary == null)
         {
             return NotFound();
@@ -139,9 +139,9 @@ public class VocabularyController(VocabularyService _vocabularyService, ILogger<
     [ProducesResponseType(204)]
     [ProducesResponseType(404)]
     [ProducesResponseType(400)]
-    public async Task<ActionResult> PartialUpdate([FromRoute] string src, [FromRoute] string target, [FromRoute] string id, [FromBody] VocabularyDto patchDoc)
+    public async Task<ActionResult> PartialUpdate([FromRoute] string srclang, [FromRoute] string targetlang, [FromRoute] string id, [FromBody] VocabularyDto patchDoc)
     {
-        var vocabulary = await _vocabularyService.GetVocabularyByIdAsync(id);
+        var vocabulary = await _vocabularyService.GetVocabularyByIdAsync(srclang, targetlang, id);
         if (vocabulary == null)
         {
             return NotFound();
@@ -177,9 +177,9 @@ public class VocabularyController(VocabularyService _vocabularyService, ILogger<
 
     // GET: api/vocabulary/{id}/verb
     [HttpGet("{id}/verb")]
-    public async Task<ActionResult<VerbDetailsDto>> Verb([FromRoute] string src, [FromRoute] string target, [FromRoute] string id)
+    public async Task<ActionResult<VerbDetailsDto>> Verb([FromRoute] string srclang, [FromRoute] string targetlang, [FromRoute] string id)
     {
-        var vocabulary = await _vocabularyService.GetVocabularyByIdAsync(id);
+        var vocabulary = await _vocabularyService.GetVocabularyByIdAsync(srclang, targetlang, id);
         if (vocabulary == null)
         {
             return NotFound();
@@ -190,9 +190,9 @@ public class VocabularyController(VocabularyService _vocabularyService, ILogger<
 
     // GET: api/vocabulary/{id}/verb/conjugations
     [HttpGet("{id}/verb/conjugations")]
-    public async Task<ActionResult<VerbDetailsDto>> VerbConjugations([FromRoute] string src, [FromRoute] string target, [FromRoute] string id)
+    public async Task<ActionResult<VerbDetailsDto>> VerbConjugations([FromRoute] string srclang, [FromRoute] string targetlang, [FromRoute] string id)
     {
-        var vocabulary = await _vocabularyService.GetVocabularyByIdAsync(id);
+        var vocabulary = await _vocabularyService.GetVocabularyByIdAsync(srclang, targetlang, id);
         if (vocabulary == null)
         {
             return NotFound();
@@ -207,9 +207,9 @@ public class VocabularyController(VocabularyService _vocabularyService, ILogger<
 
     // GET: api/vocabulary/{id}/verb/conjugations/{tense}
     [HttpGet("{id}/verb/conjugations/{tense}")]
-    public async Task<ActionResult<Dictionary<string, ConjugationDetailsDto>>> VerbConjugationsTens([FromRoute] string src, [FromRoute] string target, [FromRoute] string id, [FromRoute] string tense)
+    public async Task<ActionResult<Dictionary<string, ConjugationDetailsDto>>> VerbConjugationsTens([FromRoute] string srclang, [FromRoute] string targetlang, [FromRoute] string id, [FromRoute] string tense)
     {
-        var vocabulary = await _vocabularyService.GetVocabularyByIdAsync(id);
+        var vocabulary = await _vocabularyService.GetVocabularyByIdAsync(srclang, targetlang, id);
         if (vocabulary == null)
         {
             return NotFound();

@@ -38,18 +38,18 @@ namespace pugling.Infrastructure.Persistance.DbModels.Vocabularies
         {
             var errors = new List<string>();
 
-            if (string.IsNullOrWhiteSpace(Id))
-                errors.Add($"{nameof(Id)} cannot be null, empty, or whitespace.");
+            if (string.IsNullOrWhiteSpace(this.Id))
+                errors.Add($"{nameof(this.Id)} cannot be null, empty, or whitespace.");
 
-            if (string.IsNullOrWhiteSpace(Word))
-                errors.Add($"{nameof(Word)} cannot be null, empty, or whitespace.");
-            else if (Word.Length > 100)
-                errors.Add($"{nameof(Word)} exceeds the maximum length of 100 characters.");
+            if (string.IsNullOrWhiteSpace(this.Word))
+                errors.Add($"{nameof(this.Word)} cannot be null, empty, or whitespace.");
+            else if (this.Word.Length > 100)
+                errors.Add($"{nameof(this.Word)} exceeds the maximum length of 100 characters.");
 
-            if (string.IsNullOrWhiteSpace(Translation))
-                errors.Add($"{nameof(Translation)} cannot be null, empty, or whitespace.");
-            else if (Translation.Length > 200)
-                errors.Add($"{nameof(Translation)} exceeds the maximum length of 200 characters.");
+            if (string.IsNullOrWhiteSpace(this.Translation))
+                errors.Add($"{nameof(this.Translation)} cannot be null, empty, or whitespace.");
+            else if (this.Translation.Length > 200)
+                errors.Add($"{nameof(this.Translation)} exceeds the maximum length of 200 characters.");
 
             if (string.IsNullOrWhiteSpace(this.SourceLanguage) || this.SourceLanguage.Length > 100)
                 errors.Add($"{nameof(this.SourceLanguage)} must be non-empty and at most 100 characters.");

@@ -8,20 +8,20 @@ namespace pugling.Application.Vocabularies;
 /// <summary>
 /// Represents a vocabulary item with details about its usage, translation, and related forms.
 /// </summary>
-public sealed class Vocabulary : VocabularyBase, IVocabulary<IdiomaticUsage, NounDetails, VocabularyBase, VerbDetails>, IEquatable<IVocabulary<IdiomaticUsage, NounDetails, VocabularyBase, VerbDetails>?>, ISaveable<Vocabulary>
+public sealed class Vocabulary : VocabularyBase, IVocabulary<IdiomaticUsage, NounDetails, VocabularyBase, VerbDetails>, IEquatable<IVocabulary<IIdiomaticUsage, INounDetails, IVocabularyBase, IVerbDetails>?>, ISaveable<Vocabulary>
 {
     /// <summary>
     /// Gets the description of the vocabulary item.
     /// </summary>
     public string? Description
     {
-        get => _description;
+        get => this._description;
         private set
         {
-            if (_description != value)
+            if (this._description != value)
             {
-                _description = value;
-                OnPropertyChanged();
+                this._description = value;
+                this.OnPropertyChanged();
             }
         }
     }
@@ -33,13 +33,13 @@ public sealed class Vocabulary : VocabularyBase, IVocabulary<IdiomaticUsage, Nou
     /// </summary>
     public string? ExampleSentenceSrc
     {
-        get => _exampleSentenceSrc;
+        get => this._exampleSentenceSrc;
         private set
         {
-            if (_exampleSentenceSrc != value)
+            if (this._exampleSentenceSrc != value)
             {
-                _exampleSentenceSrc = value;
-                OnPropertyChanged();
+                this._exampleSentenceSrc = value;
+                this.OnPropertyChanged();
             }
         }
     }
@@ -51,13 +51,13 @@ public sealed class Vocabulary : VocabularyBase, IVocabulary<IdiomaticUsage, Nou
     /// </summary>
     public string? ExampleSentenceTarget
     {
-        get => _exampleSentenceTarget;
+        get => this._exampleSentenceTarget;
         private set
         {
-            if (_exampleSentenceTarget != value)
+            if (this._exampleSentenceTarget != value)
             {
-                _exampleSentenceTarget = value;
-                OnPropertyChanged();
+                this._exampleSentenceTarget = value;
+                this.OnPropertyChanged();
             }
         }
     }
@@ -69,13 +69,13 @@ public sealed class Vocabulary : VocabularyBase, IVocabulary<IdiomaticUsage, Nou
     /// </summary>
     public string? ExampleSentenceTense
     {
-        get => _exampleSentenceTense;
+        get => this._exampleSentenceTense;
         private set
         {
-            if (_exampleSentenceTense != value)
+            if (this._exampleSentenceTense != value)
             {
-                _exampleSentenceTense = value;
-                OnPropertyChanged();
+                this._exampleSentenceTense = value;
+                this.OnPropertyChanged();
             }
         }
     }
@@ -87,13 +87,13 @@ public sealed class Vocabulary : VocabularyBase, IVocabulary<IdiomaticUsage, Nou
     /// </summary>
     public IdiomaticUsage[]? IdiomaticUsages
     {
-        get => _idiomaticUsages;
+        get => this._idiomaticUsages;
         private set
         {
-            if (_idiomaticUsages != value)
+            if (this._idiomaticUsages != value)
             {
-                _idiomaticUsages = value;
-                OnPropertyChanged();
+                this._idiomaticUsages = value;
+                this.OnPropertyChanged();
             }
         }
     }
@@ -105,13 +105,13 @@ public sealed class Vocabulary : VocabularyBase, IVocabulary<IdiomaticUsage, Nou
     /// </summary>
     public NounDetails? Noun
     {
-        get => _noun;
+        get => this._noun;
         private set
         {
-            if (_noun != value)
+            if (this._noun != value)
             {
-                _noun = value;
-                OnPropertyChanged();
+                this._noun = value;
+                this.OnPropertyChanged();
             }
         }
     }
@@ -123,13 +123,13 @@ public sealed class Vocabulary : VocabularyBase, IVocabulary<IdiomaticUsage, Nou
     /// </summary>
     public EPartOfSpeech PartOfSpeech
     {
-        get => _partOfSpeech;
+        get => this._partOfSpeech;
         private set
         {
-            if (_partOfSpeech != value)
+            if (this._partOfSpeech != value)
             {
-                _partOfSpeech = value;
-                OnPropertyChanged();
+                this._partOfSpeech = value;
+                this.OnPropertyChanged();
             }
         }
     }
@@ -141,13 +141,13 @@ public sealed class Vocabulary : VocabularyBase, IVocabulary<IdiomaticUsage, Nou
     /// </summary>
     public string? Pronunciation
     {
-        get => _pronunciation;
+        get => this._pronunciation;
         private set
         {
-            if (_pronunciation != value)
+            if (this._pronunciation != value)
             {
-                _pronunciation = value;
-                OnPropertyChanged();
+                this._pronunciation = value;
+                this.OnPropertyChanged();
             }
         }
     }
@@ -159,13 +159,13 @@ public sealed class Vocabulary : VocabularyBase, IVocabulary<IdiomaticUsage, Nou
     /// </summary>
     public Uri? PronunciationAudioUrl
     {
-        get => _pronunciationAudioUrl;
+        get => this._pronunciationAudioUrl;
         private set
         {
-            if (_pronunciationAudioUrl != value)
+            if (this._pronunciationAudioUrl != value)
             {
-                _pronunciationAudioUrl = value;
-                OnPropertyChanged();
+                this._pronunciationAudioUrl = value;
+                this.OnPropertyChanged();
             }
         }
     }
@@ -177,13 +177,13 @@ public sealed class Vocabulary : VocabularyBase, IVocabulary<IdiomaticUsage, Nou
     /// </summary>
     public VocabularyBase[]? RelatedForms
     {
-        get => _relatedForms;
+        get => this._relatedForms;
         private set
         {
-            if (_relatedForms != value)
+            if (this._relatedForms != value)
             {
-                _relatedForms = value;
-                OnPropertyChanged();
+                this._relatedForms = value;
+                this.OnPropertyChanged();
             }
         }
     }
@@ -195,13 +195,13 @@ public sealed class Vocabulary : VocabularyBase, IVocabulary<IdiomaticUsage, Nou
     /// </summary>
     public DateTime? UpdatedAt
     {
-        get => _updatedAt;
+        get => this._updatedAt;
         private set
         {
-            if (_updatedAt != value)
+            if (this._updatedAt != value)
             {
-                _updatedAt = value;
-                OnPropertyChanged();
+                this._updatedAt = value;
+                this.OnPropertyChanged();
             }
         }
     }
@@ -213,13 +213,13 @@ public sealed class Vocabulary : VocabularyBase, IVocabulary<IdiomaticUsage, Nou
     /// </summary>
     public VerbDetails? Verb
     {
-        get => _verb;
+        get => this._verb;
         private set
         {
-            if (_verb != value)
+            if (this._verb != value)
             {
-                _verb = value;
-                OnPropertyChanged();
+                this._verb = value;
+                this.OnPropertyChanged();
             }
         }
     }
@@ -231,13 +231,13 @@ public sealed class Vocabulary : VocabularyBase, IVocabulary<IdiomaticUsage, Nou
     /// </summary>
     public string Version
     {
-        get => _version;
+        get => this._version;
         private set
         {
-            if (_version != value)
+            if (this._version != value)
             {
-                _version = value;
-                OnPropertyChanged();
+                this._version = value;
+                this.OnPropertyChanged();
             }
         }
     }
@@ -249,13 +249,13 @@ public sealed class Vocabulary : VocabularyBase, IVocabulary<IdiomaticUsage, Nou
     /// </summary>
     public Uri? ExampleSentenceTargetUrl
     {
-        get => _exampleSentenceTargetUrl;
+        get => this._exampleSentenceTargetUrl;
         private set
         {
-            if (_exampleSentenceTargetUrl != value)
+            if (this._exampleSentenceTargetUrl != value)
             {
-                _exampleSentenceTargetUrl = value;
-                OnPropertyChanged();
+                this._exampleSentenceTargetUrl = value;
+                this.OnPropertyChanged();
             }
         }
     }
@@ -267,13 +267,13 @@ public sealed class Vocabulary : VocabularyBase, IVocabulary<IdiomaticUsage, Nou
     /// </summary>
     public EPartOfSpeechSubcategory? PartOfSpeechSubcategory
     {
-        get => _partOfSpeechSubcategory;
+        get => this._partOfSpeechSubcategory;
         private set
         {
-            if (_partOfSpeechSubcategory != value)
+            if (this._partOfSpeechSubcategory != value)
             {
-                _partOfSpeechSubcategory = value;
-                OnPropertyChanged();
+                this._partOfSpeechSubcategory = value;
+                this.OnPropertyChanged();
             }
         }
     }
@@ -282,12 +282,7 @@ public sealed class Vocabulary : VocabularyBase, IVocabulary<IdiomaticUsage, Nou
 
     public ISaveableService<Vocabulary>? SaveableService { get; set; }
 
-    public bool HasUnsavedChanges => _changedProperties.Any();
-
-    //public Vocabulary(ISaveableService<Vocabulary> saveableService)
-    //{
-    //    this.SaveableService = saveableService;
-    //}
+    public bool HasUnsavedChanges => this._changedProperties.Count != 0;
 
     #region create
 
@@ -296,12 +291,7 @@ public sealed class Vocabulary : VocabularyBase, IVocabulary<IdiomaticUsage, Nou
     /// </summary>
     public Vocabulary(string id, string word, string translation, EPartOfSpeech partOfSpeech, string sourceLanguage, string targetLanguage) : base(id, word, translation, sourceLanguage, targetLanguage)
     {
-        //this.Id = id;
-        //this.Word = word;
-        //this.Translation = translation;
         this.PartOfSpeech = partOfSpeech;
-        //this.SourceLanguage = sourceLanguage;
-        //this.TargetLanguage = targetLanguage;
     }
 
     /// <summary>
@@ -345,8 +335,8 @@ public sealed class Vocabulary : VocabularyBase, IVocabulary<IdiomaticUsage, Nou
             result.Verb.ParentVocabulary = result;
         }
 
-        result.SourceLanguage = result.SourceLanguage ?? vocabulary.SourceLanguage;
-        result.TargetLanguage = result.TargetLanguage ?? vocabulary.TargetLanguage;
+        result.SourceLanguage ??= vocabulary.SourceLanguage;
+        result.TargetLanguage ??= vocabulary.TargetLanguage;
         return result;
     }
 
@@ -364,13 +354,13 @@ public sealed class Vocabulary : VocabularyBase, IVocabulary<IdiomaticUsage, Nou
             return;
         }
 
-        if (PartOfSpeech == EPartOfSpeech.NotSet)
+        if (this.PartOfSpeech == EPartOfSpeech.NotSet)
         {
-            PartOfSpeech = EPartOfSpeech.Verb;
+            this.PartOfSpeech = EPartOfSpeech.Verb;
         }
         else
         {
-            if (PartOfSpeech != EPartOfSpeech.Verb)
+            if (this.PartOfSpeech != EPartOfSpeech.Verb)
             {
                 throw new InvalidOperationException("Cannot set verb details for a non-verb vocabulary item.");
             }
@@ -389,24 +379,27 @@ public sealed class Vocabulary : VocabularyBase, IVocabulary<IdiomaticUsage, Nou
         {
             return;
         }
-        if (PartOfSpeech == EPartOfSpeech.NotSet)
+        if (this.PartOfSpeech == EPartOfSpeech.NotSet)
         {
-            PartOfSpeech = EPartOfSpeech.Noun;
+            this.PartOfSpeech = EPartOfSpeech.Noun;
         }
         else
         {
-            if (PartOfSpeech != EPartOfSpeech.Noun)
+            if (this.PartOfSpeech != EPartOfSpeech.Noun)
             {
                 throw new InvalidOperationException("Cannot set noun details for a non-noun vocabulary item.");
             }
         }
         this.Noun = NounDetails.Create(noun);
-        this.Noun.ParentVocabulary = this;
+        if (this.Noun != null)
+        {
+            this.Noun.ParentVocabulary = this;
+        }
     }
 
     public Task<Vocabulary> SaveAsync(CancellationToken cancellationToken)
     {
-        if (!_changedProperties.Any())
+        if (this._changedProperties.Count == 0)
         {
             return Task.FromResult(this);
         }
@@ -426,9 +419,8 @@ public sealed class Vocabulary : VocabularyBase, IVocabulary<IdiomaticUsage, Nou
         }
         // Save the changes
         this.UpdatedAt = DateTime.UtcNow;
-        _changedProperties.Clear();
+        this._changedProperties.Clear();
         return this.SaveableService.SaveAsync(this, cancellationToken);
-        //return this.SaveableService.SaveUpdateAsync(this, cancellationToken);
     }
 
     #region compare
@@ -439,7 +431,7 @@ public sealed class Vocabulary : VocabularyBase, IVocabulary<IdiomaticUsage, Nou
     public static bool operator !=(Vocabulary? left, IVocabulary<IdiomaticUsage, NounDetails, VocabularyBase, VerbDetails>? right) => !(left == right);
 
     /// <inheritdoc />
-    public override bool Equals(object? obj) => Equals(obj as IVocabulary<IdiomaticUsage, NounDetails, VocabularyBase, VerbDetails>);
+    public override bool Equals(object? obj) => this.Equals(obj as IVocabulary<IdiomaticUsage, NounDetails, VocabularyBase, VerbDetails>);
 
     /// <inheritdoc />
     public bool Equals(IVocabulary<IdiomaticUsage, NounDetails, VocabularyBase, VerbDetails>? other) => this.Compare(other);
@@ -448,6 +440,11 @@ public sealed class Vocabulary : VocabularyBase, IVocabulary<IdiomaticUsage, Nou
     public override int GetHashCode()
     {
         return HashCode.Combine(this.Id, this.Noun, this.PartOfSpeech, this.SourceLanguage, this.TargetLanguage, this.Translation, this.Verb, this.Word);
+    }
+
+    public bool Equals(IVocabulary<IIdiomaticUsage, INounDetails, IVocabularyBase, IVerbDetails>? other)
+    {
+        return this.Compare(other);
     }
 
     #endregion compare

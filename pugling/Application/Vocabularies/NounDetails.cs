@@ -1,5 +1,4 @@
-﻿using pugling.Application.Vocabularies;
-using pugling.Models;
+﻿using pugling.Models;
 using pugling.Models.Constants;
 using pugling.Models.Converter;
 
@@ -38,7 +37,7 @@ public sealed class NounDetails : INounDetails, IEquatable<INounDetails?>
     /// <param name="undeterminedArticle">The undetermined article of the noun.</param>
     /// <returns>A new instance of <see cref="NounDetails"/>.</returns>
     public static NounDetails Create(string? determinedArticle, EGenus genus, string? undeterminedArticle) =>
-        new NounDetails
+        new()
         {
             DeterminedArticle = determinedArticle,
             Genus = genus,
