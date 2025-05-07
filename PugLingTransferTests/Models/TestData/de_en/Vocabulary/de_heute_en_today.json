@@ -1,0 +1,9 @@
+{
+  "id": "de_heute_en_today",
+  "sourceLanguage": "de",
+  "word": "heute",
+  "targetLanguage": "en",
+  "translation": "today",
+  "partOfSpeech": "Adverb",
+  "partOfSpeechSubcategory": "Adverb_Time"
+}

@@ -1,8 +1,8 @@
 using FluentAssertions;
 using pugling.Application.Vocabularies;
 using pugling.Infrastructure.Persistance.DbModels.Vocabularies;
-using pugling.Models;
-using pugling.Models.Constants;
+using PugLingTransfer.Models;
+using PugLingTransfer.Models.Constants;
 using System.ComponentModel.DataAnnotations;
 
 namespace puglingTest.Infrastructure.DbServices.DbModels;
@@ -97,7 +97,7 @@ public class VocabularyEntityTests
         {
             Word = new string('a', 501), // Exceeds max length
             Translation = string.Empty, // Must not be empty
-            PartOfSpeech = pugling.Models.Constants.EPartOfSpeech.NotSet, // Exceeds max length
+            PartOfSpeech = PugLingTransfer.Models.Constants.EPartOfSpeech.NotSet, // Exceeds max length
             Description = new string('b', 1001), // Exceeds max length
             ExampleSentenceSrc = new string('c', 2001), // Exceeds max length
             ExampleSentenceTarget = new string('d', 2001), // Exceeds max length

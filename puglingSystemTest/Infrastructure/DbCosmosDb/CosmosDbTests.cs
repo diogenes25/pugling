@@ -2,8 +2,8 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VisualStudio.TestPlatform.TestHost;
 using pugling.Infrastructure.Persistance.DbModels.Vocabularies;
-using pugling.Models;
-using pugling.Models.Constants;
+using PugLingTransfer.Models;
+using PugLingTransfer.Models.Constants;
 using pugling.Services;
 
 namespace puglingSystemTest.Infrastructure.DbCosmosDb;
@@ -14,7 +14,7 @@ public class CosmosDbTests : IClassFixture<CustomWebApplicationFactory<Program>>
 
     public CosmosDbTests(CustomWebApplicationFactory<Program> factory) => this._factory = factory;
 
-    [Fact(Skip = "This test should only run when manually started or on local maschine.")]
+    [Fact] //(Skip = "This test should only run when manually started or on local maschine.")]
     public async Task SaveCosmosDbAsync()
     {
         var serv = this._factory.CreateServiceProvider();
@@ -74,7 +74,7 @@ public class CosmosDbTests : IClassFixture<CustomWebApplicationFactory<Program>>
         vocabularySave.Id.Should().NotBeNullOrEmpty();
     }
 
-    [Fact(Skip = "This test should only run when manually started or on local maschine.")]
+    [Fact] //(Skip = "This test should only run when manually started or on local maschine.")]
     public async Task GetVocabularyById()
     {
         var serv = this._factory.CreateServiceProvider();

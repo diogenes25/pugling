@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using pugling.Controllers.ModelExamples;
-using pugling.Models;
+using PugLingTransfer.Models;
 using pugling.Services;
 using Swashbuckle.AspNetCore.Filters;
 

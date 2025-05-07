@@ -1,5 +1,5 @@
-﻿using pugling.Models;
-using pugling.Models.Constants;
+﻿using PugLingTransfer.Models;
+using PugLingTransfer.Models.Constants;
 using Swashbuckle.AspNetCore.Filters;
 
 namespace pugling.Controllers.ModelExamples

@@ -1,7 +1,7 @@
 using FluentAssertions;
 using Moq;
 using pugling.Application.Vocabularies;
-using pugling.Models;
+using PugLingTransfer.Models;
 
 namespace puglingTest.Application.Vocabularies
 {

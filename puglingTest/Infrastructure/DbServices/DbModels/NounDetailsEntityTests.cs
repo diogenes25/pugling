@@ -2,8 +2,8 @@ using FluentAssertions;
 using Moq;
 using pugling.Application.Vocabularies;
 using pugling.Infrastructure.Persistance.DbModels.Vocabularies;
-using pugling.Models;
-using pugling.Models.Constants;
+using PugLingTransfer.Models;
+using PugLingTransfer.Models.Constants;
 using System.ComponentModel.DataAnnotations;
 
 namespace puglingTest.Infrastructure.DbServices.DbModels;

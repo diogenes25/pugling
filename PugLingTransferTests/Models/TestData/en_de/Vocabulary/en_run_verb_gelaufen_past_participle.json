@@ -1,0 +1,16 @@
+{
+  "id": "en_run_verb_gelaufen_past_participle",
+  "version": "1.0",
+  "sourceLanguage": "en",
+  "word": "run",
+  "translation": "gelaufen",
+  "targetLanguage": "de",
+  "partOfSpeech": "Verb",
+  "verb": {
+    "baseFormRef": "en_run_verb_laufen",
+    "tense": "past_participle"
+  },
+  "exampleSentenceSrc": "I have run a marathon.",
+  "exampleSentenceTarget": "Ich bin einen Marathon gelaufen.",
+  "pronunciationAudioUrl": "/audio/en/run_past_participle.mp3"
+}

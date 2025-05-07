@@ -2,8 +2,8 @@ using FluentAssertions;
 using Moq;
 using pugling.Application;
 using pugling.Application.Vocabularies;
-using pugling.Models;
-using pugling.Models.Constants;
+using PugLingTransfer.Models;
+using PugLingTransfer.Models.Constants;
 
 namespace puglingTest.Application.Vocabularies;
 

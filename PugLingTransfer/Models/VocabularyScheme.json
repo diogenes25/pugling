@@ -1,0 +1,258 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "VocabularyDto",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "The unique identifier of the vocabulary item.",
+      "maxLength": 100,
+      "example": "12345"
+    },
+    "version": {
+      "type": "string",
+      "description": "Version of structure. This is used to ensure that the client and server are using the same.",
+      "pattern": "^\\d+\\.\\d+$",
+      "default": "1.0",
+      "example": "1.0"
+    },
+    "sourceLanguage": {
+      "type": "string",
+      "description": "The language code of the source language (e.g., 'en' for English).",
+      "maxLength": 10,
+      "example": "en"
+    },
+    "word": {
+      "type": "string",
+      "description": "The word or phrase in the source language.",
+      "maxLength": 200,
+      "example": "run",
+      "title": "Word to translate"
+    },
+    "translation": {
+      "type": "string",
+      "description": "The translation of the word or phrase into the target language. For conjugated verbs, this is the translation of the specific form (e.g., 'gehe' for 'ich gehe'.",
+      "maxLength": 200,
+      "example": "rennen",
+      "title": "Translated Word"
+    },
+    "targetLanguage": {
+      "type": "string",
+      "description": "The language code of the target language (e.g., 'de' for German).",
+      "maxLength": 10,
+      "example": "de"
+    },
+    "partOfSpeech": {
+      "type": "string",
+      "description": "The part of speech of the vocabulary item (e.g., 'Noun', 'Verb', 'Adjective', 'Phrase').",
+      "maxLength": 50,
+      "enum": [
+        "NotSet",
+        "Noun",
+        "Verb",
+        "Adjective",
+        "Phrase",
+        "Adverb",
+        "Pronoun",
+        "Preposition",
+        "Conjunction",
+        "Interjection",
+        "Determiner",
+        "Article",
+        "Numeral",
+        "Adposition",
+        "AuxiliaryVerb",
+        "ModalVerb",
+        "Participle",
+        "Infinitive",
+        "Other"
+      ],
+      "example": "Noun"
+    },
+    "noun": {
+      "type": [ "object", "null" ],
+      "description": "Optional details for nouns, such as the article.",
+      "properties": {
+        "genus": {
+          "type": [ "string", "null" ],
+          "description": "The grammatical gender of the noun (e.g., 'maskulin', 'feminin', 'neutrum').",
+          "example": "maskulin"
+        },
+        "determinedArticle": {
+          "type": [ "string", "null" ],
+          "description": "The determined article of the noun (e.g., 'der', 'die', 'das').",
+          "example": "der"
+        },
+        "undeterminedArticle": {
+          "type": [ "string", "null" ],
+          "description": "The undetermined article of the noun (e.g., 'ein', 'eine').",
+          "example": "ein"
+        }
+      }
+    },
+    "verb": {
+      "type": [ "object", "null" ],
+      "description": "Optional details for verbs, including information about the base form, conjugations, and person.",
+      "properties": {
+        "isBaseForm": {
+          "type": "boolean",
+          "description": "Indicates whether this Vocabulary item represents the base form (infinitive) of the verb.",
+          "example": true
+        },
+        "baseFormRef": {
+          "type": [ "string", "null" ],
+          "description": "Reference to the base form of the verb.",
+          "example": "run"
+        },
+        "person": {
+          "type": [ "string", "null" ],
+          "description": "The grammatical person of the verb.",
+          "example": "third"
+        },
+        "infinitiv": {
+          "type": [ "string", "null" ],
+          "description": "The infinitive form of the verb.",
+          "example": "laufen"
+        },
+        "tense": {
+          "type": [ "string", "null" ],
+          "description": "The tense of the verb.",
+          "example": "present"
+        },
+        "conjugations": {
+          "type": [ "object", "null" ],
+          "description": "Conjugations of the verb, structured by tense and person.",
+          "example": {
+            "present": {
+              "firstPerson": "laufe",
+              "secondPerson": "läufst"
+            }
+          }
+        }
+      }
+    },
+    "description": {
+      "type": [ "string", "null" ],
+      "description": "An optional, additional description or context for the meaning of the vocabulary item.",
+      "maxLength": 500,
+      "example": "A common German verb for running."
+    },
+    "pronunciation": {
+      "type": [ "string", "null" ],
+      "description": "An optional pronunciation of the word or phrase (e.g., in IPA).",
+      "maxLength": 100,
+      "example": "/ˈlaʊfn̩/"
+    },
+    "exampleSentenceSrc": {
+      "type": [ "string", "null" ],
+      "description": "An optional example sentence in the source language.",
+      "maxLength": 500,
+      "example": "I like to run every morning."
+    },
+    "exampleSentenceTarget": {
+      "type": [ "string", "null" ],
+      "description": "The optional translation of the example sentence into the target language.",
+      "maxLength": 500,
+      "example": "Ich laufe jeden Morgen gerne."
+    },
+    "ExampleSentenceTargetUrl": {
+      "type": [ "string", "null" ],
+      "description": "Url to the translated sentence for the example sentence in the source language.",
+      "format": "uri",
+      "example": "https://example.com/sentence"
+    },
+    "exampleSentenceTense": {
+      "type": [ "string", "null" ],
+      "description": "The optional tense of the verb in the example sentence (e.g., 'present', 'past').",
+      "maxLength": 50,
+      "example": "present"
+    },
+    "relatedForms": {
+      "type": [ "array", "null" ],
+      "description": "An optional array of related vocabulary items.",
+      "items": {
+        "$ref": "#/definitions/VocabularyBaseDto"
+      },
+      "example": [
+        {
+          "id": "12346",
+          "word": "laufen",
+          "translation": "to run"
+        }
+      ]
+    },
+    "idiomaticUsages": {
+      "type": [ "array", "null" ],
+      "description": "An optional array of idiomatic usages where the word or phrase has a different meaning than its literal translation.",
+      "items": {
+        "$ref": "#/definitions/IdiomaticUsageDto"
+      },
+      "example": [
+        {
+          "phrase": "auf dem Laufenden sein",
+          "translation": "to be up to date"
+        }
+      ]
+    },
+    "pronunciationAudioUrl": {
+      "type": [ "string", "null" ],
+      "description": "Url to the audio file for pronunciation of the word or phrase.",
+      "format": "uri",
+      "example": "https://example.com/audio/laufen.mp3"
+    },
+    "createdAt": {
+      "type": [ "string", "null" ],
+      "format": "date-time",
+      "description": "The optional timestamp of when the vocabulary item was created.",
+      "example": "2023-01-01T12:00:00Z"
+    },
+    "updatedAt": {
+      "type": [ "string", "null" ],
+      "format": "date-time",
+      "description": "The optional timestamp of when the vocabulary item was last updated.",
+      "example": "2023-01-02T12:00:00Z"
+    }
+  },
+  "required": [ "id", "version", "sourceLanguage", "targetLanguage", "partOfSpeech" ],
+  "definitions": {
+    "VocabularyBaseDto": {
+      "type": "object",
+      "description": "Represents a related vocabulary item.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "The unique identifier of the vocabulary item.",
+          "example": "12346"
+        },
+        "word": {
+          "type": "string",
+          "description": "The word or phrase in the source language.",
+          "example": "laufen"
+        },
+        "translation": {
+          "type": "string",
+          "description": "The translation of the word or phrase into the target language.",
+          "example": "to run"
+        }
+      },
+      "required": [ "id", "word", "translation" ]
+    },
+    "IdiomaticUsageDto": {
+      "type": "object",
+      "description": "Represents an idiomatic usage of a word or phrase.",
+      "properties": {
+        "phrase": {
+          "type": "string",
+          "description": "The idiomatic phrase in the source language.",
+          "example": "auf dem Laufenden sein"
+        },
+        "translation": {
+          "type": "string",
+          "description": "The translation of the idiomatic phrase in the target language.",
+          "example": "to be up to date"
+        }
+      },
+      "required": [ "phrase", "translation" ]
+    }
+  }
+}

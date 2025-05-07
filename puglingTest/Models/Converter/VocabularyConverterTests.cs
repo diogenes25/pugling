@@ -1,8 +1,8 @@
 ﻿using FluentAssertions;
 using pugling.Application.Vocabularies;
 using pugling.Infrastructure.Persistance.DbModels.Vocabularies;
-using pugling.Models;
-using pugling.Models.Converter;
+using PugLingTransfer.Models;
+using PugLingTransfer.Models.Converter;
 using System.Text.Json;
 
 namespace puglingTest.Models.Converter;
@@ -16,7 +16,7 @@ public class VocabularyConverterTests
         Word = "go",
         TargetLanguage = "de",
         Translation = "gehen",
-        PartOfSpeech = pugling.Models.Constants.EPartOfSpeech.Verb,
+        PartOfSpeech = PugLingTransfer.Models.Constants.EPartOfSpeech.Verb,
         CreatedAt = DateTime.UtcNow,
         UpdatedAt = DateTime.UtcNow,
         Version = "1.0",
