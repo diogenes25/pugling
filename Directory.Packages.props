@@ -1,0 +1,45 @@
+<Project>  
+   <PropertyGroup>  
+       <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>  
+   </PropertyGroup>  
+
+   <ItemGroup>  
+       <!-- Pugling.Api -->  
+       <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.4" />  
+       <PackageReference Include="Serilog.AspNetCore" Version="9.0.0" />  
+       <PackageReference Include="Serilog.Sinks.ApplicationInsights" Version="4.0.0" />  
+       <PackageReference Include="Serilog.Sinks.Console" Version="6.0.0" />  
+       <PackageReference Include="Swashbuckle.AspNetCore.Filters" Version="8.0.3" />  
+       <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="8.1.1" />  
+
+       <!-- Pugling.Core -->  
+       <PackageReference Include="Microsoft.Azure.Cosmos" Version="3.49.0" />  
+       <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="9.0.4" />  
+       <PackageReference Include="Microsoft.Extensions.Logging" Version="9.0.4" />  
+       <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />  
+
+       <!-- Pugling.Core.SystemTests -->  
+       <PackageReference Include="coverlet.collector" Version="6.0.4">  
+           <PrivateAssets>all</PrivateAssets>  
+           <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>  
+       </PackageReference>  
+       <PackageReference Include="FluentAssertions" Version="8.2.0" />  
+       <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.13.0" />  
+       <PackageReference Include="Moq" Version="4.20.72" />  
+       <PackageReference Include="xunit" Version="2.9.3" />  
+       <PackageReference Include="xunit.runner.visualstudio" Version="3.1.0">  
+           <PrivateAssets>all</PrivateAssets>  
+           <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>  
+       </PackageReference>  
+
+       <!-- PugLing.Func -->  
+       <FrameworkReference Include="Microsoft.AspNetCore.App" />  
+       <!-- Application Insights isn't enabled by default. See https://aka.ms/AAt8mw4. -->  
+       <!-- <PackageReference Include="Microsoft.ApplicationInsights.WorkerService" Version="2.22.0" /> -->  
+       <!-- <PackageReference Include="Microsoft.Azure.Functions.Worker.ApplicationInsights" Version="2.0.0-preview5" /> -->  
+       <PackageReference Include="Microsoft.Azure.Functions.Worker" Version="2.0.0" />  
+       <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Http" Version="3.3.0" />  
+       <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Http.AspNetCore" Version="2.0.1" />  
+       <PackageReference Include="Microsoft.Azure.Functions.Worker.Sdk" Version="2.0.2" />  
+   </ItemGroup>  
+</Project>
