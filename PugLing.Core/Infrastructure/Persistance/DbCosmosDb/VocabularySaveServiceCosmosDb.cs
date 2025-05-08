@@ -1,9 +1,9 @@
 ﻿using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Logging;
+using PugLing.Core.Services;
 using PugLing.Core.Application.Vocabularies;
-using pugling.Services;
 
-namespace pugling.Infrastructure.Persistance.DbCosmosDb;
+namespace PugLing.Core.Infrastructure.Persistance.DbCosmosDb;
 
 public class VocabularySaveServiceCosmosDb : ACosmosDbBase, ISaveableService<Vocabulary>
 {

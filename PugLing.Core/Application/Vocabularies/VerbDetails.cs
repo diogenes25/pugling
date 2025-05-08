@@ -1,5 +1,5 @@
-﻿using PugLing.Model.Models;
-using PugLing.Core.Application.Vocabularies.Converter;
+﻿using PugLing.Core.Application.Vocabularies.Converter;
+using PugLing.Model.Models;
 
 namespace PugLing.Core.Application.Vocabularies;
 

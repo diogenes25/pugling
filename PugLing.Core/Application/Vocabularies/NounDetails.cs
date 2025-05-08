@@ -1,6 +1,6 @@
-﻿using PugLing.Model.Models;
+﻿using PugLing.Core.Application.Vocabularies.Converter;
+using PugLing.Model.Models;
 using PugLing.Model.Models.Constants;
-using PugLing.Core.Application.Vocabularies.Converter;
 
 namespace PugLing.Core.Application.Vocabularies;
 

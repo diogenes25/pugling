@@ -2,10 +2,9 @@
 using PugLing.Model.Models;
 using System.Diagnostics.CodeAnalysis;
 
-namespace pugling.Infrastructure.Persistance.DbModels.Vocabularies
+namespace PugLing.Core.Infrastructure.Persistance.DbModels.Vocabularies;
+
+public interface IVocabularyEntity : IVocabulary<IdiomaticUsageEntity, NounDetailsEntity, VocabularyBaseEntity, VerbDetailsEntity>
 {
-    public interface IVocabularyEntity : IVocabulary<IdiomaticUsageEntity, NounDetailsEntity, VocabularyBaseEntity, VerbDetailsEntity>
-    {
-        VocabularyEntity FillAndValidate([NotNull] Vocabulary vocabulary);
-    }
+    VocabularyEntity FillAndValidate([NotNull] Vocabulary vocabulary);
 }

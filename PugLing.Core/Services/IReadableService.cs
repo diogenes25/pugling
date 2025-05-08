@@ -1,7 +1,6 @@
-﻿namespace pugling.Services
+﻿namespace PugLing.Core.Services;
+
+public interface IReadableService<T>
 {
-    public interface IReadableService<T>
-    {
-        Task<T> GetById(string srclang, string targetlang, string id);
-    }
+    Task<T> GetById(string srclang, string targetlang, string id);
 }

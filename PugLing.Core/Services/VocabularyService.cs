@@ -1,8 +1,8 @@
 ﻿using Microsoft.Extensions.Logging;
-using PugLing.Model.Models;
 using PugLing.Core.Application.Vocabularies.Converter;
+using PugLing.Model.Models;
 
-namespace pugling.Services;
+namespace PugLing.Core.Services;
 
 public class VocabularyService(VocabularyFactory vocabularyFactory, ILogger<VocabularyService> logger)
 {
@@ -23,11 +23,11 @@ public class VocabularyService(VocabularyFactory vocabularyFactory, ILogger<Voca
         //}
     }
 
-    public async Task<VocabularyDto> GetVocabularyByIdAsync(string srclang, string targetlang, string id)
+    public async Task<VocabularyDto> GetVocabularyByIdAsync(string sourceLang, string targetlang, string id)
     {
         try
         {
-            var vocabEntity = await this._vocabularyFactory.GetVocabularyAsync(srclang, targetlang, id);
+            var vocabEntity = await this._vocabularyFactory.GetVocabularyAsync(srclang: sourceLang, targetlang: targetlang, id: id);
             return vocabEntity.ToDomain();
         }
         catch (Exception ex)
@@ -37,9 +37,9 @@ public class VocabularyService(VocabularyFactory vocabularyFactory, ILogger<Voca
         }
     }
 
-    public async Task<VocabularyDto> AddVocabularyAsync(string src, string target, VocabularyDto vocabulary)
+    public async Task<VocabularyDto> AddVocabularyAsync(string sourceLang, string targetlang, VocabularyDto vocabulary)
     {
-        var vocabWork = this._vocabularyFactory.CreateVocabulary(src, target, vocabulary);
+        var vocabWork = this._vocabularyFactory.CreateVocabulary(sourceLang: sourceLang, targetLang: targetlang, vocabulary: vocabulary);
 
         try
         {

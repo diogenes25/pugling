@@ -1,9 +1,8 @@
 using FluentAssertions;
 using Moq;
-using PugLing.Core.Application.Vocabularies;
 using PugLing.Model.Models;
 
-namespace puglingTest.Application.Vocabularies
+namespace PugLing.Core.Application.Vocabularies
 {
     /// <summary>
     /// Unit tests for the <see cref="VerbDetails"/> class.
@@ -76,7 +75,7 @@ namespace puglingTest.Application.Vocabularies
         {
             // Arrange
             var details1 = VerbDetails.Create(true, new Uri("http://example.com/vocab/run"), "ich", "laufen", "Präsens", null);
-            var details2 = VerbDetails.Create(true, new Uri("http://example.com/vocab/run") , "ich", "laufen", "Präsens", null);
+            var details2 = VerbDetails.Create(true, new Uri("http://example.com/vocab/run"), "ich", "laufen", "Präsens", null);
 
             // Act
             var result = details1.Equals(details2);

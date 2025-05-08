@@ -1,11 +1,10 @@
 ﻿using FluentAssertions;
+using PugLing.Core.Infrastructure.Persistance.DbModels.Vocabularies;
 using PugLing.Core.Application.Vocabularies;
-using pugling.Infrastructure.Persistance.DbModels.Vocabularies;
 using PugLing.Model.Models;
-using PugLing.Core.Application.Vocabularies.Converter;
 using System.Text.Json;
 
-namespace puglingTest.Models.Converter;
+namespace PugLing.Core.Application.Vocabularies.Converter;
 
 public class VocabularyConverterTests
 {
@@ -16,7 +15,7 @@ public class VocabularyConverterTests
         Word = "go",
         TargetLanguage = "de",
         Translation = "gehen",
-        PartOfSpeech = PugLing.Model.Models.Constants.EPartOfSpeech.Verb,
+        PartOfSpeech = Model.Models.Constants.EPartOfSpeech.Verb,
         CreatedAt = DateTime.UtcNow,
         UpdatedAt = DateTime.UtcNow,
         Version = "1.0",
@@ -43,7 +42,7 @@ public class VocabularyConverterTests
         var vocabulary = CreateVocabulary();
 
         // Act
-        var vocabularyApp = Vocabulary.Create(vocabulary);
+        var vocabularyApp = VocabularyBase.Create(vocabulary);
 
         // Assert
         vocabularyApp.Id.Should().Be(vocabulary.Id);
@@ -57,7 +56,7 @@ public class VocabularyConverterTests
         var vocabulary = CreateVocabulary();
 
         // Act
-        var vocabularyApp = Vocabulary.Create(vocabulary);
+        var vocabularyApp = VocabularyBase.Create(vocabulary);
         var vocabularyDto = vocabularyApp.ToDomain();
 
         // Assert

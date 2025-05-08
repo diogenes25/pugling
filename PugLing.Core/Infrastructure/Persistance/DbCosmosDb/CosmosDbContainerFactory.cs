@@ -2,7 +2,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace pugling.Infrastructure.Persistance.DbCosmosDb
+namespace PugLing.Core.Infrastructure.Persistance.DbCosmosDb
 {
     public class CosmosDbContainerFactory
     {

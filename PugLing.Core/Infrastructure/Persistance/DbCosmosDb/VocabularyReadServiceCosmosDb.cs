@@ -1,10 +1,10 @@
 ﻿using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Logging;
+using PugLing.Core.Infrastructure.Persistance.DbModels.Vocabularies;
+using PugLing.Core.Services;
 using PugLing.Core.Application.Vocabularies;
-using pugling.Infrastructure.Persistance.DbModels.Vocabularies;
-using pugling.Services;
 
-namespace pugling.Infrastructure.Persistance.DbCosmosDb;
+namespace PugLing.Core.Infrastructure.Persistance.DbCosmosDb;
 
 public class VocabularyReadServiceCosmosDb : ACosmosDbBase, IReadableService<IVocabularyEntity>
 {

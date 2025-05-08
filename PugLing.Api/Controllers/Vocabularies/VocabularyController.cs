@@ -1,8 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using PugLing.Model.Models;
-using pugling.Services;
-using Swashbuckle.AspNetCore.Filters;
+using PugLing.Core.Services;
 using PugLing.Api.Controllers.Vocabularies.ModelExamples;
+using PugLing.Model.Models;
+using Swashbuckle.AspNetCore.Filters;
 
 namespace PugLing.Api.Controllers.Vocabularies;
 

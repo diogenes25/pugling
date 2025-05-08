@@ -1,4 +1,4 @@
-﻿namespace PugLingCore.Infrastructure;
+﻿namespace PugLing.Core.Infrastructure;
 
 public interface ISaveable<T>
 {

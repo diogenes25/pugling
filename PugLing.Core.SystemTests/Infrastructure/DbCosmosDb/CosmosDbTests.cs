@@ -1,10 +1,10 @@
 ﻿using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VisualStudio.TestPlatform.TestHost;
-using pugling.Infrastructure.Persistance.DbModels.Vocabularies;
+using PugLing.Core.Infrastructure.Persistance.DbModels.Vocabularies;
+using PugLing.Core.Services;
 using PugLing.Model.Models;
 using PugLing.Model.Models.Constants;
-using pugling.Services;
 
 namespace puglingSystemTest.Infrastructure.DbCosmosDb;
 

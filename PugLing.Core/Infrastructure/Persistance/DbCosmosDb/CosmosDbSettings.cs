@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.Configuration;
 
-namespace pugling.Infrastructure.Persistance.DbCosmosDb
+namespace PugLing.Core.Infrastructure.Persistance.DbCosmosDb
 {
     public class CosmosDbSettings
     {

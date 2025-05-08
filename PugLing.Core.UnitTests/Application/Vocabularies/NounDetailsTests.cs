@@ -1,10 +1,9 @@
 using FluentAssertions;
 using Moq;
-using PugLing.Core.Application.Vocabularies;
 using PugLing.Model.Models;
 using PugLing.Model.Models.Constants;
 
-namespace puglingTest.Application.Vocabularies;
+namespace PugLing.Core.Application.Vocabularies;
 
 /// <summary>
 /// Unit tests for the <see cref="NounDetails"/> class.
@@ -65,7 +64,7 @@ public class NounDetailsTests
     {
         // Arrange
         var details1 = NounDetails.Create("the", EGenus.Masculine, "a");
-        var details2 = NounDetails.Create("the", EGenus.Masculine   , "a");
+        var details2 = NounDetails.Create("the", EGenus.Masculine, "a");
 
         // Act
         var hashCode1 = details1.GetHashCode();
@@ -152,7 +151,7 @@ public class NounDetailsTests
     public void InequalityOperator_DifferentValues_ReturnsTrueTest()
     {
         // Arrange
-        var details1 = NounDetails.Create("the", EGenus.Masculine   , "a");
+        var details1 = NounDetails.Create("the", EGenus.Masculine, "a");
         var details2 = NounDetails.Create("a", EGenus.Feminine, "an");
 
         // Act

@@ -1,9 +1,8 @@
 using FluentAssertions;
 using Moq;
-using PugLing.Core.Application.Vocabularies;
 using PugLing.Model.Models;
 
-namespace puglingTest.Application.Vocabularies
+namespace PugLing.Core.Application.Vocabularies
 {
     /// <summary>
     /// Unit tests for the <see cref="VocabularyBase"/> class.
@@ -25,7 +24,7 @@ namespace puglingTest.Application.Vocabularies
             var targetLanguage = "es";
 
             // Act
-            var result = new VocabularyBase(id, word, translation, sourceLanguage,targetLanguage);
+            var result = new VocabularyBase(id, word, translation, sourceLanguage, targetLanguage);
 
             // Assert
             result.Should().NotBeNull("the created instance should not be null");

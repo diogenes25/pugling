@@ -1,6 +1,4 @@
-﻿using PugLing.Model.Models;
-
-namespace PugLing.Model.Models.Exercises
+﻿namespace PugLing.Model.Models.Exercises
 {
     /// <summary>
     /// Represents a fill-in-the-blanks exercise based on a Sentence object,

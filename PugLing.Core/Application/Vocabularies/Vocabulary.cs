@@ -1,8 +1,8 @@
-﻿using pugling.Services;
-using PugLingCore.Infrastructure;
+﻿using PugLing.Core.Services;
+using PugLing.Core.Application.Vocabularies.Converter;
 using PugLing.Model.Models;
 using PugLing.Model.Models.Constants;
-using PugLing.Core.Application.Vocabularies.Converter;
+using PugLing.Core.Infrastructure;
 
 namespace PugLing.Core.Application.Vocabularies;
 

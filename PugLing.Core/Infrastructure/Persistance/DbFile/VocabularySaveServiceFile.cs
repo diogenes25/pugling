@@ -1,10 +1,10 @@
 ﻿using Microsoft.Extensions.Logging;
+using PugLing.Core.Infrastructure.Persistance.DbModels.Vocabularies;
+using PugLing.Core.Services;
 using PugLing.Core.Application.Vocabularies;
-using pugling.Infrastructure.Persistance.DbModels.Vocabularies;
-using pugling.Services;
 using System.Text.Json;
 
-namespace pugling.Infrastructure.Persistance.DbFile;
+namespace PugLing.Core.Infrastructure.Persistance.DbFile;
 
 public class VocabularySaveServiceFile : ISaveableService<Vocabulary>, IReadableService<IVocabularyEntity>
 {

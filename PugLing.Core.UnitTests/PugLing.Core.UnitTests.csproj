@@ -32,8 +32,4 @@
     <ProjectReference Include="..\PugLing.Api\PugLing.Api.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Infrastructure\DbServices\" />
-  </ItemGroup>
-
 </Project>

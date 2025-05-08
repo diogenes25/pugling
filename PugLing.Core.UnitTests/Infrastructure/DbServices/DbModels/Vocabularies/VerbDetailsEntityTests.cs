@@ -1,11 +1,10 @@
 using FluentAssertions;
 using Moq;
 using PugLing.Core.Application.Vocabularies;
-using pugling.Infrastructure.Persistance.DbModels.Vocabularies;
 using PugLing.Model.Models;
 using System.ComponentModel.DataAnnotations;
 
-namespace puglingTest.Infrastructure.DbServices.DbModels;
+namespace PugLing.Core.Infrastructure.Persistance.DbModels.Vocabularies;
 
 public class VerbDetailsEntityTests
 {

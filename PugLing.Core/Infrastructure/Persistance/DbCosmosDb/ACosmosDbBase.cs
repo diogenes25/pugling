@@ -1,7 +1,7 @@
 ﻿using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Logging;
 
-namespace pugling.Infrastructure.Persistance.DbCosmosDb
+namespace PugLing.Core.Infrastructure.Persistance.DbCosmosDb
 {
     public abstract class ACosmosDbBase
     {

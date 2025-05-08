@@ -1,9 +1,8 @@
-﻿namespace pugling.Services
-{
-    public interface ISaveableService<T>
-    {
-        Task<T> SaveAsync(T saveObj, CancellationToken cancellationToken);
+﻿namespace PugLing.Core.Services;
 
-        Task<T> UpdateAsync(T saveObj, IEnumerable<string> updatedProperties, CancellationToken cancellationToken);
-    }
+public interface ISaveableService<T>
+{
+    Task<T> SaveAsync(T saveObj, CancellationToken cancellationToken);
+
+    Task<T> UpdateAsync(T saveObj, IEnumerable<string> updatedProperties, CancellationToken cancellationToken);
 }

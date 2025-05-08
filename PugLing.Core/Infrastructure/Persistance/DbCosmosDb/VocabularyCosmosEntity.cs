@@ -1,8 +1,8 @@
-﻿using PugLing.Core.Application.Vocabularies;
-using pugling.Infrastructure.Persistance.DbModels.Vocabularies;
+﻿using PugLing.Core.Infrastructure.Persistance.DbModels.Vocabularies;
+using PugLing.Core.Application.Vocabularies;
 using System.Text.Json.Serialization;
 
-namespace pugling.Infrastructure.Persistance.DbCosmosDb;
+namespace PugLing.Core.Infrastructure.Persistance.DbCosmosDb;
 
 public record VocabularyCosmosEntity : VocabularyEntity
 {

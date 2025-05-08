@@ -2,8 +2,8 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Moq;
-using pugling.Infrastructure.Persistance.DbCosmosDb;
-using pugling.Services;
+using PugLing.Core.Infrastructure.Persistance.DbCosmosDb;
+using PugLing.Core.Services;
 using PugLing.Api.Configuration;
 
 namespace puglingSystemTest.Infrastructure.DbCosmosDb

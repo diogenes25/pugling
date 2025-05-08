@@ -1,11 +1,10 @@
 using FluentAssertions;
 using PugLing.Core.Application.Vocabularies;
-using pugling.Infrastructure.Persistance.DbModels.Vocabularies;
 using PugLing.Model.Models;
 using PugLing.Model.Models.Constants;
 using System.ComponentModel.DataAnnotations;
 
-namespace puglingTest.Infrastructure.DbServices.DbModels;
+namespace PugLing.Core.Infrastructure.Persistance.DbModels.Vocabularies;
 
 public class VocabularyEntityTests
 {
@@ -36,7 +35,7 @@ public class VocabularyEntityTests
             PartOfSpeech = EPartOfSpeech.Noun,
             Pronunciation = "test pronunciation",
             PronunciationAudioUrl = new Uri("http://example.com/audio.mp3"),
-            RelatedForms = [new VocabularyBaseDto {Id = "2", Word = "related", Translation = "related_translation", SourceLanguage = "en", TargetLanguage = "de" }],
+            RelatedForms = [new VocabularyBaseDto { Id = "2", Word = "related", Translation = "related_translation", SourceLanguage = "en", TargetLanguage = "de" }],
             SourceLanguage = "en",
             TargetLanguage = "de",
             UpdatedAt = DateTime.UtcNow,
@@ -97,7 +96,7 @@ public class VocabularyEntityTests
         {
             Word = new string('a', 501), // Exceeds max length
             Translation = string.Empty, // Must not be empty
-            PartOfSpeech = PugLing.Model.Models.Constants.EPartOfSpeech.NotSet, // Exceeds max length
+            PartOfSpeech = EPartOfSpeech.NotSet, // Exceeds max length
             Description = new string('b', 1001), // Exceeds max length
             ExampleSentenceSrc = new string('c', 2001), // Exceeds max length
             ExampleSentenceTarget = new string('d', 2001), // Exceeds max length

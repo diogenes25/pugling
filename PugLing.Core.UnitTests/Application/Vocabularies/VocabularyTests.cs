@@ -1,9 +1,8 @@
 ﻿using FluentAssertions;
 using Moq;
-using PugLing.Core.Application.Vocabularies;
 using PugLing.Model.Models;
 
-namespace puglingTest.Application.Vocabularies;
+namespace PugLing.Core.Application.Vocabularies;
 
 /// <summary>
 /// Contains unit tests for the <see cref="Vocabulary"/> class.
