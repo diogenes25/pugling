@@ -7,7 +7,7 @@ using Swashbuckle.AspNetCore.Filters;
 namespace PugLing.Api.Controllers.Vocabularies;
 
 [ApiController]
-[Route("api/{src}/{target}/[controller]")]
+[Route("api/{srclang}/{targetlang}/[controller]")]
 [Produces("application/json")]
 public class VocabularyController(VocabularyService _vocabularyService, ILogger<VocabularyController> _logger) : ControllerBase
 {
@@ -22,10 +22,10 @@ public class VocabularyController(VocabularyService _vocabularyService, ILogger<
     [ProducesResponseType(400)]
     [SwaggerRequestExample(typeof(VocabularyDto), typeof(VocabularyDtoExample))]
     [SwaggerResponseExample(201, typeof(VocabularyDtoSingleExample))]
-    public async Task<ActionResult<VocabularyDto>> CreateAsync([FromRoute] string src, [FromRoute] string target, [FromBody] VocabularyDto vocabularyDto)
+    public async Task<ActionResult<VocabularyDto>> CreateAsync([FromRoute] string srclang, [FromRoute] string targetlang, [FromBody] VocabularyDto vocabularyDto)
     {
-        var vocabulary = await _vocabularyService.AddVocabularyAsync(src, target, vocabularyDto);
-        return CreatedAtAction(nameof(GetById), new { id = vocabulary.Id }, vocabulary);
+        var vocabulary = await _vocabularyService.AddVocabularyAsync(srclang, targetlang, vocabularyDto);
+        return CreatedAtAction(nameof(GetById), new { srclang, targetlang, id = vocabulary.Id }, vocabulary);
     }
 
     // GET: api/vocabulary/
@@ -125,7 +125,7 @@ public class VocabularyController(VocabularyService _vocabularyService, ILogger<
     [HttpDelete("{id}")]
     [ProducesResponseType(204)]
     [ProducesResponseType(404)]
-    public async Task<ActionResult> Delete([FromRoute] string src, [FromRoute] string target, [FromRoute] string id)
+    public async Task<ActionResult> Delete([FromRoute] string srclang, [FromRoute] string targetlang, [FromRoute] string id)
     {
         //var vocabulary = _vocabularyService.DeleteVocabularyAsync(id);
         return NoContent();
@@ -159,7 +159,7 @@ public class VocabularyController(VocabularyService _vocabularyService, ILogger<
     [HttpGet("search")]
     [ProducesResponseType(typeof(List<VocabularyDto>), 200)]
     [ProducesResponseType(400)]
-    public async Task<ActionResult<List<VocabularyDto>>> Search([FromRoute] string src, [FromRoute] string target, [FromQuery] string query)
+    public async Task<ActionResult<List<VocabularyDto>>> Search([FromRoute] string srclang, [FromRoute] string targetlang, [FromQuery] string query)
     {
         if (string.IsNullOrWhiteSpace(query))
         {
