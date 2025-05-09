@@ -20,7 +20,7 @@ public sealed class ConjugationDetails : IConjugationDetails, IEquatable<IConjug
     /// <summary>
     /// Initializes a new instance of the <see cref="ConjugationDetails"/> class.
     /// </summary>
-    public ConjugationDetails()
+    private ConjugationDetails()
     {
     }
 
@@ -44,8 +44,12 @@ public sealed class ConjugationDetails : IConjugationDetails, IEquatable<IConjug
     /// </summary>
     /// <param name="conjugationDetails">The source <see cref="IConjugationDetails"/> instance.</param>
     /// <returns>A new instance of <see cref="ConjugationDetails"/>.</returns>
-    public static ConjugationDetails Create(IConjugationDetails conjugationDetails)
+    public static ConjugationDetails? Create(IConjugationDetails? conjugationDetails)
     {
+        if (conjugationDetails is null)
+        {
+            return null;
+        }
         return new ConjugationDetails
         {
             Form = conjugationDetails.Form,

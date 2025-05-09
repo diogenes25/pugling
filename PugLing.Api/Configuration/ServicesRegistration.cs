@@ -1,9 +1,9 @@
-﻿using PugLing.Core.Infrastructure.Persistance.DbCosmosDb;
+﻿using PugLing.Api.Controllers.Vocabularies.ModelExamples;
+using PugLing.Core.Application.Vocabularies;
+using PugLing.Core.Infrastructure.Persistance.DbCosmosDb;
 using PugLing.Core.Infrastructure.Persistance.DbFile;
 using PugLing.Core.Infrastructure.Persistance.DbModels.Vocabularies;
 using PugLing.Core.Services;
-using PugLing.Api.Controllers.Vocabularies.ModelExamples;
-using PugLing.Core.Application.Vocabularies;
 using Swashbuckle.AspNetCore.Filters;
 
 namespace PugLing.Api.Configuration

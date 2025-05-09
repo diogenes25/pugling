@@ -1,5 +1,5 @@
-﻿using PugLing.Core.Infrastructure.Persistance.DbModels.Vocabularies;
-using PugLing.Core.Application.Vocabularies;
+﻿using PugLing.Core.Application.Vocabularies;
+using PugLing.Core.Infrastructure.Persistance.DbModels.Vocabularies;
 using System.Text.Json.Serialization;
 
 namespace PugLing.Core.Infrastructure.Persistance.DbCosmosDb;

@@ -1,8 +1,8 @@
-﻿using PugLing.Core.Services;
-using PugLing.Core.Application.Vocabularies.Converter;
+﻿using PugLing.Core.Application.Vocabularies.Converter;
+using PugLing.Core.Infrastructure;
+using PugLing.Core.Services;
 using PugLing.Model.Models;
 using PugLing.Model.Models.Constants;
-using PugLing.Core.Infrastructure;
 
 namespace PugLing.Core.Application.Vocabularies;
 
@@ -290,7 +290,7 @@ public sealed class Vocabulary : VocabularyBase, IVocabulary<IdiomaticUsage, Nou
     /// <summary>
     /// Initializes a new instance of the <see cref="Vocabulary"/> class with the specified details.
     /// </summary>
-    public Vocabulary(string id, string word, string translation, EPartOfSpeech partOfSpeech, string sourceLanguage, string targetLanguage) : base(id, word, translation, sourceLanguage, targetLanguage)
+    public Vocabulary(string? id, string word, string translation, EPartOfSpeech partOfSpeech, string sourceLanguage, string targetLanguage) : base(id, word, translation, sourceLanguage, targetLanguage)
     {
         this.PartOfSpeech = partOfSpeech;
     }
@@ -298,7 +298,7 @@ public sealed class Vocabulary : VocabularyBase, IVocabulary<IdiomaticUsage, Nou
     /// <summary>
     /// Creates a new instance of the <see cref="Vocabulary"/> class with the specified details.
     /// </summary>
-    public static Vocabulary Create(string id, string word, string translation, EPartOfSpeech partOfSpeech, string sourceLanguage, string targetLanguage) =>
+    public static Vocabulary Create(string? id, string word, string translation, EPartOfSpeech partOfSpeech, string sourceLanguage, string targetLanguage) =>
         new(id, word, translation, partOfSpeech, sourceLanguage, targetLanguage);
 
     /// <summary>
@@ -306,6 +306,8 @@ public sealed class Vocabulary : VocabularyBase, IVocabulary<IdiomaticUsage, Nou
     /// </summary>
     public static Vocabulary Create(string sourceLanguage, string targetLanguage, IVocabulary<IIdiomaticUsage, INounDetails, IVocabularyBase, IVerbDetails> vocabulary, ISaveableService<Vocabulary>? vocabularySaveServiceFile)
     {
+        ArgumentNullException.ThrowIfNull(vocabulary);
+
         var result = new Vocabulary(vocabulary.Id, vocabulary.Word, vocabulary.Translation, vocabulary.PartOfSpeech, sourceLanguage, targetLanguage)
         {
             Version = vocabulary.Version,
@@ -367,7 +369,10 @@ public sealed class Vocabulary : VocabularyBase, IVocabulary<IdiomaticUsage, Nou
             }
         }
         this.Verb = VerbDetails.Create(verb);
-        this.Verb.ParentVocabulary = this;
+        if (this.Verb != null)
+        {
+            this.Verb.ParentVocabulary = this;
+        }
     }
 
     public void SetNoun(INounDetails? noun)
@@ -414,7 +419,7 @@ public sealed class Vocabulary : VocabularyBase, IVocabulary<IdiomaticUsage, Nou
         {
             throw new InvalidOperationException("Id is not set.");
         }
-        if (this.Id == string.Empty)
+        if (string.IsNullOrEmpty(this.Id))
         {
             this.Id = VocabularyUtil.GenerateRestfulId(this);
         }

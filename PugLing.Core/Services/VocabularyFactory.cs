@@ -1,5 +1,5 @@
-﻿using PugLing.Core.Infrastructure.Persistance.DbModels.Vocabularies;
-using PugLing.Core.Application.Vocabularies;
+﻿using PugLing.Core.Application.Vocabularies;
+using PugLing.Core.Infrastructure.Persistance.DbModels.Vocabularies;
 using PugLing.Model.Models;
 
 namespace PugLing.Core.Services;

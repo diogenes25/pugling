@@ -106,7 +106,7 @@ public static class VocabularyUtil
             "plusquamperfekt" => "plup",
             "futur i" => "fut1",
             "futur ii" => "fut2",
-            _ => null, // Default representation if no match is found
+            _ => "notSet", // Default representation if no match is found
         };
     }
 

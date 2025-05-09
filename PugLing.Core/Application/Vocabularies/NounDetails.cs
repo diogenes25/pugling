@@ -27,7 +27,7 @@ public sealed class NounDetails : INounDetails, IEquatable<INounDetails?>
     /// <summary>
     /// The parent vocabulary of the noun.
     /// </summary>
-    public Vocabulary ParentVocabulary { get; internal set; }
+    public Vocabulary? ParentVocabulary { get; internal set; }
 
     /// <summary>
     /// Creates a new instance of <see cref="NounDetails"/> with the specified properties.

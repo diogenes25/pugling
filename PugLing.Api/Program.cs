@@ -1,5 +1,5 @@
-using PugLing.Core.Services;
 using PugLing.Api.Configuration;
+using PugLing.Core.Services;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);

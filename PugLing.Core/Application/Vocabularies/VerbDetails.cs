@@ -36,7 +36,7 @@ public sealed class VerbDetails : IVerbDetails, IEquatable<IVerbDetails?>
     /// <summary>
     /// The parent vocabulary of the verb.
     /// </summary>
-    public Vocabulary ParentVocabulary { get; internal set; }
+    public Vocabulary? ParentVocabulary { get; internal set; }
 
     public static VerbDetails Create(
         bool isBaseForm,

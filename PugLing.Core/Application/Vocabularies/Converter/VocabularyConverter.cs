@@ -18,7 +18,7 @@ public static class VocabularyConverter
 
     public static VocabularyBaseDto[] ToDomain(this IVocabularyBase[] vocabularies)
     {
-        return vocabularies.Select(v => v.ToDomain()).ToArray();
+        return [.. vocabularies.Select(v => v.ToDomain())];
     }
 
     public static VocabularyDto ToDomain(this IVocabulary<IIdiomaticUsage, INounDetails, IVocabularyBase, IVerbDetails> vocabulary)
@@ -40,23 +40,22 @@ public static class VocabularyConverter
         };
     }
 
-    public static IdiomaticUsageDto ToDomain(this IIdiomaticUsage idiomaticUsage)
+    public static IdiomaticUsageDto? ToDomain(this IIdiomaticUsage idiomaticUsage)
     {
-        return new IdiomaticUsageDto
-        {
-            Phrase = idiomaticUsage.Phrase,
-            Translation = idiomaticUsage.Translation
-        };
+        return idiomaticUsage is null
+            ? null
+            : new IdiomaticUsageDto
+            {
+                Phrase = idiomaticUsage.Phrase,
+                Translation = idiomaticUsage.Translation
+            };
     }
 
-    public static IdiomaticUsageDto[] ToDomain(this IIdiomaticUsage[] idiomaticUsages)
-    {
-        return idiomaticUsages.Select(v => v.ToDomain()).ToArray();
-    }
+    public static IdiomaticUsageDto[]? ToDomain(this IIdiomaticUsage[]? idiomaticUsages) => idiomaticUsages?.Select(v => v.ToDomain()).ToArray() ?? null;
 
-    public static NounDetailsDto ToDomain(this INounDetails nounDetails)
+    public static NounDetailsDto? ToDomain(this INounDetails? nounDetails)
     {
-        return new NounDetailsDto
+        return nounDetails is null ? null : new NounDetailsDto
         {
             DeterminedArticle = nounDetails.DeterminedArticle,
             Genus = nounDetails.Genus,
@@ -64,9 +63,11 @@ public static class VocabularyConverter
         };
     }
 
-    public static VerbDetailsDto ToDomain(this IVerbDetails verbDetails)
+    public static VerbDetailsDto? ToDomain(this IVerbDetails? verbDetails)
     {
-        return new VerbDetailsDto
+        return verbDetails is null
+        ? null
+        : new VerbDetailsDto
         {
             IsBaseForm = verbDetails.IsBaseForm,
             BaseFormRef = verbDetails.BaseFormRef,

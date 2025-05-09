@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
+using PugLing.Core.Application.Vocabularies;
 using PugLing.Core.Infrastructure.Persistance.DbModels.Vocabularies;
 using PugLing.Core.Services;
-using PugLing.Core.Application.Vocabularies;
 using System.Text.Json;
 
 namespace PugLing.Core.Infrastructure.Persistance.DbFile;

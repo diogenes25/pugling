@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using PugLing.Core.Services;
 using PugLing.Api.Controllers.Vocabularies.ModelExamples;
+using PugLing.Core.Services;
 using PugLing.Model.Models;
 using Swashbuckle.AspNetCore.Filters;
 

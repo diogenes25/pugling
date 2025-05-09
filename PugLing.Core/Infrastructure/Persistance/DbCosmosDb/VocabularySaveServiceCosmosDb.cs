@@ -1,7 +1,7 @@
 ﻿using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Logging;
-using PugLing.Core.Services;
 using PugLing.Core.Application.Vocabularies;
+using PugLing.Core.Services;
 
 namespace PugLing.Core.Infrastructure.Persistance.DbCosmosDb;
 

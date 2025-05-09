@@ -12,9 +12,9 @@
         <!-- <PackageReference Include="Microsoft.ApplicationInsights.WorkerService" Version="2.22.0" /> -->
         <!-- <PackageReference Include="Microsoft.Azure.Functions.Worker.ApplicationInsights" Version="2.0.0-preview5" /> -->
         <PackageReference Include="Microsoft.Azure.Functions.Worker"  />
-        <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Http"  />
-        <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Http.AspNetCore"  />
         <PackageReference Include="Microsoft.Azure.Functions.Worker.Sdk"  />
+        <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.OpenApi" />
+        <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Http.AspNetCore" />
     </ItemGroup>
     <ItemGroup>
         <None Update="host.json">

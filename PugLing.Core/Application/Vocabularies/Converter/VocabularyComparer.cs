@@ -17,12 +17,23 @@ public static class VocabularyComparer
     /// <returns><c>true</c> if the objects are equal; otherwise, <c>false</c>.</returns>
     public static bool Compare(this IVocabulary<IIdiomaticUsage, INounDetails, IVocabularyBase, IVerbDetails> orig, IVocabulary<IIdiomaticUsage, INounDetails, IVocabularyBase, IVerbDetails>? other)
     {
-        return other is not null &&
-                orig.Id == other.Id &&
+        if (orig is null && other is null)
+        {
+            return true;
+        }
+
+        if (orig is null || other is null)
+        {
+            return false;
+        }
+
+        return orig.Id == other.Id &&
                 orig.SourceLanguage == other.SourceLanguage &&
                 orig.TargetLanguage == other.TargetLanguage &&
                 orig.Translation == other.Translation &&
                 orig.Word == other.Word &&
+                (orig.SourceLanguage?.Equals(value: other.SourceLanguage, StringComparison.Ordinal) ?? false) &&
+                (orig.TargetLanguage?.Equals(other.TargetLanguage, StringComparison.Ordinal) ?? false) &&
                 orig.Noun.Compare(other.Noun) &&
                 orig.Verb.Compare(other.Verb);
     }
@@ -35,10 +46,21 @@ public static class VocabularyComparer
     /// <returns><c>true</c> if the objects are equal; otherwise, <c>false</c>.</returns>
     public static bool Compare(this IVocabularyBase orig, IVocabularyBase other)
     {
-        return other is not null &&
-                orig.Id == other.Id &&
+        if (orig is null && other is null)
+        {
+            return true;
+        }
+
+        if (orig is null || other is null)
+        {
+            return false;
+        }
+
+        return orig.Id == other.Id &&
                 orig.Word == other.Word &&
-                orig.Translation == other.Translation;
+                orig.Translation == other.Translation &&
+                (orig.SourceLanguage?.Equals(value: other.SourceLanguage, StringComparison.Ordinal) ?? false) &&
+                (orig.TargetLanguage?.Equals(other.TargetLanguage, StringComparison.Ordinal) ?? false);
     }
 
     /// <summary>
@@ -57,10 +79,9 @@ public static class VocabularyComparer
         {
             return false;
         }
-        return other is not null &&
-        orig.Genus == other.Genus &&
-        orig.DeterminedArticle == other.DeterminedArticle &&
-        orig.UndeterminedArticle == other.UndeterminedArticle;
+        return orig.Genus == other.Genus &&
+                orig.DeterminedArticle == other.DeterminedArticle &&
+                orig.UndeterminedArticle == other.UndeterminedArticle;
     }
 
     /// <summary>
@@ -76,7 +97,7 @@ public static class VocabularyComparer
             return true;
         }
         return other is not null &&
-        orig.Phrase == other.Phrase &&
+        orig?.Phrase == other.Phrase &&
         orig.Translation == other.Translation;
     }
 
@@ -96,7 +117,7 @@ public static class VocabularyComparer
         {
             return false;
         }
-        return other is not null &&
+        return
               orig.IsBaseForm == other.IsBaseForm &&
               orig.Person == other.Person &&
               orig.Infinitiv == other.Infinitiv &&
@@ -112,14 +133,14 @@ public static class VocabularyComparer
         unchecked
         {
             var hash = 17;
-            hash = hash * 23 + (vocabulary.Id?.GetHashCode() ?? 0);
-            hash = hash * 23 + (vocabulary.PartOfSpeech.GetHashCode());
-            hash = hash * 23 + (vocabulary.SourceLanguage?.GetHashCode() ?? 0);
-            hash = hash * 23 + (vocabulary.TargetLanguage?.GetHashCode() ?? 0);
-            hash = hash * 23 + (vocabulary.Translation?.GetHashCode() ?? 0);
-            hash = hash * 23 + (vocabulary.Word?.GetHashCode() ?? 0);
-            hash = hash * 23 + (vocabulary.Noun?.GetHashCode() ?? 0);
-            hash = hash * 23 + (vocabulary.Verb?.GetHashCode() ?? 0);
+            hash = hash * 23 + (vocabulary?.Id?.GetHashCode(StringComparison.Ordinal) ?? 0);
+            hash = hash * 23 + (vocabulary?.PartOfSpeech.GetHashCode() ?? 0);
+            hash = hash * 23 + (vocabulary?.SourceLanguage?.GetHashCode(StringComparison.Ordinal) ?? 0);
+            hash = hash * 23 + (vocabulary?.TargetLanguage?.GetHashCode(StringComparison.Ordinal) ?? 0);
+            hash = hash * 23 + (vocabulary?.Translation?.GetHashCode(StringComparison.Ordinal) ?? 0);
+            hash = hash * 23 + (vocabulary?.Word?.GetHashCode(StringComparison.Ordinal) ?? 0);
+            hash = hash * 23 + (vocabulary?.Noun?.GetHashCode() ?? 0);
+            hash = hash * 23 + (vocabulary?.Verb?.GetHashCode() ?? 0);
 
             return hash;
         }
