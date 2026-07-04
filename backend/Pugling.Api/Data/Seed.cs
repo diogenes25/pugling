@@ -195,6 +195,32 @@ public static class Seed
                                 WordBank = new List<string> { "Hello", "Hi", "fine", "good", "well" },
                             }),
                         },
+                        // Birkenbihl: Wort-für-Wort-Dekodierung (grammatik-unabhängig) + natürliche Übersetzung.
+                        new Exercise
+                        {
+                            Type = ExerciseType.Birkenbihl,
+                            Title = "Birkenbihl: Getting to know each other",
+                            OrderIndex = 3,
+                            RewardPoints = 10,
+                            ConfigJson = Json(new BirkenbihlConfig
+                            {
+                                LearningLang = "Englisch",
+                                NativeLang = "Deutsch",
+                                Sentences =
+                                {
+                                    new BirkenbihlSentence(
+                                        "What is your name?",
+                                        [new WordPair("What", "Was"), new WordPair("is", "ist"),
+                                         new WordPair("your", "dein"), new WordPair("name", "Name")],
+                                        "Wie heißt du?"),
+                                    new BirkenbihlSentence(
+                                        "Where do you live?",
+                                        [new WordPair("Where", "Wo"), new WordPair("do", "tust"),
+                                         new WordPair("you", "du"), new WordPair("live", "wohnen")],
+                                        "Wo wohnst du?"),
+                                }
+                            }),
+                        },
                     }
                 },
                 new Chapter { Name = "Unit 2 – Family", OrderIndex = 2 },
