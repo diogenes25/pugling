@@ -294,6 +294,129 @@ export interface AchievementStatus {
   rewardPoints: number;
 }
 
+// ---- Vater: Missionen & Auszeichnungen verwalten (Definitionen) ----
+
+/** Missions-Definition zur Verwaltung durch den Vater. */
+export interface MissionDef {
+  id: number;
+  title: string;
+  metric: ProgressMetric;
+  target: number;
+  period: MissionPeriod;
+  rewardPoints: number;
+  active: boolean;
+}
+export interface CreateMissionDto {
+  title: string;
+  metric: ProgressMetric;
+  target: number;
+  period: MissionPeriod;
+  rewardPoints: number;
+}
+
+/** Auszeichnungs-Definition zur Verwaltung durch den Vater. */
+export interface AchievementDef {
+  id: number;
+  title: string;
+  icon: string | null;
+  metric: ProgressMetric;
+  threshold: number;
+  rewardPoints: number;
+  active: boolean;
+}
+export interface CreateAchievementDto {
+  title: string;
+  icon: string | null;
+  metric: ProgressMetric;
+  threshold: number;
+  rewardPoints: number;
+}
+
+// ---- Vater: Klassenarbeiten ----
+
+export type KlassenarbeitStatus = "Planned" | "Written" | "Cancelled";
+
+export interface TagRef { id: number; name: string; color: string | null; }
+
+/** Kurzform einer Übung aus dem Katalog (für Zuweisung/Üben). */
+export interface ExerciseBrief {
+  id: number;
+  chapterId: number;
+  chapterName: string;
+  subjectId: number | null;
+  subjectName: string;
+  type: string;
+  title: string;
+  rewardPoints: number;
+  config: unknown;
+}
+
+export interface KlassenarbeitResponse {
+  id: number;
+  childId: number;
+  subjectId: number | null;
+  subjectName: string | null;
+  title: string;
+  topic: string | null;
+  scheduledDate: string;
+  status: KlassenarbeitStatus;
+  grade: number | null;
+  gradeComment: string | null;
+  directExerciseCount: number;
+  tags: TagRef[];
+  createdAt: string;
+}
+
+export interface KlassenarbeitDetail {
+  klassenarbeit: KlassenarbeitResponse;
+  assignedExercises: ExerciseBrief[];
+}
+
+export interface CreateKlassenarbeitDto {
+  childId: number;
+  title: string;
+  topic?: string | null;
+  subjectId?: number | null;
+  scheduledDate: string;
+  grade?: number | null;
+}
+
+export interface UpdateKlassenarbeitDto {
+  title?: string;
+  topic?: string | null;
+  subjectId?: number;
+  scheduledDate?: string;
+  status?: KlassenarbeitStatus;
+  grade?: number | null;
+  clearGrade?: boolean;
+  gradeComment?: string | null;
+}
+
+export interface KlassenarbeitPractice {
+  klassenarbeitId: number;
+  title: string;
+  scheduledDate: string;
+  daysUntil: number;
+  exercises: ExerciseBrief[];
+}
+
+export interface KlassenarbeitRepeat {
+  minBadGrade: number;
+  sources: KlassenarbeitResponse[];
+  exercises: ExerciseBrief[];
+}
+
+/** Partielle Lehrplan-Änderung durch den Vater (Datumsfelder als "YYYY-MM-DD"). */
+export interface UpdatePlanDto {
+  title?: string;
+  startDate?: string;
+  endDate?: string;
+  newItemsPerLesson?: number;
+  dailyMinutesRequired?: number;
+  dailyTestPassPercent?: number;
+  active?: boolean;
+}
+
 // ---- Vokabel-Test ----
 
 export interface TestItem {
@@ -344,7 +467,7 @@ export interface TestSubmitResponse {
 
 export type PointKind =
   | "Base" | "Manual" | "Minutes" | "Test" | "DayComplete"
-  | "Combo" | "Speed" | "Duration" | "Mission" | "Achievement";
+  | "Combo" | "Speed" | "Duration" | "Mission" | "Achievement" | "SkinPurchase";
 
 export interface WalletEntry {
   id: number;
@@ -358,4 +481,13 @@ export interface Wallet {
   childId: number;
   balance: number;
   entries: WalletEntry[];
+}
+
+// ---- Sohn-Skins (server-autoritativer Besitz) ----
+
+/** Skin-Zustand des Kindes vom Server: Münzstand, ausgerüsteter und freigeschaltete Skins. */
+export interface SkinState {
+  balance: number;
+  selected: string;
+  owned: string[];
 }

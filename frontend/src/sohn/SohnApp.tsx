@@ -2,7 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 import { NavLink, Navigate, Route, Routes } from "react-router-dom";
 import { api } from "../lib/api";
 import { useAuth } from "../lib/auth";
-import { getSelectedSkin, type Skin } from "../lib/skins";
+import { DEFAULT_SKIN, skinById, type Skin } from "../lib/skins";
 import { SohnLogin } from "./SohnLogin";
 import { SohnHome } from "./SohnHome";
 import { SohnPractice } from "./SohnPractice";
@@ -40,7 +40,7 @@ export function SohnApp() {
 
 function SohnShell({ childId }: { childId: number }) {
   const [balance, setBalance] = useState(0);
-  const [skin, setSkin] = useState<Skin>(() => getSelectedSkin(childId));
+  const [skin, setSkin] = useState<Skin>(DEFAULT_SKIN);
   const [planId, setPlanIdState] = useState<number | null>(() => {
     const raw = localStorage.getItem(PLAN_KEY(childId));
     return raw ? Number(raw) : null;
@@ -52,6 +52,11 @@ function SohnShell({ childId }: { childId: number }) {
   }, []);
 
   useEffect(() => { refreshWallet(); }, [refreshWallet]);
+
+  // Ausgerüsteten Skin server-autoritativ laden (gilt geräteübergreifend); bis dahin Starter.
+  useEffect(() => {
+    api.skins().then((s) => setSkin(skinById(s.selected))).catch(() => { /* Fallback: Starter */ });
+  }, [childId]);
 
   const setPlanId = useCallback((id: number) => {
     localStorage.setItem(PLAN_KEY(childId), String(id));

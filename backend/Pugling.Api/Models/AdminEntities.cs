@@ -34,7 +34,53 @@ public class Child
     public string Pin { get; set; } = "";
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
+    /// <summary>
+    /// Aktuell ausgerüsteter Skin (Charakter) des Kindes. Serverseitig persistiert, damit die
+    /// Auswahl geräteübergreifend gilt und nicht am localStorage eines Geräts hängt.
+    /// </summary>
+    public string SelectedSkin { get; set; } = SkinCatalog.Default;
+
+    /// <summary>
+    /// Freigeschaltete Skins. Der Server ist die Quelle der Wahrheit für den Besitz, damit ein
+    /// Skin nur nach echter Münz-Einlösung freigeschaltet werden kann (kein Client-Betrug).
+    /// Als JSON-Liste gespeichert (Neuzuweisung im Controller, kein In-Place-Mutieren).
+    /// </summary>
+    public List<string> OwnedSkins { get; set; } = [SkinCatalog.Default];
+
+    /// <summary>
+    /// Nebenläufigkeits-Marke: wird bei jedem Skin-Kauf/Ausrüsten neu gesetzt und als
+    /// EF-Concurrency-Token geprüft. Verhindert, dass zwei parallele Käufe (Doppelklick/Retry)
+    /// beide den Deckungs-Check bestehen und doppelt abbuchen bzw. die Skin-Liste überschreiben –
+    /// der Verlierer läuft dann in eine <c>DbUpdateConcurrencyException</c> (→ 409) statt zu doppeln.
+    /// </summary>
+    public Guid ConcurrencyStamp { get; set; } = Guid.NewGuid();
+
     public List<ChildPointsEntry> PointsEntries { get; set; } = new();
+}
+
+/// <summary>
+/// Katalog der kaufbaren Skins samt Kosten – <b>serverseitige Quelle der Wahrheit</b>. Kosten
+/// werden nie dem Client geglaubt; das Frontend liefert nur die visuelle Darstellung
+/// (Emoji/Farbverlauf). Die IDs müssen mit dem Frontend-Katalog (<c>frontend/src/lib/skins.ts</c>)
+/// übereinstimmen.
+/// </summary>
+public static class SkinCatalog
+{
+    /// <summary>Von Anfang an freigeschalteter Gratis-Starter.</summary>
+    public const string Default = "pug";
+
+    /// <summary>Kaufbare Skins: ID → Kosten in Münzen (0 = gratis).</summary>
+    public static readonly IReadOnlyDictionary<string, int> Costs = new Dictionary<string, int>
+    {
+        ["pug"] = 0,
+        ["fox"] = 300,
+        ["dragon"] = 800,
+        ["robot"] = 1200,
+        ["ninja"] = 2000,
+    };
+
+    /// <summary>Kosten eines Skins oder <c>null</c>, wenn die ID unbekannt ist.</summary>
+    public static int? CostOf(string skinId) => Costs.TryGetValue(skinId, out var c) ? c : null;
 }
 
 /// <summary>
@@ -63,6 +109,8 @@ public enum PointKind
     Mission = 8,
     /// <summary>Belohnung für eine erreichte Auszeichnung.</summary>
     Achievement = 9,
+    /// <summary>Einlösung von Münzen für einen Skin (negative Buchung).</summary>
+    SkinPurchase = 10,
 }
 
 /// <summary>Punkte-Buchung eines Kindes (positiv = gutgeschrieben, negativ = eingelöst).</summary>

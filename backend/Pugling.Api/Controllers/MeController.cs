@@ -26,6 +26,9 @@ public class MeController(PuglingDbContext db, GamificationService gamification)
     /// <summary>Punktestand (Wallet) des Kindes samt der letzten Buchungen.</summary>
     public record WalletResponse(int ChildId, int Balance, IReadOnlyList<PointsEntryResponse> Entries);
 
+    /// <summary>Skin-Zustand des Kindes: aktueller Münzstand, ausgerüsteter und freigeschaltete Skins.</summary>
+    public record SkinStateResponse(int Balance, string Selected, IReadOnlyList<string> Owned);
+
     /// <summary>Eigener Punktestand (Wallet) samt der letzten Buchungen.</summary>
     [HttpGet("points")]
     [ProducesResponseType(StatusCodes.Status200OK)]
@@ -67,5 +70,108 @@ public class MeController(PuglingDbContext db, GamificationService gamification)
         var cid = User.ChildId();
         if (cid is null) return Forbid();
         return Ok(await gamification.AchievementStatusesAsync(cid.Value, DateOnly.FromDateTime(DateTime.UtcNow)));
+    }
+
+    /// <summary>Eigener Skin-Zustand: Münzstand, ausgerüsteter Skin und freigeschaltete Skins.</summary>
+    [HttpGet("skins")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<ActionResult<SkinStateResponse>> Skins()
+    {
+        var cid = User.ChildId();
+        if (cid is null) return Forbid();
+        return await SkinStateAsync(cid.Value);
+    }
+
+    /// <summary>
+    /// Schaltet einen Skin für den angemeldeten Sohn frei: bucht die Kosten als negative Punkte-Buchung
+    /// ab und rüstet ihn direkt aus. Kosten und Besitz sind serverseitig autoritativ (kein Client-Betrug).
+    /// Abbuchung und Freischaltung werden in einem <c>SaveChanges</c> committet; das Concurrency-Token am
+    /// Kind verhindert, dass zwei parallele Käufe (Doppelklick/Retry) beide den Deckungs-Check bestehen –
+    /// der zweite scheitert dann und liefert 409 statt doppelt abzubuchen.
+    /// </summary>
+    [HttpPost("skins/{skinId}/purchase")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<ActionResult<SkinStateResponse>> PurchaseSkin(string skinId)
+    {
+        var cid = User.ChildId();
+        if (cid is null) return Forbid();
+
+        var cost = SkinCatalog.CostOf(skinId);
+        if (cost is null) return Problem(statusCode: 404, detail: $"Unbekannter Skin '{skinId}'.");
+
+        var child = await db.Children.FirstOrDefaultAsync(c => c.Id == cid);
+        if (child is null) return Forbid();
+        if (child.OwnedSkins.Contains(skinId))
+            return Problem(statusCode: 409, detail: "Dieser Skin ist bereits freigeschaltet.");
+
+        var balance = await db.ChildPoints.Where(p => p.ChildId == cid).SumAsync(p => (int?)p.Amount) ?? 0;
+        if (balance < cost)
+            return Problem(statusCode: 400, detail: $"Zu wenig Münzen: {balance}/{cost} für '{skinId}'.");
+
+        db.ChildPoints.Add(new ChildPointsEntry
+        {
+            ChildId = cid.Value,
+            Amount = -cost.Value,
+            Kind = PointKind.SkinPurchase,
+            Reason = $"Skin freigeschaltet: {skinId}",
+        });
+        child.OwnedSkins = [.. child.OwnedSkins, skinId]; // Neuzuweisung: JSON-Spalte, kein In-Place-Mutieren
+        child.SelectedSkin = skinId;                       // gekaufter Skin wird direkt ausgerüstet
+        child.ConcurrencyStamp = Guid.NewGuid();           // Token bumpen → parallele Zweitbuchung scheitert
+
+        if (!await TrySaveAsync())
+            return Problem(statusCode: 409, detail: "Kauf kollidierte mit einer parallelen Aktion – bitte erneut versuchen.");
+
+        return await SkinStateAsync(cid.Value);
+    }
+
+    /// <summary>Rüstet einen bereits freigeschalteten Skin aus (persistiert geräteübergreifend am Kind).</summary>
+    [HttpPost("skins/{skinId}/equip")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<ActionResult<SkinStateResponse>> EquipSkin(string skinId)
+    {
+        var cid = User.ChildId();
+        if (cid is null) return Forbid();
+
+        var child = await db.Children.FirstOrDefaultAsync(c => c.Id == cid);
+        if (child is null) return Forbid();
+        if (!child.OwnedSkins.Contains(skinId))
+            return Problem(statusCode: 400, detail: "Dieser Skin ist noch nicht freigeschaltet.");
+
+        child.SelectedSkin = skinId;
+        child.ConcurrencyStamp = Guid.NewGuid();
+
+        if (!await TrySaveAsync())
+            return Problem(statusCode: 409, detail: "Ausrüsten kollidierte mit einer parallelen Aktion – bitte erneut versuchen.");
+        return await SkinStateAsync(cid.Value);
+    }
+
+    /// <summary>Speichert und fängt eine Nebenläufigkeits-Kollision (Token) ab: false = kollidiert, nichts committet.</summary>
+    private async Task<bool> TrySaveAsync()
+    {
+        try
+        {
+            await db.SaveChangesAsync();
+            return true;
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            return false;
+        }
+    }
+
+    private async Task<SkinStateResponse> SkinStateAsync(int childId)
+    {
+        var child = await db.Children.AsNoTracking().FirstAsync(c => c.Id == childId);
+        var balance = await db.ChildPoints.Where(p => p.ChildId == childId).SumAsync(p => (int?)p.Amount) ?? 0;
+        return new SkinStateResponse(balance, child.SelectedSkin, child.OwnedSkins);
     }
 }
