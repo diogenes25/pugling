@@ -83,6 +83,8 @@ export interface PlanResponse {
   pointsMinutesMet: number;
   pointsTestPassed: number;
   pointsDayCompleteBonus: number;
+  comboThreshold: number;
+  comboBonusPoints: number;
   active: boolean;
   items: PlanItemResponse[];
 }
@@ -105,6 +107,8 @@ export interface CreatePlanDto {
   pointsMinutesMet?: number;
   pointsTestPassed?: number;
   pointsDayCompleteBonus?: number;
+  comboThreshold?: number;
+  comboBonusPoints?: number;
 }
 
 // ---- Tagesstatus / Fortschritt ----

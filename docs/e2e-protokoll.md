@@ -19,6 +19,15 @@ Sohn: Login → Tagesmission → Leitner-Übung → Tagestest (SelfAssess) → S
 
 <!-- Neue Einträge oben anfügen -->
 
+### Runde 6 — Combo/Sonderpunkte im Backend konfigurierbar (+ Bugfix)
+Combo-Schwelle und Bonuspunkte sind jetzt **Plan-Einstellungen** (`StudyPlan.ComboThreshold` /
+`ComboBonusPoints`, per EF-Migration `ComboSettings`, Default 5/5 auch für Bestandspläne). Der Vater
+setzt sie im Plan-Formular; 0 schaltet den Bonus ab. Der Review-Endpunkt nutzt die Plan-Werte statt
+einer Code-Konstante. Neue Integrationstests (`ComboTests`) für „Bonus bei Schwelle" und „aus bei 0".
+**Dabei echten Bug gefunden:** Die Combo zählte sich selbst mit (EF-Relationship-Fixup reihte das noch
+ungespeicherte Review in `session.Reviews` ein → off-by-one). Fix: Vorstreak **vor** dem `Add` zählen.
+57/57 Unit-Tests + E2E grün.
+
 ### Runde 5 — Motivations-Animationen (Duolingo-Stil) + Combo-Bonus
 Neu: server-autoritative **Combo** (Treffer in Folge, im `PracticeSessionsController` gezählt → cheat-sicher)
 mit eskalierendem **Combo-Bonus** (alle 5 → +5/+10/+15 …), zurückgegeben im `ReviewOutcome`. Frontend:
