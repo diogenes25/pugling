@@ -1,0 +1,6 @@
+# Zeilenenden normalisieren. Shell-Skripte MÜSSEN LF behalten, sonst scheitert bash (\r).
+* text=auto
+*.sh text eol=lf
+*.cs text
+*.json text
+*.md text

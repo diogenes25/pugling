@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "permissions": {
+    "allow": [
+      "Bash(dotnet build:*)",
+      "Bash(dotnet run:*)",
+      "Bash(dotnet test:*)",
+      "Bash(dotnet format:*)",
+      "Bash(dotnet restore:*)",
+      "Bash(dotnet ef:*)",
+      "Bash(dotnet sln:*)",
+      "Bash(dotnet new:*)",
+      "Bash(dotnet add:*)",
+      "Bash(dotnet --version)",
+      "Bash(curl:*)",
+      "Bash(taskkill:*)",
+      "Bash(netstat:*)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git show:*)",
+      "Bash(git branch:*)"
+    ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/after-cs-edit.sh\"",
+            "timeout": 180,
+            "statusMessage": "Formatiere + baue (.cs) …"
+          }
+        ]
+      }
+    ]
+  }
+}
