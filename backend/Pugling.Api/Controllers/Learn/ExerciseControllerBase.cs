@@ -8,12 +8,13 @@ using Pugling.Api.Models;
 
 namespace Pugling.Api.Controllers.Learn;
 
-/// <summary>Übung zum Anlegen/Ändern: gemeinsame Felder + typ-spezifische Config.</summary>
-public record ExercisePayload<TConfig>(string Title, int OrderIndex, int RewardPoints, TConfig Config);
+/// <summary>Übung zum Anlegen/Ändern: gemeinsame Felder + typ-spezifische Config + optionaler Bonus-Vorschlag.</summary>
+public record ExercisePayload<TConfig>(string Title, int OrderIndex, int RewardPoints, TConfig Config,
+    SuggestedBonus? SuggestedBonus = null);
 
 /// <summary>Übung in der Antwort.</summary>
 public record ExerciseResponse<TConfig>(int Id, int ChapterId, string Type, string Title,
-    int OrderIndex, int RewardPoints, DateTime CreatedAt, TConfig Config);
+    int OrderIndex, int RewardPoints, DateTime CreatedAt, TConfig Config, SuggestedBonus? SuggestedBonus);
 
 /// <summary>
 /// Gemeinsame CRUD-Logik für alle Übungstypen unter einem Kapitel.
@@ -48,7 +49,7 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db) : Con
         JsonSerializer.Deserialize<TConfig>(exercise.ConfigJson, JsonOptions) ?? new TConfig();
 
     private ExerciseResponse<TConfig> Map(Exercise e) =>
-        new(e.Id, e.ChapterId, e.Type.ToString(), e.Title, e.OrderIndex, e.RewardPoints, e.CreatedAt, ConfigOf(e));
+        new(e.Id, e.ChapterId, e.Type.ToString(), e.Title, e.OrderIndex, e.RewardPoints, e.CreatedAt, ConfigOf(e), e.SuggestedBonus);
 
     /// <summary>Liste der Übungen dieses Typs im Kapitel.</summary>
     [HttpGet]
@@ -90,6 +91,7 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db) : Con
             OrderIndex = body.OrderIndex,
             RewardPoints = body.RewardPoints,
             ConfigJson = JsonSerializer.Serialize(body.Config ?? new TConfig(), JsonOptions),
+            SuggestedBonus = body.SuggestedBonus,
         };
         db.Exercises.Add(exercise);
         await db.SaveChangesAsync();
@@ -111,6 +113,7 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db) : Con
         exercise.OrderIndex = body.OrderIndex;
         exercise.RewardPoints = body.RewardPoints;
         exercise.ConfigJson = JsonSerializer.Serialize(body.Config ?? new TConfig(), JsonOptions);
+        exercise.SuggestedBonus = body.SuggestedBonus;
         await db.SaveChangesAsync();
 
         return Map(exercise);

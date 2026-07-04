@@ -36,6 +36,12 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
     public DbSet<TimetableEntry> Timetable => Set<TimetableEntry>();
     public DbSet<ContentRating> ContentRatings => Set<ContentRating>();
 
+    // Gamification: Missionen (zeitgebundene Ziele) + Auszeichnungen (Badges) je Kind, mit Vergabe-Log
+    public DbSet<Mission> Missions => Set<Mission>();
+    public DbSet<MissionAward> MissionAwards => Set<MissionAward>();
+    public DbSet<Achievement> Achievements => Set<Achievement>();
+    public DbSet<AchievementAward> AchievementAwards => Set<AchievementAward>();
+
     // Tagging + Klassenarbeiten
     public DbSet<Tag> Tags => Set<Tag>();
     public DbSet<ExerciseTag> ExerciseTags => Set<ExerciseTag>();
@@ -67,6 +73,12 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
                 .HasForeignKey(v => v.BaseFormId)
                 .OnDelete(DeleteBehavior.Restrict);
         });
+
+        // Bonus-Vorschlag der Übung als JSON-Spalte (null bleibt DB-NULL; Converter läuft nur für Werte).
+        modelBuilder.Entity<Exercise>()
+            .Property(e => e.SuggestedBonus).HasConversion(
+                v => JsonSerializer.Serialize(v, JsonOptions),
+                s => JsonSerializer.Deserialize<SuggestedBonus>(s, JsonOptions));
 
         // Lückentext-Store: eindeutiger Key + Gaps/WordBank als JSON-Spalten.
         modelBuilder.Entity<ClozeText>(e =>
@@ -117,6 +129,24 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
             e.HasIndex(t => new { t.ChildId, t.SubjectId, t.DayOfWeek }).IsUnique();
             e.HasOne(t => t.Child).WithMany().HasForeignKey(t => t.ChildId).OnDelete(DeleteBehavior.Cascade);
             e.HasOne(t => t.Subject).WithMany().HasForeignKey(t => t.SubjectId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // Mission gehört einem Kind (Cascade); jede Mission wird je Zeitraum höchstens einmal belohnt.
+        modelBuilder.Entity<Mission>()
+            .HasOne(m => m.Child).WithMany().HasForeignKey(m => m.ChildId).OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<MissionAward>(e =>
+        {
+            e.HasIndex(a => new { a.MissionId, a.PeriodKey }).IsUnique();
+            e.HasOne(a => a.Mission).WithMany().HasForeignKey(a => a.MissionId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // Auszeichnung gehört einem Kind (Cascade); wird genau einmal verliehen.
+        modelBuilder.Entity<Achievement>()
+            .HasOne(a => a.Child).WithMany().HasForeignKey(a => a.ChildId).OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<AchievementAward>(e =>
+        {
+            e.HasIndex(a => a.AchievementId).IsUnique();
+            e.HasOne(a => a.Achievement).WithMany().HasForeignKey(a => a.AchievementId).OnDelete(DeleteBehavior.Cascade);
         });
 
         // Tag: pro Kind eindeutiger Name; löscht das Kind, verschwinden seine Tags.

@@ -24,6 +24,7 @@ public class StudyPlansController(PuglingDbContext db, StudyProgressService prog
         IReadOnlyList<StageStep>? StageSchedule, bool UseLeitner, int MaxBox, IReadOnlyList<int>? BoxIntervalDays,
         int PointsMinutesMet, int PointsTestPassed,
         int PointsDayCompleteBonus, int ComboThreshold, int ComboBonusPoints,
+        int NewContentPoints, int SpeedThresholdSeconds, int SpeedBonusPoints,
         bool Active, IReadOnlyList<PlanItemResponse> Items);
 
     static PlanItemResponse MapItem(StudyPlanItem i) => i.ClozeTextId is not null
@@ -33,7 +34,8 @@ public class StudyPlansController(PuglingDbContext db, StudyProgressService prog
     static PlanResponse Map(StudyPlan p) => new(p.Id, p.ChildId, p.Method, p.Title, p.SubjectId, p.NewItemsPerLesson,
         p.StartDate, p.EndDate, p.DailyMinutesRequired, p.DailyTestRequired, p.DailyTestPassPercent, p.DefaultStage, p.RequireTypedTest,
         p.StageSchedule, p.UseLeitner, p.MaxBox, p.BoxIntervalDays, p.PointsMinutesMet, p.PointsTestPassed, p.PointsDayCompleteBonus,
-        p.ComboThreshold, p.ComboBonusPoints, p.Active,
+        p.ComboThreshold, p.ComboBonusPoints,
+        p.NewContentPoints, p.SpeedThresholdSeconds, p.SpeedBonusPoints, p.Active,
         p.Items.OrderBy(i => i.Order).Select(MapItem).ToList());
 
     IQueryable<StudyPlan> WithItems() =>
@@ -78,7 +80,8 @@ public class StudyPlansController(PuglingDbContext db, StudyProgressService prog
         int? DailyMinutesRequired, int? DailyTestPassPercent, int? DefaultStage, bool? RequireTypedTest,
         List<StageStep>? StageSchedule, bool? UseLeitner, int? MaxBox, List<int>? BoxIntervalDays,
         int? PointsMinutesMet, int? PointsTestPassed, int? PointsDayCompleteBonus,
-        int? ComboThreshold, int? ComboBonusPoints);
+        int? ComboThreshold, int? ComboBonusPoints,
+        int? NewContentPoints, int? SpeedThresholdSeconds, int? SpeedBonusPoints);
 
     /// <summary>Erstellt einen Lehrplan (nur Vater, nur für eigene Kinder) und verknüpft die Inhalte.</summary>
     [HttpPost]
@@ -125,6 +128,9 @@ public class StudyPlansController(PuglingDbContext db, StudyProgressService prog
             PointsDayCompleteBonus = dto.PointsDayCompleteBonus ?? 10,
             ComboThreshold = dto.ComboThreshold ?? 5,
             ComboBonusPoints = dto.ComboBonusPoints ?? 5,
+            NewContentPoints = dto.NewContentPoints ?? 10,
+            SpeedThresholdSeconds = dto.SpeedThresholdSeconds ?? 0,
+            SpeedBonusPoints = dto.SpeedBonusPoints ?? 0,
         };
 
         if (dto.ContentKeys is { Count: > 0 })
@@ -145,7 +151,8 @@ public class StudyPlansController(PuglingDbContext db, StudyProgressService prog
         int? DefaultStage, bool? RequireTypedTest, List<StageStep>? StageSchedule,
         bool? UseLeitner, int? MaxBox, List<int>? BoxIntervalDays,
         int? PointsMinutesMet, int? PointsTestPassed, int? PointsDayCompleteBonus,
-        int? ComboThreshold, int? ComboBonusPoints, bool? Active);
+        int? ComboThreshold, int? ComboBonusPoints,
+        int? NewContentPoints, int? SpeedThresholdSeconds, int? SpeedBonusPoints, bool? Active);
 
     /// <summary>Ändert einen Lehrplan (partiell, nur Vater/eigener). Das Lernverfahren ist nicht änderbar.</summary>
     [HttpPatch("{planId:int}")]
@@ -181,6 +188,9 @@ public class StudyPlansController(PuglingDbContext db, StudyProgressService prog
         if (dto.PointsDayCompleteBonus is not null) plan.PointsDayCompleteBonus = dto.PointsDayCompleteBonus.Value;
         if (dto.ComboThreshold is not null) plan.ComboThreshold = dto.ComboThreshold.Value;
         if (dto.ComboBonusPoints is not null) plan.ComboBonusPoints = dto.ComboBonusPoints.Value;
+        if (dto.NewContentPoints is not null) plan.NewContentPoints = dto.NewContentPoints.Value;
+        if (dto.SpeedThresholdSeconds is not null) plan.SpeedThresholdSeconds = dto.SpeedThresholdSeconds.Value;
+        if (dto.SpeedBonusPoints is not null) plan.SpeedBonusPoints = dto.SpeedBonusPoints.Value;
         if (dto.Active is not null) plan.Active = dto.Active.Value;
         await db.SaveChangesAsync();
         return (await Project(planId))!;

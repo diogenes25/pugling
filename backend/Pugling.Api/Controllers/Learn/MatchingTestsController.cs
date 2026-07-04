@@ -18,7 +18,7 @@ namespace Pugling.Api.Controllers.Learn;
 [Produces("application/json")]
 [Authorize]
 [ServiceFilter(typeof(PlanOwnershipFilter))]
-public class MatchingTestsController(PuglingDbContext db, ScheduleService schedule, TestAttemptService attempts)
+public class MatchingTestsController(PuglingDbContext db, ScheduleService schedule, TestAttemptService attempts, AnswerGrader grader)
     : ControllerBase
 {
     static bool IsReverse(MatchStage s) => s is MatchStage.Reverse or MatchStage.ReverseDistractors;
@@ -133,7 +133,7 @@ public class MatchingTestsController(PuglingDbContext db, ScheduleService schedu
             var v = vocab[result.ContentId];
             var expected = Right(v, stage);
             answers.TryGetValue(result.ContentId, out var answer);
-            var correct = StudyProgressService.Normalize(answer?.ChosenAnswer) == StudyProgressService.Normalize(expected);
+            var correct = grader.Matches(answer?.ChosenAnswer, expected);
 
             result.GivenAnswer = answer?.ChosenAnswer;
             result.WasCorrect = correct;

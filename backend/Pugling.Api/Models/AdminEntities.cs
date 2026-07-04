@@ -33,6 +33,34 @@ public class Child
     public List<ChildPointsEntry> PointsEntries { get; set; } = new();
 }
 
+/// <summary>
+/// Kategorie einer Punkte-Buchung – macht Boni auswertbar/deckelbar (z. B. "wie viele Punkte
+/// kamen aus Combo vs. Uhrzeit?"). <see cref="Base"/> ist der Standard für Altbuchungen.
+/// </summary>
+public enum PointKind
+{
+    /// <summary>Basispunkte einer richtigen Wiederholung (inkl. Zeitfenster-Faktor).</summary>
+    Base = 0,
+    /// <summary>Manuelle Vater-Buchung (Gutschrift/Einlösung).</summary>
+    Manual = 1,
+    /// <summary>Tagesziel Übungszeit erreicht.</summary>
+    Minutes = 2,
+    /// <summary>Abschlusstest bestanden.</summary>
+    Test = 3,
+    /// <summary>Tag vollständig (Zeit + Test).</summary>
+    DayComplete = 4,
+    /// <summary>Combo-Bonus (Treffer in Folge).</summary>
+    Combo = 5,
+    /// <summary>Bonus für schnelle Antwort.</summary>
+    Speed = 6,
+    /// <summary>Bonus für durchgehende Lernzeit.</summary>
+    Duration = 7,
+    /// <summary>Belohnung für eine erfüllte Mission (Tages-/Wochen-/Zusatzziel).</summary>
+    Mission = 8,
+    /// <summary>Belohnung für eine erreichte Auszeichnung.</summary>
+    Achievement = 9,
+}
+
 /// <summary>Punkte-Buchung eines Kindes (positiv = gutgeschrieben, negativ = eingelöst).</summary>
 public class ChildPointsEntry
 {
@@ -40,6 +68,8 @@ public class ChildPointsEntry
     public int ChildId { get; set; }
     public Child? Child { get; set; }
     public int Amount { get; set; }
+    /// <summary>Kategorie der Buchung (für Auswertung/Deckelung der Bonusquellen).</summary>
+    public PointKind Kind { get; set; } = PointKind.Base;
     public string Reason { get; set; } = "";
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }

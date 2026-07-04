@@ -15,18 +15,11 @@ namespace Pugling.Api.Controllers.Learn;
 [Produces("application/json")]
 [Authorize]
 [ServiceFilter(typeof(PlanOwnershipFilter))]
-public class ClozeTestsController(PuglingDbContext db, ScheduleService schedule, TestAttemptService attempts)
+public class ClozeTestsController(PuglingDbContext db, ScheduleService schedule, TestAttemptService attempts, AnswerGrader grader)
     : ControllerBase
 {
     static bool ShowTranslation(ClozeStage s) => s is ClozeStage.TranslationWordBank or ClozeStage.TranslationFreeText;
     static bool ShowWordBank(ClozeStage s) => s is ClozeStage.WordBank or ClozeStage.TranslationWordBank;
-
-    static bool GapCorrect(Gap gap, string? given)
-    {
-        var g = StudyProgressService.Normalize(given);
-        return g.Length > 0 && (g == StudyProgressService.Normalize(gap.Answer)
-            || (gap.Alternatives?.Any(a => StudyProgressService.Normalize(a) == g) ?? false));
-    }
 
     /// <summary>Was dem Kind je Lückentext angezeigt wird – ohne Lösungen zu verraten.</summary>
     public record ClozeTestText(int ClozeTextId, string Title, string Text, string? Translation,
@@ -161,7 +154,7 @@ public class ClozeTestsController(PuglingDbContext db, ScheduleService schedule,
             var gap = texts.TryGetValue(result.ContentId, out var text)
                 ? text.Gaps.FirstOrDefault(g => g.Index == result.GapIndex) : null;
             answers.TryGetValue((result.ContentId, result.GapIndex ?? 0), out var answer);
-            var correct = gap is not null && GapCorrect(gap, answer?.GivenAnswer);
+            var correct = gap is not null && grader.MatchesGap(gap, answer?.GivenAnswer);
 
             result.GivenAnswer = answer?.GivenAnswer;
             result.WasCorrect = correct;

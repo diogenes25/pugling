@@ -29,6 +29,49 @@ public class CatalogExerciseTests(PuglingWebAppFactory factory) : IClassFixture<
     }
 
     [Fact]
+    public async Task BonusVorschlag_WirdBeimPlanErzeugen_Kopiert_UndWirktNichtRueckwirkend()
+    {
+        var father = await TestApi.FatherAsync(factory);
+        var subjectId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/learn/subjects", new { name = "Erd" }));
+        var chapterId = await TestApi.IdAsync(await father.PostAsJsonAsync(
+            $"/api/learn/subjects/{subjectId}/chapters", new { name = "DE", orderIndex = 1 }));
+        var matchBase = $"/api/learn/subjects/{subjectId}/chapters/{chapterId}/matching";
+
+        // Übung mit Bonus-Vorschlag (großzügig, um Motivation zu erhöhen).
+        var exerciseId = await TestApi.IdAsync(await father.PostAsJsonAsync(matchBase, new
+        {
+            title = "Länder",
+            orderIndex = 1,
+            rewardPoints = 20,
+            config = new { instruction = "Ordne zu.", pairs = new[] { new { left = "Bayern", right = "München" }, new { left = "Hessen", right = "Wiesbaden" } } },
+            suggestedBonus = new { comboThreshold = 3, comboBonusPoints = 9, speedThresholdSeconds = 8, speedBonusPoints = 4, newContentPoints = 15 },
+        }));
+
+        // Plan aus der Übung → Bonus-Felder aus dem Vorschlag kopiert.
+        var planId = (await (await father.PostAsJsonAsync($"{matchBase}/{exerciseId}/to-study-plan",
+            new { childId = 1, durationDays = 7 })).Content.ReadFromJsonAsync<JsonElement>()).GetProperty("planId").GetInt32();
+
+        var plan = await (await father.GetAsync($"/api/study-plans/{planId}")).Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal(3, plan.GetProperty("comboThreshold").GetInt32());
+        Assert.Equal(9, plan.GetProperty("comboBonusPoints").GetInt32());
+        Assert.Equal(8, plan.GetProperty("speedThresholdSeconds").GetInt32());
+        Assert.Equal(15, plan.GetProperty("newContentPoints").GetInt32());
+
+        // Übungs-Vorschlag nachträglich ändern (PUT) – der bestehende Kind-Plan bleibt unberührt.
+        await father.PutAsJsonAsync($"{matchBase}/{exerciseId}", new
+        {
+            title = "Länder",
+            orderIndex = 1,
+            rewardPoints = 20,
+            config = new { instruction = "Ordne zu.", pairs = new[] { new { left = "Bayern", right = "München" } } },
+            suggestedBonus = new { comboThreshold = 99, comboBonusPoints = 99, speedThresholdSeconds = 99, speedBonusPoints = 99, newContentPoints = 99 },
+        });
+
+        var planAfter = await (await father.GetAsync($"/api/study-plans/{planId}")).Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal(3, planAfter.GetProperty("comboThreshold").GetInt32()); // unverändert
+    }
+
+    [Fact]
     public async Task Sohn_DarfKeineUebungAnlegen_403()
     {
         var father = await TestApi.FatherAsync(factory);

@@ -15,7 +15,7 @@ namespace Pugling.Api.Controllers.Learn;
 [Produces("application/json")]
 [Authorize]
 [ServiceFilter(typeof(PlanOwnershipFilter))]
-public class TestsController(PuglingDbContext db, ScheduleService schedule, TestAttemptService attempts)
+public class TestsController(PuglingDbContext db, ScheduleService schedule, TestAttemptService attempts, AnswerGrader grader)
     : ControllerBase
 {
     /// <summary>Was dem Kind je Vokabel angezeigt wird – ohne die Lösung zu verraten (außer Stufe 1).</summary>
@@ -161,8 +161,7 @@ public class TestsController(PuglingDbContext db, ScheduleService schedule, Test
             {
                 TestStage.ShowBoth => true, // reine Anzeige-Stufe
                 TestStage.SelfAssess => answer?.WasKnown ?? false,
-                _ => answer is not null &&
-                     StudyProgressService.Normalize(answer.GivenAnswer) == StudyProgressService.Normalize(v.Translation),
+                _ => grader.Matches(answer?.GivenAnswer, v.Translation),
             };
 
             result.GivenAnswer = answer?.GivenAnswer;

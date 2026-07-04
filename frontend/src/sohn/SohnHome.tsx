@@ -5,6 +5,7 @@ import { useAsync } from "../lib/useAsync";
 import { useAuth } from "../lib/auth";
 import { Mascot } from "../components/Mascot";
 import { useSohn } from "./SohnApp";
+import { MissionsPanel } from "./GamificationPanels";
 import type { PlanResponse } from "../lib/types";
 
 export function SohnHome() {
@@ -109,6 +110,8 @@ function HomeForPlan({
         </button>
       )}
       <button type="button" className="btn" onClick={() => nav("/sohn/test")}>🎯 TAGESTEST</button>
+
+      <MissionsPanel />
 
       {p.outstanding.length > 0 && !t.dutyDone && (
         <p className="sub" style={{ textAlign: "center" }}>Noch offen: {p.outstanding.join(" · ")}</p>

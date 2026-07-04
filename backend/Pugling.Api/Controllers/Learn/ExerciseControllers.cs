@@ -146,6 +146,16 @@ public class MatchingController(PuglingDbContext db, ExerciseAnswerChecker check
             EndDate = start.AddDays(duration - 1),
             Items = items,
         };
+        // Bonus-Vorschlag der Übung EINMAL in den Plan kopieren (kind-individuell, danach frei anpassbar;
+        // spätere Änderungen an der Übung wirken nicht rückwirkend). Ohne Vorschlag greifen die Plan-Defaults.
+        if (exercise.SuggestedBonus is { } sb)
+        {
+            plan.ComboThreshold = sb.ComboThreshold;
+            plan.ComboBonusPoints = sb.ComboBonusPoints;
+            plan.SpeedThresholdSeconds = sb.SpeedThresholdSeconds;
+            plan.SpeedBonusPoints = sb.SpeedBonusPoints;
+            plan.NewContentPoints = sb.NewContentPoints;
+        }
         Db.StudyPlans.Add(plan);
         await Db.SaveChangesAsync();
 

@@ -13,7 +13,9 @@ builder.Services.AddControllers()
         new System.Text.Json.Serialization.JsonStringEnumConverter()));
 builder.Services.AddDbContext<PuglingDbContext>(o =>
     o.UseSqlite(builder.Configuration.GetConnectionString("Default") ?? "Data Source=pugling.db"));
-builder.Services.AddScoped<PointsService>();
+builder.Services.AddScoped<ScoringService>();
+builder.Services.AddScoped<MetricsService>();
+builder.Services.AddScoped<GamificationService>();
 builder.Services.AddScoped<StudyProgressService>();
 builder.Services.AddScoped<ScheduleService>();
 builder.Services.AddScoped<TestAttemptService>();
@@ -22,6 +24,7 @@ builder.Services.AddScoped<PlanOwnershipFilter>();
 builder.Services.AddSingleton<TokenService>();
 builder.Services.AddSingleton<ArithmeticProblemGenerator>();
 builder.Services.AddSingleton<ExerciseAnswerChecker>();
+builder.Services.AddSingleton<AnswerGrader>();
 builder.Services.AddCors(o => o.AddDefaultPolicy(p =>
     p.WithOrigins("http://localhost:5173").AllowAnyHeader().AllowAnyMethod()));
 

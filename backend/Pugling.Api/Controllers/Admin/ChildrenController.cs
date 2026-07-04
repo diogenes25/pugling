@@ -114,7 +114,7 @@ public class ChildrenController(PuglingDbContext db) : ControllerBase, IActionFi
 
     // ---- Punkte des Kindes ----
 
-    public record PointsEntryResponse(int Id, int ChildId, int Amount, string Reason, DateTime CreatedAt);
+    public record PointsEntryResponse(int Id, int ChildId, int Amount, PointKind Kind, string Reason, DateTime CreatedAt);
     public record ChildPointsResponse(int ChildId, int Balance, IEnumerable<PointsEntryResponse> Entries);
 
     /// <summary>Punktestand des Kindes mit den letzten Buchungen.</summary>
@@ -128,7 +128,7 @@ public class ChildrenController(PuglingDbContext db) : ControllerBase, IActionFi
             .Where(p => p.ChildId == childId)
             .OrderByDescending(p => p.CreatedAt)
             .Take(100)
-            .Select(p => new PointsEntryResponse(p.Id, p.ChildId, p.Amount, p.Reason, p.CreatedAt))
+            .Select(p => new PointsEntryResponse(p.Id, p.ChildId, p.Amount, p.Kind, p.Reason, p.CreatedAt))
             .ToListAsync();
 
         return new ChildPointsResponse(childId, entries.Sum(e => e.Amount), entries);
@@ -144,11 +144,11 @@ public class ChildrenController(PuglingDbContext db) : ControllerBase, IActionFi
     {
         if (!await db.Children.AnyAsync(c => c.Id == childId && c.FatherId == fatherId)) return NotFound();
 
-        var entry = new ChildPointsEntry { ChildId = childId, Amount = dto.Amount, Reason = dto.Reason ?? "" };
+        var entry = new ChildPointsEntry { ChildId = childId, Kind = PointKind.Manual, Amount = dto.Amount, Reason = dto.Reason ?? "" };
         db.ChildPoints.Add(entry);
         await db.SaveChangesAsync();
 
-        var response = new PointsEntryResponse(entry.Id, childId, entry.Amount, entry.Reason, entry.CreatedAt);
+        var response = new PointsEntryResponse(entry.Id, childId, entry.Amount, entry.Kind, entry.Reason, entry.CreatedAt);
         return CreatedAtAction(nameof(GetPoints), new { fatherId, childId }, response);
     }
 }
