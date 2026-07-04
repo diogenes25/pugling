@@ -1,0 +1,46 @@
+{
+  "course": "Git Basics",
+  "slug": "git-basics",
+  "topic": "everyday version control with Git",
+  "level": "beginner",
+  "authored_by": "vater",
+  "pass_threshold_pct": 80,
+  "total_points": 20,
+  "house_rules": [
+    "Work modules strictly in order — Module 02 assumes Module 01 is passed.",
+    "Attempt every exercise and write your answer into the ledger BEFORE opening the answer key.",
+    "For code exercises, actually run the git commands in a throwaway repo — do not eyeball the output.",
+    "Grade yourself honestly against the rubric. The ledger is auditable.",
+    "You may not declare the course complete until overall points >= 16 (80% of 20)."
+  ],
+  "modules": [
+    {
+      "id": "01",
+      "slug": "the-three-states",
+      "title": "The three states: working tree, staging area, repository",
+      "file": "modules/01-the-three-states.md",
+      "answer_key": "answer-key/01-the-three-states.md",
+      "points": 10,
+      "pass_threshold_pct": 70,
+      "exercises": [
+        { "id": "01.1", "type": "multiple-choice", "points": 3, "checkable": true },
+        { "id": "01.2", "type": "code",            "points": 4, "checkable": true },
+        { "id": "01.3", "type": "explain",         "points": 3, "checkable": false }
+      ]
+    },
+    {
+      "id": "02",
+      "slug": "branching-and-merging",
+      "title": "Branching and merging",
+      "file": "modules/02-branching-and-merging.md",
+      "answer_key": "answer-key/02-branching-and-merging.md",
+      "points": 10,
+      "pass_threshold_pct": 70,
+      "exercises": [
+        { "id": "02.1", "type": "multiple-choice", "points": 3, "checkable": true },
+        { "id": "02.2", "type": "code",            "points": 4, "checkable": true },
+        { "id": "02.3", "type": "explain",         "points": 3, "checkable": false }
+      ]
+    }
+  ]
+}

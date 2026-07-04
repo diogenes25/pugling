@@ -1,0 +1,79 @@
+# Pugling – Claude-Leitfaden
+
+Lern-App mit Punktesystem (Leitner-Prinzip). **Vater** steuert und erzwingt Lernerfolg,
+**Sohn** lernt mit Spaß. Zwei Rollen, Punkte, Zeitfenster, Klassenarbeiten.
+
+## Grundprinzip: API-First
+
+Die REST-API (**OpenAPI/Swagger**) ist das Produkt und die einzige Quelle der Wahrheit –
+bedient direkt oder über die Skills `vater`/`sohn`. Das React-Frontend hängt am alten,
+entfernten Template und ist **außer Betrieb**, bis es gegen die neue API neu gebaut wird.
+→ Feature-Arbeit findet im **Backend** statt. Details: [docs/architektur-entscheidung.md](docs/architektur-entscheidung.md).
+
+## Befehle
+
+Immer aus `backend/Pugling.Api` bzw. Repo-Root:
+
+```bash
+cd backend/Pugling.Api && dotnet build      # baut die API (nach .cs-Edits automatisch per Hook)
+cd backend/Pugling.Api && dotnet run        # http://localhost:5200, Swagger unter /swagger
+dotnet test                                 # Integrationstests (backend/Pugling.Api.Tests)
+dotnet format backend/Pugling.Api           # Formatierung (läuft nach Edits automatisch)
+```
+
+- **Smoke-Test gegen laufende API:** `/smoke-test` (startet gegen eine Temp-DB, prüft Auth +
+  Ownership + einen Plan→Test→Submit-Flow, lässt die echte `pugling.db` unangetastet).
+- **Neuen Übungstyp/Lernverfahren anlegen:** `/neuer-uebungstyp` (führt den etablierten Prozess).
+
+## Architektur (das produktive Modell)
+
+- **Identität/Auth** ([Auth/](backend/Pugling.Api/Auth/)): `Father`→`Child`, PIN-Login → JWT mit
+  Rollen-Claim (`Roles.Vater`/`Roles.Sohn`) + `fid`/`cid`. Eigentum prüft `AuthAccess`
+  (`OwnsPlanAsync`/`OwnsChildAsync`/`FatherOwnsChildAsync`).
+- **Lern-Katalog** ([Controllers/Learn/ExerciseControllers.cs](backend/Pugling.Api/Controllers/Learn/ExerciseControllers.cs)):
+  `Subject → Chapter → Exercise` (typisiert, Config als JSON). Ein Controller je `ExerciseType`,
+  erben CRUD aus `ExerciseControllerBase<TConfig>`. Route: `api/learn/subjects/{}/chapters/{}/<typ>`.
+- **Lehrplan/Training** ([StudyPlansController](backend/Pugling.Api/Controllers/Learn/StudyPlansController.cs)):
+  `StudyPlan` (verfahrensneutral) mit `StudyPlanItem`s → Vokabel- bzw. Lückentext-Store.
+  `PracticeSession` (Übungszeit/Leitner), `TestAttempt` (mehrstufige Abschlusstests).
+  Route: `api/study-plans/{planId}/…`.
+- **Tags & Klassenarbeiten** ([KlassenarbeitenController](backend/Pugling.Api/Controllers/Learn/KlassenarbeitenController.cs)):
+  Übungen taggen, Arbeiten planen/benoten, gezielt üben/wiederholen.
+- **Services** ([Services/](backend/Pugling.Api/Services/)): `StudyProgressService` (Tages-Auswertung +
+  idempotente Punkte), `ScheduleService` (Stundenplan-Auswahl neu/Wiederholung), `TestAttemptService`
+  (gemeinsamer Test-Lebenszyklus), `PointsService` (Leitner-Punkte × Zeitfenster), `PointsService`.
+
+## Konventionen (an bestehendem Code orientieren!)
+
+- **Modernes C# 14 / net10, `Nullable` an.** File-scoped Namespaces, Primary Constructors für DI,
+  `record`s für DTOs/Requests/Responses, Expression-bodied Members, Pattern Matching, Collection Expressions.
+- **Doku auf Deutsch.** Öffentliche Typen/Members tragen `/// <summary>` (fließt in Swagger).
+  Kommentare erklären das *Warum* (Geschäftsregel, Anti-Cheat), nicht das Was.
+- **Controller dünn**, Logik in Services. DTOs als `record` projizieren – nie EF-Entities zurückgeben.
+- **Guard Clauses zuerst** (früh `return NotFound()/BadRequest()/Forbid()`), Happy Path un-eingerückt.
+- **Eigentum**: Für Endpunkte unter `{planId}` den `[ServiceFilter(typeof(PlanOwnershipFilter))]`
+  nutzen (nicht den Filter erneut inline schreiben). Sonst `AuthAccess` explizit.
+- **EF**: `AsNoTracking()` für Lesequeries, in DB filtern (`Where` vor `ToListAsync`), N+1 via `Include`/
+  Projektion vermeiden, `async`/`Async`-Suffix, `CancellationToken` durchreichen.
+- **Rolle & Selbstbetrug**: Für den Sohn serverseitig erzwingen (Stufe aus dem Fahrplan, Heartbeat clampen,
+  fremde Tage nur der Vater). Neue Endpunkte immer role-/ownership-sauber.
+
+## Fallstricke
+
+- **`EnsureCreated()` statt Migrationen** ([Program.cs](backend/Pugling.Api/Program.cs)): Schemaänderungen
+  greifen nicht in einer bestehenden `pugling.db`. Beim Testen die DB löschen oder Temp-DB nutzen
+  (`ConnectionStrings__Default`). `*.db` ist gitignored.
+- **PINs im Klartext** (`Father.Pin`/`Child.Pin`) – vor Prod hashen (offen, siehe Migrationsplan).
+- **`TimeSlotRule`** ist das *einzige* bewusst erhaltene Legacy-Entity (Leitner-Multiplikator). Alles
+  andere aus dem Ursprungs-Template wurde entfernt – **kein** `User`/`Topic`/`VocabCard`/`Points…` mehr anlegen.
+- **Zeit/UTC**: Tageslogik nutzt `DateTime.UtcNow`/`DateOnly` – nahe Mitternacht lokal ggf. anderer Kalendertag.
+- **JSON-Spalten** (`Gaps`, `WordBank`, `StageSchedule`, `Noun`/`Verb`): funktionieren, weil Controller
+  die Listen neu zuweisen; kein In-Place-Mutieren erwarten (fehlender `ValueComparer`).
+
+## Arbeitsweise
+
+- Nach `.cs`-Edits laufen automatisch `dotnet format` (nur die Datei) und `dotnet build` (API); Build-Fehler
+  kommen als Feedback zurück. Bei einer Reihe zusammengehöriger Edits ruhig weiterarbeiten – der Hook meldet sich.
+- Änderungen mit echtem Laufzeit-Effekt per `/smoke-test` oder gezieltem `curl` gegen `localhost:5200` prüfen,
+  nicht nur kompilieren. Für nichttriviale Änderungen einen Integrationstest in `Pugling.Api.Tests` ergänzen.
+- Weitere Doku unter [docs/](docs/): Architektur-Resümee, Code-Review, Tutorials, Klassenarbeiten/Tagging.

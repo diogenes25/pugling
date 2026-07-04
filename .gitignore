@@ -1,0 +1,15 @@
+bin/
+obj/
+*.user
+*.db
+*.db-shm
+*.db-wal
+node_modules/
+dist/
+.vs/
+.idea/
+.env
+
+# Tool-/Editor-Artefakte
+.opencode/
+.claude/settings.local.json

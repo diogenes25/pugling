@@ -1,0 +1,11 @@
+{
+  "course_slug": "git-basics",
+  "status": "passed",
+  "points_earned": 20,
+  "points_possible": 20,
+  "current_module": "02",
+  "modules": {
+    "01": { "status": "passed", "points_earned": 10, "points_possible": 10, "attempts": 1 },
+    "02": { "status": "passed", "points_earned": 10, "points_possible": 10, "attempts": 1 }
+  }
+}
