@@ -25,6 +25,8 @@ export function VaterPlanCreate() {
   const [useLeitner, setUseLeitner] = useState(true);
   const [requireTyped, setRequireTyped] = useState(false);
   const [defaultStage, setDefaultStage] = useState(2); // SelfAssess
+  const [comboThreshold, setComboThreshold] = useState(5);
+  const [comboBonusPoints, setComboBonusPoints] = useState(5);
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -57,6 +59,7 @@ export function VaterPlanCreate() {
       durationDays, startDate, newItemsPerLesson, contentKeys: selected,
       dailyMinutesRequired: dailyMinutes, dailyTestPassPercent: passPercent,
       defaultStage, requireTypedTest: requireTyped, useLeitner,
+      comboThreshold, comboBonusPoints,
     };
     try {
       const plan = await api.createPlan(dto);
@@ -85,6 +88,8 @@ export function VaterPlanCreate() {
           <div className="field"><label>Neue Wörter/Tag</label><input type="number" min={1} value={newItemsPerLesson} onChange={(e) => setNewItemsPerLesson(Number(e.target.value))} /></div>
           <div className="field"><label>Minuten/Tag</label><input type="number" min={1} value={dailyMinutes} onChange={(e) => setDailyMinutes(Number(e.target.value))} /></div>
           <div className="field"><label>Bestehen ab %</label><input type="number" min={1} max={100} value={passPercent} onChange={(e) => setPassPercent(Number(e.target.value))} /></div>
+          <div className="field"><label>Combo alle … Treffer</label><input type="number" min={0} value={comboThreshold} onChange={(e) => setComboThreshold(Number(e.target.value))} /></div>
+          <div className="field"><label>Combo-Bonuspunkte</label><input type="number" min={0} value={comboBonusPoints} onChange={(e) => setComboBonusPoints(Number(e.target.value))} /></div>
           <div className="field"><label>Test-Stufe</label>
             <select aria-label="Test-Stufe" value={defaultStage} onChange={(e) => setDefaultStage(Number(e.target.value))}>
               <option value={1}>1 · Zeigen</option>

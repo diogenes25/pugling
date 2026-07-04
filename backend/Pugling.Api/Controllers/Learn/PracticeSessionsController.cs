@@ -72,9 +72,6 @@ public class PracticeSessionsController(PuglingDbContext db, StudyProgressServic
         return await progress.EvaluateAndAwardAsync(plan, session.Day);
     }
 
-    /// <summary>Alle N Treffer in Folge gibt es einen eskalierenden Combo-Bonus (Motivations-Feature).</summary>
-    private const int ComboMilestone = 5;
-
     /// <summary>ContentId = Vokabel-Id bzw. Lückentext-Id; Stage = jeweilige Stufe (verfahrensabhängig).</summary>
     public record ReviewDto(int ContentId, int Stage, bool WasCorrect);
     /// <summary>
@@ -100,6 +97,14 @@ public class PracticeSessionsController(PuglingDbContext db, StudyProgressServic
             && (i.VocabularyId == dto.ContentId || i.ClozeTextId == dto.ContentId));
         if (item is null) return NotFound("Inhalt gehört nicht zum Lehrplan.");
 
+        // Combo VOR dem Hinzufügen des neuen Reviews zählen: EF-Relationship-Fixup würde das noch
+        // ungespeicherte Review sonst in session.Reviews einreihen und die Combo um 1 verfälschen.
+        var prevStreak = 0;
+        foreach (var r in session.Reviews.OrderByDescending(r => r.At).ThenByDescending(r => r.Id))
+        {
+            if (r.WasCorrect) prevStreak++; else break;
+        }
+
         db.ReviewEvents.Add(new ReviewEvent
         {
             PracticeSessionId = sessionId,
@@ -115,15 +120,13 @@ public class PracticeSessionsController(PuglingDbContext db, StudyProgressServic
             return NoContent();
         }
 
-        // Combo serverseitig zählen (cheat-sicher): Treffer in Folge am Ende der bisherigen Sitzungs-Reviews.
-        var prevStreak = 0;
-        foreach (var r in session.Reviews.OrderByDescending(r => r.At).ThenByDescending(r => r.Id))
-        {
-            if (r.WasCorrect) prevStreak++; else break;
-        }
+        // Combo serverseitig (cheat-sicher): Treffer in Folge inkl. dieses Reviews.
         var combo = dto.WasCorrect ? prevStreak + 1 : 0;
-        // Alle ComboMilestone Treffer in Folge: eskalierender Bonus (5, 10, 15 …).
-        var comboBonus = combo > 0 && combo % ComboMilestone == 0 ? ComboMilestone * (combo / ComboMilestone) : 0;
+        // Combo-Bonus laut Plan-Einstellung: alle ComboThreshold Treffer in Folge ein eskalierender Bonus
+        // (Basis × Meilenstein-Nummer). Schwelle oder Basis 0 → Feature aus.
+        var comboBonus = plan.ComboThreshold > 0 && plan.ComboBonusPoints > 0
+            && combo > 0 && combo % plan.ComboThreshold == 0
+            ? plan.ComboBonusPoints * (combo / plan.ComboThreshold) : 0;
 
         // Punkte aus dem Zustand VOR dem Box-Aufstieg berechnen (neuer Inhalt zählt am meisten),
         // dann die Karte terminieren.

@@ -92,6 +92,12 @@ public class StudyPlan
     public int PointsTestPassed { get; set; } = 20;
     public int PointsDayCompleteBonus { get; set; } = 10;
 
+    // --- Combo (Motivations-Bonus für Treffer in Folge beim Üben) ---
+    /// <summary>Alle N richtigen Antworten in Folge gibt es einen Combo-Bonus. 0 = Combo-Bonus aus.</summary>
+    public int ComboThreshold { get; set; } = 5;
+    /// <summary>Basis-Bonuspunkte je Combo-Meilenstein; eskaliert (N-ter Meilenstein → Basis × N). 0 = aus.</summary>
+    public int ComboBonusPoints { get; set; } = 5;
+
     public bool Active { get; set; } = true;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 

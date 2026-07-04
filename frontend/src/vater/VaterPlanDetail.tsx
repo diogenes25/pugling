@@ -20,7 +20,10 @@ export function VaterPlanDetail() {
         <span className="pill" style={{ marginLeft: "auto" }}>{p.method}{p.useLeitner ? " · Leitner" : ""}</span>
         {p.active ? <span className="pill lime">aktiv</span> : <span className="pill">inaktiv</span>}
       </div>
-      <p className="muted">Kind #{p.childId} · {p.startDate} – {p.endDate} · {p.newItemsPerLesson} neue/Tag · {p.dailyMinutesRequired} min · bestehen ab {p.dailyTestPassPercent}%</p>
+      <p className="muted">Kind #{p.childId} · {p.startDate} – {p.endDate} · {p.newItemsPerLesson} neue/Tag · {p.dailyMinutesRequired} min · bestehen ab {p.dailyTestPassPercent}%
+        {p.comboThreshold > 0 && p.comboBonusPoints > 0
+          ? ` · Combo alle ${p.comboThreshold} → +${p.comboBonusPoints}`
+          : " · Combo aus"}</p>
 
       {prog.data && (
         <section className="vater-grid">
