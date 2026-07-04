@@ -161,6 +161,18 @@ public class TranslationController(PuglingDbContext db) : ExerciseControllerBase
     protected override ExerciseType Type => ExerciseType.Translation;
 }
 
+/// <summary>
+/// Birkenbihl-Methode: Texte in der Lernsprache mit grammatik-unabhängiger Wort-für-Wort-Dekodierung
+/// plus natürlicher Übersetzung. Reine Inhaltsübung zum Lesen/Hören – bewusst ohne <c>/check</c>,
+/// da das Verfahren nicht aktiv abfragt. CRUD kommt aus der Basis.
+/// </summary>
+[Route(ExerciseRoutes.Base + "/birkenbihl")]
+[Tags("Learn – Birkenbihl")]
+public class BirkenbihlController(PuglingDbContext db) : ExerciseControllerBase<BirkenbihlConfig>(db)
+{
+    protected override ExerciseType Type => ExerciseType.Birkenbihl;
+}
+
 /// <summary>Feste Rechenaufgaben (manuell gepflegte Liste). <see cref="Check"/> wertet die Antworten aus.</summary>
 [Route(ExerciseRoutes.Base + "/arithmetic")]
 [Tags("Learn – Arithmetic")]

@@ -129,3 +129,30 @@ public class ListConfig
 }
 /// <summary>Ein Listeneintrag; <paramref name="Alternatives"/> erlaubt zulässige Synonyme/Schreibweisen.</summary>
 public record ListEntry(string Value, List<string>? Alternatives = null);
+
+/// <summary>
+/// Birkenbihl-Methode: ein Text in der zu lernenden Sprache wird grammatik-unabhängig
+/// Wort für Wort in die Muttersprache dekodiert. Zu jedem Satz gehört zusätzlich eine
+/// natürliche, grammatikalisch korrekte Übersetzung, damit der Sinn klar wird. Gelernt wird
+/// durch Lesen/Hören der Dekodierung – die Methode verzichtet bewusst auf aktives Abfragen
+/// (deshalb hat der Typ kein <c>/check</c>; die Punkte gibt es fürs Durcharbeiten).
+/// </summary>
+public class BirkenbihlConfig
+{
+    /// <summary>Sprache, die gelernt wird – die Sätze stehen in ihr (z. B. „Englisch").</summary>
+    public string LearningLang { get; set; } = "";
+    /// <summary>Muttersprache der Wort-für-Wort-Dekodierung und der Übersetzung (z. B. „Deutsch").</summary>
+    public string NativeLang { get; set; } = "";
+    /// <summary>Die Sätze des Textes in Lesereihenfolge.</summary>
+    public List<BirkenbihlSentence> Sentences { get; set; } = new();
+}
+
+/// <summary>
+/// Ein Satz der Birkenbihl-Übung: der Originalsatz in der Lernsprache, seine positionsgenaue
+/// Wort-für-Wort-Dekodierung (<paramref name="Decoding"/>) und eine natürliche, grammatikalisch
+/// korrekte Übersetzung (<paramref name="NaturalTranslation"/>).
+/// </summary>
+public record BirkenbihlSentence(string Text, List<WordPair> Decoding, string NaturalTranslation);
+
+/// <summary>Ein Wort-Tuple der Dekodierung: <paramref name="Word"/> der Lernsprache → wörtliche Übersetzung <paramref name="Literal"/>.</summary>
+public record WordPair(string Word, string Literal);

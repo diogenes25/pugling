@@ -40,6 +40,7 @@ public enum ExerciseType
     Arithmetic = 8,
     ArithmeticDrill = 9,
     List = 10,
+    Birkenbihl = 11,
 }
 
 /// <summary>
