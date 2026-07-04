@@ -29,6 +29,15 @@ public class MeController(PuglingDbContext db, GamificationService gamification)
     /// <summary>Skin-Zustand des Kindes: aktueller Münzstand, ausgerüsteter und freigeschaltete Skins.</summary>
     public record SkinStateResponse(int Balance, string Selected, IReadOnlyList<string> Owned);
 
+    /// <summary>Eine einlösbare Prämie aus Sohn-Sicht: Titel, Preis, ob bezahlbar und ob bereits offen angefragt.</summary>
+    public record RewardOfferResponse(int Id, string Title, int Cost, bool Affordable, bool AlreadyRequested);
+    /// <summary>Eine eigene Einlöse-Anfrage mit aktuellem Status.</summary>
+    public record MyRedemptionResponse(int Id, int? RewardId, string Title, int Cost,
+        RewardRedemptionStatus Status, DateTime RequestedAt, DateTime? DecidedAt);
+    /// <summary>Prämien-Sicht des Sohns: Münzstand, verfügbare Prämien und eigene Anfragen.</summary>
+    public record RewardsViewResponse(int Balance, IReadOnlyList<RewardOfferResponse> Available,
+        IReadOnlyList<MyRedemptionResponse> Redemptions);
+
     /// <summary>Eigener Punktestand (Wallet) samt der letzten Buchungen.</summary>
     [HttpGet("points")]
     [ProducesResponseType(StatusCodes.Status200OK)]
@@ -166,6 +175,75 @@ public class MeController(PuglingDbContext db, GamificationService gamification)
         {
             return false;
         }
+    }
+
+    /// <summary>Eigene Prämien-Sicht: Münzstand, verfügbare (aktive) Prämien und die eigenen Einlöse-Anfragen.</summary>
+    [HttpGet("rewards")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<ActionResult<RewardsViewResponse>> Rewards()
+    {
+        var cid = User.ChildId();
+        if (cid is null) return Forbid();
+        return await RewardsViewAsync(cid.Value);
+    }
+
+    /// <summary>
+    /// Fragt eine Prämie zum Einlösen an. Es wird noch <b>nichts abgebucht</b> – der Vater entscheidet
+    /// (siehe Admin-<c>RewardsController</c>). Doppelte offene Anfragen für dieselbe Prämie sind gesperrt.
+    /// </summary>
+    [HttpPost("rewards/{rewardId:int}/redeem")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<ActionResult<RewardsViewResponse>> Redeem(int rewardId)
+    {
+        var cid = User.ChildId();
+        if (cid is null) return Forbid();
+
+        var reward = await db.Rewards.FirstOrDefaultAsync(r => r.Id == rewardId && r.ChildId == cid);
+        if (reward is null) return Problem(statusCode: 404, detail: "Prämie nicht gefunden.");
+        if (!reward.Active) return Problem(statusCode: 400, detail: "Diese Prämie ist nicht (mehr) verfügbar.");
+
+        var alreadyOpen = await db.RewardRedemptions.AnyAsync(r =>
+            r.ChildId == cid && r.RewardId == rewardId && r.Status == RewardRedemptionStatus.Requested);
+        if (alreadyOpen) return Problem(statusCode: 409, detail: "Diese Prämie ist bereits angefragt und wartet auf Papa.");
+
+        db.RewardRedemptions.Add(new RewardRedemption
+        {
+            ChildId = cid.Value,
+            RewardId = reward.Id,
+            Title = reward.Title,   // Momentaufnahme, stabil auch bei späterer Änderung/Löschung
+            Cost = reward.Cost,
+        });
+        await db.SaveChangesAsync();
+        return await RewardsViewAsync(cid.Value);
+    }
+
+    private async Task<RewardsViewResponse> RewardsViewAsync(int childId)
+    {
+        var balance = await db.ChildPoints.Where(p => p.ChildId == childId).SumAsync(p => (int?)p.Amount) ?? 0;
+
+        var openRewardIds = await db.RewardRedemptions
+            .Where(r => r.ChildId == childId && r.Status == RewardRedemptionStatus.Requested && r.RewardId != null)
+            .Select(r => r.RewardId!.Value).ToListAsync();
+
+        var available = await db.Rewards.AsNoTracking()
+            .Where(r => r.ChildId == childId && r.Active)
+            .OrderBy(r => r.Cost).ThenBy(r => r.Id)
+            .Select(r => new RewardOfferResponse(r.Id, r.Title, r.Cost, balance >= r.Cost, openRewardIds.Contains(r.Id)))
+            .ToListAsync();
+
+        var redemptions = await db.RewardRedemptions.AsNoTracking()
+            .Where(r => r.ChildId == childId)
+            .OrderBy(r => r.Status == RewardRedemptionStatus.Requested ? 0 : 1)
+            .ThenByDescending(r => r.RequestedAt)
+            .Select(r => new MyRedemptionResponse(r.Id, r.RewardId, r.Title, r.Cost, r.Status, r.RequestedAt, r.DecidedAt))
+            .ToListAsync();
+
+        return new RewardsViewResponse(balance, available, redemptions);
     }
 
     private async Task<SkinStateResponse> SkinStateAsync(int childId)

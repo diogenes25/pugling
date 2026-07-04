@@ -9,6 +9,7 @@ import { SohnPractice } from "./SohnPractice";
 import { SohnTest } from "./SohnTest";
 import { SohnProgress } from "./SohnProgress";
 import { SohnSkins } from "./SohnSkins";
+import { SohnKonto } from "./SohnKonto";
 import { Mascot } from "../components/Mascot";
 
 interface SohnContextValue {
@@ -82,12 +83,14 @@ function SohnShell({ childId }: { childId: number }) {
           <Route path="test" element={<SohnTest />} />
           <Route path="progress" element={<SohnProgress />} />
           <Route path="skins" element={<SohnSkins />} />
+          <Route path="konto" element={<SohnKonto />} />
           <Route path="*" element={<Navigate to="/sohn" replace />} />
         </Routes>
 
         <nav className="sohn-nav">
           <NavLink to="/sohn" end><span className="ic">🏠</span>Basis</NavLink>
           <NavLink to="/sohn/progress"><span className="ic">🗺️</span>Weg</NavLink>
+          <NavLink to="/sohn/konto"><span className="ic">💰</span>Konto</NavLink>
           <NavLink to="/sohn/skins"><span className="ic">🎭</span>Skins</NavLink>
         </nav>
       </div>

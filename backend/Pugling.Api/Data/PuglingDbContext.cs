@@ -43,6 +43,10 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
     public DbSet<Achievement> Achievements => Set<Achievement>();
     public DbSet<AchievementAward> AchievementAwards => Set<AchievementAward>();
 
+    // Einlösbare Prämien (reale Belohnungen wie Fernseh-/Spielzeit) + Einlöse-Anfragen mit Vater-Freigabe
+    public DbSet<Reward> Rewards => Set<Reward>();
+    public DbSet<RewardRedemption> RewardRedemptions => Set<RewardRedemption>();
+
     // Tagging + Klassenarbeiten
     public DbSet<Tag> Tags => Set<Tag>();
     public DbSet<ExerciseTag> ExerciseTags => Set<ExerciseTag>();
@@ -175,6 +179,16 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
         {
             e.HasIndex(a => a.AchievementId).IsUnique();
             e.HasOne(a => a.Achievement).WithMany().HasForeignKey(a => a.AchievementId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // Prämie gehört einem Kind (Cascade). Einlöse-Anfrage gehört einem Kind (Cascade); die Prämie-
+        // Referenz wird beim Löschen der Prämie auf null gesetzt, damit die Einlöse-Historie erhalten bleibt.
+        modelBuilder.Entity<Reward>()
+            .HasOne(r => r.Child).WithMany().HasForeignKey(r => r.ChildId).OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<RewardRedemption>(e =>
+        {
+            e.HasOne(r => r.Child).WithMany().HasForeignKey(r => r.ChildId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(r => r.Reward).WithMany().HasForeignKey(r => r.RewardId).OnDelete(DeleteBehavior.SetNull);
         });
 
         // Tag: pro Kind eindeutiger Name; löscht das Kind, verschwinden seine Tags.

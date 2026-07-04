@@ -204,4 +204,31 @@ Nach der Abnahme lief ein High-Effort-Code-Review (8 Finder-Angles). Behobene Ko
 Verbleibende Cleanup-/Altitude-Findings (doppelte Skin-Kosten-Quelle, ChildPicker-/RewardManager-
 Duplikate, doppelter `me/skins`-Fetch) sind als Refactoring notiert, nicht blockierend. **Teststand: 93/93 grün.**
 
+## Iteration 5 — umgesetzt (Vater-Komfort: Konto-Übersicht + einlösbare Prämien)
+
+Auf Wunsch: Konto-Übersicht + der Sohn kann Fernseh-/Spielzeit „erkaufen", sichtbar auf dem Sohn-Konto.
+Design-Entscheidungen (vom Nutzer bestätigt): **Vater genehmigt vorher** (Münzen erst bei Freigabe weg),
+**feste Prämien** (Titel + Münzpreis).
+
+**Backend (API-First):**
+- Neue Entitäten `Reward` (einlösbare Prämie) + `RewardRedemption` (Anfrage mit Status
+  Requested/Approved/Rejected, Titel/Kosten als Momentaufnahme); `PointKind.Reward`; Migration
+  `RewardsRedemptions`. Beispiel-Prämien geseedet (30 Min Fernsehen usw.).
+- Vater `RewardsController` (`children/{id}/rewards`): Prämien-CRUD + `redemptions` listen +
+  `…/approve` (bucht ab, erneute Deckungsprüfung, 400 bei zu wenig Münzen) / `…/reject`.
+- Sohn `MeController`: `GET me/rewards` (verfügbare Prämien + eigene Anfragen + Saldo),
+  `POST me/rewards/{id}/redeem` (Anfrage, **keine** Abbuchung; Doppel-Anfrage → 409).
+
+**Frontend:**
+- Vater: „Prämien zum Einlösen"-Manager auf dem Belohnungen-Screen; neuer Screen **„💰 Konto"**
+  (`/vater/konto`): Münzstand, offene Anfragen genehmigen/ablehnen, Entschieden-Historie, **Buchungsverlauf**.
+- Sohn: neuer Tab **„💰 Konto"** (`/sohn/konto`): Münzstand, Prämien anfragen, eigene Anfragen mit
+  Status, Buchungsverlauf. Gemeinsamer Label-Helfer (`lib/labels.ts`) für Buchungs-Kategorien/Status.
+
+**Verifikation:** `RewardsFlowTests` (5 Fälle: Anfrage bucht nichts ab → Genehmigung bucht ab; Genehmigung
+ohne Deckung → 400 ohne Abbuchung; Ablehnung lässt Saldo unberührt; fremdes Kind → 404; fremdes Kind
+anlegen → 403). **Gesamtstand: 98/98 grün; Frontend-Build sauber.**
+
+Offen (Vater-Komfort-Rest, nicht-blockierend): Mehr-Kind-Tagesdashboard, Mastery-Report pro Vokabel.
+
 
