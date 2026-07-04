@@ -55,7 +55,14 @@ public class TestsController(PuglingDbContext db, ScheduleService schedule, Test
         // Stundenplan-gesteuerte Auswahl: neuer Stoff am Unterrichtstag, sonst Wiederholung.
         var selection = await schedule.SelectAsync(plan, day);
         var pool = selection.Items;
-        if (pool.Count == 0) return BadRequest("Für heute stehen keine Inhalte an.");
+        if (pool.Count == 0)
+        {
+            // Der Tagestest ist eine Standortbestimmung, kein Leitner-Trigger: sind (z.B. nachdem die
+            // Übung alle Karten hochgestuft hat) keine Karten mehr fällig, wird der bereits eingeführte
+            // Stoff geprüft – sonst alle Plan-Inhalte. So sperrt Üben nicht den Test.
+            var introduced = plan.Items.Where(i => i.IntroducedAt != null).OrderBy(i => i.Order).ToList();
+            pool = introduced.Count > 0 ? introduced : plan.Items.OrderBy(i => i.Order).ToList();
+        }
 
         var attempt = new TestAttempt
         {
