@@ -59,7 +59,9 @@ Verifiziert: Build 0 Warnungen/0 Fehler; Live-Smoke-Test (401 ohne Token, 404 de
 
 1. **PIN-Hashing** (`Father.Pin`, `Child.Pin`) – vor Produktion zwingend (PBKDF2, konstantzeitiger
    Vergleich, Rate-Limit/Lockout). Aktuell Klartext.
-2. **EF-Migrationen** statt `EnsureCreated()` – sobald das Schema stabil ist; sonst kein Upgrade-Pfad.
+2. ~~**EF-Migrationen** statt `EnsureCreated()`~~ – **erledigt (2026-07-04)**: `Program` ruft `Migrate()`,
+   Initial-Migration `InitialCreate` liegt unter `backend/Pugling.Api/Data/Migrations`, `dotnet-ef` ist als
+   lokales Tool im Manifest. Schemaänderungen ab jetzt per `dotnet ef migrations add …`.
 3. **Frontend neu gegen die neue API** – wenn das UI-Konzept steht. Bis dahin ist das alte PWA-UI außer Betrieb.
 4. **Zeitfenster-Verwaltung** – Editieren der `TimeSlotRule`-Multiplikatoren hatte nur der gelöschte
    `SettingsController`. Bei Bedarf einen schlanken, abgesicherten `TimeSlotsController` ergänzen

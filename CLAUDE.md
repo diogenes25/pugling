@@ -19,6 +19,9 @@ cd backend/Pugling.Api && dotnet build      # baut die API (nach .cs-Edits autom
 cd backend/Pugling.Api && dotnet run        # http://localhost:5200, Swagger unter /swagger
 dotnet test                                 # Integrationstests (backend/Pugling.Api.Tests)
 dotnet format backend/Pugling.Api           # Formatierung (läuft nach Edits automatisch)
+
+dotnet tool restore                          # einmalig nach dem Clone (installiert dotnet-ef aus dem Manifest)
+dotnet ef migrations add <Name> --project backend/Pugling.Api --output-dir Data/Migrations   # bei Schemaänderung
 ```
 
 - **Smoke-Test gegen laufende API:** `/smoke-test` (startet gegen eine Temp-DB, prüft Auth +
@@ -60,9 +63,11 @@ dotnet format backend/Pugling.Api           # Formatierung (läuft nach Edits au
 
 ## Fallstricke
 
-- **`EnsureCreated()` statt Migrationen** ([Program.cs](backend/Pugling.Api/Program.cs)): Schemaänderungen
-  greifen nicht in einer bestehenden `pugling.db`. Beim Testen die DB löschen oder Temp-DB nutzen
-  (`ConnectionStrings__Default`). `*.db` ist gitignored.
+- **EF-Migrationen** ([Program.cs](backend/Pugling.Api/Program.cs) ruft beim Start `db.Database.Migrate()`):
+  Bei jeder Schemaänderung eine Migration erzeugen (`dotnet ef migrations add …`, siehe Befehle) – **nicht**
+  auf `EnsureCreated` zurückfallen. Die EF-Tools laufen über die Design-Time-Factory
+  ([Data/PuglingDbContextFactory.cs](backend/Pugling.Api/Data/PuglingDbContextFactory.cs)), nicht über den Web-Host.
+  `*.db` ist gitignored; eine alte, per `EnsureCreated` erzeugte DB einmalig löschen (wird neu migriert + geseedet).
 - **PINs im Klartext** (`Father.Pin`/`Child.Pin`) – vor Prod hashen (offen, siehe Migrationsplan).
 - **`TimeSlotRule`** ist das *einzige* bewusst erhaltene Legacy-Entity (Leitner-Multiplikator). Alles
   andere aus dem Ursprungs-Template wurde entfernt – **kein** `User`/`Topic`/`VocabCard`/`Points…` mehr anlegen.
