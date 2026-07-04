@@ -70,7 +70,7 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
-    db.Database.EnsureCreated(); // für den Start; später auf EF-Migrationen umstellen
+    db.Database.Migrate(); // wendet ausstehende EF-Migrationen an (Schema-Upgrade-Pfad)
     Seed.Run(db);
 }
 

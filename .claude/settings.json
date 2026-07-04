@@ -1,5 +1,9 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "statusLine": {
+    "type": "command",
+    "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/scripts/statusline.sh\""
+  },
   "permissions": {
     "allow": [
       "Bash(dotnet build:*)",
