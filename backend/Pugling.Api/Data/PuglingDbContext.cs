@@ -18,6 +18,7 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
     public DbSet<Subject> Subjects => Set<Subject>();
     public DbSet<Chapter> Chapters => Set<Chapter>();
     public DbSet<Exercise> Exercises => Set<Exercise>();
+    public DbSet<ExerciseCategory> ExerciseCategories => Set<ExerciseCategory>();
 
     // Sprachlernen: atomarer Vokabel-Store + Lückentext-Store
     public DbSet<Vocabulary> Vocabulary => Set<Vocabulary>();
@@ -79,6 +80,23 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
             .Property(e => e.SuggestedBonus).HasConversion(
                 v => JsonSerializer.Serialize(v, JsonOptions),
                 s => JsonSerializer.Deserialize<SuggestedBonus>(s, JsonOptions));
+
+        // Fachabhängige Übungs-Arten: Name je Fach eindeutig, Löschen des Fachs entfernt die Arten.
+        modelBuilder.Entity<ExerciseCategory>(e =>
+        {
+            e.HasIndex(c => new { c.SubjectId, c.Name }).IsUnique();
+            e.HasOne(c => c.Subject)
+                .WithMany(s => s.Categories)
+                .HasForeignKey(c => c.SubjectId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // Übung → Art (optional): Löschen einer Art setzt nur die FK auf null, löscht die Übung NICHT.
+        modelBuilder.Entity<Exercise>()
+            .HasOne(e => e.Category)
+            .WithMany()
+            .HasForeignKey(e => e.CategoryId)
+            .OnDelete(DeleteBehavior.SetNull);
 
         // Lückentext-Store: eindeutiger Key + Gaps/WordBank als JSON-Spalten.
         modelBuilder.Entity<ClozeText>(e =>

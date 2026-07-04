@@ -15,7 +15,7 @@ public class BirkenbihlExerciseTests(PuglingWebAppFactory factory) : IClassFixtu
     private async Task<HttpClient> FatherClientAsync()
     {
         var client = factory.CreateClient();
-        var login = await client.PostAsJsonAsync("/api/auth/father", new { fatherId = 1, pin = "0000" });
+        var login = await client.PostAsJsonAsync("/api/v1/auth/father", new { fatherId = 1, pin = "0000" });
         var token = (await login.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("token").GetString();
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
         return client;
@@ -24,7 +24,7 @@ public class BirkenbihlExerciseTests(PuglingWebAppFactory factory) : IClassFixtu
     private async Task<HttpClient> ChildClientAsync()
     {
         var client = factory.CreateClient();
-        var login = await client.PostAsJsonAsync("/api/auth/child", new { childId = 1, pin = "1111" });
+        var login = await client.PostAsJsonAsync("/api/v1/auth/child", new { childId = 1, pin = "1111" });
         var token = (await login.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("token").GetString();
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
         return client;
@@ -33,14 +33,14 @@ public class BirkenbihlExerciseTests(PuglingWebAppFactory factory) : IClassFixtu
     /// <summary>Legt Fach + Kapitel an und gibt die Basis-Route der Birkenbihl-Übungen zurück.</summary>
     private static async Task<string> CreateChapterAsync(HttpClient father)
     {
-        var subjectRes = await father.PostAsJsonAsync("/api/learn/subjects", new { name = "Birkenbihl-Test" });
+        var subjectRes = await father.PostAsJsonAsync("/api/v1/learn/subjects", new { name = "Birkenbihl-Test" });
         var subjectId = (await subjectRes.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetInt32();
 
-        var chapterRes = await father.PostAsJsonAsync($"/api/learn/subjects/{subjectId}/chapters",
+        var chapterRes = await father.PostAsJsonAsync($"/api/v1/learn/subjects/{subjectId}/chapters",
             new { name = "Lektion 1", orderIndex = 1 });
         var chapterId = (await chapterRes.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetInt32();
 
-        return $"/api/learn/subjects/{subjectId}/chapters/{chapterId}/birkenbihl";
+        return $"/api/v1/learn/subjects/{subjectId}/chapters/{chapterId}/birkenbihl";
     }
 
     [Fact]

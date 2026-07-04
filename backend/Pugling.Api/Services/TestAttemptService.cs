@@ -9,7 +9,7 @@ namespace Pugling.Api.Services;
 /// Plan und Versuch laden sowie einen bewerteten Versuch abschließen und Punkte vergeben.
 /// Die verfahrensspezifische Aufgaben-Auswahl und Antwort-Bewertung bleibt im jeweiligen Controller.
 /// </summary>
-public class TestAttemptService(PuglingDbContext db, StudyProgressService progress)
+public class TestAttemptService(PuglingDbContext db, StudyProgressService progress, GamificationService gamification)
 {
     /// <summary>Lädt den Lehrplan (ohne Items).</summary>
     public Task<StudyPlan?> GetPlanAsync(int planId) =>
@@ -33,6 +33,10 @@ public class TestAttemptService(PuglingDbContext db, StudyProgressService progre
         attempt.Passed = attempt.ScorePercent >= plan.DailyTestPassPercent;
         attempt.CompletedAt = DateTime.UtcNow;
         await db.SaveChangesAsync();
-        return await progress.EvaluateAndAwardAsync(plan, attempt.Day);
+        var dayProgress = await progress.EvaluateAndAwardAsync(plan, attempt.Day);
+        // Missionen/Auszeichnungen auch beim Test-Abschluss auswerten (z.B. Metrik TestsPassed): sonst
+        // würden test-getriebene Belohnungen erst bei einer späteren Leitner-Wiederholung gutgeschrieben.
+        await gamification.EvaluateAndAwardAsync(plan.ChildId, attempt.Day);
+        return dayProgress;
     }
 }

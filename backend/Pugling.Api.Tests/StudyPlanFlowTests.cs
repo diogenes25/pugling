@@ -11,7 +11,7 @@ public class StudyPlanFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pu
     private async Task<HttpClient> FatherClientAsync()
     {
         var client = factory.CreateClient();
-        var login = await client.PostAsJsonAsync("/api/auth/father", new { fatherId = 1, pin = "0000" });
+        var login = await client.PostAsJsonAsync("/api/v1/auth/father", new { fatherId = 1, pin = "0000" });
         var token = (await login.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("token").GetString();
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
         return client;
@@ -21,7 +21,7 @@ public class StudyPlanFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pu
     public async Task PlanSubroute_OhneToken_Liefert401()
     {
         var client = factory.CreateClient();
-        var res = await client.PostAsJsonAsync("/api/study-plans/999/tests", new { });
+        var res = await client.PostAsJsonAsync("/api/v1/study-plans/999/tests", new { });
 
         Assert.Equal(HttpStatusCode.Unauthorized, res.StatusCode);
     }
@@ -31,7 +31,7 @@ public class StudyPlanFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pu
     {
         // Beweist den zentralen PlanOwnershipFilter: existiert nicht / nicht meiner → einheitlich 404.
         var client = await FatherClientAsync();
-        var res = await client.PostAsJsonAsync("/api/study-plans/999/tests", new { });
+        var res = await client.PostAsJsonAsync("/api/v1/study-plans/999/tests", new { });
 
         Assert.Equal(HttpStatusCode.NotFound, res.StatusCode);
     }
@@ -41,7 +41,7 @@ public class StudyPlanFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pu
     {
         var client = await FatherClientAsync();
 
-        var planRes = await client.PostAsJsonAsync("/api/study-plans", new
+        var planRes = await client.PostAsJsonAsync("/api/v1/study-plans", new
         {
             childId = 1,
             title = "Integrationstest-Plan",
@@ -53,7 +53,7 @@ public class StudyPlanFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pu
         Assert.Equal(HttpStatusCode.Created, planRes.StatusCode);
         var planId = (await planRes.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetInt32();
 
-        var startRes = await client.PostAsJsonAsync($"/api/study-plans/{planId}/tests", new { stage = "SelfAssess" });
+        var startRes = await client.PostAsJsonAsync($"/api/v1/study-plans/{planId}/tests", new { stage = "SelfAssess" });
         Assert.Equal(HttpStatusCode.Created, startRes.StatusCode);
         var attempt = await startRes.Content.ReadFromJsonAsync<JsonElement>();
         var attemptId = attempt.GetProperty("attemptId").GetInt32();
@@ -61,7 +61,7 @@ public class StudyPlanFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pu
             .Select(i => new { vocabularyId = i.GetProperty("vocabularyId").GetInt32(), wasKnown = true })
             .ToArray();
 
-        var submitRes = await client.PostAsJsonAsync($"/api/study-plans/{planId}/tests/{attemptId}/submit", new { answers });
+        var submitRes = await client.PostAsJsonAsync($"/api/v1/study-plans/{planId}/tests/{attemptId}/submit", new { answers });
         Assert.Equal(HttpStatusCode.OK, submitRes.StatusCode);
         var result = await submitRes.Content.ReadFromJsonAsync<JsonElement>();
 

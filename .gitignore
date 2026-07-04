@@ -6,6 +6,7 @@ coverage.cobertura.xml
 *.db
 *.db-shm
 *.db-wal
+logs/
 node_modules/
 dist/
 .vs/

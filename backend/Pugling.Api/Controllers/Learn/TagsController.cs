@@ -12,7 +12,8 @@ namespace Pugling.Api.Controllers.Learn;
 /// (z. B. „relevant für die nächste Klassenarbeit"); die Zugehörigkeit läuft über das Kind.
 /// </summary>
 [ApiController]
-[Route("api/tags")]
+[ApiVersion("1.0")]
+[Route(ApiRoutes.V1 + "/tags")]
 [Tags("Learn – Tags")]
 [Produces("application/json")]
 [Authorize]
@@ -57,12 +58,12 @@ public class TagsController(PuglingDbContext db, AuthAccess access) : Controller
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult<TagResponse>> Create(CreateTagDto dto)
     {
-        if (string.IsNullOrWhiteSpace(dto.Name)) return BadRequest("Name ist erforderlich.");
+        if (string.IsNullOrWhiteSpace(dto.Name)) return Problem(statusCode: 400, detail: "Name ist erforderlich.");
         if (!await access.OwnsChildAsync(User, dto.ChildId)) return Forbid();
 
         var name = dto.Name.Trim();
         if (await db.Tags.AnyAsync(t => t.ChildId == dto.ChildId && t.Name == name))
-            return BadRequest("Ein Tag mit diesem Namen existiert für dieses Kind bereits.");
+            return Problem(statusCode: 400, detail: "Ein Tag mit diesem Namen existiert für dieses Kind bereits.");
 
         var tag = new Tag
         {
@@ -91,9 +92,9 @@ public class TagsController(PuglingDbContext db, AuthAccess access) : Controller
         if (dto.Name is not null)
         {
             var name = dto.Name.Trim();
-            if (name.Length == 0) return BadRequest("Name darf nicht leer sein.");
+            if (name.Length == 0) return Problem(statusCode: 400, detail: "Name darf nicht leer sein.");
             if (name != tag.Name && await db.Tags.AnyAsync(t => t.ChildId == tag.ChildId && t.Name == name))
-                return BadRequest("Ein Tag mit diesem Namen existiert für dieses Kind bereits.");
+                return Problem(statusCode: 400, detail: "Ein Tag mit diesem Namen existiert für dieses Kind bereits.");
             tag.Name = name;
         }
         if (dto.Color is not null) tag.Color = dto.Color.Trim() is { Length: > 0 } c ? c : null;
@@ -125,12 +126,12 @@ public class TagsController(PuglingDbContext db, AuthAccess access) : Controller
     {
         var tag = await FindOwnedAsync(tagId);
         if (tag is null) return NotFound();
-        if (dto.ExerciseIds is not { Count: > 0 }) return BadRequest("Mindestens eine Übung ist erforderlich.");
+        if (dto.ExerciseIds is not { Count: > 0 }) return Problem(statusCode: 400, detail: "Mindestens eine Übung ist erforderlich.");
 
         var ids = dto.ExerciseIds.Distinct().ToList();
         var existing = await db.Exercises.Where(e => ids.Contains(e.Id)).Select(e => e.Id).ToListAsync();
         var missing = ids.Except(existing).ToList();
-        if (missing.Count > 0) return BadRequest($"Unbekannte Übungs-Ids: {string.Join(", ", missing)}");
+        if (missing.Count > 0) return Problem(statusCode: 400, detail: $"Unbekannte Übungs-Ids: {string.Join(", ", missing)}");
 
         var already = tag.ExerciseTags.Select(x => x.ExerciseId).ToHashSet();
         foreach (var id in ids.Where(id => !already.Contains(id)))

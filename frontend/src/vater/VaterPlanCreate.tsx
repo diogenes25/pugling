@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { api } from "../lib/api";
+import { api, errorMessage } from "../lib/api";
 import { useAsync } from "../lib/useAsync";
 import { useAuth } from "../lib/auth";
 import type { ChildResponse, CreatePlanDto, VocabularyResponse } from "../lib/types";
@@ -12,7 +12,7 @@ function todayIso(): string {
 export function VaterPlanCreate() {
   const { session } = useAuth();
   const nav = useNavigate();
-  const children = useAsync<ChildResponse[]>(() => api.children(session!.id), [session!.id]);
+  const children = useAsync<ChildResponse[]>(() => api.children(), [session!.id]);
   const vocab = useAsync<VocabularyResponse[]>(() => api.vocabulary(), []);
 
   const [title, setTitle] = useState("Englisch – Unit 1");
@@ -65,7 +65,7 @@ export function VaterPlanCreate() {
       const plan = await api.createPlan(dto);
       nav(`/vater/plan/${plan.id}`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Plan konnte nicht erstellt werden.");
+      setError(errorMessage(err));
     } finally {
       setBusy(false);
     }

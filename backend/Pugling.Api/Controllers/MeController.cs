@@ -14,7 +14,8 @@ namespace Pugling.Api.Controllers;
 /// (<see cref="Admin.ChildrenController"/> ist <c>Vater</c>-only).
 /// </summary>
 [ApiController]
-[Route("api/me")]
+[ApiVersion("1.0")]
+[Route(ApiRoutes.V1 + "/me")]
 [Tags("Me")]
 [Produces("application/json")]
 [Authorize(Roles = Roles.Sohn)]
@@ -46,7 +47,7 @@ public class MeController(PuglingDbContext db, GamificationService gamification)
         return new WalletResponse(cid.Value, balance, entries);
     }
 
-    /// <summary>Eigene Missionen (Tages-/Wochen-/Zusatzziele) mit aktuellem Fortschritt. Wertet vorher aus.</summary>
+    /// <summary>Eigene Missionen (Tages-/Wochen-/Zusatzziele) mit aktuellem Fortschritt (reine Lesesicht).</summary>
     [HttpGet("missions")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -57,7 +58,7 @@ public class MeController(PuglingDbContext db, GamificationService gamification)
         return Ok(await gamification.MissionStatusesAsync(cid.Value, DateOnly.FromDateTime(DateTime.UtcNow)));
     }
 
-    /// <summary>Eigene Auszeichnungen (Badges): erreichte und noch offene, erreichte zuerst. Wertet vorher aus.</summary>
+    /// <summary>Eigene Auszeichnungen (Badges): erreichte und noch offene, erreichte zuerst (reine Lesesicht).</summary>
     [HttpGet("achievements")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]

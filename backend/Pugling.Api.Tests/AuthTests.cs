@@ -11,7 +11,7 @@ public class AuthTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWebA
     public async Task LoginFather_MitSeedZugangsdaten_LiefertToken()
     {
         var client = factory.CreateClient();
-        var res = await client.PostAsJsonAsync("/api/auth/father", new { fatherId = 1, pin = "0000" });
+        var res = await client.PostAsJsonAsync("/api/v1/auth/father", new { fatherId = 1, pin = "0000" });
 
         Assert.Equal(HttpStatusCode.OK, res.StatusCode);
         var body = await res.Content.ReadFromJsonAsync<JsonElement>();
@@ -23,7 +23,7 @@ public class AuthTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWebA
     public async Task LoginFather_MitFalscherPin_Liefert401()
     {
         var client = factory.CreateClient();
-        var res = await client.PostAsJsonAsync("/api/auth/father", new { fatherId = 1, pin = "9999" });
+        var res = await client.PostAsJsonAsync("/api/v1/auth/father", new { fatherId = 1, pin = "9999" });
 
         Assert.Equal(HttpStatusCode.Unauthorized, res.StatusCode);
     }
@@ -31,9 +31,9 @@ public class AuthTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWebA
     [Fact]
     public async Task Me_OhneToken_Liefert401()
     {
-        // Regressionsschutz: /api/auth/me war zwischenzeitlich durch [AllowAnonymous] auf Klassenebene offen.
+        // Regressionsschutz: /api/v1/auth/me war zwischenzeitlich durch [AllowAnonymous] auf Klassenebene offen.
         var client = factory.CreateClient();
-        var res = await client.GetAsync("/api/auth/me");
+        var res = await client.GetAsync("/api/v1/auth/me");
 
         Assert.Equal(HttpStatusCode.Unauthorized, res.StatusCode);
     }

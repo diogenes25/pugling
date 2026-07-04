@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { ApiError } from "./api";
+import { ApiError, errorMessage } from "./api";
 import { useAuth } from "./auth";
 
 interface AsyncState<T> {
@@ -31,7 +31,7 @@ export function useAsync<T>(fn: () => Promise<T>, deps: unknown[] = []): AsyncSt
       .catch((e: unknown) => {
         if (cancelled) return;
         if (e instanceof ApiError && e.status === 401) { signOut(); return; }
-        setError(e instanceof Error ? e.message : String(e));
+        setError(errorMessage(e));
       })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };

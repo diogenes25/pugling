@@ -9,7 +9,8 @@ namespace Pugling.Api.Controllers.Learn;
 
 /// <summary>Stundenplan eines Kindes (Fach × Wochentag) – vom Vater gepflegt, steuert Wiederholung vs. neuer Stoff.</summary>
 [ApiController]
-[Route("api/children/{childId:int}/timetable")]
+[ApiVersion("1.0")]
+[Route(ApiRoutes.V1 + "/children/{childId:int}/timetable")]
 [Tags("Study – Timetable")]
 [Produces("application/json")]
 [Authorize(Roles = Roles.Vater)]
@@ -44,9 +45,9 @@ public class TimetableController(PuglingDbContext db, AuthAccess access) : Contr
     public async Task<ActionResult<EntryResponse>> Create(int childId, CreateEntryDto dto)
     {
         if (!await access.FatherOwnsChildAsync(User, childId)) return Forbid();
-        if (!await db.Subjects.AnyAsync(s => s.Id == dto.SubjectId)) return BadRequest("Fach nicht gefunden.");
+        if (!await db.Subjects.AnyAsync(s => s.Id == dto.SubjectId)) return Problem(statusCode: 400, detail: "Fach nicht gefunden.");
         if (await db.Timetable.AnyAsync(t => t.ChildId == childId && t.SubjectId == dto.SubjectId && t.DayOfWeek == dto.DayOfWeek))
-            return Conflict("Dieses Fach ist an diesem Wochentag bereits eingetragen.");
+            return Problem(statusCode: 409, detail: "Dieses Fach ist an diesem Wochentag bereits eingetragen.");
 
         var entry = new TimetableEntry { ChildId = childId, SubjectId = dto.SubjectId, DayOfWeek = dto.DayOfWeek, TimeOfDay = dto.TimeOfDay };
         db.Timetable.Add(entry);

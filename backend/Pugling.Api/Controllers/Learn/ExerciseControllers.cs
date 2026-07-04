@@ -14,7 +14,7 @@ namespace Pugling.Api.Controllers.Learn;
 /// <summary>Gemeinsames Routen-Präfix aller Übungstypen.</summary>
 internal static class ExerciseRoutes
 {
-    public const string Base = "api/learn/subjects/{subjectId:int}/chapters/{chapterId:int}";
+    public const string Base = ApiRoutes.V1 + "/learn/subjects/{subjectId:int}/chapters/{chapterId:int}";
 }
 
 /// <summary>Antworten des Kindes, positionsbezogen (Index in der Aufgaben-/Paarliste).</summary>
@@ -111,9 +111,9 @@ public class MatchingController(PuglingDbContext db, ExerciseAnswerChecker check
         if (exercise is null) return NotFound();
 
         var pairs = ConfigOf(exercise).Pairs;
-        if (pairs.Count == 0) return BadRequest("Die Zuordnung enthält keine Paare.");
+        if (pairs.Count == 0) return Problem(statusCode: 400, detail: "Die Zuordnung enthält keine Paare.");
         // Einheitlich 404 für "kein eigenes Kind" (kein Enumerieren fremder Kind-Ids), wie im StudyPlansController.
-        if (!await access.FatherOwnsChildAsync(User, body.ChildId)) return NotFound("Kind nicht gefunden.");
+        if (!await access.FatherOwnsChildAsync(User, body.ChildId)) return Problem(statusCode: 404, detail: "Kind nicht gefunden.");
 
         // Je Paar eine Vokabel mit stabilem Key (idempotent: erneutes Konvertieren aktualisiert statt zu duplizieren).
         var keys = pairs.Select((_, i) => $"match_{exercise.Id}_{i}").ToList();
@@ -235,7 +235,7 @@ public class ArithmeticDrillController(PuglingDbContext db, ArithmeticProblemGen
         var exercise = await FindAsync(subjectId, chapterId, exerciseId);
         if (exercise is null) return NotFound();
         var config = ConfigOf(exercise);
-        if (Validate(config) is { } error) return BadRequest(error);
+        if (Validate(config) is { } error) return Problem(statusCode: 400, detail: error);
 
         // Wir fixieren den Seed (auch bei „echtem" Zufall), damit der Satz später auswertbar bleibt.
         int effectiveSeed = seed ?? config.Seed ?? Random.Shared.Next();
@@ -252,9 +252,9 @@ public class ArithmeticDrillController(PuglingDbContext db, ArithmeticProblemGen
         var exercise = await FindAsync(subjectId, chapterId, exerciseId);
         if (exercise is null) return NotFound();
         var config = ConfigOf(exercise);
-        if (Validate(config) is { } error) return BadRequest(error);
+        if (Validate(config) is { } error) return Problem(statusCode: 400, detail: error);
         if ((body.Seed ?? config.Seed) is not { } seed)
-            return BadRequest("Zum Auswerten muss der Seed des generierten Satzes angegeben werden.");
+            return Problem(statusCode: 400, detail: "Zum Auswerten muss der Seed des generierten Satzes angegeben werden.");
 
         var problems = generator.Generate(config, new Random(seed));
         return checker.CheckGenerated(problems, body.Answers);

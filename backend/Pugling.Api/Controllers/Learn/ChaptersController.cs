@@ -9,7 +9,8 @@ namespace Pugling.Api.Controllers.Learn;
 
 /// <summary>Kapitel innerhalb eines Fachs.</summary>
 [ApiController]
-[Route("api/learn/subjects/{subjectId:int}/chapters")]
+[ApiVersion("1.0")]
+[Route(ApiRoutes.V1 + "/learn/subjects/{subjectId:int}/chapters")]
 [Tags("Learn – Chapters")]
 [Produces("application/json")]
 [Authorize(Roles = Roles.Vater)]
@@ -57,7 +58,7 @@ public class ChaptersController(PuglingDbContext db) : ControllerBase
     public async Task<ActionResult<ChapterResponse>> Create(int subjectId, CreateChapterDto dto)
     {
         if (!await SubjectExists(subjectId)) return NotFound();
-        if (string.IsNullOrWhiteSpace(dto.Name)) return BadRequest("Name ist erforderlich.");
+        if (string.IsNullOrWhiteSpace(dto.Name)) return Problem(statusCode: 400, detail: "Name ist erforderlich.");
 
         var chapter = new Chapter { SubjectId = subjectId, Name = dto.Name.Trim(), OrderIndex = dto.OrderIndex };
         db.Chapters.Add(chapter);

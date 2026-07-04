@@ -6,13 +6,16 @@ Enthalten: alle Dateiformate im Detail, ein **vollständig ausgearbeitetes Beisp
 Schritt-für-Schritt-Tutorial – auch für den Fall **mehrerer Söhne**.
 
 > **Abgrenzung:** Es gibt in diesem Repo zwei Dinge, die „Lehrplan/Plan" heißen:
+>
 > 1. **Der markdown-basierte Lehrplan** (dieses Dokument) — von Claude über die Skills `vater`/`sohn`
 >    erstellt und abgearbeitet, ohne dass die App läuft. Ideal für jedes Thema (Mathe, Englisch,
 >    Programmieren …).
 > 2. **Der Study-Plan der Pugling-App** (Vokabeln, Lückentext, Matching per REST-API) —
->    beschrieben in [tutorial.md](tutorial.md).
+>    kompakt in [tutorial.md](tutorial.md), ausführlich im Wiki:
+>    [04 · Lernplan bauen](../wiki/04-lernplan-bauen.md) (Aufbau via API durch einen Menschen/Agent)
+>    und [09 · LLM-Kochbuch](../wiki/09-llm-kochbuch.md) (Plan aus einem Prompt).
 >
-> Dieses Handbuch behandelt **Variante 1**.
+> Dieses Handbuch behandelt **Variante 1**. Die [drei „Pläne" im Überblick](../README.md#️-die-drei-pläne--bitte-nicht-verwechseln).
 
 ---
 
@@ -42,7 +45,7 @@ Daraus folgen drei feste Regeln, die beim Erstellen jedes Plans gelten:
 
 Der schnellste Weg: Claude die `vater`-Skill nutzen lassen.
 
-```
+```text
 /vater erstelle mir einen Lehrplan "Bruchrechnen Grundlagen" für meinen Sohn,
 Level Anfänger, 2 Module, ca. 20 Punkte
 ```
@@ -53,7 +56,7 @@ jedes Detail dafür.
 
 Wenn der Sohn (oder Claude) loslegen soll:
 
-```
+```text
 /sohn arbeite den Lehrplan unter ./lehrplan/bruchrechnen-grundlagen durch
 ```
 
@@ -64,7 +67,7 @@ Wenn der Sohn (oder Claude) loslegen soll:
 Jeder Kurs liegt unter `./lehrplan/<kurs-slug>/` (kebab-case, aus dem Thema abgeleitet). Lege
 `./lehrplan/` an, falls es fehlt.
 
-```
+```text
 lehrplan/<kurs-slug>/
 ├── manifest.json                     # Maschinenlesbarer Vertrag — die Quelle der Wahrheit für die Gates
 ├── curriculum.md                     # Menschlicher Überblick + Fächerliste + Hausregeln
@@ -162,6 +165,7 @@ Abschließen, bis sie erfüllt sind. Schreibe sie **präzise**.
 | `exercises[].checkable` | `true` = mechanisch prüfbar (Schlüssel/Test/exakter Wert); `false` = am Rubric benotet. |
 
 **Punktarithmetik (unbedingt prüfen):**
+
 - `summe(module.points) == total_points`
 - Pro Modul: `summe(exercise.points) == module.points`
 
@@ -276,10 +280,12 @@ Nach diesem Modul kannst du:
 Ein **Bruch** beschreibt einen Teil eines Ganzen. Er wird als zwei Zahlen übereinander geschrieben:
 
 ```
+
    Zähler        (wie viele Teile wir haben)
   ─────────
    Nenner        (in wie viele gleiche Teile das Ganze zerlegt ist)
-```
+
+```text
 
 Beispiel: Bei `3/4` ist das Ganze in **4** gleiche Teile geteilt (Nenner), und wir betrachten **3**
 davon (Zähler).
@@ -361,18 +367,22 @@ Nach diesem Modul kannst du:
 Nenner stehen:
 
 ```
+
   2/5 + 1/5 = 3/5
-```
+
+```text
 
 **Verschiedene Nenner:** Zuerst musst du beide Brüche auf denselben Nenner bringen (einen
 **gemeinsamen Nenner**). Dazu erweiterst du jeden Bruch (Zähler und Nenner mit derselben Zahl
 multiplizieren), bis die Nenner gleich sind. Erst dann addierst du.
 
 ```
+
   1/3 + 1/4
   = 4/12 + 3/12     (1/3 mit 4 erweitert, 1/4 mit 3 erweitert)
   = 7/12
-```
+
+```text
 
 Nach dem Addieren immer prüfen, ob sich das Ergebnis kürzen lässt. Beispiel: `1/6 + 1/6 = 2/6 = 1/3`.
 
@@ -440,27 +450,33 @@ Damit ist der Kurs vollständig: 2 Module × 10 Punkte = 20 Gesamtpunkte, Modul-
 So geht ein Vater praktisch vor.
 
 ### Schritt 1 — Umfang festlegen
+
 Entscheide (nicht: diskutiere) Thema, Level und Umfang. Standard, wenn du unsicher bist:
 **4–6 Module à ~20 Punkte**, Bestehensschwelle 80 %, pro Modul 70 %. Für ein kleines Fach reichen
 2 Module wie im Beispiel oben.
 
 ### Schritt 2 — Ordner und `manifest.json` anlegen
+
 Lege `lehrplan/<slug>/` an und schreibe zuerst die `manifest.json`. Sie ist dein Vertrag — trag hier
 Module, Übungen, Punkte und Schwellen ein. Prüfe sofort die Punktarithmetik.
 
 ### Schritt 3 — Module schreiben (`modules/`)
+
 Pro Modul: aussagekräftiges `Objective`, ein echter `Learn`-Abschnitt mit durchgerechneten Beispielen,
 dann die Übungen — **ohne Lösungen**. Mische Aufgabentypen: mindestens einen prüfbaren Typ
 (multiple-choice / short-answer / code) und höchstens eine `explain`-Aufgabe pro Modul.
 
 ### Schritt 4 — Lösungsschlüssel schreiben (`answer-key/`)
+
 Pro Modul eine Datei. Für jede Übung: korrekte Antwort + Punktregel; bei `explain` ein punktweiser
 Rubric. Für `code`: Referenzlösung + wie geprüft wird.
 
 ### Schritt 5 — `curriculum.md` schreiben
+
 Der menschliche Überblick: Fächer-/Modultabelle mit Punkten, Bestehensschwelle, Hausregeln.
 
 ### Schritt 6 — Qualitäts-Check vor der Übergabe
+
 Siehe [§8](#8-checkliste-vor-der-übergabe). Danach: **weggehen.** Nicht anbieten, live zu helfen —
 das ganze Design geht davon aus, dass der Vater nicht mehr im Raum ist.
 
@@ -472,7 +488,7 @@ Die Laufzeit-Dateien `progress.json` und `ledger.md` liegen **im Kurs-Ordner** u
 **Option A — ein Ordner pro Sohn (empfohlen).** Kopiere den fertigen Kurs pro Sohn. Jeder Sohn hat
 seinen eigenen Fortschritt und sein eigenes prüfbares Ledger:
 
-```
+```text
 lehrplan/
 ├── bruchrechnen-grundlagen-max/     # Max' Exemplar (eigenes progress.json, ledger.md)
 └── bruchrechnen-grundlagen-tom/     # Toms Exemplar
@@ -481,14 +497,14 @@ lehrplan/
 Setze in jeder `manifest.json` den passenden `slug` (`bruchrechnen-grundlagen-max` bzw. `-tom`), damit
 die Ordner eindeutig bleiben. Starten:
 
-```
+```text
 /sohn arbeite den Lehrplan unter ./lehrplan/bruchrechnen-grundlagen-max durch
 ```
 
 **Option B — verschiedene Fächer pro Sohn.** Wenn jeder Sohn ein anderes Fach lernt, ist ohnehin jeder
 Kurs-Ordner ein eigenes Fach:
 
-```
+```text
 lehrplan/
 ├── bruchrechnen-grundlagen/     # für den jüngeren Sohn
 └── englisch-a1-vokabeln/        # für den älteren Sohn
@@ -540,4 +556,5 @@ ohnehin zurück an die Arbeit. Ein reales Beispiel eines abgeschlossenen Ledgers
 - Lerner-Skill (Sohn): [.claude/skills/sohn/SKILL.md](../.claude/skills/sohn/SKILL.md)
 - Fertiger Beispielkurs: [../lehrplan/git-basics/](../lehrplan/git-basics/)
 - Pugling-App-Study-Plans (andere Variante, per API): [tutorial.md](tutorial.md)
-```
+
+```text

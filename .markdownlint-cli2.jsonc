@@ -1,0 +1,10 @@
+{
+  // Läufer-Konfiguration für markdownlint-cli2. Die Regeln stehen in .markdownlint.jsonc,
+  // hier stehen nur die auszuschließenden Pfade (operative Prompts + generierte Artefakte).
+  "ignores": [
+    "node_modules/**",
+    "frontend/**",
+    ".claude/**",
+    "lehrplan/**"
+  ]
+}

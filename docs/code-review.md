@@ -17,7 +17,7 @@ zudem noch das Frontend hing. Richtungsentscheidung **API-First** getroffen und 
   (nur `TimeSlotRule` bleibt), 9 tote `DbSet`s, 2 Legacy-`PointsService`-Methoden, Seed bereinigt.
 - **M8 (Controller-Duplikation) behoben**: `PlanOwnershipFilter` (statt 5× Inline-Filter) +
   `TestAttemptService` (gemeinsamer Attempt-Lebenszyklus der drei Test-Controller).
-- **Zusatz-Fix**: `AuthController` – `[AllowAnonymous]` auf Klassenebene machte `GET /api/auth/me`
+- **Zusatz-Fix**: `AuthController` – `[AllowAnonymous]` auf Klassenebene machte `GET /api/v1/auth/me`
   ungewollt anonym; korrigiert (Login-Actions anonym, `me` erfordert Token).
 - Verifiziert: Build sauber + Live-Smoke-Test (Auth, Ownership-404, Plan→Test→Submit inkl. Punkte).
 
@@ -62,6 +62,7 @@ Diese sind Design-/Prod-Entscheidungen mit Seiteneffekten – bewusst gemeldet s
 - **Dokumentation:** Durchgängige, sinnvolle deutsche XML-`<summary>` + `ProducesResponseType`; die Legacy-Controller hoben sich negativ ab (jetzt zumindest abgesichert + kurz dokumentiert). Plus Prozess-Log, Résumé, Tutorial.
 
 ## Fazit
+
 Der neue Study-Kern ist sauber, modern und tragfähig erweiterbar. Die kritischen Sicherheits-/Cheat-Lücken
 (H1, H2, H4, M1, M2) sind behoben und verifiziert. Vor einem echten Einsatz verbleiben v. a. **PIN-Hashing (H3)**,
 die **Katalog-Mandantenfrage (M6)** sowie **EF-Migrationen** und **automatisierte Tests**.

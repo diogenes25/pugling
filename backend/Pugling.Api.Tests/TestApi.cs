@@ -10,7 +10,7 @@ internal static class TestApi
 {
     private static async Task<string> TokenAsync(HttpClient c, string role, object dto)
     {
-        var res = await c.PostAsJsonAsync($"/api/auth/{role}", dto);
+        var res = await c.PostAsJsonAsync($"/api/v1/auth/{role}", dto);
         res.EnsureSuccessStatusCode();
         return (await res.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("token").GetString()!;
     }
@@ -41,7 +41,7 @@ internal static class TestApi
     /// <summary>Legt (als Vater) einen Vokabel-Lehrplan mit zwei Seed-Vokabeln an und liefert dessen Id.</summary>
     public static async Task<int> CreateVocabPlanAsync(HttpClient father, int childId = 1, bool dailyTestRequired = true)
     {
-        var res = await father.PostAsJsonAsync("/api/study-plans", new
+        var res = await father.PostAsJsonAsync("/api/v1/study-plans", new
         {
             childId,
             title = "Test-Plan",
@@ -56,11 +56,11 @@ internal static class TestApi
     /// <summary>Legt (als Vater) Fach → Kapitel → eine Rechen-Übung an und liefert deren Ids.</summary>
     public static async Task<(int subjectId, int chapterId, int exerciseId)> CreateArithmeticExerciseAsync(HttpClient father)
     {
-        var subjectId = await IdAsync(await father.PostAsJsonAsync("/api/learn/subjects", new { name = "Katalog-Test" }));
+        var subjectId = await IdAsync(await father.PostAsJsonAsync("/api/v1/learn/subjects", new { name = "Katalog-Test" }));
         var chapterId = await IdAsync(await father.PostAsJsonAsync(
-            $"/api/learn/subjects/{subjectId}/chapters", new { name = "Kapitel 1", orderIndex = 1 }));
+            $"/api/v1/learn/subjects/{subjectId}/chapters", new { name = "Kapitel 1", orderIndex = 1 }));
         var exerciseId = await IdAsync(await father.PostAsJsonAsync(
-            $"/api/learn/subjects/{subjectId}/chapters/{chapterId}/arithmetic", new
+            $"/api/v1/learn/subjects/{subjectId}/chapters/{chapterId}/arithmetic", new
             {
                 title = "Kleines 1×1",
                 orderIndex = 1,

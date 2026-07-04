@@ -15,7 +15,7 @@ public class MeAndTestFallbackTests(PuglingWebAppFactory factory) : IClassFixtur
     {
         var child = await TestApi.ChildAsync(factory);
 
-        var res = await child.GetAsync("/api/me/points");
+        var res = await child.GetAsync("/api/v1/me/points");
         res.EnsureSuccessStatusCode();
         var wallet = await res.Content.ReadFromJsonAsync<JsonElement>();
 
@@ -32,7 +32,7 @@ public class MeAndTestFallbackTests(PuglingWebAppFactory factory) : IClassFixtur
     {
         var father = await TestApi.FatherAsync(factory);
 
-        var res = await father.GetAsync("/api/me/points");
+        var res = await father.GetAsync("/api/v1/me/points");
 
         Assert.Equal(HttpStatusCode.Forbidden, res.StatusCode);
     }
@@ -40,7 +40,7 @@ public class MeAndTestFallbackTests(PuglingWebAppFactory factory) : IClassFixtur
     [Fact]
     public async Task Wallet_OhneToken_401()
     {
-        var res = await factory.CreateClient().GetAsync("/api/me/points");
+        var res = await factory.CreateClient().GetAsync("/api/v1/me/points");
 
         Assert.Equal(HttpStatusCode.Unauthorized, res.StatusCode);
     }
@@ -50,7 +50,7 @@ public class MeAndTestFallbackTests(PuglingWebAppFactory factory) : IClassFixtur
     {
         var father = await TestApi.FatherAsync(factory);
         // Leitner-Plan: nach dem Üben rutscht die Fälligkeit in die Zukunft.
-        var planId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/study-plans", new
+        var planId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/study-plans", new
         {
             childId = 1,
             title = "Leitner-Plan",
@@ -61,17 +61,17 @@ public class MeAndTestFallbackTests(PuglingWebAppFactory factory) : IClassFixtur
         }));
 
         var child = await TestApi.ChildAsync(factory);
-        var plan = await (await child.GetAsync($"/api/study-plans/{planId}")).Content.ReadFromJsonAsync<JsonElement>();
+        var plan = await (await child.GetAsync($"/api/v1/study-plans/{planId}")).Content.ReadFromJsonAsync<JsonElement>();
         var contentIds = plan.GetProperty("items").EnumerateArray().Select(i => i.GetProperty("contentId").GetInt32()).ToList();
 
-        var sid = (await (await child.PostAsJsonAsync($"/api/study-plans/{planId}/practice-sessions", new { }))
+        var sid = (await (await child.PostAsJsonAsync($"/api/v1/study-plans/{planId}/practice-sessions", new { }))
             .Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetInt32();
         foreach (var cid in contentIds)
-            (await child.PostAsJsonAsync($"/api/study-plans/{planId}/practice-sessions/{sid}/review",
+            (await child.PostAsJsonAsync($"/api/v1/study-plans/{planId}/practice-sessions/{sid}/review",
                 new { contentId = cid, stage = 2, wasKnown = true })).EnsureSuccessStatusCode();
 
         // Alle Karten sind jetzt hochgestuft und nicht mehr fällig – der Tagestest muss trotzdem starten.
-        var testRes = await child.PostAsJsonAsync($"/api/study-plans/{planId}/tests", new { });
+        var testRes = await child.PostAsJsonAsync($"/api/v1/study-plans/{planId}/tests", new { });
 
         Assert.Equal(HttpStatusCode.Created, testRes.StatusCode);
         var attempt = await testRes.Content.ReadFromJsonAsync<JsonElement>();

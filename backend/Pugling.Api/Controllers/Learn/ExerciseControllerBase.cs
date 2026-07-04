@@ -8,13 +8,19 @@ using Pugling.Api.Models;
 
 namespace Pugling.Api.Controllers.Learn;
 
-/// <summary>Übung zum Anlegen/Ändern: gemeinsame Felder + typ-spezifische Config + optionaler Bonus-Vorschlag.</summary>
+/// <summary>
+/// Übung zum Anlegen/Ändern: gemeinsame Felder + typ-spezifische Config + optionaler Bonus-Vorschlag.
+/// Die Metadaten (Klassenstufe, Schulart, Quelle, Art) dienen der Lehrplan-Vorfilterung und sind optional.
+/// </summary>
 public record ExercisePayload<TConfig>(string Title, int OrderIndex, int RewardPoints, TConfig Config,
-    SuggestedBonus? SuggestedBonus = null);
+    SuggestedBonus? SuggestedBonus = null,
+    int? GradeMin = null, int? GradeMax = null, SchoolTypes SchoolTypes = SchoolTypes.None,
+    string? Source = null, int? CategoryId = null);
 
 /// <summary>Übung in der Antwort.</summary>
 public record ExerciseResponse<TConfig>(int Id, int ChapterId, string Type, string Title,
-    int OrderIndex, int RewardPoints, DateTime CreatedAt, TConfig Config, SuggestedBonus? SuggestedBonus);
+    int OrderIndex, int RewardPoints, DateTime CreatedAt, TConfig Config, SuggestedBonus? SuggestedBonus,
+    int? GradeMin, int? GradeMax, SchoolTypes SchoolTypes, string? Source, int? CategoryId, string? CategoryName);
 
 /// <summary>
 /// Gemeinsame CRUD-Logik für alle Übungstypen unter einem Kapitel.
@@ -23,6 +29,7 @@ public record ExerciseResponse<TConfig>(int Id, int ChapterId, string Type, stri
 /// im API voll typisiert übertragen.
 /// </summary>
 [ApiController]
+[ApiVersion("1.0")]
 [Produces("application/json")]
 [Authorize(Roles = Roles.Vater)]
 public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db) : ControllerBase
@@ -39,17 +46,25 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db) : Con
     private Task<bool> ChapterExists(int subjectId, int chapterId) =>
         db.Chapters.AnyAsync(c => c.Id == chapterId && c.SubjectId == subjectId);
 
+    /// <summary>Prüft, dass eine gesetzte Art zum Fach der Übung gehört (fremde Fächer verhindern).</summary>
+    private Task<bool> CategoryValid(int subjectId, int? categoryId) =>
+        categoryId is null
+            ? Task.FromResult(true)
+            : db.ExerciseCategories.AnyAsync(c => c.Id == categoryId && c.SubjectId == subjectId);
+
     /// <summary>Lädt eine Übung dieses Typs; Basis für abgeleitete Zusatz-Endpunkte (Generieren, Auswerten).</summary>
     protected Task<Exercise?> FindAsync(int subjectId, int chapterId, int exerciseId) =>
-        db.Exercises.FirstOrDefaultAsync(e => e.Id == exerciseId && e.ChapterId == chapterId
-            && e.Type == Type && e.Chapter!.SubjectId == subjectId);
+        db.Exercises.Include(e => e.Category)
+            .FirstOrDefaultAsync(e => e.Id == exerciseId && e.ChapterId == chapterId
+                && e.Type == Type && e.Chapter!.SubjectId == subjectId);
 
     /// <summary>Deserialisiert die typisierte Konfiguration einer Übung (nie null; fällt auf Default zurück).</summary>
     protected TConfig ConfigOf(Exercise exercise) =>
         JsonSerializer.Deserialize<TConfig>(exercise.ConfigJson, JsonOptions) ?? new TConfig();
 
     private ExerciseResponse<TConfig> Map(Exercise e) =>
-        new(e.Id, e.ChapterId, e.Type.ToString(), e.Title, e.OrderIndex, e.RewardPoints, e.CreatedAt, ConfigOf(e), e.SuggestedBonus);
+        new(e.Id, e.ChapterId, e.Type.ToString(), e.Title, e.OrderIndex, e.RewardPoints, e.CreatedAt, ConfigOf(e), e.SuggestedBonus,
+            e.GradeMin, e.GradeMax, e.SchoolTypes, e.Source, e.CategoryId, e.Category?.Name);
 
     /// <summary>Liste der Übungen dieses Typs im Kapitel.</summary>
     [HttpGet]
@@ -58,6 +73,7 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db) : Con
     {
         if (!await ChapterExists(subjectId, chapterId)) return NotFound();
         var exercises = await db.Exercises
+            .Include(e => e.Category)
             .Where(e => e.ChapterId == chapterId && e.Type == Type)
             .OrderBy(e => e.OrderIndex).ThenBy(e => e.Id)
             .ToListAsync();
@@ -81,7 +97,8 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db) : Con
     public async Task<ActionResult<ExerciseResponse<TConfig>>> Create(int subjectId, int chapterId, ExercisePayload<TConfig> body)
     {
         if (!await ChapterExists(subjectId, chapterId)) return NotFound();
-        if (string.IsNullOrWhiteSpace(body.Title)) return BadRequest("Titel ist erforderlich.");
+        if (string.IsNullOrWhiteSpace(body.Title)) return Problem(statusCode: 400, detail: "Titel ist erforderlich.");
+        if (!await CategoryValid(subjectId, body.CategoryId)) return Problem(statusCode: 400, detail: "Unbekannte Art für dieses Fach.");
 
         var exercise = new Exercise
         {
@@ -92,9 +109,18 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db) : Con
             RewardPoints = body.RewardPoints,
             ConfigJson = JsonSerializer.Serialize(body.Config ?? new TConfig(), JsonOptions),
             SuggestedBonus = body.SuggestedBonus,
+            GradeMin = body.GradeMin,
+            GradeMax = body.GradeMax,
+            SchoolTypes = body.SchoolTypes,
+            Source = string.IsNullOrWhiteSpace(body.Source) ? null : body.Source.Trim(),
+            CategoryId = body.CategoryId,
         };
         db.Exercises.Add(exercise);
         await db.SaveChangesAsync();
+
+        // Für CategoryName in der Antwort die Art nachladen (billig; nur beim Erzeugen).
+        if (exercise.CategoryId is not null)
+            exercise.Category = await db.ExerciseCategories.FindAsync(exercise.CategoryId);
 
         return CreatedAtAction(nameof(Get), new { subjectId, chapterId, exerciseId = exercise.Id }, Map(exercise));
     }
@@ -107,14 +133,25 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db) : Con
     {
         var exercise = await FindAsync(subjectId, chapterId, exerciseId);
         if (exercise is null) return NotFound();
-        if (string.IsNullOrWhiteSpace(body.Title)) return BadRequest("Titel ist erforderlich.");
+        if (string.IsNullOrWhiteSpace(body.Title)) return Problem(statusCode: 400, detail: "Titel ist erforderlich.");
+        if (!await CategoryValid(subjectId, body.CategoryId)) return Problem(statusCode: 400, detail: "Unbekannte Art für dieses Fach.");
 
         exercise.Title = body.Title.Trim();
         exercise.OrderIndex = body.OrderIndex;
         exercise.RewardPoints = body.RewardPoints;
         exercise.ConfigJson = JsonSerializer.Serialize(body.Config ?? new TConfig(), JsonOptions);
         exercise.SuggestedBonus = body.SuggestedBonus;
+        exercise.GradeMin = body.GradeMin;
+        exercise.GradeMax = body.GradeMax;
+        exercise.SchoolTypes = body.SchoolTypes;
+        exercise.Source = string.IsNullOrWhiteSpace(body.Source) ? null : body.Source.Trim();
+        exercise.CategoryId = body.CategoryId;
         await db.SaveChangesAsync();
+
+        // Navigation nach evtl. geänderter CategoryId aktualisieren, damit CategoryName stimmt.
+        exercise.Category = exercise.CategoryId is null
+            ? null
+            : await db.ExerciseCategories.FindAsync(exercise.CategoryId);
 
         return Map(exercise);
     }

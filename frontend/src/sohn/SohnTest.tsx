@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { api } from "../lib/api";
+import { api, errorMessage } from "../lib/api";
 import { useSohn } from "./SohnApp";
 import { Mascot } from "../components/Mascot";
 import { CelebrationLayer, useCelebration } from "../components/Celebration";
@@ -25,7 +25,7 @@ export function SohnTest() {
     let alive = true;
     api.startTest(planId)
       .then((a) => { if (alive) setAttempt(a); })
-      .catch((e) => { if (alive) setError(e instanceof Error ? e.message : "Test konnte nicht starten."); });
+      .catch((e) => { if (alive) setError(errorMessage(e)); });
     return () => { alive = false; };
   }, [planId, nav]);
 
@@ -36,7 +36,7 @@ export function SohnTest() {
     <>
       <TestResult result={result} skin={skin} onHome={() => nav("/sohn")} onRetry={() => {
         setResult(null); setAttempt(null); setAnswers({}); setRevealed(new Set());
-        if (planId) api.startTest(planId).then(setAttempt).catch((e) => setError(String(e)));
+        if (planId) api.startTest(planId).then(setAttempt).catch((e) => setError(errorMessage(e)));
       }} />
       <CelebrationLayer celebration={celebration} />
     </>
@@ -68,7 +68,7 @@ export function SohnTest() {
       setStreak((await api.today(planId)).currentStreak);
       refreshWallet();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Abgabe fehlgeschlagen.");
+      setError(errorMessage(e));
     } finally {
       setBusy(false);
     }

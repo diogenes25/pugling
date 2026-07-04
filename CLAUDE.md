@@ -35,20 +35,21 @@ dotnet ef migrations add <Name> --project backend/Pugling.Api --output-dir Data/
   (`OwnsPlanAsync`/`OwnsChildAsync`/`FatherOwnsChildAsync`).
 - **Lern-Katalog** ([Controllers/Learn/ExerciseControllers.cs](backend/Pugling.Api/Controllers/Learn/ExerciseControllers.cs)):
   `Subject → Chapter → Exercise` (typisiert, Config als JSON). Ein Controller je `ExerciseType`,
-  erben CRUD aus `ExerciseControllerBase<TConfig>`. Route: `api/learn/subjects/{}/chapters/{}/<typ>`.
+  erben CRUD aus `ExerciseControllerBase<TConfig>`. Route: `api/v1/learn/subjects/{}/chapters/{}/<typ>`.
 - **Lehrplan/Training** ([StudyPlansController](backend/Pugling.Api/Controllers/Learn/StudyPlansController.cs)):
   `StudyPlan` (verfahrensneutral) mit `StudyPlanItem`s → Vokabel- bzw. Lückentext-Store.
   `PracticeSession` (Übungszeit/Leitner), `TestAttempt` (mehrstufige Abschlusstests).
-  Route: `api/study-plans/{planId}/…`.
+  Route: `api/v1/study-plans/{planId}/…`.
 - **Tags & Klassenarbeiten** ([KlassenarbeitenController](backend/Pugling.Api/Controllers/Learn/KlassenarbeitenController.cs)):
-  Übungen taggen, Arbeiten planen/benoten, gezielt üben/wiederholen.
+  Übungen taggen, Arbeiten planen/benoten, gezielt üben/wiederholen. Route: `api/v1/class-tests`
+  (Typnamen intern weiterhin `Klassenarbeit`).
 - **Services** ([Services/](backend/Pugling.Api/Services/)): `StudyProgressService` (Tages-Auswertung +
   idempotente Punkte), `ScheduleService` (Stundenplan-Auswahl neu/Wiederholung), `TestAttemptService`
   (gemeinsamer Test-Lebenszyklus), `ScoringService` (die eine Stelle für Review-Punkte: Basis × Zeitfenster
   plus Ereignis-Boni wie Combo/Schnelle Antwort; jede Buchung trägt einen `PointKind`),
   `MetricsService` (Fortschritts-Metriken aus den Tabellen) + `GamificationService` (Missionen &
-  Auszeichnungen, idempotent belohnt; Vater-CRUD unter `…/children/{}/missions|achievements`,
-  Sohn-Sicht `api/me/missions|achievements`).
+  Auszeichnungen, idempotent belohnt; Vater-CRUD unter `api/v1/children/{}/missions|achievements`,
+  Sohn-Sicht `api/v1/me/missions|achievements`).
 
 ## Konventionen (an bestehendem Code orientieren!)
 
@@ -57,9 +58,19 @@ dotnet ef migrations add <Name> --project backend/Pugling.Api --output-dir Data/
 - **Doku auf Deutsch.** Öffentliche Typen/Members tragen `/// <summary>` (fließt in Swagger).
   Kommentare erklären das *Warum* (Geschäftsregel, Anti-Cheat), nicht das Was.
 - **Controller dünn**, Logik in Services. DTOs als `record` projizieren – nie EF-Entities zurückgeben.
-- **Guard Clauses zuerst** (früh `return NotFound()/BadRequest()/Forbid()`), Happy Path un-eingerückt.
-- **Eigentum**: Für Endpunkte unter `{planId}` den `[ServiceFilter(typeof(PlanOwnershipFilter))]`
-  nutzen (nicht den Filter erneut inline schreiben). Sonst `AuthAccess` explizit.
+- **Guard Clauses zuerst** (früh `return NotFound()/Forbid()` bzw. `Problem(statusCode:…, detail:…)`),
+  Happy Path un-eingerückt.
+- **API-Versionierung**: Alle Routen unter `api/v1/…` – das Versionssegment steckt zentral in
+  `ApiRoutes.V1` ([Controllers/ApiRoutes.cs](backend/Pugling.Api/Controllers/ApiRoutes.cs)), Controller
+  tragen `[ApiVersion("1.0")]`. Bis zur Publikation bleiben wir bei 1.0 und ändern frei; ein Bruch danach
+  läuft über eine parallele `v2` (neue Controller/DTOs neben v1), nicht über Abwärtskompatibilität.
+- **Fehler** einheitlich als `ProblemDetails` (RFC 7807): `return Problem(statusCode: 400, detail: "…")`
+  statt nackter Strings; `AddProblemDetails` + `UseExceptionHandler`/`UseStatusCodePages` formen auch
+  leere Fehler (404/403/401) und unbehandelte Exceptions dazu.
+- **Eigentum**: Für Endpunkte unter `{planId}` den `[ServiceFilter(typeof(PlanOwnershipFilter))]`,
+  für Endpunkte unter `{childId}` den `[ServiceFilter(typeof(ChildOwnershipFilter))]` nutzen
+  (nicht inline wiederholen). Sonst `AuthAccess` explizit. Kindbezogene Ressourcen leben unter
+  `api/v1/children/{childId}/…`; top-level Aggregate, die nur nach Kind filtern, nehmen `?childId=`.
 - **EF**: `AsNoTracking()` für Lesequeries, in DB filtern (`Where` vor `ToListAsync`), N+1 via `Include`/
   Projektion vermeiden, `async`/`Async`-Suffix, `CancellationToken` durchreichen.
 - **Rolle & Selbstbetrug**: Für den Sohn serverseitig erzwingen (Stufe aus dem Fahrplan, Heartbeat clampen,

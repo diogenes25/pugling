@@ -9,7 +9,8 @@ namespace Pugling.Api.Controllers.Learn;
 
 /// <summary>Der Sohn bewertet die Lerninhalte eines Plans (passt der Stoff zum aktuellen Schulthema?).</summary>
 [ApiController]
-[Route("api/study-plans/{planId:int}/ratings")]
+[ApiVersion("1.0")]
+[Route(ApiRoutes.V1 + "/study-plans/{planId:int}/ratings")]
 [Tags("Study – Ratings")]
 [Produces("application/json")]
 [Authorize]
@@ -37,7 +38,7 @@ public class RatingsController(PuglingDbContext db) : ControllerBase
     {
         if (!await db.StudyPlanItems.AnyAsync(i => i.StudyPlanId == planId
                 && (i.VocabularyId == dto.ContentId || i.ClozeTextId == dto.ContentId)))
-            return BadRequest("Inhalt gehört nicht zum Lehrplan.");
+            return Problem(statusCode: 400, detail: "Inhalt gehört nicht zum Lehrplan.");
 
         var childId = User.ChildId() ?? 0;
         var rating = new ContentRating

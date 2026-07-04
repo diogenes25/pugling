@@ -178,9 +178,15 @@ public static class Seed
         var options = new JsonSerializerOptions(JsonSerializerDefaults.Web);
         string Json<T>(T config) => JsonSerializer.Serialize(config, options);
 
+        // Fachabhängige Arten (kontrolliertes Vokabular) als Grundlage der Lehrplan-Vorfilterung.
+        var enVokabeln = new ExerciseCategory { Name = "Vokabeln" };
+        var enGrammatik = new ExerciseCategory { Name = "Grammatik" };
+        var enLeseverstehen = new ExerciseCategory { Name = "Leseverstehen" };
+
         var englisch = new Subject
         {
             Name = "Englisch",
+            Categories = { enVokabeln, enGrammatik, enLeseverstehen },
             Chapters =
             {
                 new Chapter
@@ -195,6 +201,10 @@ public static class Seed
                             Title = "Begrüßungen",
                             OrderIndex = 1,
                             RewardPoints = 10,
+                            GradeMin = 5, GradeMax = 6,
+                            SchoolTypes = SchoolTypes.Realschule | SchoolTypes.Gymnasium,
+                            Source = "Green Line 1, Unit 1",
+                            Category = enVokabeln,
                             ConfigJson = Json(new VocabularyConfig
                             {
                                 Direction = "front-to-back",
@@ -212,6 +222,10 @@ public static class Seed
                             Title = "Lückentext: A short dialogue",
                             OrderIndex = 2,
                             RewardPoints = 15,
+                            GradeMin = 5, GradeMax = 7,
+                            SchoolTypes = SchoolTypes.Realschule | SchoolTypes.Gymnasium,
+                            Source = "Green Line 1, Unit 1",
+                            Category = enGrammatik,
                             ConfigJson = Json(new ClozeConfig
                             {
                                 Text = "A: {{1}}, how are you? B: I'm {{2}}, thank you.",
@@ -230,6 +244,9 @@ public static class Seed
                             Title = "Birkenbihl: Getting to know each other",
                             OrderIndex = 3,
                             RewardPoints = 10,
+                            GradeMin = 5, GradeMax = 8,
+                            SchoolTypes = SchoolTypes.Gymnasium,
+                            Category = enLeseverstehen,
                             ConfigJson = Json(new BirkenbihlConfig
                             {
                                 LearningLang = "Englisch",
@@ -255,9 +272,13 @@ public static class Seed
             }
         };
 
+        var maGrundrechenarten = new ExerciseCategory { Name = "Grundrechenarten" };
+        var maAlgebra = new ExerciseCategory { Name = "Algebra" };
+
         var mathe = new Subject
         {
             Name = "Mathe",
+            Categories = { maGrundrechenarten, maAlgebra },
             Chapters =
             {
                 new Chapter
@@ -273,6 +294,9 @@ public static class Seed
                             Title = "Das kleine 1×1 (7er-Reihe)",
                             OrderIndex = 1,
                             RewardPoints = 10,
+                            GradeMin = 3, GradeMax = 5,
+                            SchoolTypes = SchoolTypes.None,
+                            Category = maGrundrechenarten,
                             ConfigJson = Json(new ArithmeticConfig
                             {
                                 Problems =
@@ -291,6 +315,9 @@ public static class Seed
                             Title = "Kopfrechnen bis 20",
                             OrderIndex = 2,
                             RewardPoints = 15,
+                            GradeMin = 2, GradeMax = 4,
+                            SchoolTypes = SchoolTypes.None,
+                            Category = maGrundrechenarten,
                             ConfigJson = Json(new ArithmeticDrillConfig
                             {
                                 Operations = new() { ArithmeticOperation.Addition, ArithmeticOperation.Subtraction },

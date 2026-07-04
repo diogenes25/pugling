@@ -13,8 +13,9 @@ namespace Pugling.Api.Controllers.Learn;
 /// anstehende Arbeit üben oder Übungen schlecht benoteter Arbeiten wiederholen.
 /// </summary>
 [ApiController]
-[Route("api/klassenarbeiten")]
-[Tags("Learn – Klassenarbeiten")]
+[ApiVersion("1.0")]
+[Route(ApiRoutes.V1 + "/class-tests")]
+[Tags("Learn – Class Tests")]
 [Produces("application/json")]
 [Authorize]
 public class KlassenarbeitenController(PuglingDbContext db, AuthAccess access) : ControllerBase
@@ -99,11 +100,11 @@ public class KlassenarbeitenController(PuglingDbContext db, AuthAccess access) :
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult<KlassenarbeitDetail>> Create(CreateDto dto)
     {
-        if (string.IsNullOrWhiteSpace(dto.Title)) return BadRequest("Titel ist erforderlich.");
+        if (string.IsNullOrWhiteSpace(dto.Title)) return Problem(statusCode: 400, detail: "Titel ist erforderlich.");
         if (!await access.OwnsChildAsync(User, dto.ChildId)) return Forbid();
-        if (ValidateGrade(dto.Grade) is { } gradeError) return BadRequest(gradeError);
+        if (ValidateGrade(dto.Grade) is { } gradeError) return Problem(statusCode: 400, detail: gradeError);
         if (dto.SubjectId is { } sid && !await db.Subjects.AnyAsync(s => s.Id == sid))
-            return BadRequest("Fach nicht gefunden.");
+            return Problem(statusCode: 400, detail: "Fach nicht gefunden.");
 
         var k = new Klassenarbeit
         {
@@ -117,8 +118,8 @@ public class KlassenarbeitenController(PuglingDbContext db, AuthAccess access) :
             GradeComment = dto.GradeComment?.Trim(),
         };
 
-        if (await BuildExerciseLinksAsync(dto.ChildId, dto.ExerciseIds, k.Exercises) is { } exErr) return BadRequest(exErr);
-        if (await BuildTagLinksAsync(dto.ChildId, dto.TagIds, k.Tags) is { } tagErr) return BadRequest(tagErr);
+        if (await BuildExerciseLinksAsync(dto.ChildId, dto.ExerciseIds, k.Exercises) is { } exErr) return Problem(statusCode: 400, detail: exErr);
+        if (await BuildTagLinksAsync(dto.ChildId, dto.TagIds, k.Tags) is { } tagErr) return Problem(statusCode: 400, detail: tagErr);
 
         db.Klassenarbeiten.Add(k);
         await db.SaveChangesAsync();
@@ -144,13 +145,13 @@ public class KlassenarbeitenController(PuglingDbContext db, AuthAccess access) :
 
         if (dto.Title is not null)
         {
-            if (string.IsNullOrWhiteSpace(dto.Title)) return BadRequest("Titel darf nicht leer sein.");
+            if (string.IsNullOrWhiteSpace(dto.Title)) return Problem(statusCode: 400, detail: "Titel darf nicht leer sein.");
             k.Title = dto.Title.Trim();
         }
         if (dto.Topic is not null) k.Topic = dto.Topic.Trim() is { Length: > 0 } t ? t : null;
         if (dto.SubjectId is { } sid)
         {
-            if (!await db.Subjects.AnyAsync(s => s.Id == sid)) return BadRequest("Fach nicht gefunden.");
+            if (!await db.Subjects.AnyAsync(s => s.Id == sid)) return Problem(statusCode: 400, detail: "Fach nicht gefunden.");
             k.SubjectId = sid;
         }
         if (dto.ScheduledDate is not null) k.ScheduledDate = dto.ScheduledDate.Value;
@@ -162,7 +163,7 @@ public class KlassenarbeitenController(PuglingDbContext db, AuthAccess access) :
         }
         else if (dto.Grade is not null)
         {
-            if (ValidateGrade(dto.Grade) is { } gradeError) return BadRequest(gradeError);
+            if (ValidateGrade(dto.Grade) is { } gradeError) return Problem(statusCode: 400, detail: gradeError);
             k.Grade = dto.Grade;
         }
 
@@ -201,8 +202,8 @@ public class KlassenarbeitenController(PuglingDbContext db, AuthAccess access) :
     {
         var k = await FindOwnedAsync(id);
         if (k is null) return NotFound();
-        if (dto.ExerciseIds is not { Count: > 0 }) return BadRequest("Mindestens eine Übung ist erforderlich.");
-        if (await BuildExerciseLinksAsync(k.ChildId, dto.ExerciseIds, k.Exercises) is { } error) return BadRequest(error);
+        if (dto.ExerciseIds is not { Count: > 0 }) return Problem(statusCode: 400, detail: "Mindestens eine Übung ist erforderlich.");
+        if (await BuildExerciseLinksAsync(k.ChildId, dto.ExerciseIds, k.Exercises) is { } error) return Problem(statusCode: 400, detail: error);
 
         await db.SaveChangesAsync();
         var exIds = k.Exercises.Select(x => x.ExerciseId).ToList();
@@ -235,7 +236,7 @@ public class KlassenarbeitenController(PuglingDbContext db, AuthAccess access) :
         var k = await FindOwnedAsync(id);
         if (k is null) return NotFound();
         if (!await db.Tags.AnyAsync(t => t.Id == tagId && t.ChildId == k.ChildId))
-            return BadRequest("Tag gehört nicht zu diesem Kind.");
+            return Problem(statusCode: 400, detail: "Tag gehört nicht zu diesem Kind.");
         if (k.Tags.All(t => t.TagId != tagId))
         {
             k.Tags.Add(new KlassenarbeitTag { TagId = tagId });

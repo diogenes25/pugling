@@ -10,10 +10,12 @@ namespace Pugling.Api.Controllers.Learn;
 
 /// <summary>Lehrpläne (verfahrensneutral: Vokabeltraining oder Lückentext) – vom Vater erstellt und ausgewertet.</summary>
 [ApiController]
-[Route("api/study-plans")]
+[ApiVersion("1.0")]
+[Route(ApiRoutes.V1 + "/study-plans")]
 [Tags("Study – Plans")]
 [Produces("application/json")]
 [Authorize]
+[ServiceFilter(typeof(PlanOwnershipFilter))]
 public class StudyPlansController(PuglingDbContext db, StudyProgressService progress, ScheduleService schedule, AuthAccess access) : ControllerBase
 {
     public record PlanItemResponse(int Id, int Order, LearningMethod Kind, int ContentId,
@@ -71,7 +73,6 @@ public class StudyPlansController(PuglingDbContext db, StudyProgressService prog
     {
         var plan = await WithItems().FirstOrDefaultAsync(p => p.Id == planId);
         if (plan is null) return NotFound();
-        if (!await access.OwnsPlanAsync(User, plan)) return Forbid();
         return Map(plan);
     }
 
@@ -92,10 +93,10 @@ public class StudyPlansController(PuglingDbContext db, StudyProgressService prog
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<PlanResponse>> Create(CreatePlanDto dto)
     {
-        if (string.IsNullOrWhiteSpace(dto.Title)) return BadRequest("Title ist erforderlich.");
+        if (string.IsNullOrWhiteSpace(dto.Title)) return Problem(statusCode: 400, detail: "Title ist erforderlich.");
         // Eigentums-Prüfung zuerst: gibt für "existiert nicht" und "nicht mein Kind" einheitlich 404 zurück (kein Enumerieren fremder Kind-Ids).
-        if (!await access.FatherOwnsChildAsync(User, dto.ChildId)) return NotFound("Kind nicht gefunden.");
-        if (dto.SubjectId is { } sid && !await db.Subjects.AnyAsync(s => s.Id == sid)) return BadRequest("Fach nicht gefunden.");
+        if (!await access.FatherOwnsChildAsync(User, dto.ChildId)) return Problem(statusCode: 404, detail: "Kind nicht gefunden.");
+        if (dto.SubjectId is { } sid && !await db.Subjects.AnyAsync(s => s.Id == sid)) return Problem(statusCode: 400, detail: "Fach nicht gefunden.");
 
         var method = dto.Method ?? LearningMethod.Vocabulary;
         var start = dto.StartDate ?? DateOnly.FromDateTime(DateTime.UtcNow);
@@ -136,7 +137,7 @@ public class StudyPlansController(PuglingDbContext db, StudyProgressService prog
         if (dto.ContentKeys is { Count: > 0 })
         {
             var (ids, error) = await ResolveContentKeysAsync(method, dto.ContentKeys);
-            if (error is not null) return BadRequest(error);
+            if (error is not null) return Problem(statusCode: 400, detail: error);
             var order = 0;
             foreach (var id in ids) plan.Items.Add(NewItem(method, id, order++));
         }
@@ -163,12 +164,11 @@ public class StudyPlansController(PuglingDbContext db, StudyProgressService prog
     {
         var plan = await db.StudyPlans.FirstOrDefaultAsync(p => p.Id == planId);
         if (plan is null) return NotFound();
-        if (!await access.OwnsPlanAsync(User, plan)) return Forbid();
 
         if (dto.Title is not null) plan.Title = dto.Title.Trim();
         if (dto.SubjectId is { } sid)
         {
-            if (!await db.Subjects.AnyAsync(s => s.Id == sid)) return BadRequest("Fach nicht gefunden.");
+            if (!await db.Subjects.AnyAsync(s => s.Id == sid)) return Problem(statusCode: 400, detail: "Fach nicht gefunden.");
             plan.SubjectId = sid;
         }
         if (dto.NewItemsPerLesson is > 0) plan.NewItemsPerLesson = dto.NewItemsPerLesson.Value;
@@ -208,12 +208,11 @@ public class StudyPlansController(PuglingDbContext db, StudyProgressService prog
     {
         var plan = await db.StudyPlans.Include(p => p.Items).FirstOrDefaultAsync(p => p.Id == planId);
         if (plan is null) return NotFound();
-        if (!await access.OwnsPlanAsync(User, plan)) return Forbid();
 
         var (ids, error) = await ResolveContentKeysAsync(plan.Method, new() { dto.ContentKey });
-        if (error is not null) return BadRequest(error);
+        if (error is not null) return Problem(statusCode: 400, detail: error);
         var contentId = ids[0];
-        if (plan.Items.Any(i => i.ContentId == contentId)) return BadRequest("Inhalt ist bereits im Plan.");
+        if (plan.Items.Any(i => i.ContentId == contentId)) return Problem(statusCode: 400, detail: "Inhalt ist bereits im Plan.");
 
         var nextOrder = plan.Items.Count == 0 ? 0 : plan.Items.Max(i => i.Order) + 1;
         plan.Items.Add(NewItem(plan.Method, contentId, nextOrder));
@@ -231,7 +230,6 @@ public class StudyPlansController(PuglingDbContext db, StudyProgressService prog
     {
         var plan = await db.StudyPlans.FirstOrDefaultAsync(p => p.Id == planId);
         if (plan is null) return NotFound();
-        if (!await access.OwnsPlanAsync(User, plan)) return Forbid();
         var item = await db.StudyPlanItems.FirstOrDefaultAsync(i => i.Id == itemId && i.StudyPlanId == planId);
         if (item is null) return NotFound();
         db.StudyPlanItems.Remove(item);
@@ -251,7 +249,6 @@ public class StudyPlansController(PuglingDbContext db, StudyProgressService prog
     {
         var plan = await db.StudyPlans.FirstOrDefaultAsync(p => p.Id == planId);
         if (plan is null) return NotFound();
-        if (!await access.OwnsPlanAsync(User, plan)) return Forbid();
 
         var days = new List<StudyProgressService.DayProgress>();
         for (var d = plan.StartDate; d <= plan.EndDate; d = d.AddDays(1))
@@ -275,7 +272,6 @@ public class StudyPlansController(PuglingDbContext db, StudyProgressService prog
     {
         var plan = await WithItems().FirstOrDefaultAsync(p => p.Id == planId);
         if (plan is null) return NotFound();
-        if (!await access.OwnsPlanAsync(User, plan)) return Forbid();
 
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
         var days = new List<StudyProgressService.DayProgress>();
@@ -308,7 +304,6 @@ public class StudyPlansController(PuglingDbContext db, StudyProgressService prog
     {
         var plan = await WithItems().FirstOrDefaultAsync(p => p.Id == planId);
         if (plan is null) return NotFound();
-        if (!await access.OwnsPlanAsync(User, plan)) return Forbid();
 
         var stats = await ComputeItemStatsAsync(plan);
         var history = await db.TestAttempts

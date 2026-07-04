@@ -1,12 +1,15 @@
 # Module 01 — The three states: working tree, staging area, repository
 
 ## Objective
+
 After this module you should be able to:
+
 - Name Git's three states and say which command moves a file between them.
 - Take a brand-new file from untracked to committed using the command line.
 - Explain why the staging area exists instead of committing everything at once.
 
 ## Learn
+
 Git tracks your files across **three places**:
 
 1. **Working tree** — the actual files on disk you edit. A new file here is *untracked*; Git sees it
@@ -35,6 +38,7 @@ touched. That's what makes history readable and reviewable.
 ## Exercises
 
 ### Exercise 01.1  (multiple-choice, 3 pts)
+
 Which command moves a change from the **working tree** into the **staging area**?
 
 - A) `git commit`
@@ -45,6 +49,7 @@ Which command moves a change from the **working tree** into the **staging area**
 Write your chosen letter into the ledger before checking.
 
 ### Exercise 01.2  (code, 4 pts)
+
 In a throwaway directory, create a brand-new Git repository, add a single file `hello.txt`
 containing the text `hi`, and commit it with the message `First commit`. Your work is "done" when
 **all** of these hold, which you can verify yourself:
@@ -56,5 +61,6 @@ containing the text `hi`, and commit it with the message `First commit`. Your wo
 Record the exact sequence of commands you ran in the ledger.
 
 ### Exercise 01.3  (explain, 3 pts)
+
 In your own words, explain **why** Git has a separate staging area instead of committing every changed
 file automatically. Your answer will be graded against the rubric in the answer key.

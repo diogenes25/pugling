@@ -114,6 +114,7 @@ precisely.
 ```
 
 Field notes:
+
 - `pass_threshold_pct` at the top level is the overall bar to finish the course; per-module it's the
   bar to unlock the next module. 70–80% is a fair default — high enough to force real work, low
   enough that one hard exercise doesn't wall the learner.

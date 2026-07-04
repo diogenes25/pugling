@@ -12,7 +12,8 @@ namespace Pugling.Api.Controllers.Learn;
 /// referenzieren diese Einträge später über ihren <c>Key</c>.
 /// </summary>
 [ApiController]
-[Route("api/learn/vocabulary")]
+[ApiVersion("1.0")]
+[Route(ApiRoutes.V1 + "/learn/vocabulary")]
 [Tags("Learn – Vocabulary Store")]
 [Produces("application/json")]
 [Authorize(Roles = Roles.Vater)]
@@ -76,18 +77,18 @@ public class VocabularyStoreController(PuglingDbContext db) : ControllerBase
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<ActionResult<VocabularyResponse>> Create(CreateVocabularyDto dto)
     {
-        if (string.IsNullOrWhiteSpace(dto.Key)) return BadRequest("Key ist erforderlich.");
+        if (string.IsNullOrWhiteSpace(dto.Key)) return Problem(statusCode: 400, detail: "Key ist erforderlich.");
         if (string.IsNullOrWhiteSpace(dto.Word) || string.IsNullOrWhiteSpace(dto.Translation))
-            return BadRequest("Word und Translation sind erforderlich.");
+            return Problem(statusCode: 400, detail: "Word und Translation sind erforderlich.");
         if (await db.Vocabulary.AnyAsync(v => v.Key == dto.Key))
-            return Conflict($"Key '{dto.Key}' existiert bereits.");
+            return Problem(statusCode: 409, detail: $"Key '{dto.Key}' existiert bereits.");
 
         int? baseFormId = null;
         if (!string.IsNullOrWhiteSpace(dto.BaseFormKey))
         {
             baseFormId = await db.Vocabulary.Where(v => v.Key == dto.BaseFormKey)
                 .Select(v => (int?)v.Id).FirstOrDefaultAsync();
-            if (baseFormId is null) return BadRequest($"BaseFormKey '{dto.BaseFormKey}' nicht gefunden.");
+            if (baseFormId is null) return Problem(statusCode: 400, detail: $"BaseFormKey '{dto.BaseFormKey}' nicht gefunden.");
         }
 
         var vocab = new Vocabulary
@@ -143,10 +144,10 @@ public class VocabularyStoreController(PuglingDbContext db) : ControllerBase
             }
             else
             {
-                if (dto.BaseFormKey == vocab.Key) return BadRequest("Eine Vokabel kann nicht ihre eigene Grundform sein.");
+                if (dto.BaseFormKey == vocab.Key) return Problem(statusCode: 400, detail: "Eine Vokabel kann nicht ihre eigene Grundform sein.");
                 var baseFormId = await db.Vocabulary.Where(v => v.Key == dto.BaseFormKey)
                     .Select(v => (int?)v.Id).FirstOrDefaultAsync();
-                if (baseFormId is null) return BadRequest($"BaseFormKey '{dto.BaseFormKey}' nicht gefunden.");
+                if (baseFormId is null) return Problem(statusCode: 400, detail: $"BaseFormKey '{dto.BaseFormKey}' nicht gefunden.");
                 vocab.BaseFormId = baseFormId;
             }
         }
@@ -167,7 +168,7 @@ public class VocabularyStoreController(PuglingDbContext db) : ControllerBase
         if (vocab is null) return NotFound();
 
         if (await db.Vocabulary.AnyAsync(v => v.BaseFormId == id))
-            return Conflict("Vokabel ist Grundform anderer Einträge und kann nicht gelöscht werden.");
+            return Problem(statusCode: 409, detail: "Vokabel ist Grundform anderer Einträge und kann nicht gelöscht werden.");
 
         db.Vocabulary.Remove(vocab);
         await db.SaveChangesAsync();
