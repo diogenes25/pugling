@@ -11,8 +11,136 @@ public static class Seed
         SeedAdmin(db);
         SeedCatalog(db);
         SeedVocabulary(db);
+        SeedFrench(db);
         SeedKlassenarbeiten(db);
         SeedGamification(db);
+    }
+
+    /// <summary>
+    /// Französisch-Inhalte für den typischen Einstieg „Sohn (14 J.) hat Probleme in Französisch":
+    /// ein Fach mit Kapitel + Katalog-Übungen (zum Stöbern/Filtern nach Klassenstufe) UND passende
+    /// Einträge im Vokabel-Store (Basis für einen Vokabel-Lehrplan). Additiv-idempotent: läuft auch
+    /// auf einer bereits befüllten DB nach (prüft gezielt auf das Fach bzw. je Vokabel-Key).
+    /// </summary>
+    private static void SeedFrench(PuglingDbContext db)
+    {
+        var options = new JsonSerializerOptions(JsonSerializerDefaults.Web);
+        string Json<T>(T config) => JsonSerializer.Serialize(config, options);
+
+        // (fr -> de) Grundwortschatz „En ville / Le quotidien" – 8./9. Klasse, Découvertes 1, Unité 2.
+        (string Word, string De, PartOfSpeech Pos, string? Article)[] woerter =
+        [
+            ("la ville", "die Stadt", PartOfSpeech.Noun, "la"),
+            ("la rue", "die Straße", PartOfSpeech.Noun, "la"),
+            ("la maison", "das Haus", PartOfSpeech.Noun, "la"),
+            ("l'école", "die Schule", PartOfSpeech.Noun, "l'"),
+            ("le magasin", "das Geschäft", PartOfSpeech.Noun, "le"),
+            ("l'ami", "der Freund", PartOfSpeech.Noun, "l'"),
+            ("acheter", "kaufen", PartOfSpeech.Verb, null),
+            ("manger", "essen", PartOfSpeech.Verb, null),
+            ("parler", "sprechen", PartOfSpeech.Verb, null),
+            ("toujours", "immer", PartOfSpeech.Adverb, null),
+            ("souvent", "oft", PartOfSpeech.Adverb, null),
+            ("beaucoup", "viel", PartOfSpeech.Adverb, null),
+        ];
+
+        string Slug(string s) =>
+            s.ToLowerInvariant().Replace("ß", "ss").Normalize(System.Text.NormalizationForm.FormD)
+                .Where(ch => System.Globalization.CharUnicodeInfo.GetUnicodeCategory(ch)
+                    != System.Globalization.UnicodeCategory.NonSpacingMark)
+                .Aggregate(new System.Text.StringBuilder(), (sb, ch) => sb.Append(ch)).ToString()
+                .Replace("'", " ").Trim();
+        string Key(string word, string de) =>
+            $"fr_{Slug(word).Replace(' ', '_')}_de_{Slug(de).Replace(' ', '_')}"
+                .Replace("__", "_");
+
+        foreach (var w in woerter)
+        {
+            var key = Key(w.Word, w.De);
+            if (db.Vocabulary.Any(v => v.Key == key)) continue;
+            db.Vocabulary.Add(new Vocabulary
+            {
+                Key = key,
+                SourceLanguage = "fr",
+                TargetLanguage = "de",
+                Word = w.Word,
+                Translation = w.De,
+                PartOfSpeech = w.Pos,
+                Noun = w.Article is null ? null : new NounInfo { Article = w.Article },
+                Verb = w.Pos == PartOfSpeech.Verb ? new VerbInfo { IsBaseForm = true, Infinitive = w.Word } : null,
+            });
+        }
+        db.SaveChanges();
+
+        // Katalog: nur anlegen, wenn das Fach noch fehlt (sonst nur Store-Vokabeln ergänzen, s. o.).
+        if (db.Subjects.Any(s => s.Name == "Französisch")) return;
+
+        var frVokabeln = new ExerciseCategory { Name = "Vokabeln" };
+        var frGrammatik = new ExerciseCategory { Name = "Grammatik" };
+
+        var franzoesisch = new Subject
+        {
+            Name = "Französisch",
+            Categories = { frVokabeln, frGrammatik },
+            Chapters =
+            {
+                new Chapter
+                {
+                    Name = "Unité 2 – En ville",
+                    OrderIndex = 1,
+                    Exercises =
+                    {
+                        new Exercise
+                        {
+                            Type = ExerciseType.Vocabulary,
+                            Title = "Vokabeln: En ville",
+                            OrderIndex = 1,
+                            RewardPoints = 10,
+                            GradeMin = 7, GradeMax = 9,
+                            SchoolTypes = SchoolTypes.Realschule | SchoolTypes.Gymnasium,
+                            Source = "Découvertes 1, Unité 2",
+                            Category = frVokabeln,
+                            ConfigJson = Json(new VocabularyConfig
+                            {
+                                Direction = "front-to-back",
+                                Items =
+                                {
+                                    new VocabItem("la ville", "die Stadt"),
+                                    new VocabItem("la rue", "die Straße"),
+                                    new VocabItem("le magasin", "das Geschäft"),
+                                    new VocabItem("acheter", "kaufen"),
+                                    new VocabItem("manger", "essen"),
+                                }
+                            }),
+                        },
+                        new Exercise
+                        {
+                            Type = ExerciseType.Cloze,
+                            Title = "Lückentext: Au magasin",
+                            OrderIndex = 2,
+                            RewardPoints = 15,
+                            GradeMin = 7, GradeMax = 9,
+                            SchoolTypes = SchoolTypes.Realschule | SchoolTypes.Gymnasium,
+                            Source = "Découvertes 1, Unité 2",
+                            Category = frGrammatik,
+                            ConfigJson = Json(new ClozeConfig
+                            {
+                                Text = "Je {{1}} du pain à la {{2}}.",
+                                Gaps =
+                                {
+                                    new Gap(1, "mange", new List<string> { "achète" }),
+                                    new Gap(2, "boulangerie", new List<string> { "maison" }),
+                                },
+                                WordBank = new List<string> { "mange", "achète", "boulangerie", "maison" },
+                            }),
+                        },
+                    }
+                },
+            }
+        };
+
+        db.Subjects.Add(franzoesisch);
+        db.SaveChanges();
     }
 
     /// <summary>

@@ -21,8 +21,10 @@ zudem noch das Frontend hing. Richtungsentscheidung **API-First** getroffen und 
   ungewollt anonym; korrigiert (Login-Actions anonym, `me` erfordert Token).
 - Verifiziert: Build sauber + Live-Smoke-Test (Auth, Ownership-404, Plan→Test→Submit inkl. Punkte).
 
-Weiterhin offen (vor Prod): **PIN-Hashing (H3)**, **EF-Migrationen (L4)**, **Frontend-Neubau**,
-automatisierte Tests. Siehe Migrationsplan in [architektur-entscheidung.md](architektur-entscheidung.md).
+Weiterhin offen (vor Prod): **PIN-Hashing (H3)** samt Rate-Limit/Lockout. Erledigt seit diesem Review:
+**EF-Migrationen (L4)**, **automatisierte Integrationstests** (`backend/Pugling.Api.Tests`) und der
+**Frontend-Neubau** (`frontend/`, gegen `api/v1`, funktionsfähig – Sohn-App/Vater-Web inkl.
+Lehrplan-Assistent, Playwright-E2E). Siehe Migrationsplan in [architektur-entscheidung.md](architektur-entscheidung.md).
 
 ## A) Behoben & live verifiziert
 

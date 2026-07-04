@@ -26,6 +26,10 @@ public class Child
     public Father? Father { get; set; }
     public string Name { get; set; } = "";
     public int? BirthYear { get; set; }
+    /// <summary>Aktuelle Klassenstufe (1–13). Steuert die Vorfilterung passender Übungen im Lehrplan-Assistenten.</summary>
+    public int? Grade { get; set; }
+    /// <summary>Schulart des Kindes – filtert im Assistenten Übungen, die nicht für alle Schularten gedacht sind.</summary>
+    public SchoolTypes SchoolType { get; set; } = SchoolTypes.None;
     /// <summary>Einfacher PIN-Login des Kindes. Später durch echtes Auth ersetzen.</summary>
     public string Pin { get; set; } = "";
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

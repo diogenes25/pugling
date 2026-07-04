@@ -239,3 +239,71 @@ a { color: var(--cyan); }
   * { animation: none !important; transition: none !important; }
   .cel-layer { display: none; }
 }
+
+/* =========================================================================
+   Landing / Produktseite – erklärt Pugling und führt in Vater- bzw. Sohn-Rolle.
+   Dark-committed wie die Sohn-App, aber mit weiten, ruhigen Sektionen.
+   ========================================================================= */
+.lp { min-height: 100dvh; background:
+    radial-gradient(900px 500px at 80% -10%, #2a2668 0%, transparent 55%),
+    radial-gradient(700px 420px at 0% 0%, #143a6b 0%, transparent 50%),
+    linear-gradient(180deg, var(--bg-2), var(--bg)); }
+.lp-wrap { max-width: 1080px; margin: 0 auto; padding: 0 22px; }
+.lp-top { display: flex; align-items: center; gap: 12px; padding: 18px 0; }
+.lp-top .brand { font-family: var(--font-display); font-size: 20px; }
+.lp-top .spacer { margin-left: auto; }
+
+.lp-hero { display: grid; grid-template-columns: 1.2fr 1fr; gap: 30px; align-items: center; padding: 40px 0 54px; }
+.lp-hero h1 { font-family: var(--font-display); font-size: 52px; line-height: 1.02; margin: 14px 0; text-wrap: balance; }
+.lp-hero .lead { font-size: 18px; color: var(--muted); line-height: 1.5; max-width: 30em; }
+.lp-cta { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 22px; }
+.lp-cta .btn { width: auto; }
+.lp-orb { aspect-ratio: 1; border-radius: 32px; border: 1.5px solid var(--stroke); position: relative;
+  background: radial-gradient(120% 120% at 30% 20%, #2f367e, #161a46 70%); display: grid; place-items: center;
+  box-shadow: 0 30px 60px -30px var(--shadow); overflow: hidden; }
+.lp-orb .face { font-size: 118px; filter: drop-shadow(0 12px 22px rgba(0,0,0,.5)); }
+.lp-orb .spark { position: absolute; font-size: 30px; opacity: .9; }
+
+.lp-section { padding: 40px 0; }
+.lp-section h2 { font-family: var(--font-display); font-size: 30px; margin: 0 0 6px; text-wrap: balance; }
+.lp-section .kicker { color: var(--cyan); font: 800 12px/1 var(--font-body); letter-spacing: .14em; text-transform: uppercase; }
+.lp-section .intro { color: var(--muted); font-size: 15.5px; max-width: 46em; line-height: 1.5; margin: 4px 0 22px; }
+
+.lp-grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.lp-grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.lp-role { padding: 22px; border-radius: 20px; }
+.lp-role h3 { font-family: var(--font-display); font-size: 22px; margin: 8px 0; }
+.lp-role .emoji { font-size: 40px; }
+.lp-role ul { margin: 10px 0 0; padding-left: 18px; color: var(--muted); line-height: 1.7; font-size: 14.5px; }
+.lp-role.vater { border-color: var(--cyan); box-shadow: 0 0 0 1px rgba(38,217,255,.2); }
+.lp-role.sohn { border-color: var(--gold); box-shadow: 0 0 0 1px rgba(255,199,56,.2); }
+
+.lp-feature { padding: 18px; }
+.lp-feature .emoji { font-size: 26px; }
+.lp-feature h4 { margin: 8px 0 4px; font-size: 16px; }
+.lp-feature p { margin: 0; color: var(--muted); font-size: 13.5px; line-height: 1.5; }
+
+.lp-steps { display: flex; flex-direction: column; gap: 12px; counter-reset: step; }
+.lp-step { display: flex; gap: 14px; align-items: flex-start; padding: 14px 16px; }
+.lp-step .no { flex: 0 0 auto; width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center;
+  font-family: var(--font-display); font-size: 16px; color: #04122a; background: linear-gradient(180deg, var(--cyan), var(--cyan-2)); }
+.lp-step.gold .no { color: #3a2400; background: linear-gradient(180deg, var(--gold), var(--gold-2)); }
+.lp-step .t { font-weight: 800; font-size: 15px; margin-bottom: 3px; }
+.lp-step .d { color: var(--muted); font-size: 13.5px; line-height: 1.5; }
+
+.lp-loop { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+.lp-loop .node { text-align: center; padding: 16px 12px; border-radius: 16px; }
+.lp-loop .node .ic { font-size: 30px; }
+.lp-loop .node .t { font-family: var(--font-display); font-size: 14px; margin-top: 6px; }
+.lp-loop .node .d { color: var(--muted); font-size: 12px; margin-top: 3px; line-height: 1.4; }
+
+.lp-foot { text-align: center; padding: 54px 0 70px; }
+.lp-foot h2 { font-family: var(--font-display); font-size: 30px; margin-bottom: 16px; }
+.lp-foot .muted { font-size: 13px; margin-top: 26px; }
+
+@media (max-width: 760px) {
+  .lp-hero { grid-template-columns: 1fr; padding: 24px 0 34px; }
+  .lp-hero h1 { font-size: 40px; }
+  .lp-orb { max-width: 300px; margin: 0 auto; width: 100%; }
+  .lp-grid2, .lp-grid3, .lp-loop { grid-template-columns: 1fr; }
+}

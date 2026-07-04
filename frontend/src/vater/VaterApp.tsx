@@ -5,6 +5,7 @@ import { VaterDashboard } from "./VaterDashboard";
 import { VaterVocab } from "./VaterVocab";
 import { VaterPlanCreate } from "./VaterPlanCreate";
 import { VaterPlanDetail } from "./VaterPlanDetail";
+import { VaterWizard } from "./VaterWizard";
 
 export function VaterApp() {
   const { session, signOut } = useAuth();
@@ -16,6 +17,7 @@ export function VaterApp() {
         <span className="brand">🛠️ Pugling · Vater</span>
         <nav>
           <NavLink to="/vater" end>Übersicht</NavLink>
+          <NavLink to="/vater/wizard">🧭 Assistent</NavLink>
           <NavLink to="/vater/vocab">Vokabeln</NavLink>
           <NavLink to="/vater/plan/new">Neuer Plan</NavLink>
         </nav>
@@ -27,6 +29,7 @@ export function VaterApp() {
       <main className="vater-main">
         <Routes>
           <Route index element={<VaterDashboard />} />
+          <Route path="wizard" element={<VaterWizard />} />
           <Route path="vocab" element={<VaterVocab />} />
           <Route path="plan/new" element={<VaterPlanCreate />} />
           <Route path="plan/:planId" element={<VaterPlanDetail />} />

@@ -8,6 +8,13 @@ export type TestStage = "ShowBoth" | "SelfAssess" | "LetterBoxes" | "FreeText" |
 export type LessonDayMode = "New" | "Review";
 export type PartOfSpeech = "Noun" | "Verb" | "Adjective" | "Adverb" | "Other";
 
+/**
+ * Schularten – serverseitig ein [Flags]-Enum. Einzelwerte für Auswahl/Filter; der Server kann
+ * bei einem Kind auch eine Kombination als kommaseparierten String liefern ("Realschule, Gymnasium").
+ */
+export type SchoolType =
+  | "None" | "Grundschule" | "Hauptschule" | "Realschule" | "Gymnasium" | "Gesamtschule" | "Berufsschule";
+
 export interface LoginResponse {
   token: string;
   role: Role;
@@ -23,8 +30,59 @@ export interface ChildResponse {
   fatherId: number;
   name: string;
   birthYear: number | null;
+  grade: number | null;
+  schoolType: string;
   createdAt: string;
   pointsBalance: number;
+}
+
+export interface CreateChildDto {
+  name: string;
+  pin?: string;
+  birthYear?: number | null;
+  grade?: number | null;
+  schoolType?: SchoolType;
+}
+
+// ---- Katalog: Fächer, Kapitel, Übungssuche ----
+
+export interface SubjectResponse {
+  id: number;
+  name: string;
+  createdAt: string;
+  chaptersCount: number;
+}
+
+export interface ChapterResponse {
+  id: number;
+  subjectId: number;
+  name: string;
+  orderIndex: number;
+  exercisesCount: number;
+}
+
+/** Schlanke Trefferzeile der Übungssuche (Metadaten-Filter über den Katalog). */
+export interface ExerciseSummary {
+  id: number;
+  chapterId: number;
+  subjectId: number;
+  type: string;
+  title: string;
+  gradeMin: number | null;
+  gradeMax: number | null;
+  schoolTypes: string;
+  source: string | null;
+  categoryId: number | null;
+  categoryName: string | null;
+}
+
+export interface ExerciseSearchParams {
+  subjectId?: number;
+  grade?: number;
+  schoolType?: SchoolType;
+  categoryId?: number;
+  type?: string;
+  search?: string;
 }
 
 export interface VocabularyResponse {
