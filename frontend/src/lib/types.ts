@@ -332,6 +332,61 @@ export interface CreateAchievementDto {
   rewardPoints: number;
 }
 
+// ---- Prämien (einlösbare reale Belohnungen wie Fernseh-/Spielzeit) ----
+
+export type RewardRedemptionStatus = "Requested" | "Approved" | "Rejected";
+
+/** Prämien-Definition zur Verwaltung durch den Vater. */
+export interface RewardDef {
+  id: number;
+  title: string;
+  cost: number;
+  active: boolean;
+}
+export interface CreateRewardDto {
+  title: string;
+  cost: number;
+}
+
+/** Einlöse-Anfrage aus Vater-Sicht (mit Kind-Bezug). */
+export interface RedemptionDef {
+  id: number;
+  childId: number;
+  rewardId: number | null;
+  title: string;
+  cost: number;
+  status: RewardRedemptionStatus;
+  requestedAt: string;
+  decidedAt: string | null;
+}
+
+/** Verfügbare Prämie aus Sohn-Sicht. */
+export interface RewardOffer {
+  id: number;
+  title: string;
+  cost: number;
+  affordable: boolean;
+  alreadyRequested: boolean;
+}
+
+/** Eigene Einlöse-Anfrage aus Sohn-Sicht. */
+export interface MyRedemption {
+  id: number;
+  rewardId: number | null;
+  title: string;
+  cost: number;
+  status: RewardRedemptionStatus;
+  requestedAt: string;
+  decidedAt: string | null;
+}
+
+/** Prämien-Sicht des Sohns: Münzstand, verfügbare Prämien, eigene Anfragen. */
+export interface RewardsView {
+  balance: number;
+  available: RewardOffer[];
+  redemptions: MyRedemption[];
+}
+
 // ---- Vater: Klassenarbeiten ----
 
 export type KlassenarbeitStatus = "Planned" | "Written" | "Cancelled";
@@ -467,7 +522,7 @@ export interface TestSubmitResponse {
 
 export type PointKind =
   | "Base" | "Manual" | "Minutes" | "Test" | "DayComplete"
-  | "Combo" | "Speed" | "Duration" | "Mission" | "Achievement" | "SkinPurchase";
+  | "Combo" | "Speed" | "Duration" | "Mission" | "Achievement" | "SkinPurchase" | "Reward";
 
 export interface WalletEntry {
   id: number;

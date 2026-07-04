@@ -99,3 +99,54 @@ public class AchievementAward
     public int Points { get; set; }
     public DateTime EarnedAt { get; set; } = DateTime.UtcNow;
 }
+
+/// <summary>
+/// Eine vom Vater definierte, einlösbare Prämie (reale Belohnung, z. B. „30 Min Fernsehen") mit
+/// Münz-Preis. Anders als Missionen/Auszeichnungen wird hier <b>ausgegeben</b> statt verdient:
+/// der Sohn fragt eine Einlösung an, der Vater genehmigt sie (siehe <see cref="RewardRedemption"/>).
+/// </summary>
+public class Reward
+{
+    public int Id { get; set; }
+    public int ChildId { get; set; }
+    public Child? Child { get; set; }
+    public string Title { get; set; } = "";
+    /// <summary>Kosten in Münzen, die bei Genehmigung vom Kind-Konto abgebucht werden.</summary>
+    public int Cost { get; set; }
+    public bool Active { get; set; } = true;
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+}
+
+/// <summary>Status einer Einlöse-Anfrage: der Vater entscheidet, erst dann fließen Münzen.</summary>
+public enum RewardRedemptionStatus
+{
+    /// <summary>Vom Sohn angefragt, wartet auf Vater-Entscheidung (noch keine Abbuchung).</summary>
+    Requested = 0,
+    /// <summary>Vom Vater genehmigt – Münzen wurden abgebucht.</summary>
+    Approved = 1,
+    /// <summary>Vom Vater abgelehnt – keine Abbuchung.</summary>
+    Rejected = 2,
+}
+
+/// <summary>
+/// Einlöse-Anfrage des Sohns für eine <see cref="Reward"/>. Titel/Kosten werden als Momentaufnahme
+/// festgehalten, damit die Historie stabil bleibt, auch wenn die Prämie später geändert/gelöscht wird.
+/// Die Münz-Abbuchung (negative <see cref="Child.PointsEntries"/>-Buchung, <c>PointKind.Reward</c>)
+/// erfolgt erst bei Genehmigung durch den Vater.
+/// </summary>
+public class RewardRedemption
+{
+    public int Id { get; set; }
+    public int ChildId { get; set; }
+    public Child? Child { get; set; }
+    /// <summary>Referenz auf die Prämie; wird auf null gesetzt, falls die Prämie später gelöscht wird.</summary>
+    public int? RewardId { get; set; }
+    public Reward? Reward { get; set; }
+    /// <summary>Titel der Prämie zum Anfragezeitpunkt (Momentaufnahme).</summary>
+    public string Title { get; set; } = "";
+    /// <summary>Kosten zum Anfragezeitpunkt (Momentaufnahme); maßgeblich für die Abbuchung.</summary>
+    public int Cost { get; set; }
+    public RewardRedemptionStatus Status { get; set; } = RewardRedemptionStatus.Requested;
+    public DateTime RequestedAt { get; set; } = DateTime.UtcNow;
+    public DateTime? DecidedAt { get; set; }
+}

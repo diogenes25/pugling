@@ -4,6 +4,7 @@ import { VaterLogin } from "./VaterLogin";
 import { VaterDashboard } from "./VaterDashboard";
 import { VaterVocab } from "./VaterVocab";
 import { VaterRewards } from "./VaterRewards";
+import { VaterKonto } from "./VaterKonto";
 import { VaterClassTests } from "./VaterClassTests";
 import { VaterPlanCreate } from "./VaterPlanCreate";
 import { VaterPlanDetail } from "./VaterPlanDetail";
@@ -22,6 +23,7 @@ export function VaterApp() {
           <NavLink to="/vater/wizard">🧭 Assistent</NavLink>
           <NavLink to="/vater/vocab">Vokabeln</NavLink>
           <NavLink to="/vater/rewards">🏆 Belohnungen</NavLink>
+          <NavLink to="/vater/konto">💰 Konto</NavLink>
           <NavLink to="/vater/class-tests">📝 Klassenarbeiten</NavLink>
           <NavLink to="/vater/plan/new">Neuer Plan</NavLink>
         </nav>
@@ -36,6 +38,7 @@ export function VaterApp() {
           <Route path="wizard" element={<VaterWizard />} />
           <Route path="vocab" element={<VaterVocab />} />
           <Route path="rewards" element={<VaterRewards />} />
+          <Route path="konto" element={<VaterKonto />} />
           <Route path="class-tests" element={<VaterClassTests />} />
           <Route path="plan/new" element={<VaterPlanCreate />} />
           <Route path="plan/:planId" element={<VaterPlanDetail />} />

@@ -1,9 +1,10 @@
 import type {
   AchievementDef, AchievementStatus, AnswerDto, ChapterResponse, ChildResponse, CreateAchievementDto,
-  CreateChildDto, CreateKlassenarbeitDto, CreateMissionDto, CreatePlanDto, CreateVocabularyDto,
+  CreateChildDto, CreateKlassenarbeitDto, CreateMissionDto, CreatePlanDto, CreateRewardDto, CreateVocabularyDto,
   ExerciseSearchParams, ExerciseSummary, KlassenarbeitDetail, KlassenarbeitPractice, KlassenarbeitRepeat,
   KlassenarbeitResponse, KlassenarbeitStatus, LoginResponse, MissionDef, MissionStatus, PlanResponse,
-  ProgressResponse, ReviewInput, ReviewOutcome, SessionResponse, SkinState, SubjectResponse,
+  ProgressResponse, RedemptionDef, ReviewInput, ReviewOutcome, RewardDef, RewardRedemptionStatus, RewardsView,
+  SessionResponse, SkinState, SubjectResponse,
   TestAttemptResponse, TestSubmitResponse, TodayResponse, UpdateKlassenarbeitDto, UpdatePlanDto,
   VocabularyResponse, Wallet,
 } from "./types";
@@ -174,6 +175,32 @@ export const api = {
     http<AchievementDef>(`${V1}/children/${childId}/achievements/${achievementId}`, "PATCH", dto),
   deleteAchievement: (childId: number, achievementId: number) =>
     http<void>(`${V1}/children/${childId}/achievements/${achievementId}`, "DELETE"),
+
+  // ---- Vater: Konto-Übersicht (Punktestand + Buchungsverlauf je Kind) ----
+  childAccount: (childId: number) => http<Wallet>(`${V1}/children/${childId}/points`),
+
+  // ---- Vater: Prämien (einlösbare reale Belohnungen) verwalten ----
+  rewardsFor: (childId: number) => http<RewardDef[]>(`${V1}/children/${childId}/rewards`),
+  createReward: (childId: number, dto: CreateRewardDto) =>
+    http<RewardDef>(`${V1}/children/${childId}/rewards`, "POST", dto),
+  updateReward: (childId: number, rewardId: number, dto: Partial<RewardDef>) =>
+    http<RewardDef>(`${V1}/children/${childId}/rewards/${rewardId}`, "PATCH", dto),
+  deleteReward: (childId: number, rewardId: number) =>
+    http<void>(`${V1}/children/${childId}/rewards/${rewardId}`, "DELETE"),
+
+  // ---- Vater: Einlöse-Anfragen ansehen und entscheiden ----
+  redemptionsFor: (childId: number, status?: RewardRedemptionStatus) => {
+    const q = status ? `?status=${status}` : "";
+    return http<RedemptionDef[]>(`${V1}/children/${childId}/rewards/redemptions${q}`);
+  },
+  approveRedemption: (childId: number, redemptionId: number) =>
+    http<RedemptionDef>(`${V1}/children/${childId}/rewards/redemptions/${redemptionId}/approve`, "POST", {}),
+  rejectRedemption: (childId: number, redemptionId: number) =>
+    http<RedemptionDef>(`${V1}/children/${childId}/rewards/redemptions/${redemptionId}/reject`, "POST", {}),
+
+  // ---- Sohn: Prämien ansehen und einlösen (Anfrage – Vater genehmigt) ----
+  myRewards: () => http<RewardsView>(`${V1}/me/rewards`),
+  redeemReward: (rewardId: number) => http<RewardsView>(`${V1}/me/rewards/${rewardId}/redeem`, "POST", {}),
 
   // ---- Vater: Klassenarbeiten (planen, Übungen zuweisen, benoten, üben/wiederholen) ----
   classTests: (childId: number, status?: KlassenarbeitStatus) => {

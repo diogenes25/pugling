@@ -2,8 +2,8 @@ import { useState } from "react";
 import { api, errorMessage } from "../lib/api";
 import { useAsync } from "../lib/useAsync";
 import type {
-  AchievementDef, ChildResponse, CreateAchievementDto, CreateMissionDto,
-  MissionDef, MissionPeriod, ProgressMetric,
+  AchievementDef, ChildResponse, CreateAchievementDto, CreateMissionDto, CreateRewardDto,
+  MissionDef, MissionPeriod, ProgressMetric, RewardDef,
 } from "../lib/types";
 
 /** Metriken mit deutschen Labels – dieselben, die der Server (ProgressMetric) auswertet. */
@@ -53,7 +53,85 @@ export function VaterRewards() {
 
       {activeChild !== null && <MissionManager key={`m${activeChild}`} childId={activeChild} />}
       {activeChild !== null && <AchievementManager key={`a${activeChild}`} childId={activeChild} />}
+      {activeChild !== null && <RewardOfferManager key={`r${activeChild}`} childId={activeChild} />}
     </>
+  );
+}
+
+function RewardOfferManager({ childId }: { childId: number }) {
+  const list = useAsync<RewardDef[]>(() => api.rewardsFor(childId), [childId]);
+  const [form, setForm] = useState<CreateRewardDto>({ title: "", cost: 200 });
+  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!form.title.trim()) { setMsg({ ok: false, text: "Titel nötig." }); return; }
+    if (form.cost <= 0) { setMsg({ ok: false, text: "Preis muss positiv sein." }); return; }
+    setBusy(true);
+    try {
+      await api.createReward(childId, { title: form.title.trim(), cost: form.cost });
+      setMsg({ ok: true, text: `Prämie „${form.title.trim()}" angelegt.` });
+      setForm((f) => ({ ...f, title: "" }));
+      list.reload();
+    } catch (err) {
+      setMsg({ ok: false, text: errorMessage(err) });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function toggle(r: RewardDef) {
+    setBusy(true);
+    try { await api.updateReward(childId, r.id, { active: !r.active }); list.reload(); }
+    catch (err) { setMsg({ ok: false, text: errorMessage(err) }); }
+    finally { setBusy(false); }
+  }
+  async function remove(r: RewardDef) {
+    setBusy(true);
+    try { await api.deleteReward(childId, r.id); list.reload(); }
+    catch (err) { setMsg({ ok: false, text: errorMessage(err) }); }
+    finally { setBusy(false); }
+  }
+
+  return (
+    <section>
+      <h2 className="h-section">Prämien zum Einlösen {list.data ? `(${list.data.length})` : ""}</h2>
+      <p className="muted">Reale Belohnungen, die dein Kind mit verdienten Münzen „erkaufen" kann
+        (z.B. 30 Min Fernsehen). Das Kind fragt an, du genehmigst im <b>Konto</b> – erst dann werden Münzen abgebucht.</p>
+      <form className="form-grid" onSubmit={submit} style={{ alignItems: "end" }}>
+        <div className="field" style={{ minWidth: 220 }}><label>Titel</label>
+          <input value={form.title} onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))} placeholder="30 Min Fernsehen" /></div>
+        <div className="field" style={{ maxWidth: 140 }}><label>Preis 🪙</label>
+          <input title="Preis in Münzen" type="number" min={1} value={form.cost}
+            onChange={(e) => setForm((f) => ({ ...f, cost: Number(e.target.value) }))} /></div>
+        <button type="submit" className="btn inline-btn" style={{ width: "auto" }} disabled={busy}>{busy ? "…" : "Anlegen"}</button>
+      </form>
+      {msg && <div className={`banner ${msg.ok ? "ok" : "err"}`} style={{ marginTop: 10 }}>{msg.text}</div>}
+
+      {list.loading ? <div className="loading">Lade…</div> : list.error ? <div className="banner err">{list.error}</div> : (
+        <div style={{ overflowX: "auto", marginTop: 10 }}>
+          <table className="table">
+            <thead><tr><th>Prämie</th><th>Preis</th><th>Status</th><th>Aktion</th></tr></thead>
+            <tbody>
+              {list.data?.map((r) => (
+                <tr key={r.id} style={{ opacity: r.active ? 1 : 0.55 }}>
+                  <td>{r.title}</td>
+                  <td>🪙 {r.cost}</td>
+                  <td>{r.active ? <span className="pill lime">aktiv</span> : <span className="pill">inaktiv</span>}</td>
+                  <td style={{ whiteSpace: "nowrap" }}>
+                    <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} disabled={busy} onClick={() => toggle(r)}>
+                      {r.active ? "Deaktivieren" : "Aktivieren"}</button>{" "}
+                    <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} disabled={busy} onClick={() => remove(r)}>Löschen</button>
+                  </td>
+                </tr>
+              ))}
+              {list.data?.length === 0 && <tr><td colSpan={4} className="muted">Noch keine Prämien.</td></tr>}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </section>
   );
 }
 
