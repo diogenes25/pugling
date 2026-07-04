@@ -25,9 +25,10 @@ Modell (Father/Child, StudyPlan, Learn-Katalog) ist verbindlich.
 
 Konsequenzen:
 
-- Der **Legacy-Stack wurde entfernt** (siehe unten). Das mitgelieferte React-Frontend hängt
-  an den entfernten Endpunkten und ist damit **vorübergehend funktionslos** – bewusst akzeptiert,
-  weil das UI-Konzept noch erarbeitet wird und später **neu gegen die neue API** gebaut wird.
+- Der **Legacy-Stack wurde entfernt** (siehe unten). Das mitgelieferte Legacy-Frontend wurde
+  verworfen und das Frontend unter `frontend/` **neu gegen die `api/v1` gebaut** – seit 2026-07-04
+  **funktionsfähig** (Vite+React+TS+PWA: Produktseite `/`, Sohn-App `/sohn`, Vater-Web `/vater` inkl.
+  Lehrplan-Assistent). Feature-Arbeit beginnt weiterhin im Backend (API-First); das UI hängt an der API.
 - Einziges bewusst erhaltenes Legacy-Element: **`TimeSlotRule`** (Zeitfenster-Multiplikator),
   weil der neue `PracticeSessionsController` es über `PointsService` für Leitner-Punkte nutzt.
 
@@ -64,7 +65,9 @@ Verifiziert: Build 0 Warnungen/0 Fehler; Live-Smoke-Test (401 ohne Token, 404 de
 2. ~~**EF-Migrationen** statt `EnsureCreated()`~~ – **erledigt (2026-07-04)**: `Program` ruft `Migrate()`,
    Initial-Migration `InitialCreate` liegt unter `backend/Pugling.Api/Data/Migrations`, `dotnet-ef` ist als
    lokales Tool im Manifest. Schemaänderungen ab jetzt per `dotnet ef migrations add …`.
-3. **Frontend neu gegen die neue API** – wenn das UI-Konzept steht. Bis dahin ist das alte PWA-UI außer Betrieb.
+3. ~~**Frontend neu gegen die neue API**~~ – **erledigt (2026-07-04)**: `frontend/` neu aufgebaut
+   (Vite+React+TS+PWA), Sohn-Arcade-PWA `/sohn` + Vater-Web `/vater` (mit Lehrplan-Assistent `/vater/wizard`)
+   + Produktseite `/`; Playwright-E2E deckt den Vater→Sohn-Loop ab. Weitere Ausbaustufen laufend.
 4. **Zeitfenster-Verwaltung** – Editieren der `TimeSlotRule`-Multiplikatoren hatte nur der gelöschte
    `SettingsController`. Bei Bedarf einen schlanken, abgesicherten `TimeSlotsController` ergänzen
    (aktuell nur über Seed-Defaults).

@@ -14,6 +14,7 @@ export function VaterDashboard() {
   const plans = useAsync<PlanResponse[]>(() => api.plans(), []);
 
   const [name, setName] = useState("");
+  const [grade, setGrade] = useState("");
   const [pin, setPin] = useState("");
   const [msg, setMsg] = useState<string | null>(null);
 
@@ -21,8 +22,8 @@ export function VaterDashboard() {
     e.preventDefault();
     if (!name.trim()) return;
     try {
-      await api.createChild(name.trim(), pin);
-      setName(""); setPin("");
+      await api.createChild({ name: name.trim(), pin, grade: grade ? Number(grade) : null });
+      setName(""); setGrade(""); setPin("");
       setMsg("Kind angelegt.");
       children.reload();
     } catch (err) {
@@ -38,24 +39,30 @@ export function VaterDashboard() {
         <h2 className="h-section">Kinder</h2>
         {children.loading ? <div className="loading">Lade…</div> : children.error ? <div className="banner err">{children.error}</div> : (
           <table className="table">
-            <thead><tr><th>Id</th><th>Name</th><th>Geb.-Jahr</th><th className="num">Punkte</th></tr></thead>
+            <thead><tr><th>Id</th><th>Name</th><th>Klasse</th><th>Schulart</th><th className="num">Punkte</th></tr></thead>
             <tbody>
               {children.data?.map((c) => (
                 <tr key={c.id}>
-                  <td className="num">{c.id}</td><td>{c.name}</td><td>{c.birthYear ?? "–"}</td>
+                  <td className="num">{c.id}</td><td>{c.name}</td>
+                  <td>{c.grade ? `${c.grade}.` : "–"}</td>
+                  <td className="muted">{c.schoolType && c.schoolType !== "None" ? c.schoolType : "–"}</td>
                   <td className="num">{c.pointsBalance}</td>
                 </tr>
               ))}
-              {children.data?.length === 0 && <tr><td colSpan={4} className="muted">Noch keine Kinder.</td></tr>}
+              {children.data?.length === 0 && <tr><td colSpan={5} className="muted">Noch keine Kinder.</td></tr>}
             </tbody>
           </table>
         )}
 
         <form className="form-grid" style={{ marginTop: 12, alignItems: "end" }} onSubmit={addChild}>
           <div className="field"><label>Name</label><input value={name} onChange={(e) => setName(e.target.value)} placeholder="Vorname" /></div>
+          <div className="field"><label>Klasse</label><input type="number" min={1} max={13} value={grade} onChange={(e) => setGrade(e.target.value)} placeholder="z.B. 8" /></div>
           <div className="field"><label>PIN</label><input value={pin} onChange={(e) => setPin(e.target.value)} placeholder="z.B. 1111" /></div>
           <button type="submit" className="btn inline-btn" style={{ width: "auto" }}>Kind anlegen</button>
         </form>
+        <p className="sub" style={{ marginTop: 8 }}>
+          Tipp: Der <strong>Lehrplan-Assistent</strong> führt Schritt für Schritt durch Kind, Problemfeld und passende Übungen.
+        </p>
         {msg && <div className="banner ok" style={{ marginTop: 10 }}>{msg}</div>}
       </section>
 

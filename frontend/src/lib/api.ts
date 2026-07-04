@@ -1,6 +1,7 @@
 import type {
-  AchievementStatus, AnswerDto, ChildResponse, CreatePlanDto, CreateVocabularyDto, LoginResponse,
-  MissionStatus, PlanResponse, ProgressResponse, ReviewInput, ReviewOutcome, SessionResponse,
+  AchievementStatus, AnswerDto, ChapterResponse, ChildResponse, CreateChildDto, CreatePlanDto,
+  CreateVocabularyDto, ExerciseSearchParams, ExerciseSummary, LoginResponse, MissionStatus,
+  PlanResponse, ProgressResponse, ReviewInput, ReviewOutcome, SessionResponse, SubjectResponse,
   TestAttemptResponse, TestSubmitResponse, TodayResponse, VocabularyResponse, Wallet,
 } from "./types";
 
@@ -79,8 +80,25 @@ export const api = {
 
   // ---- Vater: Kinder (der Vater ergibt sich serverseitig aus dem JWT) ----
   children: () => http<ChildResponse[]>(`${V1}/children`),
-  createChild: (name: string, pin: string, birthYear?: number) =>
-    http<ChildResponse>(`${V1}/children`, "POST", { name, pin, birthYear }),
+  createChild: (dto: CreateChildDto) => http<ChildResponse>(`${V1}/children`, "POST", dto),
+  updateChild: (childId: number, dto: Partial<CreateChildDto>) =>
+    http<ChildResponse>(`${V1}/children/${childId}`, "PATCH", dto),
+
+  // ---- Vater: Katalog (Fächer, Kapitel, Übungssuche über Metadaten) ----
+  subjects: () => http<SubjectResponse[]>(`${V1}/learn/subjects`),
+  chapters: (subjectId: number) =>
+    http<ChapterResponse[]>(`${V1}/learn/subjects/${subjectId}/chapters`),
+  searchExercises: (p: ExerciseSearchParams = {}) => {
+    const q = new URLSearchParams();
+    if (p.subjectId != null) q.set("subjectId", String(p.subjectId));
+    if (p.grade != null) q.set("grade", String(p.grade));
+    if (p.schoolType && p.schoolType !== "None") q.set("schoolType", p.schoolType);
+    if (p.categoryId != null) q.set("categoryId", String(p.categoryId));
+    if (p.type) q.set("type", p.type);
+    if (p.search) q.set("search", p.search);
+    const qs = q.toString();
+    return http<ExerciseSummary[]>(`${V1}/learn/exercises${qs ? `?${qs}` : ""}`);
+  },
 
   // ---- Vater: Vokabel-Store ----
   vocabulary: (search?: string) =>

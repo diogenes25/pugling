@@ -6,9 +6,12 @@ Lern-App mit Punktesystem (Leitner-Prinzip). **Vater** steuert und erzwingt Lern
 ## Grundprinzip: API-First
 
 Die REST-API (**OpenAPI/Swagger**) ist das Produkt und die einzige Quelle der Wahrheit –
-bedient direkt oder über die Skills `vater`/`sohn`. Das React-Frontend hängt am alten,
-entfernten Template und ist **außer Betrieb**, bis es gegen die neue API neu gebaut wird.
-→ Feature-Arbeit findet im **Backend** statt. Details: [docs/architektur-entscheidung.md](docs/architektur-entscheidung.md).
+bedient direkt oder über die Skills `vater`/`sohn`. Das React-Frontend unter [frontend/](frontend/)
+wurde **neu gegen die `api/v1` gebaut und ist funktionsfähig** (Vite+React+TS+PWA): Produktseite `/`,
+Sohn-Arcade-PWA `/sohn`, Vater-Web `/vater` inkl. Lehrplan-Assistent `/vater/wizard`. Ein Playwright-E2E
+([frontend/e2e/full-flow.spec.ts](frontend/e2e/full-flow.spec.ts)) fährt den kompletten Vater→Sohn-Loop.
+→ **Neue Features beginnen weiterhin im Backend** (API-First); das Frontend hängt an der API.
+Details: [docs/architektur-entscheidung.md](docs/architektur-entscheidung.md), [frontend starten](#frontend).
 
 ## Befehle
 
@@ -27,6 +30,18 @@ dotnet ef migrations add <Name> --project backend/Pugling.Api --output-dir Data/
 - **Smoke-Test gegen laufende API:** `/smoke-test` (startet gegen eine Temp-DB, prüft Auth +
   Ownership + einen Plan→Test→Submit-Flow, lässt die echte `pugling.db` unangetastet).
 - **Neuen Übungstyp/Lernverfahren anlegen:** `/neuer-uebungstyp` (führt den etablierten Prozess).
+
+### Frontend
+
+```bash
+cd frontend && npm install        # einmalig
+cd frontend && npm run dev         # http://localhost:5173, /api-Proxy → :5200 (Backend muss laufen)
+cd frontend && npm run build       # tsc -b && vite build (Typecheck + Prod-Build)
+cd frontend && npm run test:e2e    # Playwright: startet Backend (Temp-DB) + Vite, fährt den Vater→Sohn-Loop
+```
+
+Rollen im SPA: `/` Produktseite, `/vater` Web-Admin (inkl. `/vater/wizard` Lehrplan-Assistent),
+`/sohn` Arcade-PWA. API-Client + Types zentral unter [frontend/src/lib/](frontend/src/lib/).
 
 ## Architektur (das produktive Modell)
 

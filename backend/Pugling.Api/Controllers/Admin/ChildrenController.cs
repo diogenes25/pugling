@@ -20,14 +20,14 @@ namespace Pugling.Api.Controllers.Admin;
 [ServiceFilter(typeof(ChildOwnershipFilter))]
 public class ChildrenController(PuglingDbContext db) : ControllerBase
 {
-    public record ChildResponse(int Id, int FatherId, string Name, int? BirthYear, DateTime CreatedAt,
-        int PointsBalance);
+    public record ChildResponse(int Id, int FatherId, string Name, int? BirthYear, int? Grade,
+        SchoolTypes SchoolType, DateTime CreatedAt, int PointsBalance);
 
     Task<ChildResponse?> ProjectOne(int childId) =>
         db.Children
             .Where(c => c.Id == childId)
-            .Select(c => new ChildResponse(c.Id, c.FatherId, c.Name, c.BirthYear, c.CreatedAt,
-                c.PointsEntries.Sum(p => (int?)p.Amount) ?? 0))
+            .Select(c => new ChildResponse(c.Id, c.FatherId, c.Name, c.BirthYear, c.Grade, c.SchoolType,
+                c.CreatedAt, c.PointsEntries.Sum(p => (int?)p.Amount) ?? 0))
             .FirstOrDefaultAsync();
 
     /// <summary>Liste der eigenen Kinder.</summary>
@@ -38,8 +38,8 @@ public class ChildrenController(PuglingDbContext db) : ControllerBase
         return await db.Children
             .Where(c => c.FatherId == fatherId)
             .OrderBy(c => c.Name)
-            .Select(c => new ChildResponse(c.Id, c.FatherId, c.Name, c.BirthYear, c.CreatedAt,
-                c.PointsEntries.Sum(p => (int?)p.Amount) ?? 0))
+            .Select(c => new ChildResponse(c.Id, c.FatherId, c.Name, c.BirthYear, c.Grade, c.SchoolType,
+                c.CreatedAt, c.PointsEntries.Sum(p => (int?)p.Amount) ?? 0))
             .ToListAsync();
     }
 
@@ -52,7 +52,7 @@ public class ChildrenController(PuglingDbContext db) : ControllerBase
         return child is null ? NotFound() : child;
     }
 
-    public record CreateChildDto(string Name, int? BirthYear, string? Pin);
+    public record CreateChildDto(string Name, int? BirthYear, int? Grade, SchoolTypes? SchoolType, string? Pin);
 
     /// <summary>Erstellt ein Kind unter dem angemeldeten Vater.</summary>
     [HttpPost]
@@ -62,15 +62,24 @@ public class ChildrenController(PuglingDbContext db) : ControllerBase
     {
         if (string.IsNullOrWhiteSpace(dto.Name)) return Problem(statusCode: 400, detail: "Name ist erforderlich.");
 
-        var child = new Child { FatherId = User.FatherId()!.Value, Name = dto.Name.Trim(), BirthYear = dto.BirthYear, Pin = dto.Pin ?? "" };
+        var child = new Child
+        {
+            FatherId = User.FatherId()!.Value,
+            Name = dto.Name.Trim(),
+            BirthYear = dto.BirthYear,
+            Grade = dto.Grade,
+            SchoolType = dto.SchoolType ?? SchoolTypes.None,
+            Pin = dto.Pin ?? "",
+        };
         db.Children.Add(child);
         await db.SaveChangesAsync();
 
-        var response = new ChildResponse(child.Id, child.FatherId, child.Name, child.BirthYear, child.CreatedAt, 0);
+        var response = new ChildResponse(child.Id, child.FatherId, child.Name, child.BirthYear, child.Grade,
+            child.SchoolType, child.CreatedAt, 0);
         return CreatedAtAction(nameof(Get), new { childId = child.Id }, response);
     }
 
-    public record UpdateChildDto(string? Name, int? BirthYear, string? Pin);
+    public record UpdateChildDto(string? Name, int? BirthYear, int? Grade, SchoolTypes? SchoolType, string? Pin);
 
     /// <summary>Ändert ein Kind (partiell).</summary>
     [HttpPatch("{childId:int}")]
@@ -82,6 +91,8 @@ public class ChildrenController(PuglingDbContext db) : ControllerBase
 
         if (dto.Name is not null) child.Name = dto.Name.Trim();
         if (dto.BirthYear.HasValue) child.BirthYear = dto.BirthYear;
+        if (dto.Grade.HasValue) child.Grade = dto.Grade;
+        if (dto.SchoolType.HasValue) child.SchoolType = dto.SchoolType.Value;
         if (dto.Pin is not null) child.Pin = dto.Pin;
         await db.SaveChangesAsync();
 

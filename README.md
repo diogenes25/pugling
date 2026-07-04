@@ -14,17 +14,21 @@ kompletten Lernplan bauen oder die App um neue Übungstypen erweitern kann.
 
 ```bash
 cd backend/Pugling.Api && dotnet run     # → http://localhost:5200 , Swagger unter /swagger
+cd frontend && npm install && npm run dev # → http://localhost:5173 (Web-UI, /api-Proxy → :5200)
 ```
 
 - **Base-URL:** `http://localhost:5200`
 - **OpenAPI-JSON:** `http://localhost:5200/openapi/v1.json` · **Swagger-UI:** `/swagger`
+- **Web-UI:** `http://localhost:5173` — Produktseite `/`, Vater-Web `/vater` (mit Lehrplan-Assistent
+  `/vater/wizard`), Sohn-App `/sohn`. Setzt die laufende API voraus.
 - **Alle Routen:** `api/v1/…` (Versionssegment zentral in `ApiRoutes.V1`)
 - **Auth:** PIN-Login → JWT als `Authorization: Bearer <token>`
 - **Seed-Konten:** Vater `id=1` PIN `0000` · Sohn (Kind) `id=1` PIN `1111`
 - **DB:** SQLite (`pugling.db`), Migrationen laufen beim Start automatisch
 
 Der schnellste Weg, die ganze API in Aktion zu sehen: Skill `/smoke-test` oder Swagger-UI
-(„Authorize"-Button mit dem Login-Token).
+(„Authorize"-Button mit dem Login-Token). Die komplette Rollen-Schleife im echten UI zeigt der
+Playwright-E2E: `cd frontend && npm run test:e2e`.
 
 ---
 
