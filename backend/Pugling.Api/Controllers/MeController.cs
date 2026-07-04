@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Pugling.Api.Auth;
 using Pugling.Api.Data;
+using Pugling.Api.Models;
+using Pugling.Api.Services;
 
 namespace Pugling.Api.Controllers;
 
@@ -16,10 +18,10 @@ namespace Pugling.Api.Controllers;
 [Tags("Me")]
 [Produces("application/json")]
 [Authorize(Roles = Roles.Sohn)]
-public class MeController(PuglingDbContext db) : ControllerBase
+public class MeController(PuglingDbContext db, GamificationService gamification) : ControllerBase
 {
-    /// <summary>Eine einzelne Punkte-Buchung (Gutschrift positiv, Abzug negativ).</summary>
-    public record PointsEntryResponse(int Id, int Amount, string Reason, DateTime CreatedAt);
+    /// <summary>Eine einzelne Punkte-Buchung (Gutschrift positiv, Abzug negativ) mit Kategorie.</summary>
+    public record PointsEntryResponse(int Id, int Amount, PointKind Kind, string Reason, DateTime CreatedAt);
     /// <summary>Punktestand (Wallet) des Kindes samt der letzten Buchungen.</summary>
     public record WalletResponse(int ChildId, int Balance, IReadOnlyList<PointsEntryResponse> Entries);
 
@@ -37,10 +39,32 @@ public class MeController(PuglingDbContext db) : ControllerBase
             .Where(p => p.ChildId == cid)
             .OrderByDescending(p => p.CreatedAt)
             .Take(50)
-            .Select(p => new PointsEntryResponse(p.Id, p.Amount, p.Reason, p.CreatedAt))
+            .Select(p => new PointsEntryResponse(p.Id, p.Amount, p.Kind, p.Reason, p.CreatedAt))
             .ToListAsync();
 
         var balance = await db.ChildPoints.Where(p => p.ChildId == cid).SumAsync(p => (int?)p.Amount) ?? 0;
         return new WalletResponse(cid.Value, balance, entries);
+    }
+
+    /// <summary>Eigene Missionen (Tages-/Wochen-/Zusatzziele) mit aktuellem Fortschritt. Wertet vorher aus.</summary>
+    [HttpGet("missions")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<ActionResult<IReadOnlyList<GamificationService.MissionStatus>>> Missions()
+    {
+        var cid = User.ChildId();
+        if (cid is null) return Forbid();
+        return Ok(await gamification.MissionStatusesAsync(cid.Value, DateOnly.FromDateTime(DateTime.UtcNow)));
+    }
+
+    /// <summary>Eigene Auszeichnungen (Badges): erreichte und noch offene, erreichte zuerst. Wertet vorher aus.</summary>
+    [HttpGet("achievements")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<ActionResult<IReadOnlyList<GamificationService.AchievementStatus>>> Achievements()
+    {
+        var cid = User.ChildId();
+        if (cid is null) return Forbid();
+        return Ok(await gamification.AchievementStatusesAsync(cid.Value, DateOnly.FromDateTime(DateTime.UtcNow)));
     }
 }

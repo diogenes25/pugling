@@ -1,6 +1,6 @@
 import type {
-  AnswerDto, ChildResponse, CreatePlanDto, CreateVocabularyDto, LoginResponse,
-  PlanResponse, ProgressResponse, ReviewOutcome, SessionResponse, TestAttemptResponse,
+  AchievementStatus, AnswerDto, ChildResponse, CreatePlanDto, CreateVocabularyDto, LoginResponse,
+  MissionStatus, PlanResponse, ProgressResponse, ReviewOutcome, SessionResponse, TestAttemptResponse,
   TestSubmitResponse, TodayResponse, VocabularyResponse, Wallet,
 } from "./types";
 
@@ -90,4 +90,8 @@ export const api = {
 
   // ---- Sohn: Wallet ----
   wallet: () => http<Wallet>("/api/me/points"),
+
+  // ---- Sohn: Missionen & Auszeichnungen ----
+  missions: () => http<MissionStatus[]>("/api/me/missions"),
+  achievements: () => http<AchievementStatus[]>("/api/me/achievements"),
 };

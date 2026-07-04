@@ -31,9 +31,10 @@ public class ComboTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWeb
         return (sid, ids);
     }
 
+    // Stufe 2 = SelfAssess (Selbsteinschätzung); ohne RequireTypedTest zählt das WasKnown-Flag voll.
     private static async Task<JsonElement> ReviewAsync(HttpClient child, int planId, int sid, int contentId) =>
         await (await child.PostAsJsonAsync($"/api/study-plans/{planId}/practice-sessions/{sid}/review",
-            new { contentId, stage = 2, wasCorrect = true })).Content.ReadFromJsonAsync<JsonElement>();
+            new { contentId, stage = 2, wasKnown = true })).Content.ReadFromJsonAsync<JsonElement>();
 
     [Fact]
     public async Task ComboBonus_LautPlanEinstellung_BeiSchwelleErreicht()
@@ -50,6 +51,25 @@ public class ComboTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWeb
         var second = await ReviewAsync(child, planId, sid, ids[1]);
         Assert.Equal(2, second.GetProperty("combo").GetInt32());
         Assert.Equal(7, second.GetProperty("comboBonus").GetInt32()); // Basis 7 × Meilenstein 1
+    }
+
+    [Fact]
+    public async Task ComboBonus_WirdAlsEigenerPointKindGebucht()
+    {
+        var father = await TestApi.FatherAsync(factory);
+        var planId = await LeitnerPlanAsync(father, threshold: 2, bonus: 7);
+        var child = await TestApi.ChildAsync(factory);
+        var (sid, ids) = await StartSessionAsync(child, planId);
+
+        await ReviewAsync(child, planId, sid, ids[0]);
+        await ReviewAsync(child, planId, sid, ids[1]); // Schwelle 2 erreicht → Combo-Bonus
+
+        // Der Vater sieht die Buchungen kategorisiert: der Bonus trägt Kind "Combo", nicht "Base".
+        var points = await (await father.GetAsync("/api/fathers/1/children/1/points"))
+            .Content.ReadFromJsonAsync<JsonElement>();
+        var combo = points.GetProperty("entries").EnumerateArray()
+            .First(e => e.GetProperty("kind").GetString() == "Combo");
+        Assert.Equal(7, combo.GetProperty("amount").GetInt32());
     }
 
     [Fact]

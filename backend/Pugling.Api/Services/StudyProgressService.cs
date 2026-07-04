@@ -89,6 +89,12 @@ public class StudyProgressService(PuglingDbContext db)
         db.ChildPoints.Add(new ChildPointsEntry
         {
             ChildId = plan.ChildId,
+            Kind = kind switch
+            {
+                RewardKind.MinutesMet => PointKind.Minutes,
+                RewardKind.TestPassed => PointKind.Test,
+                _ => PointKind.DayComplete,
+            },
             Amount = points,
             Reason = $"[{plan.Title}] {day:yyyy-MM-dd}: {reason}",
         });

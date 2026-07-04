@@ -184,6 +184,36 @@ export interface ReviewOutcome {
   dueOn: string | null;
   combo: number;
   comboBonus: number;
+  speedBonus: number;
+}
+
+// ---- Missionen & Auszeichnungen (Gamification) ----
+
+export type ProgressMetric =
+  | "NewWords" | "CorrectReviews" | "TestsPassed" | "MinutesPracticed" | "DaysComplete" | "StreakDays";
+export type MissionPeriod = "Daily" | "Weekly" | "OneOff";
+
+export interface MissionStatus {
+  id: number;
+  title: string;
+  metric: ProgressMetric;
+  period: MissionPeriod;
+  target: number;
+  current: number;
+  completed: boolean;
+  rewardPoints: number;
+}
+
+export interface AchievementStatus {
+  id: number;
+  title: string;
+  icon: string | null;
+  metric: ProgressMetric;
+  threshold: number;
+  current: number;
+  earned: boolean;
+  earnedAt: string | null;
+  rewardPoints: number;
 }
 
 // ---- Vokabel-Test ----
@@ -234,9 +264,14 @@ export interface TestSubmitResponse {
 
 // ---- Sohn-Wallet ----
 
+export type PointKind =
+  | "Base" | "Manual" | "Minutes" | "Test" | "DayComplete"
+  | "Combo" | "Speed" | "Duration" | "Mission" | "Achievement";
+
 export interface WalletEntry {
   id: number;
   amount: number;
+  kind: PointKind;
   reason: string;
   createdAt: string;
 }

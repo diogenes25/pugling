@@ -12,6 +12,34 @@ public static class Seed
         SeedCatalog(db);
         SeedVocabulary(db);
         SeedKlassenarbeiten(db);
+        SeedGamification(db);
+    }
+
+    /// <summary>
+    /// Vorlagen für Missionen (Tages-/Wochenziele) und Auszeichnungen (Duolingo-artige Badges) je Kind.
+    /// Der Vater kann sie frei editieren/löschen und eigene ergänzen (siehe Missions-/Achievements-Controller).
+    /// </summary>
+    private static void SeedGamification(PuglingDbContext db)
+    {
+        if (db.Missions.Any() || db.Achievements.Any()) return;
+
+        var child = db.Children.FirstOrDefault();
+        if (child is null) return;
+
+        db.Missions.AddRange(
+            new Mission { ChildId = child.Id, Title = "Tagesziel: 10 richtige Antworten", Metric = ProgressMetric.CorrectReviews, Target = 10, Period = MissionPeriod.Daily, RewardPoints = 15 },
+            new Mission { ChildId = child.Id, Title = "Tagesziel: 15 Minuten üben", Metric = ProgressMetric.MinutesPracticed, Target = 15, Period = MissionPeriod.Daily, RewardPoints = 10 },
+            new Mission { ChildId = child.Id, Title = "Wochenziel: 3 Tests bestehen", Metric = ProgressMetric.TestsPassed, Target = 3, Period = MissionPeriod.Weekly, RewardPoints = 30 },
+            new Mission { ChildId = child.Id, Title = "Wochenziel: 25 neue Wörter", Metric = ProgressMetric.NewWords, Target = 25, Period = MissionPeriod.Weekly, RewardPoints = 40 });
+
+        db.Achievements.AddRange(
+            new Achievement { ChildId = child.Id, Title = "Erste Schritte", Icon = "🌱", Metric = ProgressMetric.CorrectReviews, Threshold = 50, RewardPoints = 20 },
+            new Achievement { ChildId = child.Id, Title = "Wortschatz-Sammler", Icon = "📚", Metric = ProgressMetric.NewWords, Threshold = 100, RewardPoints = 50 },
+            new Achievement { ChildId = child.Id, Title = "Test-Ass", Icon = "🏆", Metric = ProgressMetric.TestsPassed, Threshold = 10, RewardPoints = 40 },
+            new Achievement { ChildId = child.Id, Title = "Feuer-Streak", Icon = "🔥", Metric = ProgressMetric.StreakDays, Threshold = 7, RewardPoints = 70 },
+            new Achievement { ChildId = child.Id, Title = "Marathon", Icon = "⏱️", Metric = ProgressMetric.MinutesPracticed, Threshold = 300, RewardPoints = 60 });
+
+        db.SaveChanges();
     }
 
     private static void SeedKlassenarbeiten(PuglingDbContext db)

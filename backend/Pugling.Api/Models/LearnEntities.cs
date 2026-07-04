@@ -44,6 +44,20 @@ public enum ExerciseType
 }
 
 /// <summary>
+/// Vom Übungsersteller vorgeschlagenes Bonus-System (global an der Übung). Dient nur als Vorlage:
+/// beim Erzeugen eines Lehrplans aus der Übung werden diese Werte EINMAL in dessen Bonus-Felder
+/// kopiert. Spätere Änderungen an der Übung wirken damit NICHT rückwirkend auf bestehende Kind-Pläne –
+/// das laufende Bonus-System bleibt kind-individuell und pro Lehrplan anpassbar (Motivations-Steuerung
+/// je Kind/Übung). Felder spiegeln die Bonus-Knöpfe des <see cref="StudyPlan"/>.
+/// </summary>
+public record SuggestedBonus(
+    int ComboThreshold,
+    int ComboBonusPoints,
+    int SpeedThresholdSeconds,
+    int SpeedBonusPoints,
+    int NewContentPoints);
+
+/// <summary>
 /// Eine Übung in einem Kapitel. Die gemeinsamen Felder sind typisiert;
 /// der typ-spezifische Teil steckt als JSON in <see cref="ConfigJson"/>
 /// und wird im API pro Typ als eigenes Schema ein-/ausgegeben.
@@ -60,5 +74,7 @@ public class Exercise
     public int RewardPoints { get; set; }
     /// <summary>Typ-spezifische Konfiguration als JSON (siehe die *Config-Klassen).</summary>
     public string ConfigJson { get; set; } = "{}";
+    /// <summary>Optionaler Bonus-Vorschlag des Erstellers (Vorlage, wird beim Plan-Erzeugen kopiert).</summary>
+    public SuggestedBonus? SuggestedBonus { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }

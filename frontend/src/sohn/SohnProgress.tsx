@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { api } from "../lib/api";
 import { useAsync } from "../lib/useAsync";
 import { useSohn } from "./SohnApp";
+import { BadgesGallery } from "./GamificationPanels";
 import type { PlanResponse, ProgressResponse } from "../lib/types";
 
 const RANKS = ["Frischling", "Kenner", "Profi", "Ass", "Meister", "Großmeister"];
@@ -61,6 +62,8 @@ export function SohnProgress() {
           <span style={{ color: "var(--lime)" }}>■</span> Zeit &nbsp; <span style={{ color: "var(--gold)" }}>■</span> Zeit + Test
         </div>
       </div>
+
+      <BadgesGallery />
 
       <button type="button" className="btn gold" onClick={() => nav("/sohn/practice")}>▶ Weiter üben</button>
     </div>

@@ -108,13 +108,19 @@ Ziel jeden Tag: **20 min üben** UND den **Abschlusstest ≥ 80 %** bestehen. Be
 ### 2.3 Üben (Zeit sammeln)
 ```
 POST /api/study-plans/{id}/practice-sessions            {}                → sessionId
+GET  /api/study-plans/{id}/practice-sessions/{sid}/cards → fällige Übungskarten (OHNE Lösung)
 POST /api/study-plans/{id}/practice-sessions/{sid}/review
-      { "contentId":<vokabel/cloze-id>, "stage":2, "wasCorrect":true }    (protokolliert, was geübt wurde)
+      { "contentId":<vokabel/cloze-id>, "stage":4, "givenAnswer":"Haus" }   // getippte Stufe
+      { "contentId":<cloze-id>, "stage":3, "gaps":[{"gapIndex":1,"givenAnswer":"…"}] }  // Lückentext
+      { "contentId":<vokabel-id>, "stage":2, "wasKnown":true }              // Selbsteinschätzung
+   → { wasCorrect, expected, awarded, box, dueOn, combo, comboBonus }
 POST /api/study-plans/{id}/practice-sessions/{sid}/heartbeat
       { "seconds":1200, "active":true }   → Antwort zeigt live den Tagesfortschritt
 POST /api/study-plans/{id}/practice-sessions/{sid}/end
 ```
-Nur „aktive" Sekunden zählen. Ist die Tagesübungszeit erreicht, gibt es Punkte.
+Der **Server bewertet** die Antwort (nicht das Frontend) und gibt richtig/falsch, die Lösung und die
+vergebenen Punkte/Combo zurück – das Frontend würdigt das per Animation. Nur „aktive" Sekunden zählen;
+ist die Tagesübungszeit erreicht, gibt es Punkte.
 
 ### 2.4 Abschlusstest machen
 Je nach Verfahren des Plans der passende Endpunkt. Ohne `stage` wird die **Fahrplan-Stufe des Tages** genommen.

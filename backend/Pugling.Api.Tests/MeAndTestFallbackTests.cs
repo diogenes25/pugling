@@ -68,7 +68,7 @@ public class MeAndTestFallbackTests(PuglingWebAppFactory factory) : IClassFixtur
             .Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetInt32();
         foreach (var cid in contentIds)
             (await child.PostAsJsonAsync($"/api/study-plans/{planId}/practice-sessions/{sid}/review",
-                new { contentId = cid, stage = 2, wasCorrect = true })).EnsureSuccessStatusCode();
+                new { contentId = cid, stage = 2, wasKnown = true })).EnsureSuccessStatusCode();
 
         // Alle Karten sind jetzt hochgestuft und nicht mehr fällig – der Tagestest muss trotzdem starten.
         var testRes = await child.PostAsJsonAsync($"/api/study-plans/{planId}/tests", new { });

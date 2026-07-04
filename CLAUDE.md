@@ -44,7 +44,11 @@ dotnet ef migrations add <Name> --project backend/Pugling.Api --output-dir Data/
   Übungen taggen, Arbeiten planen/benoten, gezielt üben/wiederholen.
 - **Services** ([Services/](backend/Pugling.Api/Services/)): `StudyProgressService` (Tages-Auswertung +
   idempotente Punkte), `ScheduleService` (Stundenplan-Auswahl neu/Wiederholung), `TestAttemptService`
-  (gemeinsamer Test-Lebenszyklus), `PointsService` (Leitner-Punkte × Zeitfenster), `PointsService`.
+  (gemeinsamer Test-Lebenszyklus), `ScoringService` (die eine Stelle für Review-Punkte: Basis × Zeitfenster
+  plus Ereignis-Boni wie Combo/Schnelle Antwort; jede Buchung trägt einen `PointKind`),
+  `MetricsService` (Fortschritts-Metriken aus den Tabellen) + `GamificationService` (Missionen &
+  Auszeichnungen, idempotent belohnt; Vater-CRUD unter `…/children/{}/missions|achievements`,
+  Sohn-Sicht `api/me/missions|achievements`).
 
 ## Konventionen (an bestehendem Code orientieren!)
 
