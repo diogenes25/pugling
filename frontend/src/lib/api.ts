@@ -179,7 +179,7 @@ export const api = {
   // ---- Vater: Konto-Übersicht (Punktestand + Buchungsverlauf je Kind) ----
   childAccount: (childId: number) => http<Wallet>(`${V1}/children/${childId}/points`),
 
-  // ---- Vater: Prämien (einlösbare reale Belohnungen) verwalten ----
+  // ---- Vater: Angebote (kaufbare reale Belohnungen) verwalten ----
   rewardsFor: (childId: number) => http<RewardDef[]>(`${V1}/children/${childId}/rewards`),
   createReward: (childId: number, dto: CreateRewardDto) =>
     http<RewardDef>(`${V1}/children/${childId}/rewards`, "POST", dto),
@@ -188,19 +188,19 @@ export const api = {
   deleteReward: (childId: number, rewardId: number) =>
     http<void>(`${V1}/children/${childId}/rewards/${rewardId}`, "DELETE"),
 
-  // ---- Vater: Einlöse-Anfragen ansehen und entscheiden ----
+  // ---- Vater: Käufe ansehen und erfüllen/stornieren ----
   redemptionsFor: (childId: number, status?: RewardRedemptionStatus) => {
     const q = status ? `?status=${status}` : "";
     return http<RedemptionDef[]>(`${V1}/children/${childId}/rewards/redemptions${q}`);
   },
-  approveRedemption: (childId: number, redemptionId: number) =>
-    http<RedemptionDef>(`${V1}/children/${childId}/rewards/redemptions/${redemptionId}/approve`, "POST", {}),
-  rejectRedemption: (childId: number, redemptionId: number) =>
-    http<RedemptionDef>(`${V1}/children/${childId}/rewards/redemptions/${redemptionId}/reject`, "POST", {}),
+  fulfillRedemption: (childId: number, redemptionId: number) =>
+    http<RedemptionDef>(`${V1}/children/${childId}/rewards/redemptions/${redemptionId}/fulfill`, "POST", {}),
+  cancelRedemption: (childId: number, redemptionId: number) =>
+    http<RedemptionDef>(`${V1}/children/${childId}/rewards/redemptions/${redemptionId}/cancel`, "POST", {}),
 
-  // ---- Sohn: Prämien ansehen und einlösen (Anfrage – Vater genehmigt) ----
+  // ---- Sohn: Angebote ansehen und direkt kaufen (Münzen sofort weg, Vater erfüllt später) ----
   myRewards: () => http<RewardsView>(`${V1}/me/rewards`),
-  redeemReward: (rewardId: number) => http<RewardsView>(`${V1}/me/rewards/${rewardId}/redeem`, "POST", {}),
+  purchaseReward: (rewardId: number) => http<RewardsView>(`${V1}/me/rewards/${rewardId}/purchase`, "POST", {}),
 
   // ---- Vater: Klassenarbeiten (planen, Übungen zuweisen, benoten, üben/wiederholen) ----
   classTests: (childId: number, status?: KlassenarbeitStatus) => {

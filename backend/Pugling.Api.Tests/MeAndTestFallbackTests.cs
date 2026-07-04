@@ -19,12 +19,12 @@ public class MeAndTestFallbackTests(PuglingWebAppFactory factory) : IClassFixtur
         res.EnsureSuccessStatusCode();
         var wallet = await res.Content.ReadFromJsonAsync<JsonElement>();
 
-        // Der geseedete Sohn startet mit 50 Punkten Startguthaben (weitere Buchungen anderer Tests
+        // Der geseedete Sohn startet mit 50 Münzen Startguthaben (weitere Buchungen anderer Tests
         // dieser Klasse teilen sich die DB, daher >= 50 statt exakt).
         Assert.Equal(1, wallet.GetProperty("childId").GetInt32());
-        Assert.True(wallet.GetProperty("balance").GetInt32() >= 50);
-        Assert.Contains("Startguthaben", wallet.GetProperty("entries").EnumerateArray()
-            .Select(e => e.GetProperty("reason").GetString()));
+        Assert.True(wallet.GetProperty("coins").GetInt32() >= 50);
+        Assert.Contains(wallet.GetProperty("entries").EnumerateArray(),
+            e => e.GetProperty("reason").GetString()!.Contains("Startguthaben"));
     }
 
     [Fact]

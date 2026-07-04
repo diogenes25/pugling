@@ -170,14 +170,16 @@ public static class Seed
             db.SaveChanges();
         }
 
-        // Beispiel-Prämien zum Einlösen (reale Belohnungen; eigener Guard, damit sie auch in
-        // bereits geseedeten DBs nachgezogen werden).
+        // Beispiel-Angebote zum Kaufen (reale Belohnungen; eigener Guard, damit sie auch in
+        // bereits geseedeten DBs nachgezogen werden). Wiederkehr + Kontingent zeigen die neuen Felder:
+        // Fernsehen = täglich 2×, Spielzeit = wöchentlich 5×, Taschengeld = wöchentlich 1×, Kino = einmalig.
         if (!db.Rewards.Any())
         {
             db.Rewards.AddRange(
-                new Reward { ChildId = child.Id, Title = "30 Min Fernsehen", Cost = 200 },
-                new Reward { ChildId = child.Id, Title = "1 Stunde Zocken", Cost = 400 },
-                new Reward { ChildId = child.Id, Title = "Kinoabend aussuchen", Cost = 1500 });
+                new Reward { ChildId = child.Id, Title = "30 Min Fernsehen", Cost = 200, Period = OfferPeriod.Daily, Quantity = 2 },
+                new Reward { ChildId = child.Id, Title = "1 Stunde Zocken", Cost = 400, Period = OfferPeriod.Weekly, Quantity = 5 },
+                new Reward { ChildId = child.Id, Title = "Taschengeld 5 €", Cost = 500, Period = OfferPeriod.Weekly, Quantity = 1 },
+                new Reward { ChildId = child.Id, Title = "Kinoabend aussuchen", Cost = 1500, Period = OfferPeriod.OneOff, Quantity = 1 });
             db.SaveChanges();
         }
     }
@@ -304,7 +306,13 @@ public static class Seed
                     Name = "Sohn",
                     BirthYear = 2015,
                     Pin = "1111",
-                    PointsEntries = { new ChildPointsEntry { Amount = 50, Reason = "Startguthaben" } }
+                    // Start: ein paar Münzen (Base → Coins) für Angebote und ein paar Gems (Achievement → Gems),
+                    // damit sich sofort ein Skin ausprobieren lässt.
+                    PointsEntries =
+                    {
+                        new ChildPointsEntry { Amount = 50, Kind = PointKind.Base, Reason = "Startguthaben (Münzen)" },
+                        new ChildPointsEntry { Amount = 300, Kind = PointKind.Achievement, Reason = "Willkommens-Gems" },
+                    }
                 }
             }
         });

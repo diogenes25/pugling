@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { api, errorMessage } from "../lib/api";
 import { useSohn } from "./SohnApp";
-import { CelebrationLayer, useCelebration } from "../components/Celebration";
 import type { PlanItemResponse, ReviewOutcome, SessionResponse, TodayResponse } from "../lib/types";
 
 // Kleine Anerkennung bei jedem Treffer – Variation sorgt für Abwechslung (Daumen, Stern, Feuer, Muskel).
@@ -11,7 +10,7 @@ const SMALL_EMOJI = ["👍", "⭐", "🔥", "💪", "✨"];
 type Phase = "loading" | "front" | "back" | "done" | "empty" | "error";
 
 export function SohnPractice() {
-  const { planId, refreshWallet, setStreak } = useSohn();
+  const { planId, refreshWallet, setStreak, celebrate } = useSohn();
   const nav = useNavigate();
 
   const [phase, setPhase] = useState<Phase>("loading");
@@ -22,7 +21,6 @@ export function SohnPractice() {
   const [earned, setEarned] = useState(0);
   const [toast, setToast] = useState<string | null>(null);
   const [lastOutcome, setLastOutcome] = useState<ReviewOutcome | null>(null);
-  const { celebration, celebrate } = useCelebration();
 
   const session = useRef<SessionResponse | null>(null);
   const stage = useRef<number>(2);
@@ -131,7 +129,6 @@ export function SohnPractice() {
         <button type="button" className="btn gold" onClick={() => nav("/sohn/test")} style={{ marginTop: 10 }}>🎯 Weiter zum Test</button>
         <button type="button" className="btn ghost" onClick={() => nav("/sohn")}>Zur Basis</button>
       </div>
-      <CelebrationLayer celebration={celebration} />
     </div>
   );
 
@@ -165,7 +162,6 @@ export function SohnPractice() {
       {lastOutcome?.dueOn && phase === "front" && (
         <p className="sub" style={{ textAlign: "center" }}>Nächste Fälligkeit: {lastOutcome.dueOn}</p>
       )}
-      <CelebrationLayer celebration={celebration} />
     </div>
   );
 }

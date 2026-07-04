@@ -65,6 +65,12 @@ Rollen im SPA: `/` Produktseite, `/vater` Web-Admin (inkl. `/vater/wizard` Lehrp
   `MetricsService` (Fortschritts-Metriken aus den Tabellen) + `GamificationService` (Missionen &
   Auszeichnungen, idempotent belohnt; Vater-CRUD unter `api/v1/children/{}/missions|achievements`,
   Sohn-Sicht `api/v1/me/missions|achievements`).
+- **Reward-Ökonomie** (zwei Währungen): 🪙 **Münzen** fürs Lernen → reale Vater-**Angebote**,
+  💎 **Gems** aus Boni → **Skins**. Währung = reine Funktion des `PointKind` (`PointKindCurrency`,
+  keine Ledger-Spalte); Salden über `WalletService`. Angebote (`Reward` mit `Period`/`Quantity` =
+  Kontingent pro Periode) kauft der Sohn **direkt** (`api/v1/me/rewards/{}/purchase`), der Vater
+  **erfüllt/storniert** (`OfferService`; `children/{}/rewards…/fulfill|cancel`). Details:
+  [wiki/05-punkte-und-bonus.md](wiki/05-punkte-und-bonus.md).
 
 ## Konventionen (an bestehendem Code orientieren!)
 

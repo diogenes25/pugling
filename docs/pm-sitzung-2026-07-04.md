@@ -231,4 +231,161 @@ anlegen → 403). **Gesamtstand: 98/98 grün; Frontend-Build sauber.**
 
 Offen (Vater-Komfort-Rest, nicht-blockierend): Mehr-Kind-Tagesdashboard, Mastery-Report pro Vokabel.
 
+---
+---
+
+# PM-Sitzung 2 (gleicher Tag): „Erfolg fühlbar machen"
+
+**Datum:** 2026-07-04  ·  **Moderation:** PM
+**Teilnehmer:** Vater (steuert) · Sohn (~11, 5. Klasse, Französisch) · Entwickler
+**Ziel:** Die nach Sitzung 1 vom Vater freigegebenen Sohn-Wünsche (#2 Sound/Feier, #3 Abwechslung)
+sowie zurückgestellten Vater-Komfort abarbeiten — und zwar in *einer* fokussierten Iteration, bis
+beide Rollen sie am laufenden Produkt abnehmen.
+
+## Runde 1 — Feedback (am echten Code-Stand verankert, nicht geraten)
+
+Zwei Recon-Durchgänge durch die reale App (Sohn-Arcade `frontend/src/sohn`, Vater-Web
+`frontend/src/vater`, Backend `api/v1`) lieferten die Belege:
+
+### Feedback Sohn (O-Ton) — belegt an Datei:Zeile
+
+**Nervt / fehlt (belegt):**
+- **Alles ist stumm.** Kein einziger Ton bei Treffer, Combo, Sieg — projektweit **0** Treffer für
+  `Audio`/`AudioContext`/`.play()` außer dem nativen Vokabel-Anhör-Player im Test
+  ([SohnTest.tsx:96](frontend/src/sohn/SohnTest.tsx#L96)). „Ein Spiel ohne Sound? Fühlt sich tot an."
+- **Kein Vibrieren** — `navigator.vibrate` existiert nirgends.
+- **Mission erfüllt / Badge freigeschaltet = passiert lautlos.** Die Feier-Mechanik existiert
+  ([Celebration.tsx](frontend/src/components/Celebration.tsx)), wird aber **nur** bei Antwort/Combo
+  ([SohnPractice.tsx:81-87](frontend/src/sohn/SohnPractice.tsx#L81-L87)) und Test-Sieg
+  ([SohnTest.tsx:66](frontend/src/sohn/SohnTest.tsx#L66)) ausgelöst. Missionen
+  ([GamificationPanels.tsx:32](frontend/src/sohn/GamificationPanels.tsx#L32)) und Badges
+  ([GamificationPanels.tsx:72](frontend/src/sohn/GamificationPanels.tsx#L72)) wechseln beim nächsten
+  Datenabruf still ihren Zustand — **kein „freigeschaltet!"-Moment**. „Ich krieg das Abzeichen gar
+  nicht mit."
+- **Üben ist immer gleich** — nur Flashcard ([SohnPractice.tsx:154-161](frontend/src/sohn/SohnPractice.tsx#L154-L161));
+  kein Tempo-Modus, keine echten Buchstaben-Kästchen (`LetterBoxes` rendert nur *ein* Textfeld,
+  [SohnTest.tsx:99-106](frontend/src/sohn/SohnTest.tsx#L99-L106)), kein Tipp-Knopf; `cards`/`hint`-API
+  nicht angebunden.
+
+**Top-3:** 1) Sound + Haptik + „TADAA" bei Combo/Sieg/**Mission/Badge**. 2) Abwechslung
+(Tempo, Buchstaben-Kästchen, Tipp). 3) (unverändert zufrieden mit Skins/Konto aus Sitzung 1).
+
+### Feedback Vater (O-Ton) — belegt an Datei:Zeile
+
+Der Vater hat seine Top-3 in Sitzung 1 abgenommen und die Sohn-Wünsche freigegeben. Offen bleibt
+sein *nicht-blockierender* Komfort:
+- **Lern-Report „welche Vokabel sitzt/sitzt nicht" wird berechnet, aber nicht gezeigt.** Der Endpunkt
+  `GET /study-plans/{planId}/report` liefert pro Vokabel `MasteryPercent`, Test-Trefferquote, Box,
+  Test-Historie, Sohn-Bewertungen ([StudyPlansController.cs:292-303](backend/Pugling.Api/Controllers/Learn/StudyPlansController.cs#L292-L303)),
+  aber **keine Vater-UI** ruft ihn auf — `VaterPlanDetail` zeigt nur Box + Fälligkeit
+  ([VaterPlanDetail.tsx:88-93](frontend/src/vater/VaterPlanDetail.tsx#L88-L93)).
+- **Kein Mehr-Kind-Tagesüberblick** („wer hat heute/gestern was geschafft/verpasst?"). Existiert
+  **auch im Backend nicht** als kindübergreifendes Aggregat (nur plan-gebundenes `/today`); der Vater
+  müsste Plan für Plan durchklicken.
+
+**Top (nicht-blockierend, vom Vater als „kann warten" markiert):** 1) Mastery-Report-Ansicht.
+2) Mehr-Kind-Tagesdashboard.
+
+## PM-Synthese & Priorisierung (→ Entwickler)
+
+**Beobachtung — nach „wo liegt die Arbeit wirklich":**
+- Sohns #1 ist zu ~80 % *Verkabelung vorhandener Mechanik*: die Feier-Engine steht, sie ist nur
+  stumm und nicht an Mission/Badge gehängt. Sound/Haptik sind netto-neu, aber klein (WebAudio
+  synthetisiert → keine Asset-Dateien, offline-tauglich; `navigator.vibrate` trivial). **Reines
+  Frontend, hoher Gefühls-Ertrag, kleiner Aufwand.**
+- Vaters Mastery-Report ist der klassische „berechnet, nicht gezeigt"-Fall: **Backend fertig, nur
+  UI + Client fehlen** → billig, aber vom Vater selbst als nicht dringend markiert.
+- Sohns #3 (Abwechslung) und Vaters Mehr-Kind-Dashboard sind **groß** (neue Übungsmodi bzw. neues
+  Backend-Aggregat) → nicht in diese Iteration.
+
+**Roter Faden dieser Runde: „Erfolg fühlbar machen".** Ein kohärentes Thema statt Gemischtwaren —
+jeder Erfolg (Treffer, Combo, Sieg, **Mission, Badge**) bekommt denselben mehrsinnigen „TADAA"-Moment.
+
+| Prio | Item | Größe | Wo liegt die Arbeit | Zuordnung |
+|------|------|-------|---------------------|-----------|
+| **P0** | Sound + Haptik zentral in `celebrate()`; Feier bei neuer Mission/neuem Badge; Mute-Schalter | S–M | **Frontend** (Mechanik existiert) | **Iteration 6 (jetzt)** |
+| P1 | Mastery-Report-Ansicht für den Vater | S–M | Frontend + Client (Backend fertig) | Roadmap (nächste Runde) |
+| P2 | Sohn-Abwechslung: Tempo-Modus, echte Buchstaben-Kästchen, Tipp-Knopf (`cards`/`hint` anbinden) | L | Beide | Roadmap |
+| P2 | Mehr-Kind-Tagesdashboard | M–L | Backend-Aggregat **zuerst** + UI | Roadmap |
+| P3 | Baseline: PIN-Hash/Rate-Limit, ValueComparer für JSON-Listen | S–M | Backend | Roadmap |
+
+**Entwickler-Brief Iteration 6 (P0):** Jeden Erfolg mehrsinnig machen — ohne die Flow-Robustheit zu
+gefährden.
+- **Zentralisieren:** `celebrate(tier,…)` löst künftig *automatisch* Ton + Haptik passend zur Stufe
+  aus. Dann erben die bestehenden Aufrufe (Combo, Sieg) den Ton geschenkt, ohne jede Call-Site
+  anzufassen.
+- **Feier global:** Overlay einmal in der Sohn-Shell rendern und `celebrate` über den `useSohn`-Context
+  bereitstellen — damit können auch die Missions-/Badge-Panels feiern (heute rendern nur
+  Practice/Test ein eigenes Layer → zugleich die vom letzten Review notierte Duplikat-Stelle auflösen).
+- **Neue Feier-Momente:** neu **erfüllte** Mission und neu **erreichtes** Badge feiern — Übergang
+  client-seitig gegen einen in `localStorage` gemerkten „gesehen"-Stand pro Kind erkennen; beim
+  allerersten Laden still seeden (kein Nachfeiern von Alt-Erfolgen).
+- **Robustheit ist Abnahmebedingung:** Ton/Haptik strikt feature-detecten und in `try/catch` kapseln
+  (kein Wurf, wenn `AudioContext`/`vibrate` fehlt — sonst bricht der E2E-Headless-Lauf). AudioContext
+  erst bei erster Nutzer-Geste erzeugen/`resume()`. Mute-Präferenz persistieren; `prefers-reduced-motion`
+  blendet Visuals schon aus ([index.css:240](frontend/src/index.css#L240)) — Mute deckt den Ton ab.
+
+## Iteration 6 — umgesetzt (P0: „Erfolg fühlbar machen")
+
+**Frontend (kein Backend nötig — Feier-Engine existierte, war nur stumm und nicht verkabelt):**
+- **Neu [feedback.ts](frontend/src/lib/feedback.ts):** synthetisierter Erfolgs-Ton (WebAudio,
+  `triangle`-Oszillator, C-Dur-Arpeggio bei „big" — keine Asset-Dateien, offline-tauglich) + Haptik
+  (`navigator.vibrate`) + Mute in `localStorage`. Hart abgesichert: fehlt `AudioContext`/`vibrate`
+  oder ist stumm, passiert *nichts* (nie ein Wurf). AudioContext lazy bei erster Geste, `resume()`.
+- **Zentral in `celebrate()`** ([Celebration.tsx:28](frontend/src/components/Celebration.tsx#L28)):
+  jede Feier spielt jetzt Ton + Haptik zur Stufe → Combo und Test-Sieg erben es geschenkt.
+- **Feier global** in die Sohn-Shell gehoben ([SohnApp.tsx](frontend/src/sohn/SohnApp.tsx)): `celebrate`
+  liegt im `useSohn`-Context, das Overlay rendert einmal für alle Screens; die lokalen Layer in
+  Practice/Test entfielen (löst die im letzten Review notierte Duplikat-Stelle). **Mute-Schalter
+  (🔊/🔇) im HUD**, persistiert.
+- **Neue Feier-Momente** ([GamificationPanels.tsx](frontend/src/sohn/GamificationPanels.tsx)): neu
+  erfüllte Mission (mittlere Feier, `+X 🪙`) und neu erreichtes Badge (große Feier) werden gefeiert —
+  Erkennung gegen einen `localStorage`-„gesehen"-Stand pro Kind; erstes Laden seedet still, Tages-/
+  Wochenziele feiern nach Reset erneut.
+
+**Verifikation (real):**
+- **Frontend-Build sauber** (`tsc -b && vite build`, 0 Fehler).
+- **E2E grün** (`npm run test:e2e`: 1 passed, 30 s) — bestätigt zugleich die Kern-Abnahmebedingung:
+  die Audio-/Haptik-Guards **werfen im Headless-Chromium nicht**, der Vater→Sohn-Loop läuft unverändert.
+- **Adversarialer Frontend-Review** (Hook-Regeln, Effekt-Schleifen, „gesehen"-Logik, Audio-Robustheit,
+  Context-Umbau, Mute): **kein Korrektheits-Blocker.** Behoben: irreführender Fallback-Kommentar in
+  `writeSeen`. Bewusst so belassen: Mute schaltet auch Haptik ab (einheitlicher „Stumm-Modus").
+
+## Runde 2 — Re-Review (ehrlich, mit offener Frage)
+
+**Sohn:** Wunsch #1 (Sound/Haptik/„TADAA" bei Combo/Sieg **und jetzt Mission/Badge**) ist umgesetzt
+und robust verifiziert — „endlich macht das Abzeichen *tädää*." **Ehrliche Einschränkung:** ob es sich
+*gut anhört* und auf dem echten Handy *richtig vibriert*, ist eine subjektive Geräte-Prüfung, die
+Build/E2E nicht abdecken — das muss der Nutzer einmal am Telefon gegenhören. → **Funktional
+abgenommen, Klang-/Haptik-Feinschliff unter Geräte-Vorbehalt.** #2 (Abwechslung) bleibt gewünscht,
+kein Muss-sofort.
+
+**Vater:** Nicht betroffen diese Runde; **keine Regression** (Vater→Sohn-E2E grün), Warteschlange
+respektiert (seine Komfort-Punkte wurden nicht übersprungen — Mastery-Report steht als nächstes P1
+*vor* weiterer Sohn-Politur). → **Einverstanden.** Bedingung fürs nächste Mal: sein Mastery-Report
+kommt jetzt dran.
+
+### ✅ Ergebnis: P0 geliefert & verifiziert; beide einverstanden — mit einem ehrlichen Geräte-Vorbehalt beim Klang.
+
+## Offene Roadmap (nach Iteration 6, priorisiert)
+
+1. **P1 — Vater Mastery-Report-Ansicht:** `GET /study-plans/{planId}/report` existiert komplett
+   (MasteryPercent/Box/Test-Historie/Ratings) — nur UI + Client fehlen. Cheapster hoher Nutzen, vom
+   Vater als nächstes eingefordert.
+2. **P2 — Sohn-Abwechslung:** Tempo-Modus, echte Buchstaben-Kästchen (LetterBoxes), Tipp-Knopf;
+   `cards`/`hint`-Endpunkte anbinden.
+3. **P2 — Mehr-Kind-Tagesdashboard:** Backend-Aggregat (kindübergreifend heute/gestern
+   geübt/geschafft/verpasst) **zuerst**, dann Vater-UI.
+4. **P3 — Baseline:** PIN-Hash/Rate-Limit, ValueComparer für JSON-Listen.
+5. **Geräte-Vorbehalt aus Iteration 6:** Klang-/Haptik-Feinschliff am echten Handy gegenhören
+   (Lautstärke, Arpeggio, Vibrationsmuster) — bei Bedarf nachjustieren.
+
+## Konkreter Änderungsstand Iteration 6 (für Review)
+
+- **Neu:** `frontend/src/lib/feedback.ts`.
+- **Geändert:** `Celebration.tsx` (Ton/Haptik in `celebrate`), `SohnApp.tsx` (globale Feier +
+  Context-`celebrate` + HUD-Mute), `SohnPractice.tsx`/`SohnTest.tsx` (Context-`celebrate`, lokale Layer
+  entfernt), `GamificationPanels.tsx` (Feier bei neuer Mission/neuem Badge), `index.css` (`.mute-toggle`).
+- **Kein Backend, keine Migration, keine neuen Integrationstests** (rein Frontend); Absicherung über
+  Build + E2E + adversarialen Review.
 

@@ -39,17 +39,18 @@ export function VaterDashboard() {
         <h2 className="h-section">Kinder</h2>
         {children.loading ? <div className="loading">Lade…</div> : children.error ? <div className="banner err">{children.error}</div> : (
           <table className="table">
-            <thead><tr><th>Id</th><th>Name</th><th>Klasse</th><th>Schulart</th><th className="num">Punkte</th></tr></thead>
+            <thead><tr><th>Id</th><th>Name</th><th>Klasse</th><th>Schulart</th><th className="num">🪙</th><th className="num">💎</th></tr></thead>
             <tbody>
               {children.data?.map((c) => (
                 <tr key={c.id}>
                   <td className="num">{c.id}</td><td>{c.name}</td>
                   <td>{c.grade ? `${c.grade}.` : "–"}</td>
                   <td className="muted">{c.schoolType && c.schoolType !== "None" ? c.schoolType : "–"}</td>
-                  <td className="num">{c.pointsBalance}</td>
+                  <td className="num">{c.coins}</td>
+                  <td className="num">{c.gems}</td>
                 </tr>
               ))}
-              {children.data?.length === 0 && <tr><td colSpan={5} className="muted">Noch keine Kinder.</td></tr>}
+              {children.data?.length === 0 && <tr><td colSpan={6} className="muted">Noch keine Kinder.</td></tr>}
             </tbody>
           </table>
         )}
