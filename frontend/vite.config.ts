@@ -11,8 +11,8 @@ export default defineConfig({
         name: "Pugling – Lernen & Punkte",
         short_name: "Pugling",
         description: "Vokabeln lernen, Punkte sammeln, Belohnungen eintauschen",
-        theme_color: "#4f46e5",
-        background_color: "#ffffff",
+        theme_color: "#0f1030",
+        background_color: "#0f1030",
         display: "standalone",
         orientation: "portrait",
         icons: [

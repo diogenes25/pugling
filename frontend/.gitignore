@@ -1,0 +1,10 @@
+# Abhängigkeiten & Build
+node_modules/
+dist/
+dev-dist/
+*.tsbuildinfo
+
+# Playwright / E2E-Artefakte
+test-results/
+playwright-report/
+playwright/.cache/
