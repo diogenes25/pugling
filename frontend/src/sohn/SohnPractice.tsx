@@ -2,7 +2,11 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { api } from "../lib/api";
 import { useSohn } from "./SohnApp";
+import { CelebrationLayer, useCelebration } from "../components/Celebration";
 import type { PlanItemResponse, ReviewOutcome, SessionResponse, TodayResponse } from "../lib/types";
+
+// Kleine Anerkennung bei jedem Treffer – Variation sorgt für Abwechslung (Daumen, Stern, Feuer, Muskel).
+const SMALL_EMOJI = ["👍", "⭐", "🔥", "💪", "✨"];
 
 type Phase = "loading" | "front" | "back" | "done" | "empty" | "error";
 
@@ -18,6 +22,7 @@ export function SohnPractice() {
   const [earned, setEarned] = useState(0);
   const [toast, setToast] = useState<string | null>(null);
   const [lastOutcome, setLastOutcome] = useState<ReviewOutcome | null>(null);
+  const { celebration, celebrate } = useCelebration();
 
   const session = useRef<SessionResponse | null>(null);
   const stage = useRef<number>(2);
@@ -67,16 +72,21 @@ export function SohnPractice() {
     try {
       const outcome = await api.review(planId, session.current.id, card.contentId, stage.current, wasCorrect);
       setLastOutcome(outcome);
+      setCombo(outcome.combo); // serverseitig gezählt
       if (wasCorrect) {
-        setCombo((c) => c + 1);
-        setEarned((e) => e + outcome.awarded);
+        setEarned((e) => e + outcome.awarded + outcome.comboBonus);
+        if (outcome.comboBonus > 0) {
+          // Combo-Meilenstein: mittlere Feier, ab ×10 der große fliegende Kämpfer.
+          const tier = outcome.combo >= 10 ? "big" : "medium";
+          celebrate(tier, tier === "big" ? "🥷" : "🎉", `COMBO ×${outcome.combo}`, `+${outcome.comboBonus} 🪙 Bonus`);
+        } else {
+          celebrate("small", SMALL_EMOJI[outcome.combo % SMALL_EMOJI.length]);
+        }
         if (outcome.awarded > 0) {
           setToast(`+${outcome.awarded} 🪙${outcome.box ? ` · Box ${outcome.box}` : ""}`);
           setTimeout(() => setToast(null), 1100);
         }
         refreshWallet();
-      } else {
-        setCombo(0);
       }
     } catch { /* Bewertung ist idempotent genug; UI läuft weiter */ }
     next();
@@ -118,6 +128,7 @@ export function SohnPractice() {
         <button type="button" className="btn gold" onClick={() => nav("/sohn/test")} style={{ marginTop: 10 }}>🎯 Weiter zum Test</button>
         <button type="button" className="btn ghost" onClick={() => nav("/sohn")}>Zur Basis</button>
       </div>
+      <CelebrationLayer celebration={celebration} />
     </div>
   );
 
@@ -151,6 +162,7 @@ export function SohnPractice() {
       {lastOutcome?.dueOn && phase === "front" && (
         <p className="sub" style={{ textAlign: "center" }}>Nächste Fälligkeit: {lastOutcome.dueOn}</p>
       )}
+      <CelebrationLayer celebration={celebration} />
     </div>
   );
 }

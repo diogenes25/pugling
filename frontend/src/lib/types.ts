@@ -178,6 +178,8 @@ export interface ReviewOutcome {
   awarded: number;
   box: number;
   dueOn: string | null;
+  combo: number;
+  comboBonus: number;
 }
 
 // ---- Vokabel-Test ----
