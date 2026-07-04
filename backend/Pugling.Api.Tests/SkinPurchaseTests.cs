@@ -4,13 +4,14 @@ using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Pugling.Api.Data;
+using Pugling.Api.Models;
 
 namespace Pugling.Api.Tests;
 
 /// <summary>
 /// Deckt die server-autoritative Skin-Ökonomie ab (<c>api/v1/me/skins…</c>): Der Kauf bucht echte
-/// Münzen ab, Besitz/Auswahl liegen am Kind. Nutzt frisch angelegte Kinder, damit die Salden trotz
-/// geteilter Test-DB deterministisch sind.
+/// <b>Gems</b> ab (nicht Münzen), Besitz/Auswahl liegen am Kind. Nutzt frisch angelegte Kinder, damit
+/// die Salden trotz geteilter Test-DB deterministisch sind.
 /// </summary>
 public class SkinPurchaseTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWebAppFactory>
 {
@@ -23,6 +24,21 @@ public class SkinPurchaseTests(PuglingWebAppFactory factory) : IClassFixture<Pug
         return (childId, child);
     }
 
+    /// <summary>Schreibt dem Kind Gems gut (kein API-Weg dafür – Gems entstehen aus Boni; Achievement → Gems).</summary>
+    private async Task GrantGemsAsync(int childId, int amount)
+    {
+        using var scope = factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
+        db.ChildPoints.Add(new ChildPointsEntry
+        {
+            ChildId = childId,
+            Amount = amount,
+            Kind = PointKind.Achievement,
+            Reason = "Test-Gems",
+        });
+        await db.SaveChangesAsync();
+    }
+
     [Fact]
     public async Task NeuesKind_StartetMitGratisStarter()
     {
@@ -33,7 +49,7 @@ public class SkinPurchaseTests(PuglingWebAppFactory factory) : IClassFixture<Pug
 
         Assert.Equal("pug", state.GetProperty("selected").GetString());
         Assert.Contains("pug", state.GetProperty("owned").EnumerateArray().Select(e => e.GetString()));
-        Assert.Equal(0, state.GetProperty("balance").GetInt32());
+        Assert.Equal(0, state.GetProperty("gems").GetInt32());
     }
 
     [Fact]
@@ -48,14 +64,13 @@ public class SkinPurchaseTests(PuglingWebAppFactory factory) : IClassFixture<Pug
     }
 
     [Fact]
-    public async Task Kauf_MitDeckung_BuchtMuenzenAb_UndRuestetAus()
+    public async Task Kauf_MitDeckung_BuchtGemsAb_UndRuestetAus()
     {
         var father = await TestApi.FatherAsync(factory);
         var (childId, child) = await FreshChildAsync(father, "7003");
 
-        // Guthaben schaffen (2500), damit der Ninja (2000) bezahlbar ist.
-        (await father.PostAsJsonAsync($"/api/v1/children/{childId}/points",
-            new { amount = 2500, reason = "Test-Guthaben" })).EnsureSuccessStatusCode();
+        // Gems schaffen (2500), damit der Ninja (2000) bezahlbar ist.
+        await GrantGemsAsync(childId, 2500);
 
         var res = await child.PostAsJsonAsync("/api/v1/me/skins/ninja/purchase", new { });
         res.EnsureSuccessStatusCode();
@@ -63,13 +78,28 @@ public class SkinPurchaseTests(PuglingWebAppFactory factory) : IClassFixture<Pug
 
         Assert.Equal("ninja", state.GetProperty("selected").GetString());
         Assert.Contains("ninja", state.GetProperty("owned").EnumerateArray().Select(e => e.GetString()));
-        Assert.Equal(500, state.GetProperty("balance").GetInt32()); // 2500 − 2000
+        Assert.Equal(500, state.GetProperty("gems").GetInt32()); // 2500 − 2000
 
         // Die Abbuchung ist als negative Buchung mit eigener Kategorie im Wallet nachvollziehbar.
         var wallet = await (await child.GetAsync("/api/v1/me/points")).Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal(500, wallet.GetProperty("gems").GetInt32());
         var spend = wallet.GetProperty("entries").EnumerateArray()
             .First(e => e.GetProperty("kind").GetString() == "SkinPurchase");
         Assert.Equal(-2000, spend.GetProperty("amount").GetInt32());
+    }
+
+    [Fact]
+    public async Task Muenzen_ZahlenKeineSkins()
+    {
+        var father = await TestApi.FatherAsync(factory);
+        var (childId, child) = await FreshChildAsync(father, "7007");
+
+        // Nur Münzen (Manual → Coins), keine Gems: der Skin-Kauf muss trotzdem an der Deckung scheitern.
+        (await father.PostAsJsonAsync($"/api/v1/children/{childId}/points",
+            new { amount = 5000, reason = "Nur Münzen" })).EnsureSuccessStatusCode();
+
+        var res = await child.PostAsJsonAsync("/api/v1/me/skins/fox/purchase", new { });
+        Assert.Equal(HttpStatusCode.BadRequest, res.StatusCode);
     }
 
     [Fact]

@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Pugling.Api.Auth;
 using Pugling.Api.Data;
 using Pugling.Api.Models;
+using Pugling.Api.Services;
 
 namespace Pugling.Api.Controllers.Admin;
 
@@ -18,16 +19,18 @@ namespace Pugling.Api.Controllers.Admin;
 [Produces("application/json")]
 [Authorize(Roles = Roles.Vater)]
 [ServiceFilter(typeof(ChildOwnershipFilter))]
-public class ChildrenController(PuglingDbContext db) : ControllerBase
+public class ChildrenController(PuglingDbContext db, WalletService wallet) : ControllerBase
 {
     public record ChildResponse(int Id, int FatherId, string Name, int? BirthYear, int? Grade,
-        SchoolTypes SchoolType, DateTime CreatedAt, int PointsBalance);
+        SchoolTypes SchoolType, DateTime CreatedAt, int Coins, int Gems);
 
     Task<ChildResponse?> ProjectOne(int childId) =>
         db.Children
             .Where(c => c.Id == childId)
             .Select(c => new ChildResponse(c.Id, c.FatherId, c.Name, c.BirthYear, c.Grade, c.SchoolType,
-                c.CreatedAt, c.PointsEntries.Sum(p => (int?)p.Amount) ?? 0))
+                c.CreatedAt,
+                c.PointsEntries.Where(p => PointKindCurrency.CoinKinds.Contains(p.Kind)).Sum(p => (int?)p.Amount) ?? 0,
+                c.PointsEntries.Where(p => PointKindCurrency.GemKinds.Contains(p.Kind)).Sum(p => (int?)p.Amount) ?? 0))
             .FirstOrDefaultAsync();
 
     /// <summary>Liste der eigenen Kinder.</summary>
@@ -39,7 +42,9 @@ public class ChildrenController(PuglingDbContext db) : ControllerBase
             .Where(c => c.FatherId == fatherId)
             .OrderBy(c => c.Name)
             .Select(c => new ChildResponse(c.Id, c.FatherId, c.Name, c.BirthYear, c.Grade, c.SchoolType,
-                c.CreatedAt, c.PointsEntries.Sum(p => (int?)p.Amount) ?? 0))
+                c.CreatedAt,
+                c.PointsEntries.Where(p => PointKindCurrency.CoinKinds.Contains(p.Kind)).Sum(p => (int?)p.Amount) ?? 0,
+                c.PointsEntries.Where(p => PointKindCurrency.GemKinds.Contains(p.Kind)).Sum(p => (int?)p.Amount) ?? 0))
             .ToListAsync();
     }
 
@@ -75,7 +80,7 @@ public class ChildrenController(PuglingDbContext db) : ControllerBase
         await db.SaveChangesAsync();
 
         var response = new ChildResponse(child.Id, child.FatherId, child.Name, child.BirthYear, child.Grade,
-            child.SchoolType, child.CreatedAt, 0);
+            child.SchoolType, child.CreatedAt, 0, 0);
         return CreatedAtAction(nameof(Get), new { childId = child.Id }, response);
     }
 
@@ -115,20 +120,17 @@ public class ChildrenController(PuglingDbContext db) : ControllerBase
     // ---- Punkte des Kindes ----
 
     public record PointsEntryResponse(int Id, int ChildId, int Amount, PointKind Kind, string Reason, DateTime CreatedAt);
-    public record ChildPointsResponse(int ChildId, int Balance, IEnumerable<PointsEntryResponse> Entries);
+    public record ChildPointsResponse(int ChildId, int Coins, int Gems, IEnumerable<PointsEntryResponse> Entries);
 
-    /// <summary>Punktestand des Kindes mit den letzten Buchungen.</summary>
+    /// <summary>Kontostand des Kindes (Münzen + Gems) mit den letzten Buchungen.</summary>
     [HttpGet("{childId:int}/points")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<ChildPointsResponse>> GetPoints(int childId)
     {
-        // Saldo über ALLE Buchungen (in der DB summiert) – die Liste zeigt nur die letzten 100. Sonst
-        // wiche der angezeigte Punktestand ab, sobald ein Kind mehr als 100 Buchungen hat (Basis/Combo/
+        // Saldo je Währung über ALLE Buchungen (in der DB summiert) – die Liste zeigt nur die letzten 100.
+        // Sonst wiche der angezeigte Kontostand ab, sobald ein Kind mehr als 100 Buchungen hat (Basis/Combo/
         // Speed + Missionen/Auszeichnungen erzeugen viele kleine Zeilen pro Sitzung).
-        var balance = await db.ChildPoints
-            .AsNoTracking()
-            .Where(p => p.ChildId == childId)
-            .SumAsync(p => (int?)p.Amount) ?? 0;
+        var (coins, gems) = await wallet.BalancesAsync(childId);
 
         var entries = await db.ChildPoints
             .AsNoTracking()
@@ -138,7 +140,7 @@ public class ChildrenController(PuglingDbContext db) : ControllerBase
             .Select(p => new PointsEntryResponse(p.Id, p.ChildId, p.Amount, p.Kind, p.Reason, p.CreatedAt))
             .ToListAsync();
 
-        return new ChildPointsResponse(childId, balance, entries);
+        return new ChildPointsResponse(childId, coins, gems, entries);
     }
 
     /// <summary>Manuelle Punkte-Buchung durch den Vater (Amount positiv = gutschreiben, negativ = abziehen).</summary>

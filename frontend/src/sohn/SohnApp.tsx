@@ -11,10 +11,13 @@ import { SohnProgress } from "./SohnProgress";
 import { SohnSkins } from "./SohnSkins";
 import { SohnKonto } from "./SohnKonto";
 import { Mascot } from "../components/Mascot";
+import { CelebrationLayer, useCelebration } from "../components/Celebration";
+import { isMuted, setMuted } from "../lib/feedback";
 
 interface SohnContextValue {
   childId: number;
-  balance: number;
+  coins: number;
+  gems: number;
   refreshWallet: () => void;
   skin: Skin;
   setSkin: (s: Skin) => void;
@@ -22,6 +25,8 @@ interface SohnContextValue {
   setPlanId: (id: number) => void;
   streak: number;
   setStreak: (n: number) => void;
+  /** Löst eine Feier (Overlay + Ton + Haptik) aus; das Overlay liegt zentral in der Shell. */
+  celebrate: ReturnType<typeof useCelebration>["celebrate"];
 }
 
 const SohnContext = createContext<SohnContextValue | null>(null);
@@ -40,16 +45,19 @@ export function SohnApp() {
 }
 
 function SohnShell({ childId }: { childId: number }) {
-  const [balance, setBalance] = useState(0);
+  const [coins, setCoins] = useState(0);
+  const [gems, setGems] = useState(0);
   const [skin, setSkin] = useState<Skin>(DEFAULT_SKIN);
   const [planId, setPlanIdState] = useState<number | null>(() => {
     const raw = localStorage.getItem(PLAN_KEY(childId));
     return raw ? Number(raw) : null;
   });
   const [streak, setStreak] = useState(0);
+  const [muted, setMutedState] = useState(isMuted());
+  const { celebration, celebrate } = useCelebration();
 
   const refreshWallet = useCallback(() => {
-    api.wallet().then((w) => setBalance(w.balance)).catch(() => { /* Wallet ist Beiwerk */ });
+    api.wallet().then((w) => { setCoins(w.coins); setGems(w.gems); }).catch(() => { /* Wallet ist Beiwerk */ });
   }, []);
 
   useEffect(() => { refreshWallet(); }, [refreshWallet]);
@@ -65,17 +73,38 @@ function SohnShell({ childId }: { childId: number }) {
   }, [childId]);
 
   const value = useMemo<SohnContextValue>(() => ({
-    childId, balance, refreshWallet, skin, setSkin, planId, setPlanId, streak, setStreak,
-  }), [childId, balance, refreshWallet, skin, planId, setPlanId, streak]);
+    childId, coins, gems, refreshWallet, skin, setSkin, planId, setPlanId, streak, setStreak, celebrate,
+  }), [childId, coins, gems, refreshWallet, skin, planId, setPlanId, streak, celebrate]);
+
+  const toggleMute = useCallback(() => {
+    setMutedState((m) => {
+      const next = !m;
+      setMuted(next);
+      return next;
+    });
+  }, []);
 
   return (
     <SohnContext.Provider value={value}>
       <div className="app-sohn">
         <div className="sohn-hud">
           <div className="avatar-mini" style={{ background: skin.gradient }}>{skin.emoji}</div>
-          <div className="chip">🪙<b className="tabnum">{balance}</b></div>
+          <div className="chip">🪙<b className="tabnum">{coins}</b></div>
+          <div className="chip">💎<b className="tabnum">{gems}</b></div>
           <div className="chip flame">🔥<b className="tabnum">{streak}</b></div>
+          <button
+            type="button"
+            className="chip mute-toggle"
+            onClick={toggleMute}
+            aria-pressed={muted ? "true" : "false"}
+            aria-label={muted ? "Ton einschalten" : "Ton ausschalten"}
+            title={muted ? "Ton einschalten" : "Ton ausschalten"}
+          >
+            {muted ? "🔇" : "🔊"}
+          </button>
         </div>
+
+        <CelebrationLayer celebration={celebration} />
 
         <Routes>
           <Route index element={<SohnHome />} />

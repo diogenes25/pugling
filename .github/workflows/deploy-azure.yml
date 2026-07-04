@@ -1,0 +1,49 @@
+name: Deploy to Azure App Service
+
+# Deployt den Single-Host (React-PWA + .NET-API in einem App Service).
+# Ablauf: Frontend bauen → nach wwwroot kopieren → dotnet publish → nach Azure.
+# Voraussetzung: Repo-Secret AZURE_WEBAPP_PUBLISH_PROFILE (Portal → App Service →
+# "Bereitstellungscenter" bzw. "Veröffentlichungsprofil abrufen").
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+env:
+  AZURE_WEBAPP_NAME: pugling            # ggf. an den echten App-Service-Namen anpassen
+  DOTNET_VERSION: "10.0.x"
+  NODE_VERSION: "20"
+  API_PROJECT: backend/Pugling.Api
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # 1) Frontend bauen und in das wwwroot der API legen (same-origin: /api + SPA aus einer Domain)
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: Frontend bauen
+        working-directory: frontend
+        run: |
+          npm ci
+          npm run build
+      - name: Frontend nach wwwroot kopieren
+        run: cp -r frontend/dist/. ${{ env.API_PROJECT }}/wwwroot/
+
+      # 2) API veröffentlichen (inkl. wwwroot)
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+      - name: API publish
+        run: dotnet publish ${{ env.API_PROJECT }} -c Release -o publish
+
+      # 3) Nach Azure deployen
+      - uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ env.AZURE_WEBAPP_NAME }}
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          package: publish

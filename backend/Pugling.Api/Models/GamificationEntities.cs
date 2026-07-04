@@ -100,10 +100,25 @@ public class AchievementAward
     public DateTime EarnedAt { get; set; } = DateTime.UtcNow;
 }
 
+/// <summary>Wiederkehr eines Angebots – bestimmt, über welches Zeitfenster das Kontingent zählt und sich erneuert.</summary>
+public enum OfferPeriod
+{
+    /// <summary>Einmalig; das Kontingent gilt über die gesamte Laufzeit und füllt sich nicht wieder auf.</summary>
+    OneOff = 0,
+    /// <summary>Pro Kalendertag (UTC); erneuert sich täglich.</summary>
+    Daily = 1,
+    /// <summary>Pro ISO-Woche (Mo–So); erneuert sich wöchentlich.</summary>
+    Weekly = 2,
+    /// <summary>Pro Kalendermonat; erneuert sich monatlich.</summary>
+    Monthly = 3,
+}
+
 /// <summary>
-/// Eine vom Vater definierte, einlösbare Prämie (reale Belohnung, z. B. „30 Min Fernsehen") mit
-/// Münz-Preis. Anders als Missionen/Auszeichnungen wird hier <b>ausgegeben</b> statt verdient:
-/// der Sohn fragt eine Einlösung an, der Vater genehmigt sie (siehe <see cref="RewardRedemption"/>).
+/// Ein vom Vater definiertes, kaufbares <b>Angebot</b> (reale Belohnung, z. B. „1 h Spielzeit" oder
+/// „Taschengeld") mit Münz-Preis. Anders als Missionen/Auszeichnungen wird hier <b>ausgegeben</b> statt
+/// verdient: der Sohn kauft sofort (Münzen werden abgebucht), der Vater erfüllt später seinen Teil der
+/// Abmachung (siehe <see cref="RewardRedemption"/>). <see cref="Quantity"/> Käufe sind je
+/// <see cref="Period"/> möglich; das Kontingent füllt sich mit jeder neuen Periode wieder auf.
 /// </summary>
 public class Reward
 {
@@ -111,42 +126,48 @@ public class Reward
     public int ChildId { get; set; }
     public Child? Child { get; set; }
     public string Title { get; set; } = "";
-    /// <summary>Kosten in Münzen, die bei Genehmigung vom Kind-Konto abgebucht werden.</summary>
+    /// <summary>Kosten in Münzen, die bei jedem Kauf vom Kind-Konto abgebucht werden.</summary>
     public int Cost { get; set; }
+    /// <summary>Wiederkehr des Angebots; steuert das Zeitfenster des Kontingents.</summary>
+    public OfferPeriod Period { get; set; } = OfferPeriod.OneOff;
+    /// <summary>Kontingent: wie oft das Angebot je <see cref="Period"/> gekauft werden kann (≥ 1).</summary>
+    public int Quantity { get; set; } = 1;
     public bool Active { get; set; } = true;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }
 
-/// <summary>Status einer Einlöse-Anfrage: der Vater entscheidet, erst dann fließen Münzen.</summary>
+/// <summary>Stand eines gekauften Angebots im Sohn-Konto – der Kauf ist sofort verbindlich, die Erfüllung folgt.</summary>
 public enum RewardRedemptionStatus
 {
-    /// <summary>Vom Sohn angefragt, wartet auf Vater-Entscheidung (noch keine Abbuchung).</summary>
-    Requested = 0,
-    /// <summary>Vom Vater genehmigt – Münzen wurden abgebucht.</summary>
-    Approved = 1,
-    /// <summary>Vom Vater abgelehnt – keine Abbuchung.</summary>
-    Rejected = 2,
+    /// <summary>Vom Sohn gekauft – Münzen wurden abgebucht, wartet auf die reale Erfüllung durch den Vater.</summary>
+    Purchased = 0,
+    /// <summary>Vom Vater erfüllt (reale Leistung erbracht) – abgeschlossen.</summary>
+    Fulfilled = 1,
+    /// <summary>Vom Vater storniert – die Münzen wurden zurückerstattet, der Kontingent-Slot ist wieder frei.</summary>
+    Cancelled = 2,
 }
 
 /// <summary>
-/// Einlöse-Anfrage des Sohns für eine <see cref="Reward"/>. Titel/Kosten werden als Momentaufnahme
-/// festgehalten, damit die Historie stabil bleibt, auch wenn die Prämie später geändert/gelöscht wird.
-/// Die Münz-Abbuchung (negative <see cref="Child.PointsEntries"/>-Buchung, <c>PointKind.Reward</c>)
-/// erfolgt erst bei Genehmigung durch den Vater.
+/// Ein vom Sohn gekauftes Angebot (<see cref="Reward"/>) im Konto. Titel/Kosten werden als Momentaufnahme
+/// festgehalten, damit die Historie stabil bleibt, auch wenn das Angebot später geändert/gelöscht wird.
+/// Die Münz-Abbuchung (negative <c>PointKind.Reward</c>-Buchung) erfolgt <b>sofort beim Kauf</b>; der Vater
+/// erfüllt oder storniert (Rückerstattung) danach. Zeigt dem Sohn „gekauft am … – erfüllt am …".
 /// </summary>
 public class RewardRedemption
 {
     public int Id { get; set; }
     public int ChildId { get; set; }
     public Child? Child { get; set; }
-    /// <summary>Referenz auf die Prämie; wird auf null gesetzt, falls die Prämie später gelöscht wird.</summary>
+    /// <summary>Referenz auf das Angebot; wird auf null gesetzt, falls das Angebot später gelöscht wird.</summary>
     public int? RewardId { get; set; }
     public Reward? Reward { get; set; }
-    /// <summary>Titel der Prämie zum Anfragezeitpunkt (Momentaufnahme).</summary>
+    /// <summary>Titel des Angebots zum Kaufzeitpunkt (Momentaufnahme).</summary>
     public string Title { get; set; } = "";
-    /// <summary>Kosten zum Anfragezeitpunkt (Momentaufnahme); maßgeblich für die Abbuchung.</summary>
+    /// <summary>Kosten zum Kaufzeitpunkt (Momentaufnahme); maßgeblich für Abbuchung und Rückerstattung.</summary>
     public int Cost { get; set; }
-    public RewardRedemptionStatus Status { get; set; } = RewardRedemptionStatus.Requested;
-    public DateTime RequestedAt { get; set; } = DateTime.UtcNow;
-    public DateTime? DecidedAt { get; set; }
+    public RewardRedemptionStatus Status { get; set; } = RewardRedemptionStatus.Purchased;
+    /// <summary>Kaufzeitpunkt; bestimmt zugleich, in welche Kontingent-Periode der Kauf fällt.</summary>
+    public DateTime PurchasedAt { get; set; } = DateTime.UtcNow;
+    /// <summary>Zeitpunkt der Erfüllung bzw. Stornierung durch den Vater (null solange offen).</summary>
+    public DateTime? FulfilledAt { get; set; }
 }

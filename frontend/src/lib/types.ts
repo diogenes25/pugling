@@ -33,7 +33,8 @@ export interface ChildResponse {
   grade: number | null;
   schoolType: string;
   createdAt: string;
-  pointsBalance: number;
+  coins: number;
+  gems: number;
 }
 
 export interface CreateChildDto {
@@ -332,23 +333,30 @@ export interface CreateAchievementDto {
   rewardPoints: number;
 }
 
-// ---- Prämien (einlösbare reale Belohnungen wie Fernseh-/Spielzeit) ----
+// ---- Angebote (kaufbare reale Belohnungen wie Spielzeit/Taschengeld) ----
 
-export type RewardRedemptionStatus = "Requested" | "Approved" | "Rejected";
+/** Kauf-Stand im Konto: gekauft (Münzen weg), vom Vater erfüllt, oder storniert (rückerstattet). */
+export type RewardRedemptionStatus = "Purchased" | "Fulfilled" | "Cancelled";
+/** Wiederkehr eines Angebots – bestimmt das Kontingent-Fenster. */
+export type OfferPeriod = "OneOff" | "Daily" | "Weekly" | "Monthly";
 
-/** Prämien-Definition zur Verwaltung durch den Vater. */
+/** Angebots-Definition zur Verwaltung durch den Vater. */
 export interface RewardDef {
   id: number;
   title: string;
   cost: number;
+  period: OfferPeriod;
+  quantity: number;
   active: boolean;
 }
 export interface CreateRewardDto {
   title: string;
   cost: number;
+  period?: OfferPeriod;
+  quantity?: number;
 }
 
-/** Einlöse-Anfrage aus Vater-Sicht (mit Kind-Bezug). */
+/** Kauf aus Vater-Sicht (mit Kind-Bezug). */
 export interface RedemptionDef {
   id: number;
   childId: number;
@@ -356,33 +364,35 @@ export interface RedemptionDef {
   title: string;
   cost: number;
   status: RewardRedemptionStatus;
-  requestedAt: string;
-  decidedAt: string | null;
+  purchasedAt: string;
+  fulfilledAt: string | null;
 }
 
-/** Verfügbare Prämie aus Sohn-Sicht. */
+/** Verfügbares Angebot aus Sohn-Sicht. */
 export interface RewardOffer {
   id: number;
   title: string;
   cost: number;
+  period: OfferPeriod;
+  quantity: number;
+  remainingThisPeriod: number;
   affordable: boolean;
-  alreadyRequested: boolean;
 }
 
-/** Eigene Einlöse-Anfrage aus Sohn-Sicht. */
+/** Eigener Kauf aus Sohn-Sicht. */
 export interface MyRedemption {
   id: number;
   rewardId: number | null;
   title: string;
   cost: number;
   status: RewardRedemptionStatus;
-  requestedAt: string;
-  decidedAt: string | null;
+  purchasedAt: string;
+  fulfilledAt: string | null;
 }
 
-/** Prämien-Sicht des Sohns: Münzstand, verfügbare Prämien, eigene Anfragen. */
+/** Angebots-Sicht des Sohns: Münzstand, verfügbare Angebote, eigene Käufe. */
 export interface RewardsView {
-  balance: number;
+  coins: number;
   available: RewardOffer[];
   redemptions: MyRedemption[];
 }
@@ -534,15 +544,16 @@ export interface WalletEntry {
 
 export interface Wallet {
   childId: number;
-  balance: number;
+  coins: number;
+  gems: number;
   entries: WalletEntry[];
 }
 
 // ---- Sohn-Skins (server-autoritativer Besitz) ----
 
-/** Skin-Zustand des Kindes vom Server: Münzstand, ausgerüsteter und freigeschaltete Skins. */
+/** Skin-Zustand des Kindes vom Server: Gem-Stand, ausgerüsteter und freigeschaltete Skins. */
 export interface SkinState {
-  balance: number;
+  gems: number;
   selected: string;
   owned: string[];
 }

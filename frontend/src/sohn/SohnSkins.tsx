@@ -7,7 +7,7 @@ import { useSohn } from "./SohnApp";
 
 export function SohnSkins() {
   const { signOut } = useAuth();
-  const { balance, refreshWallet, skin, setSkin } = useSohn();
+  const { gems, refreshWallet, skin, setSkin } = useSohn();
   const [owned, setOwned] = useState<string[]>([]);
   const [selected, setSelected] = useState<string>(skin.id);
   const [ready, setReady] = useState(false);
@@ -33,13 +33,13 @@ export function SohnSkins() {
     const s = SKINS.find((x) => x.id === id)!;
     setBusy(true);
     try {
-      // Bereits freigeschaltet -> nur ausrüsten. Sonst kaufen (Server bucht Münzen ab).
+      // Bereits freigeschaltet -> nur ausrüsten. Sonst kaufen (Server bucht Gems ab).
       const state = owned.includes(id) ? await api.equipSkin(id) : await api.purchaseSkin(id);
       const bought = !owned.includes(id);
       setOwned(state.owned);
       setSelected(state.selected);
       setSkin(skinById(state.selected));
-      refreshWallet(); // Münzstand im HUD real aktualisieren (nach Kauf niedriger)
+      refreshWallet(); // Gem-Stand im HUD real aktualisieren (nach Kauf niedriger)
       flash(bought ? `${s.name} freigeschaltet & ausgerüstet! 🎉` : `${s.name} ausgerüstet!`);
     } catch (e) {
       flash(errorMessage(e));
@@ -52,9 +52,9 @@ export function SohnSkins() {
     <div className="sohn-body">
       <div className="row">
         <span className="screen-title" style={{ margin: 0 }}>Charaktere</span>
-        <span className="chip" style={{ marginLeft: "auto" }}>🪙<b className="tabnum">{balance}</b></span>
+        <span className="chip" style={{ marginLeft: "auto" }}>💎<b className="tabnum">{gems}</b></span>
       </div>
-      <p className="sub">Schalte Skins mit Münzen frei, die du beim Lernen verdienst. Dein Held erscheint überall in der App – auch auf anderen Geräten.</p>
+      <p className="sub">Schalte Skins mit 💎 Gems frei, die du durch Boni beim Lernen verdienst (Combos, schnelle Antworten, Missionen). Dein Held erscheint überall in der App – auch auf anderen Geräten.</p>
 
       <Mascot skin={skin} mood="hyped" size={100} />
 
@@ -76,7 +76,7 @@ export function SohnSkins() {
               <div className="sub" style={{ fontSize: 11, minHeight: 26 }}>{s.blurb}</div>
               {isSelected ? <span className="pill cyan">ausgerüstet</span>
                 : isOwned ? <span className="pill lime">wählen</span>
-                : <span className="pill gold">🪙 {s.cost}</span>}
+                : <span className="pill gold">💎 {s.cost}</span>}
             </button>
           );
         })}

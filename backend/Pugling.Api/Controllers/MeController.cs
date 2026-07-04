@@ -19,26 +19,28 @@ namespace Pugling.Api.Controllers;
 [Tags("Me")]
 [Produces("application/json")]
 [Authorize(Roles = Roles.Sohn)]
-public class MeController(PuglingDbContext db, GamificationService gamification) : ControllerBase
+public class MeController(PuglingDbContext db, GamificationService gamification,
+    WalletService wallet, OfferService offers) : ControllerBase
 {
     /// <summary>Eine einzelne Punkte-Buchung (Gutschrift positiv, Abzug negativ) mit Kategorie.</summary>
     public record PointsEntryResponse(int Id, int Amount, PointKind Kind, string Reason, DateTime CreatedAt);
-    /// <summary>Punktestand (Wallet) des Kindes samt der letzten Buchungen.</summary>
-    public record WalletResponse(int ChildId, int Balance, IReadOnlyList<PointsEntryResponse> Entries);
+    /// <summary>Kontostand (Wallet) des Kindes je Währung samt der letzten Buchungen.</summary>
+    public record WalletResponse(int ChildId, int Coins, int Gems, IReadOnlyList<PointsEntryResponse> Entries);
 
-    /// <summary>Skin-Zustand des Kindes: aktueller Münzstand, ausgerüsteter und freigeschaltete Skins.</summary>
-    public record SkinStateResponse(int Balance, string Selected, IReadOnlyList<string> Owned);
+    /// <summary>Skin-Zustand des Kindes: aktueller Gem-Stand, ausgerüsteter und freigeschaltete Skins.</summary>
+    public record SkinStateResponse(int Gems, string Selected, IReadOnlyList<string> Owned);
 
-    /// <summary>Eine einlösbare Prämie aus Sohn-Sicht: Titel, Preis, ob bezahlbar und ob bereits offen angefragt.</summary>
-    public record RewardOfferResponse(int Id, string Title, int Cost, bool Affordable, bool AlreadyRequested);
-    /// <summary>Eine eigene Einlöse-Anfrage mit aktuellem Status.</summary>
+    /// <summary>Ein kaufbares Angebot aus Sohn-Sicht: Preis, Wiederkehr, Restkontingent dieser Periode und ob bezahlbar.</summary>
+    public record RewardOfferResponse(int Id, string Title, int Cost, OfferPeriod Period, int Quantity,
+        int RemainingThisPeriod, bool Affordable);
+    /// <summary>Ein eigener Kauf im Konto mit aktuellem Status („gekauft am … – erfüllt am …").</summary>
     public record MyRedemptionResponse(int Id, int? RewardId, string Title, int Cost,
-        RewardRedemptionStatus Status, DateTime RequestedAt, DateTime? DecidedAt);
-    /// <summary>Prämien-Sicht des Sohns: Münzstand, verfügbare Prämien und eigene Anfragen.</summary>
-    public record RewardsViewResponse(int Balance, IReadOnlyList<RewardOfferResponse> Available,
+        RewardRedemptionStatus Status, DateTime PurchasedAt, DateTime? FulfilledAt);
+    /// <summary>Angebots-Sicht des Sohns: Münzstand, verfügbare Angebote und eigene Käufe.</summary>
+    public record RewardsViewResponse(int Coins, IReadOnlyList<RewardOfferResponse> Available,
         IReadOnlyList<MyRedemptionResponse> Redemptions);
 
-    /// <summary>Eigener Punktestand (Wallet) samt der letzten Buchungen.</summary>
+    /// <summary>Eigener Kontostand (Münzen + Gems) samt der letzten Buchungen.</summary>
     [HttpGet("points")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -55,8 +57,8 @@ public class MeController(PuglingDbContext db, GamificationService gamification)
             .Select(p => new PointsEntryResponse(p.Id, p.Amount, p.Kind, p.Reason, p.CreatedAt))
             .ToListAsync();
 
-        var balance = await db.ChildPoints.Where(p => p.ChildId == cid).SumAsync(p => (int?)p.Amount) ?? 0;
-        return new WalletResponse(cid.Value, balance, entries);
+        var (coins, gems) = await wallet.BalancesAsync(cid.Value);
+        return new WalletResponse(cid.Value, coins, gems, entries);
     }
 
     /// <summary>Eigene Missionen (Tages-/Wochen-/Zusatzziele) mit aktuellem Fortschritt (reine Lesesicht).</summary>
@@ -118,9 +120,9 @@ public class MeController(PuglingDbContext db, GamificationService gamification)
         if (child.OwnedSkins.Contains(skinId))
             return Problem(statusCode: 409, detail: "Dieser Skin ist bereits freigeschaltet.");
 
-        var balance = await db.ChildPoints.Where(p => p.ChildId == cid).SumAsync(p => (int?)p.Amount) ?? 0;
-        if (balance < cost)
-            return Problem(statusCode: 400, detail: $"Zu wenig Münzen: {balance}/{cost} für '{skinId}'.");
+        var gems = await wallet.GemsAsync(cid.Value);
+        if (gems < cost)
+            return Problem(statusCode: 400, detail: $"Zu wenig Gems: {gems}/{cost} für '{skinId}'.");
 
         db.ChildPoints.Add(new ChildPointsEntry
         {
@@ -177,7 +179,7 @@ public class MeController(PuglingDbContext db, GamificationService gamification)
         }
     }
 
-    /// <summary>Eigene Prämien-Sicht: Münzstand, verfügbare (aktive) Prämien und die eigenen Einlöse-Anfragen.</summary>
+    /// <summary>Eigene Angebots-Sicht: Münzstand, verfügbare (aktive) Angebote und die eigenen Käufe.</summary>
     [HttpGet("rewards")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -189,67 +191,66 @@ public class MeController(PuglingDbContext db, GamificationService gamification)
     }
 
     /// <summary>
-    /// Fragt eine Prämie zum Einlösen an. Es wird noch <b>nichts abgebucht</b> – der Vater entscheidet
-    /// (siehe Admin-<c>RewardsController</c>). Doppelte offene Anfragen für dieselbe Prämie sind gesperrt.
+    /// Kauft ein Angebot: die Münzen werden <b>sofort</b> abgebucht (Direktkauf), der Vater erfüllt seinen
+    /// Teil später. Das Kontingent der aktuellen Periode und die Deckung werden serverseitig geprüft; ein
+    /// paralleler Doppelkauf scheitert per Concurrency-Token mit 409.
     /// </summary>
-    [HttpPost("rewards/{rewardId:int}/redeem")]
+    [HttpPost("rewards/{rewardId:int}/purchase")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
-    public async Task<ActionResult<RewardsViewResponse>> Redeem(int rewardId)
+    public async Task<ActionResult<RewardsViewResponse>> Purchase(int rewardId)
     {
         var cid = User.ChildId();
         if (cid is null) return Forbid();
 
-        var reward = await db.Rewards.FirstOrDefaultAsync(r => r.Id == rewardId && r.ChildId == cid);
-        if (reward is null) return Problem(statusCode: 404, detail: "Prämie nicht gefunden.");
-        if (!reward.Active) return Problem(statusCode: 400, detail: "Diese Prämie ist nicht (mehr) verfügbar.");
-
-        var alreadyOpen = await db.RewardRedemptions.AnyAsync(r =>
-            r.ChildId == cid && r.RewardId == rewardId && r.Status == RewardRedemptionStatus.Requested);
-        if (alreadyOpen) return Problem(statusCode: 409, detail: "Diese Prämie ist bereits angefragt und wartet auf Papa.");
-
-        db.RewardRedemptions.Add(new RewardRedemption
+        var result = await offers.PurchaseAsync(cid.Value, rewardId, DateTime.UtcNow);
+        return result.Error switch
         {
-            ChildId = cid.Value,
-            RewardId = reward.Id,
-            Title = reward.Title,   // Momentaufnahme, stabil auch bei späterer Änderung/Löschung
-            Cost = reward.Cost,
-        });
-        await db.SaveChangesAsync();
-        return await RewardsViewAsync(cid.Value);
+            OfferService.OfferError.None => await RewardsViewAsync(cid.Value),
+            OfferService.OfferError.NotFound => Problem(statusCode: 404, detail: "Angebot nicht gefunden."),
+            OfferService.OfferError.Inactive => Problem(statusCode: 400, detail: "Dieses Angebot ist nicht (mehr) verfügbar."),
+            OfferService.OfferError.QuotaExceeded => Problem(statusCode: 409, detail: "Das Kontingent für diese Periode ist erschöpft."),
+            OfferService.OfferError.InsufficientCoins => Problem(statusCode: 400, detail: "Zu wenig Münzen für dieses Angebot."),
+            _ => Problem(statusCode: 409, detail: "Kauf kollidierte mit einer parallelen Aktion – bitte erneut versuchen."),
+        };
     }
 
     private async Task<RewardsViewResponse> RewardsViewAsync(int childId)
     {
-        var balance = await db.ChildPoints.Where(p => p.ChildId == childId).SumAsync(p => (int?)p.Amount) ?? 0;
+        var coins = await wallet.CoinsAsync(childId);
 
-        var openRewardIds = await db.RewardRedemptions
-            .Where(r => r.ChildId == childId && r.Status == RewardRedemptionStatus.Requested && r.RewardId != null)
-            .Select(r => r.RewardId!.Value).ToListAsync();
-
-        var available = await db.Rewards.AsNoTracking()
+        var offersList = await db.Rewards.AsNoTracking()
             .Where(r => r.ChildId == childId && r.Active)
             .OrderBy(r => r.Cost).ThenBy(r => r.Id)
-            .Select(r => new RewardOfferResponse(r.Id, r.Title, r.Cost, balance >= r.Cost, openRewardIds.Contains(r.Id)))
             .ToListAsync();
+
+        var now = DateTime.UtcNow;
+        var available = new List<RewardOfferResponse>(offersList.Count);
+        foreach (var r in offersList)
+        {
+            var used = await offers.CountInCurrentPeriodAsync(r, now);
+            var remaining = Math.Max(0, r.Quantity - used);
+            available.Add(new RewardOfferResponse(r.Id, r.Title, r.Cost, r.Period, r.Quantity,
+                remaining, coins >= r.Cost && remaining > 0));
+        }
 
         var redemptions = await db.RewardRedemptions.AsNoTracking()
             .Where(r => r.ChildId == childId)
-            .OrderBy(r => r.Status == RewardRedemptionStatus.Requested ? 0 : 1)
-            .ThenByDescending(r => r.RequestedAt)
-            .Select(r => new MyRedemptionResponse(r.Id, r.RewardId, r.Title, r.Cost, r.Status, r.RequestedAt, r.DecidedAt))
+            .OrderBy(r => r.Status == RewardRedemptionStatus.Purchased ? 0 : 1)
+            .ThenByDescending(r => r.PurchasedAt)
+            .Select(r => new MyRedemptionResponse(r.Id, r.RewardId, r.Title, r.Cost, r.Status, r.PurchasedAt, r.FulfilledAt))
             .ToListAsync();
 
-        return new RewardsViewResponse(balance, available, redemptions);
+        return new RewardsViewResponse(coins, available, redemptions);
     }
 
     private async Task<SkinStateResponse> SkinStateAsync(int childId)
     {
         var child = await db.Children.AsNoTracking().FirstAsync(c => c.Id == childId);
-        var balance = await db.ChildPoints.Where(p => p.ChildId == childId).SumAsync(p => (int?)p.Amount) ?? 0;
-        return new SkinStateResponse(balance, child.SelectedSkin, child.OwnedSkins);
+        var gems = await wallet.GemsAsync(childId);
+        return new SkinStateResponse(gems, child.SelectedSkin, child.OwnedSkins);
     }
 }

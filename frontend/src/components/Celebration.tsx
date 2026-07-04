@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useRef, useState } from "react";
+import { playCelebration } from "../lib/feedback";
 
 export type CelebrationTier = "small" | "medium" | "big";
 
@@ -25,6 +26,7 @@ export function useCelebration() {
     seq.current += 1;
     const id = seq.current;
     setCelebration({ id, tier, emoji, title, sub });
+    playCelebration(tier); // Ton + Haptik gehören zur Feier – zentral, damit jeder Aufrufer sie erbt.
     if (timer.current) clearTimeout(timer.current);
     timer.current = setTimeout(() => setCelebration((c) => (c?.id === id ? null : c)), DURATION[tier]);
   }, []);

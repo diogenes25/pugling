@@ -1,10 +1,14 @@
 import { useState } from "react";
 import { api, errorMessage } from "../lib/api";
 import { useAsync } from "../lib/useAsync";
+import { offerPeriodLabel } from "../lib/labels";
 import type {
   AchievementDef, ChildResponse, CreateAchievementDto, CreateMissionDto, CreateRewardDto,
-  MissionDef, MissionPeriod, ProgressMetric, RewardDef,
+  MissionDef, MissionPeriod, OfferPeriod, ProgressMetric, RewardDef,
 } from "../lib/types";
+
+/** Wiederkehr-Optionen für Angebote (deutsche Labels). */
+const OFFER_PERIODS: OfferPeriod[] = ["OneOff", "Daily", "Weekly", "Monthly"];
 
 /** Metriken mit deutschen Labels – dieselben, die der Server (ProgressMetric) auswertet. */
 const METRICS: { value: ProgressMetric; label: string }[] = [
@@ -60,7 +64,7 @@ export function VaterRewards() {
 
 function RewardOfferManager({ childId }: { childId: number }) {
   const list = useAsync<RewardDef[]>(() => api.rewardsFor(childId), [childId]);
-  const [form, setForm] = useState<CreateRewardDto>({ title: "", cost: 200 });
+  const [form, setForm] = useState<Required<CreateRewardDto>>({ title: "", cost: 200, period: "Weekly", quantity: 1 });
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -68,10 +72,11 @@ function RewardOfferManager({ childId }: { childId: number }) {
     e.preventDefault();
     if (!form.title.trim()) { setMsg({ ok: false, text: "Titel nötig." }); return; }
     if (form.cost <= 0) { setMsg({ ok: false, text: "Preis muss positiv sein." }); return; }
+    if (form.quantity < 1) { setMsg({ ok: false, text: "Anzahl muss mindestens 1 sein." }); return; }
     setBusy(true);
     try {
-      await api.createReward(childId, { title: form.title.trim(), cost: form.cost });
-      setMsg({ ok: true, text: `Prämie „${form.title.trim()}" angelegt.` });
+      await api.createReward(childId, { title: form.title.trim(), cost: form.cost, period: form.period, quantity: form.quantity });
+      setMsg({ ok: true, text: `Angebot „${form.title.trim()}" angelegt.` });
       setForm((f) => ({ ...f, title: "" }));
       list.reload();
     } catch (err) {
@@ -96,15 +101,23 @@ function RewardOfferManager({ childId }: { childId: number }) {
 
   return (
     <section>
-      <h2 className="h-section">Prämien zum Einlösen {list.data ? `(${list.data.length})` : ""}</h2>
-      <p className="muted">Reale Belohnungen, die dein Kind mit verdienten Münzen „erkaufen" kann
-        (z.B. 30 Min Fernsehen). Das Kind fragt an, du genehmigst im <b>Konto</b> – erst dann werden Münzen abgebucht.</p>
+      <h2 className="h-section">Angebote zum Kaufen {list.data ? `(${list.data.length})` : ""}</h2>
+      <p className="muted">Reale Belohnungen, die dein Kind mit verdienten 🪙 Münzen kauft (z.B. 1 h Spielzeit).
+        Das Kind kauft <b>sofort</b> (Münzen sind gleich weg); du erfüllst den Kauf im <b>Konto</b>. Anzahl =
+        Kontingent pro Periode (füllt sich jede Periode neu auf).</p>
       <form className="form-grid" onSubmit={submit} style={{ alignItems: "end" }}>
-        <div className="field" style={{ minWidth: 220 }}><label>Titel</label>
-          <input value={form.title} onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))} placeholder="30 Min Fernsehen" /></div>
-        <div className="field" style={{ maxWidth: 140 }}><label>Preis 🪙</label>
+        <div className="field" style={{ minWidth: 200 }}><label>Titel</label>
+          <input value={form.title} onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))} placeholder="1 Stunde Zocken" /></div>
+        <div className="field" style={{ maxWidth: 120 }}><label>Preis 🪙</label>
           <input title="Preis in Münzen" type="number" min={1} value={form.cost}
             onChange={(e) => setForm((f) => ({ ...f, cost: Number(e.target.value) }))} /></div>
+        <div className="field" style={{ maxWidth: 150 }}><label>Wiederkehr</label>
+          <select title="Wiederkehr" value={form.period} onChange={(e) => setForm((f) => ({ ...f, period: e.target.value as OfferPeriod }))}>
+            {OFFER_PERIODS.map((p) => <option key={p} value={p}>{offerPeriodLabel(p)}</option>)}
+          </select></div>
+        <div className="field" style={{ maxWidth: 110 }}><label>Anzahl</label>
+          <input title="Kontingent pro Periode" type="number" min={1} value={form.quantity}
+            onChange={(e) => setForm((f) => ({ ...f, quantity: Number(e.target.value) }))} /></div>
         <button type="submit" className="btn inline-btn" style={{ width: "auto" }} disabled={busy}>{busy ? "…" : "Anlegen"}</button>
       </form>
       {msg && <div className={`banner ${msg.ok ? "ok" : "err"}`} style={{ marginTop: 10 }}>{msg.text}</div>}
@@ -112,12 +125,14 @@ function RewardOfferManager({ childId }: { childId: number }) {
       {list.loading ? <div className="loading">Lade…</div> : list.error ? <div className="banner err">{list.error}</div> : (
         <div style={{ overflowX: "auto", marginTop: 10 }}>
           <table className="table">
-            <thead><tr><th>Prämie</th><th>Preis</th><th>Status</th><th>Aktion</th></tr></thead>
+            <thead><tr><th>Angebot</th><th>Preis</th><th>Wiederkehr</th><th className="num">Anzahl</th><th>Status</th><th>Aktion</th></tr></thead>
             <tbody>
               {list.data?.map((r) => (
                 <tr key={r.id} style={{ opacity: r.active ? 1 : 0.55 }}>
                   <td>{r.title}</td>
                   <td>🪙 {r.cost}</td>
+                  <td className="muted">{offerPeriodLabel(r.period)}</td>
+                  <td className="num">{r.quantity}</td>
                   <td>{r.active ? <span className="pill lime">aktiv</span> : <span className="pill">inaktiv</span>}</td>
                   <td style={{ whiteSpace: "nowrap" }}>
                     <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} disabled={busy} onClick={() => toggle(r)}>
@@ -126,7 +141,7 @@ function RewardOfferManager({ childId }: { childId: number }) {
                   </td>
                 </tr>
               ))}
-              {list.data?.length === 0 && <tr><td colSpan={4} className="muted">Noch keine Prämien.</td></tr>}
+              {list.data?.length === 0 && <tr><td colSpan={6} className="muted">Noch keine Angebote.</td></tr>}
             </tbody>
           </table>
         </div>

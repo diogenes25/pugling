@@ -9,23 +9,32 @@ Bonus-Quellen es gibt (mit Formeln) und wie der Vater sie je Kind hochdreht.
 
 ## 1. Das Ledger & die Punkt-Kategorien
 
-Jede Buchung ist eine **`ChildPointsEntry`** (positiv = gutgeschrieben, negativ = eingelöst) mit einer
-Kategorie **`PointKind`** — dadurch ist auswertbar, *woher* Punkte kamen.
+Jede Buchung ist eine **`ChildPointsEntry`** (positiv = gutgeschrieben, negativ = ausgegeben) mit einer
+Kategorie **`PointKind`** — dadurch ist auswertbar, *woher* Punkte kamen. Es gibt **zwei Währungen**:
+🪙 **Münzen** (für reale Vater-Angebote) und 💎 **Gems** (für Skins/Avatar). Die Währung ist eine
+**reine Funktion des `PointKind`** (kein eigenes Feld, kein Ledger-Umbau) — festgelegt in
+[`PointKindCurrency`](../backend/Pugling.Api/Services/PointKindCurrency.cs), der Saldo je Währung kommt
+zentral aus [`WalletService`](../backend/Pugling.Api/Services/WalletService.cs).
 
-| `PointKind` | Quelle |
-| --- | --- |
-| `Base` | Basispunkte einer richtigen Leitner-Wiederholung (inkl. Zeitfenster-Faktor) |
-| `Combo` | Combo-Bonus (Treffer in Folge) |
-| `Speed` | Bonus für schnelle Antwort |
-| `Duration` | Bonus für durchgehende Lernzeit *(reserviert, aktuell über Missionen abgebildet)* |
-| `Minutes` | Tagesziel Übungszeit erreicht |
-| `Test` | Abschlusstest bestanden |
-| `DayComplete` | Tag vollständig (Zeit **und** Test) |
-| `Mission` | erfüllte Mission |
-| `Achievement` | erreichte Auszeichnung |
-| `Manual` | manuelle Vater-Buchung |
+| `PointKind` | Währung | Quelle |
+| --- | --- | --- |
+| `Base` | 🪙 Münzen | Basispunkte einer richtigen Leitner-Wiederholung (inkl. Zeitfenster-Faktor) |
+| `Minutes` | 🪙 Münzen | Tagesziel Übungszeit erreicht |
+| `Test` | 🪙 Münzen | Abschlusstest bestanden |
+| `DayComplete` | 🪙 Münzen | Tag vollständig (Zeit **und** Test) |
+| `Manual` | 🪙 Münzen | manuelle Vater-Buchung |
+| `Reward` | 🪙 Münzen | **Angebot gekauft** bzw. Storno-Rückerstattung (negativ/positiv) |
+| `Combo` | 💎 Gems | Combo-Bonus (Treffer in Folge) |
+| `Speed` | 💎 Gems | Bonus für schnelle Antwort |
+| `Duration` | 💎 Gems | Bonus für durchgehende Lernzeit *(reserviert, aktuell über Missionen abgebildet)* |
+| `Mission` | 💎 Gems | erfüllte Mission |
+| `Achievement` | 💎 Gems | erreichte Auszeichnung |
+| `SkinPurchase` | 💎 Gems | **Skin freigeschaltet** (negativ) |
 
-Lesen: `GET /api/v1/children/{childId}/points` (Vater) bzw. `GET /api/v1/me/points` (Sohn).
+Kurz: **Fleiß fürs Lernen → Münzen** (→ echte Werte beim Vater), **Motivations-Boni → Gems** (→ Kosmetik).
+Lesen: `GET /api/v1/children/{childId}/points` (Vater) bzw. `GET /api/v1/me/points` (Sohn) — beide liefern
+`coins` **und** `gems`. Ein Test (`PointKindCurrencyTests`) erzwingt, dass jeder `PointKind` genau einer
+Währung zugeordnet ist (kein stiller Verlust bei neuem Kind).
 
 ---
 
@@ -203,7 +212,55 @@ Zwei Wege, die Motivation gezielt hochzudrehen (z. B. Grammatik-Bonus für ein l
 
 ---
 
-## 7. Bewusst offen
+## 7. Ausgeben: Skins (Gems) & Angebote (Münzen)
+
+Die Kehrseite des Verdienens — zwei getrennte Kreisläufe.
+
+### Skins (💎 Gems, sofortiger Kauf)
+
+Kosmetische Charaktere, server-autoritativer Besitz. Kosten in `SkinCatalog` (Backend =
+Quelle der Wahrheit). Kauf bucht **Gems** ab (`PointKind.SkinPurchase`), rüstet direkt aus und bumpt
+`Child.ConcurrencyStamp` → paralleler Doppelklick scheitert mit 409 statt doppelt abzubuchen.
+
+```http
+GET  /api/v1/me/skins                 // { gems, selected, owned }
+POST /api/v1/me/skins/{skinId}/purchase   // Gems abbuchen + ausrüsten
+POST /api/v1/me/skins/{skinId}/equip      // bereits besessenen Skin auswählen
+```
+
+### Angebote (🪙 Münzen, Direktkauf + Erfüllung)
+
+Reale Belohnungen des Vaters (z. B. „1 h Spielzeit", „Taschengeld"). Ein **`Reward`** trägt Preis,
+`Period` (`OneOff | Daily | Weekly | Monthly`) und `Quantity` = **Kontingent pro Periode** (füllt sich
+jede Periode wieder auf). Ablauf (Logik in [`OfferService`](../backend/Pugling.Api/Services/OfferService.cs),
+Kontingent-Fenster in [`PeriodWindow`](../backend/Pugling.Api/Services/PeriodWindow.cs)):
+
+1. **Sohn kauft direkt** — Münzen sofort weg (`PointKind.Reward`), `RewardRedemption` mit Status
+   `Purchased`. Geprüft: aktiv, Kontingent der Periode nicht erschöpft (sonst 409), Deckung (sonst 400).
+   ConcurrencyStamp schützt Saldo **und** Kontingent gegen Doppelkäufe.
+2. **Vater erfüllt** (`fulfill`) real → `Fulfilled` + `FulfilledAt`; oder **storniert** (`cancel`) →
+   `Cancelled` + Münz-**Rückerstattung**; der Kontingent-Slot wird wieder frei.
+
+Das Konto zeigt dem Sohn „gekauft am … – erfüllt am …".
+
+```http
+# Vater — Angebote verwalten & Käufe entscheiden
+POST   /api/v1/children/{childId}/rewards        { "title":"1 Stunde Zocken","cost":400,"period":"Weekly","quantity":5 }
+GET    /api/v1/children/{childId}/rewards                                   // Definitionen
+PATCH  /api/v1/children/{childId}/rewards/{id}    { "period":"Daily","quantity":2,"active":true }
+DELETE /api/v1/children/{childId}/rewards/{id}
+GET    /api/v1/children/{childId}/rewards/redemptions?status=Purchased      // offene Käufe
+POST   /api/v1/children/{childId}/rewards/redemptions/{id}/fulfill          // erfüllt
+POST   /api/v1/children/{childId}/rewards/redemptions/{id}/cancel           // storniert + rückerstattet
+
+# Sohn — Angebote sehen & direkt kaufen
+GET    /api/v1/me/rewards          // { coins, available[period,quantity,remainingThisPeriod,affordable], redemptions[status,purchasedAt,fulfilledAt] }
+POST   /api/v1/me/rewards/{id}/purchase
+```
+
+---
+
+## 8. Bewusst offen
 
 - **Zeitfenster pro Kind** (der „Hausaufgaben-Faktor 13–15 Uhr") — aktuell global.
 - **Dauer-Bonus** (`PointKind.Duration`) als eskalierender Sitzungs-Bonus — reserviert, heute über

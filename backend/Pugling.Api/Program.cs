@@ -45,6 +45,8 @@ builder.Services.AddProblemDetails();
 builder.Services.AddDbContext<PuglingDbContext>(o =>
     o.UseSqlite(builder.Configuration.GetConnectionString("Default") ?? "Data Source=pugling.db"));
 builder.Services.AddScoped<ScoringService>();
+builder.Services.AddScoped<WalletService>();
+builder.Services.AddScoped<OfferService>();
 builder.Services.AddScoped<MetricsService>();
 builder.Services.AddScoped<GamificationService>();
 builder.Services.AddScoped<StudyProgressService>();
@@ -108,6 +110,12 @@ var app = builder.Build();
 app.UseExceptionHandler();
 app.UseStatusCodePages();
 
+// Single-Host-Deploy: dieselbe App liefert die gebaute React-PWA (frontend/dist → wwwroot) aus und
+// bedient /api/* same-origin. Statische Assets sind öffentlich, daher vor der Authentifizierung.
+// Lokal ist wwwroot leer (Frontend läuft über Vite :5173 mit /api-Proxy) → hier passiert nichts.
+app.UseDefaultFiles();
+app.UseStaticFiles();
+
 // Eine Zusammenfassungszeile je Request (Methode, Pfad, Status, Dauer) statt der lärmenden
 // Framework-Defaults; angereichert um Identität/TraceId, damit ein 4xx/5xx sofort zuordenbar ist.
 app.UseSerilogRequestLogging(options => options.EnrichDiagnosticContext = (diag, http) =>
@@ -121,6 +129,13 @@ app.UseSerilogRequestLogging(options => options.EnrichDiagnosticContext = (diag,
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
+    // SQLite legt die DB-Datei selbst an, aber nicht deren Verzeichnis. Im Hosting (z. B. Azure App
+    // Service) liegt die DB bewusst außerhalb des Deploy-Verzeichnisses (Data Source=/home/data/…),
+    // damit sie Deployments überlebt – der Ordner muss vor Migrate existieren. Lokal ein No-op.
+    var dataSource = new Microsoft.Data.Sqlite.SqliteConnectionStringBuilder(
+        db.Database.GetConnectionString()).DataSource;
+    if (Path.GetDirectoryName(Path.GetFullPath(dataSource)) is { Length: > 0 } dbDir)
+        Directory.CreateDirectory(dbDir);
     db.Database.Migrate(); // wendet ausstehende EF-Migrationen an (Schema-Upgrade-Pfad)
     Seed.Run(db);
 }
@@ -142,6 +157,10 @@ app.UseMiddleware<RequestLogContextMiddleware>();
 // Health-Endpunkt bewusst anonym (kein [Authorize]) – für Load-Balancer/Monitoring.
 app.MapHealthChecks("/health");
 app.MapControllers();
+// Client-seitiges Routing: alle nicht von /api, /swagger, /health etc. bediente Pfade auf die SPA
+// zurückfallen lassen, damit Direktaufrufe von /sohn, /vater usw. index.html laden (React-Router
+// übernimmt). Greift nur, wenn wwwroot/index.html existiert (Prod-Build) – lokal 404 → egal.
+app.MapFallbackToFile("index.html");
 app.Run();
 
 /// <summary>Sichtbar gemacht für Integrationstests (WebApplicationFactory&lt;Program&gt;).</summary>

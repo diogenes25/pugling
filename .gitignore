@@ -9,6 +9,10 @@ coverage.cobertura.xml
 logs/
 node_modules/
 dist/
+
+# Gebautes Frontend wird beim Deploy nach wwwroot kopiert – nicht einchecken (Ordner bleibt via .gitkeep)
+backend/Pugling.Api/wwwroot/*
+!backend/Pugling.Api/wwwroot/.gitkeep
 .vs/
 .idea/
 .env

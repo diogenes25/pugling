@@ -13,8 +13,8 @@ export function VaterKonto() {
     <>
       <section>
         <h2 className="h-section">Konto</h2>
-        <p className="muted">Punktestand, Buchungsverlauf und offene Einlöse-Anfragen deines Kindes.
-          Genehmigst du eine Anfrage, werden die Münzen abgebucht.</p>
+        <p className="muted">Münz-/Gem-Stand, Buchungsverlauf und offene Käufe deines Kindes. Beim Kauf sind
+          die Münzen sofort weg – du erfüllst den Kauf real (oder stornierst mit Rückerstattung).</p>
         {children.loading ? <div className="loading">Lade…</div>
           : children.error ? <div className="banner err">{children.error}</div>
           : children.data && children.data.length > 0 ? (
@@ -40,14 +40,14 @@ function AccountView({ childId }: { childId: number }) {
 
   function flash(ok: boolean, text: string) { setMsg({ ok, text }); setTimeout(() => setMsg(null), 2500); }
 
-  async function decide(id: number, approve: boolean) {
+  async function decide(id: number, fulfill: boolean) {
     setBusy(true);
     try {
-      if (approve) await api.approveRedemption(childId, id);
-      else await api.rejectRedemption(childId, id);
+      if (fulfill) await api.fulfillRedemption(childId, id);
+      else await api.cancelRedemption(childId, id);
       account.reload();
       redemptions.reload();
-      flash(true, approve ? "Genehmigt – Münzen abgebucht." : "Abgelehnt.");
+      flash(true, fulfill ? "Erfüllt." : "Storniert – Münzen zurückerstattet.");
     } catch (err) {
       flash(false, errorMessage(err));
     } finally {
@@ -55,36 +55,37 @@ function AccountView({ childId }: { childId: number }) {
     }
   }
 
-  const open = redemptions.data?.filter((r) => r.status === "Requested") ?? [];
-  const decided = redemptions.data?.filter((r) => r.status !== "Requested") ?? [];
+  const open = redemptions.data?.filter((r) => r.status === "Purchased") ?? [];
+  const decided = redemptions.data?.filter((r) => r.status !== "Purchased") ?? [];
 
   return (
     <>
       <section className="vater-grid">
-        <div className="card"><div className="muted">Münzstand</div><div className="h-section">🪙 {account.data?.balance ?? "…"}</div></div>
-        <div className="card"><div className="muted">Offene Anfragen</div><div className="h-section">{open.length}</div></div>
+        <div className="card"><div className="muted">Münzstand</div><div className="h-section">🪙 {account.data?.coins ?? "…"}</div></div>
+        <div className="card"><div className="muted">Gems</div><div className="h-section">💎 {account.data?.gems ?? "…"}</div></div>
+        <div className="card"><div className="muted">Offene Käufe</div><div className="h-section">{open.length}</div></div>
       </section>
 
       {msg && <div className={`banner ${msg.ok ? "ok" : "err"}`}>{msg.text}</div>}
 
       <section>
-        <h3 className="h-section">Offene Einlöse-Anfragen</h3>
+        <h3 className="h-section">Offene Käufe (zu erfüllen)</h3>
         {redemptions.loading ? <div className="loading">Lade…</div> : redemptions.error ? <div className="banner err">{redemptions.error}</div>
-          : open.length === 0 ? <p className="muted">Keine offenen Anfragen.</p> : (
+          : open.length === 0 ? <p className="muted">Keine offenen Käufe.</p> : (
             <div style={{ overflowX: "auto" }}>
               <table className="table">
-                <thead><tr><th>Prämie</th><th>Preis</th><th>Angefragt</th><th>Aktion</th></tr></thead>
+                <thead><tr><th>Angebot</th><th>Preis</th><th>Gekauft</th><th>Aktion</th></tr></thead>
                 <tbody>
                   {open.map((r) => (
                     <tr key={r.id}>
                       <td>{r.title}</td>
                       <td>🪙 {r.cost}</td>
-                      <td className="muted">{new Date(r.requestedAt).toLocaleDateString()}</td>
+                      <td className="muted">{new Date(r.purchasedAt).toLocaleDateString()}</td>
                       <td style={{ whiteSpace: "nowrap" }}>
                         <button type="button" className="btn inline-btn" style={{ width: "auto" }} disabled={busy}
-                          onClick={() => decide(r.id, true)}>Genehmigen</button>{" "}
+                          onClick={() => decide(r.id, true)}>Erfüllen</button>{" "}
                         <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} disabled={busy}
-                          onClick={() => decide(r.id, false)}>Ablehnen</button>
+                          onClick={() => decide(r.id, false)}>Stornieren</button>
                       </td>
                     </tr>
                   ))}
@@ -96,18 +97,18 @@ function AccountView({ childId }: { childId: number }) {
 
       {decided.length > 0 && (
         <section>
-          <h3 className="h-section">Entschieden</h3>
+          <h3 className="h-section">Abgeschlossen</h3>
           <div style={{ overflowX: "auto" }}>
             <table className="table">
-              <thead><tr><th>Prämie</th><th>Preis</th><th>Status</th><th>Am</th></tr></thead>
+              <thead><tr><th>Angebot</th><th>Preis</th><th>Status</th><th>Am</th></tr></thead>
               <tbody>
                 {decided.map((r) => (
                   <tr key={r.id}>
                     <td>{r.title}</td>
                     <td>🪙 {r.cost}</td>
-                    <td>{r.status === "Approved" ? <span className="pill lime">{redemptionStatusLabel(r.status)}</span>
+                    <td>{r.status === "Fulfilled" ? <span className="pill lime">{redemptionStatusLabel(r.status)}</span>
                       : <span className="pill">{redemptionStatusLabel(r.status)}</span>}</td>
-                    <td className="muted">{r.decidedAt ? new Date(r.decidedAt).toLocaleDateString() : "–"}</td>
+                    <td className="muted">{r.fulfilledAt ? new Date(r.fulfilledAt).toLocaleDateString() : "–"}</td>
                   </tr>
                 ))}
               </tbody>

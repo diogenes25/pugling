@@ -3,13 +3,12 @@ import { useNavigate } from "react-router-dom";
 import { api, errorMessage } from "../lib/api";
 import { useSohn } from "./SohnApp";
 import { Mascot } from "../components/Mascot";
-import { CelebrationLayer, useCelebration } from "../components/Celebration";
 import type { AnswerDto, TestAttemptResponse, TestStage, TestSubmitResponse } from "../lib/types";
 
 const TYPED: TestStage[] = ["LetterBoxes", "FreeText", "Audio"];
 
 export function SohnTest() {
-  const { planId, refreshWallet, setStreak, skin } = useSohn();
+  const { planId, refreshWallet, setStreak, skin, celebrate } = useSohn();
   const nav = useNavigate();
 
   const [attempt, setAttempt] = useState<TestAttemptResponse | null>(null);
@@ -18,7 +17,6 @@ export function SohnTest() {
   const [result, setResult] = useState<TestSubmitResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const { celebration, celebrate } = useCelebration();
 
   useEffect(() => {
     if (!planId) { nav("/sohn"); return; }
@@ -33,13 +31,10 @@ export function SohnTest() {
     <button type="button" className="btn ghost" onClick={() => nav("/sohn")}>Zur Basis</button></div>;
 
   if (result) return (
-    <>
-      <TestResult result={result} skin={skin} onHome={() => nav("/sohn")} onRetry={() => {
-        setResult(null); setAttempt(null); setAnswers({}); setRevealed(new Set());
-        if (planId) api.startTest(planId).then(setAttempt).catch((e) => setError(errorMessage(e)));
-      }} />
-      <CelebrationLayer celebration={celebration} />
-    </>
+    <TestResult result={result} skin={skin} onHome={() => nav("/sohn")} onRetry={() => {
+      setResult(null); setAttempt(null); setAnswers({}); setRevealed(new Set());
+      if (planId) api.startTest(planId).then(setAttempt).catch((e) => setError(errorMessage(e)));
+    }} />
   );
 
   if (!attempt) return <div className="sohn-body"><div className="loading">Test wird vorbereitet…</div></div>;
