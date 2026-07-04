@@ -31,6 +31,13 @@ internal static class TestApi
         return c;
     }
 
+    /// <summary>Liest die <c>id</c> aus einer erfolgreichen JSON-Antwort.</summary>
+    public static async Task<int> IdAsync(HttpResponseMessage res)
+    {
+        res.EnsureSuccessStatusCode();
+        return (await res.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetInt32();
+    }
+
     /// <summary>Legt (als Vater) einen Vokabel-Lehrplan mit zwei Seed-Vokabeln an und liefert dessen Id.</summary>
     public static async Task<int> CreateVocabPlanAsync(HttpClient father, int childId = 1, bool dailyTestRequired = true)
     {
@@ -43,7 +50,23 @@ internal static class TestApi
             contentKeys = new[] { "en_house_de_haus", "en_go_de_gehen" },
             dailyTestRequired,
         });
-        res.EnsureSuccessStatusCode();
-        return (await res.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetInt32();
+        return await IdAsync(res);
+    }
+
+    /// <summary>Legt (als Vater) Fach → Kapitel → eine Rechen-Übung an und liefert deren Ids.</summary>
+    public static async Task<(int subjectId, int chapterId, int exerciseId)> CreateArithmeticExerciseAsync(HttpClient father)
+    {
+        var subjectId = await IdAsync(await father.PostAsJsonAsync("/api/learn/subjects", new { name = "Katalog-Test" }));
+        var chapterId = await IdAsync(await father.PostAsJsonAsync(
+            $"/api/learn/subjects/{subjectId}/chapters", new { name = "Kapitel 1", orderIndex = 1 }));
+        var exerciseId = await IdAsync(await father.PostAsJsonAsync(
+            $"/api/learn/subjects/{subjectId}/chapters/{chapterId}/arithmetic", new
+            {
+                title = "Kleines 1×1",
+                orderIndex = 1,
+                rewardPoints = 10,
+                config = new { problems = new[] { new { prompt = "7 × 6", answer = 42, tolerance = 0 } } },
+            }));
+        return (subjectId, chapterId, exerciseId);
     }
 }
