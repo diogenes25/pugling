@@ -39,9 +39,12 @@ test("Vater erstellt Plan, Sohn arbeitet ihn ab, Punkte fließen", async ({ brow
   const vater = await vaterCtx.newPage();
   await vaterLogin(vater);
 
+  // Fünf Vokabeln → im Übungslauf lässt sich der Combo-Meilenstein (×5) auslösen.
   await addVocab(vater, "cat", "Katze");
   await addVocab(vater, "dog", "Hund");
   await addVocab(vater, "sun", "Sonne");
+  await addVocab(vater, "moon", "Mond");
+  await addVocab(vater, "tree", "Baum");
 
   // Neuen Lehrplan anlegen
   await vater.getByRole("link", { name: "Neuer Plan" }).click();
@@ -51,7 +54,7 @@ test("Vater erstellt Plan, Sohn arbeitet ihn ab, Punkte fließen", async ({ brow
   const vocabSection = vater.locator("section.card").nth(1);
   await expect(vocabSection.locator("input[type=checkbox]").first()).toBeVisible();
   const boxes = vocabSection.locator("input[type=checkbox]");
-  const pick = Math.min(3, await boxes.count());
+  const pick = Math.min(5, await boxes.count());
   for (let i = 0; i < pick; i++) await boxes.nth(i).check();
 
   await vater.getByRole("button", { name: "Lehrplan erstellen" }).click();
@@ -76,6 +79,8 @@ test("Vater erstellt Plan, Sohn arbeitet ihn ab, Punkte fließen", async ({ brow
     await sohn.getByRole("button", { name: "Umdrehen 🔄" }).click();
     await sohn.getByRole("button", { name: "Gewusst!" }).click();
   }
+  // Motivations-Feature: ab 5 Treffern in Folge feiert die App den Combo-Meilenstein (Feier-Banner).
+  if (total >= 5) await expect(sohn.locator(".cel-title", { hasText: "COMBO ×5" })).toBeVisible();
   await expect(sohn.getByText("RUNDE FERTIG!")).toBeVisible();
 
   // Weiter zum Tagestest
@@ -91,7 +96,7 @@ test("Vater erstellt Plan, Sohn arbeitet ihn ab, Punkte fließen", async ({ brow
   for (let i = 0; i < knownCount; i++) await known.nth(i).click();
 
   await sohn.getByRole("button", { name: /Abgeben/ }).click();
-  await expect(sohn.getByText("SIEG!")).toBeVisible();
+  await expect(sohn.locator(".vtitle", { hasText: "SIEG!" })).toBeVisible();
 
   // Wallet: Münzen wurden gutgeschrieben (Test bestanden + ggf. Leitner-Übung)
   await sohn.goto("/sohn/skins");

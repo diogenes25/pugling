@@ -19,6 +19,17 @@ Sohn: Login → Tagesmission → Leitner-Übung → Tagestest (SelfAssess) → S
 
 <!-- Neue Einträge oben anfügen -->
 
+### Runde 5 — Motivations-Animationen (Duolingo-Stil) + Combo-Bonus
+Neu: server-autoritative **Combo** (Treffer in Folge, im `PracticeSessionsController` gezählt → cheat-sicher)
+mit eskalierendem **Combo-Bonus** (alle 5 → +5/+10/+15 …), zurückgegeben im `ReviewOutcome`. Frontend:
+`Celebration`-System in drei Stufen — kleiner Emoji-Pop bei jedem Treffer, mittleres Konfetti-Banner ab
+Combo ×5, großer fliegender Kämpfer ab ×10; Test-Sieg feiert groß. Nur transform/opacity,
+`prefers-reduced-motion` blendet die Ebene aus. Integrationstests weiter 55/55 grün.
+E2E um 5 Vokabeln erweitert und um Assertions für Combo-Banner (×5) + Sieg ergänzt.
+Zwei kleine Test-Fixes nötig (Strict-Mode: „COMBO ×5" und „SIEG!" existieren jetzt je zweimal —
+inline-Zähler/Ergebnis-Titel **und** Feier-Banner; Locator auf `.cel-title`/`.vtitle` geschärft).
+Ergebnis: 3× stabil grün.
+
 ### Runde 4 — GRÜN ✅ (3× stabil auf frischer DB)
 Assertion auf die Auswertung geschärft (`Punkte gesamt > 0` + Tagesverlauf zeigt „bestanden N%").
 Ergebnis: kompletter Durchstich läuft deterministisch durch — Vater legt via Web an, Sohn arbeitet

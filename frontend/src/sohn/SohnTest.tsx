@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { api } from "../lib/api";
 import { useSohn } from "./SohnApp";
 import { Mascot } from "../components/Mascot";
+import { CelebrationLayer, useCelebration } from "../components/Celebration";
 import type { AnswerDto, TestAttemptResponse, TestStage, TestSubmitResponse } from "../lib/types";
 
 const TYPED: TestStage[] = ["LetterBoxes", "FreeText", "Audio"];
@@ -17,6 +18,7 @@ export function SohnTest() {
   const [result, setResult] = useState<TestSubmitResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const { celebration, celebrate } = useCelebration();
 
   useEffect(() => {
     if (!planId) { nav("/sohn"); return; }
@@ -30,10 +32,15 @@ export function SohnTest() {
   if (error) return <div className="sohn-body"><div className="error-box">{error}</div>
     <button type="button" className="btn ghost" onClick={() => nav("/sohn")}>Zur Basis</button></div>;
 
-  if (result) return <TestResult result={result} skin={skin} onHome={() => nav("/sohn")} onRetry={() => {
-    setResult(null); setAttempt(null); setAnswers({}); setRevealed(new Set());
-    if (planId) api.startTest(planId).then(setAttempt).catch((e) => setError(String(e)));
-  }} />;
+  if (result) return (
+    <>
+      <TestResult result={result} skin={skin} onHome={() => nav("/sohn")} onRetry={() => {
+        setResult(null); setAttempt(null); setAnswers({}); setRevealed(new Set());
+        if (planId) api.startTest(planId).then(setAttempt).catch((e) => setError(String(e)));
+      }} />
+      <CelebrationLayer celebration={celebration} />
+    </>
+  );
 
   if (!attempt) return <div className="sohn-body"><div className="loading">Test wird vorbereitet…</div></div>;
 
@@ -56,6 +63,8 @@ export function SohnTest() {
       );
       const res = await api.submitTest(planId, attempt.attemptId, payload);
       setResult(res);
+      celebrate(res.passed ? "big" : "small", res.passed ? "🎉" : "💪",
+        res.passed ? "SIEG!" : undefined, res.passed ? `${res.scorePercent}%` : undefined);
       setStreak((await api.today(planId)).currentStreak);
       refreshWallet();
     } catch (e) {

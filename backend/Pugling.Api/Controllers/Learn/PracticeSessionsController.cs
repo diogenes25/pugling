@@ -72,10 +72,16 @@ public class PracticeSessionsController(PuglingDbContext db, StudyProgressServic
         return await progress.EvaluateAndAwardAsync(plan, session.Day);
     }
 
+    /// <summary>Alle N Treffer in Folge gibt es einen eskalierenden Combo-Bonus (Motivations-Feature).</summary>
+    private const int ComboMilestone = 5;
+
     /// <summary>ContentId = Vokabel-Id bzw. Lückentext-Id; Stage = jeweilige Stufe (verfahrensabhängig).</summary>
     public record ReviewDto(int ContentId, int Stage, bool WasCorrect);
-    /// <summary>Ergebnis einer Leitner-Wiederholung: vergebene Punkte, neue Box, nächste Fälligkeit.</summary>
-    public record ReviewOutcome(int Awarded, int Box, DateOnly? DueOn);
+    /// <summary>
+    /// Ergebnis einer Leitner-Wiederholung: vergebene Punkte, neue Box, nächste Fälligkeit sowie die
+    /// serverseitig gezählte Combo (Treffer in Folge) und ein etwaiger Combo-Bonus.
+    /// </summary>
+    public record ReviewOutcome(int Awarded, int Box, DateOnly? DueOn, int Combo, int ComboBonus);
 
     /// <summary>
     /// Protokolliert eine Wiederholung (was wurde geübt, auf welcher Stufe, richtig?). Bei Leitner-Plänen
@@ -109,6 +115,16 @@ public class PracticeSessionsController(PuglingDbContext db, StudyProgressServic
             return NoContent();
         }
 
+        // Combo serverseitig zählen (cheat-sicher): Treffer in Folge am Ende der bisherigen Sitzungs-Reviews.
+        var prevStreak = 0;
+        foreach (var r in session.Reviews.OrderByDescending(r => r.At).ThenByDescending(r => r.Id))
+        {
+            if (r.WasCorrect) prevStreak++; else break;
+        }
+        var combo = dto.WasCorrect ? prevStreak + 1 : 0;
+        // Alle ComboMilestone Treffer in Folge: eskalierender Bonus (5, 10, 15 …).
+        var comboBonus = combo > 0 && combo % ComboMilestone == 0 ? ComboMilestone * (combo / ComboMilestone) : 0;
+
         // Punkte aus dem Zustand VOR dem Box-Aufstieg berechnen (neuer Inhalt zählt am meisten),
         // dann die Karte terminieren.
         int awarded = dto.WasCorrect ? await points.PointsForReviewAsync(item.ReviewCount, item.Box, DateTime.Now) : 0;
@@ -120,9 +136,16 @@ public class PracticeSessionsController(PuglingDbContext db, StudyProgressServic
                 Amount = awarded,
                 Reason = $"[{plan.Title}] Leitner-Wiederholung richtig → Box {item.Box}",
             });
+        if (comboBonus > 0)
+            db.ChildPoints.Add(new ChildPointsEntry
+            {
+                ChildId = plan.ChildId,
+                Amount = comboBonus,
+                Reason = $"[{plan.Title}] Combo ×{combo} – Bonus!",
+            });
         await db.SaveChangesAsync();
 
-        return new ReviewOutcome(awarded, item.Box, item.DueOn);
+        return new ReviewOutcome(awarded, item.Box, item.DueOn, combo, comboBonus);
     }
 
     /// <summary>Beendet die Sitzung, wertet den Tag aus und gibt den Fortschritt zurück.</summary>
