@@ -56,6 +56,16 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
     {
         base.OnModelCreating(modelBuilder);
 
+        // Freigeschaltete Skins des Kindes als JSON-Liste (Neuzuweisung im Controller, kein In-Place-Mutieren).
+        modelBuilder.Entity<Child>(e =>
+        {
+            e.Property(c => c.OwnedSkins).HasConversion(
+                v => JsonSerializer.Serialize(v, JsonOptions),
+                s => JsonSerializer.Deserialize<List<string>>(s, JsonOptions) ?? new());
+            // Concurrency-Token: schützt Skin-Kauf/Ausrüsten vor parallelen Doppelbuchungen.
+            e.Property(c => c.ConcurrencyStamp).IsConcurrencyToken();
+        });
+
         modelBuilder.Entity<Vocabulary>(e =>
         {
             e.HasIndex(v => v.Key).IsUnique();

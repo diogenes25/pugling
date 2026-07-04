@@ -1,8 +1,11 @@
 import type {
-  AchievementStatus, AnswerDto, ChapterResponse, ChildResponse, CreateChildDto, CreatePlanDto,
-  CreateVocabularyDto, ExerciseSearchParams, ExerciseSummary, LoginResponse, MissionStatus,
-  PlanResponse, ProgressResponse, ReviewInput, ReviewOutcome, SessionResponse, SubjectResponse,
-  TestAttemptResponse, TestSubmitResponse, TodayResponse, VocabularyResponse, Wallet,
+  AchievementDef, AchievementStatus, AnswerDto, ChapterResponse, ChildResponse, CreateAchievementDto,
+  CreateChildDto, CreateKlassenarbeitDto, CreateMissionDto, CreatePlanDto, CreateVocabularyDto,
+  ExerciseSearchParams, ExerciseSummary, KlassenarbeitDetail, KlassenarbeitPractice, KlassenarbeitRepeat,
+  KlassenarbeitResponse, KlassenarbeitStatus, LoginResponse, MissionDef, MissionStatus, PlanResponse,
+  ProgressResponse, ReviewInput, ReviewOutcome, SessionResponse, SkinState, SubjectResponse,
+  TestAttemptResponse, TestSubmitResponse, TodayResponse, UpdateKlassenarbeitDto, UpdatePlanDto,
+  VocabularyResponse, Wallet,
 } from "./types";
 
 const TOKEN_KEY = "pugling.token";
@@ -111,6 +114,13 @@ export const api = {
     http<PlanResponse[]>(`${V1}/study-plans${childId ? `?childId=${childId}` : ""}`),
   plan: (planId: number) => http<PlanResponse>(`${V1}/study-plans/${planId}`),
   createPlan: (dto: CreatePlanDto) => http<PlanResponse>(`${V1}/study-plans`, "POST", dto),
+  // Lehrplan nachträglich ändern/verlängern/deaktivieren bzw. Inhalte nachschieben/entfernen.
+  updatePlan: (planId: number, dto: UpdatePlanDto) =>
+    http<PlanResponse>(`${V1}/study-plans/${planId}`, "PATCH", dto),
+  addPlanItem: (planId: number, contentKey: string) =>
+    http<PlanResponse>(`${V1}/study-plans/${planId}/items`, "POST", { contentKey }),
+  removePlanItem: (planId: number, itemId: number) =>
+    http<void>(`${V1}/study-plans/${planId}/items/${itemId}`, "DELETE"),
   today: (planId: number) => http<TodayResponse>(`${V1}/study-plans/${planId}/today`),
   progress: (planId: number) => http<ProgressResponse>(`${V1}/study-plans/${planId}/progress`),
 
@@ -141,4 +151,50 @@ export const api = {
   // ---- Sohn: Missionen & Auszeichnungen ----
   missions: () => http<MissionStatus[]>(`${V1}/me/missions`),
   achievements: () => http<AchievementStatus[]>(`${V1}/me/achievements`),
+
+  // ---- Sohn: Skins (Besitz server-autoritativ; Kauf bucht Münzen ab) ----
+  skins: () => http<SkinState>(`${V1}/me/skins`),
+  purchaseSkin: (skinId: string) => http<SkinState>(`${V1}/me/skins/${skinId}/purchase`, "POST", {}),
+  equipSkin: (skinId: string) => http<SkinState>(`${V1}/me/skins/${skinId}/equip`, "POST", {}),
+
+  // ---- Vater: Missionen (Belohnungsziele) je Kind verwalten ----
+  missionsFor: (childId: number) => http<MissionDef[]>(`${V1}/children/${childId}/missions`),
+  createMission: (childId: number, dto: CreateMissionDto) =>
+    http<MissionDef>(`${V1}/children/${childId}/missions`, "POST", dto),
+  updateMission: (childId: number, missionId: number, dto: Partial<MissionDef>) =>
+    http<MissionDef>(`${V1}/children/${childId}/missions/${missionId}`, "PATCH", dto),
+  deleteMission: (childId: number, missionId: number) =>
+    http<void>(`${V1}/children/${childId}/missions/${missionId}`, "DELETE"),
+
+  // ---- Vater: Auszeichnungen (Badges) je Kind verwalten ----
+  achievementsFor: (childId: number) => http<AchievementDef[]>(`${V1}/children/${childId}/achievements`),
+  createAchievement: (childId: number, dto: CreateAchievementDto) =>
+    http<AchievementDef>(`${V1}/children/${childId}/achievements`, "POST", dto),
+  updateAchievement: (childId: number, achievementId: number, dto: Partial<AchievementDef>) =>
+    http<AchievementDef>(`${V1}/children/${childId}/achievements/${achievementId}`, "PATCH", dto),
+  deleteAchievement: (childId: number, achievementId: number) =>
+    http<void>(`${V1}/children/${childId}/achievements/${achievementId}`, "DELETE"),
+
+  // ---- Vater: Klassenarbeiten (planen, Übungen zuweisen, benoten, üben/wiederholen) ----
+  classTests: (childId: number, status?: KlassenarbeitStatus) => {
+    const q = new URLSearchParams({ childId: String(childId) });
+    if (status) q.set("status", status);
+    return http<KlassenarbeitResponse[]>(`${V1}/class-tests?${q.toString()}`);
+  },
+  classTest: (id: number) => http<KlassenarbeitDetail>(`${V1}/class-tests/${id}`),
+  createClassTest: (dto: CreateKlassenarbeitDto) =>
+    http<KlassenarbeitDetail>(`${V1}/class-tests`, "POST", dto),
+  updateClassTest: (id: number, dto: UpdateKlassenarbeitDto) =>
+    http<KlassenarbeitResponse>(`${V1}/class-tests/${id}`, "PATCH", dto),
+  deleteClassTest: (id: number) => http<void>(`${V1}/class-tests/${id}`, "DELETE"),
+  assignClassTestExercises: (id: number, exerciseIds: number[]) =>
+    http<KlassenarbeitDetail>(`${V1}/class-tests/${id}/exercises`, "POST", { exerciseIds }),
+  unassignClassTestExercise: (id: number, exerciseId: number) =>
+    http<void>(`${V1}/class-tests/${id}/exercises/${exerciseId}`, "DELETE"),
+  classTestPractice: (id: number) => http<KlassenarbeitPractice>(`${V1}/class-tests/${id}/practice`),
+  classTestRepeat: (childId: number, minBadGrade?: number) => {
+    const q = new URLSearchParams({ childId: String(childId) });
+    if (minBadGrade != null) q.set("minBadGrade", String(minBadGrade));
+    return http<KlassenarbeitRepeat>(`${V1}/class-tests/repeat?${q.toString()}`);
+  },
 };
