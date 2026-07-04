@@ -244,6 +244,9 @@ namespace Pugling.Api.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
+                    b.Property<int?>("CategoryId")
+                        .HasColumnType("INTEGER");
+
                     b.Property<int>("ChapterId")
                         .HasColumnType("INTEGER");
 
@@ -254,11 +257,23 @@ namespace Pugling.Api.Data.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("TEXT");
 
+                    b.Property<int?>("GradeMax")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("GradeMin")
+                        .HasColumnType("INTEGER");
+
                     b.Property<int>("OrderIndex")
                         .HasColumnType("INTEGER");
 
                     b.Property<int>("RewardPoints")
                         .HasColumnType("INTEGER");
+
+                    b.Property<int>("SchoolTypes")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Source")
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("SuggestedBonus")
                         .HasColumnType("TEXT");
@@ -272,9 +287,35 @@ namespace Pugling.Api.Data.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("CategoryId");
+
                     b.HasIndex("ChapterId");
 
                     b.ToTable("Exercises");
+                });
+
+            modelBuilder.Entity("Pugling.Api.Models.ExerciseCategory", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("SubjectId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SubjectId", "Name")
+                        .IsUnique();
+
+                    b.ToTable("ExerciseCategories");
                 });
 
             modelBuilder.Entity("Pugling.Api.Models.ExerciseTag", b =>
@@ -1015,13 +1056,31 @@ namespace Pugling.Api.Data.Migrations
 
             modelBuilder.Entity("Pugling.Api.Models.Exercise", b =>
                 {
+                    b.HasOne("Pugling.Api.Models.ExerciseCategory", "Category")
+                        .WithMany()
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("Pugling.Api.Models.Chapter", "Chapter")
                         .WithMany("Exercises")
                         .HasForeignKey("ChapterId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.Navigation("Category");
+
                     b.Navigation("Chapter");
+                });
+
+            modelBuilder.Entity("Pugling.Api.Models.ExerciseCategory", b =>
+                {
+                    b.HasOne("Pugling.Api.Models.Subject", "Subject")
+                        .WithMany("Categories")
+                        .HasForeignKey("SubjectId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Subject");
                 });
 
             modelBuilder.Entity("Pugling.Api.Models.ExerciseTag", b =>
@@ -1282,6 +1341,8 @@ namespace Pugling.Api.Data.Migrations
 
             modelBuilder.Entity("Pugling.Api.Models.Subject", b =>
                 {
+                    b.Navigation("Categories");
+
                     b.Navigation("Chapters");
                 });
 

@@ -12,7 +12,7 @@ public class SpeedBonusTests(PuglingWebAppFactory factory) : IClassFixture<Pugli
 {
     // Combo bewusst aus (Schwelle 0), damit nur der Speed-Bonus wirkt.
     private static async Task<int> SpeedPlanAsync(HttpClient father, int thresholdSeconds, int bonus) =>
-        await TestApi.IdAsync(await father.PostAsJsonAsync("/api/study-plans", new
+        await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/study-plans", new
         {
             childId = 1,
             title = "Speed-Plan",
@@ -27,16 +27,16 @@ public class SpeedBonusTests(PuglingWebAppFactory factory) : IClassFixture<Pugli
 
     private static async Task<(int session, List<int> ids)> StartAsync(HttpClient child, int planId)
     {
-        var plan = await (await child.GetAsync($"/api/study-plans/{planId}")).Content.ReadFromJsonAsync<JsonElement>();
+        var plan = await (await child.GetAsync($"/api/v1/study-plans/{planId}")).Content.ReadFromJsonAsync<JsonElement>();
         var ids = plan.GetProperty("items").EnumerateArray().Select(i => i.GetProperty("contentId").GetInt32()).ToList();
-        var sid = (await (await child.PostAsJsonAsync($"/api/study-plans/{planId}/practice-sessions", new { }))
+        var sid = (await (await child.PostAsJsonAsync($"/api/v1/study-plans/{planId}/practice-sessions", new { }))
             .Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetInt32();
         return (sid, ids);
     }
 
     // Stufe 2 = SelfAssess; ohne RequireTypedTest zählt das WasKnown-Flag voll (wie in den Combo-Tests).
     private static async Task<JsonElement> ReviewAsync(HttpClient child, int planId, int sid, int contentId) =>
-        await (await child.PostAsJsonAsync($"/api/study-plans/{planId}/practice-sessions/{sid}/review",
+        await (await child.PostAsJsonAsync($"/api/v1/study-plans/{planId}/practice-sessions/{sid}/review",
             new { contentId, stage = 2, wasKnown = true })).Content.ReadFromJsonAsync<JsonElement>();
 
     [Fact]

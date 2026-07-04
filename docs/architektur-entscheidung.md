@@ -33,7 +33,8 @@ Konsequenzen:
 
 ## In diesem Schritt umgesetzt
 
-**(b) Toter/Legacy-Code entfernt**
+### (b) Toter/Legacy-Code entfernt
+
 - Gelöscht: `Controllers/VocabController`, `SessionsController`, `PointsController`, `SettingsController`.
 - Gelöscht: `Models/Entities.cs` (alle Legacy-Entitäten) – ersetzt durch `Models/TimeSlotRule.cs`
   (das einzig noch genutzte Entity).
@@ -41,10 +42,11 @@ Konsequenzen:
 - `PointsService`: Legacy-Überladung `PointsForReviewAsync(VocabCard,…)` und `BalanceAsync` entfernt.
 - `Seed`: `SeedCore` → `SeedTimeSlots` (nur noch Zeitfenster; keine `User`/`Topic`/`LearningPlan`-Seeds).
 - Bonus-Fix: `AuthController` – `[AllowAnonymous]` lag auf Klassenebene und hebelte das `[Authorize]`
-  auf `GET /api/auth/me` aus (Endpunkt war ungewollt anonym). Jetzt liegt `[AllowAnonymous]` gezielt
+  auf `GET /api/v1/auth/me` aus (Endpunkt war ungewollt anonym). Jetzt liegt `[AllowAnonymous]` gezielt
   auf den beiden Login-Actions; `me` erfordert wieder ein Token.
 
-**(c) Duplikation refactort**
+### (c) Duplikation refactort
+
 - Neuer `PlanOwnershipFilter` (`IAsyncActionFilter`, DI): prüft `planId`-Ownership zentral.
   Ersetzt den byte-gleich in **5** Controllern duplizierten Inline-Filter via
   `[ServiceFilter(typeof(PlanOwnershipFilter))]` (Tests, ClozeTests, MatchingTests, PracticeSessions, Ratings).

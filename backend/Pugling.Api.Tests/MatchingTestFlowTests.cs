@@ -11,7 +11,7 @@ public class MatchingTestFlowTests(PuglingWebAppFactory factory) : IClassFixture
     public async Task Matching_Plan_Test_Bestehen()
     {
         var father = await TestApi.FatherAsync(factory);
-        var planId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/study-plans", new
+        var planId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/study-plans", new
         {
             childId = 1,
             title = "Matching-Plan",
@@ -21,7 +21,7 @@ public class MatchingTestFlowTests(PuglingWebAppFactory factory) : IClassFixture
             dailyTestRequired = true,
         }));
 
-        var start = await father.PostAsJsonAsync($"/api/study-plans/{planId}/matching-tests", new { stage = "Direct" });
+        var start = await father.PostAsJsonAsync($"/api/v1/study-plans/{planId}/matching-tests", new { stage = "Direct" });
         Assert.Equal(HttpStatusCode.Created, start.StatusCode);
         var attempt = await start.Content.ReadFromJsonAsync<JsonElement>();
         var attemptId = attempt.GetProperty("attemptId").GetInt32();
@@ -34,7 +34,7 @@ public class MatchingTestFlowTests(PuglingWebAppFactory factory) : IClassFixture
             chosenAnswer = expected[i.GetProperty("prompt").GetString()!],
         }).ToArray();
 
-        var submit = await father.PostAsJsonAsync($"/api/study-plans/{planId}/matching-tests/{attemptId}/submit", new { answers });
+        var submit = await father.PostAsJsonAsync($"/api/v1/study-plans/{planId}/matching-tests/{attemptId}/submit", new { answers });
         Assert.Equal(HttpStatusCode.OK, submit.StatusCode);
         var result = await submit.Content.ReadFromJsonAsync<JsonElement>();
 

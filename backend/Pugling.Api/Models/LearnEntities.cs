@@ -12,6 +12,40 @@ public class Subject
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     public List<Chapter> Chapters { get; set; } = new();
+
+    /// <summary>Fachabhängige Übungs-Arten (z. B. Grammatik/Vokabeln bei Englisch).</summary>
+    public List<ExerciseCategory> Categories { get; set; } = new();
+}
+
+/// <summary>
+/// Schularten, für die eine Übung geeignet ist. <c>[Flags]</c>-Enum, damit eine Übung
+/// mehreren Schularten zugeordnet werden kann (z. B. Realschule | Gymnasium).
+/// <see cref="None"/> bedeutet „für alle Schularten" (kein Filter-Ausschluss).
+/// </summary>
+[Flags]
+public enum SchoolTypes
+{
+    None = 0,
+    Grundschule = 1,
+    Hauptschule = 2,
+    Realschule = 4,
+    Gymnasium = 8,
+    Gesamtschule = 16,
+    Berufsschule = 32,
+}
+
+/// <summary>
+/// Fachabhängige „Art" einer Übung (z. B. Grammatik/Vokabeln bei Sprachen,
+/// Grundrechenarten/Algebra bei Mathe). Kindneutrales, kontrolliertes Vokabular je Fach –
+/// dient der Vorfilterung von Übungen bei der Lehrplan-Erstellung.
+/// </summary>
+public class ExerciseCategory
+{
+    public int Id { get; set; }
+    public int SubjectId { get; set; }
+    public Subject? Subject { get; set; }
+    public string Name { get; set; } = "";
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }
 
 /// <summary>Kapitel innerhalb eines Fachs.</summary>
@@ -76,5 +110,21 @@ public class Exercise
     public string ConfigJson { get; set; } = "{}";
     /// <summary>Optionaler Bonus-Vorschlag des Erstellers (Vorlage, wird beim Plan-Erzeugen kopiert).</summary>
     public SuggestedBonus? SuggestedBonus { get; set; }
+
+    // Strukturierte Metadaten zur Vorfilterung bei der Lehrplan-Erstellung.
+    // Fach = Subject (über Chapter), Thema = Chapter – hier nur das Ergänzende.
+
+    /// <summary>Unterste geeignete Klassenstufe (inklusive); null = keine Untergrenze.</summary>
+    public int? GradeMin { get; set; }
+    /// <summary>Oberste geeignete Klassenstufe (inklusive); null = keine Obergrenze.</summary>
+    public int? GradeMax { get; set; }
+    /// <summary>Geeignete Schularten; <see cref="SchoolTypes.None"/> = für alle.</summary>
+    public SchoolTypes SchoolTypes { get; set; } = SchoolTypes.None;
+    /// <summary>Quelle der Übung (z. B. Schulbuch „Green Line 3, Unit 4"); optional.</summary>
+    public string? Source { get; set; }
+    /// <summary>Fachabhängige Art (FK auf <see cref="ExerciseCategory"/>); optional.</summary>
+    public int? CategoryId { get; set; }
+    public ExerciseCategory? Category { get; set; }
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }

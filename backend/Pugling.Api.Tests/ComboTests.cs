@@ -10,7 +10,7 @@ namespace Pugling.Api.Tests;
 public class ComboTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWebAppFactory>
 {
     private static async Task<int> LeitnerPlanAsync(HttpClient father, int? threshold, int? bonus) =>
-        await TestApi.IdAsync(await father.PostAsJsonAsync("/api/study-plans", new
+        await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/study-plans", new
         {
             childId = 1,
             title = "Combo-Plan",
@@ -24,16 +24,16 @@ public class ComboTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWeb
 
     private static async Task<(int session, List<int> contentIds)> StartSessionAsync(HttpClient child, int planId)
     {
-        var plan = await (await child.GetAsync($"/api/study-plans/{planId}")).Content.ReadFromJsonAsync<JsonElement>();
+        var plan = await (await child.GetAsync($"/api/v1/study-plans/{planId}")).Content.ReadFromJsonAsync<JsonElement>();
         var ids = plan.GetProperty("items").EnumerateArray().Select(i => i.GetProperty("contentId").GetInt32()).ToList();
-        var sid = (await (await child.PostAsJsonAsync($"/api/study-plans/{planId}/practice-sessions", new { }))
+        var sid = (await (await child.PostAsJsonAsync($"/api/v1/study-plans/{planId}/practice-sessions", new { }))
             .Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetInt32();
         return (sid, ids);
     }
 
     // Stufe 2 = SelfAssess (Selbsteinschätzung); ohne RequireTypedTest zählt das WasKnown-Flag voll.
     private static async Task<JsonElement> ReviewAsync(HttpClient child, int planId, int sid, int contentId) =>
-        await (await child.PostAsJsonAsync($"/api/study-plans/{planId}/practice-sessions/{sid}/review",
+        await (await child.PostAsJsonAsync($"/api/v1/study-plans/{planId}/practice-sessions/{sid}/review",
             new { contentId, stage = 2, wasKnown = true })).Content.ReadFromJsonAsync<JsonElement>();
 
     [Fact]
@@ -65,7 +65,7 @@ public class ComboTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWeb
         await ReviewAsync(child, planId, sid, ids[1]); // Schwelle 2 erreicht → Combo-Bonus
 
         // Der Vater sieht die Buchungen kategorisiert: der Bonus trägt Kind "Combo", nicht "Base".
-        var points = await (await father.GetAsync("/api/fathers/1/children/1/points"))
+        var points = await (await father.GetAsync("/api/v1/children/1/points"))
             .Content.ReadFromJsonAsync<JsonElement>();
         var combo = points.GetProperty("entries").EnumerateArray()
             .First(e => e.GetProperty("kind").GetString() == "Combo");

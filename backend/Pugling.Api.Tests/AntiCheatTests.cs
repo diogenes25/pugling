@@ -12,11 +12,11 @@ public class AntiCheatTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
     {
         var father = await TestApi.FatherAsync(factory);
         var planId = await TestApi.CreateVocabPlanAsync(father);
-        var startRes = await father.PostAsJsonAsync($"/api/study-plans/{planId}/practice-sessions", new { });
+        var startRes = await father.PostAsJsonAsync($"/api/v1/study-plans/{planId}/practice-sessions", new { });
         var sid = (await startRes.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetInt32();
 
         var hb = await father.PostAsJsonAsync(
-            $"/api/study-plans/{planId}/practice-sessions/{sid}/heartbeat", new { seconds = 1200, active = true });
+            $"/api/v1/study-plans/{planId}/practice-sessions/{sid}/heartbeat", new { seconds = 1200, active = true });
         var progress = await hb.Content.ReadFromJsonAsync<JsonElement>();
 
         // 1200 s wären 20 min; pro Heartbeat sind höchstens 120 s (= 2 min) anrechenbar.
@@ -31,7 +31,7 @@ public class AntiCheatTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
         var child = await TestApi.ChildAsync(factory);
 
         // Sohn fordert die Gratis-Anzeige-Stufe "ShowBoth" an …
-        var res = await child.PostAsJsonAsync($"/api/study-plans/{planId}/tests", new { stage = "ShowBoth" });
+        var res = await child.PostAsJsonAsync($"/api/v1/study-plans/{planId}/tests", new { stage = "ShowBoth" });
         res.EnsureSuccessStatusCode();
         var attempt = await res.Content.ReadFromJsonAsync<JsonElement>();
 
@@ -47,7 +47,7 @@ public class AntiCheatTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
         var child = await TestApi.ChildAsync(factory);
         var yesterday = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(-1).ToString("yyyy-MM-dd");
 
-        var res = await child.PostAsJsonAsync($"/api/study-plans/{planId}/tests", new { stage = "SelfAssess", day = yesterday });
+        var res = await child.PostAsJsonAsync($"/api/v1/study-plans/{planId}/tests", new { stage = "SelfAssess", day = yesterday });
 
         Assert.Equal(HttpStatusCode.Forbidden, res.StatusCode);
     }
@@ -60,7 +60,7 @@ public class AntiCheatTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
         var yesterday = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(-1).ToString("yyyy-MM-dd");
 
         // Gegenprobe: der Vater darf einen vergangenen Tag nachtragen.
-        var res = await father.PostAsJsonAsync($"/api/study-plans/{planId}/tests", new { stage = "SelfAssess", day = yesterday });
+        var res = await father.PostAsJsonAsync($"/api/v1/study-plans/{planId}/tests", new { stage = "SelfAssess", day = yesterday });
 
         Assert.Equal(HttpStatusCode.Created, res.StatusCode);
     }

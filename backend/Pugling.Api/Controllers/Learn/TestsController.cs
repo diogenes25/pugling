@@ -10,7 +10,8 @@ namespace Pugling.Api.Controllers.Learn;
 
 /// <summary>Mehrstufiger Abschlusstest (Lernkarten) für einen Vokabel-Lehrplan.</summary>
 [ApiController]
-[Route("api/study-plans/{planId:int}/tests")]
+[ApiVersion("1.0")]
+[Route(ApiRoutes.V1 + "/study-plans/{planId:int}/tests")]
 [Tags("Study – Vocabulary Tests")]
 [Produces("application/json")]
 [Authorize]
@@ -41,9 +42,9 @@ public class TestsController(PuglingDbContext db, ScheduleService schedule, Test
     {
         var plan = await db.StudyPlans.Include(p => p.Items.OrderBy(i => i.Order)).ThenInclude(i => i.Vocabulary)
             .FirstOrDefaultAsync(p => p.Id == planId);
-        if (plan is null) return NotFound("Lehrplan nicht gefunden.");
-        if (plan.Method != LearningMethod.Vocabulary) return BadRequest("Dieser Lehrplan ist kein Vokabel-Plan.");
-        if (plan.Items.Count == 0) return BadRequest("Lehrplan enthält keine Vokabeln.");
+        if (plan is null) return Problem(statusCode: 404, detail: "Lehrplan nicht gefunden.");
+        if (plan.Method != LearningMethod.Vocabulary) return Problem(statusCode: 400, detail: "Dieser Lehrplan ist kein Vokabel-Plan.");
+        if (plan.Items.Count == 0) return Problem(statusCode: 400, detail: "Lehrplan enthält keine Vokabeln.");
 
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
         if (dto.Day is { } dd && dd != today && !User.IsFather()) return Forbid();
@@ -112,12 +113,12 @@ public class TestsController(PuglingDbContext db, ScheduleService schedule, Test
     {
         var attempt = await attempts.LoadAttemptAsync(planId, attemptId);
         if (attempt is null) return NotFound();
-        if (attempt.CompletedAt is not null) return BadRequest("Test ist bereits abgeschlossen.");
+        if (attempt.CompletedAt is not null) return Problem(statusCode: 400, detail: "Test ist bereits abgeschlossen.");
         if ((TestStage)attempt.StageValue is TestStage.ShowBoth or TestStage.SelfAssess)
-            return BadRequest("Für diese Teststufe gibt es keine Buchstaben-Tipps.");
+            return Problem(statusCode: 400, detail: "Für diese Teststufe gibt es keine Buchstaben-Tipps.");
 
         var result = attempt.Results.FirstOrDefault(r => r.ContentId == dto.VocabularyId);
-        if (result is null) return NotFound("Vokabel gehört nicht zum Test.");
+        if (result is null) return Problem(statusCode: 404, detail: "Vokabel gehört nicht zum Test.");
 
         var translation = await db.Vocabulary.Where(v => v.Id == dto.VocabularyId)
             .Select(v => v.Translation).FirstAsync();
@@ -143,7 +144,7 @@ public class TestsController(PuglingDbContext db, ScheduleService schedule, Test
     {
         var attempt = await attempts.LoadAttemptAsync(planId, attemptId);
         if (attempt is null) return NotFound();
-        if (attempt.CompletedAt is not null) return BadRequest("Test wurde bereits eingereicht.");
+        if (attempt.CompletedAt is not null) return Problem(statusCode: 400, detail: "Test wurde bereits eingereicht.");
 
         var plan = (await attempts.GetPlanAsync(planId))!;
         var stage = (TestStage)attempt.StageValue;

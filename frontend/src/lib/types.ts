@@ -178,7 +178,27 @@ export interface SessionResponse {
   reviewCount: number;
 }
 
+/** Antwort einer einzelnen Lücke eines Lückentexts (positionsbezogen). */
+export interface GapAnswerInput {
+  gapIndex: number;
+  givenAnswer: string | null;
+}
+
+/**
+ * Vom Kind abgegebene Antwort zu einer Übungskarte. Getippte Vokabel-/Zuordnungs-Stufen liefern
+ * `givenAnswer`, Lückentexte `gaps`, reine Anzeige-/Selbsteinschätzungs-Stufen `wasKnown`.
+ * Die Stufe bestimmt der Server aus dem Fahrplan – nie das Frontend.
+ */
+export interface ReviewInput {
+  contentId: number;
+  givenAnswer?: string | null;
+  gaps?: GapAnswerInput[];
+  wasKnown?: boolean;
+}
+
 export interface ReviewOutcome {
+  wasCorrect: boolean;
+  expected: string | null;
   awarded: number;
   box: number;
   dueOn: string | null;

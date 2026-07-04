@@ -9,7 +9,8 @@ namespace Pugling.Api.Controllers.Learn;
 
 /// <summary>Schulfächer im gemeinsamen Lehrplan-Katalog.</summary>
 [ApiController]
-[Route("api/learn/subjects")]
+[ApiVersion("1.0")]
+[Route(ApiRoutes.V1 + "/learn/subjects")]
 [Tags("Learn – Subjects")]
 [Produces("application/json")]
 [Authorize(Roles = Roles.Vater)]
@@ -45,7 +46,7 @@ public class SubjectsController(PuglingDbContext db) : ControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<SubjectResponse>> Create(CreateSubjectDto dto)
     {
-        if (string.IsNullOrWhiteSpace(dto.Name)) return BadRequest("Name ist erforderlich.");
+        if (string.IsNullOrWhiteSpace(dto.Name)) return Problem(statusCode: 400, detail: "Name ist erforderlich.");
 
         var subject = new Subject { Name = dto.Name.Trim() };
         db.Subjects.Add(subject);

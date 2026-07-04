@@ -20,6 +20,7 @@ Sohn: Login → Tagesmission → Leitner-Übung → Tagestest (SelfAssess) → S
 <!-- Neue Einträge oben anfügen -->
 
 ### Runde 6 — Combo/Sonderpunkte im Backend konfigurierbar (+ Bugfix)
+
 Combo-Schwelle und Bonuspunkte sind jetzt **Plan-Einstellungen** (`StudyPlan.ComboThreshold` /
 `ComboBonusPoints`, per EF-Migration `ComboSettings`, Default 5/5 auch für Bestandspläne). Der Vater
 setzt sie im Plan-Formular; 0 schaltet den Bonus ab. Der Review-Endpunkt nutzt die Plan-Werte statt
@@ -29,6 +30,7 @@ ungespeicherte Review in `session.Reviews` ein → off-by-one). Fix: Vorstreak *
 57/57 Unit-Tests + E2E grün.
 
 ### Runde 5 — Motivations-Animationen (Duolingo-Stil) + Combo-Bonus
+
 Neu: server-autoritative **Combo** (Treffer in Folge, im `PracticeSessionsController` gezählt → cheat-sicher)
 mit eskalierendem **Combo-Bonus** (alle 5 → +5/+10/+15 …), zurückgegeben im `ReviewOutcome`. Frontend:
 `Celebration`-System in drei Stufen — kleiner Emoji-Pop bei jedem Treffer, mittleres Konfetti-Banner ab
@@ -40,17 +42,20 @@ inline-Zähler/Ergebnis-Titel **und** Feier-Banner; Locator auf `.cel-title`/`.v
 Ergebnis: 3× stabil grün.
 
 ### Runde 4 — GRÜN ✅ (3× stabil auf frischer DB)
+
 Assertion auf die Auswertung geschärft (`Punkte gesamt > 0` + Tagesverlauf zeigt „bestanden N%").
 Ergebnis: kompletter Durchstich läuft deterministisch durch — Vater legt via Web an, Sohn arbeitet
 via App ab (Login → Mission → Leitner-Übung → Tagestest → Sieg), Punkte fließen in die Wallet und in
 die Vater-Auswertung. 3 aufeinanderfolgende Läufe grün.
 
 ### Runde 3 — Assertion zu unspezifisch
+
 `locator('.table')` traf 2 Tabellen (Inhalte + Tagesverlauf) → strict-mode-Verletzung. Der Flow selbst
 war bereits vollständig grün (Test bestanden 100 %, Punkte verbucht). Fix: gezielt auf die
 Tagesverlauf-Zeile und die „Punkte gesamt"-Kachel prüfen.
 
 ### Runde 2 — **Produktfehler gefunden:** Üben sperrte den Tagestest aus
+
 Nach der Leitner-Übung (alle Karten „gewusst") stieg die Box jeder Karte und `DueOn` rutschte in die
 Zukunft. Der Tagestest zog aus demselben „heute fällig"-Pool (`ScheduleService.SelectAsync`) und brach
 mit „Für heute stehen keine Inhalte an." ab → der Sohn konnte nach dem Üben keinen Test mehr machen.
@@ -63,6 +68,7 @@ Plan-Inhalte). Die Übung bleibt streng Leitner-getrieben. Damit funktioniert je
 (erst üben, dann testen – oder umgekehrt).
 
 ### Runde 1 — Konfig-Fehler (ESM)
+
 `__dirname` existiert im ESM-Projekt nicht → `playwright.config.ts` konnte nicht geladen werden.
 Fix: Pfad aus `import.meta.url` ableiten.
 

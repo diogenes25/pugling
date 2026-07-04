@@ -8,6 +8,7 @@ und ein kompletter Plan→Test→Submit-Flow (inkl. Punktevergabe) live funktion
 `pugling.db` anzufassen.
 
 Wichtige, in diesem Repo erprobte Randbedingungen (nicht abweichen):
+
 - **DB-Pfad relativ** (`Data Source=pugling_smoke.db`) – ein `mktemp`-`/tmp/..`-Pfad scheitert unter Windows-.NET
   („unable to open database file"). Relative `*.db` liegen im Projekt und sind gitignored.
 - **Server als Hintergrund-Task** starten (`run_in_background: true`), sonst blockiert der Tool-Aufruf, weil

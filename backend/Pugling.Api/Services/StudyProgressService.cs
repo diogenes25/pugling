@@ -8,7 +8,7 @@ namespace Pugling.Api.Services;
 /// Bewertet die Tages-Anforderungen eines Lehrplans (Übungszeit + bestandener Test)
 /// und schreibt Punkte idempotent gut (jede Belohnung höchstens einmal pro Tag).
 /// </summary>
-public class StudyProgressService(PuglingDbContext db)
+public class StudyProgressService(PuglingDbContext db, ILogger<StudyProgressService> logger)
 {
     public record DayProgress(
         DateOnly Day, int MinutesPracticed, bool MinutesMet,
@@ -101,11 +101,21 @@ public class StudyProgressService(PuglingDbContext db)
         try
         {
             await db.SaveChangesAsync();
+            // Audit-Trail: jede tatsächlich gebuchte Belohnung nachvollziehbar (Streitfall „Punkte weg?").
+            logger.LogInformation(
+                "Belohnung gebucht: Kind {ChildId} +{Points} ({Kind}) – Plan {PlanId} {Day:yyyy-MM-dd}: {Reason}",
+                plan.ChildId, points, kind, plan.Id, day, reason);
         }
-        catch (DbUpdateException)
+        catch (DbUpdateException ex)
         {
-            // Paralleler Doppel-Request: der Unique-Index (Plan, Tag, Art) hat bereits gegriffen.
-            // Belohnung gilt als vergeben – keine doppelten Punkte, kein 500.
+            // Nur den erwarteten Doppel-Request abfangen: existiert die Belohnung (Plan, Tag, Art) jetzt
+            // bereits, hat der Unique-Index gegriffen → gutartig, keine doppelten Punkte, kein 500. Sonst
+            // ein echter DB-Fehler → durchreichen, damit legitime Punkte nicht spurlos verschwinden.
+            if (!await db.StudyDayRewards.AnyAsync(r => r.StudyPlanId == plan.Id && r.Day == day && r.Kind == kind))
+                throw;
+            logger.LogWarning(ex,
+                "Doppelte Belohnung abgefangen (Unique-Index): Kind {ChildId}, Plan {PlanId}, {Kind}, Tag {Day:yyyy-MM-dd}",
+                plan.ChildId, plan.Id, kind, day);
             foreach (var entry in db.ChangeTracker.Entries().Where(e => e.State == EntityState.Added))
                 entry.State = EntityState.Detached;
         }

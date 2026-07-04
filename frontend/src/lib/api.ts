@@ -1,7 +1,7 @@
 import type {
   AchievementStatus, AnswerDto, ChildResponse, CreatePlanDto, CreateVocabularyDto, LoginResponse,
-  MissionStatus, PlanResponse, ProgressResponse, ReviewOutcome, SessionResponse, TestAttemptResponse,
-  TestSubmitResponse, TodayResponse, VocabularyResponse, Wallet,
+  MissionStatus, PlanResponse, ProgressResponse, ReviewInput, ReviewOutcome, SessionResponse,
+  TestAttemptResponse, TestSubmitResponse, TodayResponse, VocabularyResponse, Wallet,
 } from "./types";
 
 const TOKEN_KEY = "pugling.token";
@@ -14,12 +14,23 @@ export function setToken(token: string | null) {
   else localStorage.removeItem(TOKEN_KEY);
 }
 
-/** Fehler mit HTTP-Status, damit die UI 401 (Session weg) von 4xx (Eingabe) trennen kann. */
+/**
+ * Fehler mit HTTP-Status, damit die UI 401 (Session weg) von 4xx (Eingabe) trennen kann.
+ * `traceId` (aus dem RFC-7807-Body) korreliert die Meldung mit den Server-Logs – im Supportfall
+ * kann der Nutzer diese Referenz nennen.
+ */
 export class ApiError extends Error {
-  constructor(public status: number, message: string) {
+  constructor(public status: number, message: string, public traceId?: string) {
     super(message);
     this.name = "ApiError";
   }
+}
+
+/** Menschlich lesbare Fehlermeldung inkl. Trace-Referenz, wo vorhanden. */
+export function errorMessage(e: unknown): string {
+  if (e instanceof ApiError)
+    return e.traceId ? `${e.message} (Ref: ${e.traceId})` : e.message;
+  return e instanceof Error ? e.message : String(e);
 }
 
 async function http<T>(url: string, method = "GET", body?: unknown): Promise<T> {
@@ -35,63 +46,81 @@ async function http<T>(url: string, method = "GET", body?: unknown): Promise<T> 
   });
 
   if (!res.ok) {
-    const text = await res.text().catch(() => "");
-    throw new ApiError(res.status, text || `${res.status} ${res.statusText}`);
+    const raw = await res.text().catch(() => "");
+    // Die API antwortet einheitlich als application/problem+json (RFC 7807): detail/title als
+    // Klartext, traceId zur Korrelation. Bei Nicht-JSON den Rohtext behalten.
+    let message = raw || `${res.status} ${res.statusText}`;
+    let traceId: string | undefined;
+    if (res.headers.get("content-type")?.includes("json") && raw) {
+      try {
+        const problem = JSON.parse(raw) as { detail?: string; title?: string; traceId?: string };
+        message = problem.detail || problem.title || message;
+        traceId = problem.traceId;
+      } catch {
+        /* kein valides JSON – Rohtext behalten */
+      }
+    }
+    throw new ApiError(res.status, message, traceId);
   }
   const text = await res.text();
   return (text ? JSON.parse(text) : undefined) as T;
 }
 
+// Alle Routen liegen unter dem API-Versionssegment (Backend: ApiRoutes.V1 = "api/v{version}").
+// Zentral hier gehalten, damit ein künftiger v2-Umzug nur eine Stelle betrifft.
+const V1 = "/api/v1";
+
 export const api = {
   // ---- Auth ----
   loginFather: (fatherId: number, pin: string) =>
-    http<LoginResponse>("/api/auth/father", "POST", { fatherId, pin }),
+    http<LoginResponse>(`${V1}/auth/father`, "POST", { fatherId, pin }),
   loginChild: (childId: number, pin: string) =>
-    http<LoginResponse>("/api/auth/child", "POST", { childId, pin }),
+    http<LoginResponse>(`${V1}/auth/child`, "POST", { childId, pin }),
 
-  // ---- Vater: Kinder ----
-  children: (fatherId: number) =>
-    http<ChildResponse[]>(`/api/fathers/${fatherId}/children`),
-  createChild: (fatherId: number, name: string, pin: string, birthYear?: number) =>
-    http<ChildResponse>(`/api/fathers/${fatherId}/children`, "POST", { name, pin, birthYear }),
+  // ---- Vater: Kinder (der Vater ergibt sich serverseitig aus dem JWT) ----
+  children: () => http<ChildResponse[]>(`${V1}/children`),
+  createChild: (name: string, pin: string, birthYear?: number) =>
+    http<ChildResponse>(`${V1}/children`, "POST", { name, pin, birthYear }),
 
   // ---- Vater: Vokabel-Store ----
   vocabulary: (search?: string) =>
-    http<VocabularyResponse[]>(`/api/learn/vocabulary${search ? `?search=${encodeURIComponent(search)}` : ""}`),
+    http<VocabularyResponse[]>(`${V1}/learn/vocabulary${search ? `?search=${encodeURIComponent(search)}` : ""}`),
   createVocabulary: (dto: CreateVocabularyDto) =>
-    http<VocabularyResponse>("/api/learn/vocabulary", "POST", dto),
+    http<VocabularyResponse>(`${V1}/learn/vocabulary`, "POST", dto),
 
   // ---- Lehrpläne ----
   plans: (childId?: number) =>
-    http<PlanResponse[]>(`/api/study-plans${childId ? `?childId=${childId}` : ""}`),
-  plan: (planId: number) => http<PlanResponse>(`/api/study-plans/${planId}`),
-  createPlan: (dto: CreatePlanDto) => http<PlanResponse>("/api/study-plans", "POST", dto),
-  today: (planId: number) => http<TodayResponse>(`/api/study-plans/${planId}/today`),
-  progress: (planId: number) => http<ProgressResponse>(`/api/study-plans/${planId}/progress`),
+    http<PlanResponse[]>(`${V1}/study-plans${childId ? `?childId=${childId}` : ""}`),
+  plan: (planId: number) => http<PlanResponse>(`${V1}/study-plans/${planId}`),
+  createPlan: (dto: CreatePlanDto) => http<PlanResponse>(`${V1}/study-plans`, "POST", dto),
+  today: (planId: number) => http<TodayResponse>(`${V1}/study-plans/${planId}/today`),
+  progress: (planId: number) => http<ProgressResponse>(`${V1}/study-plans/${planId}/progress`),
 
   // ---- Sohn: Übungssession (Leitner) ----
   startSession: (planId: number) =>
-    http<SessionResponse>(`/api/study-plans/${planId}/practice-sessions`, "POST", {}),
+    http<SessionResponse>(`${V1}/study-plans/${planId}/practice-sessions`, "POST", {}),
   heartbeat: (planId: number, sessionId: number, seconds: number, active: boolean) =>
     http<import("./types").DayProgress>(
-      `/api/study-plans/${planId}/practice-sessions/${sessionId}/heartbeat`, "POST", { seconds, active }),
-  review: (planId: number, sessionId: number, contentId: number, stage: number, wasCorrect: boolean) =>
+      `${V1}/study-plans/${planId}/practice-sessions/${sessionId}/heartbeat`, "POST", { seconds, active }),
+  // Der Server bewertet serverseitig: das Frontend liefert nur die Antwort (getippt/Lücken) bzw. bei
+  // Anzeige-/Selbsteinschätzungs-Stufen das WasKnown-Flag; die Stufe leitet der Server aus dem Fahrplan ab.
+  review: (planId: number, sessionId: number, dto: ReviewInput) =>
     http<ReviewOutcome>(
-      `/api/study-plans/${planId}/practice-sessions/${sessionId}/review`, "POST", { contentId, stage, wasCorrect }),
+      `${V1}/study-plans/${planId}/practice-sessions/${sessionId}/review`, "POST", dto),
   endSession: (planId: number, sessionId: number) =>
     http<import("./types").DayProgress>(
-      `/api/study-plans/${planId}/practice-sessions/${sessionId}/end`, "POST", {}),
+      `${V1}/study-plans/${planId}/practice-sessions/${sessionId}/end`, "POST", {}),
 
   // ---- Sohn: Vokabel-Test ----
   startTest: (planId: number) =>
-    http<TestAttemptResponse>(`/api/study-plans/${planId}/tests`, "POST", {}),
+    http<TestAttemptResponse>(`${V1}/study-plans/${planId}/tests`, "POST", {}),
   submitTest: (planId: number, attemptId: number, answers: AnswerDto[]) =>
-    http<TestSubmitResponse>(`/api/study-plans/${planId}/tests/${attemptId}/submit`, "POST", { answers }),
+    http<TestSubmitResponse>(`${V1}/study-plans/${planId}/tests/${attemptId}/submit`, "POST", { answers }),
 
   // ---- Sohn: Wallet ----
-  wallet: () => http<Wallet>("/api/me/points"),
+  wallet: () => http<Wallet>(`${V1}/me/points`),
 
   // ---- Sohn: Missionen & Auszeichnungen ----
-  missions: () => http<MissionStatus[]>("/api/me/missions"),
-  achievements: () => http<AchievementStatus[]>("/api/me/achievements"),
+  missions: () => http<MissionStatus[]>(`${V1}/me/missions`),
+  achievements: () => http<AchievementStatus[]>(`${V1}/me/achievements`),
 };

@@ -12,7 +12,7 @@ public class ClozeFlowTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
     {
         var father = await TestApi.FatherAsync(factory);
 
-        var createCloze = await father.PostAsJsonAsync("/api/learn/cloze-texts", new
+        var createCloze = await father.PostAsJsonAsync("/api/v1/learn/cloze-texts", new
         {
             key = "en_greet_dialog",
             title = "Greetings",
@@ -27,7 +27,7 @@ public class ClozeFlowTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
         });
         Assert.Equal(HttpStatusCode.Created, createCloze.StatusCode);
 
-        var planId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/study-plans", new
+        var planId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/study-plans", new
         {
             childId = 1,
             title = "Cloze-Plan",
@@ -37,14 +37,14 @@ public class ClozeFlowTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
             dailyTestRequired = true,
         }));
 
-        var start = await father.PostAsJsonAsync($"/api/study-plans/{planId}/cloze-tests", new { stage = "FreeText" });
+        var start = await father.PostAsJsonAsync($"/api/v1/study-plans/{planId}/cloze-tests", new { stage = "FreeText" });
         Assert.Equal(HttpStatusCode.Created, start.StatusCode);
         var attempt = await start.Content.ReadFromJsonAsync<JsonElement>();
         var attemptId = attempt.GetProperty("attemptId").GetInt32();
         var clozeTextId = attempt.GetProperty("texts")[0].GetProperty("clozeTextId").GetInt32();
 
         // Kleinschreibung/Alternative werden durch die Normalisierung akzeptiert.
-        var submit = await father.PostAsJsonAsync($"/api/study-plans/{planId}/cloze-tests/{attemptId}/submit", new
+        var submit = await father.PostAsJsonAsync($"/api/v1/study-plans/{planId}/cloze-tests/{attemptId}/submit", new
         {
             answers = new object[]
             {

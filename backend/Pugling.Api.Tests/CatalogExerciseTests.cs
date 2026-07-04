@@ -12,7 +12,7 @@ public class CatalogExerciseTests(PuglingWebAppFactory factory) : IClassFixture<
     {
         var father = await TestApi.FatherAsync(factory);
         var (subjectId, chapterId, exerciseId) = await TestApi.CreateArithmeticExerciseAsync(father);
-        var basePath = $"/api/learn/subjects/{subjectId}/chapters/{chapterId}/arithmetic";
+        var basePath = $"/api/v1/learn/subjects/{subjectId}/chapters/{chapterId}/arithmetic";
 
         var list = await (await father.GetAsync(basePath)).Content.ReadFromJsonAsync<JsonElement>();
         Assert.True(list.GetArrayLength() >= 1);
@@ -32,10 +32,10 @@ public class CatalogExerciseTests(PuglingWebAppFactory factory) : IClassFixture<
     public async Task BonusVorschlag_WirdBeimPlanErzeugen_Kopiert_UndWirktNichtRueckwirkend()
     {
         var father = await TestApi.FatherAsync(factory);
-        var subjectId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/learn/subjects", new { name = "Erd" }));
+        var subjectId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/learn/subjects", new { name = "Erd" }));
         var chapterId = await TestApi.IdAsync(await father.PostAsJsonAsync(
-            $"/api/learn/subjects/{subjectId}/chapters", new { name = "DE", orderIndex = 1 }));
-        var matchBase = $"/api/learn/subjects/{subjectId}/chapters/{chapterId}/matching";
+            $"/api/v1/learn/subjects/{subjectId}/chapters", new { name = "DE", orderIndex = 1 }));
+        var matchBase = $"/api/v1/learn/subjects/{subjectId}/chapters/{chapterId}/matching";
 
         // Übung mit Bonus-Vorschlag (großzügig, um Motivation zu erhöhen).
         var exerciseId = await TestApi.IdAsync(await father.PostAsJsonAsync(matchBase, new
@@ -51,7 +51,7 @@ public class CatalogExerciseTests(PuglingWebAppFactory factory) : IClassFixture<
         var planId = (await (await father.PostAsJsonAsync($"{matchBase}/{exerciseId}/to-study-plan",
             new { childId = 1, durationDays = 7 })).Content.ReadFromJsonAsync<JsonElement>()).GetProperty("planId").GetInt32();
 
-        var plan = await (await father.GetAsync($"/api/study-plans/{planId}")).Content.ReadFromJsonAsync<JsonElement>();
+        var plan = await (await father.GetAsync($"/api/v1/study-plans/{planId}")).Content.ReadFromJsonAsync<JsonElement>();
         Assert.Equal(3, plan.GetProperty("comboThreshold").GetInt32());
         Assert.Equal(9, plan.GetProperty("comboBonusPoints").GetInt32());
         Assert.Equal(8, plan.GetProperty("speedThresholdSeconds").GetInt32());
@@ -67,7 +67,7 @@ public class CatalogExerciseTests(PuglingWebAppFactory factory) : IClassFixture<
             suggestedBonus = new { comboThreshold = 99, comboBonusPoints = 99, speedThresholdSeconds = 99, speedBonusPoints = 99, newContentPoints = 99 },
         });
 
-        var planAfter = await (await father.GetAsync($"/api/study-plans/{planId}")).Content.ReadFromJsonAsync<JsonElement>();
+        var planAfter = await (await father.GetAsync($"/api/v1/study-plans/{planId}")).Content.ReadFromJsonAsync<JsonElement>();
         Assert.Equal(3, planAfter.GetProperty("comboThreshold").GetInt32()); // unverändert
     }
 
@@ -75,12 +75,12 @@ public class CatalogExerciseTests(PuglingWebAppFactory factory) : IClassFixture<
     public async Task Sohn_DarfKeineUebungAnlegen_403()
     {
         var father = await TestApi.FatherAsync(factory);
-        var subjectId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/learn/subjects", new { name = "Fach" }));
+        var subjectId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/learn/subjects", new { name = "Fach" }));
         var chapterId = await TestApi.IdAsync(await father.PostAsJsonAsync(
-            $"/api/learn/subjects/{subjectId}/chapters", new { name = "Kapitel", orderIndex = 1 }));
+            $"/api/v1/learn/subjects/{subjectId}/chapters", new { name = "Kapitel", orderIndex = 1 }));
         var child = await TestApi.ChildAsync(factory);
 
-        var res = await child.PostAsJsonAsync($"/api/learn/subjects/{subjectId}/chapters/{chapterId}/arithmetic",
+        var res = await child.PostAsJsonAsync($"/api/v1/learn/subjects/{subjectId}/chapters/{chapterId}/arithmetic",
             new { title = "X", orderIndex = 1, rewardPoints = 5, config = new { problems = Array.Empty<object>() } });
 
         Assert.Equal(HttpStatusCode.Forbidden, res.StatusCode);

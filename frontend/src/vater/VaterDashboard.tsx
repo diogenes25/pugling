@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { api } from "../lib/api";
+import { api, errorMessage } from "../lib/api";
 import { useAsync } from "../lib/useAsync";
 import { useAuth } from "../lib/auth";
 import type { ChildResponse, PlanResponse } from "../lib/types";
@@ -10,7 +10,7 @@ export function VaterDashboard() {
   const fatherId = session!.id;
   const nav = useNavigate();
 
-  const children = useAsync<ChildResponse[]>(() => api.children(fatherId), [fatherId]);
+  const children = useAsync<ChildResponse[]>(() => api.children(), [fatherId]);
   const plans = useAsync<PlanResponse[]>(() => api.plans(), []);
 
   const [name, setName] = useState("");
@@ -21,12 +21,12 @@ export function VaterDashboard() {
     e.preventDefault();
     if (!name.trim()) return;
     try {
-      await api.createChild(fatherId, name.trim(), pin);
+      await api.createChild(name.trim(), pin);
       setName(""); setPin("");
       setMsg("Kind angelegt.");
       children.reload();
     } catch (err) {
-      setMsg(err instanceof Error ? err.message : "Fehler");
+      setMsg(errorMessage(err));
     }
   }
 

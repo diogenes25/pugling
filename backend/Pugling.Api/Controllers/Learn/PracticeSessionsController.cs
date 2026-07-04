@@ -10,13 +10,15 @@ namespace Pugling.Api.Controllers.Learn;
 
 /// <summary>Übungssitzungen des Kindes: erfassen echte Übungszeit und was geübt wurde.</summary>
 [ApiController]
-[Route("api/study-plans/{planId:int}/practice-sessions")]
+[ApiVersion("1.0")]
+[Route(ApiRoutes.V1 + "/study-plans/{planId:int}/practice-sessions")]
 [Tags("Study – Practice")]
 [Produces("application/json")]
 [Authorize]
 [ServiceFilter(typeof(PlanOwnershipFilter))]
 public class PracticeSessionsController(PuglingDbContext db, StudyProgressService progress,
-    ScheduleService schedule, ScoringService scoring, GamificationService gamification, AnswerGrader grader)
+    ScheduleService schedule, ScoringService scoring, GamificationService gamification, AnswerGrader grader,
+    ILogger<PracticeSessionsController> logger)
     : ControllerBase
 {
     /// <summary>Obergrenze der pro Heartbeat anrechenbaren Sekunden (großzügiges Intervall).</summary>
@@ -114,7 +116,7 @@ public class PracticeSessionsController(PuglingDbContext db, StudyProgressServic
             .Include(i => i.ClozeText)
             .FirstOrDefaultAsync(i => i.StudyPlanId == planId
                 && (i.VocabularyId == dto.ContentId || i.ClozeTextId == dto.ContentId));
-        if (item is null) return NotFound("Inhalt gehört nicht zum Lehrplan.");
+        if (item is null) return Problem(statusCode: 404, detail: "Inhalt gehört nicht zum Lehrplan.");
 
         var plan = (await GetPlan(planId))!;
         // Stufe serverseitig aus dem Fahrplan erzwingen (nicht vom Client wählbar, wie bei den Tests):
@@ -122,9 +124,26 @@ public class PracticeSessionsController(PuglingDbContext db, StudyProgressServic
         var stage = StudyProgressService.StageForDay(plan, session.Day);
         // Serverseitige Bewertung: das Frontend liefert nur die Antwort, nie ein "richtig"-Flag.
         var (wasCorrect, expected, isTypedStage) = Grade(plan.Method, stage, dto, item);
+
+        // Erstkontakt über die Übungssession zählt als Einführung. Sonst bliebe IntroducedAt bei rein
+        // übungsbasiertem Lernen null → die NewWords-Metrik und die Stundenplan-Auswahl (nächste Charge)
+        // stünden still, weil bislang nur der Test-/Generate-Fluss einführt.
+        if (item.IntroducedAt is null)
+        {
+            item.IntroducedAt = session.Day;
+            item.DueOn ??= session.Day;
+        }
+
+        // Gewertet wird nur eine fällige Karte, und höchstens einmal pro Tag (Anti-Farming): sonst könnte
+        // der Sohn dieselbe Karte – zumal die Lösung im Feedback steht – wiederholt einreichen und
+        // Punkte/Combo endlos abgreifen. Eine falsch beantwortete Karte bleibt zwar zum Weiterüben fällig,
+        // bringt aber am selben Tag keine weiteren Punkte mehr.
+        var due = item.DueOn is null || item.DueOn <= session.Day;
+        var alreadyScoredToday = item.LastReviewedAt is { } lastReviewed
+            && DateOnly.FromDateTime(lastReviewed) == session.Day;
         // Selbsteinschätzung zählt nur, wenn der Plan sie zulässt. Sonst wertlos: weder Punkte/Box noch
         // Combo noch Statistik – daher gar nicht erst als "richtig" protokollieren (Anti-Selbstbetrug).
-        var scored = isTypedStage || !plan.RequireTypedTest;
+        var scored = (isTypedStage || !plan.RequireTypedTest) && due && !alreadyScoredToday;
 
         // Combo VOR dem Hinzufügen des neuen Reviews zählen: EF-Relationship-Fixup würde das noch
         // ungespeicherte Review sonst in session.Reviews einreihen und die Combo um 1 verfälschen.
@@ -173,6 +192,15 @@ public class PracticeSessionsController(PuglingDbContext db, StudyProgressServic
                 Reason = c.Reason,
             });
         await db.SaveChangesAsync();
+
+        // Audit-Trail für die punkte-relevanteste Aktion (Anti-Cheat/Streitfall nachvollziehbar):
+        // wer, welcher Plan, richtig?, welche Boni – nur wenn tatsächlich Punkte flossen.
+        if (score.Total > 0)
+            logger.LogInformation(
+                "Wiederholung gewertet: Kind {ChildId} Plan {PlanId} Inhalt {ContentId} → +{Total} Punkte " +
+                "(Basis {Base}, Combo ×{Combo} +{ComboBonus}, Speed +{SpeedBonus})",
+                plan.ChildId, planId, dto.ContentId, score.Total, score.BasePoints, combo,
+                score.ComboBonus, score.SpeedBonus);
 
         // Missionen/Auszeichnungen nach jeder gewerteten Wiederholung auswerten – Belohnungen fließen
         // beim Spielen, nicht erst beim Ansehen. Idempotent (je Zeitraum/Auszeichnung höchstens einmal).
@@ -293,6 +321,10 @@ public class PracticeSessionsController(PuglingDbContext db, StudyProgressServic
         await db.SaveChangesAsync();
 
         var plan = (await GetPlan(planId))!;
-        return await progress.EvaluateAndAwardAsync(plan, session.Day);
+        var dayProgress = await progress.EvaluateAndAwardAsync(plan, session.Day);
+        // Zeitbasierte Missionen (z.B. MinutesPracticed) am Sitzungsende auswerten – nicht im häufigen
+        // Heartbeat und nicht erst beim Ansehen der Missionsseite (die ist reine Lesesicht).
+        await gamification.EvaluateAndAwardAsync(plan.ChildId, session.Day);
+        return dayProgress;
     }
 }

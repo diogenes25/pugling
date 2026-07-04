@@ -9,7 +9,8 @@ namespace Pugling.Api.Controllers.Learn;
 
 /// <summary>Lückentext-Store: Lerngrundlagen für das Lückentext-Verfahren (vom Vater gepflegt).</summary>
 [ApiController]
-[Route("api/learn/cloze-texts")]
+[ApiVersion("1.0")]
+[Route(ApiRoutes.V1 + "/learn/cloze-texts")]
 [Tags("Learn – Cloze Store")]
 [Produces("application/json")]
 [Authorize(Roles = Roles.Vater)]
@@ -54,10 +55,10 @@ public class ClozeTextsController(PuglingDbContext db) : ControllerBase
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<ActionResult<ClozeResponse>> Create(CreateClozeDto dto)
     {
-        if (string.IsNullOrWhiteSpace(dto.Key)) return BadRequest("Key ist erforderlich.");
-        if (string.IsNullOrWhiteSpace(dto.Text)) return BadRequest("Text ist erforderlich.");
-        if (dto.Gaps is null or { Count: 0 }) return BadRequest("Mindestens eine Lücke ist erforderlich.");
-        if (await db.ClozeTexts.AnyAsync(c => c.Key == dto.Key)) return Conflict($"Key '{dto.Key}' existiert bereits.");
+        if (string.IsNullOrWhiteSpace(dto.Key)) return Problem(statusCode: 400, detail: "Key ist erforderlich.");
+        if (string.IsNullOrWhiteSpace(dto.Text)) return Problem(statusCode: 400, detail: "Text ist erforderlich.");
+        if (dto.Gaps is null or { Count: 0 }) return Problem(statusCode: 400, detail: "Mindestens eine Lücke ist erforderlich.");
+        if (await db.ClozeTexts.AnyAsync(c => c.Key == dto.Key)) return Problem(statusCode: 409, detail: $"Key '{dto.Key}' existiert bereits.");
 
         var cloze = new ClozeText
         {
@@ -85,7 +86,7 @@ public class ClozeTextsController(PuglingDbContext db) : ControllerBase
         var cloze = await db.ClozeTexts.FindAsync(id);
         if (cloze is null) return NotFound();
 
-        if (dto.Gaps is { Count: 0 }) return BadRequest("Mindestens eine Lücke ist erforderlich.");
+        if (dto.Gaps is { Count: 0 }) return Problem(statusCode: 400, detail: "Mindestens eine Lücke ist erforderlich.");
         if (dto.Title is not null) cloze.Title = dto.Title;
         if (dto.Text is not null) cloze.Text = dto.Text;
         if (dto.Translation is not null) cloze.Translation = dto.Translation;
@@ -105,7 +106,7 @@ public class ClozeTextsController(PuglingDbContext db) : ControllerBase
         var cloze = await db.ClozeTexts.FindAsync(id);
         if (cloze is null) return NotFound();
         if (await db.StudyPlanItems.AnyAsync(i => i.ClozeTextId == id))
-            return Conflict("Lückentext wird in einem Lehrplan verwendet und kann nicht gelöscht werden.");
+            return Problem(statusCode: 409, detail: "Lückentext wird in einem Lehrplan verwendet und kann nicht gelöscht werden.");
         db.ClozeTexts.Remove(cloze);
         await db.SaveChangesAsync();
         return NoContent();

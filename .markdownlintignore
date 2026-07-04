@@ -1,0 +1,6 @@
+node_modules/
+frontend/
+# Operative Claude-Code-Prompts/Skills (Frontmatter-getrieben, kein Doku-Markdown).
+.claude/
+# Skill-generierter Beispielkurs inkl. append-only, prüfbarem Ledger – nicht umformatieren.
+lehrplan/

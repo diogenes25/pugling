@@ -11,7 +11,7 @@ namespace Pugling.Api.Tests;
 public class GamificationTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWebAppFactory>
 {
     private static async Task<int> LeitnerPlanAsync(HttpClient father) =>
-        await TestApi.IdAsync(await father.PostAsJsonAsync("/api/study-plans", new
+        await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/study-plans", new
         {
             childId = 1,
             title = "Gami-Plan",
@@ -24,20 +24,20 @@ public class GamificationTests(PuglingWebAppFactory factory) : IClassFixture<Pug
 
     private static async Task<(int session, List<int> ids)> StartAsync(HttpClient child, int planId)
     {
-        var plan = await (await child.GetAsync($"/api/study-plans/{planId}")).Content.ReadFromJsonAsync<JsonElement>();
+        var plan = await (await child.GetAsync($"/api/v1/study-plans/{planId}")).Content.ReadFromJsonAsync<JsonElement>();
         var ids = plan.GetProperty("items").EnumerateArray().Select(i => i.GetProperty("contentId").GetInt32()).ToList();
-        var sid = (await (await child.PostAsJsonAsync($"/api/study-plans/{planId}/practice-sessions", new { }))
+        var sid = (await (await child.PostAsJsonAsync($"/api/v1/study-plans/{planId}/practice-sessions", new { }))
             .Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetInt32();
         return (sid, ids);
     }
 
     private static Task ReviewAsync(HttpClient child, int planId, int sid, int contentId) =>
-        child.PostAsJsonAsync($"/api/study-plans/{planId}/practice-sessions/{sid}/review",
+        child.PostAsJsonAsync($"/api/v1/study-plans/{planId}/practice-sessions/{sid}/review",
             new { contentId, stage = 2, wasKnown = true });
 
     private static async Task<int> CountPointReasonAsync(HttpClient child, string reason)
     {
-        var wallet = await (await child.GetAsync("/api/me/points")).Content.ReadFromJsonAsync<JsonElement>();
+        var wallet = await (await child.GetAsync("/api/v1/me/points")).Content.ReadFromJsonAsync<JsonElement>();
         return wallet.GetProperty("entries").EnumerateArray()
             .Count(e => e.GetProperty("reason").GetString() == reason);
     }
@@ -49,7 +49,7 @@ public class GamificationTests(PuglingWebAppFactory factory) : IClassFixture<Pug
         var planId = await LeitnerPlanAsync(father);
         // Eigene Tages-Mission mit niedrigem Ziel; eindeutiger Titel isoliert den Test.
         var missionTitle = "TEST Tagesziel 2 Treffer";
-        await father.PostAsJsonAsync("/api/fathers/1/children/1/missions", new
+        await father.PostAsJsonAsync("/api/v1/children/1/missions", new
         {
             title = missionTitle,
             metric = "CorrectReviews",
@@ -65,7 +65,7 @@ public class GamificationTests(PuglingWebAppFactory factory) : IClassFixture<Pug
         await ReviewAsync(child, planId, sid, ids[1]); // Ziel (2) erreicht → Auswertung nach dem Review
 
         // Sichtbar als erfüllt in der Sohn-Sicht.
-        var missions = await (await child.GetAsync("/api/me/missions")).Content.ReadFromJsonAsync<JsonElement>();
+        var missions = await (await child.GetAsync("/api/v1/me/missions")).Content.ReadFromJsonAsync<JsonElement>();
         var mine = missions.EnumerateArray().First(m => m.GetProperty("title").GetString() == missionTitle);
         Assert.True(mine.GetProperty("completed").GetBoolean());
 
@@ -80,7 +80,7 @@ public class GamificationTests(PuglingWebAppFactory factory) : IClassFixture<Pug
         var father = await TestApi.FatherAsync(factory);
         var planId = await LeitnerPlanAsync(father);
         var title = "TEST Badge 1 Treffer";
-        await father.PostAsJsonAsync("/api/fathers/1/children/1/achievements", new
+        await father.PostAsJsonAsync("/api/v1/children/1/achievements", new
         {
             title,
             icon = "⭐",
@@ -93,7 +93,7 @@ public class GamificationTests(PuglingWebAppFactory factory) : IClassFixture<Pug
         var (sid, ids) = await StartAsync(child, planId);
         await ReviewAsync(child, planId, sid, ids[0]); // Schwelle (1) erreicht
 
-        var achievements = await (await child.GetAsync("/api/me/achievements")).Content.ReadFromJsonAsync<JsonElement>();
+        var achievements = await (await child.GetAsync("/api/v1/me/achievements")).Content.ReadFromJsonAsync<JsonElement>();
         var mine = achievements.EnumerateArray().First(a => a.GetProperty("title").GetString() == title);
         Assert.True(mine.GetProperty("earned").GetBoolean());
         Assert.Equal("⭐", mine.GetProperty("icon").GetString());
@@ -104,11 +104,11 @@ public class GamificationTests(PuglingWebAppFactory factory) : IClassFixture<Pug
     }
 
     [Fact]
-    public async Task Missionen_NurEigene_FremderVaterBekommt404()
+    public async Task Missionen_NurEigene_FremdesKindBekommt404()
     {
         var father = await TestApi.FatherAsync(factory);
-        // Kind 1 gehört Vater 1; ein anderer fatherId in der Route ist nicht erlaubt.
-        var res = await father.GetAsync("/api/fathers/999/children/1/missions");
+        // Kind 999 gehört dem Vater nicht → der ChildOwnershipFilter liefert 404 (kein Enumerieren).
+        var res = await father.GetAsync("/api/v1/children/999/missions");
         Assert.Equal(System.Net.HttpStatusCode.NotFound, res.StatusCode);
     }
 }

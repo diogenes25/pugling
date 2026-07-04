@@ -1,12 +1,15 @@
 # Module 02 — Branching and merging
 
 ## Objective
+
 After this module you should be able to:
+
 - Create a branch, switch to it, and commit on it without touching `main`.
 - Merge a branch back into `main` and know what a fast-forward merge is.
 - Explain what a merge conflict is and when Git makes you resolve one by hand.
 
 ## Learn
+
 A **branch** is just a movable pointer to a commit. `main` is a branch like any other. Working on a
 branch lets you develop a change in isolation and merge it back when it's ready.
 
@@ -33,6 +36,7 @@ because two branches both changed *some* files.
 ## Exercises
 
 ### Exercise 02.1  (multiple-choice, 3 pts)
+
 When does Git produce a **merge conflict** that you must resolve by hand?
 
 - A) Any time you merge two different branches.
@@ -43,6 +47,7 @@ When does Git produce a **merge conflict** that you must resolve by hand?
 Write your chosen letter into the ledger before checking.
 
 ### Exercise 02.2  (code, 4 pts)
+
 In a throwaway repo that already has one commit on `main` with a file `app.txt`:
 create a branch `feature`, add a line to `app.txt` on that branch and commit it, then switch back to
 `main` and merge `feature` in. Your work is "done" when:
@@ -54,5 +59,6 @@ create a branch `feature`, add a line to `app.txt` on that branch and commit it,
 Record the exact command sequence and how you confirmed the fast-forward in the ledger.
 
 ### Exercise 02.3  (explain, 3 pts)
+
 In your own words, explain what a **fast-forward merge** is and why it produces no merge commit. Your
 answer will be graded against the rubric in the answer key.

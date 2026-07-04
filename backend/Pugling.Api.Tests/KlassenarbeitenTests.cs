@@ -12,7 +12,7 @@ public class KlassenarbeitenTests(PuglingWebAppFactory factory) : IClassFixture<
     {
         var father = await TestApi.FatherAsync(factory);
 
-        var create = await father.PostAsJsonAsync("/api/klassenarbeiten", new
+        var create = await father.PostAsJsonAsync("/api/v1/class-tests", new
         {
             childId = 1,
             title = "Probe Mathe",
@@ -22,12 +22,12 @@ public class KlassenarbeitenTests(PuglingWebAppFactory factory) : IClassFixture<
         var detail = await create.Content.ReadFromJsonAsync<JsonElement>();
         var id = detail.GetProperty("klassenarbeit").GetProperty("id").GetInt32();
 
-        Assert.Equal(HttpStatusCode.OK, (await father.GetAsync($"/api/klassenarbeiten/{id}")).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await father.GetAsync($"/api/v1/class-tests/{id}")).StatusCode);
 
-        var list = await (await father.GetAsync("/api/klassenarbeiten?childId=1")).Content.ReadFromJsonAsync<JsonElement>();
+        var list = await (await father.GetAsync("/api/v1/class-tests?childId=1")).Content.ReadFromJsonAsync<JsonElement>();
         Assert.True(list.GetArrayLength() >= 1);
 
-        var practice = await father.GetAsync($"/api/klassenarbeiten/{id}/practice");
+        var practice = await father.GetAsync($"/api/v1/class-tests/{id}/practice");
         Assert.Equal(HttpStatusCode.OK, practice.StatusCode);
     }
 
@@ -37,7 +37,7 @@ public class KlassenarbeitenTests(PuglingWebAppFactory factory) : IClassFixture<
         // Der Seed legt für Kind 1 eine geschriebene Arbeit mit Note 4,5 an – sie muss im Wiederholen-Endpunkt auftauchen.
         var father = await TestApi.FatherAsync(factory);
 
-        var repeat = await (await father.GetAsync("/api/klassenarbeiten/repeat?childId=1")).Content.ReadFromJsonAsync<JsonElement>();
+        var repeat = await (await father.GetAsync("/api/v1/class-tests/repeat?childId=1")).Content.ReadFromJsonAsync<JsonElement>();
 
         Assert.True(repeat.GetProperty("sources").GetArrayLength() >= 1);
     }
@@ -48,7 +48,7 @@ public class KlassenarbeitenTests(PuglingWebAppFactory factory) : IClassFixture<
         var father = await TestApi.FatherAsync(factory);
 
         // childId 999 gehört keinem Kind dieses Vaters.
-        var res = await father.PostAsJsonAsync("/api/klassenarbeiten", new { childId = 999, title = "X", scheduledDate = "2099-01-15" });
+        var res = await father.PostAsJsonAsync("/api/v1/class-tests", new { childId = 999, title = "X", scheduledDate = "2099-01-15" });
 
         Assert.Equal(HttpStatusCode.Forbidden, res.StatusCode);
     }

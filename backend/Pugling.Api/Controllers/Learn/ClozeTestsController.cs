@@ -10,7 +10,8 @@ namespace Pugling.Api.Controllers.Learn;
 
 /// <summary>Mehrstufiger Lückentext-Abschlusstest für einen Lückentext-Lehrplan.</summary>
 [ApiController]
-[Route("api/study-plans/{planId:int}/cloze-tests")]
+[ApiVersion("1.0")]
+[Route(ApiRoutes.V1 + "/study-plans/{planId:int}/cloze-tests")]
 [Tags("Study – Cloze Tests")]
 [Produces("application/json")]
 [Authorize]
@@ -38,9 +39,9 @@ public class ClozeTestsController(PuglingDbContext db, ScheduleService schedule,
     {
         var plan = await db.StudyPlans.Include(p => p.Items.OrderBy(i => i.Order)).ThenInclude(i => i.ClozeText)
             .FirstOrDefaultAsync(p => p.Id == planId);
-        if (plan is null) return NotFound("Lehrplan nicht gefunden.");
-        if (plan.Method != LearningMethod.Cloze) return BadRequest("Dieser Lehrplan ist kein Lückentext-Plan.");
-        if (plan.Items.Count == 0) return BadRequest("Lehrplan enthält keine Lückentexte.");
+        if (plan is null) return Problem(statusCode: 404, detail: "Lehrplan nicht gefunden.");
+        if (plan.Method != LearningMethod.Cloze) return Problem(statusCode: 400, detail: "Dieser Lehrplan ist kein Lückentext-Plan.");
+        if (plan.Items.Count == 0) return Problem(statusCode: 400, detail: "Lehrplan enthält keine Lückentexte.");
 
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
         if (dto.Day is { } dd && dd != today && !User.IsFather()) return Forbid();
@@ -52,7 +53,7 @@ public class ClozeTestsController(PuglingDbContext db, ScheduleService schedule,
         // Stundenplan-gesteuerte Auswahl (neuer Stoff vs. Wiederholung).
         var selection = await schedule.SelectAsync(plan, day);
         var texts = selection.Items.Select(i => i.ClozeText!).ToList();
-        if (texts.Count == 0) return BadRequest("Für heute stehen keine Lückentexte an.");
+        if (texts.Count == 0) return Problem(statusCode: 400, detail: "Für heute stehen keine Lückentexte an.");
         if (selection.Mode == LessonDayMode.New) await schedule.MarkIntroducedAsync(selection.Items, day);
 
         var results = new List<TestItemResult>();
@@ -109,16 +110,16 @@ public class ClozeTestsController(PuglingDbContext db, ScheduleService schedule,
     {
         var attempt = await attempts.LoadAttemptAsync(planId, attemptId);
         if (attempt is null) return NotFound();
-        if (attempt.CompletedAt is not null) return BadRequest("Test ist bereits abgeschlossen.");
+        if (attempt.CompletedAt is not null) return Problem(statusCode: 400, detail: "Test ist bereits abgeschlossen.");
         if (!StudyProgressService.IsTyped((ClozeStage)attempt.StageValue))
-            return BadRequest("Buchstaben-Tipps gibt es nur in den Freitext-Stufen.");
+            return Problem(statusCode: 400, detail: "Buchstaben-Tipps gibt es nur in den Freitext-Stufen.");
 
         var result = attempt.Results.FirstOrDefault(r => r.ContentId == dto.ClozeTextId && r.GapIndex == dto.GapIndex);
-        if (result is null) return NotFound("Lücke gehört nicht zum Test.");
+        if (result is null) return Problem(statusCode: 404, detail: "Lücke gehört nicht zum Test.");
 
         var cloze = await db.ClozeTexts.FindAsync(dto.ClozeTextId);
         var answer = cloze?.Gaps.FirstOrDefault(g => g.Index == dto.GapIndex)?.Answer;
-        if (string.IsNullOrEmpty(answer)) return BadRequest("Keine Lösung hinterlegt.");
+        if (string.IsNullOrEmpty(answer)) return Problem(statusCode: 400, detail: "Keine Lösung hinterlegt.");
 
         var index = Random.Shared.Next(answer.Length);
         result.HintsUsed++;
@@ -140,7 +141,7 @@ public class ClozeTestsController(PuglingDbContext db, ScheduleService schedule,
     {
         var attempt = await attempts.LoadAttemptAsync(planId, attemptId);
         if (attempt is null) return NotFound();
-        if (attempt.CompletedAt is not null) return BadRequest("Test wurde bereits eingereicht.");
+        if (attempt.CompletedAt is not null) return Problem(statusCode: 400, detail: "Test wurde bereits eingereicht.");
 
         var plan = (await attempts.GetPlanAsync(planId))!;
         var textIds = attempt.Results.Select(r => r.ContentId).Distinct().ToList();

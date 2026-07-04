@@ -1,3 +1,4 @@
+using Asp.Versioning;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -5,12 +6,42 @@ using Microsoft.OpenApi;
 using Pugling.Api.Auth;
 using Pugling.Api.Data;
 using Pugling.Api.Services;
+using Serilog;
+using Serilog.Formatting.Compact;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Serilog als einziges Logging-Backend: Konsole (lesbar beim Entwickeln) + rollierende JSON-Datei
+// (maschinell auswertbar, 14 Tage Vorhalt). shared:true, weil bei den Integrationstests mehrere Hosts
+// parallel in dieselbe Datei schreiben. Level/Overrides kommen aus dem "Serilog"-Abschnitt der Konfiguration.
+builder.Host.UseSerilog((context, services, config) => config
+    .ReadFrom.Configuration(context.Configuration)
+    .ReadFrom.Services(services)
+    .Enrich.FromLogContext()
+    .WriteTo.Console()
+    .WriteTo.File(new CompactJsonFormatter(), "logs/pugling-.clef",
+        rollingInterval: RollingInterval.Day, retainedFileCountLimit: 14, shared: true));
 
 builder.Services.AddControllers()
     .AddJsonOptions(o => o.JsonSerializerOptions.Converters.Add(
         new System.Text.Json.Serialization.JsonStringEnumConverter()));
+
+// API-Versionierung über URL-Segment (/api/v1/…). Default 1.0; das Versionssegment steckt zentral
+// in ApiRoutes.V1. Neue Brüche laufen künftig über eine parallele v2 statt über Abwärtskompatibilität.
+builder.Services.AddApiVersioning(o =>
+    {
+        o.DefaultApiVersion = new ApiVersion(1, 0);
+        o.AssumeDefaultVersionWhenUnspecified = true;
+        o.ReportApiVersions = true;
+    })
+    .AddApiExplorer(o =>
+    {
+        o.GroupNameFormat = "'v'VVV";
+        o.SubstituteApiVersionInUrl = true;
+    });
+// Einheitliches Fehlerschema: alle Fehler (Validierung, Fach-Fehler, unbehandelte Exceptions) als
+// RFC-konforme application/problem+json statt nackter Strings.
+builder.Services.AddProblemDetails();
 builder.Services.AddDbContext<PuglingDbContext>(o =>
     o.UseSqlite(builder.Configuration.GetConnectionString("Default") ?? "Data Source=pugling.db"));
 builder.Services.AddScoped<ScoringService>();
@@ -21,6 +52,9 @@ builder.Services.AddScoped<ScheduleService>();
 builder.Services.AddScoped<TestAttemptService>();
 builder.Services.AddScoped<AuthAccess>();
 builder.Services.AddScoped<PlanOwnershipFilter>();
+builder.Services.AddScoped<ChildOwnershipFilter>();
+// Betriebs-/Monitoring-Sonde: prüft, ob die API läuft UND die Datenbank erreichbar/migriert ist.
+builder.Services.AddHealthChecks().AddDbContextCheck<PuglingDbContext>();
 builder.Services.AddSingleton<TokenService>();
 builder.Services.AddSingleton<ArithmeticProblemGenerator>();
 builder.Services.AddSingleton<ExerciseAnswerChecker>();
@@ -70,6 +104,20 @@ builder.Services.AddOpenApi(o => o.AddDocumentTransformer((doc, _, _) =>
 
 var app = builder.Build();
 
+// Unbehandelte Exceptions → problem+json (500); leere Fehler-Antworten (z. B. 404/403/401) ebenso.
+app.UseExceptionHandler();
+app.UseStatusCodePages();
+
+// Eine Zusammenfassungszeile je Request (Methode, Pfad, Status, Dauer) statt der lärmenden
+// Framework-Defaults; angereichert um Identität/TraceId, damit ein 4xx/5xx sofort zuordenbar ist.
+app.UseSerilogRequestLogging(options => options.EnrichDiagnosticContext = (diag, http) =>
+{
+    diag.Set("TraceId", System.Diagnostics.Activity.Current?.Id ?? http.TraceIdentifier);
+    if (http.User.FindFirst("fid")?.Value is { } fid) diag.Set("Fid", fid);
+    if (http.User.FindFirst("cid")?.Value is { } cid) diag.Set("Cid", cid);
+    if (http.User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value is { } role) diag.Set("Role", role);
+});
+
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
@@ -88,6 +136,11 @@ app.UseSwaggerUI(o =>
 app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
+// Nach der Authentifizierung: Identität (Fid/Cid/Role) + TraceId in den Log-Kontext heben, damit
+// jede Log-Zeile aus Controllern/Services (v. a. die Punkte-Buchungen) sie mitträgt.
+app.UseMiddleware<RequestLogContextMiddleware>();
+// Health-Endpunkt bewusst anonym (kein [Authorize]) – für Load-Balancer/Monitoring.
+app.MapHealthChecks("/health");
 app.MapControllers();
 app.Run();
 

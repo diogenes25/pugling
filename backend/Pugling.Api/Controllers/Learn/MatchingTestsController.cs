@@ -13,7 +13,8 @@ namespace Pugling.Api.Controllers.Learn;
 /// Nutzt den Vokabel-Store als Inhalt; Zuordnung ist objektiv (immer gewertet).
 /// </summary>
 [ApiController]
-[Route("api/study-plans/{planId:int}/matching-tests")]
+[ApiVersion("1.0")]
+[Route(ApiRoutes.V1 + "/study-plans/{planId:int}/matching-tests")]
 [Tags("Study – Matching Tests")]
 [Produces("application/json")]
 [Authorize]
@@ -41,9 +42,9 @@ public class MatchingTestsController(PuglingDbContext db, ScheduleService schedu
     {
         var plan = await db.StudyPlans.Include(p => p.Items.OrderBy(i => i.Order)).ThenInclude(i => i.Vocabulary)
             .FirstOrDefaultAsync(p => p.Id == planId);
-        if (plan is null) return NotFound("Lehrplan nicht gefunden.");
-        if (plan.Method != LearningMethod.Matching) return BadRequest("Dieser Lehrplan ist kein Zuordnungs-Plan.");
-        if (plan.Items.Count == 0) return BadRequest("Lehrplan enthält keine Vokabeln.");
+        if (plan is null) return Problem(statusCode: 404, detail: "Lehrplan nicht gefunden.");
+        if (plan.Method != LearningMethod.Matching) return Problem(statusCode: 400, detail: "Dieser Lehrplan ist kein Zuordnungs-Plan.");
+        if (plan.Items.Count == 0) return Problem(statusCode: 400, detail: "Lehrplan enthält keine Vokabeln.");
 
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
         if (dto.Day is { } dd && dd != today && !User.IsFather()) return Forbid();
@@ -55,7 +56,7 @@ public class MatchingTestsController(PuglingDbContext db, ScheduleService schedu
         // Stundenplan-gesteuerte Auswahl (neuer Stoff vs. Wiederholung).
         var selection = await schedule.SelectAsync(plan, day);
         var vocab = selection.Items.Select(i => i.Vocabulary!).ToList();
-        if (vocab.Count == 0) return BadRequest("Für heute stehen keine Vokabeln an.");
+        if (vocab.Count == 0) return Problem(statusCode: 400, detail: "Für heute stehen keine Vokabeln an.");
         if (selection.Mode == LessonDayMode.New) await schedule.MarkIntroducedAsync(selection.Items, day);
 
         var correct = vocab.Select(v => Right(v, stage)).ToList();
@@ -119,7 +120,7 @@ public class MatchingTestsController(PuglingDbContext db, ScheduleService schedu
     {
         var attempt = await attempts.LoadAttemptAsync(planId, attemptId);
         if (attempt is null) return NotFound();
-        if (attempt.CompletedAt is not null) return BadRequest("Test wurde bereits eingereicht.");
+        if (attempt.CompletedAt is not null) return Problem(statusCode: 400, detail: "Test wurde bereits eingereicht.");
 
         var plan = (await attempts.GetPlanAsync(planId))!;
         var stage = (MatchStage)attempt.StageValue;

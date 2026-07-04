@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { api } from "../lib/api";
+import { api, errorMessage } from "../lib/api";
 import { useSohn } from "./SohnApp";
 import { CelebrationLayer, useCelebration } from "../components/Celebration";
 import type { PlanItemResponse, ReviewOutcome, SessionResponse, TodayResponse } from "../lib/types";
@@ -44,7 +44,7 @@ export function SohnPractice() {
         setCards(due);
         setPhase(due.length === 0 ? "empty" : "front");
       } catch (e) {
-        if (alive) { setError(e instanceof Error ? e.message : "Fehler"); setPhase("error"); }
+        if (alive) { setError(errorMessage(e)); setPhase("error"); }
       }
     })();
     return () => { alive = false; };
@@ -70,11 +70,14 @@ export function SohnPractice() {
     if (!planId || !session.current) return;
     const card = cards[idx];
     try {
-      const outcome = await api.review(planId, session.current.id, card.contentId, stage.current, wasCorrect);
+      // Flip-Karte = Selbsteinschätzung: der Server bewertet, wir liefern nur das WasKnown-Flag.
+      const outcome = await api.review(planId, session.current.id, { contentId: card.contentId, wasKnown: wasCorrect });
       setLastOutcome(outcome);
       setCombo(outcome.combo); // serverseitig gezählt
       if (wasCorrect) {
-        setEarned((e) => e + outcome.awarded + outcome.comboBonus);
+        // Alle tatsächlich gebuchten Anteile zählen (Basis + Combo + Speed), sonst weicht die
+        // Rundensumme vom Wallet ab.
+        setEarned((e) => e + outcome.awarded + outcome.comboBonus + outcome.speedBonus);
         if (outcome.comboBonus > 0) {
           // Combo-Meilenstein: mittlere Feier, ab ×10 der große fliegende Kämpfer.
           const tier = outcome.combo >= 10 ? "big" : "medium";

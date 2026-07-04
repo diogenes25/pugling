@@ -10,7 +10,7 @@ namespace Pugling.Api.Services;
 /// aus und schreibt fällige Belohnungen idempotent gut – je Mission/Zeitraum bzw. je Auszeichnung genau
 /// einmal (analog zu <see cref="StudyProgressService"/>). Liefert außerdem den aktuellen Status fürs Frontend.
 /// </summary>
-public class GamificationService(PuglingDbContext db, MetricsService metrics)
+public class GamificationService(PuglingDbContext db, MetricsService metrics, ILogger<GamificationService> logger)
 {
     public record MissionStatus(int Id, string Title, ProgressMetric Metric, MissionPeriod Period,
         int Target, int Current, bool Completed, int RewardPoints);
@@ -39,7 +39,9 @@ public class GamificationService(PuglingDbContext db, MetricsService metrics)
                 Amount = m.RewardPoints,
                 Reason = $"Mission erfüllt: {m.Title}",
             });
-            await SaveIgnoringDuplicateAsync();
+            if (await SaveIgnoringDuplicateAsync(() => db.MissionAwards.AnyAsync(a => a.MissionId == m.Id && a.PeriodKey == key)))
+                logger.LogInformation("Belohnung gebucht: Kind {ChildId} +{Points} (Mission) – \"{Title}\" ({PeriodKey})",
+                    childId, m.RewardPoints, m.Title, key);
         }
 
         foreach (var a in await db.Achievements.Where(a => a.ChildId == childId && a.Active).ToListAsync())
@@ -57,15 +59,20 @@ public class GamificationService(PuglingDbContext db, MetricsService metrics)
                     Amount = a.RewardPoints,
                     Reason = $"Auszeichnung erreicht: {a.Title}",
                 });
-            await SaveIgnoringDuplicateAsync();
+            if (await SaveIgnoringDuplicateAsync(() => db.AchievementAwards.AnyAsync(x => x.AchievementId == a.Id)))
+                logger.LogInformation("Belohnung gebucht: Kind {ChildId} +{Points} (Auszeichnung) – \"{Title}\"",
+                    childId, a.RewardPoints, a.Title);
         }
     }
 
-    /// <summary>Aktueller Missions-Status (nach Auswertung) für die Anzeige beim Kind/Vater.</summary>
+    /// <summary>
+    /// Aktueller Missions-Status für die Anzeige beim Kind/Vater – reine Lesesicht, ohne Punktevergabe.
+    /// Belohnungen fließen an den Schreib-Nahtstellen (Wiederholung, Test-Abschluss, Sitzungsende), nicht
+    /// beim Ansehen: ein GET darf keine Punkte buchen (sichere HTTP-Methode, kein Prefetch-/Retry-Effekt).
+    /// </summary>
     public async Task<IReadOnlyList<MissionStatus>> MissionStatusesAsync(int childId, DateOnly today)
     {
-        await EvaluateAndAwardAsync(childId, today);
-        var missions = await db.Missions.Where(m => m.ChildId == childId && m.Active).ToListAsync();
+        var missions = await db.Missions.AsNoTracking().Where(m => m.ChildId == childId && m.Active).ToListAsync();
 
         var result = new List<MissionStatus>(missions.Count);
         foreach (var m in missions)
@@ -80,11 +87,10 @@ public class GamificationService(PuglingDbContext db, MetricsService metrics)
         return result;
     }
 
-    /// <summary>Aktueller Auszeichnungs-Status (nach Auswertung), erreichte zuerst.</summary>
+    /// <summary>Aktueller Auszeichnungs-Status (reine Lesesicht, ohne Punktevergabe), erreichte zuerst.</summary>
     public async Task<IReadOnlyList<AchievementStatus>> AchievementStatusesAsync(int childId, DateOnly today)
     {
-        await EvaluateAndAwardAsync(childId, today);
-        var achievements = await db.Achievements.Where(a => a.ChildId == childId && a.Active).ToListAsync();
+        var achievements = await db.Achievements.AsNoTracking().Where(a => a.ChildId == childId && a.Active).ToListAsync();
         var awards = await db.AchievementAwards
             .Where(x => achievements.Select(a => a.Id).Contains(x.AchievementId))
             .ToDictionaryAsync(x => x.AchievementId, x => x.EarnedAt);
@@ -118,17 +124,29 @@ public class GamificationService(PuglingDbContext db, MetricsService metrics)
         return (monday, monday.AddDays(6), key);
     }
 
-    /// <summary>Speichert; ein paralleler Doppel-Request greift den Unique-Index ab, ohne doppelte Punkte/500.</summary>
-    private async Task SaveIgnoringDuplicateAsync()
+    /// <summary>
+    /// Speichert; ein paralleler Doppel-Request greift den Unique-Index ab, ohne doppelte Punkte/500.
+    /// Liefert <c>true</c>, wenn tatsächlich gebucht wurde, <c>false</c> beim abgefangenen Duplikat –
+    /// damit der Aufrufer nur echte Buchungen ins Audit-Log schreibt. <paramref name="alreadyAwardedAsync"/>
+    /// prüft, ob die Belohnung inzwischen (durch den Konkurrenz-Request) existiert.
+    /// </summary>
+    private async Task<bool> SaveIgnoringDuplicateAsync(Func<Task<bool>> alreadyAwardedAsync)
     {
         try
         {
             await db.SaveChangesAsync();
+            return true;
         }
-        catch (DbUpdateException)
+        catch (DbUpdateException ex)
         {
+            // Nur den erwarteten Doppel-Request abfangen: taucht die Belohnung jetzt bereits auf, war es
+            // der Unique-Index-Race → gutartig. Sonst ein echter DB-Fehler (FK, NOT NULL, …) → durchreichen,
+            // damit legitime Punkte nicht stillschweigend verloren gehen.
+            if (!await alreadyAwardedAsync()) throw;
+            logger.LogWarning(ex, "Doppelte Gamification-Belohnung abgefangen (Unique-Index)");
             foreach (var entry in db.ChangeTracker.Entries().Where(e => e.State == EntityState.Added))
                 entry.State = EntityState.Detached;
+            return false;
         }
     }
 }

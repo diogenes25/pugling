@@ -10,7 +10,8 @@ namespace Pugling.Api.Controllers.Admin;
 
 /// <summary>Verwaltung der Väter (oberste Ebene des Admin-Bereichs).</summary>
 [ApiController]
-[Route("api/fathers")]
+[ApiVersion("1.0")]
+[Route(ApiRoutes.V1 + "/fathers")]
 [Tags("Admin – Fathers")]
 [Produces("application/json")]
 [Authorize(Roles = Roles.Vater)]
@@ -55,7 +56,7 @@ public class FathersController(PuglingDbContext db) : ControllerBase, IActionFil
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<FatherResponse>> Create(CreateFatherDto dto)
     {
-        if (string.IsNullOrWhiteSpace(dto.Name)) return BadRequest("Name ist erforderlich.");
+        if (string.IsNullOrWhiteSpace(dto.Name)) return Problem(statusCode: 400, detail: "Name ist erforderlich.");
 
         var father = new Father { Name = dto.Name.Trim(), Email = dto.Email, Pin = dto.Pin ?? "" };
         db.Fathers.Add(father);

@@ -30,7 +30,7 @@ Für ein eigenes mehrstufiges Trainings-/Test-Verfahren über einen `StudyPlan` 
 1. **`LearningMethod`**-Enum-Wert + eine **`XStage`**-Stufen-Enum (mit deutscher `<summary>` je Stufe) anlegen.
 2. Falls der Inhalt neu ist: einen **Content-Store** analog `Vocabulary`/`ClozeText` (+ FK-Verdrahtung in
    `StudyPlanItem` und `OnModelCreating`) – sonst den vorhandenen Vokabel-Store nutzen.
-3. **`X-TestsController`** unter `api/study-plans/{planId}/x-tests` nach dem etablierten Muster:
+3. **`X-TestsController`** unter `api/v1/study-plans/{planId}/x-tests` nach dem etablierten Muster:
    `[Authorize]` + `[ServiceFilter(typeof(PlanOwnershipFilter))]`, Konstruktor
    `(PuglingDbContext db, ScheduleService schedule, TestAttemptService attempts)`, Actions `Start`/`Get`/`Submit`
    (ggf. `Hint`). **Nicht** den Ownership-Filter inline neu schreiben; **nicht** das Lade-/Scoring-Gerüst

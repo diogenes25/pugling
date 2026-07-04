@@ -13,17 +13,17 @@ public class TagsRatingsTimetableTests(PuglingWebAppFactory factory) : IClassFix
         var father = await TestApi.FatherAsync(factory);
         var (_, _, exerciseId) = await TestApi.CreateArithmeticExerciseAsync(father);
 
-        var tagId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/tags",
+        var tagId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/tags",
             new { childId = 1, name = "Klassenarbeit", color = "#3b82f6" }));
 
-        var tagEx = await father.PostAsJsonAsync($"/api/tags/{tagId}/exercises", new { exerciseIds = new[] { exerciseId } });
+        var tagEx = await father.PostAsJsonAsync($"/api/v1/tags/{tagId}/exercises", new { exerciseIds = new[] { exerciseId } });
         Assert.Equal(HttpStatusCode.OK, tagEx.StatusCode);
         Assert.Equal(1, (await tagEx.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("exerciseCount").GetInt32());
 
-        var list = await (await father.GetAsync("/api/tags?childId=1")).Content.ReadFromJsonAsync<JsonElement>();
+        var list = await (await father.GetAsync("/api/v1/tags?childId=1")).Content.ReadFromJsonAsync<JsonElement>();
         Assert.True(list.GetArrayLength() >= 1);
 
-        var forEx = await father.GetAsync($"/api/tags/for-exercise/{exerciseId}?childId=1");
+        var forEx = await father.GetAsync($"/api/v1/tags/for-exercise/{exerciseId}?childId=1");
         Assert.Equal(HttpStatusCode.OK, forEx.StatusCode);
         Assert.True((await forEx.Content.ReadFromJsonAsync<JsonElement>()).GetArrayLength() >= 1);
     }
@@ -33,15 +33,15 @@ public class TagsRatingsTimetableTests(PuglingWebAppFactory factory) : IClassFix
     {
         var father = await TestApi.FatherAsync(factory);
         var planId = await TestApi.CreateVocabPlanAsync(father);
-        var plan = await (await father.GetAsync($"/api/study-plans/{planId}")).Content.ReadFromJsonAsync<JsonElement>();
+        var plan = await (await father.GetAsync($"/api/v1/study-plans/{planId}")).Content.ReadFromJsonAsync<JsonElement>();
         var contentId = plan.GetProperty("items")[0].GetProperty("contentId").GetInt32();
 
         var child = await TestApi.ChildAsync(factory);
-        var rate = await child.PostAsJsonAsync($"/api/study-plans/{planId}/ratings",
+        var rate = await child.PostAsJsonAsync($"/api/v1/study-plans/{planId}/ratings",
             new { contentId, feedback = "Gut", comment = "passt zum Thema" });
         Assert.Equal(HttpStatusCode.Created, rate.StatusCode);
 
-        var list = await (await child.GetAsync($"/api/study-plans/{planId}/ratings")).Content.ReadFromJsonAsync<JsonElement>();
+        var list = await (await child.GetAsync($"/api/v1/study-plans/{planId}/ratings")).Content.ReadFromJsonAsync<JsonElement>();
         Assert.True(list.GetArrayLength() >= 1);
     }
 
@@ -49,13 +49,13 @@ public class TagsRatingsTimetableTests(PuglingWebAppFactory factory) : IClassFix
     public async Task Timetable_EintragAnlegen_Auflisten()
     {
         var father = await TestApi.FatherAsync(factory);
-        var subjectId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/learn/subjects", new { name = "Sport" }));
+        var subjectId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/learn/subjects", new { name = "Sport" }));
 
-        var create = await father.PostAsJsonAsync("/api/children/1/timetable",
+        var create = await father.PostAsJsonAsync("/api/v1/children/1/timetable",
             new { subjectId, dayOfWeek = "Monday", timeOfDay = "Vormittag" });
         Assert.Equal(HttpStatusCode.Created, create.StatusCode);
 
-        var list = await (await father.GetAsync("/api/children/1/timetable")).Content.ReadFromJsonAsync<JsonElement>();
+        var list = await (await father.GetAsync("/api/v1/children/1/timetable")).Content.ReadFromJsonAsync<JsonElement>();
         Assert.True(list.GetArrayLength() >= 1);
     }
 }

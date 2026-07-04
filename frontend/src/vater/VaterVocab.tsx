@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { api } from "../lib/api";
+import { api, errorMessage } from "../lib/api";
 import { useAsync } from "../lib/useAsync";
 import type { CreateVocabularyDto, PartOfSpeech, VocabularyResponse } from "../lib/types";
 
@@ -40,7 +40,7 @@ export function VaterVocab() {
       setForm((f) => ({ ...f, key: "", word: "", translation: "" }));
       list.reload();
     } catch (err) {
-      setMsg({ ok: false, text: err instanceof Error ? err.message : "Fehler" });
+      setMsg({ ok: false, text: errorMessage(err) });
     } finally {
       setBusy(false);
     }

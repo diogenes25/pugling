@@ -1,0 +1,14 @@
+{
+  // Markdown-Stil für die Projekt-Doku (README, wiki/, docs/).
+  // Ziel: konsistente, saubere Struktur – ohne Prosa auf feste Zeilenlängen zu zwingen.
+  "default": true,
+
+  // Fließtext darf lange Zeilen haben (Doku, keine Code-Kommentare).
+  "MD013": false,
+
+  // Gleiche Überschrift unter verschiedenen Eltern erlaubt (z. B. "Anmelden" bei Vater und Sohn).
+  "MD024": { "siblings_only": true },
+
+  // Tabellen einheitlich mit Leer-Padding an den Pipes.
+  "MD060": { "style": "leading_and_trailing" }
+}
