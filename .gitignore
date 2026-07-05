@@ -20,3 +20,6 @@ backend/Pugling.Api/wwwroot/*
 # Tool-/Editor-Artefakte
 .opencode/
 .claude/settings.local.json
+.opencode
+
+.fake

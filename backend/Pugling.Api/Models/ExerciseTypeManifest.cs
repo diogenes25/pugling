@@ -72,7 +72,7 @@ public static class ExerciseManifests
             ExerciseCheckMode.None, null, null, []),
         new(ExerciseType.Cloze, "Lückentext", "cloze", V1, "cloze",
             ExerciseCheckMode.StudyPlanTest, "cloze-tests", LearningMethod.Cloze,
-            ["wordBank", "translation", "letterHints"]),
+            ["wordBank", "translation", "letterHints", "vocabStore"]),
         new(ExerciseType.Essay, "Aufsatz", "essay", V1, "essays",
             ExerciseCheckMode.None, null, null, ["rubric", "wordCount"]),
         new(ExerciseType.Listening, "Hörverständnis", "listening", V1, "listening",

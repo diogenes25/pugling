@@ -70,8 +70,44 @@ public class Vocabulary
     public int? BaseFormId { get; set; }
     public Vocabulary? BaseForm { get; set; }
 
+    /// <summary>
+    /// Erklärt die Beziehung zur Grundform (z. B. "Präteritum", "Partizip II", "Plural").
+    /// Nur zusammen mit <see cref="BaseFormId"/> sinnvoll; beschreibt die Kante flektierte Form → Grundform.
+    /// </summary>
+    public string? BaseFormRelation { get; set; }
+
     /// <summary>URL zur Aussprache-Audiodatei (kein Base64 im Payload).</summary>
     public string? PronunciationAudioUrl { get; set; }
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+    /// <summary>Freie, kindneutrale Schlagworte (Kapitel/Klasse/Thema) zum Suchen und Gruppieren.</summary>
+    public List<VocabTagLink> TagLinks { get; set; } = new();
+}
+
+/// <summary>
+/// Kindneutrales Schlagwort für den gemeinsamen Vokabel-Katalog (z. B. "Kapitel 5", "Klasse 7",
+/// "unregelmäßige Verben"). Bewusst getrennt vom kind-skopierten <see cref="Tag"/> (Klassenarbeits-Relevanz),
+/// weil der Vokabel-Store – wie seine Tags – kindneutral ist.
+/// </summary>
+public class VocabTag
+{
+    public int Id { get; set; }
+    /// <summary>Global eindeutiger Name.</summary>
+    public string Name { get; set; } = "";
+    /// <summary>Optionale Anzeigefarbe (Hex, z. B. "#3b82f6") für die UI.</summary>
+    public string? Color { get; set; }
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+    public List<VocabTagLink> Links { get; set; } = new();
+}
+
+/// <summary>Verknüpft eine <see cref="Vocabulary"/> mit einem <see cref="VocabTag"/> (n:m).</summary>
+public class VocabTagLink
+{
+    public int Id { get; set; }
+    public int VocabTagId { get; set; }
+    public VocabTag? VocabTag { get; set; }
+    public int VocabularyId { get; set; }
+    public Vocabulary? Vocabulary { get; set; }
 }

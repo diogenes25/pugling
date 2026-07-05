@@ -39,7 +39,12 @@ public class ClozeConfig
     /// <summary>Optionaler Wortpool zur Auswahl.</summary>
     public List<string>? WordBank { get; set; }
 }
-public record Gap(int Index, string Answer, List<string>? Alternatives = null);
+/// <summary>
+/// Eine Lücke. Ist <paramref name="VocabKey"/> gesetzt, kommt die Lösung aus dem Vokabel-Store
+/// (Wort des Eintrags), zentral pflegbar; das inline <paramref name="Answer"/> bleibt Fallback für
+/// Lücken ohne Store-Bezug. So lässt sich ein Lückentext aus dem gepflegten Wortschatz bauen.
+/// </summary>
+public record Gap(int Index, string Answer, List<string>? Alternatives = null, string? VocabKey = null);
 
 /// <summary>Aufsatz: Schreibauftrag + Rahmenbedingungen.</summary>
 public class EssayConfig
