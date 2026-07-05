@@ -114,6 +114,12 @@ public class StudyPlan
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     public List<StudyPlanItem> Items { get; set; } = new();
+
+    /// <summary>
+    /// Neues Modell (Strangler): verfahrens-gemischte Positionen, die auf Katalog-Übungen verweisen.
+    /// Läuft additiv neben <see cref="Items"/>, bis der Lern-Motor umgeschlüsselt ist.
+    /// </summary>
+    public List<PlanPosition> Positions { get; set; } = new();
 }
 
 /// <summary>Ein Lerninhalt im Plan – je nach Verfahren eine Vokabel ODER ein Lückentext.</summary>

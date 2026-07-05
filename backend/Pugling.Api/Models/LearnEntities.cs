@@ -111,6 +111,13 @@ public class Exercise
     /// <summary>Optionaler Bonus-Vorschlag des Erstellers (Vorlage, wird beim Plan-Erzeugen kopiert).</summary>
     public SuggestedBonus? SuggestedBonus { get; set; }
 
+    // Vorschlags-Defaults für eine Lehrplan-Position (Hybrid-Prinzip: die Position erbt sie,
+    // solange sie nicht selbst übersteuert – siehe PlanPosition.Stage/ItemCount).
+    /// <summary>Empfohlene Teststufe (verfahrensabhängig interpretiert); null = Verfahrens-Standard.</summary>
+    public int? DefaultStage { get; set; }
+    /// <summary>Empfohlene Anzahl genutzter Inhalte je Position; null = alle.</summary>
+    public int? DefaultItemCount { get; set; }
+
     // Strukturierte Metadaten zur Vorfilterung bei der Lehrplan-Erstellung.
     // Fach = Subject (über Chapter), Thema = Chapter – hier nur das Ergänzende.
 

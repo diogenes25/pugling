@@ -27,6 +27,9 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
     // Vokabeltraining: Lehrplan, Übungssitzungen, Tests, Belohnungen
     public DbSet<StudyPlan> StudyPlans => Set<StudyPlan>();
     public DbSet<StudyPlanItem> StudyPlanItems => Set<StudyPlanItem>();
+    // Neues Lehrplan-Modell (Strangler): Positionen verweisen auf Katalog-Übungen, Fortschritt je Inhalt.
+    public DbSet<PlanPosition> PlanPositions => Set<PlanPosition>();
+    public DbSet<PositionItemProgress> PositionItemProgress => Set<PositionItemProgress>();
     public DbSet<PracticeSession> PracticeSessions => Set<PracticeSession>();
     public DbSet<ReviewEvent> ReviewEvents => Set<ReviewEvent>();
     public DbSet<TestAttempt> TestAttempts => Set<TestAttempt>();
@@ -154,6 +157,32 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
         modelBuilder.Entity<StudyPlan>()
             .HasOne(p => p.Subject).WithMany().HasForeignKey(p => p.SubjectId)
             .OnDelete(DeleteBehavior.SetNull);
+
+        // Lehrplan-Position (neues Modell): gehört einem Plan (Cascade) und verweist auf eine Katalog-Übung.
+        // Die Übung darf nicht gelöscht werden, solange sie in einer Position steckt (Restrict, wie bei
+        // Vokabeln/Lückentexten). Leitner-Intervalle und Stufen-Fahrplan liegen als JSON-Spalten an der Position.
+        modelBuilder.Entity<PlanPosition>(e =>
+        {
+            e.HasOne(p => p.StudyPlan).WithMany(s => s.Positions).HasForeignKey(p => p.StudyPlanId)
+                .OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(p => p.Exercise).WithMany().HasForeignKey(p => p.ExerciseId)
+                .OnDelete(DeleteBehavior.Restrict);
+            e.Property(p => p.BoxIntervalDays).HasConversion(
+                v => JsonSerializer.Serialize(v, JsonOptions),
+                s => JsonSerializer.Deserialize<List<int>>(s, JsonOptions));
+            e.Property(p => p.StageSchedule).HasConversion(
+                v => JsonSerializer.Serialize(v, JsonOptions),
+                s => JsonSerializer.Deserialize<List<StageStep>>(s, JsonOptions));
+        });
+
+        // Fortschritt je Inhalts-Atom einer Position: verschwindet mit der Position (Cascade);
+        // je Position höchstens ein Fortschritts-Satz pro Item-Index.
+        modelBuilder.Entity<PositionItemProgress>(e =>
+        {
+            e.HasIndex(p => new { p.PlanPositionId, p.ItemIndex }).IsUnique();
+            e.HasOne(p => p.PlanPosition).WithMany(pos => pos.ItemProgress).HasForeignKey(p => p.PlanPositionId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
 
         // Stundenplan-Eintrag: Kind + Fach; ein Fach je Kind/Wochentag höchstens einmal.
         modelBuilder.Entity<TimetableEntry>(e =>
