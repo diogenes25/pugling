@@ -2,6 +2,7 @@ import { useState } from "react";
 import { api, errorMessage } from "../lib/api";
 import { useAsync } from "../lib/useAsync";
 import { offerPeriodLabel, pointKindLabel, redemptionStatusLabel } from "../lib/labels";
+import { confirmAction } from "../lib/ui";
 import type { RewardsView, Wallet } from "../lib/types";
 
 export function SohnKonto() {
@@ -12,8 +13,10 @@ export function SohnKonto() {
 
   function flash(text: string) { setMsg(text); setTimeout(() => setMsg(null), 2200); }
 
-  async function buy(rewardId: number, title: string) {
+  async function buy(rewardId: number, title: string, cost: number) {
     if (busy !== null) return;
+    // Kauf ist sofort und unumkehrbar (Münzen weg) – bewusst gegentippen lassen.
+    if (!confirmAction(`„${title}" für ${cost} 🪙 kaufen? Die Münzen sind dann weg.`)) return;
     setBusy(rewardId);
     try {
       await api.purchaseReward(rewardId);
@@ -60,7 +63,7 @@ export function SohnKonto() {
                     {offerPeriodLabel(r.period)} · noch {r.remainingThisPeriod}/{r.quantity}
                   </div>
                   <button type="button" className="btn inline-btn" style={{ width: "auto", marginTop: 6 }}
-                    disabled={busy !== null || !buyable} onClick={() => buy(r.id, r.title)}>
+                    disabled={busy !== null || !buyable} onClick={() => buy(r.id, r.title, r.cost)}>
                     {soldOut ? "diese Periode ausverkauft" : r.affordable ? "Kaufen" : `noch ${r.cost - coins} 🪙`}
                   </button>
                 </div>
@@ -98,7 +101,7 @@ export function SohnKonto() {
         </div>
       )}
 
-      {msg && <div className="toast">{msg}</div>}
+      {msg && <div className="toast" role="status" aria-live="polite">{msg}</div>}
     </div>
   );
 }

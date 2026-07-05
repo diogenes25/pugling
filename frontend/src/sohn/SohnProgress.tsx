@@ -1,4 +1,4 @@
-import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { api } from "../lib/api";
 import { useAsync } from "../lib/useAsync";
 import { useSohn } from "./SohnApp";
@@ -7,13 +7,12 @@ import type { OverviewResponse, ProgressResponse } from "../lib/types";
 
 export function SohnProgress() {
   const { planId } = useSohn();
-  const nav = useNavigate();
 
   const overview = useAsync<OverviewResponse | null>(() => (planId ? api.overview(planId) : Promise.resolve(null)), [planId]);
   const prog = useAsync<ProgressResponse | null>(() => (planId ? api.overviewProgress(planId) : Promise.resolve(null)), [planId]);
 
   if (!planId) return <div className="sohn-body"><div className="loading">Wähle zuerst eine Mission auf der Basis.</div>
-    <button type="button" className="btn ghost" onClick={() => nav("/sohn")}>Zur Basis</button></div>;
+    <Link to="/sohn" className="btn ghost" style={{ textDecoration: "none" }}>Zur Basis</Link></div>;
   if (overview.loading || prog.loading) return <div className="sohn-body"><div className="loading">Lade Fortschritt…</div></div>;
   if (!overview.data || !prog.data) return <div className="sohn-body"><div className="error-box">{overview.error ?? prog.error ?? "Fehler"}</div></div>;
 
@@ -63,7 +62,7 @@ export function SohnProgress() {
 
       <BadgesGallery />
 
-      <button type="button" className="btn gold" onClick={() => nav("/sohn")}>▶ Zur Tagesmission</button>
+      <Link to="/sohn" className="btn gold" style={{ textDecoration: "none" }}>▶ Zur Tagesmission</Link>
     </div>
   );
 }

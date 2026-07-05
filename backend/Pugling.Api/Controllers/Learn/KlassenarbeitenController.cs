@@ -59,18 +59,21 @@ public class KlassenarbeitenController(PuglingDbContext db, AuthAccess access) :
     // ---- Lesen ----
 
     /// <summary>Klassenarbeiten eines Kindes, optional nach Status/Fach gefiltert (nur eigene).</summary>
+    /// <param name="skip">Anzahl zu überspringender Einträge (Paging).</param>
+    /// <param name="take">Maximale Trefferzahl (1..500). Gesamtzahl im Header <c>X-Total-Count</c>.</param>
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult<IEnumerable<KlassenarbeitResponse>>> List(
-        [FromQuery] int childId, [FromQuery] KlassenarbeitStatus? status, [FromQuery] int? subjectId)
+        [FromQuery] int childId, [FromQuery] KlassenarbeitStatus? status, [FromQuery] int? subjectId,
+        [FromQuery] int skip = 0, [FromQuery] int take = PagingExtensions.DefaultTake)
     {
         if (!await access.OwnsChildAsync(User, childId)) return Forbid();
 
-        var query = WithRelations().Where(k => k.ChildId == childId);
+        var query = WithRelations().AsNoTracking().Where(k => k.ChildId == childId);
         if (status is not null) query = query.Where(k => k.Status == status);
         if (subjectId is not null) query = query.Where(k => k.SubjectId == subjectId);
 
-        var list = await query.OrderBy(k => k.ScheduledDate).ToListAsync();
+        var list = await query.OrderBy(k => k.ScheduledDate).ThenBy(k => k.Id).ToPagedListAsync(Response, skip, take);
         return list.Select(Map).ToList();
     }
 

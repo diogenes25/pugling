@@ -191,8 +191,12 @@ export function SohnPractice() {
             ) : (
               <form onSubmit={(e) => { e.preventDefault(); submitTyped(); }}>
                 <input
-                  autoFocus
-                  className="tabnum"
+                  aria-label="Deine Antwort"
+                  name="answer"
+                  autoComplete="off"
+                  autoCapitalize="off"
+                  autoCorrect="off"
+                  spellCheck={false}
                   style={{ width: "100%", background: "#0c0e2c", border: "1.5px solid var(--stroke)", borderRadius: 12, color: "var(--ink)", padding: 12, fontSize: 15 }}
                   placeholder="Antwort…"
                   value={typedAnswer}
@@ -212,7 +216,7 @@ export function SohnPractice() {
         )}
       </div>
 
-      {toast && <div className="toast">{toast}</div>}
+      {toast && <div className="toast" role="status" aria-live="polite">{toast}</div>}
       {lastOutcome?.dueOn && phase === "front" && (
         <p className="sub" style={{ textAlign: "center" }}>Nächste Fälligkeit: {lastOutcome.dueOn}</p>
       )}

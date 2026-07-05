@@ -130,18 +130,21 @@ public class RewardsController(PuglingDbContext db, OfferService offers) : Contr
     // ---- Käufe im Konto: Vater-Sicht und Erfüllung ----
 
     /// <summary>Käufe des Kindes, optional nach Status gefiltert (offene zuerst, dann neueste).</summary>
+    /// <param name="skip">Anzahl zu überspringender Käufe (Paging).</param>
+    /// <param name="take">Maximale Käufe-Zahl (1..500). Gesamtzahl im Header <c>X-Total-Count</c>.</param>
     [HttpGet("redemptions")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<IReadOnlyList<RedemptionDto>>> Redemptions(
-        int childId, [FromQuery] RewardRedemptionStatus? status)
+        int childId, [FromQuery] RewardRedemptionStatus? status,
+        [FromQuery] int skip = 0, [FromQuery] int take = PagingExtensions.DefaultTake)
     {
         var query = db.RewardRedemptions.AsNoTracking().Where(r => r.ChildId == childId);
         if (status is not null) query = query.Where(r => r.Status == status);
 
         return await query
             .OrderBy(r => r.Status == RewardRedemptionStatus.Purchased ? 0 : 1)
-            .ThenByDescending(r => r.PurchasedAt)
-            .Select(r => MapRedemption(r)).ToListAsync();
+            .ThenByDescending(r => r.PurchasedAt).ThenByDescending(r => r.Id)
+            .Select(r => MapRedemption(r)).ToPagedListAsync(Response, skip, take);
     }
 
     /// <summary>Markiert einen offenen Kauf als real erfüllt (der Vater hat seinen Teil der Abmachung erbracht).</summary>

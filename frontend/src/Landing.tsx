@@ -1,4 +1,4 @@
-import { Link, Navigate, useNavigate } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
 import { useAuth } from "./lib/auth";
 
 /*
@@ -8,17 +8,16 @@ import { useAuth } from "./lib/auth";
  */
 export function Landing() {
   const { session } = useAuth();
-  const nav = useNavigate();
   if (session) return <Navigate to={session.role === "Vater" ? "/vater" : "/sohn"} replace />;
 
   return (
     <div className="lp">
       <div className="lp-wrap">
         <header className="lp-top">
-          <span className="brand">🐶 Pugling</span>
+          <span className="brand"><span aria-hidden="true">🐶</span> Pugling</span>
           <span className="spacer" />
-          <button className="btn ghost inline-btn" style={{ width: "auto" }} onClick={() => nav("/vater")}>🛠️ Vater-Login</button>
-          <button className="btn gold inline-btn" style={{ width: "auto" }} onClick={() => nav("/sohn")}>🎮 Sohn-App</button>
+          <Link to="/vater" className="btn ghost inline-btn" style={{ width: "auto", textDecoration: "none" }}><span aria-hidden="true">🛠️</span> Vater-Login</Link>
+          <Link to="/sohn" className="btn gold inline-btn" style={{ width: "auto", textDecoration: "none" }}><span aria-hidden="true">🎮</span> Sohn-App</Link>
         </header>
 
         {/* Hero */}
@@ -32,8 +31,8 @@ export function Landing() {
               Belohnungen – nach dem bewährten Karteikasten-Prinzip (Leitner).
             </p>
             <div className="lp-cta">
-              <button className="btn" style={{ width: "auto" }} onClick={() => nav("/vater")}>Als Vater starten</button>
-              <button className="btn gold" style={{ width: "auto" }} onClick={() => nav("/sohn")}>Als Sohn spielen</button>
+              <Link to="/vater" className="btn" style={{ width: "auto", textDecoration: "none" }}>Als Vater starten</Link>
+              <Link to="/sohn" className="btn gold" style={{ width: "auto", textDecoration: "none" }}>Als Sohn spielen</Link>
             </div>
           </div>
           <div className="lp-orb" aria-hidden>
@@ -54,7 +53,7 @@ export function Landing() {
           </p>
           <div className="lp-grid2">
             <div className="card lp-role vater">
-              <div className="emoji">🛠️</div>
+              <div className="emoji" aria-hidden="true">🛠️</div>
               <h3>Vater · steuert &amp; erzwingt</h3>
               <ul>
                 <li>Kind anlegen (Name, Klasse, Schulart)</li>
@@ -64,7 +63,7 @@ export function Landing() {
               </ul>
             </div>
             <div className="card lp-role sohn">
-              <div className="emoji">🎮</div>
+              <div className="emoji" aria-hidden="true">🎮</div>
               <h3>Sohn · lernt mit Spaß</h3>
               <ul>
                 <li>Tagesmission: üben und den Test bestehen</li>
@@ -142,8 +141,8 @@ export function Landing() {
         <section className="lp-foot">
           <h2>Bereit, den Lernkreislauf zu starten?</h2>
           <div className="lp-cta" style={{ justifyContent: "center" }}>
-            <button className="btn" style={{ width: "auto" }} onClick={() => nav("/vater")}>🛠️ Ich bin der Vater</button>
-            <button className="btn gold" style={{ width: "auto" }} onClick={() => nav("/sohn")}>🎮 Ich bin der Sohn</button>
+            <Link to="/vater" className="btn" style={{ width: "auto", textDecoration: "none" }}><span aria-hidden="true">🛠️</span> Ich bin der Vater</Link>
+            <Link to="/sohn" className="btn gold" style={{ width: "auto", textDecoration: "none" }}><span aria-hidden="true">🎮</span> Ich bin der Sohn</Link>
           </div>
           <p className="muted">Pugling · API-First Lern-App · Vater steuert, Sohn lernt.</p>
         </section>
@@ -155,7 +154,7 @@ export function Landing() {
 function LoopNode({ ic, t, d }: { ic: string; t: string; d: string }) {
   return (
     <div className="card node">
-      <div className="ic">{ic}</div>
+      <div className="ic" aria-hidden="true">{ic}</div>
       <div className="t">{t}</div>
       <div className="d">{d}</div>
     </div>
@@ -177,8 +176,8 @@ function Step({ no, t, d, gold }: { no: string; t: string; d: string; gold?: boo
 function Feature({ emoji, t, d }: { emoji: string; t: string; d: string }) {
   return (
     <div className="card lp-feature">
-      <div className="emoji">{emoji}</div>
-      <h4>{t}</h4>
+      <div className="emoji" aria-hidden="true">{emoji}</div>
+      <h3>{t}</h3>
       <p>{d}</p>
     </div>
   );

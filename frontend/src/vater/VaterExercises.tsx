@@ -1,12 +1,14 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { api, errorMessage } from "../lib/api";
+import { confirmAction } from "../lib/ui";
 import { useAsync } from "../lib/useAsync";
 import { ExerciseAttribution } from "./ExerciseAttribution";
 import { ExercisePreviewModal } from "./ExercisePreviewModal";
+import { PAGE_SIZE, Pager, SortControl } from "../components/ListControls";
 import { LANGUAGES } from "../lib/languages";
 import type {
-  ChapterResponse, CreateExercisePayload, ExerciseSummary, ExerciseTypeKey, ExerciseUsage,
-  PartOfSpeech, SchoolType, SubjectResponse, VocabTagResponse, VocabularyResponse,
+  ChapterResponse, CreateExercisePayload, ExerciseSortKey, ExerciseSummary, ExerciseTypeKey, ExerciseUsage,
+  Paged, PartOfSpeech, SchoolType, SortDir, SubjectResponse, VocabTagResponse, VocabularyResponse,
 } from "../lib/types";
 import { POS, POS_LABEL } from "../lib/vocab";
 
@@ -93,13 +95,25 @@ export function VaterExercises() {
 
   const chapters = useAsync<ChapterResponse[]>(
     () => (subjectId ? api.chapters(Number(subjectId)) : Promise.resolve([])), [subjectId]);
-  const existing = useAsync<ExerciseSummary[]>(
-    () => (subjectId ? api.searchExercises({ subjectId: Number(subjectId), mineOnly: !showShared }) : Promise.resolve([])),
-    [subjectId, okMsg, showShared]);
-
-  const chapterExercises = useMemo(
-    () => (existing.data ?? []).filter((e) => chapterId !== "" && e.chapterId === Number(chapterId)),
-    [existing.data, chapterId]);
+  // Sortierung (Whitelist title/type/grade/source/created) + Paginierung; das Kapitel wird server-seitig
+  // gefiltert (chapterId-Param), damit die Seitenzählung stimmt – kein In-Memory-Filter mehr.
+  const [sort, setSort] = useState<ExerciseSortKey>("title");
+  const [dir, setDir] = useState<SortDir>("asc");
+  const [skip, setSkip] = useState(0);
+  const existing = useAsync<Paged<ExerciseSummary>>(
+    () => (subjectId
+      ? api.searchExercises({
+        subjectId: Number(subjectId),
+        chapterId: chapterId !== "" ? Number(chapterId) : undefined,
+        mineOnly: !showShared, sort, dir, skip, take: PAGE_SIZE,
+      })
+      : Promise.resolve({ items: [], total: 0 })),
+    [subjectId, chapterId, okMsg, showShared, sort, dir, skip]);
+  // Filter-/Sortier-Wechsel springt auf Seite 1 zurück (sonst leere Seite jenseits des Bestands). Der Reset
+  // geschieht in der Render-Phase (nicht per Effekt), damit die Liste nicht erst mit altem skip nachlädt.
+  const filterKey = `${subjectId}|${chapterId}|${showShared}|${sort}|${dir}`;
+  const [prevFilterKey, setPrevFilterKey] = useState(filterKey);
+  if (prevFilterKey !== filterKey) { setPrevFilterKey(filterKey); setSkip(0); }
 
   // Beim Typwechsel den Editor zurücksetzen (eine leere Zeile + passende Extra-Defaults).
   useEffect(() => {
@@ -157,12 +171,14 @@ export function VaterExercises() {
         return { instruction: extra.instruction?.trim() || null, ordered: !!extra.ordered,
           items: rows.map((r) => ({ value: r.value, alternatives: splitList(r.alternatives ?? "") })) };
       case "Birkenbihl":
+        // Feldnamen müssen zu BirkenbihlSentence/WordPair passen (learningSentence, decoding[{learningWord, gloss}]);
+        // sentenceId/wordId lässt der Server beim Speichern vergeben (NormalizeConfig).
         return { learningLang: extra.learningLang ?? "", nativeLang: extra.nativeLang ?? "",
-          sentences: rows.map((r) => ({ text: r.text, naturalTranslation: r.naturalTranslation,
+          sentences: rows.map((r) => ({ learningSentence: r.text, naturalTranslation: r.naturalTranslation,
             // Dekodierung als "Wort:wörtlich, Wort:wörtlich" eingegeben – hier in WordPair-Liste geparst.
             decoding: (r.decoding ?? "").split(",").map((p: string) => p.split(":"))
               .filter((kv: string[]) => kv[0]?.trim())
-              .map((kv: string[]) => ({ word: kv[0].trim(), literal: (kv[1] ?? "").trim() })) })) };
+              .map((kv: string[]) => ({ learningWord: kv[0].trim(), gloss: (kv[1] ?? "").trim() || null })) })) };
     }
   }
 
@@ -187,22 +203,27 @@ export function VaterExercises() {
     if (!title.trim()) { setError("Bitte einen Titel angeben."); return; }
     if (firstEmptyRow()) { setError("Bitte mindestens einen vollständigen Inhalt angeben."); return; }
 
-    const payload: CreateExercisePayload = {
-      title: title.trim(),
-      description: description.trim() || null,
-      orderIndex: chapterExercises.length + 1,
-      rewardPoints,
-      config: buildConfig(),
-      gradeMin: gradeMin === "" ? null : Number(gradeMin),
-      gradeMax: gradeMax === "" ? null : Number(gradeMax),
-      schoolTypes: schoolTypes.length > 0 ? schoolTypes.join(", ") : undefined,
-      source: source.trim() || null,
-      defaultUseLeitner,
-      defaultRequireTypedTest,
-      defaultStage: type === "Vocabulary" && defaultStage !== "" ? Number(defaultStage) : null,
-    };
     setBusy(true);
     try {
+      // orderIndex ans Ende der EIGENEN Übungen setzen – nicht der (evtl. mitgezählten) geteilten Bibliothek.
+      const own = await api.searchExercises({
+        subjectId: Number(subjectId), chapterId: Number(chapterId),
+        mineOnly: true, take: 1,
+      });
+      const payload: CreateExercisePayload = {
+        title: title.trim(),
+        description: description.trim() || null,
+        orderIndex: own.total + 1,
+        rewardPoints,
+        config: buildConfig(),
+        gradeMin: gradeMin === "" ? null : Number(gradeMin),
+        gradeMax: gradeMax === "" ? null : Number(gradeMax),
+        schoolTypes: schoolTypes.length > 0 ? schoolTypes.join(", ") : undefined,
+        source: source.trim() || null,
+        defaultUseLeitner,
+        defaultRequireTypedTest,
+        defaultStage: type === "Vocabulary" && defaultStage !== "" ? Number(defaultStage) : null,
+      };
       const created = await api.createExercise(Number(subjectId), Number(chapterId), TYPE_ROUTE[type], payload);
       setOkMsg(`Übung „${payload.title}" angelegt.`);
       setJustCreated({ id: created.id, title: payload.title });
@@ -236,7 +257,7 @@ export function VaterExercises() {
             <label>Neues Fach</label>
             <div className="row" style={{ gap: 6 }}>
               <input placeholder="z. B. Französisch" value={newSubject} onChange={(e) => setNewSubject(e.target.value)} />
-              <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} onClick={createSubject}>+</button>
+              <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} aria-label="Fach anlegen" onClick={createSubject}>+</button>
             </div>
           </div>
           <div className="field">
@@ -250,7 +271,7 @@ export function VaterExercises() {
             <label>Neues Kapitel</label>
             <div className="row" style={{ gap: 6 }}>
               <input placeholder="z. B. Unit 1" value={newChapter} disabled={!subjectId} onChange={(e) => setNewChapter(e.target.value)} />
-              <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} disabled={!subjectId} onClick={createChapter}>+</button>
+              <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} aria-label="Kapitel anlegen" disabled={!subjectId} onClick={createChapter}>+</button>
             </div>
           </div>
         </div>
@@ -265,15 +286,15 @@ export function VaterExercises() {
               {(Object.keys(TYPE_ROUTE) as ExerciseTypeKey[]).map((t) => <option key={t} value={t}>{TYPE_LABEL[t]}</option>)}
             </select>
           </div>
-          <div className="field"><label>Titel</label><input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="z. B. Vokabeln Unit 1" /></div>
-          <div className="field"><label>Punkte</label><input type="number" min={0} value={rewardPoints} onChange={(e) => setRewardPoints(Number(e.target.value))} /></div>
-          <div className="field"><label>Klasse von</label><input type="number" min={1} max={13} value={gradeMin} onChange={(e) => setGradeMin(e.target.value === "" ? "" : Number(e.target.value))} /></div>
-          <div className="field"><label>Klasse bis</label><input type="number" min={1} max={13} value={gradeMax} onChange={(e) => setGradeMax(e.target.value === "" ? "" : Number(e.target.value))} /></div>
-          <div className="field"><label>Quelle (Lehrbuch)</label><input value={source} onChange={(e) => setSource(e.target.value)} placeholder="z. B. Green Line 1, Unit 1" /></div>
+          <div className="field"><label htmlFor="ex-title">Titel</label><input id="ex-title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="z. B. Vokabeln Unit 1" /></div>
+          <div className="field"><label htmlFor="ex-points">Punkte</label><input id="ex-points" type="number" min={0} value={rewardPoints} onChange={(e) => setRewardPoints(Number(e.target.value))} /></div>
+          <div className="field"><label htmlFor="ex-grade-min">Klasse von</label><input id="ex-grade-min" type="number" min={1} max={13} value={gradeMin} onChange={(e) => setGradeMin(e.target.value === "" ? "" : Number(e.target.value))} /></div>
+          <div className="field"><label htmlFor="ex-grade-max">Klasse bis</label><input id="ex-grade-max" type="number" min={1} max={13} value={gradeMax} onChange={(e) => setGradeMax(e.target.value === "" ? "" : Number(e.target.value))} /></div>
+          <div className="field"><label htmlFor="ex-source">Quelle (Lehrbuch)</label><input id="ex-source" value={source} onChange={(e) => setSource(e.target.value)} placeholder="z. B. Green Line 1, Unit 1" /></div>
         </div>
         <div className="field" style={{ marginTop: 10 }}>
-          <label>Beschreibung <span className="muted">(optional)</span></label>
-          <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={2}
+          <label htmlFor="ex-description">Beschreibung <span className="muted">(optional)</span></label>
+          <textarea id="ex-description" value={description} onChange={(e) => setDescription(e.target.value)} rows={2}
             placeholder="Worum geht es, worauf achten? Hilft beim Wiederfinden im Lehrplan-Bau." />
         </div>
         <div className="field" style={{ marginTop: 10 }}>
@@ -311,9 +332,9 @@ export function VaterExercises() {
               patchRow={patchRow} addRow={addRow} removeRow={removeRow} />}
       </section>
 
-      {error && <div className="banner err">{error}</div>}
+      {error && <div className="banner err" role="status" aria-live="polite">{error}</div>}
       {okMsg && (
-        <div className="banner ok row" style={{ alignItems: "center", gap: 10 }}>
+        <div className="banner ok row" role="status" aria-live="polite" style={{ alignItems: "center", gap: 10 }}>
           <span>{okMsg}</span>
           {justCreated && (
             <button type="button" className="btn ghost inline-btn" style={{ width: "auto", marginLeft: "auto" }}
@@ -330,21 +351,31 @@ export function VaterExercises() {
       {chapterId !== "" && (
         <section className="card">
           <div className="row" style={{ alignItems: "center", gap: 8, marginBottom: 4 }}>
-            <h3 style={{ margin: 0 }}>Übungen in diesem Kapitel <span className="muted">({chapterExercises.length})</span></h3>
+            <h3 style={{ margin: 0 }}>Übungen in diesem Kapitel <span className="muted">({existing.data?.total ?? 0})</span></h3>
             {/* Verwaltung = eigene Übungen; bei Bedarf die geteilte Bibliothek anderer Väter einblenden. */}
             <label className="row" style={{ marginLeft: "auto", gap: 6, alignItems: "center", fontSize: 13 }}>
               <input type="checkbox" checked={showShared} onChange={(e) => setShowShared(e.target.checked)} />
               geteilte Übungen anderer Väter anzeigen
             </label>
           </div>
-          {chapterExercises.length === 0 ? <div className="muted">Noch keine Übungen.</div> : (
+          <div className="row" style={{ marginBottom: 8 }}>
+            <SortControl<ExerciseSortKey>
+              options={[
+                { key: "title", label: "Titel" }, { key: "type", label: "Typ" }, { key: "grade", label: "Klasse" },
+                { key: "source", label: "Quelle" }, { key: "created", label: "Erstellt" },
+              ]}
+              value={sort} dir={dir} onChange={(k, d) => { setSort(k); setDir(d); }} />
+          </div>
+          {existing.loading ? <div className="loading">Lade…</div>
+            : (existing.data?.items.length ?? 0) === 0 ? <div className="muted">Noch keine Übungen.</div> : (
             <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-              {chapterExercises.map((e) => (
+              {existing.data?.items.map((e) => (
                 <ExerciseManageRow key={e.id} exercise={e} subjectId={Number(subjectId)} onChanged={existing.reload}
                   onPreview={() => setPreview({ id: e.id, title: e.title })} />
               ))}
             </div>
           )}
+          {existing.data && <Pager skip={skip} take={PAGE_SIZE} total={existing.data.total} onSkip={setSkip} />}
         </section>
       )}
 
@@ -447,10 +478,11 @@ function RowField({ label, value, onChange, type = "text", placeholder, optional
   label: string; value: unknown; onChange: (v: string) => void;
   type?: string; placeholder?: string; optional?: boolean; width?: number;
 }) {
+  const uid = useId();
   return (
     <div className="field" style={{ flex: width ? "none" : 1, minWidth: width ?? 120, width }}>
-      <label>{label}{optional && <span className="muted"> (optional)</span>}</label>
-      <input type={type} value={String(value ?? "")} placeholder={placeholder} onChange={(e) => onChange(e.target.value)} />
+      <label htmlFor={uid}>{label}{optional && <span className="muted"> (optional)</span>}</label>
+      <input id={uid} type={type} value={String(value ?? "")} placeholder={placeholder} onChange={(e) => onChange(e.target.value)} />
     </div>
   );
 }
@@ -471,11 +503,12 @@ function VocabRefPicker({ selectedKeys, setSelectedKeys, extra, setExtra }: {
   const [src, setSrc] = useState("en");
   const [tgt, setTgt] = useState("de");
   const store = useAsync<VocabularyResponse[]>(
-    () => api.vocabulary(search.trim() || undefined, {
+    () => api.vocabulary({
+      search: search.trim() || undefined,
       sourceLanguage: src, targetLanguage: tgt,
       partOfSpeech: posFilter || undefined,
       tags: tagFilter.length > 0 ? tagFilter : undefined,
-    }),
+    }).then((r) => r.items),
     [search, src, tgt, posFilter, tagFilter]);
   const tagOptions = useAsync<VocabTagResponse[]>(() => api.vocabTags(), []);
   const [qWord, setQWord] = useState("");
@@ -529,7 +562,7 @@ function VocabRefPicker({ selectedKeys, setSelectedKeys, extra, setExtra }: {
         <div className="tokenlist">
           {selectedKeys.map((k) => {
             const v = byKey.get(k);
-            return <span className="token" key={k}>{v ? `${v.word}→${v.translation}` : k}<button type="button" onClick={() => toggle(k)}>×</button></span>;
+            return <span className="token" key={k}>{v ? `${v.word}→${v.translation}` : k}<button type="button" aria-label="Entfernen" onClick={() => toggle(k)}>×</button></span>;
           })}
         </div>
       )}
@@ -598,6 +631,7 @@ function ExerciseManageRow({ exercise, subjectId, onChanged, onPreview }: {
     catch (e) { setErr(errorMessage(e)); } finally { setBusy(false); }
   }
   async function remove() {
+    if (!confirmAction("Diese Übung wirklich löschen? Zuordnungen in Lehrplänen können betroffen sein.")) return;
     setBusy(true); setErr(null);
     try { await api.deleteExercise(subjectId, exercise.chapterId, TYPE_ROUTE[exercise.type as ExerciseTypeKey] ?? "", exercise.id); onChanged(); }
     catch (e) { setErr(errorMessage(e)); setBusy(false); }

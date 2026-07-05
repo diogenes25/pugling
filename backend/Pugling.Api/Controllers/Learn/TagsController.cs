@@ -158,9 +158,12 @@ public class TagsController(PuglingDbContext db, AuthAccess access) : Controller
     }
 
     /// <summary>Alle Übungen, die mit diesem Tag markiert sind.</summary>
+    /// <param name="skip">Anzahl zu überspringender Einträge (Paging).</param>
+    /// <param name="take">Maximale Trefferzahl (1..500). Gesamtzahl im Header <c>X-Total-Count</c>.</param>
     [HttpGet("{tagId:int}/exercises")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<IEnumerable<ExerciseBrief>>> GetExercises(int tagId)
+    public async Task<ActionResult<IEnumerable<ExerciseBrief>>> GetExercises(
+        int tagId, [FromQuery] int skip = 0, [FromQuery] int take = PagingExtensions.DefaultTake)
     {
         var tag = await FindOwnedAsync(tagId);
         if (tag is null) return NotFound();
@@ -169,9 +172,9 @@ public class TagsController(PuglingDbContext db, AuthAccess access) : Controller
             .Where(x => x.TagId == tagId)
             .Select(x => x.Exercise!)
             .Include(e => e.Chapter!).ThenInclude(c => c.Subject)
-            .OrderBy(e => e.Chapter!.SubjectId).ThenBy(e => e.ChapterId).ThenBy(e => e.OrderIndex)
+            .OrderBy(e => e.Chapter!.SubjectId).ThenBy(e => e.ChapterId).ThenBy(e => e.OrderIndex).ThenBy(e => e.Id)
             .AsNoTracking()
-            .ToListAsync();
+            .ToPagedListAsync(Response, skip, take);
         return exercises.Select(ExerciseBrief.From).ToList();
     }
 
@@ -234,9 +237,12 @@ public class TagsController(PuglingDbContext db, AuthAccess access) : Controller
     }
 
     /// <summary>Alle Vokabeln, die mit diesem Tag markiert sind (alphabetisch nach Key).</summary>
+    /// <param name="skip">Anzahl zu überspringender Einträge (Paging).</param>
+    /// <param name="take">Maximale Trefferzahl (1..500). Gesamtzahl im Header <c>X-Total-Count</c>.</param>
     [HttpGet("{tagId:int}/vocabulary")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<IEnumerable<TaggedVocabularyDto>>> GetVocabulary(int tagId)
+    public async Task<ActionResult<IEnumerable<TaggedVocabularyDto>>> GetVocabulary(
+        int tagId, [FromQuery] int skip = 0, [FromQuery] int take = PagingExtensions.DefaultTake)
     {
         var tag = await FindOwnedAsync(tagId);
         if (tag is null) return NotFound();
@@ -244,10 +250,10 @@ public class TagsController(PuglingDbContext db, AuthAccess access) : Controller
         return await db.VocabularyTags
             .Where(x => x.TagId == tagId)
             .Select(x => x.Vocabulary!)
-            .OrderBy(v => v.Key)
+            .OrderBy(v => v.Key).ThenBy(v => v.Id)
             .Select(v => new TaggedVocabularyDto(v.Id, v.Key, v.Word, v.Translation))
             .AsNoTracking()
-            .ToListAsync();
+            .ToPagedListAsync(Response, skip, take);
     }
 
     /// <summary>Die Tags, mit denen eine bestimmte Vokabel im Kontext eines Kindes markiert ist.</summary>

@@ -34,7 +34,7 @@ export function AudioButton({ url, label = "🔊 Anhören", autoPlay = true }: {
       <button type="button" className="btn ghost" style={{ width: "auto" }} onClick={play} aria-label="Vokabel anhören">
         {label}
       </button>
-      {error && <span className="muted" style={{ fontSize: 12 }}>Audio nicht abspielbar</span>}
+      {error && <span className="muted" style={{ fontSize: 12 }} role="alert">Audio nicht abspielbar</span>}
     </div>
   );
 }

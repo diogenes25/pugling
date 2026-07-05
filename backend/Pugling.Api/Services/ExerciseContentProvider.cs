@@ -115,5 +115,5 @@ public class ExerciseContentProvider
     // Birkenbihl: reine Inhaltsübung ohne aktives Abfragen – Prompt = Satz der Lernsprache,
     // „Antwort" = die natürliche Übersetzung (nützlich für Anzeige/Fortschritt, nicht zum Tippen-Prüfen).
     private static List<ContentItem> FromBirkenbihl(BirkenbihlConfig c) =>
-        c.Sentences.Select((s, i) => new ContentItem(i, s.Text, s.NaturalTranslation, [s.NaturalTranslation])).ToList();
+        c.Sentences.Select((s, i) => new ContentItem(i, s.LearningSentence, s.NaturalTranslation, [s.NaturalTranslation])).ToList();
 }

@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { api, errorMessage } from "../lib/api";
 import { useAsync } from "../lib/useAsync";
+import { confirmAction } from "../lib/ui";
 import type {
   ChildResponse, CreateKlassenarbeitDto, ExerciseSummary, KlassenarbeitDetail,
-  KlassenarbeitPractice, KlassenarbeitRepeat, KlassenarbeitResponse, KlassenarbeitStatus, SubjectResponse,
+  KlassenarbeitPractice, KlassenarbeitRepeat, KlassenarbeitResponse, KlassenarbeitStatus, Paged, SubjectResponse,
 } from "../lib/types";
+import { PAGE_SIZE, Pager } from "../components/ListControls";
 
 const STATUS_LABEL: Record<KlassenarbeitStatus, string> = {
   Planned: "geplant", Written: "geschrieben", Cancelled: "entfällt",
@@ -39,7 +41,10 @@ export function VaterClassTests() {
 }
 
 function ClassTestManager({ childId }: { childId: number }) {
-  const list = useAsync<KlassenarbeitResponse[]>(() => api.classTests(childId), [childId]);
+  // Server-paginiert (feste Termin-Ordnung, daher keine Sortier-UI). childId ist je Instanz fix
+  // (key={activeChild} remountet bei Kindwechsel) → skip startet sauber bei 0.
+  const [skip, setSkip] = useState(0);
+  const list = useAsync<Paged<KlassenarbeitResponse>>(() => api.classTests(childId, { skip, take: PAGE_SIZE }), [childId, skip]);
   const subjects = useAsync<SubjectResponse[]>(() => api.subjects(), []);
   const repeat = useAsync<KlassenarbeitRepeat>(() => api.classTestRepeat(childId), [childId]);
   const [openId, setOpenId] = useState<number | null>(null);
@@ -86,6 +91,7 @@ function ClassTestManager({ childId }: { childId: number }) {
   }
 
   async function remove(k: KlassenarbeitResponse) {
+    if (!confirmAction("Diese Klassenarbeit wirklich löschen?")) return;
     setBusy(true);
     try { await api.deleteClassTest(k.id); if (openId === k.id) setOpenId(null); flash(true, "Klassenarbeit gelöscht."); reloadAll(); }
     catch (err) { flash(false, errorMessage(err)); }
@@ -97,10 +103,10 @@ function ClassTestManager({ childId }: { childId: number }) {
       <section>
         <h3 className="h-section">Neue Klassenarbeit</h3>
         <form className="form-grid" onSubmit={create} style={{ alignItems: "end" }}>
-          <div className="field" style={{ minWidth: 200 }}><label>Titel</label>
-            <input value={form.title} onChange={(e) => up("title", e.target.value)} placeholder="Vokabeltest Unité 3" /></div>
-          <div className="field" style={{ minWidth: 160 }}><label>Thema (optional)</label>
-            <input value={form.topic ?? ""} onChange={(e) => up("topic", e.target.value)} placeholder="Passé composé" /></div>
+          <div className="field" style={{ minWidth: 200 }}><label htmlFor="ct-title">Titel</label>
+            <input id="ct-title" value={form.title} onChange={(e) => up("title", e.target.value)} placeholder="Vokabeltest Unité 3" /></div>
+          <div className="field" style={{ minWidth: 160 }}><label htmlFor="ct-topic">Thema (optional)</label>
+            <input id="ct-topic" value={form.topic ?? ""} onChange={(e) => up("topic", e.target.value)} placeholder="Passé composé" /></div>
           <div className="field"><label>Fach (optional)</label>
             <select title="Fach" value={form.subjectId ?? ""} onChange={(e) => up("subjectId", e.target.value ? Number(e.target.value) : null)}>
               <option value="">–</option>
@@ -110,17 +116,17 @@ function ClassTestManager({ childId }: { childId: number }) {
             <input title="Termin" type="date" value={form.scheduledDate} onChange={(e) => up("scheduledDate", e.target.value)} /></div>
           <button type="submit" className="btn inline-btn" style={{ width: "auto" }} disabled={busy}>{busy ? "…" : "Planen"}</button>
         </form>
-        {msg && <div className={`banner ${msg.ok ? "ok" : "err"}`} style={{ marginTop: 10 }}>{msg.text}</div>}
+        {msg && <div role="status" aria-live="polite" className={`banner ${msg.ok ? "ok" : "err"}`} style={{ marginTop: 10 }}>{msg.text}</div>}
       </section>
 
       <section>
-        <h3 className="h-section">Geplant & geschrieben {list.data ? `(${list.data.length})` : ""}</h3>
+        <h3 className="h-section">Geplant & geschrieben {list.data ? `(${list.data.total})` : ""}</h3>
         {list.loading ? <div className="loading">Lade…</div> : list.error ? <div className="banner err">{list.error}</div> : (
           <div style={{ overflowX: "auto" }}>
             <table className="table">
               <thead><tr><th>Titel</th><th>Termin</th><th>Status</th><th>Übungen</th><th>Note</th><th>Aktion</th></tr></thead>
               <tbody>
-                {list.data?.map((k) => (
+                {list.data?.items.map((k) => (
                   <tr key={k.id}>
                     <td>{k.title}{k.topic ? <span className="muted"> · {k.topic}</span> : ""}
                       {k.subjectName ? <span className="muted"> · {k.subjectName}</span> : ""}</td>
@@ -137,13 +143,14 @@ function ClassTestManager({ childId }: { childId: number }) {
                     </td>
                   </tr>
                 ))}
-                {list.data?.length === 0 && <tr><td colSpan={6} className="muted">Noch keine Klassenarbeiten.</td></tr>}
+                {list.data?.items.length === 0 && <tr><td colSpan={6} className="muted">Noch keine Klassenarbeiten.</td></tr>}
               </tbody>
             </table>
           </div>
         )}
+        {list.data && <Pager skip={skip} take={PAGE_SIZE} total={list.data.total} onSkip={setSkip} />}
         {openId !== null && <ClassTestDetail key={openId} id={openId}
-          subjectId={list.data?.find((k) => k.id === openId)?.subjectId ?? null} onChanged={reloadAll} />}
+          subjectId={list.data?.items.find((k) => k.id === openId)?.subjectId ?? null} onChanged={reloadAll} />}
       </section>
 
       <RepeatPanel repeat={repeat} />
@@ -164,7 +171,7 @@ function GradeCell({ current, busy, onSave }: { current: number | null; busy: bo
         placeholder="–" style={{ width: 64 }} />
       <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} disabled={busy || !valid}
         onClick={() => onSave(num)}>OK</button>
-      {current != null && <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} disabled={busy}
+      {current != null && <button type="button" aria-label="Note entfernen" className="btn ghost inline-btn" style={{ width: "auto" }} disabled={busy}
         onClick={() => { setVal(""); onSave(null); }}>×</button>}
     </span>
   );
@@ -177,7 +184,7 @@ function ClassTestDetail({ id, subjectId, onChanged }:
   const practice = useAsync<KlassenarbeitPractice>(() => api.classTestPractice(id), [id]);
   const [search, setSearch] = useState("");
   const found = useAsync<ExerciseSummary[]>(
-    () => api.searchExercises({ subjectId: subjectId ?? undefined, search: search || undefined }), [id, subjectId]);
+    () => api.searchExercises({ subjectId: subjectId ?? undefined, search: search || undefined }).then((r) => r.items), [id, subjectId]);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
 
@@ -213,7 +220,7 @@ function ClassTestDetail({ id, subjectId, onChanged }:
 
           <h4 className="h-section" style={{ marginTop: 10 }}>Übungen aus dem Katalog zuweisen</h4>
           <form className="row" onSubmit={(e) => { e.preventDefault(); found.reload(); }} style={{ marginBottom: 6 }}>
-            <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Suche im Katalog…" style={{ maxWidth: 260 }} />
+            <input aria-label="Suche im Katalog" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Suche im Katalog…" style={{ maxWidth: 260 }} />
             <button type="submit" className="btn ghost inline-btn" style={{ width: "auto" }}>Suchen</button>
           </form>
           {found.loading ? <div className="loading">Lade…</div> : found.data && (

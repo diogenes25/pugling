@@ -30,13 +30,13 @@ export function VaterLogin() {
         <p className="sub">Melde dich mit deiner Vater-Id und PIN an.</p>
         <div className="field">
           <label htmlFor="fid">Vater-Id</label>
-          <input id="fid" inputMode="numeric" value={fatherId} onChange={(e) => setFatherId(e.target.value.replace(/\D/g, ""))} placeholder="z.B. 1" />
+          <input id="fid" name="fatherId" inputMode="numeric" autoComplete="username" value={fatherId} onChange={(e) => setFatherId(e.target.value.replace(/\D/g, ""))} placeholder="z.B. 1" />
         </div>
         <div className="field">
           <label htmlFor="pin">PIN</label>
-          <input id="pin" type="password" value={pin} onChange={(e) => setPin(e.target.value)} />
+          <input id="pin" name="pin" type="password" autoComplete="current-password" value={pin} onChange={(e) => setPin(e.target.value)} />
         </div>
-        {error && <div className="banner err">{error}</div>}
+        {error && <div className="banner err" role="alert">{error}</div>}
         <button type="submit" className="btn" disabled={busy}>{busy ? "…" : "Anmelden"}</button>
       </form>
     </div>

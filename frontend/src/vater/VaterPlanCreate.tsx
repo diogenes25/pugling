@@ -58,23 +58,23 @@ export function VaterPlanCreate() {
 
       <section className="card">
         <div className="form-grid">
-          <div className="field"><label>Titel</label><input title="Titel" value={title} onChange={(e) => setTitle(e.target.value)} /></div>
+          <div className="field"><label htmlFor="plan-title">Titel</label><input id="plan-title" title="Titel" value={title} onChange={(e) => setTitle(e.target.value)} /></div>
           <div className="field"><label>Kind</label>
             <select aria-label="Kind" value={childId} onChange={(e) => setChildId(Number(e.target.value))}>
               {children.data?.map((c) => <option key={c.id} value={c.id}>{c.name} (#{c.id})</option>)}
             </select>
           </div>
-          <div className="field"><label>Start</label><input title="Startdatum" type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} /></div>
-          <div className="field"><label>Dauer (Tage)</label><input title="Dauer in Tagen" type="number" min={1} value={durationDays} onChange={(e) => setDurationDays(Number(e.target.value))} /></div>
+          <div className="field"><label htmlFor="plan-start">Start</label><input id="plan-start" title="Startdatum" type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} /></div>
+          <div className="field"><label htmlFor="plan-duration">Dauer (Tage)</label><input id="plan-duration" title="Dauer in Tagen" type="number" min={1} value={durationDays} onChange={(e) => setDurationDays(Number(e.target.value))} /></div>
         </div>
         <div className="field" style={{ marginTop: 10 }}>
-          <label>Beschreibung <span className="muted">(optional)</span></label>
-          <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={2}
+          <label htmlFor="plan-description">Beschreibung <span className="muted">(optional)</span></label>
+          <textarea id="plan-description" value={description} onChange={(e) => setDescription(e.target.value)} rows={2}
             placeholder="Ziel/Umfang des Plans – hilft beim Wiederfinden." />
         </div>
       </section>
 
-      {error && <div className="banner err">{error}</div>}
+      {error && <div className="banner err" role="status" aria-live="polite">{error}</div>}
       <button type="submit" className="btn" style={{ width: "auto", alignSelf: "flex-start" }} disabled={busy}>
         {busy ? "…" : "Plan anlegen & Übungen hinzufügen"}
       </button>

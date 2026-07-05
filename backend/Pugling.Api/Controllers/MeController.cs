@@ -40,11 +40,14 @@ public class MeController(PuglingDbContext db, GamificationService gamification,
     public record RewardsViewResponse(int Coins, IReadOnlyList<RewardOfferResponse> Available,
         IReadOnlyList<MyRedemptionResponse> Redemptions);
 
-    /// <summary>Eigener Kontostand (Münzen + Gems) samt der letzten Buchungen.</summary>
+    /// <summary>Eigener Kontostand (Münzen + Gems) samt der letzten Buchungen (neueste zuerst).</summary>
+    /// <param name="skip">Anzahl zu überspringender Buchungen (Paging).</param>
+    /// <param name="take">Maximale Buchungszahl (1..500). Gesamtzahl im Header <c>X-Total-Count</c>.</param>
     [HttpGet("points")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult<WalletResponse>> Points()
+    public async Task<ActionResult<WalletResponse>> Points(
+        [FromQuery] int skip = 0, [FromQuery] int take = PagingExtensions.DefaultTake)
     {
         var cid = User.ChildId();
         if (cid is null) return Forbid();
@@ -52,10 +55,9 @@ public class MeController(PuglingDbContext db, GamificationService gamification,
         var entries = await db.ChildPoints
             .AsNoTracking()
             .Where(p => p.ChildId == cid)
-            .OrderByDescending(p => p.CreatedAt)
-            .Take(50)
+            .OrderByDescending(p => p.CreatedAt).ThenByDescending(p => p.Id)
             .Select(p => new PointsEntryResponse(p.Id, p.Amount, p.Kind, p.Reason, p.CreatedAt))
-            .ToListAsync();
+            .ToPagedListAsync(Response, skip, take);
 
         var (coins, gems) = await wallet.BalancesAsync(cid.Value);
         return new WalletResponse(cid.Value, coins, gems, entries);

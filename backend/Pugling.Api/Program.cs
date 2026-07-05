@@ -56,6 +56,8 @@ builder.Services.AddScoped<PositionPlayService>();
 builder.Services.AddScoped<PositionProgressService>();
 // Lern-Report je Position: „welche Vokabel sitzt/sitzt nicht" (Box/Beherrschung + Test-Trefferquote).
 builder.Services.AddScoped<PositionReportService>();
+// Birkenbihl-Automatik: Satz tokenisieren + Wörter im Vokabelspeicher nachschlagen (Wort-für-Wort-Dekodierung).
+builder.Services.AddScoped<BirkenbihlDecodingService>();
 // Kindübergreifendes Tages-Dashboard des Vaters („wer hat heute was geschafft?").
 builder.Services.AddScoped<ChildrenDashboardService>();
 builder.Services.AddScoped<AuthAccess>();
@@ -74,7 +76,10 @@ builder.Services.AddScoped<ExerciseContentResolver>();
 // Testmodus: Vater spielt eine Übung nebenwirkungsfrei durch (nutzt Resolver + AnswerGrader); scoped wegen Resolver.
 builder.Services.AddScoped<ExercisePreviewService>();
 builder.Services.AddCors(o => o.AddDefaultPolicy(p =>
-    p.WithOrigins("http://localhost:5173").AllowAnyHeader().AllowAnyMethod()));
+    // WithExposedHeaders: sonst darf die Browser-App den Paging-Header X-Total-Count nicht lesen
+    // (AllowAnyHeader gilt nur für Request-Header, nicht für die Freigabe von Response-Headern).
+    p.WithOrigins("http://localhost:5173").AllowAnyHeader().AllowAnyMethod()
+        .WithExposedHeaders("X-Total-Count")));
 
 // Login-Bremse gegen PIN-Brute-Force: pro IP nur wenige Versuche je Minute (Policy "login" auf den
 // Auth-Endpunkten). Per Konfiguration abschaltbar, weil der In-Process-TestServer sich sonst eine

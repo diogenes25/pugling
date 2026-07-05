@@ -6,6 +6,7 @@
  * ist also an dieselben Stufen gekoppelt.
  */
 import type { CelebrationTier } from "../components/Celebration";
+import { prefersReducedMotion } from "./ui";
 
 const MUTE_KEY = "pugling.muted";
 
@@ -97,9 +98,10 @@ export function playCelebration(tier: CelebrationTier): void {
     /* Audio ist Beiwerk – ein stummer Erfolg ist besser als ein geworfener. */
   }
 
-  // Haptik – nur wo unterstützt; Desktop ignoriert es ohnehin.
+  // Haptik – nur wo unterstützt; Desktop ignoriert es ohnehin. Bei „Bewegung reduzieren" bleibt sie
+  // aus: Vibration ist spürbare Bewegung, die eine reine CSS-Regel nicht unterdrücken kann.
   try {
-    if (typeof navigator !== "undefined" && typeof navigator.vibrate === "function") {
+    if (!prefersReducedMotion() && typeof navigator !== "undefined" && typeof navigator.vibrate === "function") {
       navigator.vibrate(VIBRATION[tier]);
     }
   } catch {
