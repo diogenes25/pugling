@@ -129,3 +129,36 @@ kommt zurück (jetzt nicht nur UI, sondern auch der Endpunkt fehlt) — als näc
 - **Frontend:** `sohn/SohnTest.tsx` (Bewertung an sichtbare Lösung gekoppelt — P0-Bugfix),
   `e2e/full-flow.spec.ts` (Loop auf Positions-Modell umgeschrieben), `lib/types.ts` (`LearningMethod` entfernt).
 - **Kein Backend, keine Migration.** Absicherung über grünen E2E + Frontend-Build + Backend-Suite (163/163).
+
+---
+
+## Nachtrag — komplette Roadmap-Abarbeitung (Wellen A–D)
+
+Auf Wunsch anschließend alle offenen Roadmap-Punkte umgesetzt, je Welle verifiziert und committet.
+
+**Welle A (b6194f4):** Sohn-Test-Überschrift zurück auf „Tagestest"; E2E referenziert die 5-Vokabel-Übung
+„Vokabeln: En ville" und erzwingt den Combo-Meilenstein ×5 (kein stiller Skip mehr).
+
+**Welle B — Baseline-Härtung (f8ce710):**
+- **PIN-Hash** (`PinHasher`, PBKDF2/SHA-256 + Salt) statt Klartext; Login verifiziert per Hash, mit
+  Klartext-Fallback für Alt-Konten. Seed und Vater-/Kind-Anlage hashen mit.
+- **Login-Rate-Limit** (Policy „login", 10/min pro IP → 429) gegen PIN-Brute-Force; per Konfiguration
+  abschaltbar (Tests).
+- **JsonValueComparer** an allen JSON-Spalten — schließt den ValueComparer-Fallstrick; reine Metadaten.
+- Neue Tests `SecurityHardeningTests` (PinHasher, Rate-Limit, gehashter Seed-Login).
+
+**Welle C — Sohn-Abwechslung (b2c9d58):**
+- **Tipp-Knopf** (Hinweis erst auf Wunsch), **LetterBoxes**-Komponente (Buchstaben-Kästchen in Übung +
+  Test), **Tempo-Modus** (persistierter Toggle + Countdown-Leiste; Schnell-Bonus zählt serverseitig).
+- Klang-/Tippgefühl bleibt unter **Geräte-Vorbehalt** (subjektiv, nicht automatisiert prüfbar).
+
+**Welle D — Mehr-Kind-Tagesdashboard (Commit folgt):**
+- Backend-Aggregat `ChildrenDashboardService` + `GET children/daily-overview` (je Kind: Tagesziele
+  erfüllt?, Punkte heute, geübt?) auf Basis des Positions-Tages-Rollups.
+- „Heute"-Sektion im Vater-Dashboard mit Status-Ampel je Kind. Test `ChildrenDashboardTests`.
+
+**Verifikation Wellen A–D:** Backend **170/170 grün**, Frontend-Build sauber, E2E-Loop grün.
+
+### Offen / bewusst nicht automatisiert
+- **Geräte-Vorbehalt Sound/Haptik** (aus Iteration 6) **und** das neue Tempo-/Tippgefühl: einmal am
+  echten Handy gegenhören/-fühlen. Kein Maschinentest kann das abnehmen.

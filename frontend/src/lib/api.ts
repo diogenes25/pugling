@@ -4,7 +4,7 @@ import type {
   ExerciseDetail, ExercisePreviewAnswer, ExercisePreviewData, ExercisePreviewResult,
   ExerciseSearchParams, ExerciseSummary, ExerciseUsage, KlassenarbeitDetail, KlassenarbeitPractice, KlassenarbeitRepeat,
   KlassenarbeitResponse, KlassenarbeitStatus, LoginResponse, MissionDef, MissionStatus, PlanResponse,
-  CreatePositionDto, PositionResponse, PositionReport, UpdatePositionDto, OverviewResponse, PositionSession, PracticeCard,
+  ChildrenDashboard, CreatePositionDto, PositionResponse, PositionReport, UpdatePositionDto, OverviewResponse, PositionSession, PracticeCard,
   ProgressResponse, RedemptionDef, ReviewInput, ReviewOutcome, RewardDef, RewardRedemptionStatus, RewardsView,
   SkinState, SubjectResponse,
   TestAttemptResponse, TestSubmitResponse, UpdateKlassenarbeitDto, UpdatePlanDto, UpdateVocabularyDto,
@@ -184,6 +184,10 @@ export const api = {
   // Lern-Report der Position: je Inhalt Box/Beherrschung + Test-Trefferquote („sitzt/sitzt nicht").
   positionReport: (planId: number, positionId: number) =>
     http<PositionReport>(`${V1}/study-plans/${planId}/positions/${positionId}/report`),
+
+  // ---- Vater: kindübergreifender Tagesüberblick ----
+  childrenDaily: (date?: string) =>
+    http<ChildrenDashboard>(`${V1}/children/daily-overview${date ? `?date=${date}` : ""}`),
 
   // ---- Tagesmission (Sohn) / Verlauf (Vater) über Positionen ----
   overview: (planId: number) => http<OverviewResponse>(`${V1}/study-plans/${planId}/overview`),
