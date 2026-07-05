@@ -3,7 +3,6 @@
 
 export type Role = "Vater" | "Sohn";
 
-export type LearningMethod = "Vocabulary" | "Cloze" | "Matching";
 export type PartOfSpeech = "Noun" | "Verb" | "Adjective" | "Adverb" | "Other";
 
 /**

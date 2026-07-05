@@ -1,12 +1,16 @@
 import { test, expect, type Page } from "@playwright/test";
 
-// End-to-End des vertikalen Vokabel-Durchstichs:
-//   Vater legt (Web) Vokabeln + Lehrplan an  →  Sohn arbeitet (App) Übung + Test ab
-//   →  Punkte fließen, Vater sieht den Fortschritt.
+// End-to-End des vertikalen Durchstichs im Positions-Modell:
+//   Vater legt (Web) einen Lehrplan-Container an und hängt eine Katalog-Übung als Position hinein
+//   →  Sohn arbeitet (App) die Position ab: Üben (Leitner) + Test  →  Punkte fließen
+//   →  Vater sieht den Fortschritt.
+// Referenziert wird die system-geseedete Vokabel-Übung "Begrüßungen" (Englisch, Unit 1); sie hat
+// keinen Autor und ist damit als geteilte Übung von jedem Vater in einen Plan übernehmbar.
 // Beide Rollen laufen in getrennten Browser-Kontexten (isoliertes localStorage).
 
 const FATHER = { id: "1", pin: "0000" };
 const CHILD = { id: "1", pin: "1111" };
+const EXERCISE = "Begrüßungen";
 
 async function vaterLogin(page: Page) {
   await page.goto("/vater");
@@ -14,14 +18,6 @@ async function vaterLogin(page: Page) {
   await page.locator("#pin").fill(FATHER.pin);
   await page.getByRole("button", { name: "Anmelden" }).click();
   await expect(page.getByRole("heading", { name: "Kinder" })).toBeVisible();
-}
-
-async function addVocab(page: Page, word: string, translation: string) {
-  await page.getByRole("link", { name: "Vokabeln" }).click();
-  await page.getByPlaceholder("house").fill(word);
-  await page.getByPlaceholder("Haus").fill(translation);
-  await page.getByRole("button", { name: "Speichern" }).click();
-  await expect(page.locator(".banner.ok")).toContainText(word);
 }
 
 async function sohnLogin(page: Page) {
@@ -33,34 +29,33 @@ async function sohnLogin(page: Page) {
   await page.getByRole("button", { name: "▶ LOS" }).click();
 }
 
-test("Vater erstellt Plan, Sohn arbeitet ihn ab, Punkte fließen", async ({ browser }) => {
+test("Vater erstellt Plan mit Position, Sohn arbeitet ihn ab, Punkte fließen", async ({ browser }) => {
   // ---------- VATER (Web) ----------
   const vaterCtx = await browser.newContext();
   const vater = await vaterCtx.newPage();
   await vaterLogin(vater);
 
-  // Fünf Vokabeln → im Übungslauf lässt sich der Combo-Meilenstein (×5) auslösen.
-  await addVocab(vater, "cat", "Katze");
-  await addVocab(vater, "dog", "Hund");
-  await addVocab(vater, "sun", "Sonne");
-  await addVocab(vater, "moon", "Mond");
-  await addVocab(vater, "tree", "Baum");
-
-  // Neuen Lehrplan anlegen
+  // Lehrplan = leerer Container (Titel/Kind/Laufzeit sind vorbelegt) → anlegen und auf die Plan-Seite.
   await vater.getByRole("link", { name: "Neuer Plan" }).click();
   await expect(vater.getByRole("heading", { name: /Neuer Lehrplan/ })).toBeVisible();
-
-  // Warten bis Vokabelliste geladen ist, dann die ersten drei Vokabeln auswählen.
-  const vocabSection = vater.locator("section.card").nth(1);
-  await expect(vocabSection.locator("input[type=checkbox]").first()).toBeVisible();
-  const boxes = vocabSection.locator("input[type=checkbox]");
-  const pick = Math.min(5, await boxes.count());
-  for (let i = 0; i < pick; i++) await boxes.nth(i).check();
-
-  await vater.getByRole("button", { name: "Lehrplan erstellen" }).click();
+  // Erst wählbar, wenn die Kinder-Liste geladen ist – sonst schlägt das Anlegen mit "Kind wählen" fehl.
+  const kindSelect = vater.getByRole("combobox", { name: "Kind" });
+  await expect(kindSelect.locator("option")).not.toHaveCount(0);
+  await kindSelect.selectOption({ index: 0 });
+  await vater.getByRole("button", { name: /Plan anlegen/ }).click();
   await expect(vater).toHaveURL(/\/vater\/plan\/\d+$/);
-  await expect(vater.getByRole("heading", { name: "Inhalte & Leitner-Boxen" })).toBeVisible();
+  await expect(vater.getByRole("heading", { name: /Übungen im Plan/ })).toBeVisible();
   const planUrl = vater.url();
+
+  // Katalog-Übung als Position hinzufügen: Tagesziel + Leitner-Kasten (so erscheint "ÜBEN" beim Sohn).
+  const exSelect = vater.locator('select[aria-label="Übung"]');
+  const option = exSelect.locator("option", { hasText: EXERCISE }).first();
+  await expect(option).toBeAttached();
+  await exSelect.selectOption(await option.getAttribute("value") ?? "");
+  await vater.locator('select[aria-label="Ziel-Rhythmus"]').selectOption("Daily");
+  await vater.getByRole("checkbox", { name: /Leitner/ }).check();
+  await vater.getByRole("button", { name: /Position hinzufügen/ }).click();
+  await expect(vater.getByRole("row", { name: new RegExp(EXERCISE) })).toBeVisible();
 
   // ---------- SOHN (App) ----------
   const sohnCtx = await browser.newContext();
@@ -83,9 +78,9 @@ test("Vater erstellt Plan, Sohn arbeitet ihn ab, Punkte fließen", async ({ brow
   if (total >= 5) await expect(sohn.locator(".cel-title", { hasText: "COMBO ×5" })).toBeVisible();
   await expect(sohn.getByText("RUNDE FERTIG!")).toBeVisible();
 
-  // Weiter zum Tagestest
+  // Weiter zum Test
   await sohn.getByRole("button", { name: /Weiter zum Test/ }).click();
-  await expect(sohn.getByText("Tagestest")).toBeVisible();
+  await expect(sohn.locator(".screen-title", { hasText: "Test" })).toBeVisible();
 
   // SelfAssess: alle aufdecken, dann als "gewusst" markieren
   const reveal = sohn.getByRole("button", { name: "Aufdecken 🔄" });
@@ -108,8 +103,8 @@ test("Vater erstellt Plan, Sohn arbeitet ihn ab, Punkte fließen", async ({ brow
   // ---------- VATER sieht Fortschritt ----------
   await vater.goto(planUrl);
   await expect(vater.getByText("Punkte gesamt")).toBeVisible();
-  // Tagesverlauf-Tabelle zeigt den bestandenen Test des Sohns.
-  await expect(vater.getByText(/bestanden \d+%/).first()).toBeVisible();
+  // Tagesverlauf-Tabelle zeigt den heute erledigten Tag des Sohns (Ziel erfüllt → "komplett").
+  await expect(vater.locator("table .pill.lime", { hasText: "komplett" }).first()).toBeVisible();
   // Punkte gesamt > 0 (Übung + Test sind beim Vater angekommen).
   const totalCard = vater.locator(".vater-grid .card").first();
   await expect(totalCard).toContainText("Punkte gesamt");
