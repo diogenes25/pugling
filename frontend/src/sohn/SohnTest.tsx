@@ -110,7 +110,10 @@ export function SohnTest() {
                 ) : (
                   <button type="button" className="btn ghost small" onClick={() => setRevealed((r) => new Set(r).add(it.itemIndex))}>Aufdecken 🔄</button>
                 )}
-                {revealed.has(it.itemIndex) && (
+                {/* Bewerten, sobald die Lösung sichtbar ist – entweder vom Server aufgedeckt (Stufe
+                    „Zeigen") oder per „Aufdecken" (Stufe „Selbstcheck"). Ohne dieses `|| it.reveal`
+                    fehlten die Buttons, wenn der Server die Lösung schon mitschickt → Test unlösbar. */}
+                {(revealed.has(it.itemIndex) || it.reveal) && (
                   <div className="judge" style={{ marginTop: 8 }}>
                     <button type="button" className={`btn small ${a?.wasKnown === false ? "red" : "ghost"}`} onClick={() => setKnown(it.itemIndex, false)}>Nicht gewusst</button>
                     <button type="button" className={`btn small ${a?.wasKnown === true ? "lime" : "ghost"}`} onClick={() => setKnown(it.itemIndex, true)}>Gewusst</button>
