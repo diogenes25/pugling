@@ -63,10 +63,10 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
         pos.ItemCount is > 0 ? Math.Min(pos.ItemCount.Value, available) : available;
 
     /// <summary>
-    /// Wählt die Item-Indizes, die heute dran sind: begrenzt auf den Pool (<see cref="ItemCount"/>),
+    /// Wählt die Item-Indizes, die heute dran sind: begrenzt auf den Pool (<see cref="PlanPosition.ItemCount"/>),
     /// gefiltert nach <see cref="ItemScope"/> (neu/alt/alle) und – bei Leitner – nur die fälligen
     /// (nie gesehen zählt als fällig), sortiert nach Box und Index. Der Fortschritt wird dazu geladen,
-    /// aber NICHT neu angelegt (das passiert erst beim Bewerten in <see cref="ApplyReviewAsync"/>).
+    /// aber NICHT neu angelegt (das passiert erst beim Bewerten in <see cref="ApplyReview"/>).
     /// </summary>
     public async Task<IReadOnlyList<int>> DueItemIndicesAsync(PlanPosition pos, DateOnly day)
     {

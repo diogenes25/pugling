@@ -1,11 +1,11 @@
 import type {
   AchievementDef, AchievementStatus, AnswerDto, ChapterResponse, ChildResponse, CreateAchievementDto,
-  CreateChildDto, CreateKlassenarbeitDto, CreateMissionDto, CreatePlanDto, CreateRewardDto, CreateVocabularyDto,
-  ExerciseSearchParams, ExerciseSummary, KlassenarbeitDetail, KlassenarbeitPractice, KlassenarbeitRepeat,
+  CreateChildDto, CreateExercisePayload, CreateKlassenarbeitDto, CreateMissionDto, CreatePlanDto, CreateRewardDto, CreateVocabularyDto,
+  ExerciseDetail, ExerciseSearchParams, ExerciseSummary, ExerciseUsage, KlassenarbeitDetail, KlassenarbeitPractice, KlassenarbeitRepeat,
   KlassenarbeitResponse, KlassenarbeitStatus, LoginResponse, MissionDef, MissionStatus, PlanResponse,
   ProgressResponse, RedemptionDef, ReviewInput, ReviewOutcome, RewardDef, RewardRedemptionStatus, RewardsView,
   SessionResponse, SkinState, SubjectResponse,
-  TestAttemptResponse, TestSubmitResponse, TodayResponse, UpdateKlassenarbeitDto, UpdatePlanDto,
+  TestAttemptResponse, TestSubmitResponse, TodayResponse, UpdateKlassenarbeitDto, UpdatePlanDto, UpdateVocabularyDto,
   VocabularyResponse, Wallet,
 } from "./types";
 
@@ -90,8 +90,22 @@ export const api = {
 
   // ---- Vater: Katalog (Fächer, Kapitel, Übungssuche über Metadaten) ----
   subjects: () => http<SubjectResponse[]>(`${V1}/learn/subjects`),
+  createSubject: (name: string) => http<SubjectResponse>(`${V1}/learn/subjects`, "POST", { name }),
   chapters: (subjectId: number) =>
     http<ChapterResponse[]>(`${V1}/learn/subjects/${subjectId}/chapters`),
+  createChapter: (subjectId: number, name: string, orderIndex: number) =>
+    http<ChapterResponse>(`${V1}/learn/subjects/${subjectId}/chapters`, "POST", { name, orderIndex }),
+  // Übung eines Typs im Kapitel anlegen. Das Routen-Segment (vocabulary/arithmetic/…) bestimmt den Typ.
+  createExercise: (subjectId: number, chapterId: number, typeRoute: string, payload: CreateExercisePayload) =>
+    http<ExerciseSummary>(`${V1}/learn/subjects/${subjectId}/chapters/${chapterId}/${typeRoute}`, "POST", payload),
+  // Typ-übergreifender Detail-Abruf (mit Config) + „wo verwendet".
+  getExercise: (id: number) => http<ExerciseDetail>(`${V1}/learn/exercises/${id}`),
+  exerciseUsage: (id: number) => http<ExerciseUsage>(`${V1}/learn/exercises/${id}/usage`),
+  // Ersetzen (PUT) bzw. Löschen laufen über die per-Typ-Route.
+  updateExercise: (subjectId: number, chapterId: number, typeRoute: string, id: number, payload: CreateExercisePayload) =>
+    http<ExerciseSummary>(`${V1}/learn/subjects/${subjectId}/chapters/${chapterId}/${typeRoute}/${id}`, "PUT", payload),
+  deleteExercise: (subjectId: number, chapterId: number, typeRoute: string, id: number) =>
+    http<void>(`${V1}/learn/subjects/${subjectId}/chapters/${chapterId}/${typeRoute}/${id}`, "DELETE"),
   searchExercises: (p: ExerciseSearchParams = {}) => {
     const q = new URLSearchParams();
     if (p.subjectId != null) q.set("subjectId", String(p.subjectId));
@@ -109,6 +123,9 @@ export const api = {
     http<VocabularyResponse[]>(`${V1}/learn/vocabulary${search ? `?search=${encodeURIComponent(search)}` : ""}`),
   createVocabulary: (dto: CreateVocabularyDto) =>
     http<VocabularyResponse>(`${V1}/learn/vocabulary`, "POST", dto),
+  updateVocabulary: (id: number, patch: UpdateVocabularyDto) =>
+    http<VocabularyResponse>(`${V1}/learn/vocabulary/${id}`, "PATCH", patch),
+  deleteVocabulary: (id: number) => http<void>(`${V1}/learn/vocabulary/${id}`, "DELETE"),
 
   // ---- Lehrpläne ----
   plans: (childId?: number) =>

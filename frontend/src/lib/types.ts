@@ -62,6 +62,44 @@ export interface ChapterResponse {
   exercisesCount: number;
 }
 
+/** Vollständige Sicht einer Übung inkl. roher Config + Metadaten (zum Anzeigen/Bearbeiten). */
+export interface ExerciseDetail {
+  id: number;
+  chapterId: number;
+  chapterName: string;
+  subjectId: number;
+  subjectName: string;
+  type: string;
+  title: string;
+  orderIndex: number;
+  rewardPoints: number;
+  gradeMin: number | null;
+  gradeMax: number | null;
+  schoolTypes: string;
+  source: string | null;
+  categoryId: number | null;
+  categoryName: string | null;
+  defaultStage: number | null;
+  defaultItemCount: number | null;
+  config: unknown;
+}
+
+/** Wo eine Übung verwendet wird (nur eigene Kinder). */
+export interface PlanUsage { planId: number; planTitle: string; childId: number; childName: string; }
+export interface ClassTestUsage { id: number; title: string; childId: number; childName: string; }
+export interface ExerciseUsage { plans: PlanUsage[]; classTests: ClassTestUsage[]; }
+
+/** Partielle Vokabel-Änderung (nur gesetzte Felder). */
+export interface UpdateVocabularyDto {
+  version?: string;
+  sourceLanguage?: string;
+  targetLanguage?: string;
+  word?: string;
+  translation?: string;
+  partOfSpeech?: PartOfSpeech;
+  pronunciationAudioUrl?: string | null;
+}
+
 /** Schlanke Trefferzeile der Übungssuche (Metadaten-Filter über den Katalog). */
 export interface ExerciseSummary {
   id: number;
@@ -100,12 +138,37 @@ export interface VocabularyResponse {
 }
 
 export interface CreateVocabularyDto {
-  key: string;
+  /** Optional – fehlt er, generiert der Server einen eindeutigen Slug ("einfache" Eingabe). */
+  key?: string;
   sourceLanguage: string;
   targetLanguage: string;
   word: string;
   translation: string;
-  partOfSpeech: PartOfSpeech;
+  /** Optional – Default Other ("einfache" Eingabe). */
+  partOfSpeech?: PartOfSpeech;
+  pronunciationAudioUrl?: string | null;
+}
+
+// ---- Katalog: Übungen anlegen (Authoring) ----
+
+/** Übungstypen, die die Vater-UI anlegen kann (Route-Segment siehe TYPE_ROUTE in VaterExercises). */
+export type ExerciseTypeKey =
+  | "Vocabulary" | "Arithmetic" | "Cloze" | "Matching" | "List" | "Birkenbihl";
+
+/**
+ * Gemeinsame Nutzlast zum Anlegen einer Übung (spiegelt ExercisePayload&lt;TConfig&gt; im Backend).
+ * <c>config</c> ist typ-spezifisch – der Server interpretiert es je Routen-Segment.
+ */
+export interface CreateExercisePayload {
+  title: string;
+  orderIndex: number;
+  rewardPoints: number;
+  config: unknown;
+  gradeMin?: number | null;
+  gradeMax?: number | null;
+  schoolTypes?: string;
+  source?: string | null;
+  categoryId?: number | null;
 }
 
 // ---- Lehrpläne ----
