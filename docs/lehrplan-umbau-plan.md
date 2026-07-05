@@ -76,7 +76,15 @@ Es existieren heute **zwei getrennte, duplizierte Inhaltswelten**:
    Essay + ArithmeticDrill bewusst leer (frei/generiert). Nur Extraktion – Bewertung bleibt bei
    `AnswerGrader`/`ExerciseAnswerChecker`. Als Singleton registriert. 13 Unit-Tests, Gesamt-Suite 131 grün.
 3. **Motor umschlüsseln** – PracticeSessions + 3 Test-Controller lesen aus Position→Übung+Index;
-   Re-Key Review/TestItemResult. Verifikation: `/smoke-test` Drill+Test end-to-end. **(größter Brocken)**
+   Re-Key Review/TestItemResult. **(größter Brocken)** **🟡 KERN ERLEDIGT (2026-07-05):**
+   Neuer positions-basierter Motor **parallel** zum alten (Strangler): `PositionPlayService`
+   (Fälligkeit/Scope/ItemCount, Leitner auf `PositionItemProgress`, Stufen, Inhalt via Provider),
+   `PositionPracticeController` (Üben) + `PositionTestsController` (Test) unter
+   `study-plans/{planId}/positions/{positionId}/…`. Bewertung **typ-neutral** gegen die Item-Lösung
+   (`AcceptedAnswers`) statt `switch(Method)` → deckt Vokabeln UND Rechnen direkt ab. `ScoringService`
+   um `ScoreConfig` erweitert (Punkte je Position). 7 Integrationstests, Suite 138 grün.
+   **Rest:** Präsentations-Feinheiten Cloze (WordBank/Lücken) & Matching (Richtung); Punkte fürs
+   Positions-Ziel + Tages-/Wochen-Rollup gehören zu Etappe 4.
 4. **Ziel-/Punkte-Engine** – `StudyProgressService`: Abschluss pro Position nach `CheckMode`,
    Rollup Tag/Woche; Punkte pro Position. Verifikation: `today`/`progress` gegen gemischten Plan.
 5. **Lehrplan-CRUD** – `StudyPlansController`: Position per `ExerciseId` + Overrides + Ziel + Punkte.

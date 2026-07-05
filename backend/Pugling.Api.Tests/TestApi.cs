@@ -2,6 +2,9 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.Extensions.DependencyInjection;
+using Pugling.Api.Data;
+using Pugling.Api.Models;
 
 namespace Pugling.Api.Tests;
 
@@ -32,10 +35,13 @@ internal static class TestApi
     }
 
     /// <summary>Liest die <c>id</c> aus einer erfolgreichen JSON-Antwort.</summary>
-    public static async Task<int> IdAsync(HttpResponseMessage res)
+    public static Task<int> IdAsync(HttpResponseMessage res) => IdWithKeyAsync(res, "id");
+
+    /// <summary>Liest eine int-Property (z. B. <c>attemptId</c>) aus einer erfolgreichen JSON-Antwort.</summary>
+    public static async Task<int> IdWithKeyAsync(HttpResponseMessage res, string key)
     {
         res.EnsureSuccessStatusCode();
-        return (await res.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetInt32();
+        return (await res.Content.ReadFromJsonAsync<JsonElement>()).GetProperty(key).GetInt32();
     }
 
     /// <summary>Legt (als Vater) einen Vokabel-Lehrplan mit zwei Seed-Vokabeln an und liefert dessen Id.</summary>
@@ -68,5 +74,46 @@ internal static class TestApi
                 config = new { problems = new[] { new { prompt = "7 × 6", answer = 42, tolerance = 0 } } },
             }));
         return (subjectId, chapterId, exerciseId);
+    }
+
+    /// <summary>Legt (als Vater) eine Vokabel-Übung im Katalog an und liefert ihre Id.</summary>
+    public static async Task<int> CreateVocabExerciseAsync(HttpClient father, params (string Front, string Back)[] items)
+    {
+        var vocab = items.Length > 0 ? items : [("hello", "hallo"), ("goodbye", "tschüss")];
+        var subjectId = await IdAsync(await father.PostAsJsonAsync("/api/v1/learn/subjects", new { name = "Englisch-Pos" }));
+        var chapterId = await IdAsync(await father.PostAsJsonAsync(
+            $"/api/v1/learn/subjects/{subjectId}/chapters", new { name = "Unit 1", orderIndex = 1 }));
+        return await IdAsync(await father.PostAsJsonAsync(
+            $"/api/v1/learn/subjects/{subjectId}/chapters/{chapterId}/vocabulary", new
+            {
+                title = "Begrüßungen",
+                orderIndex = 1,
+                rewardPoints = 10,
+                config = new { direction = "front-to-back", items = vocab.Select(i => new { front = i.Front, back = i.Back }) },
+            }));
+    }
+
+    /// <summary>Seedet direkt (Positions-CRUD folgt in Etappe 5) einen Plan mit einer Leitner-Position auf die Übung.</summary>
+    public static (int planId, int positionId) SeedLeitnerPosition(WebApplicationFactory<Program> f, int exerciseId,
+        int stage, int childId = 1, GoalCadence cadence = GoalCadence.Daily, int? goalThreshold = null)
+    {
+        using var scope = f.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var plan = new StudyPlan { ChildId = childId, Title = "Positions-Plan", StartDate = today, EndDate = today.AddDays(5) };
+        var pos = new PlanPosition
+        {
+            ExerciseId = exerciseId,
+            Order = 0,
+            Stage = stage,
+            Cadence = cadence,
+            GoalThreshold = goalThreshold,
+            UseLeitner = true,
+            NewContentPoints = 10,
+        };
+        plan.Positions.Add(pos);
+        db.StudyPlans.Add(plan);
+        db.SaveChanges();
+        return (plan.Id, pos.Id);
     }
 }

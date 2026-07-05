@@ -16,59 +16,12 @@ public class PositionPracticeFlowTests(PuglingWebAppFactory factory) : IClassFix
 {
     private readonly PuglingWebAppFactory _factory = factory;
 
-    /// <summary>Legt (als Vater) eine Vokabel-Übung im Katalog an und liefert ihre Id.</summary>
-    private static async Task<int> CreateVocabExerciseAsync(HttpClient father)
-    {
-        var subjectId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/learn/subjects", new { name = "Englisch-Pos" }));
-        var chapterId = await TestApi.IdAsync(await father.PostAsJsonAsync(
-            $"/api/v1/learn/subjects/{subjectId}/chapters", new { name = "Unit 1", orderIndex = 1 }));
-        return await TestApi.IdAsync(await father.PostAsJsonAsync(
-            $"/api/v1/learn/subjects/{subjectId}/chapters/{chapterId}/vocabulary", new
-            {
-                title = "Begrüßungen",
-                orderIndex = 1,
-                rewardPoints = 10,
-                config = new
-                {
-                    direction = "front-to-back",
-                    items = new[]
-                    {
-                        new { front = "hello", back = "hallo" },
-                        new { front = "goodbye", back = "tschüss" },
-                    },
-                },
-            }));
-    }
-
-    /// <summary>Seedet einen Plan (Kind 1) mit einer Leitner-Position auf die Übung; liefert (planId, positionId).</summary>
-    private (int planId, int positionId) SeedPlanWithPosition(int exerciseId, int stage)
-    {
-        using var scope = _factory.Services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
-        var today = DateOnly.FromDateTime(DateTime.UtcNow);
-        var plan = new StudyPlan { ChildId = 1, Title = "Positions-Plan", StartDate = today, EndDate = today.AddDays(5) };
-        var pos = new PlanPosition
-        {
-            Exercise = db.Exercises.Find(exerciseId),
-            ExerciseId = exerciseId,
-            Order = 0,
-            Stage = stage,
-            Cadence = GoalCadence.Daily,
-            UseLeitner = true,
-            NewContentPoints = 10,
-        };
-        plan.Positions.Add(pos);
-        db.StudyPlans.Add(plan);
-        db.SaveChanges();
-        return (plan.Id, pos.Id);
-    }
-
     [Fact]
     public async Task Vokabel_Position_RichtigGetippt_BringtPunkteUndBoxAufstieg()
     {
         var father = await TestApi.FatherAsync(_factory);
-        var exerciseId = await CreateVocabExerciseAsync(father);
-        var (planId, positionId) = SeedPlanWithPosition(exerciseId, (int)TestStage.FreeText);
+        var exerciseId = await TestApi.CreateVocabExerciseAsync(father);
+        var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.FreeText);
         var child = await TestApi.ChildAsync(_factory);
         var baseUrl = $"/api/v1/study-plans/{planId}/positions/{positionId}/practice-sessions";
 
@@ -102,8 +55,8 @@ public class PositionPracticeFlowTests(PuglingWebAppFactory factory) : IClassFix
     public async Task Vokabel_Position_ZweiteWertungAmSelbenTag_WirdNichtGewertet()
     {
         var father = await TestApi.FatherAsync(_factory);
-        var exerciseId = await CreateVocabExerciseAsync(father);
-        var (planId, positionId) = SeedPlanWithPosition(exerciseId, (int)TestStage.FreeText);
+        var exerciseId = await TestApi.CreateVocabExerciseAsync(father);
+        var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.FreeText);
         var child = await TestApi.ChildAsync(_factory);
         var baseUrl = $"/api/v1/study-plans/{planId}/positions/{positionId}/practice-sessions";
         var sessionId = await TestApi.IdAsync(await child.PostAsJsonAsync(baseUrl, new { }));
@@ -121,8 +74,8 @@ public class PositionPracticeFlowTests(PuglingWebAppFactory factory) : IClassFix
     public async Task Vokabel_Position_FalscheAntwort_BleibtInBox1UndFaellig()
     {
         var father = await TestApi.FatherAsync(_factory);
-        var exerciseId = await CreateVocabExerciseAsync(father);
-        var (planId, positionId) = SeedPlanWithPosition(exerciseId, (int)TestStage.FreeText);
+        var exerciseId = await TestApi.CreateVocabExerciseAsync(father);
+        var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.FreeText);
         var child = await TestApi.ChildAsync(_factory);
         var baseUrl = $"/api/v1/study-plans/{planId}/positions/{positionId}/practice-sessions";
         var sessionId = await TestApi.IdAsync(await child.PostAsJsonAsync(baseUrl, new { }));
@@ -138,8 +91,8 @@ public class PositionPracticeFlowTests(PuglingWebAppFactory factory) : IClassFix
     public async Task Position_UnbekanntFuerDenPlan_LiefertNotFound()
     {
         var father = await TestApi.FatherAsync(_factory);
-        var exerciseId = await CreateVocabExerciseAsync(father);
-        var (planId, positionId) = SeedPlanWithPosition(exerciseId, (int)TestStage.FreeText);
+        var exerciseId = await TestApi.CreateVocabExerciseAsync(father);
+        var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.FreeText);
         var child = await TestApi.ChildAsync(_factory);
 
         // Position, die es (in diesem Plan) nicht gibt → Start muss 404 liefern, nicht ins Leere spielen.
