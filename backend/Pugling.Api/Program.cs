@@ -61,6 +61,8 @@ builder.Services.AddSingleton<TokenService>();
 builder.Services.AddSingleton<ArithmeticProblemGenerator>();
 builder.Services.AddSingleton<ExerciseAnswerChecker>();
 builder.Services.AddSingleton<AnswerGrader>();
+// Extraktion der Übungs-Inhalte aus der ConfigJson (Brücke Katalog → neuer Lehrplan-Motor, Etappe 2).
+builder.Services.AddSingleton<ExerciseContentProvider>();
 builder.Services.AddCors(o => o.AddDefaultPolicy(p =>
     p.WithOrigins("http://localhost:5173").AllowAnyHeader().AllowAnyMethod()));
 
