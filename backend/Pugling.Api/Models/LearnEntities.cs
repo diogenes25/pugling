@@ -133,5 +133,16 @@ public class Exercise
     public int? CategoryId { get; set; }
     public ExerciseCategory? Category { get; set; }
 
+    /// <summary>
+    /// Autor der Übung (der Vater, der sie angelegt hat). Der Katalog ist bewusst <b>global</b>:
+    /// jeder Vater darf jede Übung <i>finden und verwenden</i>, aber nur der Autor darf sie
+    /// <i>ändern oder löschen</i> – so bleibt die von einem Lehrer erstellte Übung geschützt,
+    /// während andere Väter sie in ihre Lehrpläne übernehmen. <c>null</c> = geseedete System-Übung
+    /// (gehört niemandem, entsprechend nicht editierbar). Bleibt beim Löschen des Autors erhalten
+    /// (FK → <c>SetNull</c>), damit fremde Lehrpläne, die sie referenzieren, nicht brechen.
+    /// </summary>
+    public int? AuthorFatherId { get; set; }
+    public Father? Author { get; set; }
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }

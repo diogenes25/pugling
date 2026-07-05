@@ -42,7 +42,9 @@
       "PowerShell(dotnet test backend/Pugling.Api.Tests 2>&1)",
       "PowerShell(Start-Process -FilePath \"dotnet\" -ArgumentList \"run --project backend/Pugling.Api\" -WorkingDirectory \"C:\\\\Users\\\\TjarkOnnen\\\\source\\\\repos\\\\priv\\\\pugling\" -WindowStyle Hidden)",
       "PowerShell(try { $r = Invoke-WebRequest -Uri \"http://localhost:5200/swagger/index.html\" -UseBasicParsing -TimeoutSec 5; \"swagger HTTP $\\($r.StatusCode\\)\" } catch { \"not up yet: $\\($_.Exception.Message\\)\" })",
-      "PowerShell($p = Get-Process -Name Pugling.Api -ErrorAction SilentlyContinue; if \\($p\\) { Stop-Process -Id $p.Id -Force; Start-Sleep -Milliseconds 600; \"stopped\" } else { \"not running\" })"
+      "PowerShell($p = Get-Process -Name Pugling.Api -ErrorAction SilentlyContinue; if \\($p\\) { Stop-Process -Id $p.Id -Force; Start-Sleep -Milliseconds 600; \"stopped\" } else { \"not running\" })",
+      "Bash(xargs cat)",
+      "Read(//c/Users/TjarkOnnen/source/repos/priv/pugling/backend/Pugling.Api.Tests/**)"
     ],
     "additionalDirectories": [
       "c:\\Users\\TjarkOnnen\\.claude\\projects\\c--Users-TjarkOnnen-source-repos-priv-pugling\\memory"

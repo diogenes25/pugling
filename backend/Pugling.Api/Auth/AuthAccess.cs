@@ -19,6 +19,23 @@ public static class ClaimsPrincipalExtensions
     public static bool IsChild(this ClaimsPrincipal u) => u.IsInRole(Roles.Sohn);
     public static int? FatherId(this ClaimsPrincipal u) => int.TryParse(u.FindFirstValue("fid"), out var v) ? v : null;
     public static int? ChildId(this ClaimsPrincipal u) => int.TryParse(u.FindFirstValue("cid"), out var v) ? v : null;
+
+    /// <summary>
+    /// Ob der Principal Autor der Übung ist und sie daher ändern/löschen darf. Die eine Stelle,
+    /// an der die Autorschafts-Regel lebt (Anzeige-<c>IsOwn</c> wie serverseitige Durchsetzung),
+    /// damit beide nicht auseinanderdriften.
+    /// </summary>
+    public static bool Owns(this ClaimsPrincipal u, Exercise exercise) =>
+        IsOwnedBy(exercise.AuthorFatherId, u.FatherId());
+
+    /// <summary>
+    /// Reiner Eigentums-Vergleich (für Hot-Paths/Projektionen, wo der <c>fid</c> einmal ermittelt wird):
+    /// Eine Übung gehört einem Vater nur, wenn sie einen Autor hat <b>und</b> dieser der Vater ist.
+    /// Fehlt der Autor (geseedete System-Übung) oder der <c>fid</c>, ist das Ergebnis <c>false</c>
+    /// (fail-closed) – sonst würde ein fehlender Claim System-Übungen fälschlich freigeben.
+    /// </summary>
+    public static bool IsOwnedBy(int? authorFatherId, int? fatherId) =>
+        authorFatherId is { } author && author == fatherId;
 }
 
 /// <summary>

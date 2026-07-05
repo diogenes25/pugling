@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { api, errorMessage } from "../lib/api";
 import { useAsync } from "../lib/useAsync";
+import { ExerciseAttribution } from "./ExerciseAttribution";
 import type {
   ChapterResponse, CreateExercisePayload, ExerciseSummary, ExerciseTypeKey, ExerciseUsage,
   SchoolType, SubjectResponse, VocabularyResponse,
@@ -64,11 +65,14 @@ export function VaterExercises() {
   const [okMsg, setOkMsg] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
+  // Verwaltung zeigt standardmäßig nur eigene Übungen (mineOnly); optional auch die geteilte Bibliothek.
+  const [showShared, setShowShared] = useState(false);
+
   const chapters = useAsync<ChapterResponse[]>(
     () => (subjectId ? api.chapters(Number(subjectId)) : Promise.resolve([])), [subjectId]);
   const existing = useAsync<ExerciseSummary[]>(
-    () => (subjectId ? api.searchExercises({ subjectId: Number(subjectId) }) : Promise.resolve([])),
-    [subjectId, okMsg]);
+    () => (subjectId ? api.searchExercises({ subjectId: Number(subjectId), mineOnly: !showShared }) : Promise.resolve([])),
+    [subjectId, okMsg, showShared]);
 
   const chapterExercises = useMemo(
     () => (existing.data ?? []).filter((e) => chapterId !== "" && e.chapterId === Number(chapterId)),
@@ -266,7 +270,14 @@ export function VaterExercises() {
       {/* Vorhandene Übungen im gewählten Kapitel */}
       {chapterId !== "" && (
         <section className="card">
-          <h3 style={{ marginTop: 0 }}>Übungen in diesem Kapitel <span className="muted">({chapterExercises.length})</span></h3>
+          <div className="row" style={{ alignItems: "center", gap: 8, marginBottom: 4 }}>
+            <h3 style={{ margin: 0 }}>Übungen in diesem Kapitel <span className="muted">({chapterExercises.length})</span></h3>
+            {/* Verwaltung = eigene Übungen; bei Bedarf die geteilte Bibliothek anderer Väter einblenden. */}
+            <label className="row" style={{ marginLeft: "auto", gap: 6, alignItems: "center", fontSize: 13 }}>
+              <input type="checkbox" checked={showShared} onChange={(e) => setShowShared(e.target.checked)} />
+              geteilte Übungen anderer Väter anzeigen
+            </label>
+          </div>
           {chapterExercises.length === 0 ? <div className="muted">Noch keine Übungen.</div> : (
             <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
               {chapterExercises.map((e) => (
@@ -480,9 +491,12 @@ function ExerciseManageRow({ exercise, subjectId, onChanged }: {
       <div className="row" style={{ alignItems: "center", gap: 8 }}>
         <span>{exercise.title}</span>
         <span className="muted">· {TYPE_LABEL[exercise.type as ExerciseTypeKey] ?? exercise.type}</span>
+        {/* Attribution der geteilten Bibliothek: eigene vs. von anderen Vätern erstellt vs. System. */}
+        <ExerciseAttribution e={exercise} />
         <span style={{ marginLeft: "auto" }} />
         <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} disabled={busy} onClick={toggleUsage}>Verwendung</button>
-        <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} disabled={busy} onClick={remove}>Löschen</button>
+        {/* Nur der Autor darf löschen – fremde Übungen sind übernehmbar, aber geschützt. */}
+        {exercise.isOwn && <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} disabled={busy} onClick={remove}>Löschen</button>}
       </div>
       {err && <div className="banner err" style={{ marginTop: 6 }}>{err}</div>}
       {open && usage && (

@@ -130,6 +130,14 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
             .HasForeignKey(e => e.CategoryId)
             .OnDelete(DeleteBehavior.SetNull);
 
+        // Übung → Autor (optional): Der Katalog ist global; der Autor schützt nur das Editier-/Löschrecht.
+        // Löschen des Autors setzt die FK auf null (Übung bleibt für fremde Lehrpläne nutzbar), löscht sie NICHT.
+        modelBuilder.Entity<Exercise>()
+            .HasOne(e => e.Author)
+            .WithMany()
+            .HasForeignKey(e => e.AuthorFatherId)
+            .OnDelete(DeleteBehavior.SetNull);
+
         // Lückentext-Store: eindeutiger Key + Gaps/WordBank als JSON-Spalten.
         modelBuilder.Entity<ClozeText>(e =>
         {
