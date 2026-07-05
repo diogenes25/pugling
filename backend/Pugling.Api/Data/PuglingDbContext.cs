@@ -69,7 +69,8 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
         {
             e.Property(c => c.OwnedSkins).HasConversion(
                 v => JsonSerializer.Serialize(v, JsonOptions),
-                s => JsonSerializer.Deserialize<List<string>>(s, JsonOptions) ?? new());
+                s => JsonSerializer.Deserialize<List<string>>(s, JsonOptions) ?? new())
+                .Metadata.SetValueComparer(JsonValueComparer.For<List<string>>());
             // Concurrency-Token: schützt Skin-Kauf/Ausrüsten vor parallelen Doppelbuchungen.
             e.Property(c => c.ConcurrencyStamp).IsConcurrencyToken();
         });
@@ -81,10 +82,12 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
             // noun/verb als JSON-Spalten (null bleibt DB-NULL, Converter läuft nur für Werte).
             e.Property(v => v.Noun).HasConversion(
                 v => JsonSerializer.Serialize(v, JsonOptions),
-                s => JsonSerializer.Deserialize<NounInfo>(s, JsonOptions));
+                s => JsonSerializer.Deserialize<NounInfo>(s, JsonOptions))
+                .Metadata.SetValueComparer(JsonValueComparer.For<NounInfo?>());
             e.Property(v => v.Verb).HasConversion(
                 v => JsonSerializer.Serialize(v, JsonOptions),
-                s => JsonSerializer.Deserialize<VerbInfo>(s, JsonOptions));
+                s => JsonSerializer.Deserialize<VerbInfo>(s, JsonOptions))
+                .Metadata.SetValueComparer(JsonValueComparer.For<VerbInfo?>());
 
             // Selbst-Referenz auf die Grundform; Löschen einer referenzierten Grundform verhindern.
             e.HasOne(v => v.BaseForm)
@@ -109,7 +112,8 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
         modelBuilder.Entity<Exercise>()
             .Property(e => e.SuggestedBonus).HasConversion(
                 v => JsonSerializer.Serialize(v, JsonOptions),
-                s => JsonSerializer.Deserialize<SuggestedBonus>(s, JsonOptions));
+                s => JsonSerializer.Deserialize<SuggestedBonus>(s, JsonOptions))
+                .Metadata.SetValueComparer(JsonValueComparer.For<SuggestedBonus?>());
 
         // Fachabhängige Übungs-Arten: Name je Fach eindeutig, Löschen des Fachs entfernt die Arten.
         modelBuilder.Entity<ExerciseCategory>(e =>
@@ -142,10 +146,12 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
             e.HasIndex(c => c.Key).IsUnique();
             e.Property(c => c.Gaps).HasConversion(
                 v => JsonSerializer.Serialize(v, JsonOptions),
-                s => JsonSerializer.Deserialize<List<Gap>>(s, JsonOptions) ?? new());
+                s => JsonSerializer.Deserialize<List<Gap>>(s, JsonOptions) ?? new())
+                .Metadata.SetValueComparer(JsonValueComparer.For<List<Gap>>());
             e.Property(c => c.WordBank).HasConversion(
                 v => JsonSerializer.Serialize(v, JsonOptions),
-                s => JsonSerializer.Deserialize<List<string>>(s, JsonOptions));
+                s => JsonSerializer.Deserialize<List<string>>(s, JsonOptions))
+                .Metadata.SetValueComparer(JsonValueComparer.For<List<string>?>());
         });
 
         // Lehrplan optional an ein Katalog-Fach gekoppelt (für Stundenplan-Steuerung).
@@ -164,10 +170,12 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
                 .OnDelete(DeleteBehavior.Restrict);
             e.Property(p => p.BoxIntervalDays).HasConversion(
                 v => JsonSerializer.Serialize(v, JsonOptions),
-                s => JsonSerializer.Deserialize<List<int>>(s, JsonOptions));
+                s => JsonSerializer.Deserialize<List<int>>(s, JsonOptions))
+                .Metadata.SetValueComparer(JsonValueComparer.For<List<int>?>());
             e.Property(p => p.StageSchedule).HasConversion(
                 v => JsonSerializer.Serialize(v, JsonOptions),
-                s => JsonSerializer.Deserialize<List<StageStep>>(s, JsonOptions));
+                s => JsonSerializer.Deserialize<List<StageStep>>(s, JsonOptions))
+                .Metadata.SetValueComparer(JsonValueComparer.For<List<StageStep>?>());
         });
 
         // Fortschritt je Inhalts-Atom einer Position: verschwindet mit der Position (Cascade);
