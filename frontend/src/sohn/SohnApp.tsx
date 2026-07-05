@@ -88,10 +88,10 @@ function SohnShell({ childId }: { childId: number }) {
     <SohnContext.Provider value={value}>
       <div className="app-sohn">
         <div className="sohn-hud">
-          <div className="avatar-mini" style={{ background: skin.gradient }}>{skin.emoji}</div>
-          <div className="chip">🪙<b className="tabnum">{coins}</b></div>
-          <div className="chip">💎<b className="tabnum">{gems}</b></div>
-          <div className="chip flame">🔥<b className="tabnum">{streak}</b></div>
+          <div className="avatar-mini" style={{ background: skin.gradient }} aria-hidden="true">{skin.emoji}</div>
+          <div className="chip" aria-live="polite"><span aria-hidden="true">🪙</span><b className="tabnum" aria-label={`${coins} Münzen`}>{coins}</b></div>
+          <div className="chip" aria-live="polite"><span aria-hidden="true">💎</span><b className="tabnum" aria-label={`${gems} Gems`}>{gems}</b></div>
+          <div className="chip flame" aria-live="polite"><span aria-hidden="true">🔥</span><b className="tabnum" aria-label={`${streak} Tage Streak`}>{streak}</b></div>
           <button
             type="button"
             className="chip mute-toggle"
@@ -117,10 +117,10 @@ function SohnShell({ childId }: { childId: number }) {
         </Routes>
 
         <nav className="sohn-nav">
-          <NavLink to="/sohn" end><span className="ic">🏠</span>Basis</NavLink>
-          <NavLink to="/sohn/progress"><span className="ic">🗺️</span>Weg</NavLink>
-          <NavLink to="/sohn/konto"><span className="ic">💰</span>Konto</NavLink>
-          <NavLink to="/sohn/skins"><span className="ic">🎭</span>Skins</NavLink>
+          <NavLink to="/sohn" end><span className="ic" aria-hidden="true">🏠</span>Basis</NavLink>
+          <NavLink to="/sohn/progress"><span className="ic" aria-hidden="true">🗺️</span>Weg</NavLink>
+          <NavLink to="/sohn/konto"><span className="ic" aria-hidden="true">💰</span>Konto</NavLink>
+          <NavLink to="/sohn/skins"><span className="ic" aria-hidden="true">🎭</span>Skins</NavLink>
         </nav>
       </div>
     </SohnContext.Provider>

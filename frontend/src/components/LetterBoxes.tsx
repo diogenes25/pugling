@@ -36,6 +36,10 @@ export function LetterBoxes({ length, value, onChange, onSubmit }: {
           className="lbox"
           inputMode="text"
           maxLength={1}
+          autoComplete="off"
+          autoCapitalize="off"
+          autoCorrect="off"
+          spellCheck={false}
           value={ch}
           aria-label={`Buchstabe ${i + 1} von ${length}`}
           onChange={(e) => setChar(i, e.target.value)}

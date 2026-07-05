@@ -3,12 +3,13 @@ import type {
   CreateChildDto, CreateExercisePayload, CreateKlassenarbeitDto, CreateMissionDto, CreatePlanDto, CreateRewardDto, CreateVocabularyDto,
   ExerciseDetail, ExercisePreviewAnswer, ExercisePreviewData, ExercisePreviewResult,
   ExerciseSearchParams, ExerciseSummary, ExerciseUsage, KlassenarbeitDetail, KlassenarbeitPractice, KlassenarbeitRepeat,
-  KlassenarbeitResponse, KlassenarbeitStatus, LoginResponse, MissionDef, MissionStatus, PartOfSpeech, PlanResponse,
+  KlassenarbeitResponse, KlassenarbeitStatus, LoginResponse, MissionDef, MissionStatus, PlanResponse,
   ChildrenDashboard, CreatePositionDto, PositionResponse, PositionReport, UpdatePositionDto, OverviewResponse, PositionSession, PracticeCard,
   ProgressResponse, RedemptionDef, ReviewInput, ReviewOutcome, RewardDef, RewardRedemptionStatus, RewardsView,
   SkinState, SubjectResponse,
   TestAttemptResponse, TestSubmitResponse, UpdateKlassenarbeitDto, UpdatePlanDto, UpdateVocabularyDto,
   VocabBatchResult, VocabularyResponse, VocabTagResponse, ChildTagResponse, Wallet,
+  Paged, VocabularySearchParams,
 } from "./types";
 
 const TOKEN_KEY = "pugling.token";
@@ -40,7 +41,10 @@ export function errorMessage(e: unknown): string {
   return e instanceof Error ? e.message : String(e);
 }
 
-async function http<T>(url: string, method = "GET", body?: unknown): Promise<T> {
+// Ein Request inkl. Token + einheitlicher RFC-7807-Fehlerbehandlung; liefert die rohe Response,
+// damit sowohl der Body-Parser (`http`) als auch der paginierte Helfer (`httpPaged`, liest zusätzlich
+// den `X-Total-Count`-Header) dieselbe Logik teilen.
+async function request(url: string, method: string, body?: unknown): Promise<Response> {
   const token = getToken();
   const headers: Record<string, string> = {};
   if (body !== undefined) headers["Content-Type"] = "application/json";
@@ -69,8 +73,39 @@ async function http<T>(url: string, method = "GET", body?: unknown): Promise<T> 
     }
     throw new ApiError(res.status, message, traceId);
   }
+  return res;
+}
+
+async function http<T>(url: string, method = "GET", body?: unknown): Promise<T> {
+  const res = await request(url, method, body);
   const text = await res.text();
   return (text ? JSON.parse(text) : undefined) as T;
+}
+
+/**
+ * Wie {@link http}, aber für Server-paginierte Listen: Das Backend paginiert per `skip`/`take` und
+ * schreibt die Gesamtzahl in den `X-Total-Count`-Header (nicht in den Body). Liefert die Seite plus
+ * `total`; fehlt der Header, fällt `total` auf die Seitenlänge zurück.
+ */
+/** Liest die Gesamtzahl aus dem `X-Total-Count`-Header; fehlt/leer, fällt sie auf `fallback` zurück. */
+function totalFrom(res: Response, fallback: number): number {
+  const header = res.headers.get("X-Total-Count");
+  return header != null && header !== "" ? Number(header) : fallback;
+}
+
+async function httpPaged<T>(url: string): Promise<Paged<T>> {
+  const res = await request(url, "GET");
+  const text = await res.text();
+  const items = (text ? JSON.parse(text) : []) as T[];
+  return { items, total: totalFrom(res, items.length) };
+}
+
+/** Hängt Paginierung/Sortierung an eine URLSearchParams an (nur gesetzte Werte). */
+function appendPaging(q: URLSearchParams, p: { sort?: string; dir?: string; skip?: number; take?: number }) {
+  if (p.sort) q.set("sort", p.sort);
+  if (p.dir) q.set("dir", p.dir);
+  if (p.skip != null) q.set("skip", String(p.skip));
+  if (p.take != null) q.set("take", String(p.take));
 }
 
 // Alle Routen liegen unter dem API-Versionssegment (Backend: ApiRoutes.V1 = "api/v{version}").
@@ -126,25 +161,24 @@ export const api = {
     if (p.type) q.set("type", p.type);
     if (p.search) q.set("search", p.search);
     if (p.mineOnly) q.set("mineOnly", "true");
+    appendPaging(q, p);
     const qs = q.toString();
-    return http<ExerciseSummary[]>(`${V1}/learn/exercises${qs ? `?${qs}` : ""}`);
+    return httpPaged<ExerciseSummary>(`${V1}/learn/exercises${qs ? `?${qs}` : ""}`);
   },
 
   // ---- Vater: Vokabel-Store ----
   // Optional nach Sprachpaar, Wortart und Tags filtern (Store zeigt dann nur die passenden Einträge).
-  vocabulary: (search?: string, opts?: {
-    sourceLanguage?: string; targetLanguage?: string;
-    partOfSpeech?: PartOfSpeech; tags?: string[]; matchAll?: boolean;
-  }) => {
+  vocabulary: (p: VocabularySearchParams = {}) => {
     const q = new URLSearchParams();
-    if (search) q.set("search", search);
-    if (opts?.sourceLanguage) q.set("sourceLanguage", opts.sourceLanguage);
-    if (opts?.targetLanguage) q.set("targetLanguage", opts.targetLanguage);
-    if (opts?.partOfSpeech) q.set("partOfSpeech", opts.partOfSpeech);
-    for (const t of opts?.tags ?? []) q.append("tag", t);
-    if (opts?.matchAll) q.set("matchAll", "true");
+    if (p.search) q.set("search", p.search);
+    if (p.sourceLanguage) q.set("sourceLanguage", p.sourceLanguage);
+    if (p.targetLanguage) q.set("targetLanguage", p.targetLanguage);
+    if (p.partOfSpeech) q.set("partOfSpeech", p.partOfSpeech);
+    for (const t of p.tags ?? []) q.append("tag", t);
+    if (p.matchAll) q.set("matchAll", "true");
+    appendPaging(q, p);
     const qs = q.toString();
-    return http<VocabularyResponse[]>(`${V1}/learn/vocabulary${qs ? `?${qs}` : ""}`);
+    return httpPaged<VocabularyResponse>(`${V1}/learn/vocabulary${qs ? `?${qs}` : ""}`);
   },
   createVocabulary: (dto: CreateVocabularyDto) =>
     http<VocabularyResponse>(`${V1}/learn/vocabulary`, "POST", dto),
@@ -260,7 +294,17 @@ export const api = {
     http<void>(`${V1}/children/${childId}/achievements/${achievementId}`, "DELETE"),
 
   // ---- Vater: Konto-Übersicht (Punktestand + Buchungsverlauf je Kind) ----
-  childAccount: (childId: number) => http<Wallet>(`${V1}/children/${childId}/points`),
+  // Der Buchungsverlauf ist server-paginiert (Einträge in der Hülle + X-Total-Count); die Salden sind
+  // über ALLE Zeilen berechnet, bleiben also über die Seiten stabil.
+  childPoints: async (childId: number, opts: { skip?: number; take?: number } = {}) => {
+    const q = new URLSearchParams();
+    appendPaging(q, opts);
+    const qs = q.toString();
+    const res = await request(`${V1}/children/${childId}/points${qs ? `?${qs}` : ""}`, "GET");
+    const text = await res.text();
+    const body = (text ? JSON.parse(text) : { coins: 0, gems: 0, entries: [] }) as Wallet;
+    return { coins: body.coins, gems: body.gems, items: body.entries, total: totalFrom(res, body.entries.length) };
+  },
 
   // ---- Vater: Angebote (kaufbare reale Belohnungen) verwalten ----
   rewardsFor: (childId: number) => http<RewardDef[]>(`${V1}/children/${childId}/rewards`),
@@ -272,9 +316,12 @@ export const api = {
     http<void>(`${V1}/children/${childId}/rewards/${rewardId}`, "DELETE"),
 
   // ---- Vater: Käufe ansehen und erfüllen/stornieren ----
-  redemptionsFor: (childId: number, status?: RewardRedemptionStatus) => {
-    const q = status ? `?status=${status}` : "";
-    return http<RedemptionDef[]>(`${V1}/children/${childId}/rewards/redemptions${q}`);
+  redemptionsFor: (childId: number, opts: { status?: RewardRedemptionStatus; skip?: number; take?: number } = {}) => {
+    const q = new URLSearchParams();
+    if (opts.status) q.set("status", opts.status);
+    appendPaging(q, opts);
+    const qs = q.toString();
+    return httpPaged<RedemptionDef>(`${V1}/children/${childId}/rewards/redemptions${qs ? `?${qs}` : ""}`);
   },
   fulfillRedemption: (childId: number, redemptionId: number) =>
     http<RedemptionDef>(`${V1}/children/${childId}/rewards/redemptions/${redemptionId}/fulfill`, "POST", {}),
@@ -286,10 +333,11 @@ export const api = {
   purchaseReward: (rewardId: number) => http<RewardsView>(`${V1}/me/rewards/${rewardId}/purchase`, "POST", {}),
 
   // ---- Vater: Klassenarbeiten (planen, Übungen zuweisen, benoten, üben/wiederholen) ----
-  classTests: (childId: number, status?: KlassenarbeitStatus) => {
+  classTests: (childId: number, opts: { status?: KlassenarbeitStatus; skip?: number; take?: number } = {}) => {
     const q = new URLSearchParams({ childId: String(childId) });
-    if (status) q.set("status", status);
-    return http<KlassenarbeitResponse[]>(`${V1}/class-tests?${q.toString()}`);
+    if (opts.status) q.set("status", opts.status);
+    appendPaging(q, opts);
+    return httpPaged<KlassenarbeitResponse>(`${V1}/class-tests?${q.toString()}`);
   },
   classTest: (id: number) => http<KlassenarbeitDetail>(`${V1}/class-tests/${id}`),
   createClassTest: (dto: CreateKlassenarbeitDto) =>

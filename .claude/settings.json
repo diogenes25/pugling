@@ -48,7 +48,10 @@
       "PowerShell(Stop-Process -Id 246760 -Force -ErrorAction SilentlyContinue)",
       "PowerShell($p = Get-Process -Name Pugling.Api -ErrorAction SilentlyContinue; if \\($p\\) { \"still running: $\\($p.Id\\)\" } else { \"no Pugling.Api process\" })",
       "PowerShell(Get-Process -Id 246760 -ErrorAction SilentlyContinue)",
-      "PowerShell(Get-Process Pugling.Api -ErrorAction SilentlyContinue)"
+      "PowerShell(Get-Process Pugling.Api -ErrorAction SilentlyContinue)",
+      "PowerShell(Get-Process -Id 176148 -ErrorAction SilentlyContinue)",
+      "PowerShell(Get-CimInstance Win32_Process -Filter \"ProcessId=176148\")",
+      "PowerShell(Stop-Process -Id 176148 -Force; Start-Sleep -Milliseconds 500; \\(Get-Process -Id 176148 -ErrorAction SilentlyContinue\\) ? \"noch aktiv\" : \"gestoppt\")"
     ],
     "additionalDirectories": [
       "c:\\Users\\TjarkOnnen\\.claude\\projects\\c--Users-TjarkOnnen-source-repos-priv-pugling\\memory"

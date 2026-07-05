@@ -122,23 +122,25 @@ public class ChildrenController(PuglingDbContext db, WalletService wallet) : Con
     public record PointsEntryResponse(int Id, int ChildId, int Amount, PointKind Kind, string Reason, DateTime CreatedAt);
     public record ChildPointsResponse(int ChildId, int Coins, int Gems, IEnumerable<PointsEntryResponse> Entries);
 
-    /// <summary>Kontostand des Kindes (Münzen + Gems) mit den letzten Buchungen.</summary>
+    /// <summary>Kontostand des Kindes (Münzen + Gems) mit den letzten Buchungen (neueste zuerst).</summary>
+    /// <param name="skip">Anzahl zu überspringender Buchungen (Paging).</param>
+    /// <param name="take">Maximale Buchungszahl (1..500). Gesamtzahl im Header <c>X-Total-Count</c>.</param>
     [HttpGet("{childId:int}/points")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<ChildPointsResponse>> GetPoints(int childId)
+    public async Task<ActionResult<ChildPointsResponse>> GetPoints(
+        int childId, [FromQuery] int skip = 0, [FromQuery] int take = PagingExtensions.DefaultTake)
     {
-        // Saldo je Währung über ALLE Buchungen (in der DB summiert) – die Liste zeigt nur die letzten 100.
-        // Sonst wiche der angezeigte Kontostand ab, sobald ein Kind mehr als 100 Buchungen hat (Basis/Combo/
-        // Speed + Missionen/Auszeichnungen erzeugen viele kleine Zeilen pro Sitzung).
+        // Saldo je Währung über ALLE Buchungen (in der DB summiert) – die Liste ist seitenweise (Default 100).
+        // Sonst wiche der angezeigte Kontostand von der Seite ab, sobald ein Kind mehr Buchungen hat als eine
+        // Seite fasst (Basis/Combo/Speed + Missionen/Auszeichnungen erzeugen viele kleine Zeilen pro Sitzung).
         var (coins, gems) = await wallet.BalancesAsync(childId);
 
         var entries = await db.ChildPoints
             .AsNoTracking()
             .Where(p => p.ChildId == childId)
-            .OrderByDescending(p => p.CreatedAt)
-            .Take(100)
+            .OrderByDescending(p => p.CreatedAt).ThenByDescending(p => p.Id)
             .Select(p => new PointsEntryResponse(p.Id, p.ChildId, p.Amount, p.Kind, p.Reason, p.CreatedAt))
-            .ToListAsync();
+            .ToPagedListAsync(Response, skip, take);
 
         return new ChildPointsResponse(childId, coins, gems, entries);
     }

@@ -48,6 +48,13 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db) : Con
     protected virtual Task<string?> ValidateConfigAsync(int subjectId, TConfig config) =>
         Task.FromResult<string?>(null);
 
+    /// <summary>
+    /// Normalisiert die Config vor dem Speichern (Standard: unverändert). Abgeleitete Controller überschreiben
+    /// dies, um serverseitige Invarianten herzustellen – z. B. übungsweit eindeutige IDs zu vergeben, wenn der
+    /// Aufrufer sie (wie das Anlege-Formular) nicht selbst pflegt.
+    /// </summary>
+    protected virtual void NormalizeConfig(TConfig config) { }
+
     /// <summary>DbContext für abgeleitete Controller mit Zusatz-Endpunkten über das reine CRUD hinaus.</summary>
     protected PuglingDbContext Db => db;
 
@@ -96,9 +103,13 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db) : Con
             e.DefaultUseLeitner, e.DefaultRequireTypedTest);
 
     /// <summary>Liste der Übungen dieses Typs im Kapitel.</summary>
+    /// <param name="skip">Anzahl zu überspringender Einträge (Paging).</param>
+    /// <param name="take">Maximale Trefferzahl (1..500). Gesamtzahl im Header <c>X-Total-Count</c>.</param>
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<IEnumerable<ExerciseResponse<TConfig>>>> List(int subjectId, int chapterId)
+    public async Task<ActionResult<IEnumerable<ExerciseResponse<TConfig>>>> List(
+        int subjectId, int chapterId,
+        [FromQuery] int skip = 0, [FromQuery] int take = PagingExtensions.DefaultTake)
     {
         if (!await ChapterExists(subjectId, chapterId)) return NotFound();
         var fid = User.FatherId();
@@ -107,7 +118,7 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db) : Con
             .Include(e => e.Category)
             .Where(e => e.ChapterId == chapterId && e.Type == Type)
             .OrderBy(e => e.OrderIndex).ThenBy(e => e.Id)
-            .ToListAsync();
+            .ToPagedListAsync(Response, skip, take);
         return exercises.Select(e => Map(e, fid)).ToList();
     }
 
@@ -130,7 +141,9 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db) : Con
         if (!await ChapterExists(subjectId, chapterId)) return NotFound();
         if (string.IsNullOrWhiteSpace(body.Title)) return Problem(statusCode: 400, detail: "Titel ist erforderlich.");
         if (!await CategoryValid(subjectId, body.CategoryId)) return Problem(statusCode: 400, detail: "Unbekannte Art für dieses Fach.");
-        if (await ValidateConfigAsync(subjectId, body.Config ?? new TConfig()) is { } createErr) return Problem(statusCode: 400, detail: createErr);
+        var config = body.Config ?? new TConfig();
+        if (await ValidateConfigAsync(subjectId, config) is { } createErr) return Problem(statusCode: 400, detail: createErr);
+        NormalizeConfig(config);
 
         var exercise = new Exercise
         {
@@ -140,7 +153,7 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db) : Con
             Description = string.IsNullOrWhiteSpace(body.Description) ? null : body.Description.Trim(),
             OrderIndex = body.OrderIndex,
             RewardPoints = body.RewardPoints,
-            ConfigJson = JsonSerializer.Serialize(body.Config ?? new TConfig(), JsonOptions),
+            ConfigJson = JsonSerializer.Serialize(config, JsonOptions),
             SuggestedBonus = body.SuggestedBonus,
             GradeMin = body.GradeMin,
             GradeMax = body.GradeMax,
@@ -174,13 +187,15 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db) : Con
         if (EnsureCanModify(exercise) is { } forbidden) return forbidden;
         if (string.IsNullOrWhiteSpace(body.Title)) return Problem(statusCode: 400, detail: "Titel ist erforderlich.");
         if (!await CategoryValid(subjectId, body.CategoryId)) return Problem(statusCode: 400, detail: "Unbekannte Art für dieses Fach.");
-        if (await ValidateConfigAsync(subjectId, body.Config ?? new TConfig()) is { } updateErr) return Problem(statusCode: 400, detail: updateErr);
+        var config = body.Config ?? new TConfig();
+        if (await ValidateConfigAsync(subjectId, config) is { } updateErr) return Problem(statusCode: 400, detail: updateErr);
+        NormalizeConfig(config);
 
         exercise.Title = body.Title.Trim();
         exercise.Description = string.IsNullOrWhiteSpace(body.Description) ? null : body.Description.Trim();
         exercise.OrderIndex = body.OrderIndex;
         exercise.RewardPoints = body.RewardPoints;
-        exercise.ConfigJson = JsonSerializer.Serialize(body.Config ?? new TConfig(), JsonOptions);
+        exercise.ConfigJson = JsonSerializer.Serialize(config, JsonOptions);
         exercise.SuggestedBonus = body.SuggestedBonus;
         exercise.GradeMin = body.GradeMin;
         exercise.GradeMax = body.GradeMax;

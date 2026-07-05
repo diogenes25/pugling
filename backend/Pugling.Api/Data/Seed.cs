@@ -512,20 +512,18 @@ public static class Seed
                             Category = enLeseverstehen,
                             ConfigJson = Json(new BirkenbihlConfig
                             {
-                                LearningLang = "Englisch",
-                                NativeLang = "Deutsch",
+                                LearningLang = "en",
+                                NativeLang = "de",
+                                NextSentenceId = 3,
+                                NextWordId = 9,
                                 Sentences =
                                 {
-                                    new BirkenbihlSentence(
-                                        "What is your name?",
-                                        [new WordPair("What", "Was"), new WordPair("is", "ist"),
-                                         new WordPair("your", "dein"), new WordPair("name", "Name")],
-                                        "Wie heißt du?"),
-                                    new BirkenbihlSentence(
-                                        "Where do you live?",
-                                        [new WordPair("Where", "Wo"), new WordPair("do", "tust"),
-                                         new WordPair("you", "du"), new WordPair("live", "wohnen")],
-                                        "Wo wohnst du?"),
+                                    new BirkenbihlSentence(1, "What is your name?", "Wie heißt du?",
+                                        [new WordPair(1, "What", "Was", null), new WordPair(2, "is", "ist", null),
+                                         new WordPair(3, "your", "dein", null), new WordPair(4, "name", "Name", null)]),
+                                    new BirkenbihlSentence(2, "Where do you live?", "Wo wohnst du?",
+                                        [new WordPair(5, "Where", "Wo", null), new WordPair(6, "do", "tust", null),
+                                         new WordPair(7, "you", "du", null), new WordPair(8, "live", "wohnen", null)]),
                                 }
                             }),
                         },

@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useId, useState } from "react";
 import { api, errorMessage } from "../lib/api";
 import { useAsync } from "../lib/useAsync";
+import { confirmAction } from "../lib/ui";
 import { offerPeriodLabel } from "../lib/labels";
 import type {
   AchievementDef, ChildResponse, CreateAchievementDto, CreateMissionDto,
@@ -68,6 +69,7 @@ interface RewardForm {
 }
 
 function RewardOfferManager({ childId }: { childId: number }) {
+  const uid = useId();
   const list = useAsync<RewardDef[]>(() => api.rewardsFor(childId), [childId]);
   const plans = useAsync<PlanResponse[]>(() => api.plans(childId), [childId]);
   const [form, setForm] = useState<RewardForm>({ title: "", cost: 200, period: "Weekly", quantity: 1, studyPlanId: "", exerciseId: "" });
@@ -107,6 +109,7 @@ function RewardOfferManager({ childId }: { childId: number }) {
     finally { setBusy(false); }
   }
   async function remove(r: RewardDef) {
+    if (!confirmAction("Dieses Angebot wirklich löschen?")) return;
     setBusy(true);
     try { await api.deleteReward(childId, r.id); list.reload(); }
     catch (err) { setMsg({ ok: false, text: errorMessage(err) }); }
@@ -120,8 +123,8 @@ function RewardOfferManager({ childId }: { childId: number }) {
         Das Kind kauft <b>sofort</b> (Münzen sind gleich weg); du erfüllst den Kauf im <b>Konto</b>. Anzahl =
         Kontingent pro Periode (füllt sich jede Periode neu auf).</p>
       <form className="form-grid" onSubmit={submit} style={{ alignItems: "end" }}>
-        <div className="field" style={{ minWidth: 200 }}><label>Titel</label>
-          <input value={form.title} onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))} placeholder="1 Stunde Zocken" /></div>
+        <div className="field" style={{ minWidth: 200 }}><label htmlFor={`${uid}-title`}>Titel</label>
+          <input id={`${uid}-title`} value={form.title} onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))} placeholder="1 Stunde Zocken" /></div>
         <div className="field" style={{ maxWidth: 120 }}><label>Preis 🪙</label>
           <input title="Preis in Münzen" type="number" min={1} value={form.cost}
             onChange={(e) => setForm((f) => ({ ...f, cost: Number(e.target.value) }))} /></div>
@@ -146,7 +149,7 @@ function RewardOfferManager({ childId }: { childId: number }) {
           </select></div>
         <button type="submit" className="btn inline-btn" style={{ width: "auto" }} disabled={busy}>{busy ? "…" : "Anlegen"}</button>
       </form>
-      {msg && <div className={`banner ${msg.ok ? "ok" : "err"}`} style={{ marginTop: 10 }}>{msg.text}</div>}
+      {msg && <div role="status" aria-live="polite" className={`banner ${msg.ok ? "ok" : "err"}`} style={{ marginTop: 10 }}>{msg.text}</div>}
 
       {list.loading ? <div className="loading">Lade…</div> : list.error ? <div className="banner err">{list.error}</div> : (
         <div style={{ overflowX: "auto", marginTop: 10 }}>
@@ -178,6 +181,7 @@ function RewardOfferManager({ childId }: { childId: number }) {
 }
 
 function MissionManager({ childId }: { childId: number }) {
+  const uid = useId();
   const list = useAsync<MissionDef[]>(() => api.missionsFor(childId), [childId]);
   const [form, setForm] = useState<CreateMissionDto>({
     title: "", metric: "CorrectReviews", target: 10, period: "Daily", rewardPoints: 15,
@@ -211,6 +215,7 @@ function MissionManager({ childId }: { childId: number }) {
     catch (err) { setMsg({ ok: false, text: errorMessage(err) }); }
   }
   async function remove(m: MissionDef) {
+    if (!confirmAction("Diese Mission wirklich löschen?")) return;
     try { await api.deleteMission(childId, m.id); list.reload(); }
     catch (err) { setMsg({ ok: false, text: errorMessage(err) }); }
   }
@@ -219,23 +224,23 @@ function MissionManager({ childId }: { childId: number }) {
     <section>
       <h2 className="h-section">Missionen {list.data ? `(${list.data.length})` : ""}</h2>
       <form className="form-grid" onSubmit={submit} style={{ alignItems: "end" }}>
-        <div className="field" style={{ minWidth: 200 }}><label>Titel</label>
-          <input value={form.title} onChange={(e) => up("title", e.target.value)} placeholder="Tagesziel: 10 richtig" /></div>
-        <div className="field"><label>Ziel-Metrik</label>
-          <select value={form.metric} onChange={(e) => up("metric", e.target.value as ProgressMetric)}>
+        <div className="field" style={{ minWidth: 200 }}><label htmlFor={`${uid}-title`}>Titel</label>
+          <input id={`${uid}-title`} value={form.title} onChange={(e) => up("title", e.target.value)} placeholder="Tagesziel: 10 richtig" /></div>
+        <div className="field"><label htmlFor={`${uid}-metric`}>Ziel-Metrik</label>
+          <select id={`${uid}-metric`} value={form.metric} onChange={(e) => up("metric", e.target.value as ProgressMetric)}>
             {METRICS.map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}
           </select></div>
-        <div className="field" style={{ maxWidth: 100 }}><label>Zielwert</label>
-          <input type="number" min={1} value={form.target} onChange={(e) => up("target", Number(e.target.value))} /></div>
-        <div className="field"><label>Zeitraum</label>
-          <select value={form.period} onChange={(e) => up("period", e.target.value as MissionPeriod)}>
+        <div className="field" style={{ maxWidth: 100 }}><label htmlFor={`${uid}-target`}>Zielwert</label>
+          <input id={`${uid}-target`} type="number" min={1} value={form.target} onChange={(e) => up("target", Number(e.target.value))} /></div>
+        <div className="field"><label htmlFor={`${uid}-period`}>Zeitraum</label>
+          <select id={`${uid}-period`} value={form.period} onChange={(e) => up("period", e.target.value as MissionPeriod)}>
             {PERIODS.map((p) => <option key={p.value} value={p.value}>{p.label}</option>)}
           </select></div>
-        <div className="field" style={{ maxWidth: 120 }}><label>Belohnung 🪙</label>
-          <input type="number" min={0} value={form.rewardPoints} onChange={(e) => up("rewardPoints", Number(e.target.value))} /></div>
+        <div className="field" style={{ maxWidth: 120 }}><label htmlFor={`${uid}-reward`}>Belohnung 🪙</label>
+          <input id={`${uid}-reward`} type="number" min={0} value={form.rewardPoints} onChange={(e) => up("rewardPoints", Number(e.target.value))} /></div>
         <button type="submit" className="btn inline-btn" style={{ width: "auto" }} disabled={busy}>{busy ? "…" : "Anlegen"}</button>
       </form>
-      {msg && <div className={`banner ${msg.ok ? "ok" : "err"}`} style={{ marginTop: 10 }}>{msg.text}</div>}
+      {msg && <div role="status" aria-live="polite" className={`banner ${msg.ok ? "ok" : "err"}`} style={{ marginTop: 10 }}>{msg.text}</div>}
 
       {list.loading ? <div className="loading">Lade…</div> : list.error ? <div className="banner err">{list.error}</div> : (
         <div style={{ overflowX: "auto", marginTop: 10 }}>
@@ -266,6 +271,7 @@ function MissionManager({ childId }: { childId: number }) {
 }
 
 function AchievementManager({ childId }: { childId: number }) {
+  const uid = useId();
   const list = useAsync<AchievementDef[]>(() => api.achievementsFor(childId), [childId]);
   const [form, setForm] = useState<CreateAchievementDto>({
     title: "", icon: "🏆", metric: "TestsPassed", threshold: 5, rewardPoints: 40,
@@ -299,6 +305,7 @@ function AchievementManager({ childId }: { childId: number }) {
     catch (err) { setMsg({ ok: false, text: errorMessage(err) }); }
   }
   async function remove(a: AchievementDef) {
+    if (!confirmAction("Diese Auszeichnung wirklich löschen?")) return;
     try { await api.deleteAchievement(childId, a.id); list.reload(); }
     catch (err) { setMsg({ ok: false, text: errorMessage(err) }); }
   }
@@ -307,21 +314,21 @@ function AchievementManager({ childId }: { childId: number }) {
     <section>
       <h2 className="h-section">Auszeichnungen {list.data ? `(${list.data.length})` : ""}</h2>
       <form className="form-grid" onSubmit={submit} style={{ alignItems: "end" }}>
-        <div className="field" style={{ maxWidth: 80 }}><label>Icon</label>
-          <input value={form.icon ?? ""} onChange={(e) => up("icon", e.target.value)} placeholder="🏆" /></div>
-        <div className="field" style={{ minWidth: 200 }}><label>Titel</label>
-          <input value={form.title} onChange={(e) => up("title", e.target.value)} placeholder="Test-Ass" /></div>
-        <div className="field"><label>Ziel-Metrik</label>
-          <select value={form.metric} onChange={(e) => up("metric", e.target.value as ProgressMetric)}>
+        <div className="field" style={{ maxWidth: 80 }}><label htmlFor={`${uid}-icon`}>Icon</label>
+          <input id={`${uid}-icon`} value={form.icon ?? ""} onChange={(e) => up("icon", e.target.value)} placeholder="🏆" /></div>
+        <div className="field" style={{ minWidth: 200 }}><label htmlFor={`${uid}-title`}>Titel</label>
+          <input id={`${uid}-title`} value={form.title} onChange={(e) => up("title", e.target.value)} placeholder="Test-Ass" /></div>
+        <div className="field"><label htmlFor={`${uid}-metric`}>Ziel-Metrik</label>
+          <select id={`${uid}-metric`} value={form.metric} onChange={(e) => up("metric", e.target.value as ProgressMetric)}>
             {METRICS.map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}
           </select></div>
-        <div className="field" style={{ maxWidth: 100 }}><label>Schwelle</label>
-          <input type="number" min={1} value={form.threshold} onChange={(e) => up("threshold", Number(e.target.value))} /></div>
-        <div className="field" style={{ maxWidth: 120 }}><label>Belohnung 🪙</label>
-          <input type="number" min={0} value={form.rewardPoints} onChange={(e) => up("rewardPoints", Number(e.target.value))} /></div>
+        <div className="field" style={{ maxWidth: 100 }}><label htmlFor={`${uid}-threshold`}>Schwelle</label>
+          <input id={`${uid}-threshold`} type="number" min={1} value={form.threshold} onChange={(e) => up("threshold", Number(e.target.value))} /></div>
+        <div className="field" style={{ maxWidth: 120 }}><label htmlFor={`${uid}-reward`}>Belohnung 🪙</label>
+          <input id={`${uid}-reward`} type="number" min={0} value={form.rewardPoints} onChange={(e) => up("rewardPoints", Number(e.target.value))} /></div>
         <button type="submit" className="btn inline-btn" style={{ width: "auto" }} disabled={busy}>{busy ? "…" : "Anlegen"}</button>
       </form>
-      {msg && <div className={`banner ${msg.ok ? "ok" : "err"}`} style={{ marginTop: 10 }}>{msg.text}</div>}
+      {msg && <div role="status" aria-live="polite" className={`banner ${msg.ok ? "ok" : "err"}`} style={{ marginTop: 10 }}>{msg.text}</div>}
 
       {list.loading ? <div className="loading">Lade…</div> : list.error ? <div className="banner err">{list.error}</div> : (
         <div style={{ overflowX: "auto", marginTop: 10 }}>

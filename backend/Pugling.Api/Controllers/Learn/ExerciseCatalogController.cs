@@ -43,11 +43,17 @@ public class ExerciseCatalogController(PuglingDbContext db) : ControllerBase
     /// <param name="type">Übungstyp.</param>
     /// <param name="search">Freitext in Titel oder Beschreibung (Teilstring).</param>
     /// <param name="mineOnly">Nur eigene Übungen des anfragenden Vaters (Verwaltung statt Entdeckung).</param>
+    /// <param name="sort">Sortierspalte: <c>title</c>, <c>type</c>, <c>grade</c>, <c>source</c>, <c>created</c>.
+    /// Kurzform <c>-title</c> = absteigend. Ohne Angabe: Fach → Kapitel → Reihenfolge.</param>
+    /// <param name="dir"><c>asc</c> (Default) oder <c>desc</c>; hat Vorrang vor einem <c>-</c>-Präfix in <paramref name="sort"/>.</param>
+    /// <param name="skip">Anzahl zu überspringender Einträge (Paging).</param>
+    /// <param name="take">Maximale Trefferzahl (1..500). Gesamtzahl im Header <c>X-Total-Count</c>.</param>
     [HttpGet]
     public async Task<IEnumerable<ExerciseSummary>> Search(
         [FromQuery] int? subjectId, [FromQuery] int? chapterId, [FromQuery] int? grade, [FromQuery] SchoolTypes? schoolType,
         [FromQuery] int? categoryId, [FromQuery] ExerciseType? type, [FromQuery] string? search,
-        [FromQuery] bool? mineOnly)
+        [FromQuery] bool? mineOnly, [FromQuery] string? sort = null, [FromQuery] string? dir = null,
+        [FromQuery] int skip = 0, [FromQuery] int take = PagingExtensions.DefaultTake)
     {
         var fid = User.FatherId();
         var query = db.Exercises.AsNoTracking().AsQueryable();
@@ -84,15 +90,36 @@ public class ExerciseCatalogController(PuglingDbContext db) : ControllerBase
                 || (e.Description != null && e.Description.Contains(term)));
         }
 
-        return await query
-            .OrderBy(e => e.Chapter!.SubjectId).ThenBy(e => e.ChapterId)
-            .ThenBy(e => e.OrderIndex).ThenBy(e => e.Id)
+        return await ApplySort(query, SortingExtensions.ParseSort(sort, dir))
             .Select(e => new ExerciseSummary(e.Id, e.ChapterId, e.Chapter!.SubjectId, e.Type.ToString(), e.Title,
                 e.GradeMin, e.GradeMax, e.SchoolTypes, e.Source, e.CategoryId, e.Category!.Name,
                 e.AuthorFatherId, e.Author!.Name, fid != null && e.AuthorFatherId == fid, e.Description,
                 e.DefaultUseLeitner, e.DefaultRequireTypedTest))
-            .ToListAsync();
+            .ToPagedListAsync(Response, skip, take);
     }
+
+    /// <summary>
+    /// Wendet die per Whitelist erlaubte Sortierung an; jede Variante endet mit <c>Id</c> als Tiebreaker,
+    /// damit das Paging-Fenster deterministisch bleibt. Unbekannte/leere Keys → fachlicher Standard
+    /// (Fach → Kapitel → Reihenfolge).
+    /// </summary>
+    private static IOrderedQueryable<Exercise> ApplySort(IQueryable<Exercise> q, (string? Key, bool Desc) sort) =>
+        (sort.Key?.ToLowerInvariant(), sort.Desc) switch
+        {
+            ("title", false) => q.OrderBy(e => e.Title).ThenBy(e => e.Id),
+            ("title", true) => q.OrderByDescending(e => e.Title).ThenBy(e => e.Id),
+            ("type", false) => q.OrderBy(e => e.Type).ThenBy(e => e.Id),
+            ("type", true) => q.OrderByDescending(e => e.Type).ThenBy(e => e.Id),
+            ("grade", false) => q.OrderBy(e => e.GradeMin).ThenBy(e => e.Id),
+            ("grade", true) => q.OrderByDescending(e => e.GradeMin).ThenBy(e => e.Id),
+            ("source", false) => q.OrderBy(e => e.Source).ThenBy(e => e.Id),
+            ("source", true) => q.OrderByDescending(e => e.Source).ThenBy(e => e.Id),
+            ("created", false) => q.OrderBy(e => e.CreatedAt).ThenBy(e => e.Id),
+            ("created", true) => q.OrderByDescending(e => e.CreatedAt).ThenBy(e => e.Id),
+            // Fachliche Standardreihenfolge (kein per-Spalte klickbarer Sortier-Key): bewusst immer aufsteigend –
+            // eine Richtungsumkehr des Katalog-Baums (Fach → Kapitel → Reihenfolge) wäre nicht sinnvoll.
+            _ => q.OrderBy(e => e.Chapter!.SubjectId).ThenBy(e => e.ChapterId).ThenBy(e => e.OrderIndex).ThenBy(e => e.Id),
+        };
 
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 

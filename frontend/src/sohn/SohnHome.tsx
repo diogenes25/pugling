@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { api } from "../lib/api";
 import { useAsync } from "../lib/useAsync";
 import { useAuth } from "../lib/auth";
@@ -115,7 +115,6 @@ function HomeForPlan({
 }
 
 function PositionCard({ pos }: { pos: PositionStatus }) {
-  const nav = useNavigate();
   const canPractice = pos.useLeitner || (!pos.testable && pos.checkMode === "None");
   const practiceLabel = pos.useLeitner
     ? `▶ ÜBEN${pos.dueCount > 0 ? ` (${pos.dueCount} fällig)` : ""}`
@@ -133,14 +132,14 @@ function PositionCard({ pos }: { pos: PositionStatus }) {
       </div>
       <div className="row" style={{ gap: 8 }}>
         {canPractice && (
-          <button type="button" className="btn gold" style={{ flex: 1 }} onClick={() => nav(`/sohn/practice/${pos.positionId}`)}>
+          <Link to={`/sohn/practice/${pos.positionId}`} className="btn gold" style={{ flex: 1, textDecoration: "none" }}>
             {practiceLabel}
-          </button>
+          </Link>
         )}
         {pos.testable && (
-          <button type="button" className="btn" style={{ flex: 1 }} onClick={() => nav(`/sohn/test/${pos.positionId}`)}>
-            🎯 TEST
-          </button>
+          <Link to={`/sohn/test/${pos.positionId}`} className="btn" style={{ flex: 1, textDecoration: "none" }}>
+            <span aria-hidden="true">🎯</span> TEST
+          </Link>
         )}
       </div>
     </div>

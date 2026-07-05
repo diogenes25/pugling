@@ -116,7 +116,12 @@ export function SohnTest() {
                 </div>
               ) : (
                 <input
-                  className="tabnum"
+                  aria-label="Lösung"
+                  name={`answer-${it.itemIndex}`}
+                  autoComplete="off"
+                  autoCapitalize="off"
+                  autoCorrect="off"
+                  spellCheck={false}
                   style={{ marginTop: 10, width: "100%", background: "#0c0e2c", border: "1.5px solid var(--stroke)", borderRadius: 12, color: "var(--ink)", padding: 12, fontSize: 15 }}
                   placeholder="Lösung…"
                   value={a?.givenAnswer ?? ""}

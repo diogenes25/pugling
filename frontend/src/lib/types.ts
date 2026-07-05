@@ -197,6 +197,18 @@ export interface ExerciseSummary {
   isOwn: boolean;
 }
 
+/** Server-paginierte Liste: eine Seite plus Gesamtzahl (kommt aus dem X-Total-Count-Header). */
+export interface Paged<T> {
+  items: T[];
+  total: number;
+}
+
+export type SortDir = "asc" | "desc";
+/** Erlaubte Sortierschlüssel des Übungskatalogs (Server-Whitelist in ExerciseCatalogController). */
+export type ExerciseSortKey = "title" | "type" | "grade" | "source" | "created";
+/** Erlaubte Sortierschlüssel des Vokabel-Stores (Server-Whitelist in VocabularyStoreController). */
+export type VocabSortKey = "key" | "word" | "translation" | "pos" | "created";
+
 export interface ExerciseSearchParams {
   subjectId?: number;
   chapterId?: number;
@@ -207,6 +219,25 @@ export interface ExerciseSearchParams {
   search?: string;
   /** Nur eigene Übungen des Vaters (Verwaltung statt Entdeckung der geteilten Bibliothek). */
   mineOnly?: boolean;
+  /** Sortierschlüssel + Richtung (Server-Whitelist); Paginierung per skip/take. */
+  sort?: ExerciseSortKey;
+  dir?: SortDir;
+  skip?: number;
+  take?: number;
+}
+
+/** Suchparameter des Vokabel-Stores (Filter + Sortierung + Paginierung). */
+export interface VocabularySearchParams {
+  search?: string;
+  sourceLanguage?: string;
+  targetLanguage?: string;
+  partOfSpeech?: PartOfSpeech;
+  tags?: string[];
+  matchAll?: boolean;
+  sort?: VocabSortKey;
+  dir?: SortDir;
+  skip?: number;
+  take?: number;
 }
 
 /** Fachabhängige Übungs-Art ("Kategorie") zur Vorfilterung. */

@@ -51,5 +51,12 @@ export function Mascot({ skin, mood = "happy", size = 120 }: { skin: Skin; mood?
     );
   }
 
-  return <div style={{ width: size, height: size, margin: "0 auto" }} dangerouslySetInnerHTML={{ __html: svg }} />;
+  return (
+    <div
+      role="img"
+      aria-label={skin.name}
+      style={{ width: size, height: size, margin: "0 auto" }}
+      dangerouslySetInnerHTML={{ __html: svg }}
+    />
+  );
 }

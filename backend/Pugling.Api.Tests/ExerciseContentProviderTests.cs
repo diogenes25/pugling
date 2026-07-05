@@ -163,8 +163,8 @@ public class ExerciseContentProviderTests
         {
             Sentences =
             {
-                new BirkenbihlSentence("What is your name?",
-                    [new WordPair("What", "Was"), new WordPair("is", "ist")], "Wie heißt du?"),
+                new BirkenbihlSentence(1, "What is your name?", "Wie heißt du?",
+                    [new WordPair(1, "What", "Was", null), new WordPair(2, "is", "ist", null)]),
             }
         };
 

@@ -59,6 +59,9 @@ public class VocabularyStoreController(PuglingDbContext db) : ControllerBase
     /// <param name="targetLanguage">Filter auf die Zielsprache.</param>
     /// <param name="tag">Ein oder mehrere Tag-Namen (wiederholbar).</param>
     /// <param name="matchAll">Bei mehreren Tags: true = alle (UND), false = beliebiger (ODER, Default).</param>
+    /// <param name="sort">Sortierspalte: <c>key</c> (Default), <c>word</c>, <c>translation</c>, <c>pos</c>, <c>created</c>.
+    /// Kurzform <c>-word</c> = absteigend.</param>
+    /// <param name="dir"><c>asc</c> (Default) oder <c>desc</c>; hat Vorrang vor einem <c>-</c>-Präfix in <paramref name="sort"/>.</param>
     /// <param name="skip">Anzahl zu überspringender Einträge (Paging).</param>
     /// <param name="take">Maximale Trefferzahl (1..500).</param>
     [HttpGet]
@@ -73,8 +76,10 @@ public class VocabularyStoreController(PuglingDbContext db) : ControllerBase
         [FromQuery] string? targetLanguage = null,
         [FromQuery] string[]? tag = null,
         [FromQuery] bool matchAll = false,
+        [FromQuery] string? sort = null,
+        [FromQuery] string? dir = null,
         [FromQuery] int skip = 0,
-        [FromQuery] int take = 100)
+        [FromQuery] int take = PagingExtensions.DefaultTake)
     {
         var query = db.Vocabulary.AsNoTracking().AsQueryable();
 
@@ -108,12 +113,28 @@ public class VocabularyStoreController(PuglingDbContext db) : ControllerBase
                 query = query.Where(v => v.TagLinks.Any(l => tags.Contains(l.VocabTag!.Name)));
         }
 
-        Response.Headers["X-Total-Count"] = (await query.CountAsync()).ToString();
-
-        var items = await WithGraph(query.OrderBy(v => v.Key))
-            .Skip(Math.Max(skip, 0)).Take(Math.Clamp(take, 1, 500)).ToListAsync();
+        var items = await WithGraph(ApplySort(query, SortingExtensions.ParseSort(sort, dir))).ToPagedListAsync(Response, skip, take);
         return items.Select(Map);
     }
+
+    /// <summary>
+    /// Wendet die per Whitelist erlaubte Sortierung an; jede Variante endet mit <c>Id</c> als Tiebreaker,
+    /// damit das Paging-Fenster deterministisch bleibt. Unbekannte/leere Keys → Standard nach <c>Key</c>.
+    /// </summary>
+    private static IOrderedQueryable<Vocabulary> ApplySort(IQueryable<Vocabulary> q, (string? Key, bool Desc) sort) =>
+        (sort.Key?.ToLowerInvariant(), sort.Desc) switch
+        {
+            ("word", false) => q.OrderBy(v => v.Word).ThenBy(v => v.Id),
+            ("word", true) => q.OrderByDescending(v => v.Word).ThenBy(v => v.Id),
+            ("translation", false) => q.OrderBy(v => v.Translation).ThenBy(v => v.Id),
+            ("translation", true) => q.OrderByDescending(v => v.Translation).ThenBy(v => v.Id),
+            ("pos", false) => q.OrderBy(v => v.PartOfSpeech).ThenBy(v => v.Id),
+            ("pos", true) => q.OrderByDescending(v => v.PartOfSpeech).ThenBy(v => v.Id),
+            ("created", false) => q.OrderBy(v => v.CreatedAt).ThenBy(v => v.Id),
+            ("created", true) => q.OrderByDescending(v => v.CreatedAt).ThenBy(v => v.Id),
+            (_, true) => q.OrderByDescending(v => v.Key).ThenBy(v => v.Id),
+            _ => q.OrderBy(v => v.Key).ThenBy(v => v.Id),
+        };
 
     /// <summary>Eine Vokabel per numerischer Id.</summary>
     [HttpGet("{id:int}")]

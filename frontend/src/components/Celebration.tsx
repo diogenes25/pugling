@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useRef, useState } from "react";
 import { playCelebration } from "../lib/feedback";
+import { prefersReducedMotion } from "../lib/ui";
 
 export type CelebrationTier = "small" | "medium" | "big";
 
@@ -40,7 +41,9 @@ const CONFETTI_COLORS = ["#ffc738", "#26d9ff", "#3ce85c", "#b14bff", "#ff4d6d", 
 export function CelebrationLayer({ celebration }: { celebration: Celebration | null }) {
   // Konfetti-Stücke je Feier neu würfeln (id als Seed-Ersatz).
   const pieces = useMemo(() => {
-    if (!celebration || celebration.tier === "small") return [];
+    // Bei „Bewegung reduzieren" gar nicht erst würfeln – CSS blendet die Ebene zwar aus, aber wir
+    // sparen so den Aufbau und stellen sicher, dass keine Bewegung entsteht.
+    if (!celebration || celebration.tier === "small" || prefersReducedMotion()) return [];
     const n = celebration.tier === "big" ? 30 : 18;
     return Array.from({ length: n }, (_, i) => ({
       left: Math.random() * 100,

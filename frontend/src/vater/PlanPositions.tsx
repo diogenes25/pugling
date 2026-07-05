@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useId, useState } from "react";
 import { api, errorMessage } from "../lib/api";
+import { confirmAction } from "../lib/ui";
 import { useAsync } from "../lib/useAsync";
 import type {
   CreatePositionDto, ExerciseSummary, GoalCadence, ItemReport, PositionReport, PositionResponse, SubjectResponse,
@@ -37,7 +38,9 @@ export function PlanPositions({ planId }: { planId: number }) {
       <p className="muted" style={{ marginTop: 0 }}>
         Jede Position verweist auf eine Katalog-Übung und trägt eigene Ziele, Punkte und Leitner-Einstellungen.
       </p>
-      {msg && <div className={`banner ${msg.ok ? "ok" : "err"}`}>{msg.text}</div>}
+      <div role="status" aria-live="polite">
+        {msg && <div className={`banner ${msg.ok ? "ok" : "err"}`}>{msg.text}</div>}
+      </div>
 
       <AddPosition planId={planId}
         onAdded={() => { positions.reload(); flash(true, "Übung als Position hinzugefügt."); }}
@@ -68,7 +71,7 @@ export function PlanPositions({ planId }: { planId: number }) {
 function AddPosition({ planId, onAdded, onError }: { planId: number; onAdded: () => void; onError: (t: string) => void }) {
   const subjects = useAsync<SubjectResponse[]>(() => api.subjects(), []);
   const [filter, setFilter] = useState<ExerciseFilter>({});
-  const exercises = useAsync<ExerciseSummary[]>(() => api.searchExercises(filter),
+  const exercises = useAsync<ExerciseSummary[]>(() => api.searchExercises(filter).then((r) => r.items),
     [filter.subjectId, filter.chapterId, filter.grade, filter.schoolType, filter.categoryId, filter.type, filter.search]);
   const [exerciseId, setExerciseId] = useState<number | "">("");
   const [cadence, setCadence] = useState<GoalCadence>("Daily");
@@ -156,6 +159,7 @@ function AddPosition({ planId, onAdded, onError }: { planId: number; onAdded: ()
 function PositionRow({ planId, pos, onChanged, flash }: {
   planId: number; pos: PositionResponse; onChanged: () => void; flash: Flash;
 }) {
+  const uid = useId();
   const [editing, setEditing] = useState(false);
   const [showReport, setShowReport] = useState(false);
   const [cadence, setCadence] = useState<GoalCadence>(pos.cadence);
@@ -192,6 +196,7 @@ function PositionRow({ planId, pos, onChanged, flash }: {
   }
 
   async function remove() {
+    if (!confirmAction("Diese Position wirklich entfernen? Fortschritt und Auswertung dieser Position gehen verloren.")) return;
     setBusy(true);
     try { await api.deletePosition(planId, pos.id); onChanged(); flash(true, "Position entfernt."); }
     catch (err) { flash(false, errorMessage(err)); setBusy(false); }
@@ -243,8 +248,8 @@ function PositionRow({ planId, pos, onChanged, flash }: {
               {CADENCES.map((c) => <option key={c} value={c}>{CADENCE_LABEL[c]}</option>)}
             </select>
           </div>
-          <div className="field" style={{ maxWidth: 110 }}><label>Schwelle</label>
-            <input type="number" min={0} value={goalThreshold} placeholder="Std." onChange={(e) => setGoalThreshold(e.target.value)} /></div>
+          <div className="field" style={{ maxWidth: 110 }}><label htmlFor={`${uid}-schwelle`}>Schwelle</label>
+            <input id={`${uid}-schwelle`} type="number" min={0} value={goalThreshold} placeholder="Std." onChange={(e) => setGoalThreshold(e.target.value)} /></div>
           <div className="field" style={{ maxWidth: 110 }}><label>Punkte Ziel</label>
             <input aria-label="Punkte bei erreichtem Ziel" type="number" min={0} value={pointsGoalMet} onChange={(e) => setPointsGoalMet(Number(e.target.value))} /></div>
           <div className="field" style={{ maxWidth: 110 }}><label>Punkte neu</label>

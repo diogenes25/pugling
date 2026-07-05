@@ -36,7 +36,7 @@ test("Vater erstellt Plan mit Position, Sohn arbeitet ihn ab, Punkte fließen", 
   await vaterLogin(vater);
 
   // Lehrplan = leerer Container (Titel/Kind/Laufzeit sind vorbelegt) → anlegen und auf die Plan-Seite.
-  await vater.getByRole("link", { name: "Neuer Plan" }).click();
+  await vater.getByRole("link", { name: "Neuer Plan", exact: true }).click();
   await expect(vater.getByRole("heading", { name: /Neuer Lehrplan/ })).toBeVisible();
   // Erst wählbar, wenn die Kinder-Liste geladen ist – sonst schlägt das Anlegen mit "Kind wählen" fehl.
   const kindSelect = vater.getByRole("combobox", { name: "Kind" });
@@ -48,10 +48,10 @@ test("Vater erstellt Plan mit Position, Sohn arbeitet ihn ab, Punkte fließen", 
   const planUrl = vater.url();
 
   // Katalog-Übung als Position hinzufügen: Tagesziel + Leitner-Kasten (so erscheint "ÜBEN" beim Sohn).
-  const exSelect = vater.locator('select[aria-label="Übung"]');
-  const option = exSelect.locator("option", { hasText: EXERCISE }).first();
-  await expect(option).toBeAttached();
-  await exSelect.selectOption(await option.getAttribute("value") ?? "");
+  // Die Übung wird im Radiogroup-Katalog per Radio ausgewählt (ohne Filter listet er alle Übungen).
+  const exRadio = vater.getByRole("radio", { name: new RegExp(EXERCISE) });
+  await expect(exRadio).toBeVisible();
+  await exRadio.check();
   await vater.locator('select[aria-label="Ziel-Rhythmus"]').selectOption("Daily");
   await vater.getByRole("checkbox", { name: /Leitner/ }).check();
   await vater.getByRole("button", { name: /Position hinzufügen/ }).click();
@@ -65,8 +65,8 @@ test("Vater erstellt Plan mit Position, Sohn arbeitet ihn ab, Punkte fließen", 
   // Basis: Tagesmission sichtbar
   await expect(sohn.getByText("Tagesmission")).toBeVisible();
 
-  // Übung starten und alle fälligen Karten "gewusst"
-  await sohn.getByRole("button", { name: /ÜBEN/ }).click();
+  // Übung starten und alle fälligen Karten "gewusst" (die Übungs-Kachel navigiert per Link).
+  await sohn.getByRole("link", { name: /ÜBEN/ }).click();
   const counter = sohn.locator(".pill.cyan", { hasText: /Karte \d+ \/ \d+/ });
   await expect(counter).toBeVisible();
   const total = Number((await counter.textContent())!.match(/\/ (\d+)/)![1]);
@@ -99,6 +99,8 @@ test("Vater erstellt Plan mit Position, Sohn arbeitet ihn ab, Punkte fließen", 
   await sohn.goto("/sohn/skins");
   const coins = sohn.locator(".chip", { hasText: "🪙" }).first();
   await expect(coins).toBeVisible();
+  // Der HUD lädt die Wallet nach dem Reload asynchron nach (Start bei 0) – auf eine positive Zahl warten.
+  await expect(coins).toContainText(/[1-9]/);
   const balance = Number((await coins.textContent())!.replace(/\D/g, ""));
   expect(balance).toBeGreaterThan(0);
 

@@ -74,7 +74,7 @@ export function VaterPlanDetail() {
       </p>
       {p.description && <p style={{ marginTop: -6 }}>{p.description}</p>}
 
-      {msg && <div className={`banner ${msg.ok ? "ok" : "err"}`}>{msg.text}</div>}
+      {msg && <div className={`banner ${msg.ok ? "ok" : "err"}`} role="status" aria-live="polite">{msg.text}</div>}
 
       {editing && <PlanEditForm plan={p} busy={busy}
         onSave={(dto) => mutate(() => api.updatePlan(id, dto), "Änderungen gespeichert.")} />}
@@ -138,20 +138,20 @@ function PlanEditForm({ plan, busy, onSave }: { plan: PlanResponse; busy: boolea
   return (
     <form onSubmit={submit} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
       <div className="form-grid" style={{ alignItems: "end" }}>
-        <div className="field" style={{ minWidth: 220 }}><label>Titel</label>
-          <input title="Titel" value={form.title} onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))} /></div>
-        <div className="field"><label>Kind</label>
-          <select aria-label="Kind zuweisen" value={form.childId} onChange={(e) => setForm((f) => ({ ...f, childId: Number(e.target.value) }))}>
+        <div className="field" style={{ minWidth: 220 }}><label htmlFor="plan-edit-title">Titel</label>
+          <input id="plan-edit-title" value={form.title} onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))} /></div>
+        <div className="field"><label htmlFor="plan-edit-child">Kind</label>
+          <select id="plan-edit-child" value={form.childId} onChange={(e) => setForm((f) => ({ ...f, childId: Number(e.target.value) }))}>
             {children.data?.map((c) => <option key={c.id} value={c.id}>{c.name} (#{c.id})</option>)}
           </select>
         </div>
-        <div className="field"><label>Start</label>
-          <input title="Startdatum" type="date" value={form.startDate} onChange={(e) => setForm((f) => ({ ...f, startDate: e.target.value }))} /></div>
-        <div className="field"><label>Ende</label>
-          <input title="Enddatum" type="date" value={form.endDate} onChange={(e) => setForm((f) => ({ ...f, endDate: e.target.value }))} /></div>
+        <div className="field"><label htmlFor="plan-edit-start">Start</label>
+          <input id="plan-edit-start" type="date" value={form.startDate} onChange={(e) => setForm((f) => ({ ...f, startDate: e.target.value }))} /></div>
+        <div className="field"><label htmlFor="plan-edit-end">Ende</label>
+          <input id="plan-edit-end" type="date" value={form.endDate} onChange={(e) => setForm((f) => ({ ...f, endDate: e.target.value }))} /></div>
       </div>
-      <div className="field"><label>Beschreibung <span className="muted">(optional)</span></label>
-        <textarea aria-label="Beschreibung" value={form.description} rows={2} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} /></div>
+      <div className="field"><label htmlFor="plan-edit-desc">Beschreibung <span className="muted">(optional)</span></label>
+        <textarea id="plan-edit-desc" value={form.description} rows={2} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} /></div>
       <button type="submit" className="btn inline-btn" style={{ width: "auto" }} disabled={busy}>Speichern</button>
     </form>
   );

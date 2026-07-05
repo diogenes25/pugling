@@ -23,13 +23,18 @@ public class ClozeTextsController(PuglingDbContext db) : ControllerBase
         new(c.Id, c.Key, c.Title, c.SourceLanguage, c.TargetLanguage, c.Text, c.Translation, c.Gaps, c.WordBank, c.CreatedAt);
 
     /// <summary>Liste der Lückentexte, optional per Volltext gefiltert.</summary>
+    /// <param name="search">Freitext in Titel, Text oder Key (Teilstring).</param>
+    /// <param name="skip">Anzahl zu überspringender Einträge (Paging).</param>
+    /// <param name="take">Maximale Trefferzahl (1..500). Gesamtzahl im Header <c>X-Total-Count</c>.</param>
     [HttpGet]
-    public async Task<IEnumerable<ClozeResponse>> List([FromQuery] string? search = null, [FromQuery] int take = 100)
+    public async Task<IEnumerable<ClozeResponse>> List(
+        [FromQuery] string? search = null,
+        [FromQuery] int skip = 0, [FromQuery] int take = PagingExtensions.DefaultTake)
     {
-        var query = db.ClozeTexts.AsQueryable();
+        var query = db.ClozeTexts.AsNoTracking().AsQueryable();
         if (!string.IsNullOrWhiteSpace(search))
             query = query.Where(c => c.Title.Contains(search) || c.Text.Contains(search) || c.Key.Contains(search));
-        var items = await query.OrderBy(c => c.Key).Take(Math.Clamp(take, 1, 500)).ToListAsync();
+        var items = await query.OrderBy(c => c.Key).ToPagedListAsync(Response, skip, take);
         return items.Select(Map);
     }
 

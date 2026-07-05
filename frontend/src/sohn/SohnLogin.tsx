@@ -65,7 +65,7 @@ export function SohnLogin() {
         <div className="field">
           <label htmlFor="childId">Helden-Nummer</label>
           <input
-            id="childId" inputMode="numeric" value={childId}
+            id="childId" name="childId" inputMode="numeric" autoComplete="username" value={childId}
             onChange={(e) => setChildId(e.target.value.replace(/\D/g, ""))}
             placeholder="z.B. 1"
           />
@@ -75,15 +75,15 @@ export function SohnLogin() {
           {[0, 1, 2, 3].map((i) => <i key={i} className={i < pin.length ? "f" : ""} />)}
         </div>
 
-        {error && <div className="error-box" style={{ padding: 0 }}>{error}</div>}
+        {error && <div className="error-box" style={{ padding: 0 }} role="alert">{error}</div>}
 
         <div className="keys">
           {["1", "2", "3", "4", "5", "6", "7", "8", "9"].map((d) => (
             <button type="button" key={d} onClick={() => key(d)}>{d}</button>
           ))}
-          <button type="button" className="ghost" onClick={del} style={{ boxShadow: "0 4px 0 #0b0d2c" }}>✕</button>
+          <button type="button" className="ghost" onClick={del} style={{ boxShadow: "0 4px 0 #0b0d2c" }} aria-label="Letzte Ziffer löschen">✕</button>
           <button type="button" onClick={() => key("0")}>0</button>
-          <button type="button" onClick={submit} disabled={busy} style={{ color: "var(--lime)" }}>⏎</button>
+          <button type="button" onClick={submit} disabled={busy} style={{ color: "var(--lime)" }} aria-label="Anmelden">⏎</button>
         </div>
 
         <button type="button" className="btn gold" onClick={submit} disabled={busy}>

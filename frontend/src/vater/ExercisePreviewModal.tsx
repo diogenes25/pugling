@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { api, errorMessage } from "../lib/api";
 import { LetterBoxes } from "../components/LetterBoxes";
 import { AudioButton } from "../components/AudioButton";
@@ -22,6 +22,12 @@ export function ExercisePreviewModal({ exerciseId, title, onClose }: {
   const [busy, setBusy] = useState(false);
   // Vom Vater gewählte Abfrageform (undefined = Übungs-Standard); steuert Neuladen der Vorschau.
   const [stage, setStage] = useState<number | undefined>(undefined);
+  // Container des Dialogs – für Fokus-Verwaltung (Fokus-Falle, Wiederherstellen beim Schließen).
+  const dialogRef = useRef<HTMLDivElement | null>(null);
+  // Neueste onClose-Referenz im Ref halten: Der Aufrufer übergibt onClose inline (neue Funktion pro Render);
+  // ohne das Ref würde die Fokus-Falle bei jedem Eltern-Re-Render neu aufgesetzt und der Fokus zurückgerissen.
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
 
   const load = useCallback(() => {
     setData(null); setAnswers({}); setRevealed(new Set()); setResult(null); setError(null);
@@ -32,12 +38,46 @@ export function ExercisePreviewModal({ exerciseId, title, onClose }: {
 
   useEffect(load, [load]);
 
-  // Schließen per Escape (kleines Komfort-Detail wie bei einem echten Dialog).
+  // Fokus-Verwaltung wie bei einem echten Dialog: Fokus beim Öffnen in den Dialog holen, Tab darin
+  // gefangen halten (Fokus-Falle), Escape schließt, und beim Schließen den vorherigen Fokus wiederherstellen.
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    const dialog = dialogRef.current;
+    const previouslyFocused = document.activeElement as HTMLElement | null;
+    const focusables = () =>
+      dialog
+        ? Array.from(
+            dialog.querySelectorAll<HTMLElement>(
+              'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+            ),
+          )
+        : [];
+
+    // Fokus initial in den Dialog holen (erstes fokussierbares Element, sonst der Container selbst).
+    (focusables()[0] ?? dialog)?.focus();
+
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") { onCloseRef.current(); return; }
+      if (e.key !== "Tab" || !dialog) return;
+      const items = focusables();
+      if (items.length === 0) { e.preventDefault(); dialog.focus(); return; }
+      const first = items[0];
+      const last = items[items.length - 1];
+      const active = document.activeElement;
+      if (e.shiftKey && (active === first || active === dialog)) {
+        e.preventDefault(); last.focus();
+      } else if (!e.shiftKey && active === last) {
+        e.preventDefault(); first.focus();
+      }
+    };
+
     window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [onClose]);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      previouslyFocused?.focus?.();
+    };
+    // Nur beim Öffnen/Schließen – nicht bei jedem Eltern-Re-Render (siehe onCloseRef).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   function setText(i: number, val: string) {
     setAnswers((a) => ({ ...a, [i]: { itemIndex: i, givenAnswer: val } }));
@@ -67,7 +107,7 @@ export function ExercisePreviewModal({ exerciseId, title, onClose }: {
   const isCloze = !!data && data.items.some((it) => it.gapIndex != null);
 
   return (
-    <div style={backdrop} role="dialog" aria-modal="true" aria-label={`Testmodus: ${title}`} onMouseDown={onClose}>
+    <div ref={dialogRef} tabIndex={-1} style={backdrop} role="dialog" aria-modal="true" aria-label={`Testmodus: ${title}`} onMouseDown={onClose}>
       <div className="card" style={sheet} onMouseDown={(e) => e.stopPropagation()}>
         <div className="row" style={{ alignItems: "center", gap: 8 }}>
           <h3 style={{ margin: 0 }}>🧪 Ausprobieren · {title}</h3>
@@ -130,6 +170,7 @@ export function ExercisePreviewModal({ exerciseId, title, onClose }: {
                   ) : data.typed ? (
                     <input
                       style={{ marginTop: 8, width: "100%" }}
+                      aria-label="Antwort"
                       placeholder="Antwort…"
                       value={a?.givenAnswer ?? ""}
                       onChange={(e) => setText(it.itemIndex, e.target.value)}
@@ -190,6 +231,7 @@ export function ExercisePreviewModal({ exerciseId, title, onClose }: {
 const backdrop: React.CSSProperties = {
   position: "fixed", inset: 0, background: "rgba(0,0,0,.45)", zIndex: 1000,
   display: "flex", alignItems: "flex-start", justifyContent: "center", padding: "5vh 16px", overflowY: "auto",
+  overscrollBehavior: "contain",
 };
 const sheet: React.CSSProperties = {
   width: "100%", maxWidth: 620, display: "flex", flexDirection: "column", gap: 14,

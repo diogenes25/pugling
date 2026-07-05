@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { api, errorMessage } from "../lib/api";
 import { useAsync } from "../lib/useAsync";
 import { useAuth } from "../lib/auth";
@@ -8,7 +8,6 @@ import type { ChildResponse, ChildrenDashboard, PlanResponse } from "../lib/type
 export function VaterDashboard() {
   const { session } = useAuth();
   const fatherId = session!.id;
-  const nav = useNavigate();
 
   const children = useAsync<ChildResponse[]>(() => api.children(), [fatherId]);
   const plans = useAsync<PlanResponse[]>(() => api.plans(), []);
@@ -82,28 +81,28 @@ export function VaterDashboard() {
         )}
 
         <form className="form-grid" style={{ marginTop: 12, alignItems: "end" }} onSubmit={addChild}>
-          <div className="field"><label>Name</label><input value={name} onChange={(e) => setName(e.target.value)} placeholder="Vorname" /></div>
-          <div className="field"><label>Klasse</label><input type="number" min={1} max={13} value={grade} onChange={(e) => setGrade(e.target.value)} placeholder="z.B. 8" /></div>
-          <div className="field"><label>PIN</label><input value={pin} onChange={(e) => setPin(e.target.value)} placeholder="z.B. 1111" /></div>
+          <div className="field"><label htmlFor="new-child-name">Name</label><input id="new-child-name" name="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Vorname" /></div>
+          <div className="field"><label htmlFor="new-child-grade">Klasse</label><input id="new-child-grade" name="grade" type="number" min={1} max={13} value={grade} onChange={(e) => setGrade(e.target.value)} placeholder="z.B. 8" /></div>
+          <div className="field"><label htmlFor="new-child-pin">PIN</label><input id="new-child-pin" name="pin" value={pin} onChange={(e) => setPin(e.target.value)} placeholder="z.B. 1111" /></div>
           <button type="submit" className="btn inline-btn" style={{ width: "auto" }}>Kind anlegen</button>
         </form>
         <p className="sub" style={{ marginTop: 8 }}>
           Tipp: Der <strong>Lehrplan-Assistent</strong> führt Schritt für Schritt durch Kind, Problemfeld und passende Übungen.
         </p>
-        {msg && <div className="banner ok" style={{ marginTop: 10 }}>{msg}</div>}
+        {msg && <div className="banner ok" style={{ marginTop: 10 }} role="status" aria-live="polite">{msg}</div>}
       </section>
 
       <section>
         <div className="row">
           <h2 className="h-section">Lehrpläne</h2>
-          <button type="button" className="btn inline-btn" style={{ width: "auto", marginLeft: "auto" }} onClick={() => nav("/vater/plan/new")}>+ Neuer Plan</button>
+          <Link to="/vater/plan/new" className="btn inline-btn" style={{ width: "auto", marginLeft: "auto", textDecoration: "none", textAlign: "center" }}>+ Neuer Plan</Link>
         </div>
         {plans.loading ? <div className="loading">Lade…</div> : plans.error ? <div className="banner err">{plans.error}</div> : (
           <table className="table">
             <thead><tr><th>Titel</th><th>Kind</th><th className="num">Übungen</th><th>Zeitraum</th><th>Status</th></tr></thead>
             <tbody>
               {plans.data?.map((p) => (
-                <tr key={p.id} className="clickable" onClick={() => nav(`/vater/plan/${p.id}`)}>
+                <tr key={p.id}>
                   <td><Link to={`/vater/plan/${p.id}`}>{p.title}</Link></td>
                   <td>{childName(p.childId)}</td>
                   <td className="num">{p.positionCount}</td>

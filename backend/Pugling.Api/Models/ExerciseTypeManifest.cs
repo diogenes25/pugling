@@ -91,7 +91,7 @@ public static class ExerciseManifests
         new(ExerciseType.List, "Liste", "list", V1, "list",
             ExerciseCheckMode.CatalogCheck, null, null, ["orderedOptional", "alternatives"]),
         new(ExerciseType.Birkenbihl, "Birkenbihl", "birkenbihl", V1, "birkenbihl",
-            ExerciseCheckMode.None, null, null, ["wordByWord"]),
+            ExerciseCheckMode.None, null, null, ["wordByWord", "autoDecode", "vocabLinked"]),
     ];
 
     /// <summary>Manifest zu einem Typ, oder <c>null</c>, wenn keins hinterlegt ist.</summary>

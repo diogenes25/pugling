@@ -151,20 +151,32 @@ public record ListEntry(string Value, List<string>? Alternatives = null);
 /// </summary>
 public class BirkenbihlConfig
 {
-    /// <summary>Sprache, die gelernt wird – die Sätze stehen in ihr (z. B. „Englisch").</summary>
+    /// <summary>Sprachcode der Lernsprache – die Sätze stehen in ihr (z. B. „en"). Muss zum Vokabelspeicher passen.</summary>
     public string LearningLang { get; set; } = "";
-    /// <summary>Muttersprache der Wort-für-Wort-Dekodierung und der Übersetzung (z. B. „Deutsch").</summary>
+    /// <summary>Sprachcode der Muttersprache (Glossen + Übersetzung, z. B. „de"). Muss zum Vokabelspeicher passen.</summary>
     public string NativeLang { get; set; } = "";
+    /// <summary>Nächste zu vergebende <see cref="BirkenbihlSentence.SentenceId"/> (monoton, kein Recycling gelöschter IDs).</summary>
+    public int NextSentenceId { get; set; }
+    /// <summary>
+    /// Nächste zu vergebende <see cref="WordPair.WordId"/>. Bewusst <b>übungsweit</b> eindeutig (nicht pro Satz),
+    /// damit der Austausch-Endpunkt <c>.../words/{wordId}</c> ohne Satz-Segment ein Wort eindeutig trifft.
+    /// </summary>
+    public int NextWordId { get; set; }
     /// <summary>Die Sätze des Textes in Lesereihenfolge.</summary>
     public List<BirkenbihlSentence> Sentences { get; set; } = new();
 }
 
 /// <summary>
-/// Ein Satz der Birkenbihl-Übung: der Originalsatz in der Lernsprache, seine positionsgenaue
-/// Wort-für-Wort-Dekodierung (<paramref name="Decoding"/>) und eine natürliche, grammatikalisch
-/// korrekte Übersetzung (<paramref name="NaturalTranslation"/>).
+/// Ein Satz der Birkenbihl-Übung: der Originalsatz in der Lernsprache (<paramref name="LearningSentence"/>),
+/// seine positionsgenaue Wort-für-Wort-Dekodierung (<paramref name="Decoding"/>) und eine natürliche,
+/// grammatikalisch korrekte Übersetzung (<paramref name="NaturalTranslation"/>).
 /// </summary>
-public record BirkenbihlSentence(string Text, List<WordPair> Decoding, string NaturalTranslation);
+public record BirkenbihlSentence(int SentenceId, string LearningSentence, string NaturalTranslation, List<WordPair> Decoding);
 
-/// <summary>Ein Wort-Tuple der Dekodierung: <paramref name="Word"/> der Lernsprache → wörtliche Übersetzung <paramref name="Literal"/>.</summary>
-public record WordPair(string Word, string Literal);
+/// <summary>
+/// Ein Wort-Tuple der Dekodierung: <paramref name="LearningWord"/> der Lernsprache → wörtliche muttersprachliche
+/// Glosse <paramref name="Gloss"/>. <paramref name="Gloss"/>/<paramref name="VocabularyId"/> sind <c>null</c>, wenn
+/// das Wort (noch) nicht im Vokabelspeicher liegt und keine manuelle Glosse gesetzt wurde. <paramref name="WordId"/>
+/// ist übungsweit eindeutig (siehe <see cref="BirkenbihlConfig.NextWordId"/>).
+/// </summary>
+public record WordPair(int WordId, string LearningWord, string? Gloss, int? VocabularyId);

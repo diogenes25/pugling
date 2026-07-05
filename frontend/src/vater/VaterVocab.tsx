@@ -3,10 +3,12 @@ import { api, errorMessage } from "../lib/api";
 import { useAsync } from "../lib/useAsync";
 import { LANGUAGES, languageByCode } from "../lib/languages";
 import type {
-  ChildResponse, ChildTagResponse, CreateVocabularyDto, Genus, NounInfo, PartOfSpeech, UpdateVocabularyDto,
-  VerbInfo, VocabTagResponse, VocabularyResponse,
+  ChildResponse, ChildTagResponse, CreateVocabularyDto, Genus, NounInfo, Paged, PartOfSpeech, SortDir,
+  UpdateVocabularyDto, VerbInfo, VocabSortKey, VocabTagResponse, VocabularyResponse,
 } from "../lib/types";
 import { GENUS, GENUS_LABEL, POS, POS_LABEL } from "../lib/vocab";
+import { confirmAction } from "../lib/ui";
+import { PAGE_SIZE, Pager, SortableTh } from "../components/ListControls";
 
 interface PairRow { word: string; translation: string; }
 const emptyPair = (): PairRow => ({ word: "", translation: "" });
@@ -32,15 +34,27 @@ export function VaterVocab() {
   const [posFilter, setPosFilter] = useState<PartOfSpeech | "">("");
   const [tagFilter, setTagFilter] = useState<string[]>([]);
   const [tagMatchAll, setTagMatchAll] = useState(false);
-  const list = useAsync<VocabularyResponse[]>(
-    () => api.vocabulary(search.trim() || undefined, {
+  // Server-seitige Sortierung (Whitelist key/word/translation/pos) + Paginierung.
+  const [sort, setSort] = useState<VocabSortKey>("key");
+  const [dir, setDir] = useState<SortDir>("asc");
+  const [skip, setSkip] = useState(0);
+  const onSort = (key: VocabSortKey, nextDir: SortDir) => { setSort(key); setDir(nextDir); };
+  const list = useAsync<Paged<VocabularyResponse>>(
+    () => api.vocabulary({
+      search: search.trim() || undefined,
       sourceLanguage: src, targetLanguage: tgt,
       partOfSpeech: posFilter || undefined,
       tags: tagFilter.length > 0 ? tagFilter : undefined,
       matchAll: tagMatchAll,
+      sort, dir, skip, take: PAGE_SIZE,
     }),
-    [search, src, tgt, posFilter, tagFilter, tagMatchAll],
+    [search, src, tgt, posFilter, tagFilter, tagMatchAll, sort, dir, skip],
   );
+  // Jede Filter-/Sortier-Änderung springt auf Seite 1 zurück (sonst landet man jenseits des Bestands).
+  // Reset in der Render-Phase, damit die Liste nicht erst noch einmal mit altem skip nachlädt.
+  const filterKey = `${search}|${src}|${tgt}|${posFilter}|${tagFilter.join(",")}|${tagMatchAll}|${sort}|${dir}`;
+  const [prevFilterKey, setPrevFilterKey] = useState(filterKey);
+  if (prevFilterKey !== filterKey) { setPrevFilterKey(filterKey); setSkip(0); }
 
   // Kind-Auswahl für die kind-skopierten Tags (Muster wie VaterClassTests).
   const children = useAsync<ChildResponse[]>(() => api.children(), []);
@@ -149,13 +163,13 @@ export function VaterVocab() {
             </button>
           </div>
         </form>
-        {msg && <div className={`banner ${msg.ok ? "ok" : "err"}`} style={{ marginTop: 10 }}>{msg.text}</div>}
+        {msg && <div className={`banner ${msg.ok ? "ok" : "err"}`} role="status" aria-live="polite" style={{ marginTop: 10 }}>{msg.text}</div>}
       </section>
 
       <section>
         <div className="row" style={{ alignItems: "center", gap: 8, flexWrap: "wrap" }}>
           <h2 className="h-section" style={{ margin: 0 }}>
-            Vokabel-Store <span className="muted">{srcLang?.flag}→{tgtLang?.flag}</span> {list.data ? `(${list.data.length})` : ""}
+            Vokabel-Store <span className="muted">{srcLang?.flag}→{tgtLang?.flag}</span> {list.data ? `(${list.data.total})` : ""}
           </h2>
           {/* Kind-Auswahl steuert, für welches Kind die kind-skopierten Tags gelten. */}
           <label className="row" style={{ gap: 6, alignItems: "center", fontSize: 13 }}>
@@ -197,19 +211,26 @@ export function VaterVocab() {
         {list.loading ? <div className="loading">Lade…</div> : list.error ? <div className="banner err">{list.error}</div> : (
           <div style={{ overflowX: "auto" }}>
             <table className="table">
-              <thead><tr><th>Key</th><th>Wort</th><th>Übersetzung</th><th>Wortart</th><th>Aktionen</th></tr></thead>
+              <thead><tr>
+                <SortableTh label="Key" sortKey="key" active={sort === "key"} dir={dir} onSort={onSort} />
+                <SortableTh label="Wort" sortKey="word" active={sort === "word"} dir={dir} onSort={onSort} />
+                <SortableTh label="Übersetzung" sortKey="translation" active={sort === "translation"} dir={dir} onSort={onSort} />
+                <SortableTh label="Wortart" sortKey="pos" active={sort === "pos"} dir={dir} onSort={onSort} />
+                <th>Aktionen</th>
+              </tr></thead>
               <tbody>
-                {list.data?.map((v) => (
+                {list.data?.items.map((v) => (
                   <VocabRow key={v.id} v={v} onChanged={list.reload}
                     childId={childId === "" ? null : childId}
                     globalTags={globalTags.data ?? []} reloadGlobalTags={globalTags.reload}
                     childTagOptions={childTagOpts.data ?? []} reloadChildTags={childTagOpts.reload} />
                 ))}
-                {list.data?.length === 0 && <tr><td colSpan={5} className="muted">Keine Vokabeln in dieser Sprach-Kombination.</td></tr>}
+                {list.data?.items.length === 0 && <tr><td colSpan={5} className="muted">Keine Vokabeln in dieser Sprach-Kombination.</td></tr>}
               </tbody>
             </table>
           </div>
         )}
+        {list.data && <Pager skip={skip} take={PAGE_SIZE} total={list.data.total} onSkip={setSkip} />}
       </section>
     </>
   );
@@ -285,6 +306,7 @@ function VocabRow({ v, onChanged, childId, globalTags, reloadGlobalTags, childTa
     setErr(null); setEditing(false);
   }
   async function remove() {
+    if (!confirmAction("Diese Vokabel wirklich löschen?")) return;
     setBusy(true); setErr(null);
     try { await api.deleteVocabulary(v.id); onChanged(); }
     catch (e) { setErr(errorMessage(e)); setBusy(false); }
@@ -561,7 +583,7 @@ function TagAdder({ placeholder, options, onAdd }: { placeholder: string; option
         onChange={(e) => setValue(e.target.value)}
         onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); submit(); } }} />
       <datalist id={listId}>{options.map((o) => <option key={o} value={o} />)}</datalist>
-      <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} disabled={busy || !value.trim()} onClick={submit}>+</button>
+      <button type="button" className="btn ghost inline-btn" aria-label="Tag hinzufügen" style={{ width: "auto" }} disabled={busy || !value.trim()} onClick={submit}>+</button>
     </span>
   );
 }

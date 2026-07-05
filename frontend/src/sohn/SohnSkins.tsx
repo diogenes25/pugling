@@ -3,6 +3,7 @@ import { api, errorMessage } from "../lib/api";
 import { useAuth } from "../lib/auth";
 import { SKINS, skinById } from "../lib/skins";
 import { Mascot } from "../components/Mascot";
+import { confirmAction } from "../lib/ui";
 import { useSohn } from "./SohnApp";
 
 export function SohnSkins() {
@@ -31,6 +32,8 @@ export function SohnSkins() {
   async function choose(id: string) {
     if (busy || !ready) return; // erst handeln, wenn der Server-Besitz geladen ist
     const s = SKINS.find((x) => x.id === id)!;
+    // Nur der Kauf ist unumkehrbar (Gems weg) – bloßes Ausrüsten eines besessenen Skins nicht.
+    if (!owned.includes(id) && !confirmAction(`${s.name} für ${s.cost} 💎 freischalten? Die Gems sind dann weg.`)) return;
     setBusy(true);
     try {
       // Bereits freigeschaltet -> nur ausrüsten. Sonst kaufen (Server bucht Gems ab).
@@ -83,7 +86,7 @@ export function SohnSkins() {
       </div>
       )}
 
-      {msg && <div className="toast">{msg}</div>}
+      {msg && <div className="toast" role="status" aria-live="polite">{msg}</div>}
       <button type="button" className="btn ghost" onClick={signOut} style={{ marginTop: 6 }}>Abmelden</button>
     </div>
   );

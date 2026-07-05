@@ -93,7 +93,7 @@ export function VaterWizard() {
   const exercises = useAsync<ExerciseSummary[]>(
     () => (subjectId === "" ? Promise.resolve([]) : api.searchExercises({
       subjectId: Number(subjectId), grade: effectiveGrade, schoolType: effectiveSchoolType,
-    })),
+    }).then((r) => r.items)),
     [subjectId, effectiveGrade, effectiveSchoolType],
   );
 
@@ -228,15 +228,15 @@ export function VaterWizard() {
             </div>
           ) : (
             <div className="form-grid">
-              <div className="field"><label>Name</label><input value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="z.B. Max" /></div>
-              <div className="field"><label>Geburtsjahr</label><input type="number" value={newBirthYear} onChange={(e) => setNewBirthYear(e.target.value)} placeholder="z.B. 2012" />{gradeHint && <span className="sub">{gradeHint}</span>}</div>
-              <div className="field"><label>Klasse</label><input type="number" min={1} max={13} value={grade} onChange={(e) => setGrade(e.target.value === "" ? "" : Number(e.target.value))} placeholder="z.B. 8" /></div>
+              <div className="field"><label htmlFor="wiz-name">Name</label><input id="wiz-name" value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="z.B. Max" /></div>
+              <div className="field"><label htmlFor="wiz-birthyear">Geburtsjahr</label><input id="wiz-birthyear" type="number" value={newBirthYear} onChange={(e) => setNewBirthYear(e.target.value)} placeholder="z.B. 2012" />{gradeHint && <span className="sub">{gradeHint}</span>}</div>
+              <div className="field"><label htmlFor="wiz-grade">Klasse</label><input id="wiz-grade" type="number" min={1} max={13} value={grade} onChange={(e) => setGrade(e.target.value === "" ? "" : Number(e.target.value))} placeholder="z.B. 8" /></div>
               <div className="field"><label>Schulart</label>
                 <select aria-label="Schulart" value={schoolType} onChange={(e) => setSchoolType(e.target.value as SchoolType)}>
                   {SCHOOL_TYPES.map((s) => <option key={s} value={s}>{s}</option>)}
                 </select>
               </div>
-              <div className="field"><label>PIN (Login des Kindes)</label><input value={newPin} onChange={(e) => setNewPin(e.target.value)} placeholder="z.B. 1111" /></div>
+              <div className="field"><label htmlFor="wiz-pin">PIN (Login des Kindes)</label><input id="wiz-pin" value={newPin} onChange={(e) => setNewPin(e.target.value)} placeholder="z.B. 1111" /></div>
             </div>
           )}
         </section>
@@ -253,7 +253,7 @@ export function VaterWizard() {
                 {subjects.data?.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
               </select>
             </div>
-            <div className="field"><label>Thema / Kapitel (optional)</label><input value={topic} onChange={(e) => setTopic(e.target.value)} placeholder="z.B. Unité 2 – En ville" /></div>
+            <div className="field"><label htmlFor="wiz-topic">Thema / Kapitel (optional)</label><input id="wiz-topic" value={topic} onChange={(e) => setTopic(e.target.value)} placeholder="z.B. Unité 2 – En ville" /></div>
           </div>
 
           <div>
@@ -320,13 +320,13 @@ export function VaterWizard() {
         <section className="card">
           <h3 style={{ margin: "0 0 12px" }}>Feinschliff <span className="muted">(gilt für alle {selected.length} Positionen)</span></h3>
           <div className="form-grid" onChange={() => setTouchedFineTune(true)}>
-            <div className="field"><label>Titel</label><input title="Titel" value={title} onChange={(e) => setTitle(e.target.value)} /></div>
-            <div className="field"><label>Start</label><input title="Startdatum" type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} /></div>
-            <div className="field"><label>Dauer (Tage)</label><input title="Dauer" type="number" min={1} value={durationDays} onChange={(e) => setDurationDays(Number(e.target.value))} /></div>
-            <div className="field"><label>Bestehen ab %</label><input title="Bestehen ab Prozent" type="number" min={1} max={100} value={passPercent} onChange={(e) => setPassPercent(Number(e.target.value))} /></div>
-            <div className="field"><label>Punkte je Ziel</label><input title="Punkte je erreichtem Ziel" type="number" min={0} value={pointsGoalMet} onChange={(e) => setPointsGoalMet(Number(e.target.value))} /></div>
-            <div className="field"><label>Combo alle … Treffer</label><input title="Combo-Schwelle" type="number" min={0} value={comboThreshold} onChange={(e) => setComboThreshold(Number(e.target.value))} /></div>
-            <div className="field"><label>Combo-Bonuspunkte</label><input title="Combo-Bonuspunkte" type="number" min={0} value={comboBonusPoints} onChange={(e) => setComboBonusPoints(Number(e.target.value))} /></div>
+            <div className="field"><label htmlFor="wiz-title">Titel</label><input id="wiz-title" title="Titel" value={title} onChange={(e) => setTitle(e.target.value)} /></div>
+            <div className="field"><label htmlFor="wiz-start">Start</label><input id="wiz-start" title="Startdatum" type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} /></div>
+            <div className="field"><label htmlFor="wiz-duration">Dauer (Tage)</label><input id="wiz-duration" title="Dauer" type="number" min={1} value={durationDays} onChange={(e) => setDurationDays(Number(e.target.value))} /></div>
+            <div className="field"><label htmlFor="wiz-pass">Bestehen ab %</label><input id="wiz-pass" title="Bestehen ab Prozent" type="number" min={1} max={100} value={passPercent} onChange={(e) => setPassPercent(Number(e.target.value))} /></div>
+            <div className="field"><label htmlFor="wiz-points">Punkte je Ziel</label><input id="wiz-points" title="Punkte je erreichtem Ziel" type="number" min={0} value={pointsGoalMet} onChange={(e) => setPointsGoalMet(Number(e.target.value))} /></div>
+            <div className="field"><label htmlFor="wiz-combo-threshold">Combo alle … Treffer</label><input id="wiz-combo-threshold" title="Combo-Schwelle" type="number" min={0} value={comboThreshold} onChange={(e) => setComboThreshold(Number(e.target.value))} /></div>
+            <div className="field"><label htmlFor="wiz-combo-bonus">Combo-Bonuspunkte</label><input id="wiz-combo-bonus" title="Combo-Bonuspunkte" type="number" min={0} value={comboBonusPoints} onChange={(e) => setComboBonusPoints(Number(e.target.value))} /></div>
             <div className="field"><label>Test-Stufe</label>
               <select aria-label="Test-Stufe" value={defaultStage} onChange={(e) => setDefaultStage(Number(e.target.value))}>
                 <option value={1}>1 · Zeigen</option>
@@ -359,7 +359,7 @@ export function VaterWizard() {
         </section>
       )}
 
-      {error && <div className="banner err">{error}</div>}
+      {error && <div className="banner err" role="status" aria-live="polite">{error}</div>}
 
       <div className="row" style={{ gap: 10 }}>
         {step > 0 && <button type="button" className="btn ghost" style={{ width: "auto" }} onClick={back}>← Zurück</button>}
