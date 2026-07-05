@@ -4,13 +4,13 @@ import { test, expect, type Page } from "@playwright/test";
 //   Vater legt (Web) einen Lehrplan-Container an und hängt eine Katalog-Übung als Position hinein
 //   →  Sohn arbeitet (App) die Position ab: Üben (Leitner) + Test  →  Punkte fließen
 //   →  Vater sieht den Fortschritt.
-// Referenziert wird die system-geseedete Vokabel-Übung "Begrüßungen" (Englisch, Unit 1); sie hat
-// keinen Autor und ist damit als geteilte Übung von jedem Vater in einen Plan übernehmbar.
+// Referenziert wird die system-geseedete Vokabel-Übung "Vokabeln: En ville" (Französisch, Unité 2); sie
+// hat keinen Autor (geteilte Übung) und genug Inhalte (5), um den Combo-Meilenstein ×5 auszulösen.
 // Beide Rollen laufen in getrennten Browser-Kontexten (isoliertes localStorage).
 
 const FATHER = { id: "1", pin: "0000" };
 const CHILD = { id: "1", pin: "1111" };
-const EXERCISE = "Begrüßungen";
+const EXERCISE = "Vokabeln: En ville";
 
 async function vaterLogin(page: Page) {
   await page.goto("/vater");
@@ -70,12 +70,14 @@ test("Vater erstellt Plan mit Position, Sohn arbeitet ihn ab, Punkte fließen", 
   const counter = sohn.locator(".pill.cyan", { hasText: /Karte \d+ \/ \d+/ });
   await expect(counter).toBeVisible();
   const total = Number((await counter.textContent())!.match(/\/ (\d+)/)![1]);
+  // Genug Karten, damit der Combo-Meilenstein ×5 sicher fällt (bewusste Coverage, kein stiller Skip).
+  expect(total).toBeGreaterThanOrEqual(5);
   for (let i = 0; i < total; i++) {
     await sohn.getByRole("button", { name: "Umdrehen 🔄" }).click();
     await sohn.getByRole("button", { name: "Gewusst!" }).click();
   }
   // Motivations-Feature: ab 5 Treffern in Folge feiert die App den Combo-Meilenstein (Feier-Banner).
-  if (total >= 5) await expect(sohn.locator(".cel-title", { hasText: "COMBO ×5" })).toBeVisible();
+  await expect(sohn.locator(".cel-title", { hasText: "COMBO ×5" })).toBeVisible();
   await expect(sohn.getByText("RUNDE FERTIG!")).toBeVisible();
 
   // Weiter zum Test
