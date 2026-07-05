@@ -3,8 +3,8 @@ import { api, errorMessage } from "../lib/api";
 import { useAsync } from "../lib/useAsync";
 import { offerPeriodLabel } from "../lib/labels";
 import type {
-  AchievementDef, ChildResponse, CreateAchievementDto, CreateMissionDto, CreateRewardDto,
-  MissionDef, MissionPeriod, OfferPeriod, ProgressMetric, RewardDef,
+  AchievementDef, ChildResponse, CreateAchievementDto, CreateMissionDto,
+  MissionDef, MissionPeriod, OfferPeriod, PlanResponse, PositionResponse, ProgressMetric, RewardDef,
 } from "../lib/types";
 
 /** Wiederkehr-Optionen für Angebote (deutsche Labels). */
@@ -62,9 +62,19 @@ export function VaterRewards() {
   );
 }
 
+interface RewardForm {
+  title: string; cost: number; period: OfferPeriod; quantity: number;
+  studyPlanId: number | ""; exerciseId: number | "";
+}
+
 function RewardOfferManager({ childId }: { childId: number }) {
   const list = useAsync<RewardDef[]>(() => api.rewardsFor(childId), [childId]);
-  const [form, setForm] = useState<Required<CreateRewardDto>>({ title: "", cost: 200, period: "Weekly", quantity: 1 });
+  const plans = useAsync<PlanResponse[]>(() => api.plans(childId), [childId]);
+  const [form, setForm] = useState<RewardForm>({ title: "", cost: 200, period: "Weekly", quantity: 1, studyPlanId: "", exerciseId: "" });
+  // Übungen zur Auswahl kommen aus den Positionen des gewählten Plans (nur dann ist ein Übungs-Bezug sinnvoll).
+  const positions = useAsync<PositionResponse[]>(
+    () => (form.studyPlanId === "" ? Promise.resolve([]) : api.positions(form.studyPlanId)),
+    [form.studyPlanId]);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -75,7 +85,11 @@ function RewardOfferManager({ childId }: { childId: number }) {
     if (form.quantity < 1) { setMsg({ ok: false, text: "Anzahl muss mindestens 1 sein." }); return; }
     setBusy(true);
     try {
-      await api.createReward(childId, { title: form.title.trim(), cost: form.cost, period: form.period, quantity: form.quantity });
+      await api.createReward(childId, {
+        title: form.title.trim(), cost: form.cost, period: form.period, quantity: form.quantity,
+        studyPlanId: form.studyPlanId === "" ? null : form.studyPlanId,
+        exerciseId: form.exerciseId === "" ? null : form.exerciseId,
+      });
       setMsg({ ok: true, text: `Angebot „${form.title.trim()}" angelegt.` });
       setForm((f) => ({ ...f, title: "" }));
       list.reload();
@@ -118,6 +132,18 @@ function RewardOfferManager({ childId }: { childId: number }) {
         <div className="field" style={{ maxWidth: 110 }}><label>Anzahl</label>
           <input title="Kontingent pro Periode" type="number" min={1} value={form.quantity}
             onChange={(e) => setForm((f) => ({ ...f, quantity: Number(e.target.value) }))} /></div>
+        <div className="field" style={{ minWidth: 160 }}><label>Plan <span className="muted">(optional)</span></label>
+          <select title="Plan-Bezug" value={form.studyPlanId}
+            onChange={(e) => setForm((f) => ({ ...f, studyPlanId: e.target.value ? Number(e.target.value) : "", exerciseId: "" }))}>
+            <option value="">– kindweit –</option>
+            {plans.data?.map((p) => <option key={p.id} value={p.id}>{p.title}</option>)}
+          </select></div>
+        <div className="field" style={{ minWidth: 160 }}><label>Übung <span className="muted">(optional)</span></label>
+          <select title="Übungs-Bezug" value={form.exerciseId} disabled={form.studyPlanId === ""}
+            onChange={(e) => setForm((f) => ({ ...f, exerciseId: e.target.value ? Number(e.target.value) : "" }))}>
+            <option value="">– ganzer Plan –</option>
+            {positions.data?.map((p) => <option key={p.id} value={p.exerciseId}>{p.exerciseTitle}</option>)}
+          </select></div>
         <button type="submit" className="btn inline-btn" style={{ width: "auto" }} disabled={busy}>{busy ? "…" : "Anlegen"}</button>
       </form>
       {msg && <div className={`banner ${msg.ok ? "ok" : "err"}`} style={{ marginTop: 10 }}>{msg.text}</div>}
@@ -125,11 +151,12 @@ function RewardOfferManager({ childId }: { childId: number }) {
       {list.loading ? <div className="loading">Lade…</div> : list.error ? <div className="banner err">{list.error}</div> : (
         <div style={{ overflowX: "auto", marginTop: 10 }}>
           <table className="table">
-            <thead><tr><th>Angebot</th><th>Preis</th><th>Wiederkehr</th><th className="num">Anzahl</th><th>Status</th><th>Aktion</th></tr></thead>
+            <thead><tr><th>Angebot</th><th>Kontext</th><th>Preis</th><th>Wiederkehr</th><th className="num">Anzahl</th><th>Status</th><th>Aktion</th></tr></thead>
             <tbody>
               {list.data?.map((r) => (
                 <tr key={r.id} style={{ opacity: r.active ? 1 : 0.55 }}>
                   <td>{r.title}</td>
+                  <td className="muted">{r.exerciseTitle ? `${r.planTitle} · ${r.exerciseTitle}` : r.planTitle ?? "kindweit"}</td>
                   <td>🪙 {r.cost}</td>
                   <td className="muted">{offerPeriodLabel(r.period)}</td>
                   <td className="num">{r.quantity}</td>
@@ -141,7 +168,7 @@ function RewardOfferManager({ childId }: { childId: number }) {
                   </td>
                 </tr>
               ))}
-              {list.data?.length === 0 && <tr><td colSpan={6} className="muted">Noch keine Angebote.</td></tr>}
+              {list.data?.length === 0 && <tr><td colSpan={7} className="muted">Noch keine Angebote.</td></tr>}
             </tbody>
           </table>
         </div>

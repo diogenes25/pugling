@@ -67,7 +67,7 @@ public static class ExerciseManifests
     [
         new(ExerciseType.Vocabulary, "Vokabeln", "flashcards", V1, "vocabulary",
             ExerciseCheckMode.StudyPlanTest, "tests", LearningMethod.Vocabulary,
-            ["letterHints", "audio", "selfAssess"]),
+            ["letterHints", "audio", "selfAssess", "multipleChoice"]),
         new(ExerciseType.Reading, "Leseverständnis", "reading", V1, "reading",
             ExerciseCheckMode.None, null, null, []),
         new(ExerciseType.Cloze, "Lückentext", "cloze", V1, "cloze",

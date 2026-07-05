@@ -234,8 +234,13 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
 
         // Prämie gehört einem Kind (Cascade). Einlöse-Anfrage gehört einem Kind (Cascade); die Prämie-
         // Referenz wird beim Löschen der Prämie auf null gesetzt, damit die Einlöse-Historie erhalten bleibt.
-        modelBuilder.Entity<Reward>()
-            .HasOne(r => r.Child).WithMany().HasForeignKey(r => r.ChildId).OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<Reward>(e =>
+        {
+            e.HasOne(r => r.Child).WithMany().HasForeignKey(r => r.ChildId).OnDelete(DeleteBehavior.Cascade);
+            // Optionaler Plan-/Übungs-Kontext: SetNull, damit Löschen von Plan/Übung das Angebot nicht bricht.
+            e.HasOne(r => r.StudyPlan).WithMany().HasForeignKey(r => r.StudyPlanId).OnDelete(DeleteBehavior.SetNull);
+            e.HasOne(r => r.Exercise).WithMany().HasForeignKey(r => r.ExerciseId).OnDelete(DeleteBehavior.SetNull);
+        });
         modelBuilder.Entity<RewardRedemption>(e =>
         {
             e.HasOne(r => r.Child).WithMany().HasForeignKey(r => r.ChildId).OnDelete(DeleteBehavior.Cascade);

@@ -50,6 +50,11 @@ export function SohnKonto() {
               return (
                 <div key={r.id} className={`skin${buyable ? "" : " locked"}`}>
                   <div className="nm">{r.title}</div>
+                  {(r.planTitle || r.exerciseTitle) && (
+                    <div className="sub" style={{ marginTop: 2 }}>
+                      🎯 {r.exerciseTitle ? `${r.planTitle} · ${r.exerciseTitle}` : r.planTitle}
+                    </div>
+                  )}
                   <div className="pill gold" style={{ marginTop: 4 }}>🪙 {r.cost}</div>
                   <div className="sub" style={{ marginTop: 4 }}>
                     {offerPeriodLabel(r.period)} · noch {r.remainingThisPeriod}/{r.quantity}

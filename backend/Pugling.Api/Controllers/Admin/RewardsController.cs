@@ -23,25 +23,37 @@ namespace Pugling.Api.Controllers.Admin;
 [ServiceFilter(typeof(ChildOwnershipFilter))]
 public class RewardsController(PuglingDbContext db, OfferService offers) : ControllerBase
 {
-    public record RewardDto(int Id, string Title, int Cost, OfferPeriod Period, int Quantity, bool Active);
+    public record RewardDto(int Id, string Title, int Cost, OfferPeriod Period, int Quantity, bool Active,
+        int? StudyPlanId, int? ExerciseId, string? PlanTitle, string? ExerciseTitle);
     public record RedemptionDto(int Id, int ChildId, int? RewardId, string Title, int Cost,
         RewardRedemptionStatus Status, DateTime PurchasedAt, DateTime? FulfilledAt);
 
-    private static RewardDto Map(Reward r) => new(r.Id, r.Title, r.Cost, r.Period, r.Quantity, r.Active);
+    private static RewardDto Map(Reward r) => new(r.Id, r.Title, r.Cost, r.Period, r.Quantity, r.Active,
+        r.StudyPlanId, r.ExerciseId, r.StudyPlan?.Title, r.Exercise?.Title);
     private static RedemptionDto MapRedemption(RewardRedemption r) =>
         new(r.Id, r.ChildId, r.RewardId, r.Title, r.Cost, r.Status, r.PurchasedAt, r.FulfilledAt);
 
     /// <summary>Alle Angebote des Kindes (Definitionen zur Verwaltung).</summary>
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<IReadOnlyList<RewardDto>>> List(int childId) =>
-        await db.Rewards.AsNoTracking().Where(r => r.ChildId == childId)
+    public async Task<ActionResult<IReadOnlyList<RewardDto>>> List(int childId)
+    {
+        var rewards = await db.Rewards.AsNoTracking()
+            .Include(r => r.StudyPlan).Include(r => r.Exercise)
+            .Where(r => r.ChildId == childId)
             .OrderByDescending(r => r.Active).ThenBy(r => r.Cost).ThenBy(r => r.Id)
-            .Select(r => Map(r)).ToListAsync();
+            .ToListAsync();
+        return rewards.Select(Map).ToList();
+    }
 
-    public record CreateRewardDto(string Title, int Cost, OfferPeriod Period = OfferPeriod.OneOff, int Quantity = 1);
+    /// <summary>
+    /// Anlegen eines Angebots. <paramref name="StudyPlanId"/>/<paramref name="ExerciseId"/> sind optional und
+    /// binden das Angebot an einen Plan bzw. eine Übung des Kindes (null = kindweit für alles gültig).
+    /// </summary>
+    public record CreateRewardDto(string Title, int Cost, OfferPeriod Period = OfferPeriod.OneOff, int Quantity = 1,
+        int? StudyPlanId = null, int? ExerciseId = null);
 
-    /// <summary>Legt ein kaufbares Angebot für das Kind an (mit Wiederkehr und Kontingent pro Periode).</summary>
+    /// <summary>Legt ein kaufbares Angebot für das Kind an (mit Wiederkehr, Kontingent und optionalem Plan-/Übungs-Kontext).</summary>
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -51,6 +63,11 @@ public class RewardsController(PuglingDbContext db, OfferService offers) : Contr
         if (string.IsNullOrWhiteSpace(dto.Title)) return Problem(statusCode: 400, detail: "Title ist erforderlich.");
         if (dto.Cost <= 0) return Problem(statusCode: 400, detail: "Cost muss positiv sein.");
         if (dto.Quantity < 1) return Problem(statusCode: 400, detail: "Quantity muss mindestens 1 sein.");
+        // Kontext-Bezug prüfen: der Plan muss diesem Kind gehören, die Übung muss existieren.
+        if (dto.StudyPlanId is { } spid && !await db.StudyPlans.AnyAsync(p => p.Id == spid && p.ChildId == childId))
+            return Problem(statusCode: 400, detail: "Lehrplan gehört nicht zu diesem Kind.");
+        if (dto.ExerciseId is { } exid && !await db.Exercises.AnyAsync(e => e.Id == exid))
+            return Problem(statusCode: 400, detail: "Übung nicht gefunden.");
 
         var reward = new Reward
         {
@@ -59,10 +76,20 @@ public class RewardsController(PuglingDbContext db, OfferService offers) : Contr
             Cost = dto.Cost,
             Period = dto.Period,
             Quantity = dto.Quantity,
+            StudyPlanId = dto.StudyPlanId,
+            ExerciseId = dto.ExerciseId,
         };
         db.Rewards.Add(reward);
         await db.SaveChangesAsync();
+        await LoadContextAsync(reward);
         return CreatedAtAction(nameof(List), new { childId }, Map(reward));
+    }
+
+    /// <summary>Lädt Plan-/Übungs-Kontext einer getrackten Prämie für die Antwort-Projektion nach.</summary>
+    private async Task LoadContextAsync(Reward reward)
+    {
+        if (reward.StudyPlanId is not null) await db.Entry(reward).Reference(r => r.StudyPlan).LoadAsync();
+        if (reward.ExerciseId is not null) await db.Entry(reward).Reference(r => r.Exercise).LoadAsync();
     }
 
     public record UpdateRewardDto(string? Title, int? Cost, OfferPeriod? Period, int? Quantity, bool? Active);
@@ -83,6 +110,7 @@ public class RewardsController(PuglingDbContext db, OfferService offers) : Contr
         if (dto.Quantity is not null) reward.Quantity = dto.Quantity.Value;
         if (dto.Active is not null) reward.Active = dto.Active.Value;
         await db.SaveChangesAsync();
+        await LoadContextAsync(reward);
         return Map(reward);
     }
 

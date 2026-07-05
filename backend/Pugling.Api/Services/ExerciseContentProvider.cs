@@ -17,7 +17,8 @@ public record ContentItem(
     string Answer,
     IReadOnlyList<string> AcceptedAnswers,
     string? Hint = null,
-    int? GapIndex = null);
+    int? GapIndex = null,
+    string? AudioUrl = null);
 
 /// <summary>
 /// Liest die einzelnen Inhalte einer Katalog-<see cref="Exercise"/> aus ihrer
@@ -62,9 +63,28 @@ public class ExerciseContentProvider
     private static IReadOnlyList<string> Accepted(string answer, IEnumerable<string>? alternatives = null) =>
         alternatives is null ? [answer] : [answer, .. alternatives];
 
-    // Vokabeln: kanonisch Vorderseite → Rückseite; die Abfragerichtung (front-to-back/…) dreht der Motor.
+    /// <summary>
+    /// Wendet die Abfragerichtung einer Vokabel auf ein kanonisch (Wort → Übersetzung) gebautes Item an:
+    /// <c>back-to-front</c> vertauscht Prompt/Antwort, <c>both</c> vertauscht deterministisch bei ungeradem
+    /// Index (stabil pro Item, ohne Zufall). Der Index bleibt gleich – der Leitner-/Test-Fortschritt kippt nicht.
+    /// </summary>
+    public static ContentItem WithDirection(ContentItem item, string? direction) => direction switch
+    {
+        "back-to-front" => Swap(item),
+        "both" => item.Index % 2 == 0 ? item : Swap(item),
+        _ => item,
+    };
+
+    // Prompt/Antwort tauschen; die Alternativen des Rückwärts-Falls entfallen (galten für die alte Antwort),
+    // der Artikel-Hinweis ebenso (er gehörte zum nun abgefragten Wort). Die Aussprache-Audioquelle entfällt
+    // ebenfalls: sie liest das Wort vor, das nach dem Tausch die Lösung ist – sonst würde die Hör-Stufe die
+    // Antwort vorsprechen (Anti-Schummel). Rückwärts-Items werden in der Hör-Stufe damit textlich gezeigt.
+    private static ContentItem Swap(ContentItem it) =>
+        it with { Prompt = it.Answer, Answer = it.Prompt, AcceptedAnswers = [it.Prompt], Hint = null, AudioUrl = null };
+
+    // Vokabeln: kanonisch Vorderseite → Rückseite; die Abfragerichtung dreht das Item (siehe WithDirection).
     private static List<ContentItem> FromVocabulary(VocabularyConfig c) =>
-        c.Items.Select((v, i) => new ContentItem(i, v.Front, v.Back, [v.Back], v.Hint)).ToList();
+        c.Items.Select((v, i) => WithDirection(new ContentItem(i, v.Front, v.Back, [v.Back], v.Hint), c.Direction)).ToList();
 
     // Lückentext: ein Item je Lücke; Prompt ist der Trägertext, GapIndex die {{n}}-Nummer.
     private static List<ContentItem> FromCloze(ClozeConfig c) =>

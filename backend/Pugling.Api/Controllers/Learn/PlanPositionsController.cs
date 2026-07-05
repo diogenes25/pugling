@@ -93,8 +93,9 @@ public class PlanPositionsController(PuglingDbContext db) : ControllerBase
             Scope = dto.Scope ?? ItemScope.All,
             Cadence = dto.Cadence ?? GoalCadence.None,
             GoalThreshold = dto.GoalThreshold,
-            RequireTypedTest = dto.RequireTypedTest ?? false,
-            UseLeitner = dto.UseLeitner ?? false,
+            // Leitner/getippt erben ihren Standard von der Übung (Hybrid-Prinzip), solange die Position nichts vorgibt.
+            RequireTypedTest = dto.RequireTypedTest ?? exercise.DefaultRequireTypedTest,
+            UseLeitner = dto.UseLeitner ?? exercise.DefaultUseLeitner,
             MaxBox = dto.MaxBox is > 0 ? dto.MaxBox.Value : 5,
             BoxIntervalDays = dto.BoxIntervalDays,
             StageSchedule = dto.StageSchedule,

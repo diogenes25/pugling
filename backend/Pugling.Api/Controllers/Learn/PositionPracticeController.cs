@@ -58,6 +58,10 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
         if (dto.Day is { } d && d != today && !User.IsFather())
             return Forbid(); // Nachtragen anderer Tage nur für den Vater (Anti-Schummel).
+        // Anti-Schummel: der Sohn darf nur seinen aktiven, laufenden Plan spielen – kein Cherry-Picking
+        // leichter oder abgelaufener Pläne für bequeme Punkte. Der Vater darf jederzeit (Vorschau/Nachtrag).
+        if (User.IsChild() && await GetPlan(planId) is { } plan && !PositionPlayService.PlanPlayableForChild(plan, today))
+            return Problem(statusCode: 403, detail: "Dieser Lehrplan ist gerade nicht aktiv. Frag deinen Vater.");
 
         var session = new PracticeSession { StudyPlanId = planId, PlanPositionId = positionId, Day = dto.Day ?? today };
         db.PracticeSessions.Add(session);
@@ -90,7 +94,7 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
     /// Lösung per Design aufdecken (der Server bewertet in <see cref="Review"/>, nie das Frontend).
     /// </summary>
     public record PracticeCard(int ItemIndex, int Stage, string Type, string Prompt,
-        string? Hint, int? AnswerLength, string? Reveal);
+        string? Hint, int? AnswerLength, string? Reveal, IReadOnlyList<string>? Choices, string? AudioUrl);
 
     /// <summary>Liefert die heute fälligen Übungskarten der Position (Scope/ItemCount/Leitner-Fälligkeit).</summary>
     [HttpGet("{sessionId:int}/cards")]
@@ -100,6 +104,10 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         var session = await GetSession(planId, positionId, sessionId);
         if (session is null) return NotFound();
         var plan = (await GetPlan(planId))!;
+        // Anti-Schummel: auch mit einer noch offenen Session darf der Sohn einen inzwischen deaktivierten
+        // oder abgelaufenen Plan nicht weiter beüben (der Vater bleibt für Vorschau/Nachtrag ausgenommen).
+        if (User.IsChild() && !PositionPlayService.PlanPlayableForChild(plan, DateOnly.FromDateTime(DateTime.UtcNow)))
+            return Problem(statusCode: 403, detail: "Dieser Lehrplan ist gerade nicht aktiv. Frag deinen Vater.");
         var pos = await GetPosition(planId, positionId);
         if (pos?.Exercise is null) return NotFound();
 
@@ -113,10 +121,14 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
             var item = items[i];
             // Getippte Stufen halten die Lösung zurück; Anzeige-/Selbsteinschätzung deckt sie bewusst auf.
             var isLetterBoxes = pos.Exercise.Type == ExerciseType.Vocabulary && (TestStage)stage == TestStage.LetterBoxes;
+            // Hör-Stufe: Audioquelle mitgeben, damit der Client die Vokabel vorliest und den Wort-Text ausblendet.
+            var isAudio = pos.Exercise.Type == ExerciseType.Vocabulary && (TestStage)stage == TestStage.Audio;
             return new PracticeCard(i, stage, pos.Exercise.Type.ToString(), item.Prompt,
                 typed ? item.Hint : null,
                 isLetterBoxes ? item.Answer.Length : null,
-                typed ? null : item.Answer);
+                typed ? null : item.Answer,
+                PositionPlayService.ChoicesFor(items, item, pos.Exercise.Type, stage),
+                isAudio ? item.AudioUrl : null);
         }).ToList();
         return cards;
     }
@@ -148,6 +160,10 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         var session = await GetSession(planId, positionId, sessionId);
         if (session is null) return NotFound();
         var plan = (await GetPlan(planId))!;
+        // Anti-Schummel: auch mit einer noch offenen Session darf der Sohn einen inzwischen deaktivierten
+        // oder abgelaufenen Plan nicht weiter beüben (der Vater bleibt für Vorschau/Nachtrag ausgenommen).
+        if (User.IsChild() && !PositionPlayService.PlanPlayableForChild(plan, DateOnly.FromDateTime(DateTime.UtcNow)))
+            return Problem(statusCode: 403, detail: "Dieser Lehrplan ist gerade nicht aktiv. Frag deinen Vater.");
         var pos = await GetPosition(planId, positionId);
         if (pos?.Exercise is null) return NotFound();
 

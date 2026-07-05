@@ -23,16 +23,16 @@ namespace Pugling.Api.Controllers.Learn;
 public class StudyPlansController(PuglingDbContext db, AuthAccess access) : ControllerBase
 {
     public record PlanResponse(int Id, int ChildId, string Title, int? SubjectId,
-        DateOnly StartDate, DateOnly EndDate, bool Active, int PositionCount);
+        DateOnly StartDate, DateOnly EndDate, bool Active, int PositionCount, string? Description);
 
     /// <summary>In-Memory-Projektion für frisch erstellte Container (Positionen noch leer).</summary>
     private static PlanResponse Map(StudyPlan p) =>
-        new(p.Id, p.ChildId, p.Title, p.SubjectId, p.StartDate, p.EndDate, p.Active, p.Positions.Count);
+        new(p.Id, p.ChildId, p.Title, p.SubjectId, p.StartDate, p.EndDate, p.Active, p.Positions.Count, p.Description);
 
     /// <summary>DB-Projektion inkl. Positions-Anzahl: EF übersetzt <c>p.Positions.Count</c> in eine COUNT-Subquery,
     /// ohne die Positions-Zeilen zu materialisieren.</summary>
     private static readonly Expression<Func<StudyPlan, PlanResponse>> ToResponse =
-        p => new PlanResponse(p.Id, p.ChildId, p.Title, p.SubjectId, p.StartDate, p.EndDate, p.Active, p.Positions.Count);
+        p => new PlanResponse(p.Id, p.ChildId, p.Title, p.SubjectId, p.StartDate, p.EndDate, p.Active, p.Positions.Count, p.Description);
 
     /// <summary>Lehrpläne auflisten. Sohn sieht nur eigene, Vater nur die seiner Kinder.</summary>
     [HttpGet]
@@ -41,7 +41,10 @@ public class StudyPlansController(PuglingDbContext db, AuthAccess access) : Cont
         IQueryable<StudyPlan> scoped = db.StudyPlans.AsNoTracking();
         if (User.IsChild())
         {
-            scoped = scoped.Where(p => p.ChildId == User.ChildId());
+            // Der Sohn sieht nur seinen einen spielbaren Plan (aktiv + in Laufzeit); inaktive/abgelaufene
+            // bleiben verborgen, damit er sich keinen leichten Plan zum Punktesammeln aussuchen kann.
+            var today = DateOnly.FromDateTime(DateTime.UtcNow);
+            scoped = scoped.Where(p => p.ChildId == User.ChildId() && p.Active && p.StartDate <= today && p.EndDate >= today);
         }
         else
         {
@@ -63,7 +66,8 @@ public class StudyPlansController(PuglingDbContext db, AuthAccess access) : Cont
         return plan is null ? NotFound() : plan;
     }
 
-    public record CreatePlanDto(int ChildId, string Title, int? SubjectId, DateOnly? StartDate, int DurationDays);
+    public record CreatePlanDto(int ChildId, string Title, int? SubjectId, DateOnly? StartDate, int DurationDays,
+        string? Description = null);
 
     /// <summary>Erstellt einen leeren Lehrplan-Container (nur Vater, nur für eigene Kinder).</summary>
     [HttpPost]
@@ -85,18 +89,31 @@ public class StudyPlansController(PuglingDbContext db, AuthAccess access) : Cont
         {
             ChildId = dto.ChildId,
             Title = dto.Title.Trim(),
+            Description = string.IsNullOrWhiteSpace(dto.Description) ? null : dto.Description.Trim(),
             SubjectId = dto.SubjectId,
             StartDate = start,
             EndDate = start.AddDays(duration - 1),
         };
         db.StudyPlans.Add(plan);
         await db.SaveChangesAsync();
+        // Invariante „höchstens ein aktiver Plan je Kind": ein neuer (per Default aktiver) Plan wird zum
+        // einzig spielbaren – die bisherigen des Kindes werden stillgelegt.
+        if (plan.Active) await DeactivateSiblingPlansAsync(plan.ChildId, plan.Id);
         return CreatedAtAction(nameof(Get), new { planId = plan.Id }, Map(plan));
     }
 
-    public record UpdatePlanDto(string? Title, int? SubjectId, DateOnly? StartDate, DateOnly? EndDate, bool? Active);
+    /// <summary>
+    /// Erzwingt „höchstens ein aktiver Plan je Kind": deaktiviert alle anderen Pläne des Kindes.
+    /// So kann der Sohn nicht zwischen mehreren aktiven Plänen den leichtesten wählen (Anti-Schummel).
+    /// </summary>
+    private Task DeactivateSiblingPlansAsync(int childId, int keepPlanId) =>
+        db.StudyPlans.Where(p => p.ChildId == childId && p.Id != keepPlanId && p.Active)
+            .ExecuteUpdateAsync(s => s.SetProperty(p => p.Active, false));
 
-    /// <summary>Ändert den Lehrplan-Container (partiell, nur Vater/eigener).</summary>
+    public record UpdatePlanDto(string? Title, int? SubjectId, DateOnly? StartDate, DateOnly? EndDate, bool? Active,
+        string? Description = null, int? ChildId = null);
+
+    /// <summary>Ändert den Lehrplan-Container (partiell, nur Vater/eigener). <see cref="UpdatePlanDto.ChildId"/> weist den Plan einem anderen eigenen Kind zu.</summary>
     [HttpPatch("{planId:int}")]
     [Authorize(Roles = Roles.Vater)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -108,7 +125,14 @@ public class StudyPlansController(PuglingDbContext db, AuthAccess access) : Cont
         var plan = await db.StudyPlans.FirstOrDefaultAsync(p => p.Id == planId);
         if (plan is null) return NotFound();
 
+        // Umzuweisung an ein anderes Kind: nur an ein eigenes Kind des Vaters (sonst 404, wie beim Anlegen).
+        if (dto.ChildId is { } newChildId && newChildId != plan.ChildId)
+        {
+            if (!await access.FatherOwnsChildAsync(User, newChildId)) return Problem(statusCode: 404, detail: "Kind nicht gefunden.");
+            plan.ChildId = newChildId;
+        }
         if (dto.Title is not null && dto.Title.Trim().Length > 0) plan.Title = dto.Title.Trim();
+        if (dto.Description is not null) plan.Description = dto.Description.Trim() is { Length: > 0 } d ? d : null;
         if (dto.SubjectId is { } sid)
         {
             if (!await db.Subjects.AnyAsync(s => s.Id == sid)) return Problem(statusCode: 400, detail: "Fach nicht gefunden.");
@@ -118,9 +142,11 @@ public class StudyPlansController(PuglingDbContext db, AuthAccess access) : Cont
         if (dto.EndDate is not null) plan.EndDate = dto.EndDate.Value;
         if (dto.Active is not null) plan.Active = dto.Active.Value;
         await db.SaveChangesAsync();
+        // Nach Aktivierung oder Umzug die Invariante „ein aktiver Plan je Kind" wiederherstellen.
+        if (plan.Active) await DeactivateSiblingPlansAsync(plan.ChildId, plan.Id);
         var positionCount = await db.PlanPositions.CountAsync(pp => pp.StudyPlanId == planId);
         return new PlanResponse(plan.Id, plan.ChildId, plan.Title, plan.SubjectId,
-            plan.StartDate, plan.EndDate, plan.Active, positionCount);
+            plan.StartDate, plan.EndDate, plan.Active, positionCount, plan.Description);
     }
 
     /// <summary>

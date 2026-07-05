@@ -31,21 +31,23 @@ public class ExercisePreviewController(PuglingDbContext db, ExercisePreviewServi
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<ExercisePreviewService.PreviewData>> Get(int id)
+    public async Task<ActionResult<ExercisePreviewService.PreviewData>> Get(int id, [FromQuery] int? stage = null)
     {
         var exercise = await db.Exercises.AsNoTracking().FirstOrDefaultAsync(e => e.Id == id);
         if (exercise is null) return NotFound();
 
-        var data = await preview.BuildAsync(exercise);
+        // Optionaler stage-Parameter: der Vater probiert eine bestimmte Abfrageform durch (sonst Übungs-Standard).
+        var data = await preview.BuildAsync(exercise, stage);
         if (data is null) return Problem(statusCode: 400, detail: "Die Übung enthält keine prüfbaren Inhalte.");
         return data;
     }
 
-    /// <summary>Body des Testmodus-Checks: die abgegebenen Antworten.</summary>
-    public record CheckDto(List<ExercisePreviewService.PreviewAnswer> Answers);
+    /// <summary>Body des Testmodus-Checks: die abgegebenen Antworten und – falls umgeschaltet – die Abfrageform.</summary>
+    public record CheckDto(List<ExercisePreviewService.PreviewAnswer> Answers, int? Stage = null);
 
     /// <summary>
     /// Bewertet die Antworten wie im echten Test (server-autoritativ), aber ohne jede Persistenz oder Punktevergabe.
+    /// Die Stufe muss dieselbe sein wie beim Laden (<see cref="Get"/>), damit „getippt" nicht auseinanderdriftet.
     /// </summary>
     [HttpPost("check")]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -55,7 +57,7 @@ public class ExercisePreviewController(PuglingDbContext db, ExercisePreviewServi
         var exercise = await db.Exercises.AsNoTracking().FirstOrDefaultAsync(e => e.Id == id);
         if (exercise is null) return NotFound();
 
-        var result = await preview.CheckAsync(exercise, dto.Answers ?? []);
+        var result = await preview.CheckAsync(exercise, dto.Answers ?? [], dto.Stage);
         if (result is null) return Problem(statusCode: 400, detail: "Die Übung enthält keine prüfbaren Inhalte.");
         return result;
     }

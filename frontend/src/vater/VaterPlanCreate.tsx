@@ -20,6 +20,7 @@ export function VaterPlanCreate() {
   const children = useAsync<ChildResponse[]>(() => api.children(), [session!.id]);
 
   const [title, setTitle] = useState("Englisch – Unit 1");
+  const [description, setDescription] = useState("");
   const [childId, setChildId] = useState<number | "">("");
   const [durationDays, setDurationDays] = useState(10);
   const [startDate, setStartDate] = useState(todayIso());
@@ -36,7 +37,7 @@ export function VaterPlanCreate() {
     setError(null);
     if (!childId) { setError("Bitte ein Kind wählen."); return; }
     setBusy(true);
-    const dto: CreatePlanDto = { childId: Number(childId), title: title.trim(), durationDays, startDate };
+    const dto: CreatePlanDto = { childId: Number(childId), title: title.trim(), description: description.trim() || null, durationDays, startDate };
     try {
       const plan = await api.createPlan(dto);
       nav(`/vater/plan/${plan.id}`);
@@ -65,6 +66,11 @@ export function VaterPlanCreate() {
           </div>
           <div className="field"><label>Start</label><input title="Startdatum" type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} /></div>
           <div className="field"><label>Dauer (Tage)</label><input title="Dauer in Tagen" type="number" min={1} value={durationDays} onChange={(e) => setDurationDays(Number(e.target.value))} /></div>
+        </div>
+        <div className="field" style={{ marginTop: 10 }}>
+          <label>Beschreibung <span className="muted">(optional)</span></label>
+          <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={2}
+            placeholder="Ziel/Umfang des Plans – hilft beim Wiederfinden." />
         </div>
       </section>
 

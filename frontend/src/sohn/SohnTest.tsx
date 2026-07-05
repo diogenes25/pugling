@@ -4,11 +4,12 @@ import { api, errorMessage } from "../lib/api";
 import { useSohn } from "./SohnApp";
 import { Mascot } from "../components/Mascot";
 import { LetterBoxes } from "../components/LetterBoxes";
+import { AudioButton } from "../components/AudioButton";
 import type { AnswerDto, TestAttemptResponse, TestSubmitResponse } from "../lib/types";
 
 // Vokabel-Teststufen (numerisch, serverseitig erzwungen): 1 Zeigen … 5 Hören.
 const STAGE_LABEL: Record<number, string> = {
-  1: "Zeigen", 2: "Selbstcheck", 3: "Buchstaben", 4: "Tippen", 5: "Hören",
+  1: "Zeigen", 2: "Selbstcheck", 3: "Buchstaben", 4: "Tippen", 5: "Hören", 6: "Auswahl",
 };
 const stageLabel = (s: number) => STAGE_LABEL[s] ?? `Stufe ${s}`;
 
@@ -94,10 +95,21 @@ export function SohnTest() {
         const a = answers[it.itemIndex];
         return (
           <div className="card" key={it.itemIndex}>
-            <b style={{ fontSize: 17 }}>{it.prompt}</b>
+            {/* Hör-Stufe: Wort vorlesen statt zeigen (sonst wäre „Hören → tippen" keine Höraufgabe). */}
+            {it.audioUrl
+              ? <AudioButton url={it.audioUrl} label="🔊 Vokabel anhören" />
+              : <b style={{ fontSize: 17 }}>{it.prompt}</b>}
 
             {typed ? (
-              it.answerLength ? (
+              it.choices ? (
+                <div className="row" style={{ marginTop: 10, gap: 8, flexWrap: "wrap" }}>
+                  {it.choices.map((c) => (
+                    <button type="button" key={c}
+                      className={`btn small ${a?.givenAnswer === c ? "lime" : "ghost"}`}
+                      onClick={() => setText(it.itemIndex, c)}>{c}</button>
+                  ))}
+                </div>
+              ) : it.answerLength ? (
                 <div style={{ marginTop: 10 }}>
                   <LetterBoxes length={it.answerLength} value={a?.givenAnswer ?? ""}
                     onChange={(v) => setText(it.itemIndex, v)} />
