@@ -12,7 +12,7 @@ namespace Pugling.Api.Controllers.Learn;
 /// Üben einer einzelnen Lehrplan-Position (neues Modell): der Sohn spielt die Inhalte EINER Übung,
 /// der Fortschritt läuft pro Inhalts-Atom über <see cref="PositionItemProgress"/>. Inhalt kommt aus der
 /// Übungs-Config (<see cref="ExerciseContentProvider"/>), bewertet wird typ-neutral gegen die Item-Lösung.
-/// Läuft parallel zum plan-weiten <see cref="PracticeSessionsController"/> (Strangler).
+/// Ersetzt die frühere plan-weite Übungssitzung.
 /// </summary>
 [ApiController]
 [ApiVersion("1.0")]
