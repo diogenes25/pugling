@@ -65,23 +65,39 @@ public class VocabularyStoreController(PuglingDbContext db) : ControllerBase
         return v is null ? NotFound() : Map(v);
     }
 
-    public record CreateVocabularyDto(string Key, string SourceLanguage, string TargetLanguage,
-        string Word, string Translation, PartOfSpeech PartOfSpeech, string? Version = null,
+    /// <summary>
+    /// Anlegen einer Vokabel. „Einfach" genügt Word/Translation (+ Sprachen): <see cref="Key"/> darf leer
+    /// bleiben (der Server generiert einen eindeutigen Slug) und <see cref="PartOfSpeech"/> darf entfallen
+    /// (Default <see cref="Models.PartOfSpeech.Other"/>). „Komplex" füllt zusätzlich Noun/Verb/BaseForm/Audio;
+    /// fehlende Details lassen sich später per PATCH nachliefern.
+    /// </summary>
+    public record CreateVocabularyDto(string? Key, string SourceLanguage, string TargetLanguage,
+        string Word, string Translation, PartOfSpeech? PartOfSpeech = null, string? Version = null,
         NounInfo? Noun = null, VerbInfo? Verb = null, string? BaseFormKey = null,
         string? PronunciationAudioUrl = null);
 
-    /// <summary>Erstellt eine Vokabel. Key muss eindeutig sein; BaseFormKey (falls gesetzt) muss existieren.</summary>
+    /// <summary>Erstellt eine Vokabel. Fehlt der Key, wird ein eindeutiger generiert; BaseFormKey (falls gesetzt) muss existieren.</summary>
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<ActionResult<VocabularyResponse>> Create(CreateVocabularyDto dto)
     {
-        if (string.IsNullOrWhiteSpace(dto.Key)) return Problem(statusCode: 400, detail: "Key ist erforderlich.");
         if (string.IsNullOrWhiteSpace(dto.Word) || string.IsNullOrWhiteSpace(dto.Translation))
             return Problem(statusCode: 400, detail: "Word und Translation sind erforderlich.");
-        if (await db.Vocabulary.AnyAsync(v => v.Key == dto.Key))
-            return Problem(statusCode: 409, detail: $"Key '{dto.Key}' existiert bereits.");
+
+        // Key: entweder vom Client (muss eindeutig sein) oder serverseitig aus Wort/Übersetzung generiert.
+        string key;
+        if (string.IsNullOrWhiteSpace(dto.Key))
+        {
+            key = await UniqueKeyAsync(VocabKey.Generate(dto.SourceLanguage, dto.Word, dto.TargetLanguage, dto.Translation));
+        }
+        else
+        {
+            key = dto.Key.Trim();
+            if (await db.Vocabulary.AnyAsync(v => v.Key == key))
+                return Problem(statusCode: 409, detail: $"Key '{key}' existiert bereits.");
+        }
 
         int? baseFormId = null;
         if (!string.IsNullOrWhiteSpace(dto.BaseFormKey))
@@ -93,13 +109,13 @@ public class VocabularyStoreController(PuglingDbContext db) : ControllerBase
 
         var vocab = new Vocabulary
         {
-            Key = dto.Key.Trim(),
+            Key = key,
             Version = string.IsNullOrWhiteSpace(dto.Version) ? "1.0" : dto.Version,
             SourceLanguage = dto.SourceLanguage,
             TargetLanguage = dto.TargetLanguage,
             Word = dto.Word,
             Translation = dto.Translation,
-            PartOfSpeech = dto.PartOfSpeech,
+            PartOfSpeech = dto.PartOfSpeech ?? Models.PartOfSpeech.Other,
             Noun = dto.Noun,
             Verb = dto.Verb,
             BaseFormId = baseFormId,
@@ -110,6 +126,18 @@ public class VocabularyStoreController(PuglingDbContext db) : ControllerBase
 
         await db.Entry(vocab).Reference(v => v.BaseForm).LoadAsync();
         return CreatedAtAction(nameof(Get), new { id = vocab.Id }, Map(vocab));
+    }
+
+    /// <summary>Macht einen generierten Basiskey eindeutig, indem bei Kollision _2, _3 … angehängt wird.</summary>
+    private async Task<string> UniqueKeyAsync(string baseKey)
+    {
+        var key = string.IsNullOrWhiteSpace(baseKey) ? "vokabel" : baseKey;
+        if (!await db.Vocabulary.AnyAsync(v => v.Key == key)) return key;
+        for (var n = 2; ; n++)
+        {
+            var candidate = $"{key}_{n}";
+            if (!await db.Vocabulary.AnyAsync(v => v.Key == candidate)) return candidate;
+        }
     }
 
     /// <summary>Nur gesetzte Felder werden geändert. BaseFormKey = "" hebt die Verknüpfung auf.</summary>

@@ -8,11 +8,18 @@ namespace Pugling.Api.Models;
 /// <summary>Frage mit optionalen Antwortmöglichkeiten (leer = Freitext).</summary>
 public record Question(string Prompt, List<string>? Choices, string Answer);
 
-/// <summary>Vokabelübung.</summary>
+/// <summary>
+/// Vokabelübung. Bevorzugt verweist sie über <see cref="Refs"/> (Store-Keys) auf den Vokabel-Komplextyp,
+/// damit dieselbe Vokabel über mehrere Übungen hinweg verknüpft und zentral pflegbar ist. <see cref="Items"/>
+/// (inline) bleibt für Abwärtskompatibilität (Alt-/Seed-Übungen); der Resolver liest beide Formen.
+/// </summary>
 public class VocabularyConfig
 {
     /// <summary>Abfragerichtung: front-to-back | back-to-front | both.</summary>
     public string Direction { get; set; } = "front-to-back";
+    /// <summary>Referenzen auf Vokabel-Store-Einträge per Key (bevorzugt).</summary>
+    public List<string>? Refs { get; set; }
+    /// <summary>Inline-Vokabeln (Legacy/ohne Store-Bezug).</summary>
     public List<VocabItem> Items { get; set; } = new();
 }
 public record VocabItem(string Front, string Back, string? Hint = null);

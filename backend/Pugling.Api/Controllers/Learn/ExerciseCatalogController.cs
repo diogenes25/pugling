@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -70,5 +71,73 @@ public class ExerciseCatalogController(PuglingDbContext db) : ControllerBase
             .Select(e => new ExerciseSummary(e.Id, e.ChapterId, e.Chapter!.SubjectId, e.Type.ToString(), e.Title,
                 e.GradeMin, e.GradeMax, e.SchoolTypes, e.Source, e.CategoryId, e.Category!.Name))
             .ToListAsync();
+    }
+
+    private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
+
+    /// <summary>
+    /// Vollständige, typ-übergreifende Sicht auf eine Übung inklusive roher Config und aller Metadaten –
+    /// die Grundlage zum Bearbeiten (Config in den typ-spezifischen Editor laden; gespeichert wird über
+    /// den per-Typ-PUT <c>.../chapters/{}/&lt;typ&gt;/{id}</c>).
+    /// </summary>
+    public record ExerciseDetail(int Id, int ChapterId, string ChapterName, int SubjectId, string SubjectName,
+        string Type, string Title, int OrderIndex, int RewardPoints, int? GradeMin, int? GradeMax,
+        SchoolTypes SchoolTypes, string? Source, int? CategoryId, string? CategoryName,
+        SuggestedBonus? SuggestedBonus, int? DefaultStage, int? DefaultItemCount, JsonElement Config);
+
+    /// <summary>Eine einzelne Übung typ-übergreifend per Id (mit Config + Metadaten).</summary>
+    [HttpGet("{id:int}")]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<ExerciseDetail>> Get(int id)
+    {
+        var e = await db.Exercises.AsNoTracking()
+            .Include(x => x.Chapter!).ThenInclude(c => c.Subject)
+            .Include(x => x.Category)
+            .FirstOrDefaultAsync(x => x.Id == id);
+        if (e is null) return NotFound();
+
+        return new ExerciseDetail(e.Id, e.ChapterId, e.Chapter?.Name ?? "", e.Chapter?.SubjectId ?? 0,
+            e.Chapter?.Subject?.Name ?? "", e.Type.ToString(), e.Title, e.OrderIndex, e.RewardPoints,
+            e.GradeMin, e.GradeMax, e.SchoolTypes, e.Source, e.CategoryId, e.Category?.Name,
+            e.SuggestedBonus, e.DefaultStage, e.DefaultItemCount,
+            JsonSerializer.Deserialize<JsonElement>(string.IsNullOrWhiteSpace(e.ConfigJson) ? "{}" : e.ConfigJson, JsonOptions));
+    }
+
+    public record PlanUsage(int PlanId, string PlanTitle, int ChildId, string ChildName);
+    public record ClassTestUsage(int Id, string Title, int ChildId, string ChildName);
+    /// <summary>Wo eine Übung verwendet wird (nur Ressourcen der eigenen Kinder).</summary>
+    public record UsageResponse(IReadOnlyList<PlanUsage> Plans, IReadOnlyList<ClassTestUsage> ClassTests);
+
+    /// <summary>
+    /// In welchen Lehrplänen und Klassenarbeiten (welcher eigenen Kinder) eine Übung steckt.
+    /// Lehrpläne über das neue Positions-Modell (<see cref="PlanPosition"/>); Klassenarbeiten direkt
+    /// zugewiesen ODER über einen gemeinsamen Tag. Hinweis: das alte StudyPlanItem-Modell trägt keine
+    /// Übungs-Referenz und wird daher nicht erfasst.
+    /// </summary>
+    [HttpGet("{id:int}/usage")]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<UsageResponse>> Usage(int id)
+    {
+        if (!await db.Exercises.AnyAsync(e => e.Id == id)) return NotFound();
+        var fid = User.FatherId();
+
+        var plans = (await db.PlanPositions.AsNoTracking()
+                .Where(p => p.ExerciseId == id && p.StudyPlan!.Child!.FatherId == fid)
+                .Select(p => new PlanUsage(p.StudyPlanId, p.StudyPlan!.Title, p.StudyPlan.ChildId, p.StudyPlan.Child!.Name))
+                .ToListAsync())
+            .DistinctBy(u => u.PlanId).ToList();
+
+        // Klassenarbeit gilt als Nutzer, wenn die Übung direkt zugewiesen ist oder einen ihr zugeordneten Tag trägt.
+        var directTestIds = db.KlassenarbeitExercises.Where(x => x.ExerciseId == id).Select(x => x.KlassenarbeitId);
+        var tagTestIds = db.KlassenarbeitTags
+            .Where(kt => db.ExerciseTags.Any(et => et.ExerciseId == id && et.TagId == kt.TagId))
+            .Select(kt => kt.KlassenarbeitId);
+        var testIds = directTestIds.Union(tagTestIds);
+        var classTests = await db.Klassenarbeiten.AsNoTracking()
+            .Where(k => testIds.Contains(k.Id) && k.Child!.FatherId == fid)
+            .Select(k => new ClassTestUsage(k.Id, k.Title, k.ChildId, k.Child!.Name))
+            .ToListAsync();
+
+        return new UsageResponse(plans, classTests);
     }
 }
