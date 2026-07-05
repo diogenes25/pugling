@@ -81,4 +81,32 @@ public class PlanPositionCrudTests(PuglingWebAppFactory factory) : IClassFixture
         var res = await father.PostAsJsonAsync($"/api/v1/study-plans/{planId}/positions", new { exerciseId = 999999 });
         Assert.Equal(HttpStatusCode.BadRequest, res.StatusCode);
     }
+
+    [Fact]
+    public async Task Plan_Loeschen_EntferntPlanMitGespielterPosition()
+    {
+        var father = await TestApi.FatherAsync(_factory);
+        var (_, key) = await TestApi.CreateStoreVocabAsync(father, "summer", "Sommer");
+        var exerciseId = await TestApi.CreateVocabRefExerciseAsync(father, key);
+        var planId = await EmptyPlanAsync(father);
+        var posId = await TestApi.IdAsync(await father.PostAsJsonAsync(
+            $"/api/v1/study-plans/{planId}/positions", new { exerciseId, useLeitner = true, stage = (int)TestStage.FreeText }));
+
+        // Position bespielen → Session/Progress vorhanden (blockiert Positions-DELETE, aber nicht Plan-DELETE).
+        var child = await TestApi.ChildAsync(_factory);
+        var baseUrl = $"/api/v1/study-plans/{planId}/positions/{posId}/practice-sessions";
+        var sessionId = await TestApi.IdAsync(await child.PostAsJsonAsync(baseUrl, new { }));
+        await child.PostAsJsonAsync($"{baseUrl}/{sessionId}/review", new { itemIndex = 0, givenAnswer = "Sommer" });
+
+        // Der ganze Plan lässt sich löschen (kaskadiert Positionen/Fortschritt/Sitzungen).
+        var del = await father.DeleteAsync($"/api/v1/study-plans/{planId}");
+        Assert.Equal(HttpStatusCode.NoContent, del.StatusCode);
+
+        // Danach ist der Plan (und damit die Positionsliste) weg → 404 über den Ownership-Filter.
+        var after = await father.GetAsync($"/api/v1/study-plans/{planId}/positions");
+        Assert.Equal(HttpStatusCode.NotFound, after.StatusCode);
+
+        // Die referenzierte Katalog-Übung bleibt erhalten.
+        Assert.Equal(HttpStatusCode.OK, (await father.GetAsync($"/api/v1/learn/exercises/{exerciseId}")).StatusCode);
+    }
 }

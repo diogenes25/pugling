@@ -220,6 +220,25 @@ public class StudyPlansController(PuglingDbContext db, StudyProgressService prog
         return (await Project(planId))!;
     }
 
+    /// <summary>
+    /// Löscht einen ganzen Lehrplan (nur Vater/eigener). Entfernt per Kaskade seine Positionen inkl.
+    /// Fortschritt, Alt-Items, Übungssitzungen, Testversuche und Tagesbelohnungen. Die referenzierten
+    /// Katalog-Übungen und Vokabeln bleiben unberührt (sie gehören dem kindneutralen Katalog, nicht dem Plan).
+    /// </summary>
+    [HttpDelete("{planId:int}")]
+    [Authorize(Roles = Roles.Vater)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> Delete(int planId)
+    {
+        var plan = await db.StudyPlans.FirstOrDefaultAsync(p => p.Id == planId);
+        if (plan is null) return NotFound();
+        db.StudyPlans.Remove(plan);
+        await db.SaveChangesAsync();
+        return NoContent();
+    }
+
     /// <summary>Entfernt einen Inhalt aus dem Lehrplan (nur Vater/eigener).</summary>
     [HttpDelete("{planId:int}/items/{itemId:int}")]
     [Authorize(Roles = Roles.Vater)]
