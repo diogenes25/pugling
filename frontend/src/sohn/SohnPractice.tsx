@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { api, errorMessage } from "../lib/api";
 import { useSohn } from "./SohnApp";
+import { LetterBoxes } from "../components/LetterBoxes";
 import type { PracticeCard, PositionSession, ReviewOutcome } from "../lib/types";
 
 // Kleine Anerkennung bei jedem Treffer – Variation sorgt für Abwechslung (Daumen, Stern, Feuer, Muskel).
@@ -24,6 +25,17 @@ export function SohnPractice() {
   const [earned, setEarned] = useState(0);
   const [toast, setToast] = useState<string | null>(null);
   const [lastOutcome, setLastOutcome] = useState<ReviewOutcome | null>(null);
+  // Abwechslung: Tipp erst auf Wunsch aufdecken; Tempo-Modus (persistiert) blendet eine Countdown-Leiste ein.
+  const [hintShown, setHintShown] = useState(false);
+  const [tempo, setTempo] = useState(() => localStorage.getItem("pugling.tempo") === "1");
+
+  function toggleTempo() {
+    setTempo((t) => {
+      const next = !t;
+      localStorage.setItem("pugling.tempo", next ? "1" : "0");
+      return next;
+    });
+  }
 
   const session = useRef<PositionSession | null>(null);
   const startedIso = useRef<number>(Date.now());
@@ -93,6 +105,7 @@ export function SohnPractice() {
 
   function next() {
     setTypedAnswer("");
+    setHintShown(false);
     if (idx + 1 >= cards.length) {
       if (planId) api.overview(planId).then((o) => setStreak(o.currentStreak)).catch(() => {});
       setPhase("done");
@@ -133,33 +146,52 @@ export function SohnPractice() {
 
   const card = cards[idx];
   const typed = card.reveal === null; // getippte Stufe → Eingabe; sonst Flip-Karte (Selbsteinschätzung)
+  const submitTyped = () => { if (typedAnswer.trim()) judge(card, { givenAnswer: typedAnswer }); };
   return (
     <div className="sohn-body">
       <div className="row">
         <span className="pill cyan">Karte {idx + 1} / {cards.length}</span>
-        {combo >= 2 && <span className="pill mag" style={{ marginLeft: "auto" }}>⚡ COMBO ×{combo}</span>}
+        <span className="row" style={{ marginLeft: "auto", gap: 8 }}>
+          {combo >= 2 && <span className="pill mag">⚡ COMBO ×{combo}</span>}
+          <button type="button" className={`pill toggle-pill ${tempo ? "lime" : ""}`} onClick={toggleTempo} aria-pressed={tempo}>
+            ⚡ Tempo
+          </button>
+        </span>
       </div>
+
+      {/* Tempo-Modus: Countdown-Leiste je Karte (rein visueller Ansporn; der Schnell-Bonus zählt serverseitig). */}
+      {tempo && typed && phase !== "back" && <div className="tempo-bar" key={idx}><i /></div>}
 
       <div className="flash">
         <div className="fcard">
           <div className="lang">Aufgabe</div>
           <div className="word">{card.prompt}</div>
-          {card.hint && typed && <div className="sub">💡 {card.hint}</div>}
+          {card.hint && typed && (
+            hintShown
+              ? <div className="sub">💡 {card.hint}</div>
+              : <button type="button" className="btn ghost small" style={{ marginTop: 6 }} onClick={() => setHintShown(true)}>💡 Tipp</button>
+          )}
           {phase === "back" && card.reveal && <div className="rev">→ {card.reveal}</div>}
         </div>
 
         {typed ? (
-          <form onSubmit={(e) => { e.preventDefault(); if (typedAnswer.trim()) judge(card, { givenAnswer: typedAnswer }); }}>
-            <input
-              autoFocus
-              className="tabnum"
-              style={{ width: "100%", background: "#0c0e2c", border: "1.5px solid var(--stroke)", borderRadius: 12, color: "var(--ink)", padding: 12, fontSize: 15 }}
-              placeholder={card.answerLength ? `${card.answerLength} Buchstaben` : "Antwort…"}
-              value={typedAnswer}
-              onChange={(e) => setTypedAnswer(e.target.value)}
-            />
-            <button type="submit" className="btn lime" style={{ marginTop: 10 }} disabled={!typedAnswer.trim()}>Prüfen</button>
-          </form>
+          <div>
+            {card.answerLength ? (
+              <LetterBoxes length={card.answerLength} value={typedAnswer} onChange={setTypedAnswer} onSubmit={submitTyped} />
+            ) : (
+              <form onSubmit={(e) => { e.preventDefault(); submitTyped(); }}>
+                <input
+                  autoFocus
+                  className="tabnum"
+                  style={{ width: "100%", background: "#0c0e2c", border: "1.5px solid var(--stroke)", borderRadius: 12, color: "var(--ink)", padding: 12, fontSize: 15 }}
+                  placeholder="Antwort…"
+                  value={typedAnswer}
+                  onChange={(e) => setTypedAnswer(e.target.value)}
+                />
+              </form>
+            )}
+            <button type="button" className="btn lime" style={{ marginTop: 10 }} disabled={!typedAnswer.trim()} onClick={submitTyped}>Prüfen</button>
+          </div>
         ) : phase === "front" ? (
           <button type="button" className="btn" onClick={() => setPhase("back")}>Umdrehen 🔄</button>
         ) : (
