@@ -52,16 +52,22 @@ Rollen im SPA: `/` Produktseite, `/vater` Web-Admin (inkl. `/vater/wizard` Lehrp
   `Subject → Chapter → Exercise` (typisiert, Config als JSON). Ein Controller je `ExerciseType`,
   erben CRUD aus `ExerciseControllerBase<TConfig>`. Route: `api/v1/learn/subjects/{}/chapters/{}/<typ>`.
 - **Lehrplan/Training** ([StudyPlansController](backend/Pugling.Api/Controllers/Learn/StudyPlansController.cs)):
-  `StudyPlan` (verfahrensneutral) mit `StudyPlanItem`s → Vokabel- bzw. Lückentext-Store.
-  `PracticeSession` (Übungszeit/Leitner), `TestAttempt` (mehrstufige Abschlusstests).
-  Route: `api/v1/study-plans/{planId}/…`.
+  `StudyPlan` ist ein **reiner Container** (`ChildId, Title, Start/End, Active`). Inhalt sind
+  `PlanPosition`s ([PlanPositionsController](backend/Pugling.Api/Controllers/Learn/PlanPositionsController.cs)),
+  die je auf eine Katalog-`Exercise` verweisen und **eigenes** Ziel (Rhythmus Tag/Woche + Schwelle),
+  Punkte, Stufe und Leitner tragen. Gespielt wird pro Position: `PositionPracticeController` (Üben/Leitner)
+  + `PositionTestsController` (Abschlusstest); Inhalt kommt aus der Übungs-Config (`ExerciseContentProvider`),
+  Leitner-Fortschritt materialisiert je Inhalts-Atom in `PositionItemProgress`. Tagesmission/Verlauf über
+  `PlanOverviewController` (`…/overview` + `…/overview/progress`). Route: `api/v1/study-plans/{planId}/…`.
+  Das alte plan-weite `StudyPlanItem`/`Method`-Modell wurde vollständig entfernt (kein Legacy mehr).
 - **Tags & Klassenarbeiten** ([KlassenarbeitenController](backend/Pugling.Api/Controllers/Learn/KlassenarbeitenController.cs)):
   Übungen taggen, Arbeiten planen/benoten, gezielt üben/wiederholen. Route: `api/v1/class-tests`
   (Typnamen intern weiterhin `Klassenarbeit`).
-- **Services** ([Services/](backend/Pugling.Api/Services/)): `StudyProgressService` (Tages-Auswertung +
-  idempotente Punkte), `ScheduleService` (Stundenplan-Auswahl neu/Wiederholung), `TestAttemptService`
-  (gemeinsamer Test-Lebenszyklus), `ScoringService` (die eine Stelle für Review-Punkte: Basis × Zeitfenster
-  plus Ereignis-Boni wie Combo/Schnelle Antwort; jede Buchung trägt einen `PointKind`),
+- **Services** ([Services/](backend/Pugling.Api/Services/)): `PositionPlayService` (Fälligkeit/Scope/Stufen +
+  Leitner-Terminierung je Position), `PositionProgressService` (Ziel-„erledigt"-Regel je `ExerciseCheckMode`,
+  idempotente Ziel-Punkte via `PositionGoalReward`, Tages-/Verlaufs-Rollup über Positionen), `ScoringService`
+  (die eine Stelle für Review-Punkte: Basis × Zeitfenster plus Ereignis-Boni wie Combo/Schnelle Antwort;
+  jede Buchung trägt einen `PointKind`; `StageMechanics` hält die geteilten Stufen-/Vergleichs-Statics),
   `MetricsService` (Fortschritts-Metriken aus den Tabellen) + `GamificationService` (Missionen &
   Auszeichnungen, idempotent belohnt; Vater-CRUD unter `api/v1/children/{}/missions|achievements`,
   Sohn-Sicht `api/v1/me/missions|achievements`).

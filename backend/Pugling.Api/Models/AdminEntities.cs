@@ -113,6 +113,8 @@ public enum PointKind
     SkinPurchase = 10,
     /// <summary>Einlösung von Münzen für eine reale Prämie (z. B. Fernseh-/Spielzeit; negative Buchung).</summary>
     Reward = 11,
+    /// <summary>Ziel einer Lehrplan-Position erreicht (Tages-/Wochenziel der Übung).</summary>
+    Goal = 12,
 }
 
 /// <summary>Punkte-Buchung eines Kindes (positiv = gutgeschrieben, negativ = eingelöst).</summary>

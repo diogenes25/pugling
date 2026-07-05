@@ -19,19 +19,20 @@ namespace Pugling.Api.Controllers.Learn;
 [Authorize]
 public class TagsController(PuglingDbContext db, AuthAccess access) : ControllerBase
 {
-    /// <summary>Tag in der Antwort inkl. Anzahl markierter Übungen.</summary>
+    /// <summary>Tag in der Antwort inkl. Anzahl markierter Übungen und Vokabeln.</summary>
     public record TagResponse(int Id, int ChildId, string Name, string? Color, TaggedBy CreatedBy,
-        int ExerciseCount, DateTime CreatedAt);
+        int ExerciseCount, int VocabularyCount, DateTime CreatedAt);
 
     private TaggedBy CurrentRole() => User.IsFather() ? TaggedBy.Vater : TaggedBy.Sohn;
 
     private static TagResponse Map(Tag t) =>
-        new(t.Id, t.ChildId, t.Name, t.Color, t.CreatedBy, t.ExerciseTags.Count, t.CreatedAt);
+        new(t.Id, t.ChildId, t.Name, t.Color, t.CreatedBy, t.ExerciseTags.Count, t.VocabularyTags.Count, t.CreatedAt);
 
-    /// <summary>Lädt einen Tag samt Links, sofern der Nutzer auf das zugehörige Kind zugreifen darf.</summary>
+    /// <summary>Lädt einen Tag samt Links (Übungen + Vokabeln), sofern der Nutzer auf das zugehörige Kind zugreifen darf.</summary>
     private async Task<Tag?> FindOwnedAsync(int tagId)
     {
-        var tag = await db.Tags.Include(t => t.ExerciseTags).FirstOrDefaultAsync(t => t.Id == tagId);
+        var tag = await db.Tags.Include(t => t.ExerciseTags).Include(t => t.VocabularyTags)
+            .FirstOrDefaultAsync(t => t.Id == tagId);
         if (tag is null) return null;
         return await access.OwnsChildAsync(User, tag.ChildId) ? tag : null;
     }
@@ -42,7 +43,7 @@ public class TagsController(PuglingDbContext db, AuthAccess access) : Controller
     public async Task<ActionResult<IEnumerable<TagResponse>>> List([FromQuery] int childId)
     {
         if (!await access.OwnsChildAsync(User, childId)) return Forbid();
-        var tags = await db.Tags.Include(t => t.ExerciseTags)
+        var tags = await db.Tags.Include(t => t.ExerciseTags).Include(t => t.VocabularyTags)
             .Where(t => t.ChildId == childId)
             .OrderBy(t => t.Name)
             .ToListAsync();
@@ -180,8 +181,83 @@ public class TagsController(PuglingDbContext db, AuthAccess access) : Controller
     public async Task<ActionResult<IEnumerable<TagResponse>>> ForExercise(int exerciseId, [FromQuery] int childId)
     {
         if (!await access.OwnsChildAsync(User, childId)) return Forbid();
-        var tags = await db.Tags.Include(t => t.ExerciseTags)
+        var tags = await db.Tags.Include(t => t.ExerciseTags).Include(t => t.VocabularyTags)
             .Where(t => t.ChildId == childId && t.ExerciseTags.Any(x => x.ExerciseId == exerciseId))
+            .OrderBy(t => t.Name)
+            .ToListAsync();
+        return tags.Select(Map).ToList();
+    }
+
+    // ---- Vokabeln taggen (kind-skopiert) -----------------------------------------------------------
+
+    /// <summary>Schlanke Vokabel-Sicht für die Tag-Zuordnung (ohne die kindneutralen Store-Details).</summary>
+    public record TaggedVocabularyDto(int Id, string Key, string Word, string Translation);
+
+    public record TagVocabularyDto(List<int> VocabularyIds);
+
+    /// <summary>Markiert eine oder mehrere Store-Vokabeln mit diesem Tag (bereits markierte werden übersprungen).</summary>
+    [HttpPost("{tagId:int}/vocabulary")]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<TagResponse>> TagVocabulary(int tagId, TagVocabularyDto dto)
+    {
+        var tag = await FindOwnedAsync(tagId);
+        if (tag is null) return NotFound();
+        if (dto.VocabularyIds is not { Count: > 0 }) return Problem(statusCode: 400, detail: "Mindestens eine Vokabel ist erforderlich.");
+
+        var ids = dto.VocabularyIds.Distinct().ToList();
+        var existing = await db.Vocabulary.Where(v => ids.Contains(v.Id)).Select(v => v.Id).ToListAsync();
+        var missing = ids.Except(existing).ToList();
+        if (missing.Count > 0) return Problem(statusCode: 400, detail: $"Unbekannte Vokabel-Ids: {string.Join(", ", missing)}");
+
+        var already = tag.VocabularyTags.Select(x => x.VocabularyId).ToHashSet();
+        foreach (var id in ids.Where(id => !already.Contains(id)))
+            tag.VocabularyTags.Add(new VocabularyTag { VocabularyId = id, TaggedByRole = CurrentRole() });
+
+        await db.SaveChangesAsync();
+        return Map(tag);
+    }
+
+    /// <summary>Entfernt die Markierung einer Vokabel mit diesem Tag (der Tag selbst bleibt bestehen).</summary>
+    [HttpDelete("{tagId:int}/vocabulary/{vocabularyId:int}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> UntagVocabulary(int tagId, int vocabularyId)
+    {
+        var tag = await FindOwnedAsync(tagId);
+        if (tag is null) return NotFound();
+        var link = tag.VocabularyTags.FirstOrDefault(x => x.VocabularyId == vocabularyId);
+        if (link is null) return NotFound();
+        db.VocabularyTags.Remove(link);
+        await db.SaveChangesAsync();
+        return NoContent();
+    }
+
+    /// <summary>Alle Vokabeln, die mit diesem Tag markiert sind (alphabetisch nach Key).</summary>
+    [HttpGet("{tagId:int}/vocabulary")]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<IEnumerable<TaggedVocabularyDto>>> GetVocabulary(int tagId)
+    {
+        var tag = await FindOwnedAsync(tagId);
+        if (tag is null) return NotFound();
+
+        return await db.VocabularyTags
+            .Where(x => x.TagId == tagId)
+            .Select(x => x.Vocabulary!)
+            .OrderBy(v => v.Key)
+            .Select(v => new TaggedVocabularyDto(v.Id, v.Key, v.Word, v.Translation))
+            .AsNoTracking()
+            .ToListAsync();
+    }
+
+    /// <summary>Die Tags, mit denen eine bestimmte Vokabel im Kontext eines Kindes markiert ist.</summary>
+    [HttpGet("for-vocabulary/{vocabularyId:int}")]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<ActionResult<IEnumerable<TagResponse>>> ForVocabulary(int vocabularyId, [FromQuery] int childId)
+    {
+        if (!await access.OwnsChildAsync(User, childId)) return Forbid();
+        var tags = await db.Tags.Include(t => t.ExerciseTags).Include(t => t.VocabularyTags)
+            .Where(t => t.ChildId == childId && t.VocabularyTags.Any(x => x.VocabularyId == vocabularyId))
             .OrderBy(t => t.Name)
             .ToListAsync();
         return tags.Select(Map).ToList();

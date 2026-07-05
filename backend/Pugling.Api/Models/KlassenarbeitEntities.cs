@@ -33,6 +33,7 @@ public class Tag
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     public List<ExerciseTag> ExerciseTags { get; set; } = new();
+    public List<VocabularyTag> VocabularyTags { get; set; } = new();
 }
 
 /// <summary>Verknüpft eine Katalog-Übung mit einem <see cref="Tag"/> und hält fest, wer sie gesetzt hat.</summary>
@@ -44,6 +45,24 @@ public class ExerciseTag
     public int ExerciseId { get; set; }
     public Exercise? Exercise { get; set; }
     /// <summary>Wer diese Übung mit dem Tag markiert hat (kann von <see cref="Tag.CreatedBy"/> abweichen).</summary>
+    public TaggedBy TaggedByRole { get; set; }
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+}
+
+/// <summary>
+/// Verknüpft eine Store-<see cref="Vocabulary"/> mit einem kind-skopierten <see cref="Tag"/> und hält fest,
+/// wer sie gesetzt hat. So markieren Vater/Sohn einzelne Vokabeln als relevant (z. B. für eine Klassenarbeit).
+/// <para>Nicht verwechseln mit dem globalen <see cref="VocabTag"/>/<see cref="VocabTagLink"/>: der ist
+/// kindneutral (Kapitel/Klasse/Thema), diese Verknüpfung trägt über den <see cref="Tag"/> den Kind-Kontext.</para>
+/// </summary>
+public class VocabularyTag
+{
+    public int Id { get; set; }
+    public int TagId { get; set; }
+    public Tag? Tag { get; set; }
+    public int VocabularyId { get; set; }
+    public Vocabulary? Vocabulary { get; set; }
+    /// <summary>Wer diese Vokabel mit dem Tag markiert hat (kann von <see cref="Tag.CreatedBy"/> abweichen).</summary>
     public TaggedBy TaggedByRole { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }

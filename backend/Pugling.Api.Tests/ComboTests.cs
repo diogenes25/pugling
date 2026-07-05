@@ -1,54 +1,42 @@
 using System.Net.Http.Json;
 using System.Text.Json;
+using Pugling.Api.Models;
 
 namespace Pugling.Api.Tests;
 
 /// <summary>
-/// Prüft den serverseitig gezählten Combo-Bonus und dass er über die Plan-Einstellungen
-/// (<c>ComboThreshold</c>/<c>ComboBonusPoints</c>) konfigurierbar bzw. abschaltbar ist.
+/// Prüft den serverseitig gezählten Combo-Bonus einer Lehrplan-Position und dass er über die
+/// Positions-Einstellungen (<c>ComboThreshold</c>/<c>ComboBonusPoints</c>) konfigurierbar bzw.
+/// abschaltbar ist. Stufe 2 = SelfAssess: ohne RequireTypedTest zählt das WasKnown-Flag voll.
 /// </summary>
 public class ComboTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWebAppFactory>
 {
-    private static async Task<int> LeitnerPlanAsync(HttpClient father, int? threshold, int? bonus) =>
-        await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/study-plans", new
-        {
-            childId = 1,
-            title = "Combo-Plan",
-            method = "Vocabulary",
-            durationDays = 5,
-            contentKeys = new[] { "en_house_de_haus", "en_go_de_gehen" },
-            useLeitner = true,
-            comboThreshold = threshold,
-            comboBonusPoints = bonus,
-        }));
-
-    private static async Task<(int session, List<int> contentIds)> StartSessionAsync(HttpClient child, int planId)
-    {
-        var plan = await (await child.GetAsync($"/api/v1/study-plans/{planId}")).Content.ReadFromJsonAsync<JsonElement>();
-        var ids = plan.GetProperty("items").EnumerateArray().Select(i => i.GetProperty("contentId").GetInt32()).ToList();
-        var sid = (await (await child.PostAsJsonAsync($"/api/v1/study-plans/{planId}/practice-sessions", new { }))
-            .Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetInt32();
-        return (sid, ids);
-    }
-
-    // Stufe 2 = SelfAssess (Selbsteinschätzung); ohne RequireTypedTest zählt das WasKnown-Flag voll.
-    private static async Task<JsonElement> ReviewAsync(HttpClient child, int planId, int sid, int contentId) =>
-        await (await child.PostAsJsonAsync($"/api/v1/study-plans/{planId}/practice-sessions/{sid}/review",
-            new { contentId, stage = 2, wasKnown = true })).Content.ReadFromJsonAsync<JsonElement>();
-
-    [Fact]
-    public async Task ComboBonus_LautPlanEinstellung_BeiSchwelleErreicht()
+    private async Task<(int planId, int positionId, int sessionId)> SetupAsync(int threshold, int bonus)
     {
         var father = await TestApi.FatherAsync(factory);
-        var planId = await LeitnerPlanAsync(father, threshold: 2, bonus: 7);
+        var exerciseId = await TestApi.CreateVocabExerciseAsync(father); // hello, goodbye → 2 fällige Items
+        var (planId, positionId) = TestApi.SeedLeitnerPosition(factory, exerciseId, (int)TestStage.SelfAssess,
+            comboThreshold: threshold, comboBonusPoints: bonus);
         var child = await TestApi.ChildAsync(factory);
-        var (sid, ids) = await StartSessionAsync(child, planId);
+        var sessionId = await TestApi.StartPositionSessionAsync(child, planId, positionId);
+        return (planId, positionId, sessionId);
+    }
 
-        var first = await ReviewAsync(child, planId, sid, ids[0]);
+    private static async Task<JsonElement> ReviewAsync(HttpClient child, int planId, int positionId, int sid, int itemIndex) =>
+        await (await TestApi.PositionReviewAsync(child, planId, positionId, sid, itemIndex, wasKnown: true))
+            .Content.ReadFromJsonAsync<JsonElement>();
+
+    [Fact]
+    public async Task ComboBonus_LautPositionsEinstellung_BeiSchwelleErreicht()
+    {
+        var (planId, positionId, sid) = await SetupAsync(threshold: 2, bonus: 7);
+        var child = await TestApi.ChildAsync(factory);
+
+        var first = await ReviewAsync(child, planId, positionId, sid, 0);
         Assert.Equal(1, first.GetProperty("combo").GetInt32());
         Assert.Equal(0, first.GetProperty("comboBonus").GetInt32());
 
-        var second = await ReviewAsync(child, planId, sid, ids[1]);
+        var second = await ReviewAsync(child, planId, positionId, sid, 1);
         Assert.Equal(2, second.GetProperty("combo").GetInt32());
         Assert.Equal(7, second.GetProperty("comboBonus").GetInt32()); // Basis 7 × Meilenstein 1
     }
@@ -56,15 +44,13 @@ public class ComboTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWeb
     [Fact]
     public async Task ComboBonus_WirdAlsEigenerPointKindGebucht()
     {
-        var father = await TestApi.FatherAsync(factory);
-        var planId = await LeitnerPlanAsync(father, threshold: 2, bonus: 7);
+        var (planId, positionId, sid) = await SetupAsync(threshold: 2, bonus: 7);
         var child = await TestApi.ChildAsync(factory);
-        var (sid, ids) = await StartSessionAsync(child, planId);
 
-        await ReviewAsync(child, planId, sid, ids[0]);
-        await ReviewAsync(child, planId, sid, ids[1]); // Schwelle 2 erreicht → Combo-Bonus
+        await ReviewAsync(child, planId, positionId, sid, 0);
+        await ReviewAsync(child, planId, positionId, sid, 1); // Schwelle 2 erreicht → Combo-Bonus
 
-        // Der Vater sieht die Buchungen kategorisiert: der Bonus trägt Kind "Combo", nicht "Base".
+        var father = await TestApi.FatherAsync(factory);
         var points = await (await father.GetAsync("/api/v1/children/1/points"))
             .Content.ReadFromJsonAsync<JsonElement>();
         var combo = points.GetProperty("entries").EnumerateArray()
@@ -75,13 +61,11 @@ public class ComboTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWeb
     [Fact]
     public async Task ComboBonus_AbgeschaltetBeiSchwelleNull()
     {
-        var father = await TestApi.FatherAsync(factory);
-        var planId = await LeitnerPlanAsync(father, threshold: 0, bonus: 7);
+        var (planId, positionId, sid) = await SetupAsync(threshold: 0, bonus: 7);
         var child = await TestApi.ChildAsync(factory);
-        var (sid, ids) = await StartSessionAsync(child, planId);
 
-        await ReviewAsync(child, planId, sid, ids[0]);
-        var second = await ReviewAsync(child, planId, sid, ids[1]);
+        await ReviewAsync(child, planId, positionId, sid, 0);
+        var second = await ReviewAsync(child, planId, positionId, sid, 1);
 
         Assert.Equal(2, second.GetProperty("combo").GetInt32());
         Assert.Equal(0, second.GetProperty("comboBonus").GetInt32()); // Feature aus

@@ -8,7 +8,7 @@ namespace Pugling.Api.Services;
 /// <summary>
 /// Wertet Missionen (zeitgebundene Ziele) und Auszeichnungen (permanente Meilensteine) eines Kindes
 /// aus und schreibt fällige Belohnungen idempotent gut – je Mission/Zeitraum bzw. je Auszeichnung genau
-/// einmal (analog zu <see cref="StudyProgressService"/>). Liefert außerdem den aktuellen Status fürs Frontend.
+/// einmal (analog zum früheren plan-weiten Fortschritts-Service). Liefert außerdem den aktuellen Status fürs Frontend.
 /// </summary>
 public class GamificationService(PuglingDbContext db, MetricsService metrics, ILogger<GamificationService> logger)
 {

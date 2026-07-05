@@ -4,15 +4,6 @@ namespace Pugling.Api.Models;
 // Am Unterrichtstag eines Fachs wird NEUER Stoff gelernt, an den übrigen Tagen wiederholt
 // (der Tag direkt davor gilt als Vorbereitung).
 
-/// <summary>Tagesmodus, der sich aus dem Stundenplan ergibt.</summary>
-public enum LessonDayMode
-{
-    /// <summary>Bereits eingeführten Stoff wiederholen (inkl. Vorbereitungstag vor dem Unterricht).</summary>
-    Review = 0,
-    /// <summary>Neuen Stoff einführen (am Unterrichtstag des Fachs).</summary>
-    New = 1,
-}
-
 /// <summary>Ein Stundenplan-Eintrag: an diesem Wochentag hat das Kind dieses Fach.</summary>
 public class TimetableEntry
 {

@@ -27,21 +27,18 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
     public DbSet<VocabTag> VocabTags => Set<VocabTag>();
     public DbSet<VocabTagLink> VocabTagLinks => Set<VocabTagLink>();
 
-    // Vokabeltraining: Lehrplan, Übungssitzungen, Tests, Belohnungen
+    // Lehrplan (Container) + Positionen auf Katalog-Übungen, Fortschritt/Ziel-Belohnung je Position
     public DbSet<StudyPlan> StudyPlans => Set<StudyPlan>();
-    public DbSet<StudyPlanItem> StudyPlanItems => Set<StudyPlanItem>();
-    // Neues Lehrplan-Modell (Strangler): Positionen verweisen auf Katalog-Übungen, Fortschritt je Inhalt.
     public DbSet<PlanPosition> PlanPositions => Set<PlanPosition>();
     public DbSet<PositionItemProgress> PositionItemProgress => Set<PositionItemProgress>();
+    public DbSet<PositionGoalReward> PositionGoalRewards => Set<PositionGoalReward>();
     public DbSet<PracticeSession> PracticeSessions => Set<PracticeSession>();
     public DbSet<ReviewEvent> ReviewEvents => Set<ReviewEvent>();
     public DbSet<TestAttempt> TestAttempts => Set<TestAttempt>();
     public DbSet<TestItemResult> TestItemResults => Set<TestItemResult>();
-    public DbSet<StudyDayReward> StudyDayRewards => Set<StudyDayReward>();
 
-    // Stundenplan-Steuerung + Inhalts-Bewertungen
+    // Stundenplan-Steuerung
     public DbSet<TimetableEntry> Timetable => Set<TimetableEntry>();
-    public DbSet<ContentRating> ContentRatings => Set<ContentRating>();
 
     // Gamification: Missionen (zeitgebundene Ziele) + Auszeichnungen (Badges) je Kind, mit Vergabe-Log
     public DbSet<Mission> Missions => Set<Mission>();
@@ -56,6 +53,7 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
     // Tagging + Klassenarbeiten
     public DbSet<Tag> Tags => Set<Tag>();
     public DbSet<ExerciseTag> ExerciseTags => Set<ExerciseTag>();
+    public DbSet<VocabularyTag> VocabularyTags => Set<VocabularyTag>();
     public DbSet<Klassenarbeit> Klassenarbeiten => Set<Klassenarbeit>();
     public DbSet<KlassenarbeitExercise> KlassenarbeitExercises => Set<KlassenarbeitExercise>();
     public DbSet<KlassenarbeitTag> KlassenarbeitTags => Set<KlassenarbeitTag>();
@@ -150,32 +148,6 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
                 s => JsonSerializer.Deserialize<List<string>>(s, JsonOptions));
         });
 
-        // Stufen-Fahrplan als JSON-Spalte am Lehrplan.
-        modelBuilder.Entity<StudyPlan>()
-            .Property(p => p.StageSchedule).HasConversion(
-                v => JsonSerializer.Serialize(v, JsonOptions),
-                s => JsonSerializer.Deserialize<List<StageStep>>(s, JsonOptions));
-
-        // Leitner-Intervalle je Box als JSON-Spalte (null = Standard-Intervalle).
-        modelBuilder.Entity<StudyPlan>()
-            .Property(p => p.BoxIntervalDays).HasConversion(
-                v => JsonSerializer.Serialize(v, JsonOptions),
-                s => JsonSerializer.Deserialize<List<int>>(s, JsonOptions));
-
-        // Punkte nur einmal je (Plan, Tag, Art) vergeben.
-        modelBuilder.Entity<StudyDayReward>()
-            .HasIndex(r => new { r.StudyPlanId, r.Day, r.Kind }).IsUnique();
-
-        // Lehrplan-Items verweisen auf Vokabel ODER Lückentext; Inhalte dürfen nicht gelöscht
-        // werden, solange sie in einem Lehrplan stecken.
-        modelBuilder.Entity<StudyPlanItem>(e =>
-        {
-            e.HasOne(i => i.Vocabulary).WithMany().HasForeignKey(i => i.VocabularyId)
-                .OnDelete(DeleteBehavior.Restrict);
-            e.HasOne(i => i.ClozeText).WithMany().HasForeignKey(i => i.ClozeTextId)
-                .OnDelete(DeleteBehavior.Restrict);
-        });
-
         // Lehrplan optional an ein Katalog-Fach gekoppelt (für Stundenplan-Steuerung).
         modelBuilder.Entity<StudyPlan>()
             .HasOne(p => p.Subject).WithMany().HasForeignKey(p => p.SubjectId)
@@ -204,6 +176,15 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
         {
             e.HasIndex(p => new { p.PlanPositionId, p.ItemIndex }).IsUnique();
             e.HasOne(p => p.PlanPosition).WithMany(pos => pos.ItemProgress).HasForeignKey(p => p.PlanPositionId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // Ziel-Belohnung je Position/Periode: höchstens eine Buchung pro (Position, Periode) – die
+        // Idempotenz-Garantie der Ziel-Punkte. Verschwindet mit der Position (Cascade).
+        modelBuilder.Entity<PositionGoalReward>(e =>
+        {
+            e.HasIndex(r => new { r.PlanPositionId, r.PeriodKey }).IsUnique();
+            e.HasOne(r => r.PlanPosition).WithMany().HasForeignKey(r => r.PlanPositionId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
 
@@ -266,6 +247,14 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
             e.HasIndex(x => new { x.TagId, x.ExerciseId }).IsUnique();
             e.HasOne(x => x.Tag).WithMany(t => t.ExerciseTags).HasForeignKey(x => x.TagId).OnDelete(DeleteBehavior.Cascade);
             e.HasOne(x => x.Exercise).WithMany().HasForeignKey(x => x.ExerciseId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // Vokabel <-> Kind-Tag: jede Vokabel höchstens einmal je Tag; Links verschwinden mit Tag oder Vokabel.
+        modelBuilder.Entity<VocabularyTag>(e =>
+        {
+            e.HasIndex(x => new { x.TagId, x.VocabularyId }).IsUnique();
+            e.HasOne(x => x.Tag).WithMany(t => t.VocabularyTags).HasForeignKey(x => x.TagId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(x => x.Vocabulary).WithMany().HasForeignKey(x => x.VocabularyId).OnDelete(DeleteBehavior.Cascade);
         });
 
         // Klassenarbeit: gehört einem Kind (Cascade), optional an ein Fach gekoppelt (SetNull).

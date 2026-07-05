@@ -1,14 +1,20 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { api, errorMessage } from "../lib/api";
 import { useSohn } from "./SohnApp";
 import { Mascot } from "../components/Mascot";
-import type { AnswerDto, TestAttemptResponse, TestStage, TestSubmitResponse } from "../lib/types";
+import type { AnswerDto, TestAttemptResponse, TestSubmitResponse } from "../lib/types";
 
-const TYPED: TestStage[] = ["LetterBoxes", "FreeText", "Audio"];
+// Vokabel-Teststufen (numerisch, serverseitig erzwungen): 1 Zeigen … 5 Hören.
+const STAGE_LABEL: Record<number, string> = {
+  1: "Zeigen", 2: "Selbstcheck", 3: "Buchstaben", 4: "Tippen", 5: "Hören",
+};
+const stageLabel = (s: number) => STAGE_LABEL[s] ?? `Stufe ${s}`;
 
 export function SohnTest() {
   const { planId, refreshWallet, setStreak, skin, celebrate } = useSohn();
+  const { positionId: positionIdRaw } = useParams();
+  const positionId = Number(positionIdRaw);
   const nav = useNavigate();
 
   const [attempt, setAttempt] = useState<TestAttemptResponse | null>(null);
@@ -19,13 +25,13 @@ export function SohnTest() {
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    if (!planId) { nav("/sohn"); return; }
+    if (!planId || !positionId) { nav("/sohn"); return; }
     let alive = true;
-    api.startTest(planId)
+    api.startTest(planId, positionId)
       .then((a) => { if (alive) setAttempt(a); })
       .catch((e) => { if (alive) setError(errorMessage(e)); });
     return () => { alive = false; };
-  }, [planId, nav]);
+  }, [planId, positionId, nav]);
 
   if (error) return <div className="sohn-body"><div className="error-box">{error}</div>
     <button type="button" className="btn ghost" onClick={() => nav("/sohn")}>Zur Basis</button></div>;
@@ -33,20 +39,21 @@ export function SohnTest() {
   if (result) return (
     <TestResult result={result} skin={skin} onHome={() => nav("/sohn")} onRetry={() => {
       setResult(null); setAttempt(null); setAnswers({}); setRevealed(new Set());
-      if (planId) api.startTest(planId).then(setAttempt).catch((e) => setError(errorMessage(e)));
+      if (planId) api.startTest(planId, positionId).then(setAttempt).catch((e) => setError(errorMessage(e)));
     }} />
   );
 
   if (!attempt) return <div className="sohn-body"><div className="loading">Test wird vorbereitet…</div></div>;
 
-  const typed = TYPED.includes(attempt.stage);
+  // Getippte Stufe: Server liefert keine aufgedeckte Lösung (reveal === null) → Eingabefeld.
+  const typed = attempt.items.every((it) => it.reveal === null);
 
-  function setText(vocabId: number, val: string) {
-    setAnswers((a) => ({ ...a, [vocabId]: { vocabularyId: vocabId, givenAnswer: val } }));
+  function setText(itemIndex: number, val: string) {
+    setAnswers((a) => ({ ...a, [itemIndex]: { itemIndex, givenAnswer: val } }));
   }
-  function setKnown(vocabId: number, known: boolean) {
-    setAnswers((a) => ({ ...a, [vocabId]: { vocabularyId: vocabId, wasKnown: known } }));
-    setRevealed((r) => new Set(r).add(vocabId));
+  function setKnown(itemIndex: number, known: boolean) {
+    setAnswers((a) => ({ ...a, [itemIndex]: { itemIndex, wasKnown: known } }));
+    setRevealed((r) => new Set(r).add(itemIndex));
   }
 
   async function submit() {
@@ -54,13 +61,13 @@ export function SohnTest() {
     setBusy(true);
     try {
       const payload: AnswerDto[] = attempt.items.map(
-        (it) => answers[it.vocabularyId] ?? { vocabularyId: it.vocabularyId, givenAnswer: typed ? "" : null, wasKnown: typed ? null : false },
+        (it) => answers[it.itemIndex] ?? { itemIndex: it.itemIndex, givenAnswer: typed ? "" : null, wasKnown: typed ? null : false },
       );
-      const res = await api.submitTest(planId, attempt.attemptId, payload);
+      const res = await api.submitTest(planId, positionId, attempt.attemptId, payload);
       setResult(res);
       celebrate(res.passed ? "big" : "small", res.passed ? "🎉" : "💪",
         res.passed ? "SIEG!" : undefined, res.passed ? `${res.scorePercent}%` : undefined);
-      setStreak((await api.today(planId)).currentStreak);
+      setStreak((await api.overview(planId)).currentStreak);
       refreshWallet();
     } catch (e) {
       setError(errorMessage(e));
@@ -70,46 +77,43 @@ export function SohnTest() {
   }
 
   const answeredCount = attempt.items.filter((it) => {
-    const a = answers[it.vocabularyId];
+    const a = answers[it.itemIndex];
     return a && (typed ? (a.givenAnswer ?? "").trim().length > 0 : a.wasKnown !== undefined);
   }).length;
 
   return (
     <div className="sohn-body">
       <div className="row">
-        <span className="screen-title" style={{ margin: 0 }}>Tagestest</span>
+        <span className="screen-title" style={{ margin: 0 }}>Test</span>
         <span className="pill cyan" style={{ marginLeft: "auto" }}>{stageLabel(attempt.stage)}</span>
       </div>
-      <p className="sub">{typed ? "Tippe die Übersetzung." : "Denk nach, dann aufdecken und ehrlich bewerten."}</p>
+      <p className="sub">{typed ? "Tippe die Lösung." : "Denk nach, dann aufdecken und ehrlich bewerten."}</p>
 
       {attempt.items.map((it) => {
-        const a = answers[it.vocabularyId];
+        const a = answers[it.itemIndex];
         return (
-          <div className="card" key={it.vocabularyId}>
-            <div className="row">
-              <b style={{ fontSize: 17 }}>{it.prompt}</b>
-              {it.audioUrl && <audio controls src={it.audioUrl} style={{ marginLeft: "auto", height: 30 }} />}
-            </div>
+          <div className="card" key={it.itemIndex}>
+            <b style={{ fontSize: 17 }}>{it.prompt}</b>
 
             {typed ? (
               <input
                 className="tabnum"
                 style={{ marginTop: 10, width: "100%", background: "#0c0e2c", border: "1.5px solid var(--stroke)", borderRadius: 12, color: "var(--ink)", padding: 12, fontSize: 15 }}
-                placeholder={it.answerLength ? `${it.answerLength} Buchstaben` : "Übersetzung…"}
+                placeholder={it.answerLength ? `${it.answerLength} Buchstaben` : "Lösung…"}
                 value={a?.givenAnswer ?? ""}
-                onChange={(e) => setText(it.vocabularyId, e.target.value)}
+                onChange={(e) => setText(it.itemIndex, e.target.value)}
               />
             ) : (
               <div style={{ marginTop: 10 }}>
-                {revealed.has(it.vocabularyId) || it.translation ? (
-                  <div className="rev" style={{ color: "var(--cyan)", fontWeight: 800, marginBottom: 8 }}>→ {it.translation ?? "(aufgedeckt)"}</div>
+                {revealed.has(it.itemIndex) || it.reveal ? (
+                  <div className="rev" style={{ color: "var(--cyan)", fontWeight: 800, marginBottom: 8 }}>→ {it.reveal ?? "(aufgedeckt)"}</div>
                 ) : (
-                  <button type="button" className="btn ghost small" onClick={() => setRevealed((r) => new Set(r).add(it.vocabularyId))}>Aufdecken 🔄</button>
+                  <button type="button" className="btn ghost small" onClick={() => setRevealed((r) => new Set(r).add(it.itemIndex))}>Aufdecken 🔄</button>
                 )}
-                {revealed.has(it.vocabularyId) && (
+                {revealed.has(it.itemIndex) && (
                   <div className="judge" style={{ marginTop: 8 }}>
-                    <button type="button" className={`btn small ${a?.wasKnown === false ? "red" : "ghost"}`} onClick={() => setKnown(it.vocabularyId, false)}>Nicht gewusst</button>
-                    <button type="button" className={`btn small ${a?.wasKnown === true ? "lime" : "ghost"}`} onClick={() => setKnown(it.vocabularyId, true)}>Gewusst</button>
+                    <button type="button" className={`btn small ${a?.wasKnown === false ? "red" : "ghost"}`} onClick={() => setKnown(it.itemIndex, false)}>Nicht gewusst</button>
+                    <button type="button" className={`btn small ${a?.wasKnown === true ? "lime" : "ghost"}`} onClick={() => setKnown(it.itemIndex, true)}>Gewusst</button>
                   </div>
                 )}
               </div>
@@ -134,22 +138,19 @@ function TestResult({ result, skin, onHome, onRetry }: {
     <div className="sohn-body">
       <div className="victory">
         <div style={{ fontFamily: "var(--font-display)", letterSpacing: ".2em", color: "var(--muted)", fontSize: 12 }}>
-          TAGESTEST · {result.stage.toUpperCase()}
+          TEST · {stageLabel(result.stage).toUpperCase()}
         </div>
         <div className={`vtitle ${result.passed ? "win" : "lose"}`}>{result.passed ? "SIEG!" : "FAST!"}</div>
         <div className="ring" style={ring}><b>{pct}%<small>{result.correctItems} / {result.totalItems}</small></b></div>
         <Mascot skin={skin} mood={result.passed ? "hyped" : "sleepy"} size={84} />
-        <div className="reward">
-          <div className="card">🪙<span style={{ color: "var(--gold)" }}>+{result.dayProgress.pointsAwarded}</span></div>
-          {result.dayProgress.dayComplete && <div className="card">🔥<span style={{ color: "#ffb36b" }}>Tag komplett</span></div>}
-        </div>
+        <p className="sub">Bestehensgrenze {result.passPercent}%</p>
 
         <div className="card" style={{ width: "100%", marginTop: 4, textAlign: "left" }}>
           {result.items.map((o) => (
-            <div className="row" key={o.vocabularyId} style={{ padding: "4px 0" }}>
+            <div className="row" key={o.itemIndex} style={{ padding: "4px 0" }}>
               <span>{o.wasCorrect ? "✅" : "❌"}</span>
-              <b>{o.word}</b>
-              <span className="sub" style={{ marginLeft: "auto" }}>{o.expectedTranslation}</span>
+              <b>{o.prompt}</b>
+              <span className="sub" style={{ marginLeft: "auto" }}>{o.expected}</span>
             </div>
           ))}
         </div>
@@ -159,8 +160,4 @@ function TestResult({ result, skin, onHome, onRetry }: {
       </div>
     </div>
   );
-}
-
-function stageLabel(s: TestStage): string {
-  return ({ ShowBoth: "Zeigen", SelfAssess: "Selbstcheck", LetterBoxes: "Buchstaben", FreeText: "Tippen", Audio: "Hören" } as const)[s];
 }

@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Pugling.Api.Data;
 
@@ -10,9 +11,11 @@ using Pugling.Api.Data;
 namespace Pugling.Api.Data.Migrations
 {
     [DbContext(typeof(PuglingDbContext))]
-    partial class PuglingDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260705140329_VocabularyChildTags")]
+    partial class VocabularyChildTags
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.9");
@@ -223,6 +226,37 @@ namespace Pugling.Api.Data.Migrations
                         .IsUnique();
 
                     b.ToTable("ClozeTexts");
+                });
+
+            modelBuilder.Entity("Pugling.Api.Models.ContentRating", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("ChildId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Comment")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("ContentId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Feedback")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("StudyPlanId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("StudyPlanId");
+
+                    b.ToTable("ContentRatings");
                 });
 
             modelBuilder.Entity("Pugling.Api.Models.Exercise", b =>
@@ -600,36 +634,6 @@ namespace Pugling.Api.Data.Migrations
                     b.ToTable("PlanPositions");
                 });
 
-            modelBuilder.Entity("Pugling.Api.Models.PositionGoalReward", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<DateTime>("AwardedAt")
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateOnly>("Day")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("PeriodKey")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("PlanPositionId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("Points")
-                        .HasColumnType("INTEGER");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("PlanPositionId", "PeriodKey")
-                        .IsUnique();
-
-                    b.ToTable("PositionGoalRewards");
-                });
-
             modelBuilder.Entity("Pugling.Api.Models.PositionItemProgress", b =>
                 {
                     b.Property<int>("Id")
@@ -801,6 +805,35 @@ namespace Pugling.Api.Data.Migrations
                     b.ToTable("RewardRedemptions");
                 });
 
+            modelBuilder.Entity("Pugling.Api.Models.StudyDayReward", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("AwardedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateOnly>("Day")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Kind")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Points")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("StudyPlanId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("StudyPlanId", "Day", "Kind")
+                        .IsUnique();
+
+                    b.ToTable("StudyDayRewards");
+                });
+
             modelBuilder.Entity("Pugling.Api.Models.StudyPlan", b =>
                 {
                     b.Property<int>("Id")
@@ -810,13 +843,67 @@ namespace Pugling.Api.Data.Migrations
                     b.Property<bool>("Active")
                         .HasColumnType("INTEGER");
 
+                    b.Property<string>("BoxIntervalDays")
+                        .HasColumnType("TEXT");
+
                     b.Property<int>("ChildId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("ComboBonusPoints")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("ComboThreshold")
                         .HasColumnType("INTEGER");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("TEXT");
 
+                    b.Property<int>("DailyMinutesRequired")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("DailyTestPassPercent")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("DailyTestRequired")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("DefaultStage")
+                        .HasColumnType("INTEGER");
+
                     b.Property<DateOnly>("EndDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("MaxBox")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Method")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("NewContentPoints")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("NewItemsPerLesson")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("PointsDayCompleteBonus")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("PointsMinutesMet")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("PointsTestPassed")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("RequireTypedTest")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("SpeedBonusPoints")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("SpeedThresholdSeconds")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("StageSchedule")
                         .HasColumnType("TEXT");
 
                     b.Property<DateOnly>("StartDate")
@@ -829,6 +916,9 @@ namespace Pugling.Api.Data.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+                    b.Property<bool>("UseLeitner")
+                        .HasColumnType("INTEGER");
+
                     b.HasKey("Id");
 
                     b.HasIndex("ChildId");
@@ -836,6 +926,50 @@ namespace Pugling.Api.Data.Migrations
                     b.HasIndex("SubjectId");
 
                     b.ToTable("StudyPlans");
+                });
+
+            modelBuilder.Entity("Pugling.Api.Models.StudyPlanItem", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Box")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("ClozeTextId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateOnly?>("DueOn")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateOnly?>("IntroducedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("LastReviewedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Order")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("ReviewCount")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("StudyPlanId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("VocabularyId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ClozeTextId");
+
+                    b.HasIndex("StudyPlanId");
+
+                    b.HasIndex("VocabularyId");
+
+                    b.ToTable("StudyPlanItems");
                 });
 
             modelBuilder.Entity("Pugling.Api.Models.Subject", b =>
@@ -1216,6 +1350,17 @@ namespace Pugling.Api.Data.Migrations
                     b.Navigation("Child");
                 });
 
+            modelBuilder.Entity("Pugling.Api.Models.ContentRating", b =>
+                {
+                    b.HasOne("Pugling.Api.Models.StudyPlan", "StudyPlan")
+                        .WithMany()
+                        .HasForeignKey("StudyPlanId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("StudyPlan");
+                });
+
             modelBuilder.Entity("Pugling.Api.Models.Exercise", b =>
                 {
                     b.HasOne("Pugling.Api.Models.Father", "Author")
@@ -1368,17 +1513,6 @@ namespace Pugling.Api.Data.Migrations
                     b.Navigation("StudyPlan");
                 });
 
-            modelBuilder.Entity("Pugling.Api.Models.PositionGoalReward", b =>
-                {
-                    b.HasOne("Pugling.Api.Models.PlanPosition", "PlanPosition")
-                        .WithMany()
-                        .HasForeignKey("PlanPositionId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("PlanPosition");
-                });
-
             modelBuilder.Entity("Pugling.Api.Models.PositionItemProgress", b =>
                 {
                     b.HasOne("Pugling.Api.Models.PlanPosition", "PlanPosition")
@@ -1464,6 +1598,31 @@ namespace Pugling.Api.Data.Migrations
                     b.Navigation("Child");
 
                     b.Navigation("Subject");
+                });
+
+            modelBuilder.Entity("Pugling.Api.Models.StudyPlanItem", b =>
+                {
+                    b.HasOne("Pugling.Api.Models.ClozeText", "ClozeText")
+                        .WithMany()
+                        .HasForeignKey("ClozeTextId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Pugling.Api.Models.StudyPlan", "StudyPlan")
+                        .WithMany("Items")
+                        .HasForeignKey("StudyPlanId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Pugling.Api.Models.Vocabulary", "Vocabulary")
+                        .WithMany()
+                        .HasForeignKey("VocabularyId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("ClozeText");
+
+                    b.Navigation("StudyPlan");
+
+                    b.Navigation("Vocabulary");
                 });
 
             modelBuilder.Entity("Pugling.Api.Models.Tag", b =>
@@ -1607,6 +1766,8 @@ namespace Pugling.Api.Data.Migrations
 
             modelBuilder.Entity("Pugling.Api.Models.StudyPlan", b =>
                 {
+                    b.Navigation("Items");
+
                     b.Navigation("Positions");
                 });
 

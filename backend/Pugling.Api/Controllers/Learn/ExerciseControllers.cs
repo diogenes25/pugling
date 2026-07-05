@@ -132,7 +132,7 @@ public class GrammarController(PuglingDbContext db) : ExerciseControllerBase<Gra
 /// <summary>Zuordnungs-Übungen (Paare). Neben dem CRUD bewertet <see cref="Check"/> die genannten Zuordnungen.</summary>
 [Route(ExerciseRoutes.Base + "/matching")]
 [Tags("Learn – Matching")]
-public class MatchingController(PuglingDbContext db, ExerciseAnswerChecker checker, AuthAccess access)
+public class MatchingController(PuglingDbContext db, ExerciseAnswerChecker checker)
     : ExerciseControllerBase<MatchingConfig>(db)
 {
     protected override ExerciseType Type => ExerciseType.Matching;
@@ -146,78 +146,6 @@ public class MatchingController(PuglingDbContext db, ExerciseAnswerChecker check
         return exercise is null ? NotFound() : checker.CheckMatching(ConfigOf(exercise), body.Answers);
     }
 
-    /// <summary>Kind, Titel und Laufzeit des zu erzeugenden Leitner-Plans.</summary>
-    public record ToStudyPlanDto(int ChildId, string? Title, int? DurationDays);
-    /// <summary>Der erzeugte Study-Plan als Startpunkt für den Client.</summary>
-    public record StudyPlanCreated(int PlanId, string Title, int ItemCount);
-
-    /// <summary>
-    /// Erzeugt aus den Paaren einen <b>Leitner-Study-Plan</b> im neuen System: je Paar eine Vokabel
-    /// (Wort = linke Spalte, Übersetzung = rechte Spalte) im Vokabel-Store, gebündelt in einem
-    /// <see cref="StudyPlan"/> mit <see cref="StudyPlan.Method"/> = Matching und <see cref="StudyPlan.UseLeitner"/> = true.
-    /// Damit laufen Boxen/Fälligkeit, Punkte pro Kind und Reporting über den einen vereinheitlichten Mechanismus
-    /// (<c>/api/study-plans/{id}</c>) – der alte Topic/Card-Kasten wird nicht mehr benötigt.
-    /// </summary>
-    [HttpPost("{exerciseId:int}/to-study-plan")]
-    [ProducesResponseType(StatusCodes.Status201Created)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<StudyPlanCreated>> ToStudyPlan(int subjectId, int chapterId, int exerciseId, ToStudyPlanDto body)
-    {
-        var exercise = await FindAsync(subjectId, chapterId, exerciseId);
-        if (exercise is null) return NotFound();
-
-        var pairs = ConfigOf(exercise).Pairs;
-        if (pairs.Count == 0) return Problem(statusCode: 400, detail: "Die Zuordnung enthält keine Paare.");
-        // Einheitlich 404 für "kein eigenes Kind" (kein Enumerieren fremder Kind-Ids), wie im StudyPlansController.
-        if (!await access.FatherOwnsChildAsync(User, body.ChildId)) return Problem(statusCode: 404, detail: "Kind nicht gefunden.");
-
-        // Je Paar eine Vokabel mit stabilem Key (idempotent: erneutes Konvertieren aktualisiert statt zu duplizieren).
-        var keys = pairs.Select((_, i) => $"match_{exercise.Id}_{i}").ToList();
-        var existing = await Db.Vocabulary.Where(v => keys.Contains(v.Key)).ToDictionaryAsync(v => v.Key, v => v);
-
-        var items = new List<StudyPlanItem>();
-        for (int i = 0; i < pairs.Count; i++)
-        {
-            if (!existing.TryGetValue(keys[i], out var vocab))
-            {
-                vocab = new Vocabulary { Key = keys[i] };
-                Db.Vocabulary.Add(vocab);
-            }
-            vocab.Word = pairs[i].Left;
-            vocab.Translation = pairs[i].Right;
-            items.Add(new StudyPlanItem { Vocabulary = vocab, Order = i });
-        }
-
-        var start = DateOnly.FromDateTime(DateTime.UtcNow);
-        var duration = body.DurationDays is > 0 ? body.DurationDays.Value : 14;
-        var plan = new StudyPlan
-        {
-            ChildId = body.ChildId,
-            Method = LearningMethod.Matching,
-            Title = string.IsNullOrWhiteSpace(body.Title) ? exercise.Title : body.Title!.Trim(),
-            SubjectId = subjectId,
-            UseLeitner = true,
-            DefaultStage = (int)MatchStage.Direct,
-            StartDate = start,
-            EndDate = start.AddDays(duration - 1),
-            Items = items,
-        };
-        // Bonus-Vorschlag der Übung EINMAL in den Plan kopieren (kind-individuell, danach frei anpassbar;
-        // spätere Änderungen an der Übung wirken nicht rückwirkend). Ohne Vorschlag greifen die Plan-Defaults.
-        if (exercise.SuggestedBonus is { } sb)
-        {
-            plan.ComboThreshold = sb.ComboThreshold;
-            plan.ComboBonusPoints = sb.ComboBonusPoints;
-            plan.SpeedThresholdSeconds = sb.SpeedThresholdSeconds;
-            plan.SpeedBonusPoints = sb.SpeedBonusPoints;
-            plan.NewContentPoints = sb.NewContentPoints;
-        }
-        Db.StudyPlans.Add(plan);
-        await Db.SaveChangesAsync();
-
-        return Created($"/api/study-plans/{plan.Id}", new StudyPlanCreated(plan.Id, plan.Title, items.Count));
-    }
 }
 
 /// <summary>Übersetzungs-Übungen.</summary>

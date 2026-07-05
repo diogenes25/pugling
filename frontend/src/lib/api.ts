@@ -1,12 +1,14 @@
 import type {
   AchievementDef, AchievementStatus, AnswerDto, ChapterResponse, ChildResponse, CreateAchievementDto,
   CreateChildDto, CreateExercisePayload, CreateKlassenarbeitDto, CreateMissionDto, CreatePlanDto, CreateRewardDto, CreateVocabularyDto,
-  ExerciseDetail, ExerciseSearchParams, ExerciseSummary, ExerciseUsage, KlassenarbeitDetail, KlassenarbeitPractice, KlassenarbeitRepeat,
+  ExerciseDetail, ExercisePreviewAnswer, ExercisePreviewData, ExercisePreviewResult,
+  ExerciseSearchParams, ExerciseSummary, ExerciseUsage, KlassenarbeitDetail, KlassenarbeitPractice, KlassenarbeitRepeat,
   KlassenarbeitResponse, KlassenarbeitStatus, LoginResponse, MissionDef, MissionStatus, PlanResponse,
+  CreatePositionDto, PositionResponse, UpdatePositionDto, OverviewResponse, PositionSession, PracticeCard,
   ProgressResponse, RedemptionDef, ReviewInput, ReviewOutcome, RewardDef, RewardRedemptionStatus, RewardsView,
-  SessionResponse, SkinState, SubjectResponse,
-  TestAttemptResponse, TestSubmitResponse, TodayResponse, UpdateKlassenarbeitDto, UpdatePlanDto, UpdateVocabularyDto,
-  VocabularyResponse, Wallet,
+  SkinState, SubjectResponse,
+  TestAttemptResponse, TestSubmitResponse, UpdateKlassenarbeitDto, UpdatePlanDto, UpdateVocabularyDto,
+  VocabBatchResult, VocabularyResponse, VocabTagResponse, ChildTagResponse, Wallet,
 } from "./types";
 
 const TOKEN_KEY = "pugling.token";
@@ -101,6 +103,10 @@ export const api = {
   // Typ-übergreifender Detail-Abruf (mit Config) + „wo verwendet".
   getExercise: (id: number) => http<ExerciseDetail>(`${V1}/learn/exercises/${id}`),
   exerciseUsage: (id: number) => http<ExerciseUsage>(`${V1}/learn/exercises/${id}/usage`),
+  // Testmodus: eine Übung nebenwirkungsfrei durchspielen (keine Punkte/kein Fortschritt) und bewerten lassen.
+  previewExercise: (id: number) => http<ExercisePreviewData>(`${V1}/learn/exercises/${id}/preview`),
+  checkPreviewExercise: (id: number, answers: ExercisePreviewAnswer[]) =>
+    http<ExercisePreviewResult>(`${V1}/learn/exercises/${id}/preview/check`, "POST", { answers }),
   // Ersetzen (PUT) bzw. Löschen laufen über die per-Typ-Route.
   updateExercise: (subjectId: number, chapterId: number, typeRoute: string, id: number, payload: CreateExercisePayload) =>
     http<ExerciseSummary>(`${V1}/learn/subjects/${subjectId}/chapters/${chapterId}/${typeRoute}/${id}`, "PUT", payload),
@@ -120,49 +126,88 @@ export const api = {
   },
 
   // ---- Vater: Vokabel-Store ----
-  vocabulary: (search?: string) =>
-    http<VocabularyResponse[]>(`${V1}/learn/vocabulary${search ? `?search=${encodeURIComponent(search)}` : ""}`),
+  // Optional nach Sprachpaar filtern (Store zeigt dann nur die gewählte Kombination).
+  vocabulary: (search?: string, opts?: { sourceLanguage?: string; targetLanguage?: string }) => {
+    const q = new URLSearchParams();
+    if (search) q.set("search", search);
+    if (opts?.sourceLanguage) q.set("sourceLanguage", opts.sourceLanguage);
+    if (opts?.targetLanguage) q.set("targetLanguage", opts.targetLanguage);
+    const qs = q.toString();
+    return http<VocabularyResponse[]>(`${V1}/learn/vocabulary${qs ? `?${qs}` : ""}`);
+  },
   createVocabulary: (dto: CreateVocabularyDto) =>
     http<VocabularyResponse>(`${V1}/learn/vocabulary`, "POST", dto),
+  // Viele Paare in einem Aufruf (idempotent) – für die zeilenweise Paar-Eingabe.
+  createVocabularyBatch: (items: CreateVocabularyDto[]) =>
+    http<VocabBatchResult[]>(`${V1}/learn/vocabulary/batch`, "POST", items),
   updateVocabulary: (id: number, patch: UpdateVocabularyDto) =>
     http<VocabularyResponse>(`${V1}/learn/vocabulary/${id}`, "PATCH", patch),
   deleteVocabulary: (id: number) => http<void>(`${V1}/learn/vocabulary/${id}`, "DELETE"),
 
-  // ---- Lehrpläne ----
+  // ---- Globale (kindneutrale) Vokabel-Tags ----
+  vocabTags: () => http<VocabTagResponse[]>(`${V1}/learn/vocabulary/tags`),
+  // Verknüpft eine Vokabel mit Tag-Namen (create-if-missing); liefert die aktuellen Tags der Vokabel.
+  attachVocabTags: (vocabId: number, tags: string[]) =>
+    http<VocabTagResponse[]>(`${V1}/learn/vocabulary/${vocabId}/tags`, "POST", { tags }),
+  detachVocabTag: (vocabId: number, tagId: number) =>
+    http<void>(`${V1}/learn/vocabulary/${vocabId}/tags/${tagId}`, "DELETE"),
+
+  // ---- Kind-skopierte Tags (auch an Vokabeln) ----
+  childTags: (childId: number) => http<ChildTagResponse[]>(`${V1}/tags?childId=${childId}`),
+  createChildTag: (dto: { childId: number; name: string; color?: string | null }) =>
+    http<ChildTagResponse>(`${V1}/tags`, "POST", dto),
+  tagsForVocabulary: (vocabId: number, childId: number) =>
+    http<ChildTagResponse[]>(`${V1}/tags/for-vocabulary/${vocabId}?childId=${childId}`),
+  tagVocabulary: (tagId: number, vocabularyIds: number[]) =>
+    http<ChildTagResponse>(`${V1}/tags/${tagId}/vocabulary`, "POST", { vocabularyIds }),
+  untagVocabulary: (tagId: number, vocabId: number) =>
+    http<void>(`${V1}/tags/${tagId}/vocabulary/${vocabId}`, "DELETE"),
+
+  // ---- Lehrpläne (reiner Container; Ziele/Punkte je Position) ----
   plans: (childId?: number) =>
     http<PlanResponse[]>(`${V1}/study-plans${childId ? `?childId=${childId}` : ""}`),
   plan: (planId: number) => http<PlanResponse>(`${V1}/study-plans/${planId}`),
   createPlan: (dto: CreatePlanDto) => http<PlanResponse>(`${V1}/study-plans`, "POST", dto),
-  // Lehrplan nachträglich ändern/verlängern/deaktivieren bzw. Inhalte nachschieben/entfernen.
+  // Lehrplan nachträglich umbenennen/verlängern/deaktivieren (Inhalte laufen über Positionen).
   updatePlan: (planId: number, dto: UpdatePlanDto) =>
     http<PlanResponse>(`${V1}/study-plans/${planId}`, "PATCH", dto),
-  addPlanItem: (planId: number, contentKey: string) =>
-    http<PlanResponse>(`${V1}/study-plans/${planId}/items`, "POST", { contentKey }),
-  removePlanItem: (planId: number, itemId: number) =>
-    http<void>(`${V1}/study-plans/${planId}/items/${itemId}`, "DELETE"),
-  today: (planId: number) => http<TodayResponse>(`${V1}/study-plans/${planId}/today`),
-  progress: (planId: number) => http<ProgressResponse>(`${V1}/study-plans/${planId}/progress`),
 
-  // ---- Sohn: Übungssession (Leitner) ----
-  startSession: (planId: number) =>
-    http<SessionResponse>(`${V1}/study-plans/${planId}/practice-sessions`, "POST", {}),
-  heartbeat: (planId: number, sessionId: number, seconds: number, active: boolean) =>
-    http<import("./types").DayProgress>(
-      `${V1}/study-plans/${planId}/practice-sessions/${sessionId}/heartbeat`, "POST", { seconds, active }),
-  // Der Server bewertet serverseitig: das Frontend liefert nur die Antwort (getippt/Lücken) bzw. bei
-  // Anzeige-/Selbsteinschätzungs-Stufen das WasKnown-Flag; die Stufe leitet der Server aus dem Fahrplan ab.
-  review: (planId: number, sessionId: number, dto: ReviewInput) =>
+  // ---- Lehrplan-Positionen (Plan = Container aus Katalog-Übungen) ----
+  positions: (planId: number) =>
+    http<PositionResponse[]>(`${V1}/study-plans/${planId}/positions`),
+  addPosition: (planId: number, dto: CreatePositionDto) =>
+    http<PositionResponse>(`${V1}/study-plans/${planId}/positions`, "POST", dto),
+  updatePosition: (planId: number, positionId: number, dto: UpdatePositionDto) =>
+    http<PositionResponse>(`${V1}/study-plans/${planId}/positions/${positionId}`, "PATCH", dto),
+  deletePosition: (planId: number, positionId: number) =>
+    http<void>(`${V1}/study-plans/${planId}/positions/${positionId}`, "DELETE"),
+
+  // ---- Tagesmission (Sohn) / Verlauf (Vater) über Positionen ----
+  overview: (planId: number) => http<OverviewResponse>(`${V1}/study-plans/${planId}/overview`),
+  overviewProgress: (planId: number) => http<ProgressResponse>(`${V1}/study-plans/${planId}/overview/progress`),
+
+  // ---- Sohn: Position üben (Leitner) ----
+  startSession: (planId: number, positionId: number) =>
+    http<PositionSession>(`${V1}/study-plans/${planId}/positions/${positionId}/practice-sessions`, "POST", {}),
+  heartbeat: (planId: number, positionId: number, sessionId: number, seconds: number, active: boolean) =>
+    http<PositionSession>(
+      `${V1}/study-plans/${planId}/positions/${positionId}/practice-sessions/${sessionId}/heartbeat`, "POST", { seconds, active }),
+  cards: (planId: number, positionId: number, sessionId: number) =>
+    http<PracticeCard[]>(`${V1}/study-plans/${planId}/positions/${positionId}/practice-sessions/${sessionId}/cards`),
+  // Der Server bewertet serverseitig: das Frontend liefert nur die Antwort (getippt) bzw. bei
+  // Anzeige-/Selbsteinschätzungs-Stufen das WasKnown-Flag; die Stufe erzwingt der Server.
+  review: (planId: number, positionId: number, sessionId: number, dto: ReviewInput) =>
     http<ReviewOutcome>(
-      `${V1}/study-plans/${planId}/practice-sessions/${sessionId}/review`, "POST", dto),
-  endSession: (planId: number, sessionId: number) =>
-    http<import("./types").DayProgress>(
-      `${V1}/study-plans/${planId}/practice-sessions/${sessionId}/end`, "POST", {}),
+      `${V1}/study-plans/${planId}/positions/${positionId}/practice-sessions/${sessionId}/review`, "POST", dto),
+  endSession: (planId: number, positionId: number, sessionId: number) =>
+    http<PositionSession>(
+      `${V1}/study-plans/${planId}/positions/${positionId}/practice-sessions/${sessionId}/end`, "POST", {}),
 
-  // ---- Sohn: Vokabel-Test ----
-  startTest: (planId: number) =>
-    http<TestAttemptResponse>(`${V1}/study-plans/${planId}/tests`, "POST", {}),
-  submitTest: (planId: number, attemptId: number, answers: AnswerDto[]) =>
-    http<TestSubmitResponse>(`${V1}/study-plans/${planId}/tests/${attemptId}/submit`, "POST", { answers }),
+  // ---- Sohn: Position testen (Abschlusstest einer Übung) ----
+  startTest: (planId: number, positionId: number) =>
+    http<TestAttemptResponse>(`${V1}/study-plans/${planId}/positions/${positionId}/tests`, "POST", {}),
+  submitTest: (planId: number, positionId: number, attemptId: number, answers: AnswerDto[]) =>
+    http<TestSubmitResponse>(`${V1}/study-plans/${planId}/positions/${positionId}/tests/${attemptId}/submit`, "POST", { answers }),
 
   // ---- Sohn: Wallet ----
   wallet: () => http<Wallet>(`${V1}/me/points`),

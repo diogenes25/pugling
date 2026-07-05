@@ -44,7 +44,11 @@
       "PowerShell(try { $r = Invoke-WebRequest -Uri \"http://localhost:5200/swagger/index.html\" -UseBasicParsing -TimeoutSec 5; \"swagger HTTP $\\($r.StatusCode\\)\" } catch { \"not up yet: $\\($_.Exception.Message\\)\" })",
       "PowerShell($p = Get-Process -Name Pugling.Api -ErrorAction SilentlyContinue; if \\($p\\) { Stop-Process -Id $p.Id -Force; Start-Sleep -Milliseconds 600; \"stopped\" } else { \"not running\" })",
       "Bash(xargs cat)",
-      "Read(//c/Users/TjarkOnnen/source/repos/priv/pugling/backend/Pugling.Api.Tests/**)"
+      "Read(//c/Users/TjarkOnnen/source/repos/priv/pugling/backend/Pugling.Api.Tests/**)",
+      "PowerShell(Stop-Process -Id 246760 -Force -ErrorAction SilentlyContinue)",
+      "PowerShell($p = Get-Process -Name Pugling.Api -ErrorAction SilentlyContinue; if \\($p\\) { \"still running: $\\($p.Id\\)\" } else { \"no Pugling.Api process\" })",
+      "PowerShell(Get-Process -Id 246760 -ErrorAction SilentlyContinue)",
+      "PowerShell(Get-Process Pugling.Api -ErrorAction SilentlyContinue)"
     ],
     "additionalDirectories": [
       "c:\\Users\\TjarkOnnen\\.claude\\projects\\c--Users-TjarkOnnen-source-repos-priv-pugling\\memory"

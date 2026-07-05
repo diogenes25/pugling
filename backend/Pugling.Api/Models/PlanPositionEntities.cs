@@ -102,6 +102,26 @@ public class PlanPosition
 }
 
 /// <summary>
+/// Protokolliert die <b>einmalige</b> Punkte-Gutschrift für ein erreichtes Positions-Ziel je Periode –
+/// das Positions-Gegenstück zur idempotenten Tages-Belohnung. Verhindert, dass die Ziel-Punkte
+/// (<see cref="PlanPosition.PointsGoalMet"/>) doppelt fließen, wenn dieselbe Position in derselben
+/// Periode mehrfach abgeschlossen/aufgerufen wird. <see cref="PeriodKey"/> identifiziert die Periode:
+/// der Kalendertag (<c>yyyy-MM-dd</c>) beim Tagesziel, der Montag der Woche beim Wochenziel.
+/// </summary>
+public class PositionGoalReward
+{
+    public int Id { get; set; }
+    public int PlanPositionId { get; set; }
+    public PlanPosition? PlanPosition { get; set; }
+    /// <summary>Periode, für die belohnt wurde (Tag <c>yyyy-MM-dd</c> bzw. Wochen-Montag <c>yyyy-MM-dd</c>).</summary>
+    public string PeriodKey { get; set; } = "";
+    /// <summary>Kalendertag, an dem das Ziel erreicht wurde (Grundlage der Tages-/Serien-Metriken).</summary>
+    public DateOnly Day { get; set; }
+    public int Points { get; set; }
+    public DateTime AwardedAt { get; set; } = DateTime.UtcNow;
+}
+
+/// <summary>
 /// Lern-Fortschritt eines einzelnen Inhalts-Atoms (z. B. einer Vokabel) innerhalb einer
 /// <see cref="PlanPosition"/>. Faul angelegt beim ersten Einführen – der Inhalt selbst bleibt in der
 /// Übungs-Config, hier steht nur der Karteikasten-/Einführungs-Zustand pro Kind (ein Plan = ein Kind).

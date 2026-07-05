@@ -120,9 +120,11 @@ internal static class TestApi
             }));
     }
 
-    /// <summary>Seedet direkt (Positions-CRUD folgt in Etappe 5) einen Plan mit einer Leitner-Position auf die Übung.</summary>
+    /// <summary>Seedet direkt einen Plan-Container mit einer (Leitner-)Position auf die Übung.</summary>
     public static (int planId, int positionId) SeedLeitnerPosition(WebApplicationFactory<Program> f, int exerciseId,
-        int stage, int childId = 1, GoalCadence cadence = GoalCadence.Daily, int? goalThreshold = null)
+        int stage, int childId = 1, GoalCadence cadence = GoalCadence.Daily, int? goalThreshold = null,
+        bool useLeitner = true, bool requireTypedTest = false, int pointsGoalMet = 20,
+        int comboThreshold = 5, int comboBonusPoints = 5, int speedThresholdSeconds = 0, int speedBonusPoints = 0)
     {
         using var scope = f.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
@@ -135,12 +137,32 @@ internal static class TestApi
             Stage = stage,
             Cadence = cadence,
             GoalThreshold = goalThreshold,
-            UseLeitner = true,
+            UseLeitner = useLeitner,
+            RequireTypedTest = requireTypedTest,
             NewContentPoints = 10,
+            PointsGoalMet = pointsGoalMet,
+            ComboThreshold = comboThreshold,
+            ComboBonusPoints = comboBonusPoints,
+            SpeedThresholdSeconds = speedThresholdSeconds,
+            SpeedBonusPoints = speedBonusPoints,
         };
         plan.Positions.Add(pos);
         db.StudyPlans.Add(plan);
         db.SaveChanges();
         return (plan.Id, pos.Id);
     }
+
+    /// <summary>Basis-URL der Positions-Übungssitzungen.</summary>
+    public static string PracticeBase(int planId, int positionId) =>
+        $"/api/v1/study-plans/{planId}/positions/{positionId}/practice-sessions";
+
+    /// <summary>Startet eine Positions-Übungssitzung und liefert ihre Id.</summary>
+    public static async Task<int> StartPositionSessionAsync(HttpClient child, int planId, int positionId) =>
+        await IdAsync(await child.PostAsJsonAsync(PracticeBase(planId, positionId), new { }));
+
+    /// <summary>Bewertet eine Karte serverseitig (getippt via <paramref name="givenAnswer"/>, sonst Selbsteinschätzung).</summary>
+    public static Task<HttpResponseMessage> PositionReviewAsync(HttpClient child, int planId, int positionId, int sessionId,
+        int itemIndex, string? givenAnswer = null, bool? wasKnown = null) =>
+        child.PostAsJsonAsync($"{PracticeBase(planId, positionId)}/{sessionId}/review",
+            new { itemIndex, givenAnswer, wasKnown });
 }

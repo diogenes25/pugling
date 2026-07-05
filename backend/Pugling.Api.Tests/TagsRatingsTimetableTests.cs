@@ -29,20 +29,50 @@ public class TagsRatingsTimetableTests(PuglingWebAppFactory factory) : IClassFix
     }
 
     [Fact]
-    public async Task Sohn_BewertetInhaltDesPlans()
+    public async Task Tag_VokabelMarkieren_ForVocabulary_Detach()
     {
         var father = await TestApi.FatherAsync(factory);
-        var planId = await TestApi.CreateVocabPlanAsync(father);
-        var plan = await (await father.GetAsync($"/api/v1/study-plans/{planId}")).Content.ReadFromJsonAsync<JsonElement>();
-        var contentId = plan.GetProperty("items")[0].GetProperty("contentId").GetInt32();
+        var (vocabId, _) = await TestApi.CreateStoreVocabAsync(father, "house", "Haus");
 
-        var child = await TestApi.ChildAsync(factory);
-        var rate = await child.PostAsJsonAsync($"/api/v1/study-plans/{planId}/ratings",
-            new { contentId, feedback = "Gut", comment = "passt zum Thema" });
-        Assert.Equal(HttpStatusCode.Created, rate.StatusCode);
+        var tagId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/tags",
+            new { childId = 1, name = "Vokabeltest", color = "#22c55e" }));
 
-        var list = await (await child.GetAsync($"/api/v1/study-plans/{planId}/ratings")).Content.ReadFromJsonAsync<JsonElement>();
-        Assert.True(list.GetArrayLength() >= 1);
+        // Markieren -> VocabularyCount steigt.
+        var tagVoc = await father.PostAsJsonAsync($"/api/v1/tags/{tagId}/vocabulary", new { vocabularyIds = new[] { vocabId } });
+        Assert.Equal(HttpStatusCode.OK, tagVoc.StatusCode);
+        Assert.Equal(1, (await tagVoc.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("vocabularyCount").GetInt32());
+
+        // for-vocabulary liefert den Tag; tags/{id}/vocabulary die Vokabel.
+        var forVoc = await father.GetAsync($"/api/v1/tags/for-vocabulary/{vocabId}?childId=1");
+        Assert.Equal(HttpStatusCode.OK, forVoc.StatusCode);
+        Assert.True((await forVoc.Content.ReadFromJsonAsync<JsonElement>()).GetArrayLength() >= 1);
+
+        var vocs = await (await father.GetAsync($"/api/v1/tags/{tagId}/vocabulary")).Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Contains(vocs.EnumerateArray(), v => v.GetProperty("id").GetInt32() == vocabId);
+
+        // Detach -> weg.
+        Assert.Equal(HttpStatusCode.NoContent, (await father.DeleteAsync($"/api/v1/tags/{tagId}/vocabulary/{vocabId}")).StatusCode);
+        var after = await (await father.GetAsync($"/api/v1/tags/for-vocabulary/{vocabId}?childId=1")).Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal(0, after.GetArrayLength());
+    }
+
+    [Fact]
+    public async Task Tag_VokabelMarkieren_FremderVater_Verboten()
+    {
+        var father = await TestApi.FatherAsync(factory);
+        var (vocabId, _) = await TestApi.CreateStoreVocabAsync(father, "car", "Auto");
+        var tagId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/tags",
+            new { childId = 1, name = "Fremd", color = "#ef4444" }));
+
+        // Zweiter Vater darf weder das fremde Kind abfragen (403) noch dessen Tag bespielen (404, kein Enumerieren).
+        var res = await factory.CreateClient().PostAsJsonAsync("/api/v1/fathers", new { name = "Papa2", pin = "2222" });
+        res.EnsureSuccessStatusCode();
+        var id2 = (await res.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetInt32();
+        var father2 = await TestApi.FatherAsync(factory, id2, "2222");
+
+        Assert.Equal(HttpStatusCode.Forbidden, (await father2.GetAsync($"/api/v1/tags/for-vocabulary/{vocabId}?childId=1")).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound,
+            (await father2.PostAsJsonAsync($"/api/v1/tags/{tagId}/vocabulary", new { vocabularyIds = new[] { vocabId } })).StatusCode);
     }
 
     [Fact]
