@@ -2,7 +2,7 @@ import { useState } from "react";
 import { api, errorMessage } from "../lib/api";
 import { useAsync } from "../lib/useAsync";
 import type {
-  CreatePositionDto, ExerciseSummary, GoalCadence, PositionResponse,
+  CreatePositionDto, ExerciseSummary, GoalCadence, ItemReport, PositionReport, PositionResponse,
 } from "../lib/types";
 
 /*
@@ -135,6 +135,7 @@ function PositionRow({ planId, pos, onChanged, flash }: {
   planId: number; pos: PositionResponse; onChanged: () => void; flash: Flash;
 }) {
   const [editing, setEditing] = useState(false);
+  const [showReport, setShowReport] = useState(false);
   const [cadence, setCadence] = useState<GoalCadence>(pos.cadence);
   const [goalThreshold, setGoalThreshold] = useState(pos.goalThreshold?.toString() ?? "");
   const [pointsGoalMet, setPointsGoalMet] = useState(pos.pointsGoalMet);
@@ -176,25 +177,36 @@ function PositionRow({ planId, pos, onChanged, flash }: {
 
   if (!editing) {
     return (
-      <tr>
-        <td className="num">{pos.order + 1}</td>
-        <td>
-          {pos.exerciseTitle} <span className="muted">· {typeLabel(pos.exerciseType)}</span>
-        </td>
-        <td>
-          {CADENCE_LABEL[pos.cadence]}
-          {pos.goalThreshold != null && <span className="muted"> · Schwelle {pos.goalThreshold}</span>}
-          {pos.requireTypedTest && <span className="muted"> · getippt</span>}
-        </td>
-        <td className="num">Ziel {pos.pointsGoalMet} · neu {pos.newContentPoints}
-          {pos.comboThreshold > 0 && pos.comboBonusPoints > 0 && <span className="muted"> · Combo +{pos.comboBonusPoints}</span>}
-        </td>
-        <td>{pos.useLeitner ? <span className="pill lime">an · max {pos.maxBox}</span> : <span className="muted">aus</span>}</td>
-        <td className="row" style={{ gap: 6, justifyContent: "flex-end" }}>
-          <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} disabled={busy} onClick={() => setEditing(true)}>Bearbeiten</button>
-          <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} disabled={busy} onClick={remove}>Entfernen</button>
-        </td>
-      </tr>
+      <>
+        <tr>
+          <td className="num">{pos.order + 1}</td>
+          <td>
+            {pos.exerciseTitle} <span className="muted">· {typeLabel(pos.exerciseType)}</span>
+          </td>
+          <td>
+            {CADENCE_LABEL[pos.cadence]}
+            {pos.goalThreshold != null && <span className="muted"> · Schwelle {pos.goalThreshold}</span>}
+            {pos.requireTypedTest && <span className="muted"> · getippt</span>}
+          </td>
+          <td className="num">Ziel {pos.pointsGoalMet} · neu {pos.newContentPoints}
+            {pos.comboThreshold > 0 && pos.comboBonusPoints > 0 && <span className="muted"> · Combo +{pos.comboBonusPoints}</span>}
+          </td>
+          <td>{pos.useLeitner ? <span className="pill lime">an · max {pos.maxBox}</span> : <span className="muted">aus</span>}</td>
+          <td className="row" style={{ gap: 6, justifyContent: "flex-end" }}>
+            <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }}
+              aria-expanded={showReport} onClick={() => setShowReport((s) => !s)}>📊 Report</button>
+            <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} disabled={busy} onClick={() => setEditing(true)}>Bearbeiten</button>
+            <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} disabled={busy} onClick={remove}>Entfernen</button>
+          </td>
+        </tr>
+        {showReport && (
+          <tr>
+            <td colSpan={6} style={{ background: "rgba(255,255,255,.02)" }}>
+              <PositionReportPanel planId={planId} positionId={pos.id} />
+            </td>
+          </tr>
+        )}
+      </>
     );
   }
 
@@ -225,4 +237,47 @@ function PositionRow({ planId, pos, onChanged, flash }: {
       </td>
     </tr>
   );
+}
+
+/** Lern-Report der Position: je Inhalt „sitzt/sitzt nicht" (Box/Beherrschung) + Test-Trefferquote. */
+function PositionReportPanel({ planId, positionId }: { planId: number; positionId: number }) {
+  const report = useAsync<PositionReport>(() => api.positionReport(planId, positionId), [planId, positionId]);
+
+  if (report.loading) return <div className="loading">Lade Report…</div>;
+  if (report.error || !report.data) return <div className="banner err">{report.error ?? "Report nicht verfügbar."}</div>;
+  const r = report.data;
+
+  if (r.totalItems === 0) return <div className="muted">Diese Übung hat keine einzeln auswertbaren Inhalte.</div>;
+
+  return (
+    <div style={{ padding: "6px 2px" }}>
+      <p className="muted" style={{ marginTop: 0 }}>
+        {r.introducedItems}/{r.totalItems} eingeführt · {r.masteredItems} sitzen sicher (Box {r.maxBox})
+      </p>
+      <div style={{ overflowX: "auto" }}>
+        <table className="table">
+          <thead><tr><th>Inhalt</th><th>Lösung</th><th>Beherrschung</th><th className="num">Test</th><th>Fällig</th></tr></thead>
+          <tbody>
+            {r.items.map((it) => (
+              <tr key={it.itemIndex}>
+                <td>{it.prompt}</td>
+                <td className="muted">{it.answer}</td>
+                <td><MasteryPill it={it} maxBox={r.maxBox} /></td>
+                <td className="num">{it.testsSeen === 0 ? "—" : `${it.testsCorrect}/${it.testsSeen}`}</td>
+                <td className="muted">{it.dueOn ?? "—"}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+/** Farbcodierte „sitzt"-Ampel: neu (grau) · unsicher (magenta) · in Arbeit (neutral) · sitzt sicher (lime). */
+function MasteryPill({ it, maxBox }: { it: ItemReport; maxBox: number }) {
+  if (!it.introduced) return <span className="pill">neu</span>;
+  if (it.box >= maxBox) return <span className="pill lime">sitzt · {it.masteryPercent}%</span>;
+  if (it.masteryPercent < 50) return <span className="pill mag">{it.masteryPercent}% · Box {it.box}</span>;
+  return <span className="pill">{it.masteryPercent}% · Box {it.box}</span>;
 }
