@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { api, errorMessage } from "../lib/api";
 import { useAsync } from "../lib/useAsync";
 import { ExerciseAttribution } from "./ExerciseAttribution";
+import { ExercisePreviewModal } from "./ExercisePreviewModal";
 import type {
   ChapterResponse, CreateExercisePayload, ExerciseSummary, ExerciseTypeKey, ExerciseUsage,
   SchoolType, SubjectResponse, VocabularyResponse,
@@ -64,6 +65,9 @@ export function VaterExercises() {
   const [error, setError] = useState<string | null>(null);
   const [okMsg, setOkMsg] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  // Testmodus („Ausprobieren"): die aktuell durchzuspielende Übung (frisch angelegt oder aus der Liste).
+  const [preview, setPreview] = useState<{ id: number; title: string } | null>(null);
+  const [justCreated, setJustCreated] = useState<{ id: number; title: string } | null>(null);
 
   // Verwaltung zeigt standardmäßig nur eigene Übungen (mineOnly); optional auch die geteilte Bibliothek.
   const [showShared, setShowShared] = useState(false);
@@ -175,8 +179,9 @@ export function VaterExercises() {
     };
     setBusy(true);
     try {
-      await api.createExercise(Number(subjectId), Number(chapterId), TYPE_ROUTE[type], payload);
+      const created = await api.createExercise(Number(subjectId), Number(chapterId), TYPE_ROUTE[type], payload);
       setOkMsg(`Übung „${payload.title}" angelegt.`);
+      setJustCreated({ id: created.id, title: payload.title });
       setTitle("");
       setRows([emptyRow(type)]);
       setVocabKeys([]);
@@ -261,7 +266,15 @@ export function VaterExercises() {
       </section>
 
       {error && <div className="banner err">{error}</div>}
-      {okMsg && <div className="banner ok">{okMsg}</div>}
+      {okMsg && (
+        <div className="banner ok row" style={{ alignItems: "center", gap: 10 }}>
+          <span>{okMsg}</span>
+          {justCreated && (
+            <button type="button" className="btn ghost inline-btn" style={{ width: "auto", marginLeft: "auto" }}
+              onClick={() => setPreview(justCreated)}>🧪 Ausprobieren</button>
+          )}
+        </div>
+      )}
 
       <button type="submit" className="btn" style={{ width: "auto", alignSelf: "flex-start" }} disabled={busy}>
         {busy ? "…" : "Übung anlegen"}
@@ -281,12 +294,15 @@ export function VaterExercises() {
           {chapterExercises.length === 0 ? <div className="muted">Noch keine Übungen.</div> : (
             <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
               {chapterExercises.map((e) => (
-                <ExerciseManageRow key={e.id} exercise={e} subjectId={Number(subjectId)} onChanged={existing.reload} />
+                <ExerciseManageRow key={e.id} exercise={e} subjectId={Number(subjectId)} onChanged={existing.reload}
+                  onPreview={() => setPreview({ id: e.id, title: e.title })} />
               ))}
             </div>
           )}
         </section>
       )}
+
+      {preview && <ExercisePreviewModal exerciseId={preview.id} title={preview.title} onClose={() => setPreview(null)} />}
     </form>
   );
 }
@@ -465,9 +481,9 @@ function VocabRefPicker({ selectedKeys, setSelectedKeys, extra, setExtra }: {
   );
 }
 
-/** Eine Zeile der Kapitel-Übungsliste mit Verwendungs-Anzeige und Löschen (409-bewusst). */
-function ExerciseManageRow({ exercise, subjectId, onChanged }: {
-  exercise: ExerciseSummary; subjectId: number; onChanged: () => void;
+/** Eine Zeile der Kapitel-Übungsliste mit Verwendungs-Anzeige, Testmodus und Löschen (409-bewusst). */
+function ExerciseManageRow({ exercise, subjectId, onChanged, onPreview }: {
+  exercise: ExerciseSummary; subjectId: number; onChanged: () => void; onPreview: () => void;
 }) {
   const [usage, setUsage] = useState<ExerciseUsage | null>(null);
   const [open, setOpen] = useState(false);
@@ -494,6 +510,7 @@ function ExerciseManageRow({ exercise, subjectId, onChanged }: {
         {/* Attribution der geteilten Bibliothek: eigene vs. von anderen Vätern erstellt vs. System. */}
         <ExerciseAttribution e={exercise} />
         <span style={{ marginLeft: "auto" }} />
+        <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} onClick={onPreview}>🧪 Ausprobieren</button>
         <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} disabled={busy} onClick={toggleUsage}>Verwendung</button>
         {/* Nur der Autor darf löschen – fremde Übungen sind übernehmbar, aber geschützt. */}
         {exercise.isOwn && <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} disabled={busy} onClick={remove}>Löschen</button>}

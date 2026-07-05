@@ -105,8 +105,6 @@ public class ClozeTextsController(PuglingDbContext db) : ControllerBase
     {
         var cloze = await db.ClozeTexts.FindAsync(id);
         if (cloze is null) return NotFound();
-        if (await db.StudyPlanItems.AnyAsync(i => i.ClozeTextId == id))
-            return Problem(statusCode: 409, detail: "Lückentext wird in einem Lehrplan verwendet und kann nicht gelöscht werden.");
         db.ClozeTexts.Remove(cloze);
         await db.SaveChangesAsync();
         return NoContent();

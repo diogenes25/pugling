@@ -1,12 +1,14 @@
-using System.ComponentModel.DataAnnotations.Schema;
-
 namespace Pugling.Api.Models;
 
-// Verfahrensneutraler Lehrplan-Rahmen: Zeit, Punkte, Fortschritt und Abschlusstest gelten
-// für JEDES Lernverfahren gleich. Verfahrens-spezifisch sind nur der Inhalt (Vokabel vs.
-// Lückentext) und die Test-Mechanik/Stufen (siehe TestsController / ClozeTestsController).
+// Lehrplan-Modell: Ein Lehrplan ist ein reiner Container aus referenzierten Katalog-Übungen
+// (siehe PlanPosition). Zeit-/Punkte-/Leitner-Steuerung, Stufen und Ziele hängen an der jeweiligen
+// Position, nicht mehr am Plan. Verfahrens-spezifisch sind nur der Inhalt (Übungs-Config) und die
+// Test-Mechanik/Stufen (siehe PositionPlayService / PositionTestsController).
 
-/// <summary>Lernverfahren eines Lehrplans.</summary>
+/// <summary>
+/// Lernverfahren – nur noch die Selbstbeschreibung im Übungstyp-Manifest (<see cref="ExerciseTypeManifest"/>)
+/// braucht diese Zuordnung. Kein plan-weites Verfahren mehr.
+/// </summary>
 public enum LearningMethod { Vocabulary = 0, Cloze = 1, Matching = 2 }
 
 /// <summary>Stufe des Zuordnungs-Verfahrens (steigende Schwierigkeit). Nutzt den Vokabel-Store.</summary>
@@ -40,125 +42,36 @@ public enum TestStage
 /// <summary>Ein Schritt im Stufen-Fahrplan: ab Tag <c>DayNumber</c> (1-basiert) gilt Stufe <c>Stage</c>.</summary>
 public record StageStep(int DayNumber, int Stage);
 
-/// <summary>Vom Vater erstellter Lehrplan für ein Kind (z. B. "Vokabeltest in 10 Tagen").</summary>
+/// <summary>
+/// Vom Vater erstellter Lehrplan für ein Kind: ein <b>Container</b>, der Katalog-Übungen als
+/// <see cref="PlanPosition"/>en bündelt. Titel, Kind und Laufzeit gehören hierher; alles Lern-Spezifische
+/// (Ziel, Punkte, Stufe, Leitner) trägt die einzelne Position.
+/// </summary>
 public class StudyPlan
 {
     public int Id { get; set; }
     public int ChildId { get; set; }
     public Child? Child { get; set; }
-    public LearningMethod Method { get; set; } = LearningMethod.Vocabulary;
     public string Title { get; set; } = "";
-    /// <summary>Optionale Verknüpfung zum Katalog-Fach – Basis für die Stundenplan-Steuerung.</summary>
+    /// <summary>Optionale Verknüpfung zum Katalog-Fach (nur zur Einordnung/Filterung).</summary>
     public int? SubjectId { get; set; }
     public Subject? Subject { get; set; }
-    /// <summary>Wie viele neue Inhalte an einem Unterrichtstag eingeführt werden.</summary>
-    public int NewItemsPerLesson { get; set; } = 5;
     public DateOnly StartDate { get; set; }
     public DateOnly EndDate { get; set; }
-
-    // --- Tages-Anforderungen ---
-    /// <summary>Mindest-Übungszeit pro Tag in Minuten.</summary>
-    public int DailyMinutesRequired { get; set; } = 20;
-    /// <summary>Muss täglich ein Abschlusstest bestanden werden?</summary>
-    public bool DailyTestRequired { get; set; } = true;
-    /// <summary>Bestehensgrenze des Tests in Prozent.</summary>
-    public int DailyTestPassPercent { get; set; } = 80;
-    /// <summary>Standard-Teststufe (verfahrensabhängig interpretiert), wenn Fahrplan/Angabe fehlen.</summary>
-    public int DefaultStage { get; set; } = 2;
-    /// <summary>
-    /// Wenn true, zählt ein Test nur als bestanden, wenn er auf einer "gewerteten" Stufe läuft
-    /// (getippt/Freitext) – verhindert bloßes Klicken/Auswählen. Bewertung setzt der Controller.
-    /// </summary>
-    public bool RequireTypedTest { get; set; }
-    /// <summary>Optionaler Stufen-Fahrplan (Tag -> Stufe); steigert die Schwierigkeit über die Laufzeit.</summary>
-    public List<StageStep>? StageSchedule { get; set; }
-
-    // --- Leitner-Wiederholung (Karteikasten) ---
-    /// <summary>
-    /// Aktiviert die Karteikasten-Terminierung: jede Karte wandert bei richtiger Antwort eine Box höher
-    /// (längeres Intervall), bei falscher zurück in Box 1. Die Wiederholung eines Tages umfasst dann nur
-    /// die <em>fälligen</em> Karten. Aus = bisheriges Verhalten (alle eingeführten Inhalte).
-    /// </summary>
-    public bool UseLeitner { get; set; }
-    /// <summary>Höchste Box (Standard 5).</summary>
-    public int MaxBox { get; set; } = 5;
-    /// <summary>
-    /// Intervall in Tagen je Box (Index = Box; Index 0 ungenutzt). Null = Standard <c>[0,1,2,4,7,14]</c>.
-    /// </summary>
-    public List<int>? BoxIntervalDays { get; set; }
-
-    // --- Punkte ---
-    public int PointsMinutesMet { get; set; } = 10;
-    public int PointsTestPassed { get; set; } = 20;
-    public int PointsDayCompleteBonus { get; set; } = 10;
-
-    /// <summary>Basispunkte für einen erstmals wiederholten (neuen) Inhalt – „neuer Stoff zählt am meisten".</summary>
-    public int NewContentPoints { get; set; } = 10;
-
-    // --- Combo (Motivations-Bonus für Treffer in Folge beim Üben) ---
-    /// <summary>Alle N richtigen Antworten in Folge gibt es einen Combo-Bonus. 0 = Combo-Bonus aus.</summary>
-    public int ComboThreshold { get; set; } = 5;
-    /// <summary>Basis-Bonuspunkte je Combo-Meilenstein; eskaliert (N-ter Meilenstein → Basis × N). 0 = aus.</summary>
-    public int ComboBonusPoints { get; set; } = 5;
-
-    // --- Schnelle Antwort (Motivations-Bonus fürs zügige Beantworten) ---
-    /// <summary>
-    /// Wird eine Karte in höchstens so vielen Sekunden beantwortet, gibt es <see cref="SpeedBonusPoints"/>.
-    /// Serverseitig gemessen (Zeit seit der letzten Antwort derselben Sitzung). 0 = Feature aus.
-    /// </summary>
-    public int SpeedThresholdSeconds { get; set; }
-    /// <summary>Bonuspunkte für eine schnelle Antwort. 0 = aus.</summary>
-    public int SpeedBonusPoints { get; set; }
-
     public bool Active { get; set; } = true;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
-    public List<StudyPlanItem> Items { get; set; } = new();
-
-    /// <summary>
-    /// Neues Modell (Strangler): verfahrens-gemischte Positionen, die auf Katalog-Übungen verweisen.
-    /// Läuft additiv neben <see cref="Items"/>, bis der Lern-Motor umgeschlüsselt ist.
-    /// </summary>
+    /// <summary>Die Positionen des Plans: referenzierte Katalog-Übungen mit eigenem Ziel/Punkten/Leitner.</summary>
     public List<PlanPosition> Positions { get; set; } = new();
 }
 
-/// <summary>Ein Lerninhalt im Plan – je nach Verfahren eine Vokabel ODER ein Lückentext.</summary>
-public class StudyPlanItem
-{
-    public int Id { get; set; }
-    public int StudyPlanId { get; set; }
-    public StudyPlan? StudyPlan { get; set; }
-    public int Order { get; set; }
-
-    public int? VocabularyId { get; set; }
-    public Vocabulary? Vocabulary { get; set; }
-    public int? ClozeTextId { get; set; }
-    public ClozeText? ClozeText { get; set; }
-    /// <summary>Wann der Inhalt erstmals als "neu" eingeführt wurde. Null = noch nicht eingeführt.</summary>
-    public DateOnly? IntroducedAt { get; set; }
-
-    // --- Leitner-Box-Zustand (pro Kind, da ein Plan genau einem Kind gehört) ---
-    /// <summary>Aktuelle Leitner-Box dieser Karte (1 = neu/schwer … MaxBox = sicher).</summary>
-    public int Box { get; set; } = 1;
-    /// <summary>Tag, an dem die Karte das nächste Mal fällig ist. Null = sofort fällig (noch nie bewertet).</summary>
-    public DateOnly? DueOn { get; set; }
-    /// <summary>Wie oft diese Karte schon per Leitner wiederholt wurde.</summary>
-    public int ReviewCount { get; set; }
-    /// <summary>Zeitpunkt der letzten Leitner-Wiederholung.</summary>
-    public DateTime? LastReviewedAt { get; set; }
-
-    /// <summary>Verfahrensneutraler Inhalts-Bezug (Vokabel-Id oder Lückentext-Id).</summary>
-    [NotMapped]
-    public int ContentId => VocabularyId ?? ClozeTextId ?? 0;
-}
-
-/// <summary>Übungssitzung: erfasst echte Übungszeit und was geübt wurde.</summary>
+/// <summary>Übungssitzung einer Lehrplan-Position: erfasst echte Übungszeit und was geübt wurde.</summary>
 public class PracticeSession
 {
     public int Id { get; set; }
     public int StudyPlanId { get; set; }
     public StudyPlan? StudyPlan { get; set; }
-    /// <summary>Neues Modell: Sitzung gehört zu einer Lehrplan-Position (Übung). Null = altes plan-weites Üben.</summary>
+    /// <summary>Position (Übung), zu der die Sitzung gehört.</summary>
     public int? PlanPositionId { get; set; }
     public PlanPosition? PlanPosition { get; set; }
     public DateOnly Day { get; set; }
@@ -176,22 +89,22 @@ public class ReviewEvent
     public int Id { get; set; }
     public int PracticeSessionId { get; set; }
     public PracticeSession? PracticeSession { get; set; }
-    /// <summary>Inhalts-Bezug (altes Modell): Vokabel-Id oder Lückentext-Id. Neues Modell: Übungs-Id der Position.</summary>
+    /// <summary>Übungs-Id der Position (der Inhalt lebt in der Übungs-Config).</summary>
     public int ContentId { get; set; }
-    /// <summary>Neues Modell: Index des Inhalts-Atoms in der Übung der Position. Null = altes Modell.</summary>
+    /// <summary>Index des Inhalts-Atoms in der Übung der Position.</summary>
     public int? ItemIndex { get; set; }
     public int StageValue { get; set; }
     public bool WasCorrect { get; set; }
     public DateTime At { get; set; } = DateTime.UtcNow;
 }
 
-/// <summary>Ein Abschlusstest-Versuch an einem Tag (verfahrensneutral).</summary>
+/// <summary>Ein Abschlusstest-Versuch einer Position an einem Tag (verfahrensneutral).</summary>
 public class TestAttempt
 {
     public int Id { get; set; }
     public int StudyPlanId { get; set; }
     public StudyPlan? StudyPlan { get; set; }
-    /// <summary>Neues Modell: Test gehört zu einer Lehrplan-Position (Übung). Null = altes plan-weites Testen.</summary>
+    /// <summary>Position (Übung), zu der der Test gehört.</summary>
     public int? PlanPositionId { get; set; }
     public PlanPosition? PlanPosition { get; set; }
     public DateOnly Day { get; set; }
@@ -209,34 +122,20 @@ public class TestAttempt
     public List<TestItemResult> Results { get; set; } = new();
 }
 
-/// <summary>Ergebnis einer einzelnen Test-Position (Vokabel bzw. Lückentext-Lücke).</summary>
+/// <summary>Ergebnis einer einzelnen Test-Position (ein Inhalts-Atom der Übung).</summary>
 public class TestItemResult
 {
     public int Id { get; set; }
     public int TestAttemptId { get; set; }
     public TestAttempt? TestAttempt { get; set; }
-    /// <summary>Inhalts-Bezug (altes Modell): Vokabel-Id oder Lückentext-Id. Neues Modell: Übungs-Id der Position.</summary>
+    /// <summary>Übungs-Id der Position (der Inhalt lebt in der Übungs-Config).</summary>
     public int ContentId { get; set; }
-    /// <summary>Neues Modell: Index des Inhalts-Atoms in der Übung der Position. Null = altes Modell.</summary>
+    /// <summary>Index des Inhalts-Atoms in der Übung der Position.</summary>
     public int? ItemIndex { get; set; }
-    /// <summary>Bei Lückentext: Index der Lücke; bei Vokabeln null.</summary>
+    /// <summary>Bei Lückentext: Index der Lücke; sonst null.</summary>
     public int? GapIndex { get; set; }
     public int StageValue { get; set; }
     public string? GivenAnswer { get; set; }
     public bool WasCorrect { get; set; }
     public int HintsUsed { get; set; }
-}
-
-/// <summary>Art einer Tages-Belohnung (für idempotente Punktevergabe).</summary>
-public enum RewardKind { MinutesMet = 0, TestPassed = 1, DayCompleteBonus = 2 }
-
-/// <summary>Protokolliert vergebene Tages-Belohnungen, damit Punkte nicht doppelt fließen.</summary>
-public class StudyDayReward
-{
-    public int Id { get; set; }
-    public int StudyPlanId { get; set; }
-    public DateOnly Day { get; set; }
-    public RewardKind Kind { get; set; }
-    public int Points { get; set; }
-    public DateTime AwardedAt { get; set; } = DateTime.UtcNow;
 }

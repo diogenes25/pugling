@@ -33,6 +33,7 @@ public class PointKindCurrencyTests
     [InlineData(PointKind.Minutes, Currency.Coins)]
     [InlineData(PointKind.Test, Currency.Coins)]
     [InlineData(PointKind.DayComplete, Currency.Coins)]
+    [InlineData(PointKind.Goal, Currency.Coins)]
     [InlineData(PointKind.Manual, Currency.Coins)]
     [InlineData(PointKind.Reward, Currency.Coins)]
     [InlineData(PointKind.Combo, Currency.Gems)]

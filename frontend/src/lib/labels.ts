@@ -7,6 +7,7 @@ const POINT_KIND_LABELS: Record<PointKind, string> = {
   Minutes: "Übungszeit",
   Test: "Test bestanden",
   DayComplete: "Tag komplett",
+  Goal: "Ziel erreicht",
   Combo: "Combo-Bonus",
   Speed: "Schnell-Bonus",
   Duration: "Ausdauer-Bonus",

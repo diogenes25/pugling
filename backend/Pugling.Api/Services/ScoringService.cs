@@ -36,20 +36,11 @@ public class ScoringService(PuglingDbContext db)
     private const double MinSpeedSeconds = 1.0;
 
     /// <summary>
-    /// Verfahrensneutrale Punkte-Einstellung einer Wiederholung. Im alten Modell stammt sie vom
-    /// <see cref="StudyPlan"/> (plan-weit), im neuen von der <see cref="PlanPosition"/> (pro Übung).
-    /// <paramref name="Label"/> geht in den Buchungstext ein.
+    /// Verfahrensneutrale Punkte-Einstellung einer Wiederholung – stammt von der <see cref="PlanPosition"/>
+    /// (pro Übung). <paramref name="Label"/> geht in den Buchungstext ein.
     /// </summary>
     public record ScoreConfig(string Label, int NewContentPoints, int ComboThreshold, int ComboBonusPoints,
         int SpeedThresholdSeconds, int SpeedBonusPoints);
-
-    private static ScoreConfig ConfigOf(StudyPlan plan) => new(plan.Title, plan.NewContentPoints,
-        plan.ComboThreshold, plan.ComboBonusPoints, plan.SpeedThresholdSeconds, plan.SpeedBonusPoints);
-
-    /// <summary>Altes Modell: Punkte-Einstellung vom Plan. Delegiert an die verfahrensneutrale Überladung.</summary>
-    public Task<ReviewScore> ScoreReviewAsync(StudyPlan plan, int reviewCount, int box, int postBox,
-        bool wasCorrect, int combo, DateTime nowLocal, double? elapsedSeconds = null) =>
-        ScoreReviewAsync(ConfigOf(plan), reviewCount, box, postBox, wasCorrect, combo, nowLocal, elapsedSeconds);
 
     /// <summary>
     /// Bewertet eine Wiederholung und liefert alle fälligen Punkte-Buchungen. VOR dem Box-Aufstieg

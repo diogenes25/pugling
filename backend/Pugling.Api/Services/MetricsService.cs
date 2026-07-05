@@ -9,7 +9,7 @@ namespace Pugling.Api.Services;
 /// (Übungssitzungen, Reviews, Tests, Tagesbelohnungen). Eine gemeinsame Quelle für Missionen
 /// (zeitfenster-bezogen) und Auszeichnungen (lebenslang bzw. aktuelle Serie). Nur Lese-Queries.
 /// </summary>
-public class MetricsService(PuglingDbContext db)
+public class MetricsService(PuglingDbContext db, PositionProgressService progress)
 {
     /// <summary>
     /// Wert einer Metrik für ein Kind im halboffenen Tagesfenster [<paramref name="from"/>, <paramref name="to"/>]
@@ -22,9 +22,9 @@ public class MetricsService(PuglingDbContext db)
 
         return metric switch
         {
-            ProgressMetric.NewWords => await db.StudyPlanItems
-                .Where(i => i.StudyPlan!.ChildId == childId && i.IntroducedAt != null
-                    && i.IntroducedAt >= lo && i.IntroducedAt <= hi)
+            ProgressMetric.NewWords => await db.PositionItemProgress
+                .Where(p => p.PlanPosition!.StudyPlan!.ChildId == childId && p.IntroducedAt != null
+                    && p.IntroducedAt >= lo && p.IntroducedAt <= hi)
                 .CountAsync(),
 
             ProgressMetric.CorrectReviews => await db.ReviewEvents
@@ -41,30 +41,37 @@ public class MetricsService(PuglingDbContext db)
                 .Where(s => s.StudyPlan!.ChildId == childId && s.Day >= lo && s.Day <= hi)
                 .SumAsync(s => (int?)s.ActiveSeconds) ?? 0) / 60,
 
-            ProgressMetric.DaysComplete => await CompleteDaysQuery(childId)
-                .Where(d => d >= lo && d <= hi)
-                .Distinct()
-                .CountAsync(),
+            ProgressMetric.DaysComplete => (await CompleteDaysAsync(childId, today))
+                .Count(d => d >= lo && d <= hi),
 
-            ProgressMetric.StreakDays => await CurrentStreakAsync(childId, today),
+            ProgressMetric.StreakDays => CurrentStreak(await CompleteDaysAsync(childId, today), today),
 
             _ => 0,
         };
     }
 
-    /// <summary>Tage, an denen mindestens ein Lehrplan des Kindes vollständig war (DayComplete-Belohnung).</summary>
-    private IQueryable<DateOnly> CompleteDaysQuery(int childId) =>
-        from reward in db.StudyDayRewards
-        join plan in db.StudyPlans on reward.StudyPlanId equals plan.Id
-        where plan.ChildId == childId && reward.Kind == RewardKind.DayCompleteBonus
-        select reward.Day;
+    /// <summary>
+    /// Tage bis (einschließlich) <paramref name="until"/>, an denen die Tagespflicht eines Plans des Kindes
+    /// vollständig erledigt war – <b>dieselbe</b> Regel (<see cref="PositionProgressService.DayOverview.DutyDone"/>),
+    /// die auch die Tagesmission/Overview-Serie beim Sohn nutzt. Bewusst über den Fortschritts-Service statt über
+    /// eine reine Belohnungs-Query: „mindestens ein Ziel gebucht" ≠ „Tag vollständig", und Missionen/Auszeichnungen
+    /// dürfen nicht bei nur teil-erledigten Tagen feuern.
+    /// </summary>
+    private async Task<IReadOnlyCollection<DateOnly>> CompleteDaysAsync(int childId, DateOnly until)
+    {
+        var plans = await db.StudyPlans.AsNoTracking().Where(p => p.ChildId == childId).ToListAsync();
+        var complete = new HashSet<DateOnly>();
+        foreach (var plan in plans)
+            foreach (var day in await progress.ProgressAsync(plan, until))
+                if (day.DutyDone) complete.Add(day.Day);
+        return complete;
+    }
 
     /// <summary>Länge der aktuellen Serie vollständiger Tage bis (einschließlich) heute oder gestern.</summary>
-    private async Task<int> CurrentStreakAsync(int childId, DateOnly today)
+    private static int CurrentStreak(IReadOnlyCollection<DateOnly> completeDays, DateOnly today)
     {
-        var days = await CompleteDaysQuery(childId).Distinct().ToListAsync();
-        if (days.Count == 0) return 0;
-        var set = days.ToHashSet();
+        if (completeDays.Count == 0) return 0;
+        var set = completeDays as HashSet<DateOnly> ?? completeDays.ToHashSet();
 
         // Die Serie darf heute noch offen sein: zählt ab heute, wenn heute schon vollständig, sonst ab gestern.
         var cursor = set.Contains(today) ? today : today.AddDays(-1);

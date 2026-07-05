@@ -49,11 +49,10 @@ builder.Services.AddScoped<WalletService>();
 builder.Services.AddScoped<OfferService>();
 builder.Services.AddScoped<MetricsService>();
 builder.Services.AddScoped<GamificationService>();
-builder.Services.AddScoped<StudyProgressService>();
-builder.Services.AddScoped<ScheduleService>();
-// Positions-basierter Lern-Motor (neues Modell, Etappe 3): Üben/Leitner pro Lehrplan-Position.
+// Positions-basierter Lern-Motor: Üben/Leitner pro Lehrplan-Position.
 builder.Services.AddScoped<PositionPlayService>();
-builder.Services.AddScoped<TestAttemptService>();
+// Ziel-/Punkte-Engine des Positions-Modells: Erledigt-Regel je CheckMode + idempotente Ziel-Punkte.
+builder.Services.AddScoped<PositionProgressService>();
 builder.Services.AddScoped<AuthAccess>();
 builder.Services.AddScoped<PlanOwnershipFilter>();
 builder.Services.AddScoped<ChildOwnershipFilter>();
@@ -67,6 +66,8 @@ builder.Services.AddSingleton<AnswerGrader>();
 builder.Services.AddSingleton<ExerciseContentProvider>();
 // DB-gestützte Auflösung (u. a. Vokabel-Store-Refs → ContentItems); scoped wegen DbContext.
 builder.Services.AddScoped<ExerciseContentResolver>();
+// Testmodus: Vater spielt eine Übung nebenwirkungsfrei durch (nutzt Resolver + AnswerGrader); scoped wegen Resolver.
+builder.Services.AddScoped<ExercisePreviewService>();
 builder.Services.AddCors(o => o.AddDefaultPolicy(p =>
     p.WithOrigins("http://localhost:5173").AllowAnyHeader().AllowAnyMethod()));
 

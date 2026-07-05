@@ -4,8 +4,6 @@
 export type Role = "Vater" | "Sohn";
 
 export type LearningMethod = "Vocabulary" | "Cloze" | "Matching";
-export type TestStage = "ShowBoth" | "SelfAssess" | "LetterBoxes" | "FreeText" | "Audio";
-export type LessonDayMode = "New" | "Review";
 export type PartOfSpeech = "Noun" | "Verb" | "Adjective" | "Adverb" | "Other";
 
 /**
@@ -94,6 +92,33 @@ export interface PlanUsage { planId: number; planTitle: string; childId: number;
 export interface ClassTestUsage { id: number; title: string; childId: number; childName: string; }
 export interface ExerciseUsage { plans: PlanUsage[]; classTests: ClassTestUsage[]; }
 
+// ---- Testmodus („Ausprobieren"): Vater spielt eine Übung nebenwirkungsfrei durch ----
+
+/** Eine im Testmodus vorgelegte Aufgabe. `reveal` ist nur bei Selbsteinschätzung gesetzt (Lösung aufgedeckt). */
+export interface ExercisePreviewItem {
+  itemIndex: number;
+  prompt: string;
+  /** Nur bei Lückentexten: die {{n}}-Nummer der Lücke. */
+  gapIndex: number | null;
+  hint: string | null;
+  /** Nur bei Vokabel-Buchstabenkästchen: Länge der Lösung. */
+  answerLength: number | null;
+  /** Bei Selbsteinschätzung die Lösung, bei getippten Stufen null. */
+  reveal: string | null;
+}
+/** Spielbarer Zustand einer Übung im Testmodus. `typed` = Antwort wird getippt (sonst Selbsteinschätzung). */
+export interface ExercisePreviewData { stage: number; typed: boolean; items: ExercisePreviewItem[]; }
+/** Eine Antwort im Testmodus: getippt (`givenAnswer`) oder Selbsteinschätzung (`wasKnown`). */
+export interface ExercisePreviewAnswer { itemIndex: number; givenAnswer?: string | null; wasKnown?: boolean | null; }
+/** Einzelauswertung im Testmodus (die Lösung `expected` wird hier immer offengelegt). */
+export interface ExercisePreviewOutcome {
+  itemIndex: number; prompt: string; expected: string; givenAnswer: string | null; wasCorrect: boolean;
+}
+/** Gesamtergebnis eines Testmodus-Durchlaufs. */
+export interface ExercisePreviewResult {
+  total: number; correct: number; scorePercent: number; items: ExercisePreviewOutcome[];
+}
+
 /** Partielle Vokabel-Änderung (nur gesetzte Felder). */
 export interface UpdateVocabularyDto {
   version?: string;
@@ -146,7 +171,44 @@ export interface VocabularyResponse {
   translation: string;
   partOfSpeech: PartOfSpeech;
   pronunciationAudioUrl: string | null;
+  /** Globale, kindneutrale Schlagworte (Namen) – vgl. VocabTagResponse. */
+  tags: string[];
   createdAt: string;
+}
+
+/** Globaler, kindneutraler Vokabel-Tag (learn/vocabulary/tags). */
+export interface VocabTagResponse {
+  id: number;
+  name: string;
+  color: string | null;
+  vocabCount: number;
+  createdAt: string;
+}
+
+/**
+ * Kind-skopierter Tag (api/v1/tags) – markiert Übungen UND Vokabeln als für ein Kind relevant.
+ * Nicht verwechseln mit dem globalen VocabTagResponse.
+ */
+export interface ChildTagResponse {
+  id: number;
+  childId: number;
+  name: string;
+  color: string | null;
+  /** "Vater" | "Sohn" – wer den Tag angelegt hat. */
+  createdBy: string;
+  exerciseCount: number;
+  vocabularyCount: number;
+  createdAt: string;
+}
+
+/** Ergebnis eines einzelnen Batch-Elements (POST /learn/vocabulary/batch). */
+export interface VocabBatchResult {
+  index: number;
+  /** "created" | "existing" | "error". */
+  status: string;
+  id: number | null;
+  key: string | null;
+  error: string | null;
 }
 
 export interface CreateVocabularyDto {
@@ -185,108 +247,140 @@ export interface CreateExercisePayload {
 
 // ---- Lehrpläne ----
 
-export interface PlanItemResponse {
-  id: number;
-  order: number;
-  kind: LearningMethod;
-  contentId: number;
-  ref: string;
-  label: string;
-  detail: string;
-  introducedAt: string | null;
-  box: number;
-  dueOn: string | null;
-}
-
+/**
+ * Lehrplan = reiner Container aus referenzierten Katalog-Übungen (Positionen). Ziele, Punkte, Stufen und
+ * Leitner-Einstellungen leben an der jeweiligen {@link PositionResponse}, nicht mehr am Plan.
+ */
 export interface PlanResponse {
   id: number;
   childId: number;
-  method: LearningMethod;
   title: string;
   subjectId: number | null;
-  newItemsPerLesson: number;
   startDate: string;
   endDate: string;
-  dailyMinutesRequired: number;
-  dailyTestRequired: boolean;
-  dailyTestPassPercent: number;
-  defaultStage: number;
-  requireTypedTest: boolean;
-  useLeitner: boolean;
-  maxBox: number;
-  pointsMinutesMet: number;
-  pointsTestPassed: number;
-  pointsDayCompleteBonus: number;
-  comboThreshold: number;
-  comboBonusPoints: number;
   active: boolean;
-  items: PlanItemResponse[];
+  positionCount: number;
 }
 
 export interface CreatePlanDto {
   childId: number;
   title: string;
-  method?: LearningMethod;
   subjectId?: number | null;
-  newItemsPerLesson?: number;
   startDate?: string;
   durationDays: number;
-  contentKeys?: string[];
-  dailyMinutesRequired?: number;
-  dailyTestPassPercent?: number;
-  defaultStage?: number;
+}
+
+// ---- Lehrplan-Positionen (neues, verfahrens-gemischtes Modell) ----
+
+/** Ziel-Rhythmus einer Position: kein Pflichtziel / Tagesziel / Wochenziel. */
+export type GoalCadence = "None" | "Daily" | "Weekly";
+/** Umfang der Inhaltsauswahl einer Position aus dem Übungs-Pool. */
+export type ItemScope = "All" | "New" | "Old";
+
+/** Stufen-Fahrplan-Eintrag (Tag → Stufe) einer Leitner-Position. */
+export interface StageStep { dayNumber: number; stage: number; }
+
+/** Eine Position eines Lehrplans: Verweis auf eine Katalog-Übung + eigene Ziele/Punkte/Leitner. */
+export interface PositionResponse {
+  id: number;
+  studyPlanId: number;
+  exerciseId: number;
+  exerciseTitle: string;
+  exerciseType: string;
+  order: number;
+  stage: number | null;
+  itemCount: number | null;
+  scope: ItemScope;
+  cadence: GoalCadence;
+  goalThreshold: number | null;
+  requireTypedTest: boolean;
+  useLeitner: boolean;
+  maxBox: number;
+  boxIntervalDays: number[] | null;
+  stageSchedule: StageStep[] | null;
+  pointsGoalMet: number;
+  newContentPoints: number;
+  comboThreshold: number;
+  comboBonusPoints: number;
+  speedThresholdSeconds: number;
+  speedBonusPoints: number;
+}
+
+/** Anlegen einer Position. Leere Felder erben den Vorschlag der Übung (Hybrid-Prinzip). */
+export interface CreatePositionDto {
+  exerciseId: number;
+  order?: number;
+  stage?: number | null;
+  itemCount?: number | null;
+  scope?: ItemScope;
+  cadence?: GoalCadence;
+  goalThreshold?: number | null;
   requireTypedTest?: boolean;
   useLeitner?: boolean;
   maxBox?: number;
-  pointsMinutesMet?: number;
-  pointsTestPassed?: number;
-  pointsDayCompleteBonus?: number;
+  pointsGoalMet?: number;
+  newContentPoints?: number;
   comboThreshold?: number;
   comboBonusPoints?: number;
+  speedThresholdSeconds?: number;
+  speedBonusPoints?: number;
 }
 
-// ---- Tagesstatus / Fortschritt ----
+/** Partielle Änderung einer Position (nur gesetzte Felder). */
+export type UpdatePositionDto = Partial<CreatePositionDto>;
 
-export interface DayProgress {
-  day: string;
-  minutesPracticed: number;
-  minutesMet: boolean;
-  testAttempts: number;
-  bestScorePercent: number | null;
-  testPassed: boolean;
-  dayComplete: boolean;
-  pointsAwarded: number;
-  outstanding: string[];
+// ---- Tagesmission / Fortschritt (über Positionen) ----
+
+/** Prüf-/Spieloberfläche eines Übungstyps (aus dem Typ-Manifest). */
+export type ExerciseCheckMode = "None" | "StudyPlanTest" | "CatalogCheck" | "CatalogGenerateCheck";
+
+/** Status einer Position für einen Tag – steuert, welche Aktion der Sohn-Client anbietet. */
+export interface PositionStatus {
+  positionId: number;
+  exerciseId: number;
+  exerciseTitle: string;
+  exerciseType: string;
+  renderer: string;
+  order: number;
+  cadence: GoalCadence;
+  checkMode: ExerciseCheckMode;
+  useLeitner: boolean;
+  testable: boolean;
+  goalMet: boolean;
+  dueCount: number;
+  poolSize: number;
+  pointsGoalMet: number;
 }
 
-export interface ItemStat {
-  contentId: number;
-  ref: string;
-  label: string;
-  detail: string;
-  timesReviewed: number;
-  reviewCorrect: number;
-  timesTested: number;
-  testCorrect: number;
-  masteryPercent: number;
-  lastSeen: string | null;
-  box: number;
-  dueOn: string | null;
-}
-
-export interface TodayResponse {
-  planId: number;
-  method: LearningMethod;
+/** Tages-Rollup eines Lehrplans über seine Positionen. */
+export interface DayOverview {
   day: string;
   dutyDone: boolean;
-  recommendedStage: number;
-  mode: LessonDayMode | null;
-  isPreparationDay: boolean;
-  scheduleReason: string;
+  goalsTotal: number;
+  goalsMet: number;
+  pointsAwarded: number;
+  outstanding: string[];
+  positions: PositionStatus[];
+}
+
+/** Tagesmission des Sohns bzw. Ein-Blick-Status eines Plans. */
+export interface OverviewResponse {
+  planId: number;
+  title: string;
+  startDate: string;
+  endDate: string;
+  active: boolean;
   currentStreak: number;
-  progress: DayProgress;
-  dueItems: PlanItemResponse[];
-  weakItems: ItemStat[];
+  today: DayOverview;
+}
+
+/** Ein Tag im Verlauf (Vater-Auswertung). */
+export interface ProgressDay {
+  day: string;
+  dutyDone: boolean;
+  goalsTotal: number;
+  goalsMet: number;
+  pointsAwarded: number;
 }
 
 export interface ProgressResponse {
@@ -297,14 +391,15 @@ export interface ProgressResponse {
   totalDays: number;
   totalPoints: number;
   currentStreak: number;
-  days: DayProgress[];
+  days: ProgressDay[];
 }
 
-// ---- Übungssession (Leitner) ----
+// ---- Positions-Üben (Leitner) ----
 
-export interface SessionResponse {
+export interface PositionSession {
   id: number;
   planId: number;
+  positionId: number;
   day: string;
   startedAt: string;
   endedAt: string | null;
@@ -312,27 +407,31 @@ export interface SessionResponse {
   reviewCount: number;
 }
 
-/** Antwort einer einzelnen Lücke eines Lückentexts (positionsbezogen). */
-export interface GapAnswerInput {
-  gapIndex: number;
-  givenAnswer: string | null;
+/**
+ * Eine Übungskarte einer Position. `reveal` ist bei Anzeige-/Selbsteinschätzungs-Stufen die aufgedeckte
+ * Lösung (Flip-Karte); bei getippten Stufen ist es `null` (Eingabefeld). `answerLength` nur bei
+ * Vokabel-Buchstabenkästchen, `hint` nur bei getippten Stufen.
+ */
+export interface PracticeCard {
+  itemIndex: number;
+  stage: number;
+  type: string;
+  prompt: string;
+  hint: string | null;
+  answerLength: number | null;
+  reveal: string | null;
 }
 
-/**
- * Vom Kind abgegebene Antwort zu einer Übungskarte. Getippte Vokabel-/Zuordnungs-Stufen liefern
- * `givenAnswer`, Lückentexte `gaps`, reine Anzeige-/Selbsteinschätzungs-Stufen `wasKnown`.
- * Die Stufe bestimmt der Server aus dem Fahrplan – nie das Frontend.
- */
+/** Antwort zu einer Übungskarte: getippt (`givenAnswer`) oder Selbsteinschätzung (`wasKnown`). */
 export interface ReviewInput {
-  contentId: number;
+  itemIndex: number;
   givenAnswer?: string | null;
-  gaps?: GapAnswerInput[];
-  wasKnown?: boolean;
+  wasKnown?: boolean | null;
 }
 
 export interface ReviewOutcome {
   wasCorrect: boolean;
-  expected: string | null;
+  expected: string;
   awarded: number;
   box: number;
   dueOn: string | null;
@@ -549,64 +648,66 @@ export interface KlassenarbeitRepeat {
 /** Partielle Lehrplan-Änderung durch den Vater (Datumsfelder als "YYYY-MM-DD"). */
 export interface UpdatePlanDto {
   title?: string;
+  subjectId?: number | null;
   startDate?: string;
   endDate?: string;
-  newItemsPerLesson?: number;
-  dailyMinutesRequired?: number;
-  dailyTestPassPercent?: number;
   active?: boolean;
 }
 
-// ---- Vokabel-Test ----
+// ---- Positions-Test (Abschlusstest einer Übung) ----
 
+/**
+ * Eine im Positions-Test vorgelegte Aufgabe. `reveal` = aufgedeckte Lösung bei Anzeige-/Selbsteinschätzung,
+ * `null` bei getippten Stufen; `answerLength` nur bei Vokabel-Buchstabenkästchen, `hint` nur getippt.
+ */
 export interface TestItem {
-  vocabularyId: number;
+  itemIndex: number;
   prompt: string;
-  stage: TestStage;
-  translation: string | null;
+  stage: number;
+  reveal: string | null;
   answerLength: number | null;
-  audioUrl: string | null;
+  hint: string | null;
 }
 
 export interface TestAttemptResponse {
   attemptId: number;
   planId: number;
+  positionId: number;
   day: string;
-  stage: TestStage;
+  stage: number;
   totalItems: number;
   items: TestItem[];
 }
 
 export interface AnswerDto {
-  vocabularyId: number;
+  itemIndex: number;
   givenAnswer?: string | null;
   wasKnown?: boolean | null;
 }
 
 export interface ItemOutcome {
-  vocabularyId: number;
-  word: string;
-  expectedTranslation: string;
+  itemIndex: number;
+  prompt: string;
+  expected: string;
   givenAnswer: string | null;
   wasCorrect: boolean;
-  hintsUsed: number;
 }
 
 export interface TestSubmitResponse {
   attemptId: number;
-  stage: TestStage;
+  stage: number;
   totalItems: number;
   correctItems: number;
   scorePercent: number;
   passed: boolean;
-  dayProgress: DayProgress;
+  passPercent: number;
   items: ItemOutcome[];
 }
 
 // ---- Sohn-Wallet ----
 
 export type PointKind =
-  | "Base" | "Manual" | "Minutes" | "Test" | "DayComplete"
+  | "Base" | "Manual" | "Minutes" | "Test" | "DayComplete" | "Goal"
   | "Combo" | "Speed" | "Duration" | "Mission" | "Achievement" | "SkinPurchase" | "Reward";
 
 export interface WalletEntry {

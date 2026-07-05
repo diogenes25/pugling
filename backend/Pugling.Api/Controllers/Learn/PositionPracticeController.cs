@@ -22,7 +22,8 @@ namespace Pugling.Api.Controllers.Learn;
 [Authorize]
 [ServiceFilter(typeof(PlanOwnershipFilter))]
 public class PositionPracticeController(PuglingDbContext db, PositionPlayService play, ScoringService scoring,
-    GamificationService gamification, AnswerGrader grader, ILogger<PositionPracticeController> logger)
+    PositionProgressService progress, GamificationService gamification, AnswerGrader grader,
+    ILogger<PositionPracticeController> logger)
     : ControllerBase
 {
     /// <summary>Obergrenze der pro Heartbeat anrechenbaren Sekunden (Anti-Zeit-Cheat).</summary>
@@ -235,6 +236,9 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         await db.SaveChangesAsync();
 
         var plan = (await GetPlan(planId))!;
+        // Ziel-Punkte der Position (idempotent): erfasst v. a. reine Inhalts-/Leseübungen, deren Ziel mit
+        // dem Beenden der Sitzung erfüllt ist. VOR der Gamification, damit Missionen die Gutschrift sehen.
+        await progress.EvaluateAndAwardAsync(plan, session.Day);
         await gamification.EvaluateAndAwardAsync(plan.ChildId, session.Day);
         return Map(session);
     }

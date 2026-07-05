@@ -5,32 +5,29 @@ import { useAsync } from "../lib/useAsync";
 import { useAuth } from "../lib/auth";
 import { authorText } from "./ExerciseAttribution";
 import type {
-  ChildResponse, CreatePlanDto, ExerciseSummary, SchoolType, SubjectResponse, VocabularyResponse,
+  ChildResponse, CreatePlanDto, CreatePositionDto, ExerciseSummary, SchoolType, SubjectResponse,
 } from "../lib/types";
 
 /*
  * Lehrplan-Assistent: führt den Vater in fünf Schritten von „welches Kind" über einen kurzen
- * Fragenkatalog (Problemfeld, Ziel, Intensität) und die Auswahl vorhandener Inhalte bis zum
- * fertigen Vokabel-Lehrplan. Die Fragen setzen sinnvolle Voreinstellungen – der Vater kann alles
- * im Schritt „Feinschliff" überschreiben. Der manuelle Weg (Dashboard → Vokabeln → Neuer Plan)
- * bleibt daneben bestehen; der Assistent ist die geführte Abkürzung.
+ * Fragenkatalog (Problemfeld, Ziel, Intensität) und die Auswahl vorhandener Katalog-Übungen bis zum
+ * fertigen Lehrplan. Der Plan ist ein Container; für jede gewählte Übung legt der Assistent eine
+ * Position mit Ziel/Stufe/Punkten an (aus Ziel + Intensität abgeleitet, im Feinschliff überschreibbar).
+ * Der manuelle Weg (Dashboard → Neuer Plan → Positionen) bleibt daneben bestehen.
  */
 
 const SCHOOL_TYPES: SchoolType[] = [
   "Grundschule", "Hauptschule", "Realschule", "Gymnasium", "Gesamtschule", "Berufsschule",
 ];
 
-// Fach -> Quellsprache des Vokabel-Stores (filtert die auswählbaren Vokabeln).
-const SUBJECT_LANG: Record<string, string> = { "Französisch": "fr", "Englisch": "en", "Spanisch": "es", "Latein": "la" };
-
 type Goal = "Klassenarbeit" | "Aufholen" | "Regelmaessig";
 type Intensity = "Locker" | "Normal" | "Intensiv";
 
-// Intensität -> Tages-Pensum (Minuten, neue Wörter, Bestehensgrenze).
-const INTENSITY: Record<Intensity, { minutes: number; newWords: number; pass: number; label: string; hint: string }> = {
-  Locker: { minutes: 10, newWords: 3, pass: 70, label: "Locker", hint: "10 Min · 3 neue Wörter/Tag" },
-  Normal: { minutes: 15, newWords: 5, pass: 80, label: "Normal", hint: "15 Min · 5 neue Wörter/Tag" },
-  Intensiv: { minutes: 25, newWords: 8, pass: 90, label: "Intensiv", hint: "25 Min · 8 neue Wörter/Tag" },
+// Intensität -> Ziel-Schwelle (Bestehen ab %) und Punkte je erreichtem Positions-Ziel.
+const INTENSITY: Record<Intensity, { pass: number; points: number; label: string; hint: string }> = {
+  Locker: { pass: 70, points: 10, label: "Locker", hint: "Bestehen ab 70 % · 10 Punkte/Ziel" },
+  Normal: { pass: 80, points: 20, label: "Normal", hint: "Bestehen ab 80 % · 20 Punkte/Ziel" },
+  Intensiv: { pass: 90, points: 30, label: "Intensiv", hint: "Bestehen ab 90 % · 30 Punkte/Ziel" },
 };
 
 const GOALS: Record<Goal, { label: string; emoji: string; hint: string; duration: number; stage: number; typed: boolean }> = {
@@ -39,7 +36,7 @@ const GOALS: Record<Goal, { label: string; emoji: string; hint: string; duration
   Regelmaessig: { label: "Regelmäßig üben", emoji: "🔁", hint: "Dauerhaftes, entspanntes Training", duration: 30, stage: 2, typed: false },
 };
 
-const STEPS = ["Kind", "Problemfeld", "Inhalte", "Feinschliff", "Überblick"] as const;
+const STEPS = ["Kind", "Problemfeld", "Übungen", "Feinschliff", "Überblick"] as const;
 
 function todayIso(): string { return new Date().toISOString().slice(0, 10); }
 
@@ -66,17 +63,16 @@ export function VaterWizard() {
   const [goal, setGoal] = useState<Goal>("Klassenarbeit");
   const [intensity, setIntensity] = useState<Intensity>("Normal");
 
-  // --- Schritt 3: Inhalte ---
+  // --- Schritt 3: Übungen (Katalog) ---
   const [contentSearch, setContentSearch] = useState("");
-  const [selected, setSelected] = useState<string[]>([]);
+  const [selected, setSelected] = useState<number[]>([]);
 
-  // --- Schritt 4: Feinschliff ---
+  // --- Schritt 4: Feinschliff (Positions-Defaults) ---
   const [title, setTitle] = useState("");
   const [startDate, setStartDate] = useState(todayIso());
   const [durationDays, setDurationDays] = useState(14);
-  const [dailyMinutes, setDailyMinutes] = useState(15);
-  const [newItemsPerLesson, setNewItemsPerLesson] = useState(5);
   const [passPercent, setPassPercent] = useState(80);
+  const [pointsGoalMet, setPointsGoalMet] = useState(20);
   const [defaultStage, setDefaultStage] = useState(4);
   const [requireTyped, setRequireTyped] = useState(true);
   const [useLeitner, setUseLeitner] = useState(true);
@@ -92,11 +88,8 @@ export function VaterWizard() {
   const effectiveSchoolType: SchoolType | undefined =
     mode === "new" ? schoolType : (selectedChild?.schoolType as SchoolType | undefined);
   const subject = subjects.data?.find((s) => s.id === subjectId);
-  const subjectLang = subject ? SUBJECT_LANG[subject.name] : undefined;
 
-  // Vokabel-Store (auswählbare Inhalte eines Vokabel-Plans). Nach Fachsprache vorfiltern.
-  const vocab = useAsync<VocabularyResponse[]>(() => api.vocabulary(), []);
-  // Passende Katalog-Übungen (nur zur Orientierung: „solche Übungen gibt es zu Klasse/Fach").
+  // Passende Katalog-Übungen (die Bausteine des Plans – jede wird zu einer Position).
   const exercises = useAsync<ExerciseSummary[]>(
     () => (subjectId === "" ? Promise.resolve([]) : api.searchExercises({
       subjectId: Number(subjectId), grade: effectiveGrade, schoolType: effectiveSchoolType,
@@ -111,13 +104,11 @@ export function VaterWizard() {
     }
   }, [children.data]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const filteredVocab = useMemo(() => {
-    let v = vocab.data ?? [];
-    if (subjectLang) v = v.filter((x) => x.sourceLanguage === subjectLang);
+  const filteredExercises = useMemo(() => {
+    const list = exercises.data ?? [];
     const s = contentSearch.trim().toLowerCase();
-    if (s) v = v.filter((x) => x.word.toLowerCase().includes(s) || x.translation.toLowerCase().includes(s) || x.key.toLowerCase().includes(s));
-    return v;
-  }, [vocab.data, subjectLang, contentSearch]);
+    return s ? list.filter((x) => x.title.toLowerCase().includes(s)) : list;
+  }, [exercises.data, contentSearch]);
 
   // Voreinstellungen aus dem Fragenkatalog ableiten, solange der Vater den Feinschliff nicht angefasst hat.
   function applyDefaults() {
@@ -127,17 +118,16 @@ export function VaterWizard() {
     setDurationDays(g.duration);
     setDefaultStage(g.stage);
     setRequireTyped(g.typed);
-    setDailyMinutes(it.minutes);
-    setNewItemsPerLesson(it.newWords);
     setPassPercent(it.pass);
+    setPointsGoalMet(it.points);
     const subjName = subject?.name ?? "Lernplan";
     setTitle(topic.trim() ? `${subjName} – ${topic.trim()}` : `${subjName} – ${g.label}`);
   }
 
-  function toggle(key: string) {
-    setSelected((sel) => (sel.includes(key) ? sel.filter((k) => k !== key) : [...sel, key]));
+  function toggle(id: number) {
+    setSelected((sel) => (sel.includes(id) ? sel.filter((k) => k !== id) : [...sel, id]));
   }
-  function selectAll() { setSelected(filteredVocab.map((v) => v.key)); }
+  function selectAll() { setSelected(filteredExercises.map((e) => e.id)); }
 
   function canAdvance(): string | null {
     if (step === 0) {
@@ -145,7 +135,7 @@ export function VaterWizard() {
       return newName.trim() ? null : "Bitte einen Namen eingeben.";
     }
     if (step === 1) return subjectId === "" ? "Bitte ein Fach wählen." : null;
-    if (step === 2) return selected.length === 0 ? "Bitte mindestens eine Vokabel wählen." : null;
+    if (step === 2) return selected.length === 0 ? "Bitte mindestens eine Übung wählen." : null;
     return null;
   }
 
@@ -173,24 +163,29 @@ export function VaterWizard() {
         });
         targetChildId = created.id;
       }
-      const dto: CreatePlanDto = {
+      const planDto: CreatePlanDto = {
         childId: targetChildId,
         title: title.trim() || "Neuer Lehrplan",
-        method: "Vocabulary",
         subjectId: subjectId === "" ? null : Number(subjectId),
         durationDays,
         startDate,
-        newItemsPerLesson,
-        contentKeys: selected,
-        dailyMinutesRequired: dailyMinutes,
-        dailyTestPassPercent: passPercent,
-        defaultStage,
-        requireTypedTest: requireTyped,
-        useLeitner,
-        comboThreshold,
-        comboBonusPoints,
       };
-      const plan = await api.createPlan(dto);
+      const plan = await api.createPlan(planDto);
+      // Jede gewählte Übung als Tagesziel-Position mit den Feinschliff-Werten anlegen.
+      for (const exerciseId of selected) {
+        const posDto: CreatePositionDto = {
+          exerciseId,
+          cadence: "Daily",
+          stage: defaultStage,
+          goalThreshold: passPercent,
+          useLeitner,
+          requireTypedTest: requireTyped,
+          pointsGoalMet,
+          comboThreshold,
+          comboBonusPoints,
+        };
+        await api.addPosition(plan.id, posDto);
+      }
       nav(`/vater/plan/${plan.id}`);
     } catch (err) {
       setError(errorMessage(err));
@@ -280,56 +275,41 @@ export function VaterWizard() {
               ))}
             </div>
           </div>
-          <p className="sub">Aus diesen Angaben schlägt der Assistent Dauer, Pensum und Test-Stufe vor – anpassbar im Schritt „Feinschliff".</p>
+          <p className="sub">Aus diesen Angaben schlägt der Assistent Dauer, Test-Stufe und Punkte je Übung vor – anpassbar im Schritt „Feinschliff".</p>
         </section>
       )}
 
-      {/* -------- Schritt 3: Inhalte -------- */}
+      {/* -------- Schritt 3: Übungen -------- */}
       {step === 2 && (
         <section className="card" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           <div className="row">
-            <h3 style={{ margin: 0 }}>Inhalte wählen <span className="muted">({selected.length} gewählt)</span></h3>
-            <input style={{ marginLeft: "auto", maxWidth: 220 }} placeholder="Vokabel suchen…" value={contentSearch} onChange={(e) => setContentSearch(e.target.value)} aria-label="Vokabel suchen" />
+            <h3 style={{ margin: 0 }}>Übungen wählen <span className="muted">({selected.length} gewählt)</span></h3>
+            <input style={{ marginLeft: "auto", maxWidth: 220 }} placeholder="Übung suchen…" value={contentSearch} onChange={(e) => setContentSearch(e.target.value)} aria-label="Übung suchen" />
           </div>
-
-          {exercises.data && exercises.data.length > 0 && (
-            <div className="banner ok" style={{ background: "rgba(38,217,255,.1)", color: "var(--cyan)", borderColor: "var(--stroke)" }}>
-              📚 Passende Übungen aus der geteilten Bibliothek für {subject?.name}{effectiveGrade ? `, ${effectiveGrade}. Klasse` : ""}:{" "}
-              {exercises.data.map((e) => {
-                const by = authorText(e);
-                return `${e.title}${by ? ` – ${by}` : ""}${e.source ? ` [${e.source}]` : ""}`;
-              }).join(" · ")}
-            </div>
-          )}
-
-          {selected.length > 0 && (
-            <div className="tokenlist">
-              {selected.map((k) => {
-                const v = vocab.data?.find((x) => x.key === k);
-                return <span className="token" key={k}>{v ? `${v.word}→${v.translation}` : k}<button type="button" onClick={() => toggle(k)}>×</button></span>;
-              })}
-            </div>
-          )}
+          <p className="sub">
+            Übungen aus der geteilten Bibliothek für {subject?.name ?? "das Fach"}{effectiveGrade ? `, ${effectiveGrade}. Klasse` : ""} – jede wird zu einer Tagesziel-Position im Plan.
+          </p>
 
           <div className="row">
-            <span className="sub">
-              Vokabeln aus dem Store{subjectLang ? ` (${subjectLang.toUpperCase()})` : ""} – die Bausteine des Lehrplans.
-            </span>
-            {filteredVocab.length > 0 && <button type="button" className="btn ghost inline-btn" style={{ marginLeft: "auto" }} onClick={selectAll}>Alle wählen</button>}
+            <span className="sub">{filteredExercises.length} passende Übungen</span>
+            {filteredExercises.length > 0 && <button type="button" className="btn ghost inline-btn" style={{ marginLeft: "auto" }} onClick={selectAll}>Alle wählen</button>}
           </div>
 
-          {vocab.loading ? <div className="loading">Lade Vokabeln…</div> : filteredVocab.length === 0 ? (
+          {exercises.loading ? <div className="loading">Lade Übungen…</div> : filteredExercises.length === 0 ? (
             <div className="banner err">
-              Keine passenden Vokabeln im Store. Lege welche unter „Vokabeln" an{subjectLang ? ` (Quellsprache „${subjectLang}")` : ""}.
+              Keine passenden Übungen im Katalog. Lege welche unter „Übungen" an (Fach {subject?.name ?? "?"}).
             </div>
           ) : (
-            <div style={{ maxHeight: 320, overflowY: "auto", display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(220px,1fr))", gap: 6 }}>
-              {filteredVocab.map((v) => (
-                <label key={v.id} className="checkline" style={{ padding: 8, border: "1px solid var(--stroke)", borderRadius: 8 }}>
-                  <input type="checkbox" checked={selected.includes(v.key)} onChange={() => toggle(v.key)} />
-                  <span>{v.word} <span className="muted">→ {v.translation}</span></span>
-                </label>
-              ))}
+            <div style={{ maxHeight: 340, overflowY: "auto", display: "grid", gap: 6 }}>
+              {filteredExercises.map((e) => {
+                const by = authorText(e);
+                return (
+                  <label key={e.id} className="checkline" style={{ padding: 8, border: "1px solid var(--stroke)", borderRadius: 8 }}>
+                    <input type="checkbox" checked={selected.includes(e.id)} onChange={() => toggle(e.id)} />
+                    <span>{e.title} <span className="muted">· {e.type}{by ? ` – ${by}` : ""}{e.source ? ` [${e.source}]` : ""}</span></span>
+                  </label>
+                );
+              })}
             </div>
           )}
         </section>
@@ -338,16 +318,15 @@ export function VaterWizard() {
       {/* -------- Schritt 4: Feinschliff -------- */}
       {step === 3 && (
         <section className="card">
-          <h3 style={{ margin: "0 0 12px" }}>Feinschliff</h3>
+          <h3 style={{ margin: "0 0 12px" }}>Feinschliff <span className="muted">(gilt für alle {selected.length} Positionen)</span></h3>
           <div className="form-grid" onChange={() => setTouchedFineTune(true)}>
-            <div className="field"><label>Titel</label><input value={title} onChange={(e) => setTitle(e.target.value)} /></div>
-            <div className="field"><label>Start</label><input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} /></div>
-            <div className="field"><label>Dauer (Tage)</label><input type="number" min={1} value={durationDays} onChange={(e) => setDurationDays(Number(e.target.value))} /></div>
-            <div className="field"><label>Neue Wörter/Tag</label><input type="number" min={1} value={newItemsPerLesson} onChange={(e) => setNewItemsPerLesson(Number(e.target.value))} /></div>
-            <div className="field"><label>Minuten/Tag</label><input type="number" min={1} value={dailyMinutes} onChange={(e) => setDailyMinutes(Number(e.target.value))} /></div>
-            <div className="field"><label>Bestehen ab %</label><input type="number" min={1} max={100} value={passPercent} onChange={(e) => setPassPercent(Number(e.target.value))} /></div>
-            <div className="field"><label>Combo alle … Treffer</label><input type="number" min={0} value={comboThreshold} onChange={(e) => setComboThreshold(Number(e.target.value))} /></div>
-            <div className="field"><label>Combo-Bonuspunkte</label><input type="number" min={0} value={comboBonusPoints} onChange={(e) => setComboBonusPoints(Number(e.target.value))} /></div>
+            <div className="field"><label>Titel</label><input title="Titel" value={title} onChange={(e) => setTitle(e.target.value)} /></div>
+            <div className="field"><label>Start</label><input title="Startdatum" type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} /></div>
+            <div className="field"><label>Dauer (Tage)</label><input title="Dauer" type="number" min={1} value={durationDays} onChange={(e) => setDurationDays(Number(e.target.value))} /></div>
+            <div className="field"><label>Bestehen ab %</label><input title="Bestehen ab Prozent" type="number" min={1} max={100} value={passPercent} onChange={(e) => setPassPercent(Number(e.target.value))} /></div>
+            <div className="field"><label>Punkte je Ziel</label><input title="Punkte je erreichtem Ziel" type="number" min={0} value={pointsGoalMet} onChange={(e) => setPointsGoalMet(Number(e.target.value))} /></div>
+            <div className="field"><label>Combo alle … Treffer</label><input title="Combo-Schwelle" type="number" min={0} value={comboThreshold} onChange={(e) => setComboThreshold(Number(e.target.value))} /></div>
+            <div className="field"><label>Combo-Bonuspunkte</label><input title="Combo-Bonuspunkte" type="number" min={0} value={comboBonusPoints} onChange={(e) => setComboBonusPoints(Number(e.target.value))} /></div>
             <div className="field"><label>Test-Stufe</label>
               <select aria-label="Test-Stufe" value={defaultStage} onChange={(e) => setDefaultStage(Number(e.target.value))}>
                 <option value={1}>1 · Zeigen</option>
@@ -374,8 +353,8 @@ export function VaterWizard() {
           <SummaryRow label="Ziel · Intensität" value={`${GOALS[goal].label} · ${INTENSITY[intensity].label}`} />
           <SummaryRow label="Titel" value={title || "Neuer Lehrplan"} />
           <SummaryRow label="Zeitraum" value={`${startDate} · ${durationDays} Tage`} />
-          <SummaryRow label="Pensum" value={`${dailyMinutes} Min/Tag · ${newItemsPerLesson} neue Wörter · Test-Stufe ${defaultStage} · bestehen ab ${passPercent}%`} />
-          <SummaryRow label="Vokabeln" value={`${selected.length} gewählt`} />
+          <SummaryRow label="Je Position" value={`Test-Stufe ${defaultStage} · bestehen ab ${passPercent}% · ${pointsGoalMet} Punkte/Ziel`} />
+          <SummaryRow label="Übungen" value={`${selected.length} als Tagesziel-Positionen`} />
           <p className="sub">Danach erscheint der Plan in der Übersicht; der Sohn sieht ihn sofort in seiner App.</p>
         </section>
       )}

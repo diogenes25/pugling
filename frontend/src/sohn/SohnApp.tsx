@@ -108,8 +108,8 @@ function SohnShell({ childId }: { childId: number }) {
 
         <Routes>
           <Route index element={<SohnHome />} />
-          <Route path="practice" element={<SohnPractice />} />
-          <Route path="test" element={<SohnTest />} />
+          <Route path="practice/:positionId" element={<SohnPractice />} />
+          <Route path="test/:positionId" element={<SohnTest />} />
           <Route path="progress" element={<SohnProgress />} />
           <Route path="skins" element={<SohnSkins />} />
           <Route path="konto" element={<SohnKonto />} />

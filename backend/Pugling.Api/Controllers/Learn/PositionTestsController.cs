@@ -23,7 +23,7 @@ namespace Pugling.Api.Controllers.Learn;
 [Authorize]
 [ServiceFilter(typeof(PlanOwnershipFilter))]
 public class PositionTestsController(PuglingDbContext db, PositionPlayService play,
-    GamificationService gamification, AnswerGrader grader) : ControllerBase
+    PositionProgressService progress, GamificationService gamification, AnswerGrader grader) : ControllerBase
 {
     /// <summary>Standard-Bestehensgrenze, wenn die Position keine eigene Schwelle setzt.</summary>
     private const int DefaultPassPercent = 80;
@@ -165,6 +165,9 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
         attempt.CompletedAt = DateTime.UtcNow;
         await db.SaveChangesAsync();
 
+        // Ziel-Punkte der Position (idempotent) VOR der Gamification buchen, damit münz-basierte
+        // Missionen die frische Gutschrift bereits sehen.
+        await progress.EvaluateAndAwardAsync(plan, attempt.Day);
         // Metrik-basierte Missionen/Auszeichnungen (z. B. „Tests bestanden") auch am Test-Abschluss auswerten.
         await gamification.EvaluateAndAwardAsync(plan.ChildId, attempt.Day);
 

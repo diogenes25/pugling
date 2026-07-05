@@ -74,19 +74,18 @@ export function VaterDashboard() {
         </div>
         {plans.loading ? <div className="loading">Lade…</div> : plans.error ? <div className="banner err">{plans.error}</div> : (
           <table className="table">
-            <thead><tr><th>Titel</th><th>Kind</th><th>Verfahren</th><th className="num">Inhalte</th><th>Zeitraum</th><th>Status</th></tr></thead>
+            <thead><tr><th>Titel</th><th>Kind</th><th className="num">Übungen</th><th>Zeitraum</th><th>Status</th></tr></thead>
             <tbody>
               {plans.data?.map((p) => (
                 <tr key={p.id} className="clickable" onClick={() => nav(`/vater/plan/${p.id}`)}>
                   <td><Link to={`/vater/plan/${p.id}`}>{p.title}</Link></td>
                   <td>{childName(p.childId)}</td>
-                  <td>{p.method}{p.useLeitner ? " · Leitner" : ""}</td>
-                  <td className="num">{p.items.length}</td>
+                  <td className="num">{p.positionCount}</td>
                   <td className="muted">{p.startDate} – {p.endDate}</td>
                   <td>{p.active ? <span className="pill lime">aktiv</span> : <span className="pill">inaktiv</span>}</td>
                 </tr>
               ))}
-              {plans.data?.length === 0 && <tr><td colSpan={6} className="muted">Noch keine Pläne. Lege einen an.</td></tr>}
+              {plans.data?.length === 0 && <tr><td colSpan={5} className="muted">Noch keine Pläne. Lege einen an.</td></tr>}
             </tbody>
           </table>
         )}

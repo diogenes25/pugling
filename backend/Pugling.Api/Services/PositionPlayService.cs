@@ -9,7 +9,7 @@ namespace Pugling.Api.Services;
 /// <see cref="PlanPosition"/>, terminiert ihren Karteikasten-Fortschritt (<see cref="PositionItemProgress"/>)
 /// und löst die Teststufe auf. Der Inhalt kommt aus der Übungs-Config über den
 /// <see cref="ExerciseContentProvider"/>, die Bewertung bleibt beim <see cref="AnswerGrader"/>.
-/// Das Gegenstück zu <see cref="ScheduleService"/>/<see cref="StudyProgressService"/>, aber pro Übung
+/// Das Gegenstück zu den früheren plan-weiten Schedule-/Fortschritts-Services, aber pro Übung
 /// statt pro Plan – Ziele und Punkte hängen jetzt an der Position.
 /// </summary>
 public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver content)
@@ -53,8 +53,8 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
     /// </summary>
     public static bool IsTypedStage(ExerciseType type, int stage) => type switch
     {
-        ExerciseType.Vocabulary => StudyProgressService.IsTyped((TestStage)stage),
-        ExerciseType.Cloze => StudyProgressService.IsTyped((ClozeStage)stage),
+        ExerciseType.Vocabulary => StageMechanics.IsTyped((TestStage)stage),
+        ExerciseType.Cloze => StageMechanics.IsTyped((ClozeStage)stage),
         _ => true,
     };
 
