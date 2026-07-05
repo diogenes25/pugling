@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { api, errorMessage } from "../lib/api";
 import { useAsync } from "../lib/useAsync";
 import { useAuth } from "../lib/auth";
-import type { ChildResponse, PlanResponse } from "../lib/types";
+import type { ChildResponse, ChildrenDashboard, PlanResponse } from "../lib/types";
 
 export function VaterDashboard() {
   const { session } = useAuth();
@@ -12,6 +12,7 @@ export function VaterDashboard() {
 
   const children = useAsync<ChildResponse[]>(() => api.children(), [fatherId]);
   const plans = useAsync<PlanResponse[]>(() => api.plans(), []);
+  const today = useAsync<ChildrenDashboard>(() => api.childrenDaily(), [fatherId]);
 
   const [name, setName] = useState("");
   const [grade, setGrade] = useState("");
@@ -35,6 +36,31 @@ export function VaterDashboard() {
 
   return (
     <>
+      <section>
+        <h2 className="h-section">Heute</h2>
+        {today.loading ? <div className="loading">Lade…</div> : today.error ? <div className="banner err">{today.error}</div> : (
+          <table className="table">
+            <thead><tr><th>Kind</th><th>Status</th><th className="num">Ziele</th><th className="num">Punkte heute</th></tr></thead>
+            <tbody>
+              {today.data?.children.map((c) => (
+                <tr key={c.childId}>
+                  <td>{c.name}</td>
+                  <td>
+                    {c.goalsTotal === 0 ? <span className="pill">kein Tagesziel</span>
+                      : c.dutyDone ? <span className="pill lime">✓ geschafft</span>
+                      : c.practiced ? <span className="pill">dran</span>
+                      : <span className="pill mag">offen</span>}
+                  </td>
+                  <td className="num">{c.goalsMet} / {c.goalsTotal}</td>
+                  <td className="num">{c.pointsToday}</td>
+                </tr>
+              ))}
+              {today.data?.children.length === 0 && <tr><td colSpan={4} className="muted">Noch keine Kinder.</td></tr>}
+            </tbody>
+          </table>
+        )}
+      </section>
+
       <section>
         <h2 className="h-section">Kinder</h2>
         {children.loading ? <div className="loading">Lade…</div> : children.error ? <div className="banner err">{children.error}</div> : (

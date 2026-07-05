@@ -305,6 +305,24 @@ export interface PositionResponse {
   speedBonusPoints: number;
 }
 
+/** Tagesstand eines Kindes im Vater-Dashboard (aggregiert über seine aktiven Lehrpläne). */
+export interface ChildDay {
+  childId: number;
+  name: string;
+  activePlans: number;
+  goalsTotal: number;
+  goalsMet: number;
+  pointsToday: number;
+  dutyDone: boolean;
+  practiced: boolean;
+}
+
+/** Kindübergreifender Tagesüberblick des Vaters („wer hat heute was geschafft?"). */
+export interface ChildrenDashboard {
+  date: string;
+  children: ChildDay[];
+}
+
 /** Eine Report-Zeile: wie gut ein einzelner Inhalt der Position „sitzt". */
 export interface ItemReport {
   itemIndex: number;

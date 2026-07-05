@@ -56,6 +56,8 @@ builder.Services.AddScoped<PositionPlayService>();
 builder.Services.AddScoped<PositionProgressService>();
 // Lern-Report je Position: „welche Vokabel sitzt/sitzt nicht" (Box/Beherrschung + Test-Trefferquote).
 builder.Services.AddScoped<PositionReportService>();
+// Kindübergreifendes Tages-Dashboard des Vaters („wer hat heute was geschafft?").
+builder.Services.AddScoped<ChildrenDashboardService>();
 builder.Services.AddScoped<AuthAccess>();
 builder.Services.AddScoped<PlanOwnershipFilter>();
 builder.Services.AddScoped<ChildOwnershipFilter>();
