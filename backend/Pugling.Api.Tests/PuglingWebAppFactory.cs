@@ -15,6 +15,9 @@ public sealed class PuglingWebAppFactory : WebApplicationFactory<Program>
     {
         builder.UseEnvironment("Development");
         builder.UseSetting("ConnectionStrings:Default", $"Data Source={_dbPath}");
+        // Der In-Process-TestServer teilt sich eine IP-Partition; ohne Abschalten würden die vielen
+        // Test-Logins am Login-Rate-Limit (429) scheitern. Ein eigener Test aktiviert es gezielt.
+        builder.UseSetting("RateLimiting:LoginEnabled", "false");
     }
 
     protected override void Dispose(bool disposing)

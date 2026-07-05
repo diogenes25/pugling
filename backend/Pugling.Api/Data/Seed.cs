@@ -46,7 +46,7 @@ public static class Seed
         var teacher = db.Fathers.FirstOrDefault(f => f.Email == teacherEmail);
         if (teacher is null)
         {
-            teacher = new Father { Name = "Herr Schmidt (Englischlehrer)", Email = teacherEmail, Pin = "9999" };
+            teacher = new Father { Name = "Herr Schmidt (Englischlehrer)", Email = teacherEmail, Pin = Auth.PinHasher.Hash("9999") };
             db.Fathers.Add(teacher);
             db.SaveChanges();
         }
@@ -413,14 +413,14 @@ public static class Seed
         {
             Name = "Papa",
             Email = "papa@example.com",
-            Pin = "0000",
+            Pin = Auth.PinHasher.Hash("0000"),
             Children =
             {
                 new Child
                 {
                     Name = "Sohn",
                     BirthYear = 2015,
-                    Pin = "1111",
+                    Pin = Auth.PinHasher.Hash("1111"),
                     // Start: ein paar Münzen (Base → Coins) für Angebote und ein paar Gems (Achievement → Gems),
                     // damit sich sofort ein Skin ausprobieren lässt.
                     PointsEntries =

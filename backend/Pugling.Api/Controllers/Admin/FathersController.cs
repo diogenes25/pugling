@@ -58,7 +58,7 @@ public class FathersController(PuglingDbContext db) : ControllerBase, IActionFil
     {
         if (string.IsNullOrWhiteSpace(dto.Name)) return Problem(statusCode: 400, detail: "Name ist erforderlich.");
 
-        var father = new Father { Name = dto.Name.Trim(), Email = dto.Email, Pin = dto.Pin ?? "" };
+        var father = new Father { Name = dto.Name.Trim(), Email = dto.Email, Pin = string.IsNullOrEmpty(dto.Pin) ? "" : PinHasher.Hash(dto.Pin) };
         db.Fathers.Add(father);
         await db.SaveChangesAsync();
 
@@ -79,7 +79,7 @@ public class FathersController(PuglingDbContext db) : ControllerBase, IActionFil
 
         if (dto.Name is not null) father.Name = dto.Name.Trim();
         if (dto.Email is not null) father.Email = dto.Email;
-        if (dto.Pin is not null) father.Pin = dto.Pin;
+        if (dto.Pin is not null) father.Pin = string.IsNullOrEmpty(dto.Pin) ? "" : PinHasher.Hash(dto.Pin);
         await db.SaveChangesAsync();
 
         return (await Project(db.Fathers.Where(f => f.Id == fatherId)).FirstAsync());

@@ -1,3 +1,4 @@
+using System.Threading.RateLimiting;
 using Asp.Versioning;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
@@ -72,6 +73,20 @@ builder.Services.AddScoped<ExerciseContentResolver>();
 builder.Services.AddScoped<ExercisePreviewService>();
 builder.Services.AddCors(o => o.AddDefaultPolicy(p =>
     p.WithOrigins("http://localhost:5173").AllowAnyHeader().AllowAnyMethod()));
+
+// Login-Bremse gegen PIN-Brute-Force: pro IP nur wenige Versuche je Minute (Policy "login" auf den
+// Auth-Endpunkten). Per Konfiguration abschaltbar, weil der In-Process-TestServer sich sonst eine
+// IP-Partition teilt und die vielen Test-Logins fälschlich 429 bekämen.
+var loginRateLimitEnabled = builder.Configuration.GetValue("RateLimiting:LoginEnabled", true);
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.AddPolicy("login", http => loginRateLimitEnabled
+        ? RateLimitPartition.GetFixedWindowLimiter(
+            http.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            _ => new FixedWindowRateLimiterOptions { PermitLimit = 10, Window = TimeSpan.FromMinutes(1), QueueLimit = 0 })
+        : RateLimitPartition.GetNoLimiter("disabled"));
+});
 
 // JWT-Authentifizierung (PIN-Login stellt die Tokens aus, siehe AuthController/TokenService).
 // Fail-fast: außerhalb der Entwicklung darf NICHT mit dem Dev-Fallback-Schlüssel signiert werden.
@@ -160,6 +175,7 @@ app.UseSwaggerUI(o =>
 app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseRateLimiter();
 // Nach der Authentifizierung: Identität (Fid/Cid/Role) + TraceId in den Log-Kontext heben, damit
 // jede Log-Zeile aus Controllern/Services (v. a. die Punkte-Buchungen) sie mitträgt.
 app.UseMiddleware<RequestLogContextMiddleware>();

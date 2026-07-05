@@ -74,7 +74,7 @@ public class ChildrenController(PuglingDbContext db, WalletService wallet) : Con
             BirthYear = dto.BirthYear,
             Grade = dto.Grade,
             SchoolType = dto.SchoolType ?? SchoolTypes.None,
-            Pin = dto.Pin ?? "",
+            Pin = string.IsNullOrEmpty(dto.Pin) ? "" : PinHasher.Hash(dto.Pin),
         };
         db.Children.Add(child);
         await db.SaveChangesAsync();
@@ -98,7 +98,7 @@ public class ChildrenController(PuglingDbContext db, WalletService wallet) : Con
         if (dto.BirthYear.HasValue) child.BirthYear = dto.BirthYear;
         if (dto.Grade.HasValue) child.Grade = dto.Grade;
         if (dto.SchoolType.HasValue) child.SchoolType = dto.SchoolType.Value;
-        if (dto.Pin is not null) child.Pin = dto.Pin;
+        if (dto.Pin is not null) child.Pin = string.IsNullOrEmpty(dto.Pin) ? "" : PinHasher.Hash(dto.Pin);
         await db.SaveChangesAsync();
 
         return (await ProjectOne(childId))!;
