@@ -3,10 +3,12 @@ import { api, errorMessage } from "../lib/api";
 import { useAsync } from "../lib/useAsync";
 import { ExerciseAttribution } from "./ExerciseAttribution";
 import { ExercisePreviewModal } from "./ExercisePreviewModal";
+import { LANGUAGES } from "../lib/languages";
 import type {
   ChapterResponse, CreateExercisePayload, ExerciseSummary, ExerciseTypeKey, ExerciseUsage,
-  SchoolType, SubjectResponse, VocabularyResponse,
+  PartOfSpeech, SchoolType, SubjectResponse, VocabTagResponse, VocabularyResponse,
 } from "../lib/types";
+import { POS, POS_LABEL } from "../lib/vocab";
 
 // Übungstyp → Routen-Segment (Backend: .../chapters/{c}/<segment>).
 const TYPE_ROUTE: Record<ExerciseTypeKey, string> = {
@@ -18,6 +20,17 @@ const TYPE_LABEL: Record<ExerciseTypeKey, string> = {
   Matching: "Zuordnung (Paare)", List: "Liste (auswendig)", Birkenbihl: "Birkenbihl",
 };
 const SCHOOL_TYPES: SchoolType[] = ["Grundschule", "Hauptschule", "Realschule", "Gymnasium", "Gesamtschule", "Berufsschule"];
+
+// Standard-Abfrageform einer Vokabelübung (TestStage-Werte; "" = Verfahrens-Standard: Selbstcheck → Tippen).
+const VOCAB_FORMS: { value: number | ""; label: string }[] = [
+  { value: "", label: "Standard (Selbstcheck → Tippen)" },
+  { value: 1, label: "Nur anzeigen" },
+  { value: 2, label: "Selbsteinschätzung" },
+  { value: 3, label: "Buchstabenkästchen" },
+  { value: 4, label: "Freitext (tippen)" },
+  { value: 6, label: "Multiple-Choice (Auswahl)" },
+  { value: 5, label: "Hören → tippen" },
+];
 
 // Kommaseparierten Text in eine getrimmte Liste (oder undefined) wandeln – für Alternativen/Wortpool.
 function splitList(s: string): string[] | undefined {
@@ -50,11 +63,17 @@ export function VaterExercises() {
 
   const [type, setType] = useState<ExerciseTypeKey>("Vocabulary");
   const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
   const [rewardPoints, setRewardPoints] = useState(10);
   const [gradeMin, setGradeMin] = useState<number | "">("");
   const [gradeMax, setGradeMax] = useState<number | "">("");
   const [source, setSource] = useState("");
   const [schoolTypes, setSchoolTypes] = useState<SchoolType[]>([]);
+  // Lern-Standards, die eine Lehrplan-Position von dieser Übung erbt (Hybrid-Prinzip).
+  const [defaultUseLeitner, setDefaultUseLeitner] = useState(false);
+  const [defaultRequireTypedTest, setDefaultRequireTypedTest] = useState(false);
+  // Standard-Abfrageform (nur Vokabeln): "" = Verfahrens-Standard, sonst TestStage-Wert (z. B. 6 = Multiple-Choice).
+  const [defaultStage, setDefaultStage] = useState<number | "">("");
 
   // Typ-spezifisch: Zeilen + Extra-Felder (Richtung/Trägertext/Anweisung/Sprachen …).
   const [rows, setRows] = useState<Row[]>([emptyRow("Vocabulary")]);
@@ -86,6 +105,7 @@ export function VaterExercises() {
   useEffect(() => {
     setRows([emptyRow(type)]);
     setVocabKeys([]);
+    setDefaultStage("");
     setExtra(type === "Vocabulary" ? { direction: "front-to-back" }
       : type === "List" ? { ordered: false } : {});
   }, [type]);
@@ -169,6 +189,7 @@ export function VaterExercises() {
 
     const payload: CreateExercisePayload = {
       title: title.trim(),
+      description: description.trim() || null,
       orderIndex: chapterExercises.length + 1,
       rewardPoints,
       config: buildConfig(),
@@ -176,6 +197,9 @@ export function VaterExercises() {
       gradeMax: gradeMax === "" ? null : Number(gradeMax),
       schoolTypes: schoolTypes.length > 0 ? schoolTypes.join(", ") : undefined,
       source: source.trim() || null,
+      defaultUseLeitner,
+      defaultRequireTypedTest,
+      defaultStage: type === "Vocabulary" && defaultStage !== "" ? Number(defaultStage) : null,
     };
     setBusy(true);
     try {
@@ -183,6 +207,7 @@ export function VaterExercises() {
       setOkMsg(`Übung „${payload.title}" angelegt.`);
       setJustCreated({ id: created.id, title: payload.title });
       setTitle("");
+      setDescription("");
       setRows([emptyRow(type)]);
       setVocabKeys([]);
     } catch (err) {
@@ -247,6 +272,11 @@ export function VaterExercises() {
           <div className="field"><label>Quelle (Lehrbuch)</label><input value={source} onChange={(e) => setSource(e.target.value)} placeholder="z. B. Green Line 1, Unit 1" /></div>
         </div>
         <div className="field" style={{ marginTop: 10 }}>
+          <label>Beschreibung <span className="muted">(optional)</span></label>
+          <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={2}
+            placeholder="Worum geht es, worauf achten? Hilft beim Wiederfinden im Lehrplan-Bau." />
+        </div>
+        <div className="field" style={{ marginTop: 10 }}>
           <label>Schularten</label>
           <div className="row" style={{ gap: 14, flexWrap: "wrap" }}>
             {SCHOOL_TYPES.map((s) => (
@@ -254,6 +284,22 @@ export function VaterExercises() {
             ))}
           </div>
         </div>
+        <div className="field" style={{ marginTop: 10 }}>
+          <label>Lern-Standards <span className="muted">(Lehrplan-Positionen erben diese, können sie aber übersteuern)</span></label>
+          <div className="row" style={{ gap: 14, flexWrap: "wrap" }}>
+            <label className="checkline"><input type="checkbox" checked={defaultUseLeitner} onChange={(e) => setDefaultUseLeitner(e.target.checked)} /> Leitner-Kasten</label>
+            <label className="checkline"><input type="checkbox" checked={defaultRequireTypedTest} onChange={(e) => setDefaultRequireTypedTest(e.target.checked)} /> nur getippte Tests</label>
+          </div>
+        </div>
+        {type === "Vocabulary" && (
+          <div className="field" style={{ marginTop: 10, maxWidth: 300 }}>
+            <label>Standard-Abfrageform</label>
+            <select aria-label="Standard-Abfrageform" value={defaultStage}
+              onChange={(e) => setDefaultStage(e.target.value === "" ? "" : Number(e.target.value))}>
+              {VOCAB_FORMS.map((f) => <option key={f.label} value={f.value}>{f.label}</option>)}
+            </select>
+          </div>
+        )}
       </section>
 
       {/* Typ-spezifischer Inhalts-Editor */}
@@ -417,7 +463,21 @@ function VocabRefPicker({ selectedKeys, setSelectedKeys, extra, setExtra }: {
   setExtra: (updater: (e: Row) => Row) => void;
 }) {
   const [search, setSearch] = useState("");
-  const store = useAsync<VocabularyResponse[]>(() => api.vocabulary(search.trim() || undefined), [search]);
+  // Feste Suchparameter zum Finden der Store-Vokabeln (zusätzlich zum Freitext): Wortart + Tags.
+  const [posFilter, setPosFilter] = useState<PartOfSpeech | "">("");
+  const [tagFilter, setTagFilter] = useState<string[]>([]);
+  // Sprach-Kombination des Stores: Vokabeln sind sprachgebunden – ohne Filter mischt der Store alle Sprachen
+  // (z. B. französische Vokabeln in einer englischen Übung). Standard en→de, frei umstellbar.
+  const [src, setSrc] = useState("en");
+  const [tgt, setTgt] = useState("de");
+  const store = useAsync<VocabularyResponse[]>(
+    () => api.vocabulary(search.trim() || undefined, {
+      sourceLanguage: src, targetLanguage: tgt,
+      partOfSpeech: posFilter || undefined,
+      tags: tagFilter.length > 0 ? tagFilter : undefined,
+    }),
+    [search, src, tgt, posFilter, tagFilter]);
+  const tagOptions = useAsync<VocabTagResponse[]>(() => api.vocabTags(), []);
   const [qWord, setQWord] = useState("");
   const [qTrans, setQTrans] = useState("");
   const [busy, setBusy] = useState(false);
@@ -430,7 +490,7 @@ function VocabRefPicker({ selectedKeys, setSelectedKeys, extra, setExtra }: {
     if (!qWord.trim() || !qTrans.trim()) return;
     setBusy(true); setErr(null);
     try {
-      const v = await api.createVocabulary({ sourceLanguage: "en", targetLanguage: "de", word: qWord.trim(), translation: qTrans.trim() });
+      const v = await api.createVocabulary({ sourceLanguage: src, targetLanguage: tgt, word: qWord.trim(), translation: qTrans.trim() });
       setSelectedKeys((cur) => (cur.includes(v.key) ? cur : [...cur, v.key]));
       setQWord(""); setQTrans(""); store.reload();
     } catch (e) { setErr(errorMessage(e)); } finally { setBusy(false); }
@@ -439,13 +499,30 @@ function VocabRefPicker({ selectedKeys, setSelectedKeys, extra, setExtra }: {
   const byKey = new Map((store.data ?? []).map((v) => [v.key, v]));
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-      <div className="field" style={{ maxWidth: 260 }}>
-        <label>Abfragerichtung</label>
-        <select aria-label="Abfragerichtung" value={extra.direction ?? "front-to-back"} onChange={(e) => setExtra((x) => ({ ...x, direction: e.target.value }))}>
-          <option value="front-to-back">vorne → hinten</option>
-          <option value="back-to-front">hinten → vorne</option>
-          <option value="both">beide</option>
-        </select>
+      {/* Sprach-Kombination des Stores + Abfragerichtung. Der Sprachfilter verhindert, dass fremdsprachige
+          Vokabeln (z. B. Französisch) in einer Übung anderer Sprache auftauchen. */}
+      <div className="row" style={{ gap: 10, alignItems: "flex-end", flexWrap: "wrap" }}>
+        <div className="field" style={{ maxWidth: 180 }}>
+          <label>Quellsprache</label>
+          <select aria-label="Quellsprache" value={src} onChange={(e) => setSrc(e.target.value)}>
+            {LANGUAGES.map((l) => <option key={l.code} value={l.code}>{l.flag} {l.label}</option>)}
+          </select>
+        </div>
+        <span style={{ fontSize: 20, alignSelf: "center", paddingBottom: 4 }} aria-hidden>→</span>
+        <div className="field" style={{ maxWidth: 180 }}>
+          <label>Zielsprache</label>
+          <select aria-label="Zielsprache" value={tgt} onChange={(e) => setTgt(e.target.value)}>
+            {LANGUAGES.map((l) => <option key={l.code} value={l.code}>{l.flag} {l.label}</option>)}
+          </select>
+        </div>
+        <div className="field" style={{ maxWidth: 200 }}>
+          <label>Abfragerichtung</label>
+          <select aria-label="Abfragerichtung" value={extra.direction ?? "front-to-back"} onChange={(e) => setExtra((x) => ({ ...x, direction: e.target.value }))}>
+            <option value="front-to-back">vorne → hinten</option>
+            <option value="back-to-front">hinten → vorne</option>
+            <option value="both">beide</option>
+          </select>
+        </div>
       </div>
 
       {selectedKeys.length > 0 && (
@@ -457,6 +534,30 @@ function VocabRefPicker({ selectedKeys, setSelectedKeys, extra, setExtra }: {
         </div>
       )}
 
+      {/* Feste Suchparameter: Wortart + Tags (zusätzlich zur Freitextsuche). */}
+      <div className="row" style={{ gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+        <label className="row" style={{ gap: 6, alignItems: "center", fontSize: 13 }}>
+          <span className="muted">Wortart</span>
+          <select aria-label="Wortart-Filter" value={posFilter} onChange={(e) => setPosFilter(e.target.value as PartOfSpeech | "")}>
+            <option value="">– alle –</option>
+            {POS.map((p) => <option key={p} value={p}>{POS_LABEL[p]}</option>)}
+          </select>
+        </label>
+        <span className="row" style={{ gap: 6, alignItems: "center", fontSize: 13 }}>
+          <span className="muted">Tags</span>
+          {tagFilter.map((name) => (
+            <span className="chip" key={name}>{name}
+              <button type="button" aria-label={`Tag ${name} entfernen`} onClick={() => setTagFilter((cur) => cur.filter((t) => t !== name))}
+                style={{ background: "none", border: "none", color: "inherit", cursor: "pointer", padding: 0, fontSize: 14, lineHeight: 1 }}>×</button>
+            </span>
+          ))}
+          <select aria-label="Tag-Filter hinzufügen" value=""
+            onChange={(e) => { const n = e.target.value; if (n) setTagFilter((cur) => (cur.includes(n) ? cur : [...cur, n])); }}>
+            <option value="">+ Tag…</option>
+            {(tagOptions.data ?? []).filter((t) => !tagFilter.includes(t.name)).map((t) => <option key={t.id} value={t.name}>{t.name}</option>)}
+          </select>
+        </span>
+      </div>
       <input placeholder="Store durchsuchen…" value={search} onChange={(e) => setSearch(e.target.value)} aria-label="Vokabel-Store durchsuchen" />
       {store.loading ? <div className="loading">Lade…</div> : (
         <div style={{ maxHeight: 240, overflowY: "auto", display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(200px,1fr))", gap: 6 }}>
@@ -515,6 +616,7 @@ function ExerciseManageRow({ exercise, subjectId, onChanged, onPreview }: {
         {/* Nur der Autor darf löschen – fremde Übungen sind übernehmbar, aber geschützt. */}
         {exercise.isOwn && <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} disabled={busy} onClick={remove}>Löschen</button>}
       </div>
+      {exercise.description && <div className="muted" style={{ marginTop: 2, fontSize: 13 }}>{exercise.description}</div>}
       {err && <div className="banner err" style={{ marginTop: 6 }}>{err}</div>}
       {open && usage && (
         <div className="muted" style={{ marginTop: 6, fontSize: 13 }}>

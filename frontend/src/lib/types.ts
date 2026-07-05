@@ -3,7 +3,28 @@
 
 export type Role = "Vater" | "Sohn";
 
-export type PartOfSpeech = "Noun" | "Verb" | "Adjective" | "Adverb" | "Other";
+export type PartOfSpeech =
+  | "Noun" | "Verb" | "Adjective" | "Adverb" | "Pronoun" | "Preposition"
+  | "Conjunction" | "Article" | "Numeral" | "Interjection" | "Phrase" | "Other";
+
+/** Grammatikalisches Geschlecht eines Substantivs. */
+export type Genus = "Masculine" | "Feminine" | "Neuter";
+
+/** Substantiv-spezifische Angaben (Teil des komplexen Vokabel-Datensatzes). */
+export interface NounInfo {
+  article?: string | null;
+  genus?: Genus | null;
+  plural?: string | null;
+}
+
+/** Verb-spezifische Angaben / Konjugations-Metadaten. */
+export interface VerbInfo {
+  isBaseForm: boolean;
+  infinitive?: string | null;
+  tense?: string | null;
+  person?: string | null;
+  number?: string | null;
+}
 
 /**
  * Schularten – serverseitig ein [Flags]-Enum. Einzelwerte für Auswahl/Filter; der Server kann
@@ -68,6 +89,8 @@ export interface ExerciseDetail {
   subjectName: string;
   type: string;
   title: string;
+  /** Freier Beschreibungstext (optional) – hilft beim Erkennen der Übung im Lehrplan-Bau. */
+  description: string | null;
   orderIndex: number;
   rewardPoints: number;
   gradeMin: number | null;
@@ -78,6 +101,10 @@ export interface ExerciseDetail {
   categoryName: string | null;
   defaultStage: number | null;
   defaultItemCount: number | null;
+  /** Übungs-Standard für Leitner-Kasten (Position erbt ihn, kann übersteuern). */
+  defaultUseLeitner: boolean;
+  /** Übungs-Standard „nur getippte Tests" (Position erbt ihn, kann übersteuern). */
+  defaultRequireTypedTest: boolean;
   /** Autor der Übung (Vater); null = geseedete System-Übung. */
   authorFatherId: number | null;
   authorName: string | null;
@@ -104,9 +131,20 @@ export interface ExercisePreviewItem {
   answerLength: number | null;
   /** Bei Selbsteinschätzung die Lösung, bei getippten Stufen null. */
   reveal: string | null;
+  /** Nur bei Multiple-Choice: die Auswahlmöglichkeiten (Lösung + Ablenker, gemischt). */
+  choices: string[] | null;
+  /** Nur bei der Hör-Stufe: Aussprache-Audioquelle der Vokabel (Wort-Text wird dann ausgeblendet). */
+  audioUrl: string | null;
 }
-/** Spielbarer Zustand einer Übung im Testmodus. `typed` = Antwort wird getippt (sonst Selbsteinschätzung). */
-export interface ExercisePreviewData { stage: number; typed: boolean; items: ExercisePreviewItem[]; }
+/** Eine im Testmodus umschaltbare Abfrageform (Stufenwert + Anzeigename). */
+export interface ExercisePreviewStage { value: number; label: string; }
+/**
+ * Spielbarer Zustand einer Übung im Testmodus. `typed` = Antwort wird getippt (sonst Selbsteinschätzung);
+ * `stages` = die für diesen Übungstyp durchprobierbaren Abfrageformen (leer, wenn nur eine sinnvoll ist).
+ */
+export interface ExercisePreviewData {
+  type: string; stage: number; typed: boolean; stages: ExercisePreviewStage[]; items: ExercisePreviewItem[];
+}
 /** Eine Antwort im Testmodus: getippt (`givenAnswer`) oder Selbsteinschätzung (`wasKnown`). */
 export interface ExercisePreviewAnswer { itemIndex: number; givenAnswer?: string | null; wasKnown?: boolean | null; }
 /** Einzelauswertung im Testmodus (die Lösung `expected` wird hier immer offengelegt). */
@@ -126,6 +164,11 @@ export interface UpdateVocabularyDto {
   word?: string;
   translation?: string;
   partOfSpeech?: PartOfSpeech;
+  noun?: NounInfo | null;
+  verb?: VerbInfo | null;
+  /** Key der Grundform; "" hebt die Verknüpfung auf. */
+  baseFormKey?: string | null;
+  baseFormRelation?: string | null;
   pronunciationAudioUrl?: string | null;
 }
 
@@ -136,12 +179,17 @@ export interface ExerciseSummary {
   subjectId: number;
   type: string;
   title: string;
+  /** Freier Beschreibungstext (optional). */
+  description: string | null;
   gradeMin: number | null;
   gradeMax: number | null;
   schoolTypes: string;
   source: string | null;
   categoryId: number | null;
   categoryName: string | null;
+  /** Übungs-Standards für Leitner/getippte Tests (Position erbt sie beim Hinzufügen). */
+  defaultUseLeitner: boolean;
+  defaultRequireTypedTest: boolean;
   /** Autor der Übung (Vater); null = geseedete System-Übung. Grundlage der „von …"-Attribution. */
   authorFatherId: number | null;
   authorName: string | null;
@@ -151,6 +199,7 @@ export interface ExerciseSummary {
 
 export interface ExerciseSearchParams {
   subjectId?: number;
+  chapterId?: number;
   grade?: number;
   schoolType?: SchoolType;
   categoryId?: number;
@@ -158,6 +207,14 @@ export interface ExerciseSearchParams {
   search?: string;
   /** Nur eigene Übungen des Vaters (Verwaltung statt Entdeckung der geteilten Bibliothek). */
   mineOnly?: boolean;
+}
+
+/** Fachabhängige Übungs-Art ("Kategorie") zur Vorfilterung. */
+export interface CategoryResponse {
+  id: number;
+  subjectId: number;
+  name: string;
+  createdAt: string;
 }
 
 export interface VocabularyResponse {
@@ -169,6 +226,15 @@ export interface VocabularyResponse {
   word: string;
   translation: string;
   partOfSpeech: PartOfSpeech;
+  /** Substantiv-Details (nur bei Wortart Noun sinnvoll gesetzt). */
+  noun: NounInfo | null;
+  /** Verb-Details (nur bei Wortart Verb sinnvoll gesetzt). */
+  verb: VerbInfo | null;
+  /** Id der Grundform (go→went→gone); null = eigenständig/Grundform. */
+  baseFormId: number | null;
+  /** Key der Grundform (zur Anzeige/Bearbeitung). */
+  baseFormKey: string | null;
+  baseFormRelation: string | null;
   pronunciationAudioUrl: string | null;
   /** Globale, kindneutrale Schlagworte (Namen) – vgl. VocabTagResponse. */
   tags: string[];
@@ -219,6 +285,11 @@ export interface CreateVocabularyDto {
   translation: string;
   /** Optional – Default Other ("einfache" Eingabe). */
   partOfSpeech?: PartOfSpeech;
+  version?: string;
+  noun?: NounInfo | null;
+  verb?: VerbInfo | null;
+  baseFormKey?: string | null;
+  baseFormRelation?: string | null;
   pronunciationAudioUrl?: string | null;
 }
 
@@ -234,6 +305,7 @@ export type ExerciseTypeKey =
  */
 export interface CreateExercisePayload {
   title: string;
+  description?: string | null;
   orderIndex: number;
   rewardPoints: number;
   config: unknown;
@@ -242,6 +314,10 @@ export interface CreateExercisePayload {
   schoolTypes?: string;
   source?: string | null;
   categoryId?: number | null;
+  defaultUseLeitner?: boolean;
+  defaultRequireTypedTest?: boolean;
+  /** Standard-Abfrageform (TestStage-Wert) – v. a. für Vokabeln (z. B. Multiple-Choice = 6). */
+  defaultStage?: number | null;
 }
 
 // ---- Lehrpläne ----
@@ -254,6 +330,7 @@ export interface PlanResponse {
   id: number;
   childId: number;
   title: string;
+  description: string | null;
   subjectId: number | null;
   startDate: string;
   endDate: string;
@@ -264,6 +341,7 @@ export interface PlanResponse {
 export interface CreatePlanDto {
   childId: number;
   title: string;
+  description?: string | null;
   subjectId?: number | null;
   startDate?: string;
   durationDays: number;
@@ -465,6 +543,10 @@ export interface PracticeCard {
   hint: string | null;
   answerLength: number | null;
   reveal: string | null;
+  /** Nur bei Multiple-Choice: die Auswahlmöglichkeiten (Lösung + Ablenker, gemischt). */
+  choices: string[] | null;
+  /** Nur bei der Hör-Stufe: Aussprache-Audioquelle der Vokabel (Wort-Text wird dann ausgeblendet). */
+  audioUrl: string | null;
 }
 
 /** Antwort zu einer Übungskarte: getippt (`givenAnswer`) oder Selbsteinschätzung (`wasKnown`). */
@@ -567,12 +649,19 @@ export interface RewardDef {
   period: OfferPeriod;
   quantity: number;
   active: boolean;
+  /** Optionaler Plan-/Übungs-Kontext (null = kindweit für alles gültig). */
+  studyPlanId: number | null;
+  exerciseId: number | null;
+  planTitle: string | null;
+  exerciseTitle: string | null;
 }
 export interface CreateRewardDto {
   title: string;
   cost: number;
   period?: OfferPeriod;
   quantity?: number;
+  studyPlanId?: number | null;
+  exerciseId?: number | null;
 }
 
 /** Kauf aus Vater-Sicht (mit Kind-Bezug). */
@@ -596,6 +685,9 @@ export interface RewardOffer {
   quantity: number;
   remainingThisPeriod: number;
   affordable: boolean;
+  /** Kontext-Labels, falls das Angebot an Plan/Übung gebunden ist. */
+  planTitle: string | null;
+  exerciseTitle: string | null;
 }
 
 /** Eigener Kauf aus Sohn-Sicht. */
@@ -693,10 +785,13 @@ export interface KlassenarbeitRepeat {
 /** Partielle Lehrplan-Änderung durch den Vater (Datumsfelder als "YYYY-MM-DD"). */
 export interface UpdatePlanDto {
   title?: string;
+  description?: string | null;
   subjectId?: number | null;
   startDate?: string;
   endDate?: string;
   active?: boolean;
+  /** Umzuweisung an ein anderes eigenes Kind. */
+  childId?: number;
 }
 
 // ---- Positions-Test (Abschlusstest einer Übung) ----
@@ -712,6 +807,10 @@ export interface TestItem {
   reveal: string | null;
   answerLength: number | null;
   hint: string | null;
+  /** Nur bei Multiple-Choice: die Auswahlmöglichkeiten (Lösung + Ablenker, gemischt). */
+  choices: string[] | null;
+  /** Nur bei der Hör-Stufe: Aussprache-Audioquelle der Vokabel (Wort-Text wird dann ausgeblendet). */
+  audioUrl: string | null;
 }
 
 export interface TestAttemptResponse {

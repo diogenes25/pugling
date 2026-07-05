@@ -28,7 +28,8 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
     /// <summary>Standard-Bestehensgrenze, wenn die Position keine eigene Schwelle setzt.</summary>
     private const int DefaultPassPercent = 80;
 
-    public record TestItem(int ItemIndex, string Prompt, int Stage, string? Reveal, int? AnswerLength, string? Hint);
+    public record TestItem(int ItemIndex, string Prompt, int Stage, string? Reveal, int? AnswerLength, string? Hint,
+        IReadOnlyList<string>? Choices, string? AudioUrl);
     public record AttemptResponse(int AttemptId, int PlanId, int PositionId, DateOnly Day, int Stage,
         int TotalItems, IReadOnlyList<TestItem> Items);
 
@@ -42,13 +43,18 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
         db.TestAttempts.Include(t => t.Results)
             .FirstOrDefaultAsync(t => t.Id == attemptId && t.StudyPlanId == planId && t.PlanPositionId == positionId);
 
-    private static TestItem ToItem(ContentItem item, ExerciseType type, int stage, bool typed)
+    private static TestItem ToItem(ContentItem item, ExerciseType type, int stage, bool typed, IReadOnlyList<string>? choices)
     {
         var isLetterBoxes = type == ExerciseType.Vocabulary && (TestStage)stage == TestStage.LetterBoxes;
+        // Hör-Stufe: die Vokabel wird vorgelesen – die Audioquelle mitgeben, damit der Client sie abspielt
+        // (und den Wort-Text ausblendet). Andere Stufen erhalten keine Audioquelle.
+        var isAudio = type == ExerciseType.Vocabulary && (TestStage)stage == TestStage.Audio;
         return new TestItem(item.Index, item.Prompt, stage,
             typed ? null : item.Answer, // Anzeige-/Selbsteinschätzung deckt die Lösung auf, getippt nicht.
             isLetterBoxes ? item.Answer.Length : null,
-            typed ? item.Hint : null);
+            typed ? item.Hint : null,
+            choices, // nur bei Multiple-Choice gesetzt (Lösung + Ablenker)
+            isAudio ? item.AudioUrl : null);
     }
 
     public record StartDto(int? Stage, DateOnly? Day);
@@ -72,6 +78,9 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
 
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
         if (dto.Day is { } dd && dd != today && !User.IsFather()) return Forbid();
+        // Anti-Schummel: der Sohn darf nur seinen aktiven, laufenden Plan testen (siehe Übungs-Start).
+        if (User.IsChild() && !PositionPlayService.PlanPlayableForChild(plan, today))
+            return Problem(statusCode: 403, detail: "Dieser Lehrplan ist gerade nicht aktiv. Frag deinen Vater.");
         var day = dto.Day ?? today;
         // Stufe: nur der Vater darf sie frei wählen; für den Sohn gilt die Fahrplan-/Positions-Stufe des Tages.
         var stage = User.IsFather() && dto.Stage is not null ? dto.Stage.Value : PositionPlayService.StageForDay(pos, plan, day);
@@ -97,7 +106,9 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
         db.TestAttempts.Add(attempt);
         await db.SaveChangesAsync();
 
-        var presented = pool.Select(i => ToItem(items[i], pos.Exercise.Type, stage, typed)).ToList();
+        var presented = pool.Select(i =>
+            ToItem(items[i], pos.Exercise.Type, stage, typed,
+                PositionPlayService.ChoicesFor(items, items[i], pos.Exercise.Type, stage))).ToList();
         return CreatedAtAction(nameof(Get), new { planId, positionId, attemptId = attempt.Id },
             new AttemptResponse(attempt.Id, planId, positionId, day, stage, attempt.TotalItems, presented));
     }
@@ -135,6 +146,10 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
         if (attempt is null) return NotFound();
         if (attempt.CompletedAt is not null) return Problem(statusCode: 400, detail: "Test wurde bereits eingereicht.");
         var plan = (await GetPlan(planId))!;
+        // Anti-Schummel: einen inzwischen deaktivierten oder abgelaufenen Plan darf der Sohn auch nicht über
+        // einen offenen Testversuch abschließen und bepunkten (der Vater bleibt ausgenommen).
+        if (User.IsChild() && !PositionPlayService.PlanPlayableForChild(plan, DateOnly.FromDateTime(DateTime.UtcNow)))
+            return Problem(statusCode: 403, detail: "Dieser Lehrplan ist gerade nicht aktiv. Frag deinen Vater.");
         var pos = await GetPosition(planId, positionId);
         if (pos?.Exercise is null) return NotFound();
 

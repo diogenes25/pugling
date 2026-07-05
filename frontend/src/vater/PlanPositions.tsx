@@ -2,8 +2,9 @@ import { useState } from "react";
 import { api, errorMessage } from "../lib/api";
 import { useAsync } from "../lib/useAsync";
 import type {
-  CreatePositionDto, ExerciseSummary, GoalCadence, ItemReport, PositionReport, PositionResponse,
+  CreatePositionDto, ExerciseSummary, GoalCadence, ItemReport, PositionReport, PositionResponse, SubjectResponse,
 } from "../lib/types";
+import { ExerciseFilterBar, type ExerciseFilter } from "./ExerciseFilterBar";
 
 /*
  * Positions-UI des neuen Lehrplan-Modells: Ein Plan ist ein Container aus Katalog-Übungen. Jede
@@ -63,10 +64,12 @@ export function PlanPositions({ planId }: { planId: number }) {
   );
 }
 
-/** Katalog-Übung wählen und als Position hinzufügen (die übrigen Werte erbt die Position aus der Übung). */
+/** Katalog-Übung über eine Filterleiste finden und als Position hinzufügen (übrige Werte erbt die Position). */
 function AddPosition({ planId, onAdded, onError }: { planId: number; onAdded: () => void; onError: (t: string) => void }) {
-  const [search, setSearch] = useState("");
-  const exercises = useAsync<ExerciseSummary[]>(() => api.searchExercises({ search: search.trim() || undefined }), [search]);
+  const subjects = useAsync<SubjectResponse[]>(() => api.subjects(), []);
+  const [filter, setFilter] = useState<ExerciseFilter>({});
+  const exercises = useAsync<ExerciseSummary[]>(() => api.searchExercises(filter),
+    [filter.subjectId, filter.chapterId, filter.grade, filter.schoolType, filter.categoryId, filter.type, filter.search]);
   const [exerciseId, setExerciseId] = useState<number | "">("");
   const [cadence, setCadence] = useState<GoalCadence>("Daily");
   const [pointsGoalMet, setPointsGoalMet] = useState(20);
@@ -76,7 +79,7 @@ function AddPosition({ planId, onAdded, onError }: { planId: number; onAdded: ()
 
   async function add(e: React.FormEvent) {
     e.preventDefault();
-    if (exerciseId === "") { onError("Bitte eine Übung aus dem Katalog wählen."); return; }
+    if (exerciseId === "") { onError("Bitte eine Übung aus der Liste wählen."); return; }
     setBusy(true);
     const dto: CreatePositionDto = {
       exerciseId: Number(exerciseId), cadence, pointsGoalMet, useLeitner, requireTypedTest: requireTyped,
@@ -89,23 +92,42 @@ function AddPosition({ planId, onAdded, onError }: { planId: number; onAdded: ()
     finally { setBusy(false); }
   }
 
+  const results = exercises.data ?? [];
+
   return (
     <form className="card" onSubmit={add} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-      <div className="row" style={{ gap: 8, alignItems: "flex-end", flexWrap: "wrap" }}>
-        <div className="field" style={{ flex: "1 1 320px" }}>
-          <label>Übung aus dem Katalog</label>
-          <select aria-label="Übung" value={exerciseId} onChange={(e) => setExerciseId(e.target.value ? Number(e.target.value) : "")}>
-            <option value="">– wählen –</option>
-            {exercises.data?.map((ex) => (
-              <option key={ex.id} value={ex.id}>{ex.title} · {typeLabel(ex.type)}{ex.source ? ` [${ex.source}]` : ""}</option>
+      {/* Umfangreiche Filterleiste statt flachem Pulldown: Fach/Kapitel/Klasse/Schulart/Typ/Art/Freitext. */}
+      <ExerciseFilterBar value={filter} onChange={setFilter} subjects={subjects.data ?? []} />
+
+      <div className="field">
+        <label>Übung aus dem Katalog <span className="muted">({results.length} Treffer)</span></label>
+        {exercises.loading ? <div className="loading">Lade…</div> : (
+          <div role="radiogroup" aria-label="Übung wählen"
+            style={{ maxHeight: 240, overflowY: "auto", border: "1px solid var(--stroke)", borderRadius: 8, display: "flex", flexDirection: "column" }}>
+            {results.map((ex) => (
+              <label key={ex.id} className="row"
+                style={{ gap: 8, alignItems: "flex-start", padding: "6px 10px", cursor: "pointer",
+                  background: exerciseId === ex.id ? "rgba(140,220,120,.10)" : undefined,
+                  borderBottom: "1px solid var(--stroke)" }}>
+                <input type="radio" name="add-position-exercise" checked={exerciseId === ex.id}
+                  onChange={() => { setExerciseId(ex.id); setUseLeitner(ex.defaultUseLeitner); setRequireTyped(ex.defaultRequireTypedTest); }}
+                  style={{ marginTop: 3 }} />
+                <span style={{ display: "flex", flexDirection: "column" }}>
+                  <span>{ex.title} <span className="muted">· {typeLabel(ex.type)}</span>
+                    {(ex.gradeMin != null || ex.gradeMax != null) &&
+                      <span className="muted"> · Kl. {ex.gradeMin ?? "?"}–{ex.gradeMax ?? "?"}</span>}
+                    {ex.categoryName && <span className="muted"> · {ex.categoryName}</span>}
+                    {ex.source && <span className="muted"> · {ex.source}</span>}
+                  </span>
+                  {ex.description && <span className="muted" style={{ fontSize: 12 }}>{ex.description}</span>}
+                </span>
+              </label>
             ))}
-          </select>
-        </div>
-        <div className="field" style={{ maxWidth: 180 }}>
-          <label>Suche</label>
-          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Titel filtern…" aria-label="Übung suchen" />
-        </div>
+            {results.length === 0 && <div className="muted" style={{ padding: "8px 10px" }}>Keine Treffer – Filter anpassen.</div>}
+          </div>
+        )}
       </div>
+
       <div className="row" style={{ gap: 12, alignItems: "flex-end", flexWrap: "wrap" }}>
         <div className="field" style={{ maxWidth: 180 }}>
           <label>Ziel-Rhythmus</label>
@@ -119,7 +141,7 @@ function AddPosition({ planId, onAdded, onError }: { planId: number; onAdded: ()
         </div>
         <label className="checkline"><input type="checkbox" checked={useLeitner} onChange={(e) => setUseLeitner(e.target.checked)} /> Leitner-Kasten</label>
         <label className="checkline"><input type="checkbox" checked={requireTyped} onChange={(e) => setRequireTyped(e.target.checked)} /> nur getippte Tests</label>
-        <button type="submit" className="btn inline-btn" style={{ width: "auto", marginLeft: "auto" }} disabled={busy}>
+        <button type="submit" className="btn inline-btn" style={{ width: "auto", marginLeft: "auto" }} disabled={busy || exerciseId === ""}>
           {busy ? "…" : "+ Position hinzufügen"}
         </button>
       </div>

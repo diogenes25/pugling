@@ -3,10 +3,10 @@ import { api, errorMessage } from "../lib/api";
 import { useAsync } from "../lib/useAsync";
 import { LANGUAGES, languageByCode } from "../lib/languages";
 import type {
-  ChildResponse, ChildTagResponse, CreateVocabularyDto, PartOfSpeech, VocabTagResponse, VocabularyResponse,
+  ChildResponse, ChildTagResponse, CreateVocabularyDto, Genus, NounInfo, PartOfSpeech, UpdateVocabularyDto,
+  VerbInfo, VocabTagResponse, VocabularyResponse,
 } from "../lib/types";
-
-const POS: PartOfSpeech[] = ["Noun", "Verb", "Adjective", "Adverb", "Other"];
+import { GENUS, GENUS_LABEL, POS, POS_LABEL } from "../lib/vocab";
 
 interface PairRow { word: string; translation: string; }
 const emptyPair = (): PairRow => ({ word: "", translation: "" });
@@ -28,9 +28,18 @@ export function VaterVocab() {
   const [busy, setBusy] = useState(false);
 
   const [search, setSearch] = useState("");
+  // Feste Suchparameter neben dem Freitext: Wortart + globale Tags (Punkt „Vokabel-Store durchsuchbar").
+  const [posFilter, setPosFilter] = useState<PartOfSpeech | "">("");
+  const [tagFilter, setTagFilter] = useState<string[]>([]);
+  const [tagMatchAll, setTagMatchAll] = useState(false);
   const list = useAsync<VocabularyResponse[]>(
-    () => api.vocabulary(search.trim() || undefined, { sourceLanguage: src, targetLanguage: tgt }),
-    [search, src, tgt],
+    () => api.vocabulary(search.trim() || undefined, {
+      sourceLanguage: src, targetLanguage: tgt,
+      partOfSpeech: posFilter || undefined,
+      tags: tagFilter.length > 0 ? tagFilter : undefined,
+      matchAll: tagMatchAll,
+    }),
+    [search, src, tgt, posFilter, tagFilter, tagMatchAll],
   );
 
   // Kind-Auswahl für die kind-skopierten Tags (Muster wie VaterClassTests).
@@ -160,6 +169,31 @@ export function VaterVocab() {
           </label>
           <input style={{ marginLeft: "auto", maxWidth: 220 }} placeholder="Suchen…" value={search} onChange={(e) => setSearch(e.target.value)} aria-label="Vokabel suchen" />
         </div>
+
+        {/* Feste Suchparameter: Wortart + globale Tags (zusätzlich zur Freitextsuche). */}
+        <div className="row" style={{ gap: 10, alignItems: "center", flexWrap: "wrap", marginTop: 8 }}>
+          <label className="row" style={{ gap: 6, alignItems: "center", fontSize: 13 }}>
+            <span className="muted">Wortart</span>
+            <select aria-label="Wortart-Filter" value={posFilter}
+              onChange={(e) => setPosFilter(e.target.value as PartOfSpeech | "")}>
+              <option value="">– alle –</option>
+              {POS.map((p) => <option key={p} value={p}>{POS_LABEL[p]}</option>)}
+            </select>
+          </label>
+          <span className="row" style={{ gap: 6, alignItems: "center", fontSize: 13 }}>
+            <span className="muted">Tags</span>
+            {tagFilter.map((name) => (
+              <TagChip key={name} label={name} onRemove={() => setTagFilter((cur) => cur.filter((t) => t !== name))} />
+            ))}
+            <TagAdder placeholder="+ Tag-Filter" options={(globalTags.data ?? []).map((t) => t.name)}
+              onAdd={async (name) => { setTagFilter((cur) => (cur.includes(name) ? cur : [...cur, name])); }} />
+            {tagFilter.length > 1 && (
+              <label className="row" style={{ gap: 4, alignItems: "center" }}>
+                <input type="checkbox" checked={tagMatchAll} onChange={(e) => setTagMatchAll(e.target.checked)} /> alle
+              </label>
+            )}
+          </span>
+        </div>
         {list.loading ? <div className="loading">Lade…</div> : list.error ? <div className="banner err">{list.error}</div> : (
           <div style={{ overflowX: "auto" }}>
             <table className="table">
@@ -209,6 +243,12 @@ function VocabRow({ v, onChanged, childId, globalTags, reloadGlobalTags, childTa
   const [word, setWord] = useState(v.word);
   const [translation, setTranslation] = useState(v.translation);
   const [pos, setPos] = useState<PartOfSpeech>(v.partOfSpeech);
+  // Komplexer Datensatz: Substantiv-/Verb-Details, Grundform-Verknüpfung und Aussprache-Audio.
+  const [noun, setNoun] = useState<NounInfo>(v.noun ?? {});
+  const [verb, setVerb] = useState<VerbInfo>(v.verb ?? { isBaseForm: false });
+  const [baseFormKey, setBaseFormKey] = useState(v.baseFormKey ?? "");
+  const [baseFormRelation, setBaseFormRelation] = useState(v.baseFormRelation ?? "");
+  const [audioUrl, setAudioUrl] = useState(v.pronunciationAudioUrl ?? "");
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [showTags, setShowTags] = useState(false);
@@ -216,7 +256,22 @@ function VocabRow({ v, onChanged, childId, globalTags, reloadGlobalTags, childTa
   async function save() {
     setBusy(true); setErr(null);
     try {
-      await api.updateVocabulary(v.id, { word, translation, partOfSpeech: pos });
+      const patch: UpdateVocabularyDto = {
+        word, translation, partOfSpeech: pos,
+        // "" hebt eine Grundform-Verknüpfung auf; ein Key setzt sie (Server prüft Existenz).
+        baseFormKey: baseFormKey.trim(),
+        baseFormRelation: baseFormRelation.trim() || null,
+        pronunciationAudioUrl: audioUrl.trim() || null,
+      };
+      // Nur die zur Wortart passenden Detail-Blöcke mitschicken (Server merged partiell).
+      if (pos === "Noun")
+        patch.noun = { article: noun.article?.trim() || null, genus: noun.genus ?? null, plural: noun.plural?.trim() || null };
+      if (pos === "Verb")
+        patch.verb = {
+          isBaseForm: verb.isBaseForm, infinitive: verb.infinitive?.trim() || null,
+          tense: verb.tense?.trim() || null, person: verb.person?.trim() || null, number: verb.number?.trim() || null,
+        };
+      await api.updateVocabulary(v.id, patch);
       setEditing(false);
       onChanged();
     } catch (e) { setErr(errorMessage(e)); } finally { setBusy(false); }
@@ -224,6 +279,9 @@ function VocabRow({ v, onChanged, childId, globalTags, reloadGlobalTags, childTa
   // Abbrechen: Änderungen verwerfen und wieder auf die gespeicherten Werte zurücksetzen (Punkt 5).
   function cancel() {
     setWord(v.word); setTranslation(v.translation); setPos(v.partOfSpeech);
+    setNoun(v.noun ?? {}); setVerb(v.verb ?? { isBaseForm: false });
+    setBaseFormKey(v.baseFormKey ?? ""); setBaseFormRelation(v.baseFormRelation ?? "");
+    setAudioUrl(v.pronunciationAudioUrl ?? "");
     setErr(null); setEditing(false);
   }
   async function remove() {
@@ -244,7 +302,7 @@ function VocabRow({ v, onChanged, childId, globalTags, reloadGlobalTags, childTa
             <td><input aria-label="Übersetzung" value={translation} onChange={(e) => setTranslation(e.target.value)} /></td>
             <td>
               <select aria-label="Wortart" value={pos} onChange={(e) => setPos(e.target.value as PartOfSpeech)}>
-                {POS.map((p) => <option key={p} value={p}>{p}</option>)}
+                {POS.map((p) => <option key={p} value={p}>{POS_LABEL[p]}</option>)}
               </select>
             </td>
             <td className="row" style={{ gap: 6, justifyContent: "flex-end" }}>
@@ -255,7 +313,8 @@ function VocabRow({ v, onChanged, childId, globalTags, reloadGlobalTags, childTa
           </>
         ) : (
           <>
-            <td>{v.word}</td><td>{v.translation}</td><td>{v.partOfSpeech}</td>
+            <td>{v.word}</td><td>{v.translation}</td>
+            <td>{POS_LABEL[v.partOfSpeech]}{detailSummary(v) && <div className="muted" style={{ fontSize: 11 }}>{detailSummary(v)}</div>}</td>
             <td className="row" style={{ gap: 6, justifyContent: "flex-end" }}>
               {err && <span className="muted" style={{ color: "var(--danger, #c00)", fontSize: 12 }}>{err}</span>}
               <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }}
@@ -268,6 +327,16 @@ function VocabRow({ v, onChanged, childId, globalTags, reloadGlobalTags, childTa
           </>
         )}
       </tr>
+      {editing && (
+        <tr>
+          <td colSpan={5} style={{ background: "rgba(255,255,255,.02)" }}>
+            <VocabDetailsEditor pos={pos} noun={noun} setNoun={setNoun} verb={verb} setVerb={setVerb}
+              baseFormKey={baseFormKey} setBaseFormKey={setBaseFormKey}
+              baseFormRelation={baseFormRelation} setBaseFormRelation={setBaseFormRelation}
+              audioUrl={audioUrl} setAudioUrl={setAudioUrl} selfKey={v.key} />
+          </td>
+        </tr>
+      )}
       {showTags && !editing && (
         <tr>
           <td colSpan={5} style={{ background: "rgba(255,255,255,.02)" }}>
@@ -278,6 +347,88 @@ function VocabRow({ v, onChanged, childId, globalTags, reloadGlobalTags, childTa
         </tr>
       )}
     </>
+  );
+}
+
+/** Kompakte Zusammenfassung der komplexen Vokabel-Details für die Store-Zeile (Ansicht). */
+function detailSummary(v: VocabularyResponse): string {
+  const parts: string[] = [];
+  if (v.noun) {
+    const n = [v.noun.article, v.noun.plural ? `Pl. ${v.noun.plural}` : null].filter(Boolean).join(" ");
+    if (n) parts.push(n);
+    if (v.noun.genus) parts.push(GENUS_LABEL[v.noun.genus]);
+  }
+  if (v.verb) {
+    if (v.verb.infinitive) parts.push(`Inf. ${v.verb.infinitive}`);
+    else if (v.verb.tense) parts.push(v.verb.tense);
+  }
+  if (v.baseFormKey) parts.push(`↳ ${v.baseFormKey}${v.baseFormRelation ? ` (${v.baseFormRelation})` : ""}`);
+  if (v.pronunciationAudioUrl) parts.push("🔊");
+  return parts.join(" · ");
+}
+
+/** Editor für den komplexen Vokabel-Datensatz: Substantiv-/Verb-Details, Grundform-Kante, Aussprache-Audio. */
+function VocabDetailsEditor({ pos, noun, setNoun, verb, setVerb, baseFormKey, setBaseFormKey,
+  baseFormRelation, setBaseFormRelation, audioUrl, setAudioUrl, selfKey }: {
+  pos: PartOfSpeech;
+  noun: NounInfo; setNoun: (updater: (n: NounInfo) => NounInfo) => void;
+  verb: VerbInfo; setVerb: (updater: (v: VerbInfo) => VerbInfo) => void;
+  baseFormKey: string; setBaseFormKey: (v: string) => void;
+  baseFormRelation: string; setBaseFormRelation: (v: string) => void;
+  audioUrl: string; setAudioUrl: (v: string) => void;
+  selfKey: string;
+}) {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 10, padding: "8px 2px" }}>
+      {pos === "Noun" && (
+        <div className="row" style={{ gap: 8, alignItems: "flex-end", flexWrap: "wrap" }}>
+          <span className="muted" style={{ minWidth: 96, fontSize: 12 }}>Substantiv</span>
+          <div className="field" style={{ maxWidth: 120 }}><label>Artikel</label>
+            <input aria-label="Artikel" value={noun.article ?? ""} placeholder="der/die/das"
+              onChange={(e) => setNoun((n) => ({ ...n, article: e.target.value }))} /></div>
+          <div className="field" style={{ maxWidth: 140 }}><label>Genus</label>
+            <select aria-label="Genus" value={noun.genus ?? ""}
+              onChange={(e) => setNoun((n) => ({ ...n, genus: (e.target.value || null) as Genus | null }))}>
+              <option value="">–</option>
+              {GENUS.map((g) => <option key={g} value={g}>{GENUS_LABEL[g]}</option>)}
+            </select></div>
+          <div className="field" style={{ maxWidth: 160 }}><label>Plural</label>
+            <input aria-label="Plural" value={noun.plural ?? ""}
+              onChange={(e) => setNoun((n) => ({ ...n, plural: e.target.value }))} /></div>
+        </div>
+      )}
+      {pos === "Verb" && (
+        <div className="row" style={{ gap: 8, alignItems: "flex-end", flexWrap: "wrap" }}>
+          <span className="muted" style={{ minWidth: 96, fontSize: 12 }}>Verb</span>
+          <label className="checkline"><input type="checkbox" checked={verb.isBaseForm}
+            onChange={(e) => setVerb((x) => ({ ...x, isBaseForm: e.target.checked }))} /> Grundform (Infinitiv)</label>
+          <div className="field" style={{ maxWidth: 150 }}><label>Infinitiv</label>
+            <input aria-label="Infinitiv" value={verb.infinitive ?? ""}
+              onChange={(e) => setVerb((x) => ({ ...x, infinitive: e.target.value }))} /></div>
+          <div className="field" style={{ maxWidth: 110 }}><label>Tempus</label>
+            <input aria-label="Tempus" value={verb.tense ?? ""} placeholder="present/past"
+              onChange={(e) => setVerb((x) => ({ ...x, tense: e.target.value }))} /></div>
+          <div className="field" style={{ maxWidth: 90 }}><label>Person</label>
+            <input aria-label="Person" value={verb.person ?? ""} placeholder="1/2/3"
+              onChange={(e) => setVerb((x) => ({ ...x, person: e.target.value }))} /></div>
+          <div className="field" style={{ maxWidth: 120 }}><label>Numerus</label>
+            <input aria-label="Numerus" value={verb.number ?? ""} placeholder="singular/plural"
+              onChange={(e) => setVerb((x) => ({ ...x, number: e.target.value }))} /></div>
+        </div>
+      )}
+      <div className="row" style={{ gap: 8, alignItems: "flex-end", flexWrap: "wrap" }}>
+        <span className="muted" style={{ minWidth: 96, fontSize: 12 }}>Grundform</span>
+        <div className="field" style={{ maxWidth: 180 }}><label>Grundform-Key <span className="muted">(leer = keine)</span></label>
+          <input aria-label="Grundform-Key" value={baseFormKey} placeholder={`z. B. ${selfKey}`}
+            onChange={(e) => setBaseFormKey(e.target.value)} /></div>
+        <div className="field" style={{ maxWidth: 160 }}><label>Relation</label>
+          <input aria-label="Grundform-Relation" value={baseFormRelation} placeholder="Partizip/Plural…"
+            onChange={(e) => setBaseFormRelation(e.target.value)} /></div>
+        <div className="field" style={{ flex: 1, minWidth: 200 }}><label>Aussprache-Audio (URL)</label>
+          <input aria-label="Aussprache-Audio-URL" value={audioUrl}
+            onChange={(e) => setAudioUrl(e.target.value)} /></div>
+      </div>
+    </div>
   );
 }
 

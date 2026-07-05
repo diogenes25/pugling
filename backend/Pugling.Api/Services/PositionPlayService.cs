@@ -26,6 +26,14 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
         pos.Exercise is { } ex ? await content.ItemsOfAsync(ex) : [];
 
     /// <summary>
+    /// Darf der Sohn diesen Plan heute spielen (üben/testen)? Nur ein aktiver Plan innerhalb seiner
+    /// Laufzeit ist spielbar – so kann sich das Kind keinen leichten oder abgelaufenen Plan zum bequemen
+    /// Punktesammeln aussuchen (Anti-Schummel). Der Vater ist davon ausgenommen (Vorschau/Nachtrag).
+    /// </summary>
+    public static bool PlanPlayableForChild(StudyPlan plan, DateOnly today) =>
+        plan.Active && plan.StartDate <= today && today <= plan.EndDate;
+
+    /// <summary>
     /// Für einen Tag geltende Teststufe der Position: Fahrplan (falls gesetzt) → Positions-Override →
     /// Übungs-Default → Verfahrens-Standard. Serverseitig erzwungen (nicht vom Client wählbar).
     /// </summary>
@@ -57,6 +65,31 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
         ExerciseType.Cloze => StageMechanics.IsTyped((ClozeStage)stage),
         _ => true,
     };
+
+    /// <summary>
+    /// Auswahlmöglichkeiten für eine Multiple-Choice-Vokabelaufgabe: die richtige Antwort plus bis zu drei
+    /// Ablenker aus den übrigen Items derselben Übung (dedupliziert, normalisiert). <c>null</c> für alle
+    /// anderen Verfahren/Stufen. Deterministische Rotation, damit die Lösung nicht immer vorne steht (kein Zufall).
+    /// </summary>
+    public static IReadOnlyList<string>? ChoicesFor(IReadOnlyList<ContentItem> items, ContentItem item, ExerciseType type, int stage)
+    {
+        if (type != ExerciseType.Vocabulary || (TestStage)stage != TestStage.MultipleChoice) return null;
+        if (string.IsNullOrWhiteSpace(item.Answer)) return null;
+
+        var seen = new HashSet<string>(StringComparer.Ordinal) { StageMechanics.Normalize(item.Answer) };
+        var distractors = new List<string>();
+        foreach (var other in items)
+        {
+            if (other.Index == item.Index || string.IsNullOrWhiteSpace(other.Answer)) continue;
+            if (seen.Add(StageMechanics.Normalize(other.Answer))) distractors.Add(other.Answer);
+            if (distractors.Count >= 3) break;
+        }
+
+        var choices = new List<string>(distractors.Count + 1) { item.Answer };
+        choices.AddRange(distractors);
+        var shift = item.Index % choices.Count;
+        return [.. choices.Skip(shift), .. choices.Take(shift)];
+    }
 
     /// <summary>Anzahl genutzter Inhalte der Position (Override, sonst alle vorhandenen).</summary>
     public int PoolSize(PlanPosition pos, int available) =>

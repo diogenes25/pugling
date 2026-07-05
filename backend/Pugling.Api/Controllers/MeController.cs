@@ -32,7 +32,7 @@ public class MeController(PuglingDbContext db, GamificationService gamification,
 
     /// <summary>Ein kaufbares Angebot aus Sohn-Sicht: Preis, Wiederkehr, Restkontingent dieser Periode und ob bezahlbar.</summary>
     public record RewardOfferResponse(int Id, string Title, int Cost, OfferPeriod Period, int Quantity,
-        int RemainingThisPeriod, bool Affordable);
+        int RemainingThisPeriod, bool Affordable, string? PlanTitle, string? ExerciseTitle);
     /// <summary>Ein eigener Kauf im Konto mit aktuellem Status („gekauft am … – erfüllt am …").</summary>
     public record MyRedemptionResponse(int Id, int? RewardId, string Title, int Cost,
         RewardRedemptionStatus Status, DateTime PurchasedAt, DateTime? FulfilledAt);
@@ -223,6 +223,7 @@ public class MeController(PuglingDbContext db, GamificationService gamification,
         var coins = await wallet.CoinsAsync(childId);
 
         var offersList = await db.Rewards.AsNoTracking()
+            .Include(r => r.StudyPlan).Include(r => r.Exercise)
             .Where(r => r.ChildId == childId && r.Active)
             .OrderBy(r => r.Cost).ThenBy(r => r.Id)
             .ToListAsync();
@@ -234,7 +235,7 @@ public class MeController(PuglingDbContext db, GamificationService gamification,
             var used = await offers.CountInCurrentPeriodAsync(r, now);
             var remaining = Math.Max(0, r.Quantity - used);
             available.Add(new RewardOfferResponse(r.Id, r.Title, r.Cost, r.Period, r.Quantity,
-                remaining, coins >= r.Cost && remaining > 0));
+                remaining, coins >= r.Cost && remaining > 0, r.StudyPlan?.Title, r.Exercise?.Title));
         }
 
         var redemptions = await db.RewardRedemptions.AsNoTracking()

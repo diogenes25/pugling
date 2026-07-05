@@ -37,6 +37,8 @@ public enum TestStage
     FreeText = 4,
     /// <summary>Vokabel wird vorgelesen -> Übersetzung frei eintippen.</summary>
     Audio = 5,
+    /// <summary>Auswahl aus mehreren Möglichkeiten (eine richtig, Rest Ablenker aus der Übung).</summary>
+    MultipleChoice = 6,
 }
 
 /// <summary>Ein Schritt im Stufen-Fahrplan: ab Tag <c>DayNumber</c> (1-basiert) gilt Stufe <c>Stage</c>.</summary>
@@ -53,6 +55,8 @@ public class StudyPlan
     public int ChildId { get; set; }
     public Child? Child { get; set; }
     public string Title { get; set; } = "";
+    /// <summary>Freie Beschreibung des Plans (optional): Ziel/Umfang, damit er später gut erkennbar bleibt.</summary>
+    public string? Description { get; set; }
     /// <summary>Optionale Verknüpfung zum Katalog-Fach (nur zur Einordnung/Filterung).</summary>
     public int? SubjectId { get; set; }
     public Subject? Subject { get; set; }

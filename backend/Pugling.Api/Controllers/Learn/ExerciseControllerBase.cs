@@ -15,13 +15,14 @@ namespace Pugling.Api.Controllers.Learn;
 public record ExercisePayload<TConfig>(string Title, int OrderIndex, int RewardPoints, TConfig Config,
     SuggestedBonus? SuggestedBonus = null,
     int? GradeMin = null, int? GradeMax = null, SchoolTypes SchoolTypes = SchoolTypes.None,
-    string? Source = null, int? CategoryId = null);
+    string? Source = null, int? CategoryId = null, string? Description = null,
+    bool DefaultUseLeitner = false, bool DefaultRequireTypedTest = false, int? DefaultStage = null);
 
 /// <summary>Übung in der Antwort. <paramref name="IsOwn"/> zeigt, ob der anfragende Vater Autor ist (Editier-/Löschrecht).</summary>
 public record ExerciseResponse<TConfig>(int Id, int ChapterId, string Type, string Title,
     int OrderIndex, int RewardPoints, DateTime CreatedAt, TConfig Config, SuggestedBonus? SuggestedBonus,
     int? GradeMin, int? GradeMax, SchoolTypes SchoolTypes, string? Source, int? CategoryId, string? CategoryName,
-    int? AuthorFatherId, bool IsOwn);
+    int? AuthorFatherId, bool IsOwn, string? Description, bool DefaultUseLeitner, bool DefaultRequireTypedTest);
 
 /// <summary>
 /// Gemeinsame CRUD-Logik für alle Übungstypen unter einem Kapitel.
@@ -91,7 +92,8 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db) : Con
     protected ExerciseResponse<TConfig> Map(Exercise e, int? fid) =>
         new(e.Id, e.ChapterId, e.Type.ToString(), e.Title, e.OrderIndex, e.RewardPoints, e.CreatedAt, ConfigOf(e), e.SuggestedBonus,
             e.GradeMin, e.GradeMax, e.SchoolTypes, e.Source, e.CategoryId, e.Category?.Name,
-            e.AuthorFatherId, ClaimsPrincipalExtensions.IsOwnedBy(e.AuthorFatherId, fid));
+            e.AuthorFatherId, ClaimsPrincipalExtensions.IsOwnedBy(e.AuthorFatherId, fid), e.Description,
+            e.DefaultUseLeitner, e.DefaultRequireTypedTest);
 
     /// <summary>Liste der Übungen dieses Typs im Kapitel.</summary>
     [HttpGet]
@@ -135,6 +137,7 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db) : Con
             ChapterId = chapterId,
             Type = Type,
             Title = body.Title.Trim(),
+            Description = string.IsNullOrWhiteSpace(body.Description) ? null : body.Description.Trim(),
             OrderIndex = body.OrderIndex,
             RewardPoints = body.RewardPoints,
             ConfigJson = JsonSerializer.Serialize(body.Config ?? new TConfig(), JsonOptions),
@@ -144,6 +147,9 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db) : Con
             SchoolTypes = body.SchoolTypes,
             Source = string.IsNullOrWhiteSpace(body.Source) ? null : body.Source.Trim(),
             CategoryId = body.CategoryId,
+            DefaultUseLeitner = body.DefaultUseLeitner,
+            DefaultRequireTypedTest = body.DefaultRequireTypedTest,
+            DefaultStage = body.DefaultStage,
             // Autor = der anlegende Vater. Sichert ihm später das alleinige Editier-/Löschrecht (Katalog bleibt global lesbar).
             AuthorFatherId = User.FatherId(),
         };
@@ -171,6 +177,7 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db) : Con
         if (await ValidateConfigAsync(subjectId, body.Config ?? new TConfig()) is { } updateErr) return Problem(statusCode: 400, detail: updateErr);
 
         exercise.Title = body.Title.Trim();
+        exercise.Description = string.IsNullOrWhiteSpace(body.Description) ? null : body.Description.Trim();
         exercise.OrderIndex = body.OrderIndex;
         exercise.RewardPoints = body.RewardPoints;
         exercise.ConfigJson = JsonSerializer.Serialize(body.Config ?? new TConfig(), JsonOptions);
@@ -180,6 +187,9 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db) : Con
         exercise.SchoolTypes = body.SchoolTypes;
         exercise.Source = string.IsNullOrWhiteSpace(body.Source) ? null : body.Source.Trim();
         exercise.CategoryId = body.CategoryId;
+        exercise.DefaultUseLeitner = body.DefaultUseLeitner;
+        exercise.DefaultRequireTypedTest = body.DefaultRequireTypedTest;
+        exercise.DefaultStage = body.DefaultStage;
         await db.SaveChangesAsync();
 
         // Navigation nach evtl. geänderter CategoryId aktualisieren, damit CategoryName stimmt.

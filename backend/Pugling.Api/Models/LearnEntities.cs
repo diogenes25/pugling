@@ -103,6 +103,11 @@ public class Exercise
     public Chapter? Chapter { get; set; }
     public ExerciseType Type { get; set; }
     public string Title { get; set; } = "";
+    /// <summary>
+    /// Freier Beschreibungstext (optional). Hilft, die Übung beim Zusammenstellen eines Lehrplans
+    /// zu erkennen (was übt sie, für wen, worauf achten) und fließt in die Katalog-Freitextsuche ein.
+    /// </summary>
+    public string? Description { get; set; }
     public int OrderIndex { get; set; }
     /// <summary>Punkte, die das Kind für das Absolvieren erhält.</summary>
     public int RewardPoints { get; set; }
@@ -117,6 +122,10 @@ public class Exercise
     public int? DefaultStage { get; set; }
     /// <summary>Empfohlene Anzahl genutzter Inhalte je Position; null = alle.</summary>
     public int? DefaultItemCount { get; set; }
+    /// <summary>Standard für den Leitner-Kasten (Vorschlag der Übung; Position kann übersteuern).</summary>
+    public bool DefaultUseLeitner { get; set; }
+    /// <summary>Standard „nur getippte/gewertete Tests zählen" (Vorschlag der Übung; Position kann übersteuern).</summary>
+    public bool DefaultRequireTypedTest { get; set; }
 
     // Strukturierte Metadaten zur Vorfilterung bei der Lehrplan-Erstellung.
     // Fach = Subject (über Chapter), Thema = Chapter – hier nur das Ergänzende.

@@ -9,9 +9,12 @@ namespace Pugling.Api.Services;
 /// </summary>
 public static class StageMechanics
 {
-    /// <summary>Getippte Vokabel-Stufen, die echtes Wissen abfragen (nicht bloße Selbsteinschätzung).</summary>
+    /// <summary>
+    /// Objektiv (serverseitig gegen die Lösung) prüfbare Vokabel-Stufen – im Gegensatz zu reiner
+    /// Selbsteinschätzung. Multiple-Choice zählt dazu: die Auswahl wird gegen die richtige Option geprüft.
+    /// </summary>
     public static bool IsTyped(TestStage stage) =>
-        stage is TestStage.LetterBoxes or TestStage.FreeText or TestStage.Audio;
+        stage is TestStage.LetterBoxes or TestStage.FreeText or TestStage.Audio or TestStage.MultipleChoice;
 
     /// <summary>Freitext-Stufen des Lückentexts (echtes Schreiben statt Auswahl).</summary>
     public static bool IsTyped(ClozeStage stage) =>

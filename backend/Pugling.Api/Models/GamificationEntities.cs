@@ -126,6 +126,19 @@ public class Reward
     public int ChildId { get; set; }
     public Child? Child { get; set; }
     public string Title { get; set; } = "";
+    /// <summary>
+    /// Optionaler Bezug auf einen Lehrplan des Kindes: ist er gesetzt, wird das Angebot dem Sohn nur im
+    /// Kontext dieses Plans angeboten (null = kindweit, für alle Pläne gültig). Bricht das Angebot nicht,
+    /// wenn der Plan gelöscht wird (FK → SetNull, Angebot wird dann wieder kindweit).
+    /// </summary>
+    public int? StudyPlanId { get; set; }
+    public StudyPlan? StudyPlan { get; set; }
+    /// <summary>
+    /// Optionaler Bezug auf eine Katalog-Übung: begrenzt das Angebot auf den Kontext dieser Übung
+    /// (null = für alle Übungen). FK → SetNull, damit das Löschen der Übung das Angebot nicht bricht.
+    /// </summary>
+    public int? ExerciseId { get; set; }
+    public Exercise? Exercise { get; set; }
     /// <summary>Kosten in Münzen, die bei jedem Kauf vom Kind-Konto abgebucht werden.</summary>
     public int Cost { get; set; }
     /// <summary>Wiederkehr des Angebots; steuert das Zeitfenster des Kontingents.</summary>

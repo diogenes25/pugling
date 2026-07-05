@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { api, errorMessage } from "../lib/api";
 import { useSohn } from "./SohnApp";
 import { LetterBoxes } from "../components/LetterBoxes";
+import { AudioButton } from "../components/AudioButton";
 import type { PracticeCard, PositionSession, ReviewOutcome } from "../lib/types";
 
 // Kleine Anerkennung bei jedem Treffer – Variation sorgt für Abwechslung (Daumen, Stern, Feuer, Muskel).
@@ -165,7 +166,10 @@ export function SohnPractice() {
       <div className="flash">
         <div className="fcard">
           <div className="lang">Aufgabe</div>
-          <div className="word">{card.prompt}</div>
+          {/* Hör-Stufe: Wort vorlesen statt zeigen (sonst wäre „Hören → tippen" keine Höraufgabe). */}
+          {card.audioUrl
+            ? <AudioButton url={card.audioUrl} label="🔊 Vokabel anhören" />
+            : <div className="word">{card.prompt}</div>}
           {card.hint && typed && (
             hintShown
               ? <div className="sub">💡 {card.hint}</div>
@@ -174,7 +178,13 @@ export function SohnPractice() {
           {phase === "back" && card.reveal && <div className="rev">→ {card.reveal}</div>}
         </div>
 
-        {typed ? (
+        {typed && card.choices ? (
+          <div className="row" style={{ gap: 8, flexWrap: "wrap" }}>
+            {card.choices.map((c) => (
+              <button type="button" key={c} className="btn ghost" onClick={() => judge(card, { givenAnswer: c })}>{c}</button>
+            ))}
+          </div>
+        ) : typed ? (
           <div>
             {card.answerLength ? (
               <LetterBoxes length={card.answerLength} value={typedAnswer} onChange={setTypedAnswer} onSubmit={submitTyped} />

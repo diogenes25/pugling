@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Pugling.Api.Data;
 
@@ -10,9 +11,11 @@ using Pugling.Api.Data;
 namespace Pugling.Api.Data.Migrations
 {
     [DbContext(typeof(PuglingDbContext))]
-    partial class PuglingDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260705183437_PlanDescription")]
+    partial class PlanDescription
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.9");
@@ -250,13 +253,7 @@ namespace Pugling.Api.Data.Migrations
                     b.Property<int?>("DefaultItemCount")
                         .HasColumnType("INTEGER");
 
-                    b.Property<bool>("DefaultRequireTypedTest")
-                        .HasColumnType("INTEGER");
-
                     b.Property<int?>("DefaultStage")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<bool>("DefaultUseLeitner")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Description")
@@ -756,16 +753,10 @@ namespace Pugling.Api.Data.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("TEXT");
 
-                    b.Property<int?>("ExerciseId")
-                        .HasColumnType("INTEGER");
-
                     b.Property<int>("Period")
                         .HasColumnType("INTEGER");
 
                     b.Property<int>("Quantity")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int?>("StudyPlanId")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Title")
@@ -775,10 +766,6 @@ namespace Pugling.Api.Data.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("ChildId");
-
-                    b.HasIndex("ExerciseId");
-
-                    b.HasIndex("StudyPlanId");
 
                     b.ToTable("Rewards");
                 });
@@ -1449,21 +1436,7 @@ namespace Pugling.Api.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Pugling.Api.Models.Exercise", "Exercise")
-                        .WithMany()
-                        .HasForeignKey("ExerciseId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
-                    b.HasOne("Pugling.Api.Models.StudyPlan", "StudyPlan")
-                        .WithMany()
-                        .HasForeignKey("StudyPlanId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
                     b.Navigation("Child");
-
-                    b.Navigation("Exercise");
-
-                    b.Navigation("StudyPlan");
                 });
 
             modelBuilder.Entity("Pugling.Api.Models.RewardRedemption", b =>

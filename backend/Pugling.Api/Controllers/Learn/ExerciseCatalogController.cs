@@ -28,22 +28,24 @@ public class ExerciseCatalogController(PuglingDbContext db) : ControllerBase
     /// </summary>
     public record ExerciseSummary(int Id, int ChapterId, int SubjectId, string Type, string Title,
         int? GradeMin, int? GradeMax, SchoolTypes SchoolTypes, string? Source, int? CategoryId, string? CategoryName,
-        int? AuthorFatherId, string? AuthorName, bool IsOwn);
+        int? AuthorFatherId, string? AuthorName, bool IsOwn, string? Description,
+        bool DefaultUseLeitner, bool DefaultRequireTypedTest);
 
     /// <summary>
     /// Sucht Übungen über die Metadaten. Alle Parameter sind optional und werden UND-verknüpft.
     /// Nullbare Grenzen/„None"-Schulart bedeuten „passt immer" und werden nicht ausgeschlossen.
     /// </summary>
     /// <param name="subjectId">Fach.</param>
+    /// <param name="chapterId">Kapitel (setzt in der Regel ein Fach voraus).</param>
     /// <param name="grade">Klassenstufe des Kindes; passt, wenn sie in [GradeMin, GradeMax] liegt.</param>
     /// <param name="schoolType">Schulart; passt, wenn die Übung sie enthält oder für alle gilt.</param>
     /// <param name="categoryId">Fachabhängige Art.</param>
     /// <param name="type">Übungstyp.</param>
-    /// <param name="search">Freitext im Titel (Teilstring).</param>
+    /// <param name="search">Freitext in Titel oder Beschreibung (Teilstring).</param>
     /// <param name="mineOnly">Nur eigene Übungen des anfragenden Vaters (Verwaltung statt Entdeckung).</param>
     [HttpGet]
     public async Task<IEnumerable<ExerciseSummary>> Search(
-        [FromQuery] int? subjectId, [FromQuery] int? grade, [FromQuery] SchoolTypes? schoolType,
+        [FromQuery] int? subjectId, [FromQuery] int? chapterId, [FromQuery] int? grade, [FromQuery] SchoolTypes? schoolType,
         [FromQuery] int? categoryId, [FromQuery] ExerciseType? type, [FromQuery] string? search,
         [FromQuery] bool? mineOnly)
     {
@@ -57,6 +59,9 @@ public class ExerciseCatalogController(PuglingDbContext db) : ControllerBase
 
         if (subjectId is int sid)
             query = query.Where(e => e.Chapter!.SubjectId == sid);
+
+        if (chapterId is int chid)
+            query = query.Where(e => e.ChapterId == chid);
 
         if (grade is int g)
             query = query.Where(e => (e.GradeMin == null || e.GradeMin <= g)
@@ -75,7 +80,8 @@ public class ExerciseCatalogController(PuglingDbContext db) : ControllerBase
         if (!string.IsNullOrWhiteSpace(search))
         {
             var term = search.Trim();
-            query = query.Where(e => e.Title.Contains(term));
+            query = query.Where(e => e.Title.Contains(term)
+                || (e.Description != null && e.Description.Contains(term)));
         }
 
         return await query
@@ -83,7 +89,8 @@ public class ExerciseCatalogController(PuglingDbContext db) : ControllerBase
             .ThenBy(e => e.OrderIndex).ThenBy(e => e.Id)
             .Select(e => new ExerciseSummary(e.Id, e.ChapterId, e.Chapter!.SubjectId, e.Type.ToString(), e.Title,
                 e.GradeMin, e.GradeMax, e.SchoolTypes, e.Source, e.CategoryId, e.Category!.Name,
-                e.AuthorFatherId, e.Author!.Name, fid != null && e.AuthorFatherId == fid))
+                e.AuthorFatherId, e.Author!.Name, fid != null && e.AuthorFatherId == fid, e.Description,
+                e.DefaultUseLeitner, e.DefaultRequireTypedTest))
             .ToListAsync();
     }
 
@@ -98,7 +105,8 @@ public class ExerciseCatalogController(PuglingDbContext db) : ControllerBase
         string Type, string Title, int OrderIndex, int RewardPoints, int? GradeMin, int? GradeMax,
         SchoolTypes SchoolTypes, string? Source, int? CategoryId, string? CategoryName,
         SuggestedBonus? SuggestedBonus, int? DefaultStage, int? DefaultItemCount,
-        int? AuthorFatherId, string? AuthorName, bool IsOwn, JsonElement Config);
+        int? AuthorFatherId, string? AuthorName, bool IsOwn, JsonElement Config, string? Description,
+        bool DefaultUseLeitner, bool DefaultRequireTypedTest);
 
     /// <summary>Eine einzelne Übung typ-übergreifend per Id (mit Config + Metadaten).</summary>
     [HttpGet("{id:int}")]
@@ -117,7 +125,8 @@ public class ExerciseCatalogController(PuglingDbContext db) : ControllerBase
             e.GradeMin, e.GradeMax, e.SchoolTypes, e.Source, e.CategoryId, e.Category?.Name,
             e.SuggestedBonus, e.DefaultStage, e.DefaultItemCount,
             e.AuthorFatherId, e.Author?.Name, User.Owns(e),
-            JsonSerializer.Deserialize<JsonElement>(string.IsNullOrWhiteSpace(e.ConfigJson) ? "{}" : e.ConfigJson, JsonOptions));
+            JsonSerializer.Deserialize<JsonElement>(string.IsNullOrWhiteSpace(e.ConfigJson) ? "{}" : e.ConfigJson, JsonOptions),
+            e.Description, e.DefaultUseLeitner, e.DefaultRequireTypedTest);
     }
 
     public record PlanUsage(int PlanId, string PlanTitle, int ChildId, string ChildName);

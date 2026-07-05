@@ -100,4 +100,56 @@ public class ExercisePreviewTests(PuglingWebAppFactory factory) : IClassFixture<
         var res = await child.GetAsync($"/api/v1/learn/exercises/{exerciseId}/preview");
         Assert.Equal(HttpStatusCode.Forbidden, res.StatusCode);
     }
+
+    [Fact]
+    public async Task Preview_StufeUmschalten_MultipleChoice_LiefertAuswahl()
+    {
+        var father = await TestApi.FatherAsync(_factory);
+        var exerciseId = await TestApi.CreateVocabExerciseAsync(father, ("hello", "hallo"), ("goodbye", "tschüss"), ("cat", "Katze"));
+
+        // stage=6 (Multiple-Choice): getippt, jede Aufgabe trägt Auswahlmöglichkeiten; die umschaltbaren Stufen kommen mit.
+        var data = await father.GetFromJsonAsync<JsonElement>($"/api/v1/learn/exercises/{exerciseId}/preview?stage=6");
+        Assert.Equal(6, data.GetProperty("stage").GetInt32());
+        Assert.True(data.GetProperty("typed").GetBoolean());
+        Assert.Equal("Vocabulary", data.GetProperty("type").GetString());
+        Assert.Contains(data.GetProperty("stages").EnumerateArray(), s => s.GetProperty("value").GetInt32() == 5); // Hör-Stufe wählbar
+        var items = data.GetProperty("items").EnumerateArray().ToList();
+        var choices = items[0].GetProperty("choices").EnumerateArray().Select(c => c.GetString()).ToList();
+        Assert.Contains("hallo", choices); // die richtige Lösung ist unter der Auswahl
+        Assert.True(choices.Count > 1);
+
+        // Check mit derselben Stufe: richtige Auswahl → 100 % bei einem Item.
+        var res = await father.PostAsJsonAsync($"/api/v1/learn/exercises/{exerciseId}/preview/check", new
+        {
+            answers = new[] { new { itemIndex = 0, givenAnswer = "hallo", wasKnown = (bool?)null } },
+            stage = 6,
+        });
+        res.EnsureSuccessStatusCode();
+        var result = await res.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.True(result.GetProperty("items").EnumerateArray().First().GetProperty("wasCorrect").GetBoolean());
+    }
+
+    [Fact]
+    public async Task Preview_Hoerstufe_LiefertAudioquelle_OhneLoesung()
+    {
+        var father = await TestApi.FatherAsync(_factory);
+        var (id, key) = await TestApi.CreateStoreVocabAsync(father, "hello", "hallo");
+        // Aussprache-Audio nachtragen (PATCH) – erst dann kann die Hör-Stufe die Vokabel „vorlesen".
+        var patch = await father.PatchAsJsonAsync($"/api/v1/learn/vocabulary/{id}",
+            new { pronunciationAudioUrl = "https://example.test/hello.mp3" });
+        patch.EnsureSuccessStatusCode();
+        var exerciseId = await TestApi.CreateVocabRefExerciseAsync(father, key);
+
+        // stage=5 (Hören): getippt, Lösung verborgen, aber die Audioquelle wird für den Client mitgegeben.
+        var data = await father.GetFromJsonAsync<JsonElement>($"/api/v1/learn/exercises/{exerciseId}/preview?stage=5");
+        Assert.Equal(5, data.GetProperty("stage").GetInt32());
+        Assert.True(data.GetProperty("typed").GetBoolean());
+        var item = data.GetProperty("items").EnumerateArray().First();
+        Assert.Equal("https://example.test/hello.mp3", item.GetProperty("audioUrl").GetString());
+        Assert.Equal(JsonValueKind.Null, item.GetProperty("reveal").ValueKind);
+
+        // Freitext-Stufe (4) auf derselben Übung: keine Audioquelle (nur die Hör-Stufe liest vor).
+        var freeText = await father.GetFromJsonAsync<JsonElement>($"/api/v1/learn/exercises/{exerciseId}/preview?stage=4");
+        Assert.Equal(JsonValueKind.Null, freeText.GetProperty("items").EnumerateArray().First().GetProperty("audioUrl").ValueKind);
+    }
 }

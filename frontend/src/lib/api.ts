@@ -1,9 +1,9 @@
 import type {
-  AchievementDef, AchievementStatus, AnswerDto, ChapterResponse, ChildResponse, CreateAchievementDto,
+  AchievementDef, AchievementStatus, AnswerDto, CategoryResponse, ChapterResponse, ChildResponse, CreateAchievementDto,
   CreateChildDto, CreateExercisePayload, CreateKlassenarbeitDto, CreateMissionDto, CreatePlanDto, CreateRewardDto, CreateVocabularyDto,
   ExerciseDetail, ExercisePreviewAnswer, ExercisePreviewData, ExercisePreviewResult,
   ExerciseSearchParams, ExerciseSummary, ExerciseUsage, KlassenarbeitDetail, KlassenarbeitPractice, KlassenarbeitRepeat,
-  KlassenarbeitResponse, KlassenarbeitStatus, LoginResponse, MissionDef, MissionStatus, PlanResponse,
+  KlassenarbeitResponse, KlassenarbeitStatus, LoginResponse, MissionDef, MissionStatus, PartOfSpeech, PlanResponse,
   ChildrenDashboard, CreatePositionDto, PositionResponse, PositionReport, UpdatePositionDto, OverviewResponse, PositionSession, PracticeCard,
   ProgressResponse, RedemptionDef, ReviewInput, ReviewOutcome, RewardDef, RewardRedemptionStatus, RewardsView,
   SkinState, SubjectResponse,
@@ -97,6 +97,9 @@ export const api = {
     http<ChapterResponse[]>(`${V1}/learn/subjects/${subjectId}/chapters`),
   createChapter: (subjectId: number, name: string, orderIndex: number) =>
     http<ChapterResponse>(`${V1}/learn/subjects/${subjectId}/chapters`, "POST", { name, orderIndex }),
+  // Fachabhängige Arten ("Kategorien") – zur Vorfilterung im Katalog/Planbau.
+  categories: (subjectId: number) =>
+    http<CategoryResponse[]>(`${V1}/learn/subjects/${subjectId}/categories`),
   // Übung eines Typs im Kapitel anlegen. Das Routen-Segment (vocabulary/arithmetic/…) bestimmt den Typ.
   createExercise: (subjectId: number, chapterId: number, typeRoute: string, payload: CreateExercisePayload) =>
     http<ExerciseSummary>(`${V1}/learn/subjects/${subjectId}/chapters/${chapterId}/${typeRoute}`, "POST", payload),
@@ -104,9 +107,10 @@ export const api = {
   getExercise: (id: number) => http<ExerciseDetail>(`${V1}/learn/exercises/${id}`),
   exerciseUsage: (id: number) => http<ExerciseUsage>(`${V1}/learn/exercises/${id}/usage`),
   // Testmodus: eine Übung nebenwirkungsfrei durchspielen (keine Punkte/kein Fortschritt) und bewerten lassen.
-  previewExercise: (id: number) => http<ExercisePreviewData>(`${V1}/learn/exercises/${id}/preview`),
-  checkPreviewExercise: (id: number, answers: ExercisePreviewAnswer[]) =>
-    http<ExercisePreviewResult>(`${V1}/learn/exercises/${id}/preview/check`, "POST", { answers }),
+  previewExercise: (id: number, stage?: number) =>
+    http<ExercisePreviewData>(`${V1}/learn/exercises/${id}/preview${stage != null ? `?stage=${stage}` : ""}`),
+  checkPreviewExercise: (id: number, answers: ExercisePreviewAnswer[], stage?: number) =>
+    http<ExercisePreviewResult>(`${V1}/learn/exercises/${id}/preview/check`, "POST", { answers, stage }),
   // Ersetzen (PUT) bzw. Löschen laufen über die per-Typ-Route.
   updateExercise: (subjectId: number, chapterId: number, typeRoute: string, id: number, payload: CreateExercisePayload) =>
     http<ExerciseSummary>(`${V1}/learn/subjects/${subjectId}/chapters/${chapterId}/${typeRoute}/${id}`, "PUT", payload),
@@ -115,6 +119,7 @@ export const api = {
   searchExercises: (p: ExerciseSearchParams = {}) => {
     const q = new URLSearchParams();
     if (p.subjectId != null) q.set("subjectId", String(p.subjectId));
+    if (p.chapterId != null) q.set("chapterId", String(p.chapterId));
     if (p.grade != null) q.set("grade", String(p.grade));
     if (p.schoolType && p.schoolType !== "None") q.set("schoolType", p.schoolType);
     if (p.categoryId != null) q.set("categoryId", String(p.categoryId));
@@ -126,12 +131,18 @@ export const api = {
   },
 
   // ---- Vater: Vokabel-Store ----
-  // Optional nach Sprachpaar filtern (Store zeigt dann nur die gewählte Kombination).
-  vocabulary: (search?: string, opts?: { sourceLanguage?: string; targetLanguage?: string }) => {
+  // Optional nach Sprachpaar, Wortart und Tags filtern (Store zeigt dann nur die passenden Einträge).
+  vocabulary: (search?: string, opts?: {
+    sourceLanguage?: string; targetLanguage?: string;
+    partOfSpeech?: PartOfSpeech; tags?: string[]; matchAll?: boolean;
+  }) => {
     const q = new URLSearchParams();
     if (search) q.set("search", search);
     if (opts?.sourceLanguage) q.set("sourceLanguage", opts.sourceLanguage);
     if (opts?.targetLanguage) q.set("targetLanguage", opts.targetLanguage);
+    if (opts?.partOfSpeech) q.set("partOfSpeech", opts.partOfSpeech);
+    for (const t of opts?.tags ?? []) q.append("tag", t);
+    if (opts?.matchAll) q.set("matchAll", "true");
     const qs = q.toString();
     return http<VocabularyResponse[]>(`${V1}/learn/vocabulary${qs ? `?${qs}` : ""}`);
   },
@@ -171,6 +182,8 @@ export const api = {
   // Lehrplan nachträglich umbenennen/verlängern/deaktivieren (Inhalte laufen über Positionen).
   updatePlan: (planId: number, dto: UpdatePlanDto) =>
     http<PlanResponse>(`${V1}/study-plans/${planId}`, "PATCH", dto),
+  // Lehrplan samt Positionen/Fortschritt löschen (Kaskade); die Katalog-Übungen bleiben erhalten.
+  deletePlan: (planId: number) => http<void>(`${V1}/study-plans/${planId}`, "DELETE"),
 
   // ---- Lehrplan-Positionen (Plan = Container aus Katalog-Übungen) ----
   positions: (planId: number) =>
