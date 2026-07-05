@@ -53,6 +53,8 @@ builder.Services.AddScoped<GamificationService>();
 builder.Services.AddScoped<PositionPlayService>();
 // Ziel-/Punkte-Engine des Positions-Modells: Erledigt-Regel je CheckMode + idempotente Ziel-Punkte.
 builder.Services.AddScoped<PositionProgressService>();
+// Lern-Report je Position: „welche Vokabel sitzt/sitzt nicht" (Box/Beherrschung + Test-Trefferquote).
+builder.Services.AddScoped<PositionReportService>();
 builder.Services.AddScoped<AuthAccess>();
 builder.Services.AddScoped<PlanOwnershipFilter>();
 builder.Services.AddScoped<ChildOwnershipFilter>();

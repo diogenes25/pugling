@@ -305,6 +305,34 @@ export interface PositionResponse {
   speedBonusPoints: number;
 }
 
+/** Eine Report-Zeile: wie gut ein einzelner Inhalt der Position „sitzt". */
+export interface ItemReport {
+  itemIndex: number;
+  prompt: string;
+  answer: string;
+  introduced: boolean;
+  box: number;
+  masteryPercent: number;
+  reviewCount: number;
+  dueOn: string | null;
+  lastReviewedAt: string | null;
+  testsSeen: number;
+  testsCorrect: number;
+}
+
+/** Lern-Report einer Position: „welche Vokabel sitzt/sitzt nicht" (Box/Beherrschung + Test-Trefferquote). */
+export interface PositionReport {
+  positionId: number;
+  exerciseId: number;
+  exerciseTitle: string;
+  exerciseType: string;
+  maxBox: number;
+  totalItems: number;
+  introducedItems: number;
+  masteredItems: number;
+  items: ItemReport[];
+}
+
 /** Anlegen einer Position. Leere Felder erben den Vorschlag der Übung (Hybrid-Prinzip). */
 export interface CreatePositionDto {
   exerciseId: number;

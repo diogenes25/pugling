@@ -4,7 +4,7 @@ import type {
   ExerciseDetail, ExercisePreviewAnswer, ExercisePreviewData, ExercisePreviewResult,
   ExerciseSearchParams, ExerciseSummary, ExerciseUsage, KlassenarbeitDetail, KlassenarbeitPractice, KlassenarbeitRepeat,
   KlassenarbeitResponse, KlassenarbeitStatus, LoginResponse, MissionDef, MissionStatus, PlanResponse,
-  CreatePositionDto, PositionResponse, UpdatePositionDto, OverviewResponse, PositionSession, PracticeCard,
+  CreatePositionDto, PositionResponse, PositionReport, UpdatePositionDto, OverviewResponse, PositionSession, PracticeCard,
   ProgressResponse, RedemptionDef, ReviewInput, ReviewOutcome, RewardDef, RewardRedemptionStatus, RewardsView,
   SkinState, SubjectResponse,
   TestAttemptResponse, TestSubmitResponse, UpdateKlassenarbeitDto, UpdatePlanDto, UpdateVocabularyDto,
@@ -181,6 +181,9 @@ export const api = {
     http<PositionResponse>(`${V1}/study-plans/${planId}/positions/${positionId}`, "PATCH", dto),
   deletePosition: (planId: number, positionId: number) =>
     http<void>(`${V1}/study-plans/${planId}/positions/${positionId}`, "DELETE"),
+  // Lern-Report der Position: je Inhalt Box/Beherrschung + Test-Trefferquote („sitzt/sitzt nicht").
+  positionReport: (planId: number, positionId: number) =>
+    http<PositionReport>(`${V1}/study-plans/${planId}/positions/${positionId}/report`),
 
   // ---- Tagesmission (Sohn) / Verlauf (Vater) über Positionen ----
   overview: (planId: number) => http<OverviewResponse>(`${V1}/study-plans/${planId}/overview`),
