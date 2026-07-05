@@ -70,7 +70,11 @@ Es existieren heute **zwei getrennte, duplizierte Inhaltswelten**:
    Migration `LehrplanPositionen`. **Additiv** (kein Wipe nötig) – Alt-Modell läuft parallel weiter.
    Verifiziert: Build grün, Migration angewendet, Tabellen physisch da, App startet.
 2. **Inhaltsquelle** – `ExerciseContentProvider` liefert je Typ die übbaren/testbaren Items
-   aus `ConfigJson`. Verifikation: Integrationstest je Typ.
+   aus `ConfigJson`. **✅ ERLEDIGT (2026-07-05):**
+   [Services/ExerciseContentProvider.cs](../backend/Pugling.Api/Services/ExerciseContentProvider.cs)
+   projiziert alle Typen verfahrensneutral in `ContentItem` (Index/Prompt/Answer/AcceptedAnswers/Hint/GapIndex);
+   Essay + ArithmeticDrill bewusst leer (frei/generiert). Nur Extraktion – Bewertung bleibt bei
+   `AnswerGrader`/`ExerciseAnswerChecker`. Als Singleton registriert. 13 Unit-Tests, Gesamt-Suite 131 grün.
 3. **Motor umschlüsseln** – PracticeSessions + 3 Test-Controller lesen aus Position→Übung+Index;
    Re-Key Review/TestItemResult. Verifikation: `/smoke-test` Drill+Test end-to-end. **(größter Brocken)**
 4. **Ziel-/Punkte-Engine** – `StudyProgressService`: Abschluss pro Position nach `CheckMode`,
