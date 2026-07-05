@@ -84,7 +84,7 @@ export function SohnTest() {
   return (
     <div className="sohn-body">
       <div className="row">
-        <span className="screen-title" style={{ margin: 0 }}>Test</span>
+        <span className="screen-title" style={{ margin: 0 }}>Tagestest</span>
         <span className="pill cyan" style={{ marginLeft: "auto" }}>{stageLabel(attempt.stage)}</span>
       </div>
       <p className="sub">{typed ? "Tippe die Lösung." : "Denk nach, dann aufdecken und ehrlich bewerten."}</p>
