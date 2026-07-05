@@ -36,32 +36,48 @@ public class ScoringService(PuglingDbContext db)
     private const double MinSpeedSeconds = 1.0;
 
     /// <summary>
+    /// Verfahrensneutrale Punkte-Einstellung einer Wiederholung. Im alten Modell stammt sie vom
+    /// <see cref="StudyPlan"/> (plan-weit), im neuen von der <see cref="PlanPosition"/> (pro Übung).
+    /// <paramref name="Label"/> geht in den Buchungstext ein.
+    /// </summary>
+    public record ScoreConfig(string Label, int NewContentPoints, int ComboThreshold, int ComboBonusPoints,
+        int SpeedThresholdSeconds, int SpeedBonusPoints);
+
+    private static ScoreConfig ConfigOf(StudyPlan plan) => new(plan.Title, plan.NewContentPoints,
+        plan.ComboThreshold, plan.ComboBonusPoints, plan.SpeedThresholdSeconds, plan.SpeedBonusPoints);
+
+    /// <summary>Altes Modell: Punkte-Einstellung vom Plan. Delegiert an die verfahrensneutrale Überladung.</summary>
+    public Task<ReviewScore> ScoreReviewAsync(StudyPlan plan, int reviewCount, int box, int postBox,
+        bool wasCorrect, int combo, DateTime nowLocal, double? elapsedSeconds = null) =>
+        ScoreReviewAsync(ConfigOf(plan), reviewCount, box, postBox, wasCorrect, combo, nowLocal, elapsedSeconds);
+
+    /// <summary>
     /// Bewertet eine Wiederholung und liefert alle fälligen Punkte-Buchungen. VOR dem Box-Aufstieg
     /// aufrufen (<paramref name="box"/>/<paramref name="reviewCount"/> im Zustand davor – neuer Inhalt
     /// zählt am meisten). Falsche Antwort → keine Punkte. <paramref name="postBox"/> ist die Box NACH
     /// dem Aufstieg, nur für den Buchungstext. <paramref name="elapsedSeconds"/> ist die serverseitig
     /// gemessene Zeit seit der letzten Antwort (null bei der ersten Karte einer Sitzung).
     /// </summary>
-    public async Task<ReviewScore> ScoreReviewAsync(StudyPlan plan, int reviewCount, int box, int postBox,
+    public async Task<ReviewScore> ScoreReviewAsync(ScoreConfig cfg, int reviewCount, int box, int postBox,
         bool wasCorrect, int combo, DateTime nowLocal, double? elapsedSeconds = null)
     {
         var contributions = new List<Contribution>();
         if (!wasCorrect)
             return new ReviewScore(contributions, combo);
 
-        var basePoints = await BasePointsAsync(plan, reviewCount, box, nowLocal);
+        var basePoints = await BasePointsAsync(cfg, reviewCount, box, nowLocal);
         if (basePoints > 0)
             contributions.Add(new Contribution(PointKind.Base, basePoints,
-                $"[{plan.Title}] Leitner-Wiederholung richtig → Box {postBox}"));
+                $"[{cfg.Label}] Leitner-Wiederholung richtig → Box {postBox}"));
 
-        var comboBonus = ComboBonus(plan, combo);
+        var comboBonus = ComboBonus(cfg, combo);
         if (comboBonus > 0)
             contributions.Add(new Contribution(PointKind.Combo, comboBonus,
-                $"[{plan.Title}] Combo ×{combo} – Bonus!"));
+                $"[{cfg.Label}] Combo ×{combo} – Bonus!"));
 
-        if (IsFastAnswer(plan, elapsedSeconds))
-            contributions.Add(new Contribution(PointKind.Speed, plan.SpeedBonusPoints,
-                $"[{plan.Title}] Schnelle Antwort (≤ {plan.SpeedThresholdSeconds}s) – Bonus!"));
+        if (IsFastAnswer(cfg, elapsedSeconds))
+            contributions.Add(new Contribution(PointKind.Speed, cfg.SpeedBonusPoints,
+                $"[{cfg.Label}] Schnelle Antwort (≤ {cfg.SpeedThresholdSeconds}s) – Bonus!"));
 
         return new ReviewScore(contributions, combo);
     }
@@ -71,17 +87,17 @@ public class ScoringService(PuglingDbContext db)
     /// Zeit im Fenster [<see cref="MinSpeedSeconds"/>, Schwelle] liegt – die Untergrenze verhindert
     /// Punkte-Farming durch Doppel-Submits.
     /// </summary>
-    private static bool IsFastAnswer(StudyPlan plan, double? elapsedSeconds) =>
-        plan.SpeedThresholdSeconds > 0 && plan.SpeedBonusPoints > 0
-        && elapsedSeconds is { } s && s >= MinSpeedSeconds && s <= plan.SpeedThresholdSeconds;
+    private static bool IsFastAnswer(ScoreConfig cfg, double? elapsedSeconds) =>
+        cfg.SpeedThresholdSeconds > 0 && cfg.SpeedBonusPoints > 0
+        && elapsedSeconds is { } s && s >= MinSpeedSeconds && s <= cfg.SpeedThresholdSeconds;
 
     /// <summary>
-    /// Combo-Bonus laut Plan-Einstellung: alle <see cref="StudyPlan.ComboThreshold"/> Treffer in Folge
+    /// Combo-Bonus laut Einstellung: alle <see cref="ScoreConfig.ComboThreshold"/> Treffer in Folge
     /// ein eskalierender Bonus (Basis × Meilenstein-Nummer). Schwelle oder Basis 0 → Feature aus.
     /// </summary>
-    private static int ComboBonus(StudyPlan plan, int combo) =>
-        plan.ComboThreshold > 0 && plan.ComboBonusPoints > 0 && combo > 0 && combo % plan.ComboThreshold == 0
-            ? plan.ComboBonusPoints * (combo / plan.ComboThreshold)
+    private static int ComboBonus(ScoreConfig cfg, int combo) =>
+        cfg.ComboThreshold > 0 && cfg.ComboBonusPoints > 0 && combo > 0 && combo % cfg.ComboThreshold == 0
+            ? cfg.ComboBonusPoints * (combo / cfg.ComboThreshold)
             : 0;
 
     /// <summary>
@@ -89,10 +105,10 @@ public class ScoringService(PuglingDbContext db)
     /// (<paramref name="reviewCount"/> 0) zählt am meisten, spätere je höher die <paramref name="box"/>
     /// weniger; gewichtet nach dem zur Uhrzeit aktiven Zeitfenster.
     /// </summary>
-    private async Task<int> BasePointsAsync(StudyPlan plan, int reviewCount, int box, DateTime nowLocal)
+    private async Task<int> BasePointsAsync(ScoreConfig cfg, int reviewCount, int box, DateTime nowLocal)
     {
         int basePoints = reviewCount == 0
-            ? plan.NewContentPoints               // neuer Inhalt (konfigurierbar)
+            ? cfg.NewContentPoints                // neuer Inhalt (konfigurierbar)
             : Math.Max(2, 8 - box);               // Wiederholung: je höher die Box, desto weniger
 
         var time = TimeOnly.FromDateTime(nowLocal);
