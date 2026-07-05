@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { api, errorMessage } from "../lib/api";
 import { useAsync } from "../lib/useAsync";
 import { useAuth } from "../lib/auth";
+import { authorText } from "./ExerciseAttribution";
 import type {
   ChildResponse, CreatePlanDto, ExerciseSummary, SchoolType, SubjectResponse, VocabularyResponse,
 } from "../lib/types";
@@ -293,8 +294,11 @@ export function VaterWizard() {
 
           {exercises.data && exercises.data.length > 0 && (
             <div className="banner ok" style={{ background: "rgba(38,217,255,.1)", color: "var(--cyan)", borderColor: "var(--stroke)" }}>
-              📚 Passende Katalog-Übungen für {subject?.name}{effectiveGrade ? `, ${effectiveGrade}. Klasse` : ""}:{" "}
-              {exercises.data.map((e) => `${e.title}${e.source ? ` (${e.source})` : ""}`).join(" · ")}
+              📚 Passende Übungen aus der geteilten Bibliothek für {subject?.name}{effectiveGrade ? `, ${effectiveGrade}. Klasse` : ""}:{" "}
+              {exercises.data.map((e) => {
+                const by = authorText(e);
+                return `${e.title}${by ? ` – ${by}` : ""}${e.source ? ` [${e.source}]` : ""}`;
+              }).join(" · ")}
             </div>
           )}
 

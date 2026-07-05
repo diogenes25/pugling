@@ -14,6 +14,131 @@ public static class Seed
         SeedFrench(db);
         SeedKlassenarbeiten(db);
         SeedGamification(db);
+        SeedTeacherLibrary(db);
+    }
+
+    /// <summary>
+    /// Macht das Kern-Szenario greifbar: ein <b>Englischlehrer</b> (eigener Vater-Account) legt Übungen auf
+    /// Niveau der 9. Klasse Gymnasium an – mit gesetztem <see cref="Exercise.AuthorFatherId"/>. Weil der Katalog
+    /// global ist, finden andere Väter diese Übungen über die Suche (Fach Englisch, Klasse 9, Gymnasium) und
+    /// übernehmen sie als Positionen in eigene Lehrpläne; ändern/löschen darf sie aber nur der Lehrer selbst.
+    /// Additiv-idempotent: der Lehrer-Account wird bei Bedarf angelegt, die Demo-Inhalte werden nur
+    /// ergänzt, solange das Demo-Kapitel noch fehlt (auch wenn der Account bereits anderweitig existiert).
+    /// </summary>
+    private static void SeedTeacherLibrary(PuglingDbContext db)
+    {
+        const string teacherEmail = "englischlehrer@example.com";
+        const string chapterName = "Unit 5 – Global challenges (Klasse 9)";
+
+        var englisch = db.Subjects.FirstOrDefault(s => s.Name == "Englisch");
+        if (englisch is null) return;
+
+        // Idempotenz an den Inhalten festmachen, nicht nur am Account: Existiert das Demo-Kapitel
+        // bereits, ist nichts zu tun – sonst würde ein anderweitig angelegter Lehrer-Account den
+        // Katalog-Inhalt stillschweigend unterdrücken.
+        if (db.Chapters.Any(c => c.SubjectId == englisch.Id && c.Name == chapterName)) return;
+
+        var options = new JsonSerializerOptions(JsonSerializerDefaults.Web);
+        string Json<T>(T config) => JsonSerializer.Serialize(config, options);
+
+        // Der Lehrer-Account (Login mit dieser Id + PIN 9999). Ohne Kinder – er kuratiert nur den Katalog.
+        // Get-or-create, damit ein bereits vorhandener Account wiederverwendet statt dupliziert wird.
+        var teacher = db.Fathers.FirstOrDefault(f => f.Email == teacherEmail);
+        if (teacher is null)
+        {
+            teacher = new Father { Name = "Herr Schmidt (Englischlehrer)", Email = teacherEmail, Pin = "9999" };
+            db.Fathers.Add(teacher);
+            db.SaveChanges();
+        }
+
+        // Arten (Grammatik/Vokabeln) des Fachs wiederverwenden, falls vorhanden.
+        var grammatik = db.ExerciseCategories.FirstOrDefault(c => c.SubjectId == englisch.Id && c.Name == "Grammatik");
+        var vokabeln = db.ExerciseCategories.FirstOrDefault(c => c.SubjectId == englisch.Id && c.Name == "Vokabeln");
+
+        var chapter = new Chapter { SubjectId = englisch.Id, Name = chapterName, OrderIndex = 5 };
+        db.Chapters.Add(chapter);
+        db.SaveChanges();
+
+        const SchoolTypes gym = SchoolTypes.Gymnasium;
+
+        var vocab = new Exercise
+        {
+            ChapterId = chapter.Id,
+            AuthorFatherId = teacher.Id,
+            Type = ExerciseType.Vocabulary,
+            Title = "Vocabulary: The environment",
+            OrderIndex = 1,
+            RewardPoints = 15,
+            GradeMin = 8, GradeMax = 10,
+            SchoolTypes = gym,
+            Source = "Green Line 5, Unit 3",
+            CategoryId = vokabeln?.Id,
+            ConfigJson = Json(new VocabularyConfig
+            {
+                Direction = "front-to-back",
+                Items =
+                {
+                    new VocabItem("sustainability", "Nachhaltigkeit"),
+                    new VocabItem("pollution", "Umweltverschmutzung"),
+                    new VocabItem("renewable energy", "erneuerbare Energie"),
+                    new VocabItem("greenhouse gas", "Treibhausgas"),
+                    new VocabItem("to reduce", "reduzieren, verringern"),
+                    new VocabItem("waste", "Abfall, Müll"),
+                },
+            }),
+        };
+
+        // Klassiker der 9. Klasse: if-clauses type II (Konditional). Lückentext mit Wortbank.
+        var conditionals = new Exercise
+        {
+            ChapterId = chapter.Id,
+            AuthorFatherId = teacher.Id,
+            Type = ExerciseType.Cloze,
+            Title = "Grammar: Conditional sentences (type II)",
+            OrderIndex = 2,
+            RewardPoints = 20,
+            GradeMin = 9, GradeMax = 10,
+            SchoolTypes = gym,
+            Source = "Green Line 5, Unit 3",
+            CategoryId = grammatik?.Id,
+            ConfigJson = Json(new ClozeConfig
+            {
+                Text = "If everyone {{1}} public transport, cities {{2}} much cleaner.",
+                Gaps =
+                {
+                    new Gap(1, "used", new List<string>()),
+                    new Gap(2, "would be", new List<string> { "'d be" }),
+                },
+                WordBank = new List<string> { "used", "would be", "will be", "uses" },
+            }),
+        };
+
+        var translation = new Exercise
+        {
+            ChapterId = chapter.Id,
+            AuthorFatherId = teacher.Id,
+            Type = ExerciseType.Translation,
+            Title = "Translation: Talking about the future",
+            OrderIndex = 3,
+            RewardPoints = 20,
+            GradeMin = 9, GradeMax = 10,
+            SchoolTypes = gym,
+            Source = "Green Line 5, Unit 3",
+            CategoryId = grammatik?.Id,
+            ConfigJson = Json(new TranslationConfig
+            {
+                SourceLang = "de",
+                TargetLang = "en",
+                Items =
+                {
+                    new TranslationItem("Wir müssen unseren Plastikverbrauch reduzieren.", "We have to reduce our use of plastic."),
+                    new TranslationItem("Wenn wir jetzt handeln, können wir den Planeten retten.", "If we act now, we can save the planet."),
+                },
+            }),
+        };
+
+        db.Exercises.AddRange(vocab, conditionals, translation);
+        db.SaveChanges();
     }
 
     /// <summary>

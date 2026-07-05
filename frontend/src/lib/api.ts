@@ -114,6 +114,7 @@ export const api = {
     if (p.categoryId != null) q.set("categoryId", String(p.categoryId));
     if (p.type) q.set("type", p.type);
     if (p.search) q.set("search", p.search);
+    if (p.mineOnly) q.set("mineOnly", "true");
     const qs = q.toString();
     return http<ExerciseSummary[]>(`${V1}/learn/exercises${qs ? `?${qs}` : ""}`);
   },

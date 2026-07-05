@@ -17,10 +17,11 @@ public record ExercisePayload<TConfig>(string Title, int OrderIndex, int RewardP
     int? GradeMin = null, int? GradeMax = null, SchoolTypes SchoolTypes = SchoolTypes.None,
     string? Source = null, int? CategoryId = null);
 
-/// <summary>Übung in der Antwort.</summary>
+/// <summary>Übung in der Antwort. <paramref name="IsOwn"/> zeigt, ob der anfragende Vater Autor ist (Editier-/Löschrecht).</summary>
 public record ExerciseResponse<TConfig>(int Id, int ChapterId, string Type, string Title,
     int OrderIndex, int RewardPoints, DateTime CreatedAt, TConfig Config, SuggestedBonus? SuggestedBonus,
-    int? GradeMin, int? GradeMax, SchoolTypes SchoolTypes, string? Source, int? CategoryId, string? CategoryName);
+    int? GradeMin, int? GradeMax, SchoolTypes SchoolTypes, string? Source, int? CategoryId, string? CategoryName,
+    int? AuthorFatherId, bool IsOwn);
 
 /// <summary>
 /// Gemeinsame CRUD-Logik für alle Übungstypen unter einem Kapitel.
@@ -60,6 +61,18 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db) : Con
             ? Task.FromResult(true)
             : db.ExerciseCategories.AnyAsync(c => c.Id == categoryId && c.SubjectId == subjectId);
 
+    /// <summary>
+    /// Prüft das Schreibrecht auf eine Übung: Der Katalog ist global (jeder Vater darf jede Übung
+    /// finden und in seine Lehrpläne übernehmen), aber ändern/löschen darf nur der Autor. Geseedete
+    /// System-Übungen (<see cref="Exercise.AuthorFatherId"/> = null) sind für niemanden editierbar.
+    /// Gibt bei fehlendem Recht ein <c>403</c>-<see cref="ProblemDetails"/> zurück, sonst <c>null</c>.
+    /// </summary>
+    protected ObjectResult? EnsureCanModify(Exercise exercise) =>
+        User.Owns(exercise)
+            ? null
+            : Problem(statusCode: StatusCodes.Status403Forbidden,
+                detail: "Diese Übung gehört einem anderen Vater und kann nur von ihrem Autor geändert oder gelöscht werden.");
+
     /// <summary>Lädt eine Übung dieses Typs; Basis für abgeleitete Zusatz-Endpunkte (Generieren, Auswerten).</summary>
     protected Task<Exercise?> FindAsync(int subjectId, int chapterId, int exerciseId) =>
         db.Exercises.Include(e => e.Category)
@@ -74,9 +87,11 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db) : Con
     protected void SetConfig(Exercise exercise, TConfig config) =>
         exercise.ConfigJson = JsonSerializer.Serialize(config, JsonOptions);
 
-    protected ExerciseResponse<TConfig> Map(Exercise e) =>
+    /// <summary>Projiziert eine Übung; <paramref name="fid"/> wird einmal pro Request ermittelt (nicht pro Zeile).</summary>
+    protected ExerciseResponse<TConfig> Map(Exercise e, int? fid) =>
         new(e.Id, e.ChapterId, e.Type.ToString(), e.Title, e.OrderIndex, e.RewardPoints, e.CreatedAt, ConfigOf(e), e.SuggestedBonus,
-            e.GradeMin, e.GradeMax, e.SchoolTypes, e.Source, e.CategoryId, e.Category?.Name);
+            e.GradeMin, e.GradeMax, e.SchoolTypes, e.Source, e.CategoryId, e.Category?.Name,
+            e.AuthorFatherId, ClaimsPrincipalExtensions.IsOwnedBy(e.AuthorFatherId, fid));
 
     /// <summary>Liste der Übungen dieses Typs im Kapitel.</summary>
     [HttpGet]
@@ -84,12 +99,14 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db) : Con
     public async Task<ActionResult<IEnumerable<ExerciseResponse<TConfig>>>> List(int subjectId, int chapterId)
     {
         if (!await ChapterExists(subjectId, chapterId)) return NotFound();
+        var fid = User.FatherId();
         var exercises = await db.Exercises
+            .AsNoTracking()
             .Include(e => e.Category)
             .Where(e => e.ChapterId == chapterId && e.Type == Type)
             .OrderBy(e => e.OrderIndex).ThenBy(e => e.Id)
             .ToListAsync();
-        return exercises.Select(Map).ToList();
+        return exercises.Select(e => Map(e, fid)).ToList();
     }
 
     /// <summary>Eine einzelne Übung.</summary>
@@ -98,7 +115,7 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db) : Con
     public async Task<ActionResult<ExerciseResponse<TConfig>>> Get(int subjectId, int chapterId, int exerciseId)
     {
         var exercise = await FindAsync(subjectId, chapterId, exerciseId);
-        return exercise is null ? NotFound() : Map(exercise);
+        return exercise is null ? NotFound() : Map(exercise, User.FatherId());
     }
 
     /// <summary>Erstellt eine Übung dieses Typs im Kapitel.</summary>
@@ -127,6 +144,8 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db) : Con
             SchoolTypes = body.SchoolTypes,
             Source = string.IsNullOrWhiteSpace(body.Source) ? null : body.Source.Trim(),
             CategoryId = body.CategoryId,
+            // Autor = der anlegende Vater. Sichert ihm später das alleinige Editier-/Löschrecht (Katalog bleibt global lesbar).
+            AuthorFatherId = User.FatherId(),
         };
         db.Exercises.Add(exercise);
         await db.SaveChangesAsync();
@@ -135,7 +154,7 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db) : Con
         if (exercise.CategoryId is not null)
             exercise.Category = await db.ExerciseCategories.FindAsync(exercise.CategoryId);
 
-        return CreatedAtAction(nameof(Get), new { subjectId, chapterId, exerciseId = exercise.Id }, Map(exercise));
+        return CreatedAtAction(nameof(Get), new { subjectId, chapterId, exerciseId = exercise.Id }, Map(exercise, User.FatherId()));
     }
 
     /// <summary>Ersetzt eine Übung vollständig (inkl. Config).</summary>
@@ -146,6 +165,7 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db) : Con
     {
         var exercise = await FindAsync(subjectId, chapterId, exerciseId);
         if (exercise is null) return NotFound();
+        if (EnsureCanModify(exercise) is { } forbidden) return forbidden;
         if (string.IsNullOrWhiteSpace(body.Title)) return Problem(statusCode: 400, detail: "Titel ist erforderlich.");
         if (!await CategoryValid(subjectId, body.CategoryId)) return Problem(statusCode: 400, detail: "Unbekannte Art für dieses Fach.");
         if (await ValidateConfigAsync(subjectId, body.Config ?? new TConfig()) is { } updateErr) return Problem(statusCode: 400, detail: updateErr);
@@ -167,7 +187,7 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db) : Con
             ? null
             : await db.ExerciseCategories.FindAsync(exercise.CategoryId);
 
-        return Map(exercise);
+        return Map(exercise, User.FatherId());
     }
 
     /// <summary>Löscht eine Übung. Nicht möglich, solange sie in einem Lehrplan oder einer Klassenarbeit steckt.</summary>
@@ -179,6 +199,7 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db) : Con
     {
         var exercise = await FindAsync(subjectId, chapterId, exerciseId);
         if (exercise is null) return NotFound();
+        if (EnsureCanModify(exercise) is { } forbidden) return forbidden;
         // Verwendete Übungen schützen: der FK PlanPosition→Exercise ist Restrict (sonst 500 statt klarer Fehler).
         if (await db.PlanPositions.AnyAsync(p => p.ExerciseId == exerciseId)
             || await db.KlassenarbeitExercises.AnyAsync(x => x.ExerciseId == exerciseId))

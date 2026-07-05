@@ -57,6 +57,7 @@ public class VocabularyController(PuglingDbContext db) : ExerciseControllerBase<
     {
         var exercise = await FindAsync(subjectId, chapterId, exerciseId);
         if (exercise is null) return NotFound();
+        if (EnsureCanModify(exercise) is { } forbidden) return forbidden;
 
         var tags = (dto.Tags ?? []).Select(t => t.Trim()).Where(t => t.Length > 0).Distinct().ToList();
         if (tags.Count == 0) return Problem(statusCode: 400, detail: "Mindestens ein Tag ist erforderlich.");
@@ -73,7 +74,7 @@ public class VocabularyController(PuglingDbContext db) : ExerciseControllerBase<
         config.Refs = keys;
         SetConfig(exercise, config);
         await Db.SaveChangesAsync();
-        return Map(exercise);
+        return Map(exercise, User.FatherId());
     }
 }
 

@@ -22,8 +22,12 @@ namespace Pugling.Api.Controllers.Learn;
 public class ExerciseCatalogController(PuglingDbContext db) : ControllerBase
 {
     /// <summary>Schlanke Trefferzeile der Übungssuche (kindneutraler Katalog).</summary>
+    /// <param name="AuthorFatherId">Autor der Übung; <c>null</c> = geseedete System-Übung.</param>
+    /// <param name="AuthorName">Anzeigename des Autors (für die Attribution „von …" in der geteilten Bibliothek).</param>
+    /// <param name="IsOwn">Ob die Übung dem anfragenden Vater gehört (er darf sie ändern/löschen).</param>
     public record ExerciseSummary(int Id, int ChapterId, int SubjectId, string Type, string Title,
-        int? GradeMin, int? GradeMax, SchoolTypes SchoolTypes, string? Source, int? CategoryId, string? CategoryName);
+        int? GradeMin, int? GradeMax, SchoolTypes SchoolTypes, string? Source, int? CategoryId, string? CategoryName,
+        int? AuthorFatherId, string? AuthorName, bool IsOwn);
 
     /// <summary>
     /// Sucht Übungen über die Metadaten. Alle Parameter sind optional und werden UND-verknüpft.
@@ -38,9 +42,16 @@ public class ExerciseCatalogController(PuglingDbContext db) : ControllerBase
     [HttpGet]
     public async Task<IEnumerable<ExerciseSummary>> Search(
         [FromQuery] int? subjectId, [FromQuery] int? grade, [FromQuery] SchoolTypes? schoolType,
-        [FromQuery] int? categoryId, [FromQuery] ExerciseType? type, [FromQuery] string? search)
+        [FromQuery] int? categoryId, [FromQuery] ExerciseType? type, [FromQuery] string? search,
+        [FromQuery] bool? mineOnly)
     {
+        var fid = User.FatherId();
         var query = db.Exercises.AsNoTracking().AsQueryable();
+
+        // „Nur meine": zeigt dem Vater ausschließlich seine eigenen Übungen (Verwaltung statt Entdeckung).
+        // Ohne bekannten fid bewusst leere Menge (fail-closed) statt aller autorlosen System-Übungen.
+        if (mineOnly == true)
+            query = query.Where(e => fid != null && e.AuthorFatherId == fid);
 
         if (subjectId is int sid)
             query = query.Where(e => e.Chapter!.SubjectId == sid);
@@ -69,7 +80,8 @@ public class ExerciseCatalogController(PuglingDbContext db) : ControllerBase
             .OrderBy(e => e.Chapter!.SubjectId).ThenBy(e => e.ChapterId)
             .ThenBy(e => e.OrderIndex).ThenBy(e => e.Id)
             .Select(e => new ExerciseSummary(e.Id, e.ChapterId, e.Chapter!.SubjectId, e.Type.ToString(), e.Title,
-                e.GradeMin, e.GradeMax, e.SchoolTypes, e.Source, e.CategoryId, e.Category!.Name))
+                e.GradeMin, e.GradeMax, e.SchoolTypes, e.Source, e.CategoryId, e.Category!.Name,
+                e.AuthorFatherId, e.Author!.Name, fid != null && e.AuthorFatherId == fid))
             .ToListAsync();
     }
 
@@ -83,7 +95,8 @@ public class ExerciseCatalogController(PuglingDbContext db) : ControllerBase
     public record ExerciseDetail(int Id, int ChapterId, string ChapterName, int SubjectId, string SubjectName,
         string Type, string Title, int OrderIndex, int RewardPoints, int? GradeMin, int? GradeMax,
         SchoolTypes SchoolTypes, string? Source, int? CategoryId, string? CategoryName,
-        SuggestedBonus? SuggestedBonus, int? DefaultStage, int? DefaultItemCount, JsonElement Config);
+        SuggestedBonus? SuggestedBonus, int? DefaultStage, int? DefaultItemCount,
+        int? AuthorFatherId, string? AuthorName, bool IsOwn, JsonElement Config);
 
     /// <summary>Eine einzelne Übung typ-übergreifend per Id (mit Config + Metadaten).</summary>
     [HttpGet("{id:int}")]
@@ -93,6 +106,7 @@ public class ExerciseCatalogController(PuglingDbContext db) : ControllerBase
         var e = await db.Exercises.AsNoTracking()
             .Include(x => x.Chapter!).ThenInclude(c => c.Subject)
             .Include(x => x.Category)
+            .Include(x => x.Author)
             .FirstOrDefaultAsync(x => x.Id == id);
         if (e is null) return NotFound();
 
@@ -100,6 +114,7 @@ public class ExerciseCatalogController(PuglingDbContext db) : ControllerBase
             e.Chapter?.Subject?.Name ?? "", e.Type.ToString(), e.Title, e.OrderIndex, e.RewardPoints,
             e.GradeMin, e.GradeMax, e.SchoolTypes, e.Source, e.CategoryId, e.Category?.Name,
             e.SuggestedBonus, e.DefaultStage, e.DefaultItemCount,
+            e.AuthorFatherId, e.Author?.Name, User.Owns(e),
             JsonSerializer.Deserialize<JsonElement>(string.IsNullOrWhiteSpace(e.ConfigJson) ? "{}" : e.ConfigJson, JsonOptions));
     }
 

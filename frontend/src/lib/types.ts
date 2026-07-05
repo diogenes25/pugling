@@ -81,6 +81,11 @@ export interface ExerciseDetail {
   categoryName: string | null;
   defaultStage: number | null;
   defaultItemCount: number | null;
+  /** Autor der Übung (Vater); null = geseedete System-Übung. */
+  authorFatherId: number | null;
+  authorName: string | null;
+  /** Gehört die Übung dem anfragenden Vater? Nur dann darf er sie ändern/löschen. */
+  isOwn: boolean;
   config: unknown;
 }
 
@@ -113,6 +118,11 @@ export interface ExerciseSummary {
   source: string | null;
   categoryId: number | null;
   categoryName: string | null;
+  /** Autor der Übung (Vater); null = geseedete System-Übung. Grundlage der „von …"-Attribution. */
+  authorFatherId: number | null;
+  authorName: string | null;
+  /** Gehört die Übung dem anfragenden Vater? Nur dann darf er sie ändern/löschen. */
+  isOwn: boolean;
 }
 
 export interface ExerciseSearchParams {
@@ -122,6 +132,8 @@ export interface ExerciseSearchParams {
   categoryId?: number;
   type?: string;
   search?: string;
+  /** Nur eigene Übungen des Vaters (Verwaltung statt Entdeckung der geteilten Bibliothek). */
+  mineOnly?: boolean;
 }
 
 export interface VocabularyResponse {
