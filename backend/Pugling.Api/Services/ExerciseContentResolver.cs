@@ -17,7 +17,7 @@ public class ExerciseContentResolver(PuglingDbContext db, ExerciseContentProvide
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
-    /// <summary>Die Inhalte einer Übung als verfahrensneutrale Item-Liste (mit Store-Auflösung für Vokabeln).</summary>
+    /// <summary>Die Inhalte einer Übung als verfahrensneutrale Item-Liste (mit Store-Auflösung für Vokabeln/Lückentext).</summary>
     public async Task<IReadOnlyList<ContentItem>> ItemsOfAsync(Exercise exercise)
     {
         if (exercise.Type == ExerciseType.Vocabulary)
@@ -28,7 +28,16 @@ public class ExerciseContentResolver(PuglingDbContext db, ExerciseContentProvide
             if (config.Refs is { Count: > 0 } refs)
                 return await ResolveVocabRefsAsync(refs);
         }
-        // Inline-Typen (inkl. Legacy-Vokabeln ohne Refs): zustandslose Projektion aus der Config.
+        else if (exercise.Type == ExerciseType.Cloze)
+        {
+            var config = string.IsNullOrWhiteSpace(exercise.ConfigJson)
+                ? new ClozeConfig()
+                : JsonSerializer.Deserialize<ClozeConfig>(exercise.ConfigJson, JsonOptions) ?? new ClozeConfig();
+            // Nur wenn mindestens eine Lücke den Store referenziert – sonst reicht die Inline-Projektion.
+            if (config.Gaps.Any(g => !string.IsNullOrWhiteSpace(g.VocabKey)))
+                return await ResolveClozeRefsAsync(config);
+        }
+        // Inline-Typen (inkl. Legacy-Vokabeln/Lückentexte ohne Store-Bezug): zustandslose Projektion aus der Config.
         return provider.ItemsOf(exercise);
     }
 
@@ -44,4 +53,33 @@ public class ExerciseContentResolver(PuglingDbContext db, ExerciseContentProvide
             ? new ContentItem(i, v.Word, v.Translation, [v.Translation], v.Noun?.Article)
             : new ContentItem(i, $"(Vokabel '{key}' fehlt)", "", [""])).ToList();
     }
+
+    /// <summary>
+    /// Baut die Lückentext-Items wie der Provider, zieht aber die Lösung je Lücke aus dem Vokabel-Store,
+    /// wenn <see cref="Gap.VocabKey"/> gesetzt ist (Store-Wort = fehlendes Wort im Text; Übersetzung als Hinweis).
+    /// Lücken ohne Key nutzen die inline <see cref="Gap.Answer"/>. Der Item-Index bleibt die Lücken-Reihenfolge –
+    /// ein fehlender Key wird zum Platzhalter, verschiebt aber keine Indizes (Leitner-/Test-Fortschritt bleibt stabil).
+    /// </summary>
+    private async Task<IReadOnlyList<ContentItem>> ResolveClozeRefsAsync(ClozeConfig config)
+    {
+        var keys = config.Gaps.Where(g => !string.IsNullOrWhiteSpace(g.VocabKey))
+            .Select(g => g.VocabKey!).Distinct().ToList();
+        var byKey = await db.Vocabulary.AsNoTracking()
+            .Where(v => keys.Contains(v.Key))
+            .ToDictionaryAsync(v => v.Key);
+
+        return config.Gaps.Select((g, i) =>
+        {
+            if (string.IsNullOrWhiteSpace(g.VocabKey))
+                return new ContentItem(i, config.Text, g.Answer, Accepted(g.Answer, g.Alternatives), Hint: null, GapIndex: g.Index);
+            if (byKey.TryGetValue(g.VocabKey, out var v))
+                return new ContentItem(i, config.Text, v.Word, Accepted(v.Word, g.Alternatives), v.Translation, g.Index);
+            // Fehlender Store-Key: Platzhalter auf gleichem Index (keine Lösung), damit sich nichts verschiebt.
+            return new ContentItem(i, config.Text, "", [""], $"(Vokabel '{g.VocabKey}' fehlt)", g.Index);
+        }).ToList();
+    }
+
+    // Lösung + Alternativen, roh (Normalisierung macht erst der AnswerGrader) – wie im Provider.
+    private static IReadOnlyList<string> Accepted(string answer, IEnumerable<string>? alternatives) =>
+        alternatives is null ? [answer] : [answer, .. alternatives];
 }

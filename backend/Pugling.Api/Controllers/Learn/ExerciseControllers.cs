@@ -24,12 +24,57 @@ public record CheckDrillDto(int? Seed, List<GivenAnswer> Answers);
 /// <summary>Antworten für eine Liste: die genannten Einträge in der eingegebenen Reihenfolge.</summary>
 public record CheckListDto(List<string?> Answers);
 
-/// <summary>Vokabelübungen.</summary>
+/// <summary>Vokabelübungen. Referenzieren den Vokabel-Store per <see cref="VocabularyConfig.Refs"/> (Keys).</summary>
 [Route(ExerciseRoutes.Base + "/vocabulary")]
 [Tags("Learn – Vocabulary")]
 public class VocabularyController(PuglingDbContext db) : ExerciseControllerBase<VocabularyConfig>(db)
 {
     protected override ExerciseType Type => ExerciseType.Vocabulary;
+
+    /// <summary>Sichert beim Anlegen/Ändern zu, dass alle referenzierten Store-Keys existieren.</summary>
+    protected override async Task<string?> ValidateConfigAsync(int subjectId, VocabularyConfig config)
+    {
+        if (config.Refs is not { Count: > 0 } refs) return null;
+        var keys = refs.Where(k => !string.IsNullOrWhiteSpace(k)).Distinct().ToList();
+        var existing = await Db.Vocabulary.Where(v => keys.Contains(v.Key)).Select(v => v.Key).ToListAsync();
+        var missing = keys.Except(existing).ToList();
+        return missing.Count == 0 ? null : $"Unbekannte Vokabel-Keys: {string.Join(", ", missing)}";
+    }
+
+    /// <summary>Auswahl der Vokabeln per Tag statt manueller Key-Liste.</summary>
+    public record RefsFromTagsDto(List<string> Tags, bool MatchAll = false, bool BaseFormsOnly = false);
+
+    /// <summary>
+    /// Füllt <see cref="VocabularyConfig.Refs"/> der Übung mit den aktuellen Vokabeln der genannten Tags
+    /// (optional nur Grundformen, optional alle Tags per UND). Der Vater materialisiert damit „alle Wörter
+    /// aus Unit 3" als Snapshot – so bleibt der Leitner-Fortschritt stabil (die Auffrischung erfolgt bewusst).
+    /// </summary>
+    [HttpPost("{exerciseId:int}/refs-from-tags")]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<ExerciseResponse<VocabularyConfig>>> RefsFromTags(
+        int subjectId, int chapterId, int exerciseId, RefsFromTagsDto dto)
+    {
+        var exercise = await FindAsync(subjectId, chapterId, exerciseId);
+        if (exercise is null) return NotFound();
+
+        var tags = (dto.Tags ?? []).Select(t => t.Trim()).Where(t => t.Length > 0).Distinct().ToList();
+        if (tags.Count == 0) return Problem(statusCode: 400, detail: "Mindestens ein Tag ist erforderlich.");
+
+        var query = Db.Vocabulary.AsNoTracking().AsQueryable();
+        if (dto.BaseFormsOnly) query = query.Where(v => v.BaseFormId == null);
+        if (dto.MatchAll)
+            foreach (var name in tags) query = query.Where(v => v.TagLinks.Any(l => l.VocabTag!.Name == name));
+        else
+            query = query.Where(v => v.TagLinks.Any(l => tags.Contains(l.VocabTag!.Name)));
+        var keys = await query.OrderBy(v => v.Key).Select(v => v.Key).ToListAsync();
+
+        var config = ConfigOf(exercise);
+        config.Refs = keys;
+        SetConfig(exercise, config);
+        await Db.SaveChangesAsync();
+        return Map(exercise);
+    }
 }
 
 /// <summary>Leseverständnis-Übungen.</summary>
@@ -40,12 +85,23 @@ public class ReadingController(PuglingDbContext db) : ExerciseControllerBase<Rea
     protected override ExerciseType Type => ExerciseType.Reading;
 }
 
-/// <summary>Lückentext-Übungen.</summary>
+/// <summary>Lückentext-Übungen. Lücken dürfen per <see cref="Gap.VocabKey"/> den Vokabel-Store referenzieren.</summary>
 [Route(ExerciseRoutes.Base + "/cloze")]
 [Tags("Learn – Cloze")]
 public class ClozeController(PuglingDbContext db) : ExerciseControllerBase<ClozeConfig>(db)
 {
     protected override ExerciseType Type => ExerciseType.Cloze;
+
+    /// <summary>Sichert beim Anlegen/Ändern zu, dass alle in Lücken referenzierten Store-Keys existieren.</summary>
+    protected override async Task<string?> ValidateConfigAsync(int subjectId, ClozeConfig config)
+    {
+        var keys = config.Gaps.Where(g => !string.IsNullOrWhiteSpace(g.VocabKey))
+            .Select(g => g.VocabKey!).Distinct().ToList();
+        if (keys.Count == 0) return null;
+        var existing = await Db.Vocabulary.Where(v => keys.Contains(v.Key)).Select(v => v.Key).ToListAsync();
+        var missing = keys.Except(existing).ToList();
+        return missing.Count == 0 ? null : $"Unbekannte Vokabel-Keys in Lücken: {string.Join(", ", missing)}";
+    }
 }
 
 /// <summary>Aufsatz-Übungen.</summary>

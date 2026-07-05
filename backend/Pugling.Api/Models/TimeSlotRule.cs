@@ -2,7 +2,7 @@ namespace Pugling.Api.Models;
 
 /// <summary>
 /// Zeitfenster mit Punkte-Multiplikator (vom Vater einstellbar). Gewichtet die Punkte für
-/// Leitner-Wiederholungen: früher am Tag zählt mehr (siehe <see cref="Services.PointsService"/>).
+/// Leitner-Wiederholungen: früher am Tag zählt mehr (siehe <see cref="Services.ScoringService"/>).
 /// </summary>
 public class TimeSlotRule
 {

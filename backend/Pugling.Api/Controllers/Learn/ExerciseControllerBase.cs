@@ -38,6 +38,14 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db) : Con
     /// <summary>Übungstyp, den dieser Controller verwaltet.</summary>
     protected abstract ExerciseType Type { get; }
 
+    /// <summary>
+    /// Typ-spezifische Validierung der Config beim Anlegen/Ändern. Standard: keine. Abgeleitete Controller
+    /// überschreiben dies, um z. B. Store-Referenzen (Vokabel-Keys) zu prüfen; Rückgabe = Fehlertext (→ 400)
+    /// oder <c>null</c>, wenn alles in Ordnung ist.
+    /// </summary>
+    protected virtual Task<string?> ValidateConfigAsync(int subjectId, TConfig config) =>
+        Task.FromResult<string?>(null);
+
     /// <summary>DbContext für abgeleitete Controller mit Zusatz-Endpunkten über das reine CRUD hinaus.</summary>
     protected PuglingDbContext Db => db;
 
@@ -62,7 +70,11 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db) : Con
     protected TConfig ConfigOf(Exercise exercise) =>
         JsonSerializer.Deserialize<TConfig>(exercise.ConfigJson, JsonOptions) ?? new TConfig();
 
-    private ExerciseResponse<TConfig> Map(Exercise e) =>
+    /// <summary>Schreibt die typisierte Konfiguration zurück in die Übung (JSON) – für abgeleitete Zusatz-Endpunkte.</summary>
+    protected void SetConfig(Exercise exercise, TConfig config) =>
+        exercise.ConfigJson = JsonSerializer.Serialize(config, JsonOptions);
+
+    protected ExerciseResponse<TConfig> Map(Exercise e) =>
         new(e.Id, e.ChapterId, e.Type.ToString(), e.Title, e.OrderIndex, e.RewardPoints, e.CreatedAt, ConfigOf(e), e.SuggestedBonus,
             e.GradeMin, e.GradeMax, e.SchoolTypes, e.Source, e.CategoryId, e.Category?.Name);
 
@@ -99,6 +111,7 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db) : Con
         if (!await ChapterExists(subjectId, chapterId)) return NotFound();
         if (string.IsNullOrWhiteSpace(body.Title)) return Problem(statusCode: 400, detail: "Titel ist erforderlich.");
         if (!await CategoryValid(subjectId, body.CategoryId)) return Problem(statusCode: 400, detail: "Unbekannte Art für dieses Fach.");
+        if (await ValidateConfigAsync(subjectId, body.Config ?? new TConfig()) is { } createErr) return Problem(statusCode: 400, detail: createErr);
 
         var exercise = new Exercise
         {
@@ -135,6 +148,7 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db) : Con
         if (exercise is null) return NotFound();
         if (string.IsNullOrWhiteSpace(body.Title)) return Problem(statusCode: 400, detail: "Titel ist erforderlich.");
         if (!await CategoryValid(subjectId, body.CategoryId)) return Problem(statusCode: 400, detail: "Unbekannte Art für dieses Fach.");
+        if (await ValidateConfigAsync(subjectId, body.Config ?? new TConfig()) is { } updateErr) return Problem(statusCode: 400, detail: updateErr);
 
         exercise.Title = body.Title.Trim();
         exercise.OrderIndex = body.OrderIndex;

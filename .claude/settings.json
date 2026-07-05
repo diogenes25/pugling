@@ -1,9 +1,5 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "statusLine": {
-    "type": "command",
-    "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/scripts/statusline.sh\""
-  },
   "permissions": {
     "allow": [
       "Bash(dotnet build:*)",
@@ -23,7 +19,33 @@
       "Bash(git diff:*)",
       "Bash(git log:*)",
       "Bash(git show:*)",
-      "Bash(git branch:*)"
+      "Bash(git branch:*)",
+      "Bash(git push *)",
+      "Bash(gh auth *)",
+      "Bash(npm uninstall *)",
+      "Bash(npm install *)",
+      "Read(//c/Users/TjarkOnnen/source/repos/priv/**)",
+      "Bash(npm ls *)",
+      "Bash(npm view *)",
+      "Bash(dotnet tool *)",
+      "Bash(python -c ' *)",
+      "Bash(curl -s -o /dev/null -w \"backend /health: %{http_code}\\\\n\" http://localhost:5200/health)",
+      "Bash(curl -s -o /dev/null -w \"frontend :5173: %{http_code}\\\\n\" http://localhost:5173/)",
+      "Bash(curl -s -o /dev/null -w \"frontend :5173: %{http_code}\\\\n\" http://localhost:5173/vater/exercises)",
+      "Bash(curl -s -o /dev/null -w \"frontend /vater/exercises: %{http_code}\\\\n\" http://localhost:5173/vater/exercises)",
+      "PowerShell(Get-Process -Name Pugling.Api -ErrorAction SilentlyContinue)",
+      "PowerShell(dotnet --version)",
+      "PowerShell(Stop-Process -Id 262128 -Force)",
+      "PowerShell($p = Get-Process -Name Pugling.Api -ErrorAction SilentlyContinue; if \\($p\\) { \"still running: $\\($p.Id\\)\" } else { \"stopped\" })",
+      "PowerShell(dotnet build backend/Pugling.Api 2>&1)",
+      "PowerShell(dotnet ef migrations add VocabTagsAndBaseFormRelation --project backend/Pugling.Api --output-dir Data/Migrations 2>&1)",
+      "PowerShell(dotnet test backend/Pugling.Api.Tests 2>&1)",
+      "PowerShell(Start-Process -FilePath \"dotnet\" -ArgumentList \"run --project backend/Pugling.Api\" -WorkingDirectory \"C:\\\\Users\\\\TjarkOnnen\\\\source\\\\repos\\\\priv\\\\pugling\" -WindowStyle Hidden)",
+      "PowerShell(try { $r = Invoke-WebRequest -Uri \"http://localhost:5200/swagger/index.html\" -UseBasicParsing -TimeoutSec 5; \"swagger HTTP $\\($r.StatusCode\\)\" } catch { \"not up yet: $\\($_.Exception.Message\\)\" })",
+      "PowerShell($p = Get-Process -Name Pugling.Api -ErrorAction SilentlyContinue; if \\($p\\) { Stop-Process -Id $p.Id -Force; Start-Sleep -Milliseconds 600; \"stopped\" } else { \"not running\" })"
+    ],
+    "additionalDirectories": [
+      "c:\\Users\\TjarkOnnen\\.claude\\projects\\c--Users-TjarkOnnen-source-repos-priv-pugling\\memory"
     ]
   },
   "hooks": {
@@ -40,5 +62,9 @@
         ]
       }
     ]
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/scripts/statusline.sh\""
   }
 }

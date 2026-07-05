@@ -23,6 +23,9 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
     // Sprachlernen: atomarer Vokabel-Store + Lückentext-Store
     public DbSet<Vocabulary> Vocabulary => Set<Vocabulary>();
     public DbSet<ClozeText> ClozeTexts => Set<ClozeText>();
+    // Kindneutrale Schlagworte für den Vokabel-Katalog (Kapitel/Klasse/Thema)
+    public DbSet<VocabTag> VocabTags => Set<VocabTag>();
+    public DbSet<VocabTagLink> VocabTagLinks => Set<VocabTagLink>();
 
     // Vokabeltraining: Lehrplan, Übungssitzungen, Tests, Belohnungen
     public DbSet<StudyPlan> StudyPlans => Set<StudyPlan>();
@@ -90,6 +93,18 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
                 .WithMany()
                 .HasForeignKey(v => v.BaseFormId)
                 .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // Vokabel-Tag: global eindeutiger Name (kindneutral, wie der Vokabel-Store).
+        modelBuilder.Entity<VocabTag>()
+            .HasIndex(t => t.Name).IsUnique();
+
+        // Vokabel <-> Tag: jede Vokabel höchstens einmal je Tag; Links verschwinden mit Tag oder Vokabel.
+        modelBuilder.Entity<VocabTagLink>(e =>
+        {
+            e.HasIndex(x => new { x.VocabTagId, x.VocabularyId }).IsUnique();
+            e.HasOne(x => x.VocabTag).WithMany(t => t.Links).HasForeignKey(x => x.VocabTagId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(x => x.Vocabulary).WithMany(v => v.TagLinks).HasForeignKey(x => x.VocabularyId).OnDelete(DeleteBehavior.Cascade);
         });
 
         // Bonus-Vorschlag der Übung als JSON-Spalte (null bleibt DB-NULL; Converter läuft nur für Werte).
