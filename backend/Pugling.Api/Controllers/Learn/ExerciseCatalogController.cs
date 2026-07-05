@@ -21,10 +21,11 @@ namespace Pugling.Api.Controllers.Learn;
 [Authorize(Roles = Roles.Vater)]
 public class ExerciseCatalogController(PuglingDbContext db) : ControllerBase
 {
-    /// <summary>Schlanke Trefferzeile der Übungssuche (kindneutraler Katalog).</summary>
-    /// <param name="AuthorFatherId">Autor der Übung; <c>null</c> = geseedete System-Übung.</param>
-    /// <param name="AuthorName">Anzeigename des Autors (für die Attribution „von …" in der geteilten Bibliothek).</param>
-    /// <param name="IsOwn">Ob die Übung dem anfragenden Vater gehört (er darf sie ändern/löschen).</param>
+    /// <summary>
+    /// Schlanke Trefferzeile der Übungssuche (kindneutraler Katalog). <c>AuthorFatherId</c>/<c>AuthorName</c> tragen die
+    /// Attribution der geteilten Bibliothek (<c>null</c> = geseedete System-Übung); <c>IsOwn</c> = der anfragende Vater
+    /// darf die Übung ändern/löschen.
+    /// </summary>
     public record ExerciseSummary(int Id, int ChapterId, int SubjectId, string Type, string Title,
         int? GradeMin, int? GradeMax, SchoolTypes SchoolTypes, string? Source, int? CategoryId, string? CategoryName,
         int? AuthorFatherId, string? AuthorName, bool IsOwn);
@@ -39,6 +40,7 @@ public class ExerciseCatalogController(PuglingDbContext db) : ControllerBase
     /// <param name="categoryId">Fachabhängige Art.</param>
     /// <param name="type">Übungstyp.</param>
     /// <param name="search">Freitext im Titel (Teilstring).</param>
+    /// <param name="mineOnly">Nur eigene Übungen des anfragenden Vaters (Verwaltung statt Entdeckung).</param>
     [HttpGet]
     public async Task<IEnumerable<ExerciseSummary>> Search(
         [FromQuery] int? subjectId, [FromQuery] int? grade, [FromQuery] SchoolTypes? schoolType,
