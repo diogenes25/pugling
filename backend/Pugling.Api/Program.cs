@@ -51,6 +51,8 @@ builder.Services.AddScoped<MetricsService>();
 builder.Services.AddScoped<GamificationService>();
 builder.Services.AddScoped<StudyProgressService>();
 builder.Services.AddScoped<ScheduleService>();
+// Positions-basierter Lern-Motor (neues Modell, Etappe 3): Üben/Leitner pro Lehrplan-Position.
+builder.Services.AddScoped<PositionPlayService>();
 builder.Services.AddScoped<TestAttemptService>();
 builder.Services.AddScoped<AuthAccess>();
 builder.Services.AddScoped<PlanOwnershipFilter>();

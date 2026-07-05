@@ -158,6 +158,9 @@ public class PracticeSession
     public int Id { get; set; }
     public int StudyPlanId { get; set; }
     public StudyPlan? StudyPlan { get; set; }
+    /// <summary>Neues Modell: Sitzung gehört zu einer Lehrplan-Position (Übung). Null = altes plan-weites Üben.</summary>
+    public int? PlanPositionId { get; set; }
+    public PlanPosition? PlanPosition { get; set; }
     public DateOnly Day { get; set; }
     public DateTime StartedAt { get; set; } = DateTime.UtcNow;
     public DateTime? EndedAt { get; set; }
@@ -173,8 +176,10 @@ public class ReviewEvent
     public int Id { get; set; }
     public int PracticeSessionId { get; set; }
     public PracticeSession? PracticeSession { get; set; }
-    /// <summary>Inhalts-Bezug: Vokabel-Id oder Lückentext-Id.</summary>
+    /// <summary>Inhalts-Bezug (altes Modell): Vokabel-Id oder Lückentext-Id. Neues Modell: Übungs-Id der Position.</summary>
     public int ContentId { get; set; }
+    /// <summary>Neues Modell: Index des Inhalts-Atoms in der Übung der Position. Null = altes Modell.</summary>
+    public int? ItemIndex { get; set; }
     public int StageValue { get; set; }
     public bool WasCorrect { get; set; }
     public DateTime At { get; set; } = DateTime.UtcNow;
@@ -186,6 +191,9 @@ public class TestAttempt
     public int Id { get; set; }
     public int StudyPlanId { get; set; }
     public StudyPlan? StudyPlan { get; set; }
+    /// <summary>Neues Modell: Test gehört zu einer Lehrplan-Position (Übung). Null = altes plan-weites Testen.</summary>
+    public int? PlanPositionId { get; set; }
+    public PlanPosition? PlanPosition { get; set; }
     public DateOnly Day { get; set; }
     /// <summary>Stufe (je nach Verfahren TestStage bzw. ClozeStage).</summary>
     public int StageValue { get; set; }
@@ -207,8 +215,10 @@ public class TestItemResult
     public int Id { get; set; }
     public int TestAttemptId { get; set; }
     public TestAttempt? TestAttempt { get; set; }
-    /// <summary>Inhalts-Bezug: Vokabel-Id oder Lückentext-Id.</summary>
+    /// <summary>Inhalts-Bezug (altes Modell): Vokabel-Id oder Lückentext-Id. Neues Modell: Übungs-Id der Position.</summary>
     public int ContentId { get; set; }
+    /// <summary>Neues Modell: Index des Inhalts-Atoms in der Übung der Position. Null = altes Modell.</summary>
+    public int? ItemIndex { get; set; }
     /// <summary>Bei Lückentext: Index der Lücke; bei Vokabeln null.</summary>
     public int? GapIndex { get; set; }
     public int StageValue { get; set; }

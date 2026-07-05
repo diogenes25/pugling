@@ -184,6 +184,16 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
                 .OnDelete(DeleteBehavior.Cascade);
         });
 
+        // Übungssitzung/Test optional an eine Position gekoppelt (neues Modell). Beide hängen bereits über
+        // StudyPlanId am Plan (Cascade); der Positions-Verweis nutzt daher SetNull, um in SQLite keine
+        // zweiten Cascade-Pfade (Plan → Position → Session/Test) neben Plan → Session/Test zu erzeugen.
+        modelBuilder.Entity<PracticeSession>()
+            .HasOne(s => s.PlanPosition).WithMany().HasForeignKey(s => s.PlanPositionId)
+            .OnDelete(DeleteBehavior.SetNull);
+        modelBuilder.Entity<TestAttempt>()
+            .HasOne(t => t.PlanPosition).WithMany().HasForeignKey(t => t.PlanPositionId)
+            .OnDelete(DeleteBehavior.SetNull);
+
         // Stundenplan-Eintrag: Kind + Fach; ein Fach je Kind/Wochentag höchstens einmal.
         modelBuilder.Entity<TimetableEntry>(e =>
         {
