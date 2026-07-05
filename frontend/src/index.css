@@ -242,6 +242,17 @@ a { color: var(--cyan); }
   .cel-layer { display: none; }
 }
 
+/* Übungs-Abwechslung: Buchstaben-Kästchen, Tempo-Countdown, Umschalt-Pill (Sohn-Übung). */
+.letterboxes { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
+.lbox { width: 38px; height: 46px; text-align: center; font-size: 20px;
+  background: #0c0e2c; border: 1.5px solid var(--stroke); border-radius: 10px; color: var(--ink); }
+.lbox:focus { border-color: var(--cyan); outline: none; }
+.tempo-bar { height: 6px; background: rgba(255,255,255,.08); border-radius: 6px; overflow: hidden; margin-bottom: 10px; }
+.tempo-bar i { display: block; height: 100%; width: 100%;
+  background: linear-gradient(90deg, var(--lime), var(--gold), var(--red)); animation: tempo-shrink 8s linear forwards; }
+@keyframes tempo-shrink { from { width: 100%; } to { width: 0%; } }
+.toggle-pill { cursor: pointer; border: none; font: inherit; }
+
 /* =========================================================================
    Landing / Produktseite – erklärt Pugling und führt in Vater- bzw. Sohn-Rolle.
    Dark-committed wie die Sohn-App, aber mit weiten, ruhigen Sektionen.

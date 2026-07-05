@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { api, errorMessage } from "../lib/api";
 import { useSohn } from "./SohnApp";
 import { Mascot } from "../components/Mascot";
+import { LetterBoxes } from "../components/LetterBoxes";
 import type { AnswerDto, TestAttemptResponse, TestSubmitResponse } from "../lib/types";
 
 // Vokabel-Teststufen (numerisch, serverseitig erzwungen): 1 Zeigen … 5 Hören.
@@ -96,13 +97,20 @@ export function SohnTest() {
             <b style={{ fontSize: 17 }}>{it.prompt}</b>
 
             {typed ? (
-              <input
-                className="tabnum"
-                style={{ marginTop: 10, width: "100%", background: "#0c0e2c", border: "1.5px solid var(--stroke)", borderRadius: 12, color: "var(--ink)", padding: 12, fontSize: 15 }}
-                placeholder={it.answerLength ? `${it.answerLength} Buchstaben` : "Lösung…"}
-                value={a?.givenAnswer ?? ""}
-                onChange={(e) => setText(it.itemIndex, e.target.value)}
-              />
+              it.answerLength ? (
+                <div style={{ marginTop: 10 }}>
+                  <LetterBoxes length={it.answerLength} value={a?.givenAnswer ?? ""}
+                    onChange={(v) => setText(it.itemIndex, v)} />
+                </div>
+              ) : (
+                <input
+                  className="tabnum"
+                  style={{ marginTop: 10, width: "100%", background: "#0c0e2c", border: "1.5px solid var(--stroke)", borderRadius: 12, color: "var(--ink)", padding: 12, fontSize: 15 }}
+                  placeholder="Lösung…"
+                  value={a?.givenAnswer ?? ""}
+                  onChange={(e) => setText(it.itemIndex, e.target.value)}
+                />
+              )
             ) : (
               <div style={{ marginTop: 10 }}>
                 {revealed.has(it.itemIndex) || it.reveal ? (
