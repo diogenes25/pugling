@@ -65,6 +65,8 @@ builder.Services.AddSingleton<ExerciseAnswerChecker>();
 builder.Services.AddSingleton<AnswerGrader>();
 // Extraktion der Übungs-Inhalte aus der ConfigJson (Brücke Katalog → neuer Lehrplan-Motor, Etappe 2).
 builder.Services.AddSingleton<ExerciseContentProvider>();
+// DB-gestützte Auflösung (u. a. Vokabel-Store-Refs → ContentItems); scoped wegen DbContext.
+builder.Services.AddScoped<ExerciseContentResolver>();
 builder.Services.AddCors(o => o.AddDefaultPolicy(p =>
     p.WithOrigins("http://localhost:5173").AllowAnyHeader().AllowAnyMethod()));
 

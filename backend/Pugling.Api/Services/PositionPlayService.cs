@@ -12,7 +12,7 @@ namespace Pugling.Api.Services;
 /// Das Gegenstück zu <see cref="ScheduleService"/>/<see cref="StudyProgressService"/>, aber pro Übung
 /// statt pro Plan – Ziele und Punkte hängen jetzt an der Position.
 /// </summary>
-public class PositionPlayService(PuglingDbContext db, ExerciseContentProvider content)
+public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver content)
 {
     /// <summary>Standard-Leitner-Intervalle in Tagen (Index = Box; Index 0 ungenutzt).</summary>
     private static readonly int[] DefaultBoxIntervalDays = [0, 1, 2, 4, 7, 14];
@@ -21,9 +21,9 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentProvider co
     public IReadOnlyList<int> BoxIntervals(PlanPosition pos) =>
         pos.BoxIntervalDays is { Count: > 1 } custom ? custom : DefaultBoxIntervalDays;
 
-    /// <summary>Die Inhalts-Items der Übung dieser Position (aus der Config projiziert).</summary>
-    public IReadOnlyList<ContentItem> ItemsOf(PlanPosition pos) =>
-        pos.Exercise is { } ex ? content.ItemsOf(ex) : [];
+    /// <summary>Die Inhalts-Items der Übung dieser Position (Store-aufgelöst bei referenzierten Vokabeln).</summary>
+    public async Task<IReadOnlyList<ContentItem>> ItemsOfAsync(PlanPosition pos) =>
+        pos.Exercise is { } ex ? await content.ItemsOfAsync(ex) : [];
 
     /// <summary>
     /// Für einen Tag geltende Teststufe der Position: Fahrplan (falls gesetzt) → Positions-Override →
@@ -70,7 +70,7 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentProvider co
     /// </summary>
     public async Task<IReadOnlyList<int>> DueItemIndicesAsync(PlanPosition pos, DateOnly day)
     {
-        var poolSize = PoolSize(pos, ItemsOf(pos).Count);
+        var poolSize = PoolSize(pos, (await ItemsOfAsync(pos)).Count);
         if (poolSize == 0) return [];
 
         var progress = await db.PositionItemProgress

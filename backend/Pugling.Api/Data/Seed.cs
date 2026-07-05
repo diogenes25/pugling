@@ -44,19 +44,9 @@ public static class Seed
             ("beaucoup", "viel", PartOfSpeech.Adverb, null),
         ];
 
-        string Slug(string s) =>
-            s.ToLowerInvariant().Replace("ß", "ss").Normalize(System.Text.NormalizationForm.FormD)
-                .Where(ch => System.Globalization.CharUnicodeInfo.GetUnicodeCategory(ch)
-                    != System.Globalization.UnicodeCategory.NonSpacingMark)
-                .Aggregate(new System.Text.StringBuilder(), (sb, ch) => sb.Append(ch)).ToString()
-                .Replace("'", " ").Trim();
-        string Key(string word, string de) =>
-            $"fr_{Slug(word).Replace(' ', '_')}_de_{Slug(de).Replace(' ', '_')}"
-                .Replace("__", "_");
-
         foreach (var w in woerter)
         {
-            var key = Key(w.Word, w.De);
+            var key = VocabKey.Generate("fr", w.Word, "de", w.De);
             if (db.Vocabulary.Any(v => v.Key == key)) continue;
             db.Vocabulary.Add(new Vocabulary
             {

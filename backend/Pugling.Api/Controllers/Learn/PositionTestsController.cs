@@ -66,7 +66,7 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
         var pos = await GetPosition(planId, positionId);
         if (pos?.Exercise is null) return NotFound();
 
-        var items = play.ItemsOf(pos);
+        var items = await play.ItemsOfAsync(pos);
         var poolSize = play.PoolSize(pos, items.Count);
         if (poolSize == 0) return Problem(statusCode: 400, detail: "Die Übung enthält keine prüfbaren Inhalte.");
 
@@ -138,7 +138,7 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
         var pos = await GetPosition(planId, positionId);
         if (pos?.Exercise is null) return NotFound();
 
-        var items = play.ItemsOf(pos);
+        var items = await play.ItemsOfAsync(pos);
         var typed = PositionPlayService.IsTypedStage(pos.Exercise.Type, attempt.StageValue);
         var answers = dto.Answers.ToDictionary(a => a.ItemIndex);
 

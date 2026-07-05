@@ -156,14 +156,19 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db) : Con
         return Map(exercise);
     }
 
-    /// <summary>Löscht eine Übung.</summary>
+    /// <summary>Löscht eine Übung. Nicht möglich, solange sie in einem Lehrplan oder einer Klassenarbeit steckt.</summary>
     [HttpDelete("{exerciseId:int}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<IActionResult> Delete(int subjectId, int chapterId, int exerciseId)
     {
         var exercise = await FindAsync(subjectId, chapterId, exerciseId);
         if (exercise is null) return NotFound();
+        // Verwendete Übungen schützen: der FK PlanPosition→Exercise ist Restrict (sonst 500 statt klarer Fehler).
+        if (await db.PlanPositions.AnyAsync(p => p.ExerciseId == exerciseId)
+            || await db.KlassenarbeitExercises.AnyAsync(x => x.ExerciseId == exerciseId))
+            return Problem(statusCode: 409, detail: "Übung wird in einem Lehrplan oder einer Klassenarbeit verwendet und kann nicht gelöscht werden.");
         db.Exercises.Remove(exercise);
         await db.SaveChangesAsync();
         return NoContent();

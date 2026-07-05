@@ -102,7 +102,7 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         var pos = await GetPosition(planId, positionId);
         if (pos?.Exercise is null) return NotFound();
 
-        var items = play.ItemsOf(pos);
+        var items = await play.ItemsOfAsync(pos);
         var stage = PositionPlayService.StageForDay(pos, plan, session.Day);
         var typed = PositionPlayService.IsTypedStage(pos.Exercise.Type, stage);
         var dueIndices = await play.DueItemIndicesAsync(pos, session.Day);
@@ -150,7 +150,7 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         var pos = await GetPosition(planId, positionId);
         if (pos?.Exercise is null) return NotFound();
 
-        var items = play.ItemsOf(pos);
+        var items = await play.ItemsOfAsync(pos);
         if (dto.ItemIndex < 0 || dto.ItemIndex >= play.PoolSize(pos, items.Count))
             return Problem(statusCode: 404, detail: "Inhalt gehört nicht zur Position.");
         var item = items[dto.ItemIndex];

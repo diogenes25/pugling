@@ -93,6 +93,33 @@ internal static class TestApi
             }));
     }
 
+    /// <summary>Legt (als Vater) eine Store-Vokabel „einfach" an (Auto-Key) und liefert (id, key).</summary>
+    public static async Task<(int id, string key)> CreateStoreVocabAsync(HttpClient father, string word, string translation,
+        string src = "en", string tgt = "de")
+    {
+        var res = await father.PostAsJsonAsync("/api/v1/learn/vocabulary",
+            new { sourceLanguage = src, targetLanguage = tgt, word, translation });
+        res.EnsureSuccessStatusCode();
+        var v = await res.Content.ReadFromJsonAsync<JsonElement>();
+        return (v.GetProperty("id").GetInt32(), v.GetProperty("key").GetString()!);
+    }
+
+    /// <summary>Legt (als Vater) eine Vokabel-Übung an, die Store-Einträge per Key referenziert; liefert deren Id.</summary>
+    public static async Task<int> CreateVocabRefExerciseAsync(HttpClient father, params string[] keys)
+    {
+        var subjectId = await IdAsync(await father.PostAsJsonAsync("/api/v1/learn/subjects", new { name = "Englisch-Ref" }));
+        var chapterId = await IdAsync(await father.PostAsJsonAsync(
+            $"/api/v1/learn/subjects/{subjectId}/chapters", new { name = "Unit 1", orderIndex = 1 }));
+        return await IdAsync(await father.PostAsJsonAsync(
+            $"/api/v1/learn/subjects/{subjectId}/chapters/{chapterId}/vocabulary", new
+            {
+                title = "Vokabeln (Store)",
+                orderIndex = 1,
+                rewardPoints = 10,
+                config = new { direction = "front-to-back", refs = keys },
+            }));
+    }
+
     /// <summary>Seedet direkt (Positions-CRUD folgt in Etappe 5) einen Plan mit einer Leitner-Position auf die Übung.</summary>
     public static (int planId, int positionId) SeedLeitnerPosition(WebApplicationFactory<Program> f, int exerciseId,
         int stage, int childId = 1, GoalCadence cadence = GoalCadence.Daily, int? goalThreshold = null)
