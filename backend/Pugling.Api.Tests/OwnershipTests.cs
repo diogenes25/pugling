@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
+using Pugling.Api.Models;
 
 namespace Pugling.Api.Tests;
 
@@ -72,5 +73,25 @@ public class OwnershipTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
         var father2 = await TestApi.FatherAsync(factory, id2, "2222");
 
         Assert.Equal(HttpStatusCode.Forbidden, (await father2.GetAsync($"/api/v1/study-plans/{planId}")).StatusCode);
+    }
+
+    [Fact]
+    public async Task Sohn_KannPlanEinesAnderenKindes_NichtBenutzen_403()
+    {
+        // Der Vater legt ein zweites Kind an und seedet ihm einen Positions-Plan …
+        var father = await TestApi.FatherAsync(factory);
+        var otherChildId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/children", new { name = "Bruder" }));
+        var exerciseId = await TestApi.CreateVocabExerciseAsync(father);
+        var (planId, positionId) = TestApi.SeedLeitnerPosition(factory, exerciseId, (int)TestStage.SelfAssess, childId: otherChildId);
+
+        // … der geseedete Sohn (id 1) ist ein FREMDES Kind für diesen Plan: der Kind-Zweig von
+        // AuthAccess.OwnsPlanAsync vergleicht plan.ChildId mit der eigenen cid → jeder Zugriff 403.
+        // Regressionsschutz gegen Cross-Child-IDOR (bislang nur Vater↔Vater/Kind abgedeckt).
+        var child1 = await TestApi.ChildAsync(factory);
+        Assert.Equal(HttpStatusCode.Forbidden, (await child1.GetAsync($"/api/v1/study-plans/{planId}")).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden,
+            (await child1.PostAsJsonAsync(TestApi.PracticeBase(planId, positionId), new { })).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden,
+            (await child1.GetAsync($"/api/v1/study-plans/{planId}/positions/{positionId}/report")).StatusCode);
     }
 }

@@ -34,7 +34,7 @@ public class PositionTestFlowTests(PuglingWebAppFactory factory) : IClassFixture
         Assert.Equal(2, res.GetProperty("totalItems").GetInt32());
         Assert.Equal(2, res.GetProperty("correctItems").GetInt32());
         Assert.Equal(100, res.GetProperty("scorePercent").GetInt32());
-        Assert.True(res.GetProperty("passed").GetBoolean());
+        JsonAssert.True(res, "passed");
     }
 
     [Fact]
@@ -54,7 +54,7 @@ public class PositionTestFlowTests(PuglingWebAppFactory factory) : IClassFixture
         var res = await submit.Content.ReadFromJsonAsync<JsonElement>();
         Assert.Equal(50, res.GetProperty("scorePercent").GetInt32());
         Assert.Equal(80, res.GetProperty("passPercent").GetInt32());
-        Assert.False(res.GetProperty("passed").GetBoolean());
+        JsonAssert.False(res, "passed");
     }
 
     [Fact]
@@ -75,6 +75,6 @@ public class PositionTestFlowTests(PuglingWebAppFactory factory) : IClassFixture
         var res = await submit.Content.ReadFromJsonAsync<JsonElement>();
         Assert.Equal(50, res.GetProperty("scorePercent").GetInt32());
         Assert.Equal(40, res.GetProperty("passPercent").GetInt32());
-        Assert.True(res.GetProperty("passed").GetBoolean());
+        JsonAssert.True(res, "passed");
     }
 }

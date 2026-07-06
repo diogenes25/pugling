@@ -39,7 +39,7 @@ public class PositionPracticeFlowTests(PuglingWebAppFactory factory) : IClassFix
         var review = await child.PostAsJsonAsync($"{baseUrl}/{sessionId}/review",
             new { itemIndex = 0, givenAnswer = "hallo" });
         var outcome = await review.Content.ReadFromJsonAsync<JsonElement>();
-        Assert.True(outcome.GetProperty("wasCorrect").GetBoolean());
+        JsonAssert.True(outcome, "wasCorrect");
         Assert.True(outcome.GetProperty("awarded").GetInt32() > 0);
         Assert.Equal(2, outcome.GetProperty("box").GetInt32()); // Box 1 → 2
 
@@ -82,7 +82,7 @@ public class PositionPracticeFlowTests(PuglingWebAppFactory factory) : IClassFix
 
         var review = await child.PostAsJsonAsync($"{baseUrl}/{sessionId}/review", new { itemIndex = 0, givenAnswer = "falsch" });
         var outcome = await review.Content.ReadFromJsonAsync<JsonElement>();
-        Assert.False(outcome.GetProperty("wasCorrect").GetBoolean());
+        JsonAssert.False(outcome, "wasCorrect");
         Assert.Equal(0, outcome.GetProperty("awarded").GetInt32());
         Assert.Equal(1, outcome.GetProperty("box").GetInt32());
     }

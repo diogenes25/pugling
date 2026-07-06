@@ -28,7 +28,7 @@ public class ChildrenDashboardTests(PuglingWebAppFactory factory) : IClassFixtur
             .Content.ReadFromJsonAsync<JsonElement>();
         var rowBefore = ChildRow(before, 1);
         Assert.True(rowBefore.GetProperty("goalsTotal").GetInt32() >= 1);
-        Assert.False(rowBefore.GetProperty("dutyDone").GetBoolean());
+        JsonAssert.False(rowBefore, "dutyDone");
 
         // Positions-Test bestehen → Tagesziel erfüllt, Ziel-Punkte gebucht.
         var testsUrl = $"/api/v1/study-plans/{planId}/positions/{positionId}/tests";
@@ -46,8 +46,8 @@ public class ChildrenDashboardTests(PuglingWebAppFactory factory) : IClassFixtur
         var after = await (await father.GetAsync("/api/v1/children/daily-overview"))
             .Content.ReadFromJsonAsync<JsonElement>();
         var rowAfter = ChildRow(after, 1);
-        Assert.True(rowAfter.GetProperty("dutyDone").GetBoolean());
+        JsonAssert.True(rowAfter, "dutyDone");
         Assert.True(rowAfter.GetProperty("pointsToday").GetInt32() > 0);
-        Assert.True(rowAfter.GetProperty("practiced").GetBoolean());
+        JsonAssert.True(rowAfter, "practiced");
     }
 }

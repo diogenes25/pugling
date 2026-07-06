@@ -56,7 +56,7 @@ public class VocabExerciseAuthoringTests(PuglingWebAppFactory factory) : IClassF
         var sessionId = await TestApi.IdAsync(await child.PostAsJsonAsync(baseUrl, new { }));
         var outcome = await (await child.PostAsJsonAsync($"{baseUrl}/{sessionId}/review",
             new { itemIndex = 0, givenAnswer = "opportunity" })).Content.ReadFromJsonAsync<JsonElement>();
-        Assert.True(outcome.GetProperty("wasCorrect").GetBoolean());
+        JsonAssert.True(outcome, "wasCorrect");
         Assert.Equal("opportunity", outcome.GetProperty("expected").GetString());
 
         // Zentrale Korrektur im Store schlägt in der Lücke durch. Frische Position, weil dasselbe Item
@@ -67,7 +67,7 @@ public class VocabExerciseAuthoringTests(PuglingWebAppFactory factory) : IClassF
         var s2 = await TestApi.IdAsync(await child.PostAsJsonAsync(base2, new { }));
         var out2 = await (await child.PostAsJsonAsync($"{base2}/{s2}/review",
             new { itemIndex = 0, givenAnswer = "chance" })).Content.ReadFromJsonAsync<JsonElement>();
-        Assert.True(out2.GetProperty("wasCorrect").GetBoolean());
+        JsonAssert.True(out2, "wasCorrect");
     }
 
     [Fact]

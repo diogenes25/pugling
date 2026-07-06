@@ -78,15 +78,15 @@ public class RewardsFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
 
         // Offener Kauf: erfüll- UND stornierbar (server-autoritative Affordance).
         var open = await ReadRedemptionAsync(father, childId, redemptionId);
-        Assert.True(open.GetProperty("canFulfill").GetBoolean());
-        Assert.True(open.GetProperty("canCancel").GetBoolean());
+        JsonAssert.True(open, "canFulfill");
+        JsonAssert.True(open, "canCancel");
 
         // Nach Erfüllung: beide Aktionen entfallen.
         (await father.PostAsJsonAsync($"/api/v1/children/{childId}/rewards/redemptions/{redemptionId}/fulfill", new { }))
             .EnsureSuccessStatusCode();
         var done = await ReadRedemptionAsync(father, childId, redemptionId);
-        Assert.False(done.GetProperty("canFulfill").GetBoolean());
-        Assert.False(done.GetProperty("canCancel").GetBoolean());
+        JsonAssert.False(done, "canFulfill");
+        JsonAssert.False(done, "canCancel");
     }
 
     private async Task<JsonElement> ReadRedemptionAsync(HttpClient father, int childId, int redemptionId)
@@ -128,6 +128,35 @@ public class RewardsFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
         // Rückerstattung: Guthaben wieder bei 500
         var wallet = await JsonAsync(await child.GetAsync("/api/v1/me/points"));
         Assert.Equal(500, wallet.GetProperty("coins").GetInt32());
+    }
+
+    [Fact]
+    public async Task Storno_EinesBereitsErfuelltenKaufs_409()
+    {
+        var father = await TestApi.FatherAsync(factory);
+        var (childId, child) = await FreshChildAsync(father, "9008");
+        (await father.PostAsJsonAsync($"/api/v1/children/{childId}/points", new { amount = 300, reason = "x" })).EnsureSuccessStatusCode();
+        var offerId = await CreateOfferAsync(father, childId, new { title = "Eis", cost = 100 });
+
+        var view = await JsonAsync(await child.PostAsJsonAsync($"/api/v1/me/rewards/{offerId}/purchase", new { }));
+        var redemptionId = view.GetProperty("redemptions").EnumerateArray().First().GetProperty("id").GetInt32();
+        (await father.PostAsJsonAsync($"/api/v1/children/{childId}/rewards/redemptions/{redemptionId}/fulfill", new { }))
+            .EnsureSuccessStatusCode();
+
+        // Ein bereits erfüllter Kauf ist nicht mehr offen → Storno scheitert mit 409 (keine Doppel-Rückerstattung).
+        var res = await father.PostAsJsonAsync($"/api/v1/children/{childId}/rewards/redemptions/{redemptionId}/cancel", new { });
+        Assert.Equal(HttpStatusCode.Conflict, res.StatusCode);
+    }
+
+    [Fact]
+    public async Task Erfuellen_MitUnbekannterRedemptionId_404()
+    {
+        var father = await TestApi.FatherAsync(factory);
+        var (childId, _) = await FreshChildAsync(father, "9009");
+
+        // Kein solcher Kauf existiert für dieses (eigene) Kind → NotFound-Zweig, klar von 409 „nicht offen" getrennt.
+        var res = await father.PostAsJsonAsync($"/api/v1/children/{childId}/rewards/redemptions/999999/fulfill", new { });
+        Assert.Equal(HttpStatusCode.NotFound, res.StatusCode);
     }
 
     [Fact]
