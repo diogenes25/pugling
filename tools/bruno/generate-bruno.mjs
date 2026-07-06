@@ -134,7 +134,16 @@ async function prepareOutput(directory, forceOutput) {
 }
 
 async function writeCollectionFiles(api, directory) {
-  await writeFile(path.join(directory, 'bruno.json'), `${JSON.stringify({ version: '1', name: 'Pugling API', type: 'collection' }, null, 2)}\n`);
+  const collectionMeta = {
+    version: '1',
+    name: 'Pugling API',
+    type: 'collection',
+    auth: {
+      mode: 'bearer',
+      bearer: { token: '{{token}}' },
+    },
+  };
+  await writeFile(path.join(directory, 'bruno.json'), `${JSON.stringify(collectionMeta, null, 2)}\n`);
   await writeFile(path.join(directory, 'README.md'), collectionReadme());
 
   const operations = collectOperations(api);
@@ -174,7 +183,7 @@ function collectOperations(api) {
         pathParameters: collectPathParameters(apiPath),
         queryParameters: collectQueryParameters(pathItem, operation),
         body: sampleBody(api, operation),
-        authTokenVariable: authTokenVariable(apiPath),
+        isAuthEndpoint: isAuthEndpoint(apiPath),
         captureVariables: captureVariablesFor(apiPath),
       });
     }
@@ -196,8 +205,11 @@ function renderOperation(operation, sequence) {
 
   const headers = ['  Accept: application/json'];
   if (operation.body !== undefined) headers.push('  Content-Type: application/json');
-  if (operation.authTokenVariable) headers.push(`  Authorization: Bearer {{${operation.authTokenVariable}}}`);
   sections.push(`headers {\n${headers.join('\n')}\n}`);
+
+  if (!operation.isAuthEndpoint) {
+    sections.push(`auth {\n  mode: inherit\n}`);
+  }
 
   if (operation.body !== undefined) {
     sections.push(`body {\n${indent(JSON.stringify(operation.body, null, 2), 2)}\n}`);
@@ -234,10 +246,8 @@ function queryValue(parameter) {
   return `{{${variableName}}}`;
 }
 
-function authTokenVariable(apiPath) {
-  if (apiPath.startsWith('/api/v1/auth/father') || apiPath.startsWith('/api/v1/auth/child')) return null;
-  if (apiPath.startsWith('/api/v1/me')) return 'childToken';
-  return 'fatherToken';
+function isAuthEndpoint(apiPath) {
+  return apiPath.startsWith('/api/v1/auth/father') || apiPath.startsWith('/api/v1/auth/child');
 }
 
 function sampleBody(api, operation) {
@@ -318,8 +328,8 @@ function substituteVariablesForKey(key, value, loginPin) {
 }
 
 function captureVariablesFor(apiPath) {
-  if (apiPath === '/api/v1/auth/father') return ['fatherToken', 'fatherId', 'authToken'];
-  if (apiPath === '/api/v1/auth/child') return ['childToken', 'childId', 'authToken'];
+  if (apiPath === '/api/v1/auth/father') return ['token', 'fatherId'];
+  if (apiPath === '/api/v1/auth/child') return ['token', 'childId'];
 
   const variables = new Set(collectPathParameters(apiPath).map(toVariableName));
   for (const segment of apiPath.split('/').filter(Boolean).reverse()) {
@@ -333,21 +343,23 @@ function captureVariablesFor(apiPath) {
 }
 
 function postResponseScript(operation) {
+  if (operation.isAuthEndpoint) {
+    return `var jsonData = res.getBody();\nbru.setEnvVar('token', jsonData.token);`;
+  }
+
   const variables = operation.captureVariables;
-  const mappings = variables.map(variable => {
-    if (variable.endsWith('Token')) return `capture('${variable}', body.token);`;
-    if (variable === 'authToken') return `capture('authToken', body.token);`;
-    return `capture('${variable}', body.${responsePropertyFor(variable)} ?? body.id);`;
-  });
+  const mappings = variables.map(variable =>
+    `capture('${variable}', body.${responsePropertyFor(variable)} ?? body.id);`
+  );
 
   const genericCaptures = [...knownVariables.keys()]
     .filter(variable => variable.endsWith('Id'))
     .map(variable => `capture('${variable}', body.${responsePropertyFor(variable)});`);
 
-  const body = [...new Set([...mappings, ...genericCaptures])].join('\n');
-  if (!body) return '';
+  const bodyLines = [...new Set([...mappings, ...genericCaptures])].join('\n');
+  if (!bodyLines) return '';
 
-  return `const body = res.getBody();\n\nfunction capture(name, value) {\n  if (value === undefined || value === null || value === '') return;\n  bru.setVar(name, value);\n  bru.setEnvVar(name, String(value), { persist: true });\n}\n\nif (body && typeof body === 'object' && !Array.isArray(body)) {\n${indent(body, 2)}\n}`;
+  return `const body = res.getBody();\n\nfunction capture(name, value) {\n  if (value === undefined || value === null || value === '') return;\n  bru.setVar(name, value);\n  bru.setEnvVar(name, String(value), { persist: true });\n}\n\nif (body && typeof body === 'object' && !Array.isArray(body)) {\n${indent(bodyLines, 2)}\n}`;
 }
 
 function responsePropertyFor(variableName) {
@@ -361,9 +373,7 @@ function localEnvironment() {
   ]);
   const vars = [
     ['baseUrl', 'http://localhost:5200'],
-    ['fatherToken', ''],
-    ['childToken', ''],
-    ['authToken', ''],
+    ['token', ''],
     ...variables.entries(),
   ];
 
@@ -379,7 +389,7 @@ function defaultValueFor(variableName) {
 }
 
 function collectionReadme() {
-  return `# Pugling API Bruno Collection\n\nDiese Collection ist generiert. Manuelle Änderungen an Requests gehen beim nächsten Export verloren.\n\n## Aktualisieren\n\n\`npm run bruno:generate\`\n\nStandardquelle ist \`http://localhost:5200/openapi/v1.json\`. Alternativ kann eine gespeicherte OpenAPI-Datei genutzt werden:\n\n\`node tools/bruno/generate-bruno.mjs --input ./openapi.json --output tools/bruno/Pugling.Api\`\n\n## Variablen\n\nPfad- und Body-Werte werden als Bruno-Variablen gesetzt, z. B. \`{{fatherId}}\`, \`{{childId}}\`, \`{{planId}}\`, \`{{positionId}}\`. Die Login-Requests speichern Tokens und IDs per Post-Response-Script persistent ins aktive Environment.\n\nVater-Endpunkte senden \`Authorization: Bearer {{fatherToken}}\`; Sohn-Endpunkte unter \`/api/v1/me\` senden \`Authorization: Bearer {{childToken}}\`.\n`;
+  return `# Pugling API Bruno Collection\n\nDiese Collection ist generiert. Manuelle Änderungen an Requests gehen beim nächsten Export verloren.\n\n## Aktualisieren\n\n\`npm run bruno:generate\`\n\nStandardquelle ist \`http://localhost:5200/openapi/v1.json\`. Alternativ kann eine gespeicherte OpenAPI-Datei genutzt werden:\n\n\`node tools/bruno/generate-bruno.mjs --input ./openapi.json --output tools/bruno/Pugling.Api\`\n\n## Auth\n\nDie Collection ist mit Bearer-Token-Auth konfiguriert (\`{{token}}\`). Vor dem Testen einen Login-Request ausführen – der Post-Response-Script setzt \`token\` automatisch ins aktive Environment. Alle anderen Requests erben die Auth von der Collection.\n\n## Variablen\n\nPfad- und Body-Werte werden als Bruno-Variablen gesetzt, z. B. \`{{fatherId}}\`, \`{{childId}}\`, \`{{planId}}\`, \`{{positionId}}\`.\n`;
 }
 
 function firstPathSegment(apiPath) {

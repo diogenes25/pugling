@@ -10,8 +10,10 @@ Standardquelle ist `http://localhost:5200/openapi/v1.json`. Alternativ kann eine
 
 `node tools/bruno/generate-bruno.mjs --input ./openapi.json --output tools/bruno/Pugling.Api`
 
+## Auth
+
+Die Collection ist mit Bearer-Token-Auth konfiguriert (`{{token}}`). Vor dem Testen einen Login-Request ausführen – der Post-Response-Script setzt `token` automatisch ins aktive Environment. Alle anderen Requests erben die Auth von der Collection.
+
 ## Variablen
 
-Pfad- und Body-Werte werden als Bruno-Variablen gesetzt, z. B. `{{fatherId}}`, `{{childId}}`, `{{planId}}`, `{{positionId}}`. Die Login-Requests speichern Tokens und IDs per Post-Response-Script persistent ins aktive Environment.
-
-Vater-Endpunkte senden `Authorization: Bearer {{fatherToken}}`; Sohn-Endpunkte unter `/api/v1/me` senden `Authorization: Bearer {{childToken}}`.
+Pfad- und Body-Werte werden als Bruno-Variablen gesetzt, z. B. `{{fatherId}}`, `{{childId}}`, `{{planId}}`, `{{positionId}}`.

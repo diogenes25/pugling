@@ -14,7 +14,10 @@ patch {
 headers {
   Accept: application/json
   Content-Type: application/json
-  Authorization: Bearer {{fatherToken}}
+}
+
+auth {
+  mode: inherit
 }
 
 body {

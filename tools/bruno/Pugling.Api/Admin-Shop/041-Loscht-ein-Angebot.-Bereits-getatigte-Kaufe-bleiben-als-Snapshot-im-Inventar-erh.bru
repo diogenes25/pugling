@@ -13,7 +13,10 @@ delete {
 
 headers {
   Accept: application/json
-  Authorization: Bearer {{fatherToken}}
+}
+
+auth {
+  mode: inherit
 }
 
 script:post-response {
