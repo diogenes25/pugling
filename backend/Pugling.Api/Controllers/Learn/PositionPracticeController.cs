@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Pugling.Api.Auth;
 using Pugling.Api.Data;
+using Pugling.Api.Errors;
 using Pugling.Api.Models;
 using Pugling.Api.Services;
 
@@ -61,7 +62,7 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         // Anti-Schummel: der Sohn darf nur seinen aktiven, laufenden Plan spielen – kein Cherry-Picking
         // leichter oder abgelaufener Pläne für bequeme Punkte. Der Vater darf jederzeit (Vorschau/Nachtrag).
         if (User.IsChild() && await GetPlan(planId) is { } plan && !PositionPlayService.PlanPlayableForChild(plan, today))
-            return Problem(statusCode: 403, detail: "Dieser Lehrplan ist gerade nicht aktiv. Frag deinen Vater.");
+            return this.ProblemWithCode(ApiErrors.PlanInactive, "This study plan is not currently active. Ask your parent.");
 
         var session = new PracticeSession { StudyPlanId = planId, PlanPositionId = positionId, Day = dto.Day ?? today };
         db.PracticeSessions.Add(session);
@@ -107,7 +108,7 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         // Anti-Schummel: auch mit einer noch offenen Session darf der Sohn einen inzwischen deaktivierten
         // oder abgelaufenen Plan nicht weiter beüben (der Vater bleibt für Vorschau/Nachtrag ausgenommen).
         if (User.IsChild() && !PositionPlayService.PlanPlayableForChild(plan, DateOnly.FromDateTime(DateTime.UtcNow)))
-            return Problem(statusCode: 403, detail: "Dieser Lehrplan ist gerade nicht aktiv. Frag deinen Vater.");
+            return this.ProblemWithCode(ApiErrors.PlanInactive, "This study plan is not currently active. Ask your parent.");
         var pos = await GetPosition(planId, positionId);
         if (pos?.Exercise is null) return NotFound();
 
@@ -163,13 +164,13 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         // Anti-Schummel: auch mit einer noch offenen Session darf der Sohn einen inzwischen deaktivierten
         // oder abgelaufenen Plan nicht weiter beüben (der Vater bleibt für Vorschau/Nachtrag ausgenommen).
         if (User.IsChild() && !PositionPlayService.PlanPlayableForChild(plan, DateOnly.FromDateTime(DateTime.UtcNow)))
-            return Problem(statusCode: 403, detail: "Dieser Lehrplan ist gerade nicht aktiv. Frag deinen Vater.");
+            return this.ProblemWithCode(ApiErrors.PlanInactive, "This study plan is not currently active. Ask your parent.");
         var pos = await GetPosition(planId, positionId);
         if (pos?.Exercise is null) return NotFound();
 
         var items = await play.ItemsOfAsync(pos);
         if (dto.ItemIndex < 0 || dto.ItemIndex >= play.PoolSize(pos, items.Count))
-            return Problem(statusCode: 404, detail: "Inhalt gehört nicht zur Position.");
+            return this.ProblemWithCode(ApiErrors.NotFound, "The content does not belong to this position.");
         var item = items[dto.ItemIndex];
 
         // Stufe serverseitig erzwingen (nicht vom Client wählbar) und typ-neutral bewerten.

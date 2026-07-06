@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Pugling.Api.Data;
+using Pugling.Api.Errors;
 using Pugling.Api.Models;
 
 namespace Pugling.Api.Services;
@@ -37,6 +38,21 @@ public class OfferService(PuglingDbContext db, WalletService wallet)
         public static Result Ok(RewardRedemption r) => new(OfferError.None, r);
         public static Result Fail(OfferError e) => new(e, null);
     }
+
+    /// <summary>
+    /// Kanonische Zuordnung <see cref="OfferError"/> → <see cref="ApiError"/> (Code + Status). Eine
+    /// Stelle für den Fehler-Code-Vertrag der Angebots-Vorgänge; die Controller ergänzen nur den
+    /// kontextspezifischen <c>detail</c>-Text. <see cref="OfferError.None"/> ist kein Fehler.
+    /// </summary>
+    public static ApiError ToApiError(OfferError error) => error switch
+    {
+        OfferError.NotFound => ApiErrors.NotFound,
+        OfferError.Inactive => ApiErrors.OfferInactive,
+        OfferError.QuotaExceeded => ApiErrors.QuotaExhausted,
+        OfferError.InsufficientCoins => ApiErrors.InsufficientCoins,
+        OfferError.NotOpen => ApiErrors.PurchaseNotOpen,
+        _ => ApiErrors.ConcurrencyConflict, // Conflict + Absicherung künftiger Werte
+    };
 
     /// <summary>
     /// Kauft ein Angebot für das Kind: prüft Aktiv-Status, Kontingent der aktuellen Periode und Deckung,

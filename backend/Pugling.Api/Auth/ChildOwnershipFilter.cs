@@ -1,5 +1,5 @@
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
+using Pugling.Api.Errors;
 
 namespace Pugling.Api.Auth;
 
@@ -17,7 +17,7 @@ public class ChildOwnershipFilter(AuthAccess access) : IAsyncActionFilter
         if (ctx.ActionArguments.TryGetValue("childId", out var v) && v is int childId
             && !await access.OwnsChildAsync(ctx.HttpContext.User, childId))
         {
-            ctx.Result = new NotFoundObjectResult("Kind nicht gefunden.");
+            ctx.Result = ControllerBaseErrorExtensions.ProblemResult(ctx.HttpContext, ApiErrors.NotFound, "Child not found.");
             return;
         }
         await next();

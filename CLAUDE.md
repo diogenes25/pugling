@@ -91,9 +91,14 @@ Rollen im SPA: `/` Produktseite, `/vater` Web-Admin (inkl. `/vater/wizard` Lehrp
   `ApiRoutes.V1` ([Controllers/ApiRoutes.cs](backend/Pugling.Api/Controllers/ApiRoutes.cs)), Controller
   tragen `[ApiVersion("1.0")]`. Bis zur Publikation bleiben wir bei 1.0 und ändern frei; ein Bruch danach
   läuft über eine parallele `v2` (neue Controller/DTOs neben v1), nicht über Abwärtskompatibilität.
-- **Fehler** einheitlich als `ProblemDetails` (RFC 7807): `return Problem(statusCode: 400, detail: "…")`
-  statt nackter Strings; `AddProblemDetails` + `UseExceptionHandler`/`UseStatusCodePages` formen auch
-  leere Fehler (404/403/401) und unbehandelte Exceptions dazu.
+- **Fehler** einheitlich als `ProblemDetails` (RFC 7807) mit **maschinenlesbarem `code`**: statt
+  `Problem(statusCode:, detail:)` immer `return this.ProblemWithCode(ApiErrors.<Code>, "…")` nutzen
+  (Registry: [Errors/ApiErrors.cs](backend/Pugling.Api/Errors/ApiErrors.cs); Status/Titel/`type`-URI
+  kommen aus dem `ApiError`). Neuen fachlichen Fehler? Erst einen Code additiv in `ApiErrors` ergänzen.
+  `AddProblemDetails(CustomizeProblemDetails)` + die `CodeStampingProblemDetailsFactory` stempeln leere
+  Fehler (404/403/401/429) und unbehandelte 500 mit einem status-basierten Default-Code. Meldungstexte
+  (`detail`) sind **englisch** (i18n); der `code` ist stabiler Vertragsbestandteil. Beispiele:
+  [docs/api-examples/](docs/api-examples/index.md) (verifiziert von `DocsCaptureTests`).
 - **Eigentum**: Für Endpunkte unter `{planId}` den `[ServiceFilter(typeof(PlanOwnershipFilter))]`,
   für Endpunkte unter `{childId}` den `[ServiceFilter(typeof(ChildOwnershipFilter))]` nutzen
   (nicht inline wiederholen). Sonst `AuthAccess` explizit. Kindbezogene Ressourcen leben unter

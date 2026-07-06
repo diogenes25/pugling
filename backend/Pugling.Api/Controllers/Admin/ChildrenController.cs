@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Pugling.Api.Auth;
 using Pugling.Api.Data;
+using Pugling.Api.Errors;
 using Pugling.Api.Models;
 using Pugling.Api.Services;
 
@@ -65,7 +66,7 @@ public class ChildrenController(PuglingDbContext db, WalletService wallet) : Con
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<ChildResponse>> Create(CreateChildDto dto)
     {
-        if (string.IsNullOrWhiteSpace(dto.Name)) return Problem(statusCode: 400, detail: "Name ist erforderlich.");
+        if (string.IsNullOrWhiteSpace(dto.Name)) return this.ProblemWithCode(ApiErrors.ValidationError, "Name is required.");
 
         var child = new Child
         {

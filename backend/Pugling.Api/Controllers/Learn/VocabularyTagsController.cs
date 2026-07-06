@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Pugling.Api.Auth;
 using Pugling.Api.Data;
+using Pugling.Api.Errors;
 using Pugling.Api.Models;
 
 namespace Pugling.Api.Controllers.Learn;
@@ -40,7 +41,7 @@ public class VocabularyTagsController(PuglingDbContext db) : ControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<VocabTagResponse>> Create(CreateVocabTagDto dto)
     {
-        if (string.IsNullOrWhiteSpace(dto.Name)) return Problem(statusCode: 400, detail: "Name ist erforderlich.");
+        if (string.IsNullOrWhiteSpace(dto.Name)) return this.ProblemWithCode(ApiErrors.ValidationError, "Name is required.");
         var name = dto.Name.Trim();
 
         var existing = await db.VocabTags.FirstOrDefaultAsync(t => t.Name == name);
@@ -67,9 +68,9 @@ public class VocabularyTagsController(PuglingDbContext db) : ControllerBase
         if (dto.Name is not null)
         {
             var name = dto.Name.Trim();
-            if (name.Length == 0) return Problem(statusCode: 400, detail: "Name darf nicht leer sein.");
+            if (name.Length == 0) return this.ProblemWithCode(ApiErrors.ValidationError, "Name must not be empty.");
             if (name != tag.Name && await db.VocabTags.AnyAsync(t => t.Name == name))
-                return Problem(statusCode: 400, detail: "Ein Tag mit diesem Namen existiert bereits.");
+                return this.ProblemWithCode(ApiErrors.DuplicateTagName, "A tag with this name already exists.");
             tag.Name = name;
         }
         if (dto.Color is not null) tag.Color = dto.Color.Trim() is { Length: > 0 } c ? c : null;
@@ -105,7 +106,7 @@ public class VocabularyTagsController(PuglingDbContext db) : ControllerBase
         if (vocab is null) return NotFound();
 
         var names = (dto.Tags ?? []).Select(n => n.Trim()).Where(n => n.Length > 0).Distinct(StringComparer.Ordinal).ToList();
-        if (names.Count == 0) return Problem(statusCode: 400, detail: "Mindestens ein Tag ist erforderlich.");
+        if (names.Count == 0) return this.ProblemWithCode(ApiErrors.ValidationError, "At least one tag is required.");
 
         var existing = await db.VocabTags.Where(t => names.Contains(t.Name)).ToListAsync();
         var byName = existing.ToDictionary(t => t.Name, StringComparer.Ordinal);

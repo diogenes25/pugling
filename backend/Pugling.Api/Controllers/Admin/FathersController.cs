@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.EntityFrameworkCore;
 using Pugling.Api.Auth;
 using Pugling.Api.Data;
+using Pugling.Api.Errors;
 using Pugling.Api.Models;
 
 namespace Pugling.Api.Controllers.Admin;
@@ -56,7 +57,7 @@ public class FathersController(PuglingDbContext db) : ControllerBase, IActionFil
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<FatherResponse>> Create(CreateFatherDto dto)
     {
-        if (string.IsNullOrWhiteSpace(dto.Name)) return Problem(statusCode: 400, detail: "Name ist erforderlich.");
+        if (string.IsNullOrWhiteSpace(dto.Name)) return this.ProblemWithCode(ApiErrors.ValidationError, "Name is required.");
 
         var father = new Father { Name = dto.Name.Trim(), Email = dto.Email, Pin = string.IsNullOrEmpty(dto.Pin) ? "" : PinHasher.Hash(dto.Pin) };
         db.Fathers.Add(father);

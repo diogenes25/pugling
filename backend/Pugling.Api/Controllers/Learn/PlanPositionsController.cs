@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Pugling.Api.Auth;
 using Pugling.Api.Data;
+using Pugling.Api.Errors;
 using Pugling.Api.Models;
 
 namespace Pugling.Api.Controllers.Learn;
@@ -77,7 +78,7 @@ public class PlanPositionsController(PuglingDbContext db) : ControllerBase
     public async Task<ActionResult<PositionResponse>> Create(int planId, CreatePositionDto dto)
     {
         var exercise = await db.Exercises.FirstOrDefaultAsync(e => e.Id == dto.ExerciseId);
-        if (exercise is null) return Problem(statusCode: 400, detail: $"Übung {dto.ExerciseId} nicht gefunden.");
+        if (exercise is null) return this.ProblemWithCode(ApiErrors.InvalidReference, $"Exercise {dto.ExerciseId} not found.");
 
         var order = dto.Order ?? ((await db.PlanPositions.Where(p => p.StudyPlanId == planId)
             .MaxAsync(p => (int?)p.Order)) ?? -1) + 1;
@@ -167,7 +168,7 @@ public class PlanPositionsController(PuglingDbContext db) : ControllerBase
 
         if (await db.TestAttempts.AnyAsync(t => t.PlanPositionId == positionId)
             || await db.PracticeSessions.AnyAsync(s => s.PlanPositionId == positionId))
-            return Problem(statusCode: 409, detail: "Für diese Position liegen bereits Übungs-/Testdaten vor; sie kann nicht gelöscht werden.");
+            return this.ProblemWithCode(ApiErrors.PositionHasData, "This position already has practice/test data and cannot be deleted.");
 
         db.PlanPositions.Remove(pos);
         await db.SaveChangesAsync();

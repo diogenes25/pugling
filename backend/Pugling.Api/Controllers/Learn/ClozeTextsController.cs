@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Pugling.Api.Auth;
 using Pugling.Api.Data;
+using Pugling.Api.Errors;
 using Pugling.Api.Models;
 
 namespace Pugling.Api.Controllers.Learn;
@@ -60,10 +61,10 @@ public class ClozeTextsController(PuglingDbContext db) : ControllerBase
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<ActionResult<ClozeResponse>> Create(CreateClozeDto dto)
     {
-        if (string.IsNullOrWhiteSpace(dto.Key)) return Problem(statusCode: 400, detail: "Key ist erforderlich.");
-        if (string.IsNullOrWhiteSpace(dto.Text)) return Problem(statusCode: 400, detail: "Text ist erforderlich.");
-        if (dto.Gaps is null or { Count: 0 }) return Problem(statusCode: 400, detail: "Mindestens eine Lücke ist erforderlich.");
-        if (await db.ClozeTexts.AnyAsync(c => c.Key == dto.Key)) return Problem(statusCode: 409, detail: $"Key '{dto.Key}' existiert bereits.");
+        if (string.IsNullOrWhiteSpace(dto.Key)) return this.ProblemWithCode(ApiErrors.ValidationError, "Key is required.");
+        if (string.IsNullOrWhiteSpace(dto.Text)) return this.ProblemWithCode(ApiErrors.ValidationError, "Text is required.");
+        if (dto.Gaps is null or { Count: 0 }) return this.ProblemWithCode(ApiErrors.ValidationError, "At least one gap is required.");
+        if (await db.ClozeTexts.AnyAsync(c => c.Key == dto.Key)) return this.ProblemWithCode(ApiErrors.DuplicateKey, $"Key '{dto.Key}' already exists.");
 
         var cloze = new ClozeText
         {
@@ -91,7 +92,7 @@ public class ClozeTextsController(PuglingDbContext db) : ControllerBase
         var cloze = await db.ClozeTexts.FindAsync(id);
         if (cloze is null) return NotFound();
 
-        if (dto.Gaps is { Count: 0 }) return Problem(statusCode: 400, detail: "Mindestens eine Lücke ist erforderlich.");
+        if (dto.Gaps is { Count: 0 }) return this.ProblemWithCode(ApiErrors.ValidationError, "At least one gap is required.");
         if (dto.Title is not null) cloze.Title = dto.Title;
         if (dto.Text is not null) cloze.Text = dto.Text;
         if (dto.Translation is not null) cloze.Translation = dto.Translation;

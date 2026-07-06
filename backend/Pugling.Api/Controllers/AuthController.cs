@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Pugling.Api.Auth;
 using Pugling.Api.Data;
+using Pugling.Api.Errors;
 
 namespace Pugling.Api.Controllers;
 
@@ -28,7 +29,7 @@ public class AuthController(PuglingDbContext db, TokenService tokens) : Controll
     public async Task<ActionResult<LoginResponse>> LoginFather(FatherLoginDto dto)
     {
         var father = await db.Fathers.FirstOrDefaultAsync(f => f.Id == dto.FatherId);
-        if (father is null || !PinHasher.Verify(dto.Pin, father.Pin)) return Problem(statusCode: 401, detail: "Vater-Id oder PIN falsch.");
+        if (father is null || !PinHasher.Verify(dto.Pin, father.Pin)) return this.ProblemWithCode(ApiErrors.InvalidCredentials, "Invalid father ID or PIN.");
 
         var (token, expires) = tokens.IssueForFather(father.Id, father.Name);
         return new LoginResponse(token, Roles.Vater, father.Id, father.Name, expires);
@@ -45,7 +46,7 @@ public class AuthController(PuglingDbContext db, TokenService tokens) : Controll
     public async Task<ActionResult<LoginResponse>> LoginChild(ChildLoginDto dto)
     {
         var child = await db.Children.FirstOrDefaultAsync(c => c.Id == dto.ChildId);
-        if (child is null || !PinHasher.Verify(dto.Pin, child.Pin)) return Problem(statusCode: 401, detail: "Kind-Id oder PIN falsch.");
+        if (child is null || !PinHasher.Verify(dto.Pin, child.Pin)) return this.ProblemWithCode(ApiErrors.InvalidCredentials, "Invalid child ID or PIN.");
 
         var (token, expires) = tokens.IssueForChild(child.Id, child.FatherId, child.Name);
         return new LoginResponse(token, Roles.Sohn, child.Id, child.Name, expires);

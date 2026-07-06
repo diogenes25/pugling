@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Pugling.Api.Auth;
 using Pugling.Api.Data;
+using Pugling.Api.Errors;
 using Pugling.Api.Models;
 
 namespace Pugling.Api.Controllers.Learn;
@@ -92,8 +93,7 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db) : Con
     protected ObjectResult? EnsureCanModify(Exercise exercise) =>
         User.Owns(exercise)
             ? null
-            : Problem(statusCode: StatusCodes.Status403Forbidden,
-                detail: "Diese Übung gehört einem anderen Vater und kann nur von ihrem Autor geändert oder gelöscht werden.");
+            : this.ProblemWithCode(ApiErrors.NotAuthor, "This exercise belongs to another father and can only be modified or deleted by its author.");
 
     /// <summary>Lädt eine Übung dieses Typs; Basis für abgeleitete Zusatz-Endpunkte (Generieren, Auswerten).</summary>
     protected Task<Exercise?> FindAsync(int subjectId, int chapterId, int exerciseId) =>
@@ -153,10 +153,10 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db) : Con
     public async Task<ActionResult<ExerciseResponse<TConfig>>> Create(int subjectId, int chapterId, ExercisePayload<TConfig> body)
     {
         if (!await ChapterExists(subjectId, chapterId)) return NotFound();
-        if (string.IsNullOrWhiteSpace(body.Title)) return Problem(statusCode: 400, detail: "Titel ist erforderlich.");
-        if (!await CategoryValid(subjectId, body.CategoryId)) return Problem(statusCode: 400, detail: "Unbekannte Art für dieses Fach.");
+        if (string.IsNullOrWhiteSpace(body.Title)) return this.ProblemWithCode(ApiErrors.ValidationError, "Title is required.");
+        if (!await CategoryValid(subjectId, body.CategoryId)) return this.ProblemWithCode(ApiErrors.InvalidReference, "Unknown category for this subject.");
         var config = body.Config ?? new TConfig();
-        if (await ValidateConfigAsync(subjectId, config) is { } createErr) return Problem(statusCode: 400, detail: createErr);
+        if (await ValidateConfigAsync(subjectId, config) is { } createErr) return this.ProblemWithCode(ApiErrors.ValidationError, createErr);
         NormalizeConfig(config);
         await NormalizeConfigAsync(subjectId, config);
 
@@ -200,10 +200,10 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db) : Con
         var exercise = await FindAsync(subjectId, chapterId, exerciseId);
         if (exercise is null) return NotFound();
         if (EnsureCanModify(exercise) is { } forbidden) return forbidden;
-        if (string.IsNullOrWhiteSpace(body.Title)) return Problem(statusCode: 400, detail: "Titel ist erforderlich.");
-        if (!await CategoryValid(subjectId, body.CategoryId)) return Problem(statusCode: 400, detail: "Unbekannte Art für dieses Fach.");
+        if (string.IsNullOrWhiteSpace(body.Title)) return this.ProblemWithCode(ApiErrors.ValidationError, "Title is required.");
+        if (!await CategoryValid(subjectId, body.CategoryId)) return this.ProblemWithCode(ApiErrors.InvalidReference, "Unknown category for this subject.");
         var config = body.Config ?? new TConfig();
-        if (await ValidateConfigAsync(subjectId, config) is { } updateErr) return Problem(statusCode: 400, detail: updateErr);
+        if (await ValidateConfigAsync(subjectId, config) is { } updateErr) return this.ProblemWithCode(ApiErrors.ValidationError, updateErr);
         NormalizeConfig(config);
 
         exercise.Title = body.Title.Trim();
@@ -243,7 +243,7 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db) : Con
         // Verwendete Übungen schützen: der FK PlanPosition→Exercise ist Restrict (sonst 500 statt klarer Fehler).
         if (await db.PlanPositions.AnyAsync(p => p.ExerciseId == exerciseId)
             || await db.KlassenarbeitExercises.AnyAsync(x => x.ExerciseId == exerciseId))
-            return Problem(statusCode: 409, detail: "Übung wird in einem Lehrplan oder einer Klassenarbeit verwendet und kann nicht gelöscht werden.");
+            return this.ProblemWithCode(ApiErrors.ExerciseInUse, "The exercise is used in a study plan or a class test and cannot be deleted.");
         db.Exercises.Remove(exercise);
         await db.SaveChangesAsync();
         return NoContent();

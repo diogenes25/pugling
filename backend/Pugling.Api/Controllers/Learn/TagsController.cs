@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Pugling.Api.Auth;
 using Pugling.Api.Data;
+using Pugling.Api.Errors;
 using Pugling.Api.Models;
 
 namespace Pugling.Api.Controllers.Learn;
@@ -59,12 +60,12 @@ public class TagsController(PuglingDbContext db, AuthAccess access) : Controller
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult<TagResponse>> Create(CreateTagDto dto)
     {
-        if (string.IsNullOrWhiteSpace(dto.Name)) return Problem(statusCode: 400, detail: "Name ist erforderlich.");
+        if (string.IsNullOrWhiteSpace(dto.Name)) return this.ProblemWithCode(ApiErrors.ValidationError, "Name is required.");
         if (!await access.OwnsChildAsync(User, dto.ChildId)) return Forbid();
 
         var name = dto.Name.Trim();
         if (await db.Tags.AnyAsync(t => t.ChildId == dto.ChildId && t.Name == name))
-            return Problem(statusCode: 400, detail: "Ein Tag mit diesem Namen existiert für dieses Kind bereits.");
+            return this.ProblemWithCode(ApiErrors.DuplicateTagName, "A tag with this name already exists for this child.");
 
         var tag = new Tag
         {
@@ -93,9 +94,9 @@ public class TagsController(PuglingDbContext db, AuthAccess access) : Controller
         if (dto.Name is not null)
         {
             var name = dto.Name.Trim();
-            if (name.Length == 0) return Problem(statusCode: 400, detail: "Name darf nicht leer sein.");
+            if (name.Length == 0) return this.ProblemWithCode(ApiErrors.ValidationError, "Name must not be empty.");
             if (name != tag.Name && await db.Tags.AnyAsync(t => t.ChildId == tag.ChildId && t.Name == name))
-                return Problem(statusCode: 400, detail: "Ein Tag mit diesem Namen existiert für dieses Kind bereits.");
+                return this.ProblemWithCode(ApiErrors.DuplicateTagName, "A tag with this name already exists for this child.");
             tag.Name = name;
         }
         if (dto.Color is not null) tag.Color = dto.Color.Trim() is { Length: > 0 } c ? c : null;
@@ -127,12 +128,12 @@ public class TagsController(PuglingDbContext db, AuthAccess access) : Controller
     {
         var tag = await FindOwnedAsync(tagId);
         if (tag is null) return NotFound();
-        if (dto.ExerciseIds is not { Count: > 0 }) return Problem(statusCode: 400, detail: "Mindestens eine Übung ist erforderlich.");
+        if (dto.ExerciseIds is not { Count: > 0 }) return this.ProblemWithCode(ApiErrors.ValidationError, "At least one exercise is required.");
 
         var ids = dto.ExerciseIds.Distinct().ToList();
         var existing = await db.Exercises.Where(e => ids.Contains(e.Id)).Select(e => e.Id).ToListAsync();
         var missing = ids.Except(existing).ToList();
-        if (missing.Count > 0) return Problem(statusCode: 400, detail: $"Unbekannte Übungs-Ids: {string.Join(", ", missing)}");
+        if (missing.Count > 0) return this.ProblemWithCode(ApiErrors.InvalidReference, $"Unknown exercise IDs: {string.Join(", ", missing)}");
 
         var already = tag.ExerciseTags.Select(x => x.ExerciseId).ToHashSet();
         foreach (var id in ids.Where(id => !already.Contains(id)))
@@ -206,12 +207,12 @@ public class TagsController(PuglingDbContext db, AuthAccess access) : Controller
     {
         var tag = await FindOwnedAsync(tagId);
         if (tag is null) return NotFound();
-        if (dto.VocabularyIds is not { Count: > 0 }) return Problem(statusCode: 400, detail: "Mindestens eine Vokabel ist erforderlich.");
+        if (dto.VocabularyIds is not { Count: > 0 }) return this.ProblemWithCode(ApiErrors.ValidationError, "At least one vocabulary item is required.");
 
         var ids = dto.VocabularyIds.Distinct().ToList();
         var existing = await db.Vocabulary.Where(v => ids.Contains(v.Id)).Select(v => v.Id).ToListAsync();
         var missing = ids.Except(existing).ToList();
-        if (missing.Count > 0) return Problem(statusCode: 400, detail: $"Unbekannte Vokabel-Ids: {string.Join(", ", missing)}");
+        if (missing.Count > 0) return this.ProblemWithCode(ApiErrors.InvalidReference, $"Unknown vocabulary item IDs: {string.Join(", ", missing)}");
 
         var already = tag.VocabularyTags.Select(x => x.VocabularyId).ToHashSet();
         foreach (var id in ids.Where(id => !already.Contains(id)))

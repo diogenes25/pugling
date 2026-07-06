@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Pugling.Api.Auth;
 using Pugling.Api.Data;
+using Pugling.Api.Errors;
 using Pugling.Api.Models;
 using Pugling.Api.Services;
 
@@ -74,13 +75,13 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
 
         var items = await play.ItemsOfAsync(pos);
         var poolSize = play.PoolSize(pos, items.Count);
-        if (poolSize == 0) return Problem(statusCode: 400, detail: "Die Übung enthält keine prüfbaren Inhalte.");
+        if (poolSize == 0) return this.ProblemWithCode(ApiErrors.NoCheckableContent, "The exercise contains no checkable content.");
 
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
         if (dto.Day is { } dd && dd != today && !User.IsFather()) return Forbid();
         // Anti-Schummel: der Sohn darf nur seinen aktiven, laufenden Plan testen (siehe Übungs-Start).
         if (User.IsChild() && !PositionPlayService.PlanPlayableForChild(plan, today))
-            return Problem(statusCode: 403, detail: "Dieser Lehrplan ist gerade nicht aktiv. Frag deinen Vater.");
+            return this.ProblemWithCode(ApiErrors.PlanInactive, "This study plan is not currently active. Ask your parent.");
         var day = dto.Day ?? today;
         // Stufe: nur der Vater darf sie frei wählen; für den Sohn gilt die Fahrplan-/Positions-Stufe des Tages.
         var stage = User.IsFather() && dto.Stage is not null ? dto.Stage.Value : PositionPlayService.StageForDay(pos, plan, day);
@@ -144,12 +145,12 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
     {
         var attempt = await LoadAttempt(planId, positionId, attemptId);
         if (attempt is null) return NotFound();
-        if (attempt.CompletedAt is not null) return Problem(statusCode: 400, detail: "Test wurde bereits eingereicht.");
+        if (attempt.CompletedAt is not null) return this.ProblemWithCode(ApiErrors.TestAlreadySubmitted, "The test has already been submitted.");
         var plan = (await GetPlan(planId))!;
         // Anti-Schummel: einen inzwischen deaktivierten oder abgelaufenen Plan darf der Sohn auch nicht über
         // einen offenen Testversuch abschließen und bepunkten (der Vater bleibt ausgenommen).
         if (User.IsChild() && !PositionPlayService.PlanPlayableForChild(plan, DateOnly.FromDateTime(DateTime.UtcNow)))
-            return Problem(statusCode: 403, detail: "Dieser Lehrplan ist gerade nicht aktiv. Frag deinen Vater.");
+            return this.ProblemWithCode(ApiErrors.PlanInactive, "This study plan is not currently active. Ask your parent.");
         var pos = await GetPosition(planId, positionId);
         if (pos?.Exercise is null) return NotFound();
 

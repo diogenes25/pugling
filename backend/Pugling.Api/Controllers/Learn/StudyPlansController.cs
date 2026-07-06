@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Pugling.Api.Auth;
 using Pugling.Api.Data;
+using Pugling.Api.Errors;
 using Pugling.Api.Models;
 
 namespace Pugling.Api.Controllers.Learn;
@@ -93,10 +94,10 @@ public class StudyPlansController(PuglingDbContext db, AuthAccess access) : Cont
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<PlanResponse>> Create(CreatePlanDto dto)
     {
-        if (string.IsNullOrWhiteSpace(dto.Title)) return Problem(statusCode: 400, detail: "Title ist erforderlich.");
+        if (string.IsNullOrWhiteSpace(dto.Title)) return this.ProblemWithCode(ApiErrors.ValidationError, "Title is required.");
         // Eigentums-Prüfung zuerst: einheitlich 404 für "existiert nicht" und "nicht mein Kind".
-        if (!await access.FatherOwnsChildAsync(User, dto.ChildId)) return Problem(statusCode: 404, detail: "Kind nicht gefunden.");
-        if (dto.SubjectId is { } sid && !await db.Subjects.AnyAsync(s => s.Id == sid)) return Problem(statusCode: 400, detail: "Fach nicht gefunden.");
+        if (!await access.FatherOwnsChildAsync(User, dto.ChildId)) return this.ProblemWithCode(ApiErrors.NotFound, "Child not found.");
+        if (dto.SubjectId is { } sid && !await db.Subjects.AnyAsync(s => s.Id == sid)) return this.ProblemWithCode(ApiErrors.InvalidReference, "Subject not found.");
 
         var start = dto.StartDate ?? DateOnly.FromDateTime(DateTime.UtcNow);
         var duration = dto.DurationDays > 0 ? dto.DurationDays : 10;
@@ -143,14 +144,14 @@ public class StudyPlansController(PuglingDbContext db, AuthAccess access) : Cont
         // Umzuweisung an ein anderes Kind: nur an ein eigenes Kind des Vaters (sonst 404, wie beim Anlegen).
         if (dto.ChildId is { } newChildId && newChildId != plan.ChildId)
         {
-            if (!await access.FatherOwnsChildAsync(User, newChildId)) return Problem(statusCode: 404, detail: "Kind nicht gefunden.");
+            if (!await access.FatherOwnsChildAsync(User, newChildId)) return this.ProblemWithCode(ApiErrors.NotFound, "Child not found.");
             plan.ChildId = newChildId;
         }
         if (dto.Title is not null && dto.Title.Trim().Length > 0) plan.Title = dto.Title.Trim();
         if (dto.Description is not null) plan.Description = dto.Description.Trim() is { Length: > 0 } d ? d : null;
         if (dto.SubjectId is { } sid)
         {
-            if (!await db.Subjects.AnyAsync(s => s.Id == sid)) return Problem(statusCode: 400, detail: "Fach nicht gefunden.");
+            if (!await db.Subjects.AnyAsync(s => s.Id == sid)) return this.ProblemWithCode(ApiErrors.InvalidReference, "Subject not found.");
             plan.SubjectId = sid;
         }
         if (dto.StartDate is not null) plan.StartDate = dto.StartDate.Value;
