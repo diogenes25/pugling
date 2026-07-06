@@ -1,5 +1,11 @@
 {
   "version": "1",
   "name": "Pugling API",
-  "type": "collection"
+  "type": "collection",
+  "auth": {
+    "mode": "bearer",
+    "bearer": {
+      "token": "{{token}}"
+    }
+  }
 }

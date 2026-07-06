@@ -11,6 +11,7 @@ using Pugling.Api.Data;
 using Pugling.Api.Errors;
 using Pugling.Api.OpenApi;
 using Pugling.Api.Services;
+using Scalar.AspNetCore;
 using Serilog;
 using Serilog.Formatting.Compact;
 
@@ -266,12 +267,18 @@ using (var scope = app.Services.CreateScope())
     Seed.Run(db);
 }
 
-// OpenAPI-Dokument unter /openapi/v1.json + Swagger UI unter /swagger
+// OpenAPI-Dokument unter /openapi/v1.json + Swagger UI unter /swagger + Scalar UI unter /scalar/v1
 app.MapOpenApi();
 app.UseSwaggerUI(o =>
 {
     o.SwaggerEndpoint("/openapi/v1.json", "Pugling API v1");
     o.RoutePrefix = "swagger";
+});
+app.MapScalarApiReference(options =>
+{
+    options
+        .WithTitle("Pugling API v1")
+        .WithPreferredScheme("bearer");
 });
 
 app.UseCors();

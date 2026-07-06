@@ -18,7 +18,10 @@ params:query {
 
 headers {
   Accept: application/json
-  Authorization: Bearer {{childToken}}
+}
+
+auth {
+  mode: inherit
 }
 
 script:post-response {
