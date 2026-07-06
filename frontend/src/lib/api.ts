@@ -28,7 +28,7 @@ export function setToken(token: string | null) {
  * kann der Nutzer diese Referenz nennen.
  */
 export class ApiError extends Error {
-  constructor(public status: number, message: string, public traceId?: string) {
+  constructor(public status: number, message: string, public traceId?: string, public code?: string) {
     super(message);
     this.name = "ApiError";
   }
@@ -62,16 +62,18 @@ async function request(url: string, method: string, body?: unknown): Promise<Res
     // Klartext, traceId zur Korrelation. Bei Nicht-JSON den Rohtext behalten.
     let message = raw || `${res.status} ${res.statusText}`;
     let traceId: string | undefined;
+    let code: string | undefined;
     if (res.headers.get("content-type")?.includes("json") && raw) {
       try {
-        const problem = JSON.parse(raw) as { detail?: string; title?: string; traceId?: string };
+        const problem = JSON.parse(raw) as { detail?: string; title?: string; traceId?: string; code?: string };
         message = problem.detail || problem.title || message;
         traceId = problem.traceId;
+        code = problem.code;
       } catch {
         /* kein valides JSON – Rohtext behalten */
       }
     }
-    throw new ApiError(res.status, message, traceId);
+    throw new ApiError(res.status, message, traceId, code);
   }
   return res;
 }
@@ -251,7 +253,7 @@ export const api = {
   // Der Server bewertet serverseitig: das Frontend liefert nur die Antwort (getippt) bzw. bei
   // Anzeige-/Selbsteinschätzungs-Stufen das WasKnown-Flag; die Stufe erzwingt der Server.
   review: (planId: number, positionId: number, sessionId: number, dto: ReviewInput) =>
-    http<ReviewOutcome>(
+    http<ReviewOutcome | undefined>(
       `${V1}/study-plans/${planId}/positions/${positionId}/practice-sessions/${sessionId}/review`, "POST", dto),
   endSession: (planId: number, positionId: number, sessionId: number) =>
     http<PositionSession>(

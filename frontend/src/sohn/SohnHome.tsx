@@ -23,9 +23,10 @@ export function SohnHome() {
 
   // Den spielbaren Plan vorwählen, sobald die Liste da ist (server-autoritative Affordance statt eigener Regel).
   useEffect(() => {
-    if (!plans.data || planId) return;
-    const chosen = plans.data.find((p) => p.isPlayable) ?? plans.data[0];
-    if (chosen) setPlanId(chosen.id);
+    if (!plans.data) return;
+    const current = plans.data.find((p) => p.id === planId);
+    const chosen = current ?? plans.data.find((p) => p.isPlayable) ?? plans.data[0];
+    if (chosen && chosen.id !== planId) setPlanId(chosen.id);
   }, [plans.data, planId, setPlanId]);
 
   if (plans.loading) return <div className="sohn-body"><div className="loading">Lade…</div></div>;
@@ -44,7 +45,8 @@ export function SohnHome() {
     );
   }
 
-  const activePlanId = planId ?? plans.data[0].id;
+  const activePlan = plans.data.find((p) => p.id === planId) ?? plans.data.find((p) => p.isPlayable) ?? plans.data[0];
+  const activePlanId = activePlan.id;
   return <HomeForPlan planId={activePlanId} plans={plans.data} onPickPlan={setPlanId} onStreak={setStreak} />;
 }
 
