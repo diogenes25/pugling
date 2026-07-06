@@ -95,7 +95,7 @@ Response — `HTTP 400`:
   "status": 400,
   "detail": "Exercise 999999 not found.",
   "code": "invalid_reference",
-  "traceId": "00-b3da35aeaaf2bf56198d0cec6e3d1d50-d689f563f8961fa9-00"
+  "traceId": "<trace-id>"
 }
 ```
 
@@ -112,7 +112,7 @@ Response — `HTTP 404`:
   "status": 404,
   "detail": "Study plan not found.",
   "code": "not_found",
-  "traceId": "00-3904a4c97ab6bfd583a6dd2fa6bd4ecf-45afa932116785c2-00"
+  "traceId": "<trace-id>"
 }
 ```
 
@@ -133,7 +133,7 @@ Response — `HTTP 201`:
   "planId": 2,
   "positionId": 2,
   "day": "2026-07-06",
-  "startedAt": "2026-07-06T16:55:33.9952498Z",
+  "startedAt": "<timestamp>",
   "endedAt": null,
   "activeSeconds": 0,
   "reviewCount": 0
@@ -269,7 +269,7 @@ Response — `HTTP 400`:
   "status": 400,
   "detail": "The test has already been submitted.",
   "code": "test_already_submitted",
-  "traceId": "00-ffce5319a3f95eeb915f70593e776899-95b7918e414964d8-00"
+  "traceId": "<trace-id>"
 }
 ```
 
@@ -291,7 +291,7 @@ Response — `HTTP 400`:
   "status": 400,
   "detail": "The exercise contains no checkable content.",
   "code": "no_checkable_content",
-  "traceId": "00-caf562255f183951ce2c812ca833c430-52d8d4949b7a1e7a-00"
+  "traceId": "<trace-id>"
 }
 ```
 
@@ -308,7 +308,7 @@ Response — `HTTP 409`:
   "status": 409,
   "detail": "This position already has practice/test data and cannot be deleted.",
   "code": "position_has_data",
-  "traceId": "00-0a19ce19e3703d3c842a8639d6a5e4b0-53fa268d8f5ad4d0-00"
+  "traceId": "<trace-id>"
 }
 ```
 
@@ -330,7 +330,7 @@ Response — `HTTP 403`:
   "status": 403,
   "detail": "This study plan is not currently active. Ask your parent.",
   "code": "plan_inactive",
-  "traceId": "00-f750ff43cabc3dec53a9e6d9c79cf18a-f5e8fc4283b1d68a-00"
+  "traceId": "<trace-id>"
 }
 ```
 

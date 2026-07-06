@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
+using System.Globalization;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -7,6 +8,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Pugling.Api.Data;
 using Pugling.Api.Errors;
 using Pugling.Api.Models;
+using Pugling.Api.OpenApi;
 
 namespace Pugling.Api.Tests;
 
@@ -78,7 +80,7 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
 
         var isError = (int)expectedStatus >= 400;
         _entries.Add(new Entry(group, title, method.Method, path, RoleOf(client),
-            requestJson, (int)expectedStatus, (int)res.StatusCode, Truncate(responseJson), isError));
+            requestJson, (int)expectedStatus, (int)res.StatusCode, responseJson, isError));
         return bodyEl;
     }
 
@@ -104,8 +106,14 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
         }
     }
 
-    private static string Redact(string s) =>
-        Regex.Replace(s, "(\"token\"\\s*:\\s*)\"[^\"]*\"", "$1\"<redacted-jwt>\"");
+    private static string Redact(string s)
+    {
+        var redacted = Regex.Replace(s, "(\"token\"\\s*:\\s*)\"[^\"]*\"", "$1\"<redacted-jwt>\"");
+        redacted = Regex.Replace(redacted, "(\"traceId\"\\s*:\\s*)\"[^\"]*\"", "$1\"<trace-id>\"");
+        return Regex.Replace(redacted,
+            "\"\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?Z\"",
+            "\"<timestamp>\"");
+    }
 
     private static string? Truncate(string? s) =>
         s is { Length: > 1500 } ? s[..1500] + "\n… (gekürzt)" : s;
@@ -124,6 +132,7 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
     [Fact]
     public async Task CaptureAll()
     {
+        var completed = false;
         try
         {
             var anon = factory.CreateClient();
@@ -144,11 +153,13 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
             await CaptureVocabularyAsync(father);
             await CaptureTagsAsync(father, child, foreignChildId);
             await CaptureTimetableAsync(father, docSubjectId);
+            completed = true;
         }
         finally
         {
             // Auch bei Teil-Läufen schreiben (erleichtert das Debuggen); rote Assertions lassen den Test dennoch fehlschlagen.
             if (_entries.Count > 0) WriteMarkdown();
+            if (completed) WriteOpenApiExamples();
         }
     }
 
@@ -478,6 +489,61 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
         File.WriteAllText(Path.Combine(outDir, "index.md"), RenderIndex(groups));
     }
 
+    private void WriteOpenApiExamples()
+    {
+        var outDir = Path.Combine(RepoRoot(), "backend", "Pugling.Api", "OpenApi");
+        Directory.CreateDirectory(outDir);
+
+        var usedKeys = new HashSet<string>(StringComparer.Ordinal);
+        var examples = _entries.Select(e => ToOpenApiExample(e, usedKeys)).ToList();
+        var json = JsonSerializer.Serialize(examples, Indented);
+        File.WriteAllText(Path.Combine(outDir, "openapi-examples.generated.json"), json);
+    }
+
+    private static OpenApiExampleEntry ToOpenApiExample(Entry entry, HashSet<string> usedKeys) =>
+        new(UniqueKey(entry, usedKeys), entry.ResourceGroup, entry.Title, entry.Method, entry.Path, entry.Role,
+            entry.RequestBodyJson, entry.ExpectedStatus, entry.ResponseBodyJson, entry.IsError,
+            entry.IsError ? TryReadCode(entry.ResponseBodyJson) : null);
+
+    private static string UniqueKey(Entry entry, HashSet<string> usedKeys)
+    {
+        var key = Slug($"{entry.ResourceGroup}-{entry.Title}");
+        var uniqueKey = key;
+        var suffix = 2;
+        while (!usedKeys.Add(uniqueKey))
+            uniqueKey = $"{key}-{suffix++}";
+        return uniqueKey;
+    }
+
+    private static string Slug(string text)
+    {
+        var normalized = text.Normalize(NormalizationForm.FormD);
+        var withoutMarks = new string(normalized
+            .Where(c => CharUnicodeInfo.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark)
+            .ToArray());
+        var slug = Regex.Replace(withoutMarks.ToLowerInvariant(), "[^a-z0-9]+", "-").Trim('-');
+        return string.IsNullOrWhiteSpace(slug) ? "example" : slug;
+    }
+
+    private static string? TryReadCode(string? responseBodyJson)
+    {
+        if (string.IsNullOrWhiteSpace(responseBodyJson))
+            return null;
+
+        try
+        {
+            using var doc = JsonDocument.Parse(responseBodyJson);
+            return doc.RootElement.ValueKind == JsonValueKind.Object
+                && doc.RootElement.TryGetProperty("code", out var code)
+                ? code.GetString()
+                : null;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
     private static string RenderGroup(string group, IReadOnlyList<Entry> entries)
     {
         var sb = new StringBuilder();
@@ -504,7 +570,7 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
             }
 
             sb.AppendLine($"Response — `HTTP {e.ActualStatus}`:");
-            sb.AppendLine("```json").AppendLine(e.ResponseBodyJson ?? "(kein Inhalt)").AppendLine("```").AppendLine();
+            sb.AppendLine("```json").AppendLine(Truncate(e.ResponseBodyJson) ?? "(kein Inhalt)").AppendLine("```").AppendLine();
         }
         return sb.ToString();
     }
