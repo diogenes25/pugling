@@ -25,13 +25,31 @@ public class RewardsController(PuglingDbContext db, OfferService offers) : Contr
 {
     public record RewardDto(int Id, string Title, int Cost, OfferPeriod Period, int Quantity, bool Active,
         int? StudyPlanId, int? ExerciseId, string? PlanTitle, string? ExerciseTitle);
+
+    /// <summary>
+    /// Ein Kauf in der Vater-Sicht. <paramref name="CanFulfill"/>/<paramref name="CanCancel"/> sind server-autoritative
+    /// Affordances: Sie sagen dem Frontend, ob die Aktionen <c>fulfill</c>/<c>cancel</c> für diesen Kauf gerade zulässig
+    /// sind (nur bei offenem Kauf, Status <see cref="RewardRedemptionStatus.Purchased"/>), damit die Buttons nicht die
+    /// Server-Regel nachbilden müssen.
+    /// </summary>
     public record RedemptionDto(int Id, int ChildId, int? RewardId, string Title, int Cost,
-        RewardRedemptionStatus Status, DateTime PurchasedAt, DateTime? FulfilledAt);
+        RewardRedemptionStatus Status, DateTime PurchasedAt, DateTime? FulfilledAt)
+    {
+        /// <summary>Darf der Vater diesen Kauf jetzt als erfüllt markieren? (nur solange er offen ist)</summary>
+        public bool CanFulfill { get; init; }
+        /// <summary>Darf der Vater diesen Kauf jetzt stornieren (Rückerstattung)? (nur solange er offen ist)</summary>
+        public bool CanCancel { get; init; }
+    }
 
     private static RewardDto Map(Reward r) => new(r.Id, r.Title, r.Cost, r.Period, r.Quantity, r.Active,
         r.StudyPlanId, r.ExerciseId, r.StudyPlan?.Title, r.Exercise?.Title);
     private static RedemptionDto MapRedemption(RewardRedemption r) =>
-        new(r.Id, r.ChildId, r.RewardId, r.Title, r.Cost, r.Status, r.PurchasedAt, r.FulfilledAt);
+        new(r.Id, r.ChildId, r.RewardId, r.Title, r.Cost, r.Status, r.PurchasedAt, r.FulfilledAt)
+        {
+            // Offen = erfüll- und stornierbar (dieselbe Bedingung wie in OfferService.Fulfill/Cancel).
+            CanFulfill = r.Status == RewardRedemptionStatus.Purchased,
+            CanCancel = r.Status == RewardRedemptionStatus.Purchased,
+        };
 
     /// <summary>Alle Angebote des Kindes (Definitionen zur Verwaltung).</summary>
     [HttpGet]

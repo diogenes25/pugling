@@ -140,6 +140,24 @@ public class AntiCheatTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
         var a = await (await father.GetAsync($"/api/v1/study-plans/{planA}")).Content.ReadFromJsonAsync<JsonElement>();
         Assert.False(b.GetProperty("active").GetBoolean());
         Assert.True(a.GetProperty("active").GetBoolean());
+
+        // Affordance IsPlayable folgt der Anti-Cheat-Regel: nur der aktive (und in Laufzeit befindliche) Plan ist spielbar.
+        Assert.True(a.GetProperty("isPlayable").GetBoolean());
+        Assert.False(b.GetProperty("isPlayable").GetBoolean());
+    }
+
+    [Fact]
+    public async Task IsPlayable_False_WennAktivAberNochNichtGestartet()
+    {
+        var father = await TestApi.FatherAsync(factory);
+        // Aktiver Plan, dessen Laufzeit erst in der Zukunft beginnt → heute (noch) nicht spielbar.
+        var future = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(7).ToString("yyyy-MM-dd");
+        var planId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/study-plans",
+            new { childId = 1, title = "Zukunfts-Plan", startDate = future, durationDays = 5 }));
+
+        var plan = await (await father.GetAsync($"/api/v1/study-plans/{planId}")).Content.ReadFromJsonAsync<JsonElement>();
+        Assert.True(plan.GetProperty("active").GetBoolean());
+        Assert.False(plan.GetProperty("isPlayable").GetBoolean());
     }
 
     [Fact]
@@ -201,7 +219,7 @@ public class AntiCheatTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
                 title = "Rueckwaerts",
                 orderIndex = 1,
                 rewardPoints = 10,
-                config = new { direction = "back-to-front", refs = new[] { key } },
+                config = new { direction = "back-to-front", refs = new[] { new { vocabularyId = id } } },
             }));
 
         var data = await father.GetFromJsonAsync<JsonElement>($"/api/v1/learn/exercises/{exerciseId}/preview?stage=5");

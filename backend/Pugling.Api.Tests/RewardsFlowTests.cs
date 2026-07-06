@@ -66,6 +66,36 @@ public class RewardsFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
     }
 
     [Fact]
+    public async Task Redemption_Affordances_NurBeiOffenemKauf()
+    {
+        var father = await TestApi.FatherAsync(factory);
+        var (childId, child) = await FreshChildAsync(father, "9007");
+        (await father.PostAsJsonAsync($"/api/v1/children/{childId}/points", new { amount = 300, reason = "x" })).EnsureSuccessStatusCode();
+        var offerId = await CreateOfferAsync(father, childId, new { title = "Nachtisch", cost = 100 });
+
+        var view = await JsonAsync(await child.PostAsJsonAsync($"/api/v1/me/rewards/{offerId}/purchase", new { }));
+        var redemptionId = view.GetProperty("redemptions").EnumerateArray().First().GetProperty("id").GetInt32();
+
+        // Offener Kauf: erfüll- UND stornierbar (server-autoritative Affordance).
+        var open = await ReadRedemptionAsync(father, childId, redemptionId);
+        Assert.True(open.GetProperty("canFulfill").GetBoolean());
+        Assert.True(open.GetProperty("canCancel").GetBoolean());
+
+        // Nach Erfüllung: beide Aktionen entfallen.
+        (await father.PostAsJsonAsync($"/api/v1/children/{childId}/rewards/redemptions/{redemptionId}/fulfill", new { }))
+            .EnsureSuccessStatusCode();
+        var done = await ReadRedemptionAsync(father, childId, redemptionId);
+        Assert.False(done.GetProperty("canFulfill").GetBoolean());
+        Assert.False(done.GetProperty("canCancel").GetBoolean());
+    }
+
+    private async Task<JsonElement> ReadRedemptionAsync(HttpClient father, int childId, int redemptionId)
+    {
+        var list = await JsonAsync(await father.GetAsync($"/api/v1/children/{childId}/rewards/redemptions"));
+        return list.EnumerateArray().First(r => r.GetProperty("id").GetInt32() == redemptionId);
+    }
+
+    [Fact]
     public async Task Kauf_OhneDeckung_400_KeineAbbuchung()
     {
         var father = await TestApi.FatherAsync(factory);

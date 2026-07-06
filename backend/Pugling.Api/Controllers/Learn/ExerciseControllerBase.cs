@@ -55,6 +55,20 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db) : Con
     /// </summary>
     protected virtual void NormalizeConfig(TConfig config) { }
 
+    /// <summary>
+    /// Asynchrone Normalisierung vor dem Speichern (Standard: nichts). Abgeleitete Controller überschreiben dies,
+    /// wenn die Invariante DB-Zugriff braucht – z. B. Vokabel-Übungen, die inline genutzte Wörter im Store anlegen
+    /// und mit ihrer Store-ID verknüpfen. Läuft nach <see cref="NormalizeConfig"/> und darf <c>SaveChanges</c> nutzen.
+    /// </summary>
+    protected virtual Task NormalizeConfigAsync(int subjectId, TConfig config) => Task.CompletedTask;
+
+    /// <summary>
+    /// Formt die Config für die Antwort (Standard: wie gespeichert). Abgeleitete Controller überschreiben dies,
+    /// um abgeleitete, nicht persistierte Felder zu füllen – z. B. den HATEOAS-Link <c>_self</c> je Vokabel aus
+    /// ihrer ID. Rein rechnerisch (kein DB-Zugriff), da pro Zeile der Liste aufgerufen.
+    /// </summary>
+    protected virtual TConfig ConfigForResponse(Exercise exercise) => ConfigOf(exercise);
+
     /// <summary>DbContext für abgeleitete Controller mit Zusatz-Endpunkten über das reine CRUD hinaus.</summary>
     protected PuglingDbContext Db => db;
 
@@ -97,7 +111,7 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db) : Con
 
     /// <summary>Projiziert eine Übung; <paramref name="fid"/> wird einmal pro Request ermittelt (nicht pro Zeile).</summary>
     protected ExerciseResponse<TConfig> Map(Exercise e, int? fid) =>
-        new(e.Id, e.ChapterId, e.Type.ToString(), e.Title, e.OrderIndex, e.RewardPoints, e.CreatedAt, ConfigOf(e), e.SuggestedBonus,
+        new(e.Id, e.ChapterId, e.Type.ToString(), e.Title, e.OrderIndex, e.RewardPoints, e.CreatedAt, ConfigForResponse(e), e.SuggestedBonus,
             e.GradeMin, e.GradeMax, e.SchoolTypes, e.Source, e.CategoryId, e.Category?.Name,
             e.AuthorFatherId, ClaimsPrincipalExtensions.IsOwnedBy(e.AuthorFatherId, fid), e.Description,
             e.DefaultUseLeitner, e.DefaultRequireTypedTest);
@@ -144,6 +158,7 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db) : Con
         var config = body.Config ?? new TConfig();
         if (await ValidateConfigAsync(subjectId, config) is { } createErr) return Problem(statusCode: 400, detail: createErr);
         NormalizeConfig(config);
+        await NormalizeConfigAsync(subjectId, config);
 
         var exercise = new Exercise
         {

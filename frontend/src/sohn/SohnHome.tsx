@@ -21,10 +21,10 @@ export function SohnHome() {
   const { planId, setPlanId, skin, setStreak } = useSohn();
   const plans = useAsync<PlanResponse[]>(() => api.plans(), []);
 
-  // Ersten aktiven Plan vorwählen, sobald die Liste da ist.
+  // Den spielbaren Plan vorwählen, sobald die Liste da ist (server-autoritative Affordance statt eigener Regel).
   useEffect(() => {
     if (!plans.data || planId) return;
-    const chosen = plans.data.find((p) => p.active) ?? plans.data[0];
+    const chosen = plans.data.find((p) => p.isPlayable) ?? plans.data[0];
     if (chosen) setPlanId(chosen.id);
   }, [plans.data, planId, setPlanId]);
 

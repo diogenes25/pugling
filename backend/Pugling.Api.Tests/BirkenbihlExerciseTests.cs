@@ -225,7 +225,7 @@ public class BirkenbihlExerciseTests(PuglingWebAppFactory factory) : IClassFixtu
         Assert.Equal("How", result[0].GetProperty("learningWord").GetString());
         Assert.Equal("Wie", result[0].GetProperty("gloss").GetString());
         Assert.Equal(howId, result[0].GetProperty("vocabularyId").GetInt32());
-        Assert.Equal($"/api/v1/learn/vocabulary/{howId}", result[0].GetProperty("vocabularySrc").GetString());
+        Assert.Equal($"/api/v1/learn/vocabulary/{howId}", result[0].GetProperty("_self").GetString());
 
         Assert.Equal("bist", result[1].GetProperty("gloss").GetString());
         Assert.Equal(areId, result[1].GetProperty("vocabularyId").GetInt32());
@@ -234,7 +234,7 @@ public class BirkenbihlExerciseTests(PuglingWebAppFactory factory) : IClassFixtu
         Assert.Equal("you", result[2].GetProperty("learningWord").GetString());
         Assert.True(IsNull(result[2], "gloss"));
         Assert.True(IsNull(result[2], "vocabularyId"));
-        Assert.True(IsNull(result[2], "vocabularySrc"));
+        Assert.True(IsNull(result[2], "_self"));
 
         // Wort-Ids sind übungsweit eindeutig vergeben.
         Assert.Equal([1, 2, 3], result.Select(w => w.GetProperty("wordId").GetInt32()).ToArray());
@@ -311,7 +311,9 @@ public class BirkenbihlExerciseTests(PuglingWebAppFactory factory) : IClassFixtu
         Assert.Equal("rot", w1.GetProperty("gloss").GetString());
         Assert.False(IsNull(w1, "vocabularyId"));
         Assert.Equal("ROT-FREI", w2.GetProperty("gloss").GetString());
-        Assert.True(IsNull(w2, "vocabularyId"));
+        // Freie Glosse wird jetzt automatisch im Store angelegt & verlinkt (eigener Eintrag, unabhängig von w1).
+        Assert.False(IsNull(w2, "vocabularyId"));
+        Assert.NotEqual(w1.GetProperty("vocabularyId").GetInt32(), w2.GetProperty("vocabularyId").GetInt32());
     }
 
     [Fact]

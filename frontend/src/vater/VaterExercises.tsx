@@ -80,8 +80,9 @@ export function VaterExercises() {
   // Typ-spezifisch: Zeilen + Extra-Felder (Richtung/Trägertext/Anweisung/Sprachen …).
   const [rows, setRows] = useState<Row[]>([emptyRow("Vocabulary")]);
   const [extra, setExtra] = useState<Row>({ direction: "front-to-back" });
-  // Vokabel-Übung: Store-Referenzen (Keys) statt inline-Wörter (Verknüpfung über Übungen hinweg).
-  const [vocabKeys, setVocabKeys] = useState<string[]>([]);
+  // Vokabel-Übung: Store-Referenzen (per Id) statt inline-Wörter (Verknüpfung über Übungen hinweg).
+  // Key wird nur für die Anzeige mitgeführt; ans Backend geht die vocabularyId.
+  const [vocabRefs, setVocabRefs] = useState<{ key: string; vocabularyId: number }[]>([]);
 
   const [error, setError] = useState<string | null>(null);
   const [okMsg, setOkMsg] = useState<string | null>(null);
@@ -118,7 +119,7 @@ export function VaterExercises() {
   // Beim Typwechsel den Editor zurücksetzen (eine leere Zeile + passende Extra-Defaults).
   useEffect(() => {
     setRows([emptyRow(type)]);
-    setVocabKeys([]);
+    setVocabRefs([]);
     setDefaultStage("");
     setExtra(type === "Vocabulary" ? { direction: "front-to-back" }
       : type === "List" ? { ordered: false } : {});
@@ -158,8 +159,8 @@ export function VaterExercises() {
   function buildConfig(): unknown {
     switch (type) {
       case "Vocabulary":
-        // Store-Referenzen (Keys) statt inline-Wörter → dieselbe Vokabel bleibt über Übungen verknüpft.
-        return { direction: extra.direction || "front-to-back", refs: vocabKeys };
+        // Store-Referenzen (per Id) statt inline-Wörter → dieselbe Vokabel bleibt über Übungen verknüpft.
+        return { direction: extra.direction || "front-to-back", refs: vocabRefs.map((r) => ({ vocabularyId: r.vocabularyId })) };
       case "Arithmetic":
         return { problems: rows.map((r) => ({ prompt: r.prompt, answer: Number(r.answer), tolerance: Number(r.tolerance) || 0 })) };
       case "Cloze":
@@ -186,7 +187,7 @@ export function VaterExercises() {
     // Grobe Pflichtprüfung je Typ: mindestens die Kernfelder der ersten Zeile gefüllt.
     const r = rows[0];
     switch (type) {
-      case "Vocabulary": return vocabKeys.length === 0;
+      case "Vocabulary": return vocabRefs.length === 0;
       case "Arithmetic": return !r.prompt || r.answer === "";
       case "Cloze": return !extra.text || !r.answer;
       case "Matching": return !r.left || !r.right;
@@ -230,7 +231,7 @@ export function VaterExercises() {
       setTitle("");
       setDescription("");
       setRows([emptyRow(type)]);
-      setVocabKeys([]);
+      setVocabRefs([]);
     } catch (err) {
       setError(errorMessage(err));
     } finally {
@@ -327,7 +328,7 @@ export function VaterExercises() {
       <section className="card">
         <h3 style={{ marginTop: 0 }}>Inhalt · {TYPE_LABEL[type]}</h3>
         {type === "Vocabulary"
-          ? <VocabRefPicker selectedKeys={vocabKeys} setSelectedKeys={setVocabKeys} extra={extra} setExtra={setExtra} />
+          ? <VocabRefPicker selected={vocabRefs} setSelected={setVocabRefs} extra={extra} setExtra={setExtra} />
           : <ConfigEditor type={type} rows={rows} extra={extra} setExtra={setExtra}
               patchRow={patchRow} addRow={addRow} removeRow={removeRow} />}
       </section>
@@ -487,10 +488,10 @@ function RowField({ label, value, onChange, type = "text", placeholder, optional
   );
 }
 
-/** Vokabel-Inhalt: wählt Store-Vokabeln (Komplextyp) per Key statt inline-Wörter; erlaubt „einfach anlegen". */
-function VocabRefPicker({ selectedKeys, setSelectedKeys, extra, setExtra }: {
-  selectedKeys: string[];
-  setSelectedKeys: (updater: (k: string[]) => string[]) => void;
+/** Vokabel-Inhalt: wählt Store-Vokabeln (Komplextyp) per Id statt inline-Wörter; erlaubt „einfach anlegen". */
+function VocabRefPicker({ selected, setSelected, extra, setExtra }: {
+  selected: { key: string; vocabularyId: number }[];
+  setSelected: (updater: (k: { key: string; vocabularyId: number }[]) => { key: string; vocabularyId: number }[]) => void;
   extra: Row;
   setExtra: (updater: (e: Row) => Row) => void;
 }) {
@@ -516,15 +517,18 @@ function VocabRefPicker({ selectedKeys, setSelectedKeys, extra, setExtra }: {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
-  const toggle = (key: string) =>
-    setSelectedKeys((cur) => (cur.includes(key) ? cur.filter((k) => k !== key) : [...cur, key]));
+  const toggle = (v: VocabularyResponse) =>
+    setSelected((cur) => (cur.some((s) => s.key === v.key)
+      ? cur.filter((s) => s.key !== v.key)
+      : [...cur, { key: v.key, vocabularyId: v.id }]));
+  const removeKey = (key: string) => setSelected((cur) => cur.filter((s) => s.key !== key));
 
   async function quickAdd() {
     if (!qWord.trim() || !qTrans.trim()) return;
     setBusy(true); setErr(null);
     try {
       const v = await api.createVocabulary({ sourceLanguage: src, targetLanguage: tgt, word: qWord.trim(), translation: qTrans.trim() });
-      setSelectedKeys((cur) => (cur.includes(v.key) ? cur : [...cur, v.key]));
+      setSelected((cur) => (cur.some((s) => s.key === v.key) ? cur : [...cur, { key: v.key, vocabularyId: v.id }]));
       setQWord(""); setQTrans(""); store.reload();
     } catch (e) { setErr(errorMessage(e)); } finally { setBusy(false); }
   }
@@ -558,11 +562,11 @@ function VocabRefPicker({ selectedKeys, setSelectedKeys, extra, setExtra }: {
         </div>
       </div>
 
-      {selectedKeys.length > 0 && (
+      {selected.length > 0 && (
         <div className="tokenlist">
-          {selectedKeys.map((k) => {
-            const v = byKey.get(k);
-            return <span className="token" key={k}>{v ? `${v.word}→${v.translation}` : k}<button type="button" aria-label="Entfernen" onClick={() => toggle(k)}>×</button></span>;
+          {selected.map((sel) => {
+            const v = byKey.get(sel.key);
+            return <span className="token" key={sel.key}>{v ? `${v.word}→${v.translation}` : sel.key}<button type="button" aria-label="Entfernen" onClick={() => removeKey(sel.key)}>×</button></span>;
           })}
         </div>
       )}
@@ -596,7 +600,7 @@ function VocabRefPicker({ selectedKeys, setSelectedKeys, extra, setExtra }: {
         <div style={{ maxHeight: 240, overflowY: "auto", display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(200px,1fr))", gap: 6 }}>
           {(store.data ?? []).map((v) => (
             <label key={v.id} className="checkline" style={{ padding: 6, border: "1px solid var(--stroke)", borderRadius: 8 }}>
-              <input type="checkbox" checked={selectedKeys.includes(v.key)} onChange={() => toggle(v.key)} />
+              <input type="checkbox" checked={selected.some((s) => s.key === v.key)} onChange={() => toggle(v)} />
               <span>{v.word} <span className="muted">→ {v.translation}</span></span>
             </label>
           ))}

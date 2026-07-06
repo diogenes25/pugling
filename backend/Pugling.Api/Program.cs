@@ -58,6 +58,8 @@ builder.Services.AddScoped<PositionProgressService>();
 builder.Services.AddScoped<PositionReportService>();
 // Birkenbihl-Automatik: Satz tokenisieren + Wörter im Vokabelspeicher nachschlagen (Wort-für-Wort-Dekodierung).
 builder.Services.AddScoped<BirkenbihlDecodingService>();
+// Findet-sonst-legt-an: sichert, dass jede in einer Übung genutzte Vokabel im zentralen Store liegt.
+builder.Services.AddScoped<VocabularyStoreService>();
 // Kindübergreifendes Tages-Dashboard des Vaters („wer hat heute was geschafft?").
 builder.Services.AddScoped<ChildrenDashboardService>();
 builder.Services.AddScoped<AuthAccess>();
