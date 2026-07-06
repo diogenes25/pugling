@@ -45,7 +45,7 @@ GET /api/v1/auth/me        → { role, fatherId, childId, name }
 
 ## 2. Registrierung / Bootstrapping
 
-Ein neuer **Vater** kann sich **anonym** anlegen (einziger nicht-authentifizierte Schreibpfad):
+Ein neuer **Vater** kann sich **anonym** anlegen (einziger nicht authentifizierter Schreibpfad):
 
 ```http
 POST /api/v1/fathers

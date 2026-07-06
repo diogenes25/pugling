@@ -224,7 +224,7 @@ Die Kehrseite des Verdienens — drei getrennte Kreisläufe.
 ### Skins (💎 Gems, sofortiger Kauf)
 
 Kosmetische Charaktere, server-autoritativer Besitz. Kosten in `SkinCatalog` (Backend =
-Quelle der Wahrheit). Kauf bucht **Gems** ab (`PointKind.SkinPurchase`), rüstet direkt aus und bumpt
+Quelle der Wahrheit). Kauf bucht **Gems** ab (`PointKind.SkinPurchase`), rüstet direkt aus und erhöht
 `Child.ConcurrencyStamp` → paralleler Doppelklick scheitert mit 409 statt doppelt abzubuchen.
 
 ```http
@@ -263,25 +263,25 @@ GET    /api/v1/me/rewards          // { coins, available[period,quantity,remaini
 POST   /api/v1/me/rewards/{id}/purchase
 ```
 
-### Familien-Shop (🪙 Coins + 💎 Gems, Inventar + Aktivierungsanfrage)
+### Familien-Shop (🪙 Münzen + 💎 Gems, Inventar + Aktivierungsanfrage)
 
 Der **Familien-Shop** ist das flexiblere Pendant zu den einfachen Angeboten: Der Vater pflegt einen
 **Artikel-Katalog** (`ShopArticle`) mit Eigenschaften wie Einheit (`UnitType`: Minute, Stunde, Stück, …)
 und Kategorie (`ActionType`: TV, Zocken, Süßigkeit, Ausflug, …). Je Artikel können mehrere
-**Angebote** (`ShopListing`) mit eigenem Preis (Coins **und/oder** Gems), Menge pro Kauf und Bestand
+**Angebote** (`ShopListing`) mit eigenem Preis (Münzen **und/oder** Gems), Menge pro Kauf und Bestand
 definiert werden. Bestand kann sich automatisch auffüllen (`ShopRefillKind`: None / Once / Daily /
 TwiceDaily / Weekly).
 
 Ablauf (Logik in [`ShopService`](../backend/Pugling.Api/Services/ShopService.cs)):
 
-1. **Sohn kauft ein Angebot** — Coins (`PointKind.ShopCoins`) und Gems (`PointKind.ShopGems`) sofort
+1. **Sohn kauft ein Angebot** — Münzen (`PointKind.ShopCoins`) und Gems (`PointKind.ShopGems`) sofort
    abgebucht, Bestand des Listings reduziert, **aggregiertes Inventar** (`ChildInventory`) für den
    Artikel um `UnitsPerPurchase` erhöht. ConcurrencyStamp verhindert Doppelkäufe.
 2. **Sohn stellt Aktivierungsanfrage** (`ActivationRequest`) — möchte `quantity` Einheiten
    tatsächlich verbrauchen (z. B. „Ich will jetzt 30 min Fernsehen"). Status: `Pending`.
 3. **Vater genehmigt** (`Approved`) — Inventar entsprechend reduziert; oder **lehnt ab** (`Rejected`) —
    Inventar bleibt unverändert.
-4. **Vater storniert** einen offenen Kauf (`cancel`) — Coins/Gems erstattet, Inventar reduziert.
+4. **Vater storniert** einen offenen Kauf (`cancel`) — Münzen/Gems erstattet, Inventar reduziert.
 
 ```http
 # Vater — Artikel-Katalog

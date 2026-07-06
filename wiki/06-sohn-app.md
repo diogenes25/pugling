@@ -156,7 +156,7 @@ GET /api/v1/me/points
 ```
 
 `overview/progress` zeigt den Verlauf über die Planlaufzeit. Der Positionsreport zeigt Mastery,
-Wiederholungen, Testhistorie und Leitner-Zustand der Inhalts-Atoms dieser Position. `me/points` liefert
+Wiederholungen, Testhistorie und Leitner-Zustand der Inhaltsatome dieser Position. `me/points` liefert
 beide Währungen:
 
 ```jsonc

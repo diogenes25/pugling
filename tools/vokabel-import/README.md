@@ -82,7 +82,7 @@ Parameter: `-BaseUrl` (Default `http://localhost:5200`), `-FatherId` (`1`),
 `-Pin` (`0000`), `-Files` (Default: beide `data/*.json`), `-Tags` (optional).
 
 > **PIN-Hinweis:** Vater 1 („Papa") hat im Seed die PIN **`0000`**. Die `1111` ist die
-> **Sohn**-PIN – ein Vater-Login damit scheitert mit 401.
+> **Sohn**-PIN – ein Vater-Login damit scheitert mit HTTP 401.
 
 Das Skript gibt am Ende eine Zusammenfassung aus (`created` / `existing` / `error`).
 

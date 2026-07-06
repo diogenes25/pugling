@@ -57,7 +57,7 @@ public class OfferService(PuglingDbContext db, WalletService wallet)
     /// <summary>
     /// Kauft ein Angebot für das Kind: prüft Aktiv-Status, Kontingent der aktuellen Periode und Deckung,
     /// bucht die Münzen sofort ab und legt den Kauf (Status <see cref="RewardRedemptionStatus.Purchased"/>)
-    /// an. Das Concurrency-Token am Kind wird gebumpt, sodass ein paralleler Doppelkauf mit
+    /// an. Das Concurrency-Token am Kind wird erhöht, sodass ein paralleler Doppelkauf mit
     /// <see cref="OfferError.Conflict"/> scheitert (schützt Kontingent <b>und</b> Saldo).
     /// </summary>
     public async Task<Result> PurchaseAsync(int childId, int rewardId, DateTime nowUtc, CancellationToken ct = default)

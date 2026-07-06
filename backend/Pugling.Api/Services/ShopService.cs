@@ -22,6 +22,7 @@ public class ShopService(PuglingDbContext db, WalletService wallet)
         InsufficientCoins,
         InsufficientGems,
         InsufficientInventory,
+        InvalidQuantity,
         NotOpen,
         NotPending,
         Conflict,
@@ -43,6 +44,7 @@ public class ShopService(PuglingDbContext db, WalletService wallet)
         ShopError.InsufficientCoins => ApiErrors.InsufficientCoins,
         ShopError.InsufficientGems => ApiErrors.InsufficientGems,
         ShopError.InsufficientInventory => ApiErrors.InsufficientInventory,
+        ShopError.InvalidQuantity => ApiErrors.ValidationError,
         ShopError.NotOpen => ApiErrors.PurchaseNotOpen,
         ShopError.NotPending => ApiErrors.ActivationNotPending,
         _ => ApiErrors.ConcurrencyConflict,
@@ -157,6 +159,12 @@ public class ShopService(PuglingDbContext db, WalletService wallet)
             inventory.ConcurrencyStamp = Guid.NewGuid();
         }
 
+        // Saldo-Schutz wie bei Angeboten/Skins: Der Listing-Stamp serialisiert nur denselben Bestand –
+        // das Wallet ist über alle Kaufwege hinweg geteilt. Ein Bump des Kind-Tokens lässt einen parallel
+        // gestarteten Zweitkauf (anderes Listing, Angebot oder Skin) mit Conflict scheitern, sodass der
+        // Deckungs-Check nicht doppelt umgangen und der Saldo nicht negativ werden kann.
+        child.ConcurrencyStamp = Guid.NewGuid();
+
         return await TrySaveAsync(ct)
             ? Result<ShopPurchase>.Ok(purchase)
             : Result<ShopPurchase>.Fail(ShopError.Conflict);
@@ -221,7 +229,7 @@ public class ShopService(PuglingDbContext db, WalletService wallet)
     public async Task<Result<ActivationRequest>> RequestActivationAsync(
         int childId, int articleId, int quantity, DateTime nowUtc, CancellationToken ct = default)
     {
-        if (quantity <= 0) return Result<ActivationRequest>.Fail(ShopError.NotFound);
+        if (quantity <= 0) return Result<ActivationRequest>.Fail(ShopError.InvalidQuantity);
 
         var child = await db.Children.AsNoTracking().FirstOrDefaultAsync(c => c.Id == childId, ct);
         if (child is null) return Result<ActivationRequest>.Fail(ShopError.NotFound);
@@ -253,9 +261,12 @@ public class ShopService(PuglingDbContext db, WalletService wallet)
     }
 
     /// <summary>
-    /// Vater genehmigt eine offene Aktivierungsanfrage: Status → Approved, Inventar wird um
-    /// <see cref="ActivationRequest.RequestedQuantity"/> reduziert (min. 0). Concurrency-Token am
-    /// Inventar verhindert parallele Überziehung.
+    /// Vater genehmigt eine offene Aktivierungsanfrage: prüft, dass das Inventar die beantragte Menge
+    /// zum Genehmigungszeitpunkt real deckt (sonst <see cref="ShopError.InsufficientInventory"/> – die
+    /// Anfrage bleibt offen), reduziert es um <see cref="ActivationRequest.RequestedQuantity"/> und setzt
+    /// den Status auf Approved. Da der Anfrage-Check nicht-transaktional ist (mehrere offene Anfragen
+    /// können in Summe das Inventar übersteigen), ist erst diese Deckungsprüfung die verbindliche Grenze.
+    /// Das Concurrency-Token am Inventar verhindert parallele Überziehung.
     /// </summary>
     public async Task<Result<ActivationRequest>> ApproveActivationAsync(
         int childId, int requestId, DateTime nowUtc, CancellationToken ct = default)
@@ -263,19 +274,20 @@ public class ShopService(PuglingDbContext db, WalletService wallet)
         var request = await LoadPendingActivationAsync(childId, requestId, ct);
         if (request is null) return await MissOrNotPendingAsync(childId, requestId, ct);
 
-        request.Status = ActivationRequestStatus.Approved;
-        request.ClosedAt = nowUtc;
-
+        // Nur bei fehlendem Artikelbezug (Artikel nachträglich gelöscht) gibt es kein Inventar zu buchen.
         if (request.ShopArticleId is not null)
         {
             var inv = await db.ChildInventories
                 .FirstOrDefaultAsync(i => i.ChildId == childId && i.ShopArticleId == request.ShopArticleId, ct);
-            if (inv is not null)
-            {
-                inv.Quantity = Math.Max(0, inv.Quantity - request.RequestedQuantity);
-                inv.ConcurrencyStamp = Guid.NewGuid();
-            }
+            if (inv is null || inv.Quantity < request.RequestedQuantity)
+                return Result<ActivationRequest>.Fail(ShopError.InsufficientInventory);
+
+            inv.Quantity -= request.RequestedQuantity;
+            inv.ConcurrencyStamp = Guid.NewGuid();
         }
+
+        request.Status = ActivationRequestStatus.Approved;
+        request.ClosedAt = nowUtc;
 
         return await TrySaveAsync(ct)
             ? Result<ActivationRequest>.Ok(request)

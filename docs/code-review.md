@@ -67,4 +67,4 @@ Diese sind Design-/Prod-Entscheidungen mit Seiteneffekten – bewusst gemeldet s
 
 Der neue Study-Kern ist sauber, modern und tragfähig erweiterbar. Die kritischen Sicherheits-/Cheat-Lücken
 (H1, H2, H4, M1, M2) sind behoben und verifiziert. Vor einem echten Einsatz verbleiben v. a. **PIN-Hashing (H3)**,
-die **Katalog-Mandantenfrage (M6)** sowie **EF-Migrationen** und **automatisierte Tests**.
+die **Katalog-Mandantenfrage (M6)** und die dokumentierten Prod-Härtungen.

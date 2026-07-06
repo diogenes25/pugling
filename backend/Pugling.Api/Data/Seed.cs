@@ -15,6 +15,7 @@ public static class Seed
         SeedKlassenarbeiten(db);
         SeedGamification(db);
         SeedTeacherLibrary(db);
+        SeedShop(db);
     }
 
     /// <summary>
@@ -394,6 +395,148 @@ public static class Seed
             Verb = new VerbInfo { IsBaseForm = false, Infinitive = "gehen", Tense = "present", Person = "3", Number = "singular" },
             BaseFormId = baseId,
         });
+        db.SaveChanges();
+    }
+
+    /// <summary>
+    /// Demo-Artikel und -Angebote des Familien-Shops. Zeigt alle zentralen Felder des Shop-Kreislaufs:
+    /// verschiedene <see cref="UnitType"/>s und <see cref="ActionType"/>s, Münzen- und Gem-Preise,
+    /// automatische Auffüllung (<see cref="ShopRefillKind"/>) und gemischte Stocks – damit neue Entwickler
+    /// sofort echte Objekte vorfinden, ohne erst über die Admin-API Artikel anlegen zu müssen.
+    /// Additiv-idempotent: läuft nur, solange noch keine Shop-Artikel existieren.
+    /// </summary>
+    private static void SeedShop(PuglingDbContext db)
+    {
+        if (db.ShopArticles.Any()) return;
+
+        var father = db.Fathers.OrderBy(f => f.Id).FirstOrDefault();
+        if (father is null) return;
+
+        // ── Artikel 1: Fernsehzeit ──────────────────────────────────────────────
+        // Tägliches Kontingent: automatisch jeden Tag auf MaxStock aufgefüllt.
+        // Zwei Listings zeigen das „kleines Paket vs. Sparpaket"-Muster.
+        var tv = new ShopArticle
+        {
+            FatherId = father.Id,
+            ArticleNumber = "TV-001",
+            Title = "Fernsehzeit",
+            Description = "Bildschirmzeit nach dem Lernen – täglich abrufbar.",
+            UnitType = UnitType.Minute,
+            ActionType = ActionType.TV,
+            Listings =
+            [
+                new ShopListing
+                {
+                    Title = "10 Minuten TV",
+                    CoinPrice = 50,
+                    GemPrice = 0,
+                    UnitsPerPurchase = 10,
+                    CurrentStock = 3,
+                    MaxStock = 3,
+                    RefillKind = ShopRefillKind.Daily,
+                },
+                new ShopListing
+                {
+                    Title = "30 Minuten TV",
+                    CoinPrice = 130,
+                    GemPrice = 0,
+                    UnitsPerPurchase = 30,
+                    CurrentStock = 1,
+                    MaxStock = 1,
+                    RefillKind = ShopRefillKind.Daily,
+                },
+            ],
+        };
+
+        // ── Artikel 2: Spielzeit ───────────────────────────────────────────────
+        // Wöchentliches Kontingent (montags aufgefüllt), höhere Coinkosten.
+        var gaming = new ShopArticle
+        {
+            FatherId = father.Id,
+            ArticleNumber = "GAME-001",
+            Title = "Spielzeit",
+            Description = "Konsolen- oder PC-Spielzeit; wöchentliches Budgetmodell.",
+            UnitType = UnitType.Minute,
+            ActionType = ActionType.Zocken,
+            Listings =
+            [
+                new ShopListing
+                {
+                    Title = "30 Minuten Zocken",
+                    CoinPrice = 200,
+                    GemPrice = 0,
+                    UnitsPerPurchase = 30,
+                    CurrentStock = 3,
+                    MaxStock = 3,
+                    RefillKind = ShopRefillKind.Weekly,
+                    RefillDayOfWeek = DayOfWeek.Monday,
+                },
+                new ShopListing
+                {
+                    Title = "60 Minuten Zocken",
+                    CoinPrice = 350,
+                    GemPrice = 0,
+                    UnitsPerPurchase = 60,
+                    CurrentStock = 1,
+                    MaxStock = 1,
+                    RefillKind = ShopRefillKind.Weekly,
+                    RefillDayOfWeek = DayOfWeek.Monday,
+                },
+            ],
+        };
+
+        // ── Artikel 3: Süßigkeiten ─────────────────────────────────────────────
+        // Gramm-basiert; gemischter Preis (Coins + Gems), kein Auto-Refill.
+        // Zeigt, dass Gems einen Artikel exklusiver machen können.
+        var sweets = new ShopArticle
+        {
+            FatherId = father.Id,
+            ArticleNumber = "SWEET-001",
+            Title = "Süßigkeiten",
+            Description = "Kleine Nascherei als Lernanreiz – z. B. Gummibären oder Schokolade.",
+            UnitType = UnitType.Gramm,
+            ActionType = ActionType.Suessigkeit,
+            Listings =
+            [
+                new ShopListing
+                {
+                    Title = "50 g Naschpaket",
+                    CoinPrice = 300,
+                    GemPrice = 10,
+                    UnitsPerPurchase = 50,
+                    CurrentStock = 4,
+                    MaxStock = 4,
+                    RefillKind = ShopRefillKind.None,
+                },
+            ],
+        };
+
+        // ── Artikel 4: Kino-Ausflug ────────────────────────────────────────────
+        // Stückzahl (Mal), kein Auto-Refill, hoher Preis → langfristiges Sparziel.
+        var cinema = new ShopArticle
+        {
+            FatherId = father.Id,
+            ArticleNumber = "EVENT-001",
+            Title = "Kino-Ausflug",
+            Description = "Gemeinsam ins Kino – der Sohn sucht den Film aus.",
+            UnitType = UnitType.Mal,
+            ActionType = ActionType.Ausflug,
+            Listings =
+            [
+                new ShopListing
+                {
+                    Title = "1 Kinoabend",
+                    CoinPrice = 1500,
+                    GemPrice = 0,
+                    UnitsPerPurchase = 1,
+                    CurrentStock = 1,
+                    MaxStock = 1,
+                    RefillKind = ShopRefillKind.None,
+                },
+            ],
+        };
+
+        db.ShopArticles.AddRange(tv, gaming, sweets, cinema);
         db.SaveChanges();
     }
 

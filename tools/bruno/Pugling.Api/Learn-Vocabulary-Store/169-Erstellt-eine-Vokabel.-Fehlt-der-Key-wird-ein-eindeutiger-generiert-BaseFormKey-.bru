@@ -1,0 +1,66 @@
+meta {
+  name: Erstellt eine Vokabel. Fehlt der Key, wird ein eindeutiger generiert; BaseFormKey (falls gesetzt) muss existieren.
+  type: http
+  seq: 169
+  tags: [
+    Learn – Vocabulary Store
+  ]
+}
+
+post {
+  url: {{baseUrl}}/api/v1/learn/vocabulary
+}
+
+headers {
+  Accept: application/json
+  Content-Type: application/json
+  Authorization: Bearer {{fatherToken}}
+}
+
+body {
+  {
+    "key": "en_doku_de_beispiel",
+    "sourceLanguage": "en",
+    "targetLanguage": "de",
+    "word": "example",
+    "translation": "Beispiel",
+    "partOfSpeech": "Noun"
+  }
+}
+
+script:post-response {
+  const body = res.getBody();
+  
+  function capture(name, value) {
+    if (value === undefined || value === null || value === '') return;
+    bru.setVar(name, value);
+    bru.setEnvVar(name, String(value), { persist: true });
+  }
+  
+  if (body && typeof body === 'object' && !Array.isArray(body)) {
+    capture('vocabularyId', body.vocabularyId ?? body.id);
+    capture('fatherId', body.fatherId);
+    capture('childId', body.childId);
+    capture('subjectId', body.subjectId);
+    capture('chapterId', body.chapterId);
+    capture('categoryId', body.categoryId);
+    capture('exerciseId', body.exerciseId);
+    capture('planId', body.planId);
+    capture('positionId', body.positionId);
+    capture('sessionId', body.sessionId);
+    capture('attemptId', body.attemptId);
+    capture('tagId', body.tagId);
+    capture('classTestId', body.classTestId);
+    capture('missionId', body.missionId);
+    capture('achievementId', body.achievementId);
+    capture('rewardId', body.rewardId);
+    capture('redemptionId', body.redemptionId);
+    capture('articleId', body.articleId);
+    capture('listingId', body.listingId);
+    capture('purchaseId', body.purchaseId);
+    capture('activationId', body.activationId);
+    capture('vocabularyId', body.vocabularyId);
+    capture('wordId', body.wordId);
+    capture('skinId', body.skinId);
+  }
+}

@@ -1,4 +1,7 @@
 {
+  "scripts": {
+    "bruno:generate": "node tools/bruno/generate-bruno.mjs"
+  },
   "devDependencies": {
     "vite-plugin-pwa": "^1.3.0"
   }

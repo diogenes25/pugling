@@ -122,7 +122,7 @@ public class PositionGoalReward
 }
 
 /// <summary>
-/// Lern-Fortschritt eines einzelnen Inhalts-Atoms (z. B. einer Vokabel) innerhalb einer
+/// Lern-Fortschritt eines einzelnen Inhaltsatoms (z. B. einer Vokabel) innerhalb einer
 /// <see cref="PlanPosition"/>. Faul angelegt beim ersten Einführen – der Inhalt selbst bleibt in der
 /// Übungs-Config, hier steht nur der Karteikasten-/Einführungs-Zustand pro Kind (ein Plan = ein Kind).
 /// </summary>

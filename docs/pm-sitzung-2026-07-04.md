@@ -28,6 +28,20 @@ wurde als bekannte konzeptionelle Doppelspur notiert (siehe Backlog B-9).
   (Prozent-Ring, ✅/❌-Liste), Trophäenweg (Ligen/Boxen/Kalender/Badges), Skins.
 - **Server-autoritatives Scoring** (Anti-Cheat), Missionen/Auszeichnungen im Backend.
 
+#### Screenshots der gezeigten App-Flächen
+
+![Produktseite mit Rollen-Einstieg](images/produktseite-rollen-einstieg.png)
+
+![Vater-Login mit ID und PIN](images/vater-login.png)
+
+![Vater-Übersicht mit Tagesstatus der Kinder](images/vater-uebersicht-tagesstatus.png)
+
+![Lehrplan-Assistent: Schritt Kind wählen](images/vater-lehrplan-assistent-kind.png)
+
+![Sohn-Login mit Held und PIN](images/sohn-login.png)
+
+![Sohn-App mit Tagesmission](images/sohn-tagesmission.png)
+
 ### Feedback Vater (O-Ton, gekürzt)
 **Gefällt:** Lehrplan-Assistent („ich will steuern, nicht basteln"); server-vergebene Punkte
 (fälschungssicher = Grundvoraussetzung); Plan-Detail als Beleg der Wirkung; die Arcade zieht das Kind rein.
@@ -374,7 +388,7 @@ kommt jetzt dran.
 ## Offene Roadmap (nach Iteration 6, priorisiert)
 
 1. **P1 — Vater Mastery-Report-Ansicht:** `GET /study-plans/{planId}/report` existiert komplett
-   (MasteryPercent/Box/Test-Historie/Ratings) — nur UI + Client fehlen. Cheapster hoher Nutzen, vom
+  (MasteryPercent/Box/Test-Historie/Ratings) — nur UI + Client fehlen. Hoher Nutzen bei geringem Aufwand, vom
    Vater als nächstes eingefordert.
 2. **P2 — Sohn-Abwechslung:** Tempo-Modus, echte Buchstaben-Kästchen (LetterBoxes), Tipp-Knopf;
    `cards`/`hint`-Endpunkte anbinden.
