@@ -105,7 +105,8 @@ public class VocabExerciseAuthoringTests(PuglingWebAppFactory factory) : IClassF
             $"/api/v1/learn/subjects/{s}/chapters/{c}/vocabulary/{exerciseId}/refs-from-tags",
             new { tags = new[] { "UnitP2" }, baseFormsOnly = true })).Content.ReadFromJsonAsync<JsonElement>();
 
-        var refs = updated.GetProperty("config").GetProperty("refs").EnumerateArray().Select(r => r.GetString()).ToList();
+        var refs = updated.GetProperty("config").GetProperty("refs").EnumerateArray()
+            .Select(r => r.GetProperty("key").GetString()).ToList();
         Assert.Equal(2, refs.Count); // walk + jump, NICHT walked (flektiert)
         Assert.Contains(walkKey, refs);
         Assert.DoesNotContain("en_walked_de_ging", refs);
@@ -138,5 +139,61 @@ public class VocabExerciseAuthoringTests(PuglingWebAppFactory factory) : IClassF
 
         var del = await father.DeleteAsync($"/api/v1/learn/vocabulary/{vocabId}");
         Assert.Equal(HttpStatusCode.Conflict, del.StatusCode);
+    }
+
+    // ---- Inline-Vokabeln werden automatisch im Store angelegt und verlinkt --------------------------
+
+    [Fact]
+    public async Task VocabExercise_InlineItemsOhneId_WerdenImStoreAngelegtUndVerlinkt()
+    {
+        var father = await TestApi.FatherAsync(_factory);
+        var (s, c) = await ChapterAsync(father, "Inline-Autolink");
+
+        var created = await (await father.PostAsJsonAsync(
+            $"/api/v1/learn/subjects/{s}/chapters/{c}/vocabulary", new
+            {
+                title = "Inline-Vokabeln",
+                orderIndex = 1,
+                rewardPoints = 10,
+                config = new
+                {
+                    direction = "front-to-back",
+                    sourceLang = "en",
+                    targetLang = "de",
+                    items = new[] { new { front = "mountain", back = "Berg" }, new { front = "river", back = "Fluss" } },
+                },
+            })).Content.ReadFromJsonAsync<JsonElement>();
+
+        // Jedes Inline-Item bekommt eine Store-Id und einen _self-Link.
+        var items = created.GetProperty("config").GetProperty("items").EnumerateArray().ToList();
+        Assert.Equal(2, items.Count);
+        foreach (var it in items)
+        {
+            var id = it.GetProperty("vocabularyId").GetInt32();
+            Assert.True(id > 0);
+            Assert.Equal($"/api/v1/learn/vocabulary/{id}", it.GetProperty("_self").GetString());
+        }
+
+        // Und die Wörter liegen jetzt tatsächlich im Store (Store-Membership).
+        var berg = await father.GetFromJsonAsync<List<JsonElement>>("/api/v1/learn/vocabulary?word=mountain");
+        Assert.Contains(berg!, v => v.GetProperty("translation").GetString() == "Berg");
+    }
+
+    // ---- Task 1: getrennte Suchparameter word/translation ------------------------------------------
+
+    [Fact]
+    public async Task VocabularyList_FiltertNachWordUndTranslation()
+    {
+        var father = await TestApi.FatherAsync(_factory);
+        await CreateVocabAsync(father, new { sourceLanguage = "en", targetLanguage = "de", word = "elephant", translation = "Elefant" });
+        await CreateVocabAsync(father, new { sourceLanguage = "en", targetLanguage = "de", word = "mouse", translation = "Maus" });
+
+        var byWord = await father.GetFromJsonAsync<List<JsonElement>>("/api/v1/learn/vocabulary?word=elephant");
+        Assert.All(byWord!, v => Assert.Contains("elephant", v.GetProperty("word").GetString()!));
+        Assert.Contains(byWord!, v => v.GetProperty("translation").GetString() == "Elefant");
+
+        var byTranslation = await father.GetFromJsonAsync<List<JsonElement>>("/api/v1/learn/vocabulary?translation=Maus");
+        Assert.All(byTranslation!, v => Assert.Contains("Maus", v.GetProperty("translation").GetString()!));
+        Assert.DoesNotContain(byTranslation!, v => v.GetProperty("word").GetString() == "elephant");
     }
 }

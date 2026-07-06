@@ -41,21 +41,33 @@ public class ExerciseContentResolver(PuglingDbContext db, ExerciseContentProvide
         return provider.ItemsOf(exercise);
     }
 
-    private async Task<IReadOnlyList<ContentItem>> ResolveVocabRefsAsync(List<string> refs, string? direction)
+    private async Task<IReadOnlyList<ContentItem>> ResolveVocabRefsAsync(List<VocabRef> refs, string? direction)
     {
-        var byKey = await db.Vocabulary.AsNoTracking()
-            .Where(v => refs.Contains(v.Key))
-            .ToDictionaryAsync(v => v.Key);
+        // Neue Refs verweisen per ID; Alt-Daten (id==0) tragen nur den Key – beide auflösen und zusammenführen.
+        var ids = refs.Where(r => r.VocabularyId > 0).Select(r => r.VocabularyId).Distinct().ToList();
+        var keys = refs.Where(r => r.VocabularyId <= 0 && r.Key is not null).Select(r => r.Key!).Distinct().ToList();
+        var byId = await db.Vocabulary.AsNoTracking()
+            .Where(v => ids.Contains(v.Id))
+            .ToDictionaryAsync(v => v.Id);
+        var byKey = keys.Count == 0
+            ? new Dictionary<string, Vocabulary>()
+            : await db.Vocabulary.AsNoTracking().Where(v => keys.Contains(v.Key)).ToDictionaryAsync(v => v.Key);
 
         // Reihenfolge = Reihenfolge der Refs; Index = stabile Position (→ PositionItemProgress.ItemIndex).
-        // Fehlende Keys bleiben als Platzhalter erhalten, damit sich die Indizes nicht verschieben.
+        // Fehlende Referenzen bleiben als Platzhalter erhalten, damit sich die Indizes nicht verschieben.
         // Die Abfragerichtung dreht das aufgelöste Item (Wort ↔ Übersetzung), siehe ExerciseContentProvider.
         // Die Aussprache-Audioquelle trägt das Item unabhängig von der Richtung mit (sie gehört zum Wort);
         // die Hör-Stufe (TestStage.Audio) liest sie, andere Stufen ignorieren sie.
-        return refs.Select((key, i) => byKey.TryGetValue(key, out var v)
-            ? ExerciseContentProvider.WithDirection(
-                new ContentItem(i, v.Word, v.Translation, [v.Translation], v.Noun?.Article, AudioUrl: v.PronunciationAudioUrl), direction)
-            : new ContentItem(i, $"(Vokabel '{key}' fehlt)", "", [""])).ToList();
+        return refs.Select((r, i) =>
+        {
+            var v = r.VocabularyId > 0
+                ? byId.GetValueOrDefault(r.VocabularyId)
+                : r.Key is not null ? byKey.GetValueOrDefault(r.Key) : null;
+            return v is not null
+                ? ExerciseContentProvider.WithDirection(
+                    new ContentItem(i, v.Word, v.Translation, [v.Translation], v.Noun?.Article, AudioUrl: v.PronunciationAudioUrl), direction)
+                : new ContentItem(i, $"(Vokabel '{r.Key ?? r.VocabularyId.ToString()}' fehlt)", "", [""]);
+        }).ToList();
     }
 
     /// <summary>

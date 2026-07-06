@@ -367,6 +367,11 @@ export interface PlanResponse {
   endDate: string;
   active: boolean;
   positionCount: number;
+  /**
+   * Server-autoritative Affordance: Ob dies der eine, aktuell spielbare Plan des Kindes ist
+   * (aktiv + heute in Laufzeit). Statt die „ein aktiver Plan"-Regel im Client nachzubilden.
+   */
+  isPlayable: boolean;
 }
 
 export interface CreatePlanDto {
@@ -705,6 +710,10 @@ export interface RedemptionDef {
   status: RewardRedemptionStatus;
   purchasedAt: string;
   fulfilledAt: string | null;
+  /** Server-autoritative Affordance: Kauf jetzt erfüllbar? (nur solange offen) */
+  canFulfill: boolean;
+  /** Server-autoritative Affordance: Kauf jetzt stornierbar (Rückerstattung)? (nur solange offen) */
+  canCancel: boolean;
 }
 
 /** Verfügbares Angebot aus Sohn-Sicht. */

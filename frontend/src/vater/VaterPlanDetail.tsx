@@ -57,6 +57,8 @@ export function VaterPlanDetail() {
         <h2 className="h-section">{p.title}</h2>
         <span className="pill" style={{ marginLeft: "auto" }}>{p.positionCount} Übungen</span>
         {p.active ? <span className="pill lime">aktiv</span> : <span className="pill">inaktiv</span>}
+        {/* Server-autoritativ: aktiv, aber heute außerhalb der Laufzeit → für das Kind nicht spielbar. */}
+        {p.active && !p.isPlayable && <span className="pill" title="Aktiv, aber heute außerhalb der Laufzeit">nicht in Laufzeit</span>}
         <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} disabled={busy}
           onClick={() => mutate(() => api.updatePlan(id, { active: !p.active }), p.active ? "Plan deaktiviert." : "Plan aktiviert.")}>
           {p.active ? "Deaktivieren" : "Aktivieren"}

@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Pugling.Api.Auth;
@@ -24,24 +25,85 @@ public record CheckDrillDto(int? Seed, List<GivenAnswer> Answers);
 /// <summary>Antworten für eine Liste: die genannten Einträge in der eingegebenen Reihenfolge.</summary>
 public record CheckListDto(List<string?> Answers);
 
-/// <summary>Vokabelübungen. Referenzieren den Vokabel-Store per <see cref="VocabularyConfig.Refs"/> (Keys).</summary>
+/// <summary>
+/// Vokabelübungen. Referenzieren den Vokabel-Store per <see cref="VocabularyConfig.Refs"/> (ID); Inline-<see cref="VocabItem"/>
+/// ohne ID werden beim Speichern automatisch im Store angelegt und verknüpft. Die Antwort ergänzt je Vokabel den Link <c>_self</c>.
+/// </summary>
 [Route(ExerciseRoutes.Base + "/vocabulary")]
 [Tags("Learn – Vocabulary")]
-public class VocabularyController(PuglingDbContext db) : ExerciseControllerBase<VocabularyConfig>(db)
+public class VocabularyController(PuglingDbContext db, VocabularyStoreService store) : ExerciseControllerBase<VocabularyConfig>(db)
 {
     protected override ExerciseType Type => ExerciseType.Vocabulary;
 
-    /// <summary>Sichert beim Anlegen/Ändern zu, dass alle referenzierten Store-Keys existieren.</summary>
+    /// <summary>
+    /// Sichert beim Anlegen/Ändern zu, dass alle per ID referenzierten Store-Einträge existieren und – falls
+    /// Inline-Vokabeln ohne ID vorliegen – die Sprachcodes gesetzt sind (nötig, um sie im Store anzulegen).
+    /// </summary>
     protected override async Task<string?> ValidateConfigAsync(int subjectId, VocabularyConfig config)
     {
-        if (config.Refs is not { Count: > 0 } refs) return null;
-        var keys = refs.Where(k => !string.IsNullOrWhiteSpace(k)).Distinct().ToList();
-        var existing = await Db.Vocabulary.Where(v => keys.Contains(v.Key)).Select(v => v.Key).ToListAsync();
-        var missing = keys.Except(existing).ToList();
-        return missing.Count == 0 ? null : $"Unbekannte Vokabel-Keys: {string.Join(", ", missing)}";
+        if (config.Refs is { Count: > 0 } refs)
+        {
+            if (refs.Any(r => r.VocabularyId <= 0))
+                return "Jede Referenz braucht eine gültige vocabularyId (> 0).";
+            var ids = refs.Select(r => r.VocabularyId).Distinct().ToList();
+            var existing = await Db.Vocabulary.Where(v => ids.Contains(v.Id)).Select(v => v.Id).ToListAsync();
+            var missing = ids.Except(existing).ToList();
+            if (missing.Count > 0) return $"Unbekannte Vokabel-IDs: {string.Join(", ", missing)}";
+        }
+        if (config.Items.Any(i => i.VocabularyId is null)
+            && (string.IsNullOrWhiteSpace(config.SourceLang) || string.IsNullOrWhiteSpace(config.TargetLang)))
+            return "sourceLang und targetLang sind erforderlich, um Inline-Vokabeln im Store anzulegen.";
+        return null;
     }
 
-    /// <summary>Auswahl der Vokabeln per Tag statt manueller Key-Liste.</summary>
+    /// <summary>
+    /// Legt jede Inline-Vokabel ohne <see cref="VocabItem.VocabularyId"/> im Store an (bzw. findet sie) und verknüpft sie,
+    /// damit garantiert jede genutzte Vokabel im Store liegt. Ergänzt außerdem fehlende <see cref="VocabRef.Key"/> als Lesehilfe.
+    /// </summary>
+    protected override async Task NormalizeConfigAsync(int subjectId, VocabularyConfig config)
+    {
+        // Inline-Items ohne ID anlegen/finden; IDs materialisieren sich erst nach SaveChanges → danach zurückschreiben.
+        var pending = new List<(int Index, Vocabulary Vocab)>();
+        for (var i = 0; i < config.Items.Count; i++)
+        {
+            var item = config.Items[i];
+            if (item.VocabularyId is not null) continue;
+            pending.Add((i, await store.GetOrCreateAsync(config.SourceLang, item.Front, config.TargetLang, item.Back)));
+        }
+        if (pending.Count > 0)
+        {
+            await Db.SaveChangesAsync();
+            foreach (var (index, vocab) in pending)
+                config.Items[index] = config.Items[index] with { VocabularyId = vocab.Id };
+        }
+
+        // Refs: fehlenden Key aus der ID nachziehen (dient der Lesbarkeit/Usage-Suche; _self kommt erst in der Antwort).
+        if (config.Refs is { Count: > 0 } refs)
+        {
+            var need = refs.Where(r => r.Key is null && r.VocabularyId > 0).Select(r => r.VocabularyId).Distinct().ToList();
+            if (need.Count > 0)
+            {
+                var keyById = await Db.Vocabulary.Where(v => need.Contains(v.Id)).ToDictionaryAsync(v => v.Id, v => v.Key);
+                for (var i = 0; i < refs.Count; i++)
+                    if (refs[i].Key is null && keyById.TryGetValue(refs[i].VocabularyId, out var k))
+                        refs[i] = refs[i] with { Key = k };
+            }
+        }
+    }
+
+    /// <summary>Ergänzt je Referenz und Inline-Vokabel den abgeleiteten Selbstlink <c>_self</c> (nicht persistiert).</summary>
+    protected override VocabularyConfig ConfigForResponse(Exercise exercise)
+    {
+        var config = ConfigOf(exercise);
+        if (config.Refs is { Count: > 0 } refs)
+            for (var i = 0; i < refs.Count; i++)
+                refs[i] = refs[i] with { Self = VocabLink.Self(refs[i].VocabularyId) };
+        for (var i = 0; i < config.Items.Count; i++)
+            config.Items[i] = config.Items[i] with { Self = VocabLink.Self(config.Items[i].VocabularyId) };
+        return config;
+    }
+
+    /// <summary>Auswahl der Vokabeln per Tag statt manueller Referenzliste.</summary>
     public record RefsFromTagsDto(List<string> Tags, bool MatchAll = false, bool BaseFormsOnly = false);
 
     /// <summary>
@@ -68,10 +130,10 @@ public class VocabularyController(PuglingDbContext db) : ExerciseControllerBase<
             foreach (var name in tags) query = query.Where(v => v.TagLinks.Any(l => l.VocabTag!.Name == name));
         else
             query = query.Where(v => v.TagLinks.Any(l => tags.Contains(l.VocabTag!.Name)));
-        var keys = await query.OrderBy(v => v.Key).Select(v => v.Key).ToListAsync();
+        var hits = await query.OrderBy(v => v.Key).Select(v => new { v.Id, v.Key }).ToListAsync();
 
         var config = ConfigOf(exercise);
-        config.Refs = keys;
+        config.Refs = hits.Select(h => new VocabRef(h.Id, h.Key)).ToList();
         SetConfig(exercise, config);
         await Db.SaveChangesAsync();
         return Map(exercise, User.FatherId());
@@ -148,12 +210,47 @@ public class MatchingController(PuglingDbContext db, ExerciseAnswerChecker check
 
 }
 
-/// <summary>Übersetzungs-Übungen.</summary>
+/// <summary>
+/// Übersetzungs-Übungen. Jedes Übersetzungspaar ohne <see cref="TranslationItem.VocabularyId"/> wird beim Speichern
+/// automatisch im Store angelegt und verknüpft; die Antwort ergänzt je Paar den Link <c>_self</c>.
+/// </summary>
 [Route(ExerciseRoutes.Base + "/translation")]
 [Tags("Learn – Translation")]
-public class TranslationController(PuglingDbContext db) : ExerciseControllerBase<TranslationConfig>(db)
+public class TranslationController(PuglingDbContext db, VocabularyStoreService store) : ExerciseControllerBase<TranslationConfig>(db)
 {
     protected override ExerciseType Type => ExerciseType.Translation;
+
+    /// <summary>Verpflichtet die Sprachcodes, sobald Paare ohne <see cref="TranslationItem.VocabularyId"/> anzulegen sind.</summary>
+    protected override Task<string?> ValidateConfigAsync(int subjectId, TranslationConfig config) =>
+        Task.FromResult(config.Items.Any(i => i.VocabularyId is null)
+            && (string.IsNullOrWhiteSpace(config.SourceLang) || string.IsNullOrWhiteSpace(config.TargetLang))
+            ? "sourceLang und targetLang sind erforderlich, um Übersetzungspaare im Store anzulegen."
+            : null);
+
+    /// <summary>Legt jedes noch nicht verknüpfte Paar im Store an (bzw. findet es) und verknüpft es per ID.</summary>
+    protected override async Task NormalizeConfigAsync(int subjectId, TranslationConfig config)
+    {
+        var pending = new List<(int Index, Vocabulary Vocab)>();
+        for (var i = 0; i < config.Items.Count; i++)
+        {
+            var item = config.Items[i];
+            if (item.VocabularyId is not null) continue;
+            pending.Add((i, await store.GetOrCreateAsync(config.SourceLang, item.Source, config.TargetLang, item.Target)));
+        }
+        if (pending.Count == 0) return;
+        await Db.SaveChangesAsync();
+        foreach (var (index, vocab) in pending)
+            config.Items[index] = config.Items[index] with { VocabularyId = vocab.Id };
+    }
+
+    /// <summary>Ergänzt je Übersetzungspaar den abgeleiteten Selbstlink <c>_self</c> (nicht persistiert).</summary>
+    protected override TranslationConfig ConfigForResponse(Exercise exercise)
+    {
+        var config = ConfigOf(exercise);
+        for (var i = 0; i < config.Items.Count; i++)
+            config.Items[i] = config.Items[i] with { Self = VocabLink.Self(config.Items[i].VocabularyId) };
+        return config;
+    }
 }
 
 /// <summary>Ein austauschbarer Vokabel-Kandidat für ein Wort (bei Homonymen mehrere).</summary>
@@ -161,17 +258,18 @@ public class TranslationController(PuglingDbContext db) : ExerciseControllerBase
 /// <param name="Word">Wort in der Lernsprache.</param>
 /// <param name="Translation">Muttersprachliche Glosse dieser Bedeutung.</param>
 /// <param name="PartOfSpeech">Wortart (hilft beim Unterscheiden gleicher Schreibweisen).</param>
-/// <param name="VocabularySrc">Link auf die Vokabelkarte.</param>
-public record VocabCandidate(int VocabularyId, string Word, string Translation, string PartOfSpeech, string VocabularySrc);
+/// <param name="Self">Link auf die Vokabelkarte (<c>_self</c>).</param>
+public record VocabCandidate(int VocabularyId, string Word, string Translation, string PartOfSpeech,
+    [property: JsonPropertyName("_self")] string Self);
 
 /// <summary>
 /// Ein dekodiertes Wort der Ausgabe: <paramref name="LearningWord"/> der Lernsprache → wörtliche Glosse
-/// <paramref name="Gloss"/>. <paramref name="Gloss"/>/<paramref name="VocabularyId"/>/<paramref name="VocabularySrc"/>
+/// <paramref name="Gloss"/>. <paramref name="Gloss"/>/<paramref name="VocabularyId"/>/<paramref name="Self"/>
 /// sind <c>null</c>, wenn das Wort (noch) nicht im Vokabelspeicher liegt. <paramref name="Candidates"/> ist nur
 /// bei mehrdeutigen Wörtern gefüllt (mehrere passende Karten – der Vater kann per Wort-Endpunkt die richtige wählen).
 /// </summary>
 public record DecodedWord(int WordId, string LearningWord, string? Gloss, int? VocabularyId,
-    string? VocabularySrc, IReadOnlyList<VocabCandidate>? Candidates);
+    [property: JsonPropertyName("_self")] string? Self, IReadOnlyList<VocabCandidate>? Candidates);
 
 /// <summary>Ein dekodierter Satz: Original + natürliche Übersetzung + die Wort-für-Wort-Tuple.</summary>
 public record DecodedSentence(int SentenceId, string LearningSentence, string NaturalTranslation, IReadOnlyList<DecodedWord> Result);
@@ -198,10 +296,20 @@ public record DecodePreviewInput(string LearningLang, string NativeLang, string 
 /// </summary>
 [Route(ExerciseRoutes.Base + "/birkenbihl")]
 [Tags("Learn – Birkenbihl")]
-public class BirkenbihlController(PuglingDbContext db, BirkenbihlDecodingService decoder)
+public class BirkenbihlController(PuglingDbContext db, BirkenbihlDecodingService decoder, VocabularyStoreService store)
     : ExerciseControllerBase<BirkenbihlConfig>(db)
 {
     protected override ExerciseType Type => ExerciseType.Birkenbihl;
+
+    /// <summary>Ergänzt je dekodiertem Wort den abgeleiteten Selbstlink <c>_self</c> aus seiner Vokabel-ID (nicht persistiert).</summary>
+    protected override BirkenbihlConfig ConfigForResponse(Exercise exercise)
+    {
+        var config = ConfigOf(exercise);
+        foreach (var s in config.Sentences)
+            for (var i = 0; i < s.Decoding.Count; i++)
+                s.Decoding[i] = s.Decoding[i] with { Self = VocabLink.Self(s.Decoding[i].VocabularyId) };
+        return config;
+    }
 
     /// <summary>
     /// Vergibt fehlende (≤ 0) Satz-/Wort-IDs beim Speichern über das generische CRUD: Das Anlege-Formular
@@ -230,19 +338,15 @@ public class BirkenbihlController(PuglingDbContext db, BirkenbihlDecodingService
     private static int NextWordSeed(BirkenbihlConfig c) =>
         Math.Max(Math.Max(c.NextWordId, 1), c.Sentences.SelectMany(s => s.Decoding).Select(w => w.WordId).DefaultIfEmpty(0).Max() + 1);
 
-    // Konkreter Link auf eine Vokabelkarte (v1 ist bis zur Publikation stabil).
-    private const string VocabPath = "/api/v1/learn/vocabulary/";
-    private static string? VocabSrc(int? id) => id is null ? null : VocabPath + id;
-
     private static VocabCandidate ToCandidate(VocabHit h) =>
-        new(h.Id, h.Word, h.Translation, h.PartOfSpeech.ToString(), VocabPath + h.Id);
+        new(h.Id, h.Word, h.Translation, h.PartOfSpeech.ToString(), VocabLink.Path + h.Id);
 
     // Kandidaten nur bei echter Mehrdeutigkeit (mehr als ein Treffer) ausgeben – sonst rauscht die Antwort zu.
     private static IReadOnlyList<VocabCandidate>? CandidatesOf(TokenLookup t) =>
         t.Candidates.Count > 1 ? t.Candidates.Select(ToCandidate).ToList() : null;
 
     private static DecodedWord ToDecodedWord(WordPair w, IReadOnlyList<VocabCandidate>? candidates) =>
-        new(w.WordId, w.LearningWord, w.Gloss, w.VocabularyId, VocabSrc(w.VocabularyId), candidates);
+        new(w.WordId, w.LearningWord, w.Gloss, w.VocabularyId, VocabLink.Self(w.VocabularyId), candidates);
 
     /// <summary>
     /// Dekodiert einen Satz automatisch über den Vokabelspeicher und <b>speichert</b> ihn in der Übung.
@@ -318,11 +422,18 @@ public class BirkenbihlController(PuglingDbContext db, BirkenbihlDecodingService
             if (card is null) return Problem(statusCode: 400, detail: "Vokabel nicht gefunden oder Sprachpaar passt nicht zur Übung.");
             updated = word with { Gloss = card.Translation, VocabularyId = card.Id };
         }
+        else if (string.IsNullOrWhiteSpace(body.Gloss))
+        {
+            // Glosse entfernen; Wort bleibt undekodiert und ohne Karte.
+            updated = word with { Gloss = null, VocabularyId = null };
+        }
         else
         {
-            // Freie Glosse (oder Entfernen); keine Karte mehr verknüpft.
-            var gloss = string.IsNullOrWhiteSpace(body.Gloss) ? null : body.Gloss.Trim();
-            updated = word with { Gloss = gloss, VocabularyId = null };
+            // Freie Glosse: trotzdem im Store verankern, damit jede genutzte Vokabel dort liegt und verlinkt ist.
+            var gloss = body.Gloss.Trim();
+            var vocab = await store.GetOrCreateAsync(config.LearningLang, word.LearningWord, config.NativeLang, gloss, ct: ct);
+            await Db.SaveChangesAsync(ct);
+            updated = word with { Gloss = gloss, VocabularyId = vocab.Id };
         }
 
         sentence.Decoding[index] = updated;
@@ -384,7 +495,7 @@ public class BirkenbihlController(PuglingDbContext db, BirkenbihlDecodingService
 
         var lookups = await decoder.LookupAsync(body.LearningLang ?? "", body.NativeLang ?? "", body.LearningSentence, ct);
         var words = lookups.Select(t =>
-            new DecodedWord(0, t.Surface, t.Best?.Translation, t.Best?.Id, VocabSrc(t.Best?.Id), CandidatesOf(t))).ToList();
+            new DecodedWord(0, t.Surface, t.Best?.Translation, t.Best?.Id, VocabLink.Self(t.Best?.Id), CandidatesOf(t))).ToList();
         return new DecodedSentence(0, body.LearningSentence.Trim(), (body.NaturalTranslation ?? "").Trim(), words);
     }
 

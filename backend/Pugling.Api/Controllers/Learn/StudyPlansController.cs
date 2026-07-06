@@ -23,27 +23,42 @@ namespace Pugling.Api.Controllers.Learn;
 public class StudyPlansController(PuglingDbContext db, AuthAccess access) : ControllerBase
 {
     public record PlanResponse(int Id, int ChildId, string Title, int? SubjectId,
-        DateOnly StartDate, DateOnly EndDate, bool Active, int PositionCount, string? Description);
+        DateOnly StartDate, DateOnly EndDate, bool Active, int PositionCount, string? Description)
+    {
+        /// <summary>
+        /// Server-autoritative Affordance: Ob dies der eine, aktuell spielbare Plan des Kindes ist
+        /// (aktiv <b>und</b> heute in Laufzeit). Für den Sohn ist stets nur dieser sichtbar; dem Vater
+        /// zeigt es unter mehreren Plänen den, den der Sohn gerade spielen kann – ohne die Regel im Client nachzubilden.
+        /// </summary>
+        public bool IsPlayable { get; init; }
+    }
 
     /// <summary>In-Memory-Projektion für frisch erstellte Container (Positionen noch leer).</summary>
-    private static PlanResponse Map(StudyPlan p) =>
-        new(p.Id, p.ChildId, p.Title, p.SubjectId, p.StartDate, p.EndDate, p.Active, p.Positions.Count, p.Description);
+    private static PlanResponse Map(StudyPlan p, DateOnly today) =>
+        new(p.Id, p.ChildId, p.Title, p.SubjectId, p.StartDate, p.EndDate, p.Active, p.Positions.Count, p.Description)
+        {
+            IsPlayable = p.Active && p.StartDate <= today && p.EndDate >= today,
+        };
 
     /// <summary>DB-Projektion inkl. Positions-Anzahl: EF übersetzt <c>p.Positions.Count</c> in eine COUNT-Subquery,
-    /// ohne die Positions-Zeilen zu materialisieren.</summary>
-    private static readonly Expression<Func<StudyPlan, PlanResponse>> ToResponse =
-        p => new PlanResponse(p.Id, p.ChildId, p.Title, p.SubjectId, p.StartDate, p.EndDate, p.Active, p.Positions.Count, p.Description);
+    /// ohne die Positions-Zeilen zu materialisieren. <paramref name="today"/> fließt als Parameter in die
+    /// Spielbarkeits-Berechnung ein (dieselbe Laufzeit-Bedingung wie die Sohn-Sichtbarkeit).</summary>
+    private static Expression<Func<StudyPlan, PlanResponse>> ToResponse(DateOnly today) =>
+        p => new PlanResponse(p.Id, p.ChildId, p.Title, p.SubjectId, p.StartDate, p.EndDate, p.Active, p.Positions.Count, p.Description)
+        {
+            IsPlayable = p.Active && p.StartDate <= today && p.EndDate >= today,
+        };
 
     /// <summary>Lehrpläne auflisten. Sohn sieht nur eigene, Vater nur die seiner Kinder.</summary>
     [HttpGet]
     public async Task<IEnumerable<PlanResponse>> List([FromQuery] int? childId = null)
     {
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
         IQueryable<StudyPlan> scoped = db.StudyPlans.AsNoTracking();
         if (User.IsChild())
         {
             // Der Sohn sieht nur seinen einen spielbaren Plan (aktiv + in Laufzeit); inaktive/abgelaufene
             // bleiben verborgen, damit er sich keinen leichten Plan zum Punktesammeln aussuchen kann.
-            var today = DateOnly.FromDateTime(DateTime.UtcNow);
             scoped = scoped.Where(p => p.ChildId == User.ChildId() && p.Active && p.StartDate <= today && p.EndDate >= today);
         }
         else
@@ -52,7 +67,7 @@ public class StudyPlansController(PuglingDbContext db, AuthAccess access) : Cont
             scoped = scoped.Where(p => db.Children.Any(c => c.Id == p.ChildId && c.FatherId == fid));
             if (childId is not null) scoped = scoped.Where(p => p.ChildId == childId);
         }
-        return await scoped.OrderByDescending(p => p.CreatedAt).Select(ToResponse).ToListAsync();
+        return await scoped.OrderByDescending(p => p.CreatedAt).Select(ToResponse(today)).ToListAsync();
     }
 
     /// <summary>Ein Lehrplan (nur eigener).</summary>
@@ -62,7 +77,7 @@ public class StudyPlansController(PuglingDbContext db, AuthAccess access) : Cont
     public async Task<ActionResult<PlanResponse>> Get(int planId)
     {
         var plan = await db.StudyPlans.AsNoTracking().Where(p => p.Id == planId)
-            .Select(ToResponse).FirstOrDefaultAsync();
+            .Select(ToResponse(DateOnly.FromDateTime(DateTime.UtcNow))).FirstOrDefaultAsync();
         return plan is null ? NotFound() : plan;
     }
 
@@ -99,7 +114,7 @@ public class StudyPlansController(PuglingDbContext db, AuthAccess access) : Cont
         // Invariante „höchstens ein aktiver Plan je Kind": ein neuer (per Default aktiver) Plan wird zum
         // einzig spielbaren – die bisherigen des Kindes werden stillgelegt.
         if (plan.Active) await DeactivateSiblingPlansAsync(plan.ChildId, plan.Id);
-        return CreatedAtAction(nameof(Get), new { planId = plan.Id }, Map(plan));
+        return CreatedAtAction(nameof(Get), new { planId = plan.Id }, Map(plan, DateOnly.FromDateTime(DateTime.UtcNow)));
     }
 
     /// <summary>
@@ -145,8 +160,12 @@ public class StudyPlansController(PuglingDbContext db, AuthAccess access) : Cont
         // Nach Aktivierung oder Umzug die Invariante „ein aktiver Plan je Kind" wiederherstellen.
         if (plan.Active) await DeactivateSiblingPlansAsync(plan.ChildId, plan.Id);
         var positionCount = await db.PlanPositions.CountAsync(pp => pp.StudyPlanId == planId);
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
         return new PlanResponse(plan.Id, plan.ChildId, plan.Title, plan.SubjectId,
-            plan.StartDate, plan.EndDate, plan.Active, positionCount, plan.Description);
+            plan.StartDate, plan.EndDate, plan.Active, positionCount, plan.Description)
+        {
+            IsPlayable = plan.Active && plan.StartDate <= today && plan.EndDate >= today,
+        };
     }
 
     /// <summary>

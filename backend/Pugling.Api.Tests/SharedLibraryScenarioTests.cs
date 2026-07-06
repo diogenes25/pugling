@@ -38,6 +38,8 @@ public class SharedLibraryScenarioTests(PuglingWebAppFactory factory) : IClassFi
                 config = new
                 {
                     direction = "front-to-back",
+                    sourceLang = "en",
+                    targetLang = "de",
                     items = new[]
                     {
                         new { front = "sustainability", back = "Nachhaltigkeit" },
@@ -126,7 +128,7 @@ public class SharedLibraryScenarioTests(PuglingWebAppFactory factory) : IClassFi
                 gradeMin = 9,
                 gradeMax = 10,
                 schoolTypes = "Gymnasium",
-                config = new { direction = "front-to-back", items = new[] { new { front = "waste", back = "Abfall" } } },
+                config = new { direction = "front-to-back", sourceLang = "en", targetLang = "de", items = new[] { new { front = "waste", back = "Abfall" } } },
             });
         Assert.Equal(HttpStatusCode.OK, teacherPut.StatusCode);
         _ = teacherId;

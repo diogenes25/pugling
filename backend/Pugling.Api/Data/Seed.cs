@@ -76,6 +76,8 @@ public static class Seed
             ConfigJson = Json(new VocabularyConfig
             {
                 Direction = "front-to-back",
+                SourceLang = "en",
+                TargetLang = "de",
                 Items =
                 {
                     new VocabItem("sustainability", "Nachhaltigkeit"),
@@ -218,6 +220,8 @@ public static class Seed
                             ConfigJson = Json(new VocabularyConfig
                             {
                                 Direction = "front-to-back",
+                                SourceLang = "fr",
+                                TargetLang = "de",
                                 Items =
                                 {
                                     new VocabItem("la ville", "die Stadt"),
@@ -471,6 +475,8 @@ public static class Seed
                             ConfigJson = Json(new VocabularyConfig
                             {
                                 Direction = "front-to-back",
+                                SourceLang = "en",
+                                TargetLang = "de",
                                 Items =
                                 {
                                     new VocabItem("hello", "hallo"),

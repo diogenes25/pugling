@@ -51,7 +51,12 @@
       "PowerShell(Get-Process Pugling.Api -ErrorAction SilentlyContinue)",
       "PowerShell(Get-Process -Id 176148 -ErrorAction SilentlyContinue)",
       "PowerShell(Get-CimInstance Win32_Process -Filter \"ProcessId=176148\")",
-      "PowerShell(Stop-Process -Id 176148 -Force; Start-Sleep -Milliseconds 500; \\(Get-Process -Id 176148 -ErrorAction SilentlyContinue\\) ? \"noch aktiv\" : \"gestoppt\")"
+      "PowerShell(Stop-Process -Id 176148 -Force; Start-Sleep -Milliseconds 500; \\(Get-Process -Id 176148 -ErrorAction SilentlyContinue\\) ? \"noch aktiv\" : \"gestoppt\")",
+      "Bash(mktemp -d)",
+      "Bash(ConnectionStrings__Default='Data Source=__TRACKED_VAR__' ASPNETCORE_URLS=http://localhost:5211 dotnet run --no-build)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:5211/swagger/index.html)",
+      "Bash(command -v python)",
+      "Bash(command -v python3)"
     ],
     "additionalDirectories": [
       "c:\\Users\\TjarkOnnen\\.claude\\projects\\c--Users-TjarkOnnen-source-repos-priv-pugling\\memory"

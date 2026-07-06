@@ -50,6 +50,8 @@ public class VocabularyStoreController(PuglingDbContext db) : ControllerBase
     /// <c>X-Total-Count</c>.
     /// </summary>
     /// <param name="search">Volltext in Word/Translation/Key (Teilstring).</param>
+    /// <param name="word">Teilstring-Filter allein auf das Wort (Ausgangssprache).</param>
+    /// <param name="translation">Teilstring-Filter allein auf die Übersetzung (Zielsprache).</param>
     /// <param name="partOfSpeech">Exakte Wortart.</param>
     /// <param name="untranslated">true = nur Einträge ohne Übersetzung.</param>
     /// <param name="incomplete">true = nur unvollständige Einträge (keine Übersetzung / Wortart „Other" / fehlende Noun-/Verb-Details).</param>
@@ -67,6 +69,8 @@ public class VocabularyStoreController(PuglingDbContext db) : ControllerBase
     [HttpGet]
     public async Task<IEnumerable<VocabularyResponse>> List(
         [FromQuery] string? search = null,
+        [FromQuery] string? word = null,
+        [FromQuery] string? translation = null,
         [FromQuery] PartOfSpeech? partOfSpeech = null,
         [FromQuery] bool? untranslated = null,
         [FromQuery] bool? incomplete = null,
@@ -88,6 +92,10 @@ public class VocabularyStoreController(PuglingDbContext db) : ControllerBase
         if (!string.IsNullOrWhiteSpace(search))
             query = query.Where(v => v.Word.Contains(search)
                 || v.Translation.Contains(search) || v.Key.Contains(search));
+        if (!string.IsNullOrWhiteSpace(word))
+            query = query.Where(v => v.Word.Contains(word));
+        if (!string.IsNullOrWhiteSpace(translation))
+            query = query.Where(v => v.Translation.Contains(translation));
         if (untranslated is true)
             query = query.Where(v => v.Translation == "");
         if (incomplete is true)
@@ -389,7 +397,7 @@ public class VocabularyStoreController(PuglingDbContext db) : ControllerBase
         foreach (var e in candidates)
         {
             var referenced = e.Type == ExerciseType.Vocabulary
-                ? (JsonSerializer.Deserialize<VocabularyConfig>(e.ConfigJson, JsonOptions)?.Refs?.Contains(key) ?? false)
+                ? (JsonSerializer.Deserialize<VocabularyConfig>(e.ConfigJson, JsonOptions)?.Refs?.Any(r => r.Key == key) ?? false)
                 : (JsonSerializer.Deserialize<ClozeConfig>(e.ConfigJson, JsonOptions)?.Gaps.Any(g => g.VocabKey == key) ?? false);
             if (referenced)
                 used.Add(new VocabUsage(e.Id, e.Title, e.Type.ToString(), e.ChapterId, e.Chapter?.SubjectId ?? 0));

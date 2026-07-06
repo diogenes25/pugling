@@ -114,12 +114,13 @@ function AccountView({ childId }: { childId: number }) {
                         : <span className="pill">{redemptionStatusLabel(r.status)}</span>}</td>
                       <td className="muted">{new Date(r.purchasedAt).toLocaleDateString()}</td>
                       <td style={{ whiteSpace: "nowrap" }}>
-                        {r.status === "Purchased" ? (
+                        {/* Aktionen aus den server-autoritativen Affordances – nicht die "offen"-Regel im Client nachbilden. */}
+                        {r.canFulfill || r.canCancel ? (
                           <>
-                            <button type="button" className="btn inline-btn" style={{ width: "auto" }} disabled={busy}
-                              onClick={() => decide(r.id, true)}>Erfüllen</button>{" "}
-                            <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} disabled={busy}
-                              onClick={() => decide(r.id, false)}>Stornieren</button>
+                            {r.canFulfill && <button type="button" className="btn inline-btn" style={{ width: "auto" }} disabled={busy}
+                              onClick={() => decide(r.id, true)}>Erfüllen</button>}{" "}
+                            {r.canCancel && <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} disabled={busy}
+                              onClick={() => decide(r.id, false)}>Stornieren</button>}
                           </>
                         ) : <span className="muted">{r.fulfilledAt ? new Date(r.fulfilledAt).toLocaleDateString() : "–"}</span>}
                       </td>

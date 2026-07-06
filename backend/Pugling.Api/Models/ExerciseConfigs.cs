@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace Pugling.Api.Models;
 
 // Config-Schemas je Übungstyp.
@@ -9,20 +11,40 @@ namespace Pugling.Api.Models;
 public record Question(string Prompt, List<string>? Choices, string Answer);
 
 /// <summary>
-/// Vokabelübung. Bevorzugt verweist sie über <see cref="Refs"/> (Store-Keys) auf den Vokabel-Komplextyp,
-/// damit dieselbe Vokabel über mehrere Übungen hinweg verknüpft und zentral pflegbar ist. <see cref="Items"/>
-/// (inline) bleibt für Abwärtskompatibilität (Alt-/Seed-Übungen); der Resolver liest beide Formen.
+/// Vokabelübung. Verweist über <see cref="Refs"/> auf Einträge des Vokabel-Stores (per <see cref="VocabRef.VocabularyId"/>),
+/// damit dieselbe Vokabel über mehrere Übungen hinweg verknüpft und zentral pflegbar ist. Inline-<see cref="Items"/>
+/// ohne eigene <see cref="VocabItem.VocabularyId"/> werden beim Speichern automatisch im Store angelegt und verlinkt –
+/// so liegt garantiert jede genutzte Vokabel im Store. <see cref="SourceLang"/>/<see cref="TargetLang"/> sind dafür
+/// nötig (der Store-Key wird aus Sprache + Wort + Übersetzung gebildet).
 /// </summary>
 public class VocabularyConfig
 {
     /// <summary>Abfragerichtung: front-to-back | back-to-front | both.</summary>
     public string Direction { get; set; } = "front-to-back";
-    /// <summary>Referenzen auf Vokabel-Store-Einträge per Key (bevorzugt).</summary>
-    public List<string>? Refs { get; set; }
-    /// <summary>Inline-Vokabeln (Legacy/ohne Store-Bezug).</summary>
+    /// <summary>Sprachcode der Ausgangssprache (z. B. „en"); nötig, um Inline-<see cref="Items"/> im Store anzulegen.</summary>
+    public string SourceLang { get; set; } = "";
+    /// <summary>Sprachcode der Zielsprache (z. B. „de"); nötig, um Inline-<see cref="Items"/> im Store anzulegen.</summary>
+    public string TargetLang { get; set; } = "";
+    /// <summary>Referenzen auf Vokabel-Store-Einträge (per ID; die Antwort ergänzt den Link).</summary>
+    public List<VocabRef>? Refs { get; set; }
+    /// <summary>Inline-Vokabeln; ohne <see cref="VocabItem.VocabularyId"/> beim Speichern automatisch im Store angelegt.</summary>
     public List<VocabItem> Items { get; set; } = new();
 }
-public record VocabItem(string Front, string Back, string? Hint = null);
+
+/// <summary>
+/// Verweis auf einen Vokabel-Store-Eintrag. Persistiert wird die <paramref name="VocabularyId"/> (und – als Lesehilfe –
+/// optional der <paramref name="Key"/>). <paramref name="Self"/> ist ein rein abgeleiteter HATEOAS-Link
+/// (<c>/api/v1/learn/vocabulary/{id}</c>), der nur in Antworten gefüllt und nie gespeichert wird.
+/// </summary>
+[JsonConverter(typeof(VocabRefJsonConverter))]
+public record VocabRef(int VocabularyId, string? Key = null, string? Self = null);
+
+/// <summary>
+/// Inline-Vokabel. <paramref name="VocabularyId"/> verweist auf den zugehörigen Store-Eintrag (beim Speichern
+/// automatisch angelegt); <paramref name="Self"/> ist der abgeleitete, nur lesend gefüllte HATEOAS-Link.
+/// </summary>
+public record VocabItem(string Front, string Back, string? Hint = null,
+    int? VocabularyId = null, [property: JsonPropertyName("_self")] string? Self = null);
 
 /// <summary>Leseverständnis: Text + Verständnisfragen.</summary>
 public class ReadingConfig
@@ -89,7 +111,12 @@ public class TranslationConfig
     public string TargetLang { get; set; } = "";
     public List<TranslationItem> Items { get; set; } = new();
 }
-public record TranslationItem(string Source, string Target, List<string>? Alternatives = null);
+/// <summary>
+/// Ein Übersetzungspaar. <paramref name="VocabularyId"/> verweist auf den zugehörigen Store-Eintrag
+/// (beim Speichern automatisch angelegt); <paramref name="Self"/> ist der abgeleitete, nur lesend gefüllte Link.
+/// </summary>
+public record TranslationItem(string Source, string Target, List<string>? Alternatives = null,
+    int? VocabularyId = null, [property: JsonPropertyName("_self")] string? Self = null);
 
 /// <summary>Feste Rechenaufgaben: manuell gepflegte Liste aus Ausdruck und erwarteter Lösung.</summary>
 public class ArithmeticConfig
@@ -179,4 +206,5 @@ public record BirkenbihlSentence(int SentenceId, string LearningSentence, string
 /// das Wort (noch) nicht im Vokabelspeicher liegt und keine manuelle Glosse gesetzt wurde. <paramref name="WordId"/>
 /// ist übungsweit eindeutig (siehe <see cref="BirkenbihlConfig.NextWordId"/>).
 /// </summary>
-public record WordPair(int WordId, string LearningWord, string? Gloss, int? VocabularyId);
+public record WordPair(int WordId, string LearningWord, string? Gloss, int? VocabularyId,
+    [property: JsonPropertyName("_self")] string? Self = null);

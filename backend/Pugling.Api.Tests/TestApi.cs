@@ -89,7 +89,7 @@ internal static class TestApi
                 title = "Begrüßungen",
                 orderIndex = 1,
                 rewardPoints = 10,
-                config = new { direction = "front-to-back", items = vocab.Select(i => new { front = i.Front, back = i.Back }) },
+                config = new { direction = "front-to-back", sourceLang = "en", targetLang = "de", items = vocab.Select(i => new { front = i.Front, back = i.Back }) },
             }));
     }
 
@@ -104,9 +104,20 @@ internal static class TestApi
         return (v.GetProperty("id").GetInt32(), v.GetProperty("key").GetString()!);
     }
 
-    /// <summary>Legt (als Vater) eine Vokabel-Übung an, die Store-Einträge per Key referenziert; liefert deren Id.</summary>
+    /// <summary>Löst einen Store-Key in seine Id auf (Refs referenzieren jetzt per Id).</summary>
+    public static async Task<int> ResolveVocabIdAsync(HttpClient father, string key)
+    {
+        var list = await father.GetFromJsonAsync<List<JsonElement>>(
+            $"/api/v1/learn/vocabulary?search={Uri.EscapeDataString(key)}&take=500");
+        return list!.First(v => v.GetProperty("key").GetString() == key).GetProperty("id").GetInt32();
+    }
+
+    /// <summary>Legt (als Vater) eine Vokabel-Übung an, die Store-Einträge per Id referenziert; liefert deren Id.</summary>
     public static async Task<int> CreateVocabRefExerciseAsync(HttpClient father, params string[] keys)
     {
+        var ids = new List<int>();
+        foreach (var key in keys) ids.Add(await ResolveVocabIdAsync(father, key));
+
         var subjectId = await IdAsync(await father.PostAsJsonAsync("/api/v1/learn/subjects", new { name = "Englisch-Ref" }));
         var chapterId = await IdAsync(await father.PostAsJsonAsync(
             $"/api/v1/learn/subjects/{subjectId}/chapters", new { name = "Unit 1", orderIndex = 1 }));
@@ -116,7 +127,7 @@ internal static class TestApi
                 title = "Vokabeln (Store)",
                 orderIndex = 1,
                 rewardPoints = 10,
-                config = new { direction = "front-to-back", refs = keys },
+                config = new { direction = "front-to-back", refs = ids.Select(id => new { vocabularyId = id }) },
             }));
     }
 
