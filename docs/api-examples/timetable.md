@@ -50,7 +50,7 @@ Response — `HTTP 409`:
   "status": 409,
   "detail": "This subject is already scheduled on this weekday.",
   "code": "timetable_slot_taken",
-  "traceId": "00-b2e76b71d019c0b95d8f65fe6221d7f4-7a714abd04fd48bf-00"
+  "traceId": "<trace-id>"
 }
 ```
 

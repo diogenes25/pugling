@@ -19,14 +19,14 @@ Response — `HTTP 200`:
       "amount": 300,
       "kind": "Achievement",
       "reason": "Willkommens-Gems",
-      "createdAt": "2026-07-06T16:55:29.9021996"
+      "createdAt": "2026-07-06T17:22:33.6597855"
     },
     {
       "id": 1,
       "amount": 50,
       "kind": "Base",
       "reason": "Startguthaben (M\u00FCnzen)",
-      "createdAt": "2026-07-06T16:55:29.9020011"
+      "createdAt": "2026-07-06T17:22:33.6596707"
     }
   ]
 }
@@ -235,7 +235,7 @@ Response — `HTTP 403`:
   "type": "https://pugling.app/errors/forbidden",
   "title": "Forbidden",
   "status": 403,
-  "traceId": "00-1cefe54b921635fed366f8715c7ae873-49a75948c5183001-00",
+  "traceId": "<trace-id>",
   "code": "forbidden"
 }
 ```
@@ -258,7 +258,7 @@ Response — `HTTP 409`:
   "status": 409,
   "detail": "This skin is already unlocked.",
   "code": "skin_already_unlocked",
-  "traceId": "00-7a9b96cb9c2ed63c018d3cf3706ea21d-631216a6c5aabbb8-00"
+  "traceId": "<trace-id>"
 }
 ```
 
@@ -280,7 +280,7 @@ Response — `HTTP 400`:
   "status": 400,
   "detail": "Not enough gems: 0/300 for \u0027fox\u0027.",
   "code": "insufficient_gems",
-  "traceId": "00-1595f6d77f448ba43d05a391f9f81efc-7bc549f05ee172d8-00"
+  "traceId": "<trace-id>"
 }
 ```
 
@@ -302,7 +302,7 @@ Response — `HTTP 404`:
   "status": 404,
   "detail": "Unknown skin \u0027banane\u0027.",
   "code": "not_found",
-  "traceId": "00-da6baec875ddcf36e50eda1cddcfd919-6cf427454d136d9a-00"
+  "traceId": "<trace-id>"
 }
 ```
 
@@ -368,7 +368,7 @@ Response — `HTTP 400`:
   "status": 400,
   "detail": "This skin is not unlocked yet.",
   "code": "skin_not_unlocked",
-  "traceId": "00-eaf5d2bb13ad9c873bb555256e63373b-e7cd0e38ccb51628-00"
+  "traceId": "<trace-id>"
 }
 ```
 
@@ -406,7 +406,7 @@ Response — `HTTP 200`:
       "title": "30 Min Fernsehen",
       "cost": 50,
       "status": "Purchased",
-      "purchasedAt": "2026-07-06T16:55:33.4592804",
+      "purchasedAt": "2026-07-06T17:22:36.9167877",
       "fulfilledAt": null
     }
   ]
@@ -432,8 +432,8 @@ Response — `HTTP 200`:
   "title": "30 Min Fernsehen",
   "cost": 50,
   "status": "Fulfilled",
-  "purchasedAt": "2026-07-06T16:55:33.4592804",
-  "fulfilledAt": "2026-07-06T16:55:33.5422461Z",
+  "purchasedAt": "2026-07-06T17:22:36.9167877",
+  "fulfilledAt": "<timestamp>",
   "canFulfill": false,
   "canCancel": false
 }
@@ -457,7 +457,7 @@ Response — `HTTP 409`:
   "status": 409,
   "detail": "This purchase is no longer open.",
   "code": "purchase_not_open",
-  "traceId": "00-a92a1a2e8521c74a52d1a3cb65fc00dd-6467f08087bed3c2-00"
+  "traceId": "<trace-id>"
 }
 ```
 
@@ -479,7 +479,7 @@ Response — `HTTP 409`:
   "status": 409,
   "detail": "The quota for this period is exhausted.",
   "code": "quota_exhausted",
-  "traceId": "00-e47d85614826e6913f2b1efe13394343-3be6574e2984f3d1-00"
+  "traceId": "<trace-id>"
 }
 ```
 
@@ -501,7 +501,7 @@ Response — `HTTP 400`:
   "status": 400,
   "detail": "This offer is no longer available.",
   "code": "offer_inactive",
-  "traceId": "00-2a4b0a5439fa7ab360c934c4a4a7f171-d193c9e0e43d5a86-00"
+  "traceId": "<trace-id>"
 }
 ```
 
@@ -523,7 +523,7 @@ Response — `HTTP 400`:
   "status": 400,
   "detail": "Not enough coins for this offer.",
   "code": "insufficient_coins",
-  "traceId": "00-921b2c01ff1fd0924cccf122f4b8b3c1-17b62d0f32c51fac-00"
+  "traceId": "<trace-id>"
 }
 ```
 

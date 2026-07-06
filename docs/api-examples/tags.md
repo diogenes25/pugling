@@ -26,7 +26,7 @@ Response — `HTTP 201`:
   "createdBy": "Vater",
   "exerciseCount": 0,
   "vocabularyCount": 0,
-  "createdAt": "2026-07-06T16:55:34.8045927Z"
+  "createdAt": "<timestamp>"
 }
 ```
 
@@ -54,7 +54,7 @@ Response — `HTTP 201`:
   "createdBy": "Sohn",
   "exerciseCount": 0,
   "vocabularyCount": 0,
-  "createdAt": "2026-07-06T16:55:34.8249507Z"
+  "createdAt": "<timestamp>"
 }
 ```
 
@@ -79,7 +79,7 @@ Response — `HTTP 400`:
   "status": 400,
   "detail": "A tag with this name already exists for this child.",
   "code": "duplicate_tag_name",
-  "traceId": "00-97da2eb72e16e7d331c4ce05bcebecf7-5e0240ce908decff-00"
+  "traceId": "<trace-id>"
 }
 ```
 
@@ -102,7 +102,7 @@ Response — `HTTP 403`:
   "type": "https://pugling.app/errors/forbidden",
   "title": "Forbidden",
   "status": 403,
-  "traceId": "00-7ca11c03712a7973488b40f4822e42a8-13686e64258390c2-00",
+  "traceId": "<trace-id>",
   "code": "forbidden"
 }
 ```
@@ -129,7 +129,7 @@ Response — `HTTP 400`:
   "status": 400,
   "detail": "Unknown exercise IDs: 999999",
   "code": "invalid_reference",
-  "traceId": "00-e6b7c532cb14ebc9602b6ae595312147-da97914c09b4365f-00"
+  "traceId": "<trace-id>"
 }
 ```
 

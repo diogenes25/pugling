@@ -37,7 +37,7 @@ Response — `HTTP 201`:
   "baseFormRelation": null,
   "pronunciationAudioUrl": null,
   "tags": [],
-  "createdAt": "2026-07-06T16:55:34.6333256Z"
+  "createdAt": "<timestamp>"
 }
 ```
 
@@ -66,7 +66,7 @@ Response — `HTTP 409`:
   "status": 409,
   "detail": "Key \u0027en_doku_de_beispiel\u0027 already exists.",
   "code": "duplicate_key",
-  "traceId": "00-fe3eae8f6207cac599eae02ed3ce43cc-7564dcf40cd7ebc6-00"
+  "traceId": "<trace-id>"
 }
 ```
 
@@ -99,7 +99,7 @@ Response — `HTTP 200`:
   "baseFormRelation": null,
   "pronunciationAudioUrl": null,
   "tags": [],
-  "createdAt": "2026-07-06T16:55:30.3225691"
+  "createdAt": "2026-07-06T17:22:34.0240818"
 }
 ```
 
@@ -116,7 +116,7 @@ Response — `HTTP 409`:
   "status": 409,
   "detail": "The vocabulary item is the base form of other entries and cannot be deleted.",
   "code": "vocabulary_in_use",
-  "traceId": "00-60a80a9671196c005001c663e1617262-256941675e54b34d-00"
+  "traceId": "<trace-id>"
 }
 ```
 

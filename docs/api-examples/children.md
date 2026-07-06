@@ -17,7 +17,7 @@ Response — `HTTP 200`:
     "birthYear": 2015,
     "grade": null,
     "schoolType": "None",
-    "createdAt": "2026-07-06T16:55:29.8880142",
+    "createdAt": "2026-07-06T17:22:33.6457125",
     "coins": 50,
     "gems": 300
   }
@@ -46,7 +46,7 @@ Response — `HTTP 201`:
   "birthYear": null,
   "grade": null,
   "schoolType": "None",
-  "createdAt": "2026-07-06T16:55:32.2000686Z",
+  "createdAt": "<timestamp>",
   "coins": 0,
   "gems": 0
 }
@@ -73,7 +73,7 @@ Response — `HTTP 400`:
   "status": 400,
   "detail": "Name is required.",
   "code": "validation_error",
-  "traceId": "00-fa6a103a43500ab2824dbc7f6ea64893-240903469656b64d-00"
+  "traceId": "<trace-id>"
 }
 ```
 
@@ -91,7 +91,7 @@ Response — `HTTP 200`:
   "birthYear": null,
   "grade": null,
   "schoolType": "None",
-  "createdAt": "2026-07-06T16:55:32.2000686",
+  "createdAt": "2026-07-06T17:22:35.9388756",
   "coins": 0,
   "gems": 0
 }
@@ -118,7 +118,7 @@ Response — `HTTP 200`:
   "birthYear": null,
   "grade": 4,
   "schoolType": "None",
-  "createdAt": "2026-07-06T16:55:32.2000686",
+  "createdAt": "2026-07-06T17:22:35.9388756",
   "coins": 0,
   "gems": 0
 }
@@ -137,7 +137,7 @@ Response — `HTTP 404`:
   "status": 404,
   "detail": "Child not found.",
   "code": "not_found",
-  "traceId": "00-9fa8225ed1b4d9216f16d73ec7014f02-e7148e8b2aa950a7-00"
+  "traceId": "<trace-id>"
 }
 ```
 

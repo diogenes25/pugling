@@ -9,6 +9,7 @@ using Microsoft.OpenApi;
 using Pugling.Api.Auth;
 using Pugling.Api.Data;
 using Pugling.Api.Errors;
+using Pugling.Api.OpenApi;
 using Pugling.Api.Services;
 using Serilog;
 using Serilog.Formatting.Compact;
@@ -180,6 +181,9 @@ builder.Services.AddAuthorization();
 // OpenAPI: Bearer-Sicherheitsschema, damit Swagger UI einen "Authorize"-Button zeigt.
 builder.Services.AddOpenApi(o =>
 {
+    o.AddOperationTransformer(new OpenApiExamplesOperationTransformer(
+        OpenApiExampleCatalog.Load(builder.Environment.ContentRootPath)));
+
     o.AddDocumentTransformer((doc, _, _) =>
     {
         doc.Components ??= new OpenApiComponents();
