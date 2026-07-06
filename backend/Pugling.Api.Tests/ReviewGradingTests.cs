@@ -43,7 +43,7 @@ public class ReviewGradingTests(PuglingWebAppFactory factory) : IClassFixture<Pu
         res.EnsureSuccessStatusCode();
         var outcome = await res.Content.ReadFromJsonAsync<JsonElement>();
 
-        Assert.True(outcome.GetProperty("wasCorrect").GetBoolean());
+        JsonAssert.True(outcome, "wasCorrect");
         Assert.Equal("hallo", outcome.GetProperty("expected").GetString());
         Assert.True(outcome.GetProperty("awarded").GetInt32() > 0);
         Assert.Equal(2, outcome.GetProperty("box").GetInt32()); // Box 1 → 2 nach richtiger Antwort
@@ -59,7 +59,7 @@ public class ReviewGradingTests(PuglingWebAppFactory factory) : IClassFixture<Pu
         res.EnsureSuccessStatusCode();
         var outcome = await res.Content.ReadFromJsonAsync<JsonElement>();
 
-        Assert.False(outcome.GetProperty("wasCorrect").GetBoolean());
+        JsonAssert.False(outcome, "wasCorrect");
         Assert.Equal(0, outcome.GetProperty("awarded").GetInt32());
         Assert.Equal(1, outcome.GetProperty("box").GetInt32()); // falsch → zurück in Box 1
         Assert.Equal(0, outcome.GetProperty("combo").GetInt32());
@@ -90,7 +90,7 @@ public class ReviewGradingTests(PuglingWebAppFactory factory) : IClassFixture<Pu
         res.EnsureSuccessStatusCode();
         var outcome = await res.Content.ReadFromJsonAsync<JsonElement>();
 
-        Assert.False(outcome.GetProperty("wasCorrect").GetBoolean());
+        JsonAssert.False(outcome, "wasCorrect");
         Assert.Equal(0, outcome.GetProperty("awarded").GetInt32());
     }
 

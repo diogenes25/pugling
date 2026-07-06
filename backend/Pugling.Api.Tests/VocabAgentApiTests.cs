@@ -109,9 +109,9 @@ public class VocabAgentApiTests(PuglingWebAppFactory factory) : IClassFixture<Pu
         var words = body.GetProperty("words").EnumerateArray().ToList();
         var banana = words.Single(w => w.GetProperty("word").GetString() == "banana");
         var missing = words.Single(w => w.GetProperty("word").GetString() == "missing");
-        Assert.True(banana.GetProperty("exists").GetBoolean());
+        JsonAssert.True(banana, "exists");
         Assert.Single(banana.GetProperty("matches").EnumerateArray());
-        Assert.False(missing.GetProperty("exists").GetBoolean());
+        JsonAssert.False(missing, "exists");
     }
 
     [Fact]

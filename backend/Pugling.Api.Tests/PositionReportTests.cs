@@ -35,7 +35,7 @@ public class PositionReportTests(PuglingWebAppFactory factory) : IClassFixture<P
 
         var items = report.GetProperty("items").EnumerateArray().ToList();
         var good = items.First(i => i.GetProperty("prompt").GetString() == "hello");
-        Assert.True(good.GetProperty("introduced").GetBoolean());
+        JsonAssert.True(good, "introduced");
         Assert.True(good.GetProperty("box").GetInt32() > 1);
         Assert.True(good.GetProperty("masteryPercent").GetInt32() > 0);
         Assert.Equal("hallo", good.GetProperty("answer").GetString()); // Lösung ist für den Vater sichtbar

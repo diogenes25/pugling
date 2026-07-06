@@ -54,7 +54,7 @@ public class GamificationTests(PuglingWebAppFactory factory) : IClassFixture<Pug
 
         var missions = await (await child.GetAsync("/api/v1/me/missions")).Content.ReadFromJsonAsync<JsonElement>();
         var mine = missions.EnumerateArray().First(m => m.GetProperty("title").GetString() == missionTitle);
-        Assert.True(mine.GetProperty("completed").GetBoolean());
+        JsonAssert.True(mine, "completed");
 
         // Genau einmal belohnt – auch nach weiteren Treffern (Idempotenz je Tag).
         await ReviewAsync(child, planId, positionId, sid, 0);
@@ -81,12 +81,66 @@ public class GamificationTests(PuglingWebAppFactory factory) : IClassFixture<Pug
 
         var achievements = await (await child.GetAsync("/api/v1/me/achievements")).Content.ReadFromJsonAsync<JsonElement>();
         var mine = achievements.EnumerateArray().First(a => a.GetProperty("title").GetString() == title);
-        Assert.True(mine.GetProperty("earned").GetBoolean());
+        JsonAssert.True(mine, "earned");
         Assert.Equal("⭐", mine.GetProperty("icon").GetString());
 
         // Genau einmal verliehen, auch nach weiteren Treffern.
         await ReviewAsync(child, planId, positionId, sid, 1);
         Assert.Equal(1, await CountPointReasonAsync(child, $"Auszeichnung erreicht: {title}"));
+    }
+
+    [Fact]
+    public async Task Mission_NeueWoerter_ZaehltErstmalsEingefuehrteInhalte()
+    {
+        var father = await TestApi.FatherAsync(factory);
+        var missionTitle = "TEST 2 neue Wörter";
+        await father.PostAsJsonAsync("/api/v1/children/1/missions", new
+        {
+            title = missionTitle,
+            metric = "NewWords",
+            target = 2,
+            period = "Daily",
+            rewardPoints = 15,
+        });
+
+        var (planId, positionId, sid) = await SetupAsync();
+        var child = await TestApi.ChildAsync(factory);
+
+        // Zwei bislang unbekannte Inhalte erstmals bearbeiten → 2 heute eingeführte Wörter (ProgressMetric.NewWords).
+        await ReviewAsync(child, planId, positionId, sid, 0);
+        await ReviewAsync(child, planId, positionId, sid, 1);
+
+        var missions = await (await child.GetAsync("/api/v1/me/missions")).Content.ReadFromJsonAsync<JsonElement>();
+        var mine = missions.EnumerateArray().First(m => m.GetProperty("title").GetString() == missionTitle);
+        JsonAssert.True(mine, "completed");
+    }
+
+    [Fact]
+    public async Task Mission_GeuebteMinuten_ZaehltAktiveSekunden()
+    {
+        var father = await TestApi.FatherAsync(factory);
+        var missionTitle = "TEST 1 Minute geübt";
+        await father.PostAsJsonAsync("/api/v1/children/1/missions", new
+        {
+            title = missionTitle,
+            metric = "MinutesPracticed",
+            target = 1,
+            period = "Daily",
+            rewardPoints = 10,
+        });
+
+        var (planId, positionId, sid) = await SetupAsync();
+        var child = await TestApi.ChildAsync(factory);
+
+        // 120 aktive Sekunden anrechnen (= 2 Minuten, ProgressMetric.MinutesPracticed = Summe/60) …
+        (await child.PostAsJsonAsync($"{TestApi.PracticeBase(planId, positionId)}/{sid}/heartbeat",
+            new { seconds = 120, active = true })).EnsureSuccessStatusCode();
+        // … die Missions-Auswertung läuft beim Beenden der Sitzung.
+        (await child.PostAsJsonAsync($"{TestApi.PracticeBase(planId, positionId)}/{sid}/end", new { })).EnsureSuccessStatusCode();
+
+        var missions = await (await child.GetAsync("/api/v1/me/missions")).Content.ReadFromJsonAsync<JsonElement>();
+        var mine = missions.EnumerateArray().First(m => m.GetProperty("title").GetString() == missionTitle);
+        JsonAssert.True(mine, "completed");
     }
 
     [Fact]

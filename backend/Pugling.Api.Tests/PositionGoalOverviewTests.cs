@@ -27,7 +27,7 @@ public class PositionGoalOverviewTests(PuglingWebAppFactory factory) : IClassFix
         // Tagesmission vor dem Test: Ziel offen, Pflicht nicht erledigt.
         var before = await (await child.GetAsync($"/api/v1/study-plans/{planId}/overview"))
             .Content.ReadFromJsonAsync<JsonElement>();
-        Assert.False(before.GetProperty("today").GetProperty("dutyDone").GetBoolean());
+        JsonAssert.False(before.GetProperty("today"), "dutyDone");
 
         // Test starten, alle Antworten korrekt einreichen.
         var attempt = await (await child.PostAsJsonAsync(testsUrl, new { }))
@@ -41,7 +41,7 @@ public class PositionGoalOverviewTests(PuglingWebAppFactory factory) : IClassFix
 
         var submit = await (await child.PostAsJsonAsync($"{testsUrl}/{attemptId}/submit", new { answers }))
             .Content.ReadFromJsonAsync<JsonElement>();
-        Assert.True(submit.GetProperty("passed").GetBoolean());
+        JsonAssert.True(submit, "passed");
 
         // Ziel-Punkte einmalig gebucht (Kind = 20 = PointsGoalMet-Default), Tagesmission erledigt.
         using (var scope = _factory.Services.CreateScope())
@@ -53,7 +53,7 @@ public class PositionGoalOverviewTests(PuglingWebAppFactory factory) : IClassFix
 
         var after = await (await child.GetAsync($"/api/v1/study-plans/{planId}/overview"))
             .Content.ReadFromJsonAsync<JsonElement>();
-        Assert.True(after.GetProperty("today").GetProperty("dutyDone").GetBoolean());
+        JsonAssert.True(after.GetProperty("today"), "dutyDone");
 
         // Zweiter bestandener Test am selben Tag → keine doppelten Ziel-Punkte (idempotent je Periode).
         var attempt2 = await (await child.PostAsJsonAsync(testsUrl, new { }))
@@ -94,7 +94,7 @@ public class PositionGoalOverviewTests(PuglingWebAppFactory factory) : IClassFix
         }).ToArray();
         var submit = await (await child.PostAsJsonAsync($"{testsUrl}/{attemptId}/submit", new { answers }))
             .Content.ReadFromJsonAsync<JsonElement>();
-        Assert.True(submit.GetProperty("passed").GetBoolean());
+        JsonAssert.True(submit, "passed");
 
         // Für diese Position genau eine Belohnung über 20 (die Klassen-DB teilt sich mit anderen Tests → positions-skopiert prüfen).
         using (var scope = _factory.Services.CreateScope())

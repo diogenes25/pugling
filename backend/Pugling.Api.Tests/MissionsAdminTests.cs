@@ -28,7 +28,7 @@ public class MissionsAdminTests(PuglingWebAppFactory factory) : IClassFixture<Pu
             rewardPoints = 15,
         })).Content.ReadFromJsonAsync<JsonElement>();
         var missionId = created.GetProperty("id").GetInt32();
-        Assert.True(created.GetProperty("active").GetBoolean());
+        JsonAssert.True(created, "active");
 
         // Liste enthält die Mission
         var list = await (await father.GetAsync($"/api/v1/children/{childId}/missions")).Content.ReadFromJsonAsync<JsonElement>();
@@ -38,7 +38,7 @@ public class MissionsAdminTests(PuglingWebAppFactory factory) : IClassFixture<Pu
         var patched = await (await father.PatchAsJsonAsync(
             $"/api/v1/children/{childId}/missions/{missionId}", new { active = false }))
             .Content.ReadFromJsonAsync<JsonElement>();
-        Assert.False(patched.GetProperty("active").GetBoolean());
+        JsonAssert.False(patched, "active");
 
         // Löschen → danach 404 beim erneuten Löschen
         (await father.DeleteAsync($"/api/v1/children/{childId}/missions/{missionId}")).EnsureSuccessStatusCode();

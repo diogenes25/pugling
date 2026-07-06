@@ -54,4 +54,18 @@ public class SpeedBonusTests(PuglingWebAppFactory factory) : IClassFixture<Pugli
         var second = await ReviewAsync(child, planId, positionId, sid, 1);
         Assert.Equal(0, second.GetProperty("speedBonus").GetInt32()); // Feature aus
     }
+
+    [Fact]
+    public async Task ZuSchnelleAntwort_UnterAntiCheatUntergrenze_BringtKeinenBonus()
+    {
+        var (planId, positionId, sid) = await SetupAsync(thresholdSeconds: 60, bonus: 4);
+        var child = await TestApi.ChildAsync(factory);
+
+        // Erste Karte (ohne Vorgänger), dann die zweite SOFORT danach – der gemessene Abstand liegt
+        // deutlich unter der 1-s-Untergrenze. Anti-Farming: sie verhindert Punkte durch Doppelklicks,
+        // darum gibt es trotz gültigem Zeitfenster (60 s) keinen Speed-Bonus.
+        await ReviewAsync(child, planId, positionId, sid, 0);
+        var second = await ReviewAsync(child, planId, positionId, sid, 1);
+        Assert.Equal(0, second.GetProperty("speedBonus").GetInt32());
+    }
 }

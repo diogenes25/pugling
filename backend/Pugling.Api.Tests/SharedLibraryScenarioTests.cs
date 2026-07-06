@@ -64,7 +64,7 @@ public class SharedLibraryScenarioTests(PuglingWebAppFactory factory) : IClassFi
         var mine = hits.EnumerateArray().Single(e => e.GetProperty("id").GetInt32() == exerciseId);
         Assert.Equal(teacherId, mine.GetProperty("authorFatherId").GetInt32());
         Assert.Equal("Herr Schmidt", mine.GetProperty("authorName").GetString());
-        Assert.True(mine.GetProperty("isOwn").GetBoolean());
+        JsonAssert.True(mine, "isOwn");
     }
 
     [Fact]
@@ -85,7 +85,7 @@ public class SharedLibraryScenarioTests(PuglingWebAppFactory factory) : IClassFi
             .Content.ReadFromJsonAsync<JsonElement>();
         var found = hits.EnumerateArray().Single(e => e.GetProperty("id").GetInt32() == exerciseId);
         Assert.Equal("Frau Meier", found.GetProperty("authorName").GetString());
-        Assert.False(found.GetProperty("isOwn").GetBoolean());
+        JsonAssert.False(found, "isOwn");
 
         // 4) Er darf sie NICHT ändern oder löschen (Schutz der fremden Autorenarbeit).
         var putBody = new

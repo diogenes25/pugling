@@ -31,7 +31,7 @@ public class PositionVocabRefTests(PuglingWebAppFactory factory) : IClassFixture
 
         var outcome = await (await child.PostAsJsonAsync($"{baseUrl}/{sessionId}/review",
             new { itemIndex = 0, givenAnswer = "hallo" })).Content.ReadFromJsonAsync<JsonElement>();
-        Assert.True(outcome.GetProperty("wasCorrect").GetBoolean());
+        JsonAssert.True(outcome, "wasCorrect");
         Assert.Equal("hallo", outcome.GetProperty("expected").GetString());
     }
 
@@ -52,6 +52,6 @@ public class PositionVocabRefTests(PuglingWebAppFactory factory) : IClassFixture
         var sessionId = await TestApi.IdAsync(await child.PostAsJsonAsync(baseUrl, new { }));
         var outcome = await (await child.PostAsJsonAsync($"{baseUrl}/{sessionId}/review",
             new { itemIndex = 0, givenAnswer = "Mieze" })).Content.ReadFromJsonAsync<JsonElement>();
-        Assert.True(outcome.GetProperty("wasCorrect").GetBoolean());
+        JsonAssert.True(outcome, "wasCorrect");
     }
 }

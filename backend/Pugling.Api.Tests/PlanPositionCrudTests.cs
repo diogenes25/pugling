@@ -44,7 +44,7 @@ public class PlanPositionCrudTests(PuglingWebAppFactory factory) : IClassFixture
         var sessionId = await TestApi.IdAsync(await child.PostAsJsonAsync(baseUrl, new { }));
         var outcome = await (await child.PostAsJsonAsync($"{baseUrl}/{sessionId}/review",
             new { itemIndex = 0, givenAnswer = "Frühling" })).Content.ReadFromJsonAsync<JsonElement>();
-        Assert.True(outcome.GetProperty("wasCorrect").GetBoolean());
+        JsonAssert.True(outcome, "wasCorrect");
     }
 
     [Fact]

@@ -31,6 +31,26 @@ public class AntiCheatTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
     }
 
     [Fact]
+    public async Task Heartbeat_InaktivOderNichtPositiv_RechnetKeineZeitAn()
+    {
+        var (planId, positionId) = await SetupAsync();
+        var father = await TestApi.FatherAsync(factory);
+        var sid = await TestApi.StartPositionSessionAsync(father, planId, positionId);
+        var url = $"{TestApi.PracticeBase(planId, positionId)}/{sid}/heartbeat";
+
+        // Pausiert (active:false): die Sekunden dürfen trotz Angabe nicht anrechnen –
+        // sonst zählte weggeklickte/Hintergrund-Zeit als Übungszeit (Anti-Zeit-Cheat).
+        var paused = await (await father.PostAsJsonAsync(url, new { seconds = 90, active = false }))
+            .Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal(0, paused.GetProperty("activeSeconds").GetInt32());
+
+        // Ein nicht-positiver Heartbeat (0 s) ebenfalls nicht: die Bedingung Seconds > 0 verwirft ihn still.
+        var zero = await (await father.PostAsJsonAsync(url, new { seconds = 0, active = true }))
+            .Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal(0, zero.GetProperty("activeSeconds").GetInt32());
+    }
+
+    [Fact]
     public async Task Sohn_KannTeststufeNichtWaehlen_FahrplanStufeErzwungen()
     {
         var (planId, positionId) = await SetupAsync(stage: (int)TestStage.SelfAssess);
@@ -138,12 +158,12 @@ public class AntiCheatTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
 
         var b = await (await father.GetAsync($"/api/v1/study-plans/{planB}")).Content.ReadFromJsonAsync<JsonElement>();
         var a = await (await father.GetAsync($"/api/v1/study-plans/{planA}")).Content.ReadFromJsonAsync<JsonElement>();
-        Assert.False(b.GetProperty("active").GetBoolean());
-        Assert.True(a.GetProperty("active").GetBoolean());
+        JsonAssert.False(b, "active");
+        JsonAssert.True(a, "active");
 
         // Affordance IsPlayable folgt der Anti-Cheat-Regel: nur der aktive (und in Laufzeit befindliche) Plan ist spielbar.
-        Assert.True(a.GetProperty("isPlayable").GetBoolean());
-        Assert.False(b.GetProperty("isPlayable").GetBoolean());
+        JsonAssert.True(a, "isPlayable");
+        JsonAssert.False(b, "isPlayable");
     }
 
     [Fact]
@@ -156,8 +176,8 @@ public class AntiCheatTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
             new { childId = 1, title = "Zukunfts-Plan", startDate = future, durationDays = 5 }));
 
         var plan = await (await father.GetAsync($"/api/v1/study-plans/{planId}")).Content.ReadFromJsonAsync<JsonElement>();
-        Assert.True(plan.GetProperty("active").GetBoolean());
-        Assert.False(plan.GetProperty("isPlayable").GetBoolean());
+        JsonAssert.True(plan, "active");
+        JsonAssert.False(plan, "isPlayable");
     }
 
     [Fact]

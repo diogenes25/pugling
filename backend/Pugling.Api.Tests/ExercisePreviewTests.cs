@@ -34,7 +34,7 @@ public class ExercisePreviewTests(PuglingWebAppFactory factory) : IClassFixture<
 
         // GET preview: getippte Endstufe → Lösung wird NICHT aufgedeckt.
         var data = await father.GetFromJsonAsync<JsonElement>($"/api/v1/learn/exercises/{exerciseId}/preview");
-        Assert.True(data.GetProperty("typed").GetBoolean());
+        JsonAssert.True(data, "typed");
         var items = data.GetProperty("items").EnumerateArray().ToList();
         Assert.Equal(2, items.Count);
         Assert.Equal("hello", items[0].GetProperty("prompt").GetString());
@@ -55,9 +55,9 @@ public class ExercisePreviewTests(PuglingWebAppFactory factory) : IClassFixture<
         Assert.Equal(1, result.GetProperty("correct").GetInt32());
         Assert.Equal(50, result.GetProperty("scorePercent").GetInt32());
         var outItems = result.GetProperty("items").EnumerateArray().ToList();
-        Assert.True(outItems[0].GetProperty("wasCorrect").GetBoolean());
+        JsonAssert.True(outItems[0], "wasCorrect");
         Assert.Equal("hallo", outItems[0].GetProperty("expected").GetString()); // im Ergebnis wird die Lösung offengelegt
-        Assert.False(outItems[1].GetProperty("wasCorrect").GetBoolean());
+        JsonAssert.False(outItems[1], "wasCorrect");
 
         // Kern der Zusicherung: nichts wurde persistiert – keine Punkte, kein Versuch, kein Fortschritt, keine Session.
         Assert.Equal(before, Counts());
@@ -110,7 +110,7 @@ public class ExercisePreviewTests(PuglingWebAppFactory factory) : IClassFixture<
         // stage=6 (Multiple-Choice): getippt, jede Aufgabe trägt Auswahlmöglichkeiten; die umschaltbaren Stufen kommen mit.
         var data = await father.GetFromJsonAsync<JsonElement>($"/api/v1/learn/exercises/{exerciseId}/preview?stage=6");
         Assert.Equal(6, data.GetProperty("stage").GetInt32());
-        Assert.True(data.GetProperty("typed").GetBoolean());
+        JsonAssert.True(data, "typed");
         Assert.Equal("Vocabulary", data.GetProperty("type").GetString());
         Assert.Contains(data.GetProperty("stages").EnumerateArray(), s => s.GetProperty("value").GetInt32() == 5); // Hör-Stufe wählbar
         var items = data.GetProperty("items").EnumerateArray().ToList();
@@ -126,7 +126,7 @@ public class ExercisePreviewTests(PuglingWebAppFactory factory) : IClassFixture<
         });
         res.EnsureSuccessStatusCode();
         var result = await res.Content.ReadFromJsonAsync<JsonElement>();
-        Assert.True(result.GetProperty("items").EnumerateArray().First().GetProperty("wasCorrect").GetBoolean());
+        JsonAssert.True(result.GetProperty("items").EnumerateArray().First(), "wasCorrect");
     }
 
     [Fact]
@@ -143,7 +143,7 @@ public class ExercisePreviewTests(PuglingWebAppFactory factory) : IClassFixture<
         // stage=5 (Hören): getippt, Lösung verborgen, aber die Audioquelle wird für den Client mitgegeben.
         var data = await father.GetFromJsonAsync<JsonElement>($"/api/v1/learn/exercises/{exerciseId}/preview?stage=5");
         Assert.Equal(5, data.GetProperty("stage").GetInt32());
-        Assert.True(data.GetProperty("typed").GetBoolean());
+        JsonAssert.True(data, "typed");
         var item = data.GetProperty("items").EnumerateArray().First();
         Assert.Equal("https://example.test/hello.mp3", item.GetProperty("audioUrl").GetString());
         Assert.Equal(JsonValueKind.Null, item.GetProperty("reveal").ValueKind);

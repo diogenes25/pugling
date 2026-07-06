@@ -1,5 +1,4 @@
 using System.Net;
-using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
 
@@ -13,24 +12,6 @@ namespace Pugling.Api.Tests;
 /// </summary>
 public class BirkenbihlExerciseTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWebAppFactory>
 {
-    private async Task<HttpClient> FatherClientAsync()
-    {
-        var client = factory.CreateClient();
-        var login = await client.PostAsJsonAsync("/api/v1/auth/father", new { fatherId = 1, pin = "0000" });
-        var token = (await login.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("token").GetString();
-        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-        return client;
-    }
-
-    private async Task<HttpClient> ChildClientAsync()
-    {
-        var client = factory.CreateClient();
-        var login = await client.PostAsJsonAsync("/api/v1/auth/child", new { childId = 1, pin = "1111" });
-        var token = (await login.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("token").GetString();
-        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-        return client;
-    }
-
     /// <summary>Legt Fach + Kapitel an und gibt die Basis-Route der Birkenbihl-Übungen zurück.</summary>
     private static async Task<string> CreateChapterAsync(HttpClient father)
     {
@@ -61,21 +42,9 @@ public class BirkenbihlExerciseTests(PuglingWebAppFactory factory) : IClassFixtu
         return (route, id);
     }
 
-    /// <summary>Legt eine Vokabel an und gibt ihre Id zurück (Vater-Katalog, global).</summary>
-    private static async Task<int> CreateVocabAsync(HttpClient father, string word, string translation,
-        string src = "en", string tgt = "de", string partOfSpeech = "Other")
-    {
-        var res = await father.PostAsJsonAsync("/api/v1/learn/vocabulary", new
-        {
-            sourceLanguage = src,
-            targetLanguage = tgt,
-            word,
-            translation,
-            partOfSpeech,
-        });
-        res.EnsureSuccessStatusCode();
-        return (await res.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetInt32();
-    }
+    /// <summary>Legt eine Store-Vokabel an und gibt ihre Id zurück (über den geteilten Helfer).</summary>
+    private static async Task<int> CreateVocabAsync(HttpClient father, string word, string translation) =>
+        (await TestApi.CreateStoreVocabAsync(father, word, translation)).id;
 
     private static bool IsNull(JsonElement e, string prop) =>
         e.GetProperty(prop).ValueKind == JsonValueKind.Null;
@@ -83,7 +52,7 @@ public class BirkenbihlExerciseTests(PuglingWebAppFactory factory) : IClassFixtu
     [Fact]
     public async Task CrudRoundtrip_ConfigBleibtTypisiertErhalten()
     {
-        var father = await FatherClientAsync();
+        var father = await TestApi.FatherAsync(factory);
         var route = await CreateChapterAsync(father);
 
         var payload = new
@@ -145,7 +114,7 @@ public class BirkenbihlExerciseTests(PuglingWebAppFactory factory) : IClassFixtu
     [Fact]
     public async Task Create_OhneIds_VergibtEindeutigeIds_UndAddSentenceKollidiertNicht()
     {
-        var father = await FatherClientAsync();
+        var father = await TestApi.FatherAsync(factory);
         var route = await CreateChapterAsync(father);
 
         // Genau die Form, die das Vater-Formular schickt: keine sentenceId/wordId, keine Zähler.
@@ -208,10 +177,10 @@ public class BirkenbihlExerciseTests(PuglingWebAppFactory factory) : IClassFixtu
     [Fact]
     public async Task AddSentence_VerlinktBekannteWoerter_LaesstUnbekannteLeer()
     {
-        var father = await FatherClientAsync();
+        var father = await TestApi.FatherAsync(factory);
         var (route, exerciseId) = await CreateExerciseAsync(father);
-        var howId = await CreateVocabAsync(father, "How", "Wie", partOfSpeech: "Adverb");
-        var areId = await CreateVocabAsync(father, "are", "bist", partOfSpeech: "Verb");
+        var howId = await CreateVocabAsync(father, "How", "Wie");
+        var areId = await CreateVocabAsync(father, "are", "bist");
 
         var res = await father.PostAsJsonAsync($"{route}/{exerciseId}/sentences",
             new { learningSentence = "How are you?", naturalTranslation = "Wie geht es dir?" });
@@ -243,10 +212,10 @@ public class BirkenbihlExerciseTests(PuglingWebAppFactory factory) : IClassFixtu
     [Fact]
     public async Task Homonym_LiefertKandidaten_UndWirdPerWortEndpunktKorrigiert()
     {
-        var father = await FatherClientAsync();
+        var father = await TestApi.FatherAsync(factory);
         var (route, exerciseId) = await CreateExerciseAsync(father);
-        var geldId = await CreateVocabAsync(father, "bank", "Bank", partOfSpeech: "Noun");
-        var uferId = await CreateVocabAsync(father, "bank", "Ufer", partOfSpeech: "Noun");
+        var geldId = await CreateVocabAsync(father, "bank", "Bank");
+        var uferId = await CreateVocabAsync(father, "bank", "Ufer");
 
         var add = await (await father.PostAsJsonAsync($"{route}/{exerciseId}/sentences",
             new { learningSentence = "the bank", naturalTranslation = "das Ufer" })).Content.ReadFromJsonAsync<JsonElement>();
@@ -283,9 +252,9 @@ public class BirkenbihlExerciseTests(PuglingWebAppFactory factory) : IClassFixtu
     [Fact]
     public async Task GleichesWort_InZweiSaetzen_HatEigeneWordId_UndWirdUnabhaengigGeaendert()
     {
-        var father = await FatherClientAsync();
+        var father = await TestApi.FatherAsync(factory);
         var (route, exerciseId) = await CreateExerciseAsync(father);
-        await CreateVocabAsync(father, "red", "rot", partOfSpeech: "Adjective");
+        await CreateVocabAsync(father, "red", "rot");
 
         var s1 = await (await father.PostAsJsonAsync($"{route}/{exerciseId}/sentences",
             new { learningSentence = "red apple", naturalTranslation = "roter Apfel" })).Content.ReadFromJsonAsync<JsonElement>();
@@ -319,8 +288,8 @@ public class BirkenbihlExerciseTests(PuglingWebAppFactory factory) : IClassFixtu
     [Fact]
     public async Task Decode_Zustandslos_LiefertTupelOhnePersistenz()
     {
-        var father = await FatherClientAsync();
-        var dogId = await CreateVocabAsync(father, "dog", "Hund", partOfSpeech: "Noun");
+        var father = await TestApi.FatherAsync(factory);
+        var dogId = await CreateVocabAsync(father, "dog", "Hund");
 
         var res = await father.PostAsJsonAsync("/api/v1/learn/birkenbihl/decode", new
         {
@@ -345,10 +314,10 @@ public class BirkenbihlExerciseTests(PuglingWebAppFactory factory) : IClassFixtu
     [Fact]
     public async Task Kind_KannKeinenSatzHinzufuegen_Liefert403()
     {
-        var father = await FatherClientAsync();
+        var father = await TestApi.FatherAsync(factory);
         var (route, exerciseId) = await CreateExerciseAsync(father);
 
-        var child = await ChildClientAsync();
+        var child = await TestApi.ChildAsync(factory);
         var res = await child.PostAsJsonAsync($"{route}/{exerciseId}/sentences",
             new { learningSentence = "How are you?", naturalTranslation = "Wie geht es dir?" });
 
