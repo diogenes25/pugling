@@ -34,7 +34,7 @@ public class ApiVersioningTests(PuglingWebAppFactory factory) : IClassFixture<Pu
         Assert.Equal(HttpStatusCode.BadRequest, res.StatusCode);
         var body = await res.Content.ReadFromJsonAsync<JsonElement>();
         Assert.Equal(400, body.GetProperty("status").GetInt32());
-        Assert.Equal("Name ist erforderlich.", body.GetProperty("detail").GetString());
+        Assert.Equal("Name is required.", body.GetProperty("detail").GetString());
         Assert.True(body.TryGetProperty("title", out _)); // RFC-7807-Felder vorhanden
     }
 }

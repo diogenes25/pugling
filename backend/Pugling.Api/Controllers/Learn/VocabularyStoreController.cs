@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Pugling.Api.Auth;
 using Pugling.Api.Data;
+using Pugling.Api.Errors;
 using Pugling.Api.Models;
 
 namespace Pugling.Api.Controllers.Learn;
@@ -210,8 +211,8 @@ public class VocabularyStoreController(PuglingDbContext db) : ControllerBase
         return outcome.Kind switch
         {
             CreateKind.Created => CreatedAtAction(nameof(Get), new { id = outcome.Vocab!.Id }, Map(outcome.Vocab)),
-            CreateKind.Conflict => Problem(statusCode: 409, detail: outcome.Error),
-            _ => Problem(statusCode: 400, detail: outcome.Error),
+            CreateKind.Conflict => this.ProblemWithCode(ApiErrors.DuplicateKey, outcome.Error),
+            _ => this.ProblemWithCode(ApiErrors.ValidationError, outcome.Error),
         };
     }
 
@@ -226,7 +227,7 @@ public class VocabularyStoreController(PuglingDbContext db) : ControllerBase
     private async Task<CreateOutcome> CreateCoreAsync(CreateVocabularyDto dto)
     {
         if (string.IsNullOrWhiteSpace(dto.Word))
-            return new(CreateKind.Error, null, null, "Word ist erforderlich.");
+            return new(CreateKind.Error, null, null, "Word is required.");
 
         string key;
         if (string.IsNullOrWhiteSpace(dto.Key))
@@ -237,7 +238,7 @@ public class VocabularyStoreController(PuglingDbContext db) : ControllerBase
         {
             key = dto.Key.Trim();
             if (await db.Vocabulary.AnyAsync(v => v.Key == key))
-                return new(CreateKind.Conflict, null, key, $"Key '{key}' existiert bereits.");
+                return new(CreateKind.Conflict, null, key, $"Key '{key}' already exists.");
         }
 
         int? baseFormId = null;
@@ -245,7 +246,7 @@ public class VocabularyStoreController(PuglingDbContext db) : ControllerBase
         {
             baseFormId = await db.Vocabulary.Where(v => v.Key == dto.BaseFormKey)
                 .Select(v => (int?)v.Id).FirstOrDefaultAsync();
-            if (baseFormId is null) return new(CreateKind.Error, null, key, $"BaseFormKey '{dto.BaseFormKey}' nicht gefunden.");
+            if (baseFormId is null) return new(CreateKind.Error, null, key, $"BaseFormKey '{dto.BaseFormKey}' not found.");
         }
 
         var vocab = new Vocabulary
@@ -299,7 +300,7 @@ public class VocabularyStoreController(PuglingDbContext db) : ControllerBase
         {
             UpdateStatus.Ok => Map(vocab!),
             UpdateStatus.NotFound => NotFound(),
-            _ => Problem(statusCode: 400, detail: error),
+            _ => this.ProblemWithCode(ApiErrors.ValidationError, error),
         };
     }
 
@@ -331,10 +332,10 @@ public class VocabularyStoreController(PuglingDbContext db) : ControllerBase
             }
             else
             {
-                if (dto.BaseFormKey == vocab.Key) return (UpdateStatus.Error, null, "Eine Vokabel kann nicht ihre eigene Grundform sein.");
+                if (dto.BaseFormKey == vocab.Key) return (UpdateStatus.Error, null, "A vocabulary item cannot be its own base form.");
                 var baseFormId = await db.Vocabulary.Where(v => v.Key == dto.BaseFormKey)
                     .Select(v => (int?)v.Id).FirstOrDefaultAsync();
-                if (baseFormId is null) return (UpdateStatus.Error, null, $"BaseFormKey '{dto.BaseFormKey}' nicht gefunden.");
+                if (baseFormId is null) return (UpdateStatus.Error, null, $"BaseFormKey '{dto.BaseFormKey}' not found.");
                 vocab.BaseFormId = baseFormId;
             }
         }
@@ -358,11 +359,11 @@ public class VocabularyStoreController(PuglingDbContext db) : ControllerBase
         if (vocab is null) return NotFound();
 
         if (await db.Vocabulary.AnyAsync(v => v.BaseFormId == id))
-            return Problem(statusCode: 409, detail: "Vokabel ist Grundform anderer Einträge und kann nicht gelöscht werden.");
+            return this.ProblemWithCode(ApiErrors.VocabularyInUse, "The vocabulary item is the base form of other entries and cannot be deleted.");
 
         // Verhindert stille „(Vokabel fehlt)"-Platzhalter in Übungen, die den Key referenzieren.
         if ((await ReferencingExercisesAsync(vocab.Key)).Count > 0)
-            return Problem(statusCode: 409, detail: "Vokabel wird in einer oder mehreren Übungen verwendet und kann nicht gelöscht werden.");
+            return this.ProblemWithCode(ApiErrors.VocabularyInUse, "The vocabulary item is used in one or more exercises and cannot be deleted.");
 
         db.Vocabulary.Remove(vocab);
         await db.SaveChangesAsync();
@@ -466,7 +467,7 @@ public class VocabularyStoreController(PuglingDbContext db) : ControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<IEnumerable<BatchItemResult>>> CreateBatch(List<CreateVocabularyDto> items)
     {
-        if (items is not { Count: > 0 }) return Problem(statusCode: 400, detail: "Mindestens ein Eintrag ist erforderlich.");
+        if (items is not { Count: > 0 }) return this.ProblemWithCode(ApiErrors.ValidationError, "At least one entry is required.");
 
         var results = new List<BatchItemResult>(items.Count);
         for (var i = 0; i < items.Count; i++)
@@ -500,7 +501,7 @@ public class VocabularyStoreController(PuglingDbContext db) : ControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<IEnumerable<BatchItemResult>>> UpdateBatch(List<BatchUpdateItem> items)
     {
-        if (items is not { Count: > 0 }) return Problem(statusCode: 400, detail: "Mindestens ein Eintrag ist erforderlich.");
+        if (items is not { Count: > 0 }) return this.ProblemWithCode(ApiErrors.ValidationError, "At least one entry is required.");
 
         var results = new List<BatchItemResult>(items.Count);
         for (var i = 0; i < items.Count; i++)
@@ -512,7 +513,7 @@ public class VocabularyStoreController(PuglingDbContext db) : ControllerBase
             results.Add(status switch
             {
                 UpdateStatus.Ok => new(i, "updated", vocab!.Id, vocab.Key, null),
-                UpdateStatus.NotFound => new(i, "not-found", it.Id, null, $"Vokabel {it.Id} nicht gefunden."),
+                UpdateStatus.NotFound => new(i, "not-found", it.Id, null, $"Vocabulary item {it.Id} not found."),
                 _ => new(i, "error", it.Id, null, error),
             });
         }

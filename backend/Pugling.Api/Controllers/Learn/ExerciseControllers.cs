@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Pugling.Api.Auth;
 using Pugling.Api.Data;
+using Pugling.Api.Errors;
 using Pugling.Api.Models;
 using Pugling.Api.Services;
 
@@ -44,15 +45,15 @@ public class VocabularyController(PuglingDbContext db, VocabularyStoreService st
         if (config.Refs is { Count: > 0 } refs)
         {
             if (refs.Any(r => r.VocabularyId <= 0))
-                return "Jede Referenz braucht eine gültige vocabularyId (> 0).";
+                return "Every reference needs a valid vocabularyId (> 0).";
             var ids = refs.Select(r => r.VocabularyId).Distinct().ToList();
             var existing = await Db.Vocabulary.Where(v => ids.Contains(v.Id)).Select(v => v.Id).ToListAsync();
             var missing = ids.Except(existing).ToList();
-            if (missing.Count > 0) return $"Unbekannte Vokabel-IDs: {string.Join(", ", missing)}";
+            if (missing.Count > 0) return $"Unknown vocabulary item IDs: {string.Join(", ", missing)}";
         }
         if (config.Items.Any(i => i.VocabularyId is null)
             && (string.IsNullOrWhiteSpace(config.SourceLang) || string.IsNullOrWhiteSpace(config.TargetLang)))
-            return "sourceLang und targetLang sind erforderlich, um Inline-Vokabeln im Store anzulegen.";
+            return "sourceLang and targetLang are required to create inline vocabulary items in the store.";
         return null;
     }
 
@@ -122,7 +123,7 @@ public class VocabularyController(PuglingDbContext db, VocabularyStoreService st
         if (EnsureCanModify(exercise) is { } forbidden) return forbidden;
 
         var tags = (dto.Tags ?? []).Select(t => t.Trim()).Where(t => t.Length > 0).Distinct().ToList();
-        if (tags.Count == 0) return Problem(statusCode: 400, detail: "Mindestens ein Tag ist erforderlich.");
+        if (tags.Count == 0) return this.ProblemWithCode(ApiErrors.ValidationError, "At least one tag is required.");
 
         var query = Db.Vocabulary.AsNoTracking().AsQueryable();
         if (dto.BaseFormsOnly) query = query.Where(v => v.BaseFormId == null);
@@ -163,7 +164,7 @@ public class ClozeController(PuglingDbContext db) : ExerciseControllerBase<Cloze
         if (keys.Count == 0) return null;
         var existing = await Db.Vocabulary.Where(v => keys.Contains(v.Key)).Select(v => v.Key).ToListAsync();
         var missing = keys.Except(existing).ToList();
-        return missing.Count == 0 ? null : $"Unbekannte Vokabel-Keys in Lücken: {string.Join(", ", missing)}";
+        return missing.Count == 0 ? null : $"Unknown vocabulary keys in gaps: {string.Join(", ", missing)}";
     }
 }
 
@@ -224,7 +225,7 @@ public class TranslationController(PuglingDbContext db, VocabularyStoreService s
     protected override Task<string?> ValidateConfigAsync(int subjectId, TranslationConfig config) =>
         Task.FromResult(config.Items.Any(i => i.VocabularyId is null)
             && (string.IsNullOrWhiteSpace(config.SourceLang) || string.IsNullOrWhiteSpace(config.TargetLang))
-            ? "sourceLang und targetLang sind erforderlich, um Übersetzungspaare im Store anzulegen."
+            ? "sourceLang and targetLang are required to create translation pairs in the store."
             : null);
 
     /// <summary>Legt jedes noch nicht verknüpfte Paar im Store an (bzw. findet es) und verknüpft es per ID.</summary>
@@ -364,7 +365,7 @@ public class BirkenbihlController(PuglingDbContext db, BirkenbihlDecodingService
         var exercise = await FindAsync(subjectId, chapterId, exerciseId);
         if (exercise is null) return NotFound();
         if (EnsureCanModify(exercise) is { } forbidden) return forbidden;
-        if (string.IsNullOrWhiteSpace(body.LearningSentence)) return Problem(statusCode: 400, detail: "Der Satz der Lernsprache ist erforderlich.");
+        if (string.IsNullOrWhiteSpace(body.LearningSentence)) return this.ProblemWithCode(ApiErrors.ValidationError, "The sentence in the learning language is required.");
 
         var config = ConfigOf(exercise);
         var lookups = await decoder.LookupAsync(config.LearningLang, config.NativeLang, body.LearningSentence, ct);
@@ -419,7 +420,7 @@ public class BirkenbihlController(PuglingDbContext db, BirkenbihlDecodingService
             var card = await Db.Vocabulary.AsNoTracking()
                 .FirstOrDefaultAsync(v => v.Id == vocabId
                     && v.SourceLanguage == config.LearningLang && v.TargetLanguage == config.NativeLang, ct);
-            if (card is null) return Problem(statusCode: 400, detail: "Vokabel nicht gefunden oder Sprachpaar passt nicht zur Übung.");
+            if (card is null) return this.ProblemWithCode(ApiErrors.InvalidReference, "Vocabulary item not found or its language pair does not match the exercise.");
             updated = word with { Gloss = card.Translation, VocabularyId = card.Id };
         }
         else if (string.IsNullOrWhiteSpace(body.Gloss))
@@ -491,7 +492,7 @@ public class BirkenbihlController(PuglingDbContext db, BirkenbihlDecodingService
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<DecodedSentence>> Decode(DecodePreviewInput body, CancellationToken ct)
     {
-        if (string.IsNullOrWhiteSpace(body.LearningSentence)) return Problem(statusCode: 400, detail: "Der Satz der Lernsprache ist erforderlich.");
+        if (string.IsNullOrWhiteSpace(body.LearningSentence)) return this.ProblemWithCode(ApiErrors.ValidationError, "The sentence in the learning language is required.");
 
         var lookups = await decoder.LookupAsync(body.LearningLang ?? "", body.NativeLang ?? "", body.LearningSentence, ct);
         var words = lookups.Select(t =>
@@ -546,9 +547,9 @@ public class ArithmeticDrillController(PuglingDbContext db, ArithmeticProblemGen
 
     /// <summary>Prüft die Config-Grenzen; gibt die Fehlermeldung zurück oder null, wenn alles passt.</summary>
     private static string? Validate(ArithmeticDrillConfig c) =>
-        c.Operations.Count == 0 ? "Mindestens eine Rechenart ist erforderlich."
-        : c.MaxOperand < c.MinOperand ? "MaxOperand muss ≥ MinOperand sein."
-        : c.ProblemCount is < 1 or > 100 ? "ProblemCount muss zwischen 1 und 100 liegen."
+        c.Operations.Count == 0 ? "At least one operation type is required."
+        : c.MaxOperand < c.MinOperand ? "MaxOperand must be ≥ MinOperand."
+        : c.ProblemCount is < 1 or > 100 ? "ProblemCount must be between 1 and 100."
         : null;
 
     /// <summary>
@@ -563,7 +564,7 @@ public class ArithmeticDrillController(PuglingDbContext db, ArithmeticProblemGen
         var exercise = await FindAsync(subjectId, chapterId, exerciseId);
         if (exercise is null) return NotFound();
         var config = ConfigOf(exercise);
-        if (Validate(config) is { } error) return Problem(statusCode: 400, detail: error);
+        if (Validate(config) is { } error) return this.ProblemWithCode(ApiErrors.ValidationError, error);
 
         // Wir fixieren den Seed (auch bei „echtem" Zufall), damit der Satz später auswertbar bleibt.
         int effectiveSeed = seed ?? config.Seed ?? Random.Shared.Next();
@@ -580,9 +581,9 @@ public class ArithmeticDrillController(PuglingDbContext db, ArithmeticProblemGen
         var exercise = await FindAsync(subjectId, chapterId, exerciseId);
         if (exercise is null) return NotFound();
         var config = ConfigOf(exercise);
-        if (Validate(config) is { } error) return Problem(statusCode: 400, detail: error);
+        if (Validate(config) is { } error) return this.ProblemWithCode(ApiErrors.ValidationError, error);
         if ((body.Seed ?? config.Seed) is not { } seed)
-            return Problem(statusCode: 400, detail: "Zum Auswerten muss der Seed des generierten Satzes angegeben werden.");
+            return this.ProblemWithCode(ApiErrors.ValidationError, "The seed of the generated problem must be provided for evaluation.");
 
         var problems = generator.Generate(config, new Random(seed));
         return checker.CheckGenerated(problems, body.Answers);

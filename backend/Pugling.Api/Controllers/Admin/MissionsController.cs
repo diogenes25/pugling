@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Pugling.Api.Auth;
 using Pugling.Api.Data;
+using Pugling.Api.Errors;
 using Pugling.Api.Models;
 
 namespace Pugling.Api.Controllers.Admin;
@@ -43,8 +44,8 @@ public class MissionsController(PuglingDbContext db) : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<MissionDto>> Create(int childId, CreateMissionDto dto)
     {
-        if (string.IsNullOrWhiteSpace(dto.Title)) return Problem(statusCode: 400, detail: "Title ist erforderlich.");
-        if (dto.Target <= 0) return Problem(statusCode: 400, detail: "Target muss positiv sein.");
+        if (string.IsNullOrWhiteSpace(dto.Title)) return this.ProblemWithCode(ApiErrors.ValidationError, "Title is required.");
+        if (dto.Target <= 0) return this.ProblemWithCode(ApiErrors.ValidationError, "Target must be positive.");
 
         var mission = new Mission
         {
@@ -129,8 +130,8 @@ public class AchievementsController(PuglingDbContext db) : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<AchievementDto>> Create(int childId, CreateAchievementDto dto)
     {
-        if (string.IsNullOrWhiteSpace(dto.Title)) return Problem(statusCode: 400, detail: "Title ist erforderlich.");
-        if (dto.Threshold <= 0) return Problem(statusCode: 400, detail: "Threshold muss positiv sein.");
+        if (string.IsNullOrWhiteSpace(dto.Title)) return this.ProblemWithCode(ApiErrors.ValidationError, "Title is required.");
+        if (dto.Threshold <= 0) return this.ProblemWithCode(ApiErrors.ValidationError, "Threshold must be positive.");
 
         var achievement = new Achievement
         {

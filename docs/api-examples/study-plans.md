@@ -1,0 +1,336 @@
+# API-Beispiele – study-plans
+
+_Automatisch erzeugt von `DocsCaptureTests` (Integrationstest). Jedes Beispiel ist verifiziert: Status und – bei Fehlern – der maschinenlesbare `code` wurden im Testlauf geprüft. Nicht von Hand bearbeiten._
+
+## Lehrplan anlegen
+`POST /api/v1/study-plans`
+
+Rolle: **father** — `Authorization: Bearer <father-token>`
+
+Request:
+```json
+{
+  "childId": 1,
+  "title": "Doku-Lehrplan",
+  "durationDays": 10
+}
+```
+
+Response — `HTTP 201`:
+```json
+{
+  "id": 2,
+  "childId": 1,
+  "title": "Doku-Lehrplan",
+  "subjectId": null,
+  "startDate": "2026-07-06",
+  "endDate": "2026-07-15",
+  "active": true,
+  "positionCount": 0,
+  "description": null,
+  "isPlayable": true
+}
+```
+
+## Position anlegen
+`POST /api/v1/study-plans/2/positions`
+
+Rolle: **father** — `Authorization: Bearer <father-token>`
+
+Request:
+```json
+{
+  "exerciseId": 13,
+  "useLeitner": true,
+  "stage": 4,
+  "cadence": "Daily"
+}
+```
+
+Response — `HTTP 201`:
+```json
+{
+  "id": 2,
+  "studyPlanId": 2,
+  "exerciseId": 13,
+  "exerciseTitle": "Begr\u00FC\u00DFungen",
+  "exerciseType": "Vocabulary",
+  "order": 0,
+  "stage": 4,
+  "itemCount": null,
+  "scope": "All",
+  "cadence": "Daily",
+  "goalThreshold": null,
+  "requireTypedTest": false,
+  "useLeitner": true,
+  "maxBox": 5,
+  "boxIntervalDays": null,
+  "stageSchedule": null,
+  "pointsGoalMet": 20,
+  "newContentPoints": 10,
+  "comboThreshold": 5,
+  "comboBonusPoints": 5,
+  "speedThresholdSeconds": 0,
+  "speedBonusPoints": 0
+}
+```
+
+### Position mit unbekannter Übung — Fehlerfall
+`POST /api/v1/study-plans/2/positions`
+
+Rolle: **father** — `Authorization: Bearer <father-token>`
+
+Request:
+```json
+{
+  "exerciseId": 999999
+}
+```
+
+Response — `HTTP 400`:
+```json
+{
+  "type": "https://pugling.app/errors/invalid_reference",
+  "title": "Invalid request.",
+  "status": 400,
+  "detail": "Exercise 999999 not found.",
+  "code": "invalid_reference",
+  "traceId": "00-08ea2adfd11de65e4b0536420b252b9c-72971f09a95e3f6f-00"
+}
+```
+
+### Unbekannten Lehrplan lesen — Fehlerfall
+`GET /api/v1/study-plans/999999`
+
+Rolle: **father** — `Authorization: Bearer <father-token>`
+
+Response — `HTTP 404`:
+```json
+{
+  "type": "https://pugling.app/errors/not_found",
+  "title": "Resource not found.",
+  "status": 404,
+  "detail": "Study plan not found.",
+  "code": "not_found",
+  "traceId": "00-a998b0f6331c3724bc2316d0a05728ea-902e9b3357491013-00"
+}
+```
+
+## Übungssitzung starten
+`POST /api/v1/study-plans/2/positions/2/practice-sessions`
+
+Rolle: **child** — `Authorization: Bearer <child-token>`
+
+Request:
+```json
+{}
+```
+
+Response — `HTTP 201`:
+```json
+{
+  "id": 1,
+  "planId": 2,
+  "positionId": 2,
+  "day": "2026-07-06",
+  "startedAt": "2026-07-06T14:37:15.720772Z",
+  "endedAt": null,
+  "activeSeconds": 0,
+  "reviewCount": 0
+}
+```
+
+## Karte bewerten (Review)
+`POST /api/v1/study-plans/2/positions/2/practice-sessions/1/review`
+
+Rolle: **child** — `Authorization: Bearer <child-token>`
+
+Request:
+```json
+{
+  "itemIndex": 0,
+  "givenAnswer": "hallo"
+}
+```
+
+Response — `HTTP 200`:
+```json
+{
+  "wasCorrect": true,
+  "expected": "hallo",
+  "awarded": 10,
+  "box": 2,
+  "dueOn": "2026-07-08",
+  "combo": 1,
+  "comboBonus": 0,
+  "speedBonus": 0
+}
+```
+
+## Test starten
+`POST /api/v1/study-plans/2/positions/2/tests`
+
+Rolle: **child** — `Authorization: Bearer <child-token>`
+
+Request:
+```json
+{}
+```
+
+Response — `HTTP 201`:
+```json
+{
+  "attemptId": 1,
+  "planId": 2,
+  "positionId": 2,
+  "day": "2026-07-06",
+  "stage": 4,
+  "totalItems": 1,
+  "items": [
+    {
+      "itemIndex": 0,
+      "prompt": "hello",
+      "stage": 4,
+      "reveal": null,
+      "answerLength": null,
+      "hint": null,
+      "choices": null,
+      "audioUrl": null
+    }
+  ]
+}
+```
+
+## Test abgeben
+`POST /api/v1/study-plans/2/positions/2/tests/1/submit`
+
+Rolle: **child** — `Authorization: Bearer <child-token>`
+
+Request:
+```json
+{
+  "answers": [
+    {
+      "itemIndex": 0,
+      "givenAnswer": "hallo"
+    },
+    {
+      "itemIndex": 1,
+      "givenAnswer": "tsch\u00FCss"
+    }
+  ]
+}
+```
+
+Response — `HTTP 200`:
+```json
+{
+  "attemptId": 1,
+  "stage": 4,
+  "totalItems": 1,
+  "correctItems": 1,
+  "scorePercent": 100,
+  "passed": true,
+  "passPercent": 80,
+  "items": [
+    {
+      "itemIndex": 0,
+      "prompt": "hello",
+      "expected": "hallo",
+      "givenAnswer": "hallo",
+      "wasCorrect": true
+    }
+  ]
+}
+```
+
+### Test erneut abgeben — Fehlerfall
+`POST /api/v1/study-plans/2/positions/2/tests/1/submit`
+
+Rolle: **child** — `Authorization: Bearer <child-token>`
+
+Request:
+```json
+{
+  "answers": [
+    {
+      "itemIndex": 0,
+      "givenAnswer": "hallo"
+    }
+  ]
+}
+```
+
+Response — `HTTP 400`:
+```json
+{
+  "type": "https://pugling.app/errors/test_already_submitted",
+  "title": "Test already submitted.",
+  "status": 400,
+  "detail": "The test has already been submitted.",
+  "code": "test_already_submitted",
+  "traceId": "00-df3c4e057984c29eb30aa5c06b5a705f-2cf757c0ab6f9ee8-00"
+}
+```
+
+### Test auf Übung ohne prüfbaren Inhalt — Fehlerfall
+`POST /api/v1/study-plans/2/positions/3/tests`
+
+Rolle: **child** — `Authorization: Bearer <child-token>`
+
+Request:
+```json
+{}
+```
+
+Response — `HTTP 400`:
+```json
+{
+  "type": "https://pugling.app/errors/no_checkable_content",
+  "title": "No checkable content.",
+  "status": 400,
+  "detail": "The exercise contains no checkable content.",
+  "code": "no_checkable_content",
+  "traceId": "00-1c00338905df0623edf341791f9e81be-5ec586d09645f514-00"
+}
+```
+
+### Bespielte Position löschen — Fehlerfall
+`DELETE /api/v1/study-plans/2/positions/2`
+
+Rolle: **father** — `Authorization: Bearer <father-token>`
+
+Response — `HTTP 409`:
+```json
+{
+  "type": "https://pugling.app/errors/position_has_data",
+  "title": "Position has practice/test data.",
+  "status": 409,
+  "detail": "This position already has practice/test data and cannot be deleted.",
+  "code": "position_has_data",
+  "traceId": "00-79d9623209cdf92daf1b4864fd07f953-d87dece12c531888-00"
+}
+```
+
+### Deaktivierten Plan spielen — Fehlerfall
+`POST /api/v1/study-plans/2/positions/2/practice-sessions`
+
+Rolle: **child** — `Authorization: Bearer <child-token>`
+
+Request:
+```json
+{}
+```
+
+Response — `HTTP 403`:
+```json
+{
+  "type": "https://pugling.app/errors/plan_inactive",
+  "title": "Study plan is not active.",
+  "status": 403,
+  "detail": "This study plan is not currently active. Ask your parent.",
+  "code": "plan_inactive",
+  "traceId": "00-9f3b8e66c779823e362b05e91ec82401-529be3a2c5397801-00"
+}
+```
+

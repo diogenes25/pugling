@@ -98,6 +98,34 @@ Details: [docs/klassenarbeiten-tagging.md](../docs/klassenarbeiten-tagging.md).
 
 ## Fehlerformat
 
-Alle Fehler sind `ProblemDetails` (RFC 7807): `{ "type", "title", "status", "detail" }`. Typische
-Codes: `400` (Validierung), `401` (kein/falscher Token), `403` (falsche Rolle / fremde Ressource),
-`404` (nicht gefunden / nicht eigenes Kind), `409` (Konflikt, z. B. Key existiert / Löschschutz).
+Alle Fehler sind `ProblemDetails` (RFC 7807) mit einem zusätzlichen, **maschinenlesbaren
+`code`** und einem stabilen `type`-URI (`https://pugling.app/errors/{code}`):
+
+```json
+{
+  "type": "https://pugling.app/errors/insufficient_gems",
+  "title": "Not enough gems.",
+  "status": 400,
+  "detail": "Not enough gems: 120/2000 for 'ninja'.",
+  "code": "insufficient_gems",
+  "traceId": "00-…"
+}
+```
+
+Der `code` ist **stabiler Vertragsbestandteil** – der Client verzweigt/lokalisiert darauf, nicht auf
+dem englischen `detail`-Freitext. Die Codes stammen aus der zentralen Registry
+[`Errors/ApiErrors.cs`](../backend/Pugling.Api/Errors/ApiErrors.cs); das OpenAPI-Dokument führt sie als
+`enum` der `code`-Property (sichtbar in Swagger `/swagger`). Neue Codes werden nur additiv ergänzt.
+
+**Generische, status-getriebene Codes:** `validation_error`/`bad_request`/`invalid_reference` (400),
+`unauthorized`/`invalid_credentials` (401), `forbidden`/`not_author` (403), `not_found` (404),
+`conflict`/`concurrency_conflict` (409), `rate_limited` (429), `internal_error` (500).
+
+**Fachliche Codes (Auswahl):** `skin_already_unlocked`, `skin_not_unlocked`, `insufficient_gems`,
+`insufficient_coins`, `quota_exhausted`, `offer_inactive`, `purchase_not_open`, `duplicate_key`,
+`duplicate_tag_name`, `exercise_in_use`, `vocabulary_in_use`, `position_has_data`, `plan_inactive`,
+`test_already_submitted`, `no_checkable_content`, `timetable_slot_taken`.
+
+Verifizierte Beispiel-Requests/-Responses (Erfolg **und** jeder erreichbare Fehler-Code, erzeugt gegen
+die geseedete API) liegen unter [docs/api-examples/](../docs/api-examples/index.md); sie werden vom
+Integrationstest `DocsCaptureTests` erzeugt und dabei auf Status + `code` geprüft.

@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.EntityFrameworkCore;
 using Pugling.Api.Data;
+using Pugling.Api.Errors;
 
 namespace Pugling.Api.Auth;
 
@@ -18,7 +19,7 @@ public class PlanOwnershipFilter(PuglingDbContext db, AuthAccess access) : IAsyn
         if (ctx.ActionArguments.TryGetValue("planId", out var v) && v is int planId)
         {
             var plan = await db.StudyPlans.FirstOrDefaultAsync(p => p.Id == planId);
-            if (plan is null) { ctx.Result = new NotFoundObjectResult("Lehrplan nicht gefunden."); return; }
+            if (plan is null) { ctx.Result = ControllerBaseErrorExtensions.ProblemResult(ctx.HttpContext, ApiErrors.NotFound, "Study plan not found."); return; }
             if (!await access.OwnsPlanAsync(ctx.HttpContext.User, plan)) { ctx.Result = new ForbidResult(); return; }
         }
         await next();

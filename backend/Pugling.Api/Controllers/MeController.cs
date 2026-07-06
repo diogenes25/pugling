@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Pugling.Api.Auth;
 using Pugling.Api.Data;
+using Pugling.Api.Errors;
 using Pugling.Api.Models;
 using Pugling.Api.Services;
 
@@ -115,16 +116,16 @@ public class MeController(PuglingDbContext db, GamificationService gamification,
         if (cid is null) return Forbid();
 
         var cost = SkinCatalog.CostOf(skinId);
-        if (cost is null) return Problem(statusCode: 404, detail: $"Unbekannter Skin '{skinId}'.");
+        if (cost is null) return this.ProblemWithCode(ApiErrors.NotFound, $"Unknown skin '{skinId}'.");
 
         var child = await db.Children.FirstOrDefaultAsync(c => c.Id == cid);
         if (child is null) return Forbid();
         if (child.OwnedSkins.Contains(skinId))
-            return Problem(statusCode: 409, detail: "Dieser Skin ist bereits freigeschaltet.");
+            return this.ProblemWithCode(ApiErrors.SkinAlreadyUnlocked, "This skin is already unlocked.");
 
         var gems = await wallet.GemsAsync(cid.Value);
         if (gems < cost)
-            return Problem(statusCode: 400, detail: $"Zu wenig Gems: {gems}/{cost} für '{skinId}'.");
+            return this.ProblemWithCode(ApiErrors.InsufficientGems, $"Not enough gems: {gems}/{cost} for '{skinId}'.");
 
         db.ChildPoints.Add(new ChildPointsEntry
         {
@@ -138,7 +139,7 @@ public class MeController(PuglingDbContext db, GamificationService gamification,
         child.ConcurrencyStamp = Guid.NewGuid();           // Token bumpen → parallele Zweitbuchung scheitert
 
         if (!await TrySaveAsync())
-            return Problem(statusCode: 409, detail: "Kauf kollidierte mit einer parallelen Aktion – bitte erneut versuchen.");
+            return this.ProblemWithCode(ApiErrors.ConcurrencyConflict, "Purchase conflicted with a concurrent action — please try again.");
 
         return await SkinStateAsync(cid.Value);
     }
@@ -157,13 +158,13 @@ public class MeController(PuglingDbContext db, GamificationService gamification,
         var child = await db.Children.FirstOrDefaultAsync(c => c.Id == cid);
         if (child is null) return Forbid();
         if (!child.OwnedSkins.Contains(skinId))
-            return Problem(statusCode: 400, detail: "Dieser Skin ist noch nicht freigeschaltet.");
+            return this.ProblemWithCode(ApiErrors.SkinNotUnlocked, "This skin is not unlocked yet.");
 
         child.SelectedSkin = skinId;
         child.ConcurrencyStamp = Guid.NewGuid();
 
         if (!await TrySaveAsync())
-            return Problem(statusCode: 409, detail: "Ausrüsten kollidierte mit einer parallelen Aktion – bitte erneut versuchen.");
+            return this.ProblemWithCode(ApiErrors.ConcurrencyConflict, "Equipping conflicted with a concurrent action — please try again.");
         return await SkinStateAsync(cid.Value);
     }
 
@@ -212,11 +213,11 @@ public class MeController(PuglingDbContext db, GamificationService gamification,
         return result.Error switch
         {
             OfferService.OfferError.None => await RewardsViewAsync(cid.Value),
-            OfferService.OfferError.NotFound => Problem(statusCode: 404, detail: "Angebot nicht gefunden."),
-            OfferService.OfferError.Inactive => Problem(statusCode: 400, detail: "Dieses Angebot ist nicht (mehr) verfügbar."),
-            OfferService.OfferError.QuotaExceeded => Problem(statusCode: 409, detail: "Das Kontingent für diese Periode ist erschöpft."),
-            OfferService.OfferError.InsufficientCoins => Problem(statusCode: 400, detail: "Zu wenig Münzen für dieses Angebot."),
-            _ => Problem(statusCode: 409, detail: "Kauf kollidierte mit einer parallelen Aktion – bitte erneut versuchen."),
+            OfferService.OfferError.NotFound => this.ProblemWithCode(OfferService.ToApiError(result.Error), "Offer not found."),
+            OfferService.OfferError.Inactive => this.ProblemWithCode(OfferService.ToApiError(result.Error), "This offer is no longer available."),
+            OfferService.OfferError.QuotaExceeded => this.ProblemWithCode(OfferService.ToApiError(result.Error), "The quota for this period is exhausted."),
+            OfferService.OfferError.InsufficientCoins => this.ProblemWithCode(OfferService.ToApiError(result.Error), "Not enough coins for this offer."),
+            _ => this.ProblemWithCode(OfferService.ToApiError(result.Error), "Purchase conflicted with a concurrent action — please try again."),
         };
     }
 

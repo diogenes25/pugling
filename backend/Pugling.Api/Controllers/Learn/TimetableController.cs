@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Pugling.Api.Auth;
 using Pugling.Api.Data;
+using Pugling.Api.Errors;
 using Pugling.Api.Models;
 
 namespace Pugling.Api.Controllers.Learn;
@@ -45,9 +46,9 @@ public class TimetableController(PuglingDbContext db, AuthAccess access) : Contr
     public async Task<ActionResult<EntryResponse>> Create(int childId, CreateEntryDto dto)
     {
         if (!await access.FatherOwnsChildAsync(User, childId)) return Forbid();
-        if (!await db.Subjects.AnyAsync(s => s.Id == dto.SubjectId)) return Problem(statusCode: 400, detail: "Fach nicht gefunden.");
+        if (!await db.Subjects.AnyAsync(s => s.Id == dto.SubjectId)) return this.ProblemWithCode(ApiErrors.InvalidReference, "Subject not found.");
         if (await db.Timetable.AnyAsync(t => t.ChildId == childId && t.SubjectId == dto.SubjectId && t.DayOfWeek == dto.DayOfWeek))
-            return Problem(statusCode: 409, detail: "Dieses Fach ist an diesem Wochentag bereits eingetragen.");
+            return this.ProblemWithCode(ApiErrors.TimetableSlotTaken, "This subject is already scheduled on this weekday.");
 
         var entry = new TimetableEntry { ChildId = childId, SubjectId = dto.SubjectId, DayOfWeek = dto.DayOfWeek, TimeOfDay = dto.TimeOfDay };
         db.Timetable.Add(entry);

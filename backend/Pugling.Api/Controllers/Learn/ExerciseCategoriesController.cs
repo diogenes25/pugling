@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Pugling.Api.Auth;
 using Pugling.Api.Data;
+using Pugling.Api.Errors;
 using Pugling.Api.Models;
 
 namespace Pugling.Api.Controllers.Learn;
@@ -62,11 +63,11 @@ public class ExerciseCategoriesController(PuglingDbContext db) : ControllerBase
     public async Task<ActionResult<CategoryResponse>> Create(int subjectId, CreateCategoryDto dto)
     {
         if (!await SubjectExists(subjectId)) return NotFound();
-        if (string.IsNullOrWhiteSpace(dto.Name)) return Problem(statusCode: 400, detail: "Name ist erforderlich.");
+        if (string.IsNullOrWhiteSpace(dto.Name)) return this.ProblemWithCode(ApiErrors.ValidationError, "Name is required.");
 
         var name = dto.Name.Trim();
         if (await db.ExerciseCategories.AnyAsync(c => c.SubjectId == subjectId && c.Name == name))
-            return Problem(statusCode: 409, detail: "Diese Art existiert im Fach bereits.");
+            return this.ProblemWithCode(ApiErrors.Conflict, "This category already exists in the subject.");
 
         var category = new ExerciseCategory { SubjectId = subjectId, Name = name };
         db.ExerciseCategories.Add(category);
@@ -91,10 +92,10 @@ public class ExerciseCategoriesController(PuglingDbContext db) : ControllerBase
         if (dto.Name is not null)
         {
             var name = dto.Name.Trim();
-            if (name.Length == 0) return Problem(statusCode: 400, detail: "Name darf nicht leer sein.");
+            if (name.Length == 0) return this.ProblemWithCode(ApiErrors.ValidationError, "Name must not be empty.");
             if (name != category.Name &&
                 await db.ExerciseCategories.AnyAsync(c => c.SubjectId == subjectId && c.Name == name))
-                return Problem(statusCode: 409, detail: "Diese Art existiert im Fach bereits.");
+                return this.ProblemWithCode(ApiErrors.Conflict, "This category already exists in the subject.");
             category.Name = name;
         }
         await db.SaveChangesAsync();

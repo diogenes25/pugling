@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Pugling.Api.Auth;
 using Pugling.Api.Data;
+using Pugling.Api.Errors;
 using Pugling.Api.Models;
 
 namespace Pugling.Api.Controllers.Learn;
@@ -54,7 +55,7 @@ public class KlassenarbeitenController(PuglingDbContext db, AuthAccess access) :
     }
 
     private static string? ValidateGrade(decimal? grade) =>
-        grade is { } g && (g < 1.0m || g > 6.0m) ? "Note muss zwischen 1,0 und 6,0 liegen." : null;
+        grade is { } g && (g < 1.0m || g > 6.0m) ? "Grade must be between 1.0 and 6.0." : null;
 
     // ---- Lesen ----
 
@@ -103,11 +104,11 @@ public class KlassenarbeitenController(PuglingDbContext db, AuthAccess access) :
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult<KlassenarbeitDetail>> Create(CreateDto dto)
     {
-        if (string.IsNullOrWhiteSpace(dto.Title)) return Problem(statusCode: 400, detail: "Titel ist erforderlich.");
+        if (string.IsNullOrWhiteSpace(dto.Title)) return this.ProblemWithCode(ApiErrors.ValidationError, "Title is required.");
         if (!await access.OwnsChildAsync(User, dto.ChildId)) return Forbid();
-        if (ValidateGrade(dto.Grade) is { } gradeError) return Problem(statusCode: 400, detail: gradeError);
+        if (ValidateGrade(dto.Grade) is { } gradeError) return this.ProblemWithCode(ApiErrors.ValidationError, gradeError);
         if (dto.SubjectId is { } sid && !await db.Subjects.AnyAsync(s => s.Id == sid))
-            return Problem(statusCode: 400, detail: "Fach nicht gefunden.");
+            return this.ProblemWithCode(ApiErrors.InvalidReference, "Subject not found.");
 
         var k = new Klassenarbeit
         {
@@ -121,8 +122,8 @@ public class KlassenarbeitenController(PuglingDbContext db, AuthAccess access) :
             GradeComment = dto.GradeComment?.Trim(),
         };
 
-        if (await BuildExerciseLinksAsync(dto.ChildId, dto.ExerciseIds, k.Exercises) is { } exErr) return Problem(statusCode: 400, detail: exErr);
-        if (await BuildTagLinksAsync(dto.ChildId, dto.TagIds, k.Tags) is { } tagErr) return Problem(statusCode: 400, detail: tagErr);
+        if (await BuildExerciseLinksAsync(dto.ChildId, dto.ExerciseIds, k.Exercises) is { } exErr) return this.ProblemWithCode(ApiErrors.InvalidReference, exErr);
+        if (await BuildTagLinksAsync(dto.ChildId, dto.TagIds, k.Tags) is { } tagErr) return this.ProblemWithCode(ApiErrors.InvalidReference, tagErr);
 
         db.Klassenarbeiten.Add(k);
         await db.SaveChangesAsync();
@@ -148,13 +149,13 @@ public class KlassenarbeitenController(PuglingDbContext db, AuthAccess access) :
 
         if (dto.Title is not null)
         {
-            if (string.IsNullOrWhiteSpace(dto.Title)) return Problem(statusCode: 400, detail: "Titel darf nicht leer sein.");
+            if (string.IsNullOrWhiteSpace(dto.Title)) return this.ProblemWithCode(ApiErrors.ValidationError, "Title must not be empty.");
             k.Title = dto.Title.Trim();
         }
         if (dto.Topic is not null) k.Topic = dto.Topic.Trim() is { Length: > 0 } t ? t : null;
         if (dto.SubjectId is { } sid)
         {
-            if (!await db.Subjects.AnyAsync(s => s.Id == sid)) return Problem(statusCode: 400, detail: "Fach nicht gefunden.");
+            if (!await db.Subjects.AnyAsync(s => s.Id == sid)) return this.ProblemWithCode(ApiErrors.InvalidReference, "Subject not found.");
             k.SubjectId = sid;
         }
         if (dto.ScheduledDate is not null) k.ScheduledDate = dto.ScheduledDate.Value;
@@ -166,7 +167,7 @@ public class KlassenarbeitenController(PuglingDbContext db, AuthAccess access) :
         }
         else if (dto.Grade is not null)
         {
-            if (ValidateGrade(dto.Grade) is { } gradeError) return Problem(statusCode: 400, detail: gradeError);
+            if (ValidateGrade(dto.Grade) is { } gradeError) return this.ProblemWithCode(ApiErrors.ValidationError, gradeError);
             k.Grade = dto.Grade;
         }
 
@@ -205,8 +206,8 @@ public class KlassenarbeitenController(PuglingDbContext db, AuthAccess access) :
     {
         var k = await FindOwnedAsync(id);
         if (k is null) return NotFound();
-        if (dto.ExerciseIds is not { Count: > 0 }) return Problem(statusCode: 400, detail: "Mindestens eine Übung ist erforderlich.");
-        if (await BuildExerciseLinksAsync(k.ChildId, dto.ExerciseIds, k.Exercises) is { } error) return Problem(statusCode: 400, detail: error);
+        if (dto.ExerciseIds is not { Count: > 0 }) return this.ProblemWithCode(ApiErrors.ValidationError, "At least one exercise is required.");
+        if (await BuildExerciseLinksAsync(k.ChildId, dto.ExerciseIds, k.Exercises) is { } error) return this.ProblemWithCode(ApiErrors.InvalidReference, error);
 
         await db.SaveChangesAsync();
         var exIds = k.Exercises.Select(x => x.ExerciseId).ToList();
@@ -239,7 +240,7 @@ public class KlassenarbeitenController(PuglingDbContext db, AuthAccess access) :
         var k = await FindOwnedAsync(id);
         if (k is null) return NotFound();
         if (!await db.Tags.AnyAsync(t => t.Id == tagId && t.ChildId == k.ChildId))
-            return Problem(statusCode: 400, detail: "Tag gehört nicht zu diesem Kind.");
+            return this.ProblemWithCode(ApiErrors.InvalidReference, "The tag does not belong to this child.");
         if (k.Tags.All(t => t.TagId != tagId))
         {
             k.Tags.Add(new KlassenarbeitTag { TagId = tagId });
@@ -353,7 +354,7 @@ public class KlassenarbeitenController(PuglingDbContext db, AuthAccess access) :
         var ids = exerciseIds.Distinct().ToList();
         var known = await db.Exercises.Where(e => ids.Contains(e.Id)).Select(e => e.Id).ToListAsync();
         var missing = ids.Except(known).ToList();
-        if (missing.Count > 0) return $"Unbekannte Übungs-Ids: {string.Join(", ", missing)}";
+        if (missing.Count > 0) return $"Unknown exercise IDs: {string.Join(", ", missing)}";
 
         var already = target.Select(x => x.ExerciseId).ToHashSet();
         foreach (var exId in ids.Where(exId => already.Add(exId)))
@@ -368,7 +369,7 @@ public class KlassenarbeitenController(PuglingDbContext db, AuthAccess access) :
         var ids = tagIds.Distinct().ToList();
         var known = await db.Tags.Where(t => ids.Contains(t.Id) && t.ChildId == childId).Select(t => t.Id).ToListAsync();
         var invalid = ids.Except(known).ToList();
-        if (invalid.Count > 0) return $"Tags gehören nicht zu diesem Kind oder existieren nicht: {string.Join(", ", invalid)}";
+        if (invalid.Count > 0) return $"Tags do not belong to this child or do not exist: {string.Join(", ", invalid)}";
 
         var already = target.Select(x => x.TagId).ToHashSet();
         foreach (var tagId in ids.Where(tagId => already.Add(tagId)))

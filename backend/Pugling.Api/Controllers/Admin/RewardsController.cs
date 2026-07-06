@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Pugling.Api.Auth;
 using Pugling.Api.Data;
+using Pugling.Api.Errors;
 using Pugling.Api.Models;
 using Pugling.Api.Services;
 
@@ -78,14 +79,14 @@ public class RewardsController(PuglingDbContext db, OfferService offers) : Contr
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<RewardDto>> Create(int childId, CreateRewardDto dto)
     {
-        if (string.IsNullOrWhiteSpace(dto.Title)) return Problem(statusCode: 400, detail: "Title ist erforderlich.");
-        if (dto.Cost <= 0) return Problem(statusCode: 400, detail: "Cost muss positiv sein.");
-        if (dto.Quantity < 1) return Problem(statusCode: 400, detail: "Quantity muss mindestens 1 sein.");
+        if (string.IsNullOrWhiteSpace(dto.Title)) return this.ProblemWithCode(ApiErrors.ValidationError, "Title is required.");
+        if (dto.Cost <= 0) return this.ProblemWithCode(ApiErrors.ValidationError, "Cost must be positive.");
+        if (dto.Quantity < 1) return this.ProblemWithCode(ApiErrors.ValidationError, "Quantity must be at least 1.");
         // Kontext-Bezug prüfen: der Plan muss diesem Kind gehören, die Übung muss existieren.
         if (dto.StudyPlanId is { } spid && !await db.StudyPlans.AnyAsync(p => p.Id == spid && p.ChildId == childId))
-            return Problem(statusCode: 400, detail: "Lehrplan gehört nicht zu diesem Kind.");
+            return this.ProblemWithCode(ApiErrors.InvalidReference, "The study plan does not belong to this child.");
         if (dto.ExerciseId is { } exid && !await db.Exercises.AnyAsync(e => e.Id == exid))
-            return Problem(statusCode: 400, detail: "Übung nicht gefunden.");
+            return this.ProblemWithCode(ApiErrors.InvalidReference, "Exercise not found.");
 
         var reward = new Reward
         {
@@ -120,7 +121,7 @@ public class RewardsController(PuglingDbContext db, OfferService offers) : Contr
     {
         var reward = await db.Rewards.FirstOrDefaultAsync(r => r.Id == rewardId && r.ChildId == childId);
         if (reward is null) return NotFound();
-        if (dto.Quantity is < 1) return Problem(statusCode: 400, detail: "Quantity muss mindestens 1 sein.");
+        if (dto.Quantity is < 1) return this.ProblemWithCode(ApiErrors.ValidationError, "Quantity must be at least 1.");
 
         if (dto.Title is not null) reward.Title = dto.Title.Trim();
         if (dto.Cost is > 0) reward.Cost = dto.Cost.Value;
@@ -186,7 +187,7 @@ public class RewardsController(PuglingDbContext db, OfferService offers) : Contr
     {
         OfferService.OfferError.None => MapRedemption(result.Redemption!),
         OfferService.OfferError.NotFound => NotFound(),
-        OfferService.OfferError.NotOpen => Problem(statusCode: 409, detail: "Dieser Kauf ist nicht mehr offen."),
-        _ => Problem(statusCode: 409, detail: "Der Vorgang konnte nicht abgeschlossen werden."),
+        OfferService.OfferError.NotOpen => this.ProblemWithCode(OfferService.ToApiError(result.Error), "This purchase is no longer open."),
+        _ => this.ProblemWithCode(OfferService.ToApiError(result.Error), "The operation could not be completed."),
     };
 }

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Pugling.Api.Auth;
 using Pugling.Api.Data;
+using Pugling.Api.Errors;
 using Pugling.Api.Services;
 
 namespace Pugling.Api.Controllers.Learn;
@@ -38,7 +39,7 @@ public class ExercisePreviewController(PuglingDbContext db, ExercisePreviewServi
 
         // Optionaler stage-Parameter: der Vater probiert eine bestimmte Abfrageform durch (sonst Übungs-Standard).
         var data = await preview.BuildAsync(exercise, stage);
-        if (data is null) return Problem(statusCode: 400, detail: "Die Übung enthält keine prüfbaren Inhalte.");
+        if (data is null) return this.ProblemWithCode(ApiErrors.NoCheckableContent, "The exercise contains no checkable content.");
         return data;
     }
 
@@ -58,7 +59,7 @@ public class ExercisePreviewController(PuglingDbContext db, ExercisePreviewServi
         if (exercise is null) return NotFound();
 
         var result = await preview.CheckAsync(exercise, dto.Answers ?? [], dto.Stage);
-        if (result is null) return Problem(statusCode: 400, detail: "Die Übung enthält keine prüfbaren Inhalte.");
+        if (result is null) return this.ProblemWithCode(ApiErrors.NoCheckableContent, "The exercise contains no checkable content.");
         return result;
     }
 }

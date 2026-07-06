@@ -268,7 +268,7 @@ public static class Seed
     /// </summary>
     private static void SeedGamification(PuglingDbContext db)
     {
-        var child = db.Children.FirstOrDefault();
+        var child = db.Children.OrderBy(c => c.Id).FirstOrDefault();
         if (child is null) return;
 
         if (!db.Missions.Any() && !db.Achievements.Any())
@@ -307,7 +307,7 @@ public static class Seed
     {
         if (db.Klassenarbeiten.Any()) return;
 
-        var child = db.Children.FirstOrDefault();
+        var child = db.Children.OrderBy(c => c.Id).FirstOrDefault();
         if (child is null) return; // ohne Kind keine kindbezogenen Daten
 
         var englisch = db.Subjects.FirstOrDefault(s => s.Name == "Englisch");

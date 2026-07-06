@@ -1,11 +1,14 @@
+using System.Text.Json.Nodes;
 using System.Threading.RateLimiting;
 using Asp.Versioning;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using Pugling.Api.Auth;
 using Pugling.Api.Data;
+using Pugling.Api.Errors;
 using Pugling.Api.Services;
 using Serilog;
 using Serilog.Formatting.Compact;
@@ -27,6 +30,54 @@ builder.Services.AddControllers()
     .AddJsonOptions(o => o.JsonSerializerOptions.Converters.Add(
         new System.Text.Json.Serialization.JsonStringEnumConverter()));
 
+// Modell-Validierungsfehler als sauberes, englisches ProblemDetails ausliefern. Zwei Probleme der
+// Voreinstellung werden hier behoben: (1) Schlägt die JSON-Deserialisierung fehl (z. B. String statt
+// int), leakt die Roh-Meldung von System.Text.Json den internen DTO-Typnamen; (2) der als null
+// gebundene Body-Parameter erzeugt zusätzlich ein irreführendes „field is required". Die API-Antworten
+// sind bewusst englisch (Internationalisierung) – die Lokalisierung übernimmt der Client.
+builder.Services.Configure<ApiBehaviorOptions>(o =>
+{
+    o.InvalidModelStateResponseFactory = context =>
+    {
+        var modelState = context.ModelState;
+        // JSON-Deserialisierungsfehler kommen mit „$"-Pfad-Keys (z. B. „$.fatherId"). Existiert ein
+        // solcher, konnte der Body nicht geparst werden – der als null gebundene Body-Parameter erzeugt
+        // dann einen irreführenden „field is required"-Eintrag (ohne „$"). Nur DEN unterdrücken, nicht
+        // echte Route-/Query-/Feld-Fehler (die trotz Body-Parse-Fehler legitim sind).
+        var hasJsonError = modelState.Keys.Any(key => key.StartsWith('$'));
+        var errors = new Dictionary<string, string[]>();
+        foreach (var (key, entry) in modelState)
+        {
+            if (entry.Errors.Count == 0) continue;
+            if (hasJsonError && !key.StartsWith('$')
+                && entry.Errors.All(e => e.ErrorMessage.Contains("is required", StringComparison.Ordinal)))
+                continue;
+
+            var messages = entry.Errors
+                .Select(e => e.ErrorMessage.Contains("could not be converted", StringComparison.Ordinal)
+                    ? "The value is not of the expected type."
+                    : e.ErrorMessage)
+                .ToArray();
+            // Nur das führende „$."-Token des JSON-Pfads entfernen (nicht per Zeichensatz, sonst wird
+            // ein Wurzel-Key „$" zum leeren String und innere Punkte verschwinden).
+            var name = key.StartsWith("$.", StringComparison.Ordinal) ? key[2..] : key;
+            errors[name] = messages;
+        }
+
+        var problem = new ValidationProblemDetails(errors)
+        {
+            Status = StatusCodes.Status400BadRequest,
+            Title = ApiErrors.ValidationError.Title,
+            Type = ApiErrors.ValidationError.TypeUri,
+        };
+        // Maschinenlesbarer Code + traceId – dieser Pfad baut das ProblemDetails selbst (umgeht die
+        // Factory), muss die traceId-Extension daher wie alle anderen Fehlerpfade selbst setzen.
+        problem.Extensions["code"] = ApiErrors.ValidationError.Code;
+        ProblemDetailsStamping.ApplyTraceId(problem, context.HttpContext);
+        return new BadRequestObjectResult(problem) { ContentTypes = { "application/problem+json" } };
+    };
+});
+
 // API-Versionierung über URL-Segment (/api/v1/…). Default 1.0; das Versionssegment steckt zentral
 // in ApiRoutes.V1. Neue Brüche laufen künftig über eine parallele v2 statt über Abwärtskompatibilität.
 builder.Services.AddApiVersioning(o =>
@@ -41,8 +92,20 @@ builder.Services.AddApiVersioning(o =>
         o.SubstituteApiVersionInUrl = true;
     });
 // Einheitliches Fehlerschema: alle Fehler (Validierung, Fach-Fehler, unbehandelte Exceptions) als
-// RFC-konforme application/problem+json statt nackter Strings.
-builder.Services.AddProblemDetails();
+// RFC-konforme application/problem+json statt nackter Strings. Der CustomizeProblemDetails-Hook läuft
+// für die Middleware-Pfade (UseExceptionHandler/UseStatusCodePages: leere 401/403/404/429, 500) und
+// stempelt dort einen status-basierten Fehler-Code, falls keiner gesetzt ist.
+builder.Services.AddProblemDetails(o => o.CustomizeProblemDetails = ctx =>
+{
+    var status = ctx.ProblemDetails.Status ?? ctx.HttpContext.Response.StatusCode;
+    if (status < 400) status = StatusCodes.Status500InternalServerError; // nie einen Erfolgsstatus stempeln
+    ProblemDetailsStamping.StampFallback(ctx.ProblemDetails, status);
+});
+// MVC-Fehlerergebnisse (Problem()/ValidationProblem() UND die [ApiController]-Auto-Wandlung von
+// NotFound()/Conflict()/… ) laufen NICHT über CustomizeProblemDetails, sondern über die
+// ProblemDetailsFactory. Diese hier ersetzen, damit auch dieser Pfad einen Code stempelt.
+builder.Services.AddSingleton<Microsoft.AspNetCore.Mvc.Infrastructure.ProblemDetailsFactory,
+    CodeStampingProblemDetailsFactory>();
 builder.Services.AddDbContext<PuglingDbContext>(o =>
     o.UseSqlite(builder.Configuration.GetConnectionString("Default") ?? "Data Source=pugling.db"));
 builder.Services.AddScoped<ScoringService>();
@@ -115,27 +178,52 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 builder.Services.AddAuthorization();
 
 // OpenAPI: Bearer-Sicherheitsschema, damit Swagger UI einen "Authorize"-Button zeigt.
-builder.Services.AddOpenApi(o => o.AddDocumentTransformer((doc, _, _) =>
+builder.Services.AddOpenApi(o =>
 {
-    doc.Components ??= new OpenApiComponents();
-    doc.Components.SecuritySchemes ??= new Dictionary<string, IOpenApiSecurityScheme>();
-    doc.Components.SecuritySchemes["Bearer"] = new OpenApiSecurityScheme
+    o.AddDocumentTransformer((doc, _, _) =>
     {
-        Type = SecuritySchemeType.Http,
-        Scheme = "bearer",
-        BearerFormat = "JWT",
-        In = ParameterLocation.Header,
-        Description = "JWT aus POST /api/auth/father bzw. /api/auth/child einfügen.",
-    };
-    doc.Security =
-    [
-        new OpenApiSecurityRequirement
+        doc.Components ??= new OpenApiComponents();
+        doc.Components.SecuritySchemes ??= new Dictionary<string, IOpenApiSecurityScheme>();
+        doc.Components.SecuritySchemes["Bearer"] = new OpenApiSecurityScheme
         {
-            [new OpenApiSecuritySchemeReference("Bearer", doc)] = new List<string>()
+            Type = SecuritySchemeType.Http,
+            Scheme = "bearer",
+            BearerFormat = "JWT",
+            In = ParameterLocation.Header,
+            Description = "JWT aus POST /api/auth/father bzw. /api/auth/child einfügen.",
+        };
+        doc.Security =
+        [
+            new OpenApiSecurityRequirement
+            {
+                [new OpenApiSecuritySchemeReference("Bearer", doc)] = new List<string>()
+            }
+        ];
+        return Task.CompletedTask;
+    });
+    // Fehler-Codes im Schema dokumentieren: die ProblemDetails-Schemata um die maschinenlesbare
+    // code-Property (mit enum aller bekannten Codes) erweitern, damit Swagger/Clients sie kennen.
+    o.AddDocumentTransformer((doc, _, _) =>
+    {
+        if (doc.Components?.Schemas is { } schemas)
+        {
+            foreach (var name in new[] { "ProblemDetails", "HttpValidationProblemDetails" })
+            {
+                if (schemas.TryGetValue(name, out var schema) && schema is OpenApiSchema s)
+                {
+                    s.Properties ??= new Dictionary<string, IOpenApiSchema>();
+                    s.Properties["code"] = new OpenApiSchema
+                    {
+                        Type = JsonSchemaType.String,
+                        Description = "Stabiler, maschinenlesbarer Fehler-Code (Client-Verzweigung/-Lokalisierung).",
+                        Enum = [.. ApiErrors.AllCodes.Select(c => (JsonNode)JsonValue.Create(c))],
+                    };
+                }
+            }
         }
-    ];
-    return Task.CompletedTask;
-}));
+        return Task.CompletedTask;
+    });
+});
 
 var app = builder.Build();
 
