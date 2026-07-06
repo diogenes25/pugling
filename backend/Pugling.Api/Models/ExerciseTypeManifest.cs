@@ -2,7 +2,7 @@ namespace Pugling.Api.Models;
 
 // Selbstbeschreibung der Übungstypen: die EINE Wahrheit, aus der ein (gegen die API gebautes)
 // Frontend Routing, Prüfmodus, Renderer und Fähigkeiten je Typ liest – statt sie fest zu verdrahten.
-// Bündelt das heute über Katalog-Controller, Play-Controller (study-plans/…/*-tests) und Enums
+// Bündelt das heute über Katalog-Controller, positionsbezogene Play-Controller und Enums
 // (ExerciseType ↔ LearningMethod) verstreute Wissen an einer Stelle.
 
 /// <summary>
@@ -15,7 +15,7 @@ public enum ExerciseCheckMode
     /// <summary>Keine automatische Prüfung – reine Inhalts-/Leseübung (z. B. Birkenbihl) oder (noch) nicht maschinell bewertbar (z. B. Aufsatz).</summary>
     None = 0,
 
-    /// <summary>Server-autoritativer, mehrstufiger Abschlusstest über einen Study-Plan (Leitner): <c>study-plans/{planId}/{PlayRoute}</c>.</summary>
+    /// <summary>Server-autoritativer, mehrstufiger Abschlusstest über eine Study-Plan-Position: <c>study-plans/{planId}/positions/{positionId}/{PlayRoute}</c>.</summary>
     StudyPlanTest = 1,
 
     /// <summary>Zustandsloser Direkt-Check am Katalog-Endpunkt: <c>POST .../{AuthoringRoute}/{id}/check</c>.</summary>
@@ -27,7 +27,7 @@ public enum ExerciseCheckMode
 
 /// <summary>
 /// Selbstbeschreibung eines Übungstyps: die Brücke zwischen Autoren-Katalog (<see cref="ExerciseType"/>),
-/// Lehrplan-Verfahren (<see cref="LearningMethod"/>), Play-Route und Frontend-Renderer. Das Frontend
+/// typischer Lernfamilie (<see cref="LearningMethod"/>), Play-Route und Frontend-Renderer. Das Frontend
 /// liest die Manifest-Liste einmal und verdrahtet Routing, Prüfung und Darstellung generisch; die
 /// eigentliche Render-Komponente bleibt handgebaut pro <see cref="Renderer"/> (die Play-Sicht deckt
 /// je Leitner-Stufe unterschiedlich viel auf – das lässt sich nicht generisch aus JSON erzeugen).
@@ -38,8 +38,8 @@ public enum ExerciseCheckMode
 /// <param name="SchemaVersion">Version des Typ-Schemas. Bewusst NUR hier (nicht an den Entities) – Verzweigungspunkt für spätere inkompatible Änderungen.</param>
 /// <param name="AuthoringRoute">Routen-Segment der Vater-CRUD unter <c>.../learn/subjects/{subjectId}/chapters/{chapterId}/{AuthoringRoute}</c>.</param>
 /// <param name="CheckMode">Primäre Prüf-/Spieloberfläche.</param>
-/// <param name="PlayRoute">Nur bei <see cref="ExerciseCheckMode.StudyPlanTest"/>: Segment unter <c>study-plans/{planId}/{PlayRoute}</c>; sonst <c>null</c>.</param>
-/// <param name="Method">Nur bei <see cref="ExerciseCheckMode.StudyPlanTest"/>: zugehöriges Lehrplan-Verfahren; sonst <c>null</c>.</param>
+/// <param name="PlayRoute">Nur bei <see cref="ExerciseCheckMode.StudyPlanTest"/>: Segment unter <c>study-plans/{planId}/positions/{positionId}/{PlayRoute}</c>; sonst <c>null</c>.</param>
+/// <param name="Method">Nur bei <see cref="ExerciseCheckMode.StudyPlanTest"/>: Lernfamilie für Renderer/Kompatibilität; sonst <c>null</c>.</param>
 /// <param name="Capabilities">Typ-Fähigkeiten, auf die ein Renderer reagieren kann (z. B. <c>wordBank</c>, <c>audio</c>, <c>letterHints</c>).</param>
 public record ExerciseTypeManifest(
     ExerciseType Type,
@@ -71,7 +71,7 @@ public static class ExerciseManifests
         new(ExerciseType.Reading, "Leseverständnis", "reading", V1, "reading",
             ExerciseCheckMode.None, null, null, []),
         new(ExerciseType.Cloze, "Lückentext", "cloze", V1, "cloze",
-            ExerciseCheckMode.StudyPlanTest, "cloze-tests", LearningMethod.Cloze,
+            ExerciseCheckMode.StudyPlanTest, "tests", LearningMethod.Cloze,
             ["wordBank", "translation", "letterHints", "vocabStore"]),
         new(ExerciseType.Essay, "Aufsatz", "essay", V1, "essays",
             ExerciseCheckMode.None, null, null, ["rubric", "wordCount"]),
@@ -80,7 +80,7 @@ public static class ExerciseManifests
         new(ExerciseType.Grammar, "Grammatik", "prompts", V1, "grammar",
             ExerciseCheckMode.None, null, null, ["ruleHints"]),
         new(ExerciseType.Matching, "Zuordnung", "matching", V1, "matching",
-            ExerciseCheckMode.StudyPlanTest, "matching-tests", LearningMethod.Matching,
+            ExerciseCheckMode.StudyPlanTest, "tests", LearningMethod.Matching,
             ["distractors", "reverse"]),
         new(ExerciseType.Translation, "Übersetzung", "prompts", V1, "translation",
             ExerciseCheckMode.None, null, null, ["alternatives"]),

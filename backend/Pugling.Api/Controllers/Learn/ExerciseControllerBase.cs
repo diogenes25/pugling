@@ -117,6 +117,8 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db) : Con
             e.DefaultUseLeitner, e.DefaultRequireTypedTest);
 
     /// <summary>Liste der Übungen dieses Typs im Kapitel.</summary>
+    /// <param name="subjectId">Fach, zu dem das Kapitel gehört.</param>
+    /// <param name="chapterId">Kapitel, dessen Übungen gelesen werden.</param>
     /// <param name="skip">Anzahl zu überspringender Einträge (Paging).</param>
     /// <param name="take">Maximale Trefferzahl (1..500). Gesamtzahl im Header <c>X-Total-Count</c>.</param>
     [HttpGet]

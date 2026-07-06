@@ -60,6 +60,9 @@ public class KlassenarbeitenController(PuglingDbContext db, AuthAccess access) :
     // ---- Lesen ----
 
     /// <summary>Klassenarbeiten eines Kindes, optional nach Status/Fach gefiltert (nur eigene).</summary>
+    /// <param name="childId">Kind, dessen Klassenarbeiten gelesen werden.</param>
+    /// <param name="status">Optionaler Statusfilter.</param>
+    /// <param name="subjectId">Optionaler Fachfilter.</param>
     /// <param name="skip">Anzahl zu überspringender Einträge (Paging).</param>
     /// <param name="take">Maximale Trefferzahl (1..500). Gesamtzahl im Header <c>X-Total-Count</c>.</param>
     [HttpGet]

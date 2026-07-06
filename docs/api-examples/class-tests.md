@@ -32,7 +32,7 @@ Response — `HTTP 201`:
     "gradeComment": null,
     "directExerciseCount": 0,
     "tags": [],
-    "createdAt": "2026-07-06T14:37:16.6914022Z"
+    "createdAt": "2026-07-06T16:55:34.5068409Z"
   },
   "assignedExercises": []
 }
@@ -61,7 +61,7 @@ Response — `HTTP 400`:
   "status": 400,
   "detail": "Grade must be between 1.0 and 6.0.",
   "code": "validation_error",
-  "traceId": "00-bda0bf0a7ab0d1b4e412b2482953f2e1-2d0b0e35bc2ea125-00"
+  "traceId": "00-f6872b5bc45279c3bc2cfa3b427aa621-4df068fd9337e859-00"
 }
 ```
 
@@ -90,7 +90,7 @@ Response — `HTTP 400`:
   "status": 400,
   "detail": "Unknown exercise IDs: 999999",
   "code": "invalid_reference",
-  "traceId": "00-6c1dcfadd6bf8ea59e1c46773a8eb14d-ca66c2d2192b6b38-00"
+  "traceId": "00-6226855f9a9b658b1f8ee67d9c457458-06e1b6505f736d85-00"
 }
 ```
 

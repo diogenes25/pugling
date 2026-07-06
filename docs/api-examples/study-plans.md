@@ -95,7 +95,7 @@ Response — `HTTP 400`:
   "status": 400,
   "detail": "Exercise 999999 not found.",
   "code": "invalid_reference",
-  "traceId": "00-08ea2adfd11de65e4b0536420b252b9c-72971f09a95e3f6f-00"
+  "traceId": "00-b3da35aeaaf2bf56198d0cec6e3d1d50-d689f563f8961fa9-00"
 }
 ```
 
@@ -112,7 +112,7 @@ Response — `HTTP 404`:
   "status": 404,
   "detail": "Study plan not found.",
   "code": "not_found",
-  "traceId": "00-a998b0f6331c3724bc2316d0a05728ea-902e9b3357491013-00"
+  "traceId": "00-3904a4c97ab6bfd583a6dd2fa6bd4ecf-45afa932116785c2-00"
 }
 ```
 
@@ -133,7 +133,7 @@ Response — `HTTP 201`:
   "planId": 2,
   "positionId": 2,
   "day": "2026-07-06",
-  "startedAt": "2026-07-06T14:37:15.720772Z",
+  "startedAt": "2026-07-06T16:55:33.9952498Z",
   "endedAt": null,
   "activeSeconds": 0,
   "reviewCount": 0
@@ -158,7 +158,7 @@ Response — `HTTP 200`:
 {
   "wasCorrect": true,
   "expected": "hallo",
-  "awarded": 10,
+  "awarded": 8,
   "box": 2,
   "dueOn": "2026-07-08",
   "combo": 1,
@@ -269,7 +269,7 @@ Response — `HTTP 400`:
   "status": 400,
   "detail": "The test has already been submitted.",
   "code": "test_already_submitted",
-  "traceId": "00-df3c4e057984c29eb30aa5c06b5a705f-2cf757c0ab6f9ee8-00"
+  "traceId": "00-ffce5319a3f95eeb915f70593e776899-95b7918e414964d8-00"
 }
 ```
 
@@ -291,7 +291,7 @@ Response — `HTTP 400`:
   "status": 400,
   "detail": "The exercise contains no checkable content.",
   "code": "no_checkable_content",
-  "traceId": "00-1c00338905df0623edf341791f9e81be-5ec586d09645f514-00"
+  "traceId": "00-caf562255f183951ce2c812ca833c430-52d8d4949b7a1e7a-00"
 }
 ```
 
@@ -308,7 +308,7 @@ Response — `HTTP 409`:
   "status": 409,
   "detail": "This position already has practice/test data and cannot be deleted.",
   "code": "position_has_data",
-  "traceId": "00-79d9623209cdf92daf1b4864fd07f953-d87dece12c531888-00"
+  "traceId": "00-0a19ce19e3703d3c842a8639d6a5e4b0-53fa268d8f5ad4d0-00"
 }
 ```
 
@@ -330,7 +330,7 @@ Response — `HTTP 403`:
   "status": 403,
   "detail": "This study plan is not currently active. Ask your parent.",
   "code": "plan_inactive",
-  "traceId": "00-9f3b8e66c779823e362b05e91ec82401-529be3a2c5397801-00"
+  "traceId": "00-f750ff43cabc3dec53a9e6d9c79cf18a-f5e8fc4283b1d68a-00"
 }
 ```
 

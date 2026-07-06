@@ -21,7 +21,7 @@ Response — `HTTP 201`:
   "id": 4,
   "name": "Neuer Papa",
   "email": null,
-  "createdAt": "2026-07-06T14:37:10.5532478Z",
+  "createdAt": "2026-07-06T16:55:31.9987095Z",
   "childrenCount": 0
 }
 ```
@@ -46,7 +46,7 @@ Response — `HTTP 200`:
   "role": "Vater",
   "id": 1,
   "name": "Papa",
-  "expiresAt": "2026-07-07T02:37:10.6814666Z"
+  "expiresAt": "2026-07-07T04:55:32.0603297Z"
 }
 ```
 
@@ -70,7 +70,7 @@ Response — `HTTP 200`:
   "role": "Sohn",
   "id": 1,
   "name": "Sohn",
-  "expiresAt": "2026-07-07T02:37:10.7186876Z"
+  "expiresAt": "2026-07-07T04:55:32.0793147Z"
 }
 ```
 
@@ -95,7 +95,7 @@ Response — `HTTP 401`:
   "status": 401,
   "detail": "Invalid father ID or PIN.",
   "code": "invalid_credentials",
-  "traceId": "00-188b4f43111583d676e61fbff117406f-73229dc0ba85b772-00"
+  "traceId": "00-93ce2cdcc6af07dea42229ab07ad4ef2-1e0945c98e03649c-00"
 }
 ```
 
@@ -124,7 +124,7 @@ Response — `HTTP 400`:
     ]
   },
   "code": "validation_error",
-  "traceId": "00-df32c4cc2a5e48aeb5a0371025a13e16-ac8f7370e9e2b23a-00"
+  "traceId": "00-53cc033dc8f2a75e4d86526a117af9bd-570d400aab207845-00"
 }
 ```
 
@@ -139,7 +139,7 @@ Response — `HTTP 401`:
   "type": "https://pugling.app/errors/unauthorized",
   "title": "Unauthorized",
   "status": 401,
-  "traceId": "00-eea58bca874d3eb4f1b750a75f3ed86c-173ba6af72c0031d-00",
+  "traceId": "00-c7f87e27eb38947dfa0eff197dbc1d22-f11541a50f328fd8-00",
   "code": "unauthorized"
 }
 ```

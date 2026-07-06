@@ -30,7 +30,7 @@ Konsequenzen:
   **funktionsfähig** (Vite+React+TS+PWA: Produktseite `/`, Sohn-App `/sohn`, Vater-Web `/vater` inkl.
   Lehrplan-Assistent). Feature-Arbeit beginnt weiterhin im Backend (API-First); das UI hängt an der API.
 - Einziges bewusst erhaltenes Legacy-Element: **`TimeSlotRule`** (Zeitfenster-Multiplikator),
-  weil der neue `PracticeSessionsController` es über `PointsService` für Leitner-Punkte nutzt.
+  weil der aktuelle positionsbezogene `ScoringService` es für Leitner-Basispunkte nutzt.
 
 ## In diesem Schritt umgesetzt
 
@@ -71,7 +71,8 @@ Verifiziert: Build 0 Warnungen/0 Fehler; Live-Smoke-Test (401 ohne Token, 404 de
 4. **Zeitfenster-Verwaltung** – Editieren der `TimeSlotRule`-Multiplikatoren hatte nur der gelöschte
    `SettingsController`. Bei Bedarf einen schlanken, abgesicherten `TimeSlotsController` ergänzen
    (aktuell nur über Seed-Defaults).
-5. **`StudyPlanItem`-Polymorphie** – die zwei nullbaren FKs (`VocabularyId`, `ClozeTextId`) skalieren
-   nicht über wenige Content-Typen; ab ~4 Typen echte Polymorphie.
+5. ~~**`StudyPlanItem`-Polymorphie**~~ – **erledigt (2026-07-05)**: Das alte Item-/Method-Modell wurde
+  durch `PlanPosition` ersetzt. Positionen referenzieren Katalog-Übungen; Fortschritt je Inhalts-Atom
+  lebt in `PositionItemProgress`.
 6. **N+1 in `progress`/`today`** (`ComputeDayAsync` je Tag) – bei Bedarf gruppiert laden.
 7. **Automatisierte Tests** (WebApplicationFactory-Integrationstests) – bislang nur manuelle API-Läufe.

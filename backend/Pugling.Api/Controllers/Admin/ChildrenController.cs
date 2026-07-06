@@ -124,6 +124,7 @@ public class ChildrenController(PuglingDbContext db, WalletService wallet) : Con
     public record ChildPointsResponse(int ChildId, int Coins, int Gems, IEnumerable<PointsEntryResponse> Entries);
 
     /// <summary>Kontostand des Kindes (Münzen + Gems) mit den letzten Buchungen (neueste zuerst).</summary>
+    /// <param name="childId">Kind, dessen Kontostand gelesen wird.</param>
     /// <param name="skip">Anzahl zu überspringender Buchungen (Paging).</param>
     /// <param name="take">Maximale Buchungszahl (1..500). Gesamtzahl im Header <c>X-Total-Count</c>.</param>
     [HttpGet("{childId:int}/points")]

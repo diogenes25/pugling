@@ -19,7 +19,7 @@ Response — `HTTP 201`:
 {
   "id": 5,
   "name": "Doku-Fach",
-  "createdAt": "2026-07-06T14:37:12.0085062Z",
+  "createdAt": "2026-07-06T16:55:32.3229708Z",
   "chaptersCount": 0
 }
 ```
@@ -44,7 +44,7 @@ Response — `HTTP 400`:
   "status": 400,
   "detail": "Name is required.",
   "code": "validation_error",
-  "traceId": "00-4aa3eb590d491c5da95b645670ddef66-3511afeb98d6c2ab-00"
+  "traceId": "00-ecdb2d214f9f136887d79e706715ce97-c8a3a31b1018d468-00"
 }
 ```
 
@@ -110,7 +110,7 @@ Response — `HTTP 201`:
   "title": "Begr\u00FC\u00DFungen",
   "orderIndex": 1,
   "rewardPoints": 10,
-  "createdAt": "2026-07-06T14:37:12.1986893Z",
+  "createdAt": "2026-07-06T16:55:32.4204777Z",
   "config": {
     "direction": "front-to-back",
     "sourceLang": "en",
@@ -159,7 +159,7 @@ Response — `HTTP 404`:
   "type": "https://pugling.app/errors/not_found",
   "title": "Not Found",
   "status": 404,
-  "traceId": "00-4ba19ef31653f6639bfb59a23424aa52-41cf0f4e4673f71a-00",
+  "traceId": "00-5a560306e28e15e95a02ac062eb13a7a-e8b3e3557be12c9f-00",
   "code": "not_found"
 }
 ```
@@ -182,7 +182,7 @@ Response — `HTTP 201`:
   "id": 8,
   "subjectId": 5,
   "name": "Vokabeln",
-  "createdAt": "2026-07-06T14:37:12.6259505Z"
+  "createdAt": "2026-07-06T16:55:32.518018Z"
 }
 ```
 
@@ -206,7 +206,7 @@ Response — `HTTP 409`:
   "status": 409,
   "detail": "This category already exists in the subject.",
   "code": "conflict",
-  "traceId": "00-bda39a1878f08197099131ee2e7832d9-9ad193b7cd298765-00"
+  "traceId": "00-46d47b819c2be1e2a49573295bc4c452-f03a83978dac7057-00"
 }
 ```
 
@@ -223,7 +223,7 @@ Response — `HTTP 409`:
   "status": 409,
   "detail": "The exercise is used in a study plan or a class test and cannot be deleted.",
   "code": "exercise_in_use",
-  "traceId": "00-38338a4bb9f04501daa8bd80398538d1-bddcbe140fde020d-00"
+  "traceId": "00-92b4549268ac92e8c68265907a3951c5-b8cd7c44fd631e33-00"
 }
 ```
 
@@ -250,7 +250,7 @@ Response — `HTTP 403`:
   "status": 403,
   "detail": "This exercise belongs to another father and can only be modified or deleted by its author.",
   "code": "not_author",
-  "traceId": "00-ee56ed8a6b346aa34fe435b340e2320f-b4c711786da1217c-00"
+  "traceId": "00-9b533101b6e8a76d7a3e601e83dec1ac-4693b3aac24b1d6f-00"
 }
 ```
 

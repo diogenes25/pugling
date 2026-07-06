@@ -28,7 +28,7 @@ public class RewardsController(PuglingDbContext db, OfferService offers) : Contr
         int? StudyPlanId, int? ExerciseId, string? PlanTitle, string? ExerciseTitle);
 
     /// <summary>
-    /// Ein Kauf in der Vater-Sicht. <paramref name="CanFulfill"/>/<paramref name="CanCancel"/> sind server-autoritative
+    /// Ein Kauf in der Vater-Sicht. <c>CanFulfill</c>/<c>CanCancel</c> sind server-autoritative
     /// Affordances: Sie sagen dem Frontend, ob die Aktionen <c>fulfill</c>/<c>cancel</c> für diesen Kauf gerade zulässig
     /// sind (nur bei offenem Kauf, Status <see cref="RewardRedemptionStatus.Purchased"/>), damit die Buttons nicht die
     /// Server-Regel nachbilden müssen.
@@ -149,6 +149,8 @@ public class RewardsController(PuglingDbContext db, OfferService offers) : Contr
     // ---- Käufe im Konto: Vater-Sicht und Erfüllung ----
 
     /// <summary>Käufe des Kindes, optional nach Status gefiltert (offene zuerst, dann neueste).</summary>
+    /// <param name="childId">Kind, dessen Käufe gelesen werden.</param>
+    /// <param name="status">Optionaler Statusfilter.</param>
     /// <param name="skip">Anzahl zu überspringender Käufe (Paging).</param>
     /// <param name="take">Maximale Käufe-Zahl (1..500). Gesamtzahl im Header <c>X-Total-Count</c>.</param>
     [HttpGet("redemptions")]

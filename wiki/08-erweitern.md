@@ -110,19 +110,22 @@ Grobe Landkarte (am Muster von Cloze/Matching orientieren):
 1. **`LearningMethod`-Wert** in [Models/StudyPlanEntities.cs](../backend/Pugling.Api/Models/StudyPlanEntities.cs) ergänzen.
 2. **Stufen-Enum** des Verfahrens (analog `TestStage`/`ClozeStage`/`MatchStage`) — welche Stufen sind
    „getippt/gewertet"?
-3. **Inhalts-Bezug:** Reicht der Vokabel-Store (wie Matching) oder braucht es einen neuen Store (wie
-   `ClozeText`)? Store = eigene Entity + Store-Controller + `StudyPlanItem`-FK.
-4. **Test-Controller** `…/study-plans/{planId}/<verfahren>-tests` (Start ohne Lösung, Submit bewertet
-   serverseitig, Punkte über den geteilten `StudyProgressService`/`TestAttemptService`).
-5. **`StudyProgressService.IsTyped(...)`** um die neuen gewerteten Stufen erweitern.
-6. **`PracticeSessionsController.Grade(...)`** + **`ToCard(...)`** um den neuen `LearningMethod`-Zweig
-   ergänzen (server-autoritative Bewertung + lösungsfreie Karte).
-7. **`ScheduleService`** nutzt du unverändert; **`ScoringService`** ist bereits verfahrensneutral.
-8. **`CreatePlanDto.DefaultStage`**-Fallback im `StudyPlansController` um den neuen Method-Zweig ergänzen.
-9. **Migration**, falls neue Entities/Spalten (Store, FK) hinzukamen.
+3. **Inhalts-Bezug:** Kann die Übungs-Config direkt über `ExerciseContentProvider` in `ContentItem`s
+   projiziert werden? Nur wenn du eine globale Bibliothek brauchst, ergänze einen Store-Controller.
+4. **`ExerciseContentProvider`/Resolver** um den neuen Typ erweitern: Prompt, Antwort,
+   akzeptierte Antworten, optional Hint/Audio/Choices-Grundlage.
+5. **`PositionPlayService.IsTypedStage(...)`** um die neuen gewerteten Stufen erweitern.
+6. **`PositionPracticeController`/`PositionTestsController`** möglichst unverändert nutzen; sie spielen
+   typ-neutral gegen `ContentItem`. Nur bei echter Spezialmechanik ergänzen.
+7. **`PositionProgressService`** prüfen: Welche Zielregel gilt für `ExerciseCheckMode` und
+   `PlanPosition.GoalThreshold`?
+8. **Manifest** (`ExerciseTypeManifest`) aktualisieren: Renderer, `checkMode`, optional `method`/
+   `playRoute` für Study-Plan-fähige Typen.
+9. **Migration**, falls neue Entities/Spalten hinzukamen.
 
-Der Beleg, dass der Rahmen trägt: Matching kam **ohne** Änderung an `TestAttempt`/`StudyProgressService`
-aus (nur Auswahl-Logik + Test-Mechanik). Halte dich an dieses additive, opt-in-Muster.
+Der Beleg, dass der Rahmen trägt: Das aktuelle Positionsmodell spielt Vokabeln, Cloze, Matching und
+weitere checkbare Typen über denselben positionsbezogenen Practice-/Test-Pfad. Halte dich an dieses
+additive Muster und vermeide neue plan-weite Sonderpfade.
 
 ---
 
@@ -134,7 +137,7 @@ Vieles ist reine **Datenpflege über die API** — kein Code nötig. Ideal für 
 - **Neue Study-Pläne** für Kinder bauen ([04](04-lernplan-bauen.md), [09 · Kochbuch](09-llm-kochbuch.md)).
 - **Missionen & Auszeichnungen** je Kind definieren ([05 §5](05-punkte-und-bonus.md#5-missionen--auszeichnungen)).
 - **Zeitfenster-Multiplikatoren** anpassen (`TimeSlotRule`).
-- **Bonus je Plan** feintunen (`PATCH /study-plans/{id}`).
+- **Bonus je Position** feintunen (`PATCH /study-plans/{planId}/positions/{positionId}`).
 
 ---
 
@@ -146,10 +149,11 @@ Vieles ist reine **Datenpflege über die API** — kein Code nötig. Ideal für 
 | Übungstyp-Enum & Katalog-Entities | `Models/LearnEntities.cs` |
 | Übungs-Controller (alle Typen) | `Controllers/Learn/ExerciseControllers.cs` + `ExerciseControllerBase.cs` |
 | Katalog-Auswertung | `Services/ExerciseAnswerChecker.cs`, `ArithmeticProblemGenerator.cs` |
-| Study-Plan-Modell & Stufen | `Models/StudyPlanEntities.cs` |
+| Study-Plan-Container & Stufen | `Models/StudyPlanEntities.cs` |
+| Positionsmodell | `Models/PlanPositionEntities.cs` |
 | Punkte/Bonus | `Services/ScoringService.cs`, `Models/AdminEntities.cs` (`PointKind`) |
-| Tages-Auswertung | `Services/StudyProgressService.cs` |
-| Auswahl/Leitner | `Services/ScheduleService.cs` |
+| Tages-/Ziel-Auswertung | `Services/PositionProgressService.cs` |
+| Auswahl/Leitner | `Services/PositionPlayService.cs` |
 | Gamification | `Services/GamificationService.cs`, `Models/GamificationEntities.cs` |
 | Auth/Ownership | `Auth/` (`TokenService`, `AuthAccess`, `*OwnershipFilter`) |
 | Seed-Beispiele | `Data/Seed.cs` |

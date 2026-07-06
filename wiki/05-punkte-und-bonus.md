@@ -19,9 +19,10 @@ zentral aus [`WalletService`](../backend/Pugling.Api/Services/WalletService.cs).
 | `PointKind` | Währung | Quelle |
 | --- | --- | --- |
 | `Base` | 🪙 Münzen | Basispunkte einer richtigen Leitner-Wiederholung (inkl. Zeitfenster-Faktor) |
-| `Minutes` | 🪙 Münzen | Tagesziel Übungszeit erreicht |
-| `Test` | 🪙 Münzen | Abschlusstest bestanden |
-| `DayComplete` | 🪙 Münzen | Tag vollständig (Zeit **und** Test) |
+| `Goal` | 🪙 Münzen | Ziel einer Lehrplan-Position erreicht (Tag/Woche) |
+| `Minutes` | 🪙 Münzen | historisch/reserviert: Tagesziel Übungszeit erreicht |
+| `Test` | 🪙 Münzen | historisch/reserviert: Abschlusstest bestanden |
+| `DayComplete` | 🪙 Münzen | historisch/reserviert: Tag vollständig |
 | `Manual` | 🪙 Münzen | manuelle Vater-Buchung |
 | `Reward` | 🪙 Münzen | **Angebot gekauft** bzw. Storno-Rückerstattung (negativ/positiv) |
 | `Combo` | 💎 Gems | Combo-Bonus (Treffer in Folge) |
@@ -42,24 +43,25 @@ Währung zugeordnet ist (kein stiller Verlust bei neuem Kind).
 
 Punkte entstehen an genau zwei Stellen:
 
-### Bahn A — Tages-Belohnungen (`StudyProgressService`)
+### Bahn A — Positionsziele (`PositionProgressService`)
 
-Nach jeder Aktivität (Heartbeat, Test-Submit, Session-Ende) wird der Tag ausgewertet und fällige
-Punkte werden **idempotent** gebucht (Unique-Index `StudyDayReward` je Plan/Tag/Art → nie doppelt):
+Nach Session-Ende und Test-Submit wird ausgewertet, ob eine `PlanPosition` ihr Ziel in der aktuellen
+Periode erfüllt hat. Fällige Punkte werden **idempotent** gebucht (`PositionGoalReward` je
+Position/Periode → nie doppelt):
 
 | Ereignis | `PointKind` | Punkte |
 | --- | --- | --- |
-| Tages-Übungszeit erreicht (`dailyMinutesRequired`) | `Minutes` | `pointsMinutesMet` (Default 10) |
-| Abschlusstest bestanden (`≥ dailyTestPassPercent`) | `Test` | `pointsTestPassed` (Default 20) |
-| Tag vollständig (Zeit **und** Test) | `DayComplete` | `pointsDayCompleteBonus` (Default 10) |
+| Positionsziel erreicht (`cadence=Daily`) | `Goal` | `pointsGoalMet` der Position (Default 20) |
+| Positionsziel erreicht (`cadence=Weekly`) | `Goal` | einmal je Wochenperiode |
 
-Diese Bahn gilt für **jeden** Plan (auch ohne Leitner). Die beiden Tagespflichten (Zeit, Test) zählen
-**unabhängig** — ein bestandener Test ohne genug Minuten gibt Testpunkte, aber keinen Tages-Bonus.
+Diese Bahn gilt für jede Pflichtposition, auch ohne Leitner. Ob ein Ziel erfüllt ist, entscheidet die
+Position anhand ihres Übungstyps und `ExerciseCheckMode`: testfähige Übungen über bestandene Tests,
+checkbare Katalogübungen über gelöste Aufgaben, reine Inhaltsübungen über Session-Abschluss.
 
 ### Bahn B — Review-Punkte (`ScoringService`, nur Leitner-Pläne)
 
-Beim server-autoritativen `POST …/practice-sessions/{sid}/review` einer **richtigen** Antwort auf einem
-`useLeitner`-Plan bucht der `ScoringService` mehrere Beiträge auf einmal:
+Beim server-autoritativen `POST …/practice-sessions/{sid}/review` einer **richtigen** Antwort auf einer
+`useLeitner`-Position bucht der `ScoringService` mehrere Beiträge auf einmal:
 
 ```text
 Review-Punkte = Base (Pflicht)  + Combo (falls Meilenstein)  + Speed (falls schnell)
@@ -197,12 +199,13 @@ earned, earnedAt, rewardPoints }`.
 
 Zwei Wege, die Motivation gezielt hochzudrehen (z. B. Grammatik-Bonus für ein lustloses Kind):
 
-1. **Pro Plan** — die Bonus-Felder (`comboThreshold`, `comboBonusPoints`, `speedThresholdSeconds`,
-   `speedBonusPoints`, `newContentPoints`) jederzeit per `PATCH /api/v1/study-plans/{id}` anpassen.
-   Das Bonus-System ist damit **kind-individuell**.
+1. **Pro Position** — die Bonus-Felder (`comboThreshold`, `comboBonusPoints`, `speedThresholdSeconds`,
+   `speedBonusPoints`, `newContentPoints`, `pointsGoalMet`) jederzeit per
+   `PATCH /api/v1/study-plans/{planId}/positions/{positionId}` anpassen. Das Bonus-System ist damit
+   kind- und übungsindividuell.
 2. **Bonus-Vorschlag an einer Katalog-Übung** (`SuggestedBonus`) — dient nur als Vorlage: beim
-   `to-study-plan` werden die Werte **einmal** in den neuen Plan kopiert. Spätere Änderungen an der
-   Übung wirken **nicht** rückwirkend auf bestehende Kind-Pläne.
+   Anlegen einer Position werden die Werte **einmal** in die Position übernommen. Spätere Änderungen
+   an der Übung wirken **nicht** rückwirkend auf bestehende Positionen.
 
 ```jsonc
 // SuggestedBonus (an der Exercise, siehe 03 · Übungstypen)
@@ -267,5 +270,5 @@ POST   /api/v1/me/rewards/{id}/purchase
   `MinutesPracticed`-Missionen abgebildet.
 
 Codeanker: [`ScoringService`](../backend/Pugling.Api/Services/ScoringService.cs),
-[`StudyProgressService`](../backend/Pugling.Api/Services/StudyProgressService.cs),
+[`PositionProgressService`](../backend/Pugling.Api/Services/PositionProgressService.cs),
 [`GamificationService`](../backend/Pugling.Api/Services/GamificationService.cs).

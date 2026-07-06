@@ -38,7 +38,7 @@ Im Repo heißen **drei verschiedene Dinge** „Lehrplan/Plan". Das ist die häuf
 
 | # | Name | Was es ist | Doku |
 | --- | --- | --- | --- |
-| 1 | **Study-Plan** (API) | Das **produktive** Trainingsobjekt: Vokabel-/Lückentext-/Matching-Training mit Leitner, Stufen, Punkten, Combo, Missionen. Gehört einem Kind. | **Dieses Wiki** → [Lernplan bauen](wiki/04-lernplan-bauen.md) |
+| 1 | **Study-Plan** (API) | Das **produktive** Trainingsobjekt: Container für ein Kind mit `PlanPosition`s auf Katalog-Übungen, Leitner, Stufen, Punkten, Combo und Missionen. | **Dieses Wiki** → [Lernplan bauen](wiki/04-lernplan-bauen.md) |
 | 2 | **Katalog-Übung** | Globale **Übungs-Bibliothek** `Subject → Chapter → Exercise` (12 typisierte Übungsarten mit Metadaten). Fundament für den künftigen Auto-Generator. | [Übungstypen](wiki/03-uebungstypen.md) |
 | 3 | **Markdown-Lehrplan** | Von den Skills `vater`/`sohn` erzeugter/abgearbeiteter Kurs **ohne** laufende App (reine Dateien). | [docs/lehrplan-erstellen.md](docs/lehrplan-erstellen.md) |
 
@@ -76,11 +76,11 @@ eigenständige, dateibasierte Welt.
 - **Lern-Katalog** pflegen: Fächer, Kapitel und **12 Übungstypen** (Vokabeln, Grammatik, Lückentext,
   Leseverstehen, Hörverstehen, Aufsatz, Zuordnung, Übersetzung, Rechnen fest/zufällig, Listen,
   Birkenbihl) — mit Metadaten (Klassenstufe, Schulart, Quelle, Art) für die Vorfilterung.
-- **Study-Pläne** je Kind: Vokabel-, Lückentext- oder Matching-Training mit
+- **Study-Pläne** je Kind: gemischte Positionen auf Katalog-Übungen mit
   - Leitner-Karteikasten (Boxen 1–5, Fälligkeit),
   - Stufen-Fahrplan (Schwierigkeit steigt über die Tage),
-  - Stundenplan-Kopplung (neuer Stoff am Unterrichtstag, sonst Wiederholung),
-  - zwei harten Tagespflichten (Übungszeit **und** bestandener Abschlusstest).
+  - Positionszielen (frei, täglich oder wöchentlich),
+  - Bestehensschwellen, Combo-/Speed-Boni und Zielpunkten je Position.
 - **Server-autoritative Bewertung**: Der Server prüft jede Antwort und vergibt Punkte — nie das Frontend.
 - **Motivation**: konfigurierbare Punkte, Combo-Bonus, Schnelle-Antwort-Bonus, Zeitfenster-Multiplikator,
   **Missionen** (Tages-/Wochenziele) und **Auszeichnungen** (Badges).

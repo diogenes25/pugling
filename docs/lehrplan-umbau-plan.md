@@ -1,6 +1,8 @@
 # Umbauplan: Lehrplan = Zusammenstellung von Übungen
 
-Status: **freigegeben** (Design), Bau noch nicht begonnen. Stand 2026-07-05.
+Status: **umgesetzt**. Stand 2026-07-06. Das alte plan-weite `StudyPlanItem`/`Method`-Modell ist
+entfernt; aktuelle Bedien- und API-Doku stehen in [wiki/04-lernplan-bauen.md](../wiki/04-lernplan-bauen.md)
+und [docs/api-examples/study-plans.md](api-examples/study-plans.md).
 
 ## Motivation / Zielbild
 
