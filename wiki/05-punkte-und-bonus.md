@@ -24,13 +24,15 @@ zentral aus [`WalletService`](../backend/Pugling.Api/Services/WalletService.cs).
 | `Test` | 🪙 Münzen | historisch/reserviert: Abschlusstest bestanden |
 | `DayComplete` | 🪙 Münzen | historisch/reserviert: Tag vollständig |
 | `Manual` | 🪙 Münzen | manuelle Vater-Buchung |
-| `Reward` | 🪙 Münzen | **Angebot gekauft** bzw. Storno-Rückerstattung (negativ/positiv) |
+| `Reward` | 🪙 Münzen | **Angebot gekauft** (alter Direkt-Kauf) bzw. Storno-Rückerstattung (negativ/positiv) |
+| `ShopCoins` | 🪙 Münzen | **Familien-Shop-Kauf** – Coin-Anteil (negativ) |
 | `Combo` | 💎 Gems | Combo-Bonus (Treffer in Folge) |
 | `Speed` | 💎 Gems | Bonus für schnelle Antwort |
 | `Duration` | 💎 Gems | Bonus für durchgehende Lernzeit *(reserviert, aktuell über Missionen abgebildet)* |
 | `Mission` | 💎 Gems | erfüllte Mission |
 | `Achievement` | 💎 Gems | erreichte Auszeichnung |
 | `SkinPurchase` | 💎 Gems | **Skin freigeschaltet** (negativ) |
+| `ShopGems` | 💎 Gems | **Familien-Shop-Kauf** – Gem-Anteil (negativ) |
 
 Kurz: **Fleiß fürs Lernen → Münzen** (→ echte Werte beim Vater), **Motivations-Boni → Gems** (→ Kosmetik).
 Lesen: `GET /api/v1/children/{childId}/points` (Vater) bzw. `GET /api/v1/me/points` (Sohn) — beide liefern
@@ -215,9 +217,9 @@ Zwei Wege, die Motivation gezielt hochzudrehen (z. B. Grammatik-Bonus für ein l
 
 ---
 
-## 7. Ausgeben: Skins (Gems) & Angebote (Münzen)
+## 7. Ausgeben: Skins, Angebote und Familien-Shop
 
-Die Kehrseite des Verdienens — zwei getrennte Kreisläufe.
+Die Kehrseite des Verdienens — drei getrennte Kreisläufe.
 
 ### Skins (💎 Gems, sofortiger Kauf)
 
@@ -261,6 +263,56 @@ GET    /api/v1/me/rewards          // { coins, available[period,quantity,remaini
 POST   /api/v1/me/rewards/{id}/purchase
 ```
 
+### Familien-Shop (🪙 Coins + 💎 Gems, Inventar + Aktivierungsanfrage)
+
+Der **Familien-Shop** ist das flexiblere Pendant zu den einfachen Angeboten: Der Vater pflegt einen
+**Artikel-Katalog** (`ShopArticle`) mit Eigenschaften wie Einheit (`UnitType`: Minute, Stunde, Stück, …)
+und Kategorie (`ActionType`: TV, Zocken, Süßigkeit, Ausflug, …). Je Artikel können mehrere
+**Angebote** (`ShopListing`) mit eigenem Preis (Coins **und/oder** Gems), Menge pro Kauf und Bestand
+definiert werden. Bestand kann sich automatisch auffüllen (`ShopRefillKind`: None / Once / Daily /
+TwiceDaily / Weekly).
+
+Ablauf (Logik in [`ShopService`](../backend/Pugling.Api/Services/ShopService.cs)):
+
+1. **Sohn kauft ein Angebot** — Coins (`PointKind.ShopCoins`) und Gems (`PointKind.ShopGems`) sofort
+   abgebucht, Bestand des Listings reduziert, **aggregiertes Inventar** (`ChildInventory`) für den
+   Artikel um `UnitsPerPurchase` erhöht. ConcurrencyStamp verhindert Doppelkäufe.
+2. **Sohn stellt Aktivierungsanfrage** (`ActivationRequest`) — möchte `quantity` Einheiten
+   tatsächlich verbrauchen (z. B. „Ich will jetzt 30 min Fernsehen"). Status: `Pending`.
+3. **Vater genehmigt** (`Approved`) — Inventar entsprechend reduziert; oder **lehnt ab** (`Rejected`) —
+   Inventar bleibt unverändert.
+4. **Vater storniert** einen offenen Kauf (`cancel`) — Coins/Gems erstattet, Inventar reduziert.
+
+```http
+# Vater — Artikel-Katalog
+GET    /api/v1/shop/articles
+POST   /api/v1/shop/articles   { "articleNumber":"TV-001","title":"Fernsehen","unitType":"Minute","actionType":"TV" }
+PATCH  /api/v1/shop/articles/{articleId}
+DELETE /api/v1/shop/articles/{articleId}
+
+# Vater — Angebote je Artikel
+GET    /api/v1/shop/articles/{articleId}/listings
+POST   /api/v1/shop/articles/{articleId}/listings
+       { "coinPrice":120,"gemPrice":30,"unitsPerPurchase":30,"currentStock":5,"maxStock":5,
+         "refillKind":"Weekly","refillDayOfWeek":"Monday" }
+PATCH  /api/v1/shop/articles/{articleId}/listings/{listingId}
+DELETE /api/v1/shop/articles/{articleId}/listings/{listingId}
+
+# Vater — Kind-Inventar, Kaufhistorie & Aktivierungsanfragen
+GET    /api/v1/children/{childId}/shop/inventory
+GET    /api/v1/children/{childId}/shop/purchases[?status=Owned]
+POST   /api/v1/children/{childId}/shop/purchases/{purchaseId}/cancel
+GET    /api/v1/children/{childId}/shop/activations[?status=Pending]
+POST   /api/v1/children/{childId}/shop/activations/{requestId}/approve
+POST   /api/v1/children/{childId}/shop/activations/{requestId}/reject
+
+# Sohn — Shop-Übersicht, Kaufen & Aktivieren
+GET    /api/v1/me/shop            // { coins, gems, available[], inventory[], purchases[] }
+POST   /api/v1/me/shop/listings/{listingId}/purchase
+POST   /api/v1/me/shop/inventory/{articleId}/activate   { "quantity": 30 }
+GET    /api/v1/me/shop/activations[?status=Pending]
+```
+
 ---
 
 ## 8. Bewusst offen
@@ -271,4 +323,5 @@ POST   /api/v1/me/rewards/{id}/purchase
 
 Codeanker: [`ScoringService`](../backend/Pugling.Api/Services/ScoringService.cs),
 [`PositionProgressService`](../backend/Pugling.Api/Services/PositionProgressService.cs),
-[`GamificationService`](../backend/Pugling.Api/Services/GamificationService.cs).
+[`GamificationService`](../backend/Pugling.Api/Services/GamificationService.cs),
+[`ShopService`](../backend/Pugling.Api/Services/ShopService.cs).

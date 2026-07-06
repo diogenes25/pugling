@@ -86,7 +86,7 @@
     "role": "father",
     "requestBodyJson": null,
     "expectedStatus": 200,
-    "responseBodyJson": "[\r\n  {\r\n    \u0022id\u0022: 1,\r\n    \u0022fatherId\u0022: 1,\r\n    \u0022name\u0022: \u0022Sohn\u0022,\r\n    \u0022birthYear\u0022: 2015,\r\n    \u0022grade\u0022: null,\r\n    \u0022schoolType\u0022: \u0022None\u0022,\r\n    \u0022createdAt\u0022: \u00222026-07-06T20:22:27.2414619\u0022,\r\n    \u0022coins\u0022: 50,\r\n    \u0022gems\u0022: 300\r\n  }\r\n]",
+    "responseBodyJson": "[\r\n  {\r\n    \u0022id\u0022: 1,\r\n    \u0022fatherId\u0022: 1,\r\n    \u0022name\u0022: \u0022Sohn\u0022,\r\n    \u0022birthYear\u0022: 2015,\r\n    \u0022grade\u0022: null,\r\n    \u0022schoolType\u0022: \u0022None\u0022,\r\n    \u0022createdAt\u0022: \u00222026-07-06T20:55:49.325532\u0022,\r\n    \u0022coins\u0022: 50,\r\n    \u0022gems\u0022: 300\r\n  }\r\n]",
     "isError": false,
     "expectedCode": null
   },
@@ -125,7 +125,7 @@
     "role": "father",
     "requestBodyJson": null,
     "expectedStatus": 200,
-    "responseBodyJson": "{\r\n  \u0022id\u0022: 3,\r\n  \u0022fatherId\u0022: 1,\r\n  \u0022name\u0022: \u0022Doku-Kind\u0022,\r\n  \u0022birthYear\u0022: null,\r\n  \u0022grade\u0022: null,\r\n  \u0022schoolType\u0022: \u0022None\u0022,\r\n  \u0022createdAt\u0022: \u00222026-07-06T20:22:29.7246659\u0022,\r\n  \u0022coins\u0022: 0,\r\n  \u0022gems\u0022: 0\r\n}",
+    "responseBodyJson": "{\r\n  \u0022id\u0022: 3,\r\n  \u0022fatherId\u0022: 1,\r\n  \u0022name\u0022: \u0022Doku-Kind\u0022,\r\n  \u0022birthYear\u0022: null,\r\n  \u0022grade\u0022: null,\r\n  \u0022schoolType\u0022: \u0022None\u0022,\r\n  \u0022createdAt\u0022: \u00222026-07-06T20:55:57.6854502\u0022,\r\n  \u0022coins\u0022: 0,\r\n  \u0022gems\u0022: 0\r\n}",
     "isError": false,
     "expectedCode": null
   },
@@ -138,7 +138,7 @@
     "role": "father",
     "requestBodyJson": "{\r\n  \u0022grade\u0022: 4\r\n}",
     "expectedStatus": 200,
-    "responseBodyJson": "{\r\n  \u0022id\u0022: 3,\r\n  \u0022fatherId\u0022: 1,\r\n  \u0022name\u0022: \u0022Doku-Kind\u0022,\r\n  \u0022birthYear\u0022: null,\r\n  \u0022grade\u0022: 4,\r\n  \u0022schoolType\u0022: \u0022None\u0022,\r\n  \u0022createdAt\u0022: \u00222026-07-06T20:22:29.7246659\u0022,\r\n  \u0022coins\u0022: 0,\r\n  \u0022gems\u0022: 0\r\n}",
+    "responseBodyJson": "{\r\n  \u0022id\u0022: 3,\r\n  \u0022fatherId\u0022: 1,\r\n  \u0022name\u0022: \u0022Doku-Kind\u0022,\r\n  \u0022birthYear\u0022: null,\r\n  \u0022grade\u0022: 4,\r\n  \u0022schoolType\u0022: \u0022None\u0022,\r\n  \u0022createdAt\u0022: \u00222026-07-06T20:55:57.6854502\u0022,\r\n  \u0022coins\u0022: 0,\r\n  \u0022gems\u0022: 0\r\n}",
     "isError": false,
     "expectedCode": null
   },
@@ -294,7 +294,7 @@
     "role": "child",
     "requestBodyJson": null,
     "expectedStatus": 200,
-    "responseBodyJson": "{\r\n  \u0022childId\u0022: 1,\r\n  \u0022coins\u0022: 50,\r\n  \u0022gems\u0022: 300,\r\n  \u0022entries\u0022: [\r\n    {\r\n      \u0022id\u0022: 2,\r\n      \u0022amount\u0022: 300,\r\n      \u0022kind\u0022: \u0022Achievement\u0022,\r\n      \u0022reason\u0022: \u0022Willkommens-Gems\u0022,\r\n      \u0022createdAt\u0022: \u00222026-07-06T20:22:27.2700775\u0022\r\n    },\r\n    {\r\n      \u0022id\u0022: 1,\r\n      \u0022amount\u0022: 50,\r\n      \u0022kind\u0022: \u0022Base\u0022,\r\n      \u0022reason\u0022: \u0022Startguthaben (M\\u00FCnzen)\u0022,\r\n      \u0022createdAt\u0022: \u00222026-07-06T20:22:27.270074\u0022\r\n    }\r\n  ]\r\n}",
+    "responseBodyJson": "{\r\n  \u0022childId\u0022: 1,\r\n  \u0022coins\u0022: 50,\r\n  \u0022gems\u0022: 300,\r\n  \u0022entries\u0022: [\r\n    {\r\n      \u0022id\u0022: 2,\r\n      \u0022amount\u0022: 300,\r\n      \u0022kind\u0022: \u0022Achievement\u0022,\r\n      \u0022reason\u0022: \u0022Willkommens-Gems\u0022,\r\n      \u0022createdAt\u0022: \u00222026-07-06T20:55:49.3473473\u0022\r\n    },\r\n    {\r\n      \u0022id\u0022: 1,\r\n      \u0022amount\u0022: 50,\r\n      \u0022kind\u0022: \u0022Base\u0022,\r\n      \u0022reason\u0022: \u0022Startguthaben (M\\u00FCnzen)\u0022,\r\n      \u0022createdAt\u0022: \u00222026-07-06T20:55:49.3471788\u0022\r\n    }\r\n  ]\r\n}",
     "isError": false,
     "expectedCode": null
   },
@@ -450,7 +450,7 @@
     "role": "child",
     "requestBodyJson": "{}",
     "expectedStatus": 200,
-    "responseBodyJson": "{\r\n  \u0022coins\u0022: 450,\r\n  \u0022available\u0022: [\r\n    {\r\n      \u0022id\u0022: 5,\r\n      \u0022title\u0022: \u002230 Min Fernsehen\u0022,\r\n      \u0022cost\u0022: 50,\r\n      \u0022period\u0022: \u0022Weekly\u0022,\r\n      \u0022quantity\u0022: 3,\r\n      \u0022remainingThisPeriod\u0022: 2,\r\n      \u0022affordable\u0022: true,\r\n      \u0022planTitle\u0022: null,\r\n      \u0022exerciseTitle\u0022: null\r\n    }\r\n  ],\r\n  \u0022redemptions\u0022: [\r\n    {\r\n      \u0022id\u0022: 1,\r\n      \u0022rewardId\u0022: 5,\r\n      \u0022title\u0022: \u002230 Min Fernsehen\u0022,\r\n      \u0022cost\u0022: 50,\r\n      \u0022status\u0022: \u0022Purchased\u0022,\r\n      \u0022purchasedAt\u0022: \u00222026-07-06T20:22:31.756692\u0022,\r\n      \u0022fulfilledAt\u0022: null\r\n    }\r\n  ]\r\n}",
+    "responseBodyJson": "{\r\n  \u0022coins\u0022: 450,\r\n  \u0022available\u0022: [\r\n    {\r\n      \u0022id\u0022: 5,\r\n      \u0022title\u0022: \u002230 Min Fernsehen\u0022,\r\n      \u0022cost\u0022: 50,\r\n      \u0022period\u0022: \u0022Weekly\u0022,\r\n      \u0022quantity\u0022: 3,\r\n      \u0022remainingThisPeriod\u0022: 2,\r\n      \u0022affordable\u0022: true,\r\n      \u0022planTitle\u0022: null,\r\n      \u0022exerciseTitle\u0022: null\r\n    }\r\n  ],\r\n  \u0022redemptions\u0022: [\r\n    {\r\n      \u0022id\u0022: 1,\r\n      \u0022rewardId\u0022: 5,\r\n      \u0022title\u0022: \u002230 Min Fernsehen\u0022,\r\n      \u0022cost\u0022: 50,\r\n      \u0022status\u0022: \u0022Purchased\u0022,\r\n      \u0022purchasedAt\u0022: \u00222026-07-06T20:56:02.1277482\u0022,\r\n      \u0022fulfilledAt\u0022: null\r\n    }\r\n  ]\r\n}",
     "isError": false,
     "expectedCode": null
   },
@@ -463,7 +463,7 @@
     "role": "father",
     "requestBodyJson": "{}",
     "expectedStatus": 200,
-    "responseBodyJson": "{\r\n  \u0022id\u0022: 1,\r\n  \u0022childId\u0022: 4,\r\n  \u0022rewardId\u0022: 5,\r\n  \u0022title\u0022: \u002230 Min Fernsehen\u0022,\r\n  \u0022cost\u0022: 50,\r\n  \u0022status\u0022: \u0022Fulfilled\u0022,\r\n  \u0022purchasedAt\u0022: \u00222026-07-06T20:22:31.756692\u0022,\r\n  \u0022fulfilledAt\u0022: \u0022\u003Ctimestamp\u003E\u0022,\r\n  \u0022canFulfill\u0022: false,\r\n  \u0022canCancel\u0022: false\r\n}",
+    "responseBodyJson": "{\r\n  \u0022id\u0022: 1,\r\n  \u0022childId\u0022: 4,\r\n  \u0022rewardId\u0022: 5,\r\n  \u0022title\u0022: \u002230 Min Fernsehen\u0022,\r\n  \u0022cost\u0022: 50,\r\n  \u0022status\u0022: \u0022Fulfilled\u0022,\r\n  \u0022purchasedAt\u0022: \u00222026-07-06T20:56:02.1277482\u0022,\r\n  \u0022fulfilledAt\u0022: \u0022\u003Ctimestamp\u003E\u0022,\r\n  \u0022canFulfill\u0022: false,\r\n  \u0022canCancel\u0022: false\r\n}",
     "isError": false,
     "expectedCode": null
   },
@@ -749,7 +749,7 @@
     "role": "father",
     "requestBodyJson": null,
     "expectedStatus": 200,
-    "responseBodyJson": "{\r\n  \u0022id\u0022: 2,\r\n  \u0022key\u0022: \u0022en_go_de_gehen\u0022,\r\n  \u0022version\u0022: \u00221.0\u0022,\r\n  \u0022sourceLanguage\u0022: \u0022en\u0022,\r\n  \u0022targetLanguage\u0022: \u0022de\u0022,\r\n  \u0022word\u0022: \u0022go\u0022,\r\n  \u0022translation\u0022: \u0022gehen\u0022,\r\n  \u0022partOfSpeech\u0022: \u0022Verb\u0022,\r\n  \u0022noun\u0022: null,\r\n  \u0022verb\u0022: {\r\n    \u0022isBaseForm\u0022: true,\r\n    \u0022infinitive\u0022: \u0022gehen\u0022,\r\n    \u0022tense\u0022: null,\r\n    \u0022person\u0022: null,\r\n    \u0022number\u0022: null\r\n  },\r\n  \u0022baseFormId\u0022: null,\r\n  \u0022baseFormKey\u0022: null,\r\n  \u0022baseFormRelation\u0022: null,\r\n  \u0022pronunciationAudioUrl\u0022: null,\r\n  \u0022tags\u0022: [],\r\n  \u0022createdAt\u0022: \u00222026-07-06T20:22:27.3268558\u0022\r\n}",
+    "responseBodyJson": "{\r\n  \u0022id\u0022: 2,\r\n  \u0022key\u0022: \u0022en_go_de_gehen\u0022,\r\n  \u0022version\u0022: \u00221.0\u0022,\r\n  \u0022sourceLanguage\u0022: \u0022en\u0022,\r\n  \u0022targetLanguage\u0022: \u0022de\u0022,\r\n  \u0022word\u0022: \u0022go\u0022,\r\n  \u0022translation\u0022: \u0022gehen\u0022,\r\n  \u0022partOfSpeech\u0022: \u0022Verb\u0022,\r\n  \u0022noun\u0022: null,\r\n  \u0022verb\u0022: {\r\n    \u0022isBaseForm\u0022: true,\r\n    \u0022infinitive\u0022: \u0022gehen\u0022,\r\n    \u0022tense\u0022: null,\r\n    \u0022person\u0022: null,\r\n    \u0022number\u0022: null\r\n  },\r\n  \u0022baseFormId\u0022: null,\r\n  \u0022baseFormKey\u0022: null,\r\n  \u0022baseFormRelation\u0022: null,\r\n  \u0022pronunciationAudioUrl\u0022: null,\r\n  \u0022tags\u0022: [],\r\n  \u0022createdAt\u0022: \u00222026-07-06T20:55:50.2338163\u0022\r\n}",
     "isError": false,
     "expectedCode": null
   },

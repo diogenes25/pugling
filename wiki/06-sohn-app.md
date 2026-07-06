@@ -176,7 +176,13 @@ POST /api/v1/me/skins/{skinId}/equip
 
 GET /api/v1/me/rewards         → { coins, available, redemptions }
 POST /api/v1/me/rewards/{rewardId}/purchase
+
+GET /api/v1/me/shop            → { coins, gems, available[], inventory[], purchases[] }
+POST /api/v1/me/shop/listings/{listingId}/purchase
+POST /api/v1/me/shop/inventory/{articleId}/activate   { "quantity": 30 }
+GET /api/v1/me/shop/activations[?status=Pending]
 ```
 
-Münzen kommen aus Lernleistung und kaufen reale Vater-Angebote. Gems kommen aus Boni, Missionen und
-Auszeichnungen und kaufen kosmetische Skins. Details: [05 · Punkte & Bonus](05-punkte-und-bonus.md).
+Münzen kommen aus Lernleistung und kaufen reale Vater-Angebote (`/me/rewards`) **oder** Familien-Shop-Artikel
+(`/me/shop`). Gems kommen aus Boni, Missionen und Auszeichnungen und kaufen kosmetische Skins — können aber
+auch als Gem-Anteil eines Shop-Angebots anfallen. Details: [05 · Punkte & Bonus](05-punkte-und-bonus.md).

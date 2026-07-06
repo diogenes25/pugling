@@ -43,12 +43,12 @@ public class PositionGoalOverviewTests(PuglingWebAppFactory factory) : IClassFix
             .Content.ReadFromJsonAsync<JsonElement>();
         JsonAssert.True(submit, "passed");
 
-        // Ziel-Punkte einmalig gebucht (Kind = 20 = PointsGoalMet-Default), Tagesmission erledigt.
+        // Ziel-Punkte einmalig gebucht (positionId-skopiert, da die Klassen-DB mit anderen Tests geteilt wird).
         using (var scope = _factory.Services.CreateScope())
         {
             var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
-            Assert.Equal(20, db.ChildPoints.Where(e => e.ChildId == 1 && e.Kind == PointKind.Goal).Sum(e => e.Amount));
             Assert.Equal(1, db.PositionGoalRewards.Count(r => r.PlanPositionId == positionId));
+            Assert.Equal(20, db.PositionGoalRewards.Where(r => r.PlanPositionId == positionId).Sum(r => r.Points));
         }
 
         var after = await (await child.GetAsync($"/api/v1/study-plans/{planId}/overview"))
@@ -64,7 +64,8 @@ public class PositionGoalOverviewTests(PuglingWebAppFactory factory) : IClassFix
         using (var scope = _factory.Services.CreateScope())
         {
             var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
-            Assert.Equal(20, db.ChildPoints.Where(e => e.ChildId == 1 && e.Kind == PointKind.Goal).Sum(e => e.Amount));
+            // Idempotenz: trotz zweitem Versuch weiterhin nur 1 Belohnung für diese Position.
+            Assert.Equal(1, db.PositionGoalRewards.Count(r => r.PlanPositionId == positionId));
         }
     }
 
