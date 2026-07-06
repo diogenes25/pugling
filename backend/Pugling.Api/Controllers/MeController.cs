@@ -305,6 +305,7 @@ public class MeController(PuglingDbContext db, GamificationService gamification,
             ShopService.ShopError.None => MapActivation(result.Value!),
             ShopService.ShopError.NotFound => this.ProblemWithCode(ShopService.ToApiError(result.Error), "Article not found in your family shop."),
             ShopService.ShopError.InsufficientInventory => this.ProblemWithCode(ShopService.ToApiError(result.Error), "Not enough units in your inventory."),
+            ShopService.ShopError.InvalidQuantity => this.ProblemWithCode(ShopService.ToApiError(result.Error), "Quantity must be at least 1."),
             _ => this.ProblemWithCode(ShopService.ToApiError(result.Error), "The activation request could not be saved — please try again."),
         };
     }

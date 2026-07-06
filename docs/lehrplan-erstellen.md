@@ -15,7 +15,7 @@ Schritt-für-Schritt-Tutorial – auch für den Fall **mehrerer Söhne**.
 >    [04 · Lernplan bauen](../wiki/04-lernplan-bauen.md) (Aufbau via API durch einen Menschen/Agent)
 >    und [09 · LLM-Kochbuch](../wiki/09-llm-kochbuch.md) (Plan aus einem Prompt).
 >
-> Dieses Handbuch behandelt **Variante 1**. Die [drei „Pläne" im Überblick](../README.md#️-die-drei-pläne--bitte-nicht-verwechseln).
+> Dieses Handbuch behandelt **Variante 1**. Die drei „Pläne" im Überblick stehen in [README.md](../README.md).
 
 ---
 
@@ -33,11 +33,11 @@ Daraus folgen drei feste Regeln, die beim Erstellen jedes Plans gelten:
    ist weg.
 2. **Bewertung ist so objektiv wie möglich.** Ein Lerner, der sich selbst benotet, schummelt sich
    sonst durch. Bevorzuge Aufgaben mit eindeutig prüfbarem Ergebnis (exakte Zahl, exakter String,
-   Multiple-Choice mit Schlüssel, Code, der Tests bestehen muss). Für offene „Erkläre"-Aufgaben schreibst
-   du einen **punktgenauen Rubric**, damit die Selbstbenotung kaum Spielraum hat.
+  Multiple-Choice mit Schlüssel, Code, der Tests bestehen muss). Für offene „Erkläre"-Aufgaben schreibst
+  du eine **punktgenaue Rubrik**, damit die Selbstbenotung kaum Spielraum hat.
 3. **Fortschritt ist durch Punkte gesperrt.** Der Sohn darf erst ins nächste Modul, wenn er die
-   Modul-Schwelle erreicht, und den Kurs erst abschließen, wenn er die Gesamt-Schwelle erreicht. Diese
-   „Gates" leben in `manifest.json` — die `sohn`-Skill liest sie als verbindliches Gesetz.
+  Modul-Schwelle erreicht, und den Kurs erst abschließen, wenn er die Gesamt-Schwelle erreicht. Diese
+  „Gates" leben in `manifest.json` — der Skill `sohn` liest sie als verbindliches Gesetz.
 
 ---
 
@@ -113,7 +113,7 @@ Abschließen, bis sie erfüllt sind. Schreibe sie **präzise**.
     "Arbeite die Module strikt der Reihe nach — Modul 02 setzt Modul 01 als bestanden voraus.",
     "Versuche jede Übung und schreibe deine Antwort in ledger.md, BEVOR du den Lösungsschlüssel öffnest.",
     "Rechne bei Rechenaufgaben wirklich — schätze das Ergebnis nicht.",
-    "Benote dich ehrlich am Rubric. Das Ledger ist prüfbar.",
+    "Benote dich ehrlich anhand der Rubrik. Das Ledger ist prüfbar.",
     "Der Kurs gilt erst als bestanden, wenn die Gesamtpunkte 16/20 (80 %) erreichen."
   ],
   "modules": [
@@ -162,7 +162,7 @@ Abschließen, bis sie erfüllt sind. Schreibe sie **präzise**.
 | `modules[].points` | Punkte des Moduls. |
 | `modules[].pass_threshold_pct` | Schwelle, um das **nächste** Modul freizuschalten (70–80 % ist fair). |
 | `exercises[].type` | `multiple-choice` \| `short-answer` \| `code` \| `explain`. |
-| `exercises[].checkable` | `true` = mechanisch prüfbar (Schlüssel/Test/exakter Wert); `false` = am Rubric benotet. |
+| `exercises[].checkable` | `true` = mechanisch prüfbar (Schlüssel/Test/exakter Wert); `false` = anhand der Rubrik benotet. |
 
 **Punktarithmetik (unbedingt prüfen):**
 
@@ -200,7 +200,7 @@ Die Frage und Optionen A–D. Verrate die Lösung NICHT.
 Eine präzise Aufgabe mit eindeutig prüfbarem Ergebnis (exakte Zahl / exakter Wert).
 
 ### Exercise 01.3  (explain, 3 pts)
-Eine offene Frage. Weise darauf hin, dass sie am Rubric im Lösungsschlüssel benotet wird.
+Eine offene Frage. Weise darauf hin, dass sie anhand der Rubrik im Lösungsschlüssel benotet wird.
 ```
 
 ### 4.4 `answer-key/NN-slug.md` — Lösungen + Bewertung
@@ -211,7 +211,7 @@ Gib dem Sohn pro Übung genau, was er zur Selbstbenotung braucht — mit wenig S
   („3 Punkte nur für B, sonst 0").
 - **code:** eine Referenzlösung **und** wie man sie prüft (welche Tests laufen, erwartete Ausgabe).
   Verweise den Sohn aufs **Ausführen**, nicht aufs Draufschauen.
-- **explain:** ein **punktweiser Rubric** — z. B. „1 Punkt: nennt den Zähler; 1 Punkt: nennt den Nenner;
+- **explain:** eine **punktweise Rubrik** — z. B. „1 Punkt: nennt den Zähler; 1 Punkt: nennt den Nenner;
   1 Punkt: erklärt das Verhältnis". Objektive Teilkriterien machen aus einer Bauchnote eine Rechnung.
 
 ---
@@ -223,9 +223,9 @@ Gib dem Sohn pro Übung genau, was er zur Selbstbenotung braucht — mit wenig S
 | `multiple-choice` | Verständnis-Check mit fester Lösung | `true` | Korrekter Buchstabe, volle Punkte nur bei Treffer |
 | `short-answer` | Exakte Zahl / exaktes Wort / kurze Formel | `true` | Exakter Sollwert, ggf. Teilpunkte je Teilaufgabe |
 | `code` | Programmieraufgabe | `true` | Referenzlösung + Tests/Assertions zum Selbstprüfen |
-| `explain` | „In eigenen Worten"-Verständnis | `false` | Punktweiser Rubric mit Teilkriterien |
+| `explain` | „In eigenen Worten"-Verständnis | `false` | Punktweise Rubrik mit Teilkriterien |
 
-Faustregel: So viel `checkable: true` wie möglich. Jede `explain`-Aufgabe braucht einen echten Rubric,
+Faustregel: So viel `checkable: true` wie möglich. Jede `explain`-Aufgabe braucht eine echte Rubrik,
 sonst benotet sich der unbeaufsichtigte Lerner zu großzügig.
 
 ---
@@ -261,7 +261,7 @@ Ergebnis und eine „Erkläre in eigenen Worten"-Frage mit Rubric.
 - Arbeite die Module der Reihe nach — Modul 02 setzt Modul 01 als bestanden voraus.
 - Versuche jede Übung und schreibe die Antwort in `ledger.md`, BEVOR du den Schlüssel öffnest.
 - Rechne bei Rechenaufgaben wirklich — schätze nicht.
-- Benote ehrlich am Rubric. Das Ledger ist prüfbar.
+- Benote ehrlich anhand der Rubrik. Das Ledger ist prüfbar.
 - Der Kurs ist erst fertig, wenn die Gesamtpunkte 16/20 erreichen.
 ```
 
@@ -321,7 +321,7 @@ Notiere deine vier Antworten im Ledger.
 
 ### Exercise 01.3  (explain, 3 pts)
 Erkläre in eigenen Worten, was **Zähler** und **Nenner** bedeuten und wie sie zusammen einen Anteil
-beschreiben. Deine Antwort wird am Rubric im Lösungsschlüssel benotet.
+beschreiben. Deine Antwort wird anhand der Rubrik im Lösungsschlüssel benotet.
 ```
 
 ### `lehrplan/bruchrechnen-grundlagen/answer-key/01-was-ist-ein-bruch.md`
@@ -345,7 +345,7 @@ Bewertung: **1 Punkt pro exakt korrekt gekürztem Bruch** (max. 4). Ein nicht vo
 Ergebnis (z. B. `2/4` statt `1/2`) gibt 0 Punkte für diese Teilaufgabe. Teilpunkte sind erlaubt.
 
 ## Exercise 01.3  (explain, 3 pts)
-Rubric — pro Kriterium vergeben, max. 3:
+Rubrik — pro Kriterium vergeben, max. 3:
 - 1 Punkt — erklärt, dass der **Nenner** angibt, in wie viele gleiche Teile das Ganze geteilt ist.
 - 1 Punkt — erklärt, dass der **Zähler** angibt, wie viele dieser Teile gemeint sind.
 - 1 Punkt — bringt beides zu einem **Anteil/Verhältnis** zusammen (z. B. „3 von 4 Teilen").
@@ -410,7 +410,7 @@ Notiere deine vier Antworten im Ledger.
 
 ### Exercise 02.3  (explain, 3 pts)
 Erkläre in eigenen Worten, **warum** man `1/3 + 1/4` nicht durch einfaches Addieren der Zähler
-berechnen kann. Deine Antwort wird am Rubric benotet.
+berechnen kann. Deine Antwort wird anhand der Rubrik benotet.
 ```
 
 ### `lehrplan/bruchrechnen-grundlagen/answer-key/02-brueche-addieren.md`

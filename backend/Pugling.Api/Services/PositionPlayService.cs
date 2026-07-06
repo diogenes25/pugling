@@ -129,7 +129,7 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
     private static bool IsDue(PositionItemProgress? prog, DateOnly day) =>
         prog is null || prog.DueOn is null || prog.DueOn <= day;
 
-    /// <summary>Holt den Fortschritts-Satz eines Inhalts-Atoms der Position oder legt ihn (nachverfolgt) an.</summary>
+    /// <summary>Holt den Fortschritts-Satz eines Inhaltsatoms der Position oder legt ihn (nachverfolgt) an.</summary>
     public async Task<PositionItemProgress> ProgressForAsync(int positionId, int itemIndex)
     {
         var prog = await db.PositionItemProgress

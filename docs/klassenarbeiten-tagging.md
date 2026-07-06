@@ -84,7 +84,6 @@ automatisch auf `Written`.
 
 ## Hinweis zur Datenbank
 
-Das Schema wird per `EnsureCreated()` erzeugt (noch keine EF-Migrationen). Nach diesen neuen
-Entitäten muss die Entwicklungs-DB **einmal neu angelegt** werden: `pugling.db` löschen und die API
-neu starten – der Seed legt Beispiel-Tags und zwei Beispiel-Klassenarbeiten (eine geplant, eine mit
-schlechter Note) an.
+Das Schema wird über EF-Migrationen verwaltet; beim Start ruft die API `db.Database.Migrate()` auf.
+Nach Schemaänderungen muss eine neue Migration erzeugt werden. Der Seed legt Beispiel-Tags und zwei
+Beispiel-Klassenarbeiten (eine geplant, eine mit schlechter Note) an.

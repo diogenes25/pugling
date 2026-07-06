@@ -153,7 +153,7 @@ Leere Felder erben Defaults der Übung: `stage`/`itemCount` bleiben dann `null`,
 | `exerciseId` *(req)* | — | Katalog-Übung, deren Config gespielt wird. |
 | `order` | nächster Index | Reihenfolge im Plan. |
 | `stage` | Übungs-Default | Verfahrensabhängige Spiel-/Teststufe. |
-| `itemCount` | alle | Wie viele Inhalts-Atoms aus der Übung genutzt werden. |
+| `itemCount` | alle | Wie viele Inhaltsatome aus der Übung genutzt werden. |
 | `scope` | `All` | `All`, `New` oder `Old`. |
 | `cadence` | `None` | `Daily`/`Weekly` macht daraus ein Pflichtziel. |
 | `goalThreshold` | typabhängig | Bei Tests Prozentgrenze, bei Check-Aufgaben Anzahl/Schwelle. |

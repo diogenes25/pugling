@@ -93,17 +93,26 @@ public class ShopController(PuglingDbContext db, ShopService shop) : ControllerB
     // ─── Artikel-CRUD ────────────────────────────────────────────────────────
 
     /// <summary>Familien-Shop-Artikel des angemeldeten Vaters (ohne Bestands-/Preisdetails).</summary>
+    /// <param name="search">Freitext-Suche in Artikelnummer und Titel (Teilstring, optional).</param>
+    /// <param name="skip">Anzahl übersprungener Einträge (Offset, Standard 0).</param>
+    /// <param name="take">Maximale Anzahl zurückgegebener Einträge (Standard 100, Max 500).</param>
     [HttpGet("articles")]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<ActionResult<IReadOnlyList<ShopArticleDto>>> Articles()
+    public async Task<ActionResult<IReadOnlyList<ShopArticleDto>>> Articles(
+        [FromQuery] string? search,
+        [FromQuery] int skip = 0, [FromQuery] int take = PagingExtensions.DefaultTake)
     {
         var fatherId = User.FatherId()!.Value;
-        var articles = await db.ShopArticles
+        var query = db.ShopArticles
             .AsNoTracking()
-            .Where(a => a.FatherId == fatherId)
+            .Where(a => a.FatherId == fatherId);
+        if (!string.IsNullOrWhiteSpace(search))
+            query = query.Where(a => a.Title.Contains(search) || a.ArticleNumber.Contains(search));
+        return (await query
             .OrderBy(a => a.ArticleNumber)
-            .ToListAsync();
-        return articles.Select(MapArticle).ToList();
+            .ToPagedListAsync(Response, skip, take))
+            .Select(MapArticle)
+            .ToList();
     }
 
     /// <summary>Legt einen Artikel im Familien-Shop an (Typ-Definition ohne Preis/Bestand).</summary>
@@ -298,21 +307,23 @@ public class ShopController(PuglingDbContext db, ShopService shop) : ControllerB
     // ─── Kind-Inventar ───────────────────────────────────────────────────────
 
     /// <summary>Aggregiertes Inventar eines Kindes: pro Artikel-Typ die verfügbare Gesamtmenge.</summary>
+    /// <param name="childId">Id des Kindes.</param>
+    /// <param name="skip">Anzahl übersprungener Einträge (Offset, Standard 0).</param>
+    /// <param name="take">Maximale Anzahl zurückgegebener Einträge (Standard 100, Max 500).</param>
     [HttpGet("~/" + ApiRoutes.V1 + "/children/{childId:int}/shop/inventory")]
     [ServiceFilter(typeof(ChildOwnershipFilter))]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<IReadOnlyList<InventoryItemDto>>> ChildInventory(int childId)
+    public async Task<ActionResult<IReadOnlyList<InventoryItemDto>>> ChildInventory(int childId,
+        [FromQuery] int skip = 0, [FromQuery] int take = PagingExtensions.DefaultTake)
     {
-        var items = await db.ChildInventories.AsNoTracking()
-            .Include(i => i.ShopArticle)
+        var query = db.ChildInventories.AsNoTracking()
             .Where(i => i.ChildId == childId && i.Quantity > 0)
             .OrderBy(i => i.ShopArticle!.ArticleNumber)
             .Select(i => new InventoryItemDto(
-                i.ShopArticleId, i.ShopArticle!.ArticleNumber, i.ShopArticle.Title,
-                i.ShopArticle.UnitType, i.ShopArticle.ActionType, i.Quantity))
-            .ToListAsync();
-        return items;
+                i.ShopArticleId, i.ShopArticle!.ArticleNumber, i.ShopArticle!.Title,
+                i.ShopArticle!.UnitType, i.ShopArticle!.ActionType, i.Quantity));
+        return await query.ToPagedListAsync(Response, skip, take);
     }
 
     public record InventoryItemDto(int ShopArticleId, string ArticleNumber, string Title,
@@ -382,6 +393,7 @@ public class ShopController(PuglingDbContext db, ShopService shop) : ControllerB
     [HttpPost("~/" + ApiRoutes.V1 + "/children/{childId:int}/shop/activations/{requestId:int}/approve")]
     [ServiceFilter(typeof(ChildOwnershipFilter))]
     [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<ActionResult<ActivationRequestDto>> ApproveActivation(int childId, int requestId)
@@ -410,6 +422,7 @@ public class ShopController(PuglingDbContext db, ShopService shop) : ControllerB
             ShopService.ShopError.None => MapActivation(result.Value!),
             ShopService.ShopError.NotFound => NotFound(),
             ShopService.ShopError.NotPending => this.ProblemWithCode(ShopService.ToApiError(result.Error), "This activation request is not pending."),
+            ShopService.ShopError.InsufficientInventory => this.ProblemWithCode(ShopService.ToApiError(result.Error), "Not enough units left in the child's inventory to approve this request."),
             _ => this.ProblemWithCode(ShopService.ToApiError(result.Error), "The activation could not be processed."),
         };
 

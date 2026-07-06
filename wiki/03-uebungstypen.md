@@ -69,7 +69,7 @@ api/v1/learn/subjects/{subjectId}/chapters/{chapterId}/<typ-pfad>
     "speedThresholdSeconds": 8, "speedBonusPoints": 3, "newContentPoints": 12
   },
   "gradeMin": 5, "gradeMax": 7,       // geeignete Klassenstufe (inkl.); null = keine Grenze
-  "schoolTypes": "Realschule, Gymnasium",  // [Flags]; "None" = für alle. Kombis kommaseparieren
+  "schoolTypes": "Realschule, Gymnasium",  // [Flags]; "None" = für alle. Kombinationen kommasepariert angeben
   "source": "Green Line 1, Unit 1",   // Quelle (Schulbuch o. Ä.)
   "categoryId": 7                     // fachabhängige Art (muss zum Fach gehören)
 }

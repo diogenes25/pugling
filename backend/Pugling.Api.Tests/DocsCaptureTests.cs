@@ -153,6 +153,7 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
             await CaptureVocabularyAsync(father);
             await CaptureTagsAsync(father, child, foreignChildId);
             await CaptureTimetableAsync(father, docSubjectId);
+            await CaptureShopAsync(father, child);
             completed = true;
         }
         finally
@@ -472,6 +473,146 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
         await Capture(father, g, "Gleiches Fach am selben Wochentag", HttpMethod.Post, "/api/v1/children/1/timetable",
             new { subjectId = docSubjectId, dayOfWeek = "Tuesday", timeOfDay = "Vormittag" },
             HttpStatusCode.Conflict, ApiErrors.TimetableSlotTaken.Code);
+    }
+
+    // ── shop (Vater-Admin + Sohn-Seite) ──────────────────────────────────────────────────────────
+    private async Task CaptureShopAsync(HttpClient father, HttpClient child)
+    {
+        const string g = "shop";
+
+        // ── Artikel-CRUD ──────────────────────────────────────────────────────
+        var articleEl = await Capture(father, g, "Artikel anlegen", HttpMethod.Post, "/api/v1/shop/articles",
+            new { articleNumber = "TV-900", title = "Fernsehzeit", description = "Bildschirmzeit in Minuten",
+                unitType = "Minute", actionType = "TV" }, HttpStatusCode.Created);
+        var articleId = articleEl.GetProperty("id").GetInt32();
+
+        await Capture(father, g, "Artikel mit doppelter Nummer anlegen", HttpMethod.Post, "/api/v1/shop/articles",
+            new { articleNumber = "TV-900", title = "Duplikat", unitType = "Minute", actionType = "TV" },
+            HttpStatusCode.Conflict, ApiErrors.DuplicateKey.Code);
+
+        await Capture(father, g, "Artikel auflisten", HttpMethod.Get, "/api/v1/shop/articles",
+            null, HttpStatusCode.OK);
+
+        await Capture(father, g, "Artikel auflisten (Suche)", HttpMethod.Get, "/api/v1/shop/articles?search=Fernseh",
+            null, HttpStatusCode.OK);
+
+        await Capture(father, g, "Artikel ändern", HttpMethod.Patch, $"/api/v1/shop/articles/{articleId}",
+            new { title = "Fernsehzeit (30 Min)", description = "30 Minuten freie Bildschirmzeit" },
+            HttpStatusCode.OK);
+
+        // ── Angebots-CRUD ─────────────────────────────────────────────────────
+        var listingEl = await Capture(father, g, "Angebot anlegen", HttpMethod.Post,
+            $"/api/v1/shop/articles/{articleId}/listings",
+            new { title = "30 Min Fernsehen", description = "Einmalige Halbstunde",
+                coinPrice = 120, gemPrice = 0, unitsPerPurchase = 30, currentStock = 5, maxStock = 5 },
+            HttpStatusCode.Created);
+        var listingId = listingEl.GetProperty("id").GetInt32();
+
+        await Capture(father, g, "Angebot anlegen (ungültiger Preis)", HttpMethod.Post,
+            $"/api/v1/shop/articles/{articleId}/listings",
+            new { coinPrice = 0, gemPrice = 0, unitsPerPurchase = 30, currentStock = 5, maxStock = 5 },
+            HttpStatusCode.BadRequest, ApiErrors.ValidationError.Code);
+
+        await Capture(father, g, "Angebote auflisten", HttpMethod.Get,
+            $"/api/v1/shop/articles/{articleId}/listings", null, HttpStatusCode.OK);
+
+        await Capture(father, g, "Angebot ändern (Bestand auffüllen)", HttpMethod.Patch,
+            $"/api/v1/shop/articles/{articleId}/listings/{listingId}",
+            new { currentStock = 5, maxStock = 10 }, HttpStatusCode.OK);
+
+        // ── Sohn kauft + Aktivierungsanfrage ──────────────────────────────────
+        var shopChildId = await TestApi.IdAsync(
+            await father.PostAsJsonAsync("/api/v1/children", new { name = "Shop-Doku-Kind", pin = "7001" }));
+        var shopChild = await TestApi.ChildAsync(factory, shopChildId, "7001");
+
+        // Münzen gutschreiben (über Points-Endpunkt des Vaters)
+        (await father.PostAsJsonAsync($"/api/v1/children/{shopChildId}/points",
+            new { amount = 300, reason = "Doku-Münzen" })).EnsureSuccessStatusCode();
+
+        await Capture(shopChild, g, "Shop-Sicht (Sohn)", HttpMethod.Get, "/api/v1/me/shop",
+            null, HttpStatusCode.OK);
+
+        var purchaseView = await Capture(shopChild, g, "Shop-Angebot kaufen", HttpMethod.Post,
+            $"/api/v1/me/shop/listings/{listingId}/purchase", new { }, HttpStatusCode.OK);
+        var purchaseId = purchaseView.GetProperty("purchases").EnumerateArray().First().GetProperty("id").GetInt32();
+
+        // Leeres-Lager-Szenario: neues Listing mit stock=0 anlegen, dann kaufen → shop_insufficient_stock
+        var emptyListingEl = await father.PostAsJsonAsync($"/api/v1/shop/articles/{articleId}/listings",
+            new { coinPrice = 50, gemPrice = 0, unitsPerPurchase = 10, currentStock = 0, maxStock = 1 });
+        emptyListingEl.EnsureSuccessStatusCode();
+        var emptyListingId = (await emptyListingEl.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetInt32();
+        await Capture(shopChild, g, "Shop-Angebot kaufen (ausverkauft)", HttpMethod.Post,
+            $"/api/v1/me/shop/listings/{emptyListingId}/purchase", new { },
+            HttpStatusCode.Conflict, ApiErrors.ShopInsufficientStock.Code);
+
+        // Deaktiviertes Listing → shop_listing_inactive
+        (await father.PatchAsJsonAsync($"/api/v1/shop/articles/{articleId}/listings/{emptyListingId}",
+            new { active = false })).EnsureSuccessStatusCode();
+        await Capture(shopChild, g, "Shop-Angebot kaufen (deaktiviert)", HttpMethod.Post,
+            $"/api/v1/me/shop/listings/{emptyListingId}/purchase", new { },
+            HttpStatusCode.BadRequest, ApiErrors.ShopListingInactive.Code);
+
+        // Aktivierungsanfragen: der Sohn beantragt Einheiten aus seinem Inventar (30 verfügbar).
+        var activation1El = await Capture(shopChild, g, "Aktivierungsanfrage stellen", HttpMethod.Post,
+            $"/api/v1/me/shop/inventory/{articleId}/activate",
+            new { quantity = 30 }, HttpStatusCode.OK);
+        var activationId = activation1El.GetProperty("id").GetInt32();
+
+        // Zweite Anfrage (10 Einheiten) – zum Anfragezeitpunkt gegen das aggregierte Inventar geprüft (30 >= 10);
+        // die verbindliche Deckungsprüfung erfolgt erst bei der Genehmigung durch den Vater.
+        var act2Res = await shopChild.PostAsJsonAsync($"/api/v1/me/shop/inventory/{articleId}/activate",
+            new { quantity = 10 });
+        act2Res.EnsureSuccessStatusCode();
+        var activation2Id = (await act2Res.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetInt32();
+
+        // Zu große Anfrage → insufficient_inventory (999 > 30)
+        await Capture(shopChild, g, "Aktivierungsanfrage (Inventar erschöpft)", HttpMethod.Post,
+            $"/api/v1/me/shop/inventory/{articleId}/activate",
+            new { quantity = 999 }, HttpStatusCode.BadRequest, ApiErrors.InsufficientInventory.Code);
+
+        // Eigene Aktivierungen des Sohns
+        await Capture(shopChild, g, "Eigene Aktivierungen (Sohn)", HttpMethod.Get,
+            "/api/v1/me/shop/activations", null, HttpStatusCode.OK);
+
+        // ── Vater: Inventar / Käufe / Aktivierungen ───────────────────────────
+        await Capture(father, g, "Kind-Inventar", HttpMethod.Get,
+            $"/api/v1/children/{shopChildId}/shop/inventory", null, HttpStatusCode.OK);
+
+        await Capture(father, g, "Kind-Käufe", HttpMethod.Get,
+            $"/api/v1/children/{shopChildId}/shop/purchases", null, HttpStatusCode.OK);
+
+        await Capture(father, g, "Kind-Aktivierungen", HttpMethod.Get,
+            $"/api/v1/children/{shopChildId}/shop/activations", null, HttpStatusCode.OK);
+
+        // Genehmigung reduziert das Inventar real (30 → 0); die Deckung wird zum Genehmigungszeitpunkt geprüft.
+        await Capture(father, g, "Aktivierung genehmigen", HttpMethod.Post,
+            $"/api/v1/children/{shopChildId}/shop/activations/{activationId}/approve", null, HttpStatusCode.OK);
+
+        // activation_not_pending: dieselbe Anfrage erneut genehmigen → 409
+        await Capture(father, g, "Aktivierung erneut genehmigen", HttpMethod.Post,
+            $"/api/v1/children/{shopChildId}/shop/activations/{activationId}/approve", null,
+            HttpStatusCode.Conflict, ApiErrors.ActivationNotPending.Code);
+
+        // Inventar nun erschöpft (0): Genehmigung der zweiten offenen Anfrage scheitert → insufficient_inventory.
+        // Die Anfrage bleibt offen und kann weiterhin abgelehnt werden.
+        await Capture(father, g, "Aktivierung genehmigen (Inventar erschöpft)", HttpMethod.Post,
+            $"/api/v1/children/{shopChildId}/shop/activations/{activation2Id}/approve", null,
+            HttpStatusCode.BadRequest, ApiErrors.InsufficientInventory.Code);
+
+        // Zweite Anfrage ablehnen (trotz gescheiterter Genehmigung weiterhin möglich)
+        await Capture(father, g, "Aktivierung ablehnen", HttpMethod.Post,
+            $"/api/v1/children/{shopChildId}/shop/activations/{activation2Id}/reject", null, HttpStatusCode.OK);
+
+        // Kauf stornieren erstattet Coins/Gems und reduziert das Inventar (max(0, 0 − 30) = 0).
+        await Capture(father, g, "Kauf stornieren (Vater)", HttpMethod.Post,
+            $"/api/v1/children/{shopChildId}/shop/purchases/{purchaseId}/cancel", null, HttpStatusCode.OK);
+
+        // ── Artikel/Listing löschen ────────────────────────────────────────────
+        await Capture(father, g, "Angebot löschen", HttpMethod.Delete,
+            $"/api/v1/shop/articles/{articleId}/listings/{listingId}", null, HttpStatusCode.NoContent);
+
+        await Capture(father, g, "Artikel löschen", HttpMethod.Delete,
+            $"/api/v1/shop/articles/{articleId}", null, HttpStatusCode.NoContent);
     }
 
     // ─────────────────────────────────────────────────────────────────────────────────────────────

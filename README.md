@@ -5,7 +5,7 @@
 
 Pugling ist **API-First**: Die REST-API (OpenAPI/Swagger) ist das Produkt und die einzige Quelle der
 Wahrheit. Jedes Feature lebt im Backend; das Frontend hängt daran. Diese Doku ist ein **Wiki** — sie
-erklärt jede Funktion so vollständig, dass ein Mensch **oder eine LLM** die App bedienen, einen
+erklärt jede Funktion so vollständig, dass ein Mensch **oder ein LLM** die App bedienen, einen
 kompletten Lernplan bauen oder die App um neue Übungstypen erweitern kann.
 
 ---

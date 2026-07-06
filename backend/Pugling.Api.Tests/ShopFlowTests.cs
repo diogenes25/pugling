@@ -57,7 +57,7 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
         var (childId, child) = await FreshChildAsync(father, "9301");
         var articleId = await CreateArticleAsync(father, new
         {
-            articleNumber = "TV-001", title = "Fernsehen",
+            articleNumber = "TV-901", title = "Fernsehen",
             unitType = "Minute", actionType = "TV",
         });
         var listingId = await CreateListingAsync(father, articleId, new
@@ -765,5 +765,106 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
         var res = await father.GetAsync($"/api/v1/children/{childId}/shop/activations?take=2");
         Assert.Equal(2, (await JsonAsync(res)).EnumerateArray().Count());
         Assert.Equal("3", res.Headers.GetValues("X-Total-Count").First());
+    }
+
+    // ─── Wallet-/Inventar-Integrität ───────────────────────────────────────────
+
+    [Fact]
+    public async Task Kauf_BumptChildConcurrencyStamp_SchuetztWalletVorParallelemDoppelkauf()
+    {
+        // Wie Angebote/Skins muss ein Shop-Kauf das Concurrency-Token des Kindes erhöhen: nur so scheitert
+        // ein parallel gestarteter zweiter Wallet-Write (vgl. SkinPurchaseTests.ConcurrencyToken) und der
+        // Deckungs-Check kann nicht doppelt umgangen werden. Der Listing-Stamp allein schützt nur denselben
+        // Bestand – über verschiedene Listings/Angebote hinweg bliebe der Saldo sonst ungeschützt.
+        var father = await TestApi.FatherAsync(factory);
+        var (childId, child) = await FreshChildAsync(father, "9360");
+        var articleId = await CreateArticleAsync(father, new
+        {
+            articleNumber = "STAMP-001", title = "Stamp",
+            unitType = "Stueck", actionType = "Sonstiges",
+        });
+        var listingId = await CreateListingAsync(father, articleId, new
+        {
+            coinPrice = 50, gemPrice = 0, unitsPerPurchase = 1, currentStock = 3, maxStock = 3,
+        });
+        (await father.PostAsJsonAsync($"/api/v1/children/{childId}/points",
+            new { amount = 200, reason = "Coins" })).EnsureSuccessStatusCode();
+
+        Guid StampOf()
+        {
+            using var scope = factory.Services.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
+            return db.Children.First(c => c.Id == childId).ConcurrencyStamp;
+        }
+
+        var before = StampOf();
+        (await child.PostAsJsonAsync($"/api/v1/me/shop/listings/{listingId}/purchase", new { }))
+            .EnsureSuccessStatusCode();
+
+        Assert.NotEqual(before, StampOf());
+    }
+
+    [Fact]
+    public async Task Aktivierung_ZweiOffeneAnfragen_UebersteigenInventar_ZweiteGenehmigungScheitert()
+    {
+        // Der Anfrage-Check ist nicht-transaktional: zwei offene Anfragen können in Summe das Inventar
+        // übersteigen. Verbindlich ist erst die Deckungsprüfung bei der Genehmigung – sie darf das Inventar
+        // nicht stillschweigend auf 0 klemmen, sondern muss die zweite Genehmigung ablehnen (kein Freibetrag).
+        var father = await TestApi.FatherAsync(factory);
+        var (childId, child) = await FreshChildAsync(father, "9361");
+        var articleId = await CreateArticleAsync(father, new
+        {
+            articleNumber = "OVERAP-001", title = "Fernsehen",
+            unitType = "Minute", actionType = "TV",
+        });
+        var listingId = await CreateListingAsync(father, articleId, new
+        {
+            coinPrice = 100, gemPrice = 0, unitsPerPurchase = 30, currentStock = 1, maxStock = 1,
+        });
+        (await father.PostAsJsonAsync($"/api/v1/children/{childId}/points",
+            new { amount = 200, reason = "Coins" })).EnsureSuccessStatusCode();
+        await child.PostAsJsonAsync($"/api/v1/me/shop/listings/{listingId}/purchase", new { }); // Inventar = 30
+
+        var req1 = (await JsonAsync(await child.PostAsJsonAsync(
+            $"/api/v1/me/shop/inventory/{articleId}/activate", new { quantity = 30 }))).GetProperty("id").GetInt32();
+        var req2 = (await JsonAsync(await child.PostAsJsonAsync(
+            $"/api/v1/me/shop/inventory/{articleId}/activate", new { quantity = 10 }))).GetProperty("id").GetInt32();
+
+        // Erste Genehmigung zieht das gesamte Inventar ab (30 → 0).
+        (await father.PostAsJsonAsync($"/api/v1/children/{childId}/shop/activations/{req1}/approve", new { }))
+            .EnsureSuccessStatusCode();
+
+        // Zweite Genehmigung findet kein Inventar mehr → 400 insufficient_inventory, Anfrage bleibt offen.
+        var overRes = await father.PostAsJsonAsync($"/api/v1/children/{childId}/shop/activations/{req2}/approve", new { });
+        Assert.Equal(HttpStatusCode.BadRequest, overRes.StatusCode);
+        Assert.Equal("insufficient_inventory",
+            (await overRes.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("code").GetString());
+
+        var queue = await JsonAsync(await father.GetAsync($"/api/v1/children/{childId}/shop/activations"));
+        var stillOpen = queue.EnumerateArray().First(r => r.GetProperty("id").GetInt32() == req2);
+        Assert.Equal("Pending", stillOpen.GetProperty("status").GetString());
+
+        // Die weiterhin offene Anfrage lässt sich ablehnen.
+        (await father.PostAsJsonAsync($"/api/v1/children/{childId}/shop/activations/{req2}/reject", new { }))
+            .EnsureSuccessStatusCode();
+    }
+
+    [Fact]
+    public async Task Aktivierung_QuantityNull_400_ValidationError()
+    {
+        var father = await TestApi.FatherAsync(factory);
+        var (_, child) = await FreshChildAsync(father, "9362");
+        var articleId = await CreateArticleAsync(father, new
+        {
+            articleNumber = "QZERO-001", title = "Null-Menge",
+            unitType = "Stueck", actionType = "Sonstiges",
+        });
+
+        var res = await child.PostAsJsonAsync(
+            $"/api/v1/me/shop/inventory/{articleId}/activate", new { quantity = 0 });
+
+        Assert.Equal(HttpStatusCode.BadRequest, res.StatusCode);
+        Assert.Equal("validation_error",
+            (await res.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("code").GetString());
     }
 }

@@ -95,7 +95,7 @@ public class ReviewEvent
     public PracticeSession? PracticeSession { get; set; }
     /// <summary>Übungs-Id der Position (der Inhalt lebt in der Übungs-Config).</summary>
     public int ContentId { get; set; }
-    /// <summary>Index des Inhalts-Atoms in der Übung der Position.</summary>
+    /// <summary>Index des Inhaltsatoms in der Übung der Position.</summary>
     public int? ItemIndex { get; set; }
     public int StageValue { get; set; }
     public bool WasCorrect { get; set; }
@@ -134,7 +134,7 @@ public class TestItemResult
     public TestAttempt? TestAttempt { get; set; }
     /// <summary>Übungs-Id der Position (der Inhalt lebt in der Übungs-Config).</summary>
     public int ContentId { get; set; }
-    /// <summary>Index des Inhalts-Atoms in der Übung der Position.</summary>
+    /// <summary>Index des Inhaltsatoms in der Übung der Position.</summary>
     public int? ItemIndex { get; set; }
     /// <summary>Bei Lückentext: Index der Lücke; sonst null.</summary>
     public int? GapIndex { get; set; }
