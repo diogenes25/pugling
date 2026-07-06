@@ -34,11 +34,11 @@ Teil, **Schema-Versionierung** für den Evolutions-Teil.
   `/generate` und prüft über denselben `Seed` beim `/check`.
 - `ExerciseControllerBase` ist `[Authorize(Roles = Roles.Vater)]` – das ist die **Autoren-Sicht**;
   sie liefert die **volle Config inkl. Lösungen** (`Gap.Answer`, `Question.Answer`, `MatchPair.Right` …).
-- Die **Sohn-Sicht ist getrennt und bereits antwortfrei**: Gespielt wird über die `*-Tests`-Controller
-  unter `study-plans/{planId}/…`. `TestItem` ([TestsController.cs](../backend/Pugling.Api/Controllers/Learn/TestsController.cs))
-  und `ClozeTestText` ([ClozeTestsController.cs](../backend/Pugling.Api/Controllers/Learn/ClozeTestsController.cs))
-  geben Lösungen **stufenabhängig** frei (Leitner-Stufe entscheidet, ob Übersetzung/WordBank/AnswerLength
-  sichtbar sind). Das ist bereits sorgfältig server-autoritativ ([[review-server-autoritativ]]).
+- Die **Sohn-Sicht ist getrennt und bereits antwortfrei**: Gespielt wird über die positionsbezogenen
+  Controller unter `study-plans/{planId}/positions/{positionId}/…`. `PositionPracticeController` und
+  `PositionTestsController` geben Lösungen **stufenabhängig** frei (die Position/Fahrplan-Stufe entscheidet,
+  ob Reveal/Choices/AnswerLength/Hint sichtbar sind). Das ist server-autoritativ: Der Client sendet nur
+  Antworten, der Server bewertet.
 
 Beobachtung: Heute kostet ein neuer Typ = neuer Controller **plus** neue Frontend-Komponente.
 Das Wissen über einen Typ ist zudem verstreut: `ExerciseType` (Katalog) ↔ `LearningMethod` (Lehrplan)
@@ -84,7 +84,7 @@ GET /api/v1/learn/exercise-types
   "type": "Cloze",               // ExerciseType (Katalog)
   "method": "Cloze",             // LearningMethod (Lehrplan) – die explizite Brücke
   "authoringRoute": "cloze",     // .../chapters/{}/cloze  (Vater-CRUD)
-  "playRoute": "cloze-tests",    // study-plans/{}/cloze-tests (Sohn-Play)
+  "playRoute": "tests",          // study-plans/{}/positions/{}/tests (Sohn-Play)
   "renderer": "cloze",           // welche Frontend-Komponente rendert
   "checkMode": "server",         // server | generated | none
   "submitShape": "positional",   // Aufbau des Submit-/Check-Bodys
@@ -152,7 +152,7 @@ Stand 2026-07-04, rein additiv (kein bestehendes Verhalten geändert):
   Sohn; Einzelabruf; ungültiger Typ → 400 (Model-Binding). Build 0 Warnungen, 78/78 Tests grün.
 
 Beispiele der gewählten Zuordnung: Vocabulary→`flashcards`/StudyPlanTest/`tests`,
-Cloze→`cloze`/StudyPlanTest/`cloze-tests`, Matching→`matching`/StudyPlanTest/`matching-tests`,
+Cloze→`cloze`/StudyPlanTest/`tests`, Matching→`matching`/StudyPlanTest/`tests`,
 Arithmetic+ArithmeticDrill teilen `renderer:"arithmetic"` (CatalogCheck bzw. CatalogGenerateCheck),
 Grammar+Translation teilen `renderer:"prompts"`, Birkenbihl/Reading/Essay/Listening = `None`.
 
@@ -162,7 +162,7 @@ Noch offen (bewusst nicht in diesem Schritt): echte Schema-Versionierung, ETag/C
 
 - **`checkMode`/`submitShape`-Taxonomie**: Reichen `server | generated | none` und
   `positional | set | free`? An den bestehenden Submit-/Check-DTOs (`CheckAnswersDto`, `CheckDrillDto`,
-  `CheckListDto`, `TestsController.SubmitDto`, `ClozeTestsController.SubmitDto`) verifizieren.
+  `CheckListDto`, `PositionTestsController.SubmitDto`) verifizieren.
 - **Manifest-Quelle**: aus Attributen/Enums ableiten (eine Wahrheit) vs. explizite Registry (mehr
   Kontrolle, Drift-Risiko) – tendenziell abgeleitet, per Test abgesichert.
 - **`ExerciseType` ↔ `LearningMethod`**: nicht jeder Katalog-Typ hat (heute) einen Play-Weg

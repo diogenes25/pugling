@@ -59,7 +59,7 @@ public class ExerciseTypeManifestTests(PuglingWebAppFactory factory) : IClassFix
         var cloze = arr.EnumerateArray().Single(e => e.GetProperty("type").GetString() == "Cloze");
         Assert.Equal("cloze", cloze.GetProperty("authoringRoute").GetString());
         Assert.Equal("StudyPlanTest", cloze.GetProperty("checkMode").GetString());
-        Assert.Equal("cloze-tests", cloze.GetProperty("playRoute").GetString());
+        Assert.Equal("tests", cloze.GetProperty("playRoute").GetString());
         Assert.Equal("Cloze", cloze.GetProperty("method").GetString());
 
         // Das kindneutrale Manifest darf auch der Sohn lesen.

@@ -10,7 +10,7 @@ namespace Pugling.Api.Models;
 /// </summary>
 public enum ProgressMetric
 {
-    /// <summary>Neu eingeführte Inhalte (StudyPlanItem.IntroducedAt).</summary>
+    /// <summary>Neu eingeführte Inhalte (<see cref="PositionItemProgress.IntroducedAt"/>).</summary>
     NewWords = 0,
     /// <summary>Richtige Leitner-Wiederholungen (ReviewEvent.WasCorrect).</summary>
     CorrectReviews = 1,
@@ -18,7 +18,7 @@ public enum ProgressMetric
     TestsPassed = 2,
     /// <summary>Geübte Minuten (PracticeSession.ActiveSeconds).</summary>
     MinutesPracticed = 3,
-    /// <summary>Vollständig geschaffte Tage (StudyDayReward Kind=DayCompleteBonus).</summary>
+    /// <summary>Vollständig geschaffte Tage nach der Tagesregel des <c>PositionProgressService</c>.</summary>
     DaysComplete = 4,
     /// <summary>Aktuelle Serie aufeinanderfolgender vollständiger Tage (nur sinnvoll für Auszeichnungen).</summary>
     StreakDays = 5,

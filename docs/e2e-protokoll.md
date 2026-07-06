@@ -1,5 +1,9 @@
 # E2E-Integrations-Protokoll: Vater legt an → Sohn arbeitet ab
 
+> Historisches Durchstich-Protokoll. Die aktuelle API-Struktur ist positionsbasiert
+> (`StudyPlan` + `PlanPosition`); aktuelle Endpunkte stehen in [wiki/04-lernplan-bauen.md](../wiki/04-lernplan-bauen.md)
+> und [wiki/06-sohn-app.md](../wiki/06-sohn-app.md). Ältere Runden nennen noch plan-weite Felder/Controller.
+
 Ziel: Der Vater erstellt über die **Web-Oberfläche** einen Lehrplan; der Sohn arbeitet ihn über die
 **Handy-App** ab. Der Ablauf wird via Playwright durch beide echten UIs getrieben (Backend auf
 frischer Wegwerf-DB, echte `pugling.db` bleibt unangetastet). Jede Runde: ausführen → beobachten →

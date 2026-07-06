@@ -43,7 +43,6 @@ Kompakter Überblick über alle Routen. **Autoritative Quelle bleibt Swagger** (
 | `GET/POST/PUT/DELETE /learn/subjects/{s}/chapters/{c}/<typ>[/{id}]` | Übungs-CRUD je Typ (12 Typen, siehe [03](03-uebungstypen.md)) |
 | `POST …/matching/{id}/check` · `POST …/arithmetic/{id}/check` · `POST …/list/{id}/check` | Auswertung |
 | `POST …/arithmetic-drill/{id}/generate` · `POST …/arithmetic-drill/{id}/check` | Zufallsaufgaben erzeugen/prüfen |
-| `POST …/matching/{id}/to-study-plan` | Matching-Übung → Leitner-Study-Plan |
 
 **Übungstyp-Pfade:** `/vocabulary` `/reading` `/cloze` `/essays` `/listening` `/grammar` `/matching`
 `/translation` `/arithmetic` `/arithmetic-drill` `/list` `/birkenbihl`.
@@ -61,16 +60,16 @@ Kompakter Überblick über alle Routen. **Autoritative Quelle bleibt Swagger** (
 | --- | --- | --- |
 | A | `GET /study-plans?childId=` · `GET /study-plans/{id}` | Pläne lesen (Sohn nur eigene) |
 | V | `POST /study-plans` · `PATCH /study-plans/{id}` | Plan anlegen/ändern |
-| V | `POST /study-plans/{id}/items` · `DELETE /study-plans/{id}/items/{itemId}` | Inhalte im Plan |
-| A | `GET /study-plans/{id}/today` | Ein-Blick-Status heute |
-| A | `GET /study-plans/{id}/progress` | Tag-für-Tag-Fortschritt |
-| A | `GET /study-plans/{id}/report` | Mastery pro Inhalt + Testhistorie + Ratings |
+| V | `GET/POST /study-plans/{id}/positions` · `GET/PATCH/DELETE …/{positionId}` | Übungen als PlanPositionen verwalten |
+| A | `GET /study-plans/{id}/overview` | Tagesmission und aktueller Status |
+| A | `GET /study-plans/{id}/overview/progress` | Tag-für-Tag-Fortschritt |
+| A | `GET /study-plans/{id}/positions/{positionId}/report` | Mastery und Testhistorie pro Position |
 
 ### Üben (Practice)
 
 | Rolle | Methode & Route | Zweck |
 | --- | --- | --- |
-| A | `POST /study-plans/{id}/practice-sessions` | Sitzung starten |
+| A | `POST /study-plans/{id}/positions/{positionId}/practice-sessions` | Sitzung starten |
 | A | `GET …/practice-sessions/{sid}/cards` | fällige Karten (ohne Lösung) |
 | A | `POST …/practice-sessions/{sid}/review` | Antwort abgeben (server-autoritativ) |
 | A | `POST …/practice-sessions/{sid}/heartbeat` | aktive Sekunden zählen |
@@ -78,12 +77,11 @@ Kompakter Überblick über alle Routen. **Autoritative Quelle bleibt Swagger** (
 
 ### Abschlusstests
 
-| Rolle | Methode & Route | Verfahren |
+| Rolle | Methode & Route | Zweck |
 | --- | --- | --- |
-| A | `POST /study-plans/{id}/tests` · `…/{aid}/hint` · `…/{aid}/submit` · `GET …/{aid}` | Vocabulary |
-| A | `POST /study-plans/{id}/cloze-tests` · `…/{aid}/hint` · `…/{aid}/submit` | Cloze |
-| A | `POST /study-plans/{id}/matching-tests` · `…/{aid}/submit` | Matching |
-| S | `POST /study-plans/{id}/ratings` | Inhalt bewerten |
+| A | `POST /study-plans/{id}/positions/{positionId}/tests` | Testversuch starten |
+| A | `GET …/tests/{attemptId}` | Testversuch lesen |
+| A | `POST …/tests/{attemptId}/submit` | Antworten serverseitig bewerten |
 
 ## Tags & Klassenarbeiten
 

@@ -41,31 +41,32 @@ Subject (Fach)  ─┬─ Chapter (Kapitel) ─┬─ Exercise (typisierte Übun
 ### B) Der Study-Plan (`study-plans`) — das produktive Training pro Kind
 
 ```text
-StudyPlan (gehört einem Kind, verfahrensneutraler Rahmen)
- ├─ Method: Vocabulary | Cloze | Matching
- ├─ StudyPlanItem[]  → referenziert Inhalte aus einem STORE (nicht aus dem Katalog!)
+StudyPlan (gehört einem Kind, reiner Container)
+ ├─ PlanPosition[] → referenziert globale Katalog-Übungen (`Exercise`)
  ├─ PracticeSession[] + ReviewEvent[]   (Übungszeit + Wiederholungen)
  ├─ TestAttempt[] + TestItemResult[]    (Abschlusstests)
- └─ StudyDayReward[]                    (idempotente Tages-Belohnungen)
+ └─ PositionGoalReward[]                (idempotente Ziel-Belohnungen je Position/Periode)
 ```
 
-- **Der Study-Plan ist verfahrensneutral:** Zeit, Punkte, Fortschritt und Abschlusstest gelten für
-  **jedes** Lernverfahren gleich. Verfahrensspezifisch sind nur der **Inhalt** und die **Test-Mechanik/Stufen**.
-- **Inhalte kommen aus eigenen Stores**, nicht aus dem Katalog:
-  - **Vokabel-Store** (`api/v1/learn/vocabulary`) — die „Single Source of Truth" für Wörter.
-  - **Lückentext-Store** (`api/v1/learn/cloze-texts`).
-  - Ein `StudyPlanItem` referenziert einen Store-Eintrag über dessen **`Key`**.
+- **Der Study-Plan ist nur der Rahmen:** Kind, Titel, Laufzeit, aktiv/inaktiv und optionales Fach.
+- **Die einzelne `PlanPosition` entscheidet das Training:** referenzierte Katalog-Übung, Reihenfolge,
+   Stufe/Fahrplan, Item-Auswahl, Zielrhythmus (`None|Daily|Weekly`), Bestehensschwelle, Punkte und
+   Leitner-Einstellungen.
+- **Inhalte kommen aus der Übungs-Config** der referenzierten Katalog-`Exercise`; der Fortschritt pro
+   Inhalts-Atom wird materialisiert in `PositionItemProgress`. Stores wie `learn/vocabulary` und
+   `learn/cloze-texts` existieren weiterhin als globale Inhaltsbibliotheken und für Verknüpfungen, sind
+   aber nicht mehr die direkte Study-Plan-Item-Liste.
 
-> ⚠️ **Wichtige Abgrenzung:** Der Katalog-Übungstyp `Vocabulary` (`VocabularyConfig` mit `Items`) ist
-> **nicht dasselbe** wie der **Vokabel-Store** (`Vocabulary`-Entity mit `Key`). Ein Study-Plan zieht
-> seine Vokabeln aus dem **Store** (per Key), nicht aus einer Katalog-Übung.
+> ⚠️ **Wichtige Abgrenzung:** Ein Study-Plan enthält keine kopierten Vokabel-/Lückentext-Items mehr.
+> Er verweist über Positionen auf Katalog-Übungen. Änderungen an der Übungs-Config ändern damit den
+> künftig gespielten Inhalt; Fortschrittsdaten bleiben positionsbezogen.
 
-### Die einzige Brücke: `to-study-plan`
+### Brücke Katalog → Training: Positionen
 
-Heute verbindet **ein** Endpunkt die beiden Welten: Eine **Matching**-Katalogübung kann per
-`POST api/v1/learn/subjects/{s}/chapters/{c}/matching/{id}/to-study-plan` in einen fertigen
-Leitner-Study-Plan umgewandelt werden (jedes Paar wird zu einer Vokabel im Store). Siehe
-[04 · Lernplan bauen](04-lernplan-bauen.md#8-abkürzung-matching-übung--fertiger-leitner-plan).
+Der Vater baut zuerst einen leeren Plan-Container (`POST /api/v1/study-plans`) und hängt dann Übungen
+als Positionen an (`POST /api/v1/study-plans/{planId}/positions`). Leere Overrides erben die Defaults
+der Übung (`DefaultStage`, `DefaultUseLeitner`, `SuggestedBonus`). Siehe
+[04 · Lernplan bauen](04-lernplan-bauen.md).
 
 ---
 
@@ -74,11 +75,11 @@ Leitner-Study-Plan umgewandelt werden (jedes Paar wird zu einer Vokabel im Store
 ```text
 Father ──< Child ──< ChildPointsEntry  (Punkte-Ledger, jede Buchung trägt einen PointKind)
               │
-              ├──< StudyPlan ──< StudyPlanItem ── VocabularyId? / ClozeTextId?
+              ├──< StudyPlan ──< PlanPosition ── Exercise
               │        │
               │        ├──< PracticeSession ──< ReviewEvent
               │        ├──< TestAttempt ──< TestItemResult
-              │        └──< StudyDayReward   (idempotenz je Plan/Tag/Art)
+              │        └──< PositionGoalReward + PositionItemProgress
               │
               ├──< Mission ──< MissionAward         (Tages-/Wochenziele)
               ├──< Achievement ──< AchievementAward (Badges)
@@ -90,7 +91,7 @@ Katalog (global):
 Subject ──< Chapter ──< Exercise (Type, ConfigJson, Metadaten, SuggestedBonus?)
    └──< ExerciseCategory
 
-Stores (global):
+Stores (global / optionale Inhaltsbibliotheken):
 Vocabulary (Key, Word, Translation, Noun/Verb-Info, BaseForm)
 ClozeText  (Key, Text mit {{n}}, Gaps, WordBank)
 
@@ -100,8 +101,8 @@ TimeSlotRule (Zeitfenster-Multiplikator für Punkte)
 
 Die Entities liegen in [backend/Pugling.Api/Models/](../backend/Pugling.Api/Models/):
 `AdminEntities.cs` (Father/Child/Points), `LearnEntities.cs` (Katalog), `StudyPlanEntities.cs`,
-`GamificationEntities.cs`, `VocabEntities.cs`, `ClozeEntities.cs`, `TimetableEntities.cs`,
-`KlassenarbeitEntities.cs`, `RatingEntities.cs`, `TimeSlotRule.cs`.
+`PlanPositionEntities.cs`, `GamificationEntities.cs`, `VocabEntities.cs`, `ClozeEntities.cs`,
+`TimetableEntities.cs`, `KlassenarbeitEntities.cs`, `TimeSlotRule.cs`.
 
 ---
 
@@ -112,12 +113,12 @@ Controller sind dünn; die Geschäftsregeln stecken in [backend/Pugling.Api/Serv
 | Service | Aufgabe |
 | --- | --- |
 | **`ScoringService`** | **Die eine Stelle** für Review-Punkte: Basis (Neuheit/Box × Zeitfenster) + Ereignis-Boni (Combo, Speed). Jede Buchung trägt einen `PointKind`. → [05 · Punkte](05-punkte-und-bonus.md) |
-| **`StudyProgressService`** | Tages-Auswertung (`ComputeDayAsync`) + idempotente Tages-Punkte (`EvaluateAndAwardAsync`); Stufe-des-Tages (`StageForDay`), getippt? (`IsTyped`), Antwort-Normalisierung. |
-| **`ScheduleService`** | Auswahl des Tages-Pools (Stundenplan: neu vs. Wiederholung) + Leitner-Mathematik (`ApplyReview`). |
+| **`PositionProgressService`** | Tages-/Verlaufs-Auswertung über Positionen, Ziel-erledigt-Regeln und idempotente Ziel-Punkte. |
+| **`PositionPlayService`** | Inhaltsauswahl, Stufen-Fahrplan, getippte Stufen, Leitner-Fälligkeit und Box-Bewegung je Position. |
 | **`AnswerGrader`** | Normalisierter Antwortvergleich (Vokabel/Lücke), Alternativen erlaubt. |
 | **`ExerciseAnswerChecker`** | Auswertung der Katalog-Übungen mit `/check` (Matching, Arithmetic, List). |
 | **`ArithmeticProblemGenerator`** | Erzeugt Zufalls-Rechenaufgaben aus Regeln + Seed (reproduzierbar). |
-| **`TestAttemptService`** | Gemeinsamer Lebenszyklus der Abschlusstests. |
+| **`PositionReportService`** | Mastery-/Report-Sicht pro Position. |
 | **`GamificationService`** | Missionen & Auszeichnungen auswerten + idempotent belohnen. |
 | **`MetricsService`** | Fortschritts-Metriken (`ProgressMetric`) aus den Tabellen. |
 
@@ -129,9 +130,9 @@ gegen die hinterlegte Lösung und bucht die Punkte. Das verhindert Selbstbetrug.
 
 ## 5. Ein typischer End-to-End-Loop
 
-1. **Vater** legt Inhalte an (Vokabeln/Lückentexte im Store) und daraus einen **Study-Plan** fürs Kind.
-2. **Sohn** loggt sich ein, sieht via `GET …/today` seine Pflichten, **übt** (Practice-Session →
-   Karten → Review) und macht den **Abschlusstest**.
+1. **Vater** legt Katalog-Übungen an und erstellt daraus einen **Study-Plan** mit Positionen fürs Kind.
+2. **Sohn** loggt sich ein, sieht via `GET …/overview` seine Pflichten, **übt** (positionsbezogene
+   Practice-Session → Karten → Review) und macht den **Abschlusstest** der Position.
 3. Der **Server** bewertet jede Antwort, bucht Punkte (Basis + Boni), bewegt Leitner-Boxen, wertet
    Missionen/Auszeichnungen aus.
 4. **Vater** kontrolliert über `progress`/`report`/`points`, dreht bei Bedarf an den Bonus-Knöpfen
@@ -145,7 +146,8 @@ Konkrete Requests: [04 · Lernplan bauen](04-lernplan-bauen.md) (Vater) und [06 
 
 - **C# 14 / .NET 10**, `Nullable` an, file-scoped Namespaces, Primary Constructors, `record`-DTOs.
 - **Doku auf Deutsch** (`/// <summary>` fließt in Swagger). Kommentare erklären das *Warum*.
-- **Fehler** einheitlich als `ProblemDetails` (`return Problem(statusCode:…, detail:…)`).
+- **Fehler** einheitlich als `ProblemDetails` mit maschinenlesbarem `code`
+   (`return this.ProblemWithCode(ApiErrors.X, "…")`).
 - **Zeit/UTC:** Tageslogik nutzt `DateTime.UtcNow`/`DateOnly` — nahe Mitternacht lokal ggf. anderer Kalendertag.
 - **EF-Migrationen** bei jeder Schemaänderung (kein `EnsureCreated`). `db.Database.Migrate()` läuft beim Start.
 - **JSON-Spalten** (`Gaps`, `WordBank`, `StageSchedule`, `Noun`/`Verb`) neu **zuweisen**, nicht in-place mutieren.

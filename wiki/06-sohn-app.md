@@ -2,16 +2,17 @@
 
 ← [Zurück zum Wiki-Index](../README.md)
 
-Der **Sohn** lernt — er legt keine Inhalte an, sondern übt, testet und sammelt Punkte. Alle Aufrufe
-brauchen den **Sohn-Bearer-Token**. Der Server bewertet jede Antwort selbst; das Frontend würdigt das
-per Animation.
+Der **Sohn** lernt: Er legt keine Inhalte an, sondern sieht seinen aktuell spielbaren Plan, übt
+Positionen, macht Tests und sammelt Münzen/Gems. Alle Aufrufe brauchen den Sohn-Bearer-Token. Der
+Server bewertet jede Antwort selbst; das Frontend schickt nur Antworten und Interaktionen.
 
 ---
 
 ## 1. Anmelden
 
 ```http
-POST /api/v1/auth/child   { "childId": 1, "pin": "1111" }
+POST /api/v1/auth/child
+{ "childId": 1, "pin": "1111" }
 → { "token": "eyJ…", "role": "Sohn", … }
 ```
 
@@ -22,157 +23,160 @@ Token in allen weiteren Aufrufen als `Authorization: Bearer <token>` mitgeben.
 ## 2. Was ist heute zu tun?
 
 ```http
-GET /api/v1/study-plans?childId=1        // meine Pläne (Sohn sieht nur eigene)
-GET /api/v1/study-plans/{id}/today
+GET /api/v1/study-plans
+GET /api/v1/study-plans/{planId}/positions
+GET /api/v1/study-plans/{planId}/overview
 ```
 
-`today` liefert alles für den Tag auf einen Blick:
+Der Sohn sieht nur eigene, aktive und heute laufende Pläne. `overview` liefert die Tagesmission über
+alle Positionen des Plans:
 
 ```jsonc
 {
-  "dutyDone": false,
-  "recommendedStage": 3,               // die heute geltende Stufe (aus dem Fahrplan)
-  "mode": "Review",                    // New | Review (bei Stundenplan-Kopplung)
-  "isPreparationDay": true,
-  "currentStreak": 2,
-  "progress": {
-    "minutesPracticed": 8, "minutesMet": false,
-    "bestScorePercent": 0, "testPassed": false, "dayComplete": false,
-    "pointsAwarded": 0,
-    "outstanding": ["Noch 12 min üben", "Test noch nicht bestanden"]   // offene Pflichten im Klartext
-  },
-  "dueItems": [ … ],                   // die heute fälligen Inhalte
-  "weakItems": [ … ]                   // Inhalte mit Mastery < Bestehensgrenze (gezielt üben)
+  "planId": 2,
+  "title": "Doku-Lehrplan",
+  "startDate": "2026-07-06",
+  "endDate": "2026-07-15",
+  "active": true,
+  "currentStreak": 1,
+  "today": {
+    "day": "2026-07-06",
+    "dutyDone": false,
+    "positions": [
+      {
+        "positionId": 2,
+        "exerciseId": 13,
+        "exerciseTitle": "Begrüßungen",
+        "cadence": "Daily",
+        "goalMet": false,
+        "pointsAwarded": 0
+      }
+    ]
+  }
 }
 ```
 
-**Tagesziel:** die geforderten Minuten üben **und** den Abschlusstest bestehen — beides zählt getrennt.
+**Tagesziel:** Alle fälligen Pflichtpositionen (`Daily` bzw. die passende `Weekly`-Periode) müssen ihre
+Zielregel erfüllen. Freie Positionen (`cadence=None`) dürfen geübt werden, zählen aber nicht zur Pflicht.
 
 ---
 
 ## 3. Üben (Zeit sammeln + Karten wiederholen)
 
+Der Sohn übt immer eine konkrete Position:
+
 ```http
-POST /api/v1/study-plans/{id}/practice-sessions            {}            → { id (=sessionId), … }
-GET  /api/v1/study-plans/{id}/practice-sessions/{sid}/cards               → fällige Karten (OHNE Lösung)
+POST /api/v1/study-plans/{planId}/positions/{positionId}/practice-sessions
+{} → { id, planId, positionId, day, activeSeconds, reviewCount }
+
+GET /api/v1/study-plans/{planId}/positions/{positionId}/practice-sessions/{sessionId}/cards
 ```
 
-Eine Karte (`PracticeCard`) enthält je nach Stufe/Verfahren: `prompt`, `stage`, `method`,
-`answerLength` (Stufe LetterBoxes), `audioUrl` (Audio), `translation` und `wordBank` (Cloze-Hilfen),
-`gapIndexes` (Cloze). Getippte Stufen liefern **keine** Lösung — der Server bewertet.
+Eine `PracticeCard` enthält je nach Übungstyp und Stufe: `itemIndex`, `stage`, `type`, `prompt`,
+optional `hint`, `answerLength`, `reveal`, `choices` und `audioUrl`. Getippte Stufen liefern keine
+Lösung; Anzeige-/Selbsteinschätzungs-Stufen dürfen `reveal` enthalten.
 
-### Eine Antwort abgeben (`review`) — server-autoritativ
+### Eine Antwort abgeben (`review`)
 
-Die Stufe bestimmt der Server aus dem Fahrplan; das Frontend schickt nur die passende Antwortform:
+```http
+POST /api/v1/study-plans/{planId}/positions/{positionId}/practice-sessions/{sessionId}/review
+```
 
 ```jsonc
-// getippte Vokabel-/Matching-Stufe
-POST …/practice-sessions/{sid}/review   { "contentId": 101, "givenAnswer": "hallo" }
+// getippte Stufe
+{ "itemIndex": 0, "givenAnswer": "hallo" }
 
-// Lückentext (pro Lücke)
-POST …/practice-sessions/{sid}/review   { "contentId": 55, "gaps": [ { "gapIndex": 1, "givenAnswer": "Bonjour" } ] }
-
-// reine Anzeige-/Selbsteinschätzungs-Stufe
-POST …/practice-sessions/{sid}/review   { "contentId": 101, "wasKnown": true }
+// Anzeige-/Selbsteinschätzungs-Stufe
+{ "itemIndex": 0, "wasKnown": true }
 ```
 
-Antwort bei gewerteten (Leitner-)Reviews — `ReviewOutcome`:
+Antwort bei einer gewerteten Leitner-Wiederholung:
 
 ```jsonc
-{ "wasCorrect": true, "expected": "hallo", "awarded": 18, "box": 2,
-  "dueOn": "2026-07-06", "combo": 5, "comboBonus": 5, "speedBonus": 3 }
+{
+  "wasCorrect": true,
+  "expected": "hallo",
+  "awarded": 10,
+  "box": 2,
+  "dueOn": "2026-07-08",
+  "combo": 1,
+  "comboBonus": 0,
+  "speedBonus": 0
+}
 ```
 
-> Bei Nicht-Leitner-Plänen oder bei Selbsteinschätzung unter `requireTypedTest` liefert `review` ein
-> **`204`** (nur protokolliert, keine Punkte/Box-Bewegung). Punkte-Details: [05 · Punkte](05-punkte-und-bonus.md).
+Bei Nicht-Leitner-Positionen, nicht fälligen Karten, bereits heute gewerteten Karten oder nicht
+gewerteten Selbsteinschätzungen unter `requireTypedTest` liefert `review` `204 No Content`: Es wird
+protokolliert, aber keine Box/Punkte werden bewegt.
 
 ### Zeit zählen & beenden
 
 ```http
-POST …/practice-sessions/{sid}/heartbeat   { "seconds": 60, "active": true }   → aktueller Tagesfortschritt
-POST …/practice-sessions/{sid}/end                                            → Tagesfortschritt
+POST /api/v1/study-plans/{planId}/positions/{positionId}/practice-sessions/{sessionId}/heartbeat
+{ "seconds": 60, "active": true }
+
+POST /api/v1/study-plans/{planId}/positions/{positionId}/practice-sessions/{sessionId}/end
 ```
 
-Nur **aktive** Sekunden zählen; pro Heartbeat max. 120 s anrechenbar. Ist die Tages-Übungszeit
-erreicht, fließen Minuten-Punkte.
+Nur aktive Sekunden zählen; pro Heartbeat sind maximal 120 s anrechenbar. Beim Beenden werden
+Positionsziele und Missionen erneut ausgewertet.
 
 ---
 
 ## 4. Abschlusstest machen
 
-Je nach `method` des Plans der passende Endpunkt. **Ohne `stage`** nimmt der Server automatisch die
-Fahrplan-Stufe des Tages. Der Start liefert die Karten **ohne Lösung**; Bewertung + Punkte beim Submit.
-
-### Vokabeltest
-
 ```http
-POST /api/v1/study-plans/{id}/tests                     {}                    → attemptId + Karten
-POST /api/v1/study-plans/{id}/tests/{aid}/hint          { "vocabularyId": X } // Stufe 3+: deckt einen Buchstaben auf
-POST /api/v1/study-plans/{id}/tests/{aid}/submit
+POST /api/v1/study-plans/{planId}/positions/{positionId}/tests
+{} → attemptId + Aufgaben ohne Lösung
+
+GET /api/v1/study-plans/{planId}/positions/{positionId}/tests/{attemptId}
+
+POST /api/v1/study-plans/{planId}/positions/{positionId}/tests/{attemptId}/submit
 {
   "answers": [
-    { "vocabularyId": X, "wasKnown": true },              // Stufe 2 (SelfAssess)
-    { "vocabularyId": Y, "givenAnswer": "Hund" }          // Stufe 3–5 (getippt)
+    { "itemIndex": 0, "givenAnswer": "hallo" },
+    { "itemIndex": 1, "wasKnown": true }
   ]
 }
-→ { score, passed, dayProgress }
 ```
 
-### Lückentext-Test
-
-```http
-POST /api/v1/study-plans/{id}/cloze-tests               {}   → Texte mit Lücken (+ je Stufe Übersetzung/Wortpool)
-POST /api/v1/study-plans/{id}/cloze-tests/{aid}/hint    { "clozeTextId": X, "gapIndex": 1 }   // nur Freitext-Stufen
-POST /api/v1/study-plans/{id}/cloze-tests/{aid}/submit
-{ "answers": [ { "clozeTextId": X, "gapIndex": 1, "givenAnswer": "Bonjour" } ] }
-```
-
-### Matching-Test
-
-```http
-POST /api/v1/study-plans/{id}/matching-tests            {}   → items (Prompts) + options (gemischter Pool)
-POST /api/v1/study-plans/{id}/matching-tests/{aid}/submit
-{ "answers": [ { "vocabularyId": X, "chosenAnswer": "Hund" } ] }
-```
-
-Beliebig viele Versuche erlaubt; es zählt der **beste**. Bei `requireTypedTest` zählt ein Test nur auf
-einer getippten/gewerteten Stufe als bestanden.
+Ohne `stage` nimmt der Server automatisch die Positions-/Fahrplan-Stufe des Tages. Nur der Vater darf
+beim Start eine Stufe explizit vorgeben. Die Bestehensgrenze kommt aus `goalThreshold` der Position,
+sonst aus dem Standard (80 %). Ein Test kann nur einmal submitted werden; ein zweiter Submit liefert
+`test_already_submitted`.
 
 ---
 
-## 5. Inhalte bewerten (Feedback an den Vater)
-
-Der Sohn bewertet jeden Plan-Inhalt 5-stufig — hilft dem Vater, den Plan an den echten Unterricht
-anzupassen (erscheint im `report`):
+## 5. Fortschritt, Report und Wallet
 
 ```http
-POST /api/v1/study-plans/{id}/ratings
-{ "contentId": <vokabel/cloze-id>, "feedback": "SehrGut", "comment": "optional" }
+GET /api/v1/study-plans/{planId}/overview/progress
+GET /api/v1/study-plans/{planId}/positions/{positionId}/report
+GET /api/v1/me/points
 ```
 
-Bedeutung: **SehrGut** = genau unser aktuelles Thema · **Gut** = unser Stoff, Wiederholung ·
-**Neutral** = passt zu meinem Stand · **Schlecht** = haben wir noch nicht · **Fehler** = Übung ist fehlerhaft.
+`overview/progress` zeigt den Verlauf über die Planlaufzeit. Der Positionsreport zeigt Mastery,
+Wiederholungen, Testhistorie und Leitner-Zustand der Inhalts-Atoms dieser Position. `me/points` liefert
+beide Währungen:
+
+```jsonc
+{ "childId": 1, "coins": 50, "gems": 300, "entries": [ … ] }
+```
 
 ---
 
-## 6. Punktestand, Missionen & Auszeichnungen
+## 6. Missionen, Auszeichnungen, Skins und Angebote
 
 ```http
-GET /api/v1/me/points          → { balance, entries:[ { amount, kind, reason, createdAt } ] }
-GET /api/v1/me/missions        → Tages-/Wochenziele mit Fortschritt { title, target, current, completed, rewardPoints }
-GET /api/v1/me/achievements    → Badges { title, icon, threshold, current, earned, earnedAt }
+GET /api/v1/me/missions        → Tages-/Wochenziele mit Fortschritt
+GET /api/v1/me/achievements    → Badges mit Fortschritt/Earned-Status
+GET /api/v1/me/skins           → { gems, selected, owned }
+POST /api/v1/me/skins/{skinId}/purchase
+POST /api/v1/me/skins/{skinId}/equip
+
+GET /api/v1/me/rewards         → { coins, available, redemptions }
+POST /api/v1/me/rewards/{rewardId}/purchase
 ```
 
-Beim Bestehen, beim Erreichen der Übungszeit und bei vollständigen Tagen fließen automatisch Punkte;
-ein kompletter Tag verlängert den **Streak**. Missionen/Auszeichnungen werden beim Üben laufend
-ausgewertet und belohnt.
-
----
-
-## 7. Was der Sohn NICHT kann (by design)
-
-- Keine Lehrpläne/Inhalte anlegen oder ändern (nur Vater) → **403**.
-- Keine fremden Pläne sehen/bedienen — nur die eigenen.
-- Keinen anderen Tag „nachtragen" (`day` ≠ heute) → **403**. Der Test von heute muss heute gemacht werden.
-- Bei `requireTypedTest`-Plänen zählt Selbsteinschätzung nicht — es muss wirklich getippt werden.
-- Nichts „richtig" melden: der Server bewertet jede Antwort selbst.
+Münzen kommen aus Lernleistung und kaufen reale Vater-Angebote. Gems kommen aus Boni, Missionen und
+Auszeichnungen und kaufen kosmetische Skins. Details: [05 · Punkte & Bonus](05-punkte-und-bonus.md).

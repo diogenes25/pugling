@@ -159,6 +159,7 @@ public class TagsController(PuglingDbContext db, AuthAccess access) : Controller
     }
 
     /// <summary>Alle Übungen, die mit diesem Tag markiert sind.</summary>
+    /// <param name="tagId">Tag, dessen Übungen gelesen werden.</param>
     /// <param name="skip">Anzahl zu überspringender Einträge (Paging).</param>
     /// <param name="take">Maximale Trefferzahl (1..500). Gesamtzahl im Header <c>X-Total-Count</c>.</param>
     [HttpGet("{tagId:int}/exercises")]
@@ -238,6 +239,7 @@ public class TagsController(PuglingDbContext db, AuthAccess access) : Controller
     }
 
     /// <summary>Alle Vokabeln, die mit diesem Tag markiert sind (alphabetisch nach Key).</summary>
+    /// <param name="tagId">Tag, dessen Vokabeln gelesen werden.</param>
     /// <param name="skip">Anzahl zu überspringender Einträge (Paging).</param>
     /// <param name="take">Maximale Trefferzahl (1..500). Gesamtzahl im Header <c>X-Total-Count</c>.</param>
     [HttpGet("{tagId:int}/vocabulary")]

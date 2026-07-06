@@ -3,7 +3,7 @@ namespace Pugling.Api.Controllers;
 /// <summary>
 /// Parst die Sortier-Angabe der Listen-Endpunkte. Unterstützt zwei Schreibweisen, die dieselbe Wirkung haben:
 /// <c>?sort=title&amp;dir=desc</c> und die Kurzform <c>?sort=-title</c> (führendes <c>-</c> = absteigend, <c>+</c>/nichts = aufsteigend).
-/// Ein explizites <paramref name="dir"/> hat Vorrang vor dem Präfix. Welche <c>Key</c>s zulässig sind,
+/// Ein explizites <c>dir</c> hat Vorrang vor dem Präfix. Welche <c>Key</c>s zulässig sind,
 /// entscheidet der jeweilige Endpunkt (Whitelist) – hier findet bewusst kein dynamischer Property-Zugriff statt.
 /// </summary>
 public static class SortingExtensions

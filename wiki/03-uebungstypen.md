@@ -10,8 +10,9 @@ alle Typen mit Config-Schema und Beispiel-Requests.
 > Vater-Bearer-Token voraus.
 >
 > **Abgrenzung:** Katalog-Übungen sind **nicht** dasselbe wie das Study-Plan-Training. Sie sind eine
-> kindneutrale Bibliothek mit Metadaten (für Suche/Vorfilterung). Nur die **Matching**-Übung lässt sich
-> heute direkt in einen Study-Plan gießen (`to-study-plan`). Siehe [01 · Architektur](01-ueberblick-architektur.md#2-die-zwei-api-welten).
+> kindneutrale Bibliothek mit Metadaten (für Suche/Vorfilterung). Ein Study-Plan verweist über
+> `PlanPosition` auf Katalog-Übungen; dafür nutzt der Vater `POST /api/v1/study-plans/{planId}/positions`.
+> Siehe [01 · Architektur](01-ueberblick-architektur.md#2-die-zwei-api-welten).
 
 ---
 
@@ -63,7 +64,7 @@ api/v1/learn/subjects/{subjectId}/chapters/{chapterId}/<typ-pfad>
   "config": { /* typ-spezifisch, siehe unten */ },
 
   // --- alles ab hier optional ---
-  "suggestedBonus": {                 // Bonus-Vorlage, wird beim to-study-plan EINMAL kopiert
+  "suggestedBonus": {                 // Bonus-Vorlage, wird beim Anlegen einer PlanPosition übernommen
     "comboThreshold": 3, "comboBonusPoints": 5,
     "speedThresholdSeconds": 8, "speedBonusPoints": 3, "newContentPoints": 12
   },
@@ -94,7 +95,7 @@ Legende: **/check** = hat einen Auswertungs-Endpunkt · **gen** = erzeugt Aufgab
 | Essay | `/essays` | `EssayConfig` | — |
 | Listening | `/listening` | `ListeningConfig` | — |
 | Grammar | `/grammar` | `GrammarConfig` | — |
-| Matching | `/matching` | `MatchingConfig` | **/check**, **/to-study-plan** |
+| Matching | `/matching` | `MatchingConfig` | **/check** |
 | Translation | `/translation` | `TranslationConfig` | — |
 | Arithmetic | `/arithmetic` | `ArithmeticConfig` | **/check** |
 | ArithmeticDrill | `/arithmetic-drill` | `ArithmeticDrillConfig` | **/generate** (gen), **/check** |
@@ -169,7 +170,7 @@ Legende: **/check** = hat einen Auswertungs-Endpunkt · **gen** = erzeugt Aufgab
 }
 ```
 
-### 3.7 Matching — Zuordnung (Paare) · /check · /to-study-plan
+### 3.7 Matching — Zuordnung (Paare) · /check
 
 ```jsonc
 "config": {
@@ -186,17 +187,16 @@ POST …/matching/{exerciseId}/check
 → CheckResult { total, correct, scorePercent, details[…] }
 ```
 
-**In einen Leitner-Study-Plan gießen** (die Brücke Katalog → Training):
+**Als Study-Plan trainieren:** Lege zuerst einen Plan-Container an und füge die Matching-Übung dann als
+Position hinzu. `useLeitner`, `stage`, Zielrhythmus und Bonuswerte hängen an der Position:
 
 ```http
-POST …/matching/{exerciseId}/to-study-plan
+POST /api/v1/study-plans
 { "childId": 1, "title": "Bundesländer üben", "durationDays": 14 }
-→ 201 { "planId": 42, "title": "Bundesländer üben", "itemCount": 16 }
-```
 
-Je Paar entsteht eine Vokabel im Store (`word` = links, `translation` = rechts, stabiler Key →
-idempotent). Der Plan bekommt `Method=Matching`, `UseLeitner=true`; ein evtl. `suggestedBonus` der
-Übung wird **einmal** in die Plan-Bonus-Felder kopiert.
+POST /api/v1/study-plans/{planId}/positions
+{ "exerciseId": 42, "useLeitner": true, "stage": 1, "cadence": "Daily" }
+```
 
 ### 3.8 Translation — Übersetzung
 

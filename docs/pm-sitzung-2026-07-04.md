@@ -6,6 +6,10 @@
 **Ziel:** Ersten funktionalen Stand vorstellen, Feedback beider Rollen aufnehmen, an den
 Entwickler geben und iterieren, **bis beide zufrieden sind**.
 
+> Historisches Protokoll vor dem Lehrplan-Umbau vom 2026-07-05. Genannte `items`-/`today`-/`report`-
+> Routen sind teilweise durch positionsbasierte Endpunkte ersetzt; aktuelle Referenz:
+> [wiki/04-lernplan-bauen.md](../wiki/04-lernplan-bauen.md) und [wiki/07-api-referenz.md](../wiki/07-api-referenz.md).
+
 Grundlage der Vorstellung ist die **echte App** (React-Frontend `frontend/` gegen die
 `api/v1`-Backend-API). Hinweis fürs Protokoll: Die Claude-Skills `vater`/`sohn` sind ein
 *paralleles*, dateibasiertes Kurs-Format und **nicht** Teil des vorgestellten Produkts — das

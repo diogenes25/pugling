@@ -59,8 +59,8 @@ Diese sind Design-/Prod-Entscheidungen mit Seiteneffekten – bewusst gemeldet s
 
 - **Korrektheit:** Kern solide; die gefundenen Crash-/Race-Pfade sind behoben. Keine automatisierten Tests (Verifikation manuell/API) – nächster Schritt: Integrationstests.
 - **Sicherheit:** Nach den Fixes ist die neue Fläche rollen- und eigentumssauber (401/403 verifiziert). Vor Prod bleiben **H3** (PIN-Hashing) und die Doku-Entscheidung zu **M6**.
-- **Konsistenz:** Die drei Verfahren folgen demselben Muster (Auth → Ownership-Filter → `Start` ohne Lösungsverrat → `Submit` bewertet + Punkte über den geteilten Service). Der generische Kern (`StudyPlan`/`TestAttempt`/`StudyProgressService`) ist echt verfahrensneutral.
-- **Erweiterbarkeit:** Ein viertes Verfahren = Enum + Stufen-Enum + ein Controller (+ Store nur bei neuem Inhalt). Belegt durch Matching (~1 Datei) und die parallel begonnenen Arithmetic-Typen. Grenze: `StudyPlanItem` mit zwei Nullable-FKs skaliert nicht über wenige Content-Typen hinaus (→ Polymorphie).
+- **Konsistenz:** Der aktuelle Study-Kern folgt einem positionsbezogenen Muster (Auth → Ownership-Filter → Position → `Start` ohne Lösungsverrat → `Submit`/`Review` bewertet + Punkte über geteilte Services). `StudyPlan` ist Container, `PlanPosition` trägt Training/Ziele/Leitner.
+- **Erweiterbarkeit:** Ein neuer spielbarer Typ = Katalogtyp + Config + Controller, ggf. `/check`, Projektion auf `ContentItem`, Manifest-Eintrag und Tests. Der frühere Engpass `StudyPlanItem`/Nullable-FKs ist durch `PlanPosition` ersetzt.
 - **Dokumentation:** Durchgängige, sinnvolle deutsche XML-`<summary>` + `ProducesResponseType`; die Legacy-Controller hoben sich negativ ab (jetzt zumindest abgesichert + kurz dokumentiert). Plus Prozess-Log, Résumé, Tutorial.
 
 ## Fazit

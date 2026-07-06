@@ -56,7 +56,18 @@
       "Bash(ConnectionStrings__Default='Data Source=__TRACKED_VAR__' ASPNETCORE_URLS=http://localhost:5211 dotnet run --no-build)",
       "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:5211/swagger/index.html)",
       "Bash(command -v python)",
-      "Bash(command -v python3)"
+      "Bash(command -v python3)",
+      "Bash(tee /tmp/startup.log)",
+      "Bash(echo \"exitgrep=$?\")",
+      "PowerShell(Get-Process -Id 19752 -ErrorAction SilentlyContinue | Select-Object Id,ProcessName,Path; try { Stop-Process -Id 19752 -Force -ErrorAction Stop; \"stopped 19752\" } catch { \"could not stop: $_\" }; Get-Process -Name Pugling.Api -ErrorAction SilentlyContinue | Select-Object Id,ProcessName)",
+      "PowerShell(Start-Sleep -Milliseconds 800; $p = Get-Process -Name Pugling.Api -ErrorAction SilentlyContinue; if \\($p\\) { \"still running: $\\($p.Id\\)\" } else { \"gone\" })",
+      "PowerShell(dotnet build backend/Pugling.Api/Pugling.Api.csproj -clp:ErrorsOnly 2>&1)",
+      "Bash(grep -vE '///|^\\\\s*//')",
+      "Bash(grep -nE '\\(return|=>\\) \\\\$?\"' ExerciseControllers.cs ExerciseControllerBase.cs ExercisePreviewController.cs ClozeTextsController.cs)",
+      "Bash(grep -vE '///')",
+      "PowerShell(dotnet test backend/Pugling.Api.Tests/Pugling.Api.Tests.csproj --nologo 2>&1)",
+      "PowerShell(dotnet test \"C:\\\\Users\\\\TjarkOnnen\\\\source\\\\repos\\\\priv\\\\pugling\\\\backend\\\\Pugling.Api.Tests\\\\Pugling.Api.Tests.csproj\" --nologo 2>&1)",
+      "PowerShell(git -C \"C:\\\\Users\\\\TjarkOnnen\\\\source\\\\repos\\\\priv\\\\pugling\" diff --stat -- backend/)"
     ],
     "additionalDirectories": [
       "c:\\Users\\TjarkOnnen\\.claude\\projects\\c--Users-TjarkOnnen-source-repos-priv-pugling\\memory"
