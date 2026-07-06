@@ -81,24 +81,29 @@ export function SohnPractice() {
     if (!planId || !session.current) return;
     try {
       const outcome = await api.review(planId, positionId, session.current.id, { itemIndex: card.itemIndex, ...payload });
-      setLastOutcome(outcome);
-      setCombo(outcome.combo);
-      if (outcome.wasCorrect) {
-        setEarned((e) => e + outcome.awarded + outcome.comboBonus + outcome.speedBonus);
-        if (outcome.comboBonus > 0) {
-          const tier = outcome.combo >= 10 ? "big" : "medium";
-          celebrate(tier, tier === "big" ? "🥷" : "🎉", `COMBO ×${outcome.combo}`, `+${outcome.comboBonus} 🪙 Bonus`);
-        } else {
-          celebrate("small", SMALL_EMOJI[outcome.combo % SMALL_EMOJI.length]);
-        }
-        if (outcome.awarded > 0) {
-          setToast(`+${outcome.awarded} 🪙${outcome.box ? ` · Box ${outcome.box}` : ""}`);
-          setTimeout(() => setToast(null), 1100);
-        }
-        refreshWallet();
+      if (!outcome) {
+        setLastOutcome(null);
+        setCombo(0);
       } else {
-        setToast(`Lösung: ${outcome.expected}`);
-        setTimeout(() => setToast(null), 1600);
+        setLastOutcome(outcome);
+        setCombo(outcome.combo);
+        if (outcome.wasCorrect) {
+          setEarned((e) => e + outcome.awarded + outcome.comboBonus + outcome.speedBonus);
+          if (outcome.comboBonus > 0) {
+            const tier = outcome.combo >= 10 ? "big" : "medium";
+            celebrate(tier, tier === "big" ? "🥷" : "🎉", `COMBO ×${outcome.combo}`, `+${outcome.comboBonus} 🪙 Bonus`);
+          } else {
+            celebrate("small", SMALL_EMOJI[outcome.combo % SMALL_EMOJI.length]);
+          }
+          if (outcome.awarded > 0) {
+            setToast(`+${outcome.awarded} 🪙${outcome.box ? ` · Box ${outcome.box}` : ""}`);
+            setTimeout(() => setToast(null), 1100);
+          }
+          refreshWallet();
+        } else {
+          setToast(`Lösung: ${outcome.expected}`);
+          setTimeout(() => setToast(null), 1600);
+        }
       }
     } catch { /* Bewertung ist idempotent genug; UI läuft weiter */ }
     next();

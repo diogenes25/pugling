@@ -486,7 +486,10 @@ export interface CreatePositionDto {
 }
 
 /** Partielle Änderung einer Position (nur gesetzte Felder). */
-export type UpdatePositionDto = Partial<CreatePositionDto>;
+export type UpdatePositionDto = Omit<Partial<CreatePositionDto>, "exerciseId"> & {
+  boxIntervalDays?: number[] | null;
+  stageSchedule?: StageStep[] | null;
+};
 
 // ---- Tagesmission / Fortschritt (über Positionen) ----
 

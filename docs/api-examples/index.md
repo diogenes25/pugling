@@ -16,7 +16,7 @@ Automatisch erzeugt von `backend/Pugling.Api.Tests/DocsCaptureTests.cs`. Insgesa
 
 ## Fehler-Code-Abdeckung
 
-Verifiziert: **24 / 29** Codes aus `ApiErrors`.
+Verifiziert: **24 / 33** Codes aus `ApiErrors`.
 
 | Code | Beispiel |
 | --- | --- |
@@ -47,9 +47,13 @@ Verifiziert: **24 / 29** Codes aus `ApiErrors`.
 
 ## Nicht automatisch erfassbar
 
+- `activation_not_pending` — Über HTTP im In-Process-Test nicht erreichbar.
 - `bad_request` — Generischer 400-Default (`ForStatus`): nur Sicherheitsnetz für Framework-Antworten ohne spezifischen Code – alle regulären 400-Pfade tragen bereits einen fachlichen Code.
 - `concurrency_conflict` — Erfordert eine echte Schreib-Kollision (Doppelklick/Retry) über das Concurrency-Token; in-process nicht deterministisch per HTTP auslösbar (siehe SkinPurchaseTests, direkt über DbContext).
 - `http_error` — Über HTTP im In-Process-Test nicht erreichbar.
+- `insufficient_inventory` — Über HTTP im In-Process-Test nicht erreichbar.
 - `internal_error` — 500-Fallback für unbehandelte Ausnahmen – kein sicherer, gezielter Auslöser über die öffentliche API.
 - `rate_limited` — Login-Rate-Limit ist in der Test-Factory bewusst abgeschaltet (`RateLimiting:LoginEnabled=false`), sonst würden die vielen Test-Logins scheitern.
+- `shop_insufficient_stock` — Über HTTP im In-Process-Test nicht erreichbar.
+- `shop_listing_inactive` — Über HTTP im In-Process-Test nicht erreichbar.
 

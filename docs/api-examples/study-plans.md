@@ -158,7 +158,7 @@ Response — `HTTP 200`:
 {
   "wasCorrect": true,
   "expected": "hallo",
-  "awarded": 8,
+  "awarded": 10,
   "box": 2,
   "dueOn": "2026-07-08",
   "combo": 1,
