@@ -112,6 +112,7 @@ builder.Services.AddDbContext<PuglingDbContext>(o =>
 builder.Services.AddScoped<ScoringService>();
 builder.Services.AddScoped<WalletService>();
 builder.Services.AddScoped<OfferService>();
+builder.Services.AddScoped<ShopService>();
 builder.Services.AddScoped<MetricsService>();
 builder.Services.AddScoped<GamificationService>();
 // Positions-basierter Lern-Motor: Üben/Leitner pro Lehrplan-Position.

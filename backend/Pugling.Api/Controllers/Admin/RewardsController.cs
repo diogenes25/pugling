@@ -54,6 +54,7 @@ public class RewardsController(PuglingDbContext db, OfferService offers) : Contr
 
     /// <summary>Alle Angebote des Kindes (Definitionen zur Verwaltung).</summary>
     [HttpGet]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<IReadOnlyList<RewardDto>>> List(int childId)
     {
@@ -113,14 +114,18 @@ public class RewardsController(PuglingDbContext db, OfferService offers) : Contr
 
     public record UpdateRewardDto(string? Title, int? Cost, OfferPeriod? Period, int? Quantity, bool? Active);
 
-    /// <summary>Ändert ein Angebot (partiell).</summary>
+    /// <summary>Ändert ein Angebot (partiell). Title darf nicht leer sein, Cost muss positiv sein, Quantity mindestens 1.</summary>
     [HttpPatch("{rewardId:int}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<RewardDto>> Update(int childId, int rewardId, UpdateRewardDto dto)
     {
         var reward = await db.Rewards.FirstOrDefaultAsync(r => r.Id == rewardId && r.ChildId == childId);
         if (reward is null) return NotFound();
+        if (dto.Title is not null && string.IsNullOrWhiteSpace(dto.Title))
+            return this.ProblemWithCode(ApiErrors.ValidationError, "Title must not be empty.");
+        if (dto.Cost is <= 0) return this.ProblemWithCode(ApiErrors.ValidationError, "Cost must be positive.");
         if (dto.Quantity is < 1) return this.ProblemWithCode(ApiErrors.ValidationError, "Quantity must be at least 1.");
 
         if (dto.Title is not null) reward.Title = dto.Title.Trim();
@@ -154,6 +159,7 @@ public class RewardsController(PuglingDbContext db, OfferService offers) : Contr
     /// <param name="skip">Anzahl zu überspringender Käufe (Paging).</param>
     /// <param name="take">Maximale Käufe-Zahl (1..500). Gesamtzahl im Header <c>X-Total-Count</c>.</param>
     [HttpGet("redemptions")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<IReadOnlyList<RedemptionDto>>> Redemptions(
         int childId, [FromQuery] RewardRedemptionStatus? status,

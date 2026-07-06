@@ -50,6 +50,14 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
     public DbSet<Reward> Rewards => Set<Reward>();
     public DbSet<RewardRedemption> RewardRedemptions => Set<RewardRedemption>();
 
+    // Familien-Shop: Vater-Katalog (Artikel + Angebote), kindbezogenes aggregiertes Inventar,
+    // Kaufhistorie und Aktivierungsanfragen
+    public DbSet<ShopArticle> ShopArticles => Set<ShopArticle>();
+    public DbSet<ShopListing> ShopListings => Set<ShopListing>();
+    public DbSet<ShopPurchase> ShopPurchases => Set<ShopPurchase>();
+    public DbSet<ChildInventory> ChildInventories => Set<ChildInventory>();
+    public DbSet<ActivationRequest> ActivationRequests => Set<ActivationRequest>();
+
     // Tagging + Klassenarbeiten
     public DbSet<Tag> Tags => Set<Tag>();
     public DbSet<ExerciseTag> ExerciseTags => Set<ExerciseTag>();
@@ -245,6 +253,42 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
         {
             e.HasOne(r => r.Child).WithMany().HasForeignKey(r => r.ChildId).OnDelete(DeleteBehavior.Cascade);
             e.HasOne(r => r.Reward).WithMany().HasForeignKey(r => r.RewardId).OnDelete(DeleteBehavior.SetNull);
+        });
+
+        // Shop-Artikel: familieninterne Artikelnummer eindeutig; gehört zum Vater (Cascade).
+        // Angebote (ShopListing): gehören zum Artikel (Cascade).
+        // Käufe (ShopPurchase): gehören zum Kind (Cascade); Angebots-Referenz wird auf null gesetzt,
+        //   wenn das Angebot gelöscht wird, damit die Kaufhistorie erhalten bleibt.
+        // Inventar (ChildInventory): Kind-Artikel-Kombination eindeutig; gehören zum Kind (Cascade);
+        //   Artikel-Referenz Cascade (Inventar verschwindet mit Artikel).
+        // Aktivierungsanfragen: gehören zum Kind (Cascade); Artikel-Referenz SetNull für Histor stabil.
+        modelBuilder.Entity<ShopArticle>(e =>
+        {
+            e.HasIndex(a => new { a.FatherId, a.ArticleNumber }).IsUnique();
+            e.HasOne(a => a.Father).WithMany().HasForeignKey(a => a.FatherId).OnDelete(DeleteBehavior.Cascade);
+        });
+        modelBuilder.Entity<ShopListing>(e =>
+        {
+            e.Property(l => l.ConcurrencyStamp).IsConcurrencyToken();
+            e.HasOne(l => l.ShopArticle).WithMany(a => a.Listings).HasForeignKey(l => l.ShopArticleId).OnDelete(DeleteBehavior.Cascade);
+        });
+        modelBuilder.Entity<ShopPurchase>(e =>
+        {
+            e.Property(p => p.ConcurrencyStamp).IsConcurrencyToken();
+            e.HasOne(p => p.Child).WithMany().HasForeignKey(p => p.ChildId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(p => p.ShopListing).WithMany().HasForeignKey(p => p.ShopListingId).OnDelete(DeleteBehavior.SetNull);
+        });
+        modelBuilder.Entity<ChildInventory>(e =>
+        {
+            e.HasIndex(i => new { i.ChildId, i.ShopArticleId }).IsUnique();
+            e.Property(i => i.ConcurrencyStamp).IsConcurrencyToken();
+            e.HasOne(i => i.Child).WithMany().HasForeignKey(i => i.ChildId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(i => i.ShopArticle).WithMany().HasForeignKey(i => i.ShopArticleId).OnDelete(DeleteBehavior.Cascade);
+        });
+        modelBuilder.Entity<ActivationRequest>(e =>
+        {
+            e.HasOne(r => r.Child).WithMany().HasForeignKey(r => r.ChildId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(r => r.ShopArticle).WithMany().HasForeignKey(r => r.ShopArticleId).OnDelete(DeleteBehavior.SetNull);
         });
 
         // Tag: pro Kind eindeutiger Name; löscht das Kind, verschwinden seine Tags.

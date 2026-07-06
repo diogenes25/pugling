@@ -191,4 +191,87 @@ public class RewardsFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
             new { title = "X", cost = 100, quantity = 0 });
         Assert.Equal(HttpStatusCode.BadRequest, res.StatusCode);
     }
+
+    // ─── PATCH-Validierung ────────────────────────────────────────────────────
+
+    [Fact]
+    public async Task Patch_TitelAktualisieren_Aendert()
+    {
+        var father = await TestApi.FatherAsync(factory);
+        var (childId, _) = await FreshChildAsync(father, "9010");
+        var offerId = await CreateOfferAsync(father, childId, new { title = "Alter Titel", cost = 100 });
+
+        var patched = await JsonAsync(await father.PatchAsJsonAsync(
+            $"/api/v1/children/{childId}/rewards/{offerId}", new { title = "Neuer Titel" }));
+        Assert.Equal("Neuer Titel", patched.GetProperty("title").GetString());
+    }
+
+    [Fact]
+    public async Task Patch_LeereTitel_400()
+    {
+        var father = await TestApi.FatherAsync(factory);
+        var (childId, _) = await FreshChildAsync(father, "9011");
+        var offerId = await CreateOfferAsync(father, childId, new { title = "Titel", cost = 100 });
+
+        var res = await father.PatchAsJsonAsync(
+            $"/api/v1/children/{childId}/rewards/{offerId}", new { title = "   " });
+        Assert.Equal(HttpStatusCode.BadRequest, res.StatusCode);
+    }
+
+    [Fact]
+    public async Task Patch_CostZero_400()
+    {
+        var father = await TestApi.FatherAsync(factory);
+        var (childId, _) = await FreshChildAsync(father, "9012");
+        var offerId = await CreateOfferAsync(father, childId, new { title = "X", cost = 100 });
+
+        var res = await father.PatchAsJsonAsync(
+            $"/api/v1/children/{childId}/rewards/{offerId}", new { cost = 0 });
+        Assert.Equal(HttpStatusCode.BadRequest, res.StatusCode);
+    }
+
+    [Fact]
+    public async Task Patch_QuantityUnterEins_400()
+    {
+        var father = await TestApi.FatherAsync(factory);
+        var (childId, _) = await FreshChildAsync(father, "9013");
+        var offerId = await CreateOfferAsync(father, childId, new { title = "X", cost = 50 });
+
+        var res = await father.PatchAsJsonAsync(
+            $"/api/v1/children/{childId}/rewards/{offerId}", new { quantity = 0 });
+        Assert.Equal(HttpStatusCode.BadRequest, res.StatusCode);
+    }
+
+    [Fact]
+    public async Task Patch_Deaktivieren_VerstecktAngebotFuerSohn()
+    {
+        var father = await TestApi.FatherAsync(factory);
+        var (childId, child) = await FreshChildAsync(father, "9014");
+        var offerId = await CreateOfferAsync(father, childId, new { title = "Aktiv", cost = 50 });
+
+        // Erst sichtbar
+        var viewBefore = await JsonAsync(await child.GetAsync("/api/v1/me/rewards"));
+        Assert.Contains(viewBefore.GetProperty("available").EnumerateArray(),
+            o => o.GetProperty("id").GetInt32() == offerId);
+
+        // Deaktivieren
+        (await father.PatchAsJsonAsync($"/api/v1/children/{childId}/rewards/{offerId}", new { active = false }))
+            .EnsureSuccessStatusCode();
+
+        // Nicht mehr sichtbar
+        var viewAfter = await JsonAsync(await child.GetAsync("/api/v1/me/rewards"));
+        Assert.DoesNotContain(viewAfter.GetProperty("available").EnumerateArray(),
+            o => o.GetProperty("id").GetInt32() == offerId);
+    }
+
+    [Fact]
+    public async Task Patch_UnbekannteId_404()
+    {
+        var father = await TestApi.FatherAsync(factory);
+        var (childId, _) = await FreshChildAsync(father, "9015");
+
+        var res = await father.PatchAsJsonAsync(
+            $"/api/v1/children/{childId}/rewards/999999", new { title = "X" });
+        Assert.Equal(HttpStatusCode.NotFound, res.StatusCode);
+    }
 }
