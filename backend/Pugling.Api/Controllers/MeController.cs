@@ -21,7 +21,7 @@ namespace Pugling.Api.Controllers;
 [Produces("application/json")]
 [Authorize(Roles = Roles.Sohn)]
 public class MeController(PuglingDbContext db, GamificationService gamification,
-    WalletService wallet, OfferService offers) : ControllerBase
+    WalletService wallet, OfferService offers, ShopService shop) : ControllerBase
 {
     /// <summary>Eine einzelne Punkte-Buchung (Gutschrift positiv, Abzug negativ) mit Kategorie.</summary>
     public record PointsEntryResponse(int Id, int Amount, PointKind Kind, string Reason, DateTime CreatedAt);
@@ -40,6 +40,26 @@ public class MeController(PuglingDbContext db, GamificationService gamification,
     /// <summary>Angebots-Sicht des Sohns: Münzstand, verfügbare Angebote und eigene Käufe.</summary>
     public record RewardsViewResponse(int Coins, IReadOnlyList<RewardOfferResponse> Available,
         IReadOnlyList<MyRedemptionResponse> Redemptions);
+    /// <summary>Ein kaufbares Angebot aus dem Familien-Shop aus Sohn-Sicht (Listing-Ebene).</summary>
+    public record ShopListingResponse(int Id, int ShopArticleId, string ArticleNumber, string ArticleTitle,
+        UnitType UnitType, ActionType ActionType, string Title, string Description,
+        int CoinPrice, int GemPrice, int UnitsPerPurchase, int CurrentStock, bool Affordable);
+    /// <summary>Ein Eintrag im aggregierten Sohn-Inventar: Artikel-Typ → Gesamtmenge.</summary>
+    public record MyInventoryItemResponse(int ShopArticleId, string ArticleNumber, string Title,
+        UnitType UnitType, ActionType ActionType, int Quantity);
+    /// <summary>Eigene Kaufbuchung im Sohn-Kassenbuch.</summary>
+    public record MyShopPurchaseResponse(int Id, int? ShopListingId, string ArticleNumber, string Title,
+        int CoinPrice, int GemPrice, int UnitsPerPurchase, ShopPurchaseStatus Status,
+        DateTime PurchasedAt, DateTime? ClosedAt);
+    /// <summary>Eigene Aktivierungsanfrage aus Sohn-Sicht.</summary>
+    public record MyActivationResponse(int Id, int? ShopArticleId, string ArticleTitle,
+        UnitType UnitType, ActionType ActionType, int RequestedQuantity,
+        ActivationRequestStatus Status, DateTime RequestedAt, DateTime? ClosedAt);
+    /// <summary>Shop-Sicht des Sohns: Wallet, kaufbare Angebote, aggregiertes Inventar und Kaufhistorie.</summary>
+    public record ShopViewResponse(int Coins, int Gems,
+        IReadOnlyList<ShopListingResponse> Available,
+        IReadOnlyList<MyInventoryItemResponse> Inventory,
+        IReadOnlyList<MyShopPurchaseResponse> Purchases);
 
     /// <summary>Eigener Kontostand (Münzen + Gems) samt der letzten Buchungen (neueste zuerst).</summary>
     /// <param name="skip">Anzahl zu überspringender Buchungen (Paging).</param>
@@ -86,7 +106,7 @@ public class MeController(PuglingDbContext db, GamificationService gamification,
         return Ok(await gamification.AchievementStatusesAsync(cid.Value, DateOnly.FromDateTime(DateTime.UtcNow)));
     }
 
-    /// <summary>Eigener Skin-Zustand: Münzstand, ausgerüsteter Skin und freigeschaltete Skins.</summary>
+    /// <summary>Eigener Skin-Zustand: Gem-Stand, ausgerüsteter Skin und freigeschaltete Skins.</summary>
     [HttpGet("skins")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -221,6 +241,101 @@ public class MeController(PuglingDbContext db, GamificationService gamification,
         };
     }
 
+    /// <summary>
+    /// Familien-Shop: aktive Angebote des Vaters, aggregiertes Inventar und Kaufhistorie des Sohns.
+    /// </summary>
+    [HttpGet("shop")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<ActionResult<ShopViewResponse>> Shop()
+    {
+        var cid = User.ChildId();
+        if (cid is null) return Forbid();
+        return await ShopViewAsync(cid.Value);
+    }
+
+    /// <summary>
+    /// Kauft ein Familien-Shop-Angebot: Coins/Gems werden sofort abgebucht, das aggregierte Inventar
+    /// des Sohns für den zugehörigen Artikel wird um <c>UnitsPerPurchase</c> erhöht.
+    /// </summary>
+    [HttpPost("shop/listings/{listingId:int}/purchase")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<ActionResult<ShopViewResponse>> PurchaseShopListing(int listingId)
+    {
+        var cid = User.ChildId();
+        if (cid is null) return Forbid();
+
+        var result = await shop.PurchaseAsync(cid.Value, listingId, DateTime.UtcNow);
+        return result.Error switch
+        {
+            ShopService.ShopError.None => await ShopViewAsync(cid.Value),
+            ShopService.ShopError.NotFound => this.ProblemWithCode(ShopService.ToApiError(result.Error), "Shop listing not found."),
+            ShopService.ShopError.ListingInactive => this.ProblemWithCode(ShopService.ToApiError(result.Error), "This shop listing is no longer available."),
+            ShopService.ShopError.InsufficientStock => this.ProblemWithCode(ShopService.ToApiError(result.Error), "This shop listing is out of stock."),
+            ShopService.ShopError.InsufficientCoins => this.ProblemWithCode(ShopService.ToApiError(result.Error), "Not enough coins for this shop listing."),
+            ShopService.ShopError.InsufficientGems => this.ProblemWithCode(ShopService.ToApiError(result.Error), "Not enough gems for this shop listing."),
+            _ => this.ProblemWithCode(ShopService.ToApiError(result.Error), "Purchase conflicted with a concurrent action — please try again."),
+        };
+    }
+
+    /// <summary>
+    /// Stellt eine Aktivierungsanfrage: der Sohn möchte <c>quantity</c> Einheiten des Artikels
+    /// verbrauchen. Der Vater genehmigt oder lehnt ab; das Inventar wird erst bei Genehmigung reduziert.
+    /// </summary>
+    [HttpPost("shop/inventory/{articleId:int}/activate")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<ActionResult<MyActivationResponse>> RequestActivation(
+        int articleId, [FromBody] ActivateDto dto)
+    {
+        var cid = User.ChildId();
+        if (cid is null) return Forbid();
+        if (dto.Quantity <= 0) return this.ProblemWithCode(ApiErrors.ValidationError, "Quantity must be at least 1.");
+
+        var result = await shop.RequestActivationAsync(cid.Value, articleId, dto.Quantity, DateTime.UtcNow);
+        return result.Error switch
+        {
+            ShopService.ShopError.None => MapActivation(result.Value!),
+            ShopService.ShopError.NotFound => this.ProblemWithCode(ShopService.ToApiError(result.Error), "Article not found in your family shop."),
+            ShopService.ShopError.InsufficientInventory => this.ProblemWithCode(ShopService.ToApiError(result.Error), "Not enough units in your inventory."),
+            _ => this.ProblemWithCode(ShopService.ToApiError(result.Error), "The activation request could not be saved — please try again."),
+        };
+    }
+
+    public record ActivateDto(int Quantity);
+
+    /// <summary>Eigene Aktivierungsanfragen (neueste zuerst), optional nach Status gefiltert.</summary>
+    [HttpGet("shop/activations")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<ActionResult<IReadOnlyList<MyActivationResponse>>> MyActivations(
+        [FromQuery] ActivationRequestStatus? status,
+        [FromQuery] int skip = 0, [FromQuery] int take = PagingExtensions.DefaultTake)
+    {
+        var cid = User.ChildId();
+        if (cid is null) return Forbid();
+
+        var query = db.ActivationRequests.AsNoTracking().Where(r => r.ChildId == cid);
+        if (status is not null) query = query.Where(r => r.Status == status);
+
+        return await query
+            .OrderBy(r => r.Status == ActivationRequestStatus.Pending ? 0 : 1)
+            .ThenByDescending(r => r.RequestedAt)
+            .Select(r => MapActivation(r))
+            .ToPagedListAsync(Response, skip, take);
+    }
+
+    private static MyActivationResponse MapActivation(ActivationRequest r) =>
+        new(r.Id, r.ShopArticleId, r.ArticleTitle, r.UnitType, r.ActionType,
+            r.RequestedQuantity, r.Status, r.RequestedAt, r.ClosedAt);
+
     private async Task<RewardsViewResponse> RewardsViewAsync(int childId)
     {
         var coins = await wallet.CoinsAsync(childId);
@@ -249,6 +364,48 @@ public class MeController(PuglingDbContext db, GamificationService gamification,
             .ToListAsync();
 
         return new RewardsViewResponse(coins, available, redemptions);
+    }
+
+    private async Task<ShopViewResponse> ShopViewAsync(int childId)
+    {
+        var child = await db.Children.AsNoTracking().FirstAsync(c => c.Id == childId);
+        var balances = await wallet.BalancesAsync(childId);
+        var now = DateTime.UtcNow;
+
+        var listings = await shop.ListingsForFatherAsync(child.FatherId, activeOnly: true, now);
+        var available = listings
+            .OrderBy(l => l.ShopArticle!.ArticleNumber).ThenBy(l => l.Id)
+            .Select(l =>
+            {
+                var art = l.ShopArticle!;
+                var title = string.IsNullOrWhiteSpace(l.Title) ? art.Title : l.Title;
+                return new ShopListingResponse(
+                    l.Id, art.Id, art.ArticleNumber, art.Title, art.UnitType, art.ActionType,
+                    title, l.Description, l.CoinPrice, l.GemPrice, l.UnitsPerPurchase, l.CurrentStock,
+                    l.CurrentStock > 0 && balances.Coins >= l.CoinPrice && balances.Gems >= l.GemPrice);
+            })
+            .ToList();
+
+        var inventory = await db.ChildInventories.AsNoTracking()
+            .Include(i => i.ShopArticle)
+            .Where(i => i.ChildId == childId && i.Quantity > 0)
+            .OrderBy(i => i.ShopArticle!.ArticleNumber)
+            .Select(i => new MyInventoryItemResponse(
+                i.ShopArticleId, i.ShopArticle!.ArticleNumber, i.ShopArticle.Title,
+                i.ShopArticle.UnitType, i.ShopArticle.ActionType, i.Quantity))
+            .ToListAsync();
+
+        var purchases = await db.ShopPurchases.AsNoTracking()
+            .Where(p => p.ChildId == childId)
+            .OrderBy(p => p.Status == ShopPurchaseStatus.Owned ? 0 : 1)
+            .ThenByDescending(p => p.PurchasedAt).ThenByDescending(p => p.Id)
+            .Select(p => new MyShopPurchaseResponse(
+                p.Id, p.ShopListingId, p.ArticleNumber, p.Title,
+                p.CoinPrice, p.GemPrice, p.UnitsPerPurchase, p.Status, p.PurchasedAt, p.ClosedAt))
+            .Take(50)
+            .ToListAsync();
+
+        return new ShopViewResponse(balances.Coins, balances.Gems, available, inventory, purchases);
     }
 
     private async Task<SkinStateResponse> SkinStateAsync(int childId)

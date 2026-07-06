@@ -52,8 +52,16 @@ public static class ApiErrors
     public static readonly ApiError QuotaExhausted = new("quota_exhausted", 409, "Quota exhausted.");
     /// <summary>Angebot ist deaktiviert / nicht mehr verfügbar (400).</summary>
     public static readonly ApiError OfferInactive = new("offer_inactive", 400, "Offer no longer available.");
-    /// <summary>Kauf steht nicht (mehr) offen – schon erfüllt/storniert (409).</summary>
+    /// <summary>Shop-Angebot ist deaktiviert / nicht mehr verfügbar (400).</summary>
+    public static readonly ApiError ShopListingInactive = new("shop_listing_inactive", 400, "Shop listing no longer available.");
+    /// <summary>Shop-Angebot ist nicht ausreichend auf Lager (409).</summary>
+    public static readonly ApiError ShopInsufficientStock = new("shop_insufficient_stock", 409, "Shop listing is out of stock.");
+    /// <summary>Kauf steht nicht (mehr) offen – bereits storniert (409).</summary>
     public static readonly ApiError PurchaseNotOpen = new("purchase_not_open", 409, "Purchase not open.");
+    /// <summary>Nicht genug Einheiten im Inventar für die beantragte Aktivierungsmenge (400).</summary>
+    public static readonly ApiError InsufficientInventory = new("insufficient_inventory", 400, "Not enough units in inventory.");
+    /// <summary>Aktivierungsanfrage ist nicht (mehr) offen – bereits genehmigt/abgelehnt (409).</summary>
+    public static readonly ApiError ActivationNotPending = new("activation_not_pending", 409, "Activation request is not pending.");
     /// <summary>Schlüssel existiert bereits (z. B. Vokabel-/Cloze-Key) (409).</summary>
     public static readonly ApiError DuplicateKey = new("duplicate_key", 409, "Key already exists.");
     /// <summary>Tag mit diesem Namen existiert bereits (400).</summary>

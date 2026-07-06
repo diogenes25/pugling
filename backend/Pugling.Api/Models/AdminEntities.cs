@@ -69,7 +69,7 @@ public static class SkinCatalog
     /// <summary>Von Anfang an freigeschalteter Gratis-Starter.</summary>
     public const string Default = "pug";
 
-    /// <summary>Kaufbare Skins: ID → Kosten in Münzen (0 = gratis).</summary>
+    /// <summary>Kaufbare Skins: ID → Kosten in Gems (0 = gratis).</summary>
     public static readonly IReadOnlyDictionary<string, int> Costs = new Dictionary<string, int>
     {
         ["pug"] = 0,
@@ -115,6 +115,10 @@ public enum PointKind
     Reward = 11,
     /// <summary>Ziel einer Lehrplan-Position erreicht (Tages-/Wochenziel der Übung).</summary>
     Goal = 12,
+    /// <summary>Einlösung von Münzen für einen Familien-Shop-Artikel (negative Buchung).</summary>
+    ShopCoins = 13,
+    /// <summary>Einlösung von Gems für einen Familien-Shop-Artikel (negative Buchung).</summary>
+    ShopGems = 14,
 }
 
 /// <summary>Punkte-Buchung eines Kindes (positiv = gutgeschrieben, negativ = eingelöst).</summary>
