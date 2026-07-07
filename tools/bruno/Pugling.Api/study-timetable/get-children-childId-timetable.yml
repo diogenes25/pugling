@@ -29,7 +29,6 @@ runtime:
         if (body && typeof body === 'object' && !Array.isArray(body)) {
           capture('childId', body.childId ?? body.id);
           capture('fatherId', body.fatherId);
-          capture('childId', body.childId);
           capture('subjectId', body.subjectId);
           capture('chapterId', body.chapterId);
           capture('categoryId', body.categoryId);

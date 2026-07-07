@@ -13,20 +13,23 @@ http:
       value: "{{childId}}"
       type: query
       description: Kind, dessen Klassenarbeiten gelesen werden.
+      disabled: true
     - name: status
-      value: "{{status}}"
+      value: ""
       type: query
       description: Optionaler Statusfilter.
+      disabled: true
     - name: subjectId
       value: "{{subjectId}}"
       type: query
       description: Optionaler Fachfilter.
+      disabled: true
     - name: skip
-      value: "{{skip}}"
+      value: "0"
       type: query
       description: Anzahl zu überspringender Einträge (Paging).
     - name: take
-      value: "{{take}}"
+      value: "100"
       type: query
       description: Maximale Trefferzahl (1..500). Gesamtzahl im Header `X-Total-Count`.
   auth: inherit

@@ -12,6 +12,7 @@ http:
     - name: childId
       value: "{{childId}}"
       type: query
+      disabled: true
   auth: inherit
 
 runtime:

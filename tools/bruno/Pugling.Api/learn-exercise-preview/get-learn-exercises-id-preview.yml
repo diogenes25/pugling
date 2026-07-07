@@ -13,8 +13,9 @@ http:
       value: "{{id}}"
       type: path
     - name: stage
-      value: "{{stage}}"
+      value: ""
       type: query
+      disabled: true
   auth: inherit
 
 runtime:

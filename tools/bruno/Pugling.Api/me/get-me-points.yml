@@ -10,11 +10,11 @@ http:
   url: "{{baseUrl}}/api/v1/me/points"
   params:
     - name: skip
-      value: "{{skip}}"
+      value: "0"
       type: query
       description: Anzahl zu überspringender Buchungen (Paging).
     - name: take
-      value: "{{take}}"
+      value: "100"
       type: query
       description: Maximale Buchungszahl (1..500). Gesamtzahl im Header `X-Total-Count`.
   auth: inherit
@@ -71,11 +71,11 @@ examples:
       method: GET
       params:
         - name: skip
-          value: "{{skip}}"
+          value: "0"
           type: query
           description: Anzahl zu überspringender Buchungen (Paging).
         - name: take
-          value: "{{take}}"
+          value: "100"
           type: query
           description: Maximale Buchungszahl (1..500). Gesamtzahl im Header `X-Total-Count`.
     response:
@@ -115,11 +115,11 @@ examples:
       method: GET
       params:
         - name: skip
-          value: "{{skip}}"
+          value: "0"
           type: query
           description: Anzahl zu überspringender Buchungen (Paging).
         - name: take
-          value: "{{take}}"
+          value: "100"
           type: query
           description: Maximale Buchungszahl (1..500). Gesamtzahl im Header `X-Total-Count`.
     response:
