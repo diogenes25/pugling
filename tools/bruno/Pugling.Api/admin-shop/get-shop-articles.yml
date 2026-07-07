@@ -10,15 +10,16 @@ http:
   url: "{{baseUrl}}/api/v1/shop/articles"
   params:
     - name: search
-      value: "{{search}}"
+      value: ""
       type: query
       description: Freitext-Suche in Artikelnummer und Titel (Teilstring, optional).
+      disabled: true
     - name: skip
-      value: "{{skip}}"
+      value: "0"
       type: query
       description: Anzahl übersprungener Einträge (Offset, Standard 0).
     - name: take
-      value: "{{take}}"
+      value: "100"
       type: query
       description: Maximale Anzahl zurückgegebener Einträge (Standard 100, Max 500).
   auth: inherit
@@ -76,15 +77,16 @@ examples:
       method: GET
       params:
         - name: search
-          value: "{{search}}"
+          value: ""
           type: query
           description: Freitext-Suche in Artikelnummer und Titel (Teilstring, optional).
+          disabled: true
         - name: skip
-          value: "{{skip}}"
+          value: "0"
           type: query
           description: Anzahl übersprungener Einträge (Offset, Standard 0).
         - name: take
-          value: "{{take}}"
+          value: "100"
           type: query
           description: Maximale Anzahl zurückgegebener Einträge (Standard 100, Max 500).
     response:
@@ -150,15 +152,16 @@ examples:
       method: GET
       params:
         - name: search
-          value: "{{search}}"
+          value: ""
           type: query
           description: Freitext-Suche in Artikelnummer und Titel (Teilstring, optional).
+          disabled: true
         - name: skip
-          value: "{{skip}}"
+          value: "0"
           type: query
           description: Anzahl übersprungener Einträge (Offset, Standard 0).
         - name: take
-          value: "{{take}}"
+          value: "100"
           type: query
           description: Maximale Anzahl zurückgegebener Einträge (Standard 100, Max 500).
     response:

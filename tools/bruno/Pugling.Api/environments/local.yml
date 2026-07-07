@@ -1,4 +1,5 @@
 name: local
+
 variables:
   - name: baseUrl
     value: http://localhost:5200
@@ -55,62 +56,16 @@ variables:
   - name: skinId
     value: classic
   - name: date
-    value: 2026-07-07
-  - name: baseFormsOnly
-    value: ""
-  - name: dir
-    value: ""
+    value: "2026-07-07"
   - name: entryId
     value: "1"
-  - name: grade
-    value: ""
   - name: id
-    value: ""
-  - name: incomplete
     value: ""
   - name: key
     value: ""
-  - name: linked
-    value: ""
-  - name: matchAll
-    value: ""
-  - name: minBadGrade
-    value: ""
-  - name: mineOnly
-    value: ""
-  - name: partOfSpeech
-    value: ""
   - name: requestId
     value: "1"
-  - name: schoolType
-    value: ""
-  - name: search
-    value: ""
-  - name: seed
-    value: ""
   - name: sentenceId
     value: "1"
-  - name: skip
-    value: "0"
-  - name: sort
-    value: ""
-  - name: sourceLanguage
-    value: ""
-  - name: stage
-    value: ""
-  - name: status
-    value: ""
-  - name: tag
-    value: ""
-  - name: take
-    value: "100"
-  - name: targetLanguage
-    value: ""
-  - name: translation
-    value: ""
   - name: type
-    value: ""
-  - name: untranslated
-    value: ""
-  - name: word
     value: ""

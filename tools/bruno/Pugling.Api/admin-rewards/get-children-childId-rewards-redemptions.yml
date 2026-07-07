@@ -14,15 +14,16 @@ http:
       type: path
       description: Kind, dessen Käufe gelesen werden.
     - name: status
-      value: "{{status}}"
+      value: ""
       type: query
       description: Optionaler Statusfilter.
+      disabled: true
     - name: skip
-      value: "{{skip}}"
+      value: "0"
       type: query
       description: Anzahl zu überspringender Käufe (Paging).
     - name: take
-      value: "{{take}}"
+      value: "100"
       type: query
       description: Maximale Käufe-Zahl (1..500). Gesamtzahl im Header `X-Total-Count`.
   auth: inherit

@@ -12,6 +12,7 @@ http:
     - name: date
       value: "{{date}}"
       type: query
+      disabled: true
   auth: inherit
 
 runtime:

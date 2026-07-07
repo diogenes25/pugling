@@ -12,9 +12,11 @@ http:
     - name: childId
       value: "{{childId}}"
       type: query
+      disabled: true
     - name: minBadGrade
-      value: "{{minBadGrade}}"
+      value: ""
       type: query
+      disabled: true
   auth: inherit
 
 runtime:

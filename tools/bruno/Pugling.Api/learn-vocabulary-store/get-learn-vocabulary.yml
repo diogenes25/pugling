@@ -10,67 +10,80 @@ http:
   url: "{{baseUrl}}/api/v1/learn/vocabulary"
   params:
     - name: search
-      value: "{{search}}"
+      value: ""
       type: query
       description: Volltext in Word/Translation/Key (Teilstring).
+      disabled: true
     - name: word
-      value: "{{word}}"
+      value: ""
       type: query
       description: Teilstring-Filter allein auf das Wort (Ausgangssprache).
+      disabled: true
     - name: translation
-      value: "{{translation}}"
+      value: ""
       type: query
       description: Teilstring-Filter allein auf die Übersetzung (Zielsprache).
+      disabled: true
     - name: partOfSpeech
-      value: "{{partOfSpeech}}"
+      value: ""
       type: query
       description: Exakte Wortart.
+      disabled: true
     - name: untranslated
-      value: "{{untranslated}}"
+      value: "false"
       type: query
       description: true = nur Einträge ohne Übersetzung.
+      disabled: true
     - name: incomplete
-      value: "{{incomplete}}"
+      value: "false"
       type: query
       description: true = nur unvollständige Einträge (keine Übersetzung / Wortart „Other" / fehlende Noun-/Verb-Details).
+      disabled: true
     - name: linked
-      value: "{{linked}}"
+      value: "false"
       type: query
       description: true = nur verknüpfte (Grundform gesetzt), false = nur unverknüpfte.
+      disabled: true
     - name: baseFormsOnly
-      value: "{{baseFormsOnly}}"
+      value: "false"
       type: query
       description: true = nur Grundformen (keine flektierten Formen); klarer Alias für Authoring, fachlich wie `linked=false`.
+      disabled: true
     - name: sourceLanguage
-      value: "{{sourceLanguage}}"
+      value: ""
       type: query
       description: Filter auf die Ausgangssprache.
+      disabled: true
     - name: targetLanguage
-      value: "{{targetLanguage}}"
+      value: ""
       type: query
       description: Filter auf die Zielsprache.
+      disabled: true
     - name: tag
-      value: "{{tag}}"
+      value: ""
       type: query
       description: Ein oder mehrere Tag-Namen (wiederholbar).
+      disabled: true
     - name: matchAll
-      value: "{{matchAll}}"
+      value: "false"
       type: query
       description: "Bei mehreren Tags: true = alle (UND), false = beliebiger (ODER, Default)."
     - name: sort
-      value: "{{sort}}"
+      value: ""
       type: query
       description: "Sortierspalte: `key` (Default), `word`, `translation`, `pos`, `created`. Kurzform `-word` = absteigend."
+      disabled: true
     - name: dir
-      value: "{{dir}}"
+      value: ""
       type: query
       description: "`asc` (Default) oder `desc`; hat Vorrang vor einem `-`-Präfix in sort."
+      disabled: true
     - name: skip
-      value: "{{skip}}"
+      value: "0"
       type: query
       description: Anzahl zu überspringender Einträge (Paging).
     - name: take
-      value: "{{take}}"
+      value: "100"
       type: query
       description: Maximale Trefferzahl (1..500).
   auth: inherit

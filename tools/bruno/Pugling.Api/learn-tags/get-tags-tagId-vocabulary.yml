@@ -14,11 +14,11 @@ http:
       type: path
       description: Tag, dessen Vokabeln gelesen werden.
     - name: skip
-      value: "{{skip}}"
+      value: "0"
       type: query
       description: Anzahl zu überspringender Einträge (Paging).
     - name: take
-      value: "{{take}}"
+      value: "100"
       type: query
       description: Maximale Trefferzahl (1..500). Gesamtzahl im Header `X-Total-Count`.
   auth: inherit

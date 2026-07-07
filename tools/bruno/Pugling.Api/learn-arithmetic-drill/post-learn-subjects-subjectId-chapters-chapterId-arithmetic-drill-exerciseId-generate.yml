@@ -19,8 +19,9 @@ http:
       value: "{{exerciseId}}"
       type: path
     - name: seed
-      value: "{{seed}}"
+      value: ""
       type: query
+      disabled: true
   auth: inherit
 
 runtime:

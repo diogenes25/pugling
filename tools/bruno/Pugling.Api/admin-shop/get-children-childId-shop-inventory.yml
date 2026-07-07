@@ -14,11 +14,11 @@ http:
       type: path
       description: Id des Kindes.
     - name: skip
-      value: "{{skip}}"
+      value: "0"
       type: query
       description: Anzahl übersprungener Einträge (Offset, Standard 0).
     - name: take
-      value: "{{take}}"
+      value: "100"
       type: query
       description: Maximale Anzahl zurückgegebener Einträge (Standard 100, Max 500).
   auth: inherit
@@ -80,11 +80,11 @@ examples:
           type: path
           description: Id des Kindes.
         - name: skip
-          value: "{{skip}}"
+          value: "0"
           type: query
           description: Anzahl übersprungener Einträge (Offset, Standard 0).
         - name: take
-          value: "{{take}}"
+          value: "100"
           type: query
           description: Maximale Anzahl zurückgegebener Einträge (Standard 100, Max 500).
     response:

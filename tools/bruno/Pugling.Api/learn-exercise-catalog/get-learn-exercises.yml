@@ -13,48 +13,58 @@ http:
       value: "{{subjectId}}"
       type: query
       description: Fach.
+      disabled: true
     - name: chapterId
       value: "{{chapterId}}"
       type: query
       description: Kapitel (setzt in der Regel ein Fach voraus).
+      disabled: true
     - name: grade
-      value: "{{grade}}"
+      value: ""
       type: query
       description: Klassenstufe des Kindes; passt, wenn sie in [GradeMin, GradeMax] liegt.
+      disabled: true
     - name: schoolType
-      value: "{{schoolType}}"
+      value: ""
       type: query
       description: Schulart; passt, wenn die Übung sie enthält oder für alle gilt.
+      disabled: true
     - name: categoryId
       value: "{{categoryId}}"
       type: query
       description: Fachabhängige Art.
+      disabled: true
     - name: type
-      value: "{{type}}"
+      value: ""
       type: query
       description: Übungstyp.
+      disabled: true
     - name: search
-      value: "{{search}}"
+      value: ""
       type: query
       description: Freitext in Titel oder Beschreibung (Teilstring).
+      disabled: true
     - name: mineOnly
-      value: "{{mineOnly}}"
+      value: "false"
       type: query
       description: Nur eigene Übungen des anfragenden Vaters (Verwaltung statt Entdeckung).
+      disabled: true
     - name: sort
-      value: "{{sort}}"
+      value: ""
       type: query
       description: "Sortierspalte: `title`, `type`, `grade`, `source`, `created`. Kurzform `-title` = absteigend. Ohne Angabe: Fach → Kapitel → Reihenfolge."
+      disabled: true
     - name: dir
-      value: "{{dir}}"
+      value: ""
       type: query
       description: "`asc` (Default) oder `desc`; hat Vorrang vor einem `-`-Präfix in sort."
+      disabled: true
     - name: skip
-      value: "{{skip}}"
+      value: "0"
       type: query
       description: Anzahl zu überspringender Einträge (Paging).
     - name: take
-      value: "{{take}}"
+      value: "100"
       type: query
       description: Maximale Trefferzahl (1..500). Gesamtzahl im Header `X-Total-Count`.
   auth: inherit

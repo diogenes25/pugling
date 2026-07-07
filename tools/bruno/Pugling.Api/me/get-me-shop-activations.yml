@@ -10,13 +10,14 @@ http:
   url: "{{baseUrl}}/api/v1/me/shop/activations"
   params:
     - name: status
-      value: "{{status}}"
+      value: ""
       type: query
+      disabled: true
     - name: skip
-      value: "{{skip}}"
+      value: "0"
       type: query
     - name: take
-      value: "{{take}}"
+      value: "100"
       type: query
   auth: inherit
 
@@ -73,13 +74,14 @@ examples:
       method: GET
       params:
         - name: status
-          value: "{{status}}"
+          value: ""
           type: query
+          disabled: true
         - name: skip
-          value: "{{skip}}"
+          value: "0"
           type: query
         - name: take
-          value: "{{take}}"
+          value: "100"
           type: query
     response:
       status: 200
