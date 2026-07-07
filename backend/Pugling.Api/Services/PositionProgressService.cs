@@ -172,4 +172,38 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
         }
         return streak;
     }
+
+    /// <summary>
+    /// Aufbereiteter Verlauf für die Vater-Auswertung: die Kennzahlen (<see cref="ProgressView.DaysComplete"/>
+    /// / <see cref="ProgressView.TotalPoints"/> / <see cref="ProgressView.CurrentStreak"/>) beziehen sich stets
+    /// auf die <b>gesamte</b> Laufzeit; Filter (<paramref name="from"/>/<paramref name="to"/>/<paramref name="dutyDone"/>)
+    /// und Sortierung (<paramref name="sort"/>: <c>day</c>/<c>-day</c>/<c>points</c>/<c>-points</c>) wirken nur auf
+    /// die zurückgegebenen <see cref="ProgressView.Days"/>. Das HTTP-seitige Paging setzt der Controller darauf.
+    /// </summary>
+    public async Task<ProgressView> ProgressViewAsync(StudyPlan plan, DateOnly today,
+        DateOnly? from, DateOnly? to, bool? dutyDone, string? sort)
+    {
+        var days = await ProgressAsync(plan, plan.EndDate);
+        var totalDays = plan.EndDate.DayNumber - plan.StartDate.DayNumber + 1;
+
+        IEnumerable<ProgressDay> filtered = days;
+        if (from is not null) filtered = filtered.Where(d => d.Day >= from);
+        if (to is not null) filtered = filtered.Where(d => d.Day <= to);
+        if (dutyDone is not null) filtered = filtered.Where(d => d.DutyDone == dutyDone);
+
+        filtered = sort switch
+        {
+            "-day" => filtered.OrderByDescending(d => d.Day),
+            "points" => filtered.OrderBy(d => d.PointsAwarded).ThenBy(d => d.Day),
+            "-points" => filtered.OrderByDescending(d => d.PointsAwarded).ThenBy(d => d.Day),
+            _ => filtered.OrderBy(d => d.Day),
+        };
+
+        return new ProgressView(days.Count(d => d.DutyDone), totalDays, days.Sum(d => d.PointsAwarded),
+            Streak(days, today), filtered.ToList());
+    }
+
+    /// <summary>Aggregierter Verlauf: laufzeitweite Kennzahlen + gefilterte/sortierte Tagesliste.</summary>
+    public record ProgressView(int DaysComplete, int TotalDays, int TotalPoints, int CurrentStreak,
+        IReadOnlyList<ProgressDay> Days);
 }

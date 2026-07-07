@@ -221,17 +221,24 @@ public class ShopController(PuglingDbContext db, ShopService shop) : ControllerB
         return listings.Where(l => l.ShopArticleId == articleId).Select(MapListing).ToList();
     }
 
-    /// <summary>Ein einzelnes Angebot eines Artikels lesen (fällige Auffüllung wird wie bei der Liste angewandt).</summary>
+    /// <summary>Ein einzelnes Angebot eines Artikels lesen.</summary>
     [HttpGet("articles/{articleId:int}/listings/{listingId:int}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<ShopListingDto>> Listing(int articleId, int listingId)
     {
         var fatherId = User.FatherId()!.Value;
-        // Über den Service, damit die Darstellung (inkl. fälliger Auffüllung) identisch zur Listen-Sicht ist.
-        var listings = await shop.ListingsForFatherAsync(fatherId, activeOnly: false, DateTime.UtcNow);
-        var listing = listings.FirstOrDefault(l => l.Id == listingId && l.ShopArticleId == articleId);
+        // Nur DIESES Angebot laden (kein Voll-Scan aller Vater-Angebote). AsNoTracking + rein
+        // anzeigeseitige Auffüllung (ApplyDueRefill mutiert nur das nicht getrackte Objekt, kein
+        // SaveChanges) – ein GET darf keinen Schreib-Nebeneffekt haben. Persistiert wird die Auffüllung
+        // beim Listen-Abruf bzw. beim Kauf; die Darstellung hier ist dieselbe.
+        var listing = await db.ShopListings.AsNoTracking()
+            .Include(l => l.ShopArticle)
+            .FirstOrDefaultAsync(l => l.Id == listingId && l.ShopArticleId == articleId
+                && l.ShopArticle!.FatherId == fatherId);
         if (listing is null) return NotFound();
+
+        ShopService.ApplyDueRefill(listing, DateTime.UtcNow);
         return MapListing(listing);
     }
 
