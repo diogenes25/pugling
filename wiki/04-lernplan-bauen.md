@@ -217,7 +217,7 @@ Plan-Übersicht und Fortschritt:
 
 ```http
 GET /api/v1/study-plans/{planId}/overview
-GET /api/v1/study-plans/{planId}/overview/progress
+GET /api/v1/study-plans/{planId}/overview/progress[?from=&to=&dutyDone=&sort=&skip=&take=]
 GET /api/v1/study-plans/{planId}/positions/{positionId}/report
 GET /api/v1/children/{childId}/points
 ```

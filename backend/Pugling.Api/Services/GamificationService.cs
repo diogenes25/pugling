@@ -106,6 +106,32 @@ public class GamificationService(PuglingDbContext db, MetricsService metrics, IL
         return result.OrderByDescending(s => s.Earned).ThenBy(s => s.Threshold).ToList();
     }
 
+    /// <summary>Status einer einzelnen Mission des Kindes (Einzelansicht); <c>null</c>, wenn nicht vorhanden/aktiv/eigen.</summary>
+    public async Task<MissionStatus?> MissionStatusAsync(int childId, int missionId, DateOnly today)
+    {
+        var m = await db.Missions.AsNoTracking().FirstOrDefaultAsync(m => m.Id == missionId && m.ChildId == childId && m.Active);
+        if (m is null) return null;
+
+        var (from, to, key) = PeriodWindow(m.Period, today);
+        var current = await metrics.ValueAsync(childId, m.Metric, from, to, today);
+        var completed = await db.MissionAwards.AnyAsync(a => a.MissionId == m.Id && a.PeriodKey == key)
+            || current >= m.Target;
+        return new MissionStatus(m.Id, m.Title, m.Metric, m.Period, m.Target,
+            Math.Min(current, m.Target), completed, m.RewardPoints);
+    }
+
+    /// <summary>Status einer einzelnen Auszeichnung des Kindes (Einzelansicht); <c>null</c>, wenn nicht vorhanden/aktiv/eigen.</summary>
+    public async Task<AchievementStatus?> AchievementStatusAsync(int childId, int achievementId, DateOnly today)
+    {
+        var a = await db.Achievements.AsNoTracking().FirstOrDefaultAsync(a => a.Id == achievementId && a.ChildId == childId && a.Active);
+        if (a is null) return null;
+
+        var current = await metrics.ValueAsync(childId, a.Metric, null, null, today);
+        var at = await db.AchievementAwards.Where(x => x.AchievementId == a.Id).Select(x => (DateTime?)x.EarnedAt).FirstOrDefaultAsync();
+        return new AchievementStatus(a.Id, a.Title, a.Icon, a.Metric, a.Threshold,
+            current, at is not null, at, a.RewardPoints);
+    }
+
     /// <summary>Tages-/Wochen-/Einmal-Fenster + Schlüssel für die idempotente Vergabe.</summary>
     private static (DateOnly? from, DateOnly? to, string key) PeriodWindow(MissionPeriod period, DateOnly today) =>
         period switch

@@ -83,7 +83,8 @@ public class SkinPurchaseTests(PuglingWebAppFactory factory) : IClassFixture<Pug
         // Die Abbuchung ist als negative Buchung mit eigener Kategorie im Wallet nachvollziehbar.
         var wallet = await (await child.GetAsync("/api/v1/me/points")).Content.ReadFromJsonAsync<JsonElement>();
         Assert.Equal(500, wallet.GetProperty("gems").GetInt32());
-        var spend = wallet.GetProperty("entries").EnumerateArray()
+        var entries = await (await child.GetAsync("/api/v1/me/points/entries")).Content.ReadFromJsonAsync<JsonElement>();
+        var spend = entries.EnumerateArray()
             .First(e => e.GetProperty("kind").GetString() == "SkinPurchase");
         Assert.Equal(-2000, spend.GetProperty("amount").GetInt32());
     }

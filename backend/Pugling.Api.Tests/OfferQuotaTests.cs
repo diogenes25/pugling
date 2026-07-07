@@ -32,11 +32,11 @@ public class OfferQuotaTests(PuglingWebAppFactory factory) : IClassFixture<Pugli
             new { title = "Snack", cost = 100, period = "Weekly", quantity = 2 })).Content.ReadFromJsonAsync<JsonElement>())
             .GetProperty("id").GetInt32();
 
-        (await child.PostAsJsonAsync($"/api/v1/me/rewards/{offerId}/purchase", new { })).EnsureSuccessStatusCode();
-        (await child.PostAsJsonAsync($"/api/v1/me/rewards/{offerId}/purchase", new { })).EnsureSuccessStatusCode();
+        (await child.PostAsJsonAsync($"/api/v1/me/rewards/available/{offerId}/purchase", new { })).EnsureSuccessStatusCode();
+        (await child.PostAsJsonAsync($"/api/v1/me/rewards/available/{offerId}/purchase", new { })).EnsureSuccessStatusCode();
 
         // Dritter Kauf in derselben Woche -> Kontingent erschöpft (409), obwohl noch Münzen da sind.
-        var third = await child.PostAsJsonAsync($"/api/v1/me/rewards/{offerId}/purchase", new { });
+        var third = await child.PostAsJsonAsync($"/api/v1/me/rewards/available/{offerId}/purchase", new { });
         Assert.Equal(HttpStatusCode.Conflict, third.StatusCode);
     }
 

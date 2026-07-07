@@ -744,9 +744,8 @@ export interface MyRedemption {
   fulfilledAt: string | null;
 }
 
-/** Angebots-Sicht des Sohns: Münzstand, verfügbare Angebote, eigene Käufe. */
+/** Angebots-Sicht des Sohns: verfügbare Angebote + eigene Käufe. Der Münzstand kommt aus me/points (Wallet). */
 export interface RewardsView {
-  coins: number;
   available: RewardOffer[];
   redemptions: MyRedemption[];
 }
@@ -905,6 +904,14 @@ export interface WalletEntry {
   createdAt: string;
 }
 
+/** Reiner Kontostand des Sohns (GET me/points). Die Buchungen liegen unter me/points/entries. */
+export interface WalletBalance {
+  childId: number;
+  coins: number;
+  gems: number;
+}
+
+/** Kombinierte Konto-Sicht des Vaters (GET children/{id}/points): Salden + eingebettete Buchungen. */
 export interface Wallet {
   childId: number;
   coins: number;

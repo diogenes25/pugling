@@ -308,12 +308,17 @@ app.UseSwaggerUI(o =>
 {
     o.SwaggerEndpoint("/openapi/v1.json", "Pugling API v1");
     o.RoutePrefix = "swagger";
+    // Den per „Authorize" eingegebenen Bearer-Token im Browser (localStorage) halten, damit ein
+    // Reload beim Ausprobieren nicht sofort ein erneutes Authorisieren erzwingt.
+    o.EnablePersistAuthorization();
 });
 app.MapScalarApiReference(options =>
 {
     options
         .WithTitle("Pugling API v1")
-        .WithPreferredScheme("bearer");
+        .WithPreferredScheme("bearer")
+        // Wie bei Swagger: eingegebene Authentifizierung über Reloads hinweg behalten.
+        .EnablePersistentAuthentication();
 });
 
 app.UseCors();

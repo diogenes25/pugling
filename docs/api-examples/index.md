@@ -1,6 +1,6 @@
 # API-Beispiele – Übersicht
 
-Automatisch erzeugt von `backend/Pugling.Api.Tests/DocsCaptureTests.cs`. Insgesamt **92** Beispiele in **10** Gruppen.
+Automatisch erzeugt von `backend/Pugling.Api.Tests/DocsCaptureTests.cs`. Insgesamt **104** Beispiele in **10** Gruppen.
 
 | Gruppe | Beispiele | Fehlerfälle | Datei |
 | --- | ---: | ---: | --- |
@@ -8,9 +8,9 @@ Automatisch erzeugt von `backend/Pugling.Api.Tests/DocsCaptureTests.cs`. Insgesa
 | catalog | 9 | 5 | [`catalog.md`](./catalog.md) |
 | children | 7 | 2 | [`children.md`](./children.md) |
 | class-tests | 3 | 2 | [`class-tests.md`](./class-tests.md) |
-| me | 18 | 9 | [`me.md`](./me.md) |
-| shop | 26 | 7 | [`shop.md`](./shop.md) |
-| study-plans | 12 | 6 | [`study-plans.md`](./study-plans.md) |
+| me | 26 | 9 | [`me.md`](./me.md) |
+| shop | 27 | 7 | [`shop.md`](./shop.md) |
+| study-plans | 15 | 6 | [`study-plans.md`](./study-plans.md) |
 | tags | 5 | 3 | [`tags.md`](./tags.md) |
 | timetable | 2 | 1 | [`timetable.md`](./timetable.md) |
 | vocabulary | 4 | 2 | [`vocabulary.md`](./vocabulary.md) |

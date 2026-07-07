@@ -40,9 +40,9 @@ public class RewardsFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
         (await father.PostAsJsonAsync($"/api/v1/children/{childId}/points",
             new { amount = 250, reason = "Test-Guthaben" })).EnsureSuccessStatusCode();
 
-        // Sohn kauft -> Münzen sofort weg, Status Purchased
-        var view = await JsonAsync(await child.PostAsJsonAsync($"/api/v1/me/rewards/{offerId}/purchase", new { }));
-        Assert.Equal(50, view.GetProperty("coins").GetInt32()); // 250 - 200
+        // Sohn kauft -> Münzen sofort weg, Status Purchased. Der Kauf liefert die kombinierte Sicht
+        // (ohne coins – der Saldo steht in me/points, siehe unten).
+        var view = await JsonAsync(await child.PostAsJsonAsync($"/api/v1/me/rewards/available/{offerId}/purchase", new { }));
         var purchase = view.GetProperty("redemptions").EnumerateArray().First();
         Assert.Equal("Purchased", purchase.GetProperty("status").GetString());
         var redemptionId = purchase.GetProperty("id").GetInt32();
@@ -50,7 +50,8 @@ public class RewardsFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
         // Abbuchung ist als negative Reward-Buchung im Wallet nachvollziehbar
         var wallet = await JsonAsync(await child.GetAsync("/api/v1/me/points"));
         Assert.Equal(50, wallet.GetProperty("coins").GetInt32());
-        var spend = wallet.GetProperty("entries").EnumerateArray()
+        var entries = await JsonAsync(await child.GetAsync("/api/v1/me/points/entries"));
+        var spend = entries.EnumerateArray()
             .First(e => e.GetProperty("kind").GetString() == "Reward");
         Assert.Equal(-200, spend.GetProperty("amount").GetInt32());
 
@@ -73,7 +74,7 @@ public class RewardsFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
         (await father.PostAsJsonAsync($"/api/v1/children/{childId}/points", new { amount = 300, reason = "x" })).EnsureSuccessStatusCode();
         var offerId = await CreateOfferAsync(father, childId, new { title = "Nachtisch", cost = 100 });
 
-        var view = await JsonAsync(await child.PostAsJsonAsync($"/api/v1/me/rewards/{offerId}/purchase", new { }));
+        var view = await JsonAsync(await child.PostAsJsonAsync($"/api/v1/me/rewards/available/{offerId}/purchase", new { }));
         var redemptionId = view.GetProperty("redemptions").EnumerateArray().First().GetProperty("id").GetInt32();
 
         // Offener Kauf: erfüll- UND stornierbar (server-autoritative Affordance).
@@ -102,7 +103,7 @@ public class RewardsFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
         var (childId, child) = await FreshChildAsync(father, "9002");
         var offerId = await CreateOfferAsync(father, childId, new { title = "Kinoabend", cost = 1500 });
 
-        var res = await child.PostAsJsonAsync($"/api/v1/me/rewards/{offerId}/purchase", new { });
+        var res = await child.PostAsJsonAsync($"/api/v1/me/rewards/available/{offerId}/purchase", new { });
         Assert.Equal(HttpStatusCode.BadRequest, res.StatusCode);
 
         var wallet = await JsonAsync(await child.GetAsync("/api/v1/me/points"));
@@ -117,9 +118,10 @@ public class RewardsFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
         (await father.PostAsJsonAsync($"/api/v1/children/{childId}/points", new { amount = 500, reason = "x" })).EnsureSuccessStatusCode();
         var offerId = await CreateOfferAsync(father, childId, new { title = "1 Std Zocken", cost = 400 });
 
-        var view = await JsonAsync(await child.PostAsJsonAsync($"/api/v1/me/rewards/{offerId}/purchase", new { }));
-        Assert.Equal(100, view.GetProperty("coins").GetInt32()); // 500 - 400
+        var view = await JsonAsync(await child.PostAsJsonAsync($"/api/v1/me/rewards/available/{offerId}/purchase", new { }));
         var redemptionId = view.GetProperty("redemptions").EnumerateArray().First().GetProperty("id").GetInt32();
+        var walletAfterBuy = await JsonAsync(await child.GetAsync("/api/v1/me/points"));
+        Assert.Equal(100, walletAfterBuy.GetProperty("coins").GetInt32()); // 500 - 400
 
         var cancelled = await JsonAsync(await father.PostAsJsonAsync(
             $"/api/v1/children/{childId}/rewards/redemptions/{redemptionId}/cancel", new { }));
@@ -138,7 +140,7 @@ public class RewardsFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
         (await father.PostAsJsonAsync($"/api/v1/children/{childId}/points", new { amount = 300, reason = "x" })).EnsureSuccessStatusCode();
         var offerId = await CreateOfferAsync(father, childId, new { title = "Eis", cost = 100 });
 
-        var view = await JsonAsync(await child.PostAsJsonAsync($"/api/v1/me/rewards/{offerId}/purchase", new { }));
+        var view = await JsonAsync(await child.PostAsJsonAsync($"/api/v1/me/rewards/available/{offerId}/purchase", new { }));
         var redemptionId = view.GetProperty("redemptions").EnumerateArray().First().GetProperty("id").GetInt32();
         (await father.PostAsJsonAsync($"/api/v1/children/{childId}/rewards/redemptions/{redemptionId}/fulfill", new { }))
             .EnsureSuccessStatusCode();
@@ -167,7 +169,7 @@ public class RewardsFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
         var offerId = await CreateOfferAsync(father, childAId, new { title = "Eis", cost = 100 });
         var (_, childB) = await FreshChildAsync(father, "9005");
 
-        var res = await childB.PostAsJsonAsync($"/api/v1/me/rewards/{offerId}/purchase", new { });
+        var res = await childB.PostAsJsonAsync($"/api/v1/me/rewards/available/{offerId}/purchase", new { });
         Assert.Equal(HttpStatusCode.NotFound, res.StatusCode);
     }
 
@@ -273,5 +275,59 @@ public class RewardsFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
         var res = await father.PatchAsJsonAsync(
             $"/api/v1/children/{childId}/rewards/999999", new { title = "X" });
         Assert.Equal(HttpStatusCode.NotFound, res.StatusCode);
+    }
+
+    // ─── Unterressourcen: available / redemptions (Liste + Einzelansicht) ─────
+
+    [Fact]
+    public async Task Available_ListeUndEinzelansicht_MitPaging()
+    {
+        var father = await TestApi.FatherAsync(factory);
+        var (childId, child) = await FreshChildAsync(father, "9016");
+        var offerId = await CreateOfferAsync(father, childId, new { title = "TV", cost = 100 });
+
+        // Liste (paginiert): enthält das Angebot, X-Total-Count gesetzt.
+        var listRes = await child.GetAsync("/api/v1/me/rewards/available?take=50");
+        listRes.EnsureSuccessStatusCode();
+        Assert.True(listRes.Headers.Contains("X-Total-Count"));
+        var list = await listRes.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Contains(list.EnumerateArray(), o => o.GetProperty("id").GetInt32() == offerId);
+
+        // Einzelansicht: dasselbe Angebot.
+        var single = await JsonAsync(await child.GetAsync($"/api/v1/me/rewards/available/{offerId}"));
+        Assert.Equal(offerId, single.GetProperty("id").GetInt32());
+        Assert.Equal("TV", single.GetProperty("title").GetString());
+
+        // Unbekannt → 404.
+        Assert.Equal(HttpStatusCode.NotFound,
+            (await child.GetAsync("/api/v1/me/rewards/available/999999")).StatusCode);
+    }
+
+    [Fact]
+    public async Task Redemptions_ListeUndEinzelansicht_MitPaging()
+    {
+        var father = await TestApi.FatherAsync(factory);
+        var (childId, child) = await FreshChildAsync(father, "9017");
+        (await father.PostAsJsonAsync($"/api/v1/children/{childId}/points", new { amount = 300, reason = "x" })).EnsureSuccessStatusCode();
+        var offerId = await CreateOfferAsync(father, childId, new { title = "Snack", cost = 100 });
+
+        var buy = await JsonAsync(await child.PostAsJsonAsync($"/api/v1/me/rewards/available/{offerId}/purchase", new { }));
+        var redemptionId = buy.GetProperty("redemptions").EnumerateArray().First().GetProperty("id").GetInt32();
+
+        // Liste (paginiert): enthält den Kauf, X-Total-Count gesetzt.
+        var listRes = await child.GetAsync("/api/v1/me/rewards/redemptions");
+        listRes.EnsureSuccessStatusCode();
+        Assert.Equal("1", listRes.Headers.GetValues("X-Total-Count").Single());
+        var list = await listRes.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Contains(list.EnumerateArray(), r => r.GetProperty("id").GetInt32() == redemptionId);
+
+        // Einzelansicht.
+        var single = await JsonAsync(await child.GetAsync($"/api/v1/me/rewards/redemptions/{redemptionId}"));
+        Assert.Equal(redemptionId, single.GetProperty("id").GetInt32());
+        Assert.Equal("Purchased", single.GetProperty("status").GetString());
+
+        // Unbekannt → 404.
+        Assert.Equal(HttpStatusCode.NotFound,
+            (await child.GetAsync("/api/v1/me/rewards/redemptions/999999")).StatusCode);
     }
 }
