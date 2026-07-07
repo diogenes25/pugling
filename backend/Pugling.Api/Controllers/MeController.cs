@@ -124,8 +124,10 @@ public class MeController(PuglingDbContext db, GamificationService gamification,
     {
         var cid = User.ChildId();
         if (cid is null) return Forbid();
-        var all = await gamification.MissionStatusesAsync(cid.Value, DateOnly.FromDateTime(DateTime.UtcNow));
-        return Ok(Page(all, skip, take));
+        var (items, total) = await gamification.MissionStatusesAsync(cid.Value, DateOnly.FromDateTime(DateTime.UtcNow),
+            Math.Max(skip, 0), Math.Clamp(take, 0, PagingExtensions.MaxTake));
+        Response.Headers["X-Total-Count"] = total.ToString();
+        return Ok(items);
     }
 
     /// <summary>Eine einzelne eigene Mission (Einzelansicht zur Liste unter <c>missions</c>).</summary>
@@ -152,8 +154,10 @@ public class MeController(PuglingDbContext db, GamificationService gamification,
     {
         var cid = User.ChildId();
         if (cid is null) return Forbid();
-        var all = await gamification.AchievementStatusesAsync(cid.Value, DateOnly.FromDateTime(DateTime.UtcNow));
-        return Ok(Page(all, skip, take));
+        var (items, total) = await gamification.AchievementStatusesAsync(cid.Value, DateOnly.FromDateTime(DateTime.UtcNow),
+            Math.Max(skip, 0), Math.Clamp(take, 0, PagingExtensions.MaxTake));
+        Response.Headers["X-Total-Count"] = total.ToString();
+        return Ok(items);
     }
 
     /// <summary>Eine einzelne eigene Auszeichnung (Einzelansicht zur Liste unter <c>achievements</c>).</summary>
@@ -167,18 +171,6 @@ public class MeController(PuglingDbContext db, GamificationService gamification,
         if (cid is null) return Forbid();
         var status = await gamification.AchievementStatusAsync(cid.Value, achievementId, DateOnly.FromDateTime(DateTime.UtcNow));
         return status is null ? NotFound() : status;
-    }
-
-    /// <summary>
-    /// Seitenweiser Ausschnitt einer bereits sortierten In-Memory-Liste: setzt zuerst die
-    /// Gesamtzahl in <c>X-Total-Count</c> (vor dem Body), wendet dann Skip/Take an
-    /// (geklemmt wie in <see cref="PagingExtensions"/>). Für Listen aus Services, die keine
-    /// <c>IQueryable</c> liefern (Gamification-Status).
-    /// </summary>
-    private List<T> Page<T>(IReadOnlyList<T> all, int skip, int take)
-    {
-        Response.Headers["X-Total-Count"] = all.Count.ToString();
-        return [.. all.Skip(Math.Max(skip, 0)).Take(Math.Clamp(take, 0, PagingExtensions.MaxTake))];
     }
 
     /// <summary>Eigener Skin-Zustand: Gem-Stand, ausgerüsteter Skin und freigeschaltete Skins.</summary>
@@ -304,7 +296,7 @@ public class MeController(PuglingDbContext db, GamificationService gamification,
         var cid = User.ChildId();
         if (cid is null) return Forbid();
         var all = await AvailableOffersAsync(cid.Value, DateTime.UtcNow);
-        return Ok(Page(all, skip, take));
+        return Ok(all.ToPagedList(Response, skip, take));
     }
 
     /// <summary>Ein einzelnes aktives Angebot (Einzelansicht zur Liste unter <c>rewards/available</c>).</summary>
@@ -322,8 +314,9 @@ public class MeController(PuglingDbContext db, GamificationService gamification,
             .FirstOrDefaultAsync(r => r.Id == availableId && r.ChildId == cid && r.Active);
         if (reward is null) return NotFound();
 
+        var now = DateTime.UtcNow;
         var coins = await wallet.CoinsAsync(cid.Value);
-        return await MapOfferAsync(reward, coins, DateTime.UtcNow);
+        return MapOffer(reward, coins, await offers.CountInCurrentPeriodAsync(reward, now));
     }
 
     /// <summary>Eigene Käufe (offene zuerst, dann neueste), seitenweise; optional nach Status gefiltert.</summary>
@@ -536,16 +529,15 @@ public class MeController(PuglingDbContext db, GamificationService gamification,
             .OrderBy(r => r.Cost).ThenBy(r => r.Id)
             .ToListAsync();
 
-        var available = new List<RewardOfferResponse>(offersList.Count);
-        foreach (var r in offersList)
-            available.Add(await MapOfferAsync(r, coins, now));
-        return available;
+        // Verbrauchte Kontingente aller Angebote gebündelt (≤ 4 Abfragen statt einer je Angebot).
+        var used = await offers.CountsInCurrentPeriodAsync(offersList, now);
+        return offersList.Select(r => MapOffer(r, coins, used[r.Id])).ToList();
     }
 
-    /// <summary>Projiziert ein Angebot in die Sohn-Sicht (eine Kontingent-Abfrage je Angebot).</summary>
-    private async Task<RewardOfferResponse> MapOfferAsync(Reward r, int coins, DateTime now)
+    /// <summary>Projiziert ein Angebot in die Sohn-Sicht anhand des schon ermittelten Verbrauchs.</summary>
+    private static RewardOfferResponse MapOffer(Reward r, int coins, int used)
     {
-        var remaining = Math.Max(0, r.Quantity - await offers.CountInCurrentPeriodAsync(r, now));
+        var remaining = Math.Max(0, r.Quantity - used);
         return new RewardOfferResponse(r.Id, r.Title, r.Cost, r.Period, r.Quantity,
             remaining, coins >= r.Cost && remaining > 0, r.StudyPlan?.Title, r.Exercise?.Title);
     }

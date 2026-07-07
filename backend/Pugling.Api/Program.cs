@@ -3,6 +3,7 @@ using System.Threading.RateLimiting;
 using Asp.Versioning;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
@@ -47,6 +48,13 @@ builder.Services.Configure<ApiBehaviorOptions>(o =>
         // dann einen irreführenden „field is required"-Eintrag (ohne „$"). Nur DEN unterdrücken, nicht
         // echte Route-/Query-/Feld-Fehler (die trotz Body-Parse-Fehler legitim sind).
         var hasJsonError = modelState.Keys.Any(key => key.StartsWith('$'));
+        // Nur der als null gebundene Body-Parameter erzeugt das irreführende „field is required" – nicht
+        // ein echt fehlender Route-/Query-Parameter. Darum gezielt an den Body-Parameternamen knüpfen
+        // (statt „jeder nicht-$-Key"), sonst würden legitime fehlende Route-/Query-Pflichtfelder verschluckt.
+        var bodyParamNames = context.ActionDescriptor.Parameters
+            .Where(p => p.BindingInfo?.BindingSource == BindingSource.Body)
+            .Select(p => p.Name)
+            .ToHashSet(StringComparer.Ordinal);
         // Die (Body-)Parameter-Typen der Action, gegen die wir einen JSON-Pfad wie „$.unitType" auflösen,
         // um bei ungültigen Enum-Werten die zulässigen Werte nennen zu können.
         var parameterTypes = context.ActionDescriptor.Parameters.Select(p => p.ParameterType);
@@ -54,7 +62,7 @@ builder.Services.Configure<ApiBehaviorOptions>(o =>
         foreach (var (key, entry) in modelState)
         {
             if (entry.Errors.Count == 0) continue;
-            if (hasJsonError && !key.StartsWith('$')
+            if (hasJsonError && bodyParamNames.Contains(key)
                 && entry.Errors.All(e => e.ErrorMessage.Contains("is required", StringComparison.Ordinal)))
                 continue;
 

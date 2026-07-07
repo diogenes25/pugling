@@ -142,6 +142,34 @@ public class OfferService(PuglingDbContext db, WalletService wallet)
         return query.CountAsync(ct);
     }
 
+    /// <summary>
+    /// Verbrauchte Kontingente vieler Angebote in einem Rutsch (vermeidet N+1 bei Listen-Sichten):
+    /// gruppiert nach <see cref="OfferPeriod"/> (≤ 4 Fenster) und zählt je Fenster einmal pro
+    /// <see cref="Reward.Id"/>. Liefert für jedes übergebene Angebot einen Eintrag (0, wenn keine Käufe).
+    /// </summary>
+    public async Task<Dictionary<int, int>> CountsInCurrentPeriodAsync(
+        IReadOnlyList<Reward> rewards, DateTime nowUtc, CancellationToken ct = default)
+    {
+        var result = rewards.ToDictionary(r => r.Id, _ => 0);
+        foreach (var group in rewards.GroupBy(r => r.Period))
+        {
+            var window = PeriodWindow.Of(group.Key, nowUtc);
+            var ids = group.Select(r => r.Id).ToList();
+            var query = db.RewardRedemptions
+                .Where(r => r.RewardId != null && ids.Contains(r.RewardId.Value)
+                    && r.Status != RewardRedemptionStatus.Cancelled);
+            if (window.From is { } from) query = query.Where(r => r.PurchasedAt >= from);
+            if (window.To is { } to) query = query.Where(r => r.PurchasedAt < to);
+
+            var counts = await query
+                .GroupBy(r => r.RewardId!.Value)
+                .Select(g => new { RewardId = g.Key, Count = g.Count() })
+                .ToListAsync(ct);
+            foreach (var c in counts) result[c.RewardId] = c.Count;
+        }
+        return result;
+    }
+
     private Task<RewardRedemption?> LoadOpenAsync(int childId, int redemptionId, CancellationToken ct) =>
         db.RewardRedemptions.FirstOrDefaultAsync(
             r => r.Id == redemptionId && r.ChildId == childId && r.Status == RewardRedemptionStatus.Purchased, ct);

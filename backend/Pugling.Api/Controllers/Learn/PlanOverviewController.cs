@@ -70,32 +70,11 @@ public class PlanOverviewController(PuglingDbContext db, PositionProgressService
         if (plan is null) return NotFound();
 
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
-        var days = await progress.ProgressAsync(plan, plan.EndDate);
-        var totalDays = plan.EndDate.DayNumber - plan.StartDate.DayNumber + 1;
-
-        // Kennzahlen über die gesamte Laufzeit – unabhängig von Filter/Paging der Days-Liste.
-        var daysComplete = days.Count(d => d.DutyDone);
-        var totalPoints = days.Sum(d => d.PointsAwarded);
-        var currentStreak = PositionProgressService.Streak(days, today);
-
-        IEnumerable<PositionProgressService.ProgressDay> filtered = days;
-        if (from is not null) filtered = filtered.Where(d => d.Day >= from);
-        if (to is not null) filtered = filtered.Where(d => d.Day <= to);
-        if (dutyDone is not null) filtered = filtered.Where(d => d.DutyDone == dutyDone);
-
-        filtered = sort switch
-        {
-            "-day" => filtered.OrderByDescending(d => d.Day),
-            "points" => filtered.OrderBy(d => d.PointsAwarded).ThenBy(d => d.Day),
-            "-points" => filtered.OrderByDescending(d => d.PointsAwarded).ThenBy(d => d.Day),
-            _ => filtered.OrderBy(d => d.Day),
-        };
-
-        var window = filtered.ToList();
-        Response.Headers["X-Total-Count"] = window.Count.ToString();
-        var page = window.Skip(Math.Max(skip, 0)).Take(Math.Clamp(take, 0, PagingExtensions.MaxTake)).ToList();
+        var view = await progress.ProgressViewAsync(plan, today, from, to, dutyDone, sort);
+        // Paging (HTTP-Belang) auf die bereits gefilterte/sortierte Tagesliste; X-Total-Count = gefilterte Gesamtzahl.
+        var page = view.Days.ToPagedList(Response, skip, take);
 
         return new ProgressResponse(plan.Id, plan.StartDate, plan.EndDate,
-            daysComplete, totalDays, totalPoints, currentStreak, page);
+            view.DaysComplete, view.TotalDays, view.TotalPoints, view.CurrentStreak, page);
     }
 }
