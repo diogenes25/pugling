@@ -47,6 +47,9 @@ builder.Services.Configure<ApiBehaviorOptions>(o =>
         // dann einen irreführenden „field is required"-Eintrag (ohne „$"). Nur DEN unterdrücken, nicht
         // echte Route-/Query-/Feld-Fehler (die trotz Body-Parse-Fehler legitim sind).
         var hasJsonError = modelState.Keys.Any(key => key.StartsWith('$'));
+        // Die (Body-)Parameter-Typen der Action, gegen die wir einen JSON-Pfad wie „$.unitType" auflösen,
+        // um bei ungültigen Enum-Werten die zulässigen Werte nennen zu können.
+        var parameterTypes = context.ActionDescriptor.Parameters.Select(p => p.ParameterType);
         var errors = new Dictionary<string, string[]>();
         foreach (var (key, entry) in modelState)
         {
@@ -55,9 +58,15 @@ builder.Services.Configure<ApiBehaviorOptions>(o =>
                 && entry.Errors.All(e => e.ErrorMessage.Contains("is required", StringComparison.Ordinal)))
                 continue;
 
+            // Ist der Pfad ein Enum-Feld, kennen wir dessen erlaubte Werte – unabhängig von der Rohmeldung.
+            var enumType = EnumSchemaHelp.EnumTypeForJsonPath(parameterTypes, key);
             var messages = entry.Errors
                 .Select(e => e.ErrorMessage.Contains("could not be converted", StringComparison.Ordinal)
-                    ? "The value is not of the expected type."
+                    ? enumType is not null
+                        // Ungültiger Enum-Wert: die zulässigen Werte nennen (statt „irgendwas stimmte nicht").
+                        ? $"The value is not one of the allowed values: {string.Join(", ", EnumSchemaHelp.AllowedValues(enumType))}."
+                        // Sonstige Konvertierungsfehler (z. B. String statt int): Rohmeldung leakt den DTO-Typ.
+                        : "The value is not of the expected type."
                     : e.ErrorMessage)
                 .ToArray();
             // Nur das führende „$."-Token des JSON-Pfads entfernen (nicht per Zeichensatz, sonst wird
@@ -185,6 +194,32 @@ builder.Services.AddOpenApi(o =>
 {
     o.AddOperationTransformer(new OpenApiExamplesOperationTransformer(
         OpenApiExampleCatalog.Load(builder.Environment.ContentRootPath)));
+
+    // Enum-Felder in der Doku ausweisen: Der JsonStringEnumConverter emittiert bereits die enum-Werte im
+    // Schema; hier zusätzlich die zulässigen Werte in die Beschreibung schreiben, damit Swagger/Scalar sie
+    // gut lesbar zeigen (und die 400-Fehlermeldung „allowed values: …" ihr Gegenstück in der Doku hat).
+    o.AddSchemaTransformer((schema, context, _) =>
+    {
+        if (context.JsonTypeInfo.Type.IsEnum)
+        {
+            var names = EnumSchemaHelp.AllowedValues(context.JsonTypeInfo.Type);
+            // Die API akzeptiert/liefert Enums als STRING (globaler JsonStringEnumConverter); der Generator
+            // annotiert sie sonst als integer ohne Werteliste – also die Realität ins Schema schreiben:
+            // string + explizite enum-Werte, plus die Werte in der Beschreibung für Swagger/Scalar.
+            schema.Type = JsonSchemaType.String;
+            schema.Enum = [.. names.Select(n => (JsonNode)JsonValue.Create(n))];
+            var hint = $"Allowed values: {string.Join(", ", names)}.";
+            schema.Description = string.IsNullOrEmpty(schema.Description) ? hint : $"{schema.Description}\n\n{hint}";
+        }
+        else if (schema.Properties is { Count: > 0 })
+        {
+            // required korrekt setzen: Der Generator markiert JEDEN Record-Konstruktorparameter als required –
+            // auch nullbare (optionale) wie „string?"/„TEnum?". Neu berechnen anhand der Nullbarkeit, damit
+            // Swagger/Scalar Pflicht- vs. optionale Felder wahrheitsgemäß ausweisen (v. a. Partial-Update-DTOs).
+            schema.Required = new HashSet<string>(EnumSchemaHelp.RequiredJsonPropertyNames(context.JsonTypeInfo));
+        }
+        return Task.CompletedTask;
+    });
 
     o.AddDocumentTransformer((doc, _, _) =>
     {

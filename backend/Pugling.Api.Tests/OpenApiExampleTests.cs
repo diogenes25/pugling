@@ -21,6 +21,34 @@ public class OpenApiExampleTests(PuglingWebAppFactory factory) : IClassFixture<P
         AssertDocumentContainsExample(doc, "me-angebot-kaufen");
     }
 
+    [Fact]
+    public async Task OpenApi_Schema_BeschreibtEnumWerteUndPflichtOptionaleFelder()
+    {
+        var client = factory.CreateClient();
+        var doc = await client.GetFromJsonAsync<JsonElement>("/openapi/v1.json");
+        var schemas = doc.GetProperty("components").GetProperty("schemas");
+
+        // Enums: als string mit der vollständigen Werteliste dokumentiert (nicht als nackter integer).
+        var unitType = schemas.GetProperty("UnitType");
+        Assert.Equal("string", unitType.GetProperty("type").GetString());
+        var allowed = unitType.GetProperty("enum").EnumerateArray().Select(v => v.GetString()).ToList();
+        Assert.Equal(Enum.GetNames<Pugling.Api.Models.UnitType>(), allowed);
+
+        // Pflicht vs. optional korrekt: Create nennt die nicht-nullbaren Felder als required, aber NICHT das
+        // optionale „description" (string?). Alle Properties bleiben trotzdem im Objekt beschrieben.
+        var create = schemas.GetProperty("CreateShopArticleDto");
+        var createRequired = create.GetProperty("required").EnumerateArray().Select(v => v.GetString()).ToList();
+        Assert.Contains("articleNumber", createRequired);
+        Assert.Contains("unitType", createRequired);
+        Assert.DoesNotContain("description", createRequired);
+        Assert.Contains("description", create.GetProperty("properties").EnumerateObject().Select(p => p.Name));
+
+        // Partial-Update-DTO: alle Felder nullbar → gar kein required (der Generator hätte alle markiert).
+        var update = schemas.GetProperty("UpdateShopArticleDto");
+        Assert.False(update.TryGetProperty("required", out var upd) && upd.GetArrayLength() > 0,
+            "UpdateShopArticleDto darf keine Pflichtfelder ausweisen (alle Felder sind optional).");
+    }
+
     private static IReadOnlyList<string> RequestExampleKeys(JsonElement doc, string path, string method) =>
         ExampleKeys(doc.GetProperty("paths").GetProperty(path).GetProperty(method)
             .GetProperty("requestBody").GetProperty("content"));
