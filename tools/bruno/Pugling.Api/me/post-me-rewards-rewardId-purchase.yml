@@ -1,0 +1,190 @@
+info:
+  name: "Kauft ein Angebot: die Münzen werden <b>sofort</b> abgebucht (Direktkauf), der Vater erfüllt seinen Teil später. Das Kontingent der aktuellen Periode und die Deckung werden serverseitig geprüft; ein paralleler Doppelkauf scheitert per Concurrency-Token mit 409."
+  type: http
+  seq: 5
+  tags:
+    - Me
+
+http:
+  method: POST
+  url: "{{baseUrl}}/api/v1/me/rewards/:rewardId/purchase"
+  params:
+    - name: rewardId
+      value: "{{rewardId}}"
+      type: path
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        const body = res.getBody();
+
+        function capture(name, value) {
+          if (value === undefined || value === null || value === '') return;
+          bru.setVar(name, value);
+          bru.setEnvVar(name, String(value), { persist: true });
+        }
+
+        if (body && typeof body === 'object' && !Array.isArray(body)) {
+          capture('rewardId', body.rewardId ?? body.id);
+          capture('fatherId', body.fatherId);
+          capture('childId', body.childId);
+          capture('subjectId', body.subjectId);
+          capture('chapterId', body.chapterId);
+          capture('categoryId', body.categoryId);
+          capture('exerciseId', body.exerciseId);
+          capture('planId', body.planId);
+          capture('positionId', body.positionId);
+          capture('sessionId', body.sessionId);
+          capture('attemptId', body.attemptId);
+          capture('tagId', body.tagId);
+          capture('classTestId', body.classTestId);
+          capture('missionId', body.missionId);
+          capture('achievementId', body.achievementId);
+          capture('rewardId', body.rewardId);
+          capture('redemptionId', body.redemptionId);
+          capture('articleId', body.articleId);
+          capture('listingId', body.listingId);
+          capture('purchaseId', body.purchaseId);
+          capture('activationId', body.activationId);
+          capture('vocabularyId', body.vocabularyId);
+          capture('wordId', body.wordId);
+          capture('skinId', body.skinId);
+        }
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+examples:
+  - name: Angebot kaufen
+    description: "Verifiziert durch DocsCaptureTests: Rolle `child`, erwartet HTTP 200."
+    request:
+      url: "{{baseUrl}}/api/v1/me/rewards/:rewardId/purchase"
+      method: POST
+      params:
+        - name: rewardId
+          value: "{{rewardId}}"
+          type: path
+    response:
+      status: 200
+      statusText: OK
+      headers:
+        - name: Content-Type
+          value: application/json
+      body:
+        type: json
+        data: |-
+          {
+            "coins": 450,
+            "available": [
+              {
+                "id": 5,
+                "title": "30 Min Fernsehen",
+                "cost": 50,
+                "period": "Weekly",
+                "quantity": 3,
+                "remainingThisPeriod": 2,
+                "affordable": true,
+                "planTitle": null,
+                "exerciseTitle": null
+              }
+            ],
+            "redemptions": [
+              {
+                "id": 1,
+                "rewardId": 5,
+                "title": "30 Min Fernsehen",
+                "cost": 50,
+                "status": "Purchased",
+                "purchasedAt": "2026-07-06T22:11:34.994423",
+                "fulfilledAt": null
+              }
+            ]
+          }
+  - name: Deaktiviertes Angebot kaufen (Fehlerfall)
+    description: "Verifiziert durch DocsCaptureTests: Rolle `child`, erwartet HTTP 400, Code `offer_inactive`."
+    request:
+      url: "{{baseUrl}}/api/v1/me/rewards/:rewardId/purchase"
+      method: POST
+      params:
+        - name: rewardId
+          value: "{{rewardId}}"
+          type: path
+    response:
+      status: 400
+      statusText: Bad Request
+      headers:
+        - name: Content-Type
+          value: application/json
+      body:
+        type: json
+        data: |-
+          {
+            "type": "https://pugling.app/errors/offer_inactive",
+            "title": "Offer no longer available.",
+            "status": 400,
+            "detail": "This offer is no longer available.",
+            "code": "offer_inactive",
+            "traceId": "<trace-id>"
+          }
+  - name: Angebot ohne Deckung kaufen (Fehlerfall)
+    description: "Verifiziert durch DocsCaptureTests: Rolle `child`, erwartet HTTP 400, Code `insufficient_coins`."
+    request:
+      url: "{{baseUrl}}/api/v1/me/rewards/:rewardId/purchase"
+      method: POST
+      params:
+        - name: rewardId
+          value: "{{rewardId}}"
+          type: path
+    response:
+      status: 400
+      statusText: Bad Request
+      headers:
+        - name: Content-Type
+          value: application/json
+      body:
+        type: json
+        data: |-
+          {
+            "type": "https://pugling.app/errors/insufficient_coins",
+            "title": "Not enough coins.",
+            "status": 400,
+            "detail": "Not enough coins for this offer.",
+            "code": "insufficient_coins",
+            "traceId": "<trace-id>"
+          }
+  - name: Angebot über Kontingent kaufen (Fehlerfall)
+    description: "Verifiziert durch DocsCaptureTests: Rolle `child`, erwartet HTTP 409, Code `quota_exhausted`."
+    request:
+      url: "{{baseUrl}}/api/v1/me/rewards/:rewardId/purchase"
+      method: POST
+      params:
+        - name: rewardId
+          value: "{{rewardId}}"
+          type: path
+    response:
+      status: 409
+      statusText: Conflict
+      headers:
+        - name: Content-Type
+          value: application/json
+      body:
+        type: json
+        data: |-
+          {
+            "type": "https://pugling.app/errors/quota_exhausted",
+            "title": "Quota exhausted.",
+            "status": 409,
+            "detail": "The quota for this period is exhausted.",
+            "code": "quota_exhausted",
+            "traceId": "<trace-id>"
+          }
+
+docs: |-
+  # Kauft ein Angebot: die Münzen werden <b>sofort</b> abgebucht (Direktkauf), der Vater erfüllt seinen Teil später. Das Kontingent der aktuellen Periode und die Deckung werden serverseitig geprüft; ein paralleler Doppelkauf scheitert per Concurrency-Token mit 409.
+
+  `POST /api/v1/me/rewards/{rewardId}/purchase`

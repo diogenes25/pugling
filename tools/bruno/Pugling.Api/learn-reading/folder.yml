@@ -1,0 +1,7 @@
+info:
+  name: Learn – Reading
+  type: folder
+  seq: 24
+
+request:
+  auth: inherit

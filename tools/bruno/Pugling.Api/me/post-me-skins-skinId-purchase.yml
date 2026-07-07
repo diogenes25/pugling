@@ -1,0 +1,171 @@
+info:
+  name: "Schaltet einen Skin für den angemeldeten Sohn frei: bucht die Kosten als negative Punkte-Buchung ab und rüstet ihn direkt aus. Kosten und Besitz sind serverseitig autoritativ (kein Client-Betrug). Abbuchung und Freischaltung werden in einem `SaveChanges` committet; das Concurrency-Token am Kind verhindert, dass zwei parallele Käufe (Doppelklick/Retry) beide den Deckungs-Check bestehen – der zweite scheitert dann und liefert 409 statt doppelt abzubuchen."
+  type: http
+  seq: 12
+  tags:
+    - Me
+
+http:
+  method: POST
+  url: "{{baseUrl}}/api/v1/me/skins/:skinId/purchase"
+  params:
+    - name: skinId
+      value: "{{skinId}}"
+      type: path
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        const body = res.getBody();
+
+        function capture(name, value) {
+          if (value === undefined || value === null || value === '') return;
+          bru.setVar(name, value);
+          bru.setEnvVar(name, String(value), { persist: true });
+        }
+
+        if (body && typeof body === 'object' && !Array.isArray(body)) {
+          capture('skinId', body.skinId ?? body.id);
+          capture('fatherId', body.fatherId);
+          capture('childId', body.childId);
+          capture('subjectId', body.subjectId);
+          capture('chapterId', body.chapterId);
+          capture('categoryId', body.categoryId);
+          capture('exerciseId', body.exerciseId);
+          capture('planId', body.planId);
+          capture('positionId', body.positionId);
+          capture('sessionId', body.sessionId);
+          capture('attemptId', body.attemptId);
+          capture('tagId', body.tagId);
+          capture('classTestId', body.classTestId);
+          capture('missionId', body.missionId);
+          capture('achievementId', body.achievementId);
+          capture('rewardId', body.rewardId);
+          capture('redemptionId', body.redemptionId);
+          capture('articleId', body.articleId);
+          capture('listingId', body.listingId);
+          capture('purchaseId', body.purchaseId);
+          capture('activationId', body.activationId);
+          capture('vocabularyId', body.vocabularyId);
+          capture('wordId', body.wordId);
+          capture('skinId', body.skinId);
+        }
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+examples:
+  - name: Skin kaufen (mit Gems)
+    description: "Verifiziert durch DocsCaptureTests: Rolle `child`, erwartet HTTP 200."
+    request:
+      url: "{{baseUrl}}/api/v1/me/skins/:skinId/purchase"
+      method: POST
+      params:
+        - name: skinId
+          value: "{{skinId}}"
+          type: path
+    response:
+      status: 200
+      statusText: OK
+      headers:
+        - name: Content-Type
+          value: application/json
+      body:
+        type: json
+        data: |-
+          {
+            "gems": 500,
+            "selected": "ninja",
+            "owned": [
+              "pug",
+              "ninja"
+            ]
+          }
+  - name: Skin kaufen ohne Gems (Fehlerfall)
+    description: "Verifiziert durch DocsCaptureTests: Rolle `child`, erwartet HTTP 400, Code `insufficient_gems`."
+    request:
+      url: "{{baseUrl}}/api/v1/me/skins/:skinId/purchase"
+      method: POST
+      params:
+        - name: skinId
+          value: "{{skinId}}"
+          type: path
+    response:
+      status: 400
+      statusText: Bad Request
+      headers:
+        - name: Content-Type
+          value: application/json
+      body:
+        type: json
+        data: |-
+          {
+            "type": "https://pugling.app/errors/insufficient_gems",
+            "title": "Not enough gems.",
+            "status": 400,
+            "detail": "Not enough gems: 0/300 for 'fox'.",
+            "code": "insufficient_gems",
+            "traceId": "<trace-id>"
+          }
+  - name: Unbekannten Skin kaufen (Fehlerfall)
+    description: "Verifiziert durch DocsCaptureTests: Rolle `child`, erwartet HTTP 404, Code `not_found`."
+    request:
+      url: "{{baseUrl}}/api/v1/me/skins/:skinId/purchase"
+      method: POST
+      params:
+        - name: skinId
+          value: "{{skinId}}"
+          type: path
+    response:
+      status: 404
+      statusText: Not Found
+      headers:
+        - name: Content-Type
+          value: application/json
+      body:
+        type: json
+        data: |-
+          {
+            "type": "https://pugling.app/errors/not_found",
+            "title": "Resource not found.",
+            "status": 404,
+            "detail": "Unknown skin 'banane'.",
+            "code": "not_found",
+            "traceId": "<trace-id>"
+          }
+  - name: Bereits besessenen Skin kaufen (Fehlerfall)
+    description: "Verifiziert durch DocsCaptureTests: Rolle `child`, erwartet HTTP 409, Code `skin_already_unlocked`."
+    request:
+      url: "{{baseUrl}}/api/v1/me/skins/:skinId/purchase"
+      method: POST
+      params:
+        - name: skinId
+          value: "{{skinId}}"
+          type: path
+    response:
+      status: 409
+      statusText: Conflict
+      headers:
+        - name: Content-Type
+          value: application/json
+      body:
+        type: json
+        data: |-
+          {
+            "type": "https://pugling.app/errors/skin_already_unlocked",
+            "title": "Skin already unlocked.",
+            "status": 409,
+            "detail": "This skin is already unlocked.",
+            "code": "skin_already_unlocked",
+            "traceId": "<trace-id>"
+          }
+
+docs: |-
+  # Schaltet einen Skin für den angemeldeten Sohn frei: bucht die Kosten als negative Punkte-Buchung ab und rüstet ihn direkt aus. Kosten und Besitz sind serverseitig autoritativ (kein Client-Betrug). Abbuchung und Freischaltung werden in einem `SaveChanges` committet; das Concurrency-Token am Kind verhindert, dass zwei parallele Käufe (Doppelklick/Retry) beide den Deckungs-Check bestehen – der zweite scheitert dann und liefert 409 statt doppelt abzubuchen.
+
+  `POST /api/v1/me/skins/{skinId}/purchase`

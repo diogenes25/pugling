@@ -1,0 +1,7 @@
+info:
+  name: Learn – Essays
+  type: folder
+  seq: 15
+
+request:
+  auth: inherit

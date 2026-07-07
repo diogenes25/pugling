@@ -1,0 +1,79 @@
+info:
+  name: Ändert eine Klassenarbeit partiell – u. a. Note nachtragen und Status setzen. Nur Vater.
+  type: http
+  seq: 5
+  tags:
+    - Learn – Class Tests
+
+http:
+  method: PATCH
+  url: "{{baseUrl}}/api/v1/class-tests/:id"
+  params:
+    - name: id
+      value: "{{id}}"
+      type: path
+  body:
+    type: json
+    data: |-
+      {
+        "title": "string",
+        "topic": "string",
+        "subjectId": "{{subjectId}}",
+        "scheduledDate": "{{date}}",
+        "status": "string",
+        "grade": "string",
+        "clearGrade": true,
+        "gradeComment": "string"
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        const body = res.getBody();
+
+        function capture(name, value) {
+          if (value === undefined || value === null || value === '') return;
+          bru.setVar(name, value);
+          bru.setEnvVar(name, String(value), { persist: true });
+        }
+
+        if (body && typeof body === 'object' && !Array.isArray(body)) {
+          capture('id', body.id ?? body.id);
+          capture('classTestId', body.classTestId ?? body.id);
+          capture('fatherId', body.fatherId);
+          capture('childId', body.childId);
+          capture('subjectId', body.subjectId);
+          capture('chapterId', body.chapterId);
+          capture('categoryId', body.categoryId);
+          capture('exerciseId', body.exerciseId);
+          capture('planId', body.planId);
+          capture('positionId', body.positionId);
+          capture('sessionId', body.sessionId);
+          capture('attemptId', body.attemptId);
+          capture('tagId', body.tagId);
+          capture('classTestId', body.classTestId);
+          capture('missionId', body.missionId);
+          capture('achievementId', body.achievementId);
+          capture('rewardId', body.rewardId);
+          capture('redemptionId', body.redemptionId);
+          capture('articleId', body.articleId);
+          capture('listingId', body.listingId);
+          capture('purchaseId', body.purchaseId);
+          capture('activationId', body.activationId);
+          capture('vocabularyId', body.vocabularyId);
+          capture('wordId', body.wordId);
+          capture('skinId', body.skinId);
+        }
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  # Ändert eine Klassenarbeit partiell – u. a. Note nachtragen und Status setzen. Nur Vater.
+
+  `PATCH /api/v1/class-tests/{id}`

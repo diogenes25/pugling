@@ -1,0 +1,7 @@
+info:
+  name: Study – Position Report
+  type: folder
+  seq: 35
+
+request:
+  auth: inherit

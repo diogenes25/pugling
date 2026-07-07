@@ -1,0 +1,116 @@
+name: local
+variables:
+  - name: baseUrl
+    value: http://localhost:5200
+  - name: token
+    value: ""
+  - name: fatherId
+    value: "1"
+  - name: childId
+    value: "1"
+  - name: fatherPin
+    value: "0000"
+  - name: childPin
+    value: "1111"
+  - name: subjectId
+    value: "1"
+  - name: chapterId
+    value: "1"
+  - name: categoryId
+    value: "1"
+  - name: exerciseId
+    value: "1"
+  - name: planId
+    value: "1"
+  - name: positionId
+    value: "1"
+  - name: sessionId
+    value: "1"
+  - name: attemptId
+    value: "1"
+  - name: tagId
+    value: "1"
+  - name: classTestId
+    value: "1"
+  - name: missionId
+    value: "1"
+  - name: achievementId
+    value: "1"
+  - name: rewardId
+    value: "1"
+  - name: redemptionId
+    value: "1"
+  - name: articleId
+    value: "1"
+  - name: listingId
+    value: "1"
+  - name: purchaseId
+    value: "1"
+  - name: activationId
+    value: "1"
+  - name: vocabularyId
+    value: "1"
+  - name: wordId
+    value: "1"
+  - name: skinId
+    value: classic
+  - name: date
+    value: 2026-07-07
+  - name: baseFormsOnly
+    value: ""
+  - name: dir
+    value: ""
+  - name: entryId
+    value: "1"
+  - name: grade
+    value: ""
+  - name: id
+    value: ""
+  - name: incomplete
+    value: ""
+  - name: key
+    value: ""
+  - name: linked
+    value: ""
+  - name: matchAll
+    value: ""
+  - name: minBadGrade
+    value: ""
+  - name: mineOnly
+    value: ""
+  - name: partOfSpeech
+    value: ""
+  - name: requestId
+    value: "1"
+  - name: schoolType
+    value: ""
+  - name: search
+    value: ""
+  - name: seed
+    value: ""
+  - name: sentenceId
+    value: "1"
+  - name: skip
+    value: "0"
+  - name: sort
+    value: ""
+  - name: sourceLanguage
+    value: ""
+  - name: stage
+    value: ""
+  - name: status
+    value: ""
+  - name: tag
+    value: ""
+  - name: take
+    value: "100"
+  - name: targetLanguage
+    value: ""
+  - name: translation
+    value: ""
+  - name: type
+    value: ""
+  - name: untranslated
+    value: ""
+  - name: word
+    value: ""
