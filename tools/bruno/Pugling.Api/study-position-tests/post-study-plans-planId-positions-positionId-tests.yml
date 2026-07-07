@@ -1,0 +1,154 @@
+info:
+  name: Startet einen Testversuch für die Position und liefert die zu lösenden Aufgaben (ohne Lösung).
+  type: http
+  seq: 1
+  tags:
+    - Study – Position Tests
+
+http:
+  method: POST
+  url: "{{baseUrl}}/api/v1/study-plans/:planId/positions/:positionId/tests"
+  params:
+    - name: planId
+      value: "{{planId}}"
+      type: path
+    - name: positionId
+      value: "{{positionId}}"
+      type: path
+  body:
+    type: json
+    data: |-
+      {}
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        const body = res.getBody();
+
+        function capture(name, value) {
+          if (value === undefined || value === null || value === '') return;
+          bru.setVar(name, value);
+          bru.setEnvVar(name, String(value), { persist: true });
+        }
+
+        if (body && typeof body === 'object' && !Array.isArray(body)) {
+          capture('planId', body.planId ?? body.id);
+          capture('positionId', body.positionId ?? body.id);
+          capture('attemptId', body.attemptId ?? body.id);
+          capture('fatherId', body.fatherId);
+          capture('childId', body.childId);
+          capture('subjectId', body.subjectId);
+          capture('chapterId', body.chapterId);
+          capture('categoryId', body.categoryId);
+          capture('exerciseId', body.exerciseId);
+          capture('planId', body.planId);
+          capture('positionId', body.positionId);
+          capture('sessionId', body.sessionId);
+          capture('attemptId', body.attemptId);
+          capture('tagId', body.tagId);
+          capture('classTestId', body.classTestId);
+          capture('missionId', body.missionId);
+          capture('achievementId', body.achievementId);
+          capture('rewardId', body.rewardId);
+          capture('redemptionId', body.redemptionId);
+          capture('articleId', body.articleId);
+          capture('listingId', body.listingId);
+          capture('purchaseId', body.purchaseId);
+          capture('activationId', body.activationId);
+          capture('vocabularyId', body.vocabularyId);
+          capture('wordId', body.wordId);
+          capture('skinId', body.skinId);
+        }
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+examples:
+  - name: Test starten
+    description: "Verifiziert durch DocsCaptureTests: Rolle `child`, erwartet HTTP 201."
+    request:
+      url: "{{baseUrl}}/api/v1/study-plans/:planId/positions/:positionId/tests"
+      method: POST
+      params:
+        - name: planId
+          value: "{{planId}}"
+          type: path
+        - name: positionId
+          value: "{{positionId}}"
+          type: path
+      body:
+        type: json
+        data: |-
+          {}
+    response:
+      status: 201
+      statusText: Created
+      headers:
+        - name: Content-Type
+          value: application/json
+      body:
+        type: json
+        data: |-
+          {
+            "attemptId": 1,
+            "planId": 2,
+            "positionId": 2,
+            "day": "2026-07-06",
+            "stage": 4,
+            "totalItems": 1,
+            "items": [
+              {
+                "itemIndex": 0,
+                "prompt": "hello",
+                "stage": 4,
+                "reveal": null,
+                "answerLength": null,
+                "hint": null,
+                "choices": null,
+                "audioUrl": null
+              }
+            ]
+          }
+  - name: Test auf Übung ohne prüfbaren Inhalt (Fehlerfall)
+    description: "Verifiziert durch DocsCaptureTests: Rolle `child`, erwartet HTTP 400, Code `no_checkable_content`."
+    request:
+      url: "{{baseUrl}}/api/v1/study-plans/:planId/positions/:positionId/tests"
+      method: POST
+      params:
+        - name: planId
+          value: "{{planId}}"
+          type: path
+        - name: positionId
+          value: "{{positionId}}"
+          type: path
+      body:
+        type: json
+        data: |-
+          {}
+    response:
+      status: 400
+      statusText: Bad Request
+      headers:
+        - name: Content-Type
+          value: application/json
+      body:
+        type: json
+        data: |-
+          {
+            "type": "https://pugling.app/errors/no_checkable_content",
+            "title": "No checkable content.",
+            "status": 400,
+            "detail": "The exercise contains no checkable content.",
+            "code": "no_checkable_content",
+            "traceId": "<trace-id>"
+          }
+
+docs: |-
+  # Startet einen Testversuch für die Position und liefert die zu lösenden Aufgaben (ohne Lösung).
+
+  `POST /api/v1/study-plans/{planId}/positions/{positionId}/tests`

@@ -68,11 +68,12 @@ const resourceIdBySegment = new Map([
   ['skins', 'skinId'],
 ]);
 
-const openApi = await loadOpenApi(input);
-await prepareOutput(output, force);
-await writeCollectionFiles(openApi, output);
-
-console.log(`Bruno-Collection erzeugt: ${output}`);
+const reasonPhrases = new Map([
+  [200, 'OK'], [201, 'Created'], [202, 'Accepted'], [204, 'No Content'],
+  [400, 'Bad Request'], [401, 'Unauthorized'], [403, 'Forbidden'], [404, 'Not Found'],
+  [405, 'Method Not Allowed'], [409, 'Conflict'], [415, 'Unsupported Media Type'],
+  [422, 'Unprocessable Entity'], [429, 'Too Many Requests'], [500, 'Internal Server Error'],
+]);
 
 function parseArgs(values) {
   const result = {};
@@ -134,31 +135,35 @@ async function prepareOutput(directory, forceOutput) {
 }
 
 async function writeCollectionFiles(api, directory) {
-  const collectionMeta = {
-    version: '1',
-    name: 'Pugling API',
-    type: 'collection',
-    auth: {
-      mode: 'bearer',
-      bearer: { token: '{{token}}' },
-    },
-  };
-  await writeFile(path.join(directory, 'bruno.json'), `${JSON.stringify(collectionMeta, null, 2)}\n`);
-  await writeFile(path.join(directory, 'README.md'), collectionReadme());
-
   const operations = collectOperations(api);
+
+  // Root der OpenCollection (.yml-Format): Collection-weite Bearer-Auth mit {{token}},
+  // die alle Ordner/Requests per `auth: inherit` erben.
+  await writeFile(path.join(directory, 'opencollection.yml'), collectionRoot());
+  await writeFile(path.join(directory, 'README.md'), collectionReadme());
 
   const environmentDir = path.join(directory, 'environments');
   await mkdir(environmentDir, { recursive: true });
-  await writeFile(path.join(environmentDir, 'local.bru'), localEnvironment());
+  await writeFile(path.join(environmentDir, 'local.yml'), localEnvironment());
 
-  for (const [index, operation] of operations.entries()) {
-    const folder = sanitizePathPart(operation.tag);
-    const fileName = `${String(index + 1).padStart(3, '0')}-${sanitizePathPart(operation.name)}.bru`;
-    const targetDir = path.join(directory, folder);
+  // Ordner (= Tags) alphabetisch, je ein folder.yml mit fortlaufender seq.
+  const byTag = new Map();
+  for (const operation of operations) {
+    if (!byTag.has(operation.tag)) byTag.set(operation.tag, []);
+    byTag.get(operation.tag).push(operation);
+  }
+  const tags = [...byTag.keys()].sort((left, right) => left.localeCompare(right));
 
+  for (const [tagIndex, tag] of tags.entries()) {
+    const targetDir = path.join(directory, folderSlug(tag));
     await mkdir(targetDir, { recursive: true });
-    await writeFile(path.join(targetDir, fileName), renderOperation(operation, index + 1));
+    await writeFile(path.join(targetDir, 'folder.yml'), folderFile(tag, tagIndex + 1));
+
+    const usedNames = new Set();
+    for (const [operationIndex, operation] of byTag.get(tag).entries()) {
+      const fileName = uniqueName(usedNames, operationSlug(operation));
+      await writeFile(path.join(targetDir, `${fileName}.yml`), renderRequest(operation, operationIndex + 1));
+    }
   }
 }
 
@@ -170,21 +175,23 @@ function collectOperations(api) {
     for (const [method, operation] of Object.entries(pathItem)) {
       if (!methods.has(method)) continue;
 
-      for (const parameterName of collectPathParameters(apiPath)) discoveredVariables.add(toVariableName(parameterName));
-      for (const parameter of collectQueryParameters(pathItem, operation)) discoveredVariables.add(toVariableName(parameter.name));
+      const params = collectParams(pathItem, operation, apiPath);
+      for (const parameter of params) discoveredVariables.add(toVariableName(parameter.name));
 
-      const tag = operation.tags?.[0] ?? firstPathSegment(apiPath) ?? 'API';
+      const bodyText = sampleBodyText(api, operation);
+
       operations.push({
-        method,
+        method: method.toUpperCase(),
         path: apiPath,
-        tag,
-        name: operation.summary?.trim() || `${method.toUpperCase()} ${apiPath}`,
-        operation,
-        pathParameters: collectPathParameters(apiPath),
-        queryParameters: collectQueryParameters(pathItem, operation),
-        body: sampleBody(api, operation),
+        url: `{{baseUrl}}${replacePathVariables(apiPath)}`,
+        tag: operation.tags?.[0] ?? firstPathSegment(apiPath) ?? 'API',
+        name: oneLine(operation.summary?.trim() || `${method.toUpperCase()} ${apiPath}`),
+        params,
+        bodyText,
+        description: oneLine(operation.description),
         isAuthEndpoint: isAuthEndpoint(apiPath),
-        captureVariables: captureVariablesFor(apiPath),
+        captureScript: captureScript(apiPath),
+        examples: collectExamples(operation, bodyText),
       });
     }
   }
@@ -192,62 +199,135 @@ function collectOperations(api) {
   return operations.sort((left, right) => `${left.tag} ${left.path} ${left.method}`.localeCompare(`${right.tag} ${right.path} ${right.method}`));
 }
 
-function renderOperation(operation, sequence) {
-  const url = `{{baseUrl}}${replacePathVariables(operation.path)}`;
-  const sections = [
-    `meta {\n  name: ${escapeBruValue(operation.name)}\n  type: http\n  seq: ${sequence}\n  tags: [\n    ${escapeBruValue(operation.tag)}\n  ]\n}`,
-    `${operation.method} {\n  url: ${url}\n}`,
-  ];
+// Ein Request als OpenCollection-.yml. Reihenfolge der Top-Level-Blöcke wie beim nativen Bruno-Import.
+function renderRequest(operation, sequence) {
+  const http = {
+    method: operation.method,
+    url: quoted(operation.url),
+    params: operation.params.length > 0 ? operation.params.map(paramNode) : undefined,
+    body: operation.bodyText !== undefined ? { type: 'json', data: new Block(operation.bodyText) } : undefined,
+    // Alle Requests erben die Collection-Bearer-Auth. Die Login-Endpunkte sind anonym und
+    // ignorieren den (anfangs leeren) Token serverseitig; ihr Script setzt {{token}} für den Rest.
+    auth: 'inherit',
+  };
 
-  if (operation.queryParameters.length > 0) {
-    sections.push(`params:query {\n${operation.queryParameters.map(parameter => `  ${parameter.name}: ${queryValue(parameter)}`).join('\n')}\n}`);
+  const document = {
+    info: { name: operation.name, type: 'http', seq: sequence, tags: [operation.tag] },
+    http,
+    runtime: operation.captureScript ? { scripts: [{ type: 'after-response', code: new Block(operation.captureScript) }] } : undefined,
+    settings: { encodeUrl: true, timeout: 0, followRedirects: true, maxRedirects: 5 },
+    examples: operation.examples.length > 0 ? operation.examples.map(exampleNode(operation)) : undefined,
+    docs: new Block(docsMarkdown(operation)),
+  };
+
+  return dumpDocument(document);
+}
+
+function paramNode(parameter) {
+  return {
+    name: parameter.name,
+    value: quoted(parameter.value),
+    type: parameter.type,
+    description: parameter.description ? oneLine(parameter.description) : undefined,
+  };
+}
+
+// Baut einen nativen Bruno-Beispiel-Eintrag: pro Szenario echter Request-Input (gepaart über den
+// gemeinsamen Example-Key von requestBody/response) + aufgezeichneter Response-Body.
+function exampleNode(operation) {
+  return example => {
+    const request = { url: quoted(operation.url), method: operation.method };
+    if (operation.params.length > 0) request.params = operation.params.map(paramNode);
+    if (example.requestBodyText !== undefined) request.body = { type: 'json', data: new Block(example.requestBodyText) };
+
+    return {
+      name: example.name,
+      description: example.description || undefined,
+      request,
+      response: {
+        status: example.code,
+        statusText: example.statusText,
+        headers: [{ name: 'Content-Type', value: 'application/json' }],
+        body: { type: 'json', data: new Block(example.responseBodyText) },
+      },
+    };
+  };
+}
+
+function docsMarkdown(operation) {
+  const lines = [`# ${operation.name}`, '', `\`${operation.method} ${operation.path}\``];
+  if (operation.description) lines.push('', operation.description);
+  return lines.join('\n');
+}
+
+function collectParams(pathItem, operation, apiPath) {
+  const declared = [...(pathItem.parameters ?? []), ...(operation.parameters ?? [])];
+  const describe = (name, location) => declared.find(parameter => parameter.name === name && parameter.in === location)?.description;
+
+  const params = [];
+
+  // Path-Parameter in Pfad-Reihenfolge; Wert als Variable, damit die Tabelle vorbelegt ist.
+  for (const raw of collectPathParameters(apiPath)) {
+    const variable = toVariableName(raw);
+    params.push({ name: variable, value: `{{${variable}}}`, type: 'path', description: describe(raw, 'path') });
   }
 
-  const headers = ['  Accept: application/json'];
-  if (operation.body !== undefined) headers.push('  Content-Type: application/json');
-  sections.push(`headers {\n${headers.join('\n')}\n}`);
-
-  if (!operation.isAuthEndpoint) {
-    sections.push(`auth {\n  mode: inherit\n}`);
+  for (const parameter of declared.filter(parameter => parameter.in === 'query')) {
+    const variable = toVariableName(parameter.name);
+    params.push({ name: parameter.name, value: `{{${variable}}}`, type: 'query', description: parameter.description });
   }
 
-  if (operation.body !== undefined) {
-    sections.push(`body {\n${indent(JSON.stringify(operation.body, null, 2), 2)}\n}`);
+  return params;
+}
+
+function collectExamples(operation, bodySampleText) {
+  const jsonRequest = operation.requestBody?.content?.['application/json'];
+  const requestExamples = jsonRequest?.examples;
+  const hasBody = jsonRequest !== undefined;
+  const result = [];
+
+  for (const [code, response] of Object.entries(operation.responses ?? {})) {
+    const content = response.content?.['application/json'];
+    if (!content) continue;
+
+    const entries = content.examples
+      ? Object.entries(content.examples)
+      : ('example' in content ? [[null, { value: content.example }]] : []);
+
+    for (const [key, example] of entries) {
+      const pairedRequest = key ? requestExamples?.[key]?.value : undefined;
+      result.push({
+        name: oneLine(example.summary?.trim() || key || `HTTP ${code}`),
+        description: oneLine(example.description),
+        requestBodyText: hasBody
+          ? (pairedRequest !== undefined ? JSON.stringify(pairedRequest, null, 2) : bodySampleText)
+          : undefined,
+        code: Number(code),
+        statusText: reasonPhrases.get(Number(code)) ?? response.description ?? '',
+        responseBodyText: JSON.stringify(example.value, null, 2),
+      });
+    }
   }
 
-  const postScript = postResponseScript(operation);
-  if (postScript) sections.push(`script:post-response {\n${indent(postScript, 2)}\n}`);
-
-  return `${sections.join('\n\n')}\n`;
+  return result;
 }
 
 function collectPathParameters(apiPath) {
   return [...apiPath.matchAll(/\{([^}:]+)(?::[^}]+)?\}/g)].map(match => match[1]);
 }
 
-function collectQueryParameters(pathItem, operation) {
-  return [...(pathItem.parameters ?? []), ...(operation.parameters ?? [])]
-    .filter(parameter => parameter.in === 'query')
-    .map(parameter => ({ name: parameter.name, schema: parameter.schema ?? {} }));
-}
-
+// Bruno-Pfadparameter-Syntax: `:name` im URL, Zuordnung zum Wert über den params-Block (type: path).
 function replacePathVariables(apiPath) {
-  return apiPath.replace(/\{([^}:]+)(?::[^}]+)?\}/g, (_, name) => `{{${toVariableName(name)}}}`);
-}
-
-function queryValue(parameter) {
-  const variableName = toVariableName(parameter.name);
-  if (knownVariables.has(variableName)) return `{{${variableName}}}`;
-
-  if (parameter.schema?.type === 'boolean') return 'true';
-  if (parameter.schema?.type === 'integer' || parameter.schema?.type === 'number') return '1';
-  if (parameter.schema?.format === 'date') return '{{date}}';
-
-  return `{{${variableName}}}`;
+  return apiPath.replace(/\{([^}:]+)(?::[^}]+)?\}/g, (_, name) => `:${toVariableName(name)}`);
 }
 
 function isAuthEndpoint(apiPath) {
   return apiPath.startsWith('/api/v1/auth/father') || apiPath.startsWith('/api/v1/auth/child');
+}
+
+function sampleBodyText(api, operation) {
+  const body = sampleBody(api, operation);
+  return body === undefined ? undefined : JSON.stringify(body, null, 2);
 }
 
 function sampleBody(api, operation) {
@@ -342,54 +422,102 @@ function captureVariablesFor(apiPath) {
   return [...variables];
 }
 
-function postResponseScript(operation) {
-  if (operation.isAuthEndpoint) {
+// after-response-Script: Login setzt {{token}}; alle anderen fangen IDs aus der Antwort ins
+// Environment, sodass Folge-Requests (z. B. neu angelegte Ressourcen) direkt darauf zugreifen.
+function captureScript(apiPath) {
+  if (isAuthEndpoint(apiPath)) {
     return `var jsonData = res.getBody();\nbru.setEnvVar('token', jsonData.token);`;
   }
 
-  const variables = operation.captureVariables;
-  const mappings = variables.map(variable =>
-    `capture('${variable}', body.${responsePropertyFor(variable)} ?? body.id);`
-  );
-
+  const mappings = captureVariablesFor(apiPath).map(variable => `capture('${variable}', body.${variable} ?? body.id);`);
   const genericCaptures = [...knownVariables.keys()]
     .filter(variable => variable.endsWith('Id'))
-    .map(variable => `capture('${variable}', body.${responsePropertyFor(variable)});`);
+    .map(variable => `capture('${variable}', body.${variable});`);
 
   const bodyLines = [...new Set([...mappings, ...genericCaptures])].join('\n');
-  if (!bodyLines) return '';
+  if (!bodyLines) return undefined;
 
   return `const body = res.getBody();\n\nfunction capture(name, value) {\n  if (value === undefined || value === null || value === '') return;\n  bru.setVar(name, value);\n  bru.setEnvVar(name, String(value), { persist: true });\n}\n\nif (body && typeof body === 'object' && !Array.isArray(body)) {\n${indent(bodyLines, 2)}\n}`;
 }
 
-function responsePropertyFor(variableName) {
-  return variableName.replace(/Id$/, 'Id');
+function collectionRoot() {
+  return `opencollection: 1.0.0
+
+info:
+  name: Pugling API
+
+request:
+  auth:
+    type: bearer
+    token: "{{token}}"
+bundled: false
+extensions:
+  bruno:
+    ignore:
+      - node_modules
+      - .git
+`;
+}
+
+function folderFile(tag, sequence) {
+  return dumpDocument({
+    info: { name: tag, type: 'folder', seq: sequence },
+    request: { auth: 'inherit' },
+  });
 }
 
 function localEnvironment() {
-  const variables = new Map([
+  const values = new Map([
     ...knownVariables.entries(),
     ...[...discoveredVariables].sort().map(variable => [variable, defaultValueFor(variable)]),
   ]);
-  const vars = [
-    ['baseUrl', 'http://localhost:5200'],
-    ['token', ''],
-    ...variables.entries(),
+
+  const variables = [
+    { name: 'baseUrl', value: 'http://localhost:5200' },
+    { name: 'token', value: quoted('') },
+    ...[...values.entries()].map(([name, value]) => ({ name, value: quoted(String(value)) })),
   ];
 
-  return `vars {\n${vars.map(([key, value]) => `  ${key}: ${value}`).join('\n')}\n}\n`;
+  return dumpDocument({ name: 'local', variables });
 }
 
 function defaultValueFor(variableName) {
   if (knownVariables.has(variableName)) return knownVariables.get(variableName);
+
+  const lower = variableName.toLowerCase();
   if (variableName.endsWith('Id')) return '1';
-  if (variableName.toLowerCase().includes('date')) return '{{date}}';
-  if (variableName.toLowerCase().includes('active')) return 'true';
+  if (lower.includes('date')) return '{{date}}';
+  if (lower === 'skip' || lower === 'offset') return '0';
+  if (lower === 'take' || lower === 'limit' || lower === 'pagesize') return '100';
+  if (lower === 'page') return '1';
+  if (lower.includes('active')) return 'true';
   return '';
 }
 
 function collectionReadme() {
-  return `# Pugling API Bruno Collection\n\nDiese Collection ist generiert. Manuelle Änderungen an Requests gehen beim nächsten Export verloren.\n\n## Aktualisieren\n\n\`npm run bruno:generate\`\n\nStandardquelle ist \`http://localhost:5200/openapi/v1.json\`. Alternativ kann eine gespeicherte OpenAPI-Datei genutzt werden:\n\n\`node tools/bruno/generate-bruno.mjs --input ./openapi.json --output tools/bruno/Pugling.Api\`\n\n## Auth\n\nDie Collection ist mit Bearer-Token-Auth konfiguriert (\`{{token}}\`). Vor dem Testen einen Login-Request ausführen – der Post-Response-Script setzt \`token\` automatisch ins aktive Environment. Alle anderen Requests erben die Auth von der Collection.\n\n## Variablen\n\nPfad- und Body-Werte werden als Bruno-Variablen gesetzt, z. B. \`{{fatherId}}\`, \`{{childId}}\`, \`{{planId}}\`, \`{{positionId}}\`.\n`;
+  return `# Pugling API Bruno Collection
+
+Generiert im OpenCollection-\`.yml\`-Format. Manuelle Änderungen gehen beim nächsten Export verloren.
+
+## Aktualisieren
+
+\`npm run bruno:generate\`
+
+Standardquelle ist \`http://localhost:5200/openapi/v1.json\`. Alternativ eine gespeicherte OpenAPI-Datei:
+
+\`node tools/bruno/generate-bruno.mjs --input ./openapi.json --output tools/bruno/Pugling.Api\`
+
+## Auth
+
+Die Collection (\`opencollection.yml\`) trägt Bearer-Auth mit \`{{token}}\`; Ordner und Requests erben sie
+per \`auth: inherit\`. Die Login-Requests (\`auth: none\`) setzen \`token\` per after-response-Script
+automatisch ins aktive Environment.
+
+## Variablen & Beispiele
+
+Pfad-/Query-Werte sind als \`{{variable}}\` vorbelegt (Environment \`environments/local.yml\`).
+Jeder Request bringt die von \`DocsCaptureTests\` verifizierten \`examples\` (Request-Eingabe + Response) mit.
+`;
 }
 
 function firstPathSegment(apiPath) {
@@ -400,20 +528,162 @@ function toVariableName(name) {
   return name.replace(/[^a-zA-Z0-9]+(.)/g, (_, character) => character.toUpperCase());
 }
 
-function sanitizePathPart(value) {
-  return value
-    .normalize('NFKD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-zA-Z0-9._-]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .slice(0, 80) || 'request';
+function uniqueName(used, name) {
+  let candidate = name;
+  let counter = 2;
+  while (used.has(candidate)) candidate = `${name} (${counter++})`;
+  used.add(candidate);
+  return candidate;
 }
 
-function escapeBruValue(value) {
-  return String(value).replace(/[\r\n]/g, ' ').trim();
+// Dateiname aus HTTP-Methode + Route (stabil, rein ASCII, kein Satzzeichen). Der menschenlesbare
+// Titel bleibt in `info.name` erhalten und wird von Bruno angezeigt.
+// GET /api/v1/children -> get-children; POST /api/v1/children/{childId}/points -> post-children-childId-points
+function operationSlug(operation) {
+  const route = operation.path.replace(/^\/api\/v1\//, '').replace(/[{}]/g, '');
+  return `${operation.method.toLowerCase()}-${route}`
+    .replace(/[^a-zA-Z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '') || 'request';
+}
+
+// Ordnername als ASCII-Slug des Tags (Leerzeichen/En-Dash/Akzente entfernt); Anzeigename bleibt in folder.yml.
+// "Admin \u2013 Children" -> admin-children
+function folderSlug(tag) {
+  return String(tag)
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-zA-Z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .toLowerCase() || 'folder';
+}
+
+function oneLine(value) {
+  return value === undefined || value === null ? undefined : String(value).replace(/\s*[\r\n]+\s*/g, ' ').trim();
+}
+
+// --- Minimaler YAML-Emitter (nur die hier benötigte Teilmenge) -------------------------------
+
+// Markiert einen String als literalen Blockskalar (`|-`), z. B. JSON-Bodies und Script-Code.
+class Block {
+  constructor(text) {
+    this.text = String(text);
+  }
+}
+
+// Markiert einen bereits fertig formatierten Skalar (z. B. eine Variable/URL), der wörtlich – ggf.
+// in Anführungszeichen – ausgegeben werden soll, statt erneut die Quoting-Heuristik zu durchlaufen.
+class Raw {
+  constructor(text) {
+    this.text = String(text);
+  }
+}
+
+function quoted(value) {
+  return new Raw(needsQuote(String(value)) ? doubleQuote(String(value)) : String(value));
+}
+
+function needsQuote(value) {
+  if (value === '') return true;
+  if (/^\s|\s$/.test(value)) return true;
+  if (/^[-?:,\[\]{}#&*!|>'"%@`]/.test(value)) return true;
+  if (/:(\s|$)/.test(value)) return true;
+  if (/\s#/.test(value)) return true;
+  if (/^(true|false|null|~|yes|no|on|off)$/i.test(value)) return true;
+  if (/^[+-]?(\d+\.?\d*|\.\d+)([eE][+-]?\d+)?$/.test(value)) return true;
+  if (/^\d{4}-\d\d-\d\d/.test(value)) return true;
+  return false;
+}
+
+function doubleQuote(value) {
+  return `"${value.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`;
+}
+
+function scalar(value) {
+  if (value instanceof Raw) return value.text;
+  if (value === null) return 'null';
+  if (typeof value === 'boolean' || typeof value === 'number') return String(value);
+  const text = String(value);
+  return needsQuote(text) ? doubleQuote(text) : text;
+}
+
+function isMapping(value) {
+  return value !== null && typeof value === 'object' && !Array.isArray(value) && !(value instanceof Block) && !(value instanceof Raw);
+}
+
+function dumpMapping(object, level) {
+  const pad = '  '.repeat(level);
+  const lines = [];
+
+  for (const [key, value] of Object.entries(object)) {
+    if (value === undefined) continue;
+
+    if (value instanceof Block) {
+      lines.push(`${pad}${key}: |-`);
+      const blockPad = '  '.repeat(level + 1);
+      for (const line of value.text.split('\n')) lines.push(line === '' ? '' : `${blockPad}${line}`);
+      continue;
+    }
+
+    if (Array.isArray(value)) {
+      if (value.length === 0) {
+        lines.push(`${pad}${key}: []`);
+        continue;
+      }
+      lines.push(`${pad}${key}:`);
+      lines.push(...dumpArray(value, level + 1));
+      continue;
+    }
+
+    if (isMapping(value)) {
+      lines.push(`${pad}${key}:`);
+      lines.push(...dumpMapping(value, level + 1));
+      continue;
+    }
+
+    lines.push(`${pad}${key}: ${scalar(value)}`);
+  }
+
+  return lines;
+}
+
+function dumpArray(array, level) {
+  const pad = '  '.repeat(level);
+  const lines = [];
+
+  for (const item of array) {
+    if (isMapping(item)) {
+      const inner = dumpMapping(item, level + 1);
+      const firstContent = inner[0].slice((level + 1) * 2);
+      lines.push(`${pad}- ${firstContent}`);
+      for (let index = 1; index < inner.length; index += 1) lines.push(inner[index]);
+      continue;
+    }
+
+    lines.push(`${pad}- ${scalar(item)}`);
+  }
+
+  return lines;
+}
+
+// Top-Level-Blöcke durch Leerzeilen getrennt – wie in den nativ importierten .yml-Dateien.
+function dumpDocument(object) {
+  const blocks = [];
+  for (const [key, value] of Object.entries(object)) {
+    if (value === undefined) continue;
+    blocks.push(dumpMapping({ [key]: value }, 0).join('\n'));
+  }
+  return `${blocks.join('\n\n')}\n`;
 }
 
 function indent(value, spaces) {
   const prefix = ' '.repeat(spaces);
   return String(value).split('\n').map(line => `${prefix}${line}`).join('\n');
 }
+
+// Ausführung am Dateiende: die Emitter-Klassen (Block/Raw) sind Klassendeklarationen und
+// nicht gehoistet – der Einstieg muss daher hinter ihrer Initialisierung stehen.
+const openApi = await loadOpenApi(input);
+await prepareOutput(output, force);
+await writeCollectionFiles(openApi, output);
+
+console.log(`Bruno-Collection erzeugt: ${output}`);

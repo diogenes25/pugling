@@ -1,0 +1,69 @@
+info:
+  name: Löscht ein Kapitel samt aller Übungen.
+  type: http
+  seq: 3
+  tags:
+    - Learn – Chapters
+
+http:
+  method: DELETE
+  url: "{{baseUrl}}/api/v1/learn/subjects/:subjectId/chapters/:chapterId"
+  params:
+    - name: subjectId
+      value: "{{subjectId}}"
+      type: path
+    - name: chapterId
+      value: "{{chapterId}}"
+      type: path
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        const body = res.getBody();
+
+        function capture(name, value) {
+          if (value === undefined || value === null || value === '') return;
+          bru.setVar(name, value);
+          bru.setEnvVar(name, String(value), { persist: true });
+        }
+
+        if (body && typeof body === 'object' && !Array.isArray(body)) {
+          capture('subjectId', body.subjectId ?? body.id);
+          capture('chapterId', body.chapterId ?? body.id);
+          capture('fatherId', body.fatherId);
+          capture('childId', body.childId);
+          capture('subjectId', body.subjectId);
+          capture('chapterId', body.chapterId);
+          capture('categoryId', body.categoryId);
+          capture('exerciseId', body.exerciseId);
+          capture('planId', body.planId);
+          capture('positionId', body.positionId);
+          capture('sessionId', body.sessionId);
+          capture('attemptId', body.attemptId);
+          capture('tagId', body.tagId);
+          capture('classTestId', body.classTestId);
+          capture('missionId', body.missionId);
+          capture('achievementId', body.achievementId);
+          capture('rewardId', body.rewardId);
+          capture('redemptionId', body.redemptionId);
+          capture('articleId', body.articleId);
+          capture('listingId', body.listingId);
+          capture('purchaseId', body.purchaseId);
+          capture('activationId', body.activationId);
+          capture('vocabularyId', body.vocabularyId);
+          capture('wordId', body.wordId);
+          capture('skinId', body.skinId);
+        }
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  # Löscht ein Kapitel samt aller Übungen.
+
+  `DELETE /api/v1/learn/subjects/{subjectId}/chapters/{chapterId}`

@@ -1,0 +1,197 @@
+info:
+  name: Familien-Shop-Artikel des angemeldeten Vaters (ohne Bestands-/Preisdetails).
+  type: http
+  seq: 7
+  tags:
+    - Admin – Shop
+
+http:
+  method: GET
+  url: "{{baseUrl}}/api/v1/shop/articles"
+  params:
+    - name: search
+      value: "{{search}}"
+      type: query
+      description: Freitext-Suche in Artikelnummer und Titel (Teilstring, optional).
+    - name: skip
+      value: "{{skip}}"
+      type: query
+      description: Anzahl übersprungener Einträge (Offset, Standard 0).
+    - name: take
+      value: "{{take}}"
+      type: query
+      description: Maximale Anzahl zurückgegebener Einträge (Standard 100, Max 500).
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        const body = res.getBody();
+
+        function capture(name, value) {
+          if (value === undefined || value === null || value === '') return;
+          bru.setVar(name, value);
+          bru.setEnvVar(name, String(value), { persist: true });
+        }
+
+        if (body && typeof body === 'object' && !Array.isArray(body)) {
+          capture('articleId', body.articleId ?? body.id);
+          capture('fatherId', body.fatherId);
+          capture('childId', body.childId);
+          capture('subjectId', body.subjectId);
+          capture('chapterId', body.chapterId);
+          capture('categoryId', body.categoryId);
+          capture('exerciseId', body.exerciseId);
+          capture('planId', body.planId);
+          capture('positionId', body.positionId);
+          capture('sessionId', body.sessionId);
+          capture('attemptId', body.attemptId);
+          capture('tagId', body.tagId);
+          capture('classTestId', body.classTestId);
+          capture('missionId', body.missionId);
+          capture('achievementId', body.achievementId);
+          capture('rewardId', body.rewardId);
+          capture('redemptionId', body.redemptionId);
+          capture('articleId', body.articleId);
+          capture('listingId', body.listingId);
+          capture('purchaseId', body.purchaseId);
+          capture('activationId', body.activationId);
+          capture('vocabularyId', body.vocabularyId);
+          capture('wordId', body.wordId);
+          capture('skinId', body.skinId);
+        }
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+examples:
+  - name: Artikel auflisten
+    description: "Verifiziert durch DocsCaptureTests: Rolle `father`, erwartet HTTP 200."
+    request:
+      url: "{{baseUrl}}/api/v1/shop/articles"
+      method: GET
+      params:
+        - name: search
+          value: "{{search}}"
+          type: query
+          description: Freitext-Suche in Artikelnummer und Titel (Teilstring, optional).
+        - name: skip
+          value: "{{skip}}"
+          type: query
+          description: Anzahl übersprungener Einträge (Offset, Standard 0).
+        - name: take
+          value: "{{take}}"
+          type: query
+          description: Maximale Anzahl zurückgegebener Einträge (Standard 100, Max 500).
+    response:
+      status: 200
+      statusText: OK
+      headers:
+        - name: Content-Type
+          value: application/json
+      body:
+        type: json
+        data: |-
+          [
+            {
+              "id": 4,
+              "articleNumber": "EVENT-001",
+              "title": "Kino-Ausflug",
+              "description": "Gemeinsam ins Kino – der Sohn sucht den Film aus.",
+              "unitType": "Mal",
+              "actionType": "Ausflug",
+              "createdAt": "2026-07-06T22:11:25.8136548"
+            },
+            {
+              "id": 2,
+              "articleNumber": "GAME-001",
+              "title": "Spielzeit",
+              "description": "Konsolen- oder PC-Spielzeit; wöchentliches Budgetmodell.",
+              "unitType": "Minute",
+              "actionType": "Zocken",
+              "createdAt": "2026-07-06T22:11:25.8134962"
+            },
+            {
+              "id": 3,
+              "articleNumber": "SWEET-001",
+              "title": "Süßigkeiten",
+              "description": "Kleine Nascherei als Lernanreiz – z. B. Gummibären oder Schokolade.",
+              "unitType": "Gramm",
+              "actionType": "Suessigkeit",
+              "createdAt": "2026-07-06T22:11:25.8136542"
+            },
+            {
+              "id": 1,
+              "articleNumber": "TV-001",
+              "title": "Fernsehzeit",
+              "description": "Bildschirmzeit nach dem Lernen – täglich abrufbar.",
+              "unitType": "Minute",
+              "actionType": "TV",
+              "createdAt": "2026-07-06T22:11:25.8116555"
+            },
+            {
+              "id": 5,
+              "articleNumber": "TV-900",
+              "title": "Fernsehzeit",
+              "description": "Bildschirmzeit in Minuten",
+              "unitType": "Minute",
+              "actionType": "TV",
+              "createdAt": "2026-07-06T22:11:37.8854722"
+            }
+          ]
+  - name: Artikel auflisten (Suche)
+    description: "Verifiziert durch DocsCaptureTests: Rolle `father`, erwartet HTTP 200."
+    request:
+      url: "{{baseUrl}}/api/v1/shop/articles"
+      method: GET
+      params:
+        - name: search
+          value: "{{search}}"
+          type: query
+          description: Freitext-Suche in Artikelnummer und Titel (Teilstring, optional).
+        - name: skip
+          value: "{{skip}}"
+          type: query
+          description: Anzahl übersprungener Einträge (Offset, Standard 0).
+        - name: take
+          value: "{{take}}"
+          type: query
+          description: Maximale Anzahl zurückgegebener Einträge (Standard 100, Max 500).
+    response:
+      status: 200
+      statusText: OK
+      headers:
+        - name: Content-Type
+          value: application/json
+      body:
+        type: json
+        data: |-
+          [
+            {
+              "id": 1,
+              "articleNumber": "TV-001",
+              "title": "Fernsehzeit",
+              "description": "Bildschirmzeit nach dem Lernen – täglich abrufbar.",
+              "unitType": "Minute",
+              "actionType": "TV",
+              "createdAt": "2026-07-06T22:11:25.8116555"
+            },
+            {
+              "id": 5,
+              "articleNumber": "TV-900",
+              "title": "Fernsehzeit",
+              "description": "Bildschirmzeit in Minuten",
+              "unitType": "Minute",
+              "actionType": "TV",
+              "createdAt": "2026-07-06T22:11:37.8854722"
+            }
+          ]
+
+docs: |-
+  # Familien-Shop-Artikel des angemeldeten Vaters (ohne Bestands-/Preisdetails).
+
+  `GET /api/v1/shop/articles`

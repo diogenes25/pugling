@@ -1,0 +1,7 @@
+info:
+  name: Learn – Grammar
+  type: folder
+  seq: 20
+
+request:
+  auth: inherit

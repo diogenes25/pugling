@@ -1,0 +1,77 @@
+info:
+  name: Ändert den Lehrplan-Container (partiell, nur Vater/eigener). int? UpdatePlanDto.ChildId weist den Plan einem anderen eigenen Kind zu.
+  type: http
+  seq: 5
+  tags:
+    - Study – Plans
+
+http:
+  method: PATCH
+  url: "{{baseUrl}}/api/v1/study-plans/:planId"
+  params:
+    - name: planId
+      value: "{{planId}}"
+      type: path
+  body:
+    type: json
+    data: |-
+      {
+        "title": "string",
+        "subjectId": "{{subjectId}}",
+        "startDate": "{{date}}",
+        "endDate": "{{date}}",
+        "active": "string",
+        "description": "string",
+        "childId": "{{childId}}"
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        const body = res.getBody();
+
+        function capture(name, value) {
+          if (value === undefined || value === null || value === '') return;
+          bru.setVar(name, value);
+          bru.setEnvVar(name, String(value), { persist: true });
+        }
+
+        if (body && typeof body === 'object' && !Array.isArray(body)) {
+          capture('planId', body.planId ?? body.id);
+          capture('fatherId', body.fatherId);
+          capture('childId', body.childId);
+          capture('subjectId', body.subjectId);
+          capture('chapterId', body.chapterId);
+          capture('categoryId', body.categoryId);
+          capture('exerciseId', body.exerciseId);
+          capture('planId', body.planId);
+          capture('positionId', body.positionId);
+          capture('sessionId', body.sessionId);
+          capture('attemptId', body.attemptId);
+          capture('tagId', body.tagId);
+          capture('classTestId', body.classTestId);
+          capture('missionId', body.missionId);
+          capture('achievementId', body.achievementId);
+          capture('rewardId', body.rewardId);
+          capture('redemptionId', body.redemptionId);
+          capture('articleId', body.articleId);
+          capture('listingId', body.listingId);
+          capture('purchaseId', body.purchaseId);
+          capture('activationId', body.activationId);
+          capture('vocabularyId', body.vocabularyId);
+          capture('wordId', body.wordId);
+          capture('skinId', body.skinId);
+        }
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  # Ändert den Lehrplan-Container (partiell, nur Vater/eigener). int? UpdatePlanDto.ChildId weist den Plan einem anderen eigenen Kind zu.
+
+  `PATCH /api/v1/study-plans/{planId}`

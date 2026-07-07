@@ -1,0 +1,126 @@
+info:
+  name: "Liste der Vokabeln, optional gefiltert. Die Vollständigkeits-Filter bilden die drei Agenten-Kriterien ab: untranslated (nicht übersetzt), incomplete (unvollständig) und linked (mit/ohne Grundform-Verknüpfung). Über tag lässt sich nach Schlagworten filtern (z. B. „Kapitel 5\"); mehrere Tags sind per Default ODER-verknüpft, matchAll schaltet auf UND. Die Gesamtzahl (vor Paging) steht im Header `X-Total-Count`."
+  type: http
+  seq: 1
+  tags:
+    - Learn – Vocabulary Store
+
+http:
+  method: GET
+  url: "{{baseUrl}}/api/v1/learn/vocabulary"
+  params:
+    - name: search
+      value: "{{search}}"
+      type: query
+      description: Volltext in Word/Translation/Key (Teilstring).
+    - name: word
+      value: "{{word}}"
+      type: query
+      description: Teilstring-Filter allein auf das Wort (Ausgangssprache).
+    - name: translation
+      value: "{{translation}}"
+      type: query
+      description: Teilstring-Filter allein auf die Übersetzung (Zielsprache).
+    - name: partOfSpeech
+      value: "{{partOfSpeech}}"
+      type: query
+      description: Exakte Wortart.
+    - name: untranslated
+      value: "{{untranslated}}"
+      type: query
+      description: true = nur Einträge ohne Übersetzung.
+    - name: incomplete
+      value: "{{incomplete}}"
+      type: query
+      description: true = nur unvollständige Einträge (keine Übersetzung / Wortart „Other" / fehlende Noun-/Verb-Details).
+    - name: linked
+      value: "{{linked}}"
+      type: query
+      description: true = nur verknüpfte (Grundform gesetzt), false = nur unverknüpfte.
+    - name: baseFormsOnly
+      value: "{{baseFormsOnly}}"
+      type: query
+      description: true = nur Grundformen (keine flektierten Formen); klarer Alias für Authoring, fachlich wie `linked=false`.
+    - name: sourceLanguage
+      value: "{{sourceLanguage}}"
+      type: query
+      description: Filter auf die Ausgangssprache.
+    - name: targetLanguage
+      value: "{{targetLanguage}}"
+      type: query
+      description: Filter auf die Zielsprache.
+    - name: tag
+      value: "{{tag}}"
+      type: query
+      description: Ein oder mehrere Tag-Namen (wiederholbar).
+    - name: matchAll
+      value: "{{matchAll}}"
+      type: query
+      description: "Bei mehreren Tags: true = alle (UND), false = beliebiger (ODER, Default)."
+    - name: sort
+      value: "{{sort}}"
+      type: query
+      description: "Sortierspalte: `key` (Default), `word`, `translation`, `pos`, `created`. Kurzform `-word` = absteigend."
+    - name: dir
+      value: "{{dir}}"
+      type: query
+      description: "`asc` (Default) oder `desc`; hat Vorrang vor einem `-`-Präfix in sort."
+    - name: skip
+      value: "{{skip}}"
+      type: query
+      description: Anzahl zu überspringender Einträge (Paging).
+    - name: take
+      value: "{{take}}"
+      type: query
+      description: Maximale Trefferzahl (1..500).
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        const body = res.getBody();
+
+        function capture(name, value) {
+          if (value === undefined || value === null || value === '') return;
+          bru.setVar(name, value);
+          bru.setEnvVar(name, String(value), { persist: true });
+        }
+
+        if (body && typeof body === 'object' && !Array.isArray(body)) {
+          capture('vocabularyId', body.vocabularyId ?? body.id);
+          capture('fatherId', body.fatherId);
+          capture('childId', body.childId);
+          capture('subjectId', body.subjectId);
+          capture('chapterId', body.chapterId);
+          capture('categoryId', body.categoryId);
+          capture('exerciseId', body.exerciseId);
+          capture('planId', body.planId);
+          capture('positionId', body.positionId);
+          capture('sessionId', body.sessionId);
+          capture('attemptId', body.attemptId);
+          capture('tagId', body.tagId);
+          capture('classTestId', body.classTestId);
+          capture('missionId', body.missionId);
+          capture('achievementId', body.achievementId);
+          capture('rewardId', body.rewardId);
+          capture('redemptionId', body.redemptionId);
+          capture('articleId', body.articleId);
+          capture('listingId', body.listingId);
+          capture('purchaseId', body.purchaseId);
+          capture('activationId', body.activationId);
+          capture('vocabularyId', body.vocabularyId);
+          capture('wordId', body.wordId);
+          capture('skinId', body.skinId);
+        }
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  # Liste der Vokabeln, optional gefiltert. Die Vollständigkeits-Filter bilden die drei Agenten-Kriterien ab: untranslated (nicht übersetzt), incomplete (unvollständig) und linked (mit/ohne Grundform-Verknüpfung). Über tag lässt sich nach Schlagworten filtern (z. B. „Kapitel 5"); mehrere Tags sind per Default ODER-verknüpft, matchAll schaltet auf UND. Die Gesamtzahl (vor Paging) steht im Header `X-Total-Count`.
+
+  `GET /api/v1/learn/vocabulary`

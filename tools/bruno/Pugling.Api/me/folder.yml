@@ -1,0 +1,7 @@
+info:
+  name: Me
+  type: folder
+  seq: 30
+
+request:
+  auth: inherit

@@ -1,0 +1,93 @@
+info:
+  name: Eine einzelne Übung typ-übergreifend per Id (mit Config + Metadaten).
+  type: http
+  seq: 2
+  tags:
+    - Learn – Exercise Catalog
+
+http:
+  method: GET
+  url: "{{baseUrl}}/api/v1/learn/exercises/:id"
+  params:
+    - name: id
+      value: "{{id}}"
+      type: path
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        const body = res.getBody();
+
+        function capture(name, value) {
+          if (value === undefined || value === null || value === '') return;
+          bru.setVar(name, value);
+          bru.setEnvVar(name, String(value), { persist: true });
+        }
+
+        if (body && typeof body === 'object' && !Array.isArray(body)) {
+          capture('id', body.id ?? body.id);
+          capture('exerciseId', body.exerciseId ?? body.id);
+          capture('fatherId', body.fatherId);
+          capture('childId', body.childId);
+          capture('subjectId', body.subjectId);
+          capture('chapterId', body.chapterId);
+          capture('categoryId', body.categoryId);
+          capture('exerciseId', body.exerciseId);
+          capture('planId', body.planId);
+          capture('positionId', body.positionId);
+          capture('sessionId', body.sessionId);
+          capture('attemptId', body.attemptId);
+          capture('tagId', body.tagId);
+          capture('classTestId', body.classTestId);
+          capture('missionId', body.missionId);
+          capture('achievementId', body.achievementId);
+          capture('rewardId', body.rewardId);
+          capture('redemptionId', body.redemptionId);
+          capture('articleId', body.articleId);
+          capture('listingId', body.listingId);
+          capture('purchaseId', body.purchaseId);
+          capture('activationId', body.activationId);
+          capture('vocabularyId', body.vocabularyId);
+          capture('wordId', body.wordId);
+          capture('skinId', body.skinId);
+        }
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+examples:
+  - name: Unbekannte Übung lesen (Fehlerfall)
+    description: "Verifiziert durch DocsCaptureTests: Rolle `father`, erwartet HTTP 404, Code `not_found`."
+    request:
+      url: "{{baseUrl}}/api/v1/learn/exercises/:id"
+      method: GET
+      params:
+        - name: id
+          value: "{{id}}"
+          type: path
+    response:
+      status: 404
+      statusText: Not Found
+      headers:
+        - name: Content-Type
+          value: application/json
+      body:
+        type: json
+        data: |-
+          {
+            "type": "https://pugling.app/errors/not_found",
+            "title": "Not Found",
+            "status": 404,
+            "traceId": "<trace-id>",
+            "code": "not_found"
+          }
+
+docs: |-
+  # Eine einzelne Übung typ-übergreifend per Id (mit Config + Metadaten).
+
+  `GET /api/v1/learn/exercises/{id}`

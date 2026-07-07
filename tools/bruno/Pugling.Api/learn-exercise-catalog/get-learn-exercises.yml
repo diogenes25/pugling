@@ -1,0 +1,110 @@
+info:
+  name: Sucht Übungen über die Metadaten. Alle Parameter sind optional und werden UND-verknüpft. Nullbare Grenzen/„None"-Schulart bedeuten „passt immer" und werden nicht ausgeschlossen.
+  type: http
+  seq: 1
+  tags:
+    - Learn – Exercise Catalog
+
+http:
+  method: GET
+  url: "{{baseUrl}}/api/v1/learn/exercises"
+  params:
+    - name: subjectId
+      value: "{{subjectId}}"
+      type: query
+      description: Fach.
+    - name: chapterId
+      value: "{{chapterId}}"
+      type: query
+      description: Kapitel (setzt in der Regel ein Fach voraus).
+    - name: grade
+      value: "{{grade}}"
+      type: query
+      description: Klassenstufe des Kindes; passt, wenn sie in [GradeMin, GradeMax] liegt.
+    - name: schoolType
+      value: "{{schoolType}}"
+      type: query
+      description: Schulart; passt, wenn die Übung sie enthält oder für alle gilt.
+    - name: categoryId
+      value: "{{categoryId}}"
+      type: query
+      description: Fachabhängige Art.
+    - name: type
+      value: "{{type}}"
+      type: query
+      description: Übungstyp.
+    - name: search
+      value: "{{search}}"
+      type: query
+      description: Freitext in Titel oder Beschreibung (Teilstring).
+    - name: mineOnly
+      value: "{{mineOnly}}"
+      type: query
+      description: Nur eigene Übungen des anfragenden Vaters (Verwaltung statt Entdeckung).
+    - name: sort
+      value: "{{sort}}"
+      type: query
+      description: "Sortierspalte: `title`, `type`, `grade`, `source`, `created`. Kurzform `-title` = absteigend. Ohne Angabe: Fach → Kapitel → Reihenfolge."
+    - name: dir
+      value: "{{dir}}"
+      type: query
+      description: "`asc` (Default) oder `desc`; hat Vorrang vor einem `-`-Präfix in sort."
+    - name: skip
+      value: "{{skip}}"
+      type: query
+      description: Anzahl zu überspringender Einträge (Paging).
+    - name: take
+      value: "{{take}}"
+      type: query
+      description: Maximale Trefferzahl (1..500). Gesamtzahl im Header `X-Total-Count`.
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        const body = res.getBody();
+
+        function capture(name, value) {
+          if (value === undefined || value === null || value === '') return;
+          bru.setVar(name, value);
+          bru.setEnvVar(name, String(value), { persist: true });
+        }
+
+        if (body && typeof body === 'object' && !Array.isArray(body)) {
+          capture('exerciseId', body.exerciseId ?? body.id);
+          capture('fatherId', body.fatherId);
+          capture('childId', body.childId);
+          capture('subjectId', body.subjectId);
+          capture('chapterId', body.chapterId);
+          capture('categoryId', body.categoryId);
+          capture('exerciseId', body.exerciseId);
+          capture('planId', body.planId);
+          capture('positionId', body.positionId);
+          capture('sessionId', body.sessionId);
+          capture('attemptId', body.attemptId);
+          capture('tagId', body.tagId);
+          capture('classTestId', body.classTestId);
+          capture('missionId', body.missionId);
+          capture('achievementId', body.achievementId);
+          capture('rewardId', body.rewardId);
+          capture('redemptionId', body.redemptionId);
+          capture('articleId', body.articleId);
+          capture('listingId', body.listingId);
+          capture('purchaseId', body.purchaseId);
+          capture('activationId', body.activationId);
+          capture('vocabularyId', body.vocabularyId);
+          capture('wordId', body.wordId);
+          capture('skinId', body.skinId);
+        }
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  # Sucht Übungen über die Metadaten. Alle Parameter sind optional und werden UND-verknüpft. Nullbare Grenzen/„None"-Schulart bedeuten „passt immer" und werden nicht ausgeschlossen.
+
+  `GET /api/v1/learn/exercises`

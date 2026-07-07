@@ -1,0 +1,7 @@
+info:
+  name: Study – Position Tests
+  type: folder
+  seq: 36
+
+request:
+  auth: inherit

@@ -1,0 +1,7 @@
+info:
+  name: Learn – Exercise Categories
+  type: folder
+  seq: 17
+
+request:
+  auth: inherit

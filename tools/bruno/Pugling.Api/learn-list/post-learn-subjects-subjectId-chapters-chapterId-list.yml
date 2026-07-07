@@ -1,0 +1,88 @@
+info:
+  name: POST /api/v1/learn/subjects/{subjectId}/chapters/{chapterId}/list
+  type: http
+  seq: 2
+  tags:
+    - Learn – List
+
+http:
+  method: POST
+  url: "{{baseUrl}}/api/v1/learn/subjects/:subjectId/chapters/:chapterId/list"
+  params:
+    - name: subjectId
+      value: "{{subjectId}}"
+      type: path
+    - name: chapterId
+      value: "{{chapterId}}"
+      type: path
+  body:
+    type: json
+    data: |-
+      {
+        "title": "string",
+        "orderIndex": "string",
+        "rewardPoints": "string",
+        "config": "string",
+        "suggestedBonus": "string",
+        "gradeMin": "string",
+        "gradeMax": "string",
+        "schoolTypes": 1,
+        "source": "string",
+        "categoryId": "{{categoryId}}",
+        "description": "string",
+        "defaultUseLeitner": false,
+        "defaultRequireTypedTest": false,
+        "defaultStage": "string"
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        const body = res.getBody();
+
+        function capture(name, value) {
+          if (value === undefined || value === null || value === '') return;
+          bru.setVar(name, value);
+          bru.setEnvVar(name, String(value), { persist: true });
+        }
+
+        if (body && typeof body === 'object' && !Array.isArray(body)) {
+          capture('subjectId', body.subjectId ?? body.id);
+          capture('chapterId', body.chapterId ?? body.id);
+          capture('fatherId', body.fatherId);
+          capture('childId', body.childId);
+          capture('subjectId', body.subjectId);
+          capture('chapterId', body.chapterId);
+          capture('categoryId', body.categoryId);
+          capture('exerciseId', body.exerciseId);
+          capture('planId', body.planId);
+          capture('positionId', body.positionId);
+          capture('sessionId', body.sessionId);
+          capture('attemptId', body.attemptId);
+          capture('tagId', body.tagId);
+          capture('classTestId', body.classTestId);
+          capture('missionId', body.missionId);
+          capture('achievementId', body.achievementId);
+          capture('rewardId', body.rewardId);
+          capture('redemptionId', body.redemptionId);
+          capture('articleId', body.articleId);
+          capture('listingId', body.listingId);
+          capture('purchaseId', body.purchaseId);
+          capture('activationId', body.activationId);
+          capture('vocabularyId', body.vocabularyId);
+          capture('wordId', body.wordId);
+          capture('skinId', body.skinId);
+        }
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  # POST /api/v1/learn/subjects/{subjectId}/chapters/{chapterId}/list
+
+  `POST /api/v1/learn/subjects/{subjectId}/chapters/{chapterId}/list`
