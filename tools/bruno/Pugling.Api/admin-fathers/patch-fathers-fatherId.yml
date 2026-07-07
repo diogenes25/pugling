@@ -16,8 +16,8 @@ http:
     type: json
     data: |-
       {
-        "name": "string",
-        "email": "string",
+        "name": "Vater 3",
+        "email": "tjark@onnen.de",
         "pin": "{{fatherPin}}"
       }
   auth: inherit

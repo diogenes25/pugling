@@ -12,7 +12,7 @@ http:
     type: json
     data: |-
       {
-        "name": "Doku-Kind",
+        "name": "Fried",
         "pin": "{{fatherPin}}"
       }
   auth: inherit

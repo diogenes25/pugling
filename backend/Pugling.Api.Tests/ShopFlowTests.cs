@@ -867,4 +867,30 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
         Assert.Equal("validation_error",
             (await res.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("code").GetString());
     }
+
+    [Fact]
+    public async Task CreateArticle_MitUngueltigemEnum_NenntFeldUndErlaubteWerte()
+    {
+        // Ein ungültiger Enum-Wert soll nicht nur „value is not of the expected type" liefern, sondern
+        // das fehlerhafte Feld benennen UND die zulässigen Werte auflisten (ohne den DTO-Typ zu leaken).
+        var father = await TestApi.FatherAsync(factory);
+        var res = await father.PostAsJsonAsync("/api/v1/shop/articles", new
+        {
+            articleNumber = "TV-900", title = "Fernsehzeit", description = "Bildschirmzeit",
+            unitType = "WRONG", actionType = "TV",
+        });
+
+        Assert.Equal(HttpStatusCode.BadRequest, res.StatusCode);
+
+        var raw = await res.Content.ReadAsStringAsync();
+        Assert.DoesNotContain("Pugling.Api", raw);          // kein Typnamen-Leak
+        Assert.DoesNotContain("could not be converted", raw); // keine rohe System.Text.Json-Meldung
+
+        var body = await res.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal("validation_error", body.GetProperty("code").GetString());
+        var message = body.GetProperty("errors").GetProperty("unitType")[0].GetString();
+        Assert.Contains("allowed values", message!, StringComparison.OrdinalIgnoreCase);
+        foreach (var name in Enum.GetNames<UnitType>())
+            Assert.Contains(name, message);
+    }
 }

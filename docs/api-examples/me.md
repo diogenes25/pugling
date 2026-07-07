@@ -19,14 +19,14 @@ Response — `HTTP 200`:
       "amount": 300,
       "kind": "Achievement",
       "reason": "Willkommens-Gems",
-      "createdAt": "2026-07-06T22:11:23.0709238"
+      "createdAt": "2026-07-07T11:02:14.6986389"
     },
     {
       "id": 1,
       "amount": 50,
       "kind": "Base",
       "reason": "Startguthaben (M\u00FCnzen)",
-      "createdAt": "2026-07-06T22:11:23.0709227"
+      "createdAt": "2026-07-07T11:02:14.6986368"
     }
   ]
 }
@@ -406,7 +406,7 @@ Response — `HTTP 200`:
       "title": "30 Min Fernsehen",
       "cost": 50,
       "status": "Purchased",
-      "purchasedAt": "2026-07-06T22:11:34.994423",
+      "purchasedAt": "2026-07-07T11:02:16.495161",
       "fulfilledAt": null
     }
   ]
@@ -432,7 +432,7 @@ Response — `HTTP 200`:
   "title": "30 Min Fernsehen",
   "cost": 50,
   "status": "Fulfilled",
-  "purchasedAt": "2026-07-06T22:11:34.994423",
+  "purchasedAt": "2026-07-07T11:02:16.495161",
   "fulfilledAt": "<timestamp>",
   "canFulfill": false,
   "canCancel": false
