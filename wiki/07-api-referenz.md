@@ -30,6 +30,7 @@ Kompakter Überblick über alle Routen. **Autoritative Quelle bleibt Swagger** (
 | V | `GET/POST /children` · `GET/PATCH/DELETE /children/{childId}` | Kinder verwalten (inkl. `pointsBalance`) |
 | V | `GET /children/{childId}/points` | Punkte-Ledger des Kindes |
 | V | `POST /children/{childId}/points` | manuelle Buchung `{ amount, reason }` |
+| A | `GET /children/{childId}/vocabulary-progress` · `…/{itemId}` · `…/{itemId}/history` · `…/by-word` | Vokabel-Lernstand des Kindes (Vater oder eigenes Kind) |
 | V | `GET/POST /children/{childId}/missions` · `PATCH/DELETE …/{missionId}` | Missionen definieren |
 | V | `GET/POST /children/{childId}/achievements` · `PATCH/DELETE …/{achievementId}` | Auszeichnungen definieren |
 | V | `GET/POST /children/{childId}/timetable` | Stundenplan (Fach × Wochentag) |
@@ -43,6 +44,8 @@ Kompakter Überblick über alle Routen. **Autoritative Quelle bleibt Swagger** (
 | `GET/POST /learn/subjects/{s}/categories` · `…/{categoryId}` | fachabhängige Arten |
 | `GET /learn/exercises?subjectId=&grade=&schoolType=&categoryId=&type=&search=` | **Übungssuche** (Vorfilterung) |
 | `GET/POST/PUT/DELETE /learn/subjects/{s}/chapters/{c}/<typ>[/{id}]` | Übungs-CRUD je Typ (12 Typen, siehe [03](03-uebungstypen.md)) |
+| `GET/POST /learn/subjects/{s}/chapters/{c}/vocabulary/{id}/items` · `GET/PATCH/DELETE …/items/{itemId}` | Vokabel-Items einer Übung |
+| `POST /learn/subjects/{s}/chapters/{c}/vocabulary/{id}/refs-from-tags` | Vokabel-Items per Tag-Snapshot setzen |
 | `POST …/matching/{id}/check` · `POST …/arithmetic/{id}/check` · `POST …/list/{id}/check` | Auswertung |
 | `POST …/arithmetic-drill/{id}/generate` · `POST …/arithmetic-drill/{id}/check` | Zufallsaufgaben erzeugen/prüfen |
 

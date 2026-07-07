@@ -84,15 +84,17 @@ test("Vater erstellt Plan mit Position, Sohn arbeitet ihn ab, Punkte fließen", 
   await sohn.getByRole("button", { name: /Weiter zum Test/ }).click();
   await expect(sohn.locator(".screen-title", { hasText: "Test" })).toBeVisible();
 
-  // SelfAssess: alle aufdecken, dann als "gewusst" markieren
-  const reveal = sohn.getByRole("button", { name: "Aufdecken 🔄" });
-  const revealCount = await reveal.count();
-  for (let i = 0; i < revealCount; i++) await reveal.first().click();
-  const known = sohn.getByRole("button", { name: "Gewusst", exact: true });
-  const knownCount = await known.count();
-  for (let i = 0; i < knownCount; i++) await known.nth(i).click();
-
-  await sohn.getByRole("button", { name: /Abgeben/ }).click();
+  // Klausur ist strikt server-getrieben: eine Frage nach der anderen (kein Zurück). Für jede Frage die
+  // Lösung (SelfAssess: automatisch aufgedeckt, sonst per Button) und dann "Gewusst" – die letzte Antwort
+  // schließt den Test automatisch ab (kein Sammel-"Abgeben" mehr).
+  const testCounter = sohn.locator(".pill.cyan", { hasText: /Frage \d+ \/ \d+/ });
+  await expect(testCounter).toBeVisible();
+  const testTotal = Number((await testCounter.textContent())!.match(/\/ (\d+)/)![1]);
+  for (let i = 0; i < testTotal; i++) {
+    const revealBtn = sohn.getByRole("button", { name: "Aufdecken 🔄" });
+    if (await revealBtn.count()) await revealBtn.first().click();
+    await sohn.getByRole("button", { name: "Gewusst", exact: true }).click();
+  }
   await expect(sohn.locator(".vtitle", { hasText: "SIEG!" })).toBeVisible();
 
   // Wallet: Münzen wurden gutgeschrieben (Test bestanden + ggf. Leitner-Übung)

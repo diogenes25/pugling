@@ -98,10 +98,12 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
     /// <summary>
     /// Wählt die Item-Indizes, die heute dran sind: begrenzt auf den Pool (<see cref="PlanPosition.ItemCount"/>),
     /// gefiltert nach <see cref="ItemScope"/> (neu/alt/alle) und – bei Leitner – nur die fälligen
-    /// (nie gesehen zählt als fällig), sortiert nach Box und Index. Der Fortschritt wird dazu geladen,
-    /// aber NICHT neu angelegt (das passiert erst beim Bewerten in <see cref="ApplyReview"/>).
+    /// (nie gesehen zählt als fällig). Die Reihenfolge bestimmt <paramref name="strategy"/> (Standard =
+    /// schwächste zuerst = bisheriges Verhalten). Der Fortschritt wird dazu geladen, aber NICHT neu angelegt
+    /// (das passiert erst beim Bewerten in <see cref="ApplyReview"/>).
     /// </summary>
-    public async Task<IReadOnlyList<int>> DueItemIndicesAsync(PlanPosition pos, DateOnly day)
+    public async Task<IReadOnlyList<int>> DueItemIndicesAsync(PlanPosition pos, DateOnly day,
+        PracticeOrder strategy = PracticeOrder.WeakestFirst, bool dueOnly = true)
     {
         var poolSize = PoolSize(pos, (await ItemsOfAsync(pos)).Count);
         if (poolSize == 0) return [];
@@ -110,12 +112,90 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
             .Where(p => p.PlanPositionId == pos.Id && p.ItemIndex < poolSize)
             .ToDictionaryAsync(p => p.ItemIndex);
 
-        return Enumerable.Range(0, poolSize)
+        var due = Enumerable.Range(0, poolSize)
             .Select(i => (Index: i, Prog: progress.GetValueOrDefault(i)))
-            .Where(x => ScopeMatch(pos.Scope, x.Prog) && (!pos.UseLeitner || IsDue(x.Prog, day)))
-            .OrderBy(x => x.Prog?.Box ?? 1).ThenBy(x => x.Index)
-            .Select(x => x.Index)
+            .Where(x => ScopeMatch(pos.Scope, x.Prog) && (!dueOnly || !pos.UseLeitner || IsDue(x.Prog, day)));
+
+        return OrderIndices(due, strategy);
+    }
+
+    /// <summary>
+    /// Rückt einen Cursor über die eingefrorene Reihenfolge (<paramref name="order"/>) hinweg über Item-Indizes,
+    /// die seit dem Start entfernt wurden (out-of-range gegenüber <paramref name="itemCount"/>). Geteilt vom
+    /// Übungs- und vom Test-Cursor, damit die Skip-Regel an genau einer Stelle lebt.
+    /// </summary>
+    public static int SkipRemoved(IReadOnlyList<int> order, int cursor, int itemCount)
+    {
+        while (cursor < order.Count && order[cursor] >= itemCount) cursor++;
+        return cursor;
+    }
+
+    /// <summary>
+    /// Die pro Stufe zulässige Darstellung eines Inhalts-Atoms als Karte/Testaufgabe (Anti-Cheat an einer Stelle):
+    /// getippte Stufen halten die Lösung (<c>Reveal</c>) zurück, Anzeige-/Selbsteinschätzung deckt sie auf;
+    /// Buchstabenkästchen geben die Länge, die Hör-Stufe die Audioquelle, Multiple-Choice die Auswahl.
+    /// Geteilt von Übungskarte (<c>PracticeCard</c>) und Testaufgabe (<c>TestItem</c>).
+    /// </summary>
+    public static (string? Hint, int? AnswerLength, string? Reveal, IReadOnlyList<string>? Choices, string? AudioUrl)
+        CardFacets(IReadOnlyList<ContentItem> items, ContentItem item, ExerciseType type, int stage, bool typed)
+    {
+        var isLetterBoxes = type == ExerciseType.Vocabulary && (TestStage)stage == TestStage.LetterBoxes;
+        var isAudio = type == ExerciseType.Vocabulary && (TestStage)stage == TestStage.Audio;
+        return (
+            typed ? item.Hint : null,
+            isLetterBoxes ? item.Answer.Length : null,
+            typed ? null : item.Answer,
+            ChoicesFor(items, item, type, stage),
+            isAudio ? item.AudioUrl : null);
+    }
+
+    /// <summary>
+    /// Ordnet eine Menge (Index, Fortschritt) gemäß der gewählten Strategie und gibt die Indizes zurück.
+    /// Wird beim Einfrieren der Sitzungs-/Prüfungsreihenfolge genutzt; der Zufall (Random/NewestWeighted)
+    /// fällt daher nur <b>einmal</b> beim Start, nicht bei jedem Aufruf.
+    /// </summary>
+    public static IReadOnlyList<int> OrderIndices(
+        IEnumerable<(int Index, PositionItemProgress? Prog)> items, PracticeOrder strategy)
+    {
+        var list = items.ToList();
+        return strategy switch
+        {
+            PracticeOrder.Serial => list.OrderBy(x => x.Index).Select(x => x.Index).ToList(),
+            PracticeOrder.Random => list.OrderBy(_ => Random.Shared.Next()).Select(x => x.Index).ToList(),
+            PracticeOrder.NewestWeighted => WeightedNewest(list),
+            _ => list.OrderBy(x => x.Prog?.Box ?? 1).ThenBy(x => x.Index).Select(x => x.Index).ToList(),
+        };
+    }
+
+    /// <summary>
+    /// Gewichtete Ziehung ohne Zurücklegen: zuletzt eingeführte (bzw. noch nie eingeführte) Inhalte erhalten
+    /// deutlich höheres Gewicht (Rang-Gewicht 1, 1/2, 1/3 …), stehen also mit hoher Wahrscheinlichkeit vorn –
+    /// die „neueste zuerst, aber nicht starr"-Regel.
+    /// </summary>
+    private static List<int> WeightedNewest(List<(int Index, PositionItemProgress? Prog)> items)
+    {
+        // Rang nach Einführungsdatum absteigend (null = ganz neu = höchster Rang), dann Index als Tie-Breaker.
+        var ranked = items
+            .OrderByDescending(x => x.Prog?.IntroducedAt ?? DateOnly.MaxValue)
+            .ThenBy(x => x.Index)
             .ToList();
+        var pool = ranked.Select((x, rank) => (x.Index, Weight: 1.0 / (rank + 1))).ToList();
+
+        var result = new List<int>(pool.Count);
+        while (pool.Count > 0)
+        {
+            var total = pool.Sum(p => p.Weight);
+            var roll = Random.Shared.NextDouble() * total;
+            var i = 0;
+            for (; i < pool.Count - 1; i++)
+            {
+                roll -= pool[i].Weight;
+                if (roll <= 0) break;
+            }
+            result.Add(pool[i].Index);
+            pool.RemoveAt(i);
+        }
+        return result;
     }
 
     private static bool ScopeMatch(ItemScope scope, PositionItemProgress? prog) => scope switch

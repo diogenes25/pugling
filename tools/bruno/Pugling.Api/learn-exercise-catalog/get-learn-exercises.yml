@@ -25,7 +25,7 @@ http:
       description: Klassenstufe des Kindes; passt, wenn sie in [GradeMin, GradeMax] liegt.
       disabled: true
     - name: schoolType
-      value: ""
+      value: None
       type: query
       description: Schulart; passt, wenn die Übung sie enthält oder für alle gilt.
       disabled: true
@@ -77,8 +77,7 @@ runtime:
 
         function capture(name, value) {
           if (value === undefined || value === null || value === '') return;
-          bru.setVar(name, value);
-          bru.setEnvVar(name, String(value), { persist: true });
+          bru.setEnvVar(name, String(value));
         }
 
         if (body && typeof body === 'object' && !Array.isArray(body)) {

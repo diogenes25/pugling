@@ -42,13 +42,12 @@ public class PositionReportTests(PuglingWebAppFactory factory) : IClassFixture<P
 
         // Ein Test erzeugt die Test-Trefferquote je Item (item 0 richtig, item 1 falsch).
         var testsUrl = $"/api/v1/study-plans/{planId}/positions/{positionId}/tests";
-        var attempt = await (await child.PostAsJsonAsync(testsUrl, new { })).Content.ReadFromJsonAsync<JsonElement>();
-        var attemptId = attempt.GetProperty("attemptId").GetInt32();
-        var answers = attempt.GetProperty("items").EnumerateArray().Select(i =>
+        var attemptId = await TestApi.IdWithKeyAsync(await child.PostAsJsonAsync(testsUrl, new { }), "attemptId");
+        var answers = new[]
         {
-            var prompt = i.GetProperty("prompt").GetString();
-            return new { itemIndex = i.GetProperty("itemIndex").GetInt32(), givenAnswer = prompt == "hello" ? "hallo" : "falsch" };
-        }).ToArray();
+            new { itemIndex = 0, givenAnswer = "hallo" },  // hello → hallo (richtig)
+            new { itemIndex = 1, givenAnswer = "falsch" }, // goodbye → falsch
+        };
         await child.PostAsJsonAsync($"{testsUrl}/{attemptId}/submit", new { answers });
 
         var report2 = await (await father.GetAsync(reportUrl)).Content.ReadFromJsonAsync<JsonElement>();

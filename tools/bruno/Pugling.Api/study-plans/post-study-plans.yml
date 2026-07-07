@@ -26,8 +26,7 @@ runtime:
 
         function capture(name, value) {
           if (value === undefined || value === null || value === '') return;
-          bru.setVar(name, value);
-          bru.setEnvVar(name, String(value), { persist: true });
+          bru.setEnvVar(name, String(value));
         }
 
         if (body && typeof body === 'object' && !Array.isArray(body)) {
@@ -91,8 +90,8 @@ examples:
             "childId": 1,
             "title": "Doku-Lehrplan",
             "subjectId": null,
-            "startDate": "2026-07-06",
-            "endDate": "2026-07-15",
+            "startDate": "2026-07-07",
+            "endDate": "2026-07-16",
             "active": true,
             "positionCount": 0,
             "description": null,

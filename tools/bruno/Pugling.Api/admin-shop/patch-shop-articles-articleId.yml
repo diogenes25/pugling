@@ -1,7 +1,7 @@
 info:
   name: Ändert einen Familien-Shop-Artikel partiell.
   type: http
-  seq: 10
+  seq: 11
   tags:
     - Admin – Shop
 
@@ -29,8 +29,7 @@ runtime:
 
         function capture(name, value) {
           if (value === undefined || value === null || value === '') return;
-          bru.setVar(name, value);
-          bru.setEnvVar(name, String(value), { persist: true });
+          bru.setEnvVar(name, String(value));
         }
 
         if (body && typeof body === 'object' && !Array.isArray(body)) {
@@ -99,7 +98,7 @@ examples:
             "description": "30 Minuten freie Bildschirmzeit",
             "unitType": "Minute",
             "actionType": "TV",
-            "createdAt": "2026-07-06T22:11:37.8854722"
+            "createdAt": "2026-07-07T21:03:49.1266354"
           }
 
 docs: |-

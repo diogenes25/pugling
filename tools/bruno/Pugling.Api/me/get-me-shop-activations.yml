@@ -1,7 +1,7 @@
 info:
   name: Eigene Aktivierungsanfragen (neueste zuerst), optional nach Status gefiltert.
   type: http
-  seq: 7
+  seq: 15
   tags:
     - Me
 
@@ -10,7 +10,7 @@ http:
   url: "{{baseUrl}}/api/v1/me/shop/activations"
   params:
     - name: status
-      value: ""
+      value: Pending
       type: query
       disabled: true
     - name: skip
@@ -29,8 +29,7 @@ runtime:
 
         function capture(name, value) {
           if (value === undefined || value === null || value === '') return;
-          bru.setVar(name, value);
-          bru.setEnvVar(name, String(value), { persist: true });
+          bru.setEnvVar(name, String(value));
         }
 
         if (body && typeof body === 'object' && !Array.isArray(body)) {
@@ -74,7 +73,7 @@ examples:
       method: GET
       params:
         - name: status
-          value: ""
+          value: Pending
           type: query
           disabled: true
         - name: skip
@@ -101,7 +100,7 @@ examples:
               "actionType": "TV",
               "requestedQuantity": 10,
               "status": "Pending",
-              "requestedAt": "2026-07-06T22:11:38.9058475",
+              "requestedAt": "2026-07-07T21:03:50.0096485",
               "closedAt": null
             },
             {
@@ -112,7 +111,7 @@ examples:
               "actionType": "TV",
               "requestedQuantity": 30,
               "status": "Pending",
-              "requestedAt": "2026-07-06T22:11:38.8848482",
+              "requestedAt": "2026-07-07T21:03:49.9981771",
               "closedAt": null
             }
           ]

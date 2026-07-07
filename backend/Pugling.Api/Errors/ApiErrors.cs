@@ -68,6 +68,8 @@ public static class ApiErrors
     public static readonly ApiError DuplicateTagName = new("duplicate_tag_name", 400, "Tag name already exists.");
     /// <summary>Übung wird in Lehrplan/Klassenarbeit verwendet und kann nicht gelöscht werden (409).</summary>
     public static readonly ApiError ExerciseInUse = new("exercise_in_use", 409, "Exercise is in use.");
+    /// <summary>Übungs-Item (Vokabelpaar) existiert nicht / gehört nicht zu dieser Übung (404).</summary>
+    public static readonly ApiError ItemNotFound = new("item_not_found", 404, "Exercise item not found.");
     /// <summary>Vokabel ist Grundform/in Übungen referenziert und kann nicht gelöscht werden (409).</summary>
     public static readonly ApiError VocabularyInUse = new("vocabulary_in_use", 409, "Vocabulary item is in use.");
     /// <summary>Position hat bereits Übungs-/Testdaten und kann nicht gelöscht werden (409).</summary>

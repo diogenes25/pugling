@@ -1,7 +1,7 @@
 info:
   name: "Familien-Shop: aktive Angebote des Vaters, aggregiertes Inventar und Kaufhistorie des Sohns."
   type: http
-  seq: 6
+  seq: 14
   tags:
     - Me
 
@@ -18,8 +18,7 @@ runtime:
 
         function capture(name, value) {
           if (value === undefined || value === null || value === '') return;
-          bru.setVar(name, value);
-          bru.setEnvVar(name, String(value), { persist: true });
+          bru.setEnvVar(name, String(value));
         }
 
         if (body && typeof body === 'object' && !Array.isArray(body)) {

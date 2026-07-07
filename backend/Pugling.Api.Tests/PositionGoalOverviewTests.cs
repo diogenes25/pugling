@@ -30,14 +30,12 @@ public class PositionGoalOverviewTests(PuglingWebAppFactory factory) : IClassFix
         JsonAssert.False(before.GetProperty("today"), "dutyDone");
 
         // Test starten, alle Antworten korrekt einreichen.
-        var attempt = await (await child.PostAsJsonAsync(testsUrl, new { }))
-            .Content.ReadFromJsonAsync<JsonElement>();
-        var attemptId = attempt.GetProperty("attemptId").GetInt32();
-        var answers = attempt.GetProperty("items").EnumerateArray().Select(i =>
+        var attemptId = await TestApi.IdWithKeyAsync(await child.PostAsJsonAsync(testsUrl, new { }), "attemptId");
+        var answers = new[]
         {
-            var prompt = i.GetProperty("prompt").GetString();
-            return new { itemIndex = i.GetProperty("itemIndex").GetInt32(), givenAnswer = prompt == "hello" ? "hallo" : "tschüss" };
-        }).ToArray();
+            new { itemIndex = 0, givenAnswer = "hallo" },   // hello → hallo
+            new { itemIndex = 1, givenAnswer = "tschüss" }, // goodbye → tschüss
+        };
 
         var submit = await (await child.PostAsJsonAsync($"{testsUrl}/{attemptId}/submit", new { answers }))
             .Content.ReadFromJsonAsync<JsonElement>();
@@ -85,14 +83,12 @@ public class PositionGoalOverviewTests(PuglingWebAppFactory factory) : IClassFix
         var testsUrl = $"/api/v1/study-plans/{planId}/positions/{positionId}/tests";
 
         // Wochenziel per bestandenem Test erfüllen.
-        var attempt = await (await child.PostAsJsonAsync(testsUrl, new { }))
-            .Content.ReadFromJsonAsync<JsonElement>();
-        var attemptId = attempt.GetProperty("attemptId").GetInt32();
-        var answers = attempt.GetProperty("items").EnumerateArray().Select(i =>
+        var attemptId = await TestApi.IdWithKeyAsync(await child.PostAsJsonAsync(testsUrl, new { }), "attemptId");
+        var answers = new[]
         {
-            var prompt = i.GetProperty("prompt").GetString();
-            return new { itemIndex = i.GetProperty("itemIndex").GetInt32(), givenAnswer = prompt == "hello" ? "hallo" : "tschüss" };
-        }).ToArray();
+            new { itemIndex = 0, givenAnswer = "hallo" },   // hello → hallo
+            new { itemIndex = 1, givenAnswer = "tschüss" }, // goodbye → tschüss
+        };
         var submit = await (await child.PostAsJsonAsync($"{testsUrl}/{attemptId}/submit", new { answers }))
             .Content.ReadFromJsonAsync<JsonElement>();
         JsonAssert.True(submit, "passed");

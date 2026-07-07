@@ -116,22 +116,7 @@ Response — `HTTP 201`:
     "sourceLang": "en",
     "targetLang": "de",
     "refs": null,
-    "items": [
-      {
-        "front": "hello",
-        "back": "hallo",
-        "hint": null,
-        "vocabularyId": 16,
-        "_self": "/api/v1/learn/vocabulary/16"
-      },
-      {
-        "front": "goodbye",
-        "back": "tsch\u00FCss",
-        "hint": null,
-        "vocabularyId": 17,
-        "_self": "/api/v1/learn/vocabulary/17"
-      }
-    ]
+    "items": []
   },
   "suggestedBonus": null,
   "gradeMin": null,

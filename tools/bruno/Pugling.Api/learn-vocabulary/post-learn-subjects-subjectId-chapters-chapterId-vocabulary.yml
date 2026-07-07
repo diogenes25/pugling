@@ -48,8 +48,7 @@ runtime:
 
         function capture(name, value) {
           if (value === undefined || value === null || value === '') return;
-          bru.setVar(name, value);
-          bru.setEnvVar(name, String(value), { persist: true });
+          bru.setEnvVar(name, String(value));
         }
 
         if (body && typeof body === 'object' && !Array.isArray(body)) {
@@ -145,22 +144,7 @@ examples:
               "sourceLang": "en",
               "targetLang": "de",
               "refs": null,
-              "items": [
-                {
-                  "front": "hello",
-                  "back": "hallo",
-                  "hint": null,
-                  "vocabularyId": 16,
-                  "_self": "/api/v1/learn/vocabulary/16"
-                },
-                {
-                  "front": "goodbye",
-                  "back": "tschüss",
-                  "hint": null,
-                  "vocabularyId": 17,
-                  "_self": "/api/v1/learn/vocabulary/17"
-                }
-              ]
+              "items": []
             },
             "suggestedBonus": null,
             "gradeMin": null,

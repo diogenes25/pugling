@@ -89,7 +89,7 @@ Legende: **/check** = hat einen Auswertungs-Endpunkt · **gen** = erzeugt Aufgab
 
 | Typ | Pfad | Config | Extra |
 | --- | --- | --- | --- |
-| Vocabulary | `/vocabulary` | `VocabularyConfig` | — |
+| Vocabulary | `/vocabulary` | `VocabularyConfig` | Item-CRUD unter `/{exerciseId}/items` |
 | Reading | `/reading` | `ReadingConfig` | — |
 | Cloze | `/cloze` | `ClozeConfig` | — |
 | Essay | `/essays` | `EssayConfig` | — |
@@ -104,15 +104,37 @@ Legende: **/check** = hat einen Auswertungs-Endpunkt · **gen** = erzeugt Aufgab
 
 ### 3.1 Vocabulary — Vokabelübung
 
+`VocabularyConfig` enthält die Einstellungen der Übung. Die Vokabelpaare selbst werden beim Speichern
+in `ExerciseItem`-Zeilen materialisiert und danach über die Subressource `.../items` gepflegt. Ein `POST`
+darf weiterhin inline `items` enthalten; die Response zeigt anschließend meist eine leere Item-Liste in
+der Config, weil der Inhalt nun in der Item-Tabelle liegt.
+
 ```jsonc
 "config": {
   "direction": "front-to-back",     // front-to-back | back-to-front | both
+  "sourceLang": "en",               // nötig, wenn inline items ohne vocabularyId angelegt werden
+  "targetLang": "de",
   "items": [
     { "front": "hello", "back": "hallo" },
     { "front": "please", "back": "bitte", "hint": "Höflichkeit" }
   ]
 }
 ```
+
+Nachträgliche Änderungen laufen bevorzugt über die Item-Subressource:
+
+```http
+GET  /api/v1/learn/subjects/{subjectId}/chapters/{chapterId}/vocabulary/{exerciseId}/items
+POST /api/v1/learn/subjects/{subjectId}/chapters/{chapterId}/vocabulary/{exerciseId}/items
+{ "vocabularyId": 26, "hint": "die" }
+
+PATCH  /api/v1/learn/subjects/{subjectId}/chapters/{chapterId}/vocabulary/{exerciseId}/items/{itemId}
+DELETE /api/v1/learn/subjects/{subjectId}/chapters/{chapterId}/vocabulary/{exerciseId}/items/{itemId}
+```
+
+Wird die Übung bereits in einem Study-Plan verwendet, dürfen Items nicht mehr gelöscht oder umsortiert
+werden, weil dadurch bestehender Fortschritt auf andere Wörter kippen würde. An das Ende anhängen bleibt
+erlaubt.
 
 ### 3.2 Reading — Leseverständnis
 

@@ -19,7 +19,8 @@ public class CatalogManagementTests(PuglingWebAppFactory factory) : IClassFixtur
             .Content.ReadFromJsonAsync<JsonElement>();
 
         Assert.Equal("Vocabulary", detail.GetProperty("type").GetString());
-        Assert.Equal("hello", detail.GetProperty("config").GetProperty("items")[0].GetProperty("front").GetString());
+        // Die Vokabeln leben eine Ebene tiefer als eigene Items; die Config trägt nur noch Einstellungen.
+        Assert.Equal("front-to-back", detail.GetProperty("config").GetProperty("direction").GetString());
         Assert.False(string.IsNullOrEmpty(detail.GetProperty("subjectName").GetString()));
     }
 

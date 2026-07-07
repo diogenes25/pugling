@@ -22,8 +22,7 @@ runtime:
 
         function capture(name, value) {
           if (value === undefined || value === null || value === '') return;
-          bru.setVar(name, value);
-          bru.setEnvVar(name, String(value), { persist: true });
+          bru.setEnvVar(name, String(value));
         }
 
         if (body && typeof body === 'object' && !Array.isArray(body)) {
@@ -58,6 +57,60 @@ settings:
   timeout: 0
   followRedirects: true
   maxRedirects: 5
+
+examples:
+  - name: Tagesmission (Overview)
+    description: "Verifiziert durch DocsCaptureTests: Rolle `child`, erwartet HTTP 200."
+    request:
+      url: "{{baseUrl}}/api/v1/study-plans/:planId/overview"
+      method: GET
+      params:
+        - name: planId
+          value: "{{planId}}"
+          type: path
+    response:
+      status: 200
+      statusText: OK
+      headers:
+        - name: Content-Type
+          value: application/json
+      body:
+        type: json
+        data: |-
+          {
+            "planId": 2,
+            "title": "Doku-Lehrplan",
+            "startDate": "2026-07-07",
+            "endDate": "2026-07-16",
+            "active": true,
+            "currentStreak": 1,
+            "today": {
+              "day": "2026-07-07",
+              "dutyDone": true,
+              "goalsTotal": 1,
+              "goalsMet": 1,
+              "pointsAwarded": 20,
+              "outstanding": [],
+              "positions": [
+                {
+                  "positionId": 2,
+                  "exerciseId": 13,
+                  "exerciseTitle": "Begrüßungen",
+                  "exerciseType": "Vocabulary",
+                  "renderer": "flashcards",
+                  "order": 0,
+                  "cadence": "Daily",
+                  "checkMode": "StudyPlanTest",
+                  "useLeitner": true,
+                  "testable": true,
+                  "goalMet": true,
+                  "dueCount": 1,
+                  "poolSize": 2,
+                  "pointsGoalMet": 20
+                }
+              ]
+            }
+          }
 
 docs: |-
   # Tagesmission: heute fällige Positionen mit Status, erledigte Pflicht und aktuelle Streak.

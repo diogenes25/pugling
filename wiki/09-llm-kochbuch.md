@@ -50,8 +50,9 @@ aktiven Plan sehen soll, ist das auch serverseitig die sauberste Form.
 ```
 
 **Idempotenz:** Nutze stabile Fach-/Kapitel-/Übungstitel und prüfe vorhandene Übungen zuerst über die
-Katalogsuche. Bei Vokabel-Store-Einträgen weiterhin stabile `key`s nutzen und vorher
-`GET /learn/vocabulary/by-key/{key}` prüfen.
+Katalogsuche. Bei Vokabeln zuerst den Store pflegen (`lookup`, `batch`, `by-key`) und danach die
+Übungsmenge über `ExerciseItem`s bzw. `refs-from-tags` materialisieren. `config.items` beim Übungs-POST
+ist nur Authoring-Payload; die dauerhafte Item-Liste liegt unter `.../vocabulary/{exerciseId}/items`.
 
 ---
 
@@ -76,6 +77,11 @@ POST /api/v1/learn/subjects/{subjectId}/chapters/{chapterId}/vocabulary
   "suggestedBonus": { "comboThreshold":5, "comboBonusPoints":5, "speedThresholdSeconds":8,
     "speedBonusPoints":3, "newContentPoints":10 } }
 ```
+
+  Für größere Vokabelmengen ist robuster: Store-Einträge per `POST /learn/vocabulary/batch` anlegen,
+  taggen und anschließend die Übung mit `POST .../vocabulary/{exerciseId}/refs-from-tags` auf den Tag-Snapshot
+  setzen. Dadurch kann dieselbe Store-Vokabel in mehreren Übungen auftauchen und der Lernstand später per
+  `/children/{childId}/vocabulary-progress/by-word` zusammengeführt werden.
 
 Die Qualität der Übungs-Config ist entscheidend. Lieber wenige gute Items mit passenden Hinweisen,
 Alternativen und Stufen als viel Füllmaterial.

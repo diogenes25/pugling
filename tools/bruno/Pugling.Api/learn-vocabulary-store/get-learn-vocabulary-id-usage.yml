@@ -1,5 +1,5 @@
 info:
-  name: Welche Übungen die Vokabel referenzieren – Vokabel-Übungen über List&lt;VocabRef&gt;? VocabularyConfig.Refs, Lückentexte über string? Gap.VocabKey. Grundlage für den Lösch-Schutz und für die Autoren-Sicht.
+  name: Welche Übungen die Vokabel referenzieren – Vokabel-Übungen über ihre ExerciseItem-Zeilen (per Id), Lückentexte über string? Gap.VocabKey in der Config. Grundlage für den Lösch-Schutz und die Autoren-Sicht.
   type: http
   seq: 7
   tags:
@@ -22,8 +22,7 @@ runtime:
 
         function capture(name, value) {
           if (value === undefined || value === null || value === '') return;
-          bru.setVar(name, value);
-          bru.setEnvVar(name, String(value), { persist: true });
+          bru.setEnvVar(name, String(value));
         }
 
         if (body && typeof body === 'object' && !Array.isArray(body)) {
@@ -61,6 +60,6 @@ settings:
   maxRedirects: 5
 
 docs: |-
-  # Welche Übungen die Vokabel referenzieren – Vokabel-Übungen über List&lt;VocabRef&gt;? VocabularyConfig.Refs, Lückentexte über string? Gap.VocabKey. Grundlage für den Lösch-Schutz und für die Autoren-Sicht.
+  # Welche Übungen die Vokabel referenzieren – Vokabel-Übungen über ihre ExerciseItem-Zeilen (per Id), Lückentexte über string? Gap.VocabKey in der Config. Grundlage für den Lösch-Schutz und die Autoren-Sicht.
 
   `GET /api/v1/learn/vocabulary/{id}/usage`

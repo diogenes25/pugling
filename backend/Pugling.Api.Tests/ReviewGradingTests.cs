@@ -73,9 +73,12 @@ public class ReviewGradingTests(PuglingWebAppFactory factory) : IClassFixture<Pu
         var child = await TestApi.ChildAsync(factory);
 
         var res = await TestApi.PositionReviewAsync(child, planId, positionId, sid, 0, wasKnown: true);
-        Assert.Equal(HttpStatusCode.NoContent, res.StatusCode); // nur protokolliert, keine Punkte/Box-Bewegung
+        res.EnsureSuccessStatusCode(); // Cursor läuft weiter, aber die Karte wird nicht gewertet …
+        var outcome = await res.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal(0, outcome.GetProperty("awarded").GetInt32()); // … keine Punkte …
+        Assert.Equal(0, outcome.GetProperty("comboBonus").GetInt32());
 
-        Assert.Equal(1, BoxOf(positionId, 0)); // Karte steht weiterhin in Box 1
+        Assert.Equal(1, BoxOf(positionId, 0)); // … und keine Box-Bewegung (bleibt Box 1)
     }
 
     [Fact]

@@ -32,14 +32,12 @@ public class ChildrenDashboardTests(PuglingWebAppFactory factory) : IClassFixtur
 
         // Positions-Test bestehen → Tagesziel erfüllt, Ziel-Punkte gebucht.
         var testsUrl = $"/api/v1/study-plans/{planId}/positions/{positionId}/tests";
-        var attempt = await (await child.PostAsJsonAsync(testsUrl, new { }))
-            .Content.ReadFromJsonAsync<JsonElement>();
-        var attemptId = attempt.GetProperty("attemptId").GetInt32();
-        var answers = attempt.GetProperty("items").EnumerateArray().Select(i =>
+        var attemptId = await TestApi.IdWithKeyAsync(await child.PostAsJsonAsync(testsUrl, new { }), "attemptId");
+        var answers = new[]
         {
-            var prompt = i.GetProperty("prompt").GetString();
-            return new { itemIndex = i.GetProperty("itemIndex").GetInt32(), givenAnswer = prompt == "hello" ? "hallo" : "tschüss" };
-        }).ToArray();
+            new { itemIndex = 0, givenAnswer = "hallo" },   // hello → hallo
+            new { itemIndex = 1, givenAnswer = "tschüss" }, // goodbye → tschüss
+        };
         await child.PostAsJsonAsync($"{testsUrl}/{attemptId}/submit", new { answers });
 
         // Nachher: Pflicht erledigt, Punkte des Tages sichtbar, als „geübt" markiert.

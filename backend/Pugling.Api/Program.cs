@@ -143,6 +143,10 @@ builder.Services.AddScoped<PositionReportService>();
 builder.Services.AddScoped<BirkenbihlDecodingService>();
 // Findet-sonst-legt-an: sichert, dass jede in einer Übung genutzte Vokabel im zentralen Store liegt.
 builder.Services.AddScoped<VocabularyStoreService>();
+// Pflegt die stabil identifizierten Items einer Vokabelübung (ID-erhaltender Abgleich Config → Item-Tabelle).
+builder.Services.AddScoped<ExerciseItemService>();
+// Schreibt den plan-übergreifenden Lernstand je (Kind, Item) fort und protokolliert die Antwort-Historie.
+builder.Services.AddScoped<ItemProgressService>();
 // Kindübergreifendes Tages-Dashboard des Vaters („wer hat heute was geschafft?").
 builder.Services.AddScoped<ChildrenDashboardService>();
 builder.Services.AddScoped<AuthAccess>();
@@ -308,6 +312,9 @@ using (var scope = app.Services.CreateScope())
         Directory.CreateDirectory(dbDir);
     db.Database.Migrate(); // wendet ausstehende EF-Migrationen an (Schema-Upgrade-Pfad)
     Seed.Run(db);
+    // Bestehende/geseedete Vokabelübungen einmalig in die Item-Tabelle überführen (idempotent).
+    var itemService = scope.ServiceProvider.GetRequiredService<ExerciseItemService>();
+    ExerciseItemBackfill.RunAsync(db, itemService).GetAwaiter().GetResult();
 }
 
 // OpenAPI-Dokument unter /openapi/v1.json + Swagger UI unter /swagger + Scalar UI unter /scalar/v1

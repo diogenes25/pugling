@@ -1,5 +1,5 @@
 info:
-  name: Tag-für-Tag-Verlauf über die gesamte Laufzeit (erledigte Tage, erreichte Ziele, Punkte).
+  name: Tag-für-Tag-Verlauf über die gesamte Laufzeit (erledigte Tage, erreichte Ziele, Punkte). Die Kennzahlen (`DaysComplete`/`TotalPoints`/`CurrentStreak`) beziehen sich bewusst auf die <b>gesamte</b> Laufzeit; Filter/Sortierung/Paging wirken nur auf `Days`. Die gefilterte Gesamtzahl der Tage steht im Header `X-Total-Count`.
   type: http
   seq: 2
   tags:
@@ -12,6 +12,35 @@ http:
     - name: planId
       value: "{{planId}}"
       type: path
+      description: Lehrplan, dessen Verlauf gelesen wird.
+    - name: from
+      value: ""
+      type: query
+      description: Nur Tage ab diesem Datum (inklusive).
+      disabled: true
+    - name: to
+      value: ""
+      type: query
+      description: Nur Tage bis zu diesem Datum (inklusive).
+      disabled: true
+    - name: dutyDone
+      value: "false"
+      type: query
+      description: Nur Tage mit erledigter (`true`) bzw. offener (`false`) Pflicht.
+      disabled: true
+    - name: sort
+      value: ""
+      type: query
+      description: "Sortierung: `day` (Standard), `-day`, `points`, `-points`."
+      disabled: true
+    - name: skip
+      value: "0"
+      type: query
+      description: Anzahl zu überspringender Tage (Paging).
+    - name: take
+      value: "100"
+      type: query
+      description: Maximale Tages-Zahl (1..500). Gesamtzahl im Header `X-Total-Count`.
   auth: inherit
 
 runtime:
@@ -22,8 +51,7 @@ runtime:
 
         function capture(name, value) {
           if (value === undefined || value === null || value === '') return;
-          bru.setVar(name, value);
-          bru.setEnvVar(name, String(value), { persist: true });
+          bru.setEnvVar(name, String(value));
         }
 
         if (body && typeof body === 'object' && !Array.isArray(body)) {
@@ -59,7 +87,153 @@ settings:
   followRedirects: true
   maxRedirects: 5
 
+examples:
+  - name: Verlauf – Paging & Sortierung (neueste zuerst)
+    description: "Verifiziert durch DocsCaptureTests: Rolle `child`, erwartet HTTP 200."
+    request:
+      url: "{{baseUrl}}/api/v1/study-plans/:planId/overview/progress"
+      method: GET
+      params:
+        - name: planId
+          value: "{{planId}}"
+          type: path
+          description: Lehrplan, dessen Verlauf gelesen wird.
+        - name: from
+          value: ""
+          type: query
+          description: Nur Tage ab diesem Datum (inklusive).
+          disabled: true
+        - name: to
+          value: ""
+          type: query
+          description: Nur Tage bis zu diesem Datum (inklusive).
+          disabled: true
+        - name: dutyDone
+          value: "false"
+          type: query
+          description: Nur Tage mit erledigter (`true`) bzw. offener (`false`) Pflicht.
+          disabled: true
+        - name: sort
+          value: ""
+          type: query
+          description: "Sortierung: `day` (Standard), `-day`, `points`, `-points`."
+          disabled: true
+        - name: skip
+          value: "0"
+          type: query
+          description: Anzahl zu überspringender Tage (Paging).
+        - name: take
+          value: "100"
+          type: query
+          description: Maximale Tages-Zahl (1..500). Gesamtzahl im Header `X-Total-Count`.
+    response:
+      status: 200
+      statusText: OK
+      headers:
+        - name: Content-Type
+          value: application/json
+      body:
+        type: json
+        data: |-
+          {
+            "planId": 2,
+            "startDate": "2026-07-07",
+            "endDate": "2026-07-16",
+            "daysComplete": 1,
+            "totalDays": 10,
+            "totalPoints": 20,
+            "currentStreak": 1,
+            "days": [
+              {
+                "day": "2026-07-16",
+                "dutyDone": false,
+                "goalsTotal": 1,
+                "goalsMet": 0,
+                "pointsAwarded": 0
+              },
+              {
+                "day": "2026-07-15",
+                "dutyDone": false,
+                "goalsTotal": 1,
+                "goalsMet": 0,
+                "pointsAwarded": 0
+              },
+              {
+                "day": "2026-07-14",
+                "dutyDone": false,
+                "goalsTotal": 1,
+                "goalsMet": 0,
+                "pointsAwarded": 0
+              }
+            ]
+          }
+  - name: Verlauf – nur erledigte Tage
+    description: "Verifiziert durch DocsCaptureTests: Rolle `child`, erwartet HTTP 200."
+    request:
+      url: "{{baseUrl}}/api/v1/study-plans/:planId/overview/progress"
+      method: GET
+      params:
+        - name: planId
+          value: "{{planId}}"
+          type: path
+          description: Lehrplan, dessen Verlauf gelesen wird.
+        - name: from
+          value: ""
+          type: query
+          description: Nur Tage ab diesem Datum (inklusive).
+          disabled: true
+        - name: to
+          value: ""
+          type: query
+          description: Nur Tage bis zu diesem Datum (inklusive).
+          disabled: true
+        - name: dutyDone
+          value: "false"
+          type: query
+          description: Nur Tage mit erledigter (`true`) bzw. offener (`false`) Pflicht.
+          disabled: true
+        - name: sort
+          value: ""
+          type: query
+          description: "Sortierung: `day` (Standard), `-day`, `points`, `-points`."
+          disabled: true
+        - name: skip
+          value: "0"
+          type: query
+          description: Anzahl zu überspringender Tage (Paging).
+        - name: take
+          value: "100"
+          type: query
+          description: Maximale Tages-Zahl (1..500). Gesamtzahl im Header `X-Total-Count`.
+    response:
+      status: 200
+      statusText: OK
+      headers:
+        - name: Content-Type
+          value: application/json
+      body:
+        type: json
+        data: |-
+          {
+            "planId": 2,
+            "startDate": "2026-07-07",
+            "endDate": "2026-07-16",
+            "daysComplete": 1,
+            "totalDays": 10,
+            "totalPoints": 20,
+            "currentStreak": 1,
+            "days": [
+              {
+                "day": "2026-07-07",
+                "dutyDone": true,
+                "goalsTotal": 1,
+                "goalsMet": 1,
+                "pointsAwarded": 20
+              }
+            ]
+          }
+
 docs: |-
-  # Tag-für-Tag-Verlauf über die gesamte Laufzeit (erledigte Tage, erreichte Ziele, Punkte).
+  # Tag-für-Tag-Verlauf über die gesamte Laufzeit (erledigte Tage, erreichte Ziele, Punkte). Die Kennzahlen (`DaysComplete`/`TotalPoints`/`CurrentStreak`) beziehen sich bewusst auf die <b>gesamte</b> Laufzeit; Filter/Sortierung/Paging wirken nur auf `Days`. Die gefilterte Gesamtzahl der Tage steht im Header `X-Total-Count`.
 
   `GET /api/v1/study-plans/{planId}/overview/progress`

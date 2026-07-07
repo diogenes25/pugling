@@ -28,8 +28,7 @@ runtime:
 
         function capture(name, value) {
           if (value === undefined || value === null || value === '') return;
-          bru.setVar(name, value);
-          bru.setEnvVar(name, String(value), { persist: true });
+          bru.setEnvVar(name, String(value));
         }
 
         if (body && typeof body === 'object' && !Array.isArray(body)) {
@@ -97,7 +96,7 @@ examples:
             "birthYear": null,
             "grade": 4,
             "schoolType": "None",
-            "createdAt": "2026-07-06T22:11:31.5631216",
+            "createdAt": "2026-07-07T21:03:40.3706205",
             "coins": 0,
             "gems": 0
           }

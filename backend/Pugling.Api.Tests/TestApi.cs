@@ -135,7 +135,8 @@ internal static class TestApi
     public static (int planId, int positionId) SeedLeitnerPosition(WebApplicationFactory<Program> f, int exerciseId,
         int stage, int childId = 1, GoalCadence cadence = GoalCadence.Daily, int? goalThreshold = null,
         bool useLeitner = true, bool requireTypedTest = false, int pointsGoalMet = 20,
-        int comboThreshold = 5, int comboBonusPoints = 5, int speedThresholdSeconds = 0, int speedBonusPoints = 0)
+        int comboThreshold = 5, int comboBonusPoints = 5, int speedThresholdSeconds = 0, int speedBonusPoints = 0,
+        PracticeOrder orderStrategy = PracticeOrder.WeakestFirst)
     {
         using var scope = f.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
@@ -156,6 +157,7 @@ internal static class TestApi
             ComboBonusPoints = comboBonusPoints,
             SpeedThresholdSeconds = speedThresholdSeconds,
             SpeedBonusPoints = speedBonusPoints,
+            OrderStrategy = orderStrategy,
         };
         plan.Positions.Add(pos);
         db.StudyPlans.Add(plan);

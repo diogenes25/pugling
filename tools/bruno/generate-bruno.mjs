@@ -522,7 +522,13 @@ function captureVariablesFor(apiPath) {
 // Environment, sodass Folge-Requests (z. B. neu angelegte Ressourcen) direkt darauf zugreifen.
 function captureScript(apiPath) {
   if (isAuthEndpoint(apiPath)) {
-    return `var jsonData = res.getBody();\nbru.setEnvVar('token', jsonData.token);`;
+    // Token als RUNTIME-Variable (bru.setVar), NICHT ins Environment: Bruno liest Environment-Variablen
+    // bei jedem Collection-Reload neu aus der Datei – und schon ein Request-Edit löst so einen Reload aus.
+    // Ein per setEnvVar (ohne { persist: true }) gesetzter Token wird dabei auf den Dateiwert "" zurück-
+    // gesetzt → stiller 401. Runtime-Variablen sind nicht dateigebunden, überleben den Reload und haben
+    // bei der Auflösung von {{token}} ohnehin Vorrang (die leere Environment-Variable wird überstimmt).
+    // Entspricht Brunos Empfehlung, Zugangsdaten/Tokens mit bru.setVar statt bru.setEnvVar zu halten.
+    return `var jsonData = res.getBody();\nbru.setVar('token', jsonData.token);`;
   }
 
   const mappings = captureVariablesFor(apiPath).map(variable => `capture('${variable}', body.${variable} ?? body.id);`);
@@ -533,7 +539,10 @@ function captureScript(apiPath) {
   const bodyLines = [...new Set([...mappings, ...genericCaptures])].join('\n');
   if (!bodyLines) return undefined;
 
-  return `const body = res.getBody();\n\nfunction capture(name, value) {\n  if (value === undefined || value === null || value === '') return;\n  bru.setVar(name, value);\n  bru.setEnvVar(name, String(value), { persist: true });\n}\n\nif (body && typeof body === 'object' && !Array.isArray(body)) {\n${indent(bodyLines, 2)}\n}`;
+  // Bewusst NUR ins aktive Environment schreiben (kein bru.setVar): Runtime-Variablen haben in Bruno
+  // Vorrang vor Environment-Variablen und ließen sich im Environment-Editor nicht mehr überschreiben.
+  // So landet jeder gefangene Wert als Environment-Variable, die der Nutzer notfalls von Hand ändern kann.
+  return `const body = res.getBody();\n\nfunction capture(name, value) {\n  if (value === undefined || value === null || value === '') return;\n  bru.setEnvVar(name, String(value));\n}\n\nif (body && typeof body === 'object' && !Array.isArray(body)) {\n${indent(bodyLines, 2)}\n}`;
 }
 
 function collectionRoot() {

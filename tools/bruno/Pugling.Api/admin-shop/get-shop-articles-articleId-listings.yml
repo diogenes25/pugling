@@ -1,7 +1,7 @@
 info:
   name: Alle Angebote zu einem Artikel des Vaters.
   type: http
-  seq: 11
+  seq: 12
   tags:
     - Admin – Shop
 
@@ -22,8 +22,7 @@ runtime:
 
         function capture(name, value) {
           if (value === undefined || value === null || value === '') return;
-          bru.setVar(name, value);
-          bru.setEnvVar(name, String(value), { persist: true });
+          bru.setEnvVar(name, String(value));
         }
 
         if (body && typeof body === 'object' && !Array.isArray(body)) {
@@ -97,7 +96,7 @@ examples:
               "refillAtUtc": null,
               "refillDayOfWeek": null,
               "lastRefilledAtUtc": null,
-              "createdAt": "2026-07-06T22:11:38.2588347"
+              "createdAt": "2026-07-07T21:03:49.408798"
             }
           ]
 

@@ -62,8 +62,9 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
     {
         var (from, to) = PeriodRange(pos.Cadence, day);
         if (CheckModeOf(pos) == ExerciseCheckMode.None)
+            // Nur echte Lern-Sitzungen zählen aufs Ziel – Info-Sitzungen (freies Üben ohne Feedback) nicht.
             return await db.PracticeSessions.AnyAsync(s =>
-                s.PlanPositionId == pos.Id && s.Day >= from && s.Day <= to
+                s.PlanPositionId == pos.Id && s.Day >= from && s.Day <= to && s.Mode == PlayMode.Lern
                 && (s.EndedAt != null || s.ActiveSeconds > 0));
 
         return await db.TestAttempts.AnyAsync(t =>

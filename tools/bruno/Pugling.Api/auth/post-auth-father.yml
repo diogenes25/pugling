@@ -22,7 +22,7 @@ runtime:
     - type: after-response
       code: |-
         var jsonData = res.getBody();
-        bru.setEnvVar('token', jsonData.token);
+        bru.setVar('token', jsonData.token);
 
 settings:
   encodeUrl: true

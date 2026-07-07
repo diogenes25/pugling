@@ -387,25 +387,44 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
         await Capture(father, g, "Unbekannten Lehrplan lesen", HttpMethod.Get, "/api/v1/study-plans/999999",
             null, HttpStatusCode.NotFound, ApiErrors.NotFound.Code);
 
-        // Sohn übt: Sitzung starten + eine Karte bewerten (serverseitige Prüfung).
-        var session = await Capture(child, g, "Übungssitzung starten", HttpMethod.Post,
-            $"/api/v1/study-plans/{planId}/positions/{positionId}/practice-sessions", new { }, HttpStatusCode.Created);
+        // Sohn übt (Lern-Modus, server-geführt): Sitzung starten, eine Karte bewerten (serverseitige Prüfung –
+        // die Antwort trägt bereits die nächste Karte + Abschluss-Signal), optional die nächste Karte per /next holen.
+        var session = await Capture(child, g, "Übungssitzung starten (Lern-Modus)", HttpMethod.Post,
+            $"/api/v1/study-plans/{planId}/positions/{positionId}/practice-sessions", new { mode = "Lern" }, HttpStatusCode.Created);
         var sessionId = session.GetProperty("id").GetInt32();
-        await Capture(child, g, "Karte bewerten (Review)", HttpMethod.Post,
+        await Capture(child, g, "Nächste Karte (server-geführter Cursor)", HttpMethod.Get,
+            $"/api/v1/study-plans/{planId}/positions/{positionId}/practice-sessions/{sessionId}/next", null, HttpStatusCode.OK);
+        await Capture(child, g, "Karte bewerten (Review, mit nächster Karte)", HttpMethod.Post,
             $"/api/v1/study-plans/{planId}/positions/{positionId}/practice-sessions/{sessionId}/review",
             new { itemIndex = 0, givenAnswer = "hallo" }, HttpStatusCode.OK);
 
-        // Abschlusstest: starten, abgeben, erneut abgeben (→ test_already_submitted).
-        var attempt = await Capture(child, g, "Test starten", HttpMethod.Post,
+        // Info-Modus (freies Üben): alle Karten am Stück, aber /review schreibt kein Feedback (204).
+        var infoSession = await Capture(child, g, "Übungssitzung starten (Info-Modus, freies Üben)", HttpMethod.Post,
+            $"/api/v1/study-plans/{planId}/positions/{positionId}/practice-sessions", new { mode = "Info" }, HttpStatusCode.Created);
+        var infoSessionId = infoSession.GetProperty("id").GetInt32();
+        await Capture(child, g, "Karten am Stück (Info-Modus/Offline-Batch)", HttpMethod.Get,
+            $"/api/v1/study-plans/{planId}/positions/{positionId}/practice-sessions/{infoSessionId}/cards", null, HttpStatusCode.OK);
+        await Capture(child, g, "Review im Info-Modus (kein Feedback → 204)", HttpMethod.Post,
+            $"/api/v1/study-plans/{planId}/positions/{positionId}/practice-sessions/{infoSessionId}/review",
+            new { itemIndex = 0, givenAnswer = "hallo" }, HttpStatusCode.NoContent);
+
+        // Abschlusstest = Klausur (strikt server-getrieben): starten (nur Metadaten), Frage einzeln holen,
+        // beantworten (ohne Korrektheit), abschließen (auswerten), erneut abgeben (→ test_already_submitted).
+        var attempt = await Capture(child, g, "Test starten (Klausur, ohne Aufgaben-Bulk)", HttpMethod.Post,
             $"/api/v1/study-plans/{planId}/positions/{positionId}/tests", new { }, HttpStatusCode.Created);
         var attemptId = attempt.GetProperty("attemptId").GetInt32();
-        await Capture(child, g, "Test abgeben", HttpMethod.Post,
-            $"/api/v1/study-plans/{planId}/positions/{positionId}/tests/{attemptId}/submit",
-            new { answers = new[] { new { itemIndex = 0, givenAnswer = "hallo" }, new { itemIndex = 1, givenAnswer = "tschüss" } } },
-            HttpStatusCode.OK);
+        await Capture(child, g, "Nächste Prüfungsfrage (One-at-a-time)", HttpMethod.Get,
+            $"/api/v1/study-plans/{planId}/positions/{positionId}/tests/{attemptId}/next", null, HttpStatusCode.OK);
+        await Capture(child, g, "Prüfungsantwort abgeben (ohne Korrektheit)", HttpMethod.Post,
+            $"/api/v1/study-plans/{planId}/positions/{positionId}/tests/{attemptId}/answer",
+            new { givenAnswer = "hallo" }, HttpStatusCode.OK);
+        // Restliche Fragen beantworten (nicht abgebildet), damit der Versuch vollständig ist.
+        await child.PostAsJsonAsync($"/api/v1/study-plans/{planId}/positions/{positionId}/tests/{attemptId}/answer",
+            new { givenAnswer = "tschüss" });
+        await Capture(child, g, "Test abgeben (auswerten)", HttpMethod.Post,
+            $"/api/v1/study-plans/{planId}/positions/{positionId}/tests/{attemptId}/submit", new { }, HttpStatusCode.OK);
         await Capture(child, g, "Test erneut abgeben", HttpMethod.Post,
-            $"/api/v1/study-plans/{planId}/positions/{positionId}/tests/{attemptId}/submit",
-            new { answers = new[] { new { itemIndex = 0, givenAnswer = "hallo" } } },
+            $"/api/v1/study-plans/{planId}/positions/{positionId}/tests/{attemptId}/submit", new { },
             HttpStatusCode.BadRequest, ApiErrors.TestAlreadySubmitted.Code);
 
         // Tagesmission + Verlauf. Der Verlauf unterstützt Paging (skip/take, X-Total-Count),

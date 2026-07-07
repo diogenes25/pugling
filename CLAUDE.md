@@ -51,6 +51,12 @@ Rollen im SPA: `/` Produktseite, `/vater` Web-Admin (inkl. `/vater/wizard` Lehrp
 - **Lern-Katalog** ([Controllers/Learn/ExerciseControllers.cs](backend/Pugling.Api/Controllers/Learn/ExerciseControllers.cs)):
   `Subject → Chapter → Exercise` (typisiert, Config als JSON). Ein Controller je `ExerciseType`,
   erben CRUD aus `ExerciseControllerBase<TConfig>`. Route: `api/v1/learn/subjects/{}/chapters/{}/<typ>`.
+  **Vokabelübungen** halten ihre Vokabelpaare als **eigene Ebene**: stabil identifizierte `ExerciseItem`s
+  (Tabelle, nicht mehr in der ConfigJson) mit CRUD unter `…/vocabulary/{exerciseId}/items/{itemId}`. Ein Item
+  ist eine positionierte Referenz auf eine Store-`Vocabulary` (Front/Back/Audio kommen live von dort) + optionaler
+  lokaler Hinweis. POST akzeptiert weiterhin inline `items`/`refs` im Payload (materialisiert per `ExerciseItemService`,
+  ID-erhaltend); die Config trägt danach nur noch Einstellungen (Direction/Sprachen). Der Resolver liest Vokabel-Items
+  aus der Tabelle; der Engine-Index ist die Listenposition (bleibt zum Legacy-`ItemIndex` kompatibel).
 - **Lehrplan/Training** ([StudyPlansController](backend/Pugling.Api/Controllers/Learn/StudyPlansController.cs)):
   `StudyPlan` ist ein **reiner Container** (`ChildId, Title, Start/End, Active`). Inhalt sind
   `PlanPosition`s ([PlanPositionsController](backend/Pugling.Api/Controllers/Learn/PlanPositionsController.cs)),
@@ -60,6 +66,12 @@ Rollen im SPA: `/` Produktseite, `/vater` Web-Admin (inkl. `/vater/wizard` Lehrp
   Leitner-Fortschritt materialisiert je Inhalts-Atom in `PositionItemProgress`. Tagesmission/Verlauf über
   `PlanOverviewController` (`…/overview` + `…/overview/progress`). Route: `api/v1/study-plans/{planId}/…`.
   Das alte plan-weite `StudyPlanItem`/`Method`-Modell wurde vollständig entfernt (kein Legacy mehr).
+  **Plan-übergreifender Item-Lernstand** (nur Vokabel): `PositionPracticeController.Review`/`PositionTestsController.Submit`
+  schreiben je Antwort über `ItemProgressService` einen Stand pro `(Kind, ItemId)` (`ItemProgress`: Box/Beherrschung/Zähler)
+  + eine Antwort-Historie (`ItemReviewEvent`), beide mit denormalisierter `VocabularyId`. Kind-zentrische Auswertung:
+  `ChildVocabularyProgressController` unter `api/v1/children/{childId}/vocabulary-progress` (Liste mit `?exerciseId/?maxBox/?onlyWeak`,
+  `/{itemId}`, `/{itemId}/history`, `/by-word`-Rollup für „schlecht gelernte Wörter"). Ergänzt den positionsgebundenen
+  `PositionReportService` um die plan-übergreifende Sicht.
 - **Tags & Klassenarbeiten** ([KlassenarbeitenController](backend/Pugling.Api/Controllers/Learn/KlassenarbeitenController.cs)):
   Übungen taggen, Arbeiten planen/benoten, gezielt üben/wiederholen. Route: `api/v1/class-tests`
   (Typnamen intern weiterhin `Klassenarbeit`).

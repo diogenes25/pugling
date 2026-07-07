@@ -65,6 +65,7 @@ eigenständige, dateibasierte Welt.
 
 - [Architektur-Entscheidung (API-First)](docs/architektur-entscheidung.md) · [Architektur-Resümee](docs/architektur-resumee.md)
 - [Tutorial (API, Vater & Sohn)](docs/tutorial.md) — kompakter Original-Walkthrough
+- [Vokabel-Funktionalitäten für Entwickler](docs/vokabel-funktionalitaeten-entwickler-tutorial.md) — Store, `ExerciseItem`s, Progress und API-Flows
 - [Vokabeltraining-Prozess-Log](docs/vokabeltraining-prozess.md) — wie das Study-Plan-System in 8 Iterationen entstand
 - [Klassenarbeiten & Tagging](docs/klassenarbeiten-tagging.md) · [Code-Review](docs/code-review.md)
 - [Markdown-Lehrplan erstellen](docs/lehrplan-erstellen.md) — die dateibasierte `vater`/`sohn`-Welt

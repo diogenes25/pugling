@@ -1,7 +1,7 @@
 info:
   name: Löscht ein Angebot. Bereits getätigte Käufe bleiben als Snapshot im Inventar erhalten.
   type: http
-  seq: 13
+  seq: 14
   tags:
     - Admin – Shop
 
@@ -25,8 +25,7 @@ runtime:
 
         function capture(name, value) {
           if (value === undefined || value === null || value === '') return;
-          bru.setVar(name, value);
-          bru.setEnvVar(name, String(value), { persist: true });
+          bru.setEnvVar(name, String(value));
         }
 
         if (body && typeof body === 'object' && !Array.isArray(body)) {

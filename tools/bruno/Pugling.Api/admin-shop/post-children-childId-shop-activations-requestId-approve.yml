@@ -25,8 +25,7 @@ runtime:
 
         function capture(name, value) {
           if (value === undefined || value === null || value === '') return;
-          bru.setVar(name, value);
-          bru.setEnvVar(name, String(value), { persist: true });
+          bru.setEnvVar(name, String(value));
         }
 
         if (body && typeof body === 'object' && !Array.isArray(body)) {
@@ -95,7 +94,7 @@ examples:
             "actionType": "TV",
             "requestedQuantity": 30,
             "status": "Approved",
-            "requestedAt": "2026-07-06T22:11:38.8848482",
+            "requestedAt": "2026-07-07T21:03:49.9981771",
             "closedAt": "<timestamp>",
             "canApprove": false,
             "canReject": false

@@ -22,7 +22,7 @@ Request:
 Response — `HTTP 201`:
 ```json
 {
-  "id": 18,
+  "id": 26,
   "key": "en_doku_de_beispiel",
   "version": "1.0",
   "sourceLanguage": "en",
@@ -99,7 +99,7 @@ Response — `HTTP 200`:
   "baseFormRelation": null,
   "pronunciationAudioUrl": null,
   "tags": [],
-  "createdAt": "2026-07-07T15:14:40.4472187"
+  "createdAt": "2026-07-07T21:43:36.81609"
 }
 ```
 

@@ -1,7 +1,7 @@
 info:
   name: Learn – Vocabulary Store
   type: folder
-  seq: 29
+  seq: 30
 
 request:
   auth: inherit
