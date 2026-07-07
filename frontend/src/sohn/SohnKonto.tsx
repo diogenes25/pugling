@@ -3,11 +3,12 @@ import { api, errorMessage } from "../lib/api";
 import { useAsync } from "../lib/useAsync";
 import { offerPeriodLabel, pointKindLabel, redemptionStatusLabel } from "../lib/labels";
 import { confirmAction } from "../lib/ui";
-import type { RewardsView, Wallet } from "../lib/types";
+import type { Paged, RewardsView, WalletBalance, WalletEntry } from "../lib/types";
 
 export function SohnKonto() {
   const rewards = useAsync<RewardsView>(() => api.myRewards(), []);
-  const wallet = useAsync<Wallet>(() => api.wallet(), []);
+  const wallet = useAsync<WalletBalance>(() => api.wallet(), []);
+  const history = useAsync<Paged<WalletEntry>>(() => api.walletEntries(), []);
   const [busy, setBusy] = useState<number | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
 
@@ -22,6 +23,7 @@ export function SohnKonto() {
       await api.purchaseReward(rewardId);
       rewards.reload();
       wallet.reload();
+      history.reload();
       flash(`„${title}" gekauft! 🎉 Papa löst es bald ein.`);
     } catch (e) {
       flash(errorMessage(e));
@@ -30,7 +32,7 @@ export function SohnKonto() {
     }
   }
 
-  const coins = rewards.data?.coins ?? wallet.data?.coins ?? 0;
+  const coins = wallet.data?.coins ?? 0;
   const gems = wallet.data?.gems ?? 0;
 
   return (
@@ -88,16 +90,16 @@ export function SohnKonto() {
       )}
 
       <h3 className="screen-title" style={{ fontSize: 18 }}>Verlauf</h3>
-      {wallet.loading ? <div className="loading">Lade…</div> : wallet.error ? <div className="banner err">{wallet.error}</div> : (
+      {history.loading ? <div className="loading">Lade…</div> : history.error ? <div className="banner err">{history.error}</div> : (
         <div className="list">
-          {wallet.data?.entries.map((e) => (
+          {history.data?.items.map((e) => (
             <div key={e.id} className="row" style={{ justifyContent: "space-between", padding: "5px 0" }}>
               <span className="sub">{pointKindLabel(e.kind)}{e.reason ? ` · ${e.reason}` : ""}</span>
               <b className="tabnum" style={{ color: e.amount < 0 ? "var(--danger,#ff6b6b)" : "var(--lime,#8bd450)" }}>
                 {e.amount > 0 ? `+${e.amount}` : e.amount}</b>
             </div>
           ))}
-          {wallet.data?.entries.length === 0 && <p className="sub">Noch keine Buchungen.</p>}
+          {history.data?.items.length === 0 && <p className="sub">Noch keine Buchungen.</p>}
         </div>
       )}
 

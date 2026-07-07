@@ -273,6 +273,117 @@ Response — `HTTP 400`:
 }
 ```
 
+## Tagesmission (Overview)
+`GET /api/v1/study-plans/2/overview`
+
+Rolle: **child** — `Authorization: Bearer <child-token>`
+
+Response — `HTTP 200`:
+```json
+{
+  "planId": 2,
+  "title": "Doku-Lehrplan",
+  "startDate": "2026-07-07",
+  "endDate": "2026-07-16",
+  "active": true,
+  "currentStreak": 1,
+  "today": {
+    "day": "2026-07-07",
+    "dutyDone": true,
+    "goalsTotal": 1,
+    "goalsMet": 1,
+    "pointsAwarded": 20,
+    "outstanding": [],
+    "positions": [
+      {
+        "positionId": 2,
+        "exerciseId": 13,
+        "exerciseTitle": "Begr\u00FC\u00DFungen",
+        "exerciseType": "Vocabulary",
+        "renderer": "flashcards",
+        "order": 0,
+        "cadence": "Daily",
+        "checkMode": "StudyPlanTest",
+        "useLeitner": true,
+        "testable": true,
+        "goalMet": true,
+        "dueCount": 1,
+        "poolSize": 2,
+        "pointsGoalMet": 20
+      }
+    ]
+  }
+}
+```
+
+## Verlauf – Paging & Sortierung (neueste zuerst)
+`GET /api/v1/study-plans/2/overview/progress?take=3&sort=-day`
+
+Rolle: **child** — `Authorization: Bearer <child-token>`
+
+Response — `HTTP 200`:
+```json
+{
+  "planId": 2,
+  "startDate": "2026-07-07",
+  "endDate": "2026-07-16",
+  "daysComplete": 1,
+  "totalDays": 10,
+  "totalPoints": 20,
+  "currentStreak": 1,
+  "days": [
+    {
+      "day": "2026-07-16",
+      "dutyDone": false,
+      "goalsTotal": 1,
+      "goalsMet": 0,
+      "pointsAwarded": 0
+    },
+    {
+      "day": "2026-07-15",
+      "dutyDone": false,
+      "goalsTotal": 1,
+      "goalsMet": 0,
+      "pointsAwarded": 0
+    },
+    {
+      "day": "2026-07-14",
+      "dutyDone": false,
+      "goalsTotal": 1,
+      "goalsMet": 0,
+      "pointsAwarded": 0
+    }
+  ]
+}
+```
+
+## Verlauf – nur erledigte Tage
+`GET /api/v1/study-plans/2/overview/progress?dutyDone=true`
+
+Rolle: **child** — `Authorization: Bearer <child-token>`
+
+Response — `HTTP 200`:
+```json
+{
+  "planId": 2,
+  "startDate": "2026-07-07",
+  "endDate": "2026-07-16",
+  "daysComplete": 1,
+  "totalDays": 10,
+  "totalPoints": 20,
+  "currentStreak": 1,
+  "days": [
+    {
+      "day": "2026-07-07",
+      "dutyDone": true,
+      "goalsTotal": 1,
+      "goalsMet": 1,
+      "pointsAwarded": 20
+    }
+  ]
+}
+```
+
 ### Test auf Übung ohne prüfbaren Inhalt — Fehlerfall
 `POST /api/v1/study-plans/2/positions/3/tests`
 

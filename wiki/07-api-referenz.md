@@ -15,9 +15,11 @@ Kompakter Überblick über alle Routen. **Autoritative Quelle bleibt Swagger** (
 | ∅ | `POST /auth/father` | Vater-Login (fatherId + pin) → JWT |
 | ∅ | `POST /auth/child` | Sohn-Login (childId + pin) → JWT |
 | A | `GET /auth/me` | Identität aus dem Token |
-| S | `GET /me/points` | eigener Punktestand (Wallet) |
-| S | `GET /me/missions` | eigene Missionen mit Fortschritt |
-| S | `GET /me/achievements` | eigene Auszeichnungen |
+| S | `GET /me/points` · `GET …/entries` · `GET …/entries/{entryId}` | Kontostand (Salden) + Buchungen (Liste, paginiert, + Einzeln) |
+| S | `GET /me/missions` · `GET …/{missionId}` | eigene Missionen mit Fortschritt (Liste, paginiert, + Einzeln) |
+| S | `GET /me/achievements` · `GET …/{achievementId}` | eigene Auszeichnungen (Liste, paginiert, + Einzeln) |
+| S | `GET /me/rewards` · `…/available[/{id}]` · `…/redemptions[/{id}]` | Angebots-Sicht (Aggregat) + adressierbare Unterlisten (paginiert) + Einzeln |
+| S | `POST /me/rewards/available/{availableId}/purchase` | Angebot direkt kaufen |
 
 ## Admin — Personen & Punkte
 
@@ -62,7 +64,7 @@ Kompakter Überblick über alle Routen. **Autoritative Quelle bleibt Swagger** (
 | V | `POST /study-plans` · `PATCH /study-plans/{id}` | Plan anlegen/ändern |
 | V | `GET/POST /study-plans/{id}/positions` · `GET/PATCH/DELETE …/{positionId}` | Übungen als PlanPositionen verwalten |
 | A | `GET /study-plans/{id}/overview` | Tagesmission und aktueller Status |
-| A | `GET /study-plans/{id}/overview/progress` | Tag-für-Tag-Fortschritt |
+| A | `GET /study-plans/{id}/overview/progress?from=&to=&dutyDone=&sort=&skip=&take=` | Tag-für-Tag-Fortschritt (Filter/Sort/Paging) |
 | A | `GET /study-plans/{id}/positions/{positionId}/report` | Mastery und Testhistorie pro Position |
 
 ### Üben (Practice)

@@ -5,10 +5,11 @@ import type {
   ExerciseSearchParams, ExerciseSummary, ExerciseUsage, KlassenarbeitDetail, KlassenarbeitPractice, KlassenarbeitRepeat,
   KlassenarbeitResponse, KlassenarbeitStatus, LoginResponse, MissionDef, MissionStatus, PlanResponse,
   ChildrenDashboard, CreatePositionDto, PositionResponse, PositionReport, UpdatePositionDto, OverviewResponse, PositionSession, PracticeCard,
-  ProgressResponse, RedemptionDef, ReviewInput, ReviewOutcome, RewardDef, RewardRedemptionStatus, RewardsView,
+  ProgressResponse, RedemptionDef, ReviewInput, ReviewOutcome, RewardDef, RewardOffer, MyRedemption,
+  RewardRedemptionStatus, RewardsView,
   SkinState, SubjectResponse,
   TestAttemptResponse, TestSubmitResponse, UpdateKlassenarbeitDto, UpdatePlanDto, UpdateVocabularyDto,
-  VocabBatchResult, VocabularyResponse, VocabTagResponse, ChildTagResponse, Wallet,
+  VocabBatchResult, VocabularyResponse, VocabTagResponse, ChildTagResponse, Wallet, WalletBalance, WalletEntry,
   Paged, VocabularySearchParams,
 } from "./types";
 
@@ -266,7 +267,14 @@ export const api = {
     http<TestSubmitResponse>(`${V1}/study-plans/${planId}/positions/${positionId}/tests/${attemptId}/submit`, "POST", { answers }),
 
   // ---- Sohn: Wallet ----
-  wallet: () => http<Wallet>(`${V1}/me/points`),
+  // Kontostand (Salden) und Buchungsverlauf sind getrennt: Salden als Einzelwerte, Buchungen server-paginiert.
+  wallet: () => http<WalletBalance>(`${V1}/me/points`),
+  walletEntries: (opts: { skip?: number; take?: number } = {}) => {
+    const q = new URLSearchParams();
+    appendPaging(q, opts);
+    const qs = q.toString();
+    return httpPaged<WalletEntry>(`${V1}/me/points/entries${qs ? `?${qs}` : ""}`);
+  },
 
   // ---- Sohn: Missionen & Auszeichnungen ----
   missions: () => http<MissionStatus[]>(`${V1}/me/missions`),
@@ -331,8 +339,24 @@ export const api = {
     http<RedemptionDef>(`${V1}/children/${childId}/rewards/redemptions/${redemptionId}/cancel`, "POST", {}),
 
   // ---- Sohn: Angebote ansehen und direkt kaufen (Münzen sofort weg, Vater erfüllt später) ----
+  // Aggregat-Sicht (available + redemptions); der Münzstand kommt aus api.wallet() (me/points).
   myRewards: () => http<RewardsView>(`${V1}/me/rewards`),
-  purchaseReward: (rewardId: number) => http<RewardsView>(`${V1}/me/rewards/${rewardId}/purchase`, "POST", {}),
+  // Adressierbare Unterlisten (server-paginiert) – falls einzeln benötigt.
+  rewardsAvailable: (opts: { skip?: number; take?: number } = {}) => {
+    const q = new URLSearchParams();
+    appendPaging(q, opts);
+    const qs = q.toString();
+    return httpPaged<RewardOffer>(`${V1}/me/rewards/available${qs ? `?${qs}` : ""}`);
+  },
+  rewardsRedemptions: (opts: { status?: RewardRedemptionStatus; skip?: number; take?: number } = {}) => {
+    const q = new URLSearchParams();
+    if (opts.status) q.set("status", opts.status);
+    appendPaging(q, opts);
+    const qs = q.toString();
+    return httpPaged<MyRedemption>(`${V1}/me/rewards/redemptions${qs ? `?${qs}` : ""}`);
+  },
+  // Kauf über die available-Ressource; availableId == Angebots-Id.
+  purchaseReward: (availableId: number) => http<RewardsView>(`${V1}/me/rewards/available/${availableId}/purchase`, "POST", {}),
 
   // ---- Vater: Klassenarbeiten (planen, Übungen zuweisen, benoten, üben/wiederholen) ----
   classTests: (childId: number, opts: { status?: KlassenarbeitStatus; skip?: number; take?: number } = {}) => {

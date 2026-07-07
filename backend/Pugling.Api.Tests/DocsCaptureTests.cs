@@ -275,11 +275,31 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
         const string g = "me";
 
         // Lese-Sichten des geseedeten Sohns (id 1) – realistische Daten (Missionen/Skins/Angebote geseedet).
-        await Capture(child, g, "Eigener Punktestand (Wallet)", HttpMethod.Get, "/api/v1/me/points", null, HttpStatusCode.OK);
-        await Capture(child, g, "Eigene Missionen", HttpMethod.Get, "/api/v1/me/missions", null, HttpStatusCode.OK);
-        await Capture(child, g, "Eigene Auszeichnungen", HttpMethod.Get, "/api/v1/me/achievements", null, HttpStatusCode.OK);
+        await Capture(child, g, "Eigener Kontostand (Wallet)", HttpMethod.Get, "/api/v1/me/points", null, HttpStatusCode.OK);
+
+        // Buchungen liegen eine Ebene tiefer: Liste + Einzelansicht. Eine deterministische Buchung anlegen.
+        await GrantAsync(1, 15, PointKind.Base, "Doku-Buchung");
+        var pointEntries = await Capture(child, g, "Eigene Buchungen (Liste)", HttpMethod.Get,
+            "/api/v1/me/points/entries", null, HttpStatusCode.OK);
+        var entryId = pointEntries.EnumerateArray().First().GetProperty("id").GetInt32();
+        await Capture(child, g, "Einzelne Buchung", HttpMethod.Get,
+            $"/api/v1/me/points/entries/{entryId}", null, HttpStatusCode.OK);
+        var missions = await Capture(child, g, "Eigene Missionen (Liste)", HttpMethod.Get, "/api/v1/me/missions", null, HttpStatusCode.OK);
+        var missionId = missions.EnumerateArray().First().GetProperty("id").GetInt32();
+        await Capture(child, g, "Einzelne Mission", HttpMethod.Get, $"/api/v1/me/missions/{missionId}", null, HttpStatusCode.OK);
+
+        var achievements = await Capture(child, g, "Eigene Auszeichnungen (Liste)", HttpMethod.Get, "/api/v1/me/achievements", null, HttpStatusCode.OK);
+        var achievementId = achievements.EnumerateArray().First().GetProperty("id").GetInt32();
+        await Capture(child, g, "Einzelne Auszeichnung", HttpMethod.Get, $"/api/v1/me/achievements/{achievementId}", null, HttpStatusCode.OK);
+
         await Capture(child, g, "Eigener Skin-Zustand", HttpMethod.Get, "/api/v1/me/skins", null, HttpStatusCode.OK);
-        await Capture(child, g, "Eigene Angebote & Käufe", HttpMethod.Get, "/api/v1/me/rewards", null, HttpStatusCode.OK);
+
+        // Angebots-Sicht: Aggregat + adressierbare Unterlisten mit Einzelansicht.
+        await Capture(child, g, "Eigene Angebote & Käufe (Aggregat)", HttpMethod.Get, "/api/v1/me/rewards", null, HttpStatusCode.OK);
+        var availableList = await Capture(child, g, "Verfügbare Angebote (Liste)", HttpMethod.Get, "/api/v1/me/rewards/available", null, HttpStatusCode.OK);
+        var availableId = availableList.EnumerateArray().First().GetProperty("id").GetInt32();
+        await Capture(child, g, "Einzelnes Angebot", HttpMethod.Get, $"/api/v1/me/rewards/available/{availableId}", null, HttpStatusCode.OK);
+        await Capture(child, g, "Eigene Käufe (Liste)", HttpMethod.Get, "/api/v1/me/rewards/redemptions", null, HttpStatusCode.OK);
 
         await Capture(father, g, "Vater greift auf Sohn-Route zu", HttpMethod.Get, "/api/v1/me/points",
             null, HttpStatusCode.Forbidden, ApiErrors.Forbidden.Code);
@@ -307,9 +327,11 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
         // Angebots-Kauf-Ablauf mit Kind A: Münzen über eine Base-Buchung (Base → Coins).
         await GrantAsync(childAId, 500, PointKind.Base, "Doku-Münzen");
         var offer1 = (await CreateOfferAsync(father, childAId, new { title = "30 Min Fernsehen", cost = 50, period = "Weekly", quantity = 3 }));
-        var buyView = await Capture(childA, g, "Angebot kaufen", HttpMethod.Post, $"/api/v1/me/rewards/{offer1}/purchase",
+        var buyView = await Capture(childA, g, "Angebot kaufen", HttpMethod.Post, $"/api/v1/me/rewards/available/{offer1}/purchase",
             new { }, HttpStatusCode.OK);
         var redemptionId = buyView.GetProperty("redemptions").EnumerateArray().First().GetProperty("id").GetInt32();
+        await Capture(childA, g, "Einzelner Kauf", HttpMethod.Get, $"/api/v1/me/rewards/redemptions/{redemptionId}",
+            null, HttpStatusCode.OK);
 
         await Capture(father, g, "Kauf erfüllen (Vater)", HttpMethod.Post,
             $"/api/v1/children/{childAId}/rewards/redemptions/{redemptionId}/fulfill", new { }, HttpStatusCode.OK);
@@ -319,21 +341,21 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
 
         // Kontingent (quantity = 1): zweiter Kauf in derselben Periode → erschöpft.
         var offer2 = await CreateOfferAsync(father, childAId, new { title = "Kontingent-Snack", cost = 50, period = "Weekly", quantity = 1 });
-        (await childA.PostAsJsonAsync($"/api/v1/me/rewards/{offer2}/purchase", new { })).EnsureSuccessStatusCode();
-        await Capture(childA, g, "Angebot über Kontingent kaufen", HttpMethod.Post, $"/api/v1/me/rewards/{offer2}/purchase",
+        (await childA.PostAsJsonAsync($"/api/v1/me/rewards/available/{offer2}/purchase", new { })).EnsureSuccessStatusCode();
+        await Capture(childA, g, "Angebot über Kontingent kaufen", HttpMethod.Post, $"/api/v1/me/rewards/available/{offer2}/purchase",
             new { }, HttpStatusCode.Conflict, ApiErrors.QuotaExhausted.Code);
 
         // Deaktiviertes Angebot kaufen → offer_inactive.
         var offer3 = await CreateOfferAsync(father, childAId, new { title = "Bald weg", cost = 10 });
         (await father.PatchAsJsonAsync($"/api/v1/children/{childAId}/rewards/{offer3}", new { active = false })).EnsureSuccessStatusCode();
-        await Capture(childA, g, "Deaktiviertes Angebot kaufen", HttpMethod.Post, $"/api/v1/me/rewards/{offer3}/purchase",
+        await Capture(childA, g, "Deaktiviertes Angebot kaufen", HttpMethod.Post, $"/api/v1/me/rewards/available/{offer3}/purchase",
             new { }, HttpStatusCode.BadRequest, ApiErrors.OfferInactive.Code);
 
         // Kind B: keine Münzen → insufficient_coins.
         var childBId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/children", new { name = "Ökonomie-Kind B", pin = "5002" }));
         var childB = await TestApi.ChildAsync(factory, childBId, "5002");
         var offer4 = await CreateOfferAsync(father, childBId, new { title = "Kinoabend", cost = 100 });
-        await Capture(childB, g, "Angebot ohne Deckung kaufen", HttpMethod.Post, $"/api/v1/me/rewards/{offer4}/purchase",
+        await Capture(childB, g, "Angebot ohne Deckung kaufen", HttpMethod.Post, $"/api/v1/me/rewards/available/{offer4}/purchase",
             new { }, HttpStatusCode.BadRequest, ApiErrors.InsufficientCoins.Code);
     }
 
@@ -385,6 +407,15 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
             $"/api/v1/study-plans/{planId}/positions/{positionId}/tests/{attemptId}/submit",
             new { answers = new[] { new { itemIndex = 0, givenAnswer = "hallo" } } },
             HttpStatusCode.BadRequest, ApiErrors.TestAlreadySubmitted.Code);
+
+        // Tagesmission + Verlauf. Der Verlauf unterstützt Paging (skip/take, X-Total-Count),
+        // Sortierung (day/-day/points/-points) und Filter (from/to, dutyDone).
+        await Capture(child, g, "Tagesmission (Overview)", HttpMethod.Get,
+            $"/api/v1/study-plans/{planId}/overview", null, HttpStatusCode.OK);
+        await Capture(child, g, "Verlauf – Paging & Sortierung (neueste zuerst)", HttpMethod.Get,
+            $"/api/v1/study-plans/{planId}/overview/progress?take=3&sort=-day", null, HttpStatusCode.OK);
+        await Capture(child, g, "Verlauf – nur erledigte Tage", HttpMethod.Get,
+            $"/api/v1/study-plans/{planId}/overview/progress?dutyDone=true", null, HttpStatusCode.OK);
 
         // Test auf einer Leseübung ohne prüfbaren Inhalt → no_checkable_content.
         var reading = await father.PostAsJsonAsync(
@@ -569,6 +600,10 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
         await Capture(shopChild, g, "Aktivierungsanfrage (Inventar erschöpft)", HttpMethod.Post,
             $"/api/v1/me/shop/inventory/{articleId}/activate",
             new { quantity = 999 }, HttpStatusCode.BadRequest, ApiErrors.InsufficientInventory.Code);
+
+        // Eigener Bestand des Sohns (Gegenstück zum activate-POST)
+        await Capture(shopChild, g, "Eigenes Inventar (Sohn)", HttpMethod.Get,
+            "/api/v1/me/shop/inventory", null, HttpStatusCode.OK);
 
         // Eigene Aktivierungen des Sohns
         await Capture(shopChild, g, "Eigene Aktivierungen (Sohn)", HttpMethod.Get,

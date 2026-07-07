@@ -1,3 +1,4 @@
+using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using Pugling.Api.Models;
@@ -27,8 +28,8 @@ public class GamificationTests(PuglingWebAppFactory factory) : IClassFixture<Pug
 
     private static async Task<int> CountPointReasonAsync(HttpClient child, string reason)
     {
-        var wallet = await (await child.GetAsync("/api/v1/me/points")).Content.ReadFromJsonAsync<JsonElement>();
-        return wallet.GetProperty("entries").EnumerateArray()
+        var entries = await (await child.GetAsync("/api/v1/me/points/entries")).Content.ReadFromJsonAsync<JsonElement>();
+        return entries.EnumerateArray()
             .Count(e => e.GetProperty("reason").GetString() == reason);
     }
 
@@ -79,10 +80,20 @@ public class GamificationTests(PuglingWebAppFactory factory) : IClassFixture<Pug
         var child = await TestApi.ChildAsync(factory);
         await ReviewAsync(child, planId, positionId, sid, 0); // Schwelle (1) erreicht
 
-        var achievements = await (await child.GetAsync("/api/v1/me/achievements")).Content.ReadFromJsonAsync<JsonElement>();
+        var listRes = await child.GetAsync("/api/v1/me/achievements");
+        Assert.True(listRes.Headers.Contains("X-Total-Count")); // Liste ist paginiert
+        var achievements = await listRes.Content.ReadFromJsonAsync<JsonElement>();
         var mine = achievements.EnumerateArray().First(a => a.GetProperty("title").GetString() == title);
         JsonAssert.True(mine, "earned");
         Assert.Equal("⭐", mine.GetProperty("icon").GetString());
+
+        // Einzelansicht liefert dieselbe Auszeichnung; unbekannte Id → 404.
+        var achievementId = mine.GetProperty("id").GetInt32();
+        var single = await (await child.GetAsync($"/api/v1/me/achievements/{achievementId}")).Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal(title, single.GetProperty("title").GetString());
+        JsonAssert.True(single, "earned");
+        Assert.Equal(HttpStatusCode.NotFound,
+            (await child.GetAsync("/api/v1/me/achievements/999999")).StatusCode);
 
         // Genau einmal verliehen, auch nach weiteren Treffern.
         await ReviewAsync(child, planId, positionId, sid, 1);

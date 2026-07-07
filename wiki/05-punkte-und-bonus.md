@@ -35,9 +35,10 @@ zentral aus [`WalletService`](../backend/Pugling.Api/Services/WalletService.cs).
 | `ShopGems` | 💎 Gems | **Familien-Shop-Kauf** – Gem-Anteil (negativ) |
 
 Kurz: **Fleiß fürs Lernen → Münzen** (→ echte Werte beim Vater), **Motivations-Boni → Gems** (→ Kosmetik).
-Lesen: `GET /api/v1/children/{childId}/points` (Vater) bzw. `GET /api/v1/me/points` (Sohn) — beide liefern
-`coins` **und** `gems`. Ein Test (`PointKindCurrencyTests`) erzwingt, dass jeder `PointKind` genau einer
-Währung zugeordnet ist (kein stiller Verlust bei neuem Kind).
+Lesen: `GET /api/v1/children/{childId}/points` (Vater, kombiniert mit Buchungen) bzw. `GET /api/v1/me/points`
+(Sohn — nur die Salden `coins` **und** `gems`; die Buchungen liegen paginiert unter `GET /api/v1/me/points/entries`
+bzw. einzeln unter `…/entries/{entryId}`). Ein Test (`PointKindCurrencyTests`) erzwingt, dass jeder `PointKind`
+genau einer Währung zugeordnet ist (kein stiller Verlust bei neuem Kind).
 
 ---
 
@@ -191,9 +192,9 @@ POST /api/v1/children/{childId}/achievements
 Abruf der Sohn-Sicht (`GET /api/v1/me/missions|achievements`) — Belohnungen fließen beim Spielen, nicht
 erst beim Ansehen. Sinnvolle Vorlagen werden pro Kind geseedet (frei editier-/löschbar).
 
-**Sohn-Sicht** (mit Fortschritt): `GET /api/v1/me/missions` → `{ title, metric, target, current,
-completed, rewardPoints }`; `GET /api/v1/me/achievements` → `{ title, icon, threshold, current,
-earned, earnedAt, rewardPoints }`.
+**Sohn-Sicht** (mit Fortschritt, jeweils paginiert + Einzelansicht `…/{id}`): `GET /api/v1/me/missions` →
+`{ id, title, metric, period, target, current, completed, rewardPoints }`; `GET /api/v1/me/achievements` →
+`{ id, title, icon, metric, threshold, current, earned, earnedAt, rewardPoints }`.
 
 ---
 
@@ -258,9 +259,13 @@ GET    /api/v1/children/{childId}/rewards/redemptions?status=Purchased      // o
 POST   /api/v1/children/{childId}/rewards/redemptions/{id}/fulfill          // erfüllt
 POST   /api/v1/children/{childId}/rewards/redemptions/{id}/cancel           // storniert + rückerstattet
 
-# Sohn — Angebote sehen & direkt kaufen
-GET    /api/v1/me/rewards          // { coins, available[period,quantity,remainingThisPeriod,affordable], redemptions[status,purchasedAt,fulfilledAt] }
-POST   /api/v1/me/rewards/{id}/purchase
+# Sohn — Angebote sehen & direkt kaufen (Salden via /me/points)
+GET    /api/v1/me/rewards                              // Aggregat: { available[…], redemptions[…] }
+GET    /api/v1/me/rewards/available[?skip=&take=]      // verfügbare Angebote (paginiert) [period,quantity,remainingThisPeriod,affordable]
+GET    /api/v1/me/rewards/available/{availableId}      // einzelnes Angebot
+GET    /api/v1/me/rewards/redemptions[?status=&skip=&take=]  // eigene Käufe (paginiert) [status,purchasedAt,fulfilledAt]
+GET    /api/v1/me/rewards/redemptions/{redemptionId}  // einzelner Kauf
+POST   /api/v1/me/rewards/available/{availableId}/purchase
 ```
 
 ### Familien-Shop (🪙 Münzen + 💎 Gems, Inventar + Aktivierungsanfrage)
@@ -308,6 +313,7 @@ POST   /api/v1/children/{childId}/shop/activations/{requestId}/reject
 
 # Sohn — Shop-Übersicht, Kaufen & Aktivieren
 GET    /api/v1/me/shop            // { coins, gems, available[], inventory[], purchases[] }
+GET    /api/v1/me/shop/inventory[?skip=&take=]          // eigener Bestand (paginiert; Gegenstück zum activate-POST)
 POST   /api/v1/me/shop/listings/{listingId}/purchase
 POST   /api/v1/me/shop/inventory/{articleId}/activate   { "quantity": 30 }
 GET    /api/v1/me/shop/activations[?status=Pending]

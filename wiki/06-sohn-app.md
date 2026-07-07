@@ -150,17 +150,20 @@ sonst aus dem Standard (80 %). Ein Test kann nur einmal submitted werden; ein zw
 ## 5. Fortschritt, Report und Wallet
 
 ```http
-GET /api/v1/study-plans/{planId}/overview/progress
+GET /api/v1/study-plans/{planId}/overview/progress[?from=&to=&dutyDone=&sort=&skip=&take=]
 GET /api/v1/study-plans/{planId}/positions/{positionId}/report
 GET /api/v1/me/points
+GET /api/v1/me/points/entries[?skip=&take=]      → paginierte Buchungsliste (X-Total-Count)
+GET /api/v1/me/points/entries/{entryId}          → einzelne Buchung
 ```
 
-`overview/progress` zeigt den Verlauf über die Planlaufzeit. Der Positionsreport zeigt Mastery,
+`overview/progress` zeigt den Verlauf über die Planlaufzeit (filter-/sortier-/paginierbar; die
+Kennzahlen bleiben über die gesamte Laufzeit stabil). Der Positionsreport zeigt Mastery,
 Wiederholungen, Testhistorie und Leitner-Zustand der Inhaltsatome dieser Position. `me/points` liefert
-beide Währungen:
+nur noch die beiden Salden; die Buchungen liegen eine Ebene tiefer unter `me/points/entries`:
 
 ```jsonc
-{ "childId": 1, "coins": 50, "gems": 300, "entries": [ … ] }
+{ "childId": 1, "coins": 50, "gems": 300 }
 ```
 
 ---
@@ -168,16 +171,23 @@ beide Währungen:
 ## 6. Missionen, Auszeichnungen, Skins und Angebote
 
 ```http
-GET /api/v1/me/missions        → Tages-/Wochenziele mit Fortschritt
-GET /api/v1/me/achievements    → Badges mit Fortschritt/Earned-Status
+GET /api/v1/me/missions[?skip=&take=]        → Tages-/Wochenziele mit Fortschritt (paginiert)
+GET /api/v1/me/missions/{missionId}          → einzelne Mission
+GET /api/v1/me/achievements[?skip=&take=]    → Badges mit Fortschritt/Earned-Status (paginiert)
+GET /api/v1/me/achievements/{achievementId}  → einzelne Auszeichnung
 GET /api/v1/me/skins           → { gems, selected, owned }
 POST /api/v1/me/skins/{skinId}/purchase
 POST /api/v1/me/skins/{skinId}/equip
 
-GET /api/v1/me/rewards         → { coins, available, redemptions }
-POST /api/v1/me/rewards/{rewardId}/purchase
+GET /api/v1/me/rewards                        → { available, redemptions }  (Aggregat; Salden via /me/points)
+GET /api/v1/me/rewards/available[?skip=&take=]        → verfügbare Angebote (paginiert)
+GET /api/v1/me/rewards/available/{availableId}        → einzelnes Angebot
+GET /api/v1/me/rewards/redemptions[?status=&skip=&take=]  → eigene Käufe (paginiert)
+GET /api/v1/me/rewards/redemptions/{redemptionId}    → einzelner Kauf
+POST /api/v1/me/rewards/available/{availableId}/purchase
 
 GET /api/v1/me/shop            → { coins, gems, available[], inventory[], purchases[] }
+GET /api/v1/me/shop/inventory[?skip=&take=]   → eigener Bestand (paginiert)
 POST /api/v1/me/shop/listings/{listingId}/purchase
 POST /api/v1/me/shop/inventory/{articleId}/activate   { "quantity": 30 }
 GET /api/v1/me/shop/activations[?status=Pending]

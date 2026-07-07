@@ -115,6 +115,19 @@ public class ShopController(PuglingDbContext db, ShopService shop) : ControllerB
             .ToList();
     }
 
+    /// <summary>Einen einzelnen Familien-Shop-Artikel des Vaters lesen.</summary>
+    [HttpGet("articles/{articleId:int}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<ShopArticleDto>> Article(int articleId)
+    {
+        var fatherId = User.FatherId()!.Value;
+        var article = await db.ShopArticles.AsNoTracking()
+            .FirstOrDefaultAsync(a => a.Id == articleId && a.FatherId == fatherId);
+        if (article is null) return NotFound();
+        return MapArticle(article);
+    }
+
     /// <summary>Legt einen Artikel im Familien-Shop an (Typ-Definition ohne Preis/Bestand).</summary>
     [HttpPost("articles")]
     [ProducesResponseType(StatusCodes.Status201Created)]
@@ -143,7 +156,7 @@ public class ShopController(PuglingDbContext db, ShopService shop) : ControllerB
         };
         db.ShopArticles.Add(article);
         await db.SaveChangesAsync();
-        return CreatedAtAction(nameof(Articles), MapArticle(article));
+        return CreatedAtAction(nameof(Article), new { articleId = article.Id }, MapArticle(article));
     }
 
     /// <summary>Ändert einen Familien-Shop-Artikel partiell.</summary>
@@ -208,6 +221,20 @@ public class ShopController(PuglingDbContext db, ShopService shop) : ControllerB
         return listings.Where(l => l.ShopArticleId == articleId).Select(MapListing).ToList();
     }
 
+    /// <summary>Ein einzelnes Angebot eines Artikels lesen (fällige Auffüllung wird wie bei der Liste angewandt).</summary>
+    [HttpGet("articles/{articleId:int}/listings/{listingId:int}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<ShopListingDto>> Listing(int articleId, int listingId)
+    {
+        var fatherId = User.FatherId()!.Value;
+        // Über den Service, damit die Darstellung (inkl. fälliger Auffüllung) identisch zur Listen-Sicht ist.
+        var listings = await shop.ListingsForFatherAsync(fatherId, activeOnly: false, DateTime.UtcNow);
+        var listing = listings.FirstOrDefault(l => l.Id == listingId && l.ShopArticleId == articleId);
+        if (listing is null) return NotFound();
+        return MapListing(listing);
+    }
+
     /// <summary>Legt ein neues Angebot für einen Artikel an (mit Preis, Menge und Bestand).</summary>
     [HttpPost("articles/{articleId:int}/listings")]
     [ProducesResponseType(StatusCodes.Status201Created)]
@@ -240,7 +267,7 @@ public class ShopController(PuglingDbContext db, ShopService shop) : ControllerB
         db.ShopListings.Add(listing);
         await db.SaveChangesAsync();
         listing.ShopArticle = article;
-        return CreatedAtAction(nameof(Listings), new { articleId }, MapListing(listing));
+        return CreatedAtAction(nameof(Listing), new { articleId, listingId = listing.Id }, MapListing(listing));
     }
 
     /// <summary>Ändert ein Angebot partiell (Preis, Menge, Bestand, Aktiv-Status).</summary>

@@ -88,10 +88,49 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
         // Wallet-Buchungen
         var wallet = await JsonAsync(await child.GetAsync("/api/v1/me/points"));
         Assert.Equal(80, wallet.GetProperty("coins").GetInt32());
-        Assert.Contains(wallet.GetProperty("entries").EnumerateArray(), e =>
+        var entries = await JsonAsync(await child.GetAsync("/api/v1/me/points/entries"));
+        Assert.Contains(entries.EnumerateArray(), e =>
             e.GetProperty("kind").GetString() == "ShopCoins" && e.GetProperty("amount").GetInt32() == -120);
-        Assert.Contains(wallet.GetProperty("entries").EnumerateArray(), e =>
+        Assert.Contains(entries.EnumerateArray(), e =>
             e.GetProperty("kind").GetString() == "ShopGems" && e.GetProperty("amount").GetInt32() == -30);
+    }
+
+    /// <summary>
+    /// Ein gekaufter Artikel erscheint im dedizierten Sohn-Bestand (<c>GET me/shop/inventory</c>) –
+    /// dem Gegenstück zum Aktivierungs-POST; die Gesamtzahl steht im Header <c>X-Total-Count</c>.
+    /// </summary>
+    [Fact]
+    public async Task GekaufterArtikel_ErscheintImEigenenBestand()
+    {
+        var father = await TestApi.FatherAsync(factory);
+        var (childId, child) = await FreshChildAsync(father, "9302");
+        var articleId = await CreateArticleAsync(father, new
+        {
+            articleNumber = "INV-001", title = "Naschpaket",
+            unitType = "Gramm", actionType = "Suessigkeit",
+        });
+        var listingId = await CreateListingAsync(father, articleId, new
+        {
+            coinPrice = 100, gemPrice = 0, unitsPerPurchase = 50, currentStock = 2, maxStock = 2,
+        });
+
+        // Vor dem Kauf: leerer Bestand.
+        var empty = await child.GetAsync("/api/v1/me/shop/inventory");
+        empty.EnsureSuccessStatusCode();
+        Assert.Empty((await empty.Content.ReadFromJsonAsync<JsonElement>()).EnumerateArray());
+
+        (await father.PostAsJsonAsync($"/api/v1/children/{childId}/points", new { amount = 200, reason = "Coins" }))
+            .EnsureSuccessStatusCode();
+        await child.PostAsJsonAsync($"/api/v1/me/shop/listings/{listingId}/purchase", new { });
+
+        var res = await child.GetAsync("/api/v1/me/shop/inventory");
+        res.EnsureSuccessStatusCode();
+        Assert.Equal("1", res.Headers.GetValues("X-Total-Count").Single());
+
+        var item = (await res.Content.ReadFromJsonAsync<JsonElement>()).EnumerateArray()
+            .Single(i => i.GetProperty("shopArticleId").GetInt32() == articleId);
+        Assert.Equal("INV-001", item.GetProperty("articleNumber").GetString());
+        Assert.Equal(50, item.GetProperty("quantity").GetInt32());
     }
 
     [Fact]
@@ -866,6 +905,56 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
         Assert.Equal(HttpStatusCode.BadRequest, res.StatusCode);
         Assert.Equal("validation_error",
             (await res.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("code").GetString());
+    }
+
+    [Fact]
+    public async Task Artikel_UndAngebot_LassenSichEinzelnLesen()
+    {
+        // Symmetrie zu PATCH/DELETE: die Einzel-Ressource ist auch per GET abrufbar (Read-after-write).
+        var father = await TestApi.FatherAsync(factory);
+        var articleId = await CreateArticleAsync(father, new
+        {
+            articleNumber = "GET-001", title = "Einzelabruf",
+            unitType = "Minute", actionType = "TV",
+        });
+        var listingId = await CreateListingAsync(father, articleId, new
+        {
+            title = "10 Minuten", coinPrice = 40, gemPrice = 0,
+            unitsPerPurchase = 10, currentStock = 3, maxStock = 3,
+        });
+
+        var article = await JsonAsync(await father.GetAsync($"/api/v1/shop/articles/{articleId}"));
+        Assert.Equal(articleId, article.GetProperty("id").GetInt32());
+        Assert.Equal("GET-001", article.GetProperty("articleNumber").GetString());
+
+        var listing = await JsonAsync(await father.GetAsync($"/api/v1/shop/articles/{articleId}/listings/{listingId}"));
+        Assert.Equal(listingId, listing.GetProperty("id").GetInt32());
+        Assert.Equal(articleId, listing.GetProperty("shopArticleId").GetInt32());
+
+        // Unbekannte IDs → 404 (kein 200 mit leerem Body).
+        Assert.Equal(HttpStatusCode.NotFound,
+            (await father.GetAsync($"/api/v1/shop/articles/{articleId}/listings/999999")).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound,
+            (await father.GetAsync("/api/v1/shop/articles/999999")).StatusCode);
+    }
+
+    [Fact]
+    public async Task Artikel_EinzelabrufFremderVater_404()
+    {
+        // Ownership: ein anderer Vater darf den Artikel nicht per Einzel-GET sehen.
+        var owner = await TestApi.FatherAsync(factory);
+        var articleId = await CreateArticleAsync(owner, new
+        {
+            articleNumber = "OWN-001", title = "Fremd",
+            unitType = "Stueck", actionType = "Sonstiges",
+        });
+        var anon = factory.CreateClient();
+        var strangerId = await TestApi.IdAsync(
+            await anon.PostAsJsonAsync("/api/v1/fathers", new { name = "Fremder Papa", pin = "2222" }));
+        var stranger = await TestApi.FatherAsync(factory, strangerId, "2222");
+
+        Assert.Equal(HttpStatusCode.NotFound,
+            (await stranger.GetAsync($"/api/v1/shop/articles/{articleId}")).StatusCode);
     }
 
     [Fact]

@@ -2,7 +2,7 @@
 
 _Automatisch erzeugt von `DocsCaptureTests` (Integrationstest). Jedes Beispiel ist verifiziert: Status und – bei Fehlern – der maschinenlesbare `code` wurden im Testlauf geprüft. Nicht von Hand bearbeiten._
 
-## Eigener Punktestand (Wallet)
+## Eigener Kontostand (Wallet)
 `GET /api/v1/me/points`
 
 Rolle: **child** — `Authorization: Bearer <child-token>`
@@ -12,27 +12,59 @@ Response — `HTTP 200`:
 {
   "childId": 1,
   "coins": 50,
-  "gems": 300,
-  "entries": [
-    {
-      "id": 2,
-      "amount": 300,
-      "kind": "Achievement",
-      "reason": "Willkommens-Gems",
-      "createdAt": "2026-07-07T11:02:14.6986389"
-    },
-    {
-      "id": 1,
-      "amount": 50,
-      "kind": "Base",
-      "reason": "Startguthaben (M\u00FCnzen)",
-      "createdAt": "2026-07-07T11:02:14.6986368"
-    }
-  ]
+  "gems": 300
 }
 ```
 
-## Eigene Missionen
+## Eigene Buchungen (Liste)
+`GET /api/v1/me/points/entries`
+
+Rolle: **child** — `Authorization: Bearer <child-token>`
+
+Response — `HTTP 200`:
+```json
+[
+  {
+    "id": 3,
+    "amount": 15,
+    "kind": "Base",
+    "reason": "Doku-Buchung",
+    "createdAt": "2026-07-07T15:14:43.9885659"
+  },
+  {
+    "id": 2,
+    "amount": 300,
+    "kind": "Achievement",
+    "reason": "Willkommens-Gems",
+    "createdAt": "2026-07-07T15:14:40.3772826"
+  },
+  {
+    "id": 1,
+    "amount": 50,
+    "kind": "Base",
+    "reason": "Startguthaben (M\u00FCnzen)",
+    "createdAt": "2026-07-07T15:14:40.3772809"
+  }
+]
+```
+
+## Einzelne Buchung
+`GET /api/v1/me/points/entries/3`
+
+Rolle: **child** — `Authorization: Bearer <child-token>`
+
+Response — `HTTP 200`:
+```json
+{
+  "id": 3,
+  "amount": 15,
+  "kind": "Base",
+  "reason": "Doku-Buchung",
+  "createdAt": "2026-07-07T15:14:43.9885659"
+}
+```
+
+## Eigene Missionen (Liste)
 `GET /api/v1/me/missions`
 
 Rolle: **child** — `Authorization: Bearer <child-token>`
@@ -83,7 +115,26 @@ Response — `HTTP 200`:
 ]
 ```
 
-## Eigene Auszeichnungen
+## Einzelne Mission
+`GET /api/v1/me/missions/1`
+
+Rolle: **child** — `Authorization: Bearer <child-token>`
+
+Response — `HTTP 200`:
+```json
+{
+  "id": 1,
+  "title": "Tagesziel: 10 richtige Antworten",
+  "metric": "CorrectReviews",
+  "period": "Daily",
+  "target": 10,
+  "current": 0,
+  "completed": false,
+  "rewardPoints": 15
+}
+```
+
+## Eigene Auszeichnungen (Liste)
 `GET /api/v1/me/achievements`
 
 Rolle: **child** — `Authorization: Bearer <child-token>`
@@ -149,6 +200,26 @@ Response — `HTTP 200`:
 ]
 ```
 
+## Einzelne Auszeichnung
+`GET /api/v1/me/achievements/4`
+
+Rolle: **child** — `Authorization: Bearer <child-token>`
+
+Response — `HTTP 200`:
+```json
+{
+  "id": 4,
+  "title": "Feuer-Streak",
+  "icon": "\uD83D\uDD25",
+  "metric": "StreakDays",
+  "threshold": 7,
+  "current": 0,
+  "earned": false,
+  "earnedAt": null,
+  "rewardPoints": 70
+}
+```
+
 ## Eigener Skin-Zustand
 `GET /api/v1/me/skins`
 
@@ -165,7 +236,7 @@ Response — `HTTP 200`:
 }
 ```
 
-## Eigene Angebote & Käufe
+## Eigene Angebote & Käufe (Aggregat)
 `GET /api/v1/me/rewards`
 
 Rolle: **child** — `Authorization: Bearer <child-token>`
@@ -173,7 +244,6 @@ Rolle: **child** — `Authorization: Bearer <child-token>`
 Response — `HTTP 200`:
 ```json
 {
-  "coins": 50,
   "available": [
     {
       "id": 1,
@@ -222,6 +292,91 @@ Response — `HTTP 200`:
   ],
   "redemptions": []
 }
+```
+
+## Verfügbare Angebote (Liste)
+`GET /api/v1/me/rewards/available`
+
+Rolle: **child** — `Authorization: Bearer <child-token>`
+
+Response — `HTTP 200`:
+```json
+[
+  {
+    "id": 1,
+    "title": "30 Min Fernsehen",
+    "cost": 200,
+    "period": "Daily",
+    "quantity": 2,
+    "remainingThisPeriod": 2,
+    "affordable": false,
+    "planTitle": null,
+    "exerciseTitle": null
+  },
+  {
+    "id": 2,
+    "title": "1 Stunde Zocken",
+    "cost": 400,
+    "period": "Weekly",
+    "quantity": 5,
+    "remainingThisPeriod": 5,
+    "affordable": false,
+    "planTitle": null,
+    "exerciseTitle": null
+  },
+  {
+    "id": 3,
+    "title": "Taschengeld 5 \u20AC",
+    "cost": 500,
+    "period": "Weekly",
+    "quantity": 1,
+    "remainingThisPeriod": 1,
+    "affordable": false,
+    "planTitle": null,
+    "exerciseTitle": null
+  },
+  {
+    "id": 4,
+    "title": "Kinoabend aussuchen",
+    "cost": 1500,
+    "period": "OneOff",
+    "quantity": 1,
+    "remainingThisPeriod": 1,
+    "affordable": false,
+    "planTitle": null,
+    "exerciseTitle": null
+  }
+]
+```
+
+## Einzelnes Angebot
+`GET /api/v1/me/rewards/available/1`
+
+Rolle: **child** — `Authorization: Bearer <child-token>`
+
+Response — `HTTP 200`:
+```json
+{
+  "id": 1,
+  "title": "30 Min Fernsehen",
+  "cost": 200,
+  "period": "Daily",
+  "quantity": 2,
+  "remainingThisPeriod": 2,
+  "affordable": false,
+  "planTitle": null,
+  "exerciseTitle": null
+}
+```
+
+## Eigene Käufe (Liste)
+`GET /api/v1/me/rewards/redemptions`
+
+Rolle: **child** — `Authorization: Bearer <child-token>`
+
+Response — `HTTP 200`:
+```json
+[]
 ```
 
 ### Vater greift auf Sohn-Route zu — Fehlerfall
@@ -373,7 +528,7 @@ Response — `HTTP 400`:
 ```
 
 ## Angebot kaufen
-`POST /api/v1/me/rewards/5/purchase`
+`POST /api/v1/me/rewards/available/5/purchase`
 
 Rolle: **child** — `Authorization: Bearer <child-token>`
 
@@ -385,7 +540,6 @@ Request:
 Response — `HTTP 200`:
 ```json
 {
-  "coins": 450,
   "available": [
     {
       "id": 5,
@@ -406,10 +560,28 @@ Response — `HTTP 200`:
       "title": "30 Min Fernsehen",
       "cost": 50,
       "status": "Purchased",
-      "purchasedAt": "2026-07-07T11:02:16.495161",
+      "purchasedAt": "2026-07-07T15:14:44.3896524",
       "fulfilledAt": null
     }
   ]
+}
+```
+
+## Einzelner Kauf
+`GET /api/v1/me/rewards/redemptions/1`
+
+Rolle: **child** — `Authorization: Bearer <child-token>`
+
+Response — `HTTP 200`:
+```json
+{
+  "id": 1,
+  "rewardId": 5,
+  "title": "30 Min Fernsehen",
+  "cost": 50,
+  "status": "Purchased",
+  "purchasedAt": "2026-07-07T15:14:44.3896524",
+  "fulfilledAt": null
 }
 ```
 
@@ -432,7 +604,7 @@ Response — `HTTP 200`:
   "title": "30 Min Fernsehen",
   "cost": 50,
   "status": "Fulfilled",
-  "purchasedAt": "2026-07-07T11:02:16.495161",
+  "purchasedAt": "2026-07-07T15:14:44.3896524",
   "fulfilledAt": "<timestamp>",
   "canFulfill": false,
   "canCancel": false
@@ -462,7 +634,7 @@ Response — `HTTP 409`:
 ```
 
 ### Angebot über Kontingent kaufen — Fehlerfall
-`POST /api/v1/me/rewards/6/purchase`
+`POST /api/v1/me/rewards/available/6/purchase`
 
 Rolle: **child** — `Authorization: Bearer <child-token>`
 
@@ -484,7 +656,7 @@ Response — `HTTP 409`:
 ```
 
 ### Deaktiviertes Angebot kaufen — Fehlerfall
-`POST /api/v1/me/rewards/7/purchase`
+`POST /api/v1/me/rewards/available/7/purchase`
 
 Rolle: **child** — `Authorization: Bearer <child-token>`
 
@@ -506,7 +678,7 @@ Response — `HTTP 400`:
 ```
 
 ### Angebot ohne Deckung kaufen — Fehlerfall
-`POST /api/v1/me/rewards/8/purchase`
+`POST /api/v1/me/rewards/available/8/purchase`
 
 Rolle: **child** — `Authorization: Bearer <child-token>`
 

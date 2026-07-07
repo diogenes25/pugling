@@ -25,8 +25,8 @@ public class MeController(PuglingDbContext db, GamificationService gamification,
 {
     /// <summary>Eine einzelne Punkte-Buchung (Gutschrift positiv, Abzug negativ) mit Kategorie.</summary>
     public record PointsEntryResponse(int Id, int Amount, PointKind Kind, string Reason, DateTime CreatedAt);
-    /// <summary>Kontostand (Wallet) des Kindes je Währung samt der letzten Buchungen.</summary>
-    public record WalletResponse(int ChildId, int Coins, int Gems, IReadOnlyList<PointsEntryResponse> Entries);
+    /// <summary>Kontostand (Wallet) des Kindes je Währung. Die Buchungen liegen unter <c>points/entries</c>.</summary>
+    public record WalletResponse(int ChildId, int Coins, int Gems);
 
     /// <summary>Skin-Zustand des Kindes: aktueller Gem-Stand, ausgerüsteter und freigeschaltete Skins.</summary>
     public record SkinStateResponse(int Gems, string Selected, IReadOnlyList<string> Owned);
@@ -37,8 +37,8 @@ public class MeController(PuglingDbContext db, GamificationService gamification,
     /// <summary>Ein eigener Kauf im Konto mit aktuellem Status („gekauft am … – erfüllt am …").</summary>
     public record MyRedemptionResponse(int Id, int? RewardId, string Title, int Cost,
         RewardRedemptionStatus Status, DateTime PurchasedAt, DateTime? FulfilledAt);
-    /// <summary>Angebots-Sicht des Sohns: Münzstand, verfügbare Angebote und eigene Käufe.</summary>
-    public record RewardsViewResponse(int Coins, IReadOnlyList<RewardOfferResponse> Available,
+    /// <summary>Angebots-Sicht des Sohns: verfügbare Angebote und eigene Käufe. Der Münzstand steht in <c>me/points</c>.</summary>
+    public record RewardsViewResponse(IReadOnlyList<RewardOfferResponse> Available,
         IReadOnlyList<MyRedemptionResponse> Redemptions);
     /// <summary>Ein kaufbares Angebot aus dem Familien-Shop aus Sohn-Sicht (Listing-Ebene).</summary>
     public record ShopListingResponse(int Id, int ShopArticleId, string ArticleNumber, string ArticleTitle,
@@ -61,49 +61,124 @@ public class MeController(PuglingDbContext db, GamificationService gamification,
         IReadOnlyList<MyInventoryItemResponse> Inventory,
         IReadOnlyList<MyShopPurchaseResponse> Purchases);
 
-    /// <summary>Eigener Kontostand (Münzen + Gems) samt der letzten Buchungen (neueste zuerst).</summary>
-    /// <param name="skip">Anzahl zu überspringender Buchungen (Paging).</param>
-    /// <param name="take">Maximale Buchungszahl (1..500). Gesamtzahl im Header <c>X-Total-Count</c>.</param>
+    /// <summary>Eigener Kontostand (Münzen + Gems). Die einzelnen Buchungen liegen unter <c>points/entries</c>.</summary>
     [HttpGet("points")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult<WalletResponse>> Points(
+    public async Task<ActionResult<WalletResponse>> Points()
+    {
+        var cid = User.ChildId();
+        if (cid is null) return Forbid();
+
+        var (coins, gems) = await wallet.BalancesAsync(cid.Value);
+        return new WalletResponse(cid.Value, coins, gems);
+    }
+
+    /// <summary>Eigene Punkte-Buchungen (neueste zuerst), seitenweise.</summary>
+    /// <param name="skip">Anzahl zu überspringender Buchungen (Paging).</param>
+    /// <param name="take">Maximale Buchungszahl (1..500). Gesamtzahl im Header <c>X-Total-Count</c>.</param>
+    [HttpGet("points/entries")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<ActionResult<IReadOnlyList<PointsEntryResponse>>> PointsEntries(
         [FromQuery] int skip = 0, [FromQuery] int take = PagingExtensions.DefaultTake)
     {
         var cid = User.ChildId();
         if (cid is null) return Forbid();
 
-        var entries = await db.ChildPoints
+        return await db.ChildPoints
             .AsNoTracking()
             .Where(p => p.ChildId == cid)
             .OrderByDescending(p => p.CreatedAt).ThenByDescending(p => p.Id)
             .Select(p => new PointsEntryResponse(p.Id, p.Amount, p.Kind, p.Reason, p.CreatedAt))
             .ToPagedListAsync(Response, skip, take);
-
-        var (coins, gems) = await wallet.BalancesAsync(cid.Value);
-        return new WalletResponse(cid.Value, coins, gems, entries);
     }
 
-    /// <summary>Eigene Missionen (Tages-/Wochen-/Zusatzziele) mit aktuellem Fortschritt (reine Lesesicht).</summary>
+    /// <summary>Eine einzelne eigene Punkte-Buchung (Einzelansicht zur Liste unter <c>points/entries</c>).</summary>
+    [HttpGet("points/entries/{entryId:int}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<PointsEntryResponse>> PointsEntry(int entryId)
+    {
+        var cid = User.ChildId();
+        if (cid is null) return Forbid();
+
+        var entry = await db.ChildPoints
+            .AsNoTracking()
+            .Where(p => p.Id == entryId && p.ChildId == cid)
+            .Select(p => new PointsEntryResponse(p.Id, p.Amount, p.Kind, p.Reason, p.CreatedAt))
+            .FirstOrDefaultAsync();
+
+        return entry is null ? NotFound() : entry;
+    }
+
+    /// <summary>Eigene Missionen (Tages-/Wochen-/Zusatzziele) mit aktuellem Fortschritt (reine Lesesicht), seitenweise.</summary>
+    /// <param name="skip">Anzahl zu überspringender Missionen (Paging).</param>
+    /// <param name="take">Maximale Missions-Zahl (1..500). Gesamtzahl im Header <c>X-Total-Count</c>.</param>
     [HttpGet("missions")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult<IReadOnlyList<GamificationService.MissionStatus>>> Missions()
+    public async Task<ActionResult<IReadOnlyList<GamificationService.MissionStatus>>> Missions(
+        [FromQuery] int skip = 0, [FromQuery] int take = PagingExtensions.DefaultTake)
     {
         var cid = User.ChildId();
         if (cid is null) return Forbid();
-        return Ok(await gamification.MissionStatusesAsync(cid.Value, DateOnly.FromDateTime(DateTime.UtcNow)));
+        var all = await gamification.MissionStatusesAsync(cid.Value, DateOnly.FromDateTime(DateTime.UtcNow));
+        return Ok(Page(all, skip, take));
     }
 
-    /// <summary>Eigene Auszeichnungen (Badges): erreichte und noch offene, erreichte zuerst (reine Lesesicht).</summary>
+    /// <summary>Eine einzelne eigene Mission (Einzelansicht zur Liste unter <c>missions</c>).</summary>
+    [HttpGet("missions/{missionId:int}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<GamificationService.MissionStatus>> Mission(int missionId)
+    {
+        var cid = User.ChildId();
+        if (cid is null) return Forbid();
+        var status = await gamification.MissionStatusAsync(cid.Value, missionId, DateOnly.FromDateTime(DateTime.UtcNow));
+        return status is null ? NotFound() : status;
+    }
+
+    /// <summary>Eigene Auszeichnungen (Badges): erreichte und noch offene, erreichte zuerst (reine Lesesicht), seitenweise.</summary>
+    /// <param name="skip">Anzahl zu überspringender Auszeichnungen (Paging).</param>
+    /// <param name="take">Maximale Auszeichnungs-Zahl (1..500). Gesamtzahl im Header <c>X-Total-Count</c>.</param>
     [HttpGet("achievements")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult<IReadOnlyList<GamificationService.AchievementStatus>>> Achievements()
+    public async Task<ActionResult<IReadOnlyList<GamificationService.AchievementStatus>>> Achievements(
+        [FromQuery] int skip = 0, [FromQuery] int take = PagingExtensions.DefaultTake)
     {
         var cid = User.ChildId();
         if (cid is null) return Forbid();
-        return Ok(await gamification.AchievementStatusesAsync(cid.Value, DateOnly.FromDateTime(DateTime.UtcNow)));
+        var all = await gamification.AchievementStatusesAsync(cid.Value, DateOnly.FromDateTime(DateTime.UtcNow));
+        return Ok(Page(all, skip, take));
+    }
+
+    /// <summary>Eine einzelne eigene Auszeichnung (Einzelansicht zur Liste unter <c>achievements</c>).</summary>
+    [HttpGet("achievements/{achievementId:int}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<GamificationService.AchievementStatus>> Achievement(int achievementId)
+    {
+        var cid = User.ChildId();
+        if (cid is null) return Forbid();
+        var status = await gamification.AchievementStatusAsync(cid.Value, achievementId, DateOnly.FromDateTime(DateTime.UtcNow));
+        return status is null ? NotFound() : status;
+    }
+
+    /// <summary>
+    /// Seitenweiser Ausschnitt einer bereits sortierten In-Memory-Liste: setzt zuerst die
+    /// Gesamtzahl in <c>X-Total-Count</c> (vor dem Body), wendet dann Skip/Take an
+    /// (geklemmt wie in <see cref="PagingExtensions"/>). Für Listen aus Services, die keine
+    /// <c>IQueryable</c> liefern (Gamification-Status).
+    /// </summary>
+    private List<T> Page<T>(IReadOnlyList<T> all, int skip, int take)
+    {
+        Response.Headers["X-Total-Count"] = all.Count.ToString();
+        return [.. all.Skip(Math.Max(skip, 0)).Take(Math.Clamp(take, 0, PagingExtensions.MaxTake))];
     }
 
     /// <summary>Eigener Skin-Zustand: Gem-Stand, ausgerüsteter Skin und freigeschaltete Skins.</summary>
@@ -202,7 +277,11 @@ public class MeController(PuglingDbContext db, GamificationService gamification,
         }
     }
 
-    /// <summary>Eigene Angebots-Sicht: Münzstand, verfügbare (aktive) Angebote und die eigenen Käufe.</summary>
+    /// <summary>
+    /// Eigene Angebots-Sicht als Aggregat: verfügbare (aktive) Angebote und eigene Käufe. Die einzelnen
+    /// Listen gibt es auch adressierbar unter <c>rewards/available</c> und <c>rewards/redemptions</c>;
+    /// der Münzstand steht in <c>me/points</c>.
+    /// </summary>
     [HttpGet("rewards")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -213,23 +292,100 @@ public class MeController(PuglingDbContext db, GamificationService gamification,
         return await RewardsViewAsync(cid.Value);
     }
 
+    /// <summary>Verfügbare (aktive) Angebote des Kindes, seitenweise.</summary>
+    /// <param name="skip">Anzahl zu überspringender Angebote (Paging).</param>
+    /// <param name="take">Maximale Angebots-Zahl (1..500). Gesamtzahl im Header <c>X-Total-Count</c>.</param>
+    [HttpGet("rewards/available")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<ActionResult<IReadOnlyList<RewardOfferResponse>>> RewardsAvailable(
+        [FromQuery] int skip = 0, [FromQuery] int take = PagingExtensions.DefaultTake)
+    {
+        var cid = User.ChildId();
+        if (cid is null) return Forbid();
+        var all = await AvailableOffersAsync(cid.Value, DateTime.UtcNow);
+        return Ok(Page(all, skip, take));
+    }
+
+    /// <summary>Ein einzelnes aktives Angebot (Einzelansicht zur Liste unter <c>rewards/available</c>).</summary>
+    [HttpGet("rewards/available/{availableId:int}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<RewardOfferResponse>> RewardAvailable(int availableId)
+    {
+        var cid = User.ChildId();
+        if (cid is null) return Forbid();
+
+        var reward = await db.Rewards.AsNoTracking()
+            .Include(r => r.StudyPlan).Include(r => r.Exercise)
+            .FirstOrDefaultAsync(r => r.Id == availableId && r.ChildId == cid && r.Active);
+        if (reward is null) return NotFound();
+
+        var coins = await wallet.CoinsAsync(cid.Value);
+        return await MapOfferAsync(reward, coins, DateTime.UtcNow);
+    }
+
+    /// <summary>Eigene Käufe (offene zuerst, dann neueste), seitenweise; optional nach Status gefiltert.</summary>
+    /// <param name="status">Optionaler Statusfilter.</param>
+    /// <param name="skip">Anzahl zu überspringender Käufe (Paging).</param>
+    /// <param name="take">Maximale Käufe-Zahl (1..500). Gesamtzahl im Header <c>X-Total-Count</c>.</param>
+    [HttpGet("rewards/redemptions")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<ActionResult<IReadOnlyList<MyRedemptionResponse>>> RewardsRedemptions(
+        [FromQuery] RewardRedemptionStatus? status,
+        [FromQuery] int skip = 0, [FromQuery] int take = PagingExtensions.DefaultTake)
+    {
+        var cid = User.ChildId();
+        if (cid is null) return Forbid();
+
+        var query = db.RewardRedemptions.AsNoTracking().Where(r => r.ChildId == cid);
+        if (status is not null) query = query.Where(r => r.Status == status);
+
+        return await query
+            .OrderBy(r => r.Status == RewardRedemptionStatus.Purchased ? 0 : 1)
+            .ThenByDescending(r => r.PurchasedAt).ThenByDescending(r => r.Id)
+            .Select(r => new MyRedemptionResponse(r.Id, r.RewardId, r.Title, r.Cost, r.Status, r.PurchasedAt, r.FulfilledAt))
+            .ToPagedListAsync(Response, skip, take);
+    }
+
+    /// <summary>Ein einzelner eigener Kauf (Einzelansicht zur Liste unter <c>rewards/redemptions</c>).</summary>
+    [HttpGet("rewards/redemptions/{redemptionId:int}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<MyRedemptionResponse>> RewardRedemption(int redemptionId)
+    {
+        var cid = User.ChildId();
+        if (cid is null) return Forbid();
+
+        var redemption = await db.RewardRedemptions.AsNoTracking()
+            .Where(r => r.Id == redemptionId && r.ChildId == cid)
+            .Select(r => new MyRedemptionResponse(r.Id, r.RewardId, r.Title, r.Cost, r.Status, r.PurchasedAt, r.FulfilledAt))
+            .FirstOrDefaultAsync();
+
+        return redemption is null ? NotFound() : redemption;
+    }
+
     /// <summary>
     /// Kauft ein Angebot: die Münzen werden <b>sofort</b> abgebucht (Direktkauf), der Vater erfüllt seinen
     /// Teil später. Das Kontingent der aktuellen Periode und die Deckung werden serverseitig geprüft; ein
-    /// paralleler Doppelkauf scheitert per Concurrency-Token mit 409.
+    /// paralleler Doppelkauf scheitert per Concurrency-Token mit 409. <paramref name="availableId"/> ist die
+    /// Id des Angebots aus <c>rewards/available</c>.
     /// </summary>
-    [HttpPost("rewards/{rewardId:int}/purchase")]
+    [HttpPost("rewards/available/{availableId:int}/purchase")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
-    public async Task<ActionResult<RewardsViewResponse>> Purchase(int rewardId)
+    public async Task<ActionResult<RewardsViewResponse>> Purchase(int availableId)
     {
         var cid = User.ChildId();
         if (cid is null) return Forbid();
 
-        var result = await offers.PurchaseAsync(cid.Value, rewardId, DateTime.UtcNow);
+        var result = await offers.PurchaseAsync(cid.Value, availableId, DateTime.UtcNow);
         return result.Error switch
         {
             OfferService.OfferError.None => await RewardsViewAsync(cid.Value),
@@ -280,6 +436,31 @@ public class MeController(PuglingDbContext db, GamificationService gamification,
             ShopService.ShopError.InsufficientGems => this.ProblemWithCode(ShopService.ToApiError(result.Error), "Not enough gems for this shop listing."),
             _ => this.ProblemWithCode(ShopService.ToApiError(result.Error), "Purchase conflicted with a concurrent action — please try again."),
         };
+    }
+
+    /// <summary>
+    /// Eigenes aggregiertes Inventar: pro Artikel-Typ die verfügbare Gesamtmenge (nur was &gt; 0 ist).
+    /// Gegenstück zum Aktivierungs-<c>POST</c> und zur Vater-Sicht (<c>children/{childId}/shop/inventory</c>);
+    /// dieselben Daten stehen gebündelt auch in <c>GET me/shop</c>.
+    /// </summary>
+    /// <param name="skip">Anzahl übersprungener Einträge (Offset, Standard 0).</param>
+    /// <param name="take">Maximale Einträge (1..500). Gesamtzahl im Header <c>X-Total-Count</c>.</param>
+    [HttpGet("shop/inventory")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<ActionResult<IReadOnlyList<MyInventoryItemResponse>>> MyInventory(
+        [FromQuery] int skip = 0, [FromQuery] int take = PagingExtensions.DefaultTake)
+    {
+        var cid = User.ChildId();
+        if (cid is null) return Forbid();
+
+        return await db.ChildInventories.AsNoTracking()
+            .Where(i => i.ChildId == cid && i.Quantity > 0)
+            .OrderBy(i => i.ShopArticle!.ArticleNumber)
+            .Select(i => new MyInventoryItemResponse(
+                i.ShopArticleId, i.ShopArticle!.ArticleNumber, i.ShopArticle!.Title,
+                i.ShopArticle!.UnitType, i.ShopArticle!.ActionType, i.Quantity))
+            .ToPagedListAsync(Response, skip, take);
     }
 
     /// <summary>
@@ -339,6 +520,14 @@ public class MeController(PuglingDbContext db, GamificationService gamification,
 
     private async Task<RewardsViewResponse> RewardsViewAsync(int childId)
     {
+        var available = await AvailableOffersAsync(childId, DateTime.UtcNow);
+        var redemptions = await MyRedemptionsQuery(childId).ToListAsync();
+        return new RewardsViewResponse(available, redemptions);
+    }
+
+    /// <summary>Aktive Angebote des Kindes als Sohn-Sicht (Restkontingent je Periode + Bezahlbarkeit).</summary>
+    private async Task<List<RewardOfferResponse>> AvailableOffersAsync(int childId, DateTime now)
+    {
         var coins = await wallet.CoinsAsync(childId);
 
         var offersList = await db.Rewards.AsNoTracking()
@@ -347,25 +536,27 @@ public class MeController(PuglingDbContext db, GamificationService gamification,
             .OrderBy(r => r.Cost).ThenBy(r => r.Id)
             .ToListAsync();
 
-        var now = DateTime.UtcNow;
         var available = new List<RewardOfferResponse>(offersList.Count);
         foreach (var r in offersList)
-        {
-            var used = await offers.CountInCurrentPeriodAsync(r, now);
-            var remaining = Math.Max(0, r.Quantity - used);
-            available.Add(new RewardOfferResponse(r.Id, r.Title, r.Cost, r.Period, r.Quantity,
-                remaining, coins >= r.Cost && remaining > 0, r.StudyPlan?.Title, r.Exercise?.Title));
-        }
+            available.Add(await MapOfferAsync(r, coins, now));
+        return available;
+    }
 
-        var redemptions = await db.RewardRedemptions.AsNoTracking()
+    /// <summary>Projiziert ein Angebot in die Sohn-Sicht (eine Kontingent-Abfrage je Angebot).</summary>
+    private async Task<RewardOfferResponse> MapOfferAsync(Reward r, int coins, DateTime now)
+    {
+        var remaining = Math.Max(0, r.Quantity - await offers.CountInCurrentPeriodAsync(r, now));
+        return new RewardOfferResponse(r.Id, r.Title, r.Cost, r.Period, r.Quantity,
+            remaining, coins >= r.Cost && remaining > 0, r.StudyPlan?.Title, r.Exercise?.Title);
+    }
+
+    /// <summary>Eigene Käufe des Kindes (offene zuerst, dann neueste) als projizierte, sortierte Query.</summary>
+    private IQueryable<MyRedemptionResponse> MyRedemptionsQuery(int childId) =>
+        db.RewardRedemptions.AsNoTracking()
             .Where(r => r.ChildId == childId)
             .OrderBy(r => r.Status == RewardRedemptionStatus.Purchased ? 0 : 1)
-            .ThenByDescending(r => r.PurchasedAt)
-            .Select(r => new MyRedemptionResponse(r.Id, r.RewardId, r.Title, r.Cost, r.Status, r.PurchasedAt, r.FulfilledAt))
-            .ToListAsync();
-
-        return new RewardsViewResponse(coins, available, redemptions);
-    }
+            .ThenByDescending(r => r.PurchasedAt).ThenByDescending(r => r.Id)
+            .Select(r => new MyRedemptionResponse(r.Id, r.RewardId, r.Title, r.Cost, r.Status, r.PurchasedAt, r.FulfilledAt));
 
     private async Task<ShopViewResponse> ShopViewAsync(int childId)
     {
