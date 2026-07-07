@@ -1,5 +1,5 @@
 info:
-  name: Liefert die heute fälligen Übungskarten der Position (Scope/ItemCount/Leitner-Fälligkeit).
+  name: Liefert alle Karten der Sitzung in der beim Start eingefrorenen Reihenfolge – für den Info-Modus (freies Üben, Frontend iteriert) und als Offline-Fallback des Lern-Modus (Antworten werden gepuffert und bei Reconnect über Task&lt;ActionResult&lt;ReviewOutcome&gt;&gt; PositionPracticeController.Review(int planId, int positionId, int sessionId, ReviewDto dto) nachgesendet). Der Lern-Modus nutzt sonst Task&lt;ActionResult&lt;NextResponse&gt;&gt; PositionPracticeController.Next(int planId, int positionId, int sessionId).
   type: http
   seq: 3
   tags:
@@ -28,8 +28,7 @@ runtime:
 
         function capture(name, value) {
           if (value === undefined || value === null || value === '') return;
-          bru.setVar(name, value);
-          bru.setEnvVar(name, String(value), { persist: true });
+          bru.setEnvVar(name, String(value));
         }
 
         if (body && typeof body === 'object' && !Array.isArray(body)) {
@@ -67,7 +66,46 @@ settings:
   followRedirects: true
   maxRedirects: 5
 
+examples:
+  - name: Karten am Stück (Info-Modus/Offline-Batch)
+    description: "Verifiziert durch DocsCaptureTests: Rolle `child`, erwartet HTTP 200."
+    request:
+      url: "{{baseUrl}}/api/v1/study-plans/:planId/positions/:positionId/practice-sessions/:sessionId/cards"
+      method: GET
+      params:
+        - name: planId
+          value: "{{planId}}"
+          type: path
+        - name: positionId
+          value: "{{positionId}}"
+          type: path
+        - name: sessionId
+          value: "{{sessionId}}"
+          type: path
+    response:
+      status: 200
+      statusText: OK
+      headers:
+        - name: Content-Type
+          value: application/json
+      body:
+        type: json
+        data: |-
+          [
+            {
+              "itemIndex": 1,
+              "stage": 4,
+              "type": "Vocabulary",
+              "prompt": "goodbye",
+              "hint": null,
+              "answerLength": null,
+              "reveal": null,
+              "choices": null,
+              "audioUrl": null
+            }
+          ]
+
 docs: |-
-  # Liefert die heute fälligen Übungskarten der Position (Scope/ItemCount/Leitner-Fälligkeit).
+  # Liefert alle Karten der Sitzung in der beim Start eingefrorenen Reihenfolge – für den Info-Modus (freies Üben, Frontend iteriert) und als Offline-Fallback des Lern-Modus (Antworten werden gepuffert und bei Reconnect über Task&lt;ActionResult&lt;ReviewOutcome&gt;&gt; PositionPracticeController.Review(int planId, int positionId, int sessionId, ReviewDto dto) nachgesendet). Der Lern-Modus nutzt sonst Task&lt;ActionResult&lt;NextResponse&gt;&gt; PositionPracticeController.Next(int planId, int positionId, int sessionId).
 
   `GET /api/v1/study-plans/{planId}/positions/{positionId}/practice-sessions/{sessionId}/cards`

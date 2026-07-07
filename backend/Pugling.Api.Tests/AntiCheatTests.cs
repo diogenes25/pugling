@@ -207,16 +207,15 @@ public class AntiCheatTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
         start.EnsureSuccessStatusCode();
         var attempt = await start.Content.ReadFromJsonAsync<JsonElement>();
         var attemptId = attempt.GetProperty("attemptId").GetInt32();
-        var answers = attempt.GetProperty("items").EnumerateArray()
-            .Select(i => new { itemIndex = i.GetProperty("itemIndex").GetInt32(), wasKnown = true }).ToArray();
 
         // … dann wird der Plan stillgelegt.
         var father = await TestApi.FatherAsync(factory);
         (await father.PatchAsJsonAsync($"/api/v1/study-plans/{planId}", new { active = false })).EnsureSuccessStatusCode();
 
-        // Das Einreichen (und Bepunkten) des offenen Versuchs muss scheitern.
+        // Das Einreichen (und Bepunkten) des offenen Versuchs muss scheitern (der Plan-Check greift vor jeder Wertung).
         var res = await child.PostAsJsonAsync(
-            $"/api/v1/study-plans/{planId}/positions/{positionId}/tests/{attemptId}/submit", new { answers });
+            $"/api/v1/study-plans/{planId}/positions/{positionId}/tests/{attemptId}/submit",
+            new { answers = Array.Empty<object>() });
         Assert.Equal(HttpStatusCode.Forbidden, res.StatusCode);
     }
 

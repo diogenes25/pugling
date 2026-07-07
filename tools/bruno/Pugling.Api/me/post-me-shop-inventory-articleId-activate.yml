@@ -1,7 +1,7 @@
 info:
   name: "Stellt eine Aktivierungsanfrage: der Sohn möchte `quantity` Einheiten des Artikels verbrauchen. Der Vater genehmigt oder lehnt ab; das Inventar wird erst bei Genehmigung reduziert."
   type: http
-  seq: 8
+  seq: 17
   tags:
     - Me
 
@@ -28,8 +28,7 @@ runtime:
 
         function capture(name, value) {
           if (value === undefined || value === null || value === '') return;
-          bru.setVar(name, value);
-          bru.setEnvVar(name, String(value), { persist: true });
+          bru.setEnvVar(name, String(value));
         }
 
         if (body && typeof body === 'object' && !Array.isArray(body)) {

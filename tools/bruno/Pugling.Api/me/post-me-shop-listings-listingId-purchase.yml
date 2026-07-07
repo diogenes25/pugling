@@ -1,7 +1,7 @@
 info:
   name: "Kauft ein Familien-Shop-Angebot: Coins/Gems werden sofort abgebucht, das aggregierte Inventar des Sohns für den zugehörigen Artikel wird um `UnitsPerPurchase` erhöht."
   type: http
-  seq: 9
+  seq: 18
   tags:
     - Me
 
@@ -22,8 +22,7 @@ runtime:
 
         function capture(name, value) {
           if (value === undefined || value === null || value === '') return;
-          bru.setVar(name, value);
-          bru.setEnvVar(name, String(value), { persist: true });
+          bru.setEnvVar(name, String(value));
         }
 
         if (body && typeof body === 'object' && !Array.isArray(body)) {
@@ -208,7 +207,7 @@ examples:
                 "gemPrice": 0,
                 "unitsPerPurchase": 30,
                 "status": "Owned",
-                "purchasedAt": "2026-07-06T22:11:38.6970691",
+                "purchasedAt": "2026-07-07T21:03:49.8639377",
                 "closedAt": null
               }
             ]

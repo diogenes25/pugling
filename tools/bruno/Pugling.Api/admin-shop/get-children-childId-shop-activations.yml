@@ -13,7 +13,7 @@ http:
       value: "{{childId}}"
       type: path
     - name: status
-      value: ""
+      value: Pending
       type: query
       disabled: true
     - name: skip
@@ -32,8 +32,7 @@ runtime:
 
         function capture(name, value) {
           if (value === undefined || value === null || value === '') return;
-          bru.setVar(name, value);
-          bru.setEnvVar(name, String(value), { persist: true });
+          bru.setEnvVar(name, String(value));
         }
 
         if (body && typeof body === 'object' && !Array.isArray(body)) {
@@ -81,7 +80,7 @@ examples:
           value: "{{childId}}"
           type: path
         - name: status
-          value: ""
+          value: Pending
           type: query
           disabled: true
         - name: skip
@@ -109,7 +108,7 @@ examples:
               "actionType": "TV",
               "requestedQuantity": 10,
               "status": "Pending",
-              "requestedAt": "2026-07-06T22:11:38.9058475",
+              "requestedAt": "2026-07-07T21:03:50.0096485",
               "closedAt": null,
               "canApprove": true,
               "canReject": true
@@ -123,7 +122,7 @@ examples:
               "actionType": "TV",
               "requestedQuantity": 30,
               "status": "Pending",
-              "requestedAt": "2026-07-06T22:11:38.8848482",
+              "requestedAt": "2026-07-07T21:03:49.9981771",
               "closedAt": null,
               "canApprove": true,
               "canReject": true

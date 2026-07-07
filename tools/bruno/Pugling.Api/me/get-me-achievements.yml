@@ -1,5 +1,5 @@
 info:
-  name: "Eigene Auszeichnungen (Badges): erreichte und noch offene, erreichte zuerst (reine Lesesicht)."
+  name: "Eigene Auszeichnungen (Badges): erreichte und noch offene, erreichte zuerst (reine Lesesicht), seitenweise."
   type: http
   seq: 1
   tags:
@@ -8,6 +8,15 @@ info:
 http:
   method: GET
   url: "{{baseUrl}}/api/v1/me/achievements"
+  params:
+    - name: skip
+      value: "0"
+      type: query
+      description: Anzahl zu überspringender Auszeichnungen (Paging).
+    - name: take
+      value: "100"
+      type: query
+      description: Maximale Auszeichnungs-Zahl (1..500). Gesamtzahl im Header `X-Total-Count`.
   auth: inherit
 
 runtime:
@@ -18,8 +27,7 @@ runtime:
 
         function capture(name, value) {
           if (value === undefined || value === null || value === '') return;
-          bru.setVar(name, value);
-          bru.setEnvVar(name, String(value), { persist: true });
+          bru.setEnvVar(name, String(value));
         }
 
         if (body && typeof body === 'object' && !Array.isArray(body)) {
@@ -56,11 +64,20 @@ settings:
   maxRedirects: 5
 
 examples:
-  - name: Eigene Auszeichnungen
+  - name: Eigene Auszeichnungen (Liste)
     description: "Verifiziert durch DocsCaptureTests: Rolle `child`, erwartet HTTP 200."
     request:
       url: "{{baseUrl}}/api/v1/me/achievements"
       method: GET
+      params:
+        - name: skip
+          value: "0"
+          type: query
+          description: Anzahl zu überspringender Auszeichnungen (Paging).
+        - name: take
+          value: "100"
+          type: query
+          description: Maximale Auszeichnungs-Zahl (1..500). Gesamtzahl im Header `X-Total-Count`.
     response:
       status: 200
       statusText: OK
@@ -129,6 +146,6 @@ examples:
           ]
 
 docs: |-
-  # Eigene Auszeichnungen (Badges): erreichte und noch offene, erreichte zuerst (reine Lesesicht).
+  # Eigene Auszeichnungen (Badges): erreichte und noch offene, erreichte zuerst (reine Lesesicht), seitenweise.
 
   `GET /api/v1/me/achievements`

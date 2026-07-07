@@ -1,7 +1,7 @@
 info:
-  name: Bewertet die Antworten serverseitig gegen die Item-Lösungen und schließt den Versuch ab.
+  name: Schließt den Versuch ab und liefert das Ergebnis (inkl. Lösungen). Im Klausur-Modus wurden die Antworten bereits schrittweise über Task&lt;ActionResult&lt;AnswerAck&gt;&gt; PositionTestsController.Answer(int planId, int positionId, int attemptId, AnswerDto dto) bewertet; hier wird nur aggregiert. Wird ausnahmsweise ein dto mit Antworten übergeben (Bulk-Abgabe), werden diese noch serverseitig bewertet.
   type: http
-  seq: 3
+  seq: 5
   tags:
     - Study – Position Tests
 
@@ -21,18 +21,7 @@ http:
   body:
     type: json
     data: |-
-      {
-        "answers": [
-          {
-            "itemIndex": 0,
-            "givenAnswer": "hallo"
-          },
-          {
-            "itemIndex": 1,
-            "givenAnswer": "tschüss"
-          }
-        ]
-      }
+      {}
   auth: inherit
 
 runtime:
@@ -43,8 +32,7 @@ runtime:
 
         function capture(name, value) {
           if (value === undefined || value === null || value === '') return;
-          bru.setVar(name, value);
-          bru.setEnvVar(name, String(value), { persist: true });
+          bru.setEnvVar(name, String(value));
         }
 
         if (body && typeof body === 'object' && !Array.isArray(body)) {
@@ -83,7 +71,7 @@ settings:
   maxRedirects: 5
 
 examples:
-  - name: Test abgeben
+  - name: Test abgeben (auswerten)
     description: "Verifiziert durch DocsCaptureTests: Rolle `child`, erwartet HTTP 200."
     request:
       url: "{{baseUrl}}/api/v1/study-plans/:planId/positions/:positionId/tests/:attemptId/submit"
@@ -101,18 +89,7 @@ examples:
       body:
         type: json
         data: |-
-          {
-            "answers": [
-              {
-                "itemIndex": 0,
-                "givenAnswer": "hallo"
-              },
-              {
-                "itemIndex": 1,
-                "givenAnswer": "tschüss"
-              }
-            ]
-          }
+          {}
     response:
       status: 200
       statusText: OK
@@ -158,14 +135,7 @@ examples:
       body:
         type: json
         data: |-
-          {
-            "answers": [
-              {
-                "itemIndex": 0,
-                "givenAnswer": "hallo"
-              }
-            ]
-          }
+          {}
     response:
       status: 400
       statusText: Bad Request
@@ -185,6 +155,6 @@ examples:
           }
 
 docs: |-
-  # Bewertet die Antworten serverseitig gegen die Item-Lösungen und schließt den Versuch ab.
+  # Schließt den Versuch ab und liefert das Ergebnis (inkl. Lösungen). Im Klausur-Modus wurden die Antworten bereits schrittweise über Task&lt;ActionResult&lt;AnswerAck&gt;&gt; PositionTestsController.Answer(int planId, int positionId, int attemptId, AnswerDto dto) bewertet; hier wird nur aggregiert. Wird ausnahmsweise ein dto mit Antworten übergeben (Bulk-Abgabe), werden diese noch serverseitig bewertet.
 
   `POST /api/v1/study-plans/{planId}/positions/{positionId}/tests/{attemptId}/submit`

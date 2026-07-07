@@ -69,6 +69,13 @@ public class StudyPlan
     public List<PlanPosition> Positions { get; set; } = new();
 }
 
+/// <summary>
+/// Ausspiel-Modus einer Übungssitzung. <see cref="Info"/> = freies Üben: Inhalte am Stück, das Frontend
+/// führt die Iteration, es fließt <b>kein</b> Lernfeedback (keine Bewertung/Punkte/Leitner, zählt nicht aufs
+/// Ziel). <see cref="Lern"/> = server-geführt: der Server hält Cursor + eingefrorene Reihenfolge und bewertet.
+/// </summary>
+public enum PlayMode { Info = 0, Lern = 1 }
+
 /// <summary>Übungssitzung einer Lehrplan-Position: erfasst echte Übungszeit und was geübt wurde.</summary>
 public class PracticeSession
 {
@@ -83,6 +90,16 @@ public class PracticeSession
     public DateTime? EndedAt { get; set; }
     /// <summary>Aktiv geübte Sekunden (nur Zeit mit Interaktion).</summary>
     public int ActiveSeconds { get; set; }
+
+    /// <summary>Ausspiel-Modus (Info = frei, Lern = server-geführt mit Cursor).</summary>
+    public PlayMode Mode { get; set; } = PlayMode.Lern;
+    /// <summary>
+    /// Beim Start eingefrorene Ausspiel-Reihenfolge (Item-Indizes) gemäß <see cref="PlanPosition.OrderStrategy"/>.
+    /// Bleibt über den Lauf stabil, damit sich die Reihenfolge nicht durch Box-Änderungen verschiebt.
+    /// </summary>
+    public List<int> Order { get; set; } = new();
+    /// <summary>Aktuelle Position in <see cref="Order"/> (server-geführter Cursor im Lern-Modus).</summary>
+    public int Cursor { get; set; }
 
     public List<ReviewEvent> Reviews { get; set; } = new();
 }
@@ -122,6 +139,14 @@ public class TestAttempt
     public int CorrectItems { get; set; }
     public int ScorePercent { get; set; }
     public bool Passed { get; set; }
+
+    /// <summary>
+    /// Beim Start eingefrorene Prüfungsreihenfolge (Item-Indizes) gemäß <see cref="PlanPosition.OrderStrategy"/>.
+    /// Der Klausur-Modus ist strikt server-getrieben: eine Frage nach der anderen, kein Zurück.
+    /// </summary>
+    public List<int> Order { get; set; } = new();
+    /// <summary>Aktuelle Position in <see cref="Order"/> (server-geführter Cursor der Prüfung).</summary>
+    public int Cursor { get; set; }
 
     public List<TestItemResult> Results { get; set; } = new();
 }

@@ -1,6 +1,6 @@
 # API-Beispiele – Übersicht
 
-Automatisch erzeugt von `backend/Pugling.Api.Tests/DocsCaptureTests.cs`. Insgesamt **104** Beispiele in **10** Gruppen.
+Automatisch erzeugt von `backend/Pugling.Api.Tests/DocsCaptureTests.cs`. Insgesamt **110** Beispiele in **10** Gruppen.
 
 | Gruppe | Beispiele | Fehlerfälle | Datei |
 | --- | ---: | ---: | --- |
@@ -10,14 +10,14 @@ Automatisch erzeugt von `backend/Pugling.Api.Tests/DocsCaptureTests.cs`. Insgesa
 | class-tests | 3 | 2 | [`class-tests.md`](./class-tests.md) |
 | me | 26 | 9 | [`me.md`](./me.md) |
 | shop | 27 | 7 | [`shop.md`](./shop.md) |
-| study-plans | 15 | 6 | [`study-plans.md`](./study-plans.md) |
+| study-plans | 21 | 6 | [`study-plans.md`](./study-plans.md) |
 | tags | 5 | 3 | [`tags.md`](./tags.md) |
 | timetable | 2 | 1 | [`timetable.md`](./timetable.md) |
 | vocabulary | 4 | 2 | [`vocabulary.md`](./vocabulary.md) |
 
 ## Fehler-Code-Abdeckung
 
-Verifiziert: **28 / 33** Codes aus `ApiErrors`.
+Verifiziert: **28 / 34** Codes aus `ApiErrors`.
 
 | Code | Beispiel |
 | --- | --- |
@@ -56,5 +56,6 @@ Verifiziert: **28 / 33** Codes aus `ApiErrors`.
 - `concurrency_conflict` — Erfordert eine echte Schreib-Kollision (Doppelklick/Retry) über das Concurrency-Token; in-process nicht deterministisch per HTTP auslösbar (siehe SkinPurchaseTests, direkt über DbContext).
 - `http_error` — Über HTTP im In-Process-Test nicht erreichbar.
 - `internal_error` — 500-Fallback für unbehandelte Ausnahmen – kein sicherer, gezielter Auslöser über die öffentliche API.
+- `item_not_found` — Über HTTP im In-Process-Test nicht erreichbar.
 - `rate_limited` — Login-Rate-Limit ist in der Test-Factory bewusst abgeschaltet (`RateLimiting:LoginEnabled=false`), sonst würden die vielen Test-Logins scheitern.
 

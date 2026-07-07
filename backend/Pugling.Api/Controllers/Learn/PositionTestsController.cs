@@ -24,15 +24,19 @@ namespace Pugling.Api.Controllers.Learn;
 [Authorize]
 [ServiceFilter(typeof(PlanOwnershipFilter))]
 public class PositionTestsController(PuglingDbContext db, PositionPlayService play,
-    PositionProgressService progress, GamificationService gamification, AnswerGrader grader) : ControllerBase
+    PositionProgressService progress, GamificationService gamification, AnswerGrader grader,
+    ItemProgressService itemProgress) : ControllerBase
 {
     /// <summary>Standard-Bestehensgrenze, wenn die Position keine eigene Schwelle setzt.</summary>
     private const int DefaultPassPercent = 80;
 
     public record TestItem(int ItemIndex, string Prompt, int Stage, string? Reveal, int? AnswerLength, string? Hint,
         IReadOnlyList<string>? Choices, string? AudioUrl);
-    public record AttemptResponse(int AttemptId, int PlanId, int PositionId, DateOnly Day, int Stage,
-        int TotalItems, IReadOnlyList<TestItem> Items);
+    /// <summary>
+    /// Antwort des Test-Starts. Der Klausur-Modus ist strikt server-getrieben: es kommen <b>keine</b> Aufgaben
+    /// im Bulk, nur die Metadaten. Die Fragen holt der Client einzeln über <see cref="Next"/> (kein Zurück).
+    /// </summary>
+    public record AttemptResponse(int AttemptId, int PlanId, int PositionId, DateOnly Day, int Stage, int TotalItems);
 
     private Task<StudyPlan?> GetPlan(int planId) => db.StudyPlans.FirstOrDefaultAsync(p => p.Id == planId);
 
@@ -44,23 +48,21 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
         db.TestAttempts.Include(t => t.Results)
             .FirstOrDefaultAsync(t => t.Id == attemptId && t.StudyPlanId == planId && t.PlanPositionId == positionId);
 
-    private static TestItem ToItem(ContentItem item, ExerciseType type, int stage, bool typed, IReadOnlyList<string>? choices)
+    private static TestItem ToItem(IReadOnlyList<ContentItem> items, ContentItem item, ExerciseType type, int stage, bool typed)
     {
-        var isLetterBoxes = type == ExerciseType.Vocabulary && (TestStage)stage == TestStage.LetterBoxes;
-        // Hör-Stufe: die Vokabel wird vorgelesen – die Audioquelle mitgeben, damit der Client sie abspielt
-        // (und den Wort-Text ausblendet). Andere Stufen erhalten keine Audioquelle.
-        var isAudio = type == ExerciseType.Vocabulary && (TestStage)stage == TestStage.Audio;
-        return new TestItem(item.Index, item.Prompt, stage,
-            typed ? null : item.Answer, // Anzeige-/Selbsteinschätzung deckt die Lösung auf, getippt nicht.
-            isLetterBoxes ? item.Answer.Length : null,
-            typed ? item.Hint : null,
-            choices, // nur bei Multiple-Choice gesetzt (Lösung + Ablenker)
-            isAudio ? item.AudioUrl : null);
+        // Geteilte Anti-Cheat-Projektion (Reveal/Länge/Hint/Choices/Audio je Stufe) – dieselbe Regel wie die Übungskarte.
+        var f = PositionPlayService.CardFacets(items, item, type, stage, typed);
+        return new TestItem(item.Index, item.Prompt, stage, f.Reveal, f.AnswerLength, f.Hint, f.Choices, f.AudioUrl);
     }
 
     public record StartDto(int? Stage, DateOnly? Day);
 
-    /// <summary>Startet einen Testversuch für die Position und liefert die zu lösenden Aufgaben (ohne Lösung).</summary>
+    /// <summary>
+    /// Startet einen Testversuch für die Position. Der Klausur-Modus ist strikt server-getrieben: der Start
+    /// friert die Prüfungsreihenfolge ein und liefert nur die Metadaten – die Fragen holt der Client einzeln
+    /// über <see cref="Next"/> und beantwortet sie über <see cref="Answer"/> (kein Zurück, Feedback erst bei
+    /// <see cref="Submit"/>).
+    /// </summary>
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -89,10 +91,13 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
 
         // Der Test ist Standortbestimmung: bereits eingeführte Inhalte prüfen, sonst den gesamten Pool
         // (sperrt nicht, wenn per Üben noch nichts „fällig" ist).
-        var introduced = await db.PositionItemProgress
-            .Where(p => p.PlanPositionId == positionId && p.IntroducedAt != null && p.ItemIndex < poolSize)
-            .Select(p => p.ItemIndex).OrderBy(i => i).ToListAsync();
+        var progress = await db.PositionItemProgress
+            .Where(p => p.PlanPositionId == positionId && p.ItemIndex < poolSize)
+            .ToDictionaryAsync(p => p.ItemIndex);
+        var introduced = progress.Values.Where(p => p.IntroducedAt != null).Select(p => p.ItemIndex).ToList();
         var pool = introduced.Count > 0 ? introduced : Enumerable.Range(0, poolSize).ToList();
+        // Prüfungsreihenfolge gemäß Strategie der Position EINFRIEREN (strikt server-getrieben, kein Zurück).
+        var order = PositionPlayService.OrderIndices(pool.Select(i => (i, progress.GetValueOrDefault(i))), pos.OrderStrategy);
 
         var attempt = new TestAttempt
         {
@@ -102,16 +107,94 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
             StageValue = stage,
             Graded = typed,
             TotalItems = pool.Count,
-            Results = pool.Select(i => new TestItemResult { ContentId = pos.ExerciseId, ItemIndex = i, StageValue = stage }).ToList(),
+            Order = [.. order],
+            Results = order.Select(i => new TestItemResult { ContentId = pos.ExerciseId, ItemIndex = i, StageValue = stage }).ToList(),
         };
         db.TestAttempts.Add(attempt);
         await db.SaveChangesAsync();
 
-        var presented = pool.Select(i =>
-            ToItem(items[i], pos.Exercise.Type, stage, typed,
-                PositionPlayService.ChoicesFor(items, items[i], pos.Exercise.Type, stage))).ToList();
         return CreatedAtAction(nameof(Get), new { planId, positionId, attemptId = attempt.Id },
-            new AttemptResponse(attempt.Id, planId, positionId, day, stage, attempt.TotalItems, presented));
+            new AttemptResponse(attempt.Id, planId, positionId, day, stage, attempt.TotalItems));
+    }
+
+    /// <summary>Die nächste Prüfungsfrage (oder <c>Done</c>), server-geführt über den Attempt-Cursor – ohne Lösung.</summary>
+    public record TestNextResponse(TestItem? Item, bool Done, int Cursor, int Total);
+
+    /// <summary>
+    /// Liefert die aktuelle Prüfungsfrage an der Cursor-Position (One-at-a-time, kein Zurück). Seit dem Start
+    /// entfernte Items werden übersprungen. Am Ende der Reihenfolge kommt <see cref="TestNextResponse.Done"/>.
+    /// </summary>
+    [HttpGet("{attemptId:int}/next")]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<TestNextResponse>> Next(int planId, int positionId, int attemptId)
+    {
+        var attempt = await LoadAttempt(planId, positionId, attemptId);
+        if (attempt is null) return NotFound();
+        if (attempt.CompletedAt is not null)
+            return new TestNextResponse(null, true, attempt.Cursor, attempt.TotalItems);
+        var plan = (await GetPlan(planId))!;
+        if (User.IsChild() && !PositionPlayService.PlanPlayableForChild(plan, DateOnly.FromDateTime(DateTime.UtcNow)))
+            return this.ProblemWithCode(ApiErrors.PlanInactive, "This study plan is not currently active. Ask your parent.");
+        var pos = await GetPosition(planId, positionId);
+        if (pos?.Exercise is null) return NotFound();
+
+        var items = await play.ItemsOfAsync(pos);
+        var typed = PositionPlayService.IsTypedStage(pos.Exercise.Type, attempt.StageValue);
+        var cursor = PositionPlayService.SkipRemoved(attempt.Order, attempt.Cursor, items.Count);
+        if (cursor != attempt.Cursor) { attempt.Cursor = cursor; await db.SaveChangesAsync(); }
+        if (cursor >= attempt.Order.Count) return new TestNextResponse(null, true, cursor, attempt.TotalItems);
+
+        var item = ToItem(items, items[attempt.Order[cursor]], pos.Exercise.Type, attempt.StageValue, typed);
+        return new TestNextResponse(item, false, cursor, attempt.TotalItems);
+    }
+
+    /// <summary>Bestätigung einer abgegebenen Prüfungsantwort – bewusst OHNE Korrektheit (Feedback erst beim Abschluss).</summary>
+    public record AnswerAck(bool Done, int Cursor, int Total);
+
+    /// <summary>
+    /// Nimmt die Antwort zur aktuellen Prüfungsfrage entgegen, bewertet sie serverseitig (und protokolliert
+    /// den plan-übergreifenden Item-Fortschritt), gibt die Korrektheit aber NICHT zurück (echte Klausur:
+    /// Feedback erst bei <see cref="Submit"/>). Adressiert wird stets die Cursor-Frage – der Client kann die
+    /// Reihenfolge nicht umgehen. Danach rückt der Cursor eine Frage weiter.
+    /// </summary>
+    [HttpPost("{attemptId:int}/answer")]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<AnswerAck>> Answer(int planId, int positionId, int attemptId, AnswerDto dto)
+    {
+        var attempt = await LoadAttempt(planId, positionId, attemptId);
+        if (attempt is null) return NotFound();
+        if (attempt.CompletedAt is not null) return this.ProblemWithCode(ApiErrors.TestAlreadySubmitted, "The test has already been submitted.");
+        var plan = (await GetPlan(planId))!;
+        if (User.IsChild() && !PositionPlayService.PlanPlayableForChild(plan, DateOnly.FromDateTime(DateTime.UtcNow)))
+            return this.ProblemWithCode(ApiErrors.PlanInactive, "This study plan is not currently active. Ask your parent.");
+        var pos = await GetPosition(planId, positionId);
+        if (pos?.Exercise is null) return NotFound();
+
+        var items = await play.ItemsOfAsync(pos);
+        var typed = PositionPlayService.IsTypedStage(pos.Exercise.Type, attempt.StageValue);
+        var cursor = PositionPlayService.SkipRemoved(attempt.Order, attempt.Cursor, items.Count);
+        if (cursor < attempt.Order.Count)
+        {
+            var index = attempt.Order[cursor];
+            var item = items[index];
+            var result = attempt.Results.FirstOrDefault(r => r.ItemIndex == index);
+            var correct = typed
+                ? item.AcceptedAnswers.Any(a => grader.Matches(dto.GivenAnswer, a))
+                : dto.WasKnown ?? false;
+            if (result is not null)
+            {
+                result.GivenAnswer = dto.GivenAnswer;
+                result.WasCorrect = correct;
+            }
+            // Bewusst KEINE plan-übergreifende Aufzeichnung hier: der Item-Fortschritt/die Historie werden
+            // erst beim Abschluss (Submit) EINMAL geschrieben, damit abgebrochene/wiederholte Versuche den
+            // Lernstand nicht verfälschen (sonst zählte jede Zwischenantwort dauerhaft, auch ohne Abgabe).
+            cursor++;
+        }
+        attempt.Cursor = PositionPlayService.SkipRemoved(attempt.Order, cursor, items.Count);
+        await db.SaveChangesAsync();
+        return new AnswerAck(attempt.Cursor >= attempt.Order.Count, attempt.Cursor, attempt.TotalItems);
     }
 
     public record ItemResultDto(int ItemIndex, string? GivenAnswer, bool WasCorrect, int HintsUsed);
@@ -132,12 +215,16 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
     }
 
     public record AnswerDto(int ItemIndex, string? GivenAnswer, bool? WasKnown);
-    public record SubmitDto(List<AnswerDto> Answers);
+    public record SubmitDto(List<AnswerDto>? Answers);
     public record ItemOutcome(int ItemIndex, string Prompt, string Expected, string? GivenAnswer, bool WasCorrect);
     public record SubmitResponse(int AttemptId, int Stage, int TotalItems, int CorrectItems,
         int ScorePercent, bool Passed, int PassPercent, IReadOnlyList<ItemOutcome> Items);
 
-    /// <summary>Bewertet die Antworten serverseitig gegen die Item-Lösungen und schließt den Versuch ab.</summary>
+    /// <summary>
+    /// Schließt den Versuch ab und liefert das Ergebnis (inkl. Lösungen). Im Klausur-Modus wurden die Antworten
+    /// bereits schrittweise über <see cref="Answer"/> bewertet; hier wird nur aggregiert. Wird ausnahmsweise ein
+    /// <paramref name="dto"/> mit Antworten übergeben (Bulk-Abgabe), werden diese noch serverseitig bewertet.
+    /// </summary>
     [HttpPost("{attemptId:int}/submit")]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -156,25 +243,50 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
 
         var items = await play.ItemsOfAsync(pos);
         var typed = PositionPlayService.IsTypedStage(pos.Exercise.Type, attempt.StageValue);
-        var answers = dto.Answers.ToDictionary(a => a.ItemIndex);
 
-        var outcomes = new List<ItemOutcome>();
-        foreach (var result in attempt.Results)
+        // Bulk-Abgabe (Legacy/Fallback): übergebene Antworten nur BEWERTEN (Aufzeichnung folgt einmalig unten).
+        // Im Klausur-Fluss ist die Liste leer – die Ergebnisse stehen bereits aus den schrittweisen /answer fest.
+        if (dto.Answers is { Count: > 0 } bulk)
         {
-            var index = result.ItemIndex ?? 0;
-            var item = items[index];
-            answers.TryGetValue(index, out var answer);
-            var correct = typed
-                ? item.AcceptedAnswers.Any(a => grader.Matches(answer?.GivenAnswer, a))
-                : answer?.WasKnown ?? false;
+            var answers = bulk.ToDictionary(a => a.ItemIndex);
+            foreach (var result in attempt.Results)
+            {
+                var index = result.ItemIndex ?? 0;
+                // Das Item kann seit Test-Start entfernt/umsortiert worden sein (Item-CRUD); nicht mehr existierende
+                // Indizes überspringen, statt out-of-range zu laufen oder das falsche Wort zu bewerten.
+                if (index < 0 || index >= items.Count) continue;
+                if (!answers.TryGetValue(index, out var answer)) continue;
+                var item = items[index];
+                result.GivenAnswer = answer.GivenAnswer;
+                result.WasCorrect = typed
+                    ? item.AcceptedAnswers.Any(a => grader.Matches(answer.GivenAnswer, a))
+                    : answer.WasKnown ?? false;
+            }
+        }
 
-            result.GivenAnswer = answer?.GivenAnswer;
-            result.WasCorrect = correct;
-            outcomes.Add(new ItemOutcome(index, item.Prompt, item.Answer, answer?.GivenAnswer, correct));
+        // Nur noch existierende (nicht mid-Test gelöschte) Items zählen – für Ergebnis-Karten, Aufzeichnung UND Quote.
+        var scorable = attempt.Results
+            .Where(r => (r.ItemIndex ?? 0) >= 0 && (r.ItemIndex ?? 0) < items.Count)
+            .OrderBy(r => r.ItemIndex)
+            .ToList();
+
+        // Ergebnis-Karten aufbauen und den plan-übergreifenden Item-Fortschritt/Historie genau EINMAL je
+        // abgeschlossenem Versuch schreiben (nicht je Zwischenantwort) – Idempotenz gegen Abbruch/Wiederholung.
+        var outcomes = new List<ItemOutcome>(scorable.Count);
+        foreach (var r in scorable)
+        {
+            var index = r.ItemIndex ?? 0;
+            var item = items[index];
+            outcomes.Add(new ItemOutcome(index, item.Prompt, item.Answer, r.GivenAnswer, r.WasCorrect));
+            await itemProgress.RecordAsync(plan.ChildId, pos.ExerciseId, item, r.WasCorrect, attempt.StageValue,
+                typed ? r.GivenAnswer : null, ItemReviewSource.Test, positionId, attempt.Day, countsForMastery: true);
         }
 
         var passPercent = pos.GoalThreshold is > 0 ? pos.GoalThreshold.Value : DefaultPassPercent;
-        attempt.CorrectItems = attempt.Results.Count(r => r.WasCorrect);
+        // Quote über die tatsächlich gestellten (noch existierenden) Fragen, nicht über die eingefrorene Startzahl:
+        // ein mid-Test gelöschtes Item soll die erreichbare Punktzahl nicht heimlich senken.
+        attempt.TotalItems = scorable.Count;
+        attempt.CorrectItems = scorable.Count(r => r.WasCorrect);
         attempt.ScorePercent = attempt.TotalItems == 0 ? 0
             : (int)Math.Round(100.0 * attempt.CorrectItems / attempt.TotalItems);
         attempt.Passed = attempt.ScorePercent >= passPercent;

@@ -33,6 +33,8 @@ POST /api/v1/children
 ### 1.3 Katalog-Übung anlegen
 
 Der Plan enthält später keine kopierten Items. Er verweist über Positionen auf Katalog-Übungen.
+Bei Vokabelübungen werden inline übergebene `items` beim Speichern in stabile `ExerciseItem`-Zeilen
+materialisiert. Die Config bleibt danach nur für Einstellungen wie Richtung und Sprachen zuständig.
 
 ```http
 POST /api/v1/learn/subjects
@@ -47,6 +49,14 @@ POST /api/v1/learn/subjects/{subjectId}/chapters/{chapterId}/vocabulary
     "items":[{"front":"dog","back":"Hund"},{"front":"cat","back":"Katze"}] },
   "defaultStage":2, "defaultUseLeitner":true, "defaultRequireTypedTest":true }
 → { "id": 13, ... }
+```
+
+Die gespeicherten Vokabelpaare der Übung liest oder ergänzt du danach über die Item-Subressource:
+
+```http
+GET  /api/v1/learn/subjects/{subjectId}/chapters/{chapterId}/vocabulary/13/items
+POST /api/v1/learn/subjects/{subjectId}/chapters/{chapterId}/vocabulary/13/items
+{ "front":"bird", "back":"Vogel" }
 ```
 
 Vorhandene Übungen findest du mit:
@@ -78,6 +88,8 @@ POST /api/v1/study-plans/42/positions
 GET /api/v1/study-plans/42/overview
 GET /api/v1/study-plans/42/overview/progress
 GET /api/v1/study-plans/42/positions/7/report
+GET /api/v1/children/1/vocabulary-progress?onlyWeak=true
+GET /api/v1/children/1/vocabulary-progress/by-word?onlyWeak=true
 GET /api/v1/children/1/points
 ```
 

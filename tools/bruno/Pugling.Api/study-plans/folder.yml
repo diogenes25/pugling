@@ -1,7 +1,7 @@
 info:
   name: Study – Plans
   type: folder
-  seq: 33
+  seq: 34
 
 request:
   auth: inherit

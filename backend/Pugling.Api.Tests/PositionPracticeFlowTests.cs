@@ -65,9 +65,12 @@ public class PositionPracticeFlowTests(PuglingWebAppFactory factory) : IClassFix
         var first = await child.PostAsJsonAsync($"{baseUrl}/{sessionId}/review", new { itemIndex = 0, givenAnswer = "hallo" });
         Assert.Equal(HttpStatusCode.OK, first.StatusCode);
 
-        // Zweite Wertung derselben Karte am selben Tag: nur protokolliert, keine weiteren Punkte (Anti-Farming) → 204.
+        // Zweite Wertung derselben Karte am selben Tag: nur protokolliert, keine weiteren Punkte (Anti-Farming).
+        // Der Cursor läuft weiter (200), aber es fließen keine Punkte.
         var second = await child.PostAsJsonAsync($"{baseUrl}/{sessionId}/review", new { itemIndex = 0, givenAnswer = "hallo" });
-        Assert.Equal(HttpStatusCode.NoContent, second.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, second.StatusCode);
+        var secondOutcome = await second.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal(0, secondOutcome.GetProperty("awarded").GetInt32());
     }
 
     [Fact]

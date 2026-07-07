@@ -1,7 +1,7 @@
 info:
   name: Me
   type: folder
-  seq: 30
+  seq: 31
 
 request:
   auth: inherit

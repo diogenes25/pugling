@@ -1,7 +1,7 @@
 info:
   name: "Schaltet einen Skin für den angemeldeten Sohn frei: bucht die Kosten als negative Punkte-Buchung ab und rüstet ihn direkt aus. Kosten und Besitz sind serverseitig autoritativ (kein Client-Betrug). Abbuchung und Freischaltung werden in einem `SaveChanges` committet; das Concurrency-Token am Kind verhindert, dass zwei parallele Käufe (Doppelklick/Retry) beide den Deckungs-Check bestehen – der zweite scheitert dann und liefert 409 statt doppelt abzubuchen."
   type: http
-  seq: 12
+  seq: 21
   tags:
     - Me
 
@@ -22,8 +22,7 @@ runtime:
 
         function capture(name, value) {
           if (value === undefined || value === null || value === '') return;
-          bru.setVar(name, value);
-          bru.setEnvVar(name, String(value), { persist: true });
+          bru.setEnvVar(name, String(value));
         }
 
         if (body && typeof body === 'object' && !Array.isArray(body)) {

@@ -56,6 +56,9 @@ StudyPlan (gehört einem Kind, reiner Container)
    Inhalts-Atom wird materialisiert in `PositionItemProgress`. Stores wie `learn/vocabulary` und
    `learn/cloze-texts` existieren weiterhin als globale Inhaltsbibliotheken und für Verknüpfungen, sind
    aber nicht mehr die direkte Study-Plan-Item-Liste.
+- **Vokabelübungen haben eine eigene Item-Ebene:** Die Config enthält Einstellungen und optional
+   Authoring-Payload. Die tatsächlichen Vokabelpaare liegen als stabile `ExerciseItem`-Zeilen unter der
+   Übung (`.../vocabulary/{exerciseId}/items`) und referenzieren den Vokabel-Store per `VocabularyId`.
 
 > ⚠️ **Wichtige Abgrenzung:** Ein Study-Plan enthält keine kopierten Vokabel-/Lückentext-Items mehr.
 > Er verweist über Positionen auf Katalog-Übungen. Änderungen an der Übungs-Config ändern damit den
@@ -89,6 +92,7 @@ Father ──< Child ──< ChildPointsEntry  (Punkte-Ledger, jede Buchung trä
 
 Katalog (global):
 Subject ──< Chapter ──< Exercise (Type, ConfigJson, Metadaten, SuggestedBonus?)
+                         └──< ExerciseItem (nur Vocabulary: stabile Store-Referenzen)
    └──< ExerciseCategory
 
 Stores (global / optionale Inhaltsbibliotheken):
@@ -117,6 +121,8 @@ Controller sind dünn; die Geschäftsregeln stecken in [backend/Pugling.Api/Serv
 | **`PositionPlayService`** | Inhaltsauswahl, Stufen-Fahrplan, getippte Stufen, Leitner-Fälligkeit und Box-Bewegung je Position. |
 | **`AnswerGrader`** | Normalisierter Antwortvergleich (Vokabel/Lücke), Alternativen erlaubt. |
 | **`ExerciseAnswerChecker`** | Auswertung der Katalog-Übungen mit `/check` (Matching, Arithmetic, List). |
+| **`ExerciseItemService`** | Materialisiert Vokabel-Authoring-Payload (`items`/`refs`) in stabile `ExerciseItem`-Zeilen und bewahrt `ItemId`s beim Abgleich. |
+| **`ItemProgressService`** | Schreibt planübergreifenden Vokabel-Lernstand je Kind und `ItemId` plus Antwort-Historie. |
 | **`ArithmeticProblemGenerator`** | Erzeugt Zufalls-Rechenaufgaben aus Regeln + Seed (reproduzierbar). |
 | **`PositionReportService`** | Mastery-/Report-Sicht pro Position. |
 | **`GamificationService`** | Missionen & Auszeichnungen auswerten + idempotent belohnen. |

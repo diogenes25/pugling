@@ -18,7 +18,9 @@ http:
   body:
     type: json
     data: |-
-      {}
+      {
+        "mode": "Lern"
+      }
   auth: inherit
 
 runtime:
@@ -29,8 +31,7 @@ runtime:
 
         function capture(name, value) {
           if (value === undefined || value === null || value === '') return;
-          bru.setVar(name, value);
-          bru.setEnvVar(name, String(value), { persist: true });
+          bru.setEnvVar(name, String(value));
         }
 
         if (body && typeof body === 'object' && !Array.isArray(body)) {
@@ -69,7 +70,7 @@ settings:
   maxRedirects: 5
 
 examples:
-  - name: Übungssitzung starten
+  - name: Übungssitzung starten (Lern-Modus)
     description: "Verifiziert durch DocsCaptureTests: Rolle `child`, erwartet HTTP 201."
     request:
       url: "{{baseUrl}}/api/v1/study-plans/:planId/positions/:positionId/practice-sessions"
@@ -84,7 +85,9 @@ examples:
       body:
         type: json
         data: |-
-          {}
+          {
+            "mode": "Lern"
+          }
     response:
       status: 201
       statusText: Created
@@ -98,11 +101,54 @@ examples:
             "id": 1,
             "planId": 2,
             "positionId": 2,
-            "day": "2026-07-06",
+            "day": "2026-07-07",
             "startedAt": "<timestamp>",
             "endedAt": null,
             "activeSeconds": 0,
-            "reviewCount": 0
+            "reviewCount": 0,
+            "mode": "Lern",
+            "cursor": 0,
+            "total": 2
+          }
+  - name: Übungssitzung starten (Info-Modus, freies Üben)
+    description: "Verifiziert durch DocsCaptureTests: Rolle `child`, erwartet HTTP 201."
+    request:
+      url: "{{baseUrl}}/api/v1/study-plans/:planId/positions/:positionId/practice-sessions"
+      method: POST
+      params:
+        - name: planId
+          value: "{{planId}}"
+          type: path
+        - name: positionId
+          value: "{{positionId}}"
+          type: path
+      body:
+        type: json
+        data: |-
+          {
+            "mode": "Info"
+          }
+    response:
+      status: 201
+      statusText: Created
+      headers:
+        - name: Content-Type
+          value: application/json
+      body:
+        type: json
+        data: |-
+          {
+            "id": 2,
+            "planId": 2,
+            "positionId": 2,
+            "day": "2026-07-07",
+            "startedAt": "<timestamp>",
+            "endedAt": null,
+            "activeSeconds": 0,
+            "reviewCount": 0,
+            "mode": "Info",
+            "cursor": 0,
+            "total": 1
           }
   - name: Deaktivierten Plan spielen (Fehlerfall)
     description: "Verifiziert durch DocsCaptureTests: Rolle `child`, erwartet HTTP 403, Code `plan_inactive`."

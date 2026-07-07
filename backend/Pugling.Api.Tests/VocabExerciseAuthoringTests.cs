@@ -101,15 +101,19 @@ public class VocabExerciseAuthoringTests(PuglingWebAppFactory factory) : IClassF
             $"/api/v1/learn/subjects/{s}/chapters/{c}/vocabulary",
             new { title = "Unit-Vokabeln", orderIndex = 1, rewardPoints = 10, config = new { direction = "front-to-back", refs = Array.Empty<string>() } }));
 
-        var updated = await (await father.PostAsJsonAsync(
+        (await father.PostAsJsonAsync(
             $"/api/v1/learn/subjects/{s}/chapters/{c}/vocabulary/{exerciseId}/refs-from-tags",
-            new { tags = new[] { "UnitP2" }, baseFormsOnly = true })).Content.ReadFromJsonAsync<JsonElement>();
+            new { tags = new[] { "UnitP2" }, baseFormsOnly = true })).EnsureSuccessStatusCode();
 
-        var refs = updated.GetProperty("config").GetProperty("refs").EnumerateArray()
-            .Select(r => r.GetProperty("key").GetString()).ToList();
-        Assert.Equal(2, refs.Count); // walk + jump, NICHT walked (flektiert)
-        Assert.Contains(walkKey, refs);
-        Assert.DoesNotContain("en_walked_de_ging", refs);
+        // Der Snapshot materialisiert die Wörter als Items (eine Ebene tiefer), nicht mehr in der Config.
+        var items = await father.GetFromJsonAsync<List<JsonElement>>(
+            $"/api/v1/learn/subjects/{s}/chapters/{c}/vocabulary/{exerciseId}/items");
+        var fronts = items!.Select(i => i.GetProperty("front").GetString()).ToList();
+        Assert.Equal(2, fronts.Count); // walk + jump, NICHT walked (flektiert)
+        Assert.Contains("walk", fronts);
+        Assert.Contains("jump", fronts);
+        Assert.DoesNotContain("walked", fronts);
+        _ = walkKey;
     }
 
     // ---- P3: Ref-Validierung + Vokabel-Usage + Lösch-Schutz ----------------------------------------
@@ -149,7 +153,7 @@ public class VocabExerciseAuthoringTests(PuglingWebAppFactory factory) : IClassF
         var father = await TestApi.FatherAsync(_factory);
         var (s, c) = await ChapterAsync(father, "Inline-Autolink");
 
-        var created = await (await father.PostAsJsonAsync(
+        var exerciseId = await TestApi.IdAsync(await father.PostAsJsonAsync(
             $"/api/v1/learn/subjects/{s}/chapters/{c}/vocabulary", new
             {
                 title = "Inline-Vokabeln",
@@ -162,16 +166,17 @@ public class VocabExerciseAuthoringTests(PuglingWebAppFactory factory) : IClassF
                     targetLang = "de",
                     items = new[] { new { front = "mountain", back = "Berg" }, new { front = "river", back = "Fluss" } },
                 },
-            })).Content.ReadFromJsonAsync<JsonElement>();
+            }));
 
-        // Jedes Inline-Item bekommt eine Store-Id und einen _self-Link.
-        var items = created.GetProperty("config").GetProperty("items").EnumerateArray().ToList();
-        Assert.Equal(2, items.Count);
-        foreach (var it in items)
+        // Die Inline-Items werden als eigene Items (eine Ebene tiefer) materialisiert und mit dem Store verlinkt.
+        var items = await father.GetFromJsonAsync<List<JsonElement>>(
+            $"/api/v1/learn/subjects/{s}/chapters/{c}/vocabulary/{exerciseId}/items");
+        Assert.Equal(2, items!.Count);
+        foreach (var it in items!)
         {
             var id = it.GetProperty("vocabularyId").GetInt32();
             Assert.True(id > 0);
-            Assert.Equal($"/api/v1/learn/vocabulary/{id}", it.GetProperty("_self").GetString());
+            Assert.Equal($"/api/v1/learn/vocabulary/{id}", it.GetProperty("vocabulary").GetString());
         }
 
         // Und die Wörter liegen jetzt tatsächlich im Store (Store-Membership).

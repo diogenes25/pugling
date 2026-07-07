@@ -24,17 +24,19 @@ namespace Pugling.Api.Controllers.Learn;
 [ServiceFilter(typeof(PlanOwnershipFilter))]
 public class PositionPracticeController(PuglingDbContext db, PositionPlayService play, ScoringService scoring,
     PositionProgressService progress, GamificationService gamification, AnswerGrader grader,
-    ILogger<PositionPracticeController> logger)
+    ItemProgressService itemProgress, ILogger<PositionPracticeController> logger)
     : ControllerBase
 {
     /// <summary>Obergrenze der pro Heartbeat anrechenbaren Sekunden (Anti-Zeit-Cheat).</summary>
     private const int MaxHeartbeatSeconds = 120;
 
     public record SessionResponse(int Id, int PlanId, int PositionId, DateOnly Day,
-        DateTime StartedAt, DateTime? EndedAt, int ActiveSeconds, int ReviewCount);
+        DateTime StartedAt, DateTime? EndedAt, int ActiveSeconds, int ReviewCount,
+        PlayMode Mode, int Cursor, int Total);
 
     private static SessionResponse Map(PracticeSession s) =>
-        new(s.Id, s.StudyPlanId, s.PlanPositionId ?? 0, s.Day, s.StartedAt, s.EndedAt, s.ActiveSeconds, s.Reviews.Count);
+        new(s.Id, s.StudyPlanId, s.PlanPositionId ?? 0, s.Day, s.StartedAt, s.EndedAt, s.ActiveSeconds,
+            s.Reviews.Count, s.Mode, s.Cursor, s.Order.Count);
 
     private Task<StudyPlan?> GetPlan(int planId) => db.StudyPlans.FirstOrDefaultAsync(p => p.Id == planId);
 
@@ -46,7 +48,12 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         db.PracticeSessions.Include(s => s.Reviews)
             .FirstOrDefaultAsync(s => s.Id == sessionId && s.StudyPlanId == planId && s.PlanPositionId == positionId);
 
-    public record StartDto(DateOnly? Day);
+    /// <summary>
+    /// Start-Payload einer Übungssitzung. <paramref name="Mode"/> wählt den Ausspiel-Modus (Standard
+    /// <see cref="PlayMode.Lern"/> = server-geführt mit Cursor; <see cref="PlayMode.Info"/> = freies Üben ohne
+    /// Feedback). <paramref name="Day"/> nur zum Nachtragen (Vater).
+    /// </summary>
+    public record StartDto(DateOnly? Day, PlayMode Mode = PlayMode.Lern);
 
     /// <summary>Startet eine Übungssitzung für die Position. Day nur zum Nachtragen (Vater); sonst heute.</summary>
     [HttpPost]
@@ -55,7 +62,8 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<SessionResponse>> Start(int planId, int positionId, StartDto dto)
     {
-        if (await GetPosition(planId, positionId) is null) return NotFound();
+        var pos = await GetPosition(planId, positionId);
+        if (pos is null) return NotFound();
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
         if (dto.Day is { } d && d != today && !User.IsFather())
             return Forbid(); // Nachtragen anderer Tage nur für den Vater (Anti-Schummel).
@@ -64,7 +72,13 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         if (User.IsChild() && await GetPlan(planId) is { } plan && !PositionPlayService.PlanPlayableForChild(plan, today))
             return this.ProblemWithCode(ApiErrors.PlanInactive, "This study plan is not currently active. Ask your parent.");
 
-        var session = new PracticeSession { StudyPlanId = planId, PlanPositionId = positionId, Day = dto.Day ?? today };
+        var day = dto.Day ?? today;
+        var session = new PracticeSession { StudyPlanId = planId, PlanPositionId = positionId, Day = day, Mode = dto.Mode };
+        // Reihenfolge EINMAL einfrieren (gemäß Strategie der Position), damit sie sich im Lauf nicht
+        // verschiebt und Cursor (Lern) bzw. Batch (Info/Offline) dieselbe stabile Sequenz nutzen.
+        // Info = freies Üben: der ganze scope-gefilterte Pool (ohne Leitner-Fälligkeit), damit auch bereits
+        // gelernte Vokabeln wiederholbar sind. Lern = nur die heute fälligen Karten.
+        session.Order = [.. await play.DueItemIndicesAsync(pos, day, pos.OrderStrategy, dueOnly: dto.Mode != PlayMode.Info)];
         db.PracticeSessions.Add(session);
         await db.SaveChangesAsync();
         return CreatedAtAction(nameof(Get), new { planId, positionId, sessionId = session.Id }, Map(session));
@@ -97,7 +111,25 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
     public record PracticeCard(int ItemIndex, int Stage, string Type, string Prompt,
         string? Hint, int? AnswerLength, string? Reveal, IReadOnlyList<string>? Choices, string? AudioUrl);
 
-    /// <summary>Liefert die heute fälligen Übungskarten der Position (Scope/ItemCount/Leitner-Fälligkeit).</summary>
+    /// <summary>
+    /// Baut eine Übungskarte aus einem Inhalts-Atom. Getippte Stufen halten die Lösung zurück
+    /// (der Server bewertet, nie das Frontend); Anzeige-/Selbsteinschätzung und die Hör-Stufe decken
+    /// per Design auf bzw. geben die Audioquelle mit.
+    /// </summary>
+    private static PracticeCard BuildCard(ExerciseType type, int stage, bool typed,
+        IReadOnlyList<ContentItem> items, int index)
+    {
+        var item = items[index];
+        var f = PositionPlayService.CardFacets(items, item, type, stage, typed);
+        return new PracticeCard(index, stage, type.ToString(), item.Prompt,
+            f.Hint, f.AnswerLength, f.Reveal, f.Choices, f.AudioUrl);
+    }
+
+    /// <summary>
+    /// Liefert alle Karten der Sitzung in der beim Start eingefrorenen Reihenfolge – für den Info-Modus
+    /// (freies Üben, Frontend iteriert) und als Offline-Fallback des Lern-Modus (Antworten werden gepuffert
+    /// und bei Reconnect über <see cref="Review"/> nachgesendet). Der Lern-Modus nutzt sonst <see cref="Next"/>.
+    /// </summary>
     [HttpGet("{sessionId:int}/cards")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<IReadOnlyList<PracticeCard>>> Cards(int planId, int positionId, int sessionId)
@@ -115,23 +147,41 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         var items = await play.ItemsOfAsync(pos);
         var stage = PositionPlayService.StageForDay(pos, plan, session.Day);
         var typed = PositionPlayService.IsTypedStage(pos.Exercise.Type, stage);
-        var dueIndices = await play.DueItemIndicesAsync(pos, session.Day);
 
-        var cards = dueIndices.Select(i =>
-        {
-            var item = items[i];
-            // Getippte Stufen halten die Lösung zurück; Anzeige-/Selbsteinschätzung deckt sie bewusst auf.
-            var isLetterBoxes = pos.Exercise.Type == ExerciseType.Vocabulary && (TestStage)stage == TestStage.LetterBoxes;
-            // Hör-Stufe: Audioquelle mitgeben, damit der Client die Vokabel vorliest und den Wort-Text ausblendet.
-            var isAudio = pos.Exercise.Type == ExerciseType.Vocabulary && (TestStage)stage == TestStage.Audio;
-            return new PracticeCard(i, stage, pos.Exercise.Type.ToString(), item.Prompt,
-                typed ? item.Hint : null,
-                isLetterBoxes ? item.Answer.Length : null,
-                typed ? null : item.Answer,
-                PositionPlayService.ChoicesFor(items, item, pos.Exercise.Type, stage),
-                isAudio ? item.AudioUrl : null);
-        }).ToList();
-        return cards;
+        // Eingefrorene Reihenfolge; seit dem Start entfernte Items (Item-CRUD) überspringen.
+        return session.Order.Where(i => i >= 0 && i < items.Count)
+            .Select(i => BuildCard(pos.Exercise.Type, stage, typed, items, i)).ToList();
+    }
+
+    /// <summary>Die nächste Karte im Lern-Modus (oder <c>Done</c>), server-geführt über den Sitzungs-Cursor.</summary>
+    public record NextResponse(PracticeCard? Card, bool Done, int Cursor, int Total);
+
+    /// <summary>
+    /// Liefert die aktuelle Karte an der Cursor-Position der Sitzung (Lern-Modus, One-at-a-time). Übersprungen
+    /// werden seit dem Start entfernte Items. Ist der Cursor am Ende, kommt <see cref="NextResponse.Done"/>.
+    /// </summary>
+    [HttpGet("{sessionId:int}/next")]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<NextResponse>> Next(int planId, int positionId, int sessionId)
+    {
+        var session = await GetSession(planId, positionId, sessionId);
+        if (session is null) return NotFound();
+        var plan = (await GetPlan(planId))!;
+        if (User.IsChild() && !PositionPlayService.PlanPlayableForChild(plan, DateOnly.FromDateTime(DateTime.UtcNow)))
+            return this.ProblemWithCode(ApiErrors.PlanInactive, "This study plan is not currently active. Ask your parent.");
+        var pos = await GetPosition(planId, positionId);
+        if (pos?.Exercise is null) return NotFound();
+
+        var items = await play.ItemsOfAsync(pos);
+        var stage = PositionPlayService.StageForDay(pos, plan, session.Day);
+        var typed = PositionPlayService.IsTypedStage(pos.Exercise.Type, stage);
+
+        var cursor = PositionPlayService.SkipRemoved(session.Order, session.Cursor, items.Count);
+        if (cursor != session.Cursor) { session.Cursor = cursor; await db.SaveChangesAsync(); }
+        if (cursor >= session.Order.Count) return new NextResponse(null, true, cursor, session.Order.Count);
+
+        var card = BuildCard(pos.Exercise.Type, stage, typed, items, session.Order[cursor]);
+        return new NextResponse(card, false, cursor, session.Order.Count);
     }
 
     /// <summary>
@@ -141,16 +191,22 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
     /// </summary>
     public record ReviewDto(int ItemIndex, string? GivenAnswer, bool? WasKnown);
 
-    /// <summary>Ergebnis einer Leitner-Wiederholung (serverseitig bewertet) inkl. Boni fürs Feedback.</summary>
+    /// <summary>
+    /// Ergebnis einer Leitner-Wiederholung (serverseitig bewertet) inkl. Boni fürs Feedback. <see cref="Next"/>
+    /// trägt im Lern-Modus direkt die nächste Karte (kein separater Roundtrip nötig); <see cref="Done"/> zeigt
+    /// das Ende des Laufs an. Bei nicht gewerteten Karten (nicht fällig / schon heute gewertet / nicht-Leitner)
+    /// sind die Punktefelder 0, Bewertung und Cursor laufen dennoch weiter.
+    /// </summary>
     public record ReviewOutcome(bool WasCorrect, string Expected, int Awarded, int Box,
-        DateOnly? DueOn, int Combo, int ComboBonus, int SpeedBonus);
+        DateOnly? DueOn, int Combo, int ComboBonus, int SpeedBonus, PracticeCard? Next, bool Done);
 
     /// <summary>
     /// Nimmt die Antwort zu einer Übungskarte entgegen, bewertet sie serverseitig gegen die Item-Lösung
     /// und protokolliert die Wiederholung. Bei Leitner-Positionen wandert das Atom die Box hoch/runter,
     /// richtige Antworten bringen Punkte (+ Combo-/Speed-Bonus). Anti-Farming: gewertet wird nur eine
     /// fällige Karte und höchstens einmal pro Tag; nicht-getippte Selbsteinschätzung zählt bei
-    /// <see cref="PlanPosition.RequireTypedTest"/> nicht.
+    /// <see cref="PlanPosition.RequireTypedTest"/> nicht. Danach rückt der Server-Cursor eine Karte weiter
+    /// und liefert die nächste gleich mit. Im <see cref="PlayMode.Info"/> fließt kein Feedback (204).
     /// </summary>
     [HttpPost("{sessionId:int}/review")]
     [ProducesResponseType(StatusCodes.Status200OK)]
@@ -167,6 +223,9 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
             return this.ProblemWithCode(ApiErrors.PlanInactive, "This study plan is not currently active. Ask your parent.");
         var pos = await GetPosition(planId, positionId);
         if (pos?.Exercise is null) return NotFound();
+
+        // Info-Modus: freies Üben ohne jegliches Lernfeedback – nichts protokollieren, nichts bepunkten.
+        if (session.Mode == PlayMode.Info) return NoContent();
 
         var items = await play.ItemsOfAsync(pos);
         if (dto.ItemIndex < 0 || dto.ItemIndex >= play.PoolSize(pos, items.Count))
@@ -211,35 +270,53 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
             WasCorrect = wasCorrect && scored,
         });
 
-        if (!pos.UseLeitner || !scored)
+        // Plan-übergreifenden Item-Fortschritt + Antwort-Historie mitschreiben (nur Vokabel-Items mit stabiler ItemId).
+        // Bewusst mit der tatsächlichen Korrektheit (nicht anti-farming-gedämpft) – dies ist eine Auswertungsebene,
+        // nicht die Punktequelle; persistiert wird über das SaveChanges unten.
+        await itemProgress.RecordAsync(plan.ChildId, pos.ExerciseId, item, wasCorrect, stage,
+            typed ? dto.GivenAnswer : null, ItemReviewSource.Practice, positionId, session.Day, countsForMastery: scored);
+
+        // Punkte/Box nur bei Leitner-Positionen und nur für gewertete Karten (Anti-Farming). Sonst 0.
+        int awarded = 0, comboBonus = 0, speedBonus = 0, combo = 0;
+        var leitnerScored = pos.UseLeitner && scored;
+        if (leitnerScored)
         {
-            await db.SaveChangesAsync();
-            return NoContent();
+            combo = wasCorrect ? prevStreak + 1 : 0;
+            var (preBox, preReviewCount) = (prog.Box, prog.ReviewCount);
+            play.ApplyReview(pos, prog, wasCorrect, session.Day, DateTime.UtcNow);
+
+            var cfg = new ScoringService.ScoreConfig($"{plan.Title} · {pos.Exercise.Title}", pos.NewContentPoints,
+                pos.ComboThreshold, pos.ComboBonusPoints, pos.SpeedThresholdSeconds, pos.SpeedBonusPoints);
+            var score = await scoring.ScoreReviewAsync(cfg, preReviewCount, preBox, prog.Box, wasCorrect, combo,
+                DateTime.Now, elapsedSeconds);
+            foreach (var c in score.Contributions)
+                db.ChildPoints.Add(new ChildPointsEntry { ChildId = plan.ChildId, Kind = c.Kind, Amount = c.Amount, Reason = c.Reason });
+            awarded = score.BasePoints;
+            comboBonus = score.ComboBonus;
+            speedBonus = score.SpeedBonus;
+
+            if (score.Total > 0)
+                logger.LogInformation(
+                    "Positions-Wiederholung gewertet: Kind {ChildId} Plan {PlanId} Position {PositionId} Item {ItemIndex} " +
+                    "→ +{Total} Punkte (Basis {Base}, Combo ×{Combo} +{ComboBonus}, Speed +{SpeedBonus})",
+                    plan.ChildId, planId, positionId, dto.ItemIndex, score.Total, score.BasePoints, combo,
+                    score.ComboBonus, score.SpeedBonus);
         }
 
-        var combo = wasCorrect ? prevStreak + 1 : 0;
-        var (preBox, preReviewCount) = (prog.Box, prog.ReviewCount);
-        play.ApplyReview(pos, prog, wasCorrect, session.Day, DateTime.UtcNow);
+        // Server-Cursor: auf die gerade beantwortete (gültige) Karte, eins weiter, dann entfernte überspringen.
+        var cursor = PositionPlayService.SkipRemoved(session.Order, session.Cursor, items.Count);
+        if (cursor < session.Order.Count) cursor++;
+        session.Cursor = PositionPlayService.SkipRemoved(session.Order, cursor, items.Count);
 
-        var cfg = new ScoringService.ScoreConfig($"{plan.Title} · {pos.Exercise.Title}", pos.NewContentPoints,
-            pos.ComboThreshold, pos.ComboBonusPoints, pos.SpeedThresholdSeconds, pos.SpeedBonusPoints);
-        var score = await scoring.ScoreReviewAsync(cfg, preReviewCount, preBox, prog.Box, wasCorrect, combo,
-            DateTime.Now, elapsedSeconds);
-        foreach (var c in score.Contributions)
-            db.ChildPoints.Add(new ChildPointsEntry { ChildId = plan.ChildId, Kind = c.Kind, Amount = c.Amount, Reason = c.Reason });
         await db.SaveChangesAsync();
 
-        if (score.Total > 0)
-            logger.LogInformation(
-                "Positions-Wiederholung gewertet: Kind {ChildId} Plan {PlanId} Position {PositionId} Item {ItemIndex} " +
-                "→ +{Total} Punkte (Basis {Base}, Combo ×{Combo} +{ComboBonus}, Speed +{SpeedBonus})",
-                plan.ChildId, planId, positionId, dto.ItemIndex, score.Total, score.BasePoints, combo,
-                score.ComboBonus, score.SpeedBonus);
+        if (leitnerScored)
+            await gamification.EvaluateAndAwardAsync(plan.ChildId, session.Day);
 
-        await gamification.EvaluateAndAwardAsync(plan.ChildId, session.Day);
-
-        return new ReviewOutcome(wasCorrect, item.Answer, score.BasePoints, prog.Box, prog.DueOn, combo,
-            score.ComboBonus, score.SpeedBonus);
+        var done = session.Cursor >= session.Order.Count;
+        var next = done ? null : BuildCard(pos.Exercise.Type, stage, typed, items, session.Order[session.Cursor]);
+        return new ReviewOutcome(wasCorrect, item.Answer, awarded, prog.Box, prog.DueOn, combo,
+            comboBonus, speedBonus, next, done);
     }
 
     /// <summary>Beendet die Sitzung und wertet zeitbasierte Missionen aus.</summary>

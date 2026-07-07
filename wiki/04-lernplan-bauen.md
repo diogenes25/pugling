@@ -64,6 +64,20 @@ POST /api/v1/learn/subjects/{subjectId}/chapters/{chapterId}/vocabulary
 }
 ```
 
+Bei Vokabelübungen ist `config.items` nur Authoring-Payload. Der Server legt fehlende Store-Vokabeln an,
+materialisiert die Übungsmenge in `ExerciseItem`-Zeilen und gibt die Config danach ohne Items zurück.
+Die tatsächlich gespeicherten Vokabelpaare liest und pflegt man über:
+
+```http
+GET  /api/v1/learn/subjects/{subjectId}/chapters/{chapterId}/vocabulary/{exerciseId}/items
+POST /api/v1/learn/subjects/{subjectId}/chapters/{chapterId}/vocabulary/{exerciseId}/items
+{ "vocabularyId": 26, "hint": "die" }
+```
+
+Wenn die Übung bereits in einer PlanPosition steckt, ist das Anhängen ans Ende weiter erlaubt;
+Löschen, Umsortieren oder Einfügen an fester Position wird blockiert, damit gespeicherter Lernfortschritt
+nicht auf ein anderes Wort verschoben wird.
+
 Vorhandene Übungen findest du über die Katalogsuche:
 
 ```http
@@ -219,6 +233,8 @@ Plan-Übersicht und Fortschritt:
 GET /api/v1/study-plans/{planId}/overview
 GET /api/v1/study-plans/{planId}/overview/progress[?from=&to=&dutyDone=&sort=&skip=&take=]
 GET /api/v1/study-plans/{planId}/positions/{positionId}/report
+GET /api/v1/children/{childId}/vocabulary-progress[?exerciseId=&maxBox=&onlyWeak=&skip=&take=]
+GET /api/v1/children/{childId}/vocabulary-progress/by-word[?onlyWeak=&skip=&take=]
 GET /api/v1/children/{childId}/points
 ```
 

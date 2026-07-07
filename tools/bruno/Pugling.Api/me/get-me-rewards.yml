@@ -1,7 +1,7 @@
 info:
-  name: "Eigene Angebots-Sicht: Münzstand, verfügbare (aktive) Angebote und die eigenen Käufe."
+  name: "Eigene Angebots-Sicht als Aggregat: verfügbare (aktive) Angebote und eigene Käufe. Die einzelnen Listen gibt es auch adressierbar unter `rewards/available` und `rewards/redemptions`; der Münzstand steht in `me/points`."
   type: http
-  seq: 4
+  seq: 8
   tags:
     - Me
 
@@ -18,8 +18,7 @@ runtime:
 
         function capture(name, value) {
           if (value === undefined || value === null || value === '') return;
-          bru.setVar(name, value);
-          bru.setEnvVar(name, String(value), { persist: true });
+          bru.setEnvVar(name, String(value));
         }
 
         if (body && typeof body === 'object' && !Array.isArray(body)) {
@@ -56,7 +55,7 @@ settings:
   maxRedirects: 5
 
 examples:
-  - name: Eigene Angebote & Käufe
+  - name: Eigene Angebote & Käufe (Aggregat)
     description: "Verifiziert durch DocsCaptureTests: Rolle `child`, erwartet HTTP 200."
     request:
       url: "{{baseUrl}}/api/v1/me/rewards"
@@ -71,7 +70,6 @@ examples:
         type: json
         data: |-
           {
-            "coins": 50,
             "available": [
               {
                 "id": 1,
@@ -122,6 +120,6 @@ examples:
           }
 
 docs: |-
-  # Eigene Angebots-Sicht: Münzstand, verfügbare (aktive) Angebote und die eigenen Käufe.
+  # Eigene Angebots-Sicht als Aggregat: verfügbare (aktive) Angebote und eigene Käufe. Die einzelnen Listen gibt es auch adressierbar unter `rewards/available` und `rewards/redemptions`; der Münzstand steht in `me/points`.
 
   `GET /api/v1/me/rewards`

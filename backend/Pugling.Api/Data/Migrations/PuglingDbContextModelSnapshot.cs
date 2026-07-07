@@ -397,6 +397,36 @@ namespace Pugling.Api.Data.Migrations
                     b.ToTable("ExerciseCategories");
                 });
 
+            modelBuilder.Entity("Pugling.Api.Models.ExerciseItem", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("ExerciseId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Hint")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("OrderIndex")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("VocabularyId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("VocabularyId");
+
+                    b.HasIndex("ExerciseId", "OrderIndex");
+
+                    b.ToTable("ExerciseItems");
+                });
+
             modelBuilder.Entity("Pugling.Api.Models.ExerciseTag", b =>
                 {
                     b.Property<int>("Id")
@@ -448,6 +478,104 @@ namespace Pugling.Api.Data.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Fathers");
+                });
+
+            modelBuilder.Entity("Pugling.Api.Models.ItemProgress", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Box")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("ChildId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("CorrectCount")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("ExerciseId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateOnly?>("IntroducedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("ItemId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime?>("LastAnswerAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool?>("LastCorrect")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("MasteryPercent")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("SeenCount")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("VocabularyId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ItemId");
+
+                    b.HasIndex("ChildId", "ItemId")
+                        .IsUnique();
+
+                    b.HasIndex("ChildId", "VocabularyId");
+
+                    b.ToTable("ItemProgress");
+                });
+
+            modelBuilder.Entity("Pugling.Api.Models.ItemReviewEvent", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("At")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("ChildId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("ExerciseId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("GivenAnswer")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("ItemId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("PlanPositionId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Source")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("StageValue")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("VocabularyId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("WasCorrect")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ItemId");
+
+                    b.HasIndex("ChildId", "VocabularyId");
+
+                    b.HasIndex("ChildId", "ItemId", "At");
+
+                    b.ToTable("ItemReviewEvents");
                 });
 
             modelBuilder.Entity("Pugling.Api.Models.Klassenarbeit", b =>
@@ -645,6 +773,9 @@ namespace Pugling.Api.Data.Migrations
                     b.Property<int>("Order")
                         .HasColumnType("INTEGER");
 
+                    b.Property<int>("OrderStrategy")
+                        .HasColumnType("INTEGER");
+
                     b.Property<int>("PointsGoalMet")
                         .HasColumnType("INTEGER");
 
@@ -755,10 +886,20 @@ namespace Pugling.Api.Data.Migrations
                     b.Property<int>("ActiveSeconds")
                         .HasColumnType("INTEGER");
 
+                    b.Property<int>("Cursor")
+                        .HasColumnType("INTEGER");
+
                     b.Property<DateOnly>("Day")
                         .HasColumnType("TEXT");
 
                     b.Property<DateTime?>("EndedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Mode")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Order")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<int?>("PlanPositionId")
@@ -1146,11 +1287,18 @@ namespace Pugling.Api.Data.Migrations
                     b.Property<int>("CorrectItems")
                         .HasColumnType("INTEGER");
 
+                    b.Property<int>("Cursor")
+                        .HasColumnType("INTEGER");
+
                     b.Property<DateOnly>("Day")
                         .HasColumnType("TEXT");
 
                     b.Property<bool>("Graded")
                         .HasColumnType("INTEGER");
+
+                    b.Property<string>("Order")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
 
                     b.Property<bool>("Passed")
                         .HasColumnType("INTEGER");
@@ -1537,6 +1685,25 @@ namespace Pugling.Api.Data.Migrations
                     b.Navigation("Subject");
                 });
 
+            modelBuilder.Entity("Pugling.Api.Models.ExerciseItem", b =>
+                {
+                    b.HasOne("Pugling.Api.Models.Exercise", "Exercise")
+                        .WithMany()
+                        .HasForeignKey("ExerciseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Pugling.Api.Models.Vocabulary", "Vocabulary")
+                        .WithMany()
+                        .HasForeignKey("VocabularyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Exercise");
+
+                    b.Navigation("Vocabulary");
+                });
+
             modelBuilder.Entity("Pugling.Api.Models.ExerciseTag", b =>
                 {
                     b.HasOne("Pugling.Api.Models.Exercise", "Exercise")
@@ -1554,6 +1721,43 @@ namespace Pugling.Api.Data.Migrations
                     b.Navigation("Exercise");
 
                     b.Navigation("Tag");
+                });
+
+            modelBuilder.Entity("Pugling.Api.Models.ItemProgress", b =>
+                {
+                    b.HasOne("Pugling.Api.Models.Child", "Child")
+                        .WithMany()
+                        .HasForeignKey("ChildId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Pugling.Api.Models.ExerciseItem", "Item")
+                        .WithMany()
+                        .HasForeignKey("ItemId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Child");
+
+                    b.Navigation("Item");
+                });
+
+            modelBuilder.Entity("Pugling.Api.Models.ItemReviewEvent", b =>
+                {
+                    b.HasOne("Pugling.Api.Models.Child", "Child")
+                        .WithMany()
+                        .HasForeignKey("ChildId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Pugling.Api.Models.ExerciseItem", "Item")
+                        .WithMany()
+                        .HasForeignKey("ItemId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Child");
+
+                    b.Navigation("Item");
                 });
 
             modelBuilder.Entity("Pugling.Api.Models.Klassenarbeit", b =>

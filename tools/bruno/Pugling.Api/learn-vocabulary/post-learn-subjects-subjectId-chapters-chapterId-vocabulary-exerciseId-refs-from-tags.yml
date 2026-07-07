@@ -1,7 +1,7 @@
 info:
-  name: Füllt List&lt;VocabRef&gt;? VocabularyConfig.Refs der Übung mit den aktuellen Vokabeln der genannten Tags (optional nur Grundformen, optional alle Tags per UND). Der Vater materialisiert damit „alle Wörter aus Unit 3" als Snapshot – so bleibt der Leitner-Fortschritt stabil (die Auffrischung erfolgt bewusst).
+  name: Setzt die Items der Übung als Snapshot auf die aktuellen Vokabeln der genannten Tags (optional nur Grundformen, optional alle Tags per UND). Der Vater materialisiert damit „alle Wörter aus Unit 3" – der Abgleich bewahrt die Id (und den Fortschritt) überlebender Wörter; nur weggefallene verschwinden.
   type: http
-  seq: 6
+  seq: 11
   tags:
     - Learn – Vocabulary
 
@@ -38,8 +38,7 @@ runtime:
 
         function capture(name, value) {
           if (value === undefined || value === null || value === '') return;
-          bru.setVar(name, value);
-          bru.setEnvVar(name, String(value), { persist: true });
+          bru.setEnvVar(name, String(value));
         }
 
         if (body && typeof body === 'object' && !Array.isArray(body)) {
@@ -79,6 +78,6 @@ settings:
   maxRedirects: 5
 
 docs: |-
-  # Füllt List&lt;VocabRef&gt;? VocabularyConfig.Refs der Übung mit den aktuellen Vokabeln der genannten Tags (optional nur Grundformen, optional alle Tags per UND). Der Vater materialisiert damit „alle Wörter aus Unit 3" als Snapshot – so bleibt der Leitner-Fortschritt stabil (die Auffrischung erfolgt bewusst).
+  # Setzt die Items der Übung als Snapshot auf die aktuellen Vokabeln der genannten Tags (optional nur Grundformen, optional alle Tags per UND). Der Vater materialisiert damit „alle Wörter aus Unit 3" – der Abgleich bewahrt die Id (und den Fortschritt) überlebender Wörter; nur weggefallene verschwinden.
 
   `POST /api/v1/learn/subjects/{subjectId}/chapters/{chapterId}/vocabulary/{exerciseId}/refs-from-tags`

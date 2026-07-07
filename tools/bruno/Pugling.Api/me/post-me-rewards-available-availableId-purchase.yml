@@ -1,16 +1,16 @@
 info:
-  name: "Kauft ein Angebot: die Münzen werden <b>sofort</b> abgebucht (Direktkauf), der Vater erfüllt seinen Teil später. Das Kontingent der aktuellen Periode und die Deckung werden serverseitig geprüft; ein paralleler Doppelkauf scheitert per Concurrency-Token mit 409."
+  name: "Kauft ein Angebot: die Münzen werden <b>sofort</b> abgebucht (Direktkauf), der Vater erfüllt seinen Teil später. Das Kontingent der aktuellen Periode und die Deckung werden serverseitig geprüft; ein paralleler Doppelkauf scheitert per Concurrency-Token mit 409. availableId ist die Id des Angebots aus `rewards/available`."
   type: http
-  seq: 5
+  seq: 11
   tags:
     - Me
 
 http:
   method: POST
-  url: "{{baseUrl}}/api/v1/me/rewards/:rewardId/purchase"
+  url: "{{baseUrl}}/api/v1/me/rewards/available/:availableId/purchase"
   params:
-    - name: rewardId
-      value: "{{rewardId}}"
+    - name: availableId
+      value: "{{availableId}}"
       type: path
   auth: inherit
 
@@ -22,11 +22,11 @@ runtime:
 
         function capture(name, value) {
           if (value === undefined || value === null || value === '') return;
-          bru.setVar(name, value);
-          bru.setEnvVar(name, String(value), { persist: true });
+          bru.setEnvVar(name, String(value));
         }
 
         if (body && typeof body === 'object' && !Array.isArray(body)) {
+          capture('availableId', body.availableId ?? body.id);
           capture('rewardId', body.rewardId ?? body.id);
           capture('fatherId', body.fatherId);
           capture('childId', body.childId);
@@ -63,11 +63,11 @@ examples:
   - name: Angebot kaufen
     description: "Verifiziert durch DocsCaptureTests: Rolle `child`, erwartet HTTP 200."
     request:
-      url: "{{baseUrl}}/api/v1/me/rewards/:rewardId/purchase"
+      url: "{{baseUrl}}/api/v1/me/rewards/available/:availableId/purchase"
       method: POST
       params:
-        - name: rewardId
-          value: "{{rewardId}}"
+        - name: availableId
+          value: "{{availableId}}"
           type: path
     response:
       status: 200
@@ -79,7 +79,6 @@ examples:
         type: json
         data: |-
           {
-            "coins": 450,
             "available": [
               {
                 "id": 5,
@@ -100,7 +99,7 @@ examples:
                 "title": "30 Min Fernsehen",
                 "cost": 50,
                 "status": "Purchased",
-                "purchasedAt": "2026-07-06T22:11:34.994423",
+                "purchasedAt": "2026-07-07T21:03:44.9390357",
                 "fulfilledAt": null
               }
             ]
@@ -108,11 +107,11 @@ examples:
   - name: Deaktiviertes Angebot kaufen (Fehlerfall)
     description: "Verifiziert durch DocsCaptureTests: Rolle `child`, erwartet HTTP 400, Code `offer_inactive`."
     request:
-      url: "{{baseUrl}}/api/v1/me/rewards/:rewardId/purchase"
+      url: "{{baseUrl}}/api/v1/me/rewards/available/:availableId/purchase"
       method: POST
       params:
-        - name: rewardId
-          value: "{{rewardId}}"
+        - name: availableId
+          value: "{{availableId}}"
           type: path
     response:
       status: 400
@@ -134,11 +133,11 @@ examples:
   - name: Angebot ohne Deckung kaufen (Fehlerfall)
     description: "Verifiziert durch DocsCaptureTests: Rolle `child`, erwartet HTTP 400, Code `insufficient_coins`."
     request:
-      url: "{{baseUrl}}/api/v1/me/rewards/:rewardId/purchase"
+      url: "{{baseUrl}}/api/v1/me/rewards/available/:availableId/purchase"
       method: POST
       params:
-        - name: rewardId
-          value: "{{rewardId}}"
+        - name: availableId
+          value: "{{availableId}}"
           type: path
     response:
       status: 400
@@ -160,11 +159,11 @@ examples:
   - name: Angebot über Kontingent kaufen (Fehlerfall)
     description: "Verifiziert durch DocsCaptureTests: Rolle `child`, erwartet HTTP 409, Code `quota_exhausted`."
     request:
-      url: "{{baseUrl}}/api/v1/me/rewards/:rewardId/purchase"
+      url: "{{baseUrl}}/api/v1/me/rewards/available/:availableId/purchase"
       method: POST
       params:
-        - name: rewardId
-          value: "{{rewardId}}"
+        - name: availableId
+          value: "{{availableId}}"
           type: path
     response:
       status: 409
@@ -185,6 +184,6 @@ examples:
           }
 
 docs: |-
-  # Kauft ein Angebot: die Münzen werden <b>sofort</b> abgebucht (Direktkauf), der Vater erfüllt seinen Teil später. Das Kontingent der aktuellen Periode und die Deckung werden serverseitig geprüft; ein paralleler Doppelkauf scheitert per Concurrency-Token mit 409.
+  # Kauft ein Angebot: die Münzen werden <b>sofort</b> abgebucht (Direktkauf), der Vater erfüllt seinen Teil später. Das Kontingent der aktuellen Periode und die Deckung werden serverseitig geprüft; ein paralleler Doppelkauf scheitert per Concurrency-Token mit 409. availableId ist die Id des Angebots aus `rewards/available`.
 
-  `POST /api/v1/me/rewards/{rewardId}/purchase`
+  `POST /api/v1/me/rewards/available/{availableId}/purchase`

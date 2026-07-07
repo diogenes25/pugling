@@ -361,8 +361,8 @@ public class VocabularyStoreController(PuglingDbContext db) : ControllerBase
         if (await db.Vocabulary.AnyAsync(v => v.BaseFormId == id))
             return this.ProblemWithCode(ApiErrors.VocabularyInUse, "The vocabulary item is the base form of other entries and cannot be deleted.");
 
-        // Verhindert stille „(Vokabel fehlt)"-Platzhalter in Übungen, die den Key referenzieren.
-        if ((await ReferencingExercisesAsync(vocab.Key)).Count > 0)
+        // Verhindert stille „(Vokabel fehlt)"-Platzhalter in Übungen, die die Vokabel referenzieren.
+        if ((await ReferencingExercisesAsync(vocab.Id, vocab.Key)).Count > 0)
             return this.ProblemWithCode(ApiErrors.VocabularyInUse, "The vocabulary item is used in one or more exercises and cannot be deleted.");
 
         db.Vocabulary.Remove(vocab);
@@ -374,8 +374,8 @@ public class VocabularyStoreController(PuglingDbContext db) : ControllerBase
     public record VocabUsage(int ExerciseId, string Title, string Type, int ChapterId, int SubjectId);
 
     /// <summary>
-    /// Welche Übungen die Vokabel referenzieren – Vokabel-Übungen über <see cref="VocabularyConfig.Refs"/>,
-    /// Lückentexte über <see cref="Gap.VocabKey"/>. Grundlage für den Lösch-Schutz und für die Autoren-Sicht.
+    /// Welche Übungen die Vokabel referenzieren – Vokabel-Übungen über ihre <see cref="ExerciseItem"/>-Zeilen (per Id),
+    /// Lückentexte über <see cref="Gap.VocabKey"/> in der Config. Grundlage für den Lösch-Schutz und die Autoren-Sicht.
     /// </summary>
     [HttpGet("{id:int}/usage")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -383,23 +383,39 @@ public class VocabularyStoreController(PuglingDbContext db) : ControllerBase
     {
         var key = await db.Vocabulary.Where(v => v.Id == id).Select(v => v.Key).FirstOrDefaultAsync();
         if (key is null) return NotFound();
-        return await ReferencingExercisesAsync(key);
+        return await ReferencingExercisesAsync(id, key);
     }
 
-    /// <summary>Findet Übungen, deren Config den Vokabel-Key referenziert (SQL-Vorfilter + präzise JSON-Prüfung).</summary>
-    private async Task<List<VocabUsage>> ReferencingExercisesAsync(string key)
+    /// <summary>
+    /// Findet referenzierende Übungen: Vokabelübungen über die <see cref="ExerciseItem"/>-Tabelle (per Vokabel-Id),
+    /// Lückentexte weiterhin per Key in der ConfigJson (SQL-Vorfilter + präzise JSON-Prüfung).
+    /// </summary>
+    private async Task<List<VocabUsage>> ReferencingExercisesAsync(int id, string key)
     {
-        var candidates = await db.Exercises.AsNoTracking().Include(e => e.Chapter)
-            .Where(e => (e.Type == ExerciseType.Vocabulary || e.Type == ExerciseType.Cloze)
-                && e.ConfigJson.Contains(key))
+        // Vokabelübungen: Referenz lebt in der Item-Tabelle (nicht mehr in der ConfigJson).
+        var viaItems = await db.ExerciseItems.AsNoTracking()
+            .Where(i => i.VocabularyId == id)
+            .Select(i => new
+            {
+                i.Exercise!.Id,
+                i.Exercise.Title,
+                i.Exercise.Type,
+                i.Exercise.ChapterId,
+                SubjectId = i.Exercise.Chapter!.SubjectId,
+            })
+            .Distinct()
             .ToListAsync();
+        var used = viaItems
+            .Select(e => new VocabUsage(e.Id, e.Title, e.Type.ToString(), e.ChapterId, e.SubjectId))
+            .ToList();
 
-        var used = new List<VocabUsage>();
-        foreach (var e in candidates)
+        // Lückentexte: Key-Referenz in der ConfigJson.
+        var clozeCandidates = await db.Exercises.AsNoTracking().Include(e => e.Chapter)
+            .Where(e => e.Type == ExerciseType.Cloze && e.ConfigJson.Contains(key))
+            .ToListAsync();
+        foreach (var e in clozeCandidates)
         {
-            var referenced = e.Type == ExerciseType.Vocabulary
-                ? (JsonSerializer.Deserialize<VocabularyConfig>(e.ConfigJson, JsonOptions)?.Refs?.Any(r => r.Key == key) ?? false)
-                : (JsonSerializer.Deserialize<ClozeConfig>(e.ConfigJson, JsonOptions)?.Gaps.Any(g => g.VocabKey == key) ?? false);
+            var referenced = JsonSerializer.Deserialize<ClozeConfig>(e.ConfigJson, JsonOptions)?.Gaps.Any(g => g.VocabKey == key) ?? false;
             if (referenced)
                 used.Add(new VocabUsage(e.Id, e.Title, e.Type.ToString(), e.ChapterId, e.Chapter?.SubjectId ?? 0));
         }

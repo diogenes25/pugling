@@ -9,7 +9,9 @@ namespace Pugling.Api.Services;
 /// <paramref name="Index"/> ist der stabile Positionsbezug (→ <see cref="PositionItemProgress.ItemIndex"/>).
 /// <paramref name="AcceptedAnswers"/> enthält die erwartete Lösung plus zulässige Alternativen (roh, der
 /// Textvergleich normalisiert später über <see cref="AnswerGrader"/>). <paramref name="GapIndex"/> ist nur
-/// bei Lückentexten gesetzt (die {{n}}-Nummer der Lücke).
+/// bei Lückentexten gesetzt (die {{n}}-Nummer der Lücke). <paramref name="ItemId"/> und
+/// <paramref name="VocabularyId"/> tragen (nur bei Vokabelübungen) die stabile Item- bzw. Store-Identität –
+/// die Grundlage für den je Kind/Item protokollierten Lernfortschritt; bei allen anderen Typen <c>null</c>.
 /// </summary>
 public record ContentItem(
     int Index,
@@ -18,7 +20,9 @@ public record ContentItem(
     IReadOnlyList<string> AcceptedAnswers,
     string? Hint = null,
     int? GapIndex = null,
-    string? AudioUrl = null);
+    string? AudioUrl = null,
+    int? ItemId = null,
+    int? VocabularyId = null);
 
 /// <summary>
 /// Liest die einzelnen Inhalte einer Katalog-<see cref="Exercise"/> aus ihrer

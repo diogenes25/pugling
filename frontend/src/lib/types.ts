@@ -558,6 +558,8 @@ export interface ProgressResponse {
 
 // ---- Positions-Üben (Leitner) ----
 
+export type PlayMode = "Info" | "Lern";
+
 export interface PositionSession {
   id: number;
   planId: number;
@@ -567,6 +569,12 @@ export interface PositionSession {
   endedAt: string | null;
   activeSeconds: number;
   reviewCount: number;
+  /** Ausspiel-Modus: `Info` = freies Üben ohne Feedback, `Lern` = server-geführt (Cursor). */
+  mode: PlayMode;
+  /** Aktuelle Cursor-Position im Lern-Modus. */
+  cursor: number;
+  /** Anzahl Karten in der eingefrorenen Reihenfolge. */
+  total: number;
 }
 
 /**
@@ -604,6 +612,10 @@ export interface ReviewOutcome {
   combo: number;
   comboBonus: number;
   speedBonus: number;
+  /** Lern-Modus: die nächste Karte, direkt mitgeliefert (server-geführter Cursor); null am Ende. */
+  next: PracticeCard | null;
+  /** Lern-Modus: true, wenn der Lauf zu Ende ist (Cursor am Ende der eingefrorenen Reihenfolge). */
+  done: boolean;
 }
 
 // ---- Missionen & Auszeichnungen (Gamification) ----
@@ -855,6 +867,10 @@ export interface TestItem {
   audioUrl: string | null;
 }
 
+/**
+ * Antwort des Test-Starts. Der Klausur-Modus ist strikt server-getrieben: es kommen KEINE Aufgaben im Bulk,
+ * nur die Metadaten. Die Fragen holt der Client einzeln über `nextTest` (kein Zurück).
+ */
 export interface TestAttemptResponse {
   attemptId: number;
   planId: number;
@@ -862,7 +878,21 @@ export interface TestAttemptResponse {
   day: string;
   stage: number;
   totalItems: number;
-  items: TestItem[];
+}
+
+/** Die nächste Prüfungsfrage (oder `done`), server-geführt über den Attempt-Cursor. */
+export interface TestNextResponse {
+  item: TestItem | null;
+  done: boolean;
+  cursor: number;
+  total: number;
+}
+
+/** Bestätigung einer abgegebenen Prüfungsantwort – bewusst OHNE Korrektheit (Feedback erst beim Abschluss). */
+export interface TestAnswerAck {
+  done: boolean;
+  cursor: number;
+  total: number;
 }
 
 export interface AnswerDto {

@@ -116,14 +116,16 @@ Response — `HTTP 404`:
 }
 ```
 
-## Übungssitzung starten
+## Übungssitzung starten (Lern-Modus)
 `POST /api/v1/study-plans/2/positions/2/practice-sessions`
 
 Rolle: **child** — `Authorization: Bearer <child-token>`
 
 Request:
 ```json
-{}
+{
+  "mode": "Lern"
+}
 ```
 
 Response — `HTTP 201`:
@@ -136,11 +138,39 @@ Response — `HTTP 201`:
   "startedAt": "<timestamp>",
   "endedAt": null,
   "activeSeconds": 0,
-  "reviewCount": 0
+  "reviewCount": 0,
+  "mode": "Lern",
+  "cursor": 0,
+  "total": 2
 }
 ```
 
-## Karte bewerten (Review)
+## Nächste Karte (server-geführter Cursor)
+`GET /api/v1/study-plans/2/positions/2/practice-sessions/1/next`
+
+Rolle: **child** — `Authorization: Bearer <child-token>`
+
+Response — `HTTP 200`:
+```json
+{
+  "card": {
+    "itemIndex": 0,
+    "stage": 4,
+    "type": "Vocabulary",
+    "prompt": "hello",
+    "hint": null,
+    "answerLength": null,
+    "reveal": null,
+    "choices": null,
+    "audioUrl": null
+  },
+  "done": false,
+  "cursor": 0,
+  "total": 2
+}
+```
+
+## Karte bewerten (Review, mit nächster Karte)
 `POST /api/v1/study-plans/2/positions/2/practice-sessions/1/review`
 
 Rolle: **child** — `Authorization: Bearer <child-token>`
@@ -163,11 +193,103 @@ Response — `HTTP 200`:
   "dueOn": "2026-07-09",
   "combo": 1,
   "comboBonus": 0,
-  "speedBonus": 0
+  "speedBonus": 0,
+  "next": {
+    "itemIndex": 1,
+    "stage": 4,
+    "type": "Vocabulary",
+    "prompt": "goodbye",
+    "hint": null,
+    "answerLength": null,
+    "reveal": null,
+    "choices": null,
+    "audioUrl": null
+  },
+  "done": false
 }
 ```
 
-## Test starten
+## Übungssitzung starten (Info-Modus, freies Üben)
+`POST /api/v1/study-plans/2/positions/2/practice-sessions`
+
+Rolle: **child** — `Authorization: Bearer <child-token>`
+
+Request:
+```json
+{
+  "mode": "Info"
+}
+```
+
+Response — `HTTP 201`:
+```json
+{
+  "id": 2,
+  "planId": 2,
+  "positionId": 2,
+  "day": "2026-07-07",
+  "startedAt": "<timestamp>",
+  "endedAt": null,
+  "activeSeconds": 0,
+  "reviewCount": 0,
+  "mode": "Info",
+  "cursor": 0,
+  "total": 2
+}
+```
+
+## Karten am Stück (Info-Modus/Offline-Batch)
+`GET /api/v1/study-plans/2/positions/2/practice-sessions/2/cards`
+
+Rolle: **child** — `Authorization: Bearer <child-token>`
+
+Response — `HTTP 200`:
+```json
+[
+  {
+    "itemIndex": 1,
+    "stage": 4,
+    "type": "Vocabulary",
+    "prompt": "goodbye",
+    "hint": null,
+    "answerLength": null,
+    "reveal": null,
+    "choices": null,
+    "audioUrl": null
+  },
+  {
+    "itemIndex": 0,
+    "stage": 4,
+    "type": "Vocabulary",
+    "prompt": "hello",
+    "hint": null,
+    "answerLength": null,
+    "reveal": null,
+    "choices": null,
+    "audioUrl": null
+  }
+]
+```
+
+## Review im Info-Modus (kein Feedback → 204)
+`POST /api/v1/study-plans/2/positions/2/practice-sessions/2/review`
+
+Rolle: **child** — `Authorization: Bearer <child-token>`
+
+Request:
+```json
+{
+  "itemIndex": 0,
+  "givenAnswer": "hallo"
+}
+```
+
+Response — `HTTP 204`:
+```json
+(kein Inhalt)
+```
+
+## Test starten (Klausur, ohne Aufgaben-Bulk)
 `POST /api/v1/study-plans/2/positions/2/tests`
 
 Rolle: **child** — `Authorization: Bearer <child-token>`
@@ -185,41 +307,63 @@ Response — `HTTP 201`:
   "positionId": 2,
   "day": "2026-07-07",
   "stage": 4,
-  "totalItems": 1,
-  "items": [
-    {
-      "itemIndex": 0,
-      "prompt": "hello",
-      "stage": 4,
-      "reveal": null,
-      "answerLength": null,
-      "hint": null,
-      "choices": null,
-      "audioUrl": null
-    }
-  ]
+  "totalItems": 1
 }
 ```
 
-## Test abgeben
-`POST /api/v1/study-plans/2/positions/2/tests/1/submit`
+## Nächste Prüfungsfrage (One-at-a-time)
+`GET /api/v1/study-plans/2/positions/2/tests/1/next`
+
+Rolle: **child** — `Authorization: Bearer <child-token>`
+
+Response — `HTTP 200`:
+```json
+{
+  "item": {
+    "itemIndex": 0,
+    "prompt": "hello",
+    "stage": 4,
+    "reveal": null,
+    "answerLength": null,
+    "hint": null,
+    "choices": null,
+    "audioUrl": null
+  },
+  "done": false,
+  "cursor": 0,
+  "total": 1
+}
+```
+
+## Prüfungsantwort abgeben (ohne Korrektheit)
+`POST /api/v1/study-plans/2/positions/2/tests/1/answer`
 
 Rolle: **child** — `Authorization: Bearer <child-token>`
 
 Request:
 ```json
 {
-  "answers": [
-    {
-      "itemIndex": 0,
-      "givenAnswer": "hallo"
-    },
-    {
-      "itemIndex": 1,
-      "givenAnswer": "tsch\u00FCss"
-    }
-  ]
+  "givenAnswer": "hallo"
 }
+```
+
+Response — `HTTP 200`:
+```json
+{
+  "done": true,
+  "cursor": 1,
+  "total": 1
+}
+```
+
+## Test abgeben (auswerten)
+`POST /api/v1/study-plans/2/positions/2/tests/1/submit`
+
+Rolle: **child** — `Authorization: Bearer <child-token>`
+
+Request:
+```json
+{}
 ```
 
 Response — `HTTP 200`:
@@ -251,14 +395,7 @@ Rolle: **child** — `Authorization: Bearer <child-token>`
 
 Request:
 ```json
-{
-  "answers": [
-    {
-      "itemIndex": 0,
-      "givenAnswer": "hallo"
-    }
-  ]
-}
+{}
 ```
 
 Response — `HTTP 400`:

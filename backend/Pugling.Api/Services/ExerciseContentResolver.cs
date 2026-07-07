@@ -25,8 +25,7 @@ public class ExerciseContentResolver(PuglingDbContext db, ExerciseContentProvide
             var config = string.IsNullOrWhiteSpace(exercise.ConfigJson)
                 ? new VocabularyConfig()
                 : JsonSerializer.Deserialize<VocabularyConfig>(exercise.ConfigJson, JsonOptions) ?? new VocabularyConfig();
-            if (config.Refs is { Count: > 0 } refs)
-                return await ResolveVocabRefsAsync(refs, config.Direction);
+            return await ResolveVocabularyItemsAsync(exercise, config.Direction);
         }
         else if (exercise.Type == ExerciseType.Cloze)
         {
@@ -41,32 +40,36 @@ public class ExerciseContentResolver(PuglingDbContext db, ExerciseContentProvide
         return provider.ItemsOf(exercise);
     }
 
-    private async Task<IReadOnlyList<ContentItem>> ResolveVocabRefsAsync(List<VocabRef> refs, string? direction)
+    /// <summary>
+    /// Löst die Items einer Vokabelübung aus der <see cref="ExerciseItem"/>-Tabelle auf: jede Zeile trägt die
+    /// stabile <c>ItemId</c> und verweist per <c>VocabularyId</c> auf den Store (Wort/Übersetzung/Audio kommen
+    /// live von dort, zentral pflegbar). Der Item-Index ergibt sich aus der Listenposition (sortiert nach
+    /// <see cref="ExerciseItem.OrderIndex"/>, Id) – so bleibt er lückenlos/stabil, unabhängig vom Sortierschlüssel.
+    /// Ein optionaler Zeilen-Hinweis übersteuert den abgeleiteten Store-Hinweis (z. B. Artikel). Fehlt der
+    /// Store-Eintrag, bleibt ein Platzhalter auf gleichem Index (Leitner-/Test-Fortschritt kippt nicht).
+    /// Ohne Item-Zeilen (nicht migrierte/leere Übung) greift die zustandslose Config-Projektion als Fallback.
+    /// </summary>
+    private async Task<IReadOnlyList<ContentItem>> ResolveVocabularyItemsAsync(Exercise exercise, string? direction)
     {
-        // Neue Refs verweisen per ID; Alt-Daten (id==0) tragen nur den Key – beide auflösen und zusammenführen.
-        var ids = refs.Where(r => r.VocabularyId > 0).Select(r => r.VocabularyId).Distinct().ToList();
-        var keys = refs.Where(r => r.VocabularyId <= 0 && r.Key is not null).Select(r => r.Key!).Distinct().ToList();
-        var byId = await db.Vocabulary.AsNoTracking()
-            .Where(v => ids.Contains(v.Id))
-            .ToDictionaryAsync(v => v.Id);
-        var byKey = keys.Count == 0
-            ? new Dictionary<string, Vocabulary>()
-            : await db.Vocabulary.AsNoTracking().Where(v => keys.Contains(v.Key)).ToDictionaryAsync(v => v.Key);
+        var rows = await db.ExerciseItems.AsNoTracking()
+            .Where(i => i.ExerciseId == exercise.Id)
+            .OrderBy(i => i.OrderIndex).ThenBy(i => i.Id)
+            .Select(i => new { i.Id, i.VocabularyId, i.Hint })
+            .ToListAsync();
+        if (rows.Count == 0) return provider.ItemsOf(exercise);
 
-        // Reihenfolge = Reihenfolge der Refs; Index = stabile Position (→ PositionItemProgress.ItemIndex).
-        // Fehlende Referenzen bleiben als Platzhalter erhalten, damit sich die Indizes nicht verschieben.
-        // Die Abfragerichtung dreht das aufgelöste Item (Wort ↔ Übersetzung), siehe ExerciseContentProvider.
-        // Die Aussprache-Audioquelle trägt das Item unabhängig von der Richtung mit (sie gehört zum Wort);
-        // die Hör-Stufe (TestStage.Audio) liest sie, andere Stufen ignorieren sie.
-        return refs.Select((r, i) =>
+        var ids = rows.Select(r => r.VocabularyId).Distinct().ToList();
+        var byId = await db.Vocabulary.AsNoTracking().Where(v => ids.Contains(v.Id)).ToDictionaryAsync(v => v.Id);
+
+        // Die Aussprache-Audioquelle gehört zum Wort und wird richtungsunabhängig mitgetragen (die Hör-Stufe
+        // liest sie); WithDirection dreht Wort ↔ Übersetzung und bewahrt dabei ItemId/VocabularyId.
+        return rows.Select((r, i) =>
         {
-            var v = r.VocabularyId > 0
-                ? byId.GetValueOrDefault(r.VocabularyId)
-                : r.Key is not null ? byKey.GetValueOrDefault(r.Key) : null;
-            return v is not null
-                ? ExerciseContentProvider.WithDirection(
-                    new ContentItem(i, v.Word, v.Translation, [v.Translation], v.Noun?.Article, AudioUrl: v.PronunciationAudioUrl), direction)
-                : new ContentItem(i, $"(Vokabel '{r.Key ?? r.VocabularyId.ToString()}' fehlt)", "", [""]);
+            if (!byId.TryGetValue(r.VocabularyId, out var v))
+                return new ContentItem(i, $"(Vokabel #{r.VocabularyId} fehlt)", "", [""], ItemId: r.Id, VocabularyId: r.VocabularyId);
+            var item = new ContentItem(i, v.Word, v.Translation, [v.Translation],
+                r.Hint ?? v.Noun?.Article, AudioUrl: v.PronunciationAudioUrl, ItemId: r.Id, VocabularyId: r.VocabularyId);
+            return ExerciseContentProvider.WithDirection(item, direction);
         }).ToList();
     }
 

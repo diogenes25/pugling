@@ -1,7 +1,7 @@
 info:
-  name: "Nimmt die Antwort zu einer Übungskarte entgegen, bewertet sie serverseitig gegen die Item-Lösung und protokolliert die Wiederholung. Bei Leitner-Positionen wandert das Atom die Box hoch/runter, richtige Antworten bringen Punkte (+ Combo-/Speed-Bonus). Anti-Farming: gewertet wird nur eine fällige Karte und höchstens einmal pro Tag; nicht-getippte Selbsteinschätzung zählt bei bool PlanPosition.RequireTypedTest nicht."
+  name: "Nimmt die Antwort zu einer Übungskarte entgegen, bewertet sie serverseitig gegen die Item-Lösung und protokolliert die Wiederholung. Bei Leitner-Positionen wandert das Atom die Box hoch/runter, richtige Antworten bringen Punkte (+ Combo-/Speed-Bonus). Anti-Farming: gewertet wird nur eine fällige Karte und höchstens einmal pro Tag; nicht-getippte Selbsteinschätzung zählt bei bool PlanPosition.RequireTypedTest nicht. Danach rückt der Server-Cursor eine Karte weiter und liefert die nächste gleich mit. Im PlayMode.Info fließt kein Feedback (204)."
   type: http
-  seq: 6
+  seq: 7
   tags:
     - Study – Position Practice
 
@@ -35,8 +35,7 @@ runtime:
 
         function capture(name, value) {
           if (value === undefined || value === null || value === '') return;
-          bru.setVar(name, value);
-          bru.setEnvVar(name, String(value), { persist: true });
+          bru.setEnvVar(name, String(value));
         }
 
         if (body && typeof body === 'object' && !Array.isArray(body)) {
@@ -75,7 +74,7 @@ settings:
   maxRedirects: 5
 
 examples:
-  - name: Karte bewerten (Review)
+  - name: Karte bewerten (Review, mit nächster Karte)
     description: "Verifiziert durch DocsCaptureTests: Rolle `child`, erwartet HTTP 200."
     request:
       url: "{{baseUrl}}/api/v1/study-plans/:planId/positions/:positionId/practice-sessions/:sessionId/review"
@@ -111,13 +110,25 @@ examples:
             "expected": "hallo",
             "awarded": 10,
             "box": 2,
-            "dueOn": "2026-07-08",
+            "dueOn": "2026-07-09",
             "combo": 1,
             "comboBonus": 0,
-            "speedBonus": 0
+            "speedBonus": 0,
+            "next": {
+              "itemIndex": 1,
+              "stage": 4,
+              "type": "Vocabulary",
+              "prompt": "goodbye",
+              "hint": null,
+              "answerLength": null,
+              "reveal": null,
+              "choices": null,
+              "audioUrl": null
+            },
+            "done": false
           }
 
 docs: |-
-  # Nimmt die Antwort zu einer Übungskarte entgegen, bewertet sie serverseitig gegen die Item-Lösung und protokolliert die Wiederholung. Bei Leitner-Positionen wandert das Atom die Box hoch/runter, richtige Antworten bringen Punkte (+ Combo-/Speed-Bonus). Anti-Farming: gewertet wird nur eine fällige Karte und höchstens einmal pro Tag; nicht-getippte Selbsteinschätzung zählt bei bool PlanPosition.RequireTypedTest nicht.
+  # Nimmt die Antwort zu einer Übungskarte entgegen, bewertet sie serverseitig gegen die Item-Lösung und protokolliert die Wiederholung. Bei Leitner-Positionen wandert das Atom die Box hoch/runter, richtige Antworten bringen Punkte (+ Combo-/Speed-Bonus). Anti-Farming: gewertet wird nur eine fällige Karte und höchstens einmal pro Tag; nicht-getippte Selbsteinschätzung zählt bei bool PlanPosition.RequireTypedTest nicht. Danach rückt der Server-Cursor eine Karte weiter und liefert die nächste gleich mit. Im PlayMode.Info fließt kein Feedback (204).
 
   `POST /api/v1/study-plans/{planId}/positions/{positionId}/practice-sessions/{sessionId}/review`

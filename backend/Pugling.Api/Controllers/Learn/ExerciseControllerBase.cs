@@ -70,6 +70,14 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db) : Con
     /// </summary>
     protected virtual TConfig ConfigForResponse(Exercise exercise) => ConfigOf(exercise);
 
+    /// <summary>
+    /// Läuft nach dem Speichern beim Anlegen/Ändern (Standard: nichts). Abgeleitete Controller überschreiben dies,
+    /// wenn sie – über die reine ConfigJson hinaus – abhängige Zeilen pflegen müssen, die die gerade vergebene
+    /// <see cref="Exercise.Id"/> brauchen (z. B. Vokabelübungen, die ihre Items in eine eigene Tabelle materialisieren).
+    /// <paramref name="isCreate"/> unterscheidet POST (Erstanlage) von PUT (Ersatz).
+    /// </summary>
+    protected virtual Task AfterSaveAsync(Exercise exercise, TConfig config, bool isCreate) => Task.CompletedTask;
+
     /// <summary>DbContext für abgeleitete Controller mit Zusatz-Endpunkten über das reine CRUD hinaus.</summary>
     protected PuglingDbContext Db => db;
 
@@ -185,6 +193,7 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db) : Con
         };
         db.Exercises.Add(exercise);
         await db.SaveChangesAsync();
+        await AfterSaveAsync(exercise, config, isCreate: true);
 
         // Für CategoryName in der Antwort die Art nachladen (billig; nur beim Erzeugen).
         if (exercise.CategoryId is not null)
@@ -223,6 +232,7 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db) : Con
         exercise.DefaultRequireTypedTest = body.DefaultRequireTypedTest;
         exercise.DefaultStage = body.DefaultStage;
         await db.SaveChangesAsync();
+        await AfterSaveAsync(exercise, config, isCreate: false);
 
         // Navigation nach evtl. geänderter CategoryId aktualisieren, damit CategoryName stimmt.
         exercise.Category = exercise.CategoryId is null

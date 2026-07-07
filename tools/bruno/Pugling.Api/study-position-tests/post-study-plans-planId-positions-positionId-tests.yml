@@ -1,5 +1,5 @@
 info:
-  name: Startet einen Testversuch für die Position und liefert die zu lösenden Aufgaben (ohne Lösung).
+  name: "Startet einen Testversuch für die Position. Der Klausur-Modus ist strikt server-getrieben: der Start friert die Prüfungsreihenfolge ein und liefert nur die Metadaten – die Fragen holt der Client einzeln über Task&lt;ActionResult&lt;TestNextResponse&gt;&gt; PositionTestsController.Next(int planId, int positionId, int attemptId) und beantwortet sie über Task&lt;ActionResult&lt;AnswerAck&gt;&gt; PositionTestsController.Answer(int planId, int positionId, int attemptId, AnswerDto dto) (kein Zurück, Feedback erst bei Task&lt;ActionResult&lt;SubmitResponse&gt;&gt; PositionTestsController.Submit(int planId, int positionId, int attemptId, SubmitDto dto))."
   type: http
   seq: 1
   tags:
@@ -29,8 +29,7 @@ runtime:
 
         function capture(name, value) {
           if (value === undefined || value === null || value === '') return;
-          bru.setVar(name, value);
-          bru.setEnvVar(name, String(value), { persist: true });
+          bru.setEnvVar(name, String(value));
         }
 
         if (body && typeof body === 'object' && !Array.isArray(body)) {
@@ -69,7 +68,7 @@ settings:
   maxRedirects: 5
 
 examples:
-  - name: Test starten
+  - name: Test starten (Klausur, ohne Aufgaben-Bulk)
     description: "Verifiziert durch DocsCaptureTests: Rolle `child`, erwartet HTTP 201."
     request:
       url: "{{baseUrl}}/api/v1/study-plans/:planId/positions/:positionId/tests"
@@ -98,21 +97,9 @@ examples:
             "attemptId": 1,
             "planId": 2,
             "positionId": 2,
-            "day": "2026-07-06",
+            "day": "2026-07-07",
             "stage": 4,
-            "totalItems": 1,
-            "items": [
-              {
-                "itemIndex": 0,
-                "prompt": "hello",
-                "stage": 4,
-                "reveal": null,
-                "answerLength": null,
-                "hint": null,
-                "choices": null,
-                "audioUrl": null
-              }
-            ]
+            "totalItems": 1
           }
   - name: Test auf Übung ohne prüfbaren Inhalt (Fehlerfall)
     description: "Verifiziert durch DocsCaptureTests: Rolle `child`, erwartet HTTP 400, Code `no_checkable_content`."
@@ -149,6 +136,6 @@ examples:
           }
 
 docs: |-
-  # Startet einen Testversuch für die Position und liefert die zu lösenden Aufgaben (ohne Lösung).
+  # Startet einen Testversuch für die Position. Der Klausur-Modus ist strikt server-getrieben: der Start friert die Prüfungsreihenfolge ein und liefert nur die Metadaten – die Fragen holt der Client einzeln über Task&lt;ActionResult&lt;TestNextResponse&gt;&gt; PositionTestsController.Next(int planId, int positionId, int attemptId) und beantwortet sie über Task&lt;ActionResult&lt;AnswerAck&gt;&gt; PositionTestsController.Answer(int planId, int positionId, int attemptId, AnswerDto dto) (kein Zurück, Feedback erst bei Task&lt;ActionResult&lt;SubmitResponse&gt;&gt; PositionTestsController.Submit(int planId, int positionId, int attemptId, SubmitDto dto)).
 
   `POST /api/v1/study-plans/{planId}/positions/{positionId}/tests`

@@ -14,7 +14,7 @@ http:
       type: path
       description: Kind, dessen Käufe gelesen werden.
     - name: status
-      value: ""
+      value: Purchased
       type: query
       description: Optionaler Statusfilter.
       disabled: true
@@ -36,8 +36,7 @@ runtime:
 
         function capture(name, value) {
           if (value === undefined || value === null || value === '') return;
-          bru.setVar(name, value);
-          bru.setEnvVar(name, String(value), { persist: true });
+          bru.setEnvVar(name, String(value));
         }
 
         if (body && typeof body === 'object' && !Array.isArray(body)) {

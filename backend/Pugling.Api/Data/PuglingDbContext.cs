@@ -19,6 +19,8 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
     public DbSet<Chapter> Chapters => Set<Chapter>();
     public DbSet<Exercise> Exercises => Set<Exercise>();
     public DbSet<ExerciseCategory> ExerciseCategories => Set<ExerciseCategory>();
+    // Stabil identifizierte Items einer Vokabelübung (positionierte Referenz auf den Vokabel-Store).
+    public DbSet<ExerciseItem> ExerciseItems => Set<ExerciseItem>();
 
     // Sprachlernen: atomarer Vokabel-Store + Lückentext-Store
     public DbSet<Vocabulary> Vocabulary => Set<Vocabulary>();
@@ -36,6 +38,9 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
     public DbSet<ReviewEvent> ReviewEvents => Set<ReviewEvent>();
     public DbSet<TestAttempt> TestAttempts => Set<TestAttempt>();
     public DbSet<TestItemResult> TestItemResults => Set<TestItemResult>();
+    // Plan-übergreifender Lernstand je (Kind, Item) + Antwort-Historie (stabile ItemId, denormalisierte VocabularyId).
+    public DbSet<ItemProgress> ItemProgress => Set<ItemProgress>();
+    public DbSet<ItemReviewEvent> ItemReviewEvents => Set<ItemReviewEvent>();
 
     // Stundenplan-Steuerung
     public DbSet<TimetableEntry> Timetable => Set<TimetableEntry>();
@@ -148,6 +153,18 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
             .HasForeignKey(e => e.AuthorFatherId)
             .OnDelete(DeleteBehavior.SetNull);
 
+        // Vokabel-Item: gehört einer Übung (Cascade – verschwindet mit ihr) und referenziert eine Store-Vokabel.
+        // Die Vokabel darf nicht gelöscht werden, solange ein Item sie nutzt (Restrict, wie beim Übungs-Store-Bezug);
+        // der Controller fängt das vorher als sauberen 409 ab. OrderIndex ist reiner Sortierschlüssel (bewusst NICHT
+        // unique): der Lehrplan-Motor leitet den stabilen Item-Index aus der Listenposition (sortiert nach OrderIndex,
+        // Id) ab, sodass Umsortieren ohne transiente Unique-Kollisionen (SQLite prüft je Statement) auskommt.
+        modelBuilder.Entity<ExerciseItem>(e =>
+        {
+            e.HasIndex(i => new { i.ExerciseId, i.OrderIndex });
+            e.HasOne(i => i.Exercise).WithMany().HasForeignKey(i => i.ExerciseId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(i => i.Vocabulary).WithMany().HasForeignKey(i => i.VocabularyId).OnDelete(DeleteBehavior.Restrict);
+        });
+
         // Lückentext-Store: eindeutiger Key + Gaps/WordBank als JSON-Spalten.
         modelBuilder.Entity<ClozeText>(e =>
         {
@@ -195,6 +212,27 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
                 .OnDelete(DeleteBehavior.Cascade);
         });
 
+        // Plan-übergreifender Lernstand je (Kind, Item): genau eine Zeile pro (Kind, Item); Index (Kind, Vokabel)
+        // für das Wort-Rollup. Verschwindet mit dem Kind ODER dem Item (beide Cascade; keine Diamant-Pfade, da
+        // Kind und Item unabhängige Wurzeln sind).
+        modelBuilder.Entity<ItemProgress>(e =>
+        {
+            e.HasIndex(p => new { p.ChildId, p.ItemId }).IsUnique();
+            e.HasIndex(p => new { p.ChildId, p.VocabularyId });
+            e.HasOne(p => p.Child).WithMany().HasForeignKey(p => p.ChildId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(p => p.Item).WithMany().HasForeignKey(p => p.ItemId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // Antwort-Historie je (Kind, Item): gehört dem Kind (Cascade). Die Item-Referenz wird beim Löschen des
+        // Items auf null gesetzt (SetNull), damit die Wort-Historie (VocabularyId denormalisiert) erhalten bleibt.
+        modelBuilder.Entity<ItemReviewEvent>(e =>
+        {
+            e.HasIndex(x => new { x.ChildId, x.ItemId, x.At });
+            e.HasIndex(x => new { x.ChildId, x.VocabularyId });
+            e.HasOne(x => x.Child).WithMany().HasForeignKey(x => x.ChildId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(x => x.Item).WithMany().HasForeignKey(x => x.ItemId).OnDelete(DeleteBehavior.SetNull);
+        });
+
         // Ziel-Belohnung je Position/Periode: höchstens eine Buchung pro (Position, Periode) – die
         // Idempotenz-Garantie der Ziel-Punkte. Verschwindet mit der Position (Cascade).
         modelBuilder.Entity<PositionGoalReward>(e =>
@@ -207,12 +245,25 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
         // Übungssitzung/Test optional an eine Position gekoppelt (neues Modell). Beide hängen bereits über
         // StudyPlanId am Plan (Cascade); der Positions-Verweis nutzt daher SetNull, um in SQLite keine
         // zweiten Cascade-Pfade (Plan → Position → Session/Test) neben Plan → Session/Test zu erzeugen.
-        modelBuilder.Entity<PracticeSession>()
-            .HasOne(s => s.PlanPosition).WithMany().HasForeignKey(s => s.PlanPositionId)
-            .OnDelete(DeleteBehavior.SetNull);
-        modelBuilder.Entity<TestAttempt>()
-            .HasOne(t => t.PlanPosition).WithMany().HasForeignKey(t => t.PlanPositionId)
-            .OnDelete(DeleteBehavior.SetNull);
+        // Die eingefrorene Ausspiel-Reihenfolge (Cursor-Modell) liegt als JSON-Spalte (Neuzuweisung im Controller).
+        modelBuilder.Entity<PracticeSession>(e =>
+        {
+            e.HasOne(s => s.PlanPosition).WithMany().HasForeignKey(s => s.PlanPositionId)
+                .OnDelete(DeleteBehavior.SetNull);
+            e.Property(s => s.Order).HasConversion(
+                v => JsonSerializer.Serialize(v, JsonOptions),
+                s => JsonSerializer.Deserialize<List<int>>(s, JsonOptions) ?? new())
+                .Metadata.SetValueComparer(JsonValueComparer.For<List<int>>());
+        });
+        modelBuilder.Entity<TestAttempt>(e =>
+        {
+            e.HasOne(t => t.PlanPosition).WithMany().HasForeignKey(t => t.PlanPositionId)
+                .OnDelete(DeleteBehavior.SetNull);
+            e.Property(t => t.Order).HasConversion(
+                v => JsonSerializer.Serialize(v, JsonOptions),
+                s => JsonSerializer.Deserialize<List<int>>(s, JsonOptions) ?? new())
+                .Metadata.SetValueComparer(JsonValueComparer.For<List<int>>());
+        });
 
         // Stundenplan-Eintrag: Kind + Fach; ein Fach je Kind/Wochentag höchstens einmal.
         modelBuilder.Entity<TimetableEntry>(e =>

@@ -8,7 +8,7 @@ import type {
   ProgressResponse, RedemptionDef, ReviewInput, ReviewOutcome, RewardDef, RewardOffer, MyRedemption,
   RewardRedemptionStatus, RewardsView,
   SkinState, SubjectResponse,
-  TestAttemptResponse, TestSubmitResponse, UpdateKlassenarbeitDto, UpdatePlanDto, UpdateVocabularyDto,
+  TestAttemptResponse, TestNextResponse, TestAnswerAck, TestSubmitResponse, UpdateKlassenarbeitDto, UpdatePlanDto, UpdateVocabularyDto,
   VocabBatchResult, VocabularyResponse, VocabTagResponse, ChildTagResponse, Wallet, WalletBalance, WalletEntry,
   Paged, VocabularySearchParams,
 } from "./types";
@@ -260,10 +260,16 @@ export const api = {
     http<PositionSession>(
       `${V1}/study-plans/${planId}/positions/${positionId}/practice-sessions/${sessionId}/end`, "POST", {}),
 
-  // ---- Sohn: Position testen (Abschlusstest einer Übung) ----
+  // ---- Sohn: Position testen (Abschlusstest = Klausur, strikt server-getrieben) ----
+  // Der Start liefert nur Metadaten; die Fragen kommen einzeln über nextTest, beantwortet wird über
+  // answerTest (ohne Korrektheit – Feedback erst beim Abschluss), submitTest wertet aus.
   startTest: (planId: number, positionId: number) =>
     http<TestAttemptResponse>(`${V1}/study-plans/${planId}/positions/${positionId}/tests`, "POST", {}),
-  submitTest: (planId: number, positionId: number, attemptId: number, answers: AnswerDto[]) =>
+  nextTest: (planId: number, positionId: number, attemptId: number) =>
+    http<TestNextResponse>(`${V1}/study-plans/${planId}/positions/${positionId}/tests/${attemptId}/next`),
+  answerTest: (planId: number, positionId: number, attemptId: number, dto: AnswerDto) =>
+    http<TestAnswerAck>(`${V1}/study-plans/${planId}/positions/${positionId}/tests/${attemptId}/answer`, "POST", dto),
+  submitTest: (planId: number, positionId: number, attemptId: number, answers: AnswerDto[] = []) =>
     http<TestSubmitResponse>(`${V1}/study-plans/${planId}/positions/${positionId}/tests/${attemptId}/submit`, "POST", { answers }),
 
   // ---- Sohn: Wallet ----

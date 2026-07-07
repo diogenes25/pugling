@@ -32,8 +32,7 @@ runtime:
 
         function capture(name, value) {
           if (value === undefined || value === null || value === '') return;
-          bru.setVar(name, value);
-          bru.setEnvVar(name, String(value), { persist: true });
+          bru.setEnvVar(name, String(value));
         }
 
         if (body && typeof body === 'object' && !Array.isArray(body)) {
@@ -106,7 +105,7 @@ examples:
               "description": "Gemeinsam ins Kino – der Sohn sucht den Film aus.",
               "unitType": "Mal",
               "actionType": "Ausflug",
-              "createdAt": "2026-07-06T22:11:25.8136548"
+              "createdAt": "2026-07-07T21:03:33.5077475"
             },
             {
               "id": 2,
@@ -115,7 +114,7 @@ examples:
               "description": "Konsolen- oder PC-Spielzeit; wöchentliches Budgetmodell.",
               "unitType": "Minute",
               "actionType": "Zocken",
-              "createdAt": "2026-07-06T22:11:25.8134962"
+              "createdAt": "2026-07-07T21:03:33.5074052"
             },
             {
               "id": 3,
@@ -124,7 +123,7 @@ examples:
               "description": "Kleine Nascherei als Lernanreiz – z. B. Gummibären oder Schokolade.",
               "unitType": "Gramm",
               "actionType": "Suessigkeit",
-              "createdAt": "2026-07-06T22:11:25.8136542"
+              "createdAt": "2026-07-07T21:03:33.507747"
             },
             {
               "id": 1,
@@ -133,7 +132,7 @@ examples:
               "description": "Bildschirmzeit nach dem Lernen – täglich abrufbar.",
               "unitType": "Minute",
               "actionType": "TV",
-              "createdAt": "2026-07-06T22:11:25.8116555"
+              "createdAt": "2026-07-07T21:03:33.5060094"
             },
             {
               "id": 5,
@@ -142,7 +141,7 @@ examples:
               "description": "Bildschirmzeit in Minuten",
               "unitType": "Minute",
               "actionType": "TV",
-              "createdAt": "2026-07-06T22:11:37.8854722"
+              "createdAt": "2026-07-07T21:03:49.1266354"
             }
           ]
   - name: Artikel auflisten (Suche)
@@ -181,7 +180,7 @@ examples:
               "description": "Bildschirmzeit nach dem Lernen – täglich abrufbar.",
               "unitType": "Minute",
               "actionType": "TV",
-              "createdAt": "2026-07-06T22:11:25.8116555"
+              "createdAt": "2026-07-07T21:03:33.5060094"
             },
             {
               "id": 5,
@@ -190,7 +189,7 @@ examples:
               "description": "Bildschirmzeit in Minuten",
               "unitType": "Minute",
               "actionType": "TV",
-              "createdAt": "2026-07-06T22:11:37.8854722"
+              "createdAt": "2026-07-07T21:03:49.1266354"
             }
           ]
 

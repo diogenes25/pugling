@@ -27,12 +27,15 @@ public record CheckDrillDto(int? Seed, List<GivenAnswer> Answers);
 public record CheckListDto(List<string?> Answers);
 
 /// <summary>
-/// Vokabelübungen. Referenzieren den Vokabel-Store per <see cref="VocabularyConfig.Refs"/> (ID); Inline-<see cref="VocabItem"/>
-/// ohne ID werden beim Speichern automatisch im Store angelegt und verknüpft. Die Antwort ergänzt je Vokabel den Link <c>_self</c>.
+/// Vokabelübungen. Die Übung selbst beschreibt Art/Ziel/Wert; ihre Vokabelpaare leben eine Ebene tiefer als
+/// stabil identifizierte <see cref="ExerciseItem"/>s (CRUD unter <c>{exerciseId}/items/{itemId}</c>). Beim Anlegen
+/// akzeptiert der POST weiterhin inline <see cref="VocabItem"/>/<see cref="VocabRef"/> im Payload und materialisiert
+/// sie in die Item-Tabelle; jede genutzte Vokabel wird dabei im Store angelegt/verknüpft.
 /// </summary>
 [Route(ExerciseRoutes.Base + "/vocabulary")]
 [Tags("Learn – Vocabulary")]
-public class VocabularyController(PuglingDbContext db, VocabularyStoreService store) : ExerciseControllerBase<VocabularyConfig>(db)
+public class VocabularyController(PuglingDbContext db, ExerciseItemService items, VocabularyStoreService store)
+    : ExerciseControllerBase<VocabularyConfig>(db)
 {
     protected override ExerciseType Type => ExerciseType.Vocabulary;
 
@@ -58,59 +61,32 @@ public class VocabularyController(PuglingDbContext db, VocabularyStoreService st
     }
 
     /// <summary>
-    /// Legt jede Inline-Vokabel ohne <see cref="VocabItem.VocabularyId"/> im Store an (bzw. findet sie) und verknüpft sie,
-    /// damit garantiert jede genutzte Vokabel im Store liegt. Ergänzt außerdem fehlende <see cref="VocabRef.Key"/> als Lesehilfe.
+    /// Materialisiert die Items der Übung nach dem Speichern in die <see cref="ExerciseItem"/>-Tabelle (stabile ItemIds):
+    /// beim POST aus dem Payload, beim PUT nur, wenn der Payload überhaupt Items/Refs trägt (ein reiner Einstellungs-PUT
+    /// lässt die per <c>/items</c> gepflegte Item-Menge unangetastet). Der Abgleich bewahrt die Id überlebender Wörter.
+    /// Anschließend wird die Config auf reine Einstellungen reduziert – Items/Refs sind ab jetzt die Tabelle (eine Quelle).
     /// </summary>
-    protected override async Task NormalizeConfigAsync(int subjectId, VocabularyConfig config)
+    protected override async Task AfterSaveAsync(Exercise exercise, VocabularyConfig config, bool isCreate)
     {
-        // Inline-Items ohne ID anlegen/finden; IDs materialisieren sich erst nach SaveChanges → danach zurückschreiben.
-        var pending = new List<(int Index, Vocabulary Vocab)>();
-        for (var i = 0; i < config.Items.Count; i++)
+        var hasPayloadItems = config.Items.Count > 0 || config.Refs is { Count: > 0 };
+        if (isCreate || hasPayloadItems)
+            await items.SyncFromConfigAsync(exercise.Id, config);
+        if (hasPayloadItems)
         {
-            var item = config.Items[i];
-            if (item.VocabularyId is not null) continue;
-            pending.Add((i, await store.GetOrCreateAsync(config.SourceLang, item.Front, config.TargetLang, item.Back)));
-        }
-        if (pending.Count > 0)
-        {
+            config.Items = [];
+            config.Refs = null;
+            SetConfig(exercise, config);
             await Db.SaveChangesAsync();
-            foreach (var (index, vocab) in pending)
-                config.Items[index] = config.Items[index] with { VocabularyId = vocab.Id };
         }
-
-        // Refs: fehlenden Key aus der ID nachziehen (dient der Lesbarkeit/Usage-Suche; _self kommt erst in der Antwort).
-        if (config.Refs is { Count: > 0 } refs)
-        {
-            var need = refs.Where(r => r.Key is null && r.VocabularyId > 0).Select(r => r.VocabularyId).Distinct().ToList();
-            if (need.Count > 0)
-            {
-                var keyById = await Db.Vocabulary.Where(v => need.Contains(v.Id)).ToDictionaryAsync(v => v.Id, v => v.Key);
-                for (var i = 0; i < refs.Count; i++)
-                    if (refs[i].Key is null && keyById.TryGetValue(refs[i].VocabularyId, out var k))
-                        refs[i] = refs[i] with { Key = k };
-            }
-        }
-    }
-
-    /// <summary>Ergänzt je Referenz und Inline-Vokabel den abgeleiteten Selbstlink <c>_self</c> (nicht persistiert).</summary>
-    protected override VocabularyConfig ConfigForResponse(Exercise exercise)
-    {
-        var config = ConfigOf(exercise);
-        if (config.Refs is { Count: > 0 } refs)
-            for (var i = 0; i < refs.Count; i++)
-                refs[i] = refs[i] with { Self = VocabLink.Self(refs[i].VocabularyId) };
-        for (var i = 0; i < config.Items.Count; i++)
-            config.Items[i] = config.Items[i] with { Self = VocabLink.Self(config.Items[i].VocabularyId) };
-        return config;
     }
 
     /// <summary>Auswahl der Vokabeln per Tag statt manueller Referenzliste.</summary>
     public record RefsFromTagsDto(List<string> Tags, bool MatchAll = false, bool BaseFormsOnly = false);
 
     /// <summary>
-    /// Füllt <see cref="VocabularyConfig.Refs"/> der Übung mit den aktuellen Vokabeln der genannten Tags
-    /// (optional nur Grundformen, optional alle Tags per UND). Der Vater materialisiert damit „alle Wörter
-    /// aus Unit 3" als Snapshot – so bleibt der Leitner-Fortschritt stabil (die Auffrischung erfolgt bewusst).
+    /// Setzt die Items der Übung als Snapshot auf die aktuellen Vokabeln der genannten Tags (optional nur
+    /// Grundformen, optional alle Tags per UND). Der Vater materialisiert damit „alle Wörter aus Unit 3" – der
+    /// Abgleich bewahrt die Id (und den Fortschritt) überlebender Wörter; nur weggefallene verschwinden.
     /// </summary>
     [HttpPost("{exerciseId:int}/refs-from-tags")]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -131,13 +107,189 @@ public class VocabularyController(PuglingDbContext db, VocabularyStoreService st
             foreach (var name in tags) query = query.Where(v => v.TagLinks.Any(l => l.VocabTag!.Name == name));
         else
             query = query.Where(v => v.TagLinks.Any(l => tags.Contains(l.VocabTag!.Name)));
-        var hits = await query.OrderBy(v => v.Key).Select(v => new { v.Id, v.Key }).ToListAsync();
+        var hitIds = await query.OrderBy(v => v.Key).Select(v => v.Id).ToListAsync();
+
+        await items.ReconcileAsync(exercise.Id, hitIds.Select(id => new DesiredItem(id, null)).ToList());
+        return Map(exercise, User.FatherId());
+    }
+
+    // ---- Einzel-Items (Vokabelpaare) als eigene Sub-Ressource -----------------------------------------
+
+    /// <summary>Ein einzelnes Vokabelpaar der Übung. Front/Rückseite kommen aus dem verknüpften Store-Eintrag.</summary>
+    /// <param name="Id">Stabile Item-Id (ItemId).</param>
+    /// <param name="OrderIndex">Sortierschlüssel innerhalb der Übung.</param>
+    /// <param name="VocabularyId">Verknüpfter Vokabel-Store-Eintrag.</param>
+    /// <param name="Front">Wort der Lernsprache (aus dem Store).</param>
+    /// <param name="Back">Übersetzung (aus dem Store).</param>
+    /// <param name="Hint">Übungslokaler Hinweis; überschreibt den abgeleiteten Store-Hinweis.</param>
+    /// <param name="Self">HATEOAS-Link auf das Item selbst.</param>
+    /// <param name="Vocabulary">HATEOAS-Link auf den Store-Eintrag.</param>
+    public record VocabItemResponse(int Id, int OrderIndex, int VocabularyId, string Front, string Back, string? Hint,
+        [property: JsonPropertyName("_self")] string Self,
+        [property: JsonPropertyName("vocabulary")] string Vocabulary);
+
+    /// <summary>
+    /// Anlegen/Ändern eines Items: entweder per <paramref name="VocabularyId"/> (bestehende Store-Vokabel) oder inline
+    /// per <paramref name="Front"/>/<paramref name="Back"/> (wird im Store angelegt/gefunden). <paramref name="Hint"/>
+    /// leer = löschen, gesetzt = überschreiben; beim PATCH bleibt jedes weggelassene Feld unverändert.
+    /// </summary>
+    public record VocabItemInput(int? VocabularyId = null, string? Front = null, string? Back = null,
+        string? Hint = null, int? OrderIndex = null);
+
+    // Konkreter v1-Pfad (wie VocabLink.Path); das Routen-Template ApiRoutes.V1 trägt den Versions-Platzhalter.
+    private static string ItemSelf(int subjectId, int chapterId, int exerciseId, int itemId) =>
+        $"/api/v1/learn/subjects/{subjectId}/chapters/{chapterId}/vocabulary/{exerciseId}/items/{itemId}";
+
+    private static VocabItemResponse MapItem(int subjectId, int chapterId, int exerciseId, ExerciseItem item) =>
+        new(item.Id, item.OrderIndex, item.VocabularyId, item.Vocabulary?.Word ?? "", item.Vocabulary?.Translation ?? "",
+            item.Hint, ItemSelf(subjectId, chapterId, exerciseId, item.Id), VocabLink.Path + item.VocabularyId);
+
+    /// <summary>Alle Items der Übung in Reihenfolge (Front/Rückseite aus dem Store).</summary>
+    [HttpGet("{exerciseId:int}/items")]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<IEnumerable<VocabItemResponse>>> ListItems(int subjectId, int chapterId, int exerciseId)
+    {
+        var exercise = await FindAsync(subjectId, chapterId, exerciseId);
+        if (exercise is null) return NotFound();
+        var rows = await Db.ExerciseItems.AsNoTracking().Include(i => i.Vocabulary)
+            .Where(i => i.ExerciseId == exerciseId)
+            .OrderBy(i => i.OrderIndex).ThenBy(i => i.Id)
+            .ToListAsync();
+        return rows.Select(i => MapItem(subjectId, chapterId, exerciseId, i)).ToList();
+    }
+
+    /// <summary>Ein einzelnes Item der Übung.</summary>
+    [HttpGet("{exerciseId:int}/items/{itemId:int}")]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<VocabItemResponse>> GetItem(int subjectId, int chapterId, int exerciseId, int itemId)
+    {
+        var exercise = await FindAsync(subjectId, chapterId, exerciseId);
+        if (exercise is null) return NotFound();
+        var item = await FindItemAsync(exerciseId, itemId);
+        return item is null
+            ? this.ProblemWithCode(ApiErrors.ItemNotFound, "The exercise item does not exist in this exercise.")
+            : MapItem(subjectId, chapterId, exerciseId, item);
+    }
+
+    /// <summary>Fügt der Übung ein Vokabelpaar hinzu (per Store-Id oder inline). Neue Items landen ans Ende.</summary>
+    [HttpPost("{exerciseId:int}/items")]
+    [ProducesResponseType(StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<VocabItemResponse>> AddItem(int subjectId, int chapterId, int exerciseId, VocabItemInput body, CancellationToken ct)
+    {
+        var exercise = await FindAsync(subjectId, chapterId, exerciseId);
+        if (exercise is null) return NotFound();
+        if (EnsureCanModify(exercise) is { } forbidden) return forbidden;
 
         var config = ConfigOf(exercise);
-        config.Refs = hits.Select(h => new VocabRef(h.Id, h.Key)).ToList();
-        SetConfig(exercise, config);
-        await Db.SaveChangesAsync();
-        return Map(exercise, User.FatherId());
+        var resolved = await ResolveVocabularyIdAsync(body, config, ct);
+        if (resolved is not { } vocabId) return this.ProblemWithCode(ApiErrors.ValidationError,
+            "Provide an existing vocabularyId, or front and back (plus the exercise's sourceLang/targetLang) to create one.");
+
+        // Anfügen ans Ende verschiebt keine bestehenden Positionen (sicher); eine feste Einfügeposition schon.
+        if (body.OrderIndex is not null && await ExerciseInPlanAsync(exerciseId)) return ShiftBlockedProblem();
+        var nextOrder = body.OrderIndex ??
+            (await Db.ExerciseItems.Where(i => i.ExerciseId == exerciseId).Select(i => (int?)i.OrderIndex).MaxAsync(ct) is { } max ? max + 1 : 0);
+        var item = new ExerciseItem
+        {
+            ExerciseId = exerciseId,
+            VocabularyId = vocabId,
+            Hint = NormalizeHint(body.Hint),
+            OrderIndex = nextOrder,
+        };
+        Db.ExerciseItems.Add(item);
+        await Db.SaveChangesAsync(ct);
+
+        item.Vocabulary = await Db.Vocabulary.FindAsync([vocabId], ct);
+        return CreatedAtAction(nameof(GetItem), new { subjectId, chapterId, exerciseId, itemId = item.Id },
+            MapItem(subjectId, chapterId, exerciseId, item));
+    }
+
+    /// <summary>Ändert ein Item: Vokabel austauschen (per Id oder inline), Hinweis oder Reihenfolge anpassen.</summary>
+    [HttpPatch("{exerciseId:int}/items/{itemId:int}")]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<VocabItemResponse>> PatchItem(int subjectId, int chapterId, int exerciseId, int itemId, VocabItemInput body, CancellationToken ct)
+    {
+        var exercise = await FindAsync(subjectId, chapterId, exerciseId);
+        if (exercise is null) return NotFound();
+        if (EnsureCanModify(exercise) is { } forbidden) return forbidden;
+        var item = await FindItemAsync(exerciseId, itemId);
+        if (item is null) return this.ProblemWithCode(ApiErrors.ItemNotFound, "The exercise item does not exist in this exercise.");
+
+        if (body.VocabularyId is not null || body.Front is not null || body.Back is not null)
+        {
+            var config = ConfigOf(exercise);
+            var resolved = await ResolveVocabularyIdAsync(body, config, ct);
+            if (resolved is not { } vocabId) return this.ProblemWithCode(ApiErrors.ValidationError,
+                "Provide an existing vocabularyId, or front and back (plus the exercise's sourceLang/targetLang) to change the word.");
+            item.VocabularyId = vocabId;
+        }
+        if (body.Hint is not null) item.Hint = NormalizeHint(body.Hint);
+        if (body.OrderIndex is { } order && order != item.OrderIndex)
+        {
+            // Umsortieren verschiebt Positionen → bei in-Plan gespielter Übung blocken (siehe ExerciseInPlanAsync).
+            if (await ExerciseInPlanAsync(exerciseId)) return ShiftBlockedProblem();
+            item.OrderIndex = order;
+        }
+        await Db.SaveChangesAsync(ct);
+
+        item.Vocabulary = await Db.Vocabulary.FindAsync([item.VocabularyId], ct);
+        return MapItem(subjectId, chapterId, exerciseId, item);
+    }
+
+    /// <summary>Entfernt ein Item aus der Übung.</summary>
+    [HttpDelete("{exerciseId:int}/items/{itemId:int}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> DeleteItem(int subjectId, int chapterId, int exerciseId, int itemId, CancellationToken ct)
+    {
+        var exercise = await FindAsync(subjectId, chapterId, exerciseId);
+        if (exercise is null) return NotFound();
+        if (EnsureCanModify(exercise) is { } forbidden) return forbidden;
+        var item = await FindItemAsync(exerciseId, itemId);
+        if (item is null) return this.ProblemWithCode(ApiErrors.ItemNotFound, "The exercise item does not exist in this exercise.");
+        // Löschen verschiebt Folgepositionen → bei in-Plan gespielter Übung blocken (Fortschritt bliebe fehl-verankert).
+        if (await ExerciseInPlanAsync(exerciseId)) return ShiftBlockedProblem();
+        Db.ExerciseItems.Remove(item);
+        await Db.SaveChangesAsync(ct);
+        return NoContent();
+    }
+
+    private Task<ExerciseItem?> FindItemAsync(int exerciseId, int itemId) =>
+        Db.ExerciseItems.Include(i => i.Vocabulary).FirstOrDefaultAsync(i => i.Id == itemId && i.ExerciseId == exerciseId);
+
+    // Wird die Übung in einem Lehrplan gespielt? Dann verankert PositionItemProgress den Leitner-Fortschritt
+    // je Position auf der (positionalen) Item-Reihenfolge – index-verschiebende Item-Mutationen (Löschen,
+    // Umsortieren, Einfügen an fester Position) würden gespeicherten Fortschritt aufs falsche Wort umbiegen.
+    private Task<bool> ExerciseInPlanAsync(int exerciseId) =>
+        Db.PlanPositions.AnyAsync(p => p.ExerciseId == exerciseId);
+
+    private ObjectResult ShiftBlockedProblem() =>
+        this.ProblemWithCode(ApiErrors.ExerciseInUse,
+            "The exercise is used in a study plan; items cannot be removed or reordered (it would shift saved progress). Adding to the end is allowed; remove it from plans first for other changes.");
+
+    private static string? NormalizeHint(string? hint) =>
+        string.IsNullOrWhiteSpace(hint) ? null : hint.Trim();
+
+    /// <summary>
+    /// Ermittelt die Ziel-Vokabel eines Item-Eingabe: bevorzugt die gegebene Store-Id (muss existieren), sonst
+    /// legt sie Front/Rückseite inline im Store an (braucht die Sprachcodes der Übung). Rückgabe <c>null</c> = unzureichende Eingabe.
+    /// </summary>
+    private async Task<int?> ResolveVocabularyIdAsync(VocabItemInput body, VocabularyConfig config, CancellationToken ct)
+    {
+        if (body.VocabularyId is { } id)
+            return await Db.Vocabulary.AnyAsync(v => v.Id == id, ct) ? id : null;
+        if (string.IsNullOrWhiteSpace(body.Front) || string.IsNullOrWhiteSpace(body.Back)
+            || string.IsNullOrWhiteSpace(config.SourceLang) || string.IsNullOrWhiteSpace(config.TargetLang))
+            return null;
+        var vocab = await store.GetOrCreateAsync(config.SourceLang, body.Front.Trim(), config.TargetLang, body.Back.Trim(), ct: ct);
+        await Db.SaveChangesAsync(ct);
+        return vocab.Id;
     }
 }
 

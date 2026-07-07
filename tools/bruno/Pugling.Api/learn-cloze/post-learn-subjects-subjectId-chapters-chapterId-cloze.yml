@@ -26,7 +26,7 @@ http:
         "suggestedBonus": "string",
         "gradeMin": "string",
         "gradeMax": "string",
-        "schoolTypes": 1,
+        "schoolTypes": "None",
         "source": "string",
         "categoryId": "{{categoryId}}",
         "description": "string",
@@ -44,8 +44,7 @@ runtime:
 
         function capture(name, value) {
           if (value === undefined || value === null || value === '') return;
-          bru.setVar(name, value);
-          bru.setEnvVar(name, String(value), { persist: true });
+          bru.setEnvVar(name, String(value));
         }
 
         if (body && typeof body === 'object' && !Array.isArray(body)) {

@@ -31,6 +31,23 @@ public enum ItemScope
 }
 
 /// <summary>
+/// Reihenfolge-Strategie, in der der Server die (fälligen) Inhalte einer Position ausspielt. Die Reihenfolge
+/// wird bei Sitzungs-/Testbeginn <b>einmal</b> materialisiert (eingefroren), damit sie sich nicht mitten im
+/// Lauf verschiebt, wenn sich Boxen durch Antworten ändern.
+/// </summary>
+public enum PracticeOrder
+{
+    /// <summary>Schwächste zuerst: nach Leitner-Box aufsteigend, dann Index (Standard, bisheriges Verhalten).</summary>
+    WeakestFirst = 0,
+    /// <summary>Streng seriell nach Item-Index.</summary>
+    Serial = 1,
+    /// <summary>Zufällige Reihenfolge (einmalig beim Einfrieren gemischt).</summary>
+    Random = 2,
+    /// <summary>Gewichtete Ziehung: zuletzt eingeführte (bzw. noch nie eingeführte) Inhalte stark bevorzugt.</summary>
+    NewestWeighted = 3,
+}
+
+/// <summary>
 /// Eine Position in einem <see cref="StudyPlan"/>: verweist auf eine Katalog-<see cref="Exercise"/>
 /// und legt fest, WIE sie im Plan gespielt wird (Overrides), WELCHES Ziel gilt (Rhythmus + Schwelle)
 /// und WIE Punkte fließen. Leere Override-Felder erben den Vorschlag der Übung (Hybrid-Prinzip).
@@ -55,6 +72,11 @@ public class PlanPosition
     public int? ItemCount { get; set; }
     /// <summary>Umfang der Inhaltsauswahl (alle/neu/alt).</summary>
     public ItemScope Scope { get; set; } = ItemScope.All;
+    /// <summary>
+    /// Reihenfolge, in der der Server die (fälligen) Inhalte ausspielt (beim Sitzungs-/Testbeginn eingefroren).
+    /// Standard <see cref="PracticeOrder.WeakestFirst"/> = bisheriges Verhalten.
+    /// </summary>
+    public PracticeOrder OrderStrategy { get; set; } = PracticeOrder.WeakestFirst;
 
     // --- Ziel ---
     /// <summary>Ziel-Rhythmus; <see cref="GoalCadence.None"/> = freies Üben ohne Pflicht.</summary>

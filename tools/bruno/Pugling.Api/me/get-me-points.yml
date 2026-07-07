@@ -1,22 +1,13 @@
 info:
-  name: Eigener Kontostand (Münzen + Gems) samt der letzten Buchungen (neueste zuerst).
+  name: Eigener Kontostand (Münzen + Gems). Die einzelnen Buchungen liegen unter `points/entries`.
   type: http
-  seq: 3
+  seq: 5
   tags:
     - Me
 
 http:
   method: GET
   url: "{{baseUrl}}/api/v1/me/points"
-  params:
-    - name: skip
-      value: "0"
-      type: query
-      description: Anzahl zu überspringender Buchungen (Paging).
-    - name: take
-      value: "100"
-      type: query
-      description: Maximale Buchungszahl (1..500). Gesamtzahl im Header `X-Total-Count`.
   auth: inherit
 
 runtime:
@@ -27,8 +18,7 @@ runtime:
 
         function capture(name, value) {
           if (value === undefined || value === null || value === '') return;
-          bru.setVar(name, value);
-          bru.setEnvVar(name, String(value), { persist: true });
+          bru.setEnvVar(name, String(value));
         }
 
         if (body && typeof body === 'object' && !Array.isArray(body)) {
@@ -64,20 +54,11 @@ settings:
   maxRedirects: 5
 
 examples:
-  - name: Eigener Punktestand (Wallet)
+  - name: Eigener Kontostand (Wallet)
     description: "Verifiziert durch DocsCaptureTests: Rolle `child`, erwartet HTTP 200."
     request:
       url: "{{baseUrl}}/api/v1/me/points"
       method: GET
-      params:
-        - name: skip
-          value: "0"
-          type: query
-          description: Anzahl zu überspringender Buchungen (Paging).
-        - name: take
-          value: "100"
-          type: query
-          description: Maximale Buchungszahl (1..500). Gesamtzahl im Header `X-Total-Count`.
     response:
       status: 200
       statusText: OK
@@ -90,38 +71,13 @@ examples:
           {
             "childId": 1,
             "coins": 50,
-            "gems": 300,
-            "entries": [
-              {
-                "id": 2,
-                "amount": 300,
-                "kind": "Achievement",
-                "reason": "Willkommens-Gems",
-                "createdAt": "2026-07-06T22:11:23.0709238"
-              },
-              {
-                "id": 1,
-                "amount": 50,
-                "kind": "Base",
-                "reason": "Startguthaben (Münzen)",
-                "createdAt": "2026-07-06T22:11:23.0709227"
-              }
-            ]
+            "gems": 300
           }
   - name: Vater greift auf Sohn-Route zu (Fehlerfall)
     description: "Verifiziert durch DocsCaptureTests: Rolle `father`, erwartet HTTP 403, Code `forbidden`."
     request:
       url: "{{baseUrl}}/api/v1/me/points"
       method: GET
-      params:
-        - name: skip
-          value: "0"
-          type: query
-          description: Anzahl zu überspringender Buchungen (Paging).
-        - name: take
-          value: "100"
-          type: query
-          description: Maximale Buchungszahl (1..500). Gesamtzahl im Header `X-Total-Count`.
     response:
       status: 403
       statusText: Forbidden
@@ -140,6 +96,6 @@ examples:
           }
 
 docs: |-
-  # Eigener Kontostand (Münzen + Gems) samt der letzten Buchungen (neueste zuerst).
+  # Eigener Kontostand (Münzen + Gems). Die einzelnen Buchungen liegen unter `points/entries`.
 
   `GET /api/v1/me/points`
