@@ -31,3 +31,11 @@ backend/Pugling.Api/wwwroot/*
 # Bruno: die generierte API-Collection ändert sich mit fast jeder Änderung und ist jederzeit
 # reproduzierbar via tools/bruno/generate-bruno.mjs – daher nicht einchecken (Generator + README bleiben versioniert).
 tools/bruno/Pugling.Api/
+
+# Extern (per `npx skills`) installierte Agent-Skills: pro Entwickler optional, niemandem aufzwingen.
+# Die projekteigenen Skills (.claude/skills/{pm-loop,sohn,vater}) bleiben bewusst versioniert.
+.claude/skills/obsidian-cli/
+.claude/skills/obsidian-markdown/
+.claude/skills/obsidian-vault/
+.agents/
+skills-lock.json
