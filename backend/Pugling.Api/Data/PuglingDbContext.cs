@@ -9,6 +9,10 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
     // Zeitfenster mit Punkte-Multiplikator (Leitner-Wiederholungen, siehe PointsService).
     public DbSet<TimeSlotRule> TimeSlots => Set<TimeSlotRule>();
 
+    // Identität: Login-Konto mit einer/mehreren Rollen (Creator/Supervisor/Student), entkoppelt von Father/Child.
+    public DbSet<Account> Accounts => Set<Account>();
+    public DbSet<AccountProfile> AccountProfiles => Set<AccountProfile>();
+
     // Admin-Bereich: Personen (Father -> Child) + Punkte
     public DbSet<Father> Fathers => Set<Father>();
     public DbSet<Child> Children => Set<Child>();
@@ -78,6 +82,23 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+
+        // Identität: Account -> AccountProfile(Rolle -> Father/Child). Rolle als String (lesbar/stabil).
+        // Gefilterte Unique-Indizes verhindern doppelte Profile beim (wiederholten) Backfill.
+        modelBuilder.Entity<AccountProfile>(e =>
+        {
+            e.Property(p => p.Role).HasConversion<string>();
+            e.HasOne(p => p.Account).WithMany(a => a.Profiles)
+                .HasForeignKey(p => p.AccountId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(p => p.Father).WithMany()
+                .HasForeignKey(p => p.FatherId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(p => p.Child).WithMany()
+                .HasForeignKey(p => p.ChildId).OnDelete(DeleteBehavior.Cascade);
+            e.HasIndex(p => new { p.Role, p.FatherId }).IsUnique().HasFilter("[FatherId] IS NOT NULL");
+            e.HasIndex(p => new { p.Role, p.ChildId }).IsUnique().HasFilter("[ChildId] IS NOT NULL");
+        });
+        modelBuilder.Entity<Account>()
+            .HasIndex(a => a.Email).IsUnique().HasFilter("[Email] IS NOT NULL");
 
         // Freigeschaltete Skins des Kindes als JSON-Liste (Neuzuweisung im Controller, kein In-Place-Mutieren).
         modelBuilder.Entity<Child>(e =>
