@@ -18,7 +18,7 @@ namespace Pugling.Api.Controllers.Student;
 /// </summary>
 [ApiController]
 [ApiVersion("1.0")]
-[Route(ApiRoutes.V1 + "/study-plans/{planId:int}/positions/{positionId:int}/tests")]
+[Route(ApiRoutes.Student + "/study-plans/{planId:int}/positions/{positionId:int}/tests")]
 [Tags("Study – Position Tests")]
 [Produces("application/json")]
 [Authorize]

@@ -19,9 +19,9 @@ public class ExerciseItemsAndProgressTests(PuglingWebAppFactory factory) : IClas
     private static async Task<(int s, int c, int exerciseId)> VocabWithItemsAsync(HttpClient f, params (string Front, string Back)[] items)
     {
         var vocab = items.Length > 0 ? items : [("hello", "hallo")];
-        var s = await TestApi.IdAsync(await f.PostAsJsonAsync("/api/v1/learn/subjects", new { name = "Items-Fach" }));
-        var c = await TestApi.IdAsync(await f.PostAsJsonAsync($"/api/v1/learn/subjects/{s}/chapters", new { name = "Unit", orderIndex = 1 }));
-        var exerciseId = await TestApi.IdAsync(await f.PostAsJsonAsync($"/api/v1/learn/subjects/{s}/chapters/{c}/vocabulary", new
+        var s = await TestApi.IdAsync(await f.PostAsJsonAsync("/api/v1/creator/subjects", new { name = "Items-Fach" }));
+        var c = await TestApi.IdAsync(await f.PostAsJsonAsync($"/api/v1/creator/subjects/{s}/chapters", new { name = "Unit", orderIndex = 1 }));
+        var exerciseId = await TestApi.IdAsync(await f.PostAsJsonAsync($"/api/v1/creator/subjects/{s}/chapters/{c}/vocabulary", new
         {
             title = "Items-Übung",
             orderIndex = 1,
@@ -38,7 +38,7 @@ public class ExerciseItemsAndProgressTests(PuglingWebAppFactory factory) : IClas
     {
         var father = await TestApi.FatherAsync(_factory);
         var (s, c, exerciseId) = await VocabWithItemsAsync(father, ("hello", "hallo"));
-        var itemsUrl = $"/api/v1/learn/subjects/{s}/chapters/{c}/vocabulary/{exerciseId}/items";
+        var itemsUrl = $"/api/v1/creator/subjects/{s}/chapters/{c}/vocabulary/{exerciseId}/items";
 
         // POST inline (Store-Anlage) + POST per bestehender Store-Id.
         var (storeId, _) = await TestApi.CreateStoreVocabAsync(father, "dog", "Hund");
@@ -70,7 +70,7 @@ public class ExerciseItemsAndProgressTests(PuglingWebAppFactory factory) : IClas
         var father = await TestApi.FatherAsync(_factory);
         var (s, c, exerciseId) = await VocabWithItemsAsync(father);
         var res = await father.PostAsJsonAsync(
-            $"/api/v1/learn/subjects/{s}/chapters/{c}/vocabulary/{exerciseId}/items", new { hint = "nix" });
+            $"/api/v1/creator/subjects/{s}/chapters/{c}/vocabulary/{exerciseId}/items", new { hint = "nix" });
         Assert.Equal(HttpStatusCode.BadRequest, res.StatusCode);
     }
 
@@ -93,7 +93,7 @@ public class ExerciseItemsAndProgressTests(PuglingWebAppFactory factory) : IClas
         var stranger = await TestApi.FatherAsync(_factory, otherId, "2222");
 
         var res = await stranger.PostAsJsonAsync(
-            $"/api/v1/learn/subjects/{s}/chapters/{c}/vocabulary/{exerciseId}/items", new { front = "sun", back = "Sonne" });
+            $"/api/v1/creator/subjects/{s}/chapters/{c}/vocabulary/{exerciseId}/items", new { front = "sun", back = "Sonne" });
         Assert.Equal(HttpStatusCode.Forbidden, res.StatusCode);
     }
 
@@ -107,7 +107,7 @@ public class ExerciseItemsAndProgressTests(PuglingWebAppFactory factory) : IClas
         var exerciseId = await TestApi.CreateVocabExerciseAsync(father, ("apple", "Apfel"), ("banana", "Banane"));
         var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.FreeText);
         var child = await TestApi.ChildAsync(_factory);
-        var scoped = $"/api/v1/children/1/vocabulary-progress?exerciseId={exerciseId}";
+        var scoped = $"/api/v1/student/children/1/vocabulary-progress?exerciseId={exerciseId}";
 
         var sessionId = await TestApi.StartPositionSessionAsync(child, planId, positionId);
         await TestApi.PositionReviewAsync(child, planId, positionId, sessionId, 0, givenAnswer: "Apfel");    // richtig
@@ -130,14 +130,14 @@ public class ExerciseItemsAndProgressTests(PuglingWebAppFactory factory) : IClas
 
         // Historie je Item (ItemId global eindeutig → nur diese Übung schrieb dorthin).
         var itemId = apple.GetProperty("itemId").GetInt32();
-        var history = await father.GetFromJsonAsync<List<JsonElement>>($"/api/v1/children/1/vocabulary-progress/{itemId}/history");
+        var history = await father.GetFromJsonAsync<List<JsonElement>>($"/api/v1/student/children/1/vocabulary-progress/{itemId}/history");
         Assert.Single(history!);
         JsonAssert.True(history![0], "wasCorrect");
         Assert.Equal("Practice", history![0].GetProperty("source").GetString());
 
         // Wort-Rollup über alle Übungen: enthält die beiden Wörter dieser Übung (präsenzbasiert, kollisionsfest).
         var vocabIds = progress!.Select(p => p.GetProperty("vocabularyId").GetInt32()).ToHashSet();
-        var byWord = await father.GetFromJsonAsync<List<JsonElement>>("/api/v1/children/1/vocabulary-progress/by-word");
+        var byWord = await father.GetFromJsonAsync<List<JsonElement>>("/api/v1/student/children/1/vocabulary-progress/by-word");
         Assert.All(vocabIds, id => Assert.Contains(byWord!, w => w.GetProperty("vocabularyId").GetInt32() == id));
 
         // Der Sohn darf seinen eigenen Fortschritt lesen (Ownership = er selbst).
@@ -160,14 +160,14 @@ public class ExerciseItemsAndProgressTests(PuglingWebAppFactory factory) : IClas
             await TestApi.PositionReviewAsync(child, planId, positionId, sessionId, 0, givenAnswer: "Zebra");
 
         var progress = await father.GetFromJsonAsync<List<JsonElement>>(
-            $"/api/v1/children/1/vocabulary-progress?exerciseId={exerciseId}");
+            $"/api/v1/student/children/1/vocabulary-progress?exerciseId={exerciseId}");
         var zebra = progress!.First(p => p.GetProperty("front").GetString() == "zebra");
         Assert.Equal(1, zebra.GetProperty("seenCount").GetInt32()); // nur die gewertete Antwort zählt
         Assert.Equal(2, zebra.GetProperty("box").GetInt32());        // Box 2, nicht hochgetrieben
 
         // Die Historie protokolliert dagegen alle drei Antworten (ItemId global eindeutig).
         var itemId = zebra.GetProperty("itemId").GetInt32();
-        var history = await father.GetFromJsonAsync<List<JsonElement>>($"/api/v1/children/1/vocabulary-progress/{itemId}/history");
+        var history = await father.GetFromJsonAsync<List<JsonElement>>($"/api/v1/student/children/1/vocabulary-progress/{itemId}/history");
         Assert.Equal(3, history!.Count);
     }
 
@@ -176,7 +176,7 @@ public class ExerciseItemsAndProgressTests(PuglingWebAppFactory factory) : IClas
     {
         var father = await TestApi.FatherAsync(_factory);
         var (s, c, exerciseId) = await VocabWithItemsAsync(father, ("hello", "hallo"), ("bye", "tschuess"));
-        var itemsUrl = $"/api/v1/learn/subjects/{s}/chapters/{c}/vocabulary/{exerciseId}/items";
+        var itemsUrl = $"/api/v1/creator/subjects/{s}/chapters/{c}/vocabulary/{exerciseId}/items";
         var firstId = (await father.GetFromJsonAsync<List<JsonElement>>(itemsUrl))![0].GetProperty("id").GetInt32();
 
         // In einen Lehrplan aufnehmen → Fortschritt hängt an der Position/Item-Reihenfolge.

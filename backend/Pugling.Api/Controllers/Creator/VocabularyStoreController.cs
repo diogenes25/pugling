@@ -18,7 +18,7 @@ namespace Pugling.Api.Controllers.Creator;
 /// </summary>
 [ApiController]
 [ApiVersion("1.0")]
-[Route(ApiRoutes.V1 + "/learn/vocabulary")]
+[Route(ApiRoutes.Creator + "/vocabulary")]
 [Tags("Learn – Vocabulary Store")]
 [Produces("application/json")]
 [Authorize(Roles = Roles.Vater)]

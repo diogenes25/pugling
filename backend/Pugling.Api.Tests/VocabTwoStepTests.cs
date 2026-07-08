@@ -14,7 +14,7 @@ public class VocabTwoStepTests(PuglingWebAppFactory factory) : IClassFixture<Pug
     {
         var father = await TestApi.FatherAsync(_factory);
 
-        var res = await father.PostAsJsonAsync("/api/v1/learn/vocabulary",
+        var res = await father.PostAsJsonAsync("/api/v1/creator/vocabulary",
             new { sourceLanguage = "en", targetLanguage = "de", word = "cat", translation = "Katze" });
         Assert.Equal(HttpStatusCode.Created, res.StatusCode);
 
@@ -29,8 +29,8 @@ public class VocabTwoStepTests(PuglingWebAppFactory factory) : IClassFixture<Pug
         var father = await TestApi.FatherAsync(_factory);
         object body = new { sourceLanguage = "en", targetLanguage = "de", word = "dog", translation = "Hund" };
 
-        var first = await (await father.PostAsJsonAsync("/api/v1/learn/vocabulary", body)).Content.ReadFromJsonAsync<JsonElement>();
-        var secondRes = await father.PostAsJsonAsync("/api/v1/learn/vocabulary", body);
+        var first = await (await father.PostAsJsonAsync("/api/v1/creator/vocabulary", body)).Content.ReadFromJsonAsync<JsonElement>();
+        var secondRes = await father.PostAsJsonAsync("/api/v1/creator/vocabulary", body);
         Assert.Equal(HttpStatusCode.Created, secondRes.StatusCode);
         var second = await secondRes.Content.ReadFromJsonAsync<JsonElement>();
 
@@ -42,12 +42,12 @@ public class VocabTwoStepTests(PuglingWebAppFactory factory) : IClassFixture<Pug
     public async Task Komplex_SpaeterPerPatch_ErgaenztNounUndWortart()
     {
         var father = await TestApi.FatherAsync(_factory);
-        var created = await (await father.PostAsJsonAsync("/api/v1/learn/vocabulary",
+        var created = await (await father.PostAsJsonAsync("/api/v1/creator/vocabulary",
             new { sourceLanguage = "en", targetLanguage = "de", word = "house", translation = "Haus" }))
             .Content.ReadFromJsonAsync<JsonElement>();
         var id = created.GetProperty("id").GetInt32();
 
-        var patched = await (await father.PatchAsJsonAsync($"/api/v1/learn/vocabulary/{id}",
+        var patched = await (await father.PatchAsJsonAsync($"/api/v1/creator/vocabulary/{id}",
             new { partOfSpeech = "Noun", noun = new { article = "das", plural = "Häuser" } }))
             .Content.ReadFromJsonAsync<JsonElement>();
 

@@ -12,7 +12,7 @@ namespace Pugling.Api.Controllers.Supervisor;
 /// <summary>Verwaltung der Väter (oberste Ebene des Admin-Bereichs).</summary>
 [ApiController]
 [ApiVersion("1.0")]
-[Route(ApiRoutes.V1 + "/fathers")]
+[Route(ApiRoutes.Supervisor + "/fathers")]
 [Tags("Admin – Fathers")]
 [Produces("application/json")]
 [Authorize(Roles = Roles.Vater)]

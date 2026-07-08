@@ -3,7 +3,7 @@
 _Automatisch erzeugt von `DocsCaptureTests` (Integrationstest). Jedes Beispiel ist verifiziert: Status und – bei Fehlern – der maschinenlesbare `code` wurden im Testlauf geprüft. Nicht von Hand bearbeiten._
 
 ## Vater registrieren (anonym)
-`POST /api/v1/fathers`
+`POST /api/v1/supervisor/fathers`
 
 Rolle: **anonymous** — _(kein Token)_
 

@@ -11,7 +11,7 @@ namespace Pugling.Api.Controllers.Creator;
 /// <summary>Kapitel innerhalb eines Fachs.</summary>
 [ApiController]
 [ApiVersion("1.0")]
-[Route(ApiRoutes.V1 + "/learn/subjects/{subjectId:int}/chapters")]
+[Route(ApiRoutes.Creator + "/subjects/{subjectId:int}/chapters")]
 [Tags("Learn – Chapters")]
 [Produces("application/json")]
 [Authorize(Roles = Roles.Vater)]

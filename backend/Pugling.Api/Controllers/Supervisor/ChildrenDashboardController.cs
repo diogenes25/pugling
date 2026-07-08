@@ -11,7 +11,7 @@ namespace Pugling.Api.Controllers.Supervisor;
 /// </summary>
 [ApiController]
 [ApiVersion("1.0")]
-[Route(ApiRoutes.V1 + "/children/daily-overview")]
+[Route(ApiRoutes.Supervisor + "/children/daily-overview")]
 [Tags("Admin – Children")]
 [Produces("application/json")]
 [Authorize(Roles = Roles.Vater)]

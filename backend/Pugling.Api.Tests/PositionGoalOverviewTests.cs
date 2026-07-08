@@ -22,10 +22,10 @@ public class PositionGoalOverviewTests(PuglingWebAppFactory factory) : IClassFix
         var exerciseId = await TestApi.CreateVocabExerciseAsync(father); // hello→hallo, goodbye→tschüss
         var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.FreeText);
         var child = await TestApi.ChildAsync(_factory);
-        var testsUrl = $"/api/v1/study-plans/{planId}/positions/{positionId}/tests";
+        var testsUrl = $"/api/v1/student/study-plans/{planId}/positions/{positionId}/tests";
 
         // Tagesmission vor dem Test: Ziel offen, Pflicht nicht erledigt.
-        var before = await (await child.GetAsync($"/api/v1/study-plans/{planId}/overview"))
+        var before = await (await child.GetAsync($"/api/v1/student/study-plans/{planId}/overview"))
             .Content.ReadFromJsonAsync<JsonElement>();
         JsonAssert.False(before.GetProperty("today"), "dutyDone");
 
@@ -49,7 +49,7 @@ public class PositionGoalOverviewTests(PuglingWebAppFactory factory) : IClassFix
             Assert.Equal(20, db.PositionGoalRewards.Where(r => r.PlanPositionId == positionId).Sum(r => r.Points));
         }
 
-        var after = await (await child.GetAsync($"/api/v1/study-plans/{planId}/overview"))
+        var after = await (await child.GetAsync($"/api/v1/student/study-plans/{planId}/overview"))
             .Content.ReadFromJsonAsync<JsonElement>();
         JsonAssert.True(after.GetProperty("today"), "dutyDone");
 
@@ -80,7 +80,7 @@ public class PositionGoalOverviewTests(PuglingWebAppFactory factory) : IClassFix
         var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.FreeText,
             cadence: GoalCadence.Weekly, pointsGoalMet: 20);
         var child = await TestApi.ChildAsync(_factory);
-        var testsUrl = $"/api/v1/study-plans/{planId}/positions/{positionId}/tests";
+        var testsUrl = $"/api/v1/student/study-plans/{planId}/positions/{positionId}/tests";
 
         // Wochenziel per bestandenem Test erfüllen.
         var attemptId = await TestApi.IdWithKeyAsync(await child.PostAsJsonAsync(testsUrl, new { }), "attemptId");
@@ -102,7 +102,7 @@ public class PositionGoalOverviewTests(PuglingWebAppFactory factory) : IClassFix
         }
 
         // Verlauf über die gesamte Laufzeit: TotalPoints = 20 (nicht × Anzahl Wochentage im Plan).
-        var progress = await (await child.GetAsync($"/api/v1/study-plans/{planId}/overview/progress"))
+        var progress = await (await child.GetAsync($"/api/v1/student/study-plans/{planId}/overview/progress"))
             .Content.ReadFromJsonAsync<JsonElement>();
         Assert.Equal(20, progress.GetProperty("totalPoints").GetInt32());
     }
@@ -119,7 +119,7 @@ public class PositionGoalOverviewTests(PuglingWebAppFactory factory) : IClassFix
         var exerciseId = await TestApi.CreateVocabExerciseAsync(father);
         var (planId, _) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.FreeText); // Plan: today..today+5 = 6 Tage
         var child = await TestApi.ChildAsync(_factory);
-        var baseUrl = $"/api/v1/study-plans/{planId}/overview/progress";
+        var baseUrl = $"/api/v1/student/study-plans/{planId}/overview/progress";
 
         // Voller Verlauf: 6 Tage, X-Total-Count = 6.
         var full = await child.GetAsync(baseUrl);

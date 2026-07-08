@@ -15,14 +15,14 @@ public class VocabAgentApiTests(PuglingWebAppFactory factory) : IClassFixture<Pu
 
     private static async Task<JsonElement> CreateAsync(HttpClient c, object body)
     {
-        var res = await c.PostAsJsonAsync("/api/v1/learn/vocabulary", body);
+        var res = await c.PostAsJsonAsync("/api/v1/creator/vocabulary", body);
         res.EnsureSuccessStatusCode();
         return await res.Content.ReadFromJsonAsync<JsonElement>();
     }
 
     private static async Task<List<string>> KeysAsync(HttpClient c, string query)
     {
-        var arr = await c.GetFromJsonAsync<JsonElement>($"/api/v1/learn/vocabulary?{query}");
+        var arr = await c.GetFromJsonAsync<JsonElement>($"/api/v1/creator/vocabulary?{query}");
         return arr.EnumerateArray().Select(v => v.GetProperty("key").GetString()!).ToList();
     }
 
@@ -31,7 +31,7 @@ public class VocabAgentApiTests(PuglingWebAppFactory factory) : IClassFixture<Pu
     {
         var father = await TestApi.FatherAsync(_factory);
 
-        var res = await father.PostAsJsonAsync("/api/v1/learn/vocabulary",
+        var res = await father.PostAsJsonAsync("/api/v1/creator/vocabulary",
             new { sourceLanguage = "fa", targetLanguage = "fb", word = "solo" });
         Assert.Equal(HttpStatusCode.Created, res.StatusCode);
 
@@ -101,7 +101,7 @@ public class VocabAgentApiTests(PuglingWebAppFactory factory) : IClassFixture<Pu
         var father = await TestApi.FatherAsync(_factory);
         await CreateAsync(father, new { sourceLanguage = "lkp", targetLanguage = "fb", word = "banana", translation = "Banane" });
 
-        var res = await father.PostAsJsonAsync("/api/v1/learn/vocabulary/lookup",
+        var res = await father.PostAsJsonAsync("/api/v1/creator/vocabulary/lookup",
             new { sourceLanguage = "lkp", words = new[] { "banana", "missing" } });
         res.EnsureSuccessStatusCode();
         var body = await res.Content.ReadFromJsonAsync<JsonElement>();
@@ -123,10 +123,10 @@ public class VocabAgentApiTests(PuglingWebAppFactory factory) : IClassFixture<Pu
             new { key = "batch_alpha", sourceLanguage = "bat", targetLanguage = "fb", word = "alpha", translation = "a" },
         };
 
-        var first = await (await father.PostAsJsonAsync("/api/v1/learn/vocabulary/batch", batch)).Content.ReadFromJsonAsync<JsonElement>();
+        var first = await (await father.PostAsJsonAsync("/api/v1/creator/vocabulary/batch", batch)).Content.ReadFromJsonAsync<JsonElement>();
         Assert.Equal("created", first[0].GetProperty("status").GetString());
 
-        var second = await (await father.PostAsJsonAsync("/api/v1/learn/vocabulary/batch", batch)).Content.ReadFromJsonAsync<JsonElement>();
+        var second = await (await father.PostAsJsonAsync("/api/v1/creator/vocabulary/batch", batch)).Content.ReadFromJsonAsync<JsonElement>();
         Assert.Equal("existing", second[0].GetProperty("status").GetString());
         Assert.Equal(first[0].GetProperty("id").GetInt32(), second[0].GetProperty("id").GetInt32());
     }
@@ -143,7 +143,7 @@ public class VocabAgentApiTests(PuglingWebAppFactory factory) : IClassFixture<Pu
             new { id = a.GetProperty("id").GetInt32(), translation = "eins" },
             new { id = b.GetProperty("id").GetInt32(), translation = "zwei" },
         };
-        var res = await (await father.PatchAsJsonAsync("/api/v1/learn/vocabulary/batch", patch)).Content.ReadFromJsonAsync<JsonElement>();
+        var res = await (await father.PatchAsJsonAsync("/api/v1/creator/vocabulary/batch", patch)).Content.ReadFromJsonAsync<JsonElement>();
         Assert.All(res.EnumerateArray(), r => Assert.Equal("updated", r.GetProperty("status").GetString()));
 
         var remaining = await KeysAsync(father, "sourceLanguage=bpa&untranslated=true");
@@ -161,7 +161,7 @@ public class VocabAgentApiTests(PuglingWebAppFactory factory) : IClassFixture<Pu
         await CreateAsync(father, new { sourceLanguage = sl, targetLanguage = "fb", word = "gone", translation = "gegangen", baseFormKey = baseKey, baseFormRelation = "Partizip II" });
 
         // Abfrage über eine flektierte Form liefert die ganze Familie, Grundform zuerst.
-        var forms = await father.GetFromJsonAsync<JsonElement>($"/api/v1/learn/vocabulary/{went.GetProperty("id").GetInt32()}/forms");
+        var forms = await father.GetFromJsonAsync<JsonElement>($"/api/v1/creator/vocabulary/{went.GetProperty("id").GetInt32()}/forms");
         var list = forms.EnumerateArray().ToList();
         Assert.Equal(3, list.Count);
         Assert.Equal(baseKey, list[0].GetProperty("key").GetString());
@@ -193,9 +193,9 @@ public class VocabAgentApiTests(PuglingWebAppFactory factory) : IClassFixture<Pu
         Assert.Equal(["tag_both_fb_beide"], andBoth); // UND → nur die doppelt getaggte
 
         // Tag löschen entfernt die Verknüpfungen.
-        var tags = await father.GetFromJsonAsync<JsonElement>("/api/v1/learn/vocabulary/tags");
+        var tags = await father.GetFromJsonAsync<JsonElement>("/api/v1/creator/vocabulary/tags");
         var kapitelId = tags.EnumerateArray().Single(t => t.GetProperty("name").GetString() == "Kapitel 5").GetProperty("id").GetInt32();
-        var del = await father.DeleteAsync($"/api/v1/learn/vocabulary/tags/{kapitelId}");
+        var del = await father.DeleteAsync($"/api/v1/creator/vocabulary/tags/{kapitelId}");
         Assert.Equal(HttpStatusCode.NoContent, del.StatusCode);
 
         var afterDelete = await KeysAsync(father, $"sourceLanguage={sl}&tag={k5}");
@@ -208,7 +208,7 @@ public class VocabAgentApiTests(PuglingWebAppFactory factory) : IClassFixture<Pu
         var father = await TestApi.FatherAsync(_factory);
         await CreateAsync(father, new { sourceLanguage = "hdr", targetLanguage = "fb", word = "x", translation = "x" });
 
-        var res = await father.GetAsync("/api/v1/learn/vocabulary?sourceLanguage=hdr");
+        var res = await father.GetAsync("/api/v1/creator/vocabulary?sourceLanguage=hdr");
         res.EnsureSuccessStatusCode();
         Assert.True(res.Headers.TryGetValues("X-Total-Count", out var values));
         Assert.Equal("1", values!.First());

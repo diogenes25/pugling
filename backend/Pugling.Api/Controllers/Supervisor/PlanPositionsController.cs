@@ -17,7 +17,7 @@ namespace Pugling.Api.Controllers.Supervisor;
 /// </summary>
 [ApiController]
 [ApiVersion("1.0")]
-[Route(ApiRoutes.V1 + "/study-plans/{planId:int}/positions")]
+[Route(ApiRoutes.Supervisor + "/study-plans/{planId:int}/positions")]
 [Tags("Study – Plan Positions")]
 [Produces("application/json")]
 [Authorize(Roles = Roles.Vater)]

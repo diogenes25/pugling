@@ -58,7 +58,7 @@ public class AntiCheatTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
 
         // Sohn fordert die Gratis-Anzeige-Stufe "ShowBoth" (1) an …
         var res = await child.PostAsJsonAsync(
-            $"/api/v1/study-plans/{planId}/positions/{positionId}/tests", new { stage = (int)TestStage.ShowBoth });
+            $"/api/v1/student/study-plans/{planId}/positions/{positionId}/tests", new { stage = (int)TestStage.ShowBoth });
         res.EnsureSuccessStatusCode();
         var attempt = await res.Content.ReadFromJsonAsync<JsonElement>();
 
@@ -74,7 +74,7 @@ public class AntiCheatTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
         var yesterday = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(-1).ToString("yyyy-MM-dd");
 
         var res = await child.PostAsJsonAsync(
-            $"/api/v1/study-plans/{planId}/positions/{positionId}/tests", new { day = yesterday });
+            $"/api/v1/student/study-plans/{planId}/positions/{positionId}/tests", new { day = yesterday });
 
         Assert.Equal(HttpStatusCode.Forbidden, res.StatusCode);
     }
@@ -87,7 +87,7 @@ public class AntiCheatTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
         var yesterday = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(-1).ToString("yyyy-MM-dd");
 
         var res = await father.PostAsJsonAsync(
-            $"/api/v1/study-plans/{planId}/positions/{positionId}/tests", new { day = yesterday });
+            $"/api/v1/student/study-plans/{planId}/positions/{positionId}/tests", new { day = yesterday });
 
         Assert.Equal(HttpStatusCode.Created, res.StatusCode);
     }
@@ -97,7 +97,7 @@ public class AntiCheatTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
     {
         var (planId, positionId) = await SetupAsync();
         var father = await TestApi.FatherAsync(factory);
-        (await father.PatchAsJsonAsync($"/api/v1/study-plans/{planId}", new { active = false })).EnsureSuccessStatusCode();
+        (await father.PatchAsJsonAsync($"/api/v1/supervisor/study-plans/{planId}", new { active = false })).EnsureSuccessStatusCode();
 
         // Kein Cherry-Picking: den deaktivierten Plan kann der Sohn nicht mehr üben.
         var child = await TestApi.ChildAsync(factory);
@@ -111,10 +111,10 @@ public class AntiCheatTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
     {
         var (planId, positionId) = await SetupAsync();
         var father = await TestApi.FatherAsync(factory);
-        (await father.PatchAsJsonAsync($"/api/v1/study-plans/{planId}", new { active = false })).EnsureSuccessStatusCode();
+        (await father.PatchAsJsonAsync($"/api/v1/supervisor/study-plans/{planId}", new { active = false })).EnsureSuccessStatusCode();
 
         var child = await TestApi.ChildAsync(factory);
-        var res = await child.PostAsJsonAsync($"/api/v1/study-plans/{planId}/positions/{positionId}/tests", new { });
+        var res = await child.PostAsJsonAsync($"/api/v1/student/study-plans/{planId}/positions/{positionId}/tests", new { });
 
         Assert.Equal(HttpStatusCode.Forbidden, res.StatusCode);
     }
@@ -124,7 +124,7 @@ public class AntiCheatTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
     {
         var (planId, positionId) = await SetupAsync();
         var father = await TestApi.FatherAsync(factory);
-        (await father.PatchAsJsonAsync($"/api/v1/study-plans/{planId}", new { active = false })).EnsureSuccessStatusCode();
+        (await father.PatchAsJsonAsync($"/api/v1/supervisor/study-plans/{planId}", new { active = false })).EnsureSuccessStatusCode();
 
         // Der Vater bleibt für Vorschau/Nachtrag ausgenommen – auch bei inaktivem Plan.
         var res = await father.PostAsJsonAsync(TestApi.PracticeBase(planId, positionId), new { });
@@ -137,10 +137,10 @@ public class AntiCheatTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
     {
         var (planId, _) = await SetupAsync();
         var father = await TestApi.FatherAsync(factory);
-        (await father.PatchAsJsonAsync($"/api/v1/study-plans/{planId}", new { active = false })).EnsureSuccessStatusCode();
+        (await father.PatchAsJsonAsync($"/api/v1/supervisor/study-plans/{planId}", new { active = false })).EnsureSuccessStatusCode();
 
         var child = await TestApi.ChildAsync(factory);
-        var plans = await (await child.GetAsync("/api/v1/study-plans")).Content.ReadFromJsonAsync<JsonElement>();
+        var plans = await (await child.GetAsync("/api/v1/supervisor/study-plans")).Content.ReadFromJsonAsync<JsonElement>();
 
         Assert.DoesNotContain(plans.EnumerateArray(), p => p.GetProperty("id").GetInt32() == planId);
     }
@@ -154,10 +154,10 @@ public class AntiCheatTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
         var (planB, _) = TestApi.SeedLeitnerPosition(factory, exerciseId, (int)TestStage.SelfAssess);
 
         // Beide werden direkt aktiv geseedet; das Aktivieren von A muss B stilllegen (ein aktiver Plan je Kind).
-        (await father.PatchAsJsonAsync($"/api/v1/study-plans/{planA}", new { active = true })).EnsureSuccessStatusCode();
+        (await father.PatchAsJsonAsync($"/api/v1/supervisor/study-plans/{planA}", new { active = true })).EnsureSuccessStatusCode();
 
-        var b = await (await father.GetAsync($"/api/v1/study-plans/{planB}")).Content.ReadFromJsonAsync<JsonElement>();
-        var a = await (await father.GetAsync($"/api/v1/study-plans/{planA}")).Content.ReadFromJsonAsync<JsonElement>();
+        var b = await (await father.GetAsync($"/api/v1/supervisor/study-plans/{planB}")).Content.ReadFromJsonAsync<JsonElement>();
+        var a = await (await father.GetAsync($"/api/v1/supervisor/study-plans/{planA}")).Content.ReadFromJsonAsync<JsonElement>();
         JsonAssert.False(b, "active");
         JsonAssert.True(a, "active");
 
@@ -172,10 +172,10 @@ public class AntiCheatTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
         var father = await TestApi.FatherAsync(factory);
         // Aktiver Plan, dessen Laufzeit erst in der Zukunft beginnt → heute (noch) nicht spielbar.
         var future = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(7).ToString("yyyy-MM-dd");
-        var planId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/study-plans",
+        var planId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/supervisor/study-plans",
             new { childId = 1, title = "Zukunfts-Plan", startDate = future, durationDays = 5 }));
 
-        var plan = await (await father.GetAsync($"/api/v1/study-plans/{planId}")).Content.ReadFromJsonAsync<JsonElement>();
+        var plan = await (await father.GetAsync($"/api/v1/supervisor/study-plans/{planId}")).Content.ReadFromJsonAsync<JsonElement>();
         JsonAssert.True(plan, "active");
         JsonAssert.False(plan, "isPlayable");
     }
@@ -190,7 +190,7 @@ public class AntiCheatTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
 
         // … dann legt der Vater den Plan still (oder er läuft ab).
         var father = await TestApi.FatherAsync(factory);
-        (await father.PatchAsJsonAsync($"/api/v1/study-plans/{planId}", new { active = false })).EnsureSuccessStatusCode();
+        (await father.PatchAsJsonAsync($"/api/v1/supervisor/study-plans/{planId}", new { active = false })).EnsureSuccessStatusCode();
 
         // Über die noch offene Session darf der Sohn nicht weiter bepunktet werden.
         var res = await TestApi.PositionReviewAsync(child, planId, positionId, sessionId, 0, wasKnown: true);
@@ -203,18 +203,18 @@ public class AntiCheatTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
         var (planId, positionId) = await SetupAsync();
         var child = await TestApi.ChildAsync(factory);
         // Testversuch wird gestartet, solange der Plan aktiv ist …
-        var start = await child.PostAsJsonAsync($"/api/v1/study-plans/{planId}/positions/{positionId}/tests", new { });
+        var start = await child.PostAsJsonAsync($"/api/v1/student/study-plans/{planId}/positions/{positionId}/tests", new { });
         start.EnsureSuccessStatusCode();
         var attempt = await start.Content.ReadFromJsonAsync<JsonElement>();
         var attemptId = attempt.GetProperty("attemptId").GetInt32();
 
         // … dann wird der Plan stillgelegt.
         var father = await TestApi.FatherAsync(factory);
-        (await father.PatchAsJsonAsync($"/api/v1/study-plans/{planId}", new { active = false })).EnsureSuccessStatusCode();
+        (await father.PatchAsJsonAsync($"/api/v1/supervisor/study-plans/{planId}", new { active = false })).EnsureSuccessStatusCode();
 
         // Das Einreichen (und Bepunkten) des offenen Versuchs muss scheitern (der Plan-Check greift vor jeder Wertung).
         var res = await child.PostAsJsonAsync(
-            $"/api/v1/study-plans/{planId}/positions/{positionId}/tests/{attemptId}/submit",
+            $"/api/v1/student/study-plans/{planId}/positions/{positionId}/tests/{attemptId}/submit",
             new { answers = Array.Empty<object>() });
         Assert.Equal(HttpStatusCode.Forbidden, res.StatusCode);
     }
@@ -224,16 +224,16 @@ public class AntiCheatTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
     {
         var father = await TestApi.FatherAsync(factory);
         var (id, key) = await TestApi.CreateStoreVocabAsync(father, "hello", "hallo");
-        (await father.PatchAsJsonAsync($"/api/v1/learn/vocabulary/{id}",
+        (await father.PatchAsJsonAsync($"/api/v1/creator/vocabulary/{id}",
             new { pronunciationAudioUrl = "https://example.test/hello.mp3" })).EnsureSuccessStatusCode();
 
         // Rückwärts-Übung: nach dem Tausch ist das (vorgelesene) Wort die Lösung. Die Hör-Stufe darf die
         // Audioquelle dann NICHT mitgeben, sonst spräche sie die Antwort vor.
-        var subjectId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/learn/subjects", new { name = "Audio-Ref" }));
+        var subjectId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/subjects", new { name = "Audio-Ref" }));
         var chapterId = await TestApi.IdAsync(await father.PostAsJsonAsync(
-            $"/api/v1/learn/subjects/{subjectId}/chapters", new { name = "U1", orderIndex = 1 }));
+            $"/api/v1/creator/subjects/{subjectId}/chapters", new { name = "U1", orderIndex = 1 }));
         var exerciseId = await TestApi.IdAsync(await father.PostAsJsonAsync(
-            $"/api/v1/learn/subjects/{subjectId}/chapters/{chapterId}/vocabulary", new
+            $"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/vocabulary", new
             {
                 title = "Rueckwaerts",
                 orderIndex = 1,
@@ -241,7 +241,7 @@ public class AntiCheatTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
                 config = new { direction = "back-to-front", refs = new[] { new { vocabularyId = id } } },
             }));
 
-        var data = await father.GetFromJsonAsync<JsonElement>($"/api/v1/learn/exercises/{exerciseId}/preview?stage=5");
+        var data = await father.GetFromJsonAsync<JsonElement>($"/api/v1/creator/exercises/{exerciseId}/preview?stage=5");
         Assert.Equal(5, data.GetProperty("stage").GetInt32());
         var item = data.GetProperty("items").EnumerateArray().First();
         Assert.Equal(JsonValueKind.Null, item.GetProperty("audioUrl").ValueKind);

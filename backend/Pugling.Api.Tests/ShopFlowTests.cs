@@ -17,7 +17,7 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
     private async Task<(int childId, HttpClient child)> FreshChildAsync(HttpClient father, string pin)
     {
         var childId = await TestApi.IdAsync(
-            await father.PostAsJsonAsync("/api/v1/children", new { name = "Shop-Kind", pin }));
+            await father.PostAsJsonAsync("/api/v1/supervisor/children", new { name = "Shop-Kind", pin }));
         return (childId, await TestApi.ChildAsync(factory, childId, pin));
     }
 
@@ -29,12 +29,12 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
 
     /// <summary>Erstellt einen Artikel und gibt seine Id zurück.</summary>
     private static async Task<int> CreateArticleAsync(HttpClient father, object body) =>
-        (await JsonAsync(await father.PostAsJsonAsync("/api/v1/shop/articles", body)))
+        (await JsonAsync(await father.PostAsJsonAsync("/api/v1/supervisor/shop/articles", body)))
             .GetProperty("id").GetInt32();
 
     /// <summary>Erstellt ein Angebot zu einem Artikel und gibt seine Id zurück.</summary>
     private static async Task<int> CreateListingAsync(HttpClient father, int articleId, object body) =>
-        (await JsonAsync(await father.PostAsJsonAsync($"/api/v1/shop/articles/{articleId}/listings", body)))
+        (await JsonAsync(await father.PostAsJsonAsync($"/api/v1/supervisor/shop/articles/{articleId}/listings", body)))
             .GetProperty("id").GetInt32();
 
     private async Task AddGemsAsync(int childId, int amount)
@@ -75,11 +75,11 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
             maxStock = 2,
         });
 
-        (await father.PostAsJsonAsync($"/api/v1/children/{childId}/points", new { amount = 200, reason = "Coins" }))
+        (await father.PostAsJsonAsync($"/api/v1/supervisor/children/{childId}/points", new { amount = 200, reason = "Coins" }))
             .EnsureSuccessStatusCode();
         await AddGemsAsync(childId, 50);
 
-        var view = await JsonAsync(await child.PostAsJsonAsync($"/api/v1/me/shop/listings/{listingId}/purchase", new { }));
+        var view = await JsonAsync(await child.PostAsJsonAsync($"/api/v1/student/me/shop/listings/{listingId}/purchase", new { }));
 
         Assert.Equal(80, view.GetProperty("coins").GetInt32());
         Assert.Equal(20, view.GetProperty("gems").GetInt32());
@@ -95,9 +95,9 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
         Assert.Equal(30, inv.GetProperty("quantity").GetInt32());
 
         // Wallet-Buchungen
-        var wallet = await JsonAsync(await child.GetAsync("/api/v1/me/points"));
+        var wallet = await JsonAsync(await child.GetAsync("/api/v1/student/me/points"));
         Assert.Equal(80, wallet.GetProperty("coins").GetInt32());
-        var entries = await JsonAsync(await child.GetAsync("/api/v1/me/points/entries"));
+        var entries = await JsonAsync(await child.GetAsync("/api/v1/student/me/points/entries"));
         Assert.Contains(entries.EnumerateArray(), e =>
             e.GetProperty("kind").GetString() == "ShopCoins" && e.GetProperty("amount").GetInt32() == -120);
         Assert.Contains(entries.EnumerateArray(), e =>
@@ -130,15 +130,15 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
         });
 
         // Vor dem Kauf: leerer Bestand.
-        var empty = await child.GetAsync("/api/v1/me/shop/inventory");
+        var empty = await child.GetAsync("/api/v1/student/me/shop/inventory");
         empty.EnsureSuccessStatusCode();
         Assert.Empty((await empty.Content.ReadFromJsonAsync<JsonElement>()).EnumerateArray());
 
-        (await father.PostAsJsonAsync($"/api/v1/children/{childId}/points", new { amount = 200, reason = "Coins" }))
+        (await father.PostAsJsonAsync($"/api/v1/supervisor/children/{childId}/points", new { amount = 200, reason = "Coins" }))
             .EnsureSuccessStatusCode();
-        await child.PostAsJsonAsync($"/api/v1/me/shop/listings/{listingId}/purchase", new { });
+        await child.PostAsJsonAsync($"/api/v1/student/me/shop/listings/{listingId}/purchase", new { });
 
-        var res = await child.GetAsync("/api/v1/me/shop/inventory");
+        var res = await child.GetAsync("/api/v1/student/me/shop/inventory");
         res.EnsureSuccessStatusCode();
         Assert.Equal("1", res.Headers.GetValues("X-Total-Count").Single());
 
@@ -177,13 +177,13 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
             maxStock = 3,
         });
 
-        (await father.PostAsJsonAsync($"/api/v1/children/{childId}/points", new { amount = 500, reason = "Coins" }))
+        (await father.PostAsJsonAsync($"/api/v1/supervisor/children/{childId}/points", new { amount = 500, reason = "Coins" }))
             .EnsureSuccessStatusCode();
 
-        await child.PostAsJsonAsync($"/api/v1/me/shop/listings/{listing30}/purchase", new { });
-        await child.PostAsJsonAsync($"/api/v1/me/shop/listings/{listing60}/purchase", new { });
+        await child.PostAsJsonAsync($"/api/v1/student/me/shop/listings/{listing30}/purchase", new { });
+        await child.PostAsJsonAsync($"/api/v1/student/me/shop/listings/{listing60}/purchase", new { });
 
-        var view = await JsonAsync(await child.GetAsync("/api/v1/me/shop"));
+        var view = await JsonAsync(await child.GetAsync("/api/v1/student/me/shop"));
         var inv = view.GetProperty("inventory").EnumerateArray()
             .First(i => i.GetProperty("shopArticleId").GetInt32() == articleId);
         Assert.Equal(90, inv.GetProperty("quantity").GetInt32()); // 30 + 60
@@ -209,13 +209,13 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
             currentStock = 0,
             maxStock = 1,
         });
-        (await father.PostAsJsonAsync($"/api/v1/children/{childId}/points", new { amount = 300, reason = "Coins" }))
+        (await father.PostAsJsonAsync($"/api/v1/supervisor/children/{childId}/points", new { amount = 300, reason = "Coins" }))
             .EnsureSuccessStatusCode();
 
-        var res = await child.PostAsJsonAsync($"/api/v1/me/shop/listings/{listingId}/purchase", new { });
+        var res = await child.PostAsJsonAsync($"/api/v1/student/me/shop/listings/{listingId}/purchase", new { });
 
         Assert.Equal(HttpStatusCode.Conflict, res.StatusCode);
-        var wallet = await JsonAsync(await child.GetAsync("/api/v1/me/points"));
+        var wallet = await JsonAsync(await child.GetAsync("/api/v1/student/me/points"));
         Assert.Equal(300, wallet.GetProperty("coins").GetInt32());
     }
 
@@ -242,11 +242,11 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
         await db.SaveChangesAsync();
         var fremdId = fremdListing.Id;
 
-        var view = await JsonAsync(await child.GetAsync("/api/v1/me/shop"));
+        var view = await JsonAsync(await child.GetAsync("/api/v1/student/me/shop"));
         Assert.DoesNotContain(view.GetProperty("available").EnumerateArray(),
             a => a.GetProperty("id").GetInt32() == fremdId);
         Assert.Equal(HttpStatusCode.NotFound,
-            (await child.PostAsJsonAsync($"/api/v1/me/shop/listings/{fremdId}/purchase", new { })).StatusCode);
+            (await child.PostAsJsonAsync($"/api/v1/student/me/shop/listings/{fremdId}/purchase", new { })).StatusCode);
     }
 
     // ─── Stornierung ─────────────────────────────────────────────────────────
@@ -271,25 +271,25 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
             currentStock = 1,
             maxStock = 1,
         });
-        (await father.PostAsJsonAsync($"/api/v1/children/{childId}/points", new { amount = 300, reason = "Coins" }))
+        (await father.PostAsJsonAsync($"/api/v1/supervisor/children/{childId}/points", new { amount = 300, reason = "Coins" }))
             .EnsureSuccessStatusCode();
         await AddGemsAsync(childId, 40);
 
-        var view = await JsonAsync(await child.PostAsJsonAsync($"/api/v1/me/shop/listings/{listingId}/purchase", new { }));
+        var view = await JsonAsync(await child.PostAsJsonAsync($"/api/v1/student/me/shop/listings/{listingId}/purchase", new { }));
         var purchaseId = view.GetProperty("purchases").EnumerateArray().First().GetProperty("id").GetInt32();
         Assert.Equal(200, view.GetProperty("coins").GetInt32());
         Assert.Equal(15, view.GetProperty("gems").GetInt32());
 
         var cancelled = await JsonAsync(await father.PostAsJsonAsync(
-            $"/api/v1/children/{childId}/shop/purchases/{purchaseId}/cancel", new { }));
+            $"/api/v1/supervisor/children/{childId}/shop/purchases/{purchaseId}/cancel", new { }));
         Assert.Equal("Cancelled", cancelled.GetProperty("status").GetString());
 
-        var wallet = await JsonAsync(await child.GetAsync("/api/v1/me/points"));
+        var wallet = await JsonAsync(await child.GetAsync("/api/v1/student/me/points"));
         Assert.Equal(300, wallet.GetProperty("coins").GetInt32());
         Assert.Equal(40, wallet.GetProperty("gems").GetInt32());
 
         // Inventar muss wieder 0 sein
-        var shopView = await JsonAsync(await child.GetAsync("/api/v1/me/shop"));
+        var shopView = await JsonAsync(await child.GetAsync("/api/v1/student/me/shop"));
         var invItems = shopView.GetProperty("inventory").EnumerateArray().ToList();
         Assert.DoesNotContain(invItems, i => i.GetProperty("shopArticleId").GetInt32() == articleId && i.GetProperty("quantity").GetInt32() > 0);
     }
@@ -314,9 +314,9 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
             currentStock = 1,
             maxStock = 1,
         });
-        (await father.PostAsJsonAsync($"/api/v1/children/{childId}/points", new { amount = 300, reason = "Coins" }))
+        (await father.PostAsJsonAsync($"/api/v1/supervisor/children/{childId}/points", new { amount = 300, reason = "Coins" }))
             .EnsureSuccessStatusCode();
-        var view = await JsonAsync(await child.PostAsJsonAsync($"/api/v1/me/shop/listings/{listingId}/purchase", new { }));
+        var view = await JsonAsync(await child.PostAsJsonAsync($"/api/v1/student/me/shop/listings/{listingId}/purchase", new { }));
         var purchaseId = view.GetProperty("purchases").EnumerateArray().First().GetProperty("id").GetInt32();
 
         using var scope1 = factory.Services.CreateScope();
@@ -331,7 +331,7 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
         // Genau einer der beiden darf erfolgreich sein
         Assert.Contains(ShopService.ShopError.None, new[] { first.Error, second.Error });
         Assert.NotEqual(ShopService.ShopError.None, first.Error == ShopService.ShopError.None ? second.Error : first.Error);
-        var wallet = await JsonAsync(await child.GetAsync("/api/v1/me/points"));
+        var wallet = await JsonAsync(await child.GetAsync("/api/v1/student/me/points"));
         Assert.Equal(300, wallet.GetProperty("coins").GetInt32());
     }
 
@@ -357,27 +357,27 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
             currentStock = 3,
             maxStock = 3,
         });
-        (await father.PostAsJsonAsync($"/api/v1/children/{childId}/points", new { amount = 200, reason = "Coins" }))
+        (await father.PostAsJsonAsync($"/api/v1/supervisor/children/{childId}/points", new { amount = 200, reason = "Coins" }))
             .EnsureSuccessStatusCode();
 
         // Kauf → 50 Min im Inventar
-        await child.PostAsJsonAsync($"/api/v1/me/shop/listings/{listingId}/purchase", new { });
+        await child.PostAsJsonAsync($"/api/v1/student/me/shop/listings/{listingId}/purchase", new { });
 
         // Anfrage: nur 10 Min
         var req = await JsonAsync(await child.PostAsJsonAsync(
-            $"/api/v1/me/shop/inventory/{articleId}/activate", new { quantity = 10 }));
+            $"/api/v1/student/me/shop/inventory/{articleId}/activate", new { quantity = 10 }));
         var requestId = req.GetProperty("id").GetInt32();
         Assert.Equal("Pending", req.GetProperty("status").GetString());
         Assert.Equal(10, req.GetProperty("requestedQuantity").GetInt32());
 
         // Vater genehmigt
         var approved = await JsonAsync(await father.PostAsJsonAsync(
-            $"/api/v1/children/{childId}/shop/activations/{requestId}/approve", new { }));
+            $"/api/v1/supervisor/children/{childId}/shop/activations/{requestId}/approve", new { }));
         Assert.Equal("Approved", approved.GetProperty("status").GetString());
         Assert.False(approved.GetProperty("closedAt").ValueKind == JsonValueKind.Null);
 
         // Inventar: 50 - 10 = 40
-        var shopView = await JsonAsync(await child.GetAsync("/api/v1/me/shop"));
+        var shopView = await JsonAsync(await child.GetAsync("/api/v1/student/me/shop"));
         var inv = shopView.GetProperty("inventory").EnumerateArray()
             .First(i => i.GetProperty("shopArticleId").GetInt32() == articleId);
         Assert.Equal(40, inv.GetProperty("quantity").GetInt32());
@@ -403,20 +403,20 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
             currentStock = 1,
             maxStock = 1,
         });
-        (await father.PostAsJsonAsync($"/api/v1/children/{childId}/points", new { amount = 200, reason = "Coins" }))
+        (await father.PostAsJsonAsync($"/api/v1/supervisor/children/{childId}/points", new { amount = 200, reason = "Coins" }))
             .EnsureSuccessStatusCode();
-        await child.PostAsJsonAsync($"/api/v1/me/shop/listings/{listingId}/purchase", new { });
+        await child.PostAsJsonAsync($"/api/v1/student/me/shop/listings/{listingId}/purchase", new { });
 
         var req = await JsonAsync(await child.PostAsJsonAsync(
-            $"/api/v1/me/shop/inventory/{articleId}/activate", new { quantity = 20 }));
+            $"/api/v1/student/me/shop/inventory/{articleId}/activate", new { quantity = 20 }));
         var requestId = req.GetProperty("id").GetInt32();
 
         var rejected = await JsonAsync(await father.PostAsJsonAsync(
-            $"/api/v1/children/{childId}/shop/activations/{requestId}/reject", new { }));
+            $"/api/v1/supervisor/children/{childId}/shop/activations/{requestId}/reject", new { }));
         Assert.Equal("Rejected", rejected.GetProperty("status").GetString());
 
         // Inventar noch 30 (unveränert)
-        var shopView = await JsonAsync(await child.GetAsync("/api/v1/me/shop"));
+        var shopView = await JsonAsync(await child.GetAsync("/api/v1/student/me/shop"));
         var inv = shopView.GetProperty("inventory").EnumerateArray()
             .First(i => i.GetProperty("shopArticleId").GetInt32() == articleId);
         Assert.Equal(30, inv.GetProperty("quantity").GetInt32());
@@ -442,13 +442,13 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
             currentStock = 1,
             maxStock = 1,
         });
-        (await father.PostAsJsonAsync($"/api/v1/children/{childId}/points", new { amount = 100, reason = "Coins" }))
+        (await father.PostAsJsonAsync($"/api/v1/supervisor/children/{childId}/points", new { amount = 100, reason = "Coins" }))
             .EnsureSuccessStatusCode();
-        await child.PostAsJsonAsync($"/api/v1/me/shop/listings/{listingId}/purchase", new { });
+        await child.PostAsJsonAsync($"/api/v1/student/me/shop/listings/{listingId}/purchase", new { });
 
         // 10 im Inventar, 20 beantragen → 400
         var res = await child.PostAsJsonAsync(
-            $"/api/v1/me/shop/inventory/{articleId}/activate", new { quantity = 20 });
+            $"/api/v1/student/me/shop/inventory/{articleId}/activate", new { quantity = 20 });
         Assert.Equal(HttpStatusCode.BadRequest, res.StatusCode);
     }
 
@@ -472,20 +472,20 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
             currentStock = 2,
             maxStock = 2,
         });
-        (await father.PostAsJsonAsync($"/api/v1/children/{childId}/points", new { amount = 200, reason = "Coins" }))
+        (await father.PostAsJsonAsync($"/api/v1/supervisor/children/{childId}/points", new { amount = 200, reason = "Coins" }))
             .EnsureSuccessStatusCode();
-        await child.PostAsJsonAsync($"/api/v1/me/shop/listings/{listingId}/purchase", new { });
+        await child.PostAsJsonAsync($"/api/v1/student/me/shop/listings/{listingId}/purchase", new { });
 
         var req = await JsonAsync(await child.PostAsJsonAsync(
-            $"/api/v1/me/shop/inventory/{articleId}/activate", new { quantity = 3 }));
+            $"/api/v1/student/me/shop/inventory/{articleId}/activate", new { quantity = 3 }));
         var requestId = req.GetProperty("id").GetInt32();
 
-        (await father.PostAsJsonAsync($"/api/v1/children/{childId}/shop/activations/{requestId}/approve", new { }))
+        (await father.PostAsJsonAsync($"/api/v1/supervisor/children/{childId}/shop/activations/{requestId}/approve", new { }))
             .EnsureSuccessStatusCode();
 
         // Erneute Genehmigung → 409
         Assert.Equal(HttpStatusCode.Conflict,
-            (await father.PostAsJsonAsync($"/api/v1/children/{childId}/shop/activations/{requestId}/approve", new { })).StatusCode);
+            (await father.PostAsJsonAsync($"/api/v1/supervisor/children/{childId}/shop/activations/{requestId}/approve", new { })).StatusCode);
     }
 
     // ─── Affordances ─────────────────────────────────────────────────────────
@@ -510,24 +510,24 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
             currentStock = 2,
             maxStock = 2,
         });
-        (await father.PostAsJsonAsync($"/api/v1/children/{childId}/points", new { amount = 200, reason = "Coins" }))
+        (await father.PostAsJsonAsync($"/api/v1/supervisor/children/{childId}/points", new { amount = 200, reason = "Coins" }))
             .EnsureSuccessStatusCode();
-        await child.PostAsJsonAsync($"/api/v1/me/shop/listings/{listingId}/purchase", new { });
+        await child.PostAsJsonAsync($"/api/v1/student/me/shop/listings/{listingId}/purchase", new { });
 
         var req = await JsonAsync(await child.PostAsJsonAsync(
-            $"/api/v1/me/shop/inventory/{articleId}/activate", new { quantity = 3 }));
+            $"/api/v1/student/me/shop/inventory/{articleId}/activate", new { quantity = 3 }));
         var requestId = req.GetProperty("id").GetInt32();
 
         // Offen: beide Affordances
-        var queue = await JsonAsync(await father.GetAsync($"/api/v1/children/{childId}/shop/activations"));
+        var queue = await JsonAsync(await father.GetAsync($"/api/v1/supervisor/children/{childId}/shop/activations"));
         var open = queue.EnumerateArray().First(r => r.GetProperty("id").GetInt32() == requestId);
         Assert.True(open.GetProperty("canApprove").GetBoolean());
         Assert.True(open.GetProperty("canReject").GetBoolean());
 
         // Nach Genehmigung: keine Affordances mehr
-        (await father.PostAsJsonAsync($"/api/v1/children/{childId}/shop/activations/{requestId}/approve", new { }))
+        (await father.PostAsJsonAsync($"/api/v1/supervisor/children/{childId}/shop/activations/{requestId}/approve", new { }))
             .EnsureSuccessStatusCode();
-        var done = await JsonAsync(await father.GetAsync($"/api/v1/children/{childId}/shop/activations"));
+        var done = await JsonAsync(await father.GetAsync($"/api/v1/supervisor/children/{childId}/shop/activations"));
         var closed = done.EnumerateArray().First(r => r.GetProperty("id").GetInt32() == requestId);
         Assert.False(closed.GetProperty("canApprove").GetBoolean());
         Assert.False(closed.GetProperty("canReject").GetBoolean());
@@ -566,7 +566,7 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
             actionType = "Sonstiges",
         });
 
-        var list = await JsonAsync(await father.GetAsync("/api/v1/shop/articles"));
+        var list = await JsonAsync(await father.GetAsync("/api/v1/supervisor/shop/articles"));
         var art = list.EnumerateArray().First(a => a.GetProperty("id").GetInt32() == articleId);
         Assert.Equal("CRUD-001", art.GetProperty("articleNumber").GetString());
         Assert.Equal("Schlafstunde", art.GetProperty("title").GetString());
@@ -584,7 +584,7 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
             actionType = "TV",
         });
 
-        var res = await father.PostAsJsonAsync("/api/v1/shop/articles", new
+        var res = await father.PostAsJsonAsync("/api/v1/supervisor/shop/articles", new
         {
             articleNumber = "DUP-NUM",
             title = "Zweiter",
@@ -609,7 +609,7 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
         });
 
         var patched = await JsonAsync(await father.PatchAsJsonAsync(
-            $"/api/v1/shop/articles/{articleId}", new { title = "Neuer Titel", articleNumber = "NEW-001" }));
+            $"/api/v1/supervisor/shop/articles/{articleId}", new { title = "Neuer Titel", articleNumber = "NEW-001" }));
         Assert.Equal("NEW-001", patched.GetProperty("articleNumber").GetString());
         Assert.Equal("Neuer Titel", patched.GetProperty("title").GetString());
     }
@@ -626,7 +626,7 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
             actionType = "Sonstiges",
         });
 
-        var res = await father.PatchAsJsonAsync($"/api/v1/shop/articles/{articleId}", new { title = "  " });
+        var res = await father.PatchAsJsonAsync($"/api/v1/supervisor/shop/articles/{articleId}", new { title = "  " });
         Assert.Equal(HttpStatusCode.BadRequest, res.StatusCode);
     }
 
@@ -642,9 +642,9 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
             actionType = "Sonstiges",
         });
 
-        (await father.DeleteAsync($"/api/v1/shop/articles/{articleId}")).EnsureSuccessStatusCode();
+        (await father.DeleteAsync($"/api/v1/supervisor/shop/articles/{articleId}")).EnsureSuccessStatusCode();
 
-        var list = await JsonAsync(await father.GetAsync("/api/v1/shop/articles"));
+        var list = await JsonAsync(await father.GetAsync("/api/v1/supervisor/shop/articles"));
         Assert.DoesNotContain(list.EnumerateArray(), a => a.GetProperty("id").GetInt32() == articleId);
     }
 
@@ -671,7 +671,7 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
             maxStock = 5,
         });
 
-        var list = await JsonAsync(await father.GetAsync($"/api/v1/shop/articles/{articleId}/listings"));
+        var list = await JsonAsync(await father.GetAsync($"/api/v1/supervisor/shop/articles/{articleId}/listings"));
         var l = list.EnumerateArray().First(x => x.GetProperty("id").GetInt32() == listingId);
         Assert.Equal(150, l.GetProperty("coinPrice").GetInt32());
         Assert.Equal(30, l.GetProperty("unitsPerPurchase").GetInt32());
@@ -689,7 +689,7 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
             actionType = "Sonstiges",
         });
 
-        var res = await father.PostAsJsonAsync($"/api/v1/shop/articles/{articleId}/listings",
+        var res = await father.PostAsJsonAsync($"/api/v1/supervisor/shop/articles/{articleId}/listings",
             new { coinPrice = 0, gemPrice = 0, unitsPerPurchase = 1, currentStock = 1, maxStock = 1 });
         Assert.Equal(HttpStatusCode.BadRequest, res.StatusCode);
     }
@@ -715,7 +715,7 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
         });
 
         var patched = await JsonAsync(await father.PatchAsJsonAsync(
-            $"/api/v1/shop/articles/{articleId}/listings/{listingId}", new { active = false }));
+            $"/api/v1/supervisor/shop/articles/{articleId}/listings/{listingId}", new { active = false }));
         Assert.False(patched.GetProperty("active").GetBoolean());
     }
 
@@ -739,9 +739,9 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
             maxStock = 1,
         });
 
-        (await father.DeleteAsync($"/api/v1/shop/articles/{articleId}/listings/{listingId}")).EnsureSuccessStatusCode();
+        (await father.DeleteAsync($"/api/v1/supervisor/shop/articles/{articleId}/listings/{listingId}")).EnsureSuccessStatusCode();
 
-        var list = await JsonAsync(await father.GetAsync($"/api/v1/shop/articles/{articleId}/listings"));
+        var list = await JsonAsync(await father.GetAsync($"/api/v1/supervisor/shop/articles/{articleId}/listings"));
         Assert.DoesNotContain(list.EnumerateArray(), l => l.GetProperty("id").GetInt32() == listingId);
     }
 
@@ -770,12 +770,12 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
             maxStock = 5,
         });
 
-        var res = await child.PostAsJsonAsync($"/api/v1/me/shop/listings/{listingId}/purchase", new { });
+        var res = await child.PostAsJsonAsync($"/api/v1/student/me/shop/listings/{listingId}/purchase", new { });
         Assert.Equal(HttpStatusCode.BadRequest, res.StatusCode);
         var body = await res.Content.ReadFromJsonAsync<JsonElement>();
         Assert.Equal("insufficient_coins", body!.GetProperty("code").GetString());
 
-        var wallet = await JsonAsync(await child.GetAsync("/api/v1/me/points"));
+        var wallet = await JsonAsync(await child.GetAsync("/api/v1/student/me/points"));
         Assert.Equal(0, wallet.GetProperty("coins").GetInt32());
     }
 
@@ -784,7 +784,7 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
     {
         var father = await TestApi.FatherAsync(factory);
         var (childId, child) = await FreshChildAsync(father, "9351");
-        (await father.PostAsJsonAsync($"/api/v1/children/{childId}/points",
+        (await father.PostAsJsonAsync($"/api/v1/supervisor/children/{childId}/points",
             new { amount = 500, reason = "Coins" })).EnsureSuccessStatusCode();
         // Keine Gems
 
@@ -804,7 +804,7 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
             maxStock = 5,
         });
 
-        var res = await child.PostAsJsonAsync($"/api/v1/me/shop/listings/{listingId}/purchase", new { });
+        var res = await child.PostAsJsonAsync($"/api/v1/student/me/shop/listings/{listingId}/purchase", new { });
         Assert.Equal(HttpStatusCode.BadRequest, res.StatusCode);
         var body = await res.Content.ReadFromJsonAsync<JsonElement>();
         Assert.Equal("insufficient_gems", body!.GetProperty("code").GetString());
@@ -815,7 +815,7 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
     {
         var father = await TestApi.FatherAsync(factory);
         var (childId, child) = await FreshChildAsync(father, "9352");
-        (await father.PostAsJsonAsync($"/api/v1/children/{childId}/points",
+        (await father.PostAsJsonAsync($"/api/v1/supervisor/children/{childId}/points",
             new { amount = 500, reason = "Coins" })).EnsureSuccessStatusCode();
 
         var articleId = await CreateArticleAsync(father, new
@@ -834,9 +834,9 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
             maxStock = 5,
         });
         await father.PatchAsJsonAsync(
-            $"/api/v1/shop/articles/{articleId}/listings/{listingId}", new { active = false });
+            $"/api/v1/supervisor/shop/articles/{articleId}/listings/{listingId}", new { active = false });
 
-        var res = await child.PostAsJsonAsync($"/api/v1/me/shop/listings/{listingId}/purchase", new { });
+        var res = await child.PostAsJsonAsync($"/api/v1/student/me/shop/listings/{listingId}/purchase", new { });
         Assert.Equal(HttpStatusCode.BadRequest, res.StatusCode);
         var body = await res.Content.ReadFromJsonAsync<JsonElement>();
         Assert.Equal("shop_listing_inactive", body!.GetProperty("code").GetString());
@@ -849,7 +849,7 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
     {
         var father = await TestApi.FatherAsync(factory);
         var (childId, child) = await FreshChildAsync(father, "9353");
-        (await father.PostAsJsonAsync($"/api/v1/children/{childId}/points",
+        (await father.PostAsJsonAsync($"/api/v1/supervisor/children/{childId}/points",
             new { amount = 300, reason = "Coins" })).EnsureSuccessStatusCode();
 
         var articleId = await CreateArticleAsync(father, new
@@ -869,18 +869,18 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
         });
 
         var view = await JsonAsync(await child.PostAsJsonAsync(
-            $"/api/v1/me/shop/listings/{listingId}/purchase", new { }));
+            $"/api/v1/student/me/shop/listings/{listingId}/purchase", new { }));
         var purchaseId = view.GetProperty("purchases").EnumerateArray().First().GetProperty("id").GetInt32();
 
         // Kauf offen: canCancel = true
-        var purchases = await JsonAsync(await father.GetAsync($"/api/v1/children/{childId}/shop/purchases"));
+        var purchases = await JsonAsync(await father.GetAsync($"/api/v1/supervisor/children/{childId}/shop/purchases"));
         var open = purchases.EnumerateArray().First(p => p.GetProperty("id").GetInt32() == purchaseId);
         Assert.True(open.GetProperty("canCancel").GetBoolean());
 
         // Nach Storno: canCancel = false
         (await father.PostAsJsonAsync(
-            $"/api/v1/children/{childId}/shop/purchases/{purchaseId}/cancel", new { })).EnsureSuccessStatusCode();
-        var after = await JsonAsync(await father.GetAsync($"/api/v1/children/{childId}/shop/purchases"));
+            $"/api/v1/supervisor/children/{childId}/shop/purchases/{purchaseId}/cancel", new { })).EnsureSuccessStatusCode();
+        var after = await JsonAsync(await father.GetAsync($"/api/v1/supervisor/children/{childId}/shop/purchases"));
         var closed = after.EnumerateArray().First(p => p.GetProperty("id").GetInt32() == purchaseId);
         Assert.False(closed.GetProperty("canCancel").GetBoolean());
     }
@@ -892,7 +892,7 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
     {
         var father = await TestApi.FatherAsync(factory);
         var (childId, child) = await FreshChildAsync(father, "9354");
-        (await father.PostAsJsonAsync($"/api/v1/children/{childId}/points",
+        (await father.PostAsJsonAsync($"/api/v1/supervisor/children/{childId}/points",
             new { amount = 2000, reason = "Coins" })).EnsureSuccessStatusCode();
 
         var articleId = await CreateArticleAsync(father, new
@@ -912,9 +912,9 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
         });
 
         for (var i = 0; i < 5; i++)
-            await child.PostAsJsonAsync($"/api/v1/me/shop/listings/{listingId}/purchase", new { });
+            await child.PostAsJsonAsync($"/api/v1/student/me/shop/listings/{listingId}/purchase", new { });
 
-        var res = await father.GetAsync($"/api/v1/children/{childId}/shop/purchases?take=2");
+        var res = await father.GetAsync($"/api/v1/supervisor/children/{childId}/shop/purchases?take=2");
         Assert.Equal(2, (await JsonAsync(res)).EnumerateArray().Count());
         Assert.Equal("5", res.Headers.GetValues("X-Total-Count").First());
     }
@@ -924,7 +924,7 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
     {
         var father = await TestApi.FatherAsync(factory);
         var (childId, child) = await FreshChildAsync(father, "9355");
-        (await father.PostAsJsonAsync($"/api/v1/children/{childId}/points",
+        (await father.PostAsJsonAsync($"/api/v1/supervisor/children/{childId}/points",
             new { amount = 500, reason = "Coins" })).EnsureSuccessStatusCode();
 
         var articleId = await CreateArticleAsync(father, new
@@ -942,13 +942,13 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
             currentStock = 2,
             maxStock = 2,
         });
-        await child.PostAsJsonAsync($"/api/v1/me/shop/listings/{listingId}/purchase", new { });
+        await child.PostAsJsonAsync($"/api/v1/student/me/shop/listings/{listingId}/purchase", new { });
 
         // 3 Anfragen je 1 Einheit (Inventar hat 10)
         for (var i = 0; i < 3; i++)
-            await child.PostAsJsonAsync($"/api/v1/me/shop/inventory/{articleId}/activate", new { quantity = 1 });
+            await child.PostAsJsonAsync($"/api/v1/student/me/shop/inventory/{articleId}/activate", new { quantity = 1 });
 
-        var res = await father.GetAsync($"/api/v1/children/{childId}/shop/activations?take=2");
+        var res = await father.GetAsync($"/api/v1/supervisor/children/{childId}/shop/activations?take=2");
         Assert.Equal(2, (await JsonAsync(res)).EnumerateArray().Count());
         Assert.Equal("3", res.Headers.GetValues("X-Total-Count").First());
     }
@@ -979,7 +979,7 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
             currentStock = 3,
             maxStock = 3,
         });
-        (await father.PostAsJsonAsync($"/api/v1/children/{childId}/points",
+        (await father.PostAsJsonAsync($"/api/v1/supervisor/children/{childId}/points",
             new { amount = 200, reason = "Coins" })).EnsureSuccessStatusCode();
 
         Guid StampOf()
@@ -990,7 +990,7 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
         }
 
         var before = StampOf();
-        (await child.PostAsJsonAsync($"/api/v1/me/shop/listings/{listingId}/purchase", new { }))
+        (await child.PostAsJsonAsync($"/api/v1/student/me/shop/listings/{listingId}/purchase", new { }))
             .EnsureSuccessStatusCode();
 
         Assert.NotEqual(before, StampOf());
@@ -1019,31 +1019,31 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
             currentStock = 1,
             maxStock = 1,
         });
-        (await father.PostAsJsonAsync($"/api/v1/children/{childId}/points",
+        (await father.PostAsJsonAsync($"/api/v1/supervisor/children/{childId}/points",
             new { amount = 200, reason = "Coins" })).EnsureSuccessStatusCode();
-        await child.PostAsJsonAsync($"/api/v1/me/shop/listings/{listingId}/purchase", new { }); // Inventar = 30
+        await child.PostAsJsonAsync($"/api/v1/student/me/shop/listings/{listingId}/purchase", new { }); // Inventar = 30
 
         var req1 = (await JsonAsync(await child.PostAsJsonAsync(
-            $"/api/v1/me/shop/inventory/{articleId}/activate", new { quantity = 30 }))).GetProperty("id").GetInt32();
+            $"/api/v1/student/me/shop/inventory/{articleId}/activate", new { quantity = 30 }))).GetProperty("id").GetInt32();
         var req2 = (await JsonAsync(await child.PostAsJsonAsync(
-            $"/api/v1/me/shop/inventory/{articleId}/activate", new { quantity = 10 }))).GetProperty("id").GetInt32();
+            $"/api/v1/student/me/shop/inventory/{articleId}/activate", new { quantity = 10 }))).GetProperty("id").GetInt32();
 
         // Erste Genehmigung zieht das gesamte Inventar ab (30 → 0).
-        (await father.PostAsJsonAsync($"/api/v1/children/{childId}/shop/activations/{req1}/approve", new { }))
+        (await father.PostAsJsonAsync($"/api/v1/supervisor/children/{childId}/shop/activations/{req1}/approve", new { }))
             .EnsureSuccessStatusCode();
 
         // Zweite Genehmigung findet kein Inventar mehr → 400 insufficient_inventory, Anfrage bleibt offen.
-        var overRes = await father.PostAsJsonAsync($"/api/v1/children/{childId}/shop/activations/{req2}/approve", new { });
+        var overRes = await father.PostAsJsonAsync($"/api/v1/supervisor/children/{childId}/shop/activations/{req2}/approve", new { });
         Assert.Equal(HttpStatusCode.BadRequest, overRes.StatusCode);
         Assert.Equal("insufficient_inventory",
             (await overRes.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("code").GetString());
 
-        var queue = await JsonAsync(await father.GetAsync($"/api/v1/children/{childId}/shop/activations"));
+        var queue = await JsonAsync(await father.GetAsync($"/api/v1/supervisor/children/{childId}/shop/activations"));
         var stillOpen = queue.EnumerateArray().First(r => r.GetProperty("id").GetInt32() == req2);
         Assert.Equal("Pending", stillOpen.GetProperty("status").GetString());
 
         // Die weiterhin offene Anfrage lässt sich ablehnen.
-        (await father.PostAsJsonAsync($"/api/v1/children/{childId}/shop/activations/{req2}/reject", new { }))
+        (await father.PostAsJsonAsync($"/api/v1/supervisor/children/{childId}/shop/activations/{req2}/reject", new { }))
             .EnsureSuccessStatusCode();
     }
 
@@ -1061,7 +1061,7 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
         });
 
         var res = await child.PostAsJsonAsync(
-            $"/api/v1/me/shop/inventory/{articleId}/activate", new { quantity = 0 });
+            $"/api/v1/student/me/shop/inventory/{articleId}/activate", new { quantity = 0 });
 
         Assert.Equal(HttpStatusCode.BadRequest, res.StatusCode);
         Assert.Equal("validation_error",
@@ -1090,19 +1090,19 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
             maxStock = 3,
         });
 
-        var article = await JsonAsync(await father.GetAsync($"/api/v1/shop/articles/{articleId}"));
+        var article = await JsonAsync(await father.GetAsync($"/api/v1/supervisor/shop/articles/{articleId}"));
         Assert.Equal(articleId, article.GetProperty("id").GetInt32());
         Assert.Equal("GET-001", article.GetProperty("articleNumber").GetString());
 
-        var listing = await JsonAsync(await father.GetAsync($"/api/v1/shop/articles/{articleId}/listings/{listingId}"));
+        var listing = await JsonAsync(await father.GetAsync($"/api/v1/supervisor/shop/articles/{articleId}/listings/{listingId}"));
         Assert.Equal(listingId, listing.GetProperty("id").GetInt32());
         Assert.Equal(articleId, listing.GetProperty("shopArticleId").GetInt32());
 
         // Unbekannte IDs → 404 (kein 200 mit leerem Body).
         Assert.Equal(HttpStatusCode.NotFound,
-            (await father.GetAsync($"/api/v1/shop/articles/{articleId}/listings/999999")).StatusCode);
+            (await father.GetAsync($"/api/v1/supervisor/shop/articles/{articleId}/listings/999999")).StatusCode);
         Assert.Equal(HttpStatusCode.NotFound,
-            (await father.GetAsync("/api/v1/shop/articles/999999")).StatusCode);
+            (await father.GetAsync("/api/v1/supervisor/shop/articles/999999")).StatusCode);
     }
 
     [Fact]
@@ -1119,11 +1119,11 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
         });
         var anon = factory.CreateClient();
         var strangerId = await TestApi.IdAsync(
-            await anon.PostAsJsonAsync("/api/v1/fathers", new { name = "Fremder Papa", pin = "2222" }));
+            await anon.PostAsJsonAsync("/api/v1/supervisor/fathers", new { name = "Fremder Papa", pin = "2222" }));
         var stranger = await TestApi.FatherAsync(factory, strangerId, "2222");
 
         Assert.Equal(HttpStatusCode.NotFound,
-            (await stranger.GetAsync($"/api/v1/shop/articles/{articleId}")).StatusCode);
+            (await stranger.GetAsync($"/api/v1/supervisor/shop/articles/{articleId}")).StatusCode);
     }
 
     [Fact]
@@ -1132,7 +1132,7 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
         // Ein ungültiger Enum-Wert soll nicht nur „value is not of the expected type" liefern, sondern
         // das fehlerhafte Feld benennen UND die zulässigen Werte auflisten (ohne den DTO-Typ zu leaken).
         var father = await TestApi.FatherAsync(factory);
-        var res = await father.PostAsJsonAsync("/api/v1/shop/articles", new
+        var res = await father.PostAsJsonAsync("/api/v1/supervisor/shop/articles", new
         {
             articleNumber = "TV-900",
             title = "Fernsehzeit",

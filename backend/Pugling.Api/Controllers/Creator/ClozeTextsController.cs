@@ -11,7 +11,7 @@ namespace Pugling.Api.Controllers.Creator;
 /// <summary>Lückentext-Store: Lerngrundlagen für das Lückentext-Verfahren (vom Vater gepflegt).</summary>
 [ApiController]
 [ApiVersion("1.0")]
-[Route(ApiRoutes.V1 + "/learn/cloze-texts")]
+[Route(ApiRoutes.Creator + "/cloze-texts")]
 [Tags("Learn – Cloze Store")]
 [Produces("application/json")]
 [Authorize(Roles = Roles.Vater)]

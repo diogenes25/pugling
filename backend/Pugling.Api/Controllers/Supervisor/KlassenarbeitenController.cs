@@ -15,7 +15,7 @@ namespace Pugling.Api.Controllers.Supervisor;
 /// </summary>
 [ApiController]
 [ApiVersion("1.0")]
-[Route(ApiRoutes.V1 + "/class-tests")]
+[Route(ApiRoutes.Supervisor + "/class-tests")]
 [Tags("Learn – Class Tests")]
 [Produces("application/json")]
 [Authorize]

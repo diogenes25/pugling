@@ -19,7 +19,7 @@ public class PositionTestFlowTests(PuglingWebAppFactory factory) : IClassFixture
         var exerciseId = await TestApi.CreateVocabExerciseAsync(father);
         var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.FreeText);
         var child = await TestApi.ChildAsync(_factory);
-        var baseUrl = $"/api/v1/study-plans/{planId}/positions/{positionId}/tests";
+        var baseUrl = $"/api/v1/student/study-plans/{planId}/positions/{positionId}/tests";
 
         var attemptId = await TestApi.IdWithKeyAsync(await child.PostAsJsonAsync(baseUrl, new { }), "attemptId");
         var submit = await child.PostAsJsonAsync($"{baseUrl}/{attemptId}/submit", new
@@ -44,7 +44,7 @@ public class PositionTestFlowTests(PuglingWebAppFactory factory) : IClassFixture
         var exerciseId = await TestApi.CreateVocabExerciseAsync(father);
         var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.FreeText);
         var child = await TestApi.ChildAsync(_factory);
-        var baseUrl = $"/api/v1/study-plans/{planId}/positions/{positionId}/tests";
+        var baseUrl = $"/api/v1/student/study-plans/{planId}/positions/{positionId}/tests";
 
         var attemptId = await TestApi.IdWithKeyAsync(await child.PostAsJsonAsync(baseUrl, new { }), "attemptId");
         var submit = await child.PostAsJsonAsync($"{baseUrl}/{attemptId}/submit", new
@@ -65,7 +65,7 @@ public class PositionTestFlowTests(PuglingWebAppFactory factory) : IClassFixture
         // Position mit milderer Bestehensgrenze (40 %): 50 % genügen dann.
         var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.FreeText, goalThreshold: 40);
         var child = await TestApi.ChildAsync(_factory);
-        var baseUrl = $"/api/v1/study-plans/{planId}/positions/{positionId}/tests";
+        var baseUrl = $"/api/v1/student/study-plans/{planId}/positions/{positionId}/tests";
 
         var attemptId = await TestApi.IdWithKeyAsync(await child.PostAsJsonAsync(baseUrl, new { }), "attemptId");
         var submit = await child.PostAsJsonAsync($"{baseUrl}/{attemptId}/submit", new

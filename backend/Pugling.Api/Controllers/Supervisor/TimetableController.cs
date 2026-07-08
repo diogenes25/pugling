@@ -11,7 +11,7 @@ namespace Pugling.Api.Controllers.Supervisor;
 /// <summary>Stundenplan eines Kindes (Fach × Wochentag) – vom Vater gepflegt, steuert Wiederholung vs. neuer Stoff.</summary>
 [ApiController]
 [ApiVersion("1.0")]
-[Route(ApiRoutes.V1 + "/children/{childId:int}/timetable")]
+[Route(ApiRoutes.Supervisor + "/children/{childId:int}/timetable")]
 [Tags("Study – Timetable")]
 [Produces("application/json")]
 [Authorize(Roles = Roles.Vater)]

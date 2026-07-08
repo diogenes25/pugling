@@ -77,7 +77,7 @@ public class ErrorCodeTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
     {
         // Pfad (c): leere 401 der JWT-Middleware, via UseStatusCodePages + CustomizeProblemDetails.
         var client = factory.CreateClient();
-        var res = await client.GetAsync("/api/v1/me/points");
+        var res = await client.GetAsync("/api/v1/student/me/points");
 
         Assert.Equal(HttpStatusCode.Unauthorized, res.StatusCode);
         Assert.Equal("unauthorized", Code(await BodyAsync(res)));
@@ -88,7 +88,7 @@ public class ErrorCodeTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
     {
         // Pfad (c): Vater-Token auf einer nur-Sohn-Route (me/*) → 403 forbidden.
         var father = await TestApi.FatherAsync(factory);
-        var res = await father.GetAsync("/api/v1/me/points");
+        var res = await father.GetAsync("/api/v1/student/me/points");
 
         Assert.Equal(HttpStatusCode.Forbidden, res.StatusCode);
         Assert.Equal("forbidden", Code(await BodyAsync(res)));
@@ -99,7 +99,7 @@ public class ErrorCodeTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
     {
         // Pfad: bare NotFound() eines Controllers → [ApiController]-Auto-Wandlung über die Factory.
         var father = await TestApi.FatherAsync(factory);
-        var res = await father.GetAsync("/api/v1/learn/subjects/999999");
+        var res = await father.GetAsync("/api/v1/creator/subjects/999999");
 
         Assert.Equal(HttpStatusCode.NotFound, res.StatusCode);
         Assert.Equal("not_found", Code(await BodyAsync(res)));
@@ -110,7 +110,7 @@ public class ErrorCodeTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
     {
         // Regressionsschutz: der PlanOwnershipFilter lieferte früher einen rohen deutschen String.
         var father = await TestApi.FatherAsync(factory);
-        var res = await father.GetAsync("/api/v1/study-plans/999999/positions");
+        var res = await father.GetAsync("/api/v1/supervisor/study-plans/999999/positions");
 
         Assert.Equal(HttpStatusCode.NotFound, res.StatusCode);
         var body = await BodyAsync(res);
@@ -124,10 +124,10 @@ public class ErrorCodeTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
         // Pfad (a): der Starter-Skin "pug" ist bereits freigeschaltet → erneuter Kauf 409.
         var father = await TestApi.FatherAsync(factory);
         var childId = await TestApi.IdAsync(
-            await father.PostAsJsonAsync("/api/v1/children", new { name = "Code-Kind", pin = "7401" }));
+            await father.PostAsJsonAsync("/api/v1/supervisor/children", new { name = "Code-Kind", pin = "7401" }));
         var child = await TestApi.ChildAsync(factory, childId, "7401");
 
-        var res = await child.PostAsJsonAsync("/api/v1/me/skins/pug/purchase", new { });
+        var res = await child.PostAsJsonAsync("/api/v1/student/me/skins/pug/purchase", new { });
 
         Assert.Equal(HttpStatusCode.Conflict, res.StatusCode);
         Assert.Equal("skin_already_unlocked", Code(await BodyAsync(res)));
@@ -138,10 +138,10 @@ public class ErrorCodeTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
     {
         var father = await TestApi.FatherAsync(factory);
         var childId = await TestApi.IdAsync(
-            await father.PostAsJsonAsync("/api/v1/children", new { name = "Code-Kind", pin = "7402" }));
+            await father.PostAsJsonAsync("/api/v1/supervisor/children", new { name = "Code-Kind", pin = "7402" }));
         var child = await TestApi.ChildAsync(factory, childId, "7402");
 
-        var res = await child.PostAsJsonAsync("/api/v1/me/skins/fox/purchase", new { });
+        var res = await child.PostAsJsonAsync("/api/v1/student/me/skins/fox/purchase", new { });
 
         Assert.Equal(HttpStatusCode.BadRequest, res.StatusCode);
         Assert.Equal("insufficient_gems", Code(await BodyAsync(res)));

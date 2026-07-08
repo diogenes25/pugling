@@ -9,7 +9,7 @@ using Pugling.Api.Models;
 namespace Pugling.Api.Tests;
 
 /// <summary>
-/// Deckt die server-autoritative Skin-Ökonomie ab (<c>api/v1/me/skins…</c>): Der Kauf bucht echte
+/// Deckt die server-autoritative Skin-Ökonomie ab (<c>api/v1/student/me/skins…</c>): Der Kauf bucht echte
 /// <b>Gems</b> ab (nicht Münzen), Besitz/Auswahl liegen am Kind. Nutzt frisch angelegte Kinder, damit
 /// die Salden trotz geteilter Test-DB deterministisch sind.
 /// </summary>
@@ -19,7 +19,7 @@ public class SkinPurchaseTests(PuglingWebAppFactory factory) : IClassFixture<Pug
     private async Task<(int childId, HttpClient child)> FreshChildAsync(HttpClient father, string pin)
     {
         var childId = await TestApi.IdAsync(
-            await father.PostAsJsonAsync("/api/v1/children", new { name = "Skin-Kind", pin }));
+            await father.PostAsJsonAsync("/api/v1/supervisor/children", new { name = "Skin-Kind", pin }));
         var child = await TestApi.ChildAsync(factory, childId, pin);
         return (childId, child);
     }
@@ -45,7 +45,7 @@ public class SkinPurchaseTests(PuglingWebAppFactory factory) : IClassFixture<Pug
         var father = await TestApi.FatherAsync(factory);
         var (_, child) = await FreshChildAsync(father, "7001");
 
-        var state = await (await child.GetAsync("/api/v1/me/skins")).Content.ReadFromJsonAsync<JsonElement>();
+        var state = await (await child.GetAsync("/api/v1/student/me/skins")).Content.ReadFromJsonAsync<JsonElement>();
 
         Assert.Equal("pug", state.GetProperty("selected").GetString());
         Assert.Contains("pug", state.GetProperty("owned").EnumerateArray().Select(e => e.GetString()));
@@ -58,7 +58,7 @@ public class SkinPurchaseTests(PuglingWebAppFactory factory) : IClassFixture<Pug
         var father = await TestApi.FatherAsync(factory);
         var (_, child) = await FreshChildAsync(father, "7002");
 
-        var res = await child.PostAsJsonAsync("/api/v1/me/skins/fox/purchase", new { });
+        var res = await child.PostAsJsonAsync("/api/v1/student/me/skins/fox/purchase", new { });
 
         Assert.Equal(HttpStatusCode.BadRequest, res.StatusCode);
     }
@@ -72,7 +72,7 @@ public class SkinPurchaseTests(PuglingWebAppFactory factory) : IClassFixture<Pug
         // Gems schaffen (2500), damit der Ninja (2000) bezahlbar ist.
         await GrantGemsAsync(childId, 2500);
 
-        var res = await child.PostAsJsonAsync("/api/v1/me/skins/ninja/purchase", new { });
+        var res = await child.PostAsJsonAsync("/api/v1/student/me/skins/ninja/purchase", new { });
         res.EnsureSuccessStatusCode();
         var state = await res.Content.ReadFromJsonAsync<JsonElement>();
 
@@ -81,9 +81,9 @@ public class SkinPurchaseTests(PuglingWebAppFactory factory) : IClassFixture<Pug
         Assert.Equal(500, state.GetProperty("gems").GetInt32()); // 2500 − 2000
 
         // Die Abbuchung ist als negative Buchung mit eigener Kategorie im Wallet nachvollziehbar.
-        var wallet = await (await child.GetAsync("/api/v1/me/points")).Content.ReadFromJsonAsync<JsonElement>();
+        var wallet = await (await child.GetAsync("/api/v1/student/me/points")).Content.ReadFromJsonAsync<JsonElement>();
         Assert.Equal(500, wallet.GetProperty("gems").GetInt32());
-        var entries = await (await child.GetAsync("/api/v1/me/points/entries")).Content.ReadFromJsonAsync<JsonElement>();
+        var entries = await (await child.GetAsync("/api/v1/student/me/points/entries")).Content.ReadFromJsonAsync<JsonElement>();
         var spend = entries.EnumerateArray()
             .First(e => e.GetProperty("kind").GetString() == "SkinPurchase");
         Assert.Equal(-2000, spend.GetProperty("amount").GetInt32());
@@ -96,10 +96,10 @@ public class SkinPurchaseTests(PuglingWebAppFactory factory) : IClassFixture<Pug
         var (childId, child) = await FreshChildAsync(father, "7007");
 
         // Nur Münzen (Manual → Coins), keine Gems: der Skin-Kauf muss trotzdem an der Deckung scheitern.
-        (await father.PostAsJsonAsync($"/api/v1/children/{childId}/points",
+        (await father.PostAsJsonAsync($"/api/v1/supervisor/children/{childId}/points",
             new { amount = 5000, reason = "Nur Münzen" })).EnsureSuccessStatusCode();
 
-        var res = await child.PostAsJsonAsync("/api/v1/me/skins/fox/purchase", new { });
+        var res = await child.PostAsJsonAsync("/api/v1/student/me/skins/fox/purchase", new { });
         Assert.Equal(HttpStatusCode.BadRequest, res.StatusCode);
     }
 
@@ -109,7 +109,7 @@ public class SkinPurchaseTests(PuglingWebAppFactory factory) : IClassFixture<Pug
         var father = await TestApi.FatherAsync(factory);
         var (_, child) = await FreshChildAsync(father, "7004");
 
-        var res = await child.PostAsJsonAsync("/api/v1/me/skins/pug/purchase", new { });
+        var res = await child.PostAsJsonAsync("/api/v1/student/me/skins/pug/purchase", new { });
 
         Assert.Equal(HttpStatusCode.Conflict, res.StatusCode);
     }
@@ -120,7 +120,7 @@ public class SkinPurchaseTests(PuglingWebAppFactory factory) : IClassFixture<Pug
         var father = await TestApi.FatherAsync(factory);
         var (_, child) = await FreshChildAsync(father, "7005");
 
-        var res = await child.PostAsJsonAsync("/api/v1/me/skins/banane/purchase", new { });
+        var res = await child.PostAsJsonAsync("/api/v1/student/me/skins/banane/purchase", new { });
 
         Assert.Equal(HttpStatusCode.NotFound, res.StatusCode);
     }
@@ -131,7 +131,7 @@ public class SkinPurchaseTests(PuglingWebAppFactory factory) : IClassFixture<Pug
         var father = await TestApi.FatherAsync(factory);
         var (_, child) = await FreshChildAsync(father, "7006");
 
-        var res = await child.PostAsJsonAsync("/api/v1/me/skins/ninja/equip", new { });
+        var res = await child.PostAsJsonAsync("/api/v1/student/me/skins/ninja/equip", new { });
 
         Assert.Equal(HttpStatusCode.BadRequest, res.StatusCode);
     }
@@ -141,7 +141,7 @@ public class SkinPurchaseTests(PuglingWebAppFactory factory) : IClassFixture<Pug
     {
         var father = await TestApi.FatherAsync(factory);
 
-        var res = await father.GetAsync("/api/v1/me/skins");
+        var res = await father.GetAsync("/api/v1/student/me/skins");
 
         Assert.Equal(HttpStatusCode.Forbidden, res.StatusCode);
     }
@@ -154,7 +154,7 @@ public class SkinPurchaseTests(PuglingWebAppFactory factory) : IClassFixture<Pug
         // scheitern – so kann keine Zweitbuchung den Deckungs-Check umgehen und doppelt abbuchen.
         var father = await TestApi.FatherAsync(factory);
         var childId = await TestApi.IdAsync(
-            await father.PostAsJsonAsync("/api/v1/children", new { name = "Token-Kind", pin = "7100" }));
+            await father.PostAsJsonAsync("/api/v1/supervisor/children", new { name = "Token-Kind", pin = "7100" }));
 
         using var scopeA = factory.Services.CreateScope();
         using var scopeB = factory.Services.CreateScope();

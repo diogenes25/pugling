@@ -13,7 +13,7 @@ public class CatalogExerciseTests(PuglingWebAppFactory factory) : IClassFixture<
     {
         var father = await TestApi.FatherAsync(factory);
         var (subjectId, chapterId, exerciseId) = await TestApi.CreateArithmeticExerciseAsync(father);
-        var basePath = $"/api/v1/learn/subjects/{subjectId}/chapters/{chapterId}/arithmetic";
+        var basePath = $"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/arithmetic";
 
         var list = await (await father.GetAsync(basePath)).Content.ReadFromJsonAsync<JsonElement>();
         Assert.True(list.GetArrayLength() >= 1);
@@ -33,10 +33,10 @@ public class CatalogExerciseTests(PuglingWebAppFactory factory) : IClassFixture<
     public async Task ExerciseDefaults_WerdenGespeichertUndZurueckgegeben()
     {
         var father = await TestApi.FatherAsync(factory);
-        var subjectId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/learn/subjects", new { name = "Default-Fach" }));
+        var subjectId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/subjects", new { name = "Default-Fach" }));
         var chapterId = await TestApi.IdAsync(await father.PostAsJsonAsync(
-            $"/api/v1/learn/subjects/{subjectId}/chapters", new { name = "Kapitel", orderIndex = 1 }));
-        var basePath = $"/api/v1/learn/subjects/{subjectId}/chapters/{chapterId}/vocabulary";
+            $"/api/v1/creator/subjects/{subjectId}/chapters", new { name = "Kapitel", orderIndex = 1 }));
+        var basePath = $"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/vocabulary";
 
         var created = await (await father.PostAsJsonAsync(basePath, new
         {
@@ -78,12 +78,12 @@ public class CatalogExerciseTests(PuglingWebAppFactory factory) : IClassFixture<
     public async Task Sohn_DarfKeineUebungAnlegen_403()
     {
         var father = await TestApi.FatherAsync(factory);
-        var subjectId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/learn/subjects", new { name = "Fach" }));
+        var subjectId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/subjects", new { name = "Fach" }));
         var chapterId = await TestApi.IdAsync(await father.PostAsJsonAsync(
-            $"/api/v1/learn/subjects/{subjectId}/chapters", new { name = "Kapitel", orderIndex = 1 }));
+            $"/api/v1/creator/subjects/{subjectId}/chapters", new { name = "Kapitel", orderIndex = 1 }));
         var child = await TestApi.ChildAsync(factory);
 
-        var res = await child.PostAsJsonAsync($"/api/v1/learn/subjects/{subjectId}/chapters/{chapterId}/arithmetic",
+        var res = await child.PostAsJsonAsync($"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/arithmetic",
             new { title = "X", orderIndex = 1, rewardPoints = 5, config = new { problems = Array.Empty<object>() } });
 
         Assert.Equal(HttpStatusCode.Forbidden, res.StatusCode);
