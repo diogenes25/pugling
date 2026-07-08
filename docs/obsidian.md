@@ -102,6 +102,7 @@ Der Graph-Hub: Bereich → maßgebliche Seite(n). Von hier aus ist jede Domäne 
 | Bereich | Einstieg |
 | --- | --- |
 | Gesamtbild / Konzepte | [wiki/01 · Überblick & Architektur](../wiki/01-ueberblick-architektur.md) · [CLAUDE.md](../CLAUDE.md) |
+| **Grundprinzip** (Creator→Vater→Kind) | [docs/grundprinzip.md](grundprinzip.md) |
 | **Endpunkt-Beziehungen** (Übung→Lehrplan→Kind→Auswertung) | [docs/endpunkt-beziehungen.md](endpunkt-beziehungen.md) |
 | Endpunkt-Index | [wiki/07 · API-Referenz](../wiki/07-api-referenz.md) |
 | Katalog & Übungstypen | [wiki/03 · Übungstypen](../wiki/03-uebungstypen.md) |
