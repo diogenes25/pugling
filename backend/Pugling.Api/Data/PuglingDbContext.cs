@@ -13,9 +13,10 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
     public DbSet<Account> Accounts => Set<Account>();
     public DbSet<AccountProfile> AccountProfiles => Set<AccountProfile>();
 
-    // Admin-Bereich: Personen (Father -> Child) + Punkte
+    // Admin-Bereich: Personen (Supervisor >-< Student über SupervisorLink) + Punkte
     public DbSet<Father> Fathers => Set<Father>();
     public DbSet<Child> Children => Set<Child>();
+    public DbSet<SupervisorLink> SupervisorLinks => Set<SupervisorLink>();
     public DbSet<ChildPointsEntry> ChildPoints => Set<ChildPointsEntry>();
 
     // Lern-Katalog: Subject -> Chapter -> Exercise (typisiert)
@@ -99,6 +100,25 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
         });
         modelBuilder.Entity<Account>()
             .HasIndex(a => a.Email).IsUnique().HasFilter("[Email] IS NOT NULL");
+
+        // Aussteller-Attribution der Ökonomie (Momentaufnahme): Filter „nur meine Vorgänge" je (Kind, Supervisor).
+        modelBuilder.Entity<Reward>().HasIndex(r => new { r.ChildId, r.SupervisorId });
+        modelBuilder.Entity<RewardRedemption>().HasIndex(r => new { r.ChildId, r.SupervisorId });
+        modelBuilder.Entity<ShopPurchase>().HasIndex(p => new { p.ChildId, p.SupervisorId });
+        modelBuilder.Entity<ActivationRequest>().HasIndex(r => new { r.ChildId, r.SupervisorId });
+
+        // Betreuung Supervisor >-< Student. Ein Student kann mehrere Supervisor haben; ein Paar ist eindeutig.
+        // Leaf auf zwei unabhängige Roots (wie ItemProgress) – beide FKs Cascade, kein SQLite-Diamant.
+        modelBuilder.Entity<SupervisorLink>(e =>
+        {
+            e.Property(l => l.Relation).HasConversion<string>();
+            e.HasOne(l => l.Supervisor).WithMany(f => f.SupervisedLinks)
+                .HasForeignKey(l => l.SupervisorId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(l => l.Student).WithMany(c => c.SupervisorLinks)
+                .HasForeignKey(l => l.StudentId).OnDelete(DeleteBehavior.Cascade);
+            e.HasIndex(l => new { l.SupervisorId, l.StudentId }).IsUnique();
+            e.HasIndex(l => l.StudentId);
+        });
 
         // Freigeschaltete Skins des Kindes als JSON-Liste (Neuzuweisung im Controller, kein In-Place-Mutieren).
         modelBuilder.Entity<Child>(e =>

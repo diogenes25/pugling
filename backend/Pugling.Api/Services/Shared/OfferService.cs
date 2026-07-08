@@ -86,6 +86,7 @@ public class OfferService(PuglingDbContext db, WalletService wallet)
         {
             ChildId = childId,
             RewardId = reward.Id,
+            SupervisorId = reward.SupervisorId, // Aussteller festhalten: nur er erfüllt/storniert
             Title = reward.Title,   // Momentaufnahme, stabil auch bei späterer Änderung/Löschung
             Cost = reward.Cost,
             Status = RewardRedemptionStatus.Purchased,
@@ -98,10 +99,10 @@ public class OfferService(PuglingDbContext db, WalletService wallet)
     }
 
     /// <summary>Markiert einen offenen Kauf als vom Vater erfüllt (reale Leistung erbracht).</summary>
-    public async Task<Result> FulfillAsync(int childId, int redemptionId, DateTime nowUtc, CancellationToken ct = default)
+    public async Task<Result> FulfillAsync(int supervisorId, int childId, int redemptionId, DateTime nowUtc, CancellationToken ct = default)
     {
-        var redemption = await LoadOpenAsync(childId, redemptionId, ct);
-        if (redemption is null) return await MissOrNotOpenAsync(childId, redemptionId, ct);
+        var redemption = await LoadOpenAsync(supervisorId, childId, redemptionId, ct);
+        if (redemption is null) return await MissOrNotOpenAsync(supervisorId, childId, redemptionId, ct);
 
         redemption.Status = RewardRedemptionStatus.Fulfilled;
         redemption.FulfilledAt = nowUtc;
@@ -113,10 +114,10 @@ public class OfferService(PuglingDbContext db, WalletService wallet)
     /// Storniert einen offenen Kauf und erstattet die Münzen zurück (positive <c>PointKind.Reward</c>-Buchung).
     /// Der Kontingent-Slot wird dadurch wieder frei (stornierte Käufe zählen nicht mehr mit).
     /// </summary>
-    public async Task<Result> CancelAsync(int childId, int redemptionId, DateTime nowUtc, CancellationToken ct = default)
+    public async Task<Result> CancelAsync(int supervisorId, int childId, int redemptionId, DateTime nowUtc, CancellationToken ct = default)
     {
-        var redemption = await LoadOpenAsync(childId, redemptionId, ct);
-        if (redemption is null) return await MissOrNotOpenAsync(childId, redemptionId, ct);
+        var redemption = await LoadOpenAsync(supervisorId, childId, redemptionId, ct);
+        if (redemption is null) return await MissOrNotOpenAsync(supervisorId, childId, redemptionId, ct);
 
         redemption.Status = RewardRedemptionStatus.Cancelled;
         redemption.FulfilledAt = nowUtc;
@@ -170,14 +171,16 @@ public class OfferService(PuglingDbContext db, WalletService wallet)
         return result;
     }
 
-    private Task<RewardRedemption?> LoadOpenAsync(int childId, int redemptionId, CancellationToken ct) =>
+    // Aussteller-gebunden: nur der Supervisor, der das Angebot ausgestellt hat (SupervisorId-Snapshot),
+    // sieht/erfüllt/storniert den Kauf. Ein fremd ausgestellter Kauf erscheint als NotFound.
+    private Task<RewardRedemption?> LoadOpenAsync(int supervisorId, int childId, int redemptionId, CancellationToken ct) =>
         db.RewardRedemptions.FirstOrDefaultAsync(
-            r => r.Id == redemptionId && r.ChildId == childId && r.Status == RewardRedemptionStatus.Purchased, ct);
+            r => r.Id == redemptionId && r.ChildId == childId && r.SupervisorId == supervisorId && r.Status == RewardRedemptionStatus.Purchased, ct);
 
     /// <summary>Unterscheidet „gibt es nicht" von „nicht mehr offen" für eine präzise Fehlerantwort.</summary>
-    private async Task<Result> MissOrNotOpenAsync(int childId, int redemptionId, CancellationToken ct)
+    private async Task<Result> MissOrNotOpenAsync(int supervisorId, int childId, int redemptionId, CancellationToken ct)
     {
-        var exists = await db.RewardRedemptions.AnyAsync(r => r.Id == redemptionId && r.ChildId == childId, ct);
+        var exists = await db.RewardRedemptions.AnyAsync(r => r.Id == redemptionId && r.ChildId == childId && r.SupervisorId == supervisorId, ct);
         return Result.Fail(exists ? OfferError.NotOpen : OfferError.NotFound);
     }
 

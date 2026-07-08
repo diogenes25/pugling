@@ -22,27 +22,27 @@ namespace Pugling.Api.Controllers.Supervisor;
 [ServiceFilter(typeof(ChildOwnershipFilter))]
 public class ChildrenController(PuglingDbContext db, WalletService wallet, AccountService accounts) : ControllerBase
 {
-    public record ChildResponse(int Id, int FatherId, string Name, int? BirthYear, int? Grade,
+    public record ChildResponse(int Id, string Name, int? BirthYear, int? Grade,
         SchoolTypes SchoolType, DateTime CreatedAt, int Coins, int Gems);
 
     Task<ChildResponse?> ProjectOne(int childId) =>
         db.Children
             .Where(c => c.Id == childId)
-            .Select(c => new ChildResponse(c.Id, c.FatherId, c.Name, c.BirthYear, c.Grade, c.SchoolType,
+            .Select(c => new ChildResponse(c.Id, c.Name, c.BirthYear, c.Grade, c.SchoolType,
                 c.CreatedAt,
                 c.PointsEntries.Where(p => PointKindCurrency.CoinKinds.Contains(p.Kind)).Sum(p => (int?)p.Amount) ?? 0,
                 c.PointsEntries.Where(p => PointKindCurrency.GemKinds.Contains(p.Kind)).Sum(p => (int?)p.Amount) ?? 0))
             .FirstOrDefaultAsync();
 
-    /// <summary>Liste der eigenen Kinder.</summary>
+    /// <summary>Liste der vom angemeldeten Supervisor betreuten Studenten.</summary>
     [HttpGet]
     public async Task<ActionResult<IEnumerable<ChildResponse>>> List()
     {
         var fatherId = User.FatherId();
         return await db.Children
-            .Where(c => c.FatherId == fatherId)
+            .Where(c => c.SupervisorLinks.Any(l => l.SupervisorId == fatherId))
             .OrderBy(c => c.Name)
-            .Select(c => new ChildResponse(c.Id, c.FatherId, c.Name, c.BirthYear, c.Grade, c.SchoolType,
+            .Select(c => new ChildResponse(c.Id, c.Name, c.BirthYear, c.Grade, c.SchoolType,
                 c.CreatedAt,
                 c.PointsEntries.Where(p => PointKindCurrency.CoinKinds.Contains(p.Kind)).Sum(p => (int?)p.Amount) ?? 0,
                 c.PointsEntries.Where(p => PointKindCurrency.GemKinds.Contains(p.Kind)).Sum(p => (int?)p.Amount) ?? 0))
@@ -70,7 +70,6 @@ public class ChildrenController(PuglingDbContext db, WalletService wallet, Accou
 
         var child = new Child
         {
-            FatherId = User.FatherId()!.Value,
             Name = dto.Name.Trim(),
             BirthYear = dto.BirthYear,
             Grade = dto.Grade,
@@ -79,10 +78,13 @@ public class ChildrenController(PuglingDbContext db, WalletService wallet, Accou
         };
         db.Children.Add(child);
         await db.SaveChangesAsync();
+        // Betreuung durch den anlegenden Supervisor herstellen (ein Student kann später weitere bekommen).
+        db.SupervisorLinks.Add(new SupervisorLink { SupervisorId = User.FatherId()!.Value, StudentId = child.Id });
+        await db.SaveChangesAsync();
         // Login-Konto (Student) sofort anlegen, damit sich das neue Kind einloggen kann.
         await accounts.EnsureForChildAsync(child);
 
-        var response = new ChildResponse(child.Id, child.FatherId, child.Name, child.BirthYear, child.Grade,
+        var response = new ChildResponse(child.Id, child.Name, child.BirthYear, child.Grade,
             child.SchoolType, child.CreatedAt, 0, 0);
         return CreatedAtAction(nameof(Get), new { childId = child.Id }, response);
     }
@@ -121,6 +123,62 @@ public class ChildrenController(PuglingDbContext db, WalletService wallet, Accou
         var child = await db.Children.FirstOrDefaultAsync(c => c.Id == childId);
         if (child is null) return NotFound();
         db.Children.Remove(child);
+        await db.SaveChangesAsync();
+        return NoContent();
+    }
+
+    // ---- Ko-Supervisoren (mehrere Betreuer je Student) ----
+
+    public record SupervisorLinkResponse(int SupervisorId, string SupervisorName, SupervisorRelation Relation, DateTime CreatedAt);
+
+    /// <summary>Alle Supervisor dieses Studenten (der handelnde Supervisor muss selbst einer sein).</summary>
+    [HttpGet("{childId:int}/supervisors")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<IEnumerable<SupervisorLinkResponse>>> Supervisors(int childId) =>
+        await db.SupervisorLinks.AsNoTracking()
+            .Where(l => l.StudentId == childId)
+            .OrderBy(l => l.CreatedAt)
+            .Select(l => new SupervisorLinkResponse(l.SupervisorId, l.Supervisor!.Name, l.Relation, l.CreatedAt))
+            .ToListAsync();
+
+    public record AddSupervisorDto(int SupervisorId, SupervisorRelation Relation = SupervisorRelation.Other);
+
+    /// <summary>
+    /// Fügt dem Studenten einen weiteren Supervisor hinzu (z. B. Mutter/Oma). Der handelnde Supervisor
+    /// muss den Studenten bereits betreuen (<see cref="ChildOwnershipFilter"/>); der neue Supervisor muss existieren.
+    /// Idempotent: eine bestehende Betreuung wird nicht dupliziert.
+    /// </summary>
+    [HttpPost("{childId:int}/supervisors")]
+    [ProducesResponseType(StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<SupervisorLinkResponse>> AddSupervisor(int childId, AddSupervisorDto dto)
+    {
+        var supervisor = await db.Fathers.FirstOrDefaultAsync(f => f.Id == dto.SupervisorId);
+        if (supervisor is null) return this.ProblemWithCode(ApiErrors.InvalidReference, "Supervisor not found.");
+
+        if (!await db.SupervisorLinks.AnyAsync(l => l.StudentId == childId && l.SupervisorId == dto.SupervisorId))
+        {
+            db.SupervisorLinks.Add(new SupervisorLink { StudentId = childId, SupervisorId = dto.SupervisorId, Relation = dto.Relation });
+            await db.SaveChangesAsync();
+        }
+        return CreatedAtAction(nameof(Supervisors), new { childId },
+            new SupervisorLinkResponse(supervisor.Id, supervisor.Name, dto.Relation, DateTime.UtcNow));
+    }
+
+    /// <summary>Entfernt eine Betreuung. Der letzte Supervisor kann nicht entfernt werden (Student wäre verwaist).</summary>
+    [HttpDelete("{childId:int}/supervisors/{supervisorId:int}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> RemoveSupervisor(int childId, int supervisorId)
+    {
+        var link = await db.SupervisorLinks.FirstOrDefaultAsync(l => l.StudentId == childId && l.SupervisorId == supervisorId);
+        if (link is null) return NotFound();
+        if (await db.SupervisorLinks.CountAsync(l => l.StudentId == childId) <= 1)
+            return this.ProblemWithCode(ApiErrors.ValidationError, "Cannot remove the last supervisor of a student.");
+        db.SupervisorLinks.Remove(link);
         await db.SaveChangesAsync();
         return NoContent();
     }

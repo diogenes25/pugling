@@ -87,6 +87,31 @@ public class ShopService(PuglingDbContext db, WalletService wallet)
     }
 
     /// <summary>
+    /// Lädt die Angebote ALLER Supervisor des Studenten (gemeinsame Shop-Sicht des Kindes), wendet fällige
+    /// Refill-Regeln idempotent an und liefert sie gruppierbar je Aussteller (<see cref="ShopArticle.FatherId"/>).
+    /// </summary>
+    public async Task<IReadOnlyList<ShopListing>> ListingsForStudentAsync(
+        int childId, bool activeOnly, DateTime nowUtc, CancellationToken ct = default)
+    {
+        var query = db.ShopListings
+            .Include(l => l.ShopArticle)
+            .Where(l => db.SupervisorLinks.Any(sl => sl.StudentId == childId && sl.SupervisorId == l.ShopArticle!.FatherId));
+        if (activeOnly) query = query.Where(l => l.Active);
+
+        var listings = await query
+            .OrderBy(l => l.ShopArticle!.FatherId)
+            .ThenByDescending(l => l.Active)
+            .ThenBy(l => l.ShopArticle!.ArticleNumber)
+            .ThenBy(l => l.Id)
+            .ToListAsync(ct);
+
+        var changed = false;
+        foreach (var listing in listings) changed |= ApplyDueRefill(listing, nowUtc);
+        if (changed && !await TrySaveAsync(ct)) db.ChangeTracker.Clear();
+        return listings;
+    }
+
+    /// <summary>
     /// Kauft ein Angebot für das Kind: prüft Familienzugehörigkeit, Aktiv-Status, Bestand und beide
     /// Wallet-Salden, bucht Coins/Gems ab, reduziert den Lagerbestand, legt die Kaufbuchung an und
     /// erhöht das aggregierte <see cref="ChildInventory"/> des Kinds für den zugehörigen Artikel.
@@ -97,9 +122,11 @@ public class ShopService(PuglingDbContext db, WalletService wallet)
         var child = await db.Children.FirstOrDefaultAsync(c => c.Id == childId, ct);
         if (child is null) return Result<ShopPurchase>.Fail(ShopError.NotFound);
 
+        // Der Student darf aus dem Shop JEDES seiner Supervisor kaufen (gemeinsames Wallet).
         var listing = await db.ShopListings
             .Include(l => l.ShopArticle)
-            .FirstOrDefaultAsync(l => l.Id == listingId && l.ShopArticle!.FatherId == child.FatherId, ct);
+            .FirstOrDefaultAsync(l => l.Id == listingId
+                && db.SupervisorLinks.Any(sl => sl.StudentId == childId && sl.SupervisorId == l.ShopArticle!.FatherId), ct);
         if (listing is null) return Result<ShopPurchase>.Fail(ShopError.NotFound);
 
         ApplyDueRefill(listing, nowUtc);
@@ -139,6 +166,7 @@ public class ShopService(PuglingDbContext db, WalletService wallet)
         {
             ChildId = childId,
             ShopListingId = listing.Id,
+            SupervisorId = article.FatherId, // Aussteller festhalten: nur er storniert.
             ArticleNumber = article.ArticleNumber,
             Title = title,
             Description = listing.Description,
@@ -182,10 +210,10 @@ public class ShopService(PuglingDbContext db, WalletService wallet)
     /// <see cref="ShopPurchase.UnitsPerPurchase"/> (mindestens 0).
     /// </summary>
     public async Task<Result<ShopPurchase>> CancelPurchaseAsync(
-        int childId, int purchaseId, DateTime nowUtc, CancellationToken ct = default)
+        int supervisorId, int childId, int purchaseId, DateTime nowUtc, CancellationToken ct = default)
     {
-        var purchase = await LoadOpenPurchaseAsync(childId, purchaseId, ct);
-        if (purchase is null) return await MissOrNotOpenAsync(childId, purchaseId, ct);
+        var purchase = await LoadOpenPurchaseAsync(supervisorId, childId, purchaseId, ct);
+        if (purchase is null) return await MissOrNotOpenAsync(supervisorId, childId, purchaseId, ct);
 
         purchase.Status = ShopPurchaseStatus.Cancelled;
         purchase.ClosedAt = nowUtc;
@@ -244,11 +272,13 @@ public class ShopService(PuglingDbContext db, WalletService wallet)
     {
         if (quantity <= 0) return Result<ActivationRequest>.Fail(ShopError.InvalidQuantity);
 
-        var child = await db.Children.AsNoTracking().FirstOrDefaultAsync(c => c.Id == childId, ct);
-        if (child is null) return Result<ActivationRequest>.Fail(ShopError.NotFound);
+        var childExists = await db.Children.AsNoTracking().AnyAsync(c => c.Id == childId, ct);
+        if (!childExists) return Result<ActivationRequest>.Fail(ShopError.NotFound);
 
+        // Aktivierung nur für einen Artikel eines betreuenden Supervisors möglich.
         var article = await db.ShopArticles.AsNoTracking()
-            .FirstOrDefaultAsync(a => a.Id == articleId && a.FatherId == child.FatherId, ct);
+            .FirstOrDefaultAsync(a => a.Id == articleId
+                && db.SupervisorLinks.Any(sl => sl.StudentId == childId && sl.SupervisorId == a.FatherId), ct);
         if (article is null) return Result<ActivationRequest>.Fail(ShopError.NotFound);
 
         var inventory = await db.ChildInventories
@@ -260,6 +290,7 @@ public class ShopService(PuglingDbContext db, WalletService wallet)
         {
             ChildId = childId,
             ShopArticleId = articleId,
+            SupervisorId = article.FatherId, // Aussteller festhalten: nur er genehmigt/lehnt ab.
             RequestedQuantity = quantity,
             ArticleTitle = article.Title,
             UnitType = article.UnitType,
@@ -282,10 +313,10 @@ public class ShopService(PuglingDbContext db, WalletService wallet)
     /// Das Concurrency-Token am Inventar verhindert parallele Überziehung.
     /// </summary>
     public async Task<Result<ActivationRequest>> ApproveActivationAsync(
-        int childId, int requestId, DateTime nowUtc, CancellationToken ct = default)
+        int supervisorId, int childId, int requestId, DateTime nowUtc, CancellationToken ct = default)
     {
-        var request = await LoadPendingActivationAsync(childId, requestId, ct);
-        if (request is null) return await MissOrNotPendingAsync(childId, requestId, ct);
+        var request = await LoadPendingActivationAsync(supervisorId, childId, requestId, ct);
+        if (request is null) return await MissOrNotPendingAsync(supervisorId, childId, requestId, ct);
 
         // Nur bei fehlendem Artikelbezug (Artikel nachträglich gelöscht) gibt es kein Inventar zu buchen.
         if (request.ShopArticleId is not null)
@@ -312,10 +343,10 @@ public class ShopService(PuglingDbContext db, WalletService wallet)
     /// unverändert – die Einheiten verbleiben beim Sohn.
     /// </summary>
     public async Task<Result<ActivationRequest>> RejectActivationAsync(
-        int childId, int requestId, DateTime nowUtc, CancellationToken ct = default)
+        int supervisorId, int childId, int requestId, DateTime nowUtc, CancellationToken ct = default)
     {
-        var request = await LoadPendingActivationAsync(childId, requestId, ct);
-        if (request is null) return await MissOrNotPendingAsync(childId, requestId, ct);
+        var request = await LoadPendingActivationAsync(supervisorId, childId, requestId, ct);
+        if (request is null) return await MissOrNotPendingAsync(supervisorId, childId, requestId, ct);
 
         request.Status = ActivationRequestStatus.Rejected;
         request.ClosedAt = nowUtc;
@@ -349,23 +380,25 @@ public class ShopService(PuglingDbContext db, WalletService wallet)
         _ => false,
     };
 
-    private Task<ShopPurchase?> LoadOpenPurchaseAsync(int childId, int purchaseId, CancellationToken ct) =>
+    // Aussteller-gebunden: nur der Supervisor, der den Artikel/das Angebot ausgestellt hat (SupervisorId-Snapshot),
+    // sieht/bearbeitet den Kauf bzw. die Anfrage. Ein fremd ausgestellter Vorgang erscheint als NotFound.
+    private Task<ShopPurchase?> LoadOpenPurchaseAsync(int supervisorId, int childId, int purchaseId, CancellationToken ct) =>
         db.ShopPurchases.FirstOrDefaultAsync(
-            p => p.Id == purchaseId && p.ChildId == childId && p.Status == ShopPurchaseStatus.Owned, ct);
+            p => p.Id == purchaseId && p.ChildId == childId && p.SupervisorId == supervisorId && p.Status == ShopPurchaseStatus.Owned, ct);
 
-    private Task<ActivationRequest?> LoadPendingActivationAsync(int childId, int requestId, CancellationToken ct) =>
+    private Task<ActivationRequest?> LoadPendingActivationAsync(int supervisorId, int childId, int requestId, CancellationToken ct) =>
         db.ActivationRequests.FirstOrDefaultAsync(
-            r => r.Id == requestId && r.ChildId == childId && r.Status == ActivationRequestStatus.Pending, ct);
+            r => r.Id == requestId && r.ChildId == childId && r.SupervisorId == supervisorId && r.Status == ActivationRequestStatus.Pending, ct);
 
-    private async Task<Result<ShopPurchase>> MissOrNotOpenAsync(int childId, int purchaseId, CancellationToken ct)
+    private async Task<Result<ShopPurchase>> MissOrNotOpenAsync(int supervisorId, int childId, int purchaseId, CancellationToken ct)
     {
-        var exists = await db.ShopPurchases.AnyAsync(p => p.Id == purchaseId && p.ChildId == childId, ct);
+        var exists = await db.ShopPurchases.AnyAsync(p => p.Id == purchaseId && p.ChildId == childId && p.SupervisorId == supervisorId, ct);
         return Result<ShopPurchase>.Fail(exists ? ShopError.NotOpen : ShopError.NotFound);
     }
 
-    private async Task<Result<ActivationRequest>> MissOrNotPendingAsync(int childId, int requestId, CancellationToken ct)
+    private async Task<Result<ActivationRequest>> MissOrNotPendingAsync(int supervisorId, int childId, int requestId, CancellationToken ct)
     {
-        var exists = await db.ActivationRequests.AnyAsync(r => r.Id == requestId && r.ChildId == childId, ct);
+        var exists = await db.ActivationRequests.AnyAsync(r => r.Id == requestId && r.ChildId == childId && r.SupervisorId == supervisorId, ct);
         return Result<ActivationRequest>.Fail(exists ? ShopError.NotPending : ShopError.NotFound);
     }
 

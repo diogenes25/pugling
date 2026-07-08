@@ -45,7 +45,6 @@ export interface LoginResponse {
 
 export interface ChildResponse {
   id: number;
-  fatherId: number;
   name: string;
   birthYear: number | null;
   grade: number | null;

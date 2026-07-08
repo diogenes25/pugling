@@ -325,8 +325,8 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
         var svc2 = scope2.ServiceProvider.GetRequiredService<ShopService>();
         var now = new DateTime(2026, 7, 6, 12, 0, 0, DateTimeKind.Utc);
 
-        var first = await svc1.CancelPurchaseAsync(childId, purchaseId, now);
-        var second = await svc2.CancelPurchaseAsync(childId, purchaseId, now);
+        var first = await svc1.CancelPurchaseAsync(1, childId, purchaseId, now);
+        var second = await svc2.CancelPurchaseAsync(1, childId, purchaseId, now);
 
         // Genau einer der beiden darf erfolgreich sein
         Assert.Contains(ShopService.ShopError.None, new[] { first.Error, second.Error });

@@ -351,8 +351,9 @@ public class ShopController(PuglingDbContext db, ShopService shop) : ControllerB
     public async Task<ActionResult<IReadOnlyList<InventoryItemDto>>> ChildInventory(int childId,
         [FromQuery] int skip = 0, [FromQuery] int take = PagingExtensions.DefaultTake)
     {
+        var fid = User.FatherId();
         var query = db.ChildInventories.AsNoTracking()
-            .Where(i => i.ChildId == childId && i.Quantity > 0)
+            .Where(i => i.ChildId == childId && i.Quantity > 0 && i.ShopArticle!.FatherId == fid) // nur eigene Artikel
             .OrderBy(i => i.ShopArticle!.ArticleNumber)
             .Select(i => new InventoryItemDto(
                 i.ShopArticleId, i.ShopArticle!.ArticleNumber, i.ShopArticle!.Title,
@@ -374,7 +375,8 @@ public class ShopController(PuglingDbContext db, ShopService shop) : ControllerB
         [FromQuery] ShopPurchaseStatus? status,
         [FromQuery] int skip = 0, [FromQuery] int take = PagingExtensions.DefaultTake)
     {
-        var query = db.ShopPurchases.AsNoTracking().Where(p => p.ChildId == childId);
+        var fid = User.FatherId();
+        var query = db.ShopPurchases.AsNoTracking().Where(p => p.ChildId == childId && p.SupervisorId == fid);
         if (status is not null) query = query.Where(p => p.Status == status);
 
         return await query
@@ -392,7 +394,7 @@ public class ShopController(PuglingDbContext db, ShopService shop) : ControllerB
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<ActionResult<ShopPurchaseDto>> CancelPurchase(int childId, int purchaseId)
     {
-        var result = await shop.CancelPurchaseAsync(childId, purchaseId, DateTime.UtcNow);
+        var result = await shop.CancelPurchaseAsync(User.FatherId()!.Value, childId, purchaseId, DateTime.UtcNow);
         return result.Error switch
         {
             ShopService.ShopError.None => MapPurchase(result.Value!),
@@ -413,7 +415,8 @@ public class ShopController(PuglingDbContext db, ShopService shop) : ControllerB
         [FromQuery] ActivationRequestStatus? status,
         [FromQuery] int skip = 0, [FromQuery] int take = PagingExtensions.DefaultTake)
     {
-        var query = db.ActivationRequests.AsNoTracking().Where(r => r.ChildId == childId);
+        var fid = User.FatherId();
+        var query = db.ActivationRequests.AsNoTracking().Where(r => r.ChildId == childId && r.SupervisorId == fid);
         if (status is not null) query = query.Where(r => r.Status == status);
 
         return await query
@@ -432,7 +435,7 @@ public class ShopController(PuglingDbContext db, ShopService shop) : ControllerB
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<ActionResult<ActivationRequestDto>> ApproveActivation(int childId, int requestId)
     {
-        var result = await shop.ApproveActivationAsync(childId, requestId, DateTime.UtcNow);
+        var result = await shop.ApproveActivationAsync(User.FatherId()!.Value, childId, requestId, DateTime.UtcNow);
         return ActivationResult(result);
     }
 
@@ -444,7 +447,7 @@ public class ShopController(PuglingDbContext db, ShopService shop) : ControllerB
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<ActionResult<ActivationRequestDto>> RejectActivation(int childId, int requestId)
     {
-        var result = await shop.RejectActivationAsync(childId, requestId, DateTime.UtcNow);
+        var result = await shop.RejectActivationAsync(User.FatherId()!.Value, childId, requestId, DateTime.UtcNow);
         return ActivationResult(result);
     }
 

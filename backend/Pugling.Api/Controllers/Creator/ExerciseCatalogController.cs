@@ -175,7 +175,7 @@ public class ExerciseCatalogController(PuglingDbContext db) : ControllerBase
         var fid = User.FatherId();
 
         var plans = (await db.PlanPositions.AsNoTracking()
-                .Where(p => p.ExerciseId == id && p.StudyPlan!.Child!.FatherId == fid)
+                .Where(p => p.ExerciseId == id && p.StudyPlan!.Child!.SupervisorLinks.Any(l => l.SupervisorId == fid))
                 .Select(p => new PlanUsage(p.StudyPlanId, p.StudyPlan!.Title, p.StudyPlan.ChildId, p.StudyPlan.Child!.Name))
                 .ToListAsync())
             .DistinctBy(u => u.PlanId).ToList();
@@ -187,7 +187,7 @@ public class ExerciseCatalogController(PuglingDbContext db) : ControllerBase
             .Select(kt => kt.KlassenarbeitId);
         var testIds = directTestIds.Union(tagTestIds);
         var classTests = await db.Klassenarbeiten.AsNoTracking()
-            .Where(k => testIds.Contains(k.Id) && k.Child!.FatherId == fid)
+            .Where(k => testIds.Contains(k.Id) && k.Child!.SupervisorLinks.Any(l => l.SupervisorId == fid))
             .Select(k => new ClassTestUsage(k.Id, k.Title, k.ChildId, k.Child!.Name))
             .ToListAsync();
 

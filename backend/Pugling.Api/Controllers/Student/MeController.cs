@@ -552,11 +552,11 @@ public class MeController(PuglingDbContext db, GamificationService gamification,
 
     private async Task<ShopViewResponse> ShopViewAsync(int childId)
     {
-        var child = await db.Children.AsNoTracking().FirstAsync(c => c.Id == childId);
         var balances = await wallet.BalancesAsync(childId);
         var now = DateTime.UtcNow;
 
-        var listings = await shop.ListingsForFatherAsync(child.FatherId, activeOnly: true, now);
+        // Gemeinsame Shop-Sicht des Kindes: Angebote ALLER seiner Supervisor.
+        var listings = await shop.ListingsForStudentAsync(childId, activeOnly: true, now);
         var available = listings
             .OrderBy(l => l.ShopArticle!.ArticleNumber).ThenBy(l => l.Id)
             .Select(l =>

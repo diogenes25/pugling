@@ -29,21 +29,21 @@ Response — `HTTP 200`:
     "amount": 15,
     "kind": "Base",
     "reason": "Doku-Buchung",
-    "createdAt": "2026-07-08T14:33:30.5294388"
+    "createdAt": "2026-07-08T15:05:55.199664"
   },
   {
     "id": 2,
     "amount": 300,
     "kind": "Achievement",
     "reason": "Willkommens-Gems",
-    "createdAt": "2026-07-08T14:33:13.1289037"
+    "createdAt": "2026-07-08T15:05:42.1225638"
   },
   {
     "id": 1,
     "amount": 50,
     "kind": "Base",
     "reason": "Startguthaben (M\u00FCnzen)",
-    "createdAt": "2026-07-08T14:33:13.1289018"
+    "createdAt": "2026-07-08T15:05:42.1225626"
   }
 ]
 ```
@@ -60,7 +60,7 @@ Response — `HTTP 200`:
   "amount": 15,
   "kind": "Base",
   "reason": "Doku-Buchung",
-  "createdAt": "2026-07-08T14:33:30.5294388"
+  "createdAt": "2026-07-08T15:05:55.199664"
 }
 ```
 
@@ -560,7 +560,7 @@ Response — `HTTP 200`:
       "title": "30 Min Fernsehen",
       "cost": 50,
       "status": "Purchased",
-      "purchasedAt": "2026-07-08T14:33:34.8857829",
+      "purchasedAt": "2026-07-08T15:05:59.4034321",
       "fulfilledAt": null
     }
   ]
@@ -580,7 +580,7 @@ Response — `HTTP 200`:
   "title": "30 Min Fernsehen",
   "cost": 50,
   "status": "Purchased",
-  "purchasedAt": "2026-07-08T14:33:34.8857829",
+  "purchasedAt": "2026-07-08T15:05:59.4034321",
   "fulfilledAt": null
 }
 ```
@@ -604,7 +604,7 @@ Response — `HTTP 200`:
   "title": "30 Min Fernsehen",
   "cost": 50,
   "status": "Fulfilled",
-  "purchasedAt": "2026-07-08T14:33:34.8857829",
+  "purchasedAt": "2026-07-08T15:05:59.4034321",
   "fulfilledAt": "<timestamp>",
   "canFulfill": false,
   "canCancel": false
