@@ -3,7 +3,7 @@
 _Automatisch erzeugt von `DocsCaptureTests` (Integrationstest). Jedes Beispiel ist verifiziert: Status und – bei Fehlern – der maschinenlesbare `code` wurden im Testlauf geprüft. Nicht von Hand bearbeiten._
 
 ## Fach anlegen
-`POST /api/v1/learn/subjects`
+`POST /api/v1/creator/subjects`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
@@ -25,7 +25,7 @@ Response — `HTTP 201`:
 ```
 
 ### Fach ohne Namen anlegen — Fehlerfall
-`POST /api/v1/learn/subjects`
+`POST /api/v1/creator/subjects`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
@@ -49,7 +49,7 @@ Response — `HTTP 400`:
 ```
 
 ## Kapitel anlegen
-`POST /api/v1/learn/subjects/5/chapters`
+`POST /api/v1/creator/subjects/5/chapters`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
@@ -73,7 +73,7 @@ Response — `HTTP 201`:
 ```
 
 ## Vokabel-Übung anlegen
-`POST /api/v1/learn/subjects/5/chapters/7/vocabulary`
+`POST /api/v1/creator/subjects/5/chapters/7/vocabulary`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
@@ -136,7 +136,7 @@ Response — `HTTP 201`:
 ```
 
 ### Unbekannte Übung lesen — Fehlerfall
-`GET /api/v1/learn/exercises/999999`
+`GET /api/v1/creator/exercises/999999`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
@@ -152,7 +152,7 @@ Response — `HTTP 404`:
 ```
 
 ## Art (Kategorie) anlegen
-`POST /api/v1/learn/subjects/5/categories`
+`POST /api/v1/creator/subjects/5/categories`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
@@ -174,7 +174,7 @@ Response — `HTTP 201`:
 ```
 
 ### Doppelte Art anlegen — Fehlerfall
-`POST /api/v1/learn/subjects/5/categories`
+`POST /api/v1/creator/subjects/5/categories`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
@@ -198,7 +198,7 @@ Response — `HTTP 409`:
 ```
 
 ### Verwendete Übung löschen — Fehlerfall
-`DELETE /api/v1/learn/subjects/5/chapters/7/vocabulary/13`
+`DELETE /api/v1/creator/subjects/5/chapters/7/vocabulary/13`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
@@ -215,7 +215,7 @@ Response — `HTTP 409`:
 ```
 
 ### Fremd-Autor-Übung bearbeiten — Fehlerfall
-`PUT /api/v1/learn/subjects/1/chapters/6/vocabulary/10`
+`PUT /api/v1/creator/subjects/1/chapters/6/vocabulary/10`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 

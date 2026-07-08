@@ -36,7 +36,7 @@ public enum ExerciseCheckMode
 /// <param name="Label">Deutscher Anzeigename.</param>
 /// <param name="Renderer">Id der Frontend-Komponente; mehrere Typen dürfen sich einen Renderer teilen (z. B. Arithmetic + ArithmeticDrill → <c>arithmetic</c>).</param>
 /// <param name="SchemaVersion">Version des Typ-Schemas. Bewusst NUR hier (nicht an den Entities) – Verzweigungspunkt für spätere inkompatible Änderungen.</param>
-/// <param name="AuthoringRoute">Routen-Segment der Vater-CRUD unter <c>.../learn/subjects/{subjectId}/chapters/{chapterId}/{AuthoringRoute}</c>.</param>
+/// <param name="AuthoringRoute">Routen-Segment der Vater-CRUD unter <c>.../creator/subjects/{subjectId}/chapters/{chapterId}/{AuthoringRoute}</c>.</param>
 /// <param name="CheckMode">Primäre Prüf-/Spieloberfläche.</param>
 /// <param name="PlayRoute">Nur bei <see cref="ExerciseCheckMode.StudyPlanTest"/>: Segment unter <c>study-plans/{planId}/positions/{positionId}/{PlayRoute}</c>; sonst <c>null</c>.</param>
 /// <param name="Method">Nur bei <see cref="ExerciseCheckMode.StudyPlanTest"/>: Lernfamilie für Renderer/Kompatibilität; sonst <c>null</c>.</param>

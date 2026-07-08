@@ -16,10 +16,10 @@ public class MissionsAdminTests(PuglingWebAppFactory factory) : IClassFixture<Pu
     {
         var father = await TestApi.FatherAsync(factory);
         var childId = await TestApi.IdAsync(
-            await father.PostAsJsonAsync("/api/v1/children", new { name = "Missions-Kind", pin = "8001" }));
+            await father.PostAsJsonAsync("/api/v1/supervisor/children", new { name = "Missions-Kind", pin = "8001" }));
 
         // Anlegen
-        var created = await (await father.PostAsJsonAsync($"/api/v1/children/{childId}/missions", new
+        var created = await (await father.PostAsJsonAsync($"/api/v1/supervisor/children/{childId}/missions", new
         {
             title = "Tagesziel: 10 richtig",
             metric = "CorrectReviews",
@@ -31,18 +31,18 @@ public class MissionsAdminTests(PuglingWebAppFactory factory) : IClassFixture<Pu
         JsonAssert.True(created, "active");
 
         // Liste enthält die Mission
-        var list = await (await father.GetAsync($"/api/v1/children/{childId}/missions")).Content.ReadFromJsonAsync<JsonElement>();
+        var list = await (await father.GetAsync($"/api/v1/supervisor/children/{childId}/missions")).Content.ReadFromJsonAsync<JsonElement>();
         Assert.Contains(missionId, list.EnumerateArray().Select(m => m.GetProperty("id").GetInt32()));
 
         // Deaktivieren (PATCH active=false)
         var patched = await (await father.PatchAsJsonAsync(
-            $"/api/v1/children/{childId}/missions/{missionId}", new { active = false }))
+            $"/api/v1/supervisor/children/{childId}/missions/{missionId}", new { active = false }))
             .Content.ReadFromJsonAsync<JsonElement>();
         JsonAssert.False(patched, "active");
 
         // Löschen → danach 404 beim erneuten Löschen
-        (await father.DeleteAsync($"/api/v1/children/{childId}/missions/{missionId}")).EnsureSuccessStatusCode();
-        var again = await father.DeleteAsync($"/api/v1/children/{childId}/missions/{missionId}");
+        (await father.DeleteAsync($"/api/v1/supervisor/children/{childId}/missions/{missionId}")).EnsureSuccessStatusCode();
+        var again = await father.DeleteAsync($"/api/v1/supervisor/children/{childId}/missions/{missionId}");
         Assert.Equal(HttpStatusCode.NotFound, again.StatusCode);
     }
 
@@ -53,7 +53,7 @@ public class MissionsAdminTests(PuglingWebAppFactory factory) : IClassFixture<Pu
         // liefert weder Liste noch Anlage – hier über ein nicht existierendes Kind geprüft.
         var father = await TestApi.FatherAsync(factory);
 
-        var res = await father.GetAsync("/api/v1/children/999999/missions");
+        var res = await father.GetAsync("/api/v1/supervisor/children/999999/missions");
 
         Assert.True(res.StatusCode is HttpStatusCode.Forbidden or HttpStatusCode.NotFound);
     }

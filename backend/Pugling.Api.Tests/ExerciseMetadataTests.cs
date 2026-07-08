@@ -13,11 +13,11 @@ public class ExerciseMetadataTests(PuglingWebAppFactory factory) : IClassFixture
     // Legt Fach + Art an und liefert (subjectId, chapterId, categoryId).
     private static async Task<(int subjectId, int chapterId, int categoryId)> SetupAsync(HttpClient father, string subject)
     {
-        var subjectId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/learn/subjects", new { name = subject }));
+        var subjectId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/subjects", new { name = subject }));
         var chapterId = await TestApi.IdAsync(await father.PostAsJsonAsync(
-            $"/api/v1/learn/subjects/{subjectId}/chapters", new { name = "Kapitel 1", orderIndex = 1 }));
+            $"/api/v1/creator/subjects/{subjectId}/chapters", new { name = "Kapitel 1", orderIndex = 1 }));
         var categoryId = await TestApi.IdAsync(await father.PostAsJsonAsync(
-            $"/api/v1/learn/subjects/{subjectId}/categories", new { name = "Grammatik" }));
+            $"/api/v1/creator/subjects/{subjectId}/categories", new { name = "Grammatik" }));
         return (subjectId, chapterId, categoryId);
     }
 
@@ -39,7 +39,7 @@ public class ExerciseMetadataTests(PuglingWebAppFactory factory) : IClassFixture
     {
         var father = await TestApi.FatherAsync(factory);
         var (subjectId, chapterId, categoryId) = await SetupAsync(father, $"Meta-Fach-{Guid.NewGuid():N}");
-        var basePath = $"/api/v1/learn/subjects/{subjectId}/chapters/{chapterId}/arithmetic";
+        var basePath = $"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/arithmetic";
 
         // Anlegen mit Metadaten: Klasse 5–7, Gymnasium.
         var created = await father.PostAsJsonAsync(basePath, ArithmeticBody("Grammatik-Drill", categoryId, 5, 7, "Gymnasium"));
@@ -59,7 +59,7 @@ public class ExerciseMetadataTests(PuglingWebAppFactory factory) : IClassFixture
     {
         var father = await TestApi.FatherAsync(factory);
         var (subjectId, chapterId, categoryId) = await SetupAsync(father, $"Meta-Fach-{Guid.NewGuid():N}");
-        var basePath = $"/api/v1/learn/subjects/{subjectId}/chapters/{chapterId}/arithmetic";
+        var basePath = $"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/arithmetic";
         await father.PostAsJsonAsync(basePath, ArithmeticBody("Nur-Gym-5bis7", categoryId, 5, 7, "Gymnasium"));
 
         // Klasse 3 liegt unter GradeMin → kein Treffer.
@@ -81,7 +81,7 @@ public class ExerciseMetadataTests(PuglingWebAppFactory factory) : IClassFixture
         var father = await TestApi.FatherAsync(factory);
         var (subjectId, chapterId, _) = await SetupAsync(father, $"Meta-Fach-{Guid.NewGuid():N}");
         var (_, _, fremdeArtId) = await SetupAsync(father, $"Anderes-Fach-{Guid.NewGuid():N}");
-        var basePath = $"/api/v1/learn/subjects/{subjectId}/chapters/{chapterId}/arithmetic";
+        var basePath = $"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/arithmetic";
 
         // Art gehört zu einem anderen Fach → BadRequest.
         var res = await father.PostAsJsonAsync(basePath, ArithmeticBody("Falsche Art", fremdeArtId, 5, 7, "Gymnasium"));
@@ -95,7 +95,7 @@ public class ExerciseMetadataTests(PuglingWebAppFactory factory) : IClassFixture
         if (grade is int g) query += $"&grade={g}";
         if (schoolType is not null) query += $"&schoolType={schoolType}";
         if (categoryId is int c) query += $"&categoryId={c}";
-        var res = await father.GetAsync($"/api/v1/learn/exercises{query}");
+        var res = await father.GetAsync($"/api/v1/creator/exercises{query}");
         res.EnsureSuccessStatusCode();
         return await res.Content.ReadFromJsonAsync<JsonElement>();
     }

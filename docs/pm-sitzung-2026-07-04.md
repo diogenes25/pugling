@@ -294,7 +294,7 @@ Der Vater hat seine Top-3 in Sitzung 1 abgenommen und die Sohn-Wünsche freigege
 sein *nicht-blockierender* Komfort:
 - **Lern-Report „welche Vokabel sitzt/sitzt nicht" wird berechnet, aber nicht gezeigt.** Der Endpunkt
   `GET /study-plans/{planId}/report` liefert pro Vokabel `MasteryPercent`, Test-Trefferquote, Box,
-  Test-Historie, Sohn-Bewertungen ([StudyPlansController.cs:292-303](backend/Pugling.Api/Controllers/Learn/StudyPlansController.cs#L292-L303)),
+  Test-Historie, Sohn-Bewertungen ([StudyPlansController.cs:292-303](backend/Pugling.Api/Controllers/Supervisor/StudyPlansController.cs#L292-L303)),
   aber **keine Vater-UI** ruft ihn auf — `VaterPlanDetail` zeigt nur Box + Fälligkeit
   ([VaterPlanDetail.tsx:88-93](frontend/src/vater/VaterPlanDetail.tsx#L88-L93)).
 - **Kein Mehr-Kind-Tagesüberblick** („wer hat heute/gestern was geschafft/verpasst?"). Existiert

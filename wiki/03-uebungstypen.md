@@ -15,7 +15,7 @@ alle Typen mit Config-Schema und Beispiel-Requests.
 >
 > **Abgrenzung:** Katalog-Übungen sind **nicht** dasselbe wie das Study-Plan-Training. Sie sind eine
 > kindneutrale Bibliothek mit Metadaten (für Suche/Vorfilterung). Ein Study-Plan verweist über
-> `PlanPosition` auf Katalog-Übungen; dafür nutzt der Vater `POST /api/v1/study-plans/{planId}/positions`.
+> `PlanPosition` auf Katalog-Übungen; dafür nutzt der Vater `POST /api/v1/supervisor/study-plans/{planId}/positions`.
 > Siehe [01 · Architektur](01-ueberblick-architektur.md#2-die-zwei-api-welten).
 
 ---
@@ -25,17 +25,17 @@ alle Typen mit Config-Schema und Beispiel-Requests.
 Jede Übung lebt in einem Kapitel eines Fachs.
 
 ```http
-POST /api/v1/learn/subjects                 { "name": "Französisch" }
+POST /api/v1/creator/subjects                 { "name": "Französisch" }
 → { "id": 4, "name": "Französisch", "chaptersCount": 0 }
 
-POST /api/v1/learn/subjects/4/chapters      { "name": "Unité 1 – Salutations", "orderIndex": 1 }
+POST /api/v1/creator/subjects/4/chapters      { "name": "Unité 1 – Salutations", "orderIndex": 1 }
 → { "id": 12, "subjectId": 4, "name": "…", "orderIndex": 1, "exercisesCount": 0 }
 ```
 
 Optional pro Fach **fachabhängige Arten** (kontrolliertes Vokabular für die Vorfilterung):
 
 ```http
-POST /api/v1/learn/subjects/4/categories    { "name": "Vokabeln" }
+POST /api/v1/creator/subjects/4/categories    { "name": "Vokabeln" }
 → { "id": 7, "subjectId": 4, "name": "Vokabeln" }
 ```
 
@@ -46,7 +46,7 @@ POST /api/v1/learn/subjects/4/categories    { "name": "Vokabeln" }
 Jeder Typ erbt dasselbe CRUD aus `ExerciseControllerBase<TConfig>`. Route-Präfix:
 
 ```text
-api/v1/learn/subjects/{subjectId}/chapters/{chapterId}/<typ-pfad>
+api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/<typ-pfad>
 ```
 
 | Methode | Route | Zweck |
@@ -128,12 +128,12 @@ der Config, weil der Inhalt nun in der Item-Tabelle liegt.
 Nachträgliche Änderungen laufen bevorzugt über die Item-Subressource:
 
 ```http
-GET  /api/v1/learn/subjects/{subjectId}/chapters/{chapterId}/vocabulary/{exerciseId}/items
-POST /api/v1/learn/subjects/{subjectId}/chapters/{chapterId}/vocabulary/{exerciseId}/items
+GET  /api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/vocabulary/{exerciseId}/items
+POST /api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/vocabulary/{exerciseId}/items
 { "vocabularyId": 26, "hint": "die" }
 
-PATCH  /api/v1/learn/subjects/{subjectId}/chapters/{chapterId}/vocabulary/{exerciseId}/items/{itemId}
-DELETE /api/v1/learn/subjects/{subjectId}/chapters/{chapterId}/vocabulary/{exerciseId}/items/{itemId}
+PATCH  /api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/vocabulary/{exerciseId}/items/{itemId}
+DELETE /api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/vocabulary/{exerciseId}/items/{itemId}
 ```
 
 Wird die Übung bereits in einem Study-Plan verwendet, dürfen Items nicht mehr gelöscht oder umsortiert
@@ -217,10 +217,10 @@ POST …/matching/{exerciseId}/check
 Position hinzu. `useLeitner`, `stage`, Zielrhythmus und Bonuswerte hängen an der Position:
 
 ```http
-POST /api/v1/study-plans
+POST /api/v1/supervisor/study-plans
 { "childId": 1, "title": "Bundesländer üben", "durationDays": 14 }
 
-POST /api/v1/study-plans/{planId}/positions
+POST /api/v1/supervisor/study-plans/{planId}/positions
 { "exerciseId": 42, "useLeitner": true, "stage": 1, "cadence": "Daily" }
 ```
 
@@ -316,7 +316,7 @@ Durcharbeiten.
 ## 4. Vollständiges Beispiel: Grammatik-Übung anlegen
 
 ```http
-POST /api/v1/learn/subjects/1/chapters/1/grammar
+POST /api/v1/creator/subjects/1/chapters/1/grammar
 Authorization: Bearer <VATER-TOKEN>
 Content-Type: application/json
 
@@ -347,7 +347,7 @@ Content-Type: application/json
 **automatische Lehrplan-Erstellung** ([09 · LLM-Kochbuch](09-llm-kochbuch.md)):
 
 ```http
-GET /api/v1/learn/exercises?subjectId=1&grade=9&schoolType=Gymnasium&categoryId=2&type=Grammar&search=Past
+GET /api/v1/creator/exercises?subjectId=1&grade=9&schoolType=Gymnasium&categoryId=2&type=Grammar&search=Past
 ```
 
 Alle Parameter sind optional und werden **UND-verknüpft**. Nullbare Grenzen und `schoolType=None`

@@ -34,7 +34,7 @@ typischerweise `"items": []` und `"refs": null`.
 
 ## Was in dieser Session gebaut wurde (vokabel-relevant)
 
-- **Zweistufige Store-Eingabe** ([VocabularyStoreController.cs](../backend/Pugling.Api/Controllers/Learn/VocabularyStoreController.cs)):
+- **Zweistufige Store-Eingabe** ([VocabularyStoreController.cs](../backend/Pugling.Api/Controllers/Creator/VocabularyStoreController.cs)):
   `Create` nimmt `Key` **optional** (fehlt er → Auto-Slug via [VocabKey.Generate](../backend/Pugling.Api/Data/VocabKey.cs),
   Kollision → `_2`, `_3`…) und `PartOfSpeech` optional (Default `Other`). „Einfach" = nur Word/Translation
   (+Sprachen); „komplex" = volle Felder; **später nachliefern = bestehendes `PATCH`** (Merge, `null` = unverändert).
@@ -46,13 +46,13 @@ typischerweise `"items": []` und `"refs": null`.
   liest Vokabelübungen aus `ExerciseItems`, sortiert nach `OrderIndex`/`Id` und baut daraus `ContentItem`s
   mit `ItemId` und `VocabularyId`. Ohne Item-Zeilen fällt er auf die alte Config-Projektion zurück, damit
   Alt-/Seed-Daten weiterhin spielbar bleiben.
-- **Item-CRUD:** [ExerciseControllers.cs](../backend/Pugling.Api/Controllers/Learn/ExerciseControllers.cs)
+- **Item-CRUD:** [ExerciseControllers.cs](../backend/Pugling.Api/Controllers/Creator/ExerciseControllers.cs)
   bietet unter `.../vocabulary/{exerciseId}/items` eine eigene Subressource zum Auflisten, Anlegen,
   Ändern und Löschen einzelner Vokabelpaare. Das ist der bevorzugte Weg für nachträgliche Änderungen.
-- **Übungs-Verwaltung** ([ExerciseCatalogController.cs](../backend/Pugling.Api/Controllers/Learn/ExerciseCatalogController.cs)):
+- **Übungs-Verwaltung** ([ExerciseCatalogController.cs](../backend/Pugling.Api/Controllers/Creator/ExerciseCatalogController.cs)):
   `GET learn/exercises/{id}` (Detail inkl. Config + Metadaten), `GET learn/exercises/{id}/usage`
   (Lehrpläne via `PlanPosition` + Klassenarbeiten, auf eigene Kinder gefiltert), Lösch-Schutz 409
-  ([ExerciseControllerBase.Delete](../backend/Pugling.Api/Controllers/Learn/ExerciseControllerBase.cs)).
+  ([ExerciseControllerBase.Delete](../backend/Pugling.Api/Controllers/Creator/ExerciseControllerBase.cs)).
 - **Web-UI:** [VaterVocab.tsx](../frontend/src/vater/VaterVocab.tsx) (Einfach/Komplex-Umschalter, Suche,
   Inline-Bearbeiten/Löschen); [VaterExercises.tsx](../frontend/src/vater/VaterExercises.tsx)
   (Vokabel-Editor `VocabRefPicker` wählt Store-Einträge bzw. Items, „+ anlegen & wählen";
@@ -63,7 +63,7 @@ typischerweise `"items": []` und `"refs": null`.
 
 Der Store ist jetzt so gebaut, dass ein AI-Agent Vokabeln nachträgt/vervollständigt/verknüpft, **ohne**
 dass die API Sprachlogik übernimmt (reine Datenschicht; Tokenisieren/Übersetzen/Grundform-Bestimmung macht
-der Agent). Route-Präfix `api/v1/learn/vocabulary`:
+der Agent). Route-Präfix `api/v1/creator/vocabulary`:
 
 - **„Einfach" = nur `word`** (Sprachen empfohlen). `translation` ist **optional** → unübersetzte Vokabeln
   können existieren und sind per Filter auffindbar. Key/Wortart wie gehabt optional.
@@ -93,8 +93,8 @@ beim Bauen von Übungen/Übungstexten gezielt Teilmengen ziehen (z. B. „nur Ka
 - Tag-CRUD: `GET/POST …/tags`, `PATCH/DELETE …/tags/{id}` (POST idempotent per Name).
 - Vokabel↔Tag: `POST …/{id}/tags` `{ tags:[…] }`, `DELETE …/{id}/tags/{tagId}`.
 
-Umgesetzt in [VocabularyStoreController.cs](../backend/Pugling.Api/Controllers/Learn/VocabularyStoreController.cs)
-+ [VocabularyTagsController.cs](../backend/Pugling.Api/Controllers/Learn/VocabularyTagsController.cs);
+Umgesetzt in [VocabularyStoreController.cs](../backend/Pugling.Api/Controllers/Creator/VocabularyStoreController.cs)
++ [VocabularyTagsController.cs](../backend/Pugling.Api/Controllers/Creator/VocabularyTagsController.cs);
 Modell in [VocabEntities.cs](../backend/Pugling.Api/Models/VocabEntities.cs); Migration
 `VocabTagsAndBaseFormRelation`. Tests: `VocabAgentApiTests` (157 grün gesamt).
 
@@ -130,13 +130,13 @@ einen planübergreifenden Lernstand:
 - `VocabularyId` und `ExerciseId` sind denormalisiert, damit Auswertungen je Store-Wort auch über mehrere
   Übungen hinweg möglich bleiben.
 
-API-Sicht für Vater und eigenes Kind: `GET /api/v1/children/{childId}/vocabulary-progress`,
+API-Sicht für Vater und eigenes Kind: `GET /api/v1/student/children/{childId}/vocabulary-progress`,
 `/{itemId}`, `/{itemId}/history` und `/by-word`. `onlyWeak=true` filtert auf Wörter bzw. Items mit
 Beherrschung unter 50 %.
 
-Umgesetzt in [PlanPositionsController.cs](../backend/Pugling.Api/Controllers/Learn/PlanPositionsController.cs),
-[ExerciseControllers.cs](../backend/Pugling.Api/Controllers/Learn/ExerciseControllers.cs) (Vocabulary/Cloze),
-[ExerciseControllerBase.cs](../backend/Pugling.Api/Controllers/Learn/ExerciseControllerBase.cs) (Hook),
+Umgesetzt in [PlanPositionsController.cs](../backend/Pugling.Api/Controllers/Supervisor/PlanPositionsController.cs),
+[ExerciseControllers.cs](../backend/Pugling.Api/Controllers/Creator/ExerciseControllers.cs) (Vocabulary/Cloze),
+[ExerciseControllerBase.cs](../backend/Pugling.Api/Controllers/Creator/ExerciseControllerBase.cs) (Hook),
 [ExerciseContentResolver.cs](../backend/Pugling.Api/Services/ExerciseContentResolver.cs) (Cloze-Auflösung).
 Tests: `PlanPositionCrudTests`, `VocabExerciseAuthoringTests` (165 grün). Kein DB-Migration nötig.
 
@@ -161,30 +161,30 @@ Tests: `PlanPositionCrudTests`, `VocabExerciseAuthoringTests` (165 grün). Kein 
 POST /api/v1/auth/father        { "fatherId": 1, "pin": "0000" }
 
 # Vokabel einfach anlegen (Key + Wortart macht der Server)
-POST /api/v1/learn/vocabulary   { "sourceLanguage":"en","targetLanguage":"de","word":"cat","translation":"Katze" }
+POST /api/v1/creator/vocabulary   { "sourceLanguage":"en","targetLanguage":"de","word":"cat","translation":"Katze" }
 # → 201, key z.B. "en_cat_de_katze"
 
 # Später komplex nachliefern
-PATCH /api/v1/learn/vocabulary/{id}  { "partOfSpeech":"Noun","noun":{"article":"die"} }
+PATCH /api/v1/creator/vocabulary/{id}  { "partOfSpeech":"Noun","noun":{"article":"die"} }
 
 # Vokabel-Übung anlegen; die Items werden danach in ExerciseItems materialisiert
-POST /api/v1/learn/subjects/{s}/chapters/{c}/vocabulary
+POST /api/v1/creator/subjects/{s}/chapters/{c}/vocabulary
      { "title":"Unit 1","orderIndex":1,"rewardPoints":10,
     "config": { "direction":"front-to-back","sourceLang":"en","targetLang":"de",
       "items":[{"front":"cat","back":"Katze"}] } }
 
 # Items der Übung lesen oder später erweitern
-GET  /api/v1/learn/subjects/{s}/chapters/{c}/vocabulary/{exerciseId}/items
-POST /api/v1/learn/subjects/{s}/chapters/{c}/vocabulary/{exerciseId}/items
+GET  /api/v1/creator/subjects/{s}/chapters/{c}/vocabulary/{exerciseId}/items
+POST /api/v1/creator/subjects/{s}/chapters/{c}/vocabulary/{exerciseId}/items
   { "vocabularyId": 26, "hint": "die" }
 
 # Fortschritt eines Kindes über Vokabel-Items und Wörter
-GET  /api/v1/children/{childId}/vocabulary-progress?onlyWeak=true
-GET  /api/v1/children/{childId}/vocabulary-progress/by-word?onlyWeak=true
+GET  /api/v1/student/children/{childId}/vocabulary-progress?onlyWeak=true
+GET  /api/v1/student/children/{childId}/vocabulary-progress/by-word?onlyWeak=true
 
 # Verwaltung
-GET  /api/v1/learn/exercises/{id}          # Detail + Config
-GET  /api/v1/learn/exercises/{id}/usage    # in welchen Lehrplänen/Klassenarbeiten
+GET  /api/v1/creator/exercises/{id}          # Detail + Config
+GET  /api/v1/creator/exercises/{id}/usage    # in welchen Lehrplänen/Klassenarbeiten
 PUT/DELETE .../chapters/{c}/vocabulary/{id}
 ```
 

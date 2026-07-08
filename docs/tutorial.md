@@ -29,8 +29,8 @@ POST /api/v1/auth/father
 ### 1.2 Kind prüfen oder anlegen
 
 ```http
-GET  /api/v1/children
-POST /api/v1/children
+GET  /api/v1/supervisor/children
+POST /api/v1/supervisor/children
 { "name":"Peter", "birthYear":2015, "pin":"1111" }
 ```
 
@@ -41,13 +41,13 @@ Bei Vokabelübungen werden inline übergebene `items` beim Speichern in stabile 
 materialisiert. Die Config bleibt danach nur für Einstellungen wie Richtung und Sprachen zuständig.
 
 ```http
-POST /api/v1/learn/subjects
+POST /api/v1/creator/subjects
 { "name":"Englisch" }
 
-POST /api/v1/learn/subjects/{subjectId}/chapters
+POST /api/v1/creator/subjects/{subjectId}/chapters
 { "name":"Unit 1", "orderIndex":1 }
 
-POST /api/v1/learn/subjects/{subjectId}/chapters/{chapterId}/vocabulary
+POST /api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/vocabulary
 { "title":"Unit 1 – Basics", "orderIndex":1, "rewardPoints":10,
   "config": { "direction":"front-to-back", "sourceLang":"en", "targetLang":"de",
     "items":[{"front":"dog","back":"Hund"},{"front":"cat","back":"Katze"}] },
@@ -58,25 +58,25 @@ POST /api/v1/learn/subjects/{subjectId}/chapters/{chapterId}/vocabulary
 Die gespeicherten Vokabelpaare der Übung liest oder ergänzt du danach über die Item-Subressource:
 
 ```http
-GET  /api/v1/learn/subjects/{subjectId}/chapters/{chapterId}/vocabulary/13/items
-POST /api/v1/learn/subjects/{subjectId}/chapters/{chapterId}/vocabulary/13/items
+GET  /api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/vocabulary/13/items
+POST /api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/vocabulary/13/items
 { "front":"bird", "back":"Vogel" }
 ```
 
 Vorhandene Übungen findest du mit:
 
 ```http
-GET /api/v1/learn/exercises?subjectId={subjectId}&grade=5&type=Vocabulary
+GET /api/v1/creator/exercises?subjectId={subjectId}&grade=5&type=Vocabulary
 ```
 
 ### 1.4 Plan-Container und Position erstellen
 
 ```http
-POST /api/v1/study-plans
+POST /api/v1/supervisor/study-plans
 { "childId":1, "title":"Vokabeltest in 10 Tagen", "subjectId":1, "durationDays":10 }
 → { "id": 42, "positionCount":0, ... }
 
-POST /api/v1/study-plans/42/positions
+POST /api/v1/supervisor/study-plans/42/positions
 { "exerciseId":13, "cadence":"Daily", "useLeitner":true, "requireTypedTest":true,
   "goalThreshold":80,
   "stageSchedule":[{"dayNumber":1,"stage":2},{"dayNumber":5,"stage":3},{"dayNumber":8,"stage":4}],
@@ -89,18 +89,18 @@ POST /api/v1/study-plans/42/positions
 ### 1.5 Fortschritt & Kontrolle
 
 ```http
-GET /api/v1/study-plans/42/overview
-GET /api/v1/study-plans/42/overview/progress
-GET /api/v1/study-plans/42/positions/7/report
-GET /api/v1/children/1/vocabulary-progress?onlyWeak=true
-GET /api/v1/children/1/vocabulary-progress/by-word?onlyWeak=true
-GET /api/v1/children/1/points
+GET /api/v1/student/study-plans/42/overview
+GET /api/v1/student/study-plans/42/overview/progress
+GET /api/v1/student/study-plans/42/positions/7/report
+GET /api/v1/student/children/1/vocabulary-progress?onlyWeak=true
+GET /api/v1/student/children/1/vocabulary-progress/by-word?onlyWeak=true
+GET /api/v1/supervisor/children/1/points
 ```
 
 Manuelle Punktekorrektur:
 
 ```http
-POST /api/v1/children/1/points
+POST /api/v1/supervisor/children/1/points
 { "amount": 30, "reason":"Extra fürs Dranbleiben" }
 ```
 
@@ -121,9 +121,9 @@ POST /api/v1/auth/child
 ### 2.2 Tagesmission lesen
 
 ```http
-GET /api/v1/study-plans
-GET /api/v1/study-plans/42/positions
-GET /api/v1/study-plans/42/overview
+GET /api/v1/supervisor/study-plans
+GET /api/v1/supervisor/study-plans/42/positions
+GET /api/v1/student/study-plans/42/overview
 ```
 
 Der Sohn sieht nur eigene, aktive, heute laufende Pläne. `overview` zeigt, welche Positionen heute
@@ -132,19 +132,19 @@ Pflicht sind und ob der Tag schon erledigt ist.
 ### 2.3 Üben
 
 ```http
-POST /api/v1/study-plans/42/positions/7/practice-sessions
+POST /api/v1/student/study-plans/42/positions/7/practice-sessions
 {} → { "id": 1, "planId":42, "positionId":7, ... }
 
-GET /api/v1/study-plans/42/positions/7/practice-sessions/1/cards
+GET /api/v1/student/study-plans/42/positions/7/practice-sessions/1/cards
 
-POST /api/v1/study-plans/42/positions/7/practice-sessions/1/review
+POST /api/v1/student/study-plans/42/positions/7/practice-sessions/1/review
 { "itemIndex":0, "givenAnswer":"Hund" }
 → { wasCorrect, expected, awarded, box, dueOn, combo, comboBonus, speedBonus }
 
-POST /api/v1/study-plans/42/positions/7/practice-sessions/1/heartbeat
+POST /api/v1/student/study-plans/42/positions/7/practice-sessions/1/heartbeat
 { "seconds":60, "active":true }
 
-POST /api/v1/study-plans/42/positions/7/practice-sessions/1/end
+POST /api/v1/student/study-plans/42/positions/7/practice-sessions/1/end
 ```
 
 Der Server erzwingt die Stufe und bewertet die Antwort; das Frontend entscheidet nie selbst über
@@ -153,10 +153,10 @@ richtig/falsch. Bei nicht gewerteten Reviews kommt `204 No Content` zurück.
 ### 2.4 Abschlusstest
 
 ```http
-POST /api/v1/study-plans/42/positions/7/tests
+POST /api/v1/student/study-plans/42/positions/7/tests
 {} → attemptId + Aufgaben ohne Lösung
 
-POST /api/v1/study-plans/42/positions/7/tests/{attemptId}/submit
+POST /api/v1/student/study-plans/42/positions/7/tests/{attemptId}/submit
 { "answers":[
   { "itemIndex":0, "givenAnswer":"Hund" },
   { "itemIndex":1, "givenAnswer":"Katze" }
@@ -170,11 +170,11 @@ abgeschlossener Versuch kann nicht erneut submitted werden.
 ### 2.5 Belohnung und Grenzen
 
 ```http
-GET /api/v1/me/points
-GET /api/v1/me/missions
-GET /api/v1/me/achievements
-GET /api/v1/me/skins
-GET /api/v1/me/rewards
+GET /api/v1/student/me/points
+GET /api/v1/student/me/missions
+GET /api/v1/student/me/achievements
+GET /api/v1/student/me/skins
+GET /api/v1/student/me/rewards
 ```
 
 Der Sohn kann keine Pläne/Inhalte ändern, keine fremden Pläne sehen und keine fremden Tage nachtragen.

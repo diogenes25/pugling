@@ -15,14 +15,14 @@ public class BirkenbihlExerciseTests(PuglingWebAppFactory factory) : IClassFixtu
     /// <summary>Legt Fach + Kapitel an und gibt die Basis-Route der Birkenbihl-Übungen zurück.</summary>
     private static async Task<string> CreateChapterAsync(HttpClient father)
     {
-        var subjectRes = await father.PostAsJsonAsync("/api/v1/learn/subjects", new { name = "Birkenbihl-Test" });
+        var subjectRes = await father.PostAsJsonAsync("/api/v1/creator/subjects", new { name = "Birkenbihl-Test" });
         var subjectId = (await subjectRes.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetInt32();
 
-        var chapterRes = await father.PostAsJsonAsync($"/api/v1/learn/subjects/{subjectId}/chapters",
+        var chapterRes = await father.PostAsJsonAsync($"/api/v1/creator/subjects/{subjectId}/chapters",
             new { name = "Lektion 1", orderIndex = 1 });
         var chapterId = (await chapterRes.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetInt32();
 
-        return $"/api/v1/learn/subjects/{subjectId}/chapters/{chapterId}/birkenbihl";
+        return $"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/birkenbihl";
     }
 
     /// <summary>Legt eine leere Birkenbihl-Übung mit Sprachpaar an und gibt (Basis-Route, ExerciseId) zurück.</summary>
@@ -194,7 +194,7 @@ public class BirkenbihlExerciseTests(PuglingWebAppFactory factory) : IClassFixtu
         Assert.Equal("How", result[0].GetProperty("learningWord").GetString());
         Assert.Equal("Wie", result[0].GetProperty("gloss").GetString());
         Assert.Equal(howId, result[0].GetProperty("vocabularyId").GetInt32());
-        Assert.Equal($"/api/v1/learn/vocabulary/{howId}", result[0].GetProperty("_self").GetString());
+        Assert.Equal($"/api/v1/creator/vocabulary/{howId}", result[0].GetProperty("_self").GetString());
 
         Assert.Equal("bist", result[1].GetProperty("gloss").GetString());
         Assert.Equal(areId, result[1].GetProperty("vocabularyId").GetInt32());
@@ -291,7 +291,7 @@ public class BirkenbihlExerciseTests(PuglingWebAppFactory factory) : IClassFixtu
         var father = await TestApi.FatherAsync(factory);
         var dogId = await CreateVocabAsync(father, "dog", "Hund");
 
-        var res = await father.PostAsJsonAsync("/api/v1/learn/birkenbihl/decode", new
+        var res = await father.PostAsJsonAsync("/api/v1/creator/birkenbihl/decode", new
         {
             learningLang = "en",
             nativeLang = "de",

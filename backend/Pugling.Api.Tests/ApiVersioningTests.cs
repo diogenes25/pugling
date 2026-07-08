@@ -16,7 +16,7 @@ public class ApiVersioningTests(PuglingWebAppFactory factory) : IClassFixture<Pu
         var father = await TestApi.FatherAsync(factory);
 
         // Deklarierte Version funktioniert.
-        Assert.Equal(HttpStatusCode.OK, (await father.GetAsync("/api/v1/learn/subjects")).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await father.GetAsync("/api/v1/creator/subjects")).StatusCode);
 
         // Nicht deklarierte Version → wird abgewiesen (kein passender Controller → 404).
         var v2 = await father.GetAsync("/api/v2/learn/subjects");
@@ -29,7 +29,7 @@ public class ApiVersioningTests(PuglingWebAppFactory factory) : IClassFixture<Pu
         var father = await TestApi.FatherAsync(factory);
 
         // Leerer Name → 400 mit strukturiertem ProblemDetails-Body (nicht nacktem String).
-        var res = await father.PostAsJsonAsync("/api/v1/learn/subjects", new { name = "" });
+        var res = await father.PostAsJsonAsync("/api/v1/creator/subjects", new { name = "" });
 
         Assert.Equal(HttpStatusCode.BadRequest, res.StatusCode);
         var body = await res.Content.ReadFromJsonAsync<JsonElement>();

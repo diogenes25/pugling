@@ -15,15 +15,15 @@ public class VocabExerciseAuthoringTests(PuglingWebAppFactory factory) : IClassF
 
     private static async Task<(int subjectId, int chapterId)> ChapterAsync(HttpClient f, string name)
     {
-        var s = await TestApi.IdAsync(await f.PostAsJsonAsync("/api/v1/learn/subjects", new { name }));
-        var c = await TestApi.IdAsync(await f.PostAsJsonAsync($"/api/v1/learn/subjects/{s}/chapters",
+        var s = await TestApi.IdAsync(await f.PostAsJsonAsync("/api/v1/creator/subjects", new { name }));
+        var c = await TestApi.IdAsync(await f.PostAsJsonAsync($"/api/v1/creator/subjects/{s}/chapters",
             new { name = "Unit", orderIndex = 1 }));
         return (s, c);
     }
 
     private static async Task<JsonElement> CreateVocabAsync(HttpClient f, object body)
     {
-        var res = await f.PostAsJsonAsync("/api/v1/learn/vocabulary", body);
+        var res = await f.PostAsJsonAsync("/api/v1/creator/vocabulary", body);
         res.EnsureSuccessStatusCode();
         return await res.Content.ReadFromJsonAsync<JsonElement>();
     }
@@ -41,7 +41,7 @@ public class VocabExerciseAuthoringTests(PuglingWebAppFactory factory) : IClassF
 
         var (s, c) = await ChapterAsync(father, "Cloze-Store");
         var exerciseId = await TestApi.IdAsync(await father.PostAsJsonAsync(
-            $"/api/v1/learn/subjects/{s}/chapters/{c}/cloze", new
+            $"/api/v1/creator/subjects/{s}/chapters/{c}/cloze", new
             {
                 title = "Lückentext Unit",
                 orderIndex = 1,
@@ -52,7 +52,7 @@ public class VocabExerciseAuthoringTests(PuglingWebAppFactory factory) : IClassF
         // Positions-Test auf FreeText-Stufe (getippt): die Lösung kommt aus dem Store-Wort.
         var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)ClozeStage.FreeText);
         var child = await TestApi.ChildAsync(_factory);
-        var baseUrl = $"/api/v1/study-plans/{planId}/positions/{positionId}/practice-sessions";
+        var baseUrl = $"/api/v1/student/study-plans/{planId}/positions/{positionId}/practice-sessions";
         var sessionId = await TestApi.IdAsync(await child.PostAsJsonAsync(baseUrl, new { }));
         var outcome = await (await child.PostAsJsonAsync($"{baseUrl}/{sessionId}/review",
             new { itemIndex = 0, givenAnswer = "opportunity" })).Content.ReadFromJsonAsync<JsonElement>();
@@ -61,9 +61,9 @@ public class VocabExerciseAuthoringTests(PuglingWebAppFactory factory) : IClassF
 
         // Zentrale Korrektur im Store schlägt in der Lücke durch. Frische Position, weil dasselbe Item
         // am selben Tag nur einmal gewertet wird (Anti-Farming → sonst 204).
-        await father.PatchAsJsonAsync($"/api/v1/learn/vocabulary/{vocabId}", new { word = "chance" });
+        await father.PatchAsJsonAsync($"/api/v1/creator/vocabulary/{vocabId}", new { word = "chance" });
         var (planId2, positionId2) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)ClozeStage.FreeText);
-        var base2 = $"/api/v1/study-plans/{planId2}/positions/{positionId2}/practice-sessions";
+        var base2 = $"/api/v1/student/study-plans/{planId2}/positions/{positionId2}/practice-sessions";
         var s2 = await TestApi.IdAsync(await child.PostAsJsonAsync(base2, new { }));
         var out2 = await (await child.PostAsJsonAsync($"{base2}/{s2}/review",
             new { itemIndex = 0, givenAnswer = "chance" })).Content.ReadFromJsonAsync<JsonElement>();
@@ -75,7 +75,7 @@ public class VocabExerciseAuthoringTests(PuglingWebAppFactory factory) : IClassF
     {
         var father = await TestApi.FatherAsync(_factory);
         var (s, c) = await ChapterAsync(father, "Cloze-Bad");
-        var res = await father.PostAsJsonAsync($"/api/v1/learn/subjects/{s}/chapters/{c}/cloze", new
+        var res = await father.PostAsJsonAsync($"/api/v1/creator/subjects/{s}/chapters/{c}/cloze", new
         {
             title = "Kaputt",
             orderIndex = 1,
@@ -98,16 +98,16 @@ public class VocabExerciseAuthoringTests(PuglingWebAppFactory factory) : IClassF
 
         var (s, c) = await ChapterAsync(father, "Refs-Tags");
         var exerciseId = await TestApi.IdAsync(await father.PostAsJsonAsync(
-            $"/api/v1/learn/subjects/{s}/chapters/{c}/vocabulary",
+            $"/api/v1/creator/subjects/{s}/chapters/{c}/vocabulary",
             new { title = "Unit-Vokabeln", orderIndex = 1, rewardPoints = 10, config = new { direction = "front-to-back", refs = Array.Empty<string>() } }));
 
         (await father.PostAsJsonAsync(
-            $"/api/v1/learn/subjects/{s}/chapters/{c}/vocabulary/{exerciseId}/refs-from-tags",
+            $"/api/v1/creator/subjects/{s}/chapters/{c}/vocabulary/{exerciseId}/refs-from-tags",
             new { tags = new[] { "UnitP2" }, baseFormsOnly = true })).EnsureSuccessStatusCode();
 
         // Der Snapshot materialisiert die Wörter als Items (eine Ebene tiefer), nicht mehr in der Config.
         var items = await father.GetFromJsonAsync<List<JsonElement>>(
-            $"/api/v1/learn/subjects/{s}/chapters/{c}/vocabulary/{exerciseId}/items");
+            $"/api/v1/creator/subjects/{s}/chapters/{c}/vocabulary/{exerciseId}/items");
         var fronts = items!.Select(i => i.GetProperty("front").GetString()).ToList();
         Assert.Equal(2, fronts.Count); // walk + jump, NICHT walked (flektiert)
         Assert.Contains("walk", fronts);
@@ -123,7 +123,7 @@ public class VocabExerciseAuthoringTests(PuglingWebAppFactory factory) : IClassF
     {
         var father = await TestApi.FatherAsync(_factory);
         var (s, c) = await ChapterAsync(father, "Ref-Bad");
-        var res = await father.PostAsJsonAsync($"/api/v1/learn/subjects/{s}/chapters/{c}/vocabulary",
+        var res = await father.PostAsJsonAsync($"/api/v1/creator/subjects/{s}/chapters/{c}/vocabulary",
             new { title = "Kaputt", orderIndex = 1, rewardPoints = 10, config = new { direction = "front-to-back", refs = new[] { "gibt_es_nicht" } } });
         Assert.Equal(HttpStatusCode.BadRequest, res.StatusCode);
     }
@@ -137,11 +137,11 @@ public class VocabExerciseAuthoringTests(PuglingWebAppFactory factory) : IClassF
         var key = v.GetProperty("key").GetString();
         await TestApi.CreateVocabRefExerciseAsync(father, key!);
 
-        var usage = await father.GetFromJsonAsync<List<JsonElement>>($"/api/v1/learn/vocabulary/{vocabId}/usage");
+        var usage = await father.GetFromJsonAsync<List<JsonElement>>($"/api/v1/creator/vocabulary/{vocabId}/usage");
         Assert.Single(usage!);
         Assert.Equal("Vocabulary", usage![0].GetProperty("type").GetString());
 
-        var del = await father.DeleteAsync($"/api/v1/learn/vocabulary/{vocabId}");
+        var del = await father.DeleteAsync($"/api/v1/creator/vocabulary/{vocabId}");
         Assert.Equal(HttpStatusCode.Conflict, del.StatusCode);
     }
 
@@ -154,7 +154,7 @@ public class VocabExerciseAuthoringTests(PuglingWebAppFactory factory) : IClassF
         var (s, c) = await ChapterAsync(father, "Inline-Autolink");
 
         var exerciseId = await TestApi.IdAsync(await father.PostAsJsonAsync(
-            $"/api/v1/learn/subjects/{s}/chapters/{c}/vocabulary", new
+            $"/api/v1/creator/subjects/{s}/chapters/{c}/vocabulary", new
             {
                 title = "Inline-Vokabeln",
                 orderIndex = 1,
@@ -170,17 +170,17 @@ public class VocabExerciseAuthoringTests(PuglingWebAppFactory factory) : IClassF
 
         // Die Inline-Items werden als eigene Items (eine Ebene tiefer) materialisiert und mit dem Store verlinkt.
         var items = await father.GetFromJsonAsync<List<JsonElement>>(
-            $"/api/v1/learn/subjects/{s}/chapters/{c}/vocabulary/{exerciseId}/items");
+            $"/api/v1/creator/subjects/{s}/chapters/{c}/vocabulary/{exerciseId}/items");
         Assert.Equal(2, items!.Count);
         foreach (var it in items!)
         {
             var id = it.GetProperty("vocabularyId").GetInt32();
             Assert.True(id > 0);
-            Assert.Equal($"/api/v1/learn/vocabulary/{id}", it.GetProperty("vocabulary").GetString());
+            Assert.Equal($"/api/v1/creator/vocabulary/{id}", it.GetProperty("vocabulary").GetString());
         }
 
         // Und die Wörter liegen jetzt tatsächlich im Store (Store-Membership).
-        var berg = await father.GetFromJsonAsync<List<JsonElement>>("/api/v1/learn/vocabulary?word=mountain");
+        var berg = await father.GetFromJsonAsync<List<JsonElement>>("/api/v1/creator/vocabulary?word=mountain");
         Assert.Contains(berg!, v => v.GetProperty("translation").GetString() == "Berg");
     }
 
@@ -193,11 +193,11 @@ public class VocabExerciseAuthoringTests(PuglingWebAppFactory factory) : IClassF
         await CreateVocabAsync(father, new { sourceLanguage = "en", targetLanguage = "de", word = "elephant", translation = "Elefant" });
         await CreateVocabAsync(father, new { sourceLanguage = "en", targetLanguage = "de", word = "mouse", translation = "Maus" });
 
-        var byWord = await father.GetFromJsonAsync<List<JsonElement>>("/api/v1/learn/vocabulary?word=elephant");
+        var byWord = await father.GetFromJsonAsync<List<JsonElement>>("/api/v1/creator/vocabulary?word=elephant");
         Assert.All(byWord!, v => Assert.Contains("elephant", v.GetProperty("word").GetString()!));
         Assert.Contains(byWord!, v => v.GetProperty("translation").GetString() == "Elefant");
 
-        var byTranslation = await father.GetFromJsonAsync<List<JsonElement>>("/api/v1/learn/vocabulary?translation=Maus");
+        var byTranslation = await father.GetFromJsonAsync<List<JsonElement>>("/api/v1/creator/vocabulary?translation=Maus");
         Assert.All(byTranslation!, v => Assert.Contains("Maus", v.GetProperty("translation").GetString()!));
         Assert.DoesNotContain(byTranslation!, v => v.GetProperty("word").GetString() == "elephant");
     }

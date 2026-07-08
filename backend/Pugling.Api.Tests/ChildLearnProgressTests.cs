@@ -20,11 +20,11 @@ public class ChildLearnProgressTests(PuglingWebAppFactory factory) : IClassFixtu
     private static async Task<(int subjectId, int chapterId, int exerciseId)> VocabAsync(
         HttpClient father, string subjectName, string title, params (string Front, string Back)[] items)
     {
-        var subjectId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/learn/subjects", new { name = subjectName }));
+        var subjectId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/subjects", new { name = subjectName }));
         var chapterId = await TestApi.IdAsync(await father.PostAsJsonAsync(
-            $"/api/v1/learn/subjects/{subjectId}/chapters", new { name = "Unit 1", orderIndex = 1 }));
+            $"/api/v1/creator/subjects/{subjectId}/chapters", new { name = "Unit 1", orderIndex = 1 }));
         var exerciseId = await TestApi.IdAsync(await father.PostAsJsonAsync(
-            $"/api/v1/learn/subjects/{subjectId}/chapters/{chapterId}/vocabulary", new
+            $"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/vocabulary", new
             {
                 title,
                 orderIndex = 1,
@@ -37,7 +37,7 @@ public class ChildLearnProgressTests(PuglingWebAppFactory factory) : IClassFixtu
     // Legt eine weitere Vokabelübung in ein BESTEHENDES Fach/Kapitel und liefert ihre Id.
     private static async Task<int> VocabInAsync(HttpClient father, int subjectId, int chapterId, string title, params (string Front, string Back)[] items) =>
         await TestApi.IdAsync(await father.PostAsJsonAsync(
-            $"/api/v1/learn/subjects/{subjectId}/chapters/{chapterId}/vocabulary", new
+            $"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/vocabulary", new
             {
                 title,
                 orderIndex = 1,
@@ -102,7 +102,7 @@ public class ChildLearnProgressTests(PuglingWebAppFactory factory) : IClassFixtu
         await TestApi.PositionReviewAsync(child, planId, pos1, sessionId, 0, givenAnswer: "Kurzschwanzkänguru"); // richtig
         await TestApi.PositionReviewAsync(child, planId, pos1, sessionId, 1, givenAnswer: "daneben");             // falsch
 
-        var basePath = "/api/v1/children/1/learn";
+        var basePath = "/api/v1/student/children/1/learn";
 
         // Fach-Liste: die beiden zugewiesenen Fächer erscheinen; das geübte Fach zeigt Abdeckung (Total > Introduced).
         var subjects = await father.GetFromJsonAsync<List<JsonElement>>($"{basePath}/subjects");
@@ -147,7 +147,7 @@ public class ChildLearnProgressTests(PuglingWebAppFactory factory) : IClassFixtu
         SeedPlanWithTwoPositions(ex1, ex2);
 
         var exercises = await father.GetFromJsonAsync<List<JsonElement>>(
-            $"/api/v1/children/1/learn/subjects/{subjectId}/chapters/{chapterId}/vocabulary");
+            $"/api/v1/student/children/1/learn/subjects/{subjectId}/chapters/{chapterId}/vocabulary");
         var ex2Row = exercises!.First(e => e.GetProperty("exerciseId").GetInt32() == ex2);
         var prog = ex2Row.GetProperty("progress");
         Assert.Equal(2, prog.GetProperty("totalItems").GetInt32());       // Übung hat 2 Items …
@@ -164,11 +164,11 @@ public class ChildLearnProgressTests(PuglingWebAppFactory factory) : IClassFixtu
         var (subjectId, chapterId, exerciseId) = await VocabAsync(father, "Waise-Fach", "Ohne Plan", ("caracal", "Karakal"));
 
         Assert.Equal(HttpStatusCode.NotFound,
-            (await father.GetAsync($"/api/v1/children/1/learn/subjects/{subjectId}")).StatusCode);
+            (await father.GetAsync($"/api/v1/student/children/1/learn/subjects/{subjectId}")).StatusCode);
         Assert.Equal(HttpStatusCode.NotFound,
-            (await father.GetAsync($"/api/v1/children/1/learn/subjects/{subjectId}/chapters")).StatusCode);
+            (await father.GetAsync($"/api/v1/student/children/1/learn/subjects/{subjectId}/chapters")).StatusCode);
         Assert.Equal(HttpStatusCode.NotFound,
-            (await father.GetAsync($"/api/v1/children/1/learn/subjects/{subjectId}/chapters/{chapterId}/vocabulary/{exerciseId}/items")).StatusCode);
+            (await father.GetAsync($"/api/v1/student/children/1/learn/subjects/{subjectId}/chapters/{chapterId}/vocabulary/{exerciseId}/items")).StatusCode);
     }
 
     [Fact]
@@ -181,11 +181,11 @@ public class ChildLearnProgressTests(PuglingWebAppFactory factory) : IClassFixtu
 
         // Fremdes/nicht existierendes Kind → Ownership-Filter liefert 404 (kein Enumerieren).
         Assert.Equal(HttpStatusCode.NotFound,
-            (await father.GetAsync("/api/v1/children/999/learn/subjects")).StatusCode);
+            (await father.GetAsync("/api/v1/student/children/999/learn/subjects")).StatusCode);
 
         // Der Sohn darf seinen eigenen Stand lesen.
         var child = await TestApi.ChildAsync(_factory);
-        var self = await child.GetAsync("/api/v1/children/1/learn/subjects");
+        var self = await child.GetAsync("/api/v1/student/children/1/learn/subjects");
         self.EnsureSuccessStatusCode();
     }
 
@@ -203,7 +203,7 @@ public class ChildLearnProgressTests(PuglingWebAppFactory factory) : IClassFixtu
         await TestApi.PositionReviewAsync(child, planId, pos1, sessionId, 0, givenAnswer: "Wombat");
         await TestApi.PositionReviewAsync(child, planId, pos1, sessionId, 1, givenAnswer: "Kakapo");
 
-        var url = $"/api/v1/children/1/learn/subjects/{subjectId}/chapters/{chapterId}/vocabulary";
+        var url = $"/api/v1/student/children/1/learn/subjects/{subjectId}/chapters/{chapterId}/vocabulary";
 
         // Solange der Plan aktiv ist: ex1 aktiv, mit Fortschritt.
         var before = await father.GetFromJsonAsync<List<JsonElement>>(url);
@@ -231,7 +231,7 @@ public class ChildLearnProgressTests(PuglingWebAppFactory factory) : IClassFixtu
         SeedPlan(active: true, exAktiv);
         SeedPlan(active: false, exInaktiv);
 
-        var url = $"/api/v1/children/1/learn/subjects/{subjectId}/chapters/{chapterId}/vocabulary";
+        var url = $"/api/v1/student/children/1/learn/subjects/{subjectId}/chapters/{chapterId}/vocabulary";
 
         var aktiv = await father.GetFromJsonAsync<List<JsonElement>>($"{url}?active=true");
         Assert.Contains(aktiv!, e => e.GetProperty("exerciseId").GetInt32() == exAktiv);
@@ -250,7 +250,7 @@ public class ChildLearnProgressTests(PuglingWebAppFactory factory) : IClassFixtu
         var exFarben = await VocabInAsync(father, subjectId, chapterId, "Farben", ("mauve", "Malvenfarben"));
         SeedPlan(active: true, exTiere, exFarben);
 
-        var url = $"/api/v1/children/1/learn/subjects/{subjectId}/chapters/{chapterId}/vocabulary";
+        var url = $"/api/v1/student/children/1/learn/subjects/{subjectId}/chapters/{chapterId}/vocabulary";
 
         // Suche nach Titel (Teilstring, case-insensitiv).
         var suche = await father.GetFromJsonAsync<List<JsonElement>>($"{url}?search=tier");

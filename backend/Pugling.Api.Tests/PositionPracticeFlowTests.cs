@@ -23,7 +23,7 @@ public class PositionPracticeFlowTests(PuglingWebAppFactory factory) : IClassFix
         var exerciseId = await TestApi.CreateVocabExerciseAsync(father);
         var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.FreeText);
         var child = await TestApi.ChildAsync(_factory);
-        var baseUrl = $"/api/v1/study-plans/{planId}/positions/{positionId}/practice-sessions";
+        var baseUrl = $"/api/v1/student/study-plans/{planId}/positions/{positionId}/practice-sessions";
 
         // Sitzung starten
         var sessionId = await TestApi.IdAsync(await child.PostAsJsonAsync(baseUrl, new { }));
@@ -58,7 +58,7 @@ public class PositionPracticeFlowTests(PuglingWebAppFactory factory) : IClassFix
         var exerciseId = await TestApi.CreateVocabExerciseAsync(father);
         var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.FreeText);
         var child = await TestApi.ChildAsync(_factory);
-        var baseUrl = $"/api/v1/study-plans/{planId}/positions/{positionId}/practice-sessions";
+        var baseUrl = $"/api/v1/student/study-plans/{planId}/positions/{positionId}/practice-sessions";
         var sessionId = await TestApi.IdAsync(await child.PostAsJsonAsync(baseUrl, new { }));
 
         // Erste Wertung: 200 + Ergebnis
@@ -80,7 +80,7 @@ public class PositionPracticeFlowTests(PuglingWebAppFactory factory) : IClassFix
         var exerciseId = await TestApi.CreateVocabExerciseAsync(father);
         var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.FreeText);
         var child = await TestApi.ChildAsync(_factory);
-        var baseUrl = $"/api/v1/study-plans/{planId}/positions/{positionId}/practice-sessions";
+        var baseUrl = $"/api/v1/student/study-plans/{planId}/positions/{positionId}/practice-sessions";
         var sessionId = await TestApi.IdAsync(await child.PostAsJsonAsync(baseUrl, new { }));
 
         var review = await child.PostAsJsonAsync($"{baseUrl}/{sessionId}/review", new { itemIndex = 0, givenAnswer = "falsch" });
@@ -100,7 +100,7 @@ public class PositionPracticeFlowTests(PuglingWebAppFactory factory) : IClassFix
 
         // Position, die es (in diesem Plan) nicht gibt → Start muss 404 liefern, nicht ins Leere spielen.
         var res = await child.PostAsJsonAsync(
-            $"/api/v1/study-plans/{planId}/positions/{positionId + 999}/practice-sessions", new { });
+            $"/api/v1/student/study-plans/{planId}/positions/{positionId + 999}/practice-sessions", new { });
         Assert.Equal(HttpStatusCode.NotFound, res.StatusCode);
     }
 }

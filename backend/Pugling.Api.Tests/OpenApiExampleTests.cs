@@ -15,7 +15,7 @@ public class OpenApiExampleTests(PuglingWebAppFactory factory) : IClassFixture<P
         Assert.Contains("auth-vater-login", RequestExampleKeys(doc, "/api/v1/auth/father", "post"));
         Assert.Contains("auth-login-mit-falscher-pin", RequestExampleKeys(doc, "/api/v1/auth/father", "post"));
         Assert.Contains("auth-login-mit-falscher-pin", ResponseExampleKeys(doc, "/api/v1/auth/father", "post", "401"));
-        Assert.Contains("study-plans-lehrplan-anlegen", RequestExampleKeys(doc, "/api/v1/study-plans", "post"));
+        Assert.Contains("study-plans-lehrplan-anlegen", RequestExampleKeys(doc, "/api/v1/supervisor/study-plans", "post"));
         AssertDocumentContainsExample(doc, "children-einzelnes-kind-lesen");
         AssertDocumentContainsExample(doc, "study-plans-position-anlegen");
         AssertDocumentContainsExample(doc, "me-angebot-kaufen");
