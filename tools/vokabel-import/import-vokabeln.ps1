@@ -5,7 +5,7 @@
 
 .DESCRIPTION
     Kleines Hilfsprogramm: loggt sich als Vater ein (PIN-Login -> JWT) und schiebt die
-    Vokabeln aus einer oder mehreren JSON-Dateien per POST /api/v1/learn/vocabulary/batch
+    Vokabeln aus einer oder mehreren JSON-Dateien per POST /api/v1/creator/vocabulary/batch
     in den Store. Der Batch ist idempotent: Eintraege mit bereits vorhandenem 'key' kommen
     als Status 'existing' zurueck (kein Fehler), das Skript ist also gefahrlos wiederholbar.
 
@@ -82,9 +82,9 @@ foreach ($file in $Files) {
 }
 
 # --- 3) Batch-Upload -----------------------------------------------------------
-Write-Host "Sende $($batch.Count) Vokabeln an $BaseUrl/api/v1/learn/vocabulary/batch ..." -ForegroundColor Cyan
+Write-Host "Sende $($batch.Count) Vokabeln an $BaseUrl/api/v1/creator/vocabulary/batch ..." -ForegroundColor Cyan
 $body = ConvertTo-Json $batch -Depth 6
-$result = Invoke-RestMethod -Method Post -Uri "$BaseUrl/api/v1/learn/vocabulary/batch" `
+$result = Invoke-RestMethod -Method Post -Uri "$BaseUrl/api/v1/creator/vocabulary/batch" `
     -Headers $headers -ContentType "application/json" -Body $body
 
 # --- 4) Ergebnis auswerten -----------------------------------------------------

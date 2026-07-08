@@ -643,7 +643,7 @@ function uniqueName(used, name) {
 
 // Dateiname aus HTTP-Methode + Route (stabil, rein ASCII, kein Satzzeichen). Der menschenlesbare
 // Titel bleibt in `info.name` erhalten und wird von Bruno angezeigt.
-// GET /api/v1/children -> get-children; POST /api/v1/children/{childId}/points -> post-children-childId-points
+// GET /api/v1/supervisor/children -> get-supervisor-children; POST /api/v1/supervisor/children/{childId}/points -> post-children-childId-points
 function operationSlug(operation) {
   const route = operation.path.replace(/^\/api\/v1\//, '').replace(/[{}]/g, '');
   return `${operation.method.toLowerCase()}-${route}`

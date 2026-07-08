@@ -123,37 +123,37 @@ export const api = {
     http<LoginResponse>(`${V1}/auth/child`, "POST", { childId, pin }),
 
   // ---- Vater: Kinder (der Vater ergibt sich serverseitig aus dem JWT) ----
-  children: () => http<ChildResponse[]>(`${V1}/children`),
-  createChild: (dto: CreateChildDto) => http<ChildResponse>(`${V1}/children`, "POST", dto),
+  children: () => http<ChildResponse[]>(`${V1}/supervisor/children`),
+  createChild: (dto: CreateChildDto) => http<ChildResponse>(`${V1}/supervisor/children`, "POST", dto),
   updateChild: (childId: number, dto: Partial<CreateChildDto>) =>
-    http<ChildResponse>(`${V1}/children/${childId}`, "PATCH", dto),
+    http<ChildResponse>(`${V1}/supervisor/children/${childId}`, "PATCH", dto),
 
   // ---- Vater: Katalog (Fächer, Kapitel, Übungssuche über Metadaten) ----
-  subjects: () => http<SubjectResponse[]>(`${V1}/learn/subjects`),
-  createSubject: (name: string) => http<SubjectResponse>(`${V1}/learn/subjects`, "POST", { name }),
+  subjects: () => http<SubjectResponse[]>(`${V1}/creator/subjects`),
+  createSubject: (name: string) => http<SubjectResponse>(`${V1}/creator/subjects`, "POST", { name }),
   chapters: (subjectId: number) =>
-    http<ChapterResponse[]>(`${V1}/learn/subjects/${subjectId}/chapters`),
+    http<ChapterResponse[]>(`${V1}/creator/subjects/${subjectId}/chapters`),
   createChapter: (subjectId: number, name: string, orderIndex: number) =>
-    http<ChapterResponse>(`${V1}/learn/subjects/${subjectId}/chapters`, "POST", { name, orderIndex }),
+    http<ChapterResponse>(`${V1}/creator/subjects/${subjectId}/chapters`, "POST", { name, orderIndex }),
   // Fachabhängige Arten ("Kategorien") – zur Vorfilterung im Katalog/Planbau.
   categories: (subjectId: number) =>
-    http<CategoryResponse[]>(`${V1}/learn/subjects/${subjectId}/categories`),
+    http<CategoryResponse[]>(`${V1}/creator/subjects/${subjectId}/categories`),
   // Übung eines Typs im Kapitel anlegen. Das Routen-Segment (vocabulary/arithmetic/…) bestimmt den Typ.
   createExercise: (subjectId: number, chapterId: number, typeRoute: string, payload: CreateExercisePayload) =>
-    http<ExerciseSummary>(`${V1}/learn/subjects/${subjectId}/chapters/${chapterId}/${typeRoute}`, "POST", payload),
+    http<ExerciseSummary>(`${V1}/creator/subjects/${subjectId}/chapters/${chapterId}/${typeRoute}`, "POST", payload),
   // Typ-übergreifender Detail-Abruf (mit Config) + „wo verwendet".
-  getExercise: (id: number) => http<ExerciseDetail>(`${V1}/learn/exercises/${id}`),
-  exerciseUsage: (id: number) => http<ExerciseUsage>(`${V1}/learn/exercises/${id}/usage`),
+  getExercise: (id: number) => http<ExerciseDetail>(`${V1}/creator/exercises/${id}`),
+  exerciseUsage: (id: number) => http<ExerciseUsage>(`${V1}/creator/exercises/${id}/usage`),
   // Testmodus: eine Übung nebenwirkungsfrei durchspielen (keine Punkte/kein Fortschritt) und bewerten lassen.
   previewExercise: (id: number, stage?: number) =>
-    http<ExercisePreviewData>(`${V1}/learn/exercises/${id}/preview${stage != null ? `?stage=${stage}` : ""}`),
+    http<ExercisePreviewData>(`${V1}/creator/exercises/${id}/preview${stage != null ? `?stage=${stage}` : ""}`),
   checkPreviewExercise: (id: number, answers: ExercisePreviewAnswer[], stage?: number) =>
-    http<ExercisePreviewResult>(`${V1}/learn/exercises/${id}/preview/check`, "POST", { answers, stage }),
+    http<ExercisePreviewResult>(`${V1}/creator/exercises/${id}/preview/check`, "POST", { answers, stage }),
   // Ersetzen (PUT) bzw. Löschen laufen über die per-Typ-Route.
   updateExercise: (subjectId: number, chapterId: number, typeRoute: string, id: number, payload: CreateExercisePayload) =>
-    http<ExerciseSummary>(`${V1}/learn/subjects/${subjectId}/chapters/${chapterId}/${typeRoute}/${id}`, "PUT", payload),
+    http<ExerciseSummary>(`${V1}/creator/subjects/${subjectId}/chapters/${chapterId}/${typeRoute}/${id}`, "PUT", payload),
   deleteExercise: (subjectId: number, chapterId: number, typeRoute: string, id: number) =>
-    http<void>(`${V1}/learn/subjects/${subjectId}/chapters/${chapterId}/${typeRoute}/${id}`, "DELETE"),
+    http<void>(`${V1}/creator/subjects/${subjectId}/chapters/${chapterId}/${typeRoute}/${id}`, "DELETE"),
   searchExercises: (p: ExerciseSearchParams = {}) => {
     const q = new URLSearchParams();
     if (p.subjectId != null) q.set("subjectId", String(p.subjectId));
@@ -166,7 +166,7 @@ export const api = {
     if (p.mineOnly) q.set("mineOnly", "true");
     appendPaging(q, p);
     const qs = q.toString();
-    return httpPaged<ExerciseSummary>(`${V1}/learn/exercises${qs ? `?${qs}` : ""}`);
+    return httpPaged<ExerciseSummary>(`${V1}/creator/exercises${qs ? `?${qs}` : ""}`);
   },
 
   // ---- Vater: Vokabel-Store ----
@@ -181,133 +181,133 @@ export const api = {
     if (p.matchAll) q.set("matchAll", "true");
     appendPaging(q, p);
     const qs = q.toString();
-    return httpPaged<VocabularyResponse>(`${V1}/learn/vocabulary${qs ? `?${qs}` : ""}`);
+    return httpPaged<VocabularyResponse>(`${V1}/creator/vocabulary${qs ? `?${qs}` : ""}`);
   },
   createVocabulary: (dto: CreateVocabularyDto) =>
-    http<VocabularyResponse>(`${V1}/learn/vocabulary`, "POST", dto),
+    http<VocabularyResponse>(`${V1}/creator/vocabulary`, "POST", dto),
   // Viele Paare in einem Aufruf (idempotent) – für die zeilenweise Paar-Eingabe.
   createVocabularyBatch: (items: CreateVocabularyDto[]) =>
-    http<VocabBatchResult[]>(`${V1}/learn/vocabulary/batch`, "POST", items),
+    http<VocabBatchResult[]>(`${V1}/creator/vocabulary/batch`, "POST", items),
   updateVocabulary: (id: number, patch: UpdateVocabularyDto) =>
-    http<VocabularyResponse>(`${V1}/learn/vocabulary/${id}`, "PATCH", patch),
-  deleteVocabulary: (id: number) => http<void>(`${V1}/learn/vocabulary/${id}`, "DELETE"),
+    http<VocabularyResponse>(`${V1}/creator/vocabulary/${id}`, "PATCH", patch),
+  deleteVocabulary: (id: number) => http<void>(`${V1}/creator/vocabulary/${id}`, "DELETE"),
 
   // ---- Globale (kindneutrale) Vokabel-Tags ----
-  vocabTags: () => http<VocabTagResponse[]>(`${V1}/learn/vocabulary/tags`),
+  vocabTags: () => http<VocabTagResponse[]>(`${V1}/creator/vocabulary/tags`),
   // Verknüpft eine Vokabel mit Tag-Namen (create-if-missing); liefert die aktuellen Tags der Vokabel.
   attachVocabTags: (vocabId: number, tags: string[]) =>
-    http<VocabTagResponse[]>(`${V1}/learn/vocabulary/${vocabId}/tags`, "POST", { tags }),
+    http<VocabTagResponse[]>(`${V1}/creator/vocabulary/${vocabId}/tags`, "POST", { tags }),
   detachVocabTag: (vocabId: number, tagId: number) =>
-    http<void>(`${V1}/learn/vocabulary/${vocabId}/tags/${tagId}`, "DELETE"),
+    http<void>(`${V1}/creator/vocabulary/${vocabId}/tags/${tagId}`, "DELETE"),
 
   // ---- Kind-skopierte Tags (auch an Vokabeln) ----
-  childTags: (childId: number) => http<ChildTagResponse[]>(`${V1}/tags?childId=${childId}`),
+  childTags: (childId: number) => http<ChildTagResponse[]>(`${V1}/creator/tags?childId=${childId}`),
   createChildTag: (dto: { childId: number; name: string; color?: string | null }) =>
-    http<ChildTagResponse>(`${V1}/tags`, "POST", dto),
+    http<ChildTagResponse>(`${V1}/creator/tags`, "POST", dto),
   tagsForVocabulary: (vocabId: number, childId: number) =>
-    http<ChildTagResponse[]>(`${V1}/tags/for-vocabulary/${vocabId}?childId=${childId}`),
+    http<ChildTagResponse[]>(`${V1}/creator/tags/for-vocabulary/${vocabId}?childId=${childId}`),
   tagVocabulary: (tagId: number, vocabularyIds: number[]) =>
-    http<ChildTagResponse>(`${V1}/tags/${tagId}/vocabulary`, "POST", { vocabularyIds }),
+    http<ChildTagResponse>(`${V1}/creator/tags/${tagId}/vocabulary`, "POST", { vocabularyIds }),
   untagVocabulary: (tagId: number, vocabId: number) =>
-    http<void>(`${V1}/tags/${tagId}/vocabulary/${vocabId}`, "DELETE"),
+    http<void>(`${V1}/creator/tags/${tagId}/vocabulary/${vocabId}`, "DELETE"),
 
   // ---- Lehrpläne (reiner Container; Ziele/Punkte je Position) ----
   plans: (childId?: number) =>
-    http<PlanResponse[]>(`${V1}/study-plans${childId ? `?childId=${childId}` : ""}`),
-  plan: (planId: number) => http<PlanResponse>(`${V1}/study-plans/${planId}`),
-  createPlan: (dto: CreatePlanDto) => http<PlanResponse>(`${V1}/study-plans`, "POST", dto),
+    http<PlanResponse[]>(`${V1}/supervisor/study-plans${childId ? `?childId=${childId}` : ""}`),
+  plan: (planId: number) => http<PlanResponse>(`${V1}/supervisor/study-plans/${planId}`),
+  createPlan: (dto: CreatePlanDto) => http<PlanResponse>(`${V1}/supervisor/study-plans`, "POST", dto),
   // Lehrplan nachträglich umbenennen/verlängern/deaktivieren (Inhalte laufen über Positionen).
   updatePlan: (planId: number, dto: UpdatePlanDto) =>
-    http<PlanResponse>(`${V1}/study-plans/${planId}`, "PATCH", dto),
+    http<PlanResponse>(`${V1}/supervisor/study-plans/${planId}`, "PATCH", dto),
   // Lehrplan samt Positionen/Fortschritt löschen (Kaskade); die Katalog-Übungen bleiben erhalten.
-  deletePlan: (planId: number) => http<void>(`${V1}/study-plans/${planId}`, "DELETE"),
+  deletePlan: (planId: number) => http<void>(`${V1}/supervisor/study-plans/${planId}`, "DELETE"),
 
   // ---- Lehrplan-Positionen (Plan = Container aus Katalog-Übungen) ----
   positions: (planId: number) =>
-    http<PositionResponse[]>(`${V1}/study-plans/${planId}/positions`),
+    http<PositionResponse[]>(`${V1}/supervisor/study-plans/${planId}/positions`),
   addPosition: (planId: number, dto: CreatePositionDto) =>
-    http<PositionResponse>(`${V1}/study-plans/${planId}/positions`, "POST", dto),
+    http<PositionResponse>(`${V1}/supervisor/study-plans/${planId}/positions`, "POST", dto),
   updatePosition: (planId: number, positionId: number, dto: UpdatePositionDto) =>
-    http<PositionResponse>(`${V1}/study-plans/${planId}/positions/${positionId}`, "PATCH", dto),
+    http<PositionResponse>(`${V1}/supervisor/study-plans/${planId}/positions/${positionId}`, "PATCH", dto),
   deletePosition: (planId: number, positionId: number) =>
-    http<void>(`${V1}/study-plans/${planId}/positions/${positionId}`, "DELETE"),
+    http<void>(`${V1}/supervisor/study-plans/${planId}/positions/${positionId}`, "DELETE"),
   // Lern-Report der Position: je Inhalt Box/Beherrschung + Test-Trefferquote („sitzt/sitzt nicht").
   positionReport: (planId: number, positionId: number) =>
-    http<PositionReport>(`${V1}/study-plans/${planId}/positions/${positionId}/report`),
+    http<PositionReport>(`${V1}/student/study-plans/${planId}/positions/${positionId}/report`),
 
   // ---- Vater: kindübergreifender Tagesüberblick ----
   childrenDaily: (date?: string) =>
-    http<ChildrenDashboard>(`${V1}/children/daily-overview${date ? `?date=${date}` : ""}`),
+    http<ChildrenDashboard>(`${V1}/supervisor/children/daily-overview${date ? `?date=${date}` : ""}`),
 
   // ---- Tagesmission (Sohn) / Verlauf (Vater) über Positionen ----
-  overview: (planId: number) => http<OverviewResponse>(`${V1}/study-plans/${planId}/overview`),
-  overviewProgress: (planId: number) => http<ProgressResponse>(`${V1}/study-plans/${planId}/overview/progress`),
+  overview: (planId: number) => http<OverviewResponse>(`${V1}/student/study-plans/${planId}/overview`),
+  overviewProgress: (planId: number) => http<ProgressResponse>(`${V1}/student/study-plans/${planId}/overview/progress`),
 
   // ---- Sohn: Position üben (Leitner) ----
   startSession: (planId: number, positionId: number) =>
-    http<PositionSession>(`${V1}/study-plans/${planId}/positions/${positionId}/practice-sessions`, "POST", {}),
+    http<PositionSession>(`${V1}/student/study-plans/${planId}/positions/${positionId}/practice-sessions`, "POST", {}),
   heartbeat: (planId: number, positionId: number, sessionId: number, seconds: number, active: boolean) =>
     http<PositionSession>(
-      `${V1}/study-plans/${planId}/positions/${positionId}/practice-sessions/${sessionId}/heartbeat`, "POST", { seconds, active }),
+      `${V1}/student/study-plans/${planId}/positions/${positionId}/practice-sessions/${sessionId}/heartbeat`, "POST", { seconds, active }),
   cards: (planId: number, positionId: number, sessionId: number) =>
-    http<PracticeCard[]>(`${V1}/study-plans/${planId}/positions/${positionId}/practice-sessions/${sessionId}/cards`),
+    http<PracticeCard[]>(`${V1}/student/study-plans/${planId}/positions/${positionId}/practice-sessions/${sessionId}/cards`),
   // Der Server bewertet serverseitig: das Frontend liefert nur die Antwort (getippt) bzw. bei
   // Anzeige-/Selbsteinschätzungs-Stufen das WasKnown-Flag; die Stufe erzwingt der Server.
   review: (planId: number, positionId: number, sessionId: number, dto: ReviewInput) =>
     http<ReviewOutcome | undefined>(
-      `${V1}/study-plans/${planId}/positions/${positionId}/practice-sessions/${sessionId}/review`, "POST", dto),
+      `${V1}/student/study-plans/${planId}/positions/${positionId}/practice-sessions/${sessionId}/review`, "POST", dto),
   endSession: (planId: number, positionId: number, sessionId: number) =>
     http<PositionSession>(
-      `${V1}/study-plans/${planId}/positions/${positionId}/practice-sessions/${sessionId}/end`, "POST", {}),
+      `${V1}/student/study-plans/${planId}/positions/${positionId}/practice-sessions/${sessionId}/end`, "POST", {}),
 
   // ---- Sohn: Position testen (Abschlusstest = Klausur, strikt server-getrieben) ----
   // Der Start liefert nur Metadaten; die Fragen kommen einzeln über nextTest, beantwortet wird über
   // answerTest (ohne Korrektheit – Feedback erst beim Abschluss), submitTest wertet aus.
   startTest: (planId: number, positionId: number) =>
-    http<TestAttemptResponse>(`${V1}/study-plans/${planId}/positions/${positionId}/tests`, "POST", {}),
+    http<TestAttemptResponse>(`${V1}/student/study-plans/${planId}/positions/${positionId}/tests`, "POST", {}),
   nextTest: (planId: number, positionId: number, attemptId: number) =>
-    http<TestNextResponse>(`${V1}/study-plans/${planId}/positions/${positionId}/tests/${attemptId}/next`),
+    http<TestNextResponse>(`${V1}/student/study-plans/${planId}/positions/${positionId}/tests/${attemptId}/next`),
   answerTest: (planId: number, positionId: number, attemptId: number, dto: AnswerDto) =>
-    http<TestAnswerAck>(`${V1}/study-plans/${planId}/positions/${positionId}/tests/${attemptId}/answer`, "POST", dto),
+    http<TestAnswerAck>(`${V1}/student/study-plans/${planId}/positions/${positionId}/tests/${attemptId}/answer`, "POST", dto),
   submitTest: (planId: number, positionId: number, attemptId: number, answers: AnswerDto[] = []) =>
-    http<TestSubmitResponse>(`${V1}/study-plans/${planId}/positions/${positionId}/tests/${attemptId}/submit`, "POST", { answers }),
+    http<TestSubmitResponse>(`${V1}/student/study-plans/${planId}/positions/${positionId}/tests/${attemptId}/submit`, "POST", { answers }),
 
   // ---- Sohn: Wallet ----
   // Kontostand (Salden) und Buchungsverlauf sind getrennt: Salden als Einzelwerte, Buchungen server-paginiert.
-  wallet: () => http<WalletBalance>(`${V1}/me/points`),
+  wallet: () => http<WalletBalance>(`${V1}/student/me/points`),
   walletEntries: (opts: { skip?: number; take?: number } = {}) => {
     const q = new URLSearchParams();
     appendPaging(q, opts);
     const qs = q.toString();
-    return httpPaged<WalletEntry>(`${V1}/me/points/entries${qs ? `?${qs}` : ""}`);
+    return httpPaged<WalletEntry>(`${V1}/student/me/points/entries${qs ? `?${qs}` : ""}`);
   },
 
   // ---- Sohn: Missionen & Auszeichnungen ----
-  missions: () => http<MissionStatus[]>(`${V1}/me/missions`),
-  achievements: () => http<AchievementStatus[]>(`${V1}/me/achievements`),
+  missions: () => http<MissionStatus[]>(`${V1}/student/me/missions`),
+  achievements: () => http<AchievementStatus[]>(`${V1}/student/me/achievements`),
 
   // ---- Sohn: Skins (Besitz server-autoritativ; Kauf bucht Münzen ab) ----
-  skins: () => http<SkinState>(`${V1}/me/skins`),
-  purchaseSkin: (skinId: string) => http<SkinState>(`${V1}/me/skins/${skinId}/purchase`, "POST", {}),
-  equipSkin: (skinId: string) => http<SkinState>(`${V1}/me/skins/${skinId}/equip`, "POST", {}),
+  skins: () => http<SkinState>(`${V1}/student/me/skins`),
+  purchaseSkin: (skinId: string) => http<SkinState>(`${V1}/student/me/skins/${skinId}/purchase`, "POST", {}),
+  equipSkin: (skinId: string) => http<SkinState>(`${V1}/student/me/skins/${skinId}/equip`, "POST", {}),
 
   // ---- Vater: Missionen (Belohnungsziele) je Kind verwalten ----
-  missionsFor: (childId: number) => http<MissionDef[]>(`${V1}/children/${childId}/missions`),
+  missionsFor: (childId: number) => http<MissionDef[]>(`${V1}/supervisor/children/${childId}/missions`),
   createMission: (childId: number, dto: CreateMissionDto) =>
-    http<MissionDef>(`${V1}/children/${childId}/missions`, "POST", dto),
+    http<MissionDef>(`${V1}/supervisor/children/${childId}/missions`, "POST", dto),
   updateMission: (childId: number, missionId: number, dto: Partial<MissionDef>) =>
-    http<MissionDef>(`${V1}/children/${childId}/missions/${missionId}`, "PATCH", dto),
+    http<MissionDef>(`${V1}/supervisor/children/${childId}/missions/${missionId}`, "PATCH", dto),
   deleteMission: (childId: number, missionId: number) =>
-    http<void>(`${V1}/children/${childId}/missions/${missionId}`, "DELETE"),
+    http<void>(`${V1}/supervisor/children/${childId}/missions/${missionId}`, "DELETE"),
 
   // ---- Vater: Auszeichnungen (Badges) je Kind verwalten ----
-  achievementsFor: (childId: number) => http<AchievementDef[]>(`${V1}/children/${childId}/achievements`),
+  achievementsFor: (childId: number) => http<AchievementDef[]>(`${V1}/supervisor/children/${childId}/achievements`),
   createAchievement: (childId: number, dto: CreateAchievementDto) =>
-    http<AchievementDef>(`${V1}/children/${childId}/achievements`, "POST", dto),
+    http<AchievementDef>(`${V1}/supervisor/children/${childId}/achievements`, "POST", dto),
   updateAchievement: (childId: number, achievementId: number, dto: Partial<AchievementDef>) =>
-    http<AchievementDef>(`${V1}/children/${childId}/achievements/${achievementId}`, "PATCH", dto),
+    http<AchievementDef>(`${V1}/supervisor/children/${childId}/achievements/${achievementId}`, "PATCH", dto),
   deleteAchievement: (childId: number, achievementId: number) =>
-    http<void>(`${V1}/children/${childId}/achievements/${achievementId}`, "DELETE"),
+    http<void>(`${V1}/supervisor/children/${childId}/achievements/${achievementId}`, "DELETE"),
 
   // ---- Vater: Konto-Übersicht (Punktestand + Buchungsverlauf je Kind) ----
   // Der Buchungsverlauf ist server-paginiert (Einträge in der Hülle + X-Total-Count); die Salden sind
@@ -316,20 +316,20 @@ export const api = {
     const q = new URLSearchParams();
     appendPaging(q, opts);
     const qs = q.toString();
-    const res = await request(`${V1}/children/${childId}/points${qs ? `?${qs}` : ""}`, "GET");
+    const res = await request(`${V1}/supervisor/children/${childId}/points${qs ? `?${qs}` : ""}`, "GET");
     const text = await res.text();
     const body = (text ? JSON.parse(text) : { coins: 0, gems: 0, entries: [] }) as Wallet;
     return { coins: body.coins, gems: body.gems, items: body.entries, total: totalFrom(res, body.entries.length) };
   },
 
   // ---- Vater: Angebote (kaufbare reale Belohnungen) verwalten ----
-  rewardsFor: (childId: number) => http<RewardDef[]>(`${V1}/children/${childId}/rewards`),
+  rewardsFor: (childId: number) => http<RewardDef[]>(`${V1}/supervisor/children/${childId}/rewards`),
   createReward: (childId: number, dto: CreateRewardDto) =>
-    http<RewardDef>(`${V1}/children/${childId}/rewards`, "POST", dto),
+    http<RewardDef>(`${V1}/supervisor/children/${childId}/rewards`, "POST", dto),
   updateReward: (childId: number, rewardId: number, dto: Partial<RewardDef>) =>
-    http<RewardDef>(`${V1}/children/${childId}/rewards/${rewardId}`, "PATCH", dto),
+    http<RewardDef>(`${V1}/supervisor/children/${childId}/rewards/${rewardId}`, "PATCH", dto),
   deleteReward: (childId: number, rewardId: number) =>
-    http<void>(`${V1}/children/${childId}/rewards/${rewardId}`, "DELETE"),
+    http<void>(`${V1}/supervisor/children/${childId}/rewards/${rewardId}`, "DELETE"),
 
   // ---- Vater: Käufe ansehen und erfüllen/stornieren ----
   redemptionsFor: (childId: number, opts: { status?: RewardRedemptionStatus; skip?: number; take?: number } = {}) => {
@@ -337,54 +337,54 @@ export const api = {
     if (opts.status) q.set("status", opts.status);
     appendPaging(q, opts);
     const qs = q.toString();
-    return httpPaged<RedemptionDef>(`${V1}/children/${childId}/rewards/redemptions${qs ? `?${qs}` : ""}`);
+    return httpPaged<RedemptionDef>(`${V1}/supervisor/children/${childId}/rewards/redemptions${qs ? `?${qs}` : ""}`);
   },
   fulfillRedemption: (childId: number, redemptionId: number) =>
-    http<RedemptionDef>(`${V1}/children/${childId}/rewards/redemptions/${redemptionId}/fulfill`, "POST", {}),
+    http<RedemptionDef>(`${V1}/supervisor/children/${childId}/rewards/redemptions/${redemptionId}/fulfill`, "POST", {}),
   cancelRedemption: (childId: number, redemptionId: number) =>
-    http<RedemptionDef>(`${V1}/children/${childId}/rewards/redemptions/${redemptionId}/cancel`, "POST", {}),
+    http<RedemptionDef>(`${V1}/supervisor/children/${childId}/rewards/redemptions/${redemptionId}/cancel`, "POST", {}),
 
   // ---- Sohn: Angebote ansehen und direkt kaufen (Münzen sofort weg, Vater erfüllt später) ----
   // Aggregat-Sicht (available + redemptions); der Münzstand kommt aus api.wallet() (me/points).
-  myRewards: () => http<RewardsView>(`${V1}/me/rewards`),
+  myRewards: () => http<RewardsView>(`${V1}/student/me/rewards`),
   // Adressierbare Unterlisten (server-paginiert) – falls einzeln benötigt.
   rewardsAvailable: (opts: { skip?: number; take?: number } = {}) => {
     const q = new URLSearchParams();
     appendPaging(q, opts);
     const qs = q.toString();
-    return httpPaged<RewardOffer>(`${V1}/me/rewards/available${qs ? `?${qs}` : ""}`);
+    return httpPaged<RewardOffer>(`${V1}/student/me/rewards/available${qs ? `?${qs}` : ""}`);
   },
   rewardsRedemptions: (opts: { status?: RewardRedemptionStatus; skip?: number; take?: number } = {}) => {
     const q = new URLSearchParams();
     if (opts.status) q.set("status", opts.status);
     appendPaging(q, opts);
     const qs = q.toString();
-    return httpPaged<MyRedemption>(`${V1}/me/rewards/redemptions${qs ? `?${qs}` : ""}`);
+    return httpPaged<MyRedemption>(`${V1}/student/me/rewards/redemptions${qs ? `?${qs}` : ""}`);
   },
   // Kauf über die available-Ressource; availableId == Angebots-Id.
-  purchaseReward: (availableId: number) => http<RewardsView>(`${V1}/me/rewards/available/${availableId}/purchase`, "POST", {}),
+  purchaseReward: (availableId: number) => http<RewardsView>(`${V1}/student/me/rewards/available/${availableId}/purchase`, "POST", {}),
 
   // ---- Vater: Klassenarbeiten (planen, Übungen zuweisen, benoten, üben/wiederholen) ----
   classTests: (childId: number, opts: { status?: KlassenarbeitStatus; skip?: number; take?: number } = {}) => {
     const q = new URLSearchParams({ childId: String(childId) });
     if (opts.status) q.set("status", opts.status);
     appendPaging(q, opts);
-    return httpPaged<KlassenarbeitResponse>(`${V1}/class-tests?${q.toString()}`);
+    return httpPaged<KlassenarbeitResponse>(`${V1}/supervisor/class-tests?${q.toString()}`);
   },
-  classTest: (id: number) => http<KlassenarbeitDetail>(`${V1}/class-tests/${id}`),
+  classTest: (id: number) => http<KlassenarbeitDetail>(`${V1}/supervisor/class-tests/${id}`),
   createClassTest: (dto: CreateKlassenarbeitDto) =>
-    http<KlassenarbeitDetail>(`${V1}/class-tests`, "POST", dto),
+    http<KlassenarbeitDetail>(`${V1}/supervisor/class-tests`, "POST", dto),
   updateClassTest: (id: number, dto: UpdateKlassenarbeitDto) =>
-    http<KlassenarbeitResponse>(`${V1}/class-tests/${id}`, "PATCH", dto),
-  deleteClassTest: (id: number) => http<void>(`${V1}/class-tests/${id}`, "DELETE"),
+    http<KlassenarbeitResponse>(`${V1}/supervisor/class-tests/${id}`, "PATCH", dto),
+  deleteClassTest: (id: number) => http<void>(`${V1}/supervisor/class-tests/${id}`, "DELETE"),
   assignClassTestExercises: (id: number, exerciseIds: number[]) =>
-    http<KlassenarbeitDetail>(`${V1}/class-tests/${id}/exercises`, "POST", { exerciseIds }),
+    http<KlassenarbeitDetail>(`${V1}/supervisor/class-tests/${id}/exercises`, "POST", { exerciseIds }),
   unassignClassTestExercise: (id: number, exerciseId: number) =>
-    http<void>(`${V1}/class-tests/${id}/exercises/${exerciseId}`, "DELETE"),
-  classTestPractice: (id: number) => http<KlassenarbeitPractice>(`${V1}/class-tests/${id}/practice`),
+    http<void>(`${V1}/supervisor/class-tests/${id}/exercises/${exerciseId}`, "DELETE"),
+  classTestPractice: (id: number) => http<KlassenarbeitPractice>(`${V1}/supervisor/class-tests/${id}/practice`),
   classTestRepeat: (childId: number, minBadGrade?: number) => {
     const q = new URLSearchParams({ childId: String(childId) });
     if (minBadGrade != null) q.set("minBadGrade", String(minBadGrade));
-    return http<KlassenarbeitRepeat>(`${V1}/class-tests/repeat?${q.toString()}`);
+    return http<KlassenarbeitRepeat>(`${V1}/supervisor/class-tests/repeat?${q.toString()}`);
   },
 };

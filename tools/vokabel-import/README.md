@@ -1,7 +1,7 @@
 # Vokabel-Import (Top-100 Englisch & Französisch)
 
 Kleines Hilfsprogramm, das den Pugling-**Vokabel-Store** über den Batch-Endpunkt
-(`POST /api/v1/learn/vocabulary/batch`) mit fertigen Vokabel-Listen füllt.
+(`POST /api/v1/creator/vocabulary/batch`) mit fertigen Vokabel-Listen füllt.
 
 ## Inhalt
 
@@ -90,8 +90,8 @@ Das Skript gibt am Ende eine Zusammenfassung aus (`created` / `existing` / `erro
 
 ```powershell
 # Nach Login (siehe Skript) – Anzahl im Header X-Total-Count
-GET /api/v1/learn/vocabulary?sourceLanguage=en&take=100
-GET /api/v1/learn/vocabulary?sourceLanguage=fr&take=100
+GET /api/v1/creator/vocabulary?sourceLanguage=en&take=100
+GET /api/v1/creator/vocabulary?sourceLanguage=fr&take=100
 ```
 
 Oder in der Vater-Web-UI unter `/vater` (Vokabel-Verwaltung).
