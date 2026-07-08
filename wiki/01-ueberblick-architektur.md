@@ -1,3 +1,8 @@
+---
+tags: [typ/konzept, bereich/doku]
+aliases: [Architektur-Überblick, Datenmodell-Landkarte]
+---
+
 # 01 · Überblick & Architektur
 
 Diese Seite gibt das mentale Modell, das man für alles Weitere braucht. Wer sie versteht, kann sich
@@ -145,6 +150,8 @@ gegen die hinterlegte Lösung und bucht die Punkte. Das verhindert Selbstbetrug.
    (z. B. Grammatik-Bonus für ein lustloses Kind).
 
 Konkrete Requests: [04 · Lernplan bauen](04-lernplan-bauen.md) (Vater) und [06 · Sohn-App](06-sohn-app.md) (Sohn).
+Wie die Endpunkte dieses Loops **aufeinander aufbauen** (Übung → Lehrplan → Kind → Auswertung), mit
+Datenfluss-Diagramm: [docs/endpunkt-beziehungen.md](../docs/endpunkt-beziehungen.md).
 
 ---
 
