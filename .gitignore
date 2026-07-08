@@ -23,3 +23,7 @@ backend/Pugling.Api/wwwroot/*
 .opencode
 
 .fake
+
+# Obsidian: lokale Vault-Konfiguration (Plugins/Layout/Workspace) – die .md-Doku bleibt die Quelle der
+# Wahrheit, die Tool-Config gehört nicht ins Repo. Siehe docs/obsidian.md.
+.obsidian/

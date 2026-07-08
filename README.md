@@ -64,6 +64,8 @@ eigenständige, dateibasierte Welt.
 ### Weiterführende Bestandsdoku (`docs/`)
 
 - [Architektur-Entscheidung (API-First)](docs/architektur-entscheidung.md) · [Architektur-Resümee](docs/architektur-resumee.md)
+- [Endpunkt-Beziehungen](docs/endpunkt-beziehungen.md) — wie die Endpunkte inhaltlich zusammenhängen (Übung → Lehrplan → Kind → Auswertung), mit Datenfluss-Diagramm
+- [Obsidian: Wissensvernetzung](docs/obsidian.md) — Doku/Planung als navigierbarer Graph (Tags/Backlinks), Konsistenz-Konventionen gegen Insellösungen
 - [Tutorial (API, Vater & Sohn)](docs/tutorial.md) — kompakter Original-Walkthrough
 - [Vokabel-Funktionalitäten für Entwickler](docs/vokabel-funktionalitaeten-entwickler-tutorial.md) — Store, `ExerciseItem`s, Progress und API-Flows
 - [Vokabeltraining-Prozess-Log](docs/vokabeltraining-prozess.md) — wie das Study-Plan-System in 8 Iterationen entstand

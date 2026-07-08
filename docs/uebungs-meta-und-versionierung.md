@@ -1,3 +1,7 @@
+---
+tags: [typ/konzept, bereich/katalog]
+---
+
 # Design: Übungs-Meta-Beschreibung & Versionierung
 
 Stand: 2026-07-04. Grundlage für die Entscheidung, wie sich neue Lernmethoden anbinden lassen

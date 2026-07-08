@@ -1,3 +1,7 @@
+---
+tags: [typ/konzept, bereich/training]
+---
+
 # Tagging & Klassenarbeiten
 
 Zwei zusammenhängende Backend-Features (reine API-Phase, noch kein Frontend – wie beim übrigen

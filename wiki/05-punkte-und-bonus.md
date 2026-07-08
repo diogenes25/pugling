@@ -1,3 +1,7 @@
+---
+tags: [typ/konzept, bereich/punkte, bereich/gamification]
+---
+
 # 05 · Punkte & Bonus-System
 
 ← [Zurück zum Wiki-Index](../README.md)

@@ -1,3 +1,8 @@
+---
+tags: [typ/tutorial, bereich/katalog]
+aliases: [Erweitern, Neue Lerntechnik, Neuer Übungstyp]
+---
+
 # 08 · Erweitern: neue Übung / neues Verfahren / Add-Ons
 
 ← [Zurück zum Wiki-Index](../README.md)

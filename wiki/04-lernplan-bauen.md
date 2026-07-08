@@ -1,3 +1,7 @@
+---
+tags: [typ/tutorial, bereich/training]
+---
+
 # 04 · Einen Lernplan bauen (Vater)
 
 ← [Zurück zum Wiki-Index](../README.md)

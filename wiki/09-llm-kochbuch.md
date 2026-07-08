@@ -1,3 +1,7 @@
+---
+tags: [typ/tutorial, bereich/doku]
+---
+
 # 09 · LLM-Kochbuch: Lernplan aus einem Prompt
 
 ← [Zurück zum Wiki-Index](../README.md)

@@ -1,3 +1,7 @@
+---
+tags: [typ/tutorial, bereich/training]
+---
+
 # Pugling – Tutorial (API)
 
 > Teil des Wikis. Die ausführliche Fassung steht in

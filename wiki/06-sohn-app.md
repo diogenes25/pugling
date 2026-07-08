@@ -1,3 +1,7 @@
+---
+tags: [typ/tutorial, bereich/frontend]
+---
+
 # 06 · Anleitung für die Sohn-App
 
 ← [Zurück zum Wiki-Index](../README.md)

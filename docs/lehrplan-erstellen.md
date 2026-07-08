@@ -1,3 +1,7 @@
+---
+tags: [typ/tutorial, bereich/doku]
+---
+
 # Einen Lehrplan erstellen — Handbuch für den Vater
 
 Diese Doku erklärt **genau**, wie ein Vater einen kompletten Lehrplan („Lehrplan") mit einzelnen
