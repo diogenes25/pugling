@@ -331,7 +331,7 @@ app.MapScalarApiReference(options =>
 {
     options
         .WithTitle("Pugling API v1")
-        .WithPreferredScheme("bearer")
+        .AddPreferredSecuritySchemes("bearer")
         // Wie bei Swagger: eingegebene Authentifizierung über Reloads hinweg behalten.
         .EnablePersistentAuthentication();
 });

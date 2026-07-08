@@ -26,13 +26,13 @@ public class PlanPositionsController(PuglingDbContext db) : ControllerBase
 {
     public record PositionResponse(int Id, int StudyPlanId, int ExerciseId, string ExerciseTitle,
         string ExerciseType, int Order, int? Stage, int? ItemCount, ItemScope Scope, GoalCadence Cadence,
-        int? GoalThreshold, bool RequireTypedTest, bool UseLeitner, int MaxBox, List<int>? BoxIntervalDays,
-        List<StageStep>? StageSchedule, int PointsGoalMet, int NewContentPoints, int ComboThreshold,
-        int ComboBonusPoints, int SpeedThresholdSeconds, int SpeedBonusPoints);
+        PracticeOrder OrderStrategy, int? GoalThreshold, bool RequireTypedTest, bool UseLeitner, int MaxBox,
+        List<int>? BoxIntervalDays, List<StageStep>? StageSchedule, int PointsGoalMet, int NewContentPoints,
+        int ComboThreshold, int ComboBonusPoints, int SpeedThresholdSeconds, int SpeedBonusPoints);
 
     private static PositionResponse Map(PlanPosition p) =>
         new(p.Id, p.StudyPlanId, p.ExerciseId, p.Exercise?.Title ?? "", p.Exercise?.Type.ToString() ?? "",
-            p.Order, p.Stage, p.ItemCount, p.Scope, p.Cadence, p.GoalThreshold, p.RequireTypedTest,
+            p.Order, p.Stage, p.ItemCount, p.Scope, p.Cadence, p.OrderStrategy, p.GoalThreshold, p.RequireTypedTest,
             p.UseLeitner, p.MaxBox, p.BoxIntervalDays, p.StageSchedule, p.PointsGoalMet, p.NewContentPoints,
             p.ComboThreshold, p.ComboBonusPoints, p.SpeedThresholdSeconds, p.SpeedBonusPoints);
 
@@ -67,9 +67,10 @@ public class PlanPositionsController(PuglingDbContext db) : ControllerBase
     /// aufgelöst; die Punkte-/Bonus-Felder werden aus <see cref="Exercise.SuggestedBonus"/> vorbelegt.
     /// </summary>
     public record CreatePositionDto(int ExerciseId, int? Order, int? Stage, int? ItemCount, ItemScope? Scope,
-        GoalCadence? Cadence, int? GoalThreshold, bool? RequireTypedTest, bool? UseLeitner, int? MaxBox,
-        List<int>? BoxIntervalDays, List<StageStep>? StageSchedule, int? PointsGoalMet, int? NewContentPoints,
-        int? ComboThreshold, int? ComboBonusPoints, int? SpeedThresholdSeconds, int? SpeedBonusPoints);
+        GoalCadence? Cadence, PracticeOrder? OrderStrategy, int? GoalThreshold, bool? RequireTypedTest,
+        bool? UseLeitner, int? MaxBox, List<int>? BoxIntervalDays, List<StageStep>? StageSchedule,
+        int? PointsGoalMet, int? NewContentPoints, int? ComboThreshold, int? ComboBonusPoints,
+        int? SpeedThresholdSeconds, int? SpeedBonusPoints);
 
     /// <summary>Fügt dem Lehrplan eine Position auf eine Katalog-Übung hinzu.</summary>
     [HttpPost]
@@ -93,6 +94,7 @@ public class PlanPositionsController(PuglingDbContext db) : ControllerBase
             ItemCount = dto.ItemCount,
             Scope = dto.Scope ?? ItemScope.All,
             Cadence = dto.Cadence ?? GoalCadence.None,
+            OrderStrategy = dto.OrderStrategy ?? PracticeOrder.WeakestFirst,
             GoalThreshold = dto.GoalThreshold,
             // Leitner/getippt erben ihren Standard von der Übung (Hybrid-Prinzip), solange die Position nichts vorgibt.
             RequireTypedTest = dto.RequireTypedTest ?? exercise.DefaultRequireTypedTest,
@@ -117,9 +119,10 @@ public class PlanPositionsController(PuglingDbContext db) : ControllerBase
 
     /// <summary>Partielle Änderung der Overrides/Ziele/Punkte. Die referenzierte Übung ist unveränderlich (Fortschritts-Indizes).</summary>
     public record UpdatePositionDto(int? Order, int? Stage, int? ItemCount, ItemScope? Scope,
-        GoalCadence? Cadence, int? GoalThreshold, bool? RequireTypedTest, bool? UseLeitner, int? MaxBox,
-        List<int>? BoxIntervalDays, List<StageStep>? StageSchedule, int? PointsGoalMet, int? NewContentPoints,
-        int? ComboThreshold, int? ComboBonusPoints, int? SpeedThresholdSeconds, int? SpeedBonusPoints);
+        GoalCadence? Cadence, PracticeOrder? OrderStrategy, int? GoalThreshold, bool? RequireTypedTest,
+        bool? UseLeitner, int? MaxBox, List<int>? BoxIntervalDays, List<StageStep>? StageSchedule,
+        int? PointsGoalMet, int? NewContentPoints, int? ComboThreshold, int? ComboBonusPoints,
+        int? SpeedThresholdSeconds, int? SpeedBonusPoints);
 
     /// <summary>Ändert eine Position (partiell). Setzt nur die angegebenen Felder.</summary>
     [HttpPatch("{positionId:int}")]
@@ -135,6 +138,7 @@ public class PlanPositionsController(PuglingDbContext db) : ControllerBase
         if (dto.ItemCount is not null) pos.ItemCount = dto.ItemCount;
         if (dto.Scope is not null) pos.Scope = dto.Scope.Value;
         if (dto.Cadence is not null) pos.Cadence = dto.Cadence.Value;
+        if (dto.OrderStrategy is not null) pos.OrderStrategy = dto.OrderStrategy.Value;
         if (dto.GoalThreshold is not null) pos.GoalThreshold = dto.GoalThreshold;
         if (dto.RequireTypedTest is not null) pos.RequireTypedTest = dto.RequireTypedTest.Value;
         if (dto.UseLeitner is not null) pos.UseLeitner = dto.UseLeitner.Value;

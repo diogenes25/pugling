@@ -43,7 +43,10 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
         var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
         db.ChildPoints.Add(new ChildPointsEntry
         {
-            ChildId = childId, Amount = amount, Kind = PointKind.Mission, Reason = "Test-Gems",
+            ChildId = childId,
+            Amount = amount,
+            Kind = PointKind.Mission,
+            Reason = "Test-Gems",
         });
         await db.SaveChangesAsync();
     }
@@ -57,13 +60,19 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
         var (childId, child) = await FreshChildAsync(father, "9301");
         var articleId = await CreateArticleAsync(father, new
         {
-            articleNumber = "TV-901", title = "Fernsehen",
-            unitType = "Minute", actionType = "TV",
+            articleNumber = "TV-901",
+            title = "Fernsehen",
+            unitType = "Minute",
+            actionType = "TV",
         });
         var listingId = await CreateListingAsync(father, articleId, new
         {
-            title = "30 Minuten Fernsehen", coinPrice = 120, gemPrice = 30,
-            unitsPerPurchase = 30, currentStock = 2, maxStock = 2,
+            title = "30 Minuten Fernsehen",
+            coinPrice = 120,
+            gemPrice = 30,
+            unitsPerPurchase = 30,
+            currentStock = 2,
+            maxStock = 2,
         });
 
         (await father.PostAsJsonAsync($"/api/v1/children/{childId}/points", new { amount = 200, reason = "Coins" }))
@@ -106,12 +115,18 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
         var (childId, child) = await FreshChildAsync(father, "9302");
         var articleId = await CreateArticleAsync(father, new
         {
-            articleNumber = "INV-001", title = "Naschpaket",
-            unitType = "Gramm", actionType = "Suessigkeit",
+            articleNumber = "INV-001",
+            title = "Naschpaket",
+            unitType = "Gramm",
+            actionType = "Suessigkeit",
         });
         var listingId = await CreateListingAsync(father, articleId, new
         {
-            coinPrice = 100, gemPrice = 0, unitsPerPurchase = 50, currentStock = 2, maxStock = 2,
+            coinPrice = 100,
+            gemPrice = 0,
+            unitsPerPurchase = 50,
+            currentStock = 2,
+            maxStock = 2,
         });
 
         // Vor dem Kauf: leerer Bestand.
@@ -140,16 +155,26 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
         var (childId, child) = await FreshChildAsync(father, "9310");
         var articleId = await CreateArticleAsync(father, new
         {
-            articleNumber = "ZK-001", title = "TV-Zeit",
-            unitType = "Minute", actionType = "TV",
+            articleNumber = "ZK-001",
+            title = "TV-Zeit",
+            unitType = "Minute",
+            actionType = "TV",
         });
         var listing30 = await CreateListingAsync(father, articleId, new
         {
-            coinPrice = 100, gemPrice = 0, unitsPerPurchase = 30, currentStock = 3, maxStock = 3,
+            coinPrice = 100,
+            gemPrice = 0,
+            unitsPerPurchase = 30,
+            currentStock = 3,
+            maxStock = 3,
         });
         var listing60 = await CreateListingAsync(father, articleId, new
         {
-            coinPrice = 180, gemPrice = 0, unitsPerPurchase = 60, currentStock = 3, maxStock = 3,
+            coinPrice = 180,
+            gemPrice = 0,
+            unitsPerPurchase = 60,
+            currentStock = 3,
+            maxStock = 3,
         });
 
         (await father.PostAsJsonAsync($"/api/v1/children/{childId}/points", new { amount = 500, reason = "Coins" }))
@@ -171,12 +196,18 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
         var (childId, child) = await FreshChildAsync(father, "9304");
         var articleId = await CreateArticleAsync(father, new
         {
-            articleNumber = "LEER-001", title = "Ausverkauft",
-            unitType = "Stueck", actionType = "Sonstiges",
+            articleNumber = "LEER-001",
+            title = "Ausverkauft",
+            unitType = "Stueck",
+            actionType = "Sonstiges",
         });
         var listingId = await CreateListingAsync(father, articleId, new
         {
-            coinPrice = 100, gemPrice = 0, unitsPerPurchase = 1, currentStock = 0, maxStock = 1,
+            coinPrice = 100,
+            gemPrice = 0,
+            unitsPerPurchase = 1,
+            currentStock = 0,
+            maxStock = 1,
         });
         (await father.PostAsJsonAsync($"/api/v1/children/{childId}/points", new { amount = 300, reason = "Coins" }))
             .EnsureSuccessStatusCode();
@@ -201,7 +232,11 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
         var fremdArticle = new ShopArticle { Father = fremdVater, ArticleNumber = "F-001", Title = "Fremd" };
         var fremdListing = new ShopListing
         {
-            ShopArticle = fremdArticle, CoinPrice = 1, UnitsPerPurchase = 1, CurrentStock = 1, MaxStock = 1,
+            ShopArticle = fremdArticle,
+            CoinPrice = 1,
+            UnitsPerPurchase = 1,
+            CurrentStock = 1,
+            MaxStock = 1,
         };
         db.ShopListings.Add(fremdListing);
         await db.SaveChangesAsync();
@@ -223,12 +258,18 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
         var (childId, child) = await FreshChildAsync(father, "9303");
         var articleId = await CreateArticleAsync(father, new
         {
-            articleNumber = "STO-001", title = "Sticker",
-            unitType = "Stueck", actionType = "Sonstiges",
+            articleNumber = "STO-001",
+            title = "Sticker",
+            unitType = "Stueck",
+            actionType = "Sonstiges",
         });
         var listingId = await CreateListingAsync(father, articleId, new
         {
-            coinPrice = 100, gemPrice = 25, unitsPerPurchase = 5, currentStock = 1, maxStock = 1,
+            coinPrice = 100,
+            gemPrice = 25,
+            unitsPerPurchase = 5,
+            currentStock = 1,
+            maxStock = 1,
         });
         (await father.PostAsJsonAsync($"/api/v1/children/{childId}/points", new { amount = 300, reason = "Coins" }))
             .EnsureSuccessStatusCode();
@@ -260,12 +301,18 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
         var (childId, child) = await FreshChildAsync(father, "9306");
         var articleId = await CreateArticleAsync(father, new
         {
-            articleNumber = "DS-001", title = "Doppel-Storno",
-            unitType = "Stueck", actionType = "Sonstiges",
+            articleNumber = "DS-001",
+            title = "Doppel-Storno",
+            unitType = "Stueck",
+            actionType = "Sonstiges",
         });
         var listingId = await CreateListingAsync(father, articleId, new
         {
-            coinPrice = 100, gemPrice = 0, unitsPerPurchase = 1, currentStock = 1, maxStock = 1,
+            coinPrice = 100,
+            gemPrice = 0,
+            unitsPerPurchase = 1,
+            currentStock = 1,
+            maxStock = 1,
         });
         (await father.PostAsJsonAsync($"/api/v1/children/{childId}/points", new { amount = 300, reason = "Coins" }))
             .EnsureSuccessStatusCode();
@@ -297,12 +344,18 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
         var (childId, child) = await FreshChildAsync(father, "9307");
         var articleId = await CreateArticleAsync(father, new
         {
-            articleNumber = "AKT-001", title = "Fernsehen",
-            unitType = "Minute", actionType = "TV",
+            articleNumber = "AKT-001",
+            title = "Fernsehen",
+            unitType = "Minute",
+            actionType = "TV",
         });
         var listingId = await CreateListingAsync(father, articleId, new
         {
-            coinPrice = 100, gemPrice = 0, unitsPerPurchase = 50, currentStock = 3, maxStock = 3,
+            coinPrice = 100,
+            gemPrice = 0,
+            unitsPerPurchase = 50,
+            currentStock = 3,
+            maxStock = 3,
         });
         (await father.PostAsJsonAsync($"/api/v1/children/{childId}/points", new { amount = 200, reason = "Coins" }))
             .EnsureSuccessStatusCode();
@@ -337,12 +390,18 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
         var (childId, child) = await FreshChildAsync(father, "9308");
         var articleId = await CreateArticleAsync(father, new
         {
-            articleNumber = "REJE-001", title = "Spielzeit",
-            unitType = "Minute", actionType = "Zocken",
+            articleNumber = "REJE-001",
+            title = "Spielzeit",
+            unitType = "Minute",
+            actionType = "Zocken",
         });
         var listingId = await CreateListingAsync(father, articleId, new
         {
-            coinPrice = 100, gemPrice = 0, unitsPerPurchase = 30, currentStock = 1, maxStock = 1,
+            coinPrice = 100,
+            gemPrice = 0,
+            unitsPerPurchase = 30,
+            currentStock = 1,
+            maxStock = 1,
         });
         (await father.PostAsJsonAsync($"/api/v1/children/{childId}/points", new { amount = 200, reason = "Coins" }))
             .EnsureSuccessStatusCode();
@@ -370,12 +429,18 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
         var (childId, child) = await FreshChildAsync(father, "9309");
         var articleId = await CreateArticleAsync(father, new
         {
-            articleNumber = "OVER-001", title = "Eis",
-            unitType = "Gramm", actionType = "Suessigkeit",
+            articleNumber = "OVER-001",
+            title = "Eis",
+            unitType = "Gramm",
+            actionType = "Suessigkeit",
         });
         var listingId = await CreateListingAsync(father, articleId, new
         {
-            coinPrice = 50, gemPrice = 0, unitsPerPurchase = 10, currentStock = 1, maxStock = 1,
+            coinPrice = 50,
+            gemPrice = 0,
+            unitsPerPurchase = 10,
+            currentStock = 1,
+            maxStock = 1,
         });
         (await father.PostAsJsonAsync($"/api/v1/children/{childId}/points", new { amount = 100, reason = "Coins" }))
             .EnsureSuccessStatusCode();
@@ -394,12 +459,18 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
         var (childId, child) = await FreshChildAsync(father, "9311");
         var articleId = await CreateArticleAsync(father, new
         {
-            articleNumber = "DBLAP-001", title = "Doppel",
-            unitType = "Stueck", actionType = "Sonstiges",
+            articleNumber = "DBLAP-001",
+            title = "Doppel",
+            unitType = "Stueck",
+            actionType = "Sonstiges",
         });
         var listingId = await CreateListingAsync(father, articleId, new
         {
-            coinPrice = 50, gemPrice = 0, unitsPerPurchase = 5, currentStock = 2, maxStock = 2,
+            coinPrice = 50,
+            gemPrice = 0,
+            unitsPerPurchase = 5,
+            currentStock = 2,
+            maxStock = 2,
         });
         (await father.PostAsJsonAsync($"/api/v1/children/{childId}/points", new { amount = 200, reason = "Coins" }))
             .EnsureSuccessStatusCode();
@@ -426,12 +497,18 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
         var (childId, child) = await FreshChildAsync(father, "9312");
         var articleId = await CreateArticleAsync(father, new
         {
-            articleNumber = "AFF-001", title = "Test",
-            unitType = "Stueck", actionType = "Sonstiges",
+            articleNumber = "AFF-001",
+            title = "Test",
+            unitType = "Stueck",
+            actionType = "Sonstiges",
         });
         var listingId = await CreateListingAsync(father, articleId, new
         {
-            coinPrice = 50, gemPrice = 0, unitsPerPurchase = 5, currentStock = 2, maxStock = 2,
+            coinPrice = 50,
+            gemPrice = 0,
+            unitsPerPurchase = 5,
+            currentStock = 2,
+            maxStock = 2,
         });
         (await father.PostAsJsonAsync($"/api/v1/children/{childId}/points", new { amount = 200, reason = "Coins" }))
             .EnsureSuccessStatusCode();
@@ -463,7 +540,9 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
     {
         var listing = new ShopListing
         {
-            CurrentStock = 0, MaxStock = 3, RefillKind = ShopRefillKind.Daily,
+            CurrentStock = 0,
+            MaxStock = 3,
+            RefillKind = ShopRefillKind.Daily,
         };
 
         var changed = ShopService.ApplyDueRefill(listing, new DateTime(2026, 7, 6, 10, 0, 0, DateTimeKind.Utc));
@@ -481,8 +560,10 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
         var father = await TestApi.FatherAsync(factory);
         var articleId = await CreateArticleAsync(father, new
         {
-            articleNumber = "CRUD-001", title = "Schlafstunde",
-            unitType = "Minute", actionType = "Sonstiges",
+            articleNumber = "CRUD-001",
+            title = "Schlafstunde",
+            unitType = "Minute",
+            actionType = "Sonstiges",
         });
 
         var list = await JsonAsync(await father.GetAsync("/api/v1/shop/articles"));
@@ -497,14 +578,18 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
         var father = await TestApi.FatherAsync(factory);
         await CreateArticleAsync(father, new
         {
-            articleNumber = "DUP-NUM", title = "Erster",
-            unitType = "Minute", actionType = "TV",
+            articleNumber = "DUP-NUM",
+            title = "Erster",
+            unitType = "Minute",
+            actionType = "TV",
         });
 
         var res = await father.PostAsJsonAsync("/api/v1/shop/articles", new
         {
-            articleNumber = "DUP-NUM", title = "Zweiter",
-            unitType = "Minute", actionType = "TV",
+            articleNumber = "DUP-NUM",
+            title = "Zweiter",
+            unitType = "Minute",
+            actionType = "TV",
         });
         Assert.Equal(HttpStatusCode.Conflict, res.StatusCode);
         var body = await res.Content.ReadFromJsonAsync<JsonElement>();
@@ -517,8 +602,10 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
         var father = await TestApi.FatherAsync(factory);
         var articleId = await CreateArticleAsync(father, new
         {
-            articleNumber = "OLD-001", title = "Alter Titel",
-            unitType = "Stueck", actionType = "Sonstiges",
+            articleNumber = "OLD-001",
+            title = "Alter Titel",
+            unitType = "Stueck",
+            actionType = "Sonstiges",
         });
 
         var patched = await JsonAsync(await father.PatchAsJsonAsync(
@@ -533,8 +620,10 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
         var father = await TestApi.FatherAsync(factory);
         var articleId = await CreateArticleAsync(father, new
         {
-            articleNumber = "ETITLE-001", title = "Ursprung",
-            unitType = "Stueck", actionType = "Sonstiges",
+            articleNumber = "ETITLE-001",
+            title = "Ursprung",
+            unitType = "Stueck",
+            actionType = "Sonstiges",
         });
 
         var res = await father.PatchAsJsonAsync($"/api/v1/shop/articles/{articleId}", new { title = "  " });
@@ -547,8 +636,10 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
         var father = await TestApi.FatherAsync(factory);
         var articleId = await CreateArticleAsync(father, new
         {
-            articleNumber = "DEL-001", title = "Zu löschen",
-            unitType = "Stueck", actionType = "Sonstiges",
+            articleNumber = "DEL-001",
+            title = "Zu löschen",
+            unitType = "Stueck",
+            actionType = "Sonstiges",
         });
 
         (await father.DeleteAsync($"/api/v1/shop/articles/{articleId}")).EnsureSuccessStatusCode();
@@ -565,13 +656,19 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
         var father = await TestApi.FatherAsync(factory);
         var articleId = await CreateArticleAsync(father, new
         {
-            articleNumber = "LST-001", title = "Listing-Test",
-            unitType = "Minute", actionType = "TV",
+            articleNumber = "LST-001",
+            title = "Listing-Test",
+            unitType = "Minute",
+            actionType = "TV",
         });
         var listingId = await CreateListingAsync(father, articleId, new
         {
-            title = "30 Min", coinPrice = 150, gemPrice = 0,
-            unitsPerPurchase = 30, currentStock = 5, maxStock = 5,
+            title = "30 Min",
+            coinPrice = 150,
+            gemPrice = 0,
+            unitsPerPurchase = 30,
+            currentStock = 5,
+            maxStock = 5,
         });
 
         var list = await JsonAsync(await father.GetAsync($"/api/v1/shop/articles/{articleId}/listings"));
@@ -586,8 +683,10 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
         var father = await TestApi.FatherAsync(factory);
         var articleId = await CreateArticleAsync(father, new
         {
-            articleNumber = "ZEROPRICE", title = "Null-Preis",
-            unitType = "Stueck", actionType = "Sonstiges",
+            articleNumber = "ZEROPRICE",
+            title = "Null-Preis",
+            unitType = "Stueck",
+            actionType = "Sonstiges",
         });
 
         var res = await father.PostAsJsonAsync($"/api/v1/shop/articles/{articleId}/listings",
@@ -601,12 +700,18 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
         var father = await TestApi.FatherAsync(factory);
         var articleId = await CreateArticleAsync(father, new
         {
-            articleNumber = "DEACT-001", title = "Deaktivierbar",
-            unitType = "Stueck", actionType = "Sonstiges",
+            articleNumber = "DEACT-001",
+            title = "Deaktivierbar",
+            unitType = "Stueck",
+            actionType = "Sonstiges",
         });
         var listingId = await CreateListingAsync(father, articleId, new
         {
-            coinPrice = 50, gemPrice = 0, unitsPerPurchase = 1, currentStock = 3, maxStock = 3,
+            coinPrice = 50,
+            gemPrice = 0,
+            unitsPerPurchase = 1,
+            currentStock = 3,
+            maxStock = 3,
         });
 
         var patched = await JsonAsync(await father.PatchAsJsonAsync(
@@ -620,12 +725,18 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
         var father = await TestApi.FatherAsync(factory);
         var articleId = await CreateArticleAsync(father, new
         {
-            articleNumber = "DELLIST-001", title = "Listing löschen",
-            unitType = "Stueck", actionType = "Sonstiges",
+            articleNumber = "DELLIST-001",
+            title = "Listing löschen",
+            unitType = "Stueck",
+            actionType = "Sonstiges",
         });
         var listingId = await CreateListingAsync(father, articleId, new
         {
-            coinPrice = 50, gemPrice = 0, unitsPerPurchase = 1, currentStock = 1, maxStock = 1,
+            coinPrice = 50,
+            gemPrice = 0,
+            unitsPerPurchase = 1,
+            currentStock = 1,
+            maxStock = 1,
         });
 
         (await father.DeleteAsync($"/api/v1/shop/articles/{articleId}/listings/{listingId}")).EnsureSuccessStatusCode();
@@ -645,12 +756,18 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
 
         var articleId = await CreateArticleAsync(father, new
         {
-            articleNumber = "NOCOIN-001", title = "Kein Geld",
-            unitType = "Stueck", actionType = "Sonstiges",
+            articleNumber = "NOCOIN-001",
+            title = "Kein Geld",
+            unitType = "Stueck",
+            actionType = "Sonstiges",
         });
         var listingId = await CreateListingAsync(father, articleId, new
         {
-            coinPrice = 500, gemPrice = 0, unitsPerPurchase = 1, currentStock = 5, maxStock = 5,
+            coinPrice = 500,
+            gemPrice = 0,
+            unitsPerPurchase = 1,
+            currentStock = 5,
+            maxStock = 5,
         });
 
         var res = await child.PostAsJsonAsync($"/api/v1/me/shop/listings/{listingId}/purchase", new { });
@@ -673,12 +790,18 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
 
         var articleId = await CreateArticleAsync(father, new
         {
-            articleNumber = "NOGEM-001", title = "Kein Gem",
-            unitType = "Stueck", actionType = "Sonstiges",
+            articleNumber = "NOGEM-001",
+            title = "Kein Gem",
+            unitType = "Stueck",
+            actionType = "Sonstiges",
         });
         var listingId = await CreateListingAsync(father, articleId, new
         {
-            coinPrice = 100, gemPrice = 50, unitsPerPurchase = 1, currentStock = 5, maxStock = 5,
+            coinPrice = 100,
+            gemPrice = 50,
+            unitsPerPurchase = 1,
+            currentStock = 5,
+            maxStock = 5,
         });
 
         var res = await child.PostAsJsonAsync($"/api/v1/me/shop/listings/{listingId}/purchase", new { });
@@ -697,12 +820,18 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
 
         var articleId = await CreateArticleAsync(father, new
         {
-            articleNumber = "INACT-001", title = "Inaktiv",
-            unitType = "Stueck", actionType = "Sonstiges",
+            articleNumber = "INACT-001",
+            title = "Inaktiv",
+            unitType = "Stueck",
+            actionType = "Sonstiges",
         });
         var listingId = await CreateListingAsync(father, articleId, new
         {
-            coinPrice = 100, gemPrice = 0, unitsPerPurchase = 1, currentStock = 5, maxStock = 5,
+            coinPrice = 100,
+            gemPrice = 0,
+            unitsPerPurchase = 1,
+            currentStock = 5,
+            maxStock = 5,
         });
         await father.PatchAsJsonAsync(
             $"/api/v1/shop/articles/{articleId}/listings/{listingId}", new { active = false });
@@ -725,12 +854,18 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
 
         var articleId = await CreateArticleAsync(father, new
         {
-            articleNumber = "AFFORD-001", title = "Affordance-Test",
-            unitType = "Stueck", actionType = "Sonstiges",
+            articleNumber = "AFFORD-001",
+            title = "Affordance-Test",
+            unitType = "Stueck",
+            actionType = "Sonstiges",
         });
         var listingId = await CreateListingAsync(father, articleId, new
         {
-            coinPrice = 100, gemPrice = 0, unitsPerPurchase = 1, currentStock = 3, maxStock = 3,
+            coinPrice = 100,
+            gemPrice = 0,
+            unitsPerPurchase = 1,
+            currentStock = 3,
+            maxStock = 3,
         });
 
         var view = await JsonAsync(await child.PostAsJsonAsync(
@@ -762,12 +897,18 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
 
         var articleId = await CreateArticleAsync(father, new
         {
-            articleNumber = "PAGE-001", title = "Paging-Test",
-            unitType = "Stueck", actionType = "Sonstiges",
+            articleNumber = "PAGE-001",
+            title = "Paging-Test",
+            unitType = "Stueck",
+            actionType = "Sonstiges",
         });
         var listingId = await CreateListingAsync(father, articleId, new
         {
-            coinPrice = 50, gemPrice = 0, unitsPerPurchase = 1, currentStock = 10, maxStock = 10,
+            coinPrice = 50,
+            gemPrice = 0,
+            unitsPerPurchase = 1,
+            currentStock = 10,
+            maxStock = 10,
         });
 
         for (var i = 0; i < 5; i++)
@@ -788,12 +929,18 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
 
         var articleId = await CreateArticleAsync(father, new
         {
-            articleNumber = "APAGE-001", title = "Aktivierungs-Paging",
-            unitType = "Stueck", actionType = "Sonstiges",
+            articleNumber = "APAGE-001",
+            title = "Aktivierungs-Paging",
+            unitType = "Stueck",
+            actionType = "Sonstiges",
         });
         var listingId = await CreateListingAsync(father, articleId, new
         {
-            coinPrice = 50, gemPrice = 0, unitsPerPurchase = 10, currentStock = 2, maxStock = 2,
+            coinPrice = 50,
+            gemPrice = 0,
+            unitsPerPurchase = 10,
+            currentStock = 2,
+            maxStock = 2,
         });
         await child.PostAsJsonAsync($"/api/v1/me/shop/listings/{listingId}/purchase", new { });
 
@@ -819,12 +966,18 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
         var (childId, child) = await FreshChildAsync(father, "9360");
         var articleId = await CreateArticleAsync(father, new
         {
-            articleNumber = "STAMP-001", title = "Stamp",
-            unitType = "Stueck", actionType = "Sonstiges",
+            articleNumber = "STAMP-001",
+            title = "Stamp",
+            unitType = "Stueck",
+            actionType = "Sonstiges",
         });
         var listingId = await CreateListingAsync(father, articleId, new
         {
-            coinPrice = 50, gemPrice = 0, unitsPerPurchase = 1, currentStock = 3, maxStock = 3,
+            coinPrice = 50,
+            gemPrice = 0,
+            unitsPerPurchase = 1,
+            currentStock = 3,
+            maxStock = 3,
         });
         (await father.PostAsJsonAsync($"/api/v1/children/{childId}/points",
             new { amount = 200, reason = "Coins" })).EnsureSuccessStatusCode();
@@ -853,12 +1006,18 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
         var (childId, child) = await FreshChildAsync(father, "9361");
         var articleId = await CreateArticleAsync(father, new
         {
-            articleNumber = "OVERAP-001", title = "Fernsehen",
-            unitType = "Minute", actionType = "TV",
+            articleNumber = "OVERAP-001",
+            title = "Fernsehen",
+            unitType = "Minute",
+            actionType = "TV",
         });
         var listingId = await CreateListingAsync(father, articleId, new
         {
-            coinPrice = 100, gemPrice = 0, unitsPerPurchase = 30, currentStock = 1, maxStock = 1,
+            coinPrice = 100,
+            gemPrice = 0,
+            unitsPerPurchase = 30,
+            currentStock = 1,
+            maxStock = 1,
         });
         (await father.PostAsJsonAsync($"/api/v1/children/{childId}/points",
             new { amount = 200, reason = "Coins" })).EnsureSuccessStatusCode();
@@ -895,8 +1054,10 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
         var (_, child) = await FreshChildAsync(father, "9362");
         var articleId = await CreateArticleAsync(father, new
         {
-            articleNumber = "QZERO-001", title = "Null-Menge",
-            unitType = "Stueck", actionType = "Sonstiges",
+            articleNumber = "QZERO-001",
+            title = "Null-Menge",
+            unitType = "Stueck",
+            actionType = "Sonstiges",
         });
 
         var res = await child.PostAsJsonAsync(
@@ -914,13 +1075,19 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
         var father = await TestApi.FatherAsync(factory);
         var articleId = await CreateArticleAsync(father, new
         {
-            articleNumber = "GET-001", title = "Einzelabruf",
-            unitType = "Minute", actionType = "TV",
+            articleNumber = "GET-001",
+            title = "Einzelabruf",
+            unitType = "Minute",
+            actionType = "TV",
         });
         var listingId = await CreateListingAsync(father, articleId, new
         {
-            title = "10 Minuten", coinPrice = 40, gemPrice = 0,
-            unitsPerPurchase = 10, currentStock = 3, maxStock = 3,
+            title = "10 Minuten",
+            coinPrice = 40,
+            gemPrice = 0,
+            unitsPerPurchase = 10,
+            currentStock = 3,
+            maxStock = 3,
         });
 
         var article = await JsonAsync(await father.GetAsync($"/api/v1/shop/articles/{articleId}"));
@@ -945,8 +1112,10 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
         var owner = await TestApi.FatherAsync(factory);
         var articleId = await CreateArticleAsync(owner, new
         {
-            articleNumber = "OWN-001", title = "Fremd",
-            unitType = "Stueck", actionType = "Sonstiges",
+            articleNumber = "OWN-001",
+            title = "Fremd",
+            unitType = "Stueck",
+            actionType = "Sonstiges",
         });
         var anon = factory.CreateClient();
         var strangerId = await TestApi.IdAsync(
@@ -965,8 +1134,11 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
         var father = await TestApi.FatherAsync(factory);
         var res = await father.PostAsJsonAsync("/api/v1/shop/articles", new
         {
-            articleNumber = "TV-900", title = "Fernsehzeit", description = "Bildschirmzeit",
-            unitType = "WRONG", actionType = "TV",
+            articleNumber = "TV-900",
+            title = "Fernsehzeit",
+            description = "Bildschirmzeit",
+            unitType = "WRONG",
+            actionType = "TV",
         });
 
         Assert.Equal(HttpStatusCode.BadRequest, res.StatusCode);

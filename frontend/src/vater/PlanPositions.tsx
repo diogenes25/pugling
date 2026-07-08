@@ -3,7 +3,7 @@ import { api, errorMessage } from "../lib/api";
 import { confirmAction } from "../lib/ui";
 import { useAsync } from "../lib/useAsync";
 import type {
-  CreatePositionDto, ExerciseSummary, GoalCadence, ItemReport, PositionReport, PositionResponse, SubjectResponse,
+  CreatePositionDto, ExerciseSummary, GoalCadence, ItemReport, PositionReport, PositionResponse, PracticeOrder, SubjectResponse,
 } from "../lib/types";
 import { ExerciseFilterBar, type ExerciseFilter } from "./ExerciseFilterBar";
 
@@ -17,6 +17,10 @@ const CADENCE_LABEL: Record<GoalCadence, string> = {
   None: "frei (kein Ziel)", Daily: "Tagesziel", Weekly: "Wochenziel",
 };
 const CADENCES: GoalCadence[] = ["Daily", "Weekly", "None"];
+const ORDER_LABEL: Record<PracticeOrder, string> = {
+  WeakestFirst: "Schwächste zuerst", Serial: "Reihenfolge", Random: "Zufällig", NewestWeighted: "Neue bevorzugt",
+};
+const ORDERS: PracticeOrder[] = ["WeakestFirst", "Serial", "Random", "NewestWeighted"];
 
 const TYPE_LABEL: Record<string, string> = {
   Vocabulary: "Vokabeln", Arithmetic: "Rechnen", Cloze: "Lückentext",
@@ -76,6 +80,8 @@ function AddPosition({ planId, onAdded, onError }: { planId: number; onAdded: ()
   const [exerciseId, setExerciseId] = useState<number | "">("");
   const [cadence, setCadence] = useState<GoalCadence>("Daily");
   const [pointsGoalMet, setPointsGoalMet] = useState(20);
+  const [itemCount, setItemCount] = useState<number | "">("");
+  const [orderStrategy, setOrderStrategy] = useState<PracticeOrder>("WeakestFirst");
   const [useLeitner, setUseLeitner] = useState(false);
   const [requireTyped, setRequireTyped] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -85,7 +91,8 @@ function AddPosition({ planId, onAdded, onError }: { planId: number; onAdded: ()
     if (exerciseId === "") { onError("Bitte eine Übung aus der Liste wählen."); return; }
     setBusy(true);
     const dto: CreatePositionDto = {
-      exerciseId: Number(exerciseId), cadence, pointsGoalMet, useLeitner, requireTypedTest: requireTyped,
+      exerciseId: Number(exerciseId), cadence, pointsGoalMet, orderStrategy,
+      itemCount: itemCount === "" ? null : Number(itemCount), useLeitner, requireTypedTest: requireTyped,
     };
     try {
       await api.addPosition(planId, dto);
@@ -113,7 +120,7 @@ function AddPosition({ planId, onAdded, onError }: { planId: number; onAdded: ()
                   background: exerciseId === ex.id ? "rgba(140,220,120,.10)" : undefined,
                   borderBottom: "1px solid var(--stroke)" }}>
                 <input type="radio" name="add-position-exercise" checked={exerciseId === ex.id}
-                  onChange={() => { setExerciseId(ex.id); setUseLeitner(ex.defaultUseLeitner); setRequireTyped(ex.defaultRequireTypedTest); }}
+                  onChange={() => { setExerciseId(ex.id); setUseLeitner(ex.defaultUseLeitner); setRequireTyped(ex.defaultRequireTypedTest); setItemCount(ex.defaultItemCount ?? ""); }}
                   style={{ marginTop: 3 }} />
                 <span style={{ display: "flex", flexDirection: "column" }}>
                   <span>{ex.title} <span className="muted">· {typeLabel(ex.type)}</span>
@@ -142,6 +149,16 @@ function AddPosition({ planId, onAdded, onError }: { planId: number; onAdded: ()
           <label>Punkte (Ziel erreicht)</label>
           <input aria-label="Punkte bei erreichtem Ziel" type="number" min={0} value={pointsGoalMet} onChange={(e) => setPointsGoalMet(Number(e.target.value))} />
         </div>
+        <div className="field" style={{ maxWidth: 130 }}>
+          <label>Inhalte</label>
+          <input aria-label="Anzahl Inhalte" type="number" min={1} value={itemCount} placeholder="alle" onChange={(e) => setItemCount(e.target.value === "" ? "" : Number(e.target.value))} />
+        </div>
+        <div className="field" style={{ maxWidth: 180 }}>
+          <label>Reihenfolge</label>
+          <select aria-label="Reihenfolge" value={orderStrategy} onChange={(e) => setOrderStrategy(e.target.value as PracticeOrder)}>
+            {ORDERS.map((o) => <option key={o} value={o}>{ORDER_LABEL[o]}</option>)}
+          </select>
+        </div>
         <label className="checkline"><input type="checkbox" checked={useLeitner} onChange={(e) => setUseLeitner(e.target.checked)} /> Leitner-Kasten</label>
         <label className="checkline"><input type="checkbox" checked={requireTyped} onChange={(e) => setRequireTyped(e.target.checked)} /> nur getippte Tests</label>
         <button type="submit" className="btn inline-btn" style={{ width: "auto", marginLeft: "auto" }} disabled={busy || exerciseId === ""}>
@@ -164,6 +181,8 @@ function PositionRow({ planId, pos, onChanged, flash }: {
   const [showReport, setShowReport] = useState(false);
   const [cadence, setCadence] = useState<GoalCadence>(pos.cadence);
   const [goalThreshold, setGoalThreshold] = useState(pos.goalThreshold?.toString() ?? "");
+  const [itemCount, setItemCount] = useState(pos.itemCount?.toString() ?? "");
+  const [orderStrategy, setOrderStrategy] = useState<PracticeOrder>(pos.orderStrategy);
   const [pointsGoalMet, setPointsGoalMet] = useState(pos.pointsGoalMet);
   const [newContentPoints, setNewContentPoints] = useState(pos.newContentPoints);
   const [useLeitner, setUseLeitner] = useState(pos.useLeitner);
@@ -173,6 +192,8 @@ function PositionRow({ planId, pos, onChanged, flash }: {
   function cancel() {
     setCadence(pos.cadence);
     setGoalThreshold(pos.goalThreshold?.toString() ?? "");
+    setItemCount(pos.itemCount?.toString() ?? "");
+    setOrderStrategy(pos.orderStrategy);
     setPointsGoalMet(pos.pointsGoalMet);
     setNewContentPoints(pos.newContentPoints);
     setUseLeitner(pos.useLeitner);
@@ -183,9 +204,10 @@ function PositionRow({ planId, pos, onChanged, flash }: {
   async function save() {
     setBusy(true);
     const threshold = goalThreshold.trim() === "" ? null : Number(goalThreshold);
+    const count = itemCount.trim() === "" ? null : Number(itemCount);
     try {
       await api.updatePosition(planId, pos.id, {
-        cadence, goalThreshold: threshold, pointsGoalMet, newContentPoints,
+        cadence, goalThreshold: threshold, itemCount: count, orderStrategy, pointsGoalMet, newContentPoints,
         useLeitner, requireTypedTest: requireTyped,
       });
       setEditing(false);
@@ -213,6 +235,8 @@ function PositionRow({ planId, pos, onChanged, flash }: {
           <td>
             {CADENCE_LABEL[pos.cadence]}
             {pos.goalThreshold != null && <span className="muted"> · Schwelle {pos.goalThreshold}</span>}
+            {pos.itemCount != null && <span className="muted"> · {pos.itemCount} Inhalte</span>}
+            <span className="muted"> · {ORDER_LABEL[pos.orderStrategy]}</span>
             {pos.requireTypedTest && <span className="muted"> · getippt</span>}
           </td>
           <td className="num">Ziel {pos.pointsGoalMet} · neu {pos.newContentPoints}
@@ -250,6 +274,13 @@ function PositionRow({ planId, pos, onChanged, flash }: {
           </div>
           <div className="field" style={{ maxWidth: 110 }}><label htmlFor={`${uid}-schwelle`}>Schwelle</label>
             <input id={`${uid}-schwelle`} type="number" min={0} value={goalThreshold} placeholder="Std." onChange={(e) => setGoalThreshold(e.target.value)} /></div>
+          <div className="field" style={{ maxWidth: 110 }}><label htmlFor={`${uid}-menge`}>Inhalte</label>
+            <input id={`${uid}-menge`} type="number" min={1} value={itemCount} placeholder="alle" onChange={(e) => setItemCount(e.target.value)} /></div>
+          <div className="field" style={{ maxWidth: 170 }}><label>Reihenfolge</label>
+            <select aria-label="Reihenfolge" value={orderStrategy} onChange={(e) => setOrderStrategy(e.target.value as PracticeOrder)}>
+              {ORDERS.map((o) => <option key={o} value={o}>{ORDER_LABEL[o]}</option>)}
+            </select>
+          </div>
           <div className="field" style={{ maxWidth: 110 }}><label>Punkte Ziel</label>
             <input aria-label="Punkte bei erreichtem Ziel" type="number" min={0} value={pointsGoalMet} onChange={(e) => setPointsGoalMet(Number(e.target.value))} /></div>
           <div className="field" style={{ maxWidth: 110 }}><label>Punkte neu</label>

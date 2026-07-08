@@ -148,7 +148,7 @@ examples:
             "reviewCount": 0,
             "mode": "Info",
             "cursor": 0,
-            "total": 1
+            "total": 2
           }
   - name: Deaktivierten Plan spielen (Fehlerfall)
     description: "Verifiziert durch DocsCaptureTests: Rolle `child`, erwartet HTTP 403, Code `plan_inactive`."

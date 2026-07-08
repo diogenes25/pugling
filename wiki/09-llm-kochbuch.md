@@ -73,7 +73,7 @@ POST /api/v1/learn/subjects/{subjectId}/chapters/{chapterId}/vocabulary
 { "title":"Unit 1 – Begrüßungen", "orderIndex":1, "rewardPoints":10,
   "config": { "direction":"front-to-back", "sourceLang":"en", "targetLang":"de",
     "items":[{"front":"hello","back":"hallo"},{"front":"goodbye","back":"tschüss"}] },
-  "defaultStage":2, "defaultUseLeitner":true, "defaultRequireTypedTest":true,
+  "defaultStage":2, "defaultItemCount":20, "defaultUseLeitner":true, "defaultRequireTypedTest":true,
   "suggestedBonus": { "comboThreshold":5, "comboBonusPoints":5, "speedThresholdSeconds":8,
     "speedBonusPoints":3, "newContentPoints":10 } }
 ```

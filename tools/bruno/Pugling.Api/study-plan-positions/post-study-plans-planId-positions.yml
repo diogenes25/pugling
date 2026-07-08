@@ -107,6 +107,7 @@ examples:
             "itemCount": null,
             "scope": "All",
             "cadence": "Daily",
+            "orderStrategy": "WeakestFirst",
             "goalThreshold": null,
             "requireTypedTest": false,
             "useLeitner": true,

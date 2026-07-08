@@ -76,6 +76,7 @@ export function VaterExercises() {
   const [defaultRequireTypedTest, setDefaultRequireTypedTest] = useState(false);
   // Standard-Abfrageform (nur Vokabeln): "" = Verfahrens-Standard, sonst TestStage-Wert (z. B. 6 = Multiple-Choice).
   const [defaultStage, setDefaultStage] = useState<number | "">("");
+  const [defaultItemCount, setDefaultItemCount] = useState<number | "">("");
 
   // Typ-spezifisch: Zeilen + Extra-Felder (Richtung/Trägertext/Anweisung/Sprachen …).
   const [rows, setRows] = useState<Row[]>([emptyRow("Vocabulary")]);
@@ -121,6 +122,7 @@ export function VaterExercises() {
     setRows([emptyRow(type)]);
     setVocabRefs([]);
     setDefaultStage("");
+    setDefaultItemCount("");
     setExtra(type === "Vocabulary" ? { direction: "front-to-back" }
       : type === "List" ? { ordered: false } : {});
   }, [type]);
@@ -224,6 +226,7 @@ export function VaterExercises() {
         defaultUseLeitner,
         defaultRequireTypedTest,
         defaultStage: type === "Vocabulary" && defaultStage !== "" ? Number(defaultStage) : null,
+        defaultItemCount: defaultItemCount === "" ? null : Number(defaultItemCount),
       };
       const created = await api.createExercise(Number(subjectId), Number(chapterId), TYPE_ROUTE[type], payload);
       setOkMsg(`Übung „${payload.title}" angelegt.`);
@@ -312,6 +315,11 @@ export function VaterExercises() {
             <label className="checkline"><input type="checkbox" checked={defaultUseLeitner} onChange={(e) => setDefaultUseLeitner(e.target.checked)} /> Leitner-Kasten</label>
             <label className="checkline"><input type="checkbox" checked={defaultRequireTypedTest} onChange={(e) => setDefaultRequireTypedTest(e.target.checked)} /> nur getippte Tests</label>
           </div>
+        </div>
+        <div className="field" style={{ marginTop: 10, maxWidth: 220 }}>
+          <label htmlFor="ex-default-item-count">Standard-Menge</label>
+          <input id="ex-default-item-count" type="number" min={1} value={defaultItemCount}
+            placeholder="alle" onChange={(e) => setDefaultItemCount(e.target.value === "" ? "" : Number(e.target.value))} />
         </div>
         {type === "Vocabulary" && (
           <div className="field" style={{ marginTop: 10, maxWidth: 300 }}>

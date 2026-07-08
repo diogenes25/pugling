@@ -102,6 +102,17 @@ examples:
               "reveal": null,
               "choices": null,
               "audioUrl": null
+            },
+            {
+              "itemIndex": 0,
+              "stage": 4,
+              "type": "Vocabulary",
+              "prompt": "hello",
+              "hint": null,
+              "answerLength": null,
+              "reveal": null,
+              "choices": null,
+              "audioUrl": null
             }
           ]
 

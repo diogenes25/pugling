@@ -23,8 +23,8 @@ Response — `HTTP 201`:
   "childId": 1,
   "title": "Doku-Lehrplan",
   "subjectId": null,
-  "startDate": "2026-07-07",
-  "endDate": "2026-07-16",
+  "startDate": "2026-07-08",
+  "endDate": "2026-07-17",
   "active": true,
   "positionCount": 0,
   "description": null,
@@ -60,6 +60,7 @@ Response — `HTTP 201`:
   "itemCount": null,
   "scope": "All",
   "cadence": "Daily",
+  "orderStrategy": "WeakestFirst",
   "goalThreshold": null,
   "requireTypedTest": false,
   "useLeitner": true,
@@ -134,7 +135,7 @@ Response — `HTTP 201`:
   "id": 1,
   "planId": 2,
   "positionId": 2,
-  "day": "2026-07-07",
+  "day": "2026-07-08",
   "startedAt": "<timestamp>",
   "endedAt": null,
   "activeSeconds": 0,
@@ -188,9 +189,9 @@ Response — `HTTP 200`:
 {
   "wasCorrect": true,
   "expected": "hallo",
-  "awarded": 10,
+  "awarded": 15,
   "box": 2,
-  "dueOn": "2026-07-09",
+  "dueOn": "2026-07-10",
   "combo": 1,
   "comboBonus": 0,
   "speedBonus": 0,
@@ -227,7 +228,7 @@ Response — `HTTP 201`:
   "id": 2,
   "planId": 2,
   "positionId": 2,
-  "day": "2026-07-07",
+  "day": "2026-07-08",
   "startedAt": "<timestamp>",
   "endedAt": null,
   "activeSeconds": 0,
@@ -305,7 +306,7 @@ Response — `HTTP 201`:
   "attemptId": 1,
   "planId": 2,
   "positionId": 2,
-  "day": "2026-07-07",
+  "day": "2026-07-08",
   "stage": 4,
   "totalItems": 1
 }
@@ -420,12 +421,12 @@ Response — `HTTP 200`:
 {
   "planId": 2,
   "title": "Doku-Lehrplan",
-  "startDate": "2026-07-07",
-  "endDate": "2026-07-16",
+  "startDate": "2026-07-08",
+  "endDate": "2026-07-17",
   "active": true,
   "currentStreak": 1,
   "today": {
-    "day": "2026-07-07",
+    "day": "2026-07-08",
     "dutyDone": true,
     "goalsTotal": 1,
     "goalsMet": 1,
@@ -462,13 +463,20 @@ Response — `HTTP 200`:
 ```json
 {
   "planId": 2,
-  "startDate": "2026-07-07",
-  "endDate": "2026-07-16",
+  "startDate": "2026-07-08",
+  "endDate": "2026-07-17",
   "daysComplete": 1,
   "totalDays": 10,
   "totalPoints": 20,
   "currentStreak": 1,
   "days": [
+    {
+      "day": "2026-07-17",
+      "dutyDone": false,
+      "goalsTotal": 1,
+      "goalsMet": 0,
+      "pointsAwarded": 0
+    },
     {
       "day": "2026-07-16",
       "dutyDone": false,
@@ -478,13 +486,6 @@ Response — `HTTP 200`:
     },
     {
       "day": "2026-07-15",
-      "dutyDone": false,
-      "goalsTotal": 1,
-      "goalsMet": 0,
-      "pointsAwarded": 0
-    },
-    {
-      "day": "2026-07-14",
       "dutyDone": false,
       "goalsTotal": 1,
       "goalsMet": 0,
@@ -503,15 +504,15 @@ Response — `HTTP 200`:
 ```json
 {
   "planId": 2,
-  "startDate": "2026-07-07",
-  "endDate": "2026-07-16",
+  "startDate": "2026-07-08",
+  "endDate": "2026-07-17",
   "daysComplete": 1,
   "totalDays": 10,
   "totalPoints": 20,
   "currentStreak": 1,
   "days": [
     {
-      "day": "2026-07-07",
+      "day": "2026-07-08",
       "dutyDone": true,
       "goalsTotal": 1,
       "goalsMet": 1,

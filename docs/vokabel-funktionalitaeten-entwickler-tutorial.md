@@ -64,6 +64,7 @@ POST /api/v1/learn/subjects/{subjectId}/chapters/{chapterId}/vocabulary
     ]
   },
   "defaultStage": 2,
+  "defaultItemCount": 20,
   "defaultUseLeitner": true,
   "defaultRequireTypedTest": true
 }
