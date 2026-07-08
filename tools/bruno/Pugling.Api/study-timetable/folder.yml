@@ -1,7 +1,0 @@
-info:
-  name: Study – Timetable
-  type: folder
-  seq: 38
-
-request:
-  auth: inherit
