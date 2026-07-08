@@ -16,7 +16,7 @@ namespace Pugling.Api.Controllers.Creator;
 /// <summary>Gemeinsames Routen-Präfix aller Übungstypen.</summary>
 internal static class ExerciseRoutes
 {
-    public const string Base = ApiRoutes.V1 + "/learn/subjects/{subjectId:int}/chapters/{chapterId:int}";
+    public const string Base = ApiRoutes.Creator + "/subjects/{subjectId:int}/chapters/{chapterId:int}";
 }
 
 /// <summary>Antworten des Kindes, positionsbezogen (Index in der Aufgaben-/Paarliste).</summary>
@@ -136,9 +136,9 @@ public class VocabularyController(PuglingDbContext db, ExerciseItemService items
     public record VocabItemInput(int? VocabularyId = null, string? Front = null, string? Back = null,
         string? Hint = null, int? OrderIndex = null);
 
-    // Konkreter v1-Pfad (wie VocabLink.Path); das Routen-Template ApiRoutes.V1 trägt den Versions-Platzhalter.
+    // Konkreter Pfad (wie VocabLink.Path); das Routen-Template ApiRoutes.Creator trägt den Versions-Platzhalter.
     private static string ItemSelf(int subjectId, int chapterId, int exerciseId, int itemId) =>
-        $"/api/v1/learn/subjects/{subjectId}/chapters/{chapterId}/vocabulary/{exerciseId}/items/{itemId}";
+        $"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/vocabulary/{exerciseId}/items/{itemId}";
 
     private static VocabItemResponse MapItem(int subjectId, int chapterId, int exerciseId, ExerciseItem item) =>
         new(item.Id, item.OrderIndex, item.VocabularyId, item.Vocabulary?.Word ?? "", item.Vocabulary?.Translation ?? "",
@@ -640,7 +640,7 @@ public class BirkenbihlController(PuglingDbContext db, BirkenbihlDecodingService
     /// <b>ohne</b> etwas zu speichern (IDs sind hier <c>0</c>). Praktisch, um vor dem Anlegen zu prüfen, welche
     /// Wörter schon im Speicher liegen.
     /// </summary>
-    [HttpPost("~/" + ApiRoutes.V1 + "/learn/birkenbihl/decode")]
+    [HttpPost("~/" + ApiRoutes.Creator + "/birkenbihl/decode")]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<DecodedSentence>> Decode(DecodePreviewInput body, CancellationToken ct)
     {

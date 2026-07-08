@@ -3,7 +3,7 @@
 _Automatisch erzeugt von `DocsCaptureTests` (Integrationstest). Jedes Beispiel ist verifiziert: Status und – bei Fehlern – der maschinenlesbare `code` wurden im Testlauf geprüft. Nicht von Hand bearbeiten._
 
 ## Klassenarbeit planen
-`POST /api/v1/class-tests`
+`POST /api/v1/supervisor/class-tests`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
@@ -39,7 +39,7 @@ Response — `HTTP 201`:
 ```
 
 ### Note außerhalb des Bereichs — Fehlerfall
-`POST /api/v1/class-tests`
+`POST /api/v1/supervisor/class-tests`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
@@ -66,7 +66,7 @@ Response — `HTTP 400`:
 ```
 
 ### Unbekannte Übung zuweisen — Fehlerfall
-`POST /api/v1/class-tests`
+`POST /api/v1/supervisor/class-tests`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 

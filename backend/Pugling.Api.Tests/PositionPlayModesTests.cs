@@ -102,11 +102,11 @@ public class PositionPlayModesTests(PuglingWebAppFactory factory) : IClassFixtur
     {
         var father = await TestApi.FatherAsync(_factory);
         // Reine Inhaltsübung (Leseverstehen) → Ziel „erledigt", sobald eine echte Lern-Sitzung existiert.
-        var subjectId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/learn/subjects", new { name = "Info-Fach" }));
+        var subjectId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/subjects", new { name = "Info-Fach" }));
         var chapterId = await TestApi.IdAsync(await father.PostAsJsonAsync(
-            $"/api/v1/learn/subjects/{subjectId}/chapters", new { name = "K1", orderIndex = 1 }));
+            $"/api/v1/creator/subjects/{subjectId}/chapters", new { name = "K1", orderIndex = 1 }));
         var exerciseId = await TestApi.IdAsync(await father.PostAsJsonAsync(
-            $"/api/v1/learn/subjects/{subjectId}/chapters/{chapterId}/reading",
+            $"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/reading",
             new { title = "Text", orderIndex = 1, rewardPoints = 5, config = new { text = "Ein kurzer Text.", questions = Array.Empty<object>() } }));
         var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.FreeText, useLeitner: false);
         var child = await TestApi.ChildAsync(_factory);
@@ -117,7 +117,7 @@ public class PositionPlayModesTests(PuglingWebAppFactory factory) : IClassFixtur
         await child.PostAsJsonAsync($"{baseUrl}/{sessionId}/heartbeat", new { seconds = 60, active = true });
         await child.PostAsJsonAsync($"{baseUrl}/{sessionId}/end", new { });
 
-        var overview = await child.GetFromJsonAsync<JsonElement>($"/api/v1/study-plans/{planId}/overview");
+        var overview = await child.GetFromJsonAsync<JsonElement>($"/api/v1/student/study-plans/{planId}/overview");
         JsonAssert.False(overview.GetProperty("today"), "dutyDone");
     }
 
@@ -130,7 +130,7 @@ public class PositionPlayModesTests(PuglingWebAppFactory factory) : IClassFixtur
         var exerciseId = await TestApi.CreateVocabExerciseAsync(father, ThreeWords);
         var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.FreeText);
         var child = await TestApi.ChildAsync(_factory);
-        var testsUrl = $"/api/v1/study-plans/{planId}/positions/{positionId}/tests";
+        var testsUrl = $"/api/v1/student/study-plans/{planId}/positions/{positionId}/tests";
 
         // Start liefert NUR Metadaten – keine Aufgaben im Bulk (strikt server-getrieben).
         var start = await (await child.PostAsJsonAsync(testsUrl, new { })).Content.ReadFromJsonAsync<JsonElement>();
@@ -190,7 +190,7 @@ public class PositionPlayModesTests(PuglingWebAppFactory factory) : IClassFixtur
         var exerciseId = await TestApi.CreateVocabExerciseAsync(father, ThreeWords);
         var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.FreeText);
         var child = await TestApi.ChildAsync(_factory);
-        var testsUrl = $"/api/v1/study-plans/{planId}/positions/{positionId}/tests";
+        var testsUrl = $"/api/v1/student/study-plans/{planId}/positions/{positionId}/tests";
         var ans = new Dictionary<string, string> { ["a"] = "1", ["b"] = "2", ["c"] = "3" };
 
         // Versuch 1: eine Frage beantworten, dann ABBRECHEN (kein Submit).

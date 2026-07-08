@@ -12,12 +12,12 @@ namespace Pugling.Api.Controllers.Supervisor;
 /// <summary>
 /// Kaufbare Angebote eines Kindes verwalten (nur Vater, nur eigene Kinder): reale Belohnungen wie
 /// Spielzeit oder Taschengeld mit Münz-Preis, Wiederkehr und Kontingent. Der Sohn kauft über
-/// <c>api/v1/me/rewards</c> direkt (Münzen werden sofort abgebucht); der Vater <b>erfüllt</b> den Kauf
+/// <c>api/v1/student/me/rewards</c> direkt (Münzen werden sofort abgebucht); der Vater <b>erfüllt</b> den Kauf
 /// hier real oder <b>storniert</b> ihn (Rückerstattung). Eigentum sichert der <see cref="ChildOwnershipFilter"/>.
 /// </summary>
 [ApiController]
 [ApiVersion("1.0")]
-[Route(ApiRoutes.V1 + "/children/{childId:int}/rewards")]
+[Route(ApiRoutes.Supervisor + "/children/{childId:int}/rewards")]
 [Tags("Admin – Rewards")]
 [Produces("application/json")]
 [Authorize(Roles = Roles.Vater)]

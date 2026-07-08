@@ -11,7 +11,7 @@ namespace Pugling.Api.Controllers.Creator;
 /// <summary>Schulfächer im gemeinsamen Lehrplan-Katalog.</summary>
 [ApiController]
 [ApiVersion("1.0")]
-[Route(ApiRoutes.V1 + "/learn/subjects")]
+[Route(ApiRoutes.Creator + "/subjects")]
 [Tags("Learn – Subjects")]
 [Produces("application/json")]
 [Authorize(Roles = Roles.Vater)]

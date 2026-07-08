@@ -51,7 +51,7 @@ public class ComboTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWeb
         await ReviewAsync(child, planId, positionId, sid, 1); // Schwelle 2 erreicht → Combo-Bonus
 
         var father = await TestApi.FatherAsync(factory);
-        var points = await (await father.GetAsync("/api/v1/children/1/points"))
+        var points = await (await father.GetAsync("/api/v1/supervisor/children/1/points"))
             .Content.ReadFromJsonAsync<JsonElement>();
         var combo = points.GetProperty("entries").EnumerateArray()
             .First(e => e.GetProperty("kind").GetString() == "Combo");

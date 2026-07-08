@@ -16,7 +16,7 @@ namespace Pugling.Api.Controllers.Student;
 /// </summary>
 [ApiController]
 [ApiVersion("1.0")]
-[Route(ApiRoutes.V1 + "/children/{childId:int}/learn")]
+[Route(ApiRoutes.Student + "/children/{childId:int}/learn")]
 [Tags("Learn – Child Progress")]
 [Produces("application/json")]
 [Authorize]

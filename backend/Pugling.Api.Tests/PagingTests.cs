@@ -13,11 +13,11 @@ public class PagingTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWe
     /// <summary>Legt <paramref name="count"/> Rechen-Übungen in einem frischen Kapitel an; liefert Fach/Kapitel.</summary>
     private static async Task<(int subjectId, int chapterId)> SeedExercisesAsync(HttpClient father, int count)
     {
-        var subjectId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/learn/subjects", new { name = "Paging-Fach" }));
+        var subjectId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/subjects", new { name = "Paging-Fach" }));
         var chapterId = await TestApi.IdAsync(await father.PostAsJsonAsync(
-            $"/api/v1/learn/subjects/{subjectId}/chapters", new { name = "Kapitel", orderIndex = 1 }));
+            $"/api/v1/creator/subjects/{subjectId}/chapters", new { name = "Kapitel", orderIndex = 1 }));
         for (var i = 0; i < count; i++)
-            await father.PostAsJsonAsync($"/api/v1/learn/subjects/{subjectId}/chapters/{chapterId}/arithmetic", new
+            await father.PostAsJsonAsync($"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/arithmetic", new
             {
                 title = $"Aufgabe {i}",
                 orderIndex = i,
@@ -47,7 +47,7 @@ public class PagingTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWe
     {
         var father = await TestApi.FatherAsync(factory);
         var (subjectId, chapterId) = await SeedExercisesAsync(father, 5);
-        var basePath = $"/api/v1/learn/subjects/{subjectId}/chapters/{chapterId}/arithmetic";
+        var basePath = $"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/arithmetic";
 
         var page1 = await father.GetAsync($"{basePath}?skip=0&take=2");
         var page2 = await father.GetAsync($"{basePath}?skip=2&take=2");
@@ -77,13 +77,13 @@ public class PagingTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWe
         await SeedExercisesAsync(father, 4);
 
         // Robust gegen die im Development-Seed vorhandenen Übungen: die volle Menge einmal zählen …
-        var full = await father.GetAsync("/api/v1/learn/exercises?take=500");
+        var full = await father.GetAsync("/api/v1/creator/exercises?take=500");
         var total = (await IdsAsync(full)).Length;
         Assert.Equal(total, TotalCount(full));
         Assert.True(total >= 4, "Seed + 4 angelegte Übungen erwartet.");
 
         // … und prüfen, dass take die Seite begrenzt, der Header aber die Gesamtzahl trägt.
-        var res = await father.GetAsync("/api/v1/learn/exercises?take=3");
+        var res = await father.GetAsync("/api/v1/creator/exercises?take=3");
         Assert.Equal(total, TotalCount(res));
         Assert.Equal(3, (await IdsAsync(res)).Length);
     }
@@ -94,7 +94,7 @@ public class PagingTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWe
         var father = await TestApi.FatherAsync(factory);
         // Auf das eigene Fach filtern, damit die Seed-Übungen das Ergebnis nicht mischen.
         var (subjectId, _) = await SeedExercisesAsync(father, 4); // Titel: "Aufgabe 0".."Aufgabe 3"
-        var basePath = $"/api/v1/learn/exercises?subjectId={subjectId}";
+        var basePath = $"/api/v1/creator/exercises?subjectId={subjectId}";
 
         var asc = await StringsAsync(await father.GetAsync($"{basePath}&sort=title"), "title");
         var desc = await StringsAsync(await father.GetAsync($"{basePath}&sort=title&dir=desc"), "title");
@@ -116,10 +116,10 @@ public class PagingTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWe
         await TestApi.CreateStoreVocabAsync(father, "zzzapple", "Apfel");
         await TestApi.CreateStoreVocabAsync(father, "zzzcherry", "Kirsche");
 
-        var asc = await StringsAsync(await father.GetAsync("/api/v1/learn/vocabulary?search=zzz&sort=word"), "word");
+        var asc = await StringsAsync(await father.GetAsync("/api/v1/creator/vocabulary?search=zzz&sort=word"), "word");
         Assert.Equal(new[] { "zzzapple", "zzzbanana", "zzzcherry" }, asc);
 
-        var desc = await StringsAsync(await father.GetAsync("/api/v1/learn/vocabulary?search=zzz&sort=word&dir=desc"), "word");
+        var desc = await StringsAsync(await father.GetAsync("/api/v1/creator/vocabulary?search=zzz&sort=word&dir=desc"), "word");
         Assert.Equal(new[] { "zzzcherry", "zzzbanana", "zzzapple" }, desc);
     }
 
@@ -128,7 +128,7 @@ public class PagingTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWe
     {
         var father = await TestApi.FatherAsync(factory);
         var (subjectId, chapterId) = await SeedExercisesAsync(father, 3);
-        var basePath = $"/api/v1/learn/subjects/{subjectId}/chapters/{chapterId}/arithmetic";
+        var basePath = $"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/arithmetic";
 
         // take=0 = reine Kennzahl: Gesamtzahl im Header, aber keine Zeilen (spart die Projektion).
         var res = await father.GetAsync($"{basePath}?take=0");

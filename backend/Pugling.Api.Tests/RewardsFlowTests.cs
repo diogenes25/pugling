@@ -14,7 +14,7 @@ public class RewardsFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
     private async Task<(int childId, HttpClient child)> FreshChildAsync(HttpClient father, string pin)
     {
         var childId = await TestApi.IdAsync(
-            await father.PostAsJsonAsync("/api/v1/children", new { name = "Angebots-Kind", pin }));
+            await father.PostAsJsonAsync("/api/v1/supervisor/children", new { name = "Angebots-Kind", pin }));
         return (childId, await TestApi.ChildAsync(factory, childId, pin));
     }
 
@@ -25,7 +25,7 @@ public class RewardsFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
     }
 
     private static async Task<int> CreateOfferAsync(HttpClient father, int childId, object body) =>
-        (await JsonAsync(await father.PostAsJsonAsync($"/api/v1/children/{childId}/rewards", body)))
+        (await JsonAsync(await father.PostAsJsonAsync($"/api/v1/supervisor/children/{childId}/rewards", body)))
             .GetProperty("id").GetInt32();
 
     [Fact]
@@ -37,33 +37,33 @@ public class RewardsFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
             new { title = "30 Min Fernsehen", cost = 200, period = "Weekly", quantity = 3 });
 
         // Guthaben schaffen (250 Münzen)
-        (await father.PostAsJsonAsync($"/api/v1/children/{childId}/points",
+        (await father.PostAsJsonAsync($"/api/v1/supervisor/children/{childId}/points",
             new { amount = 250, reason = "Test-Guthaben" })).EnsureSuccessStatusCode();
 
         // Sohn kauft -> Münzen sofort weg, Status Purchased. Der Kauf liefert die kombinierte Sicht
         // (ohne coins – der Saldo steht in me/points, siehe unten).
-        var view = await JsonAsync(await child.PostAsJsonAsync($"/api/v1/me/rewards/available/{offerId}/purchase", new { }));
+        var view = await JsonAsync(await child.PostAsJsonAsync($"/api/v1/student/me/rewards/available/{offerId}/purchase", new { }));
         var purchase = view.GetProperty("redemptions").EnumerateArray().First();
         Assert.Equal("Purchased", purchase.GetProperty("status").GetString());
         var redemptionId = purchase.GetProperty("id").GetInt32();
 
         // Abbuchung ist als negative Reward-Buchung im Wallet nachvollziehbar
-        var wallet = await JsonAsync(await child.GetAsync("/api/v1/me/points"));
+        var wallet = await JsonAsync(await child.GetAsync("/api/v1/student/me/points"));
         Assert.Equal(50, wallet.GetProperty("coins").GetInt32());
-        var entries = await JsonAsync(await child.GetAsync("/api/v1/me/points/entries"));
+        var entries = await JsonAsync(await child.GetAsync("/api/v1/student/me/points/entries"));
         var spend = entries.EnumerateArray()
             .First(e => e.GetProperty("kind").GetString() == "Reward");
         Assert.Equal(-200, spend.GetProperty("amount").GetInt32());
 
         // Vater erfüllt -> Status Fulfilled, kein weiterer Münz-Effekt
         var fulfilled = await JsonAsync(await father.PostAsJsonAsync(
-            $"/api/v1/children/{childId}/rewards/redemptions/{redemptionId}/fulfill", new { }));
+            $"/api/v1/supervisor/children/{childId}/rewards/redemptions/{redemptionId}/fulfill", new { }));
         Assert.Equal("Fulfilled", fulfilled.GetProperty("status").GetString());
         Assert.False(fulfilled.GetProperty("fulfilledAt").ValueKind == JsonValueKind.Null);
 
         // Erneutes Erfüllen -> 409 (nicht mehr offen)
         Assert.Equal(HttpStatusCode.Conflict,
-            (await father.PostAsJsonAsync($"/api/v1/children/{childId}/rewards/redemptions/{redemptionId}/fulfill", new { })).StatusCode);
+            (await father.PostAsJsonAsync($"/api/v1/supervisor/children/{childId}/rewards/redemptions/{redemptionId}/fulfill", new { })).StatusCode);
     }
 
     [Fact]
@@ -71,10 +71,10 @@ public class RewardsFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
     {
         var father = await TestApi.FatherAsync(factory);
         var (childId, child) = await FreshChildAsync(father, "9007");
-        (await father.PostAsJsonAsync($"/api/v1/children/{childId}/points", new { amount = 300, reason = "x" })).EnsureSuccessStatusCode();
+        (await father.PostAsJsonAsync($"/api/v1/supervisor/children/{childId}/points", new { amount = 300, reason = "x" })).EnsureSuccessStatusCode();
         var offerId = await CreateOfferAsync(father, childId, new { title = "Nachtisch", cost = 100 });
 
-        var view = await JsonAsync(await child.PostAsJsonAsync($"/api/v1/me/rewards/available/{offerId}/purchase", new { }));
+        var view = await JsonAsync(await child.PostAsJsonAsync($"/api/v1/student/me/rewards/available/{offerId}/purchase", new { }));
         var redemptionId = view.GetProperty("redemptions").EnumerateArray().First().GetProperty("id").GetInt32();
 
         // Offener Kauf: erfüll- UND stornierbar (server-autoritative Affordance).
@@ -83,7 +83,7 @@ public class RewardsFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
         JsonAssert.True(open, "canCancel");
 
         // Nach Erfüllung: beide Aktionen entfallen.
-        (await father.PostAsJsonAsync($"/api/v1/children/{childId}/rewards/redemptions/{redemptionId}/fulfill", new { }))
+        (await father.PostAsJsonAsync($"/api/v1/supervisor/children/{childId}/rewards/redemptions/{redemptionId}/fulfill", new { }))
             .EnsureSuccessStatusCode();
         var done = await ReadRedemptionAsync(father, childId, redemptionId);
         JsonAssert.False(done, "canFulfill");
@@ -92,7 +92,7 @@ public class RewardsFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
 
     private async Task<JsonElement> ReadRedemptionAsync(HttpClient father, int childId, int redemptionId)
     {
-        var list = await JsonAsync(await father.GetAsync($"/api/v1/children/{childId}/rewards/redemptions"));
+        var list = await JsonAsync(await father.GetAsync($"/api/v1/supervisor/children/{childId}/rewards/redemptions"));
         return list.EnumerateArray().First(r => r.GetProperty("id").GetInt32() == redemptionId);
     }
 
@@ -103,10 +103,10 @@ public class RewardsFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
         var (childId, child) = await FreshChildAsync(father, "9002");
         var offerId = await CreateOfferAsync(father, childId, new { title = "Kinoabend", cost = 1500 });
 
-        var res = await child.PostAsJsonAsync($"/api/v1/me/rewards/available/{offerId}/purchase", new { });
+        var res = await child.PostAsJsonAsync($"/api/v1/student/me/rewards/available/{offerId}/purchase", new { });
         Assert.Equal(HttpStatusCode.BadRequest, res.StatusCode);
 
-        var wallet = await JsonAsync(await child.GetAsync("/api/v1/me/points"));
+        var wallet = await JsonAsync(await child.GetAsync("/api/v1/student/me/points"));
         Assert.Equal(0, wallet.GetProperty("coins").GetInt32());
     }
 
@@ -115,20 +115,20 @@ public class RewardsFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
     {
         var father = await TestApi.FatherAsync(factory);
         var (childId, child) = await FreshChildAsync(father, "9003");
-        (await father.PostAsJsonAsync($"/api/v1/children/{childId}/points", new { amount = 500, reason = "x" })).EnsureSuccessStatusCode();
+        (await father.PostAsJsonAsync($"/api/v1/supervisor/children/{childId}/points", new { amount = 500, reason = "x" })).EnsureSuccessStatusCode();
         var offerId = await CreateOfferAsync(father, childId, new { title = "1 Std Zocken", cost = 400 });
 
-        var view = await JsonAsync(await child.PostAsJsonAsync($"/api/v1/me/rewards/available/{offerId}/purchase", new { }));
+        var view = await JsonAsync(await child.PostAsJsonAsync($"/api/v1/student/me/rewards/available/{offerId}/purchase", new { }));
         var redemptionId = view.GetProperty("redemptions").EnumerateArray().First().GetProperty("id").GetInt32();
-        var walletAfterBuy = await JsonAsync(await child.GetAsync("/api/v1/me/points"));
+        var walletAfterBuy = await JsonAsync(await child.GetAsync("/api/v1/student/me/points"));
         Assert.Equal(100, walletAfterBuy.GetProperty("coins").GetInt32()); // 500 - 400
 
         var cancelled = await JsonAsync(await father.PostAsJsonAsync(
-            $"/api/v1/children/{childId}/rewards/redemptions/{redemptionId}/cancel", new { }));
+            $"/api/v1/supervisor/children/{childId}/rewards/redemptions/{redemptionId}/cancel", new { }));
         Assert.Equal("Cancelled", cancelled.GetProperty("status").GetString());
 
         // Rückerstattung: Guthaben wieder bei 500
-        var wallet = await JsonAsync(await child.GetAsync("/api/v1/me/points"));
+        var wallet = await JsonAsync(await child.GetAsync("/api/v1/student/me/points"));
         Assert.Equal(500, wallet.GetProperty("coins").GetInt32());
     }
 
@@ -137,16 +137,16 @@ public class RewardsFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
     {
         var father = await TestApi.FatherAsync(factory);
         var (childId, child) = await FreshChildAsync(father, "9008");
-        (await father.PostAsJsonAsync($"/api/v1/children/{childId}/points", new { amount = 300, reason = "x" })).EnsureSuccessStatusCode();
+        (await father.PostAsJsonAsync($"/api/v1/supervisor/children/{childId}/points", new { amount = 300, reason = "x" })).EnsureSuccessStatusCode();
         var offerId = await CreateOfferAsync(father, childId, new { title = "Eis", cost = 100 });
 
-        var view = await JsonAsync(await child.PostAsJsonAsync($"/api/v1/me/rewards/available/{offerId}/purchase", new { }));
+        var view = await JsonAsync(await child.PostAsJsonAsync($"/api/v1/student/me/rewards/available/{offerId}/purchase", new { }));
         var redemptionId = view.GetProperty("redemptions").EnumerateArray().First().GetProperty("id").GetInt32();
-        (await father.PostAsJsonAsync($"/api/v1/children/{childId}/rewards/redemptions/{redemptionId}/fulfill", new { }))
+        (await father.PostAsJsonAsync($"/api/v1/supervisor/children/{childId}/rewards/redemptions/{redemptionId}/fulfill", new { }))
             .EnsureSuccessStatusCode();
 
         // Ein bereits erfüllter Kauf ist nicht mehr offen → Storno scheitert mit 409 (keine Doppel-Rückerstattung).
-        var res = await father.PostAsJsonAsync($"/api/v1/children/{childId}/rewards/redemptions/{redemptionId}/cancel", new { });
+        var res = await father.PostAsJsonAsync($"/api/v1/supervisor/children/{childId}/rewards/redemptions/{redemptionId}/cancel", new { });
         Assert.Equal(HttpStatusCode.Conflict, res.StatusCode);
     }
 
@@ -157,7 +157,7 @@ public class RewardsFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
         var (childId, _) = await FreshChildAsync(father, "9009");
 
         // Kein solcher Kauf existiert für dieses (eigene) Kind → NotFound-Zweig, klar von 409 „nicht offen" getrennt.
-        var res = await father.PostAsJsonAsync($"/api/v1/children/{childId}/rewards/redemptions/999999/fulfill", new { });
+        var res = await father.PostAsJsonAsync($"/api/v1/supervisor/children/{childId}/rewards/redemptions/999999/fulfill", new { });
         Assert.Equal(HttpStatusCode.NotFound, res.StatusCode);
     }
 
@@ -169,7 +169,7 @@ public class RewardsFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
         var offerId = await CreateOfferAsync(father, childAId, new { title = "Eis", cost = 100 });
         var (_, childB) = await FreshChildAsync(father, "9005");
 
-        var res = await childB.PostAsJsonAsync($"/api/v1/me/rewards/available/{offerId}/purchase", new { });
+        var res = await childB.PostAsJsonAsync($"/api/v1/student/me/rewards/available/{offerId}/purchase", new { });
         Assert.Equal(HttpStatusCode.NotFound, res.StatusCode);
     }
 
@@ -178,7 +178,7 @@ public class RewardsFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
     {
         var father = await TestApi.FatherAsync(factory);
 
-        var res = await father.PostAsJsonAsync("/api/v1/children/999999/rewards", new { title = "X", cost = 100 });
+        var res = await father.PostAsJsonAsync("/api/v1/supervisor/children/999999/rewards", new { title = "X", cost = 100 });
 
         Assert.True(res.StatusCode is HttpStatusCode.Forbidden or HttpStatusCode.NotFound);
     }
@@ -189,7 +189,7 @@ public class RewardsFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
         var father = await TestApi.FatherAsync(factory);
         var (childId, _) = await FreshChildAsync(father, "9006");
 
-        var res = await father.PostAsJsonAsync($"/api/v1/children/{childId}/rewards",
+        var res = await father.PostAsJsonAsync($"/api/v1/supervisor/children/{childId}/rewards",
             new { title = "X", cost = 100, quantity = 0 });
         Assert.Equal(HttpStatusCode.BadRequest, res.StatusCode);
     }
@@ -204,7 +204,7 @@ public class RewardsFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
         var offerId = await CreateOfferAsync(father, childId, new { title = "Alter Titel", cost = 100 });
 
         var patched = await JsonAsync(await father.PatchAsJsonAsync(
-            $"/api/v1/children/{childId}/rewards/{offerId}", new { title = "Neuer Titel" }));
+            $"/api/v1/supervisor/children/{childId}/rewards/{offerId}", new { title = "Neuer Titel" }));
         Assert.Equal("Neuer Titel", patched.GetProperty("title").GetString());
     }
 
@@ -216,7 +216,7 @@ public class RewardsFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
         var offerId = await CreateOfferAsync(father, childId, new { title = "Titel", cost = 100 });
 
         var res = await father.PatchAsJsonAsync(
-            $"/api/v1/children/{childId}/rewards/{offerId}", new { title = "   " });
+            $"/api/v1/supervisor/children/{childId}/rewards/{offerId}", new { title = "   " });
         Assert.Equal(HttpStatusCode.BadRequest, res.StatusCode);
     }
 
@@ -228,7 +228,7 @@ public class RewardsFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
         var offerId = await CreateOfferAsync(father, childId, new { title = "X", cost = 100 });
 
         var res = await father.PatchAsJsonAsync(
-            $"/api/v1/children/{childId}/rewards/{offerId}", new { cost = 0 });
+            $"/api/v1/supervisor/children/{childId}/rewards/{offerId}", new { cost = 0 });
         Assert.Equal(HttpStatusCode.BadRequest, res.StatusCode);
     }
 
@@ -240,7 +240,7 @@ public class RewardsFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
         var offerId = await CreateOfferAsync(father, childId, new { title = "X", cost = 50 });
 
         var res = await father.PatchAsJsonAsync(
-            $"/api/v1/children/{childId}/rewards/{offerId}", new { quantity = 0 });
+            $"/api/v1/supervisor/children/{childId}/rewards/{offerId}", new { quantity = 0 });
         Assert.Equal(HttpStatusCode.BadRequest, res.StatusCode);
     }
 
@@ -252,16 +252,16 @@ public class RewardsFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
         var offerId = await CreateOfferAsync(father, childId, new { title = "Aktiv", cost = 50 });
 
         // Erst sichtbar
-        var viewBefore = await JsonAsync(await child.GetAsync("/api/v1/me/rewards"));
+        var viewBefore = await JsonAsync(await child.GetAsync("/api/v1/student/me/rewards"));
         Assert.Contains(viewBefore.GetProperty("available").EnumerateArray(),
             o => o.GetProperty("id").GetInt32() == offerId);
 
         // Deaktivieren
-        (await father.PatchAsJsonAsync($"/api/v1/children/{childId}/rewards/{offerId}", new { active = false }))
+        (await father.PatchAsJsonAsync($"/api/v1/supervisor/children/{childId}/rewards/{offerId}", new { active = false }))
             .EnsureSuccessStatusCode();
 
         // Nicht mehr sichtbar
-        var viewAfter = await JsonAsync(await child.GetAsync("/api/v1/me/rewards"));
+        var viewAfter = await JsonAsync(await child.GetAsync("/api/v1/student/me/rewards"));
         Assert.DoesNotContain(viewAfter.GetProperty("available").EnumerateArray(),
             o => o.GetProperty("id").GetInt32() == offerId);
     }
@@ -273,7 +273,7 @@ public class RewardsFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
         var (childId, _) = await FreshChildAsync(father, "9015");
 
         var res = await father.PatchAsJsonAsync(
-            $"/api/v1/children/{childId}/rewards/999999", new { title = "X" });
+            $"/api/v1/supervisor/children/{childId}/rewards/999999", new { title = "X" });
         Assert.Equal(HttpStatusCode.NotFound, res.StatusCode);
     }
 
@@ -287,20 +287,20 @@ public class RewardsFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
         var offerId = await CreateOfferAsync(father, childId, new { title = "TV", cost = 100 });
 
         // Liste (paginiert): enthält das Angebot, X-Total-Count gesetzt.
-        var listRes = await child.GetAsync("/api/v1/me/rewards/available?take=50");
+        var listRes = await child.GetAsync("/api/v1/student/me/rewards/available?take=50");
         listRes.EnsureSuccessStatusCode();
         Assert.True(listRes.Headers.Contains("X-Total-Count"));
         var list = await listRes.Content.ReadFromJsonAsync<JsonElement>();
         Assert.Contains(list.EnumerateArray(), o => o.GetProperty("id").GetInt32() == offerId);
 
         // Einzelansicht: dasselbe Angebot.
-        var single = await JsonAsync(await child.GetAsync($"/api/v1/me/rewards/available/{offerId}"));
+        var single = await JsonAsync(await child.GetAsync($"/api/v1/student/me/rewards/available/{offerId}"));
         Assert.Equal(offerId, single.GetProperty("id").GetInt32());
         Assert.Equal("TV", single.GetProperty("title").GetString());
 
         // Unbekannt → 404.
         Assert.Equal(HttpStatusCode.NotFound,
-            (await child.GetAsync("/api/v1/me/rewards/available/999999")).StatusCode);
+            (await child.GetAsync("/api/v1/student/me/rewards/available/999999")).StatusCode);
     }
 
     [Fact]
@@ -308,26 +308,26 @@ public class RewardsFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
     {
         var father = await TestApi.FatherAsync(factory);
         var (childId, child) = await FreshChildAsync(father, "9017");
-        (await father.PostAsJsonAsync($"/api/v1/children/{childId}/points", new { amount = 300, reason = "x" })).EnsureSuccessStatusCode();
+        (await father.PostAsJsonAsync($"/api/v1/supervisor/children/{childId}/points", new { amount = 300, reason = "x" })).EnsureSuccessStatusCode();
         var offerId = await CreateOfferAsync(father, childId, new { title = "Snack", cost = 100 });
 
-        var buy = await JsonAsync(await child.PostAsJsonAsync($"/api/v1/me/rewards/available/{offerId}/purchase", new { }));
+        var buy = await JsonAsync(await child.PostAsJsonAsync($"/api/v1/student/me/rewards/available/{offerId}/purchase", new { }));
         var redemptionId = buy.GetProperty("redemptions").EnumerateArray().First().GetProperty("id").GetInt32();
 
         // Liste (paginiert): enthält den Kauf, X-Total-Count gesetzt.
-        var listRes = await child.GetAsync("/api/v1/me/rewards/redemptions");
+        var listRes = await child.GetAsync("/api/v1/student/me/rewards/redemptions");
         listRes.EnsureSuccessStatusCode();
         Assert.Equal("1", listRes.Headers.GetValues("X-Total-Count").Single());
         var list = await listRes.Content.ReadFromJsonAsync<JsonElement>();
         Assert.Contains(list.EnumerateArray(), r => r.GetProperty("id").GetInt32() == redemptionId);
 
         // Einzelansicht.
-        var single = await JsonAsync(await child.GetAsync($"/api/v1/me/rewards/redemptions/{redemptionId}"));
+        var single = await JsonAsync(await child.GetAsync($"/api/v1/student/me/rewards/redemptions/{redemptionId}"));
         Assert.Equal(redemptionId, single.GetProperty("id").GetInt32());
         Assert.Equal("Purchased", single.GetProperty("status").GetString());
 
         // Unbekannt → 404.
         Assert.Equal(HttpStatusCode.NotFound,
-            (await child.GetAsync("/api/v1/me/rewards/redemptions/999999")).StatusCode);
+            (await child.GetAsync("/api/v1/student/me/rewards/redemptions/999999")).StatusCode);
     }
 }

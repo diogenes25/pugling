@@ -11,11 +11,11 @@ namespace Pugling.Api.Controllers.Supervisor;
 /// <summary>
 /// Missionen eines Kindes verwalten (nur Vater, nur eigene Kinder): zeitgebundene Ziele mit Belohnung.
 /// Eigentum sichert der <see cref="ChildOwnershipFilter"/>; der Fortschritt/Status wird beim Kind über
-/// <c>GET api/v1/me/missions</c> gelesen.
+/// <c>GET api/v1/student/me/missions</c> gelesen.
 /// </summary>
 [ApiController]
 [ApiVersion("1.0")]
-[Route(ApiRoutes.V1 + "/children/{childId:int}/missions")]
+[Route(ApiRoutes.Supervisor + "/children/{childId:int}/missions")]
 [Tags("Admin – Missions")]
 [Produces("application/json")]
 [Authorize(Roles = Roles.Vater)]
@@ -96,11 +96,11 @@ public class MissionsController(PuglingDbContext db) : ControllerBase
 /// <summary>
 /// Auszeichnungen (Badges) eines Kindes verwalten (nur Vater, nur eigene Kinder): permanente
 /// Meilensteine. Eigentum sichert der <see cref="ChildOwnershipFilter"/>; der Status wird beim Kind
-/// über <c>GET api/v1/me/achievements</c> gelesen.
+/// über <c>GET api/v1/student/me/achievements</c> gelesen.
 /// </summary>
 [ApiController]
 [ApiVersion("1.0")]
-[Route(ApiRoutes.V1 + "/children/{childId:int}/achievements")]
+[Route(ApiRoutes.Supervisor + "/children/{childId:int}/achievements")]
 [Tags("Admin – Achievements")]
 [Produces("application/json")]
 [Authorize(Roles = Roles.Vater)]

@@ -3,7 +3,7 @@
 _Automatisch erzeugt von `DocsCaptureTests` (Integrationstest). Jedes Beispiel ist verifiziert: Status und – bei Fehlern – der maschinenlesbare `code` wurden im Testlauf geprüft. Nicht von Hand bearbeiten._
 
 ## Eigener Kontostand (Wallet)
-`GET /api/v1/me/points`
+`GET /api/v1/student/me/points`
 
 Rolle: **child** — `Authorization: Bearer <child-token>`
 
@@ -17,7 +17,7 @@ Response — `HTTP 200`:
 ```
 
 ## Eigene Buchungen (Liste)
-`GET /api/v1/me/points/entries`
+`GET /api/v1/student/me/points/entries`
 
 Rolle: **child** — `Authorization: Bearer <child-token>`
 
@@ -29,27 +29,27 @@ Response — `HTTP 200`:
     "amount": 15,
     "kind": "Base",
     "reason": "Doku-Buchung",
-    "createdAt": "2026-07-08T14:02:08.2999784"
+    "createdAt": "2026-07-08T14:11:13.8552091"
   },
   {
     "id": 2,
     "amount": 300,
     "kind": "Achievement",
     "reason": "Willkommens-Gems",
-    "createdAt": "2026-07-08T14:02:04.6688315"
+    "createdAt": "2026-07-08T14:11:10.5312802"
   },
   {
     "id": 1,
     "amount": 50,
     "kind": "Base",
     "reason": "Startguthaben (M\u00FCnzen)",
-    "createdAt": "2026-07-08T14:02:04.6688292"
+    "createdAt": "2026-07-08T14:11:10.5312785"
   }
 ]
 ```
 
 ## Einzelne Buchung
-`GET /api/v1/me/points/entries/3`
+`GET /api/v1/student/me/points/entries/3`
 
 Rolle: **child** — `Authorization: Bearer <child-token>`
 
@@ -60,12 +60,12 @@ Response — `HTTP 200`:
   "amount": 15,
   "kind": "Base",
   "reason": "Doku-Buchung",
-  "createdAt": "2026-07-08T14:02:08.2999784"
+  "createdAt": "2026-07-08T14:11:13.8552091"
 }
 ```
 
 ## Eigene Missionen (Liste)
-`GET /api/v1/me/missions`
+`GET /api/v1/student/me/missions`
 
 Rolle: **child** — `Authorization: Bearer <child-token>`
 
@@ -116,7 +116,7 @@ Response — `HTTP 200`:
 ```
 
 ## Einzelne Mission
-`GET /api/v1/me/missions/1`
+`GET /api/v1/student/me/missions/1`
 
 Rolle: **child** — `Authorization: Bearer <child-token>`
 
@@ -135,7 +135,7 @@ Response — `HTTP 200`:
 ```
 
 ## Eigene Auszeichnungen (Liste)
-`GET /api/v1/me/achievements`
+`GET /api/v1/student/me/achievements`
 
 Rolle: **child** — `Authorization: Bearer <child-token>`
 
@@ -201,7 +201,7 @@ Response — `HTTP 200`:
 ```
 
 ## Einzelne Auszeichnung
-`GET /api/v1/me/achievements/4`
+`GET /api/v1/student/me/achievements/4`
 
 Rolle: **child** — `Authorization: Bearer <child-token>`
 
@@ -221,7 +221,7 @@ Response — `HTTP 200`:
 ```
 
 ## Eigener Skin-Zustand
-`GET /api/v1/me/skins`
+`GET /api/v1/student/me/skins`
 
 Rolle: **child** — `Authorization: Bearer <child-token>`
 
@@ -237,7 +237,7 @@ Response — `HTTP 200`:
 ```
 
 ## Eigene Angebote & Käufe (Aggregat)
-`GET /api/v1/me/rewards`
+`GET /api/v1/student/me/rewards`
 
 Rolle: **child** — `Authorization: Bearer <child-token>`
 
@@ -295,7 +295,7 @@ Response — `HTTP 200`:
 ```
 
 ## Verfügbare Angebote (Liste)
-`GET /api/v1/me/rewards/available`
+`GET /api/v1/student/me/rewards/available`
 
 Rolle: **child** — `Authorization: Bearer <child-token>`
 
@@ -350,7 +350,7 @@ Response — `HTTP 200`:
 ```
 
 ## Einzelnes Angebot
-`GET /api/v1/me/rewards/available/1`
+`GET /api/v1/student/me/rewards/available/1`
 
 Rolle: **child** — `Authorization: Bearer <child-token>`
 
@@ -370,7 +370,7 @@ Response — `HTTP 200`:
 ```
 
 ## Eigene Käufe (Liste)
-`GET /api/v1/me/rewards/redemptions`
+`GET /api/v1/student/me/rewards/redemptions`
 
 Rolle: **child** — `Authorization: Bearer <child-token>`
 
@@ -380,7 +380,7 @@ Response — `HTTP 200`:
 ```
 
 ### Vater greift auf Sohn-Route zu — Fehlerfall
-`GET /api/v1/me/points`
+`GET /api/v1/student/me/points`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
@@ -396,7 +396,7 @@ Response — `HTTP 403`:
 ```
 
 ### Bereits besessenen Skin kaufen — Fehlerfall
-`POST /api/v1/me/skins/pug/purchase`
+`POST /api/v1/student/me/skins/pug/purchase`
 
 Rolle: **child** — `Authorization: Bearer <child-token>`
 
@@ -418,7 +418,7 @@ Response — `HTTP 409`:
 ```
 
 ### Skin kaufen ohne Gems — Fehlerfall
-`POST /api/v1/me/skins/fox/purchase`
+`POST /api/v1/student/me/skins/fox/purchase`
 
 Rolle: **child** — `Authorization: Bearer <child-token>`
 
@@ -440,7 +440,7 @@ Response — `HTTP 400`:
 ```
 
 ### Unbekannten Skin kaufen — Fehlerfall
-`POST /api/v1/me/skins/banane/purchase`
+`POST /api/v1/student/me/skins/banane/purchase`
 
 Rolle: **child** — `Authorization: Bearer <child-token>`
 
@@ -462,7 +462,7 @@ Response — `HTTP 404`:
 ```
 
 ## Skin kaufen (mit Gems)
-`POST /api/v1/me/skins/ninja/purchase`
+`POST /api/v1/student/me/skins/ninja/purchase`
 
 Rolle: **child** — `Authorization: Bearer <child-token>`
 
@@ -484,7 +484,7 @@ Response — `HTTP 200`:
 ```
 
 ## Besessenen Skin ausrüsten
-`POST /api/v1/me/skins/pug/equip`
+`POST /api/v1/student/me/skins/pug/equip`
 
 Rolle: **child** — `Authorization: Bearer <child-token>`
 
@@ -506,7 +506,7 @@ Response — `HTTP 200`:
 ```
 
 ### Nicht besessenen Skin ausrüsten — Fehlerfall
-`POST /api/v1/me/skins/fox/equip`
+`POST /api/v1/student/me/skins/fox/equip`
 
 Rolle: **child** — `Authorization: Bearer <child-token>`
 
@@ -528,7 +528,7 @@ Response — `HTTP 400`:
 ```
 
 ## Angebot kaufen
-`POST /api/v1/me/rewards/available/5/purchase`
+`POST /api/v1/student/me/rewards/available/5/purchase`
 
 Rolle: **child** — `Authorization: Bearer <child-token>`
 
@@ -560,7 +560,7 @@ Response — `HTTP 200`:
       "title": "30 Min Fernsehen",
       "cost": 50,
       "status": "Purchased",
-      "purchasedAt": "2026-07-08T14:02:08.8765977",
+      "purchasedAt": "2026-07-08T14:11:14.4108188",
       "fulfilledAt": null
     }
   ]
@@ -568,7 +568,7 @@ Response — `HTTP 200`:
 ```
 
 ## Einzelner Kauf
-`GET /api/v1/me/rewards/redemptions/1`
+`GET /api/v1/student/me/rewards/redemptions/1`
 
 Rolle: **child** — `Authorization: Bearer <child-token>`
 
@@ -580,13 +580,13 @@ Response — `HTTP 200`:
   "title": "30 Min Fernsehen",
   "cost": 50,
   "status": "Purchased",
-  "purchasedAt": "2026-07-08T14:02:08.8765977",
+  "purchasedAt": "2026-07-08T14:11:14.4108188",
   "fulfilledAt": null
 }
 ```
 
 ## Kauf erfüllen (Vater)
-`POST /api/v1/children/4/rewards/redemptions/1/fulfill`
+`POST /api/v1/supervisor/children/4/rewards/redemptions/1/fulfill`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
@@ -604,7 +604,7 @@ Response — `HTTP 200`:
   "title": "30 Min Fernsehen",
   "cost": 50,
   "status": "Fulfilled",
-  "purchasedAt": "2026-07-08T14:02:08.8765977",
+  "purchasedAt": "2026-07-08T14:11:14.4108188",
   "fulfilledAt": "<timestamp>",
   "canFulfill": false,
   "canCancel": false
@@ -612,7 +612,7 @@ Response — `HTTP 200`:
 ```
 
 ### Bereits erfüllten Kauf erneut erfüllen — Fehlerfall
-`POST /api/v1/children/4/rewards/redemptions/1/fulfill`
+`POST /api/v1/supervisor/children/4/rewards/redemptions/1/fulfill`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
@@ -634,7 +634,7 @@ Response — `HTTP 409`:
 ```
 
 ### Angebot über Kontingent kaufen — Fehlerfall
-`POST /api/v1/me/rewards/available/6/purchase`
+`POST /api/v1/student/me/rewards/available/6/purchase`
 
 Rolle: **child** — `Authorization: Bearer <child-token>`
 
@@ -656,7 +656,7 @@ Response — `HTTP 409`:
 ```
 
 ### Deaktiviertes Angebot kaufen — Fehlerfall
-`POST /api/v1/me/rewards/available/7/purchase`
+`POST /api/v1/student/me/rewards/available/7/purchase`
 
 Rolle: **child** — `Authorization: Bearer <child-token>`
 
@@ -678,7 +678,7 @@ Response — `HTTP 400`:
 ```
 
 ### Angebot ohne Deckung kaufen — Fehlerfall
-`POST /api/v1/me/rewards/available/8/purchase`
+`POST /api/v1/student/me/rewards/available/8/purchase`
 
 Rolle: **child** — `Authorization: Bearer <child-token>`
 

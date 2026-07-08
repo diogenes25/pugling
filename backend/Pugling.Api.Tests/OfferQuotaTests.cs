@@ -24,19 +24,19 @@ public class OfferQuotaTests(PuglingWebAppFactory factory) : IClassFixture<Pugli
     {
         var father = await TestApi.FatherAsync(factory);
         var childId = await TestApi.IdAsync(
-            await father.PostAsJsonAsync("/api/v1/children", new { name = "Kontingent-Kind", pin = "9200" }));
+            await father.PostAsJsonAsync("/api/v1/supervisor/children", new { name = "Kontingent-Kind", pin = "9200" }));
         var child = await TestApi.ChildAsync(factory, childId, "9200");
 
-        (await father.PostAsJsonAsync($"/api/v1/children/{childId}/points", new { amount = 1000, reason = "x" })).EnsureSuccessStatusCode();
-        var offerId = (await (await father.PostAsJsonAsync($"/api/v1/children/{childId}/rewards",
+        (await father.PostAsJsonAsync($"/api/v1/supervisor/children/{childId}/points", new { amount = 1000, reason = "x" })).EnsureSuccessStatusCode();
+        var offerId = (await (await father.PostAsJsonAsync($"/api/v1/supervisor/children/{childId}/rewards",
             new { title = "Snack", cost = 100, period = "Weekly", quantity = 2 })).Content.ReadFromJsonAsync<JsonElement>())
             .GetProperty("id").GetInt32();
 
-        (await child.PostAsJsonAsync($"/api/v1/me/rewards/available/{offerId}/purchase", new { })).EnsureSuccessStatusCode();
-        (await child.PostAsJsonAsync($"/api/v1/me/rewards/available/{offerId}/purchase", new { })).EnsureSuccessStatusCode();
+        (await child.PostAsJsonAsync($"/api/v1/student/me/rewards/available/{offerId}/purchase", new { })).EnsureSuccessStatusCode();
+        (await child.PostAsJsonAsync($"/api/v1/student/me/rewards/available/{offerId}/purchase", new { })).EnsureSuccessStatusCode();
 
         // Dritter Kauf in derselben Woche -> Kontingent erschöpft (409), obwohl noch Münzen da sind.
-        var third = await child.PostAsJsonAsync($"/api/v1/me/rewards/available/{offerId}/purchase", new { });
+        var third = await child.PostAsJsonAsync($"/api/v1/student/me/rewards/available/{offerId}/purchase", new { });
         Assert.Equal(HttpStatusCode.Conflict, third.StatusCode);
     }
 

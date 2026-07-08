@@ -15,7 +15,7 @@ public class CatalogManagementTests(PuglingWebAppFactory factory) : IClassFixtur
         var father = await TestApi.FatherAsync(_factory);
         var exerciseId = await TestApi.CreateVocabExerciseAsync(father);
 
-        var detail = await (await father.GetAsync($"/api/v1/learn/exercises/{exerciseId}"))
+        var detail = await (await father.GetAsync($"/api/v1/creator/exercises/{exerciseId}"))
             .Content.ReadFromJsonAsync<JsonElement>();
 
         Assert.Equal("Vocabulary", detail.GetProperty("type").GetString());
@@ -31,7 +31,7 @@ public class CatalogManagementTests(PuglingWebAppFactory factory) : IClassFixtur
         var exerciseId = await TestApi.CreateVocabExerciseAsync(father);
         var (planId, _) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)Pugling.Api.Models.TestStage.FreeText);
 
-        var usage = await (await father.GetAsync($"/api/v1/learn/exercises/{exerciseId}/usage"))
+        var usage = await (await father.GetAsync($"/api/v1/creator/exercises/{exerciseId}/usage"))
             .Content.ReadFromJsonAsync<JsonElement>();
 
         var plans = usage.GetProperty("plans");
@@ -46,7 +46,7 @@ public class CatalogManagementTests(PuglingWebAppFactory factory) : IClassFixtur
         var father = await TestApi.FatherAsync(_factory);
         var exerciseId = await TestApi.CreateVocabExerciseAsync(father);
 
-        var usage = await (await father.GetAsync($"/api/v1/learn/exercises/{exerciseId}/usage"))
+        var usage = await (await father.GetAsync($"/api/v1/creator/exercises/{exerciseId}/usage"))
             .Content.ReadFromJsonAsync<JsonElement>();
 
         Assert.Equal(0, usage.GetProperty("plans").GetArrayLength());
@@ -60,11 +60,11 @@ public class CatalogManagementTests(PuglingWebAppFactory factory) : IClassFixtur
         var exerciseId = await TestApi.CreateVocabExerciseAsync(father);
         TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)Pugling.Api.Models.TestStage.FreeText);
 
-        var detail = await (await father.GetAsync($"/api/v1/learn/exercises/{exerciseId}"))
+        var detail = await (await father.GetAsync($"/api/v1/creator/exercises/{exerciseId}"))
             .Content.ReadFromJsonAsync<JsonElement>();
         var (subjectId, chapterId) = (detail.GetProperty("subjectId").GetInt32(), detail.GetProperty("chapterId").GetInt32());
 
-        var res = await father.DeleteAsync($"/api/v1/learn/subjects/{subjectId}/chapters/{chapterId}/vocabulary/{exerciseId}");
+        var res = await father.DeleteAsync($"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/vocabulary/{exerciseId}");
         Assert.Equal(HttpStatusCode.Conflict, res.StatusCode);
     }
 
@@ -73,14 +73,14 @@ public class CatalogManagementTests(PuglingWebAppFactory factory) : IClassFixtur
     {
         var father = await TestApi.FatherAsync(_factory);
         var exerciseId = await TestApi.CreateVocabExerciseAsync(father);
-        var detail = await (await father.GetAsync($"/api/v1/learn/exercises/{exerciseId}"))
+        var detail = await (await father.GetAsync($"/api/v1/creator/exercises/{exerciseId}"))
             .Content.ReadFromJsonAsync<JsonElement>();
         var (subjectId, chapterId) = (detail.GetProperty("subjectId").GetInt32(), detail.GetProperty("chapterId").GetInt32());
 
-        var res = await father.DeleteAsync($"/api/v1/learn/subjects/{subjectId}/chapters/{chapterId}/vocabulary/{exerciseId}");
+        var res = await father.DeleteAsync($"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/vocabulary/{exerciseId}");
         Assert.Equal(HttpStatusCode.NoContent, res.StatusCode);
 
-        var after = await father.GetAsync($"/api/v1/learn/exercises/{exerciseId}");
+        var after = await father.GetAsync($"/api/v1/creator/exercises/{exerciseId}");
         Assert.Equal(HttpStatusCode.NotFound, after.StatusCode);
     }
 }

@@ -15,7 +15,7 @@ namespace Pugling.Api.Controllers.Supervisor;
 /// </summary>
 [ApiController]
 [ApiVersion("1.0")]
-[Route(ApiRoutes.V1 + "/shop")]
+[Route(ApiRoutes.Supervisor + "/shop")]
 [Tags("Admin – Shop")]
 [Produces("application/json")]
 [Authorize(Roles = Roles.Vater)]
@@ -344,7 +344,7 @@ public class ShopController(PuglingDbContext db, ShopService shop) : ControllerB
     /// <param name="childId">Id des Kindes.</param>
     /// <param name="skip">Anzahl übersprungener Einträge (Offset, Standard 0).</param>
     /// <param name="take">Maximale Anzahl zurückgegebener Einträge (Standard 100, Max 500).</param>
-    [HttpGet("~/" + ApiRoutes.V1 + "/children/{childId:int}/shop/inventory")]
+    [HttpGet("~/" + ApiRoutes.Supervisor + "/children/{childId:int}/shop/inventory")]
     [ServiceFilter(typeof(ChildOwnershipFilter))]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -366,7 +366,7 @@ public class ShopController(PuglingDbContext db, ShopService shop) : ControllerB
     // ─── Kaufhistorie ────────────────────────────────────────────────────────
 
     /// <summary>Kaufhistorie eines Kindes, optional nach Status gefiltert.</summary>
-    [HttpGet("~/" + ApiRoutes.V1 + "/children/{childId:int}/shop/purchases")]
+    [HttpGet("~/" + ApiRoutes.Supervisor + "/children/{childId:int}/shop/purchases")]
     [ServiceFilter(typeof(ChildOwnershipFilter))]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -385,7 +385,7 @@ public class ShopController(PuglingDbContext db, ShopService shop) : ControllerB
     }
 
     /// <summary>Storniert einen offenen Kauf und erstattet Coins/Gems zurück.</summary>
-    [HttpPost("~/" + ApiRoutes.V1 + "/children/{childId:int}/shop/purchases/{purchaseId:int}/cancel")]
+    [HttpPost("~/" + ApiRoutes.Supervisor + "/children/{childId:int}/shop/purchases/{purchaseId:int}/cancel")]
     [ServiceFilter(typeof(ChildOwnershipFilter))]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -405,7 +405,7 @@ public class ShopController(PuglingDbContext db, ShopService shop) : ControllerB
     // ─── Aktivierungsanfragen ────────────────────────────────────────────────
 
     /// <summary>Aktivierungsanfragen eines Kindes, optional nach Status gefiltert (offene zuerst).</summary>
-    [HttpGet("~/" + ApiRoutes.V1 + "/children/{childId:int}/shop/activations")]
+    [HttpGet("~/" + ApiRoutes.Supervisor + "/children/{childId:int}/shop/activations")]
     [ServiceFilter(typeof(ChildOwnershipFilter))]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -424,7 +424,7 @@ public class ShopController(PuglingDbContext db, ShopService shop) : ControllerB
     }
 
     /// <summary>Genehmigt eine offene Aktivierungsanfrage; das Inventar des Kindes wird reduziert.</summary>
-    [HttpPost("~/" + ApiRoutes.V1 + "/children/{childId:int}/shop/activations/{requestId:int}/approve")]
+    [HttpPost("~/" + ApiRoutes.Supervisor + "/children/{childId:int}/shop/activations/{requestId:int}/approve")]
     [ServiceFilter(typeof(ChildOwnershipFilter))]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -437,7 +437,7 @@ public class ShopController(PuglingDbContext db, ShopService shop) : ControllerB
     }
 
     /// <summary>Lehnt eine offene Aktivierungsanfrage ab; das Inventar des Kindes bleibt unverändert.</summary>
-    [HttpPost("~/" + ApiRoutes.V1 + "/children/{childId:int}/shop/activations/{requestId:int}/reject")]
+    [HttpPost("~/" + ApiRoutes.Supervisor + "/children/{childId:int}/shop/activations/{requestId:int}/reject")]
     [ServiceFilter(typeof(ChildOwnershipFilter))]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

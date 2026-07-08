@@ -21,7 +21,7 @@ public class PositionReportTests(PuglingWebAppFactory factory) : IClassFixture<P
         var exerciseId = await TestApi.CreateVocabExerciseAsync(father); // hello→hallo, goodbye→tschüss
         var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.FreeText);
         var child = await TestApi.ChildAsync(_factory);
-        var reportUrl = $"/api/v1/study-plans/{planId}/positions/{positionId}/report";
+        var reportUrl = $"/api/v1/student/study-plans/{planId}/positions/{positionId}/report";
 
         // Üben: beide Inhalte einmal richtig → je eine Box höher und eingeführt.
         var sessionId = await TestApi.StartPositionSessionAsync(child, planId, positionId);
@@ -41,7 +41,7 @@ public class PositionReportTests(PuglingWebAppFactory factory) : IClassFixture<P
         Assert.Equal("hallo", good.GetProperty("answer").GetString()); // Lösung ist für den Vater sichtbar
 
         // Ein Test erzeugt die Test-Trefferquote je Item (item 0 richtig, item 1 falsch).
-        var testsUrl = $"/api/v1/study-plans/{planId}/positions/{positionId}/tests";
+        var testsUrl = $"/api/v1/student/study-plans/{planId}/positions/{positionId}/tests";
         var attemptId = await TestApi.IdWithKeyAsync(await child.PostAsJsonAsync(testsUrl, new { }), "attemptId");
         var answers = new[]
         {
@@ -67,7 +67,7 @@ public class PositionReportTests(PuglingWebAppFactory factory) : IClassFixture<P
         var exerciseId = await TestApi.CreateVocabExerciseAsync(father);
         var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.FreeText);
 
-        var res = await father.GetAsync($"/api/v1/study-plans/{planId}/positions/{positionId + 999}/report");
+        var res = await father.GetAsync($"/api/v1/student/study-plans/{planId}/positions/{positionId + 999}/report");
         Assert.Equal(HttpStatusCode.NotFound, res.StatusCode);
     }
 }
