@@ -17,6 +17,76 @@ namespace Pugling.Api.Data.Migrations
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.9");
 
+            modelBuilder.Entity("Pugling.Api.Models.Account", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("DisplayName")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Email")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("PinHash")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Email")
+                        .IsUnique()
+                        .HasFilter("[Email] IS NOT NULL");
+
+                    b.ToTable("Accounts");
+                });
+
+            modelBuilder.Entity("Pugling.Api.Models.AccountProfile", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("AccountId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("ChildId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("FatherId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Role")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AccountId");
+
+                    b.HasIndex("ChildId");
+
+                    b.HasIndex("FatherId");
+
+                    b.HasIndex("Role", "ChildId")
+                        .IsUnique()
+                        .HasFilter("[ChildId] IS NOT NULL");
+
+                    b.HasIndex("Role", "FatherId")
+                        .IsUnique()
+                        .HasFilter("[FatherId] IS NOT NULL");
+
+                    b.ToTable("AccountProfiles");
+                });
+
             modelBuilder.Entity("Pugling.Api.Models.Achievement", b =>
                 {
                     b.Property<int>("Id")
@@ -109,14 +179,17 @@ namespace Pugling.Api.Data.Migrations
                     b.Property<int>("Status")
                         .HasColumnType("INTEGER");
 
+                    b.Property<int>("SupervisorId")
+                        .HasColumnType("INTEGER");
+
                     b.Property<int>("UnitType")
                         .HasColumnType("INTEGER");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ChildId");
-
                     b.HasIndex("ShopArticleId");
+
+                    b.HasIndex("ChildId", "SupervisorId");
 
                     b.ToTable("ActivationRequests");
                 });
@@ -160,9 +233,6 @@ namespace Pugling.Api.Data.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("TEXT");
 
-                    b.Property<int>("FatherId")
-                        .HasColumnType("INTEGER");
-
                     b.Property<int?>("Grade")
                         .HasColumnType("INTEGER");
 
@@ -186,8 +256,6 @@ namespace Pugling.Api.Data.Migrations
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("FatherId");
 
                     b.ToTable("Children");
                 });
@@ -1021,17 +1089,20 @@ namespace Pugling.Api.Data.Migrations
                     b.Property<int?>("StudyPlanId")
                         .HasColumnType("INTEGER");
 
+                    b.Property<int>("SupervisorId")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("Title")
                         .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ChildId");
-
                     b.HasIndex("ExerciseId");
 
                     b.HasIndex("StudyPlanId");
+
+                    b.HasIndex("ChildId", "SupervisorId");
 
                     b.ToTable("Rewards");
                 });
@@ -1060,15 +1131,18 @@ namespace Pugling.Api.Data.Migrations
                     b.Property<int>("Status")
                         .HasColumnType("INTEGER");
 
+                    b.Property<int>("SupervisorId")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("Title")
                         .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ChildId");
-
                     b.HasIndex("RewardId");
+
+                    b.HasIndex("ChildId", "SupervisorId");
 
                     b.ToTable("RewardRedemptions");
                 });
@@ -1211,6 +1285,9 @@ namespace Pugling.Api.Data.Migrations
                     b.Property<int>("Status")
                         .HasColumnType("INTEGER");
 
+                    b.Property<int>("SupervisorId")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("Title")
                         .IsRequired()
                         .HasColumnType("TEXT");
@@ -1220,9 +1297,9 @@ namespace Pugling.Api.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ChildId");
-
                     b.HasIndex("ShopListingId");
+
+                    b.HasIndex("ChildId", "SupervisorId");
 
                     b.ToTable("ShopPurchases");
                 });
@@ -1283,6 +1360,35 @@ namespace Pugling.Api.Data.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Subjects");
+                });
+
+            modelBuilder.Entity("Pugling.Api.Models.SupervisorLink", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Relation")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("StudentId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("SupervisorId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("StudentId");
+
+                    b.HasIndex("SupervisorId", "StudentId")
+                        .IsUnique();
+
+                    b.ToTable("SupervisorLinks");
                 });
 
             modelBuilder.Entity("Pugling.Api.Models.Tag", b =>
@@ -1597,6 +1703,31 @@ namespace Pugling.Api.Data.Migrations
                     b.ToTable("VocabularyTags");
                 });
 
+            modelBuilder.Entity("Pugling.Api.Models.AccountProfile", b =>
+                {
+                    b.HasOne("Pugling.Api.Models.Account", "Account")
+                        .WithMany("Profiles")
+                        .HasForeignKey("AccountId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Pugling.Api.Models.Child", "Child")
+                        .WithMany()
+                        .HasForeignKey("ChildId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.HasOne("Pugling.Api.Models.Father", "Father")
+                        .WithMany()
+                        .HasForeignKey("FatherId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.Navigation("Account");
+
+                    b.Navigation("Child");
+
+                    b.Navigation("Father");
+                });
+
             modelBuilder.Entity("Pugling.Api.Models.Achievement", b =>
                 {
                     b.HasOne("Pugling.Api.Models.Child", "Child")
@@ -1646,17 +1777,6 @@ namespace Pugling.Api.Data.Migrations
                         .IsRequired();
 
                     b.Navigation("Subject");
-                });
-
-            modelBuilder.Entity("Pugling.Api.Models.Child", b =>
-                {
-                    b.HasOne("Pugling.Api.Models.Father", "Father")
-                        .WithMany("Children")
-                        .HasForeignKey("FatherId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Father");
                 });
 
             modelBuilder.Entity("Pugling.Api.Models.ChildInventory", b =>
@@ -2060,6 +2180,25 @@ namespace Pugling.Api.Data.Migrations
                     b.Navigation("Subject");
                 });
 
+            modelBuilder.Entity("Pugling.Api.Models.SupervisorLink", b =>
+                {
+                    b.HasOne("Pugling.Api.Models.Child", "Student")
+                        .WithMany("SupervisorLinks")
+                        .HasForeignKey("StudentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Pugling.Api.Models.Father", "Supervisor")
+                        .WithMany("SupervisedLinks")
+                        .HasForeignKey("SupervisorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Student");
+
+                    b.Navigation("Supervisor");
+                });
+
             modelBuilder.Entity("Pugling.Api.Models.Tag", b =>
                 {
                     b.HasOne("Pugling.Api.Models.Child", "Child")
@@ -2167,6 +2306,11 @@ namespace Pugling.Api.Data.Migrations
                     b.Navigation("Vocabulary");
                 });
 
+            modelBuilder.Entity("Pugling.Api.Models.Account", b =>
+                {
+                    b.Navigation("Profiles");
+                });
+
             modelBuilder.Entity("Pugling.Api.Models.Chapter", b =>
                 {
                     b.Navigation("Exercises");
@@ -2175,11 +2319,13 @@ namespace Pugling.Api.Data.Migrations
             modelBuilder.Entity("Pugling.Api.Models.Child", b =>
                 {
                     b.Navigation("PointsEntries");
+
+                    b.Navigation("SupervisorLinks");
                 });
 
             modelBuilder.Entity("Pugling.Api.Models.Father", b =>
                 {
-                    b.Navigation("Children");
+                    b.Navigation("SupervisedLinks");
                 });
 
             modelBuilder.Entity("Pugling.Api.Models.Klassenarbeit", b =>

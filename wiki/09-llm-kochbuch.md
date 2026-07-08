@@ -65,7 +65,7 @@ ist nur Authoring-Payload; die dauerhafte Item-Liste liegt unter `.../vocabulary
 **Weg 1 — Vorhandenes wiederverwenden:**
 
 ```http
-GET /api/v1/learn/exercises?subjectId=1&grade=9&schoolType=Gymnasium&type=Vocabulary
+GET /api/v1/creator/exercises?subjectId=1&grade=9&schoolType=Gymnasium&type=Vocabulary
 ```
 
 Wenn eine Übung passt, nutze ihre `id` direkt als `exerciseId` in der Position.
@@ -73,7 +73,7 @@ Wenn eine Übung passt, nutze ihre `id` direkt als `exerciseId` in der Position.
 **Weg 2 — Neue Katalog-Übung anlegen:**
 
 ```http
-POST /api/v1/learn/subjects/{subjectId}/chapters/{chapterId}/vocabulary
+POST /api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/vocabulary
 { "title":"Unit 1 – Begrüßungen", "orderIndex":1, "rewardPoints":10,
   "config": { "direction":"front-to-back", "sourceLang":"en", "targetLang":"de",
     "items":[{"front":"hello","back":"hallo"},{"front":"goodbye","back":"tschüss"}] },
@@ -112,39 +112,39 @@ der Planbeschreibung und über Positionen ab:
 POST /api/v1/auth/father   { "fatherId": 1, "pin": "0000" }
 
 ### Plan-Container
-POST /api/v1/study-plans
+POST /api/v1/supervisor/study-plans
 { "childId":1, "title":"9. Klasse – Wochenplan", "durationDays":14,
   "description":"Mo–Fr je Fach ca. 10 Minuten; täglich die fälligen Positionen erledigen." }
 → planId
 
 ### Französisch-Position
-POST /api/v1/study-plans/{planId}/positions
+POST /api/v1/supervisor/study-plans/{planId}/positions
 { "exerciseId": 101, "order":0, "cadence":"Daily", "useLeitner":true,
   "requireTypedTest":true, "itemCount":10, "goalThreshold":80,
   "stageSchedule":[{"dayNumber":1,"stage":2},{"dayNumber":5,"stage":3},{"dayNumber":9,"stage":4}],
   "comboThreshold":5, "comboBonusPoints":5, "speedThresholdSeconds":8, "speedBonusPoints":3 }
 
 ### Englisch-Position
-POST /api/v1/study-plans/{planId}/positions
+POST /api/v1/supervisor/study-plans/{planId}/positions
 { "exerciseId": 102, "order":1, "cadence":"Daily", "useLeitner":true,
   "requireTypedTest":true, "itemCount":10, "goalThreshold":80 }
 
 ### Mathe-Position
-POST /api/v1/study-plans/{planId}/positions
+POST /api/v1/supervisor/study-plans/{planId}/positions
 { "exerciseId": 201, "order":2, "cadence":"Daily", "stage":1,
   "itemCount":12, "goalThreshold":10, "pointsGoalMet":20 }
 
 ### Motivation einmal fürs Kind
-POST /api/v1/children/1/missions
+POST /api/v1/supervisor/children/1/missions
 { "title":"Tagesziel: 15 richtige Antworten", "metric":"CorrectReviews", "target":15,
   "period":"Daily", "rewardPoints":10 }
 
-POST /api/v1/children/1/achievements
+POST /api/v1/supervisor/children/1/achievements
 { "title":"Feuer-Streak", "icon":"🔥", "metric":"StreakDays", "threshold":7, "rewardPoints":70 }
 
 ### Kontrolle
-GET /api/v1/study-plans/{planId}/positions
-GET /api/v1/study-plans/{planId}/overview
+GET /api/v1/supervisor/study-plans/{planId}/positions
+GET /api/v1/student/study-plans/{planId}/overview
 ```
 
 Der Sohn startet über `GET /study-plans`, wählt den spielbaren Plan und arbeitet die Positionen aus

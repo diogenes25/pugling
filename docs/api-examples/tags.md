@@ -3,7 +3,7 @@
 _Automatisch erzeugt von `DocsCaptureTests` (Integrationstest). Jedes Beispiel ist verifiziert: Status und – bei Fehlern – der maschinenlesbare `code` wurden im Testlauf geprüft. Nicht von Hand bearbeiten._
 
 ## Tag anlegen (Vater)
-`POST /api/v1/tags`
+`POST /api/v1/creator/tags`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
@@ -31,7 +31,7 @@ Response — `HTTP 201`:
 ```
 
 ## Tag anlegen (Sohn)
-`POST /api/v1/tags`
+`POST /api/v1/creator/tags`
 
 Rolle: **child** — `Authorization: Bearer <child-token>`
 
@@ -59,7 +59,7 @@ Response — `HTTP 201`:
 ```
 
 ### Tag mit doppeltem Namen — Fehlerfall
-`POST /api/v1/tags`
+`POST /api/v1/creator/tags`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
@@ -84,7 +84,7 @@ Response — `HTTP 400`:
 ```
 
 ### Tag für fremdes Kind anlegen — Fehlerfall
-`POST /api/v1/tags`
+`POST /api/v1/creator/tags`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
@@ -108,7 +108,7 @@ Response — `HTTP 403`:
 ```
 
 ### Unbekannte Übungen taggen — Fehlerfall
-`POST /api/v1/tags/3/exercises`
+`POST /api/v1/creator/tags/3/exercises`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 

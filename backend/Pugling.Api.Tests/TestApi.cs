@@ -47,7 +47,7 @@ internal static class TestApi
     /// <summary>Legt (als Vater) einen Vokabel-Lehrplan mit zwei Seed-Vokabeln an und liefert dessen Id.</summary>
     public static async Task<int> CreateVocabPlanAsync(HttpClient father, int childId = 1, bool dailyTestRequired = true)
     {
-        var res = await father.PostAsJsonAsync("/api/v1/study-plans", new
+        var res = await father.PostAsJsonAsync("/api/v1/supervisor/study-plans", new
         {
             childId,
             title = "Test-Plan",
@@ -62,11 +62,11 @@ internal static class TestApi
     /// <summary>Legt (als Vater) Fach → Kapitel → eine Rechen-Übung an und liefert deren Ids.</summary>
     public static async Task<(int subjectId, int chapterId, int exerciseId)> CreateArithmeticExerciseAsync(HttpClient father)
     {
-        var subjectId = await IdAsync(await father.PostAsJsonAsync("/api/v1/learn/subjects", new { name = "Katalog-Test" }));
+        var subjectId = await IdAsync(await father.PostAsJsonAsync("/api/v1/creator/subjects", new { name = "Katalog-Test" }));
         var chapterId = await IdAsync(await father.PostAsJsonAsync(
-            $"/api/v1/learn/subjects/{subjectId}/chapters", new { name = "Kapitel 1", orderIndex = 1 }));
+            $"/api/v1/creator/subjects/{subjectId}/chapters", new { name = "Kapitel 1", orderIndex = 1 }));
         var exerciseId = await IdAsync(await father.PostAsJsonAsync(
-            $"/api/v1/learn/subjects/{subjectId}/chapters/{chapterId}/arithmetic", new
+            $"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/arithmetic", new
             {
                 title = "Kleines 1×1",
                 orderIndex = 1,
@@ -80,11 +80,11 @@ internal static class TestApi
     public static async Task<int> CreateVocabExerciseAsync(HttpClient father, params (string Front, string Back)[] items)
     {
         var vocab = items.Length > 0 ? items : [("hello", "hallo"), ("goodbye", "tschüss")];
-        var subjectId = await IdAsync(await father.PostAsJsonAsync("/api/v1/learn/subjects", new { name = "Englisch-Pos" }));
+        var subjectId = await IdAsync(await father.PostAsJsonAsync("/api/v1/creator/subjects", new { name = "Englisch-Pos" }));
         var chapterId = await IdAsync(await father.PostAsJsonAsync(
-            $"/api/v1/learn/subjects/{subjectId}/chapters", new { name = "Unit 1", orderIndex = 1 }));
+            $"/api/v1/creator/subjects/{subjectId}/chapters", new { name = "Unit 1", orderIndex = 1 }));
         return await IdAsync(await father.PostAsJsonAsync(
-            $"/api/v1/learn/subjects/{subjectId}/chapters/{chapterId}/vocabulary", new
+            $"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/vocabulary", new
             {
                 title = "Begrüßungen",
                 orderIndex = 1,
@@ -97,7 +97,7 @@ internal static class TestApi
     public static async Task<(int id, string key)> CreateStoreVocabAsync(HttpClient father, string word, string translation,
         string src = "en", string tgt = "de")
     {
-        var res = await father.PostAsJsonAsync("/api/v1/learn/vocabulary",
+        var res = await father.PostAsJsonAsync("/api/v1/creator/vocabulary",
             new { sourceLanguage = src, targetLanguage = tgt, word, translation });
         res.EnsureSuccessStatusCode();
         var v = await res.Content.ReadFromJsonAsync<JsonElement>();
@@ -108,7 +108,7 @@ internal static class TestApi
     public static async Task<int> ResolveVocabIdAsync(HttpClient father, string key)
     {
         var list = await father.GetFromJsonAsync<List<JsonElement>>(
-            $"/api/v1/learn/vocabulary?search={Uri.EscapeDataString(key)}&take=500");
+            $"/api/v1/creator/vocabulary?search={Uri.EscapeDataString(key)}&take=500");
         return list!.First(v => v.GetProperty("key").GetString() == key).GetProperty("id").GetInt32();
     }
 
@@ -118,11 +118,11 @@ internal static class TestApi
         var ids = new List<int>();
         foreach (var key in keys) ids.Add(await ResolveVocabIdAsync(father, key));
 
-        var subjectId = await IdAsync(await father.PostAsJsonAsync("/api/v1/learn/subjects", new { name = "Englisch-Ref" }));
+        var subjectId = await IdAsync(await father.PostAsJsonAsync("/api/v1/creator/subjects", new { name = "Englisch-Ref" }));
         var chapterId = await IdAsync(await father.PostAsJsonAsync(
-            $"/api/v1/learn/subjects/{subjectId}/chapters", new { name = "Unit 1", orderIndex = 1 }));
+            $"/api/v1/creator/subjects/{subjectId}/chapters", new { name = "Unit 1", orderIndex = 1 }));
         return await IdAsync(await father.PostAsJsonAsync(
-            $"/api/v1/learn/subjects/{subjectId}/chapters/{chapterId}/vocabulary", new
+            $"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/vocabulary", new
             {
                 title = "Vokabeln (Store)",
                 orderIndex = 1,
@@ -167,7 +167,7 @@ internal static class TestApi
 
     /// <summary>Basis-URL der Positions-Übungssitzungen.</summary>
     public static string PracticeBase(int planId, int positionId) =>
-        $"/api/v1/study-plans/{planId}/positions/{positionId}/practice-sessions";
+        $"/api/v1/student/study-plans/{planId}/positions/{positionId}/practice-sessions";
 
     /// <summary>Startet eine Positions-Übungssitzung und liefert ihre Id.</summary>
     public static async Task<int> StartPositionSessionAsync(HttpClient child, int planId, int positionId) =>

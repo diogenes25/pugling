@@ -34,7 +34,7 @@ public class VocabularyConfig
 /// <summary>
 /// Verweis auf einen Vokabel-Store-Eintrag. Persistiert wird die <paramref name="VocabularyId"/> (und – als Lesehilfe –
 /// optional der <paramref name="Key"/>). <paramref name="Self"/> ist ein rein abgeleiteter HATEOAS-Link
-/// (<c>/api/v1/learn/vocabulary/{id}</c>), der nur in Antworten gefüllt und nie gespeichert wird.
+/// (<c>/api/v1/creator/vocabulary/{id}</c>), der nur in Antworten gefüllt und nie gespeichert wird.
 /// </summary>
 [JsonConverter(typeof(VocabRefJsonConverter))]
 public record VocabRef(int VocabularyId, string? Key = null, string? Self = null);

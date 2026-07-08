@@ -54,10 +54,10 @@ Aufbauend auf den bestehenden Bausteinen: Vokabel-Store (`Vocabulary`, Single So
 
 | Zweck | Route |
 |-------|-------|
-| Vater: Lehrplan CRUD + Vokabeln | `POST/GET/PATCH /api/v1/study-plans`, `…/{id}/items` |
-| Vater: Tag-für-Tag-Fortschritt | `GET /api/v1/study-plans/{id}/progress` |
-| Vater/Sohn: Ein-Blick-Status heute | `GET /api/v1/study-plans/{id}/today` |
-| Vater: Lern-Doku + Testhistorie | `GET /api/v1/study-plans/{id}/report` |
+| Vater: Lehrplan CRUD + Vokabeln | `POST/GET/PATCH /api/v1/supervisor/study-plans`, `…/{id}/items` |
+| Vater: Tag-für-Tag-Fortschritt | `GET /api/v1/supervisor/study-plans/{id}/progress` |
+| Vater/Sohn: Ein-Blick-Status heute | `GET /api/v1/supervisor/study-plans/{id}/today` |
+| Vater: Lern-Doku + Testhistorie | `GET /api/v1/supervisor/study-plans/{id}/report` |
 | Sohn: Üben (Zeit + Wiederholungen) | `POST …/{id}/practice-sessions`, `…/heartbeat`, `…/review`, `…/end` |
 | Sohn: Test (5 Stufen) | `POST …/{id}/tests` (Start), `…/hint`, `…/submit`, `GET …/{attemptId}` |
 
@@ -139,7 +139,7 @@ Klaus wollte, dass die Schwierigkeit über die 10 Tage steigt. Umgesetzt:
 
 **Lückentext-Verfahren:**
 
-- **`ClozeText`-Store** (Lerngrundlage, `api/v1/learn/cloze-texts`): Text mit `{{1}}`-Platzhaltern, `Gaps` (Lösung + Alternativen), optionaler `WordBank` und Übersetzung – Gaps/WordBank als JSON-Spalten, eindeutiger `Key`, Löschschutz solange in einem Plan verwendet.
+- **`ClozeText`-Store** (Lerngrundlage, `api/v1/creator/cloze-texts`): Text mit `{{1}}`-Platzhaltern, `Gaps` (Lösung + Alternativen), optionaler `WordBank` und Übersetzung – Gaps/WordBank als JSON-Spalten, eindeutiger `Key`, Löschschutz solange in einem Plan verwendet.
 - **4 Stufen** (`ClozeStage`), die zwei Hilfen togglen:
 
   | Stufe | Enum | Übersetzung? | Wortpool? | gewertet? |
@@ -149,7 +149,7 @@ Klaus wollte, dass die Schwierigkeit über die 10 Tage steigt. Umgesetzt:
   | 3 | `TranslationFreeText` | ✓ | – | ✓ (Freitext) |
   | 4 | `FreeText` | – | – | ✓ (Freitext) |
 
-- **Cloze-Tests** (`api/v1/study-plans/{id}/cloze-tests`): Start liefert Texte mit Lücken (ohne Lösungen), je Stufe passend Übersetzung/Wortpool; Tipp deckt Zufallsbuchstaben (nur Freitext-Stufen); Submit bewertet **pro Lücke** (normalisiert, Alternativen erlaubt), Score = korrekte Lücken / Gesamtlücken; Punkte über den geteilten `StudyProgressService`.
+- **Cloze-Tests** (`api/v1/supervisor/study-plans/{id}/cloze-tests`): Start liefert Texte mit Lücken (ohne Lösungen), je Stufe passend Übersetzung/Wortpool; Tipp deckt Zufallsbuchstaben (nur Freitext-Stufen); Submit bewertet **pro Lücke** (normalisiert, Alternativen erlaubt), Score = korrekte Lücken / Gesamtlücken; Punkte über den geteilten `StudyProgressService`.
 
 **Verifiziert (Vater legt an, Sohn testet alle 4 Stufen):**
 
@@ -202,7 +202,7 @@ Klaus wollte, dass die Schwierigkeit über die 10 Tage steigt. Umgesetzt:
 | 3 | `Reverse` | Übersetzung → Wort | – |
 | 4 | `ReverseDistractors` | Übersetzung → Wort | ✓ |
 
-- **`MatchingTestsController`** (`api/v1/study-plans/{id}/matching-tests`): Start liefert die Prompts und einen **gemischten Auswahl-Pool** (korrekte Antworten + bei Ablenker-Stufen zusätzliche Einträge aus anderen Vokabeln); Submit ordnet je Vokabel eine Auswahl zu und bewertet gegen die erwartete Seite (normalisiert). Punkte über den geteilten `StudyProgressService`.
+- **`MatchingTestsController`** (`api/v1/supervisor/study-plans/{id}/matching-tests`): Start liefert die Prompts und einen **gemischten Auswahl-Pool** (korrekte Antworten + bei Ablenker-Stufen zusätzliche Einträge aus anderen Vokabeln); Submit ordnet je Vokabel eine Auswahl zu und bewertet gegen die erwartete Seite (normalisiert). Punkte über den geteilten `StudyProgressService`.
 - Nur `LearningMethod.Matching` änderte sich am Modell (+ `MatchStage`, + Default-Stufe). **Kein** neuer Store, **keine** Änderung am Rahmen – der Beleg, dass die Generalisierung aus It. 4 trägt.
 
 **Verifiziert (als angemeldeter Sohn):** Stufe 1 korrekt → 100 %, +20 Punkte; Stufe 4 mit gewähltem Ablenker („house" statt „dog") → 80 % bestanden; Pool enthält in Ablenker-Stufen echte Fremd-Wörter; Vokabel-Test-Endpoint auf Matching-Plan → 400; Fahrplan/`today` liefern die Tagesstufe.

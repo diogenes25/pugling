@@ -21,7 +21,7 @@ public class PositionVocabRefTests(PuglingWebAppFactory factory) : IClassFixture
         var exerciseId = await TestApi.CreateVocabRefExerciseAsync(father, k1, k2);
         var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.FreeText);
         var child = await TestApi.ChildAsync(_factory);
-        var baseUrl = $"/api/v1/study-plans/{planId}/positions/{positionId}/practice-sessions";
+        var baseUrl = $"/api/v1/student/study-plans/{planId}/positions/{positionId}/practice-sessions";
 
         var sessionId = await TestApi.IdAsync(await child.PostAsJsonAsync(baseUrl, new { }));
         var cards = await (await child.GetAsync($"{baseUrl}/{sessionId}/cards"))
@@ -43,10 +43,10 @@ public class PositionVocabRefTests(PuglingWebAppFactory factory) : IClassFixture
         var exerciseId = await TestApi.CreateVocabRefExerciseAsync(father, key);
         var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.FreeText);
         var child = await TestApi.ChildAsync(_factory);
-        var baseUrl = $"/api/v1/study-plans/{planId}/positions/{positionId}/practice-sessions";
+        var baseUrl = $"/api/v1/student/study-plans/{planId}/positions/{positionId}/practice-sessions";
 
         // Zentrale Korrektur der Übersetzung im Store …
-        await father.PatchAsJsonAsync($"/api/v1/learn/vocabulary/{id}", new { translation = "Mieze" });
+        await father.PatchAsJsonAsync($"/api/v1/creator/vocabulary/{id}", new { translation = "Mieze" });
 
         // … schlägt sofort in der referenzierenden Übung durch: die neue Lösung ist maßgeblich.
         var sessionId = await TestApi.IdAsync(await child.PostAsJsonAsync(baseUrl, new { }));

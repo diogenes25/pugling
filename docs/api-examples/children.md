@@ -3,7 +3,7 @@
 _Automatisch erzeugt von `DocsCaptureTests` (Integrationstest). Jedes Beispiel ist verifiziert: Status und – bei Fehlern – der maschinenlesbare `code` wurden im Testlauf geprüft. Nicht von Hand bearbeiten._
 
 ## Eigene Kinder auflisten
-`GET /api/v1/children`
+`GET /api/v1/supervisor/children`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
@@ -12,12 +12,11 @@ Response — `HTTP 200`:
 [
   {
     "id": 1,
-    "fatherId": 1,
     "name": "Sohn",
     "birthYear": 2015,
     "grade": null,
     "schoolType": "None",
-    "createdAt": "2026-07-08T06:25:45.68859",
+    "createdAt": "2026-07-08T15:05:42.1038677",
     "coins": 50,
     "gems": 300
   }
@@ -25,7 +24,7 @@ Response — `HTTP 200`:
 ```
 
 ## Kind anlegen
-`POST /api/v1/children`
+`POST /api/v1/supervisor/children`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
@@ -41,7 +40,6 @@ Response — `HTTP 201`:
 ```json
 {
   "id": 3,
-  "fatherId": 1,
   "name": "Doku-Kind",
   "birthYear": null,
   "grade": null,
@@ -53,7 +51,7 @@ Response — `HTTP 201`:
 ```
 
 ### Kind ohne Namen anlegen — Fehlerfall
-`POST /api/v1/children`
+`POST /api/v1/supervisor/children`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
@@ -78,7 +76,7 @@ Response — `HTTP 400`:
 ```
 
 ## Einzelnes Kind lesen
-`GET /api/v1/children/3`
+`GET /api/v1/supervisor/children/3`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
@@ -86,19 +84,18 @@ Response — `HTTP 200`:
 ```json
 {
   "id": 3,
-  "fatherId": 1,
   "name": "Doku-Kind",
   "birthYear": null,
   "grade": null,
   "schoolType": "None",
-  "createdAt": "2026-07-08T06:25:48.5065405",
+  "createdAt": "2026-07-08T15:05:52.577949",
   "coins": 0,
   "gems": 0
 }
 ```
 
 ## Kind ändern (Klassenstufe)
-`PATCH /api/v1/children/3`
+`PATCH /api/v1/supervisor/children/3`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
@@ -113,19 +110,18 @@ Response — `HTTP 200`:
 ```json
 {
   "id": 3,
-  "fatherId": 1,
   "name": "Doku-Kind",
   "birthYear": null,
   "grade": 4,
   "schoolType": "None",
-  "createdAt": "2026-07-08T06:25:48.5065405",
+  "createdAt": "2026-07-08T15:05:52.577949",
   "coins": 0,
   "gems": 0
 }
 ```
 
 ### Fremdes Kind lesen — Fehlerfall
-`GET /api/v1/children/2`
+`GET /api/v1/supervisor/children/2`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
@@ -142,7 +138,7 @@ Response — `HTTP 404`:
 ```
 
 ## Kind löschen
-`DELETE /api/v1/children/3`
+`DELETE /api/v1/supervisor/children/3`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 

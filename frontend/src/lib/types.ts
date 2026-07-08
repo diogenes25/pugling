@@ -45,7 +45,6 @@ export interface LoginResponse {
 
 export interface ChildResponse {
   id: number;
-  fatherId: number;
   name: string;
   birthYear: number | null;
   grade: number | null;
@@ -284,7 +283,7 @@ export interface VocabTagResponse {
 }
 
 /**
- * Kind-skopierter Tag (api/v1/tags) – markiert Übungen UND Vokabeln als für ein Kind relevant.
+ * Kind-skopierter Tag (api/v1/creator/tags) – markiert Übungen UND Vokabeln als für ein Kind relevant.
  * Nicht verwechseln mit dem globalen VocabTagResponse.
  */
 export interface ChildTagResponse {

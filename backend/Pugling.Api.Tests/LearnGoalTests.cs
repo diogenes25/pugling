@@ -17,11 +17,11 @@ public class LearnGoalTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
     private static async Task<(int subjectId, int chapterId, int exerciseId)> VocabAsync(
         HttpClient father, string subjectName, params (string Front, string Back)[] items)
     {
-        var subjectId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/learn/subjects", new { name = subjectName }));
+        var subjectId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/subjects", new { name = subjectName }));
         var chapterId = await TestApi.IdAsync(await father.PostAsJsonAsync(
-            $"/api/v1/learn/subjects/{subjectId}/chapters", new { name = "Unit 1", orderIndex = 1 }));
+            $"/api/v1/creator/subjects/{subjectId}/chapters", new { name = "Unit 1", orderIndex = 1 }));
         var exerciseId = await TestApi.IdAsync(await father.PostAsJsonAsync(
-            $"/api/v1/learn/subjects/{subjectId}/chapters/{chapterId}/vocabulary", new
+            $"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/vocabulary", new
             {
                 title = "Übung",
                 orderIndex = 1,
@@ -31,7 +31,7 @@ public class LearnGoalTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
         return (subjectId, chapterId, exerciseId);
     }
 
-    private static string Url(int childId) => $"/api/v1/children/{childId}/learn-goals";
+    private static string Url(int childId) => $"/api/v1/supervisor/children/{childId}/learn-goals";
 
     [Fact]
     public async Task Erstellen_UndLiveStatus_ErreichtVsOffen()

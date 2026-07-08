@@ -9,9 +9,14 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
     // Zeitfenster mit Punkte-Multiplikator (Leitner-Wiederholungen, siehe PointsService).
     public DbSet<TimeSlotRule> TimeSlots => Set<TimeSlotRule>();
 
-    // Admin-Bereich: Personen (Father -> Child) + Punkte
+    // Identität: Login-Konto mit einer/mehreren Rollen (Creator/Supervisor/Student), entkoppelt von Father/Child.
+    public DbSet<Account> Accounts => Set<Account>();
+    public DbSet<AccountProfile> AccountProfiles => Set<AccountProfile>();
+
+    // Admin-Bereich: Personen (Supervisor >-< Student über SupervisorLink) + Punkte
     public DbSet<Father> Fathers => Set<Father>();
     public DbSet<Child> Children => Set<Child>();
+    public DbSet<SupervisorLink> SupervisorLinks => Set<SupervisorLink>();
     public DbSet<ChildPointsEntry> ChildPoints => Set<ChildPointsEntry>();
 
     // Lern-Katalog: Subject -> Chapter -> Exercise (typisiert)
@@ -78,6 +83,42 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+
+        // Identität: Account -> AccountProfile(Rolle -> Father/Child). Rolle als String (lesbar/stabil).
+        // Gefilterte Unique-Indizes verhindern doppelte Profile beim (wiederholten) Backfill.
+        modelBuilder.Entity<AccountProfile>(e =>
+        {
+            e.Property(p => p.Role).HasConversion<string>();
+            e.HasOne(p => p.Account).WithMany(a => a.Profiles)
+                .HasForeignKey(p => p.AccountId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(p => p.Father).WithMany()
+                .HasForeignKey(p => p.FatherId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(p => p.Child).WithMany()
+                .HasForeignKey(p => p.ChildId).OnDelete(DeleteBehavior.Cascade);
+            e.HasIndex(p => new { p.Role, p.FatherId }).IsUnique().HasFilter("[FatherId] IS NOT NULL");
+            e.HasIndex(p => new { p.Role, p.ChildId }).IsUnique().HasFilter("[ChildId] IS NOT NULL");
+        });
+        modelBuilder.Entity<Account>()
+            .HasIndex(a => a.Email).IsUnique().HasFilter("[Email] IS NOT NULL");
+
+        // Aussteller-Attribution der Ökonomie (Momentaufnahme): Filter „nur meine Vorgänge" je (Kind, Supervisor).
+        modelBuilder.Entity<Reward>().HasIndex(r => new { r.ChildId, r.SupervisorId });
+        modelBuilder.Entity<RewardRedemption>().HasIndex(r => new { r.ChildId, r.SupervisorId });
+        modelBuilder.Entity<ShopPurchase>().HasIndex(p => new { p.ChildId, p.SupervisorId });
+        modelBuilder.Entity<ActivationRequest>().HasIndex(r => new { r.ChildId, r.SupervisorId });
+
+        // Betreuung Supervisor >-< Student. Ein Student kann mehrere Supervisor haben; ein Paar ist eindeutig.
+        // Leaf auf zwei unabhängige Roots (wie ItemProgress) – beide FKs Cascade, kein SQLite-Diamant.
+        modelBuilder.Entity<SupervisorLink>(e =>
+        {
+            e.Property(l => l.Relation).HasConversion<string>();
+            e.HasOne(l => l.Supervisor).WithMany(f => f.SupervisedLinks)
+                .HasForeignKey(l => l.SupervisorId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(l => l.Student).WithMany(c => c.SupervisorLinks)
+                .HasForeignKey(l => l.StudentId).OnDelete(DeleteBehavior.Cascade);
+            e.HasIndex(l => new { l.SupervisorId, l.StudentId }).IsUnique();
+            e.HasIndex(l => l.StudentId);
+        });
 
         // Freigeschaltete Skins des Kindes als JSON-Liste (Neuzuweisung im Controller, kein In-Place-Mutieren).
         modelBuilder.Entity<Child>(e =>

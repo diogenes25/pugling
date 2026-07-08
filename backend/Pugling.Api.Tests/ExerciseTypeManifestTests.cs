@@ -6,7 +6,7 @@ using Pugling.Api.Models;
 namespace Pugling.Api.Tests;
 
 /// <summary>
-/// Das Übungstyp-Manifest (<c>GET api/v1/learn/exercise-types</c>): die Single Source of Truth für
+/// Das Übungstyp-Manifest (<c>GET api/v1/creator/exercise-types</c>): die Single Source of Truth für
 /// Routing/Prüfmodus/Renderer je Typ. Sichert Vollständigkeit (kein Typ ohne Eintrag) und die
 /// Invarianten je Prüfmodus ab – so fällt ein neuer, nicht eingetragener Übungstyp sofort auf.
 /// </summary>
@@ -50,7 +50,7 @@ public class ExerciseTypeManifestTests(PuglingWebAppFactory factory) : IClassFix
         var father = await TestApi.FatherAsync(factory);
         var son = await TestApi.ChildAsync(factory);
 
-        var res = await father.GetAsync("/api/v1/learn/exercise-types");
+        var res = await father.GetAsync("/api/v1/creator/exercise-types");
         Assert.Equal(HttpStatusCode.OK, res.StatusCode);
         var arr = await res.Content.ReadFromJsonAsync<JsonElement>();
         Assert.Equal(Enum.GetValues<ExerciseType>().Length, arr.GetArrayLength());
@@ -63,7 +63,7 @@ public class ExerciseTypeManifestTests(PuglingWebAppFactory factory) : IClassFix
         Assert.Equal("Cloze", cloze.GetProperty("method").GetString());
 
         // Das kindneutrale Manifest darf auch der Sohn lesen.
-        Assert.Equal(HttpStatusCode.OK, (await son.GetAsync("/api/v1/learn/exercise-types")).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await son.GetAsync("/api/v1/creator/exercise-types")).StatusCode);
     }
 
     [Fact]
@@ -71,7 +71,7 @@ public class ExerciseTypeManifestTests(PuglingWebAppFactory factory) : IClassFix
     {
         var father = await TestApi.FatherAsync(factory);
 
-        var ok = await father.GetAsync("/api/v1/learn/exercise-types/Birkenbihl");
+        var ok = await father.GetAsync("/api/v1/creator/exercise-types/Birkenbihl");
         Assert.Equal(HttpStatusCode.OK, ok.StatusCode);
         var body = await ok.Content.ReadFromJsonAsync<JsonElement>();
         Assert.Equal("birkenbihl", body.GetProperty("renderer").GetString());
@@ -79,7 +79,7 @@ public class ExerciseTypeManifestTests(PuglingWebAppFactory factory) : IClassFix
 
         // Unbekannter Typ im Pfad → das Model-Binding weist den ungültigen Enum-Wert mit 400 ab
         // (ApiController-Konvention), bevor der Guard im Controller greift.
-        var invalid = await father.GetAsync("/api/v1/learn/exercise-types/999");
+        var invalid = await father.GetAsync("/api/v1/creator/exercise-types/999");
         Assert.Equal(HttpStatusCode.BadRequest, invalid.StatusCode);
     }
 }

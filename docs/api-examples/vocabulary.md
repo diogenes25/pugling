@@ -3,7 +3,7 @@
 _Automatisch erzeugt von `DocsCaptureTests` (Integrationstest). Jedes Beispiel ist verifiziert: Status und – bei Fehlern – der maschinenlesbare `code` wurden im Testlauf geprüft. Nicht von Hand bearbeiten._
 
 ## Vokabel anlegen
-`POST /api/v1/learn/vocabulary`
+`POST /api/v1/creator/vocabulary`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
@@ -42,7 +42,7 @@ Response — `HTTP 201`:
 ```
 
 ### Vokabel mit doppeltem Key — Fehlerfall
-`POST /api/v1/learn/vocabulary`
+`POST /api/v1/creator/vocabulary`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
@@ -71,7 +71,7 @@ Response — `HTTP 409`:
 ```
 
 ## Grundform-Vokabel lesen
-`GET /api/v1/learn/vocabulary/by-key/en_go_de_gehen`
+`GET /api/v1/creator/vocabulary/by-key/en_go_de_gehen`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
@@ -99,12 +99,12 @@ Response — `HTTP 200`:
   "baseFormRelation": null,
   "pronunciationAudioUrl": null,
   "tags": [],
-  "createdAt": "2026-07-08T06:25:45.7880967"
+  "createdAt": "2026-07-08T15:05:43.3575641"
 }
 ```
 
 ### Verwendete Grundform löschen — Fehlerfall
-`DELETE /api/v1/learn/vocabulary/2`
+`DELETE /api/v1/creator/vocabulary/2`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 

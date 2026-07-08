@@ -27,7 +27,7 @@ Kern-Loop, Sohn-Erlebnis, Vater-Steuerung. Reibung fixen, bis beide Rollen am re
 
 **1. Kern-Loop war kaputt: der Selbsteinschätzungs-Test ist unlösbar.**
 Der Umbau schickt im neuen `PositionTestsController.ToItem` bei Selbsteinschätzungs-Stufen die Lösung
-vorab mit (`Reveal = item.Answer`, [PositionTestsController.cs:49](../backend/Pugling.Api/Controllers/Learn/PositionTestsController.cs#L49)).
+vorab mit (`Reveal = item.Answer`, [PositionTestsController.cs:49](../backend/Pugling.Api/Controllers/Student/PositionTestsController.cs#L49)).
 In [SohnTest.tsx](../frontend/src/sohn/SohnTest.tsx) hingen die „Gewusst/Nicht gewusst"-Buttons an
 `revealed.has(...)`, das nur der „Aufdecken"-Klick setzt — und der „Aufdecken"-Button erscheint nicht
 mehr, sobald `it.reveal` gefüllt ist. **Folge:** Der Sohn sieht die Lösung, hat aber **keine

@@ -1,7 +1,7 @@
 # Pugling – Claude-Leitfaden
 
 Lern-App mit Punktesystem (Leitner-Prinzip). **Vater** steuert und erzwingt Lernerfolg,
-**Sohn** lernt mit Spaß. Zwei Rollen, Punkte, Zeitfenster, Klassenarbeiten.
+**Sohn** lernt mit Spaß. Drei Ebenen (Creator/Supervisor/Student), Punkte, Zeitfenster, Klassenarbeiten.
 
 ## Grundprinzip: API-First
 
@@ -45,35 +45,46 @@ Rollen im SPA: `/` Produktseite, `/vater` Web-Admin (inkl. `/vater/wizard` Lehrp
 
 ## Architektur (das produktive Modell)
 
-- **Identität/Auth** ([Auth/](backend/Pugling.Api/Auth/)): `Father`→`Child`, PIN-Login → JWT mit
-  Rollen-Claim (`Roles.Vater`/`Roles.Sohn`) + `fid`/`cid`. Eigentum prüft `AuthAccess`
-  (`OwnsPlanAsync`/`OwnsChildAsync`/`FatherOwnsChildAsync`).
-- **Lern-Katalog** ([Controllers/Learn/ExerciseControllers.cs](backend/Pugling.Api/Controllers/Learn/ExerciseControllers.cs)):
+- **Drei Ebenen** (siehe [docs/grundprinzip.md](docs/grundprinzip.md)): **Creator** (Inhalte), **Supervisor**
+  (Steuerung), **Student** (Lernen). Sie sind **Rollen**, entkoppelt vom Login, und schneiden API **und** Code:
+  Routen `api/v1/{creator|supervisor|student}/…`, Ordner `Controllers/{Tier}` + `Services/{Creator,Supervisor,Student,Shared}`
+  (Sub-Namespaces projektweit via csproj `<Using>`). Das Präfix ist Taxonomie, nicht die Auth-Wand.
+- **Identität/Auth** ([Auth/](backend/Pugling.Api/Auth/)): Ein `Account` (Login/PIN-Hash) trägt über
+  `AccountProfile` **mehrere Rollen** (`ProfileRole` Creator/Supervisor/Student → `Father`/`Child`-Profil);
+  ein Vater ist zugleich Creator+Supervisor. PIN-Login (`auth/{father|child}` oder konto-zentrisch `auth/login`)
+  → JWT mit `aid` + je Rolle einem Claim (plus Alias `Roles.Vater`/`Roles.Sohn`) + `fid`/`cid`. `AuthAccess`
+  prüft Eigentum OR-verknüpft je Rolle; Bestandsnutzer bekommen Konten per idempotentem `AccountBackfill`.
+- **Multi-Supervisor** ([AdminEntities.cs](backend/Pugling.Api/Models/AdminEntities.cs)): `SupervisorLink`
+  (Supervisor ⇢ Student) ersetzt die frühere 1:1-`Child.FatherId`. Ein Student hat mehrere Supervisor
+  (Vater/Mutter/Oma), je mit eigenem Shop/Angeboten; **Wallet gemeinsam**, Einlösung **ausstellergebunden**
+  (Momentaufnahme `SupervisorId` auf `Reward`/`RewardRedemption`/`ShopPurchase`/`ActivationRequest`).
+  Betreuung: `…/supervisor/children/{id}/supervisors`.
+- **Lern-Katalog** ([Controllers/Creator/ExerciseControllers.cs](backend/Pugling.Api/Controllers/Creator/ExerciseControllers.cs)):
   `Subject → Chapter → Exercise` (typisiert, Config als JSON). Ein Controller je `ExerciseType`,
-  erben CRUD aus `ExerciseControllerBase<TConfig>`. Route: `api/v1/learn/subjects/{}/chapters/{}/<typ>`.
+  erben CRUD aus `ExerciseControllerBase<TConfig>`. Route: `api/v1/creator/subjects/{}/chapters/{}/<typ>`.
   **Vokabelübungen** halten ihre Vokabelpaare als **eigene Ebene**: stabil identifizierte `ExerciseItem`s
   (Tabelle, nicht mehr in der ConfigJson) mit CRUD unter `…/vocabulary/{exerciseId}/items/{itemId}`. Ein Item
   ist eine positionierte Referenz auf eine Store-`Vocabulary` (Front/Back/Audio kommen live von dort) + optionaler
   lokaler Hinweis. POST akzeptiert weiterhin inline `items`/`refs` im Payload (materialisiert per `ExerciseItemService`,
   ID-erhaltend); die Config trägt danach nur noch Einstellungen (Direction/Sprachen). Der Resolver liest Vokabel-Items
   aus der Tabelle; der Engine-Index ist die Listenposition (bleibt zum Legacy-`ItemIndex` kompatibel).
-- **Lehrplan/Training** ([StudyPlansController](backend/Pugling.Api/Controllers/Learn/StudyPlansController.cs)):
+- **Lehrplan/Training** ([StudyPlansController](backend/Pugling.Api/Controllers/Supervisor/StudyPlansController.cs)):
   `StudyPlan` ist ein **reiner Container** (`ChildId, Title, Start/End, Active`). Inhalt sind
-  `PlanPosition`s ([PlanPositionsController](backend/Pugling.Api/Controllers/Learn/PlanPositionsController.cs)),
+  `PlanPosition`s ([PlanPositionsController](backend/Pugling.Api/Controllers/Supervisor/PlanPositionsController.cs)),
   die je auf eine Katalog-`Exercise` verweisen und **eigenes** Ziel (Rhythmus Tag/Woche + Schwelle),
   Punkte, Stufe und Leitner tragen. Gespielt wird pro Position: `PositionPracticeController` (Üben/Leitner)
   + `PositionTestsController` (Abschlusstest); Inhalt kommt aus der Übungs-Config (`ExerciseContentProvider`),
   Leitner-Fortschritt materialisiert je Inhalts-Atom in `PositionItemProgress`. Tagesmission/Verlauf über
-  `PlanOverviewController` (`…/overview` + `…/overview/progress`). Route: `api/v1/study-plans/{planId}/…`.
+  `PlanOverviewController` (`…/overview` + `…/overview/progress`). Route: `api/v1/supervisor/study-plans/{planId}/…`.
   Das alte plan-weite `StudyPlanItem`/`Method`-Modell wurde vollständig entfernt (kein Legacy mehr).
   **Plan-übergreifender Item-Lernstand** (nur Vokabel): `PositionPracticeController.Review`/`PositionTestsController.Submit`
   schreiben je Antwort über `ItemProgressService` einen Stand pro `(Kind, ItemId)` (`ItemProgress`: Box/Beherrschung/Zähler)
   + eine Antwort-Historie (`ItemReviewEvent`), beide mit denormalisierter `VocabularyId`. Kind-zentrische Auswertung:
-  `ChildVocabularyProgressController` unter `api/v1/children/{childId}/vocabulary-progress` (Liste mit `?exerciseId/?maxBox/?onlyWeak`,
+  `ChildVocabularyProgressController` unter `api/v1/student/children/{childId}/vocabulary-progress` (Liste mit `?exerciseId/?maxBox/?onlyWeak`,
   `/{itemId}`, `/{itemId}/history`, `/by-word`-Rollup für „schlecht gelernte Wörter"). Ergänzt den positionsgebundenen
   `PositionReportService` um die plan-übergreifende Sicht.
-- **Tags & Klassenarbeiten** ([KlassenarbeitenController](backend/Pugling.Api/Controllers/Learn/KlassenarbeitenController.cs)):
-  Übungen taggen, Arbeiten planen/benoten, gezielt üben/wiederholen. Route: `api/v1/class-tests`
+- **Tags & Klassenarbeiten** ([KlassenarbeitenController](backend/Pugling.Api/Controllers/Supervisor/KlassenarbeitenController.cs)):
+  Übungen taggen, Arbeiten planen/benoten, gezielt üben/wiederholen. Route: `api/v1/supervisor/class-tests`
   (Typnamen intern weiterhin `Klassenarbeit`).
 - **Services** ([Services/](backend/Pugling.Api/Services/)): `PositionPlayService` (Fälligkeit/Scope/Stufen +
   Leitner-Terminierung je Position), `PositionProgressService` (Ziel-„erledigt"-Regel je `ExerciseCheckMode`,
@@ -81,13 +92,13 @@ Rollen im SPA: `/` Produktseite, `/vater` Web-Admin (inkl. `/vater/wizard` Lehrp
   (die eine Stelle für Review-Punkte: Basis × Zeitfenster plus Ereignis-Boni wie Combo/Schnelle Antwort;
   jede Buchung trägt einen `PointKind`; `StageMechanics` hält die geteilten Stufen-/Vergleichs-Statics),
   `MetricsService` (Fortschritts-Metriken aus den Tabellen) + `GamificationService` (Missionen &
-  Auszeichnungen, idempotent belohnt; Vater-CRUD unter `api/v1/children/{}/missions|achievements`,
-  Sohn-Sicht `api/v1/me/missions|achievements`).
+  Auszeichnungen, idempotent belohnt; Vater-CRUD unter `api/v1/supervisor/children/{}/missions|achievements`,
+  Sohn-Sicht `api/v1/student/me/missions|achievements`).
 - **Reward-Ökonomie** (zwei Währungen): 🪙 **Münzen** fürs Lernen → reale Vater-**Angebote** oder **Shop-Artikel**,
   💎 **Gems** aus Boni → **Skins** (und optionaler Gem-Anteil bei Shop-Artikeln). Währung = reine Funktion des
   `PointKind` (`PointKindCurrency`, keine Ledger-Spalte); Salden über `WalletService`. Zwei Ausgabe-Kreisläufe:
   (1) **Angebote** (`Reward` mit `Period`/`Quantity` = Kontingent pro Periode) — der Sohn kauft direkt
-  (`api/v1/me/rewards/{}/purchase`), der Vater erfüllt/storniert (`OfferService`; `children/{}/rewards…/fulfill|cancel`).
+  (`api/v1/student/me/rewards/{}/purchase`), der Vater erfüllt/storniert (`OfferService`; `children/{}/rewards…/fulfill|cancel`).
   (2) **Familien-Shop** (`ShopArticle` → `ShopListing`): Vater pflegt Artikel-Katalog mit `UnitType`/`ActionType`
   und Angebote mit Coin+Gem-Preis sowie Bestand (inkl. `ShopRefillKind` für automatisches Auffüllen). Kauf bucht
   `PointKind.ShopCoins`/`ShopGems` ab, erhöht das aggregierte Inventar (`ChildInventory`) des Sohns. Sohn stellt
@@ -118,7 +129,7 @@ Rollen im SPA: `/` Produktseite, `/vater` Web-Admin (inkl. `/vater/wizard` Lehrp
 - **Eigentum**: Für Endpunkte unter `{planId}` den `[ServiceFilter(typeof(PlanOwnershipFilter))]`,
   für Endpunkte unter `{childId}` den `[ServiceFilter(typeof(ChildOwnershipFilter))]` nutzen
   (nicht inline wiederholen). Sonst `AuthAccess` explizit. Kindbezogene Ressourcen leben unter
-  `api/v1/children/{childId}/…`; top-level Aggregate, die nur nach Kind filtern, nehmen `?childId=`.
+  `api/v1/supervisor/children/{childId}/…`; top-level Aggregate, die nur nach Kind filtern, nehmen `?childId=`.
 - **EF**: `AsNoTracking()` für Lesequeries, in DB filtern (`Where` vor `ToListAsync`), N+1 via `Include`/
   Projektion vermeiden, `async`/`Async`-Suffix, `CancellationToken` durchreichen.
 - **Rolle & Selbstbetrug**: Für den Sohn serverseitig erzwingen (Stufe aus dem Fahrplan, Heartbeat clampen,

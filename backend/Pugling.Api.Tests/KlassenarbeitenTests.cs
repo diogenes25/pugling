@@ -12,7 +12,7 @@ public class KlassenarbeitenTests(PuglingWebAppFactory factory) : IClassFixture<
     {
         var father = await TestApi.FatherAsync(factory);
 
-        var create = await father.PostAsJsonAsync("/api/v1/class-tests", new
+        var create = await father.PostAsJsonAsync("/api/v1/supervisor/class-tests", new
         {
             childId = 1,
             title = "Probe Mathe",
@@ -22,12 +22,12 @@ public class KlassenarbeitenTests(PuglingWebAppFactory factory) : IClassFixture<
         var detail = await create.Content.ReadFromJsonAsync<JsonElement>();
         var id = detail.GetProperty("klassenarbeit").GetProperty("id").GetInt32();
 
-        Assert.Equal(HttpStatusCode.OK, (await father.GetAsync($"/api/v1/class-tests/{id}")).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await father.GetAsync($"/api/v1/supervisor/class-tests/{id}")).StatusCode);
 
-        var list = await (await father.GetAsync("/api/v1/class-tests?childId=1")).Content.ReadFromJsonAsync<JsonElement>();
+        var list = await (await father.GetAsync("/api/v1/supervisor/class-tests?childId=1")).Content.ReadFromJsonAsync<JsonElement>();
         Assert.True(list.GetArrayLength() >= 1);
 
-        var practice = await father.GetAsync($"/api/v1/class-tests/{id}/practice");
+        var practice = await father.GetAsync($"/api/v1/supervisor/class-tests/{id}/practice");
         Assert.Equal(HttpStatusCode.OK, practice.StatusCode);
     }
 
@@ -37,7 +37,7 @@ public class KlassenarbeitenTests(PuglingWebAppFactory factory) : IClassFixture<
         // Der Seed legt für Kind 1 eine geschriebene Arbeit mit Note 4,5 an – sie muss im Wiederholen-Endpunkt auftauchen.
         var father = await TestApi.FatherAsync(factory);
 
-        var repeat = await (await father.GetAsync("/api/v1/class-tests/repeat?childId=1")).Content.ReadFromJsonAsync<JsonElement>();
+        var repeat = await (await father.GetAsync("/api/v1/supervisor/class-tests/repeat?childId=1")).Content.ReadFromJsonAsync<JsonElement>();
 
         Assert.True(repeat.GetProperty("sources").GetArrayLength() >= 1);
     }
@@ -50,7 +50,7 @@ public class KlassenarbeitenTests(PuglingWebAppFactory factory) : IClassFixture<
         var father = await TestApi.FatherAsync(factory);
         var (_, _, exerciseId) = await TestApi.CreateArithmeticExerciseAsync(father);
 
-        var id = (await (await father.PostAsJsonAsync("/api/v1/class-tests", new
+        var id = (await (await father.PostAsJsonAsync("/api/v1/supervisor/class-tests", new
         {
             childId = 1,
             title = "Zuweis-Probe",
@@ -58,22 +58,22 @@ public class KlassenarbeitenTests(PuglingWebAppFactory factory) : IClassFixture<
         })).Content.ReadFromJsonAsync<JsonElement>()).GetProperty("klassenarbeit").GetProperty("id").GetInt32();
 
         // Übung zuweisen
-        var assigned = await (await father.PostAsJsonAsync($"/api/v1/class-tests/{id}/exercises",
+        var assigned = await (await father.PostAsJsonAsync($"/api/v1/supervisor/class-tests/{id}/exercises",
             new { exerciseIds = new[] { exerciseId } })).Content.ReadFromJsonAsync<JsonElement>();
         Assert.Contains(exerciseId, assigned.GetProperty("assignedExercises").EnumerateArray()
             .Select(e => e.GetProperty("id").GetInt32()));
 
         // Note nachtragen (schlecht: 5,0) – Status wird dabei auf geschrieben gesetzt
-        var patched = await (await father.PatchAsJsonAsync($"/api/v1/class-tests/{id}",
+        var patched = await (await father.PatchAsJsonAsync($"/api/v1/supervisor/class-tests/{id}",
             new { grade = 5.0m, status = "Written" })).Content.ReadFromJsonAsync<JsonElement>();
         Assert.Equal("Written", patched.GetProperty("status").GetString());
 
         // Vorbereiten enthält die zugewiesene Übung
-        var practice = await (await father.GetAsync($"/api/v1/class-tests/{id}/practice")).Content.ReadFromJsonAsync<JsonElement>();
+        var practice = await (await father.GetAsync($"/api/v1/supervisor/class-tests/{id}/practice")).Content.ReadFromJsonAsync<JsonElement>();
         Assert.Contains(exerciseId, practice.GetProperty("exercises").EnumerateArray().Select(e => e.GetProperty("id").GetInt32()));
 
         // Wiederholen (schwach benotet) listet diese Arbeit
-        var repeat = await (await father.GetAsync("/api/v1/class-tests/repeat?childId=1")).Content.ReadFromJsonAsync<JsonElement>();
+        var repeat = await (await father.GetAsync("/api/v1/supervisor/class-tests/repeat?childId=1")).Content.ReadFromJsonAsync<JsonElement>();
         Assert.Contains(id, repeat.GetProperty("sources").EnumerateArray().Select(s => s.GetProperty("id").GetInt32()));
     }
 
@@ -83,7 +83,7 @@ public class KlassenarbeitenTests(PuglingWebAppFactory factory) : IClassFixture<
         var father = await TestApi.FatherAsync(factory);
 
         // childId 999 gehört keinem Kind dieses Vaters.
-        var res = await father.PostAsJsonAsync("/api/v1/class-tests", new { childId = 999, title = "X", scheduledDate = "2099-01-15" });
+        var res = await father.PostAsJsonAsync("/api/v1/supervisor/class-tests", new { childId = 999, title = "X", scheduledDate = "2099-01-15" });
 
         Assert.Equal(HttpStatusCode.Forbidden, res.StatusCode);
     }

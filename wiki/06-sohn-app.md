@@ -27,9 +27,9 @@ Token in allen weiteren Aufrufen als `Authorization: Bearer <token>` mitgeben.
 ## 2. Was ist heute zu tun?
 
 ```http
-GET /api/v1/study-plans
-GET /api/v1/study-plans/{planId}/positions
-GET /api/v1/study-plans/{planId}/overview
+GET /api/v1/supervisor/study-plans
+GET /api/v1/supervisor/study-plans/{planId}/positions
+GET /api/v1/student/study-plans/{planId}/overview
 ```
 
 Der Sohn sieht nur eigene, aktive und heute laufende Pläne. `overview` liefert die Tagesmission über
@@ -70,10 +70,10 @@ Zielregel erfüllen. Freie Positionen (`cadence=None`) dürfen geübt werden, z�
 Der Sohn übt immer eine konkrete Position:
 
 ```http
-POST /api/v1/study-plans/{planId}/positions/{positionId}/practice-sessions
+POST /api/v1/student/study-plans/{planId}/positions/{positionId}/practice-sessions
 {} → { id, planId, positionId, day, activeSeconds, reviewCount }
 
-GET /api/v1/study-plans/{planId}/positions/{positionId}/practice-sessions/{sessionId}/cards
+GET /api/v1/student/study-plans/{planId}/positions/{positionId}/practice-sessions/{sessionId}/cards
 ```
 
 Eine `PracticeCard` enthält je nach Übungstyp und Stufe: `itemIndex`, `stage`, `type`, `prompt`,
@@ -83,7 +83,7 @@ Lösung; Anzeige-/Selbsteinschätzungs-Stufen dürfen `reveal` enthalten.
 ### Eine Antwort abgeben (`review`)
 
 ```http
-POST /api/v1/study-plans/{planId}/positions/{positionId}/practice-sessions/{sessionId}/review
+POST /api/v1/student/study-plans/{planId}/positions/{positionId}/practice-sessions/{sessionId}/review
 ```
 
 ```jsonc
@@ -116,10 +116,10 @@ protokolliert, aber keine Box/Punkte werden bewegt.
 ### Zeit zählen & beenden
 
 ```http
-POST /api/v1/study-plans/{planId}/positions/{positionId}/practice-sessions/{sessionId}/heartbeat
+POST /api/v1/student/study-plans/{planId}/positions/{positionId}/practice-sessions/{sessionId}/heartbeat
 { "seconds": 60, "active": true }
 
-POST /api/v1/study-plans/{planId}/positions/{positionId}/practice-sessions/{sessionId}/end
+POST /api/v1/student/study-plans/{planId}/positions/{positionId}/practice-sessions/{sessionId}/end
 ```
 
 Nur aktive Sekunden zählen; pro Heartbeat sind maximal 120 s anrechenbar. Beim Beenden werden
@@ -130,12 +130,12 @@ Positionsziele und Missionen erneut ausgewertet.
 ## 4. Abschlusstest machen
 
 ```http
-POST /api/v1/study-plans/{planId}/positions/{positionId}/tests
+POST /api/v1/student/study-plans/{planId}/positions/{positionId}/tests
 {} → attemptId + Aufgaben ohne Lösung
 
-GET /api/v1/study-plans/{planId}/positions/{positionId}/tests/{attemptId}
+GET /api/v1/student/study-plans/{planId}/positions/{positionId}/tests/{attemptId}
 
-POST /api/v1/study-plans/{planId}/positions/{positionId}/tests/{attemptId}/submit
+POST /api/v1/student/study-plans/{planId}/positions/{positionId}/tests/{attemptId}/submit
 {
   "answers": [
     { "itemIndex": 0, "givenAnswer": "hallo" },
@@ -154,11 +154,11 @@ sonst aus dem Standard (80 %). Ein Test kann nur einmal submitted werden; ein zw
 ## 5. Fortschritt, Report und Wallet
 
 ```http
-GET /api/v1/study-plans/{planId}/overview/progress[?from=&to=&dutyDone=&sort=&skip=&take=]
-GET /api/v1/study-plans/{planId}/positions/{positionId}/report
-GET /api/v1/me/points
-GET /api/v1/me/points/entries[?skip=&take=]      → paginierte Buchungsliste (X-Total-Count)
-GET /api/v1/me/points/entries/{entryId}          → einzelne Buchung
+GET /api/v1/student/study-plans/{planId}/overview/progress[?from=&to=&dutyDone=&sort=&skip=&take=]
+GET /api/v1/student/study-plans/{planId}/positions/{positionId}/report
+GET /api/v1/student/me/points
+GET /api/v1/student/me/points/entries[?skip=&take=]      → paginierte Buchungsliste (X-Total-Count)
+GET /api/v1/student/me/points/entries/{entryId}          → einzelne Buchung
 ```
 
 `overview/progress` zeigt den Verlauf über die Planlaufzeit (filter-/sortier-/paginierbar; die
@@ -175,26 +175,26 @@ nur noch die beiden Salden; die Buchungen liegen eine Ebene tiefer unter `me/poi
 ## 6. Missionen, Auszeichnungen, Skins und Angebote
 
 ```http
-GET /api/v1/me/missions[?skip=&take=]        → Tages-/Wochenziele mit Fortschritt (paginiert)
-GET /api/v1/me/missions/{missionId}          → einzelne Mission
-GET /api/v1/me/achievements[?skip=&take=]    → Badges mit Fortschritt/Earned-Status (paginiert)
-GET /api/v1/me/achievements/{achievementId}  → einzelne Auszeichnung
-GET /api/v1/me/skins           → { gems, selected, owned }
-POST /api/v1/me/skins/{skinId}/purchase
-POST /api/v1/me/skins/{skinId}/equip
+GET /api/v1/student/me/missions[?skip=&take=]        → Tages-/Wochenziele mit Fortschritt (paginiert)
+GET /api/v1/student/me/missions/{missionId}          → einzelne Mission
+GET /api/v1/student/me/achievements[?skip=&take=]    → Badges mit Fortschritt/Earned-Status (paginiert)
+GET /api/v1/student/me/achievements/{achievementId}  → einzelne Auszeichnung
+GET /api/v1/student/me/skins           → { gems, selected, owned }
+POST /api/v1/student/me/skins/{skinId}/purchase
+POST /api/v1/student/me/skins/{skinId}/equip
 
-GET /api/v1/me/rewards                        → { available, redemptions }  (Aggregat; Salden via /me/points)
-GET /api/v1/me/rewards/available[?skip=&take=]        → verfügbare Angebote (paginiert)
-GET /api/v1/me/rewards/available/{availableId}        → einzelnes Angebot
-GET /api/v1/me/rewards/redemptions[?status=&skip=&take=]  → eigene Käufe (paginiert)
-GET /api/v1/me/rewards/redemptions/{redemptionId}    → einzelner Kauf
-POST /api/v1/me/rewards/available/{availableId}/purchase
+GET /api/v1/student/me/rewards                        → { available, redemptions }  (Aggregat; Salden via /me/points)
+GET /api/v1/student/me/rewards/available[?skip=&take=]        → verfügbare Angebote (paginiert)
+GET /api/v1/student/me/rewards/available/{availableId}        → einzelnes Angebot
+GET /api/v1/student/me/rewards/redemptions[?status=&skip=&take=]  → eigene Käufe (paginiert)
+GET /api/v1/student/me/rewards/redemptions/{redemptionId}    → einzelner Kauf
+POST /api/v1/student/me/rewards/available/{availableId}/purchase
 
-GET /api/v1/me/shop            → { coins, gems, available[], inventory[], purchases[] }
-GET /api/v1/me/shop/inventory[?skip=&take=]   → eigener Bestand (paginiert)
-POST /api/v1/me/shop/listings/{listingId}/purchase
-POST /api/v1/me/shop/inventory/{articleId}/activate   { "quantity": 30 }
-GET /api/v1/me/shop/activations[?status=Pending]
+GET /api/v1/student/me/shop            → { coins, gems, available[], inventory[], purchases[] }
+GET /api/v1/student/me/shop/inventory[?skip=&take=]   → eigener Bestand (paginiert)
+POST /api/v1/student/me/shop/listings/{listingId}/purchase
+POST /api/v1/student/me/shop/inventory/{articleId}/activate   { "quantity": 30 }
+GET /api/v1/student/me/shop/activations[?status=Pending]
 ```
 
 Münzen kommen aus Lernleistung und kaufen reale Vater-Angebote (`/me/rewards`) **oder** Familien-Shop-Artikel

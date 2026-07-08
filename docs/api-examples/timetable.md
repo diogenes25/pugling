@@ -3,7 +3,7 @@
 _Automatisch erzeugt von `DocsCaptureTests` (Integrationstest). Jedes Beispiel ist verifiziert: Status und – bei Fehlern – der maschinenlesbare `code` wurden im Testlauf geprüft. Nicht von Hand bearbeiten._
 
 ## Stundenplan-Eintrag anlegen
-`POST /api/v1/children/1/timetable`
+`POST /api/v1/supervisor/children/1/timetable`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
@@ -29,7 +29,7 @@ Response — `HTTP 201`:
 ```
 
 ### Gleiches Fach am selben Wochentag — Fehlerfall
-`POST /api/v1/children/1/timetable`
+`POST /api/v1/supervisor/children/1/timetable`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
