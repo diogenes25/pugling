@@ -1,3 +1,8 @@
+---
+tags: [typ/referenz, bereich/doku]
+aliases: [API-Referenz, Endpunkt-Index]
+---
+
 # 07 · API-Referenz (Endpunkt-Index)
 
 ← [Zurück zum Wiki-Index](../README.md)
@@ -5,6 +10,9 @@
 Kompakter Überblick über alle Routen. **Autoritative Quelle bleibt Swagger** (`/swagger` bzw.
 `/openapi/v1.json`) — dort stehen die vollständigen Request/Response-Schemas. Alle Routen unter
 `api/v1/…`. `V` = Vater-only, `S` = Sohn, `A` = beide (authentifiziert), `∅` = anonym.
+
+> 🔗 **Wie die Endpunkte inhaltlich zusammenhängen** (Übung → Lehrplan → Kind → Auswertung), mit
+> Datenfluss-Diagramm: [docs/endpunkt-beziehungen.md](../docs/endpunkt-beziehungen.md).
 
 ---
 
@@ -30,7 +38,8 @@ Kompakter Überblick über alle Routen. **Autoritative Quelle bleibt Swagger** (
 | V | `GET/POST /children` · `GET/PATCH/DELETE /children/{childId}` | Kinder verwalten (inkl. `pointsBalance`) |
 | V | `GET /children/{childId}/points` | Punkte-Ledger des Kindes |
 | V | `POST /children/{childId}/points` | manuelle Buchung `{ amount, reason }` |
-| A | `GET /children/{childId}/vocabulary-progress` · `…/{itemId}` · `…/{itemId}/history` · `…/by-word` | Vokabel-Lernstand des Kindes (Vater oder eigenes Kind) |
+| A | `GET /children/{childId}/vocabulary-progress` · `…/{itemId}` · `…/{itemId}/history` · `…/by-word` | Vokabel-Lernstand des Kindes, **flach** (Item + Wort-Rollup + Historie) |
+| A | `GET /children/{childId}/learn/subjects[/{s}]` · `…/{s}/chapters` · `…/{s}/chapters/{c}/vocabulary[/{exerciseId}/items]` | Vokabel-Lernstand **hierarchisch** (Fach→Kapitel→Übung→Item, Aggregate + `active`-Flag; `search`/`sort`/`active`/Paging) |
 | V | `GET/POST /children/{childId}/missions` · `PATCH/DELETE …/{missionId}` | Missionen definieren |
 | V | `GET/POST /children/{childId}/achievements` · `PATCH/DELETE …/{achievementId}` | Auszeichnungen definieren |
 | V | `GET/POST /children/{childId}/timetable` | Stundenplan (Fach × Wochentag) |
