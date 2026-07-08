@@ -99,7 +99,7 @@ Response — `HTTP 200`:
   "baseFormRelation": null,
   "pronunciationAudioUrl": null,
   "tags": [],
-  "createdAt": "2026-07-08T14:11:10.6096111"
+  "createdAt": "2026-07-08T14:33:14.2138158"
 }
 ```
 

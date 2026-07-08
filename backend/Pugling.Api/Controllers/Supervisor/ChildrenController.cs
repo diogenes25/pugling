@@ -20,7 +20,7 @@ namespace Pugling.Api.Controllers.Supervisor;
 [Produces("application/json")]
 [Authorize(Roles = Roles.Vater)]
 [ServiceFilter(typeof(ChildOwnershipFilter))]
-public class ChildrenController(PuglingDbContext db, WalletService wallet) : ControllerBase
+public class ChildrenController(PuglingDbContext db, WalletService wallet, AccountService accounts) : ControllerBase
 {
     public record ChildResponse(int Id, int FatherId, string Name, int? BirthYear, int? Grade,
         SchoolTypes SchoolType, DateTime CreatedAt, int Coins, int Gems);
@@ -79,6 +79,8 @@ public class ChildrenController(PuglingDbContext db, WalletService wallet) : Con
         };
         db.Children.Add(child);
         await db.SaveChangesAsync();
+        // Login-Konto (Student) sofort anlegen, damit sich das neue Kind einloggen kann.
+        await accounts.EnsureForChildAsync(child);
 
         var response = new ChildResponse(child.Id, child.FatherId, child.Name, child.BirthYear, child.Grade,
             child.SchoolType, child.CreatedAt, 0, 0);
@@ -99,7 +101,12 @@ public class ChildrenController(PuglingDbContext db, WalletService wallet) : Con
         if (dto.BirthYear.HasValue) child.BirthYear = dto.BirthYear;
         if (dto.Grade.HasValue) child.Grade = dto.Grade;
         if (dto.SchoolType.HasValue) child.SchoolType = dto.SchoolType.Value;
-        if (dto.Pin is not null) child.Pin = string.IsNullOrEmpty(dto.Pin) ? "" : PinHasher.Hash(dto.Pin);
+        if (dto.Pin is not null)
+        {
+            child.Pin = string.IsNullOrEmpty(dto.Pin) ? "" : PinHasher.Hash(dto.Pin);
+            // PIN-Hash auf das Login-Konto spiegeln (konto-zentrischer Login /auth/login bleibt synchron).
+            (await accounts.EnsureForChildAsync(child)).PinHash = child.Pin;
+        }
         await db.SaveChangesAsync();
 
         return (await ProjectOne(childId))!;

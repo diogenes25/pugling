@@ -17,7 +17,7 @@ Response — `HTTP 200`:
     "birthYear": 2015,
     "grade": null,
     "schoolType": "None",
-    "createdAt": "2026-07-08T14:11:10.5144417",
+    "createdAt": "2026-07-08T14:33:13.1068816",
     "coins": 50,
     "gems": 300
   }
@@ -91,7 +91,7 @@ Response — `HTTP 200`:
   "birthYear": null,
   "grade": null,
   "schoolType": "None",
-  "createdAt": "2026-07-08T14:11:13.1988064",
+  "createdAt": "2026-07-08T14:33:26.109774",
   "coins": 0,
   "gems": 0
 }
@@ -118,7 +118,7 @@ Response — `HTTP 200`:
   "birthYear": null,
   "grade": 4,
   "schoolType": "None",
-  "createdAt": "2026-07-08T14:11:13.1988064",
+  "createdAt": "2026-07-08T14:33:26.109774",
   "coins": 0,
   "gems": 0
 }

@@ -154,6 +154,7 @@ builder.Services.AddScoped<LearnGoalService>();
 // Kindübergreifendes Tages-Dashboard des Vaters („wer hat heute was geschafft?").
 builder.Services.AddScoped<ChildrenDashboardService>();
 builder.Services.AddScoped<AuthAccess>();
+builder.Services.AddScoped<AccountService>();
 builder.Services.AddScoped<PlanOwnershipFilter>();
 builder.Services.AddScoped<ChildOwnershipFilter>();
 // Betriebs-/Monitoring-Sonde: prüft, ob die API läuft UND die Datenbank erreichbar/migriert ist.
@@ -319,6 +320,10 @@ using (var scope = app.Services.CreateScope())
     // Bestehende/geseedete Vokabelübungen einmalig in die Item-Tabelle überführen (idempotent).
     var itemService = scope.ServiceProvider.GetRequiredService<ExerciseItemService>();
     ExerciseItemBackfill.RunAsync(db, itemService).GetAwaiter().GetResult();
+    // Zu jedem Father/Child ein Login-Konto mit Rollen anlegen (idempotent), damit Bestandsnutzer
+    // sich weiterhin einloggen und ein Mehrrollen-Token erhalten.
+    var accountService = scope.ServiceProvider.GetRequiredService<AccountService>();
+    AccountBackfill.RunAsync(db, accountService).GetAwaiter().GetResult();
 }
 
 // OpenAPI-Dokument unter /openapi/v1.json + Swagger UI unter /swagger + Scalar UI unter /scalar/v1

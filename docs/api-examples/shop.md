@@ -73,7 +73,7 @@ Response — `HTTP 200`:
     "description": "Gemeinsam ins Kino \u2013 der Sohn sucht den Film aus.",
     "unitType": "Mal",
     "actionType": "Ausflug",
-    "createdAt": "2026-07-08T14:11:10.9109747"
+    "createdAt": "2026-07-08T14:33:16.3057543"
   },
   {
     "id": 2,
@@ -82,7 +82,7 @@ Response — `HTTP 200`:
     "description": "Konsolen- oder PC-Spielzeit; w\u00F6chentliches Budgetmodell.",
     "unitType": "Minute",
     "actionType": "Zocken",
-    "createdAt": "2026-07-08T14:11:10.9109727"
+    "createdAt": "2026-07-08T14:33:16.3053277"
   },
   {
     "id": 3,
@@ -91,7 +91,7 @@ Response — `HTTP 200`:
     "description": "Kleine Nascherei als Lernanreiz \u2013 z. B. Gummib\u00E4ren oder Schokolade.",
     "unitType": "Gramm",
     "actionType": "Suessigkeit",
-    "createdAt": "2026-07-08T14:11:10.910974"
+    "createdAt": "2026-07-08T14:33:16.3057518"
   },
   {
     "id": 1,
@@ -100,7 +100,7 @@ Response — `HTTP 200`:
     "description": "Bildschirmzeit nach dem Lernen \u2013 t\u00E4glich abrufbar.",
     "unitType": "Minute",
     "actionType": "TV",
-    "createdAt": "2026-07-08T14:11:10.9109643"
+    "createdAt": "2026-07-08T14:33:16.3035442"
   },
   {
     "id": 5,
@@ -109,7 +109,7 @@ Response — `HTTP 200`:
     "description": "Bildschirmzeit in Minuten",
     "unitType": "Minute",
     "actionType": "TV",
-    "createdAt": "2026-07-08T14:11:15.4574075"
+    "createdAt": "2026-07-08T14:33:41.6786335"
   }
 ]
 ```
@@ -129,7 +129,7 @@ Response — `HTTP 200`:
     "description": "Bildschirmzeit nach dem Lernen \u2013 t\u00E4glich abrufbar.",
     "unitType": "Minute",
     "actionType": "TV",
-    "createdAt": "2026-07-08T14:11:10.9109643"
+    "createdAt": "2026-07-08T14:33:16.3035442"
   },
   {
     "id": 5,
@@ -138,7 +138,7 @@ Response — `HTTP 200`:
     "description": "Bildschirmzeit in Minuten",
     "unitType": "Minute",
     "actionType": "TV",
-    "createdAt": "2026-07-08T14:11:15.4574075"
+    "createdAt": "2026-07-08T14:33:41.6786335"
   }
 ]
 ```
@@ -165,7 +165,7 @@ Response — `HTTP 200`:
   "description": "30 Minuten freie Bildschirmzeit",
   "unitType": "Minute",
   "actionType": "TV",
-  "createdAt": "2026-07-08T14:11:15.4574075"
+  "createdAt": "2026-07-08T14:33:41.6786335"
 }
 ```
 
@@ -263,7 +263,7 @@ Response — `HTTP 200`:
     "refillAtUtc": null,
     "refillDayOfWeek": null,
     "lastRefilledAtUtc": null,
-    "createdAt": "2026-07-08T14:11:15.5519142"
+    "createdAt": "2026-07-08T14:33:41.9289713"
   }
 ]
 ```
@@ -300,7 +300,7 @@ Response — `HTTP 200`:
   "refillAtUtc": null,
   "refillDayOfWeek": null,
   "lastRefilledAtUtc": null,
-  "createdAt": "2026-07-08T14:11:15.5519142"
+  "createdAt": "2026-07-08T14:33:41.9289713"
 }
 ```
 
@@ -579,7 +579,7 @@ Response — `HTTP 200`:
     "actionType": "TV",
     "requestedQuantity": 10,
     "status": "Pending",
-    "requestedAt": "2026-07-08T14:11:15.7773576",
+    "requestedAt": "2026-07-08T14:33:42.3707977",
     "closedAt": null
   },
   {
@@ -590,7 +590,7 @@ Response — `HTTP 200`:
     "actionType": "TV",
     "requestedQuantity": 30,
     "status": "Pending",
-    "requestedAt": "2026-07-08T14:11:15.7666546",
+    "requestedAt": "2026-07-08T14:33:42.356476",
     "closedAt": null
   }
 ]
@@ -634,7 +634,7 @@ Response — `HTTP 200`:
     "gemPrice": 0,
     "unitsPerPurchase": 30,
     "status": "Owned",
-    "purchasedAt": "2026-07-08T14:11:15.709929",
+    "purchasedAt": "2026-07-08T14:33:42.2336419",
     "closedAt": null,
     "canCancel": true
   }
@@ -658,7 +658,7 @@ Response — `HTTP 200`:
     "actionType": "TV",
     "requestedQuantity": 10,
     "status": "Pending",
-    "requestedAt": "2026-07-08T14:11:15.7773576",
+    "requestedAt": "2026-07-08T14:33:42.3707977",
     "closedAt": null,
     "canApprove": true,
     "canReject": true
@@ -672,7 +672,7 @@ Response — `HTTP 200`:
     "actionType": "TV",
     "requestedQuantity": 30,
     "status": "Pending",
-    "requestedAt": "2026-07-08T14:11:15.7666546",
+    "requestedAt": "2026-07-08T14:33:42.356476",
     "closedAt": null,
     "canApprove": true,
     "canReject": true
@@ -696,7 +696,7 @@ Response — `HTTP 200`:
   "actionType": "TV",
   "requestedQuantity": 30,
   "status": "Approved",
-  "requestedAt": "2026-07-08T14:11:15.7666546",
+  "requestedAt": "2026-07-08T14:33:42.356476",
   "closedAt": "<timestamp>",
   "canApprove": false,
   "canReject": false
@@ -753,7 +753,7 @@ Response — `HTTP 200`:
   "actionType": "TV",
   "requestedQuantity": 10,
   "status": "Rejected",
-  "requestedAt": "2026-07-08T14:11:15.7773576",
+  "requestedAt": "2026-07-08T14:33:42.3707977",
   "closedAt": "<timestamp>",
   "canApprove": false,
   "canReject": false
@@ -778,7 +778,7 @@ Response — `HTTP 200`:
   "gemPrice": 0,
   "unitsPerPurchase": 30,
   "status": "Cancelled",
-  "purchasedAt": "2026-07-08T14:11:15.709929",
+  "purchasedAt": "2026-07-08T14:33:42.2336419",
   "closedAt": "<timestamp>",
   "canCancel": false
 }

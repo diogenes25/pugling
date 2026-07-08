@@ -16,7 +16,7 @@ namespace Pugling.Api.Controllers.Supervisor;
 [Tags("Admin – Fathers")]
 [Produces("application/json")]
 [Authorize(Roles = Roles.Vater)]
-public class FathersController(PuglingDbContext db) : ControllerBase, IActionFilter
+public class FathersController(PuglingDbContext db, AccountService accounts) : ControllerBase, IActionFilter
 {
     /// <summary>Ein Vater darf nur seinen eigenen Datensatz lesen/ändern/löschen (Route-fatherId == Token-fid).</summary>
     [NonAction]
@@ -62,6 +62,8 @@ public class FathersController(PuglingDbContext db) : ControllerBase, IActionFil
         var father = new Father { Name = dto.Name.Trim(), Email = dto.Email, Pin = string.IsNullOrEmpty(dto.Pin) ? "" : PinHasher.Hash(dto.Pin) };
         db.Fathers.Add(father);
         await db.SaveChangesAsync();
+        // Login-Konto (Creator+Supervisor) sofort anlegen, damit der neue Vater sich einloggen kann.
+        await accounts.EnsureForFatherAsync(father);
 
         var response = new FatherResponse(father.Id, father.Name, father.Email, father.CreatedAt, 0);
         return CreatedAtAction(nameof(Get), new { fatherId = father.Id }, response);
@@ -80,7 +82,12 @@ public class FathersController(PuglingDbContext db) : ControllerBase, IActionFil
 
         if (dto.Name is not null) father.Name = dto.Name.Trim();
         if (dto.Email is not null) father.Email = dto.Email;
-        if (dto.Pin is not null) father.Pin = string.IsNullOrEmpty(dto.Pin) ? "" : PinHasher.Hash(dto.Pin);
+        if (dto.Pin is not null)
+        {
+            father.Pin = string.IsNullOrEmpty(dto.Pin) ? "" : PinHasher.Hash(dto.Pin);
+            // PIN-Hash auf das Login-Konto spiegeln, damit der konto-zentrische Login (/auth/login) synchron bleibt.
+            (await accounts.EnsureForFatherAsync(father)).PinHash = father.Pin;
+        }
         await db.SaveChangesAsync();
 
         return (await Project(db.Fathers.Where(f => f.Id == fatherId)).FirstAsync());
