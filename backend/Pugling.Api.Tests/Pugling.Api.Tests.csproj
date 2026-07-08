@@ -24,6 +24,11 @@
 
   <ItemGroup>
     <Using Include="Xunit" />
+    <!-- Service-Ebenen (Creator/Supervisor/Student/Shared) projektweit, damit Service-Unit-Tests kein per-Datei-using brauchen. -->
+    <Using Include="Pugling.Api.Services.Creator" />
+    <Using Include="Pugling.Api.Services.Supervisor" />
+    <Using Include="Pugling.Api.Services.Student" />
+    <Using Include="Pugling.Api.Services.Shared" />
   </ItemGroup>
 
   <ItemGroup>

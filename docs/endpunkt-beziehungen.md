@@ -11,6 +11,21 @@ aufbauen**: Welche Ressource entsteht woraus, worüber wird sie verknüpft, und 
 Lernstand wieder aus. Alle Routen unter `api/v1/…`. Konzept-Hintergrund:
 [wiki/01 · Überblick & Architektur](../wiki/01-ueberblick-architektur.md).
 
+## Navigierbare Einstiegspunkte
+
+- [Die Kette auf einen Blick](#die-kette-auf-einen-blick) – Ressource-zu-Ressource-Diagramm.
+- [Übung ↔ Lehrplan](#1-übung--lehrplan-über-positionen) – warum Pläne Übungen referenzieren statt kopieren.
+- [Lehrplan ↔ Kind](#2-lehrplan--kind) – `StudyPlan.ChildId`, Rollenfilter und spielbarer Plan.
+- [Durchstich Vater→Sohn](#durchstich-vater-weist-zu--sohn-sieht-denselben-plan) – konkrete Request/Response-Kette.
+- [Übung ↔ Auswertung](#3-übung--auswertung-des-kindes) – positionsgebundener und kindweiter Lernstand.
+- [Lernziele](#4-lernziele-ergebnis-ziele-auf-der-auswertung) – Vater-Ziele auf Live-Auswertung.
+- [Punkte & Gamification](#5-was-der-fortschritt-auslöst-punkte--gamification) – Punkte, Missionen, Auszeichnungen.
+- [Weitere Vater→Sohn-Zusammenhänge](#6-weitere-vatersohn-zusammenhänge) – Lernziele, Missionen, Rewards, Shop, nächste Planung.
+
+Obsidian-Hinweis: Die Produkt-Doku nutzt bewusst relative Markdown-Links statt `[[Wikilinks]]`
+(siehe [Obsidian-Konvention](obsidian.md#leitplanken-verbindlich)). Obsidian indiziert diese Links trotzdem
+für Backlinks und Graph; auf GitHub bleiben sie gleichzeitig korrekt klickbar.
+
 ---
 
 ## Die Kette auf einen Blick
@@ -83,6 +98,248 @@ isoliert**. Eigentum erzwingen die Filter [`PlanOwnershipFilter`](../backend/Pug
 
 Genau **ein aktiver + laufender** Plan je Kind ist spielbar (Anti-Cheat); deaktivierte Pläne bleiben
 zur Auswertung erhalten (`StudyPlan.Active`).
+
+### Durchstich: Vater weist zu → Sohn sieht denselben Plan
+
+Dieser Ablauf zeigt die wichtigste Beziehung in der API: Der Vater schreibt einen Zustand unter
+`StudyPlan.ChildId`; der Sohn liest danach **dieselbe Ressource**, aber durch seine Rolle gefiltert.
+Die IDs in den Responses sind die verbindenden Klammern: `childId`, `planId`, `positionId`, `exerciseId`.
+
+#### 1) Vater legt einen aktiven Lehrplan für Sohn 1 an
+
+```http
+POST /api/v1/study-plans
+Authorization: Bearer <father-token>
+Content-Type: application/json
+
+{
+  "childId": 1,
+  "title": "Französisch Unit 1",
+  "durationDays": 10
+}
+```
+
+```json
+{
+  "id": 2,
+  "childId": 1,
+  "title": "Französisch Unit 1",
+  "startDate": "2026-07-08",
+  "endDate": "2026-07-17",
+  "active": true,
+  "positionCount": 0,
+  "isPlayable": true
+}
+```
+
+**Zusammenhang:** `childId: 1` macht den Plan zum Plan dieses Kindes. Weil ein neuer Plan standardmäßig
+aktiv ist, deaktiviert der Server andere aktive Pläne desselben Kindes. Der Sohn kann später nur aktive,
+heute laufende Pläne sehen.
+
+#### 2) Vater hängt eine Katalog-Übung als Position in den Plan
+
+```http
+POST /api/v1/study-plans/2/positions
+Authorization: Bearer <father-token>
+Content-Type: application/json
+
+{
+  "exerciseId": 13,
+  "cadence": "Daily",
+  "useLeitner": true,
+  "stage": 4
+}
+```
+
+```json
+{
+  "id": 7,
+  "studyPlanId": 2,
+  "exerciseId": 13,
+  "exerciseTitle": "Begrüßungen",
+  "exerciseType": "Vocabulary",
+  "cadence": "Daily",
+  "orderStrategy": "WeakestFirst",
+  "useLeitner": true,
+  "pointsGoalMet": 20
+}
+```
+
+**Zusammenhang:** Der Plan enthält jetzt keine Kopie der Übung, sondern `PlanPosition.ExerciseId = 13`.
+Die Position `id: 7` ist der spielbare Kontext: Fortschritt, Leitner-Boxen, Tests und Tagesziele hängen
+an dieser Position.
+
+#### 3) Sohn öffnet seine Lehrplan-Übersicht
+
+```http
+GET /api/v1/study-plans
+Authorization: Bearer <child-token>
+```
+
+```json
+[
+  {
+    "id": 2,
+    "childId": 1,
+    "title": "Französisch Unit 1",
+    "startDate": "2026-07-08",
+    "endDate": "2026-07-17",
+    "active": true,
+    "positionCount": 1,
+    "isPlayable": true
+  }
+]
+```
+
+**Zusammenhang:** Der Sohn übergibt keinen `childId`-Filter. Seine Identität kommt aus dem JWT
+(`cid = 1`). Der Server filtert automatisch auf `StudyPlan.ChildId = 1`, `active = true` und den heutigen
+Laufzeitbereich. Der gerade vom Vater angelegte Plan erscheint deshalb in der Sohn-Sicht.
+
+#### 4) Sohn sieht, was heute in diesem Plan dran ist
+
+```http
+GET /api/v1/study-plans/2/overview
+Authorization: Bearer <child-token>
+```
+
+```json
+{
+  "planId": 2,
+  "title": "Französisch Unit 1",
+  "active": true,
+  "currentStreak": 0,
+  "today": {
+    "day": "2026-07-08",
+    "dutyDone": false,
+    "goalsTotal": 1,
+    "goalsMet": 0,
+    "outstanding": ["Begrüßungen"],
+    "positions": [
+      {
+        "positionId": 7,
+        "exerciseId": 13,
+        "exerciseTitle": "Begrüßungen",
+        "exerciseType": "Vocabulary",
+        "cadence": "Daily",
+        "goalMet": false,
+        "dueCount": 2,
+        "poolSize": 2,
+        "pointsGoalMet": 20
+      }
+    ]
+  }
+}
+```
+
+**Zusammenhang:** `overview` verdichtet die Positionen des Plans zu einer Tagesmission. Aus
+`PlanPosition.Cadence = Daily` wird eine Pflichtposition; `goalMet: false` erklärt, warum `dutyDone`
+noch `false` ist.
+
+#### 5) Sohn übt die Position und erzeugt Fortschritt
+
+```http
+POST /api/v1/study-plans/2/positions/7/practice-sessions
+Authorization: Bearer <child-token>
+Content-Type: application/json
+
+{ "mode": "Lern" }
+```
+
+```json
+{
+  "id": 11,
+  "planId": 2,
+  "positionId": 7,
+  "mode": "Lern",
+  "cursor": 0,
+  "total": 2
+}
+```
+
+```http
+POST /api/v1/study-plans/2/positions/7/practice-sessions/11/review
+Authorization: Bearer <child-token>
+Content-Type: application/json
+
+{ "itemIndex": 0, "givenAnswer": "hallo" }
+```
+
+```json
+{
+  "wasCorrect": true,
+  "expected": "hallo",
+  "awarded": 15,
+  "box": 2,
+  "dueOn": "2026-07-10",
+  "next": {
+    "itemIndex": 1,
+    "prompt": "goodbye"
+  },
+  "done": false
+}
+```
+
+**Zusammenhang:** Diese eine Antwort schreibt mehrere Folgezustände: Punkte ins Ledger,
+`PositionItemProgress` für die Position und bei Vokabeln zusätzlich `ItemProgress`/`ItemReviewEvent`
+für die kindweite Wort-Auswertung.
+
+#### 6) Nach erfülltem Ziel ändert sich die Overview
+
+```http
+GET /api/v1/study-plans/2/overview
+Authorization: Bearer <child-token>
+```
+
+```json
+{
+  "planId": 2,
+  "title": "Französisch Unit 1",
+  "currentStreak": 1,
+  "today": {
+    "dutyDone": true,
+    "goalsTotal": 1,
+    "goalsMet": 1,
+    "pointsAwarded": 20,
+    "outstanding": [],
+    "positions": [
+      {
+        "positionId": 7,
+        "exerciseTitle": "Begrüßungen",
+        "goalMet": true,
+        "pointsGoalMet": 20
+      }
+    ]
+  }
+}
+```
+
+**Zusammenhang:** Der Sohn liest wieder denselben Plan `2`, aber der berechnete Zustand hat sich durch
+Reviews/Tests geändert. `pointsAwarded: 20` kommt aus dem Positionsziel, nicht direkt aus der Katalog-Übung.
+
+#### 7) Vater liest dieselbe Entwicklung aus anderen Blickwinkeln
+
+```http
+GET /api/v1/study-plans/2/positions/7/report
+Authorization: Bearer <father-token>
+```
+
+Antwort auf: „Wie steht diese eine Plan-Position da?" Liest den positionsgebundenen Leitner-/Teststand.
+
+```http
+GET /api/v1/children/1/vocabulary-progress?onlyWeak=true
+Authorization: Bearer <father-token>
+```
+
+Antwort auf: „Welche Wörter sind bei Sohn 1 schwach, egal in welchem Plan sie vorkamen?" Liest den
+kindweiten Item-Lernstand.
+
+```http
+GET /api/v1/children/1/learn/subjects
+Authorization: Bearer <father-token>
+```
+
+Antwort auf: „Wie sieht Sohn 1 nach Fach/Kapitel/Übung aggregiert aus?" Das ist die hierarchische Sicht,
+aus der sich neue Lernziele ableiten lassen.
 
 ## 3. Übung ↔ Auswertung des Kindes
 
@@ -170,6 +427,193 @@ kein materialisierter Zustand, keine Belohnung (v1). Plan-übergreifend: das Zie
 Jede bewertete Antwort bucht Punkte (Basis × Zeitfenster + Boni) und wertet Missionen/Auszeichnungen
 idempotent aus – gespeist aus denselben Fortschrittsdaten.
 
+## 6. Weitere Vater→Sohn-Zusammenhänge
+
+Die gleiche Denkfigur taucht an mehreren Stellen wieder auf: **Vater schreibt eine kindbezogene Regel
+oder ein Angebot**, **Sohn liest sie über `/me` oder planbezogene Endpunkte**, **eine Sohn-Aktion erzeugt
+Folgezustand**, den der Vater wieder verwaltet oder auswertet.
+
+### a) Vater setzt Lernziel → Sohn/Familie sieht Zielstatus aus Live-Fortschritt
+
+```http
+POST /api/v1/children/1/learn-goals
+Authorization: Bearer <father-token>
+Content-Type: application/json
+
+{
+  "subjectId": 3,
+  "chapterId": 8,
+  "exerciseId": 13,
+  "metric": "MasteredPercent",
+  "targetValue": 80,
+  "dueDate": "2026-07-17",
+  "title": "Begrüßungen sicher beherrschen"
+}
+```
+
+```http
+GET /api/v1/children/1/learn-goals?status=open
+Authorization: Bearer <father-token>
+```
+
+**Zusammenhang:** Das Ziel speichert nicht jeden Fortschritt selbst. Es verweist auf ein Kind und einen
+Katalog-Scope; der Status wird beim Lesen live aus der kindweiten Auswertung berechnet. Wenn der Sohn
+später dieselbe Übung in einem anderen Plan wiederholt, kann dieses Ziel trotzdem näher an `achieved`
+rücken.
+
+### b) Vater definiert Mission → Sohn sieht Tages-/Wochenauftrag unter `/me`
+
+```http
+POST /api/v1/children/1/missions
+Authorization: Bearer <father-token>
+Content-Type: application/json
+
+{
+  "title": "Heute 10 richtige Antworten",
+  "metric": "CorrectReviews",
+  "period": "Daily",
+  "target": 10,
+  "rewardPoints": 15
+}
+```
+
+```http
+GET /api/v1/me/missions
+Authorization: Bearer <child-token>
+```
+
+```json
+[
+  {
+    "id": 1,
+    "title": "Heute 10 richtige Antworten",
+    "metric": "CorrectReviews",
+    "period": "Daily",
+    "target": 10,
+    "current": 3,
+    "completed": false,
+    "rewardPoints": 15
+  }
+]
+```
+
+**Zusammenhang:** Die Mission ist Vater-CRUD unter `children/{childId}`. Der Sohn sieht keine fremde
+Kinder-ID, sondern seine eigene Projektion unter `/me/missions`. `current` kommt aus denselben
+Review-/Testdaten wie Plan-Overview und Auswertung.
+
+### c) Vater stellt Angebot bereit → Sohn kauft → Vater erfüllt
+
+```http
+POST /api/v1/children/1/rewards
+Authorization: Bearer <father-token>
+Content-Type: application/json
+
+{
+  "title": "30 Min Fernsehen",
+  "cost": 50,
+  "period": "Weekly",
+  "quantity": 3,
+  "studyPlanId": 2
+}
+```
+
+```http
+GET /api/v1/me/rewards
+Authorization: Bearer <child-token>
+```
+
+```json
+{
+  "available": [
+    {
+      "id": 5,
+      "title": "30 Min Fernsehen",
+      "cost": 50,
+      "period": "Weekly",
+      "remainingThisPeriod": 3,
+      "affordable": true,
+      "planTitle": "Französisch Unit 1"
+    }
+  ],
+  "redemptions": []
+}
+```
+
+```http
+POST /api/v1/me/rewards/available/5/purchase
+Authorization: Bearer <child-token>
+Content-Type: application/json
+
+{}
+```
+
+```http
+POST /api/v1/children/1/rewards/redemptions/1/fulfill
+Authorization: Bearer <father-token>
+Content-Type: application/json
+
+{}
+```
+
+**Zusammenhang:** Definition und Erfüllung gehören dem Vater; Kauf gehört dem Sohn. Der Kauf bucht Münzen
+ab und erzeugt eine `RewardRedemption`, die der Vater mit `canFulfill/canCancel` als offene Aufgabe sieht.
+
+### d) Familien-Shop: Vater pflegt Bestand → Sohn kauft Inventar → Vater genehmigt Aktivierung
+
+```http
+POST /api/v1/shop/articles
+Authorization: Bearer <father-token>
+Content-Type: application/json
+
+{
+  "articleNumber": "TV-001",
+  "title": "Fernsehzeit",
+  "unitType": "Minute",
+  "actionType": "TV"
+}
+```
+
+```http
+POST /api/v1/shop/articles/1/listings
+Authorization: Bearer <father-token>
+Content-Type: application/json
+
+{
+  "title": "30 Minuten TV",
+  "coinPrice": 120,
+  "gemPrice": 0,
+  "unitsPerPurchase": 30,
+  "currentStock": 5,
+  "maxStock": 5
+}
+```
+
+```http
+GET /api/v1/me/shop
+Authorization: Bearer <child-token>
+```
+
+**Zusammenhang:** Der Shop hat zwei Kreisläufe. Beim Kauf entsteht sofort Inventar des Sohns
+(`POST /api/v1/me/shop/listings/{listingId}/purchase`). Bei der Aktivierung
+(`POST /api/v1/me/shop/inventory/{articleId}/activate`) entsteht eine `ActivationRequest`, die der Vater
+unter `children/{childId}/shop/activations/{requestId}/approve|reject` entscheidet.
+
+### e) Kindweite Auswertung → Vater baut daraus den nächsten Plan
+
+```http
+GET /api/v1/children/1/vocabulary-progress?onlyWeak=true
+Authorization: Bearer <father-token>
+```
+
+```http
+GET /api/v1/children/1/learn/subjects/3/chapters/8/vocabulary/13/items
+Authorization: Bearer <father-token>
+```
+
+**Zusammenhang:** Diese Views sind keine Spiel-Endpunkte. Sie beantworten, **wo der nächste Plan ansetzen
+soll**. Der Vater findet schwache Wörter (`items` ist standardmäßig schwächste zuerst) oder Kapitel,
+sucht/erstellt passende Katalog-Übungen und hängt sie wieder als neue `PlanPosition` in einen aktiven Lehrplan.
+
 ---
 
 ## Der Loop als Endpunkt-Sequenz
@@ -183,3 +627,9 @@ idempotent aus – gespeist aus denselben Fortschrittsdaten.
 Vollständige Beispiel-Requests: [wiki/04 · Lernplan bauen](../wiki/04-lernplan-bauen.md) (Vater),
 [wiki/06 · Sohn-App](../wiki/06-sohn-app.md) (Sohn); verifizierte Responses unter
 [docs/api-examples/](api-examples/index.md).
+
+**Verwandt:** [docs/obsidian.md](obsidian.md) · [wiki/01 · Überblick](../wiki/01-ueberblick-architektur.md) ·
+[wiki/02 · Auth & Rollen](../wiki/02-authentifizierung.md) · [wiki/04 · Lernplan bauen](../wiki/04-lernplan-bauen.md) ·
+[wiki/05 · Punkte & Bonus](../wiki/05-punkte-und-bonus.md) · [wiki/06 · Sohn-App](../wiki/06-sohn-app.md) ·
+[wiki/07 · API-Referenz](../wiki/07-api-referenz.md) · [api-examples/study-plans.md](api-examples/study-plans.md) ·
+[api-examples/me.md](api-examples/me.md)

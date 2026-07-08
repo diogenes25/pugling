@@ -15,6 +15,21 @@
     <Using Include="Asp.Versioning" />
   </ItemGroup>
 
+  <!--
+    Die Ebenen-Sub-Namespaces (Creator/Supervisor/Student/Shared) sind projektweit verfügbar.
+    So bleibt die fachliche Ordner-/Namespace-Struktur nach den drei Ebenen (docs/grundprinzip.md)
+    ohne flächigen per-Datei-using-Churn zwischen Controllern und ebenenübergreifenden Services.
+  -->
+  <ItemGroup>
+    <Using Include="Pugling.Api.Controllers.Creator" />
+    <Using Include="Pugling.Api.Controllers.Supervisor" />
+    <Using Include="Pugling.Api.Controllers.Student" />
+    <Using Include="Pugling.Api.Services.Creator" />
+    <Using Include="Pugling.Api.Services.Supervisor" />
+    <Using Include="Pugling.Api.Services.Student" />
+    <Using Include="Pugling.Api.Services.Shared" />
+  </ItemGroup>
+
   <ItemGroup>
     <Content Update="OpenApi\openapi-examples.generated.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" Condition="Exists('OpenApi\openapi-examples.generated.json')" />
   </ItemGroup>
