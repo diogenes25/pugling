@@ -41,6 +41,8 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
     // Plan-übergreifender Lernstand je (Kind, Item) + Antwort-Historie (stabile ItemId, denormalisierte VocabularyId).
     public DbSet<ItemProgress> ItemProgress => Set<ItemProgress>();
     public DbSet<ItemReviewEvent> ItemReviewEvents => Set<ItemReviewEvent>();
+    // Kind-/Scope-bezogene Ergebnis-Lernziele (Beherrschung/Abdeckung), live gegen den Lernstand ausgewertet.
+    public DbSet<LearnGoal> LearnGoals => Set<LearnGoal>();
 
     // Stundenplan-Steuerung
     public DbSet<TimetableEntry> Timetable => Set<TimetableEntry>();
