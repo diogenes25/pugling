@@ -147,6 +147,8 @@ builder.Services.AddScoped<VocabularyStoreService>();
 builder.Services.AddScoped<ExerciseItemService>();
 // Schreibt den plan-übergreifenden Lernstand je (Kind, Item) fort und protokolliert die Antwort-Historie.
 builder.Services.AddScoped<ItemProgressService>();
+// Kind-zentrische Drill-down-Sicht auf den Vokabel-Lernstand entlang der Katalog-Hierarchie (Fach→Kapitel→Übung→Item).
+builder.Services.AddScoped<ChildLearnProgressService>();
 // Kindübergreifendes Tages-Dashboard des Vaters („wer hat heute was geschafft?").
 builder.Services.AddScoped<ChildrenDashboardService>();
 builder.Services.AddScoped<AuthAccess>();

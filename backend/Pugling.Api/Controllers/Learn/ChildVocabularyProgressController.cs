@@ -24,8 +24,8 @@ namespace Pugling.Api.Controllers.Learn;
 [ServiceFilter(typeof(ChildOwnershipFilter))]
 public class ChildVocabularyProgressController(PuglingDbContext db) : ControllerBase
 {
-    /// <summary>Ab welcher Beherrschung (Prozent) ein Item/Wort als „schwach" gilt (Filter <c>onlyWeak</c>).</summary>
-    private const int WeakBelowPercent = 50;
+    /// <summary>Ab welcher Beherrschung (Prozent) ein Item/Wort als „schwach" gilt (Filter <c>onlyWeak</c>); geteilte Schwelle.</summary>
+    private const int WeakBelowPercent = ItemProgress.WeakBelowPercent;
 
     /// <summary>Lernstand eines Kindes zu einem Item (Front/Rückseite aus dem Store, kanonisch Wort → Übersetzung).</summary>
     public record ItemProgressResponse(int ItemId, int ExerciseId, int VocabularyId, string Front, string Back,

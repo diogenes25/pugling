@@ -34,6 +34,8 @@ public class ItemProgress
     public int Box { get; set; } = 1;
     /// <summary>Höchste Box dieses aggregierten Stands (fest, plan-unabhängig).</summary>
     public const int MaxBox = 5;
+    /// <summary>Geteilte Auswertungs-Schwelle: unter dieser Beherrschung (Prozent) gilt ein Item/Wort als „schwach".</summary>
+    public const int WeakBelowPercent = 50;
     /// <summary>Beherrschung in Prozent, aus <see cref="Box"/> abgeleitet (für einfache Auswertung/Sortierung).</summary>
     public int MasteryPercent { get; set; }
 
