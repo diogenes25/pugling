@@ -1,7 +1,0 @@
-info:
-  name: Learn – Chapters
-  type: folder
-  seq: 11
-
-request:
-  auth: inherit

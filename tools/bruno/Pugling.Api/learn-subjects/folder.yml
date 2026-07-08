@@ -1,7 +1,0 @@
-info:
-  name: Learn – Subjects
-  type: folder
-  seq: 25
-
-request:
-  auth: inherit

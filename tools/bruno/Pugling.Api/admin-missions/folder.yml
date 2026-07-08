@@ -1,7 +1,0 @@
-info:
-  name: Admin – Missions
-  type: folder
-  seq: 4
-
-request:
-  auth: inherit

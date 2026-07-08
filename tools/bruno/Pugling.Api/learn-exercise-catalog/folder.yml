@@ -1,7 +1,0 @@
-info:
-  name: Learn – Exercise Catalog
-  type: folder
-  seq: 16
-
-request:
-  auth: inherit
