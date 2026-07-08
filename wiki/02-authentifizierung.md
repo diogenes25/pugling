@@ -52,14 +52,14 @@ GET /api/v1/auth/me        → { role, fatherId, childId, name }
 Ein neuer **Vater** kann sich **anonym** anlegen (einziger nicht authentifizierter Schreibpfad):
 
 ```http
-POST /api/v1/fathers
+POST /api/v1/supervisor/fathers
 { "name": "Klaus", "email": "klaus@example.com", "pin": "1234" }
 ```
 
 Danach als dieser Vater einloggen und **Kinder** anlegen:
 
 ```http
-POST /api/v1/children      (Bearer: Vater)
+POST /api/v1/supervisor/children      (Bearer: Vater)
 { "name": "Peter", "birthYear": 2015, "pin": "1111" }
 ```
 

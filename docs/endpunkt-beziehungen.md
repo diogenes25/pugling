@@ -70,10 +70,10 @@ Der Katalog ist **global und kindneutral**; der Lehrplan verweist nur darauf.
 
 | Beziehung | Endpunkt(e) | Wohin |
 | --- | --- | --- |
-| Katalog-Übung anlegen/ändern (je Typ) | `GET/POST/PUT/DELETE /learn/subjects/{s}/chapters/{c}/<typ>[/{id}]` | [ExerciseControllers.cs](../backend/Pugling.Api/Controllers/Learn/ExerciseControllers.cs) |
-| Passende Übung finden | `GET /learn/exercises?subjectId=&grade=&schoolType=&categoryId=&type=&search=` | [ExerciseCatalogController.cs](../backend/Pugling.Api/Controllers/Learn/ExerciseCatalogController.cs) |
-| Übung **in den Plan hängen** (Position) | `GET/POST /study-plans/{planId}/positions` · `GET/PATCH/DELETE …/{positionId}` | [PlanPositionsController.cs](../backend/Pugling.Api/Controllers/Learn/PlanPositionsController.cs) |
-| Vokabelpaare der Übung | `GET/POST …/vocabulary/{exerciseId}/items` · `…/items/{itemId}` | [ExerciseControllers.cs](../backend/Pugling.Api/Controllers/Learn/ExerciseControllers.cs) |
+| Katalog-Übung anlegen/ändern (je Typ) | `GET/POST/PUT/DELETE /learn/subjects/{s}/chapters/{c}/<typ>[/{id}]` | [ExerciseControllers.cs](../backend/Pugling.Api/Controllers/Creator/ExerciseControllers.cs) |
+| Passende Übung finden | `GET /learn/exercises?subjectId=&grade=&schoolType=&categoryId=&type=&search=` | [ExerciseCatalogController.cs](../backend/Pugling.Api/Controllers/Creator/ExerciseCatalogController.cs) |
+| Übung **in den Plan hängen** (Position) | `GET/POST /study-plans/{planId}/positions` · `GET/PATCH/DELETE …/{positionId}` | [PlanPositionsController.cs](../backend/Pugling.Api/Controllers/Supervisor/PlanPositionsController.cs) |
+| Vokabelpaare der Übung | `GET/POST …/vocabulary/{exerciseId}/items` · `…/items/{itemId}` | [ExerciseControllers.cs](../backend/Pugling.Api/Controllers/Creator/ExerciseControllers.cs) |
 
 **Verknüpfung:** `PlanPosition.ExerciseId → Exercise.Id`. Der Inhalt bleibt in der Übungs-Config; die
 Position trägt nur Ziel, Punkte, Stufe, Leitner (leere Overrides erben die Übungs-Defaults).
@@ -87,9 +87,9 @@ Position trägt nur Ziel, Punkte, Stufe, Leitner (leere Overrides erben die Übu
 
 | Beziehung | Endpunkt(e) | Wohin |
 | --- | --- | --- |
-| Kinder des Vaters | `GET/POST /children` · `GET/PATCH/DELETE /children/{childId}` | [ChildrenController](../backend/Pugling.Api/Controllers/Admin/ChildrenController.cs) |
-| Pläne eines Kindes | `GET /study-plans?childId=` · `GET /study-plans/{planId}` | [StudyPlansController.cs](../backend/Pugling.Api/Controllers/Learn/StudyPlansController.cs) |
-| Plan anlegen/ändern | `POST /study-plans` · `PATCH /study-plans/{planId}` | [StudyPlansController.cs](../backend/Pugling.Api/Controllers/Learn/StudyPlansController.cs) |
+| Kinder des Vaters | `GET/POST /children` · `GET/PATCH/DELETE /children/{childId}` | [ChildrenController](../backend/Pugling.Api/Controllers/Supervisor/ChildrenController.cs) |
+| Pläne eines Kindes | `GET /study-plans?childId=` · `GET /study-plans/{planId}` | [StudyPlansController.cs](../backend/Pugling.Api/Controllers/Supervisor/StudyPlansController.cs) |
+| Plan anlegen/ändern | `POST /study-plans` · `PATCH /study-plans/{planId}` | [StudyPlansController.cs](../backend/Pugling.Api/Controllers/Supervisor/StudyPlansController.cs) |
 
 **Verknüpfung:** `StudyPlan.ChildId → Child.Id`. Damit ist jeder Zustand automatisch **pro Kind
 isoliert**. Eigentum erzwingen die Filter [`PlanOwnershipFilter`](../backend/Pugling.Api/Auth/PlanOwnershipFilter.cs)
@@ -108,7 +108,7 @@ Die IDs in den Responses sind die verbindenden Klammern: `childId`, `planId`, `p
 #### 1) Vater legt einen aktiven Lehrplan für Sohn 1 an
 
 ```http
-POST /api/v1/study-plans
+POST /api/v1/supervisor/study-plans
 Authorization: Bearer <father-token>
 Content-Type: application/json
 
@@ -139,7 +139,7 @@ heute laufende Pläne sehen.
 #### 2) Vater hängt eine Katalog-Übung als Position in den Plan
 
 ```http
-POST /api/v1/study-plans/2/positions
+POST /api/v1/supervisor/study-plans/2/positions
 Authorization: Bearer <father-token>
 Content-Type: application/json
 
@@ -172,7 +172,7 @@ an dieser Position.
 #### 3) Sohn öffnet seine Lehrplan-Übersicht
 
 ```http
-GET /api/v1/study-plans
+GET /api/v1/supervisor/study-plans
 Authorization: Bearer <child-token>
 ```
 
@@ -198,7 +198,7 @@ Laufzeitbereich. Der gerade vom Vater angelegte Plan erscheint deshalb in der So
 #### 4) Sohn sieht, was heute in diesem Plan dran ist
 
 ```http
-GET /api/v1/study-plans/2/overview
+GET /api/v1/student/study-plans/2/overview
 Authorization: Bearer <child-token>
 ```
 
@@ -238,7 +238,7 @@ noch `false` ist.
 #### 5) Sohn übt die Position und erzeugt Fortschritt
 
 ```http
-POST /api/v1/study-plans/2/positions/7/practice-sessions
+POST /api/v1/student/study-plans/2/positions/7/practice-sessions
 Authorization: Bearer <child-token>
 Content-Type: application/json
 
@@ -257,7 +257,7 @@ Content-Type: application/json
 ```
 
 ```http
-POST /api/v1/study-plans/2/positions/7/practice-sessions/11/review
+POST /api/v1/student/study-plans/2/positions/7/practice-sessions/11/review
 Authorization: Bearer <child-token>
 Content-Type: application/json
 
@@ -286,7 +286,7 @@ für die kindweite Wort-Auswertung.
 #### 6) Nach erfülltem Ziel ändert sich die Overview
 
 ```http
-GET /api/v1/study-plans/2/overview
+GET /api/v1/student/study-plans/2/overview
 Authorization: Bearer <child-token>
 ```
 
@@ -319,14 +319,14 @@ Reviews/Tests geändert. `pointsAwarded: 20` kommt aus dem Positionsziel, nicht 
 #### 7) Vater liest dieselbe Entwicklung aus anderen Blickwinkeln
 
 ```http
-GET /api/v1/study-plans/2/positions/7/report
+GET /api/v1/student/study-plans/2/positions/7/report
 Authorization: Bearer <father-token>
 ```
 
 Antwort auf: „Wie steht diese eine Plan-Position da?" Liest den positionsgebundenen Leitner-/Teststand.
 
 ```http
-GET /api/v1/children/1/vocabulary-progress?onlyWeak=true
+GET /api/v1/student/children/1/vocabulary-progress?onlyWeak=true
 Authorization: Bearer <father-token>
 ```
 
@@ -334,7 +334,7 @@ Antwort auf: „Welche Wörter sind bei Sohn 1 schwach, egal in welchem Plan sie
 kindweiten Item-Lernstand.
 
 ```http
-GET /api/v1/children/1/learn/subjects
+GET /api/v1/student/children/1/learn/subjects
 Authorization: Bearer <father-token>
 ```
 
@@ -353,9 +353,9 @@ Antworten:
 
 Geschrieben werden sie an denselben Bewertungspunkten:
 `POST …/positions/{positionId}/practice-sessions/{sid}/review`
-([PositionPracticeController](../backend/Pugling.Api/Controllers/Learn/PositionPracticeController.cs)) und
+([PositionPracticeController](../backend/Pugling.Api/Controllers/Student/PositionPracticeController.cs)) und
 `POST …/positions/{positionId}/tests/{attemptId}/submit`
-([PositionTestsController](../backend/Pugling.Api/Controllers/Learn/PositionTestsController.cs)).
+([PositionTestsController](../backend/Pugling.Api/Controllers/Student/PositionTestsController.cs)).
 
 Daraus ergeben sich **drei Auswertungs-Blickwinkel**:
 
@@ -363,8 +363,8 @@ Daraus ergeben sich **drei Auswertungs-Blickwinkel**:
 
 | Endpunkt | Wohin |
 | --- | --- |
-| `GET /study-plans/{planId}/overview` · `…/overview/progress` | [PlanOverviewController](../backend/Pugling.Api/Controllers/Learn/PlanOverviewController.cs) → [PositionProgressService](../backend/Pugling.Api/Services/PositionProgressService.cs) |
-| `GET /study-plans/{planId}/positions/{positionId}/report` | [PositionReportController](../backend/Pugling.Api/Controllers/Learn/PositionReportController.cs) → [PositionReportService](../backend/Pugling.Api/Services/PositionReportService.cs) |
+| `GET /study-plans/{planId}/overview` · `…/overview/progress` | [PlanOverviewController](../backend/Pugling.Api/Controllers/Student/PlanOverviewController.cs) → [PositionProgressService](../backend/Pugling.Api/Services/PositionProgressService.cs) |
+| `GET /study-plans/{planId}/positions/{positionId}/report` | [PositionReportController](../backend/Pugling.Api/Controllers/Student/PositionReportController.cs) → [PositionReportService](../backend/Pugling.Api/Services/PositionReportService.cs) |
 
 Antwort auf „welche Vokabel dieser **Position** sitzt?" plus Tagesmission/Streak. Liest `PositionItemProgress`.
 
@@ -372,7 +372,7 @@ Antwort auf „welche Vokabel dieser **Position** sitzt?" plus Tagesmission/Stre
 
 | Endpunkt | Wohin |
 | --- | --- |
-| `GET /children/{childId}/vocabulary-progress` (`?exerciseId=&maxBox=&onlyWeak=`) | [ChildVocabularyProgressController](../backend/Pugling.Api/Controllers/Learn/ChildVocabularyProgressController.cs) |
+| `GET /children/{childId}/vocabulary-progress` (`?exerciseId=&maxBox=&onlyWeak=`) | [ChildVocabularyProgressController](../backend/Pugling.Api/Controllers/Student/ChildVocabularyProgressController.cs) |
 | `GET …/vocabulary-progress/{itemId}` · `…/{itemId}/history` · `…/by-word` | dito |
 
 Antwort auf „welche **Wörter** sitzen bei diesem Kind – egal in welcher Übung?" (Wort-Rollup, Historie,
@@ -388,7 +388,7 @@ schlecht gelernte Wörter). Liest `ItemProgress`/`ItemReviewEvent`.
 | `GET …/subjects/{subjectId}/chapters/{chapterId}/vocabulary` | Übungen + Fortschritt je Übung |
 | `GET …/vocabulary/{exerciseId}/items` | Item-Lernstand (schwächste zuerst) |
 
-→ [ChildLearnProgressController](../backend/Pugling.Api/Controllers/Learn/ChildLearnProgressController.cs)
+→ [ChildLearnProgressController](../backend/Pugling.Api/Controllers/Student/ChildLearnProgressController.cs)
 / [ChildLearnProgressService](../backend/Pugling.Api/Services/ChildLearnProgressService.cs). Antwort auf
 „wie steht das Kind **je Fach/Kapitel/Übung** da?" – die Grundlage, um **Ziele festzulegen**. Alle Listen
 unterstützen `?search=`, `?sort=`+`?dir=`, `?active=` und Paging (`skip`/`take` + Header `X-Total-Count`).
@@ -408,7 +408,7 @@ kein materialisierter Zustand, keine Belohnung (v1). Plan-übergreifend: das Zie
 
 | Endpunkt | Wohin |
 | --- | --- |
-| `GET/POST /children/{childId}/learn-goals` · `GET/PATCH/DELETE …/{goalId}` | [LearnGoalsController](../backend/Pugling.Api/Controllers/Learn/LearnGoalsController.cs) → [LearnGoalService](../backend/Pugling.Api/Services/LearnGoalService.cs) |
+| `GET/POST /children/{childId}/learn-goals` · `GET/PATCH/DELETE …/{goalId}` | [LearnGoalsController](../backend/Pugling.Api/Controllers/Supervisor/LearnGoalsController.cs) → [LearnGoalService](../backend/Pugling.Api/Services/LearnGoalService.cs) |
 
 - **Metriken** bilden direkt Felder des `MasteryRollup` (§3) ab: `AvgMastery`, `Coverage`,
   `MasteredPercent` (jeweils „≥ Zielwert") und `MaxWeakItems` („≤ Zielwert").
@@ -436,7 +436,7 @@ Folgezustand**, den der Vater wieder verwaltet oder auswertet.
 ### a) Vater setzt Lernziel → Sohn/Familie sieht Zielstatus aus Live-Fortschritt
 
 ```http
-POST /api/v1/children/1/learn-goals
+POST /api/v1/supervisor/children/1/learn-goals
 Authorization: Bearer <father-token>
 Content-Type: application/json
 
@@ -452,7 +452,7 @@ Content-Type: application/json
 ```
 
 ```http
-GET /api/v1/children/1/learn-goals?status=open
+GET /api/v1/supervisor/children/1/learn-goals?status=open
 Authorization: Bearer <father-token>
 ```
 
@@ -464,7 +464,7 @@ rücken.
 ### b) Vater definiert Mission → Sohn sieht Tages-/Wochenauftrag unter `/me`
 
 ```http
-POST /api/v1/children/1/missions
+POST /api/v1/supervisor/children/1/missions
 Authorization: Bearer <father-token>
 Content-Type: application/json
 
@@ -478,7 +478,7 @@ Content-Type: application/json
 ```
 
 ```http
-GET /api/v1/me/missions
+GET /api/v1/student/me/missions
 Authorization: Bearer <child-token>
 ```
 
@@ -504,7 +504,7 @@ Review-/Testdaten wie Plan-Overview und Auswertung.
 ### c) Vater stellt Angebot bereit → Sohn kauft → Vater erfüllt
 
 ```http
-POST /api/v1/children/1/rewards
+POST /api/v1/supervisor/children/1/rewards
 Authorization: Bearer <father-token>
 Content-Type: application/json
 
@@ -518,7 +518,7 @@ Content-Type: application/json
 ```
 
 ```http
-GET /api/v1/me/rewards
+GET /api/v1/student/me/rewards
 Authorization: Bearer <child-token>
 ```
 
@@ -540,7 +540,7 @@ Authorization: Bearer <child-token>
 ```
 
 ```http
-POST /api/v1/me/rewards/available/5/purchase
+POST /api/v1/student/me/rewards/available/5/purchase
 Authorization: Bearer <child-token>
 Content-Type: application/json
 
@@ -548,7 +548,7 @@ Content-Type: application/json
 ```
 
 ```http
-POST /api/v1/children/1/rewards/redemptions/1/fulfill
+POST /api/v1/supervisor/children/1/rewards/redemptions/1/fulfill
 Authorization: Bearer <father-token>
 Content-Type: application/json
 
@@ -561,7 +561,7 @@ ab und erzeugt eine `RewardRedemption`, die der Vater mit `canFulfill/canCancel`
 ### d) Familien-Shop: Vater pflegt Bestand → Sohn kauft Inventar → Vater genehmigt Aktivierung
 
 ```http
-POST /api/v1/shop/articles
+POST /api/v1/supervisor/shop/articles
 Authorization: Bearer <father-token>
 Content-Type: application/json
 
@@ -574,7 +574,7 @@ Content-Type: application/json
 ```
 
 ```http
-POST /api/v1/shop/articles/1/listings
+POST /api/v1/supervisor/shop/articles/1/listings
 Authorization: Bearer <father-token>
 Content-Type: application/json
 
@@ -589,24 +589,24 @@ Content-Type: application/json
 ```
 
 ```http
-GET /api/v1/me/shop
+GET /api/v1/student/me/shop
 Authorization: Bearer <child-token>
 ```
 
 **Zusammenhang:** Der Shop hat zwei Kreisläufe. Beim Kauf entsteht sofort Inventar des Sohns
-(`POST /api/v1/me/shop/listings/{listingId}/purchase`). Bei der Aktivierung
-(`POST /api/v1/me/shop/inventory/{articleId}/activate`) entsteht eine `ActivationRequest`, die der Vater
+(`POST /api/v1/student/me/shop/listings/{listingId}/purchase`). Bei der Aktivierung
+(`POST /api/v1/student/me/shop/inventory/{articleId}/activate`) entsteht eine `ActivationRequest`, die der Vater
 unter `children/{childId}/shop/activations/{requestId}/approve|reject` entscheidet.
 
 ### e) Kindweite Auswertung → Vater baut daraus den nächsten Plan
 
 ```http
-GET /api/v1/children/1/vocabulary-progress?onlyWeak=true
+GET /api/v1/student/children/1/vocabulary-progress?onlyWeak=true
 Authorization: Bearer <father-token>
 ```
 
 ```http
-GET /api/v1/children/1/learn/subjects/3/chapters/8/vocabulary/13/items
+GET /api/v1/student/children/1/learn/subjects/3/chapters/8/vocabulary/13/items
 Authorization: Bearer <father-token>
 ```
 

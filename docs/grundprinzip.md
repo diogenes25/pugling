@@ -40,11 +40,12 @@ Kindern, Zielen oder Punkten. Er füllt allein die **globale Übungs-Bibliothek*
 - Er sagt **nichts** darüber, wie oft, für wie viele Punkte oder mit welchem Ziel geübt wird – das ist
   Sache der zweiten Ebene.
 
-> In der heutigen Umsetzung ist der Creator noch nicht als eigenständige Rolle mit eigenem Login
-> ausgeprägt: Übungen werden vom **Vater** im Katalog gepflegt, und eine geteilte Bibliothek mit
-> **Autor-Zuordnung** (`AuthorFatherId`) erlaubt bereits, dass ein Vater die Übungen eines anderen
-> übernimmt. Die dedizierte Lehrer-/Creator-Rolle (eigene Entität, Beitrittscode) ist als Ausbaustufe
-> vorgesehen. Fachlich ist die Trennung aber schon jetzt gültig: **Inhalt ≠ Lehrplan.**
+> **Umsetzung:** Die drei Ebenen sind **Rollen** (`ProfileRole` Creator/Supervisor/Student), entkoppelt
+> vom Login. Ein `Account` trägt eine oder mehrere Rollen über `AccountProfile`-Zeilen; ein Vater ist
+> zugleich Creator **und** Supervisor (ein Token, beide Ebenen). Die REST-API ist nach den Ebenen
+> geschnitten: `api/v1/creator/…`, `api/v1/supervisor/…`, `api/v1/student/…`. Die dedizierte, vom
+> Vater getrennte Creator-/Lehrer-Rolle (eigenes Konto, Beitrittscode) ist damit vorbereitet; heute
+> pflegt der Vater den Katalog. Fachlich gilt: **Inhalt ≠ Lehrplan.**
 
 ---
 
@@ -103,6 +104,21 @@ Kind darf 10 Minuten fernsehen) passiert **außerhalb** der App.
    die Punkte und den bestätigten Status.
 
 ---
+
+## Technische Umsetzung (Kurzabriss)
+
+- **Identität ≠ Rolle:** `Account` (Login + PIN-Hash) → `AccountProfile[]` (`Role` → `Father`/`Child`-Profil).
+  Das JWT trägt `aid` und **mehrere** Rollen-Claims; `AuthAccess` prüft Eigentum OR-verknüpft je Rolle.
+  Login über `api/v1/auth/{father|child}` oder konto-zentrisch `api/v1/auth/login`.
+- **Ein Student, mehrere Supervisor:** `SupervisorLink` (Supervisor ⇢ Student) ersetzt die frühere
+  1:1-Bindung. Betreuung verwalten: `…/supervisor/children/{id}/supervisors`.
+- **Gemeinsames Wallet, ausstellergebundene Einlösung:** Der Punkte-Ledger (`ChildPointsEntry`) ist rein
+  student-skopiert – ein Saldo über alle Supervisor. Die Zuordnung „wer löst ein" ist eine **Momentaufnahme**
+  (`SupervisorId`) auf `Reward`/`RewardRedemption`/`ShopPurchase`/`ActivationRequest`: nur der ausstellende
+  Supervisor sieht und erfüllt/genehmigt den Kauf; die Student-Shop-Sicht aggregiert alle Supervisor.
+- **API nach Ebenen** (`ApiRoutes.Creator/Supervisor/Student`); Code ebenso in `Controllers/{Tier}` und
+  `Services/{Creator,Supervisor,Student,Shared}`. Das URL-Präfix ist Taxonomie, nicht die Auth-Wand –
+  einzelne Routen sind bewusst dual (z. B. liest der Supervisor eine Student-getaggte Report-Route).
 
 ## Warum diese Trennung wichtig ist
 

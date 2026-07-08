@@ -30,22 +30,22 @@ Für einzelne Wörter reicht ein einfacher Create-Call. `key` und `partOfSpeech`
 kann den Key aus Sprache, Wort und Übersetzung ableiten.
 
 ```http
-POST /api/v1/learn/vocabulary
+POST /api/v1/creator/vocabulary
 { "sourceLanguage":"en", "targetLanguage":"de", "word":"cat", "translation":"Katze" }
 ```
 
 Für Agenten oder Importe ist der Batch-Pfad idempotenter:
 
 ```http
-POST /api/v1/learn/vocabulary/batch
+POST /api/v1/creator/vocabulary/batch
 [
   { "sourceLanguage":"en", "targetLanguage":"de", "word":"cat", "translation":"Katze", "tags":["Unit 1"] },
   { "sourceLanguage":"en", "targetLanguage":"de", "word":"dog", "translation":"Hund", "tags":["Unit 1"] }
 ]
 ```
 
-Vor dem Anlegen kann `POST /api/v1/learn/vocabulary/lookup` Duplikate über Wörter oder Keys finden.
-Nachträge laufen über `PATCH /api/v1/learn/vocabulary/{id}` oder `PATCH /api/v1/learn/vocabulary/batch`.
+Vor dem Anlegen kann `POST /api/v1/creator/vocabulary/lookup` Duplikate über Wörter oder Keys finden.
+Nachträge laufen über `PATCH /api/v1/creator/vocabulary/{id}` oder `PATCH /api/v1/creator/vocabulary/batch`.
 
 ## 3. Vokabelübung erstellen
 
@@ -53,7 +53,7 @@ Beim Erstellen darf der Client inline `items` schicken. Der Server legt fehlende
 materialisiert die Übungsmenge in `ExerciseItems` und speichert in der Config nur noch Einstellungen.
 
 ```http
-POST /api/v1/learn/subjects/{subjectId}/chapters/{chapterId}/vocabulary
+POST /api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/vocabulary
 {
   "title": "Unit 1 – Tiere",
   "orderIndex": 1,
@@ -82,15 +82,15 @@ liegen jetzt unter der Übung.
 Die Item-Subressource ist der bevorzugte Weg für spätere Änderungen:
 
 ```http
-GET /api/v1/learn/subjects/{subjectId}/chapters/{chapterId}/vocabulary/{exerciseId}/items
+GET /api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/vocabulary/{exerciseId}/items
 
-POST /api/v1/learn/subjects/{subjectId}/chapters/{chapterId}/vocabulary/{exerciseId}/items
+POST /api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/vocabulary/{exerciseId}/items
 { "vocabularyId": 26, "hint": "die" }
 
-POST /api/v1/learn/subjects/{subjectId}/chapters/{chapterId}/vocabulary/{exerciseId}/items
+POST /api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/vocabulary/{exerciseId}/items
 { "front": "bird", "back": "Vogel" }
 
-PATCH /api/v1/learn/subjects/{subjectId}/chapters/{chapterId}/vocabulary/{exerciseId}/items/{itemId}
+PATCH /api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/vocabulary/{exerciseId}/items/{itemId}
 { "hint": "der", "orderIndex": 3 }
 ```
 
@@ -104,7 +104,7 @@ Für größere Einheiten ist der Tag-Flow am stabilsten: Store-Einträge taggen 
 Snapshot aus den aktuellen Treffern setzen.
 
 ```http
-POST /api/v1/learn/subjects/{subjectId}/chapters/{chapterId}/vocabulary/{exerciseId}/refs-from-tags
+POST /api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/vocabulary/{exerciseId}/refs-from-tags
 { "tags":["Unit 1"], "matchAll":false, "baseFormsOnly":true }
 ```
 
@@ -116,7 +116,7 @@ Snapshot bleiben, behalten ihre `ItemId`; entfernte Wörter verschwinden aus der
 Der Study-Plan bekommt keine kopierten Vokabeln. Er verweist über eine `PlanPosition` auf die Übung:
 
 ```http
-POST /api/v1/study-plans/{planId}/positions
+POST /api/v1/supervisor/study-plans/{planId}/positions
 {
   "exerciseId": 13,
   "cadence": "Daily",
@@ -146,11 +146,11 @@ Es gibt zwei Fortschritts-Sichten:
 Nützliche Endpunkte:
 
 ```http
-GET /api/v1/study-plans/{planId}/positions/{positionId}/report
-GET /api/v1/children/{childId}/vocabulary-progress?onlyWeak=true
-GET /api/v1/children/{childId}/vocabulary-progress/{itemId}
-GET /api/v1/children/{childId}/vocabulary-progress/{itemId}/history
-GET /api/v1/children/{childId}/vocabulary-progress/by-word?onlyWeak=true
+GET /api/v1/student/study-plans/{planId}/positions/{positionId}/report
+GET /api/v1/student/children/{childId}/vocabulary-progress?onlyWeak=true
+GET /api/v1/student/children/{childId}/vocabulary-progress/{itemId}
+GET /api/v1/student/children/{childId}/vocabulary-progress/{itemId}/history
+GET /api/v1/student/children/{childId}/vocabulary-progress/by-word?onlyWeak=true
 ```
 
 `onlyWeak=true` bedeutet aktuell: Beherrschung unter 50 %. Die Item-Liste kann zusätzlich nach
@@ -160,11 +160,11 @@ GET /api/v1/children/{childId}/vocabulary-progress/by-word?onlyWeak=true
 
 - [Models/ExerciseConfigs.cs](../backend/Pugling.Api/Models/ExerciseConfigs.cs): `VocabularyConfig`, `VocabItem`, `VocabRef`.
 - [Models/ExerciseItemEntities.cs](../backend/Pugling.Api/Models/ExerciseItemEntities.cs): stabile Item-Zeilen der Vokabelübung.
-- [Controllers/Learn/ExerciseControllers.cs](../backend/Pugling.Api/Controllers/Learn/ExerciseControllers.cs): Vokabel-CRUD, `refs-from-tags`, Item-CRUD.
+- [Controllers/Creator/ExerciseControllers.cs](../backend/Pugling.Api/Controllers/Creator/ExerciseControllers.cs): Vokabel-CRUD, `refs-from-tags`, Item-CRUD.
 - [Services/ExerciseItemService.cs](../backend/Pugling.Api/Services/ExerciseItemService.cs): Materialisierung und ID-erhaltender Abgleich.
 - [Services/ExerciseContentResolver.cs](../backend/Pugling.Api/Services/ExerciseContentResolver.cs): Auflösung von `ExerciseItems` zu spielbaren `ContentItem`s.
 - [Services/ItemProgressService.cs](../backend/Pugling.Api/Services/ItemProgressService.cs): planübergreifender Lernstand und Antwort-Historie.
-- [Controllers/Learn/ChildVocabularyProgressController.cs](../backend/Pugling.Api/Controllers/Learn/ChildVocabularyProgressController.cs): kindzentrierte Progress-API.
+- [Controllers/Student/ChildVocabularyProgressController.cs](../backend/Pugling.Api/Controllers/Student/ChildVocabularyProgressController.cs): kindzentrierte Progress-API.
 
 ## 9. Tests und Checks
 
