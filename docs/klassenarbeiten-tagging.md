@@ -50,34 +50,34 @@ auf einmal einbeziehen.
 Alle Endpunkte unter `[Authorize]`; JWT wie üblich per PIN-Login (`POST /api/v1/auth/father` bzw.
 `/api/v1/auth/child`).
 
-### Tags – `api/v1/tags`
+### Tags – `api/v1/creator/tags`
 
 | Methode & Pfad | Rolle | Zweck |
 |---|---|---|
-| `GET /api/v1/tags?childId=` | beide | Tags eines Kindes (mit Anzahl markierter Übungen) |
-| `POST /api/v1/tags` | beide | Tag anlegen `{ childId, name, color? }` |
-| `PATCH /api/v1/tags/{id}` | beide | umbenennen / Farbe ändern |
-| `DELETE /api/v1/tags/{id}` | beide | Tag löschen (entfernt Markierungen + KA-Verknüpfungen) |
-| `POST /api/v1/tags/{id}/exercises` | beide | Übungen markieren `{ exerciseIds: [] }` |
-| `DELETE /api/v1/tags/{id}/exercises/{exerciseId}` | beide | Markierung entfernen |
-| `GET /api/v1/tags/{id}/exercises` | beide | Übungen dieses Tags |
-| `GET /api/v1/tags/for-exercise/{exerciseId}?childId=` | beide | Tags einer Übung im Kontext des Kindes |
+| `GET /api/v1/creator/tags?childId=` | beide | Tags eines Kindes (mit Anzahl markierter Übungen) |
+| `POST /api/v1/creator/tags` | beide | Tag anlegen `{ childId, name, color? }` |
+| `PATCH /api/v1/creator/tags/{id}` | beide | umbenennen / Farbe ändern |
+| `DELETE /api/v1/creator/tags/{id}` | beide | Tag löschen (entfernt Markierungen + KA-Verknüpfungen) |
+| `POST /api/v1/creator/tags/{id}/exercises` | beide | Übungen markieren `{ exerciseIds: [] }` |
+| `DELETE /api/v1/creator/tags/{id}/exercises/{exerciseId}` | beide | Markierung entfernen |
+| `GET /api/v1/creator/tags/{id}/exercises` | beide | Übungen dieses Tags |
+| `GET /api/v1/creator/tags/for-exercise/{exerciseId}?childId=` | beide | Tags einer Übung im Kontext des Kindes |
 
-### Klassenarbeiten – `api/v1/class-tests`
+### Klassenarbeiten – `api/v1/supervisor/class-tests`
 
 | Methode & Pfad | Rolle | Zweck |
 |---|---|---|
-| `GET /api/v1/class-tests?childId=&status=&subjectId=` | beide | Liste (optional gefiltert) |
-| `GET /api/v1/class-tests/{id}` | beide | Detail inkl. direkt zugewiesener Übungen |
-| `POST /api/v1/class-tests` | Vater | planen/anlegen; optional `exerciseIds`/`tagIds` gleich mitgeben |
-| `PATCH /api/v1/class-tests/{id}` | Vater | ändern, **Note nachtragen**, Status setzen |
-| `DELETE /api/v1/class-tests/{id}` | Vater | löschen |
-| `POST /api/v1/class-tests/{id}/exercises` | Vater | Übungen direkt zuweisen `{ exerciseIds: [] }` |
-| `DELETE /api/v1/class-tests/{id}/exercises/{exerciseId}` | Vater | Zuordnung entfernen |
-| `POST /api/v1/class-tests/{id}/tags/{tagId}` | Vater | Tag verknüpfen |
-| `DELETE /api/v1/class-tests/{id}/tags/{tagId}` | Vater | Tag-Verknüpfung lösen |
-| `GET /api/v1/class-tests/{id}/practice` | beide | **gezielt üben**: relevante Übungen + Tage bis Termin |
-| `GET /api/v1/class-tests/repeat?childId=&minBadGrade=` | beide | **wiederholen**: Übungen aller Arbeiten mit Note ≥ Grenze (Standard 4,0) |
+| `GET /api/v1/supervisor/class-tests?childId=&status=&subjectId=` | beide | Liste (optional gefiltert) |
+| `GET /api/v1/supervisor/class-tests/{id}` | beide | Detail inkl. direkt zugewiesener Übungen |
+| `POST /api/v1/supervisor/class-tests` | Vater | planen/anlegen; optional `exerciseIds`/`tagIds` gleich mitgeben |
+| `PATCH /api/v1/supervisor/class-tests/{id}` | Vater | ändern, **Note nachtragen**, Status setzen |
+| `DELETE /api/v1/supervisor/class-tests/{id}` | Vater | löschen |
+| `POST /api/v1/supervisor/class-tests/{id}/exercises` | Vater | Übungen direkt zuweisen `{ exerciseIds: [] }` |
+| `DELETE /api/v1/supervisor/class-tests/{id}/exercises/{exerciseId}` | Vater | Zuordnung entfernen |
+| `POST /api/v1/supervisor/class-tests/{id}/tags/{tagId}` | Vater | Tag verknüpfen |
+| `DELETE /api/v1/supervisor/class-tests/{id}/tags/{tagId}` | Vater | Tag-Verknüpfung lösen |
+| `GET /api/v1/supervisor/class-tests/{id}/practice` | beide | **gezielt üben**: relevante Übungen + Tage bis Termin |
+| `GET /api/v1/supervisor/class-tests/repeat?childId=&minBadGrade=` | beide | **wiederholen**: Übungen aller Arbeiten mit Note ≥ Grenze (Standard 4,0) |
 
 ### Note & „schlechte Note"
 

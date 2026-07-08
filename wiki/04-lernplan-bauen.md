@@ -35,13 +35,13 @@ Eine Position verweist auf eine bestehende Katalog-`Exercise`. Du kannst also vo
 wiederverwenden oder neue anlegen.
 
 ```http
-POST /api/v1/learn/subjects
+POST /api/v1/creator/subjects
 { "name": "Französisch" }
 
-POST /api/v1/learn/subjects/{subjectId}/chapters
+POST /api/v1/creator/subjects/{subjectId}/chapters
 { "name": "Unité 1 – Salutations", "orderIndex": 1 }
 
-POST /api/v1/learn/subjects/{subjectId}/chapters/{chapterId}/vocabulary
+POST /api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/vocabulary
 {
   "title": "Begrüßungen",
   "orderIndex": 1,
@@ -82,8 +82,8 @@ materialisiert die Übungsmenge in `ExerciseItem`-Zeilen und gibt die Config dan
 Die tatsächlich gespeicherten Vokabelpaare liest und pflegt man über:
 
 ```http
-GET  /api/v1/learn/subjects/{subjectId}/chapters/{chapterId}/vocabulary/{exerciseId}/items
-POST /api/v1/learn/subjects/{subjectId}/chapters/{chapterId}/vocabulary/{exerciseId}/items
+GET  /api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/vocabulary/{exerciseId}/items
+POST /api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/vocabulary/{exerciseId}/items
 { "vocabularyId": 26, "hint": "die" }
 ```
 
@@ -94,7 +94,7 @@ nicht auf ein anderes Wort verschoben wird.
 Vorhandene Übungen findest du über die Katalogsuche:
 
 ```http
-GET /api/v1/learn/exercises?subjectId=1&grade=9&schoolType=Gymnasium&type=Vocabulary
+GET /api/v1/creator/exercises?subjectId=1&grade=9&schoolType=Gymnasium&type=Vocabulary
 ```
 
 Details zu allen Übungstypen stehen in [03 · Übungstypen](03-uebungstypen.md).
@@ -104,7 +104,7 @@ Details zu allen Übungstypen stehen in [03 · Übungstypen](03-uebungstypen.md)
 ## 2. Den Study-Plan-Container anlegen
 
 ```http
-POST /api/v1/study-plans
+POST /api/v1/supervisor/study-plans
 Authorization: Bearer <VATER-TOKEN>
 
 {
@@ -134,7 +134,7 @@ einen aktuell spielbaren Plan und kann nicht zwischen leichten Plänen wechseln.
 Nachträglich änderbar:
 
 ```http
-PATCH /api/v1/study-plans/{planId}
+PATCH /api/v1/supervisor/study-plans/{planId}
 { "title": "Französisch – Klassenarbeit", "active": true, "endDate": "2026-07-15" }
 ```
 
@@ -143,7 +143,7 @@ PATCH /api/v1/study-plans/{planId}
 ## 3. Positionen hinzufügen
 
 ```http
-POST /api/v1/study-plans/{planId}/positions
+POST /api/v1/supervisor/study-plans/{planId}/positions
 {
   "exerciseId": 13,
   "cadence": "Daily",
@@ -206,9 +206,9 @@ wirkungslos, wenn ein `stageSchedule` schon ab Tag 1 greift; dann liefert der Fa
 Positionen ändern oder löschen:
 
 ```http
-GET    /api/v1/study-plans/{planId}/positions
-PATCH  /api/v1/study-plans/{planId}/positions/{positionId}
-DELETE /api/v1/study-plans/{planId}/positions/{positionId}
+GET    /api/v1/supervisor/study-plans/{planId}/positions
+PATCH  /api/v1/supervisor/study-plans/{planId}/positions/{positionId}
+DELETE /api/v1/supervisor/study-plans/{planId}/positions/{positionId}
 ```
 
 Eine Position mit vorhandenen Übungs-/Testdaten kann nicht gelöscht werden (`position_has_data`).
@@ -239,37 +239,37 @@ Selbsteinschätzungs-Stufen nicht für Punkte/Box.
 Der Sohn spielt immer eine konkrete Position:
 
 ```http
-POST /api/v1/study-plans/{planId}/positions/{positionId}/practice-sessions
+POST /api/v1/student/study-plans/{planId}/positions/{positionId}/practice-sessions
 { "mode": "Lern" }
 
-GET  /api/v1/study-plans/{planId}/positions/{positionId}/practice-sessions/{sessionId}/cards
-GET  /api/v1/study-plans/{planId}/positions/{positionId}/practice-sessions/{sessionId}/next
+GET  /api/v1/student/study-plans/{planId}/positions/{positionId}/practice-sessions/{sessionId}/cards
+GET  /api/v1/student/study-plans/{planId}/positions/{positionId}/practice-sessions/{sessionId}/next
 
-POST /api/v1/study-plans/{planId}/positions/{positionId}/practice-sessions/{sessionId}/review
+POST /api/v1/student/study-plans/{planId}/positions/{positionId}/practice-sessions/{sessionId}/review
 { "itemIndex": 0, "givenAnswer": "hallo" }
 
-POST /api/v1/study-plans/{planId}/positions/{positionId}/practice-sessions/{sessionId}/review
+POST /api/v1/student/study-plans/{planId}/positions/{positionId}/practice-sessions/{sessionId}/review
 { "itemIndex": 1, "wasKnown": true }
 
-POST /api/v1/study-plans/{planId}/positions/{positionId}/practice-sessions/{sessionId}/heartbeat
+POST /api/v1/student/study-plans/{planId}/positions/{positionId}/practice-sessions/{sessionId}/heartbeat
 { "seconds": 60, "active": true }
 
-POST /api/v1/study-plans/{planId}/positions/{positionId}/practice-sessions/{sessionId}/end
+POST /api/v1/student/study-plans/{planId}/positions/{positionId}/practice-sessions/{sessionId}/end
 
-POST /api/v1/study-plans/{planId}/positions/{positionId}/tests
+POST /api/v1/student/study-plans/{planId}/positions/{positionId}/tests
 { }
 
-GET  /api/v1/study-plans/{planId}/positions/{positionId}/tests/{attemptId}
+GET  /api/v1/student/study-plans/{planId}/positions/{positionId}/tests/{attemptId}
 
-GET  /api/v1/study-plans/{planId}/positions/{positionId}/tests/{attemptId}/next
+GET  /api/v1/student/study-plans/{planId}/positions/{positionId}/tests/{attemptId}/next
 
-POST /api/v1/study-plans/{planId}/positions/{positionId}/tests/{attemptId}/answer
+POST /api/v1/student/study-plans/{planId}/positions/{positionId}/tests/{attemptId}/answer
 { "itemIndex": 0, "givenAnswer": "hallo" }
 
-POST /api/v1/study-plans/{planId}/positions/{positionId}/tests/{attemptId}/answer
+POST /api/v1/student/study-plans/{planId}/positions/{positionId}/tests/{attemptId}/answer
 { "itemIndex": 1, "wasKnown": true }
 
-POST /api/v1/study-plans/{planId}/positions/{positionId}/tests/{attemptId}/submit
+POST /api/v1/student/study-plans/{planId}/positions/{positionId}/tests/{attemptId}/submit
 { }
 ```
 Im Lernmodus ist `next` der normale Weg: Der Server führt den Cursor und liefert nach `review` direkt die
@@ -281,12 +281,12 @@ schließt den Versuch ab und liefert erst dann Ergebnis und Lösungen. Für den 
 Plan-Übersicht und Fortschritt:
 
 ```http
-GET /api/v1/study-plans/{planId}/overview
-GET /api/v1/study-plans/{planId}/overview/progress[?from=&to=&dutyDone=&sort=&skip=&take=]
-GET /api/v1/study-plans/{planId}/positions/{positionId}/report
-GET /api/v1/children/{childId}/vocabulary-progress[?exerciseId=&maxBox=&onlyWeak=&skip=&take=]
-GET /api/v1/children/{childId}/vocabulary-progress/by-word[?onlyWeak=&skip=&take=]
-GET /api/v1/children/{childId}/points
+GET /api/v1/student/study-plans/{planId}/overview
+GET /api/v1/student/study-plans/{planId}/overview/progress[?from=&to=&dutyDone=&sort=&skip=&take=]
+GET /api/v1/student/study-plans/{planId}/positions/{positionId}/report
+GET /api/v1/student/children/{childId}/vocabulary-progress[?exerciseId=&maxBox=&onlyWeak=&skip=&take=]
+GET /api/v1/student/children/{childId}/vocabulary-progress/by-word[?onlyWeak=&skip=&take=]
+GET /api/v1/supervisor/children/{childId}/points
 ```
 
 Nur der **Vater** darf einen Tag nachtragen (`day` beim Practice-/Test-Start ungleich heute).
@@ -303,7 +303,7 @@ getippten Tests und kleinen Bonus-Anreizen.
 POST /api/v1/auth/father   { "fatherId": 1, "pin": "0000" }
 
 # 2) Katalog-Übung anlegen oder vorhandene Übung suchen
-POST /api/v1/learn/subjects/{subjectId}/chapters/{chapterId}/vocabulary
+POST /api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/vocabulary
 { "title":"Begrüßungen", "orderIndex":1, "rewardPoints":10,
   "config": { "direction":"front-to-back", "sourceLang":"fr", "targetLang":"de",
     "items":[{"front":"bonjour","back":"hallo"},{"front":"merci","back":"danke"}] },
@@ -311,20 +311,20 @@ POST /api/v1/learn/subjects/{subjectId}/chapters/{chapterId}/vocabulary
 → 201 { "id": 13, … }
 
 # 3) Plan-Container
-POST /api/v1/study-plans
+POST /api/v1/supervisor/study-plans
 { "childId":1, "title":"Französisch – Vokabeltest in 10 Tagen", "subjectId":4, "durationDays":10 }
 → 201 { "id": 42, "positionCount": 0, … }
 
 # 4) Position
-POST /api/v1/study-plans/42/positions
+POST /api/v1/supervisor/study-plans/42/positions
 { "exerciseId":13, "cadence":"Daily", "goalThreshold":80,
   "stageSchedule":[{"dayNumber":1,"stage":2},{"dayNumber":5,"stage":3},{"dayNumber":8,"stage":4}] }
 → 201 { "id": 7, "exerciseTitle":"Begrüßungen", … }
 
 # 5) Kontrolle
-GET /api/v1/study-plans/42/overview
-GET /api/v1/study-plans/42/positions/7/report
-GET /api/v1/children/1/points
+GET /api/v1/student/study-plans/42/overview
+GET /api/v1/student/study-plans/42/positions/7/report
+GET /api/v1/supervisor/children/1/points
 ```
 
 Der Sohn kann danach über [06 · Sohn-App](06-sohn-app.md) loslegen.
@@ -338,9 +338,9 @@ Zusätzlich zum laufenden Punktesystem definierst du pro Kind **Missionen** (Tag
 in [05 · Punkte & Bonus §5](05-punkte-und-bonus.md#5-missionen--auszeichnungen).
 
 ```http
-POST /api/v1/children/1/missions
+POST /api/v1/supervisor/children/1/missions
 { "title": "Tagesziel: 10 richtige Antworten", "metric": "CorrectReviews", "target": 10, "period": "Daily", "rewardPoints": 15 }
 
-POST /api/v1/children/1/achievements
+POST /api/v1/supervisor/children/1/achievements
 { "title": "Feuer-Streak", "icon": "🔥", "metric": "StreakDays", "threshold": 7, "rewardPoints": 70 }
 ```

@@ -12,15 +12,21 @@ in jeder anderen Wiki-Seite schnell orientieren.
 
 ---
 
-## 1. Zwei Rollen, ein Ziel
+## 1. Drei Ebenen, ein Ziel
 
-| Rolle | Claim | Darf | Ziel |
+Das fachliche Grundmodell ([grundprinzip.md](../docs/grundprinzip.md)) kennt **drei Ebenen** – zugleich
+**Rollen** (`ProfileRole`), entkoppelt vom Login (ein `Account` kann mehrere tragen):
+
+| Ebene / Rolle | Claim | Darf | Ziel |
 | --- | --- | --- | --- |
-| **Vater** (`Roles.Vater`) | `fid` | Katalog & Inhalte pflegen, Study-Pläne/Missionen/Auszeichnungen anlegen, Punkte manuell buchen, alles auswerten | Lernerfolg **erzwingen** und kontrollieren |
-| **Sohn** (`Roles.Sohn`) | `cid` + `fid` | nur die **eigenen** Pläne sehen, üben, testen, Inhalte bewerten, eigenen Punktestand lesen | mit Spaß und Punkten **lernen** |
+| **Creator** (`Roles.Creator`, Alias `Vater`) | `fid` | Übungen/Inhalte im Katalog erstellen | Lernstoff liefern |
+| **Supervisor** (`Roles.Supervisor`, Alias `Vater`) | `fid` | Lehrpläne/Ziele/Punkte, Shop/Angebote, Kind-Verwaltung, alles auswerten | Lernerfolg **erzwingen** |
+| **Student** (`Roles.Student`, Alias `Sohn`) | `cid` | nur die **eigenen** Pläne sehen, üben, testen, bewerten, kaufen/aktivieren | mit Spaß **lernen** |
 
-Ein `Father` hat viele `Child`ren. Jedes Study-Plan-, Missions- und Punkte-Objekt gehört genau einem
-Kind — dadurch ist der Zustand automatisch pro Kind isoliert. Details: [02 · Authentifizierung](02-authentifizierung.md).
+Ein Vater ist heute zugleich Creator **und** Supervisor (ein Token, beide Ebenen). Ein **Student kann
+mehrere Supervisor** haben (`SupervisorLink`: Vater/Mutter/Oma) – jeder mit eigenem Shop/Angeboten,
+Wallet gemeinsam, Einlösung ausstellergebunden. Jedes Study-Plan-/Missions-/Punkte-Objekt gehört genau
+einem Kind — der Zustand ist pro Kind isoliert. Details: [02 · Authentifizierung](02-authentifizierung.md).
 
 ---
 
@@ -40,8 +46,8 @@ Subject (Fach)  ─┬─ Chapter (Kapitel) ─┬─ Exercise (typisierte Übun
 - Jede `Exercise` hat einen **Typ** (`ExerciseType`) und eine **typisierte Config** (als JSON gespeichert,
   im API pro Typ ein eigenes Schema). Dazu **Metadaten**: `GradeMin/GradeMax` (Klassenstufe),
   `SchoolTypes` (Schulart, `[Flags]`), `Source` (Quelle), `CategoryId` (Art) — Basis für die spätere
-  automatische Lehrplan-Vorfilterung (`GET api/v1/learn/exercises`).
-- Route je Typ: `api/v1/learn/subjects/{s}/chapters/{c}/<typ>`. Siehe [03 · Übungstypen](03-uebungstypen.md).
+  automatische Lehrplan-Vorfilterung (`GET api/v1/creator/exercises`).
+- Route je Typ: `api/v1/creator/subjects/{s}/chapters/{c}/<typ>`. Siehe [03 · Übungstypen](03-uebungstypen.md).
 
 ### B) Der Study-Plan (`study-plans`) — das produktive Training pro Kind
 
@@ -71,8 +77,8 @@ StudyPlan (gehört einem Kind, reiner Container)
 
 ### Brücke Katalog → Training: Positionen
 
-Der Vater baut zuerst einen leeren Plan-Container (`POST /api/v1/study-plans`) und hängt dann Übungen
-als Positionen an (`POST /api/v1/study-plans/{planId}/positions`). Leere Overrides erben die Defaults
+Der Vater baut zuerst einen leeren Plan-Container (`POST /api/v1/supervisor/study-plans`) und hängt dann Übungen
+als Positionen an (`POST /api/v1/supervisor/study-plans/{planId}/positions`). Leere Overrides erben die Defaults
 der Übung (`DefaultStage`, `DefaultUseLeitner`, `SuggestedBonus`). Siehe
 [04 · Lernplan bauen](04-lernplan-bauen.md).
 

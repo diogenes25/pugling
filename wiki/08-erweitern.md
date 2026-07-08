@@ -52,7 +52,7 @@ public enum ExerciseType { …, Birkenbihl = 11, TrueFalse = 12 }
 
 ### Schritt 3 — Controller
 
-In [Controllers/Learn/ExerciseControllers.cs](../backend/Pugling.Api/Controllers/Learn/ExerciseControllers.cs)
+In [Controllers/Creator/ExerciseControllers.cs](../backend/Pugling.Api/Controllers/Creator/ExerciseControllers.cs)
 einen dünnen Controller ergänzen — er erbt das komplette CRUD:
 
 ```csharp
@@ -152,7 +152,7 @@ Vieles ist reine **Datenpflege über die API** — kein Code nötig. Ideal für 
 | --- | --- |
 | Übungs-Configs | `Models/ExerciseConfigs.cs` |
 | Übungstyp-Enum & Katalog-Entities | `Models/LearnEntities.cs` |
-| Übungs-Controller (alle Typen) | `Controllers/Learn/ExerciseControllers.cs` + `ExerciseControllerBase.cs` |
+| Übungs-Controller (alle Typen) | `Controllers/Creator/ExerciseControllers.cs` + `ExerciseControllerBase.cs` |
 | Katalog-Auswertung | `Services/ExerciseAnswerChecker.cs`, `ArithmeticProblemGenerator.cs` |
 | Study-Plan-Container & Stufen | `Models/StudyPlanEntities.cs` |
 | Positionsmodell | `Models/PlanPositionEntities.cs` |

@@ -39,8 +39,8 @@ zentral aus [`WalletService`](../backend/Pugling.Api/Services/WalletService.cs).
 | `ShopGems` | 💎 Gems | **Familien-Shop-Kauf** – Gem-Anteil (negativ) |
 
 Kurz: **Fleiß fürs Lernen → Münzen** (→ echte Werte beim Vater), **Motivations-Boni → Gems** (→ Kosmetik).
-Lesen: `GET /api/v1/children/{childId}/points` (Vater, kombiniert mit Buchungen) bzw. `GET /api/v1/me/points`
-(Sohn — nur die Salden `coins` **und** `gems`; die Buchungen liegen paginiert unter `GET /api/v1/me/points/entries`
+Lesen: `GET /api/v1/supervisor/children/{childId}/points` (Vater, kombiniert mit Buchungen) bzw. `GET /api/v1/student/me/points`
+(Sohn — nur die Salden `coins` **und** `gems`; die Buchungen liegen paginiert unter `GET /api/v1/student/me/points/entries`
 bzw. einzeln unter `…/entries/{entryId}`). Ein Test (`PointKindCurrencyTests`) erzwingt, dass jeder `PointKind`
 genau einer Währung zugeordnet ist (kein stiller Verlust bei neuem Kind).
 
@@ -172,12 +172,12 @@ messen dieselben serverseitigen Metriken und belohnen **idempotent** (kein Clien
 gibt es **einmal je Zeitraum** `rewardPoints`.
 
 ```http
-POST   /api/v1/children/{childId}/missions
+POST   /api/v1/supervisor/children/{childId}/missions
 { "title": "Wochenziel: 3 Tests bestehen", "metric": "TestsPassed", "target": 3, "period": "Weekly", "rewardPoints": 30 }
 
-GET    /api/v1/children/{childId}/missions        // Definitionen (Vater)
-PATCH  /api/v1/children/{childId}/missions/{id}    { "target": 4, "rewardPoints": 40, "active": true }
-DELETE /api/v1/children/{childId}/missions/{id}
+GET    /api/v1/supervisor/children/{childId}/missions        // Definitionen (Vater)
+PATCH  /api/v1/supervisor/children/{childId}/missions/{id}    { "target": 4, "rewardPoints": 40, "active": true }
+DELETE /api/v1/supervisor/children/{childId}/missions/{id}
 ```
 
 ### Auszeichnungen (permanente Badges)
@@ -186,18 +186,18 @@ Ab `threshold` der `metric` (lebenslang bzw. aktuelle Serie) einmalig verliehen 
 optionaler Punkte-Belohnung.
 
 ```http
-POST /api/v1/children/{childId}/achievements
+POST /api/v1/supervisor/children/{childId}/achievements
 { "title": "Wortschatz-Sammler", "icon": "📚", "metric": "NewWords", "threshold": 100, "rewardPoints": 50 }
 ```
 
 ### Wann wird ausgewertet?
 
 `GamificationService.EvaluateAndAwardAsync` läuft **nach jeder gewerteten Wiederholung** und beim
-Abruf der Sohn-Sicht (`GET /api/v1/me/missions|achievements`) — Belohnungen fließen beim Spielen, nicht
+Abruf der Sohn-Sicht (`GET /api/v1/student/me/missions|achievements`) — Belohnungen fließen beim Spielen, nicht
 erst beim Ansehen. Sinnvolle Vorlagen werden pro Kind geseedet (frei editier-/löschbar).
 
-**Sohn-Sicht** (mit Fortschritt, jeweils paginiert + Einzelansicht `…/{id}`): `GET /api/v1/me/missions` →
-`{ id, title, metric, period, target, current, completed, rewardPoints }`; `GET /api/v1/me/achievements` →
+**Sohn-Sicht** (mit Fortschritt, jeweils paginiert + Einzelansicht `…/{id}`): `GET /api/v1/student/me/missions` →
+`{ id, title, metric, period, target, current, completed, rewardPoints }`; `GET /api/v1/student/me/achievements` →
 `{ id, title, icon, metric, threshold, current, earned, earnedAt, rewardPoints }`.
 
 ---
@@ -208,7 +208,7 @@ Zwei Wege, die Motivation gezielt hochzudrehen (z. B. Grammatik-Bonus für ein l
 
 1. **Pro Position** — die Bonus-Felder (`comboThreshold`, `comboBonusPoints`, `speedThresholdSeconds`,
    `speedBonusPoints`, `newContentPoints`, `pointsGoalMet`) jederzeit per
-   `PATCH /api/v1/study-plans/{planId}/positions/{positionId}` anpassen. Das Bonus-System ist damit
+   `PATCH /api/v1/supervisor/study-plans/{planId}/positions/{positionId}` anpassen. Das Bonus-System ist damit
    kind- und übungsindividuell.
 2. **Bonus-Vorschlag an einer Katalog-Übung** (`SuggestedBonus`) — dient nur als Vorlage: beim
    Anlegen einer Position werden die Werte **einmal** in die Position übernommen. Spätere Änderungen
@@ -233,9 +233,9 @@ Quelle der Wahrheit). Kauf bucht **Gems** ab (`PointKind.SkinPurchase`), rüstet
 `Child.ConcurrencyStamp` → paralleler Doppelklick scheitert mit 409 statt doppelt abzubuchen.
 
 ```http
-GET  /api/v1/me/skins                 // { gems, selected, owned }
-POST /api/v1/me/skins/{skinId}/purchase   // Gems abbuchen + ausrüsten
-POST /api/v1/me/skins/{skinId}/equip      // bereits besessenen Skin auswählen
+GET  /api/v1/student/me/skins                 // { gems, selected, owned }
+POST /api/v1/student/me/skins/{skinId}/purchase   // Gems abbuchen + ausrüsten
+POST /api/v1/student/me/skins/{skinId}/equip      // bereits besessenen Skin auswählen
 ```
 
 ### Angebote (🪙 Münzen, Direktkauf + Erfüllung)
@@ -255,21 +255,21 @@ Das Konto zeigt dem Sohn „gekauft am … – erfüllt am …".
 
 ```http
 # Vater — Angebote verwalten & Käufe entscheiden
-POST   /api/v1/children/{childId}/rewards        { "title":"1 Stunde Zocken","cost":400,"period":"Weekly","quantity":5 }
-GET    /api/v1/children/{childId}/rewards                                   // Definitionen
-PATCH  /api/v1/children/{childId}/rewards/{id}    { "period":"Daily","quantity":2,"active":true }
-DELETE /api/v1/children/{childId}/rewards/{id}
-GET    /api/v1/children/{childId}/rewards/redemptions?status=Purchased      // offene Käufe
-POST   /api/v1/children/{childId}/rewards/redemptions/{id}/fulfill          // erfüllt
-POST   /api/v1/children/{childId}/rewards/redemptions/{id}/cancel           // storniert + rückerstattet
+POST   /api/v1/supervisor/children/{childId}/rewards        { "title":"1 Stunde Zocken","cost":400,"period":"Weekly","quantity":5 }
+GET    /api/v1/supervisor/children/{childId}/rewards                                   // Definitionen
+PATCH  /api/v1/supervisor/children/{childId}/rewards/{id}    { "period":"Daily","quantity":2,"active":true }
+DELETE /api/v1/supervisor/children/{childId}/rewards/{id}
+GET    /api/v1/supervisor/children/{childId}/rewards/redemptions?status=Purchased      // offene Käufe
+POST   /api/v1/supervisor/children/{childId}/rewards/redemptions/{id}/fulfill          // erfüllt
+POST   /api/v1/supervisor/children/{childId}/rewards/redemptions/{id}/cancel           // storniert + rückerstattet
 
 # Sohn — Angebote sehen & direkt kaufen (Salden via /me/points)
-GET    /api/v1/me/rewards                              // Aggregat: { available[…], redemptions[…] }
-GET    /api/v1/me/rewards/available[?skip=&take=]      // verfügbare Angebote (paginiert) [period,quantity,remainingThisPeriod,affordable]
-GET    /api/v1/me/rewards/available/{availableId}      // einzelnes Angebot
-GET    /api/v1/me/rewards/redemptions[?status=&skip=&take=]  // eigene Käufe (paginiert) [status,purchasedAt,fulfilledAt]
-GET    /api/v1/me/rewards/redemptions/{redemptionId}  // einzelner Kauf
-POST   /api/v1/me/rewards/available/{availableId}/purchase
+GET    /api/v1/student/me/rewards                              // Aggregat: { available[…], redemptions[…] }
+GET    /api/v1/student/me/rewards/available[?skip=&take=]      // verfügbare Angebote (paginiert) [period,quantity,remainingThisPeriod,affordable]
+GET    /api/v1/student/me/rewards/available/{availableId}      // einzelnes Angebot
+GET    /api/v1/student/me/rewards/redemptions[?status=&skip=&take=]  // eigene Käufe (paginiert) [status,purchasedAt,fulfilledAt]
+GET    /api/v1/student/me/rewards/redemptions/{redemptionId}  // einzelner Kauf
+POST   /api/v1/student/me/rewards/available/{availableId}/purchase
 ```
 
 ### Familien-Shop (🪙 Münzen + 💎 Gems, Inventar + Aktivierungsanfrage)
@@ -294,33 +294,33 @@ Ablauf (Logik in [`ShopService`](../backend/Pugling.Api/Services/ShopService.cs)
 
 ```http
 # Vater — Artikel-Katalog
-GET    /api/v1/shop/articles
-POST   /api/v1/shop/articles   { "articleNumber":"TV-001","title":"Fernsehen","unitType":"Minute","actionType":"TV" }
-PATCH  /api/v1/shop/articles/{articleId}
-DELETE /api/v1/shop/articles/{articleId}
+GET    /api/v1/supervisor/shop/articles
+POST   /api/v1/supervisor/shop/articles   { "articleNumber":"TV-001","title":"Fernsehen","unitType":"Minute","actionType":"TV" }
+PATCH  /api/v1/supervisor/shop/articles/{articleId}
+DELETE /api/v1/supervisor/shop/articles/{articleId}
 
 # Vater — Angebote je Artikel
-GET    /api/v1/shop/articles/{articleId}/listings
-POST   /api/v1/shop/articles/{articleId}/listings
+GET    /api/v1/supervisor/shop/articles/{articleId}/listings
+POST   /api/v1/supervisor/shop/articles/{articleId}/listings
        { "coinPrice":120,"gemPrice":30,"unitsPerPurchase":30,"currentStock":5,"maxStock":5,
          "refillKind":"Weekly","refillDayOfWeek":"Monday" }
-PATCH  /api/v1/shop/articles/{articleId}/listings/{listingId}
-DELETE /api/v1/shop/articles/{articleId}/listings/{listingId}
+PATCH  /api/v1/supervisor/shop/articles/{articleId}/listings/{listingId}
+DELETE /api/v1/supervisor/shop/articles/{articleId}/listings/{listingId}
 
 # Vater — Kind-Inventar, Kaufhistorie & Aktivierungsanfragen
-GET    /api/v1/children/{childId}/shop/inventory
-GET    /api/v1/children/{childId}/shop/purchases[?status=Owned]
-POST   /api/v1/children/{childId}/shop/purchases/{purchaseId}/cancel
-GET    /api/v1/children/{childId}/shop/activations[?status=Pending]
-POST   /api/v1/children/{childId}/shop/activations/{requestId}/approve
-POST   /api/v1/children/{childId}/shop/activations/{requestId}/reject
+GET    /api/v1/supervisor/children/{childId}/shop/inventory
+GET    /api/v1/supervisor/children/{childId}/shop/purchases[?status=Owned]
+POST   /api/v1/supervisor/children/{childId}/shop/purchases/{purchaseId}/cancel
+GET    /api/v1/supervisor/children/{childId}/shop/activations[?status=Pending]
+POST   /api/v1/supervisor/children/{childId}/shop/activations/{requestId}/approve
+POST   /api/v1/supervisor/children/{childId}/shop/activations/{requestId}/reject
 
 # Sohn — Shop-Übersicht, Kaufen & Aktivieren
-GET    /api/v1/me/shop            // { coins, gems, available[], inventory[], purchases[] }
-GET    /api/v1/me/shop/inventory[?skip=&take=]          // eigener Bestand (paginiert; Gegenstück zum activate-POST)
-POST   /api/v1/me/shop/listings/{listingId}/purchase
-POST   /api/v1/me/shop/inventory/{articleId}/activate   { "quantity": 30 }
-GET    /api/v1/me/shop/activations[?status=Pending]
+GET    /api/v1/student/me/shop            // { coins, gems, available[], inventory[], purchases[] }
+GET    /api/v1/student/me/shop/inventory[?skip=&take=]          // eigener Bestand (paginiert; Gegenstück zum activate-POST)
+POST   /api/v1/student/me/shop/listings/{listingId}/purchase
+POST   /api/v1/student/me/shop/inventory/{articleId}/activate   { "quantity": 30 }
+GET    /api/v1/student/me/shop/activations[?status=Pending]
 ```
 
 ---

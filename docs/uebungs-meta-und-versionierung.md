@@ -27,9 +27,9 @@ Teil, **Schema-Versionierung** für den Evolutions-Teil.
 ## Ist-Zustand
 
 - Ein Controller je Übungstyp, jeder erbt CRUD aus
-  [`ExerciseControllerBase<TConfig>`](../backend/Pugling.Api/Controllers/Learn/ExerciseControllerBase.cs);
+  [`ExerciseControllerBase<TConfig>`](../backend/Pugling.Api/Controllers/Creator/ExerciseControllerBase.cs);
   Route + `Type` + Tag sind das Einzige, was ein konkreter Controller setzt
-  ([ExerciseControllers.cs](../backend/Pugling.Api/Controllers/Learn/ExerciseControllers.cs)).
+  ([ExerciseControllers.cs](../backend/Pugling.Api/Controllers/Creator/ExerciseControllers.cs)).
 - Die typ-spezifische Config ist als JSON gespeichert, im API aber voll typisiert
   (`ExercisePayload<TConfig>` / `ExerciseResponse<TConfig>`); jeder Typ bekommt so ein eigenes
   Swagger-Schema ([ExerciseConfigs.cs](../backend/Pugling.Api/Models/ExerciseConfigs.cs)).
@@ -80,7 +80,7 @@ dass das Wissen über einen Typ implizit über mehrere Stellen verteilt ist.
 Ein Endpunkt liefert *einmal pro Typ* die Brücke zwischen Katalog, Lehrplan, Play-Route und Renderer:
 
 ```text
-GET /api/v1/learn/exercise-types
+GET /api/v1/creator/exercise-types
 ```
 
 ```jsonc
@@ -147,8 +147,8 @@ Stand 2026-07-04, rein additiv (kein bestehendes Verhalten geändert):
   `ExerciseTypeManifest` und die statische Registry `ExerciseManifests.All` mit einem Eintrag je
   `ExerciseType`. Felder: `type`, `label`, `renderer`, `schemaVersion` (überall 1), `authoringRoute`,
   `checkMode`, `playRoute`, `method`, `capabilities`. `schemaVersion` lebt **nur** hier.
-- **Endpunkt** ([Controllers/Learn/ExerciseTypesController.cs](../backend/Pugling.Api/Controllers/Learn/ExerciseTypesController.cs)):
-  `GET api/v1/learn/exercise-types` (Liste) und `.../{type}` (Einzel). `[Authorize]` ohne Rollen-
+- **Endpunkt** ([Controllers/Creator/ExerciseTypesController.cs](../backend/Pugling.Api/Controllers/Creator/ExerciseTypesController.cs)):
+  `GET api/v1/creator/exercise-types` (Liste) und `.../{type}` (Einzel). `[Authorize]` ohne Rollen-
   einschränkung – kindneutrales Manifest, das beide Rollen lesen dürfen.
 - **Tests** ([ExerciseTypeManifestTests.cs](../backend/Pugling.Api.Tests/ExerciseTypeManifestTests.cs)):
   Vollständigkeit (jeder `ExerciseType` → genau ein Eintrag) + Prüfmodus-Invarianten
@@ -174,4 +174,4 @@ Noch offen (bewusst nicht in diesem Schritt): echte Schema-Versionierung, ETag/C
 - **i18n der Labels**: statisch im Manifest (`label.de`) vs. eigener Übersetzungsweg.
 - **Verhältnis zum Lehrplan-Generator** (siehe [[uebungs-metadaten]]): Das Manifest ist
   kindneutral wie der Katalog – passt zur Vorfilter-Logik im
-  [ExerciseCatalogController](../backend/Pugling.Api/Controllers/Learn/ExerciseCatalogController.cs).
+  [ExerciseCatalogController](../backend/Pugling.Api/Controllers/Creator/ExerciseCatalogController.cs).
