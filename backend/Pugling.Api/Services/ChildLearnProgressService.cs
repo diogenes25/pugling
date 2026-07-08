@@ -44,7 +44,7 @@ public class ChildLearnProgressService(PuglingDbContext db)
 
     // Eine für die Sicht relevante Vokabelübung (zugewiesen und/oder mit Fortschritt) samt Katalog-Koordinaten.
     // Active = von mindestens einem AKTIVEN Plan des Kindes referenziert.
-    private record RelevantExercise(int ExerciseId, string Title, int ExerciseOrder,
+    internal record RelevantExercise(int ExerciseId, string Title, int ExerciseOrder,
         int ChapterId, string ChapterName, int ChapterOrder, int SubjectId, bool Active);
 
     // Roh-Aggregat einer Item-Menge: summierbar, damit sich Übung → Kapitel → Fach ohne erneute DB-Abfrage rollt.
@@ -52,7 +52,7 @@ public class ChildLearnProgressService(PuglingDbContext db)
         int Seen, int Correct, int MasterySum, DateTime? LastActivity);
 
     // Pro-Übung aggregierte Fortschrittszeile aus ItemProgress (Introduced = Zeilen, also mind. einmal beantwortet).
-    private record ProgRow(int Introduced, int Mastered, int Weak, int Seen, int Correct, int MasterySum, DateTime? LastActivity);
+    internal record ProgRow(int Introduced, int Mastered, int Weak, int Seen, int Correct, int MasterySum, DateTime? LastActivity);
 
     // EF-Projektion des Item-Blatts ohne den abgeleiteten Store-Link (im Speicher ergänzt).
     private record ItemRow(int ItemId, int ExerciseId, int VocabularyId, string Front, string Back,
@@ -144,6 +144,9 @@ public class ChildLearnProgressService(PuglingDbContext db)
                 a.LastActivity is { } d && (acc.LastActivity is null || d > acc.LastActivity) ? d : acc.LastActivity);
         return acc;
     }
+
+    /// <summary>Leerer Roll-up (Scope ohne relevante Übungen / ohne Fortschritt).</summary>
+    public static readonly MasteryRollup EmptyRollup = new(0, 0, 0, 0, 0, 0, 0, 0, null);
 
     // Ø-Beherrschung über die EINGEFÜHRTEN Items (nicht über alle), Trefferquote über gesehene Antworten.
     private static MasteryRollup ToRollup(Agg a) =>
@@ -328,5 +331,48 @@ public class ChildLearnProgressService(PuglingDbContext db)
         return page.Select(r => new ItemProgressResponse(r.ItemId, r.ExerciseId, r.VocabularyId, r.Front, r.Back,
             r.Box, ItemProgress.MaxBox, r.MasteryPercent, r.SeenCount, r.CorrectCount,
             r.IntroducedAt, r.LastAnswerAt, r.LastCorrect, VocabLink.Path + r.VocabularyId)).ToList();
+    }
+
+    /// <summary>
+    /// Lädt den relevanten Lernstand des Kindes <b>einmal</b> und liefert einen Evaluator, der daraus den
+    /// <see cref="MasteryRollup"/> für beliebige Katalog-Scopes im Speicher berechnet – ohne erneute DB-Abfragen
+    /// (Grundlage der Lernziel-Auswertung über viele Ziele hinweg).
+    /// </summary>
+    public async Task<ScopeEvaluator> LoadScopeEvaluatorAsync(int childId, CancellationToken ct = default)
+    {
+        var relevant = await LoadRelevantAsync(childId, ct);
+        var (total, prog) = relevant.Count == 0
+            ? (new Dictionary<int, int>(), new Dictionary<int, ProgRow>())
+            : await LoadAggAsync(childId, relevant.Select(r => r.ExerciseId).ToList(), ct);
+        return new ScopeEvaluator(relevant, total, prog);
+    }
+
+    /// <summary>Berechnet Roll-ups für Katalog-Scopes aus einem einmal geladenen Lernstand-Snapshot.</summary>
+    public sealed class ScopeEvaluator
+    {
+        // Private-Typen im Konstruktor → bewusst privater Ctor; nur die umschließende Klasse erzeugt den Evaluator.
+        private readonly IReadOnlyList<RelevantExercise> _relevant;
+        private readonly IReadOnlyDictionary<int, int> _total;
+        private readonly IReadOnlyDictionary<int, ProgRow> _prog;
+
+        internal ScopeEvaluator(IReadOnlyList<RelevantExercise> relevant,
+            IReadOnlyDictionary<int, int> total, IReadOnlyDictionary<int, ProgRow> prog)
+        {
+            _relevant = relevant;
+            _total = total;
+            _prog = prog;
+        }
+
+        /// <summary>Roll-up für einen Scope (Fach, optional Kapitel/Übung). Leerer Roll-up, wenn nichts passt.</summary>
+        public MasteryRollup For(int subjectId, int? chapterId, int? exerciseId)
+        {
+            var parts = _relevant
+                .Where(r => r.SubjectId == subjectId
+                    && (chapterId is null || r.ChapterId == chapterId)
+                    && (exerciseId is null || r.ExerciseId == exerciseId))
+                .Select(r => AggFor(r.ExerciseId, _total, _prog))
+                .ToList();
+            return parts.Count == 0 ? EmptyRollup : ToRollup(Combine(parts));
+        }
     }
 }

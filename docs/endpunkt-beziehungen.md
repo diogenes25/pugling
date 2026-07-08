@@ -142,7 +142,25 @@ sie bleibt mit **`active: false`** sichtbar. `ItemProgress` kann keine gelöscht
 über `ExerciseItem`), daher gibt es keine „toten" Fortschrittszeilen; eine hart gelöschte Übung lebt nur
 noch im Wort-Rollup der flachen Sicht (`ItemReviewEvent` mit denormalisierter `VocabularyId`) weiter.
 
-## 4. Was der Fortschritt auslöst: Punkte & Gamification
+## 4. Lernziele: Ergebnis-Ziele auf der Auswertung
+
+Der Vater setzt **Beherrschungs-/Abdeckungsziele** je Kind auf einem Katalog-Scope (Fach/Kapitel/Übung);
+der Status (`open` / `achieved` / `overdue`) wird **live** aus denselben Aggregaten wie in §3 berechnet –
+kein materialisierter Zustand, keine Belohnung (v1). Plan-übergreifend: das Ziel hängt am Kind + Scope
+(nicht an einer Position) und überlebt das Abhängen einer Übung.
+
+| Endpunkt | Wohin |
+| --- | --- |
+| `GET/POST /children/{childId}/learn-goals` · `GET/PATCH/DELETE …/{goalId}` | [LearnGoalsController](../backend/Pugling.Api/Controllers/Learn/LearnGoalsController.cs) → [LearnGoalService](../backend/Pugling.Api/Services/LearnGoalService.cs) |
+
+- **Metriken** bilden direkt Felder des `MasteryRollup` (§3) ab: `AvgMastery`, `Coverage`,
+  `MasteredPercent` (jeweils „≥ Zielwert") und `MaxWeakItems` („≤ Zielwert").
+- **Lesen**: Vater **und** Kind (Motivation); **Schreiben**: nur Vater. Filter `?subjectId=`/`?status=`.
+- **Abgrenzung:** das plan-gebundene Pflicht-Ziel der Position (`GoalCadence`, Tag/Woche) und die
+  aktivitätsbasierten [Missionen](../wiki/05-punkte-und-bonus.md) sind eigene Konzepte – Lernziele messen
+  den **Lernstand** (Ergebnis), nicht die Aktivität.
+
+## 5. Was der Fortschritt auslöst: Punkte & Gamification
 
 | Beziehung | Endpunkt(e) | Wohin |
 | --- | --- | --- |

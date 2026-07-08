@@ -40,6 +40,7 @@ Kompakter Überblick über alle Routen. **Autoritative Quelle bleibt Swagger** (
 | V | `POST /children/{childId}/points` | manuelle Buchung `{ amount, reason }` |
 | A | `GET /children/{childId}/vocabulary-progress` · `…/{itemId}` · `…/{itemId}/history` · `…/by-word` | Vokabel-Lernstand des Kindes, **flach** (Item + Wort-Rollup + Historie) |
 | A | `GET /children/{childId}/learn/subjects[/{s}]` · `…/{s}/chapters` · `…/{s}/chapters/{c}/vocabulary[/{exerciseId}/items]` | Vokabel-Lernstand **hierarchisch** (Fach→Kapitel→Übung→Item, Aggregate + `active`-Flag; `search`/`sort`/`active`/Paging) |
+| A/V | `GET /children/{childId}/learn-goals[/{goalId}]` (lesen: Vater/Kind) · `POST/PATCH/DELETE` (nur Vater) | **Lernziele** (Beherrschung/Abdeckung je Scope), live ausgewertet (`open`/`achieved`/`overdue`); Filter `?subjectId=&status=` |
 | V | `GET/POST /children/{childId}/missions` · `PATCH/DELETE …/{missionId}` | Missionen definieren |
 | V | `GET/POST /children/{childId}/achievements` · `PATCH/DELETE …/{achievementId}` | Auszeichnungen definieren |
 | V | `GET/POST /children/{childId}/timetable` | Stundenplan (Fach × Wochentag) |
