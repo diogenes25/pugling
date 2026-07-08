@@ -17,13 +17,15 @@ public record ExercisePayload<TConfig>(string Title, int OrderIndex, int RewardP
     SuggestedBonus? SuggestedBonus = null,
     int? GradeMin = null, int? GradeMax = null, SchoolTypes SchoolTypes = SchoolTypes.None,
     string? Source = null, int? CategoryId = null, string? Description = null,
-    bool DefaultUseLeitner = false, bool DefaultRequireTypedTest = false, int? DefaultStage = null);
+    bool DefaultUseLeitner = false, bool DefaultRequireTypedTest = false, int? DefaultStage = null,
+    int? DefaultItemCount = null);
 
 /// <summary>Übung in der Antwort. <paramref name="IsOwn"/> zeigt, ob der anfragende Vater Autor ist (Editier-/Löschrecht).</summary>
 public record ExerciseResponse<TConfig>(int Id, int ChapterId, string Type, string Title,
     int OrderIndex, int RewardPoints, DateTime CreatedAt, TConfig Config, SuggestedBonus? SuggestedBonus,
     int? GradeMin, int? GradeMax, SchoolTypes SchoolTypes, string? Source, int? CategoryId, string? CategoryName,
-    int? AuthorFatherId, bool IsOwn, string? Description, bool DefaultUseLeitner, bool DefaultRequireTypedTest);
+    int? AuthorFatherId, bool IsOwn, string? Description, bool DefaultUseLeitner, bool DefaultRequireTypedTest,
+    int? DefaultStage, int? DefaultItemCount);
 
 /// <summary>
 /// Gemeinsame CRUD-Logik für alle Übungstypen unter einem Kapitel.
@@ -122,7 +124,7 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db) : Con
         new(e.Id, e.ChapterId, e.Type.ToString(), e.Title, e.OrderIndex, e.RewardPoints, e.CreatedAt, ConfigForResponse(e), e.SuggestedBonus,
             e.GradeMin, e.GradeMax, e.SchoolTypes, e.Source, e.CategoryId, e.Category?.Name,
             e.AuthorFatherId, ClaimsPrincipalExtensions.IsOwnedBy(e.AuthorFatherId, fid), e.Description,
-            e.DefaultUseLeitner, e.DefaultRequireTypedTest);
+            e.DefaultUseLeitner, e.DefaultRequireTypedTest, e.DefaultStage, e.DefaultItemCount);
 
     /// <summary>Liste der Übungen dieses Typs im Kapitel.</summary>
     /// <param name="subjectId">Fach, zu dem das Kapitel gehört.</param>
@@ -188,6 +190,7 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db) : Con
             DefaultUseLeitner = body.DefaultUseLeitner,
             DefaultRequireTypedTest = body.DefaultRequireTypedTest,
             DefaultStage = body.DefaultStage,
+            DefaultItemCount = body.DefaultItemCount,
             // Autor = der anlegende Vater. Sichert ihm später das alleinige Editier-/Löschrecht (Katalog bleibt global lesbar).
             AuthorFatherId = User.FatherId(),
         };
@@ -231,6 +234,7 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db) : Con
         exercise.DefaultUseLeitner = body.DefaultUseLeitner;
         exercise.DefaultRequireTypedTest = body.DefaultRequireTypedTest;
         exercise.DefaultStage = body.DefaultStage;
+        exercise.DefaultItemCount = body.DefaultItemCount;
         await db.SaveChangesAsync();
         await AfterSaveAsync(exercise, config, isCreate: false);
 

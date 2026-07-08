@@ -105,7 +105,7 @@ examples:
               "description": "Gemeinsam ins Kino – der Sohn sucht den Film aus.",
               "unitType": "Mal",
               "actionType": "Ausflug",
-              "createdAt": "2026-07-07T21:03:33.5077475"
+              "createdAt": "2026-07-07T22:32:49.3689671"
             },
             {
               "id": 2,
@@ -114,7 +114,7 @@ examples:
               "description": "Konsolen- oder PC-Spielzeit; wöchentliches Budgetmodell.",
               "unitType": "Minute",
               "actionType": "Zocken",
-              "createdAt": "2026-07-07T21:03:33.5074052"
+              "createdAt": "2026-07-07T22:32:49.3679915"
             },
             {
               "id": 3,
@@ -123,7 +123,7 @@ examples:
               "description": "Kleine Nascherei als Lernanreiz – z. B. Gummibären oder Schokolade.",
               "unitType": "Gramm",
               "actionType": "Suessigkeit",
-              "createdAt": "2026-07-07T21:03:33.507747"
+              "createdAt": "2026-07-07T22:32:49.3689634"
             },
             {
               "id": 1,
@@ -132,7 +132,7 @@ examples:
               "description": "Bildschirmzeit nach dem Lernen – täglich abrufbar.",
               "unitType": "Minute",
               "actionType": "TV",
-              "createdAt": "2026-07-07T21:03:33.5060094"
+              "createdAt": "2026-07-07T22:32:49.3655964"
             },
             {
               "id": 5,
@@ -141,7 +141,7 @@ examples:
               "description": "Bildschirmzeit in Minuten",
               "unitType": "Minute",
               "actionType": "TV",
-              "createdAt": "2026-07-07T21:03:49.1266354"
+              "createdAt": "2026-07-07T22:33:06.6311137"
             }
           ]
   - name: Artikel auflisten (Suche)
@@ -180,7 +180,7 @@ examples:
               "description": "Bildschirmzeit nach dem Lernen – täglich abrufbar.",
               "unitType": "Minute",
               "actionType": "TV",
-              "createdAt": "2026-07-07T21:03:33.5060094"
+              "createdAt": "2026-07-07T22:32:49.3655964"
             },
             {
               "id": 5,
@@ -189,7 +189,7 @@ examples:
               "description": "Bildschirmzeit in Minuten",
               "unitType": "Minute",
               "actionType": "TV",
-              "createdAt": "2026-07-07T21:03:49.1266354"
+              "createdAt": "2026-07-07T22:33:06.6311137"
             }
           ]
 

@@ -110,7 +110,7 @@ examples:
               "gemPrice": 0,
               "unitsPerPurchase": 30,
               "status": "Owned",
-              "purchasedAt": "2026-07-07T21:03:49.8639377",
+              "purchasedAt": "2026-07-07T22:33:07.9444138",
               "closedAt": null,
               "canCancel": true
             }

@@ -52,7 +52,9 @@ public class KlassenarbeitenTests(PuglingWebAppFactory factory) : IClassFixture<
 
         var id = (await (await father.PostAsJsonAsync("/api/v1/class-tests", new
         {
-            childId = 1, title = "Zuweis-Probe", scheduledDate = "2099-02-01",
+            childId = 1,
+            title = "Zuweis-Probe",
+            scheduledDate = "2099-02-01",
         })).Content.ReadFromJsonAsync<JsonElement>()).GetProperty("klassenarbeit").GetProperty("id").GetInt32();
 
         // Übung zuweisen

@@ -52,6 +52,7 @@ POST /api/v1/learn/subjects/{subjectId}/chapters/{chapterId}/vocabulary
     ]
   },
   "defaultStage": 2,
+  "defaultItemCount": 20,
   "defaultUseLeitner": true,
   "defaultRequireTypedTest": true,
   "suggestedBonus": {
@@ -63,6 +64,14 @@ POST /api/v1/learn/subjects/{subjectId}/chapters/{chapterId}/vocabulary
   }
 }
 ```
+
+Der Request ist gültig, obwohl die Response die Vokabeln nicht mehr in `config.items` zurückliefert.
+`defaultStage` und `defaultItemCount` werden als Übungs-Defaults gespeichert und in der `ExerciseResponse`
+zurückgegeben. Für die tatsächliche Vokabelmenge ist die Item-Subressource maßgeblich.
+
+`rewardPoints` ist aktuell weiterhin ein Pflichtfeld des Katalog-DTOs und taucht in Katalog-/Brief-Responses
+auf. Die produktiven Lernpunkte entstehen aber über `PlanPosition` (`newContentPoints`, `pointsGoalMet`,
+Combo/Speed) und nicht mehr direkt über dieses Katalogfeld.
 
 Bei Vokabelübungen ist `config.items` nur Authoring-Payload. Der Server legt fehlende Store-Vokabeln an,
 materialisiert die Übungsmenge in `ExerciseItem`-Zeilen und gibt die Config danach ohne Items zurück.
@@ -133,32 +142,34 @@ PATCH /api/v1/study-plans/{planId}
 POST /api/v1/study-plans/{planId}/positions
 {
   "exerciseId": 13,
-  "order": 0,
-  "stage": 4,
-  "itemCount": null,
-  "scope": "All",
   "cadence": "Daily",
+  "orderStrategy": "WeakestFirst",
   "goalThreshold": 80,
-  "requireTypedTest": true,
-  "useLeitner": true,
-  "maxBox": 5,
-  "boxIntervalDays": [0, 1, 2, 4, 7, 14],
   "stageSchedule": [
     { "dayNumber": 1, "stage": 2 },
     { "dayNumber": 5, "stage": 3 },
     { "dayNumber": 8, "stage": 4 }
-  ],
-  "pointsGoalMet": 20,
-  "newContentPoints": 12,
-  "comboThreshold": 5,
-  "comboBonusPoints": 5,
-  "speedThresholdSeconds": 8,
-  "speedBonusPoints": 3
+  ]
 }
 ```
 
-Leere Felder erben Defaults der Übung: `stage`/`itemCount` bleiben dann `null`, `requireTypedTest`,
-`useLeitner` und Bonuswerte kommen aus der Exercise-Konfiguration bzw. `SuggestedBonus`.
+Das ist der sinnvolle Minimal-Request für die oben angelegte Vokabelübung: `defaultUseLeitner`,
+`defaultRequireTypedTest` und `suggestedBonus` kommen bereits von der Exercise. `exerciseId` reicht
+technisch aus; alles Weitere sind Overrides. Leere Felder erben Defaults der Übung: `stage`/`itemCount`
+bleiben dann `null`, `requireTypedTest` und `useLeitner` kommen aus der Exercise, Bonuswerte aus
+`SuggestedBonus` bzw. den Modell-Defaults.
+
+Nur echte Abweichungen sendest du zusätzlich, z. B. eine feste Stufe ohne Fahrplan oder eigene Intervalle:
+
+```json
+{
+  "exerciseId": 13,
+  "stage": 4,
+  "useLeitner": true,
+  "maxBox": 6,
+  "boxIntervalDays": [0, 1, 2, 4, 7, 14, 30]
+}
+```
 
 ### Felder (`CreatePositionDto`)
 
@@ -167,9 +178,10 @@ Leere Felder erben Defaults der Übung: `stage`/`itemCount` bleiben dann `null`,
 | `exerciseId` *(req)* | — | Katalog-Übung, deren Config gespielt wird. |
 | `order` | nächster Index | Reihenfolge im Plan. |
 | `stage` | Übungs-Default | Verfahrensabhängige Spiel-/Teststufe. |
-| `itemCount` | alle | Wie viele Inhaltsatome aus der Übung genutzt werden. |
+| `itemCount` | Übungs-Default/alle | Wie viele Inhaltsatome aus der Übung genutzt werden. |
 | `scope` | `All` | `All`, `New` oder `Old`. |
 | `cadence` | `None` | `Daily`/`Weekly` macht daraus ein Pflichtziel. |
+| `orderStrategy` | `WeakestFirst` | Ausspielreihenfolge: `WeakestFirst`, `Serial`, `Random`, `NewestWeighted`. |
 | `goalThreshold` | typabhängig | Bei Tests Prozentgrenze, bei Check-Aufgaben Anzahl/Schwelle. |
 | `requireTypedTest` | Übungs-Default | Nur getippte/gewertete Stufen zählen als echt. |
 | `useLeitner` | Übungs-Default | Karteikasten-Fälligkeit aktivieren. |
@@ -179,6 +191,13 @@ Leere Felder erben Defaults der Übung: `stage`/`itemCount` bleiben dann `null`,
 | `pointsGoalMet` | 20 | Münzen für ein erfülltes Positionsziel je Periode. |
 | `newContentPoints` | Bonus-Vorschlag/10 | Basispunkte für erstmals geübten Inhalt. |
 | `combo*`, `speed*` | Bonus-Vorschlag | Gem-Boni für Trefferfolgen und schnelle Antworten. |
+
+Nicht im Request enthalten sind interne/abgeleitete Felder wie `positionId`, `exerciseTitle` oder
+`exerciseType`; sie kommen aus der Response bzw. aus Serverlogik.
+Ebenfalls weglassen solltest du Felder, die nur Defaults wiederholen: `order: 0`, `scope: "All"`,
+`itemCount: null`, `orderStrategy: "WeakestFirst"`, `maxBox: 5`, `boxIntervalDays: [0,1,2,4,7,14]`,
+`pointsGoalMet: 20` sowie Bonuswerte, die identisch zum `suggestedBonus` der Übung sind. `stage` ist
+wirkungslos, wenn ein `stageSchedule` schon ab Tag 1 greift; dann liefert der Fahrplan immer die Stufe.
 
 Positionen ändern oder löschen:
 
@@ -217,15 +236,43 @@ Der Sohn spielt immer eine konkrete Position:
 
 ```http
 POST /api/v1/study-plans/{planId}/positions/{positionId}/practice-sessions
+{ "mode": "Lern" }
+
 GET  /api/v1/study-plans/{planId}/positions/{positionId}/practice-sessions/{sessionId}/cards
+GET  /api/v1/study-plans/{planId}/positions/{positionId}/practice-sessions/{sessionId}/next
+
 POST /api/v1/study-plans/{planId}/positions/{positionId}/practice-sessions/{sessionId}/review
+{ "itemIndex": 0, "givenAnswer": "hallo" }
+
+POST /api/v1/study-plans/{planId}/positions/{positionId}/practice-sessions/{sessionId}/review
+{ "itemIndex": 1, "wasKnown": true }
+
 POST /api/v1/study-plans/{planId}/positions/{positionId}/practice-sessions/{sessionId}/heartbeat
+{ "seconds": 60, "active": true }
+
 POST /api/v1/study-plans/{planId}/positions/{positionId}/practice-sessions/{sessionId}/end
 
 POST /api/v1/study-plans/{planId}/positions/{positionId}/tests
+{ }
+
 GET  /api/v1/study-plans/{planId}/positions/{positionId}/tests/{attemptId}
+
+GET  /api/v1/study-plans/{planId}/positions/{positionId}/tests/{attemptId}/next
+
+POST /api/v1/study-plans/{planId}/positions/{positionId}/tests/{attemptId}/answer
+{ "itemIndex": 0, "givenAnswer": "hallo" }
+
+POST /api/v1/study-plans/{planId}/positions/{positionId}/tests/{attemptId}/answer
+{ "itemIndex": 1, "wasKnown": true }
+
 POST /api/v1/study-plans/{planId}/positions/{positionId}/tests/{attemptId}/submit
+{ }
 ```
+Im Lernmodus ist `next` der normale Weg: Der Server führt den Cursor und liefert nach `review` direkt die
+nächste Karte mit. `cards` bleibt für Info-Modus und Offline-Fallback. Tests laufen ebenfalls
+servergeführt: `next` liefert die aktuelle Frage, `answer` speichert die Antwort ohne Feedback, `submit`
+schließt den Versuch ab und liefert erst dann Ergebnis und Lösungen. Für den Bulk-/Fallback-Modus kann
+`submit` weiterhin eine `answers`-Liste enthalten; im normalen Klausurmodus reicht `{}`.
 
 Plan-Übersicht und Fortschritt:
 
@@ -256,7 +303,7 @@ POST /api/v1/learn/subjects/{subjectId}/chapters/{chapterId}/vocabulary
 { "title":"Begrüßungen", "orderIndex":1, "rewardPoints":10,
   "config": { "direction":"front-to-back", "sourceLang":"fr", "targetLang":"de",
     "items":[{"front":"bonjour","back":"hallo"},{"front":"merci","back":"danke"}] },
-  "defaultStage":2, "defaultUseLeitner":true, "defaultRequireTypedTest":true }
+  "defaultStage":2, "defaultItemCount":20, "defaultUseLeitner":true, "defaultRequireTypedTest":true }
 → 201 { "id": 13, … }
 
 # 3) Plan-Container
@@ -266,10 +313,8 @@ POST /api/v1/study-plans
 
 # 4) Position
 POST /api/v1/study-plans/42/positions
-{ "exerciseId":13, "cadence":"Daily", "useLeitner":true, "requireTypedTest":true,
-  "stageSchedule":[{"dayNumber":1,"stage":2},{"dayNumber":5,"stage":3},{"dayNumber":8,"stage":4}],
-  "newContentPoints":12, "comboThreshold":5, "comboBonusPoints":5,
-  "speedThresholdSeconds":8, "speedBonusPoints":3 }
+{ "exerciseId":13, "cadence":"Daily", "goalThreshold":80,
+  "stageSchedule":[{"dayNumber":1,"stage":2},{"dayNumber":5,"stage":3},{"dayNumber":8,"stage":4}] }
 → 201 { "id": 7, "exerciseTitle":"Begrüßungen", … }
 
 # 5) Kontrolle

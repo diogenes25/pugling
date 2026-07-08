@@ -129,7 +129,9 @@ Response — `HTTP 201`:
   "isOwn": true,
   "description": null,
   "defaultUseLeitner": false,
-  "defaultRequireTypedTest": false
+  "defaultRequireTypedTest": false,
+  "defaultStage": null,
+  "defaultItemCount": null
 }
 ```
 

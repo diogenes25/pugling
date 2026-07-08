@@ -91,9 +91,9 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
         return [.. choices.Skip(shift), .. choices.Take(shift)];
     }
 
-    /// <summary>Anzahl genutzter Inhalte der Position (Override, sonst alle vorhandenen).</summary>
+    /// <summary>Anzahl genutzter Inhalte der Position (Override, Übungs-Default, sonst alle vorhandenen).</summary>
     public int PoolSize(PlanPosition pos, int available) =>
-        pos.ItemCount is > 0 ? Math.Min(pos.ItemCount.Value, available) : available;
+        (pos.ItemCount ?? pos.Exercise?.DefaultItemCount) is > 0 and var count ? Math.Min(count, available) : available;
 
     /// <summary>
     /// Wählt die Item-Indizes, die heute dran sind: begrenzt auf den Pool (<see cref="PlanPosition.ItemCount"/>),

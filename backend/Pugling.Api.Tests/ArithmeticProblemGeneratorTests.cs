@@ -12,15 +12,15 @@ public class ArithmeticProblemGeneratorTests
     private static ArithmeticDrillConfig Config(
         int count = 20, int min = 1, int max = 12, bool allowNeg = false, bool wholeDiv = true,
         params ArithmeticOperation[] ops) => new()
-    {
-        Operations = ops.Length > 0 ? [.. ops] : [ArithmeticOperation.Addition, ArithmeticOperation.Subtraction,
+        {
+            Operations = ops.Length > 0 ? [.. ops] : [ArithmeticOperation.Addition, ArithmeticOperation.Subtraction,
             ArithmeticOperation.Multiplication, ArithmeticOperation.Division],
-        MinOperand = min,
-        MaxOperand = max,
-        ProblemCount = count,
-        AllowNegativeResults = allowNeg,
-        DivisionMustBeWhole = wholeDiv,
-    };
+            MinOperand = min,
+            MaxOperand = max,
+            ProblemCount = count,
+            AllowNegativeResults = allowNeg,
+            DivisionMustBeWhole = wholeDiv,
+        };
 
     [Fact]
     public void GleicherSeed_LiefertIdentischenSatz()

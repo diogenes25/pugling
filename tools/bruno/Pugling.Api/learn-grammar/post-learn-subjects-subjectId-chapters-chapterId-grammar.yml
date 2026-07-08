@@ -32,7 +32,8 @@ http:
         "description": "string",
         "defaultUseLeitner": false,
         "defaultRequireTypedTest": false,
-        "defaultStage": "string"
+        "defaultStage": "string",
+        "defaultItemCount": "string"
       }
   auth: inherit
 

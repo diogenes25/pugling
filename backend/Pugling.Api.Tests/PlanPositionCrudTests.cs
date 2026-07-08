@@ -83,6 +83,66 @@ public class PlanPositionCrudTests(PuglingWebAppFactory factory) : IClassFixture
     }
 
     [Fact]
+    public async Task Position_UebernimmtExerciseDefaults_UndOrderStrategyIstApiSichtbar()
+    {
+        var father = await TestApi.FatherAsync(_factory);
+        var subjectId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/learn/subjects", new { name = "Defaults-Position" }));
+        var chapterId = await TestApi.IdAsync(await father.PostAsJsonAsync(
+            $"/api/v1/learn/subjects/{subjectId}/chapters", new { name = "Unit", orderIndex = 1 }));
+        var exerciseId = await TestApi.IdAsync(await father.PostAsJsonAsync(
+            $"/api/v1/learn/subjects/{subjectId}/chapters/{chapterId}/vocabulary", new
+            {
+                title = "Nur zwei Karten",
+                orderIndex = 1,
+                rewardPoints = 10,
+                defaultStage = (int)TestStage.FreeText,
+                defaultItemCount = 2,
+                defaultUseLeitner = true,
+                defaultRequireTypedTest = true,
+                config = new
+                {
+                    direction = "front-to-back",
+                    sourceLang = "en",
+                    targetLang = "de",
+                    items = new[]
+                    {
+                        new { front = "a", back = "1" },
+                        new { front = "b", back = "2" },
+                        new { front = "c", back = "3" },
+                    },
+                },
+            }));
+        var planId = await EmptyPlanAsync(father);
+
+        var created = await (await father.PostAsJsonAsync($"/api/v1/study-plans/{planId}/positions", new
+        {
+            exerciseId,
+            orderStrategy = "Serial",
+        })).Content.ReadFromJsonAsync<JsonElement>();
+        var positionId = created.GetProperty("id").GetInt32();
+
+        Assert.Equal(JsonValueKind.Null, created.GetProperty("stage").ValueKind);
+        Assert.Equal(JsonValueKind.Null, created.GetProperty("itemCount").ValueKind);
+        Assert.Equal("Serial", created.GetProperty("orderStrategy").GetString());
+        JsonAssert.True(created, "useLeitner");
+        JsonAssert.True(created, "requireTypedTest");
+
+        var child = await TestApi.ChildAsync(_factory);
+        var baseUrl = TestApi.PracticeBase(planId, positionId);
+        var session = await (await child.PostAsJsonAsync(baseUrl, new { mode = "Info" })).Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal(2, session.GetProperty("total").GetInt32());
+
+        var cards = await child.GetFromJsonAsync<JsonElement>($"{baseUrl}/{session.GetProperty("id").GetInt32()}/cards");
+        Assert.Equal(new[] { 0, 1 }, cards.EnumerateArray().Select(card => card.GetProperty("itemIndex").GetInt32()).ToArray());
+
+        var patched = await (await father.PatchAsJsonAsync($"/api/v1/study-plans/{planId}/positions/{positionId}", new
+        {
+            orderStrategy = "Random",
+        })).Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal("Random", patched.GetProperty("orderStrategy").GetString());
+    }
+
+    [Fact]
     public async Task Plan_Loeschen_EntferntPlanMitGespielterPosition()
     {
         var father = await TestApi.FatherAsync(_factory);

@@ -115,14 +115,20 @@ public class ShopService(PuglingDbContext db, WalletService wallet)
         if (listing.CoinPrice > 0)
             db.ChildPoints.Add(new ChildPointsEntry
             {
-                ChildId = childId, Amount = -listing.CoinPrice, Kind = PointKind.ShopCoins,
-                Reason = $"Shop-Angebot gekauft: {article.Title}", CreatedAt = nowUtc,
+                ChildId = childId,
+                Amount = -listing.CoinPrice,
+                Kind = PointKind.ShopCoins,
+                Reason = $"Shop-Angebot gekauft: {article.Title}",
+                CreatedAt = nowUtc,
             });
         if (listing.GemPrice > 0)
             db.ChildPoints.Add(new ChildPointsEntry
             {
-                ChildId = childId, Amount = -listing.GemPrice, Kind = PointKind.ShopGems,
-                Reason = $"Shop-Angebot gekauft: {article.Title}", CreatedAt = nowUtc,
+                ChildId = childId,
+                Amount = -listing.GemPrice,
+                Kind = PointKind.ShopGems,
+                Reason = $"Shop-Angebot gekauft: {article.Title}",
+                CreatedAt = nowUtc,
             });
 
         listing.CurrentStock -= 1;
@@ -150,7 +156,8 @@ public class ShopService(PuglingDbContext db, WalletService wallet)
         if (inventory is null)
             db.ChildInventories.Add(new ChildInventory
             {
-                ChildId = childId, ShopArticleId = article.Id,
+                ChildId = childId,
+                ShopArticleId = article.Id,
                 Quantity = listing.UnitsPerPurchase,
             });
         else
@@ -187,14 +194,20 @@ public class ShopService(PuglingDbContext db, WalletService wallet)
         if (purchase.CoinPrice > 0)
             db.ChildPoints.Add(new ChildPointsEntry
             {
-                ChildId = childId, Amount = purchase.CoinPrice, Kind = PointKind.ShopCoins,
-                Reason = $"Shop-Kauf storniert (Rückerstattung): {purchase.Title}", CreatedAt = nowUtc,
+                ChildId = childId,
+                Amount = purchase.CoinPrice,
+                Kind = PointKind.ShopCoins,
+                Reason = $"Shop-Kauf storniert (Rückerstattung): {purchase.Title}",
+                CreatedAt = nowUtc,
             });
         if (purchase.GemPrice > 0)
             db.ChildPoints.Add(new ChildPointsEntry
             {
-                ChildId = childId, Amount = purchase.GemPrice, Kind = PointKind.ShopGems,
-                Reason = $"Shop-Kauf storniert (Rückerstattung): {purchase.Title}", CreatedAt = nowUtc,
+                ChildId = childId,
+                Amount = purchase.GemPrice,
+                Kind = PointKind.ShopGems,
+                Reason = $"Shop-Kauf storniert (Rückerstattung): {purchase.Title}",
+                CreatedAt = nowUtc,
             });
 
         // Inventar um die stornierte Menge reduzieren (soweit noch vorhanden)

@@ -188,6 +188,8 @@ export interface ExerciseSummary {
   categoryId: number | null;
   categoryName: string | null;
   /** Übungs-Standards für Leitner/getippte Tests (Position erbt sie beim Hinzufügen). */
+  defaultStage: number | null;
+  defaultItemCount: number | null;
   defaultUseLeitner: boolean;
   defaultRequireTypedTest: boolean;
   /** Autor der Übung (Vater); null = geseedete System-Übung. Grundlage der „von …"-Attribution. */
@@ -349,6 +351,8 @@ export interface CreateExercisePayload {
   defaultRequireTypedTest?: boolean;
   /** Standard-Abfrageform (TestStage-Wert) – v. a. für Vokabeln (z. B. Multiple-Choice = 6). */
   defaultStage?: number | null;
+  /** Empfohlene Anzahl genutzter Inhalte je Position; null = alle. */
+  defaultItemCount?: number | null;
 }
 
 // ---- Lehrpläne ----
@@ -389,6 +393,8 @@ export interface CreatePlanDto {
 export type GoalCadence = "None" | "Daily" | "Weekly";
 /** Umfang der Inhaltsauswahl einer Position aus dem Übungs-Pool. */
 export type ItemScope = "All" | "New" | "Old";
+/** Server-Reihenfolge, in der fällige Inhalte ausgespielt werden. */
+export type PracticeOrder = "WeakestFirst" | "Serial" | "Random" | "NewestWeighted";
 
 /** Stufen-Fahrplan-Eintrag (Tag → Stufe) einer Leitner-Position. */
 export interface StageStep { dayNumber: number; stage: number; }
@@ -405,6 +411,7 @@ export interface PositionResponse {
   itemCount: number | null;
   scope: ItemScope;
   cadence: GoalCadence;
+  orderStrategy: PracticeOrder;
   goalThreshold: number | null;
   requireTypedTest: boolean;
   useLeitner: boolean;
@@ -473,6 +480,7 @@ export interface CreatePositionDto {
   itemCount?: number | null;
   scope?: ItemScope;
   cadence?: GoalCadence;
+  orderStrategy?: PracticeOrder;
   goalThreshold?: number | null;
   requireTypedTest?: boolean;
   useLeitner?: boolean;

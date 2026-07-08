@@ -47,7 +47,7 @@ POST /api/v1/learn/subjects/{subjectId}/chapters/{chapterId}/vocabulary
 { "title":"Unit 1 – Basics", "orderIndex":1, "rewardPoints":10,
   "config": { "direction":"front-to-back", "sourceLang":"en", "targetLang":"de",
     "items":[{"front":"dog","back":"Hund"},{"front":"cat","back":"Katze"}] },
-  "defaultStage":2, "defaultUseLeitner":true, "defaultRequireTypedTest":true }
+  "defaultStage":2, "defaultItemCount":20, "defaultUseLeitner":true, "defaultRequireTypedTest":true }
 → { "id": 13, ... }
 ```
 

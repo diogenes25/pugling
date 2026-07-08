@@ -77,7 +77,7 @@ public class VocabAgentApiTests(PuglingWebAppFactory factory) : IClassFixture<Pu
         const string sl = "lnk";
 
         var baseForm = await CreateAsync(father, new { sourceLanguage = sl, targetLanguage = "fb", word = "swim", translation = "schwimmen" });
-        var baseKey = baseForm.GetProperty("key").GetString();
+        var baseKey = baseForm.GetProperty("key").GetString()!;
         await CreateAsync(father, new
         {
             sourceLanguage = sl,

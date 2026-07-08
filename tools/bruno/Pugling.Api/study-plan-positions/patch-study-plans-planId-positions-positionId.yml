@@ -24,6 +24,7 @@ http:
         "itemCount": "string",
         "scope": "string",
         "cadence": "string",
+        "orderStrategy": "string",
         "goalThreshold": "string",
         "requireTypedTest": "string",
         "useLeitner": "string",

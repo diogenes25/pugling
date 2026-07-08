@@ -532,8 +532,14 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
 
         // ── Artikel-CRUD ──────────────────────────────────────────────────────
         var articleEl = await Capture(father, g, "Artikel anlegen", HttpMethod.Post, "/api/v1/shop/articles",
-            new { articleNumber = "TV-900", title = "Fernsehzeit", description = "Bildschirmzeit in Minuten",
-                unitType = "Minute", actionType = "TV" }, HttpStatusCode.Created);
+            new
+            {
+                articleNumber = "TV-900",
+                title = "Fernsehzeit",
+                description = "Bildschirmzeit in Minuten",
+                unitType = "Minute",
+                actionType = "TV"
+            }, HttpStatusCode.Created);
         var articleId = articleEl.GetProperty("id").GetInt32();
 
         await Capture(father, g, "Artikel mit doppelter Nummer anlegen", HttpMethod.Post, "/api/v1/shop/articles",
@@ -553,8 +559,16 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
         // ── Angebots-CRUD ─────────────────────────────────────────────────────
         var listingEl = await Capture(father, g, "Angebot anlegen", HttpMethod.Post,
             $"/api/v1/shop/articles/{articleId}/listings",
-            new { title = "30 Min Fernsehen", description = "Einmalige Halbstunde",
-                coinPrice = 120, gemPrice = 0, unitsPerPurchase = 30, currentStock = 5, maxStock = 5 },
+            new
+            {
+                title = "30 Min Fernsehen",
+                description = "Einmalige Halbstunde",
+                coinPrice = 120,
+                gemPrice = 0,
+                unitsPerPurchase = 30,
+                currentStock = 5,
+                maxStock = 5
+            },
             HttpStatusCode.Created);
         var listingId = listingEl.GetProperty("id").GetInt32();
 

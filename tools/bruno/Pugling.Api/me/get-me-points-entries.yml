@@ -92,21 +92,21 @@ examples:
               "amount": 15,
               "kind": "Base",
               "reason": "Doku-Buchung",
-              "createdAt": "2026-07-07T21:03:41.8398339"
+              "createdAt": "2026-07-07T22:32:59.2067314"
             },
             {
               "id": 2,
               "amount": 300,
               "kind": "Achievement",
               "reason": "Willkommens-Gems",
-              "createdAt": "2026-07-07T21:03:30.9334898"
+              "createdAt": "2026-07-07T22:32:46.3221189"
             },
             {
               "id": 1,
               "amount": 50,
               "kind": "Base",
               "reason": "Startguthaben (Münzen)",
-              "createdAt": "2026-07-07T21:03:30.9334887"
+              "createdAt": "2026-07-07T22:32:46.3221179"
             }
           ]
 
