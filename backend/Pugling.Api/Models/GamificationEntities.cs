@@ -125,6 +125,8 @@ public class Reward
     public int Id { get; set; }
     public int ChildId { get; set; }
     public Child? Child { get; set; }
+    /// <summary>Ausstellender Supervisor: nur er sieht/erfüllt/storniert Käufe dieses Angebots (app-seitig erzwungen).</summary>
+    public int SupervisorId { get; set; }
     public string Title { get; set; } = "";
     /// <summary>
     /// Optionaler Bezug auf einen Lehrplan des Kindes: ist er gesetzt, wird das Angebot dem Sohn nur im
@@ -174,6 +176,8 @@ public class RewardRedemption
     /// <summary>Referenz auf das Angebot; wird auf null gesetzt, falls das Angebot später gelöscht wird.</summary>
     public int? RewardId { get; set; }
     public Reward? Reward { get; set; }
+    /// <summary>Ausstellender Supervisor (Momentaufnahme): nur er erfüllt/storniert; überlebt das Löschen des Angebots.</summary>
+    public int SupervisorId { get; set; }
     /// <summary>Titel des Angebots zum Kaufzeitpunkt (Momentaufnahme).</summary>
     public string Title { get; set; } = "";
     /// <summary>Kosten zum Kaufzeitpunkt (Momentaufnahme); maßgeblich für Abbuchung und Rückerstattung.</summary>
@@ -342,6 +346,8 @@ public class ShopPurchase
     /// <summary>Referenz auf das Angebot; wird auf null gesetzt, falls das Angebot später gelöscht wird.</summary>
     public int? ShopListingId { get; set; }
     public ShopListing? ShopListing { get; set; }
+    /// <summary>Ausstellender Supervisor (Momentaufnahme aus <c>ShopArticle.FatherId</c>): nur er storniert.</summary>
+    public int SupervisorId { get; set; }
     // Momentaufnahmen (stabile Kaufhistorie auch nach Änderung/Löschung des Angebots)
     public string ArticleNumber { get; set; } = "";
     public string Title { get; set; } = "";
@@ -371,6 +377,8 @@ public class ActivationRequest
     /// <summary>Referenz auf den Artikel; wird auf null gesetzt, falls der Artikel später gelöscht wird.</summary>
     public int? ShopArticleId { get; set; }
     public ShopArticle? ShopArticle { get; set; }
+    /// <summary>Ausstellender Supervisor (Momentaufnahme aus <c>ShopArticle.FatherId</c>): nur er genehmigt/lehnt ab.</summary>
+    public int SupervisorId { get; set; }
     /// <summary>Beantragte Menge in der Einheit des Artikels (z. B. 10 Minuten).</summary>
     public int RequestedQuantity { get; set; }
     public ActivationRequestStatus Status { get; set; } = ActivationRequestStatus.Pending;

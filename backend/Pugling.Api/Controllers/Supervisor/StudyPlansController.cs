@@ -65,7 +65,7 @@ public class StudyPlansController(PuglingDbContext db, AuthAccess access) : Cont
         else
         {
             var fid = User.FatherId();
-            scoped = scoped.Where(p => db.Children.Any(c => c.Id == p.ChildId && c.FatherId == fid));
+            scoped = scoped.Where(p => db.SupervisorLinks.Any(l => l.StudentId == p.ChildId && l.SupervisorId == fid));
             if (childId is not null) scoped = scoped.Where(p => p.ChildId == childId);
         }
         return await scoped.OrderByDescending(p => p.CreatedAt).Select(ToResponse(today)).ToListAsync();

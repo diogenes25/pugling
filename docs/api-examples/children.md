@@ -12,12 +12,11 @@ Response — `HTTP 200`:
 [
   {
     "id": 1,
-    "fatherId": 1,
     "name": "Sohn",
     "birthYear": 2015,
     "grade": null,
     "schoolType": "None",
-    "createdAt": "2026-07-08T14:33:13.1068816",
+    "createdAt": "2026-07-08T15:05:42.1038677",
     "coins": 50,
     "gems": 300
   }
@@ -41,7 +40,6 @@ Response — `HTTP 201`:
 ```json
 {
   "id": 3,
-  "fatherId": 1,
   "name": "Doku-Kind",
   "birthYear": null,
   "grade": null,
@@ -86,12 +84,11 @@ Response — `HTTP 200`:
 ```json
 {
   "id": 3,
-  "fatherId": 1,
   "name": "Doku-Kind",
   "birthYear": null,
   "grade": null,
   "schoolType": "None",
-  "createdAt": "2026-07-08T14:33:26.109774",
+  "createdAt": "2026-07-08T15:05:52.577949",
   "coins": 0,
   "gems": 0
 }
@@ -113,12 +110,11 @@ Response — `HTTP 200`:
 ```json
 {
   "id": 3,
-  "fatherId": 1,
   "name": "Doku-Kind",
   "birthYear": null,
   "grade": 4,
   "schoolType": "None",
-  "createdAt": "2026-07-08T14:33:26.109774",
+  "createdAt": "2026-07-08T15:05:52.577949",
   "coins": 0,
   "gems": 0
 }

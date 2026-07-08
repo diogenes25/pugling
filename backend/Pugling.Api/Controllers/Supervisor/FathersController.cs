@@ -32,7 +32,7 @@ public class FathersController(PuglingDbContext db, AccountService accounts) : C
     public record FatherResponse(int Id, string Name, string? Email, DateTime CreatedAt, int ChildrenCount);
 
     IQueryable<FatherResponse> Project(IQueryable<Father> q) =>
-        q.Select(f => new FatherResponse(f.Id, f.Name, f.Email, f.CreatedAt, f.Children.Count));
+        q.Select(f => new FatherResponse(f.Id, f.Name, f.Email, f.CreatedAt, f.SupervisedLinks.Count));
 
     /// <summary>Der eigene Vater-Datensatz (Selbstauskunft).</summary>
     [HttpGet]

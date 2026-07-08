@@ -565,28 +565,25 @@ public static class Seed
     {
         if (db.Fathers.Any()) return;
 
-        db.Fathers.Add(new Father
+        var father = new Father { Name = "Papa", Email = "papa@example.com", Pin = Auth.PinHasher.Hash("0000") };
+        var child = new Child
         {
-            Name = "Papa",
-            Email = "papa@example.com",
-            Pin = Auth.PinHasher.Hash("0000"),
-            Children =
+            Name = "Sohn",
+            BirthYear = 2015,
+            Pin = Auth.PinHasher.Hash("1111"),
+            // Start: ein paar Münzen (Base → Coins) für Angebote und ein paar Gems (Achievement → Gems),
+            // damit sich sofort ein Skin ausprobieren lässt.
+            PointsEntries =
             {
-                new Child
-                {
-                    Name = "Sohn",
-                    BirthYear = 2015,
-                    Pin = Auth.PinHasher.Hash("1111"),
-                    // Start: ein paar Münzen (Base → Coins) für Angebote und ein paar Gems (Achievement → Gems),
-                    // damit sich sofort ein Skin ausprobieren lässt.
-                    PointsEntries =
-                    {
-                        new ChildPointsEntry { Amount = 50, Kind = PointKind.Base, Reason = "Startguthaben (Münzen)" },
-                        new ChildPointsEntry { Amount = 300, Kind = PointKind.Achievement, Reason = "Willkommens-Gems" },
-                    }
-                }
+                new ChildPointsEntry { Amount = 50, Kind = PointKind.Base, Reason = "Startguthaben (Münzen)" },
+                new ChildPointsEntry { Amount = 300, Kind = PointKind.Achievement, Reason = "Willkommens-Gems" },
             }
-        });
+        };
+        db.Fathers.Add(father);
+        db.Children.Add(child);
+        db.SaveChanges();
+        // Betreuung Papa → Sohn (ersetzt die frühere Child.FatherId-Bindung).
+        db.SupervisorLinks.Add(new SupervisorLink { SupervisorId = father.Id, StudentId = child.Id, Relation = SupervisorRelation.Father });
         db.SaveChanges();
     }
 

@@ -1,11 +1,42 @@
 namespace Pugling.Api.Models;
 
 // Admin-Bereich: Personen-Verwaltung.
-//   Father -> Child  (+ Punkte pro Kind)
+//   Supervisor (Father) >-< Student (Child) über SupervisorLink (ein Student kann mehrere Supervisor haben)
+//   + Punkte pro Kind (ein gemeinsames Wallet über alle Supervisor).
 // Der Lern-Inhalt (Subject -> Chapter -> Exercise) liegt separat im gemeinsamen
-// learn-Katalog (siehe LearnEntities.cs). Die Zuordnung Kind <-> Katalog folgt später.
+// learn-Katalog (siehe LearnEntities.cs).
 
-/// <summary>Elternteil / Verwalter im Admin-Bereich.</summary>
+/// <summary>Verwandtschaftsrolle eines Supervisors zum Studenten (rein deskriptiv).</summary>
+public enum SupervisorRelation
+{
+    Father = 0,
+    Mother = 1,
+    Grandma = 2,
+    Grandpa = 3,
+    Guardian = 4,
+    Other = 5,
+}
+
+/// <summary>
+/// Betreuungs-Beziehung Supervisor↔Student. Ein Student kann mehrere Supervisor haben (Vater, Mutter,
+/// Oma …); jeder betreibt seinen eigenen Shop/Angebote. Das Wallet bleibt <b>gemeinsam</b> – die
+/// Zuordnung „wer löst ein" liegt am Kauf (siehe <see cref="Reward"/>/<see cref="ShopPurchase"/> etc.),
+/// nicht am Geld. Ersetzt die frühere 1:1-Bindung <c>Child.FatherId</c>.
+/// </summary>
+public class SupervisorLink
+{
+    public int Id { get; set; }
+    /// <summary>Der betreuende Erwachsene (heute ein <see cref="Father"/>-Profil).</summary>
+    public int SupervisorId { get; set; }
+    public Father? Supervisor { get; set; }
+    /// <summary>Der betreute Lernende (ein <see cref="Child"/>-Profil).</summary>
+    public int StudentId { get; set; }
+    public Child? Student { get; set; }
+    public SupervisorRelation Relation { get; set; } = SupervisorRelation.Father;
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+}
+
+/// <summary>Elternteil / Verwalter (Supervisor-Profil) im Admin-Bereich.</summary>
 public class Father
 {
     public int Id { get; set; }
@@ -15,15 +46,14 @@ public class Father
     public string Pin { get; set; } = "";
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
-    public List<Child> Children { get; set; } = new();
+    /// <summary>Von diesem Supervisor betreute Studenten (über <see cref="SupervisorLink"/>).</summary>
+    public List<SupervisorLink> SupervisedLinks { get; set; } = new();
 }
 
-/// <summary>Kind, das genau einem Vater zugeordnet ist.</summary>
+/// <summary>Lernendes Kind (Student-Profil). Kann mehrere Supervisor haben (<see cref="SupervisorLinks"/>).</summary>
 public class Child
 {
     public int Id { get; set; }
-    public int FatherId { get; set; }
-    public Father? Father { get; set; }
     public string Name { get; set; } = "";
     public int? BirthYear { get; set; }
     /// <summary>Aktuelle Klassenstufe (1–13). Steuert die Vorfilterung passender Übungen im Lehrplan-Assistenten.</summary>
@@ -56,6 +86,9 @@ public class Child
     public Guid ConcurrencyStamp { get; set; } = Guid.NewGuid();
 
     public List<ChildPointsEntry> PointsEntries { get; set; } = new();
+
+    /// <summary>Betreuende Supervisor dieses Studenten (über <see cref="SupervisorLink"/>).</summary>
+    public List<SupervisorLink> SupervisorLinks { get; set; } = new();
 }
 
 /// <summary>

@@ -47,7 +47,7 @@ public class OfferQuotaTests(PuglingWebAppFactory factory) : IClassFixture<Pugli
         var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
         var offers = scope.ServiceProvider.GetRequiredService<OfferService>();
 
-        var (childId, offer) = await SetupAsync(db, coins: 1000, quantity: 1, OfferPeriod.Weekly);
+        var (childId, offer, _) = await SetupAsync(db, coins: 1000, quantity: 1, OfferPeriod.Weekly);
 
         Assert.Equal(OfferService.OfferError.None, (await offers.PurchaseAsync(childId, offer, Monday)).Error);
         // Zweiter Kauf in derselben Woche -> erschöpft.
@@ -63,14 +63,14 @@ public class OfferQuotaTests(PuglingWebAppFactory factory) : IClassFixture<Pugli
         var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
         var offers = scope.ServiceProvider.GetRequiredService<OfferService>();
 
-        var (childId, offer) = await SetupAsync(db, coins: 1000, quantity: 1, OfferPeriod.Weekly);
+        var (childId, offer, supervisorId) = await SetupAsync(db, coins: 1000, quantity: 1, OfferPeriod.Weekly);
 
         var first = await offers.PurchaseAsync(childId, offer, Monday);
         Assert.Equal(OfferService.OfferError.None, first.Error);
         Assert.Equal(OfferService.OfferError.QuotaExceeded, (await offers.PurchaseAsync(childId, offer, Monday)).Error);
 
         // Storno gibt den Slot frei -> erneuter Kauf in derselben Woche klappt wieder.
-        Assert.Equal(OfferService.OfferError.None, (await offers.CancelAsync(childId, first.Redemption!.Id, Monday)).Error);
+        Assert.Equal(OfferService.OfferError.None, (await offers.CancelAsync(supervisorId, childId, first.Redemption!.Id, Monday)).Error);
         Assert.Equal(OfferService.OfferError.None, (await offers.PurchaseAsync(childId, offer, Monday)).Error);
     }
 
@@ -81,24 +81,26 @@ public class OfferQuotaTests(PuglingWebAppFactory factory) : IClassFixture<Pugli
         var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
         var offers = scope.ServiceProvider.GetRequiredService<OfferService>();
 
-        var (childId, offer) = await SetupAsync(db, coins: 50, quantity: 5, OfferPeriod.Weekly, cost: 100);
+        var (childId, offer, _) = await SetupAsync(db, coins: 50, quantity: 5, OfferPeriod.Weekly, cost: 100);
 
         Assert.Equal(OfferService.OfferError.InsufficientCoins, (await offers.PurchaseAsync(childId, offer, Monday)).Error);
     }
 
     /// <summary>Legt direkt in der DB ein Kind mit Münz-Guthaben und ein Angebot an; liefert deren Ids.</summary>
-    private static async Task<(int childId, int offerId)> SetupAsync(
+    private static async Task<(int childId, int offerId, int supervisorId)> SetupAsync(
         PuglingDbContext db, int coins, int quantity, OfferPeriod period, int cost = 100)
     {
         var father = new Father { Name = "Q-Vater", Pin = "0000" };
-        var child = new Child { Father = father, Name = "Q-Kind", Pin = "0000" };
+        var child = new Child { Name = "Q-Kind", Pin = "0000" };
         // Münzen über eine Coins-Buchung (Manual → Coins).
         child.PointsEntries.Add(new ChildPointsEntry { Amount = coins, Kind = PointKind.Manual, Reason = "Test" });
         db.Fathers.Add(father);
         db.Children.Add(child);
-        var offer = new Reward { Child = child, Title = "Q-Angebot", Cost = cost, Period = period, Quantity = quantity };
+        await db.SaveChangesAsync();
+        db.SupervisorLinks.Add(new SupervisorLink { SupervisorId = father.Id, StudentId = child.Id });
+        var offer = new Reward { ChildId = child.Id, SupervisorId = father.Id, Title = "Q-Angebot", Cost = cost, Period = period, Quantity = quantity };
         db.Rewards.Add(offer);
         await db.SaveChangesAsync();
-        return (child.Id, offer.Id);
+        return (child.Id, offer.Id, father.Id);
     }
 }

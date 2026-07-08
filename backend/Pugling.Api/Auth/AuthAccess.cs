@@ -69,14 +69,14 @@ public class AuthAccess(PuglingDbContext db)
         if (user.IsStudent() && plan.ChildId == user.StudentId()) return true;
         var fid = user.SupervisorId();
         return user.IsSupervisor() && fid is not null
-            && await db.Children.AnyAsync(c => c.Id == plan.ChildId && c.FatherId == fid);
+            && await db.SupervisorLinks.AnyAsync(l => l.StudentId == plan.ChildId && l.SupervisorId == fid);
     }
 
-    /// <summary>Betreut der angemeldete Supervisor dieses Kind?</summary>
+    /// <summary>Betreut der angemeldete Supervisor dieses Kind (Mitgliedschaft über <see cref="SupervisorLink"/>)?</summary>
     public async Task<bool> FatherOwnsChildAsync(ClaimsPrincipal user, int childId)
     {
         var fid = user.SupervisorId();
-        return fid is not null && await db.Children.AnyAsync(c => c.Id == childId && c.FatherId == fid);
+        return fid is not null && await db.SupervisorLinks.AnyAsync(l => l.StudentId == childId && l.SupervisorId == fid);
     }
 
     /// <summary>

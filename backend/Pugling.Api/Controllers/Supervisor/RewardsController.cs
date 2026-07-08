@@ -58,9 +58,10 @@ public class RewardsController(PuglingDbContext db, OfferService offers) : Contr
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<IReadOnlyList<RewardDto>>> List(int childId)
     {
+        var fid = User.FatherId();
         var rewards = await db.Rewards.AsNoTracking()
             .Include(r => r.StudyPlan).Include(r => r.Exercise)
-            .Where(r => r.ChildId == childId)
+            .Where(r => r.ChildId == childId && r.SupervisorId == fid) // nur eigene Angebote
             .OrderByDescending(r => r.Active).ThenBy(r => r.Cost).ThenBy(r => r.Id)
             .ToListAsync();
         return rewards.Select(Map).ToList();
@@ -92,6 +93,7 @@ public class RewardsController(PuglingDbContext db, OfferService offers) : Contr
         var reward = new Reward
         {
             ChildId = childId,
+            SupervisorId = User.FatherId()!.Value, // Aussteller: nur er sieht/erfüllt/storniert Käufe dieses Angebots
             Title = dto.Title.Trim(),
             Cost = dto.Cost,
             Period = dto.Period,
@@ -121,7 +123,7 @@ public class RewardsController(PuglingDbContext db, OfferService offers) : Contr
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<RewardDto>> Update(int childId, int rewardId, UpdateRewardDto dto)
     {
-        var reward = await db.Rewards.FirstOrDefaultAsync(r => r.Id == rewardId && r.ChildId == childId);
+        var reward = await db.Rewards.FirstOrDefaultAsync(r => r.Id == rewardId && r.ChildId == childId && r.SupervisorId == User.FatherId());
         if (reward is null) return NotFound();
         if (dto.Title is not null && string.IsNullOrWhiteSpace(dto.Title))
             return this.ProblemWithCode(ApiErrors.ValidationError, "Title must not be empty.");
@@ -144,7 +146,7 @@ public class RewardsController(PuglingDbContext db, OfferService offers) : Contr
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(int childId, int rewardId)
     {
-        var reward = await db.Rewards.FirstOrDefaultAsync(r => r.Id == rewardId && r.ChildId == childId);
+        var reward = await db.Rewards.FirstOrDefaultAsync(r => r.Id == rewardId && r.ChildId == childId && r.SupervisorId == User.FatherId());
         if (reward is null) return NotFound();
         db.Rewards.Remove(reward);
         await db.SaveChangesAsync();
@@ -165,7 +167,8 @@ public class RewardsController(PuglingDbContext db, OfferService offers) : Contr
         int childId, [FromQuery] RewardRedemptionStatus? status,
         [FromQuery] int skip = 0, [FromQuery] int take = PagingExtensions.DefaultTake)
     {
-        var query = db.RewardRedemptions.AsNoTracking().Where(r => r.ChildId == childId);
+        var fid = User.FatherId();
+        var query = db.RewardRedemptions.AsNoTracking().Where(r => r.ChildId == childId && r.SupervisorId == fid);
         if (status is not null) query = query.Where(r => r.Status == status);
 
         return await query
@@ -180,7 +183,7 @@ public class RewardsController(PuglingDbContext db, OfferService offers) : Contr
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<ActionResult<RedemptionDto>> Fulfill(int childId, int redemptionId) =>
-        ToResult(await offers.FulfillAsync(childId, redemptionId, DateTime.UtcNow));
+        ToResult(await offers.FulfillAsync(User.FatherId()!.Value, childId, redemptionId, DateTime.UtcNow));
 
     /// <summary>Storniert einen offenen Kauf und erstattet die Münzen zurück (Kontingent-Slot wird wieder frei).</summary>
     [HttpPost("redemptions/{redemptionId:int}/cancel")]
@@ -188,7 +191,7 @@ public class RewardsController(PuglingDbContext db, OfferService offers) : Contr
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<ActionResult<RedemptionDto>> Cancel(int childId, int redemptionId) =>
-        ToResult(await offers.CancelAsync(childId, redemptionId, DateTime.UtcNow));
+        ToResult(await offers.CancelAsync(User.FatherId()!.Value, childId, redemptionId, DateTime.UtcNow));
 
     /// <summary>Übersetzt das Service-Ergebnis in eine HTTP-Antwort (einheitliche Fehler-Behandlung).</summary>
     private ActionResult<RedemptionDto> ToResult(OfferService.Result result) => result.Error switch

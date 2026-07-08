@@ -22,7 +22,7 @@ public class ChildrenDashboardService(PuglingDbContext db, PositionProgressServi
     public async Task<Dashboard> BuildAsync(int fatherId, DateOnly date, CancellationToken ct = default)
     {
         var children = await db.Children.AsNoTracking()
-            .Where(c => c.FatherId == fatherId)
+            .Where(c => c.SupervisorLinks.Any(l => l.SupervisorId == fatherId))
             .OrderBy(c => c.Name)
             .Select(c => new { c.Id, c.Name })
             .ToListAsync(ct);
