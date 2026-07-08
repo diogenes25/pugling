@@ -1,3 +1,7 @@
+---
+tags: [typ/tutorial, bereich/katalog, bereich/auswertung, lerntechnik/vokabeln]
+---
+
 # Vokabel-Funktionalitäten für Entwickler
 
 Dieses Tutorial beschreibt, wie die aktuelle Vokabel-Funktionalität technisch gedacht ist und wie man sie

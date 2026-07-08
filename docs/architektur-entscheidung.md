@@ -1,3 +1,7 @@
+---
+tags: [typ/adr, bereich/doku]
+---
+
 # Architektur-Entscheidung: API-First + Legacy-Abbau
 
 Stand: 2026-07-04. Kurzformat (ADR). Ersetzt die im [architektur-resumee.md](architektur-resumee.md)

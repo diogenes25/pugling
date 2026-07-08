@@ -1,3 +1,7 @@
+---
+tags: [typ/konzept, bereich/katalog, bereich/auswertung, lerntechnik/vokabeln]
+---
+
 # Übergabe: Vokabel-Store, Übungs-Items und Lernfortschritt
 
 **Zweck:** Diese Seite fasst den aktuellen Stand der Vokabel-Funktionalität zusammen, damit eine

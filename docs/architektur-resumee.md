@@ -1,3 +1,7 @@
+---
+tags: [typ/konzept, bereich/doku]
+---
+
 # Architektur-Resümee: aktueller Study-Kern
 
 Stand: 2026-07-06. Dieses Resümee beschreibt den aktuellen Zustand nach dem Umbau vom plan-weiten

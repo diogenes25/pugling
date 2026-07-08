@@ -1,3 +1,7 @@
+---
+tags: [typ/referenz, bereich/katalog, lerntechnik/vokabeln]
+---
+
 # 03 · Übungstypen (Lern-Katalog)
 
 ← [Zurück zum Wiki-Index](../README.md)
