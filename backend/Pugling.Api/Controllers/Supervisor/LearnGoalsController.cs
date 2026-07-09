@@ -16,7 +16,7 @@ namespace Pugling.Api.Controllers.Supervisor;
 [ApiController]
 [ApiVersion("1.0")]
 [Route(ApiRoutes.Supervisor + "/children/{childId:int}/learn-goals")]
-[Tags("Learn – Learning Goals")]
+[Tags("Supervisor – Learning Goals")]
 [Produces("application/json")]
 [Authorize]
 [ServiceFilter(typeof(ChildOwnershipFilter))]
@@ -41,7 +41,7 @@ public class LearnGoalsController(LearnGoalService goals) : ControllerBase
 
     /// <summary>Legt ein Lernziel an (nur Vater). 400 bei ungültigem Scope/Zielwert.</summary>
     [HttpPost]
-    [Authorize(Roles = Roles.Vater)]
+    [Authorize(Roles = Roles.Supervisor)]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -55,7 +55,7 @@ public class LearnGoalsController(LearnGoalService goals) : ControllerBase
 
     /// <summary>Ändert Metrik/Zielwert/Stichtag/Titel eines Ziels (nur Vater); der Scope bleibt fix.</summary>
     [HttpPatch("{goalId:int}")]
-    [Authorize(Roles = Roles.Vater)]
+    [Authorize(Roles = Roles.Supervisor)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<LearnGoalService.LearnGoalResponse>> Update(
@@ -68,7 +68,7 @@ public class LearnGoalsController(LearnGoalService goals) : ControllerBase
 
     /// <summary>Löscht ein Lernziel (nur Vater).</summary>
     [HttpDelete("{goalId:int}")]
-    [Authorize(Roles = Roles.Vater)]
+    [Authorize(Roles = Roles.Supervisor)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(int childId, int goalId, CancellationToken ct = default) =>

@@ -26,6 +26,9 @@ function load(): Session | null {
     const s = JSON.parse(raw) as Session;
     // Abgelaufene Tokens gar nicht erst annehmen.
     if (new Date(s.expiresAt).getTime() < Date.now()) return null;
+    // Sessions mit einer nicht mehr gültigen Rolle (z. B. altes "Vater"/"Sohn" vor der Ebenen-Umstellung)
+    // verwerfen → sauberer Re-Login, statt den Nutzer an einem Guard in den falschen Login zu werfen.
+    if (s.role !== "Supervisor" && s.role !== "Student") return null;
     return s;
   } catch {
     return null;

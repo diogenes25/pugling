@@ -16,7 +16,7 @@ namespace Pugling.Api.Controllers.Student;
 [ApiController]
 [ApiVersion("1.0")]
 [Route(ApiRoutes.Student + "/study-plans/{planId:int}/overview")]
-[Tags("Study – Plan Overview")]
+[Tags("Student – Plan Overview")]
 [Produces("application/json")]
 [Authorize]
 [ServiceFilter(typeof(PlanOwnershipFilter))]

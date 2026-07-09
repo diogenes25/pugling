@@ -19,9 +19,9 @@ namespace Pugling.Api.Controllers.Creator;
 [ApiController]
 [ApiVersion("1.0")]
 [Route(ApiRoutes.Creator + "/vocabulary")]
-[Tags("Learn – Vocabulary Store")]
+[Tags("Creator – Vocabulary Store")]
 [Produces("application/json")]
-[Authorize(Roles = Roles.Vater)]
+[Authorize(Roles = Roles.Creator)]
 public class VocabularyStoreController(PuglingDbContext db) : ControllerBase
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);

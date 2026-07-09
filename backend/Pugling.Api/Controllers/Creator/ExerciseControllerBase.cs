@@ -36,7 +36,7 @@ public record ExerciseResponse<TConfig>(int Id, int ChapterId, string Type, stri
 [ApiController]
 [ApiVersion("1.0")]
 [Produces("application/json")]
-[Authorize(Roles = Roles.Vater)]
+[Authorize(Roles = Roles.Creator)]
 public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db) : ControllerBase
     where TConfig : class, new()
 {

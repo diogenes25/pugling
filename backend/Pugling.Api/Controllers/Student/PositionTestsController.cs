@@ -19,7 +19,7 @@ namespace Pugling.Api.Controllers.Student;
 [ApiController]
 [ApiVersion("1.0")]
 [Route(ApiRoutes.Student + "/study-plans/{planId:int}/positions/{positionId:int}/tests")]
-[Tags("Study – Position Tests")]
+[Tags("Student – Position Tests")]
 [Produces("application/json")]
 [Authorize]
 [ServiceFilter(typeof(PlanOwnershipFilter))]
@@ -80,13 +80,13 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
         if (poolSize == 0) return this.ProblemWithCode(ApiErrors.NoCheckableContent, "The exercise contains no checkable content.");
 
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
-        if (dto.Day is { } dd && dd != today && !User.IsFather()) return Forbid();
+        if (dto.Day is { } dd && dd != today && !User.IsSupervisor()) return Forbid();
         // Anti-Schummel: der Sohn darf nur seinen aktiven, laufenden Plan testen (siehe Übungs-Start).
-        if (User.IsChild() && !PositionPlayService.PlanPlayableForChild(plan, today))
+        if (User.IsStudent() && !PositionPlayService.PlanPlayableForChild(plan, today))
             return this.ProblemWithCode(ApiErrors.PlanInactive, "This study plan is not currently active. Ask your parent.");
         var day = dto.Day ?? today;
         // Stufe: nur der Vater darf sie frei wählen; für den Sohn gilt die Fahrplan-/Positions-Stufe des Tages.
-        var stage = User.IsFather() && dto.Stage is not null ? dto.Stage.Value : PositionPlayService.StageForDay(pos, plan, day);
+        var stage = User.IsSupervisor() && dto.Stage is not null ? dto.Stage.Value : PositionPlayService.StageForDay(pos, plan, day);
         var typed = PositionPlayService.IsTypedStage(pos.Exercise.Type, stage);
 
         // Der Test ist Standortbestimmung: bereits eingeführte Inhalte prüfen, sonst den gesamten Pool
@@ -133,7 +133,7 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
         if (attempt.CompletedAt is not null)
             return new TestNextResponse(null, true, attempt.Cursor, attempt.TotalItems);
         var plan = (await GetPlan(planId))!;
-        if (User.IsChild() && !PositionPlayService.PlanPlayableForChild(plan, DateOnly.FromDateTime(DateTime.UtcNow)))
+        if (User.IsStudent() && !PositionPlayService.PlanPlayableForChild(plan, DateOnly.FromDateTime(DateTime.UtcNow)))
             return this.ProblemWithCode(ApiErrors.PlanInactive, "This study plan is not currently active. Ask your parent.");
         var pos = await GetPosition(planId, positionId);
         if (pos?.Exercise is null) return NotFound();
@@ -166,7 +166,7 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
         if (attempt is null) return NotFound();
         if (attempt.CompletedAt is not null) return this.ProblemWithCode(ApiErrors.TestAlreadySubmitted, "The test has already been submitted.");
         var plan = (await GetPlan(planId))!;
-        if (User.IsChild() && !PositionPlayService.PlanPlayableForChild(plan, DateOnly.FromDateTime(DateTime.UtcNow)))
+        if (User.IsStudent() && !PositionPlayService.PlanPlayableForChild(plan, DateOnly.FromDateTime(DateTime.UtcNow)))
             return this.ProblemWithCode(ApiErrors.PlanInactive, "This study plan is not currently active. Ask your parent.");
         var pos = await GetPosition(planId, positionId);
         if (pos?.Exercise is null) return NotFound();
@@ -236,7 +236,7 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
         var plan = (await GetPlan(planId))!;
         // Anti-Schummel: einen inzwischen deaktivierten oder abgelaufenen Plan darf der Sohn auch nicht über
         // einen offenen Testversuch abschließen und bepunkten (der Vater bleibt ausgenommen).
-        if (User.IsChild() && !PositionPlayService.PlanPlayableForChild(plan, DateOnly.FromDateTime(DateTime.UtcNow)))
+        if (User.IsStudent() && !PositionPlayService.PlanPlayableForChild(plan, DateOnly.FromDateTime(DateTime.UtcNow)))
             return this.ProblemWithCode(ApiErrors.PlanInactive, "This study plan is not currently active. Ask your parent.");
         var pos = await GetPosition(planId, positionId);
         if (pos?.Exercise is null) return NotFound();

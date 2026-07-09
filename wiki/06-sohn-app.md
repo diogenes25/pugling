@@ -17,7 +17,7 @@ Server bewertet jede Antwort selbst; das Frontend schickt nur Antworten und Inte
 ```http
 POST /api/v1/auth/child
 { "childId": 1, "pin": "1111" }
-→ { "token": "eyJ…", "role": "Sohn", … }
+→ { "token": "eyJ…", "role": "Student", … }
 ```
 
 Token in allen weiteren Aufrufen als `Authorization: Bearer <token>` mitgeben.

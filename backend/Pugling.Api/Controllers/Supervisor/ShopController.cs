@@ -16,9 +16,9 @@ namespace Pugling.Api.Controllers.Supervisor;
 [ApiController]
 [ApiVersion("1.0")]
 [Route(ApiRoutes.Supervisor + "/shop")]
-[Tags("Admin – Shop")]
+[Tags("Supervisor – Shop")]
 [Produces("application/json")]
-[Authorize(Roles = Roles.Vater)]
+[Authorize(Roles = Roles.Supervisor)]
 public class ShopController(PuglingDbContext db, ShopService shop) : ControllerBase
 {
     // ─── DTOs ────────────────────────────────────────────────────────────────

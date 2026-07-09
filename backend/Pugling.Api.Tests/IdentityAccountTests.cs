@@ -30,7 +30,7 @@ public class IdentityAccountTests(PuglingWebAppFactory factory) : IClassFixture<
         var roles = me.GetProperty("roles").EnumerateArray().Select(r => r.GetString()).ToList();
         Assert.Contains("Creator", roles);
         Assert.Contains("Supervisor", roles);
-        Assert.Contains("Vater", roles); // Alias bleibt erhalten
+        Assert.DoesNotContain("Vater", roles); // Alias entfernt – nur noch Ebenen-Rollen
         Assert.Equal(1, me.GetProperty("fatherId").GetInt32());
         Assert.True(me.GetProperty("accountId").GetInt32() > 0);
 
@@ -46,7 +46,7 @@ public class IdentityAccountTests(PuglingWebAppFactory factory) : IClassFixture<
         var me = await MeAsync(child);
         var roles = me.GetProperty("roles").EnumerateArray().Select(r => r.GetString()).ToList();
         Assert.Contains("Student", roles);
-        Assert.Contains("Sohn", roles);
+        Assert.DoesNotContain("Sohn", roles); // Alias entfernt – nur noch Ebenen-Rollen
         Assert.Equal(1, me.GetProperty("childId").GetInt32());
     }
 

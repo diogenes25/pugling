@@ -13,9 +13,9 @@ namespace Pugling.Api.Controllers.Supervisor;
 [ApiController]
 [ApiVersion("1.0")]
 [Route(ApiRoutes.Supervisor + "/fathers")]
-[Tags("Admin – Fathers")]
+[Tags("Supervisor – Fathers")]
 [Produces("application/json")]
-[Authorize(Roles = Roles.Vater)]
+[Authorize(Roles = Roles.Supervisor)]
 public class FathersController(PuglingDbContext db, AccountService accounts) : ControllerBase, IActionFilter
 {
     /// <summary>Ein Vater darf nur seinen eigenen Datensatz lesen/ändern/löschen (Route-fatherId == Token-fid).</summary>

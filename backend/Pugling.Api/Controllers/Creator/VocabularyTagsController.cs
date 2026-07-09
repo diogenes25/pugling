@@ -17,9 +17,9 @@ namespace Pugling.Api.Controllers.Creator;
 [ApiController]
 [ApiVersion("1.0")]
 [Route(ApiRoutes.Creator + "/vocabulary")]
-[Tags("Learn – Vocabulary Store")]
+[Tags("Creator – Vocabulary Store")]
 [Produces("application/json")]
-[Authorize(Roles = Roles.Vater)]
+[Authorize(Roles = Roles.Creator)]
 public class VocabularyTagsController(PuglingDbContext db) : ControllerBase
 {
     /// <summary>Tag inkl. Anzahl verknüpfter Vokabeln.</summary>

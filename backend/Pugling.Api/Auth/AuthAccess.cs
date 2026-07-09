@@ -6,14 +6,12 @@ using Pugling.Api.Models;
 namespace Pugling.Api.Auth;
 
 /// <summary>
-/// Rollen-Namen (als Rollen-Claim im JWT). Die drei fachlichen Ebenen (Creator/Supervisor/Student)
-/// sind die neuen Rollen; <see cref="Vater"/>/<see cref="Sohn"/> bleiben als Alias erhalten, damit die
-/// bestehenden <c>[Authorize(Roles=…)]</c> unverändert greifen. Ein Konto kann mehrere Rollen tragen.
+/// Rollen-Namen (als Rollen-Claim im JWT) – die drei fachlichen Ebenen. Ein Konto kann mehrere
+/// Rollen tragen (ein Vater ist zugleich Creator und Supervisor). Die <c>[Authorize(Roles=…)]</c>
+/// gaten direkt auf diese Ebenen; das frühere Vater/Sohn-Alias wurde entfernt.
 /// </summary>
 public static class Roles
 {
-    public const string Vater = "Vater";
-    public const string Sohn = "Sohn";
     public const string Creator = "Creator";
     public const string Supervisor = "Supervisor";
     public const string Student = "Student";
@@ -22,14 +20,13 @@ public static class Roles
 /// <summary>Zugriff auf Identität aus dem JWT.</summary>
 public static class ClaimsPrincipalExtensions
 {
-    // Alt-Vokabular (bewusst erhalten – hält bestehende Inline-Checks/Force-Unwraps ohne Edits):
-    public static bool IsFather(this ClaimsPrincipal u) => u.IsInRole(Roles.Vater);
-    public static bool IsChild(this ClaimsPrincipal u) => u.IsInRole(Roles.Sohn);
+    // Entität-IDs aus dem Token: fid trägt heute sowohl das Creator- als auch das Supervisor-Profil
+    // (ein Haushalt = ein Father); cid trägt das Student-Profil. (Father/Child sind die Fach-Entitäten,
+    // nicht die Rollen – die Rollen heißen Creator/Supervisor/Student.)
     public static int? FatherId(this ClaimsPrincipal u) => int.TryParse(u.FindFirstValue("fid"), out var v) ? v : null;
     public static int? ChildId(this ClaimsPrincipal u) => int.TryParse(u.FindFirstValue("cid"), out var v) ? v : null;
 
-    // Ebenen-Vokabular (neuer Code): Rollen und ihre Ziel-IDs. fid trägt heute sowohl das Creator- als
-    // auch das Supervisor-Profil (ein Haushalt = ein Father); cid trägt das Student-Profil.
+    // Ebenen-Rollen und ihre Ziel-IDs.
     public static bool IsCreator(this ClaimsPrincipal u) => u.IsInRole(Roles.Creator);
     public static bool IsSupervisor(this ClaimsPrincipal u) => u.IsInRole(Roles.Supervisor);
     public static bool IsStudent(this ClaimsPrincipal u) => u.IsInRole(Roles.Student);

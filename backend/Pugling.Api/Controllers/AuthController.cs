@@ -34,7 +34,7 @@ public class AuthController(PuglingDbContext db, TokenService tokens, AccountSer
 
         var account = await accounts.EnsureForFatherAsync(father);
         var (token, expires) = tokens.IssueForAccount(account, account.Profiles);
-        return new LoginResponse(token, Roles.Vater, father.Id, father.Name, expires);
+        return new LoginResponse(token, Roles.Supervisor, father.Id, father.Name, expires);
     }
 
     public record ChildLoginDto(int ChildId, string Pin);
@@ -52,14 +52,14 @@ public class AuthController(PuglingDbContext db, TokenService tokens, AccountSer
 
         var account = await accounts.EnsureForChildAsync(child);
         var (token, expires) = tokens.IssueForAccount(account, account.Profiles);
-        return new LoginResponse(token, Roles.Sohn, child.Id, child.Name, expires);
+        return new LoginResponse(token, Roles.Student, child.Id, child.Name, expires);
     }
 
     public record AccountLoginDto(int AccountId, string Pin);
 
     /// <summary>
     /// Kanonischer, konto-zentrischer Login: ein Token, das <b>alle</b> Rollen des Kontos trägt
-    /// (z. B. Creator + Supervisor). <c>role</c> in der Antwort ist die primäre Rolle (Abwärtskompatibilität).
+    /// (z. B. Creator + Supervisor). <c>role</c> in der Antwort ist die primäre Ebene (Supervisor bzw. Student) fürs UI-Routing.
     /// </summary>
     [HttpPost("login")]
     [AllowAnonymous]
@@ -72,7 +72,7 @@ public class AuthController(PuglingDbContext db, TokenService tokens, AccountSer
         if (account is null || !PinHasher.Verify(dto.Pin, account.PinHash)) return this.ProblemWithCode(ApiErrors.InvalidCredentials, "Invalid account ID or PIN.");
 
         var (token, expires) = tokens.IssueForAccount(account, account.Profiles);
-        var primaryRole = account.Profiles.Any(p => p.Role != Models.ProfileRole.Student) ? Roles.Vater : Roles.Sohn;
+        var primaryRole = account.Profiles.Any(p => p.Role != Models.ProfileRole.Student) ? Roles.Supervisor : Roles.Student;
         return new LoginResponse(token, primaryRole, account.Id, account.DisplayName, expires);
     }
 
@@ -83,7 +83,8 @@ public class AuthController(PuglingDbContext db, TokenService tokens, AccountSer
     public ActionResult<object> Me() => new
     {
         AccountId = int.TryParse(User.FindFirstValue("aid"), out var aid) ? aid : (int?)null,
-        Role = User.IsFather() ? Roles.Vater : User.IsChild() ? Roles.Sohn : "?",
+        // Primäre Ebene fürs UI-Routing: Student → Student, jeder Erwachsene (auch reiner Creator) → Supervisor.
+        Role = User.IsStudent() ? Roles.Student : User.IsSupervisor() || User.IsCreator() ? Roles.Supervisor : "?",
         Roles = User.FindAll(System.Security.Claims.ClaimTypes.Role).Select(c => c.Value).ToArray(),
         FatherId = User.FatherId(),
         ChildId = User.ChildId(),

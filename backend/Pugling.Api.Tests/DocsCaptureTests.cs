@@ -96,8 +96,8 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
             var payload = parts[1].Replace('-', '+').Replace('_', '/');
             payload = payload.PadRight(payload.Length + (4 - payload.Length % 4) % 4, '=');
             var json = Encoding.UTF8.GetString(Convert.FromBase64String(payload));
-            if (json.Contains("\"Vater\"")) return "father";
-            if (json.Contains("\"Sohn\"")) return "child";
+            if (json.Contains("\"Supervisor\"")) return "father";
+            if (json.Contains("\"Student\"")) return "child";
             return "authenticated";
         }
         catch

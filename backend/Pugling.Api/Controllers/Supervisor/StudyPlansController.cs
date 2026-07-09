@@ -17,7 +17,7 @@ namespace Pugling.Api.Controllers.Supervisor;
 [ApiController]
 [ApiVersion("1.0")]
 [Route(ApiRoutes.Supervisor + "/study-plans")]
-[Tags("Study – Plans")]
+[Tags("Supervisor – Plans")]
 [Produces("application/json")]
 [Authorize]
 [ServiceFilter(typeof(PlanOwnershipFilter))]
@@ -56,7 +56,7 @@ public class StudyPlansController(PuglingDbContext db, AuthAccess access) : Cont
     {
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
         IQueryable<StudyPlan> scoped = db.StudyPlans.AsNoTracking();
-        if (User.IsChild())
+        if (User.IsStudent())
         {
             // Der Sohn sieht nur seinen einen spielbaren Plan (aktiv + in Laufzeit); inaktive/abgelaufene
             // bleiben verborgen, damit er sich keinen leichten Plan zum Punktesammeln aussuchen kann.
@@ -87,7 +87,7 @@ public class StudyPlansController(PuglingDbContext db, AuthAccess access) : Cont
 
     /// <summary>Erstellt einen leeren Lehrplan-Container (nur Vater, nur für eigene Kinder).</summary>
     [HttpPost]
-    [Authorize(Roles = Roles.Vater)]
+    [Authorize(Roles = Roles.Supervisor)]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -131,7 +131,7 @@ public class StudyPlansController(PuglingDbContext db, AuthAccess access) : Cont
 
     /// <summary>Ändert den Lehrplan-Container (partiell, nur Vater/eigener). <see cref="UpdatePlanDto.ChildId"/> weist den Plan einem anderen eigenen Kind zu.</summary>
     [HttpPatch("{planId:int}")]
-    [Authorize(Roles = Roles.Vater)]
+    [Authorize(Roles = Roles.Supervisor)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -175,7 +175,7 @@ public class StudyPlansController(PuglingDbContext db, AuthAccess access) : Cont
     /// bleiben unberührt (sie gehören dem kindneutralen Katalog, nicht dem Plan).
     /// </summary>
     [HttpDelete("{planId:int}")]
-    [Authorize(Roles = Roles.Vater)]
+    [Authorize(Roles = Roles.Supervisor)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

@@ -12,9 +12,9 @@ namespace Pugling.Api.Controllers.Creator;
 [ApiController]
 [ApiVersion("1.0")]
 [Route(ApiRoutes.Creator + "/cloze-texts")]
-[Tags("Learn – Cloze Store")]
+[Tags("Creator – Cloze Store")]
 [Produces("application/json")]
-[Authorize(Roles = Roles.Vater)]
+[Authorize(Roles = Roles.Creator)]
 public class ClozeTextsController(PuglingDbContext db) : ControllerBase
 {
     public record ClozeResponse(int Id, string Key, string Title, string SourceLanguage, string TargetLanguage,

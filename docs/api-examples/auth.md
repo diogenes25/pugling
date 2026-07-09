@@ -43,7 +43,7 @@ Response — `HTTP 200`:
 ```json
 {
   "token": "<redacted-jwt>",
-  "role": "Vater",
+  "role": "Supervisor",
   "id": 1,
   "name": "Papa",
   "expiresAt": "<timestamp>"
@@ -67,7 +67,7 @@ Response — `HTTP 200`:
 ```json
 {
   "token": "<redacted-jwt>",
-  "role": "Sohn",
+  "role": "Student",
   "id": 1,
   "name": "Sohn",
   "expiresAt": "<timestamp>"

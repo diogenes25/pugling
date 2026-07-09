@@ -15,7 +15,7 @@ export default function App() {
       <Route path="/vater/*" element={<VaterApp />} />
       <Route
         path="*"
-        element={<Navigate to={session ? (session.role === "Vater" ? "/vater" : "/sohn") : "/"} replace />}
+        element={<Navigate to={session ? (session.role === "Supervisor" ? "/vater" : "/sohn") : "/"} replace />}
       />
     </Routes>
   );

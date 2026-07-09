@@ -21,9 +21,9 @@ namespace Pugling.Api.Controllers.Creator;
 [ApiController]
 [ApiVersion("1.0")]
 [Route(ApiRoutes.Creator + "/exercises/{id:int}/preview")]
-[Tags("Learn – Exercise Preview")]
+[Tags("Creator – Exercise Preview")]
 [Produces("application/json")]
-[Authorize(Roles = Roles.Vater)]
+[Authorize(Roles = Roles.Creator)]
 public class ExercisePreviewController(PuglingDbContext db, ExercisePreviewService preview) : ControllerBase
 {
     /// <summary>

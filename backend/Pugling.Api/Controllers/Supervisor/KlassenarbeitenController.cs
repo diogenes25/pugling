@@ -16,7 +16,7 @@ namespace Pugling.Api.Controllers.Supervisor;
 [ApiController]
 [ApiVersion("1.0")]
 [Route(ApiRoutes.Supervisor + "/class-tests")]
-[Tags("Learn – Class Tests")]
+[Tags("Supervisor – Class Tests")]
 [Produces("application/json")]
 [Authorize]
 public class KlassenarbeitenController(PuglingDbContext db, AuthAccess access) : ControllerBase
@@ -101,7 +101,7 @@ public class KlassenarbeitenController(PuglingDbContext db, AuthAccess access) :
 
     /// <summary>Plant eine Klassenarbeit (oder trägt eine bereits geschriebene nach). Nur Vater, nur eigene Kinder.</summary>
     [HttpPost]
-    [Authorize(Roles = Roles.Vater)]
+    [Authorize(Roles = Roles.Supervisor)]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -142,7 +142,7 @@ public class KlassenarbeitenController(PuglingDbContext db, AuthAccess access) :
 
     /// <summary>Ändert eine Klassenarbeit partiell – u. a. Note nachtragen und Status setzen. Nur Vater.</summary>
     [HttpPatch("{id:int}")]
-    [Authorize(Roles = Roles.Vater)]
+    [Authorize(Roles = Roles.Supervisor)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<KlassenarbeitResponse>> Update(int id, UpdateDto dto)
@@ -184,7 +184,7 @@ public class KlassenarbeitenController(PuglingDbContext db, AuthAccess access) :
 
     /// <summary>Löscht eine Klassenarbeit (Zuordnungen und Tag-Verknüpfungen verschwinden mit). Nur Vater.</summary>
     [HttpDelete("{id:int}")]
-    [Authorize(Roles = Roles.Vater)]
+    [Authorize(Roles = Roles.Supervisor)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(int id)
@@ -202,7 +202,7 @@ public class KlassenarbeitenController(PuglingDbContext db, AuthAccess access) :
 
     /// <summary>Weist der Klassenarbeit Übungen direkt zu (bereits zugewiesene werden übersprungen). Nur Vater.</summary>
     [HttpPost("{id:int}/exercises")]
-    [Authorize(Roles = Roles.Vater)]
+    [Authorize(Roles = Roles.Supervisor)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<KlassenarbeitDetail>> AssignExercises(int id, AssignExercisesDto dto)
@@ -219,7 +219,7 @@ public class KlassenarbeitenController(PuglingDbContext db, AuthAccess access) :
 
     /// <summary>Entfernt die direkte Zuordnung einer Übung. Nur Vater.</summary>
     [HttpDelete("{id:int}/exercises/{exerciseId:int}")]
-    [Authorize(Roles = Roles.Vater)]
+    [Authorize(Roles = Roles.Supervisor)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> UnassignExercise(int id, int exerciseId)
@@ -235,7 +235,7 @@ public class KlassenarbeitenController(PuglingDbContext db, AuthAccess access) :
 
     /// <summary>Verknüpft einen Tag mit der Klassenarbeit: alle so markierten Übungen gelten als relevant. Nur Vater.</summary>
     [HttpPost("{id:int}/tags/{tagId:int}")]
-    [Authorize(Roles = Roles.Vater)]
+    [Authorize(Roles = Roles.Supervisor)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<KlassenarbeitResponse>> LinkTag(int id, int tagId)
@@ -254,7 +254,7 @@ public class KlassenarbeitenController(PuglingDbContext db, AuthAccess access) :
 
     /// <summary>Löst die Verknüpfung eines Tags mit der Klassenarbeit. Nur Vater.</summary>
     [HttpDelete("{id:int}/tags/{tagId:int}")]
-    [Authorize(Roles = Roles.Vater)]
+    [Authorize(Roles = Roles.Supervisor)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> UnlinkTag(int id, int tagId)
