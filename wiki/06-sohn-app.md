@@ -1,5 +1,5 @@
 ---
-tags: [typ/tutorial, bereich/frontend]
+tags: [typ/tutorial, bereich/frontend, rolle/student]
 ---
 
 # 06 · Anleitung für die Sohn-App
@@ -172,7 +172,7 @@ nur noch die beiden Salden; die Buchungen liegen eine Ebene tiefer unter `me/poi
 
 ---
 
-## 6. Missionen, Auszeichnungen, Skins und Angebote
+## 6. Missionen, Auszeichnungen, Skins und Familien-Shop
 
 ```http
 GET /api/v1/student/me/missions[?skip=&take=]        → Tages-/Wochenziele mit Fortschritt (paginiert)
@@ -183,13 +183,6 @@ GET /api/v1/student/me/skins           → { gems, selected, owned }
 POST /api/v1/student/me/skins/{skinId}/purchase
 POST /api/v1/student/me/skins/{skinId}/equip
 
-GET /api/v1/student/me/rewards                        → { available, redemptions }  (Aggregat; Salden via /me/points)
-GET /api/v1/student/me/rewards/available[?skip=&take=]        → verfügbare Angebote (paginiert)
-GET /api/v1/student/me/rewards/available/{availableId}        → einzelnes Angebot
-GET /api/v1/student/me/rewards/redemptions[?status=&skip=&take=]  → eigene Käufe (paginiert)
-GET /api/v1/student/me/rewards/redemptions/{redemptionId}    → einzelner Kauf
-POST /api/v1/student/me/rewards/available/{availableId}/purchase
-
 GET /api/v1/student/me/shop            → { coins, gems, available[], inventory[], purchases[] }
 GET /api/v1/student/me/shop/inventory[?skip=&take=]   → eigener Bestand (paginiert)
 POST /api/v1/student/me/shop/listings/{listingId}/purchase
@@ -197,6 +190,8 @@ POST /api/v1/student/me/shop/inventory/{articleId}/activate   { "quantity": 30 }
 GET /api/v1/student/me/shop/activations[?status=Pending]
 ```
 
-Münzen kommen aus Lernleistung und kaufen reale Vater-Angebote (`/me/rewards`) **oder** Familien-Shop-Artikel
-(`/me/shop`). Gems kommen aus Boni, Missionen und Auszeichnungen und kaufen kosmetische Skins — können aber
-auch als Gem-Anteil eines Shop-Angebots anfallen. Details: [05 · Punkte & Bonus](05-punkte-und-bonus.md).
+Münzen kommen aus Lernleistung und kaufen reale Vater-Belohnungen im **Familien-Shop** (`/me/shop`): Der Sohn
+kauft ein Angebot (`listings/{id}/purchase`), das erhöht sein Inventar; zum Einlösen stellt er eine
+Aktivierungsanfrage (`inventory/{articleId}/activate`), die der Vater genehmigt. Gems kommen aus Boni,
+Missionen und Auszeichnungen und kaufen kosmetische Skins — können aber auch als Gem-Anteil eines
+Shop-Angebots anfallen. Details: [05 · Punkte & Bonus](05-punkte-und-bonus.md).

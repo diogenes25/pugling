@@ -1,5 +1,5 @@
 ---
-tags: [typ/konzept, bereich/doku]
+tags: [typ/konzept, bereich/doku, rolle/creator, rolle/supervisor, rolle/student]
 aliases: [Grundprinzip, Drei-Ebenen-Modell, Creator-Vater-Kind]
 ---
 
@@ -114,7 +114,7 @@ Kind darf 10 Minuten fernsehen) passiert **außerhalb** der App.
   1:1-Bindung. Betreuung verwalten: `…/supervisor/children/{id}/supervisors`.
 - **Gemeinsames Wallet, ausstellergebundene Einlösung:** Der Punkte-Ledger (`ChildPointsEntry`) ist rein
   student-skopiert – ein Saldo über alle Supervisor. Die Zuordnung „wer löst ein" ist eine **Momentaufnahme**
-  (`SupervisorId`) auf `Reward`/`RewardRedemption`/`ShopPurchase`/`ActivationRequest`: nur der ausstellende
+  (`SupervisorId`) auf `ShopPurchase`/`ActivationRequest`: nur der ausstellende
   Supervisor sieht und erfüllt/genehmigt den Kauf; die Student-Shop-Sicht aggregiert alle Supervisor.
 - **API nach Ebenen** (`ApiRoutes.Creator/Supervisor/Student`); Code ebenso in `Controllers/{Tier}` und
   `Services/{Creator,Supervisor,Student,Shared}`. Das URL-Präfix ist Taxonomie, nicht die Auth-Wand –

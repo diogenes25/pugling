@@ -1,5 +1,5 @@
 ---
-tags: [typ/konzept, bereich/doku]
+tags: [typ/konzept, bereich/doku, rolle/creator, rolle/supervisor, rolle/student]
 aliases: [Architektur-Überblick, Datenmodell-Landkarte]
 ---
 
@@ -22,6 +22,8 @@ Das fachliche Grundmodell ([grundprinzip.md](../docs/grundprinzip.md)) kennt **d
 | **Creator** (`Roles.Creator`, Alias `Vater`) | `fid` | Übungen/Inhalte im Katalog erstellen | Lernstoff liefern |
 | **Supervisor** (`Roles.Supervisor`, Alias `Vater`) | `fid` | Lehrpläne/Ziele/Punkte, Shop/Angebote, Kind-Verwaltung, alles auswerten | Lernerfolg **erzwingen** |
 | **Student** (`Roles.Student`, Alias `Sohn`) | `cid` | nur die **eigenen** Pläne sehen, üben, testen, bewerten, kaufen/aktivieren | mit Spaß **lernen** |
+
+Rollenbasierter Einstieg in Doku und Wiki: [docs/rollen-doku.md](../docs/rollen-doku.md).
 
 Ein Vater ist heute zugleich Creator **und** Supervisor (ein Token, beide Ebenen). Ein **Student kann
 mehrere Supervisor** haben (`SupervisorLink`: Vater/Mutter/Oma) – jeder mit eigenem Shop/Angeboten,

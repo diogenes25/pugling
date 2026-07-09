@@ -1,5 +1,5 @@
 ---
-tags: [typ/konzept, bereich/doku]
+tags: [typ/konzept, bereich/doku, rolle/creator, rolle/supervisor, rolle/student]
 ---
 
 # Architektur-Resümee: aktueller Study-Kern

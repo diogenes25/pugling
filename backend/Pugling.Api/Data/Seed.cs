@@ -292,19 +292,6 @@ public static class Seed
 
             db.SaveChanges();
         }
-
-        // Beispiel-Angebote zum Kaufen (reale Belohnungen; eigener Guard, damit sie auch in
-        // bereits geseedeten DBs nachgezogen werden). Wiederkehr + Kontingent zeigen die neuen Felder:
-        // Fernsehen = täglich 2×, Spielzeit = wöchentlich 5×, Taschengeld = wöchentlich 1×, Kino = einmalig.
-        if (!db.Rewards.Any())
-        {
-            db.Rewards.AddRange(
-                new Reward { ChildId = child.Id, Title = "30 Min Fernsehen", Cost = 200, Period = OfferPeriod.Daily, Quantity = 2 },
-                new Reward { ChildId = child.Id, Title = "1 Stunde Zocken", Cost = 400, Period = OfferPeriod.Weekly, Quantity = 5 },
-                new Reward { ChildId = child.Id, Title = "Taschengeld 5 €", Cost = 500, Period = OfferPeriod.Weekly, Quantity = 1 },
-                new Reward { ChildId = child.Id, Title = "Kinoabend aussuchen", Cost = 1500, Period = OfferPeriod.OneOff, Quantity = 1 });
-            db.SaveChanges();
-        }
     }
 
     private static void SeedKlassenarbeiten(PuglingDbContext db)

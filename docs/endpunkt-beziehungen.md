@@ -1,5 +1,5 @@
 ---
-tags: [typ/konzept, bereich/katalog, bereich/training, bereich/auswertung, lerntechnik/vokabeln]
+tags: [typ/konzept, bereich/katalog, bereich/training, bereich/auswertung, rolle/creator, rolle/supervisor, rolle/student, lerntechnik/vokabeln]
 aliases: [Endpunkt-Landkarte, Datenfluss]
 ---
 
@@ -501,46 +501,63 @@ Authorization: Bearer <child-token>
 Kinder-ID, sondern seine eigene Projektion unter `/me/missions`. `current` kommt aus denselben
 Review-/Testdaten wie Plan-Overview und Auswertung.
 
-### c) Vater stellt Angebot bereit → Sohn kauft → Vater erfüllt
+### c) Vater legt Shop-Artikel + Angebot an → Sohn kauft → Vater sieht Kauf / storniert
 
 ```http
-POST /api/v1/supervisor/children/1/rewards
+POST /api/v1/supervisor/shop/articles
+Authorization: Bearer <father-token>
+Content-Type: application/json
+
+{
+  "articleNumber": "TV-001",
+  "title": "Fernsehzeit",
+  "unitType": "Minute",
+  "actionType": "TV"
+}
+```
+
+```http
+POST /api/v1/supervisor/shop/articles/1/listings
 Authorization: Bearer <father-token>
 Content-Type: application/json
 
 {
   "title": "30 Min Fernsehen",
-  "cost": 50,
-  "period": "Weekly",
-  "quantity": 3,
-  "studyPlanId": 2
+  "coinPrice": 120,
+  "gemPrice": 0,
+  "unitsPerPurchase": 30,
+  "currentStock": 3,
+  "maxStock": 3
 }
 ```
 
 ```http
-GET /api/v1/student/me/rewards
+GET /api/v1/student/me/shop
 Authorization: Bearer <child-token>
 ```
 
 ```json
 {
+  "coins": 300,
+  "gems": 0,
   "available": [
     {
-      "id": 5,
+      "id": 7,
+      "shopArticleId": 1,
+      "articleNumber": "TV-001",
       "title": "30 Min Fernsehen",
-      "cost": 50,
-      "period": "Weekly",
-      "remainingThisPeriod": 3,
-      "affordable": true,
-      "planTitle": "Französisch Unit 1"
+      "coinPrice": 120,
+      "gemPrice": 0,
+      "unitsPerPurchase": 30,
+      "currentStock": 3,
+      "affordable": true
     }
-  ],
-  "redemptions": []
+  ]
 }
 ```
 
 ```http
-POST /api/v1/student/me/rewards/available/5/purchase
+POST /api/v1/student/me/shop/listings/7/purchase
 Authorization: Bearer <child-token>
 Content-Type: application/json
 
@@ -548,15 +565,22 @@ Content-Type: application/json
 ```
 
 ```http
-POST /api/v1/supervisor/children/1/rewards/redemptions/1/fulfill
+GET /api/v1/supervisor/children/1/shop/purchases
+Authorization: Bearer <father-token>
+```
+
+```http
+POST /api/v1/supervisor/children/1/shop/purchases/1/cancel
 Authorization: Bearer <father-token>
 Content-Type: application/json
 
 {}
 ```
 
-**Zusammenhang:** Definition und Erfüllung gehören dem Vater; Kauf gehört dem Sohn. Der Kauf bucht Münzen
-ab und erzeugt eine `RewardRedemption`, die der Vater mit `canFulfill/canCancel` als offene Aufgabe sieht.
+**Zusammenhang:** Artikel-Katalog und Angebote (`ShopListing`) gehören dem Vater; der Kauf gehört dem Sohn.
+Der Kauf bucht Münzen ab, senkt den Bestand und erhöht das Inventar des Sohns (`ChildInventory`). Den Kauf
+sieht der Vater unter `children/{childId}/shop/purchases` (mit `canCancel`) und kann ihn stornieren. Wird der
+gekaufte Bestand später eingelöst, läuft das über die **Aktivierung** in Flow d).
 
 ### d) Familien-Shop: Vater pflegt Bestand → Sohn kauft Inventar → Vater genehmigt Aktivierung
 

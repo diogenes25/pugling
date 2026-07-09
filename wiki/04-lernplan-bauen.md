@@ -1,5 +1,5 @@
 ---
-tags: [typ/tutorial, bereich/training]
+tags: [typ/tutorial, bereich/training, rolle/supervisor]
 ---
 
 # 04 · Einen Lernplan bauen (Vater)

@@ -1,7 +1,7 @@
 # Pugling 🐣 — Lern-App mit Punktesystem
 
 > **Vater** steuert und erzwingt Lernerfolg, **Sohn** lernt mit Spaß.
-> Zwei Rollen, Punkte, Zeitfenster, Leitner-Karteikasten, Klassenarbeiten — alles über eine REST-API.
+> Drei Ebenen, Punkte, Zeitfenster, Leitner-Karteikasten, Klassenarbeiten — alles über eine REST-API.
 
 Pugling ist **API-First**: Die REST-API (OpenAPI/Swagger) ist das Produkt und die einzige Quelle der
 Wahrheit. Jedes Feature lebt im Backend; das Frontend hängt daran. Diese Doku ist ein **Wiki** — sie
@@ -49,6 +49,16 @@ eigenständige, dateibasierte Welt.
 
 ## 📚 Wiki-Inhalt
 
+### Rollen-Einstiege
+
+| Rolle | Einstieg | Fokus |
+| --- | --- | --- |
+| **Creator** | [Doku nach Rollen](docs/rollen-doku.md#creator--inhalte-und-katalog) · [Übungstypen](wiki/03-uebungstypen.md) | Inhalte, Katalog, Übungstypen, Stores, Metadaten. |
+| **Supervisor** | [Doku nach Rollen](docs/rollen-doku.md#supervisor--steuerung-kontrolle-belohnung) · [Lernplan bauen](wiki/04-lernplan-bauen.md) | Study-Pläne, Ziele, Kontrolle, Punkte, Shop, Klassenarbeiten. |
+| **Student** | [Doku nach Rollen](docs/rollen-doku.md#student--lernen-fortschritt-einlösen) · [Sohn-App](wiki/06-sohn-app.md) | Lernen, Tests, Fortschritt, Punkte-Sicht, Einlösen. |
+
+### Thematische Seiten
+
 | Seite | Inhalt |
 | --- | --- |
 | **[01 · Überblick & Architektur](wiki/01-ueberblick-architektur.md)** | Konzepte, Rollen, Datenmodell, wie alles zusammenhängt. **Hier anfangen.** |
@@ -63,6 +73,7 @@ eigenständige, dateibasierte Welt.
 
 ### Weiterführende Bestandsdoku (`docs/`)
 
+- [Doku nach Rollen: Creator, Supervisor, Student](docs/rollen-doku.md) — rollenbasierter Einstieg in Doku und Wiki
 - [Architektur-Entscheidung (API-First)](docs/architektur-entscheidung.md) · [Architektur-Resümee](docs/architektur-resumee.md)
 - [Endpunkt-Beziehungen](docs/endpunkt-beziehungen.md) — wie die Endpunkte inhaltlich zusammenhängen (Übung → Lehrplan → Kind → Auswertung), mit Datenfluss-Diagramm
 - [Obsidian: Wissensvernetzung](docs/obsidian.md) — Doku/Planung als navigierbarer Graph (Tags/Backlinks), Konsistenz-Konventionen gegen Insellösungen

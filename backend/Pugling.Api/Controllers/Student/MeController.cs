@@ -21,7 +21,7 @@ namespace Pugling.Api.Controllers.Student;
 [Produces("application/json")]
 [Authorize(Roles = Roles.Sohn)]
 public class MeController(PuglingDbContext db, GamificationService gamification,
-    WalletService wallet, OfferService offers, ShopService shop) : ControllerBase
+    WalletService wallet, ShopService shop) : ControllerBase
 {
     /// <summary>Eine einzelne Punkte-Buchung (Gutschrift positiv, Abzug negativ) mit Kategorie.</summary>
     public record PointsEntryResponse(int Id, int Amount, PointKind Kind, string Reason, DateTime CreatedAt);
@@ -31,15 +31,6 @@ public class MeController(PuglingDbContext db, GamificationService gamification,
     /// <summary>Skin-Zustand des Kindes: aktueller Gem-Stand, ausgerüsteter und freigeschaltete Skins.</summary>
     public record SkinStateResponse(int Gems, string Selected, IReadOnlyList<string> Owned);
 
-    /// <summary>Ein kaufbares Angebot aus Sohn-Sicht: Preis, Wiederkehr, Restkontingent dieser Periode und ob bezahlbar.</summary>
-    public record RewardOfferResponse(int Id, string Title, int Cost, OfferPeriod Period, int Quantity,
-        int RemainingThisPeriod, bool Affordable, string? PlanTitle, string? ExerciseTitle);
-    /// <summary>Ein eigener Kauf im Konto mit aktuellem Status („gekauft am … – erfüllt am …").</summary>
-    public record MyRedemptionResponse(int Id, int? RewardId, string Title, int Cost,
-        RewardRedemptionStatus Status, DateTime PurchasedAt, DateTime? FulfilledAt);
-    /// <summary>Angebots-Sicht des Sohns: verfügbare Angebote und eigene Käufe. Der Münzstand steht in <c>me/points</c>.</summary>
-    public record RewardsViewResponse(IReadOnlyList<RewardOfferResponse> Available,
-        IReadOnlyList<MyRedemptionResponse> Redemptions);
     /// <summary>Ein kaufbares Angebot aus dem Familien-Shop aus Sohn-Sicht (Listing-Ebene).</summary>
     public record ShopListingResponse(int Id, int ShopArticleId, string ArticleNumber, string ArticleTitle,
         UnitType UnitType, ActionType ActionType, string Title, string Description,
@@ -270,127 +261,6 @@ public class MeController(PuglingDbContext db, GamificationService gamification,
     }
 
     /// <summary>
-    /// Eigene Angebots-Sicht als Aggregat: verfügbare (aktive) Angebote und eigene Käufe. Die einzelnen
-    /// Listen gibt es auch adressierbar unter <c>rewards/available</c> und <c>rewards/redemptions</c>;
-    /// der Münzstand steht in <c>me/points</c>.
-    /// </summary>
-    [HttpGet("rewards")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult<RewardsViewResponse>> Rewards()
-    {
-        var cid = User.ChildId();
-        if (cid is null) return Forbid();
-        return await RewardsViewAsync(cid.Value);
-    }
-
-    /// <summary>Verfügbare (aktive) Angebote des Kindes, seitenweise.</summary>
-    /// <param name="skip">Anzahl zu überspringender Angebote (Paging).</param>
-    /// <param name="take">Maximale Angebots-Zahl (1..500). Gesamtzahl im Header <c>X-Total-Count</c>.</param>
-    [HttpGet("rewards/available")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult<IReadOnlyList<RewardOfferResponse>>> RewardsAvailable(
-        [FromQuery] int skip = 0, [FromQuery] int take = PagingExtensions.DefaultTake)
-    {
-        var cid = User.ChildId();
-        if (cid is null) return Forbid();
-        var all = await AvailableOffersAsync(cid.Value, DateTime.UtcNow);
-        return Ok(all.ToPagedList(Response, skip, take));
-    }
-
-    /// <summary>Ein einzelnes aktives Angebot (Einzelansicht zur Liste unter <c>rewards/available</c>).</summary>
-    [HttpGet("rewards/available/{availableId:int}")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<RewardOfferResponse>> RewardAvailable(int availableId)
-    {
-        var cid = User.ChildId();
-        if (cid is null) return Forbid();
-
-        var reward = await db.Rewards.AsNoTracking()
-            .Include(r => r.StudyPlan).Include(r => r.Exercise)
-            .FirstOrDefaultAsync(r => r.Id == availableId && r.ChildId == cid && r.Active);
-        if (reward is null) return NotFound();
-
-        var now = DateTime.UtcNow;
-        var coins = await wallet.CoinsAsync(cid.Value);
-        return MapOffer(reward, coins, await offers.CountInCurrentPeriodAsync(reward, now));
-    }
-
-    /// <summary>Eigene Käufe (offene zuerst, dann neueste), seitenweise; optional nach Status gefiltert.</summary>
-    /// <param name="status">Optionaler Statusfilter.</param>
-    /// <param name="skip">Anzahl zu überspringender Käufe (Paging).</param>
-    /// <param name="take">Maximale Käufe-Zahl (1..500). Gesamtzahl im Header <c>X-Total-Count</c>.</param>
-    [HttpGet("rewards/redemptions")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult<IReadOnlyList<MyRedemptionResponse>>> RewardsRedemptions(
-        [FromQuery] RewardRedemptionStatus? status,
-        [FromQuery] int skip = 0, [FromQuery] int take = PagingExtensions.DefaultTake)
-    {
-        var cid = User.ChildId();
-        if (cid is null) return Forbid();
-
-        var query = db.RewardRedemptions.AsNoTracking().Where(r => r.ChildId == cid);
-        if (status is not null) query = query.Where(r => r.Status == status);
-
-        return await query
-            .OrderBy(r => r.Status == RewardRedemptionStatus.Purchased ? 0 : 1)
-            .ThenByDescending(r => r.PurchasedAt).ThenByDescending(r => r.Id)
-            .Select(r => new MyRedemptionResponse(r.Id, r.RewardId, r.Title, r.Cost, r.Status, r.PurchasedAt, r.FulfilledAt))
-            .ToPagedListAsync(Response, skip, take);
-    }
-
-    /// <summary>Ein einzelner eigener Kauf (Einzelansicht zur Liste unter <c>rewards/redemptions</c>).</summary>
-    [HttpGet("rewards/redemptions/{redemptionId:int}")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<MyRedemptionResponse>> RewardRedemption(int redemptionId)
-    {
-        var cid = User.ChildId();
-        if (cid is null) return Forbid();
-
-        var redemption = await db.RewardRedemptions.AsNoTracking()
-            .Where(r => r.Id == redemptionId && r.ChildId == cid)
-            .Select(r => new MyRedemptionResponse(r.Id, r.RewardId, r.Title, r.Cost, r.Status, r.PurchasedAt, r.FulfilledAt))
-            .FirstOrDefaultAsync();
-
-        return redemption is null ? NotFound() : redemption;
-    }
-
-    /// <summary>
-    /// Kauft ein Angebot: die Münzen werden <b>sofort</b> abgebucht (Direktkauf), der Vater erfüllt seinen
-    /// Teil später. Das Kontingent der aktuellen Periode und die Deckung werden serverseitig geprüft; ein
-    /// paralleler Doppelkauf scheitert per Concurrency-Token mit 409. <paramref name="availableId"/> ist die
-    /// Id des Angebots aus <c>rewards/available</c>.
-    /// </summary>
-    [HttpPost("rewards/available/{availableId:int}/purchase")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    [ProducesResponseType(StatusCodes.Status409Conflict)]
-    public async Task<ActionResult<RewardsViewResponse>> Purchase(int availableId)
-    {
-        var cid = User.ChildId();
-        if (cid is null) return Forbid();
-
-        var result = await offers.PurchaseAsync(cid.Value, availableId, DateTime.UtcNow);
-        return result.Error switch
-        {
-            OfferService.OfferError.None => await RewardsViewAsync(cid.Value),
-            OfferService.OfferError.NotFound => this.ProblemWithCode(OfferService.ToApiError(result.Error), "Offer not found."),
-            OfferService.OfferError.Inactive => this.ProblemWithCode(OfferService.ToApiError(result.Error), "This offer is no longer available."),
-            OfferService.OfferError.QuotaExceeded => this.ProblemWithCode(OfferService.ToApiError(result.Error), "The quota for this period is exhausted."),
-            OfferService.OfferError.InsufficientCoins => this.ProblemWithCode(OfferService.ToApiError(result.Error), "Not enough coins for this offer."),
-            _ => this.ProblemWithCode(OfferService.ToApiError(result.Error), "Purchase conflicted with a concurrent action — please try again."),
-        };
-    }
-
-    /// <summary>
     /// Familien-Shop: aktive Angebote des Vaters, aggregiertes Inventar und Kaufhistorie des Sohns.
     /// </summary>
     [HttpGet("shop")]
@@ -510,45 +380,6 @@ public class MeController(PuglingDbContext db, GamificationService gamification,
     private static MyActivationResponse MapActivation(ActivationRequest r) =>
         new(r.Id, r.ShopArticleId, r.ArticleTitle, r.UnitType, r.ActionType,
             r.RequestedQuantity, r.Status, r.RequestedAt, r.ClosedAt);
-
-    private async Task<RewardsViewResponse> RewardsViewAsync(int childId)
-    {
-        var available = await AvailableOffersAsync(childId, DateTime.UtcNow);
-        var redemptions = await MyRedemptionsQuery(childId).ToListAsync();
-        return new RewardsViewResponse(available, redemptions);
-    }
-
-    /// <summary>Aktive Angebote des Kindes als Sohn-Sicht (Restkontingent je Periode + Bezahlbarkeit).</summary>
-    private async Task<List<RewardOfferResponse>> AvailableOffersAsync(int childId, DateTime now)
-    {
-        var coins = await wallet.CoinsAsync(childId);
-
-        var offersList = await db.Rewards.AsNoTracking()
-            .Include(r => r.StudyPlan).Include(r => r.Exercise)
-            .Where(r => r.ChildId == childId && r.Active)
-            .OrderBy(r => r.Cost).ThenBy(r => r.Id)
-            .ToListAsync();
-
-        // Verbrauchte Kontingente aller Angebote gebündelt (≤ 4 Abfragen statt einer je Angebot).
-        var used = await offers.CountsInCurrentPeriodAsync(offersList, now);
-        return offersList.Select(r => MapOffer(r, coins, used[r.Id])).ToList();
-    }
-
-    /// <summary>Projiziert ein Angebot in die Sohn-Sicht anhand des schon ermittelten Verbrauchs.</summary>
-    private static RewardOfferResponse MapOffer(Reward r, int coins, int used)
-    {
-        var remaining = Math.Max(0, r.Quantity - used);
-        return new RewardOfferResponse(r.Id, r.Title, r.Cost, r.Period, r.Quantity,
-            remaining, coins >= r.Cost && remaining > 0, r.StudyPlan?.Title, r.Exercise?.Title);
-    }
-
-    /// <summary>Eigene Käufe des Kindes (offene zuerst, dann neueste) als projizierte, sortierte Query.</summary>
-    private IQueryable<MyRedemptionResponse> MyRedemptionsQuery(int childId) =>
-        db.RewardRedemptions.AsNoTracking()
-            .Where(r => r.ChildId == childId)
-            .OrderBy(r => r.Status == RewardRedemptionStatus.Purchased ? 0 : 1)
-            .ThenByDescending(r => r.PurchasedAt).ThenByDescending(r => r.Id)
-            .Select(r => new MyRedemptionResponse(r.Id, r.RewardId, r.Title, r.Cost, r.Status, r.PurchasedAt, r.FulfilledAt));
 
     private async Task<ShopViewResponse> ShopViewAsync(int childId)
     {

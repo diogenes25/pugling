@@ -692,82 +692,8 @@ export interface CreateAchievementDto {
   rewardPoints: number;
 }
 
-// ---- Angebote (kaufbare reale Belohnungen wie Spielzeit/Taschengeld) ----
-
-/** Kauf-Stand im Konto: gekauft (Münzen weg), vom Vater erfüllt, oder storniert (rückerstattet). */
-export type RewardRedemptionStatus = "Purchased" | "Fulfilled" | "Cancelled";
-/** Wiederkehr eines Angebots – bestimmt das Kontingent-Fenster. */
-export type OfferPeriod = "OneOff" | "Daily" | "Weekly" | "Monthly";
-
-/** Angebots-Definition zur Verwaltung durch den Vater. */
-export interface RewardDef {
-  id: number;
-  title: string;
-  cost: number;
-  period: OfferPeriod;
-  quantity: number;
-  active: boolean;
-  /** Optionaler Plan-/Übungs-Kontext (null = kindweit für alles gültig). */
-  studyPlanId: number | null;
-  exerciseId: number | null;
-  planTitle: string | null;
-  exerciseTitle: string | null;
-}
-export interface CreateRewardDto {
-  title: string;
-  cost: number;
-  period?: OfferPeriod;
-  quantity?: number;
-  studyPlanId?: number | null;
-  exerciseId?: number | null;
-}
-
-/** Kauf aus Vater-Sicht (mit Kind-Bezug). */
-export interface RedemptionDef {
-  id: number;
-  childId: number;
-  rewardId: number | null;
-  title: string;
-  cost: number;
-  status: RewardRedemptionStatus;
-  purchasedAt: string;
-  fulfilledAt: string | null;
-  /** Server-autoritative Affordance: Kauf jetzt erfüllbar? (nur solange offen) */
-  canFulfill: boolean;
-  /** Server-autoritative Affordance: Kauf jetzt stornierbar (Rückerstattung)? (nur solange offen) */
-  canCancel: boolean;
-}
-
-/** Verfügbares Angebot aus Sohn-Sicht. */
-export interface RewardOffer {
-  id: number;
-  title: string;
-  cost: number;
-  period: OfferPeriod;
-  quantity: number;
-  remainingThisPeriod: number;
-  affordable: boolean;
-  /** Kontext-Labels, falls das Angebot an Plan/Übung gebunden ist. */
-  planTitle: string | null;
-  exerciseTitle: string | null;
-}
-
-/** Eigener Kauf aus Sohn-Sicht. */
-export interface MyRedemption {
-  id: number;
-  rewardId: number | null;
-  title: string;
-  cost: number;
-  status: RewardRedemptionStatus;
-  purchasedAt: string;
-  fulfilledAt: string | null;
-}
-
-/** Angebots-Sicht des Sohns: verfügbare Angebote + eigene Käufe. Der Münzstand kommt aus me/points (Wallet). */
-export interface RewardsView {
-  available: RewardOffer[];
-  redemptions: MyRedemption[];
-}
+// Hinweis: Das frühere Angebots-System (Reward/Redemption/OfferPeriod) wurde entfernt – der
+// Familien-Shop (siehe ShopArticle/ShopListing/ShopPurchase weiter unten) ist der einzige Münz-Ausgabeweg.
 
 // ---- Vater: Klassenarbeiten ----
 

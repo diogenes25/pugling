@@ -1,5 +1,5 @@
 ---
-tags: [typ/konzept, bereich/punkte, bereich/gamification]
+tags: [typ/konzept, bereich/punkte, bereich/gamification, rolle/supervisor, rolle/student]
 ---
 
 # 05 · Punkte & Bonus-System
@@ -15,7 +15,7 @@ Bonus-Quellen es gibt (mit Formeln) und wie der Vater sie je Kind hochdreht.
 
 Jede Buchung ist eine **`ChildPointsEntry`** (positiv = gutgeschrieben, negativ = ausgegeben) mit einer
 Kategorie **`PointKind`** — dadurch ist auswertbar, *woher* Punkte kamen. Es gibt **zwei Währungen**:
-🪙 **Münzen** (für reale Vater-Angebote) und 💎 **Gems** (für Skins/Avatar). Die Währung ist eine
+🪙 **Münzen** (für reale Vater-Belohnungen aus dem Familien-Shop) und 💎 **Gems** (für Skins/Avatar). Die Währung ist eine
 **reine Funktion des `PointKind`** (kein eigenes Feld, kein Ledger-Umbau) — festgelegt in
 [`PointKindCurrency`](../backend/Pugling.Api/Services/PointKindCurrency.cs), der Saldo je Währung kommt
 zentral aus [`WalletService`](../backend/Pugling.Api/Services/WalletService.cs).
@@ -28,7 +28,7 @@ zentral aus [`WalletService`](../backend/Pugling.Api/Services/WalletService.cs).
 | `Test` | 🪙 Münzen | historisch/reserviert: Abschlusstest bestanden |
 | `DayComplete` | 🪙 Münzen | historisch/reserviert: Tag vollständig |
 | `Manual` | 🪙 Münzen | manuelle Vater-Buchung |
-| `Reward` | 🪙 Münzen | **Angebot gekauft** (alter Direkt-Kauf) bzw. Storno-Rückerstattung (negativ/positiv) |
+| `Reward` | 🪙 Münzen | **Tombstone** – nur noch historische Buchungen des entfernten Angebots-Systems (keine neuen) |
 | `ShopCoins` | 🪙 Münzen | **Familien-Shop-Kauf** – Coin-Anteil (negativ) |
 | `Combo` | 💎 Gems | Combo-Bonus (Treffer in Folge) |
 | `Speed` | 💎 Gems | Bonus für schnelle Antwort |
@@ -222,9 +222,13 @@ Zwei Wege, die Motivation gezielt hochzudrehen (z. B. Grammatik-Bonus für ein l
 
 ---
 
-## 7. Ausgeben: Skins, Angebote und Familien-Shop
+## 7. Ausgeben: Skins und Familien-Shop
 
-Die Kehrseite des Verdienens — drei getrennte Kreisläufe.
+Die Kehrseite des Verdienens — zwei getrennte Kreisläufe (💎 Gems → Skins, 🪙 Münzen → Familien-Shop).
+
+> **Hinweis:** Das früher hier beschriebene separate **Angebots**-System (`Reward`/`RewardRedemption`,
+> Direktkauf mit Vater-Erfüllung) wurde **entfernt** — der **Familien-Shop** deckt es vollständig ab und ist
+> der **einzige Münz-Ausgabeweg**. `PointKind.Reward` existiert nur noch als Tombstone für Alt-Buchungen.
 
 ### Skins (💎 Gems, sofortiger Kauf)
 
@@ -238,43 +242,9 @@ POST /api/v1/student/me/skins/{skinId}/purchase   // Gems abbuchen + ausrüsten
 POST /api/v1/student/me/skins/{skinId}/equip      // bereits besessenen Skin auswählen
 ```
 
-### Angebote (🪙 Münzen, Direktkauf + Erfüllung)
-
-Reale Belohnungen des Vaters (z. B. „1 h Spielzeit", „Taschengeld"). Ein **`Reward`** trägt Preis,
-`Period` (`OneOff | Daily | Weekly | Monthly`) und `Quantity` = **Kontingent pro Periode** (füllt sich
-jede Periode wieder auf). Ablauf (Logik in [`OfferService`](../backend/Pugling.Api/Services/OfferService.cs),
-Kontingent-Fenster in [`PeriodWindow`](../backend/Pugling.Api/Services/PeriodWindow.cs)):
-
-1. **Sohn kauft direkt** — Münzen sofort weg (`PointKind.Reward`), `RewardRedemption` mit Status
-   `Purchased`. Geprüft: aktiv, Kontingent der Periode nicht erschöpft (sonst 409), Deckung (sonst 400).
-   ConcurrencyStamp schützt Saldo **und** Kontingent gegen Doppelkäufe.
-2. **Vater erfüllt** (`fulfill`) real → `Fulfilled` + `FulfilledAt`; oder **storniert** (`cancel`) →
-   `Cancelled` + Münz-**Rückerstattung**; der Kontingent-Slot wird wieder frei.
-
-Das Konto zeigt dem Sohn „gekauft am … – erfüllt am …".
-
-```http
-# Vater — Angebote verwalten & Käufe entscheiden
-POST   /api/v1/supervisor/children/{childId}/rewards        { "title":"1 Stunde Zocken","cost":400,"period":"Weekly","quantity":5 }
-GET    /api/v1/supervisor/children/{childId}/rewards                                   // Definitionen
-PATCH  /api/v1/supervisor/children/{childId}/rewards/{id}    { "period":"Daily","quantity":2,"active":true }
-DELETE /api/v1/supervisor/children/{childId}/rewards/{id}
-GET    /api/v1/supervisor/children/{childId}/rewards/redemptions?status=Purchased      // offene Käufe
-POST   /api/v1/supervisor/children/{childId}/rewards/redemptions/{id}/fulfill          // erfüllt
-POST   /api/v1/supervisor/children/{childId}/rewards/redemptions/{id}/cancel           // storniert + rückerstattet
-
-# Sohn — Angebote sehen & direkt kaufen (Salden via /me/points)
-GET    /api/v1/student/me/rewards                              // Aggregat: { available[…], redemptions[…] }
-GET    /api/v1/student/me/rewards/available[?skip=&take=]      // verfügbare Angebote (paginiert) [period,quantity,remainingThisPeriod,affordable]
-GET    /api/v1/student/me/rewards/available/{availableId}      // einzelnes Angebot
-GET    /api/v1/student/me/rewards/redemptions[?status=&skip=&take=]  // eigene Käufe (paginiert) [status,purchasedAt,fulfilledAt]
-GET    /api/v1/student/me/rewards/redemptions/{redemptionId}  // einzelner Kauf
-POST   /api/v1/student/me/rewards/available/{availableId}/purchase
-```
-
 ### Familien-Shop (🪙 Münzen + 💎 Gems, Inventar + Aktivierungsanfrage)
 
-Der **Familien-Shop** ist das flexiblere Pendant zu den einfachen Angeboten: Der Vater pflegt einen
+Der **Familien-Shop** ist der Münz-Ausgabeweg für reale Belohnungen: Der Vater pflegt einen
 **Artikel-Katalog** (`ShopArticle`) mit Eigenschaften wie Einheit (`UnitType`: Minute, Stunde, Stück, …)
 und Kategorie (`ActionType`: TV, Zocken, Süßigkeit, Ausflug, …). Je Artikel können mehrere
 **Angebote** (`ShopListing`) mit eigenem Preis (Münzen **und/oder** Gems), Menge pro Kauf und Bestand

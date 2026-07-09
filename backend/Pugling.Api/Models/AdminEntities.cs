@@ -19,8 +19,8 @@ public enum SupervisorRelation
 
 /// <summary>
 /// Betreuungs-Beziehung Supervisor↔Student. Ein Student kann mehrere Supervisor haben (Vater, Mutter,
-/// Oma …); jeder betreibt seinen eigenen Shop/Angebote. Das Wallet bleibt <b>gemeinsam</b> – die
-/// Zuordnung „wer löst ein" liegt am Kauf (siehe <see cref="Reward"/>/<see cref="ShopPurchase"/> etc.),
+/// Oma …); jeder betreibt seinen eigenen Familien-Shop. Das Wallet bleibt <b>gemeinsam</b> – die
+/// Zuordnung „wer löst ein" liegt am Kauf (siehe <see cref="ShopPurchase"/> mit Aussteller-Snapshot),
 /// nicht am Geld. Ersetzt die frühere 1:1-Bindung <c>Child.FatherId</c>.
 /// </summary>
 public class SupervisorLink

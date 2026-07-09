@@ -1,5 +1,5 @@
 ---
-tags: [typ/tutorial, bereich/training]
+tags: [typ/tutorial, bereich/training, rolle/creator, rolle/supervisor, rolle/student]
 ---
 
 # Pugling – Tutorial (API)
@@ -174,7 +174,7 @@ GET /api/v1/student/me/points
 GET /api/v1/student/me/missions
 GET /api/v1/student/me/achievements
 GET /api/v1/student/me/skins
-GET /api/v1/student/me/rewards
+GET /api/v1/student/me/shop
 ```
 
 Der Sohn kann keine Pläne/Inhalte ändern, keine fremden Pläne sehen und keine fremden Tage nachtragen.

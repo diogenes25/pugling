@@ -93,6 +93,21 @@ internal static class TestApi
             }));
     }
 
+    /// <summary>
+    /// Legt (als Supervisor) einen Familien-Shop-Artikel samt einem Angebot (<c>ShopListing</c>) an und
+    /// liefert die Listing-Id. Geteilter Setup-Helfer für die Shop-Tests (statt in jedem Test article+listing
+    /// von Hand zu posten). Artikelnummer ist je Vater eindeutig – bei mehreren Vätern darf sie sich wiederholen.
+    /// </summary>
+    public static async Task<int> CreateShopListingAsync(HttpClient supervisor, string articleNumber,
+        int coinPrice, int unitsPerPurchase, int stock, string articleTitle = "Test-Artikel",
+        string listingTitle = "", int gemPrice = 0, string unitType = "Stueck", string actionType = "Sonstiges")
+    {
+        var articleId = await IdAsync(await supervisor.PostAsJsonAsync("/api/v1/supervisor/shop/articles",
+            new { articleNumber, title = articleTitle, unitType, actionType }));
+        return await IdAsync(await supervisor.PostAsJsonAsync($"/api/v1/supervisor/shop/articles/{articleId}/listings",
+            new { title = listingTitle, coinPrice, gemPrice, unitsPerPurchase, currentStock = stock, maxStock = stock }));
+    }
+
     /// <summary>Legt (als Vater) eine Store-Vokabel „einfach" an (Auto-Key) und liefert (id, key).</summary>
     public static async Task<(int id, string key)> CreateStoreVocabAsync(HttpClient father, string word, string translation,
         string src = "en", string tgt = "de")

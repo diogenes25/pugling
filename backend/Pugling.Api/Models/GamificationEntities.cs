@@ -100,94 +100,9 @@ public class AchievementAward
     public DateTime EarnedAt { get; set; } = DateTime.UtcNow;
 }
 
-/// <summary>Wiederkehr eines Angebots – bestimmt, über welches Zeitfenster das Kontingent zählt und sich erneuert.</summary>
-public enum OfferPeriod
-{
-    /// <summary>Einmalig; das Kontingent gilt über die gesamte Laufzeit und füllt sich nicht wieder auf.</summary>
-    OneOff = 0,
-    /// <summary>Pro Kalendertag (UTC); erneuert sich täglich.</summary>
-    Daily = 1,
-    /// <summary>Pro ISO-Woche (Mo–So); erneuert sich wöchentlich.</summary>
-    Weekly = 2,
-    /// <summary>Pro Kalendermonat; erneuert sich monatlich.</summary>
-    Monthly = 3,
-}
-
-/// <summary>
-/// Ein vom Vater definiertes, kaufbares <b>Angebot</b> (reale Belohnung, z. B. „1 h Spielzeit" oder
-/// „Taschengeld") mit Münz-Preis. Anders als Missionen/Auszeichnungen wird hier <b>ausgegeben</b> statt
-/// verdient: der Sohn kauft sofort (Münzen werden abgebucht), der Vater erfüllt später seinen Teil der
-/// Abmachung (siehe <see cref="RewardRedemption"/>). <see cref="Quantity"/> Käufe sind je
-/// <see cref="Period"/> möglich; das Kontingent füllt sich mit jeder neuen Periode wieder auf.
-/// </summary>
-public class Reward
-{
-    public int Id { get; set; }
-    public int ChildId { get; set; }
-    public Child? Child { get; set; }
-    /// <summary>Ausstellender Supervisor: nur er sieht/erfüllt/storniert Käufe dieses Angebots (app-seitig erzwungen).</summary>
-    public int SupervisorId { get; set; }
-    public string Title { get; set; } = "";
-    /// <summary>
-    /// Optionaler Bezug auf einen Lehrplan des Kindes: ist er gesetzt, wird das Angebot dem Sohn nur im
-    /// Kontext dieses Plans angeboten (null = kindweit, für alle Pläne gültig). Bricht das Angebot nicht,
-    /// wenn der Plan gelöscht wird (FK → SetNull, Angebot wird dann wieder kindweit).
-    /// </summary>
-    public int? StudyPlanId { get; set; }
-    public StudyPlan? StudyPlan { get; set; }
-    /// <summary>
-    /// Optionaler Bezug auf eine Katalog-Übung: begrenzt das Angebot auf den Kontext dieser Übung
-    /// (null = für alle Übungen). FK → SetNull, damit das Löschen der Übung das Angebot nicht bricht.
-    /// </summary>
-    public int? ExerciseId { get; set; }
-    public Exercise? Exercise { get; set; }
-    /// <summary>Kosten in Münzen, die bei jedem Kauf vom Kind-Konto abgebucht werden.</summary>
-    public int Cost { get; set; }
-    /// <summary>Wiederkehr des Angebots; steuert das Zeitfenster des Kontingents.</summary>
-    public OfferPeriod Period { get; set; } = OfferPeriod.OneOff;
-    /// <summary>Kontingent: wie oft das Angebot je <see cref="Period"/> gekauft werden kann (≥ 1).</summary>
-    public int Quantity { get; set; } = 1;
-    public bool Active { get; set; } = true;
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-}
-
-/// <summary>Stand eines gekauften Angebots im Sohn-Konto – der Kauf ist sofort verbindlich, die Erfüllung folgt.</summary>
-public enum RewardRedemptionStatus
-{
-    /// <summary>Vom Sohn gekauft – Münzen wurden abgebucht, wartet auf die reale Erfüllung durch den Vater.</summary>
-    Purchased = 0,
-    /// <summary>Vom Vater erfüllt (reale Leistung erbracht) – abgeschlossen.</summary>
-    Fulfilled = 1,
-    /// <summary>Vom Vater storniert – die Münzen wurden zurückerstattet, der Kontingent-Slot ist wieder frei.</summary>
-    Cancelled = 2,
-}
-
-/// <summary>
-/// Ein vom Sohn gekauftes Angebot (<see cref="Reward"/>) im Konto. Titel/Kosten werden als Momentaufnahme
-/// festgehalten, damit die Historie stabil bleibt, auch wenn das Angebot später geändert/gelöscht wird.
-/// Die Münz-Abbuchung (negative <c>PointKind.Reward</c>-Buchung) erfolgt <b>sofort beim Kauf</b>; der Vater
-/// erfüllt oder storniert (Rückerstattung) danach. Zeigt dem Sohn „gekauft am … – erfüllt am …".
-/// </summary>
-public class RewardRedemption
-{
-    public int Id { get; set; }
-    public int ChildId { get; set; }
-    public Child? Child { get; set; }
-    /// <summary>Referenz auf das Angebot; wird auf null gesetzt, falls das Angebot später gelöscht wird.</summary>
-    public int? RewardId { get; set; }
-    public Reward? Reward { get; set; }
-    /// <summary>Ausstellender Supervisor (Momentaufnahme): nur er erfüllt/storniert; überlebt das Löschen des Angebots.</summary>
-    public int SupervisorId { get; set; }
-    /// <summary>Titel des Angebots zum Kaufzeitpunkt (Momentaufnahme).</summary>
-    public string Title { get; set; } = "";
-    /// <summary>Kosten zum Kaufzeitpunkt (Momentaufnahme); maßgeblich für Abbuchung und Rückerstattung.</summary>
-    public int Cost { get; set; }
-    public RewardRedemptionStatus Status { get; set; } = RewardRedemptionStatus.Purchased;
-    /// <summary>Kaufzeitpunkt; bestimmt zugleich, in welche Kontingent-Periode der Kauf fällt.</summary>
-    public DateTime PurchasedAt { get; set; } = DateTime.UtcNow;
-    /// <summary>Zeitpunkt der Erfüllung bzw. Stornierung durch den Vater (null solange offen).</summary>
-    public DateTime? FulfilledAt { get; set; }
-}
+// Hinweis: Das frühere „Angebots"-System (Reward/RewardRedemption/OfferPeriod) wurde entfernt – der
+// Familien-Shop (ShopArticle/ShopListing/ShopPurchase/ActivationRequest) ist der einzige Münz-Ausgabeweg.
+// Der Ledger-Kind <c>PointKind.Reward</c> bleibt nur als Tombstone für historische Buchungen bestehen.
 
 /// <summary>Maßeinheit des Artikels – bestimmt, wie Mengen im Inventar und bei der Aktivierung dargestellt werden.</summary>
 public enum UnitType

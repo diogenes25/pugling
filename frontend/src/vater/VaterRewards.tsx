@@ -2,14 +2,10 @@ import { useId, useState } from "react";
 import { api, errorMessage } from "../lib/api";
 import { useAsync } from "../lib/useAsync";
 import { confirmAction } from "../lib/ui";
-import { offerPeriodLabel } from "../lib/labels";
 import type {
   AchievementDef, ChildResponse, CreateAchievementDto, CreateMissionDto,
-  MissionDef, MissionPeriod, OfferPeriod, PlanResponse, PositionResponse, ProgressMetric, RewardDef,
+  MissionDef, MissionPeriod, ProgressMetric,
 } from "../lib/types";
-
-/** Wiederkehr-Optionen für Angebote (deutsche Labels). */
-const OFFER_PERIODS: OfferPeriod[] = ["OneOff", "Daily", "Weekly", "Monthly"];
 
 /** Metriken mit deutschen Labels – dieselben, die der Server (ProgressMetric) auswertet. */
 const METRICS: { value: ProgressMetric; label: string }[] = [
@@ -58,125 +54,7 @@ export function VaterRewards() {
 
       {activeChild !== null && <MissionManager key={`m${activeChild}`} childId={activeChild} />}
       {activeChild !== null && <AchievementManager key={`a${activeChild}`} childId={activeChild} />}
-      {activeChild !== null && <RewardOfferManager key={`r${activeChild}`} childId={activeChild} />}
     </>
-  );
-}
-
-interface RewardForm {
-  title: string; cost: number; period: OfferPeriod; quantity: number;
-  studyPlanId: number | ""; exerciseId: number | "";
-}
-
-function RewardOfferManager({ childId }: { childId: number }) {
-  const uid = useId();
-  const list = useAsync<RewardDef[]>(() => api.rewardsFor(childId), [childId]);
-  const plans = useAsync<PlanResponse[]>(() => api.plans(childId), [childId]);
-  const [form, setForm] = useState<RewardForm>({ title: "", cost: 200, period: "Weekly", quantity: 1, studyPlanId: "", exerciseId: "" });
-  // Übungen zur Auswahl kommen aus den Positionen des gewählten Plans (nur dann ist ein Übungs-Bezug sinnvoll).
-  const positions = useAsync<PositionResponse[]>(
-    () => (form.studyPlanId === "" ? Promise.resolve([]) : api.positions(form.studyPlanId)),
-    [form.studyPlanId]);
-  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
-  const [busy, setBusy] = useState(false);
-
-  async function submit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!form.title.trim()) { setMsg({ ok: false, text: "Titel nötig." }); return; }
-    if (form.cost <= 0) { setMsg({ ok: false, text: "Preis muss positiv sein." }); return; }
-    if (form.quantity < 1) { setMsg({ ok: false, text: "Anzahl muss mindestens 1 sein." }); return; }
-    setBusy(true);
-    try {
-      await api.createReward(childId, {
-        title: form.title.trim(), cost: form.cost, period: form.period, quantity: form.quantity,
-        studyPlanId: form.studyPlanId === "" ? null : form.studyPlanId,
-        exerciseId: form.exerciseId === "" ? null : form.exerciseId,
-      });
-      setMsg({ ok: true, text: `Angebot „${form.title.trim()}" angelegt.` });
-      setForm((f) => ({ ...f, title: "" }));
-      list.reload();
-    } catch (err) {
-      setMsg({ ok: false, text: errorMessage(err) });
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function toggle(r: RewardDef) {
-    setBusy(true);
-    try { await api.updateReward(childId, r.id, { active: !r.active }); list.reload(); }
-    catch (err) { setMsg({ ok: false, text: errorMessage(err) }); }
-    finally { setBusy(false); }
-  }
-  async function remove(r: RewardDef) {
-    if (!confirmAction("Dieses Angebot wirklich löschen?")) return;
-    setBusy(true);
-    try { await api.deleteReward(childId, r.id); list.reload(); }
-    catch (err) { setMsg({ ok: false, text: errorMessage(err) }); }
-    finally { setBusy(false); }
-  }
-
-  return (
-    <section>
-      <h2 className="h-section">Angebote zum Kaufen {list.data ? `(${list.data.length})` : ""}</h2>
-      <p className="muted">Reale Belohnungen, die dein Kind mit verdienten 🪙 Münzen kauft (z.B. 1 h Spielzeit).
-        Das Kind kauft <b>sofort</b> (Münzen sind gleich weg); du erfüllst den Kauf im <b>Konto</b>. Anzahl =
-        Kontingent pro Periode (füllt sich jede Periode neu auf).</p>
-      <form className="form-grid" onSubmit={submit} style={{ alignItems: "end" }}>
-        <div className="field" style={{ minWidth: 200 }}><label htmlFor={`${uid}-title`}>Titel</label>
-          <input id={`${uid}-title`} value={form.title} onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))} placeholder="1 Stunde Zocken" /></div>
-        <div className="field" style={{ maxWidth: 120 }}><label>Preis 🪙</label>
-          <input title="Preis in Münzen" type="number" min={1} value={form.cost}
-            onChange={(e) => setForm((f) => ({ ...f, cost: Number(e.target.value) }))} /></div>
-        <div className="field" style={{ maxWidth: 150 }}><label>Wiederkehr</label>
-          <select title="Wiederkehr" value={form.period} onChange={(e) => setForm((f) => ({ ...f, period: e.target.value as OfferPeriod }))}>
-            {OFFER_PERIODS.map((p) => <option key={p} value={p}>{offerPeriodLabel(p)}</option>)}
-          </select></div>
-        <div className="field" style={{ maxWidth: 110 }}><label>Anzahl</label>
-          <input title="Kontingent pro Periode" type="number" min={1} value={form.quantity}
-            onChange={(e) => setForm((f) => ({ ...f, quantity: Number(e.target.value) }))} /></div>
-        <div className="field" style={{ minWidth: 160 }}><label>Plan <span className="muted">(optional)</span></label>
-          <select title="Plan-Bezug" value={form.studyPlanId}
-            onChange={(e) => setForm((f) => ({ ...f, studyPlanId: e.target.value ? Number(e.target.value) : "", exerciseId: "" }))}>
-            <option value="">– kindweit –</option>
-            {plans.data?.map((p) => <option key={p.id} value={p.id}>{p.title}</option>)}
-          </select></div>
-        <div className="field" style={{ minWidth: 160 }}><label>Übung <span className="muted">(optional)</span></label>
-          <select title="Übungs-Bezug" value={form.exerciseId} disabled={form.studyPlanId === ""}
-            onChange={(e) => setForm((f) => ({ ...f, exerciseId: e.target.value ? Number(e.target.value) : "" }))}>
-            <option value="">– ganzer Plan –</option>
-            {positions.data?.map((p) => <option key={p.id} value={p.exerciseId}>{p.exerciseTitle}</option>)}
-          </select></div>
-        <button type="submit" className="btn inline-btn" style={{ width: "auto" }} disabled={busy}>{busy ? "…" : "Anlegen"}</button>
-      </form>
-      {msg && <div role="status" aria-live="polite" className={`banner ${msg.ok ? "ok" : "err"}`} style={{ marginTop: 10 }}>{msg.text}</div>}
-
-      {list.loading ? <div className="loading">Lade…</div> : list.error ? <div className="banner err">{list.error}</div> : (
-        <div style={{ overflowX: "auto", marginTop: 10 }}>
-          <table className="table">
-            <thead><tr><th>Angebot</th><th>Kontext</th><th>Preis</th><th>Wiederkehr</th><th className="num">Anzahl</th><th>Status</th><th>Aktion</th></tr></thead>
-            <tbody>
-              {list.data?.map((r) => (
-                <tr key={r.id} style={{ opacity: r.active ? 1 : 0.55 }}>
-                  <td>{r.title}</td>
-                  <td className="muted">{r.exerciseTitle ? `${r.planTitle} · ${r.exerciseTitle}` : r.planTitle ?? "kindweit"}</td>
-                  <td>🪙 {r.cost}</td>
-                  <td className="muted">{offerPeriodLabel(r.period)}</td>
-                  <td className="num">{r.quantity}</td>
-                  <td>{r.active ? <span className="pill lime">aktiv</span> : <span className="pill">inaktiv</span>}</td>
-                  <td style={{ whiteSpace: "nowrap" }}>
-                    <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} disabled={busy} onClick={() => toggle(r)}>
-                      {r.active ? "Deaktivieren" : "Aktivieren"}</button>{" "}
-                    <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} disabled={busy} onClick={() => remove(r)}>Löschen</button>
-                  </td>
-                </tr>
-              ))}
-              {list.data?.length === 0 && <tr><td colSpan={7} className="muted">Noch keine Angebote.</td></tr>}
-            </tbody>
-          </table>
-        </div>
-      )}
-    </section>
   );
 }
 

@@ -46,12 +46,8 @@ public static class ApiErrors
     public static readonly ApiError SkinNotUnlocked = new("skin_not_unlocked", 400, "Skin not unlocked.");
     /// <summary>Zu wenig Gems für den Skin-Kauf (400).</summary>
     public static readonly ApiError InsufficientGems = new("insufficient_gems", 400, "Not enough gems.");
-    /// <summary>Zu wenig Münzen für das Angebot (400).</summary>
+    /// <summary>Zu wenig Münzen für den Shop-Kauf (400).</summary>
     public static readonly ApiError InsufficientCoins = new("insufficient_coins", 400, "Not enough coins.");
-    /// <summary>Kontingent des Angebots in dieser Periode erschöpft (409).</summary>
-    public static readonly ApiError QuotaExhausted = new("quota_exhausted", 409, "Quota exhausted.");
-    /// <summary>Angebot ist deaktiviert / nicht mehr verfügbar (400).</summary>
-    public static readonly ApiError OfferInactive = new("offer_inactive", 400, "Offer no longer available.");
     /// <summary>Shop-Angebot ist deaktiviert / nicht mehr verfügbar (400).</summary>
     public static readonly ApiError ShopListingInactive = new("shop_listing_inactive", 400, "Shop listing no longer available.");
     /// <summary>Shop-Angebot ist nicht ausreichend auf Lager (409).</summary>

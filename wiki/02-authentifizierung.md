@@ -1,5 +1,5 @@
 ---
-tags: [typ/konzept, bereich/auth]
+tags: [typ/konzept, bereich/auth, rolle/creator, rolle/supervisor, rolle/student]
 ---
 
 # 02 · Authentifizierung & Rollen

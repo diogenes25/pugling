@@ -1,5 +1,5 @@
 ---
-tags: [typ/konzept, bereich/doku]
+tags: [typ/konzept, bereich/doku, rolle/creator, rolle/supervisor, rolle/student]
 aliases: [Obsidian, Wissensvernetzung, Wissenskarte]
 ---
 
@@ -54,20 +54,22 @@ Obsidian erzwingt und sichtbar macht:
 Damit spätere Lerntechniken/Themen **schmerzfrei** andocken, gelten dieselben Muster wie heute beim
 Vokabeltraining:
 
-### a) Frontmatter-Tags (zwei Achsen + Doku-Typ)
+### a) Frontmatter-Tags (Bereich + Rolle + Doku-Typ)
 
 Jede neue Doku-Seite bekommt oben eine kleine YAML-Frontmatter (rendert auf GitHub als Tabelle,
 in Obsidian als Tags):
 
 ```yaml
 ---
-tags: [typ/konzept, bereich/auswertung, lerntechnik/vokabeln]
+tags: [typ/konzept, bereich/auswertung, rolle/supervisor, lerntechnik/vokabeln]
 aliases: [Lernstand-Hierarchie]
 ---
 ```
 
 - **`bereich/…`** – Architektur-Bereich: `katalog`, `training`, `auswertung`, `punkte`,
   `gamification`, `auth`, `shop`, `frontend`, `doku`.
+- **`rolle/…`** – fachlicher Blick: `creator` (Inhalte/Katalog), `supervisor` (Steuerung/Kontrolle),
+  `student` (Lernen/Einlösen). Rollenübergreifende Seiten tragen mehrere Rollen-Tags.
 - **`lerntechnik/…`** – fachliche Technik: `vokabeln` (heute), später z. B. `karteikarten`,
   `lueckentext`, `rechnen` … – **eine** neue Tag pro Technik, nie ein paralleler Doku-Baum.
 - **`typ/…`** – Doku-Art: `konzept`, `referenz`, `tutorial`, `plan`, `adr`.
@@ -102,6 +104,7 @@ Der Graph-Hub: Bereich → maßgebliche Seite(n). Von hier aus ist jede Domäne 
 | Bereich | Einstieg |
 | --- | --- |
 | Gesamtbild / Konzepte | [wiki/01 · Überblick & Architektur](../wiki/01-ueberblick-architektur.md) · [CLAUDE.md](../CLAUDE.md) |
+| **Rollen-Einstieg** (Creator/Supervisor/Student) | [docs/rollen-doku.md](rollen-doku.md) |
 | **Grundprinzip** (Creator→Vater→Kind) | [docs/grundprinzip.md](grundprinzip.md) |
 | **Endpunkt-Beziehungen** (Übung→Lehrplan→Kind→Auswertung) | [docs/endpunkt-beziehungen.md](endpunkt-beziehungen.md) |
 | Endpunkt-Index | [wiki/07 · API-Referenz](../wiki/07-api-referenz.md) |
