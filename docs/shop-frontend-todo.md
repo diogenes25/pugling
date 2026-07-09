@@ -2,16 +2,22 @@
 tags: [typ/aufgabe, bereich/frontend, rolle/student, rolle/supervisor]
 ---
 
-# TODO: Familien-Shop im Frontend nachziehen
+# TODO: Familien-Shop im Frontend nachziehen — ✅ ERLEDIGT (2026-07-09)
 
 ← [Zurück zum Wiki-Index](../README.md) · Verwandt: [05 · Punkte & Bonus](../wiki/05-punkte-und-bonus.md),
 [Sohn-App-Funktionsbeschreibung](sohn-app-funktionsbeschreibung.md)
 
+> **Status: umgesetzt.** Alles unten ist gebaut: Sohn-Shop [`frontend/src/sohn/SohnShop.tsx`](../frontend/src/sohn/SohnShop.tsx)
+> (`/sohn/shop`, Nav 🛒 – Kaufen/Sachen/Anfragen), Vater-Verwaltung [`frontend/src/vater/VaterShop.tsx`](../frontend/src/vater/VaterShop.tsx)
+> (`/vater/shop`, Nav 🛒 – Artikel/Angebote + Käufe/Aktivierungen je Kind), Shop-Methoden in
+> [`api.ts`](../frontend/src/lib/api.ts) + Typen in [`types.ts`](../frontend/src/lib/types.ts) + geteilte
+> Anzeige-Helfer in [`lib/shop.ts`](../frontend/src/lib/shop.ts). Mislabel 🪙→💎 in `VaterRewards.tsx` behoben.
+> Der E2E ([`full-flow.spec.ts`](../frontend/e2e/full-flow.spec.ts)) fährt jetzt auch einen Shop-Kauf (grün).
+> Das Dokument bleibt als Beschreibung der Anforderung stehen.
+
 **Kontext:** Das redundante „Angebots"-System (`Reward`/`OfferService`/`…/rewards`) wurde entfernt – der
-**Familien-Shop** ist jetzt der **einzige Münz-Ausgabeweg** (Backend + API vollständig vorhanden). Das
-**React-Frontend hat aber noch KEINE Shop-Oberfläche** – der Shop existiert nur in der API. Mit dem Entfernen
-der Reward-Screens ist dadurch aktuell **kein Münz-Ausgeben im UI möglich**. Diese Lücke wird in einer eigenen
-Session geschlossen. Dieses Dokument ist der Arbeitsauftrag.
+**Familien-Shop** ist der **einzige Münz-Ausgabeweg** (Backend + API vollständig vorhanden). Das
+React-Frontend hatte dafür zunächst **keine Oberfläche**; diese Lücke ist mit dieser Session geschlossen.
 
 ## Ist-Zustand (nach dem Reward-Removal)
 

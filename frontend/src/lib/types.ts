@@ -693,7 +693,188 @@ export interface CreateAchievementDto {
 }
 
 // Hinweis: Das frühere Angebots-System (Reward/Redemption/OfferPeriod) wurde entfernt – der
-// Familien-Shop (siehe ShopArticle/ShopListing/ShopPurchase weiter unten) ist der einzige Münz-Ausgabeweg.
+// Familien-Shop (siehe unten) ist der einzige Münz-Ausgabeweg.
+
+// ---- Familien-Shop (einziger Münz-Ausgabeweg) ----
+// Enums werden serverseitig als Strings serialisiert (JsonStringEnumConverter).
+
+/** Maßeinheit eines Shop-Artikels (z. B. Minuten Fernsehen, Gramm Süßigkeiten). */
+export type UnitType = "Stueck" | "Minute" | "Stunde" | "Gramm" | "Mal";
+/** Art der Belohnung, die ein Artikel repräsentiert (kategorisiert + bebildert). */
+export type ActionType = "Sonstiges" | "TV" | "Zocken" | "Suessigkeit" | "Ausflug";
+/** Automatische Auffüll-Regel eines Angebots. */
+export type ShopRefillKind = "None" | "Once" | "Daily" | "TwiceDaily" | "Weekly";
+export type ShopPurchaseStatus = "Owned" | "Cancelled";
+export type ActivationRequestStatus = "Pending" | "Approved" | "Rejected";
+/** Wochentag (C# DayOfWeek, string-serialisiert) – nur für wöchentliches Auffüllen relevant. */
+export type DayOfWeek =
+  | "Sunday" | "Monday" | "Tuesday" | "Wednesday" | "Thursday" | "Friday" | "Saturday";
+
+/** Katalog-Artikel des Vaters: die *Art* der Belohnung (Preis/Bestand liegen an den Angeboten). */
+export interface ShopArticle {
+  id: number;
+  articleNumber: string;
+  title: string;
+  description: string;
+  unitType: UnitType;
+  actionType: ActionType;
+  createdAt: string;
+}
+export interface CreateShopArticleDto {
+  articleNumber: string;
+  title: string;
+  description?: string | null;
+  unitType: UnitType;
+  actionType: ActionType;
+}
+export interface UpdateShopArticleDto {
+  articleNumber?: string;
+  title?: string;
+  description?: string | null;
+  unitType?: UnitType;
+  actionType?: ActionType;
+}
+
+/** Ein konkretes Angebot zu einem Artikel: Preis (Coin/Gem), Menge je Kauf und Bestand. */
+export interface ShopListing {
+  id: number;
+  shopArticleId: number;
+  articleNumber: string;
+  articleTitle: string;
+  title: string;
+  description: string;
+  coinPrice: number;
+  gemPrice: number;
+  unitsPerPurchase: number;
+  active: boolean;
+  currentStock: number;
+  maxStock: number;
+  refillKind: ShopRefillKind;
+  refillAtUtc: string | null;
+  refillDayOfWeek: DayOfWeek | null;
+  lastRefilledAtUtc: string | null;
+  createdAt: string;
+}
+export interface CreateShopListingDto {
+  title?: string | null;
+  description?: string | null;
+  coinPrice: number;
+  gemPrice: number;
+  unitsPerPurchase: number;
+  currentStock: number;
+  maxStock: number;
+  refillKind?: ShopRefillKind;
+  refillAtUtc?: string | null;
+  refillDayOfWeek?: DayOfWeek | null;
+}
+export interface UpdateShopListingDto {
+  title?: string | null;
+  description?: string | null;
+  coinPrice?: number;
+  gemPrice?: number;
+  unitsPerPurchase?: number;
+  active?: boolean;
+  currentStock?: number;
+  maxStock?: number;
+  refillKind?: ShopRefillKind;
+  refillAtUtc?: string | null;
+  refillDayOfWeek?: DayOfWeek | null;
+}
+
+/** Aggregierter Inventar-Eintrag eines Kindes: Artikel-Typ → verfügbare Gesamtmenge. */
+export interface InventoryItem {
+  shopArticleId: number;
+  articleNumber: string;
+  title: string;
+  unitType: UnitType;
+  actionType: ActionType;
+  quantity: number;
+}
+
+/** Kaufbuchung eines Kindes (Vater-Sicht, mit Stornier-Affordance). */
+export interface ShopPurchase {
+  id: number;
+  childId: number;
+  shopListingId: number | null;
+  articleNumber: string;
+  title: string;
+  description: string;
+  coinPrice: number;
+  gemPrice: number;
+  unitsPerPurchase: number;
+  status: ShopPurchaseStatus;
+  purchasedAt: string;
+  closedAt: string | null;
+  canCancel: boolean;
+}
+
+/** Aktivierungsanfrage eines Kindes (Vater-Sicht, mit Genehmigen/Ablehnen-Affordance). */
+export interface ActivationRequest {
+  id: number;
+  childId: number;
+  shopArticleId: number | null;
+  articleTitle: string;
+  unitType: UnitType;
+  actionType: ActionType;
+  requestedQuantity: number;
+  status: ActivationRequestStatus;
+  requestedAt: string;
+  closedAt: string | null;
+  canApprove: boolean;
+  canReject: boolean;
+}
+
+// ---- Familien-Shop: Sohn-Sicht ----
+
+/** Ein kaufbares Angebot aus Sohn-Sicht (`affordable` = reicht das aktuelle Guthaben?). */
+export interface ShopAvailableListing {
+  id: number;
+  shopArticleId: number;
+  articleNumber: string;
+  articleTitle: string;
+  unitType: UnitType;
+  actionType: ActionType;
+  title: string;
+  description: string;
+  coinPrice: number;
+  gemPrice: number;
+  unitsPerPurchase: number;
+  currentStock: number;
+  affordable: boolean;
+}
+/** Eigene Kaufbuchung aus Sohn-Sicht (Kassenbuch). */
+export interface MyShopPurchase {
+  id: number;
+  shopListingId: number | null;
+  articleNumber: string;
+  title: string;
+  coinPrice: number;
+  gemPrice: number;
+  unitsPerPurchase: number;
+  status: ShopPurchaseStatus;
+  purchasedAt: string;
+  closedAt: string | null;
+}
+/** Eigene Aktivierungsanfrage aus Sohn-Sicht. */
+export interface MyActivation {
+  id: number;
+  shopArticleId: number | null;
+  articleTitle: string;
+  unitType: UnitType;
+  actionType: ActionType;
+  requestedQuantity: number;
+  status: ActivationRequestStatus;
+  requestedAt: string;
+  closedAt: string | null;
+}
+/** Gebündelte Shop-Sicht des Sohns (Salden + kaufbare Angebote + Inventar + Kaufhistorie). */
+export interface ShopView {
+  coins: number;
+  gems: number;
+  available: ShopAvailableListing[];
+  inventory: InventoryItem[];
+  purchases: MyShopPurchase[];
+}
 
 // ---- Vater: Klassenarbeiten ----
 
