@@ -10,6 +10,9 @@ import type {
   TestAttemptResponse, TestNextResponse, TestAnswerAck, TestSubmitResponse, UpdateKlassenarbeitDto, UpdatePlanDto, UpdateVocabularyDto,
   VocabBatchResult, VocabularyResponse, VocabTagResponse, ChildTagResponse, Wallet, WalletBalance, WalletEntry,
   Paged, VocabularySearchParams,
+  ShopArticle, CreateShopArticleDto, UpdateShopArticleDto, ShopListing, CreateShopListingDto, UpdateShopListingDto,
+  InventoryItem, ShopPurchase, ActivationRequest, ShopPurchaseStatus, ActivationRequestStatus,
+  ShopView, MyActivation,
 } from "./types";
 
 const TOKEN_KEY = "pugling.token";
@@ -344,4 +347,62 @@ export const api = {
     if (minBadGrade != null) q.set("minBadGrade", String(minBadGrade));
     return http<KlassenarbeitRepeat>(`${V1}/supervisor/class-tests/repeat?${q.toString()}`);
   },
+
+  // ---- Sohn: Familien-Shop (einziger Münz-Ausgabeweg) ----
+  // Die Shop-Sicht bündelt Salden + kaufbare Angebote + Inventar + Kaufhistorie; Kauf und Aktivierung
+  // liefern jeweils den frischen Stand zurück, damit der Client nicht separat nachladen muss.
+  shopView: () => http<ShopView>(`${V1}/student/me/shop`),
+  purchaseListing: (listingId: number) =>
+    http<ShopView>(`${V1}/student/me/shop/listings/${listingId}/purchase`, "POST", {}),
+  myInventory: () => http<InventoryItem[]>(`${V1}/student/me/shop/inventory`),
+  activateInventory: (articleId: number, quantity: number) =>
+    http<MyActivation>(`${V1}/student/me/shop/inventory/${articleId}/activate`, "POST", { quantity }),
+  myActivations: () => http<MyActivation[]>(`${V1}/student/me/shop/activations`),
+
+  // ---- Vater: Familien-Shop verwalten ----
+  // Artikel = die Belohnungs-*Art* (Preis/Bestand liegen an den Angeboten je Artikel).
+  shopArticles: (search?: string) => {
+    const q = new URLSearchParams();
+    if (search) q.set("search", search);
+    const qs = q.toString();
+    return http<ShopArticle[]>(`${V1}/supervisor/shop/articles${qs ? `?${qs}` : ""}`);
+  },
+  createShopArticle: (dto: CreateShopArticleDto) =>
+    http<ShopArticle>(`${V1}/supervisor/shop/articles`, "POST", dto),
+  updateShopArticle: (articleId: number, dto: UpdateShopArticleDto) =>
+    http<ShopArticle>(`${V1}/supervisor/shop/articles/${articleId}`, "PATCH", dto),
+  deleteShopArticle: (articleId: number) =>
+    http<void>(`${V1}/supervisor/shop/articles/${articleId}`, "DELETE"),
+
+  // Angebote je Artikel (Coin/Gem-Preis, Menge je Kauf, Bestand, optionales Auffüllen).
+  shopListings: (articleId: number) =>
+    http<ShopListing[]>(`${V1}/supervisor/shop/articles/${articleId}/listings`),
+  createShopListing: (articleId: number, dto: CreateShopListingDto) =>
+    http<ShopListing>(`${V1}/supervisor/shop/articles/${articleId}/listings`, "POST", dto),
+  updateShopListing: (articleId: number, listingId: number, dto: UpdateShopListingDto) =>
+    http<ShopListing>(`${V1}/supervisor/shop/articles/${articleId}/listings/${listingId}`, "PATCH", dto),
+  deleteShopListing: (articleId: number, listingId: number) =>
+    http<void>(`${V1}/supervisor/shop/articles/${articleId}/listings/${listingId}`, "DELETE"),
+
+  // Kindbezogene Sicht: Inventar, Käufe (stornierbar) und Aktivierungsanfragen (genehmigen/ablehnen).
+  childInventory: (childId: number) =>
+    http<InventoryItem[]>(`${V1}/supervisor/children/${childId}/shop/inventory`),
+  childPurchases: (childId: number, status?: ShopPurchaseStatus) => {
+    const q = new URLSearchParams();
+    if (status) q.set("status", status);
+    const qs = q.toString();
+    return http<ShopPurchase[]>(`${V1}/supervisor/children/${childId}/shop/purchases${qs ? `?${qs}` : ""}`);
+  },
+  cancelPurchase: (childId: number, purchaseId: number) =>
+    http<ShopPurchase>(`${V1}/supervisor/children/${childId}/shop/purchases/${purchaseId}/cancel`, "POST", {}),
+  childActivations: (childId: number, status?: ActivationRequestStatus) => {
+    const q = new URLSearchParams();
+    if (status) q.set("status", status);
+    const qs = q.toString();
+    return http<ActivationRequest[]>(`${V1}/supervisor/children/${childId}/shop/activations${qs ? `?${qs}` : ""}`);
+  },
+  approveActivation: (childId: number, requestId: number) =>
+    http<ActivationRequest>(`${V1}/supervisor/children/${childId}/shop/activations/${requestId}/approve`, "POST", {}),
+  rejectActivation: (childId: number, requestId: number) =>
+    http<ActivationRequest>(`${V1}/supervisor/children/${childId}/shop/activations/${requestId}/reject`, "POST", {}),
 };

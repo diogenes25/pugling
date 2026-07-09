@@ -35,9 +35,9 @@ export function VaterRewards() {
     <>
       <section>
         <h2 className="h-section">Belohnungen</h2>
-        <p className="muted">Setze Ziele, für die dein Kind beim Lernen Münzen verdient – die es dann
-          (echt) für Charaktere ausgeben kann. <b>Missionen</b> sind zeitgebundene Ziele (täglich/wöchentlich),
-          <b> Auszeichnungen</b> sind dauerhafte Meilensteine.</p>
+        <p className="muted">Setze Ziele, für die dein Kind beim Lernen 💎 Gems verdient – die es dann im
+          Skins-Shop für Charaktere ausgibt. <b>Missionen</b> sind zeitgebundene Ziele (täglich/wöchentlich),
+          <b> Auszeichnungen</b> sind dauerhafte Meilensteine. (Echte Belohnungen laufen über den 🛒 Familien-Shop.)</p>
         {children.loading ? <div className="loading">Lade…</div>
           : children.error ? <div className="banner err">{children.error}</div>
           : children.data && children.data.length > 0 ? (
@@ -114,7 +114,7 @@ function MissionManager({ childId }: { childId: number }) {
           <select id={`${uid}-period`} value={form.period} onChange={(e) => up("period", e.target.value as MissionPeriod)}>
             {PERIODS.map((p) => <option key={p.value} value={p.value}>{p.label}</option>)}
           </select></div>
-        <div className="field" style={{ maxWidth: 120 }}><label htmlFor={`${uid}-reward`}>Belohnung 🪙</label>
+        <div className="field" style={{ maxWidth: 120 }}><label htmlFor={`${uid}-reward`}>Belohnung 💎</label>
           <input id={`${uid}-reward`} type="number" min={0} value={form.rewardPoints} onChange={(e) => up("rewardPoints", Number(e.target.value))} /></div>
         <button type="submit" className="btn inline-btn" style={{ width: "auto" }} disabled={busy}>{busy ? "…" : "Anlegen"}</button>
       </form>
@@ -130,7 +130,7 @@ function MissionManager({ childId }: { childId: number }) {
                   <td>{m.title}</td>
                   <td className="muted">{m.target}× {metricLabel(m.metric)}</td>
                   <td>{periodLabel(m.period)}</td>
-                  <td>🪙 {m.rewardPoints}</td>
+                  <td>💎 {m.rewardPoints}</td>
                   <td>{m.active ? <span className="pill lime">aktiv</span> : <span className="pill">inaktiv</span>}</td>
                   <td style={{ whiteSpace: "nowrap" }}>
                     <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} onClick={() => toggle(m)}>
@@ -202,7 +202,7 @@ function AchievementManager({ childId }: { childId: number }) {
           </select></div>
         <div className="field" style={{ maxWidth: 100 }}><label htmlFor={`${uid}-threshold`}>Schwelle</label>
           <input id={`${uid}-threshold`} type="number" min={1} value={form.threshold} onChange={(e) => up("threshold", Number(e.target.value))} /></div>
-        <div className="field" style={{ maxWidth: 120 }}><label htmlFor={`${uid}-reward`}>Belohnung 🪙</label>
+        <div className="field" style={{ maxWidth: 120 }}><label htmlFor={`${uid}-reward`}>Belohnung 💎</label>
           <input id={`${uid}-reward`} type="number" min={0} value={form.rewardPoints} onChange={(e) => up("rewardPoints", Number(e.target.value))} /></div>
         <button type="submit" className="btn inline-btn" style={{ width: "auto" }} disabled={busy}>{busy ? "…" : "Anlegen"}</button>
       </form>
@@ -218,7 +218,7 @@ function AchievementManager({ childId }: { childId: number }) {
                   <td style={{ fontSize: 20 }}>{a.icon ?? "🎖️"}</td>
                   <td>{a.title}</td>
                   <td className="muted">{a.threshold}× {metricLabel(a.metric)}</td>
-                  <td>🪙 {a.rewardPoints}</td>
+                  <td>💎 {a.rewardPoints}</td>
                   <td>{a.active ? <span className="pill lime">aktiv</span> : <span className="pill">inaktiv</span>}</td>
                   <td style={{ whiteSpace: "nowrap" }}>
                     <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} onClick={() => toggle(a)}>

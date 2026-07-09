@@ -9,6 +9,7 @@ import { SohnPractice } from "./SohnPractice";
 import { SohnTest } from "./SohnTest";
 import { SohnProgress } from "./SohnProgress";
 import { SohnSkins } from "./SohnSkins";
+import { SohnShop } from "./SohnShop";
 import { SohnKonto } from "./SohnKonto";
 import { Mascot } from "../components/Mascot";
 import { CelebrationLayer, useCelebration } from "../components/Celebration";
@@ -111,6 +112,7 @@ function SohnShell({ childId }: { childId: number }) {
           <Route path="practice/:positionId" element={<SohnPractice />} />
           <Route path="test/:positionId" element={<SohnTest />} />
           <Route path="progress" element={<SohnProgress />} />
+          <Route path="shop" element={<SohnShop />} />
           <Route path="skins" element={<SohnSkins />} />
           <Route path="konto" element={<SohnKonto />} />
           <Route path="*" element={<Navigate to="/sohn" replace />} />
@@ -120,6 +122,7 @@ function SohnShell({ childId }: { childId: number }) {
           <NavLink to="/sohn" end><span className="ic" aria-hidden="true">🏠</span>Basis</NavLink>
           <NavLink to="/sohn/progress"><span className="ic" aria-hidden="true">🗺️</span>Weg</NavLink>
           <NavLink to="/sohn/konto"><span className="ic" aria-hidden="true">💰</span>Konto</NavLink>
+          <NavLink to="/sohn/shop"><span className="ic" aria-hidden="true">🛒</span>Shop</NavLink>
           <NavLink to="/sohn/skins"><span className="ic" aria-hidden="true">🎭</span>Skins</NavLink>
         </nav>
       </div>

@@ -4,6 +4,7 @@ import { VaterLogin } from "./VaterLogin";
 import { VaterDashboard } from "./VaterDashboard";
 import { VaterVocab } from "./VaterVocab";
 import { VaterRewards } from "./VaterRewards";
+import { VaterShop } from "./VaterShop";
 import { VaterKonto } from "./VaterKonto";
 import { VaterClassTests } from "./VaterClassTests";
 import { VaterExercises } from "./VaterExercises";
@@ -25,6 +26,7 @@ export function VaterApp() {
           <NavLink to="/vater/exercises">📚 Übungen</NavLink>
           <NavLink to="/vater/vocab">Vokabeln</NavLink>
           <NavLink to="/vater/rewards">🏆 Belohnungen</NavLink>
+          <NavLink to="/vater/shop">🛒 Shop</NavLink>
           <NavLink to="/vater/konto">💰 Konto</NavLink>
           <NavLink to="/vater/class-tests">📝 Klassenarbeiten</NavLink>
           <NavLink to="/vater/plan/new">Neuer Plan</NavLink>
@@ -41,6 +43,7 @@ export function VaterApp() {
           <Route path="exercises" element={<VaterExercises />} />
           <Route path="vocab" element={<VaterVocab />} />
           <Route path="rewards" element={<VaterRewards />} />
+          <Route path="shop" element={<VaterShop />} />
           <Route path="konto" element={<VaterKonto />} />
           <Route path="class-tests" element={<VaterClassTests />} />
           <Route path="plan/new" element={<VaterPlanCreate />} />

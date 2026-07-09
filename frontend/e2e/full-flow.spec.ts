@@ -106,6 +106,21 @@ test("Vater erstellt Plan mit Position, Sohn arbeitet ihn ab, Punkte fließen", 
   const balance = Number((await coins.textContent())!.replace(/\D/g, ""));
   expect(balance).toBeGreaterThan(0);
 
+  // ---------- SOHN: Familien-Shop (einziger Münz-Ausgabeweg) ----------
+  // Verdiente Münzen gegen eine echte Belohnung eintauschen. Kauf/Einlösen bestätigen per window.confirm
+  // → im E2E den Dialog annehmen (Playwright verwirft ihn sonst automatisch).
+  sohn.on("dialog", (d) => d.accept());
+  await sohn.goto("/sohn/shop");
+  await expect(sohn.locator(".screen-title", { hasText: "Shop" })).toBeVisible();
+  // Erste kaufbare Belohnung (leistbar + auf Lager → nicht ".locked") kaufen.
+  const buyCard = sohn.locator("button.skin:not(.locked)").first();
+  await expect(buyCard).toBeVisible();
+  await buyCard.click();
+  // Der Kauf wird gefeiert; danach liegt die Ware im Inventar-Tab "Sachen" (Einlösen möglich).
+  await expect(sohn.locator(".cel-title", { hasText: "GEKAUFT!" })).toBeVisible();
+  await sohn.getByRole("button", { name: /^Sachen/ }).click();
+  await expect(sohn.getByRole("button", { name: "Einlösen beantragen" }).first()).toBeVisible();
+
   // ---------- VATER sieht Fortschritt ----------
   await vater.goto(planUrl);
   await expect(vater.getByText("Punkte gesamt")).toBeVisible();
