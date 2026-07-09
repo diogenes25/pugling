@@ -16,9 +16,9 @@ namespace Pugling.Api.Controllers.Supervisor;
 [ApiController]
 [ApiVersion("1.0")]
 [Route(ApiRoutes.Supervisor + "/children/{childId:int}/missions")]
-[Tags("Admin – Missions")]
+[Tags("Supervisor – Missions")]
 [Produces("application/json")]
-[Authorize(Roles = Roles.Vater)]
+[Authorize(Roles = Roles.Supervisor)]
 [ServiceFilter(typeof(ChildOwnershipFilter))]
 public class MissionsController(PuglingDbContext db) : ControllerBase
 {
@@ -101,9 +101,9 @@ public class MissionsController(PuglingDbContext db) : ControllerBase
 [ApiController]
 [ApiVersion("1.0")]
 [Route(ApiRoutes.Supervisor + "/children/{childId:int}/achievements")]
-[Tags("Admin – Achievements")]
+[Tags("Supervisor – Achievements")]
 [Produces("application/json")]
-[Authorize(Roles = Roles.Vater)]
+[Authorize(Roles = Roles.Supervisor)]
 [ServiceFilter(typeof(ChildOwnershipFilter))]
 public class AchievementsController(PuglingDbContext db) : ControllerBase
 {

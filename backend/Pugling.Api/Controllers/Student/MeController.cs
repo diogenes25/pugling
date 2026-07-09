@@ -17,9 +17,9 @@ namespace Pugling.Api.Controllers.Student;
 [ApiController]
 [ApiVersion("1.0")]
 [Route(ApiRoutes.Student + "/me")]
-[Tags("Me")]
+[Tags("Student – Me")]
 [Produces("application/json")]
-[Authorize(Roles = Roles.Sohn)]
+[Authorize(Roles = Roles.Student)]
 public class MeController(PuglingDbContext db, GamificationService gamification,
     WalletService wallet, ShopService shop) : ControllerBase
 {
@@ -108,6 +108,7 @@ public class MeController(PuglingDbContext db, GamificationService gamification,
     /// <param name="skip">Anzahl zu überspringender Missionen (Paging).</param>
     /// <param name="take">Maximale Missions-Zahl (1..500). Gesamtzahl im Header <c>X-Total-Count</c>.</param>
     [HttpGet("missions")]
+    [Tags("Student – Missions")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult<IReadOnlyList<GamificationService.MissionStatus>>> Missions(
@@ -123,6 +124,7 @@ public class MeController(PuglingDbContext db, GamificationService gamification,
 
     /// <summary>Eine einzelne eigene Mission (Einzelansicht zur Liste unter <c>missions</c>).</summary>
     [HttpGet("missions/{missionId:int}")]
+    [Tags("Student – Missions")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -138,6 +140,7 @@ public class MeController(PuglingDbContext db, GamificationService gamification,
     /// <param name="skip">Anzahl zu überspringender Auszeichnungen (Paging).</param>
     /// <param name="take">Maximale Auszeichnungs-Zahl (1..500). Gesamtzahl im Header <c>X-Total-Count</c>.</param>
     [HttpGet("achievements")]
+    [Tags("Student – Achievements")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult<IReadOnlyList<GamificationService.AchievementStatus>>> Achievements(
@@ -153,6 +156,7 @@ public class MeController(PuglingDbContext db, GamificationService gamification,
 
     /// <summary>Eine einzelne eigene Auszeichnung (Einzelansicht zur Liste unter <c>achievements</c>).</summary>
     [HttpGet("achievements/{achievementId:int}")]
+    [Tags("Student – Achievements")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -264,6 +268,7 @@ public class MeController(PuglingDbContext db, GamificationService gamification,
     /// Familien-Shop: aktive Angebote des Vaters, aggregiertes Inventar und Kaufhistorie des Sohns.
     /// </summary>
     [HttpGet("shop")]
+    [Tags("Student – Shop")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult<ShopViewResponse>> Shop()
@@ -278,6 +283,7 @@ public class MeController(PuglingDbContext db, GamificationService gamification,
     /// des Sohns für den zugehörigen Artikel wird um <c>UnitsPerPurchase</c> erhöht.
     /// </summary>
     [HttpPost("shop/listings/{listingId:int}/purchase")]
+    [Tags("Student – Shop")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -309,6 +315,7 @@ public class MeController(PuglingDbContext db, GamificationService gamification,
     /// <param name="skip">Anzahl übersprungener Einträge (Offset, Standard 0).</param>
     /// <param name="take">Maximale Einträge (1..500). Gesamtzahl im Header <c>X-Total-Count</c>.</param>
     [HttpGet("shop/inventory")]
+    [Tags("Student – Shop")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult<IReadOnlyList<MyInventoryItemResponse>>> MyInventory(
@@ -331,6 +338,7 @@ public class MeController(PuglingDbContext db, GamificationService gamification,
     /// verbrauchen. Der Vater genehmigt oder lehnt ab; das Inventar wird erst bei Genehmigung reduziert.
     /// </summary>
     [HttpPost("shop/inventory/{articleId:int}/activate")]
+    [Tags("Student – Shop")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -358,6 +366,7 @@ public class MeController(PuglingDbContext db, GamificationService gamification,
 
     /// <summary>Eigene Aktivierungsanfragen (neueste zuerst), optional nach Status gefiltert.</summary>
     [HttpGet("shop/activations")]
+    [Tags("Student – Shop")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult<IReadOnlyList<MyActivationResponse>>> MyActivations(

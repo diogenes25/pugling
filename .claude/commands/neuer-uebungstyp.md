@@ -17,7 +17,7 @@ Reading, Grammar, Arithmetic, List …). Der günstigste Weg – meist nur eine 
 2. **`ExerciseType`**-Enum-Wert ergänzen (im selben Bereich der Models).
 3. **Controller** in [Controllers/Learn/ExerciseControllers.cs](backend/Pugling.Api/Controllers/Learn/ExerciseControllers.cs):
    `class XController(PuglingDbContext db) : ExerciseControllerBase<XConfig>(db)` mit `[Route(ExerciseRoutes.Base + "/x")]`,
-   `[Tags("Learn – X")]` und `protected override ExerciseType Type => ExerciseType.X;`. CRUD kommt aus der Basis.
+   `[Tags("Creator – X")]` und `protected override ExerciseType Type => ExerciseType.X;`. CRUD kommt aus der Basis.
 4. **Optional Auswertung**: braucht der Typ ein `/check`, eine Methode in
    [Services/ExerciseAnswerChecker.cs](backend/Pugling.Api/Services/ExerciseAnswerChecker.cs) ergänzen und
    im Controller eine `Check`-Action (Muster: `MatchingController.Check`).

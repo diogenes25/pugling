@@ -41,7 +41,7 @@ const PLAN_KEY = (childId: number) => `pugling.plan.${childId}`;
 
 export function SohnApp() {
   const { session } = useAuth();
-  if (!session || session.role !== "Sohn") return <SohnLogin />;
+  if (!session || session.role !== "Student") return <SohnLogin />;
   return <SohnShell childId={session.id} />;
 }
 

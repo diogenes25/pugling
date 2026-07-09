@@ -258,6 +258,33 @@ builder.Services.AddOpenApi(o =>
         ];
         return Task.CompletedTask;
     });
+    // Tag-Reihenfolge in Swagger/Scalar steuern: Die Tags folgen der Ebene (Creator → Supervisor →
+    // Student, Auth zuerst), innerhalb einer Ebene alphabetisch. Ohne das zeigt die UI die Gruppen in
+    // zufälliger Controller-Ladereihenfolge. Rank nach Tag-Präfix, das die Rolle trägt.
+    o.AddDocumentTransformer((doc, _, _) =>
+    {
+        if (doc.Tags is { Count: > 0 })
+        {
+            static int Rank(string name) => name switch
+            {
+                "Auth" => 0,
+                _ when name.StartsWith("Creator – ", StringComparison.Ordinal) => 1,
+                _ when name.StartsWith("Supervisor – ", StringComparison.Ordinal) => 2,
+                _ when name.StartsWith("Student – ", StringComparison.Ordinal) => 3,
+                _ => 9,
+            };
+            // SortedSet statt HashSet: dessen Enumerations-Reihenfolge ist vertraglich die Comparer-
+            // Reihenfolge (HashSet garantiert keine), und der OpenAPI-Serializer emittiert die Tags in
+            // Enumerations-Reihenfolge. Comparer = (Rang, dann Name) – ein Total-Order über eindeutige
+            // Tag-Namen, sodass nichts dedupliziert wird.
+            var byRankThenName = Comparer<OpenApiTag>.Create((a, b) =>
+                Rank(a.Name ?? "").CompareTo(Rank(b.Name ?? "")) is var r and not 0
+                    ? r
+                    : string.CompareOrdinal(a.Name, b.Name));
+            doc.Tags = new SortedSet<OpenApiTag>(doc.Tags, byRankThenName);
+        }
+        return Task.CompletedTask;
+    });
     // Fehler-Codes im Schema dokumentieren: die ProblemDetails-Schemata um die maschinenlesbare
     // code-Property (mit enum aller bekannten Codes) erweitern, damit Swagger/Clients sie kennen.
     o.AddDocumentTransformer((doc, _, _) =>

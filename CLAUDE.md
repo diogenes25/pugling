@@ -48,12 +48,17 @@ Rollen im SPA: `/` Produktseite, `/vater` Web-Admin (inkl. `/vater/wizard` Lehrp
 - **Drei Ebenen** (siehe [docs/grundprinzip.md](docs/grundprinzip.md)): **Creator** (Inhalte), **Supervisor**
   (Steuerung), **Student** (Lernen). Sie sind **Rollen**, entkoppelt vom Login, und schneiden API **und** Code:
   Routen `api/v1/{creator|supervisor|student}/…`, Ordner `Controllers/{Tier}` + `Services/{Creator,Supervisor,Student,Shared}`
-  (Sub-Namespaces projektweit via csproj `<Using>`). Das Präfix ist Taxonomie, nicht die Auth-Wand.
+  (Sub-Namespaces projektweit via csproj `<Using>`). Das Präfix ist die **Taxonomie**; die Auth-Wand deckt
+  sich damit, wo gegated wird: schreibende Creator-/Supervisor-Endpunkte tragen `[Authorize(Roles = Roles.Creator)]`
+  bzw. `Roles.Supervisor`. Die spielenden/lesenden **Student-Endpunkte** sind bewusst nur `[Authorize]` und
+  trennen die Rollen inline (`IsSupervisor`/`IsStudent`), damit der Supervisor für Vorschau/Nachtrag mitlesen darf.
 - **Identität/Auth** ([Auth/](backend/Pugling.Api/Auth/)): Ein `Account` (Login/PIN-Hash) trägt über
   `AccountProfile` **mehrere Rollen** (`ProfileRole` Creator/Supervisor/Student → `Father`/`Child`-Profil);
   ein Vater ist zugleich Creator+Supervisor. PIN-Login (`auth/{father|child}` oder konto-zentrisch `auth/login`)
-  → JWT mit `aid` + je Rolle einem Claim (plus Alias `Roles.Vater`/`Roles.Sohn`) + `fid`/`cid`. `AuthAccess`
-  prüft Eigentum OR-verknüpft je Rolle; Bestandsnutzer bekommen Konten per idempotentem `AccountBackfill`.
+  → JWT mit `aid` + je Rolle einem Ebenen-Claim (`Creator`/`Supervisor`/`Student`) + `fid`/`cid`. Das frühere
+  Vater/Sohn-Alias wurde **entfernt**; gegated wird direkt auf die Ebenen-Rollen, `LoginResponse.role` ist
+  `Supervisor` bzw. `Student` (fürs UI-Routing). `AuthAccess` prüft Eigentum OR-verknüpft je Rolle
+  (`IsSupervisor`/`IsStudent`); Bestandsnutzer bekommen Konten per idempotentem `AccountBackfill`.
 - **Multi-Supervisor** ([AdminEntities.cs](backend/Pugling.Api/Models/AdminEntities.cs)): `SupervisorLink`
   (Supervisor ⇢ Student) ersetzt die frühere 1:1-`Child.FatherId`. Ein Student hat mehrere Supervisor
   (Vater/Mutter/Oma), je mit eigenem Familien-Shop; **Wallet gemeinsam**, Einlösung **ausstellergebunden**

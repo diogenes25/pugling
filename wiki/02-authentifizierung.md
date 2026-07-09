@@ -25,7 +25,7 @@ Content-Type: application/json
 Antwort (`LoginResponse`):
 
 ```json
-{ "token": "eyJ…", "role": "Vater", "id": 1, "name": "Papa", "expiresAt": "2026-07-04T22:00:00Z" }
+{ "token": "eyJ…", "role": "Supervisor", "id": 1, "name": "Papa", "expiresAt": "2026-07-04T22:00:00Z" }
 ```
 
 ### Sohn (Kind)
@@ -33,7 +33,7 @@ Antwort (`LoginResponse`):
 ```http
 POST /api/v1/auth/child
 { "childId": 1, "pin": "1111" }
-→ { "token": "eyJ…", "role": "Sohn", "id": 1, "name": "Sohn", "expiresAt": … }
+→ { "token": "eyJ…", "role": "Student", "id": 1, "name": "Sohn", "expiresAt": … }
 ```
 
 Den `token` in **allen** weiteren Aufrufen mitgeben. Gültigkeit: 12 h (HS256, `TokenService`).

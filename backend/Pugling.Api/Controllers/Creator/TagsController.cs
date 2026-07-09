@@ -15,7 +15,7 @@ namespace Pugling.Api.Controllers.Creator;
 [ApiController]
 [ApiVersion("1.0")]
 [Route(ApiRoutes.Creator + "/tags")]
-[Tags("Learn – Tags")]
+[Tags("Creator – Tags")]
 [Produces("application/json")]
 [Authorize]
 public class TagsController(PuglingDbContext db, AuthAccess access) : ControllerBase
@@ -24,7 +24,9 @@ public class TagsController(PuglingDbContext db, AuthAccess access) : Controller
     public record TagResponse(int Id, int ChildId, string Name, string? Color, TaggedBy CreatedBy,
         int ExerciseCount, int VocabularyCount, DateTime CreatedAt);
 
-    private TaggedBy CurrentRole() => User.IsFather() ? TaggedBy.Vater : TaggedBy.Sohn;
+    // Attribution „wer hat getaggt": Student → Sohn, jeder Erwachsene (Creator und/oder Supervisor) → Vater.
+    // Nicht auf IsSupervisor allein prüfen – ein reiner Creator (künftige Lehrer-Konten) ist ebenfalls Erwachsener.
+    private TaggedBy CurrentRole() => User.IsStudent() ? TaggedBy.Sohn : TaggedBy.Vater;
 
     private static TagResponse Map(Tag t) =>
         new(t.Id, t.ChildId, t.Name, t.Color, t.CreatedBy, t.ExerciseTags.Count, t.VocabularyTags.Count, t.CreatedAt);

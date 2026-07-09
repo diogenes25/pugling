@@ -12,9 +12,9 @@ namespace Pugling.Api.Controllers.Creator;
 [ApiController]
 [ApiVersion("1.0")]
 [Route(ApiRoutes.Creator + "/subjects")]
-[Tags("Learn – Subjects")]
+[Tags("Creator – Subjects")]
 [Produces("application/json")]
-[Authorize(Roles = Roles.Vater)]
+[Authorize(Roles = Roles.Creator)]
 public class SubjectsController(PuglingDbContext db) : ControllerBase
 {
     public record SubjectResponse(int Id, string Name, DateTime CreatedAt, int ChaptersCount);

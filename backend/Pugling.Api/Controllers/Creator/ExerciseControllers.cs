@@ -33,7 +33,7 @@ public record CheckListDto(List<string?> Answers);
 /// sie in die Item-Tabelle; jede genutzte Vokabel wird dabei im Store angelegt/verknüpft.
 /// </summary>
 [Route(ExerciseRoutes.Base + "/vocabulary")]
-[Tags("Learn – Vocabulary")]
+[Tags("Creator – Vocabulary")]
 public class VocabularyController(PuglingDbContext db, ExerciseItemService items, VocabularyStoreService store)
     : ExerciseControllerBase<VocabularyConfig>(db)
 {
@@ -295,7 +295,7 @@ public class VocabularyController(PuglingDbContext db, ExerciseItemService items
 
 /// <summary>Leseverständnis-Übungen.</summary>
 [Route(ExerciseRoutes.Base + "/reading")]
-[Tags("Learn – Reading")]
+[Tags("Creator – Reading")]
 public class ReadingController(PuglingDbContext db) : ExerciseControllerBase<ReadingConfig>(db)
 {
     protected override ExerciseType Type => ExerciseType.Reading;
@@ -303,7 +303,7 @@ public class ReadingController(PuglingDbContext db) : ExerciseControllerBase<Rea
 
 /// <summary>Lückentext-Übungen. Lücken dürfen per <see cref="Gap.VocabKey"/> den Vokabel-Store referenzieren.</summary>
 [Route(ExerciseRoutes.Base + "/cloze")]
-[Tags("Learn – Cloze")]
+[Tags("Creator – Cloze")]
 public class ClozeController(PuglingDbContext db) : ExerciseControllerBase<ClozeConfig>(db)
 {
     protected override ExerciseType Type => ExerciseType.Cloze;
@@ -322,7 +322,7 @@ public class ClozeController(PuglingDbContext db) : ExerciseControllerBase<Cloze
 
 /// <summary>Aufsatz-Übungen.</summary>
 [Route(ExerciseRoutes.Base + "/essays")]
-[Tags("Learn – Essays")]
+[Tags("Creator – Essays")]
 public class EssaysController(PuglingDbContext db) : ExerciseControllerBase<EssayConfig>(db)
 {
     protected override ExerciseType Type => ExerciseType.Essay;
@@ -330,7 +330,7 @@ public class EssaysController(PuglingDbContext db) : ExerciseControllerBase<Essa
 
 /// <summary>Hörverständnis-Übungen.</summary>
 [Route(ExerciseRoutes.Base + "/listening")]
-[Tags("Learn – Listening")]
+[Tags("Creator – Listening")]
 public class ListeningController(PuglingDbContext db) : ExerciseControllerBase<ListeningConfig>(db)
 {
     protected override ExerciseType Type => ExerciseType.Listening;
@@ -338,7 +338,7 @@ public class ListeningController(PuglingDbContext db) : ExerciseControllerBase<L
 
 /// <summary>Grammatik-Übungen.</summary>
 [Route(ExerciseRoutes.Base + "/grammar")]
-[Tags("Learn – Grammar")]
+[Tags("Creator – Grammar")]
 public class GrammarController(PuglingDbContext db) : ExerciseControllerBase<GrammarConfig>(db)
 {
     protected override ExerciseType Type => ExerciseType.Grammar;
@@ -346,7 +346,7 @@ public class GrammarController(PuglingDbContext db) : ExerciseControllerBase<Gra
 
 /// <summary>Zuordnungs-Übungen (Paare). Neben dem CRUD bewertet <see cref="Check"/> die genannten Zuordnungen.</summary>
 [Route(ExerciseRoutes.Base + "/matching")]
-[Tags("Learn – Matching")]
+[Tags("Creator – Matching")]
 public class MatchingController(PuglingDbContext db, ExerciseAnswerChecker checker)
     : ExerciseControllerBase<MatchingConfig>(db)
 {
@@ -368,7 +368,7 @@ public class MatchingController(PuglingDbContext db, ExerciseAnswerChecker check
 /// automatisch im Store angelegt und verknüpft; die Antwort ergänzt je Paar den Link <c>_self</c>.
 /// </summary>
 [Route(ExerciseRoutes.Base + "/translation")]
-[Tags("Learn – Translation")]
+[Tags("Creator – Translation")]
 public class TranslationController(PuglingDbContext db, VocabularyStoreService store) : ExerciseControllerBase<TranslationConfig>(db)
 {
     protected override ExerciseType Type => ExerciseType.Translation;
@@ -448,7 +448,7 @@ public record DecodePreviewInput(string LearningLang, string NativeLang, string 
 /// nachgeschlagen und einzeln korrigierbar (Homonyme).
 /// </summary>
 [Route(ExerciseRoutes.Base + "/birkenbihl")]
-[Tags("Learn – Birkenbihl")]
+[Tags("Creator – Birkenbihl")]
 public class BirkenbihlController(PuglingDbContext db, BirkenbihlDecodingService decoder, VocabularyStoreService store)
     : ExerciseControllerBase<BirkenbihlConfig>(db)
 {
@@ -666,7 +666,7 @@ public class BirkenbihlController(PuglingDbContext db, BirkenbihlDecodingService
 
 /// <summary>Feste Rechenaufgaben (manuell gepflegte Liste). <see cref="Check"/> wertet die Antworten aus.</summary>
 [Route(ExerciseRoutes.Base + "/arithmetic")]
-[Tags("Learn – Arithmetic")]
+[Tags("Creator – Arithmetic")]
 public class ArithmeticController(PuglingDbContext db, ExerciseAnswerChecker checker)
     : ExerciseControllerBase<ArithmeticConfig>(db)
 {
@@ -688,7 +688,7 @@ public class ArithmeticController(PuglingDbContext db, ExerciseAnswerChecker che
 /// und bewertet ihn – dadurch bleibt die Prüfung serverseitig. Das CRUD der Regeln erbt der Controller.
 /// </summary>
 [Route(ExerciseRoutes.Base + "/arithmetic-drill")]
-[Tags("Learn – Arithmetic Drill")]
+[Tags("Creator – Arithmetic Drill")]
 public class ArithmeticDrillController(PuglingDbContext db, ArithmeticProblemGenerator generator, ExerciseAnswerChecker checker)
     : ExerciseControllerBase<ArithmeticDrillConfig>(db)
 {
@@ -744,7 +744,7 @@ public class ArithmeticDrillController(PuglingDbContext db, ArithmeticProblemGen
 
 /// <summary>Auswendig zu lernende Listen (z. B. die Bundesländer). <see cref="Check"/> zählt die genannten Einträge.</summary>
 [Route(ExerciseRoutes.Base + "/list")]
-[Tags("Learn – List")]
+[Tags("Creator – List")]
 public class ListController(PuglingDbContext db, ExerciseAnswerChecker checker)
     : ExerciseControllerBase<ListConfig>(db)
 {

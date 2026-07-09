@@ -12,9 +12,9 @@ namespace Pugling.Api.Controllers.Supervisor;
 [ApiController]
 [ApiVersion("1.0")]
 [Route(ApiRoutes.Supervisor + "/children/{childId:int}/timetable")]
-[Tags("Study – Timetable")]
+[Tags("Supervisor – Timetable")]
 [Produces("application/json")]
-[Authorize(Roles = Roles.Vater)]
+[Authorize(Roles = Roles.Supervisor)]
 public class TimetableController(PuglingDbContext db, AuthAccess access) : ControllerBase
 {
     public record EntryResponse(int Id, int ChildId, int SubjectId, string SubjectName, DayOfWeek DayOfWeek, string? TimeOfDay);

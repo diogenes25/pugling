@@ -14,7 +14,7 @@ import { VaterWizard } from "./VaterWizard";
 
 export function VaterApp() {
   const { session, signOut } = useAuth();
-  if (!session || session.role !== "Vater") return <VaterLogin />;
+  if (!session || session.role !== "Supervisor") return <VaterLogin />;
 
   return (
     <div className="app-vater">

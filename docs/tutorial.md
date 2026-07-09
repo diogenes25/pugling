@@ -23,7 +23,7 @@ Seed-Konten: Vater `id=1` PIN `0000`, Sohn (Kind) `id=1` PIN `1111`.
 ```http
 POST /api/v1/auth/father
 { "fatherId": 1, "pin": "0000" }
-→ { token, role:"Vater", ... }
+→ { token, role:"Supervisor", ... }
 ```
 
 ### 1.2 Kind prüfen oder anlegen
@@ -115,7 +115,7 @@ Nur der Vater darf beim Start von Practice/Test einen anderen `day` als heute se
 ```http
 POST /api/v1/auth/child
 { "childId": 1, "pin": "1111" }
-→ token (Rolle "Sohn")
+→ token (Rolle "Student")
 ```
 
 ### 2.2 Tagesmission lesen

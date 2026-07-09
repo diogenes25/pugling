@@ -12,9 +12,9 @@ namespace Pugling.Api.Controllers.Supervisor;
 [ApiController]
 [ApiVersion("1.0")]
 [Route(ApiRoutes.Supervisor + "/children/daily-overview")]
-[Tags("Admin – Children")]
+[Tags("Supervisor – Children")]
 [Produces("application/json")]
-[Authorize(Roles = Roles.Vater)]
+[Authorize(Roles = Roles.Supervisor)]
 public class ChildrenDashboardController(ChildrenDashboardService dashboard) : ControllerBase
 {
     /// <summary>Tagesstand aller eigenen Kinder; <paramref name="date"/> optional (Standard: heute, UTC).</summary>

@@ -16,9 +16,9 @@ namespace Pugling.Api.Controllers.Creator;
 [ApiController]
 [ApiVersion("1.0")]
 [Route(ApiRoutes.Creator + "/exercises")]
-[Tags("Learn – Exercise Catalog")]
+[Tags("Creator – Exercise Catalog")]
 [Produces("application/json")]
-[Authorize(Roles = Roles.Vater)]
+[Authorize(Roles = Roles.Creator)]
 public class ExerciseCatalogController(PuglingDbContext db) : ControllerBase
 {
     /// <summary>

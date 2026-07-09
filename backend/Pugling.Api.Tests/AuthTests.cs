@@ -16,7 +16,7 @@ public class AuthTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWebA
         Assert.Equal(HttpStatusCode.OK, res.StatusCode);
         var body = await res.Content.ReadFromJsonAsync<JsonElement>();
         Assert.False(string.IsNullOrWhiteSpace(body.GetProperty("token").GetString()));
-        Assert.Equal("Vater", body.GetProperty("role").GetString());
+        Assert.Equal("Supervisor", body.GetProperty("role").GetString());
     }
 
     [Fact]

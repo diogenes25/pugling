@@ -18,7 +18,7 @@ namespace Pugling.Api.Controllers.Student;
 [ApiController]
 [ApiVersion("1.0")]
 [Route(ApiRoutes.Student + "/study-plans/{planId:int}/positions/{positionId:int}/practice-sessions")]
-[Tags("Study – Position Practice")]
+[Tags("Student – Position Practice")]
 [Produces("application/json")]
 [Authorize]
 [ServiceFilter(typeof(PlanOwnershipFilter))]
@@ -65,11 +65,11 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         var pos = await GetPosition(planId, positionId);
         if (pos is null) return NotFound();
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
-        if (dto.Day is { } d && d != today && !User.IsFather())
+        if (dto.Day is { } d && d != today && !User.IsSupervisor())
             return Forbid(); // Nachtragen anderer Tage nur für den Vater (Anti-Schummel).
         // Anti-Schummel: der Sohn darf nur seinen aktiven, laufenden Plan spielen – kein Cherry-Picking
         // leichter oder abgelaufener Pläne für bequeme Punkte. Der Vater darf jederzeit (Vorschau/Nachtrag).
-        if (User.IsChild() && await GetPlan(planId) is { } plan && !PositionPlayService.PlanPlayableForChild(plan, today))
+        if (User.IsStudent() && await GetPlan(planId) is { } plan && !PositionPlayService.PlanPlayableForChild(plan, today))
             return this.ProblemWithCode(ApiErrors.PlanInactive, "This study plan is not currently active. Ask your parent.");
 
         var day = dto.Day ?? today;
@@ -139,7 +139,7 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         var plan = (await GetPlan(planId))!;
         // Anti-Schummel: auch mit einer noch offenen Session darf der Sohn einen inzwischen deaktivierten
         // oder abgelaufenen Plan nicht weiter beüben (der Vater bleibt für Vorschau/Nachtrag ausgenommen).
-        if (User.IsChild() && !PositionPlayService.PlanPlayableForChild(plan, DateOnly.FromDateTime(DateTime.UtcNow)))
+        if (User.IsStudent() && !PositionPlayService.PlanPlayableForChild(plan, DateOnly.FromDateTime(DateTime.UtcNow)))
             return this.ProblemWithCode(ApiErrors.PlanInactive, "This study plan is not currently active. Ask your parent.");
         var pos = await GetPosition(planId, positionId);
         if (pos?.Exercise is null) return NotFound();
@@ -167,7 +167,7 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         var session = await GetSession(planId, positionId, sessionId);
         if (session is null) return NotFound();
         var plan = (await GetPlan(planId))!;
-        if (User.IsChild() && !PositionPlayService.PlanPlayableForChild(plan, DateOnly.FromDateTime(DateTime.UtcNow)))
+        if (User.IsStudent() && !PositionPlayService.PlanPlayableForChild(plan, DateOnly.FromDateTime(DateTime.UtcNow)))
             return this.ProblemWithCode(ApiErrors.PlanInactive, "This study plan is not currently active. Ask your parent.");
         var pos = await GetPosition(planId, positionId);
         if (pos?.Exercise is null) return NotFound();
@@ -219,7 +219,7 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         var plan = (await GetPlan(planId))!;
         // Anti-Schummel: auch mit einer noch offenen Session darf der Sohn einen inzwischen deaktivierten
         // oder abgelaufenen Plan nicht weiter beüben (der Vater bleibt für Vorschau/Nachtrag ausgenommen).
-        if (User.IsChild() && !PositionPlayService.PlanPlayableForChild(plan, DateOnly.FromDateTime(DateTime.UtcNow)))
+        if (User.IsStudent() && !PositionPlayService.PlanPlayableForChild(plan, DateOnly.FromDateTime(DateTime.UtcNow)))
             return this.ProblemWithCode(ApiErrors.PlanInactive, "This study plan is not currently active. Ask your parent.");
         var pos = await GetPosition(planId, positionId);
         if (pos?.Exercise is null) return NotFound();

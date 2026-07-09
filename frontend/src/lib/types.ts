@@ -1,7 +1,8 @@
 // DTOs der Pugling-API (Ausschnitt für den Vokabel-Durchstich).
 // Enums werden serverseitig als Strings serialisiert (JsonStringEnumConverter).
 
-export type Role = "Vater" | "Sohn";
+// Technischer Rollen-Diskriminator aus dem Login (die Ebenen-Rolle); die UI-Vokabel bleibt Vater/Sohn.
+export type Role = "Supervisor" | "Student";
 
 export type PartOfSpeech =
   | "Noun" | "Verb" | "Adjective" | "Adverb" | "Pronoun" | "Preposition"

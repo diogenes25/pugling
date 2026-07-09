@@ -18,9 +18,8 @@ public class TokenService(IConfiguration config)
 
     /// <summary>
     /// Der kanonische Weg: Token aus einem Konto samt seiner Rollen-Profile. Trägt <c>aid</c> (Konto),
-    /// je Rolle einen <see cref="ClaimTypes.Role"/>-Claim (Creator/Supervisor/Student) plus die Alias-Rollen
-    /// Vater/Sohn (Abwärtskompatibilität der <c>[Authorize(Roles=…)]</c>), sowie <c>fid</c> (Father der
-    /// Creator/Supervisor-Profile) und <c>cid</c> (Child des Student-Profils), soweit vorhanden.
+    /// je Rolle einen <see cref="ClaimTypes.Role"/>-Claim (Creator/Supervisor/Student) sowie <c>fid</c>
+    /// (Father der Creator/Supervisor-Profile) und <c>cid</c> (Child des Student-Profils), soweit vorhanden.
     /// </summary>
     public (string token, DateTime expiresAt) IssueForAccount(Account account, IReadOnlyList<AccountProfile> profiles)
     {
@@ -35,10 +34,6 @@ public class TokenService(IConfiguration config)
         if (roles.Contains(ProfileRole.Creator)) claims.Add(new(ClaimTypes.Role, Roles.Creator));
         if (roles.Contains(ProfileRole.Supervisor)) claims.Add(new(ClaimTypes.Role, Roles.Supervisor));
         if (roles.Contains(ProfileRole.Student)) claims.Add(new(ClaimTypes.Role, Roles.Student));
-        // Alias-Rollen: alles Creator/Supervisor zählt als Vater, Student als Sohn.
-        if (roles.Contains(ProfileRole.Creator) || roles.Contains(ProfileRole.Supervisor))
-            claims.Add(new(ClaimTypes.Role, Roles.Vater));
-        if (roles.Contains(ProfileRole.Student)) claims.Add(new(ClaimTypes.Role, Roles.Sohn));
 
         var fid = profiles.FirstOrDefault(p => p.FatherId is not null)?.FatherId;
         if (fid is not null) claims.Add(new("fid", fid.Value.ToString()));

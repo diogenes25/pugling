@@ -15,9 +15,9 @@ namespace Pugling.Api.Controllers.Creator;
 [ApiController]
 [ApiVersion("1.0")]
 [Route(ApiRoutes.Creator + "/subjects/{subjectId:int}/categories")]
-[Tags("Learn – Exercise Categories")]
+[Tags("Creator – Exercise Categories")]
 [Produces("application/json")]
-[Authorize(Roles = Roles.Vater)]
+[Authorize(Roles = Roles.Creator)]
 public class ExerciseCategoriesController(PuglingDbContext db) : ControllerBase
 {
     public record CategoryResponse(int Id, int SubjectId, string Name, DateTime CreatedAt);

@@ -58,7 +58,7 @@ einen dünnen Controller ergänzen — er erbt das komplette CRUD:
 ```csharp
 /// <summary>Wahr/Falsch-Übungen.</summary>
 [Route(ExerciseRoutes.Base + "/true-false")]
-[Tags("Learn – TrueFalse")]
+[Tags("Creator – TrueFalse")]
 public class TrueFalseController(PuglingDbContext db) : ExerciseControllerBase<TrueFalseConfig>(db)
 {
     protected override ExerciseType Type => ExerciseType.TrueFalse;

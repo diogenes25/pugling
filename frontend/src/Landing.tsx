@@ -8,7 +8,7 @@ import { useAuth } from "./lib/auth";
  */
 export function Landing() {
   const { session } = useAuth();
-  if (session) return <Navigate to={session.role === "Vater" ? "/vater" : "/sohn"} replace />;
+  if (session) return <Navigate to={session.role === "Supervisor" ? "/vater" : "/sohn"} replace />;
 
   return (
     <div className="lp">
