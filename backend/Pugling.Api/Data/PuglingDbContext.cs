@@ -58,10 +58,6 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
     public DbSet<Achievement> Achievements => Set<Achievement>();
     public DbSet<AchievementAward> AchievementAwards => Set<AchievementAward>();
 
-    // Einlösbare Prämien (reale Belohnungen wie Fernseh-/Spielzeit) + Einlöse-Anfragen mit Vater-Freigabe
-    public DbSet<Reward> Rewards => Set<Reward>();
-    public DbSet<RewardRedemption> RewardRedemptions => Set<RewardRedemption>();
-
     // Familien-Shop: Vater-Katalog (Artikel + Angebote), kindbezogenes aggregiertes Inventar,
     // Kaufhistorie und Aktivierungsanfragen
     public DbSet<ShopArticle> ShopArticles => Set<ShopArticle>();
@@ -102,8 +98,6 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
             .HasIndex(a => a.Email).IsUnique().HasFilter("[Email] IS NOT NULL");
 
         // Aussteller-Attribution der Ökonomie (Momentaufnahme): Filter „nur meine Vorgänge" je (Kind, Supervisor).
-        modelBuilder.Entity<Reward>().HasIndex(r => new { r.ChildId, r.SupervisorId });
-        modelBuilder.Entity<RewardRedemption>().HasIndex(r => new { r.ChildId, r.SupervisorId });
         modelBuilder.Entity<ShopPurchase>().HasIndex(p => new { p.ChildId, p.SupervisorId });
         modelBuilder.Entity<ActivationRequest>().HasIndex(r => new { r.ChildId, r.SupervisorId });
 
@@ -332,21 +326,6 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
         {
             e.HasIndex(a => a.AchievementId).IsUnique();
             e.HasOne(a => a.Achievement).WithMany().HasForeignKey(a => a.AchievementId).OnDelete(DeleteBehavior.Cascade);
-        });
-
-        // Prämie gehört einem Kind (Cascade). Einlöse-Anfrage gehört einem Kind (Cascade); die Prämie-
-        // Referenz wird beim Löschen der Prämie auf null gesetzt, damit die Einlöse-Historie erhalten bleibt.
-        modelBuilder.Entity<Reward>(e =>
-        {
-            e.HasOne(r => r.Child).WithMany().HasForeignKey(r => r.ChildId).OnDelete(DeleteBehavior.Cascade);
-            // Optionaler Plan-/Übungs-Kontext: SetNull, damit Löschen von Plan/Übung das Angebot nicht bricht.
-            e.HasOne(r => r.StudyPlan).WithMany().HasForeignKey(r => r.StudyPlanId).OnDelete(DeleteBehavior.SetNull);
-            e.HasOne(r => r.Exercise).WithMany().HasForeignKey(r => r.ExerciseId).OnDelete(DeleteBehavior.SetNull);
-        });
-        modelBuilder.Entity<RewardRedemption>(e =>
-        {
-            e.HasOne(r => r.Child).WithMany().HasForeignKey(r => r.ChildId).OnDelete(DeleteBehavior.Cascade);
-            e.HasOne(r => r.Reward).WithMany().HasForeignKey(r => r.RewardId).OnDelete(DeleteBehavior.SetNull);
         });
 
         // Shop-Artikel: familieninterne Artikelnummer eindeutig; gehört zum Vater (Cascade).

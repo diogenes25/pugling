@@ -73,7 +73,7 @@ Response — `HTTP 200`:
     "description": "Gemeinsam ins Kino \u2013 der Sohn sucht den Film aus.",
     "unitType": "Mal",
     "actionType": "Ausflug",
-    "createdAt": "2026-07-08T15:05:45.1057166"
+    "createdAt": "2026-07-09T15:25:17.9019247"
   },
   {
     "id": 2,
@@ -82,7 +82,7 @@ Response — `HTTP 200`:
     "description": "Konsolen- oder PC-Spielzeit; w\u00F6chentliches Budgetmodell.",
     "unitType": "Minute",
     "actionType": "Zocken",
-    "createdAt": "2026-07-08T15:05:45.1054648"
+    "createdAt": "2026-07-09T15:25:17.9016083"
   },
   {
     "id": 3,
@@ -91,7 +91,7 @@ Response — `HTTP 200`:
     "description": "Kleine Nascherei als Lernanreiz \u2013 z. B. Gummib\u00E4ren oder Schokolade.",
     "unitType": "Gramm",
     "actionType": "Suessigkeit",
-    "createdAt": "2026-07-08T15:05:45.1057143"
+    "createdAt": "2026-07-09T15:25:17.9019243"
   },
   {
     "id": 1,
@@ -100,7 +100,7 @@ Response — `HTTP 200`:
     "description": "Bildschirmzeit nach dem Lernen \u2013 t\u00E4glich abrufbar.",
     "unitType": "Minute",
     "actionType": "TV",
-    "createdAt": "2026-07-08T15:05:45.1036798"
+    "createdAt": "2026-07-09T15:25:17.9005608"
   },
   {
     "id": 5,
@@ -109,7 +109,7 @@ Response — `HTTP 200`:
     "description": "Bildschirmzeit in Minuten",
     "unitType": "Minute",
     "actionType": "TV",
-    "createdAt": "2026-07-08T15:06:04.8952651"
+    "createdAt": "2026-07-09T15:25:38.2723409"
   }
 ]
 ```
@@ -129,7 +129,7 @@ Response — `HTTP 200`:
     "description": "Bildschirmzeit nach dem Lernen \u2013 t\u00E4glich abrufbar.",
     "unitType": "Minute",
     "actionType": "TV",
-    "createdAt": "2026-07-08T15:05:45.1036798"
+    "createdAt": "2026-07-09T15:25:17.9005608"
   },
   {
     "id": 5,
@@ -138,7 +138,7 @@ Response — `HTTP 200`:
     "description": "Bildschirmzeit in Minuten",
     "unitType": "Minute",
     "actionType": "TV",
-    "createdAt": "2026-07-08T15:06:04.8952651"
+    "createdAt": "2026-07-09T15:25:38.2723409"
   }
 ]
 ```
@@ -165,7 +165,7 @@ Response — `HTTP 200`:
   "description": "30 Minuten freie Bildschirmzeit",
   "unitType": "Minute",
   "actionType": "TV",
-  "createdAt": "2026-07-08T15:06:04.8952651"
+  "createdAt": "2026-07-09T15:25:38.2723409"
 }
 ```
 
@@ -263,7 +263,7 @@ Response — `HTTP 200`:
     "refillAtUtc": null,
     "refillDayOfWeek": null,
     "lastRefilledAtUtc": null,
-    "createdAt": "2026-07-08T15:06:05.3147395"
+    "createdAt": "2026-07-09T15:25:38.6105309"
   }
 ]
 ```
@@ -300,7 +300,7 @@ Response — `HTTP 200`:
   "refillAtUtc": null,
   "refillDayOfWeek": null,
   "lastRefilledAtUtc": null,
-  "createdAt": "2026-07-08T15:06:05.3147395"
+  "createdAt": "2026-07-09T15:25:38.6105309"
 }
 ```
 
@@ -493,6 +493,28 @@ Response — `HTTP 400`:
 }
 ```
 
+### Shop-Angebot kaufen (kein Guthaben) — Fehlerfall
+`POST /api/v1/student/me/shop/listings/7/purchase`
+
+Rolle: **child** — `Authorization: Bearer <child-token>`
+
+Request:
+```json
+{}
+```
+
+Response — `HTTP 400`:
+```json
+{
+  "type": "https://pugling.app/errors/insufficient_coins",
+  "title": "Not enough coins.",
+  "status": 400,
+  "detail": "Not enough coins for this shop listing.",
+  "code": "insufficient_coins",
+  "traceId": "<trace-id>"
+}
+```
+
 ## Aktivierungsanfrage stellen
 `POST /api/v1/student/me/shop/inventory/5/activate`
 
@@ -579,7 +601,7 @@ Response — `HTTP 200`:
     "actionType": "TV",
     "requestedQuantity": 10,
     "status": "Pending",
-    "requestedAt": "2026-07-08T15:06:06.1749324",
+    "requestedAt": "2026-07-09T15:25:39.5853103",
     "closedAt": null
   },
   {
@@ -590,14 +612,14 @@ Response — `HTTP 200`:
     "actionType": "TV",
     "requestedQuantity": 30,
     "status": "Pending",
-    "requestedAt": "2026-07-08T15:06:06.1349591",
+    "requestedAt": "2026-07-09T15:25:39.5244413",
     "closedAt": null
   }
 ]
 ```
 
 ## Kind-Inventar
-`GET /api/v1/supervisor/children/6/shop/inventory`
+`GET /api/v1/supervisor/children/5/shop/inventory`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
@@ -616,7 +638,7 @@ Response — `HTTP 200`:
 ```
 
 ## Kind-Käufe
-`GET /api/v1/supervisor/children/6/shop/purchases`
+`GET /api/v1/supervisor/children/5/shop/purchases`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
@@ -625,7 +647,7 @@ Response — `HTTP 200`:
 [
   {
     "id": 1,
-    "childId": 6,
+    "childId": 5,
     "shopListingId": 7,
     "articleNumber": "TV-900",
     "title": "30 Min Fernsehen",
@@ -634,7 +656,7 @@ Response — `HTTP 200`:
     "gemPrice": 0,
     "unitsPerPurchase": 30,
     "status": "Owned",
-    "purchasedAt": "2026-07-08T15:06:05.9024381",
+    "purchasedAt": "2026-07-09T15:25:39.109308",
     "closedAt": null,
     "canCancel": true
   }
@@ -642,7 +664,7 @@ Response — `HTTP 200`:
 ```
 
 ## Kind-Aktivierungen
-`GET /api/v1/supervisor/children/6/shop/activations`
+`GET /api/v1/supervisor/children/5/shop/activations`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
@@ -651,28 +673,28 @@ Response — `HTTP 200`:
 [
   {
     "id": 2,
-    "childId": 6,
+    "childId": 5,
     "shopArticleId": 5,
     "articleTitle": "Fernsehzeit (30 Min)",
     "unitType": "Minute",
     "actionType": "TV",
     "requestedQuantity": 10,
     "status": "Pending",
-    "requestedAt": "2026-07-08T15:06:06.1749324",
+    "requestedAt": "2026-07-09T15:25:39.5853103",
     "closedAt": null,
     "canApprove": true,
     "canReject": true
   },
   {
     "id": 1,
-    "childId": 6,
+    "childId": 5,
     "shopArticleId": 5,
     "articleTitle": "Fernsehzeit (30 Min)",
     "unitType": "Minute",
     "actionType": "TV",
     "requestedQuantity": 30,
     "status": "Pending",
-    "requestedAt": "2026-07-08T15:06:06.1349591",
+    "requestedAt": "2026-07-09T15:25:39.5244413",
     "closedAt": null,
     "canApprove": true,
     "canReject": true
@@ -681,7 +703,7 @@ Response — `HTTP 200`:
 ```
 
 ## Aktivierung genehmigen
-`POST /api/v1/supervisor/children/6/shop/activations/1/approve`
+`POST /api/v1/supervisor/children/5/shop/activations/1/approve`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
@@ -689,14 +711,14 @@ Response — `HTTP 200`:
 ```json
 {
   "id": 1,
-  "childId": 6,
+  "childId": 5,
   "shopArticleId": 5,
   "articleTitle": "Fernsehzeit (30 Min)",
   "unitType": "Minute",
   "actionType": "TV",
   "requestedQuantity": 30,
   "status": "Approved",
-  "requestedAt": "2026-07-08T15:06:06.1349591",
+  "requestedAt": "2026-07-09T15:25:39.5244413",
   "closedAt": "<timestamp>",
   "canApprove": false,
   "canReject": false
@@ -704,7 +726,7 @@ Response — `HTTP 200`:
 ```
 
 ### Aktivierung erneut genehmigen — Fehlerfall
-`POST /api/v1/supervisor/children/6/shop/activations/1/approve`
+`POST /api/v1/supervisor/children/5/shop/activations/1/approve`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
@@ -721,7 +743,7 @@ Response — `HTTP 409`:
 ```
 
 ### Aktivierung genehmigen (Inventar erschöpft) — Fehlerfall
-`POST /api/v1/supervisor/children/6/shop/activations/2/approve`
+`POST /api/v1/supervisor/children/5/shop/activations/2/approve`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
@@ -738,7 +760,7 @@ Response — `HTTP 400`:
 ```
 
 ## Aktivierung ablehnen
-`POST /api/v1/supervisor/children/6/shop/activations/2/reject`
+`POST /api/v1/supervisor/children/5/shop/activations/2/reject`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
@@ -746,14 +768,14 @@ Response — `HTTP 200`:
 ```json
 {
   "id": 2,
-  "childId": 6,
+  "childId": 5,
   "shopArticleId": 5,
   "articleTitle": "Fernsehzeit (30 Min)",
   "unitType": "Minute",
   "actionType": "TV",
   "requestedQuantity": 10,
   "status": "Rejected",
-  "requestedAt": "2026-07-08T15:06:06.1749324",
+  "requestedAt": "2026-07-09T15:25:39.5853103",
   "closedAt": "<timestamp>",
   "canApprove": false,
   "canReject": false
@@ -761,7 +783,7 @@ Response — `HTTP 200`:
 ```
 
 ## Kauf stornieren (Vater)
-`POST /api/v1/supervisor/children/6/shop/purchases/1/cancel`
+`POST /api/v1/supervisor/children/5/shop/purchases/1/cancel`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
@@ -769,7 +791,7 @@ Response — `HTTP 200`:
 ```json
 {
   "id": 1,
-  "childId": 6,
+  "childId": 5,
   "shopListingId": 7,
   "articleNumber": "TV-900",
   "title": "30 Min Fernsehen",
@@ -778,7 +800,7 @@ Response — `HTTP 200`:
   "gemPrice": 0,
   "unitsPerPurchase": 30,
   "status": "Cancelled",
-  "purchasedAt": "2026-07-08T15:06:05.9024381",
+  "purchasedAt": "2026-07-09T15:25:39.109308",
   "closedAt": "<timestamp>",
   "canCancel": false
 }

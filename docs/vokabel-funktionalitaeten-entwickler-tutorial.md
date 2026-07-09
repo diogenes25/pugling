@@ -1,5 +1,5 @@
 ---
-tags: [typ/tutorial, bereich/katalog, bereich/auswertung, lerntechnik/vokabeln]
+tags: [typ/tutorial, bereich/katalog, bereich/auswertung, rolle/creator, rolle/supervisor, rolle/student, lerntechnik/vokabeln]
 ---
 
 # Vokabel-Funktionalitäten für Entwickler

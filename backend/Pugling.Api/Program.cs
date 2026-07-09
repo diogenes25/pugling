@@ -129,7 +129,6 @@ builder.Services.AddDbContext<PuglingDbContext>(o =>
     o.UseSqlite(builder.Configuration.GetConnectionString("Default") ?? "Data Source=pugling.db"));
 builder.Services.AddScoped<ScoringService>();
 builder.Services.AddScoped<WalletService>();
-builder.Services.AddScoped<OfferService>();
 builder.Services.AddScoped<ShopService>();
 builder.Services.AddScoped<MetricsService>();
 builder.Services.AddScoped<GamificationService>();

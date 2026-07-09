@@ -18,7 +18,7 @@ public class OpenApiExampleTests(PuglingWebAppFactory factory) : IClassFixture<P
         Assert.Contains("study-plans-lehrplan-anlegen", RequestExampleKeys(doc, "/api/v1/supervisor/study-plans", "post"));
         AssertDocumentContainsExample(doc, "children-einzelnes-kind-lesen");
         AssertDocumentContainsExample(doc, "study-plans-position-anlegen");
-        AssertDocumentContainsExample(doc, "me-angebot-kaufen");
+        AssertDocumentContainsExample(doc, "shop-shop-angebot-kaufen");
     }
 
     [Fact]

@@ -1,5 +1,5 @@
 ---
-tags: [typ/adr, bereich/doku]
+tags: [typ/adr, bereich/doku, rolle/creator, rolle/supervisor, rolle/student]
 ---
 
 # Architektur-Entscheidung: API-First + Legacy-Abbau

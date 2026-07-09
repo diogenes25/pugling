@@ -1,12 +1,11 @@
 import type {
   AchievementDef, AchievementStatus, AnswerDto, CategoryResponse, ChapterResponse, ChildResponse, CreateAchievementDto,
-  CreateChildDto, CreateExercisePayload, CreateKlassenarbeitDto, CreateMissionDto, CreatePlanDto, CreateRewardDto, CreateVocabularyDto,
+  CreateChildDto, CreateExercisePayload, CreateKlassenarbeitDto, CreateMissionDto, CreatePlanDto, CreateVocabularyDto,
   ExerciseDetail, ExercisePreviewAnswer, ExercisePreviewData, ExercisePreviewResult,
   ExerciseSearchParams, ExerciseSummary, ExerciseUsage, KlassenarbeitDetail, KlassenarbeitPractice, KlassenarbeitRepeat,
   KlassenarbeitResponse, KlassenarbeitStatus, LoginResponse, MissionDef, MissionStatus, PlanResponse,
   ChildrenDashboard, CreatePositionDto, PositionResponse, PositionReport, UpdatePositionDto, OverviewResponse, PositionSession, PracticeCard,
-  ProgressResponse, RedemptionDef, ReviewInput, ReviewOutcome, RewardDef, RewardOffer, MyRedemption,
-  RewardRedemptionStatus, RewardsView,
+  ProgressResponse, ReviewInput, ReviewOutcome,
   SkinState, SubjectResponse,
   TestAttemptResponse, TestNextResponse, TestAnswerAck, TestSubmitResponse, UpdateKlassenarbeitDto, UpdatePlanDto, UpdateVocabularyDto,
   VocabBatchResult, VocabularyResponse, VocabTagResponse, ChildTagResponse, Wallet, WalletBalance, WalletEntry,
@@ -321,48 +320,6 @@ export const api = {
     const body = (text ? JSON.parse(text) : { coins: 0, gems: 0, entries: [] }) as Wallet;
     return { coins: body.coins, gems: body.gems, items: body.entries, total: totalFrom(res, body.entries.length) };
   },
-
-  // ---- Vater: Angebote (kaufbare reale Belohnungen) verwalten ----
-  rewardsFor: (childId: number) => http<RewardDef[]>(`${V1}/supervisor/children/${childId}/rewards`),
-  createReward: (childId: number, dto: CreateRewardDto) =>
-    http<RewardDef>(`${V1}/supervisor/children/${childId}/rewards`, "POST", dto),
-  updateReward: (childId: number, rewardId: number, dto: Partial<RewardDef>) =>
-    http<RewardDef>(`${V1}/supervisor/children/${childId}/rewards/${rewardId}`, "PATCH", dto),
-  deleteReward: (childId: number, rewardId: number) =>
-    http<void>(`${V1}/supervisor/children/${childId}/rewards/${rewardId}`, "DELETE"),
-
-  // ---- Vater: Käufe ansehen und erfüllen/stornieren ----
-  redemptionsFor: (childId: number, opts: { status?: RewardRedemptionStatus; skip?: number; take?: number } = {}) => {
-    const q = new URLSearchParams();
-    if (opts.status) q.set("status", opts.status);
-    appendPaging(q, opts);
-    const qs = q.toString();
-    return httpPaged<RedemptionDef>(`${V1}/supervisor/children/${childId}/rewards/redemptions${qs ? `?${qs}` : ""}`);
-  },
-  fulfillRedemption: (childId: number, redemptionId: number) =>
-    http<RedemptionDef>(`${V1}/supervisor/children/${childId}/rewards/redemptions/${redemptionId}/fulfill`, "POST", {}),
-  cancelRedemption: (childId: number, redemptionId: number) =>
-    http<RedemptionDef>(`${V1}/supervisor/children/${childId}/rewards/redemptions/${redemptionId}/cancel`, "POST", {}),
-
-  // ---- Sohn: Angebote ansehen und direkt kaufen (Münzen sofort weg, Vater erfüllt später) ----
-  // Aggregat-Sicht (available + redemptions); der Münzstand kommt aus api.wallet() (me/points).
-  myRewards: () => http<RewardsView>(`${V1}/student/me/rewards`),
-  // Adressierbare Unterlisten (server-paginiert) – falls einzeln benötigt.
-  rewardsAvailable: (opts: { skip?: number; take?: number } = {}) => {
-    const q = new URLSearchParams();
-    appendPaging(q, opts);
-    const qs = q.toString();
-    return httpPaged<RewardOffer>(`${V1}/student/me/rewards/available${qs ? `?${qs}` : ""}`);
-  },
-  rewardsRedemptions: (opts: { status?: RewardRedemptionStatus; skip?: number; take?: number } = {}) => {
-    const q = new URLSearchParams();
-    if (opts.status) q.set("status", opts.status);
-    appendPaging(q, opts);
-    const qs = q.toString();
-    return httpPaged<MyRedemption>(`${V1}/student/me/rewards/redemptions${qs ? `?${qs}` : ""}`);
-  },
-  // Kauf über die available-Ressource; availableId == Angebots-Id.
-  purchaseReward: (availableId: number) => http<RewardsView>(`${V1}/student/me/rewards/available/${availableId}/purchase`, "POST", {}),
 
   // ---- Vater: Klassenarbeiten (planen, Übungen zuweisen, benoten, üben/wiederholen) ----
   classTests: (childId: number, opts: { status?: KlassenarbeitStatus; skip?: number; take?: number } = {}) => {

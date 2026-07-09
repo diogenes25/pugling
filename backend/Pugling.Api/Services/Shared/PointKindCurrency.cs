@@ -16,8 +16,10 @@ public enum Currency
 
 /// <summary>
 /// Ordnet jedem <see cref="PointKind"/> genau eine <see cref="Currency"/> zu. Fleiß fürs Lernen
-/// (Basis/Zeit/Test/Tag) sowie manuelle Vater-Buchungen und Angebots-Käufe laufen über Münzen;
+/// (Basis/Zeit/Test/Tag) sowie manuelle Vater-Buchungen und Familien-Shop-Käufe laufen über Münzen;
 /// alle Motivations-Boni (Combo/Speed/Dauer/Missionen/Auszeichnungen) und Skin-Käufe über Gems.
+/// <c>PointKind.Reward</c> ist nur ein Tombstone für historische Buchungen des entfernten Angebots-Systems
+/// (bleibt Münzen zugeordnet, damit alte Ledger-Einträge nicht still aus dem Saldo fallen).
 /// <para>
 /// Bewusst wird die Währung <b>aus dem Kind abgeleitet</b> statt als eigene Spalte gespeichert:
 /// so bleibt der bestehende Ledger unverändert (keine Migration/kein Backfill), und der Kontostand

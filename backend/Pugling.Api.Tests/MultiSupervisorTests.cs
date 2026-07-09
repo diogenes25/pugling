@@ -7,27 +7,21 @@ namespace Pugling.Api.Tests;
 
 /// <summary>
 /// Phase 3: ein Student hat mehrere Supervisor. Er verdient EIN gemeinsames Wallet und kauft aus den
-/// Shops/Angeboten beider Supervisor; einlösen darf aber nur der jeweils ausstellende Supervisor.
+/// Familien-Shops beider Supervisor; stornieren/einlösen darf aber nur der jeweils ausstellende Supervisor
+/// (aussteller-gebundene Momentaufnahme auf dem <c>ShopPurchase</c>).
 /// </summary>
 public class MultiSupervisorTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWebAppFactory>
 {
     private readonly WebApplicationFactory<Program> _factory = factory;
 
-    private static async Task<int> CreateRewardAsync(HttpClient sup, int childId, string title, int cost)
+    private static async Task BuyAsync(HttpClient child, int listingId)
     {
-        var res = await sup.PostAsJsonAsync($"/api/v1/supervisor/children/{childId}/rewards",
-            new { title, cost, period = "OneOff", quantity = 5 });
-        return await TestApi.IdAsync(res);
-    }
-
-    private static async Task BuyAsync(HttpClient child, int rewardId)
-    {
-        var res = await child.PostAsJsonAsync($"/api/v1/student/me/rewards/available/{rewardId}/purchase", new { });
+        var res = await child.PostAsJsonAsync($"/api/v1/student/me/shop/listings/{listingId}/purchase", new { });
         res.EnsureSuccessStatusCode();
     }
 
     [Fact]
-    public async Task ZweiSupervisor_GemeinsamesWallet_AbersEinloesungAusstellergebunden()
+    public async Task ZweiSupervisor_GemeinsamesWallet_AberEinloesungAusstellergebunden()
     {
         // Supervisor A = geseedeter Papa (id 1), Student = geseedeter Sohn (id 1, 50 Münzen Startguthaben).
         var supA = await TestApi.FatherAsync(_factory);
@@ -42,35 +36,35 @@ public class MultiSupervisorTests(PuglingWebAppFactory factory) : IClassFixture<
         (await supA.PostAsJsonAsync("/api/v1/supervisor/children/1/supervisors",
             new { supervisorId = supBId, relation = "Mother" })).EnsureSuccessStatusCode();
 
-        // Beide legen je ein Angebot für denselben Studenten an.
-        var offerA = await CreateRewardAsync(supA, 1, "Papas Angebot", 10);
-        var offerB = await CreateRewardAsync(supB, 1, "Mamas Angebot", 10);
+        // Beide legen je ein Shop-Angebot für denselben Studenten an (Artikelnummer ist je Vater eindeutig).
+        var listingA = await TestApi.CreateShopListingAsync(supA, "TEST-1", coinPrice: 10, unitsPerPurchase: 1, stock: 5, articleTitle: "Papas Artikel");
+        var listingB = await TestApi.CreateShopListingAsync(supB, "TEST-1", coinPrice: 10, unitsPerPurchase: 1, stock: 5, articleTitle: "Mamas Artikel");
 
         // Der Student kauft aus BEIDEN Shops – ein gemeinsames Wallet (50 → 30).
         var child = await TestApi.ChildAsync(_factory);
-        await BuyAsync(child, offerA);
-        await BuyAsync(child, offerB);
+        await BuyAsync(child, listingA);
+        await BuyAsync(child, listingB);
         var wallet = await (await child.GetAsync("/api/v1/student/me/points")).Content.ReadFromJsonAsync<JsonElement>();
         Assert.Equal(30, wallet.GetProperty("coins").GetInt32());
 
         // Jeder Supervisor sieht NUR seinen eigenen Kauf.
-        var redemptionsA = await (await supA.GetAsync("/api/v1/supervisor/children/1/rewards/redemptions"))
+        var purchasesA = await (await supA.GetAsync("/api/v1/supervisor/children/1/shop/purchases"))
             .Content.ReadFromJsonAsync<JsonElement>();
-        var redemptionsB = await (await supB.GetAsync("/api/v1/supervisor/children/1/rewards/redemptions"))
+        var purchasesB = await (await supB.GetAsync("/api/v1/supervisor/children/1/shop/purchases"))
             .Content.ReadFromJsonAsync<JsonElement>();
-        Assert.Single(redemptionsA.EnumerateArray());
-        Assert.Single(redemptionsB.EnumerateArray());
-        var redemptionAId = redemptionsA.EnumerateArray().First().GetProperty("id").GetInt32();
-        var redemptionBId = redemptionsB.EnumerateArray().First().GetProperty("id").GetInt32();
-        Assert.NotEqual(redemptionAId, redemptionBId);
+        Assert.Single(purchasesA.EnumerateArray());
+        Assert.Single(purchasesB.EnumerateArray());
+        var purchaseAId = purchasesA.EnumerateArray().First().GetProperty("id").GetInt32();
+        var purchaseBId = purchasesB.EnumerateArray().First().GetProperty("id").GetInt32();
+        Assert.NotEqual(purchaseAId, purchaseBId);
 
-        // A darf B's Kauf NICHT einlösen (fremd ausgestellt → 404), seinen eigenen schon.
+        // A darf B's Kauf NICHT stornieren (fremd ausgestellt → 404), seinen eigenen schon.
         Assert.Equal(HttpStatusCode.NotFound,
-            (await supA.PostAsJsonAsync($"/api/v1/supervisor/children/1/rewards/redemptions/{redemptionBId}/fulfill", new { })).StatusCode);
-        (await supA.PostAsJsonAsync($"/api/v1/supervisor/children/1/rewards/redemptions/{redemptionAId}/fulfill", new { }))
+            (await supA.PostAsJsonAsync($"/api/v1/supervisor/children/1/shop/purchases/{purchaseBId}/cancel", new { })).StatusCode);
+        (await supA.PostAsJsonAsync($"/api/v1/supervisor/children/1/shop/purchases/{purchaseAId}/cancel", new { }))
             .EnsureSuccessStatusCode();
-        // B löst seinen eigenen ein.
-        (await supB.PostAsJsonAsync($"/api/v1/supervisor/children/1/rewards/redemptions/{redemptionBId}/fulfill", new { }))
+        // B storniert seinen eigenen.
+        (await supB.PostAsJsonAsync($"/api/v1/supervisor/children/1/shop/purchases/{purchaseBId}/cancel", new { }))
             .EnsureSuccessStatusCode();
     }
 }

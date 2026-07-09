@@ -29,21 +29,21 @@ Response — `HTTP 200`:
     "amount": 15,
     "kind": "Base",
     "reason": "Doku-Buchung",
-    "createdAt": "2026-07-08T15:05:55.199664"
+    "createdAt": "2026-07-09T15:25:28.5110121"
   },
   {
     "id": 2,
     "amount": 300,
     "kind": "Achievement",
     "reason": "Willkommens-Gems",
-    "createdAt": "2026-07-08T15:05:42.1225638"
+    "createdAt": "2026-07-09T15:25:15.3318768"
   },
   {
     "id": 1,
     "amount": 50,
     "kind": "Base",
     "reason": "Startguthaben (M\u00FCnzen)",
-    "createdAt": "2026-07-08T15:05:42.1225626"
+    "createdAt": "2026-07-09T15:25:15.3318753"
   }
 ]
 ```
@@ -60,7 +60,7 @@ Response — `HTTP 200`:
   "amount": 15,
   "kind": "Base",
   "reason": "Doku-Buchung",
-  "createdAt": "2026-07-08T15:05:55.199664"
+  "createdAt": "2026-07-09T15:25:28.5110121"
 }
 ```
 
@@ -236,149 +236,6 @@ Response — `HTTP 200`:
 }
 ```
 
-## Eigene Angebote & Käufe (Aggregat)
-`GET /api/v1/student/me/rewards`
-
-Rolle: **child** — `Authorization: Bearer <child-token>`
-
-Response — `HTTP 200`:
-```json
-{
-  "available": [
-    {
-      "id": 1,
-      "title": "30 Min Fernsehen",
-      "cost": 200,
-      "period": "Daily",
-      "quantity": 2,
-      "remainingThisPeriod": 2,
-      "affordable": false,
-      "planTitle": null,
-      "exerciseTitle": null
-    },
-    {
-      "id": 2,
-      "title": "1 Stunde Zocken",
-      "cost": 400,
-      "period": "Weekly",
-      "quantity": 5,
-      "remainingThisPeriod": 5,
-      "affordable": false,
-      "planTitle": null,
-      "exerciseTitle": null
-    },
-    {
-      "id": 3,
-      "title": "Taschengeld 5 \u20AC",
-      "cost": 500,
-      "period": "Weekly",
-      "quantity": 1,
-      "remainingThisPeriod": 1,
-      "affordable": false,
-      "planTitle": null,
-      "exerciseTitle": null
-    },
-    {
-      "id": 4,
-      "title": "Kinoabend aussuchen",
-      "cost": 1500,
-      "period": "OneOff",
-      "quantity": 1,
-      "remainingThisPeriod": 1,
-      "affordable": false,
-      "planTitle": null,
-      "exerciseTitle": null
-    }
-  ],
-  "redemptions": []
-}
-```
-
-## Verfügbare Angebote (Liste)
-`GET /api/v1/student/me/rewards/available`
-
-Rolle: **child** — `Authorization: Bearer <child-token>`
-
-Response — `HTTP 200`:
-```json
-[
-  {
-    "id": 1,
-    "title": "30 Min Fernsehen",
-    "cost": 200,
-    "period": "Daily",
-    "quantity": 2,
-    "remainingThisPeriod": 2,
-    "affordable": false,
-    "planTitle": null,
-    "exerciseTitle": null
-  },
-  {
-    "id": 2,
-    "title": "1 Stunde Zocken",
-    "cost": 400,
-    "period": "Weekly",
-    "quantity": 5,
-    "remainingThisPeriod": 5,
-    "affordable": false,
-    "planTitle": null,
-    "exerciseTitle": null
-  },
-  {
-    "id": 3,
-    "title": "Taschengeld 5 \u20AC",
-    "cost": 500,
-    "period": "Weekly",
-    "quantity": 1,
-    "remainingThisPeriod": 1,
-    "affordable": false,
-    "planTitle": null,
-    "exerciseTitle": null
-  },
-  {
-    "id": 4,
-    "title": "Kinoabend aussuchen",
-    "cost": 1500,
-    "period": "OneOff",
-    "quantity": 1,
-    "remainingThisPeriod": 1,
-    "affordable": false,
-    "planTitle": null,
-    "exerciseTitle": null
-  }
-]
-```
-
-## Einzelnes Angebot
-`GET /api/v1/student/me/rewards/available/1`
-
-Rolle: **child** — `Authorization: Bearer <child-token>`
-
-Response — `HTTP 200`:
-```json
-{
-  "id": 1,
-  "title": "30 Min Fernsehen",
-  "cost": 200,
-  "period": "Daily",
-  "quantity": 2,
-  "remainingThisPeriod": 2,
-  "affordable": false,
-  "planTitle": null,
-  "exerciseTitle": null
-}
-```
-
-## Eigene Käufe (Liste)
-`GET /api/v1/student/me/rewards/redemptions`
-
-Rolle: **child** — `Authorization: Bearer <child-token>`
-
-Response — `HTTP 200`:
-```json
-[]
-```
-
 ### Vater greift auf Sohn-Route zu — Fehlerfall
 `GET /api/v1/student/me/points`
 
@@ -523,178 +380,6 @@ Response — `HTTP 400`:
   "status": 400,
   "detail": "This skin is not unlocked yet.",
   "code": "skin_not_unlocked",
-  "traceId": "<trace-id>"
-}
-```
-
-## Angebot kaufen
-`POST /api/v1/student/me/rewards/available/5/purchase`
-
-Rolle: **child** — `Authorization: Bearer <child-token>`
-
-Request:
-```json
-{}
-```
-
-Response — `HTTP 200`:
-```json
-{
-  "available": [
-    {
-      "id": 5,
-      "title": "30 Min Fernsehen",
-      "cost": 50,
-      "period": "Weekly",
-      "quantity": 3,
-      "remainingThisPeriod": 2,
-      "affordable": true,
-      "planTitle": null,
-      "exerciseTitle": null
-    }
-  ],
-  "redemptions": [
-    {
-      "id": 1,
-      "rewardId": 5,
-      "title": "30 Min Fernsehen",
-      "cost": 50,
-      "status": "Purchased",
-      "purchasedAt": "2026-07-08T15:05:59.4034321",
-      "fulfilledAt": null
-    }
-  ]
-}
-```
-
-## Einzelner Kauf
-`GET /api/v1/student/me/rewards/redemptions/1`
-
-Rolle: **child** — `Authorization: Bearer <child-token>`
-
-Response — `HTTP 200`:
-```json
-{
-  "id": 1,
-  "rewardId": 5,
-  "title": "30 Min Fernsehen",
-  "cost": 50,
-  "status": "Purchased",
-  "purchasedAt": "2026-07-08T15:05:59.4034321",
-  "fulfilledAt": null
-}
-```
-
-## Kauf erfüllen (Vater)
-`POST /api/v1/supervisor/children/4/rewards/redemptions/1/fulfill`
-
-Rolle: **father** — `Authorization: Bearer <father-token>`
-
-Request:
-```json
-{}
-```
-
-Response — `HTTP 200`:
-```json
-{
-  "id": 1,
-  "childId": 4,
-  "rewardId": 5,
-  "title": "30 Min Fernsehen",
-  "cost": 50,
-  "status": "Fulfilled",
-  "purchasedAt": "2026-07-08T15:05:59.4034321",
-  "fulfilledAt": "<timestamp>",
-  "canFulfill": false,
-  "canCancel": false
-}
-```
-
-### Bereits erfüllten Kauf erneut erfüllen — Fehlerfall
-`POST /api/v1/supervisor/children/4/rewards/redemptions/1/fulfill`
-
-Rolle: **father** — `Authorization: Bearer <father-token>`
-
-Request:
-```json
-{}
-```
-
-Response — `HTTP 409`:
-```json
-{
-  "type": "https://pugling.app/errors/purchase_not_open",
-  "title": "Purchase not open.",
-  "status": 409,
-  "detail": "This purchase is no longer open.",
-  "code": "purchase_not_open",
-  "traceId": "<trace-id>"
-}
-```
-
-### Angebot über Kontingent kaufen — Fehlerfall
-`POST /api/v1/student/me/rewards/available/6/purchase`
-
-Rolle: **child** — `Authorization: Bearer <child-token>`
-
-Request:
-```json
-{}
-```
-
-Response — `HTTP 409`:
-```json
-{
-  "type": "https://pugling.app/errors/quota_exhausted",
-  "title": "Quota exhausted.",
-  "status": 409,
-  "detail": "The quota for this period is exhausted.",
-  "code": "quota_exhausted",
-  "traceId": "<trace-id>"
-}
-```
-
-### Deaktiviertes Angebot kaufen — Fehlerfall
-`POST /api/v1/student/me/rewards/available/7/purchase`
-
-Rolle: **child** — `Authorization: Bearer <child-token>`
-
-Request:
-```json
-{}
-```
-
-Response — `HTTP 400`:
-```json
-{
-  "type": "https://pugling.app/errors/offer_inactive",
-  "title": "Offer no longer available.",
-  "status": 400,
-  "detail": "This offer is no longer available.",
-  "code": "offer_inactive",
-  "traceId": "<trace-id>"
-}
-```
-
-### Angebot ohne Deckung kaufen — Fehlerfall
-`POST /api/v1/student/me/rewards/available/8/purchase`
-
-Rolle: **child** — `Authorization: Bearer <child-token>`
-
-Request:
-```json
-{}
-```
-
-Response — `HTTP 400`:
-```json
-{
-  "type": "https://pugling.app/errors/insufficient_coins",
-  "title": "Not enough coins.",
-  "status": 400,
-  "detail": "Not enough coins for this offer.",
-  "code": "insufficient_coins",
   "traceId": "<trace-id>"
 }
 ```

@@ -1,5 +1,5 @@
 ---
-tags: [typ/tutorial, bereich/doku]
+tags: [typ/tutorial, bereich/doku, rolle/creator, rolle/supervisor]
 ---
 
 # 09 · LLM-Kochbuch: Lernplan aus einem Prompt

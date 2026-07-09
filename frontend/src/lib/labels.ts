@@ -1,4 +1,4 @@
-import type { OfferPeriod, PointKind, RewardRedemptionStatus } from "./types";
+import type { PointKind } from "./types";
 
 /** Deutsche Klartext-Labels für die Buchungs-Kategorien im Konto-/Wallet-Verlauf. */
 const POINT_KIND_LABELS: Record<PointKind, string> = {
@@ -14,26 +14,10 @@ const POINT_KIND_LABELS: Record<PointKind, string> = {
   Mission: "Mission",
   Achievement: "Auszeichnung",
   SkinPurchase: "Skin gekauft",
+  // Tombstone: historische Buchungen des entfernten Angebots-Systems.
   Reward: "Prämie eingelöst",
 };
 export const pointKindLabel = (k: PointKind): string => POINT_KIND_LABELS[k] ?? k;
-
-/** Deutsche Labels für den Kauf-Status im Konto. */
-const REDEMPTION_STATUS_LABELS: Record<RewardRedemptionStatus, string> = {
-  Purchased: "gekauft – wartet auf Papa",
-  Fulfilled: "erfüllt",
-  Cancelled: "storniert (rückerstattet)",
-};
-export const redemptionStatusLabel = (s: RewardRedemptionStatus): string => REDEMPTION_STATUS_LABELS[s] ?? s;
-
-/** Deutsche Labels für die Wiederkehr eines Angebots. */
-const OFFER_PERIOD_LABELS: Record<OfferPeriod, string> = {
-  OneOff: "einmalig",
-  Daily: "täglich",
-  Weekly: "wöchentlich",
-  Monthly: "monatlich",
-};
-export const offerPeriodLabel = (p: OfferPeriod): string => OFFER_PERIOD_LABELS[p] ?? p;
 
 /** Symbol + Name der beiden Währungen. */
 export const COIN_LABEL = "🪙 Münzen";

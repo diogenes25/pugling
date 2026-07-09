@@ -1,5 +1,5 @@
 ---
-tags: [typ/referenz, bereich/doku]
+tags: [typ/referenz, bereich/doku, rolle/creator, rolle/supervisor, rolle/student]
 aliases: [API-Referenz, Endpunkt-Index]
 ---
 
@@ -14,6 +14,14 @@ Kompakter Überblick über alle Routen. **Autoritative Quelle bleibt Swagger** (
 > 🔗 **Wie die Endpunkte inhaltlich zusammenhängen** (Übung → Lehrplan → Kind → Auswertung), mit
 > Datenfluss-Diagramm: [docs/endpunkt-beziehungen.md](../docs/endpunkt-beziehungen.md).
 
+## Rollen-Schnelleinstieg
+
+| Rolle | Route-Präfix | Doku-Einstieg |
+| --- | --- | --- |
+| **Creator** | `api/v1/creator/learn/...` | [docs/rollen-doku.md · Creator](../docs/rollen-doku.md#creator--inhalte-und-katalog) |
+| **Supervisor** | `api/v1/supervisor/...` | [docs/rollen-doku.md · Supervisor](../docs/rollen-doku.md#supervisor--steuerung-kontrolle-belohnung) |
+| **Student** | `api/v1/student/...` | [docs/rollen-doku.md · Student](../docs/rollen-doku.md#student--lernen-fortschritt-einlösen) |
+
 ---
 
 ## Auth & Selbstauskunft
@@ -26,8 +34,9 @@ Kompakter Überblick über alle Routen. **Autoritative Quelle bleibt Swagger** (
 | S | `GET /me/points` · `GET …/entries` · `GET …/entries/{entryId}` | Kontostand (Salden) + Buchungen (Liste, paginiert, + Einzeln) |
 | S | `GET /me/missions` · `GET …/{missionId}` | eigene Missionen mit Fortschritt (Liste, paginiert, + Einzeln) |
 | S | `GET /me/achievements` · `GET …/{achievementId}` | eigene Auszeichnungen (Liste, paginiert, + Einzeln) |
-| S | `GET /me/rewards` · `…/available[/{id}]` · `…/redemptions[/{id}]` | Angebots-Sicht (Aggregat) + adressierbare Unterlisten (paginiert) + Einzeln |
-| S | `POST /me/rewards/available/{availableId}/purchase` | Angebot direkt kaufen |
+| S | `GET /me/shop` · `…/inventory[?skip=&take=]` · `…/activations[?status=]` | Familien-Shop-Sicht (`coins/gems/available/inventory/purchases`) + eigener Bestand + eigene Aktivierungen |
+| S | `POST /me/shop/listings/{listingId}/purchase` | Shop-Angebot kaufen (bucht Münzen ab → Inventar) |
+| S | `POST /me/shop/inventory/{articleId}/activate` | Aktivierungsanfrage stellen `{ quantity }` |
 
 ## Admin — Personen & Punkte
 

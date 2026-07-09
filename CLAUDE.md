@@ -56,8 +56,8 @@ Rollen im SPA: `/` Produktseite, `/vater` Web-Admin (inkl. `/vater/wizard` Lehrp
   prüft Eigentum OR-verknüpft je Rolle; Bestandsnutzer bekommen Konten per idempotentem `AccountBackfill`.
 - **Multi-Supervisor** ([AdminEntities.cs](backend/Pugling.Api/Models/AdminEntities.cs)): `SupervisorLink`
   (Supervisor ⇢ Student) ersetzt die frühere 1:1-`Child.FatherId`. Ein Student hat mehrere Supervisor
-  (Vater/Mutter/Oma), je mit eigenem Shop/Angeboten; **Wallet gemeinsam**, Einlösung **ausstellergebunden**
-  (Momentaufnahme `SupervisorId` auf `Reward`/`RewardRedemption`/`ShopPurchase`/`ActivationRequest`).
+  (Vater/Mutter/Oma), je mit eigenem Familien-Shop; **Wallet gemeinsam**, Einlösung **ausstellergebunden**
+  (Momentaufnahme `SupervisorId` auf `ShopPurchase`/`ActivationRequest`).
   Betreuung: `…/supervisor/children/{id}/supervisors`.
 - **Lern-Katalog** ([Controllers/Creator/ExerciseControllers.cs](backend/Pugling.Api/Controllers/Creator/ExerciseControllers.cs)):
   `Subject → Chapter → Exercise` (typisiert, Config als JSON). Ein Controller je `ExerciseType`,
@@ -94,16 +94,17 @@ Rollen im SPA: `/` Produktseite, `/vater` Web-Admin (inkl. `/vater/wizard` Lehrp
   `MetricsService` (Fortschritts-Metriken aus den Tabellen) + `GamificationService` (Missionen &
   Auszeichnungen, idempotent belohnt; Vater-CRUD unter `api/v1/supervisor/children/{}/missions|achievements`,
   Sohn-Sicht `api/v1/student/me/missions|achievements`).
-- **Reward-Ökonomie** (zwei Währungen): 🪙 **Münzen** fürs Lernen → reale Vater-**Angebote** oder **Shop-Artikel**,
-  💎 **Gems** aus Boni → **Skins** (und optionaler Gem-Anteil bei Shop-Artikeln). Währung = reine Funktion des
-  `PointKind` (`PointKindCurrency`, keine Ledger-Spalte); Salden über `WalletService`. Zwei Ausgabe-Kreisläufe:
-  (1) **Angebote** (`Reward` mit `Period`/`Quantity` = Kontingent pro Periode) — der Sohn kauft direkt
-  (`api/v1/student/me/rewards/{}/purchase`), der Vater erfüllt/storniert (`OfferService`; `children/{}/rewards…/fulfill|cancel`).
-  (2) **Familien-Shop** (`ShopArticle` → `ShopListing`): Vater pflegt Artikel-Katalog mit `UnitType`/`ActionType`
-  und Angebote mit Coin+Gem-Preis sowie Bestand (inkl. `ShopRefillKind` für automatisches Auffüllen). Kauf bucht
-  `PointKind.ShopCoins`/`ShopGems` ab, erhöht das aggregierte Inventar (`ChildInventory`) des Sohns. Sohn stellt
-  **Aktivierungsanfrage** (`ActivationRequest`), Vater genehmigt/lehnt ab (`ShopService`;
-  `children/{}/shop/activations/{}/approve|reject`). Details: [wiki/05-punkte-und-bonus.md](wiki/05-punkte-und-bonus.md).
+- **Reward-Ökonomie** (zwei Währungen): 🪙 **Münzen** fürs Lernen → reale Vater-Belohnungen aus dem
+  **Familien-Shop**, 💎 **Gems** aus Boni → **Skins** (und optionaler Gem-Anteil bei Shop-Artikeln). Währung =
+  reine Funktion des `PointKind` (`PointKindCurrency`, keine Ledger-Spalte); Salden über `WalletService`.
+  Der **Familien-Shop** ist der **einzige Münz-Ausgabeweg** (`ShopArticle` → `ShopListing`): Vater pflegt
+  Artikel-Katalog mit `UnitType`/`ActionType` und Angebote mit Coin+Gem-Preis sowie Bestand (inkl.
+  `ShopRefillKind` für automatisches Auffüllen). Kauf bucht `PointKind.ShopCoins`/`ShopGems` ab, erhöht das
+  aggregierte Inventar (`ChildInventory`) des Sohns. Sohn stellt **Aktivierungsanfrage** (`ActivationRequest`),
+  Vater genehmigt/lehnt ab (`ShopService`; `children/{}/shop/activations/{}/approve|reject`). Käufe/Aktivierungen
+  sind **ausstellergebunden** (`SupervisorId`-Snapshot). Das frühere separate „Angebots"-System
+  (`Reward`/`RewardRedemption`/`OfferService`) wurde **entfernt**; `PointKind.Reward` bleibt nur als Ledger-Tombstone
+  für historische Buchungen. Details: [wiki/05-punkte-und-bonus.md](wiki/05-punkte-und-bonus.md).
 
 ## Konventionen (an bestehendem Code orientieren!)
 

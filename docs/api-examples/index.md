@@ -1,6 +1,6 @@
 # API-Beispiele – Übersicht
 
-Automatisch erzeugt von `backend/Pugling.Api.Tests/DocsCaptureTests.cs`. Insgesamt **110** Beispiele in **10** Gruppen.
+Automatisch erzeugt von `backend/Pugling.Api.Tests/DocsCaptureTests.cs`. Insgesamt **100** Beispiele in **10** Gruppen.
 
 | Gruppe | Beispiele | Fehlerfälle | Datei |
 | --- | ---: | ---: | --- |
@@ -8,8 +8,8 @@ Automatisch erzeugt von `backend/Pugling.Api.Tests/DocsCaptureTests.cs`. Insgesa
 | catalog | 9 | 5 | [`catalog.md`](./catalog.md) |
 | children | 7 | 2 | [`children.md`](./children.md) |
 | class-tests | 3 | 2 | [`class-tests.md`](./class-tests.md) |
-| me | 26 | 9 | [`me.md`](./me.md) |
-| shop | 27 | 7 | [`shop.md`](./shop.md) |
+| me | 15 | 5 | [`me.md`](./me.md) |
+| shop | 28 | 8 | [`shop.md`](./shop.md) |
 | study-plans | 21 | 6 | [`study-plans.md`](./study-plans.md) |
 | tags | 5 | 3 | [`tags.md`](./tags.md) |
 | timetable | 2 | 1 | [`timetable.md`](./timetable.md) |
@@ -17,7 +17,7 @@ Automatisch erzeugt von `backend/Pugling.Api.Tests/DocsCaptureTests.cs`. Insgesa
 
 ## Fehler-Code-Abdeckung
 
-Verifiziert: **28 / 34** Codes aus `ApiErrors`.
+Verifiziert: **25 / 32** Codes aus `ApiErrors`.
 
 | Code | Beispiel |
 | --- | --- |
@@ -27,7 +27,7 @@ Verifiziert: **28 / 34** Codes aus `ApiErrors`.
 | `duplicate_tag_name` | tags – Tag mit doppeltem Namen |
 | `exercise_in_use` | catalog – Verwendete Übung löschen |
 | `forbidden` | me – Vater greift auf Sohn-Route zu |
-| `insufficient_coins` | me – Angebot ohne Deckung kaufen |
+| `insufficient_coins` | shop – Shop-Angebot kaufen (kein Guthaben) |
 | `insufficient_gems` | me – Skin kaufen ohne Gems |
 | `insufficient_inventory` | shop – Aktivierungsanfrage (Inventar erschöpft) |
 | `invalid_credentials` | auth – Login mit falscher PIN |
@@ -35,11 +35,8 @@ Verifiziert: **28 / 34** Codes aus `ApiErrors`.
 | `no_checkable_content` | study-plans – Test auf Übung ohne prüfbaren Inhalt |
 | `not_author` | catalog – Fremd-Autor-Übung bearbeiten |
 | `not_found` | children – Fremdes Kind lesen |
-| `offer_inactive` | me – Deaktiviertes Angebot kaufen |
 | `plan_inactive` | study-plans – Deaktivierten Plan spielen |
 | `position_has_data` | study-plans – Bespielte Position löschen |
-| `purchase_not_open` | me – Bereits erfüllten Kauf erneut erfüllen |
-| `quota_exhausted` | me – Angebot über Kontingent kaufen |
 | `shop_insufficient_stock` | shop – Shop-Angebot kaufen (ausverkauft) |
 | `shop_listing_inactive` | shop – Shop-Angebot kaufen (deaktiviert) |
 | `skin_already_unlocked` | me – Bereits besessenen Skin kaufen |
@@ -57,5 +54,6 @@ Verifiziert: **28 / 34** Codes aus `ApiErrors`.
 - `http_error` — Über HTTP im In-Process-Test nicht erreichbar.
 - `internal_error` — 500-Fallback für unbehandelte Ausnahmen – kein sicherer, gezielter Auslöser über die öffentliche API.
 - `item_not_found` — Über HTTP im In-Process-Test nicht erreichbar.
+- `purchase_not_open` — Über HTTP im In-Process-Test nicht erreichbar.
 - `rate_limited` — Login-Rate-Limit ist in der Test-Factory bewusst abgeschaltet (`RateLimiting:LoginEnabled=false`), sonst würden die vielen Test-Logins scheitern.
 

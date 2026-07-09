@@ -1,5 +1,5 @@
 ---
-tags: [typ/konzept, bereich/katalog, bereich/auswertung, lerntechnik/vokabeln]
+tags: [typ/konzept, bereich/katalog, bereich/auswertung, rolle/creator, rolle/supervisor, rolle/student, lerntechnik/vokabeln]
 ---
 
 # Übergabe: Vokabel-Store, Übungs-Items und Lernfortschritt

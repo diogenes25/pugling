@@ -294,13 +294,6 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
 
         await Capture(child, g, "Eigener Skin-Zustand", HttpMethod.Get, "/api/v1/student/me/skins", null, HttpStatusCode.OK);
 
-        // Angebots-Sicht: Aggregat + adressierbare Unterlisten mit Einzelansicht.
-        await Capture(child, g, "Eigene Angebote & Käufe (Aggregat)", HttpMethod.Get, "/api/v1/student/me/rewards", null, HttpStatusCode.OK);
-        var availableList = await Capture(child, g, "Verfügbare Angebote (Liste)", HttpMethod.Get, "/api/v1/student/me/rewards/available", null, HttpStatusCode.OK);
-        var availableId = availableList.EnumerateArray().First().GetProperty("id").GetInt32();
-        await Capture(child, g, "Einzelnes Angebot", HttpMethod.Get, $"/api/v1/student/me/rewards/available/{availableId}", null, HttpStatusCode.OK);
-        await Capture(child, g, "Eigene Käufe (Liste)", HttpMethod.Get, "/api/v1/student/me/rewards/redemptions", null, HttpStatusCode.OK);
-
         await Capture(father, g, "Vater greift auf Sohn-Route zu", HttpMethod.Get, "/api/v1/student/me/points",
             null, HttpStatusCode.Forbidden, ApiErrors.Forbidden.Code);
 
@@ -323,47 +316,6 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
             new { }, HttpStatusCode.OK);
         await Capture(childA, g, "Nicht besessenen Skin ausrüsten", HttpMethod.Post, "/api/v1/student/me/skins/fox/equip",
             new { }, HttpStatusCode.BadRequest, ApiErrors.SkinNotUnlocked.Code);
-
-        // Angebots-Kauf-Ablauf mit Kind A: Münzen über eine Base-Buchung (Base → Coins).
-        await GrantAsync(childAId, 500, PointKind.Base, "Doku-Münzen");
-        var offer1 = (await CreateOfferAsync(father, childAId, new { title = "30 Min Fernsehen", cost = 50, period = "Weekly", quantity = 3 }));
-        var buyView = await Capture(childA, g, "Angebot kaufen", HttpMethod.Post, $"/api/v1/student/me/rewards/available/{offer1}/purchase",
-            new { }, HttpStatusCode.OK);
-        var redemptionId = buyView.GetProperty("redemptions").EnumerateArray().First().GetProperty("id").GetInt32();
-        await Capture(childA, g, "Einzelner Kauf", HttpMethod.Get, $"/api/v1/student/me/rewards/redemptions/{redemptionId}",
-            null, HttpStatusCode.OK);
-
-        await Capture(father, g, "Kauf erfüllen (Vater)", HttpMethod.Post,
-            $"/api/v1/supervisor/children/{childAId}/rewards/redemptions/{redemptionId}/fulfill", new { }, HttpStatusCode.OK);
-        await Capture(father, g, "Bereits erfüllten Kauf erneut erfüllen", HttpMethod.Post,
-            $"/api/v1/supervisor/children/{childAId}/rewards/redemptions/{redemptionId}/fulfill", new { },
-            HttpStatusCode.Conflict, ApiErrors.PurchaseNotOpen.Code);
-
-        // Kontingent (quantity = 1): zweiter Kauf in derselben Periode → erschöpft.
-        var offer2 = await CreateOfferAsync(father, childAId, new { title = "Kontingent-Snack", cost = 50, period = "Weekly", quantity = 1 });
-        (await childA.PostAsJsonAsync($"/api/v1/student/me/rewards/available/{offer2}/purchase", new { })).EnsureSuccessStatusCode();
-        await Capture(childA, g, "Angebot über Kontingent kaufen", HttpMethod.Post, $"/api/v1/student/me/rewards/available/{offer2}/purchase",
-            new { }, HttpStatusCode.Conflict, ApiErrors.QuotaExhausted.Code);
-
-        // Deaktiviertes Angebot kaufen → offer_inactive.
-        var offer3 = await CreateOfferAsync(father, childAId, new { title = "Bald weg", cost = 10 });
-        (await father.PatchAsJsonAsync($"/api/v1/supervisor/children/{childAId}/rewards/{offer3}", new { active = false })).EnsureSuccessStatusCode();
-        await Capture(childA, g, "Deaktiviertes Angebot kaufen", HttpMethod.Post, $"/api/v1/student/me/rewards/available/{offer3}/purchase",
-            new { }, HttpStatusCode.BadRequest, ApiErrors.OfferInactive.Code);
-
-        // Kind B: keine Münzen → insufficient_coins.
-        var childBId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/supervisor/children", new { name = "Ökonomie-Kind B", pin = "5002" }));
-        var childB = await TestApi.ChildAsync(factory, childBId, "5002");
-        var offer4 = await CreateOfferAsync(father, childBId, new { title = "Kinoabend", cost = 100 });
-        await Capture(childB, g, "Angebot ohne Deckung kaufen", HttpMethod.Post, $"/api/v1/student/me/rewards/available/{offer4}/purchase",
-            new { }, HttpStatusCode.BadRequest, ApiErrors.InsufficientCoins.Code);
-    }
-
-    private static async Task<int> CreateOfferAsync(HttpClient father, int childId, object body)
-    {
-        var res = await father.PostAsJsonAsync($"/api/v1/supervisor/children/{childId}/rewards", body);
-        res.EnsureSuccessStatusCode();
-        return (await res.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetInt32();
     }
 
     // ── study-plans / positions / practice / tests ────────────────────────────────────────────────
@@ -615,6 +567,14 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
         await Capture(shopChild, g, "Shop-Angebot kaufen (deaktiviert)", HttpMethod.Post,
             $"/api/v1/student/me/shop/listings/{emptyListingId}/purchase", new { },
             HttpStatusCode.BadRequest, ApiErrors.ShopListingInactive.Code);
+
+        // Ohne Deckung: frisches Kind (0 Münzen) kauft ein aktives, vorrätiges Angebot → insufficient_coins.
+        var brokeChildId = await TestApi.IdAsync(
+            await father.PostAsJsonAsync("/api/v1/supervisor/children", new { name = "Shop-Doku-Kind (pleite)", pin = "7009" }));
+        var brokeChild = await TestApi.ChildAsync(factory, brokeChildId, "7009");
+        await Capture(brokeChild, g, "Shop-Angebot kaufen (kein Guthaben)", HttpMethod.Post,
+            $"/api/v1/student/me/shop/listings/{listingId}/purchase", new { },
+            HttpStatusCode.BadRequest, ApiErrors.InsufficientCoins.Code);
 
         // Aktivierungsanfragen: der Sohn beantragt Einheiten aus seinem Inventar (30 verfügbar).
         var activation1El = await Capture(shopChild, g, "Aktivierungsanfrage stellen", HttpMethod.Post,

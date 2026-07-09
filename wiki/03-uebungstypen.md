@@ -1,5 +1,5 @@
 ---
-tags: [typ/referenz, bereich/katalog, lerntechnik/vokabeln]
+tags: [typ/referenz, bereich/katalog, rolle/creator, lerntechnik/vokabeln]
 ---
 
 # 03 · Übungstypen (Lern-Katalog)

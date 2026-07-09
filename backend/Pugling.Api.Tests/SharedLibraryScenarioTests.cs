@@ -112,10 +112,10 @@ public class SharedLibraryScenarioTests(PuglingWebAppFactory factory) : IClassFi
         var pos = await posRes.Content.ReadFromJsonAsync<JsonElement>();
         Assert.Equal(exerciseId, pos.GetProperty("exerciseId").GetInt32());
 
-        // 6) Und er richtet eine individuelle Belohnung für sein Kind ein.
-        var reward = await other.PostAsJsonAsync($"/api/v1/supervisor/children/{childId}/rewards",
-            new { title = "1 Stunde Zocken", cost = 300, period = "Weekly", quantity = 2 });
-        Assert.Equal(HttpStatusCode.Created, reward.StatusCode);
+        // 6) Und er richtet in seinem Familien-Shop ein Angebot für sein Kind ein.
+        var listingId = await TestApi.CreateShopListingAsync(other, "GAME-1", coinPrice: 300, unitsPerPurchase: 60,
+            stock: 2, articleTitle: "Zockzeit", listingTitle: "1 Stunde Zocken", unitType: "Minute", actionType: "Zocken");
+        Assert.True(listingId > 0);
 
         // 7) Der Lehrer selbst darf seine Übung weiterhin ändern.
         var teacherPut = await teacher.PutAsJsonAsync(

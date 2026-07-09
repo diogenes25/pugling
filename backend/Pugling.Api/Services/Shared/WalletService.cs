@@ -15,10 +15,6 @@ public class WalletService(PuglingDbContext db)
     /// <summary>Kontostand beider Währungen eines Kindes.</summary>
     public record Balances(int Coins, int Gems);
 
-    /// <summary>Aktueller Münz-Kontostand (für reale Angebote).</summary>
-    public Task<int> CoinsAsync(int childId, CancellationToken ct = default) =>
-        SumAsync(childId, PointKindCurrency.CoinKinds, ct);
-
     /// <summary>Aktueller Gem-Kontostand (für Skins/Spielfeatures).</summary>
     public Task<int> GemsAsync(int childId, CancellationToken ct = default) =>
         SumAsync(childId, PointKindCurrency.GemKinds, ct);

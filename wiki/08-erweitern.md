@@ -1,5 +1,5 @@
 ---
-tags: [typ/tutorial, bereich/katalog]
+tags: [typ/tutorial, bereich/katalog, rolle/creator]
 aliases: [Erweitern, Neue Lerntechnik, Neuer Übungstyp]
 ---
 
