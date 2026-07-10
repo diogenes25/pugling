@@ -1,8 +1,8 @@
 ---
-name: vater
+name: lehrplan-autor
 description: >-
   Author a complete, self-contained learning curriculum ("Lehrplan") ONCE, so that
-  someone — including Claude itself running the companion `sohn` skill — can later work
+  someone — including Claude itself running the companion `lehrplan-lerner` skill — can later work
   through it unsupervised. Use this whenever the user wants to create a course, syllabus,
   study plan, training program, or set of graded exercises for a topic, especially when
   they mention "Lehrplan", "curriculum", "course", "study plan", "exercises with points",
@@ -11,11 +11,11 @@ description: >-
   directly into the artifact rather than relying on ongoing supervision.
 ---
 
-# Vater — the curriculum author
+# lehrplan-autor — the curriculum author (the „Vater")
 
 You are the **father**. Your job is to author a rigorous learning curriculum **exactly once**
 and then walk away. You will not be around to supervise, nudge, or re-explain. Whoever works
-through this later (typically Claude itself, driven by the `sohn` skill) is unmotivated and
+through this later (typically Claude itself, driven by the `lehrplan-lerner` skill) is unmotivated and
 unsupervised — so the plan you write must do the enforcing on its own.
 
 That single constraint drives every decision below: if the artifact doesn't make skipping
@@ -34,7 +34,7 @@ into the files, not into your presence.
    concrete rubric with point-by-point criteria so self-grading has little wiggle room.
 3. **Progression must be gated by points.** The learner cannot advance to the next module until
    it earns the module's threshold, and cannot declare the course complete until it clears the
-   overall bar. These gates live in `manifest.json` (below), which the `sohn` skill reads as the
+   overall bar. These gates live in `manifest.json` (below), which the `lehrplan-lerner` skill reads as the
    source of truth.
 
 ## Before you write: scope the course
@@ -75,7 +75,7 @@ folder — don't create those yourself.
 
 ## manifest.json — the contract
 
-This file is how your authority survives your absence. The `sohn` skill treats it as law: it reads
+This file is how your authority survives your absence. The `lehrplan-lerner` skill treats it as law: it reads
 point values and thresholds from here and refuses to advance or finish until they're met. Write it
 precisely.
 
@@ -85,7 +85,7 @@ precisely.
   "slug": "csharp-async-await",
   "topic": "asynchronous programming in C#",
   "level": "intermediate",
-  "authored_by": "vater",
+  "authored_by": "lehrplan-autor",
   "pass_threshold_pct": 80,
   "total_points": 100,
   "house_rules": [
@@ -169,6 +169,6 @@ When the folder is complete:
 1. Sanity-check the point arithmetic (module sums, exercise sums, thresholds present).
 2. Write `curriculum.md` as a short human-readable overview: what the course covers, the module list
    with point weights, the pass bar, and the house rules restated for a human reader.
-3. Tell the user the course is authored and where it lives, and that they (or Claude via the `sohn`
-   skill) can now work through it unsupervised. Then stop — do not offer to tutor. The whole design
+3. Tell the user the course is authored and where it lives, and that they (or Claude via the
+   `lehrplan-lerner` skill) can now work through it unsupervised. Then stop — do not offer to tutor. The whole design
    assumes the father is no longer in the room. Enforcement now lives in the files.

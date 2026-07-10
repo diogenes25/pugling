@@ -184,6 +184,70 @@ public class VocabExerciseAuthoringTests(PuglingWebAppFactory factory) : IClassF
         Assert.Contains(berg!, v => v.GetProperty("translation").GetString() == "Berg");
     }
 
+    // ---- Item-Eingabe: VocabularyId-only (Front/Back aus dem Store) + Validierung -------------------
+
+    [Fact]
+    public async Task InlineItem_NurVocabularyId_ZiehtFrontBackAusStore()
+    {
+        var father = await TestApi.FatherAsync(_factory);
+        var v = await CreateVocabAsync(father, new { sourceLanguage = "en", targetLanguage = "de", word = "bridge", translation = "Brücke" });
+        var vocabId = v.GetProperty("id").GetInt32();
+        var (s, c) = await ChapterAsync(father, "Inline-IdOnly");
+
+        // Inline-Item ohne Front/Back – nur die Store-Id. Front/Back kommen aus dem verknüpften Store-Eintrag.
+        var exerciseId = await TestApi.IdAsync(await father.PostAsJsonAsync(
+            $"/api/v1/creator/subjects/{s}/chapters/{c}/vocabulary", new
+            {
+                title = "Nur-Id",
+                orderIndex = 1,
+                rewardPoints = 10,
+                config = new { direction = "front-to-back", items = new[] { new { vocabularyId = vocabId } } },
+            }));
+
+        var items = await father.GetFromJsonAsync<List<JsonElement>>(
+            $"/api/v1/creator/subjects/{s}/chapters/{c}/vocabulary/{exerciseId}/items");
+        var item = Assert.Single(items!);
+        Assert.Equal(vocabId, item.GetProperty("vocabularyId").GetInt32());
+        Assert.Equal("bridge", item.GetProperty("front").GetString());
+        Assert.Equal("Brücke", item.GetProperty("back").GetString());
+    }
+
+    [Fact]
+    public async Task ItemEndpunkt_NurVocabularyId_LiefertFrontBackAusStore()
+    {
+        var father = await TestApi.FatherAsync(_factory);
+        var v = await CreateVocabAsync(father, new { sourceLanguage = "en", targetLanguage = "de", word = "castle", translation = "Schloss" });
+        var vocabId = v.GetProperty("id").GetInt32();
+        var (s, c) = await ChapterAsync(father, "ItemEP-IdOnly");
+        var exerciseId = await TestApi.IdAsync(await father.PostAsJsonAsync(
+            $"/api/v1/creator/subjects/{s}/chapters/{c}/vocabulary",
+            new { title = "Hülle", orderIndex = 1, rewardPoints = 10, config = new { direction = "front-to-back", sourceLang = "en", targetLang = "de" } }));
+
+        // Item per Item-EP mit ausschließlich der VocabularyId (Front/Back leer → aus dem Store).
+        var res = await father.PostAsJsonAsync(
+            $"/api/v1/creator/subjects/{s}/chapters/{c}/vocabulary/{exerciseId}/items", new { vocabularyId = vocabId });
+        Assert.Equal(HttpStatusCode.Created, res.StatusCode);
+        var item = await res.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal(vocabId, item.GetProperty("vocabularyId").GetInt32());
+        Assert.Equal("castle", item.GetProperty("front").GetString());
+        Assert.Equal("Schloss", item.GetProperty("back").GetString());
+    }
+
+    [Fact]
+    public async Task InlineItem_OhneIdUndOhneFrontBack_Liefert400()
+    {
+        var father = await TestApi.FatherAsync(_factory);
+        var (s, c) = await ChapterAsync(father, "Inline-Leer");
+        var res = await father.PostAsJsonAsync($"/api/v1/creator/subjects/{s}/chapters/{c}/vocabulary", new
+        {
+            title = "Leeres Item",
+            orderIndex = 1,
+            rewardPoints = 10,
+            config = new { direction = "front-to-back", sourceLang = "en", targetLang = "de", items = new[] { new { hint = "nur ein Hinweis" } } },
+        });
+        Assert.Equal(HttpStatusCode.BadRequest, res.StatusCode);
+    }
+
     // ---- Task 1: getrennte Suchparameter word/translation ------------------------------------------
 
     [Fact]

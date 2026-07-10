@@ -86,17 +86,7 @@ Request:
   "config": {
     "direction": "front-to-back",
     "sourceLang": "en",
-    "targetLang": "de",
-    "items": [
-      {
-        "front": "hello",
-        "back": "hallo"
-      },
-      {
-        "front": "goodbye",
-        "back": "tsch\u00FCss"
-      }
-    ]
+    "targetLang": "de"
   }
 }
 ```
@@ -132,6 +122,33 @@ Response — `HTTP 201`:
   "defaultRequireTypedTest": false,
   "defaultStage": null,
   "defaultItemCount": null
+}
+```
+
+## Vokabelpaar hinzufügen
+`POST /api/v1/creator/subjects/5/chapters/7/vocabulary/13/items`
+
+Rolle: **father** — `Authorization: Bearer <father-token>`
+
+Request:
+```json
+{
+  "front": "hello",
+  "back": "hallo"
+}
+```
+
+Response — `HTTP 201`:
+```json
+{
+  "id": 15,
+  "orderIndex": 0,
+  "vocabularyId": 16,
+  "front": "hello",
+  "back": "hallo",
+  "hint": null,
+  "_self": "/api/v1/creator/subjects/5/chapters/7/vocabulary/13/items/15",
+  "vocabulary": "/api/v1/creator/vocabulary/16"
 }
 ```
 

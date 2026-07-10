@@ -6,7 +6,7 @@
 `StudyPlanItem`/`Method`) am **laufenden** Produkt prüfen, ob die App ihren Zweck noch erfüllt:
 Kern-Loop, Sohn-Erlebnis, Vater-Steuerung. Reibung fixen, bis beide Rollen am realen Produkt abnehmen.
 
-> Doppelspur-Hinweis (unverändert): die Claude-Skills `vater`/`sohn` sind das dateibasierte Kursformat,
+> Doppelspur-Hinweis (unverändert): die Claude-Skills `lehrplan-autor`/`lehrplan-lerner` sind das dateibasierte Kursformat,
 > **nicht** das hier geprüfte Produkt.
 
 ---

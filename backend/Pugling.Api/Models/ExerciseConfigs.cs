@@ -40,10 +40,14 @@ public class VocabularyConfig
 public record VocabRef(int VocabularyId, string? Key = null, string? Self = null);
 
 /// <summary>
-/// Inline-Vokabel. <paramref name="VocabularyId"/> verweist auf den zugehörigen Store-Eintrag (beim Speichern
-/// automatisch angelegt); <paramref name="Self"/> ist der abgeleitete, nur lesend gefüllte HATEOAS-Link.
+/// Inline-Vokabel – dieselbe Eingabeform wie der Item-Endpunkt (<c>VocabItemInput</c>): Wort per
+/// <paramref name="VocabularyId"/> (bestehender Store-Eintrag; <paramref name="Front"/>/<paramref name="Back"/>
+/// kommen dann aus dem Store) <b>oder</b> inline per <paramref name="Front"/>/<paramref name="Back"/> (wird beim
+/// Speichern im Store angelegt/gefunden). Beide sind daher optional; ein Item braucht jedoch entweder die
+/// <paramref name="VocabularyId"/> oder Front <i>und</i> Back. <paramref name="Self"/> ist der abgeleitete, nur
+/// lesend gefüllte HATEOAS-Link.
 /// </summary>
-public record VocabItem(string Front, string Back, string? Hint = null,
+public record VocabItem(string? Front = null, string? Back = null, string? Hint = null,
     int? VocabularyId = null, [property: JsonPropertyName("_self")] string? Self = null);
 
 /// <summary>Leseverständnis: Text + Verständnisfragen.</summary>

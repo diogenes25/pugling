@@ -216,6 +216,8 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
             new { name = "Kapitel 1", orderIndex = 1 }, HttpStatusCode.Created);
         var chapterId = chapter.GetProperty("id").GetInt32();
 
+        // Die Übung wird als Hülle angelegt (nur Einstellungen); die Vokabelpaare kommen darunter über den
+        // Item-Endpunkt als eigene Sub-Ressource (Items sind eine eigene Ebene, siehe VocabularyController).
         var exercise = await Capture(father, g, "Vokabel-Übung anlegen", HttpMethod.Post,
             $"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/vocabulary",
             new
@@ -223,9 +225,19 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
                 title = "Begrüßungen",
                 orderIndex = 1,
                 rewardPoints = 10,
-                config = new { direction = "front-to-back", sourceLang = "en", targetLang = "de", items = new[] { new { front = "hello", back = "hallo" }, new { front = "goodbye", back = "tschüss" } } },
+                config = new { direction = "front-to-back", sourceLang = "en", targetLang = "de" },
             }, HttpStatusCode.Created);
         var exerciseId = exercise.GetProperty("id").GetInt32();
+
+        // Vokabelpaar per Item-EP: inline über front/back – ohne vocabularyId wird die Vokabel im Store angelegt.
+        // (Mit vocabularyId genügt die ID; Front/Back kämen dann aus dem Store.) Front/Back sind optional.
+        await Capture(father, g, "Vokabelpaar hinzufügen", HttpMethod.Post,
+            $"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/vocabulary/{exerciseId}/items",
+            new { front = "hello", back = "hallo" }, HttpStatusCode.Created);
+        // Zweites Paar direkt anlegen (nicht als Beispiel), damit die Übung zwei Items für den Spielfluss trägt.
+        (await father.PostAsJsonAsync(
+            $"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/vocabulary/{exerciseId}/items",
+            new { front = "goodbye", back = "tschüss" })).EnsureSuccessStatusCode();
 
         await Capture(father, g, "Unbekannte Übung lesen", HttpMethod.Get, "/api/v1/creator/exercises/999999",
             null, HttpStatusCode.NotFound, ApiErrors.NotFound.Code);
