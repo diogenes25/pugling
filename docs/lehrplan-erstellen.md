@@ -11,7 +11,7 @@ Schritt-für-Schritt-Tutorial – auch für den Fall **mehrerer Söhne**.
 
 > **Abgrenzung:** Es gibt in diesem Repo zwei Dinge, die „Lehrplan/Plan" heißen:
 >
-> 1. **Der markdown-basierte Lehrplan** (dieses Dokument) — von Claude über die Skills `vater`/`sohn`
+> 1. **Der markdown-basierte Lehrplan** (dieses Dokument) — von Claude über die Skills `lehrplan-autor`/`lehrplan-lerner`
 >    erstellt und abgearbeitet, ohne dass die App läuft. Ideal für jedes Thema (Mathe, Englisch,
 >    Programmieren …).
 > 2. **Der Study-Plan der Pugling-App** (Vokabeln, Lückentext, Matching per REST-API) —
@@ -25,9 +25,9 @@ Schritt-für-Schritt-Tutorial – auch für den Fall **mehrerer Söhne**.
 
 ## 1. Das Grundprinzip: einmal schreiben, dann weggehen
 
-Der Vater ist die **Autorenrolle** (Skill `vater`). Er schreibt den Lehrplan **genau einmal** und ist
+Der Vater ist die **Autorenrolle** (Skill `lehrplan-autor`). Er schreibt den Lehrplan **genau einmal** und ist
 danach nicht mehr im Raum. Wer den Plan später abarbeitet (typischerweise Claude selbst über den Skill
-`sohn`), ist unmotiviert und unbeaufsichtigt. Deshalb muss der Plan die Disziplin **selbst erzwingen** —
+`lehrplan-lerner`), ist unmotiviert und unbeaufsichtigt. Deshalb muss der Plan die Disziplin **selbst erzwingen** —
 nicht der Vater durch Nachfragen.
 
 Daraus folgen drei feste Regeln, die beim Erstellen jedes Plans gelten:
@@ -41,13 +41,13 @@ Daraus folgen drei feste Regeln, die beim Erstellen jedes Plans gelten:
   du eine **punktgenaue Rubrik**, damit die Selbstbenotung kaum Spielraum hat.
 3. **Fortschritt ist durch Punkte gesperrt.** Der Sohn darf erst ins nächste Modul, wenn er die
   Modul-Schwelle erreicht, und den Kurs erst abschließen, wenn er die Gesamt-Schwelle erreicht. Diese
-  „Gates" leben in `manifest.json` — der Skill `sohn` liest sie als verbindliches Gesetz.
+  „Gates" leben in `manifest.json` — der Skill `lehrplan-lerner` liest sie als verbindliches Gesetz.
 
 ---
 
 ## 2. Schnellstart
 
-Der schnellste Weg: Claude die `vater`-Skill nutzen lassen.
+Der schnellste Weg: Claude die `lehrplan-autor`-Skill nutzen lassen.
 
 ```text
 /vater erstelle mir einen Lehrplan "Bruchrechnen Grundlagen" für meinen Sohn,
@@ -100,7 +100,7 @@ der Vater erstellt sie nicht.
 
 ### 4.1 `manifest.json` — der Vertrag
 
-Diese Datei sorgt dafür, dass deine Autorität deine Abwesenheit überlebt. Die `sohn`-Skill behandelt sie
+Diese Datei sorgt dafür, dass deine Autorität deine Abwesenheit überlebt. Die `lehrplan-lerner`-Skill behandelt sie
 als Gesetz: Punktwerte und Schwellen kommen von hier, und sie verweigert das Weiterrücken oder
 Abschließen, bis sie erfüllt sind. Schreibe sie **präzise**.
 
@@ -110,7 +110,7 @@ Abschließen, bis sie erfüllt sind. Schreibe sie **präzise**.
   "slug": "bruchrechnen-grundlagen",
   "topic": "Grundlagen der Bruchrechnung",
   "level": "beginner",
-  "authored_by": "vater",
+  "authored_by": "lehrplan-autor",
   "pass_threshold_pct": 80,
   "total_points": 20,
   "house_rules": [
@@ -159,7 +159,7 @@ Abschließen, bis sie erfüllt sind. Schreibe sie **präzise**.
 |------|-----------|
 | `course` / `slug` / `topic` | Klartext-Name, Ordner-Slug, Kurzbeschreibung des Themas. |
 | `level` | `beginner` / `intermediate` / `advanced`. |
-| `authored_by` | Immer `"vater"`. |
+| `authored_by` | Immer `"lehrplan-autor"`. |
 | `pass_threshold_pct` (oben) | Gesamt-Bestehensschwelle des Kurses in Prozent. |
 | `total_points` | Summe aller Modulpunkte. |
 | `house_rules` | Die Regeln, die der Sohn befolgen muss — in `curriculum.md` für Menschen wiederholt. |
@@ -247,8 +247,8 @@ Lösungsschlüssel.
 
 **Level:** Anfänger · **Gesamt:** 20 Punkte · **Bestehen ab:** 16 / 20 (80 %)
 
-Eine kurze Einführung in die Bruchrechnung. Zwei Module. Einmal vom `vater`-Skill verfasst,
-unbeaufsichtigt über den `sohn`-Skill abgearbeitet.
+Eine kurze Einführung in die Bruchrechnung. Zwei Module. Einmal vom `lehrplan-autor`-Skill verfasst,
+unbeaufsichtigt über den `lehrplan-lerner`-Skill abgearbeitet.
 
 ## Module
 
@@ -516,7 +516,7 @@ lehrplan/
 
 > Willst du **denselben** Kurs für mehrere Söhne pflegen, ohne den Lehrinhalt zu duplizieren, halte die
 > `modules/` und `answer-key/` als „Master" und kopiere pro Sohn nur einen Arbeitsordner. Aktuell
-> unterstützt das `sohn`-Skill genau **eine** `progress.json`/`ledger.md` pro Ordner — deshalb ist ein
+> unterstützt das `lehrplan-lerner`-Skill genau **eine** `progress.json`/`ledger.md` pro Ordner — deshalb ist ein
 > Ordner pro Sohn der unkomplizierteste Weg.
 
 ---
@@ -556,8 +556,8 @@ ohnehin zurück an die Arbeit. Ein reales Beispiel eines abgeschlossenen Ledgers
 
 ## Referenzen
 
-- Autor-Skill (Vater): [.claude/skills/vater/SKILL.md](../.claude/skills/vater/SKILL.md)
-- Lerner-Skill (Sohn): [.claude/skills/sohn/SKILL.md](../.claude/skills/sohn/SKILL.md)
+- Autor-Skill (Vater): [.claude/skills/lehrplan-autor/SKILL.md](../.claude/skills/lehrplan-autor/SKILL.md)
+- Lerner-Skill (Sohn): [.claude/skills/lehrplan-lerner/SKILL.md](../.claude/skills/lehrplan-lerner/SKILL.md)
 - Fertiger Beispielkurs: [../lehrplan/git-basics/](../lehrplan/git-basics/)
 - Pugling-App-Study-Plans (andere Variante, per API): [tutorial.md](tutorial.md)
 

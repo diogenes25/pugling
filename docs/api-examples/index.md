@@ -1,11 +1,11 @@
 # API-Beispiele – Übersicht
 
-Automatisch erzeugt von `backend/Pugling.Api.Tests/DocsCaptureTests.cs`. Insgesamt **100** Beispiele in **10** Gruppen.
+Automatisch erzeugt von `backend/Pugling.Api.Tests/DocsCaptureTests.cs`. Insgesamt **101** Beispiele in **10** Gruppen.
 
 | Gruppe | Beispiele | Fehlerfälle | Datei |
 | --- | ---: | ---: | --- |
 | auth | 6 | 3 | [`auth.md`](./auth.md) |
-| catalog | 9 | 5 | [`catalog.md`](./catalog.md) |
+| catalog | 10 | 5 | [`catalog.md`](./catalog.md) |
 | children | 7 | 2 | [`children.md`](./children.md) |
 | class-tests | 3 | 2 | [`class-tests.md`](./class-tests.md) |
 | me | 15 | 5 | [`me.md`](./me.md) |

@@ -11,7 +11,7 @@ Entwickler geben und iterieren, **bis beide zufrieden sind**.
 > [wiki/04-lernplan-bauen.md](../wiki/04-lernplan-bauen.md) und [wiki/07-api-referenz.md](../wiki/07-api-referenz.md).
 
 Grundlage der Vorstellung ist die **echte App** (React-Frontend `frontend/` gegen die
-`api/v1`-Backend-API). Hinweis fürs Protokoll: Die Claude-Skills `vater`/`sohn` sind ein
+`api/v1`-Backend-API). Hinweis fürs Protokoll: Die Claude-Skills `lehrplan-autor`/`lehrplan-lerner` sind ein
 *paralleles*, dateibasiertes Kurs-Format und **nicht** Teil des vorgestellten Produkts — das
 wurde als bekannte konzeptionelle Doppelspur notiert (siehe Backlog B-9).
 

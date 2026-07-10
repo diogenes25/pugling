@@ -20,6 +20,7 @@ der Vater technisch meist auch diese Rolle, fachlich bleibt sie aber getrennt vo
 
 | Einstieg | Wofür |
 | --- | --- |
+| **[Creator-Tutorial](tutorial-creator.md)** | Verifizierter Durchlauf: Fach → Kapitel → typisierte Übung → Items → Katalogsuche → Testmodus. |
 | [wiki/03 · Übungstypen](../wiki/03-uebungstypen.md) | Katalogmodell, alle Übungstypen, Configs, Stores und Checks. |
 | [wiki/08 · Erweitern](../wiki/08-erweitern.md) | Neue Übungstypen oder Lernverfahren im bestehenden Katalogmuster ergänzen. |
 | [docs/uebungs-meta-und-versionierung.md](uebungs-meta-und-versionierung.md) | Metadaten, Versionierung und Vorfilterung von Katalog-Übungen. |
@@ -36,7 +37,7 @@ Ziele, Punkte, Shop, Missionen, Klassenarbeiten und Auswertung.
 
 | Einstieg | Wofür |
 | --- | --- |
-| [wiki/04 · Lernplan bauen](../wiki/04-lernplan-bauen.md) | Vater-Flow von Katalog-Auswahl bis Study-Plan, Positionen, Stufen und Kontrolle. |
+| **[Supervisor-Tutorial](tutorial-supervisor.md)** | Verifizierter Durchlauf: Plan-Container → Positionen (Ziel/Punkte) → Lernziele → Shop → Missionen → Kontrolle. |
 | [wiki/05 · Punkte & Bonus](../wiki/05-punkte-und-bonus.md) | Punkte, Coins/Gems, Missionen, Auszeichnungen, Angebote und Shop. |
 | [docs/endpunkt-beziehungen.md](endpunkt-beziehungen.md) | Datenfluss Übung → Lehrplan → Kind → Auswertung. |
 | [docs/klassenarbeiten-tagging.md](klassenarbeiten-tagging.md) | Klassenarbeiten planen, Übungen taggen und gezielt wiederholen. |
@@ -55,8 +56,8 @@ bucht Punkte, schützt vor Selbstbetrug und zeigt Fortschritt, Missionen und ver
 
 | Einstieg | Wofür |
 | --- | --- |
-| [wiki/06 · Sohn-App](../wiki/06-sohn-app.md) | Student-Flow: Tagesansicht, Üben, Testen, Punkte, Missionen, Shop. |
-| [docs/tutorial.md](tutorial.md) | Kompakter API-Walkthrough für Vater- und Sohn-Flows. |
+| **[Student-Tutorial](tutorial-student.md)** | Verifizierter Durchlauf: Tagesmission → Üben → Abschlusstest → Fortschritt → Münzen einlösen. |
+| [docs/tutorial.md](tutorial.md) | Rollen-Tutorial-Index (Creator/Supervisor/Student) + gemeinsame Grundlagen. |
 | [docs/api-examples/me.md](api-examples/me.md) | Student-`me`-Endpunkte für Punkte, Missionen, Auszeichnungen und Angebote. |
 | [docs/api-examples/vocabulary.md](api-examples/vocabulary.md) | Vokabel-Lernstand und Wiederholungsdaten aus Student-/Kind-Sicht. |
 | [docs/api-examples/auth.md](api-examples/auth.md) | Login und Token als Voraussetzung für Student-Flows. |

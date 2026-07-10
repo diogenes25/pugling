@@ -5,8 +5,10 @@ Lern-App mit Punktesystem (Leitner-Prinzip). **Vater** steuert und erzwingt Lern
 
 ## Grundprinzip: API-First
 
-Die REST-API (**OpenAPI/Swagger**) ist das Produkt und die einzige Quelle der Wahrheit –
-bedient direkt oder über die Skills `vater`/`sohn`. Das React-Frontend unter [frontend/](frontend/)
+Die REST-API (**OpenAPI/Swagger**) ist das Produkt und die einzige Quelle der Wahrheit – direkt bedient
+oder über die Rollen-Skills `creator`/`supervisor`/`student`, die die API je Ebene treiben und die
+verifizierten [Rollen-Tutorials](docs/tutorial.md) schreiben. (Das dateibasierte `lehrplan-autor`/
+`lehrplan-lerner`-Kursformat ist eine **separate** Spur und berührt die App-API nicht.) Das React-Frontend unter [frontend/](frontend/)
 wurde **neu gegen die `api/v1` gebaut und ist funktionsfähig** (Vite+React+TS+PWA): Produktseite `/`,
 Sohn-Arcade-PWA `/sohn`, Vater-Web `/vater` inkl. Lehrplan-Assistent `/vater/wizard`. Ein Playwright-E2E
 ([frontend/e2e/full-flow.spec.ts](frontend/e2e/full-flow.spec.ts)) fährt den kompletten Vater→Sohn-Loop.

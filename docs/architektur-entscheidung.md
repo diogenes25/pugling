@@ -24,7 +24,7 @@ Legacy-Entitäten lebten nur noch in `Seed` + ihren eigenen deprecated Controlle
 ## Entscheidung
 
 **Pugling ist API-First.** Die REST-API (OpenAPI/Swagger) ist das Produkt und die einzige
-Quelle der Wahrheit; sie wird direkt bzw. über die Skills `vater`/`sohn` bedient. Das produktive
+Quelle der Wahrheit; sie wird direkt bzw. über die Skills `lehrplan-autor`/`lehrplan-lerner` bedient. Das produktive
 Modell (Father/Child, StudyPlan, Learn-Katalog) ist verbindlich.
 
 Konsequenzen:

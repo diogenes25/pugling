@@ -49,7 +49,9 @@ public class ExerciseItemService(PuglingDbContext db, VocabularyStoreService sto
             if (item.VocabularyId is { } id)
                 desired[i] = new DesiredItem(id, item.Hint);
             else
-                pending.Add((i, await store.GetOrCreateAsync(config.SourceLang, item.Front, config.TargetLang, item.Back, ct: ct)));
+                // Front/Back sind hier garantiert gesetzt: ValidateConfigAsync lehnt Items ohne VocabularyId
+                // und ohne beides (Front + Back) vorab ab; der Fallback verhindert nur die Nullable-Warnung.
+                pending.Add((i, await store.GetOrCreateAsync(config.SourceLang, item.Front ?? "", config.TargetLang, item.Back ?? "", ct: ct)));
         }
         if (pending.Count > 0)
         {

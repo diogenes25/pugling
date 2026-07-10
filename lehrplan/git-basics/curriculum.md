@@ -3,7 +3,7 @@
 **Level:** beginner · **Total:** 20 points · **Pass bar:** 16 / 20 (80%)
 
 A short, hands-on introduction to everyday version control with Git. Two modules, worked at the
-command line. Authored once by the `vater` skill; worked through unsupervised via the `sohn` skill.
+command line. Authored once by the `lehrplan-autor` skill; worked through unsupervised via the `lehrplan-lerner` skill.
 
 ## Modules
 

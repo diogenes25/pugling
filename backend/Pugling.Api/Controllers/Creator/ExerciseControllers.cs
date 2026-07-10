@@ -54,9 +54,23 @@ public class VocabularyController(PuglingDbContext db, ExerciseItemService items
             var missing = ids.Except(existing).ToList();
             if (missing.Count > 0) return $"Unknown vocabulary item IDs: {string.Join(", ", missing)}";
         }
+
+        // Inline-Items tragen – wie der Item-Endpunkt – entweder eine (existierende) VocabularyId ODER Front + Back
+        // (die dann im Store angelegt werden). Front/Back sind optional, ohne VocabularyId aber beide Pflicht.
+        if (config.Items.Any(i => i.VocabularyId is null
+            && (string.IsNullOrWhiteSpace(i.Front) || string.IsNullOrWhiteSpace(i.Back))))
+            return "Every inline item needs either a vocabularyId or both front and back.";
         if (config.Items.Any(i => i.VocabularyId is null)
             && (string.IsNullOrWhiteSpace(config.SourceLang) || string.IsNullOrWhiteSpace(config.TargetLang)))
             return "sourceLang and targetLang are required to create inline vocabulary items in the store.";
+
+        var itemIds = config.Items.Where(i => i.VocabularyId is > 0).Select(i => i.VocabularyId!.Value).Distinct().ToList();
+        if (itemIds.Count > 0)
+        {
+            var existing = await Db.Vocabulary.Where(v => itemIds.Contains(v.Id)).Select(v => v.Id).ToListAsync();
+            var missing = itemIds.Except(existing).ToList();
+            if (missing.Count > 0) return $"Unknown vocabulary item IDs: {string.Join(", ", missing)}";
+        }
         return null;
     }
 

@@ -33,7 +33,7 @@ backend/Pugling.Api/wwwroot/*
 tools/bruno/Pugling.Api/
 
 # Extern (per `npx skills`) installierte Agent-Skills: pro Entwickler optional, niemandem aufzwingen.
-# Die projekteigenen Skills (.claude/skills/{pm-loop,sohn,vater}) bleiben bewusst versioniert.
+# Die projekteigenen Skills (.claude/skills/{pm-loop,lehrplan-autor,lehrplan-lerner,creator,supervisor,student}) bleiben bewusst versioniert.
 .claude/skills/obsidian-cli/
 .claude/skills/obsidian-markdown/
 .claude/skills/obsidian-vault/

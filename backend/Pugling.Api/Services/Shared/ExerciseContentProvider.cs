@@ -88,7 +88,7 @@ public class ExerciseContentProvider
 
     // Vokabeln: kanonisch Vorderseite → Rückseite; die Abfragerichtung dreht das Item (siehe WithDirection).
     private static List<ContentItem> FromVocabulary(VocabularyConfig c) =>
-        c.Items.Select((v, i) => WithDirection(new ContentItem(i, v.Front, v.Back, [v.Back], v.Hint), c.Direction)).ToList();
+        c.Items.Select((v, i) => WithDirection(new ContentItem(i, v.Front ?? "", v.Back ?? "", [v.Back ?? ""], v.Hint), c.Direction)).ToList();
 
     // Lückentext: ein Item je Lücke; Prompt ist der Trägertext, GapIndex die {{n}}-Nummer.
     private static List<ContentItem> FromCloze(ClozeConfig c) =>

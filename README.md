@@ -40,7 +40,7 @@ Im Repo heißen **drei verschiedene Dinge** „Lehrplan/Plan". Das ist die häuf
 | --- | --- | --- | --- |
 | 1 | **Study-Plan** (API) | Das **produktive** Trainingsobjekt: Container für ein Kind mit `PlanPosition`s auf Katalog-Übungen, Leitner, Stufen, Punkten, Combo und Missionen. | **Dieses Wiki** → [Lernplan bauen](wiki/04-lernplan-bauen.md) |
 | 2 | **Katalog-Übung** | Globale **Übungs-Bibliothek** `Subject → Chapter → Exercise` (12 typisierte Übungsarten mit Metadaten). Fundament für den künftigen Auto-Generator. | [Übungstypen](wiki/03-uebungstypen.md) |
-| 3 | **Markdown-Lehrplan** | Von den Skills `vater`/`sohn` erzeugter/abgearbeiteter Kurs **ohne** laufende App (reine Dateien). | [docs/lehrplan-erstellen.md](docs/lehrplan-erstellen.md) |
+| 3 | **Markdown-Lehrplan** | Von den Skills `lehrplan-autor`/`lehrplan-lerner` erzeugter/abgearbeiteter Kurs **ohne** laufende App (reine Dateien). | [docs/lehrplan-erstellen.md](docs/lehrplan-erstellen.md) |
 
 Dieses Wiki behandelt vor allem **#1 (Study-Plan)** und **#2 (Katalog)** — die API. #3 ist eine
 eigenständige, dateibasierte Welt.
@@ -53,9 +53,9 @@ eigenständige, dateibasierte Welt.
 
 | Rolle | Einstieg | Fokus |
 | --- | --- | --- |
-| **Creator** | [Doku nach Rollen](docs/rollen-doku.md#creator--inhalte-und-katalog) · [Übungstypen](wiki/03-uebungstypen.md) | Inhalte, Katalog, Übungstypen, Stores, Metadaten. |
-| **Supervisor** | [Doku nach Rollen](docs/rollen-doku.md#supervisor--steuerung-kontrolle-belohnung) · [Lernplan bauen](wiki/04-lernplan-bauen.md) | Study-Pläne, Ziele, Kontrolle, Punkte, Shop, Klassenarbeiten. |
-| **Student** | [Doku nach Rollen](docs/rollen-doku.md#student--lernen-fortschritt-einlösen) · [Sohn-App](wiki/06-sohn-app.md) | Lernen, Tests, Fortschritt, Punkte-Sicht, Einlösen. |
+| **Creator** | [Creator-Tutorial](docs/tutorial-creator.md) · [Übungstypen](wiki/03-uebungstypen.md) · [Doku nach Rollen](docs/rollen-doku.md#creator--inhalte-und-katalog) | Inhalte, Katalog, Übungstypen, Stores, Metadaten. |
+| **Supervisor** | [Supervisor-Tutorial](docs/tutorial-supervisor.md) · [Doku nach Rollen](docs/rollen-doku.md#supervisor--steuerung-kontrolle-belohnung) | Study-Pläne, Ziele, Kontrolle, Punkte, Shop, Klassenarbeiten. |
+| **Student** | [Student-Tutorial](docs/tutorial-student.md) · [Doku nach Rollen](docs/rollen-doku.md#student--lernen-fortschritt-einlösen) | Lernen, Tests, Fortschritt, Punkte-Sicht, Einlösen. |
 
 ### Thematische Seiten
 
@@ -64,9 +64,9 @@ eigenständige, dateibasierte Welt.
 | **[01 · Überblick & Architektur](wiki/01-ueberblick-architektur.md)** | Konzepte, Rollen, Datenmodell, wie alles zusammenhängt. **Hier anfangen.** |
 | **[02 · Authentifizierung & Rollen](wiki/02-authentifizierung.md)** | PIN-Login, JWT, Rollen, Eigentum (Ownership), Anti-Schummel. |
 | **[03 · Übungstypen (Katalog)](wiki/03-uebungstypen.md)** | Alle 12 Übungsarten mit Config-Schema, Beispiel-Requests, Auswertung. |
-| **[04 · Einen Lernplan bauen (Vater)](wiki/04-lernplan-bauen.md)** | Der komplette Vater-Flow: Inhalte → Study-Plan → Stufen/Leitner/Stundenplan → Kontrolle. Vollständiges Beispiel. |
+| **[04 · Einen Lernplan bauen (Supervisor)](wiki/04-lernplan-bauen.md)** | Wegweiser → die vollständige Fassung ist jetzt das [Supervisor-Tutorial](docs/tutorial-supervisor.md). |
 | **[05 · Punkte & Bonus-System](wiki/05-punkte-und-bonus.md)** | Wie Punkte entstehen, alle Bonus-Quellen (Combo, Speed, Zeitfenster), Missionen & Auszeichnungen — mit Formeln. |
-| **[06 · Anleitung für die Sohn-App](wiki/06-sohn-app.md)** | Der Sohn-Flow: heute, üben, testen, bewerten, Punktestand, Missionen. |
+| **[06 · Anleitung für die Sohn-App](wiki/06-sohn-app.md)** | Wegweiser → die vollständige Fassung ist jetzt das [Student-Tutorial](docs/tutorial-student.md). |
 | **[07 · API-Referenz](wiki/07-api-referenz.md)** | Kompakter Endpunkt-Index über die ganze API. |
 | **[08 · Erweitern: neue Übung / neues Verfahren](wiki/08-erweitern.md)** | Für Entwickler & LLMs: neuen Übungstyp anlegen, neues Lernverfahren, Add-Ons. |
 | **[09 · LLM-Kochbuch: Lernplan aus einem Prompt](wiki/09-llm-kochbuch.md)** | Rezept, damit eine AI wie ein Vater aus „Erstelle einen Lernplan für die 9. Klasse …" einen fertigen Plan über die API baut. |
@@ -77,11 +77,11 @@ eigenständige, dateibasierte Welt.
 - [Architektur-Entscheidung (API-First)](docs/architektur-entscheidung.md) · [Architektur-Resümee](docs/architektur-resumee.md)
 - [Endpunkt-Beziehungen](docs/endpunkt-beziehungen.md) — wie die Endpunkte inhaltlich zusammenhängen (Übung → Lehrplan → Kind → Auswertung), mit Datenfluss-Diagramm
 - [Obsidian: Wissensvernetzung](docs/obsidian.md) — Doku/Planung als navigierbarer Graph (Tags/Backlinks), Konsistenz-Konventionen gegen Insellösungen
-- [Tutorial (API, Vater & Sohn)](docs/tutorial.md) — kompakter Original-Walkthrough
+- [Tutorials nach Rolle](docs/tutorial.md) — Index → [Creator](docs/tutorial-creator.md) · [Supervisor](docs/tutorial-supervisor.md) · [Student](docs/tutorial-student.md) (verifiziert)
 - [Vokabel-Funktionalitäten für Entwickler](docs/vokabel-funktionalitaeten-entwickler-tutorial.md) — Store, `ExerciseItem`s, Progress und API-Flows
 - [Vokabeltraining-Prozess-Log](docs/vokabeltraining-prozess.md) — wie das Study-Plan-System in 8 Iterationen entstand
 - [Klassenarbeiten & Tagging](docs/klassenarbeiten-tagging.md) · [Code-Review](docs/code-review.md)
-- [Markdown-Lehrplan erstellen](docs/lehrplan-erstellen.md) — die dateibasierte `vater`/`sohn`-Welt
+- [Markdown-Lehrplan erstellen](docs/lehrplan-erstellen.md) — die dateibasierte `lehrplan-autor`/`lehrplan-lerner`-Welt
 
 ---
 
