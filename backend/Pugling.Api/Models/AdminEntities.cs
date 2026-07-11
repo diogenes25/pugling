@@ -152,6 +152,10 @@ public enum PointKind
     ShopCoins = 13,
     /// <summary>Einlösung von Gems für einen Familien-Shop-Artikel (negative Buchung).</summary>
     ShopGems = 14,
+    /// <summary>Manuelle Vater-Buchung in Gems (Gem-Zwilling zu <see cref="Manual"/>; Geschenk/Korrektur).</summary>
+    ManualGems = 15,
+    /// <summary>Malus, weil ein Pflichtziel einer Lehrplan-Position in der Periode gerissen wurde (negative Buchung).</summary>
+    GoalPenalty = 16,
 }
 
 /// <summary>Punkte-Buchung eines Kindes (positiv = gutgeschrieben, negativ = eingelöst).</summary>

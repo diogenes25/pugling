@@ -12,8 +12,8 @@ tags: [typ/tutorial, bereich/training, rolle/supervisor]
 
 **Kurz zur Einordnung:** Der **Supervisor** (im Produkt der **Vater**, der zugleich Creator ist; Seed: Papa,
 `fatherId 1`, PIN `0000`) macht aus Katalog-Inhalten verbindliche Aufgaben: ein **Study-Plan** ist ein
-Container, seine **Positionen** verweisen je auf eine Katalog-Übung und tragen eigenes Ziel, Punkte, Stufe
-und Leitner. Dazu kommen plan-übergreifende **Lernziele**, der **Familien-Shop**, **Missionen/Auszeichnungen**,
+Container, seine **Positionen** verweisen je auf eine Katalog-Übung und tragen eigenes Ziel, Punkte
+(inkl. optionalem **Münz-Malus** `penaltyCoins` bei gerissener Pflicht), Stufe und Leitner. Dazu kommen plan-übergreifende **Lernziele**, der **Familien-Shop**, **Missionen/Auszeichnungen**,
 **Klassenarbeiten** und die Kontrolle über die (dual lesbaren) `student/`-Reports.
 
 ---

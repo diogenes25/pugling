@@ -419,6 +419,8 @@ export interface PositionResponse {
   boxIntervalDays: number[] | null;
   stageSchedule: StageStep[] | null;
   pointsGoalMet: number;
+  /** Münz-Malus bei gerissener Pflicht-Periode (0 = kein Malus). Nur bei Cadence Tag/Woche wirksam. */
+  penaltyCoins: number;
   newContentPoints: number;
   comboThreshold: number;
   comboBonusPoints: number;
@@ -486,6 +488,8 @@ export interface CreatePositionDto {
   useLeitner?: boolean;
   maxBox?: number;
   pointsGoalMet?: number;
+  /** Münz-Malus bei gerissener Pflicht-Periode (0 = kein Malus). */
+  penaltyCoins?: number;
   newContentPoints?: number;
   comboThreshold?: number;
   comboBonusPoints?: number;
@@ -1039,7 +1043,11 @@ export interface TestSubmitResponse {
 
 export type PointKind =
   | "Base" | "Manual" | "Minutes" | "Test" | "DayComplete" | "Goal"
-  | "Combo" | "Speed" | "Duration" | "Mission" | "Achievement" | "SkinPurchase" | "Reward";
+  | "Combo" | "Speed" | "Duration" | "Mission" | "Achievement" | "SkinPurchase" | "Reward"
+  | "ManualGems" | "GoalPenalty";
+
+/** Die beiden Währungen der App (Münzen fürs echte Leben, Gems für Kosmetik). */
+export type Currency = "Coins" | "Gems";
 
 export interface WalletEntry {
   id: number;

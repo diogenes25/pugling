@@ -8,7 +8,7 @@ import type {
   ProgressResponse, ReviewInput, ReviewOutcome,
   SkinState, SubjectResponse,
   TestAttemptResponse, TestNextResponse, TestAnswerAck, TestSubmitResponse, UpdateKlassenarbeitDto, UpdatePlanDto, UpdateVocabularyDto,
-  VocabBatchResult, VocabularyResponse, VocabTagResponse, ChildTagResponse, Wallet, WalletBalance, WalletEntry,
+  VocabBatchResult, VocabularyResponse, VocabTagResponse, ChildTagResponse, Wallet, WalletBalance, WalletEntry, Currency,
   Paged, VocabularySearchParams,
   ShopArticle, CreateShopArticleDto, UpdateShopArticleDto, ShopListing, CreateShopListingDto, UpdateShopListingDto,
   InventoryItem, ShopPurchase, ActivationRequest, ShopPurchaseStatus, ActivationRequestStatus,
@@ -323,6 +323,10 @@ export const api = {
     const body = (text ? JSON.parse(text) : { coins: 0, gems: 0, entries: [] }) as Wallet;
     return { coins: body.coins, gems: body.gems, items: body.entries, total: totalFrom(res, body.entries.length) };
   },
+  // Manuelle Vater-Buchung: positiver Betrag = verschenken/gutschreiben, negativ = abziehen; Währung wählbar
+  // (auch Gems, das Druckventil gegen zu hohe Malus-Schulden bzw. Belohnung außerhalb der App).
+  grantPoints: (childId: number, amount: number, reason: string, currency: Currency) =>
+    http<WalletEntry>(`${V1}/supervisor/children/${childId}/points`, "POST", { amount, reason, currency }),
 
   // ---- Vater: Klassenarbeiten (planen, Übungen zuweisen, benoten, üben/wiederholen) ----
   classTests: (childId: number, opts: { status?: KlassenarbeitStatus; skip?: number; take?: number } = {}) => {

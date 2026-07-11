@@ -33,9 +33,11 @@ public static class PointKindCurrency
     public static Currency Of(PointKind kind) => kind switch
     {
         PointKind.Base or PointKind.Minutes or PointKind.Test or PointKind.DayComplete
-            or PointKind.Goal or PointKind.Manual or PointKind.Reward or PointKind.ShopCoins => Currency.Coins,
+            or PointKind.Goal or PointKind.Manual or PointKind.Reward or PointKind.ShopCoins
+            or PointKind.GoalPenalty => Currency.Coins,
         PointKind.Combo or PointKind.Speed or PointKind.Duration or PointKind.Mission
-            or PointKind.Achievement or PointKind.SkinPurchase or PointKind.ShopGems => Currency.Gems,
+            or PointKind.Achievement or PointKind.SkinPurchase or PointKind.ShopGems
+            or PointKind.ManualGems => Currency.Gems,
         _ => throw new ArgumentOutOfRangeException(nameof(kind), kind, "PointKind ohne Währungs-Zuordnung"),
     };
 

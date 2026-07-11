@@ -37,6 +37,7 @@ public class PointKindCurrencyTests
     [InlineData(PointKind.Manual, Currency.Coins)]
     [InlineData(PointKind.Reward, Currency.Coins)]
     [InlineData(PointKind.ShopCoins, Currency.Coins)]
+    [InlineData(PointKind.GoalPenalty, Currency.Coins)]
     [InlineData(PointKind.Combo, Currency.Gems)]
     [InlineData(PointKind.Speed, Currency.Gems)]
     [InlineData(PointKind.Duration, Currency.Gems)]

@@ -212,15 +212,24 @@ public class ChildrenController(PuglingDbContext db, WalletService wallet, Accou
         return new ChildPointsResponse(childId, coins, gems, entries);
     }
 
-    /// <summary>Manuelle Punkte-Buchung durch den Vater (Amount positiv = gutschreiben, negativ = abziehen).</summary>
-    public record PointsEntryDto(int Amount, string Reason);
+    /// <summary>
+    /// Manuelle Vater-Buchung: positiver Betrag = gutschreiben/verschenken, negativ = abziehen.
+    /// Über die Währung kann der Vater neben Münzen auch <b>Gems verschenken</b>
+    /// (Belohnung außerhalb der App, Schulden-Erlass).
+    /// </summary>
+    /// <param name="Amount">Betrag; positiv = gutschreiben/verschenken, negativ = abziehen.</param>
+    /// <param name="Reason">Freitext-Begründung fürs Ledger.</param>
+    /// <param name="Currency">Zielwährung der Buchung (Default Münzen).</param>
+    public record PointsEntryDto(int Amount, string Reason, Currency Currency = Currency.Coins);
 
     [HttpPost("{childId:int}/points")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<PointsEntryResponse>> AddPoints(int childId, PointsEntryDto dto)
     {
-        var entry = new ChildPointsEntry { ChildId = childId, Kind = PointKind.Manual, Amount = dto.Amount, Reason = dto.Reason ?? "" };
+        // Währung → Buchungs-Kind: Gems über den Manual-Zwilling, sonst die klassische Münz-Manualbuchung.
+        var kind = dto.Currency == Currency.Gems ? PointKind.ManualGems : PointKind.Manual;
+        var entry = new ChildPointsEntry { ChildId = childId, Kind = kind, Amount = dto.Amount, Reason = dto.Reason ?? "" };
         db.ChildPoints.Add(entry);
         await db.SaveChangesAsync();
 

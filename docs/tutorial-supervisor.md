@@ -37,8 +37,9 @@ liest ihn aus.
 ```
 
 Dazu kommen die **Steuer- und Belohnungshebel**, die alle am Kind hängen: **Lernziele** (plan-übergreifend),
-der **Familien-Shop** (der einzige Münz-Ausgabeweg), **Missionen/Auszeichnungen**, **manuelle Punkte** und
-**Klassenarbeiten**.
+der **Familien-Shop** (der einzige Münz-Ausgabeweg), **Missionen/Auszeichnungen**, **manuelle Punkte /
+Verschenken** und **Klassenarbeiten**. Der einzige **„Stick"** (Konsequenz fürs *Nicht*-Lernen) ist der
+**Münz-Malus** einer Pflichtposition (Schritt 3) — alle anderen Hebel sind Belohnung.
 
 ---
 
@@ -159,6 +160,7 @@ POST /api/v1/supervisor/study-plans/1/positions
   "maxBox": 5,
   "stageSchedule": null,
   "pointsGoalMet": 20,
+  "penaltyCoins": 0,
   "newContentPoints": 10,
   "comboThreshold": 5,
   "comboBonusPoints": 5,
@@ -183,11 +185,26 @@ POST /api/v1/supervisor/study-plans/1/positions
 | `scope` | `All` / `New` / `Old` — welche Inhalts-Teilmenge gespielt wird. |
 | `orderStrategy` | Ausspielreihenfolge: `WeakestFirst` (Default), `Serial`, `Random`, `NewestWeighted`. |
 | `pointsGoalMet` | 🪙 Münzen für ein **erfülltes Positionsziel** je Periode (idempotent). |
+| `penaltyCoins` | 🪙 **Münz-Malus**, wenn die Pflicht-Periode **gerissen** wird (0 = aus). Der einzige „Stick". |
 | `newContentPoints` | Basispunkte für **erstmals** geübten Inhalt. |
 | `combo*` / `speed*` | 💎 Gem-Boni für Trefferfolgen bzw. schnelle Antworten. |
 
 Vollständige Feldliste inkl. `maxBox`/`boxIntervalDays`: die frühere Referenz lebt jetzt in diesem Tutorial
 und im [PlanPositionsController](../backend/Pugling.Api/Controllers/Supervisor/PlanPositionsController.cs).
+
+### Der Münz-Malus (`penaltyCoins`) — Lernen erzwingen
+
+Alle bisherigen Hebel belohnen. `penaltyCoins` ist die **Konsequenz fürs Nicht-Lernen**: Reißt eine
+Pflichtposition (`cadence: Daily|Weekly`) ihre **abgeschlossene** Periode (Ziel nicht erreicht), zieht der
+Server `penaltyCoins` 🪙 wieder ab (`PointKind.GoalPenalty`).
+
+- **Schulden erlaubt** — der Münzsaldo darf negativ werden und **blockt dann den Shop-Kauf**, bis das Kind
+  wieder verdient oder du Münzen **verschenkst** (Schritt 7). So koppelt der Malus reale Privilegien ans Lernen.
+- **Automatisch & idempotent:** Es gibt keinen Scheduler — der Malus wird **faul** beim **Kind-Login** und
+  beim **Shop-Kauf** nachgerechnet, je Periode höchstens einmal (Rückblick max. 14 Tage).
+- **Fair:** Kein Malus für Tage/Wochen, in denen der Plan **inaktiv** oder außerhalb der Laufzeit war.
+- Default `0` = reines Belohnen (bisheriges Verhalten). Setzen/ändern via `POST`/`PATCH` der Position, z. B.
+  `{ "penaltyCoins": 50 }`. Hintergrund: [wiki/05 · Punkte & Bonus §2](../wiki/05-punkte-und-bonus.md).
 
 ### Stufen-Fahrplan (`stageSchedule`)
 
@@ -390,15 +407,26 @@ Wörter finden, passende Übung suchen/anlegen, als neue Position anhängen. Die
 (`…/children/1/learn/subjects/…`) spiegelt zusätzlich den Katalog. Datenfluss und alle Filter:
 [endpunkt-beziehungen.md §3](endpunkt-beziehungen.md#3-übung--auswertung-des-kindes).
 
-### Manuelle Punktekorrektur
+### Manuelle Punkte & Verschenken (🪙 Münzen **oder** 💎 Gems)
 
-Der Supervisor kann jederzeit direkt ins Ledger buchen — für Extra-Motivation oder Korrekturen:
+Der Supervisor kann jederzeit direkt ins Ledger buchen — für Extra-Motivation, Korrekturen oder als
+**Geschenk**. `amount` positiv = gutschreiben/verschenken, negativ = abziehen; über **`currency`** wählst
+du die Währung (Default `Coins`):
 
 ```http
 POST /api/v1/supervisor/children/1/points
-{ "amount": 30, "reason": "Extra fürs Dranbleiben" }
+{ "amount": 30, "reason": "Extra fürs Dranbleiben" }                       # Münzen (Default)
 → { "id": 3, "childId": 1, "amount": 30, "kind": "Manual", "reason": "Extra fürs Dranbleiben" }
+
+POST /api/v1/supervisor/children/1/points
+{ "amount": 20, "reason": "Belohnung fürs Zimmeraufräumen", "currency": "Gems" }   # Gems verschenken
+→ { "id": 4, "childId": 1, "amount": 20, "kind": "ManualGems", … }
 ```
+
+**Gems verschenken** ging vorher nicht (Münzen konnte der Vater immer manuell buchen). Zweck: Belohnung
+**außerhalb der App** *und* das **Druckventil gegen Malus-Schulden** — wird der Münzsaldo durch den Malus
+(Schritt 3) zu negativ und erstickt die Motivation, gleicht der Vater ihn mit einem Münz-Geschenk aus. Im
+Frontend sitzt das als „Verschenken"-Dialog unter `/vater/konto`.
 
 Nur der **Vater** darf beim Start von Practice/Test einen anderen `day` als heute setzen (fremde Tage
 nachtragen) — der Sohn ist serverseitig auf heute geklemmt.
@@ -437,10 +465,10 @@ POST /api/v1/supervisor/study-plans
 { "childId": 1, "title": "Vokabel-Sprint", "durationDays": 10 }
 → { "id": 1, "positionCount": 0, "isPlayable": true, … }
 
-# 3) Position (getippte Klausur → stageSchedule mit Stufe 4!)
+# 3) Position (getippte Klausur → stageSchedule mit Stufe 4!; penaltyCoins = Münz-Malus bei gerissener Pflicht)
 POST /api/v1/supervisor/study-plans/1/positions
 { "exerciseId": 1, "cadence": "Daily", "useLeitner": true, "requireTypedTest": true,
-  "goalThreshold": 80, "pointsGoalMet": 20,
+  "goalThreshold": 80, "pointsGoalMet": 20, "penaltyCoins": 50,
   "stageSchedule": [ { "dayNumber": 1, "stage": 2 }, { "dayNumber": 5, "stage": 4 } ],
   "comboThreshold": 5, "comboBonusPoints": 5,
   "speedThresholdSeconds": 8, "speedBonusPoints": 3 }
@@ -465,9 +493,11 @@ GET  /api/v1/student/study-plans/1/overview
 GET  /api/v1/student/study-plans/1/positions/1/report
 GET  /api/v1/student/children/1/vocabulary-progress?onlyWeak=true
 
-# 8) Manuelle Punkte
+# 8) Manuelle Punkte / Verschenken (Münzen bzw. Gems)
 POST /api/v1/supervisor/children/1/points
 { "amount": 30, "reason": "Extra fürs Dranbleiben" }
+POST /api/v1/supervisor/children/1/points
+{ "amount": 20, "reason": "Malus-Ausgleich", "currency": "Gems" }
 ```
 
 Danach kann der Sohn loslegen — weiter in [tutorial-student.md](tutorial-student.md).

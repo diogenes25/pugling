@@ -15,7 +15,8 @@ namespace Pugling.Api.Controllers;
 [Route(ApiRoutes.V1 + "/auth")]
 [Tags("Auth")]
 [Produces("application/json")]
-public class AuthController(PuglingDbContext db, TokenService tokens, AccountService accounts) : ControllerBase
+public class AuthController(PuglingDbContext db, TokenService tokens, AccountService accounts,
+    Services.Shared.PositionProgressService progress) : ControllerBase
 {
     public record LoginResponse(string Token, string Role, int Id, string Name, DateTime ExpiresAt);
 
@@ -51,6 +52,9 @@ public class AuthController(PuglingDbContext db, TokenService tokens, AccountSer
         if (child is null || !PinHasher.Verify(dto.Pin, child.Pin)) return this.ProblemWithCode(ApiErrors.InvalidCredentials, "Invalid child ID or PIN.");
 
         var account = await accounts.EnsureForChildAsync(child);
+        // Beim Einloggen offene Pflicht-Perioden nachrechnen: ein Malus fürs Nicht-Lernen landet so, bevor
+        // der Sohn seinen Kontostand sieht oder etwas ausgibt (es gibt keinen Scheduler; idempotent).
+        await progress.SettleClosedPeriodsAsync(child.Id, DateOnly.FromDateTime(DateTime.UtcNow));
         var (token, expires) = tokens.IssueForAccount(account, account.Profiles);
         return new LoginResponse(token, Roles.Student, child.Id, child.Name, expires);
     }
