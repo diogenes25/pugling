@@ -352,6 +352,12 @@ GET /api/v1/student/me/points
 - **💎 Gems (`gems`)** kommen aus **Boni** (Combo, Tempo, Missionen, Auszeichnungen) und kaufen
   kosmetische **Skins** (bzw. als Gem-Anteil eines Shop-Artikels).
 
+> **Vorsicht, Münzen können ins Minus rutschen.** Hat eine Pflichtübung einen **Malus** (`penaltyCoins`,
+> vom Vater gesetzt) und lässt der Student sein **Tages-/Wochenziel platzen**, zieht der Server die Münzen
+> beim nächsten **Login** wieder ab — auch **unter 0**. Ein negativer Münzstand **sperrt den Shop-Kauf**
+> (`insufficient_coins`), bis wieder genug verdient (oder vom Vater geschenkt) ist. Nur Lernen füllt das
+> Konto zurück — genau das ist der Sinn.
+
 Die einzelnen Buchungen liegen paginiert unter `GET /api/v1/student/me/points/entries`
 (mit `X-Total-Count`); eine einzelne unter `…/entries/{entryId}`.
 

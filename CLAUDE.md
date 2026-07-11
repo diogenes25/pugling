@@ -1,7 +1,9 @@
 # Pugling – Claude-Leitfaden
 
-Lern-App mit Punktesystem (Leitner-Prinzip). **Vater** steuert und erzwingt Lernerfolg,
-**Sohn** lernt mit Spaß. Drei Ebenen (Creator/Supervisor/Student), Punkte, Zeitfenster, Klassenarbeiten.
+Lern-App mit Punktesystem (Leitner-Prinzip). **Vater** steuert und **erzwingt** Lernerfolg – Kernidee:
+wiederkehrende **Pflichtziele** (täglich/wöchentlich) + Klausuren, und **verpasste Pflicht kostet Münzen**
+(der „Stick"; siehe Positions-`PenaltyCoins` / Reward-Ökonomie). **Sohn** lernt mit Spaß. Drei Ebenen
+(Creator/Supervisor/Student), Punkte, Zeitfenster, Klassenarbeiten.
 
 ## Grundprinzip: API-First
 
@@ -79,7 +81,8 @@ Rollen im SPA: `/` Produktseite, `/vater` Web-Admin (inkl. `/vater/wizard` Lehrp
   `StudyPlan` ist ein **reiner Container** (`ChildId, Title, Start/End, Active`). Inhalt sind
   `PlanPosition`s ([PlanPositionsController](backend/Pugling.Api/Controllers/Supervisor/PlanPositionsController.cs)),
   die je auf eine Katalog-`Exercise` verweisen und **eigenes** Ziel (Rhythmus Tag/Woche + Schwelle),
-  Punkte, Stufe und Leitner tragen. Gespielt wird pro Position: `PositionPracticeController` (Üben/Leitner)
+  Punkte (Ziel-Belohnung + optionaler **Münz-Malus** `PenaltyCoins` bei gerissener Pflicht = der „Stick"),
+  Stufe und Leitner tragen. Gespielt wird pro Position: `PositionPracticeController` (Üben/Leitner)
   + `PositionTestsController` (Abschlusstest); Inhalt kommt aus der Übungs-Config (`ExerciseContentProvider`),
   Leitner-Fortschritt materialisiert je Inhalts-Atom in `PositionItemProgress`. Tagesmission/Verlauf über
   `PlanOverviewController` (`…/overview` + `…/overview/progress`). Route: `api/v1/supervisor/study-plans/{planId}/…`.
@@ -95,7 +98,10 @@ Rollen im SPA: `/` Produktseite, `/vater` Web-Admin (inkl. `/vater/wizard` Lehrp
   (Typnamen intern weiterhin `Klassenarbeit`).
 - **Services** ([Services/](backend/Pugling.Api/Services/)): `PositionPlayService` (Fälligkeit/Scope/Stufen +
   Leitner-Terminierung je Position), `PositionProgressService` (Ziel-„erledigt"-Regel je `ExerciseCheckMode`,
-  idempotente Ziel-Punkte via `PositionGoalReward`, Tages-/Verlaufs-Rollup über Positionen), `ScoringService`
+  idempotente Ziel-Punkte via `PositionGoalReward`, Tages-/Verlaufs-Rollup über Positionen; **Malus fürs
+  Nicht-Lernen** via `SettleClosedPeriodsAsync`: gerissene Pflicht-Periode → negative `PointKind.GoalPenalty`,
+  idempotent über `PositionGoalPenalty`, **Schuld erlaubt**; es gibt **keinen Scheduler** → lazy an Kind-Login
+  und Shop-Kauf abgerechnet, Fairness bei inaktivem Plan, `ConcurrencyStamp`-Bump), `ScoringService`
   (die eine Stelle für Review-Punkte: Basis × Zeitfenster plus Ereignis-Boni wie Combo/Schnelle Antwort;
   jede Buchung trägt einen `PointKind`; `StageMechanics` hält die geteilten Stufen-/Vergleichs-Statics),
   `MetricsService` (Fortschritts-Metriken aus den Tabellen) + `GamificationService` (Missionen &
@@ -109,7 +115,11 @@ Rollen im SPA: `/` Produktseite, `/vater` Web-Admin (inkl. `/vater/wizard` Lehrp
   `ShopRefillKind` für automatisches Auffüllen). Kauf bucht `PointKind.ShopCoins`/`ShopGems` ab, erhöht das
   aggregierte Inventar (`ChildInventory`) des Sohns. Sohn stellt **Aktivierungsanfrage** (`ActivationRequest`),
   Vater genehmigt/lehnt ab (`ShopService`; `children/{}/shop/activations/{}/approve|reject`). Käufe/Aktivierungen
-  sind **ausstellergebunden** (`SupervisorId`-Snapshot). Das frühere separate „Angebots"-System
+  sind **ausstellergebunden** (`SupervisorId`-Snapshot). Der Shop ist der einzige Weg, auf dem der **Sohn**
+  Münzen *ausgibt*; daneben stehen zwei vater-getriebene Münz-Bewegungen: der **Malus** (`GoalPenalty`, s. o.)
+  zieht ab, das **Verschenken** gibt dazu. **Verschenken/Manuell:** `POST children/{}/points` nimmt `currency`
+  (Coins → `PointKind.Manual`, Gems → `PointKind.ManualGems`) – der Vater kann Münzen **und Gems** verschenken
+  (Belohnung außerhalb der App + Druckventil gegen Malus-Schulden). Das frühere separate „Angebots"-System
   (`Reward`/`RewardRedemption`/`OfferService`) wurde **entfernt**; `PointKind.Reward` bleibt nur als Ledger-Tombstone
   für historische Buchungen. Details: [wiki/05-punkte-und-bonus.md](wiki/05-punkte-und-bonus.md).
 

@@ -21,7 +21,7 @@ namespace Pugling.Api.Controllers.Student;
 [Produces("application/json")]
 [Authorize(Roles = Roles.Student)]
 public class MeController(PuglingDbContext db, GamificationService gamification,
-    WalletService wallet, ShopService shop) : ControllerBase
+    WalletService wallet, ShopService shop, PositionProgressService progress) : ControllerBase
 {
     /// <summary>Eine einzelne Punkte-Buchung (Gutschrift positiv, Abzug negativ) mit Kategorie.</summary>
     public record PointsEntryResponse(int Id, int Amount, PointKind Kind, string Reason, DateTime CreatedAt);
@@ -293,6 +293,10 @@ public class MeController(PuglingDbContext db, GamificationService gamification,
     {
         var cid = User.ChildId();
         if (cid is null) return Forbid();
+
+        // Erst offene Pflicht-Perioden abrechnen: ein etwaiger Malus muss den Münz-Saldo mindern, BEVOR der
+        // Deckungs-Check greift – sonst könnte der Sohn den Stick durch schnelles Kaufen umgehen.
+        await progress.SettleClosedPeriodsAsync(cid.Value, DateOnly.FromDateTime(DateTime.UtcNow));
 
         var result = await shop.PurchaseAsync(cid.Value, listingId, DateTime.UtcNow);
         return result.Error switch

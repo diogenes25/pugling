@@ -39,6 +39,7 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
     public DbSet<PlanPosition> PlanPositions => Set<PlanPosition>();
     public DbSet<PositionItemProgress> PositionItemProgress => Set<PositionItemProgress>();
     public DbSet<PositionGoalReward> PositionGoalRewards => Set<PositionGoalReward>();
+    public DbSet<PositionGoalPenalty> PositionGoalPenalties => Set<PositionGoalPenalty>();
     public DbSet<PracticeSession> PracticeSessions => Set<PracticeSession>();
     public DbSet<ReviewEvent> ReviewEvents => Set<ReviewEvent>();
     public DbSet<TestAttempt> TestAttempts => Set<TestAttempt>();
@@ -273,6 +274,15 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
         // Ziel-Belohnung je Position/Periode: höchstens eine Buchung pro (Position, Periode) – die
         // Idempotenz-Garantie der Ziel-Punkte. Verschwindet mit der Position (Cascade).
         modelBuilder.Entity<PositionGoalReward>(e =>
+        {
+            e.HasIndex(r => new { r.PlanPositionId, r.PeriodKey }).IsUnique();
+            e.HasOne(r => r.PlanPosition).WithMany().HasForeignKey(r => r.PlanPositionId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // Ziel-Malus je Position/Periode: höchstens ein Abzug pro (Position, Periode) – die Idempotenz-Garantie
+        // gegen doppelte Bestrafung, wenn das Lazy Settlement mehrfach über dieselbe Periode läuft. Cascade mit der Position.
+        modelBuilder.Entity<PositionGoalPenalty>(e =>
         {
             e.HasIndex(r => new { r.PlanPositionId, r.PeriodKey }).IsUnique();
             e.HasOne(r => r.PlanPosition).WithMany().HasForeignKey(r => r.PlanPositionId)

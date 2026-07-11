@@ -80,6 +80,7 @@ function AddPosition({ planId, onAdded, onError }: { planId: number; onAdded: ()
   const [exerciseId, setExerciseId] = useState<number | "">("");
   const [cadence, setCadence] = useState<GoalCadence>("Daily");
   const [pointsGoalMet, setPointsGoalMet] = useState(20);
+  const [penaltyCoins, setPenaltyCoins] = useState(0);
   const [itemCount, setItemCount] = useState<number | "">("");
   const [orderStrategy, setOrderStrategy] = useState<PracticeOrder>("WeakestFirst");
   const [useLeitner, setUseLeitner] = useState(false);
@@ -91,7 +92,7 @@ function AddPosition({ planId, onAdded, onError }: { planId: number; onAdded: ()
     if (exerciseId === "") { onError("Bitte eine Übung aus der Liste wählen."); return; }
     setBusy(true);
     const dto: CreatePositionDto = {
-      exerciseId: Number(exerciseId), cadence, pointsGoalMet, orderStrategy,
+      exerciseId: Number(exerciseId), cadence, pointsGoalMet, penaltyCoins, orderStrategy,
       itemCount: itemCount === "" ? null : Number(itemCount), useLeitner, requireTypedTest: requireTyped,
     };
     try {
@@ -149,6 +150,10 @@ function AddPosition({ planId, onAdded, onError }: { planId: number; onAdded: ()
           <label>Punkte (Ziel erreicht)</label>
           <input aria-label="Punkte bei erreichtem Ziel" type="number" min={0} value={pointsGoalMet} onChange={(e) => setPointsGoalMet(Number(e.target.value))} />
         </div>
+        <div className="field" style={{ maxWidth: 150 }}>
+          <label>Münz-Malus (gerissen)</label>
+          <input aria-label="Münz-Malus bei gerissener Pflicht" type="number" min={0} value={penaltyCoins} onChange={(e) => setPenaltyCoins(Number(e.target.value))} />
+        </div>
         <div className="field" style={{ maxWidth: 130 }}>
           <label>Inhalte</label>
           <input aria-label="Anzahl Inhalte" type="number" min={1} value={itemCount} placeholder="alle" onChange={(e) => setItemCount(e.target.value === "" ? "" : Number(e.target.value))} />
@@ -184,6 +189,7 @@ function PositionRow({ planId, pos, onChanged, flash }: {
   const [itemCount, setItemCount] = useState(pos.itemCount?.toString() ?? "");
   const [orderStrategy, setOrderStrategy] = useState<PracticeOrder>(pos.orderStrategy);
   const [pointsGoalMet, setPointsGoalMet] = useState(pos.pointsGoalMet);
+  const [penaltyCoins, setPenaltyCoins] = useState(pos.penaltyCoins);
   const [newContentPoints, setNewContentPoints] = useState(pos.newContentPoints);
   const [useLeitner, setUseLeitner] = useState(pos.useLeitner);
   const [requireTyped, setRequireTyped] = useState(pos.requireTypedTest);
@@ -195,6 +201,7 @@ function PositionRow({ planId, pos, onChanged, flash }: {
     setItemCount(pos.itemCount?.toString() ?? "");
     setOrderStrategy(pos.orderStrategy);
     setPointsGoalMet(pos.pointsGoalMet);
+    setPenaltyCoins(pos.penaltyCoins);
     setNewContentPoints(pos.newContentPoints);
     setUseLeitner(pos.useLeitner);
     setRequireTyped(pos.requireTypedTest);
@@ -207,7 +214,7 @@ function PositionRow({ planId, pos, onChanged, flash }: {
     const count = itemCount.trim() === "" ? null : Number(itemCount);
     try {
       await api.updatePosition(planId, pos.id, {
-        cadence, goalThreshold: threshold, itemCount: count, orderStrategy, pointsGoalMet, newContentPoints,
+        cadence, goalThreshold: threshold, itemCount: count, orderStrategy, pointsGoalMet, penaltyCoins, newContentPoints,
         useLeitner, requireTypedTest: requireTyped,
       });
       setEditing(false);
@@ -240,6 +247,7 @@ function PositionRow({ planId, pos, onChanged, flash }: {
             {pos.requireTypedTest && <span className="muted"> · getippt</span>}
           </td>
           <td className="num">Ziel {pos.pointsGoalMet} · neu {pos.newContentPoints}
+            {pos.penaltyCoins > 0 && <span className="pill amber"> · Malus −{pos.penaltyCoins}🪙</span>}
             {pos.comboThreshold > 0 && pos.comboBonusPoints > 0 && <span className="muted"> · Combo +{pos.comboBonusPoints}</span>}
           </td>
           <td>{pos.useLeitner ? <span className="pill lime">an · max {pos.maxBox}</span> : <span className="muted">aus</span>}</td>
@@ -283,6 +291,8 @@ function PositionRow({ planId, pos, onChanged, flash }: {
           </div>
           <div className="field" style={{ maxWidth: 110 }}><label>Punkte Ziel</label>
             <input aria-label="Punkte bei erreichtem Ziel" type="number" min={0} value={pointsGoalMet} onChange={(e) => setPointsGoalMet(Number(e.target.value))} /></div>
+          <div className="field" style={{ maxWidth: 120 }}><label>Malus (gerissen)</label>
+            <input aria-label="Münz-Malus bei gerissener Pflicht" type="number" min={0} value={penaltyCoins} onChange={(e) => setPenaltyCoins(Number(e.target.value))} /></div>
           <div className="field" style={{ maxWidth: 110 }}><label>Punkte neu</label>
             <input aria-label="Punkte für neuen Inhalt" type="number" min={0} value={newContentPoints} onChange={(e) => setNewContentPoints(Number(e.target.value))} /></div>
           <label className="checkline"><input type="checkbox" checked={useLeitner} onChange={(e) => setUseLeitner(e.target.checked)} /> Leitner</label>

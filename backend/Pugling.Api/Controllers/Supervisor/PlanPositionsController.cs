@@ -27,13 +27,13 @@ public class PlanPositionsController(PuglingDbContext db) : ControllerBase
     public record PositionResponse(int Id, int StudyPlanId, int ExerciseId, string ExerciseTitle,
         string ExerciseType, int Order, int? Stage, int? ItemCount, ItemScope Scope, GoalCadence Cadence,
         PracticeOrder OrderStrategy, int? GoalThreshold, bool RequireTypedTest, bool UseLeitner, int MaxBox,
-        List<int>? BoxIntervalDays, List<StageStep>? StageSchedule, int PointsGoalMet, int NewContentPoints,
-        int ComboThreshold, int ComboBonusPoints, int SpeedThresholdSeconds, int SpeedBonusPoints);
+        List<int>? BoxIntervalDays, List<StageStep>? StageSchedule, int PointsGoalMet, int PenaltyCoins,
+        int NewContentPoints, int ComboThreshold, int ComboBonusPoints, int SpeedThresholdSeconds, int SpeedBonusPoints);
 
     private static PositionResponse Map(PlanPosition p) =>
         new(p.Id, p.StudyPlanId, p.ExerciseId, p.Exercise?.Title ?? "", p.Exercise?.Type.ToString() ?? "",
             p.Order, p.Stage, p.ItemCount, p.Scope, p.Cadence, p.OrderStrategy, p.GoalThreshold, p.RequireTypedTest,
-            p.UseLeitner, p.MaxBox, p.BoxIntervalDays, p.StageSchedule, p.PointsGoalMet, p.NewContentPoints,
+            p.UseLeitner, p.MaxBox, p.BoxIntervalDays, p.StageSchedule, p.PointsGoalMet, p.PenaltyCoins, p.NewContentPoints,
             p.ComboThreshold, p.ComboBonusPoints, p.SpeedThresholdSeconds, p.SpeedBonusPoints);
 
     /// <summary>Alle Positionen des Lehrplans in ihrer Reihenfolge.</summary>
@@ -69,7 +69,7 @@ public class PlanPositionsController(PuglingDbContext db) : ControllerBase
     public record CreatePositionDto(int ExerciseId, int? Order, int? Stage, int? ItemCount, ItemScope? Scope,
         GoalCadence? Cadence, PracticeOrder? OrderStrategy, int? GoalThreshold, bool? RequireTypedTest,
         bool? UseLeitner, int? MaxBox, List<int>? BoxIntervalDays, List<StageStep>? StageSchedule,
-        int? PointsGoalMet, int? NewContentPoints, int? ComboThreshold, int? ComboBonusPoints,
+        int? PointsGoalMet, int? PenaltyCoins, int? NewContentPoints, int? ComboThreshold, int? ComboBonusPoints,
         int? SpeedThresholdSeconds, int? SpeedBonusPoints);
 
     /// <summary>Fügt dem Lehrplan eine Position auf eine Katalog-Übung hinzu.</summary>
@@ -104,6 +104,8 @@ public class PlanPositionsController(PuglingDbContext db) : ControllerBase
             StageSchedule = dto.StageSchedule,
             // Punkte/Bonus: Position-Override → Übungs-Vorschlag → Modell-Default.
             PointsGoalMet = dto.PointsGoalMet ?? 20,
+            // Malus ist opt-in pro Position (Default 0 = reine Belohnung, bisheriges Verhalten).
+            PenaltyCoins = dto.PenaltyCoins ?? 0,
             NewContentPoints = dto.NewContentPoints ?? sb?.NewContentPoints ?? 10,
             ComboThreshold = dto.ComboThreshold ?? sb?.ComboThreshold ?? 5,
             ComboBonusPoints = dto.ComboBonusPoints ?? sb?.ComboBonusPoints ?? 5,
@@ -121,7 +123,7 @@ public class PlanPositionsController(PuglingDbContext db) : ControllerBase
     public record UpdatePositionDto(int? Order, int? Stage, int? ItemCount, ItemScope? Scope,
         GoalCadence? Cadence, PracticeOrder? OrderStrategy, int? GoalThreshold, bool? RequireTypedTest,
         bool? UseLeitner, int? MaxBox, List<int>? BoxIntervalDays, List<StageStep>? StageSchedule,
-        int? PointsGoalMet, int? NewContentPoints, int? ComboThreshold, int? ComboBonusPoints,
+        int? PointsGoalMet, int? PenaltyCoins, int? NewContentPoints, int? ComboThreshold, int? ComboBonusPoints,
         int? SpeedThresholdSeconds, int? SpeedBonusPoints);
 
     /// <summary>Ändert eine Position (partiell). Setzt nur die angegebenen Felder.</summary>
@@ -146,6 +148,7 @@ public class PlanPositionsController(PuglingDbContext db) : ControllerBase
         if (dto.BoxIntervalDays is not null) pos.BoxIntervalDays = dto.BoxIntervalDays;
         if (dto.StageSchedule is not null) pos.StageSchedule = dto.StageSchedule;
         if (dto.PointsGoalMet is not null) pos.PointsGoalMet = dto.PointsGoalMet.Value;
+        if (dto.PenaltyCoins is not null) pos.PenaltyCoins = dto.PenaltyCoins.Value;
         if (dto.NewContentPoints is not null) pos.NewContentPoints = dto.NewContentPoints.Value;
         if (dto.ComboThreshold is not null) pos.ComboThreshold = dto.ComboThreshold.Value;
         if (dto.ComboBonusPoints is not null) pos.ComboBonusPoints = dto.ComboBonusPoints.Value;

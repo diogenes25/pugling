@@ -96,6 +96,13 @@ public class PlanPosition
     // --- Punkte (Default aus dem Bonus-Vorschlag der Übung, hier pro Position überschreibbar) ---
     /// <summary>Punkte für das Erreichen des Positionsziels in seiner Periode.</summary>
     public int PointsGoalMet { get; set; } = 20;
+    /// <summary>
+    /// Münz-<b>Malus</b>, der abgezogen wird, wenn das Pflichtziel (<see cref="Cadence"/> Tag/Woche) in
+    /// einer abgeschlossenen Periode <b>gerissen</b> wurde – der „Stick" gegen Nicht-Lernen. 0 = kein Malus
+    /// (reine Belohnung). Nur bei <see cref="GoalCadence.Daily"/>/<see cref="GoalCadence.Weekly"/> wirksam.
+    /// Schulden sind erlaubt: der Münz-Saldo darf dadurch negativ werden.
+    /// </summary>
+    public int PenaltyCoins { get; set; }
     /// <summary>Basispunkte für einen erstmals wiederholten (neuen) Inhalt – „neuer Stoff zählt am meisten".</summary>
     public int NewContentPoints { get; set; } = 10;
     /// <summary>Alle N richtigen Antworten in Folge gibt es einen Combo-Bonus. 0 = aus.</summary>
@@ -141,6 +148,28 @@ public class PositionGoalReward
     public DateOnly Day { get; set; }
     public int Points { get; set; }
     public DateTime AwardedAt { get; set; } = DateTime.UtcNow;
+}
+
+/// <summary>
+/// Protokolliert den <b>einmaligen</b> Münz-Malus für ein <b>gerissenes</b> Positions-Pflichtziel je Periode –
+/// das negative Gegenstück zu <see cref="PositionGoalReward"/>. Ein Unique-Index auf
+/// <c>(PlanPositionId, PeriodKey)</c> garantiert, dass der Malus (<see cref="PlanPosition.PenaltyCoins"/>) je
+/// Periode höchstens einmal abgezogen wird – auch wenn das Lazy Settlement mehrfach über dieselbe abgeschlossene
+/// Periode läuft. <see cref="PeriodKey"/> identifiziert die Periode wie beim Reward
+/// (Kalendertag <c>yyyy-MM-dd</c> beim Tagesziel, Wochen-Montag beim Wochenziel).
+/// </summary>
+public class PositionGoalPenalty
+{
+    public int Id { get; set; }
+    public int PlanPositionId { get; set; }
+    public PlanPosition? PlanPosition { get; set; }
+    /// <summary>Periode, für die der Malus fiel (Tag <c>yyyy-MM-dd</c> bzw. Wochen-Montag <c>yyyy-MM-dd</c>).</summary>
+    public string PeriodKey { get; set; } = "";
+    /// <summary>Letzter Tag der gerissenen Periode (Tag selbst bzw. Wochen-Sonntag) – für die Auswertung.</summary>
+    public DateOnly Day { get; set; }
+    /// <summary>Abgezogene Münzen (positiver Betrag; die Ledger-Buchung ist negativ).</summary>
+    public int Points { get; set; }
+    public DateTime AppliedAt { get; set; } = DateTime.UtcNow;
 }
 
 /// <summary>

@@ -16,6 +16,8 @@ const POINT_KIND_LABELS: Record<PointKind, string> = {
   SkinPurchase: "Skin gekauft",
   // Tombstone: historische Buchungen des entfernten Angebots-Systems.
   Reward: "Prämie eingelöst",
+  ManualGems: "Papa-Geschenk (Gems)",
+  GoalPenalty: "Pflicht gerissen (Malus)",
 };
 export const pointKindLabel = (k: PointKind): string => POINT_KIND_LABELS[k] ?? k;
 

@@ -16,6 +16,13 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
     /// <summary>Standard-Bestehensgrenze eines Positions-Tests, wenn die Position keine eigene Schwelle setzt.</summary>
     private const int DefaultPassPercent = 80;
 
+    /// <summary>
+    /// Wie weit das Lazy Settlement (<see cref="SettleClosedPeriodsAsync"/>) höchstens zurückrechnet. Im
+    /// Normalbetrieb ist die einzige offene Periode „gestern"; der Deckel begrenzt nur Nachrechnungen nach
+    /// längerer Abwesenheit, ohne je die gesamte Historie zu scannen.
+    /// </summary>
+    private const int MaxSettleLookbackDays = 14;
+
     /// <summary>Status einer einzelnen Position für einen Tag – genug, damit der Sohn-Client die richtige Aktion rendert.</summary>
     public record PositionStatus(
         int PositionId, int ExerciseId, string ExerciseTitle, string ExerciseType, string Renderer,
@@ -149,6 +156,111 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
         }
         await db.SaveChangesAsync();
         return await ComputeDayAsync(plan, day);
+    }
+
+    // ---- Malus fürs Nicht-Lernen (Lazy Settlement) ----
+
+    /// <summary>Ist der Plan in der Periode [<paramref name="from"/>,<paramref name="to"/>] fällig gewesen? (Fairness).</summary>
+    /// <remarks>
+    /// Überlappungs-Variante der Anti-Schummel-Regel <c>PlanPlayableForChild</c>: kein Malus, wenn der Plan
+    /// inaktiv ist oder die Periode gar nicht in seine Laufzeit fällt. So wird nicht für Tage bestraft, an
+    /// denen der Vater den Plan aus hatte oder außerhalb des Datumsfensters gar nicht gelernt werden durfte.
+    /// </remarks>
+    private static bool PlanDueForPeriod(StudyPlan plan, DateOnly from, DateOnly to) =>
+        plan.Active && from <= plan.EndDate && to >= plan.StartDate;
+
+    /// <summary>Alle bereits <b>abgeschlossenen</b> Perioden eines Rhythmus im Fenster [<paramref name="windowStart"/>, heute).</summary>
+    private static IEnumerable<(DateOnly From, DateOnly To, string Key)> ClosedPeriods(
+        GoalCadence cadence, DateOnly windowStart, DateOnly today)
+    {
+        if (cadence == GoalCadence.Weekly)
+        {
+            // Nur voll abgeschlossene Wochen (Sonntag < heute); Schlüssel = Wochen-Montag wie beim Reward.
+            for (var monday = WeekMonday(windowStart); monday.AddDays(6) < today; monday = monday.AddDays(7))
+                yield return (monday, monday.AddDays(6), monday.ToString("yyyy-MM-dd"));
+        }
+        else
+        {
+            for (var d = windowStart; d < today; d = d.AddDays(1))
+                yield return (d, d, d.ToString("yyyy-MM-dd"));
+        }
+    }
+
+    /// <summary>
+    /// Rechnet für ein Kind alle <b>abgeschlossenen</b> Pflicht-Perioden nach und bucht für jede
+    /// <b>gerissene</b> (Ziel nicht erreicht) einmalig den Münz-Malus (<see cref="PlanPosition.PenaltyCoins"/>)
+    /// als negative <see cref="PointKind.GoalPenalty"/>-Buchung. Der „Stick" gegen Nicht-Lernen. Es gibt keinen
+    /// Scheduler; diese Methode wird an POST-Nahtstellen (Login, Shop-Kauf) aufgerufen und ist über den
+    /// Unique-Index (<see cref="PositionGoalPenalty"/>) sowie die Existenz-Checks <b>idempotent</b> – mehrfaches
+    /// Auslösen doppelt nicht. Schulden sind erlaubt: der Münz-Saldo darf negativ werden (kein Clamp).
+    /// </summary>
+    /// <returns>Summe der in diesem Lauf abgezogenen Münzen (0 = nichts fällig).</returns>
+    public async Task<int> SettleClosedPeriodsAsync(int childId, DateOnly today)
+    {
+        var child = await db.Children.FirstOrDefaultAsync(c => c.Id == childId);
+        if (child is null) return 0;
+
+        // Nur bestrafbare Positionen: echte Pflicht (Tag/Woche) mit gesetztem Malus, aus den Plänen des Kindes.
+        var positions = await db.PlanPositions.Include(p => p.Exercise).Include(p => p.StudyPlan)
+            .Where(p => p.StudyPlan!.ChildId == childId && p.Cadence != GoalCadence.None && p.PenaltyCoins > 0)
+            .ToListAsync();
+        if (positions.Count == 0) return 0;
+
+        var lookbackFloor = today.AddDays(-MaxSettleLookbackDays);
+        var appliedCoins = 0;
+        var changed = false;
+
+        foreach (var pos in positions)
+        {
+            var plan = pos.StudyPlan!;
+            var windowStart = plan.StartDate > lookbackFloor ? plan.StartDate : lookbackFloor;
+
+            foreach (var (from, to, key) in ClosedPeriods(pos.Cadence, windowStart, today))
+            {
+                if (!PlanDueForPeriod(plan, from, to)) continue;
+                // Ziel in der Periode belohnt (erreicht) oder bereits bestraft? → nichts nachzuholen.
+                if (await db.PositionGoalRewards.AnyAsync(r => r.PlanPositionId == pos.Id && r.PeriodKey == key)) continue;
+                if (await db.PositionGoalPenalties.AnyAsync(r => r.PlanPositionId == pos.Id && r.PeriodKey == key)) continue;
+                // Absicherung gegen ein Rennen mit dem Belohnungspfad (PointsGoalMet == 0 bucht keinen Reward,
+                // das Ziel kann trotzdem erfüllt sein): nur bei tatsächlich gerissener Periode bestrafen.
+                if (await IsGoalMetAsync(pos, to)) continue;
+
+                db.PositionGoalPenalties.Add(new PositionGoalPenalty
+                {
+                    PlanPositionId = pos.Id,
+                    PeriodKey = key,
+                    Day = to,
+                    Points = pos.PenaltyCoins,
+                });
+                db.ChildPoints.Add(new ChildPointsEntry
+                {
+                    ChildId = childId,
+                    Kind = PointKind.GoalPenalty,
+                    Amount = -pos.PenaltyCoins,
+                    Reason = $"[{plan.Title} · {pos.Exercise?.Title}] {(pos.Cadence == GoalCadence.Weekly ? "Wochenziel" : "Tagesziel")} gerissen",
+                });
+                appliedCoins += pos.PenaltyCoins;
+                changed = true;
+            }
+        }
+
+        if (!changed) return 0;
+
+        // Wallet-Invariante: jeder abbuchende Pfad bumpt den Serialisierungspunkt des geteilten Saldos,
+        // damit ein parallel laufender Kauf/Malus den Deckungs-Check nicht doppelt umgeht.
+        child.ConcurrencyStamp = Guid.NewGuid();
+        try
+        {
+            await db.SaveChangesAsync();
+        }
+        catch (DbUpdateException)
+        {
+            // Paralleles Settlement traf den Unique-Index bzw. den Kind-Concurrency-Token – gutartig: der Malus
+            // liegt bereits (bzw. wird beim nächsten Lauf idempotent nachgeholt). Nicht als Fehler durchreichen.
+            db.ChangeTracker.Clear();
+            return 0;
+        }
+        return appliedCoins;
     }
 
     /// <summary>Tag-für-Tag-Status über die Laufzeit bis heute (für die Vater-Auswertung).</summary>
