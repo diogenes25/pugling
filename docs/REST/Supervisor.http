@@ -1,0 +1,155 @@
+###############################################################################
+# Pugling – SUPERVISOR-Flow (api/v1/supervisor/*)
+#
+# Rolle: Supervisor (steuern & belohnen). Login als Vater 1.
+# Legt einen Lehrplan-Container an, hängt eine Position (referenzierte Übung mit
+# Ziel/Punkten/Leitner) ein, setzt ein Lernziel, pflegt den Familien-Shop, eine
+# Mission, bucht Punkte – und liest zur Kontrolle die Student-Sicht mit.
+#
+# Von oben nach unten senden (Chaining ist datei-lokal). Umgebung im
+# REST-Client-Statusleisten-Picker wählen (local = :5200, smoke = :5280).
+###############################################################################
+
+### Login als Vater (Supervisor)
+# @name login
+POST {{baseUrl}}/auth/father
+Content-Type: application/json
+
+{
+  "fatherId": {{fatherId}},
+  "pin": "{{fatherPin}}"
+}
+
+### Token aus der Login-Antwort ziehen
+@authToken = {{login.response.body.token}}
+
+### Kinder des Vaters lesen (Array-Response → erstes Kind greifen)
+# @name children
+GET {{baseUrl}}/supervisor/children
+Authorization: Bearer {{authToken}}
+### Erste Child-ID merken ($[0] = Array-Index-Zugriff)
+@childId = {{children.response.body.$[0].id}}
+
+### Eine vorhandene Übung als Positions-Referenz wählen (Vater hält Creator-Rolle)
+# @name pickExercise
+GET {{baseUrl}}/creator/exercises?take=1
+Authorization: Bearer {{authToken}}
+### Erste Exercise-ID merken
+@exerciseId = {{pickExercise.response.body.$[0].id}}
+
+### Lehrplan-Container anlegen (aktiviert automatisch, deaktiviert Geschwister-Pläne)
+# @name createPlan
+POST {{baseUrl}}/supervisor/study-plans
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "childId": {{childId}},
+  "title": "REST-Client Demo-Plan",
+  "durationDays": 14
+}
+
+### Neue Plan-ID merken
+@planId = {{createPlan.response.body.id}}
+
+### Position in den Plan hängen: Ziel 80 %, Leitner an, getippter Test (Stufe 4)
+# @name createPosition
+POST {{baseUrl}}/supervisor/study-plans/{{planId}}/positions
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "exerciseId": {{exerciseId}},
+  "cadence": "Daily",
+  "orderStrategy": "WeakestFirst",
+  "useLeitner": true,
+  "requireTypedTest": true,
+  "goalThreshold": 80,
+  "pointsGoalMet": 20,
+  "stageSchedule": [
+    { "dayNumber": 1, "stage": 2 },
+    { "dayNumber": 4, "stage": 4 }
+  ]
+}
+
+### Neue Position-ID merken
+@positionId = {{createPosition.response.body.id}}
+
+### Lernziel setzen (Durchschnitts-Beherrschung ≥ 70 % im Fach)
+# @name createLearnGoal
+POST {{baseUrl}}/supervisor/children/{{childId}}/learn-goals
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "subjectId": 1,
+  "metric": "AvgMastery",
+  "targetValue": 70,
+  "title": "REST-Demo Ziel"
+}
+
+### Shop-Artikel anlegen (articleNumber je Vater eindeutig → Zeitstempel)
+# @name createArticle
+POST {{baseUrl}}/supervisor/shop/articles
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "articleNumber": "REST-{{$timestamp}}",
+  "title": "30 Min Zocken",
+  "description": "Belohnung aus dem Familien-Shop",
+  "unitType": "Minute",
+  "actionType": "Zocken"
+}
+
+### Neue Article-ID merken
+@articleId = {{createArticle.response.body.id}}
+
+### Angebot (Listing) zum Artikel anlegen: 20 Münzen, Bestand 5
+# @name createListing
+POST {{baseUrl}}/supervisor/shop/articles/{{articleId}}/listings
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "title": "30 Min Zocken",
+  "coinPrice": 20,
+  "gemPrice": 0,
+  "unitsPerPurchase": 1,
+  "currentStock": 5,
+  "maxStock": 5,
+  "refillKind": "None"
+}
+
+### Neue Listing-ID merken
+@listingId = {{createListing.response.body.id}}
+
+### Tages-Mission anlegen (5 neue Wörter → 10 Punkte)
+# @name createMission
+POST {{baseUrl}}/supervisor/children/{{childId}}/missions
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "title": "5 neue Wörter",
+  "metric": "NewWords",
+  "target": 5,
+  "period": "Daily",
+  "rewardPoints": 10
+}
+
+### Punkte manuell gutschreiben (Fleiß-Bonus)
+# @name grantPoints
+POST {{baseUrl}}/supervisor/children/{{childId}}/points
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "amount": 5,
+  "reason": "Fleiß-Bonus (REST-Demo)"
+}
+
+### Kontrolle: die Tagesmission des Kindes aus der Student-Sicht mitlesen
+# @name overview
+GET {{baseUrl}}/student/study-plans/{{planId}}/overview
+Authorization: Bearer {{authToken}}
