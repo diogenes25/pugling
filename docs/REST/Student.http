@@ -1,0 +1,142 @@
+###############################################################################
+# Pugling – STUDENT-Flow (api/v1/student/*)
+#
+# Rolle: Student (lernen & einlösen). Login als Sohn 1.
+# Liest die Tagesmission, übt eine Position (Leitner-Review), legt den
+# Abschlusstest ab, liest Report/Wallet und kauft im Familien-Shop.
+#
+# VORAUSSETZUNG: ein aktiver Plan mit mindestens einer Position. Entweder vorher
+# Supervisor.http laufen lassen oder unten @planId auf einen Seed-Plan setzen.
+# Die positionId wird aus der Overview-Antwort abgeleitet.
+#
+# Von oben nach unten senden. Umgebung im REST-Client-Statusleisten-Picker
+# wählen (local = :5200, smoke = :5280).
+###############################################################################
+
+### Aktiver Plan (aus Supervisor.http oder Seed). Bei Bedarf anpassen.
+@planId = 1
+
+### Login als Sohn (Student)
+# @name login
+POST {{baseUrl}}/auth/child
+Content-Type: application/json
+
+{
+  "childId": {{childId}},
+  "pin": "{{childPin}}"
+}
+
+### Token aus der Login-Antwort ziehen
+@authToken = {{login.response.body.token}}
+
+### Tagesmission / Plan-Übersicht lesen
+# @name overview
+GET {{baseUrl}}/student/study-plans/{{planId}}/overview
+Authorization: Bearer {{authToken}}
+### Erste fällige Position aus der Overview greifen (verschachtelter Array-Zugriff)
+@positionId = {{overview.response.body.$.today.positions[0].positionId}}
+
+### Übungssitzung starten (Lern-Modus)
+# @name startSession
+POST {{baseUrl}}/student/study-plans/{{planId}}/positions/{{positionId}}/practice-sessions
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "mode": "Lern"
+}
+
+### Session-ID merken
+@sessionId = {{startSession.response.body.id}}
+
+### Karten der Sitzung lesen (Prompt + ggf. reveal je nach Stufe)
+# @name cards
+GET {{baseUrl}}/student/study-plans/{{planId}}/positions/{{positionId}}/practice-sessions/{{sessionId}}/cards
+Authorization: Bearer {{authToken}}
+### Erste Karte beantworten
+# Selbsteinschätzungs-Stufe (2) → "wasKnown"; getippte Stufe (z.B. 4) → stattdessen
+# "givenAnswer": "<Lösung>". Die Antwort liefert wasCorrect/expected/awarded/next.
+# @name review
+POST {{baseUrl}}/student/study-plans/{{planId}}/positions/{{positionId}}/practice-sessions/{{sessionId}}/review
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "itemIndex": 0,
+  "wasKnown": true
+}
+
+### Aktive Lernzeit melden (Anti-Cheat: server-seitig gedeckelt)
+# @name heartbeat
+POST {{baseUrl}}/student/study-plans/{{planId}}/positions/{{positionId}}/practice-sessions/{{sessionId}}/heartbeat
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "seconds": 30,
+  "active": true
+}
+
+### Sitzung beenden
+# @name endSession
+POST {{baseUrl}}/student/study-plans/{{planId}}/positions/{{positionId}}/practice-sessions/{{sessionId}}/end
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{}
+
+### Abschlusstest starten (Stufe kommt aus dem Fahrplan)
+# @name startTest
+POST {{baseUrl}}/student/study-plans/{{planId}}/positions/{{positionId}}/tests
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{}
+
+### Attempt-ID merken
+@attemptId = {{startTest.response.body.attemptId}}
+
+### Nächste Testaufgabe holen
+# @name testNext
+GET {{baseUrl}}/student/study-plans/{{planId}}/positions/{{positionId}}/tests/{{attemptId}}/next
+Authorization: Bearer {{authToken}}
+### Test abgeben (Selbsteinschätzung: wasKnown; getippt: "givenAnswer": "<Lösung>")
+# @name submitTest
+POST {{baseUrl}}/student/study-plans/{{planId}}/positions/{{positionId}}/tests/{{attemptId}}/submit
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "answers": [
+    { "itemIndex": 0, "wasKnown": true }
+  ]
+}
+
+### Positions-Report lesen (Box/Beherrschung/Trefferquote)
+# @name report
+GET {{baseUrl}}/student/study-plans/{{planId}}/positions/{{positionId}}/report
+Authorization: Bearer {{authToken}}
+### Wallet (Münzen/Gems) lesen
+# @name wallet
+GET {{baseUrl}}/student/me/points
+Authorization: Bearer {{authToken}}
+### Skins lesen (Gems → Skins)
+# @name skins
+GET {{baseUrl}}/student/me/skins
+Authorization: Bearer {{authToken}}
+### Familien-Shop lesen (kaufbare Angebote)
+# @name shop
+GET {{baseUrl}}/student/me/shop
+Authorization: Bearer {{authToken}}
+### Erste Angebots-ID greifen ($.available[0])
+@listingId = {{shop.response.body.$.available[0].id}}
+
+### Angebot kaufen (bucht Münzen ab, erhöht das Inventar)
+# Hinweis: 409, falls das erste Angebot zu teuer ist (affordable:false) — dann oben
+# @listingId auf eine bezahlbare Angebots-ID setzen. Kein Assert, da datenabhängig.
+# @name purchase
+POST {{baseUrl}}/student/me/shop/listings/{{listingId}}/purchase
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{}

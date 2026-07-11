@@ -1,0 +1,126 @@
+###############################################################################
+# Pugling – CREATOR-Flow (api/v1/creator/*)
+#
+# Rolle: Creator (Inhalte anlegen). Login als Vater 1 – ein Vater hält die
+# Creator- UND Supervisor-Rolle, und besitzt Kind 1 (nötig für den Tag-Schritt).
+# Ein reiner Lehrer (fatherId 2 / PIN 9999) kann alle Katalog-Schritte ebenso,
+# nur die child-skopierten Tags nicht (kein eigenes Kind).
+#
+# Von oben nach unten senden: jeder Request zieht Token/IDs aus der vorherigen
+# Antwort. Variablen sind DATEI-LOKAL – diese Datei ist ein durchgehender Flow.
+#
+# Umgebung im REST-Client-Statusleisten-Picker wählen (local = :5200, smoke = :5280).
+# baseUrl / Zugänge kommen aus .vscode/settings.json (rest-client.environmentVariables).
+###############################################################################
+
+### Login als Vater (hält Creator+Supervisor)
+# @name login
+POST {{baseUrl}}/auth/father
+Content-Type: application/json
+
+{
+  "fatherId": {{fatherId}},
+  "pin": "{{fatherPin}}"
+}
+
+### Token aus der Login-Antwort ziehen
+@authToken = {{login.response.body.token}}
+
+### Identität prüfen (roles enthält "Creator")
+# @name me
+GET {{baseUrl}}/auth/me
+Authorization: Bearer {{authToken}}
+### Fach anlegen
+# @name createSubject
+POST {{baseUrl}}/creator/subjects
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "name": "REST-Client Demo-Fach"
+}
+
+### Neue Subject-ID merken
+@subjectId = {{createSubject.response.body.id}}
+
+### Anlegen verifizieren: das Fach ist per GET abrufbar
+# @name getSubject
+GET {{baseUrl}}/creator/subjects/{{subjectId}}
+Authorization: Bearer {{authToken}}
+### Kapitel im Fach anlegen
+# @name createChapter
+POST {{baseUrl}}/creator/subjects/{{subjectId}}/chapters
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "name": "Lektion 1",
+  "orderIndex": 0
+}
+
+### Neue Chapter-ID merken
+@chapterId = {{createChapter.response.body.id}}
+
+### Zwei Vokabeln aus dem Store lesen (Array-Response!)
+# @name getVocabulary
+GET {{baseUrl}}/creator/vocabulary?take=2
+Authorization: Bearer {{authToken}}
+### Erste/zweite Store-Vokabel-ID greifen — $[0] / $[1] = Array-Index-Zugriff
+@vocab1Id = {{getVocabulary.response.body.$[0].id}}
+@vocab2Id = {{getVocabulary.response.body.$[1].id}}
+
+### Vokabelübung im Kapitel anlegen (refs = Store-Verlinkung per vocabularyId)
+# @name createExercise
+POST {{baseUrl}}/creator/subjects/{{subjectId}}/chapters/{{chapterId}}/vocabulary
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "title": "REST-Client Demo-Vokabeln",
+  "orderIndex": 0,
+  "rewardPoints": 10,
+  "config": {
+    "direction": "front-to-back",
+    "sourceLang": "en",
+    "targetLang": "de",
+    "refs": [
+      { "vocabularyId": {{vocab1Id}} },
+      { "vocabularyId": {{vocab2Id}} }
+    ]
+  }
+}
+
+### Neue Exercise-ID merken
+@exerciseId = {{createExercise.response.body.id}}
+
+### Anlegen verifizieren: die materialisierten Items der Übung lesen
+# @name getItems
+GET {{baseUrl}}/creator/subjects/{{subjectId}}/chapters/{{chapterId}}/vocabulary/{{exerciseId}}/items
+Authorization: Bearer {{authToken}}
+### Übungskatalog nach Typ filtern
+# @name listExercises
+GET {{baseUrl}}/creator/exercises?type=Vocabulary&take=5
+Authorization: Bearer {{authToken}}
+### Übung nebenwirkungsfrei durchspielen (Preview/Testmodus)
+# @name preview
+GET {{baseUrl}}/creator/exercises/{{exerciseId}}/preview
+Authorization: Bearer {{authToken}}
+### Tag anlegen (child-skopiert – Vater 1 besitzt Kind {{childId}})
+# @name createTag
+POST {{baseUrl}}/creator/tags
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "childId": {{childId}},
+  "name": "REST-Demo-{{$timestamp}}",
+  "color": "#22aa55"
+}
+
+### Neue Tag-ID merken
+@tagId = {{createTag.response.body.id}}
+
+### Verfügbare Übungstypen (Manifest) lesen
+# @name exerciseTypes
+GET {{baseUrl}}/creator/exercise-types
+Authorization: Bearer {{authToken}}

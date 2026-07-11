@@ -1,0 +1,19 @@
+{
+  "rest-client.environmentVariables": {
+    "$shared": {
+      "baseUrl": "http://localhost:5200/api/v1",
+      "fatherId": "1",
+      "teacherId": "2",
+      "childId": "1",
+      "fatherPin": "0000",
+      "teacherPin": "9999",
+      "childPin": "1111"
+    },
+    "local": {
+      "baseUrl": "http://localhost:5200/api/v1"
+    },
+    "smoke": {
+      "baseUrl": "http://localhost:5280/api/v1"
+    }
+  }
+}
