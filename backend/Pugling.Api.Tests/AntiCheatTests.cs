@@ -146,6 +146,44 @@ public class AntiCheatTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
     }
 
     [Fact]
+    public async Task Sohn_StudentPlanListe_ZeigtNurSpielbarenPlan()
+    {
+        var (planId, _) = await SetupAsync();
+        var child = await TestApi.ChildAsync(factory);
+
+        // Namensraum-treuer Discovery-Einstieg: der Sohn findet seinen spielbaren Plan unter student/.
+        var plans = await (await child.GetAsync("/api/v1/student/study-plans")).Content.ReadFromJsonAsync<JsonElement>();
+        var plan = Assert.Single(plans.EnumerateArray(), p => p.GetProperty("id").GetInt32() == planId);
+        JsonAssert.True(plan, "isPlayable");
+    }
+
+    [Fact]
+    public async Task Sohn_StudentPlanListe_ZeigtInaktivenPlanNicht()
+    {
+        var (planId, _) = await SetupAsync();
+        var father = await TestApi.FatherAsync(factory);
+        (await father.PatchAsJsonAsync($"/api/v1/supervisor/study-plans/{planId}", new { active = false })).EnsureSuccessStatusCode();
+
+        // Kein Cherry-Picking: der stillgelegte Plan taucht in der Sohn-Discovery nicht auf.
+        var child = await TestApi.ChildAsync(factory);
+        var plans = await (await child.GetAsync("/api/v1/student/study-plans")).Content.ReadFromJsonAsync<JsonElement>();
+
+        Assert.DoesNotContain(plans.EnumerateArray(), p => p.GetProperty("id").GetInt32() == planId);
+    }
+
+    [Fact]
+    public async Task Vater_DarfStudentPlanListeNicht_403()
+    {
+        await SetupAsync();
+        var father = await TestApi.FatherAsync(factory);
+
+        // student/study-plans ist Sohn-only (Role-Gate); der Vater liest Pläne unter supervisor/.
+        var res = await father.GetAsync("/api/v1/student/study-plans");
+
+        Assert.Equal(HttpStatusCode.Forbidden, res.StatusCode);
+    }
+
+    [Fact]
     public async Task AktivierenEinesPlans_DeaktiviertAndereDesKindes()
     {
         var father = await TestApi.FatherAsync(factory);

@@ -16,7 +16,7 @@ namespace Pugling.Api.Controllers;
 [Tags("Auth")]
 [Produces("application/json")]
 public class AuthController(PuglingDbContext db, TokenService tokens, AccountService accounts,
-    Services.Shared.PositionProgressService progress) : ControllerBase
+    Services.Shared.PositionProgressService progress, Services.Shared.ObjectiveRewardService objectiveRewards) : ControllerBase
 {
     public record LoginResponse(string Token, string Role, int Id, string Name, DateTime ExpiresAt);
 
@@ -54,7 +54,11 @@ public class AuthController(PuglingDbContext db, TokenService tokens, AccountSer
         var account = await accounts.EnsureForChildAsync(child);
         // Beim Einloggen offene Pflicht-Perioden nachrechnen: ein Malus fürs Nicht-Lernen landet so, bevor
         // der Sohn seinen Kontostand sieht oder etwas ausgibt (es gibt keinen Scheduler; idempotent).
-        await progress.SettleClosedPeriodsAsync(child.Id, DateOnly.FromDateTime(DateTime.UtcNow));
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        await progress.SettleClosedPeriodsAsync(child.Id, today);
+        // Ebenso die verdienten Belohnungen erreichter „großer Ziele" idempotent gutschreiben (Carrot),
+        // damit der Sohn sie direkt beim Login auf dem Konto hat.
+        await objectiveRewards.SettleAsync(child.Id, today);
         var (token, expires) = tokens.IssueForAccount(account, account.Profiles);
         return new LoginResponse(token, Roles.Student, child.Id, child.Name, expires);
     }

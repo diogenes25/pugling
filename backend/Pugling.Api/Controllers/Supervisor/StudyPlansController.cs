@@ -44,7 +44,7 @@ public class StudyPlansController(PuglingDbContext db, AuthAccess access) : Cont
     /// <summary>DB-Projektion inkl. Positions-Anzahl: EF übersetzt <c>p.Positions.Count</c> in eine COUNT-Subquery,
     /// ohne die Positions-Zeilen zu materialisieren. <paramref name="today"/> fließt als Parameter in die
     /// Spielbarkeits-Berechnung ein (dieselbe Laufzeit-Bedingung wie die Sohn-Sichtbarkeit).</summary>
-    private static Expression<Func<StudyPlan, PlanResponse>> ToResponse(DateOnly today) =>
+    internal static Expression<Func<StudyPlan, PlanResponse>> ToResponse(DateOnly today) =>
         p => new PlanResponse(p.Id, p.ChildId, p.Title, p.SubjectId, p.StartDate, p.EndDate, p.Active, p.Positions.Count, p.Description)
         {
             IsPlayable = p.Active && p.StartDate <= today && p.EndDate >= today,

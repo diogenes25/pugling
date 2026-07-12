@@ -49,6 +49,10 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
     public DbSet<ItemReviewEvent> ItemReviewEvents => Set<ItemReviewEvent>();
     // Kind-/Scope-bezogene Ergebnis-Lernziele (Beherrschung/Abdeckung), live gegen den Lernstand ausgewertet.
     public DbSet<LearnGoal> LearnGoals => Set<LearnGoal>();
+    // „Große Ziele" (OKR-Kern): Objective als Container über messbaren KeyResults + idempotenter Belohnungs-Log.
+    public DbSet<Objective> Objectives => Set<Objective>();
+    public DbSet<KeyResult> KeyResults => Set<KeyResult>();
+    public DbSet<ObjectiveReward> ObjectiveRewards => Set<ObjectiveReward>();
 
     // Stundenplan-Steuerung
     public DbSet<TimetableEntry> Timetable => Set<TimetableEntry>();
@@ -101,6 +105,12 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
         // Aussteller-Attribution der Ökonomie (Momentaufnahme): Filter „nur meine Vorgänge" je (Kind, Supervisor).
         modelBuilder.Entity<ShopPurchase>().HasIndex(p => new { p.ChildId, p.SupervisorId });
         modelBuilder.Entity<ActivationRequest>().HasIndex(r => new { r.ChildId, r.SupervisorId });
+        modelBuilder.Entity<ChildPointsEntry>(e =>
+        {
+            // Wallet-Summen und Buchungslisten: Filter nach Kind/Art sowie Paging „neueste zuerst".
+            e.HasIndex(p => new { p.ChildId, p.Kind });
+            e.HasIndex(p => new { p.ChildId, p.CreatedAt, p.Id });
+        });
 
         // Betreuung Supervisor >-< Student. Ein Student kann mehrere Supervisor haben; ein Paar ist eindeutig.
         // Leaf auf zwei unabhängige Roots (wie ItemProgress) – beide FKs Cascade, kein SQLite-Diamant.
@@ -227,6 +237,8 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
         // Vokabeln/Lückentexten). Leitner-Intervalle und Stufen-Fahrplan liegen als JSON-Spalten an der Position.
         modelBuilder.Entity<PlanPosition>(e =>
         {
+            // Plan-Ladevorgänge filtern nach StudyPlanId und sortieren nach Order/Id.
+            e.HasIndex(p => new { p.StudyPlanId, p.Order, p.Id });
             e.HasOne(p => p.StudyPlan).WithMany(s => s.Positions).HasForeignKey(p => p.StudyPlanId)
                 .OnDelete(DeleteBehavior.Cascade);
             e.HasOne(p => p.Exercise).WithMany().HasForeignKey(p => p.ExerciseId)
@@ -257,6 +269,7 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
         {
             e.HasIndex(p => new { p.ChildId, p.ItemId }).IsUnique();
             e.HasIndex(p => new { p.ChildId, p.VocabularyId });
+            e.HasIndex(p => new { p.ChildId, p.ExerciseId });
             e.HasOne(p => p.Child).WithMany().HasForeignKey(p => p.ChildId).OnDelete(DeleteBehavior.Cascade);
             e.HasOne(p => p.Item).WithMany().HasForeignKey(p => p.ItemId).OnDelete(DeleteBehavior.Cascade);
         });
@@ -289,12 +302,34 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
                 .OnDelete(DeleteBehavior.Cascade);
         });
 
+        // Objective (großes Ziel) gehört einem Kind (Cascade); seine KeyResults hängen am Objective (Cascade).
+        // Der Katalog-Scope eines KeyResults ist bewusst NICHT als FK modelliert (nur Ids), wie beim LearnGoal –
+        // die Auswertung läuft über den Lernstand-Snapshot, nicht über Navigationspfade.
+        modelBuilder.Entity<Objective>(e =>
+        {
+            e.HasOne(o => o.Child).WithMany().HasForeignKey(o => o.ChildId).OnDelete(DeleteBehavior.Cascade);
+            e.HasMany(o => o.KeyResults).WithOne(k => k.Objective!).HasForeignKey(k => k.ObjectiveId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // Objective-Belohnungs-Log: höchstens eine Buchung je (Objective, Anlass) – die Idempotenz-Garantie
+        // gegen doppelte Auszahlung, wenn das Lazy Settlement mehrfach läuft. Cascade mit dem Objective.
+        modelBuilder.Entity<ObjectiveReward>(e =>
+        {
+            e.HasIndex(r => new { r.ObjectiveId, r.PeriodKey }).IsUnique();
+            e.HasOne(r => r.Objective).WithMany().HasForeignKey(r => r.ObjectiveId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
         // Übungssitzung/Test optional an eine Position gekoppelt (neues Modell). Beide hängen bereits über
         // StudyPlanId am Plan (Cascade); der Positions-Verweis nutzt daher SetNull, um in SQLite keine
         // zweiten Cascade-Pfade (Plan → Position → Session/Test) neben Plan → Session/Test zu erzeugen.
         // Die eingefrorene Ausspiel-Reihenfolge (Cursor-Modell) liegt als JSON-Spalte (Neuzuweisung im Controller).
         modelBuilder.Entity<PracticeSession>(e =>
         {
+            // Ziel-/Metrik-Queries: Position+Tag(+Modus) sowie Child-Rollups über StudyPlan+Tag.
+            e.HasIndex(s => new { s.PlanPositionId, s.Day, s.Mode });
+            e.HasIndex(s => new { s.StudyPlanId, s.Day });
             e.HasOne(s => s.PlanPosition).WithMany().HasForeignKey(s => s.PlanPositionId)
                 .OnDelete(DeleteBehavior.SetNull);
             e.Property(s => s.Order).HasConversion(
@@ -304,6 +339,9 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
         });
         modelBuilder.Entity<TestAttempt>(e =>
         {
+            // Ziel-/Metrik-Queries: Position+Tag mit Abschlussstatus sowie Child-Rollups über StudyPlan+Tag.
+            e.HasIndex(t => new { t.PlanPositionId, t.Day, t.CompletedAt, t.Passed });
+            e.HasIndex(t => new { t.StudyPlanId, t.Day });
             e.HasOne(t => t.PlanPosition).WithMany().HasForeignKey(t => t.PlanPositionId)
                 .OnDelete(DeleteBehavior.SetNull);
             e.Property(t => t.Order).HasConversion(
