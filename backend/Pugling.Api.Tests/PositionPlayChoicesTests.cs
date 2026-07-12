@@ -1,16 +1,19 @@
+using Pugling.Api.Exercises;
 using Pugling.Api.Models;
-using Pugling.Api.Services;
+using Pugling.Api.Services.Shared;
 
 namespace Pugling.Api.Tests;
 
 /// <summary>
-/// Unit-Tests der Multiple-Choice-Ablenkerwahl (<see cref="PositionPlayService.ChoicesFor"/>):
-/// zustandslos, ohne DB/HTTP. Sichert die Anti-Rate-Zusagen: genau eine richtige Antwort plus bis zu
-/// drei <b>distinkte</b> Ablenker, deterministische Rotation (die Lösung steht nicht immer vorne) und
-/// keine Auswahl für andere Verfahren/Stufen.
+/// Unit-Tests der Multiple-Choice-Ablenkerwahl (<see cref="IExerciseType.Choices"/>, hier
+/// <see cref="VocabularyExerciseType"/>): zustandslos, ohne DB/HTTP. Sichert die Anti-Rate-Zusagen: genau eine
+/// richtige Antwort plus bis zu drei <b>distinkte</b> Ablenker, deterministische Rotation (die Lösung steht nicht
+/// immer vorne) und keine Auswahl für andere Verfahren/Stufen.
 /// </summary>
 public class PositionPlayChoicesTests
 {
+    private static readonly VocabularyExerciseType VocabType = new();
+
     private static ContentItem Item(int index, string answer) => new(index, $"Frage {index}", answer, []);
 
     private static readonly IReadOnlyList<ContentItem> Vocab =
@@ -19,7 +22,7 @@ public class PositionPlayChoicesTests
     ];
 
     private static IReadOnlyList<string>? Choices(IReadOnlyList<ContentItem> items, int index, TestStage stage) =>
-        PositionPlayService.ChoicesFor(items, items[index], ExerciseType.Vocabulary, (int)stage);
+        VocabType.Choices(items, items[index], (int)stage);
 
     [Fact]
     public void MultipleChoice_LiefertLoesungPlusDreiDistinkteAblenker()
@@ -57,6 +60,7 @@ public class PositionPlayChoicesTests
     public void NichtMultipleChoice_LiefertKeineAuswahl()
     {
         Assert.Null(Choices(Vocab, 0, TestStage.SelfAssess)); // andere Stufe
-        Assert.Null(PositionPlayService.ChoicesFor(Vocab, Vocab[0], ExerciseType.Arithmetic, (int)TestStage.MultipleChoice)); // anderes Verfahren
+        // Anderes Verfahren: Rechnen kennt keine MC-Auswahl (Basis-Default null).
+        Assert.Null(new ArithmeticExerciseType().Choices(Vocab, Vocab[0], (int)TestStage.MultipleChoice));
     }
 }

@@ -161,35 +161,40 @@ public class ObjectiveTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
         // Leerer Titel → 400.
         Assert.Equal(HttpStatusCode.BadRequest, (await father.PostAsJsonAsync(Url(childId), new
         {
-            title = "", kind = "Committed",
+            title = "",
+            kind = "Committed",
             keyResults = new[] { new { subjectId, metric = "MaxWeakItems", targetValue = 0 } },
         })).StatusCode);
 
         // ClassTestGrade mit Kapitel-Scope → 400 (Noten hängen am Fach).
         Assert.Equal(HttpStatusCode.BadRequest, (await father.PostAsJsonAsync(Url(childId), new
         {
-            title = "X", kind = "Committed",
+            title = "X",
+            kind = "Committed",
             keyResults = new[] { new { subjectId, chapterId = 1, metric = "ClassTestGrade", targetValue = 20 } },
         })).StatusCode);
 
         // ClassTestGrade Zielnote außerhalb 10..60 → 400.
         Assert.Equal(HttpStatusCode.BadRequest, (await father.PostAsJsonAsync(Url(childId), new
         {
-            title = "X", kind = "Committed",
+            title = "X",
+            kind = "Committed",
             keyResults = new[] { new { subjectId, metric = "ClassTestGrade", targetValue = 5 } },
         })).StatusCode);
 
         // Prozent-Metrik über 100 → 400.
         Assert.Equal(HttpStatusCode.BadRequest, (await father.PostAsJsonAsync(Url(childId), new
         {
-            title = "X", kind = "Committed",
+            title = "X",
+            kind = "Committed",
             keyResults = new[] { new { subjectId, metric = "AvgMastery", targetValue = 150 } },
         })).StatusCode);
 
         // „Mindestens"-Metrik mit Zielwert 0 → 400 (wäre sonst sofort vakuär erfüllt = Gratis-Belohnung).
         Assert.Equal(HttpStatusCode.BadRequest, (await father.PostAsJsonAsync(Url(childId), new
         {
-            title = "X", kind = "Committed",
+            title = "X",
+            kind = "Committed",
             keyResults = new[] { new { subjectId, metric = "MasteredPercent", targetValue = 0 } },
         })).StatusCode);
 
@@ -197,7 +202,8 @@ public class ObjectiveTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
         var child = await TestApi.ChildAsync(factory, childId, "7104");
         Assert.Equal(HttpStatusCode.Forbidden, (await child.PostAsJsonAsync(Url(childId), new
         {
-            title = "X", kind = "Committed",
+            title = "X",
+            kind = "Committed",
             keyResults = new[] { new { subjectId, metric = "MaxWeakItems", targetValue = 0 } },
         })).StatusCode);
 
@@ -214,7 +220,10 @@ public class ObjectiveTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
 
         var objectiveId = (await JsonAsync(await father.PostAsJsonAsync(Url(childId), new
         {
-            title = "Ziel mit Etappen", kind = "Committed", rewardOnComplete = 0, rewardPerKeyResult = 0,
+            title = "Ziel mit Etappen",
+            kind = "Committed",
+            rewardOnComplete = 0,
+            rewardPerKeyResult = 0,
         }))).GetProperty("id").GetInt32();
 
         var krUrl = $"{Url(childId)}/{objectiveId}/key-results";

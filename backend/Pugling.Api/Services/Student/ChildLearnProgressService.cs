@@ -17,7 +17,7 @@ namespace Pugling.Api.Services.Student;
 /// vokabel-skopiert. Der Fortschritt wird nicht neu berechnet, sondern aus <see cref="ItemProgress"/> gelesen
 /// (fortgeschrieben vom <see cref="ItemProgressService"/> an den Bewertungspunkten).
 /// </summary>
-public class ChildLearnProgressService(PuglingDbContext db)
+public class ChildLearnProgressService(PuglingDbContext db, ExerciseTypeRegistry registry)
 {
     /// <summary>Ab welcher Beherrschung (Prozent) ein Item als „schwach" gilt – geteilt mit der flachen Sicht.</summary>
     private const int WeakBelowPercent = ItemProgress.WeakBelowPercent;
@@ -81,10 +81,11 @@ public class ChildLearnProgressService(PuglingDbContext db)
         var allIds = planRows.Select(r => r.ExerciseId).Concat(progressIds).Distinct().ToList();
         if (allIds.Count == 0) return [];
 
-        // Katalog-Koordinaten (nur Vokabelübungen).
+        // Katalog-Koordinaten (nur item-getrackte Typen, heute Vokabeln).
+        var itemProgressKeys = registry.KeysSupportingItemProgress;
         var coords = await (
             from ex in db.Exercises.AsNoTracking()
-            where allIds.Contains(ex.Id) && ex.Type == ExerciseType.Vocabulary
+            where allIds.Contains(ex.Id) && itemProgressKeys.Contains(ex.Type)
             join ch in db.Chapters.AsNoTracking() on ex.ChapterId equals ch.Id
             select new { ex.Id, ex.Title, ExOrder = ex.OrderIndex, ChId = ch.Id, ChName = ch.Name, ChOrder = ch.OrderIndex, ch.SubjectId })
             .ToListAsync(ct);

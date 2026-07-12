@@ -15,15 +15,15 @@ namespace Pugling.Api.Controllers.Creator;
 [Tags("Creator – Exercise Types")]
 [Produces("application/json")]
 [Authorize]
-public class ExerciseTypesController : ControllerBase
+public class ExerciseTypesController(ExerciseTypeRegistry registry) : ControllerBase
 {
     /// <summary>Manifest aller bekannten Übungstypen.</summary>
     [HttpGet]
-    public IReadOnlyList<ExerciseTypeManifest> List() => ExerciseManifests.All;
+    public IReadOnlyList<ExerciseTypeManifest> List() => registry.Manifests;
 
     /// <summary>Manifest eines einzelnen Übungstyps.</summary>
     [HttpGet("{type}")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public ActionResult<ExerciseTypeManifest> Get(ExerciseType type) =>
-        ExerciseManifests.ByType(type) is { } manifest ? manifest : NotFound();
+    public ActionResult<ExerciseTypeManifest> Get(string type) =>
+        registry.ByKey(type)?.Manifest is { } manifest ? manifest : NotFound();
 }

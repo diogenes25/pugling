@@ -116,12 +116,12 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
     /// (der Server bewertet, nie das Frontend); Anzeige-/Selbsteinschätzung und die Hör-Stufe decken
     /// per Design auf bzw. geben die Audioquelle mit.
     /// </summary>
-    private static PracticeCard BuildCard(ExerciseType type, int stage, bool typed,
+    private static PracticeCard BuildCard(IExerciseType type, int stage, bool typed,
         IReadOnlyList<ContentItem> items, int index)
     {
         var item = items[index];
         var f = PositionPlayService.CardFacets(items, item, type, stage, typed);
-        return new PracticeCard(index, stage, type.ToString(), item.Prompt,
+        return new PracticeCard(index, stage, type.Key, item.Prompt,
             f.Hint, f.AnswerLength, f.Reveal, f.Choices, f.AudioUrl);
     }
 
@@ -145,12 +145,14 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         if (pos?.Exercise is null) return NotFound();
 
         var items = await play.ItemsOfAsync(pos);
-        var stage = PositionPlayService.StageForDay(pos, plan, session.Day);
-        var typed = PositionPlayService.IsTypedStage(pos.Exercise.Type, stage);
+        if (play.TypeOf(pos.Exercise) is not { } type)
+            return this.ProblemWithCode(ApiErrors.UnknownExerciseType, "The exercise has an unknown type.");
+        var stage = PositionPlayService.StageForDay(pos, plan, session.Day, type);
+        var typed = type.IsTypedStage(stage);
 
         // Eingefrorene Reihenfolge; seit dem Start entfernte Items (Item-CRUD) überspringen.
         return session.Order.Where(i => i >= 0 && i < items.Count)
-            .Select(i => BuildCard(pos.Exercise.Type, stage, typed, items, i)).ToList();
+            .Select(i => BuildCard(type, stage, typed, items, i)).ToList();
     }
 
     /// <summary>Die nächste Karte im Lern-Modus (oder <c>Done</c>), server-geführt über den Sitzungs-Cursor.</summary>
@@ -173,14 +175,16 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         if (pos?.Exercise is null) return NotFound();
 
         var items = await play.ItemsOfAsync(pos);
-        var stage = PositionPlayService.StageForDay(pos, plan, session.Day);
-        var typed = PositionPlayService.IsTypedStage(pos.Exercise.Type, stage);
+        if (play.TypeOf(pos.Exercise) is not { } type)
+            return this.ProblemWithCode(ApiErrors.UnknownExerciseType, "The exercise has an unknown type.");
+        var stage = PositionPlayService.StageForDay(pos, plan, session.Day, type);
+        var typed = type.IsTypedStage(stage);
 
         var cursor = PositionPlayService.SkipRemoved(session.Order, session.Cursor, items.Count);
         if (cursor != session.Cursor) { session.Cursor = cursor; await db.SaveChangesAsync(); }
         if (cursor >= session.Order.Count) return new NextResponse(null, true, cursor, session.Order.Count);
 
-        var card = BuildCard(pos.Exercise.Type, stage, typed, items, session.Order[cursor]);
+        var card = BuildCard(type, stage, typed, items, session.Order[cursor]);
         return new NextResponse(card, false, cursor, session.Order.Count);
     }
 
@@ -233,8 +237,10 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         var item = items[dto.ItemIndex];
 
         // Stufe serverseitig erzwingen (nicht vom Client wählbar) und typ-neutral bewerten.
-        var stage = PositionPlayService.StageForDay(pos, plan, session.Day);
-        var typed = PositionPlayService.IsTypedStage(pos.Exercise.Type, stage);
+        if (play.TypeOf(pos.Exercise) is not { } type)
+            return this.ProblemWithCode(ApiErrors.UnknownExerciseType, "The exercise has an unknown type.");
+        var stage = PositionPlayService.StageForDay(pos, plan, session.Day, type);
+        var typed = type.IsTypedStage(stage);
         var wasCorrect = typed
             ? item.AcceptedAnswers.Any(a => grader.Matches(dto.GivenAnswer, a))
             : dto.WasKnown ?? false;
@@ -314,7 +320,7 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
             await gamification.EvaluateAndAwardAsync(plan.ChildId, session.Day);
 
         var done = session.Cursor >= session.Order.Count;
-        var next = done ? null : BuildCard(pos.Exercise.Type, stage, typed, items, session.Order[session.Cursor]);
+        var next = done ? null : BuildCard(type, stage, typed, items, session.Order[session.Cursor]);
         return new ReviewOutcome(wasCorrect, item.Answer, awarded, prog.Box, prog.DueOn, combo,
             comboBonus, speedBonus, next, done);
     }

@@ -78,6 +78,8 @@ public static class ApiErrors
     public static readonly ApiError NoCheckableContent = new("no_checkable_content", 400, "No checkable content.");
     /// <summary>Stundenplan-Slot (Wochentag + Fach) ist bereits belegt (409).</summary>
     public static readonly ApiError TimetableSlotTaken = new("timetable_slot_taken", 409, "Timetable slot already taken.");
+    /// <summary>Die Übung trägt einen Typ-Schlüssel, den die <see cref="Exercises.ExerciseTypeRegistry"/> nicht kennt – Datenintegritätsfehler, kein Nutzerfehler (500).</summary>
+    public static readonly ApiError UnknownExerciseType = new("unknown_exercise_type", 500, "The exercise has an unknown type.");
 
     /// <summary>
     /// Alle bekannten Codes (per Reflection über die Felder, einmalig materialisiert). Speist das

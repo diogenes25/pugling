@@ -19,7 +19,7 @@ public static class ExerciseItemBackfill
     public static async Task RunAsync(PuglingDbContext db, ExerciseItemService items, CancellationToken ct = default)
     {
         var vocabExercises = await db.Exercises
-            .Where(e => e.Type == ExerciseType.Vocabulary)
+            .Where(e => e.Type == ExerciseTypeKeys.Vocabulary)
             .ToListAsync(ct);
 
         foreach (var exercise in vocabExercises)

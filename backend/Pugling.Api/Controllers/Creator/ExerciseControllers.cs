@@ -19,12 +19,11 @@ internal static class ExerciseRoutes
     public const string Base = ApiRoutes.Creator + "/subjects/{subjectId:int}/chapters/{chapterId:int}";
 }
 
-/// <summary>Antworten des Kindes, positionsbezogen (Index in der Aufgaben-/Paarliste).</summary>
-public record CheckAnswersDto(List<GivenAnswer> Answers);
-/// <summary>Antworten zu einem generierten Drill; <paramref name="Seed"/> muss der beim Generieren genutzte sein.</summary>
-public record CheckDrillDto(int? Seed, List<GivenAnswer> Answers);
-/// <summary>Antworten für eine Liste: die genannten Einträge in der eingegebenen Reihenfolge.</summary>
-public record CheckListDto(List<string?> Answers);
+/// <summary>
+/// Antworten des Kindes für einen Katalog-Direktcheck, positionsbezogen (Index in der Aufgaben-/Paarliste).
+/// <paramref name="Seed"/> ist nur für seed-gebundene Typen (Rechen-Drill) nötig – der beim Generieren erhaltene.
+/// </summary>
+public record CheckDto(List<GivenAnswer> Answers, int? Seed = null);
 
 /// <summary>
 /// Vokabelübungen. Die Übung selbst beschreibt Art/Ziel/Wert; ihre Vokabelpaare leben eine Ebene tiefer als
@@ -34,10 +33,10 @@ public record CheckListDto(List<string?> Answers);
 /// </summary>
 [Route(ExerciseRoutes.Base + "/vocabulary")]
 [Tags("Creator – Vocabulary")]
-public class VocabularyController(PuglingDbContext db, ExerciseItemService items, VocabularyStoreService store)
-    : ExerciseControllerBase<VocabularyConfig>(db)
+public class VocabularyController(PuglingDbContext db, ExerciseTypeRegistry registry, ExerciseItemService items, VocabularyStoreService store)
+    : ExerciseControllerBase<VocabularyConfig>(db, registry)
 {
-    protected override ExerciseType Type => ExerciseType.Vocabulary;
+    protected override string TypeKey => ExerciseTypeKeys.Vocabulary;
 
     /// <summary>
     /// Sichert beim Anlegen/Ändern zu, dass alle per ID referenzierten Store-Einträge existieren und – falls
@@ -310,17 +309,17 @@ public class VocabularyController(PuglingDbContext db, ExerciseItemService items
 /// <summary>Leseverständnis-Übungen.</summary>
 [Route(ExerciseRoutes.Base + "/reading")]
 [Tags("Creator – Reading")]
-public class ReadingController(PuglingDbContext db) : ExerciseControllerBase<ReadingConfig>(db)
+public class ReadingController(PuglingDbContext db, ExerciseTypeRegistry registry) : ExerciseControllerBase<ReadingConfig>(db, registry)
 {
-    protected override ExerciseType Type => ExerciseType.Reading;
+    protected override string TypeKey => ExerciseTypeKeys.Reading;
 }
 
 /// <summary>Lückentext-Übungen. Lücken dürfen per <see cref="Gap.VocabKey"/> den Vokabel-Store referenzieren.</summary>
 [Route(ExerciseRoutes.Base + "/cloze")]
 [Tags("Creator – Cloze")]
-public class ClozeController(PuglingDbContext db) : ExerciseControllerBase<ClozeConfig>(db)
+public class ClozeController(PuglingDbContext db, ExerciseTypeRegistry registry) : ExerciseControllerBase<ClozeConfig>(db, registry)
 {
-    protected override ExerciseType Type => ExerciseType.Cloze;
+    protected override string TypeKey => ExerciseTypeKeys.Cloze;
 
     /// <summary>Sichert beim Anlegen/Ändern zu, dass alle in Lücken referenzierten Store-Keys existieren.</summary>
     protected override async Task<string?> ValidateConfigAsync(int subjectId, ClozeConfig config)
@@ -337,44 +336,40 @@ public class ClozeController(PuglingDbContext db) : ExerciseControllerBase<Cloze
 /// <summary>Aufsatz-Übungen.</summary>
 [Route(ExerciseRoutes.Base + "/essays")]
 [Tags("Creator – Essays")]
-public class EssaysController(PuglingDbContext db) : ExerciseControllerBase<EssayConfig>(db)
+public class EssaysController(PuglingDbContext db, ExerciseTypeRegistry registry) : ExerciseControllerBase<EssayConfig>(db, registry)
 {
-    protected override ExerciseType Type => ExerciseType.Essay;
+    protected override string TypeKey => ExerciseTypeKeys.Essay;
 }
 
 /// <summary>Hörverständnis-Übungen.</summary>
 [Route(ExerciseRoutes.Base + "/listening")]
 [Tags("Creator – Listening")]
-public class ListeningController(PuglingDbContext db) : ExerciseControllerBase<ListeningConfig>(db)
+public class ListeningController(PuglingDbContext db, ExerciseTypeRegistry registry) : ExerciseControllerBase<ListeningConfig>(db, registry)
 {
-    protected override ExerciseType Type => ExerciseType.Listening;
+    protected override string TypeKey => ExerciseTypeKeys.Listening;
 }
 
 /// <summary>Grammatik-Übungen.</summary>
 [Route(ExerciseRoutes.Base + "/grammar")]
 [Tags("Creator – Grammar")]
-public class GrammarController(PuglingDbContext db) : ExerciseControllerBase<GrammarConfig>(db)
+public class GrammarController(PuglingDbContext db, ExerciseTypeRegistry registry) : ExerciseControllerBase<GrammarConfig>(db, registry)
 {
-    protected override ExerciseType Type => ExerciseType.Grammar;
+    protected override string TypeKey => ExerciseTypeKeys.Grammar;
 }
 
 /// <summary>Zuordnungs-Übungen (Paare). Neben dem CRUD bewertet <see cref="Check"/> die genannten Zuordnungen.</summary>
 [Route(ExerciseRoutes.Base + "/matching")]
 [Tags("Creator – Matching")]
-public class MatchingController(PuglingDbContext db, ExerciseAnswerChecker checker)
-    : ExerciseControllerBase<MatchingConfig>(db)
+public class MatchingController(PuglingDbContext db, ExerciseTypeRegistry registry)
+    : ExerciseControllerBase<MatchingConfig>(db, registry)
 {
-    protected override ExerciseType Type => ExerciseType.Matching;
+    protected override string TypeKey => ExerciseTypeKeys.Matching;
 
     /// <summary>Wertet die Zuordnungen aus: je Paar zählt die zur linken Seite genannte rechte Seite.</summary>
     [HttpPost("{exerciseId:int}/check")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<CheckResult>> Check(int subjectId, int chapterId, int exerciseId, CheckAnswersDto body)
-    {
-        var exercise = await FindAsync(subjectId, chapterId, exerciseId);
-        return exercise is null ? NotFound() : checker.CheckMatching(ConfigOf(exercise), body.Answers);
-    }
-
+    public Task<ActionResult<CheckResult>> Check(int subjectId, int chapterId, int exerciseId, CheckDto body) =>
+        RunCheckAsync(subjectId, chapterId, exerciseId, body);
 }
 
 /// <summary>
@@ -383,9 +378,9 @@ public class MatchingController(PuglingDbContext db, ExerciseAnswerChecker check
 /// </summary>
 [Route(ExerciseRoutes.Base + "/translation")]
 [Tags("Creator – Translation")]
-public class TranslationController(PuglingDbContext db, VocabularyStoreService store) : ExerciseControllerBase<TranslationConfig>(db)
+public class TranslationController(PuglingDbContext db, ExerciseTypeRegistry registry, VocabularyStoreService store) : ExerciseControllerBase<TranslationConfig>(db, registry)
 {
-    protected override ExerciseType Type => ExerciseType.Translation;
+    protected override string TypeKey => ExerciseTypeKeys.Translation;
 
     /// <summary>Verpflichtet die Sprachcodes, sobald Paare ohne <see cref="TranslationItem.VocabularyId"/> anzulegen sind.</summary>
     protected override Task<string?> ValidateConfigAsync(int subjectId, TranslationConfig config) =>
@@ -463,10 +458,10 @@ public record DecodePreviewInput(string LearningLang, string NativeLang, string 
 /// </summary>
 [Route(ExerciseRoutes.Base + "/birkenbihl")]
 [Tags("Creator – Birkenbihl")]
-public class BirkenbihlController(PuglingDbContext db, BirkenbihlDecodingService decoder, VocabularyStoreService store)
-    : ExerciseControllerBase<BirkenbihlConfig>(db)
+public class BirkenbihlController(PuglingDbContext db, ExerciseTypeRegistry registry, BirkenbihlDecodingService decoder, VocabularyStoreService store)
+    : ExerciseControllerBase<BirkenbihlConfig>(db, registry)
 {
-    protected override ExerciseType Type => ExerciseType.Birkenbihl;
+    protected override string TypeKey => ExerciseTypeKeys.Birkenbihl;
 
     /// <summary>Ergänzt je dekodiertem Wort den abgeleiteten Selbstlink <c>_self</c> aus seiner Vokabel-ID (nicht persistiert).</summary>
     protected override BirkenbihlConfig ConfigForResponse(Exercise exercise)
@@ -681,19 +676,16 @@ public class BirkenbihlController(PuglingDbContext db, BirkenbihlDecodingService
 /// <summary>Feste Rechenaufgaben (manuell gepflegte Liste). <see cref="Check"/> wertet die Antworten aus.</summary>
 [Route(ExerciseRoutes.Base + "/arithmetic")]
 [Tags("Creator – Arithmetic")]
-public class ArithmeticController(PuglingDbContext db, ExerciseAnswerChecker checker)
-    : ExerciseControllerBase<ArithmeticConfig>(db)
+public class ArithmeticController(PuglingDbContext db, ExerciseTypeRegistry registry)
+    : ExerciseControllerBase<ArithmeticConfig>(db, registry)
 {
-    protected override ExerciseType Type => ExerciseType.Arithmetic;
+    protected override string TypeKey => ExerciseTypeKeys.Arithmetic;
 
     /// <summary>Bewertet die Lösungen des Kindes gegen die hinterlegten Aufgaben (numerisch, mit Toleranz).</summary>
     [HttpPost("{exerciseId:int}/check")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<CheckResult>> Check(int subjectId, int chapterId, int exerciseId, CheckAnswersDto body)
-    {
-        var exercise = await FindAsync(subjectId, chapterId, exerciseId);
-        return exercise is null ? NotFound() : checker.CheckArithmetic(ConfigOf(exercise), body.Answers);
-    }
+    public Task<ActionResult<CheckResult>> Check(int subjectId, int chapterId, int exerciseId, CheckDto body) =>
+        RunCheckAsync(subjectId, chapterId, exerciseId, body);
 }
 
 /// <summary>
@@ -703,20 +695,15 @@ public class ArithmeticController(PuglingDbContext db, ExerciseAnswerChecker che
 /// </summary>
 [Route(ExerciseRoutes.Base + "/arithmetic-drill")]
 [Tags("Creator – Arithmetic Drill")]
-public class ArithmeticDrillController(PuglingDbContext db, ArithmeticProblemGenerator generator, ExerciseAnswerChecker checker)
-    : ExerciseControllerBase<ArithmeticDrillConfig>(db)
+public class ArithmeticDrillController(PuglingDbContext db, ExerciseTypeRegistry registry)
+    : ExerciseControllerBase<ArithmeticDrillConfig>(db, registry)
 {
-    protected override ExerciseType Type => ExerciseType.ArithmeticDrill;
+    protected override string TypeKey => ExerciseTypeKeys.ArithmeticDrill;
 
     /// <summary>Ein frisch erzeugter Aufgabensatz zu einer Drill-Übung.</summary>
     public record GeneratedDrill(int ExerciseId, string Title, int Seed, IReadOnlyList<GeneratedProblem> Problems);
 
-    /// <summary>Prüft die Config-Grenzen; gibt die Fehlermeldung zurück oder null, wenn alles passt.</summary>
-    private static string? Validate(ArithmeticDrillConfig c) =>
-        c.Operations.Count == 0 ? "At least one operation type is required."
-        : c.MaxOperand < c.MinOperand ? "MaxOperand must be ≥ MinOperand."
-        : c.ProblemCount is < 1 or > 100 ? "ProblemCount must be between 1 and 100."
-        : null;
+    private IGeneratingExerciseType DrillType => (IGeneratingExerciseType)Registry.Require(TypeKey);
 
     /// <summary>
     /// Erzeugt einen Zufallssatz nach den gespeicherten Regeln. Zurückgegeben wird auch der verwendete
@@ -729,12 +716,9 @@ public class ArithmeticDrillController(PuglingDbContext db, ArithmeticProblemGen
     {
         var exercise = await FindAsync(subjectId, chapterId, exerciseId);
         if (exercise is null) return NotFound();
-        var config = ConfigOf(exercise);
-        if (Validate(config) is { } error) return this.ProblemWithCode(ApiErrors.ValidationError, error);
+        if (ArithmeticDrillExerciseType.Validate(ConfigOf(exercise)) is { } error) return this.ProblemWithCode(ApiErrors.ValidationError, error);
 
-        // Wir fixieren den Seed (auch bei „echtem" Zufall), damit der Satz später auswertbar bleibt.
-        int effectiveSeed = seed ?? config.Seed ?? Random.Shared.Next();
-        var problems = generator.Generate(config, new Random(effectiveSeed));
+        var (effectiveSeed, problems) = DrillType.Generate(exercise.ConfigJson, seed);
         return new GeneratedDrill(exercise.Id, exercise.Title, effectiveSeed, problems);
     }
 
@@ -742,34 +726,29 @@ public class ArithmeticDrillController(PuglingDbContext db, ArithmeticProblemGen
     [HttpPost("{exerciseId:int}/check")]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<CheckResult>> Check(int subjectId, int chapterId, int exerciseId, CheckDrillDto body)
+    public async Task<ActionResult<CheckResult>> Check(int subjectId, int chapterId, int exerciseId, CheckDto body)
     {
         var exercise = await FindAsync(subjectId, chapterId, exerciseId);
         if (exercise is null) return NotFound();
-        var config = ConfigOf(exercise);
-        if (Validate(config) is { } error) return this.ProblemWithCode(ApiErrors.ValidationError, error);
-        if ((body.Seed ?? config.Seed) is not { } seed)
-            return this.ProblemWithCode(ApiErrors.ValidationError, "The seed of the generated problem must be provided for evaluation.");
+        if (ArithmeticDrillExerciseType.Validate(ConfigOf(exercise)) is { } error) return this.ProblemWithCode(ApiErrors.ValidationError, error);
 
-        var problems = generator.Generate(config, new Random(seed));
-        return checker.CheckGenerated(problems, body.Answers);
+        return DrillType.Check(exercise.ConfigJson, body.Answers, body.Seed) is { } result
+            ? result
+            : this.ProblemWithCode(ApiErrors.ValidationError, "The seed of the generated problem must be provided for evaluation.");
     }
 }
 
 /// <summary>Auswendig zu lernende Listen (z. B. die Bundesländer). <see cref="Check"/> zählt die genannten Einträge.</summary>
 [Route(ExerciseRoutes.Base + "/list")]
 [Tags("Creator – List")]
-public class ListController(PuglingDbContext db, ExerciseAnswerChecker checker)
-    : ExerciseControllerBase<ListConfig>(db)
+public class ListController(PuglingDbContext db, ExerciseTypeRegistry registry)
+    : ExerciseControllerBase<ListConfig>(db, registry)
 {
-    protected override ExerciseType Type => ExerciseType.List;
+    protected override string TypeKey => ExerciseTypeKeys.List;
 
     /// <summary>Bewertet die genannten Einträge – als Menge, oder positionsgenau bei <c>Ordered</c>.</summary>
     [HttpPost("{exerciseId:int}/check")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<CheckResult>> Check(int subjectId, int chapterId, int exerciseId, CheckListDto body)
-    {
-        var exercise = await FindAsync(subjectId, chapterId, exerciseId);
-        return exercise is null ? NotFound() : checker.CheckList(ConfigOf(exercise), body.Answers);
-    }
+    public Task<ActionResult<CheckResult>> Check(int subjectId, int chapterId, int exerciseId, CheckDto body) =>
+        RunCheckAsync(subjectId, chapterId, exerciseId, body);
 }

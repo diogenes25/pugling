@@ -48,7 +48,7 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
         db.TestAttempts.Include(t => t.Results)
             .FirstOrDefaultAsync(t => t.Id == attemptId && t.StudyPlanId == planId && t.PlanPositionId == positionId);
 
-    private static TestItem ToItem(IReadOnlyList<ContentItem> items, ContentItem item, ExerciseType type, int stage, bool typed)
+    private static TestItem ToItem(IReadOnlyList<ContentItem> items, ContentItem item, IExerciseType type, int stage, bool typed)
     {
         // Geteilte Anti-Cheat-Projektion (Reveal/Länge/Hint/Choices/Audio je Stufe) – dieselbe Regel wie die Übungskarte.
         var f = PositionPlayService.CardFacets(items, item, type, stage, typed);
@@ -86,8 +86,10 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
             return this.ProblemWithCode(ApiErrors.PlanInactive, "This study plan is not currently active. Ask your parent.");
         var day = dto.Day ?? today;
         // Stufe: nur der Vater darf sie frei wählen; für den Sohn gilt die Fahrplan-/Positions-Stufe des Tages.
-        var stage = User.IsSupervisor() && dto.Stage is not null ? dto.Stage.Value : PositionPlayService.StageForDay(pos, plan, day);
-        var typed = PositionPlayService.IsTypedStage(pos.Exercise.Type, stage);
+        if (play.TypeOf(pos.Exercise) is not { } type)
+            return this.ProblemWithCode(ApiErrors.UnknownExerciseType, "The exercise has an unknown type.");
+        var stage = User.IsSupervisor() && dto.Stage is not null ? dto.Stage.Value : PositionPlayService.StageForDay(pos, plan, day, type);
+        var typed = type.IsTypedStage(stage);
 
         // Der Test ist Standortbestimmung: bereits eingeführte Inhalte prüfen, sonst den gesamten Pool
         // (sperrt nicht, wenn per Üben noch nichts „fällig" ist).
@@ -139,12 +141,14 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
         if (pos?.Exercise is null) return NotFound();
 
         var items = await play.ItemsOfAsync(pos);
-        var typed = PositionPlayService.IsTypedStage(pos.Exercise.Type, attempt.StageValue);
+        if (play.TypeOf(pos.Exercise) is not { } type)
+            return this.ProblemWithCode(ApiErrors.UnknownExerciseType, "The exercise has an unknown type.");
+        var typed = type.IsTypedStage(attempt.StageValue);
         var cursor = PositionPlayService.SkipRemoved(attempt.Order, attempt.Cursor, items.Count);
         if (cursor != attempt.Cursor) { attempt.Cursor = cursor; await db.SaveChangesAsync(); }
         if (cursor >= attempt.Order.Count) return new TestNextResponse(null, true, cursor, attempt.TotalItems);
 
-        var item = ToItem(items, items[attempt.Order[cursor]], pos.Exercise.Type, attempt.StageValue, typed);
+        var item = ToItem(items, items[attempt.Order[cursor]], type, attempt.StageValue, typed);
         return new TestNextResponse(item, false, cursor, attempt.TotalItems);
     }
 
@@ -172,7 +176,9 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
         if (pos?.Exercise is null) return NotFound();
 
         var items = await play.ItemsOfAsync(pos);
-        var typed = PositionPlayService.IsTypedStage(pos.Exercise.Type, attempt.StageValue);
+        if (play.TypeOf(pos.Exercise) is not { } type)
+            return this.ProblemWithCode(ApiErrors.UnknownExerciseType, "The exercise has an unknown type.");
+        var typed = type.IsTypedStage(attempt.StageValue);
         var cursor = PositionPlayService.SkipRemoved(attempt.Order, attempt.Cursor, items.Count);
         if (cursor < attempt.Order.Count)
         {
@@ -242,7 +248,9 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
         if (pos?.Exercise is null) return NotFound();
 
         var items = await play.ItemsOfAsync(pos);
-        var typed = PositionPlayService.IsTypedStage(pos.Exercise.Type, attempt.StageValue);
+        if (play.TypeOf(pos.Exercise) is not { } type)
+            return this.ProblemWithCode(ApiErrors.UnknownExerciseType, "The exercise has an unknown type.");
+        var typed = type.IsTypedStage(attempt.StageValue);
 
         // Bulk-Abgabe (Legacy/Fallback): übergebene Antworten nur BEWERTEN (Aufzeichnung folgt einmalig unten).
         // Im Klausur-Fluss ist die Liste leer – die Ergebnisse stehen bereits aus den schrittweisen /answer fest.

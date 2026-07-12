@@ -1,6 +1,8 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
+using Microsoft.Extensions.DependencyInjection;
+using Pugling.Api.Exercises;
 using Pugling.Api.Models;
 
 namespace Pugling.Api.Tests;
@@ -15,15 +17,16 @@ public class ExerciseTypeManifestTests(PuglingWebAppFactory factory) : IClassFix
     [Fact]
     public void JederUebungstyp_HatGenauEinManifest_MitStimmigenInvarianten()
     {
-        var types = Enum.GetValues<ExerciseType>();
+        var registry = factory.Services.GetRequiredService<ExerciseTypeRegistry>();
+        var manifests = registry.Manifests;
 
-        // Vollständig und eindeutig: genau ein Eintrag je ExerciseType.
-        Assert.Equal(types.Length, ExerciseManifests.All.Count);
-        Assert.Equal(types.Length, ExerciseManifests.All.Select(m => m.Type).Distinct().Count());
-        foreach (var type in types)
-            Assert.NotNull(ExerciseManifests.ByType(type));
+        // Eindeutige Keys: genau ein Manifest je registriertem Typ, und der Manifest-Key == Typ-Key.
+        Assert.Equal(registry.All.Count, manifests.Count);
+        Assert.Equal(manifests.Count, manifests.Select(m => m.Type).Distinct().Count());
+        foreach (var t in registry.All)
+            Assert.Equal(t.Key, t.Manifest.Type);
 
-        foreach (var m in ExerciseManifests.All)
+        foreach (var m in manifests)
         {
             Assert.False(string.IsNullOrWhiteSpace(m.Label));
             Assert.False(string.IsNullOrWhiteSpace(m.Renderer));
@@ -53,7 +56,8 @@ public class ExerciseTypeManifestTests(PuglingWebAppFactory factory) : IClassFix
         var res = await father.GetAsync("/api/v1/creator/exercise-types");
         Assert.Equal(HttpStatusCode.OK, res.StatusCode);
         var arr = await res.Content.ReadFromJsonAsync<JsonElement>();
-        Assert.Equal(Enum.GetValues<ExerciseType>().Length, arr.GetArrayLength());
+        var registry = factory.Services.GetRequiredService<ExerciseTypeRegistry>();
+        Assert.Equal(registry.All.Count, arr.GetArrayLength());
 
         // Enums werden als Strings übertragen (globale Konvention, JsonStringEnumConverter).
         var cloze = arr.EnumerateArray().Single(e => e.GetProperty("type").GetString() == "Cloze");
@@ -77,9 +81,8 @@ public class ExerciseTypeManifestTests(PuglingWebAppFactory factory) : IClassFix
         Assert.Equal("birkenbihl", body.GetProperty("renderer").GetString());
         Assert.Equal("None", body.GetProperty("checkMode").GetString());
 
-        // Unbekannter Typ im Pfad → das Model-Binding weist den ungültigen Enum-Wert mit 400 ab
-        // (ApiController-Konvention), bevor der Guard im Controller greift.
+        // Unbekannter Typ-Schlüssel → der Controller-Guard liefert 404 (kein Enum-Model-Binding mehr).
         var invalid = await father.GetAsync("/api/v1/creator/exercise-types/999");
-        Assert.Equal(HttpStatusCode.BadRequest, invalid.StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, invalid.StatusCode);
     }
 }

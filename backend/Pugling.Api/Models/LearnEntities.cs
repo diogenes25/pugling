@@ -60,23 +60,6 @@ public class Chapter
     public List<Exercise> Exercises { get; set; } = new();
 }
 
-/// <summary>Art der Übung. Bestimmt, wie <see cref="Exercise.ConfigJson"/> interpretiert wird.</summary>
-public enum ExerciseType
-{
-    Vocabulary = 0,
-    Reading = 1,
-    Cloze = 2,
-    Essay = 3,
-    Listening = 4,
-    Grammar = 5,
-    Matching = 6,
-    Translation = 7,
-    Arithmetic = 8,
-    ArithmeticDrill = 9,
-    List = 10,
-    Birkenbihl = 11,
-}
-
 /// <summary>
 /// Vom Übungsersteller vorgeschlagenes Bonus-System (global an der Übung). Dient nur als Vorlage:
 /// beim Erzeugen eines Lehrplans aus der Übung werden diese Werte EINMAL in dessen Bonus-Felder
@@ -101,7 +84,8 @@ public class Exercise
     public int Id { get; set; }
     public int ChapterId { get; set; }
     public Chapter? Chapter { get; set; }
-    public ExerciseType Type { get; set; }
+    /// <summary>Übungstyp-Schlüssel (z. B. <c>"Vocabulary"</c>) – aufgelöst über die <see cref="ExerciseTypeRegistry"/>; bestimmt, wie <see cref="ConfigJson"/> interpretiert wird.</summary>
+    public string Type { get; set; } = "";
     public string Title { get; set; } = "";
     /// <summary>
     /// Freier Beschreibungstext (optional). Hilft, die Übung beim Zusammenstellen eines Lehrplans
