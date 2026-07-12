@@ -13,13 +13,14 @@ Stand: 2026-07-06. Dieses Resümee beschreibt den aktuellen Zustand nach dem Umb
 Laufzeit und optionales Fach. Jede `PlanPosition` referenziert eine Katalog-`Exercise` und trägt ihre
 eigenen Regeln: Stufe/Fahrplan, Item-Auswahl, Zielrhythmus, Bestehensschwelle, Leitner und Punkte.
 
-Ein neuer Katalogtyp kostet im Normalfall:
+Ein neuer Katalogtyp kostet im Normalfall (Details: [wiki/08-erweitern.md](../wiki/08-erweitern.md)):
 
-1. `ExerciseType`-Wert und Config-`record`s ergänzen.
-2. Controller mit Route/Tags/`Type` hinzufügen (CRUD kommt aus `ExerciseControllerBase<TConfig>`).
-3. Falls prüfbar: `ExerciseAnswerChecker` bzw. Generator ergänzen.
-4. Falls im Study-Plan spielbar: `ExerciseContentProvider`/Resolver auf `ContentItem` projizieren,
-   `PositionPlayService.IsTypedStage` prüfen und Manifest aktualisieren.
+1. Config-`record`s ergänzen + Schlüssel in `ExerciseTypeKeys`.
+2. Typklasse (`IExerciseType`/`ExerciseTypeBase`) mit `Key`/`Manifest`/`ItemsOf` — inkl. `Check`, falls
+   prüfbar (geteilte Primitive in `AnswerChecking`). Eine Zeile in `AddExerciseTypes`.
+3. Controller mit Route/Tags/`TypeKey` (CRUD aus `ExerciseControllerBase<TConfig>`), `/check` delegiert an `RunCheckAsync`.
+4. Study-Plan-spielbar? Am Typ `StoreResolution`/Stufen/`IsTypedStage`/`Choices` setzen und (bei Store)
+   `ExerciseContentResolver` erweitern — die Play-/Test-Controller bleiben generisch.
 5. Tests ergänzen.
 
 Der Vorteil: Der positionsbezogene Practice-/Test-Pfad bleibt gleich:

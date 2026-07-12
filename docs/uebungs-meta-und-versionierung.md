@@ -142,18 +142,21 @@ Ein einziger, kleiner Schritt: Registry-Record + Endpunkt + Konsistenz-Test. Rü
 
 Stand 2026-07-04, rein additiv (kein bestehendes Verhalten geändert):
 
-- **Registry + Modell** ([Models/ExerciseTypeManifest.cs](../backend/Pugling.Api/Models/ExerciseTypeManifest.cs)):
-  `ExerciseCheckMode` (`None | StudyPlanTest | CatalogCheck | CatalogGenerateCheck`), der Record
-  `ExerciseTypeManifest` und die statische Registry `ExerciseManifests.All` mit einem Eintrag je
-  `ExerciseType`. Felder: `type`, `label`, `renderer`, `schemaVersion` (überall 1), `authoringRoute`,
+- **Modell** ([Models/ExerciseTypeManifest.cs](../backend/Pugling.Api/Models/ExerciseTypeManifest.cs)):
+  `ExerciseCheckMode` (`None | StudyPlanTest | CatalogCheck | CatalogGenerateCheck`) und der Record
+  `ExerciseTypeManifest`. Felder: `type`, `label`, `renderer`, `schemaVersion` (überall 1), `authoringRoute`,
   `checkMode`, `playRoute`, `method`, `capabilities`. `schemaVersion` lebt **nur** hier.
+  > **Seit dem Registry-Umbau:** Das Manifest wird **nicht** mehr zentral hartkodiert (früher
+  > `ExerciseManifests.All` je `ExerciseType`-Enum-Wert), sondern liegt an jeder Typklasse
+  > (`IExerciseType.Manifest`); die `ExerciseTypeRegistry` aggregiert sie (`registry.Manifests`).
+  > `type` ist der String-`Key` der Typklasse.
 - **Endpunkt** ([Controllers/Creator/ExerciseTypesController.cs](../backend/Pugling.Api/Controllers/Creator/ExerciseTypesController.cs)):
   `GET api/v1/creator/exercise-types` (Liste) und `.../{type}` (Einzel). `[Authorize]` ohne Rollen-
   einschränkung – kindneutrales Manifest, das beide Rollen lesen dürfen.
 - **Tests** ([ExerciseTypeManifestTests.cs](../backend/Pugling.Api.Tests/ExerciseTypeManifestTests.cs)):
-  Vollständigkeit (jeder `ExerciseType` → genau ein Eintrag) + Prüfmodus-Invarianten
+  Vollständigkeit (jeder registrierte Typ → genau ein Manifest, `Key == Manifest.Type`) + Prüfmodus-Invarianten
   (StudyPlanTest ⇔ `playRoute`+`method` gesetzt, sonst beide null); Erreichbarkeit für Vater und
-  Sohn; Einzelabruf; ungültiger Typ → 400 (Model-Binding). Build 0 Warnungen, 78/78 Tests grün.
+  Sohn; Einzelabruf; unbekannter Typ-Schlüssel → 404 (Controller-Guard, kein Enum-Model-Binding mehr).
 
 Beispiele der gewählten Zuordnung: Vocabulary→`flashcards`/StudyPlanTest/`tests`,
 Cloze→`cloze`/StudyPlanTest/`tests`, Matching→`matching`/StudyPlanTest/`tests`,
