@@ -360,7 +360,8 @@ title, gradeMin, gradeMax, schoolTypes, source, categoryId, categoryName`).
 
 Die `/check`-Endpunkte (Matching, Arithmetic, ArithmeticDrill, List) liefern ein einheitliches
 Ergebnis mit Gesamt-/Trefferzahl, Prozent und Detail je Position. Genaue Feldnamen im Swagger-Schema
-(`CheckResult`) bzw. in [Services/ExerciseAnswerChecker.cs](../backend/Pugling.Api/Services/ExerciseAnswerChecker.cs).
+(`CheckResult`, [Services/Shared/CheckResult.cs](../backend/Pugling.Api/Services/Shared/CheckResult.cs)); die
+Prüf-Logik lebt je Typ in dessen `IExerciseType.Check` ([Exercises/BuiltInExerciseTypes.cs](../backend/Pugling.Api/Exercises/BuiltInExerciseTypes.cs)).
 
 ---
 

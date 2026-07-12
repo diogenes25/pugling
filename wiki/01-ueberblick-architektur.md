@@ -45,7 +45,7 @@ Subject (Fach)  ─┬─ Chapter (Kapitel) ─┬─ Exercise (typisierte Übun
 ```
 
 - **Global, kindneutral, Vater-gepflegt.** Wird **einmal** aufgebaut, nicht pro Kind.
-- Jede `Exercise` hat einen **Typ** (`ExerciseType`) und eine **typisierte Config** (als JSON gespeichert,
+- Jede `Exercise` hat einen **Typ** (String-`Key`, aufgelöst über die `ExerciseTypeRegistry`) und eine **typisierte Config** (als JSON gespeichert,
   im API pro Typ ein eigenes Schema). Dazu **Metadaten**: `GradeMin/GradeMax` (Klassenstufe),
   `SchoolTypes` (Schulart, `[Flags]`), `Source` (Quelle), `CategoryId` (Art) — Basis für die spätere
   automatische Lehrplan-Vorfilterung (`GET api/v1/creator/exercises`).
@@ -133,7 +133,7 @@ Controller sind dünn; die Geschäftsregeln stecken in [backend/Pugling.Api/Serv
 | **`PositionProgressService`** | Tages-/Verlaufs-Auswertung über Positionen, Ziel-erledigt-Regeln und idempotente Ziel-Punkte. |
 | **`PositionPlayService`** | Inhaltsauswahl, Stufen-Fahrplan, getippte Stufen, Leitner-Fälligkeit und Box-Bewegung je Position. |
 | **`AnswerGrader`** | Normalisierter Antwortvergleich (Vokabel/Lücke), Alternativen erlaubt. |
-| **`ExerciseAnswerChecker`** | Auswertung der Katalog-Übungen mit `/check` (Matching, Arithmetic, List). |
+| **`ExerciseTypeRegistry`** | Löst `Exercise.Type` (String-`Key`) auf die Typklasse (`IExerciseType`) auf; trägt Manifeste + Katalog-`/check` (je Typ `IExerciseType.Check`). |
 | **`ExerciseItemService`** | Materialisiert Vokabel-Authoring-Payload (`items`/`refs`) in stabile `ExerciseItem`-Zeilen und bewahrt `ItemId`s beim Abgleich. |
 | **`ItemProgressService`** | Schreibt planübergreifenden Vokabel-Lernstand je Kind und `ItemId` plus Antwort-Historie. |
 | **`ArithmeticProblemGenerator`** | Erzeugt Zufalls-Rechenaufgaben aus Regeln + Seed (reproduzierbar). |
