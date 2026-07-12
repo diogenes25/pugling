@@ -12,8 +12,16 @@ namespace Pugling.Api.Services.Shared;
 /// Das Gegenstück zu den früheren plan-weiten Schedule-/Fortschritts-Services, aber pro Übung
 /// statt pro Plan – Ziele und Punkte hängen jetzt an der Position.
 /// </summary>
-public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver content)
+public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver content, ExerciseTypeRegistry registry)
 {
+    /// <summary>
+    /// Der <see cref="IExerciseType"/> hinter einer Übung (für Stufen-/Facetten-Regeln) oder <c>null</c>, wenn ihr
+    /// Typ-Schlüssel unbekannt ist. Null-sicher wie die Inhalts-Auflösung (<see cref="ExerciseContentResolver"/>),
+    /// damit ein Datenintegritätsfehler als sauberer <see cref="ApiErrors.UnknownExerciseType"/> statt als
+    /// unbehandelte Ausnahme beim Aufrufer landet.
+    /// </summary>
+    public IExerciseType? TypeOf(Exercise exercise) => registry.ByKey(exercise.Type);
+
     /// <summary>Standard-Leitner-Intervalle in Tagen (Index = Box; Index 0 ungenutzt).</summary>
     private static readonly int[] DefaultBoxIntervalDays = [0, 1, 2, 4, 7, 14];
 
@@ -37,58 +45,14 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
     /// Für einen Tag geltende Teststufe der Position: Fahrplan (falls gesetzt) → Positions-Override →
     /// Übungs-Default → Verfahrens-Standard. Serverseitig erzwungen (nicht vom Client wählbar).
     /// </summary>
-    public static int StageForDay(PlanPosition pos, StudyPlan plan, DateOnly day)
+    public static int StageForDay(PlanPosition pos, StudyPlan plan, DateOnly day, IExerciseType type)
     {
         var dayNumber = day.DayNumber - plan.StartDate.DayNumber + 1;
         var step = pos.StageSchedule?
             .Where(s => s.DayNumber <= dayNumber)
             .OrderByDescending(s => s.DayNumber)
             .FirstOrDefault();
-        return step?.Stage ?? pos.Stage ?? pos.Exercise?.DefaultStage ?? DefaultStageFor(pos.Exercise?.Type);
-    }
-
-    private static int DefaultStageFor(ExerciseType? type) => type switch
-    {
-        ExerciseType.Cloze => (int)ClozeStage.TranslationWordBank,
-        ExerciseType.Matching => (int)MatchStage.Direct,
-        _ => (int)TestStage.SelfAssess,
-    };
-
-    /// <summary>
-    /// Ist die Stufe „getippt"/objektiv (serverseitig gegen die Lösung prüfbar) – im Gegensatz zu reiner
-    /// Anzeige/Selbsteinschätzung? Objektive Verfahren (Zuordnung, Liste, Rechnen …) sind immer getippt;
-    /// bei Vokabeln/Lückentexten entscheidet die Stufe.
-    /// </summary>
-    public static bool IsTypedStage(ExerciseType type, int stage) => type switch
-    {
-        ExerciseType.Vocabulary => StageMechanics.IsTyped((TestStage)stage),
-        ExerciseType.Cloze => StageMechanics.IsTyped((ClozeStage)stage),
-        _ => true,
-    };
-
-    /// <summary>
-    /// Auswahlmöglichkeiten für eine Multiple-Choice-Vokabelaufgabe: die richtige Antwort plus bis zu drei
-    /// Ablenker aus den übrigen Items derselben Übung (dedupliziert, normalisiert). <c>null</c> für alle
-    /// anderen Verfahren/Stufen. Deterministische Rotation, damit die Lösung nicht immer vorne steht (kein Zufall).
-    /// </summary>
-    public static IReadOnlyList<string>? ChoicesFor(IReadOnlyList<ContentItem> items, ContentItem item, ExerciseType type, int stage)
-    {
-        if (type != ExerciseType.Vocabulary || (TestStage)stage != TestStage.MultipleChoice) return null;
-        if (string.IsNullOrWhiteSpace(item.Answer)) return null;
-
-        var seen = new HashSet<string>(StringComparer.Ordinal) { StageMechanics.Normalize(item.Answer) };
-        var distractors = new List<string>();
-        foreach (var other in items)
-        {
-            if (other.Index == item.Index || string.IsNullOrWhiteSpace(other.Answer)) continue;
-            if (seen.Add(StageMechanics.Normalize(other.Answer))) distractors.Add(other.Answer);
-            if (distractors.Count >= 3) break;
-        }
-
-        var choices = new List<string>(distractors.Count + 1) { item.Answer };
-        choices.AddRange(distractors);
-        var shift = item.Index % choices.Count;
-        return [.. choices.Skip(shift), .. choices.Take(shift)];
+        return step?.Stage ?? pos.Stage ?? pos.Exercise?.DefaultStage ?? type.DefaultStage;
     }
 
     /// <summary>Anzahl genutzter Inhalte der Position (Override, Übungs-Default, sonst alle vorhandenen).</summary>
@@ -137,16 +101,15 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
     /// Geteilt von Übungskarte (<c>PracticeCard</c>) und Testaufgabe (<c>TestItem</c>).
     /// </summary>
     public static (string? Hint, int? AnswerLength, string? Reveal, IReadOnlyList<string>? Choices, string? AudioUrl)
-        CardFacets(IReadOnlyList<ContentItem> items, ContentItem item, ExerciseType type, int stage, bool typed)
+        CardFacets(IReadOnlyList<ContentItem> items, ContentItem item, IExerciseType type, int stage, bool typed)
     {
-        var isLetterBoxes = type == ExerciseType.Vocabulary && (TestStage)stage == TestStage.LetterBoxes;
-        var isAudio = type == ExerciseType.Vocabulary && (TestStage)stage == TestStage.Audio;
+        var (letterBoxLength, audioUrl) = type.StageFacets(item, stage);
         return (
             typed ? item.Hint : null,
-            isLetterBoxes ? item.Answer.Length : null,
+            letterBoxLength,
             typed ? null : item.Answer,
-            ChoicesFor(items, item, type, stage),
-            isAudio ? item.AudioUrl : null);
+            type.Choices(items, item, stage),
+            audioUrl);
     }
 
     /// <summary>

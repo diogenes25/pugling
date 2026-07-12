@@ -66,7 +66,7 @@ public static class Seed
         {
             ChapterId = chapter.Id,
             AuthorFatherId = teacher.Id,
-            Type = ExerciseType.Vocabulary,
+            Type = ExerciseTypeKeys.Vocabulary,
             Title = "Vocabulary: The environment",
             OrderIndex = 1,
             RewardPoints = 15,
@@ -97,7 +97,7 @@ public static class Seed
         {
             ChapterId = chapter.Id,
             AuthorFatherId = teacher.Id,
-            Type = ExerciseType.Cloze,
+            Type = ExerciseTypeKeys.Cloze,
             Title = "Grammar: Conditional sentences (type II)",
             OrderIndex = 2,
             RewardPoints = 20,
@@ -122,7 +122,7 @@ public static class Seed
         {
             ChapterId = chapter.Id,
             AuthorFatherId = teacher.Id,
-            Type = ExerciseType.Translation,
+            Type = ExerciseTypeKeys.Translation,
             Title = "Translation: Talking about the future",
             OrderIndex = 3,
             RewardPoints = 20,
@@ -213,7 +213,7 @@ public static class Seed
                     {
                         new Exercise
                         {
-                            Type = ExerciseType.Vocabulary,
+                            Type = ExerciseTypeKeys.Vocabulary,
                             Title = "Vokabeln: En ville",
                             OrderIndex = 1,
                             RewardPoints = 10,
@@ -238,7 +238,7 @@ public static class Seed
                         },
                         new Exercise
                         {
-                            Type = ExerciseType.Cloze,
+                            Type = ExerciseTypeKeys.Cloze,
                             Title = "Lückentext: Au magasin",
                             OrderIndex = 2,
                             RewardPoints = 15,
@@ -600,7 +600,7 @@ public static class Seed
                     {
                         new Exercise
                         {
-                            Type = ExerciseType.Vocabulary,
+                            Type = ExerciseTypeKeys.Vocabulary,
                             Title = "Begrüßungen",
                             OrderIndex = 1,
                             RewardPoints = 10,
@@ -623,7 +623,7 @@ public static class Seed
                         },
                         new Exercise
                         {
-                            Type = ExerciseType.Cloze,
+                            Type = ExerciseTypeKeys.Cloze,
                             Title = "Lückentext: A short dialogue",
                             OrderIndex = 2,
                             RewardPoints = 15,
@@ -645,7 +645,7 @@ public static class Seed
                         // Birkenbihl: Wort-für-Wort-Dekodierung (grammatik-unabhängig) + natürliche Übersetzung.
                         new Exercise
                         {
-                            Type = ExerciseType.Birkenbihl,
+                            Type = ExerciseTypeKeys.Birkenbihl,
                             Title = "Birkenbihl: Getting to know each other",
                             OrderIndex = 3,
                             RewardPoints = 10,
@@ -693,7 +693,7 @@ public static class Seed
                         // Feste Aufgaben: manuell gepflegte Liste (wie Vokabeln).
                         new Exercise
                         {
-                            Type = ExerciseType.Arithmetic,
+                            Type = ExerciseTypeKeys.Arithmetic,
                             Title = "Das kleine 1×1 (7er-Reihe)",
                             OrderIndex = 1,
                             RewardPoints = 10,
@@ -714,7 +714,7 @@ public static class Seed
                         // erzeugt POST …/arithmetic-drill/{id}/generate auf Abruf.
                         new Exercise
                         {
-                            Type = ExerciseType.ArithmeticDrill,
+                            Type = ExerciseTypeKeys.ArithmeticDrill,
                             Title = "Kopfrechnen bis 20",
                             OrderIndex = 2,
                             RewardPoints = 15,
@@ -760,7 +760,7 @@ public static class Seed
                         // Liste: alle Bundesländer aufzählen (Reihenfolge egal).
                         new Exercise
                         {
-                            Type = ExerciseType.List,
+                            Type = ExerciseTypeKeys.List,
                             Title = "Die 16 Bundesländer",
                             OrderIndex = 1,
                             RewardPoints = 15,
@@ -773,7 +773,7 @@ public static class Seed
                         // Zuordnung nach Karteikasten-Prinzip: Bundesland -> Landeshauptstadt.
                         new Exercise
                         {
-                            Type = ExerciseType.Matching,
+                            Type = ExerciseTypeKeys.Matching,
                             Title = "Bundesland → Landeshauptstadt",
                             OrderIndex = 2,
                             RewardPoints = 20,

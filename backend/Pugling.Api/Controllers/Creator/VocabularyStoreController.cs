@@ -411,7 +411,7 @@ public class VocabularyStoreController(PuglingDbContext db) : ControllerBase
 
         // Lückentexte: Key-Referenz in der ConfigJson.
         var clozeCandidates = await db.Exercises.AsNoTracking().Include(e => e.Chapter)
-            .Where(e => e.Type == ExerciseType.Cloze && e.ConfigJson.Contains(key))
+            .Where(e => e.Type == ExerciseTypeKeys.Cloze && e.ConfigJson.Contains(key))
             .ToListAsync();
         foreach (var e in clozeCandidates)
         {

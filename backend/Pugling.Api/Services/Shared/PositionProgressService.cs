@@ -11,7 +11,7 @@ namespace Pugling.Api.Services.Shared;
 /// und rollt den Tages-/Wochen-Status eines ganzen Lehrplans zusammen. Das positions-weite Gegenstück zum
 /// früheren plan-weiten Fortschritts-Service – Pflicht und Punkte hängen jetzt an der Übung, nicht am Plan.
 /// </summary>
-public class PositionProgressService(PuglingDbContext db, PositionPlayService play)
+public class PositionProgressService(PuglingDbContext db, PositionPlayService play, ExerciseTypeRegistry registry)
 {
     /// <summary>Standard-Bestehensgrenze eines Positions-Tests, wenn die Position keine eigene Schwelle setzt.</summary>
     private const int DefaultPassPercent = 80;
@@ -56,8 +56,8 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
     // ---- Erledigt-Regel je Prüfmodus ----
 
     /// <summary>Prüfmodus der Übung dieser Position (Standard <see cref="ExerciseCheckMode.None"/>).</summary>
-    private static ExerciseCheckMode CheckModeOf(PlanPosition pos) =>
-        pos.Exercise is { } ex ? ExerciseManifests.ByType(ex.Type)?.CheckMode ?? ExerciseCheckMode.None : ExerciseCheckMode.None;
+    private ExerciseCheckMode CheckModeOf(PlanPosition pos) =>
+        pos.Exercise is { } ex ? registry.ByKey(ex.Type)?.Manifest.CheckMode ?? ExerciseCheckMode.None : ExerciseCheckMode.None;
 
     /// <summary>
     /// Ist das Ziel der Position in ihrer Periode um <paramref name="day"/> erledigt? Reine Inhalts-/
@@ -106,7 +106,7 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
 
         foreach (var pos in positions)
         {
-            var manifest = pos.Exercise is { } ex ? ExerciseManifests.ByType(ex.Type) : null;
+            var manifest = pos.Exercise is { } ex ? registry.ByKey(ex.Type)?.Manifest : null;
             var checkMode = CheckModeOf(pos);
             var items = await play.ItemsOfAsync(pos);
             var poolSize = play.PoolSize(pos, items.Count);

@@ -1,4 +1,6 @@
 using System.Globalization;
+using System.Text.Json;
+using Pugling.Api.Exercises;
 using Pugling.Api.Models;
 using Pugling.Api.Services;
 
@@ -41,15 +43,17 @@ public class ArithmeticProblemGeneratorTests
     }
 
     [Fact]
-    public void ErzeugteAntworten_WerdenVomChecker_AlsRichtigAkzeptiert()
+    public void ErzeugteAntworten_WerdenVomCheck_AlsRichtigAkzeptiert()
     {
-        // Selbstkonsistenz: die vom Generator gelieferte Lösung muss der Checker als korrekt werten.
-        var problems = _gen.Generate(Config(count: 40), new Random(555));
+        // Selbstkonsistenz über den echten Drill-Pfad: Generate → Check aus demselben Seed muss 100 % ergeben.
+        var drill = new ArithmeticDrillExerciseType(_gen);
+        var configJson = JsonSerializer.Serialize(Config(count: 40), new JsonSerializerOptions(JsonSerializerDefaults.Web));
+        var (seed, problems) = drill.Generate(configJson, 555);
         var answers = problems
             .Select((p, i) => new GivenAnswer(i, p.Answer.ToString(CultureInfo.InvariantCulture)))
             .ToList();
 
-        var result = new ExerciseAnswerChecker().CheckGenerated(problems, answers);
+        var result = drill.Check(configJson, answers, seed)!;
 
         Assert.Equal(100, result.ScorePercent);
     }

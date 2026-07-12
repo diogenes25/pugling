@@ -13,7 +13,7 @@ namespace Pugling.Api.Services.Supervisor;
 /// Etappe ist nach Anlage fix (zum Umhängen neu anlegen). Validiert Scope (Katalog + Hierarchie) und Zielwerte je
 /// Metrik. Die Belohnung selbst bucht der <see cref="ObjectiveRewardService"/> (hier nur das <c>Rewarded</c>-Flag).
 /// </summary>
-public class ObjectiveService(PuglingDbContext db, ObjectiveEvaluationService evaluation)
+public class ObjectiveService(PuglingDbContext db, ObjectiveEvaluationService evaluation, ExerciseTypeRegistry registry)
 {
     /// <summary>Ausgewertete Etappe eines Objectives.</summary>
     public record KeyResultResponse(int Id, int ObjectiveId, int SubjectId, int? ChapterId, int? ExerciseId,
@@ -100,8 +100,10 @@ public class ObjectiveService(PuglingDbContext db, ObjectiveEvaluationService ev
         {
             if (chapterId is null)
                 return ApiErrors.ValidationError; // Übungs-Scope setzt ein Kapitel voraus
-            if (!await db.Exercises.AsNoTracking().AnyAsync(e => e.Id == exId && e.ChapterId == chapterId && e.Type == ExerciseType.Vocabulary, ct))
-                return ApiErrors.InvalidReference; // nur Vokabelübungen sind item-getrackt
+            var type = await db.Exercises.AsNoTracking()
+                .Where(e => e.Id == exId && e.ChapterId == chapterId).Select(e => e.Type).FirstOrDefaultAsync(ct);
+            if (type is null || registry.ByKey(type)?.SupportsObjectives != true)
+                return ApiErrors.InvalidReference; // nur item-getrackte Typen (heute Vokabeln)
         }
         return null;
     }

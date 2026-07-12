@@ -37,11 +37,28 @@ public record ExerciseResponse<TConfig>(int Id, int ChapterId, string Type, stri
 [ApiVersion("1.0")]
 [Produces("application/json")]
 [Authorize(Roles = Roles.Creator)]
-public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db) : ControllerBase
+public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db, ExerciseTypeRegistry registry) : ControllerBase
     where TConfig : class, new()
 {
-    /// <summary>Übungstyp, den dieser Controller verwaltet.</summary>
-    protected abstract ExerciseType Type { get; }
+    /// <summary>Übungstyp-Schlüssel, den dieser Controller verwaltet (= <see cref="IExerciseType.Key"/>, Wert von <see cref="Exercise.Type"/>).</summary>
+    protected abstract string TypeKey { get; }
+
+    /// <summary>Registry der Übungstypen – für abgeleitete Zusatz-Endpunkte (/check, /generate).</summary>
+    protected ExerciseTypeRegistry Registry => registry;
+
+    /// <summary>
+    /// Bewertet Antworten am Katalog-Endpunkt über den <see cref="IExerciseType.Check"/> des Typs (eine Quelle
+    /// der Wahrheit). Abgeleitete Controller, deren Typ einen Direkt-Check anbietet, exponieren darauf ihre
+    /// dünne <c>/check</c>-Action.
+    /// </summary>
+    protected async Task<ActionResult<CheckResult>> RunCheckAsync(int subjectId, int chapterId, int exerciseId, CheckDto body)
+    {
+        var exercise = await FindAsync(subjectId, chapterId, exerciseId);
+        if (exercise is null) return NotFound();
+        return registry.Require(TypeKey).Check(exercise.ConfigJson, body.Answers, body.Seed) is { } result
+            ? result
+            : this.ProblemWithCode(ApiErrors.ValidationError, "This exercise type does not support answer checking.");
+    }
 
     /// <summary>
     /// Typ-spezifische Validierung der Config beim Anlegen/Ändern. Standard: keine. Abgeleitete Controller
@@ -109,7 +126,7 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db) : Con
     protected Task<Exercise?> FindAsync(int subjectId, int chapterId, int exerciseId) =>
         db.Exercises.Include(e => e.Category)
             .FirstOrDefaultAsync(e => e.Id == exerciseId && e.ChapterId == chapterId
-                && e.Type == Type && e.Chapter!.SubjectId == subjectId);
+                && e.Type == TypeKey && e.Chapter!.SubjectId == subjectId);
 
     /// <summary>Deserialisiert die typisierte Konfiguration einer Übung (nie null; fällt auf Default zurück).</summary>
     protected TConfig ConfigOf(Exercise exercise) =>
@@ -142,7 +159,7 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db) : Con
         var exercises = await db.Exercises
             .AsNoTracking()
             .Include(e => e.Category)
-            .Where(e => e.ChapterId == chapterId && e.Type == Type)
+            .Where(e => e.ChapterId == chapterId && e.Type == TypeKey)
             .OrderBy(e => e.OrderIndex).ThenBy(e => e.Id)
             .ToPagedListAsync(Response, skip, take);
         return exercises.Select(e => Map(e, fid)).ToList();
@@ -175,7 +192,7 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db) : Con
         var exercise = new Exercise
         {
             ChapterId = chapterId,
-            Type = Type,
+            Type = TypeKey,
             Title = body.Title.Trim(),
             Description = string.IsNullOrWhiteSpace(body.Description) ? null : body.Description.Trim(),
             OrderIndex = body.OrderIndex,

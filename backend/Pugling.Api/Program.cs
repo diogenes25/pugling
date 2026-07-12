@@ -164,9 +164,11 @@ builder.Services.AddScoped<ChildOwnershipFilter>();
 builder.Services.AddHealthChecks().AddDbContextCheck<PuglingDbContext>();
 builder.Services.AddSingleton<TokenService>();
 builder.Services.AddSingleton<ArithmeticProblemGenerator>();
-builder.Services.AddSingleton<ExerciseAnswerChecker>();
 builder.Services.AddSingleton<AnswerGrader>();
-// Extraktion der Übungs-Inhalte aus der ConfigJson (Brücke Katalog → neuer Lehrplan-Motor, Etappe 2).
+// Übungstypen als Plugin-Contract: jeder Typ eine Klasse (IExerciseType), aufgelöst über die Registry
+// (ersetzt das frühere ExerciseType-Enum + die verstreuten switch-/Checker-Stellen).
+builder.Services.AddExerciseTypes();
+// Extraktion der Übungs-Inhalte aus der ConfigJson (dünne Fassade über die Registry).
 builder.Services.AddSingleton<ExerciseContentProvider>();
 // DB-gestützte Auflösung (u. a. Vokabel-Store-Refs → ContentItems); scoped wegen DbContext.
 builder.Services.AddScoped<ExerciseContentResolver>();

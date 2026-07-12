@@ -28,6 +28,7 @@
     <Using Include="Pugling.Api.Services.Supervisor" />
     <Using Include="Pugling.Api.Services.Student" />
     <Using Include="Pugling.Api.Services.Shared" />
+    <Using Include="Pugling.Api.Exercises" />
   </ItemGroup>
 
   <ItemGroup>

@@ -1,13 +1,24 @@
 using System.Text.Json;
+using Pugling.Api.Exercises;
 using Pugling.Api.Models;
 using Pugling.Api.Services;
+using Pugling.Api.Services.Shared;
 
 namespace Pugling.Api.Tests;
 
 /// <summary>Unit-Tests der Inhalts-Extraktion aus der Übungs-Config (zustandslos, ohne DB/HTTP).</summary>
 public class ExerciseContentProviderTests
 {
-    private readonly ExerciseContentProvider _provider = new();
+    // Registry aus den eingebauten Typen – der Provider delegiert die Projektion an sie.
+    private static readonly ExerciseTypeRegistry Registry = new(
+    [
+        new VocabularyExerciseType(), new ReadingExerciseType(), new ClozeExerciseType(),
+        new EssayExerciseType(), new ListeningExerciseType(), new GrammarExerciseType(),
+        new MatchingExerciseType(), new TranslationExerciseType(), new ArithmeticExerciseType(),
+        new ArithmeticDrillExerciseType(new ArithmeticProblemGenerator()), new ListExerciseType(),
+        new BirkenbihlExerciseType(),
+    ]);
+    private readonly ExerciseContentProvider _provider = new(Registry);
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
     private static string Json<T>(T config) => JsonSerializer.Serialize(config, JsonOptions);
@@ -26,7 +37,7 @@ public class ExerciseContentProviderTests
             }
         };
 
-        var items = _provider.ItemsOf(ExerciseType.Vocabulary, Json(config));
+        var items = _provider.ItemsOf(ExerciseTypeKeys.Vocabulary, Json(config));
 
         Assert.Equal(2, items.Count);
         Assert.Equal(0, items[0].Index);
@@ -52,7 +63,7 @@ public class ExerciseContentProviderTests
             },
         };
 
-        var items = _provider.ItemsOf(ExerciseType.Cloze, Json(config));
+        var items = _provider.ItemsOf(ExerciseTypeKeys.Cloze, Json(config));
 
         Assert.Equal(2, items.Count);
         // Prompt ist der Trägertext, GapIndex die {{n}}-Nummer.
@@ -71,7 +82,7 @@ public class ExerciseContentProviderTests
     {
         var config = new MatchingConfig { Pairs = { new("Bayern", "München"), new("Hessen", "Wiesbaden") } };
 
-        var items = _provider.ItemsOf(ExerciseType.Matching, Json(config));
+        var items = _provider.ItemsOf(ExerciseTypeKeys.Matching, Json(config));
 
         Assert.Equal(2, items.Count);
         Assert.Equal("Bayern", items[0].Prompt);
@@ -89,7 +100,7 @@ public class ExerciseContentProviderTests
             Items = { new("Nordrhein-Westfalen", new() { "NRW" }), new("Bayern") },
         };
 
-        var items = _provider.ItemsOf(ExerciseType.List, Json(config));
+        var items = _provider.ItemsOf(ExerciseTypeKeys.List, Json(config));
 
         Assert.Equal("Nenne alle Bundesländer.", items[0].Prompt);
         Assert.Equal(["Nordrhein-Westfalen", "NRW"], items[0].AcceptedAnswers);
@@ -103,7 +114,7 @@ public class ExerciseContentProviderTests
     {
         var config = new ArithmeticConfig { Problems = { new("7 × 6", 42m), new("10 ÷ 4", 2.5m) } };
 
-        var items = _provider.ItemsOf(ExerciseType.Arithmetic, Json(config));
+        var items = _provider.ItemsOf(ExerciseTypeKeys.Arithmetic, Json(config));
 
         Assert.Equal("7 × 6", items[0].Prompt);
         Assert.Equal("42", items[0].Answer);
@@ -118,7 +129,7 @@ public class ExerciseContentProviderTests
     {
         var config = new GrammarConfig { Tasks = { new GrammarTask("go (past)", "went", "unregelmäßig") } };
 
-        var item = Assert.Single(_provider.ItemsOf(ExerciseType.Grammar, Json(config)));
+        var item = Assert.Single(_provider.ItemsOf(ExerciseTypeKeys.Grammar, Json(config)));
 
         Assert.Equal("went", item.Answer);
         Assert.Equal("unregelmäßig", item.Hint);
@@ -132,7 +143,7 @@ public class ExerciseContentProviderTests
             Items = { new TranslationItem("Guten Tag", "Good day", new() { "Hello" }) }
         };
 
-        var item = Assert.Single(_provider.ItemsOf(ExerciseType.Translation, Json(config)));
+        var item = Assert.Single(_provider.ItemsOf(ExerciseTypeKeys.Translation, Json(config)));
 
         Assert.Equal("Guten Tag", item.Prompt);
         Assert.Equal(["Good day", "Hello"], item.AcceptedAnswers);
@@ -147,7 +158,7 @@ public class ExerciseContentProviderTests
             Questions = { new Question("Who?", null, "Tom"), new Question("Where?", new() { "A", "B" }, "A") },
         };
 
-        var items = _provider.ItemsOf(ExerciseType.Reading, Json(config));
+        var items = _provider.ItemsOf(ExerciseTypeKeys.Reading, Json(config));
 
         Assert.Equal(2, items.Count);
         Assert.Equal("Who?", items[0].Prompt);
@@ -168,7 +179,7 @@ public class ExerciseContentProviderTests
             }
         };
 
-        var item = Assert.Single(_provider.ItemsOf(ExerciseType.Birkenbihl, Json(config)));
+        var item = Assert.Single(_provider.ItemsOf(ExerciseTypeKeys.Birkenbihl, Json(config)));
 
         Assert.Equal("What is your name?", item.Prompt);
         Assert.Equal("Wie heißt du?", item.Answer);
@@ -177,9 +188,9 @@ public class ExerciseContentProviderTests
     // ---- Typen ohne feste Items ----
 
     [Theory]
-    [InlineData(ExerciseType.Essay)]
-    [InlineData(ExerciseType.ArithmeticDrill)]
-    public void OhneFesteItems_LiefertLeereListe(ExerciseType type)
+    [InlineData(ExerciseTypeKeys.Essay)]
+    [InlineData(ExerciseTypeKeys.ArithmeticDrill)]
+    public void OhneFesteItems_LiefertLeereListe(string type)
     {
         // Essay = freier Text; ArithmeticDrill = pro Abruf erzeugt – beide haben keine abzählbaren Inhalte.
         Assert.Empty(_provider.ItemsOf(type, "{}"));
@@ -192,6 +203,6 @@ public class ExerciseContentProviderTests
     [InlineData("{}")]
     public void LeereOderInhaltsloseConfig_LiefertLeereListe(string configJson)
     {
-        Assert.Empty(_provider.ItemsOf(ExerciseType.Vocabulary, configJson));
+        Assert.Empty(_provider.ItemsOf(ExerciseTypeKeys.Vocabulary, configJson));
     }
 }

@@ -51,7 +51,7 @@ public class ExerciseCatalogController(PuglingDbContext db) : ControllerBase
     [HttpGet]
     public async Task<IEnumerable<ExerciseSummary>> Search(
         [FromQuery] int? subjectId, [FromQuery] int? chapterId, [FromQuery] int? grade, [FromQuery] SchoolTypes? schoolType,
-        [FromQuery] int? categoryId, [FromQuery] ExerciseType? type, [FromQuery] string? search,
+        [FromQuery] int? categoryId, [FromQuery] string? type, [FromQuery] string? search,
         [FromQuery] bool? mineOnly, [FromQuery] string? sort = null, [FromQuery] string? dir = null,
         [FromQuery] int skip = 0, [FromQuery] int take = PagingExtensions.DefaultTake)
     {
@@ -80,8 +80,8 @@ public class ExerciseCatalogController(PuglingDbContext db) : ControllerBase
         if (categoryId is int cid)
             query = query.Where(e => e.CategoryId == cid);
 
-        if (type is ExerciseType t)
-            query = query.Where(e => e.Type == t);
+        if (!string.IsNullOrWhiteSpace(type))
+            query = query.Where(e => e.Type == type);
 
         if (!string.IsNullOrWhiteSpace(search))
         {
@@ -91,7 +91,7 @@ public class ExerciseCatalogController(PuglingDbContext db) : ControllerBase
         }
 
         return await ApplySort(query, SortingExtensions.ParseSort(sort, dir))
-            .Select(e => new ExerciseSummary(e.Id, e.ChapterId, e.Chapter!.SubjectId, e.Type.ToString(), e.Title,
+            .Select(e => new ExerciseSummary(e.Id, e.ChapterId, e.Chapter!.SubjectId, e.Type, e.Title,
                 e.GradeMin, e.GradeMax, e.SchoolTypes, e.Source, e.CategoryId, e.Category!.Name,
                 e.AuthorFatherId, e.Author!.Name, fid != null && e.AuthorFatherId == fid, e.Description,
                 e.DefaultUseLeitner, e.DefaultRequireTypedTest))

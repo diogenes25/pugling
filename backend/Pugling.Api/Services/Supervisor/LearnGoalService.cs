@@ -11,7 +11,7 @@ namespace Pugling.Api.Services.Supervisor;
 /// berechnet (Reuse von <see cref="ChildLearnProgressService"/>), es gibt keinen materialisierten Zustand
 /// und in v1 keine Belohnung. Validiert Scope (Katalog-Referenzen + Hierarchie) und Zielwert-Bereich.
 /// </summary>
-public class LearnGoalService(PuglingDbContext db, ChildLearnProgressService progress)
+public class LearnGoalService(PuglingDbContext db, ChildLearnProgressService progress, ExerciseTypeRegistry registry)
 {
     /// <summary>Ausgewertetes Lernziel inkl. aktuellem Wert und Status (<c>open</c>/<c>achieved</c>/<c>overdue</c>).</summary>
     public record LearnGoalResponse(int Id, int ChildId, int SubjectId, int? ChapterId, int? ExerciseId,
@@ -87,8 +87,10 @@ public class LearnGoalService(PuglingDbContext db, ChildLearnProgressService pro
         {
             if (chapterId is null)
                 return ApiErrors.ValidationError; // Übungs-Scope setzt ein Kapitel voraus
-            if (!await db.Exercises.AsNoTracking().AnyAsync(e => e.Id == exId && e.ChapterId == chapterId && e.Type == ExerciseType.Vocabulary, ct))
-                return ApiErrors.InvalidReference; // nur Vokabelübungen sind item-getrackt
+            var type = await db.Exercises.AsNoTracking()
+                .Where(e => e.Id == exId && e.ChapterId == chapterId).Select(e => e.Type).FirstOrDefaultAsync(ct);
+            if (type is null || registry.ByKey(type)?.SupportsLearnGoals != true)
+                return ApiErrors.InvalidReference; // nur item-getrackte Typen (heute Vokabeln)
         }
 
         return null;

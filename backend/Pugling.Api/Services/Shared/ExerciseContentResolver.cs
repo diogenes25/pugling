@@ -13,29 +13,32 @@ namespace Pugling.Api.Services.Shared;
 /// verknüpft und zentral pflegbar. Legacy-Vokabeln (nur inline <see cref="VocabularyConfig.Items"/>)
 /// laufen weiterhin über den Provider.
 /// </summary>
-public class ExerciseContentResolver(PuglingDbContext db, ExerciseContentProvider provider)
+public class ExerciseContentResolver(PuglingDbContext db, ExerciseContentProvider provider, ExerciseTypeRegistry registry)
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
     /// <summary>Die Inhalte einer Übung als verfahrensneutrale Item-Liste (mit Store-Auflösung für Vokabeln/Lückentext).</summary>
     public async Task<IReadOnlyList<ContentItem>> ItemsOfAsync(Exercise exercise)
     {
-        if (exercise.Type == ExerciseType.Vocabulary)
+        // Die Verzweigung folgt der StoreResolution-Fähigkeit des Typs (enum-frei); die DB-Logik bleibt hier.
+        switch (registry.ByKey(exercise.Type)?.StoreResolution)
         {
-            var config = string.IsNullOrWhiteSpace(exercise.ConfigJson)
-                ? new VocabularyConfig()
-                : JsonSerializer.Deserialize<VocabularyConfig>(exercise.ConfigJson, JsonOptions) ?? new VocabularyConfig();
-            return await ResolveVocabularyItemsAsync(exercise, config.Direction);
+            case StoreResolution.ItemTable:
+                var vocab = string.IsNullOrWhiteSpace(exercise.ConfigJson)
+                    ? new VocabularyConfig()
+                    : JsonSerializer.Deserialize<VocabularyConfig>(exercise.ConfigJson, JsonOptions) ?? new VocabularyConfig();
+                return await ResolveVocabularyItemsAsync(exercise, vocab.Direction);
+
+            case StoreResolution.VocabRefs:
+                var cloze = string.IsNullOrWhiteSpace(exercise.ConfigJson)
+                    ? new ClozeConfig()
+                    : JsonSerializer.Deserialize<ClozeConfig>(exercise.ConfigJson, JsonOptions) ?? new ClozeConfig();
+                // Nur wenn mindestens eine Lücke den Store referenziert – sonst reicht die Inline-Projektion.
+                if (cloze.Gaps.Any(g => !string.IsNullOrWhiteSpace(g.VocabKey)))
+                    return await ResolveClozeRefsAsync(cloze);
+                break;
         }
-        else if (exercise.Type == ExerciseType.Cloze)
-        {
-            var config = string.IsNullOrWhiteSpace(exercise.ConfigJson)
-                ? new ClozeConfig()
-                : JsonSerializer.Deserialize<ClozeConfig>(exercise.ConfigJson, JsonOptions) ?? new ClozeConfig();
-            // Nur wenn mindestens eine Lücke den Store referenziert – sonst reicht die Inline-Projektion.
-            if (config.Gaps.Any(g => !string.IsNullOrWhiteSpace(g.VocabKey)))
-                return await ResolveClozeRefsAsync(config);
-        }
+
         // Inline-Typen (inkl. Legacy-Vokabeln/Lückentexte ohne Store-Bezug): zustandslose Projektion aus der Config.
         return provider.ItemsOf(exercise);
     }
