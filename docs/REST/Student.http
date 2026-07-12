@@ -5,16 +5,13 @@
 # Liest die Tagesmission, übt eine Position (Leitner-Review), legt den
 # Abschlusstest ab, liest Report/Wallet und kauft im Familien-Shop.
 #
-# VORAUSSETZUNG: ein aktiver Plan mit mindestens einer Position. Entweder vorher
-# Supervisor.http laufen lassen oder unten @planId auf einen Seed-Plan setzen.
-# Die positionId wird aus der Overview-Antwort abgeleitet.
+# VORAUSSETZUNG: ein aktiver Plan mit mindestens einer Position (vorher Supervisor.http
+# laufen lassen oder Seed-Daten). Die planId wird NICHT geraten, sondern serverseitig
+# gefunden (Schritt "plans"); die positionId leitet sich aus der Overview-Antwort ab.
 #
 # Von oben nach unten senden. Umgebung im REST-Client-Statusleisten-Picker
 # wählen (local = :5200, smoke = :5280).
 ###############################################################################
-
-### Aktiver Plan (aus Supervisor.http oder Seed). Bei Bedarf anpassen.
-@planId = 1
 
 ### Login als Sohn (Student)
 # @name login
@@ -29,10 +26,24 @@ Content-Type: application/json
 ### Token aus der Login-Antwort ziehen
 @authToken = {{login.response.body.token}}
 
-### Tagesmission / Plan-Übersicht lesen
+
+### Spielbaren Plan finden (Discovery statt planId raten)
+# Der Sohn ruft seine Plan-Liste – der Server gibt ihm nur SEINEN EINEN spielbaren Plan
+# (aktiv + heute in Laufzeit) zurück; inaktive/abgelaufene bleiben verborgen (Anti-Cheat).
+# @name plans
+GET {{baseUrl}}/student/study-plans
+Authorization: Bearer {{authToken}}
+
+### planId aus dem ersten (spielbaren) Plan ziehen
+@planId = {{plans.response.body.$[0].id}}
+
+
 # @name overview
 GET {{baseUrl}}/student/study-plans/{{planId}}/overview
 Authorization: Bearer {{authToken}}
+
+
+
 ### Erste fällige Position aus der Overview greifen (verschachtelter Array-Zugriff)
 @positionId = {{overview.response.body.$.today.positions[0].positionId}}
 

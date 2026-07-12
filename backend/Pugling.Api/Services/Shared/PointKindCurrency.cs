@@ -34,10 +34,10 @@ public static class PointKindCurrency
     {
         PointKind.Base or PointKind.Minutes or PointKind.Test or PointKind.DayComplete
             or PointKind.Goal or PointKind.Manual or PointKind.Reward or PointKind.ShopCoins
-            or PointKind.GoalPenalty => Currency.Coins,
+            or PointKind.GoalPenalty or PointKind.ObjectiveCoins => Currency.Coins,
         PointKind.Combo or PointKind.Speed or PointKind.Duration or PointKind.Mission
             or PointKind.Achievement or PointKind.SkinPurchase or PointKind.ShopGems
-            or PointKind.ManualGems => Currency.Gems,
+            or PointKind.ManualGems or PointKind.ObjectiveGems => Currency.Gems,
         _ => throw new ArgumentOutOfRangeException(nameof(kind), kind, "PointKind ohne Währungs-Zuordnung"),
     };
 

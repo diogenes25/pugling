@@ -30,6 +30,15 @@ Content-Type: application/json
 # @name me
 GET {{baseUrl}}/auth/me
 Authorization: Bearer {{authToken}}
+
+### alle Fächer des Creators abrufen (Array-Response!)
+# @name listSubjects
+GET {{baseUrl}}/creator/subjects
+Authorization: Bearer {{authToken}}
+
+### erste Subject-ID greifen – $[0] = Array-Index-Zugriff
+@subjectId = {{listSubjects.response.body.$[0].id}}
+
 ### Fach anlegen
 # @name createSubject
 POST {{baseUrl}}/creator/subjects
@@ -47,6 +56,7 @@ Content-Type: application/json
 # @name getSubject
 GET {{baseUrl}}/creator/subjects/{{subjectId}}
 Authorization: Bearer {{authToken}}
+
 ### Kapitel im Fach anlegen
 # @name createChapter
 POST {{baseUrl}}/creator/subjects/{{subjectId}}/chapters
@@ -63,8 +73,9 @@ Content-Type: application/json
 
 ### Zwei Vokabeln aus dem Store lesen (Array-Response!)
 # @name getVocabulary
-GET {{baseUrl}}/creator/vocabulary?take=2
+GET {{baseUrl}}/creator/vocabulary?sourceLanguage=en&targetLanguage=de&sort=translation&skip=10&take=2
 Authorization: Bearer {{authToken}}
+
 ### Erste/zweite Store-Vokabel-ID greifen — $[0] / $[1] = Array-Index-Zugriff
 @vocab1Id = {{getVocabulary.response.body.$[0].id}}
 @vocab2Id = {{getVocabulary.response.body.$[1].id}}
@@ -97,14 +108,17 @@ Content-Type: application/json
 # @name getItems
 GET {{baseUrl}}/creator/subjects/{{subjectId}}/chapters/{{chapterId}}/vocabulary/{{exerciseId}}/items
 Authorization: Bearer {{authToken}}
+
 ### Übungskatalog nach Typ filtern
 # @name listExercises
 GET {{baseUrl}}/creator/exercises?type=Vocabulary&take=5
 Authorization: Bearer {{authToken}}
+
 ### Übung nebenwirkungsfrei durchspielen (Preview/Testmodus)
 # @name preview
 GET {{baseUrl}}/creator/exercises/{{exerciseId}}/preview
 Authorization: Bearer {{authToken}}
+
 ### Tag anlegen (child-skopiert – Vater 1 besitzt Kind {{childId}})
 # @name createTag
 POST {{baseUrl}}/creator/tags

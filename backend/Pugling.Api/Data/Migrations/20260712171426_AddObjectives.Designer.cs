@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Pugling.Api.Data;
 
@@ -10,9 +11,11 @@ using Pugling.Api.Data;
 namespace Pugling.Api.Data.Migrations
 {
     [DbContext(typeof(PuglingDbContext))]
-    partial class PuglingDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260712171426_AddObjectives")]
+    partial class AddObjectives
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.9");
@@ -313,9 +316,7 @@ namespace Pugling.Api.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ChildId", "Kind");
-
-                    b.HasIndex("ChildId", "CreatedAt", "Id");
+                    b.HasIndex("ChildId");
 
                     b.ToTable("ChildPoints");
                 });
@@ -592,8 +593,6 @@ namespace Pugling.Api.Data.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("ItemId");
-
-                    b.HasIndex("ChildId", "ExerciseId");
 
                     b.HasIndex("ChildId", "ItemId")
                         .IsUnique();
@@ -1027,7 +1026,7 @@ namespace Pugling.Api.Data.Migrations
 
                     b.HasIndex("ExerciseId");
 
-                    b.HasIndex("StudyPlanId", "Order", "Id");
+                    b.HasIndex("StudyPlanId");
 
                     b.ToTable("PlanPositions");
                 });
@@ -1163,9 +1162,9 @@ namespace Pugling.Api.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("StudyPlanId", "Day");
+                    b.HasIndex("PlanPositionId");
 
-                    b.HasIndex("PlanPositionId", "Day", "Mode");
+                    b.HasIndex("StudyPlanId");
 
                     b.ToTable("PracticeSessions");
                 });
@@ -1523,9 +1522,9 @@ namespace Pugling.Api.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("StudyPlanId", "Day");
+                    b.HasIndex("PlanPositionId");
 
-                    b.HasIndex("PlanPositionId", "Day", "CompletedAt", "Passed");
+                    b.HasIndex("StudyPlanId");
 
                     b.ToTable("TestAttempts");
                 });

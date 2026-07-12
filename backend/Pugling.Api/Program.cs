@@ -150,6 +150,10 @@ builder.Services.AddScoped<ItemProgressService>();
 builder.Services.AddScoped<ChildLearnProgressService>();
 // Ergebnis-/Beherrschungsziele je Kind auf einem Katalog-Scope; live gegen den Lernstand ausgewertet.
 builder.Services.AddScoped<LearnGoalService>();
+// „Große Ziele" (OKR-Kern): Auswertung (Lernstand + Klassenarbeits-Note), Vater-CRUD und idempotente Belohnung.
+builder.Services.AddScoped<ObjectiveEvaluationService>();
+builder.Services.AddScoped<ObjectiveService>();
+builder.Services.AddScoped<ObjectiveRewardService>();
 // Kindübergreifendes Tages-Dashboard des Vaters („wer hat heute was geschafft?").
 builder.Services.AddScoped<ChildrenDashboardService>();
 builder.Services.AddScoped<AuthAccess>();

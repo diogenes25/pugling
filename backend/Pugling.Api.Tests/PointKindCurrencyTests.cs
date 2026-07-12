@@ -45,6 +45,8 @@ public class PointKindCurrencyTests
     [InlineData(PointKind.Achievement, Currency.Gems)]
     [InlineData(PointKind.SkinPurchase, Currency.Gems)]
     [InlineData(PointKind.ShopGems, Currency.Gems)]
+    [InlineData(PointKind.ObjectiveCoins, Currency.Coins)]
+    [InlineData(PointKind.ObjectiveGems, Currency.Gems)]
     public void Zuordnung_EntsprichtDerFachlichenTrennung(PointKind kind, Currency expected) =>
         Assert.Equal(expected, PointKindCurrency.Of(kind));
 }
