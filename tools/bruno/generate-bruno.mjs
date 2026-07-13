@@ -660,6 +660,18 @@ function captureVariablesFor(apiPath) {
   return [...variables];
 }
 
+// Die „eigene" Ressource des Endpunkts – jene, deren id als `body.id` zurückkommt (POST/GET auf eine
+// Ressource). Ausschließlich diese Variable darf den `body.id`-Fallback nehmen; sonst würde ein
+// `body.id` (z. B. das neue Item bei …/items) fälschlich auch die Eltern-IDs (subjectId, chapterId, …)
+// überschreiben. Bestimmt aus dem letzten Routen-Segment: Pfadparameter → dessen Variable, sonst der
+// Ressourcen-Schlüssel des Segments (unbekannt/Action-Verb → null = kein body.id-Fallback).
+function selfIdVariable(apiPath) {
+  const last = apiPath.split('/').filter(Boolean).at(-1);
+  if (!last) return null;
+  if (last.startsWith('{')) return toVariableName(last.replace(/[{}]/g, '').split(':')[0]);
+  return resourceIdBySegment.get(last) ?? null;
+}
+
 // after-response-Script: Login setzt {{token}}; alle anderen fangen IDs aus der Antwort ins
 // Environment, sodass Folge-Requests (z. B. neu angelegte Ressourcen) direkt darauf zugreifen.
 function captureScript(apiPath) {
@@ -673,7 +685,13 @@ function captureScript(apiPath) {
     return `var jsonData = res.getBody();\nbru.setVar('token', jsonData.token);`;
   }
 
-  const mappings = captureVariablesFor(apiPath).map(variable => `capture('${variable}', body.${variable} ?? body.id);`);
+  // Nur die eigene Ressource-Variable erbt den `body.id`-Fallback; alle übrigen fangen strikt aus dem
+  // gleichnamigen Feld (fehlt es, überspringt `capture()` und die vorbelegte/vorherige Variable bleibt).
+  const self = selfIdVariable(apiPath);
+  const mappings = captureVariablesFor(apiPath).map(variable =>
+    variable === self
+      ? `capture('${variable}', body.${variable} ?? body.id);`
+      : `capture('${variable}', body.${variable});`);
   const genericCaptures = [...knownVariables.keys()]
     .filter(variable => variable.endsWith('Id'))
     .map(variable => `capture('${variable}', body.${variable});`);
