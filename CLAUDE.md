@@ -123,6 +123,18 @@ Rollen im SPA: `/` Produktseite, `/vater` Web-Admin (inkl. `/vater/wizard` Lehrp
   (`Reward`/`RewardRedemption`/`OfferService`) wurde **entfernt**; `PointKind.Reward` bleibt nur als Ledger-Tombstone
   für historische Buchungen. Details: [wiki/05-punkte-und-bonus.md](wiki/05-punkte-und-bonus.md).
 
+## okf/ — Open Knowledge Format bundle
+
+docs/okf/ holds durable conceptual knowledge (architecture concepts, playbooks, how-tos) that should stay useful to both humans and AI agents over time. Its content is written in the Open Knowledge Format (OKF).
+
+Every non-reserved .md file under docs/okf/ MUST follow OKF:
+
+YAML frontmatter with at least a non-empty type (a descriptive string, e.g. Architecture Concept, Playbook). Recommended keys: title, description, tags, timestamp (ISO 8601).
+Body is plain markdown. Conventional headings such as # Examples / # Citations are optional.
+index.md and log.md are reserved filenames with defined meaning; index.md is a directory listing for the bundle (or a subdirectory).
+Cross-link other concepts with relative markdown paths so links stay clickable in-repo (OKF also permits bundle-relative paths beginning with /); link to source files with relative paths too.
+Format definition (draft): https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md
+
 ## Konventionen (an bestehendem Code orientieren!)
 
 - **Modernes C# 14 / net10, `Nullable` an.** File-scoped Namespaces, Primary Constructors für DI,
