@@ -23,12 +23,14 @@ namespace Pugling.Api.Controllers.Supervisor;
 public class ChildrenController(PuglingDbContext db, WalletService wallet, AccountService accounts) : ControllerBase
 {
     public record ChildResponse(int Id, string Name, int? BirthYear, int? Grade,
-        SchoolTypes SchoolType, DateTime CreatedAt, int Coins, int Gems);
+        SchoolTypes SchoolType, Gender Gender, IReadOnlyList<string> Interests, string? ProfileNotes,
+        DateTime CreatedAt, int Coins, int Gems);
 
     Task<ChildResponse?> ProjectOne(int childId) =>
         db.Children
             .Where(c => c.Id == childId)
             .Select(c => new ChildResponse(c.Id, c.Name, c.BirthYear, c.Grade, c.SchoolType,
+                c.Gender, c.Interests, c.ProfileNotes,
                 c.CreatedAt,
                 c.PointsEntries.Where(p => PointKindCurrency.CoinKinds.Contains(p.Kind)).Sum(p => (int?)p.Amount) ?? 0,
                 c.PointsEntries.Where(p => PointKindCurrency.GemKinds.Contains(p.Kind)).Sum(p => (int?)p.Amount) ?? 0))
@@ -43,6 +45,7 @@ public class ChildrenController(PuglingDbContext db, WalletService wallet, Accou
             .Where(c => c.SupervisorLinks.Any(l => l.SupervisorId == fatherId))
             .OrderBy(c => c.Name)
             .Select(c => new ChildResponse(c.Id, c.Name, c.BirthYear, c.Grade, c.SchoolType,
+                c.Gender, c.Interests, c.ProfileNotes,
                 c.CreatedAt,
                 c.PointsEntries.Where(p => PointKindCurrency.CoinKinds.Contains(p.Kind)).Sum(p => (int?)p.Amount) ?? 0,
                 c.PointsEntries.Where(p => PointKindCurrency.GemKinds.Contains(p.Kind)).Sum(p => (int?)p.Amount) ?? 0))
@@ -58,7 +61,8 @@ public class ChildrenController(PuglingDbContext db, WalletService wallet, Accou
         return child is null ? NotFound() : child;
     }
 
-    public record CreateChildDto(string Name, int? BirthYear, int? Grade, SchoolTypes? SchoolType, string? Pin);
+    public record CreateChildDto(string Name, int? BirthYear, int? Grade, SchoolTypes? SchoolType, string? Pin,
+        Gender? Gender = null, List<string>? Interests = null, string? ProfileNotes = null);
 
     /// <summary>Erstellt ein Kind unter dem angemeldeten Vater.</summary>
     [HttpPost]
@@ -74,6 +78,9 @@ public class ChildrenController(PuglingDbContext db, WalletService wallet, Accou
             BirthYear = dto.BirthYear,
             Grade = dto.Grade,
             SchoolType = dto.SchoolType ?? SchoolTypes.None,
+            Gender = dto.Gender ?? Gender.None,
+            Interests = dto.Interests ?? [],
+            ProfileNotes = dto.ProfileNotes,
             Pin = string.IsNullOrEmpty(dto.Pin) ? "" : PinHasher.Hash(dto.Pin),
         };
         db.Children.Add(child);
@@ -85,11 +92,12 @@ public class ChildrenController(PuglingDbContext db, WalletService wallet, Accou
         await accounts.EnsureForChildAsync(child);
 
         var response = new ChildResponse(child.Id, child.Name, child.BirthYear, child.Grade,
-            child.SchoolType, child.CreatedAt, 0, 0);
+            child.SchoolType, child.Gender, child.Interests, child.ProfileNotes, child.CreatedAt, 0, 0);
         return CreatedAtAction(nameof(Get), new { childId = child.Id }, response);
     }
 
-    public record UpdateChildDto(string? Name, int? BirthYear, int? Grade, SchoolTypes? SchoolType, string? Pin);
+    public record UpdateChildDto(string? Name, int? BirthYear, int? Grade, SchoolTypes? SchoolType, string? Pin,
+        Gender? Gender = null, List<string>? Interests = null, string? ProfileNotes = null);
 
     /// <summary>Ändert ein Kind (partiell).</summary>
     [HttpPatch("{childId:int}")]
@@ -103,6 +111,10 @@ public class ChildrenController(PuglingDbContext db, WalletService wallet, Accou
         if (dto.BirthYear.HasValue) child.BirthYear = dto.BirthYear;
         if (dto.Grade.HasValue) child.Grade = dto.Grade;
         if (dto.SchoolType.HasValue) child.SchoolType = dto.SchoolType.Value;
+        if (dto.Gender.HasValue) child.Gender = dto.Gender.Value;
+        // Neue Liste zuweisen (kein In-Place-Mutieren – JSON-Spalten-Fallstrick).
+        if (dto.Interests is not null) child.Interests = [.. dto.Interests];
+        if (dto.ProfileNotes is not null) child.ProfileNotes = dto.ProfileNotes;
         if (dto.Pin is not null)
         {
             child.Pin = string.IsNullOrEmpty(dto.Pin) ? "" : PinHasher.Hash(dto.Pin);

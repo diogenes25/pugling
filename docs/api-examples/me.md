@@ -25,42 +25,42 @@ Response — `HTTP 200`:
 ```json
 [
   {
-    "id": 3,
+    "id": 5,
     "amount": 15,
     "kind": "Base",
     "reason": "Doku-Buchung",
-    "createdAt": "2026-07-12T21:09:03.7538574"
+    "createdAt": "2026-07-13T05:51:28.4551792"
   },
   {
     "id": 2,
     "amount": 300,
     "kind": "Achievement",
     "reason": "Willkommens-Gems",
-    "createdAt": "2026-07-12T21:08:54.3550135"
+    "createdAt": "2026-07-13T05:51:26.2523503"
   },
   {
     "id": 1,
     "amount": 50,
     "kind": "Base",
     "reason": "Startguthaben (M\u00FCnzen)",
-    "createdAt": "2026-07-12T21:08:54.3550128"
+    "createdAt": "2026-07-13T05:51:26.2523481"
   }
 ]
 ```
 
 ## Einzelne Buchung
-`GET /api/v1/student/me/points/entries/3`
+`GET /api/v1/student/me/points/entries/5`
 
 Rolle: **child** — `Authorization: Bearer <child-token>`
 
 Response — `HTTP 200`:
 ```json
 {
-  "id": 3,
+  "id": 5,
   "amount": 15,
   "kind": "Base",
   "reason": "Doku-Buchung",
-  "createdAt": "2026-07-12T21:09:03.7538574"
+  "createdAt": "2026-07-13T05:51:28.4551792"
 }
 ```
 

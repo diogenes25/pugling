@@ -68,6 +68,33 @@ const resourceIdBySegment = new Map([
   ['skins', 'skinId'],
 ]);
 
+// Kuratierte Sammelordner: Der Backbone der Verschachtelung ist die URL-Route (siehe pathOf), aber an
+// wenigen Stellen wollen wir einen synthetischen Zwischenordner einziehen, der aus Route/Tag allein nicht
+// ableitbar ist. `tier` grenzt die Regel auf eine Ebene ein, `parentKey` verankert den Gruppenordner am
+// Routen-Key eines Eltern-Tags (leer = direkt unter dem Tier), `match` entscheidet die Mitgliedschaft.
+// Reihenfolge = Priorität (erste passende Regel gewinnt).
+const curatedGroups = [
+  // Übungs-Verwaltung (Katalog/Kategorien/Vorschau/Typen) direkt unter dem Creator-Tier bündeln – die
+  // vier Tags tragen alle „Exercise" im Namen, liegen aber auf unterschiedlichen Routen.
+  {
+    tier: 'creator',
+    name: 'Exercises',
+    parentKey: [],
+    match: tag => tag.name.includes('Exercise'),
+  },
+  // Alle typisierten Übungen (arithmetic, cloze, grammar, …) unter Kapitel in einen „Exercises"-Ordner
+  // sammeln. Erkannt an der Route …/subjects/{}/chapters/{typ}, nicht am (uneinheitlichen) Tag-Namen.
+  {
+    tier: 'creator',
+    name: 'Exercises',
+    parentKey: ['creator', 'subjects', 'chapters'],
+    match: tag => tag.operations.some(operation => {
+      const key = routeKey(operation.path);
+      return key.length >= 4 && key[1] === 'subjects' && key[2] === 'chapters';
+    }),
+  },
+];
+
 const reasonPhrases = new Map([
   [200, 'OK'], [201, 'Created'], [202, 'Accepted'], [204, 'No Content'],
   [400, 'Bad Request'], [401, 'Unauthorized'], [403, 'Forbidden'], [404, 'Not Found'],
@@ -152,32 +179,147 @@ async function writeCollectionFiles(api, directory, managed) {
   await write(path.join(directory, 'README.md'), collectionReadme());
   await write(path.join(directory, 'environments', 'local.yml'), localEnvironment());
 
-  // Ordner (= Tags) alphabetisch, je ein folder.yml mit fortlaufender seq.
+  // Verschachtelter Ordnerbaum statt flacher Tag-Liste (Tier-Wurzel → Routen-Schachtelung →
+  // kuratierte Sammelordner). placeOperations liefert je Tag den vollständigen Knotenpfad.
+  await writeFolderTree(placeOperations(operations), directory, write);
+
+  if (managed) await pruneStale(directory, written);
+}
+
+// Ordnet jedem Tag seinen Ort im Baum zu. Ergebnis: [{ tag, nodes }] mit `nodes` = Kette von
+// Ordnerknoten (tier → … → tag) von der Wurzel bis zum Blatt.
+function placeOperations(operations) {
   const byTag = new Map();
   for (const operation of operations) {
     if (!byTag.has(operation.tag)) byTag.set(operation.tag, []);
     byTag.get(operation.tag).push(operation);
   }
-  const tags = [...byTag.keys()].sort((left, right) => left.localeCompare(right));
 
-  for (const [tagIndex, tag] of tags.entries()) {
-    const targetDir = path.join(directory, folderSlug(tag));
-    await write(path.join(targetDir, 'folder.yml'), folderFile(tag, tagIndex + 1));
+  const tags = [...byTag.entries()].map(([name, ops]) => ({
+    name,
+    operations: ops,
+    tier: tierOf(ops[0].path),
+    key: canonicalKey(ops),
+  }));
+  // Routen-Key → Tag, um den Eltern-Tag beim Schachteln aufzulösen (längster echter Präfix gewinnt).
+  const byKey = new Map(tags.map(tag => [tag.key.join('/'), tag]));
 
-    const usedNames = new Set();
-    for (const [operationIndex, operation] of byTag.get(tag).entries()) {
-      const fileName = uniqueName(usedNames, operationSlug(operation));
-      await write(path.join(targetDir, `${fileName}.yml`), renderRequest(operation, operationIndex + 1));
+  const tierNode = tier => ({ kind: 'tier', name: tierDisplay(tier), dir: tierDisplay(tier) });
+  const groupNode = group => ({ kind: 'group', name: group.name, dir: group.name });
+  const tagNode = tag => ({ kind: 'tag', name: tag.name, dir: folderSlug(tag.name) });
+
+  // Eltern-Tag = jener Tag, dessen kanonische Route der längste echte Präfix dieser Route ist.
+  const parentTagOf = tag => {
+    for (let length = tag.key.length - 1; length >= 1; length -= 1) {
+      const owner = byKey.get(tag.key.slice(0, length).join('/'));
+      if (owner && owner !== tag) return owner;
+    }
+    return null;
+  };
+
+  const matchingGroup = tag => curatedGroups.find(group => group.tier === tag.tier && group.match(tag));
+
+  // Voller Pfad eines Tags: kuratierte Gruppe hat Vorrang vor der reinen Routen-Schachtelung; beide
+  // hängen sich rekursiv an den Pfad ihres Eltern-Knotens.
+  const pathOf = tag => {
+    const group = matchingGroup(tag);
+    if (group) {
+      const parent = group.parentKey.length > 0 ? byKey.get(group.parentKey.join('/')) : null;
+      const base = parent ? pathOf(parent) : [tierNode(tag.tier)];
+      return [...base, groupNode(group), tagNode(tag)];
+    }
+
+    const parent = parentTagOf(tag);
+    const base = parent ? pathOf(parent) : [tierNode(tag.tier)];
+    return [...base, tagNode(tag)];
+  };
+
+  return tags.map(tag => ({ tag, nodes: collapsePath(pathOf(tag)) }));
+}
+
+// Schreibt Ordner-Metadaten (folder.yml je Knoten) und die Requests in ihre Blatt-Ordner. Ein Tag-Ordner
+// kann zugleich Requests und Unterordner tragen (z. B. Subjects mit Requests + Chapters-Unterordner).
+async function writeFolderTree(placements, directory, write) {
+  const folders = new Map();
+  for (const { nodes } of placements) {
+    let parentDir = '';
+    for (const node of nodes) {
+      const dir = parentDir ? `${parentDir}/${node.dir}` : node.dir;
+      if (!folders.has(dir)) folders.set(dir, { name: node.name, parentDir, dir });
+      parentDir = dir;
     }
   }
 
-  if (managed) await pruneStale(directory, written);
+  // seq je Geschwistergruppe (alphabetisch nach Anzeigename, stabil).
+  const siblings = new Map();
+  for (const folder of folders.values()) {
+    if (!siblings.has(folder.parentDir)) siblings.set(folder.parentDir, []);
+    siblings.get(folder.parentDir).push(folder);
+  }
+  const seqOf = new Map();
+  for (const list of siblings.values()) {
+    list.sort((left, right) => left.name.localeCompare(right.name));
+    list.forEach((folder, index) => seqOf.set(folder.dir, index + 1));
+  }
+
+  for (const folder of folders.values()) {
+    const target = path.join(directory, ...folder.dir.split('/'), 'folder.yml');
+    await write(target, folderFile(folder.name, seqOf.get(folder.dir)));
+  }
+
+  for (const { tag, nodes } of placements) {
+    const leafDir = path.join(directory, ...nodes.map(node => node.dir));
+    const usedNames = new Set();
+    for (const [index, operation] of tag.operations.entries()) {
+      const fileName = uniqueName(usedNames, operationSlug(operation));
+      await write(path.join(leafDir, `${fileName}.yml`), renderRequest(operation, index + 1));
+    }
+  }
+}
+
+// Erster Routen-Segment nach /api/v1 = Tier (creator/supervisor/student/auth).
+function tierOf(apiPath) {
+  return apiPath.split('/').filter(Boolean).at(2) ?? 'api';
+}
+
+function tierDisplay(tier) {
+  return tier.charAt(0).toUpperCase() + tier.slice(1);
+}
+
+// Statische Routen-Segmente nach /api/v1 (Parameter wie {subjectId} entfallen) – Basis für Präfix-Vergleich.
+function routeKey(apiPath) {
+  return apiPath.split('/').filter(Boolean).slice(2).filter(segment => !segment.startsWith('{'));
+}
+
+// Kanonische Route eines Tags = kürzeste (spezifischste-neutrale) Route; bestimmt die Einhängung.
+function canonicalKey(operations) {
+  let best = null;
+  for (const operation of operations) {
+    const key = routeKey(operation.path);
+    if (!best || key.length < best.length || (key.length === best.length && key.join('/') < best.join('/'))) best = key;
+  }
+  return best ?? [];
+}
+
+// Kollabiert einen Tag, dessen Name dem Tier entspricht (z. B. „Auth"), in den Tier-Ordner – sonst
+// entstünde ein redundantes Auth/Auth. Die Requests landen dann direkt im Tier-Ordner.
+function collapsePath(nodes) {
+  if (nodes.length >= 2) {
+    const last = nodes.at(-1);
+    const parent = nodes.at(-2);
+    if (last.kind === 'tag' && parent.kind === 'tier' && last.name === parent.name) return nodes.slice(0, -1);
+  }
+  return nodes;
 }
 
 // Entfernt Dateien/leere Ordner, die zu einem früheren Lauf gehörten (z. B. umbenannte Slugs), aber
 // diesmal nicht geschrieben wurden. Best-effort: eine gesperrte Datei bricht den Sync nicht ab.
 async function pruneStale(directory, written) {
   const failures = [];
+  // Vergleich case-insensitiv: Auf case-insensitiven Dateisystemen (Windows/macOS) meint eine reine
+  // Groß-/Kleinschreibungs-Umbenennung (altes `auth` → neues `Auth`) denselben Ordner. Ein case-sensitiver
+  // Set-Vergleich hielte die frisch geschriebene Datei fälschlich für verwaist und löschte sie wieder.
+  const keep = new Set([...written].map(entry => entry.toLowerCase()));
 
   const walk = async currentDir => {
     let entries;
@@ -201,7 +343,7 @@ async function pruneStale(directory, written) {
         continue;
       }
 
-      if (written.has(path.resolve(entryPath))) {
+      if (keep.has(path.resolve(entryPath).toLowerCase())) {
         emptied = false;
         continue;
       }

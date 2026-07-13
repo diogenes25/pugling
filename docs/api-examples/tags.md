@@ -91,7 +91,7 @@ Rolle: **father** — `Authorization: Bearer <father-token>`
 Request:
 ```json
 {
-  "childId": 2,
+  "childId": 3,
   "name": "Fremd"
 }
 ```
