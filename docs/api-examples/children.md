@@ -16,7 +16,14 @@ Response — `HTTP 200`:
     "birthYear": 2015,
     "grade": null,
     "schoolType": "None",
-    "createdAt": "2026-07-12T21:08:54.33513",
+    "gender": "Male",
+    "interests": [
+      "Brawl Stars",
+      "Pok\u00E9mon",
+      "Fu\u00DFball"
+    ],
+    "profileNotes": "Motiviert \u00FCber Spiele-Themen; braucht klare kurze Aufgaben.",
+    "createdAt": "2026-07-13T05:51:26.2228375",
     "coins": 50,
     "gems": 300
   }
@@ -39,11 +46,14 @@ Request:
 Response — `HTTP 201`:
 ```json
 {
-  "id": 3,
+  "id": 4,
   "name": "Doku-Kind",
   "birthYear": null,
   "grade": null,
   "schoolType": "None",
+  "gender": "None",
+  "interests": [],
+  "profileNotes": null,
   "createdAt": "<timestamp>",
   "coins": 0,
   "gems": 0
@@ -76,26 +86,29 @@ Response — `HTTP 400`:
 ```
 
 ## Einzelnes Kind lesen
-`GET /api/v1/supervisor/children/3`
+`GET /api/v1/supervisor/children/4`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
 Response — `HTTP 200`:
 ```json
 {
-  "id": 3,
+  "id": 4,
   "name": "Doku-Kind",
   "birthYear": null,
   "grade": null,
   "schoolType": "None",
-  "createdAt": "2026-07-12T21:09:01.5616127",
+  "gender": "None",
+  "interests": [],
+  "profileNotes": null,
+  "createdAt": "2026-07-13T05:51:28.1664955",
   "coins": 0,
   "gems": 0
 }
 ```
 
 ## Kind ändern (Klassenstufe)
-`PATCH /api/v1/supervisor/children/3`
+`PATCH /api/v1/supervisor/children/4`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
@@ -109,19 +122,22 @@ Request:
 Response — `HTTP 200`:
 ```json
 {
-  "id": 3,
+  "id": 4,
   "name": "Doku-Kind",
   "birthYear": null,
   "grade": 4,
   "schoolType": "None",
-  "createdAt": "2026-07-12T21:09:01.5616127",
+  "gender": "None",
+  "interests": [],
+  "profileNotes": null,
+  "createdAt": "2026-07-13T05:51:28.1664955",
   "coins": 0,
   "gems": 0
 }
 ```
 
 ### Fremdes Kind lesen — Fehlerfall
-`GET /api/v1/supervisor/children/2`
+`GET /api/v1/supervisor/children/3`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
@@ -138,7 +154,7 @@ Response — `HTTP 404`:
 ```
 
 ## Kind löschen
-`DELETE /api/v1/supervisor/children/3`
+`DELETE /api/v1/supervisor/children/4`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 

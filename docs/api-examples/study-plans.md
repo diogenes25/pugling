@@ -19,12 +19,12 @@ Request:
 Response — `HTTP 201`:
 ```json
 {
-  "id": 2,
+  "id": 3,
   "childId": 1,
   "title": "Doku-Lehrplan",
   "subjectId": null,
-  "startDate": "2026-07-12",
-  "endDate": "2026-07-21",
+  "startDate": "2026-07-13",
+  "endDate": "2026-07-22",
   "active": true,
   "positionCount": 0,
   "description": null,
@@ -33,7 +33,7 @@ Response — `HTTP 201`:
 ```
 
 ## Position anlegen
-`POST /api/v1/supervisor/study-plans/2/positions`
+`POST /api/v1/supervisor/study-plans/3/positions`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
@@ -50,8 +50,8 @@ Request:
 Response — `HTTP 201`:
 ```json
 {
-  "id": 2,
-  "studyPlanId": 2,
+  "id": 18,
+  "studyPlanId": 3,
   "exerciseId": 13,
   "exerciseTitle": "Begr\u00FC\u00DFungen",
   "exerciseType": "Vocabulary",
@@ -78,7 +78,7 @@ Response — `HTTP 201`:
 ```
 
 ### Position mit unbekannter Übung — Fehlerfall
-`POST /api/v1/supervisor/study-plans/2/positions`
+`POST /api/v1/supervisor/study-plans/3/positions`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
@@ -119,7 +119,7 @@ Response — `HTTP 404`:
 ```
 
 ## Übungssitzung starten (Lern-Modus)
-`POST /api/v1/student/study-plans/2/positions/2/practice-sessions`
+`POST /api/v1/student/study-plans/3/positions/18/practice-sessions`
 
 Rolle: **child** — `Authorization: Bearer <child-token>`
 
@@ -134,9 +134,9 @@ Response — `HTTP 201`:
 ```json
 {
   "id": 1,
-  "planId": 2,
-  "positionId": 2,
-  "day": "2026-07-12",
+  "planId": 3,
+  "positionId": 18,
+  "day": "2026-07-13",
   "startedAt": "<timestamp>",
   "endedAt": null,
   "activeSeconds": 0,
@@ -148,7 +148,7 @@ Response — `HTTP 201`:
 ```
 
 ## Nächste Karte (server-geführter Cursor)
-`GET /api/v1/student/study-plans/2/positions/2/practice-sessions/1/next`
+`GET /api/v1/student/study-plans/3/positions/18/practice-sessions/1/next`
 
 Rolle: **child** — `Authorization: Bearer <child-token>`
 
@@ -173,7 +173,7 @@ Response — `HTTP 200`:
 ```
 
 ## Karte bewerten (Review, mit nächster Karte)
-`POST /api/v1/student/study-plans/2/positions/2/practice-sessions/1/review`
+`POST /api/v1/student/study-plans/3/positions/18/practice-sessions/1/review`
 
 Rolle: **child** — `Authorization: Bearer <child-token>`
 
@@ -192,7 +192,7 @@ Response — `HTTP 200`:
   "expected": "hallo",
   "awarded": 10,
   "box": 2,
-  "dueOn": "2026-07-14",
+  "dueOn": "2026-07-15",
   "combo": 1,
   "comboBonus": 0,
   "speedBonus": 0,
@@ -212,7 +212,7 @@ Response — `HTTP 200`:
 ```
 
 ## Übungssitzung starten (Info-Modus, freies Üben)
-`POST /api/v1/student/study-plans/2/positions/2/practice-sessions`
+`POST /api/v1/student/study-plans/3/positions/18/practice-sessions`
 
 Rolle: **child** — `Authorization: Bearer <child-token>`
 
@@ -227,9 +227,9 @@ Response — `HTTP 201`:
 ```json
 {
   "id": 2,
-  "planId": 2,
-  "positionId": 2,
-  "day": "2026-07-12",
+  "planId": 3,
+  "positionId": 18,
+  "day": "2026-07-13",
   "startedAt": "<timestamp>",
   "endedAt": null,
   "activeSeconds": 0,
@@ -241,7 +241,7 @@ Response — `HTTP 201`:
 ```
 
 ## Karten am Stück (Info-Modus/Offline-Batch)
-`GET /api/v1/student/study-plans/2/positions/2/practice-sessions/2/cards`
+`GET /api/v1/student/study-plans/3/positions/18/practice-sessions/2/cards`
 
 Rolle: **child** — `Authorization: Bearer <child-token>`
 
@@ -274,7 +274,7 @@ Response — `HTTP 200`:
 ```
 
 ## Review im Info-Modus (kein Feedback → 204)
-`POST /api/v1/student/study-plans/2/positions/2/practice-sessions/2/review`
+`POST /api/v1/student/study-plans/3/positions/18/practice-sessions/2/review`
 
 Rolle: **child** — `Authorization: Bearer <child-token>`
 
@@ -292,7 +292,7 @@ Response — `HTTP 204`:
 ```
 
 ## Test starten (Klausur, ohne Aufgaben-Bulk)
-`POST /api/v1/student/study-plans/2/positions/2/tests`
+`POST /api/v1/student/study-plans/3/positions/18/tests`
 
 Rolle: **child** — `Authorization: Bearer <child-token>`
 
@@ -305,16 +305,16 @@ Response — `HTTP 201`:
 ```json
 {
   "attemptId": 1,
-  "planId": 2,
-  "positionId": 2,
-  "day": "2026-07-12",
+  "planId": 3,
+  "positionId": 18,
+  "day": "2026-07-13",
   "stage": 4,
   "totalItems": 1
 }
 ```
 
 ## Nächste Prüfungsfrage (One-at-a-time)
-`GET /api/v1/student/study-plans/2/positions/2/tests/1/next`
+`GET /api/v1/student/study-plans/3/positions/18/tests/1/next`
 
 Rolle: **child** — `Authorization: Bearer <child-token>`
 
@@ -338,7 +338,7 @@ Response — `HTTP 200`:
 ```
 
 ## Prüfungsantwort abgeben (ohne Korrektheit)
-`POST /api/v1/student/study-plans/2/positions/2/tests/1/answer`
+`POST /api/v1/student/study-plans/3/positions/18/tests/1/answer`
 
 Rolle: **child** — `Authorization: Bearer <child-token>`
 
@@ -359,7 +359,7 @@ Response — `HTTP 200`:
 ```
 
 ## Test abgeben (auswerten)
-`POST /api/v1/student/study-plans/2/positions/2/tests/1/submit`
+`POST /api/v1/student/study-plans/3/positions/18/tests/1/submit`
 
 Rolle: **child** — `Authorization: Bearer <child-token>`
 
@@ -391,7 +391,7 @@ Response — `HTTP 200`:
 ```
 
 ### Test erneut abgeben — Fehlerfall
-`POST /api/v1/student/study-plans/2/positions/2/tests/1/submit`
+`POST /api/v1/student/study-plans/3/positions/18/tests/1/submit`
 
 Rolle: **child** — `Authorization: Bearer <child-token>`
 
@@ -413,21 +413,21 @@ Response — `HTTP 400`:
 ```
 
 ## Tagesmission (Overview)
-`GET /api/v1/student/study-plans/2/overview`
+`GET /api/v1/student/study-plans/3/overview`
 
 Rolle: **child** — `Authorization: Bearer <child-token>`
 
 Response — `HTTP 200`:
 ```json
 {
-  "planId": 2,
+  "planId": 3,
   "title": "Doku-Lehrplan",
-  "startDate": "2026-07-12",
-  "endDate": "2026-07-21",
+  "startDate": "2026-07-13",
+  "endDate": "2026-07-22",
   "active": true,
   "currentStreak": 1,
   "today": {
-    "day": "2026-07-12",
+    "day": "2026-07-13",
     "dutyDone": true,
     "goalsTotal": 1,
     "goalsMet": 1,
@@ -435,7 +435,7 @@ Response — `HTTP 200`:
     "outstanding": [],
     "positions": [
       {
-        "positionId": 2,
+        "positionId": 18,
         "exerciseId": 13,
         "exerciseTitle": "Begr\u00FC\u00DFungen",
         "exerciseType": "Vocabulary",
@@ -456,21 +456,28 @@ Response — `HTTP 200`:
 ```
 
 ## Verlauf – Paging & Sortierung (neueste zuerst)
-`GET /api/v1/student/study-plans/2/overview/progress?take=3&sort=-day`
+`GET /api/v1/student/study-plans/3/overview/progress?take=3&sort=-day`
 
 Rolle: **child** — `Authorization: Bearer <child-token>`
 
 Response — `HTTP 200`:
 ```json
 {
-  "planId": 2,
-  "startDate": "2026-07-12",
-  "endDate": "2026-07-21",
+  "planId": 3,
+  "startDate": "2026-07-13",
+  "endDate": "2026-07-22",
   "daysComplete": 1,
   "totalDays": 10,
   "totalPoints": 20,
   "currentStreak": 1,
   "days": [
+    {
+      "day": "2026-07-22",
+      "dutyDone": false,
+      "goalsTotal": 1,
+      "goalsMet": 0,
+      "pointsAwarded": 0
+    },
     {
       "day": "2026-07-21",
       "dutyDone": false,
@@ -484,36 +491,29 @@ Response — `HTTP 200`:
       "goalsTotal": 1,
       "goalsMet": 0,
       "pointsAwarded": 0
-    },
-    {
-      "day": "2026-07-19",
-      "dutyDone": false,
-      "goalsTotal": 1,
-      "goalsMet": 0,
-      "pointsAwarded": 0
     }
   ]
 }
 ```
 
 ## Verlauf – nur erledigte Tage
-`GET /api/v1/student/study-plans/2/overview/progress?dutyDone=true`
+`GET /api/v1/student/study-plans/3/overview/progress?dutyDone=true`
 
 Rolle: **child** — `Authorization: Bearer <child-token>`
 
 Response — `HTTP 200`:
 ```json
 {
-  "planId": 2,
-  "startDate": "2026-07-12",
-  "endDate": "2026-07-21",
+  "planId": 3,
+  "startDate": "2026-07-13",
+  "endDate": "2026-07-22",
   "daysComplete": 1,
   "totalDays": 10,
   "totalPoints": 20,
   "currentStreak": 1,
   "days": [
     {
-      "day": "2026-07-12",
+      "day": "2026-07-13",
       "dutyDone": true,
       "goalsTotal": 1,
       "goalsMet": 1,
@@ -524,7 +524,7 @@ Response — `HTTP 200`:
 ```
 
 ### Test auf Übung ohne prüfbaren Inhalt — Fehlerfall
-`POST /api/v1/student/study-plans/2/positions/3/tests`
+`POST /api/v1/student/study-plans/3/positions/19/tests`
 
 Rolle: **child** — `Authorization: Bearer <child-token>`
 
@@ -546,7 +546,7 @@ Response — `HTTP 400`:
 ```
 
 ### Bespielte Position löschen — Fehlerfall
-`DELETE /api/v1/supervisor/study-plans/2/positions/2`
+`DELETE /api/v1/supervisor/study-plans/3/positions/18`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
@@ -563,7 +563,7 @@ Response — `HTTP 409`:
 ```
 
 ### Deaktivierten Plan spielen — Fehlerfall
-`POST /api/v1/student/study-plans/2/positions/2/practice-sessions`
+`POST /api/v1/student/study-plans/3/positions/18/practice-sessions`
 
 Rolle: **child** — `Authorization: Bearer <child-token>`
 

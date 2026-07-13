@@ -16,6 +16,8 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
     // Admin-Bereich: Personen (Supervisor >-< Student über SupervisorLink) + Punkte
     public DbSet<Father> Fathers => Set<Father>();
     public DbSet<Child> Children => Set<Child>();
+    // Vom Kind verwendete Lehrbücher (übungsunabhängiges Profil, Grundlage für einen späteren Lehrplan-Generator).
+    public DbSet<Textbook> Textbooks => Set<Textbook>();
     public DbSet<SupervisorLink> SupervisorLinks => Set<SupervisorLink>();
     public DbSet<ChildPointsEntry> ChildPoints => Set<ChildPointsEntry>();
 
@@ -132,8 +134,26 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
                 v => JsonSerializer.Serialize(v, JsonOptions),
                 s => JsonSerializer.Deserialize<List<string>>(s, JsonOptions) ?? new())
                 .Metadata.SetValueComparer(JsonValueComparer.For<List<string>>());
+            // Interessen des Kindes ebenfalls als JSON-Liste (gleicher ValueComparer-Fallstrick wie OwnedSkins).
+            e.Property(c => c.Interests).HasConversion(
+                v => JsonSerializer.Serialize(v, JsonOptions),
+                s => JsonSerializer.Deserialize<List<string>>(s, JsonOptions) ?? new())
+                .Metadata.SetValueComparer(JsonValueComparer.For<List<string>>());
+            // Geschlecht als String (lesbar/stabil, wie SupervisorLink.Relation).
+            e.Property(c => c.Gender).HasConversion<string>();
             // Concurrency-Token: schützt Skin-Kauf/Ausrüsten vor parallelen Doppelbuchungen.
             e.Property(c => c.ConcurrencyStamp).IsConcurrencyToken();
+        });
+
+        // Lehrbuch: gehört einem Kind (Cascade – verschwindet mit dem Kind). Der optionale Katalog-Link auf
+        // ein Fach nutzt SetNull, damit ein Fach-Löschen die Buch-Zuordnung nicht mitreißt (nur die FK leert).
+        modelBuilder.Entity<Textbook>(e =>
+        {
+            e.HasIndex(t => t.ChildId);
+            e.HasOne(t => t.Child).WithMany(c => c.Textbooks).HasForeignKey(t => t.ChildId)
+                .OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(t => t.Subject).WithMany().HasForeignKey(t => t.SubjectId)
+                .OnDelete(DeleteBehavior.SetNull);
         });
 
         modelBuilder.Entity<Vocabulary>(e =>

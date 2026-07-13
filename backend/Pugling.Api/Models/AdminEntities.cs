@@ -50,6 +50,16 @@ public class Father
     public List<SupervisorLink> SupervisedLinks { get; set; } = new();
 }
 
+/// <summary>Geschlecht des Kindes (rein deskriptiv). Teil des übungsunabhängigen Profils; ein späterer
+/// Lehrplan-Generator nutzt es allenfalls für die sprachliche Ansprache, nie für die Filterung des Stoffs.</summary>
+public enum Gender
+{
+    None = 0,
+    Male = 1,
+    Female = 2,
+    Diverse = 3,
+}
+
 /// <summary>Lernendes Kind (Student-Profil). Kann mehrere Supervisor haben (<see cref="SupervisorLinks"/>).</summary>
 public class Child
 {
@@ -60,6 +70,27 @@ public class Child
     public int? Grade { get; set; }
     /// <summary>Schulart des Kindes – filtert im Assistenten Übungen, die nicht für alle Schularten gedacht sind.</summary>
     public SchoolTypes SchoolType { get; set; } = SchoolTypes.None;
+
+    // --- Übungsunabhängiges persönliches Profil ---
+    // Diese Angaben beschreiben das Kind, nicht seinen Lernstoff. Sie sind bewusst hier (am Kind) und nicht
+    // an einer Übung/einem Plan angesiedelt, damit ein späterer KI-Generator daraus einen individuellen
+    // Lehrplan ableiten kann: den Stoff treffen (Grade/SchoolType/Lehrbücher) und ihn in Themen einbetten,
+    // die das Kind interessieren (Interests). Siehe wiki/09-llm-kochbuch.md.
+
+    /// <summary>Geschlecht (rein deskriptiv; als String persistiert, lesbar/stabil).</summary>
+    public Gender Gender { get; set; } = Gender.None;
+
+    /// <summary>
+    /// Freie Interessen/Vorlieben des Kindes („Brawl Stars", „Pokémon", „Fußball"). Dienen einem späteren
+    /// Generator als Themen, in die der (feste) Lernstoff eingebettet wird – sie verändern nie, <i>was</i>
+    /// gelernt wird, nur die Einkleidung (Cloze-Sätze, Textaufgaben, Kontexte). Als JSON-Liste gespeichert
+    /// (Neuzuweisung im Controller, kein In-Place-Mutieren – fehlender ValueComparer sonst ein Fallstrick).
+    /// </summary>
+    public List<string> Interests { get; set; } = [];
+
+    /// <summary>Optionaler Freitext für alles Unstrukturierte, das ein Generator kennen sollte
+    /// (Lernschwächen, Motivationshinweise). Bewusst frei, damit ohne Schemaänderung nachtragbar.</summary>
+    public string? ProfileNotes { get; set; }
     /// <summary>Einfacher PIN-Login des Kindes. Später durch echtes Auth ersetzen.</summary>
     public string Pin { get; set; } = "";
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
@@ -89,6 +120,37 @@ public class Child
 
     /// <summary>Betreuende Supervisor dieses Studenten (über <see cref="SupervisorLink"/>).</summary>
     public List<SupervisorLink> SupervisorLinks { get; set; } = new();
+
+    /// <summary>Vom Kind verwendete Lehrbücher (übungsunabhängiges Profil, siehe <see cref="Textbook"/>).</summary>
+    public List<Textbook> Textbooks { get; set; } = new();
+}
+
+/// <summary>
+/// Ein vom Kind verwendetes Lehrbuch (übungsunabhängiges Profil). Hält fest, aus welchem Werk und welchem
+/// aktuellen Kapitel der Lernstoff kommt – die Grundlage, aus der ein späterer Generator „was ist gerade
+/// dran" ableitet. <see cref="Title"/> + <see cref="CurrentChapter"/> lassen sich gegen den Freitext
+/// <c>Exercise.Source</c> (z. B. „Green Line 3, Unit 4") matchen, um vorhandene Übungen wiederzuverwenden.
+/// </summary>
+public class Textbook
+{
+    public int Id { get; set; }
+    /// <summary>Das Kind, dem das Buch zugeordnet ist (Cascade – verschwindet mit dem Kind).</summary>
+    public int ChildId { get; set; }
+    public Child? Child { get; set; }
+    /// <summary>Titel des Werks, z. B. „Green Line 3".</summary>
+    public string Title { get; set; } = "";
+    /// <summary>Fach als Freitext, z. B. „Englisch" – das Fach muss nicht im Katalog existieren.</summary>
+    public string? SubjectName { get; set; }
+    /// <summary>Optionaler Katalog-Link auf ein <see cref="Subject"/>, wo eine exakte Zuordnung möglich ist.</summary>
+    public int? SubjectId { get; set; }
+    public Subject? Subject { get; set; }
+    /// <summary>Für welche Klassenstufe das Buch gedacht ist.</summary>
+    public int? Grade { get; set; }
+    public string? Publisher { get; set; }
+    public string? Isbn { get; set; }
+    /// <summary>Aktueller Lernstand im Buch, z. B. „Unit 4 – Past Tense".</summary>
+    public string? CurrentChapter { get; set; }
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }
 
 /// <summary>

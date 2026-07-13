@@ -166,7 +166,51 @@ Der Sohn startet über `GET /study-plans`, wählt den spielbaren Plan und arbeit
 
 ---
 
-## 7. Fallstricke für Agenten
+## 7. Individueller, profil-getriebener Plan
+
+Die §1–6 bauen einen *generischen* Plan. Individuell wird er durch das **übungsunabhängige Profil am Kind**
+(am `Child` bzw. als Lehrbuch-Sub-Ressource gepflegt, siehe `ChildrenController`/`TextbooksController`). Es
+liefert genau zwei Achsen: **was** gelernt wird und **worin verpackt**.
+
+**a) Profil lesen (der „Brief"):**
+
+```http
+GET /api/v1/supervisor/children/{childId}            # grade, schoolType, gender, interests[], profileNotes
+GET /api/v1/supervisor/children/{childId}/textbooks  # title, subjectName, grade, currentChapter, …
+```
+
+**b) Lernstoff bestimmen (das „Was"):** Aus dem aktiven Lehrbuch kommen Fach, Klassenstufe und der aktuelle
+Abschnitt – z. B. `title="Green Line 3"`, `currentChapter="Unit 4 – Past Tense"`. Match `title` +
+`currentChapter` gegen den Freitext `Exercise.Source` (z. B. „Green Line 3, Unit 4") über die Katalogsuche
+(`GET /api/v1/creator/exercises?...`), um **vorhandene** Übungen wiederzuverwenden, statt neu zu generieren.
+Die Vokabeln sind lehrbuch-**fest** → in den Store (`lookup`/`batch`), Übung per `refs-from-tags` materialisieren.
+
+**c) Einbettung nach Interessen (das „Worin" – das eigentlich Individuelle):** `interests`
+(z. B. „Brawl Stars", „Pokémon") ändern **nie**, *welche* Wörter/Regeln gelernt werden – nur die
+**Einkleidung** drumherum:
+
+| Übungstyp | Was das Interesse einfärbt (der Wortschatz/die Regel bleibt fix) |
+| --- | --- |
+| `Cloze` | Beispielsätze im Brawl-Stars-/Pokémon-Kontext |
+| `Reading`/`Essay` | Lesetext/Schreibauftrag über das Lieblingsthema |
+| `Arithmetic`/`ArithmeticDrill` | Textaufgaben („Wie viele Pokébälle …") |
+| `Matching` | Kontext der Paare aus dem Thema |
+| `Vocabulary` | die Wörter bleiben lehrbuch-fest; nur Hinweise/Beispielsätze thematisch |
+
+`profileNotes` ist Freitext (Lernschwächen, Motivation) und fließt in die Aufgabenauswahl/-tonalität ein;
+`gender` allenfalls in die sprachliche Ansprache – **nie** in die Filterung des Stoffs.
+
+**d) Bauen & verifizieren:** wie in §2–5 (Katalog-Übung mit gesetzten Metadaten `GradeMin/Max`, `SchoolTypes`,
+`Source`, `Description` anlegen → `study-plans` + Positionen → `preview`-Endpunkte ohne Nebenwirkung prüfen).
+
+> **Status:** Das Datenfundament (Profil + Lehrbücher) steht in der API. Der Generator selbst ist noch **nicht**
+> eingebaut – er läuft als **externer Agent**, der diese Endpunkte treibt (keine LLM-Abhängigkeit im Backend).
+> Ein optionaler read-only „Generierungs-Brief"-Endpunkt (Profil + passender Katalog-Kontext gebündelt) ist als
+> Folge-Schritt vorgemerkt.
+
+---
+
+## 8. Fallstricke für Agenten
 
 - **Plan ist Container:** Lernregeln gehören an `PlanPosition`, nicht an `StudyPlan`.
 - **Kein `method/contentKeys` mehr:** Positionen referenzieren Katalog-Übungen per `exerciseId`.

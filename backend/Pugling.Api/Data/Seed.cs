@@ -10,12 +10,246 @@ public static class Seed
         SeedTimeSlots(db);
         SeedAdmin(db);
         SeedCatalog(db);
+        SeedStudentProfile(db);
         SeedVocabulary(db);
         SeedFrench(db);
         SeedKlassenarbeiten(db);
         SeedGamification(db);
         SeedTeacherLibrary(db);
         SeedShop(db);
+        SeedDemoPlan(db);
+    }
+
+    /// <summary>
+    /// Übungsunabhängiges Profil des Seed-Kindes: ein verwendetes Lehrbuch als Grundlage für einen späteren
+    /// Lehrplan-Generator („was ist gerade dran"). Titel + Kapitel decken sich bewusst mit dem
+    /// <see cref="Exercise.Source"/> der geseedeten Englisch-Übungen („Green Line 1, Unit 1"), damit ein
+    /// Agent vorhandene Übungen wiederfindet statt neu zu generieren. Die Interessen des Kindes werden bereits
+    /// in <see cref="SeedAdmin"/> gesetzt. Additiv-idempotent: legt das Buch nur an, wenn das Kind noch keins hat.
+    /// </summary>
+    private static void SeedStudentProfile(PuglingDbContext db)
+    {
+        var child = db.Children.OrderBy(c => c.Id).FirstOrDefault();
+        if (child is null) return;
+        if (db.Textbooks.Any(t => t.ChildId == child.Id)) return;
+
+        var englisch = db.Subjects.FirstOrDefault(s => s.Name == "Englisch");
+        db.Textbooks.Add(new Textbook
+        {
+            ChildId = child.Id,
+            Title = "Green Line 1",
+            SubjectName = "Englisch",
+            SubjectId = englisch?.Id,
+            Grade = 5,
+            Publisher = "Klett",
+            CurrentChapter = "Unit 1 – Greetings",
+        });
+        db.SaveChanges();
+    }
+
+    /// <summary>
+    /// Ein <b>vollständiger</b> Demo-Lehrplan für den Seed-Sohn, der <b>jede</b> spielbare Lernart als eigene
+    /// Position sichtbar macht – gedacht als Echt-Datensatz für die Frontend-Entwicklung: alle Vokabel-Stufen
+    /// (Kennenlernen, Selbsteinschätzung/„Umdrehen", Multiple-Choice/„Auswahl", Buchstabenkästchen, Freitext,
+    /// Hören), die Lückentext- und Zuordnungs-Stufen, eine reine Inhaltsübung (Birkenbihl), feste und generierte
+    /// Rechen-Checks, eine Liste und eine Übersetzung. Deckt zusätzlich die Ziel-Varianten (Tag/Woche/frei),
+    /// den Münz-Malus, die Leitner-Terminierung und einen Stufen-Fahrplan ab, damit Tagesmission, Üben,
+    /// Abschlusstest und Auswertung im Frontend gegen realistische Daten laufen.
+    /// Hängt bewusst an einer <b>eigenen Demo-Familie</b> (Demo-Vater <c>demo-vater@example.com</c>/PIN 0001,
+    /// Demo-Kind „Demo-Kind"/PIN 2222), damit das primäre Seed-Kind „Sohn" ein sauberer Ausgangszustand bleibt.
+    /// Additiv-idempotent: legt Familie/Plan nur an, solange der Demo-Plan noch nicht existiert.
+    /// </summary>
+    private static void SeedDemoPlan(PuglingDbContext db)
+    {
+        const string planTitle = "Demo: Alle Lernarten (Frontend-Testdaten)";
+        const string demoFatherEmail = "demo-vater@example.com";
+
+        // Bewusst eine EIGENE Demo-Familie statt des primären Seed-Kindes „Sohn": So bleibt „Sohn" ein
+        // sauberer Ausgangszustand (u. a. für die Tests, die dort ihre eigenen Pläne/Ziele aufbauen),
+        // während dieses reichhaltige Frontend-Testdaten-Set isoliert daneben liegt. Get-or-create,
+        // damit ein Nachlauf auf befüllter DB weder dupliziert noch fremde Accounts anfasst.
+        var demoFather = db.Fathers.FirstOrDefault(f => f.Email == demoFatherEmail);
+        if (demoFather is null)
+        {
+            demoFather = new Father { Name = "Demo-Vater", Email = demoFatherEmail, Pin = Auth.PinHasher.Hash("0001") };
+            db.Fathers.Add(demoFather);
+            db.SaveChanges();
+        }
+
+        var child = db.Children.FirstOrDefault(c => c.Name == "Demo-Kind");
+        if (child is null)
+        {
+            child = new Child
+            {
+                Name = "Demo-Kind",
+                BirthYear = 2013,
+                Gender = Gender.Male,
+                Interests = ["Minecraft", "Basketball"],
+                ProfileNotes = "Frontend-Testkind: trägt den vollständigen Lernarten-Demoplan.",
+                Pin = Auth.PinHasher.Hash("2222"),
+                // Startguthaben, damit sich Shop/Skins sofort ausprobieren lassen.
+                PointsEntries =
+                {
+                    new ChildPointsEntry { Amount = 200, Kind = PointKind.Base, Reason = "Startguthaben (Münzen)" },
+                    new ChildPointsEntry { Amount = 300, Kind = PointKind.Achievement, Reason = "Willkommens-Gems" },
+                },
+            };
+            db.Children.Add(child);
+            db.SaveChanges();
+            db.SupervisorLinks.Add(new SupervisorLink { SupervisorId = demoFather.Id, StudentId = child.Id, Relation = SupervisorRelation.Father });
+            db.SaveChanges();
+        }
+
+        if (db.StudyPlans.Any(p => p.ChildId == child.Id && p.Title == planTitle)) return;
+
+        // Katalog-Übungen per Titel holen (im Seed stabil). Optionale bleiben null, wenn ihr Fach fehlt.
+        Exercise? ByTitle(string title) => db.Exercises.FirstOrDefault(e => e.Title == title);
+        var vocab = ByTitle("Begrüßungen");
+        if (vocab is null) return; // ohne die Kern-Vokabelübung ergibt der Demo-Plan keinen Sinn
+        int vocabId = vocab.Id;
+
+        var cloze = ByTitle("Lückentext: A short dialogue");
+        var birkenbihl = ByTitle("Birkenbihl: Getting to know each other");
+        var arithmetic = ByTitle("Das kleine 1×1 (7er-Reihe)");
+        var drill = ByTitle("Kopfrechnen bis 20");
+        var list = ByTitle("Die 16 Bundesländer");
+        var matching = ByTitle("Bundesland → Landeshauptstadt");
+        var translation = ByTitle("Translation: Talking about the future");
+
+        var englisch = db.Subjects.FirstOrDefault(s => s.Name == "Englisch");
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+
+        var positions = new List<PlanPosition>();
+        var order = 0;
+
+        // ── Vokabeln: jede Teststufe als eigene Position ────────────────────────
+        // Damit sich alle Vokabel-Lernarten sofort durchspielen lassen. Der Inhalt ist immer dieselbe
+        // Übung „Begrüßungen"; erst die Stufe (Stage) je Position bestimmt die Lernart.
+        void Vocab(TestStage stage, GoalCadence cadence, bool leitner, int penalty = 0)
+        {
+            positions.Add(new PlanPosition
+            {
+                ExerciseId = vocabId,
+                Order = order++,
+                Stage = (int)stage,
+                Cadence = cadence,
+                PenaltyCoins = penalty,
+                UseLeitner = leitner,
+                // Getippte Stufen dürfen nur „gewertet" bestehen (kein bloßes Klicken/Aufdecken).
+                RequireTypedTest = stage is TestStage.FreeText or TestStage.Audio,
+            });
+        }
+
+        Vocab(TestStage.ShowBoth, GoalCadence.None, leitner: false); // Kennenlernen (Vorder-/Rückseite sichtbar)
+        Vocab(TestStage.SelfAssess, GoalCadence.Daily, leitner: true, penalty: 5); // „Umdrehen" + Selbsteinschätzung
+        Vocab(TestStage.MultipleChoice, GoalCadence.Daily, leitner: true); // „Auswahl" mit Ablenkern
+        Vocab(TestStage.LetterBoxes, GoalCadence.Weekly, leitner: true); // Buchstabenkästchen
+        Vocab(TestStage.Audio, GoalCadence.None, leitner: false); // Hören → tippen (Items ohne Audio → stumm, aber spielbar)
+
+        // Freitext-Stufe zusätzlich mit Schnell-Antwort-Bonus, um auch diesen Punkte-Pfad zu bespielen.
+        positions.Add(new PlanPosition
+        {
+            ExerciseId = vocabId,
+            Order = order++,
+            Stage = (int)TestStage.FreeText,
+            Cadence = GoalCadence.Daily,
+            PenaltyCoins = 10,
+            UseLeitner = true,
+            RequireTypedTest = true,
+            SpeedThresholdSeconds = 8,
+            SpeedBonusPoints = 3,
+        });
+
+        // Eine Position mit Stufen-Fahrplan: die Schwierigkeit steigt über die Laufzeit automatisch an.
+        positions.Add(new PlanPosition
+        {
+            ExerciseId = vocabId,
+            Order = order++,
+            Stage = (int)TestStage.SelfAssess,
+            Cadence = GoalCadence.Daily,
+            UseLeitner = true,
+            StageSchedule =
+            [
+                new StageStep(1, (int)TestStage.ShowBoth),
+                new StageStep(3, (int)TestStage.SelfAssess),
+                new StageStep(7, (int)TestStage.MultipleChoice),
+                new StageStep(14, (int)TestStage.FreeText),
+            ],
+        });
+
+        // ── Lückentext: zwei Stufen (Wortbank vs. Freitext) ─────────────────────
+        if (cloze is not null)
+        {
+            positions.Add(new PlanPosition
+            {
+                ExerciseId = cloze.Id,
+                Order = order++,
+                Stage = (int)ClozeStage.TranslationWordBank,
+                Cadence = GoalCadence.Daily,
+                UseLeitner = true,
+            });
+            positions.Add(new PlanPosition
+            {
+                ExerciseId = cloze.Id,
+                Order = order++,
+                Stage = (int)ClozeStage.FreeText,
+                Cadence = GoalCadence.Weekly,
+                UseLeitner = true,
+                RequireTypedTest = true,
+            });
+        }
+
+        // ── Zuordnung: einfach vs. mit Ablenkern ────────────────────────────────
+        if (matching is not null)
+        {
+            positions.Add(new PlanPosition
+            {
+                ExerciseId = matching.Id,
+                Order = order++,
+                Stage = (int)MatchStage.Direct,
+                Cadence = GoalCadence.Daily,
+                UseLeitner = true,
+            });
+            positions.Add(new PlanPosition
+            {
+                ExerciseId = matching.Id,
+                Order = order++,
+                Stage = (int)MatchStage.Distractors,
+                Cadence = GoalCadence.None,
+            });
+        }
+
+        // ── Reine Inhaltsübung (kein aktives Abfragen) ──────────────────────────
+        if (birkenbihl is not null)
+            positions.Add(new PlanPosition { ExerciseId = birkenbihl.Id, Order = order++, Cadence = GoalCadence.None });
+
+        // ── Katalog-Checks: feste Rechenaufgaben, generierter Drill, Liste ──────
+        // GoalThreshold = Anzahl korrekt zu lösender Aufgaben (Katalog-Check-Semantik).
+        if (arithmetic is not null)
+            positions.Add(new PlanPosition { ExerciseId = arithmetic.Id, Order = order++, Cadence = GoalCadence.Daily, GoalThreshold = 3 });
+        if (drill is not null)
+            positions.Add(new PlanPosition { ExerciseId = drill.Id, Order = order++, Cadence = GoalCadence.Daily, GoalThreshold = 8 });
+        if (list is not null)
+            positions.Add(new PlanPosition { ExerciseId = list.Id, Order = order++, Cadence = GoalCadence.Weekly, GoalThreshold = 16 });
+
+        // ── Übersetzung (aus der Lehrer-Bibliothek, sofern vorhanden) ───────────
+        if (translation is not null)
+            positions.Add(new PlanPosition { ExerciseId = translation.Id, Order = order++, Cadence = GoalCadence.Weekly });
+
+        var plan = new StudyPlan
+        {
+            ChildId = child.Id,
+            Title = planTitle,
+            Description = "Automatisch geseedeter Übungs-Querschnitt: jede Lernart einmal spielbar (Frontend-Testdaten).",
+            SubjectId = englisch?.Id,
+            StartDate = today,
+            EndDate = today.AddYears(1),
+            Active = true,
+            Positions = positions,
+        };
+
+        db.StudyPlans.Add(plan);
+        db.SaveChanges();
     }
 
     /// <summary>
@@ -557,6 +791,11 @@ public static class Seed
         {
             Name = "Sohn",
             BirthYear = 2015,
+            // Übungsunabhängiges Profil: Vorlieben, in die ein späterer Generator den (festen) Lernstoff
+            // einbettet, plus ein Freitext-Hinweis. Siehe wiki/09-llm-kochbuch.md.
+            Gender = Gender.Male,
+            Interests = ["Brawl Stars", "Pokémon", "Fußball"],
+            ProfileNotes = "Motiviert über Spiele-Themen; braucht klare kurze Aufgaben.",
             Pin = Auth.PinHasher.Hash("1111"),
             // Start: ein paar Münzen (Base → Coins) für Angebote und ein paar Gems (Achievement → Gems),
             // damit sich sofort ein Skin ausprobieren lässt.
