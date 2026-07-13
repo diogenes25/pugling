@@ -147,6 +147,7 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
             await CaptureAuthAsync(anon);
             await CaptureChildrenAsync(father, father2, foreignChildId);
             var (docSubjectId, docChapterId, docExerciseId) = await CaptureCatalogAsync(father);
+            await CaptureExerciseTypesAsync(father, docSubjectId, docChapterId);
             await CaptureMeAsync(father, child);
             await CaptureStudyPlansAsync(father, father2, child, docSubjectId, docChapterId, docExerciseId);
             await CaptureClassTestsAsync(father);
@@ -262,6 +263,179 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
                 HttpStatusCode.Forbidden, ApiErrors.NotAuthor.Code);
 
         return (subjectId, chapterId, exerciseId);
+    }
+
+    // ── exercise types (je Typ ein verifizierter Anlage-POST) ─────────────────────────────────────
+    // Vokabel ist bereits in CaptureCatalogAsync abgedeckt; hier die übrigen Typen, damit JEDER Typ-POST
+    // ein verifiziertes Request/Response-Beispiel in die OpenAPI-Spec (und damit die Bruno-Collection) trägt.
+    private async Task CaptureExerciseTypesAsync(HttpClient father, int subjectId, int chapterId)
+    {
+        const string g = "catalog";
+        string Base(string type) => $"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/{type}";
+
+        await Capture(father, g, "Leseübung anlegen", HttpMethod.Post, Base("reading"),
+            new
+            {
+                title = "Der Wetterbericht",
+                orderIndex = 3,
+                rewardPoints = 10,
+                config = new
+                {
+                    text = "Today it is sunny with a light breeze.",
+                    questions = new[] { new { prompt = "How is the weather?", choices = new[] { "sunny", "rainy", "snowy" }, answer = "sunny" } },
+                },
+            }, HttpStatusCode.Created);
+
+        await Capture(father, g, "Lückentext anlegen", HttpMethod.Post, Base("cloze"),
+            new
+            {
+                title = "Present Simple",
+                orderIndex = 4,
+                rewardPoints = 10,
+                config = new
+                {
+                    text = "She {{1}} to school every day and {{2}} her friends.",
+                    gaps = new[] { new { index = 1, answer = "goes" }, new { index = 2, answer = "meets" } },
+                    wordBank = new[] { "goes", "meets", "go", "meet" },
+                },
+            }, HttpStatusCode.Created);
+
+        await Capture(father, g, "Aufsatz anlegen", HttpMethod.Post, Base("essays"),
+            new
+            {
+                title = "My last holiday",
+                orderIndex = 5,
+                rewardPoints = 20,
+                config = new
+                {
+                    prompt = "Write about your last holiday.",
+                    minWords = 80,
+                    maxWords = 200,
+                    rubric = new[] { new { criterion = "Content", maxScore = 5 }, new { criterion = "Grammar", maxScore = 5 } },
+                },
+            }, HttpStatusCode.Created);
+
+        await Capture(father, g, "Hörübung anlegen", HttpMethod.Post, Base("listening"),
+            new
+            {
+                title = "At the station",
+                orderIndex = 6,
+                rewardPoints = 10,
+                config = new
+                {
+                    audioUrl = "https://example.com/audio/at-the-station.mp3",
+                    transcript = "The train to London leaves at nine o'clock.",
+                    questions = new[] { new { prompt = "When does the train leave?", choices = new[] { "at nine", "at ten", "at noon" }, answer = "at nine" } },
+                },
+            }, HttpStatusCode.Created);
+
+        await Capture(father, g, "Grammatikübung anlegen", HttpMethod.Post, Base("grammar"),
+            new
+            {
+                title = "Simple Past",
+                orderIndex = 7,
+                rewardPoints = 10,
+                config = new
+                {
+                    instruction = "Put the verb in brackets into the simple past.",
+                    tasks = new[]
+                    {
+                        new { prompt = "I (go) to school.", answer = "went", ruleHint = "irregular verb" },
+                        new { prompt = "She (play) tennis.", answer = "played", ruleHint = "regular: + ed" },
+                    },
+                },
+            }, HttpStatusCode.Created);
+
+        await Capture(father, g, "Zuordnungsübung anlegen", HttpMethod.Post, Base("matching"),
+            new
+            {
+                title = "Countries & capitals",
+                orderIndex = 8,
+                rewardPoints = 10,
+                config = new
+                {
+                    instruction = "Match each country to its capital.",
+                    pairs = new[] { new { left = "France", right = "Paris" }, new { left = "Spain", right = "Madrid" } },
+                },
+            }, HttpStatusCode.Created);
+
+        await Capture(father, g, "Übersetzungsübung anlegen", HttpMethod.Post, Base("translation"),
+            new
+            {
+                title = "Everyday phrases",
+                orderIndex = 9,
+                rewardPoints = 10,
+                config = new
+                {
+                    sourceLang = "en",
+                    targetLang = "de",
+                    items = new[]
+                    {
+                        new { source = "Good morning", target = "Guten Morgen", alternatives = new[] { "Guten Tag" } },
+                        new { source = "Thank you", target = "Danke", alternatives = new[] { "Vielen Dank" } },
+                    },
+                },
+            }, HttpStatusCode.Created);
+
+        await Capture(father, g, "Feste Rechenaufgaben anlegen", HttpMethod.Post, Base("arithmetic"),
+            new
+            {
+                title = "Kopfrechnen gemischt",
+                orderIndex = 10,
+                rewardPoints = 10,
+                config = new
+                {
+                    problems = new[]
+                    {
+                        new { prompt = "7 + 8", answer = 15m, tolerance = 0m },
+                        new { prompt = "12 / 5", answer = 2.4m, tolerance = 0.1m },
+                    },
+                },
+            }, HttpStatusCode.Created);
+
+        await Capture(father, g, "Rechen-Drill (Regeln) anlegen", HttpMethod.Post, Base("arithmetic-drill"),
+            new
+            {
+                title = "Einmaleins-Drill",
+                orderIndex = 11,
+                rewardPoints = 10,
+                config = new
+                {
+                    operations = new[] { "Multiplication" },
+                    minOperand = 2,
+                    maxOperand = 10,
+                    problemCount = 10,
+                    allowNegativeResults = false,
+                    divisionMustBeWhole = true,
+                },
+            }, HttpStatusCode.Created);
+
+        await Capture(father, g, "Merkliste anlegen", HttpMethod.Post, Base("list"),
+            new
+            {
+                title = "Die vier Himmelsrichtungen",
+                orderIndex = 12,
+                rewardPoints = 15,
+                config = new
+                {
+                    instruction = "Nenne die vier Himmelsrichtungen.",
+                    ordered = false,
+                    items = new[]
+                    {
+                        new { value = "Norden", alternatives = new[] { "Nord" } },
+                        new { value = "Osten", alternatives = new[] { "Ost" } },
+                    },
+                },
+            }, HttpStatusCode.Created);
+
+        await Capture(father, g, "Birkenbihl-Übung anlegen", HttpMethod.Post, Base("birkenbihl"),
+            new
+            {
+                title = "Birkenbihl: Small talk",
+                orderIndex = 13,
+                rewardPoints = 10,
+                config = new { learningLang = "en", nativeLang = "de", sentences = Array.Empty<object>() },
+            }, HttpStatusCode.Created);
     }
 
     private sealed record ForeignExercise(int Id, int SubjectId, int ChapterId);
