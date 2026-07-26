@@ -5,11 +5,7 @@ namespace Pugling.Api.Models;
 // Position, nicht mehr am Plan. Verfahrens-spezifisch sind nur der Inhalt (Übungs-Config) und die
 // Test-Mechanik/Stufen (siehe PositionPlayService / PositionTestsController).
 
-/// <summary>
-/// Lernverfahren – nur noch die Selbstbeschreibung im Übungstyp-Manifest (<see cref="ExerciseTypeManifest"/>)
-/// braucht diese Zuordnung. Kein plan-weites Verfahren mehr.
-/// </summary>
-public enum LearningMethod { Vocabulary = 0, Cloze = 1, Matching = 2 }
+// LearningMethod lebt im Vertrags-Projekt (Pugling.Contracts).
 
 /// <summary>Stufe des Zuordnungs-Verfahrens (steigende Schwierigkeit). Nutzt den Vokabel-Store.</summary>
 public enum MatchStage
@@ -41,8 +37,7 @@ public enum TestStage
     MultipleChoice = 6,
 }
 
-/// <summary>Ein Schritt im Stufen-Fahrplan: ab Tag <c>DayNumber</c> (1-basiert) gilt Stufe <c>Stage</c>.</summary>
-public record StageStep(int DayNumber, int Stage);
+// StageStep lebt im Vertrags-Projekt (Pugling.Contracts).
 
 /// <summary>
 /// Vom Vater erstellter Lehrplan für ein Kind: ein <b>Container</b>, der Katalog-Übungen als
@@ -69,12 +64,7 @@ public class StudyPlan
     public List<PlanPosition> Positions { get; set; } = new();
 }
 
-/// <summary>
-/// Ausspiel-Modus einer Übungssitzung. <see cref="Info"/> = freies Üben: Inhalte am Stück, das Frontend
-/// führt die Iteration, es fließt <b>kein</b> Lernfeedback (keine Bewertung/Punkte/Leitner, zählt nicht aufs
-/// Ziel). <see cref="Lern"/> = server-geführt: der Server hält Cursor + eingefrorene Reihenfolge und bewertet.
-/// </summary>
-public enum PlayMode { Info = 0, Lern = 1 }
+// PlayMode lebt im Vertrags-Projekt (Pugling.Contracts).
 
 /// <summary>Übungssitzung einer Lehrplan-Position: erfasst echte Übungszeit und was geübt wurde.</summary>
 public class PracticeSession

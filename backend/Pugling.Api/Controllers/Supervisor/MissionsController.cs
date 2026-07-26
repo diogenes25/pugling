@@ -22,9 +22,6 @@ namespace Pugling.Api.Controllers.Supervisor;
 [ServiceFilter(typeof(ChildOwnershipFilter))]
 public class MissionsController(PuglingDbContext db) : ControllerBase
 {
-    public record MissionDto(int Id, string Title, ProgressMetric Metric, int Target, MissionPeriod Period,
-        int RewardPoints, bool Active);
-
     static MissionDto Map(Mission m) => new(m.Id, m.Title, m.Metric, m.Target, m.Period, m.RewardPoints, m.Active);
 
     /// <summary>Alle Missionen des Kindes (Definitionen zur Verwaltung).</summary>
@@ -34,8 +31,6 @@ public class MissionsController(PuglingDbContext db) : ControllerBase
         await db.Missions.AsNoTracking().Where(m => m.ChildId == childId)
             .OrderBy(m => m.Period).ThenBy(m => m.Id)
             .Select(m => Map(m)).ToListAsync();
-
-    public record CreateMissionDto(string Title, ProgressMetric Metric, int Target, MissionPeriod Period, int RewardPoints);
 
     /// <summary>Legt eine Mission für das Kind an.</summary>
     [HttpPost]
@@ -60,8 +55,6 @@ public class MissionsController(PuglingDbContext db) : ControllerBase
         await db.SaveChangesAsync();
         return CreatedAtAction(nameof(List), new { childId }, Map(mission));
     }
-
-    public record UpdateMissionDto(string? Title, int? Target, int? RewardPoints, bool? Active);
 
     /// <summary>Ändert eine Mission (partiell).</summary>
     [HttpPatch("{missionId:int}")]
@@ -107,9 +100,6 @@ public class MissionsController(PuglingDbContext db) : ControllerBase
 [ServiceFilter(typeof(ChildOwnershipFilter))]
 public class AchievementsController(PuglingDbContext db) : ControllerBase
 {
-    public record AchievementDto(int Id, string Title, string? Icon, ProgressMetric Metric, int Threshold,
-        int RewardPoints, bool Active);
-
     static AchievementDto Map(Achievement a) =>
         new(a.Id, a.Title, a.Icon, a.Metric, a.Threshold, a.RewardPoints, a.Active);
 
@@ -120,8 +110,6 @@ public class AchievementsController(PuglingDbContext db) : ControllerBase
         await db.Achievements.AsNoTracking().Where(a => a.ChildId == childId)
             .OrderBy(a => a.Metric).ThenBy(a => a.Threshold)
             .Select(a => Map(a)).ToListAsync();
-
-    public record CreateAchievementDto(string Title, string? Icon, ProgressMetric Metric, int Threshold, int RewardPoints);
 
     /// <summary>Legt eine Auszeichnung für das Kind an.</summary>
     [HttpPost]
@@ -146,8 +134,6 @@ public class AchievementsController(PuglingDbContext db) : ControllerBase
         await db.SaveChangesAsync();
         return CreatedAtAction(nameof(List), new { childId }, Map(achievement));
     }
-
-    public record UpdateAchievementDto(string? Title, string? Icon, int? Threshold, int? RewardPoints, bool? Active);
 
     /// <summary>Ändert eine Auszeichnung (partiell).</summary>
     [HttpPatch("{achievementId:int}")]

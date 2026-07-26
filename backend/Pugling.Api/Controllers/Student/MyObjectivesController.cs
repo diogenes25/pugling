@@ -29,7 +29,7 @@ public class MyObjectivesController(ObjectiveService objectives) : ControllerBas
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult<IEnumerable<ObjectiveService.ObjectiveResponse>>> List(
+    public async Task<ActionResult<IEnumerable<ObjectiveResponse>>> List(
         [FromQuery] int skip = 0, [FromQuery] int take = PagingExtensions.DefaultTake, CancellationToken ct = default)
     {
         var cid = User.ChildId();
@@ -44,7 +44,7 @@ public class MyObjectivesController(ObjectiveService objectives) : ControllerBas
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<ObjectiveService.ObjectiveResponse>> Get(int objectiveId, CancellationToken ct = default)
+    public async Task<ActionResult<ObjectiveResponse>> Get(int objectiveId, CancellationToken ct = default)
     {
         var cid = User.ChildId();
         if (cid is null) return Forbid();

@@ -52,7 +52,7 @@ public class MetricsService(PuglingDbContext db, PositionProgressService progres
 
     /// <summary>
     /// Tage bis (einschließlich) <paramref name="until"/>, an denen die Tagespflicht eines Plans des Kindes
-    /// vollständig erledigt war – <b>dieselbe</b> Regel (<see cref="PositionProgressService.DayOverview.DutyDone"/>),
+    /// vollständig erledigt war – <b>dieselbe</b> Regel (<see cref="DayOverview.DutyDone"/>),
     /// die auch die Tagesmission/Overview-Serie beim Sohn nutzt. Bewusst über den Fortschritts-Service statt über
     /// eine reine Belohnungs-Query: „mindestens ein Ziel gebucht" ≠ „Tag vollständig", und Missionen/Auszeichnungen
     /// dürfen nicht bei nur teil-erledigten Tagen feuern.

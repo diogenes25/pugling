@@ -18,23 +18,6 @@ public class Subject
 }
 
 /// <summary>
-/// Schularten, für die eine Übung geeignet ist. <c>[Flags]</c>-Enum, damit eine Übung
-/// mehreren Schularten zugeordnet werden kann (z. B. Realschule | Gymnasium).
-/// <see cref="None"/> bedeutet „für alle Schularten" (kein Filter-Ausschluss).
-/// </summary>
-[Flags]
-public enum SchoolTypes
-{
-    None = 0,
-    Grundschule = 1,
-    Hauptschule = 2,
-    Realschule = 4,
-    Gymnasium = 8,
-    Gesamtschule = 16,
-    Berufsschule = 32,
-}
-
-/// <summary>
 /// Fachabhängige „Art" einer Übung (z. B. Grammatik/Vokabeln bei Sprachen,
 /// Grundrechenarten/Algebra bei Mathe). Kindneutrales, kontrolliertes Vokabular je Fach –
 /// dient der Vorfilterung von Übungen bei der Lehrplan-Erstellung.
@@ -59,20 +42,6 @@ public class Chapter
 
     public List<Exercise> Exercises { get; set; } = new();
 }
-
-/// <summary>
-/// Vom Übungsersteller vorgeschlagenes Bonus-System (global an der Übung). Dient nur als Vorlage:
-/// beim Erzeugen eines Lehrplans aus der Übung werden diese Werte EINMAL in dessen Bonus-Felder
-/// kopiert. Spätere Änderungen an der Übung wirken damit NICHT rückwirkend auf bestehende Kind-Pläne –
-/// das laufende Bonus-System bleibt kind-individuell und pro Lehrplan anpassbar (Motivations-Steuerung
-/// je Kind/Übung). Felder spiegeln die Bonus-Knöpfe des <see cref="StudyPlan"/>.
-/// </summary>
-public record SuggestedBonus(
-    int ComboThreshold,
-    int ComboBonusPoints,
-    int SpeedThresholdSeconds,
-    int SpeedBonusPoints,
-    int NewContentPoints);
 
 /// <summary>
 /// Eine Übung in einem Kapitel. Die gemeinsamen Felder sind typisiert;
@@ -137,5 +106,36 @@ public class Exercise
     public int? AuthorFatherId { get; set; }
     public Father? Author { get; set; }
 
+    /// <summary>
+    /// Ob die Übung <b>für alle</b> Creator ausführbar (in Lehrpläne/Klassenarbeiten aufnehmbar) ist.
+    /// <c>true</c> (Default) = bisheriges Verhalten (jeder darf zuweisen). Setzt ein Owner sie auf <c>false</c>,
+    /// dürfen nur Owner und Creator mit einem Execute-/Write-<see cref="ExerciseGrant"/> die Übung zuweisen.
+    /// Wirkt nur auf <i>neue</i> Zuweisungen – bereits laufende Pläne bleiben unberührt.
+    /// </summary>
+    public bool ExecutePublic { get; set; } = true;
+
+    /// <summary>Vergebene RWX-Rechte an einzelne Creator (Owner/Write/Execute) – siehe <see cref="ExerciseGrant"/>.</summary>
+    public List<ExerciseGrant> Grants { get; set; } = [];
+
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+}
+
+/// <summary>
+/// Ein an einen einzelnen Creator vergebenes Recht auf eine Übung. Ersetzt das frühere 1-Autor-Modell:
+/// Der ursprüngliche <see cref="Exercise.AuthorFatherId"/> wird per Migration zum ersten <see cref="GrantPermission.Owner"/>;
+/// weitere Owner/Write/Execute-Rechte kommen über diese Tabelle hinzu (Co-Authoring, kontrollierte Weitergabe).
+/// Muster analog <see cref="SupervisorLink"/> (Surrogat-PK + eindeutiger Composite-Index, beide FKs Cascade).
+/// </summary>
+public class ExerciseGrant
+{
+    public int Id { get; set; }
+    public int ExerciseId { get; set; }
+    public Exercise? Exercise { get; set; }
+    /// <summary>Begünstigter Creator (= <see cref="Father.Id"/>).</summary>
+    public int CreatorId { get; set; }
+    public Father? Creator { get; set; }
+    public GrantPermission Permission { get; set; }
+    /// <summary>Audit: welcher Vater das Recht vergeben hat (null bei Migrations-Seed).</summary>
+    public int? GrantedByFatherId { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }

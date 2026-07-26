@@ -19,7 +19,7 @@ public class ChildrenDashboardController(ChildrenDashboardService dashboard) : C
 {
     /// <summary>Tagesstand aller eigenen Kinder; <paramref name="date"/> optional (Standard: heute, UTC).</summary>
     [HttpGet]
-    public async Task<ActionResult<ChildrenDashboardService.Dashboard>> Get([FromQuery] DateOnly? date, CancellationToken ct)
+    public async Task<ActionResult<Dashboard>> Get([FromQuery] DateOnly? date, CancellationToken ct)
     {
         var day = date ?? DateOnly.FromDateTime(DateTime.UtcNow);
         return await dashboard.BuildAsync(User.FatherId()!.Value, day, ct);

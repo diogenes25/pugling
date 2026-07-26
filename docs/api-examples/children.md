@@ -23,7 +23,7 @@ Response — `HTTP 200`:
       "Fu\u00DFball"
     ],
     "profileNotes": "Motiviert \u00FCber Spiele-Themen; braucht klare kurze Aufgaben.",
-    "createdAt": "2026-07-13T12:56:03.0115116",
+    "createdAt": "2026-07-26T04:55:41.6149496",
     "coins": 50,
     "gems": 300
   }
@@ -101,7 +101,7 @@ Response — `HTTP 200`:
   "gender": "None",
   "interests": [],
   "profileNotes": null,
-  "createdAt": "2026-07-13T12:56:07.9145165",
+  "createdAt": "2026-07-26T04:55:50.8694542",
   "coins": 0,
   "gems": 0
 }
@@ -130,7 +130,7 @@ Response — `HTTP 200`:
   "gender": "None",
   "interests": [],
   "profileNotes": null,
-  "createdAt": "2026-07-13T12:56:07.9145165",
+  "createdAt": "2026-07-26T04:55:50.8694542",
   "coins": 0,
   "gems": 0
 }

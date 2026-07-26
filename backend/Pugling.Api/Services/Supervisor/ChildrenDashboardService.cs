@@ -11,12 +11,7 @@ namespace Pugling.Api.Services.Supervisor;
 /// </summary>
 public class ChildrenDashboardService(PuglingDbContext db, PositionProgressService progress)
 {
-    /// <summary>Tagesstand eines Kindes, aggregiert über seine aktiven Lehrpläne.</summary>
-    public record ChildDay(int ChildId, string Name, int ActivePlans, int GoalsTotal, int GoalsMet,
-        int PointsToday, bool DutyDone, bool Practiced);
-
-    /// <summary>Der Tagesüberblick über alle Kinder eines Vaters.</summary>
-    public record Dashboard(DateOnly Date, IReadOnlyList<ChildDay> Children);
+    // ChildDay/Dashboard leben im Vertrags-Projekt (Pugling.Contracts.Supervisor).
 
     /// <summary>Baut den Tagesüberblick für alle Kinder des Vaters am angegebenen Tag.</summary>
     public async Task<Dashboard> BuildAsync(int fatherId, DateOnly date, CancellationToken ct = default)

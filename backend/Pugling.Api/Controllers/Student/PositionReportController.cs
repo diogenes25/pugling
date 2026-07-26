@@ -22,7 +22,7 @@ public class PositionReportController(PositionReportService report) : Controller
     /// <summary>Report der Position: je Inhalt Box/Beherrschung, Einführung/Fälligkeit und Test-Trefferquote.</summary>
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<PositionReportService.Report>> Get(int planId, int positionId, CancellationToken ct)
+    public async Task<ActionResult<Report>> Get(int planId, int positionId, CancellationToken ct)
     {
         var result = await report.BuildAsync(planId, positionId, ct);
         return result is null ? NotFound() : result;

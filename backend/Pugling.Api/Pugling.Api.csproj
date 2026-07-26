@@ -29,6 +29,16 @@
     <Using Include="Pugling.Api.Services.Student" />
     <Using Include="Pugling.Api.Services.Shared" />
     <Using Include="Pugling.Api.Exercises" />
+    <Using Include="Pugling.Contracts" />
+    <Using Include="Pugling.Contracts.Auth" />
+    <Using Include="Pugling.Contracts.Creator" />
+    <Using Include="Pugling.Contracts.Shared" />
+    <Using Include="Pugling.Contracts.Supervisor" />
+    <Using Include="Pugling.Contracts.Student" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Pugling.Contracts\Pugling.Contracts.csproj" />
   </ItemGroup>
 
   <ItemGroup>

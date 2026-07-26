@@ -13,17 +13,8 @@ namespace Pugling.Api.Services.Supervisor;
 /// </summary>
 public class LearnGoalService(PuglingDbContext db, ChildLearnProgressService progress, ExerciseTypeRegistry registry)
 {
-    /// <summary>Ausgewertetes Lernziel inkl. aktuellem Wert und Status (<c>open</c>/<c>achieved</c>/<c>overdue</c>).</summary>
-    public record LearnGoalResponse(int Id, int ChildId, int SubjectId, int? ChapterId, int? ExerciseId,
-        string Scope, string Metric, int TargetValue, int CurrentValue, int ProgressPercent,
-        DateOnly? DueDate, string Status, string? Title, DateTime CreatedAt);
-
-    /// <summary>Anlage-Request (Scope + Metrik + Zielwert + optionaler Stichtag/Titel).</summary>
-    public record CreateLearnGoalRequest(int SubjectId, int? ChapterId, int? ExerciseId,
-        LearnGoalMetric Metric, int TargetValue, DateOnly? DueDate, string? Title);
-
-    /// <summary>Teil-Update: nur gesetzte Felder ändern sich (Scope bleibt fix – zum Umhängen neu anlegen).</summary>
-    public record UpdateLearnGoalRequest(LearnGoalMetric? Metric, int? TargetValue, DateOnly? DueDate, string? Title);
+    // LearnGoalResponse/Create-/UpdateLearnGoalRequest leben im Vertrags-Projekt (Pugling.Contracts.Supervisor);
+    // das Result-Paar bleibt hier, weil es den API-internen ApiError trägt.
 
     /// <summary>Ergebnis mit optionalem Fehler-Code; <c>Value</c> und <c>Error</c> beide <c>null</c> = nicht gefunden.</summary>
     public record Result(LearnGoalResponse? Value, ApiError? Error);
@@ -33,7 +24,7 @@ public class LearnGoalService(PuglingDbContext db, ChildLearnProgressService pro
 
     private static int Pct(int part, int whole) => whole == 0 ? 0 : (int)Math.Round(100.0 * part / whole);
 
-    private static int CurrentOf(LearnGoalMetric metric, ChildLearnProgressService.MasteryRollup r) => metric switch
+    private static int CurrentOf(LearnGoalMetric metric, MasteryRollup r) => metric switch
     {
         LearnGoalMetric.AvgMastery => r.AvgMasteryPercent,
         LearnGoalMetric.Coverage => Pct(r.IntroducedItems, r.TotalItems),
@@ -53,7 +44,7 @@ public class LearnGoalService(PuglingDbContext db, ChildLearnProgressService pro
         return target <= 0 ? 100 : Math.Clamp((int)Math.Round(100.0 * current / target), 0, 99);
     }
 
-    private static LearnGoalResponse Map(LearnGoal g, ChildLearnProgressService.MasteryRollup r, DateOnly today)
+    private static LearnGoalResponse Map(LearnGoal g, MasteryRollup r, DateOnly today)
     {
         var current = CurrentOf(g.Metric, r);
         var achieved = IsAchieved(g.Metric, current, g.TargetValue);

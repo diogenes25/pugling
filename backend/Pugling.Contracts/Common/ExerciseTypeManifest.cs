@@ -1,9 +1,7 @@
-namespace Pugling.Api.Models;
+namespace Pugling.Contracts;
 
-// Selbstbeschreibung der Übungstypen: die EINE Wahrheit, aus der ein (gegen die API gebautes)
-// Frontend Routing, Prüfmodus, Renderer und Fähigkeiten je Typ liest – statt sie fest zu verdrahten.
-// Bündelt das heute über Katalog-Controller, positionsbezogene Play-Controller und Enums
-// (ExerciseType ↔ LearningMethod) verstreute Wissen an einer Stelle.
+/// <summary>Eine im Testmodus umschaltbare Abfrageform (Stufenwert + Anzeigename).</summary>
+public record StageOption(int Value, string Label);
 
 /// <summary>
 /// Wie eine Übung dieses Typs primär geprüft/gespielt wird. Beschreibt die tatsächlich vorhandene
@@ -26,13 +24,13 @@ public enum ExerciseCheckMode
 }
 
 /// <summary>
-/// Selbstbeschreibung eines Übungstyps: die Brücke zwischen Autoren-Katalog (<see cref="IExerciseType"/>),
+/// Selbstbeschreibung eines Übungstyps: die Brücke zwischen Autoren-Katalog (<c>IExerciseType</c>),
 /// typischer Lernfamilie (<see cref="LearningMethod"/>), Play-Route und Frontend-Renderer. Das Frontend
 /// liest die Manifest-Liste einmal und verdrahtet Routing, Prüfung und Darstellung generisch; die
 /// eigentliche Render-Komponente bleibt handgebaut pro <see cref="Renderer"/> (die Play-Sicht deckt
 /// je Leitner-Stufe unterschiedlich viel auf – das lässt sich nicht generisch aus JSON erzeugen).
 /// </summary>
-/// <param name="Type">Übungstyp-Schlüssel (Autoren-Katalog, = <see cref="IExerciseType.Key"/> und Wert von <see cref="Exercise.Type"/>).</param>
+/// <param name="Type">Übungstyp-Schlüssel (Autoren-Katalog, = <c>IExerciseType.Key</c> und Wert von <c>Exercise.Type</c>).</param>
 /// <param name="Label">Deutscher Anzeigename.</param>
 /// <param name="Renderer">Id der Frontend-Komponente; mehrere Typen dürfen sich einen Renderer teilen (z. B. Arithmetic + ArithmeticDrill → <c>arithmetic</c>).</param>
 /// <param name="SchemaVersion">Version des Typ-Schemas. Bewusst NUR hier (nicht an den Entities) – Verzweigungspunkt für spätere inkompatible Änderungen.</param>

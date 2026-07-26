@@ -23,8 +23,10 @@ public static class ApiErrors
     public static readonly ApiError InvalidCredentials = new("invalid_credentials", 401, "Invalid credentials.");
     /// <summary>Zugriff verweigert (falsche Rolle / fremde Ressource) (403).</summary>
     public static readonly ApiError Forbidden = new("forbidden", 403, "Access denied.");
-    /// <summary>Übung eines anderen Autors – nur der Autor darf ändern/löschen (403).</summary>
+    /// <summary>Kein Schreibrecht auf die Übung – weder Owner noch Write-Grant (403).</summary>
     public static readonly ApiError NotAuthor = new("not_author", 403, "Access denied.");
+    /// <summary>Kein Owner-Recht – Löschen, Rechte-Verwaltung und Sichtbarkeits-Umschaltung nur für Owner (403).</summary>
+    public static readonly ApiError NotOwner = new("not_owner", 403, "Access denied.");
     /// <summary>Ressource nicht gefunden / nicht eigenes Kind (404).</summary>
     public static readonly ApiError NotFound = new("not_found", 404, "Resource not found.");
     /// <summary>Generischer Konflikt-Default für 409 ohne spezifischeren Code.</summary>
@@ -64,6 +66,10 @@ public static class ApiErrors
     public static readonly ApiError DuplicateTagName = new("duplicate_tag_name", 400, "Tag name already exists.");
     /// <summary>Übung wird in Lehrplan/Klassenarbeit verwendet und kann nicht gelöscht werden (409).</summary>
     public static readonly ApiError ExerciseInUse = new("exercise_in_use", 409, "Exercise is in use.");
+    /// <summary>Übung ist nicht öffentlich ausführbar und darf ohne Execute-/Write-/Owner-Recht nicht zugewiesen werden (403).</summary>
+    public static readonly ApiError ExerciseNotExecutable = new("exercise_not_executable", 403, "Exercise cannot be assigned.");
+    /// <summary>Der letzte Owner einer Übung kann nicht entfernt werden (409).</summary>
+    public static readonly ApiError LastOwner = new("last_owner", 409, "Cannot remove the last owner.");
     /// <summary>Übungs-Item (Vokabelpaar) existiert nicht / gehört nicht zu dieser Übung (404).</summary>
     public static readonly ApiError ItemNotFound = new("item_not_found", 404, "Exercise item not found.");
     /// <summary>Vokabel ist Grundform/in Übungen referenziert und kann nicht gelöscht werden (409).</summary>

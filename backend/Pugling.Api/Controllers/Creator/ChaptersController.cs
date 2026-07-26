@@ -17,8 +17,6 @@ namespace Pugling.Api.Controllers.Creator;
 [Authorize(Roles = Roles.Creator)]
 public class ChaptersController(PuglingDbContext db) : ControllerBase
 {
-    public record ChapterResponse(int Id, int SubjectId, string Name, int OrderIndex, int ExercisesCount);
-
     Task<bool> SubjectExists(int subjectId) => db.Subjects.AnyAsync(s => s.Id == subjectId);
 
     Task<ChapterResponse?> ProjectOne(int subjectId, int chapterId) =>
@@ -49,8 +47,6 @@ public class ChaptersController(PuglingDbContext db) : ControllerBase
         return chapter is null ? NotFound() : chapter;
     }
 
-    public record CreateChapterDto(string Name, int OrderIndex);
-
     /// <summary>Erstellt ein Kapitel unter einem Fach.</summary>
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status201Created)]
@@ -68,8 +64,6 @@ public class ChaptersController(PuglingDbContext db) : ControllerBase
         var response = new ChapterResponse(chapter.Id, subjectId, chapter.Name, chapter.OrderIndex, 0);
         return CreatedAtAction(nameof(Get), new { subjectId, chapterId = chapter.Id }, response);
     }
-
-    public record UpdateChapterDto(string? Name, int? OrderIndex);
 
     /// <summary>Ändert ein Kapitel (partiell).</summary>
     [HttpPatch("{chapterId:int}")]

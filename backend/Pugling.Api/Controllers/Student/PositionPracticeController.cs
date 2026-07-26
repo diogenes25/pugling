@@ -30,10 +30,6 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
     /// <summary>Obergrenze der pro Heartbeat anrechenbaren Sekunden (Anti-Zeit-Cheat).</summary>
     private const int MaxHeartbeatSeconds = 120;
 
-    public record SessionResponse(int Id, int PlanId, int PositionId, DateOnly Day,
-        DateTime StartedAt, DateTime? EndedAt, int ActiveSeconds, int ReviewCount,
-        PlayMode Mode, int Cursor, int Total);
-
     private static SessionResponse Map(PracticeSession s) =>
         new(s.Id, s.StudyPlanId, s.PlanPositionId ?? 0, s.Day, s.StartedAt, s.EndedAt, s.ActiveSeconds,
             s.Reviews.Count, s.Mode, s.Cursor, s.Order.Count);
@@ -48,19 +44,12 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         db.PracticeSessions.Include(s => s.Reviews)
             .FirstOrDefaultAsync(s => s.Id == sessionId && s.StudyPlanId == planId && s.PlanPositionId == positionId);
 
-    /// <summary>
-    /// Start-Payload einer Übungssitzung. <paramref name="Mode"/> wählt den Ausspiel-Modus (Standard
-    /// <see cref="PlayMode.Lern"/> = server-geführt mit Cursor; <see cref="PlayMode.Info"/> = freies Üben ohne
-    /// Feedback). <paramref name="Day"/> nur zum Nachtragen (Vater).
-    /// </summary>
-    public record StartDto(DateOnly? Day, PlayMode Mode = PlayMode.Lern);
-
     /// <summary>Startet eine Übungssitzung für die Position. Day nur zum Nachtragen (Vater); sonst heute.</summary>
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<SessionResponse>> Start(int planId, int positionId, StartDto dto)
+    public async Task<ActionResult<SessionResponse>> Start(int planId, int positionId, StartPracticeDto dto)
     {
         var pos = await GetPosition(planId, positionId);
         if (pos is null) return NotFound();
@@ -90,8 +79,6 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
     public async Task<ActionResult<SessionResponse>> Get(int planId, int positionId, int sessionId) =>
         await GetSession(planId, positionId, sessionId) is { } s ? Map(s) : NotFound();
 
-    public record HeartbeatDto(int Seconds, bool Active);
-
     /// <summary>Fügt (aktive) Übungssekunden hinzu (Anti-Zeit-Cheat: pro Heartbeat gedeckelt).</summary>
     [HttpPost("{sessionId:int}/heartbeat")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -103,13 +90,6 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         await db.SaveChangesAsync();
         return Map(session);
     }
-
-    /// <summary>
-    /// Eine Übungskarte – bewusst OHNE Lösung, außer bei Anzeige-/Selbsteinschätzungs-Stufen, die die
-    /// Lösung per Design aufdecken (der Server bewertet in <see cref="Review"/>, nie das Frontend).
-    /// </summary>
-    public record PracticeCard(int ItemIndex, int Stage, string Type, string Prompt,
-        string? Hint, int? AnswerLength, string? Reveal, IReadOnlyList<string>? Choices, string? AudioUrl);
 
     /// <summary>
     /// Baut eine Übungskarte aus einem Inhalts-Atom. Getippte Stufen halten die Lösung zurück
@@ -155,9 +135,6 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
             .Select(i => BuildCard(type, stage, typed, items, i)).ToList();
     }
 
-    /// <summary>Die nächste Karte im Lern-Modus (oder <c>Done</c>), server-geführt über den Sitzungs-Cursor.</summary>
-    public record NextResponse(PracticeCard? Card, bool Done, int Cursor, int Total);
-
     /// <summary>
     /// Liefert die aktuelle Karte an der Cursor-Position der Sitzung (Lern-Modus, One-at-a-time). Übersprungen
     /// werden seit dem Start entfernte Items. Ist der Cursor am Ende, kommt <see cref="NextResponse.Done"/>.
@@ -187,22 +164,6 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         var card = BuildCard(type, stage, typed, items, session.Order[cursor]);
         return new NextResponse(card, false, cursor, session.Order.Count);
     }
-
-    /// <summary>
-    /// Die Antwort des Kindes auf eine Übungskarte. <paramref name="ItemIndex"/> adressiert das Inhalts-Atom
-    /// in der Übung. Getippte Stufen liefern <paramref name="GivenAnswer"/>, Anzeige-/Selbsteinschätzungs-
-    /// Stufen <paramref name="WasKnown"/>. Die Stufe erzwingt der Server; er bewertet – nie das Frontend.
-    /// </summary>
-    public record ReviewDto(int ItemIndex, string? GivenAnswer, bool? WasKnown);
-
-    /// <summary>
-    /// Ergebnis einer Leitner-Wiederholung (serverseitig bewertet) inkl. Boni fürs Feedback. <see cref="Next"/>
-    /// trägt im Lern-Modus direkt die nächste Karte (kein separater Roundtrip nötig); <see cref="Done"/> zeigt
-    /// das Ende des Laufs an. Bei nicht gewerteten Karten (nicht fällig / schon heute gewertet / nicht-Leitner)
-    /// sind die Punktefelder 0, Bewertung und Cursor laufen dennoch weiter.
-    /// </summary>
-    public record ReviewOutcome(bool WasCorrect, string Expected, int Awarded, int Box,
-        DateOnly? DueOn, int Combo, int ComboBonus, int SpeedBonus, PracticeCard? Next, bool Done);
 
     /// <summary>
     /// Nimmt die Antwort zu einer Übungskarte entgegen, bewertet sie serverseitig gegen die Item-Lösung

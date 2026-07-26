@@ -4,13 +4,10 @@ using Pugling.Api.Models;
 namespace Pugling.Api.Controllers.Creator;
 
 /// <summary>
-/// Schlanke, typ-übergreifende Sicht auf eine Katalog-Übung – für Listen, in denen Übungen
-/// verschiedener Typen gemeinsam erscheinen (getaggte Übungen, Übungen einer Klassenarbeit).
-/// Die typ-spezifische Konfiguration wird als rohes JSON durchgereicht.
+/// Bildet Katalog-Übungen auf den Vertrags-Record <see cref="ExerciseBrief"/> ab. Der Record selbst
+/// lebt im Vertrags-Projekt (Pugling.Contracts.Creator) – hier bleibt allein die Entity-Kenntnis.
 /// </summary>
-public record ExerciseBrief(
-    int Id, int ChapterId, string ChapterName, int? SubjectId, string SubjectName,
-    string Type, string Title, int RewardPoints, JsonElement Config)
+public static class ExerciseBriefMapping
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 

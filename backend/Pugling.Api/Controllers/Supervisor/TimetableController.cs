@@ -17,8 +17,6 @@ namespace Pugling.Api.Controllers.Supervisor;
 [Authorize(Roles = Roles.Supervisor)]
 public class TimetableController(PuglingDbContext db, AuthAccess access) : ControllerBase
 {
-    public record EntryResponse(int Id, int ChildId, int SubjectId, string SubjectName, DayOfWeek DayOfWeek, string? TimeOfDay);
-
     static EntryResponse Map(TimetableEntry t) =>
         new(t.Id, t.ChildId, t.SubjectId, t.Subject!.Name, t.DayOfWeek, t.TimeOfDay);
 
@@ -34,8 +32,6 @@ public class TimetableController(PuglingDbContext db, AuthAccess access) : Contr
             .ToListAsync();
         return entries.Select(Map).ToList();
     }
-
-    public record CreateEntryDto(int SubjectId, DayOfWeek DayOfWeek, string? TimeOfDay);
 
     /// <summary>Trägt ein Fach an einem Wochentag ein.</summary>
     [HttpPost]

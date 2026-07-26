@@ -30,13 +30,6 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
     /// <summary>Standard-Bestehensgrenze, wenn die Position keine eigene Schwelle setzt.</summary>
     private const int DefaultPassPercent = 80;
 
-    public record TestItem(int ItemIndex, string Prompt, int Stage, string? Reveal, int? AnswerLength, string? Hint,
-        IReadOnlyList<string>? Choices, string? AudioUrl);
-    /// <summary>
-    /// Antwort des Test-Starts. Der Klausur-Modus ist strikt server-getrieben: es kommen <b>keine</b> Aufgaben
-    /// im Bulk, nur die Metadaten. Die Fragen holt der Client einzeln über <see cref="Next"/> (kein Zurück).
-    /// </summary>
-    public record AttemptResponse(int AttemptId, int PlanId, int PositionId, DateOnly Day, int Stage, int TotalItems);
 
     private Task<StudyPlan?> GetPlan(int planId) => db.StudyPlans.FirstOrDefaultAsync(p => p.Id == planId);
 
@@ -55,8 +48,6 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
         return new TestItem(item.Index, item.Prompt, stage, f.Reveal, f.AnswerLength, f.Hint, f.Choices, f.AudioUrl);
     }
 
-    public record StartDto(int? Stage, DateOnly? Day);
-
     /// <summary>
     /// Startet einen Testversuch für die Position. Der Klausur-Modus ist strikt server-getrieben: der Start
     /// friert die Prüfungsreihenfolge ein und liefert nur die Metadaten – die Fragen holt der Client einzeln
@@ -68,7 +59,7 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<AttemptResponse>> Start(int planId, int positionId, StartDto dto)
+    public async Task<ActionResult<AttemptResponse>> Start(int planId, int positionId, StartTestDto dto)
     {
         var plan = await GetPlan(planId);
         if (plan is null) return NotFound();
@@ -119,8 +110,6 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
             new AttemptResponse(attempt.Id, planId, positionId, day, stage, attempt.TotalItems));
     }
 
-    /// <summary>Die nächste Prüfungsfrage (oder <c>Done</c>), server-geführt über den Attempt-Cursor – ohne Lösung.</summary>
-    public record TestNextResponse(TestItem? Item, bool Done, int Cursor, int Total);
 
     /// <summary>
     /// Liefert die aktuelle Prüfungsfrage an der Cursor-Position (One-at-a-time, kein Zurück). Seit dem Start
@@ -152,8 +141,6 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
         return new TestNextResponse(item, false, cursor, attempt.TotalItems);
     }
 
-    /// <summary>Bestätigung einer abgegebenen Prüfungsantwort – bewusst OHNE Korrektheit (Feedback erst beim Abschluss).</summary>
-    public record AnswerAck(bool Done, int Cursor, int Total);
 
     /// <summary>
     /// Nimmt die Antwort zur aktuellen Prüfungsfrage entgegen, bewertet sie serverseitig (und protokolliert
@@ -203,10 +190,6 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
         return new AnswerAck(attempt.Cursor >= attempt.Order.Count, attempt.Cursor, attempt.TotalItems);
     }
 
-    public record ItemResultDto(int ItemIndex, string? GivenAnswer, bool WasCorrect, int HintsUsed);
-    public record AttemptDetail(int Id, int PlanId, int PositionId, DateOnly Day, int Stage, DateTime StartedAt,
-        DateTime? CompletedAt, int TotalItems, int CorrectItems, int ScorePercent, bool Passed,
-        IReadOnlyList<ItemResultDto> Results);
 
     /// <summary>Ein Testversuch samt Einzelergebnissen.</summary>
     [HttpGet("{attemptId:int}")]
@@ -220,11 +203,6 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
             a.Results.OrderBy(r => r.ItemIndex).Select(r => new ItemResultDto(r.ItemIndex ?? 0, r.GivenAnswer, r.WasCorrect, r.HintsUsed)).ToList());
     }
 
-    public record AnswerDto(int ItemIndex, string? GivenAnswer, bool? WasKnown);
-    public record SubmitDto(List<AnswerDto>? Answers);
-    public record ItemOutcome(int ItemIndex, string Prompt, string Expected, string? GivenAnswer, bool WasCorrect);
-    public record SubmitResponse(int AttemptId, int Stage, int TotalItems, int CorrectItems,
-        int ScorePercent, bool Passed, int PassPercent, IReadOnlyList<ItemOutcome> Items);
 
     /// <summary>
     /// Schließt den Versuch ab und liefert das Ergebnis (inkl. Lösungen). Im Klausur-Modus wurden die Antworten

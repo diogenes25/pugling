@@ -23,9 +23,6 @@ namespace Pugling.Api.Controllers.Supervisor;
 [ServiceFilter(typeof(ChildOwnershipFilter))]
 public class TextbooksController(PuglingDbContext db) : ControllerBase
 {
-    public record TextbookResponse(int Id, string Title, string? SubjectName, int? SubjectId, int? Grade,
-        string? Publisher, string? Isbn, string? CurrentChapter, DateTime CreatedAt);
-
     static TextbookResponse Map(Textbook t) =>
         new(t.Id, t.Title, t.SubjectName, t.SubjectId, t.Grade, t.Publisher, t.Isbn, t.CurrentChapter, t.CreatedAt);
 
@@ -46,9 +43,6 @@ public class TextbooksController(PuglingDbContext db) : ControllerBase
             .FirstOrDefaultAsync(t => t.Id == textbookId && t.ChildId == childId, ct);
         return book is null ? NotFound() : Map(book);
     }
-
-    public record CreateTextbookDto(string Title, string? SubjectName, int? SubjectId, int? Grade,
-        string? Publisher, string? Isbn, string? CurrentChapter);
 
     /// <summary>Legt ein Lehrbuch für das Kind an.</summary>
     [HttpPost]
@@ -76,9 +70,6 @@ public class TextbooksController(PuglingDbContext db) : ControllerBase
         await db.SaveChangesAsync(ct);
         return CreatedAtAction(nameof(Get), new { childId, textbookId = book.Id }, Map(book));
     }
-
-    public record UpdateTextbookDto(string? Title, string? SubjectName, int? SubjectId, int? Grade,
-        string? Publisher, string? Isbn, string? CurrentChapter);
 
     /// <summary>Ändert ein Lehrbuch (partiell). Setzt Felder nur, wenn sie im Payload enthalten sind.</summary>
     [HttpPatch("{textbookId:int}")]

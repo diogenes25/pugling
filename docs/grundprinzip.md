@@ -33,7 +33,10 @@ außerhalb der App eingelöst – die App hält nur den Vertrag und den Kontosta
 Der Creator ist vergleichbar mit einem **Lehrer oder Schulbuchautor**. Er erstellt Übungen für
 unterschiedliche Fächer (`Subject`) und Kapitel (`Chapter`) – zum Beispiel einen Satz von 200 Vokabeln
 für „Englisch, Unit 3". Diese Übungen sind **kindneutral**: Der Creator weiß nichts von einzelnen
-Kindern, Zielen oder Punkten. Er füllt allein die **globale Übungs-Bibliothek** (den Lern-Katalog).
+Kindern, Zielen oder Punkten. Er füllt allein die **globale Übungs-Bibliothek** (den Lern-Katalog). Die
+Bibliothek ist für alle Creator **lesbar**; ändern/löschen darf nur ein **Owner** der Übung, und über
+**RWX-Grants** (Owner/Write/Execute) kann ein Owner einzelnen Creatorn gezielt Mit-Pflege oder das Zuweisen
+erlauben bzw. das Zuweisen für alle abschalten (`executePublic`).
 
 - Der Creator entscheidet über den **Übungstyp** (Vokabeltraining, Lückentext, Rechnen …) und den
   konkreten Inhalt.

@@ -27,8 +27,8 @@ public class KeyResultsController(ObjectiveService objectives) : ControllerBase
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<ObjectiveService.KeyResultResponse>> Create(
-        int childId, int objectiveId, [FromBody] ObjectiveService.CreateKeyResultRequest request, CancellationToken ct = default)
+    public async Task<ActionResult<KeyResultResponse>> Create(
+        int childId, int objectiveId, [FromBody] CreateKeyResultRequest request, CancellationToken ct = default)
     {
         var (value, error) = await objectives.AddKeyResultAsync(childId, objectiveId, request, ct);
         if (error is not null) return this.ProblemWithCode(error.Value);
@@ -42,8 +42,8 @@ public class KeyResultsController(ObjectiveService objectives) : ControllerBase
     [Authorize(Roles = Roles.Supervisor)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<ObjectiveService.KeyResultResponse>> Update(
-        int childId, int objectiveId, int keyResultId, [FromBody] ObjectiveService.UpdateKeyResultRequest request, CancellationToken ct = default)
+    public async Task<ActionResult<KeyResultResponse>> Update(
+        int childId, int objectiveId, int keyResultId, [FromBody] UpdateKeyResultRequest request, CancellationToken ct = default)
     {
         var (value, error) = await objectives.UpdateKeyResultAsync(childId, objectiveId, keyResultId, request, ct);
         if (error is not null) return this.ProblemWithCode(error.Value);

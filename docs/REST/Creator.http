@@ -138,3 +138,43 @@ Content-Type: application/json
 # @name exerciseTypes
 GET {{baseUrl}}/creator/exercise-types
 Authorization: Bearer {{authToken}}
+
+###############################################################################
+# Rechte teilen (RWX): Owner/Write/Execute pro Übung. Read bleibt global.
+# Der Anleger ist automatisch Owner; nur ein Owner darf Rechte sehen/vergeben.
+###############################################################################
+
+### Vergebene Rechte der Übung ansehen (nur Owner) – zeigt den Auto-Owner-Grant
+# @name listGrants
+GET {{baseUrl}}/creator/exercises/{{exerciseId}}/grants
+Authorization: Bearer {{authToken}}
+
+### Write-Recht an einen anderen Creator vergeben (Co-Authoring); permission: Owner|Write|Execute
+# @name addGrant
+POST {{baseUrl}}/creator/exercises/{{exerciseId}}/grants
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "creatorId": 2,
+  "permission": "Write"
+}
+
+### Zuweisen für alle abschalten (executePublic=false) – nur Owner/Write/Execute dürfen dann noch zuweisen
+# @name restrictExecute
+PUT {{baseUrl}}/creator/subjects/{{subjectId}}/chapters/{{chapterId}}/vocabulary/{{exerciseId}}
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "title": "REST-Client Demo-Vokabeln",
+  "orderIndex": 0,
+  "rewardPoints": 10,
+  "executePublic": false,
+  "config": { "direction": "front-to-back", "sourceLang": "en", "targetLang": "de" }
+}
+
+### Recht wieder entziehen (permission im Pfad); der letzte Owner ist nicht entfernbar
+# @name removeGrant
+DELETE {{baseUrl}}/creator/exercises/{{exerciseId}}/grants/2/Write
+Authorization: Bearer {{authToken}}

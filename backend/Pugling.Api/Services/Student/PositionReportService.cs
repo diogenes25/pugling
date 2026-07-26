@@ -12,14 +12,7 @@ namespace Pugling.Api.Services.Student;
 /// </summary>
 public class PositionReportService(PuglingDbContext db, PositionPlayService play)
 {
-    /// <summary>Report-Zeile eines einzelnen Inhalts.</summary>
-    public record ItemReport(int ItemIndex, string Prompt, string Answer, bool Introduced,
-        int Box, int MasteryPercent, int ReviewCount, DateOnly? DueOn, DateTime? LastReviewedAt,
-        int TestsSeen, int TestsCorrect);
-
-    /// <summary>Report einer Position samt Kopf-Kennzahlen (eingeführt/beherrscht).</summary>
-    public record Report(int PositionId, int ExerciseId, string ExerciseTitle, string ExerciseType,
-        int MaxBox, int TotalItems, int IntroducedItems, int MasteredItems, IReadOnlyList<ItemReport> Items);
+    // ItemReport/Report leben im Vertrags-Projekt (Pugling.Contracts.Student).
 
     /// <summary>Beherrschung in Prozent aus der Leitner-Box (Box 1 = 0 % … MaxBox = 100 %).</summary>
     private static int MasteryOf(int box, int maxBox) =>

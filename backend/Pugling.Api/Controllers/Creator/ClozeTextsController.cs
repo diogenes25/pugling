@@ -17,9 +17,6 @@ namespace Pugling.Api.Controllers.Creator;
 [Authorize(Roles = Roles.Creator)]
 public class ClozeTextsController(PuglingDbContext db) : ControllerBase
 {
-    public record ClozeResponse(int Id, string Key, string Title, string SourceLanguage, string TargetLanguage,
-        string Text, string? Translation, IReadOnlyList<Gap> Gaps, IReadOnlyList<string>? WordBank, DateTime CreatedAt);
-
     static ClozeResponse Map(ClozeText c) =>
         new(c.Id, c.Key, c.Title, c.SourceLanguage, c.TargetLanguage, c.Text, c.Translation, c.Gaps, c.WordBank, c.CreatedAt);
 
@@ -51,9 +48,6 @@ public class ClozeTextsController(PuglingDbContext db) : ControllerBase
     public async Task<ActionResult<ClozeResponse>> GetByKey(string key) =>
         await db.ClozeTexts.FirstOrDefaultAsync(c => c.Key == key) is { } c ? Map(c) : NotFound();
 
-    public record CreateClozeDto(string Key, string Title, string SourceLanguage, string TargetLanguage,
-        string Text, List<Gap> Gaps, string? Translation = null, List<string>? WordBank = null);
-
     /// <summary>Erstellt einen Lückentext. Key muss eindeutig sein; mind. eine Lücke.</summary>
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status201Created)]
@@ -81,8 +75,6 @@ public class ClozeTextsController(PuglingDbContext db) : ControllerBase
         await db.SaveChangesAsync();
         return CreatedAtAction(nameof(Get), new { id = cloze.Id }, Map(cloze));
     }
-
-    public record UpdateClozeDto(string? Title, string? Text, string? Translation, List<Gap>? Gaps, List<string>? WordBank);
 
     /// <summary>Ändert einen Lückentext (partiell).</summary>
     [HttpPatch("{id:int}")]

@@ -26,7 +26,7 @@ public class ObjectiveEvaluationService(PuglingDbContext db, ChildLearnProgressS
     private static int Pct(int part, int whole) => whole == 0 ? 0 : (int)Math.Round(100.0 * part / whole);
 
     // Aktueller Wert einer Beherrschungs-Metrik aus dem Scope-Roll-up (ClassTestGrade wird getrennt behandelt).
-    private static int MasteryCurrent(KeyResultMetric metric, ChildLearnProgressService.MasteryRollup r) => metric switch
+    private static int MasteryCurrent(KeyResultMetric metric, MasteryRollup r) => metric switch
     {
         KeyResultMetric.AvgMastery => r.AvgMasteryPercent,
         KeyResultMetric.MasteredPercent => Pct(r.MasteredItems, r.TotalItems),

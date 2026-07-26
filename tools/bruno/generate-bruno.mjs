@@ -404,7 +404,7 @@ function collectOperations(api) {
         bodyText,
         description: oneLine(operation.description),
         isAuthEndpoint: isAuthEndpoint(apiPath),
-        captureScript: captureScript(apiPath),
+        captureScript: captureScript(apiPath, respondsWithArray(api, operation)),
         examples: collectExamples(operation, bodyText),
       });
     }
@@ -672,9 +672,25 @@ function selfIdVariable(apiPath) {
   return resourceIdBySegment.get(last) ?? null;
 }
 
+// Antwortet der Endpunkt mit einer Liste (JSON-Array im 2xx-Body)? Bestimmt aus dem Response-Schema
+// des ersten Erfolgs-Status. Listen-Ansichten bekommen bewusst KEIN Capture-Script (s. captureScript).
+function respondsWithArray(api, operation) {
+  for (const [code, response] of Object.entries(operation.responses ?? {})) {
+    if (!/^2\d\d$/.test(code)) continue;
+    const resolved = resolveSchema(api, response.content?.['application/json']?.schema);
+    if (resolved?.type === 'array') return true;
+  }
+  return false;
+}
+
 // after-response-Script: Login setzt {{token}}; alle anderen fangen IDs aus der Antwort ins
 // Environment, sodass Folge-Requests (z. B. neu angelegte Ressourcen) direkt darauf zugreifen.
-function captureScript(apiPath) {
+// Listen-Ansichten (Array-Antwort) sind ausgenommen: Aus einer Liste soll NICHT automatisch eine
+// (beliebige) ID ins Environment gezogen werden – das passiert nur bei Detail-Ansichten (Einzel-Objekt).
+function captureScript(apiPath, isList) {
+  // Login ist nie eine Liste und behält sein Token-Script; jede andere Listen-Antwort bekommt keins.
+  if (isList && !isAuthEndpoint(apiPath)) return undefined;
+
   if (isAuthEndpoint(apiPath)) {
     // Token als RUNTIME-Variable (bru.setVar), NICHT ins Environment: Bruno liest Environment-Variablen
     // bei jedem Collection-Reload neu aus der Datei – und schon ein Request-Edit löst so einen Reload aus.

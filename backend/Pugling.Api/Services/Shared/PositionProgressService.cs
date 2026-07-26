@@ -23,19 +23,7 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
     /// </summary>
     private const int MaxSettleLookbackDays = 14;
 
-    /// <summary>Status einer einzelnen Position für einen Tag – genug, damit der Sohn-Client die richtige Aktion rendert.</summary>
-    public record PositionStatus(
-        int PositionId, int ExerciseId, string ExerciseTitle, string ExerciseType, string Renderer,
-        int Order, GoalCadence Cadence, ExerciseCheckMode CheckMode, bool UseLeitner, bool Testable,
-        bool GoalMet, int DueCount, int PoolSize, int PointsGoalMet);
-
-    /// <summary>Tages-Rollup eines Lehrplans über seine Positionen.</summary>
-    public record DayOverview(
-        DateOnly Day, bool DutyDone, int GoalsTotal, int GoalsMet, int PointsAwarded,
-        IReadOnlyList<string> Outstanding, IReadOnlyList<PositionStatus> Positions);
-
-    /// <summary>Ein Tag im Verlauf (für die Vater-Auswertung).</summary>
-    public record ProgressDay(DateOnly Day, bool DutyDone, int GoalsTotal, int GoalsMet, int PointsAwarded);
+    // PositionStatus/DayOverview/ProgressDay/ProgressView leben im Vertrags-Projekt (Pugling.Contracts.Shared).
 
     // ---- Perioden ----
 
@@ -316,7 +304,4 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
             Streak(days, today), filtered.ToList());
     }
 
-    /// <summary>Aggregierter Verlauf: laufzeitweite Kennzahlen + gefilterte/sortierte Tagesliste.</summary>
-    public record ProgressView(int DaysComplete, int TotalDays, int TotalPoints, int CurrentStreak,
-        IReadOnlyList<ProgressDay> Days);
 }

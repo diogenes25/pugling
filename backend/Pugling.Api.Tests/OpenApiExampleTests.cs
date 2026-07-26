@@ -32,7 +32,7 @@ public class OpenApiExampleTests(PuglingWebAppFactory factory) : IClassFixture<P
         var unitType = schemas.GetProperty("UnitType");
         Assert.Equal("string", unitType.GetProperty("type").GetString());
         var allowed = unitType.GetProperty("enum").EnumerateArray().Select(v => v.GetString()).ToList();
-        Assert.Equal(Enum.GetNames<Pugling.Api.Models.UnitType>(), allowed);
+        Assert.Equal(Enum.GetNames<UnitType>(), allowed);
 
         // Pflicht vs. optional korrekt: Create nennt die nicht-nullbaren Felder als required, aber NICHT das
         // optionale „description" (string?). Alle Properties bleiben trotzdem im Objekt beschrieben.

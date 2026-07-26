@@ -30,7 +30,7 @@ public class ChildLearnProgressController(ChildLearnProgressService progress) : 
     /// </summary>
     [HttpGet("subjects")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<IEnumerable<ChildLearnProgressService.SubjectProgressResponse>>> Subjects(
+    public async Task<ActionResult<IEnumerable<SubjectProgressResponse>>> Subjects(
         int childId, [FromQuery] string? search = null, [FromQuery] bool? active = null,
         [FromQuery] string? sort = null, [FromQuery] string? dir = null,
         [FromQuery] int skip = 0, [FromQuery] int take = PagingExtensions.DefaultTake, CancellationToken ct = default) =>
@@ -40,7 +40,7 @@ public class ChildLearnProgressController(ChildLearnProgressService progress) : 
     /// <summary>Ein einzelnes relevantes Fach (404, wenn dem Kind darin nichts zugewiesen ist und kein Fortschritt existiert).</summary>
     [HttpGet("subjects/{subjectId:int}")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<ChildLearnProgressService.SubjectProgressResponse>> Subject(
+    public async Task<ActionResult<SubjectProgressResponse>> Subject(
         int childId, int subjectId, CancellationToken ct = default) =>
         await progress.SubjectAsync(childId, subjectId, ct) is { } s ? s : NotFound();
 
@@ -50,7 +50,7 @@ public class ChildLearnProgressController(ChildLearnProgressService progress) : 
     /// </summary>
     [HttpGet("subjects/{subjectId:int}/chapters")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<IEnumerable<ChildLearnProgressService.ChapterProgressResponse>>> Chapters(
+    public async Task<ActionResult<IEnumerable<ChapterProgressResponse>>> Chapters(
         int childId, int subjectId, [FromQuery] string? search = null, [FromQuery] bool? active = null,
         [FromQuery] string? sort = null, [FromQuery] string? dir = null,
         [FromQuery] int skip = 0, [FromQuery] int take = PagingExtensions.DefaultTake, CancellationToken ct = default) =>
@@ -65,7 +65,7 @@ public class ChildLearnProgressController(ChildLearnProgressService progress) : 
     /// </summary>
     [HttpGet("subjects/{subjectId:int}/chapters/{chapterId:int}/vocabulary")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<IEnumerable<ChildLearnProgressService.ExerciseProgressResponse>>> Vocabulary(
+    public async Task<ActionResult<IEnumerable<ExerciseProgressResponse>>> Vocabulary(
         int childId, int subjectId, int chapterId, [FromQuery] string? search = null, [FromQuery] bool? active = null,
         [FromQuery] string? sort = null, [FromQuery] string? dir = null,
         [FromQuery] int skip = 0, [FromQuery] int take = PagingExtensions.DefaultTake, CancellationToken ct = default) =>
@@ -81,7 +81,7 @@ public class ChildLearnProgressController(ChildLearnProgressService progress) : 
     /// </summary>
     [HttpGet("subjects/{subjectId:int}/chapters/{chapterId:int}/vocabulary/{exerciseId:int}/items")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<IEnumerable<ChildLearnProgressService.ItemProgressResponse>>> Items(
+    public async Task<ActionResult<IEnumerable<ItemProgressResponse>>> Items(
         int childId, int subjectId, int chapterId, int exerciseId,
         [FromQuery] string? search = null, [FromQuery] string? sort = null, [FromQuery] string? dir = null,
         [FromQuery] int skip = 0, [FromQuery] int take = PagingExtensions.DefaultTake, CancellationToken ct = default)

@@ -18,8 +18,7 @@ public enum StoreResolution
     VocabRefs = 2,
 }
 
-/// <summary>Eine im Testmodus umschaltbare Abfrageform (Stufenwert + Anzeigename).</summary>
-public record StageOption(int Value, string Label);
+// StageOption lebt im Vertrags-Projekt (Pugling.Contracts).
 
 /// <summary>
 /// Ein Übungstyp als selbstbeschreibende Einheit („ein Typ = eine Klasse"). Ersetzt das frühere geschlossene

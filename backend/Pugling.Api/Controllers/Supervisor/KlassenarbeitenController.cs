@@ -19,20 +19,10 @@ namespace Pugling.Api.Controllers.Supervisor;
 [Tags("Supervisor – Class Tests")]
 [Produces("application/json")]
 [Authorize]
-public class KlassenarbeitenController(PuglingDbContext db, AuthAccess access) : ControllerBase
+public class KlassenarbeitenController(PuglingDbContext db, AuthAccess access, ExercisePermissionService perms) : ControllerBase
 {
     /// <summary>Grenze, ab der eine Note als „schlecht" gilt (deutsche Skala, höher = schlechter).</summary>
     private const decimal DefaultBadGrade = 4.0m;
-
-    public record TagRef(int Id, string Name, string? Color);
-
-    /// <summary>Klassenarbeit in Listen-/Zusammenfassungssicht.</summary>
-    public record KlassenarbeitResponse(int Id, int ChildId, int? SubjectId, string? SubjectName,
-        string Title, string? Topic, DateOnly ScheduledDate, KlassenarbeitStatus Status,
-        decimal? Grade, string? GradeComment, int DirectExerciseCount, IReadOnlyList<TagRef> Tags, DateTime CreatedAt);
-
-    /// <summary>Klassenarbeit mit den direkt zugewiesenen Übungen.</summary>
-    public record KlassenarbeitDetail(KlassenarbeitResponse Klassenarbeit, IReadOnlyList<ExerciseBrief> AssignedExercises);
 
     private static KlassenarbeitResponse Map(Klassenarbeit k) => new(
         k.Id, k.ChildId, k.SubjectId, k.Subject?.Name, k.Title, k.Topic, k.ScheduledDate, k.Status,
@@ -96,16 +86,13 @@ public class KlassenarbeitenController(PuglingDbContext db, AuthAccess access) :
 
     // ---- Anlegen / Ändern (nur Vater) ----
 
-    public record CreateDto(int ChildId, string Title, string? Topic, int? SubjectId, DateOnly ScheduledDate,
-        KlassenarbeitStatus? Status, decimal? Grade, string? GradeComment, List<int>? ExerciseIds, List<int>? TagIds);
-
     /// <summary>Plant eine Klassenarbeit (oder trägt eine bereits geschriebene nach). Nur Vater, nur eigene Kinder.</summary>
     [HttpPost]
     [Authorize(Roles = Roles.Supervisor)]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult<KlassenarbeitDetail>> Create(CreateDto dto)
+    public async Task<ActionResult<KlassenarbeitDetail>> Create(CreateClassTestDto dto)
     {
         if (string.IsNullOrWhiteSpace(dto.Title)) return this.ProblemWithCode(ApiErrors.ValidationError, "Title is required.");
         if (!await access.OwnsChildAsync(User, dto.ChildId)) return Forbid();
@@ -125,7 +112,7 @@ public class KlassenarbeitenController(PuglingDbContext db, AuthAccess access) :
             GradeComment = dto.GradeComment?.Trim(),
         };
 
-        if (await BuildExerciseLinksAsync(dto.ChildId, dto.ExerciseIds, k.Exercises) is { } exErr) return this.ProblemWithCode(ApiErrors.InvalidReference, exErr);
+        if (await BuildExerciseLinksAsync(dto.ChildId, dto.ExerciseIds, k.Exercises) is { } exErr) return exErr;
         if (await BuildTagLinksAsync(dto.ChildId, dto.TagIds, k.Tags) is { } tagErr) return this.ProblemWithCode(ApiErrors.InvalidReference, tagErr);
 
         db.Klassenarbeiten.Add(k);
@@ -137,15 +124,12 @@ public class KlassenarbeitenController(PuglingDbContext db, AuthAccess access) :
             new KlassenarbeitDetail(Map(created), await LoadExercisesAsync(e => exIds.Contains(e.Id))));
     }
 
-    public record UpdateDto(string? Title, string? Topic, int? SubjectId, DateOnly? ScheduledDate,
-        KlassenarbeitStatus? Status, decimal? Grade, bool ClearGrade, string? GradeComment);
-
     /// <summary>Ändert eine Klassenarbeit partiell – u. a. Note nachtragen und Status setzen. Nur Vater.</summary>
     [HttpPatch("{id:int}")]
     [Authorize(Roles = Roles.Supervisor)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<KlassenarbeitResponse>> Update(int id, UpdateDto dto)
+    public async Task<ActionResult<KlassenarbeitResponse>> Update(int id, UpdateClassTestDto dto)
     {
         var k = await FindOwnedAsync(id);
         if (k is null) return NotFound();
@@ -198,8 +182,6 @@ public class KlassenarbeitenController(PuglingDbContext db, AuthAccess access) :
 
     // ---- Übungen zuweisen (nur Vater) ----
 
-    public record AssignExercisesDto(List<int> ExerciseIds);
-
     /// <summary>Weist der Klassenarbeit Übungen direkt zu (bereits zugewiesene werden übersprungen). Nur Vater.</summary>
     [HttpPost("{id:int}/exercises")]
     [Authorize(Roles = Roles.Supervisor)]
@@ -210,7 +192,7 @@ public class KlassenarbeitenController(PuglingDbContext db, AuthAccess access) :
         var k = await FindOwnedAsync(id);
         if (k is null) return NotFound();
         if (dto.ExerciseIds is not { Count: > 0 }) return this.ProblemWithCode(ApiErrors.ValidationError, "At least one exercise is required.");
-        if (await BuildExerciseLinksAsync(k.ChildId, dto.ExerciseIds, k.Exercises) is { } error) return this.ProblemWithCode(ApiErrors.InvalidReference, error);
+        if (await BuildExerciseLinksAsync(k.ChildId, dto.ExerciseIds, k.Exercises) is { } error) return error;
 
         await db.SaveChangesAsync();
         var exIds = k.Exercises.Select(x => x.ExerciseId).ToList();
@@ -270,10 +252,6 @@ public class KlassenarbeitenController(PuglingDbContext db, AuthAccess access) :
 
     // ---- Üben / Wiederholen ----
 
-    /// <summary>Relevante Übungen einer Klassenarbeit zum gezielten Üben (Tage bis zum Termin inklusive).</summary>
-    public record PracticeResponse(int KlassenarbeitId, string Title, DateOnly ScheduledDate, int DaysUntil,
-        IReadOnlyList<ExerciseBrief> Exercises);
-
     /// <summary>
     /// Alle für die Klassenarbeit relevanten Übungen: direkt zugewiesene UND über verknüpfte Tags markierte
     /// (ohne Dubletten). Grundlage zum gezielten Üben für eine anstehende Arbeit.
@@ -289,10 +267,6 @@ public class KlassenarbeitenController(PuglingDbContext db, AuthAccess access) :
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
         return new PracticeResponse(k.Id, k.Title, k.ScheduledDate, k.ScheduledDate.DayNumber - today.DayNumber, exercises);
     }
-
-    /// <summary>Übungen, die wegen schlecht benoteter Klassenarbeiten wiederholt werden sollten.</summary>
-    public record RepeatResponse(decimal MinBadGrade, IReadOnlyList<KlassenarbeitResponse> Sources,
-        IReadOnlyList<ExerciseBrief> Exercises);
 
     /// <summary>
     /// Sammelt die relevanten Übungen aller geschriebenen Klassenarbeiten eines Kindes, deren Note
@@ -330,7 +304,7 @@ public class KlassenarbeitenController(PuglingDbContext db, AuthAccess access) :
             .OrderBy(e => e.Chapter!.SubjectId).ThenBy(e => e.ChapterId).ThenBy(e => e.OrderIndex)
             .AsNoTracking()
             .ToListAsync();
-        return exercises.Select(ExerciseBrief.From).ToList();
+        return exercises.Select(ExerciseBriefMapping.From).ToList();
     }
 
     /// <summary>
@@ -350,14 +324,20 @@ public class KlassenarbeitenController(PuglingDbContext db, AuthAccess access) :
             || db.ExerciseTags.Any(et => et.ExerciseId == e.Id && tagIds.Contains(et.TagId)));
     }
 
-    /// <summary>Prüft die Übungs-Ids und hängt neue Zuordnungen an; gibt eine Fehlermeldung zurück oder null.</summary>
-    private async Task<string?> BuildExerciseLinksAsync(int childId, List<int>? exerciseIds, List<KlassenarbeitExercise> target)
+    /// <summary>Prüft die Übungs-Ids (Existenz + Execute-Recht) und hängt neue Zuordnungen an; gibt ein Fehler-Ergebnis zurück oder null.</summary>
+    private async Task<ObjectResult?> BuildExerciseLinksAsync(int childId, List<int>? exerciseIds, List<KlassenarbeitExercise> target)
     {
         if (exerciseIds is not { Count: > 0 }) return null;
         var ids = exerciseIds.Distinct().ToList();
-        var known = await db.Exercises.Where(e => ids.Contains(e.Id)).Select(e => e.Id).ToListAsync();
-        var missing = ids.Except(known).ToList();
-        if (missing.Count > 0) return $"Unknown exercise IDs: {string.Join(", ", missing)}";
+        var known = await db.Exercises.Where(e => ids.Contains(e.Id)).ToListAsync();
+        var missing = ids.Except(known.Select(e => e.Id)).ToList();
+        if (missing.Count > 0) return this.ProblemWithCode(ApiErrors.InvalidReference, $"Unknown exercise IDs: {string.Join(", ", missing)}");
+
+        // Execute-Gate: nur öffentlich ausführbare oder eigens freigegebene Übungen darf der Vater in die Arbeit aufnehmen.
+        foreach (var exercise in known)
+            if (!await perms.CanExecuteAsync(User, exercise))
+                return this.ProblemWithCode(ApiErrors.ExerciseNotExecutable,
+                    $"Exercise {exercise.Id} is not publicly assignable; you need execute permission from its owner.");
 
         var already = target.Select(x => x.ExerciseId).ToHashSet();
         foreach (var exId in ids.Where(exId => already.Add(exId)))

@@ -20,8 +20,6 @@ namespace Pugling.Api.Controllers.Creator;
 [Authorize(Roles = Roles.Creator)]
 public class ExerciseCategoriesController(PuglingDbContext db) : ControllerBase
 {
-    public record CategoryResponse(int Id, int SubjectId, string Name, DateTime CreatedAt);
-
     Task<bool> SubjectExists(int subjectId) => db.Subjects.AnyAsync(s => s.Id == subjectId);
 
     Task<CategoryResponse?> ProjectOne(int subjectId, int categoryId) =>
@@ -52,8 +50,6 @@ public class ExerciseCategoriesController(PuglingDbContext db) : ControllerBase
         return category is null ? NotFound() : category;
     }
 
-    public record CreateCategoryDto(string Name);
-
     /// <summary>Erstellt eine Art unter einem Fach.</summary>
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status201Created)]
@@ -76,8 +72,6 @@ public class ExerciseCategoriesController(PuglingDbContext db) : ControllerBase
         var response = new CategoryResponse(category.Id, subjectId, category.Name, category.CreatedAt);
         return CreatedAtAction(nameof(Get), new { subjectId, categoryId = category.Id }, response);
     }
-
-    public record UpdateCategoryDto(string? Name);
 
     /// <summary>Ändert eine Art (partiell).</summary>
     [HttpPatch("{categoryId:int}")]

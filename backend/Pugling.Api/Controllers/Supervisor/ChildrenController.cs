@@ -22,10 +22,6 @@ namespace Pugling.Api.Controllers.Supervisor;
 [ServiceFilter(typeof(ChildOwnershipFilter))]
 public class ChildrenController(PuglingDbContext db, WalletService wallet, AccountService accounts) : ControllerBase
 {
-    public record ChildResponse(int Id, string Name, int? BirthYear, int? Grade,
-        SchoolTypes SchoolType, Gender Gender, IReadOnlyList<string> Interests, string? ProfileNotes,
-        DateTime CreatedAt, int Coins, int Gems);
-
     Task<ChildResponse?> ProjectOne(int childId) =>
         db.Children
             .Where(c => c.Id == childId)
@@ -61,9 +57,6 @@ public class ChildrenController(PuglingDbContext db, WalletService wallet, Accou
         return child is null ? NotFound() : child;
     }
 
-    public record CreateChildDto(string Name, int? BirthYear, int? Grade, SchoolTypes? SchoolType, string? Pin,
-        Gender? Gender = null, List<string>? Interests = null, string? ProfileNotes = null);
-
     /// <summary>Erstellt ein Kind unter dem angemeldeten Vater.</summary>
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status201Created)]
@@ -95,9 +88,6 @@ public class ChildrenController(PuglingDbContext db, WalletService wallet, Accou
             child.SchoolType, child.Gender, child.Interests, child.ProfileNotes, child.CreatedAt, 0, 0);
         return CreatedAtAction(nameof(Get), new { childId = child.Id }, response);
     }
-
-    public record UpdateChildDto(string? Name, int? BirthYear, int? Grade, SchoolTypes? SchoolType, string? Pin,
-        Gender? Gender = null, List<string>? Interests = null, string? ProfileNotes = null);
 
     /// <summary>Ändert ein Kind (partiell).</summary>
     [HttpPatch("{childId:int}")]
@@ -141,8 +131,6 @@ public class ChildrenController(PuglingDbContext db, WalletService wallet, Accou
 
     // ---- Ko-Supervisoren (mehrere Betreuer je Student) ----
 
-    public record SupervisorLinkResponse(int SupervisorId, string SupervisorName, SupervisorRelation Relation, DateTime CreatedAt);
-
     /// <summary>Alle Supervisor dieses Studenten (der handelnde Supervisor muss selbst einer sein).</summary>
     [HttpGet("{childId:int}/supervisors")]
     [ProducesResponseType(StatusCodes.Status200OK)]
@@ -153,8 +141,6 @@ public class ChildrenController(PuglingDbContext db, WalletService wallet, Accou
             .OrderBy(l => l.CreatedAt)
             .Select(l => new SupervisorLinkResponse(l.SupervisorId, l.Supervisor!.Name, l.Relation, l.CreatedAt))
             .ToListAsync();
-
-    public record AddSupervisorDto(int SupervisorId, SupervisorRelation Relation = SupervisorRelation.Other);
 
     /// <summary>
     /// Fügt dem Studenten einen weiteren Supervisor hinzu (z. B. Mutter/Oma). Der handelnde Supervisor
@@ -197,9 +183,6 @@ public class ChildrenController(PuglingDbContext db, WalletService wallet, Accou
 
     // ---- Punkte des Kindes ----
 
-    public record PointsEntryResponse(int Id, int ChildId, int Amount, PointKind Kind, string Reason, DateTime CreatedAt);
-    public record ChildPointsResponse(int ChildId, int Coins, int Gems, IEnumerable<PointsEntryResponse> Entries);
-
     /// <summary>Kontostand des Kindes (Münzen + Gems) mit den letzten Buchungen (neueste zuerst).</summary>
     /// <param name="childId">Kind, dessen Kontostand gelesen wird.</param>
     /// <param name="skip">Anzahl zu überspringender Buchungen (Paging).</param>
@@ -223,16 +206,6 @@ public class ChildrenController(PuglingDbContext db, WalletService wallet, Accou
 
         return new ChildPointsResponse(childId, coins, gems, entries);
     }
-
-    /// <summary>
-    /// Manuelle Vater-Buchung: positiver Betrag = gutschreiben/verschenken, negativ = abziehen.
-    /// Über die Währung kann der Vater neben Münzen auch <b>Gems verschenken</b>
-    /// (Belohnung außerhalb der App, Schulden-Erlass).
-    /// </summary>
-    /// <param name="Amount">Betrag; positiv = gutschreiben/verschenken, negativ = abziehen.</param>
-    /// <param name="Reason">Freitext-Begründung fürs Ledger.</param>
-    /// <param name="Currency">Zielwährung der Buchung (Default Münzen).</param>
-    public record PointsEntryDto(int Amount, string Reason, Currency Currency = Currency.Coins);
 
     [HttpPost("{childId:int}/points")]
     [ProducesResponseType(StatusCodes.Status201Created)]

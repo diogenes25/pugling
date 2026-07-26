@@ -148,6 +148,7 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
             await CaptureChildrenAsync(father, father2, foreignChildId);
             var (docSubjectId, docChapterId, docExerciseId) = await CaptureCatalogAsync(father);
             await CaptureExerciseTypesAsync(father, docSubjectId, docChapterId);
+            await CaptureGrantsAsync(father, father2, father2Id, foreignChildId, docSubjectId, docChapterId, docExerciseId);
             await CaptureMeAsync(father, child);
             await CaptureStudyPlansAsync(father, father2, child, docSubjectId, docChapterId, docExerciseId);
             await CaptureClassTestsAsync(father);
@@ -263,6 +264,50 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
                 HttpStatusCode.Forbidden, ApiErrors.NotAuthor.Code);
 
         return (subjectId, chapterId, exerciseId);
+    }
+
+    // ── exercise grants (RWX: Owner/Write/Execute + Execute-Gate) ─────────────────────────────────
+    private async Task CaptureGrantsAsync(HttpClient father, HttpClient father2, int father2Id,
+        int foreignChildId, int subjectId, int chapterId, int exerciseId)
+    {
+        const string g = "exercise-grants";
+
+        await Capture(father, g, "Rechte einer Übung auflisten (nur Owner)", HttpMethod.Get,
+            $"/api/v1/creator/exercises/{exerciseId}/grants", null, HttpStatusCode.OK);
+
+        await Capture(father2, g, "Rechte einer fremden Übung auflisten", HttpMethod.Get,
+            $"/api/v1/creator/exercises/{exerciseId}/grants", null, HttpStatusCode.Forbidden, ApiErrors.NotOwner.Code);
+
+        await Capture(father, g, "Write-Recht an anderen Creator vergeben", HttpMethod.Post,
+            $"/api/v1/creator/exercises/{exerciseId}/grants",
+            new { creatorId = father2Id, permission = "Write" }, HttpStatusCode.Created);
+
+        // Der Anleger ist einziger Owner (Auto-Grant, Vater-Id 1) – er lässt sich nicht als letzter entfernen.
+        await Capture(father, g, "Letzten Owner entfernen", HttpMethod.Delete,
+            $"/api/v1/creator/exercises/{exerciseId}/grants/1/Owner",
+            null, HttpStatusCode.Conflict, ApiErrors.LastOwner.Code);
+
+        // Execute-Gate: eine nicht öffentlich ausführbare Übung darf ein fremder Creator nicht zuweisen.
+        var privateEx = await Capture(father, g, "Nicht öffentlich ausführbare Übung anlegen", HttpMethod.Post,
+            $"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/vocabulary",
+            new
+            {
+                title = "Nur intern",
+                orderIndex = 2,
+                rewardPoints = 10,
+                executePublic = false,
+                config = new { direction = "front-to-back", sourceLang = "en", targetLang = "de" },
+            }, HttpStatusCode.Created);
+        var privateExId = privateEx.GetProperty("id").GetInt32();
+
+        var plan = await Capture(father2, g, "Lehrplan für eigenes Kind anlegen", HttpMethod.Post,
+            "/api/v1/supervisor/study-plans",
+            new { childId = foreignChildId, title = "Plan (fremd)", durationDays = 5 }, HttpStatusCode.Created);
+        var planId = plan.GetProperty("id").GetInt32();
+
+        await Capture(father2, g, "Nicht ausführbare Übung zuweisen", HttpMethod.Post,
+            $"/api/v1/supervisor/study-plans/{planId}/positions",
+            new { exerciseId = privateExId }, HttpStatusCode.Forbidden, ApiErrors.ExerciseNotExecutable.Code);
     }
 
     // ── exercise types (je Typ ein verifizierter Anlage-POST) ─────────────────────────────────────

@@ -1,6 +1,6 @@
 # API-Beispiele – Übersicht
 
-Automatisch erzeugt von `backend/Pugling.Api.Tests/DocsCaptureTests.cs`. Insgesamt **112** Beispiele in **10** Gruppen.
+Automatisch erzeugt von `backend/Pugling.Api.Tests/DocsCaptureTests.cs`. Insgesamt **119** Beispiele in **11** Gruppen.
 
 | Gruppe | Beispiele | Fehlerfälle | Datei |
 | --- | ---: | ---: | --- |
@@ -8,6 +8,7 @@ Automatisch erzeugt von `backend/Pugling.Api.Tests/DocsCaptureTests.cs`. Insgesa
 | catalog | 21 | 5 | [`catalog.md`](./catalog.md) |
 | children | 7 | 2 | [`children.md`](./children.md) |
 | class-tests | 3 | 2 | [`class-tests.md`](./class-tests.md) |
+| exercise-grants | 7 | 3 | [`exercise-grants.md`](./exercise-grants.md) |
 | me | 15 | 5 | [`me.md`](./me.md) |
 | shop | 28 | 8 | [`shop.md`](./shop.md) |
 | study-plans | 21 | 6 | [`study-plans.md`](./study-plans.md) |
@@ -17,7 +18,7 @@ Automatisch erzeugt von `backend/Pugling.Api.Tests/DocsCaptureTests.cs`. Insgesa
 
 ## Fehler-Code-Abdeckung
 
-Verifiziert: **25 / 33** Codes aus `ApiErrors`.
+Verifiziert: **28 / 36** Codes aus `ApiErrors`.
 
 | Code | Beispiel |
 | --- | --- |
@@ -26,15 +27,18 @@ Verifiziert: **25 / 33** Codes aus `ApiErrors`.
 | `duplicate_key` | vocabulary – Vokabel mit doppeltem Key |
 | `duplicate_tag_name` | tags – Tag mit doppeltem Namen |
 | `exercise_in_use` | catalog – Verwendete Übung löschen |
+| `exercise_not_executable` | exercise-grants – Nicht ausführbare Übung zuweisen |
 | `forbidden` | me – Vater greift auf Sohn-Route zu |
 | `insufficient_coins` | shop – Shop-Angebot kaufen (kein Guthaben) |
 | `insufficient_gems` | me – Skin kaufen ohne Gems |
 | `insufficient_inventory` | shop – Aktivierungsanfrage (Inventar erschöpft) |
 | `invalid_credentials` | auth – Login mit falscher PIN |
 | `invalid_reference` | study-plans – Position mit unbekannter Übung |
+| `last_owner` | exercise-grants – Letzten Owner entfernen |
 | `no_checkable_content` | study-plans – Test auf Übung ohne prüfbaren Inhalt |
 | `not_author` | catalog – Fremd-Autor-Übung bearbeiten |
 | `not_found` | children – Fremdes Kind lesen |
+| `not_owner` | exercise-grants – Rechte einer fremden Übung auflisten |
 | `plan_inactive` | study-plans – Deaktivierten Plan spielen |
 | `position_has_data` | study-plans – Bespielte Position löschen |
 | `shop_insufficient_stock` | shop – Shop-Angebot kaufen (ausverkauft) |

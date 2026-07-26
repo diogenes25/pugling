@@ -27,21 +27,6 @@ public class ChildVocabularyProgressController(PuglingDbContext db) : Controller
     /// <summary>Ab welcher Beherrschung (Prozent) ein Item/Wort als „schwach" gilt (Filter <c>onlyWeak</c>); geteilte Schwelle.</summary>
     private const int WeakBelowPercent = ItemProgress.WeakBelowPercent;
 
-    /// <summary>Lernstand eines Kindes zu einem Item (Front/Rückseite aus dem Store, kanonisch Wort → Übersetzung).</summary>
-    public record ItemProgressResponse(int ItemId, int ExerciseId, int VocabularyId, string Front, string Back,
-        int Box, int MaxBox, int MasteryPercent, int SeenCount, int CorrectCount,
-        DateOnly? IntroducedAt, DateTime? LastAnswerAt, bool? LastCorrect,
-        [property: System.Text.Json.Serialization.JsonPropertyName("vocabulary")] string Vocabulary);
-
-    /// <summary>Aggregierter Wort-Beherrschungsstand über alle Übungen, die dieses Store-Wort nutzen.</summary>
-    public record WordMasteryResponse(int VocabularyId, string Word, string Translation, int ItemCount,
-        int AvgMasteryPercent, int MinBox, int SeenCount, int CorrectCount, int CorrectPercent,
-        [property: System.Text.Json.Serialization.JsonPropertyName("vocabulary")] string Vocabulary);
-
-    /// <summary>Ein protokolliertes Antwort-Ereignis der Item-Historie.</summary>
-    public record HistoryResponse(DateTime At, string Source, int StageValue, string? GivenAnswer,
-        bool WasCorrect, int? PlanPositionId);
-
     // EF-Projektion ohne den abgeleiteten Link (im Speicher ergänzt).
     private record Row(int ItemId, int ExerciseId, int VocabularyId, string Front, string Back,
         int Box, int MasteryPercent, int SeenCount, int CorrectCount,

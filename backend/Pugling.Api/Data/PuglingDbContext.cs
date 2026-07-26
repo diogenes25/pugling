@@ -26,6 +26,8 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
     public DbSet<Chapter> Chapters => Set<Chapter>();
     public DbSet<Exercise> Exercises => Set<Exercise>();
     public DbSet<ExerciseCategory> ExerciseCategories => Set<ExerciseCategory>();
+    // RWX-Rechte einzelner Creator auf eine Übung (Owner/Write/Execute).
+    public DbSet<ExerciseGrant> ExerciseGrants => Set<ExerciseGrant>();
     // Stabil identifizierte Items einer Vokabelübung (positionierte Referenz auf den Vokabel-Store).
     public DbSet<ExerciseItem> ExerciseItems => Set<ExerciseItem>();
 
@@ -220,6 +222,22 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
             .WithMany()
             .HasForeignKey(e => e.AuthorFatherId)
             .OnDelete(DeleteBehavior.SetNull);
+
+        // Bislang gab es keinen Index auf den Autor; die neuen Grant-Joins und der `mineOnly`-Filter profitieren.
+        modelBuilder.Entity<Exercise>().HasIndex(e => e.AuthorFatherId);
+
+        // RWX-Grant: Recht eines Creator auf eine Übung. Leaf auf zwei unabhängige Roots (Exercise, Father) –
+        // beide FKs Cascade, kein SQLite-Diamant (Muster wie SupervisorLink). Paar+Recht eindeutig (Idempotenz).
+        modelBuilder.Entity<ExerciseGrant>(e =>
+        {
+            e.Property(g => g.Permission).HasConversion<string>();
+            e.HasOne(g => g.Exercise).WithMany(x => x.Grants)
+                .HasForeignKey(g => g.ExerciseId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(g => g.Creator).WithMany()
+                .HasForeignKey(g => g.CreatorId).OnDelete(DeleteBehavior.Cascade);
+            e.HasIndex(g => new { g.ExerciseId, g.CreatorId, g.Permission }).IsUnique();
+            e.HasIndex(g => g.CreatorId);
+        });
 
         // Vokabel-Item: gehört einer Übung (Cascade – verschwindet mit ihr) und referenziert eine Store-Vokabel.
         // Die Vokabel darf nicht gelöscht werden, solange ein Item sie nutzt (Restrict, wie beim Übungs-Store-Bezug);

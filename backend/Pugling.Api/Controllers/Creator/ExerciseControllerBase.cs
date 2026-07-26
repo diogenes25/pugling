@@ -9,23 +9,7 @@ using Pugling.Api.Models;
 
 namespace Pugling.Api.Controllers.Creator;
 
-/// <summary>
-/// Übung zum Anlegen/Ändern: gemeinsame Felder + typ-spezifische Config + optionaler Bonus-Vorschlag.
-/// Die Metadaten (Klassenstufe, Schulart, Quelle, Art) dienen der Lehrplan-Vorfilterung und sind optional.
-/// </summary>
-public record ExercisePayload<TConfig>(string Title, int OrderIndex, int RewardPoints, TConfig Config,
-    SuggestedBonus? SuggestedBonus = null,
-    int? GradeMin = null, int? GradeMax = null, SchoolTypes SchoolTypes = SchoolTypes.None,
-    string? Source = null, int? CategoryId = null, string? Description = null,
-    bool DefaultUseLeitner = false, bool DefaultRequireTypedTest = false, int? DefaultStage = null,
-    int? DefaultItemCount = null);
-
-/// <summary>Übung in der Antwort. <paramref name="IsOwn"/> zeigt, ob der anfragende Vater Autor ist (Editier-/Löschrecht).</summary>
-public record ExerciseResponse<TConfig>(int Id, int ChapterId, string Type, string Title,
-    int OrderIndex, int RewardPoints, DateTime CreatedAt, TConfig Config, SuggestedBonus? SuggestedBonus,
-    int? GradeMin, int? GradeMax, SchoolTypes SchoolTypes, string? Source, int? CategoryId, string? CategoryName,
-    int? AuthorFatherId, bool IsOwn, string? Description, bool DefaultUseLeitner, bool DefaultRequireTypedTest,
-    int? DefaultStage, int? DefaultItemCount);
+// ExercisePayload<TConfig>/ExerciseResponse<TConfig> leben im Vertrags-Projekt (Pugling.Contracts.Creator).
 
 /// <summary>
 /// Gemeinsame CRUD-Logik für alle Übungstypen unter einem Kapitel.
@@ -112,19 +96,28 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db, Exerc
             : db.ExerciseCategories.AnyAsync(c => c.Id == categoryId && c.SubjectId == subjectId);
 
     /// <summary>
-    /// Prüft das Schreibrecht auf eine Übung: Der Katalog ist global (jeder Vater darf jede Übung
-    /// finden und in seine Lehrpläne übernehmen), aber ändern/löschen darf nur der Autor. Geseedete
-    /// System-Übungen (<see cref="Exercise.AuthorFatherId"/> = null) sind für niemanden editierbar.
+    /// Prüft das <b>Schreibrecht</b> (ändern) auf eine Übung: Der Katalog ist global (jeder Creator darf jede
+    /// Übung finden und in seine Lehrpläne übernehmen), aber ändern darf nur, wer einen Owner- oder Write-Grant
+    /// hält. Setzt voraus, dass die Grants der Übung geladen sind (<see cref="FindAsync"/> lädt sie mit).
     /// Gibt bei fehlendem Recht ein <c>403</c>-<see cref="ProblemDetails"/> zurück, sonst <c>null</c>.
     /// </summary>
-    protected ObjectResult? EnsureCanModify(Exercise exercise) =>
-        User.Owns(exercise)
+    protected ObjectResult? EnsureCanWrite(Exercise exercise) =>
+        ExercisePermissionService.CanWrite(exercise.Grants, User.FatherId(), User.IsAdmin())
             ? null
-            : this.ProblemWithCode(ApiErrors.NotAuthor, "This exercise belongs to another father and can only be modified or deleted by its author.");
+            : this.ProblemWithCode(ApiErrors.NotAuthor, "You need owner or write permission to modify this exercise.");
 
-    /// <summary>Lädt eine Übung dieses Typs; Basis für abgeleitete Zusatz-Endpunkte (Generieren, Auswerten).</summary>
+    /// <summary>
+    /// Prüft das <b>Verwaltungsrecht</b> (nur Owner): löschen, Rechte vergeben/entziehen, Sichtbarkeit umschalten.
+    /// Setzt geladene Grants voraus (siehe <see cref="FindAsync"/>).
+    /// </summary>
+    protected ObjectResult? EnsureCanAdminister(Exercise exercise) =>
+        ExercisePermissionService.CanAdminister(exercise.Grants, User.FatherId(), User.IsAdmin())
+            ? null
+            : this.ProblemWithCode(ApiErrors.NotOwner, "Only an owner can delete this exercise or manage its permissions.");
+
+    /// <summary>Lädt eine Übung dieses Typs inkl. ihrer Grants (für die Rechteprüfung/-anzeige); Basis für abgeleitete Zusatz-Endpunkte.</summary>
     protected Task<Exercise?> FindAsync(int subjectId, int chapterId, int exerciseId) =>
-        db.Exercises.Include(e => e.Category)
+        db.Exercises.Include(e => e.Category).Include(e => e.Grants)
             .FirstOrDefaultAsync(e => e.Id == exerciseId && e.ChapterId == chapterId
                 && e.Type == TypeKey && e.Chapter!.SubjectId == subjectId);
 
@@ -136,30 +129,79 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db, Exerc
     protected void SetConfig(Exercise exercise, TConfig config) =>
         exercise.ConfigJson = JsonSerializer.Serialize(config, JsonOptions);
 
-    /// <summary>Projiziert eine Übung; <paramref name="fid"/> wird einmal pro Request ermittelt (nicht pro Zeile).</summary>
-    protected ExerciseResponse<TConfig> Map(Exercise e, int? fid) =>
-        new(e.Id, e.ChapterId, e.Type.ToString(), e.Title, e.OrderIndex, e.RewardPoints, e.CreatedAt, ConfigForResponse(e), e.SuggestedBonus,
+    /// <summary>Projiziert eine Übung; <paramref name="fid"/> wird einmal pro Request ermittelt (nicht pro Zeile). Erwartet geladene <see cref="Exercise.Grants"/>.</summary>
+    protected ExerciseResponse<TConfig> Map(Exercise e, int? fid)
+    {
+        var isAdmin = User.IsAdmin();
+        return new(e.Id, e.ChapterId, e.Type.ToString(), e.Title, e.OrderIndex, e.RewardPoints, e.CreatedAt, ConfigForResponse(e), e.SuggestedBonus,
             e.GradeMin, e.GradeMax, e.SchoolTypes, e.Source, e.CategoryId, e.Category?.Name,
-            e.AuthorFatherId, ClaimsPrincipalExtensions.IsOwnedBy(e.AuthorFatherId, fid), e.Description,
+            e.AuthorFatherId, ExercisePermissionService.CanWrite(e.Grants, fid, isAdmin), ExercisePermissionService.CanAdminister(e.Grants, fid, isAdmin),
+            e.ExecutePublic, e.Grants.Count, e.Description,
             e.DefaultUseLeitner, e.DefaultRequireTypedTest, e.DefaultStage, e.DefaultItemCount);
+    }
 
     /// <summary>Liste der Übungen dieses Typs im Kapitel.</summary>
     /// <param name="subjectId">Fach, zu dem das Kapitel gehört.</param>
     /// <param name="chapterId">Kapitel, dessen Übungen gelesen werden.</param>
+    /// <param name="isOwn">Optionaler Rechtefilter auf Änderungsrecht (Owner/Write-Grant; Admin gilt als <c>true</c>).</param>
+    /// <param name="isOwner">Optionaler Rechtefilter auf Verwaltungsrecht (Owner-Grant; Admin gilt als <c>true</c>).</param>
     /// <param name="skip">Anzahl zu überspringender Einträge (Paging).</param>
     /// <param name="take">Maximale Trefferzahl (1..500). Gesamtzahl im Header <c>X-Total-Count</c>.</param>
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<IEnumerable<ExerciseResponse<TConfig>>>> List(
         int subjectId, int chapterId,
+        [FromQuery] bool? isOwn = null,
+        [FromQuery] bool? isOwner = null,
         [FromQuery] int skip = 0, [FromQuery] int take = PagingExtensions.DefaultTake)
     {
         if (!await ChapterExists(subjectId, chapterId)) return NotFound();
         var fid = User.FatherId();
-        var exercises = await db.Exercises
+        var isAdmin = User.IsAdmin();
+
+        var query = db.Exercises
             .AsNoTracking()
             .Include(e => e.Category)
-            .Where(e => e.ChapterId == chapterId && e.Type == TypeKey)
+            .Include(e => e.Grants)
+            .Where(e => e.ChapterId == chapterId && e.Type == TypeKey);
+
+        // isOwn/isOwner spiegeln die Antwortfelder und erlauben Listen auf „was ich ändern/verwalten darf".
+        // Admin hat beides implizit; daher liefern *true*-Filter für Admin die normale Liste, *false* leer.
+        if (isOwn is not null)
+        {
+            if (isOwn.Value)
+            {
+                if (!isAdmin)
+                    query = query.Where(e => fid != null && e.Grants.Any(g => g.CreatorId == fid
+                        && (g.Permission == GrantPermission.Owner || g.Permission == GrantPermission.Write)));
+            }
+            else
+            {
+                query = isAdmin
+                    ? query.Where(_ => false)
+                    : query.Where(e => fid == null || !e.Grants.Any(g => g.CreatorId == fid
+                        && (g.Permission == GrantPermission.Owner || g.Permission == GrantPermission.Write)));
+            }
+        }
+
+        if (isOwner is not null)
+        {
+            if (isOwner.Value)
+            {
+                if (!isAdmin)
+                    query = query.Where(e => fid != null && e.Grants.Any(g => g.CreatorId == fid
+                        && g.Permission == GrantPermission.Owner));
+            }
+            else
+            {
+                query = isAdmin
+                    ? query.Where(_ => false)
+                    : query.Where(e => fid == null || !e.Grants.Any(g => g.CreatorId == fid
+                        && g.Permission == GrantPermission.Owner));
+            }
+        }
+
+        var exercises = await query
             .OrderBy(e => e.OrderIndex).ThenBy(e => e.Id)
             .ToPagedListAsync(Response, skip, take);
         return exercises.Select(e => Map(e, fid)).ToList();
@@ -208,11 +250,30 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db, Exerc
             DefaultRequireTypedTest = body.DefaultRequireTypedTest,
             DefaultStage = body.DefaultStage,
             DefaultItemCount = body.DefaultItemCount,
-            // Autor = der anlegende Vater. Sichert ihm später das alleinige Editier-/Löschrecht (Katalog bleibt global lesbar).
+            ExecutePublic = body.ExecutePublic,
+            // Autor = der anlegende Creator (Attribution). Das Editier-/Löschrecht läuft über den unten
+            // angelegten Owner-Grant (RWX-Modell), damit Eigentum später übertragbar/teilbar ist.
             AuthorFatherId = User.FatherId(),
         };
         db.Exercises.Add(exercise);
         await db.SaveChangesAsync();
+
+        // Der Anleger wird erster Owner (Editier-/Lösch-/Verwaltungsrecht). Ohne fid (kein Creator-Profil)
+        // bleibt die Übung ownerlos wie eine System-Übung – dann aber ohnehin nur über [Authorize] erreichbar.
+        if (User.FatherId() is int authorId)
+        {
+            var ownerGrant = new ExerciseGrant
+            {
+                ExerciseId = exercise.Id,
+                CreatorId = authorId,
+                Permission = GrantPermission.Owner,
+                GrantedByFatherId = authorId,
+            };
+            db.ExerciseGrants.Add(ownerGrant);
+            await db.SaveChangesAsync();
+            exercise.Grants.Add(ownerGrant);
+        }
+
         await AfterSaveAsync(exercise, config, isCreate: true);
 
         // Für CategoryName in der Antwort die Art nachladen (billig; nur beim Erzeugen).
@@ -230,13 +291,16 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db, Exerc
     {
         var exercise = await FindAsync(subjectId, chapterId, exerciseId);
         if (exercise is null) return NotFound();
-        if (EnsureCanModify(exercise) is { } forbidden) return forbidden;
+        if (EnsureCanWrite(exercise) is { } forbidden) return forbidden;
         if (string.IsNullOrWhiteSpace(body.Title)) return this.ProblemWithCode(ApiErrors.ValidationError, "Title is required.");
         if (!await CategoryValid(subjectId, body.CategoryId)) return this.ProblemWithCode(ApiErrors.InvalidReference, "Unknown category for this subject.");
+        // Die Ausführ-Sichtbarkeit ist ein Owner-Recht (kontrollierte Weitergabe) – ein Write-Grantee darf sie nicht umschalten.
+        if (body.ExecutePublic != exercise.ExecutePublic && EnsureCanAdminister(exercise) is { } adminForbidden) return adminForbidden;
         var config = body.Config ?? new TConfig();
         if (await ValidateConfigAsync(subjectId, config) is { } updateErr) return this.ProblemWithCode(ApiErrors.ValidationError, updateErr);
         NormalizeConfig(config);
 
+        exercise.ExecutePublic = body.ExecutePublic;
         exercise.Title = body.Title.Trim();
         exercise.Description = string.IsNullOrWhiteSpace(body.Description) ? null : body.Description.Trim();
         exercise.OrderIndex = body.OrderIndex;
@@ -272,7 +336,7 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db, Exerc
     {
         var exercise = await FindAsync(subjectId, chapterId, exerciseId);
         if (exercise is null) return NotFound();
-        if (EnsureCanModify(exercise) is { } forbidden) return forbidden;
+        if (EnsureCanAdminister(exercise) is { } forbidden) return forbidden;
         // Verwendete Übungen schützen: der FK PlanPosition→Exercise ist Restrict (sonst 500 statt klarer Fehler).
         if (await db.PlanPositions.AnyAsync(p => p.ExerciseId == exerciseId)
             || await db.KlassenarbeitExercises.AnyAsync(x => x.ExerciseId == exerciseId))

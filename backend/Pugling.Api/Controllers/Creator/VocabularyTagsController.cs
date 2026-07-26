@@ -22,17 +22,12 @@ namespace Pugling.Api.Controllers.Creator;
 [Authorize(Roles = Roles.Creator)]
 public class VocabularyTagsController(PuglingDbContext db) : ControllerBase
 {
-    /// <summary>Tag inkl. Anzahl verknüpfter Vokabeln.</summary>
-    public record VocabTagResponse(int Id, string Name, string? Color, int VocabCount, DateTime CreatedAt);
-
     /// <summary>Alle Vokabel-Tags (alphabetisch), jeweils mit Anzahl verknüpfter Vokabeln.</summary>
     [HttpGet("tags")]
     public async Task<IEnumerable<VocabTagResponse>> List() =>
         await db.VocabTags.AsNoTracking().OrderBy(t => t.Name)
             .Select(t => new VocabTagResponse(t.Id, t.Name, t.Color, t.Links.Count, t.CreatedAt))
             .ToListAsync();
-
-    public record CreateVocabTagDto(string Name, string? Color);
 
     /// <summary>Legt einen Tag an (Name global eindeutig). Existiert er bereits, wird der bestehende zurückgegeben (idempotent).</summary>
     [HttpPost("tags")]
@@ -53,8 +48,6 @@ public class VocabularyTagsController(PuglingDbContext db) : ControllerBase
         await db.SaveChangesAsync();
         return CreatedAtAction(nameof(List), new VocabTagResponse(tag.Id, tag.Name, tag.Color, 0, tag.CreatedAt));
     }
-
-    public record UpdateVocabTagDto(string? Name, string? Color);
 
     /// <summary>Benennt einen Tag um oder ändert seine Farbe.</summary>
     [HttpPatch("tags/{id:int}")]
@@ -92,8 +85,6 @@ public class VocabularyTagsController(PuglingDbContext db) : ControllerBase
         await db.SaveChangesAsync();
         return NoContent();
     }
-
-    public record TagVocabDto(List<string> Tags);
 
     /// <summary>Verknüpft eine Vokabel mit einem oder mehreren Tags (create-if-missing; bereits verknüpfte werden übersprungen). Liefert die aktuellen Tags der Vokabel.</summary>
     [HttpPost("{vocabularyId:int}/tags")]

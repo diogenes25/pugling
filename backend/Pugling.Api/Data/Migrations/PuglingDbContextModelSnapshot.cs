@@ -415,6 +415,9 @@ namespace Pugling.Api.Data.Migrations
                     b.Property<string>("Description")
                         .HasColumnType("TEXT");
 
+                    b.Property<bool>("ExecutePublic")
+                        .HasColumnType("INTEGER");
+
                     b.Property<int?>("GradeMax")
                         .HasColumnType("INTEGER");
 
@@ -477,6 +480,38 @@ namespace Pugling.Api.Data.Migrations
                         .IsUnique();
 
                     b.ToTable("ExerciseCategories");
+                });
+
+            modelBuilder.Entity("Pugling.Api.Models.ExerciseGrant", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("CreatorId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("ExerciseId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("GrantedByFatherId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Permission")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatorId");
+
+                    b.HasIndex("ExerciseId", "CreatorId", "Permission")
+                        .IsUnique();
+
+                    b.ToTable("ExerciseGrants");
                 });
 
             modelBuilder.Entity("Pugling.Api.Models.ExerciseItem", b =>
@@ -548,6 +583,9 @@ namespace Pugling.Api.Data.Migrations
 
                     b.Property<string>("Email")
                         .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsAdmin")
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -1954,6 +1992,25 @@ namespace Pugling.Api.Data.Migrations
                     b.Navigation("Subject");
                 });
 
+            modelBuilder.Entity("Pugling.Api.Models.ExerciseGrant", b =>
+                {
+                    b.HasOne("Pugling.Api.Models.Father", "Creator")
+                        .WithMany()
+                        .HasForeignKey("CreatorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Pugling.Api.Models.Exercise", "Exercise")
+                        .WithMany("Grants")
+                        .HasForeignKey("ExerciseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Creator");
+
+                    b.Navigation("Exercise");
+                });
+
             modelBuilder.Entity("Pugling.Api.Models.ExerciseItem", b =>
                 {
                     b.HasOne("Pugling.Api.Models.Exercise", "Exercise")
@@ -2451,6 +2508,11 @@ namespace Pugling.Api.Data.Migrations
                     b.Navigation("SupervisorLinks");
 
                     b.Navigation("Textbooks");
+                });
+
+            modelBuilder.Entity("Pugling.Api.Models.Exercise", b =>
+                {
+                    b.Navigation("Grants");
                 });
 
             modelBuilder.Entity("Pugling.Api.Models.Father", b =>

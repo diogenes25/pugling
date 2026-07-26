@@ -6,7 +6,7 @@ namespace Pugling.Api.Services.Shared;
 
 /// <summary>
 /// Zentrale Lesequelle für den Kontostand eines Kindes je Währung. Der Saldo ist keine Spalte, sondern
-/// stets die Summe der Punkte-Buchungen mit den zur Währung gehörenden <see cref="Models.PointKind"/>s
+/// stets die Summe der Punkte-Buchungen mit den zur Währung gehörenden <see cref="PointKind"/>s
 /// (siehe <see cref="PointKindCurrency"/>). Bündelt die vorher an mehreren Stellen duplizierte
 /// <c>Where(...).SumAsync(...)</c>-Query an einer Stelle.
 /// </summary>

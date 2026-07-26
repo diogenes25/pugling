@@ -22,25 +22,8 @@ public class ChildLearnProgressService(PuglingDbContext db, ExerciseTypeRegistry
     /// <summary>Ab welcher Beherrschung (Prozent) ein Item als „schwach" gilt – geteilt mit der flachen Sicht.</summary>
     private const int WeakBelowPercent = ItemProgress.WeakBelowPercent;
 
-    /// <summary>Aggregierter Lernstand über eine Menge Vokabel-Items (auf jeder Ebene identisch aufgebaut).</summary>
-    public record MasteryRollup(
-        int TotalItems, int IntroducedItems, int MasteredItems, int WeakItems,
-        int AvgMasteryPercent, int SeenCount, int CorrectCount, int CorrectPercent, DateTime? LastActivityAt);
-
-    /// <summary>Fortschritt eines Fachs. <paramref name="Active"/> = enthält ≥1 aktuell (über aktiven Plan) zugewiesene Übung.</summary>
-    public record SubjectProgressResponse(int SubjectId, string Name, int ChapterCount, int ExerciseCount, bool Active, MasteryRollup Progress);
-
-    /// <summary>Fortschritt eines Kapitels. <paramref name="Active"/> = enthält ≥1 aktuell zugewiesene Übung.</summary>
-    public record ChapterProgressResponse(int ChapterId, string Name, int OrderIndex, int ExerciseCount, bool Active, MasteryRollup Progress);
-
-    /// <summary>Fortschritt einer einzelnen Vokabelübung. <paramref name="Active"/> = aktuell über einen aktiven Plan zugewiesen.</summary>
-    public record ExerciseProgressResponse(int ExerciseId, string Title, int OrderIndex, bool Active, MasteryRollup Progress);
-
-    /// <summary>Item-Lernstand des Kindes (Front/Rückseite live aus dem Store); Form wie in der flachen Sicht.</summary>
-    public record ItemProgressResponse(int ItemId, int ExerciseId, int VocabularyId, string Front, string Back,
-        int Box, int MaxBox, int MasteryPercent, int SeenCount, int CorrectCount,
-        DateOnly? IntroducedAt, DateTime? LastAnswerAt, bool? LastCorrect,
-        [property: System.Text.Json.Serialization.JsonPropertyName("vocabulary")] string Vocabulary);
+    // MasteryRollup/Subject-/Chapter-/ExerciseProgressResponse/ItemProgressResponse leben im
+    // Vertrags-Projekt (Pugling.Contracts.Student); das Item-DTO teilen sich flache und hierarchische Sicht.
 
     // Eine für die Sicht relevante Vokabelübung (zugewiesen und/oder mit Fortschritt) samt Katalog-Koordinaten.
     // Active = von mindestens einem AKTIVEN Plan des Kindes referenziert.

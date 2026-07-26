@@ -23,48 +23,6 @@ public class ShopController(PuglingDbContext db, ShopService shop) : ControllerB
 {
     // ─── DTOs ────────────────────────────────────────────────────────────────
 
-    public record ShopArticleDto(int Id, string ArticleNumber, string Title, string Description,
-        UnitType UnitType, ActionType ActionType, DateTime CreatedAt);
-
-    public record ShopListingDto(int Id, int ShopArticleId, string ArticleNumber, string ArticleTitle,
-        string Title, string Description, int CoinPrice, int GemPrice, int UnitsPerPurchase,
-        bool Active, int CurrentStock, int MaxStock, ShopRefillKind RefillKind,
-        DateTime? RefillAtUtc, DayOfWeek? RefillDayOfWeek, DateTime? LastRefilledAtUtc, DateTime CreatedAt);
-
-    public record ShopPurchaseDto(int Id, int ChildId, int? ShopListingId, string ArticleNumber,
-        string Title, string Description, int CoinPrice, int GemPrice, int UnitsPerPurchase,
-        ShopPurchaseStatus Status, DateTime PurchasedAt, DateTime? ClosedAt)
-    {
-        /// <summary>Darf der Vater diesen Kauf jetzt stornieren und erstatten?</summary>
-        public bool CanCancel { get; init; }
-    }
-
-    public record ActivationRequestDto(int Id, int ChildId, int? ShopArticleId, string ArticleTitle,
-        UnitType UnitType, ActionType ActionType, int RequestedQuantity,
-        ActivationRequestStatus Status, DateTime RequestedAt, DateTime? ClosedAt)
-    {
-        /// <summary>Darf der Vater diese Anfrage jetzt genehmigen?</summary>
-        public bool CanApprove { get; init; }
-        /// <summary>Darf der Vater diese Anfrage jetzt ablehnen?</summary>
-        public bool CanReject { get; init; }
-    }
-
-    public record CreateShopArticleDto(string ArticleNumber, string Title, string? Description,
-        UnitType UnitType, ActionType ActionType);
-
-    public record UpdateShopArticleDto(string? ArticleNumber, string? Title, string? Description,
-        UnitType? UnitType, ActionType? ActionType);
-
-    public record CreateShopListingDto(string? Title, string? Description,
-        int CoinPrice, int GemPrice, int UnitsPerPurchase, int CurrentStock, int MaxStock,
-        ShopRefillKind RefillKind = ShopRefillKind.None,
-        DateTime? RefillAtUtc = null, DayOfWeek? RefillDayOfWeek = null);
-
-    public record UpdateShopListingDto(string? Title, string? Description,
-        int? CoinPrice, int? GemPrice, int? UnitsPerPurchase, bool? Active,
-        int? CurrentStock, int? MaxStock, ShopRefillKind? RefillKind,
-        DateTime? RefillAtUtc, DayOfWeek? RefillDayOfWeek);
-
     // ─── Mapping ─────────────────────────────────────────────────────────────
 
     private static ShopArticleDto MapArticle(ShopArticle a) =>
@@ -360,9 +318,6 @@ public class ShopController(PuglingDbContext db, ShopService shop) : ControllerB
                 i.ShopArticle!.UnitType, i.ShopArticle!.ActionType, i.Quantity));
         return await query.ToPagedListAsync(Response, skip, take);
     }
-
-    public record InventoryItemDto(int ShopArticleId, string ArticleNumber, string Title,
-        UnitType UnitType, ActionType ActionType, int Quantity);
 
     // ─── Kaufhistorie ────────────────────────────────────────────────────────
 

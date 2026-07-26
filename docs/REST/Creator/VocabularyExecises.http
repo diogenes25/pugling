@@ -1,0 +1,108 @@
+@fatherId = 6
+@subjectId = 1
+@chapterId = 1
+@authToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3ODQ4ODcyMTAsImh0dHA6Ly9zY2hlbWFzLnhtbHNvYXAub3JnL3dzLzIwMDUvMDUvaWRlbnRpdHkvY2xhaW1zL25hbWVpZGVudGlmaWVyIjoiOSIsImFpZCI6IjkiLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1lIjoiVGphcmsiLCJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL3dzLzIwMDgvMDYvaWRlbnRpdHkvY2xhaW1zL3JvbGUiOlsiQ3JlYXRvciIsIlN1cGVydmlzb3IiXSwiZmlkIjoiNiIsImlhdCI6MTc4NDg0NDAxMCwibmJmIjoxNzg0ODQ0MDEwfQ.mGVhZdKm7CUShF7picUTc0uBBuYv2-oQnZwIUuXPGaA
+
+### Login als Vater (hält Creator+Supervisor)
+# @name login
+POST {{baseUrl}}/auth/father
+Content-Type: application/json
+
+{
+  "fatherId": {{fatherId}},
+  "pin": "{{fatherPin}}"
+}
+
+### Token aus der Login-Antwort ziehen
+# @authToken = {{login.response.body.token}}
+
+### GetSubject liefert das Fach mit allen Kapiteln und Übungen (Vokabeln, Lückentexte, Tests)
+GET {{baseUrl}}/creator/subjects
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+### Subject = English
+GET {{baseUrl}}/creator/subjects/{{subjectId}}
+Authorization: Bearer {{authToken}}
+
+### Chapters from English
+GET {{baseUrl}}/creator/subjects/{{subjectId}}/chapters
+Authorization: Bearer {{authToken}}
+
+
+### Chapter-Details
+GET {{baseUrl}}/creator/subjects/{{subjectId}}/chapters/{{chapterId}}
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+### Get Vocabulary-Exercises im Kapitel
+GET {{baseUrl}}/creator/subjects/{{subjectId}}/chapters/{{chapterId}}/vocabulary
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+@existingExerciseId = 20
+
+### Get Vocabulary-Exercise im Kapitel
+GET {{baseUrl}}/creator/subjects/{{subjectId}}/chapters/{{chapterId}}/vocabulary/{{existingExerciseId}}
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+
+### Create Vocabulary-Exercise im Kapitel
+    # @name createVocabularyExercise    
+POST {{baseUrl}}/creator/subjects/{{subjectId}}/chapters/{{chapterId}}/vocabulary
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "title": "Einfach Vokabeln",
+  "orderIndex": 1,
+  "rewardPoints": 10,
+  "config": {
+    "direction": "front-to-back",
+    "sourceLang": "en",
+    "targetLang": "de"
+  }
+}
+
+###
+
+@createdExerciseId = {{createVocabularyExercise.response.body.id}}
+
+### Create Vocabulary-Exercise im Kapitel
+# @name GetVocabularyExercise
+GET {{baseUrl}}/creator/subjects/{{subjectId}}/chapters/{{chapterId}}/vocabulary
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+
+### Get Vocabulary-Exercise im Kapitel
+# @name getVocabulary-Exercise
+GET {{baseUrl}}/creator/subjects/{{subjectId}}/chapters/{{chapterId}}/vocabulary/{{createdExerciseId}}
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+###
+
+### Add Vocabulary-Items to the Exercise
+# @name addVocabularyItems
+POST {{baseUrl}}/creator/subjects/{{subjectId}}/chapters/{{chapterId}}/vocabulary/{{createdExerciseId}}/items
+Authorization: Bearer {{authToken}}
+Content-Type: application/json  
+
+{
+  "vocabularyId": 825
+}
+
+### Add Vocabulary-Items to the Exercise
+# @name getVocabularyItems
+GET {{baseUrl}}/creator/subjects/{{subjectId}}/chapters/{{chapterId}}/vocabulary/{{createdExerciseId}}/items
+Authorization: Bearer {{authToken}}
+
+###
+603
+826
+537
+670
+484
+420
+487

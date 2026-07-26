@@ -11,7 +11,7 @@ namespace Pugling.Api.Controllers.Student;
 /// Plan-Discovery für den angemeldeten Sohn: findet hier seinen einen aktuell spielbaren Lehrplan,
 /// ohne die planId raten zu müssen – der Einstieg vor Overview/Practice/Test. Namensraum-treuer
 /// Alias zur <see cref="StudyPlansController"/>-Liste (die den Student-Fall zwar mitliest, aber
-/// unter <c>supervisor/</c> liegt); gibt dieselbe <see cref="StudyPlansController.PlanResponse"/> zurück.
+/// unter <c>supervisor/</c> liegt); gibt dieselbe <see cref="PlanResponse"/> zurück.
 /// </summary>
 [ApiController]
 [ApiVersion("1.0")]
@@ -29,7 +29,7 @@ public class StudentPlansController(PuglingDbContext db) : ControllerBase
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult<IEnumerable<StudyPlansController.PlanResponse>>> List()
+    public async Task<ActionResult<IEnumerable<PlanResponse>>> List()
     {
         var cid = User.ChildId();
         if (cid is null) return Forbid();

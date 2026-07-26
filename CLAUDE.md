@@ -130,6 +130,17 @@ Rollen im SPA: `/` Produktseite, `/vater` Web-Admin (inkl. `/vater/wizard` Lehrp
 - **Doku auf Deutsch.** Öffentliche Typen/Members tragen `/// <summary>` (fließt in Swagger).
   Kommentare erklären das *Warum* (Geschäftsregel, Anti-Cheat), nicht das Was.
 - **Controller dünn**, Logik in Services. DTOs als `record` projizieren – nie EF-Entities zurückgeben.
+- **Vertrag im eigenen Projekt** ([backend/Pugling.Contracts/](backend/Pugling.Contracts/)): *alle* Request-/
+  Response-`record`s und die geteilten Basistypen (Enums wie `PointKind`/`GoalCadence`, `StageStep`,
+  `NounInfo`, die Übungs-Configs) liegen dort – **nicht** mehr als verschachtelte Typen im Controller.
+  Aufteilung: `Common/` + `Exercise/` = Wurzel-Namespace `Pugling.Contracts` (ebenen-neutral), dazu je Ebene
+  ein Ordner **und** Namespace `Pugling.Contracts.{Auth,Creator,Supervisor,Student,Shared}`; alle sechs sind
+  per csproj-`<Using>` projektweit sichtbar. Das Projekt ist ein **Blatt**: keine Referenz auf `Pugling.Api`,
+  kein EF, keine Entities – damit ein Client es pur verwenden kann. Folgerichtig bleibt Entity-Wissen in der
+  API (Mapping-Klasse statt Factory am Record, siehe `ExerciseBriefMapping`), und Service-Ergebnisse, die
+  `ApiError` oder Entities tragen, bleiben ebenfalls dort. Neues DTO? Ins Vertrags-Projekt, mit `/// <summary>`.
+  Namen sind **global eindeutig** zu halten (der OpenAPI-Generator schlüsselt Schemas über den einfachen
+  Typnamen; gleichnamige Records verschmelzen sonst still zu einem Schema).
 - **Guard Clauses zuerst** (früh `return NotFound()/Forbid()` bzw. `Problem(statusCode:…, detail:…)`),
   Happy Path un-eingerückt.
 - **API-Versionierung**: Alle Routen unter `api/v1/…` – das Versionssegment steckt zentral in

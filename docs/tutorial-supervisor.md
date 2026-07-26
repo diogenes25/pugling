@@ -127,6 +127,10 @@ Eine `PlanPosition` verweist auf **eine Katalog-Übung** (per `exerciseId`) und 
 ihre Stufe, ihre Punkte und ihren Leitner-Zustand. Der Inhalt bleibt in der Übungs-Config; die Position ist
 die Steuer-Schicht darüber.
 
+> **Zuweisbarkeit (Execute-Recht):** Katalog-Übungen sind standardmäßig für alle zuweisbar. Hat ein Owner eine
+> Übung auf `executePublic: false` gestellt, darf sie nur zuweisen, wer ein Owner-/Write-/Execute-Recht hält –
+> sonst antwortet das Anhängen mit `403 exercise_not_executable`. Bereits laufende Pläne bleiben unberührt.
+
 Der Seed hat Übung `1` = **„Begrüßungen"** (`Vocabulary`). Ein reichhaltig konfigurierter Request:
 
 ```http

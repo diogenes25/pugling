@@ -6,16 +6,7 @@ namespace Pugling.Api.Models;
 // Die IDs von Father/Child bleiben unangetastet (jede Fach-FK hängt daran); der Account sitzt darüber.
 // Siehe docs/grundprinzip.md.
 
-/// <summary>Die drei fachlichen Ebenen als Rolle – unabhängig vom Login.</summary>
-public enum ProfileRole
-{
-    /// <summary>Erstellt Inhalte/Übungen (heute: an ein <see cref="Father"/>-Profil gebunden).</summary>
-    Creator = 0,
-    /// <summary>Steuert: Lehrpläne, Ziele/Punkte, Shop (heute: <see cref="Father"/>-Profil).</summary>
-    Supervisor = 1,
-    /// <summary>Lernt, verdient, kauft/aktiviert (heute: <see cref="Child"/>-Profil).</summary>
-    Student = 2,
-}
+// ProfileRole lebt im Vertrags-Projekt (Pugling.Contracts).
 
 /// <summary>
 /// Login-Konto: hält die Zugangsdaten (PIN-Hash) einer Person. Über <see cref="Profiles"/> trägt es

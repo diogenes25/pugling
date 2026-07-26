@@ -22,16 +22,6 @@ namespace Pugling.Api.Controllers.Creator;
 public class ExerciseCatalogController(PuglingDbContext db) : ControllerBase
 {
     /// <summary>
-    /// Schlanke Trefferzeile der Übungssuche (kindneutraler Katalog). <c>AuthorFatherId</c>/<c>AuthorName</c> tragen die
-    /// Attribution der geteilten Bibliothek (<c>null</c> = geseedete System-Übung); <c>IsOwn</c> = der anfragende Vater
-    /// darf die Übung ändern/löschen.
-    /// </summary>
-    public record ExerciseSummary(int Id, int ChapterId, int SubjectId, string Type, string Title,
-        int? GradeMin, int? GradeMax, SchoolTypes SchoolTypes, string? Source, int? CategoryId, string? CategoryName,
-        int? AuthorFatherId, string? AuthorName, bool IsOwn, string? Description,
-        bool DefaultUseLeitner, bool DefaultRequireTypedTest);
-
-    /// <summary>
     /// Sucht Übungen über die Metadaten. Alle Parameter sind optional und werden UND-verknüpft.
     /// Nullbare Grenzen/„None"-Schulart bedeuten „passt immer" und werden nicht ausgeschlossen.
     /// </summary>
@@ -56,12 +46,14 @@ public class ExerciseCatalogController(PuglingDbContext db) : ControllerBase
         [FromQuery] int skip = 0, [FromQuery] int take = PagingExtensions.DefaultTake)
     {
         var fid = User.FatherId();
+        var isAdmin = User.IsAdmin();
         var query = db.Exercises.AsNoTracking().AsQueryable();
 
-        // „Nur meine": zeigt dem Vater ausschließlich seine eigenen Übungen (Verwaltung statt Entdeckung).
+        // „Nur meine": Übungen, die der Creator ändern darf (Owner- oder Write-Grant) – Verwaltung statt Entdeckung.
         // Ohne bekannten fid bewusst leere Menge (fail-closed) statt aller autorlosen System-Übungen.
         if (mineOnly == true)
-            query = query.Where(e => fid != null && e.AuthorFatherId == fid);
+            query = query.Where(e => fid != null && e.Grants.Any(g => g.CreatorId == fid
+                && (g.Permission == GrantPermission.Owner || g.Permission == GrantPermission.Write)));
 
         if (subjectId is int sid)
             query = query.Where(e => e.Chapter!.SubjectId == sid);
@@ -93,7 +85,12 @@ public class ExerciseCatalogController(PuglingDbContext db) : ControllerBase
         return await ApplySort(query, SortingExtensions.ParseSort(sort, dir))
             .Select(e => new ExerciseSummary(e.Id, e.ChapterId, e.Chapter!.SubjectId, e.Type, e.Title,
                 e.GradeMin, e.GradeMax, e.SchoolTypes, e.Source, e.CategoryId, e.Category!.Name,
-                e.AuthorFatherId, e.Author!.Name, fid != null && e.AuthorFatherId == fid, e.Description,
+                e.AuthorFatherId, e.Author!.Name,
+                // IsOwn = darf ändern (Owner/Write-Grant); IsOwner = darf verwalten (Owner-Grant). Admin sieht beides als true.
+                isAdmin || (fid != null && e.Grants.Any(g => g.CreatorId == fid
+                    && (g.Permission == GrantPermission.Owner || g.Permission == GrantPermission.Write))),
+                isAdmin || (fid != null && e.Grants.Any(g => g.CreatorId == fid && g.Permission == GrantPermission.Owner)),
+                e.ExecutePublic, e.Description,
                 e.DefaultUseLeitner, e.DefaultRequireTypedTest))
             .ToPagedListAsync(Response, skip, take);
     }
@@ -123,17 +120,6 @@ public class ExerciseCatalogController(PuglingDbContext db) : ControllerBase
 
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
-    /// <summary>
-    /// Vollständige, typ-übergreifende Sicht auf eine Übung inklusive roher Config und aller Metadaten –
-    /// die Grundlage zum Bearbeiten (Config in den typ-spezifischen Editor laden; gespeichert wird über
-    /// den per-Typ-PUT <c>.../chapters/{}/&lt;typ&gt;/{id}</c>).
-    /// </summary>
-    public record ExerciseDetail(int Id, int ChapterId, string ChapterName, int SubjectId, string SubjectName,
-        string Type, string Title, int OrderIndex, int RewardPoints, int? GradeMin, int? GradeMax,
-        SchoolTypes SchoolTypes, string? Source, int? CategoryId, string? CategoryName,
-        SuggestedBonus? SuggestedBonus, int? DefaultStage, int? DefaultItemCount,
-        int? AuthorFatherId, string? AuthorName, bool IsOwn, JsonElement Config, string? Description,
-        bool DefaultUseLeitner, bool DefaultRequireTypedTest);
 
     /// <summary>Eine einzelne Übung typ-übergreifend per Id (mit Config + Metadaten).</summary>
     [HttpGet("{id:int}")]
@@ -144,22 +130,22 @@ public class ExerciseCatalogController(PuglingDbContext db) : ControllerBase
             .Include(x => x.Chapter!).ThenInclude(c => c.Subject)
             .Include(x => x.Category)
             .Include(x => x.Author)
+            .Include(x => x.Grants)
             .FirstOrDefaultAsync(x => x.Id == id);
         if (e is null) return NotFound();
 
+        var fid = User.FatherId();
+        var isAdmin = User.IsAdmin();
         return new ExerciseDetail(e.Id, e.ChapterId, e.Chapter?.Name ?? "", e.Chapter?.SubjectId ?? 0,
             e.Chapter?.Subject?.Name ?? "", e.Type.ToString(), e.Title, e.OrderIndex, e.RewardPoints,
             e.GradeMin, e.GradeMax, e.SchoolTypes, e.Source, e.CategoryId, e.Category?.Name,
             e.SuggestedBonus, e.DefaultStage, e.DefaultItemCount,
-            e.AuthorFatherId, e.Author?.Name, User.Owns(e),
+            e.AuthorFatherId, e.Author?.Name,
+            ExercisePermissionService.CanWrite(e.Grants, fid, isAdmin), ExercisePermissionService.CanAdminister(e.Grants, fid, isAdmin),
+            e.ExecutePublic, e.Grants.Count,
             JsonSerializer.Deserialize<JsonElement>(string.IsNullOrWhiteSpace(e.ConfigJson) ? "{}" : e.ConfigJson, JsonOptions),
             e.Description, e.DefaultUseLeitner, e.DefaultRequireTypedTest);
     }
-
-    public record PlanUsage(int PlanId, string PlanTitle, int ChildId, string ChildName);
-    public record ClassTestUsage(int Id, string Title, int ChildId, string ChildName);
-    /// <summary>Wo eine Übung verwendet wird (nur Ressourcen der eigenen Kinder).</summary>
-    public record UsageResponse(IReadOnlyList<PlanUsage> Plans, IReadOnlyList<ClassTestUsage> ClassTests);
 
     /// <summary>
     /// In welchen Lehrplänen und Klassenarbeiten (welcher eigenen Kinder) eine Übung steckt.

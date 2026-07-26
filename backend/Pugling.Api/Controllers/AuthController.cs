@@ -18,10 +18,6 @@ namespace Pugling.Api.Controllers;
 public class AuthController(PuglingDbContext db, TokenService tokens, AccountService accounts,
     Services.Shared.PositionProgressService progress, Services.Shared.ObjectiveRewardService objectiveRewards) : ControllerBase
 {
-    public record LoginResponse(string Token, string Role, int Id, string Name, DateTime ExpiresAt);
-
-    public record FatherLoginDto(int FatherId, string Pin);
-
     /// <summary>Vater-Login per Id + PIN. Löst das Konto auf und stellt ein Mehrrollen-Token aus.</summary>
     [HttpPost("father")]
     [AllowAnonymous]
@@ -34,11 +30,9 @@ public class AuthController(PuglingDbContext db, TokenService tokens, AccountSer
         if (father is null || !PinHasher.Verify(dto.Pin, father.Pin)) return this.ProblemWithCode(ApiErrors.InvalidCredentials, "Invalid father ID or PIN.");
 
         var account = await accounts.EnsureForFatherAsync(father);
-        var (token, expires) = tokens.IssueForAccount(account, account.Profiles);
+        var (token, expires) = tokens.IssueForAccount(account, account.Profiles, isAdmin: father.IsAdmin);
         return new LoginResponse(token, Roles.Supervisor, father.Id, father.Name, expires);
     }
-
-    public record ChildLoginDto(int ChildId, string Pin);
 
     /// <summary>Sohn-Login per Id + PIN. Löst das Konto auf und stellt ein Rollen-Token aus.</summary>
     [HttpPost("child")]
@@ -63,8 +57,6 @@ public class AuthController(PuglingDbContext db, TokenService tokens, AccountSer
         return new LoginResponse(token, Roles.Student, child.Id, child.Name, expires);
     }
 
-    public record AccountLoginDto(int AccountId, string Pin);
-
     /// <summary>
     /// Kanonischer, konto-zentrischer Login: ein Token, das <b>alle</b> Rollen des Kontos trägt
     /// (z. B. Creator + Supervisor). <c>role</c> in der Antwort ist die primäre Ebene (Supervisor bzw. Student) fürs UI-Routing.
@@ -79,8 +71,11 @@ public class AuthController(PuglingDbContext db, TokenService tokens, AccountSer
         var account = await accounts.FindWithProfilesAsync(dto.AccountId);
         if (account is null || !PinHasher.Verify(dto.Pin, account.PinHash)) return this.ProblemWithCode(ApiErrors.InvalidCredentials, "Invalid account ID or PIN.");
 
-        var (token, expires) = tokens.IssueForAccount(account, account.Profiles);
-        var primaryRole = account.Profiles.Any(p => p.Role != Models.ProfileRole.Student) ? Roles.Supervisor : Roles.Student;
+        // Break-Glass-Admin: gilt, wenn ein an das Konto gebundener Vater als Admin markiert ist.
+        var fatherIds = account.Profiles.Where(p => p.FatherId is not null).Select(p => p.FatherId!.Value).ToList();
+        var isAdmin = fatherIds.Count > 0 && await db.Fathers.AnyAsync(f => fatherIds.Contains(f.Id) && f.IsAdmin);
+        var (token, expires) = tokens.IssueForAccount(account, account.Profiles, isAdmin);
+        var primaryRole = account.Profiles.Any(p => p.Role != ProfileRole.Student) ? Roles.Supervisor : Roles.Student;
         return new LoginResponse(token, primaryRole, account.Id, account.DisplayName, expires);
     }
 

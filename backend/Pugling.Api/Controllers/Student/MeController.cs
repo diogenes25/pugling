@@ -23,35 +23,6 @@ namespace Pugling.Api.Controllers.Student;
 public class MeController(PuglingDbContext db, GamificationService gamification,
     WalletService wallet, ShopService shop, PositionProgressService progress) : ControllerBase
 {
-    /// <summary>Eine einzelne Punkte-Buchung (Gutschrift positiv, Abzug negativ) mit Kategorie.</summary>
-    public record PointsEntryResponse(int Id, int Amount, PointKind Kind, string Reason, DateTime CreatedAt);
-    /// <summary>Kontostand (Wallet) des Kindes je Währung. Die Buchungen liegen unter <c>points/entries</c>.</summary>
-    public record WalletResponse(int ChildId, int Coins, int Gems);
-
-    /// <summary>Skin-Zustand des Kindes: aktueller Gem-Stand, ausgerüsteter und freigeschaltete Skins.</summary>
-    public record SkinStateResponse(int Gems, string Selected, IReadOnlyList<string> Owned);
-
-    /// <summary>Ein kaufbares Angebot aus dem Familien-Shop aus Sohn-Sicht (Listing-Ebene).</summary>
-    public record ShopListingResponse(int Id, int ShopArticleId, string ArticleNumber, string ArticleTitle,
-        UnitType UnitType, ActionType ActionType, string Title, string Description,
-        int CoinPrice, int GemPrice, int UnitsPerPurchase, int CurrentStock, bool Affordable);
-    /// <summary>Ein Eintrag im aggregierten Sohn-Inventar: Artikel-Typ → Gesamtmenge.</summary>
-    public record MyInventoryItemResponse(int ShopArticleId, string ArticleNumber, string Title,
-        UnitType UnitType, ActionType ActionType, int Quantity);
-    /// <summary>Eigene Kaufbuchung im Sohn-Kassenbuch.</summary>
-    public record MyShopPurchaseResponse(int Id, int? ShopListingId, string ArticleNumber, string Title,
-        int CoinPrice, int GemPrice, int UnitsPerPurchase, ShopPurchaseStatus Status,
-        DateTime PurchasedAt, DateTime? ClosedAt);
-    /// <summary>Eigene Aktivierungsanfrage aus Sohn-Sicht.</summary>
-    public record MyActivationResponse(int Id, int? ShopArticleId, string ArticleTitle,
-        UnitType UnitType, ActionType ActionType, int RequestedQuantity,
-        ActivationRequestStatus Status, DateTime RequestedAt, DateTime? ClosedAt);
-    /// <summary>Shop-Sicht des Sohns: Wallet, kaufbare Angebote, aggregiertes Inventar und Kaufhistorie.</summary>
-    public record ShopViewResponse(int Coins, int Gems,
-        IReadOnlyList<ShopListingResponse> Available,
-        IReadOnlyList<MyInventoryItemResponse> Inventory,
-        IReadOnlyList<MyShopPurchaseResponse> Purchases);
-
     /// <summary>Eigener Kontostand (Münzen + Gems). Die einzelnen Buchungen liegen unter <c>points/entries</c>.</summary>
     [HttpGet("points")]
     [ProducesResponseType(StatusCodes.Status200OK)]
@@ -71,7 +42,7 @@ public class MeController(PuglingDbContext db, GamificationService gamification,
     [HttpGet("points/entries")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult<IReadOnlyList<PointsEntryResponse>>> PointsEntries(
+    public async Task<ActionResult<IReadOnlyList<MyPointsEntryResponse>>> PointsEntries(
         [FromQuery] int skip = 0, [FromQuery] int take = PagingExtensions.DefaultTake)
     {
         var cid = User.ChildId();
@@ -81,7 +52,7 @@ public class MeController(PuglingDbContext db, GamificationService gamification,
             .AsNoTracking()
             .Where(p => p.ChildId == cid)
             .OrderByDescending(p => p.CreatedAt).ThenByDescending(p => p.Id)
-            .Select(p => new PointsEntryResponse(p.Id, p.Amount, p.Kind, p.Reason, p.CreatedAt))
+            .Select(p => new MyPointsEntryResponse(p.Id, p.Amount, p.Kind, p.Reason, p.CreatedAt))
             .ToPagedListAsync(Response, skip, take);
     }
 
@@ -90,7 +61,7 @@ public class MeController(PuglingDbContext db, GamificationService gamification,
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<PointsEntryResponse>> PointsEntry(int entryId)
+    public async Task<ActionResult<MyPointsEntryResponse>> PointsEntry(int entryId)
     {
         var cid = User.ChildId();
         if (cid is null) return Forbid();
@@ -98,7 +69,7 @@ public class MeController(PuglingDbContext db, GamificationService gamification,
         var entry = await db.ChildPoints
             .AsNoTracking()
             .Where(p => p.Id == entryId && p.ChildId == cid)
-            .Select(p => new PointsEntryResponse(p.Id, p.Amount, p.Kind, p.Reason, p.CreatedAt))
+            .Select(p => new MyPointsEntryResponse(p.Id, p.Amount, p.Kind, p.Reason, p.CreatedAt))
             .FirstOrDefaultAsync();
 
         return entry is null ? NotFound() : entry;
@@ -111,7 +82,7 @@ public class MeController(PuglingDbContext db, GamificationService gamification,
     [Tags("Student – Missions")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult<IReadOnlyList<GamificationService.MissionStatus>>> Missions(
+    public async Task<ActionResult<IReadOnlyList<MissionStatus>>> Missions(
         [FromQuery] int skip = 0, [FromQuery] int take = PagingExtensions.DefaultTake)
     {
         var cid = User.ChildId();
@@ -128,7 +99,7 @@ public class MeController(PuglingDbContext db, GamificationService gamification,
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<GamificationService.MissionStatus>> Mission(int missionId)
+    public async Task<ActionResult<MissionStatus>> Mission(int missionId)
     {
         var cid = User.ChildId();
         if (cid is null) return Forbid();
@@ -143,7 +114,7 @@ public class MeController(PuglingDbContext db, GamificationService gamification,
     [Tags("Student – Achievements")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult<IReadOnlyList<GamificationService.AchievementStatus>>> Achievements(
+    public async Task<ActionResult<IReadOnlyList<AchievementStatus>>> Achievements(
         [FromQuery] int skip = 0, [FromQuery] int take = PagingExtensions.DefaultTake)
     {
         var cid = User.ChildId();
@@ -160,7 +131,7 @@ public class MeController(PuglingDbContext db, GamificationService gamification,
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<GamificationService.AchievementStatus>> Achievement(int achievementId)
+    public async Task<ActionResult<AchievementStatus>> Achievement(int achievementId)
     {
         var cid = User.ChildId();
         if (cid is null) return Forbid();
@@ -366,7 +337,6 @@ public class MeController(PuglingDbContext db, GamificationService gamification,
         };
     }
 
-    public record ActivateDto(int Quantity);
 
     /// <summary>Eigene Aktivierungsanfragen (neueste zuerst), optional nach Status gefiltert.</summary>
     [HttpGet("shop/activations")]

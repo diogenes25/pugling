@@ -22,14 +22,8 @@ namespace Pugling.Api.Controllers.Supervisor;
 [Produces("application/json")]
 [Authorize(Roles = Roles.Supervisor)]
 [ServiceFilter(typeof(PlanOwnershipFilter))]
-public class PlanPositionsController(PuglingDbContext db) : ControllerBase
+public class PlanPositionsController(PuglingDbContext db, ExercisePermissionService perms) : ControllerBase
 {
-    public record PositionResponse(int Id, int StudyPlanId, int ExerciseId, string ExerciseTitle,
-        string ExerciseType, int Order, int? Stage, int? ItemCount, ItemScope Scope, GoalCadence Cadence,
-        PracticeOrder OrderStrategy, int? GoalThreshold, bool RequireTypedTest, bool UseLeitner, int MaxBox,
-        List<int>? BoxIntervalDays, List<StageStep>? StageSchedule, int PointsGoalMet, int PenaltyCoins,
-        int NewContentPoints, int ComboThreshold, int ComboBonusPoints, int SpeedThresholdSeconds, int SpeedBonusPoints);
-
     private static PositionResponse Map(PlanPosition p) =>
         new(p.Id, p.StudyPlanId, p.ExerciseId, p.Exercise?.Title ?? "", p.Exercise?.Type.ToString() ?? "",
             p.Order, p.Stage, p.ItemCount, p.Scope, p.Cadence, p.OrderStrategy, p.GoalThreshold, p.RequireTypedTest,
@@ -60,18 +54,6 @@ public class PlanPositionsController(PuglingDbContext db) : ControllerBase
         return pos is null ? NotFound() : Map(pos);
     }
 
-    /// <summary>
-    /// Anlegen einer Position. Leere Override-Felder erben den Vorschlag der Übung (Hybrid-Prinzip):
-    /// <see cref="PlanPosition.Stage"/>/<see cref="PlanPosition.ItemCount"/> bleiben dann <c>null</c> und
-    /// werden erst beim Spielen aus <see cref="Exercise.DefaultStage"/>/<see cref="Exercise.DefaultItemCount"/>
-    /// aufgelöst; die Punkte-/Bonus-Felder werden aus <see cref="Exercise.SuggestedBonus"/> vorbelegt.
-    /// </summary>
-    public record CreatePositionDto(int ExerciseId, int? Order, int? Stage, int? ItemCount, ItemScope? Scope,
-        GoalCadence? Cadence, PracticeOrder? OrderStrategy, int? GoalThreshold, bool? RequireTypedTest,
-        bool? UseLeitner, int? MaxBox, List<int>? BoxIntervalDays, List<StageStep>? StageSchedule,
-        int? PointsGoalMet, int? PenaltyCoins, int? NewContentPoints, int? ComboThreshold, int? ComboBonusPoints,
-        int? SpeedThresholdSeconds, int? SpeedBonusPoints);
-
     /// <summary>Fügt dem Lehrplan eine Position auf eine Katalog-Übung hinzu.</summary>
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status201Created)]
@@ -80,6 +62,9 @@ public class PlanPositionsController(PuglingDbContext db) : ControllerBase
     {
         var exercise = await db.Exercises.FirstOrDefaultAsync(e => e.Id == dto.ExerciseId);
         if (exercise is null) return this.ProblemWithCode(ApiErrors.InvalidReference, $"Exercise {dto.ExerciseId} not found.");
+        // Execute-Gate: nicht öffentlich ausführbare Übungen darf nur zuweisen, wer ein Owner-/Write-/Execute-Recht hält.
+        if (!await perms.CanExecuteAsync(User, exercise))
+            return this.ProblemWithCode(ApiErrors.ExerciseNotExecutable, "This exercise is not publicly assignable; you need execute permission from its owner.");
 
         var order = dto.Order ?? ((await db.PlanPositions.Where(p => p.StudyPlanId == planId)
             .MaxAsync(p => (int?)p.Order)) ?? -1) + 1;
@@ -118,13 +103,6 @@ public class PlanPositionsController(PuglingDbContext db) : ControllerBase
         pos.Exercise = exercise;
         return CreatedAtAction(nameof(Get), new { planId, positionId = pos.Id }, Map(pos));
     }
-
-    /// <summary>Partielle Änderung der Overrides/Ziele/Punkte. Die referenzierte Übung ist unveränderlich (Fortschritts-Indizes).</summary>
-    public record UpdatePositionDto(int? Order, int? Stage, int? ItemCount, ItemScope? Scope,
-        GoalCadence? Cadence, PracticeOrder? OrderStrategy, int? GoalThreshold, bool? RequireTypedTest,
-        bool? UseLeitner, int? MaxBox, List<int>? BoxIntervalDays, List<StageStep>? StageSchedule,
-        int? PointsGoalMet, int? PenaltyCoins, int? NewContentPoints, int? ComboThreshold, int? ComboBonusPoints,
-        int? SpeedThresholdSeconds, int? SpeedBonusPoints);
 
     /// <summary>Ändert eine Position (partiell). Setzt nur die angegebenen Felder.</summary>
     [HttpPatch("{positionId:int}")]

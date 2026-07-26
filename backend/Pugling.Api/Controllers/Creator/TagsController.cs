@@ -20,10 +20,6 @@ namespace Pugling.Api.Controllers.Creator;
 [Authorize]
 public class TagsController(PuglingDbContext db, AuthAccess access) : ControllerBase
 {
-    /// <summary>Tag in der Antwort inkl. Anzahl markierter Übungen und Vokabeln.</summary>
-    public record TagResponse(int Id, int ChildId, string Name, string? Color, TaggedBy CreatedBy,
-        int ExerciseCount, int VocabularyCount, DateTime CreatedAt);
-
     // Attribution „wer hat getaggt": Student → Sohn, jeder Erwachsene (Creator und/oder Supervisor) → Vater.
     // Nicht auf IsSupervisor allein prüfen – ein reiner Creator (künftige Lehrer-Konten) ist ebenfalls Erwachsener.
     private TaggedBy CurrentRole() => User.IsStudent() ? TaggedBy.Sohn : TaggedBy.Vater;
@@ -53,8 +49,6 @@ public class TagsController(PuglingDbContext db, AuthAccess access) : Controller
         return tags.Select(Map).ToList();
     }
 
-    public record CreateTagDto(int ChildId, string Name, string? Color);
-
     /// <summary>Legt einen Tag für ein Kind an (Name je Kind eindeutig).</summary>
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status201Created)]
@@ -80,8 +74,6 @@ public class TagsController(PuglingDbContext db, AuthAccess access) : Controller
         await db.SaveChangesAsync();
         return CreatedAtAction(nameof(GetExercises), new { tagId = tag.Id }, Map(tag));
     }
-
-    public record UpdateTagDto(string? Name, string? Color);
 
     /// <summary>Benennt einen Tag um oder ändert seine Farbe.</summary>
     [HttpPatch("{tagId:int}")]
@@ -119,8 +111,6 @@ public class TagsController(PuglingDbContext db, AuthAccess access) : Controller
         await db.SaveChangesAsync();
         return NoContent();
     }
-
-    public record TagExercisesDto(List<int> ExerciseIds);
 
     /// <summary>Markiert eine oder mehrere Katalog-Übungen mit diesem Tag (bereits markierte werden übersprungen).</summary>
     [HttpPost("{tagId:int}/exercises")]
@@ -179,7 +169,7 @@ public class TagsController(PuglingDbContext db, AuthAccess access) : Controller
             .OrderBy(e => e.Chapter!.SubjectId).ThenBy(e => e.ChapterId).ThenBy(e => e.OrderIndex).ThenBy(e => e.Id)
             .AsNoTracking()
             .ToPagedListAsync(Response, skip, take);
-        return exercises.Select(ExerciseBrief.From).ToList();
+        return exercises.Select(ExerciseBriefMapping.From).ToList();
     }
 
     /// <summary>Die Tags, mit denen eine bestimmte Übung im Kontext eines Kindes markiert ist.</summary>
@@ -196,11 +186,6 @@ public class TagsController(PuglingDbContext db, AuthAccess access) : Controller
     }
 
     // ---- Vokabeln taggen (kind-skopiert) -----------------------------------------------------------
-
-    /// <summary>Schlanke Vokabel-Sicht für die Tag-Zuordnung (ohne die kindneutralen Store-Details).</summary>
-    public record TaggedVocabularyDto(int Id, string Key, string Word, string Translation);
-
-    public record TagVocabularyDto(List<int> VocabularyIds);
 
     /// <summary>Markiert eine oder mehrere Store-Vokabeln mit diesem Tag (bereits markierte werden übersprungen).</summary>
     [HttpPost("{tagId:int}/vocabulary")]

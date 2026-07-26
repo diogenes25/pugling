@@ -21,7 +21,10 @@ public class TokenService(IConfiguration config)
     /// je Rolle einen <see cref="ClaimTypes.Role"/>-Claim (Creator/Supervisor/Student) sowie <c>fid</c>
     /// (Father der Creator/Supervisor-Profile) und <c>cid</c> (Child des Student-Profils), soweit vorhanden.
     /// </summary>
-    public (string token, DateTime expiresAt) IssueForAccount(Account account, IReadOnlyList<AccountProfile> profiles)
+    /// <param name="account">Das Login-Konto, für das das Token ausgestellt wird.</param>
+    /// <param name="profiles">Die Rollen-Profile des Kontos – je Profil ein Ebenen-Claim.</param>
+    /// <param name="isAdmin">Setzt zusätzlich den <see cref="Roles.Admin"/>-Claim (Break-Glass-Superuser, aus <see cref="Father.IsAdmin"/>).</param>
+    public (string token, DateTime expiresAt) IssueForAccount(Account account, IReadOnlyList<AccountProfile> profiles, bool isAdmin = false)
     {
         var claims = new List<Claim>
         {
@@ -34,6 +37,7 @@ public class TokenService(IConfiguration config)
         if (roles.Contains(ProfileRole.Creator)) claims.Add(new(ClaimTypes.Role, Roles.Creator));
         if (roles.Contains(ProfileRole.Supervisor)) claims.Add(new(ClaimTypes.Role, Roles.Supervisor));
         if (roles.Contains(ProfileRole.Student)) claims.Add(new(ClaimTypes.Role, Roles.Student));
+        if (isAdmin) claims.Add(new(ClaimTypes.Role, Roles.Admin));
 
         var fid = profiles.FirstOrDefault(p => p.FatherId is not null)?.FatherId;
         if (fid is not null) claims.Add(new("fid", fid.Value.ToString()));

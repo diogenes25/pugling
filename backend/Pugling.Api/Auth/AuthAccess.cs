@@ -15,6 +15,10 @@ public static class Roles
     public const string Creator = "Creator";
     public const string Supervisor = "Supervisor";
     public const string Student = "Student";
+    /// <summary>Plattform-Superuser (Break-Glass). Umgeht die RWX-Rechteprüfung auf Übungen – z. B. um
+    /// verwaiste (ownerlose) Übungen im Notfall zu bearbeiten. Wird nicht per API vergeben, sondern über
+    /// das Flag <see cref="Father.IsAdmin"/> (DB/Seed) gesetzt und beim Login als Rollen-Claim ausgestellt.</summary>
+    public const string Admin = "Admin";
 }
 
 /// <summary>Zugriff auf Identität aus dem JWT.</summary>
@@ -30,6 +34,8 @@ public static class ClaimsPrincipalExtensions
     public static bool IsCreator(this ClaimsPrincipal u) => u.IsInRole(Roles.Creator);
     public static bool IsSupervisor(this ClaimsPrincipal u) => u.IsInRole(Roles.Supervisor);
     public static bool IsStudent(this ClaimsPrincipal u) => u.IsInRole(Roles.Student);
+    /// <summary>Plattform-Superuser (Break-Glass, siehe <see cref="Roles.Admin"/>).</summary>
+    public static bool IsAdmin(this ClaimsPrincipal u) => u.IsInRole(Roles.Admin);
     public static int? SupervisorId(this ClaimsPrincipal u) => u.FatherId();
     public static int? CreatorId(this ClaimsPrincipal u) => u.FatherId();
     public static int? StudentId(this ClaimsPrincipal u) => u.ChildId();

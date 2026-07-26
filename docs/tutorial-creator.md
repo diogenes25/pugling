@@ -187,8 +187,10 @@ Beachtenswert:
   Referenzen wurden beim Speichern in **stabile Item-Zeilen** überführt. Die Vokabelpaare
   leben jetzt als eigene Ebene unter `…/items`, nicht mehr in der Config. Die Config trägt danach
   nur noch Einstellungen (Richtung, Sprachen).
-- `authorFatherId: 2` + `isOwn: true` — die Übung gehört Herrn Schmidt. Andere Creator sehen
-  sie in der Suche mit `isOwn: false` und dürfen sie **nicht** ändern (nur der Autor).
+- `authorFatherId: 2` + `isOwn: true` — Herr Schmidt ist Autor **und** (Auto-)Owner, darf also ändern.
+  `isOwn` = Schreibrecht (Owner **oder** Write-Grant), `isOwner` = Verwaltungsrecht (Owner: löschen, Rechte
+  vergeben, Sichtbarkeit umschalten). Andere Creator sehen die Übung mit `isOwn: false` und dürfen sie **nicht**
+  ändern, solange ihnen kein Recht erteilt wurde (siehe Abschnitt „Rechte teilen (RWX)").
 
 ---
 
@@ -326,9 +328,38 @@ sowie `authorFatherId`/`authorName` und `isOwn`. Alle Filter sind optional und *
 GET /api/v1/creator/exercises?subjectId=5&grade=9&schoolType=Gymnasium&type=Vocabulary&search=Zell
 ```
 
-Übungen mit `authorFatherId: 2` sind die von Herrn Schmidt (für ihn `isOwn: true`). Nur der
-Autor darf eine Übung ändern; alle anderen dürfen sie lesen und in ihre Pläne übernehmen
-(geteilte Bibliothek).
+Übungen mit `authorFatherId: 2` sind die von Herrn Schmidt (für ihn `isOwn: true`). Standardmäßig darf nur
+der Owner ändern; alle anderen dürfen lesen und in ihre Pläne übernehmen (geteilte Bibliothek). Über
+**RWX-Grants** kann der Owner das gezielt aufweichen (nächster Abschnitt).
+
+## Rechte teilen (RWX)
+
+Der Katalog bleibt für alle **lesbar** – Read ist bewusst kein Recht. Owner können aber **Write** (ändern)
+und **Execute** (in Lehrplan/Klassenarbeit aufnehmen) an einzelne Creator vergeben, und die Ausführbarkeit
+für alle abschalten:
+
+- Beim Anlegen/Ändern einer Übung `executePublic: false` setzen → nur Owner und Creator mit Execute-/Write-/
+  Owner-Grant dürfen sie noch **zuweisen** (bereits laufende Pläne bleiben unberührt). Default `true`.
+- Rechte verwalten (nur Owner) unter `api/v1/creator/exercises/{exerciseId}/grants`:
+
+```http
+GET    /api/v1/creator/exercises/42/grants
+POST   /api/v1/creator/exercises/42/grants     { "creatorId": 3, "permission": "Write" }
+DELETE /api/v1/creator/exercises/42/grants/3/Write
+```
+
+`permission` ist `Owner` | `Write` | `Execute` (Owner ⊃ Write ⊃ Execute). Der Anleger wird automatisch erster
+Owner; der **letzte Owner** kann nicht entfernt werden. Fehlt das Recht: `403 not_author` (ändern),
+`403 not_owner` (verwalten/löschen), `403 exercise_not_executable` (zuweisen).
+
+Die Detail-Response (`GET /creator/exercises/{id}`) trägt zusätzlich `grantCount` (Anzahl vergebener Rechte,
+inkl. Owner) – so ist erkennbar, dass eine Übung geteilt ist, ohne die volle Liste zu ziehen. Die
+**vollständige** Rechteliste gibt es nur owner-only über den `/grants`-Endpunkt.
+
+**Break-Glass-Admin:** Ein als `Father.IsAdmin` markierter Vater erhält beim Login den `Admin`-Claim und
+umgeht **alle** RWX-Prüfungen – gedacht, um im Notfall **verwaiste** (ownerlose) Übungen zu reparieren
+(z. B. nachdem der einzige Owner-Vater gelöscht wurde). Das Flag ist bewusst **nicht** per API setzbar,
+sondern nur über die DB/Seed (kein Selbst-Rechteausbau).
 
 Damit Übungen gut gefunden werden, beim Anlegen die Metadaten mitgeben (alle optional):
 `gradeMin`/`gradeMax`, `schoolTypes` (`[Flags]`, kommasepariert wie `"Realschule, Gymnasium"`,

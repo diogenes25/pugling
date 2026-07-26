@@ -32,7 +32,7 @@ public class ExercisePreviewController(PuglingDbContext db, ExercisePreviewServi
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<ExercisePreviewService.PreviewData>> Get(int id, [FromQuery] int? stage = null)
+    public async Task<ActionResult<PreviewData>> Get(int id, [FromQuery] int? stage = null)
     {
         var exercise = await db.Exercises.AsNoTracking().FirstOrDefaultAsync(e => e.Id == id);
         if (exercise is null) return NotFound();
@@ -43,9 +43,6 @@ public class ExercisePreviewController(PuglingDbContext db, ExercisePreviewServi
         return data;
     }
 
-    /// <summary>Body des Testmodus-Checks: die abgegebenen Antworten und – falls umgeschaltet – die Abfrageform.</summary>
-    public record CheckDto(List<ExercisePreviewService.PreviewAnswer> Answers, int? Stage = null);
-
     /// <summary>
     /// Bewertet die Antworten wie im echten Test (server-autoritativ), aber ohne jede Persistenz oder Punktevergabe.
     /// Die Stufe muss dieselbe sein wie beim Laden (<see cref="Get"/>), damit „getippt" nicht auseinanderdriftet.
@@ -53,7 +50,7 @@ public class ExercisePreviewController(PuglingDbContext db, ExercisePreviewServi
     [HttpPost("check")]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<ExercisePreviewService.PreviewResult>> Check(int id, CheckDto dto)
+    public async Task<ActionResult<PreviewResult>> Check(int id, PreviewCheckDto dto)
     {
         var exercise = await db.Exercises.AsNoTracking().FirstOrDefaultAsync(e => e.Id == id);
         if (exercise is null) return NotFound();

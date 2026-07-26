@@ -12,11 +12,7 @@ namespace Pugling.Api.Services.Shared;
 /// </summary>
 public class GamificationService(PuglingDbContext db, MetricsService metrics, ILogger<GamificationService> logger)
 {
-    public record MissionStatus(int Id, string Title, ProgressMetric Metric, MissionPeriod Period,
-        int Target, int Current, bool Completed, int RewardPoints);
-
-    public record AchievementStatus(int Id, string Title, string? Icon, ProgressMetric Metric,
-        int Threshold, int Current, bool Earned, DateTime? EarnedAt, int RewardPoints);
+    // MissionStatus/AchievementStatus leben im Vertrags-Projekt (Pugling.Contracts.Student).
 
     /// <summary>Wertet alle aktiven Missionen und Auszeichnungen aus und vergibt fällige Belohnungen.</summary>
     public async Task EvaluateAndAwardAsync(int childId, DateOnly today)

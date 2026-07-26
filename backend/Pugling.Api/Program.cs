@@ -157,6 +157,7 @@ builder.Services.AddScoped<ObjectiveRewardService>();
 // Kindübergreifendes Tages-Dashboard des Vaters („wer hat heute was geschafft?").
 builder.Services.AddScoped<ChildrenDashboardService>();
 builder.Services.AddScoped<AuthAccess>();
+builder.Services.AddScoped<ExercisePermissionService>();
 builder.Services.AddScoped<AccountService>();
 builder.Services.AddScoped<PlanOwnershipFilter>();
 builder.Services.AddScoped<ChildOwnershipFilter>();

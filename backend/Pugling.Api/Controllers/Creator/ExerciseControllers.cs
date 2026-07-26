@@ -20,12 +20,6 @@ internal static class ExerciseRoutes
 }
 
 /// <summary>
-/// Antworten des Kindes für einen Katalog-Direktcheck, positionsbezogen (Index in der Aufgaben-/Paarliste).
-/// <paramref name="Seed"/> ist nur für seed-gebundene Typen (Rechen-Drill) nötig – der beim Generieren erhaltene.
-/// </summary>
-public record CheckDto(List<GivenAnswer> Answers, int? Seed = null);
-
-/// <summary>
 /// Vokabelübungen. Die Übung selbst beschreibt Art/Ziel/Wert; ihre Vokabelpaare leben eine Ebene tiefer als
 /// stabil identifizierte <see cref="ExerciseItem"/>s (CRUD unter <c>{exerciseId}/items/{itemId}</c>). Beim Anlegen
 /// akzeptiert der POST weiterhin inline <see cref="VocabItem"/>/<see cref="VocabRef"/> im Payload und materialisiert
@@ -93,9 +87,6 @@ public class VocabularyController(PuglingDbContext db, ExerciseTypeRegistry regi
         }
     }
 
-    /// <summary>Auswahl der Vokabeln per Tag statt manueller Referenzliste.</summary>
-    public record RefsFromTagsDto(List<string> Tags, bool MatchAll = false, bool BaseFormsOnly = false);
-
     /// <summary>
     /// Setzt die Items der Übung als Snapshot auf die aktuellen Vokabeln der genannten Tags (optional nur
     /// Grundformen, optional alle Tags per UND). Der Vater materialisiert damit „alle Wörter aus Unit 3" – der
@@ -109,7 +100,7 @@ public class VocabularyController(PuglingDbContext db, ExerciseTypeRegistry regi
     {
         var exercise = await FindAsync(subjectId, chapterId, exerciseId);
         if (exercise is null) return NotFound();
-        if (EnsureCanModify(exercise) is { } forbidden) return forbidden;
+        if (EnsureCanWrite(exercise) is { } forbidden) return forbidden;
 
         var tags = (dto.Tags ?? []).Select(t => t.Trim()).Where(t => t.Length > 0).Distinct().ToList();
         if (tags.Count == 0) return this.ProblemWithCode(ApiErrors.ValidationError, "At least one tag is required.");
@@ -127,27 +118,6 @@ public class VocabularyController(PuglingDbContext db, ExerciseTypeRegistry regi
     }
 
     // ---- Einzel-Items (Vokabelpaare) als eigene Sub-Ressource -----------------------------------------
-
-    /// <summary>Ein einzelnes Vokabelpaar der Übung. Front/Rückseite kommen aus dem verknüpften Store-Eintrag.</summary>
-    /// <param name="Id">Stabile Item-Id (ItemId).</param>
-    /// <param name="OrderIndex">Sortierschlüssel innerhalb der Übung.</param>
-    /// <param name="VocabularyId">Verknüpfter Vokabel-Store-Eintrag.</param>
-    /// <param name="Front">Wort der Lernsprache (aus dem Store).</param>
-    /// <param name="Back">Übersetzung (aus dem Store).</param>
-    /// <param name="Hint">Übungslokaler Hinweis; überschreibt den abgeleiteten Store-Hinweis.</param>
-    /// <param name="Self">HATEOAS-Link auf das Item selbst.</param>
-    /// <param name="Vocabulary">HATEOAS-Link auf den Store-Eintrag.</param>
-    public record VocabItemResponse(int Id, int OrderIndex, int VocabularyId, string Front, string Back, string? Hint,
-        [property: JsonPropertyName("_self")] string Self,
-        [property: JsonPropertyName("vocabulary")] string Vocabulary);
-
-    /// <summary>
-    /// Anlegen/Ändern eines Items: entweder per <paramref name="VocabularyId"/> (bestehende Store-Vokabel) oder inline
-    /// per <paramref name="Front"/>/<paramref name="Back"/> (wird im Store angelegt/gefunden). <paramref name="Hint"/>
-    /// leer = löschen, gesetzt = überschreiben; beim PATCH bleibt jedes weggelassene Feld unverändert.
-    /// </summary>
-    public record VocabItemInput(int? VocabularyId = null, string? Front = null, string? Back = null,
-        string? Hint = null, int? OrderIndex = null);
 
     // Konkreter Pfad (wie VocabLink.Path); das Routen-Template ApiRoutes.Creator trägt den Versions-Platzhalter.
     private static string ItemSelf(int subjectId, int chapterId, int exerciseId, int itemId) =>
@@ -194,7 +164,7 @@ public class VocabularyController(PuglingDbContext db, ExerciseTypeRegistry regi
     {
         var exercise = await FindAsync(subjectId, chapterId, exerciseId);
         if (exercise is null) return NotFound();
-        if (EnsureCanModify(exercise) is { } forbidden) return forbidden;
+        if (EnsureCanWrite(exercise) is { } forbidden) return forbidden;
 
         var config = ConfigOf(exercise);
         var resolved = await ResolveVocabularyIdAsync(body, config, ct);
@@ -229,7 +199,7 @@ public class VocabularyController(PuglingDbContext db, ExerciseTypeRegistry regi
     {
         var exercise = await FindAsync(subjectId, chapterId, exerciseId);
         if (exercise is null) return NotFound();
-        if (EnsureCanModify(exercise) is { } forbidden) return forbidden;
+        if (EnsureCanWrite(exercise) is { } forbidden) return forbidden;
         var item = await FindItemAsync(exerciseId, itemId);
         if (item is null) return this.ProblemWithCode(ApiErrors.ItemNotFound, "The exercise item does not exist in this exercise.");
 
@@ -263,7 +233,7 @@ public class VocabularyController(PuglingDbContext db, ExerciseTypeRegistry regi
     {
         var exercise = await FindAsync(subjectId, chapterId, exerciseId);
         if (exercise is null) return NotFound();
-        if (EnsureCanModify(exercise) is { } forbidden) return forbidden;
+        if (EnsureCanWrite(exercise) is { } forbidden) return forbidden;
         var item = await FindItemAsync(exerciseId, itemId);
         if (item is null) return this.ProblemWithCode(ApiErrors.ItemNotFound, "The exercise item does not exist in this exercise.");
         // Löschen verschiebt Folgepositionen → bei in-Plan gespielter Übung blocken (Fortschritt bliebe fehl-verankert).
@@ -415,39 +385,9 @@ public class TranslationController(PuglingDbContext db, ExerciseTypeRegistry reg
     }
 }
 
-/// <summary>Ein austauschbarer Vokabel-Kandidat für ein Wort (bei Homonymen mehrere).</summary>
-/// <param name="VocabularyId">Vokabel-Id.</param>
-/// <param name="Word">Wort in der Lernsprache.</param>
-/// <param name="Translation">Muttersprachliche Glosse dieser Bedeutung.</param>
-/// <param name="PartOfSpeech">Wortart (hilft beim Unterscheiden gleicher Schreibweisen).</param>
-/// <param name="Self">Link auf die Vokabelkarte (<c>_self</c>).</param>
-public record VocabCandidate(int VocabularyId, string Word, string Translation, string PartOfSpeech,
-    [property: JsonPropertyName("_self")] string Self);
+// VocabCandidate/DecodedWord/DecodedSentence/BirkenbihlSentenceInput/WordOverride/DecodePreviewInput
+// leben im Vertrags-Projekt (Pugling.Contracts.Creator).
 
-/// <summary>
-/// Ein dekodiertes Wort der Ausgabe: <paramref name="LearningWord"/> der Lernsprache → wörtliche Glosse
-/// <paramref name="Gloss"/>. <paramref name="Gloss"/>/<paramref name="VocabularyId"/>/<paramref name="Self"/>
-/// sind <c>null</c>, wenn das Wort (noch) nicht im Vokabelspeicher liegt. <paramref name="Candidates"/> ist nur
-/// bei mehrdeutigen Wörtern gefüllt (mehrere passende Karten – der Vater kann per Wort-Endpunkt die richtige wählen).
-/// </summary>
-public record DecodedWord(int WordId, string LearningWord, string? Gloss, int? VocabularyId,
-    [property: JsonPropertyName("_self")] string? Self, IReadOnlyList<VocabCandidate>? Candidates);
-
-/// <summary>Ein dekodierter Satz: Original + natürliche Übersetzung + die Wort-für-Wort-Tuple.</summary>
-public record DecodedSentence(int SentenceId, string LearningSentence, string NaturalTranslation, IReadOnlyList<DecodedWord> Result);
-
-/// <summary>Eingabe zum Hinzufügen eines Satzes: der Satz der Lernsprache + seine natürliche, korrekte Übersetzung.</summary>
-public record BirkenbihlSentenceInput(string LearningSentence, string NaturalTranslation);
-
-/// <summary>
-/// Korrektur eines einzelnen Worts. <paramref name="VocabularyId"/> gesetzt → die Glosse folgt dieser Karte
-/// (richtige Bedeutung bei Homonymen). Nur <paramref name="Gloss"/> gesetzt → freie Glosse ohne Karte. Beides
-/// leer → Glosse entfernen (Wort bleibt undekodiert).
-/// </summary>
-public record WordOverride(int? VocabularyId, string? Gloss);
-
-/// <summary>Eingabe der zustandslosen Vorschau: Sprachen + der zu dekodierende Satz samt Übersetzung.</summary>
-public record DecodePreviewInput(string LearningLang, string NativeLang, string LearningSentence, string NaturalTranslation);
 
 /// <summary>
 /// Birkenbihl-Methode: Texte in der Lernsprache mit grammatik-unabhängiger Wort-für-Wort-Dekodierung
@@ -525,7 +465,7 @@ public class BirkenbihlController(PuglingDbContext db, ExerciseTypeRegistry regi
     {
         var exercise = await FindAsync(subjectId, chapterId, exerciseId);
         if (exercise is null) return NotFound();
-        if (EnsureCanModify(exercise) is { } forbidden) return forbidden;
+        if (EnsureCanWrite(exercise) is { } forbidden) return forbidden;
         if (string.IsNullOrWhiteSpace(body.LearningSentence)) return this.ProblemWithCode(ApiErrors.ValidationError, "The sentence in the learning language is required.");
 
         var config = ConfigOf(exercise);
@@ -567,7 +507,7 @@ public class BirkenbihlController(PuglingDbContext db, ExerciseTypeRegistry regi
     {
         var exercise = await FindAsync(subjectId, chapterId, exerciseId);
         if (exercise is null) return NotFound();
-        if (EnsureCanModify(exercise) is { } forbidden) return forbidden;
+        if (EnsureCanWrite(exercise) is { } forbidden) return forbidden;
 
         var config = ConfigOf(exercise);
         var (sentence, index) = FindWord(config, wordId);
@@ -634,7 +574,7 @@ public class BirkenbihlController(PuglingDbContext db, ExerciseTypeRegistry regi
     {
         var exercise = await FindAsync(subjectId, chapterId, exerciseId);
         if (exercise is null) return NotFound();
-        if (EnsureCanModify(exercise) is { } forbidden) return forbidden;
+        if (EnsureCanWrite(exercise) is { } forbidden) return forbidden;
 
         var config = ConfigOf(exercise);
         var removed = config.Sentences.RemoveAll(s => s.SentenceId == sentenceId);
@@ -699,9 +639,6 @@ public class ArithmeticDrillController(PuglingDbContext db, ExerciseTypeRegistry
     : ExerciseControllerBase<ArithmeticDrillConfig>(db, registry)
 {
     protected override string TypeKey => ExerciseTypeKeys.ArithmeticDrill;
-
-    /// <summary>Ein frisch erzeugter Aufgabensatz zu einer Drill-Übung.</summary>
-    public record GeneratedDrill(int ExerciseId, string Title, int Seed, IReadOnlyList<GeneratedProblem> Problems);
 
     private IGeneratingExerciseType DrillType => (IGeneratingExerciseType)Registry.Require(TypeKey);
 

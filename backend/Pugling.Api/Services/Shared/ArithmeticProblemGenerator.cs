@@ -2,8 +2,7 @@ using Pugling.Api.Models;
 
 namespace Pugling.Api.Services.Shared;
 
-/// <summary>Ein erzeugter Rechenausdruck samt Lösung.</summary>
-public record GeneratedProblem(string Prompt, decimal Answer);
+// GeneratedProblem lebt im Vertrags-Projekt (Pugling.Contracts.Shared).
 
 /// <summary>
 /// Erzeugt zufällige Rechenaufgaben aus den Regeln einer <see cref="ArithmeticDrillConfig"/>.

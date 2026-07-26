@@ -28,7 +28,7 @@ public class LearnGoalsController(LearnGoalService goals) : ControllerBase
     /// </summary>
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<IEnumerable<LearnGoalService.LearnGoalResponse>>> List(
+    public async Task<ActionResult<IEnumerable<LearnGoalResponse>>> List(
         int childId, [FromQuery] int? subjectId = null, [FromQuery] string? status = null,
         [FromQuery] int skip = 0, [FromQuery] int take = PagingExtensions.DefaultTake, CancellationToken ct = default) =>
         (await goals.ListAsync(childId, subjectId, status, ct)).ToPagedList(Response, skip, take);
@@ -36,7 +36,7 @@ public class LearnGoalsController(LearnGoalService goals) : ControllerBase
     /// <summary>Ein einzelnes Lernziel, live ausgewertet (404, wenn es zu diesem Kind nicht existiert).</summary>
     [HttpGet("{goalId:int}")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<LearnGoalService.LearnGoalResponse>> Get(int childId, int goalId, CancellationToken ct = default) =>
+    public async Task<ActionResult<LearnGoalResponse>> Get(int childId, int goalId, CancellationToken ct = default) =>
         await goals.GetAsync(childId, goalId, ct) is { } g ? g : NotFound();
 
     /// <summary>Legt ein Lernziel an (nur Vater). 400 bei ungültigem Scope/Zielwert.</summary>
@@ -45,8 +45,8 @@ public class LearnGoalsController(LearnGoalService goals) : ControllerBase
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<LearnGoalService.LearnGoalResponse>> Create(
-        int childId, [FromBody] LearnGoalService.CreateLearnGoalRequest request, CancellationToken ct = default)
+    public async Task<ActionResult<LearnGoalResponse>> Create(
+        int childId, [FromBody] CreateLearnGoalRequest request, CancellationToken ct = default)
     {
         var (value, error) = await goals.CreateAsync(childId, request, ct);
         if (error is not null) return this.ProblemWithCode(error.Value);
@@ -58,8 +58,8 @@ public class LearnGoalsController(LearnGoalService goals) : ControllerBase
     [Authorize(Roles = Roles.Supervisor)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<LearnGoalService.LearnGoalResponse>> Update(
-        int childId, int goalId, [FromBody] LearnGoalService.UpdateLearnGoalRequest request, CancellationToken ct = default)
+    public async Task<ActionResult<LearnGoalResponse>> Update(
+        int childId, int goalId, [FromBody] UpdateLearnGoalRequest request, CancellationToken ct = default)
     {
         var (value, error) = await goals.UpdateAsync(childId, goalId, request, ct);
         if (error is not null) return this.ProblemWithCode(error.Value);

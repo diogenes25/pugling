@@ -9,12 +9,7 @@ namespace Pugling.Api.Models;
 // Übung ist für dieses Kind / diese Klassenarbeit relevant" passiert ausschließlich über diese
 // Verknüpfungstabellen. Tags dürfen Vater UND Sohn setzen, Klassenarbeiten pflegt nur der Vater.
 
-/// <summary>Wer eine Markierung vorgenommen hat (für Nachvollziehbarkeit im Dashboard).</summary>
-public enum TaggedBy
-{
-    Vater = 0,
-    Sohn = 1,
-}
+// TaggedBy lebt im Vertrags-Projekt (Pugling.Contracts).
 
 /// <summary>
 /// Frei benanntes Schlagwort im Kontext eines Kindes (z. B. „Unit 5", „unregelmäßige Verben").
@@ -67,16 +62,7 @@ public class VocabularyTag
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }
 
-/// <summary>Status einer Klassenarbeit im Lebenszyklus.</summary>
-public enum KlassenarbeitStatus
-{
-    /// <summary>Geplant / steht noch an.</summary>
-    Planned = 0,
-    /// <summary>Geschrieben (Note kann nachgetragen sein).</summary>
-    Written = 1,
-    /// <summary>Entfällt / abgesagt.</summary>
-    Cancelled = 2,
-}
+// KlassenarbeitStatus lebt im Vertrags-Projekt (Pugling.Contracts).
 
 /// <summary>
 /// Eine geplante oder bereits geschriebene Klassenarbeit eines Kindes. Der Vater plant sie,

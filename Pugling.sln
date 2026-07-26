@@ -9,6 +9,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "backend", "backend", "{1AE8
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pugling.Api.Tests", "backend\Pugling.Api.Tests\Pugling.Api.Tests.csproj", "{A3B059C2-EE0E-4231-A1FC-220A5BBA407F}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pugling.Contracts", "backend\Pugling.Contracts\Pugling.Contracts.csproj", "{18D61631-F07A-42D2-AF1A-55DBB2A3184B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -43,11 +45,24 @@ Global
 		{A3B059C2-EE0E-4231-A1FC-220A5BBA407F}.Release|x64.Build.0 = Release|Any CPU
 		{A3B059C2-EE0E-4231-A1FC-220A5BBA407F}.Release|x86.ActiveCfg = Release|Any CPU
 		{A3B059C2-EE0E-4231-A1FC-220A5BBA407F}.Release|x86.Build.0 = Release|Any CPU
+		{18D61631-F07A-42D2-AF1A-55DBB2A3184B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{18D61631-F07A-42D2-AF1A-55DBB2A3184B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{18D61631-F07A-42D2-AF1A-55DBB2A3184B}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{18D61631-F07A-42D2-AF1A-55DBB2A3184B}.Debug|x64.Build.0 = Debug|Any CPU
+		{18D61631-F07A-42D2-AF1A-55DBB2A3184B}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{18D61631-F07A-42D2-AF1A-55DBB2A3184B}.Debug|x86.Build.0 = Debug|Any CPU
+		{18D61631-F07A-42D2-AF1A-55DBB2A3184B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{18D61631-F07A-42D2-AF1A-55DBB2A3184B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{18D61631-F07A-42D2-AF1A-55DBB2A3184B}.Release|x64.ActiveCfg = Release|Any CPU
+		{18D61631-F07A-42D2-AF1A-55DBB2A3184B}.Release|x64.Build.0 = Release|Any CPU
+		{18D61631-F07A-42D2-AF1A-55DBB2A3184B}.Release|x86.ActiveCfg = Release|Any CPU
+		{18D61631-F07A-42D2-AF1A-55DBB2A3184B}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{A3B059C2-EE0E-4231-A1FC-220A5BBA407F} = {1AE8ACA6-933B-BF2A-3671-3E2EAC007D16}
+		{18D61631-F07A-42D2-AF1A-55DBB2A3184B} = {1AE8ACA6-933B-BF2A-3671-3E2EAC007D16}
 	EndGlobalSection
 EndGlobal

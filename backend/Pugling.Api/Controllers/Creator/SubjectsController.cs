@@ -17,8 +17,6 @@ namespace Pugling.Api.Controllers.Creator;
 [Authorize(Roles = Roles.Creator)]
 public class SubjectsController(PuglingDbContext db) : ControllerBase
 {
-    public record SubjectResponse(int Id, string Name, DateTime CreatedAt, int ChaptersCount);
-
     /// <summary>Liste aller Fächer.</summary>
     [HttpGet]
     public async Task<IEnumerable<SubjectResponse>> List() =>
@@ -39,8 +37,6 @@ public class SubjectsController(PuglingDbContext db) : ControllerBase
         return subject is null ? NotFound() : subject;
     }
 
-    public record CreateSubjectDto(string Name);
-
     /// <summary>Erstellt ein Fach.</summary>
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status201Created)]
@@ -56,8 +52,6 @@ public class SubjectsController(PuglingDbContext db) : ControllerBase
         var response = new SubjectResponse(subject.Id, subject.Name, subject.CreatedAt, 0);
         return CreatedAtAction(nameof(Get), new { subjectId = subject.Id }, response);
     }
-
-    public record UpdateSubjectDto(string? Name);
 
     /// <summary>Ändert ein Fach (partiell).</summary>
     [HttpPatch("{subjectId:int}")]

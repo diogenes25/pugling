@@ -23,17 +23,6 @@ namespace Pugling.Api.Controllers.Supervisor;
 [ServiceFilter(typeof(PlanOwnershipFilter))]
 public class StudyPlansController(PuglingDbContext db, AuthAccess access) : ControllerBase
 {
-    public record PlanResponse(int Id, int ChildId, string Title, int? SubjectId,
-        DateOnly StartDate, DateOnly EndDate, bool Active, int PositionCount, string? Description)
-    {
-        /// <summary>
-        /// Server-autoritative Affordance: Ob dies der eine, aktuell spielbare Plan des Kindes ist
-        /// (aktiv <b>und</b> heute in Laufzeit). Für den Sohn ist stets nur dieser sichtbar; dem Vater
-        /// zeigt es unter mehreren Plänen den, den der Sohn gerade spielen kann – ohne die Regel im Client nachzubilden.
-        /// </summary>
-        public bool IsPlayable { get; init; }
-    }
-
     /// <summary>In-Memory-Projektion für frisch erstellte Container (Positionen noch leer).</summary>
     private static PlanResponse Map(StudyPlan p, DateOnly today) =>
         new(p.Id, p.ChildId, p.Title, p.SubjectId, p.StartDate, p.EndDate, p.Active, p.Positions.Count, p.Description)
@@ -82,9 +71,6 @@ public class StudyPlansController(PuglingDbContext db, AuthAccess access) : Cont
         return plan is null ? NotFound() : plan;
     }
 
-    public record CreatePlanDto(int ChildId, string Title, int? SubjectId, DateOnly? StartDate, int DurationDays,
-        string? Description = null);
-
     /// <summary>Erstellt einen leeren Lehrplan-Container (nur Vater, nur für eigene Kinder).</summary>
     [HttpPost]
     [Authorize(Roles = Roles.Supervisor)]
@@ -125,9 +111,6 @@ public class StudyPlansController(PuglingDbContext db, AuthAccess access) : Cont
     private Task DeactivateSiblingPlansAsync(int childId, int keepPlanId) =>
         db.StudyPlans.Where(p => p.ChildId == childId && p.Id != keepPlanId && p.Active)
             .ExecuteUpdateAsync(s => s.SetProperty(p => p.Active, false));
-
-    public record UpdatePlanDto(string? Title, int? SubjectId, DateOnly? StartDate, DateOnly? EndDate, bool? Active,
-        string? Description = null, int? ChildId = null);
 
     /// <summary>Ändert den Lehrplan-Container (partiell, nur Vater/eigener). <see cref="UpdatePlanDto.ChildId"/> weist den Plan einem anderen eigenen Kind zu.</summary>
     [HttpPatch("{planId:int}")]

@@ -26,11 +26,6 @@ public class VocabularyStoreController(PuglingDbContext db) : ControllerBase
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
-    public record VocabularyResponse(int Id, string Key, string Version, string SourceLanguage,
-        string TargetLanguage, string Word, string Translation, PartOfSpeech PartOfSpeech,
-        NounInfo? Noun, VerbInfo? Verb, int? BaseFormId, string? BaseFormKey, string? BaseFormRelation,
-        string? PronunciationAudioUrl, IReadOnlyList<string> Tags, DateTime CreatedAt);
-
     static VocabularyResponse Map(Vocabulary v) =>
         new(v.Id, v.Key, v.Version, v.SourceLanguage, v.TargetLanguage, v.Word, v.Translation,
             v.PartOfSpeech, v.Noun, v.Verb, v.BaseFormId, v.BaseForm?.Key, v.BaseFormRelation,
@@ -187,19 +182,6 @@ public class VocabularyStoreController(PuglingDbContext db) : ControllerBase
             .Select(Map).ToList();
     }
 
-    /// <summary>
-    /// Anlegen einer Vokabel. „Einfach" genügt <see cref="Word"/> (+ Sprachen): <see cref="Key"/> darf leer
-    /// bleiben (der Server generiert einen eindeutigen Slug), <see cref="Translation"/> darf entfallen
-    /// (bleibt leer und ist per <c>?untranslated=true</c> auffindbar) und <see cref="PartOfSpeech"/> darf
-    /// entfallen (Default <see cref="Models.PartOfSpeech.Other"/>). „Komplex" füllt zusätzlich
-    /// Noun/Verb/BaseForm/Audio; fehlende Details lassen sich später per PATCH nachliefern.
-    /// <see cref="Tags"/> (Namen) werden create-if-missing verknüpft.
-    /// </summary>
-    public record CreateVocabularyDto(string? Key, string SourceLanguage, string TargetLanguage,
-        string Word, string? Translation = null, PartOfSpeech? PartOfSpeech = null, string? Version = null,
-        NounInfo? Noun = null, VerbInfo? Verb = null, string? BaseFormKey = null,
-        string? BaseFormRelation = null, string? PronunciationAudioUrl = null, List<string>? Tags = null);
-
     /// <summary>Erstellt eine Vokabel. Fehlt der Key, wird ein eindeutiger generiert; BaseFormKey (falls gesetzt) muss existieren.</summary>
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status201Created)]
@@ -257,7 +239,7 @@ public class VocabularyStoreController(PuglingDbContext db) : ControllerBase
             TargetLanguage = dto.TargetLanguage,
             Word = dto.Word,
             Translation = dto.Translation ?? "",
-            PartOfSpeech = dto.PartOfSpeech ?? Models.PartOfSpeech.Other,
+            PartOfSpeech = dto.PartOfSpeech ?? Contracts.PartOfSpeech.Other,
             Noun = dto.Noun,
             Verb = dto.Verb,
             BaseFormId = baseFormId,
@@ -283,11 +265,6 @@ public class VocabularyStoreController(PuglingDbContext db) : ControllerBase
             if (!await db.Vocabulary.AnyAsync(v => v.Key == candidate)) return candidate;
         }
     }
-
-    /// <summary>Nur gesetzte Felder werden geändert. BaseFormKey = "" hebt die Verknüpfung (und ihr Label) auf; Tags werden ergänzt (nicht ersetzt).</summary>
-    public record UpdateVocabularyDto(string? Version, string? SourceLanguage, string? TargetLanguage,
-        string? Word, string? Translation, PartOfSpeech? PartOfSpeech, NounInfo? Noun, VerbInfo? Verb,
-        string? BaseFormKey, string? BaseFormRelation, string? PronunciationAudioUrl, List<string>? Tags);
 
     /// <summary>Ändert eine Vokabel (partiell).</summary>
     [HttpPatch("{id:int}")]
@@ -370,9 +347,6 @@ public class VocabularyStoreController(PuglingDbContext db) : ControllerBase
         return NoContent();
     }
 
-    /// <summary>Eine Übung, die diese Vokabel referenziert (Vokabel-Refs bzw. Lückentext-Lücke).</summary>
-    public record VocabUsage(int ExerciseId, string Title, string Type, int ChapterId, int SubjectId);
-
     /// <summary>
     /// Welche Übungen die Vokabel referenzieren – Vokabel-Übungen über ihre <see cref="ExerciseItem"/>-Zeilen (per Id),
     /// Lückentexte über <see cref="Gap.VocabKey"/> in der Config. Grundlage für den Lösch-Schutz und die Autoren-Sicht.
@@ -424,13 +398,6 @@ public class VocabularyStoreController(PuglingDbContext db) : ControllerBase
 
     // ---- Agenten-Primitive: Lookup (Dedup) + Batch-Anlegen/-Nachtragen ------------------------------
 
-    /// <summary>Anfrage der Existenzprüfung: Wörter (für die Text-Extraktion) und/oder Keys (für Ref-Validierung).</summary>
-    public record LookupRequest(string? SourceLanguage, string? TargetLanguage, List<string>? Words, List<string>? Keys);
-    /// <summary>Treffer je angefragtem Wort inkl. bereits vorhandener Store-Einträge.</summary>
-    public record LookupResult(string Word, bool Exists, IReadOnlyList<VocabularyResponse> Matches);
-    /// <summary>Antwort der Existenzprüfung: pro Wort ein Ergebnis plus die Menge existierender Keys.</summary>
-    public record LookupResponse(IReadOnlyList<LookupResult> Words, IReadOnlyList<string> ExistingKeys);
-
     /// <summary>
     /// Existenz-Prüfung für die Text→Vokabel-Extraktion (Dedup, bevor der Agent anlegt). Der Vergleich läuft
     /// case-insensitiv über <c>Word</c>, optional gefiltert nach Sprachpaar. Zusätzlich lässt sich prüfen,
@@ -470,9 +437,6 @@ public class VocabularyStoreController(PuglingDbContext db) : ControllerBase
         return new LookupResponse(results, existingKeys);
     }
 
-    /// <summary>Ergebnis eines einzelnen Batch-Elements (Teilerfolg möglich).</summary>
-    public record BatchItemResult(int Index, string Status, int? Id, string? Key, string? Error);
-
     /// <summary>
     /// Legt viele Vokabeln in einem Aufruf an – idempotent: ein bereits existierender, explizit gesetzter
     /// Key liefert Status <c>existing</c> (kein Fehler), sodass derselbe Batch gefahrlos wiederholt werden
@@ -506,11 +470,6 @@ public class VocabularyStoreController(PuglingDbContext db) : ControllerBase
         }
         return results;
     }
-
-    /// <summary>Ein Batch-Änderungselement: die Ziel-Id plus dieselben partiellen Felder wie beim Einzel-PATCH.</summary>
-    public record BatchUpdateItem(int Id, string? Version, string? SourceLanguage, string? TargetLanguage,
-        string? Word, string? Translation, PartOfSpeech? PartOfSpeech, NounInfo? Noun, VerbInfo? Verb,
-        string? BaseFormKey, string? BaseFormRelation, string? PronunciationAudioUrl, List<string>? Tags);
 
     /// <summary>Trägt Felder vieler Vokabeln in einem Aufruf nach (gleiche Merge-Semantik wie Einzel-PATCH).</summary>
     [HttpPatch("batch")]

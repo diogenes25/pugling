@@ -1,11 +1,14 @@
 using System.Text.Json.Serialization;
 
-namespace Pugling.Api.Models;
+namespace Pugling.Contracts;
 
 // Config-Schemas je Übungstyp.
 // Werden als JSON in Exercise.ConfigJson gespeichert, im API aber typisiert
 // als Teil von ExercisePayload<TConfig> / ExerciseResponse<TConfig> übertragen.
 // Jeder Typ = eigener Pfad + eigenes Swagger-Schema.
+//
+// Liegen in Pugling.Contracts, damit Server (Pugling.Api) und die Client-Projekte
+// (Creator/Supervisor) dieselben Config-Typen über die Leitung teilen.
 
 /// <summary>Frage mit optionalen Antwortmöglichkeiten (leer = Freitext).</summary>
 public record Question(string Prompt, List<string>? Choices, string Answer);

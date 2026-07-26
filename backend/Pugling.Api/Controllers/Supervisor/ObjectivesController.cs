@@ -32,7 +32,7 @@ public class ObjectivesController(ObjectiveService objectives) : ControllerBase
     /// </summary>
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<IEnumerable<ObjectiveService.ObjectiveResponse>>> List(
+    public async Task<ActionResult<IEnumerable<ObjectiveResponse>>> List(
         int childId, [FromQuery] string? status = null, [FromQuery] ObjectiveKind? kind = null,
         [FromQuery] int skip = 0, [FromQuery] int take = PagingExtensions.DefaultTake, CancellationToken ct = default) =>
         (await objectives.ListAsync(childId, status, kind, ct)).ToPagedList(Response, skip, take);
@@ -40,7 +40,7 @@ public class ObjectivesController(ObjectiveService objectives) : ControllerBase
     /// <summary>Ein einzelnes großes Ziel, live ausgewertet (404, wenn es zu diesem Kind nicht existiert).</summary>
     [HttpGet("{objectiveId:int}")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<ObjectiveService.ObjectiveResponse>> Get(int childId, int objectiveId, CancellationToken ct = default) =>
+    public async Task<ActionResult<ObjectiveResponse>> Get(int childId, int objectiveId, CancellationToken ct = default) =>
         await objectives.GetAsync(childId, objectiveId, ct) is { } o ? o : NotFound();
 
     /// <summary>Legt ein großes Ziel an (nur Vater); Etappen können inline mitgegeben werden. 400 bei ungültigem Scope/Zielwert.</summary>
@@ -49,8 +49,8 @@ public class ObjectivesController(ObjectiveService objectives) : ControllerBase
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<ObjectiveService.ObjectiveResponse>> Create(
-        int childId, [FromBody] ObjectiveService.CreateObjectiveRequest request, CancellationToken ct = default)
+    public async Task<ActionResult<ObjectiveResponse>> Create(
+        int childId, [FromBody] CreateObjectiveRequest request, CancellationToken ct = default)
     {
         var (value, error) = await objectives.CreateAsync(childId, request, ct);
         if (error is not null) return this.ProblemWithCode(error.Value);
@@ -62,8 +62,8 @@ public class ObjectivesController(ObjectiveService objectives) : ControllerBase
     [Authorize(Roles = Roles.Supervisor)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<ObjectiveService.ObjectiveResponse>> Update(
-        int childId, int objectiveId, [FromBody] ObjectiveService.UpdateObjectiveRequest request, CancellationToken ct = default)
+    public async Task<ActionResult<ObjectiveResponse>> Update(
+        int childId, int objectiveId, [FromBody] UpdateObjectiveRequest request, CancellationToken ct = default)
     {
         var (value, error) = await objectives.UpdateAsync(childId, objectiveId, request, ct);
         if (error is not null) return this.ProblemWithCode(error.Value);

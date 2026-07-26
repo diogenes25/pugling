@@ -28,9 +28,6 @@ public class FathersController(PuglingDbContext db, AccountService accounts) : C
     [NonAction]
     public void OnActionExecuted(ActionExecutedContext context) { }
 
-    /// <summary>Vater ohne PIN (wird nie ausgeliefert).</summary>
-    public record FatherResponse(int Id, string Name, string? Email, DateTime CreatedAt, int ChildrenCount);
-
     IQueryable<FatherResponse> Project(IQueryable<Father> q) =>
         q.Select(f => new FatherResponse(f.Id, f.Name, f.Email, f.CreatedAt, f.SupervisedLinks.Count));
 
@@ -47,8 +44,6 @@ public class FathersController(PuglingDbContext db, AccountService accounts) : C
         var father = await Project(db.Fathers.Where(f => f.Id == fatherId)).FirstOrDefaultAsync();
         return father is null ? NotFound() : father;
     }
-
-    public record CreateFatherDto(string Name, string? Email, string? Pin);
 
     /// <summary>Erstellt einen neuen Vater (Registrierung, ohne Anmeldung erreichbar).</summary>
     [HttpPost]
@@ -68,9 +63,6 @@ public class FathersController(PuglingDbContext db, AccountService accounts) : C
         var response = new FatherResponse(father.Id, father.Name, father.Email, father.CreatedAt, 0);
         return CreatedAtAction(nameof(Get), new { fatherId = father.Id }, response);
     }
-
-    /// <summary>Nur gesetzte Felder werden geändert.</summary>
-    public record UpdateFatherDto(string? Name, string? Email, string? Pin);
 
     /// <summary>Ändert einen Vater (partiell).</summary>
     [HttpPatch("{fatherId:int}")]
