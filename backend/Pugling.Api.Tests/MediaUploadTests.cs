@@ -1,0 +1,156 @@
+using System.Net;
+using System.Net.Http.Headers;
+using System.Net.Http.Json;
+using System.Text.Json;
+using SkiaSharp;
+
+namespace Pugling.Api.Tests;
+
+/// <summary>
+/// Bild-Upload (Etappe 5): der Server nimmt <b>eine</b> Datei entgegen und erzeugt die Auflösungen
+/// selbst. Die Tests sichern vor allem die Regeln der Aufbereitung ab – sie sind nachträglich teuer zu
+/// ändern, weil bereits erzeugte Dateien dann nicht mehr zur Regel passen.
+/// </summary>
+public class MediaUploadTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWebAppFactory>
+{
+    [Fact]
+    public async Task Upload_ErzeugtDieAufloesungenUndEinePlatzhalterfarbe()
+    {
+        var father = await TestApi.FatherAsync(factory);
+
+        var res = await UploadAsync(father, Png(1000, 500, SKColors.CornflowerBlue),
+            "Eine breite Stadtansicht", tags: "Stadt, Foto");
+        Assert.Equal(HttpStatusCode.Created, res.StatusCode);
+
+        var asset = await res.Content.ReadFromJsonAsync<JsonElement>();
+        var variants = asset.GetProperty("variants").EnumerateArray()
+            .ToDictionary(v => v.GetProperty("purpose").GetString()!);
+
+        // Drei Zwecke aus einer Datei – ohne dass der Creator ein Grafikprogramm anfassen muss.
+        Assert.Equal(3, variants.Count);
+        Assert.Equal(128, variants["Thumb"].GetProperty("width").GetInt32());
+        Assert.Equal(512, variants["Card"].GetProperty("width").GetInt32());
+        Assert.Equal(1000, variants["Full"].GetProperty("width").GetInt32()); // nicht hochskaliert
+
+        // Seitenverhältnis bleibt erhalten (kein Beschnitt – ein Zuschnitt könnte das Motiv köpfen).
+        Assert.Equal(64, variants["Thumb"].GetProperty("height").GetInt32());
+        Assert.Equal(256, variants["Card"].GetProperty("height").GetInt32());
+
+        Assert.All(variants.Values, v => Assert.Equal("webp", v.GetProperty("format").GetString()));
+        Assert.All(variants.Values, v => Assert.True(v.GetProperty("bytes").GetInt64() > 0));
+
+        // Platzhalterfarbe für ruckelfreies Nachladen – aus dem Bild gemittelt, nicht geraten.
+        Assert.Matches("^#[0-9a-f]{6}$", asset.GetProperty("placeholder").GetString()!);
+
+        // Herkunft ohne Angabe = Upload; die Tags laufen durch dieselbe Taxonomie wie sonst.
+        Assert.Equal("Upload", asset.GetProperty("origin").GetString());
+        Assert.Contains("stadt", asset.GetProperty("tags").EnumerateArray().Select(t => t.GetString()));
+    }
+
+    [Fact]
+    public async Task HochgeladeneDatei_IstUeberIhreUrlAbrufbar()
+    {
+        var father = await TestApi.FatherAsync(factory);
+        var asset = await (await UploadAsync(father, Png(300, 300, SKColors.Tomato), "Ein rotes Quadrat"))
+            .Content.ReadFromJsonAsync<JsonElement>();
+
+        var url = asset.GetProperty("variants").EnumerateArray()
+            .First(v => v.GetProperty("purpose").GetString() == "Card").GetProperty("url").GetString()!;
+
+        // Die URL zeigt in den eigenen Medien-Ordner – nicht nach wwwroot, das der Deploy überschreibt.
+        Assert.StartsWith("/media/", url);
+
+        // Ohne Token abrufbar: die Sohn-App lädt Bilder als normale <img>-Quelle, ganz ohne Header.
+        var anonymous = factory.CreateClient();
+        var file = await anonymous.GetAsync(url);
+        Assert.Equal(HttpStatusCode.OK, file.StatusCode);
+        Assert.True((await file.Content.ReadAsByteArrayAsync()).Length > 0);
+    }
+
+    [Fact]
+    public async Task KleineQuelle_WirdNichtHochskaliert_UndDoppelteGroessenEntfallen()
+    {
+        var father = await TestApi.FatherAsync(factory);
+        var asset = await (await UploadAsync(father, Png(64, 64, SKColors.Green), "Ein winziges Symbol"))
+            .Content.ReadFromJsonAsync<JsonElement>();
+
+        var variants = asset.GetProperty("variants").EnumerateArray().ToList();
+        // Thumb/Card/Full kämen alle bei 64px heraus – eine Datei genügt, die Auswahl fällt auf den
+        // nächstbesten Zweck zurück. Aufblasen würde nur unscharfe, größere Dateien erzeugen.
+        Assert.Single(variants);
+        Assert.Equal(64, variants[0].GetProperty("width").GetInt32());
+    }
+
+    [Fact]
+    public async Task KeineBilddatei_Liefert400MitEigenemCode()
+    {
+        var father = await TestApi.FatherAsync(factory);
+        var res = await UploadAsync(father, "kein Bild, nur Text"u8.ToArray(), "Kaputte Datei", fileName: "x.png");
+
+        Assert.Equal(HttpStatusCode.BadRequest, res.StatusCode);
+        Assert.Equal("media_not_an_image", await CodeOf(res));
+    }
+
+    [Fact]
+    public async Task BeschreibungIstPflicht_SieIstDerAltText()
+    {
+        var father = await TestApi.FatherAsync(factory);
+        var res = await UploadAsync(father, Png(100, 100, SKColors.Gray), description: "   ");
+
+        Assert.Equal(HttpStatusCode.BadRequest, res.StatusCode);
+        Assert.Equal("validation_error", await CodeOf(res));
+    }
+
+    [Fact]
+    public async Task LoeschenRaeumtDieDateienMitWeg()
+    {
+        var father = await TestApi.FatherAsync(factory);
+        var asset = await (await UploadAsync(father, Png(200, 200, SKColors.Purple), "Wird gleich gelöscht"))
+            .Content.ReadFromJsonAsync<JsonElement>();
+        var id = asset.GetProperty("id").GetInt32();
+        var url = asset.GetProperty("variants")[0].GetProperty("url").GetString()!;
+
+        var anonymous = factory.CreateClient();
+        Assert.Equal(HttpStatusCode.OK, (await anonymous.GetAsync(url)).StatusCode);
+
+        Assert.Equal(HttpStatusCode.NoContent, (await father.DeleteAsync($"/api/v1/creator/media/{id}")).StatusCode);
+
+        // Sonst sammelte der Ordner mit jedem verworfenen Versuch Dateileichen an.
+        Assert.Equal(HttpStatusCode.NotFound, (await anonymous.GetAsync(url)).StatusCode);
+    }
+
+    [Fact]
+    public async Task Upload_IstDemSohnVerwehrt()
+    {
+        var child = await TestApi.ChildAsync(factory);
+        var res = await UploadAsync(child, Png(100, 100, SKColors.Black), "Vom Sohn");
+        Assert.Equal(HttpStatusCode.Forbidden, res.StatusCode);
+    }
+
+    // ---- Helfer -------------------------------------------------------------------------------------
+
+    /// <summary>Ein echtes, dekodierbares PNG – der Prozessor soll an echten Bytes arbeiten, nicht an einer Attrappe.</summary>
+    private static byte[] Png(int width, int height, SKColor color)
+    {
+        using var bitmap = new SKBitmap(width, height);
+        using (var canvas = new SKCanvas(bitmap)) canvas.Clear(color);
+        using var image = SKImage.FromBitmap(bitmap);
+        using var data = image.Encode(SKEncodedImageFormat.Png, 100);
+        return data.ToArray();
+    }
+
+    private static async Task<HttpResponseMessage> UploadAsync(HttpClient client, byte[] bytes,
+        string description, string? tags = null, string fileName = "motiv.png")
+    {
+        using var form = new MultipartFormDataContent();
+        var file = new ByteArrayContent(bytes);
+        file.Headers.ContentType = new MediaTypeHeaderValue("image/png");
+        form.Add(file, "file", fileName);
+        form.Add(new StringContent(description), "description");
+        if (tags is not null) form.Add(new StringContent(tags), "tags");
+        return await client.PostAsync("/api/v1/creator/media/upload", form);
+    }
+
+    private static async Task<string?> CodeOf(HttpResponseMessage res) =>
+        (await res.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("code").GetString();
+}

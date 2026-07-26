@@ -11,6 +11,8 @@ import { VaterExercises } from "./VaterExercises";
 import { VaterPlanCreate } from "./VaterPlanCreate";
 import { VaterPlanDetail } from "./VaterPlanDetail";
 import { VaterWizard } from "./VaterWizard";
+import { VaterMedia } from "./VaterMedia";
+import { VaterKind } from "./VaterKind";
 
 export function VaterApp() {
   const { session, signOut } = useAuth();
@@ -25,6 +27,7 @@ export function VaterApp() {
           <NavLink to="/vater/wizard">🧭 Assistent</NavLink>
           <NavLink to="/vater/exercises">📚 Übungen</NavLink>
           <NavLink to="/vater/vocab">Vokabeln</NavLink>
+          <NavLink to="/vater/media">🖼️ Bilder</NavLink>
           <NavLink to="/vater/rewards">🏆 Belohnungen</NavLink>
           <NavLink to="/vater/shop">🛒 Shop</NavLink>
           <NavLink to="/vater/konto">💰 Konto</NavLink>
@@ -42,6 +45,8 @@ export function VaterApp() {
           <Route path="wizard" element={<VaterWizard />} />
           <Route path="exercises" element={<VaterExercises />} />
           <Route path="vocab" element={<VaterVocab />} />
+          <Route path="media" element={<VaterMedia />} />
+          <Route path="kind/:childId" element={<VaterKind />} />
           <Route path="rewards" element={<VaterRewards />} />
           <Route path="shop" element={<VaterShop />} />
           <Route path="konto" element={<VaterKonto />} />

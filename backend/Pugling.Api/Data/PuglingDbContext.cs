@@ -38,6 +38,20 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
     public DbSet<VocabTag> VocabTags => Set<VocabTag>();
     public DbSet<VocabTagLink> VocabTagLinks => Set<VocabTagLink>();
 
+    // Medien-Store: Asset = eine Darstellung eines Motivs, Variant = dieselbe Darstellung in einer
+    // Auflösung/einem Format. Getaggt mit derselben Taxonomie, die auch die Kind-Interessen nutzen.
+    public DbSet<MediaAsset> MediaAssets => Set<MediaAsset>();
+    public DbSet<MediaVariant> MediaVariants => Set<MediaVariant>();
+    public DbSet<MediaTagLink> MediaTagLinks => Set<MediaTagLink>();
+    // Zuordnung Bild ⇢ Träger (Vokabel / Übungs-Item / Übung) – n:m in beide Richtungen.
+    public DbSet<MediaLink> MediaLinks => Set<MediaLink>();
+    // Eingefrorene Bildwahl je (Kind, Träger) – Bildkonstanz ist beim Vokabellernen der Merkeffekt.
+    public DbSet<ChildMediaPick> ChildMediaPicks => Set<ChildMediaPick>();
+
+    // Geteilte Interessen-/Stil-Taxonomie (Kind ⇢ Tag ⇠ Bild) – Grundlage der individualisierten Bildauswahl.
+    public DbSet<InterestTag> InterestTags => Set<InterestTag>();
+    public DbSet<ChildInterest> ChildInterests => Set<ChildInterest>();
+
     // Lehrplan (Container) + Positionen auf Katalog-Übungen, Fortschritt/Ziel-Belohnung je Position
     public DbSet<StudyPlan> StudyPlans => Set<StudyPlan>();
     public DbSet<PlanPosition> PlanPositions => Set<PlanPosition>();
@@ -143,6 +157,10 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
                 .Metadata.SetValueComparer(JsonValueComparer.For<List<string>>());
             // Geschlecht als String (lesbar/stabil, wie SupervisorLink.Relation).
             e.Property(c => c.Gender).HasConversion<string>();
+            // Eignungsgrenze bewusst als int (NICHT als String wie die übrigen Enums): der Medien-Selektor
+            // vergleicht sie ordnend (Rating <= Erlaubtes). Als String liefe der Vergleich alphabetisch
+            // ("Everyone" < "Mature" < "Teen") und wäre schlicht falsch.
+            e.Property(c => c.AllowedContentRating).HasConversion<int>();
             // Concurrency-Token: schützt Skin-Kauf/Ausrüsten vor parallelen Doppelbuchungen.
             e.Property(c => c.ConcurrencyStamp).IsConcurrencyToken();
         });
@@ -189,6 +207,112 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
             e.HasIndex(x => new { x.VocabTagId, x.VocabularyId }).IsUnique();
             e.HasOne(x => x.VocabTag).WithMany(t => t.Links).HasForeignKey(x => x.VocabTagId).OnDelete(DeleteBehavior.Cascade);
             e.HasOne(x => x.Vocabulary).WithMany(v => v.TagLinks).HasForeignKey(x => x.VocabularyId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // Geteilte Interessen-/Stil-Taxonomie: global eindeutiger Slug (kindneutral wie der Vokabel-Store).
+        // Die Facette bleibt als String lesbar – sie wird nur verglichen, nie geordnet.
+        modelBuilder.Entity<InterestTag>(e =>
+        {
+            e.HasIndex(t => t.Slug).IsUnique();
+            e.Property(t => t.Facet).HasConversion<string>();
+            e.Property(t => t.Synonyms).HasConversion(
+                v => JsonSerializer.Serialize(v, JsonOptions),
+                s => JsonSerializer.Deserialize<List<string>>(s, JsonOptions) ?? new())
+                .Metadata.SetValueComparer(JsonValueComparer.For<List<string>>());
+        });
+
+        // Kind <-> Interesse: höchstens ein Gewicht je (Kind, Tag). Leaf auf zwei unabhängige Roots
+        // (Child, InterestTag) – beide Cascade, kein SQLite-Diamant (Muster wie SupervisorLink).
+        modelBuilder.Entity<ChildInterest>(e =>
+        {
+            e.HasIndex(x => new { x.ChildId, x.InterestTagId }).IsUnique();
+            e.HasOne(x => x.Child).WithMany(c => c.InterestTags).HasForeignKey(x => x.ChildId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(x => x.InterestTag).WithMany(t => t.ChildInterests).HasForeignKey(x => x.InterestTagId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // Medien-Asset: eindeutiger Key (wie Vocabulary). Das Rating liegt – anders als Kind/Origin –
+        // als int in der DB, weil der Selektor ordnend darauf filtert (siehe Kommentar bei Child).
+        modelBuilder.Entity<MediaAsset>(e =>
+        {
+            e.HasIndex(a => a.Key).IsUnique();
+            // Der Selektor filtert immer zuerst Art + Eignung, bevor er nach Interessen sortiert.
+            e.HasIndex(a => new { a.Kind, a.Rating });
+            e.Property(a => a.Kind).HasConversion<string>();
+            e.Property(a => a.Origin).HasConversion<string>();
+            e.Property(a => a.Rating).HasConversion<int>();
+        });
+
+        // Variante: gehört dem Asset (Cascade). Je Asset höchstens eine Datei pro (Zweck, Format) –
+        // sonst müsste die Auslieferung zwischen gleichwertigen Kandidaten willkürlich wählen.
+        modelBuilder.Entity<MediaVariant>(e =>
+        {
+            e.HasIndex(v => new { v.MediaAssetId, v.Purpose, v.Format }).IsUnique();
+            e.Property(v => v.Purpose).HasConversion<string>();
+            e.HasOne(v => v.MediaAsset).WithMany(a => a.Variants).HasForeignKey(v => v.MediaAssetId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // Bild <-> Tag: jedes Asset höchstens einmal je Tag. Der zusätzliche Index auf den Tag bedient
+        // die heiße Richtung der späteren Auswahl („welche Assets tragen dieses Interesse?").
+        modelBuilder.Entity<MediaTagLink>(e =>
+        {
+            e.HasIndex(x => new { x.MediaAssetId, x.InterestTagId }).IsUnique();
+            e.HasIndex(x => x.InterestTagId);
+            e.HasOne(x => x.MediaAsset).WithMany(a => a.TagLinks).HasForeignKey(x => x.MediaAssetId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(x => x.InterestTag).WithMany(t => t.MediaLinks).HasForeignKey(x => x.InterestTagId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // Bild ⇢ Träger. Genau eine der drei FKs ist gesetzt – als Check-Constraint in der DB, nicht nur
+        // im Controller: eine Zeile ohne Träger wäre unsichtbar, eine mit zweien mehrdeutig auflösbar.
+        // Je Träger ein eigener gefilterter Unique-Index (dasselbe Bild nicht zweimal am selben Objekt)
+        // – ein gemeinsamer Index über alle drei Spalten griffe nicht, weil NULLs in SQLite als
+        // verschieden gelten. Alle FKs Cascade: ein gelöschtes Bild/Objekt lässt keine Zuordnung zurück.
+        // Kein Diamant trotz Exercise → ExerciseItem → MediaLink, weil eine Zeile per Constraint immer
+        // nur an EINEM Träger hängt (die anderen Spalten sind NULL und werden nie mitgelöscht).
+        modelBuilder.Entity<MediaLink>(e =>
+        {
+            e.ToTable(t => t.HasCheckConstraint("CK_MediaLink_SingleCarrier",
+                """
+                (CASE WHEN "VocabularyId" IS NULL THEN 0 ELSE 1 END
+                 + CASE WHEN "ExerciseItemId" IS NULL THEN 0 ELSE 1 END
+                 + CASE WHEN "ExerciseId" IS NULL THEN 0 ELSE 1 END) = 1
+                """));
+
+            e.HasIndex(l => new { l.MediaAssetId, l.VocabularyId }).IsUnique().HasFilter("[VocabularyId] IS NOT NULL");
+            e.HasIndex(l => new { l.MediaAssetId, l.ExerciseItemId }).IsUnique().HasFilter("[ExerciseItemId] IS NOT NULL");
+            e.HasIndex(l => new { l.MediaAssetId, l.ExerciseId }).IsUnique().HasFilter("[ExerciseId] IS NOT NULL");
+            // Die heiße Richtung der Auswahl: „welche Bilder hängen an dieser Vokabel / diesem Item?"
+            e.HasIndex(l => l.VocabularyId);
+            e.HasIndex(l => l.ExerciseItemId);
+            e.HasIndex(l => l.ExerciseId);
+
+            e.HasOne(l => l.MediaAsset).WithMany(a => a.Links).HasForeignKey(l => l.MediaAssetId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(l => l.Vocabulary).WithMany().HasForeignKey(l => l.VocabularyId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(l => l.ExerciseItem).WithMany().HasForeignKey(l => l.ExerciseItemId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(l => l.Exercise).WithMany().HasForeignKey(l => l.ExerciseId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // Eingefrorene Bildwahl. Eine Zeile je Kandidat (nicht je Träger): die aktive Wahl ist die Zeile
+        // ohne Rejected, abgelehnte bleiben als Ausschluss stehen. Genau ein Träger je Zeile – gleiche
+        // Begründung und gleiche Bauart wie beim MediaLink (Check-Constraint + gefilterte Unique-Indizes).
+        modelBuilder.Entity<ChildMediaPick>(e =>
+        {
+            e.ToTable(t => t.HasCheckConstraint("CK_ChildMediaPick_SingleCarrier",
+                """
+                (CASE WHEN "VocabularyId" IS NULL THEN 0 ELSE 1 END
+                 + CASE WHEN "ExerciseItemId" IS NULL THEN 0 ELSE 1 END) = 1
+                """));
+
+            e.HasIndex(p => new { p.ChildId, p.VocabularyId, p.MediaAssetId }).IsUnique().HasFilter("[VocabularyId] IS NOT NULL");
+            e.HasIndex(p => new { p.ChildId, p.ExerciseItemId, p.MediaAssetId }).IsUnique().HasFilter("[ExerciseItemId] IS NOT NULL");
+            // Die heiße Richtung der Ausspielung: „was ist für dieses Kind an diesem Träger gewählt?"
+            e.HasIndex(p => new { p.ChildId, p.VocabularyId });
+            e.HasIndex(p => new { p.ChildId, p.ExerciseItemId });
+
+            e.HasOne(p => p.Child).WithMany().HasForeignKey(p => p.ChildId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(p => p.Vocabulary).WithMany().HasForeignKey(p => p.VocabularyId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(p => p.ExerciseItem).WithMany().HasForeignKey(p => p.ExerciseItemId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(p => p.MediaAsset).WithMany().HasForeignKey(p => p.MediaAssetId).OnDelete(DeleteBehavior.Cascade);
         });
 
         // Bonus-Vorschlag der Übung als JSON-Spalte (null bleibt DB-NULL; Converter läuft nur für Werte).

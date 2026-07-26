@@ -56,8 +56,13 @@ public interface IExerciseType
     /// <summary>Multiple-Choice-Auswahl für die Aufgabe (richtige Antwort + Ablenker) oder <c>null</c>, wenn der Typ/die Stufe keine Auswahl kennt.</summary>
     IReadOnlyList<string>? Choices(IReadOnlyList<ContentItem> items, ContentItem item, int stage);
 
-    /// <summary>Typ-spezifische Karten-Facetten je Stufe: Buchstabenkästchen-Länge und/oder Audioquelle (sonst <c>null</c>).</summary>
-    (int? LetterBoxLength, string? AudioUrl) StageFacets(ContentItem item, int stage);
+    /// <summary>
+    /// Typ-spezifische Karten-Facetten je Stufe: Buchstabenkästchen-Länge, Audioquelle und/oder Bild
+    /// (sonst <c>null</c>). Hier – und nur hier – entscheidet der Typ auch, ob ein Bild die Lösung
+    /// verriete: es ist beim Bild <b>schärfer</b> als beim Audio, weil ein Motiv die Bedeutung in beide
+    /// Abfragerichtungen zeigt, während die Aussprache nur ein Wort vorliest.
+    /// </summary>
+    (int? LetterBoxLength, string? AudioUrl, string? ImageUrl) StageFacets(ContentItem item, int stage);
 
     /// <summary>Die im Testmodus umschaltbaren Abfrageformen (leer, wenn der Typ nur eine Form kennt).</summary>
     IReadOnlyList<StageOption> StageOptions { get; }

@@ -26,7 +26,7 @@ public class ChildrenController(PuglingDbContext db, WalletService wallet, Accou
         db.Children
             .Where(c => c.Id == childId)
             .Select(c => new ChildResponse(c.Id, c.Name, c.BirthYear, c.Grade, c.SchoolType,
-                c.Gender, c.Interests, c.ProfileNotes,
+                c.Gender, c.Interests, c.ProfileNotes, c.AllowedContentRating,
                 c.CreatedAt,
                 c.PointsEntries.Where(p => PointKindCurrency.CoinKinds.Contains(p.Kind)).Sum(p => (int?)p.Amount) ?? 0,
                 c.PointsEntries.Where(p => PointKindCurrency.GemKinds.Contains(p.Kind)).Sum(p => (int?)p.Amount) ?? 0))
@@ -41,7 +41,7 @@ public class ChildrenController(PuglingDbContext db, WalletService wallet, Accou
             .Where(c => c.SupervisorLinks.Any(l => l.SupervisorId == fatherId))
             .OrderBy(c => c.Name)
             .Select(c => new ChildResponse(c.Id, c.Name, c.BirthYear, c.Grade, c.SchoolType,
-                c.Gender, c.Interests, c.ProfileNotes,
+                c.Gender, c.Interests, c.ProfileNotes, c.AllowedContentRating,
                 c.CreatedAt,
                 c.PointsEntries.Where(p => PointKindCurrency.CoinKinds.Contains(p.Kind)).Sum(p => (int?)p.Amount) ?? 0,
                 c.PointsEntries.Where(p => PointKindCurrency.GemKinds.Contains(p.Kind)).Sum(p => (int?)p.Amount) ?? 0))
@@ -74,6 +74,8 @@ public class ChildrenController(PuglingDbContext db, WalletService wallet, Accou
             Gender = dto.Gender ?? Gender.None,
             Interests = dto.Interests ?? [],
             ProfileNotes = dto.ProfileNotes,
+            // Ohne Angabe die strengste Stufe – eine Bild-Freigabe muss der Supervisor bewusst setzen.
+            AllowedContentRating = dto.AllowedContentRating ?? ContentRating.Everyone,
             Pin = string.IsNullOrEmpty(dto.Pin) ? "" : PinHasher.Hash(dto.Pin),
         };
         db.Children.Add(child);
@@ -85,7 +87,8 @@ public class ChildrenController(PuglingDbContext db, WalletService wallet, Accou
         await accounts.EnsureForChildAsync(child);
 
         var response = new ChildResponse(child.Id, child.Name, child.BirthYear, child.Grade,
-            child.SchoolType, child.Gender, child.Interests, child.ProfileNotes, child.CreatedAt, 0, 0);
+            child.SchoolType, child.Gender, child.Interests, child.ProfileNotes,
+            child.AllowedContentRating, child.CreatedAt, 0, 0);
         return CreatedAtAction(nameof(Get), new { childId = child.Id }, response);
     }
 
@@ -105,6 +108,7 @@ public class ChildrenController(PuglingDbContext db, WalletService wallet, Accou
         // Neue Liste zuweisen (kein In-Place-Mutieren – JSON-Spalten-Fallstrick).
         if (dto.Interests is not null) child.Interests = [.. dto.Interests];
         if (dto.ProfileNotes is not null) child.ProfileNotes = dto.ProfileNotes;
+        if (dto.AllowedContentRating.HasValue) child.AllowedContentRating = dto.AllowedContentRating.Value;
         if (dto.Pin is not null)
         {
             child.Pin = string.IsNullOrEmpty(dto.Pin) ? "" : PinHasher.Hash(dto.Pin);

@@ -39,9 +39,11 @@ test("Vater erstellt Plan mit Position, Sohn arbeitet ihn ab, Punkte fließen", 
   await vater.getByRole("link", { name: "Neuer Plan", exact: true }).click();
   await expect(vater.getByRole("heading", { name: /Neuer Lehrplan/ })).toBeVisible();
   // Erst wählbar, wenn die Kinder-Liste geladen ist – sonst schlägt das Anlegen mit "Kind wählen" fehl.
+  // Das Kind per Id wählen, nicht per Position: die Liste ist nach Namen sortiert, und ein von einem
+  // anderen Spec angelegtes Kind würde sonst still den Index verschieben.
   const kindSelect = vater.getByRole("combobox", { name: "Kind" });
   await expect(kindSelect.locator("option")).not.toHaveCount(0);
-  await kindSelect.selectOption({ index: 0 });
+  await kindSelect.selectOption(CHILD.id);
   await vater.getByRole("button", { name: /Plan anlegen/ }).click();
   await expect(vater).toHaveURL(/\/vater\/plan\/\d+$/);
   await expect(vater.getByRole("heading", { name: /Übungen im Plan/ })).toBeVisible();

@@ -26,6 +26,7 @@ der Vater technisch meist auch diese Rolle, fachlich bleibt sie aber getrennt vo
 | [docs/uebungs-meta-und-versionierung.md](uebungs-meta-und-versionierung.md) | Metadaten, Versionierung und Vorfilterung von Katalog-Übungen. |
 | [docs/vokabel-funktionalitaeten-entwickler-tutorial.md](vokabel-funktionalitaeten-entwickler-tutorial.md) | Vokabel-Store, `ExerciseItem`s und Authoring-Flows. |
 | [docs/api-examples/catalog.md](api-examples/catalog.md) | Verifizierte Beispiel-Requests für Katalog-Endpunkte. |
+| [backend/Pugling.Agent.Creator](../backend/Pugling.Agent.Creator/README.md) | **KI-Creator**: Konsolen-Agent, der diese Rolle mit einem lokalen Sprachmodell ausfüllt und Übungen auf ein Kind zuschneidet. |
 
 Typische Creator-Frage: "Welche Übung existiert, wie wird sie gespeichert, und wie kann sie später in
 Plänen wiederverwendet werden?"

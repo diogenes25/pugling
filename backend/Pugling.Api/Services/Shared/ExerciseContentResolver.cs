@@ -13,12 +13,19 @@ namespace Pugling.Api.Services.Shared;
 /// verknüpft und zentral pflegbar. Legacy-Vokabeln (nur inline <see cref="VocabularyConfig.Items"/>)
 /// laufen weiterhin über den Provider.
 /// </summary>
-public class ExerciseContentResolver(PuglingDbContext db, ExerciseContentProvider provider, ExerciseTypeRegistry registry)
+public class ExerciseContentResolver(PuglingDbContext db, ExerciseContentProvider provider,
+    ExerciseTypeRegistry registry, MediaSelector media)
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
-    /// <summary>Die Inhalte einer Übung als verfahrensneutrale Item-Liste (mit Store-Auflösung für Vokabeln/Lückentext).</summary>
-    public async Task<IReadOnlyList<ContentItem>> ItemsOfAsync(Exercise exercise)
+    /// <summary>
+    /// Die Inhalte einer Übung als verfahrensneutrale Item-Liste (mit Store-Auflösung für Vokabeln/Lückentext).
+    /// <paramref name="childId"/> ist der <b>einzige</b> Weg, an dem Bilder ins Spiel kommen: nur mit einem Kind
+    /// lässt sich aus mehreren Darstellungen die passende wählen. Kind-neutrale Aufrufer (Vorschau, Auswertung,
+    /// Ziel-Berechnung) lassen ihn weg und bekommen dieselben Items ohne Bild – bewusst explizit statt implizit
+    /// über eine geladene Navigation, sonst hinge die Bebilderung an einem vergessenen <c>Include</c>.
+    /// </summary>
+    public async Task<IReadOnlyList<ContentItem>> ItemsOfAsync(Exercise exercise, int? childId = null)
     {
         // Die Verzweigung folgt der StoreResolution-Fähigkeit des Typs (enum-frei); die DB-Logik bleibt hier.
         switch (registry.ByKey(exercise.Type)?.StoreResolution)
@@ -27,7 +34,7 @@ public class ExerciseContentResolver(PuglingDbContext db, ExerciseContentProvide
                 var vocab = string.IsNullOrWhiteSpace(exercise.ConfigJson)
                     ? new VocabularyConfig()
                     : JsonSerializer.Deserialize<VocabularyConfig>(exercise.ConfigJson, JsonOptions) ?? new VocabularyConfig();
-                return await ResolveVocabularyItemsAsync(exercise, vocab.Direction);
+                return await ResolveVocabularyItemsAsync(exercise, vocab.Direction, childId);
 
             case StoreResolution.VocabRefs:
                 var cloze = string.IsNullOrWhiteSpace(exercise.ConfigJson)
@@ -51,8 +58,11 @@ public class ExerciseContentResolver(PuglingDbContext db, ExerciseContentProvide
     /// Ein optionaler Zeilen-Hinweis übersteuert den abgeleiteten Store-Hinweis (z. B. Artikel). Fehlt der
     /// Store-Eintrag, bleibt ein Platzhalter auf gleichem Index (Leitner-/Test-Fortschritt kippt nicht).
     /// Ohne Item-Zeilen (nicht migrierte/leere Übung) greift die zustandslose Config-Projektion als Fallback.
+    /// Ist ein <paramref name="childId"/> gegeben, wählt der <see cref="MediaSelector"/> zusätzlich je Item
+    /// das für dieses Kind passende Bild (ein Batch-Aufruf für die ganze Übung, kein N+1 je Karte).
     /// </summary>
-    private async Task<IReadOnlyList<ContentItem>> ResolveVocabularyItemsAsync(Exercise exercise, string? direction)
+    private async Task<IReadOnlyList<ContentItem>> ResolveVocabularyItemsAsync(Exercise exercise, string? direction,
+        int? childId)
     {
         var rows = await db.ExerciseItems.AsNoTracking()
             .Where(i => i.ExerciseId == exercise.Id)
@@ -64,14 +74,20 @@ public class ExerciseContentResolver(PuglingDbContext db, ExerciseContentProvide
         var ids = rows.Select(r => r.VocabularyId).Distinct().ToList();
         var byId = await db.Vocabulary.AsNoTracking().Where(v => ids.Contains(v.Id)).ToDictionaryAsync(v => v.Id);
 
+        var images = childId is { } cid
+            ? await media.SelectForItemsAsync(cid, [.. rows.Select(r => (r.Id, r.VocabularyId))])
+            : new Dictionary<int, SelectedMedia>();
+
         // Die Aussprache-Audioquelle gehört zum Wort und wird richtungsunabhängig mitgetragen (die Hör-Stufe
         // liest sie); WithDirection dreht Wort ↔ Übersetzung und bewahrt dabei ItemId/VocabularyId.
         return rows.Select((r, i) =>
         {
             if (!byId.TryGetValue(r.VocabularyId, out var v))
                 return new ContentItem(i, $"(Vokabel #{r.VocabularyId} fehlt)", "", [""], ItemId: r.Id, VocabularyId: r.VocabularyId);
+            var picked = images.GetValueOrDefault(r.Id);
             var item = new ContentItem(i, v.Word, v.Translation, [v.Translation],
-                r.Hint ?? v.Noun?.Article, AudioUrl: v.PronunciationAudioUrl, ItemId: r.Id, VocabularyId: r.VocabularyId);
+                r.Hint ?? v.Noun?.Article, AudioUrl: v.PronunciationAudioUrl, ItemId: r.Id, VocabularyId: r.VocabularyId,
+                ImageUrl: picked?.Url, ImageAlt: picked?.Alt);
             return ExerciseContentProvider.WithDirection(item, direction);
         }).ToList();
     }

@@ -73,7 +73,9 @@ public class ExercisePreviewService(ExerciseContentResolver content, AnswerGrade
     // PositionTestsController.ToItem.
     private static PreviewItem Present(ContentItem item, IExerciseType type, int stage, bool typed, IReadOnlyList<string>? choices)
     {
-        var (letterBoxLength, audioUrl) = type.StageFacets(item, stage);
+        // Kein Bild im Testmodus: die Auswahl hängt am Profil eines Kindes, der Vater probiert hier aber
+        // kind-neutral aus. Ein beliebiges Bild wäre irreführend – es zeigte nicht, was sein Sohn sieht.
+        var (letterBoxLength, audioUrl, _) = type.StageFacets(item, stage);
         return new PreviewItem(item.Index, item.Prompt, item.GapIndex,
             typed ? item.Hint : null,
             letterBoxLength,

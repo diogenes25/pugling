@@ -50,9 +50,146 @@ export interface ChildResponse {
   birthYear: number | null;
   grade: number | null;
   schoolType: string;
+  /** Freitext-Interessen: die Sprache des KI-Creators. Die gewichteten Tags stehen separat. */
+  interests: string[];
+  profileNotes: string | null;
+  /** Obergrenze der Bild-Eignung; nur der Vater darf sie heben. */
+  allowedContentRating: ContentRating;
   createdAt: string;
   coins: number;
   gems: number;
+}
+
+// ---- Bilder & Interessen (Individualisierung der Lerninhalte) ----
+
+/**
+ * Eignung eines Bildes. Aufsteigend geordnet – die Auswahl liefert einem Kind nie ein Asset über
+ * seiner Freigabe.
+ */
+export type ContentRating = "Everyone" | "Teen" | "Mature";
+
+/** Semantischer Auslieferungs-Slot einer Auflösung (der Client fragt nach Zweck, nicht nach Pixeln). */
+export type MediaPurpose = "Thumb" | "Card" | "Full" | "Hero";
+
+export type MediaKind = "Image" | "Audio" | "Video";
+export type MediaOrigin = "Unknown" | "Upload" | "Stock" | "Generated";
+
+/**
+ * Facette eines Interessen-Schlagworts. `Style` (Comic/Foto/Pixel-Art) liegt bewusst im selben
+ * Vokabular wie die Themen – bei der Bildauswahl verhält es sich gleich, nur schwächer gewichtet.
+ */
+export type InterestFacet =
+  | "Other" | "Franchise" | "Sport" | "Animal" | "Vehicle" | "Music" | "Hobby" | "Nature" | "Style";
+
+/** Ein Schlagwort der geteilten Taxonomie – Bilder *und* Kinder referenzieren dieselben Einträge. */
+export interface InterestTagResponse {
+  id: number;
+  slug: string;
+  label: string;
+  facet: InterestFacet;
+  synonyms: string[];
+  color: string | null;
+  mediaCount: number;
+  childCount: number;
+  createdAt: string;
+}
+
+export interface CreateInterestTagDto {
+  label: string;
+  slug?: string;
+  facet?: InterestFacet;
+  synonyms?: string[];
+}
+
+/** Ein gewichtetes Interesse des Kindes; negatives Gewicht = Abneigung (schließt Bilder hart aus). */
+export interface ChildInterestResponse {
+  tagId: number;
+  slug: string;
+  label: string;
+  facet: InterestFacet;
+  weight: number;
+  createdAt: string;
+}
+
+/** Eingabe beim Setzen: entweder eine bestehende `tagId` oder ein Label (wird bei Bedarf angelegt). */
+export interface ChildInterestInput {
+  weight: number;
+  tagId?: number | null;
+  label?: string | null;
+  facet?: InterestFacet | null;
+}
+
+/** Eine technische Ausprägung eines Bildes (dieselbe Darstellung, andere Auflösung/Format). */
+export interface MediaVariantResponse {
+  id: number;
+  purpose: MediaPurpose;
+  width: number;
+  height: number;
+  format: string;
+  url: string;
+  bytes: number | null;
+}
+
+/** Eine *Darstellung* eines Motivs („laufendes Einhorn im Comic-Stil") samt Auflösungen und Tags. */
+export interface MediaAssetResponse {
+  id: number;
+  key: string;
+  /** Was zu sehen ist – zugleich Alt-Text für die Barrierefreiheit. */
+  description: string;
+  kind: MediaKind;
+  rating: ContentRating;
+  license: string | null;
+  attribution: string | null;
+  origin: MediaOrigin;
+  source: string | null;
+  placeholder: string | null;
+  variants: MediaVariantResponse[];
+  /** Slugs der verknüpften Interessen-/Stil-Schlagworte. */
+  tags: string[];
+  createdAt: string;
+}
+
+export interface CreateMediaVariantDto {
+  purpose: MediaPurpose;
+  url: string;
+  width: number;
+  height: number;
+  format?: string;
+}
+
+export interface CreateMediaAssetDto {
+  description: string;
+  key?: string;
+  rating?: ContentRating;
+  origin?: MediaOrigin;
+  source?: string | null;
+  license?: string | null;
+  attribution?: string | null;
+  tags?: string[];
+  variants?: CreateMediaVariantDto[];
+}
+
+/** Eine Bild-Zuordnung an einem Träger (Vokabel/Item/Übung) samt des zugeordneten Assets. */
+export interface MediaLinkResponse {
+  id: number;
+  /** Redaktioneller Rang – bricht nur Gleichstände der Interessens-Bewertung. */
+  weight: number;
+  asset: MediaAssetResponse;
+}
+
+/** Wo ein Asset zugeordnet ist (Rückrichtung; `carrier` = vocabulary | item | exercise). */
+export interface MediaUsage {
+  carrier: string;
+  carrierId: number;
+  label: string;
+  weight: number;
+}
+
+/** Das nach „anderes Bild" gültige Bild. */
+export interface SelectedMediaResponse {
+  mediaAssetId: number;
+  imageUrl: string;
+  imageAlt: string;
 }
 
 export interface CreateChildDto {
@@ -61,6 +198,11 @@ export interface CreateChildDto {
   birthYear?: number | null;
   grade?: number | null;
   schoolType?: SchoolType;
+  /** Freitext-Interessen (Sprache des KI-Creators); die gewichteten Tags laufen über eigene Endpunkte. */
+  interests?: string[];
+  profileNotes?: string | null;
+  /** Obergrenze der Bild-Eignung. Ohne Angabe die strengste Stufe. */
+  allowedContentRating?: ContentRating;
 }
 
 // ---- Katalog: Fächer, Kapitel, Übungssuche ----
@@ -606,6 +748,12 @@ export interface PracticeCard {
   choices: string[] | null;
   /** Nur bei der Hör-Stufe: Aussprache-Audioquelle der Vokabel (Wort-Text wird dann ausgeblendet). */
   audioUrl: string | null;
+  /**
+   * Das für dieses Kind ausgewählte Bild. Nur auf nicht-getippten Stufen gesetzt – auf getippten
+   * verriete ein Motiv die Lösung, deshalb liefert der Server dort weder URL noch Alt-Text.
+   */
+  imageUrl: string | null;
+  imageAlt: string | null;
 }
 
 /** Antwort zu einer Übungskarte: getippt (`givenAnswer`) oder Selbsteinschätzung (`wasKnown`). */
@@ -984,6 +1132,9 @@ export interface TestItem {
   choices: string[] | null;
   /** Nur bei der Hör-Stufe: Aussprache-Audioquelle der Vokabel (Wort-Text wird dann ausgeblendet). */
   audioUrl: string | null;
+  /** Wie bei der Übungskarte: nur auf nicht-getippten Stufen gesetzt. */
+  imageUrl: string | null;
+  imageAlt: string | null;
 }
 
 /**

@@ -1,0 +1,42 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>Pugling.Agent.Creator</RootNamespace>
+    <AssemblyName>pugling-creator</AssemblyName>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+    <!-- Die PIN gehört nicht in appsettings.json: dotnet user-secrets set "Pugling:Pin" "0000" -->
+    <UserSecretsId>pugling-agent-creator</UserSecretsId>
+  </PropertyGroup>
+
+  <!-- Die Vertrags-Namespaces projektweit sichtbar (wie in Pugling.Api/Pugling.Client). -->
+  <ItemGroup>
+    <Using Include="Pugling.Contracts" />
+    <Using Include="Pugling.Contracts.Creator" />
+    <Using Include="Pugling.Contracts.Supervisor" />
+    <Using Include="Pugling.Contracts.Student" />
+    <Using Include="Pugling.Contracts.Shared" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.AI" Version="10.8.1" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="10.0.10" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.10" />
+    <PackageReference Include="OllamaSharp" Version="5.4.30" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Pugling.Client\Pugling.Client.csproj" />
+    <ProjectReference Include="..\Pugling.Contracts\Pugling.Contracts.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="appsettings.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>

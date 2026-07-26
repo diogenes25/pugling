@@ -10,6 +10,9 @@ namespace Pugling.Api.Services.Shared;
 /// bei Lückentexten gesetzt (die {{n}}-Nummer der Lücke). <paramref name="ItemId"/> und
 /// <paramref name="VocabularyId"/> tragen (nur bei Vokabelübungen) die stabile Item- bzw. Store-Identität –
 /// die Grundlage für den je Kind/Item protokollierten Lernfortschritt; bei allen anderen Typen <c>null</c>.
+/// <paramref name="ImageUrl"/>/<paramref name="ImageAlt"/> sind das für <b>dieses Kind</b> ausgewählte Bild
+/// (siehe <see cref="MediaSelector"/>) – nur gefüllt, wenn der Auflöser mit einem Kind aufgerufen wurde;
+/// kind-neutrale Pfade (Vorschau, Auswertung) lassen sie leer.
 /// </summary>
 public record ContentItem(
     int Index,
@@ -20,7 +23,9 @@ public record ContentItem(
     int? GapIndex = null,
     string? AudioUrl = null,
     int? ItemId = null,
-    int? VocabularyId = null);
+    int? VocabularyId = null,
+    string? ImageUrl = null,
+    string? ImageAlt = null);
 
 /// <summary>
 /// Dünne Fassade über die <see cref="ExerciseTypeRegistry"/>: projiziert die Inhalte einer Katalog-<see cref="Exercise"/>
@@ -53,6 +58,8 @@ public class ExerciseContentProvider(ExerciseTypeRegistry registry)
     // der Artikel-Hinweis ebenso (er gehörte zum nun abgefragten Wort). Die Aussprache-Audioquelle entfällt
     // ebenfalls: sie liest das Wort vor, das nach dem Tausch die Lösung ist – sonst würde die Hör-Stufe die
     // Antwort vorsprechen (Anti-Schummel). Rückwärts-Items werden in der Hör-Stufe damit textlich gezeigt.
+    // Das Bild bleibt: es zeigt die *Bedeutung* und ist damit richtungsunabhängig; ob es überhaupt gezeigt
+    // werden darf, entscheidet ohnehin die Stufe (StageFacets), nicht die Richtung.
     private static ContentItem Swap(ContentItem it) =>
         it with { Prompt = it.Answer, Answer = it.Prompt, AcceptedAnswers = [it.Prompt], Hint = null, AudioUrl = null };
 }

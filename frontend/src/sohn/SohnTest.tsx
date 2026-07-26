@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { api, errorMessage } from "../lib/api";
 import { useSohn } from "./SohnApp";
@@ -58,11 +58,21 @@ export function SohnTest() {
     } catch (e) { setError(errorMessage(e)); }
   }
 
+  /**
+   * Merkt, für welche Position bereits ein Versuch gestartet wurde. Nötig, weil ein Effekt
+   * <b>zweimal laufen kann</b> (React-StrictMode im Dev, generell bei einem Remount) – ein
+   * `alive`-Flag verhindert dann zwar das Setzen von State, aber nicht den bereits abgeschickten
+   * POST. Ergebnis wären zwei Klausur-Versuche: der zweite gewinnt die Anzeige, die erste Antwort
+   * landet aber noch auf dem ersten – der Test bliebe eine Frage vor dem Ende hängen.
+   */
+  const startedFor = useRef<string | null>(null);
+
   useEffect(() => {
     if (!planId || !positionId) { nav("/sohn"); return; }
-    let alive = true;
-    (async () => { if (alive) await start(); })();
-    return () => { alive = false; };
+    const key = `${planId}:${positionId}`;
+    if (startedFor.current === key) return;
+    startedFor.current = key;
+    void start();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [planId, positionId, nav]);
 

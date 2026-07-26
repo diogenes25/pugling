@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { api, errorMessage } from "../lib/api";
+import { ApiError, api, errorMessage } from "../lib/api";
 import { useSohn } from "./SohnApp";
 import { LetterBoxes } from "../components/LetterBoxes";
 import { AudioButton } from "../components/AudioButton";
@@ -153,6 +153,26 @@ export function SohnPractice() {
   const card = cards[idx];
   const typed = card.reveal === null; // getippte Stufe → Eingabe; sonst Flip-Karte (Selbsteinschätzung)
   const submitTyped = () => { if (typedAnswer.trim()) judge(card, { givenAnswer: typedAnswer }); };
+
+  /**
+   * „Anderes Bild": das abgelehnte kommt nie wieder. Die neue Wahl wird lokal in die Karte gespiegelt,
+   * damit der Wechsel sofort sichtbar ist – ein Neuladen der Sitzung würde den Fortschritt anfassen.
+   * Ohne Alternative antwortet der Server 409; dann bleibt das Bild stehen und wir sagen es nur.
+   */
+  async function reshuffleImage() {
+    if (!planId || !session.current) return;
+    const at = idx;
+    try {
+      // Nicht `next` nennen – so heißt die Karten-Weiterschaltung oben.
+      const picked = await api.reshuffleCardImage(planId, positionId, session.current.id, cards[at].itemIndex);
+      setCards((prev) => prev.map((c, i) =>
+        i === at ? { ...c, imageUrl: picked.imageUrl, imageAlt: picked.imageAlt } : c));
+    } catch (e) {
+      setToast(e instanceof ApiError && e.code === "media_no_alternative"
+        ? "Mehr Bilder gibt es dafür nicht 🙂"
+        : errorMessage(e));
+    }
+  }
   return (
     <div className="sohn-body">
       <div className="row">
@@ -171,6 +191,19 @@ export function SohnPractice() {
       <div className="flash">
         <div className="fcard">
           <div className="lang">Aufgabe</div>
+          {/*
+            Das Bild kommt nur auf Stufen, auf denen es die Lösung nicht verraten kann – der Server
+            entscheidet das, das Frontend rendert nur, was da ist. Es steht über dem Wort, weil es beim
+            Einprägen hilft (Bild + Wort zusammen), nicht als Dekoration darunter.
+          */}
+          {card.imageUrl && (
+            <CardImage
+              key={card.imageUrl}
+              url={card.imageUrl}
+              alt={card.imageAlt ?? ""}
+              onReshuffle={reshuffleImage}
+            />
+          )}
           {/* Hör-Stufe: Wort vorlesen statt zeigen (sonst wäre „Hören → tippen" keine Höraufgabe). */}
           {card.audioUrl
             ? <AudioButton url={card.audioUrl} label="🔊 Vokabel anhören" />
@@ -226,5 +259,37 @@ export function SohnPractice() {
         <p className="sub" style={{ textAlign: "center" }}>Nächste Fälligkeit: {lastOutcome.dueOn}</p>
       )}
     </div>
+  );
+}
+
+/**
+ * Das Bild zur Karte. Es ist Teil der Lernhilfe, nicht Deko – deshalb bekommt es Platz und einen
+ * Alt-Text (der Server liefert ihn nur mit, wenn er die Lösung nicht verrät).
+ *
+ * Der „anderes Bild"-Knopf ist bewusst klein und unaufdringlich: Bildkonstanz ist beim Vokabellernen
+ * der Merkeffekt, das Wechseln ist die Ausnahme. Genau deshalb ist es aber wichtig, dass es sie gibt –
+ * ein Motiv, das ein Kind nicht mag, arbeitet gegen das Lernen.
+ */
+function CardImage({ url, alt, onReshuffle }: { url: string; alt: string; onReshuffle: () => void }) {
+  const [busy, setBusy] = useState(false);
+  return (
+    <figure style={{ margin: "0 0 10px", textAlign: "center" }}>
+      <img
+        src={url}
+        alt={alt}
+        style={{ maxWidth: "100%", maxHeight: 180, objectFit: "contain", borderRadius: 12 }}
+      />
+      <figcaption>
+        <button
+          type="button"
+          className="btn ghost small"
+          style={{ width: "auto", marginTop: 4 }}
+          disabled={busy}
+          onClick={async () => { setBusy(true); try { await onReshuffle(); } finally { setBusy(false); } }}
+        >
+          🔄 anderes Bild
+        </button>
+      </figcaption>
+    </figure>
   );
 }

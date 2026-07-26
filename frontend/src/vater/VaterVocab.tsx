@@ -9,6 +9,7 @@ import type {
 import { GENUS, GENUS_LABEL, POS, POS_LABEL } from "../lib/vocab";
 import { confirmAction } from "../lib/ui";
 import { PAGE_SIZE, Pager, SortableTh } from "../components/ListControls";
+import { VocabMediaPanel } from "./VocabMediaPanel";
 
 interface PairRow { word: string; translation: string; }
 const emptyPair = (): PairRow => ({ word: "", translation: "" });
@@ -273,6 +274,7 @@ function VocabRow({ v, onChanged, childId, globalTags, reloadGlobalTags, childTa
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [showTags, setShowTags] = useState(false);
+  const [showMedia, setShowMedia] = useState(false);
 
   async function save() {
     setBusy(true); setErr(null);
@@ -343,6 +345,10 @@ function VocabRow({ v, onChanged, childId, globalTags, reloadGlobalTags, childTa
                 aria-expanded={showTags} onClick={() => setShowTags((s) => !s)}>
                 🏷️ Tags{tagCount > 0 ? ` (${tagCount})` : ""}
               </button>
+              <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }}
+                aria-expanded={showMedia} onClick={() => setShowMedia((s) => !s)}>
+                🖼️ Bilder
+              </button>
               <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} disabled={busy} onClick={() => setEditing(true)}>Bearbeiten</button>
               <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} disabled={busy} onClick={remove}>Löschen</button>
             </td>
@@ -365,6 +371,13 @@ function VocabRow({ v, onChanged, childId, globalTags, reloadGlobalTags, childTa
             <TagEditor v={v} onGlobalChanged={() => { onChanged(); reloadGlobalTags(); }}
               childId={childId} globalTags={globalTags} childTagOptions={childTagOptions}
               reloadChildTags={reloadChildTags} />
+          </td>
+        </tr>
+      )}
+      {showMedia && !editing && (
+        <tr>
+          <td colSpan={5} style={{ background: "rgba(255,255,255,.02)" }}>
+            <VocabMediaPanel vocabularyId={v.id} word={v.word} />
           </td>
         </tr>
       )}

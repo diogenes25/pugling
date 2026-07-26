@@ -15,7 +15,7 @@ Response — `HTTP 200`:
     "creatorName": "Papa",
     "permission": "Owner",
     "grantedByFatherId": 1,
-    "createdAt": "2026-07-26T04:55:51.271246"
+    "createdAt": "2026-07-26T14:10:21.8424955"
   }
 ]
 ```

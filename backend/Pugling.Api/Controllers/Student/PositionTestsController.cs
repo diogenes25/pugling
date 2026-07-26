@@ -33,8 +33,9 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
 
     private Task<StudyPlan?> GetPlan(int planId) => db.StudyPlans.FirstOrDefaultAsync(p => p.Id == planId);
 
+    // Der Plan kommt mit, weil die Bebilderung das Kind braucht (die Auswahl hängt an seinem Profil).
     private Task<PlanPosition?> GetPosition(int planId, int positionId) =>
-        db.PlanPositions.Include(p => p.Exercise)
+        db.PlanPositions.Include(p => p.Exercise).Include(p => p.StudyPlan)
             .FirstOrDefaultAsync(p => p.Id == positionId && p.StudyPlanId == planId);
 
     private Task<TestAttempt?> LoadAttempt(int planId, int positionId, int attemptId) =>
@@ -43,9 +44,10 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
 
     private static TestItem ToItem(IReadOnlyList<ContentItem> items, ContentItem item, IExerciseType type, int stage, bool typed)
     {
-        // Geteilte Anti-Cheat-Projektion (Reveal/Länge/Hint/Choices/Audio je Stufe) – dieselbe Regel wie die Übungskarte.
+        // Geteilte Anti-Cheat-Projektion (Reveal/Länge/Hint/Choices/Audio/Bild je Stufe) – dieselbe Regel wie die Übungskarte.
         var f = PositionPlayService.CardFacets(items, item, type, stage, typed);
-        return new TestItem(item.Index, item.Prompt, stage, f.Reveal, f.AnswerLength, f.Hint, f.Choices, f.AudioUrl);
+        return new TestItem(item.Index, item.Prompt, stage, f.Reveal, f.AnswerLength, f.Hint, f.Choices, f.AudioUrl,
+            f.ImageUrl, f.ImageAlt);
     }
 
     /// <summary>
@@ -66,7 +68,7 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
         var pos = await GetPosition(planId, positionId);
         if (pos?.Exercise is null) return NotFound();
 
-        var items = await play.ItemsOfAsync(pos);
+        var items = await play.ItemsOfAsync(pos, pos.StudyPlan?.ChildId);
         var poolSize = play.PoolSize(pos, items.Count);
         if (poolSize == 0) return this.ProblemWithCode(ApiErrors.NoCheckableContent, "The exercise contains no checkable content.");
 
@@ -129,7 +131,7 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
         var pos = await GetPosition(planId, positionId);
         if (pos?.Exercise is null) return NotFound();
 
-        var items = await play.ItemsOfAsync(pos);
+        var items = await play.ItemsOfAsync(pos, pos.StudyPlan?.ChildId);
         if (play.TypeOf(pos.Exercise) is not { } type)
             return this.ProblemWithCode(ApiErrors.UnknownExerciseType, "The exercise has an unknown type.");
         var typed = type.IsTypedStage(attempt.StageValue);
@@ -162,7 +164,7 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
         var pos = await GetPosition(planId, positionId);
         if (pos?.Exercise is null) return NotFound();
 
-        var items = await play.ItemsOfAsync(pos);
+        var items = await play.ItemsOfAsync(pos, pos.StudyPlan?.ChildId);
         if (play.TypeOf(pos.Exercise) is not { } type)
             return this.ProblemWithCode(ApiErrors.UnknownExerciseType, "The exercise has an unknown type.");
         var typed = type.IsTypedStage(attempt.StageValue);
@@ -225,7 +227,7 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
         var pos = await GetPosition(planId, positionId);
         if (pos?.Exercise is null) return NotFound();
 
-        var items = await play.ItemsOfAsync(pos);
+        var items = await play.ItemsOfAsync(pos, pos.StudyPlan?.ChildId);
         if (play.TypeOf(pos.Exercise) is not { } type)
             return this.ProblemWithCode(ApiErrors.UnknownExerciseType, "The exercise has an unknown type.");
         var typed = type.IsTypedStage(attempt.StageValue);

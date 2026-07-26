@@ -30,9 +30,13 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
     public IReadOnlyList<int> BoxIntervals(PlanPosition pos) =>
         pos.BoxIntervalDays is { Count: > 1 } custom ? custom : DefaultBoxIntervalDays;
 
-    /// <summary>Die Inhalts-Items der Übung dieser Position (Store-aufgelöst bei referenzierten Vokabeln).</summary>
-    public async Task<IReadOnlyList<ContentItem>> ItemsOfAsync(PlanPosition pos) =>
-        pos.Exercise is { } ex ? await content.ItemsOfAsync(ex) : [];
+    /// <summary>
+    /// Die Inhalts-Items der Übung dieser Position (Store-aufgelöst bei referenzierten Vokabeln).
+    /// <paramref name="childId"/> schaltet die Bebilderung frei – nur die spielenden Pfade (Übungskarte,
+    /// Testaufgabe) geben ihn mit; Auswertung und Ziel-Berechnung brauchen kein Bild und sparen die Auswahl.
+    /// </summary>
+    public async Task<IReadOnlyList<ContentItem>> ItemsOfAsync(PlanPosition pos, int? childId = null) =>
+        pos.Exercise is { } ex ? await content.ItemsOfAsync(ex, childId) : [];
 
     /// <summary>
     /// Darf der Sohn diesen Plan heute spielen (üben/testen)? Nur ein aktiver Plan innerhalb seiner
@@ -101,16 +105,21 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
     /// Buchstabenkästchen geben die Länge, die Hör-Stufe die Audioquelle, Multiple-Choice die Auswahl.
     /// Geteilt von Übungskarte (<c>PracticeCard</c>) und Testaufgabe (<c>TestItem</c>).
     /// </summary>
-    public static (string? Hint, int? AnswerLength, string? Reveal, IReadOnlyList<string>? Choices, string? AudioUrl)
+    public static (string? Hint, int? AnswerLength, string? Reveal, IReadOnlyList<string>? Choices,
+        string? AudioUrl, string? ImageUrl, string? ImageAlt)
         CardFacets(IReadOnlyList<ContentItem> items, ContentItem item, IExerciseType type, int stage, bool typed)
     {
-        var (letterBoxLength, audioUrl) = type.StageFacets(item, stage);
+        var (letterBoxLength, audioUrl, imageUrl) = type.StageFacets(item, stage);
         return (
             typed ? item.Hint : null,
             letterBoxLength,
             typed ? null : item.Answer,
             type.Choices(items, item, stage),
-            audioUrl);
+            audioUrl,
+            imageUrl,
+            // Der Alt-Text folgt dem Bild: ohne Bild kein Alt-Text, sonst leakte die Beschreibung
+            // („Ein Einhorn läuft") auf einer getippten Stufe genau das, was das Bild verrät hätte.
+            imageUrl is null ? null : item.ImageAlt);
     }
 
     /// <summary>

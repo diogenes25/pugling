@@ -3,18 +3,25 @@ namespace Pugling.Contracts.Supervisor;
 // Vertrag rund um das betreute Kind: Stammdaten inkl. übungsunabhängigem Profil, die Ko-Supervisoren
 // (ein Student kann mehrere haben) und das gemeinsame Wallet samt manueller Vater-Buchung.
 
-/// <summary>Ein betreutes Kind samt Profil und Kontostand beider Währungen.</summary>
+/// <summary>
+/// Ein betreutes Kind samt Profil und Kontostand beider Währungen. <c>Interests</c> ist der <b>freie</b>
+/// Teil des Profils (Sprache des KI-Creators); die gewichteten, referenzierten Interessen für die
+/// Bildauswahl stehen unter <c>children/{id}/interests</c>. <c>AllowedContentRating</c> ist die
+/// Obergrenze der Bild-Eignung – nur der Supervisor darf sie heben.
+/// </summary>
 public record ChildResponse(int Id, string Name, int? BirthYear, int? Grade,
     SchoolTypes SchoolType, Gender Gender, IReadOnlyList<string> Interests, string? ProfileNotes,
-    DateTime CreatedAt, int Coins, int Gems);
+    ContentRating AllowedContentRating, DateTime CreatedAt, int Coins, int Gems);
 
 /// <summary>Eingabe zum Anlegen eines Kindes.</summary>
 public record CreateChildDto(string Name, int? BirthYear, int? Grade, SchoolTypes? SchoolType, string? Pin,
-    Gender? Gender = null, List<string>? Interests = null, string? ProfileNotes = null);
+    Gender? Gender = null, List<string>? Interests = null, string? ProfileNotes = null,
+    ContentRating? AllowedContentRating = null);
 
 /// <summary>Partielle Änderung eines Kindes; weggelassene Felder bleiben unverändert.</summary>
 public record UpdateChildDto(string? Name, int? BirthYear, int? Grade, SchoolTypes? SchoolType, string? Pin,
-    Gender? Gender = null, List<string>? Interests = null, string? ProfileNotes = null);
+    Gender? Gender = null, List<string>? Interests = null, string? ProfileNotes = null,
+    ContentRating? AllowedContentRating = null);
 
 /// <summary>Eine Betreuungs-Beziehung: welcher Supervisor betreut den Studenten seit wann.</summary>
 public record SupervisorLinkResponse(int SupervisorId, string SupervisorName, SupervisorRelation Relation, DateTime CreatedAt);

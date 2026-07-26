@@ -203,10 +203,13 @@ Die Vokabeln sind lehrbuch-**fest** → in den Store (`lookup`/`batch`), Übung 
 **d) Bauen & verifizieren:** wie in §2–5 (Katalog-Übung mit gesetzten Metadaten `GradeMin/Max`, `SchoolTypes`,
 `Source`, `Description` anlegen → `study-plans` + Positionen → `preview`-Endpunkte ohne Nebenwirkung prüfen).
 
-> **Status:** Das Datenfundament (Profil + Lehrbücher) steht in der API. Der Generator selbst ist noch **nicht**
-> eingebaut – er läuft als **externer Agent**, der diese Endpunkte treibt (keine LLM-Abhängigkeit im Backend).
-> Ein optionaler read-only „Generierungs-Brief"-Endpunkt (Profil + passender Katalog-Kontext gebündelt) ist als
-> Folge-Schritt vorgemerkt.
+> **Status:** Das Datenfundament (Profil + Lehrbücher) steht in der API, und für die **Creator-Seite** gibt es
+> den Generator inzwischen: [backend/Pugling.Agent.Creator](../backend/Pugling.Agent.Creator/README.md) erzeugt
+> profil-getriebene Übungen über genau diese Endpunkte – als **externer Agent** (keine LLM-Abhängigkeit im
+> Backend). Er baut sein „Briefing" selbst aus Profil + Lehrbuch + Katalog zusammen; ein eigener read-only
+> Brief-Endpunkt hat sich damit vorerst erübrigt. **Offen bleibt die Supervisor-Seite**: den Plan samt
+> Positionen, Zielen und Punkten generiert weiterhin niemand automatisch (§1–5 beschreiben, wie ein Agent
+> das täte).
 
 ---
 

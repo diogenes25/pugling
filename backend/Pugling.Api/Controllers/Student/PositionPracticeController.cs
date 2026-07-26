@@ -24,7 +24,7 @@ namespace Pugling.Api.Controllers.Student;
 [ServiceFilter(typeof(PlanOwnershipFilter))]
 public class PositionPracticeController(PuglingDbContext db, PositionPlayService play, ScoringService scoring,
     PositionProgressService progress, GamificationService gamification, AnswerGrader grader,
-    ItemProgressService itemProgress, ILogger<PositionPracticeController> logger)
+    ItemProgressService itemProgress, MediaSelector selector, ILogger<PositionPracticeController> logger)
     : ControllerBase
 {
     /// <summary>Obergrenze der pro Heartbeat anrechenbaren Sekunden (Anti-Zeit-Cheat).</summary>
@@ -36,8 +36,9 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
 
     private Task<StudyPlan?> GetPlan(int planId) => db.StudyPlans.FirstOrDefaultAsync(p => p.Id == planId);
 
+    // Der Plan kommt mit, weil die Bebilderung das Kind braucht (die Auswahl hängt an seinem Profil).
     private Task<PlanPosition?> GetPosition(int planId, int positionId) =>
-        db.PlanPositions.Include(p => p.Exercise)
+        db.PlanPositions.Include(p => p.Exercise).Include(p => p.StudyPlan)
             .FirstOrDefaultAsync(p => p.Id == positionId && p.StudyPlanId == planId);
 
     private Task<PracticeSession?> GetSession(int planId, int positionId, int sessionId) =>
@@ -102,7 +103,7 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         var item = items[index];
         var f = PositionPlayService.CardFacets(items, item, type, stage, typed);
         return new PracticeCard(index, stage, type.Key, item.Prompt,
-            f.Hint, f.AnswerLength, f.Reveal, f.Choices, f.AudioUrl);
+            f.Hint, f.AnswerLength, f.Reveal, f.Choices, f.AudioUrl, f.ImageUrl, f.ImageAlt);
     }
 
     /// <summary>
@@ -124,7 +125,7 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         var pos = await GetPosition(planId, positionId);
         if (pos?.Exercise is null) return NotFound();
 
-        var items = await play.ItemsOfAsync(pos);
+        var items = await play.ItemsOfAsync(pos, pos.StudyPlan?.ChildId);
         if (play.TypeOf(pos.Exercise) is not { } type)
             return this.ProblemWithCode(ApiErrors.UnknownExerciseType, "The exercise has an unknown type.");
         var stage = PositionPlayService.StageForDay(pos, plan, session.Day, type);
@@ -133,6 +134,37 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         // Eingefrorene Reihenfolge; seit dem Start entfernte Items (Item-CRUD) überspringen.
         return session.Order.Where(i => i >= 0 && i < items.Count)
             .Select(i => BuildCard(type, stage, typed, items, i)).ToList();
+    }
+
+    /// <summary>
+    /// „Anderes Bild" für eine Karte. Bewusst hier und nicht beim Kind adressiert: welcher Träger die
+    /// Wahl hält – die übungslokale Übersteuerung oder die Store-Vokabel – ergibt sich erst aus der
+    /// Genauigkeits-Kaskade, die nur der Server kennt. Der Client hat nur die Karte vor sich.
+    /// <para>
+    /// Das abgelehnte Bild kommt für diesen Träger nie wieder. Gibt es keine Alternative, bleibt alles
+    /// unverändert (<c>409 media_no_alternative</c>) statt die Karte bildlos zurückzulassen.
+    /// </para>
+    /// </summary>
+    [HttpPost("{sessionId:int}/cards/{itemIndex:int}/image/reshuffle")]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<ActionResult<SelectedMediaResponse>> ReshuffleImage(int planId, int positionId,
+        int sessionId, int itemIndex, CancellationToken ct)
+    {
+        var session = await GetSession(planId, positionId, sessionId);
+        if (session is null) return NotFound();
+        var pos = await GetPosition(planId, positionId);
+        if (pos?.Exercise is null || pos.StudyPlan is null) return NotFound();
+
+        var items = await play.ItemsOfAsync(pos, pos.StudyPlan.ChildId);
+        if (items.FirstOrDefault(i => i.Index == itemIndex) is not { ItemId: { } itemId, VocabularyId: { } vocabId })
+            return NotFound();
+
+        var picked = await selector.ReshuffleForItemAsync(pos.StudyPlan.ChildId, itemId, vocabId, ct: ct);
+        if (picked is null)
+            return this.ProblemWithCode(ApiErrors.MediaNoAlternative, "There is no other image available for this card.");
+
+        return new SelectedMediaResponse(picked.MediaAssetId, picked.Url, picked.Alt);
     }
 
     /// <summary>
@@ -151,7 +183,7 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         var pos = await GetPosition(planId, positionId);
         if (pos?.Exercise is null) return NotFound();
 
-        var items = await play.ItemsOfAsync(pos);
+        var items = await play.ItemsOfAsync(pos, pos.StudyPlan?.ChildId);
         if (play.TypeOf(pos.Exercise) is not { } type)
             return this.ProblemWithCode(ApiErrors.UnknownExerciseType, "The exercise has an unknown type.");
         var stage = PositionPlayService.StageForDay(pos, plan, session.Day, type);
@@ -192,7 +224,7 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         // Info-Modus: freies Üben ohne jegliches Lernfeedback – nichts protokollieren, nichts bepunkten.
         if (session.Mode == PlayMode.Info) return NoContent();
 
-        var items = await play.ItemsOfAsync(pos);
+        var items = await play.ItemsOfAsync(pos, pos.StudyPlan?.ChildId);
         if (dto.ItemIndex < 0 || dto.ItemIndex >= play.PoolSize(pos, items.Count))
             return this.ProblemWithCode(ApiErrors.NotFound, "The content does not belong to this position.");
         var item = items[dto.ItemIndex];

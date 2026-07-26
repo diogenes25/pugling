@@ -394,6 +394,14 @@ GET /api/v1/creator/exercises/13/preview
 Selbsteinschätzung bis „Hören → tippen"). `typed: true` heißt: Es gibt eine echte
 Tipp-Prüfung. So sieht der Creator, was das Kind später sehen wird — ohne Seiteneffekt.
 
+Die Vorschau gibt **keine Lösungen** heraus: Antworten erscheinen weder als Feld noch im
+`reveal` (das ist stufenabhängig und bleibt in der Vorschau leer). Nachprüfbar mit einer
+Cloze-/Matching-Übung — die Musterlösungen tauchen im Response-Body nicht auf.
+
+> **Ausnahme Essay:** Der Typ hat keine prüfbaren Einzelaufgaben (nur einen Schreibauftrag),
+> deshalb antwortet die Vorschau mit `400 no_checkable_content`. Der Auftrag selbst lässt sich
+> über das normale `GET …/essays/{id}` lesen.
+
 ---
 
 ## 10. Die 12 Übungstypen im Überblick
@@ -426,6 +434,52 @@ wählt):
 | **List** | `/list` | Auswendig-Liste (geordnet/ungeordnet) · hat `/check` |
 | **Birkenbihl** | `/birkenbihl` | Wort-für-Wort-Dekodierung (reine Inhaltsübung, kein Abfragen) |
 
+Bis auf **Birkenbihl** legt man jeden Typ in **einem** POST an: `title`, `orderIndex`,
+`rewardPoints` und die typ-spezifische `config`.
+
+### Sonderfall Birkenbihl: erst anlegen, dann dekodieren
+
+Die Sätze einer Birkenbihl-Übung lassen sich **nicht** vollständig inline mitgeben — jeder Satz
+braucht seine Wort-für-Wort-`decoding`, und die erzeugt der Server. Ein POST mit Sätzen ohne
+`decoding` scheitert:
+
+```http
+POST …/chapters/7/birkenbihl
+{ "config": { "learningLang": "en", "nativeLang": "de",
+              "sentences": [ { "learningSentence": "I go to school every day.", … } ] } }
+→ 400  validation_error
+"Config.Sentences[0].Decoding": [ "The Decoding field is required." ]
+```
+
+Der vorgesehene Weg ist zweistufig — Übung **leer** anlegen, dann Sätze einzeln über die
+Auto-Dekodierung anhängen:
+
+```http
+POST …/chapters/7/birkenbihl
+{ "title": "…", "orderIndex": 10, "rewardPoints": 15,
+  "config": { "learningLang": "en", "nativeLang": "de", "sentences": [] } }
+→ 201  { "id": 22, "config": { "nextSentenceId": 1, "nextWordId": 1, "sentences": [] } }
+
+POST …/birkenbihl/22/sentences
+{ "learningSentence": "I go to school every day.",
+  "naturalTranslation": "Ich gehe jeden Tag zur Schule." }
+→ 201 {
+  "sentenceId": 1,
+  "result": [
+    { "wordId": 1, "learningWord": "I",  "gloss": null,    "vocabularyId": null },
+    { "wordId": 2, "learningWord": "go", "gloss": "gehen", "vocabularyId": 2,
+      "_self": "/api/v1/creator/vocabulary/2" },
+    …
+  ]
+}
+```
+
+Der Server tokenisiert den Satz und schlägt jedes Wort im Vokabelspeicher nach: Treffer bekommen
+Glosse + `vocabularyId`, **unbekannte Wörter kommen mit leerer Glosse** zurück (kein Fehler —
+sie lassen sich später per `PUT …/birkenbihl/{id}/words/{wordId}` nachziehen). Bei mehrdeutigen
+Wörtern liefert die Antwort zusätzlich `candidates` zur Auswahl. Die `wordId` ist **übungsweit**
+eindeutig, damit der Austausch-Endpunkt ein Wort ohne Satz-Segment eindeutig trifft.
+
 Die **vollständige Typ-Referenz** mit vollständigen Config-Schemata und Beispiel-Requests für
 jeden Typ steht in [wiki/03 · Übungstypen](../wiki/03-uebungstypen.md). Willst du einen
 **neuen** Übungstyp bauen, folge dem etablierten Muster (ein Controller je Typ, kein
@@ -443,9 +497,15 @@ POST /api/v1/creator/tags
 { "name": "Klausur Zelle", "childId": 1 }
 ```
 
-Tags sind (anders als der übrige Katalog) kind-skopiert, wenn eine `childId` mitgegeben wird —
-so lässt sich pro Kind ein eigener Wiederholungsfokus setzen, ohne den geteilten Katalog zu
+Tags sind (anders als der übrige Katalog) **kind-skopiert** — eine bewusste Abweichung, damit
+sich pro Kind ein eigener Wiederholungsfokus setzen lässt, ohne den geteilten Katalog zu
 verändern.
+
+> **Achtung, gilt auch für den reinen Creator:** `childId` ist **Pflicht**, und der Aufrufer muss
+> Zugriff auf dieses Kind haben. Herr Schmidt als reiner Lehrer betreut kein Kind — für ihn
+> antwortet sowohl `POST /creator/tags` (ohne bzw. mit fremder `childId`) als auch
+> `GET /creator/tags?childId=…` mit `403 forbidden`. Taggen ist damit faktisch dem **Supervisor**
+> vorbehalten, obwohl der Endpunkt unter der Creator-Taxonomie liegt.
 
 ---
 

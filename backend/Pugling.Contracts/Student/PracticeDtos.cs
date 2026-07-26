@@ -21,9 +21,12 @@ public record HeartbeatDto(int Seconds, bool Active);
 /// <summary>
 /// Eine Übungskarte – bewusst OHNE Lösung, außer bei Anzeige-/Selbsteinschätzungs-Stufen, die die
 /// Lösung per Design aufdecken (der Server bewertet, nie das Frontend).
+/// <c>ImageUrl</c>/<c>ImageAlt</c> tragen das <b>für dieses Kind ausgewählte</b> Bild; sie sind nur auf
+/// Stufen gesetzt, auf denen ein Motiv die Lösung nicht verraten kann, und fehlen sonst.
 /// </summary>
 public record PracticeCard(int ItemIndex, int Stage, string Type, string Prompt,
-    string? Hint, int? AnswerLength, string? Reveal, IReadOnlyList<string>? Choices, string? AudioUrl);
+    string? Hint, int? AnswerLength, string? Reveal, IReadOnlyList<string>? Choices, string? AudioUrl,
+    string? ImageUrl = null, string? ImageAlt = null);
 
 /// <summary>Die nächste Karte im Lern-Modus (oder <c>Done</c>), server-geführt über den Sitzungs-Cursor.</summary>
 public record NextResponse(PracticeCard? Card, bool Done, int Cursor, int Total);

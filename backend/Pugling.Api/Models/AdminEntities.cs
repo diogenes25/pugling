@@ -78,6 +78,19 @@ public class Child
     /// <summary>Optionaler Freitext für alles Unstrukturierte, das ein Generator kennen sollte
     /// (Lernschwächen, Motivationshinweise). Bewusst frei, damit ohne Schemaänderung nachtragbar.</summary>
     public string? ProfileNotes { get; set; }
+
+    /// <summary>
+    /// Gewichtete Interessen aus der kontrollierten Taxonomie (inkl. Abneigungen bei negativem Gewicht).
+    /// Ergänzt das freie <see cref="Interests"/>, ersetzt es nicht: Freitext ist die Sprache des
+    /// KI-Creators, referenzierte Tags sind die Grundlage der maschinellen Bildauswahl.
+    /// </summary>
+    public List<ChildInterest> InterestTags { get; set; } = [];
+
+    /// <summary>
+    /// Obergrenze der Bild-Eignung für dieses Kind – die Auswahl liefert nie ein Asset darüber.
+    /// Nur der Supervisor darf sie heben; Default ist die strengste Stufe.
+    /// </summary>
+    public ContentRating AllowedContentRating { get; set; } = ContentRating.Everyone;
     /// <summary>Einfacher PIN-Login des Kindes. Später durch echtes Auth ersetzen.</summary>
     public string Pin { get; set; } = "";
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

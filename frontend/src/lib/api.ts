@@ -13,6 +13,8 @@ import type {
   ShopArticle, CreateShopArticleDto, UpdateShopArticleDto, ShopListing, CreateShopListingDto, UpdateShopListingDto,
   InventoryItem, ShopPurchase, ActivationRequest, ShopPurchaseStatus, ActivationRequestStatus,
   ShopView, MyActivation,
+  ContentRating, InterestTagResponse, CreateInterestTagDto, ChildInterestResponse, ChildInterestInput,
+  MediaAssetResponse, CreateMediaAssetDto, MediaLinkResponse, MediaUsage, SelectedMediaResponse,
 } from "./types";
 
 const TOKEN_KEY = "pugling.token";
@@ -59,6 +61,23 @@ async function request(url: string, method: string, body?: unknown): Promise<Res
     body: body !== undefined ? JSON.stringify(body) : undefined,
   });
 
+  return throwIfFailed(res);
+}
+
+/**
+ * Multipart-Variante von {@link request} (Datei-Upload). Setzt bewusst **keinen** `Content-Type`:
+ * bei `FormData` muss der Browser ihn samt `boundary` selbst bestimmen – ein eigener Header ließe den
+ * Server den Body nicht parsen. Fehlerbehandlung ist dieselbe.
+ */
+async function requestForm(url: string, form: FormData): Promise<Response> {
+  const token = getToken();
+  const headers: Record<string, string> = {};
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+  return throwIfFailed(await fetch(url, { method: "POST", headers, body: form }));
+}
+
+/** Die geteilte RFC-7807-Auswertung: aus einer Fehlerantwort einen {@link ApiError} mit Code/TraceId machen. */
+async function throwIfFailed(res: Response): Promise<Response> {
   if (!res.ok) {
     const raw = await res.text().catch(() => "");
     // Die API antwortet einheitlich als application/problem+json (RFC 7807): detail/title als
@@ -83,6 +102,13 @@ async function request(url: string, method: string, body?: unknown): Promise<Res
 
 async function http<T>(url: string, method = "GET", body?: unknown): Promise<T> {
   const res = await request(url, method, body);
+  const text = await res.text();
+  return (text ? JSON.parse(text) : undefined) as T;
+}
+
+/** Wie {@link http}, aber mit `FormData` als Body (Datei-Upload). */
+async function httpForm<T>(url: string, form: FormData): Promise<T> {
+  const res = await requestForm(url, form);
   const text = await res.text();
   return (text ? JSON.parse(text) : undefined) as T;
 }
@@ -409,4 +435,68 @@ export const api = {
     http<ActivationRequest>(`${V1}/supervisor/children/${childId}/shop/activations/${requestId}/approve`, "POST", {}),
   rejectActivation: (childId: number, requestId: number) =>
     http<ActivationRequest>(`${V1}/supervisor/children/${childId}/shop/activations/${requestId}/reject`, "POST", {}),
+
+  // ---- Bilder & Interessen ----
+  // Die Taxonomie ist EIN Vokabular für zwei Seiten: Bilder tragen die Schlagworte als Eigenschaft,
+  // Kinder als gewichtete Vorliebe/Abneigung. Nur deshalb ist die Bildauswahl je Kind berechenbar.
+  interestTags: (search?: string) =>
+    http<InterestTagResponse[]>(`${V1}/creator/interest-tags${search ? `?search=${encodeURIComponent(search)}&take=200` : "?take=200"}`),
+  createInterestTag: (dto: CreateInterestTagDto) =>
+    http<InterestTagResponse>(`${V1}/creator/interest-tags`, "POST", dto),
+
+  childInterests: (childId: number) =>
+    http<ChildInterestResponse[]>(`${V1}/supervisor/children/${childId}/interests`),
+  /** Ersetzt die Menge vollständig – das UI bearbeitet sie als Ganzes. */
+  setChildInterests: (childId: number, interests: ChildInterestInput[]) =>
+    http<ChildInterestResponse[]>(`${V1}/supervisor/children/${childId}/interests`, "PUT", { interests }),
+
+  media: (p: { search?: string; tag?: string[]; maxRating?: ContentRating; take?: number } = {}) => {
+    const q = new URLSearchParams();
+    if (p.search) q.set("search", p.search);
+    if (p.maxRating) q.set("maxRating", p.maxRating);
+    for (const t of p.tag ?? []) q.append("tag", t);
+    q.set("take", String(p.take ?? 100));
+    return http<MediaAssetResponse[]>(`${V1}/creator/media?${q}`);
+  },
+  createMedia: (dto: CreateMediaAssetDto) => http<MediaAssetResponse>(`${V1}/creator/media`, "POST", dto),
+  /**
+   * Bild-Upload: der Server erzeugt die Auflösungen selbst. Geht bewusst nicht über `http()` – dort setzt
+   * der Wrapper `Content-Type: application/json`; bei multipart muss der Browser den Header samt
+   * `boundary` selbst bestimmen.
+   */
+  uploadMedia: (file: File, fields: { description: string; tags?: string; rating?: ContentRating }) => {
+    const form = new FormData();
+    form.append("file", file);
+    form.append("description", fields.description);
+    if (fields.tags) form.append("tags", fields.tags);
+    if (fields.rating) form.append("rating", fields.rating);
+    return httpForm<MediaAssetResponse>(`${V1}/creator/media/upload`, form);
+  },
+  deleteMedia: (assetId: number) => http<void>(`${V1}/creator/media/${assetId}`, "DELETE"),
+  /** Wo ein Bild hängt – vor dem Löschen lesenswert (Löschen ist bewusst nicht gesperrt). */
+  mediaUsage: (assetId: number) => http<MediaUsage[]>(`${V1}/creator/media/${assetId}/usage`),
+  tagMedia: (assetId: number, tags: string[]) =>
+    http<MediaAssetResponse>(`${V1}/creator/media/${assetId}/tags`, "POST", { tags }),
+
+  // Zuordnung an der Store-Vokabel: gilt in JEDER Übung mit diesem Wort. Mehrere sind der Normalfall –
+  // erst die Auswahl macht die Individualisierung je Kind möglich.
+  vocabularyMedia: (vocabularyId: number) =>
+    http<MediaLinkResponse[]>(`${V1}/creator/vocabulary/${vocabularyId}/media`),
+  linkVocabularyMedia: (vocabularyId: number, mediaAssetId: number, weight = 0) =>
+    http<MediaLinkResponse>(`${V1}/creator/vocabulary/${vocabularyId}/media`, "POST", { mediaAssetId, weight }),
+  unlinkVocabularyMedia: (vocabularyId: number, linkId: number) =>
+    http<void>(`${V1}/creator/vocabulary/${vocabularyId}/media/${linkId}`, "DELETE"),
+
+  /** „Anderes Bild": lehnt die eingefrorene Wahl ab und zieht neu (409 `media_no_alternative`, wenn keine da ist). */
+  reshuffleMedia: (childId: number, vocabularyId: number) =>
+    http<SelectedMediaResponse>(`${V1}/student/children/${childId}/media-picks/reshuffle`, "POST", { vocabularyId }),
+
+  /**
+   * „Anderes Bild" aus Sicht einer Übungskarte. Bewusst über die Karte adressiert: ob die Wahl an der
+   * Vokabel oder an einer übungslokalen Übersteuerung hängt, weiß nur der Server.
+   */
+  reshuffleCardImage: (planId: number, positionId: number, sessionId: number, itemIndex: number) =>
+    http<SelectedMediaResponse>(
+      `${V1}/student/study-plans/${planId}/positions/${positionId}/practice-sessions/${sessionId}/cards/${itemIndex}/image/reshuffle`,
+      "POST", {}),
 };

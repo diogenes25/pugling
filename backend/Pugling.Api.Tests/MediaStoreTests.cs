@@ -1,0 +1,207 @@
+using System.Net;
+using System.Net.Http.Json;
+using System.Text.Json;
+
+namespace Pugling.Api.Tests;
+
+/// <summary>
+/// Medien-Store (Etappe 1): ein Motiv, viele Darstellungen – und je Darstellung mehrere Auflösungen.
+/// Die Tests halten die beiden Achsen auseinander und sichern die Eignungs-Filterung ab, auf der die
+/// Zielgruppen-Trennung später beruht.
+/// </summary>
+public class MediaStoreTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWebAppFactory>
+{
+    [Fact]
+    public async Task Anlegen_MitVariantenUndTags_LiefertBeideAchsen()
+    {
+        var father = await TestApi.FatherAsync(factory);
+
+        var create = await father.PostAsJsonAsync("/api/v1/creator/media", new
+        {
+            key = "run_unicorn_comic",
+            description = "Ein Einhorn läuft im Comic-Stil",
+            rating = "Everyone",
+            origin = "Generated",
+            source = "sdxl: running unicorn, comic",
+            tags = new[] { "Einhorn", "Comic" },
+            variants = new object[]
+            {
+                new { purpose = "Thumb", url = "https://cdn.test/run-unicorn-128.webp", width = 128, height = 128 },
+                new { purpose = "Card", url = "https://cdn.test/run-unicorn-512.webp", width = 512, height = 512 },
+            },
+        });
+        Assert.Equal(HttpStatusCode.Created, create.StatusCode);
+
+        var asset = await create.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal(2, asset.GetProperty("variants").GetArrayLength());
+        // Tags kommen als Slugs zurück: die Taxonomie normalisiert, damit ein Kind-Interesse sie trifft.
+        var tags = asset.GetProperty("tags").EnumerateArray().Select(t => t.GetString()).ToList();
+        Assert.Contains("einhorn", tags);
+        Assert.Contains("comic", tags);
+    }
+
+    [Fact]
+    public async Task OhneKey_WirdEindeutigerKeyAusBeschreibungErzeugt()
+    {
+        var father = await TestApi.FatherAsync(factory);
+        var body = new { description = "Flash rennt sehr schnell" };
+
+        var first = await father.PostAsJsonAsync("/api/v1/creator/media", body);
+        var second = await father.PostAsJsonAsync("/api/v1/creator/media", body);
+
+        var firstKey = (await first.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("key").GetString();
+        var secondKey = (await second.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("key").GetString();
+
+        Assert.Equal("flash-rennt-sehr-schnell", firstKey);
+        Assert.Equal("flash-rennt-sehr-schnell_2", secondKey);
+    }
+
+    [Fact]
+    public async Task DoppelterKey_Liefert409()
+    {
+        var father = await TestApi.FatherAsync(factory);
+        var dto = new { key = "dupe-media-key", description = "Irgendein Motiv" };
+
+        Assert.Equal(HttpStatusCode.Created, (await father.PostAsJsonAsync("/api/v1/creator/media", dto)).StatusCode);
+
+        var again = await father.PostAsJsonAsync("/api/v1/creator/media", dto);
+        Assert.Equal(HttpStatusCode.Conflict, again.StatusCode);
+        Assert.Equal("duplicate_key", await CodeOf(again));
+    }
+
+    [Fact]
+    public async Task BeschreibungIstPflicht_SieIstZugleichDerAltText()
+    {
+        var father = await TestApi.FatherAsync(factory);
+        var res = await father.PostAsJsonAsync("/api/v1/creator/media", new { description = "   " });
+
+        Assert.Equal(HttpStatusCode.BadRequest, res.StatusCode);
+        Assert.Equal("validation_error", await CodeOf(res));
+    }
+
+    [Fact]
+    public async Task ZweiteVarianteMitGleichemZweckUndFormat_Liefert409()
+    {
+        var father = await TestApi.FatherAsync(factory);
+        var id = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/media",
+            new { description = "Ein Hund schläft" }));
+
+        var first = await father.PostAsJsonAsync($"/api/v1/creator/media/{id}/variants",
+            new { purpose = "Card", url = "https://cdn.test/dog.webp", width = 512, height = 512, format = "webp" });
+        Assert.Equal(HttpStatusCode.Created, first.StatusCode);
+
+        var duplicate = await father.PostAsJsonAsync($"/api/v1/creator/media/{id}/variants",
+            new { purpose = "Card", url = "https://cdn.test/dog-2.webp", width = 512, height = 512, format = "webp" });
+        Assert.Equal(HttpStatusCode.Conflict, duplicate.StatusCode);
+        Assert.Equal("media_variant_exists", await CodeOf(duplicate));
+
+        // Anderes Format zum selben Zweck ist dagegen erwünscht (<picture>/srcset).
+        var avif = await father.PostAsJsonAsync($"/api/v1/creator/media/{id}/variants",
+            new { purpose = "Card", url = "https://cdn.test/dog.avif", width = 512, height = 512, format = "avif" });
+        Assert.Equal(HttpStatusCode.Created, avif.StatusCode);
+    }
+
+    [Fact]
+    public async Task FremdeVariante_LiefertEigenenFehlercode()
+    {
+        var father = await TestApi.FatherAsync(factory);
+        var assetA = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/media", new { description = "Motiv A" }));
+        var assetB = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/media", new { description = "Motiv B" }));
+
+        var variantId = await TestApi.IdAsync(await father.PostAsJsonAsync($"/api/v1/creator/media/{assetA}/variants",
+            new { purpose = "Card", url = "https://cdn.test/a.webp", width = 100, height = 100 }));
+
+        var res = await father.DeleteAsync($"/api/v1/creator/media/{assetB}/variants/{variantId}");
+        Assert.Equal(HttpStatusCode.NotFound, res.StatusCode);
+        Assert.Equal("media_variant_not_found", await CodeOf(res));
+    }
+
+    [Fact]
+    public async Task MaxRating_FiltertNichtKindgerechteDarstellungenAus()
+    {
+        var father = await TestApi.FatherAsync(factory);
+        var marker = "rating-filter-motiv";
+
+        await father.PostAsJsonAsync("/api/v1/creator/media",
+            new { description = $"{marker} als Einhorn", rating = "Everyone" });
+        await father.PostAsJsonAsync("/api/v1/creator/media",
+            new { description = $"{marker} freizuegig", rating = "Mature" });
+
+        var all = await ListAsync(father, $"/api/v1/creator/media?search={marker}");
+        Assert.Equal(2, all.GetArrayLength());
+
+        // Der Schnitt, den die spätere automatische Auswahl je Kind hart anwendet.
+        var kidSafe = await ListAsync(father, $"/api/v1/creator/media?search={marker}&maxRating=Everyone");
+        Assert.Equal(1, kidSafe.GetArrayLength());
+        Assert.Equal("Everyone", kidSafe[0].GetProperty("rating").GetString());
+    }
+
+    [Fact]
+    public async Task TagFilter_FindetDarstellungenUeberDieGeteilteTaxonomie()
+    {
+        var father = await TestApi.FatherAsync(factory);
+        var marker = "tagfilter-motiv";
+
+        await father.PostAsJsonAsync("/api/v1/creator/media", new
+        {
+            description = $"{marker} eins",
+            tags = new[] { "Pokémon", "Comic" },
+        });
+        await father.PostAsJsonAsync("/api/v1/creator/media", new
+        {
+            description = $"{marker} zwei",
+            tags = new[] { "Comic" },
+        });
+
+        // Diakritika/Großschreibung werden auf denselben Slug normalisiert.
+        var byFranchise = await ListAsync(father, $"/api/v1/creator/media?search={marker}&tag=pokemon");
+        Assert.Equal(1, byFranchise.GetArrayLength());
+
+        var byStyle = await ListAsync(father, $"/api/v1/creator/media?search={marker}&tag=comic");
+        Assert.Equal(2, byStyle.GetArrayLength());
+
+        // matchAll = UND über beide Achsen (Thema + Stil).
+        var both = await ListAsync(father, $"/api/v1/creator/media?search={marker}&tag=pokemon&tag=comic&matchAll=true");
+        Assert.Equal(1, both.GetArrayLength());
+    }
+
+    [Fact]
+    public async Task TagLoesen_LaesstDasSchlagwortImKatalog()
+    {
+        var father = await TestApi.FatherAsync(factory);
+        var id = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/media",
+            new { description = "Ein Fussballspieler schiesst", tags = new[] { "Fußball" } }));
+
+        var tagId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/interest-tags",
+            new { label = "Fußball" }));
+
+        Assert.Equal(HttpStatusCode.NoContent,
+            (await father.DeleteAsync($"/api/v1/creator/media/{id}/tags/{tagId}")).StatusCode);
+
+        var asset = await GetAsync(father, $"/api/v1/creator/media/{id}");
+        Assert.Empty(asset.GetProperty("tags").EnumerateArray());
+
+        // Der Tag selbst überlebt – er hängt womöglich an anderen Bildern und an Kind-Profilen.
+        Assert.Equal(HttpStatusCode.OK, (await father.GetAsync($"/api/v1/creator/interest-tags/{tagId}")).StatusCode);
+    }
+
+    [Fact]
+    public async Task NurCreator_DarfDenStorePflegen()
+    {
+        var child = await TestApi.ChildAsync(factory);
+        var res = await child.GetAsync("/api/v1/creator/media");
+        Assert.Equal(HttpStatusCode.Forbidden, res.StatusCode);
+    }
+
+    private static async Task<JsonElement> ListAsync(HttpClient client, string url) => await GetAsync(client, url);
+
+    private static async Task<JsonElement> GetAsync(HttpClient client, string url)
+    {
+        var res = await client.GetAsync(url);
+        res.EnsureSuccessStatusCode();
+        return await res.Content.ReadFromJsonAsync<JsonElement>();
+    }
+
+    private static async Task<string?> CodeOf(HttpResponseMessage res) =>
+        (await res.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("code").GetString();
+}

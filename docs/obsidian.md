@@ -115,6 +115,8 @@ Der Graph-Hub: Bereich → maßgebliche Seite(n). Von hier aus ist jede Domäne 
 | Auth & Rollen | [wiki/02 · Authentifizierung](../wiki/02-authentifizierung.md) |
 | Erweitern (neue Technik) | [wiki/08 · Erweitern](../wiki/08-erweitern.md) |
 | Vokabel-Details (Entwickler) | [docs/vokabel-funktionalitaeten-entwickler-tutorial.md](vokabel-funktionalitaeten-entwickler-tutorial.md) |
+| **Bilder & Medien** (Individualisierung, Plan) | [docs/medien-bilder.md](medien-bilder.md) |
+| **API-Konsumenten & KI-Agenten** | [backend/Pugling.Agent.Creator/README.md](../backend/Pugling.Agent.Creator/README.md) (KI-Creator) · [wiki/09 · LLM-Kochbuch](../wiki/09-llm-kochbuch.md) (Lehrplan aus einem Prompt) |
 | KI-Gedächtnis | `MEMORY.md` + Notizen im Memory-Ordner (eigene Vault) |
 
 ## Skills installieren

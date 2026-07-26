@@ -52,10 +52,22 @@ public sealed class VocabularyExerciseType : ExerciseTypeBase
         return [.. choices.Skip(shift), .. choices.Take(shift)];
     }
 
-    // Buchstabenkästchen geben die Länge, die Hör-Stufe die Audioquelle.
-    public override (int? LetterBoxLength, string? AudioUrl) StageFacets(ContentItem item, int stage) =>
+    /// <summary>
+    /// Buchstabenkästchen geben die Länge, die Hör-Stufe die Audioquelle – und das Bild erscheint
+    /// <b>nur auf nicht-getippten Stufen</b>.
+    /// <para>
+    /// Das ist strenger als beim Audio, und zwar aus einem konkreten Grund: die Aussprache liest ein
+    /// einzelnes Wort vor (nach dem Richtungstausch entfällt sie deshalb gezielt), ein Motiv dagegen zeigt
+    /// die <i>Bedeutung</i>. „Ein Einhorn läuft" verrät bei <c>run → laufen</c> die Lösung genauso wie eine
+    /// vorgesprochene Antwort. Deshalb hier die konservative Regel statt einer richtungsabhängigen
+    /// Feinunterscheidung: gezeigt wird nur, wo die Lösung ohnehin aufgedeckt ist (Selbsteinschätzung) –
+    /// genau die Stufe, auf der das Bild seinen Zweck erfüllt, nämlich das Einprägen.
+    /// </para>
+    /// </summary>
+    public override (int? LetterBoxLength, string? AudioUrl, string? ImageUrl) StageFacets(ContentItem item, int stage) =>
         ((TestStage)stage == TestStage.LetterBoxes ? item.Answer.Length : null,
-         (TestStage)stage == TestStage.Audio ? item.AudioUrl : null);
+         (TestStage)stage == TestStage.Audio ? item.AudioUrl : null,
+         IsTypedStage(stage) ? null : item.ImageUrl);
 
     public override IReadOnlyList<StageOption> StageOptions { get; } =
     [

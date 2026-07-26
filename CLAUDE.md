@@ -47,6 +47,19 @@ cd frontend && npm run test:e2e    # Playwright: startet Backend (Temp-DB) + Vit
 Rollen im SPA: `/` Produktseite, `/vater` Web-Admin (inkl. `/vater/wizard` Lehrplan-Assistent),
 `/sohn` Arcade-PWA. API-Client + Types zentral unter [frontend/src/lib/](frontend/src/lib/).
 
+### KI-Creator (Konsolen-Agent)
+
+```bash
+ollama pull qwen2.5:14b-instruct                      # einmalig: Modell mit verlässlichem JSON
+cd backend/Pugling.Agent.Creator && dotnet user-secrets set "Pugling:Pin" "0000"   # einmalig
+dotnet run --project backend/Pugling.Agent.Creator -- briefing --child 1           # ohne LLM
+dotnet run --project backend/Pugling.Agent.Creator -- create --child 1 --type Cloze \
+    --subject 1 --chapter 1 --topic "Unit 3" --count 8 --dry-run
+```
+
+Braucht die laufende API und ein Konto mit Creator **und** Supervisor-Rolle (Seed: Konto 1).
+Details: [backend/Pugling.Agent.Creator/README.md](backend/Pugling.Agent.Creator/README.md).
+
 ## Architektur (das produktive Modell)
 
 - **Drei Ebenen** (siehe [docs/grundprinzip.md](docs/grundprinzip.md)): **Creator** (Inhalte), **Supervisor**
@@ -96,6 +109,50 @@ Rollen im SPA: `/` Produktseite, `/vater` Web-Admin (inkl. `/vater/wizard` Lehrp
 - **Tags & Klassenarbeiten** ([KlassenarbeitenController](backend/Pugling.Api/Controllers/Supervisor/KlassenarbeitenController.cs)):
   Übungen taggen, Arbeiten planen/benoten, gezielt üben/wiederholen. Route: `api/v1/supervisor/class-tests`
   (Typnamen intern weiterhin `Klassenarbeit`).
+- **Medien & Interessen** ([MediaEntities.cs](backend/Pugling.Api/Models/MediaEntities.cs),
+  [InterestEntities.cs](backend/Pugling.Api/Models/InterestEntities.cs), Plan:
+  [docs/medien-bilder.md](docs/medien-bilder.md)): **Ein Motiv, viele Bilder.** Zwei Achsen bleiben
+  getrennt: `MediaAsset` ist *eine Darstellung* („laufendes Einhorn im Comic-Stil") mit Stil-Tags und
+  `ContentRating`, `MediaVariant` dieselbe Darstellung in einer Auflösung – adressiert über den
+  semantischen `MediaPurpose` (Thumb/Card/Full/Hero), nicht über Pixelmaße. Bytes liegen nie in der DB,
+  nur URLs. Route: `api/v1/creator/media` (+ `…/{id}/variants`, `…/{id}/tags`).
+  **Der Angelpunkt ist die geteilte Taxonomie**: `InterestTag` (Slug + Facette, u. a. `Style`) wird von
+  Bildern *und* Kindern referenziert (`ChildInterest` mit Gewicht **-3…+3**, negativ = Abneigung, unter
+  `api/v1/supervisor/children/{}/interests`). Nur weil beide Seiten aus **einem** Vokabular schöpfen, ist
+  die Bildauswahl berechenbar – deshalb läuft jedes Findet-sonst-legt-an über `InterestTagService`.
+  `Child.Interests` (Freitext) bleibt daneben: es ist die Sprache des KI-Creators. `ContentRating` +
+  `Child.AllowedContentRating` liegen **als int** in der DB (ordnender Vergleich – als String wäre er
+  alphabetisch und damit falsch).
+  **Zuordnung** über `MediaLink` – **n:m in beide Richtungen** (ein Wort trägt viele Darstellungen, ein
+  Bild dient vielen Wörtern), deshalb eigene Tabelle statt Spalte am Träger wie beim 1:1-Aussprache-Audio.
+  Genau *ein* Träger je Zeile (DB-Check-Constraint): `Vocabulary` = Regel für alle Übungen
+  (`api/v1/creator/vocabulary/{}/media`, jeder Creator), `ExerciseItem` = übungslokale Übersteuerung und
+  `Exercise` = Titelbild (beide unter `api/v1/creator/exercises/{}/…`, **Schreibrecht** nötig).
+  Genauigkeits-Kaskade: Item schlägt Vokabel. Rückrichtung `media/{id}/usage`; Löschen ist bewusst *nicht*
+  gesperrt (kein Platzhalter wie bei Vokabeln – die Auswahl schrumpft nur).
+  **Auswahl je Kind** (`MediaSelector`): hart filtern (Eignung über Freigabe, Abneigung = negativ
+  gewichteter Tag, bereits abgelehnt, keine Variante) → nach Interessen bewerten (Thema ×2, Stil ×1;
+  `MediaLink.Weight` bricht nur Gleichstände, gefolgt von einem stabilen FNV-Hash – **kein** `Random`
+  und **kein** `string.GetHashCode`, der ist pro Prozess randomisiert) → **einfrieren** in
+  `ChildMediaPick`. Das Einfrieren ist der Kern: beim Vokabellernen ist Bildkonstanz der Merkeffekt, ein
+  nachträglich hinzugefügtes Bild darf die laufende Wahl nicht kippen. „Anderes Bild" über
+  `api/v1/student/children/{}/media-picks/reshuffle` (lehnt dauerhaft ab; ohne Alternative
+  `409 media_no_alternative`, statt den letzten Kandidaten zu verbrennen). Kein Treffer = **kein Bild**,
+  nie ein Notnagel. Weg zur Karte: `ItemsOfAsync(exercise, childId)` → `ContentItem.ImageUrl/ImageAlt` →
+  `StageFacets` → `CardFacets` → `PracticeCard`/`TestItem`; `childId` ist **explizit** (nicht aus einer
+  geladenen Navigation), sonst entschiede ein vergessenes `Include` über die Bebilderung.
+  **Anti-Cheat:** Bild nur auf nicht-getippten Stufen (`ShowBoth`/`SelfAssess`) – schärfer als beim Audio,
+  weil ein Motiv die Bedeutung in beide Richtungen zeigt; der Alt-Text folgt dem Bild.
+  **Frontend** (Etappe 6): `/vater/kind/:id` (gewichtete Interessen + Bild-Freigabe), `/vater/media`
+  (Bibliothek), Bilder-Panel je Vokabelzeile, Bild + „anderes Bild" auf der Sohn-Karte; E2E
+  [frontend/e2e/bilder.spec.ts](frontend/e2e/bilder.spec.ts).
+  **Upload** (Etappe 5): `POST creator/media/upload` (multipart) → `MediaImageProcessor` skaliert auf
+  Thumb/Card/Full (WebP, **nie hochskalieren, nie beschneiden** – daher kein `Hero`) und ermittelt eine
+  Platzhalterfarbe; `IMediaStorage` legt ab. Der Ordner ist **nicht** `wwwroot` (das überschreibt der
+  Frontend-Deploy), sondern `Media:RootPath` (Default `media-uploads`), ausgeliefert unter
+  `Media:PublicPath` (`/media`); Ordnername ist die Asset-**Id**, nie der nutzergesetzte Key.
+  Bildbibliothek ist **SkiaSharp** (MIT/BSD) – ImageSharp 4 bricht den Build ohne Lizenzschlüssel ab.
+  **Offen**: Stufe „Bild → Wort" (7).
 - **Services** ([Services/](backend/Pugling.Api/Services/)): `PositionPlayService` (Fälligkeit/Scope/Stufen +
   Leitner-Terminierung je Position), `PositionProgressService` (Ziel-„erledigt"-Regel je `ExerciseCheckMode`,
   idempotente Ziel-Punkte via `PositionGoalReward`, Tages-/Verlaufs-Rollup über Positionen; **Malus fürs
@@ -141,6 +198,25 @@ Rollen im SPA: `/` Produktseite, `/vater` Web-Admin (inkl. `/vater/wizard` Lehrp
   `ApiError` oder Entities tragen, bleiben ebenfalls dort. Neues DTO? Ins Vertrags-Projekt, mit `/// <summary>`.
   Namen sind **global eindeutig** zu halten (der OpenAPI-Generator schlüsselt Schemas über den einfachen
   Typnamen; gleichnamige Records verschmelzen sonst still zu einem Schema).
+- **Client-Bibliothek** ([backend/Pugling.Client/](backend/Pugling.Client/)): die *eine* HTTP-Schicht für
+  Nicht-Browser-Konsumenten (die KI-Agenten) – `AuthHandler` (konto-zentrischer Login, proaktive
+  Token-Erneuerung, 401-Retry) über den geteilten `PuglingTokenStore` (**eine** Anmeldung für alle
+  Fassaden; der Handler selbst wird je Client neu erzeugt – eine geteilte `DelegatingHandler`-Instanz
+  lehnt die `HttpClientFactory` beim zweiten Client ab), `PuglingJson` (Web-Defaults **+**
+  `JsonStringEnumConverter` – Enum-Parität ist Pflicht), `PuglingResponse` (ProblemDetails →
+  `PuglingApiException` mit stabilem `code`) und die dünnen Fassaden `CreatorApi`/`SupervisorApi`/
+  `StudentApi` (Letztere = die Lernstand-Lesesichten, die ein Supervisor-Konto mitlesen darf).
+  Registrierung per `services.AddPuglingClient(config)`.
+  Neuer Endpunkt? Erst Backend, dann hier eine einzeilige Methode ergänzen – nie HTTP-Plumbing duplizieren.
+  Verifiziert von `PuglingClientTests` gegen den echten In-Process-Server.
+- **KI-Creator** ([backend/Pugling.Agent.Creator/](backend/Pugling.Agent.Creator/README.md)): Konsolen-App,
+  die die Creator-Rolle übernimmt und Übungen **auf ein Kind zugeschnitten** anlegt – lokal gegen Ollama
+  (`Microsoft.Extensions.AI`/`IChatClient` + OllamaSharp). **Deterministische Pipeline**: C# besitzt den
+  Ablauf (Briefing → Entwurf → Regelprüfung mit Reparatur-Runde → Anlegen → nebenwirkungsfreier
+  Selbsttest über `preview`/`preview/check`), das Modell liefert nur strukturierten Inhalt – kein
+  Tool-Calling. Fachliche Kernregel: **Interessen kleiden den Stoff ein, sie ersetzen ihn nie** (bei
+  vorgegebenem Wortschatz deterministisch erzwungen). Neuer Typ = eine Klasse auf
+  `ExerciseStrategy<TDraft,TConfig>`. Getestet ohne Ollama via `FakeChatClient` (`CreatorAgentTests`).
 - **Guard Clauses zuerst** (früh `return NotFound()/Forbid()` bzw. `Problem(statusCode:…, detail:…)`),
   Happy Path un-eingerückt.
 - **API-Versionierung**: Alle Routen unter `api/v1/…` – das Versionssegment steckt zentral in

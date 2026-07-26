@@ -9,6 +9,9 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 // Frische Wegwerf-DB je Testlauf → Backend seedet Papa(#1/0000) + Sohn(#1/1111) + Vokabeln neu.
 // Die echte pugling.db bleibt unangetastet.
 const dbFile = path.join(os.tmpdir(), `pugling-e2e-${Date.now()}.db`);
+// Auch die hochgeladenen Bilder in einen Wegwerf-Ordner – sonst sammelt der Entwicklungsbaum
+// (backend/Pugling.Api/media-uploads) mit jedem Testlauf Dateien an.
+const mediaDir = path.join(os.tmpdir(), `pugling-e2e-media-${Date.now()}`);
 const backendDir = path.resolve(here, "../backend/Pugling.Api");
 
 export default defineConfig({
@@ -36,6 +39,7 @@ export default defineConfig({
       env: {
         ASPNETCORE_ENVIRONMENT: "Development",
         ConnectionStrings__Default: `Data Source=${dbFile}`,
+        Media__RootPath: mediaDir,
       },
     },
     {

@@ -5,7 +5,7 @@ namespace Pugling.Contracts.Student;
 
 /// <summary>Eine Prüfungsfrage – ohne Lösung, außer bei Stufen, die sie per Design aufdecken.</summary>
 public record TestItem(int ItemIndex, string Prompt, int Stage, string? Reveal, int? AnswerLength, string? Hint,
-    IReadOnlyList<string>? Choices, string? AudioUrl);
+    IReadOnlyList<string>? Choices, string? AudioUrl, string? ImageUrl = null, string? ImageAlt = null);
 
 /// <summary>
 /// Antwort des Test-Starts. Der Klausur-Modus ist strikt server-getrieben: es kommen <b>keine</b> Aufgaben

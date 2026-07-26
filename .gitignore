@@ -39,3 +39,5 @@ tools/bruno/Pugling.Api/
 .claude/skills/obsidian-vault/
 .agents/
 skills-lock.json
+# Hochgeladene Medien (Bilder) – Nutzerinhalte, gehören nicht ins Repo
+backend/Pugling.Api/media-uploads/

@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using Pugling.Api.Auth;
@@ -142,6 +143,22 @@ builder.Services.AddScoped<PositionReportService>();
 builder.Services.AddScoped<BirkenbihlDecodingService>();
 // Findet-sonst-legt-an: sichert, dass jede in einer Übung genutzte Vokabel im zentralen Store liegt.
 builder.Services.AddScoped<VocabularyStoreService>();
+// Findet-sonst-legt-an für die geteilte Interessen-Taxonomie – die eine Stelle, an der aus Text ein Tag
+// wird (Creator taggt Bilder, Supervisor pflegt Interessen, Backfill übernimmt Freitext). Getrennte
+// Wege würden Dubletten erzeugen und das Matching „Bild ↔ Kind" genau dort leerlaufen lassen.
+builder.Services.AddScoped<InterestTagService>();
+// Zuordnung Bild ⇢ Träger (Vokabel/Item/Übung). Drei Träger, ein Ablauf – der Service hält ihn an einer
+// Stelle; die Controller unterscheiden sich nur in Route und Rechte-Prüfung.
+builder.Services.AddScoped<MediaLinkService>();
+// Die Stelle, an der Medien-Store und Kind-Profil zusammenkommen: aus „viele Darstellungen" wird EIN Bild
+// (hart filtern nach Eignung/Abneigung, dann nach Interessen bewerten) – und die Wahl wird eingefroren,
+// weil Bildkonstanz beim Vokabellernen der Merkeffekt ist.
+builder.Services.AddScoped<MediaSelector>();
+// Bild-Upload: Ablage hinter einer Schnittstelle (heute lokales Dateisystem, später ggf. Blob-Storage)
+// plus die serverseitige Varianten-Erzeugung. Beide zustandslos → Singleton.
+builder.Services.AddSingleton(builder.Configuration.GetSection("Media").Get<MediaOptions>() ?? new MediaOptions());
+builder.Services.AddSingleton<IMediaStorage, LocalMediaStorage>();
+builder.Services.AddSingleton<MediaImageProcessor>();
 // Pflegt die stabil identifizierten Items einer Vokabelübung (ID-erhaltender Abgleich Config → Item-Tabelle).
 builder.Services.AddScoped<ExerciseItemService>();
 // Schreibt den plan-übergreifenden Lernstand je (Kind, Item) fort und protokolliert die Antwort-Historie.
@@ -328,6 +345,20 @@ app.UseStatusCodePages();
 app.UseDefaultFiles();
 app.UseStaticFiles();
 
+// Hochgeladene Bilder aus einem EIGENEN Ordner ausliefern – bewusst nicht aus wwwroot: dorthin kopiert
+// der Deploy das gebaute Frontend, ein Redeploy würde die Bilder der Familie mitlöschen. Öffentlich wie
+// die übrigen statischen Assets (die URLs sind unratebar genug und stehen ohnehin in den Karten).
+{
+    var media = app.Services.GetRequiredService<MediaOptions>();
+    var mediaRoot = ((LocalMediaStorage)app.Services.GetRequiredService<IMediaStorage>()).Root;
+    Directory.CreateDirectory(mediaRoot);
+    app.UseStaticFiles(new StaticFileOptions
+    {
+        FileProvider = new PhysicalFileProvider(mediaRoot),
+        RequestPath = media.PublicPath.TrimEnd('/'),
+    });
+}
+
 // Eine Zusammenfassungszeile je Request (Methode, Pfad, Status, Dauer) statt der lärmenden
 // Framework-Defaults; angereichert um Identität/TraceId, damit ein 4xx/5xx sofort zuordenbar ist.
 app.UseSerilogRequestLogging(options => options.EnrichDiagnosticContext = (diag, http) =>
@@ -357,6 +388,10 @@ using (var scope = app.Services.CreateScope())
     // sich weiterhin einloggen und ein Mehrrollen-Token erhalten.
     var accountService = scope.ServiceProvider.GetRequiredService<AccountService>();
     AccountBackfill.RunAsync(db, accountService).GetAwaiter().GetResult();
+    // Freitext-Interessen der Bestandskinder einmalig in die referenzierte Taxonomie überführen
+    // (idempotent; der Freitext bleibt für den KI-Creator erhalten).
+    var interestTagService = scope.ServiceProvider.GetRequiredService<InterestTagService>();
+    InterestTagBackfill.RunAsync(db, interestTagService).GetAwaiter().GetResult();
 }
 
 // OpenAPI-Dokument unter /openapi/v1.json + Swagger UI unter /swagger + Scalar UI unter /scalar/v1

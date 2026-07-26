@@ -60,8 +60,22 @@ public static class ApiErrors
     public static readonly ApiError InsufficientInventory = new("insufficient_inventory", 400, "Not enough units in inventory.");
     /// <summary>Aktivierungsanfrage ist nicht (mehr) offen – bereits genehmigt/abgelehnt (409).</summary>
     public static readonly ApiError ActivationNotPending = new("activation_not_pending", 409, "Activation request is not pending.");
-    /// <summary>Schlüssel existiert bereits (z. B. Vokabel-/Cloze-Key) (409).</summary>
+    /// <summary>Schlüssel existiert bereits (z. B. Vokabel-/Cloze-/Medien-Key) (409).</summary>
     public static readonly ApiError DuplicateKey = new("duplicate_key", 409, "Key already exists.");
+    /// <summary>Bild-Variante existiert nicht / gehört nicht zu diesem Asset (404).</summary>
+    public static readonly ApiError MediaVariantNotFound = new("media_variant_not_found", 404, "Media variant not found.");
+    /// <summary>Für diesen Zweck und dieses Format hat das Asset bereits eine Variante (409).</summary>
+    public static readonly ApiError MediaVariantExists = new("media_variant_exists", 409, "A variant for this purpose and format already exists.");
+    /// <summary>Das Bild ist diesem Träger (Vokabel/Item/Übung) bereits zugeordnet (409).</summary>
+    public static readonly ApiError MediaAlreadyLinked = new("media_already_linked", 409, "The media asset is already linked to this object.");
+    /// <summary>Bild-Zuordnung existiert nicht / gehört nicht zu diesem Träger (404).</summary>
+    public static readonly ApiError MediaLinkNotFound = new("media_link_not_found", 404, "Media link not found.");
+    /// <summary>„Anderes Bild" nicht möglich – es gibt für diesen Träger keine zulässige Alternative (409).</summary>
+    public static readonly ApiError MediaNoAlternative = new("media_no_alternative", 409, "No alternative image available.");
+    /// <summary>Die hochgeladene Datei ließ sich nicht als Bild dekodieren (400).</summary>
+    public static readonly ApiError MediaNotAnImage = new("media_not_an_image", 400, "The uploaded file is not a readable image.");
+    /// <summary>Die hochgeladene Datei überschreitet das erlaubte Maximum (400).</summary>
+    public static readonly ApiError MediaUploadTooLarge = new("media_upload_too_large", 400, "The uploaded file is too large.");
     /// <summary>Tag mit diesem Namen existiert bereits (400).</summary>
     public static readonly ApiError DuplicateTagName = new("duplicate_tag_name", 400, "Tag name already exists.");
     /// <summary>Übung wird in Lehrplan/Klassenarbeit verwendet und kann nicht gelöscht werden (409).</summary>

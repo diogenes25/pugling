@@ -38,7 +38,7 @@ public abstract class ExerciseTypeBase : IExerciseType
     public virtual IReadOnlyList<string>? Choices(IReadOnlyList<ContentItem> items, ContentItem item, int stage) => null;
 
     /// <inheritdoc/>
-    public virtual (int? LetterBoxLength, string? AudioUrl) StageFacets(ContentItem item, int stage) => (null, null);
+    public virtual (int? LetterBoxLength, string? AudioUrl, string? ImageUrl) StageFacets(ContentItem item, int stage) => (null, null, null);
 
     /// <inheritdoc/>
     public virtual IReadOnlyList<StageOption> StageOptions => [];
