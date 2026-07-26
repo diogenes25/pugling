@@ -21,9 +21,9 @@ public sealed class GrammarStrategy(IChatClient chat, CreatorApi creator,
     protected override string TitleOf(GrammarDraft draft) => draft.Title;
 
     /// <inheritdoc/>
-    protected override string TaskInstruction(ChildBriefing briefing, GenerationRequest request) =>
+    protected override string TaskInstruction(CreatorBriefing briefing, GenerationRequest request) =>
         $"""
-        Entwirf eine Grammatikübung zu {request.SourceLang}. 'instruction' ist die deutsche
+        Entwirf eine Grammatikübung zu {briefing.SourceLang}. 'instruction' ist die deutsche
         Arbeitsanweisung für das ganze Blatt. Jede Aufgabe hat in 'prompt' den Ausgangssatz bzw. die
         Aufgabenstellung, in 'answer' die einzig richtige Lösung (nur das, was das Kind schreiben soll)
         und in 'ruleHint' einen kurzen deutschen Hinweis auf die zugrunde liegende Regel.
@@ -31,7 +31,7 @@ public sealed class GrammarStrategy(IChatClient chat, CreatorApi creator,
         """;
 
     /// <inheritdoc/>
-    protected override IReadOnlyList<string> Validate(GrammarDraft draft, ChildBriefing briefing,
+    protected override IReadOnlyList<string> Validate(GrammarDraft draft, CreatorBriefing briefing,
         GenerationRequest request)
     {
         var violations = new Violations();
@@ -60,7 +60,7 @@ public sealed class GrammarStrategy(IChatClient chat, CreatorApi creator,
 
     /// <inheritdoc/>
     protected override Task<ExercisePayload<GrammarConfig>> ToPayloadAsync(GrammarDraft draft,
-        ChildBriefing briefing, GenerationRequest request, CancellationToken ct)
+        CreatorBriefing briefing, GenerationRequest request, CancellationToken ct)
     {
         var config = new GrammarConfig
         {

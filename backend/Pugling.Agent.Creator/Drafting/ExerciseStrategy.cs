@@ -18,7 +18,7 @@ public interface IExerciseStrategy
     string TypeKey { get; }
 
     /// <summary>Erzeugt (und veröffentlicht) eine Übung für dieses Briefing.</summary>
-    Task<GenerationOutcome> RunAsync(ChildBriefing briefing, GenerationRequest request, CancellationToken ct = default);
+    Task<GenerationOutcome> RunAsync(CreatorBriefing briefing, GenerationRequest request, CancellationToken ct = default);
 }
 
 /// <summary>
@@ -44,13 +44,13 @@ public abstract class ExerciseStrategy<TDraft, TConfig>(
     public abstract string TypeKey { get; }
 
     /// <summary>Die typ-spezifische Auftragsbeschreibung im Prompt.</summary>
-    protected abstract string TaskInstruction(ChildBriefing briefing, GenerationRequest request);
+    protected abstract string TaskInstruction(CreatorBriefing briefing, GenerationRequest request);
 
     /// <summary>Die deterministischen Regeln dieses Typs.</summary>
-    protected abstract IReadOnlyList<string> Validate(TDraft draft, ChildBriefing briefing, GenerationRequest request);
+    protected abstract IReadOnlyList<string> Validate(TDraft draft, CreatorBriefing briefing, GenerationRequest request);
 
     /// <summary>Übersetzt den Entwurf in die Nutzlast der API (darf dafür den Vokabelspeicher befragen).</summary>
-    protected abstract Task<ExercisePayload<TConfig>> ToPayloadAsync(TDraft draft, ChildBriefing briefing,
+    protected abstract Task<ExercisePayload<TConfig>> ToPayloadAsync(TDraft draft, CreatorBriefing briefing,
         GenerationRequest request, CancellationToken ct);
 
     /// <summary>Die Soll-Antworten in Aufgabenreihenfolge – Grundlage des Selbsttests.</summary>
@@ -62,21 +62,28 @@ public abstract class ExerciseStrategy<TDraft, TConfig>(
     /// <summary>
     /// Hüllt eine fertige Config in die API-Nutzlast und setzt dabei die Metadaten aus dem Briefing –
     /// Klassenstufe, Schulart und Quelle sind das, woran der Supervisor die Übung später wiederfindet.
+    /// Individuell steht dort die Stufe des Kindes, allgemein der Bereich des Profils: eine Katalog-Übung
+    /// soll für ihre ganze Zielgruppe auffindbar sein, nicht für genau ein Kind.
     /// </summary>
-    protected ExercisePayload<TConfig> Payload(string title, TConfig config, ChildBriefing briefing,
+    protected ExercisePayload<TConfig> Payload(string title, TConfig config, CreatorBriefing briefing,
         GenerationRequest request) =>
         new(title.Trim(), briefing.ExistingExerciseTitles.Count + 1, request.RewardPoints, config,
-            GradeMin: briefing.Grade, GradeMax: briefing.Grade, SchoolTypes: briefing.SchoolType,
+            GradeMin: briefing.GradeMin, GradeMax: briefing.GradeMax, SchoolTypes: briefing.SchoolType,
             Source: briefing.Source, Description: DescriptionFor(briefing));
 
     /// <summary>Kurze Herkunftsnotiz an der Übung – macht generierte Inhalte im Katalog erkennbar.</summary>
-    private static string DescriptionFor(ChildBriefing briefing) =>
-        briefing.Interests.Count > 0
-            ? $"Vom KI-Creator für {briefing.Name} erzeugt (eingekleidet in: {string.Join(", ", briefing.Interests)})."
-            : $"Vom KI-Creator für {briefing.Name} erzeugt.";
+    private static string DescriptionFor(CreatorBriefing briefing)
+    {
+        var origin = briefing.Profile is { } profile ? $"Vom KI-Creator (Profil „{profile.Name}“)" : "Vom KI-Creator";
+        return briefing.Individual
+            ? briefing.Interests.Count > 0
+                ? $"{origin} für {briefing.Audience} erzeugt (eingekleidet in: {string.Join(", ", briefing.Interests)})."
+                : $"{origin} für {briefing.Audience} erzeugt."
+            : $"{origin} für den gemeinsamen Katalog erzeugt.";
+    }
 
     /// <inheritdoc/>
-    public async Task<GenerationOutcome> RunAsync(ChildBriefing briefing, GenerationRequest request,
+    public async Task<GenerationOutcome> RunAsync(CreatorBriefing briefing, GenerationRequest request,
         CancellationToken ct = default)
     {
         var route = await ResolveAuthoringRouteAsync(ct);
@@ -119,12 +126,12 @@ public abstract class ExerciseStrategy<TDraft, TConfig>(
     }
 
     /// <summary>Holt einen Entwurf vom Sprachmodell; <paramref name="violations"/> löst die Reparatur-Runde aus.</summary>
-    private async Task<TDraft> DraftAsync(ChildBriefing briefing, GenerationRequest request,
+    private async Task<TDraft> DraftAsync(CreatorBriefing briefing, GenerationRequest request,
         IReadOnlyList<string> violations, CancellationToken ct)
     {
         List<ChatMessage> messages =
         [
-            new(ChatRole.System, DraftPrompts.System),
+            new(ChatRole.System, DraftPrompts.SystemFor(briefing)),
             new(ChatRole.User, DraftPrompts.User(briefing, request, TaskInstruction(briefing, request))),
         ];
         if (violations.Count > 0) messages.Add(new ChatMessage(ChatRole.User, DraftPrompts.Repair(violations)));

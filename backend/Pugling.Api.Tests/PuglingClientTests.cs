@@ -202,6 +202,52 @@ public class PuglingClientTests : IClassFixture<PuglingWebAppFactory>
         Assert.Contains(books, b => b.Id == created.Id && b.CurrentChapter == "Unit 3");
     }
 
+    /// <summary>
+    /// Der Weg, den ein Creator-Agent geht: Reihe und Unit anlegen, ein Profil darauf setzen, die Reihe am
+    /// Lehrbuch des Kindes hinterlegen – und dann das passende Profil <b>finden</b>. Das Matching ist der
+    /// Grund für die ganze Kette; ohne die Reihe am Kind wäre es Raten.
+    /// </summary>
+    [Fact]
+    public async Task Creator_legt_Buchreihe_und_Profil_an_und_findet_es_zum_Kind()
+    {
+        var creator = Creator();
+        var supervisor = Supervisor();
+
+        var series = await creator.CreateSeriesAsync(new CreateTextbookSeriesDto(
+            $"Access {Guid.NewGuid():N}", "Cornelsen", "Englisch", null,
+            SchoolTypes.Gymnasium, "en", "de", null));
+        var unit = await creator.CreateUnitAsync(series.Id, new CreateSeriesUnitDto(
+            "Unit 3 – Growing up", 8, 3, "Familie", "Present perfect", "to grow up, responsibility"));
+
+        // Klassenstufe und Schulart bleiben offen: das Seed-Kind 1 soll dieses Profil in jedem Fall
+        // treffen. Die Rangfolge selbst prüft CreatorProfileTests mit einem eigens angelegten Kind.
+        var profile = await creator.CreateProfileAsync(new CreateCreatorProfileDto(
+            $"Englisch Access {Guid.NewGuid():N}", "Englisch", null, null,
+            null, null, series.Id, "en", "de", "Du bist Englischlehrer.", "Kurze Sätze.", ["Vocabulary"], true));
+
+        // Erst die Reihe am Lehrbuch des Kindes macht den Treffer möglich.
+        var book = await supervisor.CreateTextbookAsync(1,
+            new CreateTextbookDto("Access 8", "Englisch", null, 8, "Cornelsen", null, null, series.Id, unit.Id));
+        Assert.Equal(unit.Label, book.CurrentUnitLabel);
+
+        // Der Match-Endpunkt liest Kind-Daten: er braucht das betreuende Konto, nicht nur die Creator-Rolle.
+        var supervisingCreator = new CreatorApi(Authenticated(1, "0000"));
+        var matches = await supervisingCreator.MatchProfilesAsync(1);
+        var match = Assert.Single(matches, m => m.Profile.Id == profile.Id);
+        Assert.Contains("series_match", match.Reasons);
+
+        // Dasselbe Kind mit einem fremden Konto: die Profil-Suche ist kein Seitenkanal auf Kind-Daten.
+        var foreign = await Assert.ThrowsAsync<PuglingApiException>(() => creator.MatchProfilesAsync(1));
+        Assert.Equal(HttpStatusCode.Forbidden, foreign.StatusCode);
+
+        // Die Units der Reihe liest der Agent, bevor er Stoff erfindet.
+        var units = await creator.ListUnitsAsync(series.Id, grade: 8);
+        Assert.Contains(units, u => u.Grammar == "Present perfect");
+
+        await creator.DeleteProfileAsync(profile.Id);
+        await creator.DeleteSeriesAsync(series.Id);
+    }
+
     [Fact]
     public async Task Supervisor_liest_den_Lernstand_seines_Kindes_ueber_die_Student_Sichten()
     {

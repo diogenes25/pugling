@@ -178,3 +178,97 @@ Content-Type: application/json
 # @name removeGrant
 DELETE {{baseUrl}}/creator/exercises/{{exerciseId}}/grants/2/Write
 Authorization: Bearer {{authToken}}
+###############################################################################
+# Unterrichtsmaterial & Creator-Profile: welcher Stoff ist dran, und wer kennt ihn?
+# Die Lehrwerk-Reihe ist geteilt (jeder Creator liest, nur der Owner ändert) und
+# verbindet das Lehrbuch des Kindes mit dem darauf optimierten Creator-Profil.
+###############################################################################
+
+### Lehrwerk-Reihe anlegen (Name schon vergeben ⇒ 200 mit der bestehenden Reihe)
+# @name createSeries
+POST {{baseUrl}}/creator/textbook-series
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "name": "Access REST-Demo",
+  "publisher": "Cornelsen",
+  "subjectName": "Englisch",
+  "subjectId": {{subjectId}},
+  "schoolTypes": "Gymnasium",
+  "sourceLanguage": "en",
+  "targetLanguage": "de",
+  "notes": "Kompetenzorientiertes Lehrwerk, ein Band je Jahrgang."
+}
+
+### Neue Series-ID merken
+@seriesId = {{createSeries.response.body.id}}
+
+### Unit anlegen – topics/grammar/vocabularyNotes sind der Stoff, den der KI-Creator liest
+# @name createUnit
+POST {{baseUrl}}/creator/textbook-series/{{seriesId}}/units
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "label": "Unit 3 - Growing up",
+  "grade": 8,
+  "orderIndex": 3,
+  "topics": "Familie, Freundschaft, Erwachsenwerden",
+  "grammar": "Present perfect vs. simple past",
+  "vocabularyNotes": "to grow up, responsibility, to argue"
+}
+
+### Neue Unit-ID merken
+@unitId = {{createUnit.response.body.id}}
+
+### Units der Reihe lesen (nach Band und Reihenfolge)
+# @name listUnits
+GET {{baseUrl}}/creator/textbook-series/{{seriesId}}/units?grade=8
+Authorization: Bearer {{authToken}}
+
+### Creator-Profil anlegen (der "Fachlehrer": persona/didactics prägen den System-Prompt)
+# @name createProfile
+POST {{baseUrl}}/creator/profiles
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "name": "Englisch 8 Gymnasium - Access REST-Demo",
+  "subjectName": "Englisch",
+  "subjectId": {{subjectId}},
+  "schoolTypes": "Gymnasium",
+  "gradeMin": 7,
+  "gradeMax": 8,
+  "seriesId": {{seriesId}},
+  "sourceLang": "en",
+  "targetLang": "de",
+  "persona": "Du bist Englischlehrer an einem Gymnasium.",
+  "didactics": "Kurze Sätze, maximal zwölf Wörter. Progression wie im Lehrwerk.",
+  "defaultTypes": ["Vocabulary", "Cloze"]
+}
+
+### Neue Profil-ID merken
+@profileId = {{createProfile.response.body.id}}
+
+### Reihe + aktuelle Unit am Lehrbuch des Kindes hinterlegen (Supervisor-Route!)
+# @name linkTextbook
+POST {{baseUrl}}/supervisor/children/{{childId}}/textbooks
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "title": "Access 8",
+  "subjectName": "Englisch",
+  "subjectId": {{subjectId}},
+  "grade": 8,
+  "publisher": "Cornelsen",
+  "seriesId": {{seriesId}},
+  "currentUnitId": {{unitId}}
+}
+
+### Den passenden Creator zum Kind finden: Reihe (8) > Fach (4) > Klassenstufe (2) > Schulart (1)
+# Braucht ein Konto, das dieses Kind betreut – sonst 403 forbidden.
+# @name matchProfiles
+GET {{baseUrl}}/creator/profiles/match?childId={{childId}}&subjectId={{subjectId}}
+Authorization: Bearer {{authToken}}

@@ -16,11 +16,11 @@ public sealed class CreatorPipeline(BriefingBuilder briefings, IEnumerable<IExer
     public IReadOnlyList<string> SupportedTypes => [.. _strategies.Select(s => s.TypeKey)];
 
     /// <summary>Nur das Briefing bauen (Verb <c>briefing</c>) – ohne Sprachmodell, ohne Schreibzugriff.</summary>
-    public Task<ChildBriefing> BriefAsync(GenerationRequest request, CancellationToken ct = default) =>
+    public Task<CreatorBriefing> BriefAsync(GenerationRequest request, CancellationToken ct = default) =>
         briefings.BuildAsync(request, ct);
 
     /// <summary>Briefing bauen und die Übung erzeugen.</summary>
-    public async Task<(ChildBriefing Briefing, GenerationOutcome Outcome)> CreateAsync(
+    public async Task<(CreatorBriefing Briefing, GenerationOutcome Outcome)> CreateAsync(
         GenerationRequest request, CancellationToken ct = default)
     {
         var strategy = _strategies.FirstOrDefault(s =>

@@ -150,6 +150,21 @@ public class Textbook
     public string? Isbn { get; set; }
     /// <summary>Aktueller Lernstand im Buch, z. B. „Unit 4 – Past Tense".</summary>
     public string? CurrentChapter { get; set; }
+
+    /// <summary>
+    /// Optionaler Link auf die katalogisierte <see cref="TextbookSeries"/>. Erst er macht die Frage
+    /// „welcher Creator kennt dieses Material?" entscheidbar (Reihen-Treffer im Profil-Matching);
+    /// <see cref="Title"/>/<see cref="Publisher"/> bleiben als Rückfallebene für unkatalogisierte Werke.
+    /// </summary>
+    public int? SeriesId { get; set; }
+    public TextbookSeries? Series { get; set; }
+    /// <summary>
+    /// Die Unit, in der das Kind gerade steckt – die strukturierte Form von <see cref="CurrentChapter"/>.
+    /// Nur damit kennt der Creator den Stoff der Unit (Themen/Grammatik/Wortschatz) statt bloß ihren Namen.
+    /// </summary>
+    public int? CurrentUnitId { get; set; }
+    public SeriesUnit? CurrentUnit { get; set; }
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }
 

@@ -143,6 +143,9 @@ builder.Services.AddScoped<PositionReportService>();
 builder.Services.AddScoped<BirkenbihlDecodingService>();
 // Findet-sonst-legt-an: sichert, dass jede in einer Übung genutzte Vokabel im zentralen Store liegt.
 builder.Services.AddScoped<VocabularyStoreService>();
+// Sucht zu einem Kind den fachkundigen Creator (Reihe > Fach > Klassenstufe > Schulart). Deterministisch,
+// damit derselbe Datenstand denselben Lehrer liefert – die Herkunft einer Übung bleibt nachvollziehbar.
+builder.Services.AddScoped<CreatorProfileService>();
 // Findet-sonst-legt-an für die geteilte Interessen-Taxonomie – die eine Stelle, an der aus Text ein Tag
 // wird (Creator taggt Bilder, Supervisor pflegt Interessen, Backfill übernimmt Freitext). Getrennte
 // Wege würden Dubletten erzeugen und das Matching „Bild ↔ Kind" genau dort leerlaufen lassen.

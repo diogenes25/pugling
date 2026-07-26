@@ -23,10 +23,10 @@ public sealed partial class ClozeStrategy(IChatClient chat, CreatorApi creator,
     protected override string TitleOf(ClozeDraft draft) => draft.Title;
 
     /// <inheritdoc/>
-    protected override string TaskInstruction(ChildBriefing briefing, GenerationRequest request) =>
+    protected override string TaskInstruction(CreatorBriefing briefing, GenerationRequest request) =>
         // Drei '$': so bleiben die Platzhalter {{1}} literal und nur {{{…}}} interpoliert.
         $$$"""
-        Entwirf einen Lückentext in {{{request.SourceLang}}}: einen zusammenhängenden, kurzen Text, in dem
+        Entwirf einen Lückentext in {{{briefing.SourceLang}}}: einen zusammenhängenden, kurzen Text, in dem
         an den Lernstellen Platzhalter stehen – {{1}}, {{2}}, {{3}} … in aufsteigender Reihenfolge.
         Zu jedem Platzhalter gehört genau ein Eintrag in 'gaps' mit derselben Nummer in 'index' und der
         richtigen Lösung in 'answer'. Die Lösung darf im Text sonst nirgends stehen.
@@ -34,7 +34,7 @@ public sealed partial class ClozeStrategy(IChatClient chat, CreatorApi creator,
         """;
 
     /// <inheritdoc/>
-    protected override IReadOnlyList<string> Validate(ClozeDraft draft, ChildBriefing briefing,
+    protected override IReadOnlyList<string> Validate(ClozeDraft draft, CreatorBriefing briefing,
         GenerationRequest request)
     {
         var violations = new Violations();
@@ -96,7 +96,7 @@ public sealed partial class ClozeStrategy(IChatClient chat, CreatorApi creator,
 
     /// <inheritdoc/>
     protected override Task<ExercisePayload<ClozeConfig>> ToPayloadAsync(ClozeDraft draft,
-        ChildBriefing briefing, GenerationRequest request, CancellationToken ct)
+        CreatorBriefing briefing, GenerationRequest request, CancellationToken ct)
     {
         var config = new ClozeConfig
         {

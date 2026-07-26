@@ -21,6 +21,11 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
     public DbSet<SupervisorLink> SupervisorLinks => Set<SupervisorLink>();
     public DbSet<ChildPointsEntry> ChildPoints => Set<ChildPointsEntry>();
 
+    // Unterrichts-Seite des Katalogs: Lehrwerk-Reihe -> Unit, dazu die Creator-Profile („Fachlehrer").
+    public DbSet<TextbookSeries> TextbookSeries => Set<TextbookSeries>();
+    public DbSet<SeriesUnit> SeriesUnits => Set<SeriesUnit>();
+    public DbSet<CreatorProfile> CreatorProfiles => Set<CreatorProfile>();
+
     // Lern-Katalog: Subject -> Chapter -> Exercise (typisiert)
     public DbSet<Subject> Subjects => Set<Subject>();
     public DbSet<Chapter> Chapters => Set<Chapter>();
@@ -173,6 +178,52 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
             e.HasOne(t => t.Child).WithMany(c => c.Textbooks).HasForeignKey(t => t.ChildId)
                 .OnDelete(DeleteBehavior.Cascade);
             e.HasOne(t => t.Subject).WithMany().HasForeignKey(t => t.SubjectId)
+                .OnDelete(DeleteBehavior.SetNull);
+            // Reihe und Unit sind Verweise in den geteilten Katalog: eine gelöschte Reihe leert nur die
+            // Zuordnung (SetNull) – das Buch des Kindes bleibt mit Titel/Kapitel als Freitext bestehen.
+            e.HasOne(t => t.Series).WithMany().HasForeignKey(t => t.SeriesId)
+                .OnDelete(DeleteBehavior.SetNull);
+            e.HasOne(t => t.CurrentUnit).WithMany().HasForeignKey(t => t.CurrentUnitId)
+                .OnDelete(DeleteBehavior.SetNull);
+            // Der heiße Weg des Profil-Matchings: „welche Reihe benutzt dieses Kind?"
+            e.HasIndex(t => t.SeriesId);
+        });
+
+        // Lehrwerk-Reihe: global eindeutiger Slug (kindneutral wie der Vokabel-Store, Muster InterestTag).
+        // Owner nur als Editier-/Löschrecht – ein gelöschter Vater leert die FK, die Reihe bleibt nutzbar.
+        modelBuilder.Entity<TextbookSeries>(e =>
+        {
+            e.HasIndex(s => s.Slug).IsUnique();
+            e.HasOne(s => s.Subject).WithMany().HasForeignKey(s => s.SubjectId)
+                .OnDelete(DeleteBehavior.SetNull);
+            e.HasOne(s => s.Owner).WithMany().HasForeignKey(s => s.OwnerFatherId)
+                .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        // Unit: gehört der Reihe (Cascade). Der Index bedient die einzige Sortierung, in der Units je
+        // gelesen werden – Band, dann Reihenfolge im Band.
+        modelBuilder.Entity<SeriesUnit>(e =>
+        {
+            e.HasIndex(u => new { u.SeriesId, u.Grade, u.OrderIndex });
+            e.HasOne(u => u.Series).WithMany(s => s.Units).HasForeignKey(u => u.SeriesId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // Creator-Profil: je Owner ein eindeutiger Name; Fach und Reihe sind die beiden Achsen, über die
+        // das Matching filtert. Die bevorzugten Übungstypen liegen als JSON-Liste (ValueComparer wie bei Child).
+        modelBuilder.Entity<CreatorProfile>(e =>
+        {
+            e.HasIndex(p => new { p.OwnerFatherId, p.Name }).IsUnique().HasFilter("[OwnerFatherId] IS NOT NULL");
+            e.HasIndex(p => new { p.SubjectId, p.SeriesId });
+            e.Property(p => p.DefaultTypes).HasConversion(
+                v => JsonSerializer.Serialize(v, JsonOptions),
+                s => JsonSerializer.Deserialize<List<string>>(s, JsonOptions) ?? new())
+                .Metadata.SetValueComparer(JsonValueComparer.For<List<string>>());
+            e.HasOne(p => p.Subject).WithMany().HasForeignKey(p => p.SubjectId)
+                .OnDelete(DeleteBehavior.SetNull);
+            e.HasOne(p => p.Series).WithMany().HasForeignKey(p => p.SeriesId)
+                .OnDelete(DeleteBehavior.SetNull);
+            e.HasOne(p => p.Owner).WithMany().HasForeignKey(p => p.OwnerFatherId)
                 .OnDelete(DeleteBehavior.SetNull);
         });
 

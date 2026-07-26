@@ -11,6 +11,27 @@ namespace Pugling.Agent.Creator.Drafting;
 /// </summary>
 public static class DraftPrompts
 {
+    /// <summary>
+    /// Der System-Prompt eines Auftrags: die Persona und die Didaktik des Profils <b>vor</b> den festen
+    /// Regeln. Die Reihenfolge ist die Aussage – ein Profil darf die Rolle prägen, aber keine Regel
+    /// aufweichen; deshalb steht der unveränderliche Block zuletzt und behält das letzte Wort.
+    /// </summary>
+    public static string SystemFor(CreatorBriefing briefing)
+    {
+        if (briefing.Profile is not { } profile) return System;
+
+        var text = new StringBuilder();
+        if (profile.Persona is { Length: > 0 } persona) text.AppendLine(persona).AppendLine();
+        if (profile.Didactics is { Length: > 0 } didactics)
+        {
+            text.AppendLine("Didaktische Vorgaben deines Profils:");
+            text.AppendLine(didactics);
+            text.AppendLine();
+        }
+        text.Append(System);
+        return text.ToString();
+    }
+
     /// <summary>Rollen- und Regelbeschreibung; gilt für alle Typen.</summary>
     public const string System = """
         Du bist der Creator der Lern-App Pugling und entwirfst Schulübungen für ein einzelnes Kind.
@@ -28,7 +49,7 @@ public static class DraftPrompts
         """;
 
     /// <summary>Baut den Auftragsteil: Briefing plus typ-spezifische Anweisung.</summary>
-    public static string User(ChildBriefing briefing, GenerationRequest request, string taskInstruction)
+    public static string User(CreatorBriefing briefing, GenerationRequest request, string taskInstruction)
     {
         var prompt = new StringBuilder();
         prompt.AppendLine(briefing.ToPromptText());
@@ -36,7 +57,7 @@ public static class DraftPrompts
         prompt.AppendLine(taskInstruction);
         prompt.AppendLine();
         prompt.AppendLine($"Anzahl Aufgaben: genau {request.ItemCount}.");
-        prompt.AppendLine($"Lernsprache: {request.SourceLang}, Muttersprache: {request.TargetLang}.");
+        prompt.AppendLine($"Lernsprache: {briefing.SourceLang}, Muttersprache: {briefing.TargetLang}.");
         if (briefing.Interests.Count > 0)
             prompt.AppendLine($"Kleide die Aufgaben in die Interessen ein: {string.Join(", ", briefing.Interests)} – " +
                               "aber ändere den Lernstoff dadurch nicht.");

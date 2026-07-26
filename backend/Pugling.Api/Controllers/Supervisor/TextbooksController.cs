@@ -23,25 +23,31 @@ namespace Pugling.Api.Controllers.Supervisor;
 [ServiceFilter(typeof(ChildOwnershipFilter))]
 public class TextbooksController(PuglingDbContext db) : ControllerBase
 {
-    static TextbookResponse Map(Textbook t) =>
-        new(t.Id, t.Title, t.SubjectName, t.SubjectId, t.Grade, t.Publisher, t.Isbn, t.CurrentChapter, t.CreatedAt);
+    /// <summary>
+    /// Projiziert samt Reihe und Unit. Die Namen kommen mit, damit ein Aufrufer die Zuordnung anzeigen
+    /// kann, ohne den Katalog nachzuladen.
+    /// </summary>
+    private static IQueryable<TextbookResponse> Project(IQueryable<Textbook> q) =>
+        q.Select(t => new TextbookResponse(t.Id, t.Title, t.SubjectName, t.SubjectId, t.Grade, t.Publisher,
+            t.Isbn, t.CurrentChapter, t.CreatedAt,
+            t.SeriesId, t.Series!.Name, t.CurrentUnitId, t.CurrentUnit!.Label));
 
     /// <summary>Alle Lehrbücher des Kindes.</summary>
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<IReadOnlyList<TextbookResponse>>> List(int childId, CancellationToken ct) =>
-        await db.Textbooks.AsNoTracking().Where(t => t.ChildId == childId)
-            .OrderBy(t => t.SubjectName).ThenBy(t => t.Title)
-            .Select(t => Map(t)).ToListAsync(ct);
+        await Project(db.Textbooks.AsNoTracking().Where(t => t.ChildId == childId)
+                .OrderBy(t => t.SubjectName).ThenBy(t => t.Title))
+            .ToListAsync(ct);
 
     /// <summary>Ein einzelnes Lehrbuch des Kindes.</summary>
     [HttpGet("{textbookId:int}")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<TextbookResponse>> Get(int childId, int textbookId, CancellationToken ct)
     {
-        var book = await db.Textbooks.AsNoTracking()
-            .FirstOrDefaultAsync(t => t.Id == textbookId && t.ChildId == childId, ct);
-        return book is null ? NotFound() : Map(book);
+        var book = await Project(db.Textbooks.AsNoTracking()
+            .Where(t => t.Id == textbookId && t.ChildId == childId)).FirstOrDefaultAsync(ct);
+        return book is null ? NotFound() : book;
     }
 
     /// <summary>Legt ein Lehrbuch für das Kind an.</summary>
@@ -54,6 +60,7 @@ public class TextbooksController(PuglingDbContext db) : ControllerBase
         if (string.IsNullOrWhiteSpace(dto.Title)) return this.ProblemWithCode(ApiErrors.ValidationError, "Title is required.");
         if (dto.SubjectId is int sid && !await db.Subjects.AnyAsync(s => s.Id == sid, ct))
             return this.ProblemWithCode(ApiErrors.ValidationError, "SubjectId does not reference an existing subject.");
+        if (await CatalogProblemAsync(dto.SeriesId, dto.CurrentUnitId, ct) is { } problem) return problem;
 
         var book = new Textbook
         {
@@ -65,10 +72,13 @@ public class TextbooksController(PuglingDbContext db) : ControllerBase
             Publisher = dto.Publisher?.Trim(),
             Isbn = dto.Isbn?.Trim(),
             CurrentChapter = dto.CurrentChapter?.Trim(),
+            SeriesId = dto.SeriesId,
+            CurrentUnitId = dto.CurrentUnitId,
         };
         db.Textbooks.Add(book);
         await db.SaveChangesAsync(ct);
-        return CreatedAtAction(nameof(Get), new { childId, textbookId = book.Id }, Map(book));
+        return CreatedAtAction(nameof(Get), new { childId, textbookId = book.Id },
+            await Project(db.Textbooks.AsNoTracking().Where(t => t.Id == book.Id)).FirstAsync(ct));
     }
 
     /// <summary>Ändert ein Lehrbuch (partiell). Setzt Felder nur, wenn sie im Payload enthalten sind.</summary>
@@ -81,6 +91,10 @@ public class TextbooksController(PuglingDbContext db) : ControllerBase
         if (book is null) return NotFound();
         if (dto.SubjectId is int sid && !await db.Subjects.AnyAsync(s => s.Id == sid, ct))
             return this.ProblemWithCode(ApiErrors.ValidationError, "SubjectId does not reference an existing subject.");
+        // Gegen den Zielzustand prüfen, nicht gegen den Payload: wer nur die Unit nachträgt, muss die
+        // schon gesetzte Reihe nicht mitschicken – die Unit muss aber zu ihr gehören.
+        if (await CatalogProblemAsync(dto.SeriesId ?? book.SeriesId, dto.CurrentUnitId ?? book.CurrentUnitId, ct)
+            is { } problem) return problem;
 
         if (dto.Title is not null) book.Title = dto.Title.Trim();
         if (dto.SubjectName is not null) book.SubjectName = dto.SubjectName.Trim();
@@ -89,8 +103,31 @@ public class TextbooksController(PuglingDbContext db) : ControllerBase
         if (dto.Publisher is not null) book.Publisher = dto.Publisher.Trim();
         if (dto.Isbn is not null) book.Isbn = dto.Isbn.Trim();
         if (dto.CurrentChapter is not null) book.CurrentChapter = dto.CurrentChapter.Trim();
+        if (dto.SeriesId.HasValue) book.SeriesId = dto.SeriesId;
+        if (dto.CurrentUnitId.HasValue) book.CurrentUnitId = dto.CurrentUnitId;
         await db.SaveChangesAsync(ct);
-        return Map(book);
+        return await Project(db.Textbooks.AsNoTracking().Where(t => t.Id == textbookId)).FirstAsync(ct);
+    }
+
+    /// <summary>
+    /// Prüft die Katalog-Verweise: die Reihe muss existieren, und die Unit muss <b>zu dieser Reihe</b>
+    /// gehören. Ohne die zweite Prüfung stünde am Kind eine Unit aus einem fremden Werk – der Creator
+    /// bekäme dann den Stoff eines Buchs, das das Kind nicht benutzt.
+    /// </summary>
+    private async Task<ObjectResult?> CatalogProblemAsync(int? seriesId, int? unitId, CancellationToken ct)
+    {
+        if (seriesId is int sid && !await db.TextbookSeries.AnyAsync(s => s.Id == sid, ct))
+            return this.ProblemWithCode(ApiErrors.ValidationError, "SeriesId does not reference an existing textbook series.");
+        if (unitId is not int uid) return null;
+
+        var unit = await db.SeriesUnits.AsNoTracking().FirstOrDefaultAsync(u => u.Id == uid, ct);
+        if (unit is null)
+            return this.ProblemWithCode(ApiErrors.ValidationError, "CurrentUnitId does not reference an existing series unit.");
+        if (seriesId is null)
+            return this.ProblemWithCode(ApiErrors.ValidationError, "CurrentUnitId requires SeriesId to be set.");
+        if (unit.SeriesId != seriesId)
+            return this.ProblemWithCode(ApiErrors.ValidationError, "CurrentUnitId belongs to a different textbook series.");
+        return null;
     }
 
     /// <summary>Löscht ein Lehrbuch des Kindes.</summary>

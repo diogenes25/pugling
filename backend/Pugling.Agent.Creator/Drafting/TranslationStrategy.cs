@@ -22,16 +22,16 @@ public sealed class TranslationStrategy(IChatClient chat, CreatorApi creator,
     protected override string TitleOf(TranslationDraft draft) => draft.Title;
 
     /// <inheritdoc/>
-    protected override string TaskInstruction(ChildBriefing briefing, GenerationRequest request) =>
+    protected override string TaskInstruction(CreatorBriefing briefing, GenerationRequest request) =>
         $"""
-        Entwirf eine Übersetzungsübung: kurze, vollständige Sätze in {request.SourceLang} ('source'),
-        dazu die erwartete Übersetzung in {request.TargetLang} ('target'). Die Sätze bauen aufeinander
+        Entwirf eine Übersetzungsübung: kurze, vollständige Sätze in {briefing.SourceLang} ('source'),
+        dazu die erwartete Übersetzung in {briefing.TargetLang} ('target'). Die Sätze bauen aufeinander
         nicht auf und stehen für sich. Trage in 'alternatives' weitere korrekte Übersetzungen ein,
         wenn mehrere natürlich klingen – sonst lasse das Feld leer.
         """;
 
     /// <inheritdoc/>
-    protected override IReadOnlyList<string> Validate(TranslationDraft draft, ChildBriefing briefing,
+    protected override IReadOnlyList<string> Validate(TranslationDraft draft, CreatorBriefing briefing,
         GenerationRequest request)
     {
         var violations = new Violations();
@@ -58,12 +58,12 @@ public sealed class TranslationStrategy(IChatClient chat, CreatorApi creator,
 
     /// <inheritdoc/>
     protected override Task<ExercisePayload<TranslationConfig>> ToPayloadAsync(TranslationDraft draft,
-        ChildBriefing briefing, GenerationRequest request, CancellationToken ct)
+        CreatorBriefing briefing, GenerationRequest request, CancellationToken ct)
     {
         var config = new TranslationConfig
         {
-            SourceLang = request.SourceLang,
-            TargetLang = request.TargetLang,
+            SourceLang = briefing.SourceLang,
+            TargetLang = briefing.TargetLang,
             Items =
             [
                 .. draft.Items.Select(i => new TranslationItem(i.Source.Trim(), i.Target.Trim(),

@@ -71,6 +71,106 @@ public sealed class CreatorApi(HttpClient http)
     public Task<CategoryResponse> CreateCategoryAsync(int subjectId, CreateCategoryDto dto, CancellationToken ct = default) =>
         Http.PostAsync<CategoryResponse>($"{Root}/subjects/{subjectId}/categories", dto, ct);
 
+    // ---------------------------------------------------------------- Lehrwerk-Reihen & Units
+
+    /// <summary>Die Lehrwerk-Reihen des geteilten Katalogs (alle Filter optional).</summary>
+    public Task<IReadOnlyList<TextbookSeriesResponse>> ListSeriesAsync(string? search = null, int? subjectId = null,
+        bool? mineOnly = null, int skip = 0, int take = 50, CancellationToken ct = default) =>
+        Http.GetAsync<IReadOnlyList<TextbookSeriesResponse>>($"{Root}/textbook-series" + PuglingHttp.Query(
+            ("search", search), ("subjectId", subjectId), ("mineOnly", mineOnly), ("skip", skip), ("take", take)), ct);
+
+    /// <summary>Eine Reihe per Id.</summary>
+    public Task<TextbookSeriesResponse> GetSeriesAsync(int seriesId, CancellationToken ct = default) =>
+        Http.GetAsync<TextbookSeriesResponse>($"{Root}/textbook-series/{seriesId}", ct);
+
+    /// <summary>Legt eine Reihe an; ein bereits vergebener Name liefert die bestehende Reihe (idempotent).</summary>
+    public Task<TextbookSeriesResponse> CreateSeriesAsync(CreateTextbookSeriesDto dto, CancellationToken ct = default) =>
+        Http.PostAsync<TextbookSeriesResponse>($"{Root}/textbook-series", dto, ct);
+
+    /// <summary>Ändert eine Reihe (nur Owner).</summary>
+    public Task<TextbookSeriesResponse> UpdateSeriesAsync(int seriesId, UpdateTextbookSeriesDto dto,
+        CancellationToken ct = default) =>
+        Http.PatchAsync<TextbookSeriesResponse>($"{Root}/textbook-series/{seriesId}", dto, ct);
+
+    /// <summary>Löscht eine Reihe samt Units (nur Owner).</summary>
+    public Task DeleteSeriesAsync(int seriesId, CancellationToken ct = default) =>
+        Http.SendAsync(HttpMethod.Delete, $"{Root}/textbook-series/{seriesId}", null, ct);
+
+    /// <summary>
+    /// Die Units einer Reihe (nach Band und Reihenfolge). Ein Agent sollte sie lesen, <b>bevor</b> er
+    /// Stoff erfindet: <c>Topics</c>/<c>Grammar</c>/<c>VocabularyNotes</c> sind der Inhalt der Unit.
+    /// </summary>
+    public Task<IReadOnlyList<SeriesUnitResponse>> ListUnitsAsync(int seriesId, int? grade = null,
+        CancellationToken ct = default) =>
+        Http.GetAsync<IReadOnlyList<SeriesUnitResponse>>(
+            $"{Root}/textbook-series/{seriesId}/units" + PuglingHttp.Query(("grade", grade)), ct);
+
+    /// <summary>Eine Unit per Id.</summary>
+    public Task<SeriesUnitResponse> GetUnitAsync(int seriesId, int unitId, CancellationToken ct = default) =>
+        Http.GetAsync<SeriesUnitResponse>($"{Root}/textbook-series/{seriesId}/units/{unitId}", ct);
+
+    /// <summary>Hängt eine Unit an die Reihe (nur Owner).</summary>
+    public Task<SeriesUnitResponse> CreateUnitAsync(int seriesId, CreateSeriesUnitDto dto, CancellationToken ct = default) =>
+        Http.PostAsync<SeriesUnitResponse>($"{Root}/textbook-series/{seriesId}/units", dto, ct);
+
+    /// <summary>Ändert eine Unit (nur Owner der Reihe).</summary>
+    public Task<SeriesUnitResponse> UpdateUnitAsync(int seriesId, int unitId, UpdateSeriesUnitDto dto,
+        CancellationToken ct = default) =>
+        Http.PatchAsync<SeriesUnitResponse>($"{Root}/textbook-series/{seriesId}/units/{unitId}", dto, ct);
+
+    /// <summary>Löscht eine Unit (nur Owner der Reihe).</summary>
+    public Task DeleteUnitAsync(int seriesId, int unitId, CancellationToken ct = default) =>
+        Http.SendAsync(HttpMethod.Delete, $"{Root}/textbook-series/{seriesId}/units/{unitId}", null, ct);
+
+    // ---------------------------------------------------------------- Creator-Profile
+
+    /// <summary>Die Creator-Profile („Fachlehrer"), optional gefiltert.</summary>
+    public Task<IReadOnlyList<CreatorProfileResponse>> ListProfilesAsync(int? subjectId = null, int? seriesId = null,
+        bool? mineOnly = null, bool? includeInactive = null, CancellationToken ct = default) =>
+        Http.GetAsync<IReadOnlyList<CreatorProfileResponse>>($"{Root}/profiles" + PuglingHttp.Query(
+            ("subjectId", subjectId), ("seriesId", seriesId), ("mineOnly", mineOnly),
+            ("includeInactive", includeInactive)), ct);
+
+    /// <summary>Ein Profil per Id.</summary>
+    public Task<CreatorProfileResponse> GetProfileAsync(int profileId, CancellationToken ct = default) =>
+        Http.GetAsync<CreatorProfileResponse>($"{Root}/profiles/{profileId}", ct);
+
+    /// <summary>
+    /// Die zu einem Kind passenden Profile, bestes zuerst. Braucht ein Konto, das das Kind <b>betreut</b> –
+    /// sonst <c>403 forbidden</c>.
+    /// </summary>
+    public Task<IReadOnlyList<CreatorProfileMatch>> MatchProfilesAsync(int childId, int? subjectId = null,
+        CancellationToken ct = default) =>
+        Http.GetAsync<IReadOnlyList<CreatorProfileMatch>>($"{Root}/profiles/match" + PuglingHttp.Query(
+            ("childId", childId), ("subjectId", subjectId)), ct);
+
+    /// <summary>Legt ein Profil an (Owner = das angemeldete Konto).</summary>
+    public Task<CreatorProfileResponse> CreateProfileAsync(CreateCreatorProfileDto dto, CancellationToken ct = default) =>
+        Http.PostAsync<CreatorProfileResponse>($"{Root}/profiles", dto, ct);
+
+    /// <summary>Ändert ein Profil (nur Owner).</summary>
+    public Task<CreatorProfileResponse> UpdateProfileAsync(int profileId, UpdateCreatorProfileDto dto,
+        CancellationToken ct = default) =>
+        Http.PatchAsync<CreatorProfileResponse>($"{Root}/profiles/{profileId}", dto, ct);
+
+    /// <summary>Löscht ein Profil (nur Owner); erzeugte Übungen bleiben unberührt.</summary>
+    public Task DeleteProfileAsync(int profileId, CancellationToken ct = default) =>
+        Http.SendAsync(HttpMethod.Delete, $"{Root}/profiles/{profileId}", null, ct);
+
+    // ---------------------------------------------------------------- Kind-skopierte Tags
+
+    /// <summary>Die Tags eines Kindes (kind-skopiert – anders als die kindneutrale Interessen-Taxonomie).</summary>
+    public Task<IReadOnlyList<TagResponse>> ListTagsAsync(int childId, CancellationToken ct = default) =>
+        Http.GetAsync<IReadOnlyList<TagResponse>>($"{Root}/tags" + PuglingHttp.Query(("childId", childId)), ct);
+
+    /// <summary>Legt einen kind-skopierten Tag an.</summary>
+    public Task<TagResponse> CreateTagAsync(CreateTagDto dto, CancellationToken ct = default) =>
+        Http.PostAsync<TagResponse>($"{Root}/tags", dto, ct);
+
+    /// <summary>Markiert Übungen mit einem Tag – so hält ein Klausur-Bündel zusammen.</summary>
+    public Task<TagResponse> TagExercisesAsync(int tagId, TagExercisesDto dto, CancellationToken ct = default) =>
+        Http.PostAsync<TagResponse>($"{Root}/tags/{tagId}/exercises", dto, ct);
+
     // ---------------------------------------------------------------- Vokabelspeicher
 
     /// <summary>Durchsucht den Vokabelspeicher (alle Filter optional, UND-verknüpft).</summary>

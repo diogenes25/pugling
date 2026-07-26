@@ -12,17 +12,24 @@ public record CreateFatherDto(string Name, string? Email, string? Pin);
 /// <summary>Nur gesetzte Felder werden geändert.</summary>
 public record UpdateFatherDto(string? Name, string? Email, string? Pin);
 
-/// <summary>Ein vom Kind verwendetes Lehrbuch samt aktuellem Kapitel.</summary>
+/// <summary>
+/// Ein vom Kind verwendetes Lehrbuch samt aktuellem Kapitel. <c>SeriesId</c>/<c>CurrentUnitId</c> sind
+/// die katalogisierte Form von Titel und Kapitel: erst über sie findet das Profil-Matching den Creator,
+/// der dieses Werk kennt.
+/// </summary>
 public record TextbookResponse(int Id, string Title, string? SubjectName, int? SubjectId, int? Grade,
-    string? Publisher, string? Isbn, string? CurrentChapter, DateTime CreatedAt);
+    string? Publisher, string? Isbn, string? CurrentChapter, DateTime CreatedAt,
+    int? SeriesId = null, string? SeriesName = null, int? CurrentUnitId = null, string? CurrentUnitLabel = null);
 
 /// <summary>Eingabe zum Anlegen eines Lehrbuchs.</summary>
 public record CreateTextbookDto(string Title, string? SubjectName, int? SubjectId, int? Grade,
-    string? Publisher, string? Isbn, string? CurrentChapter);
+    string? Publisher, string? Isbn, string? CurrentChapter,
+    int? SeriesId = null, int? CurrentUnitId = null);
 
 /// <summary>Partielle Änderung eines Lehrbuchs; weggelassene Felder bleiben unverändert.</summary>
 public record UpdateTextbookDto(string? Title, string? SubjectName, int? SubjectId, int? Grade,
-    string? Publisher, string? Isbn, string? CurrentChapter);
+    string? Publisher, string? Isbn, string? CurrentChapter,
+    int? SeriesId = null, int? CurrentUnitId = null);
 
 /// <summary>Ein Stundenplan-Eintrag: Fach an einem Wochentag.</summary>
 public record EntryResponse(int Id, int ChildId, int SubjectId, string SubjectName, DayOfWeek DayOfWeek, string? TimeOfDay);

@@ -43,7 +43,7 @@ public static class DraftRules
     public const int MaxItems = 30;
 
     /// <summary>Titel gesetzt, plausibel lang und nicht schon im Kapitel vergeben.</summary>
-    public static void Title(Violations violations, string? title, ChildBriefing briefing)
+    public static void Title(Violations violations, string? title, CreatorBriefing briefing)
     {
         violations.Require(!string.IsNullOrWhiteSpace(title), "Der Titel fehlt.");
         violations.Require(title is null || title.Length <= 120, "Der Titel ist länger als 120 Zeichen.");
@@ -86,7 +86,7 @@ public static class DraftRules
     /// <b>vollständig</b> auftauchen. <paramref name="exact"/> vergleicht ganze Einträge
     /// (Vokabel-/Lückenlösungen), sonst genügt Vorkommen im Text (Sätze, Aufgaben).
     /// </summary>
-    public static void CoversRequiredWords(Violations violations, ChildBriefing briefing,
+    public static void CoversRequiredWords(Violations violations, CreatorBriefing briefing,
         IEnumerable<string?>? produced, bool exact)
     {
         if (briefing.RequiredWords.Count == 0) return;

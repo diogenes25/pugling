@@ -1,3 +1,4 @@
+using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Pugling.Agent.Creator;
@@ -43,6 +44,10 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
         return (new CreatorPipeline(new BriefingBuilder(creator, supervisor, student), strategies), creator, chat);
     }
 
+    /// <summary>Die Konsolen-Verben mit demselben Unterbau wie der echte Agent (inkl. Klausur-Planer).</summary>
+    private AgentCommands Commands(CreatorApi creator, CreatorPipeline pipeline) =>
+        new(creator, pipeline, new ExamPlanner(pipeline, creator, new SupervisorApi(Authenticated())));
+
     /// <summary>Legt ein leeres Fach mit Kapitel an, damit jeder Test für sich steht.</summary>
     private static async Task<(int SubjectId, int ChapterId)> FreshChapterAsync(CreatorApi creator, string name)
     {
@@ -52,8 +57,10 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
     }
 
     private static GenerationRequest Request(int subjectId, int chapterId, string type,
-        int count = 3, IReadOnlyList<string>? words = null, bool dryRun = false, bool strict = true) =>
-        new(ChildId: 1, SubjectId: subjectId, ChapterId: chapterId, TypeKey: type,
+        int count = 3, IReadOnlyList<string>? words = null, bool dryRun = false, bool strict = true,
+        int? childId = 1, int? profileId = null, int? unitId = null, bool general = false) =>
+        new(ChildId: childId, ProfileId: profileId, UnitId: unitId, General: general,
+            SubjectId: subjectId, ChapterId: chapterId, TypeKey: type,
             Topic: "Unit 1: Animals", ItemCount: count, Words: words ?? [], UseWeakWords: false,
             SourceLang: "en", TargetLang: "de", RewardPoints: 10, DryRun: dryRun, Strict: strict);
 
@@ -86,7 +93,7 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
         // Die Metadaten kommen aus dem Briefing – daran findet der Supervisor die Übung später wieder.
         var detail = await creator.GetExerciseDetailAsync(outcome.ExerciseId.Value);
         Assert.Equal(briefing.Grade, detail.GradeMin);
-        Assert.Contains(briefing.Name, detail.Description);
+        Assert.Contains(briefing.Audience, detail.Description);
     }
 
     [Fact]
@@ -272,7 +279,7 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
         var (pipeline, creator, _) = BuildAgent(VocabularyJson);
         // Es gibt Fächer mit Kapiteln – ohne die Prüfung würde genau eines davon stumm gewählt.
         await FreshChapterAsync(creator, "Kapitel-Wahl");
-        var commands = new AgentCommands(creator, pipeline);
+        var commands = Commands(creator, pipeline);
 
         var command = CommandLine.Parse(["briefing", "--child", "1", "--chapter", "999999"]);
         var error = await Assert.ThrowsAsync<AgentUsageException>(() => commands.RunAsync(command, default));
@@ -349,6 +356,189 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
         // … und die Abneigung wird als Verbot geführt, nicht als weiteres Thema.
         Assert.Contains("Vermeide unbedingt (Abneigungen): Spinnen", prompt);
         Assert.DoesNotContain("Interessen (wichtigste zuerst): Weltraum, Spinnen", prompt);
+    }
+
+    /// <summary>
+    /// Legt eine Lehrwerk-Reihe mit einer Unit und ein darauf optimiertes Creator-Profil an – der
+    /// „Fachlehrer", in dessen Namen der Agent entwirft.
+    /// </summary>
+    private static async Task<(TextbookSeriesResponse Series, SeriesUnitResponse Unit, CreatorProfileResponse Profile)>
+        FreshProfileAsync(CreatorApi creator, int? subjectId, string name)
+    {
+        var series = await creator.CreateSeriesAsync(new CreateTextbookSeriesDto(
+            $"Access {name} {Guid.NewGuid():N}", "Cornelsen", "Englisch", subjectId,
+            SchoolTypes.Gymnasium, "en", "de", "Kompetenzorientiertes Lehrwerk mit Units je Halbjahr."));
+        var unit = await creator.CreateUnitAsync(series.Id, new CreateSeriesUnitDto(
+            "Unit 3 – Growing up", Grade: 8, OrderIndex: 3,
+            Topics: "Familie, Freundschaft, Erwachsenwerden",
+            Grammar: "Present perfect vs. simple past",
+            VocabularyNotes: "to grow up, responsibility, to argue"));
+        var profile = await creator.CreateProfileAsync(new CreateCreatorProfileDto(
+            $"Englisch 8 Gymnasium – {name} {Guid.NewGuid():N}", "Englisch", subjectId,
+            SchoolTypes.Gymnasium, GradeMin: 7, GradeMax: 8, SeriesId: series.Id,
+            SourceLang: "en", TargetLang: "de",
+            Persona: "Du bist Englischlehrer an einem bayerischen Gymnasium.",
+            Didactics: "Kurze Sätze, maximal zwölf Wörter.", DefaultTypes: ["Vocabulary"], Active: true));
+
+        return (series, unit, profile);
+    }
+
+    /// <summary>
+    /// Eigener Wortschatz für die Profil-Tests. Bewusst <b>nicht</b> <see cref="VocabularyJson"/>: die
+    /// Tests teilen eine DB, und der Vokabelspeicher ist global – wer dieselben Paare anlegt, verschiebt
+    /// die Erwartung anderer Tests (siehe Dedupe-Test, der auf „seine" Store-Id prüft).
+    /// </summary>
+    private const string ProfileVocabularyJson = """
+        {"title":"Erwachsen werden","items":[
+          {"front":"to grow up","back":"aufwachsen","hint":"Unit 3"},
+          {"front":"the responsibility","back":"die Verantwortung","hint":null},
+          {"front":"to argue","back":"streiten","hint":null}]}
+        """;
+
+    /// <summary>
+    /// Ohne Kind entsteht eine Übung für den <b>gemeinsamen Katalog</b>: die Metadaten kommen aus dem
+    /// Profil (Klassenstufen-Bereich statt einer einzelnen Stufe), und im Prompt darf kein Kind-Abschnitt
+    /// stehen – sonst erfände das Modell Vorlieben, die niemandem gehören.
+    /// </summary>
+    [Fact]
+    public async Task Eine_allgemeine_Uebung_entsteht_ohne_Kind_mit_den_Metadaten_des_Profils()
+    {
+        var (pipeline, creator, chat) = BuildAgent(ProfileVocabularyJson);
+        var (subjectId, chapterId) = await FreshChapterAsync(creator, "Allgemein");
+        var (series, unit, profile) = await FreshProfileAsync(creator, subjectId, "Allgemein");
+
+        var request = Request(subjectId, chapterId, "Vocabulary", childId: null, profileId: profile.Id, unitId: unit.Id);
+        var (briefing, outcome) = await pipeline.CreateAsync(request);
+
+        Assert.True(outcome.Published, $"Selbsttest: {outcome.SelfTestPercent} %");
+        Assert.False(briefing.Individual);
+
+        // Der Prompt beschreibt den Lehrer und den Stoff, aber kein Kind.
+        var prompt = briefing.ToPromptText();
+        Assert.DoesNotContain("## Das Kind", prompt);
+        Assert.Contains("Kein bestimmtes Kind", prompt);
+        Assert.Contains(profile.Name, prompt);
+
+        // Metadaten aus dem Profil: der ganze Klassenstufen-Bereich, die Schulart und die Quelle mit Unit.
+        var detail = await creator.GetExerciseDetailAsync(outcome.ExerciseId!.Value);
+        Assert.Equal(7, detail.GradeMin);
+        Assert.Equal(8, detail.GradeMax);
+        Assert.Equal(SchoolTypes.Gymnasium, detail.SchoolTypes);
+        Assert.Contains(series.Name, detail.Source);
+        Assert.Contains(unit.Label, detail.Source);
+        Assert.Contains("gemeinsamen Katalog", detail.Description);
+
+        // Die Persona des Profils steht im System-Prompt – vor den festen Regeln, die sie nicht aufweicht.
+        var system = Assert.Single(chat.LastMessages, m => m.Role == ChatRole.System).Text;
+        Assert.StartsWith("Du bist Englischlehrer", system);
+        Assert.Contains("Kurze Sätze", system);
+        Assert.Contains("Der Lernstoff ist vorgegeben und unveränderlich", system);
+    }
+
+    /// <summary>
+    /// Der eigentliche Gewinn der Unit-Ebene: Themen, Grammatik und Wortschatz der Unit stehen im Prompt.
+    /// Ohne sie müsste das Modell den Stoff erfinden, den das Kind im Unterricht hat.
+    /// </summary>
+    [Fact]
+    public async Task Der_Stoff_der_Unit_steht_im_Prompt()
+    {
+        var (pipeline, creator, _) = BuildAgent(VocabularyJson);
+        var (subjectId, chapterId) = await FreshChapterAsync(creator, "Unit-Stoff");
+        var (series, unit, profile) = await FreshProfileAsync(creator, subjectId, "Unit-Stoff");
+
+        var briefing = await pipeline.BriefAsync(
+            Request(subjectId, chapterId, "Vocabulary", childId: null, profileId: profile.Id, unitId: unit.Id));
+        var prompt = briefing.ToPromptText();
+
+        Assert.Contains($"Lehrwerk: {series.Name} (Cornelsen)", prompt);
+        Assert.Contains("Unit 3 – Growing up", prompt);
+        Assert.Contains("Present perfect vs. simple past", prompt);
+        Assert.Contains("to grow up, responsibility, to argue", prompt);
+        // Die Sprachen des Profils gelten, wenn die Kommandozeile keine nennt.
+        Assert.Equal("en", briefing.SourceLang);
+    }
+
+    /// <summary>
+    /// Eine Unit aus einer fremden Reihe wäre schlimmer als keine – das Modell hielte deren Stoff für
+    /// gesichert. Deshalb bricht der Auftrag ab, statt die Angabe still zu verwerfen.
+    /// </summary>
+    [Fact]
+    public async Task Eine_Unit_aus_einer_fremden_Reihe_wird_gemeldet()
+    {
+        var (pipeline, creator, _) = BuildAgent(VocabularyJson);
+        var (subjectId, chapterId) = await FreshChapterAsync(creator, "Fremde-Unit");
+        var (_, _, profile) = await FreshProfileAsync(creator, subjectId, "Fremde-Unit");
+        var (_, foreignUnit, _) = await FreshProfileAsync(creator, subjectId, "Fremdwerk");
+
+        var error = await Assert.ThrowsAsync<AgentUsageException>(() => pipeline.BriefAsync(
+            Request(subjectId, chapterId, "Vocabulary", childId: null, profileId: profile.Id, unitId: foreignUnit.Id)));
+
+        Assert.Contains(foreignUnit.Id.ToString(), error.Message);
+    }
+
+    /// <summary>
+    /// Die Übungsklausur: mehrere Typen zum selben Stoff, gebündelt zu einer geplanten Klassenarbeit mit
+    /// genau diesen Übungen. Erst das macht aus einzelnen Übungen eine Prüfungsvorbereitung.
+    /// </summary>
+    [Fact]
+    public async Task Eine_Uebungsklausur_erzeugt_mehrere_Uebungen_und_eine_Klassenarbeit()
+    {
+        const string cloze = """
+            {"title":"Klausur-Lückentext","text":"Ben has {{1}} for his sister, never wants to {{2}} and has {{3}} up fast.",
+             "gaps":[{"index":1,"answer":"responsibility","alternatives":null},
+                     {"index":2,"answer":"argue","alternatives":null},
+                     {"index":3,"answer":"grown","alternatives":null}],
+             "wordBank":["responsibility","argue","grown","promise"]}
+            """;
+        var (pipeline, creator, _) = BuildAgent(ProfileVocabularyJson, cloze);
+        var supervisor = new SupervisorApi(Authenticated());
+        var (subjectId, chapterId) = await FreshChapterAsync(creator, "Klausur");
+        var (_, unit, profile) = await FreshProfileAsync(creator, subjectId, "Klausur");
+
+        var planner = new ExamPlanner(pipeline, creator, supervisor);
+        var outcome = await planner.RunAsync(new ExamRequest(
+            Request(subjectId, chapterId, "Vocabulary", profileId: profile.Id, unitId: unit.Id),
+            Types: ["Vocabulary", "Cloze"], PerType: 3,
+            ScheduledDate: new DateOnly(2026, 9, 15), Title: null));
+
+        Assert.True(outcome.Complete, string.Join(" | ", outcome.Parts.Select(p => p.Error ?? p.Outcome?.Title)));
+        Assert.Equal(2, outcome.ExerciseIds.Count);
+        // Der Titel kommt aus der Unit – dieselbe Bezeichnung, die auch in der Quelle steht.
+        Assert.Contains(unit.Label, outcome.Title);
+
+        var classTest = await supervisor.GetClassTestAsync(outcome.ClassTestId!.Value);
+        Assert.Equal(new DateOnly(2026, 9, 15), classTest.Klassenarbeit.ScheduledDate);
+        Assert.Equal(KlassenarbeitStatus.Planned, classTest.Klassenarbeit.Status);
+        Assert.Equal([.. outcome.ExerciseIds.Order()],
+            [.. classTest.AssignedExercises.Select(e => e.Id).Order()]);
+        // Der kind-skopierte Tag hält das Bündel auch außerhalb der Klassenarbeit zusammen.
+        Assert.Contains(outcome.TagName, classTest.Klassenarbeit.Tags.Select(t => t.Name));
+    }
+
+    /// <summary>
+    /// Ein gescheiterter Teil kostet die Klausur einen Teil, nicht alle – und er wird gemeldet, statt
+    /// eine unvollständige Arbeit als fertig auszugeben.
+    /// </summary>
+    [Fact]
+    public async Task Eine_Klausur_mit_einem_kaputten_Teil_bleibt_unvollstaendig()
+    {
+        // Die eine vorbereitete Antwort passt nur zum Vokabel-Teil; der Lückentext-Teil scheitert an den Regeln.
+        var (pipeline, creator, _) = BuildAgent(ProfileVocabularyJson);
+        var supervisor = new SupervisorApi(Authenticated());
+        var (subjectId, chapterId) = await FreshChapterAsync(creator, "Klausur-kaputt");
+        var (_, unit, profile) = await FreshProfileAsync(creator, subjectId, "Klausur-kaputt");
+
+        var planner = new ExamPlanner(pipeline, creator, supervisor);
+        var outcome = await planner.RunAsync(new ExamRequest(
+            Request(subjectId, chapterId, "Vocabulary", profileId: profile.Id, unitId: unit.Id),
+            Types: ["Vocabulary", "Cloze"], PerType: 3, ScheduledDate: null, Title: "Übungsklausur Test"));
+
+        Assert.False(outcome.Complete);
+        Assert.Single(outcome.ExerciseIds);
+        Assert.Contains(outcome.Parts, p => p.TypeKey == "Cloze" && p.Outcome is { DraftAccepted: false });
+        // Die gelungene Übung ist trotzdem angelegt und der Klassenarbeit zugewiesen.
+        var classTest = await supervisor.GetClassTestAsync(outcome.ClassTestId!.Value);
+        Assert.Single(classTest.AssignedExercises);
     }
 
     [Fact]

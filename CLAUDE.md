@@ -52,13 +52,16 @@ Rollen im SPA: `/` Produktseite, `/vater` Web-Admin (inkl. `/vater/wizard` Lehrp
 ```bash
 ollama pull qwen2.5:14b-instruct                      # einmalig: Modell mit verlässlichem JSON
 cd backend/Pugling.Agent.Creator && dotnet user-secrets set "Pugling:Pin" "0000"   # einmalig
+dotnet run --project backend/Pugling.Agent.Creator -- profiles --child 1           # welcher Lehrer passt?
 dotnet run --project backend/Pugling.Agent.Creator -- briefing --child 1           # ohne LLM
-dotnet run --project backend/Pugling.Agent.Creator -- create --child 1 --type Cloze \
-    --subject 1 --chapter 1 --topic "Unit 3" --count 8 --dry-run
+dotnet run --project backend/Pugling.Agent.Creator -- create --child 1 --type Cloze --count 8 --dry-run
+dotnet run --project backend/Pugling.Agent.Creator -- create --profile 3 --type Cloze --unit 12   # allgemein
+dotnet run --project backend/Pugling.Agent.Creator -- exam --child 1 --types Vocabulary,Cloze --date 2026-09-15
 ```
 
-Braucht die laufende API und ein Konto mit Creator **und** Supervisor-Rolle (Seed: Konto 1).
-Details: [backend/Pugling.Agent.Creator/README.md](backend/Pugling.Agent.Creator/README.md).
+Braucht die laufende API. **Individuell** (`--child`) verlangt ein Konto mit Creator **und**
+Supervisor-Rolle, das das Kind betreut (Seed: Konto 1); **allgemein** (`--profile`, ohne Kind) genügt
+die Creator-Rolle. Details: [backend/Pugling.Agent.Creator/README.md](backend/Pugling.Agent.Creator/README.md).
 
 ## Architektur (das produktive Modell)
 
@@ -90,6 +93,24 @@ Details: [backend/Pugling.Agent.Creator/README.md](backend/Pugling.Agent.Creator
   lokaler Hinweis. POST akzeptiert weiterhin inline `items`/`refs` im Payload (materialisiert per `ExerciseItemService`,
   ID-erhaltend); die Config trägt danach nur noch Einstellungen (Direction/Sprachen). Der Resolver liest Vokabel-Items
   aus der Tabelle; der Engine-Index ist die Listenposition (bleibt zum Legacy-`ItemIndex` kompatibel).
+- **Unterrichtsmaterial & Creator-Profile** ([CurriculumEntities.cs](backend/Pugling.Api/Models/CurriculumEntities.cs)):
+  Die **Lehrwerk-Reihe** ist eine *geteilte* Katalog-Größe: `TextbookSeries` („Access", Slug-idempotent wie
+  `InterestTag`) → `SeriesUnit`. Band und Unit liegen bewusst in **einer** Ebene (`Grade` = Band); der
+  fachliche Wert steckt in `Topics`/`Grammar`/`VocabularyNotes` – **das** macht einen KI-Creator
+  materialkundig, statt ihn den Stoff der Unit erfinden zu lassen. Route `api/v1/creator/textbook-series`
+  (+ `…/{id}/units`), lesen darf jeder Creator, ändern nur der Owner (`OwnerFatherId`, Muster
+  `Exercise.AuthorFatherId`, FK `SetNull`). Das **Kind** zeigt über `Textbook.SeriesId`/`CurrentUnitId`
+  darauf (Titel/`CurrentChapter` bleiben Rückfallebene für unkatalogisierte Werke); eine Unit muss zur
+  Reihe des Buchs gehören, sonst `validation_error` – sonst bekäme der Creator den Stoff eines fremden Werks.
+  Ein **`CreatorProfile`** (`api/v1/creator/profiles`) ist der *Fachlehrer*: Fach, Schulart,
+  Klassenstufen-Bereich, optional die Reihe, dazu `Persona`/`Didactics` (gehen dem festen Regelblock des
+  Agenten **voran**, weichen ihn nie auf) und `DefaultTypes` (JSON-Liste → Neuzuweisung, kein
+  In-Place-Mutieren). Der Angelpunkt ist `…/profiles/match?childId=` (`CreatorProfileService`):
+  harte Ausschlüsse (inaktiv, Klassenstufe außerhalb, Schulart disjunkt), dann Punkte
+  **Reihe 8 > Fach 4 > Klassenstufe 2 > Schulart 1**, Gleichstand über die `Id` – deterministisch wie der
+  `MediaSelector`, damit derselbe Datenstand denselben Lehrer liefert. Der Endpunkt liest Kind-Daten und
+  trägt darum trotz Creator-Route eine **Betreuungs-Prüfung** (`AuthAccess`, sonst 403); die `Reasons` sind
+  stabile Codes (`series_match` …), die Formulierung macht die Oberfläche.
 - **Lehrplan/Training** ([StudyPlansController](backend/Pugling.Api/Controllers/Supervisor/StudyPlansController.cs)):
   `StudyPlan` ist ein **reiner Container** (`ChildId, Title, Start/End, Active`). Inhalt sind
   `PlanPosition`s ([PlanPositionsController](backend/Pugling.Api/Controllers/Supervisor/PlanPositionsController.cs)),
@@ -213,12 +234,19 @@ Details: [backend/Pugling.Agent.Creator/README.md](backend/Pugling.Agent.Creator
   Neuer Endpunkt? Erst Backend, dann hier eine einzeilige Methode ergänzen – nie HTTP-Plumbing duplizieren.
   Verifiziert von `PuglingClientTests` gegen den echten In-Process-Server.
 - **KI-Creator** ([backend/Pugling.Agent.Creator/](backend/Pugling.Agent.Creator/README.md)): Konsolen-App,
-  die die Creator-Rolle übernimmt und Übungen **auf ein Kind zugeschnitten** anlegt – lokal gegen Ollama
-  (`Microsoft.Extensions.AI`/`IChatClient` + OllamaSharp). **Deterministische Pipeline**: C# besitzt den
-  Ablauf (Briefing → Entwurf → Regelprüfung mit Reparatur-Runde → Anlegen → nebenwirkungsfreier
-  Selbsttest über `preview`/`preview/check`), das Modell liefert nur strukturierten Inhalt – kein
-  Tool-Calling. Fachliche Kernregel: **Interessen kleiden den Stoff ein, sie ersetzen ihn nie** (bei
-  vorgegebenem Wortschatz deterministisch erzwungen). Neuer Typ = eine Klasse auf
+  die die Creator-Rolle übernimmt – lokal gegen Ollama (`Microsoft.Extensions.AI`/`IChatClient` +
+  OllamaSharp). **Deterministische Pipeline**: C# besitzt den Ablauf (Briefing → Entwurf → Regelprüfung mit
+  Reparatur-Runde → Anlegen → nebenwirkungsfreier Selbsttest über `preview`/`preview/check`), das Modell
+  liefert nur strukturierten Inhalt – kein Tool-Calling. Fachliche Kernregel: **Interessen kleiden den Stoff
+  ein, sie ersetzen ihn nie** (bei vorgegebenem Wortschatz deterministisch erzwungen).
+  Das `CreatorBriefing` hat **zwei Quellen**: `ProfileFacts` (der Fachlehrer samt Reihe/Unit-Stoff) und
+  **optional** `ChildFacts` – daran hängt die Betriebsart: mit Kind entsteht eine *individuelle* Übung, ohne
+  eine *allgemeine* für den geteilten Katalog (dann kommen Klassenstufen-Bereich/Schulart/Quelle aus dem
+  Profil, und der Agent braucht kein Betreuungsrecht). Ohne `--profile` sucht der Agent selbst das
+  bestpassende (`profiles/match`). Der `ExamPlanner` baut **Übungsklausuren**: ein Pipeline-Lauf je Typ
+  (jeder mit eigenem Selbsttest), danach – nur mit Kind – ein kind-skopierter Tag und eine
+  `Klassenarbeit` (Status *geplant*) mit genau diesen Übungen; ein gescheiterter Teil bricht die Klausur
+  nicht ab, macht sie aber sichtbar unvollständig (Exit 1). Neuer Typ = eine Klasse auf
   `ExerciseStrategy<TDraft,TConfig>`. Getestet ohne Ollama via `FakeChatClient` (`CreatorAgentTests`).
 - **Guard Clauses zuerst** (früh `return NotFound()/Forbid()` bzw. `Problem(statusCode:…, detail:…)`),
   Happy Path un-eingerückt.

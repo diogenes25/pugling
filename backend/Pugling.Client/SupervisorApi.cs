@@ -82,6 +82,14 @@ public sealed class SupervisorApi(HttpClient http)
     public Task<TextbookResponse> CreateTextbookAsync(int childId, CreateTextbookDto dto, CancellationToken ct = default) =>
         Http.PostAsync<TextbookResponse>($"{Root}/children/{childId}/textbooks", dto, ct);
 
+    /// <summary>
+    /// Ändert ein Lehrbuch (partiell) – der Weg, die katalogisierte Reihe und die aktuelle Unit am Kind
+    /// nachzutragen. Erst damit findet das Profil-Matching den Creator, der dieses Werk kennt.
+    /// </summary>
+    public Task<TextbookResponse> UpdateTextbookAsync(int childId, int textbookId, UpdateTextbookDto dto,
+        CancellationToken ct = default) =>
+        Http.PatchAsync<TextbookResponse>($"{Root}/children/{childId}/textbooks/{textbookId}", dto, ct);
+
     /// <summary>Tagesdashboard über alle betreuten Kinder: wer hat heute seine Pflicht erledigt?</summary>
     public Task<Dashboard> GetDailyOverviewAsync(DateOnly? date = null, CancellationToken ct = default) =>
         Http.GetAsync<Dashboard>($"{Root}/children/daily-overview" + PuglingHttp.Query(("date", date)), ct);
@@ -233,9 +241,12 @@ public sealed class SupervisorApi(HttpClient http)
     public Task<IReadOnlyList<KlassenarbeitResponse>> ListClassTestsAsync(int? childId = null, CancellationToken ct = default) =>
         Http.GetAsync<IReadOnlyList<KlassenarbeitResponse>>($"{Root}/class-tests" + PuglingHttp.Query(("childId", childId)), ct);
 
-    /// <summary>Plant eine Klassenarbeit.</summary>
-    public Task<KlassenarbeitResponse> CreateClassTestAsync(CreateClassTestDto dto, CancellationToken ct = default) =>
-        Http.PostAsync<KlassenarbeitResponse>($"{Root}/class-tests", dto, ct);
+    /// <summary>
+    /// Plant eine Klassenarbeit. Die Antwort ist das <b>Detail</b> (Arbeit + zugewiesene Übungen) – der
+    /// Endpunkt liefert es so, damit ein Aufrufer nach dem Anlegen nicht nachladen muss.
+    /// </summary>
+    public Task<KlassenarbeitDetail> CreateClassTestAsync(CreateClassTestDto dto, CancellationToken ct = default) =>
+        Http.PostAsync<KlassenarbeitDetail>($"{Root}/class-tests", dto, ct);
 
     /// <summary>Klassenarbeit mit Übungen und Tags.</summary>
     public Task<KlassenarbeitDetail> GetClassTestAsync(int classTestId, CancellationToken ct = default) =>

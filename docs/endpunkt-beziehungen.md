@@ -15,6 +15,7 @@ Lernstand wieder aus. Alle Routen unter `api/v1/…`. Konzept-Hintergrund:
 
 - [Die Kette auf einen Blick](#die-kette-auf-einen-blick) – Ressource-zu-Ressource-Diagramm.
 - [Übung ↔ Lehrplan](#1-übung--lehrplan-über-positionen) – warum Pläne Übungen referenzieren statt kopieren.
+- [Buchreihe → Kind → Creator-Profil](#woher-der-stoff-kommt-buchreihe--kind--creator-profil) – welcher Stoff dran ist und wer ihn kennt.
 - [Lehrplan ↔ Kind](#2-lehrplan--kind) – `StudyPlan.ChildId`, Rollenfilter und spielbarer Plan.
 - [Durchstich Vater→Sohn](#durchstich-vater-weist-zu--sohn-sieht-denselben-plan) – konkrete Request/Response-Kette.
 - [Übung ↔ Auswertung](#3-übung--auswertung-des-kindes) – positionsgebundener und kindweiter Lernstand.
@@ -82,6 +83,30 @@ Position trägt nur Ziel, Punkte, Stufe, Leitner (leere Overrides erben die Übu
 > ⚠️ Eine Übung wird **nicht kopiert**. Ändert man ihre Items, während sie in einem Plan liegt, sind
 > index-verschiebende Mutationen gesperrt (`409 exercise_in_use`); Anhängen ist erlaubt. Löschen einer
 > genutzten Übung ist gesperrt. Siehe [Auswertung](#3-übung--auswertung-des-kindes) zur Robustheit.
+
+### Woher der Stoff kommt: Buchreihe → Kind → Creator-Profil
+
+Vor der Übung steht die Frage, **welcher Stoff** überhaupt dran ist – und **wer** ihn kennt. Beide
+Antworten hängen an derselben geteilten Ressource, der Lehrwerk-Reihe:
+
+| Beziehung | Endpunkt(e) | Wohin |
+| --- | --- | --- |
+| Reihe pflegen („Access") | `GET/POST/PATCH/DELETE /creator/textbook-series[/{id}]` | [TextbookSeriesController.cs](../backend/Pugling.Api/Controllers/Creator/TextbookSeriesController.cs) |
+| Units samt Stoff (Themen/Grammatik/Wortschatz) | `GET/POST/PATCH/DELETE /creator/textbook-series/{s}/units[/{u}]` | [SeriesUnitsController.cs](../backend/Pugling.Api/Controllers/Creator/SeriesUnitsController.cs) |
+| Reihe + aktuelle Unit **am Kind** hinterlegen | `POST/PATCH /supervisor/children/{c}/textbooks[/{t}]` (`seriesId`, `currentUnitId`) | [TextbooksController.cs](../backend/Pugling.Api/Controllers/Supervisor/TextbooksController.cs) |
+| Creator-Profil („Fachlehrer") pflegen | `GET/POST/PATCH/DELETE /creator/profiles[/{id}]` | [CreatorProfilesController.cs](../backend/Pugling.Api/Controllers/Creator/CreatorProfilesController.cs) |
+| **Passenden Creator zum Kind finden** | `GET /creator/profiles/match?childId=&subjectId=` | [CreatorProfileService.cs](../backend/Pugling.Api/Services/Creator/CreatorProfileService.cs) |
+
+**Verknüpfung:** `Textbook.SeriesId → TextbookSeries.Id ← CreatorProfile.SeriesId`. Nur weil beide Seiten
+denselben Datensatz nennen, ist die Passung berechenbar: harte Ausschlüsse (inaktiv, Klassenstufe
+außerhalb `GradeMin/GradeMax`, Schulart disjunkt), dann Punkte **Reihe 8 > Fach 4 > Klassenstufe 2 >
+Schulart 1**, Gleichstand über die `Id`. `Textbook.CurrentUnitId` muss zur `SeriesId` desselben Buchs
+gehören (`400 validation_error`).
+
+> Der Match-Endpunkt liegt auf der **Creator**-Route (die Ressource ist ein Profil, das Kind nur Filter),
+> liest aber Kind-Daten – deshalb prüft er zusätzlich die **Betreuung** und antwortet fremden Konten mit
+> `403 forbidden`. Verbraucher ist der [KI-Creator](../backend/Pugling.Agent.Creator/README.md): mit Kind
+> entsteht eine individuelle Übung, ohne Kind (nur `--profile`) eine allgemeine für den geteilten Katalog.
 
 ## 2. Lehrplan ↔ Kind
 
