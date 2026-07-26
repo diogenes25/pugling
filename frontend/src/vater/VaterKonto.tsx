@@ -1,14 +1,15 @@
 import { useState } from "react";
 import { api, errorMessage } from "../lib/api";
 import { useAsync } from "../lib/useAsync";
+import { useChildSelection } from "../lib/useChildSelection";
 import { pointKindLabel } from "../lib/labels";
 import { PAGE_SIZE, Pager } from "../components/ListControls";
 import type { ChildResponse, Currency, WalletEntry } from "../lib/types";
 
 export function VaterKonto() {
   const children = useAsync<ChildResponse[]>(() => api.children(), []);
-  const [childId, setChildId] = useState<number | null>(null);
-  const activeChild = childId ?? children.data?.[0]?.id ?? null;
+  // Vorauswahl aus `?childId=` (die Links vom Kind-Hub tragen sie), sonst das erste Kind.
+  const { activeChild, select } = useChildSelection(children.data);
 
   return (
     <>
@@ -21,7 +22,7 @@ export function VaterKonto() {
           : children.data && children.data.length > 0 ? (
             <div className="field" style={{ maxWidth: 320 }}>
               <label htmlFor="konto-child">Kind</label>
-              <select id="konto-child" value={activeChild ?? ""} onChange={(e) => setChildId(Number(e.target.value))}>
+              <select id="konto-child" value={activeChild ?? ""} onChange={(e) => select(Number(e.target.value))}>
                 {children.data.map((c) => <option key={c.id} value={c.id}>{c.name} (#{c.id})</option>)}
               </select>
             </div>

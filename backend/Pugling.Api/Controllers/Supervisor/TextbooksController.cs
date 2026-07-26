@@ -91,20 +91,32 @@ public class TextbooksController(PuglingDbContext db) : ControllerBase
         if (book is null) return NotFound();
         if (dto.SubjectId is int sid && !await db.Subjects.AnyAsync(s => s.Id == sid, ct))
             return this.ProblemWithCode(ApiErrors.ValidationError, "SubjectId does not reference an existing subject.");
-        // Gegen den Zielzustand prüfen, nicht gegen den Payload: wer nur die Unit nachträgt, muss die
-        // schon gesetzte Reihe nicht mitschicken – die Unit muss aber zu ihr gehören.
-        if (await CatalogProblemAsync(dto.SeriesId ?? book.SeriesId, dto.CurrentUnitId ?? book.CurrentUnitId, ct)
-            is { } problem) return problem;
+        /*
+         * Gegen den Zielzustand prüfen, nicht gegen den Payload: wer nur die Unit nachträgt, muss die schon
+         * gesetzte Reihe nicht mitschicken – die Unit muss aber zu ihr gehören.
+         *
+         * Beim **Reihenwechsel** ist die gespeicherte Unit hinfällig: sie gehört zur alten Reihe. Sie hier
+         * mitzuprüfen hieße, den Wechsel an einer Unit scheitern zu lassen, die der Aufrufer gerade ersetzt –
+         * bei einer Reihe ohne Units wäre er nie möglich. Sie fällt darum weg, statt zu blockieren.
+         */
+        var seriesId = dto.ClearSeries ? null : dto.SeriesId ?? book.SeriesId;
+        var seriesChanged = seriesId != book.SeriesId;
+        var unitId = dto.ClearSeries || dto.ClearUnit ? null
+            : dto.CurrentUnitId ?? (seriesChanged ? null : book.CurrentUnitId);
+        if (await CatalogProblemAsync(seriesId, unitId, ct) is { } problem) return problem;
 
         if (dto.Title is not null) book.Title = dto.Title.Trim();
         if (dto.SubjectName is not null) book.SubjectName = dto.SubjectName.Trim();
         if (dto.SubjectId.HasValue) book.SubjectId = dto.SubjectId;
+        if (dto.ClearSubject) { book.SubjectId = null; book.SubjectName = null; }
         if (dto.Grade.HasValue) book.Grade = dto.Grade;
+        if (dto.ClearGrade) book.Grade = null;
         if (dto.Publisher is not null) book.Publisher = dto.Publisher.Trim();
         if (dto.Isbn is not null) book.Isbn = dto.Isbn.Trim();
         if (dto.CurrentChapter is not null) book.CurrentChapter = dto.CurrentChapter.Trim();
-        if (dto.SeriesId.HasValue) book.SeriesId = dto.SeriesId;
-        if (dto.CurrentUnitId.HasValue) book.CurrentUnitId = dto.CurrentUnitId;
+        // Genau den oben geprüften Zielzustand schreiben – sonst könnten Prüfung und Ergebnis auseinanderlaufen.
+        book.SeriesId = seriesId;
+        book.CurrentUnitId = unitId;
         await db.SaveChangesAsync(ct);
         return await Project(db.Textbooks.AsNoTracking().Where(t => t.Id == textbookId)).FirstAsync(ct);
     }

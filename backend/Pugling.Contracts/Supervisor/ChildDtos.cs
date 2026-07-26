@@ -18,10 +18,17 @@ public record CreateChildDto(string Name, int? BirthYear, int? Grade, SchoolType
     Gender? Gender = null, List<string>? Interests = null, string? ProfileNotes = null,
     ContentRating? AllowedContentRating = null);
 
-/// <summary>Partielle Änderung eines Kindes; weggelassene Felder bleiben unverändert.</summary>
+/// <summary>
+/// Partielle Änderung eines Kindes; weggelassene Felder bleiben unverändert. <c>null</c> heißt „nicht
+/// angegeben" und kann darum nichts <b>leeren</b> – dafür stehen die <c>Clear…</c>-Schalter (vgl.
+/// <c>ClearGrade</c> an der Klassenarbeit).
+/// </summary>
+/// <param name="ClearBirthYear">Entfernt das Geburtsjahr.</param>
+/// <param name="ClearGrade">Entfernt die Klassenstufe (das Kind wird damit aus Klassen-Filtern herausgenommen).</param>
 public record UpdateChildDto(string? Name, int? BirthYear, int? Grade, SchoolTypes? SchoolType, string? Pin,
     Gender? Gender = null, List<string>? Interests = null, string? ProfileNotes = null,
-    ContentRating? AllowedContentRating = null);
+    ContentRating? AllowedContentRating = null,
+    bool ClearBirthYear = false, bool ClearGrade = false);
 
 /// <summary>Eine Betreuungs-Beziehung: welcher Supervisor betreut den Studenten seit wann.</summary>
 public record SupervisorLinkResponse(int SupervisorId, string SupervisorName, SupervisorRelation Relation, DateTime CreatedAt);

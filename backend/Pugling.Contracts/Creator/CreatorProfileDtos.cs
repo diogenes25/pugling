@@ -17,11 +17,24 @@ public record CreateCreatorProfileDto(string Name, string? SubjectName, int? Sub
     string? SourceLang, string? TargetLang, string? Persona, string? Didactics,
     List<string>? DefaultTypes, bool? Active);
 
-/// <summary>Partielle Änderung eines Profils; weggelassene Felder bleiben unverändert.</summary>
+/// <summary>
+/// Partielle Änderung eines Profils; weggelassene Felder bleiben unverändert.
+/// <para>
+/// Ein <c>null</c> bedeutet in einem PATCH „nicht angegeben" – es kann darum kein Feld <b>leeren</b>.
+/// Dafür stehen die <c>Clear…</c>-Schalter (wie <c>ClearGrade</c> an der Klassenarbeit): erst mit ihnen
+/// lässt sich ein Profil wieder fachneutral, werkunabhängig oder klassenstufen-offen machen.
+/// </para>
+/// </summary>
+/// <param name="ClearSubject">Setzt Fach-Bindung (<c>SubjectId</c>) zurück – das Profil wird fachneutral.</param>
+/// <param name="ClearSeries">Setzt die Buchreihe zurück – das Profil wird werkunabhängig.</param>
+/// <param name="ClearGradeMin">Hebt die untere Klassenstufen-Grenze auf.</param>
+/// <param name="ClearGradeMax">Hebt die obere Klassenstufen-Grenze auf.</param>
 public record UpdateCreatorProfileDto(string? Name, string? SubjectName, int? SubjectId,
     SchoolTypes? SchoolTypes, int? GradeMin, int? GradeMax, int? SeriesId,
     string? SourceLang, string? TargetLang, string? Persona, string? Didactics,
-    List<string>? DefaultTypes, bool? Active);
+    List<string>? DefaultTypes, bool? Active,
+    bool ClearSubject = false, bool ClearSeries = false,
+    bool ClearGradeMin = false, bool ClearGradeMax = false);
 
 /// <summary>
 /// Ein Treffer der Profil-Suche zu einem Kind. <paramref name="Score"/> ist deterministisch berechnet

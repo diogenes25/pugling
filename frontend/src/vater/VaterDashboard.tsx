@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { api, errorMessage } from "../lib/api";
 import { useAsync } from "../lib/useAsync";
 import { useAuth } from "../lib/auth";
@@ -8,9 +8,12 @@ import type { ChildResponse, ChildrenDashboard, PlanResponse } from "../lib/type
 export function VaterDashboard() {
   const { session } = useAuth();
   const fatherId = session!.id;
+  // `?childId=` kommt vom Kind-Hub („Lehrpläne") und schränkt die Plan-Liste auf dieses Kind ein.
+  const [params] = useSearchParams();
+  const filterChildId = Number(params.get("childId")) || null;
 
   const children = useAsync<ChildResponse[]>(() => api.children(), [fatherId]);
-  const plans = useAsync<PlanResponse[]>(() => api.plans(), []);
+  const plans = useAsync<PlanResponse[]>(() => api.plans(filterChildId ?? undefined), [filterChildId]);
   const today = useAsync<ChildrenDashboard>(() => api.childrenDaily(), [fatherId]);
 
   const [name, setName] = useState("");
@@ -22,7 +25,9 @@ export function VaterDashboard() {
     e.preventDefault();
     if (!name.trim()) return;
     try {
-      await api.createChild({ name: name.trim(), pin, grade: grade ? Number(grade) : null });
+      // Ohne PIN legt der Server das Kind mit leerer PIN an – es kann sich dann nicht anmelden, bis der
+      // Vater sie auf der Kind-Seite nachträgt. Darauf weist der Hinweis unter dem Formular hin.
+      await api.createChild({ name: name.trim(), pin: pin.trim() || undefined, grade: grade ? Number(grade) : null });
       setName(""); setGrade(""); setPin("");
       setMsg("Kind angelegt.");
       children.reload();
@@ -94,14 +99,17 @@ export function VaterDashboard() {
           <button type="submit" className="btn inline-btn" style={{ width: "auto" }}>Kind anlegen</button>
         </form>
         <p className="sub" style={{ marginTop: 8 }}>
-          Tipp: Der <strong>Lehrplan-Assistent</strong> führt Schritt für Schritt durch Kind, Problemfeld und passende Übungen.
+          Die <strong>PIN ist der Login deines Kindes</strong> – ohne sie kommt es nicht in seine App
+          (nachtragen kannst du sie auf der Kind-Seite). Der <strong>Lehrplan-Assistent</strong> führt
+          danach Schritt für Schritt durch Problemfeld und passende Übungen.
         </p>
         {msg && <div className="banner ok" style={{ marginTop: 10 }} role="status" aria-live="polite">{msg}</div>}
       </section>
 
       <section>
         <div className="row">
-          <h2 className="h-section">Lehrpläne</h2>
+          <h2 className="h-section">Lehrpläne{filterChildId ? ` · ${childName(filterChildId)}` : ""}</h2>
+          {filterChildId && <Link to="/vater" className="btn ghost small" style={{ width: "auto", textDecoration: "none" }}>alle Kinder</Link>}
           <Link to="/vater/plan/new" className="btn inline-btn" style={{ width: "auto", marginLeft: "auto", textDecoration: "none", textAlign: "center" }}>+ Neuer Plan</Link>
         </div>
         {plans.loading ? <div className="loading">Lade…</div> : plans.error ? <div className="banner err">{plans.error}</div> : (

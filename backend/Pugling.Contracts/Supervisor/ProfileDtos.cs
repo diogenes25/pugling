@@ -27,9 +27,18 @@ public record CreateTextbookDto(string Title, string? SubjectName, int? SubjectI
     int? SeriesId = null, int? CurrentUnitId = null);
 
 /// <summary>Partielle Änderung eines Lehrbuchs; weggelassene Felder bleiben unverändert.</summary>
+/// <param name="ClearSeries">
+/// Löst das Buch aus dem Katalog („nicht katalogisiert"); die aktuelle Unit fällt mit weg, weil sie ohne
+/// ihre Reihe nichts bezeichnet. Nötig, weil <c>null</c> im PATCH „nicht angegeben" heißt (vgl. <c>ClearGrade</c>).
+/// </param>
+/// <param name="ClearUnit">Setzt nur die aktuelle Unit zurück; die Reihe bleibt.</param>
+/// <param name="ClearSubject">Entfernt die Fach-Zuordnung (Id und Name).</param>
+/// <param name="ClearGrade">Entfernt die Klassenstufe des Buchs.</param>
 public record UpdateTextbookDto(string? Title, string? SubjectName, int? SubjectId, int? Grade,
     string? Publisher, string? Isbn, string? CurrentChapter,
-    int? SeriesId = null, int? CurrentUnitId = null);
+    int? SeriesId = null, int? CurrentUnitId = null,
+    bool ClearSeries = false, bool ClearUnit = false,
+    bool ClearSubject = false, bool ClearGrade = false);
 
 /// <summary>Ein Stundenplan-Eintrag: Fach an einem Wochentag.</summary>
 public record EntryResponse(int Id, int ChildId, int SubjectId, string SubjectName, DayOfWeek DayOfWeek, string? TimeOfDay);

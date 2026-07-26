@@ -43,10 +43,20 @@ Verschenken** und **Klassenarbeiten**. Der einzige **„Stick"** (Konsequenz fü
 
 ---
 
-## 0. Anmelden
+## 0. Konto anlegen und anmelden
 
-Der Vater meldet sich per PIN an und erhält ein JWT. Weil ein Vater zugleich Creator und Supervisor ist,
-trägt das Token beide Rollen (plus den Alias `Vater`); die `fatherId` steckt als `fid`-Claim drin.
+Existiert noch kein Vater, legt ihn die **Registrierung** an – der einzige anonyme Schreibpfad der API
+(`[AllowAnonymous]`). Der Server erzeugt dabei gleich das Login-Konto mit den Rollen Creator **und**
+Supervisor; die vergebene `id` ist der Login-Name für jede weitere Anmeldung.
+
+```http
+POST /api/v1/supervisor/fathers
+{ "name": "Thomas", "email": "t@example.com", "pin": "4711" }
+→ 201 { "id": 7, "name": "Thomas", "childrenCount": 0, … }
+```
+
+Danach meldet sich der Vater per PIN an und erhält ein JWT. Weil ein Vater zugleich Creator und Supervisor
+ist, trägt das Token beide Rollen; die `fatherId` steckt als `fid`-Claim drin.
 
 ```http
 POST /api/v1/auth/father
@@ -55,6 +65,17 @@ POST /api/v1/auth/father
 ```
 
 Alle folgenden `POST/PATCH/DELETE`-Aufrufe brauchen `Authorization: Bearer <token>`.
+
+Das eigene Konto lesen und ändern (Name, E-Mail, **PIN**) geht nur für den eigenen Datensatz – ein anderer
+`fatherId` in der Route ergibt `403`:
+
+```http
+GET   /api/v1/supervisor/fathers/7
+PATCH /api/v1/supervisor/fathers/7   { "pin": "1234" }
+```
+
+> **Im Web-UI:** `/vater` bietet beides an („Anmelden" / „Neu registrieren"); die Registrierung meldet direkt
+> an und zeigt die neue Vater-Id. Das eigene Konto liegt unter `/vater/profil`.
 
 ---
 
@@ -75,6 +96,21 @@ GET /api/v1/supervisor/children
 legst du mit `POST /api/v1/supervisor/children { "name": "…", "birthYear": 2015, "pin": "1111" }` an;
 kindbezogene Ressourcen leben danach unter `api/v1/supervisor/children/{childId}/…`. Verifizierte Bodies:
 [api-examples/children.md](api-examples/children.md).
+
+Die **PIN ist der Login des Kindes** – ohne sie kommt es nicht in seine App. Nachtragen und alles andere am
+Profil (Name, Klasse, Schulart, Geschlecht, Freitext-`interests`, `profileNotes`) läuft über ein `PATCH`;
+weggelassene Felder bleiben unverändert:
+
+```http
+PATCH /api/v1/supervisor/children/1
+{ "grade": 6, "schoolType": "Gymnasium", "interests": ["Fußball", "Minecraft"], "pin": "2468" }
+```
+
+`interests` ist der **freie** Teil des Profils (die Sprache des KI-Creators); die *gewichteten* Interessen
+für die Bildauswahl haben ihren eigenen Endpunkt (`children/{id}/interests`).
+
+> **Im Web-UI:** `/vater/kind/:childId` ist die Startseite eines Kindes – Stammdaten inkl. PIN, Bild-Freigabe,
+> gewichtete Interessen und Links auf alles Kindbezogene (Lernstand, Ziele, Pläne, Shop, Konto).
 
 ---
 
@@ -410,6 +446,10 @@ plan-übergreifende Spur `ItemProgress`/`ItemReviewEvent`. Genau hier setzt der 
 Wörter finden, passende Übung suchen/anlegen, als neue Position anhängen. Die hierarchische Drill-down-Sicht
 (`…/children/1/learn/subjects/…`) spiegelt zusätzlich den Katalog. Datenfluss und alle Filter:
 [endpunkt-beziehungen.md §3](endpunkt-beziehungen.md#3-übung--auswertung-des-kindes).
+
+> **Im Web-UI:** `/vater/kind/:childId/lernstand` zeigt beide Sichten — „Schlecht gelernte Wörter" (Rollup je
+> Wort, aufklappbar bis zur Antwort-Historie) und „Nach Katalog" (Fach → Kapitel → Übung → Wort). Die Ziele
+> darüber liegen unter `/vater/kind/:childId/ziele`.
 
 ### Manuelle Punkte & Verschenken (🪙 Münzen **oder** 💎 Gems)
 

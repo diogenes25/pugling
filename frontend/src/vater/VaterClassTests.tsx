@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { api, errorMessage } from "../lib/api";
 import { useAsync } from "../lib/useAsync";
+import { useChildSelection } from "../lib/useChildSelection";
 import { confirmAction } from "../lib/ui";
 import type {
   ChildResponse, CreateKlassenarbeitDto, ExerciseSummary, KlassenarbeitDetail,
   KlassenarbeitPractice, KlassenarbeitRepeat, KlassenarbeitResponse, KlassenarbeitStatus, Paged, SubjectResponse,
 } from "../lib/types";
-import { PAGE_SIZE, Pager } from "../components/ListControls";
+import { PAGE_SIZE, Pager, TruncationHint } from "../components/ListControls";
 
 const STATUS_LABEL: Record<KlassenarbeitStatus, string> = {
   Planned: "geplant", Written: "geschrieben", Cancelled: "entfällt",
@@ -14,8 +15,8 @@ const STATUS_LABEL: Record<KlassenarbeitStatus, string> = {
 
 export function VaterClassTests() {
   const children = useAsync<ChildResponse[]>(() => api.children(), []);
-  const [childId, setChildId] = useState<number | null>(null);
-  const activeChild = childId ?? children.data?.[0]?.id ?? null;
+  // Vorauswahl aus `?childId=` (die Links vom Kind-Hub tragen sie), sonst das erste Kind.
+  const { activeChild, select } = useChildSelection(children.data);
 
   return (
     <>
@@ -27,8 +28,8 @@ export function VaterClassTests() {
           : children.error ? <div className="banner err">{children.error}</div>
           : children.data && children.data.length > 0 ? (
             <div className="field" style={{ maxWidth: 320 }}>
-              <label>Kind</label>
-              <select title="Kind" value={activeChild ?? ""} onChange={(e) => setChildId(Number(e.target.value))}>
+              <label htmlFor="ct-child">Kind</label>
+              <select id="ct-child" value={activeChild ?? ""} onChange={(e) => select(Number(e.target.value))}>
                 {children.data.map((c) => <option key={c.id} value={c.id}>{c.name} (#{c.id})</option>)}
               </select>
             </div>
@@ -183,8 +184,9 @@ function ClassTestDetail({ id, subjectId, onChanged }:
   const detail = useAsync<KlassenarbeitDetail>(() => api.classTest(id), [id]);
   const practice = useAsync<KlassenarbeitPractice>(() => api.classTestPractice(id), [id]);
   const [search, setSearch] = useState("");
-  const found = useAsync<ExerciseSummary[]>(
-    () => api.searchExercises({ subjectId: subjectId ?? undefined, search: search || undefined }).then((r) => r.items), [id, subjectId]);
+  // Gesamtzahl mitführen: der Server liefert nur eine Seite, sonst wirkt die Liste vollständig.
+  const found = useAsync<Paged<ExerciseSummary>>(
+    () => api.searchExercises({ subjectId: subjectId ?? undefined, search: search || undefined }), [id, subjectId]);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
 
@@ -224,9 +226,9 @@ function ClassTestDetail({ id, subjectId, onChanged }:
             <button type="submit" className="btn ghost inline-btn" style={{ width: "auto" }}>Suchen</button>
           </form>
           {found.loading ? <div className="loading">Lade…</div> : found.data && (
-            found.data.length === 0 ? <p className="muted">Keine passenden Übungen im Katalog.</p> : (
+            found.data.items.length === 0 ? <p className="muted">Keine passenden Übungen im Katalog.</p> : (
               <ul>
-                {found.data.map((e) => (
+                {found.data.items.map((e) => (
                   <li key={e.id}>{e.title} <span className="muted">({e.type})</span>{" "}
                     {assignedIds.has(e.id)
                       ? <span className="pill lime">zugewiesen</span>
@@ -236,6 +238,7 @@ function ClassTestDetail({ id, subjectId, onChanged }:
               </ul>
             )
           )}
+          {found.data && <TruncationHint shown={found.data.items.length} total={found.data.total} />}
 
           {practice.data && (
             <>

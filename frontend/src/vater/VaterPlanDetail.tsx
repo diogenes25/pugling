@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { api, errorMessage } from "../lib/api";
+import { confirmAction } from "../lib/ui";
 import { useAsync } from "../lib/useAsync";
 import { PlanPositions } from "./PlanPositions";
 import type { ChildResponse, PlanResponse, ProgressResponse, UpdatePlanDto } from "../lib/types";
@@ -11,13 +12,16 @@ export function VaterPlanDetail() {
   const id = Number(planId);
   const plan = useAsync<PlanResponse>(() => api.plan(id), [id]);
   const prog = useAsync<ProgressResponse>(() => api.overviewProgress(id), [id]);
+  // Der Plan trägt nur die childId; für den Namen (und den Weg zum Kind) braucht es den Datensatz.
+  const child = useAsync<ChildResponse | null>(
+    () => (plan.data ? api.child(plan.data.childId) : Promise.resolve(null)), [plan.data?.childId]);
 
   const [editing, setEditing] = useState(false);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [busy, setBusy] = useState(false);
 
   async function remove() {
-    if (!window.confirm("Diesen Lehrplan wirklich löschen? Positionen, Fortschritt und Testversuche gehen verloren. Die Übungen im Katalog bleiben erhalten.")) return;
+    if (!confirmAction("Diesen Lehrplan wirklich löschen? Positionen, Fortschritt und Testversuche gehen verloren. Die Übungen im Katalog bleiben erhalten.")) return;
     setBusy(true);
     try {
       await api.deletePlan(id);
@@ -70,7 +74,9 @@ export function VaterPlanDetail() {
           Löschen
         </button>
       </div>
-      <p className="muted">Kind #{p.childId} · {p.startDate} – {p.endDate}</p>
+      <p className="muted">
+        <Link to={`/vater/kind/${p.childId}`}>{child.data?.name ?? `Kind #${p.childId}`}</Link> · {p.startDate} – {p.endDate}
+      </p>
       <p className="sub" style={{ marginTop: -4 }}>
         Nur der <strong>aktive</strong> Plan ist für dein Kind spielbar. Aktivierst du diesen, werden andere Pläne desselben Kindes automatisch deaktiviert – so kann es sich keine leichte Übung zum Punktesammeln aussuchen.
       </p>

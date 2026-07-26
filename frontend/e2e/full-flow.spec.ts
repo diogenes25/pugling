@@ -133,6 +133,20 @@ test("Vater erstellt Plan mit Position, Sohn arbeitet ihn ab, Punkte fließen", 
   await expect(totalCard).toContainText("Punkte gesamt");
   expect(Number((await totalCard.textContent())!.replace(/\D/g, ""))).toBeGreaterThan(0);
 
+  // ---------- VATER sieht den plan-übergreifenden Lernstand ----------
+  // Die Gegenprobe zum Positions-Report: hier zählt das *Wort* über alle Übungen, nicht die Position.
+  // Nur nach echtem Üben gefüllt – deshalb steht die Prüfung am Ende dieses Durchstichs.
+  await vater.goto(`/vater/kind/${CHILD.id}/lernstand`);
+  await expect(vater.getByRole("heading", { name: /^Wörter/ })).toBeVisible();
+  // Alles „gewusst" geklickt → keine schwachen Wörter; ohne Filter müssen die geübten Wörter auftauchen.
+  await vater.getByRole("checkbox", { name: /nur schwache/ }).uncheck();
+  await expect(vater.locator("table tbody tr").first()).toBeVisible();
+  await expect(vater.locator("table .pill", { hasText: /%/ }).first()).toBeVisible();
+
+  // Katalog-Drilldown: das Fach der geübten Übung ist über den aktiven Plan zugewiesen.
+  await vater.getByRole("radio", { name: /Nach Katalog/ }).click();
+  await expect(vater.locator(".card .pill.lime", { hasText: "aktiv" }).first()).toBeVisible();
+
   await vaterCtx.close();
   await sohnCtx.close();
 });

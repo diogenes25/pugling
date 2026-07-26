@@ -1,6 +1,8 @@
 import type {
   AchievementDef, AchievementStatus, AnswerDto, CategoryResponse, ChapterResponse, ChildResponse, CreateAchievementDto,
   CreateChildDto, CreateExercisePayload, CreateKlassenarbeitDto, CreateMissionDto, CreatePlanDto, CreateVocabularyDto,
+  UpdateChildDto,
+  CreateFatherDto, FatherResponse, UpdateFatherDto,
   ExerciseDetail, ExercisePreviewAnswer, ExercisePreviewData, ExercisePreviewResult,
   ExerciseSearchParams, ExerciseSummary, ExerciseUsage, KlassenarbeitDetail, KlassenarbeitPractice, KlassenarbeitRepeat,
   KlassenarbeitResponse, KlassenarbeitStatus, LoginResponse, MissionDef, MissionStatus, PlanResponse,
@@ -9,12 +11,19 @@ import type {
   SkinState, SubjectResponse,
   TestAttemptResponse, TestNextResponse, TestAnswerAck, TestSubmitResponse, UpdateKlassenarbeitDto, UpdatePlanDto, UpdateVocabularyDto,
   VocabBatchResult, VocabularyResponse, VocabTagResponse, ChildTagResponse, Wallet, WalletBalance, WalletEntry, Currency,
-  Paged, VocabularySearchParams,
+  Paged, VocabularySearchParams, VocabItemInput, VocabItemResponse,
+  ChapterProgress, ExerciseProgress, ItemHistoryEntry, ItemProgressResponse, SubjectProgress, WordMastery,
+  CreateKeyResultRequest, CreateLearnGoalRequest, CreateObjectiveRequest, GoalStatus, KeyResult, LearnGoal,
+  Objective, ObjectiveKind, UpdateKeyResultRequest, UpdateLearnGoalRequest, UpdateObjectiveRequest,
   ShopArticle, CreateShopArticleDto, UpdateShopArticleDto, ShopListing, CreateShopListingDto, UpdateShopListingDto,
   InventoryItem, ShopPurchase, ActivationRequest, ShopPurchaseStatus, ActivationRequestStatus,
   ShopView, MyActivation,
   ContentRating, InterestTagResponse, CreateInterestTagDto, ChildInterestResponse, ChildInterestInput,
   MediaAssetResponse, CreateMediaAssetDto, MediaLinkResponse, MediaUsage, SelectedMediaResponse,
+  TextbookSeriesResponse, CreateTextbookSeriesDto, UpdateTextbookSeriesDto,
+  SeriesUnitResponse, CreateSeriesUnitDto, UpdateSeriesUnitDto,
+  CreatorProfileResponse, CreateCreatorProfileDto, UpdateCreatorProfileDto, CreatorProfileMatch,
+  TextbookResponse, CreateTextbookDto, UpdateTextbookDto,
 } from "./types";
 
 const TOKEN_KEY = "pugling.token";
@@ -25,6 +34,18 @@ export function getToken(): string | null {
 export function setToken(token: string | null) {
   if (token) localStorage.setItem(TOKEN_KEY, token);
   else localStorage.removeItem(TOKEN_KEY);
+}
+
+/**
+ * Wer benachrichtigt wird, wenn der Server eine Anfrage mit 401 abweist.
+ *
+ * Ein abgelaufenes Token merkt man sonst erst daran, dass **jedes** Panel „Unauthorized" anzeigt – der
+ * Nutzer sieht eine kaputte Seite statt eines Logins. Der `AuthProvider` hängt sich hier ein und beendet
+ * die Sitzung; danach greift der Rollen-Guard und zeigt die Anmeldung.
+ */
+let onUnauthorized: (() => void) | null = null;
+export function setUnauthorizedHandler(handler: (() => void) | null) {
+  onUnauthorized = handler;
 }
 
 /**
@@ -95,6 +116,9 @@ async function throwIfFailed(res: Response): Promise<Response> {
         /* kein valides JSON – Rohtext behalten */
       }
     }
+    // Nur wenn überhaupt ein Token im Spiel war: ein 401 auf dem Login-Endpunkt bedeutet „PIN falsch",
+    // nicht „Sitzung abgelaufen" – dort soll die Meldung im Formular stehen bleiben.
+    if (res.status === 401 && getToken()) onUnauthorized?.();
     throw new ApiError(res.status, message, traceId, code);
   }
   return res;
@@ -150,10 +174,21 @@ export const api = {
   loginChild: (childId: number, pin: string) =>
     http<LoginResponse>(`${V1}/auth/child`, "POST", { childId, pin }),
 
+  // ---- Vater: eigenes Konto ----
+  // Die Registrierung ist der einzige anonyme Schreibpfad der API: ohne sie könnte ein neuer Vater
+  // nur per Seed entstehen. Der Server legt dabei zugleich das Login-Konto (Creator+Supervisor) an.
+  registerFather: (dto: CreateFatherDto) =>
+    http<FatherResponse>(`${V1}/supervisor/fathers`, "POST", dto),
+  father: (fatherId: number) => http<FatherResponse>(`${V1}/supervisor/fathers/${fatherId}`),
+  updateFather: (fatherId: number, dto: UpdateFatherDto) =>
+    http<FatherResponse>(`${V1}/supervisor/fathers/${fatherId}`, "PATCH", dto),
+
   // ---- Vater: Kinder (der Vater ergibt sich serverseitig aus dem JWT) ----
   children: () => http<ChildResponse[]>(`${V1}/supervisor/children`),
+  child: (childId: number) => http<ChildResponse>(`${V1}/supervisor/children/${childId}`),
+  deleteChild: (childId: number) => http<void>(`${V1}/supervisor/children/${childId}`, "DELETE"),
   createChild: (dto: CreateChildDto) => http<ChildResponse>(`${V1}/supervisor/children`, "POST", dto),
-  updateChild: (childId: number, dto: Partial<CreateChildDto>) =>
+  updateChild: (childId: number, dto: UpdateChildDto) =>
     http<ChildResponse>(`${V1}/supervisor/children/${childId}`, "PATCH", dto),
 
   // ---- Vater: Katalog (Fächer, Kapitel, Übungssuche über Metadaten) ----
@@ -182,6 +217,17 @@ export const api = {
     http<ExerciseSummary>(`${V1}/creator/subjects/${subjectId}/chapters/${chapterId}/${typeRoute}/${id}`, "PUT", payload),
   deleteExercise: (subjectId: number, chapterId: number, typeRoute: string, id: number) =>
     http<void>(`${V1}/creator/subjects/${subjectId}/chapters/${chapterId}/${typeRoute}/${id}`, "DELETE"),
+
+  // Vokabelpaare einer Übung: eigene Ebene mit stabilen Ids, daher CRUD statt „ganze Config ersetzen".
+  // Genau deshalb lässt sich ein Wort nachtragen, ohne den Lernstand der übrigen Items zu verlieren.
+  exerciseItems: (subjectId: number, chapterId: number, exerciseId: number) =>
+    http<VocabItemResponse[]>(`${V1}/creator/subjects/${subjectId}/chapters/${chapterId}/vocabulary/${exerciseId}/items`),
+  addExerciseItem: (subjectId: number, chapterId: number, exerciseId: number, body: VocabItemInput) =>
+    http<VocabItemResponse>(`${V1}/creator/subjects/${subjectId}/chapters/${chapterId}/vocabulary/${exerciseId}/items`, "POST", body),
+  patchExerciseItem: (subjectId: number, chapterId: number, exerciseId: number, itemId: number, body: VocabItemInput) =>
+    http<VocabItemResponse>(`${V1}/creator/subjects/${subjectId}/chapters/${chapterId}/vocabulary/${exerciseId}/items/${itemId}`, "PATCH", body),
+  deleteExerciseItem: (subjectId: number, chapterId: number, exerciseId: number, itemId: number) =>
+    http<void>(`${V1}/creator/subjects/${subjectId}/chapters/${chapterId}/vocabulary/${exerciseId}/items/${itemId}`, "DELETE"),
   searchExercises: (p: ExerciseSearchParams = {}) => {
     const q = new URLSearchParams();
     if (p.subjectId != null) q.set("subjectId", String(p.subjectId));
@@ -262,6 +308,80 @@ export const api = {
   // Lern-Report der Position: je Inhalt Box/Beherrschung + Test-Trefferquote („sitzt/sitzt nicht").
   positionReport: (planId: number, positionId: number) =>
     http<PositionReport>(`${V1}/student/study-plans/${planId}/positions/${positionId}/report`),
+
+  // ---- Lernstand eines Kindes (plan-übergreifend) ----
+  // Liegt unter `student/…`, ist aber für beide Rollen gedacht: die Controller sind nur `[Authorize]` +
+  // ChildOwnershipFilter, damit der Supervisor den Stand seines Kindes mitlesen darf.
+  /** „Schlecht gelernte Wörter": Rollup je Store-Wort über alle Übungen, schwächste zuerst. */
+  childWordMastery: (childId: number, p: { onlyWeak?: boolean; skip?: number; take?: number } = {}) => {
+    const q = new URLSearchParams();
+    if (p.onlyWeak) q.set("onlyWeak", "true");
+    appendPaging(q, p);
+    const qs = q.toString();
+    return httpPaged<WordMastery>(`${V1}/student/children/${childId}/vocabulary-progress/by-word${qs ? `?${qs}` : ""}`);
+  },
+  /** Item-Lernstand, schwächste zuerst; optional auf eine Übung, eine Box-Obergrenze oder „schwach" beschränkt. */
+  childItemProgress: (childId: number, p: { exerciseId?: number; maxBox?: number; onlyWeak?: boolean; skip?: number; take?: number } = {}) => {
+    const q = new URLSearchParams();
+    if (p.exerciseId != null) q.set("exerciseId", String(p.exerciseId));
+    if (p.maxBox != null) q.set("maxBox", String(p.maxBox));
+    if (p.onlyWeak) q.set("onlyWeak", "true");
+    appendPaging(q, p);
+    const qs = q.toString();
+    return httpPaged<ItemProgressResponse>(`${V1}/student/children/${childId}/vocabulary-progress${qs ? `?${qs}` : ""}`);
+  },
+  /** Antwort-Historie eines Items, neueste zuerst – zeigt, *wie* falsch geantwortet wurde. */
+  childItemHistory: (childId: number, itemId: number, take = 20) =>
+    httpPaged<ItemHistoryEntry>(`${V1}/student/children/${childId}/vocabulary-progress/${itemId}/history?take=${take}`),
+
+  // Katalog-hierarchischer Drilldown (Fach → Kapitel → Übung → Item), abgeleitet aus den Lehrplänen.
+  childLearnSubjects: (childId: number) =>
+    http<SubjectProgress[]>(`${V1}/student/children/${childId}/learn/subjects`),
+  childLearnChapters: (childId: number, subjectId: number) =>
+    http<ChapterProgress[]>(`${V1}/student/children/${childId}/learn/subjects/${subjectId}/chapters`),
+  childLearnExercises: (childId: number, subjectId: number, chapterId: number) =>
+    http<ExerciseProgress[]>(`${V1}/student/children/${childId}/learn/subjects/${subjectId}/chapters/${chapterId}/vocabulary`),
+  childLearnItems: (childId: number, subjectId: number, chapterId: number, exerciseId: number) =>
+    http<ItemProgressResponse[]>(
+      `${V1}/student/children/${childId}/learn/subjects/${subjectId}/chapters/${chapterId}/vocabulary/${exerciseId}/items`),
+
+  // ---- Ziele über dem Lernstand: Lernziele (einzeln) und Objectives (Klammer aus Etappen) ----
+  // Beide werden bei jeder Abfrage live aus dem Lernstand ausgewertet – deshalb keine „Fortschritt
+  // aktualisieren"-Aktion: es gibt keinen gespeicherten Stand, der veralten könnte.
+  learnGoals: (childId: number, p: { subjectId?: number; status?: GoalStatus } = {}) => {
+    const q = new URLSearchParams();
+    if (p.subjectId != null) q.set("subjectId", String(p.subjectId));
+    if (p.status) q.set("status", p.status);
+    const qs = q.toString();
+    return httpPaged<LearnGoal>(`${V1}/supervisor/children/${childId}/learn-goals${qs ? `?${qs}` : ""}`);
+  },
+  createLearnGoal: (childId: number, dto: CreateLearnGoalRequest) =>
+    http<LearnGoal>(`${V1}/supervisor/children/${childId}/learn-goals`, "POST", dto),
+  updateLearnGoal: (childId: number, goalId: number, dto: UpdateLearnGoalRequest) =>
+    http<LearnGoal>(`${V1}/supervisor/children/${childId}/learn-goals/${goalId}`, "PATCH", dto),
+  deleteLearnGoal: (childId: number, goalId: number) =>
+    http<void>(`${V1}/supervisor/children/${childId}/learn-goals/${goalId}`, "DELETE"),
+
+  objectives: (childId: number, p: { status?: GoalStatus; kind?: ObjectiveKind } = {}) => {
+    const q = new URLSearchParams();
+    if (p.status) q.set("status", p.status);
+    if (p.kind) q.set("kind", p.kind);
+    const qs = q.toString();
+    return httpPaged<Objective>(`${V1}/supervisor/children/${childId}/objectives${qs ? `?${qs}` : ""}`);
+  },
+  createObjective: (childId: number, dto: CreateObjectiveRequest) =>
+    http<Objective>(`${V1}/supervisor/children/${childId}/objectives`, "POST", dto),
+  updateObjective: (childId: number, objectiveId: number, dto: UpdateObjectiveRequest) =>
+    http<Objective>(`${V1}/supervisor/children/${childId}/objectives/${objectiveId}`, "PATCH", dto),
+  deleteObjective: (childId: number, objectiveId: number) =>
+    http<void>(`${V1}/supervisor/children/${childId}/objectives/${objectiveId}`, "DELETE"),
+
+  createKeyResult: (childId: number, objectiveId: number, dto: CreateKeyResultRequest) =>
+    http<KeyResult>(`${V1}/supervisor/children/${childId}/objectives/${objectiveId}/key-results`, "POST", dto),
+  updateKeyResult: (childId: number, objectiveId: number, keyResultId: number, dto: UpdateKeyResultRequest) =>
+    http<KeyResult>(`${V1}/supervisor/children/${childId}/objectives/${objectiveId}/key-results/${keyResultId}`, "PATCH", dto),
+  deleteKeyResult: (childId: number, objectiveId: number, keyResultId: number) =>
+    http<void>(`${V1}/supervisor/children/${childId}/objectives/${objectiveId}/key-results/${keyResultId}`, "DELETE"),
 
   // ---- Vater: kindübergreifender Tagesüberblick ----
   childrenDaily: (date?: string) =>
@@ -435,6 +555,66 @@ export const api = {
     http<ActivationRequest>(`${V1}/supervisor/children/${childId}/shop/activations/${requestId}/approve`, "POST", {}),
   rejectActivation: (childId: number, requestId: number) =>
     http<ActivationRequest>(`${V1}/supervisor/children/${childId}/shop/activations/${requestId}/reject`, "POST", {}),
+
+  // ---- Unterrichtsmaterial: Lehrwerk-Reihen und ihre Units ----
+  // Der Katalog ist geteilt: lesen darf jeder Creator, ändern nur der Owner (`isOwn` sagt es der UI).
+  // Anlegen ist über den Slug idempotent – derselbe Name liefert die bestehende Reihe zurück.
+  textbookSeries: (p: { search?: string; subjectId?: number; mineOnly?: boolean } = {}) => {
+    const q = new URLSearchParams({ take: "200" });
+    if (p.search) q.set("search", p.search);
+    if (p.subjectId != null) q.set("subjectId", String(p.subjectId));
+    if (p.mineOnly) q.set("mineOnly", "true");
+    return http<TextbookSeriesResponse[]>(`${V1}/creator/textbook-series?${q}`);
+  },
+  createTextbookSeries: (dto: CreateTextbookSeriesDto) =>
+    http<TextbookSeriesResponse>(`${V1}/creator/textbook-series`, "POST", dto),
+  updateTextbookSeries: (seriesId: number, dto: UpdateTextbookSeriesDto) =>
+    http<TextbookSeriesResponse>(`${V1}/creator/textbook-series/${seriesId}`, "PATCH", dto),
+  deleteTextbookSeries: (seriesId: number) =>
+    http<void>(`${V1}/creator/textbook-series/${seriesId}`, "DELETE"),
+
+  seriesUnits: (seriesId: number, grade?: number) =>
+    http<SeriesUnitResponse[]>(`${V1}/creator/textbook-series/${seriesId}/units${grade != null ? `?grade=${grade}` : ""}`),
+  createSeriesUnit: (seriesId: number, dto: CreateSeriesUnitDto) =>
+    http<SeriesUnitResponse>(`${V1}/creator/textbook-series/${seriesId}/units`, "POST", dto),
+  updateSeriesUnit: (seriesId: number, unitId: number, dto: UpdateSeriesUnitDto) =>
+    http<SeriesUnitResponse>(`${V1}/creator/textbook-series/${seriesId}/units/${unitId}`, "PATCH", dto),
+  deleteSeriesUnit: (seriesId: number, unitId: number) =>
+    http<void>(`${V1}/creator/textbook-series/${seriesId}/units/${unitId}`, "DELETE"),
+
+  // ---- Creator-Profile („Fachlehrer") ----
+  creatorProfiles: (p: { subjectId?: number; seriesId?: number; mineOnly?: boolean; includeInactive?: boolean } = {}) => {
+    const q = new URLSearchParams();
+    if (p.subjectId != null) q.set("subjectId", String(p.subjectId));
+    if (p.seriesId != null) q.set("seriesId", String(p.seriesId));
+    if (p.mineOnly) q.set("mineOnly", "true");
+    if (p.includeInactive) q.set("includeInactive", "true");
+    const qs = q.toString();
+    return http<CreatorProfileResponse[]>(`${V1}/creator/profiles${qs ? `?${qs}` : ""}`);
+  },
+  createCreatorProfile: (dto: CreateCreatorProfileDto) =>
+    http<CreatorProfileResponse>(`${V1}/creator/profiles`, "POST", dto),
+  updateCreatorProfile: (profileId: number, dto: UpdateCreatorProfileDto) =>
+    http<CreatorProfileResponse>(`${V1}/creator/profiles/${profileId}`, "PATCH", dto),
+  deleteCreatorProfile: (profileId: number) =>
+    http<void>(`${V1}/creator/profiles/${profileId}`, "DELETE"),
+  /**
+   * Welcher Fachlehrer passt zu diesem Kind? Deterministisch bewertet (Reihe > Fach > Klassenstufe >
+   * Schulart). Liegt auf der Creator-Route, verlangt aber die Betreuung des Kindes.
+   */
+  matchCreatorProfiles: (childId: number, subjectId?: number) =>
+    http<CreatorProfileMatch[]>(
+      `${V1}/creator/profiles/match?childId=${childId}${subjectId != null ? `&subjectId=${subjectId}` : ""}`),
+
+  // ---- Lehrbücher des Kindes (Brücke zwischen Kind und geteiltem Lehrwerk-Katalog) ----
+  childTextbooks: (childId: number) =>
+    http<TextbookResponse[]>(`${V1}/supervisor/children/${childId}/textbooks`),
+  createChildTextbook: (childId: number, dto: CreateTextbookDto) =>
+    http<TextbookResponse>(`${V1}/supervisor/children/${childId}/textbooks`, "POST", dto),
+  updateChildTextbook: (childId: number, textbookId: number, dto: UpdateTextbookDto) =>
+    http<TextbookResponse>(`${V1}/supervisor/children/${childId}/textbooks/${textbookId}`, "PATCH", dto),
+  deleteChildTextbook: (childId: number, textbookId: number) =>
+    http<void>(`${V1}/supervisor/children/${childId}/textbooks/${textbookId}`, "DELETE"),
 
   // ---- Bilder & Interessen ----
   // Die Taxonomie ist EIN Vokabular für zwei Seiten: Bilder tragen die Schlagworte als Eigenschaft,

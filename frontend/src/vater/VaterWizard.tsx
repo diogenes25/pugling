@@ -1,11 +1,13 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { api, errorMessage } from "../lib/api";
 import { useAsync } from "../lib/useAsync";
 import { useAuth } from "../lib/auth";
+import { SCHOOL_TYPES } from "../lib/labels";
+import { TruncationHint } from "../components/ListControls";
 import { authorText } from "./ExerciseAttribution";
 import type {
-  ChildResponse, CreatePlanDto, CreatePositionDto, ExerciseSummary, SchoolType, SubjectResponse,
+  ChildResponse, CreatePlanDto, CreatePositionDto, ExerciseSummary, Paged, SchoolType, SubjectResponse,
 } from "../lib/types";
 
 /*
@@ -16,18 +18,18 @@ import type {
  * Der manuelle Weg (Dashboard → Neuer Plan → Positionen) bleibt daneben bestehen.
  */
 
-const SCHOOL_TYPES: SchoolType[] = [
-  "Grundschule", "Hauptschule", "Realschule", "Gymnasium", "Gesamtschule", "Berufsschule",
-];
-
 type Goal = "Klassenarbeit" | "Aufholen" | "Regelmaessig";
 type Intensity = "Locker" | "Normal" | "Intensiv";
 
-// Intensität -> Ziel-Schwelle (Bestehen ab %) und Punkte je erreichtem Positions-Ziel.
-const INTENSITY: Record<Intensity, { pass: number; points: number; label: string; hint: string }> = {
-  Locker: { pass: 70, points: 10, label: "Locker", hint: "Bestehen ab 70 % · 10 Punkte/Ziel" },
-  Normal: { pass: 80, points: 20, label: "Normal", hint: "Bestehen ab 80 % · 20 Punkte/Ziel" },
-  Intensiv: { pass: 90, points: 30, label: "Intensiv", hint: "Bestehen ab 90 % · 30 Punkte/Ziel" },
+/*
+ * Intensität → Bestehensgrenze, Punkte je erreichtem Ziel und **Münz-Malus** für eine gerissene Pflicht.
+ * Der Malus ist der „Stick" des Produkts: ohne ihn ist ein Pflichtziel bloß ein Angebot. Er steigt mit der
+ * Intensität, bleibt aber bei „Locker" bewusst bei 0 – reine Belohnung, wenn der Vater sanft anfangen will.
+ */
+const INTENSITY: Record<Intensity, { pass: number; points: number; penalty: number; label: string; hint: string }> = {
+  Locker: { pass: 70, points: 10, penalty: 0, label: "Locker", hint: "Bestehen ab 70 % · 10 Punkte/Ziel · kein Malus" },
+  Normal: { pass: 80, points: 20, penalty: 5, label: "Normal", hint: "Bestehen ab 80 % · 20 Punkte/Ziel · −5 🪙 bei Versäumnis" },
+  Intensiv: { pass: 90, points: 30, penalty: 10, label: "Intensiv", hint: "Bestehen ab 90 % · 30 Punkte/Ziel · −10 🪙 bei Versäumnis" },
 };
 
 const GOALS: Record<Goal, { label: string; emoji: string; hint: string; duration: number; stage: number; typed: boolean }> = {
@@ -73,6 +75,7 @@ export function VaterWizard() {
   const [durationDays, setDurationDays] = useState(14);
   const [passPercent, setPassPercent] = useState(80);
   const [pointsGoalMet, setPointsGoalMet] = useState(20);
+  const [penaltyCoins, setPenaltyCoins] = useState(5);
   const [defaultStage, setDefaultStage] = useState(4);
   const [requireTyped, setRequireTyped] = useState(true);
   const [useLeitner, setUseLeitner] = useState(true);
@@ -82,6 +85,14 @@ export function VaterWizard() {
 
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  /*
+   * Was beim Abschluss schon geschrieben wurde. Ein Ref, nicht State: es wird mitten in `finish()` gelesen
+   * und geschrieben, und ein State-Update käme erst im nächsten Render an – der laufende Durchgang würde
+   * seinen eigenen Fortschritt nicht sehen und Positionen doppelt anlegen.
+   */
+  const progress = useRef<{ childId: number | null; planId: number | null; positions: number[] }>({
+    childId: null, planId: null, positions: [],
+  });
 
   const selectedChild = children.data?.find((c) => c.id === childId);
   const effectiveGrade = mode === "new" ? (grade === "" ? undefined : Number(grade)) : selectedChild?.grade ?? undefined;
@@ -89,11 +100,12 @@ export function VaterWizard() {
     mode === "new" ? schoolType : (selectedChild?.schoolType as SchoolType | undefined);
   const subject = subjects.data?.find((s) => s.id === subjectId);
 
-  // Passende Katalog-Übungen (die Bausteine des Plans – jede wird zu einer Position).
-  const exercises = useAsync<ExerciseSummary[]>(
-    () => (subjectId === "" ? Promise.resolve([]) : api.searchExercises({
+  // Passende Katalog-Übungen (die Bausteine des Plans – jede wird zu einer Position). Die Gesamtzahl wird
+  // mitgeführt, weil der Server nur eine Seite liefert: ohne sie wäre eine gekappte Liste nicht erkennbar.
+  const exercises = useAsync<Paged<ExerciseSummary>>(
+    () => (subjectId === "" ? Promise.resolve({ items: [], total: 0 }) : api.searchExercises({
       subjectId: Number(subjectId), grade: effectiveGrade, schoolType: effectiveSchoolType,
-    }).then((r) => r.items)),
+    })),
     [subjectId, effectiveGrade, effectiveSchoolType],
   );
 
@@ -105,7 +117,7 @@ export function VaterWizard() {
   }, [children.data]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const filteredExercises = useMemo(() => {
-    const list = exercises.data ?? [];
+    const list = exercises.data?.items ?? [];
     const s = contentSearch.trim().toLowerCase();
     return s ? list.filter((x) => x.title.toLowerCase().includes(s)) : list;
   }, [exercises.data, contentSearch]);
@@ -120,6 +132,7 @@ export function VaterWizard() {
     setRequireTyped(g.typed);
     setPassPercent(it.pass);
     setPointsGoalMet(it.points);
+    setPenaltyCoins(it.penalty);
     const subjName = subject?.name ?? "Lernplan";
     setTitle(topic.trim() ? `${subjName} – ${topic.trim()}` : `${subjName} – ${g.label}`);
   }
@@ -148,12 +161,20 @@ export function VaterWizard() {
   }
   function back() { setError(null); setStep((s) => Math.max(s - 1, 0)); }
 
+  /**
+   * Legt Kind (optional), Plan und je Übung eine Position an.
+   *
+   * Der Ablauf ist **wiederaufnehmbar**, weil er mehrere Schreibschritte umfasst und der erste (der Plan)
+   * bereits Wirkung hat, wenn ein späterer scheitert. Was gelungen ist, merkt sich `done`; ein zweiter
+   * Klick vervollständigt denselben Plan statt einen zweiten anzulegen.
+   */
   async function finish() {
     setError(null);
     setBusy(true);
     try {
-      let targetChildId = mode === "existing" ? Number(childId) : 0;
-      if (mode === "new") {
+      const done = progress.current;
+      let targetChildId = done.childId ?? (mode === "existing" ? Number(childId) : 0);
+      if (mode === "new" && done.childId == null) {
         const created = await api.createChild({
           name: newName.trim(),
           pin: newPin || undefined,
@@ -162,17 +183,26 @@ export function VaterWizard() {
           schoolType,
         });
         targetChildId = created.id;
+        done.childId = created.id;
       }
-      const planDto: CreatePlanDto = {
-        childId: targetChildId,
-        title: title.trim() || "Neuer Lehrplan",
-        subjectId: subjectId === "" ? null : Number(subjectId),
-        durationDays,
-        startDate,
-      };
-      const plan = await api.createPlan(planDto);
-      // Jede gewählte Übung als Tagesziel-Position mit den Feinschliff-Werten anlegen.
+
+      let planId = done.planId;
+      if (planId == null) {
+        const planDto: CreatePlanDto = {
+          childId: targetChildId,
+          title: title.trim() || "Neuer Lehrplan",
+          subjectId: subjectId === "" ? null : Number(subjectId),
+          durationDays,
+          startDate,
+        };
+        planId = (await api.createPlan(planDto)).id;
+        done.planId = planId;
+      }
+
+      // Jede gewählte Übung als Tagesziel-Position mit den Feinschliff-Werten anlegen; schon angelegte
+      // überspringen (Wiederaufnahme nach einem Fehler).
       for (const exerciseId of selected) {
+        if (done.positions.includes(exerciseId)) continue;
         const posDto: CreatePositionDto = {
           exerciseId,
           cadence: "Daily",
@@ -181,12 +211,15 @@ export function VaterWizard() {
           useLeitner,
           requireTypedTest: requireTyped,
           pointsGoalMet,
+          penaltyCoins,
           comboThreshold,
           comboBonusPoints,
         };
-        await api.addPosition(plan.id, posDto);
+        await api.addPosition(planId, posDto);
+        // Sofort vermerken – sonst wüsste ein Wiederholungsversuch nach dem nächsten Fehler nichts davon.
+        done.positions.push(exerciseId);
       }
-      nav(`/vater/plan/${plan.id}`);
+      nav(`/vater/plan/${planId}`);
     } catch (err) {
       setError(errorMessage(err));
       setBusy(false);
@@ -294,6 +327,7 @@ export function VaterWizard() {
             <span className="sub">{filteredExercises.length} passende Übungen</span>
             {filteredExercises.length > 0 && <button type="button" className="btn ghost inline-btn" style={{ marginLeft: "auto" }} onClick={selectAll}>Alle wählen</button>}
           </div>
+          <TruncationHint shown={exercises.data?.items.length ?? 0} total={exercises.data?.total ?? 0} />
 
           {exercises.loading ? <div className="loading">Lade Übungen…</div> : filteredExercises.length === 0 ? (
             <div className="banner err">
@@ -325,6 +359,8 @@ export function VaterWizard() {
             <div className="field"><label htmlFor="wiz-duration">Dauer (Tage)</label><input id="wiz-duration" title="Dauer" type="number" min={1} value={durationDays} onChange={(e) => setDurationDays(Number(e.target.value))} /></div>
             <div className="field"><label htmlFor="wiz-pass">Bestehen ab %</label><input id="wiz-pass" title="Bestehen ab Prozent" type="number" min={1} max={100} value={passPercent} onChange={(e) => setPassPercent(Number(e.target.value))} /></div>
             <div className="field"><label htmlFor="wiz-points">Punkte je Ziel</label><input id="wiz-points" title="Punkte je erreichtem Ziel" type="number" min={0} value={pointsGoalMet} onChange={(e) => setPointsGoalMet(Number(e.target.value))} /></div>
+            {/* Der „Stick": verpasste Pflicht kostet Münzen. 0 = reine Belohnung, Schulden sind erlaubt. */}
+            <div className="field"><label htmlFor="wiz-penalty">Münz-Malus bei Versäumnis</label><input id="wiz-penalty" title="Münz-Malus bei gerissener Pflicht" type="number" min={0} value={penaltyCoins} onChange={(e) => setPenaltyCoins(Number(e.target.value))} /></div>
             <div className="field"><label htmlFor="wiz-combo-threshold">Combo alle … Treffer</label><input id="wiz-combo-threshold" title="Combo-Schwelle" type="number" min={0} value={comboThreshold} onChange={(e) => setComboThreshold(Number(e.target.value))} /></div>
             <div className="field"><label htmlFor="wiz-combo-bonus">Combo-Bonuspunkte</label><input id="wiz-combo-bonus" title="Combo-Bonuspunkte" type="number" min={0} value={comboBonusPoints} onChange={(e) => setComboBonusPoints(Number(e.target.value))} /></div>
             <div className="field"><label>Test-Stufe</label>
@@ -341,6 +377,10 @@ export function VaterWizard() {
             <label className="checkline"><input type="checkbox" checked={useLeitner} onChange={(e) => { setTouchedFineTune(true); setUseLeitner(e.target.checked); }} /> Leitner-Kasten (Übungspunkte)</label>
             <label className="checkline"><input type="checkbox" checked={requireTyped} onChange={(e) => { setTouchedFineTune(true); setRequireTyped(e.target.checked); }} /> Nur getippte Tests zählen</label>
           </div>
+          <p className="sub" style={{ marginTop: 12 }}>
+            Der <strong>Münz-Malus</strong> greift, wenn ein Tagesziel am Ende des Tages nicht erreicht wurde –
+            das Kind kann dadurch ins Minus geraten. Setze ihn auf 0, wenn du nur belohnen willst.
+          </p>
         </section>
       )}
 
@@ -354,6 +394,7 @@ export function VaterWizard() {
           <SummaryRow label="Titel" value={title || "Neuer Lehrplan"} />
           <SummaryRow label="Zeitraum" value={`${startDate} · ${durationDays} Tage`} />
           <SummaryRow label="Je Position" value={`Test-Stufe ${defaultStage} · bestehen ab ${passPercent}% · ${pointsGoalMet} Punkte/Ziel`} />
+          <SummaryRow label="Versäumnis" value={penaltyCoins > 0 ? `−${penaltyCoins} 🪙 je gerissenem Tagesziel` : "kein Malus (reine Belohnung)"} />
           <SummaryRow label="Übungen" value={`${selected.length} als Tagesziel-Positionen`} />
           <p className="sub">Danach erscheint der Plan in der Übersicht; der Sohn sieht ihn sofort in seiner App.</p>
         </section>

@@ -12,8 +12,11 @@ oder über die Rollen-Skills `creator`/`supervisor`/`student`, die die API je Eb
 verifizierten [Rollen-Tutorials](docs/tutorial.md) schreiben. (Das dateibasierte `lehrplan-autor`/
 `lehrplan-lerner`-Kursformat ist eine **separate** Spur und berührt die App-API nicht.) Das React-Frontend unter [frontend/](frontend/)
 wurde **neu gegen die `api/v1` gebaut und ist funktionsfähig** (Vite+React+TS+PWA): Produktseite `/`,
-Sohn-Arcade-PWA `/sohn`, Vater-Web `/vater` inkl. Lehrplan-Assistent `/vater/wizard`. Ein Playwright-E2E
-([frontend/e2e/full-flow.spec.ts](frontend/e2e/full-flow.spec.ts)) fährt den kompletten Vater→Sohn-Loop.
+Sohn-Arcade-PWA `/sohn`, Vater-Web `/vater` inkl. Lehrplan-Assistent `/vater/wizard`. Zwei Playwright-E2E
+tragen den Durchstich: [full-flow.spec.ts](frontend/e2e/full-flow.spec.ts) fährt den Vater→Sohn-Loop gegen
+das Seed-Konto, [vater-von-null.spec.ts](frontend/e2e/vater-von-null.spec.ts) baut einen Vater **von Grund
+auf** (Registrierung → Kind → Fach/Kapitel/Vokabeln/Übung → Übung korrigieren → Plan+Position mit Malus →
+Shop → Lernziel → Kind-Login).
 → **Neue Features beginnen weiterhin im Backend** (API-First); das Frontend hängt an der API.
 Details: [docs/architektur-entscheidung.md](docs/architektur-entscheidung.md), [frontend starten](#frontend).
 
@@ -44,8 +47,18 @@ cd frontend && npm run build       # tsc -b && vite build (Typecheck + Prod-Buil
 cd frontend && npm run test:e2e    # Playwright: startet Backend (Temp-DB) + Vite, fährt den Vater→Sohn-Loop
 ```
 
-Rollen im SPA: `/` Produktseite, `/vater` Web-Admin (inkl. `/vater/wizard` Lehrplan-Assistent),
-`/sohn` Arcade-PWA. API-Client + Types zentral unter [frontend/src/lib/](frontend/src/lib/).
+Rollen im SPA: `/` Produktseite, `/vater` Web-Admin (inkl. `/vater/wizard` Lehrplan-Assistent,
+`/vater/lehrwerke` Buchreihen + Units, `/vater/fachlehrer` Creator-Profile), `/sohn` Arcade-PWA.
+API-Client + Types zentral unter [frontend/src/lib/](frontend/src/lib/).
+Ein Vater entsteht **im UI**: `/vater` hat neben „Anmelden" den Modus „Neu registrieren" (gegen das anonyme
+`POST supervisor/fathers`, meldet direkt an und nennt die neue Vater-Id — sie ist der Login-Name); das eigene
+Konto liegt unter `/vater/profil`. `/vater/kind/:id` ist der **Kind-Hub** (Stammdaten inkl. PIN, Bild-Freigabe,
+gewichtete Interessen) und verlinkt alles Kindbezogene per `?childId=`; darunter
+`/vater/kind/:id/lernstand` (plan-übergreifender Lernstand: schwache Wörter + Katalog-Drilldown) und
+`/vater/kind/:id/ziele` (Lernziele + Objectives/OKR). Übungen sind über `/vater/exercises` **bearbeitbar**
+(Metadaten per PUT — den geladenen `config`/`suggestedBonus`/`executePublic` mitschicken, sonst löscht der
+Vollersatz sie; Vokabelpaare einzeln über `…/vocabulary/{id}/items`, damit die Item-Ids und der Lernstand
+des Kindes erhalten bleiben).
 
 ### KI-Creator (Konsolen-Agent)
 
@@ -111,6 +124,9 @@ die Creator-Rolle. Details: [backend/Pugling.Agent.Creator/README.md](backend/Pu
   `MediaSelector`, damit derselbe Datenstand denselben Lehrer liefert. Der Endpunkt liest Kind-Daten und
   trägt darum trotz Creator-Route eine **Betreuungs-Prüfung** (`AuthAccess`, sonst 403); die `Reasons` sind
   stabile Codes (`series_match` …), die Formulierung macht die Oberfläche.
+  **Frontend**: `/vater/lehrwerke` (Reihen + Units samt Stoff), `/vater/fachlehrer` (Profile) und auf
+  `/vater/kind/:id` die Sektion „Unterrichtsmaterial" – Buch mit Reihe/Unit plus die begründete
+  Fachlehrer-Trefferliste; E2E [frontend/e2e/lehrwerke.spec.ts](frontend/e2e/lehrwerke.spec.ts).
 - **Lehrplan/Training** ([StudyPlansController](backend/Pugling.Api/Controllers/Supervisor/StudyPlansController.cs)):
   `StudyPlan` ist ein **reiner Container** (`ChildId, Title, Start/End, Active`). Inhalt sind
   `PlanPosition`s ([PlanPositionsController](backend/Pugling.Api/Controllers/Supervisor/PlanPositionsController.cs)),
@@ -262,6 +278,13 @@ die Creator-Rolle. Details: [backend/Pugling.Agent.Creator/README.md](backend/Pu
   Fehler (404/403/401/429) und unbehandelte 500 mit einem status-basierten Default-Code. Meldungstexte
   (`detail`) sind **englisch** (i18n); der `code` ist stabiler Vertragsbestandteil. Beispiele:
   [docs/api-examples/](docs/api-examples/index.md) (verifiziert von `DocsCaptureTests`).
+- **PATCH-Semantik**: `null` heißt „nicht angegeben" (der Wert bleibt), **nicht** „leeren". Ein Feld
+  löschbar zu machen braucht darum einen ausdrücklichen `bool Clear<Feld>`-Schalter im Update-DTO – so wie
+  `UpdateKlassenarbeitDto.ClearGrade`, `UpdateChildDto.ClearBirthYear/ClearGrade`,
+  `UpdateTextbookDto.ClearSeries/ClearUnit/…`, `UpdateCreatorProfileDto.ClearSubject/ClearSeries/…`.
+  Im Controller **erst den Wert, dann den Schalter** anwenden, damit „leeren" gewinnt, wenn ein Formular
+  beides schickt. Ohne den Schalter meldet eine Oberfläche mit „– keine Angabe –" fröhlich „Gespeichert."
+  und der alte Wert steht weiter da (verifiziert von `PatchClearFieldTests`).
 - **Eigentum**: Für Endpunkte unter `{planId}` den `[ServiceFilter(typeof(PlanOwnershipFilter))]`,
   für Endpunkte unter `{childId}` den `[ServiceFilter(typeof(ChildOwnershipFilter))]` nutzen
   (nicht inline wiederholen). Sonst `AuthAccess` explizit. Kindbezogene Ressourcen leben unter

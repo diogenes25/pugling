@@ -1,6 +1,7 @@
 import { useId, useState } from "react";
 import { api, errorMessage } from "../lib/api";
 import { useAsync } from "../lib/useAsync";
+import { useChildSelection } from "../lib/useChildSelection";
 import { confirmAction } from "../lib/ui";
 import type {
   AchievementDef, ChildResponse, CreateAchievementDto, CreateMissionDto,
@@ -27,9 +28,8 @@ const periodLabel = (p: MissionPeriod) => PERIODS.find((x) => x.value === p)?.la
 
 export function VaterRewards() {
   const children = useAsync<ChildResponse[]>(() => api.children(), []);
-  const [childId, setChildId] = useState<number | null>(null);
-  // Beim ersten Laden das erste Kind vorwählen.
-  const activeChild = childId ?? children.data?.[0]?.id ?? null;
+  // Vorauswahl aus `?childId=` (die Links vom Kind-Hub tragen sie), sonst das erste Kind.
+  const { activeChild, select } = useChildSelection(children.data);
 
   return (
     <>
@@ -42,8 +42,8 @@ export function VaterRewards() {
           : children.error ? <div className="banner err">{children.error}</div>
           : children.data && children.data.length > 0 ? (
             <div className="field" style={{ maxWidth: 320 }}>
-              <label>Kind</label>
-              <select title="Kind" value={activeChild ?? ""} onChange={(e) => setChildId(Number(e.target.value))}>
+              <label htmlFor="rewards-child">Kind</label>
+              <select id="rewards-child" value={activeChild ?? ""} onChange={(e) => select(Number(e.target.value))}>
                 {children.data.map((c) => (
                   <option key={c.id} value={c.id}>{c.name} (#{c.id})</option>
                 ))}

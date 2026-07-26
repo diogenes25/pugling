@@ -101,8 +101,11 @@ public class ChildrenController(PuglingDbContext db, WalletService wallet, Accou
         if (child is null) return NotFound();
 
         if (dto.Name is not null) child.Name = dto.Name.Trim();
+        // Wert zuerst, Clear-Schalter danach – „leeren" gewinnt, falls ein Client beides schickt.
         if (dto.BirthYear.HasValue) child.BirthYear = dto.BirthYear;
+        if (dto.ClearBirthYear) child.BirthYear = null;
         if (dto.Grade.HasValue) child.Grade = dto.Grade;
+        if (dto.ClearGrade) child.Grade = null;
         if (dto.SchoolType.HasValue) child.SchoolType = dto.SchoolType.Value;
         if (dto.Gender.HasValue) child.Gender = dto.Gender.Value;
         // Neue Liste zuweisen (kein In-Place-Mutieren – JSON-Spalten-Fallstrick).

@@ -12,7 +12,12 @@ import { VaterPlanCreate } from "./VaterPlanCreate";
 import { VaterPlanDetail } from "./VaterPlanDetail";
 import { VaterWizard } from "./VaterWizard";
 import { VaterMedia } from "./VaterMedia";
+import { VaterLehrwerke } from "./VaterLehrwerke";
+import { VaterFachlehrer } from "./VaterFachlehrer";
 import { VaterKind } from "./VaterKind";
+import { VaterProfil } from "./VaterProfil";
+import { VaterLernstand } from "./VaterLernstand";
+import { VaterZiele } from "./VaterZiele";
 
 export function VaterApp() {
   const { session, signOut } = useAuth();
@@ -26,16 +31,19 @@ export function VaterApp() {
           <NavLink to="/vater" end>Übersicht</NavLink>
           <NavLink to="/vater/wizard">🧭 Assistent</NavLink>
           <NavLink to="/vater/exercises">📚 Übungen</NavLink>
+          <NavLink to="/vater/lehrwerke">📕 Lehrwerke</NavLink>
+          <NavLink to="/vater/fachlehrer">🎓 Fachlehrer</NavLink>
           <NavLink to="/vater/vocab">Vokabeln</NavLink>
           <NavLink to="/vater/media">🖼️ Bilder</NavLink>
           <NavLink to="/vater/rewards">🏆 Belohnungen</NavLink>
           <NavLink to="/vater/shop">🛒 Shop</NavLink>
-          <NavLink to="/vater/konto">💰 Konto</NavLink>
+          <NavLink to="/vater/konto">💰 Kontostand</NavLink>
           <NavLink to="/vater/class-tests">📝 Klassenarbeiten</NavLink>
           <NavLink to="/vater/plan/new">Neuer Plan</NavLink>
         </nav>
         <span className="spacer" />
-        <span className="muted" style={{ fontSize: 14 }}>{session.name} (#{session.id})</span>
+        {/* Die Id ist der Login-Name – sie steht hier, damit sie nicht verloren geht. */}
+        <NavLink to="/vater/profil" className="muted" style={{ fontSize: 14 }}>👤 {session.name} (#{session.id})</NavLink>
         <button type="button" className="btn ghost inline-btn" onClick={signOut} style={{ width: "auto" }}>Abmelden</button>
       </header>
 
@@ -46,7 +54,12 @@ export function VaterApp() {
           <Route path="exercises" element={<VaterExercises />} />
           <Route path="vocab" element={<VaterVocab />} />
           <Route path="media" element={<VaterMedia />} />
+          <Route path="lehrwerke" element={<VaterLehrwerke />} />
+          <Route path="fachlehrer" element={<VaterFachlehrer />} />
           <Route path="kind/:childId" element={<VaterKind />} />
+          <Route path="kind/:childId/lernstand" element={<VaterLernstand />} />
+          <Route path="kind/:childId/ziele" element={<VaterZiele />} />
+          <Route path="profil" element={<VaterProfil />} />
           <Route path="rewards" element={<VaterRewards />} />
           <Route path="shop" element={<VaterShop />} />
           <Route path="konto" element={<VaterKonto />} />

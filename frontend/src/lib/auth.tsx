@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
-import { setToken } from "./api";
+import { setToken, setUnauthorizedHandler } from "./api";
 import type { LoginResponse, Role } from "./types";
 
 interface Session {
@@ -41,6 +41,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     setToken(session?.token ?? null);
   }, [session]);
+
+  /*
+   * Ein 401 auf einer beliebigen Anfrage heißt: das Token gilt nicht mehr (abgelaufen, Konto geändert).
+   * Die Sitzung hier zu beenden ist die einzige Stelle, die das zentral kann – sonst müsste jedes Panel
+   * den Fall selbst behandeln, und der Nutzer bliebe auf einer Seite voller Fehlermeldungen sitzen.
+   */
+  useEffect(() => {
+    setUnauthorizedHandler(() => {
+      localStorage.removeItem(SESSION_KEY);
+      setToken(null);
+      setSession(null);
+    });
+    return () => setUnauthorizedHandler(null);
+  }, []);
 
   const value = useMemo<AuthContextValue>(() => ({
     session,

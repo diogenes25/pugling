@@ -2,8 +2,10 @@ import { useId, useState } from "react";
 import { api, errorMessage } from "../lib/api";
 import { confirmAction } from "../lib/ui";
 import { useAsync } from "../lib/useAsync";
+import { TruncationHint } from "../components/ListControls";
+import { MasteryPill } from "../components/MasteryPill";
 import type {
-  CreatePositionDto, ExerciseSummary, GoalCadence, ItemReport, PositionReport, PositionResponse, PracticeOrder, SubjectResponse,
+  CreatePositionDto, ExerciseSummary, GoalCadence, PositionReport, PositionResponse, Paged, PracticeOrder, SubjectResponse,
 } from "../lib/types";
 import { ExerciseFilterBar, type ExerciseFilter } from "./ExerciseFilterBar";
 
@@ -71,30 +73,167 @@ export function PlanPositions({ planId }: { planId: number }) {
   );
 }
 
+/*
+ * Die Einstellungen einer Position an EINER Stelle – Anlegen und Bearbeiten müssen dieselben Felder mit
+ * denselben Beschriftungen zeigen, sonst lernt der Vater die Bedeutung zweimal (und einmal falsch).
+ *
+ * `goalThreshold`/`itemCount` sind Strings, weil "" hier eine eigene Bedeutung hat: "Standard des
+ * Verfahrens" bzw. „alle Inhalte" – eine 0 wäre eine Aussage, ein leeres Feld ist keine.
+ */
+interface PositionSettings {
+  cadence: GoalCadence;
+  goalThreshold: string;
+  itemCount: string;
+  orderStrategy: PracticeOrder;
+  pointsGoalMet: number;
+  penaltyCoins: number;
+  /*
+   * Bonus-Werte als Strings, weil "" hier „erben" heißt: die Position übernimmt dann den Bonus-Vorschlag
+   * ihrer Übung (der Server setzt `?? sb?.… ?? Default` nur ein, wenn das Feld `null` ist). Eine Zahl zu
+   * senden ist eine Aussage – und würde einen bewusst getunten Übungs-Vorschlag überschreiben.
+   */
+  newContentPoints: string;
+  comboThreshold: string;
+  comboBonusPoints: string;
+  useLeitner: boolean;
+  requireTypedTest: boolean;
+}
+
+/** Startwerte einer neuen Position; die Übung bringt ihre Lern-Standards als Vorschlag mit. */
+function defaultSettings(ex?: ExerciseSummary): PositionSettings {
+  return {
+    cadence: "Daily", goalThreshold: "", itemCount: ex?.defaultItemCount?.toString() ?? "",
+    orderStrategy: "WeakestFirst", pointsGoalMet: 20, penaltyCoins: 0,
+    // Leer = Vorschlag der Übung übernehmen (siehe PositionSettings).
+    newContentPoints: "", comboThreshold: "", comboBonusPoints: "",
+    useLeitner: ex?.defaultUseLeitner ?? false, requireTypedTest: ex?.defaultRequireTypedTest ?? false,
+  };
+}
+
+/** Der gespeicherte Stand einer Position als Formular-Zustand. */
+function settingsFrom(pos: PositionResponse): PositionSettings {
+  return {
+    cadence: pos.cadence,
+    goalThreshold: pos.goalThreshold?.toString() ?? "",
+    itemCount: pos.itemCount?.toString() ?? "",
+    orderStrategy: pos.orderStrategy,
+    pointsGoalMet: pos.pointsGoalMet,
+    penaltyCoins: pos.penaltyCoins,
+    // Am gespeicherten Stand ist die Erbschaft längst aufgelöst – hier stehen konkrete Zahlen.
+    newContentPoints: pos.newContentPoints.toString(),
+    comboThreshold: pos.comboThreshold.toString(),
+    comboBonusPoints: pos.comboBonusPoints.toString(),
+    useLeitner: pos.useLeitner,
+    requireTypedTest: pos.requireTypedTest,
+  };
+}
+
+/** Leeres Feld = `null` = „Standard bzw. Vorschlag der Übung übernehmen". */
+const numOrNull = (v: string): number | null => (v.trim() === "" ? null : Number(v));
+
+/** Formular-Zustand in die Vertragsform (leere Felder werden zu `null` = Standard). */
+function settingsToDto(s: PositionSettings) {
+  return {
+    cadence: s.cadence,
+    goalThreshold: s.goalThreshold.trim() === "" ? null : Number(s.goalThreshold),
+    itemCount: s.itemCount.trim() === "" ? null : Number(s.itemCount),
+    orderStrategy: s.orderStrategy,
+    pointsGoalMet: s.pointsGoalMet,
+    penaltyCoins: s.penaltyCoins,
+    newContentPoints: numOrNull(s.newContentPoints),
+    comboThreshold: numOrNull(s.comboThreshold),
+    comboBonusPoints: numOrNull(s.comboBonusPoints),
+    useLeitner: s.useLeitner,
+    requireTypedTest: s.requireTypedTest,
+  };
+}
+
+/** Die Felder selbst. Präsentational: den Zustand hält der Aufrufer (Anlegen bzw. Zeile im Edit-Modus). */
+function PositionFields({ value, onChange }: { value: PositionSettings; onChange: (next: PositionSettings) => void }) {
+  const uid = useId();
+  const up = <K extends keyof PositionSettings>(k: K, v: PositionSettings[K]) => onChange({ ...value, [k]: v });
+
+  return (
+    <div className="row" style={{ gap: 12, alignItems: "flex-end", flexWrap: "wrap" }}>
+      <div className="field" style={{ maxWidth: 180 }}>
+        <label htmlFor={`${uid}-cadence`}>Ziel-Rhythmus</label>
+        <select id={`${uid}-cadence`} aria-label="Ziel-Rhythmus" value={value.cadence}
+          onChange={(e) => up("cadence", e.target.value as GoalCadence)}>
+          {CADENCES.map((c) => <option key={c} value={c}>{CADENCE_LABEL[c]}</option>)}
+        </select>
+      </div>
+      {/* Der Server wertet die Schwelle als Bestehens-Prozentsatz des Abschlusstests aus (Standard 80). */}
+      <div className="field" style={{ maxWidth: 140 }}>
+        <label htmlFor={`${uid}-pass`}>Bestehen ab %</label>
+        <input id={`${uid}-pass`} aria-label="Bestehen ab Prozent" type="number" min={1} max={100}
+          placeholder="80" value={value.goalThreshold} onChange={(e) => up("goalThreshold", e.target.value)} />
+      </div>
+      <div className="field" style={{ maxWidth: 130 }}>
+        <label htmlFor={`${uid}-count`}>Inhalte</label>
+        <input id={`${uid}-count`} aria-label="Anzahl Inhalte" type="number" min={1} placeholder="alle"
+          value={value.itemCount} onChange={(e) => up("itemCount", e.target.value)} />
+      </div>
+      <div className="field" style={{ maxWidth: 180 }}>
+        <label htmlFor={`${uid}-order`}>Reihenfolge</label>
+        <select id={`${uid}-order`} aria-label="Reihenfolge" value={value.orderStrategy}
+          onChange={(e) => up("orderStrategy", e.target.value as PracticeOrder)}>
+          {ORDERS.map((o) => <option key={o} value={o}>{ORDER_LABEL[o]}</option>)}
+        </select>
+      </div>
+      <div className="field" style={{ maxWidth: 140 }}>
+        <label htmlFor={`${uid}-points`}>Punkte (Ziel erreicht)</label>
+        <input id={`${uid}-points`} aria-label="Punkte bei erreichtem Ziel" type="number" min={0}
+          value={value.pointsGoalMet} onChange={(e) => up("pointsGoalMet", Number(e.target.value))} />
+      </div>
+      {/* Der „Stick": verpasste Pflicht kostet Münzen. 0 = reine Belohnung; Schulden sind erlaubt. */}
+      <div className="field" style={{ maxWidth: 150 }}>
+        <label htmlFor={`${uid}-penalty`}>Münz-Malus (versäumt)</label>
+        <input id={`${uid}-penalty`} aria-label="Münz-Malus bei gerissener Pflicht" type="number" min={0}
+          value={value.penaltyCoins} onChange={(e) => up("penaltyCoins", Number(e.target.value))} />
+      </div>
+      {/* Leer lassen = Bonus-Vorschlag der Übung übernehmen (Platzhalter „erbt"). */}
+      <div className="field" style={{ maxWidth: 130 }}>
+        <label htmlFor={`${uid}-new`}>Punkte neuer Inhalt</label>
+        <input id={`${uid}-new`} aria-label="Punkte für neuen Inhalt" type="number" min={0} placeholder="erbt"
+          value={value.newContentPoints} onChange={(e) => up("newContentPoints", e.target.value)} />
+      </div>
+      <div className="field" style={{ maxWidth: 150 }}>
+        <label htmlFor={`${uid}-combo-n`}>Combo alle … Treffer</label>
+        <input id={`${uid}-combo-n`} aria-label="Combo-Schwelle" type="number" min={0} placeholder="erbt"
+          value={value.comboThreshold} onChange={(e) => up("comboThreshold", e.target.value)} />
+      </div>
+      <div className="field" style={{ maxWidth: 140 }}>
+        <label htmlFor={`${uid}-combo-p`}>Combo-Bonuspunkte</label>
+        <input id={`${uid}-combo-p`} aria-label="Combo-Bonuspunkte" type="number" min={0} placeholder="erbt"
+          value={value.comboBonusPoints} onChange={(e) => up("comboBonusPoints", e.target.value)} />
+      </div>
+      <label className="checkline">
+        <input type="checkbox" checked={value.useLeitner} onChange={(e) => up("useLeitner", e.target.checked)} /> Leitner-Kasten
+      </label>
+      <label className="checkline">
+        <input type="checkbox" checked={value.requireTypedTest} onChange={(e) => up("requireTypedTest", e.target.checked)} /> nur getippte Tests
+      </label>
+    </div>
+  );
+}
+
 /** Katalog-Übung über eine Filterleiste finden und als Position hinzufügen (übrige Werte erbt die Position). */
 function AddPosition({ planId, onAdded, onError }: { planId: number; onAdded: () => void; onError: (t: string) => void }) {
   const subjects = useAsync<SubjectResponse[]>(() => api.subjects(), []);
   const [filter, setFilter] = useState<ExerciseFilter>({});
-  const exercises = useAsync<ExerciseSummary[]>(() => api.searchExercises(filter).then((r) => r.items),
+  // Die Gesamtzahl wird mitgeführt: der Server liefert nur eine Seite, und eine still gekappte
+  // Auswahlliste liest sich wie „mehr gibt es nicht".
+  const exercises = useAsync<Paged<ExerciseSummary>>(() => api.searchExercises(filter),
     [filter.subjectId, filter.chapterId, filter.grade, filter.schoolType, filter.categoryId, filter.type, filter.search]);
   const [exerciseId, setExerciseId] = useState<number | "">("");
-  const [cadence, setCadence] = useState<GoalCadence>("Daily");
-  const [pointsGoalMet, setPointsGoalMet] = useState(20);
-  const [penaltyCoins, setPenaltyCoins] = useState(0);
-  const [itemCount, setItemCount] = useState<number | "">("");
-  const [orderStrategy, setOrderStrategy] = useState<PracticeOrder>("WeakestFirst");
-  const [useLeitner, setUseLeitner] = useState(false);
-  const [requireTyped, setRequireTyped] = useState(false);
+  const [settings, setSettings] = useState<PositionSettings>(defaultSettings());
   const [busy, setBusy] = useState(false);
 
   async function add(e: React.FormEvent) {
     e.preventDefault();
     if (exerciseId === "") { onError("Bitte eine Übung aus der Liste wählen."); return; }
     setBusy(true);
-    const dto: CreatePositionDto = {
-      exerciseId: Number(exerciseId), cadence, pointsGoalMet, penaltyCoins, orderStrategy,
-      itemCount: itemCount === "" ? null : Number(itemCount), useLeitner, requireTypedTest: requireTyped,
-    };
+    const dto: CreatePositionDto = { exerciseId: Number(exerciseId), ...settingsToDto(settings) };
     try {
       await api.addPosition(planId, dto);
       setExerciseId("");
@@ -103,7 +242,7 @@ function AddPosition({ planId, onAdded, onError }: { planId: number; onAdded: ()
     finally { setBusy(false); }
   }
 
-  const results = exercises.data ?? [];
+  const results = exercises.data?.items ?? [];
 
   return (
     <form className="card" onSubmit={add} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -121,7 +260,17 @@ function AddPosition({ planId, onAdded, onError }: { planId: number; onAdded: ()
                   background: exerciseId === ex.id ? "rgba(140,220,120,.10)" : undefined,
                   borderBottom: "1px solid var(--stroke)" }}>
                 <input type="radio" name="add-position-exercise" checked={exerciseId === ex.id}
-                  onChange={() => { setExerciseId(ex.id); setUseLeitner(ex.defaultUseLeitner); setRequireTyped(ex.defaultRequireTypedTest); setItemCount(ex.defaultItemCount ?? ""); }}
+                  // Nur die Werte übernehmen, die AUS der Übung kommen – schon eingestellte Ziele,
+                  // Punkte und Malus bleiben stehen (ein Übungswechsel ist keine Rücknahme).
+                  onChange={() => {
+                    setExerciseId(ex.id);
+                    setSettings((cur) => ({
+                      ...cur,
+                      useLeitner: ex.defaultUseLeitner,
+                      requireTypedTest: ex.defaultRequireTypedTest,
+                      itemCount: ex.defaultItemCount?.toString() ?? "",
+                    }));
+                  }}
                   style={{ marginTop: 3 }} />
                 <span style={{ display: "flex", flexDirection: "column" }}>
                   <span>{ex.title} <span className="muted">· {typeLabel(ex.type)}</span>
@@ -137,41 +286,19 @@ function AddPosition({ planId, onAdded, onError }: { planId: number; onAdded: ()
             {results.length === 0 && <div className="muted" style={{ padding: "8px 10px" }}>Keine Treffer – Filter anpassen.</div>}
           </div>
         )}
+        <TruncationHint shown={results.length} total={exercises.data?.total ?? 0} />
       </div>
 
-      <div className="row" style={{ gap: 12, alignItems: "flex-end", flexWrap: "wrap" }}>
-        <div className="field" style={{ maxWidth: 180 }}>
-          <label>Ziel-Rhythmus</label>
-          <select aria-label="Ziel-Rhythmus" value={cadence} onChange={(e) => setCadence(e.target.value as GoalCadence)}>
-            {CADENCES.map((c) => <option key={c} value={c}>{CADENCE_LABEL[c]}</option>)}
-          </select>
-        </div>
-        <div className="field" style={{ maxWidth: 140 }}>
-          <label>Punkte (Ziel erreicht)</label>
-          <input aria-label="Punkte bei erreichtem Ziel" type="number" min={0} value={pointsGoalMet} onChange={(e) => setPointsGoalMet(Number(e.target.value))} />
-        </div>
-        <div className="field" style={{ maxWidth: 150 }}>
-          <label>Münz-Malus (gerissen)</label>
-          <input aria-label="Münz-Malus bei gerissener Pflicht" type="number" min={0} value={penaltyCoins} onChange={(e) => setPenaltyCoins(Number(e.target.value))} />
-        </div>
-        <div className="field" style={{ maxWidth: 130 }}>
-          <label>Inhalte</label>
-          <input aria-label="Anzahl Inhalte" type="number" min={1} value={itemCount} placeholder="alle" onChange={(e) => setItemCount(e.target.value === "" ? "" : Number(e.target.value))} />
-        </div>
-        <div className="field" style={{ maxWidth: 180 }}>
-          <label>Reihenfolge</label>
-          <select aria-label="Reihenfolge" value={orderStrategy} onChange={(e) => setOrderStrategy(e.target.value as PracticeOrder)}>
-            {ORDERS.map((o) => <option key={o} value={o}>{ORDER_LABEL[o]}</option>)}
-          </select>
-        </div>
-        <label className="checkline"><input type="checkbox" checked={useLeitner} onChange={(e) => setUseLeitner(e.target.checked)} /> Leitner-Kasten</label>
-        <label className="checkline"><input type="checkbox" checked={requireTyped} onChange={(e) => setRequireTyped(e.target.checked)} /> nur getippte Tests</label>
+      <PositionFields value={settings} onChange={setSettings} />
+
+      <div className="row">
         <button type="submit" className="btn inline-btn" style={{ width: "auto", marginLeft: "auto" }} disabled={busy || exerciseId === ""}>
           {busy ? "…" : "+ Position hinzufügen"}
         </button>
       </div>
       <p className="muted" style={{ margin: 0, fontSize: 12 }}>
-        Nicht gesetzte Werte (Combo, Tempo-Bonus, neue Inhalte …) erbt die Position aus dem Bonus-Vorschlag der Übung.
+        Leere Felder bedeuten den Standard: Bestehen ab 80 %, alle Inhalte – und bei den Bonus-Werten den
+        <b> Vorschlag der Übung</b>. Beim Auswählen einer Übung übernimmt das Formular deren Lern-Standards.
       </p>
     </form>
   );
@@ -181,42 +308,20 @@ function AddPosition({ planId, onAdded, onError }: { planId: number; onAdded: ()
 function PositionRow({ planId, pos, onChanged, flash }: {
   planId: number; pos: PositionResponse; onChanged: () => void; flash: Flash;
 }) {
-  const uid = useId();
   const [editing, setEditing] = useState(false);
   const [showReport, setShowReport] = useState(false);
-  const [cadence, setCadence] = useState<GoalCadence>(pos.cadence);
-  const [goalThreshold, setGoalThreshold] = useState(pos.goalThreshold?.toString() ?? "");
-  const [itemCount, setItemCount] = useState(pos.itemCount?.toString() ?? "");
-  const [orderStrategy, setOrderStrategy] = useState<PracticeOrder>(pos.orderStrategy);
-  const [pointsGoalMet, setPointsGoalMet] = useState(pos.pointsGoalMet);
-  const [penaltyCoins, setPenaltyCoins] = useState(pos.penaltyCoins);
-  const [newContentPoints, setNewContentPoints] = useState(pos.newContentPoints);
-  const [useLeitner, setUseLeitner] = useState(pos.useLeitner);
-  const [requireTyped, setRequireTyped] = useState(pos.requireTypedTest);
+  const [settings, setSettings] = useState<PositionSettings>(() => settingsFrom(pos));
   const [busy, setBusy] = useState(false);
 
   function cancel() {
-    setCadence(pos.cadence);
-    setGoalThreshold(pos.goalThreshold?.toString() ?? "");
-    setItemCount(pos.itemCount?.toString() ?? "");
-    setOrderStrategy(pos.orderStrategy);
-    setPointsGoalMet(pos.pointsGoalMet);
-    setPenaltyCoins(pos.penaltyCoins);
-    setNewContentPoints(pos.newContentPoints);
-    setUseLeitner(pos.useLeitner);
-    setRequireTyped(pos.requireTypedTest);
+    setSettings(settingsFrom(pos));
     setEditing(false);
   }
 
   async function save() {
     setBusy(true);
-    const threshold = goalThreshold.trim() === "" ? null : Number(goalThreshold);
-    const count = itemCount.trim() === "" ? null : Number(itemCount);
     try {
-      await api.updatePosition(planId, pos.id, {
-        cadence, goalThreshold: threshold, itemCount: count, orderStrategy, pointsGoalMet, penaltyCoins, newContentPoints,
-        useLeitner, requireTypedTest: requireTyped,
-      });
+      await api.updatePosition(planId, pos.id, settingsToDto(settings));
       setEditing(false);
       onChanged();
       flash(true, "Position gespeichert.");
@@ -241,7 +346,7 @@ function PositionRow({ planId, pos, onChanged, flash }: {
           </td>
           <td>
             {CADENCE_LABEL[pos.cadence]}
-            {pos.goalThreshold != null && <span className="muted"> · Schwelle {pos.goalThreshold}</span>}
+            {pos.goalThreshold != null && <span className="muted"> · bestehen ab {pos.goalThreshold}%</span>}
             {pos.itemCount != null && <span className="muted"> · {pos.itemCount} Inhalte</span>}
             <span className="muted"> · {ORDER_LABEL[pos.orderStrategy]}</span>
             {pos.requireTypedTest && <span className="muted"> · getippt</span>}
@@ -274,30 +379,7 @@ function PositionRow({ planId, pos, onChanged, flash }: {
       <td className="num">{pos.order + 1}</td>
       <td>{pos.exerciseTitle} <span className="muted">· {typeLabel(pos.exerciseType)}</span></td>
       <td colSpan={3}>
-        <div className="row" style={{ gap: 10, alignItems: "flex-end", flexWrap: "wrap" }}>
-          <div className="field" style={{ maxWidth: 160 }}><label>Ziel-Rhythmus</label>
-            <select aria-label="Ziel-Rhythmus" value={cadence} onChange={(e) => setCadence(e.target.value as GoalCadence)}>
-              {CADENCES.map((c) => <option key={c} value={c}>{CADENCE_LABEL[c]}</option>)}
-            </select>
-          </div>
-          <div className="field" style={{ maxWidth: 110 }}><label htmlFor={`${uid}-schwelle`}>Schwelle</label>
-            <input id={`${uid}-schwelle`} type="number" min={0} value={goalThreshold} placeholder="Std." onChange={(e) => setGoalThreshold(e.target.value)} /></div>
-          <div className="field" style={{ maxWidth: 110 }}><label htmlFor={`${uid}-menge`}>Inhalte</label>
-            <input id={`${uid}-menge`} type="number" min={1} value={itemCount} placeholder="alle" onChange={(e) => setItemCount(e.target.value)} /></div>
-          <div className="field" style={{ maxWidth: 170 }}><label>Reihenfolge</label>
-            <select aria-label="Reihenfolge" value={orderStrategy} onChange={(e) => setOrderStrategy(e.target.value as PracticeOrder)}>
-              {ORDERS.map((o) => <option key={o} value={o}>{ORDER_LABEL[o]}</option>)}
-            </select>
-          </div>
-          <div className="field" style={{ maxWidth: 110 }}><label>Punkte Ziel</label>
-            <input aria-label="Punkte bei erreichtem Ziel" type="number" min={0} value={pointsGoalMet} onChange={(e) => setPointsGoalMet(Number(e.target.value))} /></div>
-          <div className="field" style={{ maxWidth: 120 }}><label>Malus (gerissen)</label>
-            <input aria-label="Münz-Malus bei gerissener Pflicht" type="number" min={0} value={penaltyCoins} onChange={(e) => setPenaltyCoins(Number(e.target.value))} /></div>
-          <div className="field" style={{ maxWidth: 110 }}><label>Punkte neu</label>
-            <input aria-label="Punkte für neuen Inhalt" type="number" min={0} value={newContentPoints} onChange={(e) => setNewContentPoints(Number(e.target.value))} /></div>
-          <label className="checkline"><input type="checkbox" checked={useLeitner} onChange={(e) => setUseLeitner(e.target.checked)} /> Leitner</label>
-          <label className="checkline"><input type="checkbox" checked={requireTyped} onChange={(e) => setRequireTyped(e.target.checked)} /> getippt</label>
-        </div>
+        <PositionFields value={settings} onChange={setSettings} />
       </td>
       <td className="row" style={{ gap: 6, justifyContent: "flex-end" }}>
         <button type="button" className="btn inline-btn" style={{ width: "auto" }} disabled={busy} onClick={save}>OK</button>
@@ -340,12 +422,4 @@ function PositionReportPanel({ planId, positionId }: { planId: number; positionI
       </div>
     </div>
   );
-}
-
-/** Farbcodierte „sitzt"-Ampel: neu (grau) · unsicher (magenta) · in Arbeit (neutral) · sitzt sicher (lime). */
-function MasteryPill({ it, maxBox }: { it: ItemReport; maxBox: number }) {
-  if (!it.introduced) return <span className="pill">neu</span>;
-  if (it.box >= maxBox) return <span className="pill lime">sitzt · {it.masteryPercent}%</span>;
-  if (it.masteryPercent < 50) return <span className="pill mag">{it.masteryPercent}% · Box {it.box}</span>;
-  return <span className="pill">{it.masteryPercent}% · Box {it.box}</span>;
 }

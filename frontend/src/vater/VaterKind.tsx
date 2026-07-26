@@ -1,10 +1,14 @@
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import { ChildMaterialSection } from "./ChildMaterialSection";
 import { api, errorMessage } from "../lib/api";
 import { interestSlug } from "../lib/interests";
+import { GENDERS, SCHOOL_TYPES } from "../lib/labels";
+import { confirmAction } from "../lib/ui";
 import { useAsync } from "../lib/useAsync";
 import type {
-  ChildInterestResponse, ChildResponse, ContentRating, InterestFacet, InterestTagResponse,
+  ChildInterestResponse, ChildResponse, ContentRating, Gender, InterestFacet,
+  InterestTagResponse, SchoolType, UpdateChildDto,
 } from "../lib/types";
 
 /**
@@ -20,22 +24,40 @@ import type {
  */
 export function VaterKind() {
   const childId = Number(useParams().childId);
-  const child = useAsync<ChildResponse[]>(() => api.children(), [childId]);
+  const child = useAsync<ChildResponse>(() => api.child(childId), [childId]);
   const interests = useAsync<ChildInterestResponse[]>(() => api.childInterests(childId), [childId]);
   const tags = useAsync<InterestTagResponse[]>(() => api.interestTags(), []);
 
-  const me = child.data?.find((c) => c.id === childId);
+  const me = child.data;
 
-  if (child.loading) return <div className="loading">Lade…</div>;
+  /*
+   * Auf `data` prüfen, nicht auf `loading` – aus demselben Grund wie beim Interessen-Editor weiter unten:
+   * nach dem Speichern lädt der Datensatz neu, und ein Platzhalter nähme die Formulare für einen Moment
+   * aus dem DOM. Sie verlören dabei ihren Zustand samt der Bestätigung, die der Nutzer gerade lesen soll.
+   */
   if (child.error) return <div className="banner err">{child.error}</div>;
-  if (!me) return <div className="banner err">Kind nicht gefunden.</div>;
+  if (!me) return child.loading
+    ? <div className="loading">Lade…</div>
+    : <div className="banner err">Kind nicht gefunden.</div>;
 
   return (
     <>
       <div className="row" style={{ marginBottom: 8 }}>
         <h2 className="h-section">{me.name}</h2>
+        <span className="pill">🪙 {me.coins}</span>
+        <span className="pill">💎 {me.gems}</span>
         <Link to="/vater" className="btn ghost small" style={{ marginLeft: "auto", textDecoration: "none" }}>← Übersicht</Link>
       </div>
+
+      <ChildNav child={me} />
+
+      <CoreDataSection child={me} onSaved={child.reload} />
+
+      {/*
+        Direkt hinter den Stammdaten: Klasse und Schulart von oben entscheiden mit, welcher Fachlehrer
+        zu diesem Kind passt – die Wirkung soll auf demselben Blick sichtbar sein.
+      */}
+      <ChildMaterialSection childId={childId} childName={me.name} />
 
       <RatingSection child={me} onSaved={child.reload} />
 
@@ -61,6 +83,178 @@ export function VaterKind() {
         )}
       </section>
     </>
+  );
+}
+
+/**
+ * Alles, was zu *diesem* Kind gehört, von einer Stelle aus erreichbar. Ohne diese Leiste beginnt jeder
+ * Weg im Hauptmenü und endet an einem Kind-Pulldown – bei mehreren Kindern eine ständige Fehlerquelle,
+ * weil dort immer das erste vorausgewählt ist. Die Ziel-Seiten übernehmen das Kind aus `?childId=`.
+ */
+function ChildNav({ child }: { child: ChildResponse }) {
+  const links: [string, string][] = [
+    [`/vater/kind/${child.id}/lernstand`, "📈 Lernstand"],
+    [`/vater/kind/${child.id}/ziele`, "🎯 Ziele"],
+    [`/vater?childId=${child.id}`, "🗂️ Lehrpläne"],
+    [`/vater/class-tests?childId=${child.id}`, "📝 Klassenarbeiten"],
+    [`/vater/rewards?childId=${child.id}`, "🏆 Belohnungen"],
+    [`/vater/shop?childId=${child.id}`, "🛒 Shop"],
+    [`/vater/konto?childId=${child.id}`, "💰 Kontostand"],
+  ];
+  return (
+    <nav className="row" style={{ gap: 8, flexWrap: "wrap", marginBottom: 14 }} aria-label={`Bereiche für ${child.name}`}>
+      {links.map(([to, label]) => (
+        <Link key={to} to={to} className="btn ghost small" style={{ width: "auto", textDecoration: "none" }}>{label}</Link>
+      ))}
+    </nav>
+  );
+}
+
+/**
+ * Die Stammdaten des Kindes. Sie gehören hierher, weil sie nach dem Anlegen sonst unerreichbar wären –
+ * und zwei von ihnen sind mehr als Beschriftung:
+ *
+ * * **Die PIN** ist der Login des Kindes. Wird sie beim Anlegen weggelassen, kommt das Kind nicht in
+ *   seine App; hier ist die einzige Stelle, an der sie nachgetragen oder geändert werden kann.
+ * * **Klasse und Schulart** filtern die Übungssuche im Katalog und im Assistenten – eine falsche Klasse
+ *   versteckt also passende Übungen.
+ *
+ * Die Freitext-Interessen sind absichtlich getrennt von den gewichteten Interessen weiter unten: sie sind
+ * die Sprache des KI-Creators (Prosa fürs Modell), nicht das Vokabular der Bildauswahl.
+ */
+/**
+ * Der Formular-Zustand aus dem Server-Stand. Auch die Rücksetz-Quelle nach dem Speichern: der `PATCH`
+ * ignoriert `null` bei `birthYear`/`grade` (`HasValue`), ein geleertes Zahlenfeld ist also **kein** Löschen.
+ * Ohne das Zurücksetzen stünde danach ein leeres Feld über einem gespeicherten Wert – die Anzeige würde lügen.
+ */
+function formStateOf(child: ChildResponse) {
+  return {
+    name: child.name,
+    birthYear: child.birthYear?.toString() ?? "",
+    grade: child.grade?.toString() ?? "",
+    // Der Server kann bei Kindern eine Flags-Kombination liefern ("Realschule, Gymnasium"); für die
+    // Auswahl zählt nur ein Einzelwert – Kombinationen fallen auf "None" zurück.
+    schoolType: (SCHOOL_TYPES.includes(child.schoolType as SchoolType) ? child.schoolType : "None") as SchoolType | "None",
+    gender: child.gender,
+    interests: child.interests.join(", "),
+    profileNotes: child.profileNotes ?? "",
+  };
+}
+
+function CoreDataSection({ child, onSaved }: { child: ChildResponse; onSaved: () => void }) {
+  const nav = useNavigate();
+  const [form, setForm] = useState(() => formStateOf(child));
+  const [pin, setPin] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+
+  function up<K extends keyof typeof form>(k: K, v: (typeof form)[K]) {
+    setForm((f) => ({ ...f, [k]: v }));
+  }
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    setMsg(null);
+    if (!form.name.trim()) { setMsg({ ok: false, text: "Der Name darf nicht leer sein." }); return; }
+
+    // Nur Geändertes senden (PATCH-Semantik); ein leeres PIN-Feld heißt „unverändert", nicht „löschen".
+    const initial = formStateOf(child);
+    const dto: UpdateChildDto = {};
+    if (form.name.trim() !== child.name) dto.name = form.name.trim();
+    // Ein geleertes Zahlenfeld ist ein ausdrücklicher Löschwunsch – im PATCH gilt `null` als
+    // „nicht angegeben", also braucht es den Clear-Schalter.
+    const year = form.birthYear.trim() === "" ? null : Number(form.birthYear);
+    if (year !== child.birthYear) { if (year === null) dto.clearBirthYear = true; else dto.birthYear = year; }
+    const grade = form.grade.trim() === "" ? null : Number(form.grade);
+    if (grade !== child.grade) { if (grade === null) dto.clearGrade = true; else dto.grade = grade; }
+    /*
+     * Gegen den **Anzeigewert** vergleichen, nicht gegen `child.schoolType`: bei einer Flags-Kombination
+     * zeigt die Auswahl "None", und ein Vergleich mit dem Rohwert wäre immer „geändert" – jedes Speichern
+     * (auch ein reines Umbenennen) hätte die Kombination auf None zurückgesetzt.
+     */
+    if (form.schoolType !== initial.schoolType) dto.schoolType = form.schoolType as SchoolType;
+    if (form.gender !== child.gender) dto.gender = form.gender;
+    const interests = form.interests.split(",").map((s) => s.trim()).filter(Boolean);
+    if (interests.length !== child.interests.length
+      || interests.some((x, i) => x !== child.interests[i])) dto.interests = interests;
+    // Leerer Text als "" senden, nicht als null: `null` ignoriert der Server, "" löscht die Notiz wirklich.
+    const notes = form.profileNotes.trim();
+    if (notes !== (child.profileNotes ?? "")) dto.profileNotes = notes;
+    if (pin.trim()) dto.pin = pin.trim();
+    if (Object.keys(dto).length === 0) { setMsg({ ok: true, text: "Nichts zu speichern." }); return; }
+
+    setBusy(true);
+    try {
+      const saved = await api.updateChild(child.id, dto);
+      setPin("");
+      // Formular aus der Server-Antwort setzen, nicht aus der Eingabe: so zeigt es immer den echten Stand
+      // (etwa einen getrimmten Namen), statt dem Nutzer seine eigene Eingabe als „gespeichert" zu bestätigen.
+      setForm(formStateOf(saved));
+      setMsg({
+        ok: true,
+        text: dto.pin ? "Gespeichert. Die neue PIN gilt ab dem nächsten Login des Kindes." : "Gespeichert.",
+      });
+      onSaved();
+    } catch (err) {
+      setMsg({ ok: false, text: errorMessage(err) });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function remove() {
+    if (!confirmAction(
+      `„${child.name}" wirklich löschen? Lehrpläne, Fortschritt, Punktekonto, Käufe und Auswertungen `
+      + "dieses Kindes gehen mit verloren – auch für alle anderen Betreuer (Mutter, Oma …), die es "
+      + "mitbetreuen. Die Übungen im Katalog bleiben erhalten.")) return;
+    setBusy(true);
+    try { await api.deleteChild(child.id); nav("/vater"); }
+    catch (err) { setMsg({ ok: false, text: errorMessage(err) }); setBusy(false); }
+  }
+
+  return (
+    <section>
+      <h3 className="h-section">Stammdaten</h3>
+      <form onSubmit={submit} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+        <div className="form-grid" style={{ alignItems: "end" }}>
+          <div className="field"><label htmlFor="kd-name">Name</label>
+            <input id="kd-name" value={form.name} onChange={(e) => up("name", e.target.value)} /></div>
+          <div className="field"><label htmlFor="kd-year">Geburtsjahr</label>
+            <input id="kd-year" type="number" min={1990} max={2030} value={form.birthYear} onChange={(e) => up("birthYear", e.target.value)} /></div>
+          <div className="field"><label htmlFor="kd-grade">Klasse</label>
+            <input id="kd-grade" type="number" min={1} max={13} value={form.grade} onChange={(e) => up("grade", e.target.value)} /></div>
+          <div className="field"><label htmlFor="kd-school">Schulart</label>
+            <select id="kd-school" value={form.schoolType} onChange={(e) => up("schoolType", e.target.value as SchoolType)}>
+              <option value="None">– keine Angabe –</option>
+              {SCHOOL_TYPES.map((s) => <option key={s} value={s}>{s}</option>)}
+            </select></div>
+          <div className="field"><label htmlFor="kd-gender">Geschlecht</label>
+            <select id="kd-gender" value={form.gender} onChange={(e) => up("gender", e.target.value as Gender)}>
+              {GENDERS.map((g) => <option key={g.value} value={g.value}>{g.label}</option>)}
+            </select></div>
+          <div className="field"><label htmlFor="kd-pin">PIN <span className="muted">(leer = unverändert)</span></label>
+            <input id="kd-pin" value={pin} onChange={(e) => setPin(e.target.value)} placeholder="z.B. 1111" /></div>
+        </div>
+        <div className="field">
+          <label htmlFor="kd-interests">Interessen als Freitext <span className="muted">(kommagetrennt)</span></label>
+          <input id="kd-interests" value={form.interests} onChange={(e) => up("interests", e.target.value)}
+            placeholder="Fußball, Minecraft, Hunde" />
+          <span className="sub">Damit kleidet der KI-Creator Aufgaben ein. Für die Bildauswahl zählen die gewichteten Interessen unten.</span>
+        </div>
+        <div className="field">
+          <label htmlFor="kd-notes">Notizen zum Kind <span className="muted">(optional)</span></label>
+          <textarea id="kd-notes" rows={2} value={form.profileNotes} onChange={(e) => up("profileNotes", e.target.value)}
+            placeholder="z.B. Schwächen bei unregelmäßigen Verben, braucht kurze Einheiten." />
+        </div>
+        <div className="row" style={{ gap: 8 }}>
+          <button type="submit" className="btn inline-btn" style={{ width: "auto" }} disabled={busy}>{busy ? "…" : "Speichern"}</button>
+          <button type="button" className="btn ghost inline-btn" style={{ width: "auto", marginLeft: "auto" }} disabled={busy} onClick={remove}>
+            Kind löschen
+          </button>
+        </div>
+      </form>
+      {msg && <div className={`banner ${msg.ok ? "ok" : "err"}`} style={{ marginTop: 10 }} role="status" aria-live="polite">{msg.text}</div>}
+    </section>
   );
 }
 

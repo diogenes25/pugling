@@ -35,6 +35,20 @@ export function Pager({ skip, take, total, onSkip }: {
 }
 
 /**
+ * Sagt an, wenn eine Auswahlliste nur einen Teil der Treffer zeigt. Gedacht für Listen ohne Blätterung
+ * (Übungs-Auswahl im Assistenten, beim Positions-Anlegen, beim Zuweisen zur Klassenarbeit): der Server
+ * liefert höchstens eine Seite, und eine still gekappte Liste liest sich wie „mehr gibt es nicht".
+ */
+export function TruncationHint({ shown, total }: { shown: number; total: number }) {
+  if (total <= shown) return null;
+  return (
+    <p className="banner" style={{ margin: "6px 0", fontSize: 13 }} role="status">
+      Zeigt {shown} von {total} Treffern – grenze die Filter weiter ein, um die übrigen zu sehen.
+    </p>
+  );
+}
+
+/**
  * Sortierbarer Tabellen-Spaltenkopf (klickbar, zeigt ▲/▼ bei aktiver Spalte, setzt `aria-sort`).
  * Klick auf die aktive Spalte dreht die Richtung, sonst wird nach dieser Spalte sortiert.
  */

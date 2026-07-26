@@ -136,11 +136,17 @@ public class CreatorProfilesController(PuglingDbContext db, CreatorProfileServic
             profile.Name = name;
         }
         if (dto.SubjectName is not null) profile.SubjectName = Trimmed(dto.SubjectName);
+        // Reihenfolge: erst der Wert, dann der Clear-Schalter – so gewinnt „leeren" auch, wenn ein Client
+        // (etwa ein Formular, das immer alle Felder schickt) beides mitsendet.
         if (dto.SubjectId.HasValue) profile.SubjectId = dto.SubjectId;
+        if (dto.ClearSubject) { profile.SubjectId = null; profile.SubjectName = null; }
         if (dto.SchoolTypes.HasValue) profile.SchoolTypes = dto.SchoolTypes.Value;
         if (dto.GradeMin.HasValue) profile.GradeMin = dto.GradeMin;
+        if (dto.ClearGradeMin) profile.GradeMin = null;
         if (dto.GradeMax.HasValue) profile.GradeMax = dto.GradeMax;
+        if (dto.ClearGradeMax) profile.GradeMax = null;
         if (dto.SeriesId.HasValue) profile.SeriesId = dto.SeriesId;
+        if (dto.ClearSeries) profile.SeriesId = null;
         if (Trimmed(dto.SourceLang) is { } src) profile.SourceLang = src;
         if (Trimmed(dto.TargetLang) is { } tgt) profile.TargetLang = tgt;
         if (dto.Persona is not null) profile.Persona = Trimmed(dto.Persona);

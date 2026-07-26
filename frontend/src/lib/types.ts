@@ -34,12 +34,40 @@ export interface VerbInfo {
 export type SchoolType =
   | "None" | "Grundschule" | "Hauptschule" | "Realschule" | "Gymnasium" | "Gesamtschule" | "Berufsschule";
 
+/** Geschlecht des Kindes – Teil des Profils, aus dem der KI-Creator seine Anrede/Einkleidung ableitet. */
+export type Gender = "None" | "Male" | "Female" | "Diverse";
+
 export interface LoginResponse {
   token: string;
   role: Role;
   id: number;
   name: string;
   expiresAt: string;
+}
+
+// ---- Vater: eigenes Konto (Registrierung + Selbstauskunft) ----
+
+/** Der eigene Vater-Datensatz; die PIN liefert der Server nie aus. */
+export interface FatherResponse {
+  id: number;
+  name: string;
+  email: string | null;
+  createdAt: string;
+  childrenCount: number;
+}
+
+/** Registrierung eines Vaters – der einzige Weg, ohne Anmeldung ein Konto zu erzeugen. */
+export interface CreateFatherDto {
+  name: string;
+  email?: string | null;
+  pin?: string | null;
+}
+
+/** Partielle Änderung des eigenen Kontos; weggelassene Felder bleiben unverändert. */
+export interface UpdateFatherDto {
+  name?: string | null;
+  email?: string | null;
+  pin?: string | null;
 }
 
 // ---- Vater: Kinder & Vokabel-Store ----
@@ -50,6 +78,7 @@ export interface ChildResponse {
   birthYear: number | null;
   grade: number | null;
   schoolType: string;
+  gender: Gender;
   /** Freitext-Interessen: die Sprache des KI-Creators. Die gewichteten Tags stehen separat. */
   interests: string[];
   profileNotes: string | null;
@@ -58,6 +87,181 @@ export interface ChildResponse {
   createdAt: string;
   coins: number;
   gems: number;
+}
+
+// ---- Unterrichtsmaterial: Lehrwerk-Reihe → Unit → Lehrbuch des Kindes ----
+
+/**
+ * Eine Lehrwerk-Reihe („Access") – bewusst ein **geteilter** Katalog-Eintrag: das Lehrbuch des Kindes
+ * und das Creator-Profil zeigen auf denselben Datensatz. Nur dadurch ist die Frage „welcher Creator
+ * kennt das Material dieses Kindes?" berechenbar statt ein Namensvergleich.
+ */
+export interface TextbookSeriesResponse {
+  id: number;
+  name: string;
+  /** Normalisierter Schlüssel; unveränderlich und global eindeutig (macht das Anlegen idempotent). */
+  slug: string;
+  publisher: string | null;
+  subjectName: string | null;
+  subjectId: number | null;
+  schoolTypes: string;
+  sourceLanguage: string | null;
+  targetLanguage: string | null;
+  notes: string | null;
+  ownerFatherId: number | null;
+  /** Ob das angemeldete Konto die Reihe ändern darf (lesen darf jeder Creator). */
+  isOwn: boolean;
+  unitCount: number;
+  createdAt: string;
+}
+
+export interface CreateTextbookSeriesDto {
+  name: string;
+  publisher?: string | null;
+  subjectName?: string | null;
+  subjectId?: number | null;
+  schoolTypes?: SchoolType | null;
+  sourceLanguage?: string | null;
+  targetLanguage?: string | null;
+  notes?: string | null;
+}
+
+/** Partielle Änderung einer Reihe; der Slug bleibt fest. */
+export type UpdateTextbookSeriesDto = Partial<CreateTextbookSeriesDto>;
+
+/**
+ * Eine Unit der Reihe samt Band (`grade`). `topics`/`grammar`/`vocabularyNotes` sind der eigentliche
+ * Gewinn: sie sind der Stoff, den ein KI-Creator liest, statt ihn zu erfinden.
+ */
+export interface SeriesUnitResponse {
+  id: number;
+  seriesId: number;
+  grade: number | null;
+  orderIndex: number;
+  label: string;
+  topics: string | null;
+  grammar: string | null;
+  vocabularyNotes: string | null;
+  createdAt: string;
+}
+
+export interface CreateSeriesUnitDto {
+  label: string;
+  grade?: number | null;
+  orderIndex?: number | null;
+  topics?: string | null;
+  grammar?: string | null;
+  vocabularyNotes?: string | null;
+}
+
+export type UpdateSeriesUnitDto = Partial<CreateSeriesUnitDto>;
+
+/**
+ * Ein vom Kind benutztes Lehrbuch. `seriesId`/`currentUnitId` sind die katalogisierte Form von Titel
+ * und Kapitel – erst sie machen aus „irgendein Buch" den auffindbaren Stoff.
+ */
+export interface TextbookResponse {
+  id: number;
+  title: string;
+  subjectName: string | null;
+  subjectId: number | null;
+  grade: number | null;
+  publisher: string | null;
+  isbn: string | null;
+  currentChapter: string | null;
+  createdAt: string;
+  seriesId: number | null;
+  seriesName: string | null;
+  currentUnitId: number | null;
+  currentUnitLabel: string | null;
+}
+
+export interface CreateTextbookDto {
+  title: string;
+  subjectName?: string | null;
+  subjectId?: number | null;
+  grade?: number | null;
+  publisher?: string | null;
+  isbn?: string | null;
+  currentChapter?: string | null;
+  seriesId?: number | null;
+  currentUnitId?: number | null;
+}
+
+/**
+ * Änderung eines Lehrbuchs. Die `clear…`-Schalter sind nötig, weil `null` im PATCH „nicht angegeben"
+ * heißt: ohne sie ließe sich ein einmal gesetztes Fach, eine Klasse, eine Reihe oder eine Unit nie
+ * wieder loswerden (der Server würde das `null` überlesen und still den alten Wert behalten).
+ */
+export type UpdateTextbookDto = Partial<CreateTextbookDto> & {
+  clearSeries?: boolean;
+  clearUnit?: boolean;
+  clearSubject?: boolean;
+  clearGrade?: boolean;
+};
+
+// ---- Creator-Profile („Fachlehrer") ----
+
+/**
+ * Ein Creator-Profil ist der *Lehrer*, in dessen Namen der KI-Creator entwirft: ein Fach, ein
+ * Schulzweig, ein Klassenstufen-Bereich, optional eine Buchreihe. `persona`/`didactics` prägen seine
+ * Rolle im Sprachmodell – die festen Inhalts-Regeln des Agenten weichen sie nie auf.
+ */
+export interface CreatorProfileResponse {
+  id: number;
+  name: string;
+  ownerFatherId: number | null;
+  isOwn: boolean;
+  subjectName: string | null;
+  subjectId: number | null;
+  schoolTypes: string;
+  gradeMin: number | null;
+  gradeMax: number | null;
+  seriesId: number | null;
+  seriesName: string | null;
+  sourceLang: string;
+  targetLang: string;
+  persona: string | null;
+  didactics: string | null;
+  /** Bevorzugte Übungstypen (Schlüssel aus dem Typ-Manifest). */
+  defaultTypes: string[];
+  active: boolean;
+  createdAt: string;
+}
+
+export interface CreateCreatorProfileDto {
+  name: string;
+  subjectName?: string | null;
+  subjectId?: number | null;
+  schoolTypes?: SchoolType | null;
+  gradeMin?: number | null;
+  gradeMax?: number | null;
+  seriesId?: number | null;
+  sourceLang?: string | null;
+  targetLang?: string | null;
+  persona?: string | null;
+  didactics?: string | null;
+  defaultTypes?: string[] | null;
+  active?: boolean | null;
+}
+
+/** Änderung eines Profils; `clear…` leert ein Feld (ein `null` gilt als „nicht angegeben"). */
+export type UpdateCreatorProfileDto = Partial<CreateCreatorProfileDto> & {
+  clearSubject?: boolean;
+  clearSeries?: boolean;
+  clearGradeMin?: boolean;
+  clearGradeMax?: boolean;
+};
+
+/**
+ * Ein Treffer der Profil-Suche zu einem Kind. `score` entsteht deterministisch (Reihe wiegt am
+ * schwersten), `reasons` sind **stabile Codes** – die Formulierung macht die Oberfläche
+ * (siehe `matchReasonLabel`).
+ */
+export interface CreatorProfileMatch {
+  profile: CreatorProfileResponse;
+  score: number;
+  reasons: string[];
 }
 
 // ---- Bilder & Interessen (Individualisierung der Lerninhalte) ----
@@ -198,11 +402,235 @@ export interface CreateChildDto {
   birthYear?: number | null;
   grade?: number | null;
   schoolType?: SchoolType;
+  gender?: Gender;
   /** Freitext-Interessen (Sprache des KI-Creators); die gewichteten Tags laufen über eigene Endpunkte. */
   interests?: string[];
   profileNotes?: string | null;
   /** Obergrenze der Bild-Eignung. Ohne Angabe die strengste Stufe. */
   allowedContentRating?: ContentRating;
+}
+
+/** Änderung eines Kindes; `clear…` leert ein Feld (ein `null` gilt im PATCH als „nicht angegeben"). */
+export type UpdateChildDto = Partial<CreateChildDto> & {
+  clearBirthYear?: boolean;
+  clearGrade?: boolean;
+};
+
+// ---- Lernstand eines Kindes (plan-übergreifend, nicht an eine Position gebunden) ----
+
+/**
+ * Aggregierter Lernstand über eine Menge Vokabel-Items – auf jeder Katalog-Ebene identisch aufgebaut.
+ * `weakItems` sind die Kandidaten für gezielte Wiederholung (Beherrschung unter 50 %).
+ */
+export interface MasteryRollup {
+  totalItems: number;
+  introducedItems: number;
+  masteredItems: number;
+  weakItems: number;
+  avgMasteryPercent: number;
+  seenCount: number;
+  correctCount: number;
+  correctPercent: number;
+  lastActivityAt: string | null;
+}
+
+/** `active` = enthält mindestens eine über einen aktiven Plan zugewiesene Übung (sonst nur Historie). */
+export interface SubjectProgress {
+  subjectId: number;
+  name: string;
+  chapterCount: number;
+  exerciseCount: number;
+  active: boolean;
+  progress: MasteryRollup;
+}
+
+export interface ChapterProgress {
+  chapterId: number;
+  name: string;
+  orderIndex: number;
+  exerciseCount: number;
+  active: boolean;
+  progress: MasteryRollup;
+}
+
+export interface ExerciseProgress {
+  exerciseId: number;
+  title: string;
+  orderIndex: number;
+  active: boolean;
+  progress: MasteryRollup;
+}
+
+/** Lernstand des Kindes zu einem einzelnen Übungs-Item. */
+export interface ItemProgressResponse {
+  itemId: number;
+  exerciseId: number;
+  vocabularyId: number;
+  front: string;
+  back: string;
+  box: number;
+  maxBox: number;
+  masteryPercent: number;
+  seenCount: number;
+  correctCount: number;
+  introducedAt: string | null;
+  lastAnswerAt: string | null;
+  lastCorrect: boolean | null;
+}
+
+/** Beherrschung eines Store-Wortes über **alle** Übungen, die es benutzen – die „schlecht gelernten Wörter". */
+export interface WordMastery {
+  vocabularyId: number;
+  word: string;
+  translation: string;
+  itemCount: number;
+  avgMasteryPercent: number;
+  minBox: number;
+  seenCount: number;
+  correctCount: number;
+  correctPercent: number;
+}
+
+/** Ein protokolliertes Antwort-Ereignis (Übung oder Test). */
+export interface ItemHistoryEntry {
+  at: string;
+  source: string;
+  stageValue: number;
+  givenAnswer: string | null;
+  wasCorrect: boolean;
+  planPositionId: number | null;
+}
+
+// ---- Ziele über dem Lernstand: Lernziele (einzeln) und Objectives (OKR-Klammer) ----
+
+/**
+ * Metrik eines Lernziels. Achtung auf die Richtung: `MaxWeakItems` ist ein **Höchstwert** („nicht mehr als
+ * N wackelige Wörter"), alle anderen sind Mindestwerte in Prozent.
+ */
+export type LearnGoalMetric = "AvgMastery" | "Coverage" | "MasteredPercent" | "MaxWeakItems";
+
+/** Wie ein Lernziel/eine Etappe gerade steht; live aus dem Lernstand berechnet, nie gespeichert. */
+export type GoalStatus = "open" | "achieved" | "overdue";
+
+/** Ein ausgewertetes Lernziel auf einem Katalog-Scope (Fach, optional Kapitel, optional Übung). */
+export interface LearnGoal {
+  id: number;
+  childId: number;
+  subjectId: number;
+  chapterId: number | null;
+  exerciseId: number | null;
+  /** Menschenlesbarer Scope-Text vom Server (z. B. „Englisch · Unit 1"). */
+  scope: string;
+  metric: LearnGoalMetric;
+  targetValue: number;
+  currentValue: number;
+  progressPercent: number;
+  dueDate: string | null;
+  status: GoalStatus;
+  title: string | null;
+  createdAt: string;
+}
+
+export interface CreateLearnGoalRequest {
+  subjectId: number;
+  chapterId?: number | null;
+  exerciseId?: number | null;
+  metric: LearnGoalMetric;
+  targetValue: number;
+  dueDate?: string | null;
+  title?: string | null;
+}
+
+/** Nur gesetzte Felder ändern sich; der Scope bleibt fix (zum Umhängen neu anlegen). */
+export interface UpdateLearnGoalRequest {
+  metric?: LearnGoalMetric;
+  targetValue?: number;
+  dueDate?: string | null;
+  title?: string | null;
+}
+
+/**
+ * Art eines Objectives – sie bestimmt die **Währung** der Belohnung: `Committed` ist verbindlich und zahlt
+ * Münzen (real einlösbar), `Stretch` ist ein Dehnungsziel und zahlt Gems (Skins).
+ */
+export type ObjectiveKind = "Committed" | "Stretch";
+
+/** Metrik einer Etappe; `ClassTestGrade` ist die Note ×10 als Höchstwert (20 = „mindestens 2,0"). */
+export type KeyResultMetric = "AvgMastery" | "MasteredPercent" | "MaxWeakItems" | "ClassTestGrade";
+
+/** Eine ausgewertete Etappe eines Objectives. */
+export interface KeyResult {
+  id: number;
+  objectiveId: number;
+  subjectId: number;
+  chapterId: number | null;
+  exerciseId: number | null;
+  scope: string;
+  metric: KeyResultMetric;
+  targetValue: number;
+  currentValue: number;
+  progressPercent: number;
+  status: GoalStatus;
+  title: string | null;
+}
+
+/** Ein Objective mit Etappen und Roll-up; `rewarded` = die Belohnung ist bereits geflossen. */
+export interface Objective {
+  id: number;
+  childId: number;
+  title: string;
+  motivation: string | null;
+  kind: ObjectiveKind;
+  start: string | null;
+  dueDate: string | null;
+  active: boolean;
+  rewardOnComplete: number;
+  rewardPerKeyResult: number;
+  achievedCount: number;
+  totalCount: number;
+  progressPercent: number;
+  status: GoalStatus;
+  rewarded: boolean;
+  keyResults: KeyResult[];
+  createdAt: string;
+}
+
+export interface CreateKeyResultRequest {
+  subjectId: number;
+  chapterId?: number | null;
+  exerciseId?: number | null;
+  metric: KeyResultMetric;
+  targetValue: number;
+  title?: string | null;
+}
+
+export interface CreateObjectiveRequest {
+  title: string;
+  motivation?: string | null;
+  kind: ObjectiveKind;
+  start?: string | null;
+  dueDate?: string | null;
+  rewardOnComplete: number;
+  rewardPerKeyResult: number;
+  keyResults?: CreateKeyResultRequest[];
+}
+
+export interface UpdateObjectiveRequest {
+  title?: string | null;
+  motivation?: string | null;
+  kind?: ObjectiveKind;
+  start?: string | null;
+  dueDate?: string | null;
+  active?: boolean;
+  rewardOnComplete?: number;
+  rewardPerKeyResult?: number;
+}
+
+/** Teil-Update einer Etappe; der Scope bleibt fix. */
+export interface UpdateKeyResultRequest {
+  metric?: KeyResultMetric;
+  targetValue?: number;
+  title?: string | null;
 }
 
 // ---- Katalog: Fächer, Kapitel, Übungssuche ----
@@ -250,9 +678,27 @@ export interface ExerciseDetail {
   /** Autor der Übung (Vater); null = geseedete System-Übung. */
   authorFatherId: number | null;
   authorName: string | null;
-  /** Gehört die Übung dem anfragenden Vater? Nur dann darf er sie ändern/löschen. */
+  /** Darf der anfragende Vater die Übung **ändern** (Owner oder Write-Grant)? */
   isOwn: boolean;
+  /** Darf er sie **verwalten** (löschen, Rechte vergeben, Sichtbarkeit umschalten)? Nur der Owner. */
+  isOwner: boolean;
+  /** Für alle Väter zuweisbar? Umschalten ist ein Owner-Recht. */
+  executePublic: boolean;
+  /** Bonus-Vorschlag, den Lehrplan-Positionen erben; null = Verfahrens-Standard. */
+  suggestedBonus: SuggestedBonus | null;
   config: unknown;
+}
+
+/**
+ * Bonus-Vorschlag einer Übung. Er gehört an die Übung, weil er inhaltsabhängig ist (kurze Vokabeln
+ * vertragen straffere Zeitfenster als lange Sätze); die Position erbt ihn und darf übersteuern.
+ */
+export interface SuggestedBonus {
+  comboThreshold: number;
+  comboBonusPoints: number;
+  speedThresholdSeconds: number;
+  speedBonusPoints: number;
+  newContentPoints: number;
 }
 
 /** Wo eine Übung verwendet wird (nur eigene Kinder). */
@@ -495,6 +941,37 @@ export interface CreateExercisePayload {
   defaultStage?: number | null;
   /** Empfohlene Anzahl genutzter Inhalte je Position; null = alle. */
   defaultItemCount?: number | null;
+  /**
+   * Bonus-Vorschlag. Beim **Ändern** unbedingt mitschicken: der Server ersetzt die Übung vollständig,
+   * ein Weglassen würde den Vorschlag löschen.
+   */
+  suggestedBonus?: SuggestedBonus | null;
+  /**
+   * Für alle Väter zuweisbar? Beim **Ändern** den vorhandenen Wert mitschicken – der Server-Default ist
+   * `true`, und ein Umschalten verlangt Owner-Rechte (sonst 403 für einen Write-Grantee).
+   */
+  executePublic?: boolean;
+}
+
+// ---- Vokabel-Items einer Übung (eigene Ebene, stabil identifiziert) ----
+
+/** Ein positioniertes Vokabelpaar einer Übung; Front/Back kommen live aus dem Store. */
+export interface VocabItemResponse {
+  id: number;
+  orderIndex: number;
+  vocabularyId: number;
+  front: string;
+  back: string;
+  hint: string | null;
+}
+
+/** Anlegen/Ändern eines Items: per Store-Id **oder** inline (`front`/`back` werden dann angelegt/gefunden). */
+export interface VocabItemInput {
+  vocabularyId?: number | null;
+  front?: string | null;
+  back?: string | null;
+  hint?: string | null;
+  orderIndex?: number | null;
 }
 
 // ---- Lehrpläne ----
@@ -632,11 +1109,15 @@ export interface CreatePositionDto {
   pointsGoalMet?: number;
   /** Münz-Malus bei gerissener Pflicht-Periode (0 = kein Malus). */
   penaltyCoins?: number;
-  newContentPoints?: number;
-  comboThreshold?: number;
-  comboBonusPoints?: number;
-  speedThresholdSeconds?: number;
-  speedBonusPoints?: number;
+  /*
+   * Bonus-Werte sind `null`-fähig, und der Unterschied trägt Bedeutung: `null` heißt „Bonus-Vorschlag der
+   * Übung übernehmen" (Server: `dto.X ?? exercise.SuggestedBonus?.X ?? Default`), eine Zahl überschreibt ihn.
+   */
+  newContentPoints?: number | null;
+  comboThreshold?: number | null;
+  comboBonusPoints?: number | null;
+  speedThresholdSeconds?: number | null;
+  speedBonusPoints?: number | null;
 }
 
 /** Partielle Änderung einer Position (nur gesetzte Felder). */

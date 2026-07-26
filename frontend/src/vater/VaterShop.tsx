@@ -1,12 +1,16 @@
 import { useId, useState } from "react";
 import { api, errorMessage } from "../lib/api";
 import { useAsync } from "../lib/useAsync";
+import { useChildSelection } from "../lib/useChildSelection";
 import { confirmAction } from "../lib/ui";
 import { ACTION_LABEL, ACTION_OPTIONS, REFILL_LABEL, UNIT_LABEL, UNIT_OPTIONS, priceLabel, unitAmount } from "../lib/shop";
 import type {
   ActionType, ActivationRequest, ChildResponse, CreateShopArticleDto, CreateShopListingDto,
-  InventoryItem, ShopArticle, ShopListing, ShopPurchase, UnitType,
+  InventoryItem, ShopArticle, ShopListing, ShopPurchase, ShopRefillKind, UnitType, UpdateShopListingDto,
 } from "../lib/types";
+
+/** Auffüll-Regeln zur Auswahl (Reihenfolge = wie oft man sie braucht). */
+const REFILL_KINDS: ShopRefillKind[] = ["None", "Daily", "TwiceDaily", "Weekly", "Once"];
 
 /**
  * Familien-Shop aus Vater-Sicht: den Belohnungs-Katalog pflegen (Artikel + Angebote) und je Kind
@@ -101,18 +105,11 @@ function ArticleCatalog() {
             <thead><tr><th>Nr.</th><th>Titel</th><th>Art</th><th>Einheit</th><th></th></tr></thead>
             <tbody>
               {list.data?.map((a) => (
-                <tr key={a.id} style={selected?.id === a.id ? { background: "rgba(38,217,255,.08)" } : undefined}>
-                  <td className="muted">{a.articleNumber}</td>
-                  <td>{a.title}</td>
-                  <td>{ACTION_LABEL[a.actionType]}</td>
-                  <td className="muted">{UNIT_LABEL[a.unitType]}</td>
-                  <td style={{ whiteSpace: "nowrap" }}>
-                    <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }}
-                      onClick={() => setSelected(selected?.id === a.id ? null : a)}>
-                      {selected?.id === a.id ? "Angebote ▲" : "Angebote ▼"}</button>{" "}
-                    <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} onClick={() => remove(a)}>Löschen</button>
-                  </td>
-                </tr>
+                <ArticleRow key={a.id} article={a} selected={selected?.id === a.id}
+                  onToggleListings={() => setSelected(selected?.id === a.id ? null : a)}
+                  onSaved={list.reload}
+                  onError={(t) => setMsg({ ok: false, text: t })}
+                  onRemove={() => remove(a)} />
               ))}
               {list.data?.length === 0 && <tr><td colSpan={5} className="muted">Noch keine Artikel.</td></tr>}
             </tbody>
@@ -125,11 +122,85 @@ function ArticleCatalog() {
   );
 }
 
+/**
+ * Eine Artikel-Zeile, im Bearbeiten-Modus mit Feldern. Der Artikel ist die Belohnungs-*Art*; Preis und
+ * Bestand hängen an seinen Angeboten. Titel und Einheit lassen sich nachträglich richtigstellen, ohne
+ * die Kaufhistorie anzutasten – sie trägt ihre eigene Momentaufnahme.
+ */
+function ArticleRow({ article, selected, onToggleListings, onSaved, onError, onRemove }: {
+  article: ShopArticle; selected: boolean;
+  onToggleListings: () => void; onSaved: () => void; onError: (t: string) => void; onRemove: () => void;
+}) {
+  const uid = useId();
+  const [editing, setEditing] = useState(false);
+  const [form, setForm] = useState({
+    articleNumber: article.articleNumber, title: article.title,
+    description: article.description ?? "", unitType: article.unitType, actionType: article.actionType,
+  });
+  const [busy, setBusy] = useState(false);
+
+  async function save() {
+    setBusy(true);
+    try {
+      await api.updateShopArticle(article.id, {
+        articleNumber: form.articleNumber.trim(), title: form.title.trim(),
+        description: form.description.trim() || null, unitType: form.unitType, actionType: form.actionType,
+      });
+      setEditing(false);
+      onSaved();
+    } catch (err) { onError(errorMessage(err)); }
+    finally { setBusy(false); }
+  }
+
+  if (editing) {
+    return (
+      <tr>
+        <td colSpan={5}>
+          <div className="row" style={{ gap: 8, alignItems: "flex-end", flexWrap: "wrap" }}>
+            <div className="field" style={{ maxWidth: 130 }}><label htmlFor={`${uid}-nr`}>Artikelnummer</label>
+              <input id={`${uid}-nr`} value={form.articleNumber} onChange={(e) => setForm((f) => ({ ...f, articleNumber: e.target.value }))} /></div>
+            <div className="field" style={{ minWidth: 160 }}><label htmlFor={`${uid}-title`}>Titel</label>
+              <input id={`${uid}-title`} value={form.title} onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))} /></div>
+            <div className="field"><label htmlFor={`${uid}-action`}>Art</label>
+              <select id={`${uid}-action`} value={form.actionType} onChange={(e) => setForm((f) => ({ ...f, actionType: e.target.value as ActionType }))}>
+                {ACTION_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+              </select></div>
+            <div className="field"><label htmlFor={`${uid}-unit`}>Einheit</label>
+              <select id={`${uid}-unit`} value={form.unitType} onChange={(e) => setForm((f) => ({ ...f, unitType: e.target.value as UnitType }))}>
+                {UNIT_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+              </select></div>
+            <div className="field" style={{ minWidth: 180 }}><label htmlFor={`${uid}-desc`}>Beschreibung</label>
+              <input id={`${uid}-desc`} value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} /></div>
+            <button type="button" className="btn inline-btn" style={{ width: "auto" }} disabled={busy} onClick={save}>OK</button>
+            <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} disabled={busy} onClick={() => setEditing(false)}>Abbrechen</button>
+          </div>
+        </td>
+      </tr>
+    );
+  }
+
+  return (
+    <tr style={selected ? { background: "rgba(38,217,255,.08)" } : undefined}>
+      <td className="muted">{article.articleNumber}</td>
+      <td>{article.title}</td>
+      <td>{ACTION_LABEL[article.actionType]}</td>
+      <td className="muted">{UNIT_LABEL[article.unitType]}</td>
+      <td style={{ whiteSpace: "nowrap" }}>
+        <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} onClick={onToggleListings}>
+          {selected ? "Angebote \u25b2" : "Angebote \u25bc"}</button>{" "}
+        <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} onClick={() => setEditing(true)}>Bearbeiten</button>{" "}
+        <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} onClick={onRemove}>Löschen</button>
+      </td>
+    </tr>
+  );
+}
+
 function ListingManager({ article }: { article: ShopArticle }) {
   const uid = useId();
   const list = useAsync<ShopListing[]>(() => api.shopListings(article.id), [article.id]);
   const [form, setForm] = useState<CreateShopListingDto>({
     title: "", description: "", coinPrice: 100, gemPrice: 0, unitsPerPurchase: 30, currentStock: 5, maxStock: 5,
+    refillKind: "None",
   });
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [busy, setBusy] = useState(false);
@@ -161,6 +232,10 @@ function ListingManager({ article }: { article: ShopArticle }) {
     try { await api.updateShopListing(article.id, l.id, { active: !l.active }); list.reload(); }
     catch (err) { setMsg({ ok: false, text: errorMessage(err) }); }
   }
+  async function save(l: ShopListing, dto: UpdateShopListingDto) {
+    try { await api.updateShopListing(article.id, l.id, dto); list.reload(); }
+    catch (err) { setMsg({ ok: false, text: errorMessage(err) }); }
+  }
   async function refill(l: ShopListing) {
     // Schneller „auffüllen": Bestand auf Max zurücksetzen (Max unverändert).
     try { await api.updateShopListing(article.id, l.id, { currentStock: l.maxStock }); list.reload(); }
@@ -188,6 +263,12 @@ function ListingManager({ article }: { article: ShopArticle }) {
           <input id={`${uid}-stock`} type="number" min={0} value={form.currentStock} onChange={(e) => up("currentStock", Number(e.target.value))} /></div>
         <div className="field" style={{ maxWidth: 100 }}><label htmlFor={`${uid}-max`}>Max-Bestand</label>
           <input id={`${uid}-max`} type="number" min={0} value={form.maxStock} onChange={(e) => up("maxStock", Number(e.target.value))} /></div>
+        {/* Ohne Auffüllen ist ein Angebot nach `maxStock` Käufen dauerhaft leer – das ist oft gewollt
+            (einmalige Belohnung), aber es muss eine Entscheidung sein, keine Nebenwirkung. */}
+        <div className="field"><label htmlFor={`${uid}-refill`}>Auffüllen</label>
+          <select id={`${uid}-refill`} value={form.refillKind ?? "None"} onChange={(e) => up("refillKind", e.target.value as ShopRefillKind)}>
+            {REFILL_KINDS.map((k) => <option key={k} value={k}>{REFILL_LABEL[k]}</option>)}
+          </select></div>
         <button type="submit" className="btn inline-btn" style={{ width: "auto" }} disabled={busy}>{busy ? "…" : "Angebot anlegen"}</button>
       </form>
       {msg && <div role="status" aria-live="polite" className={`banner ${msg.ok ? "ok" : "err"}`} style={{ marginTop: 10 }}>{msg.text}</div>}
@@ -198,20 +279,8 @@ function ListingManager({ article }: { article: ShopArticle }) {
             <thead><tr><th>Angebot</th><th>Menge</th><th>Preis</th><th>Bestand</th><th>Auffüllen</th><th>Status</th><th></th></tr></thead>
             <tbody>
               {list.data?.map((l) => (
-                <tr key={l.id} style={{ opacity: l.active ? 1 : 0.55 }}>
-                  <td>{l.title || <span className="muted">(ohne Titel)</span>}</td>
-                  <td className="muted">{unitAmount(l.unitsPerPurchase, article.unitType)}</td>
-                  <td>{priceLabel(l.coinPrice, l.gemPrice)}</td>
-                  <td className="num">{l.currentStock}/{l.maxStock}</td>
-                  <td className="muted">{REFILL_LABEL[l.refillKind]}</td>
-                  <td>{l.active ? <span className="pill lime">aktiv</span> : <span className="pill">inaktiv</span>}</td>
-                  <td style={{ whiteSpace: "nowrap" }}>
-                    <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} onClick={() => refill(l)}>Bestand füllen</button>{" "}
-                    <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} onClick={() => toggle(l)}>
-                      {l.active ? "Deaktivieren" : "Aktivieren"}</button>{" "}
-                    <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} onClick={() => remove(l)}>Löschen</button>
-                  </td>
-                </tr>
+                <ListingRow key={l.id} listing={l} unitType={article.unitType}
+                  onSave={(dto) => save(l, dto)} onRefill={() => refill(l)} onToggle={() => toggle(l)} onRemove={() => remove(l)} />
               ))}
               {list.data?.length === 0 && <tr><td colSpan={7} className="muted">Noch keine Angebote – lege oben eins an.</td></tr>}
             </tbody>
@@ -222,12 +291,75 @@ function ListingManager({ article }: { article: ShopArticle }) {
   );
 }
 
+/** Eine Angebots-Zeile; im Bearbeiten-Modus sind Preis, Menge und Bestandsgrenzen änderbar. */
+function ListingRow({ listing, unitType, onSave, onRefill, onToggle, onRemove }: {
+  listing: ShopListing; unitType: UnitType;
+  onSave: (dto: UpdateShopListingDto) => void;
+  onRefill: () => void; onToggle: () => void; onRemove: () => void;
+}) {
+  const uid = useId();
+  const [editing, setEditing] = useState(false);
+  const [form, setForm] = useState({
+    title: listing.title ?? "", coinPrice: listing.coinPrice, gemPrice: listing.gemPrice,
+    unitsPerPurchase: listing.unitsPerPurchase, currentStock: listing.currentStock,
+    maxStock: listing.maxStock, refillKind: listing.refillKind,
+  });
+
+  if (editing) {
+    return (
+      <tr>
+        <td colSpan={7}>
+          <div className="row" style={{ gap: 8, alignItems: "flex-end", flexWrap: "wrap" }}>
+            <div className="field" style={{ minWidth: 140 }}><label htmlFor={`${uid}-t`}>Titel</label>
+              <input id={`${uid}-t`} value={form.title} onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))} /></div>
+            <div className="field" style={{ maxWidth: 110 }}><label htmlFor={`${uid}-u`}>Menge je Kauf</label>
+              <input id={`${uid}-u`} type="number" min={1} value={form.unitsPerPurchase} onChange={(e) => setForm((f) => ({ ...f, unitsPerPurchase: Number(e.target.value) }))} /></div>
+            <div className="field" style={{ maxWidth: 100 }}><label htmlFor={`${uid}-c`}>Preis 🪙</label>
+              <input id={`${uid}-c`} type="number" min={0} value={form.coinPrice} onChange={(e) => setForm((f) => ({ ...f, coinPrice: Number(e.target.value) }))} /></div>
+            <div className="field" style={{ maxWidth: 100 }}><label htmlFor={`${uid}-g`}>Preis 💎</label>
+              <input id={`${uid}-g`} type="number" min={0} value={form.gemPrice} onChange={(e) => setForm((f) => ({ ...f, gemPrice: Number(e.target.value) }))} /></div>
+            <div className="field" style={{ maxWidth: 100 }}><label htmlFor={`${uid}-s`}>Bestand</label>
+              <input id={`${uid}-s`} type="number" min={0} value={form.currentStock} onChange={(e) => setForm((f) => ({ ...f, currentStock: Number(e.target.value) }))} /></div>
+            <div className="field" style={{ maxWidth: 100 }}><label htmlFor={`${uid}-m`}>Max</label>
+              <input id={`${uid}-m`} type="number" min={0} value={form.maxStock} onChange={(e) => setForm((f) => ({ ...f, maxStock: Number(e.target.value) }))} /></div>
+            <div className="field"><label htmlFor={`${uid}-r`}>Auffüllen</label>
+              <select id={`${uid}-r`} value={form.refillKind} onChange={(e) => setForm((f) => ({ ...f, refillKind: e.target.value as ShopRefillKind }))}>
+                {REFILL_KINDS.map((k) => <option key={k} value={k}>{REFILL_LABEL[k]}</option>)}
+              </select></div>
+            <button type="button" className="btn inline-btn" style={{ width: "auto" }}
+              onClick={() => { onSave({ ...form, title: form.title.trim() || null }); setEditing(false); }}>OK</button>
+            <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} onClick={() => setEditing(false)}>Abbrechen</button>
+          </div>
+        </td>
+      </tr>
+    );
+  }
+
+  return (
+    <tr style={{ opacity: listing.active ? 1 : 0.55 }}>
+      <td>{listing.title || <span className="muted">(ohne Titel)</span>}</td>
+      <td className="muted">{unitAmount(listing.unitsPerPurchase, unitType)}</td>
+      <td>{priceLabel(listing.coinPrice, listing.gemPrice)}</td>
+      <td className="num">{listing.currentStock}/{listing.maxStock}</td>
+      <td className="muted">{REFILL_LABEL[listing.refillKind]}</td>
+      <td>{listing.active ? <span className="pill lime">aktiv</span> : <span className="pill">inaktiv</span>}</td>
+      <td style={{ whiteSpace: "nowrap" }}>
+        <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} onClick={onRefill}>Bestand füllen</button>{" "}
+        <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} onClick={() => setEditing(true)}>Bearbeiten</button>{" "}
+        <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} onClick={onToggle}>
+          {listing.active ? "Deaktivieren" : "Aktivieren"}</button>{" "}
+        <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} onClick={onRemove}>Löschen</button>
+      </td>
+    </tr>
+  );
+}
+
 // ─── Kind-Verwaltung: Anfragen entscheiden, Käufe stornieren, Inventar sehen ──
 
 function ChildShopManager() {
   const children = useAsync<ChildResponse[]>(() => api.children(), []);
-  const [childId, setChildId] = useState<number | null>(null);
-  const activeChild = childId ?? children.data?.[0]?.id ?? null;
+  // Vorauswahl aus `?childId=` (die Links vom Kind-Hub tragen sie), sonst das erste Kind.
+  const { activeChild, select } = useChildSelection(children.data);
 
   return (
     <section>
@@ -237,7 +369,7 @@ function ChildShopManager() {
         : children.data && children.data.length > 0 ? (
           <div className="field" style={{ maxWidth: 320 }}>
             <label htmlFor="shop-child">Kind</label>
-            <select id="shop-child" value={activeChild ?? ""} onChange={(e) => setChildId(Number(e.target.value))}>
+            <select id="shop-child" value={activeChild ?? ""} onChange={(e) => select(Number(e.target.value))}>
               {children.data.map((c) => <option key={c.id} value={c.id}>{c.name} (#{c.id})</option>)}
             </select>
           </div>

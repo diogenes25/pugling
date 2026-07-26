@@ -1,59 +1,24 @@
-import { useEffect, useId, useState } from "react";
+import { useEffect, useState } from "react";
 import { api, errorMessage } from "../lib/api";
 import { confirmAction } from "../lib/ui";
 import { useAsync } from "../lib/useAsync";
 import { ExerciseAttribution } from "./ExerciseAttribution";
+import { ExerciseEditModal } from "./ExerciseEditModal";
 import { ExercisePreviewModal } from "./ExercisePreviewModal";
 import { PAGE_SIZE, Pager, SortControl } from "../components/ListControls";
+import { SCHOOL_TYPES } from "../lib/labels";
 import { LANGUAGES } from "../lib/languages";
 import type {
   ChapterResponse, CreateExercisePayload, ExerciseSortKey, ExerciseSummary, ExerciseTypeKey, ExerciseUsage,
   Paged, PartOfSpeech, SchoolType, SortDir, SubjectResponse, VocabTagResponse, VocabularyResponse,
 } from "../lib/types";
 import { POS, POS_LABEL } from "../lib/vocab";
-
-// Übungstyp → Routen-Segment (Backend: .../chapters/{c}/<segment>).
-const TYPE_ROUTE: Record<ExerciseTypeKey, string> = {
-  Vocabulary: "vocabulary", Arithmetic: "arithmetic", Cloze: "cloze",
-  Matching: "matching", List: "list", Birkenbihl: "birkenbihl",
-};
-const TYPE_LABEL: Record<ExerciseTypeKey, string> = {
-  Vocabulary: "Vokabeln", Arithmetic: "Rechnen (feste Aufgaben)", Cloze: "Lückentext",
-  Matching: "Zuordnung (Paare)", List: "Liste (auswendig)", Birkenbihl: "Birkenbihl",
-};
-const SCHOOL_TYPES: SchoolType[] = ["Grundschule", "Hauptschule", "Realschule", "Gymnasium", "Gesamtschule", "Berufsschule"];
-
-// Standard-Abfrageform einer Vokabelübung (TestStage-Werte; "" = Verfahrens-Standard: Selbstcheck → Tippen).
-const VOCAB_FORMS: { value: number | ""; label: string }[] = [
-  { value: "", label: "Standard (Selbstcheck → Tippen)" },
-  { value: 1, label: "Nur anzeigen" },
-  { value: 2, label: "Selbsteinschätzung" },
-  { value: 3, label: "Buchstabenkästchen" },
-  { value: 4, label: "Freitext (tippen)" },
-  { value: 6, label: "Multiple-Choice (Auswahl)" },
-  { value: 5, label: "Hören → tippen" },
-];
-
-// Kommaseparierten Text in eine getrimmte Liste (oder undefined) wandeln – für Alternativen/Wortpool.
-function splitList(s: string): string[] | undefined {
-  const list = s.split(",").map((x) => x.trim()).filter(Boolean);
-  return list.length > 0 ? list : undefined;
-}
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type Row = Record<string, any>;
-
-/** Leere Anfangszeile je Typ (die Felder, die der jeweilige Editor bearbeitet). */
-function emptyRow(type: ExerciseTypeKey): Row {
-  switch (type) {
-    case "Vocabulary": return { front: "", back: "", hint: "" };
-    case "Arithmetic": return { prompt: "", answer: "", tolerance: "0" };
-    case "Cloze": return { index: 1, answer: "", alternatives: "" };
-    case "Matching": return { left: "", right: "" };
-    case "List": return { value: "", alternatives: "" };
-    case "Birkenbihl": return { text: "", decoding: "", naturalTranslation: "" };
-  }
-}
+// Die typ-spezifische Inhalts-Maschinerie ist mit dem Bearbeiten-Dialog geteilt: Schreiben (buildTypeConfig)
+// und Zurücklesen (configToEditorState) müssen zueinander passen, sonst verliert Bearbeiten Inhalte.
+import {
+  ConfigEditor, TYPE_LABEL, TYPE_ROUTE, VOCAB_FORMS, buildTypeConfig, emptyExtra, emptyRow,
+  firstRowIncomplete, isKnownType, type Row,
+} from "./exerciseConfig";
 
 export function VaterExercises() {
   const subjects = useAsync<SubjectResponse[]>(() => api.subjects(), []);
@@ -80,7 +45,7 @@ export function VaterExercises() {
 
   // Typ-spezifisch: Zeilen + Extra-Felder (Richtung/Trägertext/Anweisung/Sprachen …).
   const [rows, setRows] = useState<Row[]>([emptyRow("Vocabulary")]);
-  const [extra, setExtra] = useState<Row>({ direction: "front-to-back" });
+  const [extra, setExtra] = useState<Row>(emptyExtra("Vocabulary"));
   // Vokabel-Übung: Store-Referenzen (per Id) statt inline-Wörter (Verknüpfung über Übungen hinweg).
   // Key wird nur für die Anzeige mitgeführt; ans Backend geht die vocabularyId.
   const [vocabRefs, setVocabRefs] = useState<{ key: string; vocabularyId: number }[]>([]);
@@ -91,6 +56,8 @@ export function VaterExercises() {
   // Testmodus („Ausprobieren"): die aktuell durchzuspielende Übung (frisch angelegt oder aus der Liste).
   const [preview, setPreview] = useState<{ id: number; title: string } | null>(null);
   const [justCreated, setJustCreated] = useState<{ id: number; title: string } | null>(null);
+  // Bearbeiten-Dialog: die aktuell offene Übung (Metadaten + Inhalt korrigieren statt neu anlegen).
+  const [editing, setEditing] = useState<ExerciseSummary | null>(null);
 
   // Verwaltung zeigt standardmäßig nur eigene Übungen (mineOnly); optional auch die geteilte Bibliothek.
   const [showShared, setShowShared] = useState(false);
@@ -123,8 +90,7 @@ export function VaterExercises() {
     setVocabRefs([]);
     setDefaultStage("");
     setDefaultItemCount("");
-    setExtra(type === "Vocabulary" ? { direction: "front-to-back" }
-      : type === "List" ? { ordered: false } : {});
+    setExtra(emptyExtra(type));
   }, [type]);
 
   function patchRow(i: number, patch: Row) {
@@ -157,54 +123,13 @@ export function VaterExercises() {
     } catch (e) { setError(errorMessage(e)); }
   }
 
-  // Baut die typ-spezifische Config aus den Zeilen/Extra-Feldern (Form entspricht den Backend-*Config-Klassen).
-  function buildConfig(): unknown {
-    switch (type) {
-      case "Vocabulary":
-        // Store-Referenzen (per Id) statt inline-Wörter → dieselbe Vokabel bleibt über Übungen verknüpft.
-        return { direction: extra.direction || "front-to-back", refs: vocabRefs.map((r) => ({ vocabularyId: r.vocabularyId })) };
-      case "Arithmetic":
-        return { problems: rows.map((r) => ({ prompt: r.prompt, answer: Number(r.answer), tolerance: Number(r.tolerance) || 0 })) };
-      case "Cloze":
-        return { text: extra.text ?? "", wordBank: splitList(extra.wordBank ?? ""),
-          gaps: rows.map((r) => ({ index: Number(r.index), answer: r.answer, alternatives: splitList(r.alternatives ?? "") })) };
-      case "Matching":
-        return { instruction: extra.instruction?.trim() || null, pairs: rows.map((r) => ({ left: r.left, right: r.right })) };
-      case "List":
-        return { instruction: extra.instruction?.trim() || null, ordered: !!extra.ordered,
-          items: rows.map((r) => ({ value: r.value, alternatives: splitList(r.alternatives ?? "") })) };
-      case "Birkenbihl":
-        // Feldnamen müssen zu BirkenbihlSentence/WordPair passen (learningSentence, decoding[{learningWord, gloss}]);
-        // sentenceId/wordId lässt der Server beim Speichern vergeben (NormalizeConfig).
-        return { learningLang: extra.learningLang ?? "", nativeLang: extra.nativeLang ?? "",
-          sentences: rows.map((r) => ({ learningSentence: r.text, naturalTranslation: r.naturalTranslation,
-            // Dekodierung als "Wort:wörtlich, Wort:wörtlich" eingegeben – hier in WordPair-Liste geparst.
-            decoding: (r.decoding ?? "").split(",").map((p: string) => p.split(":"))
-              .filter((kv: string[]) => kv[0]?.trim())
-              .map((kv: string[]) => ({ learningWord: kv[0].trim(), gloss: (kv[1] ?? "").trim() || null })) })) };
-    }
-  }
-
-  function firstEmptyRow(): boolean {
-    // Grobe Pflichtprüfung je Typ: mindestens die Kernfelder der ersten Zeile gefüllt.
-    const r = rows[0];
-    switch (type) {
-      case "Vocabulary": return vocabRefs.length === 0;
-      case "Arithmetic": return !r.prompt || r.answer === "";
-      case "Cloze": return !extra.text || !r.answer;
-      case "Matching": return !r.left || !r.right;
-      case "List": return !r.value;
-      case "Birkenbihl": return !r.text || !r.naturalTranslation;
-    }
-  }
-
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setError(null); setOkMsg(null);
     if (!subjectId) { setError("Bitte ein Fach wählen oder anlegen."); return; }
     if (!chapterId) { setError("Bitte ein Kapitel wählen oder anlegen."); return; }
     if (!title.trim()) { setError("Bitte einen Titel angeben."); return; }
-    if (firstEmptyRow()) { setError("Bitte mindestens einen vollständigen Inhalt angeben."); return; }
+    if (firstRowIncomplete(type, rows, extra, vocabRefs.length)) { setError("Bitte mindestens einen vollständigen Inhalt angeben."); return; }
 
     setBusy(true);
     try {
@@ -218,7 +143,8 @@ export function VaterExercises() {
         description: description.trim() || null,
         orderIndex: own.total + 1,
         rewardPoints,
-        config: buildConfig(),
+        // Store-Referenzen (per Id) statt inline-Wörter → dieselbe Vokabel bleibt über Übungen verknüpft.
+        config: buildTypeConfig(type, rows, extra, { vocabRefs }),
         gradeMin: gradeMin === "" ? null : Number(gradeMin),
         gradeMax: gradeMax === "" ? null : Number(gradeMax),
         schoolTypes: schoolTypes.length > 0 ? schoolTypes.join(", ") : undefined,
@@ -243,6 +169,10 @@ export function VaterExercises() {
   }
 
   return (
+    // Die Dialoge stehen bewusst NEBEN dem Formular, nicht darin: sie bringen eigene `<form>`s mit, und
+    // verschachtelte Formulare sind ungültiges HTML – ein „Suchen" im Dialog könnte das äußere Formular
+    // abschicken und dabei eine Übung anlegen.
+    <>
     <form onSubmit={submit} style={{ display: "flex", flexDirection: "column", gap: 18 }}>
       <h2 className="h-section">Übungen anlegen</h2>
 
@@ -380,7 +310,7 @@ export function VaterExercises() {
             <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
               {existing.data?.items.map((e) => (
                 <ExerciseManageRow key={e.id} exercise={e} subjectId={Number(subjectId)} onChanged={existing.reload}
-                  onPreview={() => setPreview({ id: e.id, title: e.title })} />
+                  onPreview={() => setPreview({ id: e.id, title: e.title })} onEdit={() => setEditing(e)} />
               ))}
             </div>
           )}
@@ -388,111 +318,19 @@ export function VaterExercises() {
         </section>
       )}
 
-      {preview && <ExercisePreviewModal exerciseId={preview.id} title={preview.title} onClose={() => setPreview(null)} />}
     </form>
-  );
-}
 
-interface EditorProps {
-  type: ExerciseTypeKey;
-  rows: Row[];
-  extra: Row;
-  setExtra: (updater: (e: Row) => Row) => void;
-  patchRow: (i: number, patch: Row) => void;
-  addRow: () => void;
-  removeRow: (i: number) => void;
-}
-
-function ConfigEditor({ type, rows, extra, setExtra, patchRow, addRow, removeRow }: EditorProps) {
-  const ex = (patch: Row) => setExtra((e) => ({ ...e, ...patch }));
-  return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-      {/* Extra-Felder je Typ */}
-      {type === "Vocabulary" && (
-        <div className="field" style={{ maxWidth: 260 }}>
-          <label>Abfragerichtung</label>
-          <select aria-label="Abfragerichtung" value={extra.direction ?? "front-to-back"} onChange={(e) => ex({ direction: e.target.value })}>
-            <option value="front-to-back">vorne → hinten</option>
-            <option value="back-to-front">hinten → vorne</option>
-            <option value="both">beide</option>
-          </select>
-        </div>
-      )}
-      {type === "Cloze" && (
-        <>
-          <div className="field"><label>Text (Lücken als {"{{1}}"}, {"{{2}}"} …)</label>
-            <input value={extra.text ?? ""} onChange={(e) => ex({ text: e.target.value })} placeholder="Je {{1}} du pain à la {{2}}." /></div>
-          <div className="field"><label>Wortpool (optional, kommagetrennt)</label>
-            <input value={extra.wordBank ?? ""} onChange={(e) => ex({ wordBank: e.target.value })} placeholder="mange, achète, boulangerie" /></div>
-        </>
-      )}
-      {type === "Matching" && (
-        <div className="field"><label>Anweisung (optional)</label>
-          <input value={extra.instruction ?? ""} onChange={(e) => ex({ instruction: e.target.value })} placeholder="Ordne zu." /></div>
-      )}
-      {type === "List" && (
-        <>
-          <div className="field"><label>Anweisung (optional)</label>
-            <input value={extra.instruction ?? ""} onChange={(e) => ex({ instruction: e.target.value })} placeholder="Nenne alle …" /></div>
-          <label className="checkline"><input type="checkbox" checked={!!extra.ordered} onChange={(e) => ex({ ordered: e.target.checked })} /> Reihenfolge zählt</label>
-        </>
-      )}
-      {type === "Birkenbihl" && (
-        <div className="form-grid">
-          <div className="field"><label>Lernsprache</label><input value={extra.learningLang ?? ""} onChange={(e) => ex({ learningLang: e.target.value })} placeholder="Englisch" /></div>
-          <div className="field"><label>Muttersprache</label><input value={extra.nativeLang ?? ""} onChange={(e) => ex({ nativeLang: e.target.value })} placeholder="Deutsch" /></div>
-        </div>
-      )}
-
-      {/* Zeilen */}
-      {rows.map((r, i) => (
-        <div key={i} className="row" style={{ gap: 6, alignItems: "flex-end", flexWrap: "wrap" }}>
-          {type === "Vocabulary" && <>
-            <RowField label="Vorderseite" value={r.front} onChange={(v) => patchRow(i, { front: v })} />
-            <RowField label="Rückseite" value={r.back} onChange={(v) => patchRow(i, { back: v })} />
-            <RowField label="Hinweis" value={r.hint} onChange={(v) => patchRow(i, { hint: v })} optional />
-          </>}
-          {type === "Arithmetic" && <>
-            <RowField label="Aufgabe" value={r.prompt} onChange={(v) => patchRow(i, { prompt: v })} placeholder="7 × 6" />
-            <RowField label="Lösung" value={r.answer} onChange={(v) => patchRow(i, { answer: v })} type="number" width={90} />
-            <RowField label="Toleranz" value={r.tolerance} onChange={(v) => patchRow(i, { tolerance: v })} type="number" width={90} optional />
-          </>}
-          {type === "Cloze" && <>
-            <RowField label="Lücke-Nr." value={r.index} onChange={(v) => patchRow(i, { index: v })} type="number" width={80} />
-            <RowField label="Lösung" value={r.answer} onChange={(v) => patchRow(i, { answer: v })} />
-            <RowField label="Alternativen (kommagetrennt)" value={r.alternatives} onChange={(v) => patchRow(i, { alternatives: v })} optional />
-          </>}
-          {type === "Matching" && <>
-            <RowField label="Links" value={r.left} onChange={(v) => patchRow(i, { left: v })} />
-            <RowField label="Rechts" value={r.right} onChange={(v) => patchRow(i, { right: v })} />
-          </>}
-          {type === "List" && <>
-            <RowField label="Eintrag" value={r.value} onChange={(v) => patchRow(i, { value: v })} />
-            <RowField label="Alternativen (kommagetrennt)" value={r.alternatives} onChange={(v) => patchRow(i, { alternatives: v })} optional />
-          </>}
-          {type === "Birkenbihl" && <>
-            <RowField label="Satz (Lernsprache)" value={r.text} onChange={(v) => patchRow(i, { text: v })} />
-            <RowField label="Dekodierung (Wort:wörtlich, …)" value={r.decoding} onChange={(v) => patchRow(i, { decoding: v })} placeholder="What:Was, is:ist" />
-            <RowField label="Natürliche Übersetzung" value={r.naturalTranslation} onChange={(v) => patchRow(i, { naturalTranslation: v })} />
-          </>}
-          <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} onClick={() => removeRow(i)} aria-label="Zeile entfernen">×</button>
-        </div>
-      ))}
-      <button type="button" className="btn ghost" style={{ width: "auto", alignSelf: "flex-start" }} onClick={addRow}>+ Zeile</button>
-    </div>
-  );
-}
-
-function RowField({ label, value, onChange, type = "text", placeholder, optional, width }: {
-  label: string; value: unknown; onChange: (v: string) => void;
-  type?: string; placeholder?: string; optional?: boolean; width?: number;
-}) {
-  const uid = useId();
-  return (
-    <div className="field" style={{ flex: width ? "none" : 1, minWidth: width ?? 120, width }}>
-      <label htmlFor={uid}>{label}{optional && <span className="muted"> (optional)</span>}</label>
-      <input id={uid} type={type} value={String(value ?? "")} placeholder={placeholder} onChange={(e) => onChange(e.target.value)} />
-    </div>
+    {preview && <ExercisePreviewModal exerciseId={preview.id} title={preview.title} onClose={() => setPreview(null)} />}
+    {editing && (
+      <ExerciseEditModal
+        exercise={editing}
+        onClose={() => setEditing(null)}
+        // Nur die Liste auffrischen, den Dialog offen lassen: Beschreibung und Inhalt sind getrennte
+        // Speicher-Schritte, und ein zuklappender Dialog nähme die Bestätigung gleich wieder mit.
+        onSaved={existing.reload}
+      />
+    )}
+    </>
   );
 }
 
@@ -509,8 +347,12 @@ function VocabRefPicker({ selected, setSelected, extra, setExtra }: {
   const [tagFilter, setTagFilter] = useState<string[]>([]);
   // Sprach-Kombination des Stores: Vokabeln sind sprachgebunden – ohne Filter mischt der Store alle Sprachen
   // (z. B. französische Vokabeln in einer englischen Übung). Standard en→de, frei umstellbar.
-  const [src, setSrc] = useState("en");
-  const [tgt, setTgt] = useState("de");
+  // Das Sprachpaar steht in `extra`, nicht lokal: es wandert mit in die Config, damit der Server später
+  // inline ergänzte Wörter im Store anlegen kann (der Item-Endpunkt braucht die Sprachcodes).
+  const src = extra.sourceLang || "en";
+  const tgt = extra.targetLang || "de";
+  const setSrc = (v: string) => setExtra((x) => ({ ...x, sourceLang: v }));
+  const setTgt = (v: string) => setExtra((x) => ({ ...x, targetLang: v }));
   const store = useAsync<VocabularyResponse[]>(
     () => api.vocabulary({
       search: search.trim() || undefined,
@@ -617,8 +459,10 @@ function VocabRefPicker({ selected, setSelected, extra, setExtra }: {
       )}
 
       <div className="row" style={{ gap: 6, alignItems: "flex-end" }}>
-        <div className="field" style={{ flex: 1 }}><label>Neu: Wort</label><input value={qWord} onChange={(e) => setQWord(e.target.value)} /></div>
-        <div className="field" style={{ flex: 1 }}><label>Übersetzung</label><input value={qTrans} onChange={(e) => setQTrans(e.target.value)} /></div>
+        <div className="field" style={{ flex: 1 }}><label htmlFor="vp-word">Neu: Wort</label>
+          <input id="vp-word" value={qWord} onChange={(e) => setQWord(e.target.value)} /></div>
+        <div className="field" style={{ flex: 1 }}><label htmlFor="vp-translation">Übersetzung</label>
+          <input id="vp-translation" value={qTrans} onChange={(e) => setQTrans(e.target.value)} /></div>
         <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} disabled={busy} onClick={quickAdd}>+ anlegen &amp; wählen</button>
       </div>
       {err && <div className="banner err">{err}</div>}
@@ -628,13 +472,14 @@ function VocabRefPicker({ selected, setSelected, extra, setExtra }: {
 }
 
 /** Eine Zeile der Kapitel-Übungsliste mit Verwendungs-Anzeige, Testmodus und Löschen (409-bewusst). */
-function ExerciseManageRow({ exercise, subjectId, onChanged, onPreview }: {
-  exercise: ExerciseSummary; subjectId: number; onChanged: () => void; onPreview: () => void;
+function ExerciseManageRow({ exercise, subjectId, onChanged, onPreview, onEdit }: {
+  exercise: ExerciseSummary; subjectId: number; onChanged: () => void; onPreview: () => void; onEdit: () => void;
 }) {
   const [usage, setUsage] = useState<ExerciseUsage | null>(null);
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const known = isKnownType(exercise.type);
 
   async function toggleUsage() {
     if (open) { setOpen(false); return; }
@@ -658,9 +503,21 @@ function ExerciseManageRow({ exercise, subjectId, onChanged, onPreview }: {
         <ExerciseAttribution e={exercise} />
         <span style={{ marginLeft: "auto" }} />
         <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} onClick={onPreview}>🧪 Ausprobieren</button>
+        {/*
+          Bearbeiten und Löschen brauchen Schreibrecht (isOwn = Owner oder Write-Grant) UND einen Typ, den
+          dieses UI kennt: das Routen-Segment kommt aus TYPE_ROUTE, und für die übrigen Backend-Typen
+          (Reading, Grammar, Translation …) gäbe es keins – die Aufrufe liefen ins Leere.
+        */}
+        {exercise.isOwn && known && (
+          <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} onClick={onEdit}>✏️ Bearbeiten</button>
+        )}
         <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} disabled={busy} onClick={toggleUsage}>Verwendung</button>
-        {/* Nur der Autor darf löschen – fremde Übungen sind übernehmbar, aber geschützt. */}
-        {exercise.isOwn && <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} disabled={busy} onClick={remove}>Löschen</button>}
+        {exercise.isOwn && known && (
+          <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} disabled={busy} onClick={remove}>Löschen</button>
+        )}
+        {exercise.isOwn && !known && (
+          <span className="muted" style={{ fontSize: 12 }}>Typ hier nicht bearbeitbar</span>
+        )}
       </div>
       {exercise.description && <div className="muted" style={{ marginTop: 2, fontSize: 13 }}>{exercise.description}</div>}
       {err && <div className="banner err" style={{ marginTop: 6 }}>{err}</div>}
