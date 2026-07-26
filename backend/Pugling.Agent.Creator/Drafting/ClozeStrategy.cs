@@ -82,8 +82,10 @@ public sealed partial class ClozeStrategy(IChatClient chat, CreatorApi creator,
         // Die Standard-Abfrageform des Typs ist die Wortbank – ohne sie hätte das Kind keine Auswahl.
         var bank = draft.WordBank ?? [];
         violations.Require(bank.Count > 0, "Die Wortbank fehlt.");
-        foreach (var answer in gaps.Select(g => g?.Answer).Where(a => !string.IsNullOrWhiteSpace(a)))
-            if (!bank.Any(w => string.Equals(w?.Trim(), answer.Trim(), StringComparison.OrdinalIgnoreCase)))
+        // Früh trimmen statt im Vergleich: so bleibt `answer` durchgehend derselbe Wert (auch in der
+        // Meldung), und der Compiler sieht keine Dereferenzierung eines möglicherweise leeren Werts.
+        foreach (var answer in gaps.Select(g => g?.Answer?.Trim()).Where(a => !string.IsNullOrEmpty(a)))
+            if (!bank.Any(w => string.Equals(w?.Trim(), answer, StringComparison.OrdinalIgnoreCase)))
                 violations.Add($"Die Wortbank enthält die Lösung '{answer}' nicht.");
 
         return violations.Messages;

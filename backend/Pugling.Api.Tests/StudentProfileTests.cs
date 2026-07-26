@@ -32,7 +32,7 @@ public class StudentProfileTests(PuglingWebAppFactory factory) : IClassFixture<P
         Assert.Equal("Male", created.GetProperty("gender").GetString());
         Assert.Equal("Mag kurze Aufgaben.", created.GetProperty("profileNotes").GetString());
         Assert.Equal(["Brawl Stars", "Pokémon"],
-            created.GetProperty("interests").EnumerateArray().Select(i => i.GetString()).ToArray());
+            created.GetProperty("interests").EnumerateArray().Select(i => i.GetString()!).ToArray());
 
         // GET liefert dieselben Profil-Felder zurück.
         var fetched = await father.GetFromJsonAsync<JsonElement>($"/api/v1/supervisor/children/{childId}");
@@ -47,7 +47,7 @@ public class StudentProfileTests(PuglingWebAppFactory factory) : IClassFixture<P
         })).Content.ReadFromJsonAsync<JsonElement>();
         Assert.Equal("Diverse", patched.GetProperty("gender").GetString());
         Assert.Equal(["Fußball"],
-            patched.GetProperty("interests").EnumerateArray().Select(i => i.GetString()).ToArray());
+            patched.GetProperty("interests").EnumerateArray().Select(i => i.GetString()!).ToArray());
     }
 
     [Fact]
