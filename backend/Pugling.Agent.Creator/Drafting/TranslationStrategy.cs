@@ -35,16 +35,18 @@ public sealed class TranslationStrategy(IChatClient chat, CreatorApi creator,
         GenerationRequest request)
     {
         var violations = new Violations();
+        // Fehlt 'items' im Modell-JSON, steht hier null – als leere Liste wird daraus ein Regelverstoß.
+        var items = draft.Items ?? [];
         DraftRules.Title(violations, draft.Title, briefing);
-        DraftRules.Count(violations, draft.Items.Count, request);
-        DraftRules.NoDuplicates(violations, draft.Items.Select(i => i.Source), "Ausgangssätze");
-        DraftRules.CoversRequiredWords(violations, briefing, draft.Items.Select(i => i.Source), exact: false);
+        DraftRules.Count(violations, items.Count, request);
+        DraftRules.NoDuplicates(violations, items.Select(i => i?.Source), "Ausgangssätze");
+        DraftRules.CoversRequiredWords(violations, briefing, items.Select(i => i?.Source), exact: false);
 
-        foreach (var (item, index) in draft.Items.Select((item, index) => (item, index)))
+        foreach (var (item, index) in items.Select((item, index) => (item, index)))
         {
-            DraftRules.NotBlank(violations, item.Source, $"Satz {index + 1}: der Ausgangssatz");
-            DraftRules.NotBlank(violations, item.Target, $"Satz {index + 1}: die Übersetzung");
-            DraftRules.PromptDiffersFromAnswer(violations, item.Source, item.Target, index);
+            DraftRules.NotBlank(violations, item?.Source, $"Satz {index + 1}: der Ausgangssatz");
+            DraftRules.NotBlank(violations, item?.Target, $"Satz {index + 1}: die Übersetzung");
+            DraftRules.PromptDiffersFromAnswer(violations, item?.Source, item?.Target, index);
         }
 
         return violations.Messages;

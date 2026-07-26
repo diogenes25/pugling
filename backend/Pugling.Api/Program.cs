@@ -350,13 +350,15 @@ app.UseStaticFiles();
 // die übrigen statischen Assets (die URLs sind unratebar genug und stehen ohnehin in den Karten).
 {
     var media = app.Services.GetRequiredService<MediaOptions>();
-    var mediaRoot = ((LocalMediaStorage)app.Services.GetRequiredService<IMediaStorage>()).Root;
-    Directory.CreateDirectory(mediaRoot);
-    app.UseStaticFiles(new StaticFileOptions
-    {
-        FileProvider = new PhysicalFileProvider(mediaRoot),
-        RequestPath = media.PublicPath.TrimEnd('/'),
-    });
+    // Über die Schnittstelle, nicht per Cast auf die lokale Ablage: eine Ablage, die ihre Dateien selbst
+    // ausliefert (Blob-Storage), liefert keinen Anbieter – dann entfällt die Middleware still, statt den
+    // Start mit einer InvalidCastException zu sprengen.
+    if (app.Services.GetRequiredService<IMediaStorage>().CreateContentProvider() is { } mediaFiles)
+        app.UseStaticFiles(new StaticFileOptions
+        {
+            FileProvider = mediaFiles,
+            RequestPath = media.PublicPath.TrimEnd('/'),
+        });
 }
 
 // Eine Zusammenfassungszeile je Request (Methode, Pfad, Status, Dauer) statt der lärmenden

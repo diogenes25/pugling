@@ -1,3 +1,5 @@
+using Microsoft.Extensions.FileProviders;
+
 namespace Pugling.Api.Services.Shared;
 
 /// <summary>
@@ -32,6 +34,15 @@ public interface IMediaStorage
 
     /// <summary>Entfernt alle Dateien eines Assets (Ordner). Fehlt der Ordner, passiert nichts.</summary>
     Task DeleteFolderAsync(string folder, CancellationToken ct = default);
+
+    /// <summary>
+    /// Der Dateianbieter, über den die Ablage statisch ausgeliefert werden kann – oder <c>null</c>, wenn
+    /// sie ihre Dateien selbst ausliefert (Blob-Storage mit eigenen URLs). Bewusst hier und nicht als
+    /// Pfad: die Static-Files-Middleware braucht genau das. Ein Cast auf die konkrete Klasse im
+    /// Startup-Pfad würde jede zweite Implementierung beim Start sprengen – und genau deshalb gibt es
+    /// diese Schnittstelle.
+    /// </summary>
+    IFileProvider? CreateContentProvider();
 }
 
 /// <summary>
@@ -53,6 +64,17 @@ public class LocalMediaStorage(MediaOptions options, IWebHostEnvironment env, IL
         Directory.CreateDirectory(Path.GetDirectoryName(full)!);
         await File.WriteAllBytesAsync(full, content, ct);
         return $"{options.PublicPath.TrimEnd('/')}/{relativePath.Replace('\\', '/')}";
+    }
+
+    /// <inheritdoc/>
+    /// <remarks>
+    /// Der Ordner wird hier angelegt, nicht im Konstruktor: <see cref="PhysicalFileProvider"/> verlangt
+    /// ein existierendes Verzeichnis, und beim ersten Start gibt es noch keins.
+    /// </remarks>
+    public IFileProvider? CreateContentProvider()
+    {
+        Directory.CreateDirectory(Root);
+        return new PhysicalFileProvider(Root);
     }
 
     /// <inheritdoc/>

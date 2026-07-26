@@ -34,6 +34,22 @@ public class PuglingClientTests : IClassFixture<PuglingWebAppFactory>
     // Die Student-Lesesichten liest der Agent mit dem Supervisor-Konto (die Controller sind nur [Authorize]).
     private StudentApi ProgressOfChild() => new(Authenticated(1, "0000"));
 
+    /// <summary>
+    /// Ohne Token gehen <b>nur</b> die Anmelde-Routen hinaus. Der Filter des Handlers traf vorher jeden
+    /// Pfad mit „/auth/" – also auch das <c>[Authorize]</c>-geschützte <c>auth/me</c>: das ging ohne
+    /// Bearer hinaus, und weil derselbe Kurzschluss den 401-Retry überspringt, bekam der Aufrufer
+    /// unweigerlich <c>unauthorized</c> statt seiner Identität.
+    /// </summary>
+    [Fact]
+    public async Task Authentifizierte_Auth_Routen_bekommen_ihr_Token()
+    {
+        var creator = Creator();
+
+        using var response = await creator.Http.GetAsync("api/v1/auth/me");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+    }
+
     [Fact]
     public async Task Client_meldet_sich_selbst_an_und_liest_das_Typ_Manifest()
     {

@@ -28,11 +28,21 @@ public class InterestTagService(PuglingDbContext db)
         var slug = InterestSlug.From(text);
         if (slug.Length == 0) return null;
 
+        // ZUERST der ChangeTracker, dann die DB: ein im selben Aufruf angelegter Tag ist noch nicht
+        // gespeichert und wäre für jede Abfrage unsichtbar. Zwei Eingaben, die auf denselben Slug fallen
+        // („Fußball"/„Fussball" – ß wird zu ss), legten sonst zwei Zeilen an und das Speichern risse den
+        // Unique-Index auf Slug. Genau darüber fiel im Zweifel der Start um, weil der
+        // <see cref="InterestTagBackfill"/> die Freitext-Interessen der Bestandskinder hier durchschickt.
+        if (Pending(slug) is { } pending) return pending;
+
         var bySlug = await db.InterestTags.FirstOrDefaultAsync(t => t.Slug == slug, ct);
         if (bySlug is not null) return bySlug;
 
         // Der Slug ist neu – bevor eine Dublette entsteht, gegen die Synonyme der bestehenden Tags prüfen.
-        var bySynonym = (await db.InterestTags.ToListAsync(ct))
+        // Getrackt geladen und über die lokale Sicht gesucht, damit auch hier die noch nicht gespeicherten
+        // Tags dieses Aufrufs mitzählen (Synonyme liegen als JSON-Spalte und sind nicht abfragbar).
+        await db.InterestTags.LoadAsync(ct);
+        var bySynonym = db.InterestTags.Local
             .FirstOrDefault(t => t.Synonyms.Any(s => InterestSlug.From(s) == slug));
         if (bySynonym is not null) return bySynonym;
 
@@ -66,4 +76,11 @@ public class InterestTagService(PuglingDbContext db)
 
         return result;
     }
+
+    /// <summary>
+    /// Der Tag zum Slug, sofern er in diesem <see cref="PuglingDbContext"/> schon hängt – auch als noch
+    /// nicht gespeicherter Neuzugang. Die lokale Sicht ist die einzige Stelle, die beides sieht.
+    /// </summary>
+    private InterestTag? Pending(string slug) =>
+        db.InterestTags.Local.FirstOrDefault(t => t.Slug == slug);
 }

@@ -27,6 +27,13 @@ public sealed class Violations
 /// Die deterministischen Prüfungen, die für mehrere Übungstypen gelten. Sie laufen <b>vor</b> jedem
 /// Schreibzugriff – die API würde vieles zwar auch ablehnen, aber erst nach dem Anlegen und mit
 /// technischen Meldungen; hier entsteht stattdessen ein Reparatur-Hinweis in Fachsprache.
+/// <para>
+/// Alle Prüfungen sind <b>null-tolerant</b>, und das ist keine Bequemlichkeit: die Entwurfs-Records
+/// deklarieren ihre Felder nicht-nullbar, aber ein Modell darf jedes Feld weglassen – dann setzt der
+/// JSON-Deserialisierer schlicht <c>null</c> ein. Würde der Validator daran mit einer
+/// <see cref="NullReferenceException"/> zerbrechen, stürbe der Agent mit Stacktrace genau dort, wo er
+/// eine Reparatur-Runde anstoßen soll. Ein fehlendes Feld ist ein <i>Regelverstoß</i>, kein Absturz.
+/// </para>
 /// </summary>
 public static class DraftRules
 {
@@ -60,10 +67,10 @@ public static class DraftRules
     }
 
     /// <summary>Keine zweimal vorkommenden Schlüssel (Wörter, Sätze, Aufgabenstellungen).</summary>
-    public static void NoDuplicates(Violations violations, IEnumerable<string> keys, string what)
+    public static void NoDuplicates(Violations violations, IEnumerable<string?>? keys, string what)
     {
-        var duplicates = keys
-            .Select(k => k.Trim())
+        var duplicates = (keys ?? [])
+            .Select(k => k?.Trim() ?? "")
             .Where(k => k.Length > 0)
             .GroupBy(k => k, StringComparer.OrdinalIgnoreCase)
             .Where(g => g.Count() > 1)
@@ -80,11 +87,11 @@ public static class DraftRules
     /// (Vokabel-/Lückenlösungen), sonst genügt Vorkommen im Text (Sätze, Aufgaben).
     /// </summary>
     public static void CoversRequiredWords(Violations violations, ChildBriefing briefing,
-        IEnumerable<string> produced, bool exact)
+        IEnumerable<string?>? produced, bool exact)
     {
         if (briefing.RequiredWords.Count == 0) return;
 
-        var haystack = produced.Select(p => p.Trim()).ToList();
+        var haystack = (produced ?? []).Select(p => p?.Trim() ?? "").Where(p => p.Length > 0).ToList();
         var missing = briefing.RequiredWords
             .Where(word => !haystack.Any(candidate => exact
                 ? string.Equals(candidate, word, StringComparison.OrdinalIgnoreCase)
@@ -96,9 +103,15 @@ public static class DraftRules
                            "Der Wortschatz ist unveränderlich – ersetze ihn nicht durch andere Wörter.");
     }
 
-    /// <summary>Aufgabe und Lösung dürfen nicht identisch sein (sonst ist nichts zu lernen).</summary>
-    public static void PromptDiffersFromAnswer(Violations violations, string prompt, string answer, int index)
+    /// <summary>
+    /// Aufgabe und Lösung dürfen nicht identisch sein (sonst ist nichts zu lernen). Fehlt eines von
+    /// beiden, meldet das bereits <see cref="NotBlank"/> – hier bleibt es dann still, statt „leer ist
+    /// gleich leer" als zweiten Verstoß zu melden.
+    /// </summary>
+    public static void PromptDiffersFromAnswer(Violations violations, string? prompt, string? answer, int index)
     {
+        if (string.IsNullOrWhiteSpace(prompt) || string.IsNullOrWhiteSpace(answer)) return;
+
         if (string.Equals(prompt.Trim(), answer.Trim(), StringComparison.OrdinalIgnoreCase))
             violations.Add($"Aufgabe {index + 1}: Aufgabenstellung und Lösung sind identisch ('{answer}').");
     }

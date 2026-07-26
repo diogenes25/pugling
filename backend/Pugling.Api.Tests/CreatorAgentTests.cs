@@ -214,6 +214,88 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
         Assert.Empty(await creator.SearchExercisesAsync(subjectId: subjectId));
     }
 
+    /// <summary>
+    /// Ein Modell darf jedes Feld weglassen – <c>{"title":"Tiere"}</c> ist valides JSON. Die
+    /// Entwurfs-Records deklarieren ihre Felder nicht-nullbar, der Deserialisierer setzt also
+    /// <c>null</c> ein. Der Validator muss daraus einen <i>Regelverstoß</i> machen: vorher zerbrach er
+    /// mit einer <see cref="NullReferenceException"/> und der Agent starb mit Stacktrace an genau der
+    /// Stelle, an der er die Reparatur-Runde anstoßen soll.
+    /// </summary>
+    [Fact]
+    public async Task Ein_Entwurf_mit_fehlenden_Feldern_wird_abgelehnt_statt_den_Agenten_zu_sprengen()
+    {
+        // Erst fehlt die ganze Liste, dann fehlen in jedem Eintrag die Vorderseiten.
+        var (pipeline, creator, _) = BuildAgent(
+            """{"title":"Tiere"}""",
+            """{"title":"Tiere","items":[{"back":"das Pferd"},{"back":"das Schaf"},{"back":"die Ziege"}]}""");
+        var (subjectId, chapterId) = await FreshChapterAsync(creator, "Nullfelder");
+
+        var (_, outcome) = await pipeline.CreateAsync(Request(subjectId, chapterId, "Vocabulary"));
+
+        Assert.False(outcome.DraftAccepted);
+        Assert.Contains(outcome.Violations, v => v.Contains("Vorderseite"));
+        Assert.Empty(await creator.SearchExercisesAsync(subjectId: subjectId));
+    }
+
+    /// <summary>
+    /// Derselbe Platzhalter zweimal im Text. Eine Mengendifferenz (<c>Except</c>) merkt das nicht, weil
+    /// sie dedupliziert – der Server rendert dann aber ein Feld mehr, als es Lösungen gibt, und das Kind
+    /// bekommt ein Kästchen, das nie richtig werden kann.
+    /// </summary>
+    [Fact]
+    public async Task Ein_doppelter_Platzhalter_wird_abgelehnt()
+    {
+        const string cloze = """
+            {"title":"Doppelt","text":"Tom feeds the {{1}}, then the {{2}} and the {{2}}.",
+             "gaps":[{"index":1,"answer":"horse","alternatives":null},
+                     {"index":2,"answer":"sheep","alternatives":null},
+                     {"index":3,"answer":"stable","alternatives":null}],
+             "wordBank":["horse","sheep","stable"]}
+            """;
+        var (pipeline, creator, _) = BuildAgent(cloze);
+        var (subjectId, chapterId) = await FreshChapterAsync(creator, "Cloze-doppelt");
+
+        var (_, outcome) = await pipeline.CreateAsync(Request(subjectId, chapterId, "Cloze"));
+
+        Assert.False(outcome.DraftAccepted);
+        Assert.Contains(outcome.Violations, v => v.Contains("{{2}} steht 2×"));
+        Assert.Empty(await creator.SearchExercisesAsync(subjectId: subjectId));
+    }
+
+    /// <summary>
+    /// <c>--chapter</c> ohne <c>--subject</c> wurde still verworfen: die Übung landete im ersten Kapitel
+    /// des ersten Fachs. Ein stiller Griff ins falsche Regal ist schlimmer als eine Fehlermeldung.
+    /// </summary>
+    [Fact]
+    public async Task Ein_unbekanntes_Kapitel_wird_gemeldet_statt_still_ins_erste_zu_schreiben()
+    {
+        var (pipeline, creator, _) = BuildAgent(VocabularyJson);
+        // Es gibt Fächer mit Kapiteln – ohne die Prüfung würde genau eines davon stumm gewählt.
+        await FreshChapterAsync(creator, "Kapitel-Wahl");
+        var commands = new AgentCommands(creator, pipeline);
+
+        var command = CommandLine.Parse(["briefing", "--child", "1", "--chapter", "999999"]);
+        var error = await Assert.ThrowsAsync<AgentUsageException>(() => commands.RunAsync(command, default));
+
+        Assert.Contains("999999", error.Message);
+    }
+
+    /// <summary>
+    /// Ein getipptes <c>help</c> ist ein Verb. Die frühere Startbedingung der Options-Schleife
+    /// verwechselte „kein Verb angegeben" mit „Verb heißt help" und las <c>args[0]</c> erneut als Option –
+    /// <c>pugling-creator help</c> brach mit „Unerwartetes Argument 'help'" und Exit-Code 2 ab.
+    /// </summary>
+    [Fact]
+    public void Getipptes_help_ist_ein_Verb_und_keine_Option()
+    {
+        Assert.Equal("help", CommandLine.Parse(["help"]).Verb);
+
+        // Ohne Verb gilt weiterhin help – und die Optionen werden ab dem ersten Argument gelesen.
+        var line = CommandLine.Parse(["--child", "7"]);
+        Assert.Equal("help", line.Verb);
+        Assert.Equal(7, line.Int("child", 0));
+    }
+
     [Fact]
     public async Task Uebersetzung_und_Grammatik_entstehen_ebenfalls_selbstgetestet()
     {

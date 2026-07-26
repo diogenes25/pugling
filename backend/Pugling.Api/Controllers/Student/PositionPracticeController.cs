@@ -144,6 +144,13 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
     /// Das abgelehnte Bild kommt für diesen Träger nie wieder. Gibt es keine Alternative, bleibt alles
     /// unverändert (<c>409 media_no_alternative</c>) statt die Karte bildlos zurückzulassen.
     /// </para>
+    /// <para>
+    /// Der Endpunkt <b>gibt ein Bild heraus</b> und trägt darum dieselben Schranken wie die Ausspielung
+    /// selbst: nur der spielbare Plan, nur Karten dieser Sitzung, und nur wo die Karte auch ein Bild
+    /// zeigt. Ohne die letzte Schranke wäre er das Loch in der Anti-Cheat-Regel – auf einer getippten
+    /// Stufe lieferte er Bild <i>und</i> Alt-Text und damit die Bedeutung genau des Wortes, das getippt
+    /// werden soll (<see cref="PositionPlayService.CardFacets"/> hält dort beides bewusst zurück).
+    /// </para>
     /// </summary>
     [HttpPost("{sessionId:int}/cards/{itemIndex:int}/image/reshuffle")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -155,10 +162,27 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         if (session is null) return NotFound();
         var pos = await GetPosition(planId, positionId);
         if (pos?.Exercise is null || pos.StudyPlan is null) return NotFound();
+        if (User.IsStudent()
+            && !PositionPlayService.PlanPlayableForChild(pos.StudyPlan, DateOnly.FromDateTime(DateTime.UtcNow)))
+            return this.ProblemWithCode(ApiErrors.PlanInactive, "This study plan is not currently active. Ask your parent.");
+
+        // Nur Karten dieser Sitzung: die beim Start eingefrorene Reihenfolge ist genau die Menge, die
+        // ausgeliefert wird (und liegt im Pool der Position). Ein freier Index könnte sonst die Motive der
+        // ganzen Übung durchzählen – auch die der Karten, die diese Sitzung nie zeigt.
+        if (!session.Order.Contains(itemIndex)) return NotFound();
 
         var items = await play.ItemsOfAsync(pos, pos.StudyPlan.ChildId);
-        if (items.FirstOrDefault(i => i.Index == itemIndex) is not { ItemId: { } itemId, VocabularyId: { } vocabId })
+        if (items.FirstOrDefault(i => i.Index == itemIndex) is not
+            { ItemId: { } itemId, VocabularyId: { } vocabId } item)
             return NotFound();
+        if (play.TypeOf(pos.Exercise) is not { } type)
+            return this.ProblemWithCode(ApiErrors.UnknownExerciseType, "The exercise has an unknown type.");
+
+        // Umgewählt wird nur das Bild, das die Karte auch zeigt – die Stufe kommt dabei wie überall aus
+        // dem Fahrplan, nie vom Client.
+        var stage = PositionPlayService.StageForDay(pos, pos.StudyPlan, session.Day, type);
+        if (PositionPlayService.CardFacets(items, item, type, stage, type.IsTypedStage(stage)).ImageUrl is null)
+            return this.ProblemWithCode(ApiErrors.MediaNotOnCard, "This card does not show an image.");
 
         var picked = await selector.ReshuffleForItemAsync(pos.StudyPlan.ChildId, itemId, vocabId, ct: ct);
         if (picked is null)

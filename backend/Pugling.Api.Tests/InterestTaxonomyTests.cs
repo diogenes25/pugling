@@ -196,6 +196,38 @@ public class InterestTaxonomyTests(PuglingWebAppFactory factory) : IClassFixture
         Assert.Contains("Minecraft", child.GetProperty("interests").EnumerateArray().Select(i => i.GetString()));
     }
 
+    /// <summary>
+    /// Zwei Schreibweisen desselben Slugs in <b>einem</b> Aufruf. Der indizierte Slug-Treffer allein reicht
+    /// dafür nicht: der eben angelegte Tag hängt noch ungespeichert im ChangeTracker und ist für jede
+    /// Abfrage unsichtbar – beide Eingaben legten je eine Zeile an und das Speichern risse den
+    /// Unique-Index. Dasselbe traf den <c>InterestTagBackfill</c> beim Start, für jedes Bestandskind mit
+    /// zwei Schreibweisen im Freitext.
+    /// </summary>
+    [Fact]
+    public async Task ZweiSchreibweisenInEinemAufruf_TreffenDenselbenTag()
+    {
+        var father = await TestApi.FatherAsync(factory);
+        var childId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/supervisor/children",
+            new { name = "Slug-Kollision", pin = "4711" }));
+
+        // Beide Schreibweisen fallen auf strassenhockey (ß → ss) – und der Tag ist hier wirklich neu
+        // (nicht wie „Fußball" schon vom Seed über den Backfill angelegt).
+        await SetInterestsAsync(father, [
+            new { label = "Straßenhockey", weight = 3 },
+            new { label = "Strassenhockey", weight = 1 },
+        ], childId);
+
+        var interests = await GetAsync(father, $"/api/v1/supervisor/children/{childId}/interests");
+        Assert.Equal(1, interests.GetArrayLength());
+        Assert.Equal("strassenhockey", interests[0].GetProperty("slug").GetString());
+        // Dubletten in der Eingabe verhalten sich wie eine Zuweisung: der letzte Eintrag gewinnt.
+        Assert.Equal(1, interests[0].GetProperty("weight").GetInt32());
+
+        // Und es ist wirklich ein Tag im Katalog, keine zweite Zeile daneben.
+        var tags = await GetAsync(father, "/api/v1/creator/interest-tags?search=strassenhockey");
+        Assert.Equal(1, tags.GetArrayLength());
+    }
+
     private static async Task SetInterestsAsync(HttpClient father, object[] interests, int childId = 1)
     {
         var res = await father.PutAsJsonAsync($"/api/v1/supervisor/children/{childId}/interests", new { interests });

@@ -35,18 +35,20 @@ public sealed class GrammarStrategy(IChatClient chat, CreatorApi creator,
         GenerationRequest request)
     {
         var violations = new Violations();
+        // Fehlt 'tasks' im Modell-JSON, steht hier null – als leere Liste wird daraus ein Regelverstoß.
+        var tasks = draft.Tasks ?? [];
         DraftRules.Title(violations, draft.Title, briefing);
         DraftRules.NotBlank(violations, draft.Instruction, "Die Arbeitsanweisung");
-        DraftRules.Count(violations, draft.Tasks.Count, request);
-        DraftRules.NoDuplicates(violations, draft.Tasks.Select(t => t.Prompt), "Aufgabenstellungen");
+        DraftRules.Count(violations, tasks.Count, request);
+        DraftRules.NoDuplicates(violations, tasks.Select(t => t?.Prompt), "Aufgabenstellungen");
         DraftRules.CoversRequiredWords(violations, briefing,
-            draft.Tasks.Select(t => $"{t.Prompt} {t.Answer}"), exact: false);
+            tasks.Select(t => $"{t?.Prompt} {t?.Answer}"), exact: false);
 
-        foreach (var (task, index) in draft.Tasks.Select((task, index) => (task, index)))
+        foreach (var (task, index) in tasks.Select((task, index) => (task, index)))
         {
-            DraftRules.NotBlank(violations, task.Prompt, $"Aufgabe {index + 1}: die Aufgabenstellung");
-            DraftRules.NotBlank(violations, task.Answer, $"Aufgabe {index + 1}: die Lösung");
-            DraftRules.PromptDiffersFromAnswer(violations, task.Prompt, task.Answer, index);
+            DraftRules.NotBlank(violations, task?.Prompt, $"Aufgabe {index + 1}: die Aufgabenstellung");
+            DraftRules.NotBlank(violations, task?.Answer, $"Aufgabe {index + 1}: die Lösung");
+            DraftRules.PromptDiffersFromAnswer(violations, task?.Prompt, task?.Answer, index);
         }
 
         return violations.Messages;

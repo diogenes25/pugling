@@ -142,7 +142,10 @@ Details: [backend/Pugling.Agent.Creator/README.md](backend/Pugling.Agent.Creator
   `StageFacets` → `CardFacets` → `PracticeCard`/`TestItem`; `childId` ist **explizit** (nicht aus einer
   geladenen Navigation), sonst entschiede ein vergessenes `Include` über die Bebilderung.
   **Anti-Cheat:** Bild nur auf nicht-getippten Stufen (`ShowBoth`/`SelfAssess`) – schärfer als beim Audio,
-  weil ein Motiv die Bedeutung in beide Richtungen zeigt; der Alt-Text folgt dem Bild.
+  weil ein Motiv die Bedeutung in beide Richtungen zeigt; der Alt-Text folgt dem Bild. Das gilt **auch für
+  „anderes Bild"** am Karten-Endpunkt: er gibt ein Bild *heraus* und trägt darum dieselben Schranken wie die
+  Ausspielung (spielbarer Plan, nur Karten der Sitzung, nur wo die Karte ein Bild zeigt →
+  `409 media_not_on_card`) – sonst wäre er die Hintertür um die Regel herum.
   **Frontend** (Etappe 6): `/vater/kind/:id` (gewichtete Interessen + Bild-Freigabe), `/vater/media`
   (Bibliothek), Bilder-Panel je Vokabelzeile, Bild + „anderes Bild" auf der Sohn-Karte; E2E
   [frontend/e2e/bilder.spec.ts](frontend/e2e/bilder.spec.ts).

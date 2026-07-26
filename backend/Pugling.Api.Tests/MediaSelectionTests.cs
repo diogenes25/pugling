@@ -19,6 +19,9 @@ public class MediaSelectionTests(PuglingWebAppFactory factory) : IClassFixture<P
     private const int FreeText = 4;
     private const int MultipleChoice = 6;
 
+    /// <summary>PIN der Szenario-Kinder – für die Endpunkte, die der Sohn selbst aufruft.</summary>
+    private const string ChildPin = "9876";
+
     [Fact]
     public async Task DasInteresseDesKindes_EntscheidetWelcheDarstellungKommt()
     {
@@ -130,6 +133,97 @@ public class MediaSelectionTests(PuglingWebAppFactory factory) : IClassFixture<P
         Assert.Equal(before, (await FirstCardAsync(father, setup, SelfAssess)).GetProperty("imageUrl").GetString());
     }
 
+    /// <summary>
+    /// Wird die eingefrorene Wahl nachträglich unzulässig (hier: der Vater trägt eine Abneigung gegen ihr
+    /// Motiv nach), muss die alte Einfrierung <b>zurückgezogen</b> werden und nicht bloß übergangen. Sonst
+    /// bliebe sie die aktive Wahl, die Neuwahl fiele bei jedem Abruf erneut, und das zweite Einfrieren
+    /// risse den Unique-Index: die Karte wäre für dieses Kind dauerhaft nicht mehr abrufbar – ohne einen
+    /// Weg zurück über die API.
+    /// </summary>
+    [Fact]
+    public async Task UnzulaessigGewordeneWahl_WirdZurueckgezogen_StattDieKarteZuVerbrennen()
+    {
+        var father = await TestApi.FatherAsync(factory);
+        var setup = await ScenarioAsync(father, "auswahl-veraltet");
+        await SetInterestsAsync(father, setup.ChildId, [("Einhorn", 3)]);
+
+        Assert.Contains("unicorn", (await FirstCardAsync(father, setup, SelfAssess)).GetProperty("imageUrl").GetString());
+
+        // Das eingefrorene Motiv fällt aus der Auswahl – eine Abneigung schließt hart aus.
+        await SetInterestsAsync(father, setup.ChildId, [("Einhorn", -3)]);
+        var second = (await FirstCardAsync(father, setup, SelfAssess)).GetProperty("imageUrl").GetString();
+        Assert.DoesNotContain("unicorn", second);
+
+        // Der eigentliche Regressionstest ist der dritte Abruf: er lief vorher in den Unique-Index.
+        Assert.Equal(second, (await FirstCardAsync(father, setup, SelfAssess)).GetProperty("imageUrl").GetString());
+        Assert.Equal(second, (await FirstCardAsync(father, setup, SelfAssess)).GetProperty("imageUrl").GetString());
+    }
+
+    /// <summary>
+    /// „Anderes Bild" <b>gibt ein Bild heraus</b> – auf einer getippten Stufe wäre der Endpunkt damit das
+    /// Loch in der Anti-Cheat-Regel: die Karte hält Bild <i>und</i> Alt-Text zurück, weil das Motiv die
+    /// Bedeutung genau des Wortes zeigt, das getippt werden soll. Er muss dieselbe Schranke tragen.
+    /// </summary>
+    [Fact]
+    public async Task AnderesBild_AufGetippterStufe_GibtNichtsHeraus()
+    {
+        var father = await TestApi.FatherAsync(factory);
+        var setup = await ScenarioAsync(father, "reshuffle-stufe");
+        await SetInterestsAsync(father, setup.ChildId, [("Einhorn", 3)]);
+        var sohn = await TestApi.ChildAsync(factory, setup.ChildId, ChildPin);
+
+        var (typedSession, typedCard) = await SessionAsync(father, sohn, setup, LetterBoxes);
+        Assert.True(IsNull(typedCard, "imageUrl"), "Die Karte selbst zeigt auf dieser Stufe kein Bild.");
+
+        var res = await sohn.PostAsync(ReshuffleUrl(setup, typedSession, CardIndex(typedCard)), null);
+        Assert.Equal(HttpStatusCode.Conflict, res.StatusCode);
+        Assert.Equal("media_not_on_card", await CodeOf(res));
+
+        // Auf der Selbsteinschätzung – wo das Bild seinen Zweck erfüllt – bleibt es möglich.
+        var (openSession, openCard) = await SessionAsync(father, sohn, setup, SelfAssess);
+        (await sohn.PostAsync(ReshuffleUrl(setup, openSession, CardIndex(openCard)), null)).EnsureSuccessStatusCode();
+    }
+
+    /// <summary>
+    /// Der Index adressiert eine Karte <b>dieser Sitzung</b>. Ohne die Grenze ließen sich über einen freien
+    /// Index die Motive und Beschreibungen der ganzen Übung durchzählen – auch die der Karten, die die
+    /// Sitzung nie ausliefert.
+    /// </summary>
+    [Fact]
+    public async Task AnderesBild_NurFuerKartenDerSitzung()
+    {
+        var father = await TestApi.FatherAsync(factory);
+        var setup = await ScenarioAsync(father, "reshuffle-index");
+        var sohn = await TestApi.ChildAsync(factory, setup.ChildId, ChildPin);
+
+        var (sessionId, _) = await SessionAsync(father, sohn, setup, SelfAssess);
+        var res = await sohn.PostAsync(ReshuffleUrl(setup, sessionId, 99), null);
+        Assert.Equal(HttpStatusCode.NotFound, res.StatusCode);
+    }
+
+    /// <summary>
+    /// Wie jeder spielende Endpunkt: ein stillgelegter Plan ist für den Sohn zu, für den Vater
+    /// (Vorschau/Nachtrag) offen.
+    /// </summary>
+    [Fact]
+    public async Task AnderesBild_ImStillgelegtenPlan_BleibtDemSohnVerschlossen()
+    {
+        var father = await TestApi.FatherAsync(factory);
+        var setup = await ScenarioAsync(father, "reshuffle-plan");
+        await SetInterestsAsync(father, setup.ChildId, [("Einhorn", 3)]);
+        var sohn = await TestApi.ChildAsync(factory, setup.ChildId, ChildPin);
+
+        var (sessionId, card) = await SessionAsync(father, sohn, setup, SelfAssess);
+        (await father.PatchAsJsonAsync($"/api/v1/supervisor/study-plans/{setup.PlanId}", new { active = false }))
+            .EnsureSuccessStatusCode();
+
+        var res = await sohn.PostAsync(ReshuffleUrl(setup, sessionId, CardIndex(card)), null);
+        Assert.Equal(HttpStatusCode.Forbidden, res.StatusCode);
+        Assert.Equal("plan_inactive", await CodeOf(res));
+
+        (await father.PostAsync(ReshuffleUrl(setup, sessionId, CardIndex(card)), null)).EnsureSuccessStatusCode();
+    }
+
     [Fact]
     public async Task GetippteStufen_ZeigenKeinBild_DennEinMotivVerraetDieBedeutung()
     {
@@ -213,7 +307,7 @@ public class MediaSelectionTests(PuglingWebAppFactory factory) : IClassFixture<P
         bool includeMature = false, Scenario? reuse = null)
     {
         var childId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/supervisor/children",
-            new { name = marker, pin = "9876" }));
+            new { name = marker, pin = ChildPin }));
 
         int exerciseId, itemId, vocabularyId;
         if (reuse is not null)
@@ -281,23 +375,38 @@ public class MediaSelectionTests(PuglingWebAppFactory factory) : IClassFixture<P
     }
 
     /// <summary>Startet eine Übungssitzung auf der gewünschten Stufe und liefert die erste Karte.</summary>
-    private static async Task<JsonElement> FirstCardAsync(HttpClient father, Scenario s, int stage)
+    private static async Task<JsonElement> FirstCardAsync(HttpClient father, Scenario s, int stage) =>
+        (await SessionAsync(father, father, s, stage)).Card;
+
+    /// <summary>
+    /// Wie <see cref="FirstCardAsync"/>, gibt aber auch die Sitzungs-Id zurück und lässt
+    /// <paramref name="player"/> spielen – für die Endpunkte, die das Kind selbst aufruft (die Stufe setzt
+    /// weiterhin nur der Vater).
+    /// </summary>
+    private static async Task<(int SessionId, JsonElement Card)> SessionAsync(HttpClient father, HttpClient player,
+        Scenario s, int stage)
     {
         // Die Stufe kommt aus dem Fahrplan der Position (der Server erzwingt sie – nie der Client).
         var patch = await father.PatchAsJsonAsync(
             $"/api/v1/supervisor/study-plans/{s.PlanId}/positions/{s.PositionId}", new { stage });
         patch.EnsureSuccessStatusCode();
 
-        var start = await father.PostAsJsonAsync(
+        var start = await player.PostAsJsonAsync(
             $"/api/v1/student/study-plans/{s.PlanId}/positions/{s.PositionId}/practice-sessions",
             new { mode = "Lern" });
         start.EnsureSuccessStatusCode();
         var sessionId = await TestApi.IdAsync(start);
 
-        var next = await GetAsync(father,
+        var next = await GetAsync(player,
             $"/api/v1/student/study-plans/{s.PlanId}/positions/{s.PositionId}/practice-sessions/{sessionId}/next");
-        return next.GetProperty("card");
+        return (sessionId, next.GetProperty("card"));
     }
+
+    private static string ReshuffleUrl(Scenario s, int sessionId, int itemIndex) =>
+        $"/api/v1/student/study-plans/{s.PlanId}/positions/{s.PositionId}/practice-sessions/{sessionId}" +
+        $"/cards/{itemIndex}/image/reshuffle";
+
+    private static int CardIndex(JsonElement card) => card.GetProperty("itemIndex").GetInt32();
 
     private static async Task SetInterestsAsync(HttpClient father, int childId, (string Label, int Weight)[] interests)
     {

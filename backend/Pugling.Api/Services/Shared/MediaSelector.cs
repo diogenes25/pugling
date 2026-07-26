@@ -30,7 +30,7 @@ public record SelectedMedia(int MediaAssetId, string Url, string Alt);
 /// irreführend bebilderte.
 /// </para>
 /// </summary>
-public class MediaSelector(PuglingDbContext db)
+public class MediaSelector(PuglingDbContext db, ILogger<MediaSelector> logger)
 {
     /// <summary>Themen-Tags wiegen doppelt so schwer wie Stil-Tags: <i>was</i> zu sehen ist, bindet stärker als <i>wie</i>.</summary>
     private const int ThemeFactor = 2;
@@ -79,15 +79,15 @@ public class MediaSelector(PuglingDbContext db)
             if (isNew) frozen.Add(NewPick(childId, carrier, carrierId, chosen.Value.Media.MediaAssetId));
         }
 
+        // Zwei Items derselben Übung dürfen auf dieselbe Vokabel zeigen – dann fiele die Wahl zweimal
+        // auf denselben Träger und der Unique-Index risse. Je Träger nur einmal einfrieren.
         if (frozen.Count > 0)
-        {
-            // Zwei Items derselben Übung dürfen auf dieselbe Vokabel zeigen – dann fiele die Wahl zweimal
-            // auf denselben Träger und der Unique-Index risse. Je Träger nur einmal einfrieren.
             db.ChildMediaPicks.AddRange(frozen
                 .GroupBy(p => (p.VocabularyId, p.ExerciseItemId, p.MediaAssetId))
                 .Select(g => g.First()));
-            await db.SaveChangesAsync(ct);
-        }
+        if (context.Superseded.Count > 0) db.ChildMediaPicks.RemoveRange(context.Superseded);
+
+        if (frozen.Count > 0 || context.Superseded.Count > 0) await SaveFreezeAsync(ct);
         return result;
     }
 
@@ -131,8 +131,38 @@ public class MediaSelector(PuglingDbContext db)
         if (chosen is null) return null;
 
         if (isNew) db.ChildMediaPicks.Add(NewPick(childId, carrier, carrierId, chosen.Value.Media.MediaAssetId));
-        await db.SaveChangesAsync(ct);
+        if (context.Superseded.Count > 0) db.ChildMediaPicks.RemoveRange(context.Superseded);
+        await SaveFreezeAsync(ct);
         return chosen.Value.Media;
+    }
+
+    /// <summary>
+    /// Speichert Einfrierung und Rückzug – und verschluckt <b>genau</b> den nebenläufigen Konflikt.
+    /// <para>
+    /// Zwei gleichzeitige Abrufe für dasselbe Kind (React-StrictMode-Doppelaufruf, Doppeltipp auf
+    /// „neu laden", zwei offene Tabs) frieren denselben Träger ein bzw. ziehen dieselbe veraltete Wahl
+    /// zurück. Der Verlierer läuft in den gefilterten Unique-Index oder löscht eine schon gelöschte Zeile.
+    /// Beides ist <b>harmlos</b>, und zwar nicht zufällig: die Auswahl ist deterministisch (gleiche
+    /// Eingaben, stabiler Tiebreak), der Gewinner hat also genau dieselbe Zeile geschrieben. Der Konflikt
+    /// heißt hier immer „schon erledigt". Das Einfrieren ist ein Cache-Auffüllen, das Ergebnis steht
+    /// bereits fest – ein 500 wäre die einzige Wirkung eines durchgereichten Fehlers.
+    /// </para>
+    /// Die betroffenen Einträge werden abgehängt, damit ein späteres <c>SaveChanges</c> desselben
+    /// Requests (z. B. das Buchen einer Wiederholung) nicht erneut darüber stolpert; den Rückzug
+    /// wiederholt der nächste Abruf.
+    /// </summary>
+    private async Task SaveFreezeAsync(CancellationToken ct)
+    {
+        try
+        {
+            await db.SaveChangesAsync(ct);
+        }
+        catch (DbUpdateException e)
+        {
+            logger.LogDebug(e, "Bildwahl war nebenläufig schon eingefroren – die bestehende Wahl gilt.");
+            foreach (var entry in db.ChangeTracker.Entries<ChildMediaPick>().ToList())
+                entry.State = EntityState.Detached;
+        }
     }
 
     /// <summary>
@@ -161,6 +191,16 @@ public class MediaSelector(PuglingDbContext db)
         isNew = false;
         var eligible = links.Where(l => Eligible(ctx, l, purpose)).ToList();
         if (eligible.Count == 0) return null;
+
+        // Eine Einfrierung, die nicht mehr ausspielbar ist (Freigabe gesenkt, Abneigung ergänzt,
+        // Zuordnung oder Variante gelöscht), wird ZURÜCKGEZOGEN und nicht bloß übergangen: sonst bliebe
+        // sie die aktive Wahl, die Neuwahl fiele bei jedem Abruf erneut und das zweite Einfrieren risse
+        // den Unique-Index – die Karte wäre dauerhaft nicht mehr abrufbar. Gelöscht statt abgelehnt:
+        // „abgelehnt" heißt „nie wieder", der Grund hier ist aber nur vorübergehend (der Vater kann die
+        // Freigabe wieder heben).
+        foreach (var stale in ctx.ActivePicks(carrier, carrierId)
+            .Where(p => eligible.All(l => l.MediaAssetId != p.MediaAssetId)).ToList())
+            ctx.Supersede(stale);
 
         // Die eingefrorene Wahl gewinnt, solange sie noch zulässig ist – daran hängt der Merkeffekt.
         if (ctx.ActivePick(carrier, carrierId) is { } pick
@@ -259,8 +299,25 @@ public class MediaSelector(PuglingDbContext db)
         /// <summary>Abgelehnte Kombinationen (Träger + Asset) – schnell nachschlagbar.</summary>
         public required HashSet<(int? VocabularyId, int? ItemId, int AssetId)> RejectedAssets { get; init; }
 
-        public ChildMediaPick? ActivePick(Carrier carrier, int carrierId) => Picks.FirstOrDefault(p =>
+        /// <summary>
+        /// Zurückgezogene Einfrierungen – vom Aufrufer zu löschen. Bewusst gesammelt statt sofort
+        /// entfernt: das <see cref="PuglingDbContext"/> kennt diese Klasse nicht, und die Löschung
+        /// gehört in dasselbe <c>SaveChanges</c> wie die Neuwahl, die sie ersetzt.
+        /// </summary>
+        public List<ChildMediaPick> Superseded { get; } = [];
+
+        public IEnumerable<ChildMediaPick> ActivePicks(Carrier carrier, int carrierId) => Picks.Where(p =>
             !p.Rejected && (carrier == Carrier.Item ? p.ExerciseItemId == carrierId : p.VocabularyId == carrierId));
+
+        public ChildMediaPick? ActivePick(Carrier carrier, int carrierId) =>
+            ActivePicks(carrier, carrierId).FirstOrDefault();
+
+        /// <summary>Zieht eine Einfrierung zurück – sofort auch im Kontext, damit die Neuwahl sie nicht mehr sieht.</summary>
+        public void Supersede(ChildMediaPick pick)
+        {
+            Picks.Remove(pick);
+            Superseded.Add(pick);
+        }
     }
 
     private async Task<SelectionContext?> LoadContextAsync(int childId, List<int> itemIds, List<int> vocabIds,
@@ -285,11 +342,14 @@ public class MediaSelector(PuglingDbContext db)
                 || (l.ExerciseItemId != null && itemIds.Contains(l.ExerciseItemId.Value)))
             .ToListAsync(ct);
 
-        // Getrackt laden: das Reshuffle setzt Rejected auf einer dieser Zeilen.
+        // Getrackt laden: das Reshuffle setzt Rejected auf einer dieser Zeilen. Nach Id sortiert, damit
+        // „die aktive Wahl" auch dann eindeutig dieselbe bleibt, wenn ein Träger (aus Altdaten) mehr als
+        // eine trägt – sonst entschiede die Laune der Abfrage über das Bild.
         var picks = await db.ChildMediaPicks
             .Where(p => p.ChildId == childId
                 && ((p.VocabularyId != null && vocabIds.Contains(p.VocabularyId.Value))
                     || (p.ExerciseItemId != null && itemIds.Contains(p.ExerciseItemId.Value))))
+            .OrderBy(p => p.Id)
             .ToListAsync(ct);
 
         return new SelectionContext

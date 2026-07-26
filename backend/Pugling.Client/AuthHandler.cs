@@ -42,8 +42,16 @@ public sealed class AuthHandler(PuglingTokenStore tokens) : DelegatingHandler
         return await base.SendAsync(retry, ct);
     }
 
+    /// <summary>
+    /// Die Anmelde-Endpunkte – und <b>nur</b> die. Ein <c>Contains("/auth/")</c> träfe auch die
+    /// authentifizierten Auth-Routen (<c>auth/me</c>): die gingen dann ohne Token hinaus, und weil der
+    /// Kurzschluss auch den 401-Retry überspringt, bekäme der Aufrufer immer <c>unauthorized</c>.
+    /// </summary>
+    private static readonly string[] LoginPaths = ["/auth/login", "/auth/father", "/auth/child"];
+
     private static bool IsLogin(HttpRequestMessage request) =>
-        request.RequestUri?.AbsolutePath.Contains("/auth/", StringComparison.OrdinalIgnoreCase) == true;
+        request.RequestUri?.AbsolutePath is { } path
+        && LoginPaths.Any(p => path.EndsWith(p, StringComparison.OrdinalIgnoreCase));
 
     // Nur das, was der Client tatsächlich sendet: Methode, URI, Inhalt und Nicht-Auth-Header.
     private static async Task<HttpRequestMessage> CloneAsync(HttpRequestMessage request, CancellationToken ct)

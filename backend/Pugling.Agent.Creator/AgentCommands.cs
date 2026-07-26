@@ -84,14 +84,16 @@ public sealed class AgentCommands(CreatorApi creator, CreatorPipeline pipeline)
             return 0;
         }
 
-        Console.WriteLine($"Angelegt als Übung {outcome.ExerciseId}.");
-        Console.WriteLine($"Selbsttest: {outcome.SelfTestPercent} %");
-
+        // Die Rücknahme zuerst: sonst nennt die Erfolgsmeldung eine Übungs-Id, die es schon nicht mehr gibt.
         if (outcome.RolledBack)
         {
-            Console.Error.WriteLine("Der Selbsttest scheiterte – die Übung wurde wieder gelöscht (--strict).");
+            Console.Error.WriteLine($"Der Selbsttest erreichte nur {outcome.SelfTestPercent} % – " +
+                                    "die Übung wurde wieder gelöscht (--strict). Es wurde nichts gespeichert.");
             return 1;
         }
+
+        Console.WriteLine($"Angelegt als Übung {outcome.ExerciseId}.");
+        Console.WriteLine($"Selbsttest: {outcome.SelfTestPercent} %");
 
         if (outcome.SelfTestPercent != 100)
         {
@@ -130,18 +132,34 @@ public sealed class AgentCommands(CreatorApi creator, CreatorPipeline pipeline)
 
     private async Task<(int SubjectId, int ChapterId)> ResolveLocationAsync(CommandLine command, CancellationToken ct)
     {
-        if (command.Value("subject") is not null && command.Value("chapter") is not null)
-            return (command.RequiredInt("subject"), command.RequiredInt("chapter"));
+        var wantedSubject = command.Value("subject") is not null ? command.RequiredInt("subject") : (int?)null;
+        var wantedChapter = command.Value("chapter") is not null ? command.RequiredInt("chapter") : (int?)null;
+
+        if (wantedSubject is { } subjectId && wantedChapter is { } chapterId) return (subjectId, chapterId);
 
         var subjects = await creator.ListSubjectsAsync(ct);
-        foreach (var subject in subjects.Where(s => command.Value("subject") is null || s.Id == command.Int("subject", 0)))
+        foreach (var subject in subjects.Where(s => wantedSubject is null || s.Id == wantedSubject))
         {
             var chapters = await creator.ListChaptersAsync(subject.Id, ct);
-            if (chapters.Count > 0) return (subject.Id, chapters[0].Id);
+            if (chapters.Count == 0) continue;
+
+            // `--chapter` ohne `--subject`: das Kapitel bestimmt das Fach. Vorher fiel die Angabe still
+            // durch und die Übung landete im ERSTEN Kapitel des ERSTEN Fachs – ein stiller Griff ins
+            // falsche Regal ist schlimmer als eine Fehlermeldung.
+            if (wantedChapter is { } wanted)
+            {
+                if (chapters.Any(c => c.Id == wanted)) return (subject.Id, wanted);
+                continue;
+            }
+
+            return (subject.Id, chapters[0].Id);
         }
 
-        throw new AgentUsageException(
-            "Es gibt kein Fach mit Kapitel – lege erst Katalog-Struktur an oder gib --subject und --chapter an.");
+        throw new AgentUsageException(wantedChapter is { } missing
+            ? $"Kapitel {missing} gibt es nicht"
+              + (wantedSubject is { } id ? $" im Fach {id}" : " in keinem Fach")
+              + " – prüfe die Id mit 'pugling-creator types' bzw. im Vater-Web."
+            : "Es gibt kein Fach mit Kapitel – lege erst Katalog-Struktur an oder gib --subject und --chapter an.");
     }
 
     /// <summary>Kurzhilfe.</summary>
@@ -157,7 +175,8 @@ public sealed class AgentCommands(CreatorApi creator, CreatorPipeline pipeline)
           --child <id>          Kind, auf das zugeschnitten wird                (Pflicht)
           --type <Typ>          Vocabulary | Cloze | Translation | Grammar      (Pflicht)
           --subject <id>        Zielfach     (Standard: erstes Fach mit Kapitel)
-          --chapter <id>        Zielkapitel  (Standard: erstes Kapitel des Fachs)
+          --chapter <id>        Zielkapitel  (Standard: erstes Kapitel des Fachs;
+                                allein angegeben bestimmt es auch das Fach)
           --topic "..."         Thema/Lehrbuch-Unit
           --count <n>           Anzahl Aufgaben                                 (Standard 10)
           --words a,b,c         Pflicht-Wortschatz (unveränderlich)

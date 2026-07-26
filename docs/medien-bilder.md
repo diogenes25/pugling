@@ -402,9 +402,9 @@ daneben – Stock-Bilder liegen oft schon irgendwo.
   [MediaLinkTests](../backend/Pugling.Api.Tests/MediaLinkTests.cs),
   [MediaSelectionTests](../backend/Pugling.Api.Tests/MediaSelectionTests.cs) + drei Fälle in
   `PuglingClientTests`. Neue Fehler-Codes: `media_variant_not_found`, `media_variant_exists`,
-  `media_already_linked`, `media_link_not_found`, `media_no_alternative`.
+  `media_already_linked`, `media_link_not_found`, `media_no_alternative`, `media_not_on_card`.
 
-**Sechs Entscheidungen, die beim Bauen konkret wurden:**
+**Acht Entscheidungen, die beim Bauen konkret wurden:**
 
 1. **`ContentRating` liegt als `int` in der DB**, alle anderen Enums als String. Der Selektor vergleicht
    *ordnend* (`Rating <= Erlaubtes`); als String liefe der Vergleich alphabetisch
@@ -428,6 +428,32 @@ daneben – Stock-Bilder liegen oft schon irgendwo.
    es überhaupt eine Alternative gibt, und lässt den Bestand sonst unangetastet (`409
    media_no_alternative`). Andernfalls könnte ein Kind sich durch wiederholtes Klicken dauerhaft
    bildlos machen.
+7. **„Anderes Bild" trägt die Schranken der Ausspielung.** Der Karten-Endpunkt *gibt ein Bild heraus* und
+   ist damit derselben Anti-Cheat-Regel unterworfen wie die Karte: spielbarer Plan, nur Indizes der
+   eingefrorenen Sitzungs-Reihenfolge, und nur wo die Karte auch ein Bild zeigt (`409
+   media_not_on_card`). Auf einer getippten Stufe lieferte er sonst Bild **und** Alt-Text – also genau die
+   Bedeutung des Wortes, das getippt werden soll. Der eine Code deckt „getippte Stufe" und „kein Bild"
+   bewusst gemeinsam ab, damit der Fehler nicht verrät, ob es überhaupt ein Bild *gäbe*.
+8. **Eine unzulässig gewordene Einfrierung wird zurückgezogen, nicht übergangen.** Sinkt die Freigabe,
+   kommt eine Abneigung dazu oder verschwindet die Zuordnung, ist das eingefrorene Bild nicht mehr
+   ausspielbar – dann muss die Zeile *weg*. Bliebe sie als aktive Wahl liegen, fiele die Neuwahl bei jedem
+   Abruf erneut und das zweite Einfrieren risse den gefilterten Unique-Index: die Karte wäre für dieses
+   Kind dauerhaft nicht mehr abrufbar, ohne Weg zurück über die API. **Gelöscht, nicht abgelehnt** –
+   „abgelehnt" heißt „nie wieder", der Grund hier ist aber vorübergehend.
+
+**Zwei Fallstricke, die beim Weiterbauen leicht wieder aufgehen:**
+
+- **Der Konflikt beim Einfrieren wird bewusst verschluckt** (`MediaSelector.SaveFreezeAsync`). Zwei
+  gleichzeitige Karten-Abrufe desselben Kindes (React-StrictMode-Doppelaufruf, Doppeltipp, zweiter Tab)
+  schreiben denselben `ChildMediaPick`; der Verlierer läuft in den gefilterten Unique-Index. Das ist
+  harmlos, und zwar nicht zufällig: **die Auswahl ist deterministisch**, der Gewinner hat also genau
+  dieselbe Zeile geschrieben – der Konflikt heißt hier immer „schon erledigt". Das Einfrieren ist ein
+  Cache-Auffüllen aus einem GET; ein durchgereichter Fehler wäre nur ein 500. Wer den `catch` entfernt,
+  holt sich den Fehler zurück.
+- **`MediaPurpose` liegt als String in der DB.** Ein `OrderBy(v => v.Purpose)`, das in SQL übersetzt wird,
+  sortiert daher alphabetisch (Card, Full, Hero, Thumb) statt semantisch (Thumb → Card → Full → Hero).
+  Varianten deshalb **im Speicher** sortieren – sonst widersprechen sich `media/{id}` und
+  `media/{id}/variants` bei identischen Daten.
 
 ---
 

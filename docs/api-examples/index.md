@@ -18,7 +18,7 @@ Automatisch erzeugt von `backend/Pugling.Api.Tests/DocsCaptureTests.cs`. Insgesa
 
 ## Fehler-Code-Abdeckung
 
-Verifiziert: **28 / 43** Codes aus `ApiErrors`.
+Verifiziert: **28 / 44** Codes aus `ApiErrors`.
 
 | Code | Beispiel |
 | --- | --- |
@@ -62,6 +62,7 @@ Verifiziert: **28 / 43** Codes aus `ApiErrors`.
 - `media_link_not_found` — Über HTTP im In-Process-Test nicht erreichbar.
 - `media_no_alternative` — Über HTTP im In-Process-Test nicht erreichbar.
 - `media_not_an_image` — Über HTTP im In-Process-Test nicht erreichbar.
+- `media_not_on_card` — Über HTTP im In-Process-Test nicht erreichbar.
 - `media_upload_too_large` — Über HTTP im In-Process-Test nicht erreichbar.
 - `media_variant_exists` — Über HTTP im In-Process-Test nicht erreichbar.
 - `media_variant_not_found` — Über HTTP im In-Process-Test nicht erreichbar.

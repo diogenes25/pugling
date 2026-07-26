@@ -38,25 +38,40 @@ public sealed partial class ClozeStrategy(IChatClient chat, CreatorApi creator,
         GenerationRequest request)
     {
         var violations = new Violations();
+        // Fehlt 'gaps' im Modell-JSON, steht hier null – als leere Liste wird daraus ein Regelverstoß.
+        var gaps = draft.Gaps ?? [];
         DraftRules.Title(violations, draft.Title, briefing);
         DraftRules.NotBlank(violations, draft.Text, "Der Lückentext");
-        DraftRules.Count(violations, draft.Gaps.Count, request);
-        DraftRules.NoDuplicates(violations, draft.Gaps.Select(g => g.Index.ToString()), "Lücken-Nummern");
-        DraftRules.CoversRequiredWords(violations, briefing, draft.Gaps.Select(g => g.Answer), exact: true);
+        DraftRules.Count(violations, gaps.Count, request);
+        DraftRules.CoversRequiredWords(violations, briefing, gaps.Select(g => g?.Answer), exact: true);
 
         // Platzhalter im Text und Lücken müssen sich eins zu eins entsprechen – sonst zeigt die Übung
-        // eine Lücke ohne Lösung (oder eine Lösung ohne Lücke).
-        var placeholders = Placeholder().Matches(draft.Text ?? "")
-            .Select(m => int.Parse(m.Groups[1].Value))
-            .ToList();
-        var gapIndexes = draft.Gaps.Select(g => g.Index).ToList();
+        // eine Lücke ohne Lösung (oder eine Lösung ohne Lücke). Verglichen wird die ANZAHL je Nummer,
+        // nicht die Mengendifferenz: ein Text mit zweimal {{3}} bestand die Except-Prüfung in beiden
+        // Richtungen, der Server rendert daraus aber ein Feld mehr als es Lösungen gibt – ein Kästchen,
+        // das das Kind nie richtig beantworten kann.
+        var inText = Placeholder().Matches(draft.Text ?? "")
+            .GroupBy(m => int.Parse(m.Groups[1].Value))
+            .ToDictionary(g => g.Key, g => g.Count());
+        var asGap = gaps.Where(g => g is not null)
+            .GroupBy(g => g.Index)
+            .ToDictionary(g => g.Key, g => g.Count());
 
-        foreach (var missing in placeholders.Except(gapIndexes))
-            violations.Add($"Zum Platzhalter {{{{{missing}}}}} im Text fehlt die passende Lücke.");
-        foreach (var orphan in gapIndexes.Except(placeholders))
-            violations.Add($"Die Lücke mit index {orphan} hat keinen Platzhalter {{{{{orphan}}}}} im Text.");
+        foreach (var index in inText.Keys.Union(asGap.Keys).Order())
+        {
+            var (texts, entries) = (inText.GetValueOrDefault(index), asGap.GetValueOrDefault(index));
+            // Genau einmal im Text und genau eine Lücke – Zahlengleichheit allein genügt nicht, sonst
+            // ginge „zweimal {{3}} plus zwei Lücken mit index 3" als in Ordnung durch.
+            if (texts == 1 && entries == 1) continue;
 
-        foreach (var gap in draft.Gaps)
+            violations.Add(
+                entries == 0 ? $"Zum Platzhalter {{{{{index}}}}} im Text fehlt die passende Lücke."
+                : texts == 0 ? $"Die Lücke mit index {index} hat keinen Platzhalter {{{{{index}}}}} im Text."
+                : $"Der Platzhalter {{{{{index}}}}} steht {texts}× im Text, dazu gibt es {entries} Lücke(n) – "
+                  + "jeder Platzhalter darf nur einmal vorkommen und braucht genau eine Lücke.");
+        }
+
+        foreach (var gap in gaps.Where(g => g is not null))
         {
             DraftRules.NotBlank(violations, gap.Answer, $"Lücke {gap.Index}: die Lösung");
             if (!string.IsNullOrWhiteSpace(gap.Answer)
@@ -67,8 +82,8 @@ public sealed partial class ClozeStrategy(IChatClient chat, CreatorApi creator,
         // Die Standard-Abfrageform des Typs ist die Wortbank – ohne sie hätte das Kind keine Auswahl.
         var bank = draft.WordBank ?? [];
         violations.Require(bank.Count > 0, "Die Wortbank fehlt.");
-        foreach (var answer in draft.Gaps.Select(g => g.Answer).Where(a => !string.IsNullOrWhiteSpace(a)))
-            if (!bank.Any(w => string.Equals(w.Trim(), answer.Trim(), StringComparison.OrdinalIgnoreCase)))
+        foreach (var answer in gaps.Select(g => g?.Answer).Where(a => !string.IsNullOrWhiteSpace(a)))
+            if (!bank.Any(w => string.Equals(w?.Trim(), answer.Trim(), StringComparison.OrdinalIgnoreCase)))
                 violations.Add($"Die Wortbank enthält die Lösung '{answer}' nicht.");
 
         return violations.Messages;

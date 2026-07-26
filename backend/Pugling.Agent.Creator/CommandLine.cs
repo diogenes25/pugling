@@ -24,10 +24,15 @@ public sealed class CommandLine
     /// <summary>Zerlegt die Argumente; ohne Verb gilt <c>help</c>.</summary>
     public static CommandLine Parse(string[] args)
     {
-        var verb = args.Length > 0 && !args[0].StartsWith('-') ? args[0] : "help";
+        var hasVerb = args.Length > 0 && !args[0].StartsWith('-');
+        var verb = hasVerb ? args[0] : "help";
         var line = new CommandLine(verb);
 
-        for (int i = verb == "help" ? 0 : 1; i < args.Length; i++)
+        // Optionen beginnen hinter dem Verb – und nur wenn gar keins dastand, ab 0. Die frühere Bedingung
+        // (`verb == "help" ? 0 : 1`) verwechselte „kein Verb angegeben" mit „Verb heißt help": ein
+        // getipptes `help` wurde danach erneut als Option gelesen und mit „Unerwartetes Argument 'help'"
+        // abgewiesen.
+        for (int i = hasVerb ? 1 : 0; i < args.Length; i++)
         {
             var arg = args[i];
             if (!arg.StartsWith("--", StringComparison.Ordinal))

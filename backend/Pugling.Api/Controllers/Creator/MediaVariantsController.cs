@@ -33,11 +33,18 @@ public class MediaVariantsController(PuglingDbContext db) : ControllerBase
     {
         if (!await db.MediaAssets.AnyAsync(a => a.Id == assetId)) return NotFound();
 
-        return await db.MediaVariants.AsNoTracking()
+        var variants = await db.MediaVariants.AsNoTracking()
             .Where(v => v.MediaAssetId == assetId)
-            .OrderBy(v => v.Purpose).ThenBy(v => v.Format)
-            .Select(v => new MediaVariantResponse(v.Id, v.Purpose, v.Width, v.Height, v.Format, v.Url, v.Bytes))
             .ToListAsync();
+
+        // Sortiert wird bewusst im Speicher: `Purpose` liegt als String in der DB, ein `OrderBy` in SQL
+        // ordnete daher alphabetisch (Card, Full, Hero, Thumb) statt in der semantischen Reihenfolge des
+        // Enums (Thumb → Card → Full → Hero) – und widerspräche damit derselben Liste, die
+        // <see cref="MediaAssetsController.Map"/> am Asset ausliefert.
+        return variants
+            .OrderBy(v => v.Purpose).ThenBy(v => v.Format, StringComparer.Ordinal)
+            .Select(Map)
+            .ToList();
     }
 
     /// <summary>Reicht eine Auflösung nach. (Zweck, Format) muss am Asset noch frei sein.</summary>

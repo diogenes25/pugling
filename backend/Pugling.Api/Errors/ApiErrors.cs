@@ -72,6 +72,12 @@ public static class ApiErrors
     public static readonly ApiError MediaLinkNotFound = new("media_link_not_found", 404, "Media link not found.");
     /// <summary>„Anderes Bild" nicht möglich – es gibt für diesen Träger keine zulässige Alternative (409).</summary>
     public static readonly ApiError MediaNoAlternative = new("media_no_alternative", 409, "No alternative image available.");
+    /// <summary>
+    /// „Anderes Bild" auf einer Karte, die gar kein Bild zeigt (409). Deckt zwei Fälle mit <b>einer</b>
+    /// Antwort ab – die getippte Stufe (dort verriete ein Motiv die Lösung) und den fehlenden Treffer –,
+    /// damit aus dem Fehler nicht abzulesen ist, ob es überhaupt ein Bild <i>gäbe</i>.
+    /// </summary>
+    public static readonly ApiError MediaNotOnCard = new("media_not_on_card", 409, "This card does not show an image.");
     /// <summary>Die hochgeladene Datei ließ sich nicht als Bild dekodieren (400).</summary>
     public static readonly ApiError MediaNotAnImage = new("media_not_an_image", 400, "The uploaded file is not a readable image.");
     /// <summary>Die hochgeladene Datei überschreitet das erlaubte Maximum (400).</summary>

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { api, errorMessage } from "../lib/api";
+import { interestSlug } from "../lib/interests";
 import { useAsync } from "../lib/useAsync";
 import type {
   ChildInterestResponse, ChildResponse, ContentRating, InterestFacet, InterestTagResponse,
@@ -141,14 +142,21 @@ function InterestEditor({ childId, current, known, onSaved }: {
     e.preventDefault();
     const text = label.trim();
     if (!text) return;
-    // Der Slug entsteht serverseitig; hier reicht ein grober Vergleich gegen offensichtliche Dubletten.
-    const rough = text.toLowerCase();
-    if (rows.some((r) => r.label.toLowerCase() === rough || r.slug === rough)) {
+    // Nach DERSELBEN Regel wie der Server (interestSlug spiegelt InterestSlug.From): „Brawl Stars" und
+    // „brawl-stars" sind ein Eintrag. Ein reiner toLowerCase-Vergleich ließ beide durch – der PUT lief
+    // dann in den Unique-Index, und der Slug diente hier zugleich als React-Key und als Griff der
+    // Ändern-/Entfernen-Handler, die damit zwei Zeilen als eine behandelten.
+    const slug = interestSlug(text);
+    if (!slug) {
+      setMsg(`„${text}" ergibt kein verwertbares Schlagwort – nimm einen Namen mit Buchstaben oder Zahlen.`);
+      return;
+    }
+    if (rows.some((r) => r.slug === slug || interestSlug(r.label) === slug)) {
       setMsg(`„${text}" steht schon in der Liste.`);
       return;
     }
     // tagId 0 = noch nicht angelegt; der Server legt beim Speichern an (create-if-missing).
-    setRows([...rows, { tagId: 0, slug: rough, label: text, facet, weight, createdAt: "" }]);
+    setRows([...rows, { tagId: 0, slug, label: text, facet, weight, createdAt: "" }]);
     setLabel(""); setMsg(null);
   }
 

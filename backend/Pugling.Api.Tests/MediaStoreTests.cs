@@ -101,6 +101,41 @@ public class MediaStoreTests(PuglingWebAppFactory factory) : IClassFixture<Pugli
         Assert.Equal(HttpStatusCode.Created, avif.StatusCode);
     }
 
+    /// <summary>
+    /// „Nach Zweck" heißt <b>semantisch</b> (Thumb → Card → Full → Hero), nicht alphabetisch. Weil
+    /// <c>Purpose</c> als String persistiert wird, sortierte ein <c>OrderBy</c> in SQL nach Buchstaben
+    /// (Card, Full, Hero, Thumb) – und widersprach damit derselben Liste am Asset, die in-memory nach
+    /// Enum-Wert sortiert. Zwei Endpunkte, zwei Reihenfolgen für dieselben Daten.
+    /// </summary>
+    [Fact]
+    public async Task Varianten_SindNachZweckSortiert_NichtAlphabetisch()
+    {
+        var father = await TestApi.FatherAsync(factory);
+        var id = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/media",
+            new { description = "Ein Fuchs springt" }));
+
+        // Bewusst in „falscher" Reihenfolge angelegt; die Zwecke sind zugleich alphabetisch verdreht.
+        foreach (var purpose in new[] { "Full", "Thumb", "Hero", "Card" })
+            (await father.PostAsJsonAsync($"/api/v1/creator/media/{id}/variants", new
+            {
+                purpose,
+                url = $"https://cdn.test/fox-{purpose}.webp",
+                width = 128,
+                height = 128,
+            })).EnsureSuccessStatusCode();
+
+        const string expected = "Thumb,Card,Full,Hero";
+        var listed = await GetAsync(father, $"/api/v1/creator/media/{id}/variants");
+        Assert.Equal(expected, Purposes(listed));
+
+        // … und das Asset selbst liefert genau dieselbe Reihenfolge.
+        var asset = await GetAsync(father, $"/api/v1/creator/media/{id}");
+        Assert.Equal(expected, Purposes(asset.GetProperty("variants")));
+
+        static string Purposes(JsonElement variants) =>
+            string.Join(',', variants.EnumerateArray().Select(v => v.GetProperty("purpose").GetString()));
+    }
+
     [Fact]
     public async Task FremdeVariante_LiefertEigenenFehlercode()
     {
