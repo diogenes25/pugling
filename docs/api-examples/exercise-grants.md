@@ -15,7 +15,7 @@ Response — `HTTP 200`:
     "creatorName": "Papa",
     "permission": "Owner",
     "grantedByFatherId": 1,
-    "createdAt": "2026-07-26T14:10:21.8424955"
+    "createdAt": "2026-07-26T22:40:59.8026403"
   }
 ]
 ```
@@ -126,7 +126,7 @@ Response — `HTTP 201`:
   "isOwn": true,
   "isOwner": true,
   "executePublic": false,
-  "grantCount": 2,
+  "grantCount": 1,
   "description": null,
   "defaultUseLeitner": false,
   "defaultRequireTypedTest": false,
