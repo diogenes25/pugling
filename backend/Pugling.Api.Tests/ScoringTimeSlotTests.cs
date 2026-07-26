@@ -43,4 +43,29 @@ public class ScoringTimeSlotTests(PuglingWebAppFactory factory) : IClassFixture<
         Assert.Equal(20, await BasePointsAtAsync(inSlot)); // 10 × 2,0
         Assert.Equal(10, await BasePointsAtAsync(noSlot)); // 10 × 1,0 (kein Fenster)
     }
+
+    /// <summary>
+    /// Überlappende Fenster sind erlaubt (das Anlegen verbietet sie nicht) – dann muss die Auswahl trotzdem
+    /// **festliegen**: das engste, also am spätesten beginnende Fenster gewinnt. Ohne diese Ordnung entschied
+    /// die Datenbank-Laune, und dieselbe richtige Antwort brachte mal 30, mal 50 Punkte.
+    /// </summary>
+    [Fact]
+    public async Task Bei_ueberlappenden_Fenstern_gewinnt_deterministisch_das_engste()
+    {
+        using (var scope = factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
+            // Absichtlich das weite Fenster ZUERST einfügen: ohne OrderBy läge es als Erstes in der
+            // Einfüge-Reihenfolge und der Test würde den falschen Faktor sehen.
+            db.TimeSlots.Add(new TimeSlotRule { Name = "Weit", StartTime = new(4, 0), EndTime = new(6, 0), Multiplier = 3.0 });
+            db.TimeSlots.Add(new TimeSlotRule { Name = "Eng", StartTime = new(4, 30), EndTime = new(5, 0), Multiplier = 5.0 });
+            await db.SaveChangesAsync();
+        }
+
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        // 04:45 liegt in beiden Fenstern → das engere („Eng", 5,0) muss gelten.
+        Assert.Equal(50, await BasePointsAtAsync(today.ToDateTime(new TimeOnly(4, 45))));
+        // 04:15 liegt nur im weiten Fenster.
+        Assert.Equal(30, await BasePointsAtAsync(today.ToDateTime(new TimeOnly(4, 15))));
+    }
 }

@@ -103,8 +103,12 @@ public class ScoringService(PuglingDbContext db)
             : Math.Max(2, 8 - box);               // Wiederholung: je höher die Box, desto weniger
 
         var time = TimeOnly.FromDateTime(nowLocal);
+        // Deterministisch ordnen: überlappende Zeitfenster sind erlaubt (niemand verbietet sie beim Anlegen),
+        // und ohne OrderBy entschiede die Datenbank-Laune, welcher Multiplikator gilt – dieselbe Antwort
+        // brächte dann unterschiedlich viele Punkte. Das engste Fenster gewinnt, bei Gleichstand die Id.
         var slot = await db.TimeSlots
             .Where(s => s.StartTime <= time && time < s.EndTime)
+            .OrderByDescending(s => s.StartTime).ThenBy(s => s.EndTime).ThenBy(s => s.Id)
             .FirstOrDefaultAsync();
 
         return (int)Math.Round(basePoints * (slot?.Multiplier ?? 1.0));

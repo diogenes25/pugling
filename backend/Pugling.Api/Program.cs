@@ -195,10 +195,16 @@ builder.Services.AddSingleton<ExerciseContentProvider>();
 builder.Services.AddScoped<ExerciseContentResolver>();
 // Testmodus: Vater spielt eine Übung nebenwirkungsfrei durch (nutzt Resolver + AnswerGrader); scoped wegen Resolver.
 builder.Services.AddScoped<ExercisePreviewService>();
+// Erlaubte Origins aus der Konfiguration (`Cors:Origins`, kommagetrennt oder als Array); Default ist der
+// Vite-Dev-Server. Konfigurierbar, weil ein Prod-Deploy unter eigenem Namen läuft – dort wäre ein
+// fest verdrahtetes localhost der Grund, warum die App „ohne Fehlermeldung nichts lädt".
+var corsOrigins = builder.Configuration.GetSection("Cors:Origins").Get<string[]>()
+    ?? builder.Configuration.GetValue<string>("Cors:Origins")?.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+    ?? ["http://localhost:5173"];
 builder.Services.AddCors(o => o.AddDefaultPolicy(p =>
     // WithExposedHeaders: sonst darf die Browser-App den Paging-Header X-Total-Count nicht lesen
     // (AllowAnyHeader gilt nur für Request-Header, nicht für die Freigabe von Response-Headern).
-    p.WithOrigins("http://localhost:5173").AllowAnyHeader().AllowAnyMethod()
+    p.WithOrigins(corsOrigins).AllowAnyHeader().AllowAnyMethod()
         .WithExposedHeaders("X-Total-Count")));
 
 // Login-Bremse gegen PIN-Brute-Force: pro IP nur wenige Versuche je Minute (Policy "login" auf den

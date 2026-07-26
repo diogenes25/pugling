@@ -271,7 +271,9 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db, Exerc
             };
             db.ExerciseGrants.Add(ownerGrant);
             await db.SaveChangesAsync();
-            exercise.Grants.Add(ownerGrant);
+            // Kein `exercise.Grants.Add(ownerGrant)`: EFs Relationship-Fixup hat den Grant beim Speichern
+            // schon in die geladene Navigation gehängt. Ein zweites Anhängen zählte ihn doppelt – die
+            // POST-Antwort meldete `grantCount: 2`, obwohl GET und /grants korrekt 1 lieferten.
         }
 
         await AfterSaveAsync(exercise, config, isCreate: true);

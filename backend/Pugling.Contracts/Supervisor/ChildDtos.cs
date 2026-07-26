@@ -21,10 +21,9 @@ public record CreateChildDto(string Name, int? BirthYear, int? Grade, SchoolType
 /// <summary>
 /// Partielle Änderung eines Kindes; weggelassene Felder bleiben unverändert. <c>null</c> heißt „nicht
 /// angegeben" und kann darum nichts <b>leeren</b> – dafür stehen die <c>Clear…</c>-Schalter (vgl.
-/// <c>ClearGrade</c> an der Klassenarbeit).
+/// <c>ClearGrade</c> an der Klassenarbeit): <c>ClearBirthYear</c> entfernt das Geburtsjahr,
+/// <c>ClearGrade</c> die Klassenstufe (das Kind fällt damit aus Klassen-Filtern heraus).
 /// </summary>
-/// <param name="ClearBirthYear">Entfernt das Geburtsjahr.</param>
-/// <param name="ClearGrade">Entfernt die Klassenstufe (das Kind wird damit aus Klassen-Filtern herausgenommen).</param>
 public record UpdateChildDto(string? Name, int? BirthYear, int? Grade, SchoolTypes? SchoolType, string? Pin,
     Gender? Gender = null, List<string>? Interests = null, string? ProfileNotes = null,
     ContentRating? AllowedContentRating = null,

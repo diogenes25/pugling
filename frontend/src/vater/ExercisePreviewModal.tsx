@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { api, errorMessage } from "../lib/api";
+import { ApiError, api, errorMessage } from "../lib/api";
 import { LetterBoxes } from "../components/LetterBoxes";
 import { AudioButton } from "../components/AudioButton";
 import { Modal } from "../components/Modal";
@@ -28,7 +28,13 @@ export function ExercisePreviewModal({ exerciseId, title, onClose }: {
     setData(null); setAnswers({}); setRevealed(new Set()); setResult(null); setError(null);
     api.previewExercise(exerciseId, stage)
       .then(setData)
-      .catch((e) => setError(errorMessage(e)));
+      // Manche Typen haben keine einzeln prüfbaren Aufgaben (ein Aufsatz ist ein Schreibauftrag, kein
+      // Frage-Antwort-Paar). Der Server sagt das mit `no_checkable_content`; die technische englische
+      // Meldung würde hier wie ein Defekt aussehen, obwohl es die Natur des Typs ist.
+      .catch((e) => setError(e instanceof ApiError && e.code === "no_checkable_content"
+        ? "Diese Übung hat keine einzeln prüfbaren Aufgaben – ein Schreibauftrag lässt sich nicht "
+          + "automatisch bewerten. Du kannst sie zuweisen, aber nicht durchspielen."
+        : errorMessage(e)));
   }, [exerciseId, stage]);
 
   useEffect(load, [load]);

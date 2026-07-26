@@ -3,10 +3,11 @@ namespace Pugling.Contracts.Creator;
 // Vertrag der Lehrwerk-Reihen (Route api/v1/creator/textbook-series): die Reihe selbst und ihre Units.
 // Kindneutral wie der übrige Katalog – gelesen von jedem Creator, geändert nur vom Owner.
 
-/// <summary>Eine Lehrwerk-Reihe („Access") samt eigener Rechte-Sicht.</summary>
-/// <param name="Slug">Normalisierter Schlüssel der Reihe; unveränderlich und global eindeutig.</param>
-/// <param name="IsOwn">Ob das aufrufende Konto die Reihe ändern darf.</param>
-/// <param name="UnitCount">Anzahl hinterlegter Units über alle Bände.</param>
+/// <summary>
+/// Eine Lehrwerk-Reihe („Access") samt eigener Rechte-Sicht. <c>Slug</c> ist der normalisierte, global
+/// eindeutige und unveränderliche Schlüssel der Reihe, <c>IsOwn</c> sagt, ob das aufrufende Konto sie
+/// ändern darf, <c>UnitCount</c> zählt die hinterlegten Units über alle Bände.
+/// </summary>
 public record TextbookSeriesResponse(int Id, string Name, string Slug, string? Publisher,
     string? SubjectName, int? SubjectId, SchoolTypes SchoolTypes, string? SourceLanguage,
     string? TargetLanguage, string? Notes, int? OwnerFatherId, bool IsOwn, int UnitCount, DateTime CreatedAt);

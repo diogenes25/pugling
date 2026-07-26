@@ -27,13 +27,16 @@ public record CreateTextbookDto(string Title, string? SubjectName, int? SubjectI
     int? SeriesId = null, int? CurrentUnitId = null);
 
 /// <summary>Partielle Änderung eines Lehrbuchs; weggelassene Felder bleiben unverändert.</summary>
-/// <param name="ClearSeries">
-/// Löst das Buch aus dem Katalog („nicht katalogisiert"); die aktuelle Unit fällt mit weg, weil sie ohne
-/// ihre Reihe nichts bezeichnet. Nötig, weil <c>null</c> im PATCH „nicht angegeben" heißt (vgl. <c>ClearGrade</c>).
-/// </param>
-/// <param name="ClearUnit">Setzt nur die aktuelle Unit zurück; die Reihe bleibt.</param>
-/// <param name="ClearSubject">Entfernt die Fach-Zuordnung (Id und Name).</param>
-/// <param name="ClearGrade">Entfernt die Klassenstufe des Buchs.</param>
+/// <summary>
+/// Partielle Änderung eines Lehrbuchs; weggelassene Felder bleiben unverändert.
+/// <para>
+/// <c>null</c> heißt im PATCH „nicht angegeben" und kann darum nichts <b>leeren</b> – dafür stehen die
+/// <c>Clear…</c>-Schalter (vgl. <c>ClearGrade</c> an der Klassenarbeit): <c>ClearSeries</c> löst das Buch aus
+/// dem Katalog („nicht katalogisiert") und nimmt die aktuelle Unit mit, weil sie ohne ihre Reihe nichts
+/// bezeichnet; <c>ClearUnit</c> setzt nur die Unit zurück; <c>ClearSubject</c> entfernt Fach-Id und -Name;
+/// <c>ClearGrade</c> die Klassenstufe des Buchs.
+/// </para>
+/// </summary>
 public record UpdateTextbookDto(string? Title, string? SubjectName, int? SubjectId, int? Grade,
     string? Publisher, string? Isbn, string? CurrentChapter,
     int? SeriesId = null, int? CurrentUnitId = null,

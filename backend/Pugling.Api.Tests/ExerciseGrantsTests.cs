@@ -197,6 +197,32 @@ public class ExerciseGrantsTests(PuglingWebAppFactory factory) : IClassFixture<P
         Assert.Equal(HttpStatusCode.OK, (await admin.PutAsJsonAsync(url, VocabPayload())).StatusCode);
     }
 
+    /// <summary>
+    /// Die POST-Antwort muss denselben <c>grantCount</c> nennen wie das anschließende GET. Vorher hängte
+    /// <c>Create</c> den Owner-Grant nach dem Speichern noch einmal an die geladene Navigation, obwohl EFs
+    /// Relationship-Fixup ihn dort schon hatte – die Antwort meldete 2 Rechte, die DB kannte 1.
+    /// </summary>
+    [Fact]
+    public async Task CreateAntwort_ZaehltDenOwnerGrantNichtDoppelt()
+    {
+        var father = await TestApi.FatherAsync(factory);
+        var subjectId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/subjects",
+            new { name = $"Grant-Zaehlung {Guid.NewGuid():N}" }));
+        var chapterId = await TestApi.IdAsync(await father.PostAsJsonAsync(
+            $"/api/v1/creator/subjects/{subjectId}/chapters", new { name = "Kapitel 1", orderIndex = 1 }));
+
+        var created = await father.PostAsJsonAsync(
+            $"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/vocabulary", VocabPayload());
+        created.EnsureSuccessStatusCode();
+        var body = await created.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal(1, body.GetProperty("grantCount").GetInt32());
+
+        // Gegenprobe über den Lesepfad: beide Sichten müssen sich einig sein.
+        var detail = await father.GetFromJsonAsync<JsonElement>(
+            $"/api/v1/creator/exercises/{body.GetProperty("id").GetInt32()}");
+        Assert.Equal(1, detail.GetProperty("grantCount").GetInt32());
+    }
+
     [Fact]
     public async Task DetailResponse_ZeigtGrantCount()
     {

@@ -301,12 +301,19 @@ die Creator-Rolle. Details: [backend/Pugling.Agent.Creator/README.md](backend/Pu
   auf `EnsureCreated` zurückfallen. Die EF-Tools laufen über die Design-Time-Factory
   ([Data/PuglingDbContextFactory.cs](backend/Pugling.Api/Data/PuglingDbContextFactory.cs)), nicht über den Web-Host.
   `*.db` ist gitignored; eine alte, per `EnsureCreated` erzeugte DB einmalig löschen (wird neu migriert + geseedet).
-- **PINs im Klartext** (`Father.Pin`/`Child.Pin`) – vor Prod hashen (offen, siehe Migrationsplan).
+- **PINs sind gehasht** (`Auth/PinHasher`): `Father.Pin`/`Child.Pin` und `Account.PinHash` halten den Hash,
+  nie den Klartext. Wer eine PIN setzt, muss durch `PinHasher.Hash` und den Hash **auf das Konto spiegeln**
+  (sonst läuft der konto-zentrische `/auth/login` aus dem Takt) – siehe `ChildrenController`/`FathersController`.
+  Der PIN-Login ist zusätzlich per `AddRateLimiter` gebremst (Policy `login`, über `RateLimiting:LoginEnabled`
+  abschaltbar – der In-Process-TestServer teilt sonst eine IP-Partition und bekäme 429).
 - **`TimeSlotRule`** ist das *einzige* bewusst erhaltene Legacy-Entity (Leitner-Multiplikator). Alles
   andere aus dem Ursprungs-Template wurde entfernt – **kein** `User`/`Topic`/`VocabCard`/`Points…` mehr anlegen.
 - **Zeit/UTC**: Tageslogik nutzt `DateTime.UtcNow`/`DateOnly` – nahe Mitternacht lokal ggf. anderer Kalendertag.
-- **JSON-Spalten** (`Gaps`, `WordBank`, `StageSchedule`, `Noun`/`Verb`): funktionieren, weil Controller
-  die Listen neu zuweisen; kein In-Place-Mutieren erwarten (fehlender `ValueComparer`).
+- **JSON-Spalten** (`Gaps`, `WordBank`, `BoxIntervalDays`, `StageSchedule`, `Noun`/`Verb`, `Interests`,
+  `OwnedSkins`, `SuggestedBonus`): tragen alle einen `ValueComparer` aus
+  [Data/JsonValueComparer.cs](backend/Pugling.Api/Data/JsonValueComparer.cs) – EF erkennt Änderungen also
+  auch bei In-Place-Mutation. **Neue JSON-Spalte? Comparer nicht vergessen**, sonst gehen Änderungen still
+  verloren, solange niemand die Liste neu zuweist.
 
 ## Arbeitsweise
 

@@ -3,9 +3,10 @@ namespace Pugling.Contracts.Creator;
 // Vertrag der Creator-Profile (Route api/v1/creator/profiles): der „Fachlehrer" – Fach, Schulzweig,
 // Klassenstufen, optional eine Buchreihe, dazu Persona und Didaktik für den KI-Creator.
 
-/// <summary>Ein Creator-Profil samt eigener Rechte-Sicht.</summary>
-/// <param name="IsOwn">Ob das aufrufende Konto das Profil ändern darf.</param>
-/// <param name="DefaultTypes">Bevorzugte Übungstypen (Schlüssel aus dem Typ-Manifest).</param>
+/// <summary>
+/// Ein Creator-Profil samt eigener Rechte-Sicht. <c>IsOwn</c> sagt, ob das aufrufende Konto das Profil
+/// ändern darf; <c>DefaultTypes</c> sind die bevorzugten Übungstypen (Schlüssel aus dem Typ-Manifest).
+/// </summary>
 public record CreatorProfileResponse(int Id, string Name, int? OwnerFatherId, bool IsOwn,
     string? SubjectName, int? SubjectId, SchoolTypes SchoolTypes, int? GradeMin, int? GradeMax,
     int? SeriesId, string? SeriesName, string SourceLang, string TargetLang,
@@ -25,10 +26,10 @@ public record CreateCreatorProfileDto(string Name, string? SubjectName, int? Sub
 /// lässt sich ein Profil wieder fachneutral, werkunabhängig oder klassenstufen-offen machen.
 /// </para>
 /// </summary>
-/// <param name="ClearSubject">Setzt Fach-Bindung (<c>SubjectId</c>) zurück – das Profil wird fachneutral.</param>
-/// <param name="ClearSeries">Setzt die Buchreihe zurück – das Profil wird werkunabhängig.</param>
-/// <param name="ClearGradeMin">Hebt die untere Klassenstufen-Grenze auf.</param>
-/// <param name="ClearGradeMax">Hebt die obere Klassenstufen-Grenze auf.</param>
+/// <para>
+/// <c>ClearSubject</c> macht das Profil fachneutral (Fach-Id und -Name fallen weg), <c>ClearSeries</c>
+/// werkunabhängig, <c>ClearGradeMin</c>/<c>ClearGradeMax</c> heben die jeweilige Klassenstufen-Grenze auf.
+/// </para>
 public record UpdateCreatorProfileDto(string? Name, string? SubjectName, int? SubjectId,
     SchoolTypes? SchoolTypes, int? GradeMin, int? GradeMax, int? SeriesId,
     string? SourceLang, string? TargetLang, string? Persona, string? Didactics,
