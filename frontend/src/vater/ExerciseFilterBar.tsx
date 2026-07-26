@@ -1,5 +1,7 @@
 import { api } from "../lib/api";
 import { useAsync } from "../lib/useAsync";
+import { SCHOOL_TYPES } from "../lib/labels";
+import { useExerciseTypes } from "../lib/exerciseTypes";
 import type { CategoryResponse, ChapterResponse, SchoolType, SubjectResponse } from "../lib/types";
 
 /**
@@ -17,12 +19,7 @@ export interface ExerciseFilter {
   search?: string;
 }
 
-const SCHOOL_TYPES: SchoolType[] = ["Grundschule", "Hauptschule", "Realschule", "Gymnasium", "Gesamtschule", "Berufsschule"];
-const TYPES: { key: string; label: string }[] = [
-  { key: "Vocabulary", label: "Vokabeln" }, { key: "Arithmetic", label: "Rechnen" },
-  { key: "Cloze", label: "Lückentext" }, { key: "Matching", label: "Zuordnung" },
-  { key: "List", label: "Liste" }, { key: "Birkenbihl", label: "Birkenbihl" },
-];
+
 
 export function ExerciseFilterBar({ value, onChange, subjects }: {
   value: ExerciseFilter;
@@ -30,6 +27,7 @@ export function ExerciseFilterBar({ value, onChange, subjects }: {
   subjects: SubjectResponse[];
 }) {
   // Kapitel + Arten hängen am gewählten Fach und werden reaktiv nachgeladen.
+  const types = useExerciseTypes();
   const chapters = useAsync<ChapterResponse[]>(
     () => (value.subjectId ? api.chapters(value.subjectId) : Promise.resolve([])), [value.subjectId]);
   const categories = useAsync<CategoryResponse[]>(
@@ -77,7 +75,7 @@ export function ExerciseFilterBar({ value, onChange, subjects }: {
         <select aria-label="Typ-Filter" value={value.type ?? ""}
           onChange={(e) => set({ type: e.target.value || undefined })}>
           <option value="">– alle –</option>
-          {TYPES.map((t) => <option key={t.key} value={t.key}>{t.label}</option>)}
+          {(types?.all ?? []).map((t) => <option key={t.type} value={t.type}>{t.label}</option>)}
         </select>
       </div>
       <div className="field" style={{ minWidth: 140 }}>

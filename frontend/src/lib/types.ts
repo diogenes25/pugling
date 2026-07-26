@@ -916,9 +916,39 @@ export interface CreateVocabularyDto {
 
 // ---- Katalog: Übungen anlegen (Authoring) ----
 
-/** Übungstypen, die die Vater-UI anlegen kann (Route-Segment siehe TYPE_ROUTE in VaterExercises). */
+/**
+ * Übungstypen, für die diese UI einen Editor hat. Deckungsgleich mit den Server-Typen
+ * (`ExerciseTypeKeys`) – das **Routen-Segment und der Anzeigename kommen aber aus dem Typ-Manifest**
+ * (`GET creator/exercise-types`), nicht aus einer Tabelle hier: sie driften sonst auseinander, und der
+ * Server weicht durchaus ab (Aufsatz liegt unter `essays`, nicht `essay`).
+ */
 export type ExerciseTypeKey =
-  | "Vocabulary" | "Arithmetic" | "Cloze" | "Matching" | "List" | "Birkenbihl";
+  | "Vocabulary" | "Arithmetic" | "ArithmeticDrill" | "Cloze" | "Matching" | "List" | "Birkenbihl"
+  | "Reading" | "Listening" | "Essay" | "Grammar" | "Translation";
+
+/**
+ * Selbstbeschreibung eines Übungstyps vom Server. Das Frontend liest sie einmal und verdrahtet daraus
+ * Routen und Beschriftungen; die Editor-/Render-Komponente bleibt handgebaut je Typ (aus JSON allein
+ * lässt sich kein Formular erzeugen, das die Fachlichkeit trifft).
+ */
+export interface ExerciseTypeManifest {
+  type: string;
+  /** Deutscher Anzeigename. */
+  label: string;
+  /** Id der Render-Komponente; mehrere Typen dürfen sie teilen (Arithmetic + ArithmeticDrill). */
+  renderer: string;
+  schemaVersion: number;
+  /** Routen-Segment der Autoren-CRUD unter `.../chapters/{chapterId}/{authoringRoute}`. */
+  authoringRoute: string;
+  checkMode: ExerciseCheckMode;
+  playRoute: string | null;
+  method: string | null;
+  /** Fähigkeiten, auf die ein Renderer reagieren kann (`audio`, `wordBank`, `rubric` …). */
+  capabilities: string[];
+}
+
+/** Rechenarten des Rechen-Drills (der Server wählt je Aufgabe zufällig eine der erlaubten). */
+export type ArithmeticOperation = "Addition" | "Subtraction" | "Multiplication" | "Division";
 
 /**
  * Gemeinsame Nutzlast zum Anlegen einer Übung (spiegelt ExercisePayload&lt;TConfig&gt; im Backend).

@@ -2,6 +2,7 @@ import { useId, useState } from "react";
 import { api, errorMessage } from "../lib/api";
 import { confirmAction } from "../lib/ui";
 import { useAsync } from "../lib/useAsync";
+import { useExerciseTypes } from "../lib/exerciseTypes";
 import { TruncationHint } from "../components/ListControls";
 import { MasteryPill } from "../components/MasteryPill";
 import type {
@@ -24,11 +25,8 @@ const ORDER_LABEL: Record<PracticeOrder, string> = {
 };
 const ORDERS: PracticeOrder[] = ["WeakestFirst", "Serial", "Random", "NewestWeighted"];
 
-const TYPE_LABEL: Record<string, string> = {
-  Vocabulary: "Vokabeln", Arithmetic: "Rechnen", Cloze: "Lückentext",
-  Matching: "Zuordnung", List: "Liste", Birkenbihl: "Birkenbihl",
-};
-const typeLabel = (t: string) => TYPE_LABEL[t] ?? t;
+// Anzeigename der Typen aus dem Server-Manifest – eine dritte Kopie der Tabelle lief zwangsläufig
+// aus dem Takt (das UI kannte sechs Typen, der Server führt zwölf).
 
 type Flash = (ok: boolean, text: string) => void;
 
@@ -220,6 +218,8 @@ function PositionFields({ value, onChange }: { value: PositionSettings; onChange
 /** Katalog-Übung über eine Filterleiste finden und als Position hinzufügen (übrige Werte erbt die Position). */
 function AddPosition({ planId, onAdded, onError }: { planId: number; onAdded: () => void; onError: (t: string) => void }) {
   const subjects = useAsync<SubjectResponse[]>(() => api.subjects(), []);
+  const types = useExerciseTypes();
+  const typeLabel = (t: string) => types?.label(t) ?? t;
   const [filter, setFilter] = useState<ExerciseFilter>({});
   // Die Gesamtzahl wird mitgeführt: der Server liefert nur eine Seite, und eine still gekappte
   // Auswahlliste liest sich wie „mehr gibt es nicht".
@@ -308,6 +308,8 @@ function AddPosition({ planId, onAdded, onError }: { planId: number; onAdded: ()
 function PositionRow({ planId, pos, onChanged, flash }: {
   planId: number; pos: PositionResponse; onChanged: () => void; flash: Flash;
 }) {
+  const types = useExerciseTypes();
+  const typeLabel = (t: string) => types?.label(t) ?? t;
   const [editing, setEditing] = useState(false);
   const [showReport, setShowReport] = useState(false);
   const [settings, setSettings] = useState<PositionSettings>(() => settingsFrom(pos));

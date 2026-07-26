@@ -3,7 +3,7 @@ import type {
   CreateChildDto, CreateExercisePayload, CreateKlassenarbeitDto, CreateMissionDto, CreatePlanDto, CreateVocabularyDto,
   UpdateChildDto,
   CreateFatherDto, FatherResponse, UpdateFatherDto,
-  ExerciseDetail, ExercisePreviewAnswer, ExercisePreviewData, ExercisePreviewResult,
+  ExerciseDetail, ExercisePreviewAnswer, ExercisePreviewData, ExercisePreviewResult, ExerciseTypeManifest,
   ExerciseSearchParams, ExerciseSummary, ExerciseUsage, KlassenarbeitDetail, KlassenarbeitPractice, KlassenarbeitRepeat,
   KlassenarbeitResponse, KlassenarbeitStatus, LoginResponse, MissionDef, MissionStatus, PlanResponse,
   ChildrenDashboard, CreatePositionDto, PositionResponse, PositionReport, UpdatePositionDto, OverviewResponse, PositionSession, PracticeCard,
@@ -204,6 +204,11 @@ export const api = {
   // Übung eines Typs im Kapitel anlegen. Das Routen-Segment (vocabulary/arithmetic/…) bestimmt den Typ.
   createExercise: (subjectId: number, chapterId: number, typeRoute: string, payload: CreateExercisePayload) =>
     http<ExerciseSummary>(`${V1}/creator/subjects/${subjectId}/chapters/${chapterId}/${typeRoute}`, "POST", payload),
+  /**
+   * Typ-Manifest: welche Übungstypen der Server kennt, wie sie heißen und unter welchem Routen-Segment
+   * ihre Autoren-CRUD liegt. Einmal laden statt Tabellen im Frontend pflegen (siehe lib/exerciseTypes.ts).
+   */
+  exerciseTypes: () => http<ExerciseTypeManifest[]>(`${V1}/creator/exercise-types`),
   // Typ-übergreifender Detail-Abruf (mit Config) + „wo verwendet".
   getExercise: (id: number) => http<ExerciseDetail>(`${V1}/creator/exercises/${id}`),
   exerciseUsage: (id: number) => http<ExerciseUsage>(`${V1}/creator/exercises/${id}/usage`),

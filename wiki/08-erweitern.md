@@ -158,6 +158,16 @@ Nach `.cs`-Edits laufen `dotnet format` + `dotnet build` automatisch (Hook). Dan
 - [ ] Controller mit `Route` + `Tags` + `TypeKey` (erbt CRUD), bei Prüfbarkeit `/check` → `RunCheckAsync`.
 - [ ] **Keine** Migration nötig (JSON-Config), außer du hast echte neue Spalten/Entities hinzugefügt.
 - [ ] `dotnet build` grün, smoke-getestet, Integrationstest.
+- [ ] **Frontend-Editor** in [`frontend/src/vater/exerciseConfig.tsx`](../frontend/src/vater/exerciseConfig.tsx):
+      Schlüssel in `AUTHORABLE_TYPES`, dazu `emptyRow`/`emptyExtra`/`buildTypeConfig`/`configToEditorState`/
+      `ConfigEditor`/`contentProblem`. **Anzeigename und Routen-Segment nicht** dort eintragen – die kommen
+      aus deinem `Manifest` (`GET creator/exercise-types`, gelesen von `lib/exerciseTypes.ts`).
+      `buildTypeConfig` und `configToEditorState` sind Hin- und Rückweg: was das eine schreibt, muss das
+      andere zurücklesen, sonst verliert „Bearbeiten" Inhalte.
+      Trägt dein Typ **identitätsstiftende Ids** in der Config (wie Birkenbihls `wordId` oder
+      `vocabularyId`), gehört er **nicht** in `CONTENT_EDITABLE` – ein Vollersatz würde sie neu vergeben.
+- [ ] `frontend/e2e/uebungstypen.spec.ts` um deinen Typ ergänzen; ihre letzte Zusicherung vergleicht das
+      Typ-Pulldown gegen das Manifest und schlägt sonst fehl (genau dafür ist sie da).
 
 > **DB-Bestand:** `Exercise.Type` ist ein String-Schlüssel. Neue Typen brauchen **keine** Migration.
 > Ein *umbenannter* Schlüssel bräuchte eine (String-Remap wie

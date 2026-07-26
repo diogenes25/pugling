@@ -117,12 +117,12 @@ test("Vater legt sich selbst an und richtet ein Englisch-Szenario von Null ein",
   await expect(dialog.getByRole("cell", { name: EXTRA_WORD[0], exact: true })).toBeVisible();
   await dialog.getByRole("button", { name: "Schließen" }).click();
 
-  // ---------- 5b. Ein Typ, den dieses UI nicht kennt, darf die Liste nicht zerlegen ----------
+  // ---------- 5b. Eine per API angelegte Übung ist im UI vollwertig verwaltbar ----------
   /*
-   * Das Backend führt mehr Übungstypen als das Vater-UI (Grammar, Translation, Reading … – der KI-Creator
-   * legt Grammar tatsächlich an). Solche Übungen dürfen in der Verwaltung erscheinen, aber weder einen
-   * Bearbeiten-Weg anbieten (es gibt kein Routen-Segment für sie) noch die Seite zum Absturz bringen.
-   * Angelegt wird sie über die API, weil das UI sie bewusst nicht anlegen kann.
+   * Der KI-Creator legt Übungen direkt über die API an (hier: Grammatik). Sie müssen in der Verwaltung
+   * ankommen wie eigene: mit dem deutschen Namen aus dem Typ-Manifest und einem Bearbeiten-Weg. Vorher
+   * kannte das UI nur sechs der zwölf Server-Typen – eine solche Übung ließ die Seite mit `undefined`
+   * abstürzen. Das Anlegen aller Typen *durch das UI* deckt `uebungstypen.spec.ts` ab.
    */
   const token = await vater.evaluate(() => localStorage.getItem("pugling.token"));
   const subjectId = await vater.locator('select[aria-label="Fach"]').inputValue();
@@ -144,10 +144,12 @@ test("Vater legt sich selbst an und richtet ein Englisch-Szenario von Null ein",
   await chapterSelect.selectOption("");
   await chapterSelect.selectOption(chapterId);
   const grammarRow = vater.locator("div", { hasText: `Grammatik ${RUN}` }).last();
-  await expect(grammarRow).toContainText("Typ hier nicht bearbeitbar");
-  await expect(grammarRow.getByRole("button", { name: /Bearbeiten/ })).toHaveCount(0);
-  // Die eigene, bearbeitbare Übung ist weiterhin da – die Liste lebt.
-  await expect(vater.getByRole("button", { name: /🧪 Ausprobieren/ }).first()).toBeVisible();
+  // Der Name kommt aus dem Manifest, nicht aus einer Tabelle im Frontend.
+  await expect(grammarRow).toContainText("Grammatik");
+  await expect(grammarRow.getByRole("button", { name: /Bearbeiten/ })).toBeVisible();
+  // Und die zuvor im UI angelegte Vokabelübung steht weiter daneben – die Liste lebt.
+  // `exact`, weil der Titel auch in der Erfolgsmeldung darüber steht.
+  await expect(vater.getByText(EXERCISE, { exact: true })).toBeVisible();
 
   // ---------- 6. Lehrplan mit Position (inkl. Münz-Malus) ----------
   await vater.goto("/vater/plan/new");

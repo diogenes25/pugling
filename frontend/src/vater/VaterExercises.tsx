@@ -16,12 +16,16 @@ import { POS, POS_LABEL } from "../lib/vocab";
 // Die typ-spezifische Inhalts-Maschinerie ist mit dem Bearbeiten-Dialog geteilt: Schreiben (buildTypeConfig)
 // und Zurücklesen (configToEditorState) müssen zueinander passen, sonst verliert Bearbeiten Inhalte.
 import {
-  ConfigEditor, TYPE_LABEL, TYPE_ROUTE, VOCAB_FORMS, buildTypeConfig, emptyExtra, emptyRow,
-  firstRowIncomplete, isKnownType, type Row,
+  AUTHORABLE_TYPES, ConfigEditor, VOCAB_FORMS, buildTypeConfig, contentProblem, emptyExtra, emptyRow,
+  isKnownType, type Row,
 } from "./exerciseConfig";
+import { useExerciseTypes } from "../lib/exerciseTypes";
 
 export function VaterExercises() {
   const subjects = useAsync<SubjectResponse[]>(() => api.subjects(), []);
+  // Routen-Segment und Anzeigename der Typen kommen vom Server (Typ-Manifest), nicht aus einer Tabelle hier.
+  const types = useExerciseTypes();
+  const typeLabel = (t: string) => types?.label(t) ?? t;
 
   const [subjectId, setSubjectId] = useState<number | "">("");
   const [newSubject, setNewSubject] = useState("");
@@ -29,6 +33,9 @@ export function VaterExercises() {
   const [newChapter, setNewChapter] = useState("");
 
   const [type, setType] = useState<ExerciseTypeKey>("Vocabulary");
+  // Routen-Segment des gewählten Typs. `null`, solange das Manifest lädt oder der Server den Typ nicht
+  // führt – dann bleibt das Anlegen gesperrt, statt gegen eine geratene Route zu posten.
+  const route = types?.route(type) ?? null;
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [rewardPoints, setRewardPoints] = useState(10);
@@ -129,7 +136,11 @@ export function VaterExercises() {
     if (!subjectId) { setError("Bitte ein Fach wählen oder anlegen."); return; }
     if (!chapterId) { setError("Bitte ein Kapitel wählen oder anlegen."); return; }
     if (!title.trim()) { setError("Bitte einen Titel angeben."); return; }
-    if (firstRowIncomplete(type, rows, extra, vocabRefs.length)) { setError("Bitte mindestens einen vollständigen Inhalt angeben."); return; }
+    // Die Meldung kommt aus der Typ-Prüfung: sie nennt, WAS fehlt (bei zwölf Typen sagt ein
+    // Sammelsatz wie „Inhalt angeben" zu wenig).
+    const problem = contentProblem(type, rows, extra, vocabRefs.length);
+    if (problem) { setError(problem); return; }
+    if (!route) { setError("Diesen Übungstyp kennt der Server nicht."); return; }
 
     setBusy(true);
     try {
@@ -154,7 +165,7 @@ export function VaterExercises() {
         defaultStage: type === "Vocabulary" && defaultStage !== "" ? Number(defaultStage) : null,
         defaultItemCount: defaultItemCount === "" ? null : Number(defaultItemCount),
       };
-      const created = await api.createExercise(Number(subjectId), Number(chapterId), TYPE_ROUTE[type], payload);
+      const created = await api.createExercise(Number(subjectId), Number(chapterId), route, payload);
       setOkMsg(`Übung „${payload.title}" angelegt.`);
       setJustCreated({ id: created.id, title: payload.title });
       setTitle("");
@@ -217,7 +228,7 @@ export function VaterExercises() {
           <div className="field">
             <label>Übungstyp</label>
             <select aria-label="Übungstyp" value={type} onChange={(e) => setType(e.target.value as ExerciseTypeKey)}>
-              {(Object.keys(TYPE_ROUTE) as ExerciseTypeKey[]).map((t) => <option key={t} value={t}>{TYPE_LABEL[t]}</option>)}
+              {AUTHORABLE_TYPES.map((t) => <option key={t} value={t}>{typeLabel(t)}</option>)}
             </select>
           </div>
           <div className="field"><label htmlFor="ex-title">Titel</label><input id="ex-title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="z. B. Vokabeln Unit 1" /></div>
@@ -264,7 +275,7 @@ export function VaterExercises() {
 
       {/* Typ-spezifischer Inhalts-Editor */}
       <section className="card">
-        <h3 style={{ marginTop: 0 }}>Inhalt · {TYPE_LABEL[type]}</h3>
+        <h3 style={{ marginTop: 0 }}>Inhalt · {typeLabel(type)}</h3>
         {type === "Vocabulary"
           ? <VocabRefPicker selected={vocabRefs} setSelected={setVocabRefs} extra={extra} setExtra={setExtra} />
           : <ConfigEditor type={type} rows={rows} extra={extra} setExtra={setExtra}
@@ -282,7 +293,7 @@ export function VaterExercises() {
         </div>
       )}
 
-      <button type="submit" className="btn" style={{ width: "auto", alignSelf: "flex-start" }} disabled={busy}>
+      <button type="submit" className="btn" style={{ width: "auto", alignSelf: "flex-start" }} disabled={busy || !route}>
         {busy ? "…" : "Übung anlegen"}
       </button>
 
@@ -309,7 +320,8 @@ export function VaterExercises() {
             : (existing.data?.items.length ?? 0) === 0 ? <div className="muted">Noch keine Übungen.</div> : (
             <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
               {existing.data?.items.map((e) => (
-                <ExerciseManageRow key={e.id} exercise={e} subjectId={Number(subjectId)} onChanged={existing.reload}
+                <ExerciseManageRow key={e.id} exercise={e} subjectId={Number(subjectId)}
+                  route={types?.route(e.type) ?? null} label={typeLabel(e.type)} onChanged={existing.reload}
                   onPreview={() => setPreview({ id: e.id, title: e.title })} onEdit={() => setEditing(e)} />
               ))}
             </div>
@@ -472,14 +484,19 @@ function VocabRefPicker({ selected, setSelected, extra, setExtra }: {
 }
 
 /** Eine Zeile der Kapitel-Übungsliste mit Verwendungs-Anzeige, Testmodus und Löschen (409-bewusst). */
-function ExerciseManageRow({ exercise, subjectId, onChanged, onPreview, onEdit }: {
-  exercise: ExerciseSummary; subjectId: number; onChanged: () => void; onPreview: () => void; onEdit: () => void;
+function ExerciseManageRow({ exercise, subjectId, route, label, onChanged, onPreview, onEdit }: {
+  exercise: ExerciseSummary; subjectId: number;
+  /** Routen-Segment des Typs aus dem Manifest; `null` = der Server kennt den Typ nicht. */
+  route: string | null;
+  label: string;
+  onChanged: () => void; onPreview: () => void; onEdit: () => void;
 }) {
   const [usage, setUsage] = useState<ExerciseUsage | null>(null);
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
-  const known = isKnownType(exercise.type);
+  // Bearbeitbar nur, wenn diese UI einen Editor hat UND der Server eine Route dafür nennt.
+  const known = isKnownType(exercise.type) && route !== null;
 
   async function toggleUsage() {
     if (open) { setOpen(false); return; }
@@ -490,7 +507,7 @@ function ExerciseManageRow({ exercise, subjectId, onChanged, onPreview, onEdit }
   async function remove() {
     if (!confirmAction("Diese Übung wirklich löschen? Zuordnungen in Lehrplänen können betroffen sein.")) return;
     setBusy(true); setErr(null);
-    try { await api.deleteExercise(subjectId, exercise.chapterId, TYPE_ROUTE[exercise.type as ExerciseTypeKey] ?? "", exercise.id); onChanged(); }
+    try { await api.deleteExercise(subjectId, exercise.chapterId, route!, exercise.id); onChanged(); }
     catch (e) { setErr(errorMessage(e)); setBusy(false); }
   }
 
@@ -498,15 +515,15 @@ function ExerciseManageRow({ exercise, subjectId, onChanged, onPreview, onEdit }
     <div style={{ border: "1px solid var(--stroke)", borderRadius: 8, padding: "6px 10px" }}>
       <div className="row" style={{ alignItems: "center", gap: 8 }}>
         <span>{exercise.title}</span>
-        <span className="muted">· {TYPE_LABEL[exercise.type as ExerciseTypeKey] ?? exercise.type}</span>
+        <span className="muted">· {label}</span>
         {/* Attribution der geteilten Bibliothek: eigene vs. von anderen Vätern erstellt vs. System. */}
         <ExerciseAttribution e={exercise} />
         <span style={{ marginLeft: "auto" }} />
         <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} onClick={onPreview}>🧪 Ausprobieren</button>
         {/*
           Bearbeiten und Löschen brauchen Schreibrecht (isOwn = Owner oder Write-Grant) UND einen Typ, den
-          dieses UI kennt: das Routen-Segment kommt aus TYPE_ROUTE, und für die übrigen Backend-Typen
-          (Reading, Grammar, Translation …) gäbe es keins – die Aufrufe liefen ins Leere.
+          diese UI mit einem Editor bedienen kann. Das Routen-Segment kommt aus dem Typ-Manifest; fehlt es,
+          liefen die Aufrufe ins Leere.
         */}
         {exercise.isOwn && known && (
           <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} onClick={onEdit}>✏️ Bearbeiten</button>

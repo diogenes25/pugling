@@ -9,9 +9,10 @@ import type {
 } from "../lib/types";
 import { LANGUAGES } from "../lib/languages";
 import {
-  ConfigEditor, TYPE_LABEL, TYPE_ROUTE, VOCAB_FORMS, buildTypeConfig, configToEditorState, emptyRow,
-  firstRowIncomplete, isContentEditable, type Row,
+  ConfigEditor, VOCAB_FORMS, buildTypeConfig, configToEditorState, contentProblem, emptyRow,
+  isContentEditable, type Row,
 } from "./exerciseConfig";
+import { useExerciseTypes } from "../lib/exerciseTypes";
 
 /**
  * Eine bestehende Übung ändern. Ohne diesen Dialog wäre ein Tippfehler nur durch Löschen und Neuanlegen
@@ -33,6 +34,9 @@ export function ExerciseEditModal({ exercise, onClose, onSaved }: {
   onSaved: () => void;
 }) {
   const type = exercise.type as ExerciseTypeKey;
+  const types = useExerciseTypes();
+  const typeLabel = types?.label(type) ?? type;
+  const route = types?.route(type) ?? null;
   const [detail, setDetail] = useState<ExerciseDetail | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
 
@@ -44,7 +48,7 @@ export function ExerciseEditModal({ exercise, onClose, onSaved }: {
     <Modal label={`Übung bearbeiten: ${exercise.title}`} onClose={onClose} maxWidth={720}>
       <div className="row" style={{ alignItems: "center", gap: 8 }}>
         <h3 style={{ margin: 0 }}>✏️ Bearbeiten · {exercise.title}</h3>
-        <span className="muted">{TYPE_LABEL[type] ?? exercise.type}</span>
+        <span className="muted">{typeLabel}</span>
         <button type="button" className="btn ghost inline-btn" style={{ width: "auto", marginLeft: "auto" }}
           onClick={onClose} aria-label="Schließen">×</button>
       </div>
@@ -55,7 +59,7 @@ export function ExerciseEditModal({ exercise, onClose, onSaved }: {
         <>
           {type === "Vocabulary" && <ItemEditor detail={detail} />}
           {type !== "Vocabulary" && isContentEditable(type) && (
-            <ContentEditor detail={detail} type={type} onSaved={onSaved} />
+            <ContentEditor detail={detail} type={type} route={route!} onSaved={onSaved} />
           )}
           {type !== "Vocabulary" && !isContentEditable(type) && (
             <div className="banner">
@@ -64,7 +68,7 @@ export function ExerciseEditModal({ exercise, onClose, onSaved }: {
               Beschreibung und Einordnung lassen sich unten ändern.
             </div>
           )}
-          <MetaEditor detail={detail} type={type} onSaved={onSaved} />
+          <MetaEditor detail={detail} type={type} route={route!} onSaved={onSaved} />
         </>
       )}
     </Modal>
@@ -146,7 +150,9 @@ function langsOf(d: ExerciseDetail): { sourceLang: string; targetLang: string } 
   return { sourceLang: c.sourceLang ?? "", targetLang: c.targetLang ?? "" };
 }
 
-function MetaEditor({ detail, type, onSaved }: { detail: ExerciseDetail; type: ExerciseTypeKey; onSaved: () => void }) {
+function MetaEditor({ detail, type, route, onSaved }: {
+  detail: ExerciseDetail; type: ExerciseTypeKey; route: string; onSaved: () => void;
+}) {
   const [form, setForm] = useState<MetaForm>(() => initialForm(detail));
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
@@ -165,7 +171,7 @@ function MetaEditor({ detail, type, onSaved }: { detail: ExerciseDetail; type: E
         ? { ...(detail.config as Record<string, unknown>),
             sourceLang: form.sourceLang || null, targetLang: form.targetLang || null }
         : detail.config;
-      await api.updateExercise(detail.subjectId, detail.chapterId, TYPE_ROUTE[type], detail.id,
+      await api.updateExercise(detail.subjectId, detail.chapterId, route, detail.id,
         payloadFrom(detail, form, config));
       setMsg({ ok: true, text: "Gespeichert." });
       onSaved();
@@ -269,7 +275,9 @@ function MetaEditor({ detail, type, onSaved }: { detail: ExerciseDetail; type: E
  * derselbe wie beim Anlegen; vorbelegt wird über `configToEditorState` – die Gegenrichtung zu
  * `buildTypeConfig`.
  */
-function ContentEditor({ detail, type, onSaved }: { detail: ExerciseDetail; type: ExerciseTypeKey; onSaved: () => void }) {
+function ContentEditor({ detail, type, route, onSaved }: {
+  detail: ExerciseDetail; type: ExerciseTypeKey; route: string; onSaved: () => void;
+}) {
   const initial = configToEditorState(type, detail.config);
   const [rows, setRows] = useState<Row[]>(initial.rows);
   const [extra, setExtra] = useState<Row>(initial.extra);
@@ -282,10 +290,11 @@ function ContentEditor({ detail, type, onSaved }: { detail: ExerciseDetail; type
 
   async function save() {
     setMsg(null);
-    if (firstRowIncomplete(type, rows, extra, 0)) { setMsg({ ok: false, text: "Bitte mindestens einen vollständigen Inhalt angeben." }); return; }
+    const problem = contentProblem(type, rows, extra, 0);
+    if (problem) { setMsg({ ok: false, text: problem }); return; }
     setBusy(true);
     try {
-      await api.updateExercise(detail.subjectId, detail.chapterId, TYPE_ROUTE[type], detail.id,
+      await api.updateExercise(detail.subjectId, detail.chapterId, route, detail.id,
         payloadFrom(detail, initialForm(detail), buildTypeConfig(type, rows, extra)));
       setMsg({ ok: true, text: "Inhalt gespeichert." });
       onSaved();
@@ -298,7 +307,7 @@ function ContentEditor({ detail, type, onSaved }: { detail: ExerciseDetail; type
 
   return (
     <section>
-      <h4 className="h-section" style={{ fontSize: 16 }}>Inhalt · {TYPE_LABEL[type]}</h4>
+      <h4 className="h-section" style={{ fontSize: 16 }}>Inhalt</h4>
       <ConfigEditor type={type} rows={rows} extra={extra} setExtra={setExtra}
         patchRow={patchRow} addRow={addRow} removeRow={removeRow} />
       <button type="button" className="btn inline-btn" style={{ width: "auto", marginTop: 10 }} disabled={busy} onClick={save}>
