@@ -13,6 +13,7 @@ import { SohnShop } from "./SohnShop";
 import { SohnKonto } from "./SohnKonto";
 import { Mascot } from "../components/Mascot";
 import { CelebrationLayer, useCelebration } from "../components/Celebration";
+import { RemarkWidget } from "../components/RemarkWidget";
 import { isMuted, setMuted } from "../lib/feedback";
 
 interface SohnContextValue {
@@ -125,6 +126,10 @@ function SohnShell({ childId }: { childId: number }) {
           <NavLink to="/sohn/shop"><span className="ic" aria-hidden="true">🛒</span>Shop</NavLink>
           <NavLink to="/sohn/skins"><span className="ic" aria-hidden="true">🎭</span>Skins</NavLink>
         </nav>
+
+        {/* Anmerkungen beim Testen – nur im Dev-Modus, im Prod-Bundle wegoptimiert. Der Abstand hält
+            die Arcade-Navigation frei: Bei 12px läge das Widget darüber und finge deren Klicks ab. */}
+        {import.meta.env.DEV && <RemarkWidget bottomOffset={96} />}
       </div>
     </SohnContext.Provider>
   );

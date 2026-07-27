@@ -109,4 +109,9 @@ eigenständige, dateibasierte Welt.
 - **Konventionen:** siehe [CLAUDE.md](CLAUDE.md) — dünne Controller, Logik in Services, `record`-DTOs,
   deutsche `/// <summary>`-Docs, Guard Clauses zuerst, `ProblemDetails` für Fehler, EF-Migrationen.
 - **Neuen Übungstyp anlegen:** [wiki/08-erweitern.md](wiki/08-erweitern.md) oder Skill `/neuer-uebungstyp`.
-- **Tests:** `dotnet test` (`backend/Pugling.Api.Tests`).
+- **Tests:** `dotnet test` (`backend/Pugling.Api.Tests`) · Frontend: `npm test` (Vitest) und
+  `npm run test:e2e` (Playwright), beides aus `frontend/`.
+- **Beim Testen etwas bemerkt?** Widget mit **Alt+A** (nur im Dev-Modus, Vater-Web und Sohn-Arcade):
+  Text eintippen, Log-Id merken, danach in Claude Code „Beantworte die Frage 123". Route, Kind/Übung und
+  die letzten fehlgeschlagenen Requests werden automatisch mitgeschrieben.
+  → [docs/anmerkungen-plan.md](docs/anmerkungen-plan.md)

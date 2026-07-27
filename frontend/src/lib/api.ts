@@ -27,7 +27,9 @@ import type {
   SeriesUnitResponse, CreateSeriesUnitDto, UpdateSeriesUnitDto,
   CreatorProfileResponse, CreateCreatorProfileDto, UpdateCreatorProfileDto, CreatorProfileMatch,
   TextbookResponse, CreateTextbookDto, UpdateTextbookDto,
+  Remark, CreateRemarkDto, UpdateRemarkDto,
 } from "./types";
+import { recordHttpError, recordNetworkError } from "./remarks";
 
 const TOKEN_KEY = "pugling.token";
 
@@ -79,13 +81,21 @@ async function request(url: string, method: string, body?: unknown): Promise<Res
   if (body !== undefined) headers["Content-Type"] = "application/json";
   if (token) headers["Authorization"] = `Bearer ${token}`;
 
-  const res = await fetch(url, {
-    method,
-    headers,
-    body: body !== undefined ? JSON.stringify(body) : undefined,
-  });
+  let res: Response;
+  try {
+    res = await fetch(url, {
+      method,
+      headers,
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+    });
+  } catch (e) {
+    // Der Server wurde gar nicht erreicht (offline, DNS, Abbruch) – für eine spätere Bug-Anmerkung
+    // ist gerade das die Information. Nur Methode/Pfad/Meldung, nie der Body.
+    recordNetworkError(method, url, e instanceof Error ? e.message : String(e));
+    throw e;
+  }
 
-  return throwIfFailed(res);
+  return throwIfFailed(res, method, url);
 }
 
 /**
@@ -97,11 +107,23 @@ async function requestForm(url: string, form: FormData): Promise<Response> {
   const token = getToken();
   const headers: Record<string, string> = {};
   if (token) headers["Authorization"] = `Bearer ${token}`;
-  return throwIfFailed(await fetch(url, { method: "POST", headers, body: form }));
+  let res: Response;
+  try {
+    res = await fetch(url, { method: "POST", headers, body: form });
+  } catch (e) {
+    recordNetworkError("POST", url, e instanceof Error ? e.message : String(e));
+    throw e;
+  }
+  return throwIfFailed(res, "POST", url);
 }
 
-/** Die geteilte RFC-7807-Auswertung: aus einer Fehlerantwort einen {@link ApiError} mit Code/TraceId machen. */
-async function throwIfFailed(res: Response): Promise<Response> {
+/**
+ * Die geteilte RFC-7807-Auswertung: aus einer Fehlerantwort einen {@link ApiError} mit Code/TraceId machen.
+ *
+ * `url` wird durchgereicht statt aus `res.url` gelesen: Das ist bei opaken und synthetischen Responses
+ * leer, der Fehler-Ringpuffer protokollierte dann nur „/" statt des Endpunkts.
+ */
+async function throwIfFailed(res: Response, method: string, url: string): Promise<Response> {
   if (!res.ok) {
     const raw = await res.text().catch(() => "");
     // Die API antwortet einheitlich als application/problem+json (RFC 7807): detail/title als
@@ -122,6 +144,9 @@ async function throwIfFailed(res: Response): Promise<Response> {
     // Nur wenn überhaupt ein Token im Spiel war: ein 401 auf dem Login-Endpunkt bedeutet „PIN falsch",
     // nicht „Sitzung abgelaufen" – dort soll die Meldung im Formular stehen bleiben.
     if (res.status === 401 && getToken()) onUnauthorized?.();
+    // Für eine spätere Bug-Anmerkung festhalten – ausschließlich Metadaten (Methode, Pfad ohne Query,
+    // Status, Code). Weder `raw` noch `message` gehen in den Puffer: Sie stammen aus dem Antwort-Body.
+    recordHttpError(method, url, res.status, code);
     throw new ApiError(res.status, message, traceId, code);
   }
   return res;
@@ -772,4 +797,14 @@ export const api = {
     http<SelectedMediaResponse>(
       `${V1}/student/study-plans/${planId}/positions/${positionId}/practice-sessions/${sessionId}/cards/${itemIndex}/image/reshuffle`,
       "POST", {}),
+
+  // ---- Anmerkungen beim Testen ----
+  // Bewusst tier-neutral (kein creator/supervisor/student-Präfix): Dieselbe Ressource wird aus dem
+  // Vater-Web und aus der Sohn-Arcade bedient – die Trennung macht der Server über die Sichtbarkeit.
+
+  createRemark: (dto: CreateRemarkDto) => http<Remark>(`${V1}/remarks`, "POST", dto),
+  /** Die eigenen letzten Anmerkungen – `mine` blendet die des Kindes aus, die im Widget nur stören. */
+  myRemarks: (take = 10) => httpPaged<Remark>(`${V1}/remarks?mine=true&take=${take}`),
+  updateRemark: (id: number, dto: UpdateRemarkDto) => http<Remark>(`${V1}/remarks/${id}`, "PATCH", dto),
+  deleteRemark: (id: number) => http<void>(`${V1}/remarks/${id}`, "DELETE"),
 };

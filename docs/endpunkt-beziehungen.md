@@ -17,6 +17,7 @@ Lernstand wieder aus. Alle Routen unter `api/v1/…`. Konzept-Hintergrund:
 - [Übung ↔ Lehrplan](#1-übung--lehrplan-über-positionen) – warum Pläne Übungen referenzieren statt kopieren.
 - [Buchreihe → Kind → Creator-Profil](#woher-der-stoff-kommt-buchreihe--kind--creator-profil) – welcher Stoff dran ist und wer ihn kennt.
 - [Lehrplan ↔ Kind](#2-lehrplan--kind) – `StudyPlan.ChildId`, Rollenfilter und spielbarer Plan.
+- [Anmerkungen beim Testen](#daneben-anmerkungen-beim-testen-apiv1remarks) – die Ressource neben der Kette.
 - [Durchstich Vater→Sohn](#durchstich-vater-weist-zu--sohn-sieht-denselben-plan) – konkrete Request/Response-Kette.
 - [Übung ↔ Auswertung](#3-übung--auswertung-des-kindes) – positionsgebundener und kindweiter Lernstand.
 - [Lernziele](#4-lernziele-ergebnis-ziele-auf-der-auswertung) – Vater-Ziele auf Live-Auswertung.
@@ -676,6 +677,33 @@ sucht/erstellt passende Katalog-Übungen und hängt sie wieder als neue `PlanPos
 Vollständige Beispiel-Requests: [wiki/04 · Lernplan bauen](../wiki/04-lernplan-bauen.md) (Vater),
 [wiki/06 · Sohn-App](../wiki/06-sohn-app.md) (Sohn); verifizierte Responses unter
 [docs/api-examples/](api-examples/index.md).
+
+---
+
+## Daneben: Anmerkungen beim Testen (`api/v1/remarks`)
+
+Die einzige Ressource, die **außerhalb** dieser Kette steht – und bewusst außerhalb der Drei-Ebenen-Route
+(wie `auth/…`): Sie gehört keiner Ebene, weil derselbe Mensch sie mal aus dem Vater-Web, mal aus der
+Sohn-Arcade erfasst. Sie beschreibt nicht den Lernstoff, sondern die **Beobachtung beim Testen des Produkts**.
+
+| Endpunkt | Wozu |
+| --- | --- |
+| `POST remarks` | Erfassen (Widget, Alt+A). Antwort trägt die **Id** – damit geht man zu Claude Code. |
+| `GET remarks?mine=true` | Die eigene Liste (Widget). Ohne `mine` sieht ein Supervisor auch die des Kindes. |
+| `GET remarks/{id}` | Einstieg für „Beantworte die Frage 123". |
+| `PATCH remarks/{id}` | Antwort zurückschreiben, Stand setzen (`Open`/`Planned`/`Done`/`Rejected`). |
+| `GET remarks/export` | Markdown-Schnappschuss nach [docs/anmerkungen/](anmerkungen/README.md) – Supervisor-only. |
+
+**Zusammenhang:** Der Wert steckt nicht im Text, sondern im **automatisch mitgeschnittenen Kontext**
+(Route, Kind/Übung/Plan/Position, letzte fehlgeschlagene Requests). Die Kontext-Bezüge zeigen also *in*
+die obige Kette hinein, ohne Teil von ihr zu sein – und sie sind alle `SetNull` bzw. werden beim Anlegen
+still verworfen, wenn sie ins Leere zeigen: Der Kontext darf verblassen, er darf das Erfassen nie
+blockieren. **Sichtbarkeit:** Ein Student sieht ausschließlich eigene Anmerkungen (Antworten tragen
+Datei-/Zeilenverweise), ein Supervisor zusätzlich die der betreuten Kinder.
+
+Der Export ist zugleich die einzige Brücke zu den Rollen-Skills: `creator`/`supervisor`/`student` laufen
+gegen eine Wegwerf-DB und sehen die echten Anmerkungen nur als Datei im Repo.
+Details: [docs/anmerkungen-plan.md](anmerkungen-plan.md).
 
 **Verwandt:** [docs/obsidian.md](obsidian.md) · [wiki/01 · Überblick](../wiki/01-ueberblick-architektur.md) ·
 [wiki/02 · Auth & Rollen](../wiki/02-authentifizierung.md) · [wiki/04 · Lernplan bauen](../wiki/04-lernplan-bauen.md) ·

@@ -106,6 +106,8 @@ public static class ApiErrors
     public static readonly ApiError TimetableSlotTaken = new("timetable_slot_taken", 409, "Timetable slot already taken.");
     /// <summary>Die Übung trägt einen Typ-Schlüssel, den die <see cref="Exercises.ExerciseTypeRegistry"/> nicht kennt – Datenintegritätsfehler, kein Nutzerfehler (500).</summary>
     public static readonly ApiError UnknownExerciseType = new("unknown_exercise_type", 500, "The exercise has an unknown type.");
+    /// <summary>Anmerkung existiert nicht oder ist für den Aufrufer nicht sichtbar (404).</summary>
+    public static readonly ApiError RemarkNotFound = new("remark_not_found", 404, "Remark not found.");
 
     /// <summary>
     /// Alle bekannten Codes (per Reflection über die Felder, einmalig materialisiert). Speist das

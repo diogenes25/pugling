@@ -30,6 +30,13 @@ public static class ClaimsPrincipalExtensions
     public static int? FatherId(this ClaimsPrincipal u) => int.TryParse(u.FindFirstValue("fid"), out var v) ? v : null;
     public static int? ChildId(this ClaimsPrincipal u) => int.TryParse(u.FindFirstValue("cid"), out var v) ? v : null;
 
+    /// <summary>
+    /// Das Konto selbst (Claim <c>aid</c>) – rollenunabhängig. Nötig überall dort, wo nicht die Ebene
+    /// zählt, sondern die Person: etwa die Autorschaft einer Anmerkung, die derselbe Mensch mal als
+    /// Supervisor und mal als Student erfasst.
+    /// </summary>
+    public static int? AccountId(this ClaimsPrincipal u) => int.TryParse(u.FindFirstValue("aid"), out var v) ? v : null;
+
     // Ebenen-Rollen und ihre Ziel-IDs.
     public static bool IsCreator(this ClaimsPrincipal u) => u.IsInRole(Roles.Creator);
     public static bool IsSupervisor(this ClaimsPrincipal u) => u.IsInRole(Roles.Supervisor);

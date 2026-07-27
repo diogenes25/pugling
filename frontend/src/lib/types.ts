@@ -1848,3 +1848,63 @@ export interface SkinState {
   selected: string;
   owned: string[];
 }
+
+// ---- Anmerkungen beim Testen (api/v1/remarks) ----
+
+/** Einordnung einer Anmerkung. `Unspecified` ist der Regelfall – der Nachbereitungs-Skill zieht sie nach. */
+export type RemarkCategory = "Unspecified" | "Bug" | "Ui" | "Code" | "Content" | "Idea" | "Question";
+
+/** Bearbeitungsstand einer Anmerkung. */
+export type RemarkStatus = "Open" | "Planned" | "Done" | "Rejected";
+
+/** Der Kontext-Schnappschuss, den das Widget automatisch mitschickt. */
+export interface RemarkContext {
+  route: string | null;
+  appArea: string | null;
+  childId: number | null;
+  exerciseId: number | null;
+  studyPlanId: number | null;
+  planPositionId: number | null;
+  contextJson: string | null;
+  /** Fehler-Ringpuffer – ausschließlich Metadaten, nie Bodies/Header/Tokens (siehe `lib/remarks.ts`). */
+  recentErrorsJson: string | null;
+}
+
+/** Eine Anmerkung, wie der Server sie ausliefert. */
+export interface Remark {
+  /** Die „Log-Id", die du mitnimmst: „Beantworte die Frage 123". */
+  id: number;
+  text: string;
+  category: RemarkCategory;
+  status: RemarkStatus;
+  /** Antwort aus Claude Code – bleibt auch bei `Planned` erhalten. */
+  answer: string | null;
+  answeredAt: string | null;
+  answeredBy: string | null;
+  parentRemarkId: number | null;
+  accountId: number;
+  authorRole: string;
+  /** Ob die Anmerkung vom eigenen Konto stammt. */
+  isOwn: boolean;
+  context: RemarkContext;
+  userAgent: string | null;
+  createdAt: string;
+}
+
+/** Was beim Erfassen zum Server geht. Pflicht ist allein der Text. */
+export interface CreateRemarkDto {
+  text: string;
+  category?: RemarkCategory;
+  context?: Partial<RemarkContext>;
+  parentRemarkId?: number;
+}
+
+/** Änderungen an einer Anmerkung. `null`/weglassen = „nicht angegeben"; geleert wird über `clear…`. */
+export interface UpdateRemarkDto {
+  text?: string;
+  category?: RemarkCategory;
+  status?: RemarkStatus;
+  answer?: string;
+  answeredBy?: string;
+  clearAnswer?: boolean;
+}

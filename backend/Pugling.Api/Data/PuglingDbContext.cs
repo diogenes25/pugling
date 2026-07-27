@@ -102,6 +102,9 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
     public DbSet<KlassenarbeitExercise> KlassenarbeitExercises => Set<KlassenarbeitExercise>();
     public DbSet<KlassenarbeitTag> KlassenarbeitTags => Set<KlassenarbeitTag>();
 
+    // Anmerkungen beim Testen (Erfassung im UI-Widget, Beantwortung durch Claude Code)
+    public DbSet<Remark> Remarks => Set<Remark>();
+
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -670,6 +673,25 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
             e.HasIndex(x => new { x.KlassenarbeitId, x.TagId }).IsUnique();
             e.HasOne(x => x.Klassenarbeit).WithMany(k => k.Tags).HasForeignKey(x => x.KlassenarbeitId).OnDelete(DeleteBehavior.Cascade);
             e.HasOne(x => x.Tag).WithMany().HasForeignKey(x => x.TagId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // Anmerkung: Der Autor bindet (Cascade – ohne Konto gibt es niemanden, dem die Notiz gehört).
+        // Jeder Kontext-Bezug dagegen SetNull: Ein gelöschtes Kind, eine gelöschte Übung oder eine
+        // gelöschte Vorgänger-Anmerkung darf das Löschen nicht blockieren – der Kontext darf verblassen,
+        // die Beobachtung bleibt. Rolle als String (lesbar/stabil, wie beim AccountProfile).
+        modelBuilder.Entity<Remark>(e =>
+        {
+            e.Property(r => r.AuthorRole).HasConversion<string>();
+            e.HasOne(r => r.Account).WithMany().HasForeignKey(r => r.AccountId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(r => r.Child).WithMany().HasForeignKey(r => r.ChildId).OnDelete(DeleteBehavior.SetNull);
+            e.HasOne(r => r.Exercise).WithMany().HasForeignKey(r => r.ExerciseId).OnDelete(DeleteBehavior.SetNull);
+            e.HasOne(r => r.StudyPlan).WithMany().HasForeignKey(r => r.StudyPlanId).OnDelete(DeleteBehavior.SetNull);
+            e.HasOne(r => r.PlanPosition).WithMany().HasForeignKey(r => r.PlanPositionId).OnDelete(DeleteBehavior.SetNull);
+            e.HasOne(r => r.ParentRemark).WithMany().HasForeignKey(r => r.ParentRemarkId).OnDelete(DeleteBehavior.SetNull);
+            // Die beiden Wege, auf denen gelesen wird: die eigene Liste im Widget (neueste zuerst)
+            // und der Export/Nachbereitungs-Skill, der die offenen Anmerkungen holt.
+            e.HasIndex(r => new { r.AccountId, r.CreatedAt });
+            e.HasIndex(r => r.Status);
         });
     }
 }
