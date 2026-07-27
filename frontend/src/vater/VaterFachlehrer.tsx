@@ -1,5 +1,7 @@
 import { Fragment, useState } from "react";
-import { api, errorMessage } from "../lib/api";
+import { StatusBanner } from "../components/StatusBanner";
+import { api } from "../lib/api";
+import { useAction } from "../lib/useAction";
 import { SCHOOL_TYPES } from "../lib/labels";
 import { confirmAction } from "../lib/ui";
 import { useAsync } from "../lib/useAsync";
@@ -142,8 +144,7 @@ function ProfileForm({ profile, subjects, series, onDone }: {
     active: profile?.active ?? true,
   });
   const [types, setTypes] = useState<string[]>(profile?.defaultTypes ?? []);
-  const [busy, setBusy] = useState(false);
-  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const action = useAction();
   const id = profile ? `p${profile.id}` : "new";
 
   function up<K extends keyof typeof form>(k: K, v: (typeof form)[K]) {
@@ -152,11 +153,11 @@ function ProfileForm({ profile, subjects, series, onDone }: {
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (!form.name.trim()) { setMsg({ ok: false, text: "Der Name fehlt." }); return; }
+    if (!form.name.trim()) { action.fail("Der Name fehlt."); return; }
     const min = form.gradeMin.trim() === "" ? null : Number(form.gradeMin);
     const max = form.gradeMax.trim() === "" ? null : Number(form.gradeMax);
     if (min != null && max != null && min > max) {
-      setMsg({ ok: false, text: "Die untere Klassenstufe darf nicht über der oberen liegen." });
+      action.fail("Die untere Klassenstufe darf nicht über der oberen liegen.");
       return;
     }
 
@@ -179,27 +180,23 @@ function ProfileForm({ profile, subjects, series, onDone }: {
       active: form.active,
     };
 
-    setBusy(true); setMsg(null);
-    try {
-      if (profile) {
-        // Beim Ändern muss „leer" ausdrücklich gesagt werden: der Server überliest `null` (= nicht
-        // angegeben), sonst blieben Fach, Reihe und Klassenstufen für immer gesetzt.
-        await api.updateCreatorProfile(profile.id, {
+    const ok = await action.run(() => (profile
+      // Beim Ändern muss „leer" ausdrücklich gesagt werden: der Server überliest `null` (= nicht
+      // angegeben), sonst blieben Fach, Reihe und Klassenstufen für immer gesetzt.
+      ? api.updateCreatorProfile(profile.id, {
           ...dto,
           clearSubject: dto.subjectId == null,
           clearSeries: dto.seriesId == null,
           clearGradeMin: min == null,
           clearGradeMax: max == null,
-        });
-      } else {
-        await api.createCreatorProfile(dto);
-        setForm({ ...form, name: "", persona: "", didactics: "" });
-        setTypes([]);
-      }
-      setMsg({ ok: true, text: profile ? "Gespeichert." : "Fachlehrer angelegt." });
-      onDone();
-    } catch (err) { setMsg({ ok: false, text: errorMessage(err) }); }
-    finally { setBusy(false); }
+        })
+      : api.createCreatorProfile(dto)), profile ? "Gespeichert." : "Fachlehrer angelegt.");
+    if (!ok) return;
+    if (!profile) {
+      setForm({ ...form, name: "", persona: "", didactics: "" });
+      setTypes([]);
+    }
+    onDone();
   }
 
   async function remove() {
@@ -207,9 +204,7 @@ function ProfileForm({ profile, subjects, series, onDone }: {
     if (!confirmAction(
       `Fachlehrer „${profile.name}" löschen? Bereits erzeugte Übungen bleiben erhalten – `
       + "das Profil ist die Werkbank, nicht der Besitzer.")) return;
-    setBusy(true);
-    try { await api.deleteCreatorProfile(profile.id); onDone(); }
-    catch (err) { setMsg({ ok: false, text: errorMessage(err) }); setBusy(false); }
+    if (await action.run(() => api.deleteCreatorProfile(profile.id))) onDone();
   }
 
   return (
@@ -310,17 +305,17 @@ function ProfileForm({ profile, subjects, series, onDone }: {
       </label>
 
       <div className="row" style={{ gap: 8 }}>
-        <button type="submit" className="btn inline-btn" style={{ width: "auto" }} disabled={busy}>
-          {busy ? "…" : profile ? "Speichern" : "Fachlehrer anlegen"}
+        <button type="submit" className="btn inline-btn" style={{ width: "auto" }} disabled={action.busy}>
+          {action.busy ? "Speichere…" : profile ? "Speichern" : "Fachlehrer anlegen"}
         </button>
         {profile && (
           <button
             type="button" className="btn ghost inline-btn" style={{ width: "auto", marginLeft: "auto" }}
-            disabled={busy} onClick={remove}
+            disabled={action.busy} onClick={remove}
           >Löschen</button>
         )}
       </div>
-      {msg && <div className={`banner ${msg.ok ? "ok" : "err"}`} role="status" aria-live="polite">{msg.text}</div>}
+      <StatusBanner message={action.message} style={{ marginTop: 0 }} />
     </form>
   );
 }

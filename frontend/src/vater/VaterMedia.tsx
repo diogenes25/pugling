@@ -1,5 +1,8 @@
 import { useRef, useState } from "react";
+import { InterestTagAdmin } from "./InterestTagAdmin";
+import { StatusBanner } from "../components/StatusBanner";
 import { api, errorMessage } from "../lib/api";
+import { useAction } from "../lib/useAction";
 import { useAsync } from "../lib/useAsync";
 import { confirmAction } from "../lib/ui";
 import type { ContentRating, MediaAssetResponse, MediaUsage } from "../lib/types";
@@ -30,6 +33,10 @@ export function VaterMedia() {
           Zu einem Motiv gehören mehrere Darstellungen – erst die Auswahl macht die Bebilderung
           individuell. Zugeordnet werden sie bei der Vokabel (Reiter <strong>Vokabeln</strong>).
         </p>
+
+        {/* Das Vokabular gehört hierher: es ist die Sprache, in der Bilder und Kind-Interessen
+            beschrieben werden – passen die Wörter nicht zusammen, findet die Auswahl nichts. */}
+        <InterestTagAdmin />
 
         <form
           className="row" style={{ gap: 8, marginBottom: 10 }}
@@ -69,8 +76,7 @@ function cardUrl(asset: MediaAssetResponse): string | null {
 function AssetRow({ asset, onChanged }: { asset: MediaAssetResponse; onChanged: () => void }) {
   const [usage, setUsage] = useState<MediaUsage[] | null>(null);
   const [tagInput, setTagInput] = useState("");
-  const [err, setErr] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
+  const action = useAction();
   const url = cardUrl(asset);
 
   async function remove() {
@@ -79,19 +85,16 @@ function AssetRow({ asset, onChanged }: { asset: MediaAssetResponse; onChanged: 
     const where = usage ?? await api.mediaUsage(asset.id).catch(() => []);
     const hint = where.length > 0 ? `\n\nZugeordnet an ${where.length} Stelle(n) – die Zuordnung geht mit.` : "";
     if (!confirmAction(`„${asset.description}" wirklich löschen?${hint}`)) return;
-    setBusy(true);
-    try { await api.deleteMedia(asset.id); onChanged(); }
-    catch (e) { setErr(errorMessage(e)); setBusy(false); }
+    if (await action.run(() => api.deleteMedia(asset.id))) onChanged();
   }
 
   async function addTags(e: React.FormEvent) {
     e.preventDefault();
     const tags = tagInput.split(",").map((t) => t.trim()).filter(Boolean);
     if (tags.length === 0) return;
-    setBusy(true); setErr(null);
-    try { await api.tagMedia(asset.id, tags); setTagInput(""); onChanged(); }
-    catch (e) { setErr(errorMessage(e)); }
-    finally { setBusy(false); }
+    if (!await action.run(() => api.tagMedia(asset.id, tags))) return;
+    setTagInput("");
+    onChanged();
   }
 
   return (
@@ -114,16 +117,16 @@ function AssetRow({ asset, onChanged }: { asset: MediaAssetResponse; onChanged: 
         <td>{asset.rating === "Everyone" ? <span className="pill lime">für alle</span> : <span className="pill mag">{asset.rating}</span>}</td>
         <td className="row" style={{ gap: 6, justifyContent: "flex-end" }}>
           <button
-            type="button" className="btn ghost small" style={{ width: "auto" }} disabled={busy}
+            type="button" className="btn ghost small" style={{ width: "auto" }} disabled={action.busy}
             onClick={async () => setUsage(usage ? null : await api.mediaUsage(asset.id))}
           >Wo benutzt?</button>
-          <button type="button" className="btn ghost small" style={{ width: "auto" }} disabled={busy} onClick={remove}>Löschen</button>
+          <button type="button" className="btn ghost small" style={{ width: "auto" }} disabled={action.busy} onClick={remove}>Löschen</button>
         </td>
       </tr>
-      {(usage || err) && (
+      {(usage || action.message) && (
         <tr>
           <td colSpan={5}>
-            {err && <div className="banner err">{err}</div>}
+            <StatusBanner message={action.message} style={{ marginTop: 0 }} />
             {usage && (usage.length === 0
               ? <p className="muted">Noch nirgends zugeordnet – so sieht es kein Kind.</p>
               : <ul className="muted">{usage.map((u) => <li key={`${u.carrier}-${u.carrierId}`}>{u.carrier}: {u.label}</li>)}</ul>)}

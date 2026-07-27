@@ -1,5 +1,7 @@
 import { useId, useState } from "react";
-import { api, errorMessage } from "../lib/api";
+import { StatusBanner } from "../components/StatusBanner";
+import { api } from "../lib/api";
+import { useAction } from "../lib/useAction";
 import { useAsync } from "../lib/useAsync";
 import { useChildSelection } from "../lib/useChildSelection";
 import { confirmAction } from "../lib/ui";
@@ -64,8 +66,7 @@ function MissionManager({ childId }: { childId: number }) {
   const [form, setForm] = useState<CreateMissionDto>({
     title: "", metric: "CorrectReviews", target: 10, period: "Daily", rewardPoints: 15,
   });
-  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
-  const [busy, setBusy] = useState(false);
+  const action = useAction();
 
   function up<K extends keyof CreateMissionDto>(k: K, v: CreateMissionDto[K]) {
     setForm((f) => ({ ...f, [k]: v }));
@@ -73,29 +74,20 @@ function MissionManager({ childId }: { childId: number }) {
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (!form.title.trim()) { setMsg({ ok: false, text: "Titel nötig." }); return; }
-    if (form.target <= 0) { setMsg({ ok: false, text: "Ziel muss positiv sein." }); return; }
-    setBusy(true);
-    try {
-      await api.createMission(childId, { ...form, title: form.title.trim() });
-      setMsg({ ok: true, text: `Mission „${form.title.trim()}" angelegt.` });
-      setForm((f) => ({ ...f, title: "" }));
-      list.reload();
-    } catch (err) {
-      setMsg({ ok: false, text: errorMessage(err) });
-    } finally {
-      setBusy(false);
-    }
+    const title = form.title.trim();
+    if (!title) { action.fail("Titel nötig."); return; }
+    if (form.target <= 0) { action.fail("Ziel muss positiv sein."); return; }
+    if (!await action.run(() => api.createMission(childId, { ...form, title }), `Mission „${title}" angelegt.`)) return;
+    setForm((f) => ({ ...f, title: "" }));
+    list.reload();
   }
 
   async function toggle(m: MissionDef) {
-    try { await api.updateMission(childId, m.id, { active: !m.active }); list.reload(); }
-    catch (err) { setMsg({ ok: false, text: errorMessage(err) }); }
+    if (await action.run(() => api.updateMission(childId, m.id, { active: !m.active }))) list.reload();
   }
   async function remove(m: MissionDef) {
     if (!confirmAction("Diese Mission wirklich löschen?")) return;
-    try { await api.deleteMission(childId, m.id); list.reload(); }
-    catch (err) { setMsg({ ok: false, text: errorMessage(err) }); }
+    if (await action.run(() => api.deleteMission(childId, m.id))) list.reload();
   }
 
   return (
@@ -116,9 +108,11 @@ function MissionManager({ childId }: { childId: number }) {
           </select></div>
         <div className="field" style={{ maxWidth: 120 }}><label htmlFor={`${uid}-reward`}>Belohnung 💎</label>
           <input id={`${uid}-reward`} type="number" min={0} value={form.rewardPoints} onChange={(e) => up("rewardPoints", Number(e.target.value))} /></div>
-        <button type="submit" className="btn inline-btn" style={{ width: "auto" }} disabled={busy}>{busy ? "…" : "Anlegen"}</button>
+        <button type="submit" className="btn inline-btn" style={{ width: "auto" }} disabled={action.busy}>
+          {action.busy ? "Lege an…" : "Anlegen"}
+        </button>
       </form>
-      {msg && <div role="status" aria-live="polite" className={`banner ${msg.ok ? "ok" : "err"}`} style={{ marginTop: 10 }}>{msg.text}</div>}
+      <StatusBanner message={action.message} style={{ marginTop: 10 }} />
 
       {list.loading ? <div className="loading">Lade…</div> : list.error ? <div className="banner err">{list.error}</div> : (
         <div style={{ overflowX: "auto", marginTop: 10 }}>
@@ -154,8 +148,7 @@ function AchievementManager({ childId }: { childId: number }) {
   const [form, setForm] = useState<CreateAchievementDto>({
     title: "", icon: "🏆", metric: "TestsPassed", threshold: 5, rewardPoints: 40,
   });
-  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
-  const [busy, setBusy] = useState(false);
+  const action = useAction();
 
   function up<K extends keyof CreateAchievementDto>(k: K, v: CreateAchievementDto[K]) {
     setForm((f) => ({ ...f, [k]: v }));
@@ -163,29 +156,23 @@ function AchievementManager({ childId }: { childId: number }) {
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (!form.title.trim()) { setMsg({ ok: false, text: "Titel nötig." }); return; }
-    if (form.threshold <= 0) { setMsg({ ok: false, text: "Schwelle muss positiv sein." }); return; }
-    setBusy(true);
-    try {
-      await api.createAchievement(childId, { ...form, title: form.title.trim(), icon: form.icon?.trim() || null });
-      setMsg({ ok: true, text: `Auszeichnung „${form.title.trim()}" angelegt.` });
-      setForm((f) => ({ ...f, title: "" }));
-      list.reload();
-    } catch (err) {
-      setMsg({ ok: false, text: errorMessage(err) });
-    } finally {
-      setBusy(false);
-    }
+    const title = form.title.trim();
+    if (!title) { action.fail("Titel nötig."); return; }
+    if (form.threshold <= 0) { action.fail("Schwelle muss positiv sein."); return; }
+    const ok = await action.run(
+      () => api.createAchievement(childId, { ...form, title, icon: form.icon?.trim() || null }),
+      `Auszeichnung „${title}" angelegt.`);
+    if (!ok) return;
+    setForm((f) => ({ ...f, title: "" }));
+    list.reload();
   }
 
   async function toggle(a: AchievementDef) {
-    try { await api.updateAchievement(childId, a.id, { active: !a.active }); list.reload(); }
-    catch (err) { setMsg({ ok: false, text: errorMessage(err) }); }
+    if (await action.run(() => api.updateAchievement(childId, a.id, { active: !a.active }))) list.reload();
   }
   async function remove(a: AchievementDef) {
     if (!confirmAction("Diese Auszeichnung wirklich löschen?")) return;
-    try { await api.deleteAchievement(childId, a.id); list.reload(); }
-    catch (err) { setMsg({ ok: false, text: errorMessage(err) }); }
+    if (await action.run(() => api.deleteAchievement(childId, a.id))) list.reload();
   }
 
   return (
@@ -204,9 +191,11 @@ function AchievementManager({ childId }: { childId: number }) {
           <input id={`${uid}-threshold`} type="number" min={1} value={form.threshold} onChange={(e) => up("threshold", Number(e.target.value))} /></div>
         <div className="field" style={{ maxWidth: 120 }}><label htmlFor={`${uid}-reward`}>Belohnung 💎</label>
           <input id={`${uid}-reward`} type="number" min={0} value={form.rewardPoints} onChange={(e) => up("rewardPoints", Number(e.target.value))} /></div>
-        <button type="submit" className="btn inline-btn" style={{ width: "auto" }} disabled={busy}>{busy ? "…" : "Anlegen"}</button>
+        <button type="submit" className="btn inline-btn" style={{ width: "auto" }} disabled={action.busy}>
+          {action.busy ? "Lege an…" : "Anlegen"}
+        </button>
       </form>
-      {msg && <div role="status" aria-live="polite" className={`banner ${msg.ok ? "ok" : "err"}`} style={{ marginTop: 10 }}>{msg.text}</div>}
+      <StatusBanner message={action.message} style={{ marginTop: 10 }} />
 
       {list.loading ? <div className="loading">Lade…</div> : list.error ? <div className="banner err">{list.error}</div> : (
         <div style={{ overflowX: "auto", marginTop: 10 }}>

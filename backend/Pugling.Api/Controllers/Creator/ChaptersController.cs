@@ -80,14 +80,23 @@ public class ChaptersController(PuglingDbContext db) : ControllerBase
         return (await ProjectOne(subjectId, chapterId))!;
     }
 
-    /// <summary>Löscht ein Kapitel samt aller Übungen.</summary>
+    /// <summary>
+    /// Löscht ein Kapitel samt aller Übungen. Nicht möglich, solange eine Übung darin in einem
+    /// Lehrplan oder einer Klassenarbeit verwendet wird.
+    /// </summary>
     [HttpDelete("{chapterId:int}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<IActionResult> Delete(int subjectId, int chapterId)
     {
         var chapter = await db.Chapters.FirstOrDefaultAsync(c => c.Id == chapterId && c.SubjectId == subjectId);
         if (chapter is null) return NotFound();
+        // Chapter→Exercise kaskadiert, PlanPosition→Exercise ist Restrict – vgl. ExerciseControllerBase.Delete.
+        if (await db.PlanPositions.AnyAsync(p => p.Exercise!.ChapterId == chapterId)
+            || await db.KlassenarbeitExercises.AnyAsync(x => x.Exercise!.ChapterId == chapterId))
+            return this.ProblemWithCode(ApiErrors.ExerciseInUse,
+                "Exercises in this chapter are used in a study plan or a class test; remove them there first.");
         db.Chapters.Remove(chapter);
         await db.SaveChangesAsync();
         return NoContent();

@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { api, errorMessage } from "../lib/api";
 import { confirmAction } from "../lib/ui";
 import { useAsync } from "../lib/useAsync";
+import { CatalogAdmin } from "./CatalogAdmin";
+import { ClozeTexts } from "./ClozeTexts";
 import { ExerciseAttribution } from "./ExerciseAttribution";
 import { ExerciseEditModal } from "./ExerciseEditModal";
 import { ExercisePreviewModal } from "./ExercisePreviewModal";
@@ -184,6 +186,18 @@ export function VaterExercises() {
     // verschachtelte Formulare sind ungültiges HTML – ein „Suchen" im Dialog könnte das äußere Formular
     // abschicken und dabei eine Übung anlegen.
     <>
+    {/*
+      Umbenennen/Löschen von Fach, Kapitel und Art – bewusst hier oben und AUSSERHALB des Formulars: der
+      Bereich bringt eigene `<form>`s mit, und er gehört neben die Auswahl, die er pflegt. Jede Änderung
+      frischt Fach- und Kapitel-Pulldown mit auf.
+    */}
+    <CatalogAdmin subjects={subjects.data ?? []}
+      onCatalogChanged={() => { subjects.reload(); chapters.reload(); }} />
+
+    {/* Der Lückentext-Store gehört neben das Anlegen, nicht hinein: seine Texte sind Lerngrundlage für
+        mehrere Übungen – wie der Vokabel-Store, nur für ganze Sätze. Ebenfalls außerhalb des Formulars. */}
+    <ClozeTexts />
+
     <form onSubmit={submit} style={{ display: "flex", flexDirection: "column", gap: 18 }}>
       <h2 className="h-section">Übungen anlegen</h2>
 

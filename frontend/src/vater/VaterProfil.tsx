@@ -1,5 +1,7 @@
 import { useState } from "react";
-import { api, errorMessage } from "../lib/api";
+import { StatusBanner } from "../components/StatusBanner";
+import { api } from "../lib/api";
+import { useAction } from "../lib/useAction";
 import { useAsync } from "../lib/useAsync";
 import { useAuth } from "../lib/auth";
 import type { FatherResponse, UpdateFatherDto } from "../lib/types";
@@ -54,33 +56,25 @@ function ProfileForm({ father, onSaved }: { father: FatherResponse; onSaved: () 
   const [email, setEmail] = useState(father.email ?? "");
   const [pin, setPin] = useState("");
   const [pin2, setPin2] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const action = useAction();
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    setMsg(null);
-    if (!name.trim()) { setMsg({ ok: false, text: "Der Name darf nicht leer sein." }); return; }
-    if (pin !== pin2) { setMsg({ ok: false, text: "Die beiden PINs stimmen nicht überein." }); return; }
+    if (!name.trim()) { action.fail("Der Name darf nicht leer sein."); return; }
+    if (pin !== pin2) { action.fail("Die beiden PINs stimmen nicht überein."); return; }
 
     // Nur Geändertes schicken – ein leeres PIN-Feld heißt „PIN unverändert", nicht „PIN löschen".
     const dto: UpdateFatherDto = {};
     if (name.trim() !== father.name) dto.name = name.trim();
     if (email.trim() !== (father.email ?? "")) dto.email = email.trim() || null;
     if (pin.trim()) dto.pin = pin;
-    if (Object.keys(dto).length === 0) { setMsg({ ok: true, text: "Nichts zu speichern." }); return; }
+    if (Object.keys(dto).length === 0) { action.succeed("Nichts zu speichern."); return; }
 
-    setBusy(true);
-    try {
-      await api.updateFather(father.id, dto);
-      setPin(""); setPin2("");
-      setMsg({ ok: true, text: dto.pin ? "Gespeichert. Die neue PIN gilt ab der nächsten Anmeldung." : "Gespeichert." });
-      onSaved();
-    } catch (err) {
-      setMsg({ ok: false, text: errorMessage(err) });
-    } finally {
-      setBusy(false);
-    }
+    const ok = await action.run(() => api.updateFather(father.id, dto),
+      dto.pin ? "Gespeichert. Die neue PIN gilt ab der nächsten Anmeldung." : "Gespeichert.");
+    if (!ok) return;
+    setPin(""); setPin2("");
+    onSaved();
   }
 
   return (
@@ -97,9 +91,11 @@ function ProfileForm({ father, onSaved }: { father: FatherResponse; onSaved: () 
           <div className="field"><label htmlFor="prof-pin2">Neue PIN wiederholen</label>
             <input id="prof-pin2" type="password" autoComplete="new-password" value={pin2} onChange={(e) => setPin2(e.target.value)} /></div>
         </div>
-        <button type="submit" className="btn inline-btn" style={{ width: "auto" }} disabled={busy}>{busy ? "…" : "Speichern"}</button>
+        <button type="submit" className="btn inline-btn" style={{ width: "auto" }} disabled={action.busy}>
+          {action.busy ? "Speichere…" : "Speichern"}
+        </button>
       </form>
-      {msg && <div className={`banner ${msg.ok ? "ok" : "err"}`} style={{ marginTop: 10 }} role="status" aria-live="polite">{msg.text}</div>}
+      <StatusBanner message={action.message} style={{ marginTop: 10 }} />
     </section>
   );
 }

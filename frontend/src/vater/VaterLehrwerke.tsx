@@ -1,5 +1,7 @@
 import { Fragment, useState } from "react";
-import { api, errorMessage } from "../lib/api";
+import { StatusBanner } from "../components/StatusBanner";
+import { api } from "../lib/api";
+import { useAction } from "../lib/useAction";
 import { SCHOOL_TYPES } from "../lib/labels";
 import { confirmAction } from "../lib/ui";
 import { useAsync } from "../lib/useAsync";
@@ -80,17 +82,13 @@ function SeriesRow({ series, subjects, open, onToggle, onChanged }: {
   onToggle: () => void;
   onChanged: () => void;
 }) {
-  const [busy, setBusy] = useState(false);
-  const [err, setErr] = useState<string | null>(null);
+  const action = useAction();
 
   async function remove() {
     if (!confirmAction(
       `Reihe „${series.name}" wirklich löschen? Die ${series.unitCount} Unit(s) gehen mit. `
       + "Lehrbücher der Kinder und Profile verlieren nur die Zuordnung und bleiben nutzbar.")) return;
-    setBusy(true); setErr(null);
-    try { await api.deleteTextbookSeries(series.id); onChanged(); }
-    catch (e) { setErr(errorMessage(e)); }
-    finally { setBusy(false); }
+    if (await action.run(() => api.deleteTextbookSeries(series.id))) onChanged();
   }
 
   const subjectLabel = series.subjectId != null
@@ -115,13 +113,13 @@ function SeriesRow({ series, subjects, open, onToggle, onChanged }: {
           </button>
           {/* Fremde Reihen bleiben lesbar – der Knopf fehlt, statt später mit 403 zu scheitern. */}
           {series.isOwn && (
-            <button type="button" className="btn ghost small" style={{ width: "auto" }} disabled={busy} onClick={remove}>
+            <button type="button" className="btn ghost small" style={{ width: "auto" }} disabled={action.busy} onClick={remove}>
               Löschen
             </button>
           )}
         </td>
       </tr>
-      {err && <tr><td colSpan={5}><div className="banner err">{err}</div></td></tr>}
+      {action.message && <tr><td colSpan={5}><StatusBanner message={action.message} style={{ marginTop: 0 }} /></td></tr>}
       {open && (
         <tr>
           <td colSpan={5}>
@@ -222,8 +220,7 @@ function UnitForm({ seriesId, unit, onDone }: {
     grammar: unit?.grammar ?? "",
     vocabularyNotes: unit?.vocabularyNotes ?? "",
   });
-  const [busy, setBusy] = useState(false);
-  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const action = useAction();
   const id = unit ? `u${unit.id}` : `new${seriesId}`;
 
   function up<K extends keyof typeof form>(k: K, v: string) {
@@ -232,8 +229,7 @@ function UnitForm({ seriesId, unit, onDone }: {
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (!form.label.trim()) { setMsg({ ok: false, text: "Die Bezeichnung fehlt." }); return; }
-    setBusy(true); setMsg(null);
+    if (!form.label.trim()) { action.fail("Die Bezeichnung fehlt."); return; }
     const dto: CreateSeriesUnitDto = {
       label: form.label.trim(),
       grade: form.grade.trim() === "" ? null : Number(form.grade),
@@ -241,23 +237,18 @@ function UnitForm({ seriesId, unit, onDone }: {
       grammar: form.grammar.trim() || null,
       vocabularyNotes: form.vocabularyNotes.trim() || null,
     };
-    try {
-      if (unit) await api.updateSeriesUnit(seriesId, unit.id, dto);
-      else {
-        await api.createSeriesUnit(seriesId, dto);
-        setForm({ label: "", grade: form.grade, topics: "", grammar: "", vocabularyNotes: "" });
-      }
-      onDone();
-    } catch (err) { setMsg({ ok: false, text: errorMessage(err) }); }
-    finally { setBusy(false); }
+    const ok = await action.run(() => (unit
+      ? api.updateSeriesUnit(seriesId, unit.id, dto)
+      : api.createSeriesUnit(seriesId, dto)), unit ? "Gespeichert." : "Unit hinzugefügt.");
+    if (!ok) return;
+    if (!unit) setForm({ label: "", grade: form.grade, topics: "", grammar: "", vocabularyNotes: "" });
+    onDone();
   }
 
   async function remove() {
     if (!unit) return;
     if (!confirmAction(`Unit „${unit.label}" löschen? Lehrbücher, die darauf zeigen, verlieren nur die Angabe.`)) return;
-    setBusy(true);
-    try { await api.deleteSeriesUnit(seriesId, unit.id); onDone(); }
-    catch (err) { setMsg({ ok: false, text: errorMessage(err) }); setBusy(false); }
+    if (await action.run(() => api.deleteSeriesUnit(seriesId, unit.id))) onDone();
   }
 
   return (
@@ -305,15 +296,15 @@ function UnitForm({ seriesId, unit, onDone }: {
         </span>
       </div>
       <div className="row" style={{ gap: 8 }}>
-        <button type="submit" className="btn inline-btn" style={{ width: "auto" }} disabled={busy}>
-          {busy ? "…" : unit ? "Speichern" : "Unit hinzufügen"}
+        <button type="submit" className="btn inline-btn" style={{ width: "auto" }} disabled={action.busy}>
+          {action.busy ? "Speichere…" : unit ? "Speichern" : "Unit hinzufügen"}
         </button>
         {unit && (
           <button type="button" className="btn ghost inline-btn" style={{ width: "auto", marginLeft: "auto" }}
-            disabled={busy} onClick={remove}>Unit löschen</button>
+            disabled={action.busy} onClick={remove}>Unit löschen</button>
         )}
       </div>
-      {msg && <div className={`banner ${msg.ok ? "ok" : "err"}`} role="status" aria-live="polite">{msg.text}</div>}
+      <StatusBanner message={action.message} style={{ marginTop: 0 }} />
     </form>
   );
 }
@@ -324,8 +315,7 @@ function NewSeries({ subjects, onCreated }: { subjects: SubjectResponse[]; onCre
     name: "", publisher: "", subjectId: "", schoolTypes: "None" as SchoolType,
     sourceLanguage: "", targetLanguage: "", notes: "",
   });
-  const [busy, setBusy] = useState(false);
-  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const action = useAction();
 
   function up<K extends keyof typeof form>(k: K, v: (typeof form)[K]) {
     setForm((f) => ({ ...f, [k]: v }));
@@ -334,25 +324,24 @@ function NewSeries({ subjects, onCreated }: { subjects: SubjectResponse[]; onCre
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!form.name.trim()) return;
-    setBusy(true); setMsg(null);
-    try {
-      const subject = subjects.find((s) => String(s.id) === form.subjectId);
-      const created = await api.createTextbookSeries({
-        name: form.name.trim(),
-        publisher: form.publisher.trim() || null,
-        subjectId: form.subjectId ? Number(form.subjectId) : null,
-        // Den Fachnamen mitschicken: er trägt die Reihe auch dort, wo kein Katalog-Fach gewählt ist.
-        subjectName: subject?.name ?? null,
-        schoolTypes: form.schoolTypes === "None" ? null : form.schoolTypes,
-        sourceLanguage: form.sourceLanguage.trim() || null,
-        targetLanguage: form.targetLanguage.trim() || null,
-        notes: form.notes.trim() || null,
-      });
-      setForm({ ...form, name: "", publisher: "", notes: "" });
-      setMsg({ ok: true, text: `„${created.name}" steht im Katalog. Jetzt die Units mit ihrem Stoff anlegen.` });
-      onCreated();
-    } catch (err) { setMsg({ ok: false, text: errorMessage(err) }); }
-    finally { setBusy(false); }
+    const subject = subjects.find((s) => String(s.id) === form.subjectId);
+    // `runFor`, weil die Meldung den Namen **des Servers** nennt: gleicher Name = gleiche Reihe, ein
+    // zweites Anlegen liefert die bestehende zurück – und die kann anders geschrieben sein als das Feld.
+    const created = await action.runFor(() => api.createTextbookSeries({
+      name: form.name.trim(),
+      publisher: form.publisher.trim() || null,
+      subjectId: form.subjectId ? Number(form.subjectId) : null,
+      // Den Fachnamen mitschicken: er trägt die Reihe auch dort, wo kein Katalog-Fach gewählt ist.
+      subjectName: subject?.name ?? null,
+      schoolTypes: form.schoolTypes === "None" ? null : form.schoolTypes,
+      sourceLanguage: form.sourceLanguage.trim() || null,
+      targetLanguage: form.targetLanguage.trim() || null,
+      notes: form.notes.trim() || null,
+    }));
+    if (!created) return;
+    setForm({ ...form, name: "", publisher: "", notes: "" });
+    action.succeed(`„${created.name}" steht im Katalog. Jetzt die Units mit ihrem Stoff anlegen.`);
+    onCreated();
   }
 
   return (
@@ -393,15 +382,15 @@ function NewSeries({ subjects, onCreated }: { subjects: SubjectResponse[]; onCre
           <label htmlFor="ns-notes">Notiz zum Werk</label>
           <input id="ns-notes" value={form.notes} onChange={(e) => up("notes", e.target.value)} placeholder="Aufbau, Besonderheiten" />
         </div>
-        <button type="submit" className="btn inline-btn" style={{ width: "auto" }} disabled={busy}>
-          {busy ? "…" : "Reihe anlegen"}
+        <button type="submit" className="btn inline-btn" style={{ width: "auto" }} disabled={action.busy}>
+          {action.busy ? "Lege an…" : "Reihe anlegen"}
         </button>
       </form>
       <p className="sub" style={{ marginTop: 8 }}>
         Gleicher Name = gleiche Reihe: ein zweites Anlegen liefert die bestehende zurück, statt eine
         Dublette in den geteilten Katalog zu schreiben.
       </p>
-      {msg && <div className={`banner ${msg.ok ? "ok" : "err"}`} style={{ marginTop: 10 }} role="status" aria-live="polite">{msg.text}</div>}
+      <StatusBanner message={action.message} style={{ marginTop: 10 }} />
     </section>
   );
 }

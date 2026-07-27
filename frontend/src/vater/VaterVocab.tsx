@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
+import { StatusBanner } from "../components/StatusBanner";
 import { api, errorMessage } from "../lib/api";
+import { useAction } from "../lib/useAction";
 import { useAsync } from "../lib/useAsync";
 import { LANGUAGES, languageByCode } from "../lib/languages";
 import type {
@@ -27,8 +29,7 @@ export function VaterVocab() {
   const [tgt, setTgt] = useState("de");
 
   const [rows, setRows] = useState<PairRow[]>([emptyPair()]);
-  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
-  const [busy, setBusy] = useState(false);
+  const action = useAction();
 
   const [search, setSearch] = useState("");
   // Feste Suchparameter neben dem Freitext: Wortart + globale Tags (Punkt „Vokabel-Store durchsuchbar").
@@ -82,41 +83,32 @@ export function VaterVocab() {
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    setMsg(null);
-    if (src === tgt) { setMsg({ ok: false, text: "Quell- und Zielsprache müssen sich unterscheiden." }); return; }
+    if (src === tgt) { action.fail("Quell- und Zielsprache müssen sich unterscheiden."); return; }
 
     // Nur vollständig ausgefüllte Zeilen senden – leere Rest-Zeilen ignorieren.
     const filled = rows.filter((r) => r.word.trim() && r.translation.trim());
-    if (filled.length === 0) { setMsg({ ok: false, text: "Mindestens ein Wort-Paar (Wort + Übersetzung) angeben." }); return; }
+    if (filled.length === 0) { action.fail("Mindestens ein Wort-Paar (Wort + Übersetzung) angeben."); return; }
 
     const items: CreateVocabularyDto[] = filled.map((r) => ({
       sourceLanguage: src, targetLanguage: tgt, word: r.word.trim(), translation: r.translation.trim(),
     }));
 
-    setBusy(true);
-    try {
-      const results = await api.createVocabularyBatch(items);
-      const created = results.filter((r) => r.status === "created").length;
-      const existing = results.filter((r) => r.status === "existing").length;
-      const errors = results.filter((r) => r.status === "error");
-      const parts = [
-        `${created} angelegt`,
-        existing > 0 ? `${existing} existierten bereits` : null,
-        errors.length > 0 ? `${errors.length} fehlgeschlagen` : null,
-      ].filter(Boolean);
-      setMsg({
-        ok: errors.length === 0,
-        text: errors.length === 0
-          ? parts.join(" · ")
-          : `${parts.join(" · ")}: ${errors.map((e) => e.error).filter(Boolean).join("; ")}`,
-      });
-      setRows([emptyPair()]);
-      list.reload();
-    } catch (err) {
-      setMsg({ ok: false, text: errorMessage(err) });
-    } finally {
-      setBusy(false);
-    }
+    // `runFor`, weil der Stapel **teilweise** scheitern kann: die Meldung ist erst aus den Einzelergebnissen
+    // zu bilden, und ein einzelnes „existiert schon" ist kein Fehlschlag des Ganzen.
+    const results = await action.runFor(() => api.createVocabularyBatch(items));
+    if (!results) return;
+    const created = results.filter((r) => r.status === "created").length;
+    const existing = results.filter((r) => r.status === "existing").length;
+    const errors = results.filter((r) => r.status === "error");
+    const parts = [
+      `${created} angelegt`,
+      existing > 0 ? `${existing} existierten bereits` : null,
+      errors.length > 0 ? `${errors.length} fehlgeschlagen` : null,
+    ].filter(Boolean);
+    if (errors.length === 0) action.succeed(parts.join(" · "));
+    else action.fail(`${parts.join(" · ")}: ${errors.map((e) => e.error).filter(Boolean).join("; ")}`);
+    setRows([emptyPair()]);
+    list.reload();
   }
 
   return (
@@ -159,12 +151,12 @@ export function VaterVocab() {
 
           <div className="row" style={{ gap: 8 }}>
             <button type="button" className="btn ghost" style={{ width: "auto" }} onClick={addRow}>+ Zeile</button>
-            <button type="submit" className="btn" style={{ width: "auto", marginLeft: "auto" }} disabled={busy}>
-              {busy ? "…" : "Speichern"}
+            <button type="submit" className="btn" style={{ width: "auto", marginLeft: "auto" }} disabled={action.busy}>
+              {action.busy ? "Speichere…" : "Speichern"}
             </button>
           </div>
         </form>
-        {msg && <div className={`banner ${msg.ok ? "ok" : "err"}`} role="status" aria-live="polite" style={{ marginTop: 10 }}>{msg.text}</div>}
+        <StatusBanner message={action.message} style={{ marginTop: 10 }} />
       </section>
 
       <section>
@@ -271,33 +263,29 @@ function VocabRow({ v, onChanged, childId, globalTags, reloadGlobalTags, childTa
   const [baseFormKey, setBaseFormKey] = useState(v.baseFormKey ?? "");
   const [baseFormRelation, setBaseFormRelation] = useState(v.baseFormRelation ?? "");
   const [audioUrl, setAudioUrl] = useState(v.pronunciationAudioUrl ?? "");
-  const [err, setErr] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
+  const action = useAction();
   const [showTags, setShowTags] = useState(false);
   const [showMedia, setShowMedia] = useState(false);
 
   async function save() {
-    setBusy(true); setErr(null);
-    try {
-      const patch: UpdateVocabularyDto = {
-        word, translation, partOfSpeech: pos,
-        // "" hebt eine Grundform-Verknüpfung auf; ein Key setzt sie (Server prüft Existenz).
-        baseFormKey: baseFormKey.trim(),
-        baseFormRelation: baseFormRelation.trim() || null,
-        pronunciationAudioUrl: audioUrl.trim() || null,
+    const patch: UpdateVocabularyDto = {
+      word, translation, partOfSpeech: pos,
+      // "" hebt eine Grundform-Verknüpfung auf; ein Key setzt sie (Server prüft Existenz).
+      baseFormKey: baseFormKey.trim(),
+      baseFormRelation: baseFormRelation.trim() || null,
+      pronunciationAudioUrl: audioUrl.trim() || null,
+    };
+    // Nur die zur Wortart passenden Detail-Blöcke mitschicken (Server merged partiell).
+    if (pos === "Noun")
+      patch.noun = { article: noun.article?.trim() || null, genus: noun.genus ?? null, plural: noun.plural?.trim() || null };
+    if (pos === "Verb")
+      patch.verb = {
+        isBaseForm: verb.isBaseForm, infinitive: verb.infinitive?.trim() || null,
+        tense: verb.tense?.trim() || null, person: verb.person?.trim() || null, number: verb.number?.trim() || null,
       };
-      // Nur die zur Wortart passenden Detail-Blöcke mitschicken (Server merged partiell).
-      if (pos === "Noun")
-        patch.noun = { article: noun.article?.trim() || null, genus: noun.genus ?? null, plural: noun.plural?.trim() || null };
-      if (pos === "Verb")
-        patch.verb = {
-          isBaseForm: verb.isBaseForm, infinitive: verb.infinitive?.trim() || null,
-          tense: verb.tense?.trim() || null, person: verb.person?.trim() || null, number: verb.number?.trim() || null,
-        };
-      await api.updateVocabulary(v.id, patch);
-      setEditing(false);
-      onChanged();
-    } catch (e) { setErr(errorMessage(e)); } finally { setBusy(false); }
+    if (!await action.run(() => api.updateVocabulary(v.id, patch))) return;
+    setEditing(false);
+    onChanged();
   }
   // Abbrechen: Änderungen verwerfen und wieder auf die gespeicherten Werte zurücksetzen (Punkt 5).
   function cancel() {
@@ -305,13 +293,11 @@ function VocabRow({ v, onChanged, childId, globalTags, reloadGlobalTags, childTa
     setNoun(v.noun ?? {}); setVerb(v.verb ?? { isBaseForm: false });
     setBaseFormKey(v.baseFormKey ?? ""); setBaseFormRelation(v.baseFormRelation ?? "");
     setAudioUrl(v.pronunciationAudioUrl ?? "");
-    setErr(null); setEditing(false);
+    action.clear(); setEditing(false);
   }
   async function remove() {
     if (!confirmAction("Diese Vokabel wirklich löschen?")) return;
-    setBusy(true); setErr(null);
-    try { await api.deleteVocabulary(v.id); onChanged(); }
-    catch (e) { setErr(errorMessage(e)); setBusy(false); }
+    if (await action.run(() => api.deleteVocabulary(v.id))) onChanged();
   }
 
   const tagCount = v.tags.length;
@@ -330,9 +316,12 @@ function VocabRow({ v, onChanged, childId, globalTags, reloadGlobalTags, childTa
               </select>
             </td>
             <td className="row" style={{ gap: 6, justifyContent: "flex-end" }}>
-              {err && <span className="muted" style={{ color: "var(--danger, #c00)", fontSize: 12 }}>{err}</span>}
-              <button type="button" className="btn inline-btn" style={{ width: "auto" }} disabled={busy} onClick={save}>OK</button>
-              <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} disabled={busy} onClick={cancel}>Abbrechen</button>
+              {action.message && !action.message.ok && (
+                <span className="muted" role="status" aria-live="polite"
+                  style={{ color: "var(--danger, #c00)", fontSize: 12 }}>{action.message.text}</span>
+              )}
+              <button type="button" className="btn inline-btn" style={{ width: "auto" }} disabled={action.busy} onClick={save}>OK</button>
+              <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} disabled={action.busy} onClick={cancel}>Abbrechen</button>
             </td>
           </>
         ) : (
@@ -340,7 +329,10 @@ function VocabRow({ v, onChanged, childId, globalTags, reloadGlobalTags, childTa
             <td>{v.word}</td><td>{v.translation}</td>
             <td>{POS_LABEL[v.partOfSpeech]}{detailSummary(v) && <div className="muted" style={{ fontSize: 11 }}>{detailSummary(v)}</div>}</td>
             <td className="row" style={{ gap: 6, justifyContent: "flex-end" }}>
-              {err && <span className="muted" style={{ color: "var(--danger, #c00)", fontSize: 12 }}>{err}</span>}
+              {action.message && !action.message.ok && (
+                <span className="muted" role="status" aria-live="polite"
+                  style={{ color: "var(--danger, #c00)", fontSize: 12 }}>{action.message.text}</span>
+              )}
               <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }}
                 aria-expanded={showTags} onClick={() => setShowTags((s) => !s)}>
                 🏷️ Tags{tagCount > 0 ? ` (${tagCount})` : ""}
@@ -349,8 +341,8 @@ function VocabRow({ v, onChanged, childId, globalTags, reloadGlobalTags, childTa
                 aria-expanded={showMedia} onClick={() => setShowMedia((s) => !s)}>
                 🖼️ Bilder
               </button>
-              <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} disabled={busy} onClick={() => setEditing(true)}>Bearbeiten</button>
-              <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} disabled={busy} onClick={remove}>Löschen</button>
+              <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} disabled={action.busy} onClick={() => setEditing(true)}>Bearbeiten</button>
+              <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} disabled={action.busy} onClick={remove}>Löschen</button>
             </td>
           </>
         )}

@@ -1,6 +1,8 @@
 import { Fragment, useState } from "react";
 import { Link } from "react-router-dom";
-import { api, errorMessage } from "../lib/api";
+import { StatusBanner } from "../components/StatusBanner";
+import { api } from "../lib/api";
+import { useAction } from "../lib/useAction";
 import { matchReasonLabel } from "../lib/labels";
 import { confirmAction } from "../lib/ui";
 import { useAsync } from "../lib/useAsync";
@@ -119,8 +121,7 @@ function TextbookForm({ childId, book, series, subjects, onDone }: {
     currentUnitId: book?.currentUnitId?.toString() ?? "",
     currentChapter: book?.currentChapter ?? "",
   });
-  const [busy, setBusy] = useState(false);
-  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const action = useAction();
   const id = book ? `tb${book.id}` : "tbnew";
 
   // Die Units der gewählten Reihe. Ohne Reihe gibt es nichts zu wählen – dann bleibt das Freitext-Kapitel.
@@ -139,7 +140,7 @@ function TextbookForm({ childId, book, series, subjects, onDone }: {
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (!form.title.trim()) { setMsg({ ok: false, text: "Der Titel fehlt." }); return; }
+    if (!form.title.trim()) { action.fail("Der Titel fehlt."); return; }
     const subject = subjects.find((s) => String(s.id) === form.subjectId);
     const dto: CreateTextbookDto = {
       title: form.title.trim(),
@@ -151,34 +152,26 @@ function TextbookForm({ childId, book, series, subjects, onDone }: {
       currentUnitId: form.currentUnitId ? Number(form.currentUnitId) : null,
       currentChapter: form.currentChapter.trim() || null,
     };
-    setBusy(true); setMsg(null);
-    try {
-      if (book) {
-        // Beim Ändern muss „leer" ausdrücklich gesagt werden (der Server überliest `null` als „nicht
-        // angegeben"). Ohne die Schalter wäre „nicht katalogisiert" ein stiller Klick ins Nichts.
-        await api.updateChildTextbook(childId, book.id, {
+    const ok = await action.run(() => (book
+      // Beim Ändern muss „leer" ausdrücklich gesagt werden (der Server überliest `null` als „nicht
+      // angegeben"). Ohne die Schalter wäre „nicht katalogisiert" ein stiller Klick ins Nichts.
+      ? api.updateChildTextbook(childId, book.id, {
           ...dto,
           clearSubject: dto.subjectId == null,
           clearGrade: dto.grade == null,
           clearSeries: seriesId == null,
           clearUnit: form.currentUnitId === "",
-        });
-      } else {
-        await api.createChildTextbook(childId, dto);
-        setForm({ ...form, title: "", currentChapter: "" });
-      }
-      setMsg({ ok: true, text: book ? "Gespeichert." : "Buch hinterlegt." });
-      onDone();
-    } catch (err) { setMsg({ ok: false, text: errorMessage(err) }); }
-    finally { setBusy(false); }
+        })
+      : api.createChildTextbook(childId, dto)), book ? "Gespeichert." : "Buch hinterlegt.");
+    if (!ok) return;
+    if (!book) setForm({ ...form, title: "", currentChapter: "" });
+    onDone();
   }
 
   async function remove() {
     if (!book) return;
     if (!confirmAction(`Buch „${book.title}" entfernen?`)) return;
-    setBusy(true);
-    try { await api.deleteChildTextbook(childId, book.id); onDone(); }
-    catch (err) { setMsg({ ok: false, text: errorMessage(err) }); setBusy(false); }
+    if (await action.run(() => api.deleteChildTextbook(childId, book.id))) onDone();
   }
 
   return (
@@ -241,17 +234,17 @@ function TextbookForm({ childId, book, series, subjects, onDone }: {
         </div>
       </div>
       <div className="row" style={{ gap: 8 }}>
-        <button type="submit" className="btn inline-btn" style={{ width: "auto" }} disabled={busy}>
-          {busy ? "…" : book ? "Speichern" : "Buch hinterlegen"}
+        <button type="submit" className="btn inline-btn" style={{ width: "auto" }} disabled={action.busy}>
+          {action.busy ? "Speichere…" : book ? "Speichern" : "Buch hinterlegen"}
         </button>
         {book && (
           <button
             type="button" className="btn ghost inline-btn" style={{ width: "auto", marginLeft: "auto" }}
-            disabled={busy} onClick={remove}
+            disabled={action.busy} onClick={remove}
           >Entfernen</button>
         )}
       </div>
-      {msg && <div className={`banner ${msg.ok ? "ok" : "err"}`} role="status" aria-live="polite">{msg.text}</div>}
+      <StatusBanner message={action.message} style={{ marginTop: 0 }} />
     </form>
   );
 }

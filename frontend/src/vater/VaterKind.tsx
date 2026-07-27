@@ -1,14 +1,17 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { ChildMaterialSection } from "./ChildMaterialSection";
-import { api, errorMessage } from "../lib/api";
+import { SupervisorsSection, TimetableSection } from "./ChildCarePanels";
+import { StatusBanner } from "../components/StatusBanner";
+import { api } from "../lib/api";
+import { useAction } from "../lib/useAction";
 import { interestSlug } from "../lib/interests";
-import { GENDERS, SCHOOL_TYPES } from "../lib/labels";
+import { GENDERS, INTEREST_FACETS, SCHOOL_TYPES, interestFacetLabel } from "../lib/labels";
 import { confirmAction } from "../lib/ui";
 import { useAsync } from "../lib/useAsync";
 import type {
   ChildInterestResponse, ChildResponse, ContentRating, Gender, InterestFacet,
-  InterestTagResponse, SchoolType, UpdateChildDto,
+  InterestTagResponse, SchoolType, SubjectResponse, UpdateChildDto,
 } from "../lib/types";
 
 /**
@@ -27,6 +30,8 @@ export function VaterKind() {
   const child = useAsync<ChildResponse>(() => api.child(childId), [childId]);
   const interests = useAsync<ChildInterestResponse[]>(() => api.childInterests(childId), [childId]);
   const tags = useAsync<InterestTagResponse[]>(() => api.interestTags(), []);
+  // Für den Stundenplan: die Fächer des Katalogs.
+  const subjects = useAsync<SubjectResponse[]>(() => api.subjects(), []);
 
   const me = child.data;
 
@@ -58,6 +63,10 @@ export function VaterKind() {
         zu diesem Kind passt – die Wirkung soll auf demselben Blick sichtbar sein.
       */}
       <ChildMaterialSection childId={childId} childName={me.name} />
+
+      {/* Wer betreut das Kind (gemeinsames Wallet) und wann welches Fach ansteht – beides Profilwissen. */}
+      <SupervisorsSection childId={childId} childName={me.name} />
+      <TimetableSection childId={childId} subjects={subjects.data ?? []} />
 
       <RatingSection child={me} onSaved={child.reload} />
 
@@ -145,8 +154,7 @@ function CoreDataSection({ child, onSaved }: { child: ChildResponse; onSaved: ()
   const nav = useNavigate();
   const [form, setForm] = useState(() => formStateOf(child));
   const [pin, setPin] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const action = useAction();
 
   function up<K extends keyof typeof form>(k: K, v: (typeof form)[K]) {
     setForm((f) => ({ ...f, [k]: v }));
@@ -154,8 +162,7 @@ function CoreDataSection({ child, onSaved }: { child: ChildResponse; onSaved: ()
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    setMsg(null);
-    if (!form.name.trim()) { setMsg({ ok: false, text: "Der Name darf nicht leer sein." }); return; }
+    if (!form.name.trim()) { action.fail("Der Name darf nicht leer sein."); return; }
 
     // Nur Geändertes senden (PATCH-Semantik); ein leeres PIN-Feld heißt „unverändert", nicht „löschen".
     const initial = formStateOf(child);
@@ -181,25 +188,16 @@ function CoreDataSection({ child, onSaved }: { child: ChildResponse; onSaved: ()
     const notes = form.profileNotes.trim();
     if (notes !== (child.profileNotes ?? "")) dto.profileNotes = notes;
     if (pin.trim()) dto.pin = pin.trim();
-    if (Object.keys(dto).length === 0) { setMsg({ ok: true, text: "Nichts zu speichern." }); return; }
+    if (Object.keys(dto).length === 0) { action.succeed("Nichts zu speichern."); return; }
 
-    setBusy(true);
-    try {
-      const saved = await api.updateChild(child.id, dto);
-      setPin("");
-      // Formular aus der Server-Antwort setzen, nicht aus der Eingabe: so zeigt es immer den echten Stand
-      // (etwa einen getrimmten Namen), statt dem Nutzer seine eigene Eingabe als „gespeichert" zu bestätigen.
-      setForm(formStateOf(saved));
-      setMsg({
-        ok: true,
-        text: dto.pin ? "Gespeichert. Die neue PIN gilt ab dem nächsten Login des Kindes." : "Gespeichert.",
-      });
-      onSaved();
-    } catch (err) {
-      setMsg({ ok: false, text: errorMessage(err) });
-    } finally {
-      setBusy(false);
-    }
+    const saved = await action.runFor(() => api.updateChild(child.id, dto),
+      dto.pin ? "Gespeichert. Die neue PIN gilt ab dem nächsten Login des Kindes." : "Gespeichert.");
+    if (!saved) return;
+    setPin("");
+    // Formular aus der Server-Antwort setzen, nicht aus der Eingabe: so zeigt es immer den echten Stand
+    // (etwa einen getrimmten Namen), statt dem Nutzer seine eigene Eingabe als „gespeichert" zu bestätigen.
+    setForm(formStateOf(saved));
+    onSaved();
   }
 
   async function remove() {
@@ -207,9 +205,7 @@ function CoreDataSection({ child, onSaved }: { child: ChildResponse; onSaved: ()
       `„${child.name}" wirklich löschen? Lehrpläne, Fortschritt, Punktekonto, Käufe und Auswertungen `
       + "dieses Kindes gehen mit verloren – auch für alle anderen Betreuer (Mutter, Oma …), die es "
       + "mitbetreuen. Die Übungen im Katalog bleiben erhalten.")) return;
-    setBusy(true);
-    try { await api.deleteChild(child.id); nav("/vater"); }
-    catch (err) { setMsg({ ok: false, text: errorMessage(err) }); setBusy(false); }
+    if (await action.run(() => api.deleteChild(child.id))) nav("/vater");
   }
 
   return (
@@ -247,13 +243,13 @@ function CoreDataSection({ child, onSaved }: { child: ChildResponse; onSaved: ()
             placeholder="z.B. Schwächen bei unregelmäßigen Verben, braucht kurze Einheiten." />
         </div>
         <div className="row" style={{ gap: 8 }}>
-          <button type="submit" className="btn inline-btn" style={{ width: "auto" }} disabled={busy}>{busy ? "…" : "Speichern"}</button>
-          <button type="button" className="btn ghost inline-btn" style={{ width: "auto", marginLeft: "auto" }} disabled={busy} onClick={remove}>
+          <button type="submit" className="btn inline-btn" style={{ width: "auto" }} disabled={action.busy}>{action.busy ? "Speichere…" : "Speichern"}</button>
+          <button type="button" className="btn ghost inline-btn" style={{ width: "auto", marginLeft: "auto" }} disabled={action.busy} onClick={remove}>
             Kind löschen
           </button>
         </div>
       </form>
-      {msg && <div className={`banner ${msg.ok ? "ok" : "err"}`} style={{ marginTop: 10 }} role="status" aria-live="polite">{msg.text}</div>}
+      <StatusBanner message={action.message} style={{ marginTop: 10 }} />
     </section>
   );
 }
@@ -267,17 +263,16 @@ const RATINGS: { value: ContentRating; label: string; hint: string }[] = [
 /** Die Bild-Freigabe. Bewusst eine eigene, erklärte Auswahl statt eines beiläufigen Häkchens. */
 function RatingSection({ child, onSaved }: { child: ChildResponse; onSaved: () => void }) {
   const [value, setValue] = useState<ContentRating>(child.allowedContentRating);
-  const [busy, setBusy] = useState(false);
-  const [msg, setMsg] = useState<string | null>(null);
+  const action = useAction();
 
   async function save(next: ContentRating) {
-    setValue(next); setBusy(true); setMsg(null);
-    try {
-      await api.updateChild(child.id, { allowedContentRating: next });
-      setMsg("Freigabe gespeichert.");
+    setValue(next);
+    if (await action.run(() => api.updateChild(child.id, { allowedContentRating: next }), "Freigabe gespeichert.")) {
       onSaved();
-    } catch (e) { setMsg(errorMessage(e)); setValue(child.allowedContentRating); }
-    finally { setBusy(false); }
+      return;
+    }
+    // Zurück auf den Serverstand: die Auswahl zeigte sonst eine Freigabe, die gar nicht gilt.
+    setValue(child.allowedContentRating);
   }
 
   return (
@@ -285,23 +280,15 @@ function RatingSection({ child, onSaved }: { child: ChildResponse; onSaved: () =
       <h3 className="h-section">Bild-Freigabe</h3>
       <div className="field" style={{ maxWidth: 320 }}>
         <label htmlFor="rating">Welche Bilder darf {child.name} sehen?</label>
-        <select id="rating" value={value} disabled={busy} onChange={(e) => save(e.target.value as ContentRating)}>
+        <select id="rating" value={value} disabled={action.busy} onChange={(e) => save(e.target.value as ContentRating)}>
           {RATINGS.map((r) => <option key={r.value} value={r.value}>{r.label}</option>)}
         </select>
       </div>
       <p className="sub">{RATINGS.find((r) => r.value === value)?.hint}</p>
-      {msg && <div className="banner ok" role="status" aria-live="polite">{msg}</div>}
+      <StatusBanner message={action.message} style={{ marginTop: 0 }} />
     </section>
   );
 }
-
-const FACETS: { value: InterestFacet; label: string }[] = [
-  { value: "Franchise", label: "Marke/Serie" }, { value: "Sport", label: "Sport" },
-  { value: "Animal", label: "Tiere" }, { value: "Vehicle", label: "Fahrzeuge" },
-  { value: "Music", label: "Musik" }, { value: "Hobby", label: "Hobby" },
-  { value: "Nature", label: "Natur" }, { value: "Style", label: "Stil" },
-  { value: "Other", label: "Sonstiges" },
-];
 
 /** Skala grob halten: sie wird von einem Menschen gepflegt, nicht kalibriert. */
 const WEIGHTS = [
@@ -326,8 +313,7 @@ function InterestEditor({ childId, current, known, onSaved }: {
   const [label, setLabel] = useState("");
   const [facet, setFacet] = useState<InterestFacet>("Franchise");
   const [weight, setWeight] = useState(2);
-  const [busy, setBusy] = useState(false);
-  const [msg, setMsg] = useState<string | null>(null);
+  const action = useAction();
 
   // Nach dem Speichern liefert der Server die kanonische Menge (Slugs, aufgelöste Synonyme) – übernehmen.
   useEffect(() => { setRows(current); }, [current]);
@@ -342,32 +328,27 @@ function InterestEditor({ childId, current, known, onSaved }: {
     // Ändern-/Entfernen-Handler, die damit zwei Zeilen als eine behandelten.
     const slug = interestSlug(text);
     if (!slug) {
-      setMsg(`„${text}" ergibt kein verwertbares Schlagwort – nimm einen Namen mit Buchstaben oder Zahlen.`);
+      action.fail(`„${text}" ergibt kein verwertbares Schlagwort – nimm einen Namen mit Buchstaben oder Zahlen.`);
       return;
     }
     if (rows.some((r) => r.slug === slug || interestSlug(r.label) === slug)) {
-      setMsg(`„${text}" steht schon in der Liste.`);
+      action.fail(`„${text}" steht schon in der Liste.`);
       return;
     }
     // tagId 0 = noch nicht angelegt; der Server legt beim Speichern an (create-if-missing).
     setRows([...rows, { tagId: 0, slug, label: text, facet, weight, createdAt: "" }]);
-    setLabel(""); setMsg(null);
+    setLabel(""); action.clear();
   }
 
   async function save() {
-    setBusy(true); setMsg(null);
-    try {
-      await api.setChildInterests(childId, rows.map((r) => ({
-        weight: r.weight,
-        // Bekannte Tags per Id (eindeutig), neue per Label – der Server legt sie an bzw. trifft ein Synonym.
-        tagId: r.tagId > 0 ? r.tagId : null,
-        label: r.tagId > 0 ? null : r.label,
-        facet: r.tagId > 0 ? null : r.facet,
-      })));
-      setMsg("Interessen gespeichert.");
-      onSaved();
-    } catch (e) { setMsg(errorMessage(e)); }
-    finally { setBusy(false); }
+    const ok = await action.run(() => api.setChildInterests(childId, rows.map((r) => ({
+      weight: r.weight,
+      // Bekannte Tags per Id (eindeutig), neue per Label – der Server legt sie an bzw. trifft ein Synonym.
+      tagId: r.tagId > 0 ? r.tagId : null,
+      label: r.tagId > 0 ? null : r.label,
+      facet: r.tagId > 0 ? null : r.facet,
+    }))), "Interessen gespeichert.");
+    if (ok) onSaved();
   }
 
   const likes = rows.filter((r) => r.weight > 0).sort((a, b) => b.weight - a.weight);
@@ -387,7 +368,7 @@ function InterestEditor({ childId, current, known, onSaved }: {
         <div className="field">
           <label htmlFor="int-facet">Art</label>
           <select id="int-facet" value={facet} onChange={(e) => setFacet(e.target.value as InterestFacet)}>
-            {FACETS.map((f) => <option key={f.value} value={f.value}>{f.label}</option>)}
+            {INTEREST_FACETS.map((f) => <option key={f.value} value={f.value}>{f.label}</option>)}
           </select>
         </div>
         <div className="field">
@@ -415,11 +396,11 @@ function InterestEditor({ childId, current, known, onSaved }: {
       <InterestList title="Mag nicht" empty="Nichts ausgeschlossen." rows={dislikes} setRows={setRows} all={rows} />
 
       <div className="row" style={{ marginTop: 12, gap: 8 }}>
-        <button type="button" className="btn" style={{ width: "auto" }} disabled={busy} onClick={save}>
-          {busy ? "Speichere…" : "Interessen speichern"}
+        <button type="button" className="btn" style={{ width: "auto" }} disabled={action.busy} onClick={save}>
+          {action.busy ? "Speichere…" : "Interessen speichern"}
         </button>
       </div>
-      {msg && <div className="banner ok" style={{ marginTop: 10 }} role="status" aria-live="polite">{msg}</div>}
+      <StatusBanner message={action.message} style={{ marginTop: 10 }} />
     </>
   );
 }
@@ -440,7 +421,7 @@ function InterestList({ title, empty, rows, setRows, all }: {
             {rows.map((r) => (
               <tr key={r.slug}>
                 <td>{r.label}</td>
-                <td className="muted">{FACETS.find((f) => f.value === r.facet)?.label ?? r.facet}</td>
+                <td className="muted">{interestFacetLabel(r.facet)}</td>
                 <td>
                   <select
                     aria-label={`Gewichtung für ${r.label}`}

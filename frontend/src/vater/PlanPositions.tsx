@@ -1,5 +1,7 @@
 import { useId, useState } from "react";
-import { api, errorMessage } from "../lib/api";
+import { StatusBanner } from "../components/StatusBanner";
+import { api } from "../lib/api";
+import { useAction, type ActionState } from "../lib/useAction";
 import { confirmAction } from "../lib/ui";
 import { useAsync } from "../lib/useAsync";
 import { useExerciseTypes } from "../lib/exerciseTypes";
@@ -28,13 +30,11 @@ const ORDERS: PracticeOrder[] = ["WeakestFirst", "Serial", "Random", "NewestWeig
 // Anzeigename der Typen aus dem Server-Manifest – eine dritte Kopie der Tabelle lief zwangsläufig
 // aus dem Takt (das UI kannte sechs Typen, der Server führt zwölf).
 
-type Flash = (ok: boolean, text: string) => void;
-
 export function PlanPositions({ planId }: { planId: number }) {
   const positions = useAsync<PositionResponse[]>(() => api.positions(planId), [planId]);
-  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
-
-  const flash: Flash = (ok, text) => { setMsg({ ok, text }); setTimeout(() => setMsg(null), 3500); };
+  // **Eine** Aktion für den ganzen Abschnitt: es lässt sich ohnehin nur eine Position auf einmal
+  // bearbeiten, und so steht die Rückmeldung an einer Stelle statt in jeder Zeile.
+  const action = useAction();
 
   return (
     <section>
@@ -42,13 +42,9 @@ export function PlanPositions({ planId }: { planId: number }) {
       <p className="muted" style={{ marginTop: 0 }}>
         Jede Position verweist auf eine Katalog-Übung und trägt eigene Ziele, Punkte und Leitner-Einstellungen.
       </p>
-      <div role="status" aria-live="polite">
-        {msg && <div className={`banner ${msg.ok ? "ok" : "err"}`}>{msg.text}</div>}
-      </div>
+      <StatusBanner message={action.message} />
 
-      <AddPosition planId={planId}
-        onAdded={() => { positions.reload(); flash(true, "Übung als Position hinzugefügt."); }}
-        onError={(t) => flash(false, t)} />
+      <AddPosition planId={planId} action={action} onAdded={positions.reload} />
 
       {positions.loading ? <div className="loading">Lade Positionen…</div> : positions.error ? (
         <div className="banner err">{positions.error}</div>
@@ -58,7 +54,7 @@ export function PlanPositions({ planId }: { planId: number }) {
             <thead><tr><th>#</th><th>Übung</th><th>Ziel</th><th className="num">Punkte</th><th>Leitner</th><th>Aktionen</th></tr></thead>
             <tbody>
               {positions.data?.map((p) => (
-                <PositionRow key={p.id} planId={planId} pos={p} onChanged={positions.reload} flash={flash} />
+                <PositionRow key={p.id} planId={planId} pos={p} onChanged={positions.reload} action={action} />
               ))}
               {positions.data?.length === 0 && (
                 <tr><td colSpan={6} className="muted">Noch keine Übungen im Plan – füge oben eine aus dem Katalog hinzu.</td></tr>
@@ -216,7 +212,7 @@ function PositionFields({ value, onChange }: { value: PositionSettings; onChange
 }
 
 /** Katalog-Übung über eine Filterleiste finden und als Position hinzufügen (übrige Werte erbt die Position). */
-function AddPosition({ planId, onAdded, onError }: { planId: number; onAdded: () => void; onError: (t: string) => void }) {
+function AddPosition({ planId, action, onAdded }: { planId: number; action: ActionState; onAdded: () => void }) {
   const subjects = useAsync<SubjectResponse[]>(() => api.subjects(), []);
   const types = useExerciseTypes();
   const typeLabel = (t: string) => types?.label(t) ?? t;
@@ -227,19 +223,14 @@ function AddPosition({ planId, onAdded, onError }: { planId: number; onAdded: ()
     [filter.subjectId, filter.chapterId, filter.grade, filter.schoolType, filter.categoryId, filter.type, filter.search]);
   const [exerciseId, setExerciseId] = useState<number | "">("");
   const [settings, setSettings] = useState<PositionSettings>(defaultSettings());
-  const [busy, setBusy] = useState(false);
 
   async function add(e: React.FormEvent) {
     e.preventDefault();
-    if (exerciseId === "") { onError("Bitte eine Übung aus der Liste wählen."); return; }
-    setBusy(true);
+    if (exerciseId === "") { action.fail("Bitte eine Übung aus der Liste wählen."); return; }
     const dto: CreatePositionDto = { exerciseId: Number(exerciseId), ...settingsToDto(settings) };
-    try {
-      await api.addPosition(planId, dto);
-      setExerciseId("");
-      onAdded();
-    } catch (err) { onError(errorMessage(err)); }
-    finally { setBusy(false); }
+    if (!await action.run(() => api.addPosition(planId, dto), "Übung als Position hinzugefügt.")) return;
+    setExerciseId("");
+    onAdded();
   }
 
   const results = exercises.data?.items ?? [];
@@ -292,8 +283,8 @@ function AddPosition({ planId, onAdded, onError }: { planId: number; onAdded: ()
       <PositionFields value={settings} onChange={setSettings} />
 
       <div className="row">
-        <button type="submit" className="btn inline-btn" style={{ width: "auto", marginLeft: "auto" }} disabled={busy || exerciseId === ""}>
-          {busy ? "…" : "+ Position hinzufügen"}
+        <button type="submit" className="btn inline-btn" style={{ width: "auto", marginLeft: "auto" }} disabled={action.busy || exerciseId === ""}>
+          {action.busy ? "Füge hinzu…" : "+ Position hinzufügen"}
         </button>
       </div>
       <p className="muted" style={{ margin: 0, fontSize: 12 }}>
@@ -305,15 +296,14 @@ function AddPosition({ planId, onAdded, onError }: { planId: number; onAdded: ()
 }
 
 /** Eine Positionszeile mit Inline-Bearbeiten (Ziel/Punkte/Leitner) und Entfernen (409-bewusst). */
-function PositionRow({ planId, pos, onChanged, flash }: {
-  planId: number; pos: PositionResponse; onChanged: () => void; flash: Flash;
+function PositionRow({ planId, pos, onChanged, action }: {
+  planId: number; pos: PositionResponse; onChanged: () => void; action: ActionState;
 }) {
   const types = useExerciseTypes();
   const typeLabel = (t: string) => types?.label(t) ?? t;
   const [editing, setEditing] = useState(false);
   const [showReport, setShowReport] = useState(false);
   const [settings, setSettings] = useState<PositionSettings>(() => settingsFrom(pos));
-  const [busy, setBusy] = useState(false);
 
   function cancel() {
     setSettings(settingsFrom(pos));
@@ -321,21 +311,14 @@ function PositionRow({ planId, pos, onChanged, flash }: {
   }
 
   async function save() {
-    setBusy(true);
-    try {
-      await api.updatePosition(planId, pos.id, settingsToDto(settings));
-      setEditing(false);
-      onChanged();
-      flash(true, "Position gespeichert.");
-    } catch (err) { flash(false, errorMessage(err)); }
-    finally { setBusy(false); }
+    if (!await action.run(() => api.updatePosition(planId, pos.id, settingsToDto(settings)), "Position gespeichert.")) return;
+    setEditing(false);
+    onChanged();
   }
 
   async function remove() {
     if (!confirmAction("Diese Position wirklich entfernen? Fortschritt und Auswertung dieser Position gehen verloren.")) return;
-    setBusy(true);
-    try { await api.deletePosition(planId, pos.id); onChanged(); flash(true, "Position entfernt."); }
-    catch (err) { flash(false, errorMessage(err)); setBusy(false); }
+    if (await action.run(() => api.deletePosition(planId, pos.id), "Position entfernt.")) onChanged();
   }
 
   if (!editing) {
@@ -361,8 +344,8 @@ function PositionRow({ planId, pos, onChanged, flash }: {
           <td className="row" style={{ gap: 6, justifyContent: "flex-end" }}>
             <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }}
               aria-expanded={showReport} onClick={() => setShowReport((s) => !s)}>📊 Report</button>
-            <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} disabled={busy} onClick={() => setEditing(true)}>Bearbeiten</button>
-            <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} disabled={busy} onClick={remove}>Entfernen</button>
+            <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} disabled={action.busy} onClick={() => setEditing(true)}>Bearbeiten</button>
+            <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} disabled={action.busy} onClick={remove}>Entfernen</button>
           </td>
         </tr>
         {showReport && (
@@ -384,8 +367,8 @@ function PositionRow({ planId, pos, onChanged, flash }: {
         <PositionFields value={settings} onChange={setSettings} />
       </td>
       <td className="row" style={{ gap: 6, justifyContent: "flex-end" }}>
-        <button type="button" className="btn inline-btn" style={{ width: "auto" }} disabled={busy} onClick={save}>OK</button>
-        <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} disabled={busy} onClick={cancel}>Abbrechen</button>
+        <button type="button" className="btn inline-btn" style={{ width: "auto" }} disabled={action.busy} onClick={save}>OK</button>
+        <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} disabled={action.busy} onClick={cancel}>Abbrechen</button>
       </td>
     </tr>
   );

@@ -27,6 +27,15 @@ public class TagsController(PuglingDbContext db, AuthAccess access) : Controller
     private static TagResponse Map(Tag t) =>
         new(t.Id, t.ChildId, t.Name, t.Color, t.CreatedBy, t.ExerciseTags.Count, t.VocabularyTags.Count, t.CreatedAt);
 
+    /// <summary>
+    /// Projiziert Tags direkt in die Antwort. Die beiden Zähler entstehen dabei als <c>COUNT</c> in der
+    /// Datenbank – die Listen-Endpunkte luden zuvor über zwei <c>Include</c>s *alle* Verknüpfungszeilen,
+    /// nur um sie im Speicher zu zählen (und bekamen sie obendrein nachverfolgt zurück).
+    /// </summary>
+    private static IQueryable<TagResponse> Project(IQueryable<Tag> q) =>
+        q.Select(t => new TagResponse(t.Id, t.ChildId, t.Name, t.Color, t.CreatedBy,
+            t.ExerciseTags.Count, t.VocabularyTags.Count, t.CreatedAt));
+
     /// <summary>Lädt einen Tag samt Links (Übungen + Vokabeln), sofern der Nutzer auf das zugehörige Kind zugreifen darf.</summary>
     private async Task<Tag?> FindOwnedAsync(int tagId)
     {
@@ -42,11 +51,7 @@ public class TagsController(PuglingDbContext db, AuthAccess access) : Controller
     public async Task<ActionResult<IEnumerable<TagResponse>>> List([FromQuery] int childId)
     {
         if (!await access.OwnsChildAsync(User, childId)) return Forbid();
-        var tags = await db.Tags.Include(t => t.ExerciseTags).Include(t => t.VocabularyTags)
-            .Where(t => t.ChildId == childId)
-            .OrderBy(t => t.Name)
-            .ToListAsync();
-        return tags.Select(Map).ToList();
+        return await Project(db.Tags.Where(t => t.ChildId == childId).OrderBy(t => t.Name)).ToListAsync();
     }
 
     /// <summary>Legt einen Tag für ein Kind an (Name je Kind eindeutig).</summary>
@@ -178,11 +183,9 @@ public class TagsController(PuglingDbContext db, AuthAccess access) : Controller
     public async Task<ActionResult<IEnumerable<TagResponse>>> ForExercise(int exerciseId, [FromQuery] int childId)
     {
         if (!await access.OwnsChildAsync(User, childId)) return Forbid();
-        var tags = await db.Tags.Include(t => t.ExerciseTags).Include(t => t.VocabularyTags)
+        return await Project(db.Tags
             .Where(t => t.ChildId == childId && t.ExerciseTags.Any(x => x.ExerciseId == exerciseId))
-            .OrderBy(t => t.Name)
-            .ToListAsync();
-        return tags.Select(Map).ToList();
+            .OrderBy(t => t.Name)).ToListAsync();
     }
 
     // ---- Vokabeln taggen (kind-skopiert) -----------------------------------------------------------
@@ -252,10 +255,8 @@ public class TagsController(PuglingDbContext db, AuthAccess access) : Controller
     public async Task<ActionResult<IEnumerable<TagResponse>>> ForVocabulary(int vocabularyId, [FromQuery] int childId)
     {
         if (!await access.OwnsChildAsync(User, childId)) return Forbid();
-        var tags = await db.Tags.Include(t => t.ExerciseTags).Include(t => t.VocabularyTags)
+        return await Project(db.Tags
             .Where(t => t.ChildId == childId && t.VocabularyTags.Any(x => x.VocabularyId == vocabularyId))
-            .OrderBy(t => t.Name)
-            .ToListAsync();
-        return tags.Select(Map).ToList();
+            .OrderBy(t => t.Name)).ToListAsync();
     }
 }

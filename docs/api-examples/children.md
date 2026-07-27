@@ -24,7 +24,7 @@ Response — `HTTP 200`:
     ],
     "profileNotes": "Motiviert \u00FCber Spiele-Themen; braucht klare kurze Aufgaben.",
     "allowedContentRating": "Everyone",
-    "createdAt": "2026-07-26T22:40:56.0846439",
+    "createdAt": "2026-07-27T08:50:58.7920705",
     "coins": 50,
     "gems": 300
   }
@@ -104,7 +104,7 @@ Response — `HTTP 200`:
   "interests": [],
   "profileNotes": null,
   "allowedContentRating": "Everyone",
-  "createdAt": "2026-07-26T22:40:59.3766342",
+  "createdAt": "2026-07-27T08:51:02.6677007",
   "coins": 0,
   "gems": 0
 }
@@ -134,7 +134,7 @@ Response — `HTTP 200`:
   "interests": [],
   "profileNotes": null,
   "allowedContentRating": "Everyone",
-  "createdAt": "2026-07-26T22:40:59.3766342",
+  "createdAt": "2026-07-27T08:51:02.6677007",
   "coins": 0,
   "gems": 0
 }

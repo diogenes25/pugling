@@ -305,6 +305,69 @@ export interface CreateInterestTagDto {
   synonyms?: string[];
 }
 
+/** Eine Lücke im Trägertext: `index` zeigt auf den Platzhalter `{{index}}` im Text. */
+export interface Gap {
+  index: number;
+  answer: string;
+  /** Weitere gültige Antworten (z. B. Kurzform) – die erste bleibt die Musterlösung. */
+  alternatives?: string[] | null;
+  /** Optionale Bindung an eine Store-Vokabel (Key), damit der Lernstand am Wort hängt. */
+  vocabKey?: string | null;
+}
+
+/** Ein Trägertext des Lückentext-Stores – Lerngrundlage, aus der Übungen schöpfen. */
+export interface ClozeResponse {
+  id: number;
+  key: string;
+  title: string;
+  sourceLanguage: string;
+  targetLanguage: string;
+  /** Text mit Platzhaltern `{{1}}`, `{{2}}` … an den Lücken. */
+  text: string;
+  translation: string | null;
+  gaps: Gap[];
+  wordBank: string[] | null;
+  createdAt: string;
+}
+
+/** Anlegen eines Trägertexts; `key` muss eindeutig sein, mindestens eine Lücke ist Pflicht. */
+export interface CreateClozeDto {
+  key: string;
+  title: string;
+  sourceLanguage: string;
+  targetLanguage: string;
+  text: string;
+  gaps: Gap[];
+  translation?: string | null;
+  wordBank?: string[] | null;
+}
+
+/**
+ * Änderung eines Trägertexts; der `key` bleibt (stabile Referenz). `null` heißt „unverändert" –
+ * geleert werden Übersetzung und Wortpool darum über die beiden `clear`-Schalter.
+ */
+export interface UpdateClozeDto {
+  title?: string | null;
+  text?: string | null;
+  translation?: string | null;
+  gaps?: Gap[] | null;
+  wordBank?: string[] | null;
+  clearTranslation?: boolean;
+  clearWordBank?: boolean;
+}
+
+/**
+ * Änderung eines Schlagworts. Der `slug` fehlt **absichtlich**: er ist die stabile Referenz, an der Bilder
+ * und Kind-Profile hängen – ihn zu ändern hieße, beide Seiten der geteilten Taxonomie zu entkoppeln.
+ * `synonyms` ersetzt die Liste vollständig.
+ */
+export interface UpdateInterestTagDto {
+  label?: string;
+  facet?: InterestFacet;
+  synonyms?: string[];
+  color?: string;
+}
+
 /** Ein gewichtetes Interesse des Kindes; negatives Gewicht = Abneigung (schließt Bilder hart aus). */
 export interface ChildInterestResponse {
   tagId: number;
@@ -408,6 +471,49 @@ export interface CreateChildDto {
   profileNotes?: string | null;
   /** Obergrenze der Bild-Eignung. Ohne Angabe die strengste Stufe. */
   allowedContentRating?: ContentRating;
+}
+
+/**
+ * RWX-Recht an einer Übung. Hierarchie `Owner` ⊃ `Write` ⊃ `Execute`: Owner darf zusätzlich löschen,
+ * die Ausführ-Sichtbarkeit umschalten und selbst Rechte vergeben. **Lesen darf jeder Creator** – das
+ * regelt kein Grant.
+ */
+export type GrantPermission = "Execute" | "Write" | "Owner";
+
+/** Ein vergebenes Recht an einer Übung. */
+export interface ExerciseGrant {
+  creatorId: number;
+  creatorName: string;
+  permission: GrantPermission;
+  grantedByFatherId: number | null;
+  createdAt: string;
+}
+
+/**
+ * Verwandtschaft eines Betreuers zum Kind. Sie ist reine Beschreibung – die Rechte sind für alle
+ * Betreuer gleich; nur die **Einlösung** ist ausstellergebunden (wer den Artikel angelegt hat, gibt frei).
+ */
+export type SupervisorRelation = "Father" | "Mother" | "Grandma" | "Grandpa" | "Guardian" | "Other";
+
+/** Eine Betreuungs-Beziehung: wer betreut dieses Kind seit wann. */
+export interface SupervisorLink {
+  supervisorId: number;
+  supervisorName: string;
+  relation: SupervisorRelation;
+  createdAt: string;
+}
+
+/** Wochentage, wie der Server sie serialisiert (`System.DayOfWeek` als Name). */
+export type Weekday = "Monday" | "Tuesday" | "Wednesday" | "Thursday" | "Friday" | "Saturday" | "Sunday";
+
+/** Ein Stundenplan-Eintrag: welches Fach an welchem Wochentag (optional mit Uhrzeit). */
+export interface TimetableEntry {
+  id: number;
+  childId: number;
+  subjectId: number;
+  subjectName: string;
+  dayOfWeek: Weekday;
+  timeOfDay: string | null;
 }
 
 /** Änderung eines Kindes; `clear…` leert ein Feld (ein `null` gilt im PATCH als „nicht angegeben"). */

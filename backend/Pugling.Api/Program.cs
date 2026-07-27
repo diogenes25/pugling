@@ -390,19 +390,21 @@ using (var scope = app.Services.CreateScope())
         db.Database.GetConnectionString()).DataSource;
     if (Path.GetDirectoryName(Path.GetFullPath(dataSource)) is { Length: > 0 } dbDir)
         Directory.CreateDirectory(dbDir);
-    db.Database.Migrate(); // wendet ausstehende EF-Migrationen an (Schema-Upgrade-Pfad)
+    // Durchgehend `await`: Top-Level-Statements dürfen das, und ein blockierendes
+    // `GetAwaiter().GetResult()` beim Start ist genau das Muster, das anderswo Deadlocks erzeugt.
+    await db.Database.MigrateAsync(); // wendet ausstehende EF-Migrationen an (Schema-Upgrade-Pfad)
     Seed.Run(db);
     // Bestehende/geseedete Vokabelübungen einmalig in die Item-Tabelle überführen (idempotent).
     var itemService = scope.ServiceProvider.GetRequiredService<ExerciseItemService>();
-    ExerciseItemBackfill.RunAsync(db, itemService).GetAwaiter().GetResult();
+    await ExerciseItemBackfill.RunAsync(db, itemService);
     // Zu jedem Father/Child ein Login-Konto mit Rollen anlegen (idempotent), damit Bestandsnutzer
     // sich weiterhin einloggen und ein Mehrrollen-Token erhalten.
     var accountService = scope.ServiceProvider.GetRequiredService<AccountService>();
-    AccountBackfill.RunAsync(db, accountService).GetAwaiter().GetResult();
+    await AccountBackfill.RunAsync(db, accountService);
     // Freitext-Interessen der Bestandskinder einmalig in die referenzierte Taxonomie überführen
     // (idempotent; der Freitext bleibt für den KI-Creator erhalten).
     var interestTagService = scope.ServiceProvider.GetRequiredService<InterestTagService>();
-    InterestTagBackfill.RunAsync(db, interestTagService).GetAwaiter().GetResult();
+    await InterestTagBackfill.RunAsync(db, interestTagService);
 }
 
 // OpenAPI-Dokument unter /openapi/v1.json + Swagger UI unter /swagger + Scalar UI unter /scalar/v1

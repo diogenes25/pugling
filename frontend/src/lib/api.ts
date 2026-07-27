@@ -1,7 +1,9 @@
 import type {
   AchievementDef, AchievementStatus, AnswerDto, CategoryResponse, ChapterResponse, ChildResponse, CreateAchievementDto,
   CreateChildDto, CreateExercisePayload, CreateKlassenarbeitDto, CreateMissionDto, CreatePlanDto, CreateVocabularyDto,
-  UpdateChildDto,
+  UpdateChildDto, SupervisorLink, SupervisorRelation, TimetableEntry, Weekday,
+  ClozeResponse, CreateClozeDto, UpdateClozeDto,
+  ExerciseGrant, GrantPermission,
   CreateFatherDto, FatherResponse, UpdateFatherDto,
   ExerciseDetail, ExercisePreviewAnswer, ExercisePreviewData, ExercisePreviewResult, ExerciseTypeManifest,
   ExerciseSearchParams, ExerciseSummary, ExerciseUsage, KlassenarbeitDetail, KlassenarbeitPractice, KlassenarbeitRepeat,
@@ -18,7 +20,8 @@ import type {
   ShopArticle, CreateShopArticleDto, UpdateShopArticleDto, ShopListing, CreateShopListingDto, UpdateShopListingDto,
   InventoryItem, ShopPurchase, ActivationRequest, ShopPurchaseStatus, ActivationRequestStatus,
   ShopView, MyActivation,
-  ContentRating, InterestTagResponse, CreateInterestTagDto, ChildInterestResponse, ChildInterestInput,
+  ContentRating, InterestTagResponse, CreateInterestTagDto, UpdateInterestTagDto,
+  ChildInterestResponse, ChildInterestInput,
   MediaAssetResponse, CreateMediaAssetDto, MediaLinkResponse, MediaUsage, SelectedMediaResponse,
   TextbookSeriesResponse, CreateTextbookSeriesDto, UpdateTextbookSeriesDto,
   SeriesUnitResponse, CreateSeriesUnitDto, UpdateSeriesUnitDto,
@@ -187,13 +190,60 @@ export const api = {
   children: () => http<ChildResponse[]>(`${V1}/supervisor/children`),
   child: (childId: number) => http<ChildResponse>(`${V1}/supervisor/children/${childId}`),
   deleteChild: (childId: number) => http<void>(`${V1}/supervisor/children/${childId}`, "DELETE"),
+
+  // Ko-Betreuer: ein Kind hat mehrere Supervisor (Vater/Mutter/Oma) mit gleichen Rechten und
+  // gemeinsamem Wallet. Der letzte lässt sich nicht entfernen – das Kind wäre verwaist (400).
+  childSupervisors: (childId: number) =>
+    http<SupervisorLink[]>(`${V1}/supervisor/children/${childId}/supervisors`),
+  addChildSupervisor: (childId: number, supervisorId: number, relation: SupervisorRelation) =>
+    http<SupervisorLink>(`${V1}/supervisor/children/${childId}/supervisors`, "POST", { supervisorId, relation }),
+  removeChildSupervisor: (childId: number, supervisorId: number) =>
+    http<void>(`${V1}/supervisor/children/${childId}/supervisors/${supervisorId}`, "DELETE"),
+
+  // Stundenplan: welches Fach an welchem Wochentag. Ein Fach je Wochentag (409 `timetable_slot_taken`).
+  childTimetable: (childId: number) =>
+    http<TimetableEntry[]>(`${V1}/supervisor/children/${childId}/timetable`),
+  addTimetableEntry: (childId: number, dto: { subjectId: number; dayOfWeek: Weekday; timeOfDay?: string | null }) =>
+    http<TimetableEntry>(`${V1}/supervisor/children/${childId}/timetable`, "POST", dto),
+  removeTimetableEntry: (childId: number, entryId: number) =>
+    http<void>(`${V1}/supervisor/children/${childId}/timetable/${entryId}`, "DELETE"),
   createChild: (dto: CreateChildDto) => http<ChildResponse>(`${V1}/supervisor/children`, "POST", dto),
   updateChild: (childId: number, dto: UpdateChildDto) =>
     http<ChildResponse>(`${V1}/supervisor/children/${childId}`, "PATCH", dto),
 
+  // ---- Lückentext-Store: Trägertexte als Lerngrundlage (analog zum Vokabel-Store) ----
+  // Der `key` ist die stabile Referenz und darum nur beim Anlegen setzbar; PATCH lässt ihn aus.
+  clozeTexts: (p: { search?: string; skip?: number; take?: number } = {}) => {
+    const q = new URLSearchParams();
+    if (p.search) q.set("search", p.search);
+    appendPaging(q, p);
+    const qs = q.toString();
+    return httpPaged<ClozeResponse>(`${V1}/creator/cloze-texts${qs ? `?${qs}` : ""}`);
+  },
+  createClozeText: (dto: CreateClozeDto) => http<ClozeResponse>(`${V1}/creator/cloze-texts`, "POST", dto),
+  updateClozeText: (id: number, dto: UpdateClozeDto) =>
+    http<ClozeResponse>(`${V1}/creator/cloze-texts/${id}`, "PATCH", dto),
+  deleteClozeText: (id: number) => http<void>(`${V1}/creator/cloze-texts/${id}`, "DELETE"),
+
   // ---- Vater: Katalog (Fächer, Kapitel, Übungssuche über Metadaten) ----
   subjects: () => http<SubjectResponse[]>(`${V1}/creator/subjects`),
   createSubject: (name: string) => http<SubjectResponse>(`${V1}/creator/subjects`, "POST", { name }),
+  updateSubject: (subjectId: number, name: string) =>
+    http<SubjectResponse>(`${V1}/creator/subjects/${subjectId}`, "PATCH", { name }),
+  /** Löscht das Fach **samt Kapiteln und Übungen** – scheitert, solange eine Übung in einem Plan steckt. */
+  deleteSubject: (subjectId: number) => http<void>(`${V1}/creator/subjects/${subjectId}`, "DELETE"),
+  updateChapter: (subjectId: number, chapterId: number, dto: { name?: string; orderIndex?: number }) =>
+    http<ChapterResponse>(`${V1}/creator/subjects/${subjectId}/chapters/${chapterId}`, "PATCH", dto),
+  deleteChapter: (subjectId: number, chapterId: number) =>
+    http<void>(`${V1}/creator/subjects/${subjectId}/chapters/${chapterId}`, "DELETE"),
+
+  // „Arten" (Kategorien) sind fachabhängig und dienen der Vorfilterung im Katalog.
+  createCategory: (subjectId: number, name: string) =>
+    http<CategoryResponse>(`${V1}/creator/subjects/${subjectId}/categories`, "POST", { name }),
+  updateCategory: (subjectId: number, categoryId: number, name: string) =>
+    http<CategoryResponse>(`${V1}/creator/subjects/${subjectId}/categories/${categoryId}`, "PATCH", { name }),
+  deleteCategory: (subjectId: number, categoryId: number) =>
+    http<void>(`${V1}/creator/subjects/${subjectId}/categories/${categoryId}`, "DELETE"),
   chapters: (subjectId: number) =>
     http<ChapterResponse[]>(`${V1}/creator/subjects/${subjectId}/chapters`),
   createChapter: (subjectId: number, name: string, orderIndex: number) =>
@@ -222,6 +272,30 @@ export const api = {
     http<ExerciseSummary>(`${V1}/creator/subjects/${subjectId}/chapters/${chapterId}/${typeRoute}/${id}`, "PUT", payload),
   deleteExercise: (subjectId: number, chapterId: number, typeRoute: string, id: number) =>
     http<void>(`${V1}/creator/subjects/${subjectId}/chapters/${chapterId}/${typeRoute}/${id}`, "DELETE"),
+
+  // RWX-Rechte an einer Übung: mehrere Owner möglich, Write/Execute je Creator. Lesen darf jeder – dafür
+  // gibt es kein Grant. Rechte vergeben/entziehen darf nur ein Owner.
+  exerciseGrants: (exerciseId: number) =>
+    http<ExerciseGrant[]>(`${V1}/creator/exercises/${exerciseId}/grants`),
+  addExerciseGrant: (exerciseId: number, creatorId: number, permission: GrantPermission) =>
+    http<ExerciseGrant>(`${V1}/creator/exercises/${exerciseId}/grants`, "POST", { creatorId, permission }),
+  removeExerciseGrant: (exerciseId: number, creatorId: number, permission: GrantPermission) =>
+    http<void>(`${V1}/creator/exercises/${exerciseId}/grants/${creatorId}/${permission}`, "DELETE"),
+
+  // Titelbild der Übung (und die übungslokale Übersteuerung am Item). Genauigkeits-Kaskade: das Item
+  // schlägt die Vokabel; das Titelbild ist reine Deko der Übungskachel.
+  exerciseMedia: (exerciseId: number) =>
+    http<MediaLinkResponse[]>(`${V1}/creator/exercises/${exerciseId}/media`),
+  linkExerciseMedia: (exerciseId: number, mediaAssetId: number, weight = 0) =>
+    http<MediaLinkResponse>(`${V1}/creator/exercises/${exerciseId}/media`, "POST", { mediaAssetId, weight }),
+  unlinkExerciseMedia: (exerciseId: number, linkId: number) =>
+    http<void>(`${V1}/creator/exercises/${exerciseId}/media/${linkId}`, "DELETE"),
+  exerciseItemMedia: (exerciseId: number, itemId: number) =>
+    http<MediaLinkResponse[]>(`${V1}/creator/exercises/${exerciseId}/items/${itemId}/media`),
+  linkExerciseItemMedia: (exerciseId: number, itemId: number, mediaAssetId: number, weight = 0) =>
+    http<MediaLinkResponse>(`${V1}/creator/exercises/${exerciseId}/items/${itemId}/media`, "POST", { mediaAssetId, weight }),
+  unlinkExerciseItemMedia: (exerciseId: number, itemId: number, linkId: number) =>
+    http<void>(`${V1}/creator/exercises/${exerciseId}/items/${itemId}/media/${linkId}`, "DELETE"),
 
   // Vokabelpaare einer Übung: eigene Ebene mit stabilen Ids, daher CRUD statt „ganze Config ersetzen".
   // Genau deshalb lässt sich ein Wort nachtragen, ohne den Lernstand der übrigen Items zu verlieren.
@@ -439,6 +513,15 @@ export const api = {
   missions: () => http<MissionStatus[]>(`${V1}/student/me/missions`),
   achievements: () => http<AchievementStatus[]>(`${V1}/student/me/achievements`),
 
+  // Die eigenen großen Ziele (OKR). Der Server liefert nur **aktive** – ein vom Vater stillgelegtes
+  // Ziel soll das Kind gar nicht erst sehen, sonst arbeitet es auf etwas hin, das nicht mehr zählt.
+  myObjectives: (p: { skip?: number; take?: number } = {}) => {
+    const q = new URLSearchParams();
+    appendPaging(q, p);
+    const qs = q.toString();
+    return httpPaged<Objective>(`${V1}/student/me/objectives${qs ? `?${qs}` : ""}`);
+  },
+
   // ---- Sohn: Skins (Besitz server-autoritativ; Kauf bucht Münzen ab) ----
   skins: () => http<SkinState>(`${V1}/student/me/skins`),
   purchaseSkin: (skinId: string) => http<SkinState>(`${V1}/student/me/skins/${skinId}/purchase`, "POST", {}),
@@ -628,6 +711,11 @@ export const api = {
     http<InterestTagResponse[]>(`${V1}/creator/interest-tags${search ? `?search=${encodeURIComponent(search)}&take=200` : "?take=200"}`),
   createInterestTag: (dto: CreateInterestTagDto) =>
     http<InterestTagResponse>(`${V1}/creator/interest-tags`, "POST", dto),
+  /** Ändert Label, Facette, Synonyme oder Farbe. Der **Slug** bleibt: an ihm hängen Bilder und Kind-Profile. */
+  updateInterestTag: (id: number, dto: UpdateInterestTagDto) =>
+    http<InterestTagResponse>(`${V1}/creator/interest-tags/${id}`, "PATCH", dto),
+  /** Löscht ein Schlagwort samt Verknüpfungen – bewusst ohne Sperre: es trägt keine Inhalte. */
+  deleteInterestTag: (id: number) => http<void>(`${V1}/creator/interest-tags/${id}`, "DELETE"),
 
   childInterests: (childId: number) =>
     http<ChildInterestResponse[]>(`${V1}/supervisor/children/${childId}/interests`),

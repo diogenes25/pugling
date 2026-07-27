@@ -1,8 +1,11 @@
 import { useEffect, useState } from "react";
 import { api, errorMessage } from "../lib/api";
 import { Modal } from "../components/Modal";
+import { StatusBanner } from "../components/StatusBanner";
 import { SCHOOL_TYPES } from "../lib/labels";
 import { confirmAction } from "../lib/ui";
+import { useAction } from "../lib/useAction";
+import { useAsync } from "../lib/useAsync";
 import type {
   CreateExercisePayload, ExerciseDetail, ExerciseSummary, ExerciseTypeKey, SchoolType,
   VocabItemResponse, VocabularyResponse,
@@ -13,6 +16,8 @@ import {
   isContentEditable, type Row,
 } from "./exerciseConfig";
 import { useExerciseTypes } from "../lib/exerciseTypes";
+import { ExerciseCoverSection, GrantsSection } from "./ExerciseSharingPanels";
+import { ExerciseItemMediaPanel } from "./VocabMediaPanel";
 
 /**
  * Eine bestehende Übung ändern. Ohne diesen Dialog wäre ein Tippfehler nur durch Löschen und Neuanlegen
@@ -69,6 +74,9 @@ export function ExerciseEditModal({ exercise, onClose, onSaved }: {
             </div>
           )}
           <MetaEditor detail={detail} type={type} route={route!} onSaved={onSaved} />
+          {/* Titelbild und Rechte gehören zur Übung, nicht zu ihrem Inhalt – darum unter den Metadaten. */}
+          <ExerciseCoverSection exerciseId={detail.id} canWrite={detail.isOwn} />
+          <GrantsSection exerciseId={detail.id} isOwner={detail.isOwner} />
         </>
       )}
     </Modal>
@@ -154,32 +162,22 @@ function MetaEditor({ detail, type, route, onSaved }: {
   detail: ExerciseDetail; type: ExerciseTypeKey; route: string; onSaved: () => void;
 }) {
   const [form, setForm] = useState<MetaForm>(() => initialForm(detail));
-  const [busy, setBusy] = useState(false);
-  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const action = useAction();
 
   function up<K extends keyof MetaForm>(k: K, v: MetaForm[K]) { setForm((f) => ({ ...f, [k]: v })); }
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    setMsg(null);
-    if (!form.title.trim()) { setMsg({ ok: false, text: "Bitte einen Titel angeben." }); return; }
-    setBusy(true);
-    try {
-      // Die Config bleibt inhaltlich, wie sie ist – nur das Sprachpaar der Vokabelübung kommt aus dem
-      // Formular (ohne es kann der Server kein inline ergänztes Wort im Store anlegen).
-      const config = type === "Vocabulary"
-        ? { ...(detail.config as Record<string, unknown>),
-            sourceLang: form.sourceLang || null, targetLang: form.targetLang || null }
-        : detail.config;
-      await api.updateExercise(detail.subjectId, detail.chapterId, route, detail.id,
-        payloadFrom(detail, form, config));
-      setMsg({ ok: true, text: "Gespeichert." });
-      onSaved();
-    } catch (err) {
-      setMsg({ ok: false, text: errorMessage(err) });
-    } finally {
-      setBusy(false);
-    }
+    if (!form.title.trim()) { action.fail("Bitte einen Titel angeben."); return; }
+    // Die Config bleibt inhaltlich, wie sie ist – nur das Sprachpaar der Vokabelübung kommt aus dem
+    // Formular (ohne es kann der Server kein inline ergänztes Wort im Store anlegen).
+    const config = type === "Vocabulary"
+      ? { ...(detail.config as Record<string, unknown>),
+          sourceLang: form.sourceLang || null, targetLang: form.targetLang || null }
+      : detail.config;
+    const ok = await action.run(() => api.updateExercise(
+      detail.subjectId, detail.chapterId, route, detail.id, payloadFrom(detail, form, config)), "Gespeichert.");
+    if (ok) onSaved();
   }
 
   return (
@@ -260,10 +258,10 @@ function MetaEditor({ detail, type, route, onSaved }: {
           )}
         </>
       )}
-      <button type="submit" className="btn inline-btn" style={{ width: "auto" }} disabled={busy}>
-        {busy ? "…" : "Beschreibung speichern"}
+      <button type="submit" className="btn inline-btn" style={{ width: "auto" }} disabled={action.busy}>
+        {action.busy ? "Speichere…" : "Beschreibung speichern"}
       </button>
-      {msg && <div className={`banner ${msg.ok ? "ok" : "err"}`} role="status" aria-live="polite">{msg.text}</div>}
+      <StatusBanner message={action.message} style={{ marginTop: 0 }} />
     </form>
   );
 }
@@ -281,28 +279,20 @@ function ContentEditor({ detail, type, route, onSaved }: {
   const initial = configToEditorState(type, detail.config);
   const [rows, setRows] = useState<Row[]>(initial.rows);
   const [extra, setExtra] = useState<Row>(initial.extra);
-  const [busy, setBusy] = useState(false);
-  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const action = useAction();
 
   function patchRow(i: number, patch: Row) { setRows((rs) => rs.map((r, idx) => (idx === i ? { ...r, ...patch } : r))); }
   function addRow() { setRows((rs) => [...rs, emptyRow(type)]); }
   function removeRow(i: number) { setRows((rs) => (rs.length > 1 ? rs.filter((_, idx) => idx !== i) : rs)); }
 
   async function save() {
-    setMsg(null);
+    // Erst die fachliche Prüfung des Editors – sie erspart einen Rundlauf mit sicherem 400.
     const problem = contentProblem(type, rows, extra, 0);
-    if (problem) { setMsg({ ok: false, text: problem }); return; }
-    setBusy(true);
-    try {
-      await api.updateExercise(detail.subjectId, detail.chapterId, route, detail.id,
-        payloadFrom(detail, initialForm(detail), buildTypeConfig(type, rows, extra)));
-      setMsg({ ok: true, text: "Inhalt gespeichert." });
-      onSaved();
-    } catch (err) {
-      setMsg({ ok: false, text: errorMessage(err) });
-    } finally {
-      setBusy(false);
-    }
+    if (problem) { action.fail(problem); return; }
+    const ok = await action.run(() => api.updateExercise(
+      detail.subjectId, detail.chapterId, route, detail.id,
+      payloadFrom(detail, initialForm(detail), buildTypeConfig(type, rows, extra))), "Inhalt gespeichert.");
+    if (ok) onSaved();
   }
 
   return (
@@ -310,10 +300,11 @@ function ContentEditor({ detail, type, route, onSaved }: {
       <h4 className="h-section" style={{ fontSize: 16 }}>Inhalt</h4>
       <ConfigEditor type={type} rows={rows} extra={extra} setExtra={setExtra}
         patchRow={patchRow} addRow={addRow} removeRow={removeRow} />
-      <button type="button" className="btn inline-btn" style={{ width: "auto", marginTop: 10 }} disabled={busy} onClick={save}>
-        {busy ? "…" : "Inhalt speichern"}
+      <button type="button" className="btn inline-btn" style={{ width: "auto", marginTop: 10 }}
+        disabled={action.busy} onClick={save}>
+        {action.busy ? "Speichere…" : "Inhalt speichern"}
       </button>
-      {msg && <div className={`banner ${msg.ok ? "ok" : "err"}`} style={{ marginTop: 8 }} role="status" aria-live="polite">{msg.text}</div>}
+      <StatusBanner message={action.message} />
     </section>
   );
 }
@@ -326,83 +317,92 @@ function ContentEditor({ detail, type, route, onSaved }: {
  * die einzige Einfügeart, die keine Position verschiebt und deshalb auch bei einer laufenden Übung erlaubt ist.
  */
 function ItemEditor({ detail }: { detail: ExerciseDetail }) {
-  const [items, setItems] = useState<VocabItemResponse[] | null>(null);
-  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
-  const [busy, setBusy] = useState(false);
-
-  const reload = () => api.exerciseItems(detail.subjectId, detail.chapterId, detail.id).then(setItems);
-  useEffect(() => { reload().catch((e) => setMsg({ ok: false, text: errorMessage(e) })); },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [detail.id]);
+  const items = useAsync<VocabItemResponse[]>(
+    () => api.exerciseItems(detail.subjectId, detail.chapterId, detail.id), [detail.id]);
+  const action = useAction();
 
   async function act(fn: () => Promise<unknown>, okText: string) {
-    setBusy(true); setMsg(null);
-    try { await fn(); await reload(); setMsg({ ok: true, text: okText }); }
-    catch (err) { setMsg({ ok: false, text: errorMessage(err) }); }
-    finally { setBusy(false); }
+    if (await action.run(fn, okText)) items.reload();
   }
 
   return (
     <section>
       <h4 className="h-section" style={{ fontSize: 16 }}>
-        Wortpaare {items ? `(${items.length})` : ""}
+        Wortpaare {items.data ? `(${items.data.length})` : ""}
       </h4>
       <p className="muted" style={{ marginTop: 0, fontSize: 13 }}>
         Wörter kommen aus dem Vokabel-Store und bleiben über Übungen hinweg verknüpft. Der Lernstand deines
         Kindes hängt am einzelnen Wort – Ergänzen und Entfernen lässt die übrigen unberührt.
       </p>
 
-      {items === null ? <div className="loading">Lade Wortpaare…</div> : (
+      {items.error && <div className="banner err">{items.error}</div>}
+      {/* Auf `loading` prüfen, nicht auf „noch keine Daten": nach einem Fehler bleibt `data` null, und
+          der Spinner stünde neben der Fehlermeldung für immer. */}
+      {items.loading ? <div className="loading">Lade Wortpaare…</div> : items.data && (
         <div style={{ overflowX: "auto" }}>
           <table className="table">
             <thead><tr><th>#</th><th>Wort</th><th>Übersetzung</th><th>Hinweis</th><th /></tr></thead>
             <tbody>
-              {items.map((it, i) => (
-                <ItemRow key={it.id} item={it} position={i + 1} busy={busy}
+              {items.data.map((it, i) => (
+                <ItemRow key={it.id} item={it} position={i + 1} busy={action.busy} exerciseId={detail.id}
                   onHint={(hint) => act(() => api.patchExerciseItem(detail.subjectId, detail.chapterId, detail.id, it.id, { hint }), "Hinweis gespeichert.")}
                   onRemove={() => {
                     if (!confirmAction(`„${it.front} → ${it.back}" aus dieser Übung entfernen? Die Vokabel bleibt im Store.`)) return;
                     act(() => api.deleteExerciseItem(detail.subjectId, detail.chapterId, detail.id, it.id), "Wort entfernt.");
                   }} />
               ))}
-              {items.length === 0 && <tr><td colSpan={5} className="muted">Noch keine Wörter – unten hinzufügen.</td></tr>}
+              {items.data.length === 0 && <tr><td colSpan={5} className="muted">Noch keine Wörter – unten hinzufügen.</td></tr>}
             </tbody>
           </table>
         </div>
       )}
 
-      <AddItem detail={detail} busy={busy}
+      <AddItem detail={detail} busy={action.busy}
         onAdd={(body) => act(() => api.addExerciseItem(detail.subjectId, detail.chapterId, detail.id, body), "Wort hinzugefügt.")} />
 
-      {msg && <div className={`banner ${msg.ok ? "ok" : "err"}`} style={{ marginTop: 8 }} role="status" aria-live="polite">{msg.text}</div>}
+      <StatusBanner message={action.message} />
     </section>
   );
 }
 
-function ItemRow({ item, position, busy, onHint, onRemove }: {
-  item: VocabItemResponse; position: number; busy: boolean;
+function ItemRow({ item, position, busy, exerciseId, onHint, onRemove }: {
+  item: VocabItemResponse; position: number; busy: boolean; exerciseId: number;
   onHint: (hint: string) => void; onRemove: () => void;
 }) {
   const [hint, setHint] = useState(item.hint ?? "");
+  // Das Bild-Panel steht eingeklappt: es lädt eigene Daten, und bei 30 Wörtern wären das 30 Abfragen.
+  const [showMedia, setShowMedia] = useState(false);
   const dirty = hint !== (item.hint ?? "");
   return (
-    <tr>
-      <td className="num">{position}</td>
-      <td>{item.front}</td>
-      <td className="muted">{item.back}</td>
-      <td>
-        <span className="row" style={{ gap: 4 }}>
-          <input aria-label={`Hinweis für ${item.front}`} value={hint} onChange={(e) => setHint(e.target.value)}
-            placeholder="–" style={{ maxWidth: 160 }} />
-          {dirty && <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }}
-            disabled={busy} onClick={() => onHint(hint)}>OK</button>}
-        </span>
-      </td>
-      <td style={{ textAlign: "right" }}>
-        <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }}
-          aria-label={`${item.front} entfernen`} disabled={busy} onClick={onRemove}>Entfernen</button>
-      </td>
-    </tr>
+    <>
+      <tr>
+        <td className="num">{position}</td>
+        <td>{item.front}</td>
+        <td className="muted">{item.back}</td>
+        <td>
+          <span className="row" style={{ gap: 4 }}>
+            <input aria-label={`Hinweis für ${item.front}`} value={hint} onChange={(e) => setHint(e.target.value)}
+              placeholder="–" style={{ maxWidth: 160 }} />
+            {dirty && <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }}
+              disabled={busy} onClick={() => onHint(hint)}>OK</button>}
+          </span>
+        </td>
+        <td style={{ textAlign: "right", whiteSpace: "nowrap" }}>
+          <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }}
+            aria-expanded={showMedia} aria-label={`Bild für ${item.front} nur in dieser Übung`}
+            onClick={() => setShowMedia((v) => !v)}>🖼️ Bild</button>
+          <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }}
+            aria-label={`${item.front} entfernen`} disabled={busy} onClick={onRemove}>Entfernen</button>
+        </td>
+      </tr>
+      {showMedia && (
+        <tr>
+          <td colSpan={5}>
+            <ExerciseItemMediaPanel exerciseId={exerciseId} itemId={item.id} word={item.front} />
+          </td>
+        </tr>
+      )}
+    </>
   );
 }
 

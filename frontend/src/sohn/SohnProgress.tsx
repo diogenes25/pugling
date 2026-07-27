@@ -3,6 +3,7 @@ import { api } from "../lib/api";
 import { useAsync } from "../lib/useAsync";
 import { useSohn } from "./SohnApp";
 import { BadgesGallery } from "./GamificationPanels";
+import { MyObjectives } from "./MyObjectives";
 import type { OverviewResponse, ProgressResponse } from "../lib/types";
 
 export function SohnProgress() {
@@ -59,6 +60,9 @@ export function SohnProgress() {
           <span style={{ color: "var(--lime)" }}>■</span> teils geschafft &nbsp; <span style={{ color: "var(--gold)" }}>■</span> Tag komplett
         </div>
       </div>
+
+      {/* Die großen Ziele stehen über den Abzeichen: sie laufen über Wochen und sagen, wofür das alles gut ist. */}
+      <MyObjectives />
 
       <BadgesGallery />
 

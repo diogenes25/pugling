@@ -68,14 +68,24 @@ public class SubjectsController(PuglingDbContext db) : ControllerBase
             await db.Chapters.CountAsync(c => c.SubjectId == subjectId));
     }
 
-    /// <summary>Löscht ein Fach samt aller Kapitel und Übungen.</summary>
+    /// <summary>
+    /// Löscht ein Fach samt aller Kapitel und Übungen. Nicht möglich, solange eine Übung darunter
+    /// in einem Lehrplan oder einer Klassenarbeit verwendet wird.
+    /// </summary>
     [HttpDelete("{subjectId:int}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<IActionResult> Delete(int subjectId)
     {
         var subject = await db.Subjects.FindAsync(subjectId);
         if (subject is null) return NotFound();
+        // Subject→Chapter→Exercise kaskadiert, PlanPosition→Exercise ist Restrict: ohne diese Prüfung
+        // stirbt das Löschen als FK-Verletzung in einer nackten 500, statt zu sagen, was im Weg steht.
+        if (await db.PlanPositions.AnyAsync(p => p.Exercise!.Chapter!.SubjectId == subjectId)
+            || await db.KlassenarbeitExercises.AnyAsync(x => x.Exercise!.Chapter!.SubjectId == subjectId))
+            return this.ProblemWithCode(ApiErrors.ExerciseInUse,
+                "Exercises in this subject are used in a study plan or a class test; remove them there first.");
         db.Subjects.Remove(subject);
         await db.SaveChangesAsync();
         return NoContent();

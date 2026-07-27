@@ -46,7 +46,7 @@ public class ClozeTextsController(PuglingDbContext db) : ControllerBase
     [HttpGet("by-key/{key}")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<ClozeResponse>> GetByKey(string key) =>
-        await db.ClozeTexts.FirstOrDefaultAsync(c => c.Key == key) is { } c ? Map(c) : NotFound();
+        await db.ClozeTexts.AsNoTracking().FirstOrDefaultAsync(c => c.Key == key) is { } c ? Map(c) : NotFound();
 
     /// <summary>Erstellt einen Lückentext. Key muss eindeutig sein; mind. eine Lücke.</summary>
     [HttpPost]
@@ -87,9 +87,12 @@ public class ClozeTextsController(PuglingDbContext db) : ControllerBase
         if (dto.Gaps is { Count: 0 }) return this.ProblemWithCode(ApiErrors.ValidationError, "At least one gap is required.");
         if (dto.Title is not null) cloze.Title = dto.Title;
         if (dto.Text is not null) cloze.Text = dto.Text;
-        if (dto.Translation is not null) cloze.Translation = dto.Translation;
         if (dto.Gaps is not null) cloze.Gaps = dto.Gaps;
+        // Erst der Wert, dann der Lösch-Schalter: schickt ein Formular beides, gewinnt „leeren".
+        if (dto.Translation is not null) cloze.Translation = dto.Translation;
+        if (dto.ClearTranslation) cloze.Translation = null;
         if (dto.WordBank is not null) cloze.WordBank = dto.WordBank;
+        if (dto.ClearWordBank) cloze.WordBank = null;
         await db.SaveChangesAsync();
         return Map(cloze);
     }

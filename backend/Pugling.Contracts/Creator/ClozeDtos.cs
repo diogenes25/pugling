@@ -11,5 +11,11 @@ public record ClozeResponse(int Id, string Key, string Title, string SourceLangu
 public record CreateClozeDto(string Key, string Title, string SourceLanguage, string TargetLanguage,
     string Text, List<Gap> Gaps, string? Translation = null, List<string>? WordBank = null);
 
-/// <summary>Partielle Änderung eines Lückentexts; leere Felder bleiben unverändert.</summary>
-public record UpdateClozeDto(string? Title, string? Text, string? Translation, List<Gap>? Gaps, List<string>? WordBank);
+/// <summary>
+/// Partielle Änderung eines Lückentexts: <c>null</c> heißt „nicht angegeben" (der Wert bleibt).
+/// Die beiden optionalen Inhalte leert man darum über <see cref="ClearTranslation"/> bzw.
+/// <see cref="ClearWordBank"/> – ein im Formular geräumtes Feld käme als <c>null</c> an und wäre
+/// sonst nicht von „unverändert" zu unterscheiden.
+/// </summary>
+public record UpdateClozeDto(string? Title, string? Text, string? Translation, List<Gap>? Gaps,
+    List<string>? WordBank, bool ClearTranslation = false, bool ClearWordBank = false);

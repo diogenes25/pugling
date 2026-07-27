@@ -26,7 +26,7 @@ public class TimetableController(PuglingDbContext db, AuthAccess access) : Contr
     public async Task<ActionResult<IEnumerable<EntryResponse>>> List(int childId)
     {
         if (!await access.FatherOwnsChildAsync(User, childId)) return Forbid();
-        var entries = await db.Timetable.Include(t => t.Subject)
+        var entries = await db.Timetable.AsNoTracking().Include(t => t.Subject)
             .Where(t => t.ChildId == childId)
             .OrderBy(t => t.DayOfWeek).ThenBy(t => t.Subject!.Name)
             .ToListAsync();

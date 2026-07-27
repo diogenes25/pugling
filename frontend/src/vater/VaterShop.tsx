@@ -1,5 +1,7 @@
 import { useId, useState } from "react";
-import { api, errorMessage } from "../lib/api";
+import { StatusBanner } from "../components/StatusBanner";
+import { api } from "../lib/api";
+import { useAction, type ActionState } from "../lib/useAction";
 import { useAsync } from "../lib/useAsync";
 import { useChildSelection } from "../lib/useChildSelection";
 import { confirmAction } from "../lib/ui";
@@ -41,8 +43,7 @@ function ArticleCatalog() {
   const [form, setForm] = useState<CreateShopArticleDto>({
     articleNumber: "", title: "", description: "", unitType: "Minute", actionType: "TV",
   });
-  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
-  const [busy, setBusy] = useState(false);
+  const action = useAction();
 
   function up<K extends keyof CreateShopArticleDto>(k: K, v: CreateShopArticleDto[K]) {
     setForm((f) => ({ ...f, [k]: v }));
@@ -50,31 +51,23 @@ function ArticleCatalog() {
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (!form.articleNumber.trim()) { setMsg({ ok: false, text: "Artikelnummer nötig." }); return; }
-    if (!form.title.trim()) { setMsg({ ok: false, text: "Titel nötig." }); return; }
-    setBusy(true);
-    try {
-      await api.createShopArticle({
-        ...form, articleNumber: form.articleNumber.trim(), title: form.title.trim(),
-        description: form.description?.trim() || null,
-      });
-      setMsg({ ok: true, text: `Artikel „${form.title.trim()}" angelegt.` });
-      setForm((f) => ({ ...f, articleNumber: "", title: "", description: "" }));
-      list.reload();
-    } catch (err) {
-      setMsg({ ok: false, text: errorMessage(err) });
-    } finally {
-      setBusy(false);
-    }
+    const title = form.title.trim();
+    if (!form.articleNumber.trim()) { action.fail("Artikelnummer nötig."); return; }
+    if (!title) { action.fail("Titel nötig."); return; }
+    const ok = await action.run(() => api.createShopArticle({
+      ...form, articleNumber: form.articleNumber.trim(), title,
+      description: form.description?.trim() || null,
+    }), `Artikel „${title}" angelegt.`);
+    if (!ok) return;
+    setForm((f) => ({ ...f, articleNumber: "", title: "", description: "" }));
+    list.reload();
   }
 
   async function remove(a: ShopArticle) {
     if (!confirmAction(`Artikel „${a.title}" samt aller Angebote löschen? (Kaufhistorie bleibt erhalten.)`)) return;
-    try {
-      await api.deleteShopArticle(a.id);
-      if (selected?.id === a.id) setSelected(null);
-      list.reload();
-    } catch (err) { setMsg({ ok: false, text: errorMessage(err) }); }
+    if (!await action.run(() => api.deleteShopArticle(a.id))) return;
+    if (selected?.id === a.id) setSelected(null);
+    list.reload();
   }
 
   return (
@@ -95,9 +88,9 @@ function ArticleCatalog() {
           </select></div>
         <div className="field" style={{ minWidth: 200 }}><label htmlFor={`${uid}-desc`}>Beschreibung</label>
           <input id={`${uid}-desc`} value={form.description ?? ""} onChange={(e) => up("description", e.target.value)} placeholder="Bildschirmzeit nach dem Lernen" /></div>
-        <button type="submit" className="btn inline-btn" style={{ width: "auto" }} disabled={busy}>{busy ? "…" : "Anlegen"}</button>
+        <button type="submit" className="btn inline-btn" style={{ width: "auto" }} disabled={action.busy}>{action.busy ? "Lege an…" : "Anlegen"}</button>
       </form>
-      {msg && <div role="status" aria-live="polite" className={`banner ${msg.ok ? "ok" : "err"}`} style={{ marginTop: 10 }}>{msg.text}</div>}
+      <StatusBanner message={action.message} style={{ marginTop: 10 }} />
 
       {list.loading ? <div className="loading">Lade…</div> : list.error ? <div className="banner err">{list.error}</div> : (
         <div style={{ overflowX: "auto", marginTop: 10 }}>
@@ -108,7 +101,7 @@ function ArticleCatalog() {
                 <ArticleRow key={a.id} article={a} selected={selected?.id === a.id}
                   onToggleListings={() => setSelected(selected?.id === a.id ? null : a)}
                   onSaved={list.reload}
-                  onError={(t) => setMsg({ ok: false, text: t })}
+                  action={action}
                   onRemove={() => remove(a)} />
               ))}
               {list.data?.length === 0 && <tr><td colSpan={5} className="muted">Noch keine Artikel.</td></tr>}
@@ -127,9 +120,9 @@ function ArticleCatalog() {
  * Bestand hängen an seinen Angeboten. Titel und Einheit lassen sich nachträglich richtigstellen, ohne
  * die Kaufhistorie anzutasten – sie trägt ihre eigene Momentaufnahme.
  */
-function ArticleRow({ article, selected, onToggleListings, onSaved, onError, onRemove }: {
-  article: ShopArticle; selected: boolean;
-  onToggleListings: () => void; onSaved: () => void; onError: (t: string) => void; onRemove: () => void;
+function ArticleRow({ article, selected, action, onToggleListings, onSaved, onRemove }: {
+  article: ShopArticle; selected: boolean; action: ActionState;
+  onToggleListings: () => void; onSaved: () => void; onRemove: () => void;
 }) {
   const uid = useId();
   const [editing, setEditing] = useState(false);
@@ -137,19 +130,14 @@ function ArticleRow({ article, selected, onToggleListings, onSaved, onError, onR
     articleNumber: article.articleNumber, title: article.title,
     description: article.description ?? "", unitType: article.unitType, actionType: article.actionType,
   });
-  const [busy, setBusy] = useState(false);
-
   async function save() {
-    setBusy(true);
-    try {
-      await api.updateShopArticle(article.id, {
-        articleNumber: form.articleNumber.trim(), title: form.title.trim(),
-        description: form.description.trim() || null, unitType: form.unitType, actionType: form.actionType,
-      });
-      setEditing(false);
-      onSaved();
-    } catch (err) { onError(errorMessage(err)); }
-    finally { setBusy(false); }
+    const ok = await action.run(() => api.updateShopArticle(article.id, {
+      articleNumber: form.articleNumber.trim(), title: form.title.trim(),
+      description: form.description.trim() || null, unitType: form.unitType, actionType: form.actionType,
+    }), "Artikel gespeichert.");
+    if (!ok) return;
+    setEditing(false);
+    onSaved();
   }
 
   if (editing) {
@@ -171,8 +159,8 @@ function ArticleRow({ article, selected, onToggleListings, onSaved, onError, onR
               </select></div>
             <div className="field" style={{ minWidth: 180 }}><label htmlFor={`${uid}-desc`}>Beschreibung</label>
               <input id={`${uid}-desc`} value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} /></div>
-            <button type="button" className="btn inline-btn" style={{ width: "auto" }} disabled={busy} onClick={save}>OK</button>
-            <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} disabled={busy} onClick={() => setEditing(false)}>Abbrechen</button>
+            <button type="button" className="btn inline-btn" style={{ width: "auto" }} disabled={action.busy} onClick={save}>OK</button>
+            <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} disabled={action.busy} onClick={() => setEditing(false)}>Abbrechen</button>
           </div>
         </td>
       </tr>
@@ -202,8 +190,7 @@ function ListingManager({ article }: { article: ShopArticle }) {
     title: "", description: "", coinPrice: 100, gemPrice: 0, unitsPerPurchase: 30, currentStock: 5, maxStock: 5,
     refillKind: "None",
   });
-  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
-  const [busy, setBusy] = useState(false);
+  const action = useAction();
 
   function up<K extends keyof CreateShopListingDto>(k: K, v: CreateShopListingDto[K]) {
     setForm((f) => ({ ...f, [k]: v }));
@@ -211,40 +198,29 @@ function ListingManager({ article }: { article: ShopArticle }) {
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (form.coinPrice <= 0 && form.gemPrice <= 0) { setMsg({ ok: false, text: "Mindestens ein Preis muss > 0 sein." }); return; }
-    if (form.unitsPerPurchase <= 0) { setMsg({ ok: false, text: "Menge je Kauf muss ≥ 1 sein." }); return; }
-    setBusy(true);
-    try {
-      await api.createShopListing(article.id, {
-        ...form, title: form.title?.trim() || null, description: form.description?.trim() || null,
-      });
-      setMsg({ ok: true, text: "Angebot angelegt." });
-      setForm((f) => ({ ...f, title: "", description: "" }));
-      list.reload();
-    } catch (err) {
-      setMsg({ ok: false, text: errorMessage(err) });
-    } finally {
-      setBusy(false);
-    }
+    if (form.coinPrice <= 0 && form.gemPrice <= 0) { action.fail("Mindestens ein Preis muss > 0 sein."); return; }
+    if (form.unitsPerPurchase <= 0) { action.fail("Menge je Kauf muss ≥ 1 sein."); return; }
+    const ok = await action.run(() => api.createShopListing(article.id, {
+      ...form, title: form.title?.trim() || null, description: form.description?.trim() || null,
+    }), "Angebot angelegt.");
+    if (!ok) return;
+    setForm((f) => ({ ...f, title: "", description: "" }));
+    list.reload();
   }
 
   async function toggle(l: ShopListing) {
-    try { await api.updateShopListing(article.id, l.id, { active: !l.active }); list.reload(); }
-    catch (err) { setMsg({ ok: false, text: errorMessage(err) }); }
+    if (await action.run(() => api.updateShopListing(article.id, l.id, { active: !l.active }))) list.reload();
   }
   async function save(l: ShopListing, dto: UpdateShopListingDto) {
-    try { await api.updateShopListing(article.id, l.id, dto); list.reload(); }
-    catch (err) { setMsg({ ok: false, text: errorMessage(err) }); }
+    if (await action.run(() => api.updateShopListing(article.id, l.id, dto))) list.reload();
   }
   async function refill(l: ShopListing) {
     // Schneller „auffüllen": Bestand auf Max zurücksetzen (Max unverändert).
-    try { await api.updateShopListing(article.id, l.id, { currentStock: l.maxStock }); list.reload(); }
-    catch (err) { setMsg({ ok: false, text: errorMessage(err) }); }
+    if (await action.run(() => api.updateShopListing(article.id, l.id, { currentStock: l.maxStock }))) list.reload();
   }
   async function remove(l: ShopListing) {
     if (!confirmAction("Dieses Angebot löschen?")) return;
-    try { await api.deleteShopListing(article.id, l.id); list.reload(); }
-    catch (err) { setMsg({ ok: false, text: errorMessage(err) }); }
+    if (await action.run(() => api.deleteShopListing(article.id, l.id))) list.reload();
   }
 
   return (
@@ -269,9 +245,9 @@ function ListingManager({ article }: { article: ShopArticle }) {
           <select id={`${uid}-refill`} value={form.refillKind ?? "None"} onChange={(e) => up("refillKind", e.target.value as ShopRefillKind)}>
             {REFILL_KINDS.map((k) => <option key={k} value={k}>{REFILL_LABEL[k]}</option>)}
           </select></div>
-        <button type="submit" className="btn inline-btn" style={{ width: "auto" }} disabled={busy}>{busy ? "…" : "Angebot anlegen"}</button>
+        <button type="submit" className="btn inline-btn" style={{ width: "auto" }} disabled={action.busy}>{action.busy ? "Lege an…" : "Angebot anlegen"}</button>
       </form>
-      {msg && <div role="status" aria-live="polite" className={`banner ${msg.ok ? "ok" : "err"}`} style={{ marginTop: 10 }}>{msg.text}</div>}
+      <StatusBanner message={action.message} style={{ marginTop: 10 }} />
 
       {list.loading ? <div className="loading">Lade…</div> : list.error ? <div className="banner err">{list.error}</div> : (
         <div style={{ overflowX: "auto", marginTop: 10 }}>
@@ -384,29 +360,27 @@ function ChildShopView({ childId }: { childId: number }) {
   const activations = useAsync<ActivationRequest[]>(() => api.childActivations(childId), [childId]);
   const purchases = useAsync<ShopPurchase[]>(() => api.childPurchases(childId), [childId]);
   const inventory = useAsync<InventoryItem[]>(() => api.childInventory(childId), [childId]);
-  const [msg, setMsg] = useState<string | null>(null);
+  const action = useAction();
 
   async function decide(r: ActivationRequest, approve: boolean) {
     if (approve && !confirmAction(`${unitAmount(r.requestedQuantity, r.unitType)} „${r.articleTitle}" freigeben? Die Einheiten werden aus dem Inventar entnommen.`)) return;
-    try {
-      if (approve) await api.approveActivation(childId, r.id);
-      else await api.rejectActivation(childId, r.id);
-      activations.reload();
-      inventory.reload();
-    } catch (err) { setMsg(errorMessage(err)); }
+    const ok = await action.run(() => (approve
+      ? api.approveActivation(childId, r.id)
+      : api.rejectActivation(childId, r.id)));
+    if (!ok) return;
+    activations.reload();
+    inventory.reload();
   }
   async function cancel(p: ShopPurchase) {
     if (!confirmAction(`Kauf „${p.title}" stornieren und ${priceLabel(p.coinPrice, p.gemPrice)} erstatten?`)) return;
-    try {
-      await api.cancelPurchase(childId, p.id);
-      purchases.reload();
-      inventory.reload();
-    } catch (err) { setMsg(errorMessage(err)); }
+    if (!await action.run(() => api.cancelPurchase(childId, p.id))) return;
+    purchases.reload();
+    inventory.reload();
   }
 
   return (
     <>
-      {msg && <div role="status" aria-live="polite" className="banner err" style={{ marginTop: 10 }}>{msg}</div>}
+      <StatusBanner message={action.message} style={{ marginTop: 10 }} />
 
       <h4 className="h-section" style={{ fontSize: 16, marginTop: 14 }}>Offene Aktivierungsanfragen</h4>
       {activations.loading ? <div className="loading">Lade…</div> : activations.error ? <div className="banner err">{activations.error}</div> : (

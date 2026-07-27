@@ -1,5 +1,7 @@
 import { useState } from "react";
-import { api, errorMessage } from "../lib/api";
+import { StatusBanner } from "../components/StatusBanner";
+import { api } from "../lib/api";
+import { useAction } from "../lib/useAction";
 import { useAsync } from "../lib/useAsync";
 import { useChildSelection } from "../lib/useChildSelection";
 import { confirmAction } from "../lib/ui";
@@ -49,8 +51,7 @@ function ClassTestManager({ childId }: { childId: number }) {
   const subjects = useAsync<SubjectResponse[]>(() => api.subjects(), []);
   const repeat = useAsync<KlassenarbeitRepeat>(() => api.classTestRepeat(childId), [childId]);
   const [openId, setOpenId] = useState<number | null>(null);
-  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
-  const [busy, setBusy] = useState(false);
+  const action = useAction();
 
   const [form, setForm] = useState<CreateKlassenarbeitDto>({
     childId, title: "", topic: "", subjectId: null, scheduledDate: "",
@@ -58,45 +59,35 @@ function ClassTestManager({ childId }: { childId: number }) {
   function up<K extends keyof CreateKlassenarbeitDto>(k: K, v: CreateKlassenarbeitDto[K]) {
     setForm((f) => ({ ...f, [k]: v }));
   }
-  function flash(ok: boolean, text: string) { setMsg({ ok, text }); setTimeout(() => setMsg(null), 2500); }
 
+  // Die Liste hängt am Wiederholungs-Vorschlag: eine benotete Arbeit ändert, was zu üben ist.
   function reloadAll() { list.reload(); repeat.reload(); }
 
   async function create(e: React.FormEvent) {
     e.preventDefault();
-    if (!form.title.trim()) { flash(false, "Titel nötig."); return; }
-    if (!form.scheduledDate) { flash(false, "Termin nötig."); return; }
-    setBusy(true);
-    try {
-      await api.createClassTest({
-        ...form, childId, title: form.title.trim(), topic: form.topic?.trim() || null,
-        subjectId: form.subjectId || null,
-      });
-      flash(true, `Klassenarbeit „${form.title.trim()}" geplant.`);
-      setForm((f) => ({ ...f, title: "", topic: "" }));
-      reloadAll();
-    } catch (err) { flash(false, errorMessage(err)); }
-    finally { setBusy(false); }
+    const title = form.title.trim();
+    if (!title) { action.fail("Titel nötig."); return; }
+    if (!form.scheduledDate) { action.fail("Termin nötig."); return; }
+    const ok = await action.run(() => api.createClassTest({
+      ...form, childId, title, topic: form.topic?.trim() || null, subjectId: form.subjectId || null,
+    }), `Klassenarbeit „${title}" geplant.`);
+    if (!ok) return;
+    setForm((f) => ({ ...f, title: "", topic: "" }));
+    reloadAll();
   }
 
   async function saveGrade(k: KlassenarbeitResponse, grade: number | null) {
-    setBusy(true);
-    try {
-      await api.updateClassTest(k.id, grade == null
-        ? { clearGrade: true }
-        : { grade, status: "Written" });
-      flash(true, grade == null ? "Note entfernt." : `Note ${grade.toFixed(1)} eingetragen.`);
-      reloadAll();
-    } catch (err) { flash(false, errorMessage(err)); }
-    finally { setBusy(false); }
+    const ok = await action.run(
+      () => api.updateClassTest(k.id, grade == null ? { clearGrade: true } : { grade, status: "Written" }),
+      grade == null ? "Note entfernt." : `Note ${grade.toFixed(1)} eingetragen.`);
+    if (ok) reloadAll();
   }
 
   async function remove(k: KlassenarbeitResponse) {
     if (!confirmAction("Diese Klassenarbeit wirklich löschen?")) return;
-    setBusy(true);
-    try { await api.deleteClassTest(k.id); if (openId === k.id) setOpenId(null); flash(true, "Klassenarbeit gelöscht."); reloadAll(); }
-    catch (err) { flash(false, errorMessage(err)); }
-    finally { setBusy(false); }
+    if (!await action.run(() => api.deleteClassTest(k.id), "Klassenarbeit gelöscht.")) return;
+    if (openId === k.id) setOpenId(null);
+    reloadAll();
   }
 
   return (
@@ -115,9 +106,9 @@ function ClassTestManager({ childId }: { childId: number }) {
             </select></div>
           <div className="field"><label>Termin</label>
             <input title="Termin" type="date" value={form.scheduledDate} onChange={(e) => up("scheduledDate", e.target.value)} /></div>
-          <button type="submit" className="btn inline-btn" style={{ width: "auto" }} disabled={busy}>{busy ? "…" : "Planen"}</button>
+          <button type="submit" className="btn inline-btn" style={{ width: "auto" }} disabled={action.busy}>{action.busy ? "Plane…" : "Planen"}</button>
         </form>
-        {msg && <div role="status" aria-live="polite" className={`banner ${msg.ok ? "ok" : "err"}`} style={{ marginTop: 10 }}>{msg.text}</div>}
+        <StatusBanner message={action.message} style={{ marginTop: 10 }} />
       </section>
 
       <section>
@@ -136,11 +127,11 @@ function ClassTestManager({ childId }: { childId: number }) {
                       ? <span className="pill lime">{STATUS_LABEL[k.status]}</span>
                       : <span className="pill">{STATUS_LABEL[k.status]}</span>}</td>
                     <td className="num">{k.directExerciseCount}{k.tags.length > 0 ? ` +${k.tags.length}🏷️` : ""}</td>
-                    <td><GradeCell key={`${k.id}-${k.grade ?? ""}`} current={k.grade} busy={busy} onSave={(g) => saveGrade(k, g)} /></td>
+                    <td><GradeCell key={`${k.id}-${k.grade ?? ""}`} current={k.grade} busy={action.busy} onSave={(g) => saveGrade(k, g)} /></td>
                     <td style={{ whiteSpace: "nowrap" }}>
                       <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }}
                         onClick={() => setOpenId(openId === k.id ? null : k.id)}>{openId === k.id ? "Schließen" : "Übungen & Vorbereiten"}</button>{" "}
-                      <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} disabled={busy} onClick={() => remove(k)}>Löschen</button>
+                      <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} disabled={action.busy} onClick={() => remove(k)}>Löschen</button>
                     </td>
                   </tr>
                 ))}
@@ -187,16 +178,15 @@ function ClassTestDetail({ id, subjectId, onChanged }:
   // Gesamtzahl mitführen: der Server liefert nur eine Seite, sonst wirkt die Liste vollständig.
   const found = useAsync<Paged<ExerciseSummary>>(
     () => api.searchExercises({ subjectId: subjectId ?? undefined, search: search || undefined }), [id, subjectId]);
-  const [busy, setBusy] = useState(false);
-  const [msg, setMsg] = useState<string | null>(null);
+  const action = useAction();
 
   const assignedIds = new Set(detail.data?.assignedExercises.map((e) => e.id));
 
   async function act(fn: () => Promise<unknown>) {
-    setBusy(true); setMsg(null);
-    try { await fn(); detail.reload(); practice.reload(); onChanged(); }
-    catch (err) { setMsg(errorMessage(err)); }
-    finally { setBusy(false); }
+    if (!await action.run(fn)) return;
+    detail.reload();
+    practice.reload();
+    onChanged();
   }
 
   return (
@@ -214,7 +204,7 @@ function ClassTestDetail({ id, subjectId, onChanged }:
             <ul>
               {detail.data.assignedExercises.map((e) => (
                 <li key={e.id}>{e.title} <span className="muted">({e.type} · {e.subjectName})</span>{" "}
-                  <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} disabled={busy}
+                  <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} disabled={action.busy}
                     onClick={() => act(() => api.unassignClassTestExercise(id, e.id))}>entfernen</button></li>
               ))}
             </ul>
@@ -232,7 +222,7 @@ function ClassTestDetail({ id, subjectId, onChanged }:
                   <li key={e.id}>{e.title} <span className="muted">({e.type})</span>{" "}
                     {assignedIds.has(e.id)
                       ? <span className="pill lime">zugewiesen</span>
-                      : <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} disabled={busy}
+                      : <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} disabled={action.busy}
                           onClick={() => act(() => api.assignClassTestExercises(id, [e.id]))}>zuweisen</button>}</li>
                 ))}
               </ul>
@@ -249,7 +239,7 @@ function ClassTestDetail({ id, subjectId, onChanged }:
             </>
           )}
 
-          {msg && <div className="banner err">{msg}</div>}
+          <StatusBanner message={action.message} />
         </>
       )}
     </div>

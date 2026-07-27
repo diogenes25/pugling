@@ -15,7 +15,7 @@ Response — `HTTP 200`:
     "creatorName": "Papa",
     "permission": "Owner",
     "grantedByFatherId": 1,
-    "createdAt": "2026-07-26T22:40:59.8026403"
+    "createdAt": "2026-07-27T08:51:03.2100528"
   }
 ]
 ```
@@ -156,8 +156,8 @@ Response — `HTTP 201`:
   "childId": 3,
   "title": "Plan (fremd)",
   "subjectId": null,
-  "startDate": "2026-07-26",
-  "endDate": "2026-07-30",
+  "startDate": "2026-07-27",
+  "endDate": "2026-07-31",
   "active": true,
   "positionCount": 0,
   "description": null,

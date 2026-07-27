@@ -115,6 +115,19 @@ test("Vater legt sich selbst an und richtet ein Englisch-Szenario von Null ein",
   await dialog.getByRole("button", { name: /anlegen & hinzufügen/ }).click();
   await expect(dialog.getByRole("heading", { name: /Wortpaare \(4\)/ })).toBeVisible();
   await expect(dialog.getByRole("cell", { name: EXTRA_WORD[0], exact: true })).toBeVisible();
+
+  // Titelbild und Rechte hängen an der Übung, nicht an ihrem Inhalt – beide waren bisher nur über die API
+  // erreichbar. Wer eine Übung anlegt, bekommt automatisch das Owner-Recht; ohne es könnte er sie an
+  // keinen zweiten Vater weitergeben, und die „geteilte Bibliothek" wäre nur Theorie.
+  await expect(dialog.getByRole("heading", { name: "Titelbild" })).toBeVisible();
+  await expect(dialog.getByRole("heading", { name: /Rechte \(1\)/ })).toBeVisible();
+  await expect(dialog.getByRole("row", { name: new RegExp(FATHER.name) })).toContainText("Verwalten");
+
+  // Die übungslokale Bild-Übersteuerung sitzt an der Wortzeile: sie schlägt die Bilder der Vokabel, gilt
+  // aber nur in dieser Übung. Eingeklappt, damit 30 Wörter nicht 30 Abfragen auslösen.
+  await dialog.getByRole("button", { name: `Bild für ${WORDS[0][0]} nur in dieser Übung` }).click();
+  await expect(dialog.getByText("Keine Übersteuerung", { exact: false })).toBeVisible();
+
   await dialog.getByRole("button", { name: "Schließen" }).click();
 
   // ---------- 5b. Eine per API angelegte Übung ist im UI vollwertig verwaltbar ----------
@@ -150,6 +163,56 @@ test("Vater legt sich selbst an und richtet ein Englisch-Szenario von Null ein",
   // Und die zuvor im UI angelegte Vokabelübung steht weiter daneben – die Liste lebt.
   // `exact`, weil der Titel auch in der Erfolgsmeldung darüber steht.
   await expect(vater.getByText(EXERCISE, { exact: true })).toBeVisible();
+
+  // ---------- 5c. Katalog korrigieren: Kapitel umbenennen ----------
+  /*
+   * Fächer und Kapitel sind **globaler** Katalog – ein Tippfehler stand für alle Väter da und war nur über
+   * die API zu heilen. Wichtig ist die Gegenprobe am Pulldown darüber: es muss die Umbenennung mitbekommen,
+   * sonst arbeitet der Vater weiter mit einem Namen, den es nicht mehr gibt.
+   */
+  await vater.getByRole("button", { name: /Katalog verwalten/ }).click();
+  await vater.locator("#ca-subject").selectOption(subjectId);
+  const chapterName = vater.getByLabel("Kapitel #1");
+  await expect(chapterName).toHaveValue(CHAPTER);
+  await chapterName.fill(`${CHAPTER} korrigiert`);
+  await vater.getByRole("button", { name: `Kapitel „${CHAPTER}" speichern` }).click();
+  await expect(vater.getByText("Kapitel umbenannt.")).toBeVisible();
+  await expect(vater.locator('select[aria-label="Kapitel"]')).toContainText(`${CHAPTER} korrigiert`);
+  await vater.getByRole("button", { name: "Schließen" }).click();
+
+  // ---------- 5d. Kind-Hub: Betreuung und Stundenplan ----------
+  await vater.goto(`/vater/kind/${childId}`);
+  // Beim Anlegen wird der Vater als Betreuer verknüpft. Der **letzte** Betreuer lässt sich nicht entziehen –
+  // das Kind wäre für niemanden mehr erreichbar –, darum steht in seiner Zeile kein Entfernen-Knopf.
+  const supervisorRow = vater.getByRole("row", { name: new RegExp(FATHER.name) });
+  await expect(supervisorRow).toContainText("Vater");
+  await expect(supervisorRow.getByRole("button", { name: /Entfernen/ })).toHaveCount(0);
+
+  // Der Stundenplan ist Profilwissen, kein Lehrplan: er sagt, worauf heute der Schwerpunkt liegt.
+  await vater.locator("#tt-subject").selectOption({ label: SUBJECT });
+  await vater.locator("#tt-day").selectOption("Tuesday");
+  await vater.locator("#tt-time").fill("1. Stunde");
+  await vater.getByRole("button", { name: "Eintragen" }).click();
+  await expect(vater.locator(".token", { hasText: SUBJECT })).toContainText("1. Stunde");
+  // Über den Tages-Kopf, nicht über den Text: „Dienstag" steht auch als Option im Wochentag-Pulldown.
+  await expect(vater.locator("span").filter({ hasText: "Dienstag" })).toBeVisible();
+
+  // ---------- 5e. Lückentext-Store: ein Trägertext als Lerngrundlage ----------
+  /*
+   * Trägertexte sind wie der Vokabel-Store *unabhängig* von einer einzelnen Übung – ohne diese
+   * Oberfläche musste der Vater denselben Satz in jede Übung neu tippen. Die Lücken hängen über den
+   * Platzhalter am Text, darum entsteht die Lösungszeile erst, wenn der Text steht.
+   */
+  await vater.goto("/vater/exercises");
+  await vater.getByRole("button", { name: /Lückentexte verwalten/ }).click();
+  await vater.locator("#cz-key").fill(`cz-e2e-${RUN}`);
+  await vater.locator("#cz-title").fill(`Begrüßungen ${RUN}`);
+  await vater.locator("#cz-text").fill("Good {{1}}, how {{2}} you?");
+  await vater.locator("#cz-text").blur();
+  await vater.getByRole("textbox", { name: "Lösung für Lücke 1" }).fill("morning");
+  await vater.getByRole("textbox", { name: "Lösung für Lücke 2" }).fill("are");
+  await vater.getByRole("button", { name: "Trägertext anlegen" }).click();
+  await expect(vater.getByText(`Trägertext „Begrüßungen ${RUN}" angelegt.`)).toBeVisible();
 
   // ---------- 6. Lehrplan mit Position (inkl. Münz-Malus) ----------
   await vater.goto("/vater/plan/new");
@@ -198,6 +261,15 @@ test("Vater legt sich selbst an und richtet ein Englisch-Szenario von Null ein",
   await expect(goalRow).toContainText("offen");
   await expect(goalRow).toContainText("mindestens 80 %");
 
+  // ---------- 8a. Großes Ziel (OKR) – der Sohn muss es in Schritt 9 sehen ----------
+  // Ziele setzt der Vater, das Kind sieht nur, woran es ist: die Sohn-Sicht ist bewusst rein lesend.
+  // `exact`, sonst trifft „Ziel anlegen" auch „Lernziel anlegen" und „+ Großes Ziel anlegen"
+  // (Playwright matcht den Namen als Teilzeichenkette).
+  await vater.getByRole("button", { name: "+ Großes Ziel anlegen", exact: true }).click();
+  await vater.locator("#ob-title").fill(`Englisch aufholen ${RUN}`);
+  await vater.getByRole("button", { name: "Ziel anlegen", exact: true }).click();
+  await expect(vater.getByText("Großes Ziel angelegt.")).toBeVisible();
+
   // ---------- 8b. Lernstand: beide Sichten laden (noch ohne Fortschritt) ----------
   // Sichert die Routen und die Lesezugriffe auf die student/-Endpunkte ab, die der Vater mitlesen darf.
   await vater.goto(`/vater/kind/${childId}/lernstand`);
@@ -216,6 +288,11 @@ test("Vater legt sich selbst an und richtet ein Englisch-Szenario von Null ein",
   await sohn.getByRole("button", { name: "▶ LOS" }).click();
   await expect(sohn.getByText("Tagesmission")).toBeVisible();
   await expect(sohn.getByText(new RegExp(EXERCISE))).toBeVisible();
+
+  // Und auf dem Trophäenweg steht das große Ziel des Vaters – vorher war es nur über die API sichtbar.
+  await sohn.getByRole("link", { name: /Weg/ }).click();
+  await expect(sohn.getByText("🎯 Meine großen Ziele")).toBeVisible();
+  await expect(sohn.getByText(`Englisch aufholen ${RUN}`)).toBeVisible();
 
   // ---------- 10. Der Vater kann sich mit seiner Id wieder anmelden ----------
   const wieder = await (await browser.newContext()).newPage();

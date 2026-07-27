@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { api, errorMessage } from "../lib/api";
+import { StatusBanner } from "../components/StatusBanner";
+import { api } from "../lib/api";
 import { confirmAction } from "../lib/ui";
+import { useAction } from "../lib/useAction";
 import { useAsync } from "../lib/useAsync";
 import { PlanPositions } from "./PlanPositions";
 import type { ChildResponse, PlanResponse, ProgressResponse, UpdatePlanDto } from "../lib/types";
@@ -17,42 +19,23 @@ export function VaterPlanDetail() {
     () => (plan.data ? api.child(plan.data.childId) : Promise.resolve(null)), [plan.data?.childId]);
 
   const [editing, setEditing] = useState(false);
-  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
-  const [busy, setBusy] = useState(false);
+  const action = useAction();
 
   async function remove() {
     if (!confirmAction("Diesen Lehrplan wirklich löschen? Positionen, Fortschritt und Testversuche gehen verloren. Die Übungen im Katalog bleiben erhalten.")) return;
-    setBusy(true);
-    try {
-      await api.deletePlan(id);
-      nav("/vater");
-    } catch (err) {
-      setMsg({ ok: false, text: errorMessage(err) });
-      setBusy(false);
-    }
+    if (await action.run(() => api.deletePlan(id))) nav("/vater");
   }
 
   if (plan.loading) return <div className="loading">Lade Plan…</div>;
   if (plan.error || !plan.data) return <div className="banner err">{plan.error ?? "Plan nicht gefunden."}</div>;
   const p = plan.data;
 
-  function flash(ok: boolean, text: string) {
-    setMsg({ ok, text });
-    setTimeout(() => setMsg(null), 2500);
-  }
-
+  // Die Meldung bleibt stehen, bis die nächste Aktion startet (`run` räumt sie) – wie überall sonst im
+  // Vater-Web. Vorher verschwand sie hier nach 2,5 s per `setTimeout`, der beim Verlassen der Seite weiterlief.
   async function mutate(fn: () => Promise<unknown>, okText: string) {
-    setBusy(true);
-    try {
-      await fn();
-      plan.reload();
-      prog.reload();
-      flash(true, okText);
-    } catch (err) {
-      flash(false, errorMessage(err));
-    } finally {
-      setBusy(false);
-    }
+    if (!await action.run(fn, okText)) return;
+    plan.reload();
+    prog.reload();
   }
 
   return (
@@ -63,14 +46,14 @@ export function VaterPlanDetail() {
         {p.active ? <span className="pill lime">aktiv</span> : <span className="pill">inaktiv</span>}
         {/* Server-autoritativ: aktiv, aber heute außerhalb der Laufzeit → für das Kind nicht spielbar. */}
         {p.active && !p.isPlayable && <span className="pill" title="Aktiv, aber heute außerhalb der Laufzeit">nicht in Laufzeit</span>}
-        <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} disabled={busy}
+        <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} disabled={action.busy}
           onClick={() => mutate(() => api.updatePlan(id, { active: !p.active }), p.active ? "Plan deaktiviert." : "Plan aktiviert.")}>
           {p.active ? "Deaktivieren" : "Aktivieren"}
         </button>
         <button type="button" className="btn inline-btn" style={{ width: "auto" }} onClick={() => setEditing((v) => !v)}>
           {editing ? "Schließen" : "Bearbeiten"}
         </button>
-        <button type="button" className="btn ghost inline-btn" style={{ width: "auto", color: "var(--mag, #c0392b)" }} disabled={busy} onClick={remove}>
+        <button type="button" className="btn ghost inline-btn" style={{ width: "auto", color: "var(--mag, #c0392b)" }} disabled={action.busy} onClick={remove}>
           Löschen
         </button>
       </div>
@@ -82,9 +65,9 @@ export function VaterPlanDetail() {
       </p>
       {p.description && <p style={{ marginTop: -6 }}>{p.description}</p>}
 
-      {msg && <div className={`banner ${msg.ok ? "ok" : "err"}`} role="status" aria-live="polite">{msg.text}</div>}
+      <StatusBanner message={action.message} style={{ marginTop: 0 }} />
 
-      {editing && <PlanEditForm plan={p} busy={busy}
+      {editing && <PlanEditForm plan={p} busy={action.busy}
         onSave={(dto) => mutate(() => api.updatePlan(id, dto), "Änderungen gespeichert.")} />}
 
       {prog.data && (

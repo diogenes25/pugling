@@ -68,6 +68,51 @@ public class CatalogManagementTests(PuglingWebAppFactory factory) : IClassFixtur
         Assert.Equal(HttpStatusCode.Conflict, res.StatusCode);
     }
 
+    /// <summary>
+    /// Kapitel und Fach kaskadieren auf ihre Übungen – der FK <c>PlanPosition→Exercise</c> ist aber
+    /// Restrict. Ohne eigene Prüfung stürbe das Löschen als FK-Verletzung in einer nackten 500; hier muss
+    /// derselbe klare <c>exercise_in_use</c>-Konflikt kommen wie beim direkten Löschen der Übung.
+    /// </summary>
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task Delete_KapitelOderFach_MitVerwendeterUebung_Liefert409(bool wholeSubject)
+    {
+        var father = await TestApi.FatherAsync(_factory);
+        var exerciseId = await TestApi.CreateVocabExerciseAsync(father);
+        TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)Pugling.Api.Models.TestStage.FreeText);
+
+        var detail = await (await father.GetAsync($"/api/v1/creator/exercises/{exerciseId}"))
+            .Content.ReadFromJsonAsync<JsonElement>();
+        var (subjectId, chapterId) = (detail.GetProperty("subjectId").GetInt32(), detail.GetProperty("chapterId").GetInt32());
+
+        var res = await father.DeleteAsync(wholeSubject
+            ? $"/api/v1/creator/subjects/{subjectId}"
+            : $"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}");
+
+        Assert.Equal(HttpStatusCode.Conflict, res.StatusCode);
+        var problem = await res.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal("exercise_in_use", problem.GetProperty("code").GetString());
+    }
+
+    [Fact]
+    public async Task Delete_KapitelUndFach_OhneVerwendung_Loescht()
+    {
+        var father = await TestApi.FatherAsync(_factory);
+        var exerciseId = await TestApi.CreateVocabExerciseAsync(father);
+        var detail = await (await father.GetAsync($"/api/v1/creator/exercises/{exerciseId}"))
+            .Content.ReadFromJsonAsync<JsonElement>();
+        var (subjectId, chapterId) = (detail.GetProperty("subjectId").GetInt32(), detail.GetProperty("chapterId").GetInt32());
+
+        // Der Schutz gilt nur für *verwendete* Übungen – die Kaskade auf unbenutzte bleibt erlaubt.
+        Assert.Equal(HttpStatusCode.NoContent,
+            (await father.DeleteAsync($"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}")).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound,
+            (await father.GetAsync($"/api/v1/creator/exercises/{exerciseId}")).StatusCode);
+        Assert.Equal(HttpStatusCode.NoContent,
+            (await father.DeleteAsync($"/api/v1/creator/subjects/{subjectId}")).StatusCode);
+    }
+
     [Fact]
     public async Task Delete_UnbenutzteUebung_Loescht()
     {

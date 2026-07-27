@@ -1,6 +1,8 @@
 import { useId, useState } from "react";
 import { Link, useParams } from "react-router-dom";
+import { StatusBanner } from "../components/StatusBanner";
 import { api, errorMessage } from "../lib/api";
+import { useAction, type ActionState } from "../lib/useAction";
 import { confirmAction } from "../lib/ui";
 import { useAsync } from "../lib/useAsync";
 import type {
@@ -167,23 +169,19 @@ const scopeToDto = (s: Scope) => ({
 
 function LearnGoals({ childId, subjects }: { childId: number; subjects: SubjectResponse[] }) {
   const goals = useAsync<Paged<LearnGoal>>(() => api.learnGoals(childId), [childId]);
-  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const action = useAction();
 
   async function act(fn: () => Promise<unknown>, okText: string) {
-    setMsg(null);
-    try { await fn(); goals.reload(); setMsg({ ok: true, text: okText }); }
-    catch (err) { setMsg({ ok: false, text: errorMessage(err) }); }
+    if (await action.run(fn, okText)) goals.reload();
   }
 
   return (
     <section>
       <h3 className="h-section">Lernziele {goals.data ? `(${goals.data.total})` : ""}</h3>
 
-      <NewLearnGoal childId={childId} subjects={subjects}
-        onCreated={() => { goals.reload(); setMsg({ ok: true, text: "Lernziel angelegt." }); }}
-        onError={(t) => setMsg({ ok: false, text: t })} />
+      <NewLearnGoal childId={childId} subjects={subjects} action={action} onCreated={goals.reload} />
 
-      {msg && <div className={`banner ${msg.ok ? "ok" : "err"}`} style={{ marginTop: 10 }} role="status" aria-live="polite">{msg.text}</div>}
+      <StatusBanner message={action.message} style={{ marginTop: 10 }} />
 
       {goals.loading ? <div className="loading">Lade…</div> : goals.error ? <div className="banner err">{goals.error}</div> : (
         <div style={{ overflowX: "auto", marginTop: 10 }}>
@@ -243,31 +241,26 @@ function LearnGoalRow({ goal, onSave, onDelete }: {
   );
 }
 
-function NewLearnGoal({ childId, subjects, onCreated, onError }: {
-  childId: number; subjects: SubjectResponse[]; onCreated: () => void; onError: (t: string) => void;
+function NewLearnGoal({ childId, subjects, action, onCreated }: {
+  childId: number; subjects: SubjectResponse[]; action: ActionState; onCreated: () => void;
 }) {
   const [scope, setScope] = useState<Scope>(emptyScope);
   const [metric, setMetric] = useState<LearnGoalMetric>("AvgMastery");
   const [targetValue, setTargetValue] = useState(80);
   const [dueDate, setDueDate] = useState("");
   const [title, setTitle] = useState("");
-  const [busy, setBusy] = useState(false);
-
   const meta = goalMetric(metric);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (scope.subjectId === "") { onError("Bitte ein Fach wählen."); return; }
-    setBusy(true);
-    try {
-      await api.createLearnGoal(childId, {
-        ...scopeToDto(scope), metric, targetValue,
-        dueDate: dueDate || null, title: title.trim() || null,
-      });
-      setTitle("");
-      onCreated();
-    } catch (err) { onError(errorMessage(err)); }
-    finally { setBusy(false); }
+    if (scope.subjectId === "") { action.fail("Bitte ein Fach wählen."); return; }
+    const ok = await action.run(() => api.createLearnGoal(childId, {
+      ...scopeToDto(scope), metric, targetValue,
+      dueDate: dueDate || null, title: title.trim() || null,
+    }), "Lernziel angelegt.");
+    if (!ok) return;
+    setTitle("");
+    onCreated();
   }
 
   return (
@@ -298,7 +291,7 @@ function NewLearnGoal({ childId, subjects, onCreated, onError }: {
           <label htmlFor="lg-title">Titel <span className="muted">(optional)</span></label>
           <input id="lg-title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Unit 1 sitzt" />
         </div>
-        <button type="submit" className="btn inline-btn" style={{ width: "auto" }} disabled={busy}>{busy ? "…" : "Lernziel anlegen"}</button>
+        <button type="submit" className="btn inline-btn" style={{ width: "auto" }} disabled={action.busy}>{action.busy ? "Lege an…" : "Lernziel anlegen"}</button>
       </div>
       <p className="sub" style={{ margin: 0 }}>
         {meta?.hint} {meta?.max && <strong>Der Zielwert ist hier eine Obergrenze.</strong>}
@@ -312,12 +305,10 @@ function NewLearnGoal({ childId, subjects, onCreated, onError }: {
 
 function Objectives({ childId, subjects }: { childId: number; subjects: SubjectResponse[] }) {
   const objectives = useAsync<Paged<Objective>>(() => api.objectives(childId), [childId]);
-  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const action = useAction();
 
   async function act(fn: () => Promise<unknown>, okText: string) {
-    setMsg(null);
-    try { await fn(); objectives.reload(); setMsg({ ok: true, text: okText }); }
-    catch (err) { setMsg({ ok: false, text: errorMessage(err) }); }
+    if (await action.run(fn, okText)) objectives.reload();
   }
 
   return (
@@ -328,11 +319,9 @@ function Objectives({ childId, subjects }: { childId: number; subjects: SubjectR
         <strong> Dehnungsziel</strong> zahlt 💎 Gems (Skins).
       </p>
 
-      <NewObjective childId={childId} subjects={subjects}
-        onCreated={() => { objectives.reload(); setMsg({ ok: true, text: "Großes Ziel angelegt." }); }}
-        onError={(t) => setMsg({ ok: false, text: t })} />
+      <NewObjective childId={childId} subjects={subjects} action={action} onCreated={objectives.reload} />
 
-      {msg && <div className={`banner ${msg.ok ? "ok" : "err"}`} style={{ marginTop: 10 }} role="status" aria-live="polite">{msg.text}</div>}
+      <StatusBanner message={action.message} style={{ marginTop: 10 }} />
 
       {objectives.loading ? <div className="loading">Lade…</div> : objectives.error ? <div className="banner err">{objectives.error}</div> : (
         <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 10 }}>
@@ -504,8 +493,8 @@ function KeyResultForm({ subjects, onSubmit }: {
   );
 }
 
-function NewObjective({ childId, subjects, onCreated, onError }: {
-  childId: number; subjects: SubjectResponse[]; onCreated: () => void; onError: (t: string) => void;
+function NewObjective({ childId, subjects, action, onCreated }: {
+  childId: number; subjects: SubjectResponse[]; action: ActionState; onCreated: () => void;
 }) {
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
@@ -517,22 +506,17 @@ function NewObjective({ childId, subjects, onCreated, onError }: {
   const [rewardPerKeyResult, setRewardPerKeyResult] = useState(20);
   // Etappen werden inline gesammelt: ein Ziel ohne Etappe ist nicht erreichbar, deshalb gleich hier.
   const [keyResults, setKeyResults] = useState<CreateKeyResultRequest[]>([]);
-  const [busy, setBusy] = useState(false);
-
   async function submit() {
-    if (!title.trim()) { onError("Bitte einen Titel angeben."); return; }
-    setBusy(true);
-    try {
-      await api.createObjective(childId, {
-        title: title.trim(), motivation: motivation.trim() || null, kind,
-        start: start || null, dueDate: dueDate || null,
-        rewardOnComplete, rewardPerKeyResult,
-        keyResults: keyResults.length > 0 ? keyResults : undefined,
-      });
-      setTitle(""); setMotivation(""); setKeyResults([]); setOpen(false);
-      onCreated();
-    } catch (err) { onError(errorMessage(err)); }
-    finally { setBusy(false); }
+    if (!title.trim()) { action.fail("Bitte einen Titel angeben."); return; }
+    const ok = await action.run(() => api.createObjective(childId, {
+      title: title.trim(), motivation: motivation.trim() || null, kind,
+      start: start || null, dueDate: dueDate || null,
+      rewardOnComplete, rewardPerKeyResult,
+      keyResults: keyResults.length > 0 ? keyResults : undefined,
+    }), "Großes Ziel angelegt.");
+    if (!ok) return;
+    setTitle(""); setMotivation(""); setKeyResults([]); setOpen(false);
+    onCreated();
   }
 
   if (!open) {
@@ -587,8 +571,8 @@ function NewObjective({ childId, subjects, onCreated, onError }: {
       <KeyResultForm subjects={subjects} onSubmit={(dto) => setKeyResults((cur) => [...cur, dto])} />
 
       <div className="row" style={{ gap: 8 }}>
-        <button type="button" className="btn inline-btn" style={{ width: "auto" }} disabled={busy} onClick={submit}>
-          {busy ? "…" : "Ziel anlegen"}
+        <button type="button" className="btn inline-btn" style={{ width: "auto" }} disabled={action.busy} onClick={submit}>
+          {action.busy ? "Lege an…" : "Ziel anlegen"}
         </button>
         <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} onClick={() => setOpen(false)}>Abbrechen</button>
       </div>

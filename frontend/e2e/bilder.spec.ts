@@ -109,7 +109,9 @@ test("Vater bebildert eine Vokabel, der Sohn sieht sein Bild und kann es wechsel
   await expect(vater.getByRole("heading", { name: "Interessen" })).toBeVisible();
   await vater.locator("#int-label").fill("Comic");
   await vater.locator("#int-facet").selectOption("Style");
-  await vater.getByRole("button", { name: "Hinzufügen" }).click();
+  // `exact`, weil der Kind-Hub inzwischen mehrere Hinzufügen-Knöpfe trägt (Betreuer, Stundenplan) und
+  // Playwright den Namen sonst als Teilzeichenkette matcht.
+  await vater.getByRole("button", { name: "Hinzufügen", exact: true }).click();
   await vater.getByRole("button", { name: "Interessen speichern" }).click();
   await expect(vater.getByText("Interessen gespeichert.")).toBeVisible();
 

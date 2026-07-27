@@ -49,6 +49,43 @@ public class PatchClearFieldTests(PuglingWebAppFactory factory) : IClassFixture<
     }
 
     [Fact]
+    public async Task Lueckentext_Uebersetzung_und_Wortpool_lassen_sich_leeren()
+    {
+        var creator = await TestApi.FatherAsync(factory);
+        var id = await TestApi.IdAsync(await creator.PostAsJsonAsync("/api/v1/creator/cloze-texts", new
+        {
+            key = $"cz_clear_{Guid.NewGuid():N}",
+            title = "Begrüßungen",
+            sourceLanguage = "en",
+            targetLanguage = "de",
+            text = "Good {{1}}!",
+            gaps = new[] { new { index = 1, answer = "morning" } },
+            translation = "Guten Morgen!",
+            wordBank = new[] { "morning", "evening" },
+        }));
+
+        // Gegenprobe: das geräumte Formularfeld käme als `null` an – und ließe beides stehen.
+        var untouched = await JsonAsync(await creator.PatchAsJsonAsync($"/api/v1/creator/cloze-texts/{id}",
+            new { translation = (string?)null, wordBank = (string[]?)null }));
+        Assert.Equal("Guten Morgen!", untouched.GetProperty("translation").GetString());
+        Assert.Equal(2, untouched.GetProperty("wordBank").GetArrayLength());
+
+        var cleared = await JsonAsync(await creator.PatchAsJsonAsync($"/api/v1/creator/cloze-texts/{id}",
+            new { clearTranslation = true, clearWordBank = true }));
+        Assert.Equal(JsonValueKind.Null, cleared.GetProperty("translation").ValueKind);
+        Assert.Equal(JsonValueKind.Null, cleared.GetProperty("wordBank").ValueKind);
+
+        Assert.Equal("Guten Abend!", (await JsonAsync(await creator.PatchAsJsonAsync(
+            $"/api/v1/creator/cloze-texts/{id}", new { translation = "Guten Abend!" })))
+            .GetProperty("translation").GetString());
+
+        // Schickt eine Oberfläche Wert *und* Schalter, gewinnt „leeren" (Reihenfolge im Controller).
+        var both = await JsonAsync(await creator.PatchAsJsonAsync($"/api/v1/creator/cloze-texts/{id}",
+            new { translation = "Egal", clearTranslation = true }));
+        Assert.Equal(JsonValueKind.Null, both.GetProperty("translation").ValueKind);
+    }
+
+    [Fact]
     public async Task Fachlehrer_Profil_wird_wieder_fachneutral_und_werkunabhaengig()
     {
         var creator = await TestApi.FatherAsync(factory);

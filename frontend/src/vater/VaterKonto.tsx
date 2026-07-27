@@ -1,5 +1,7 @@
 import { useState } from "react";
-import { api, errorMessage } from "../lib/api";
+import { StatusBanner } from "../components/StatusBanner";
+import { api } from "../lib/api";
+import { useAction } from "../lib/useAction";
 import { useAsync } from "../lib/useAsync";
 import { useChildSelection } from "../lib/useChildSelection";
 import { pointKindLabel } from "../lib/labels";
@@ -91,23 +93,17 @@ function GrantForm({ childId, onGranted }: { childId: number; onGranted: () => v
   const [amount, setAmount] = useState(20);
   const [currency, setCurrency] = useState<Currency>("Coins");
   const [reason, setReason] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [msg, setMsg] = useState<string | null>(null);
-  const [err, setErr] = useState<string | null>(null);
+  const action = useAction();
 
   async function grant() {
-    if (amount <= 0) { setErr("Betrag muss größer als 0 sein."); return; }
-    setBusy(true); setErr(null); setMsg(null);
-    try {
-      await api.grantPoints(childId, amount, reason.trim() || "Geschenk vom Papa", currency);
-      setMsg(`${amount} ${currency === "Gems" ? "💎 Gems" : "🪙 Münzen"} verschenkt.`);
-      setReason("");
-      onGranted();
-    } catch (e) {
-      setErr(errorMessage(e));
-    } finally {
-      setBusy(false);
-    }
+    if (amount <= 0) { action.fail("Betrag muss größer als 0 sein."); return; }
+    const label = currency === "Gems" ? "💎 Gems" : "🪙 Münzen";
+    const ok = await action.run(
+      () => api.grantPoints(childId, amount, reason.trim() || "Geschenk vom Papa", currency),
+      `${amount} ${label} verschenkt.`);
+    if (!ok) return;
+    setReason("");
+    onGranted();
   }
 
   return (
@@ -130,10 +126,11 @@ function GrantForm({ childId, onGranted }: { childId: number; onGranted: () => v
           <label htmlFor="grant-reason">Grund (optional)</label>
           <input id="grant-reason" type="text" value={reason} placeholder="z. B. Zimmer aufgeräumt" onChange={(e) => setReason(e.target.value)} />
         </div>
-        <button className="btn" disabled={busy} onClick={grant}>{busy ? "…" : "Verschenken"}</button>
+        <button className="btn" disabled={action.busy} onClick={grant}>
+          {action.busy ? "Verschenke…" : "Verschenken"}
+        </button>
       </div>
-      {msg && <div className="banner ok">{msg}</div>}
-      {err && <div className="banner err">{err}</div>}
+      <StatusBanner message={action.message} />
     </section>
   );
 }
