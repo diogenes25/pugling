@@ -20,10 +20,16 @@ gegen eine laufende Instanz verifiziert. Export als Markdown über `GET remarks/
 **Die beiden zuletzt offenen Punkte sind erledigt** (2026-07-27):
 
 - **Aufgezeichnete Beispiele.** `DocsCaptureTests` fährt jetzt eine Gruppe `remarks`
-  ([docs/api-examples/remarks.md](api-examples/remarks.md), 10 Beispiele): erfassen samt Kontext →
+  ([docs/api-examples/remarks.md](api-examples/remarks.md), 12 Beispiele): erfassen samt Kontext →
   Log-Id lesen → Antwort zurückschreiben → Folgeanmerkung mit Verweis, dazu die Sichtbarkeitswand
-  (der Sohn sieht die Anmerkung des Vaters **nicht** – deshalb 404 und nicht 403) und die Fehlerfälle.
+  (der Sohn sieht die Anmerkung des Vaters **nicht** – deshalb 404 und nicht 403), der
+  **Markdown-Export** samt Supervisor-Schranke und die Fehlerfälle.
   Damit ist `remark_not_found` belegt; die Abdeckung steigt auf **29 / 45** Codes.
+  Der Export zwang die Capture-Harness dazu, den **Antwort-Medientyp** mitzuführen: Sein Rumpf ist
+  Markdown und enthält selbst ` ```json `-Blöcke. Ein als JSON etikettierter dreifacher Zaun wäre eine
+  Falschaussage *und* hätte die Seite zerlegt – jetzt bestimmen Sprache und Zaunlänge sich aus dem Inhalt
+  (wie in `RemarkExportService.AppendFenced`), und nur JSON-Antworten wandern als Wert in die
+  OpenAPI-Beispiele, wo sie geparst werden.
 - **Reproduzierbare Doku.** Die Test-Factory löscht nach dem Start die geseedeten Zeitfenster
   (`PuglingWebAppFactory.CreateHost`) – ohne Multiplikator gilt Faktor 1,0, `awarded` steht fest bei 10
   statt zwischen 8, 10 und 15 zu wandern. Dabei fiel auf, dass die Zeitstempel-Maskierung in `Redact`

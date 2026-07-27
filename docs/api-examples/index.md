@@ -1,6 +1,6 @@
 # API-Beispiele – Übersicht
 
-Automatisch erzeugt von `backend/Pugling.Api.Tests/DocsCaptureTests.cs`. Insgesamt **129** Beispiele in **12** Gruppen.
+Automatisch erzeugt von `backend/Pugling.Api.Tests/DocsCaptureTests.cs`. Insgesamt **131** Beispiele in **12** Gruppen.
 
 | Gruppe | Beispiele | Fehlerfälle | Datei |
 | --- | ---: | ---: | --- |
@@ -10,7 +10,7 @@ Automatisch erzeugt von `backend/Pugling.Api.Tests/DocsCaptureTests.cs`. Insgesa
 | class-tests | 3 | 2 | [`class-tests.md`](./class-tests.md) |
 | exercise-grants | 7 | 3 | [`exercise-grants.md`](./exercise-grants.md) |
 | me | 15 | 5 | [`me.md`](./me.md) |
-| remarks | 10 | 4 | [`remarks.md`](./remarks.md) |
+| remarks | 12 | 5 | [`remarks.md`](./remarks.md) |
 | shop | 28 | 8 | [`shop.md`](./shop.md) |
 | study-plans | 21 | 6 | [`study-plans.md`](./study-plans.md) |
 | tags | 5 | 3 | [`tags.md`](./tags.md) |

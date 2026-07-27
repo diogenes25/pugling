@@ -1664,6 +1664,32 @@
     "expectedCode": "remark_not_found"
   },
   {
+    "key": "remarks-anmerkungen-als-markdown-exportieren",
+    "resourceGroup": "remarks",
+    "title": "Anmerkungen als Markdown exportieren",
+    "method": "GET",
+    "path": "/api/v1/remarks/export?status=Done",
+    "role": "father",
+    "requestBodyJson": null,
+    "expectedStatus": 200,
+    "responseBodyJson": null,
+    "isError": false,
+    "expectedCode": null
+  },
+  {
+    "key": "remarks-export-als-sohn-abrufen",
+    "resourceGroup": "remarks",
+    "title": "Export als Sohn abrufen",
+    "method": "GET",
+    "path": "/api/v1/remarks/export",
+    "role": "child",
+    "requestBodyJson": null,
+    "expectedStatus": 403,
+    "responseBodyJson": "{\r\n  \u0022type\u0022: \u0022https://pugling.app/errors/forbidden\u0022,\r\n  \u0022title\u0022: \u0022Forbidden\u0022,\r\n  \u0022status\u0022: 403,\r\n  \u0022traceId\u0022: \u0022\u003Ctrace-id\u003E\u0022,\r\n  \u0022code\u0022: \u0022forbidden\u0022\r\n}",
+    "isError": true,
+    "expectedCode": "forbidden"
+  },
+  {
     "key": "remarks-anmerkung-loschen",
     "resourceGroup": "remarks",
     "title": "Anmerkung l\u00F6schen",

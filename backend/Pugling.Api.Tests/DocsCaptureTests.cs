@@ -23,9 +23,20 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
 {
     private static readonly JsonSerializerOptions Indented = new(JsonSerializerDefaults.Web) { WriteIndented = true };
 
-    /// <summary>Ein aufgezeichnetes Request/Response-Paar (kein echtes Token – Bearer wird maskiert).</summary>
+    /// <summary>
+    /// Ein aufgezeichnetes Request/Response-Paar (kein echtes Token – Bearer wird maskiert).
+    /// <paramref name="ResponseMediaType"/> kommt aus dem Antwort-Header: Nicht jede Antwort ist JSON
+    /// (<c>remarks/export</c> liefert Markdown), und ein falsch etikettierter Code-Block wäre in der Doku
+    /// schlimmer als keiner.
+    /// </summary>
     private sealed record Entry(string ResourceGroup, string Title, string Method, string Path, string Role,
-        string? RequestBodyJson, int ExpectedStatus, int ActualStatus, string? ResponseBodyJson, bool IsError);
+        string? RequestBodyJson, int ExpectedStatus, int ActualStatus, string? ResponseBodyJson, bool IsError,
+        string? ResponseMediaType)
+    {
+        /// <summary>Ob der Antwort-Rumpf JSON ist – nur solche taugen als OpenAPI-Beispiel (dort wird geparst).</summary>
+        public bool IsJsonResponse => ResponseMediaType is null
+            || ResponseMediaType.Contains("json", StringComparison.OrdinalIgnoreCase);
+    }
 
     private readonly List<Entry> _entries = [];
     // code → (Gruppe, Titel) der ersten Aufzeichnung, die diesen Code verifiziert hat (Abdeckungs-Report).
@@ -80,7 +91,8 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
 
         var isError = (int)expectedStatus >= 400;
         _entries.Add(new Entry(group, title, method.Method, path, RoleOf(client),
-            requestJson, (int)expectedStatus, (int)res.StatusCode, responseJson, isError));
+            requestJson, (int)expectedStatus, (int)res.StatusCode, responseJson, isError,
+            res.Content.Headers.ContentType?.MediaType));
         return bodyEl;
     }
 
@@ -116,6 +128,9 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
         redacted = Regex.Replace(redacted,
             "\"\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?(?:Z|[+-]\\d{2}:\\d{2})?\"",
             "\"<timestamp>\"");
+        // Nicht-JSON-Antworten (Markdown-Export) tragen ihre Zeitstempel ohne Anführungszeichen im
+        // Fließtext („Stand: 2026-07-27 09:12 UTC") – ohne diese Regel wanderte der Export minütlich.
+        redacted = Regex.Replace(redacted, @"\d{4}-\d{2}-\d{2} \d{2}:\d{2} UTC", "<timestamp>");
         // Reine Datumswerte nur dann, wenn sie **lauf-relativ** sind (Plan-Start/-Ende, Verlaufstage
         // wandern täglich). Feste Literale wie `2099-03-01` aus den Requests bleiben lesbar – sonst
         // verlöre das Beispiel seine Aussage.
@@ -127,6 +142,28 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
     private static bool IsRunRelativeDate(string value) =>
         DateOnly.TryParseExact(value, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var date)
         && Math.Abs(date.DayNumber - DateOnly.FromDateTime(DateTime.UtcNow).DayNumber) <= 366;
+
+    /// <summary>Sprachkennung des Code-Blocks – ein als JSON etikettierter Markdown-Block wäre eine Falschaussage.</summary>
+    private static string LanguageOf(Entry entry) => entry.ResponseMediaType switch
+    {
+        null => "json",
+        var m when m.Contains("json", StringComparison.OrdinalIgnoreCase) => "json",
+        var m when m.Contains("markdown", StringComparison.OrdinalIgnoreCase) => "markdown",
+        _ => "text",
+    };
+
+    /// <summary>Längste zusammenhängende Backtick-Folge im Inhalt (bestimmt die nötige Zaunlänge).</summary>
+    private static int LongestBacktickRun(string content)
+    {
+        var longest = 0;
+        var run = 0;
+        foreach (var ch in content)
+        {
+            if (ch == '`') { run++; longest = Math.Max(longest, run); }
+            else run = 0;
+        }
+        return longest;
+    }
 
     private static string? Truncate(string? s) =>
         s is { Length: > 1500 } ? s[..1500] + "\n… (gekürzt)" : s;
@@ -955,6 +992,16 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
         await Capture(father, g, "Unbekannte Anmerkung lesen", HttpMethod.Get, "/api/v1/remarks/999999",
             null, HttpStatusCode.NotFound, ApiErrors.RemarkNotFound.Code);
 
+        // Markdown-Export – die einzige Brücke zu den Test-Skills, die gegen eine Wegwerf-DB laufen und die
+        // echten Anmerkungen nur als Datei unter docs/anmerkungen/ sehen. Antwort ist `text/markdown`,
+        // nicht JSON; auf `status=Done` gefiltert, damit das Beispiel einen beantworteten Fall zeigt.
+        await Capture(father, g, "Anmerkungen als Markdown exportieren", HttpMethod.Get,
+            "/api/v1/remarks/export?status=Done", null, HttpStatusCode.OK);
+
+        // Nur der Supervisor darf exportieren: Antworten tragen Datei- und Zeilenverweise, also Code-Interna.
+        await Capture(child, g, "Export als Sohn abrufen", HttpMethod.Get, "/api/v1/remarks/export",
+            null, HttpStatusCode.Forbidden, ApiErrors.Forbidden.Code);
+
         // Zuletzt löschen – die Folgeanmerkung hängt per `SetNull` daran und bleibt bestehen.
         await Capture(father, g, "Anmerkung löschen", HttpMethod.Delete, $"/api/v1/remarks/{remarkId}",
             null, HttpStatusCode.NoContent);
@@ -986,10 +1033,13 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
         File.WriteAllText(Path.Combine(outDir, "openapi-examples.generated.json"), json);
     }
 
+    // Nicht-JSON-Antworten gehen ohne Rumpf in den Katalog: Der Transformer parst den Wert
+    // (`JsonNode.Parse`) und hängt ihn an die JSON-Medientypen der Operation – ein Markdown-Rumpf hätte
+    // dort nichts zu suchen. Der Aufruf selbst bleibt dokumentiert (Pfad, Rolle, Status).
     private static OpenApiExampleEntry ToOpenApiExample(Entry entry, HashSet<string> usedKeys) =>
         new(UniqueKey(entry, usedKeys), entry.ResourceGroup, entry.Title, entry.Method, entry.Path, entry.Role,
-            entry.RequestBodyJson, entry.ExpectedStatus, entry.ResponseBodyJson, entry.IsError,
-            entry.IsError ? TryReadCode(entry.ResponseBodyJson) : null);
+            entry.RequestBodyJson, entry.ExpectedStatus, entry.IsJsonResponse ? entry.ResponseBodyJson : null,
+            entry.IsError, entry.IsError ? TryReadCode(entry.ResponseBodyJson) : null);
 
     private static string UniqueKey(Entry entry, HashSet<string> usedKeys)
     {
@@ -1055,8 +1105,13 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
                 sb.AppendLine("Request:").AppendLine("```json").AppendLine(rq).AppendLine("```").AppendLine();
             }
 
-            sb.AppendLine($"Response — `HTTP {e.ActualStatus}`:");
-            sb.AppendLine("```json").AppendLine(Truncate(e.ResponseBodyJson) ?? "(kein Inhalt)").AppendLine("```").AppendLine();
+            var mediaNote = e.IsJsonResponse ? "" : $" (`{e.ResponseMediaType}`)";
+            sb.AppendLine($"Response — `HTTP {e.ActualStatus}`{mediaNote}:");
+            var body = Truncate(e.ResponseBodyJson) ?? "(kein Inhalt)";
+            // Zaun und Sprache aus dem Antwort-Typ: Der Markdown-Export enthält selbst ```json-Blöcke,
+            // ein dreifacher Zaun würde vorzeitig schließen und die Seite zerlegen (CommonMark).
+            var fence = new string('`', Math.Max(3, LongestBacktickRun(body) + 1));
+            sb.AppendLine(fence + LanguageOf(e)).AppendLine(body).AppendLine(fence).AppendLine();
         }
         return sb.ToString();
     }

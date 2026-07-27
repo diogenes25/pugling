@@ -291,6 +291,63 @@ Response — `HTTP 404`:
 }
 ```
 
+## Anmerkungen als Markdown exportieren
+`GET /api/v1/remarks/export?status=Done`
+
+Rolle: **father** — `Authorization: Bearer <father-token>`
+
+Response — `HTTP 200` (`text/markdown`):
+````markdown
+# Anmerkungen – Export
+
+Stand: <timestamp> · 1 Eintrag · Filter: status=Done
+
+> Erzeugt von `GET api/v1/remarks/export`. **Nicht von Hand bearbeiten** – die Quelle ist
+> die Datenbank. Status und Antworten ändert der Skill `anmerkungen` über die API.
+
+## #1 · Question · erledigt
+
+- **Erfasst:** <timestamp> von Konto 1 (Supervisor)
+- **Wo:** `/vater/kind/1` (vater)
+- **Bezug:** Kind 1, Übung 13
+
+Ich will meine E-Mail-Adresse ändern und finde keine Stelle dafür.
+
+**Zustand:**
+
+```json
+{"tab":"stammdaten"}
+```
+
+**Letzte Fehler:**
+
+```json
+[{"method":"GET","path":"/api/v1/supervisor/fathers/1","status":404,"code":"not_found","at":"<timestamp>"}]
+```
+
+**Antwort** (claude-code, <timestamp>):
+
+Die API kann das über PATCH api/v1/supervisor/fathers/{id} (FathersController.Update); im Vater-Web gibt es dafür kein Formular.
+
+
+````
+
+### Export als Sohn abrufen — Fehlerfall
+`GET /api/v1/remarks/export`
+
+Rolle: **child** — `Authorization: Bearer <child-token>`
+
+Response — `HTTP 403`:
+```json
+{
+  "type": "https://pugling.app/errors/forbidden",
+  "title": "Forbidden",
+  "status": 403,
+  "traceId": "<trace-id>",
+  "code": "forbidden"
+}
+```
+
 ## Anmerkung löschen
 `DELETE /api/v1/remarks/1`
 
