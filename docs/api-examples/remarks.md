@@ -1,0 +1,303 @@
+# API-Beispiele – remarks
+
+_Automatisch erzeugt von `DocsCaptureTests` (Integrationstest). Jedes Beispiel ist verifiziert: Status und – bei Fehlern – der maschinenlesbare `code` wurden im Testlauf geprüft. Nicht von Hand bearbeiten._
+
+## Anmerkung erfassen (mit Kontext)
+`POST /api/v1/remarks`
+
+Rolle: **father** — `Authorization: Bearer <father-token>`
+
+Request:
+```json
+{
+  "text": "Ich will meine E-Mail-Adresse \u00E4ndern und finde keine Stelle daf\u00FCr.",
+  "category": "Question",
+  "context": {
+    "route": "/vater/kind/1",
+    "appArea": "vater",
+    "childId": 1,
+    "exerciseId": 13,
+    "contextJson": "{\u0022tab\u0022:\u0022stammdaten\u0022}",
+    "recentErrorsJson": "[{\u0022method\u0022:\u0022GET\u0022,\u0022path\u0022:\u0022/api/v1/supervisor/fathers/1\u0022,\u0022status\u0022:404,\u0022code\u0022:\u0022not_found\u0022,\u0022at\u0022:\u00222026-07-27T09:12:44Z\u0022}]"
+  }
+}
+```
+
+Response — `HTTP 201`:
+```json
+{
+  "id": 1,
+  "text": "Ich will meine E-Mail-Adresse \u00E4ndern und finde keine Stelle daf\u00FCr.",
+  "category": "Question",
+  "status": "Open",
+  "answer": null,
+  "answeredAt": null,
+  "answeredBy": null,
+  "parentRemarkId": null,
+  "accountId": 1,
+  "authorRole": "Supervisor",
+  "isOwn": true,
+  "context": {
+    "route": "/vater/kind/1",
+    "appArea": "vater",
+    "childId": 1,
+    "exerciseId": 13,
+    "studyPlanId": null,
+    "planPositionId": null,
+    "contextJson": "{\u0022tab\u0022:\u0022stammdaten\u0022}",
+    "recentErrorsJson": "[{\u0022method\u0022:\u0022GET\u0022,\u0022path\u0022:\u0022/api/v1/supervisor/fathers/1\u0022,\u0022status\u0022:404,\u0022code\u0022:\u0022not_found\u0022,\u0022at\u0022:\u00222026-07-27T09:12:44Z\u0022}]"
+  },
+  "userAgent": null,
+  "createdAt": "<timestamp>"
+}
+```
+
+### Anmerkung ohne Text erfassen — Fehlerfall
+`POST /api/v1/remarks`
+
+Rolle: **father** — `Authorization: Bearer <father-token>`
+
+Request:
+```json
+{
+  "text": "   "
+}
+```
+
+Response — `HTTP 400`:
+```json
+{
+  "type": "https://pugling.app/errors/validation_error",
+  "title": "Invalid request.",
+  "status": 400,
+  "detail": "Text is required.",
+  "code": "validation_error",
+  "traceId": "<trace-id>"
+}
+```
+
+## Anmerkung zur Log-Id lesen
+`GET /api/v1/remarks/1`
+
+Rolle: **father** — `Authorization: Bearer <father-token>`
+
+Response — `HTTP 200`:
+```json
+{
+  "id": 1,
+  "text": "Ich will meine E-Mail-Adresse \u00E4ndern und finde keine Stelle daf\u00FCr.",
+  "category": "Question",
+  "status": "Open",
+  "answer": null,
+  "answeredAt": null,
+  "answeredBy": null,
+  "parentRemarkId": null,
+  "accountId": 1,
+  "authorRole": "Supervisor",
+  "isOwn": true,
+  "context": {
+    "route": "/vater/kind/1",
+    "appArea": "vater",
+    "childId": 1,
+    "exerciseId": 13,
+    "studyPlanId": null,
+    "planPositionId": null,
+    "contextJson": "{\u0022tab\u0022:\u0022stammdaten\u0022}",
+    "recentErrorsJson": "[{\u0022method\u0022:\u0022GET\u0022,\u0022path\u0022:\u0022/api/v1/supervisor/fathers/1\u0022,\u0022status\u0022:404,\u0022code\u0022:\u0022not_found\u0022,\u0022at\u0022:\u00222026-07-27T09:12:44Z\u0022}]"
+  },
+  "userAgent": null,
+  "createdAt": "<timestamp>"
+}
+```
+
+## Eigene Anmerkungen (Liste im Widget)
+`GET /api/v1/remarks?mine=true&take=5`
+
+Rolle: **father** — `Authorization: Bearer <father-token>`
+
+Response — `HTTP 200`:
+```json
+[
+  {
+    "id": 1,
+    "text": "Ich will meine E-Mail-Adresse \u00E4ndern und finde keine Stelle daf\u00FCr.",
+    "category": "Question",
+    "status": "Open",
+    "answer": null,
+    "answeredAt": null,
+    "answeredBy": null,
+    "parentRemarkId": null,
+    "accountId": 1,
+    "authorRole": "Supervisor",
+    "isOwn": true,
+    "context": {
+      "route": "/vater/kind/1",
+      "appArea": "vater",
+      "childId": 1,
+      "exerciseId": 13,
+      "studyPlanId": null,
+      "planPositionId": null,
+      "contextJson": "{\u0022tab\u0022:\u0022stammdaten\u0022}",
+      "recentErrorsJson": "[{\u0022method\u0022:\u0022GET\u0022,\u0022path\u0022:\u0022/api/v1/supervisor/fathers/1\u0022,\u0022status\u0022:404,\u0022code\u0022:\u0022not_found\u0022,\u0022at\u0022:\u00222026-07-27T09:12:44Z\u0022}]"
+    },
+    "userAgent": null,
+    "createdAt": "<timestamp>"
+  }
+]
+```
+
+## Antwort zurückschreiben und abschließen
+`PATCH /api/v1/remarks/1`
+
+Rolle: **father** — `Authorization: Bearer <father-token>`
+
+Request:
+```json
+{
+  "answer": "Die API kann das \u00FCber PATCH api/v1/supervisor/fathers/{id} (FathersController.Update); im Vater-Web gibt es daf\u00FCr kein Formular.",
+  "answeredBy": "claude-code",
+  "status": "Done"
+}
+```
+
+Response — `HTTP 200`:
+```json
+{
+  "id": 1,
+  "text": "Ich will meine E-Mail-Adresse \u00E4ndern und finde keine Stelle daf\u00FCr.",
+  "category": "Question",
+  "status": "Done",
+  "answer": "Die API kann das \u00FCber PATCH api/v1/supervisor/fathers/{id} (FathersController.Update); im Vater-Web gibt es daf\u00FCr kein Formular.",
+  "answeredAt": "<timestamp>",
+  "answeredBy": "claude-code",
+  "parentRemarkId": null,
+  "accountId": 1,
+  "authorRole": "Supervisor",
+  "isOwn": true,
+  "context": {
+    "route": "/vater/kind/1",
+    "appArea": "vater",
+    "childId": 1,
+    "exerciseId": 13,
+    "studyPlanId": null,
+    "planPositionId": null,
+    "contextJson": "{\u0022tab\u0022:\u0022stammdaten\u0022}",
+    "recentErrorsJson": "[{\u0022method\u0022:\u0022GET\u0022,\u0022path\u0022:\u0022/api/v1/supervisor/fathers/1\u0022,\u0022status\u0022:404,\u0022code\u0022:\u0022not_found\u0022,\u0022at\u0022:\u00222026-07-27T09:12:44Z\u0022}]"
+  },
+  "userAgent": null,
+  "createdAt": "<timestamp>"
+}
+```
+
+## Folgeanmerkung mit Verweis anlegen
+`POST /api/v1/remarks`
+
+Rolle: **father** — `Authorization: Bearer <father-token>`
+
+Request:
+```json
+{
+  "text": "Formular f\u00FCr die E-Mail-Adresse im Vater-Web nachziehen.",
+  "category": "Idea",
+  "parentRemarkId": 1
+}
+```
+
+Response — `HTTP 201`:
+```json
+{
+  "id": 2,
+  "text": "Formular f\u00FCr die E-Mail-Adresse im Vater-Web nachziehen.",
+  "category": "Idea",
+  "status": "Open",
+  "answer": null,
+  "answeredAt": null,
+  "answeredBy": null,
+  "parentRemarkId": 1,
+  "accountId": 1,
+  "authorRole": "Supervisor",
+  "isOwn": true,
+  "context": {
+    "route": "",
+    "appArea": "",
+    "childId": null,
+    "exerciseId": null,
+    "studyPlanId": null,
+    "planPositionId": null,
+    "contextJson": null,
+    "recentErrorsJson": null
+  },
+  "userAgent": null,
+  "createdAt": "<timestamp>"
+}
+```
+
+### Verweis auf unbekannte Vorgänger-Anmerkung — Fehlerfall
+`POST /api/v1/remarks`
+
+Rolle: **father** — `Authorization: Bearer <father-token>`
+
+Request:
+```json
+{
+  "text": "Bezug ins Leere",
+  "parentRemarkId": 999999
+}
+```
+
+Response — `HTTP 400`:
+```json
+{
+  "type": "https://pugling.app/errors/invalid_reference",
+  "title": "Invalid request.",
+  "status": 400,
+  "detail": "Parent remark not found.",
+  "code": "invalid_reference",
+  "traceId": "<trace-id>"
+}
+```
+
+### Fremde Anmerkung lesen (Sohn) — Fehlerfall
+`GET /api/v1/remarks/1`
+
+Rolle: **child** — `Authorization: Bearer <child-token>`
+
+Response — `HTTP 404`:
+```json
+{
+  "type": "https://pugling.app/errors/remark_not_found",
+  "title": "Remark not found.",
+  "status": 404,
+  "detail": "Remark not found.",
+  "code": "remark_not_found",
+  "traceId": "<trace-id>"
+}
+```
+
+### Unbekannte Anmerkung lesen — Fehlerfall
+`GET /api/v1/remarks/999999`
+
+Rolle: **father** — `Authorization: Bearer <father-token>`
+
+Response — `HTTP 404`:
+```json
+{
+  "type": "https://pugling.app/errors/remark_not_found",
+  "title": "Remark not found.",
+  "status": 404,
+  "detail": "Remark not found.",
+  "code": "remark_not_found",
+  "traceId": "<trace-id>"
+}
+```
+
+## Anmerkung löschen
+`DELETE /api/v1/remarks/1`
+
+Rolle: **father** — `Authorization: Bearer <father-token>`
+
+Response — `HTTP 204`:
+```json
+(kein Inhalt)
+```
+

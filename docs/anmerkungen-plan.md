@@ -17,14 +17,25 @@ gegen eine laufende Instanz verifiziert. Export als Markdown über `GET remarks/
 [docs/anmerkungen/](anmerkungen/README.md); `creator`/`supervisor`/`student` lesen ihn als Schritt 0,
 `pm-loop` den Befund als stärkste Feedback-Quelle (Schritt 2).
 
-**Zwei Punkte bleiben bewusst offen:**
+**Die beiden zuletzt offenen Punkte sind erledigt** (2026-07-27):
 
-- `remark_not_found` ist **nicht** in `DocsCaptureTests` abgedeckt – die Endpunkte sind über
-  `RemarkTests` geprüft, aber ohne aufgezeichnetes Beispiel in `docs/api-examples/`.
-- `DocsCaptureTests` erzeugt **tageszeitabhängige** Beispiele: Der Seed hat Zeitfenster-Multiplikatoren
-  (Vormittag ×1.5, Nachmittag ×1.0, Abend ×0.8), daher wandert `awarded` je nach Laufzeit zwischen 8, 10
-  und 15. Jeder Lauf zu anderer Uhrzeit erzeugt Diff-Rauschen in der eingecheckten Doku. Vorbestehend,
-  nicht durch dieses Feature verursacht – ein Fix wäre, das Zeitfenster in der Test-Factory zu neutralisieren.
+- **Aufgezeichnete Beispiele.** `DocsCaptureTests` fährt jetzt eine Gruppe `remarks`
+  ([docs/api-examples/remarks.md](api-examples/remarks.md), 10 Beispiele): erfassen samt Kontext →
+  Log-Id lesen → Antwort zurückschreiben → Folgeanmerkung mit Verweis, dazu die Sichtbarkeitswand
+  (der Sohn sieht die Anmerkung des Vaters **nicht** – deshalb 404 und nicht 403) und die Fehlerfälle.
+  Damit ist `remark_not_found` belegt; die Abdeckung steigt auf **29 / 45** Codes.
+- **Reproduzierbare Doku.** Die Test-Factory löscht nach dem Start die geseedeten Zeitfenster
+  (`PuglingWebAppFactory.CreateHost`) – ohne Multiplikator gilt Faktor 1,0, `awarded` steht fest bei 10
+  statt zwischen 8, 10 und 15 zu wandern. Dabei fiel auf, dass die Zeitstempel-Maskierung in `Redact`
+  ein abschließendes `Z` verlangte, das die API nie schreibt: Sie traf **nie**, und jeder Lauf schrieb
+  sämtliche Zeitstempel neu. Jetzt greift sie mit und ohne Zonenkennung, und lauf-relative Datumswerte
+  (Plan-Start/-Ende, Verlaufstage) werden zu `<date>` – feste Literale wie `2099-03-01` bleiben lesbar.
+  Zwei Läufe hintereinander erzeugen nun **byte-identische** Dateien.
+- **Smoke-Test.** `/smoke-test` prüft die Anmerkungen jetzt mit (Checks 9–10 in
+  `.claude/scripts/smoke-checks.sh`): erfassen, Kontext wieder auslesen, unbekannte Id →
+  `remark_not_found`. Das widerspricht dem Abschnitt „Verhältnis zu den bestehenden Test-Skills" nicht –
+  dort geht es darum, dass der Smoke-Test keine *variablen Zusatzchecks aus einer Textdatei* fährt. Diese
+  drei Checks sind fest und binär wie alle anderen.
 
 > Beim Verifizieren von Etappe 6 gefunden und behoben: Ein Kontext-Bezug, der ins Leere zeigt
 > (gelöschtes Kind, `/vater/kind/999` durch Tippfehler), ließ den POST mit **500** scheitern – das Widget
@@ -290,8 +301,9 @@ den Standardpfad abzuspulen. Eine Beobachtung wie „Shop-Kauf fühlt sich komis
 sich verzögert" wird so zur Testanweisung; das Ergebnis fließt in den Befund und – wo es die Bedienung
 betrifft – ins jeweilige Tutorial.
 
-`/smoke-test` bleibt bewusst außen vor: Er ist ein schnelles Ja/Nein-Gate, und variable Zusatzchecks aus
-einer Textdatei würden genau das aufweichen.
+`/smoke-test` **liest keine** Anmerkungen: Er ist ein schnelles Ja/Nein-Gate, und variable Zusatzchecks aus
+einer Textdatei würden genau das aufweichen. Er prüft aber – seit den letzten Änderungen – die
+Remarks-**Endpunkte** selbst (erfassen, Kontext, `remark_not_found`): feste, binäre Checks wie alle anderen.
 
 ## Etappen
 

@@ -110,10 +110,23 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
     {
         var redacted = Regex.Replace(s, "(\"token\"\\s*:\\s*)\"[^\"]*\"", "$1\"<redacted-jwt>\"");
         redacted = Regex.Replace(redacted, "(\"traceId\"\\s*:\\s*)\"[^\"]*\"", "$1\"<trace-id>\"");
-        return Regex.Replace(redacted,
-            "\"\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?Z\"",
+        // Zeitstempel maskieren – mit **oder ohne** Zonenkennung: Die API serialisiert `DateTime`
+        // (UTC-Werte ohne `Z`), ein auf `Z` bestehendes Muster traf nie und ließ jeden Lauf sämtliche
+        // Zeitstempel in der eingecheckten Doku neu schreiben.
+        redacted = Regex.Replace(redacted,
+            "\"\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?(?:Z|[+-]\\d{2}:\\d{2})?\"",
             "\"<timestamp>\"");
+        // Reine Datumswerte nur dann, wenn sie **lauf-relativ** sind (Plan-Start/-Ende, Verlaufstage
+        // wandern täglich). Feste Literale wie `2099-03-01` aus den Requests bleiben lesbar – sonst
+        // verlöre das Beispiel seine Aussage.
+        return Regex.Replace(redacted, "\"(\\d{4})-(\\d{2})-(\\d{2})\"",
+            m => IsRunRelativeDate(m.Value.Trim('"')) ? "\"<date>\"" : m.Value);
     }
+
+    /// <summary>Datum in Reichweite des Testlaufs (±1 Jahr)? Nur solche Werte verschieben sich von Lauf zu Lauf.</summary>
+    private static bool IsRunRelativeDate(string value) =>
+        DateOnly.TryParseExact(value, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var date)
+        && Math.Abs(date.DayNumber - DateOnly.FromDateTime(DateTime.UtcNow).DayNumber) <= 366;
 
     private static string? Truncate(string? s) =>
         s is { Length: > 1500 } ? s[..1500] + "\n… (gekürzt)" : s;
@@ -156,6 +169,7 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
             await CaptureTagsAsync(father, child, foreignChildId);
             await CaptureTimetableAsync(father, docSubjectId);
             await CaptureShopAsync(father, child);
+            await CaptureRemarksAsync(father, child, docExerciseId);
             completed = true;
         }
         finally
@@ -872,6 +886,78 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
 
         await Capture(father, g, "Artikel löschen", HttpMethod.Delete,
             $"/api/v1/supervisor/shop/articles/{articleId}", null, HttpStatusCode.NoContent);
+    }
+
+    // ── remarks (Anmerkungen beim Testen – tier-neutrale Ressource) ───────────────────────────────
+    // Zeichnet den Kreis auf, der das Feature ausmacht: erfassen samt Kontext → Log-Id → Antwort
+    // zurückschreiben → Folgeanmerkung mit Verweis. Dazu die Sichtbarkeitswand (Student sieht nur
+    // Eigenes) und der Fehlerfall `remark_not_found`.
+    private async Task CaptureRemarksAsync(HttpClient father, HttpClient child, int docExerciseId)
+    {
+        const string g = "remarks";
+
+        var created = await Capture(father, g, "Anmerkung erfassen (mit Kontext)", HttpMethod.Post, "/api/v1/remarks",
+            new
+            {
+                text = "Ich will meine E-Mail-Adresse ändern und finde keine Stelle dafür.",
+                category = "Question",
+                context = new
+                {
+                    route = "/vater/kind/1",
+                    appArea = "vater",
+                    childId = 1,
+                    exerciseId = docExerciseId,
+                    contextJson = """{"tab":"stammdaten"}""",
+                    // Ringpuffer: ausschließlich Metadaten – keine Bodies, Header oder Tokens.
+                    // Der Login-Request trägt die PIN im Body; ein roher Mitschnitt legte sie in die DB.
+                    recentErrorsJson = """[{"method":"GET","path":"/api/v1/supervisor/fathers/1","status":404,"code":"not_found","at":"2026-07-27T09:12:44Z"}]""",
+                },
+            }, HttpStatusCode.Created);
+        var remarkId = created.GetProperty("id").GetInt32();
+
+        await Capture(father, g, "Anmerkung ohne Text erfassen", HttpMethod.Post, "/api/v1/remarks",
+            new { text = "   " }, HttpStatusCode.BadRequest, ApiErrors.ValidationError.Code);
+
+        await Capture(father, g, "Anmerkung zur Log-Id lesen", HttpMethod.Get, $"/api/v1/remarks/{remarkId}",
+            null, HttpStatusCode.OK);
+
+        await Capture(father, g, "Eigene Anmerkungen (Liste im Widget)", HttpMethod.Get,
+            "/api/v1/remarks?mine=true&take=5", null, HttpStatusCode.OK);
+
+        // Der Rückkanal: Claude Code schreibt die Antwort zurück und schließt ab. Bei `Planned` bliebe die
+        // Antwort genauso erhalten – das macht aus dem offenen Zettel einen analysierten Backlog-Eintrag.
+        await Capture(father, g, "Antwort zurückschreiben und abschließen", HttpMethod.Patch, $"/api/v1/remarks/{remarkId}",
+            new
+            {
+                answer = "Die API kann das über PATCH api/v1/supervisor/fathers/{id} (FathersController.Update); im Vater-Web gibt es dafür kein Formular.",
+                answeredBy = "claude-code",
+                status = "Done",
+            }, HttpStatusCode.OK);
+
+        await Capture(father, g, "Folgeanmerkung mit Verweis anlegen", HttpMethod.Post, "/api/v1/remarks",
+            new
+            {
+                text = "Formular für die E-Mail-Adresse im Vater-Web nachziehen.",
+                category = "Idea",
+                parentRemarkId = remarkId,
+            }, HttpStatusCode.Created);
+
+        await Capture(father, g, "Verweis auf unbekannte Vorgänger-Anmerkung", HttpMethod.Post, "/api/v1/remarks",
+            new { text = "Bezug ins Leere", parentRemarkId = 999999 },
+            HttpStatusCode.BadRequest, ApiErrors.InvalidReference.Code);
+
+        // Sichtbarkeitswand: Der Student sieht ausschließlich eigene Anmerkungen. Deshalb ist die Antwort
+        // hier 404 und nicht 403 – ein 403 verriete, dass die Anmerkung existiert, und deren Antworten
+        // tragen Datei- und Zeilenverweise.
+        await Capture(child, g, "Fremde Anmerkung lesen (Sohn)", HttpMethod.Get, $"/api/v1/remarks/{remarkId}",
+            null, HttpStatusCode.NotFound, ApiErrors.RemarkNotFound.Code);
+
+        await Capture(father, g, "Unbekannte Anmerkung lesen", HttpMethod.Get, "/api/v1/remarks/999999",
+            null, HttpStatusCode.NotFound, ApiErrors.RemarkNotFound.Code);
+
+        // Zuletzt löschen – die Folgeanmerkung hängt per `SetNull` daran und bleibt bestehen.
+        await Capture(father, g, "Anmerkung löschen", HttpMethod.Delete, $"/api/v1/remarks/{remarkId}",
+            null, HttpStatusCode.NoContent);
     }
 
     // ─────────────────────────────────────────────────────────────────────────────────────────────

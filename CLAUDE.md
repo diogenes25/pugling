@@ -31,7 +31,8 @@ dotnet ef migrations add <Name> --project backend/Pugling.Api --output-dir Data/
 ```
 
 - **Smoke-Test gegen laufende API:** `/smoke-test` (startet gegen eine Temp-DB, prüft Auth +
-  Ownership + einen Plan→Test→Submit-Flow, lässt die echte `pugling.db` unangetastet).
+  Ownership + einen Plan→Test→Submit-Flow + die Anmerkungen samt Kontext-Mitschnitt, lässt die echte
+  `pugling.db` unangetastet).
 - **Neuen Übungstyp/Lernverfahren anlegen:** `/neuer-uebungstyp` (führt den etablierten Prozess).
 
 ### Frontend
