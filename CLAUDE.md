@@ -22,14 +22,10 @@ Details: [docs/architektur-entscheidung.md](docs/architektur-entscheidung.md), [
 
 ## Befehle
 
-Immer aus `backend/Pugling.Api` bzw. Repo-Root:
+`dotnet build` / `run` / `test` / `format` laufen aus `backend/Pugling.Api` bzw. dem Repo-Root;
+Format und Build übernimmt nach `.cs`-Edits ohnehin der Hook. Nicht erratbar ist nur das:
 
 ```bash
-cd backend/Pugling.Api && dotnet build      # baut die API (nach .cs-Edits automatisch per Hook)
-cd backend/Pugling.Api && dotnet run        # http://localhost:5200, Swagger unter /swagger
-dotnet test                                 # Integrationstests (backend/Pugling.Api.Tests)
-dotnet format backend/Pugling.Api           # Formatierung (läuft nach Edits automatisch)
-
 dotnet tool restore                          # einmalig nach dem Clone (installiert dotnet-ef aus dem Manifest)
 dotnet ef migrations add <Name> --project backend/Pugling.Api --output-dir Data/Migrations   # bei Schemaänderung
 ```
@@ -40,49 +36,15 @@ dotnet ef migrations add <Name> --project backend/Pugling.Api --output-dir Data/
 
 ### Frontend
 
-```bash
-cd frontend && npm install        # einmalig
-cd frontend && npm run dev         # http://localhost:5173, /api-Proxy → :5200 (Backend muss laufen)
-cd frontend && npm run build       # tsc -b && vite build (Typecheck + Prod-Build)
-cd frontend && npm run test:e2e    # Playwright: startet Backend (Temp-DB) + Vite, fährt den Vater→Sohn-Loop
-```
-
-Rollen im SPA: `/` Produktseite, `/vater` Web-Admin (inkl. `/vater/wizard` Lehrplan-Assistent,
-`/vater/lehrwerke` Buchreihen + Units, `/vater/fachlehrer` Creator-Profile), `/sohn` Arcade-PWA.
-API-Client + Types zentral unter [frontend/src/lib/](frontend/src/lib/).
-Ein Vater entsteht **im UI**: `/vater` hat neben „Anmelden" den Modus „Neu registrieren" (gegen das anonyme
-`POST supervisor/fathers`, meldet direkt an und nennt die neue Vater-Id — sie ist der Login-Name); das eigene
-Konto liegt unter `/vater/profil`. `/vater/kind/:id` ist der **Kind-Hub** (Stammdaten inkl. PIN, Bild-Freigabe,
-gewichtete Interessen) und verlinkt alles Kindbezogene per `?childId=`; darunter
-`/vater/kind/:id/lernstand` (plan-übergreifender Lernstand: schwache Wörter + Katalog-Drilldown) und
-`/vater/kind/:id/ziele` (Lernziele + Objectives/OKR).
-**Alle Übungstypen des Servers sind im UI anlegbar** — Anzeigename und Routen-Segment kommen aus dem
-Typ-Manifest (`GET creator/exercise-types`, gelesen über [lib/exerciseTypes.ts](frontend/src/lib/exerciseTypes.ts)),
-**nicht** aus einer Tabelle im Frontend: der Schlüssel weicht von der Route ab (Aufsatz → `essays`), und drei
-Kopien liefen zwangsläufig auseinander. Die Formulare je Typ stehen in
-[vater/exerciseConfig.tsx](frontend/src/vater/exerciseConfig.tsx) (Hin- **und** Rückweg, siehe
-[wiki/08-erweitern.md](wiki/08-erweitern.md)); `frontend/e2e/uebungstypen.spec.ts` vergleicht das
-Typ-Pulldown gegen das Manifest und schlägt fehl, sobald ein Server-Typ kein UI hat.
-Übungen sind über `/vater/exercises` **bearbeitbar**
-(Metadaten per PUT — den geladenen `config`/`suggestedBonus`/`executePublic` mitschicken, sonst löscht der
-Vollersatz sie; Vokabelpaare einzeln über `…/vocabulary/{id}/items`, damit die Item-Ids und der Lernstand
-des Kindes erhalten bleiben).
+Startbefehle stehen in `frontend/package.json`. Routen-Landkarte, UI-Konventionen und die Regel
+„Übungstypen kommen aus dem Server-Manifest" liegen in [frontend/CLAUDE.md](frontend/CLAUDE.md) –
+die Datei lädt automatisch, sobald du unter `frontend/` arbeitest.
 
 ### KI-Creator (Konsolen-Agent)
 
-```bash
-ollama pull qwen2.5:14b-instruct                      # einmalig: Modell mit verlässlichem JSON
-cd backend/Pugling.Agent.Creator && dotnet user-secrets set "Pugling:Pin" "0000"   # einmalig
-dotnet run --project backend/Pugling.Agent.Creator -- profiles --child 1           # welcher Lehrer passt?
-dotnet run --project backend/Pugling.Agent.Creator -- briefing --child 1           # ohne LLM
-dotnet run --project backend/Pugling.Agent.Creator -- create --child 1 --type Cloze --count 8 --dry-run
-dotnet run --project backend/Pugling.Agent.Creator -- create --profile 3 --type Cloze --unit 12   # allgemein
-dotnet run --project backend/Pugling.Agent.Creator -- exam --child 1 --types Vocabulary,Cloze --date 2026-09-15
-```
-
-Braucht die laufende API. **Individuell** (`--child`) verlangt ein Konto mit Creator **und**
-Supervisor-Rolle, das das Kind betreut (Seed: Konto 1); **allgemein** (`--profile`, ohne Kind) genügt
-die Creator-Rolle. Details: [backend/Pugling.Agent.Creator/README.md](backend/Pugling.Agent.Creator/README.md).
+Der Konsolen-Agent, der die Creator-Rolle übernimmt (Briefing/Entwurf/Klausur gegen die laufende API):
+Aufrufe und Betriebsarten stehen im Skill `ki-creator`, die Architektur unter „Konventionen".
+Details: [backend/Pugling.Agent.Creator/README.md](backend/Pugling.Agent.Creator/README.md).
 
 ## Architektur (das produktive Modell)
 
