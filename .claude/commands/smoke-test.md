@@ -1,11 +1,11 @@
 ---
-description: API isoliert gegen eine Wegwerf-DB starten und den End-to-End-Flow (Auth, Ownership, Plan→Test→Submit) prüfen
+description: API isoliert gegen eine Wegwerf-DB starten und den End-to-End-Flow (Auth, Ownership, Plan→Test→Submit, Anmerkungen) prüfen
 allowed-tools: Bash, Read
 ---
 
-Führe einen Smoke-Test der Pugling-API durch. Ziel: verifizieren, dass Auth, der Plan-Ownership-Filter
-und ein kompletter Plan→Test→Submit-Flow (inkl. Punktevergabe) live funktionieren – **ohne** die echte
-`pugling.db` anzufassen.
+Führe einen Smoke-Test der Pugling-API durch. Ziel: verifizieren, dass Auth, der Plan-Ownership-Filter,
+ein kompletter Plan→Test→Submit-Flow (inkl. Punktevergabe) und die Anmerkungen beim Testen
+(`api/v1/remarks`, inkl. Kontext-Mitschnitt) live funktionieren – **ohne** die echte `pugling.db` anzufassen.
 
 Wichtige, in diesem Repo erprobte Randbedingungen (nicht abweichen):
 

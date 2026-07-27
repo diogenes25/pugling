@@ -28,6 +28,17 @@ export default defineConfig({
     viewport: { width: 393, height: 830 }, // Handy-Größe (Redmi-7-nah)
     trace: "retain-on-failure",
     screenshot: "only-on-failure",
+    // Das Anmerkungs-Widget (nur Dev-Modus) abschalten: Playwright startet `npm run dev`, also wäre es
+    // sichtbar und könnte Klicks abfangen oder Alt+A abgreifen. Der Schalter liegt bewusst im
+    // localStorage statt in einer Env-Variablen – bei `reuseExistingServer` läuft der Dev-Server
+    // fremdgestartet, dessen Env wir gar nicht setzen.
+    storageState: {
+      cookies: [],
+      origins: [{
+        origin: "http://localhost:5173",
+        localStorage: [{ name: "pugling.remarks.off", value: "1" }],
+      }],
+    },
   },
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
   webServer: [
@@ -40,6 +51,11 @@ export default defineConfig({
         ASPNETCORE_ENVIRONMENT: "Development",
         ConnectionStrings__Default: `Data Source=${dbFile}`,
         Media__RootPath: mediaDir,
+        // Login-Bremse aus: Sie zählt pro IP (PermitLimit 10/Minute), und alle Specs kommen über
+        // dieselbe localhost-Partition. Die Suite lag knapp darunter – jeder weitere Test mit Login
+        // hätte sonst einen späteren Spec mit „Login fehlgeschlagen" umgeworfen, scheinbar grundlos.
+        // Dasselbe Zugeständnis macht der In-Process-TestServer im Backend.
+        RateLimiting__LoginEnabled: "false",
       },
     },
     {

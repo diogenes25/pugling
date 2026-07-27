@@ -75,6 +75,14 @@ agenda — but still run it through all three roles' eyes before committing to i
 
 ## Step 2 — Sit in each role's seat and generate honest feedback
 
+**First, read what the human already observed.** If a Befund from the `anmerkungen` skill exists under
+[docs/anmerkungen/](../../../docs/anmerkungen/README.md), read it before you seat yourself in any role.
+Those entries were written by a real person testing the real app, with the route and the failing requests
+captured automatically — by this skill's own standard ("feedback must come from the real app, not your
+imagination") they are the **strongest** input you get, and they outrank anything you produce by walking
+the product yourself. Fold them into the matching role's feedback block and mark them as observed rather
+than simulated. No Befund present → skip without comment.
+
 Make sure the product is actually reachable (backend on `:5200`, and for UI feedback the frontend
 on `:5173` — see `CLAUDE.md` for start commands; use `/smoke-test` or targeted `curl` when you only
 need the API). Each tier has a dedicated role-skill that drives its API slice and can seat you fast:

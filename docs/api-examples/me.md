@@ -29,21 +29,21 @@ Response — `HTTP 200`:
     "amount": 15,
     "kind": "Base",
     "reason": "Doku-Buchung",
-    "createdAt": "2026-07-27T08:51:06.2850885"
+    "createdAt": "<timestamp>"
   },
   {
     "id": 2,
     "amount": 300,
     "kind": "Achievement",
     "reason": "Willkommens-Gems",
-    "createdAt": "2026-07-27T08:50:58.8247388"
+    "createdAt": "<timestamp>"
   },
   {
     "id": 1,
     "amount": 50,
     "kind": "Base",
     "reason": "Startguthaben (M\u00FCnzen)",
-    "createdAt": "2026-07-27T08:50:58.8247376"
+    "createdAt": "<timestamp>"
   }
 ]
 ```
@@ -60,7 +60,7 @@ Response — `HTTP 200`:
   "amount": 15,
   "kind": "Base",
   "reason": "Doku-Buchung",
-  "createdAt": "2026-07-27T08:51:06.2850885"
+  "createdAt": "<timestamp>"
 }
 ```
 

@@ -26,6 +26,13 @@ verifizierte Tutorial **`docs/tutorial-creator.md`** schreiben/aktualisieren. En
 Alles läuft gegen eine **Wegwerf-Instanz** (Port 5280, Temp-DB) — die echte `pugling.db` bleibt unberührt,
 die Seed-IDs sind stabil. Der gemeinsame Helfer `.claude/scripts/tutorial-api.sh` kapselt Start/Stop/Login.
 
+0. **Offene Anmerkungen sichten** (optional, blockiert nie): Liegt in [docs/anmerkungen/](../../../docs/anmerkungen/README.md)
+   ein Export, die Einträge mit `offen`/`eingeplant` lesen und die zum **Katalog** heraussuchen — Routen
+   `/vater/exercises`, `/vater/vocab`, `/vater/media`, `/vater/lehrwerke`, `/vater/fachlehrer` sowie alles
+   mit Kategorie `Content`. Diese Beobachtungen im Durchlauf **gezielt nachtesten** statt nur den
+   Standardpfad abzuspulen; das Ergebnis kommt in den Abschlussbericht. Kein Export vorhanden →
+   kommentarlos überspringen. Den Status **nicht** ändern (diese Instanz kennt die echte Anmerkung nicht) —
+   das erledigt der Skill `anmerkungen`. Ablauf und Begründung: [docs/anmerkungen/](../../../docs/anmerkungen/README.md).
 1. **Hochfahren** (nicht abweichen — Windows-Fallstricke stecken im Helfer):
    - `bash .claude/scripts/tutorial-api.sh build`
    - `bash .claude/scripts/tutorial-api.sh stop` (vor-aufräumen)

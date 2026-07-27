@@ -1,6 +1,6 @@
 # API-Beispiele – Übersicht
 
-Automatisch erzeugt von `backend/Pugling.Api.Tests/DocsCaptureTests.cs`. Insgesamt **119** Beispiele in **11** Gruppen.
+Automatisch erzeugt von `backend/Pugling.Api.Tests/DocsCaptureTests.cs`. Insgesamt **129** Beispiele in **12** Gruppen.
 
 | Gruppe | Beispiele | Fehlerfälle | Datei |
 | --- | ---: | ---: | --- |
@@ -10,6 +10,7 @@ Automatisch erzeugt von `backend/Pugling.Api.Tests/DocsCaptureTests.cs`. Insgesa
 | class-tests | 3 | 2 | [`class-tests.md`](./class-tests.md) |
 | exercise-grants | 7 | 3 | [`exercise-grants.md`](./exercise-grants.md) |
 | me | 15 | 5 | [`me.md`](./me.md) |
+| remarks | 10 | 4 | [`remarks.md`](./remarks.md) |
 | shop | 28 | 8 | [`shop.md`](./shop.md) |
 | study-plans | 21 | 6 | [`study-plans.md`](./study-plans.md) |
 | tags | 5 | 3 | [`tags.md`](./tags.md) |
@@ -18,7 +19,7 @@ Automatisch erzeugt von `backend/Pugling.Api.Tests/DocsCaptureTests.cs`. Insgesa
 
 ## Fehler-Code-Abdeckung
 
-Verifiziert: **28 / 44** Codes aus `ApiErrors`.
+Verifiziert: **29 / 45** Codes aus `ApiErrors`.
 
 | Code | Beispiel |
 | --- | --- |
@@ -41,6 +42,7 @@ Verifiziert: **28 / 44** Codes aus `ApiErrors`.
 | `not_owner` | exercise-grants – Rechte einer fremden Übung auflisten |
 | `plan_inactive` | study-plans – Deaktivierten Plan spielen |
 | `position_has_data` | study-plans – Bespielte Position löschen |
+| `remark_not_found` | remarks – Fremde Anmerkung lesen (Sohn) |
 | `shop_insufficient_stock` | shop – Shop-Angebot kaufen (ausverkauft) |
 | `shop_listing_inactive` | shop – Shop-Angebot kaufen (deaktiviert) |
 | `skin_already_unlocked` | me – Bereits besessenen Skin kaufen |

@@ -6,6 +6,8 @@
 #
 # Prüft das aktuelle Positions-Modell: Plan = Container aus Katalog-Übungen; Test/Üben laufen pro Position
 # unter .../study-plans/{planId}/positions/{positionId}/…  (das alte plan-weite /tests gibt es nicht mehr).
+# Zuletzt die Anmerkungen (api/v1/remarks) – das Dev-Werkzeug hängt an derselben HTTP-Schicht und darf
+# nicht still verrotten, weil es sonst genau dann klemmt, wenn man beim Testen etwas notieren will.
 set -uo pipefail
 
 BASE="${1:-http://localhost:5280}"
@@ -73,6 +75,21 @@ if [ -n "${POS:-}" ]; then
   ok=$(echo "$RES" | python -c "import sys,json;d=json.load(sys.stdin);print('yes' if d.get('passed') and d.get('scorePercent')==100 else 'no')" 2>/dev/null)
   [ "$ok" = "yes" ] && pass "Submit: 100% bestanden" || bad "Submit-Ergebnis unerwartet: $RES"
 fi
+
+# 9) Anmerkungen beim Testen (tier-neutrale Route api/v1/remarks): erfassen → Log-Id → Kontext wieder lesen.
+# Der Wert des Features steckt im mitgeschnittenen Kontext, nicht im Text – darum wird genau der geprüft.
+REM=$(curl -s -X POST "$BASE/api/v1/remarks" "${AUTH[@]}" -H "Content-Type: application/json" \
+  -d '{"text":"Smoke-Anmerkung","category":"Question","context":{"route":"/vater/kind/1","appArea":"vater","childId":1}}')
+RID=$(echo "$REM" | jget id)
+[ -n "$RID" ] && pass "Anmerkung erfasst (Log-Id=$RID)" || bad "Anmerkung erfassen fehlgeschlagen: $REM"
+if [ -n "${RID:-}" ]; then
+  ROUTE=$(curl -s "$BASE/api/v1/remarks/$RID" "${AUTH[@]}" | python -c "import sys,json;print(json.load(sys.stdin)['context']['route'])" 2>/dev/null)
+  [ "$ROUTE" = "/vater/kind/1" ] && pass "Anmerkung: Kontext mitgeschnitten (route=$ROUTE)" || bad "Kontext fehlt/falsch: '$ROUTE'"
+fi
+
+# 10) Unbekannte Anmerkung → 404 mit maschinenlesbarem code (Regressionsschutz für ProblemWithCode)
+code=$(curl -s "$BASE/api/v1/remarks/999999" "${AUTH[@]}" | jget code)
+[ "$code" = "remark_not_found" ] && pass "Unbekannte Anmerkung → remark_not_found" || bad "erwartete remark_not_found, war '$code'"
 
 echo
 if [ "$fail" = "0" ]; then echo "✅ Smoke-Checks bestanden."; else echo "❌ Smoke-Checks mit Fehlern."; fi

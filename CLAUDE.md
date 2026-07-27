@@ -31,7 +31,8 @@ dotnet ef migrations add <Name> --project backend/Pugling.Api --output-dir Data/
 ```
 
 - **Smoke-Test gegen laufende API:** `/smoke-test` (startet gegen eine Temp-DB, prüft Auth +
-  Ownership + einen Plan→Test→Submit-Flow, lässt die echte `pugling.db` unangetastet).
+  Ownership + einen Plan→Test→Submit-Flow + die Anmerkungen samt Kontext-Mitschnitt, lässt die echte
+  `pugling.db` unangetastet).
 - **Neuen Übungstyp/Lernverfahren anlegen:** `/neuer-uebungstyp` (führt den etablierten Prozess).
 
 ### Frontend
@@ -55,6 +56,13 @@ Details: [backend/Pugling.Agent.Creator/README.md](backend/Pugling.Agent.Creator
   sich damit, wo gegated wird: schreibende Creator-/Supervisor-Endpunkte tragen `[Authorize(Roles = Roles.Creator)]`
   bzw. `Roles.Supervisor`. Die spielenden/lesenden **Student-Endpunkte** sind bewusst nur `[Authorize]` und
   trennen die Rollen inline (`IsSupervisor`/`IsStudent`), damit der Supervisor für Vorschau/Nachtrag mitlesen darf.
+  **Bewusste Ausnahmen ohne Ebenen-Präfix** (kein Versehen): `auth/…` und `remarks/…` – Ressourcen, die
+  keiner Ebene gehören, weil derselbe Mensch sie aus mehreren Rollen bedient.
+- **Anmerkungen beim Testen** (`api/v1/remarks`, Dev-Werkzeug – kein Produktfeature): Beobachtung im
+  Widget erfassen (Alt+A) → **Log-Id** → in Claude Code per Skill `anmerkungen` belegt beantworten.
+  Der Wert steckt im automatisch mitgeschnittenen Kontext (Route, Kind/Übung, letzte Fehler), nicht im
+  Text. Ringpuffer speichert **nur Metadaten** – der Login-Request trägt die PIN im Body.
+  Details: [docs/anmerkungen-plan.md](docs/anmerkungen-plan.md).
 - **Identität/Auth** ([Auth/](backend/Pugling.Api/Auth/)): Ein `Account` (Login/PIN-Hash) trägt über
   `AccountProfile` **mehrere Rollen** (`ProfileRole` Creator/Supervisor/Student → `Father`/`Child`-Profil);
   ein Vater ist zugleich Creator+Supervisor. PIN-Login (`auth/{father|child}` oder konto-zentrisch `auth/login`)
@@ -198,42 +206,20 @@ Details: [backend/Pugling.Agent.Creator/README.md](backend/Pugling.Agent.Creator
   Kommentare erklären das *Warum* (Geschäftsregel, Anti-Cheat), nicht das Was.
 - **Controller dünn**, Logik in Services. DTOs als `record` projizieren – nie EF-Entities zurückgeben.
 - **Vertrag im eigenen Projekt** ([backend/Pugling.Contracts/](backend/Pugling.Contracts/)): *alle* Request-/
-  Response-`record`s und die geteilten Basistypen (Enums wie `PointKind`/`GoalCadence`, `StageStep`,
-  `NounInfo`, die Übungs-Configs) liegen dort – **nicht** mehr als verschachtelte Typen im Controller.
-  Aufteilung: `Common/` + `Exercise/` = Wurzel-Namespace `Pugling.Contracts` (ebenen-neutral), dazu je Ebene
-  ein Ordner **und** Namespace `Pugling.Contracts.{Auth,Creator,Supervisor,Student,Shared}`; alle sechs sind
-  per csproj-`<Using>` projektweit sichtbar. Das Projekt ist ein **Blatt**: keine Referenz auf `Pugling.Api`,
-  kein EF, keine Entities – damit ein Client es pur verwenden kann. Folgerichtig bleibt Entity-Wissen in der
-  API (Mapping-Klasse statt Factory am Record, siehe `ExerciseBriefMapping`), und Service-Ergebnisse, die
-  `ApiError` oder Entities tragen, bleiben ebenfalls dort. Neues DTO? Ins Vertrags-Projekt, mit `/// <summary>`.
+  Response-`record`s und die geteilten Basistypen (Enums, `StageStep`, die Übungs-Configs) liegen dort –
+  **nicht** als verschachtelte Typen im Controller. Neues DTO? Ins Vertrags-Projekt, mit `/// <summary>`.
   Namen sind **global eindeutig** zu halten (der OpenAPI-Generator schlüsselt Schemas über den einfachen
-  Typnamen; gleichnamige Records verschmelzen sonst still zu einem Schema).
+  Typnamen; gleichnamige Records verschmelzen sonst still zu einem Schema). Namespace-Aufteilung und die
+  Blatt-Regel stehen in [backend/Pugling.Contracts/CLAUDE.md](backend/Pugling.Contracts/CLAUDE.md).
 - **Client-Bibliothek** ([backend/Pugling.Client/](backend/Pugling.Client/)): die *eine* HTTP-Schicht für
-  Nicht-Browser-Konsumenten (die KI-Agenten) – `AuthHandler` (konto-zentrischer Login, proaktive
-  Token-Erneuerung, 401-Retry) über den geteilten `PuglingTokenStore` (**eine** Anmeldung für alle
-  Fassaden; der Handler selbst wird je Client neu erzeugt – eine geteilte `DelegatingHandler`-Instanz
-  lehnt die `HttpClientFactory` beim zweiten Client ab), `PuglingJson` (Web-Defaults **+**
-  `JsonStringEnumConverter` – Enum-Parität ist Pflicht), `PuglingResponse` (ProblemDetails →
-  `PuglingApiException` mit stabilem `code`) und die dünnen Fassaden `CreatorApi`/`SupervisorApi`/
-  `StudentApi` (Letztere = die Lernstand-Lesesichten, die ein Supervisor-Konto mitlesen darf).
-  Registrierung per `services.AddPuglingClient(config)`.
-  Neuer Endpunkt? Erst Backend, dann hier eine einzeilige Methode ergänzen – nie HTTP-Plumbing duplizieren.
-  Verifiziert von `PuglingClientTests` gegen den echten In-Process-Server.
+  Nicht-Browser-Konsumenten (die KI-Agenten). Neuer Endpunkt? Erst Backend, dann dort eine einzeilige
+  Methode ergänzen – nie HTTP-Plumbing duplizieren. Aufbau (AuthHandler/TokenStore/Fassaden):
+  [backend/Pugling.Client/CLAUDE.md](backend/Pugling.Client/CLAUDE.md).
 - **KI-Creator** ([backend/Pugling.Agent.Creator/](backend/Pugling.Agent.Creator/README.md)): Konsolen-App,
-  die die Creator-Rolle übernimmt – lokal gegen Ollama (`Microsoft.Extensions.AI`/`IChatClient` +
-  OllamaSharp). **Deterministische Pipeline**: C# besitzt den Ablauf (Briefing → Entwurf → Regelprüfung mit
-  Reparatur-Runde → Anlegen → nebenwirkungsfreier Selbsttest über `preview`/`preview/check`), das Modell
-  liefert nur strukturierten Inhalt – kein Tool-Calling. Fachliche Kernregel: **Interessen kleiden den Stoff
-  ein, sie ersetzen ihn nie** (bei vorgegebenem Wortschatz deterministisch erzwungen).
-  Das `CreatorBriefing` hat **zwei Quellen**: `ProfileFacts` (der Fachlehrer samt Reihe/Unit-Stoff) und
-  **optional** `ChildFacts` – daran hängt die Betriebsart: mit Kind entsteht eine *individuelle* Übung, ohne
-  eine *allgemeine* für den geteilten Katalog (dann kommen Klassenstufen-Bereich/Schulart/Quelle aus dem
-  Profil, und der Agent braucht kein Betreuungsrecht). Ohne `--profile` sucht der Agent selbst das
-  bestpassende (`profiles/match`). Der `ExamPlanner` baut **Übungsklausuren**: ein Pipeline-Lauf je Typ
-  (jeder mit eigenem Selbsttest), danach – nur mit Kind – ein kind-skopierter Tag und eine
-  `Klassenarbeit` (Status *geplant*) mit genau diesen Übungen; ein gescheiterter Teil bricht die Klausur
-  nicht ab, macht sie aber sichtbar unvollständig (Exit 1). Neuer Typ = eine Klasse auf
-  `ExerciseStrategy<TDraft,TConfig>`. Getestet ohne Ollama via `FakeChatClient` (`CreatorAgentTests`).
+  die die Creator-Rolle übernimmt – lokal gegen Ollama, **deterministische Pipeline** (C# besitzt den Ablauf,
+  das Modell liefert nur strukturierten Inhalt – kein Tool-Calling). Fachliche Kernregel: **Interessen
+  kleiden den Stoff ein, sie ersetzen ihn nie**. Pipeline, Briefing-Quellen und `ExamPlanner`:
+  [backend/Pugling.Agent.Creator/CLAUDE.md](backend/Pugling.Agent.Creator/CLAUDE.md).
 - **Guard Clauses zuerst** (früh `return NotFound()/Forbid()` bzw. `Problem(statusCode:…, detail:…)`),
   Happy Path un-eingerückt.
 - **API-Versionierung**: Alle Routen unter `api/v1/…` – das Versionssegment steckt zentral in

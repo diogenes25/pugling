@@ -1,4 +1,5 @@
 import { NavLink, Navigate, Route, Routes } from "react-router-dom";
+import { RemarkWidget } from "../components/RemarkWidget";
 import { useAuth } from "../lib/auth";
 import { VaterLogin } from "./VaterLogin";
 import { VaterDashboard } from "./VaterDashboard";
@@ -69,6 +70,10 @@ export function VaterApp() {
           <Route path="*" element={<Navigate to="/vater" replace />} />
         </Routes>
       </main>
+
+      {/* Anmerkungen beim Testen – nur im Dev-Modus. Datenmodell und API sind produktreif, allein die
+          Einblendung ist gegated: Freischalten wäre später das Streichen dieser einen Bedingung. */}
+      {import.meta.env.DEV && <RemarkWidget />}
     </div>
   );
 }

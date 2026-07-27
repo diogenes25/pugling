@@ -25,6 +25,13 @@ Zwei Ziele in einem Lauf: **(1)** die Supervisor-Endpunkte end-to-end **verifizi
 
 Gegen die **Wegwerf-Instanz** (Port 5280, Temp-DB) über `.claude/scripts/tutorial-api.sh`.
 
+0. **Offene Anmerkungen sichten** (optional, blockiert nie): Liegt in [docs/anmerkungen/](../../../docs/anmerkungen/README.md)
+   ein Export, die Einträge mit `offen`/`eingeplant` lesen und die zur **Steuerung** heraussuchen — Routen
+   `/vater/kind/…`, `/vater/plan/…`, `/vater/wizard`, `/vater/shop`, `/vater/class-tests`, `/vater/konto`,
+   `/vater/rewards`. Diese Beobachtungen im Durchlauf **gezielt nachtesten** statt nur den Standardpfad
+   abzuspulen; das Ergebnis kommt in den Abschlussbericht. Kein Export vorhanden → kommentarlos
+   überspringen. Den Status **nicht** ändern (diese Instanz kennt die echte Anmerkung nicht) — das
+   erledigt der Skill `anmerkungen`. Ablauf und Begründung: [docs/anmerkungen/](../../../docs/anmerkungen/README.md).
 1. **Hochfahren**: `build` → `stop` → `serve` (Hintergrund, `run_in_background: true`) → `wait`
    (siehe `creator`-Skill; Windows-Fallstricke stecken im Helfer). Bei Datei-Lock die Dev-Instanz stoppen.
 2. **Einloggen**: `source .claude/scripts/tutorial-api.sh; TOK=$(login_father 1 0000)`.

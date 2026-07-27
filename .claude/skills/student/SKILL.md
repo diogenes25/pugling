@@ -31,6 +31,13 @@ Der Seed liefert Katalog, aber **keinen** fertigen Plan → lege vor dem Student
 
 Gegen die **Wegwerf-Instanz** (Port 5280, Temp-DB) über `.claude/scripts/tutorial-api.sh`.
 
+0. **Offene Anmerkungen sichten** (optional, blockiert nie): Liegt in [docs/anmerkungen/](../../../docs/anmerkungen/README.md)
+   ein Export, die Einträge mit `offen`/`eingeplant` lesen und die zum **Lernen** heraussuchen — alles, was
+   im „Wo" den Bereich `(sohn)` trägt, plus Beobachtungen zu Karten, Leitner, Punkten oder Shop-Einlösung.
+   Diese Beobachtungen im Durchlauf **gezielt nachtesten** statt nur den Standardpfad abzuspulen; das
+   Ergebnis kommt in den Abschlussbericht. Kein Export vorhanden → kommentarlos überspringen. Den Status
+   **nicht** ändern (diese Instanz kennt die echte Anmerkung nicht) — das erledigt der Skill `anmerkungen`.
+   Ablauf und Begründung: [docs/anmerkungen/](../../../docs/anmerkungen/README.md).
 1. **Hochfahren**: `build` → `stop` → `serve` (Hintergrund, `run_in_background: true`) → `wait`.
    Plan+Position als Supervisor anlegen (siehe Voraussetzung), Plan-/Positions-`id` merken.
 2. **Einloggen** als Student: `source .claude/scripts/tutorial-api.sh; TOK=$(login_child 1 1111)`.

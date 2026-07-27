@@ -150,6 +150,9 @@ builder.Services.AddScoped<CreatorProfileService>();
 // wird (Creator taggt Bilder, Supervisor pflegt Interessen, Backfill übernimmt Freitext). Getrennte
 // Wege würden Dubletten erzeugen und das Matching „Bild ↔ Kind" genau dort leerlaufen lassen.
 builder.Services.AddScoped<InterestTagService>();
+// Markdown-Schnappschuss der Test-Anmerkungen: die einzige Brücke zu den Skills, die gegen eine
+// Wegwerf-DB laufen und die echten Anmerkungen nur als Datei im Repo sehen können.
+builder.Services.AddScoped<RemarkExportService>();
 // Zuordnung Bild ⇢ Träger (Vokabel/Item/Übung). Drei Träger, ein Ablauf – der Service hält ihn an einer
 // Stelle; die Controller unterscheiden sich nur in Route und Rechte-Prüfung.
 builder.Services.AddScoped<MediaLinkService>();

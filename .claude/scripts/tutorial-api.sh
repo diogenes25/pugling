@@ -58,6 +58,7 @@ login_child()  { curl -s -X POST "$BASE/api/v1/auth/child"  -H "Content-Type: ap
 # Authentifizierte Aufrufe – setzt eine Variable TOK voraus.
 api_get()  { curl -s "$BASE$1" -H "Authorization: Bearer $TOK"; }
 api_post() { curl -s -X POST "$BASE$1" -H "Authorization: Bearer $TOK" -H "Content-Type: application/json" -d "$2"; }
+api_patch(){ curl -s -X PATCH "$BASE$1" -H "Authorization: Bearer $TOK" -H "Content-Type: application/json" -d "$2"; }
 
 # Als Kommando -> Subcommand; gesourcet -> nur Funktionen (kein set -u, um die aufrufende Shell nicht zu stören).
 if [ "${BASH_SOURCE[0]}" = "${0}" ]; then

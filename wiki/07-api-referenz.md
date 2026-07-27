@@ -116,6 +116,26 @@ Kompakter Überblick über alle Routen. **Autoritative Quelle bleibt Swagger** (
 
 Details: [docs/klassenarbeiten-tagging.md](../docs/klassenarbeiten-tagging.md).
 
+## Anmerkungen beim Testen (`api/v1/remarks`)
+
+**Dev-Werkzeug, kein Produktfeature** – und die einzige Ressource neben `auth/…` **ohne** Ebenen-Präfix:
+Sie gehört keiner Ebene, weil derselbe Mensch sie aus Vater-Web und Sohn-Arcade erfasst.
+
+| Methode & Route | Rolle | Zweck |
+| --- | --- | --- |
+| `POST remarks` | A | Beobachtung erfassen (Widget, Alt+A); Antwort trägt die **Log-Id** |
+| `GET remarks` | A | Liste; `?mine=true` nur eigene, dazu `status`/`category`/`childId`/`appArea` |
+| `GET remarks/{id}` | A | Einzelne Anmerkung samt Kontext-Schnappschuss |
+| `PATCH remarks/{id}` | A | Text/Kategorie/Status und die Antwort (`answer`) |
+| `DELETE remarks/{id}` | A | Löschen |
+| `GET remarks/export` | V | Markdown-Schnappschuss (`text/markdown`) |
+
+**Sichtbarkeit** (inline getrennt, nicht per `[Authorize]`): Ein Sohn sieht **ausschließlich eigene**
+Anmerkungen – Antworten tragen Datei-/Zeilenverweise. Ein Vater sieht zusätzlich die der betreuten Kinder.
+
+Details: [docs/anmerkungen-plan.md](../docs/anmerkungen-plan.md) ·
+Exporte: [docs/anmerkungen/](../docs/anmerkungen/README.md).
+
 ---
 
 ## Fehlerformat

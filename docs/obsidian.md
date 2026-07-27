@@ -117,6 +117,7 @@ Der Graph-Hub: Bereich → maßgebliche Seite(n). Von hier aus ist jede Domäne 
 | Vokabel-Details (Entwickler) | [docs/vokabel-funktionalitaeten-entwickler-tutorial.md](vokabel-funktionalitaeten-entwickler-tutorial.md) |
 | **Bilder & Medien** (Individualisierung, Plan) | [docs/medien-bilder.md](medien-bilder.md) |
 | **API-Konsumenten & KI-Agenten** | [backend/Pugling.Agent.Creator/README.md](../backend/Pugling.Agent.Creator/README.md) (KI-Creator) · [wiki/09 · LLM-Kochbuch](../wiki/09-llm-kochbuch.md) (Lehrplan aus einem Prompt) |
+| **Anmerkungen beim Testen** (Widget → Log-Id → Antwort) | [docs/anmerkungen-plan.md](anmerkungen-plan.md) · [docs/anmerkungen/](anmerkungen/README.md) (Exporte) |
 | KI-Gedächtnis | `MEMORY.md` + Notizen im Memory-Ordner (eigene Vault) |
 
 ## Skills installieren

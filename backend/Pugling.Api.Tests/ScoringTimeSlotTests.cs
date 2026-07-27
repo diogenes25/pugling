@@ -28,7 +28,9 @@ public class ScoringTimeSlotTests(PuglingWebAppFactory factory) : IClassFixture<
     [Fact]
     public async Task Basispunkte_ImDoppelfenster_WerdenVerdoppelt_SonstUnveraendert()
     {
-        // Eigenes 2×-Fenster zu einer vom Seed NICHT belegten Uhrzeit anlegen (der Seed deckt 08–21 Uhr ab).
+        // Eigenes 2×-Fenster anlegen: Die Test-Factory löscht die geseedeten Fenster (Wanduhr-Neutralisierung),
+        // wer den Multiplikator prüfen will, bringt sein Fenster also selbst mit. Die Nachtzeiten bleiben
+        // trotzdem gewählt – so trifft der Test auch dann, wenn irgendwann wieder Fenster vorhanden sind.
         using (var scope = factory.Services.CreateScope())
         {
             var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
