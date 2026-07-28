@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { api, errorMessage } from "../lib/api";
 import { FieldLabel } from "../components/InfoHint";
 import { useAsync } from "../lib/useAsync";
@@ -18,17 +18,20 @@ function todayIso(): string {
 export function VaterPlanCreate() {
   const { session } = useAuth();
   const nav = useNavigate();
+  const [params] = useSearchParams();
   const children = useAsync<ChildResponse[]>(() => api.children(), [session!.id]);
 
   const [title, setTitle] = useState("Englisch – Unit 1");
   const [description, setDescription] = useState("");
-  const [childId, setChildId] = useState<number | "">("");
+  // `?childId=` kommt aus der gefilterten Plan-Liste bzw. dem Kind-Hub. Ohne diese Übernahme stand hier
+  // stets das *erste* Kind – wer für Kind 2 einen Plan anlegte, baute ihn stillschweigend für Kind 1.
+  const [childId, setChildId] = useState<number | "">(Number(params.get("childId")) || "");
   const [durationDays, setDurationDays] = useState(10);
   const [startDate, setStartDate] = useState(todayIso());
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  // Erstes Kind vorwählen, sobald geladen.
+  // Erstes Kind vorwählen, sobald geladen – nur, wenn die Route keines mitgebracht hat.
   useEffect(() => {
     if (childId === "" && children.data && children.data.length > 0) setChildId(children.data[0].id);
   }, [children.data, childId]);

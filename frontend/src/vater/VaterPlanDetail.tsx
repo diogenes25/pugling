@@ -101,7 +101,9 @@ export function VaterPlanDetail() {
         </section>
       )}
 
-      <Link to="/vater" className="btn ghost inline-btn" style={{ width: "auto", alignSelf: "flex-start", textDecoration: "none", textAlign: "center" }}>← Zur Übersicht</Link>
+      {/* Zurück zur **Plan-Liste**, nicht zur Betreuen-Startseite: wer einen Plan verlässt, will zum
+          nächsten Plan – und dort liegen sie seit der Perspektiven-Trennung. */}
+      <Link to="/vater/plaene" className="btn ghost inline-btn" style={{ width: "auto", alignSelf: "flex-start", textDecoration: "none", textAlign: "center" }}>← Alle Lehrpläne</Link>
     </>
   );
 }

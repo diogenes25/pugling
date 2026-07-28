@@ -35,7 +35,7 @@ export function VaterClassTests() {
                 {children.data.map((c) => <option key={c.id} value={c.id}>{c.name} (#{c.id})</option>)}
               </select>
             </div>
-          ) : <div className="banner">Lege zuerst ein Kind an (Übersicht).</div>}
+          ) : <div className="banner">Lege zuerst ein Kind an (unter „Kinder &amp; Heute").</div>}
       </section>
 
       {activeChild !== null && <ClassTestManager key={activeChild} childId={activeChild} />}

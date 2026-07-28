@@ -30,7 +30,11 @@ export function ExercisePreviewModal({ exerciseId, title, onClose }: {
       .then(setData)
       // Manche Typen haben keine einzeln prüfbaren Aufgaben (ein Aufsatz ist ein Schreibauftrag, kein
       // Frage-Antwort-Paar). Der Server sagt das mit `no_checkable_content`; die technische englische
-      // Meldung würde hier wie ein Defekt aussehen, obwohl es die Natur des Typs ist.
+      // Meldung würde hier wie ein Defekt aussehen, obwohl es die Natur des Typs ist. Der Satz ist
+      // *hier* länger als die zentrale Fassung, weil er die Folge nennt (zuweisen ja, durchspielen nein).
+      //
+      // Der verwandte Fall „Übung noch nicht gefüllt" (`exercise_empty`) braucht keinen Zweig: er ist
+      // nicht vorschau-spezifisch und kommt deutsch aus `errorMessage` (GERMAN_PROBLEM_TEXT in lib/api).
       .catch((e) => setError(e instanceof ApiError && e.code === "no_checkable_content"
         ? "Diese Übung hat keine einzeln prüfbaren Aufgaben – ein Schreibauftrag lässt sich nicht "
           + "automatisch bewerten. Du kannst sie zuweisen, aber nicht durchspielen."

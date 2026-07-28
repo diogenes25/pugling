@@ -199,14 +199,39 @@ a { color: var(--cyan); }
    Vater-Web (Admin): heller, sachlicher – gleiche Tokens, andere Dichte.
    ========================================================================= */
 .app-vater { min-height: 100dvh; display: flex; flex-direction: column; }
-.vater-top { display: flex; align-items: center; gap: 14px; padding: 14px 22px; background: #0b0d28; border-bottom: 1.5px solid var(--stroke); }
+/* Kopfzeile: zwei Zeilen (Marke/Konto, darunter die Bereichs-Navigation). Beide in einem Flex hätten
+   den rechten Block bei jedem Nav-Umbruch mitverschoben. */
+.vater-top { display: flex; flex-direction: column; gap: 10px; padding: 12px 22px; background: #0b0d28; border-bottom: 1.5px solid var(--stroke); }
+.vater-top-row { display: flex; align-items: center; gap: 14px; }
 .vater-top .brand { font-family: var(--font-display); font-size: 18px; }
-.vater-top nav { display: flex; gap: 6px; margin-left: 12px; flex-wrap: wrap; }
-.vater-top nav a { text-decoration: none; color: var(--muted); font-weight: 700; font-size: 14px; padding: 8px 12px; border-radius: 10px; }
-.vater-top nav a.active { color: var(--ink); background: var(--card); }
+/* Perspektiven-Umschalter: die oberste Ebene der Navigation (Betreuen / Zuweisen / Erstellen). Er sieht
+   wie ein Segmented Control aus, ist aber eine Link-Reihe – jede Perspektive hat eine eigene Startseite. */
+.perspective-switch { display: flex; gap: 4px; padding: 3px; border: 1px solid var(--stroke); border-radius: 12px; align-self: flex-start; }
+.perspective-switch .perspective { text-decoration: none; color: var(--muted); font-weight: 800; font-size: 14px; padding: 7px 16px; border-radius: 9px; white-space: nowrap; }
+.perspective-switch .perspective:hover { color: var(--ink); }
+/* Die aktive Perspektive trägt Fläche statt nur Farbe: sie muss sich stärker abheben als ein aktiver
+   Bereich darunter, sonst konkurrieren zwei Ebenen um dieselbe Aufmerksamkeit. */
+.perspective-switch .perspective.active { color: #08111f; background: var(--lime); }
+/* Beide Navigationsebenen sind eigenständig gestaltete Links; der Standard-Ring des Browsers verschwindet
+   auf der dunklen Fläche zu leicht. Dieselbe Farbe wie bei Eingabefeldern – ein Fokus sieht überall gleich aus. */
+.perspective-switch .perspective:focus-visible,
+.vater-nav a:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+
+/* Der Umbruch fällt zwischen die Gruppen, weil `.nav-group` selbst nicht umbricht. */
+.vater-nav { display: flex; align-items: center; gap: 6px 10px; flex-wrap: wrap; }
+.vater-nav a { text-decoration: none; color: var(--muted); font-weight: 700; font-size: 14px; padding: 8px 12px; border-radius: 10px; }
+.vater-nav a.active { color: var(--ink); background: var(--card); }
+.nav-group { display: flex; align-items: center; gap: 2px; padding-left: 10px; border-left: 1px solid var(--stroke); }
+.nav-group-label { color: var(--muted); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; opacity: .65; padding-right: 2px; }
 .vater-top .spacer { margin-left: auto; }
 .vater-main { flex: 1; max-width: 1000px; width: 100%; margin: 0 auto; padding: 22px; display: flex; flex-direction: column; gap: 18px; }
 .vater-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
+/* Kachel der Werkstatt: die ganze Karte ist der Link, darum trägt sie den Fokusring und die Hover-Anhebung. */
+.hub-card { display: flex; flex-direction: column; gap: 6px; color: inherit; transition: border-color .15s ease, transform .15s ease; }
+.hub-card:hover { border-color: var(--cyan); transform: translateY(-2px); }
+.hub-card:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; border-color: var(--cyan); }
+.hub-card-title { font-family: var(--font-display); font-size: 16px; color: var(--ink); }
+@media (prefers-reduced-motion: reduce) { .hub-card:hover { transform: none; } }
 .h-section { font-family: var(--font-display); font-size: 20px; margin: 4px 0; }
 
 .table { width: 100%; border-collapse: collapse; font-size: 14px; }

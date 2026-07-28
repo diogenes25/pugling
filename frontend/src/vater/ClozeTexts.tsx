@@ -13,6 +13,10 @@ import type { ClozeResponse, Gap, Paged } from "../lib/types";
  * einer einzelnen Übung. Er war bisher nur über die API erreichbar – ein Vater konnte Lückentexte also
  * nicht sammeln, sondern musste den Text in jeder Übung neu tippen.
  *
+ * Er lag danach eingeklappt auf der Übungen-Seite; seit er eine eigene Route hat (`/vater/lueckentexte`,
+ * siehe docs/vater-informationsarchitektur-plan.md) ist der Einklapper entfallen – ein Store ist ein
+ * Baustein neben dem Anlegen, kein Teil davon.
+ *
  * Die Lücken sind über den Platzhalter an den Text gebunden: `{{1}}` im Text gehört zur Lücke mit
  * `index` 1. Deshalb liest diese Oberfläche die Platzhalter aus dem Text und führt die Lücken-Zeilen
  * daran nach – eine Lücke ohne Platzhalter würde beim Spielen nie erscheinen.
@@ -36,7 +40,6 @@ function gapProblem(text: string, gaps: Gap[]): string | null {
 }
 
 export function ClozeTexts() {
-  const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [applied, setApplied] = useState("");
   const [skip, setSkip] = useState(0);
@@ -44,13 +47,6 @@ export function ClozeTexts() {
     () => api.clozeTexts({ search: applied || undefined, skip, take: PAGE_SIZE }), [applied, skip]);
   const action = useAction();
   const [editing, setEditing] = useState<ClozeResponse | null>(null);
-
-  if (!open) {
-    return (
-      <button type="button" className="btn ghost inline-btn" style={{ width: "auto", alignSelf: "flex-start" }}
-        onClick={() => setOpen(true)}>📄 Lückentexte verwalten</button>
-    );
-  }
 
   async function remove(c: ClozeResponse) {
     if (!confirmAction(`Trägertext „${c.title}" löschen? Bereits angelegte Übungen behalten ihren Inhalt.`)) return;
@@ -62,11 +58,7 @@ export function ClozeTexts() {
 
   return (
     <section className="card">
-      <div className="row" style={{ alignItems: "center" }}>
-        <h3 style={{ margin: 0 }}>Lückentexte {list.data ? `(${list.data.total})` : ""}</h3>
-        <button type="button" className="btn ghost inline-btn" style={{ width: "auto", marginLeft: "auto" }}
-          onClick={() => setOpen(false)}>Schließen</button>
-      </div>
+      <h3 style={{ marginTop: 0 }}>Alle Trägertexte {list.data ? `(${list.data.total})` : ""}</h3>
       <p className="muted" style={{ fontSize: 13 }}>
         Trägertexte sind <strong>Lerngrundlage</strong>, keine Übung: einmal gepflegt, in mehreren Übungen
         nutzbar. Lücken markierst du im Text mit <code>{"{{1}}"}</code>, <code>{"{{2}}"}</code> …

@@ -67,9 +67,28 @@ export class ApiError extends Error {
 }
 
 /** Menschlich lesbare Fehlermeldung inkl. Trace-Referenz, wo vorhanden. */
+/**
+ * Deutsche Texte zu **fachlichen** Fehler-Codes.
+ *
+ * Die `detail`-Texte des Servers sind bewusst englisch (i18n-Vertrag, siehe CLAUDE.md) – im UI liest sich
+ * eine englische Zeile aber wie ein Defekt, gerade dort, wo der Nutzer selbst etwas richten kann. Der
+ * `code` ist stabiler Vertragsbestandteil, die Formulierung gehört der Oberfläche. Hier stehen nur Codes,
+ * die einen **Nutzer** treffen und ihm sagen, was zu tun ist; technische Fälle behalten ihre Rohmeldung.
+ */
+const GERMAN_PROBLEM_TEXT: Record<string, string> = {
+  exercise_empty:
+    "Diese Übung hat noch keine Inhalte. Füge erst Wörter hinzu – danach lässt sie sich durchspielen und zuweisen.",
+  no_checkable_content: "Diese Übung hat keine einzeln prüfbaren Aufgaben.",
+  no_tag_matches: "Zu diesen Tags gibt es keine Vokabeln. Die Übung wurde nicht verändert.",
+};
+
 export function errorMessage(e: unknown): string {
-  if (e instanceof ApiError)
+  if (e instanceof ApiError) {
+    // Bei einem fachlichen Code die deutsche Fassung – und **ohne** Trace-Id: die hilft beim Melden eines
+    // Defekts, nicht beim Beheben einer leeren Übung, und macht den Satz nur unverständlicher.
+    if (e.code && GERMAN_PROBLEM_TEXT[e.code]) return GERMAN_PROBLEM_TEXT[e.code];
     return e.traceId ? `${e.message} (Ref: ${e.traceId})` : e.message;
+  }
   return e instanceof Error ? e.message : String(e);
 }
 

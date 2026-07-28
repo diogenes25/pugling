@@ -82,15 +82,20 @@ test("Vater legt sich selbst an und richtet ein Englisch-Szenario von Null ein",
   await vater.getByRole("button", { name: "Speichern", exact: true }).click();
   await expect(vater.getByText("Gespeichert.", { exact: true })).toBeVisible();
 
-  // ---------- 4. Katalog: Fach, Kapitel, Vokabeln, Übung ----------
-  await vater.goto("/vater/exercises");
+  // ---------- 4. Katalog: Fach und Kapitel (geteilter Katalog, eigener Bereich) ----------
+  await vater.goto("/vater/katalog");
   await vater.getByPlaceholder("z. B. Französisch").fill(SUBJECT);
-  await vater.getByRole("button", { name: "Fach anlegen" }).click();
-  await expect(vater.locator('select[aria-label="Fach"]')).toHaveValue(/\d+/);
-
+  await vater.getByRole("button", { name: "Neues Fach anlegen" }).click();
+  // Das neue Fach wird gleich ausgewählt – sonst müsste man es zum Kapitel-Anlegen erst suchen.
+  await expect(vater.locator("#ca-subject")).toHaveValue(/\d+/);
   await vater.getByPlaceholder("z. B. Unit 1").fill(CHAPTER);
-  await vater.getByRole("button", { name: "Kapitel anlegen" }).click();
-  await expect(vater.locator('select[aria-label="Kapitel"]')).toHaveValue(/\d+/);
+  await vater.getByRole("button", { name: "Neues Kapitel anlegen" }).click();
+  await expect(vater.getByText("Kapitel angelegt.")).toBeVisible();
+
+  // ---------- 4b. Vokabeln und Übung anlegen (eigene Route) ----------
+  await vater.goto("/vater/exercises/neu");
+  await vater.locator('select[aria-label="Fach"]').selectOption({ label: SUBJECT });
+  await vater.locator('select[aria-label="Kapitel"]').selectOption({ label: CHAPTER });
 
   await vater.locator("#ex-title").fill(EXERCISE);
   // Vokabeln direkt aus dem Editor in den Store legen und übernehmen (en→de ist die Vorbelegung).
@@ -104,6 +109,10 @@ test("Vater legt sich selbst an und richtet ein Englisch-Szenario von Null ein",
   await expect(vater.getByText(`Übung „${EXERCISE}" angelegt.`)).toBeVisible();
 
   // ---------- 5. Übung korrigieren: ein viertes Wort ergänzen ----------
+  // Bearbeiten ist die Daueraufgabe und liegt in der Verwaltung; „Übungen verwalten" nimmt Fach und
+  // Kapitel als Query mit, damit die Liste ohne erneutes Auswählen das richtige Kapitel zeigt.
+  await vater.getByRole("link", { name: /Übungen verwalten/ }).first().click();
+  await expect(vater).toHaveURL(/\/vater\/exercises\?subjectId=\d+&chapterId=\d+/);
   const exerciseRow = vater.locator("div", { hasText: EXERCISE }).last();
   await exerciseRow.getByRole("button", { name: /Bearbeiten/ }).click();
   const dialog = vater.getByRole("dialog", { name: new RegExp(`Übung bearbeiten: ${EXERCISE}`) });
@@ -167,18 +176,21 @@ test("Vater legt sich selbst an und richtet ein Englisch-Szenario von Null ein",
   // ---------- 5c. Katalog korrigieren: Kapitel umbenennen ----------
   /*
    * Fächer und Kapitel sind **globaler** Katalog – ein Tippfehler stand für alle Väter da und war nur über
-   * die API zu heilen. Wichtig ist die Gegenprobe am Pulldown darüber: es muss die Umbenennung mitbekommen,
-   * sonst arbeitet der Vater weiter mit einem Namen, den es nicht mehr gibt.
+   * die API zu heilen. Der Katalog hat seit dem IA-Umbau eine eigene Route; die Gegenprobe wandert damit
+   * zurück auf die Übungen-Seite: **deren** Kapitel-Pulldown muss die Umbenennung mitbekommen, sonst
+   * arbeitet der Vater weiter mit einem Namen, den es nicht mehr gibt.
    */
-  await vater.getByRole("button", { name: /Katalog verwalten/ }).click();
+  await vater.goto("/vater/katalog");
   await vater.locator("#ca-subject").selectOption(subjectId);
   const chapterName = vater.getByLabel("Kapitel #1");
   await expect(chapterName).toHaveValue(CHAPTER);
   await chapterName.fill(`${CHAPTER} korrigiert`);
   await vater.getByRole("button", { name: `Kapitel „${CHAPTER}" speichern` }).click();
   await expect(vater.getByText("Kapitel umbenannt.")).toBeVisible();
+
+  await vater.goto("/vater/exercises");
+  await vater.locator('select[aria-label="Fach"]').selectOption(subjectId);
   await expect(vater.locator('select[aria-label="Kapitel"]')).toContainText(`${CHAPTER} korrigiert`);
-  await vater.getByRole("button", { name: "Schließen" }).click();
 
   // ---------- 5d. Kind-Hub: Betreuung und Stundenplan ----------
   await vater.goto(`/vater/kind/${childId}`);
@@ -203,8 +215,7 @@ test("Vater legt sich selbst an und richtet ein Englisch-Szenario von Null ein",
    * Oberfläche musste der Vater denselben Satz in jede Übung neu tippen. Die Lücken hängen über den
    * Platzhalter am Text, darum entsteht die Lösungszeile erst, wenn der Text steht.
    */
-  await vater.goto("/vater/exercises");
-  await vater.getByRole("button", { name: /Lückentexte verwalten/ }).click();
+  await vater.goto("/vater/lueckentexte");
   await vater.locator("#cz-key").fill(`cz-e2e-${RUN}`);
   await vater.locator("#cz-title").fill(`Begrüßungen ${RUN}`);
   await vater.locator("#cz-text").fill("Good {{1}}, how {{2}} you?");
