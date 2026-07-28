@@ -810,7 +810,12 @@ export interface SuggestedBonus {
 /** Wo eine Übung verwendet wird (nur eigene Kinder). */
 export interface PlanUsage { planId: number; planTitle: string; childId: number; childName: string; }
 export interface ClassTestUsage { id: number; title: string; childId: number; childName: string; }
-export interface ExerciseUsage { plans: PlanUsage[]; classTests: ClassTestUsage[]; }
+/**
+ * Wo eine Übung verwendet wird. `plans`/`classTests` nennen nur die **eigenen** Kinder;
+ * `otherCarersCount` ist die Zahl der Verwendungen bei fremd betreuten Kindern – ohne sie behauptete die
+ * Anzeige „nirgends", während das Löschen mit 409 scheiterte (Anmerkung 14).
+ */
+export interface ExerciseUsage { plans: PlanUsage[]; classTests: ClassTestUsage[]; otherCarersCount: number; }
 
 // ---- Testmodus („Ausprobieren"): Vater spielt eine Übung nebenwirkungsfrei durch ----
 

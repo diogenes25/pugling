@@ -281,7 +281,7 @@
     "role": "father",
     "requestBodyJson": null,
     "expectedStatus": 409,
-    "responseBodyJson": "{\r\n  \u0022type\u0022: \u0022https://pugling.app/errors/exercise_in_use\u0022,\r\n  \u0022title\u0022: \u0022Exercise is in use.\u0022,\r\n  \u0022status\u0022: 409,\r\n  \u0022detail\u0022: \u0022The exercise is used in a study plan or a class test and cannot be deleted.\u0022,\r\n  \u0022code\u0022: \u0022exercise_in_use\u0022,\r\n  \u0022traceId\u0022: \u0022\u003Ctrace-id\u003E\u0022\r\n}",
+    "responseBodyJson": "{\r\n  \u0022type\u0022: \u0022https://pugling.app/errors/exercise_in_use\u0022,\r\n  \u0022title\u0022: \u0022Exercise is in use.\u0022,\r\n  \u0022status\u0022: 409,\r\n  \u0022detail\u0022: \u0022Cannot delete: the exercise is still used \\u2013 1 study plan of yours. Remove it there first.\u0022,\r\n  \u0022code\u0022: \u0022exercise_in_use\u0022,\r\n  \u0022traceId\u0022: \u0022\u003Ctrace-id\u003E\u0022\r\n}",
     "isError": true,
     "expectedCode": "exercise_in_use"
   },

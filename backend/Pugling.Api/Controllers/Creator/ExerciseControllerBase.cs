@@ -334,17 +334,22 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db, Exerc
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
-    public async Task<IActionResult> Delete(int subjectId, int chapterId, int exerciseId)
+    public async Task<IActionResult> Delete(int subjectId, int chapterId, int exerciseId, CancellationToken ct)
     {
         var exercise = await FindAsync(subjectId, chapterId, exerciseId);
         if (exercise is null) return NotFound();
         if (EnsureCanAdminister(exercise) is { } forbidden) return forbidden;
-        // Verwendete Übungen schützen: der FK PlanPosition→Exercise ist Restrict (sonst 500 statt klarer Fehler).
-        if (await db.PlanPositions.AnyAsync(p => p.ExerciseId == exerciseId)
-            || await db.KlassenarbeitExercises.AnyAsync(x => x.ExerciseId == exerciseId))
-            return this.ProblemWithCode(ApiErrors.ExerciseInUse, "The exercise is used in a study plan or a class test and cannot be deleted.");
+        /*
+         * Verwendete Übungen schützen: der FK PlanPosition→Exercise ist Restrict (sonst 500 statt klarer
+         * Fehler). Die Zählung kommt aus derselben Quelle wie die Verwendungs-Anzeige, und die Meldung nennt
+         * die Verwendungen, die der Aufrufer **nicht sehen kann** – vorher log ein „nirgends" in der Anzeige
+         * gegen ein 409 hier, und der Autor hatte keinen Weg, den Widerspruch aufzulösen (Anmerkung 14).
+         */
+        var usage = await ExerciseUsageQueries.CountBlockingAsync(db, exerciseId, User.FatherId(), ct);
+        if (usage.Any)
+            return this.ProblemWithCode(ApiErrors.ExerciseInUse, ExerciseUsageQueries.Explain(usage));
         db.Exercises.Remove(exercise);
-        await db.SaveChangesAsync();
+        await db.SaveChangesAsync(ct);
         return NoContent();
     }
 }

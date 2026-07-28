@@ -239,6 +239,17 @@ function ExerciseManageRow({ exercise, subjectId, route, label, onChanged, onPre
         <div className="muted" style={{ marginTop: 6, fontSize: 13 }}>
           <div>Lehrpläne: {usage.plans.length === 0 ? "—" : usage.plans.map((p) => `${p.planTitle} (${p.childName})`).join(", ")}</div>
           <div>Klassenarbeiten: {usage.classTests.length === 0 ? "—" : usage.classTests.map((c) => `${c.title} (${c.childName})`).join(", ")}</div>
+          {/*
+            Die Zahl ohne Namen: fremde Kinder gehören einem anderen Betreuer und dürfen hier nicht stehen.
+            Sie muss aber sichtbar sein – sonst las diese Anzeige „nirgends", während das Löschen mit 409
+            scheiterte, und niemand konnte den Widerspruch auflösen (Anmerkung 14).
+          */}
+          {usage.otherCarersCount > 0 && (
+            <div style={{ marginTop: 2 }}>
+              Außerdem <strong>{usage.otherCarersCount}×</strong> bei Kindern, die du nicht betreust – darum
+              lässt sich diese Übung nicht löschen.
+            </div>
+          )}
         </div>
       )}
     </div>

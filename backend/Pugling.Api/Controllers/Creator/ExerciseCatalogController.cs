@@ -152,12 +152,17 @@ public class ExerciseCatalogController(PuglingDbContext db) : ControllerBase
     /// Lehrpläne über das neue Positions-Modell (<see cref="PlanPosition"/>); Klassenarbeiten direkt
     /// zugewiesen ODER über einen gemeinsamen Tag. Hinweis: das alte StudyPlanItem-Modell trägt keine
     /// Übungs-Referenz und wird daher nicht erfasst.
+    /// <para>
+    /// Dazu <see cref="UsageResponse.OtherCarersCount"/>: die <b>Zahl</b> der Verwendungen bei fremd
+    /// betreuten Kindern. Ohne sie behauptete diese Antwort „nirgends", während das Löschen mit
+    /// <c>409</c> scheiterte – dieselbe Zählung liefert jetzt beide Stellen (Anmerkung 14).
+    /// </para>
     /// </summary>
     [HttpGet("{id:int}/usage")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<UsageResponse>> Usage(int id)
+    public async Task<ActionResult<UsageResponse>> Usage(int id, CancellationToken ct)
     {
-        if (!await db.Exercises.AnyAsync(e => e.Id == id)) return NotFound();
+        if (!await db.Exercises.AnyAsync(e => e.Id == id, ct)) return NotFound();
         var fid = User.FatherId();
 
         var plans = (await db.PlanPositions.AsNoTracking()
@@ -177,6 +182,9 @@ public class ExerciseCatalogController(PuglingDbContext db) : ControllerBase
             .Select(k => new ClassTestUsage(k.Id, k.Title, k.ChildId, k.Child!.Name))
             .ToListAsync();
 
-        return new UsageResponse(plans, classTests);
+        // Dieselbe Zählung, die auch das Löschen benutzt – eine Quelle, damit die beiden Auskünfte nicht
+        // wieder auseinanderlaufen können.
+        var blocking = await ExerciseUsageQueries.CountBlockingAsync(db, id, fid, ct);
+        return new UsageResponse(plans, classTests, blocking.Hidden);
     }
 }

@@ -34,5 +34,18 @@ public record PlanUsage(int PlanId, string PlanTitle, int ChildId, string ChildN
 /// <summary>Eine Klassenarbeit, der eine Übung zugewiesen ist (direkt oder über einen Tag).</summary>
 public record ClassTestUsage(int Id, string Title, int ChildId, string ChildName);
 
-/// <summary>Wo eine Übung verwendet wird (nur Ressourcen der eigenen Kinder).</summary>
-public record UsageResponse(IReadOnlyList<PlanUsage> Plans, IReadOnlyList<ClassTestUsage> ClassTests);
+/// <summary>
+/// Wo eine Übung verwendet wird. <see cref="Plans"/> und <see cref="ClassTests"/> nennen nur Ressourcen der
+/// <b>eigenen</b> Kinder – fremde Kinder eines anderen Betreuers dürfen hier nicht auftauchen.
+/// </summary>
+/// <param name="Plans">Lehrpläne eigener Kinder, in denen die Übung als Position steckt.</param>
+/// <param name="ClassTests">Klassenarbeiten eigener Kinder (direkt zugewiesen oder über einen Tag).</param>
+/// <param name="OtherCarersCount">
+/// Anzahl der Verwendungen bei Kindern, die der Aufrufer <b>nicht betreut</b> – nur die Zahl, ohne Namen.
+/// Ohne sie melden die Listen „nirgends", während das Löschen mit <c>409 exercise_in_use</c> scheitert, und
+/// der Autor hat keinen Weg, den Widerspruch aufzulösen (Anmerkung 14). Gezählt werden dieselben
+/// FK-relevanten Verwendungen, die das Löschen blockieren – eine nur über einen Tag eingesammelte
+/// Klassenarbeit hindert es nicht und zählt darum nicht mit.
+/// </param>
+public record UsageResponse(
+    IReadOnlyList<PlanUsage> Plans, IReadOnlyList<ClassTestUsage> ClassTests, int OtherCarersCount);
