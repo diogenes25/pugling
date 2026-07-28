@@ -684,6 +684,23 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
             $"/api/v1/student/study-plans/{planId}/positions/{readingPosId}/tests", new { },
             HttpStatusCode.BadRequest, ApiErrors.NoCheckableContent.Code);
 
+        // Eine noch nicht gefüllte Vokabelübung zuweisen → exercise_empty. Der Unterschied zum Fall darüber
+        // ist der Punkt: dort ist „nichts zu prüfen" eine Eigenschaft des Typs, hier ein unfertiger Stand.
+        var emptyVocab = await father.PostAsJsonAsync(
+            $"/api/v1/creator/subjects/{docSubjectId}/chapters/{docChapterId}/vocabulary",
+            new { title = "Vokabeln (noch leer)", orderIndex = 3, rewardPoints = 5, config = new { direction = "front-to-back" } });
+        emptyVocab.EnsureSuccessStatusCode();
+        var emptyVocabId = (await emptyVocab.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetInt32();
+        await Capture(father, g, "Ungefüllte Übung zuweisen", HttpMethod.Post,
+            $"/api/v1/supervisor/study-plans/{planId}/positions", new { exerciseId = emptyVocabId, cadence = "Daily" },
+            HttpStatusCode.BadRequest, ApiErrors.ExerciseEmpty.Code);
+
+        // Tag-Schnappschuss ohne Treffer → no_tag_matches (die Übung bleibt unverändert). Eigener Code, damit
+        // ein Aufrufer das von „gar keinen Tag geschickt" (validation_error) unterscheiden kann.
+        await Capture(father, g, "Tag-Schnappschuss ohne Treffer", HttpMethod.Post,
+            $"/api/v1/creator/subjects/{docSubjectId}/chapters/{docChapterId}/vocabulary/{emptyVocabId}/refs-from-tags",
+            new { tags = new[] { "gibt-es-nicht" } }, HttpStatusCode.BadRequest, ApiErrors.NoTagMatches.Code);
+
         // Bespielte Position löschen → position_has_data.
         await Capture(father, g, "Bespielte Position löschen", HttpMethod.Delete,
             $"/api/v1/supervisor/study-plans/{planId}/positions/{positionId}", null,

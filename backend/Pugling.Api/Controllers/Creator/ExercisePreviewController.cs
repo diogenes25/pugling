@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Pugling.Api.Auth;
 using Pugling.Api.Data;
 using Pugling.Api.Errors;
+using Pugling.Api.Models;
 using Pugling.Api.Services;
 
 namespace Pugling.Api.Controllers.Creator;
@@ -24,22 +25,37 @@ namespace Pugling.Api.Controllers.Creator;
 [Tags("Creator – Exercise Preview")]
 [Produces("application/json")]
 [Authorize(Roles = Roles.Creator)]
-public class ExercisePreviewController(PuglingDbContext db, ExercisePreviewService preview) : ControllerBase
+public class ExercisePreviewController(PuglingDbContext db, ExercisePreviewService preview, ExerciseTypeRegistry types) : ControllerBase
 {
+    /// <summary>
+    /// Warum es nichts zu spielen gibt – und das ist der Unterschied, der dem Autor die Arbeit spart:
+    /// Bei einem Aufsatz ist „keine prüfbaren Aufgaben" die <b>Eigenschaft des Typs</b>, bei einer
+    /// Vokabelübung ohne Items ein <b>unfertiger Datenstand</b>. Vorher trugen beide Fälle dieselbe Meldung,
+    /// und ein leeres „Ausprobieren" sah aus wie ein Fehler der App statt wie eine Übung ohne Wörter.
+    /// </summary>
+    private async Task<ObjectResult> NoContentProblemAsync(Exercise exercise, CancellationToken ct)
+    {
+        var unfilled = types.ByKey(exercise.Type)?.StoreResolution == StoreResolution.ItemTable
+            && !await db.ExerciseItems.AnyAsync(i => i.ExerciseId == exercise.Id, ct);
+        return unfilled
+            ? this.ProblemWithCode(ApiErrors.ExerciseEmpty, "This exercise has no items yet. Add its content first.")
+            : this.ProblemWithCode(ApiErrors.NoCheckableContent, "The exercise contains no checkable content.");
+    }
+
     /// <summary>
     /// Liefert die spielbaren Aufgaben der Übung (ohne Lösung, wenn getippt wird), damit der Vater sie durchspielen kann.
     /// </summary>
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<PreviewData>> Get(int id, [FromQuery] int? stage = null)
+    public async Task<ActionResult<PreviewData>> Get(int id, CancellationToken ct, [FromQuery] int? stage = null)
     {
-        var exercise = await db.Exercises.AsNoTracking().FirstOrDefaultAsync(e => e.Id == id);
+        var exercise = await db.Exercises.AsNoTracking().FirstOrDefaultAsync(e => e.Id == id, ct);
         if (exercise is null) return NotFound();
 
         // Optionaler stage-Parameter: der Vater probiert eine bestimmte Abfrageform durch (sonst Übungs-Standard).
         var data = await preview.BuildAsync(exercise, stage);
-        if (data is null) return this.ProblemWithCode(ApiErrors.NoCheckableContent, "The exercise contains no checkable content.");
+        if (data is null) return await NoContentProblemAsync(exercise, ct);
         return data;
     }
 
@@ -50,13 +66,13 @@ public class ExercisePreviewController(PuglingDbContext db, ExercisePreviewServi
     [HttpPost("check")]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<PreviewResult>> Check(int id, PreviewCheckDto dto)
+    public async Task<ActionResult<PreviewResult>> Check(int id, PreviewCheckDto dto, CancellationToken ct)
     {
-        var exercise = await db.Exercises.AsNoTracking().FirstOrDefaultAsync(e => e.Id == id);
+        var exercise = await db.Exercises.AsNoTracking().FirstOrDefaultAsync(e => e.Id == id, ct);
         if (exercise is null) return NotFound();
 
         var result = await preview.CheckAsync(exercise, dto.Answers ?? [], dto.Stage);
-        if (result is null) return this.ProblemWithCode(ApiErrors.NoCheckableContent, "The exercise contains no checkable content.");
+        if (result is null) return await NoContentProblemAsync(exercise, ct);
         return result;
     }
 }

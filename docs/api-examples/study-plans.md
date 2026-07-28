@@ -555,6 +555,57 @@ Response — `HTTP 400`:
 }
 ```
 
+### Ungefüllte Übung zuweisen — Fehlerfall
+`POST /api/v1/supervisor/study-plans/4/positions`
+
+Rolle: **father** — `Authorization: Bearer <father-token>`
+
+Request:
+```json
+{
+  "exerciseId": 27,
+  "cadence": "Daily"
+}
+```
+
+Response — `HTTP 400`:
+```json
+{
+  "type": "https://pugling.app/errors/exercise_empty",
+  "title": "Exercise has no content yet.",
+  "status": 400,
+  "detail": "This exercise has no items yet. Add its content before assigning it to a study plan.",
+  "code": "exercise_empty",
+  "traceId": "<trace-id>"
+}
+```
+
+### Tag-Schnappschuss ohne Treffer — Fehlerfall
+`POST /api/v1/creator/subjects/5/chapters/7/vocabulary/27/refs-from-tags`
+
+Rolle: **father** — `Authorization: Bearer <father-token>`
+
+Request:
+```json
+{
+  "tags": [
+    "gibt-es-nicht"
+  ]
+}
+```
+
+Response — `HTTP 400`:
+```json
+{
+  "type": "https://pugling.app/errors/no_tag_matches",
+  "title": "No vocabulary matched these tags.",
+  "status": 400,
+  "detail": "No vocabulary matched these tags; the exercise was left unchanged.",
+  "code": "no_tag_matches",
+  "traceId": "<trace-id>"
+}
+```
+
 ### Bespielte Position löschen — Fehlerfall
 `DELETE /api/v1/supervisor/study-plans/4/positions/18`
 

@@ -22,8 +22,21 @@ namespace Pugling.Api.Controllers.Supervisor;
 [Produces("application/json")]
 [Authorize(Roles = Roles.Supervisor)]
 [ServiceFilter(typeof(PlanOwnershipFilter))]
-public class PlanPositionsController(PuglingDbContext db, ExercisePermissionService perms) : ControllerBase
+public class PlanPositionsController(PuglingDbContext db, ExercisePermissionService perms, ExerciseTypeRegistry types) : ControllerBase
 {
+    /// <summary>
+    /// Ist die Übung <b>noch nicht gefüllt</b>? Gilt nur für Typen, die ihre Inhalte als Item-Tabelle tragen
+    /// (<see cref="StoreResolution.ItemTable"/>, heute Vokabeln): dort ist „kein Item" ein unfertiger
+    /// Datenstand. Bei allen anderen Typen wäre die Frage falsch gestellt – ein Aufsatz hat *nie* Items,
+    /// ein Rechen-Drill erzeugt seine Aufgaben aus Regeln. Darum wird hier nicht auf „prüfbare Inhalte"
+    /// geprüft (das dürfen 0 sein), sondern auf die eine Form von Leere, die niemand gewollt hat.
+    /// </summary>
+    // Kein Vorgabewert für `ct`: er ließe die Aufrufstelle korrekt aussehen, während der Abbruch des
+    // Clients verpufft.
+    private async Task<bool> IsUnfilledAsync(Exercise exercise, CancellationToken ct) =>
+        types.ByKey(exercise.Type)?.StoreResolution == StoreResolution.ItemTable
+        && !await db.ExerciseItems.AnyAsync(i => i.ExerciseId == exercise.Id, ct);
+
     private static PositionResponse Map(PlanPosition p) =>
         new(p.Id, p.StudyPlanId, p.ExerciseId, p.Exercise?.Title ?? "", p.Exercise?.Type.ToString() ?? "",
             p.Order, p.Stage, p.ItemCount, p.Scope, p.Cadence, p.OrderStrategy, p.GoalThreshold, p.RequireTypedTest,
@@ -69,16 +82,23 @@ public class PlanPositionsController(PuglingDbContext db, ExercisePermissionServ
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<PositionResponse>> Create(int planId, CreatePositionDto dto)
+    public async Task<ActionResult<PositionResponse>> Create(int planId, CreatePositionDto dto, CancellationToken ct)
     {
         if (ThresholdProblem(dto.GoalThreshold) is { } problem)
             return this.ProblemWithCode(ApiErrors.ValidationError, problem);
 
-        var exercise = await db.Exercises.FirstOrDefaultAsync(e => e.Id == dto.ExerciseId);
+        var exercise = await db.Exercises.FirstOrDefaultAsync(e => e.Id == dto.ExerciseId, ct);
         if (exercise is null) return this.ProblemWithCode(ApiErrors.InvalidReference, $"Exercise {dto.ExerciseId} not found.");
         // Execute-Gate: nicht öffentlich ausführbare Übungen darf nur zuweisen, wer ein Owner-/Write-/Execute-Recht hält.
         if (!await perms.CanExecuteAsync(User, exercise))
             return this.ProblemWithCode(ApiErrors.ExerciseNotExecutable, "This exercise is not publicly assignable; you need execute permission from its owner.");
+        // Eine ungefüllte Übung ist hier zu stoppen und nicht beim Anlegen: „erst anlegen, dann füllen" ist
+        // ein gewollter Weg (POST mit leeren refs, danach /items oder /refs-from-tags). Erst das Zuweisen
+        // macht die Lücke zum Problem – das Kind bekäme eine Pflicht, die es nicht spielen kann, und erfuhr
+        // es bisher erst im Test als „no_checkable_content".
+        if (await IsUnfilledAsync(exercise, ct))
+            return this.ProblemWithCode(ApiErrors.ExerciseEmpty,
+                "This exercise has no items yet. Add its content before assigning it to a study plan.");
 
         var order = dto.Order ?? ((await db.PlanPositions.Where(p => p.StudyPlanId == planId)
             .MaxAsync(p => (int?)p.Order)) ?? -1) + 1;
