@@ -37,8 +37,47 @@ test("Lehrer registriert sich, landet in der Werkstatt und sieht keine Betreuung
     await expect(areaNav.getByRole("link", { name: new RegExp(area) })).toHaveCount(0);
   }
 
-  // Auch der Profil-Link fehlt: er zeigte auf einen Supervisor-Endpunkt und hätte 403 geliefert.
-  await expect(page.getByRole("link", { name: /Papa|👤/ })).toHaveCount(0);
+  // Das eigene Konto ist erreichbar: die Selbstverwaltung liegt bei `auth/me`, außerhalb der
+  // Supervisor-Rolle. Vorher war der Link ausgeblendet, weil er auf einen 403 geführt hätte.
+  await page.getByRole("link", { name: new RegExp(TEACHER.name) }).click();
+  await expect(page).toHaveURL(/\/vater\/profil$/);
+  await expect(page.getByText("Lehrer-Id")).toBeVisible();
+  await expect(page.getByText("Betreute Kinder")).toHaveCount(0);
+});
+
+test("Lehrer ändert Name und PIN selbst und meldet sich damit an", async ({ page }) => {
+  const pin = "5151";
+  const created = await page.request.post("/api/v1/creator/teacher-accounts",
+    { data: { name: `Umbenennen ${RUN}`, email: null, pin } });
+  expect(created.ok(), await created.text()).toBeTruthy();
+  const creatorId = (await created.json()).creatorId as number;
+
+  await page.goto("/vater");
+  await page.locator("#fid").fill(String(creatorId));
+  await page.locator("#pin").fill(pin);
+  await page.getByRole("button", { name: "Anmelden" }).click();
+  await expect(page).toHaveURL(/\/vater\/inhalte$/);
+
+  await page.goto("/vater/profil");
+  await page.locator("#prof-name").fill(`Neuer Name ${RUN}`);
+  await page.locator("#prof-pin").fill("6161");
+  await page.locator("#prof-pin2").fill("6161");
+  await page.getByRole("button", { name: "Speichern" }).click();
+  await expect(page.getByText(/Die neue PIN gilt ab der nächsten Anmeldung/)).toBeVisible();
+
+  // Die Gegenprobe, auf die es ankommt: die neue PIN trägt den nächsten Login – der Hash wurde aufs
+  // Konto gespiegelt, sonst liefe der konto-zentrische Login aus dem Takt.
+  await page.getByRole("button", { name: "Abmelden" }).first().click();
+  await page.locator("#fid").fill(String(creatorId));
+  await page.locator("#pin").fill("6161");
+  await page.getByRole("button", { name: "Anmelden" }).click();
+  /*
+   * Angemeldet bleibt er, wo er war: der Sprung in die Werkstatt gilt nur für `/vater` – auf einer
+   * perspektivlosen Seite wie dem Konto wäre er eine Entführung. Geprüft wird darum die Anmeldung selbst
+   * (der Kopf trägt den neuen Namen) und nicht die Adresse.
+   */
+  await expect(page.getByRole("link", { name: new RegExp(`Neuer Name ${RUN}`) })).toBeVisible();
+  await expect(page.locator("#fid")).toHaveCount(0);
 });
 
 test("Betreuungs-Seiten sind für den Lehrer nicht erreichbar – auch nicht per Adresse", async ({ page }) => {

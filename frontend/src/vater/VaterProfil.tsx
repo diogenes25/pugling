@@ -4,56 +4,103 @@ import { api } from "../lib/api";
 import { useAction } from "../lib/useAction";
 import { useAsync } from "../lib/useAsync";
 import { useAuth } from "../lib/auth";
-import type { FatherResponse, UpdateFatherDto } from "../lib/types";
+import type { FatherResponse, TeacherAccount, UpdateMyAccountDto } from "../lib/types";
 
 /**
- * Das eigene Konto. Zwei Dinge stehen hier, die sonst nirgends erreichbar wären:
+ * Das eigene Konto – für **beide** Erwachsenen-Arten. Zwei Dinge stehen hier, die sonst nirgends
+ * erreichbar wären:
  *
- * 1. **Die Vater-Id.** Sie ist der Login-Name; wer sie vergisst, kommt nicht mehr herein.
+ * 1. **Die eigene Id.** Sie ist der Login-Name; wer sie vergisst, kommt nicht mehr herein.
  * 2. **Die PIN.** Sie lässt sich nur vom angemeldeten Konto aus ändern – es gibt bewusst keinen
  *    Zurücksetzen-Weg über E-Mail, weil die App keine Mails verschickt.
+ *
+ * Geschrieben wird über `PATCH auth/me` (Selbstverwaltung), nicht über den Vater-Endpunkt: der ist
+ * Supervisor-gegated und für ein **Lehrer-Konto** verschlossen. Zusätzlich hält der eine Weg Konto- und
+ * fachlichen Namen zusammen – der Vater-PATCH spiegelte nur die PIN, sodass die beiden Namen driften konnten.
  */
 export function VaterProfil() {
   const { session, signOut } = useAuth();
-  const fatherId = session!.id;
-  const me = useAsync<FatherResponse>(() => api.father(fatherId), [fatherId]);
+  const isTeacher = session!.role === "Creator";
+
+  // Zwei Quellen, weil zwei Rollen: der Vater-Endpunkt kennt betreute Kinder und das Anlege-Datum, das
+  // Lehrer-Konto seine Rollen. Für einen Lehrer wäre der Vater-Endpunkt ein 403.
+  const father = useAsync<FatherResponse | null>(
+    () => (isTeacher ? Promise.resolve(null) : api.father(session!.id)), [session!.id, isTeacher]);
+  const teacher = useAsync<TeacherAccount | null>(
+    () => (isTeacher ? api.teacherAccount(session!.id) : Promise.resolve(null)), [session!.id, isTeacher]);
+
+  const loading = isTeacher ? teacher.loading : father.loading;
+  const error = isTeacher ? teacher.error : father.error;
+  /*
+   * Ob überhaupt schon Daten da sind – und nur dann darf der Platzhalter greifen. `onSaved` frischt den
+   * Datensatz auf, und ein „Lade…" an dieser Stelle hängt das Formular aus: es verliert die Bestätigung,
+   * die der Nutzer gerade lesen soll, und die eingegebenen Werte. Dieselbe Falle wie in VaterKatalog und
+   * VaterExercises (siehe frontend/CLAUDE.md) – `useAsync` behält `data` über ein `reload`.
+   */
+  const hasData = (isTeacher ? teacher.data : father.data) !== null;
+  const name = (isTeacher ? teacher.data?.name : father.data?.name) ?? "";
+  const email = (isTeacher ? teacher.data?.email : father.data?.email) ?? null;
+  const reload = () => { if (isTeacher) teacher.reload(); else father.reload(); };
 
   return (
     <>
       <h2 className="h-section">Mein Konto</h2>
+      <p className="sub">
+        {isTeacher
+          ? "Ein Lehrer-Konto: du erstellst Inhalte. Kinder betreuen und Lehrpläne zuweisen tun die Eltern."
+          : "Ein Vater-Konto: du betreust deine Kinder und erstellst Inhalte."}
+      </p>
 
-      {me.loading ? <div className="loading">Lade…</div>
-        : me.error ? <div className="banner err">{me.error}</div>
-        : me.data && (
+      {loading && !hasData ? <div className="loading">Lade…</div>
+        : error ? <div className="banner err">{error}</div>
+        : (
           <>
             <section className="vater-grid">
               <div className="card">
-                <div className="muted">Vater-Id <span className="muted">(dein Login-Name)</span></div>
-                <div className="h-section">#{me.data.id}</div>
+                <div className="muted">{isTeacher ? "Lehrer-Id" : "Vater-Id"} <span className="muted">(dein Login-Name)</span></div>
+                <div className="h-section">#{session!.id}</div>
               </div>
-              <div className="card"><div className="muted">Betreute Kinder</div><div className="h-section">{me.data.childrenCount}</div></div>
-              <div className="card">
-                <div className="muted">Konto seit</div>
-                <div className="h-section" style={{ fontSize: 20 }}>{new Date(me.data.createdAt).toLocaleDateString()}</div>
-              </div>
+              {isTeacher
+                ? (
+                  <div className="card">
+                    <div className="muted">Rollen</div>
+                    <div className="h-section" style={{ fontSize: 20 }}>{teacher.data?.roles.join(", ")}</div>
+                  </div>
+                )
+                : (
+                  <>
+                    <div className="card"><div className="muted">Betreute Kinder</div>
+                      <div className="h-section">{father.data?.childrenCount}</div></div>
+                    <div className="card">
+                      <div className="muted">Konto seit</div>
+                      <div className="h-section" style={{ fontSize: 20 }}>
+                        {father.data && new Date(father.data.createdAt).toLocaleDateString()}
+                      </div>
+                    </div>
+                  </>
+                )}
             </section>
 
-            <ProfileForm father={me.data} onSaved={me.reload} />
+            <ProfileForm name={name} email={email} onSaved={reload} />
           </>
         )}
 
       <section>
         <h3 className="h-section">Abmelden</h3>
-        <p className="muted">Beendet die Sitzung auf diesem Gerät. Dein Kind bleibt in seiner App angemeldet.</p>
+        <p className="muted">
+          Beendet die Sitzung auf diesem Gerät.{isTeacher ? "" : " Dein Kind bleibt in seiner App angemeldet."}
+        </p>
         <button type="button" className="btn ghost" style={{ width: "auto" }} onClick={signOut}>Abmelden</button>
       </section>
     </>
   );
 }
 
-function ProfileForm({ father, onSaved }: { father: FatherResponse; onSaved: () => void }) {
-  const [name, setName] = useState(father.name);
-  const [email, setEmail] = useState(father.email ?? "");
+function ProfileForm({ name: initialName, email: initialEmail, onSaved }: {
+  name: string; email: string | null; onSaved: () => void;
+}) {
+  const [name, setName] = useState(initialName);
+  const [email, setEmail] = useState(initialEmail ?? "");
   const [pin, setPin] = useState("");
   const [pin2, setPin2] = useState("");
   const action = useAction();
@@ -64,13 +111,17 @@ function ProfileForm({ father, onSaved }: { father: FatherResponse; onSaved: () 
     if (pin !== pin2) { action.fail("Die beiden PINs stimmen nicht überein."); return; }
 
     // Nur Geändertes schicken – ein leeres PIN-Feld heißt „PIN unverändert", nicht „PIN löschen".
-    const dto: UpdateFatherDto = {};
-    if (name.trim() !== father.name) dto.name = name.trim();
-    if (email.trim() !== (father.email ?? "")) dto.email = email.trim() || null;
+    const dto: UpdateMyAccountDto = {};
+    if (name.trim() !== initialName) dto.name = name.trim();
+    if (email.trim() !== (initialEmail ?? "")) {
+      // Geleertes Feld heißt hier tatsächlich „löschen" – dafür braucht die API den ausdrücklichen Schalter,
+      // weil `null` dort „nicht angegeben" bedeutet.
+      if (email.trim()) dto.email = email.trim(); else dto.clearEmail = true;
+    }
     if (pin.trim()) dto.pin = pin;
     if (Object.keys(dto).length === 0) { action.succeed("Nichts zu speichern."); return; }
 
-    const ok = await action.run(() => api.updateFather(father.id, dto),
+    const ok = await action.run(() => api.updateMyAccount(dto),
       dto.pin ? "Gespeichert. Die neue PIN gilt ab der nächsten Anmeldung." : "Gespeichert.");
     if (!ok) return;
     setPin(""); setPin2("");

@@ -101,14 +101,11 @@ export function VaterApp() {
           <span className="brand">{adultRole === "Creator" ? "🎓 Pugling · Lehrer" : "🛠️ Pugling · Vater"}</span>
           <span className="spacer" />
           {/* Die Id ist der Login-Name – sie steht hier, damit sie nicht verloren geht. */}
-          {/*
-            Der Profil-Link nur für den Vater: `FathersController` ist Supervisor-gegated, ein Lehrer bekäme
-            dort 403. Lieber den Namen ohne Link zeigen als eine Tür, die sich nicht öffnet – die
-            Selbstverwaltung des Lehrer-Kontos ist noch offen (siehe docs/lehrer-konto-plan.md).
-          */}
-          {adultRole === "Supervisor"
-            ? <NavLink to="/vater/profil" className="muted" style={{ fontSize: 14 }}>👤 {session.name} (#{session.id})</NavLink>
-            : <span className="muted" style={{ fontSize: 14 }}>🎓 {session.name} (#{session.id})</span>}
+          {/* Für beide Konto-Arten: die Selbstverwaltung liegt bei `PATCH auth/me` und damit außerhalb der
+              Supervisor-Rolle – ein Lehrer kann seinen Namen und seine PIN jetzt selbst ändern. */}
+          <NavLink to="/vater/profil" className="muted" style={{ fontSize: 14 }}>
+            {adultRole === "Creator" ? "🎓" : "👤"} {session.name} (#{session.id})
+          </NavLink>
           <button type="button" className="btn ghost inline-btn" onClick={signOut} style={{ width: "auto" }}>Abmelden</button>
         </div>
         {/*

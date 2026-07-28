@@ -919,6 +919,20 @@ export interface TeacherAccount {
   creatorId: number; accountId: number; name: string; email: string | null; roles: string[];
 }
 
+/** Die eigene Identität (`GET auth/me`) – Konto, alle Rollen, fachliche Ids. */
+export interface MeResponse {
+  accountId: number | null; role: Role; roles: string[];
+  fatherId: number | null; childId: number | null; name: string | null;
+}
+
+/**
+ * Selbstverwaltung des eigenen Kontos. `null`/weggelassen heißt „unverändert"; die E-Mail ist das einzige
+ * löschbare Feld und braucht dafür `clearEmail` – ein leeres Textfeld allein löscht nichts.
+ */
+export interface UpdateMyAccountDto {
+  name?: string; email?: string | null; clearEmail?: boolean; pin?: string;
+}
+
 /** Der Freigabe-Stand einer Übung nach dem Umschalten (Antwort von `setExerciseSharing`). */
 export interface ExerciseSharing { id: number; executePublic: boolean; grantCount: number; }
 

@@ -6,7 +6,7 @@ import type {
   ExerciseGrant, GrantPermission,
   CreateFatherDto, FatherResponse, UpdateFatherDto,
   ExerciseDetail, ExercisePreviewAnswer, ExercisePreviewData, ExercisePreviewResult, ExerciseTypeManifest,
-  ExerciseSearchParams, ExerciseSharing, ExerciseSummary, TeacherAccount, ExerciseUsage, KlassenarbeitDetail, KlassenarbeitPractice, KlassenarbeitRepeat,
+  ExerciseSearchParams, ExerciseSharing, ExerciseSummary, MeResponse, TeacherAccount, UpdateMyAccountDto, ExerciseUsage, KlassenarbeitDetail, KlassenarbeitPractice, KlassenarbeitRepeat,
   KlassenarbeitResponse, KlassenarbeitStatus, LoginResponse, MissionDef, MissionStatus, PlanResponse,
   ChildrenDashboard, CreatePositionDto, PositionResponse, PositionReport, UpdatePositionDto, OverviewResponse, PositionSession, PracticeCard,
   ProgressResponse, ReviewInput, ReviewOutcome,
@@ -233,6 +233,18 @@ export const api = {
    */
   registerTeacher: (dto: { name: string; email: string | null; pin: string }) =>
     http<TeacherAccount>(`${V1}/creator/teacher-accounts`, "POST", dto),
+  /** Das eigene Lehrer-Konto (nur der Inhaber). */
+  teacherAccount: (creatorId: number) =>
+    http<TeacherAccount>(`${V1}/creator/teacher-accounts/${creatorId}`),
+  /** Die eigene Identität aus dem Token. */
+  me: () => http<MeResponse>(`${V1}/auth/me`),
+  /**
+   * Selbstverwaltung des eigenen Kontos: Name, E-Mail, PIN. Liegt bei `auth/…`, weil das Konto zu keiner
+   * Ebene gehört – **derselbe Mensch** bedient es aus jeder Rolle. Der einzige Weg für ein Lehrer-Konto,
+   * dem die Vater-Endpunkte verschlossen sind; hält Konto- und fachlichen Namen zusammen.
+   */
+  updateMyAccount: (dto: UpdateMyAccountDto) =>
+    http<MeResponse>(`${V1}/auth/me`, "PATCH", dto),
   father: (fatherId: number) => http<FatherResponse>(`${V1}/supervisor/fathers/${fatherId}`),
   updateFather: (fatherId: number, dto: UpdateFatherDto) =>
     http<FatherResponse>(`${V1}/supervisor/fathers/${fatherId}`, "PATCH", dto),

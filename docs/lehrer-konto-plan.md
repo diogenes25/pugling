@@ -5,7 +5,8 @@ aliases: [Lehrer-Konto, Creator-only, Teacher-Account, Rollentrennung]
 
 # Das Lehrer-Konto: ein Erwachsener ohne Betreuungsauftrag
 
-Status: **Umgesetzt** (2026-07-29). 0 Build-Warnungen, 483 Backend-Tests, 21 Vitest, 24 Playwright grün.
+Status: **Umgesetzt** (2026-07-29), inklusive Selbstverwaltung. 0 Build-Warnungen, 491 Backend-Tests,
+21 Vitest, 25 Playwright grün.
 
 ## Warum keine `Teacher`-Entität
 
@@ -83,11 +84,28 @@ Lesezeichen und E2E – dieselbe Abwägung wie beim Perspektiven-Umbau.
 - **Der Profil-Link führte ins Leere.** `FathersController` ist Supervisor-gegated; ein Lehrer bekäme dort
   403. Er sieht seinen Namen jetzt ohne Link.
 
+## Selbstverwaltung: `PATCH auth/me`
+
+Nachgereicht, weil ein Konto, das seine PIN nicht ändern kann, kein Konto ist. Der Weg liegt bei `auth/…`
+und nicht in einer Ebene, weil er zu keiner gehört – **derselbe Mensch** bedient ihn aus jeder Rolle (die
+dokumentierte Ausnahme in CLAUDE.md). Damit gilt er für **beide** Erwachsenen-Arten, nicht nur als
+Lückenfüller für den Lehrer.
+
+Drei Entscheidungen, die darin stecken:
+
+- **Zwei Stellen schreiben.** Das `Account` trägt den Login, die `Father`-Zeile den fachlichen Namen (er
+  erscheint als Autor an den Übungen). Der PIN-Hash *musste* schon immer gespiegelt werden, sonst läuft
+  `auth/login` aus dem Takt; Name und E-Mail werden hier **mit** gespiegelt. `FathersController` tat das
+  bisher nicht – Konto- und Vater-Name konnten auseinanderdriften.
+- **Kein Kind.** Ein Kind ändert Name und PIN nicht selbst: die PIN ist der Zugang, den der Vater vergibt.
+  Sonst hätte sich das Kind der Aufsicht entzogen, und zwar über einen Endpunkt, der „mein Konto" heißt.
+- **E-Mail nur mit Schalter löschbar** (`ClearEmail`), Eindeutigkeit gegen andere Konten → `409 conflict`.
+
+Die Oberfläche: `/vater/profil` bedient jetzt beide Arten – der Lehrer sieht „Lehrer-Id" und seine Rollen
+statt „Betreute Kinder"/„Konto seit", und der Profil-Link im Kopf ist für ihn zurück.
+
 ## Offen
 
-- **Selbstverwaltung des Lehrer-Kontos** (Name, E-Mail, PIN ändern). Sie liegt hinter
-  `api/v1/supervisor/fathers/{id}` und damit hinter der Supervisor-Rolle. Sauber wäre ein konto-zentrischer
-  Selbstbedienungs-Endpunkt für beide Konto-Arten – eigene, kleine Aufgabe.
 - **`Father` als Tabellenname** für „Erwachsener" (siehe oben).
 - **Hausaufgaben** – dafür bleibt der ältere Entwurf gültig, inklusive `Teacher`-Entität, Klassen,
   Beitrittscode und Ownership-Umkehr.

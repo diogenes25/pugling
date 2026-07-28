@@ -108,18 +108,89 @@ public class AuthController(PuglingDbContext db, TokenService tokens, AccountSer
     [HttpGet("me")]
     [Authorize]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public ActionResult<object> Me() => new
-    {
-        AccountId = int.TryParse(User.FindFirstValue("aid"), out var aid) ? aid : (int?)null,
+    public ActionResult<MeResponse> Me() => new MeResponse(
+        AccountId: int.TryParse(User.FindFirstValue("aid"), out var aid) ? aid : null,
         // Primäre Ebene fürs UI-Routing – dieselbe Rangfolge wie beim Login (Supervisor → Creator → Student).
         // Vorher stand hier „jeder Erwachsene (auch reiner Creator) → Supervisor": ein Lehrer, der die Seite
         // neu lädt, hätte damit trotz Creator-Token die Vater-Oberfläche bekommen.
-        Role = User.IsSupervisor() ? Roles.Supervisor
+        Role: User.IsSupervisor() ? Roles.Supervisor
             : User.IsCreator() ? Roles.Creator
             : User.IsStudent() ? Roles.Student : "?",
-        Roles = User.FindAll(System.Security.Claims.ClaimTypes.Role).Select(c => c.Value).ToArray(),
-        FatherId = User.FatherId(),
-        ChildId = User.ChildId(),
-        Name = User.Identity?.Name,
-    };
+        Roles: User.FindAll(ClaimTypes.Role).Select(c => c.Value).ToList(),
+        FatherId: User.FatherId(),
+        ChildId: User.ChildId(),
+        Name: User.Identity?.Name);
+
+    /// <summary>
+    /// Selbstverwaltung des eigenen Kontos: Anzeigename, E-Mail und PIN.
+    ///
+    /// <para>
+    /// Liegt bei <c>auth/…</c> und nicht in einer Ebene, weil es zu keiner gehört – <b>derselbe Mensch</b>
+    /// bedient es aus jeder Rolle (die dokumentierte Ausnahme in CLAUDE.md). Vorher ging das nur über
+    /// <c>supervisor/fathers/{id}</c>, und damit gar nicht für ein <b>Lehrer-Konto</b>: dem fehlt die
+    /// Supervisor-Rolle, es konnte seine eigene PIN nicht ändern.
+    /// </para>
+    /// <para>
+    /// Geschrieben wird an <b>zwei</b> Stellen, weil die Identität an zwei hängt: das <see cref="Account"/>
+    /// trägt den Login, die <see cref="Father"/>-Zeile den fachlichen Namen (er erscheint als Autor an den
+    /// Übungen). Der PIN-Hash muss ohnehin gespiegelt werden, sonst läuft der konto-zentrische Login aus dem
+    /// Takt; Name und E-Mail werden hier <i>mit</i> gespiegelt – <c>FathersController</c> tat das bisher nicht,
+    /// weshalb Konto- und Vater-Name auseinanderdriften konnten.
+    /// </para>
+    /// <para>
+    /// <b>Nur Erwachsene.</b> Ein Kind ändert seinen Namen und seine PIN nicht selbst: die PIN ist der
+    /// Zugang, den der Vater vergibt, und ein Kind, das sie umstellt, hätte sich der Aufsicht entzogen.
+    /// </para>
+    /// </summary>
+    [HttpPatch("me")]
+    [Authorize]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<ActionResult<MeResponse>> UpdateMe(UpdateMyAccountDto dto, CancellationToken ct)
+    {
+        if (User.FatherId() is not int fid)
+            return this.ProblemWithCode(ApiErrors.Forbidden,
+                "Only a grown-up account can manage itself; a child's name and PIN are set by its supervisor.");
+        if (!int.TryParse(User.FindFirstValue("aid"), out var accountId))
+            return this.ProblemWithCode(ApiErrors.Unauthorized, "The token carries no account.");
+
+        var account = await db.Accounts.Include(a => a.Profiles).FirstOrDefaultAsync(a => a.Id == accountId, ct);
+        var father = await db.Fathers.FirstOrDefaultAsync(f => f.Id == fid, ct);
+        if (account is null || father is null) return NotFound();
+
+        if (dto.Name is not null)
+        {
+            var name = dto.Name.Trim();
+            if (name.Length == 0) return this.ProblemWithCode(ApiErrors.ValidationError, "Name must not be empty.");
+            father.Name = name;
+            account.DisplayName = name;
+        }
+
+        // Erst der Wert, dann der Schalter – so gewinnt „leeren", wenn ein Formular beides schickt.
+        if (dto.Email is not null)
+        {
+            var email = dto.Email.Trim();
+            if (email.Length > 0 && await db.Accounts.AnyAsync(a => a.Id != accountId && a.Email == email, ct))
+                return this.ProblemWithCode(ApiErrors.Conflict, "This e-mail is already used by another account.");
+            father.Email = email.Length == 0 ? null : email;
+            account.Email = father.Email;
+        }
+        if (dto.ClearEmail) { father.Email = null; account.Email = null; }
+
+        if (dto.Pin is not null)
+        {
+            father.Pin = dto.Pin.Length == 0 ? "" : PinHasher.Hash(dto.Pin);
+            account.PinHash = father.Pin;
+        }
+
+        await db.SaveChangesAsync(ct);
+
+        // Der Name im Token ist jetzt veraltet – die Antwort nennt darum den **gespeicherten** Stand, damit
+        // die Oberfläche ihn ohne neues Token anzeigen kann.
+        return new MeResponse(account.Id, PrimaryRoleOf(account.Profiles),
+            account.Profiles.Select(p => p.Role.ToString()).Distinct().ToList(),
+            fid, User.ChildId(), account.DisplayName);
+    }
 }
