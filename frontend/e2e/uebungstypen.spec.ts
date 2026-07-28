@@ -37,15 +37,21 @@ async function createExercise(page: Page, type: string, title: string, fill: () 
 
 test("Jeder Übungstyp des Manifests lässt sich im UI anlegen", async ({ page }) => {
   await vaterLogin(page);
-  await page.goto("/vater/exercises");
 
-  // Fach + Kapitel einmal anlegen (global, darum je Lauf eindeutig benannt).
+  // Fach + Kapitel einmal anlegen (global, darum je Lauf eindeutig benannt). Das gehört seit dem
+  // IA-Umbau in den Katalog – er ist unter allen Vätern geteilt und darum kein Teil des Formulars.
+  await page.goto("/vater/katalog");
   await page.getByPlaceholder("z. B. Französisch").fill(SUBJECT);
-  await page.getByRole("button", { name: "Fach anlegen" }).click();
-  await expect(page.locator('select[aria-label="Fach"]')).toHaveValue(/\d+/);
+  await page.getByRole("button", { name: "Neues Fach anlegen" }).click();
+  await expect(page.locator("#ca-subject")).toHaveValue(/\d+/);
   await page.getByPlaceholder("z. B. Unit 1").fill(CHAPTER);
-  await page.getByRole("button", { name: "Kapitel anlegen" }).click();
-  await expect(page.locator('select[aria-label="Kapitel"]')).toHaveValue(/\d+/);
+  await page.getByRole("button", { name: "Neues Kapitel anlegen" }).click();
+  await expect(page.getByText("Kapitel angelegt.")).toBeVisible();
+
+  // Anlegen ist eine eigene Route; Fach und Kapitel werden dort ausgewählt.
+  await page.goto("/vater/exercises/neu");
+  await page.locator('select[aria-label="Fach"]').selectOption({ label: SUBJECT });
+  await page.locator('select[aria-label="Kapitel"]').selectOption({ label: CHAPTER });
 
   // ---------- Leseverständnis ----------
   await createExercise(page, "Reading", `Lesen ${RUN}`, async () => {
@@ -99,7 +105,23 @@ test("Jeder Übungstyp des Manifests lässt sich im UI anlegen", async ({ page }
     await page.locator("#cfg-seed").fill("42");
   });
 
-  // Alle sechs stehen in der Kapitel-Liste – mit ihrem deutschen Namen aus dem Manifest.
+  // ---------- Das Pulldown deckt das Manifest ab ----------
+  // Ein Typ, den der Server führt und das UI nicht anlegen kann, wäre eine stille Lücke. Der Vergleich
+  // steht hier, weil das Typ-Pulldown zur Anlege-Seite gehört – ab jetzt geht es in die Verwaltung.
+  const manifest = await page.request.get("/api/v1/creator/exercise-types", {
+    headers: { Authorization: `Bearer ${await page.evaluate(() => localStorage.getItem("pugling.token"))}` },
+  });
+  expect(manifest.ok()).toBeTruthy();
+  const serverTypes = ((await manifest.json()) as { type: string }[]).map((m) => m.type).sort();
+  const uiTypes = await page.locator('select[aria-label="Übungstyp"] option').evaluateAll(
+    (os) => os.map((o) => (o as HTMLOptionElement).value).sort());
+  expect(uiTypes).toEqual(serverTypes);
+
+  // ---------- Verwaltung: alle sechs stehen in der Liste ----------
+  // Mit ihrem deutschen Namen aus dem Manifest. Die Auswahl reist als Query mit, damit die Liste
+  // gleich das richtige Kapitel zeigt – genau das tut auch der Knopf „Übungen verwalten".
+  await page.getByRole("link", { name: /Übungen verwalten/ }).click();
+  await expect(page).toHaveURL(/\/vater\/exercises\?subjectId=\d+&chapterId=\d+/);
   for (const label of ["Leseverständnis", "Hörverständnis", "Aufsatz", "Grammatik", "Übersetzung", "Rechen-Drill"]) {
     await expect(page.getByText(`· ${label}`, { exact: false }).first()).toBeVisible();
   }
@@ -138,15 +160,4 @@ test("Jeder Übungstyp des Manifests lässt sich im UI anlegen", async ({ page }
   await expect(page.getByText(/keine einzeln prüfbaren Aufgaben/)).toBeVisible();
   await page.getByRole("dialog", { name: new RegExp(`Testmodus: Aufsatz ${RUN}`) })
     .getByRole("button", { name: "Schließen" }).click();
-
-  // ---------- Das Pulldown deckt das Manifest ab ----------
-  // Ein Typ, den der Server führt und das UI nicht anlegen kann, wäre eine stille Lücke.
-  const manifest = await page.request.get("/api/v1/creator/exercise-types", {
-    headers: { Authorization: `Bearer ${await page.evaluate(() => localStorage.getItem("pugling.token"))}` },
-  });
-  expect(manifest.ok()).toBeTruthy();
-  const serverTypes = ((await manifest.json()) as { type: string }[]).map((m) => m.type).sort();
-  const uiTypes = await page.locator('select[aria-label="Übungstyp"] option').evaluateAll(
-    (os) => os.map((o) => (o as HTMLOptionElement).value).sort());
-  expect(uiTypes).toEqual(serverTypes);
 });

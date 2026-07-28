@@ -7,14 +7,20 @@ import { useAsync } from "../lib/useAsync";
 import type { CategoryResponse, ChapterResponse, SubjectResponse } from "../lib/types";
 
 /*
- * Katalog-Verwaltung: Fach, Kapitel und „Art" umbenennen und löschen.
+ * Katalog-Verwaltung: Fach, Kapitel und „Art" anlegen, umbenennen und löschen.
  *
- * Anlegen ging schon immer, korrigieren nicht – ein Tippfehler im Fachnamen blieb für alle sichtbar, denn
- * der Katalog ist **global**: Fächer und Kapitel teilen sich alle Väter. Genau deshalb warnt das Löschen
- * hier deutlich und nennt die Kaskade.
+ * Korrigieren ging lange nicht – ein Tippfehler im Fachnamen blieb für alle sichtbar, denn der Katalog ist
+ * **global**: Fächer und Kapitel teilen sich alle Väter. Genau deshalb warnt das Löschen hier deutlich und
+ * nennt die Kaskade.
  *
  * Die „Art" (Kategorie) ist fachabhängig und dient der Vorfilterung im Katalog – sie ist der einzige
  * Ordnungsbegriff, den der Vater selbst erfinden darf.
+ *
+ * Der Bereich lag früher **eingeklappt** auf der Übungen-Seite und war darum kaum zu finden; er hat jetzt
+ * eine eigene Route (`/vater/katalog`, siehe docs/vater-informationsarchitektur-plan.md). Ein eigener Ort
+ * muss sich nicht aufklappen – der Einklapper und sein „Schließen" sind entfallen. Weil das Anlegen von
+ * Fach und Kapitel bisher nur am Anlege-Formular hing, steht es jetzt **auch hier**: sonst wäre der
+ * Katalog eine Seite, auf der man nur umbenennen und löschen kann.
  */
 export function CatalogAdmin({ subjects, onCatalogChanged }: {
   subjects: SubjectResponse[];
@@ -22,7 +28,6 @@ export function CatalogAdmin({ subjects, onCatalogChanged }: {
   onCatalogChanged: () => void;
 }) {
   const [subjectId, setSubjectId] = useState<number | "">("");
-  const [open, setOpen] = useState(false);
   const action = useAction();
 
   const subject = subjects.find((s) => s.id === subjectId);
@@ -39,20 +44,17 @@ export function CatalogAdmin({ subjects, onCatalogChanged }: {
     onCatalogChanged();
   }
 
-  if (!open) {
-    return (
-      <button type="button" className="btn ghost inline-btn" style={{ width: "auto", alignSelf: "flex-start" }}
-        onClick={() => setOpen(true)}>🗂️ Katalog verwalten (Fach, Kapitel, Art)</button>
-    );
+  /** Neues Fach anlegen und **gleich auswählen** – Kapitel und Arten hängen daran, der Weg geht weiter. */
+  async function createSubject(name: string) {
+    const created = await action.runFor(() => api.createSubject(name), "Fach angelegt.");
+    if (!created) return;
+    setSubjectId(created.id);
+    onCatalogChanged();
   }
 
   return (
     <section className="card">
-      <div className="row" style={{ alignItems: "center" }}>
-        <h3 style={{ margin: 0 }}>Katalog verwalten</h3>
-        <button type="button" className="btn ghost inline-btn" style={{ width: "auto", marginLeft: "auto" }}
-          onClick={() => setOpen(false)}>Schließen</button>
-      </div>
+      <h3 style={{ marginTop: 0 }}>Fächer</h3>
       <p className="muted" style={{ fontSize: 13 }}>
         Fächer und Kapitel sind <strong>gemeinsamer Katalog</strong> – deine Änderungen sehen alle Väter.
       </p>
@@ -65,6 +67,8 @@ export function CatalogAdmin({ subjects, onCatalogChanged }: {
           {subjects.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
         </select>
       </div>
+      <NewName fieldId="ca-new-subject" label="Neues Fach" placeholder="z. B. Französisch"
+        onCreate={createSubject} />
 
       {subject && (
         <>
@@ -96,6 +100,11 @@ export function CatalogAdmin({ subjects, onCatalogChanged }: {
               }} />
           ))}
           {chapters.data?.length === 0 && <p className="muted">Noch keine Kapitel.</p>}
+          {/* `orderIndex` ans Ende: das Kapitel folgt dem Stoff, und die Reihenfolge trägt Bedeutung. */}
+          <NewName fieldId="ca-new-chapter" label="Neues Kapitel" placeholder="z. B. Unit 1"
+            onCreate={(name) => act(
+              () => api.createChapter(subject.id, name, (chapters.data?.length ?? 0) + 1),
+              "Kapitel angelegt.", chapters.reload)} />
 
           <h4 className="h-section" style={{ fontSize: 15, marginTop: 14 }}>
             Arten {categories.data ? `(${categories.data.length})` : ""}
@@ -113,7 +122,7 @@ export function CatalogAdmin({ subjects, onCatalogChanged }: {
                 act(() => api.deleteCategory(subject.id, c.id), "Art gelöscht.", categories.reload);
               }} />
           ))}
-          <NewName label="Neue Art" placeholder="z. B. Grammatik"
+          <NewName fieldId="ca-new-category" label="Neue Art" placeholder="z. B. Grammatik"
             onCreate={(name) => act(() => api.createCategory(subject.id, name), "Art angelegt.", categories.reload)} />
         </>
       )}
@@ -153,19 +162,27 @@ function NameRow({ fieldId, label, srName, value, busy, onSave, onDelete }: {
   );
 }
 
-/** Einen neuen Ordnungsbegriff anlegen. Eigenes `<form>`, damit die Eingabetaste ihn abschickt. */
-function NewName({ label, placeholder, onCreate }: {
-  label: string; placeholder: string; onCreate: (name: string) => void;
+/**
+ * Einen neuen Katalog-Eintrag anlegen. Eigenes `<form>`, damit die Eingabetaste ihn abschickt.
+ *
+ * `fieldId` kommt von außen, weil es diese Zeile inzwischen **dreimal** auf der Seite gibt (Fach, Kapitel,
+ * Art): eine feste DOM-`id` wäre dreifach vergeben, und jedes `label` zeigte auf dasselbe – das erste – Feld.
+ */
+function NewName({ fieldId, label, placeholder, onCreate }: {
+  fieldId: string; label: string; placeholder: string; onCreate: (name: string) => void;
 }) {
   const [name, setName] = useState("");
   return (
     <form className="row" style={{ gap: 6, alignItems: "flex-end", marginTop: 8 }}
       onSubmit={(e) => { e.preventDefault(); if (name.trim()) { onCreate(name.trim()); setName(""); } }}>
       <div className="field" style={{ flex: 1, minWidth: 200 }}>
-        <label htmlFor="ca-new-name">{label}</label>
-        <input id="ca-new-name" value={name} onChange={(e) => setName(e.target.value)} placeholder={placeholder} />
+        <label htmlFor={fieldId}>{label}</label>
+        <input id={fieldId} value={name} onChange={(e) => setName(e.target.value)} placeholder={placeholder} />
       </div>
-      <button type="submit" className="btn ghost inline-btn" style={{ width: "auto" }}>Anlegen</button>
+      {/* „Anlegen" steht dreimal auf der Seite (Fach, Kapitel, Art). Der sichtbare Text bleibt kurz, der
+          zugängliche Name nennt die Sache – sonst sagt Sprachsteuerung „Anlegen" und trifft irgendeinen. */}
+      <button type="submit" className="btn ghost inline-btn" style={{ width: "auto" }}
+        aria-label={`${label} anlegen`}>Anlegen</button>
     </form>
   );
 }

@@ -975,6 +975,32 @@
     "expectedCode": "no_checkable_content"
   },
   {
+    "key": "study-plans-ungefullte-ubung-zuweisen",
+    "resourceGroup": "study-plans",
+    "title": "Ungef\u00FCllte \u00DCbung zuweisen",
+    "method": "POST",
+    "path": "/api/v1/supervisor/study-plans/4/positions",
+    "role": "father",
+    "requestBodyJson": "{\r\n  \u0022exerciseId\u0022: 27,\r\n  \u0022cadence\u0022: \u0022Daily\u0022\r\n}",
+    "expectedStatus": 400,
+    "responseBodyJson": "{\r\n  \u0022type\u0022: \u0022https://pugling.app/errors/exercise_empty\u0022,\r\n  \u0022title\u0022: \u0022Exercise has no content yet.\u0022,\r\n  \u0022status\u0022: 400,\r\n  \u0022detail\u0022: \u0022This exercise has no items yet. Add its content before assigning it to a study plan.\u0022,\r\n  \u0022code\u0022: \u0022exercise_empty\u0022,\r\n  \u0022traceId\u0022: \u0022\u003Ctrace-id\u003E\u0022\r\n}",
+    "isError": true,
+    "expectedCode": "exercise_empty"
+  },
+  {
+    "key": "study-plans-tag-schnappschuss-ohne-treffer",
+    "resourceGroup": "study-plans",
+    "title": "Tag-Schnappschuss ohne Treffer",
+    "method": "POST",
+    "path": "/api/v1/creator/subjects/5/chapters/7/vocabulary/27/refs-from-tags",
+    "role": "father",
+    "requestBodyJson": "{\r\n  \u0022tags\u0022: [\r\n    \u0022gibt-es-nicht\u0022\r\n  ]\r\n}",
+    "expectedStatus": 400,
+    "responseBodyJson": "{\r\n  \u0022type\u0022: \u0022https://pugling.app/errors/no_tag_matches\u0022,\r\n  \u0022title\u0022: \u0022No vocabulary matched these tags.\u0022,\r\n  \u0022status\u0022: 400,\r\n  \u0022detail\u0022: \u0022No vocabulary matched these tags; the exercise was left unchanged.\u0022,\r\n  \u0022code\u0022: \u0022no_tag_matches\u0022,\r\n  \u0022traceId\u0022: \u0022\u003Ctrace-id\u003E\u0022\r\n}",
+    "isError": true,
+    "expectedCode": "no_tag_matches"
+  },
+  {
     "key": "study-plans-bespielte-position-loschen",
     "resourceGroup": "study-plans",
     "title": "Bespielte Position l\u00F6schen",

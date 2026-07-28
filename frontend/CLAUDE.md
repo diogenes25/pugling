@@ -35,6 +35,25 @@ Peer `vite@^3…^6`, installiert ist `vite@8` – jede Neuauflösung bricht sons
 
 Rollen im SPA: `/` Produktseite, `/vater` Web-Admin (inkl. `/vater/wizard` Lehrplan-Assistent,
 `/vater/lehrwerke` Buchreihen + Units, `/vater/fachlehrer` Creator-Profile), `/sohn` Arcade-PWA.
+
+**Informationsarchitektur des Vater-Webs** ([docs/vater-perspektiven-plan.md](../docs/vater-perspektiven-plan.md),
+Vorgänger: [docs/vater-informationsarchitektur-plan.md](../docs/vater-informationsarchitektur-plan.md)):
+Das Vater-Web hat **drei Perspektiven** – 👀 Betreuen (`/vater`), 🎯 Zuweisen (`/vater/plaene`),
+✏️ Erstellen (`/vater/inhalte`). Sie folgen den Ebenen des Produkts (Supervisor / Brücke / Creator) und
+sind **keine Rechte**, sondern eine Antwort auf „woran arbeite ich gerade".
+
+**Die Architektur liegt als Daten in [src/vater/navigation.ts](src/vater/navigation.ts)** – ein neuer
+Bereich wird *dort* eingetragen, nicht in die Kopfzeile geschrieben. Die aktive Perspektive kommt aus dem
+**Pfad** (`perspectiveOfPath`), nicht aus einem State: sonst öffnete ein Lesezeichen die richtige Seite in
+der falschen Perspektive. Eine neue Unterseite, die nicht selbst Nav-Eintrag ist, braucht darum einen
+Eintrag in `EXTRA_ROUTES` – sonst springt die Navigation auf „Betreuen".
+
+Drei Regeln, die man beim Ergänzen kennen muss:
+**Eine Aktion bekommt keinen Nav-Eintrag** (deshalb stehen „+ Neue Übung" und „+ Neuer Plan" am Bestand,
+den sie erweitern); **ein Bereich, der mehrere Übungen trägt, ist ein eigener Ort** (darum liegen Katalog
+und Lückentexte neben dem Anlegen statt eingeklappt darin); und **eine Auswahl reist als Query mit**
+(`?childId=`, `?subjectId=&chapterId=`) – sonst steht im Zielformular wieder das erste Kind bzw. Fach.
+Anlegen und Verwalten sind getrennt: `/vater/exercises` verwaltet, `/vater/exercises/neu` legt an.
 API-Client + Types zentral unter [src/lib/](src/lib/).
 Ein Vater entsteht **im UI**: `/vater` hat neben „Anmelden" den Modus „Neu registrieren" (gegen das anonyme
 `POST supervisor/fathers`, meldet direkt an und nennt die neue Vater-Id — sie ist der Login-Name); das eigene
@@ -52,4 +71,6 @@ Typ-Pulldown gegen das Manifest und schlägt fehl, sobald ein Server-Typ kein UI
 Übungen sind über `/vater/exercises` **bearbeitbar**
 (Metadaten per PUT — den geladenen `config`/`suggestedBonus`/`executePublic` mitschicken, sonst löscht der
 Vollersatz sie; Vokabelpaare einzeln über `…/vocabulary/{id}/items`, damit die Item-Ids und der Lernstand
-des Kindes erhalten bleiben).
+des Kindes erhalten bleiben). Das **Anlege**-Formular liegt daneben auf `/vater/exercises/neu`
+([src/vater/VaterExerciseCreate.tsx](src/vater/VaterExerciseCreate.tsx)) — wer einen neuen Typ ergänzt,
+braucht beide Wege: dort das Formular, im Dialog den Rückweg.

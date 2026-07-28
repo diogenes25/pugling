@@ -112,6 +112,12 @@ public class VocabularyController(PuglingDbContext db, ExerciseTypeRegistry regi
         else
             query = query.Where(v => v.TagLinks.Any(l => tags.Contains(l.VocabTag!.Name)));
         var hitIds = await query.OrderBy(v => v.Key).Select(v => v.Id).ToListAsync();
+        // Ein Snapshot ohne Treffer würde die Übung **leeren** – und zwar lautlos: ein vertippter Tag
+        // (oder `baseFormsOnly` auf einer Liste rein flektierter Formen) sähe wie ein Erfolg aus und ließe
+        // eine Übung ohne Wörter zurück. Nichts ändern ist hier die einzige vertretbare Antwort.
+        if (hitIds.Count == 0)
+            return this.ProblemWithCode(ApiErrors.NoTagMatches,
+                "No vocabulary matched these tags; the exercise was left unchanged.");
 
         await items.ReconcileAsync(exercise.Id, hitIds.Select(id => new DesiredItem(id, null)).ToList());
         return Map(exercise, User.FatherId());

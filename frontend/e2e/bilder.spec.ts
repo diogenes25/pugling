@@ -116,7 +116,10 @@ test("Vater bebildert eine Vokabel, der Sohn sieht sein Bild und kann es wechsel
   await expect(vater.getByText("Interessen gespeichert.")).toBeVisible();
 
   // ---------- Plan mit der Übung, damit der Sohn sie spielen kann ----------
-  await vater.getByRole("link", { name: "Neuer Plan", exact: true }).click();
+  // „Neuer Plan" ist eine Aktion am Bestand und liegt in der Perspektive „Zuweisen" – von der Kind-Seite
+  // aus also erst dorthin.
+  await vater.goto("/vater/plaene");
+  await vater.getByRole("link", { name: /Neuer Plan/ }).click();
   const kindSelect = vater.getByRole("combobox", { name: "Kind" });
   await expect(kindSelect.locator("option")).not.toHaveCount(0);
   await kindSelect.selectOption(childId);

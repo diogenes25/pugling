@@ -216,7 +216,18 @@ export function VaterWizard() {
           comboThreshold,
           comboBonusPoints,
         };
-        await api.addPosition(planId, posDto);
+        try {
+          await api.addPosition(planId, posDto);
+        } catch (err) {
+          /*
+           * Den Titel mitgeben: der Plan ist an dieser Stelle **schon angelegt**, und die Server-Meldung
+           * spricht von „dieser Übung", ohne zu sagen welcher. Bei zehn gewählten Übungen wäre der Nutzer
+           * damit allein – am häufigsten trifft es eine noch nicht gefüllte Vokabelübung (`exercise_empty`).
+           * Der Plan bleibt bestehen; `done` lässt einen zweiten Versuch dort weitermachen, wo es hakte.
+           */
+          const title = filteredExercises.find((x) => x.id === exerciseId)?.title ?? `#${exerciseId}`;
+          throw new Error(`„${title}": ${errorMessage(err)} Der Plan ist angelegt – nimm die Übung ab und versuche es erneut.`);
+        }
         // Sofort vermerken – sonst wüsste ein Wiederholungsversuch nach dem nächsten Fehler nichts davon.
         done.positions.push(exerciseId);
       }
@@ -403,7 +414,7 @@ export function VaterWizard() {
           <SummaryRow label="Je Position" value={`Test-Stufe ${defaultStage} · bestehen ab ${passPercent}% · ${pointsGoalMet} Punkte/Ziel`} />
           <SummaryRow label="Versäumnis" value={penaltyCoins > 0 ? `−${penaltyCoins} 🪙 je gerissenem Tagesziel` : "kein Malus (reine Belohnung)"} />
           <SummaryRow label="Übungen" value={`${selected.length} als Tagesziel-Positionen`} />
-          <p className="sub">Danach erscheint der Plan in der Übersicht; der Sohn sieht ihn sofort in seiner App.</p>
+          <p className="sub">Danach erscheint der Plan unter „Zuweisen"; der Sohn sieht ihn sofort in seiner App.</p>
         </section>
       )}
 

@@ -1,6 +1,6 @@
 # API-Beispiele – Übersicht
 
-Automatisch erzeugt von `backend/Pugling.Api.Tests/DocsCaptureTests.cs`. Insgesamt **138** Beispiele in **12** Gruppen.
+Automatisch erzeugt von `backend/Pugling.Api.Tests/DocsCaptureTests.cs`. Insgesamt **140** Beispiele in **12** Gruppen.
 
 | Gruppe | Beispiele | Fehlerfälle | Datei |
 | --- | ---: | ---: | --- |
@@ -12,14 +12,14 @@ Automatisch erzeugt von `backend/Pugling.Api.Tests/DocsCaptureTests.cs`. Insgesa
 | me | 15 | 5 | [`me.md`](./me.md) |
 | remarks | 19 | 7 | [`remarks.md`](./remarks.md) |
 | shop | 28 | 8 | [`shop.md`](./shop.md) |
-| study-plans | 21 | 6 | [`study-plans.md`](./study-plans.md) |
+| study-plans | 23 | 8 | [`study-plans.md`](./study-plans.md) |
 | tags | 5 | 3 | [`tags.md`](./tags.md) |
 | timetable | 2 | 1 | [`timetable.md`](./timetable.md) |
 | vocabulary | 4 | 2 | [`vocabulary.md`](./vocabulary.md) |
 
 ## Fehler-Code-Abdeckung
 
-Verifiziert: **30 / 47** Codes aus `ApiErrors`.
+Verifiziert: **32 / 49** Codes aus `ApiErrors`.
 
 | Code | Beispiel |
 | --- | --- |
@@ -27,6 +27,7 @@ Verifiziert: **30 / 47** Codes aus `ApiErrors`.
 | `conflict` | catalog – Doppelte Art anlegen |
 | `duplicate_key` | vocabulary – Vokabel mit doppeltem Key |
 | `duplicate_tag_name` | tags – Tag mit doppeltem Namen |
+| `exercise_empty` | study-plans – Ungefüllte Übung zuweisen |
 | `exercise_in_use` | catalog – Verwendete Übung löschen |
 | `exercise_not_executable` | exercise-grants – Nicht ausführbare Übung zuweisen |
 | `forbidden` | me – Vater greift auf Sohn-Route zu |
@@ -37,6 +38,7 @@ Verifiziert: **30 / 47** Codes aus `ApiErrors`.
 | `invalid_reference` | study-plans – Position mit unbekannter Übung |
 | `last_owner` | exercise-grants – Letzten Owner entfernen |
 | `no_checkable_content` | study-plans – Test auf Übung ohne prüfbaren Inhalt |
+| `no_tag_matches` | study-plans – Tag-Schnappschuss ohne Treffer |
 | `not_author` | catalog – Fremd-Autor-Übung bearbeiten |
 | `not_found` | children – Fremdes Kind lesen |
 | `not_owner` | exercise-grants – Rechte einer fremden Übung auflisten |

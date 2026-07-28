@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { api, errorMessage } from "../lib/api";
 import { useAsync } from "../lib/useAsync";
 import { useAuth } from "../lib/auth";
@@ -8,12 +8,10 @@ import type { ChildResponse, ChildrenDashboard, PlanResponse } from "../lib/type
 export function VaterDashboard() {
   const { session } = useAuth();
   const fatherId = session!.id;
-  // `?childId=` kommt vom Kind-Hub („Lehrpläne") und schränkt die Plan-Liste auf dieses Kind ein.
-  const [params] = useSearchParams();
-  const filterChildId = Number(params.get("childId")) || null;
 
   const children = useAsync<ChildResponse[]>(() => api.children(), [fatherId]);
-  const plans = useAsync<PlanResponse[]>(() => api.plans(filterChildId ?? undefined), [filterChildId]);
+  // Nur für die Standortbestimmung „gibt es überhaupt einen Plan?" – die Liste selbst liegt beim Zuweisen.
+  const plans = useAsync<PlanResponse[]>(() => api.plans(), [fatherId]);
   const today = useAsync<ChildrenDashboard>(() => api.childrenDaily(), [fatherId]);
 
   const [name, setName] = useState("");
@@ -36,7 +34,6 @@ export function VaterDashboard() {
     }
   }
 
-  const childName = (id: number) => children.data?.find((c) => c.id === id)?.name ?? `#${id}`;
 
   return (
     <>
@@ -106,29 +103,26 @@ export function VaterDashboard() {
         {msg && <div className="banner ok" style={{ marginTop: 10 }} role="status" aria-live="polite">{msg}</div>}
       </section>
 
-      <section>
-        <div className="row">
-          <h2 className="h-section">Lehrpläne{filterChildId ? ` · ${childName(filterChildId)}` : ""}</h2>
-          {filterChildId && <Link to="/vater" className="btn ghost small" style={{ width: "auto", textDecoration: "none" }}>alle Kinder</Link>}
-          <Link to="/vater/plan/new" className="btn inline-btn" style={{ width: "auto", marginLeft: "auto", textDecoration: "none", textAlign: "center" }}>+ Neuer Plan</Link>
+      {/*
+        Die Lehrpläne sind hier bewusst **weg**: das Zuweisen ist eine eigene Perspektive und stand vorher
+        als Anhängsel unter zwei Betreuungs-Tabellen (docs/vater-perspektiven-plan.md). Was bleibt, ist der
+        Weg dorthin – mit der Zahl, damit die Seite nicht verschweigt, ob überhaupt ein Plan existiert.
+      */}
+      <section className="card">
+        <div className="row" style={{ alignItems: "center", gap: 10 }}>
+          <div>
+            <h3 style={{ margin: 0 }}>🎯 Lehrpläne</h3>
+            <p className="muted" style={{ margin: "4px 0 0", fontSize: 13 }}>
+              {plans.loading ? "Lade…"
+                : plans.data?.length === 0 ? "Noch kein Plan angelegt – ohne Plan hat dein Kind keine Pflicht."
+                : `${plans.data?.length} ${plans.data?.length === 1 ? "Plan" : "Pläne"}, davon ${plans.data?.filter((p) => p.active).length} aktiv.`}
+            </p>
+          </div>
+          <Link to="/vater/plaene" className="btn inline-btn"
+            style={{ width: "auto", marginLeft: "auto", textDecoration: "none", textAlign: "center" }}>
+            Zum Zuweisen
+          </Link>
         </div>
-        {plans.loading ? <div className="loading">Lade…</div> : plans.error ? <div className="banner err">{plans.error}</div> : (
-          <table className="table">
-            <thead><tr><th>Titel</th><th>Kind</th><th className="num">Übungen</th><th>Zeitraum</th><th>Status</th></tr></thead>
-            <tbody>
-              {plans.data?.map((p) => (
-                <tr key={p.id}>
-                  <td><Link to={`/vater/plan/${p.id}`}>{p.title}</Link></td>
-                  <td>{childName(p.childId)}</td>
-                  <td className="num">{p.positionCount}</td>
-                  <td className="muted">{p.startDate} – {p.endDate}</td>
-                  <td>{p.active ? <span className="pill lime">aktiv</span> : <span className="pill">inaktiv</span>}</td>
-                </tr>
-              ))}
-              {plans.data?.length === 0 && <tr><td colSpan={5} className="muted">Noch keine Pläne. Lege einen an.</td></tr>}
-            </tbody>
-          </table>
-        )}
       </section>
     </>
   );

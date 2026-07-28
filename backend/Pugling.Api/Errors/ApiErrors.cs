@@ -102,6 +102,19 @@ public static class ApiErrors
     public static readonly ApiError TestAlreadySubmitted = new("test_already_submitted", 400, "Test already submitted.");
     /// <summary>Übung enthält keine prüfbaren Inhalte (400).</summary>
     public static readonly ApiError NoCheckableContent = new("no_checkable_content", 400, "No checkable content.");
+    /// <summary>
+    /// Die Übung ist <b>noch nicht gefüllt</b>: ihr Typ trägt seine Inhalte als Item-Tabelle
+    /// (<see cref="Exercises.StoreResolution.ItemTable"/>), sie hat aber kein einziges Item (400).
+    /// Bewusst getrennt von <see cref="NoCheckableContent"/>: dort ist „keine prüfbaren Aufgaben" eine
+    /// <i>Eigenschaft des Typs</i> (Aufsatz), hier ein unfertiger Datenstand, den der Autor beheben kann.
+    /// </summary>
+    public static readonly ApiError ExerciseEmpty = new("exercise_empty", 400, "Exercise has no content yet.");
+    /// <summary>
+    /// Der Tag-Schnappschuss hätte **keine** Vokabel getroffen – die Übung bleibt unverändert (400).
+    /// Eigener Code statt <see cref="ValidationError"/>, weil ein Aufrufer (KI-Creator, REST-Tutorial) das
+    /// von „gar keinen Tag geschickt" unterscheiden muss: hier hilft ein *anderer* Tag, dort ein Bugfix.
+    /// </summary>
+    public static readonly ApiError NoTagMatches = new("no_tag_matches", 400, "No vocabulary matched these tags.");
     /// <summary>Stundenplan-Slot (Wochentag + Fach) ist bereits belegt (409).</summary>
     public static readonly ApiError TimetableSlotTaken = new("timetable_slot_taken", 409, "Timetable slot already taken.");
     /// <summary>Die Übung trägt einen Typ-Schlüssel, den die <see cref="Exercises.ExerciseTypeRegistry"/> nicht kennt – Datenintegritätsfehler, kein Nutzerfehler (500).</summary>

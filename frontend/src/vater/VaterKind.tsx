@@ -52,7 +52,10 @@ export function VaterKind() {
         <h2 className="h-section">{me.name}</h2>
         <span className="pill">🪙 {me.coins}</span>
         <span className="pill">💎 {me.gems}</span>
-        <Link to="/vater" className="btn ghost small" style={{ marginLeft: "auto", textDecoration: "none" }}>← Übersicht</Link>
+        {/* `width: auto` ist Pflicht, nicht Kosmetik: `.btn` ist vollbreit: ohne die Angabe füllte der
+            Zurück-Knopf die halbe Zeile und quetschte die Münz-/Gem-Anzeigen in den Umbruch. */}
+        <Link to="/vater" className="btn ghost small"
+          style={{ width: "auto", marginLeft: "auto", textDecoration: "none", textAlign: "center" }}>← Alle Kinder</Link>
       </div>
 
       <ChildNav child={me} />
@@ -105,7 +108,7 @@ function ChildNav({ child }: { child: ChildResponse }) {
   const links: [string, string][] = [
     [`/vater/kind/${child.id}/lernstand`, "📈 Lernstand"],
     [`/vater/kind/${child.id}/ziele`, "🎯 Ziele"],
-    [`/vater?childId=${child.id}`, "🗂️ Lehrpläne"],
+    [`/vater/plaene?childId=${child.id}`, "🗂️ Lehrpläne"],
     [`/vater/class-tests?childId=${child.id}`, "📝 Klassenarbeiten"],
     [`/vater/rewards?childId=${child.id}`, "🏆 Belohnungen"],
     [`/vater/shop?childId=${child.id}`, "🛒 Shop"],

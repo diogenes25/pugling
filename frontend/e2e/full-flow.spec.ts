@@ -36,7 +36,11 @@ test("Vater erstellt Plan mit Position, Sohn arbeitet ihn ab, Punkte fließen", 
   await vaterLogin(vater);
 
   // Lehrplan = leerer Container (Titel/Kind/Laufzeit sind vorbelegt) → anlegen und auf die Plan-Seite.
-  await vater.getByRole("link", { name: "Neuer Plan", exact: true }).click();
+  // Der Weg läuft über die Perspektive „Zuweisen": dort liegen die Pläne, und „+ Neuer Plan" ist eine
+  // Aktion am Bestand, keine Navigation. Der Klick auf den Umschalter prüft ihn gleich mit.
+  await vater.getByRole("link", { name: /Zuweisen/ }).first().click();
+  await expect(vater).toHaveURL(/\/vater\/plaene$/);
+  await vater.getByRole("link", { name: /Neuer Plan/ }).click();
   await expect(vater.getByRole("heading", { name: /Neuer Lehrplan/ })).toBeVisible();
   // Erst wählbar, wenn die Kinder-Liste geladen ist – sonst schlägt das Anlegen mit "Kind wählen" fehl.
   // Das Kind per Id wählen, nicht per Position: die Liste ist nach Namen sortiert, und ein von einem
