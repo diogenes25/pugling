@@ -24,6 +24,11 @@ public record UpdatePlanDto(string? Title, int? SubjectId, DateOnly? StartDate, 
     string? Description = null, int? ChildId = null);
 
 /// <summary>Eine Position im Lehrplan: die referenzierte Übung samt eigenem Ziel, Punkten, Stufe und Leitner.</summary>
+/// <param name="GoalThreshold">
+/// Bestehensgrenze des Abschlusstests in <b>Prozent</b> richtiger Antworten; <c>null</c> = 80 %. Die
+/// Einheit gilt für <i>alle</i> prüfbaren Übungstypen – auch für Katalog-Checks, denn das Ziel einer
+/// Position wird immer an einem bestandenen Positions-Test gemessen. Bei reinen Inhaltsübungen ungenutzt.
+/// </param>
 public record PositionResponse(int Id, int StudyPlanId, int ExerciseId, string ExerciseTitle,
     string ExerciseType, int Order, int? Stage, int? ItemCount, ItemScope Scope, GoalCadence Cadence,
     PracticeOrder OrderStrategy, int? GoalThreshold, bool RequireTypedTest, bool UseLeitner, int MaxBox,
@@ -35,6 +40,9 @@ public record PositionResponse(int Id, int StudyPlanId, int ExerciseId, string E
 /// Stufe/Item-Anzahl bleiben dann <c>null</c> und werden erst beim Spielen aus den Übungs-Defaults
 /// aufgelöst; die Punkte-/Bonus-Felder werden aus dem Bonus-Vorschlag der Übung vorbelegt.
 /// </summary>
+/// <param name="GoalThreshold">
+/// Bestehensgrenze in <b>Prozent</b> (siehe <see cref="PositionResponse"/>); <c>null</c> = 80 %.
+/// </param>
 public record CreatePositionDto(int ExerciseId, int? Order, int? Stage, int? ItemCount, ItemScope? Scope,
     GoalCadence? Cadence, PracticeOrder? OrderStrategy, int? GoalThreshold, bool? RequireTypedTest,
     bool? UseLeitner, int? MaxBox, List<int>? BoxIntervalDays, List<StageStep>? StageSchedule,
@@ -42,6 +50,9 @@ public record CreatePositionDto(int ExerciseId, int? Order, int? Stage, int? Ite
     int? SpeedThresholdSeconds, int? SpeedBonusPoints);
 
 /// <summary>Partielle Änderung der Overrides/Ziele/Punkte. Die referenzierte Übung ist unveränderlich (Fortschritts-Indizes).</summary>
+/// <param name="GoalThreshold">
+/// Bestehensgrenze in <b>Prozent</b> (siehe <see cref="PositionResponse"/>); <c>null</c> = nicht angegeben.
+/// </param>
 public record UpdatePositionDto(int? Order, int? Stage, int? ItemCount, ItemScope? Scope,
     GoalCadence? Cadence, PracticeOrder? OrderStrategy, int? GoalThreshold, bool? RequireTypedTest,
     bool? UseLeitner, int? MaxBox, List<int>? BoxIntervalDays, List<StageStep>? StageSchedule,

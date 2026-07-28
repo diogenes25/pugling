@@ -224,13 +224,16 @@ public static class Seed
             positions.Add(new PlanPosition { ExerciseId = birkenbihl.Id, Order = order++, Cadence = GoalCadence.None });
 
         // ── Katalog-Checks: feste Rechenaufgaben, generierter Drill, Liste ──────
-        // GoalThreshold = Anzahl korrekt zu lösender Aufgaben (Katalog-Check-Semantik).
+        // GoalThreshold ist eine PROZENT-Bestehensgrenze, auch hier (siehe PlanPosition.GoalThreshold) –
+        // vorher standen an dieser Stelle Trefferzahlen (3/8/16), die als Prozentwerte jeden Versuch
+        // bestehen ließen und damit ausgerechnet die Pflicht wirkungslos machten, die sie setzen sollten.
+        // Drei verschiedene Werte, damit die Testdaten auch eine abweichende Grenze zeigen.
         if (arithmetic is not null)
-            positions.Add(new PlanPosition { ExerciseId = arithmetic.Id, Order = order++, Cadence = GoalCadence.Daily, GoalThreshold = 3 });
+            positions.Add(new PlanPosition { ExerciseId = arithmetic.Id, Order = order++, Cadence = GoalCadence.Daily, GoalThreshold = 80 });
         if (drill is not null)
-            positions.Add(new PlanPosition { ExerciseId = drill.Id, Order = order++, Cadence = GoalCadence.Daily, GoalThreshold = 8 });
+            positions.Add(new PlanPosition { ExerciseId = drill.Id, Order = order++, Cadence = GoalCadence.Daily, GoalThreshold = 70 });
         if (list is not null)
-            positions.Add(new PlanPosition { ExerciseId = list.Id, Order = order++, Cadence = GoalCadence.Weekly, GoalThreshold = 16 });
+            positions.Add(new PlanPosition { ExerciseId = list.Id, Order = order++, Cadence = GoalCadence.Weekly, GoalThreshold = 90 });
 
         // ── Übersetzung (aus der Lehrer-Bibliothek, sofern vorhanden) ───────────
         if (translation is not null)

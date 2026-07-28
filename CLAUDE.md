@@ -120,7 +120,11 @@ Details: [backend/Pugling.Agent.Creator/README.md](backend/Pugling.Agent.Creator
 - **Lehrplan/Training** ([StudyPlansController](backend/Pugling.Api/Controllers/Supervisor/StudyPlansController.cs)):
   `StudyPlan` ist ein **reiner Container** (`ChildId, Title, Start/End, Active`). Inhalt sind
   `PlanPosition`s ([PlanPositionsController](backend/Pugling.Api/Controllers/Supervisor/PlanPositionsController.cs)),
-  die je auf eine Katalog-`Exercise` verweisen und **eigenes** Ziel (Rhythmus Tag/Woche + Schwelle),
+  die je auf eine Katalog-`Exercise` verweisen und **eigenes** Ziel (Rhythmus Tag/Woche + `GoalThreshold`
+  = Bestehensgrenze in **Prozent**, `null` = 80 %, typ-unabhängig auch bei Katalog-Checks – ein
+  `TestAttempt` entsteht nur im Positions-Test, ein zweiter Auswertungspfad existiert nicht; die API weist
+  Werte außerhalb 1–100 ab, weil eine mit Trefferzahlen verwechselte Schwelle die Pflicht lautlos
+  entschärft statt sie zu verschärfen),
   Punkte (Ziel-Belohnung + optionaler **Münz-Malus** `PenaltyCoins` bei gerissener Pflicht = der „Stick"),
   Stufe und Leitner tragen. Gespielt wird pro Position: `PositionPracticeController` (Üben/Leitner)
   + `PositionTestsController` (Abschlusstest); Inhalt kommt aus der Übungs-Config (`ExerciseContentProvider`),

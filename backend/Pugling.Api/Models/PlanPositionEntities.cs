@@ -45,9 +45,19 @@ public class PlanPosition
     /// <summary>Ziel-Rhythmus; <see cref="GoalCadence.None"/> = freies Üben ohne Pflicht.</summary>
     public GoalCadence Cadence { get; set; } = GoalCadence.None;
     /// <summary>
-    /// Typ-abhängige Ziel-Schwelle: bei Katalog-Check die Anzahl korrekt zu lösender Aufgaben,
-    /// bei einem Leitner-Test die Prozent-Bestehensgrenze; bei reinen Inhaltsübungen ungenutzt.
-    /// Null = Standard des jeweiligen Verfahrens.
+    /// Bestehensgrenze des Abschlusstests in <b>Prozent</b> richtiger Antworten; <c>null</c> = 80 %.
+    /// <para>
+    /// Die Einheit ist <b>typ-unabhängig</b> – auch bei Katalog-Check-Verfahren. Das ist keine
+    /// Vereinfachung, sondern folgt daraus, dass ein <see cref="TestAttempt"/> ausschließlich im
+    /// Positions-Test entsteht und <c>PositionProgressService.IsGoalMetAsync</c> das Ziel jedes
+    /// prüfbaren Typs an einem bestandenen Versuch misst: es gibt gar keinen zweiten Pfad, der eine
+    /// andere Einheit auswerten könnte. Eine absolute Trefferzahl wäre hier auch überflüssig – wie
+    /// groß der Pool ist, sagt bereits <see cref="ItemCount"/>.
+    /// </para>
+    /// <para>
+    /// Bei reinen Inhaltsübungen (<c>ExerciseCheckMode.None</c>) bleibt der Wert ungenutzt: dort gilt
+    /// das Ziel schon mit einer Lern-Sitzung als erledigt.
+    /// </para>
     /// </summary>
     public int? GoalThreshold { get; set; }
     /// <summary>
