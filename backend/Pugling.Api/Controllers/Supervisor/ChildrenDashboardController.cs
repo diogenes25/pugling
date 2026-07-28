@@ -22,6 +22,6 @@ public class ChildrenDashboardController(ChildrenDashboardService dashboard) : C
     public async Task<ActionResult<Dashboard>> Get([FromQuery] DateOnly? date, CancellationToken ct)
     {
         var day = date ?? DateOnly.FromDateTime(DateTime.UtcNow);
-        return await dashboard.BuildAsync(User.FatherId()!.Value, day, ct);
+        return await dashboard.BuildAsync(User.AdultId()!.Value, day, ct);
     }
 }

@@ -405,7 +405,7 @@ using (var scope = app.Services.CreateScope())
     // Bestehende/geseedete Vokabelübungen einmalig in die Item-Tabelle überführen (idempotent).
     var itemService = scope.ServiceProvider.GetRequiredService<ExerciseItemService>();
     await ExerciseItemBackfill.RunAsync(db, itemService);
-    // Zu jedem Father/Child ein Login-Konto mit Rollen anlegen (idempotent), damit Bestandsnutzer
+    // Zu jedem Adult/Child ein Login-Konto mit Rollen anlegen (idempotent), damit Bestandsnutzer
     // sich weiterhin einloggen und ein Mehrrollen-Token erhalten.
     var accountService = scope.ServiceProvider.GetRequiredService<AccountService>();
     await AccountBackfill.RunAsync(db, accountService);

@@ -43,7 +43,7 @@ public class ExerciseGrantsController(PuglingDbContext db, ExercisePermissionSer
         return await db.ExerciseGrants.AsNoTracking()
             .Where(g => g.ExerciseId == exerciseId)
             .OrderBy(g => g.CreatedAt).ThenBy(g => g.Id)
-            .Select(g => new GrantResponse(g.CreatorId, g.Creator!.Name, g.Permission, g.GrantedByFatherId, g.CreatedAt))
+            .Select(g => new GrantResponse(g.CreatorId, g.Creator!.Name, g.Permission, g.GrantedByAdultId, g.CreatedAt))
             .ToListAsync();
     }
 
@@ -59,7 +59,7 @@ public class ExerciseGrantsController(PuglingDbContext db, ExercisePermissionSer
     public async Task<ActionResult<GrantResponse>> Add(int exerciseId, AddGrantDto dto)
     {
         if (await EnsureOwnerAsync(exerciseId) is { } forbidden) return forbidden;
-        var creator = await db.Fathers.FirstOrDefaultAsync(f => f.Id == dto.CreatorId);
+        var creator = await db.Adults.FirstOrDefaultAsync(f => f.Id == dto.CreatorId);
         if (creator is null) return this.ProblemWithCode(ApiErrors.InvalidReference, "Creator not found.");
 
         if (!await db.ExerciseGrants.AnyAsync(g =>
@@ -70,12 +70,12 @@ public class ExerciseGrantsController(PuglingDbContext db, ExercisePermissionSer
                 ExerciseId = exerciseId,
                 CreatorId = dto.CreatorId,
                 Permission = dto.Permission,
-                GrantedByFatherId = User.FatherId(),
+                GrantedByAdultId = User.AdultId(),
             });
             await db.SaveChangesAsync();
         }
         return CreatedAtAction(nameof(List), new { exerciseId },
-            new GrantResponse(creator.Id, creator.Name, dto.Permission, User.FatherId(), DateTime.UtcNow));
+            new GrantResponse(creator.Id, creator.Name, dto.Permission, User.AdultId(), DateTime.UtcNow));
     }
 
     /// <summary>

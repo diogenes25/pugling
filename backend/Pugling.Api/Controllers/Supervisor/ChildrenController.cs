@@ -36,7 +36,7 @@ public class ChildrenController(PuglingDbContext db, WalletService wallet, Accou
     [HttpGet]
     public async Task<ActionResult<IEnumerable<ChildResponse>>> List()
     {
-        var fatherId = User.FatherId();
+        var fatherId = User.AdultId();
         return await db.Children
             .Where(c => c.SupervisorLinks.Any(l => l.SupervisorId == fatherId))
             .OrderBy(c => c.Name)
@@ -81,7 +81,7 @@ public class ChildrenController(PuglingDbContext db, WalletService wallet, Accou
         db.Children.Add(child);
         await db.SaveChangesAsync();
         // Betreuung durch den anlegenden Supervisor herstellen (ein Student kann später weitere bekommen).
-        db.SupervisorLinks.Add(new SupervisorLink { SupervisorId = User.FatherId()!.Value, StudentId = child.Id });
+        db.SupervisorLinks.Add(new SupervisorLink { SupervisorId = User.AdultId()!.Value, StudentId = child.Id });
         await db.SaveChangesAsync();
         // Login-Konto (Student) sofort anlegen, damit sich das neue Kind einloggen kann.
         await accounts.EnsureForChildAsync(child);
@@ -160,7 +160,7 @@ public class ChildrenController(PuglingDbContext db, WalletService wallet, Accou
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<SupervisorLinkResponse>> AddSupervisor(int childId, AddSupervisorDto dto)
     {
-        var supervisor = await db.Fathers.FirstOrDefaultAsync(f => f.Id == dto.SupervisorId);
+        var supervisor = await db.Adults.FirstOrDefaultAsync(f => f.Id == dto.SupervisorId);
         if (supervisor is null) return this.ProblemWithCode(ApiErrors.InvalidReference, "Supervisor not found.");
 
         if (!await db.SupervisorLinks.AnyAsync(l => l.StudentId == childId && l.SupervisorId == dto.SupervisorId))

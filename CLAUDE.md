@@ -56,15 +56,22 @@ Details: [backend/Pugling.Agent.Creator/README.md](backend/Pugling.Agent.Creator
   Wert steckt im automatisch mitgeschnittenen Kontext (Route, Kind/Übung, letzte Fehler), nicht im Text.
   Verlauf, Sichtbarkeits-Schalter (`Remarks:GlobalRead`) und die Rechte-Regeln stehen in
   [docs/anmerkungen-plan.md](docs/anmerkungen-plan.md) – dort nachsehen, bevor du an `remarks/…` arbeitest.
+- **`Adult` statt `Father`** ([docs/lehrer-konto-plan.md](docs/lehrer-konto-plan.md)): die fachliche Zeile
+  hinter jeder Nicht-Kind-Rolle heißt **`Adult`** – an ihr hängen Autorschaft (`Exercise.AuthorAdultId`)
+  und die RWX-Rechte (`ExerciseGrant.CreatorId`). Sie hieß `Father`, trägt aber auch ein **Lehrer-Konto**
+  ohne Betreuungsauftrag. „Vater" bleibt richtig, wo ein Vater gemeint ist – etwa in
+  `SupervisorRelation.Father` als Verwandtschaftsangabe und in der Oberfläche. Der Token-Claim heißt
+  weiter `fid` (er steckt in ausgestellten Tokens), der Zugriff `User.AdultId()`. Der **Vertrag** ist
+  unverändert: `FatherResponse`, `supervisor/fathers` und `auth/father` heißen weiter so.
 - **Identität/Auth** ([Auth/](backend/Pugling.Api/Auth/)): Ein `Account` (Login/PIN-Hash) trägt über
-  `AccountProfile` **mehrere Rollen** (`ProfileRole` Creator/Supervisor/Student → `Father`/`Child`-Profil);
+  `AccountProfile` **mehrere Rollen** (`ProfileRole` Creator/Supervisor/Student → `Adult`/`Child`-Profil);
   ein Vater ist zugleich Creator+Supervisor. PIN-Login (`auth/{father|child}` oder konto-zentrisch `auth/login`)
   → JWT mit `aid` + je Rolle einem Ebenen-Claim (`Creator`/`Supervisor`/`Student`) + `fid`/`cid`. Das frühere
   Vater/Sohn-Alias wurde **entfernt**; gegated wird direkt auf die Ebenen-Rollen, `LoginResponse.role` ist
   `Supervisor` bzw. `Student` (fürs UI-Routing). `AuthAccess` prüft Eigentum OR-verknüpft je Rolle
   (`IsSupervisor`/`IsStudent`); Bestandsnutzer bekommen Konten per idempotentem `AccountBackfill`.
 - **Multi-Supervisor** ([AdminEntities.cs](backend/Pugling.Api/Models/AdminEntities.cs)): `SupervisorLink`
-  (Supervisor ⇢ Student) ersetzt die frühere 1:1-`Child.FatherId`. Ein Student hat mehrere Supervisor
+  (Supervisor ⇢ Student) ersetzt die frühere 1:1-Bindung Kind→Erwachsener. Ein Student hat mehrere Supervisor
   (Vater/Mutter/Oma), je mit eigenem Familien-Shop; **Wallet gemeinsam**, Einlösung **ausstellergebunden**
   (Momentaufnahme `SupervisorId` auf `ShopPurchase`/`ActivationRequest`).
   Betreuung: `…/supervisor/children/{id}/supervisors`.
@@ -82,8 +89,8 @@ Details: [backend/Pugling.Agent.Creator/README.md](backend/Pugling.Agent.Creator
   `InterestTag`) → `SeriesUnit`. Band und Unit liegen bewusst in **einer** Ebene (`Grade` = Band); der
   fachliche Wert steckt in `Topics`/`Grammar`/`VocabularyNotes` – **das** macht einen KI-Creator
   materialkundig, statt ihn den Stoff der Unit erfinden zu lassen. Route `api/v1/creator/textbook-series`
-  (+ `…/{id}/units`), lesen darf jeder Creator, ändern nur der Owner (`OwnerFatherId`, Muster
-  `Exercise.AuthorFatherId`, FK `SetNull`). Das **Kind** zeigt über `Textbook.SeriesId`/`CurrentUnitId`
+  (+ `…/{id}/units`), lesen darf jeder Creator, ändern nur der Owner (`OwnerAdultId`, Muster
+  `Exercise.AuthorAdultId`, FK `SetNull`). Das **Kind** zeigt über `Textbook.SeriesId`/`CurrentUnitId`
   darauf (Titel/`CurrentChapter` bleiben Rückfallebene für unkatalogisierte Werke); eine Unit muss zur
   Reihe des Buchs gehören, sonst `validation_error` – sonst bekäme der Creator den Stoff eines fremden Werks.
   Ein **`CreatorProfile`** (`api/v1/creator/profiles`) ist der *Fachlehrer*: Fach, Schulart,
@@ -217,7 +224,7 @@ Details: [backend/Pugling.Agent.Creator/README.md](backend/Pugling.Agent.Creator
   auf `EnsureCreated` zurückfallen. Die EF-Tools laufen über die Design-Time-Factory
   ([Data/PuglingDbContextFactory.cs](backend/Pugling.Api/Data/PuglingDbContextFactory.cs)), nicht über den Web-Host.
   `*.db` ist gitignored; eine alte, per `EnsureCreated` erzeugte DB einmalig löschen (wird neu migriert + geseedet).
-- **PINs sind gehasht** (`Auth/PinHasher`): `Father.Pin`/`Child.Pin` und `Account.PinHash` halten den Hash,
+- **PINs sind gehasht** (`Auth/PinHasher`): `Adult.Pin`/`Child.Pin` und `Account.PinHash` halten den Hash,
   nie den Klartext. Wer eine PIN setzt, muss durch `PinHasher.Hash` und den Hash **auf das Konto spiegeln**
   (sonst läuft der konto-zentrische `/auth/login` aus dem Takt) – siehe `ChildrenController`/`FathersController`.
   Der PIN-Login ist zusätzlich per `AddRateLimiter` gebremst (Policy `login`, über `RateLimiting:LoginEnabled`

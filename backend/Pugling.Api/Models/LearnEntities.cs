@@ -103,8 +103,8 @@ public class Exercise
     /// (gehört niemandem, entsprechend nicht editierbar). Bleibt beim Löschen des Autors erhalten
     /// (FK → <c>SetNull</c>), damit fremde Lehrpläne, die sie referenzieren, nicht brechen.
     /// </summary>
-    public int? AuthorFatherId { get; set; }
-    public Father? Author { get; set; }
+    public int? AuthorAdultId { get; set; }
+    public Adult? Author { get; set; }
 
     /// <summary>
     /// Ob die Übung <b>für alle</b> Creator ausführbar (in Lehrpläne/Klassenarbeiten aufnehmbar) ist.
@@ -122,7 +122,7 @@ public class Exercise
 
 /// <summary>
 /// Ein an einen einzelnen Creator vergebenes Recht auf eine Übung. Ersetzt das frühere 1-Autor-Modell:
-/// Der ursprüngliche <see cref="Exercise.AuthorFatherId"/> wird per Migration zum ersten <see cref="GrantPermission.Owner"/>;
+/// Der ursprüngliche <see cref="Exercise.AuthorAdultId"/> wird per Migration zum ersten <see cref="GrantPermission.Owner"/>;
 /// weitere Owner/Write/Execute-Rechte kommen über diese Tabelle hinzu (Co-Authoring, kontrollierte Weitergabe).
 /// Muster analog <see cref="SupervisorLink"/> (Surrogat-PK + eindeutiger Composite-Index, beide FKs Cascade).
 /// </summary>
@@ -131,11 +131,11 @@ public class ExerciseGrant
     public int Id { get; set; }
     public int ExerciseId { get; set; }
     public Exercise? Exercise { get; set; }
-    /// <summary>Begünstigter Creator (= <see cref="Father.Id"/>).</summary>
+    /// <summary>Begünstigter Creator (= <see cref="Adult.Id"/>).</summary>
     public int CreatorId { get; set; }
-    public Father? Creator { get; set; }
+    public Adult? Creator { get; set; }
     public GrantPermission Permission { get; set; }
     /// <summary>Audit: welcher Vater das Recht vergeben hat (null bei Migrations-Seed).</summary>
-    public int? GrantedByFatherId { get; set; }
+    public int? GrantedByAdultId { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }

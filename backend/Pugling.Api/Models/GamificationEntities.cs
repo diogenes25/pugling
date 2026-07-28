@@ -85,8 +85,8 @@ public class AchievementAward
 public class ShopArticle
 {
     public int Id { get; set; }
-    public int FatherId { get; set; }
-    public Father? Father { get; set; }
+    public int AdultId { get; set; }
+    public Adult? Adult { get; set; }
     /// <summary>Familieninterne Artikelnummer/SKU, eindeutig je Vater.</summary>
     public string ArticleNumber { get; set; } = "";
     public string Title { get; set; } = "";
@@ -168,7 +168,7 @@ public class ShopPurchase
     /// <summary>Referenz auf das Angebot; wird auf null gesetzt, falls das Angebot später gelöscht wird.</summary>
     public int? ShopListingId { get; set; }
     public ShopListing? ShopListing { get; set; }
-    /// <summary>Ausstellender Supervisor (Momentaufnahme aus <c>ShopArticle.FatherId</c>): nur er storniert.</summary>
+    /// <summary>Ausstellender Supervisor (Momentaufnahme aus <c>ShopArticle.AdultId</c>): nur er storniert.</summary>
     public int SupervisorId { get; set; }
     // Momentaufnahmen (stabile Kaufhistorie auch nach Änderung/Löschung des Angebots)
     public string ArticleNumber { get; set; } = "";
@@ -199,7 +199,7 @@ public class ActivationRequest
     /// <summary>Referenz auf den Artikel; wird auf null gesetzt, falls der Artikel später gelöscht wird.</summary>
     public int? ShopArticleId { get; set; }
     public ShopArticle? ShopArticle { get; set; }
-    /// <summary>Ausstellender Supervisor (Momentaufnahme aus <c>ShopArticle.FatherId</c>): nur er genehmigt/lehnt ab.</summary>
+    /// <summary>Ausstellender Supervisor (Momentaufnahme aus <c>ShopArticle.AdultId</c>): nur er genehmigt/lehnt ab.</summary>
     public int SupervisorId { get; set; }
     /// <summary>Beantragte Menge in der Einheit des Artikels (z. B. 10 Minuten).</summary>
     public int RequestedQuantity { get; set; }

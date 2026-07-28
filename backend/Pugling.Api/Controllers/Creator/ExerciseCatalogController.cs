@@ -46,7 +46,7 @@ public class ExerciseCatalogController(PuglingDbContext db) : ControllerBase
         [FromQuery] bool? mineOnly, [FromQuery] string? sort = null, [FromQuery] string? dir = null,
         [FromQuery] int skip = 0, [FromQuery] int take = PagingExtensions.DefaultTake)
     {
-        var fid = User.FatherId();
+        var fid = User.AdultId();
         var isAdmin = User.IsAdmin();
         var query = db.Exercises.AsNoTracking().AsQueryable();
 
@@ -86,7 +86,7 @@ public class ExerciseCatalogController(PuglingDbContext db) : ControllerBase
         return await ApplySort(query, SortingExtensions.ParseSort(sort, dir))
             .Select(e => new ExerciseSummary(e.Id, e.ChapterId, e.Chapter!.SubjectId, e.Type, e.Title,
                 e.GradeMin, e.GradeMax, e.SchoolTypes, e.Source, e.CategoryId, e.Category!.Name,
-                e.AuthorFatherId, e.Author!.Name,
+                e.AuthorAdultId, e.Author!.Name,
                 // IsOwn = darf ändern (Owner/Write-Grant); IsOwner = darf verwalten (Owner-Grant). Admin sieht beides als true.
                 isAdmin || (fid != null && e.Grants.Any(g => g.CreatorId == fid
                     && (g.Permission == GrantPermission.Owner || g.Permission == GrantPermission.Write))),
@@ -135,13 +135,13 @@ public class ExerciseCatalogController(PuglingDbContext db) : ControllerBase
             .FirstOrDefaultAsync(x => x.Id == id);
         if (e is null) return NotFound();
 
-        var fid = User.FatherId();
+        var fid = User.AdultId();
         var isAdmin = User.IsAdmin();
         return new ExerciseDetail(e.Id, e.ChapterId, e.Chapter?.Name ?? "", e.Chapter?.SubjectId ?? 0,
             e.Chapter?.Subject?.Name ?? "", e.Type.ToString(), e.Title, e.OrderIndex, e.RewardPoints,
             e.GradeMin, e.GradeMax, e.SchoolTypes, e.Source, e.CategoryId, e.Category?.Name,
             e.SuggestedBonus, e.DefaultStage, e.DefaultItemCount,
-            e.AuthorFatherId, e.Author?.Name,
+            e.AuthorAdultId, e.Author?.Name,
             ExercisePermissionService.CanWrite(e.Grants, fid, isAdmin), ExercisePermissionService.CanAdminister(e.Grants, fid, isAdmin),
             e.ExecutePublic, e.Grants.Count,
             JsonSerializer.Deserialize<JsonElement>(string.IsNullOrWhiteSpace(e.ConfigJson) ? "{}" : e.ConfigJson, JsonOptions),
@@ -170,7 +170,7 @@ public class ExerciseCatalogController(PuglingDbContext db) : ControllerBase
     {
         var e = await db.Exercises.Include(x => x.Grants).FirstOrDefaultAsync(x => x.Id == id, ct);
         if (e is null) return NotFound();
-        if (!ExercisePermissionService.CanAdminister(e.Grants, User.FatherId(), User.IsAdmin()))
+        if (!ExercisePermissionService.CanAdminister(e.Grants, User.AdultId(), User.IsAdmin()))
             return this.ProblemWithCode(ApiErrors.NotOwner, "Only an owner can share or withdraw this exercise.");
 
         e.ExecutePublic = dto.ExecutePublic;
@@ -195,7 +195,7 @@ public class ExerciseCatalogController(PuglingDbContext db) : ControllerBase
     public async Task<ActionResult<UsageResponse>> Usage(int id, CancellationToken ct)
     {
         if (!await db.Exercises.AnyAsync(e => e.Id == id, ct)) return NotFound();
-        var fid = User.FatherId();
+        var fid = User.AdultId();
 
         var plans = (await db.PlanPositions.AsNoTracking()
                 .Where(p => p.ExerciseId == id && p.StudyPlan!.Child!.SupervisorLinks.Any(l => l.SupervisorId == fid))

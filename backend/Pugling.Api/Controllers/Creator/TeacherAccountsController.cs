@@ -17,8 +17,8 @@ namespace Pugling.Api.Controllers.Creator;
 /// (docs/grundprinzip.md). Ein Konto trägt je Rolle ein <see cref="AccountProfile"/>; ein Vater bekommt
 /// Creator <b>und</b> Supervisor, ein Lehrer nur Creator. Damit fehlt seinem Token der Supervisor-Claim, und
 /// alle Betreuungs-Endpunkte weisen ihn über ihr vorhandenes <c>[Authorize(Roles = Roles.Supervisor)]</c> ab
-/// – ohne eine einzige Sonderregel. Autorschaft (<c>Exercise.AuthorFatherId</c>) und RWX-Rechte
-/// (<c>ExerciseGrant.CreatorId</c>) hängen weiter an derselben <see cref="Father"/>-Zeile, weshalb Anlegen,
+/// – ohne eine einzige Sonderregel. Autorschaft (<c>Exercise.AuthorAdultId</c>) und RWX-Rechte
+/// (<c>ExerciseGrant.CreatorId</c>) hängen weiter an derselben <see cref="Adult"/>-Zeile, weshalb Anlegen,
 /// Rechtevergabe, Freigabe und Rücknahme unverändert funktionieren.
 /// </para>
 /// <para>
@@ -47,13 +47,13 @@ public class TeacherAccountsController(PuglingDbContext db, AccountService accou
 
         // Die PIN wird gehasht (PinHasher) und auf das Konto gespiegelt – sonst liefe der konto-zentrische
         // Login aus dem Takt. Genau dieselbe Regel wie bei Vater und Kind.
-        var teacher = new Father
+        var teacher = new Adult
         {
             Name = dto.Name.Trim(),
             Email = dto.Email,
             Pin = string.IsNullOrEmpty(dto.Pin) ? "" : PinHasher.Hash(dto.Pin),
         };
-        db.Fathers.Add(teacher);
+        db.Adults.Add(teacher);
         await db.SaveChangesAsync(ct);
 
         var account = await accounts.EnsureForTeacherAsync(teacher, ct);
@@ -72,12 +72,12 @@ public class TeacherAccountsController(PuglingDbContext db, AccountService accou
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<TeacherAccountResponse>> Get(int creatorId, CancellationToken ct)
     {
-        if (User.FatherId() != creatorId) return Forbid();
+        if (User.AdultId() != creatorId) return Forbid();
 
-        var teacher = await db.Fathers.AsNoTracking().FirstOrDefaultAsync(f => f.Id == creatorId, ct);
+        var teacher = await db.Adults.AsNoTracking().FirstOrDefaultAsync(f => f.Id == creatorId, ct);
         if (teacher is null) return NotFound();
         var account = await db.Accounts.AsNoTracking().Include(a => a.Profiles)
-            .FirstOrDefaultAsync(a => a.Profiles.Any(p => p.FatherId == creatorId), ct);
+            .FirstOrDefaultAsync(a => a.Profiles.Any(p => p.AdultId == creatorId), ct);
         if (account is null) return NotFound();
 
         var roles = account.Profiles.Select(p => p.Role.ToString()).Distinct().ToList();

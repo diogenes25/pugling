@@ -59,7 +59,7 @@ public class ShopService(PuglingDbContext db, WalletService wallet)
     {
         var query = db.ShopListings
             .Include(l => l.ShopArticle)
-            .Where(l => l.ShopArticle!.FatherId == fatherId);
+            .Where(l => l.ShopArticle!.AdultId == fatherId);
         if (activeOnly) query = query.Where(l => l.Active);
 
         var listings = await query
@@ -77,7 +77,7 @@ public class ShopService(PuglingDbContext db, WalletService wallet)
         db.ChangeTracker.Clear();
         var fresh = db.ShopListings.AsNoTracking()
             .Include(l => l.ShopArticle)
-            .Where(l => l.ShopArticle!.FatherId == fatherId);
+            .Where(l => l.ShopArticle!.AdultId == fatherId);
         if (activeOnly) fresh = fresh.Where(l => l.Active);
         return await fresh
             .OrderByDescending(l => l.Active)
@@ -88,18 +88,18 @@ public class ShopService(PuglingDbContext db, WalletService wallet)
 
     /// <summary>
     /// Lädt die Angebote ALLER Supervisor des Studenten (gemeinsame Shop-Sicht des Kindes), wendet fällige
-    /// Refill-Regeln idempotent an und liefert sie gruppierbar je Aussteller (<see cref="ShopArticle.FatherId"/>).
+    /// Refill-Regeln idempotent an und liefert sie gruppierbar je Aussteller (<see cref="ShopArticle.AdultId"/>).
     /// </summary>
     public async Task<IReadOnlyList<ShopListing>> ListingsForStudentAsync(
         int childId, bool activeOnly, DateTime nowUtc, CancellationToken ct = default)
     {
         var query = db.ShopListings
             .Include(l => l.ShopArticle)
-            .Where(l => db.SupervisorLinks.Any(sl => sl.StudentId == childId && sl.SupervisorId == l.ShopArticle!.FatherId));
+            .Where(l => db.SupervisorLinks.Any(sl => sl.StudentId == childId && sl.SupervisorId == l.ShopArticle!.AdultId));
         if (activeOnly) query = query.Where(l => l.Active);
 
         var listings = await query
-            .OrderBy(l => l.ShopArticle!.FatherId)
+            .OrderBy(l => l.ShopArticle!.AdultId)
             .ThenByDescending(l => l.Active)
             .ThenBy(l => l.ShopArticle!.ArticleNumber)
             .ThenBy(l => l.Id)
@@ -126,7 +126,7 @@ public class ShopService(PuglingDbContext db, WalletService wallet)
         var listing = await db.ShopListings
             .Include(l => l.ShopArticle)
             .FirstOrDefaultAsync(l => l.Id == listingId
-                && db.SupervisorLinks.Any(sl => sl.StudentId == childId && sl.SupervisorId == l.ShopArticle!.FatherId), ct);
+                && db.SupervisorLinks.Any(sl => sl.StudentId == childId && sl.SupervisorId == l.ShopArticle!.AdultId), ct);
         if (listing is null) return Result<ShopPurchase>.Fail(ShopError.NotFound);
 
         ApplyDueRefill(listing, nowUtc);
@@ -166,7 +166,7 @@ public class ShopService(PuglingDbContext db, WalletService wallet)
         {
             ChildId = childId,
             ShopListingId = listing.Id,
-            SupervisorId = article.FatherId, // Aussteller festhalten: nur er storniert.
+            SupervisorId = article.AdultId, // Aussteller festhalten: nur er storniert.
             ArticleNumber = article.ArticleNumber,
             Title = title,
             Description = listing.Description,
@@ -278,7 +278,7 @@ public class ShopService(PuglingDbContext db, WalletService wallet)
         // Aktivierung nur für einen Artikel eines betreuenden Supervisors möglich.
         var article = await db.ShopArticles.AsNoTracking()
             .FirstOrDefaultAsync(a => a.Id == articleId
-                && db.SupervisorLinks.Any(sl => sl.StudentId == childId && sl.SupervisorId == a.FatherId), ct);
+                && db.SupervisorLinks.Any(sl => sl.StudentId == childId && sl.SupervisorId == a.AdultId), ct);
         if (article is null) return Result<ActivationRequest>.Fail(ShopError.NotFound);
 
         var inventory = await db.ChildInventories
@@ -290,7 +290,7 @@ public class ShopService(PuglingDbContext db, WalletService wallet)
         {
             ChildId = childId,
             ShopArticleId = articleId,
-            SupervisorId = article.FatherId, // Aussteller festhalten: nur er genehmigt/lehnt ab.
+            SupervisorId = article.AdultId, // Aussteller festhalten: nur er genehmigt/lehnt ab.
             RequestedQuantity = quantity,
             ArticleTitle = article.Title,
             UnitType = article.UnitType,

@@ -22,26 +22,26 @@ public class FathersController(PuglingDbContext db, AccountService accounts) : C
     [NonAction]
     public void OnActionExecuting(ActionExecutingContext context)
     {
-        if (context.ActionArguments.TryGetValue("fatherId", out var v) && v is int fid && User.FatherId() != fid)
+        if (context.ActionArguments.TryGetValue("fatherId", out var v) && v is int fid && User.AdultId() != fid)
             context.Result = Forbid();
     }
     [NonAction]
     public void OnActionExecuted(ActionExecutedContext context) { }
 
-    IQueryable<FatherResponse> Project(IQueryable<Father> q) =>
+    IQueryable<FatherResponse> Project(IQueryable<Adult> q) =>
         q.Select(f => new FatherResponse(f.Id, f.Name, f.Email, f.CreatedAt, f.SupervisedLinks.Count));
 
     /// <summary>Der eigene Vater-Datensatz (Selbstauskunft).</summary>
     [HttpGet]
     public async Task<IEnumerable<FatherResponse>> List() =>
-        await Project(db.Fathers.Where(f => f.Id == User.FatherId())).ToListAsync();
+        await Project(db.Adults.Where(f => f.Id == User.AdultId())).ToListAsync();
 
     /// <summary>Ein einzelner Vater.</summary>
     [HttpGet("{fatherId:int}")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<FatherResponse>> Get(int fatherId)
     {
-        var father = await Project(db.Fathers.Where(f => f.Id == fatherId)).FirstOrDefaultAsync();
+        var father = await Project(db.Adults.Where(f => f.Id == fatherId)).FirstOrDefaultAsync();
         return father is null ? NotFound() : father;
     }
 
@@ -54,8 +54,8 @@ public class FathersController(PuglingDbContext db, AccountService accounts) : C
     {
         if (string.IsNullOrWhiteSpace(dto.Name)) return this.ProblemWithCode(ApiErrors.ValidationError, "Name is required.");
 
-        var father = new Father { Name = dto.Name.Trim(), Email = dto.Email, Pin = string.IsNullOrEmpty(dto.Pin) ? "" : PinHasher.Hash(dto.Pin) };
-        db.Fathers.Add(father);
+        var father = new Adult { Name = dto.Name.Trim(), Email = dto.Email, Pin = string.IsNullOrEmpty(dto.Pin) ? "" : PinHasher.Hash(dto.Pin) };
+        db.Adults.Add(father);
         await db.SaveChangesAsync();
         // Login-Konto (Creator+Supervisor) sofort anlegen, damit der neue Vater sich einloggen kann.
         await accounts.EnsureForFatherAsync(father);
@@ -69,7 +69,7 @@ public class FathersController(PuglingDbContext db, AccountService accounts) : C
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<FatherResponse>> Update(int fatherId, UpdateFatherDto dto)
     {
-        var father = await db.Fathers.FirstOrDefaultAsync(f => f.Id == fatherId);
+        var father = await db.Adults.FirstOrDefaultAsync(f => f.Id == fatherId);
         if (father is null) return NotFound();
 
         if (dto.Name is not null) father.Name = dto.Name.Trim();
@@ -82,7 +82,7 @@ public class FathersController(PuglingDbContext db, AccountService accounts) : C
         }
         await db.SaveChangesAsync();
 
-        return (await Project(db.Fathers.Where(f => f.Id == fatherId)).FirstAsync());
+        return (await Project(db.Adults.Where(f => f.Id == fatherId)).FirstAsync());
     }
 
     /// <summary>Löscht einen Vater samt aller Kinder, Fächer, Kapitel und Lektionen.</summary>
@@ -91,9 +91,9 @@ public class FathersController(PuglingDbContext db, AccountService accounts) : C
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(int fatherId)
     {
-        var father = await db.Fathers.FindAsync(fatherId);
+        var father = await db.Adults.FindAsync(fatherId);
         if (father is null) return NotFound();
-        db.Fathers.Remove(father);
+        db.Adults.Remove(father);
         await db.SaveChangesAsync();
         return NoContent();
     }

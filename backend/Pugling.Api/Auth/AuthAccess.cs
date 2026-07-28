@@ -17,17 +17,21 @@ public static class Roles
     public const string Student = "Student";
     /// <summary>Plattform-Superuser (Break-Glass). Umgeht die RWX-Rechteprüfung auf Übungen – z. B. um
     /// verwaiste (ownerlose) Übungen im Notfall zu bearbeiten. Wird nicht per API vergeben, sondern über
-    /// das Flag <see cref="Father.IsAdmin"/> (DB/Seed) gesetzt und beim Login als Rollen-Claim ausgestellt.</summary>
+    /// das Flag <see cref="Adult.IsAdmin"/> (DB/Seed) gesetzt und beim Login als Rollen-Claim ausgestellt.</summary>
     public const string Admin = "Admin";
 }
 
 /// <summary>Zugriff auf Identität aus dem JWT.</summary>
 public static class ClaimsPrincipalExtensions
 {
-    // Entität-IDs aus dem Token: fid trägt heute sowohl das Creator- als auch das Supervisor-Profil
-    // (ein Haushalt = ein Father); cid trägt das Student-Profil. (Father/Child sind die Fach-Entitäten,
+    // Entität-IDs aus dem Token: fid trägt sowohl das Creator- als auch das Supervisor-Profil
+    // (ein Erwachsener = ein Adult); cid trägt das Student-Profil. (Adult/Child sind die Fach-Entitäten,
     // nicht die Rollen – die Rollen heißen Creator/Supervisor/Student.)
-    public static int? FatherId(this ClaimsPrincipal u) => int.TryParse(u.FindFirstValue("fid"), out var v) ? v : null;
+    //
+    // Der Claim heißt weiterhin `fid`, obwohl die Entität `Adult` heißt: er steht in bereits ausgestellten
+    // Tokens. Ihn umzubenennen würde jede offene Sitzung ungültig machen – für einen Namen, den niemand
+    // sieht. Der Zugriff heißt `AdultId()`, damit der Code die richtige Sprache spricht.
+    public static int? AdultId(this ClaimsPrincipal u) => int.TryParse(u.FindFirstValue("fid"), out var v) ? v : null;
     public static int? ChildId(this ClaimsPrincipal u) => int.TryParse(u.FindFirstValue("cid"), out var v) ? v : null;
 
     /// <summary>
@@ -43,8 +47,8 @@ public static class ClaimsPrincipalExtensions
     public static bool IsStudent(this ClaimsPrincipal u) => u.IsInRole(Roles.Student);
     /// <summary>Plattform-Superuser (Break-Glass, siehe <see cref="Roles.Admin"/>).</summary>
     public static bool IsAdmin(this ClaimsPrincipal u) => u.IsInRole(Roles.Admin);
-    public static int? SupervisorId(this ClaimsPrincipal u) => u.FatherId();
-    public static int? CreatorId(this ClaimsPrincipal u) => u.FatherId();
+    public static int? SupervisorId(this ClaimsPrincipal u) => u.AdultId();
+    public static int? CreatorId(this ClaimsPrincipal u) => u.AdultId();
     public static int? StudentId(this ClaimsPrincipal u) => u.ChildId();
 
     /// <summary>
@@ -53,7 +57,7 @@ public static class ClaimsPrincipalExtensions
     /// damit beide nicht auseinanderdriften.
     /// </summary>
     public static bool Owns(this ClaimsPrincipal u, Exercise exercise) =>
-        IsOwnedBy(exercise.AuthorFatherId, u.FatherId());
+        IsOwnedBy(exercise.AuthorAdultId, u.AdultId());
 
     /// <summary>
     /// Reiner Eigentums-Vergleich (für Hot-Paths/Projektionen, wo der <c>fid</c> einmal ermittelt wird):

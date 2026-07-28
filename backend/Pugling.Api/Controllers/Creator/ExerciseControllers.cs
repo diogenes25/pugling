@@ -120,7 +120,7 @@ public class VocabularyController(PuglingDbContext db, ExerciseTypeRegistry regi
                 "No vocabulary matched these tags; the exercise was left unchanged.");
 
         await items.ReconcileAsync(exercise.Id, hitIds.Select(id => new DesiredItem(id, null)).ToList());
-        return Map(exercise, User.FatherId());
+        return Map(exercise, User.AdultId());
     }
 
     // ---- Einzel-Items (Vokabelpaare) als eigene Sub-Ressource -----------------------------------------

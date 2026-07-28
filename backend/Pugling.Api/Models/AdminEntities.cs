@@ -1,7 +1,7 @@
 namespace Pugling.Api.Models;
 
 // Admin-Bereich: Personen-Verwaltung.
-//   Supervisor (Father) >-< Student (Child) über SupervisorLink (ein Student kann mehrere Supervisor haben)
+//   Supervisor (Adult) >-< Student (Child) über SupervisorLink (ein Student kann mehrere Supervisor haben)
 //   + Punkte pro Kind (ein gemeinsames Wallet über alle Supervisor).
 // Der Lern-Inhalt (Subject -> Chapter -> Exercise) liegt separat im gemeinsamen
 // learn-Katalog (siehe LearnEntities.cs).
@@ -12,14 +12,14 @@ namespace Pugling.Api.Models;
 /// Betreuungs-Beziehung Supervisor↔Student. Ein Student kann mehrere Supervisor haben (Vater, Mutter,
 /// Oma …); jeder betreibt seinen eigenen Familien-Shop. Das Wallet bleibt <b>gemeinsam</b> – die
 /// Zuordnung „wer löst ein" liegt am Kauf (siehe <see cref="ShopPurchase"/> mit Aussteller-Snapshot),
-/// nicht am Geld. Ersetzt die frühere 1:1-Bindung <c>Child.FatherId</c>.
+/// nicht am Geld. Ersetzt die frühere 1:1-Bindung <c>Child.AdultId</c>.
 /// </summary>
 public class SupervisorLink
 {
     public int Id { get; set; }
-    /// <summary>Der betreuende Erwachsene (heute ein <see cref="Father"/>-Profil).</summary>
+    /// <summary>Der betreuende Erwachsene (heute ein <see cref="Adult"/>-Profil).</summary>
     public int SupervisorId { get; set; }
-    public Father? Supervisor { get; set; }
+    public Adult? Supervisor { get; set; }
     /// <summary>Der betreute Lernende (ein <see cref="Child"/>-Profil).</summary>
     public int StudentId { get; set; }
     public Child? Student { get; set; }
@@ -27,8 +27,19 @@ public class SupervisorLink
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }
 
-/// <summary>Elternteil / Verwalter (Supervisor-Profil) im Admin-Bereich.</summary>
-public class Father
+/// <summary>
+/// Ein <b>Erwachsener</b>: die fachliche Zeile hinter jeder Nicht-Kind-Rolle. An ihr hängen Autorschaft
+/// (<see cref="Exercise.AuthorAdultId"/>) und die RWX-Rechte (<see cref="ExerciseGrant.CreatorId"/>).
+///
+/// <para>
+/// Hieß bis 2026-07-29 <c>Adult</c> – zu eng: dieselbe Zeile trägt auch ein <b>Lehrer-Konto</b>, das kein
+/// Kind betreut (siehe docs/lehrer-konto-plan.md). Ob jemand betreut, entscheidet nicht der Typ, sondern
+/// die Rolle seines Kontos (<see cref="AccountProfile"/>) und die <see cref="SupervisorLink"/>s.
+/// „Vater" bleibt richtig, wo tatsächlich ein Vater gemeint ist – etwa in
+/// <see cref="SupervisorRelation.Father"/> als Verwandtschaftsangabe.
+/// </para>
+/// </summary>
+public class Adult
 {
     public int Id { get; set; }
     public string Name { get; set; } = "";

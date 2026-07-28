@@ -68,11 +68,11 @@ public static class Seed
         // sauberer Ausgangszustand (u. a. für die Tests, die dort ihre eigenen Pläne/Ziele aufbauen),
         // während dieses reichhaltige Frontend-Testdaten-Set isoliert daneben liegt. Get-or-create,
         // damit ein Nachlauf auf befüllter DB weder dupliziert noch fremde Accounts anfasst.
-        var demoFather = db.Fathers.FirstOrDefault(f => f.Email == demoFatherEmail);
+        var demoFather = db.Adults.FirstOrDefault(f => f.Email == demoFatherEmail);
         if (demoFather is null)
         {
-            demoFather = new Father { Name = "Demo-Vater", Email = demoFatherEmail, Pin = Auth.PinHasher.Hash("0001") };
-            db.Fathers.Add(demoFather);
+            demoFather = new Adult { Name = "Demo-Vater", Email = demoFatherEmail, Pin = Auth.PinHasher.Hash("0001") };
+            db.Adults.Add(demoFather);
             db.SaveChanges();
         }
 
@@ -257,7 +257,7 @@ public static class Seed
 
     /// <summary>
     /// Macht das Kern-Szenario greifbar: ein <b>Englischlehrer</b> (eigener Vater-Account) legt Übungen auf
-    /// Niveau der 9. Klasse Gymnasium an – mit gesetztem <see cref="Exercise.AuthorFatherId"/>. Weil der Katalog
+    /// Niveau der 9. Klasse Gymnasium an – mit gesetztem <see cref="Exercise.AuthorAdultId"/>. Weil der Katalog
     /// global ist, finden andere Väter diese Übungen über die Suche (Fach Englisch, Klasse 9, Gymnasium) und
     /// übernehmen sie als Positionen in eigene Lehrpläne; ändern/löschen darf sie aber nur der Lehrer selbst.
     /// Additiv-idempotent: der Lehrer-Account wird bei Bedarf angelegt, die Demo-Inhalte werden nur
@@ -281,11 +281,11 @@ public static class Seed
 
         // Der Lehrer-Account (Login mit dieser Id + PIN 9999). Ohne Kinder – er kuratiert nur den Katalog.
         // Get-or-create, damit ein bereits vorhandener Account wiederverwendet statt dupliziert wird.
-        var teacher = db.Fathers.FirstOrDefault(f => f.Email == teacherEmail);
+        var teacher = db.Adults.FirstOrDefault(f => f.Email == teacherEmail);
         if (teacher is null)
         {
-            teacher = new Father { Name = "Herr Schmidt (Englischlehrer)", Email = teacherEmail, Pin = Auth.PinHasher.Hash("9999") };
-            db.Fathers.Add(teacher);
+            teacher = new Adult { Name = "Herr Schmidt (Englischlehrer)", Email = teacherEmail, Pin = Auth.PinHasher.Hash("9999") };
+            db.Adults.Add(teacher);
             db.SaveChanges();
         }
 
@@ -302,7 +302,7 @@ public static class Seed
         var vocab = new Exercise
         {
             ChapterId = chapter.Id,
-            AuthorFatherId = teacher.Id,
+            AuthorAdultId = teacher.Id,
             Type = ExerciseTypeKeys.Vocabulary,
             Title = "Vocabulary: The environment",
             OrderIndex = 1,
@@ -333,7 +333,7 @@ public static class Seed
         var conditionals = new Exercise
         {
             ChapterId = chapter.Id,
-            AuthorFatherId = teacher.Id,
+            AuthorAdultId = teacher.Id,
             Type = ExerciseTypeKeys.Cloze,
             Title = "Grammar: Conditional sentences (type II)",
             OrderIndex = 2,
@@ -358,7 +358,7 @@ public static class Seed
         var translation = new Exercise
         {
             ChapterId = chapter.Id,
-            AuthorFatherId = teacher.Id,
+            AuthorAdultId = teacher.Id,
             Type = ExerciseTypeKeys.Translation,
             Title = "Translation: Talking about the future",
             OrderIndex = 3,
@@ -642,7 +642,7 @@ public static class Seed
     {
         if (db.ShopArticles.Any()) return;
 
-        var father = db.Fathers.OrderBy(f => f.Id).FirstOrDefault();
+        var father = db.Adults.OrderBy(f => f.Id).FirstOrDefault();
         if (father is null) return;
 
         // ── Artikel 1: Fernsehzeit ──────────────────────────────────────────────
@@ -650,7 +650,7 @@ public static class Seed
         // Zwei Listings zeigen das „kleines Paket vs. Sparpaket"-Muster.
         var tv = new ShopArticle
         {
-            FatherId = father.Id,
+            AdultId = father.Id,
             ArticleNumber = "TV-001",
             Title = "Fernsehzeit",
             Description = "Bildschirmzeit nach dem Lernen – täglich abrufbar.",
@@ -685,7 +685,7 @@ public static class Seed
         // Wöchentliches Kontingent (montags aufgefüllt), höhere Coinkosten.
         var gaming = new ShopArticle
         {
-            FatherId = father.Id,
+            AdultId = father.Id,
             ArticleNumber = "GAME-001",
             Title = "Spielzeit",
             Description = "Konsolen- oder PC-Spielzeit; wöchentliches Budgetmodell.",
@@ -723,7 +723,7 @@ public static class Seed
         // Zeigt, dass Gems einen Artikel exklusiver machen können.
         var sweets = new ShopArticle
         {
-            FatherId = father.Id,
+            AdultId = father.Id,
             ArticleNumber = "SWEET-001",
             Title = "Süßigkeiten",
             Description = "Kleine Nascherei als Lernanreiz – z. B. Gummibären oder Schokolade.",
@@ -748,7 +748,7 @@ public static class Seed
         // Stückzahl (Mal), kein Auto-Refill, hoher Preis → langfristiges Sparziel.
         var cinema = new ShopArticle
         {
-            FatherId = father.Id,
+            AdultId = father.Id,
             ArticleNumber = "EVENT-001",
             Title = "Kino-Ausflug",
             Description = "Gemeinsam ins Kino – der Sohn sucht den Film aus.",
@@ -787,9 +787,9 @@ public static class Seed
 
     private static void SeedAdmin(PuglingDbContext db)
     {
-        if (db.Fathers.Any()) return;
+        if (db.Adults.Any()) return;
 
-        var father = new Father { Name = "Papa", Email = "papa@example.com", Pin = Auth.PinHasher.Hash("0000") };
+        var father = new Adult { Name = "Papa", Email = "papa@example.com", Pin = Auth.PinHasher.Hash("0000") };
         var child = new Child
         {
             Name = "Sohn",
@@ -808,10 +808,10 @@ public static class Seed
                 new ChildPointsEntry { Amount = 300, Kind = PointKind.Achievement, Reason = "Willkommens-Gems" },
             }
         };
-        db.Fathers.Add(father);
+        db.Adults.Add(father);
         db.Children.Add(child);
         db.SaveChanges();
-        // Betreuung Papa → Sohn (ersetzt die frühere Child.FatherId-Bindung).
+        // Betreuung Papa → Sohn (ersetzt die frühere Child.AdultId-Bindung).
         db.SupervisorLinks.Add(new SupervisorLink { SupervisorId = father.Id, StudentId = child.Id, Relation = SupervisorRelation.Father });
         db.SaveChanges();
     }

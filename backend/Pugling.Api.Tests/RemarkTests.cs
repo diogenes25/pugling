@@ -647,7 +647,7 @@ public class RemarkTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWe
     }
 
     /// <summary>
-    /// Registriert einen Vater <b>mit</b> <c>Father.IsAdmin</c> und liefert dessen Id – für den Nachweis, dass
+    /// Registriert einen Vater <b>mit</b> <c>Adult.IsAdmin</c> und liefert dessen Id – für den Nachweis, dass
     /// die Rolle als Break-Glass weiterhin trägt, auch wenn der Schalter aus ist.
     /// <para>
     /// Bewusst ein <b>eigenes</b> Konto und kein geseedetes: Die Factory ist über die Testklasse geteilt, und
@@ -661,7 +661,7 @@ public class RemarkTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWe
         var id = await RegisterFatherAsync("Admin-Vater", pin);
         using var scope = _factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
-        var father = await db.Fathers.FirstAsync(f => f.Id == id);
+        var father = await db.Adults.FirstAsync(f => f.Id == id);
         father.IsAdmin = true;
         await db.SaveChangesAsync();
         return id;

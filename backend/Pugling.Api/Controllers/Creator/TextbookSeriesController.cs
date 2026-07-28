@@ -30,8 +30,8 @@ public class TextbookSeriesController(PuglingDbContext db) : ControllerBase
     /// </summary>
     private static IQueryable<TextbookSeriesResponse> Project(IQueryable<TextbookSeries> q, int? fid) =>
         q.Select(s => new TextbookSeriesResponse(s.Id, s.Name, s.Slug, s.Publisher, s.SubjectName, s.SubjectId,
-            s.SchoolTypes, s.SourceLanguage, s.TargetLanguage, s.Notes, s.OwnerFatherId,
-            fid != null && s.OwnerFatherId == fid, s.Units.Count, s.CreatedAt));
+            s.SchoolTypes, s.SourceLanguage, s.TargetLanguage, s.Notes, s.OwnerAdultId,
+            fid != null && s.OwnerAdultId == fid, s.Units.Count, s.CreatedAt));
 
     /// <summary>
     /// Alle Reihen (alphabetisch), optional gefiltert. Die Gesamtzahl vor dem Paging steht im Header
@@ -57,7 +57,7 @@ public class TextbookSeriesController(PuglingDbContext db) : ControllerBase
             query = query.Where(s => s.Name.Contains(search) || s.Slug.Contains(search)
                                      || (s.Publisher != null && s.Publisher.Contains(search)));
         if (subjectId is int sid) query = query.Where(s => s.SubjectId == sid);
-        if (mineOnly is true) query = query.Where(s => s.OwnerFatherId == fid);
+        if (mineOnly is true) query = query.Where(s => s.OwnerAdultId == fid);
 
         return await Project(query.OrderBy(s => s.Name).ThenBy(s => s.Id), fid)
             .ToPagedListAsync(Response, skip, take);
@@ -106,7 +106,7 @@ public class TextbookSeriesController(PuglingDbContext db) : ControllerBase
             SourceLanguage = Trimmed(dto.SourceLanguage),
             TargetLanguage = Trimmed(dto.TargetLanguage),
             Notes = Trimmed(dto.Notes),
-            OwnerFatherId = fid,
+            OwnerAdultId = fid,
         };
         db.TextbookSeries.Add(series);
         await db.SaveChangesAsync();
@@ -125,7 +125,7 @@ public class TextbookSeriesController(PuglingDbContext db) : ControllerBase
         var series = await db.TextbookSeries.FirstOrDefaultAsync(s => s.Id == seriesId);
         if (series is null) return NotFound();
         var fid = User.CreatorId();
-        if (!ClaimsPrincipalExtensions.IsOwnedBy(series.OwnerFatherId, fid))
+        if (!ClaimsPrincipalExtensions.IsOwnedBy(series.OwnerAdultId, fid))
             return this.ProblemWithCode(ApiErrors.NotOwner, "Only the owner may change this textbook series.");
         if (dto.SubjectId is int sid && !await db.Subjects.AnyAsync(s => s.Id == sid))
             return this.ProblemWithCode(ApiErrors.InvalidReference, "SubjectId does not reference an existing subject.");
@@ -160,7 +160,7 @@ public class TextbookSeriesController(PuglingDbContext db) : ControllerBase
     {
         var series = await db.TextbookSeries.FirstOrDefaultAsync(s => s.Id == seriesId);
         if (series is null) return NotFound();
-        if (!ClaimsPrincipalExtensions.IsOwnedBy(series.OwnerFatherId, User.CreatorId()))
+        if (!ClaimsPrincipalExtensions.IsOwnedBy(series.OwnerAdultId, User.CreatorId()))
             return this.ProblemWithCode(ApiErrors.NotOwner, "Only the owner may delete this textbook series.");
 
         db.TextbookSeries.Remove(series);

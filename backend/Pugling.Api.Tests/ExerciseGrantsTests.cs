@@ -47,7 +47,7 @@ public class ExerciseGrantsTests(PuglingWebAppFactory factory) : IClassFixture<P
     {
         using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
-        db.Fathers.First(f => f.Id == fatherId).IsAdmin = true;
+        db.Adults.First(f => f.Id == fatherId).IsAdmin = true;
         db.SaveChanges();
     }
 

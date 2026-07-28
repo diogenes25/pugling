@@ -228,8 +228,8 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
         // Fremder Artikel/Angebot anlegen
         using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
-        var fremdVater = new Father { Name = "Fremd-Vater", Pin = "unused" };
-        var fremdArticle = new ShopArticle { Father = fremdVater, ArticleNumber = "F-001", Title = "Fremd" };
+        var fremdVater = new Adult { Name = "Fremd-Vater", Pin = "unused" };
+        var fremdArticle = new ShopArticle { Adult = fremdVater, ArticleNumber = "F-001", Title = "Fremd" };
         var fremdListing = new ShopListing
         {
             ShopArticle = fremdArticle,

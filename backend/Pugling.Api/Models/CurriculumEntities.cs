@@ -35,8 +35,8 @@ public class TextbookSeries
     /// <summary>Freie Notizen zum Werk (Aufbau, Besonderheiten) – Kontext für den KI-Creator.</summary>
     public string? Notes { get; set; }
     /// <summary>Wer die Reihe angelegt hat und sie ändern darf; <c>null</c> = geseedet, gehört niemandem.</summary>
-    public int? OwnerFatherId { get; set; }
-    public Father? Owner { get; set; }
+    public int? OwnerAdultId { get; set; }
+    public Adult? Owner { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     public List<SeriesUnit> Units { get; set; } = [];
@@ -82,8 +82,8 @@ public class CreatorProfile
     /// <summary>Sprechender Name, z. B. „Englisch 8 Gymnasium – Access".</summary>
     public string Name { get; set; } = "";
     /// <summary>Wer das Profil angelegt hat und es ändern darf; <c>null</c> = geseedet.</summary>
-    public int? OwnerFatherId { get; set; }
-    public Father? Owner { get; set; }
+    public int? OwnerAdultId { get; set; }
+    public Adult? Owner { get; set; }
     /// <summary>Fach als Freitext („Englisch") – für Profile ohne Katalog-Fach.</summary>
     public string? SubjectName { get; set; }
     /// <summary>Optionaler Katalog-Link auf ein <see cref="Subject"/>.</summary>

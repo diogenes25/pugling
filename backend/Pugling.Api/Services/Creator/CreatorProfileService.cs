@@ -109,7 +109,7 @@ public class CreatorProfileService(PuglingDbContext db)
 
     /// <summary>Die eine Abbildung Entität → Vertrag; auch der Controller nutzt sie.</summary>
     public static CreatorProfileResponse Map(CreatorProfile p, int? fatherId) =>
-        new(p.Id, p.Name, p.OwnerFatherId, ClaimsPrincipalExtensions.IsOwnedBy(p.OwnerFatherId, fatherId),
+        new(p.Id, p.Name, p.OwnerAdultId, ClaimsPrincipalExtensions.IsOwnedBy(p.OwnerAdultId, fatherId),
             p.SubjectName, p.SubjectId, p.SchoolTypes, p.GradeMin, p.GradeMax,
             p.SeriesId, p.Series?.Name, p.SourceLang, p.TargetLang,
             p.Persona, p.Didactics, p.DefaultTypes, p.Active, p.CreatedAt);

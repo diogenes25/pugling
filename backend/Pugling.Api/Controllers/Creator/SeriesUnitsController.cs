@@ -63,7 +63,7 @@ public class SeriesUnitsController(PuglingDbContext db) : ControllerBase
     {
         var series = await db.TextbookSeries.FirstOrDefaultAsync(s => s.Id == seriesId, ct);
         if (series is null) return NotFound();
-        if (!ClaimsPrincipalExtensions.IsOwnedBy(series.OwnerFatherId, User.CreatorId()))
+        if (!ClaimsPrincipalExtensions.IsOwnedBy(series.OwnerAdultId, User.CreatorId()))
             return this.ProblemWithCode(ApiErrors.NotOwner, "Only the owner of the series may add units.");
         if (string.IsNullOrWhiteSpace(dto.Label)) return this.ProblemWithCode(ApiErrors.ValidationError, "Label is required.");
 
@@ -94,7 +94,7 @@ public class SeriesUnitsController(PuglingDbContext db) : ControllerBase
         var unit = await db.SeriesUnits.Include(u => u.Series)
             .FirstOrDefaultAsync(u => u.Id == unitId && u.SeriesId == seriesId, ct);
         if (unit is null) return NotFound();
-        if (!ClaimsPrincipalExtensions.IsOwnedBy(unit.Series?.OwnerFatherId, User.CreatorId()))
+        if (!ClaimsPrincipalExtensions.IsOwnedBy(unit.Series?.OwnerAdultId, User.CreatorId()))
             return this.ProblemWithCode(ApiErrors.NotOwner, "Only the owner of the series may change its units.");
 
         if (dto.Label is not null)
@@ -126,7 +126,7 @@ public class SeriesUnitsController(PuglingDbContext db) : ControllerBase
         var unit = await db.SeriesUnits.Include(u => u.Series)
             .FirstOrDefaultAsync(u => u.Id == unitId && u.SeriesId == seriesId, ct);
         if (unit is null) return NotFound();
-        if (!ClaimsPrincipalExtensions.IsOwnedBy(unit.Series?.OwnerFatherId, User.CreatorId()))
+        if (!ClaimsPrincipalExtensions.IsOwnedBy(unit.Series?.OwnerAdultId, User.CreatorId()))
             return this.ProblemWithCode(ApiErrors.NotOwner, "Only the owner of the series may delete its units.");
 
         db.SeriesUnits.Remove(unit);

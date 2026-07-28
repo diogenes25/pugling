@@ -9,12 +9,12 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
     // Zeitfenster mit Punkte-Multiplikator (Leitner-Wiederholungen, siehe PointsService).
     public DbSet<TimeSlotRule> TimeSlots => Set<TimeSlotRule>();
 
-    // Identität: Login-Konto mit einer/mehreren Rollen (Creator/Supervisor/Student), entkoppelt von Father/Child.
+    // Identität: Login-Konto mit einer/mehreren Rollen (Creator/Supervisor/Student), entkoppelt von Adult/Child.
     public DbSet<Account> Accounts => Set<Account>();
     public DbSet<AccountProfile> AccountProfiles => Set<AccountProfile>();
 
     // Admin-Bereich: Personen (Supervisor >-< Student über SupervisorLink) + Punkte
-    public DbSet<Father> Fathers => Set<Father>();
+    public DbSet<Adult> Adults => Set<Adult>();
     public DbSet<Child> Children => Set<Child>();
     // Vom Kind verwendete Lehrbücher (übungsunabhängiges Profil, Grundlage für einen späteren Lehrplan-Generator).
     public DbSet<Textbook> Textbooks => Set<Textbook>();
@@ -112,18 +112,18 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
     {
         base.OnModelCreating(modelBuilder);
 
-        // Identität: Account -> AccountProfile(Rolle -> Father/Child). Rolle als String (lesbar/stabil).
+        // Identität: Account -> AccountProfile(Rolle -> Adult/Child). Rolle als String (lesbar/stabil).
         // Gefilterte Unique-Indizes verhindern doppelte Profile beim (wiederholten) Backfill.
         modelBuilder.Entity<AccountProfile>(e =>
         {
             e.Property(p => p.Role).HasConversion<string>();
             e.HasOne(p => p.Account).WithMany(a => a.Profiles)
                 .HasForeignKey(p => p.AccountId).OnDelete(DeleteBehavior.Cascade);
-            e.HasOne(p => p.Father).WithMany()
-                .HasForeignKey(p => p.FatherId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(p => p.Adult).WithMany()
+                .HasForeignKey(p => p.AdultId).OnDelete(DeleteBehavior.Cascade);
             e.HasOne(p => p.Child).WithMany()
                 .HasForeignKey(p => p.ChildId).OnDelete(DeleteBehavior.Cascade);
-            e.HasIndex(p => new { p.Role, p.FatherId }).IsUnique().HasFilter("[FatherId] IS NOT NULL");
+            e.HasIndex(p => new { p.Role, p.AdultId }).IsUnique().HasFilter("[AdultId] IS NOT NULL");
             e.HasIndex(p => new { p.Role, p.ChildId }).IsUnique().HasFilter("[ChildId] IS NOT NULL");
         });
         modelBuilder.Entity<Account>()
@@ -200,7 +200,7 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
             e.HasIndex(s => s.Slug).IsUnique();
             e.HasOne(s => s.Subject).WithMany().HasForeignKey(s => s.SubjectId)
                 .OnDelete(DeleteBehavior.SetNull);
-            e.HasOne(s => s.Owner).WithMany().HasForeignKey(s => s.OwnerFatherId)
+            e.HasOne(s => s.Owner).WithMany().HasForeignKey(s => s.OwnerAdultId)
                 .OnDelete(DeleteBehavior.SetNull);
         });
 
@@ -217,7 +217,7 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
         // das Matching filtert. Die bevorzugten Übungstypen liegen als JSON-Liste (ValueComparer wie bei Child).
         modelBuilder.Entity<CreatorProfile>(e =>
         {
-            e.HasIndex(p => new { p.OwnerFatherId, p.Name }).IsUnique().HasFilter("[OwnerFatherId] IS NOT NULL");
+            e.HasIndex(p => new { p.OwnerAdultId, p.Name }).IsUnique().HasFilter("[OwnerAdultId] IS NOT NULL");
             e.HasIndex(p => new { p.SubjectId, p.SeriesId });
             e.Property(p => p.DefaultTypes).HasConversion(
                 v => JsonSerializer.Serialize(v, JsonOptions),
@@ -227,7 +227,7 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
                 .OnDelete(DeleteBehavior.SetNull);
             e.HasOne(p => p.Series).WithMany().HasForeignKey(p => p.SeriesId)
                 .OnDelete(DeleteBehavior.SetNull);
-            e.HasOne(p => p.Owner).WithMany().HasForeignKey(p => p.OwnerFatherId)
+            e.HasOne(p => p.Owner).WithMany().HasForeignKey(p => p.OwnerAdultId)
                 .OnDelete(DeleteBehavior.SetNull);
         });
 
@@ -399,13 +399,24 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
         modelBuilder.Entity<Exercise>()
             .HasOne(e => e.Author)
             .WithMany()
-            .HasForeignKey(e => e.AuthorFatherId)
+            .HasForeignKey(e => e.AuthorAdultId)
             .OnDelete(DeleteBehavior.SetNull);
 
-        // Bislang gab es keinen Index auf den Autor; die neuen Grant-Joins und der `mineOnly`-Filter profitieren.
-        modelBuilder.Entity<Exercise>().HasIndex(e => e.AuthorFatherId);
+        /*
+         * Der DB-Default gehört ins Modell, nicht nur in eine alte Migration.
+         *
+         * `ExecutePublic` bekam seinen `DEFAULT 1` einst über `AddColumn(defaultValue: true)`. SQLite baut
+         * eine Tabelle bei jeder Spaltenumbenennung neu – und ein Neubau folgt dem **Modell**. Beim Umbau
+         * Father→Adult wäre der Default darum lautlos verschwunden; ein Fremd-`INSERT` ohne die Spalte
+         * scheiterte plötzlich. Hier steht er als Absicht: neue Übungen sind öffentlich zuweisbar, solange
+         * niemand widerspricht.
+         */
+        modelBuilder.Entity<Exercise>().Property(e => e.ExecutePublic).HasDefaultValue(true);
 
-        // RWX-Grant: Recht eines Creator auf eine Übung. Leaf auf zwei unabhängige Roots (Exercise, Father) –
+        // Bislang gab es keinen Index auf den Autor; die neuen Grant-Joins und der `mineOnly`-Filter profitieren.
+        modelBuilder.Entity<Exercise>().HasIndex(e => e.AuthorAdultId);
+
+        // RWX-Grant: Recht eines Creator auf eine Übung. Leaf auf zwei unabhängige Roots (Exercise, Adult) –
         // beide FKs Cascade, kein SQLite-Diamant (Muster wie SupervisorLink). Paar+Recht eindeutig (Idempotenz).
         modelBuilder.Entity<ExerciseGrant>(e =>
         {
@@ -602,8 +613,8 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
         // Aktivierungsanfragen: gehören zum Kind (Cascade); Artikel-Referenz SetNull für Histor stabil.
         modelBuilder.Entity<ShopArticle>(e =>
         {
-            e.HasIndex(a => new { a.FatherId, a.ArticleNumber }).IsUnique();
-            e.HasOne(a => a.Father).WithMany().HasForeignKey(a => a.FatherId).OnDelete(DeleteBehavior.Cascade);
+            e.HasIndex(a => new { a.AdultId, a.ArticleNumber }).IsUnique();
+            e.HasOne(a => a.Adult).WithMany().HasForeignKey(a => a.AdultId).OnDelete(DeleteBehavior.Cascade);
         });
         modelBuilder.Entity<ShopListing>(e =>
         {

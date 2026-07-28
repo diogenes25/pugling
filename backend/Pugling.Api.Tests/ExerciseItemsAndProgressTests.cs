@@ -85,8 +85,8 @@ public class ExerciseItemsAndProgressTests(PuglingWebAppFactory factory) : IClas
         using (var scope = _factory.Services.CreateScope())
         {
             var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
-            var other = new Father { Name = "Fremder", Email = $"fremd-{Guid.NewGuid():N}@x.de", Pin = Pugling.Api.Auth.PinHasher.Hash("2222") };
-            db.Fathers.Add(other);
+            var other = new Adult { Name = "Fremder", Email = $"fremd-{Guid.NewGuid():N}@x.de", Pin = Pugling.Api.Auth.PinHasher.Hash("2222") };
+            db.Adults.Add(other);
             db.SaveChanges();
             otherId = other.Id;
         }

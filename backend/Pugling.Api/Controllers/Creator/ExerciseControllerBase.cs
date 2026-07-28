@@ -102,7 +102,7 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db, Exerc
     /// Gibt bei fehlendem Recht ein <c>403</c>-<see cref="ProblemDetails"/> zurück, sonst <c>null</c>.
     /// </summary>
     protected ObjectResult? EnsureCanWrite(Exercise exercise) =>
-        ExercisePermissionService.CanWrite(exercise.Grants, User.FatherId(), User.IsAdmin())
+        ExercisePermissionService.CanWrite(exercise.Grants, User.AdultId(), User.IsAdmin())
             ? null
             : this.ProblemWithCode(ApiErrors.NotAuthor, "You need owner or write permission to modify this exercise.");
 
@@ -111,7 +111,7 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db, Exerc
     /// Setzt geladene Grants voraus (siehe <see cref="FindAsync"/>).
     /// </summary>
     protected ObjectResult? EnsureCanAdminister(Exercise exercise) =>
-        ExercisePermissionService.CanAdminister(exercise.Grants, User.FatherId(), User.IsAdmin())
+        ExercisePermissionService.CanAdminister(exercise.Grants, User.AdultId(), User.IsAdmin())
             ? null
             : this.ProblemWithCode(ApiErrors.NotOwner, "Only an owner can delete this exercise or manage its permissions.");
 
@@ -135,7 +135,7 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db, Exerc
         var isAdmin = User.IsAdmin();
         return new(e.Id, e.ChapterId, e.Type.ToString(), e.Title, e.OrderIndex, e.RewardPoints, e.CreatedAt, ConfigForResponse(e), e.SuggestedBonus,
             e.GradeMin, e.GradeMax, e.SchoolTypes, e.Source, e.CategoryId, e.Category?.Name,
-            e.AuthorFatherId, ExercisePermissionService.CanWrite(e.Grants, fid, isAdmin), ExercisePermissionService.CanAdminister(e.Grants, fid, isAdmin),
+            e.AuthorAdultId, ExercisePermissionService.CanWrite(e.Grants, fid, isAdmin), ExercisePermissionService.CanAdminister(e.Grants, fid, isAdmin),
             e.ExecutePublic, e.Grants.Count, e.Description,
             e.DefaultUseLeitner, e.DefaultRequireTypedTest, e.DefaultStage, e.DefaultItemCount);
     }
@@ -156,7 +156,7 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db, Exerc
         [FromQuery] int skip = 0, [FromQuery] int take = PagingExtensions.DefaultTake)
     {
         if (!await ChapterExists(subjectId, chapterId)) return NotFound();
-        var fid = User.FatherId();
+        var fid = User.AdultId();
         var isAdmin = User.IsAdmin();
 
         var query = db.Exercises
@@ -213,7 +213,7 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db, Exerc
     public async Task<ActionResult<ExerciseResponse<TConfig>>> Get(int subjectId, int chapterId, int exerciseId)
     {
         var exercise = await FindAsync(subjectId, chapterId, exerciseId);
-        return exercise is null ? NotFound() : Map(exercise, User.FatherId());
+        return exercise is null ? NotFound() : Map(exercise, User.AdultId());
     }
 
     /// <summary>Erstellt eine Übung dieses Typs im Kapitel.</summary>
@@ -253,21 +253,21 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db, Exerc
             ExecutePublic = body.ExecutePublic,
             // Autor = der anlegende Creator (Attribution). Das Editier-/Löschrecht läuft über den unten
             // angelegten Owner-Grant (RWX-Modell), damit Eigentum später übertragbar/teilbar ist.
-            AuthorFatherId = User.FatherId(),
+            AuthorAdultId = User.AdultId(),
         };
         db.Exercises.Add(exercise);
         await db.SaveChangesAsync();
 
         // Der Anleger wird erster Owner (Editier-/Lösch-/Verwaltungsrecht). Ohne fid (kein Creator-Profil)
         // bleibt die Übung ownerlos wie eine System-Übung – dann aber ohnehin nur über [Authorize] erreichbar.
-        if (User.FatherId() is int authorId)
+        if (User.AdultId() is int authorId)
         {
             var ownerGrant = new ExerciseGrant
             {
                 ExerciseId = exercise.Id,
                 CreatorId = authorId,
                 Permission = GrantPermission.Owner,
-                GrantedByFatherId = authorId,
+                GrantedByAdultId = authorId,
             };
             db.ExerciseGrants.Add(ownerGrant);
             await db.SaveChangesAsync();
@@ -282,7 +282,7 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db, Exerc
         if (exercise.CategoryId is not null)
             exercise.Category = await db.ExerciseCategories.FindAsync(exercise.CategoryId);
 
-        return CreatedAtAction(nameof(Get), new { subjectId, chapterId, exerciseId = exercise.Id }, Map(exercise, User.FatherId()));
+        return CreatedAtAction(nameof(Get), new { subjectId, chapterId, exerciseId = exercise.Id }, Map(exercise, User.AdultId()));
     }
 
     /// <summary>Ersetzt eine Übung vollständig (inkl. Config).</summary>
@@ -326,7 +326,7 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db, Exerc
             ? null
             : await db.ExerciseCategories.FindAsync(exercise.CategoryId);
 
-        return Map(exercise, User.FatherId());
+        return Map(exercise, User.AdultId());
     }
 
     /// <summary>Löscht eine Übung. Nicht möglich, solange sie in einem Lehrplan oder einer Klassenarbeit steckt.</summary>
@@ -345,7 +345,7 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db, Exerc
          * die Verwendungen, die der Aufrufer **nicht sehen kann** – vorher log ein „nirgends" in der Anzeige
          * gegen ein 409 hier, und der Autor hatte keinen Weg, den Widerspruch aufzulösen (Anmerkung 14).
          */
-        var usage = await ExerciseUsageQueries.CountBlockingAsync(db, exerciseId, User.FatherId(), ct);
+        var usage = await ExerciseUsageQueries.CountBlockingAsync(db, exerciseId, User.AdultId(), ct);
         if (usage.Any)
             return this.ProblemWithCode(ApiErrors.ExerciseInUse, ExerciseUsageQueries.Explain(usage));
         db.Exercises.Remove(exercise);

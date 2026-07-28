@@ -40,7 +40,7 @@ public class AuthController(PuglingDbContext db, TokenService tokens, AccountSer
     /// Login per fachlicher Id + PIN. Löst das Konto auf und stellt ein Mehrrollen-Token aus.
     /// <para>
     /// Trägt weiterhin den Namen <c>father</c>, weil sich nichts am Ablauf ändert – gilt aber genauso für ein
-    /// <b>Lehrer-Konto</b>: dessen Id ist ebenfalls eine <see cref="Father"/>-Id, und die Antwort nennt dann
+    /// <b>Lehrer-Konto</b>: dessen Id ist ebenfalls eine <see cref="Adult"/>-Id, und die Antwort nennt dann
     /// <c>Creator</c> statt <c>Supervisor</c>. Ein bestehendes Konto bekommt dabei keine Rolle nachgereicht
     /// (siehe <see cref="AccountService"/>), ein Lehrer wird durch das Anmelden also nicht zum Betreuer.
     /// </para>
@@ -52,7 +52,7 @@ public class AuthController(PuglingDbContext db, TokenService tokens, AccountSer
     [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
     public async Task<ActionResult<LoginResponse>> LoginFather(FatherLoginDto dto)
     {
-        var father = await db.Fathers.FirstOrDefaultAsync(f => f.Id == dto.FatherId);
+        var father = await db.Adults.FirstOrDefaultAsync(f => f.Id == dto.FatherId);
         if (father is null || !PinHasher.Verify(dto.Pin, father.Pin)) return this.ProblemWithCode(ApiErrors.InvalidCredentials, "Invalid father ID or PIN.");
 
         var account = await accounts.EnsureForFatherAsync(father);
@@ -98,8 +98,8 @@ public class AuthController(PuglingDbContext db, TokenService tokens, AccountSer
         if (account is null || !PinHasher.Verify(dto.Pin, account.PinHash)) return this.ProblemWithCode(ApiErrors.InvalidCredentials, "Invalid account ID or PIN.");
 
         // Break-Glass-Admin: gilt, wenn ein an das Konto gebundener Vater als Admin markiert ist.
-        var fatherIds = account.Profiles.Where(p => p.FatherId is not null).Select(p => p.FatherId!.Value).ToList();
-        var isAdmin = fatherIds.Count > 0 && await db.Fathers.AnyAsync(f => fatherIds.Contains(f.Id) && f.IsAdmin);
+        var fatherIds = account.Profiles.Where(p => p.AdultId is not null).Select(p => p.AdultId!.Value).ToList();
+        var isAdmin = fatherIds.Count > 0 && await db.Adults.AnyAsync(f => fatherIds.Contains(f.Id) && f.IsAdmin);
         var (token, expires) = tokens.IssueForAccount(account, account.Profiles, isAdmin);
         return new LoginResponse(token, PrimaryRoleOf(account.Profiles), account.Id, account.DisplayName, expires);
     }
@@ -117,7 +117,7 @@ public class AuthController(PuglingDbContext db, TokenService tokens, AccountSer
             : User.IsCreator() ? Roles.Creator
             : User.IsStudent() ? Roles.Student : "?",
         Roles: User.FindAll(ClaimTypes.Role).Select(c => c.Value).ToList(),
-        FatherId: User.FatherId(),
+        FatherId: User.AdultId(),
         ChildId: User.ChildId(),
         Name: User.Identity?.Name);
 
@@ -132,7 +132,7 @@ public class AuthController(PuglingDbContext db, TokenService tokens, AccountSer
     /// </para>
     /// <para>
     /// Geschrieben wird an <b>zwei</b> Stellen, weil die Identität an zwei hängt: das <see cref="Account"/>
-    /// trägt den Login, die <see cref="Father"/>-Zeile den fachlichen Namen (er erscheint als Autor an den
+    /// trägt den Login, die <see cref="Adult"/>-Zeile den fachlichen Namen (er erscheint als Autor an den
     /// Übungen). Der PIN-Hash muss ohnehin gespiegelt werden, sonst läuft der konto-zentrische Login aus dem
     /// Takt; Name und E-Mail werden hier <i>mit</i> gespiegelt – <c>FathersController</c> tat das bisher nicht,
     /// weshalb Konto- und Vater-Name auseinanderdriften konnten.
@@ -150,14 +150,14 @@ public class AuthController(PuglingDbContext db, TokenService tokens, AccountSer
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<ActionResult<MeResponse>> UpdateMe(UpdateMyAccountDto dto, CancellationToken ct)
     {
-        if (User.FatherId() is not int fid)
+        if (User.AdultId() is not int fid)
             return this.ProblemWithCode(ApiErrors.Forbidden,
                 "Only a grown-up account can manage itself; a child's name and PIN are set by its supervisor.");
         if (!int.TryParse(User.FindFirstValue("aid"), out var accountId))
             return this.ProblemWithCode(ApiErrors.Unauthorized, "The token carries no account.");
 
         var account = await db.Accounts.Include(a => a.Profiles).FirstOrDefaultAsync(a => a.Id == accountId, ct);
-        var father = await db.Fathers.FirstOrDefaultAsync(f => f.Id == fid, ct);
+        var father = await db.Adults.FirstOrDefaultAsync(f => f.Id == fid, ct);
         if (account is null || father is null) return NotFound();
 
         if (dto.Name is not null)

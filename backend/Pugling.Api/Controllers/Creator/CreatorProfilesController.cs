@@ -40,7 +40,7 @@ public class CreatorProfilesController(PuglingDbContext db, CreatorProfileServic
 
         if (subjectId is int sid) query = query.Where(p => p.SubjectId == sid);
         if (seriesId is int serId) query = query.Where(p => p.SeriesId == serId);
-        if (mineOnly is true) query = query.Where(p => p.OwnerFatherId == fid);
+        if (mineOnly is true) query = query.Where(p => p.OwnerAdultId == fid);
         if (includeInactive is not true) query = query.Where(p => p.Active);
 
         var found = await query.OrderBy(p => p.Name).ThenBy(p => p.Id).ToListAsync(ct);
@@ -93,7 +93,7 @@ public class CreatorProfilesController(PuglingDbContext db, CreatorProfileServic
         var profile = new CreatorProfile
         {
             Name = dto.Name.Trim(),
-            OwnerFatherId = User.CreatorId(),
+            OwnerAdultId = User.CreatorId(),
             SubjectName = Trimmed(dto.SubjectName),
             SubjectId = dto.SubjectId,
             SchoolTypes = dto.SchoolTypes ?? SchoolTypes.None,
@@ -125,7 +125,7 @@ public class CreatorProfilesController(PuglingDbContext db, CreatorProfileServic
         var profile = await db.CreatorProfiles.FirstOrDefaultAsync(p => p.Id == profileId, ct);
         if (profile is null) return NotFound();
         var fid = User.CreatorId();
-        if (!ClaimsPrincipalExtensions.IsOwnedBy(profile.OwnerFatherId, fid))
+        if (!ClaimsPrincipalExtensions.IsOwnedBy(profile.OwnerAdultId, fid))
             return this.ProblemWithCode(ApiErrors.NotOwner, "Only the owner may change this creator profile.");
         if (await ReferenceProblemAsync(dto.SubjectId, dto.SeriesId, ct) is { } problem) return problem;
 
@@ -174,7 +174,7 @@ public class CreatorProfilesController(PuglingDbContext db, CreatorProfileServic
     {
         var profile = await db.CreatorProfiles.FirstOrDefaultAsync(p => p.Id == profileId, ct);
         if (profile is null) return NotFound();
-        if (!ClaimsPrincipalExtensions.IsOwnedBy(profile.OwnerFatherId, User.CreatorId()))
+        if (!ClaimsPrincipalExtensions.IsOwnedBy(profile.OwnerAdultId, User.CreatorId()))
             return this.ProblemWithCode(ApiErrors.NotOwner, "Only the owner may delete this creator profile.");
 
         db.CreatorProfiles.Remove(profile);

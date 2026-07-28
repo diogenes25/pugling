@@ -22,7 +22,7 @@ public class ExercisePermissionService(PuglingDbContext db)
     public async Task<bool> CanWriteAsync(ClaimsPrincipal user, int exerciseId)
     {
         if (user.IsAdmin()) return true;
-        var fid = user.FatherId();
+        var fid = user.AdultId();
         return fid is not null && await db.ExerciseGrants.AnyAsync(g =>
             g.ExerciseId == exerciseId && g.CreatorId == fid
             && (g.Permission == GrantPermission.Owner || g.Permission == GrantPermission.Write));
@@ -32,7 +32,7 @@ public class ExercisePermissionService(PuglingDbContext db)
     public async Task<bool> CanAdministerAsync(ClaimsPrincipal user, int exerciseId)
     {
         if (user.IsAdmin()) return true;
-        var fid = user.FatherId();
+        var fid = user.AdultId();
         return fid is not null && await db.ExerciseGrants.AnyAsync(g =>
             g.ExerciseId == exerciseId && g.CreatorId == fid && g.Permission == GrantPermission.Owner);
     }
@@ -44,7 +44,7 @@ public class ExercisePermissionService(PuglingDbContext db)
     public async Task<bool> CanExecuteAsync(ClaimsPrincipal user, Exercise exercise)
     {
         if (exercise.ExecutePublic || user.IsAdmin()) return true;
-        var fid = user.FatherId();
+        var fid = user.AdultId();
         return fid is not null && await db.ExerciseGrants.AnyAsync(g =>
             g.ExerciseId == exercise.Id && g.CreatorId == fid);
     }
