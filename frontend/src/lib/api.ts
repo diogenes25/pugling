@@ -27,7 +27,8 @@ import type {
   SeriesUnitResponse, CreateSeriesUnitDto, UpdateSeriesUnitDto,
   CreatorProfileResponse, CreateCreatorProfileDto, UpdateCreatorProfileDto, CreatorProfileMatch,
   TextbookResponse, CreateTextbookDto, UpdateTextbookDto,
-  Remark, CreateRemarkDto, UpdateRemarkDto,
+  Remark, CreateRemarkDto, UpdateRemarkDto, RemarkCategory, RemarkStatus,
+  RemarkComment, CreateRemarkCommentDto, SortDir,
 } from "./types";
 import { recordHttpError, recordNetworkError } from "./remarks";
 
@@ -807,4 +808,32 @@ export const api = {
   myRemarks: (take = 10) => httpPaged<Remark>(`${V1}/remarks?mine=true&take=${take}`),
   updateRemark: (id: number, dto: UpdateRemarkDto) => http<Remark>(`${V1}/remarks/${id}`, "PATCH", dto),
   deleteRemark: (id: number) => http<void>(`${V1}/remarks/${id}`, "DELETE"),
+
+  /**
+   * Anmerkungen für die Verwaltungsseite. `scope: "all"` hebt die Konten-Grenze auf (God-Mode). Das Gate
+   * dafür ist der Server-Schalter `Remarks:GlobalRead` (Vorgabe: nur in der Entwicklung), zusätzlich
+   * erlaubt ist die Admin-Rolle; ein Student ist immer ausgeschlossen. Fehlt die Berechtigung, antwortet
+   * der Server mit `403 remark_scope_forbidden`.
+   */
+  remarks: (q: {
+    status?: RemarkStatus; category?: RemarkCategory; appArea?: string;
+    scope?: "all"; sort?: string; dir?: SortDir; skip?: number; take?: number;
+  } = {}) => {
+    const p = new URLSearchParams();
+    if (q.status) p.set("status", q.status);
+    if (q.category) p.set("category", q.category);
+    if (q.appArea) p.set("appArea", q.appArea);
+    if (q.scope) p.set("scope", q.scope);
+    if (q.sort) p.set("sort", q.sort);
+    if (q.dir) p.set("dir", q.dir);
+    p.set("skip", String(q.skip ?? 0));
+    p.set("take", String(q.take ?? 20));
+    return httpPaged<Remark>(`${V1}/remarks?${p}`);
+  },
+  /** Der Verlauf einer Anmerkung, älteste zuerst. */
+  remarkComments: (id: number) => http<RemarkComment[]>(`${V1}/remarks/${id}/comments`),
+  addRemarkComment: (id: number, dto: CreateRemarkCommentDto) =>
+    http<RemarkComment>(`${V1}/remarks/${id}/comments`, "POST", dto),
+  deleteRemarkComment: (id: number, commentId: number) =>
+    http<void>(`${V1}/remarks/${id}/comments/${commentId}`, "DELETE"),
 };

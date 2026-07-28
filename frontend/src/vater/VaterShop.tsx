@@ -1,5 +1,6 @@
 import { useId, useState } from "react";
 import { StatusBanner } from "../components/StatusBanner";
+import { FieldLabel } from "../components/InfoHint";
 import { api } from "../lib/api";
 import { useAction, type ActionState } from "../lib/useAction";
 import { useAsync } from "../lib/useAsync";
@@ -74,15 +75,15 @@ function ArticleCatalog() {
     <section>
       <h3 className="h-section">Artikel {list.data ? `(${list.data.length})` : ""}</h3>
       <form className="form-grid" onSubmit={submit} style={{ alignItems: "end" }}>
-        <div className="field" style={{ maxWidth: 140 }}><label htmlFor={`${uid}-nr`}>Artikelnummer</label>
+        <div className="field" style={{ maxWidth: 140 }}><FieldLabel htmlFor={`${uid}-nr`} topic="shopArticleNumber">Artikelnummer</FieldLabel>
           <input id={`${uid}-nr`} value={form.articleNumber} onChange={(e) => up("articleNumber", e.target.value)} placeholder="TV-001" /></div>
         <div className="field" style={{ minWidth: 180 }}><label htmlFor={`${uid}-title`}>Titel</label>
           <input id={`${uid}-title`} value={form.title} onChange={(e) => up("title", e.target.value)} placeholder="Fernsehzeit" /></div>
-        <div className="field"><label htmlFor={`${uid}-action`}>Art</label>
+        <div className="field"><FieldLabel htmlFor={`${uid}-action`} topic="shopActionType">Art</FieldLabel>
           <select id={`${uid}-action`} value={form.actionType} onChange={(e) => up("actionType", e.target.value as ActionType)}>
             {ACTION_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
           </select></div>
-        <div className="field"><label htmlFor={`${uid}-unit`}>Einheit</label>
+        <div className="field"><FieldLabel htmlFor={`${uid}-unit`} topic="shopUnitType">Einheit</FieldLabel>
           <select id={`${uid}-unit`} value={form.unitType} onChange={(e) => up("unitType", e.target.value as UnitType)}>
             {UNIT_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
           </select></div>
@@ -145,15 +146,15 @@ function ArticleRow({ article, selected, action, onToggleListings, onSaved, onRe
       <tr>
         <td colSpan={5}>
           <div className="row" style={{ gap: 8, alignItems: "flex-end", flexWrap: "wrap" }}>
-            <div className="field" style={{ maxWidth: 130 }}><label htmlFor={`${uid}-nr`}>Artikelnummer</label>
+            <div className="field" style={{ maxWidth: 130 }}><FieldLabel htmlFor={`${uid}-nr`} topic="shopArticleNumber">Artikelnummer</FieldLabel>
               <input id={`${uid}-nr`} value={form.articleNumber} onChange={(e) => setForm((f) => ({ ...f, articleNumber: e.target.value }))} /></div>
             <div className="field" style={{ minWidth: 160 }}><label htmlFor={`${uid}-title`}>Titel</label>
               <input id={`${uid}-title`} value={form.title} onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))} /></div>
-            <div className="field"><label htmlFor={`${uid}-action`}>Art</label>
+            <div className="field"><FieldLabel htmlFor={`${uid}-action`} topic="shopActionType">Art</FieldLabel>
               <select id={`${uid}-action`} value={form.actionType} onChange={(e) => setForm((f) => ({ ...f, actionType: e.target.value as ActionType }))}>
                 {ACTION_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
               </select></div>
-            <div className="field"><label htmlFor={`${uid}-unit`}>Einheit</label>
+            <div className="field"><FieldLabel htmlFor={`${uid}-unit`} topic="shopUnitType">Einheit</FieldLabel>
               <select id={`${uid}-unit`} value={form.unitType} onChange={(e) => setForm((f) => ({ ...f, unitType: e.target.value as UnitType }))}>
                 {UNIT_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
               </select></div>
@@ -229,19 +230,19 @@ function ListingManager({ article }: { article: ShopArticle }) {
       <form className="form-grid" onSubmit={submit} style={{ alignItems: "end" }}>
         <div className="field" style={{ minWidth: 150 }}><label htmlFor={`${uid}-t`}>Titel (optional)</label>
           <input id={`${uid}-t`} value={form.title ?? ""} onChange={(e) => up("title", e.target.value)} placeholder="30 Min Fernsehen" /></div>
-        <div className="field" style={{ maxWidth: 120 }}><label htmlFor={`${uid}-units`}>Menge je Kauf</label>
+        <div className="field" style={{ maxWidth: 120 }}><FieldLabel htmlFor={`${uid}-units`} topic="shopUnitsPerPurchase">Menge je Kauf</FieldLabel>
           <input id={`${uid}-units`} type="number" min={1} value={form.unitsPerPurchase} onChange={(e) => up("unitsPerPurchase", Number(e.target.value))} /></div>
-        <div className="field" style={{ maxWidth: 110 }}><label htmlFor={`${uid}-coin`}>Preis 🪙</label>
+        <div className="field" style={{ maxWidth: 110 }}><FieldLabel htmlFor={`${uid}-coin`} topic="shopCoinPrice">Preis 🪙</FieldLabel>
           <input id={`${uid}-coin`} type="number" min={0} value={form.coinPrice} onChange={(e) => up("coinPrice", Number(e.target.value))} /></div>
-        <div className="field" style={{ maxWidth: 110 }}><label htmlFor={`${uid}-gem`}>Preis 💎</label>
+        <div className="field" style={{ maxWidth: 110 }}><FieldLabel htmlFor={`${uid}-gem`} topic="shopGemPrice">Preis 💎</FieldLabel>
           <input id={`${uid}-gem`} type="number" min={0} value={form.gemPrice} onChange={(e) => up("gemPrice", Number(e.target.value))} /></div>
-        <div className="field" style={{ maxWidth: 100 }}><label htmlFor={`${uid}-stock`}>Bestand</label>
+        <div className="field" style={{ maxWidth: 100 }}><FieldLabel htmlFor={`${uid}-stock`} topic="shopStock">Bestand</FieldLabel>
           <input id={`${uid}-stock`} type="number" min={0} value={form.currentStock} onChange={(e) => up("currentStock", Number(e.target.value))} /></div>
-        <div className="field" style={{ maxWidth: 100 }}><label htmlFor={`${uid}-max`}>Max-Bestand</label>
+        <div className="field" style={{ maxWidth: 100 }}><FieldLabel htmlFor={`${uid}-max`} topic="shopMaxStock">Max-Bestand</FieldLabel>
           <input id={`${uid}-max`} type="number" min={0} value={form.maxStock} onChange={(e) => up("maxStock", Number(e.target.value))} /></div>
         {/* Ohne Auffüllen ist ein Angebot nach `maxStock` Käufen dauerhaft leer – das ist oft gewollt
             (einmalige Belohnung), aber es muss eine Entscheidung sein, keine Nebenwirkung. */}
-        <div className="field"><label htmlFor={`${uid}-refill`}>Auffüllen</label>
+        <div className="field"><FieldLabel htmlFor={`${uid}-refill`} topic="shopRefill">Auffüllen</FieldLabel>
           <select id={`${uid}-refill`} value={form.refillKind ?? "None"} onChange={(e) => up("refillKind", e.target.value as ShopRefillKind)}>
             {REFILL_KINDS.map((k) => <option key={k} value={k}>{REFILL_LABEL[k]}</option>)}
           </select></div>
@@ -288,17 +289,17 @@ function ListingRow({ listing, unitType, onSave, onRefill, onToggle, onRemove }:
           <div className="row" style={{ gap: 8, alignItems: "flex-end", flexWrap: "wrap" }}>
             <div className="field" style={{ minWidth: 140 }}><label htmlFor={`${uid}-t`}>Titel</label>
               <input id={`${uid}-t`} value={form.title} onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))} /></div>
-            <div className="field" style={{ maxWidth: 110 }}><label htmlFor={`${uid}-u`}>Menge je Kauf</label>
+            <div className="field" style={{ maxWidth: 110 }}><FieldLabel htmlFor={`${uid}-u`} topic="shopUnitsPerPurchase">Menge je Kauf</FieldLabel>
               <input id={`${uid}-u`} type="number" min={1} value={form.unitsPerPurchase} onChange={(e) => setForm((f) => ({ ...f, unitsPerPurchase: Number(e.target.value) }))} /></div>
-            <div className="field" style={{ maxWidth: 100 }}><label htmlFor={`${uid}-c`}>Preis 🪙</label>
+            <div className="field" style={{ maxWidth: 100 }}><FieldLabel htmlFor={`${uid}-c`} topic="shopCoinPrice">Preis 🪙</FieldLabel>
               <input id={`${uid}-c`} type="number" min={0} value={form.coinPrice} onChange={(e) => setForm((f) => ({ ...f, coinPrice: Number(e.target.value) }))} /></div>
-            <div className="field" style={{ maxWidth: 100 }}><label htmlFor={`${uid}-g`}>Preis 💎</label>
+            <div className="field" style={{ maxWidth: 100 }}><FieldLabel htmlFor={`${uid}-g`} topic="shopGemPrice">Preis 💎</FieldLabel>
               <input id={`${uid}-g`} type="number" min={0} value={form.gemPrice} onChange={(e) => setForm((f) => ({ ...f, gemPrice: Number(e.target.value) }))} /></div>
-            <div className="field" style={{ maxWidth: 100 }}><label htmlFor={`${uid}-s`}>Bestand</label>
+            <div className="field" style={{ maxWidth: 100 }}><FieldLabel htmlFor={`${uid}-s`} topic="shopStock">Bestand</FieldLabel>
               <input id={`${uid}-s`} type="number" min={0} value={form.currentStock} onChange={(e) => setForm((f) => ({ ...f, currentStock: Number(e.target.value) }))} /></div>
-            <div className="field" style={{ maxWidth: 100 }}><label htmlFor={`${uid}-m`}>Max</label>
+            <div className="field" style={{ maxWidth: 100 }}><FieldLabel htmlFor={`${uid}-m`} topic="shopMaxStock">Max</FieldLabel>
               <input id={`${uid}-m`} type="number" min={0} value={form.maxStock} onChange={(e) => setForm((f) => ({ ...f, maxStock: Number(e.target.value) }))} /></div>
-            <div className="field"><label htmlFor={`${uid}-r`}>Auffüllen</label>
+            <div className="field"><FieldLabel htmlFor={`${uid}-r`} topic="shopRefill">Auffüllen</FieldLabel>
               <select id={`${uid}-r`} value={form.refillKind} onChange={(e) => setForm((f) => ({ ...f, refillKind: e.target.value as ShopRefillKind }))}>
                 {REFILL_KINDS.map((k) => <option key={k} value={k}>{REFILL_LABEL[k]}</option>)}
               </select></div>

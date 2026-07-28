@@ -104,6 +104,7 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
 
     // Anmerkungen beim Testen (Erfassung im UI-Widget, Beantwortung durch Claude Code)
     public DbSet<Remark> Remarks => Set<Remark>();
+    public DbSet<RemarkComment> RemarkComments => Set<RemarkComment>();
 
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
@@ -692,6 +693,20 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
             // und der Export/Nachbereitungs-Skill, der die offenen Anmerkungen holt.
             e.HasIndex(r => new { r.AccountId, r.CreatedAt });
             e.HasIndex(r => r.Status);
+        });
+
+        // Verlauf einer Anmerkung. Die Anmerkung bindet (Cascade): ein Beitrag ohne Vorgang ist sinnlos –
+        // anders als der Kontext, der verblassen darf. Das Autor-Konto dagegen SetNull, denn die fachliche
+        // Aussage des Beitrags gilt weiter, auch wenn das Konto verschwindet.
+        // Herkunft als String wie die `AuthorRole` daneben: An dieser Tabelle wird von Hand nachgesehen
+        // (Werkzeug für die Entwicklung), und „Assistant" liest sich dabei besser als „1".
+        modelBuilder.Entity<RemarkComment>(e =>
+        {
+            e.Property(c => c.Author).HasConversion<string>();
+            e.HasOne(c => c.Remark).WithMany(r => r.Comments).HasForeignKey(c => c.RemarkId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(c => c.AuthorAccount).WithMany().HasForeignKey(c => c.AuthorAccountId).OnDelete(DeleteBehavior.SetNull);
+            // Der einzige Lesepfad: der Verlauf einer Anmerkung, chronologisch.
+            e.HasIndex(c => new { c.RemarkId, c.CreatedAt });
         });
     }
 }

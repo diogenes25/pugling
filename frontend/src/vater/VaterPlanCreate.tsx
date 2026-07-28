@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { api, errorMessage } from "../lib/api";
+import { FieldLabel } from "../components/InfoHint";
 import { useAsync } from "../lib/useAsync";
 import { useAuth } from "../lib/auth";
 import type { ChildResponse, CreatePlanDto } from "../lib/types";
@@ -65,7 +66,7 @@ export function VaterPlanCreate() {
             </select>
           </div>
           <div className="field"><label htmlFor="plan-start">Start</label><input id="plan-start" title="Startdatum" type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} /></div>
-          <div className="field"><label htmlFor="plan-duration">Dauer (Tage)</label><input id="plan-duration" title="Dauer in Tagen" type="number" min={1} value={durationDays} onChange={(e) => setDurationDays(Number(e.target.value))} /></div>
+          <div className="field"><FieldLabel htmlFor="plan-duration" topic="planDuration">Dauer (Tage)</FieldLabel><input id="plan-duration" title="Dauer in Tagen" type="number" min={1} value={durationDays} onChange={(e) => setDurationDays(Number(e.target.value))} /></div>
         </div>
         <div className="field" style={{ marginTop: 10 }}>
           <label htmlFor="plan-description">Beschreibung <span className="muted">(optional)</span></label>

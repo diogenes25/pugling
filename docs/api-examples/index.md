@@ -1,6 +1,6 @@
 # API-Beispiele – Übersicht
 
-Automatisch erzeugt von `backend/Pugling.Api.Tests/DocsCaptureTests.cs`. Insgesamt **131** Beispiele in **12** Gruppen.
+Automatisch erzeugt von `backend/Pugling.Api.Tests/DocsCaptureTests.cs`. Insgesamt **138** Beispiele in **12** Gruppen.
 
 | Gruppe | Beispiele | Fehlerfälle | Datei |
 | --- | ---: | ---: | --- |
@@ -10,7 +10,7 @@ Automatisch erzeugt von `backend/Pugling.Api.Tests/DocsCaptureTests.cs`. Insgesa
 | class-tests | 3 | 2 | [`class-tests.md`](./class-tests.md) |
 | exercise-grants | 7 | 3 | [`exercise-grants.md`](./exercise-grants.md) |
 | me | 15 | 5 | [`me.md`](./me.md) |
-| remarks | 12 | 5 | [`remarks.md`](./remarks.md) |
+| remarks | 19 | 7 | [`remarks.md`](./remarks.md) |
 | shop | 28 | 8 | [`shop.md`](./shop.md) |
 | study-plans | 21 | 6 | [`study-plans.md`](./study-plans.md) |
 | tags | 5 | 3 | [`tags.md`](./tags.md) |
@@ -19,7 +19,7 @@ Automatisch erzeugt von `backend/Pugling.Api.Tests/DocsCaptureTests.cs`. Insgesa
 
 ## Fehler-Code-Abdeckung
 
-Verifiziert: **29 / 45** Codes aus `ApiErrors`.
+Verifiziert: **30 / 47** Codes aus `ApiErrors`.
 
 | Code | Beispiel |
 | --- | --- |
@@ -43,6 +43,7 @@ Verifiziert: **29 / 45** Codes aus `ApiErrors`.
 | `plan_inactive` | study-plans – Deaktivierten Plan spielen |
 | `position_has_data` | study-plans – Bespielte Position löschen |
 | `remark_not_found` | remarks – Fremde Anmerkung lesen (Sohn) |
+| `remark_scope_forbidden` | remarks – Alle Konten lesen als Sohn |
 | `shop_insufficient_stock` | shop – Shop-Angebot kaufen (ausverkauft) |
 | `shop_listing_inactive` | shop – Shop-Angebot kaufen (deaktiviert) |
 | `skin_already_unlocked` | me – Bereits besessenen Skin kaufen |
@@ -70,5 +71,6 @@ Verifiziert: **29 / 45** Codes aus `ApiErrors`.
 - `media_variant_not_found` — Über HTTP im In-Process-Test nicht erreichbar.
 - `purchase_not_open` — Über HTTP im In-Process-Test nicht erreichbar.
 - `rate_limited` — Login-Rate-Limit ist in der Test-Factory bewusst abgeschaltet (`RateLimiting:LoginEnabled=false`), sonst würden die vielen Test-Logins scheitern.
+- `remark_comment_not_found` — Über HTTP im In-Process-Test nicht erreichbar.
 - `unknown_exercise_type` — Über HTTP im In-Process-Test nicht erreichbar.
 

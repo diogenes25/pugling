@@ -239,7 +239,9 @@ test("Vater legt sich selbst an und richtet ein Englisch-Szenario von Null ein",
 
   // ---------- 7. Familien-Shop: Artikel + Angebot ----------
   await vater.goto(`/vater/shop?childId=${childId}`);
-  await vater.getByLabel("Artikelnummer").fill(`TV-${RUN}`);
+  // `exact`, weil neben dem Feld ein „ⓘ" mit dem Namen „Erklärung zu „Artikelnummer"" steht – ohne
+  // das Flag greift der Teilstring-Vergleich auch den Hinweis-Knopf ab.
+  await vater.getByLabel("Artikelnummer", { exact: true }).fill(`TV-${RUN}`);
   await vater.getByLabel("Titel", { exact: true }).fill(`Fernsehzeit ${RUN}`);
   await vater.getByRole("button", { name: "Anlegen" }).click();
   await expect(vater.getByText(`Artikel „Fernsehzeit ${RUN}" angelegt.`)).toBeVisible();

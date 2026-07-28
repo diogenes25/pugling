@@ -1,6 +1,9 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Pugling.Api.Data;
 
 namespace Pugling.Api.Tests;
 
@@ -134,7 +137,7 @@ public class RemarkTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWe
     }
 
     [Fact]
-    public async Task FremderSupervisor_SiehtNichts()
+    public async Task FremderSupervisor_TauchtNichtInDerVorgabesichtAuf()
     {
         var father = await TestApi.FatherAsync(_factory);
         var child = await TestApi.ChildAsync(_factory);
@@ -144,13 +147,20 @@ public class RemarkTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWe
         var fatherRemark = await CreateAsync(father, "Nur für Papa");
         var childRemark = await CreateAsync(child, "Nur für den Sohn");
 
-        Assert.Equal(HttpStatusCode.NotFound, (await teacher.GetAsync($"{Url}/{fatherRemark}")).StatusCode);
-        Assert.Equal(HttpStatusCode.NotFound, (await teacher.GetAsync($"{Url}/{childRemark}")).StatusCode);
-
+        // Die **Vorgabe** bleibt eng: eigene plus betreute Konten. Daran hängt die Liste im Widget.
         var list = await teacher.GetFromJsonAsync<JsonElement>(Url);
         var ids = list.EnumerateArray().Select(r => r.GetProperty("id").GetInt32()).ToList();
         Assert.DoesNotContain(fatherRemark, ids);
         Assert.DoesNotContain(childRemark, ids);
+
+        // Der gezielte Zugriff auf eine Id ist mit eingeschaltetem `GlobalRead` dagegen **offen** – genau
+        // dafür ist der Schalter da: Der Skill beantwortet Anmerkungen aus jedem Testkonto.
+        (await teacher.GetAsync($"{Url}/{fatherRemark}")).EnsureSuccessStatusCode();
+
+        // Ohne den Schalter gilt die alte Welt: unsichtbar, und zwar als 404 statt 403 (kein Existenz-Leak).
+        var narrow = await FatherWithoutGlobalReadAsync(id: 2, pin: "9999");
+        Assert.Equal(HttpStatusCode.NotFound, (await narrow.GetAsync($"{Url}/{fatherRemark}")).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await narrow.GetAsync($"{Url}/{childRemark}")).StatusCode);
     }
 
     [Fact]
@@ -489,5 +499,297 @@ public class RemarkTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWe
         Assert.True(int.Parse(totals.First()) >= 3);
         var pageList = await paged.Content.ReadFromJsonAsync<JsonElement>();
         Assert.Equal(1, pageList.GetArrayLength());
+    }
+
+    // ── Verlauf ───────────────────────────────────────────────────────────────────────────────────────
+
+    private static async Task<JsonElement> CommentAsync(HttpClient client, int remarkId, string body,
+        string? author = null, string? label = null)
+    {
+        var dto = new Dictionary<string, object?> { ["body"] = body };
+        if (author is not null) dto["author"] = author;
+        if (label is not null) dto["authorLabel"] = label;
+        var res = await client.PostAsJsonAsync($"{Url}/{remarkId}/comments", dto);
+        Assert.Equal(HttpStatusCode.Created, res.StatusCode);
+        return await res.Content.ReadFromJsonAsync<JsonElement>();
+    }
+
+    [Fact]
+    public async Task Verlauf_IstChronologisch_UndZaehltAnDerAnmerkung()
+    {
+        var father = await TestApi.FatherAsync(_factory);
+        var id = await CreateAsync(father, "Der Löschen-Knopf ist nicht zu sehen");
+
+        await CommentAsync(father, id, "Gemessen: die Tabelle braucht 868px.", author: "Assistant", label: "claude-code");
+        await CommentAsync(father, id, "Passt, danke.");
+
+        var thread = await father.GetFromJsonAsync<JsonElement>($"{Url}/{id}/comments");
+        var bodies = thread.EnumerateArray().Select(c => c.GetProperty("body").GetString()).ToList();
+        // Älteste zuerst: Ein Vorgang liest sich chronologisch, anders als die Liste der Anmerkungen.
+        Assert.Equal(["Gemessen: die Tabelle braucht 868px.", "Passt, danke."], bodies);
+        Assert.Equal("claude-code", thread[0].GetProperty("authorLabel").GetString());
+        Assert.Equal("Assistant", thread[0].GetProperty("author").GetString());
+        // Ohne Label springt der Anzeigename des Kontos ein – sonst stünde im Export „Human".
+        Assert.Equal("Papa", thread[1].GetProperty("authorLabel").GetString());
+        Assert.Equal("Human", thread[1].GetProperty("author").GetString());
+
+        // Die Zahl liegt an der Anmerkung, damit die Liste sie ohne Nachladen zeigt.
+        var one = await father.GetFromJsonAsync<JsonElement>($"{Url}/{id}");
+        Assert.Equal(2, one.GetProperty("commentCount").GetInt32());
+        var list = await father.GetFromJsonAsync<JsonElement>($"{Url}?mine=true");
+        var row = list.EnumerateArray().First(r => r.GetProperty("id").GetInt32() == id);
+        Assert.Equal(2, row.GetProperty("commentCount").GetInt32());
+    }
+
+    [Fact]
+    public async Task MenschlicherBeitrag_HoltErledigteAnmerkungZurueck_AssistentNicht()
+    {
+        var father = await TestApi.FatherAsync(_factory);
+        var id = await CreateAsync(father, "Tags sollten sichtbar sein");
+
+        (await father.PatchAsJsonAsync($"{Url}/{id}", new { status = "Done", answer = "Belegt: keine Tag-Spalte." }))
+            .EnsureSuccessStatusCode();
+
+        // Claude berichtet – das darf den Stand nicht aufreißen, sonst öffnete jede Umsetzungsnotiz
+        // die eigene Anmerkung wieder.
+        await CommentAsync(father, id, "Gebaut: Spalte ergänzt.", author: "Assistant");
+        var afterAssistant = await father.GetFromJsonAsync<JsonElement>($"{Url}/{id}");
+        Assert.Equal("Done", afterAssistant.GetProperty("status").GetString());
+
+        // Der Mensch hakt nach – das ist die Mechanik, die den Vorgang wieder auf den Tisch legt.
+        await CommentAsync(father, id, "Und die Kind-Tags?");
+        var afterHuman = await father.GetFromJsonAsync<JsonElement>($"{Url}/{id}");
+        Assert.Equal("Open", afterHuman.GetProperty("status").GetString());
+        // Die Auflösung bleibt stehen: Nachhaken ist keine Rücknahme der Vorarbeit.
+        Assert.Equal("Belegt: keine Tag-Spalte.", afterHuman.GetProperty("answer").GetString());
+    }
+
+    [Fact]
+    public async Task MenschlicherBeitrag_LaesstOffeneAnmerkungInRuhe()
+    {
+        var father = await TestApi.FatherAsync(_factory);
+        var id = await CreateAsync(father, "Noch offen");
+
+        await CommentAsync(father, id, "Ergänzung: tritt nur im Firefox auf.");
+
+        var after = await father.GetFromJsonAsync<JsonElement>($"{Url}/{id}");
+        Assert.Equal("Open", after.GetProperty("status").GetString());
+    }
+
+    [Fact]
+    public async Task EigenenBeitragEntfernen_FremdenNicht()
+    {
+        var father = await TestApi.FatherAsync(_factory);
+        var teacher = await TestApi.FatherAsync(_factory, id: 2, pin: "9999");
+        var id = await CreateAsync(father, "Beitrag zurücknehmen");
+        var comment = await CommentAsync(father, id, "Tippfehler-Beitrag");
+        var commentId = comment.GetProperty("id").GetInt32();
+
+        // Der fremde Supervisor sieht die Anmerkung gar nicht.
+        Assert.Equal(HttpStatusCode.NotFound,
+            (await teacher.DeleteAsync($"{Url}/{id}/comments/{commentId}")).StatusCode);
+
+        Assert.Equal(HttpStatusCode.NoContent,
+            (await father.DeleteAsync($"{Url}/{id}/comments/{commentId}")).StatusCode);
+        // Zweiter Versuch: weg ist weg.
+        Assert.Equal(HttpStatusCode.NotFound,
+            (await father.DeleteAsync($"{Url}/{id}/comments/{commentId}")).StatusCode);
+    }
+
+    [Fact]
+    public async Task Sohn_SiehtDenVerlaufNicht_UndSchreibtKeinen()
+    {
+        var father = await TestApi.FatherAsync(_factory);
+        var child = await TestApi.ChildAsync(_factory);
+        var own = await CreateAsync(child, "Die Übung war doof");
+        await CommentAsync(father, own, "Notiert.", author: "Assistant");
+
+        // Beiträge tragen dieselben Code-Interna wie Antworten – dieselbe Schranke.
+        Assert.Equal(HttpStatusCode.Forbidden, (await child.GetAsync($"{Url}/{own}/comments")).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden,
+            (await child.PostAsJsonAsync($"{Url}/{own}/comments", new { body = "Warum?" })).StatusCode);
+
+        // Schon die Anzahl wäre eine Auskunft darüber, dass über die Anmerkung gesprochen wurde.
+        var mine = await child.GetFromJsonAsync<JsonElement>($"{Url}?mine=true");
+        var row = mine.EnumerateArray().First(r => r.GetProperty("id").GetInt32() == own);
+        Assert.Equal(0, row.GetProperty("commentCount").GetInt32());
+    }
+
+    [Fact]
+    public async Task LeererBeitrag_IstValidierungsfehler()
+    {
+        var father = await TestApi.FatherAsync(_factory);
+        var id = await CreateAsync(father, "Mit leerem Beitrag");
+
+        var res = await father.PostAsJsonAsync($"{Url}/{id}/comments", new { body = "   " });
+        Assert.Equal(HttpStatusCode.BadRequest, res.StatusCode);
+    }
+
+    // ── Kontenübergreifend lesen (scope=all) ──────────────────────────────────────────────────────────
+    //
+    // Die Berechtigung hängt am Schalter `Remarks:GlobalRead` (in der Entwicklung an), NICHT an einer Rolle.
+    // Grund: Beim Testen entstehen ständig Wegwerf-Konten, weil sich manche Fehler nur in einer bestimmten
+    // Konstellation zeigen (ein frischer Vater ohne Übungen deckt auf, was beim geseedeten Papa nie
+    // auffällt). Jedes solche Konto erst mit einem Flag zu versehen wäre Verwaltungsarbeit ohne Gegenwert.
+
+    /// <summary>Registriert einen Vater und liefert einen Client dafür – ein Wegwerf-Konto ohne Sonderrechte.</summary>
+    private async Task<HttpClient> FreshFatherAsync(string pin)
+    {
+        var id = await RegisterFatherAsync("Wegwerf-Vater", pin);
+        return await TestApi.FatherAsync(_factory, id, pin);
+    }
+
+    private async Task<int> RegisterFatherAsync(string name, string pin)
+    {
+        var res = await _factory.CreateClient().PostAsJsonAsync("/api/v1/supervisor/fathers", new { name, pin });
+        res.EnsureSuccessStatusCode();
+        return (await res.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetInt32();
+    }
+
+    /// <summary>
+    /// Registriert einen Vater <b>mit</b> <c>Father.IsAdmin</c> und liefert dessen Id – für den Nachweis, dass
+    /// die Rolle als Break-Glass weiterhin trägt, auch wenn der Schalter aus ist.
+    /// <para>
+    /// Bewusst ein <b>eigenes</b> Konto und kein geseedetes: Die Factory ist über die Testklasse geteilt, und
+    /// <c>Roles.Admin</c> umgeht auch die RWX-Rechte auf Übungen. Würde hier Papa oder der Lehrer umgewidmet,
+    /// verlöre jeder andere Test seine Annahme „dieses Konto darf das nicht" – abhängig von der
+    /// Ausführungsreihenfolge. (Genau das ist beim ersten Anlauf passiert.)
+    /// </para>
+    /// </summary>
+    private async Task<int> RegisterAdminFatherAsync(string pin)
+    {
+        var id = await RegisterFatherAsync("Admin-Vater", pin);
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
+        var father = await db.Fathers.FirstAsync(f => f.Id == id);
+        father.IsAdmin = true;
+        await db.SaveChangesAsync();
+        return id;
+    }
+
+    /// <summary>
+    /// Client gegen <b>dieselbe Datenbank</b>, aber mit abgeschaltetem <c>GlobalRead</c> – so verhält sich eine
+    /// Produktions-Instanz. Das Token wird hier ausgestellt, damit die Rollen-Claims stimmen.
+    /// </summary>
+    private async Task<HttpClient> FatherWithoutGlobalReadAsync(int id = 1, string pin = "0000")
+    {
+        var narrow = _factory.WithWebHostBuilder(b => b.UseSetting("Remarks:GlobalRead", "false"));
+        return await TestApi.FatherAsync(narrow, id, pin);
+    }
+
+    [Fact]
+    public async Task JedesVaterKonto_LiestMitScopeAll_AlleAnmerkungen()
+    {
+        var father = await TestApi.FatherAsync(_factory);
+        var foreign = await CreateAsync(father, "Beobachtung aus einem anderen Konto");
+
+        // Ein frisch registriertes Wegwerf-Konto: keine Kinder, keine Übungen, KEIN Admin-Flag.
+        var fresh = await FreshFatherAsync("6101");
+
+        // Ohne Parameter bleibt die Sicht eng – sonst zeigte die Liste im Widget fremde Einträge.
+        var narrow = await fresh.GetFromJsonAsync<JsonElement>(Url);
+        Assert.DoesNotContain(foreign, narrow.EnumerateArray().Select(r => r.GetProperty("id").GetInt32()));
+
+        // Mit scope=all sieht es alles – das ist die Sicht, die der Nachbereitungs-Skill braucht.
+        var all = await fresh.GetFromJsonAsync<JsonElement>($"{Url}?scope=all");
+        Assert.Contains(foreign, all.EnumerateArray().Select(r => r.GetProperty("id").GetInt32()));
+    }
+
+    [Fact]
+    public async Task FremdeAnmerkung_LaesstSichBeantwortenUndKommentieren()
+    {
+        var father = await TestApi.FatherAsync(_factory);
+        var foreign = await CreateAsync(father, "Frage aus einem anderen Testkonto");
+        var fresh = await FreshFatherAsync("6102");
+
+        // Eine einzelne Id braucht den scope-Parameter nicht: Genau so löst der Skill „Beantworte 123" ein.
+        var one = await fresh.GetFromJsonAsync<JsonElement>($"{Url}/{foreign}");
+        Assert.Equal(foreign, one.GetProperty("id").GetInt32());
+        // Fremd, aber sichtbar – das Widget blendet sie damit aus seiner eigenen Liste aus.
+        Assert.False(one.GetProperty("isOwn").GetBoolean());
+
+        (await fresh.PatchAsJsonAsync($"{Url}/{foreign}",
+            new { answer = "Belegt in VaterVocab.tsx:345.", answeredBy = "claude-code", status = "Done" }))
+            .EnsureSuccessStatusCode();
+        await CommentAsync(fresh, foreign, "Gebaut und geprüft.", author: "Assistant", label: "claude-code");
+
+        // Der Eigentümer sieht Auflösung und Verlauf in seiner eigenen Sicht.
+        var owner = await father.GetFromJsonAsync<JsonElement>($"{Url}/{foreign}");
+        Assert.Equal("Belegt in VaterVocab.tsx:345.", owner.GetProperty("answer").GetString());
+        var thread = await father.GetFromJsonAsync<JsonElement>($"{Url}/{foreign}/comments");
+        Assert.Equal("Gebaut und geprüft.", thread[0].GetProperty("body").GetString());
+    }
+
+    [Fact]
+    public async Task Sohn_LiestNiemalsAlleKonten_AuchNichtMitGlobalRead()
+    {
+        var father = await TestApi.FatherAsync(_factory);
+        var child = await TestApi.ChildAsync(_factory);
+        var foreign = await CreateAsync(father, "Interne Notiz mit Codebezug");
+
+        // Der Schalter öffnet die Sicht für Erwachsene, nie für ein Kind: Antworten und Verlauf tragen
+        // Datei- und Zeilenverweise.
+        var res = await child.GetAsync($"{Url}?scope=all");
+        Assert.Equal(HttpStatusCode.Forbidden, res.StatusCode);
+        Assert.Equal("remark_scope_forbidden",
+            (await res.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("code").GetString());
+
+        Assert.Equal(HttpStatusCode.NotFound, (await child.GetAsync($"{Url}/{foreign}")).StatusCode);
+    }
+
+    [Fact]
+    public async Task OhneGlobalRead_IstScopeAll_403_UndDieEngeSichtBleibt()
+    {
+        var father = await TestApi.FatherAsync(_factory);
+        var own = await CreateAsync(father, "Eigene Anmerkung bei abgeschaltetem Schalter");
+
+        var narrow = await FatherWithoutGlobalReadAsync();
+
+        var res = await narrow.GetAsync($"{Url}?scope=all");
+        Assert.Equal(HttpStatusCode.Forbidden, res.StatusCode);
+        Assert.Equal("remark_scope_forbidden",
+            (await res.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("code").GetString());
+
+        // Ohne den Parameter arbeitet dieselbe Instanz normal weiter – der Schalter sperrt nicht das Feature.
+        var list = await narrow.GetFromJsonAsync<JsonElement>($"{Url}?mine=true");
+        Assert.Contains(own, list.EnumerateArray().Select(r => r.GetProperty("id").GetInt32()));
+    }
+
+    [Fact]
+    public async Task OhneGlobalRead_TraegtDieAdminRolle_WeiterhinAlsBreakGlass()
+    {
+        var father = await TestApi.FatherAsync(_factory);
+        var foreign = await CreateAsync(father, "Nur per Break-Glass erreichbar");
+
+        var adminId = await RegisterAdminFatherAsync("6103");
+        var adminNarrow = await FatherWithoutGlobalReadAsync(adminId, "6103");
+
+        var all = await adminNarrow.GetFromJsonAsync<JsonElement>($"{Url}?scope=all");
+        Assert.Contains(foreign, all.EnumerateArray().Select(r => r.GetProperty("id").GetInt32()));
+    }
+
+    [Fact]
+    public async Task Export_MitScopeAll_TraegtDenVerlauf_UndOhneGlobalRead_403()
+    {
+        var father = await TestApi.FatherAsync(_factory);
+        var id = await CreateAsync(father, "Export mit Verlauf");
+        await CommentAsync(father, id, "Umsetzungsnotiz für den Export.", author: "Assistant", label: "claude-code");
+
+        // Der eigene Export trägt den Verlauf – deshalb weiß ein Schnappschuss von heute noch etwas über
+        // gestern; vorher überschrieb die Umsetzungsnotiz die Analyse.
+        var own = await father.GetAsync($"{Url}/export");
+        own.EnsureSuccessStatusCode();
+        var markdown = await own.Content.ReadAsStringAsync();
+        Assert.Contains("**Verlauf**", markdown);
+        Assert.Contains("> Umsetzungsnotiz für den Export.", markdown);
+
+        // Kontenübergreifend: erlaubt (Schalter an) und mit Konto-Angabe je Beitrag, damit im
+        // Repo-Schnappschuss erkennbar bleibt, wessen Beobachtung eine Zeile ist.
+        var across = await father.GetAsync($"{Url}/export?scope=all");
+        across.EnsureSuccessStatusCode();
+        Assert.Contains("Konto", await across.Content.ReadAsStringAsync());
+
+        var narrow = await FatherWithoutGlobalReadAsync();
+        Assert.Equal(HttpStatusCode.Forbidden, (await narrow.GetAsync($"{Url}/export?scope=all")).StatusCode);
     }
 }

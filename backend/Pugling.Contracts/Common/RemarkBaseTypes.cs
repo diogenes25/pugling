@@ -38,3 +38,20 @@ public enum RemarkStatus
     /// <summary>Verworfen: kein Handlungsbedarf.</summary>
     Rejected = 3,
 }
+
+/// <summary>
+/// Herkunft eines Beitrags im Verlauf einer Anmerkung.
+/// <para>
+/// Bewusst ein eigenes Feld und <b>nicht</b> aus dem Autor-Konto abgeleitet: Claude schreibt über den Skill
+/// mit dem Token des Menschen, beide Beiträge trügen also dasselbe Konto. An der Unterscheidung hängt aber
+/// eine Regel – ein <see cref="Human"/>-Beitrag öffnet eine erledigte Anmerkung wieder, ein
+/// <see cref="Assistant"/>-Beitrag lässt den Stand unberührt.
+/// </para>
+/// </summary>
+public enum RemarkCommentAuthor
+{
+    /// <summary>Der Mensch – im Widget oder auf der Anmerkungs-Seite geschrieben (Vorgabe).</summary>
+    Human = 0,
+    /// <summary>Claude Code, über den Skill.</summary>
+    Assistant = 1,
+}

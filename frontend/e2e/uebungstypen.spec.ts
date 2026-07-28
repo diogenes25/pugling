@@ -69,7 +69,9 @@ test("Jeder Übungstyp des Manifests lässt sich im UI anlegen", async ({ page }
     await page.locator("#cfg-minwords").fill("80");
     await page.locator("#cfg-maxwords").fill("150");
     await page.getByLabel("Kriterium").fill("Aufbau");
-    await page.getByLabel("Punkte", { exact: false }).first().fill("5");
+    // `exact`: Sonst trifft der Teilstring-Vergleich auch das „ⓘ" der Übungs-Punkte
+    // („Erklärung zu „Punkte der Übung"") – und das ist kein Eingabefeld.
+    await page.getByLabel("Punkte", { exact: true }).first().fill("5");
   });
 
   // ---------- Grammatik ----------

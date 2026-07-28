@@ -7,6 +7,7 @@ import { useAsync } from "../lib/useAsync";
 import { useExerciseTypes } from "../lib/exerciseTypes";
 import { TruncationHint } from "../components/ListControls";
 import { MasteryPill } from "../components/MasteryPill";
+import { FieldLabel, InfoHint } from "../components/InfoHint";
 import type {
   CreatePositionDto, ExerciseSummary, GoalCadence, PositionReport, PositionResponse, Paged, PracticeOrder, SubjectResponse,
 } from "../lib/types";
@@ -150,7 +151,7 @@ function PositionFields({ value, onChange }: { value: PositionSettings; onChange
   return (
     <div className="row" style={{ gap: 12, alignItems: "flex-end", flexWrap: "wrap" }}>
       <div className="field" style={{ maxWidth: 180 }}>
-        <label htmlFor={`${uid}-cadence`}>Ziel-Rhythmus</label>
+        <FieldLabel htmlFor={`${uid}-cadence`} topic="cadence">Ziel-Rhythmus</FieldLabel>
         <select id={`${uid}-cadence`} aria-label="Ziel-Rhythmus" value={value.cadence}
           onChange={(e) => up("cadence", e.target.value as GoalCadence)}>
           {CADENCES.map((c) => <option key={c} value={c}>{CADENCE_LABEL[c]}</option>)}
@@ -158,55 +159,61 @@ function PositionFields({ value, onChange }: { value: PositionSettings; onChange
       </div>
       {/* Der Server wertet die Schwelle als Bestehens-Prozentsatz des Abschlusstests aus (Standard 80). */}
       <div className="field" style={{ maxWidth: 140 }}>
-        <label htmlFor={`${uid}-pass`}>Bestehen ab %</label>
+        <FieldLabel htmlFor={`${uid}-pass`} topic="goalThreshold">Bestehen ab %</FieldLabel>
         <input id={`${uid}-pass`} aria-label="Bestehen ab Prozent" type="number" min={1} max={100}
           placeholder="80" value={value.goalThreshold} onChange={(e) => up("goalThreshold", e.target.value)} />
       </div>
       <div className="field" style={{ maxWidth: 130 }}>
-        <label htmlFor={`${uid}-count`}>Inhalte</label>
+        <FieldLabel htmlFor={`${uid}-count`} topic="itemCount">Inhalte</FieldLabel>
         <input id={`${uid}-count`} aria-label="Anzahl Inhalte" type="number" min={1} placeholder="alle"
           value={value.itemCount} onChange={(e) => up("itemCount", e.target.value)} />
       </div>
       <div className="field" style={{ maxWidth: 180 }}>
-        <label htmlFor={`${uid}-order`}>Reihenfolge</label>
+        <FieldLabel htmlFor={`${uid}-order`} topic="orderStrategy">Reihenfolge</FieldLabel>
         <select id={`${uid}-order`} aria-label="Reihenfolge" value={value.orderStrategy}
           onChange={(e) => up("orderStrategy", e.target.value as PracticeOrder)}>
           {ORDERS.map((o) => <option key={o} value={o}>{ORDER_LABEL[o]}</option>)}
         </select>
       </div>
       <div className="field" style={{ maxWidth: 140 }}>
-        <label htmlFor={`${uid}-points`}>Punkte (Ziel erreicht)</label>
+        <FieldLabel htmlFor={`${uid}-points`} topic="pointsGoalMet">Punkte (Ziel erreicht)</FieldLabel>
         <input id={`${uid}-points`} aria-label="Punkte bei erreichtem Ziel" type="number" min={0}
           value={value.pointsGoalMet} onChange={(e) => up("pointsGoalMet", Number(e.target.value))} />
       </div>
       {/* Der „Stick": verpasste Pflicht kostet Münzen. 0 = reine Belohnung; Schulden sind erlaubt. */}
       <div className="field" style={{ maxWidth: 150 }}>
-        <label htmlFor={`${uid}-penalty`}>Münz-Malus (versäumt)</label>
+        <FieldLabel htmlFor={`${uid}-penalty`} topic="penaltyCoins">Münz-Malus (versäumt)</FieldLabel>
         <input id={`${uid}-penalty`} aria-label="Münz-Malus bei gerissener Pflicht" type="number" min={0}
           value={value.penaltyCoins} onChange={(e) => up("penaltyCoins", Number(e.target.value))} />
       </div>
       {/* Leer lassen = Bonus-Vorschlag der Übung übernehmen (Platzhalter „erbt"). */}
       <div className="field" style={{ maxWidth: 130 }}>
-        <label htmlFor={`${uid}-new`}>Punkte neuer Inhalt</label>
+        <FieldLabel htmlFor={`${uid}-new`} topic="newContentPoints">Punkte neuer Inhalt</FieldLabel>
         <input id={`${uid}-new`} aria-label="Punkte für neuen Inhalt" type="number" min={0} placeholder="erbt"
           value={value.newContentPoints} onChange={(e) => up("newContentPoints", e.target.value)} />
       </div>
       <div className="field" style={{ maxWidth: 150 }}>
-        <label htmlFor={`${uid}-combo-n`}>Combo alle … Treffer</label>
+        <FieldLabel htmlFor={`${uid}-combo-n`} topic="comboThreshold">Combo alle … Treffer</FieldLabel>
         <input id={`${uid}-combo-n`} aria-label="Combo-Schwelle" type="number" min={0} placeholder="erbt"
           value={value.comboThreshold} onChange={(e) => up("comboThreshold", e.target.value)} />
       </div>
       <div className="field" style={{ maxWidth: 140 }}>
-        <label htmlFor={`${uid}-combo-p`}>Combo-Bonuspunkte</label>
+        <FieldLabel htmlFor={`${uid}-combo-p`} topic="comboBonusPoints">Combo-Bonuspunkte</FieldLabel>
         <input id={`${uid}-combo-p`} aria-label="Combo-Bonuspunkte" type="number" min={0} placeholder="erbt"
           value={value.comboBonusPoints} onChange={(e) => up("comboBonusPoints", e.target.value)} />
       </div>
-      <label className="checkline">
-        <input type="checkbox" checked={value.useLeitner} onChange={(e) => up("useLeitner", e.target.checked)} /> Leitner-Kasten
-      </label>
-      <label className="checkline">
-        <input type="checkbox" checked={value.requireTypedTest} onChange={(e) => up("requireTypedTest", e.target.checked)} /> nur getippte Tests
-      </label>
+      <span className="label-row">
+        <label className="checkline">
+          <input type="checkbox" checked={value.useLeitner} onChange={(e) => up("useLeitner", e.target.checked)} /> Leitner-Kasten
+        </label>
+        <InfoHint topic="useLeitner" />
+      </span>
+      <span className="label-row">
+        <label className="checkline">
+          <input type="checkbox" checked={value.requireTypedTest} onChange={(e) => up("requireTypedTest", e.target.checked)} /> nur getippte Tests
+        </label>
+        <InfoHint topic="requireTypedTest" />
+      </span>
     </div>
   );
 }

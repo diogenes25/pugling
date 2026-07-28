@@ -104,3 +104,76 @@ test("Leerer Text wird abgewiesen, ohne etwas zu speichern", async ({ page }) =>
   await expect(page.getByText("Bitte etwas eintragen.")).toBeVisible();
   await expect(page.getByText(/Gespeichert als #\d+/)).toBeHidden();
 });
+
+test("Verlauf im Widget: nachhaken und den eigenen Beitrag wiederfinden", async ({ page }) => {
+  await vaterLogin(page);
+  await page.keyboard.press("Alt+a");
+
+  const text = `Mit Verlauf ${Date.now()}`;
+  await page.getByLabel("Text der Anmerkung").fill(text);
+  await page.getByRole("button", { name: "Speichern" }).click();
+  const confirmation = page.getByText(/Gespeichert als #\d+/);
+  await expect(confirmation).toBeVisible();
+  const id = (await confirmation.textContent())!.match(/#(\d+)/)![1];
+
+  await page.getByRole("button", { name: "Meine" }).click();
+  const entry = page.getByRole("article").filter({ hasText: `#${id}` });
+  await expect(entry).toBeVisible();
+
+  // Frisch erfasst gibt es keinen Beitrag – der Knopf lädt zum Nachhaken ein statt eine Zahl zu zeigen.
+  await entry.getByRole("button", { name: "Nachhaken" }).click();
+
+  const beitrag = `Ergaenzung ${Date.now()}`;
+  await entry.getByLabel(`Beitrag zu Anmerkung ${id}`).fill(beitrag);
+  await entry.getByLabel(`Beitrag zu Anmerkung ${id}`).press("Enter");
+
+  // Der Verlauf zeigt den Beitrag; damit ist der Rückkanal aus dem UI belegt.
+  await expect(entry).toContainText(beitrag);
+  await expect(entry.getByRole("button", { name: /Verlauf zu/ })).toBeVisible();
+});
+
+test("Anmerkungs-Seite: filtern, Verlauf lesen, Stand ändern", async ({ page }) => {
+  await vaterLogin(page);
+  await page.keyboard.press("Alt+a");
+
+  const text = `Fuer die Seite ${Date.now()}`;
+  await page.getByLabel("Text der Anmerkung").fill(text);
+  await page.getByRole("button", { name: "🎨 UI" }).click();
+  await page.getByRole("button", { name: "Speichern" }).click();
+  await expect(page.getByText(/Gespeichert als #\d+/)).toBeVisible();
+
+  await page.goto("/vater/anmerkungen");
+  const card = page.getByRole("article").filter({ hasText: text });
+  await expect(card).toBeVisible();
+
+  // Kontext-Filter: „offen" ist die Vorgabe, die Einordnung kam aus dem Schnellklick im Widget.
+  await page.getByLabel("Kategorie-Filter").selectOption("Ui");
+  await expect(card).toBeVisible();
+
+  // Nachhaken über die Seite – hier ist Platz für mehr als eine Zeile.
+  await card.getByRole("button", { name: /Nachhaken|Verlauf/ }).click();
+  const beitrag = `Von der Seite aus ${Date.now()}`;
+  await card.getByLabel("Beitrag").fill(beitrag);
+  await card.getByRole("button", { name: "Senden" }).click();
+  await expect(card).toContainText(beitrag);
+
+  // Der Stand lässt sich hier direkt setzen (der Skill macht das sonst über die API). Die Zeile fällt
+  // damit aus dem Filter „offen" – die Rückmeldung muss das überleben, sonst hätte man eine Änderung
+  // ohne jede Bestätigung.
+  await card.getByLabel(/^Stand von Anmerkung/).selectOption("Planned");
+  await expect(page.getByText(/Stand gesetzt: #\d+ → eingeplant/)).toBeVisible();
+  await expect(card).toBeHidden();
+
+  // Und unter „eingeplant" ist sie wieder da.
+  await page.getByLabel("Status-Filter").selectOption("Planned");
+  await expect(page.getByRole("article").filter({ hasText: text })).toBeVisible();
+
+  // Kontenübergreifend lesen steht jedem Vater offen (Schalter `Remarks:GlobalRead`, in der Entwicklung
+  // an) – ohne Admin-Rolle und ohne Flag am Konto. Genau diese Sicht nutzt der Nachbereitungs-Skill.
+  const alleKonten = page.getByRole("checkbox", { name: "alle Konten" });
+  await expect(alleKonten).toBeVisible();
+  await alleKonten.check();
+  await expect(alleKonten).toBeChecked();
+  // Kein Fehlerbanner: Die Abfrage mit scope=all wird beantwortet, nicht abgewiesen.
+  await expect(page.locator(".banner.err")).toHaveCount(0);
+});

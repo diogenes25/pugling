@@ -164,6 +164,11 @@ builder.Services.AddScoped<MediaSelector>();
 // plus die serverseitige Varianten-Erzeugung. Beide zustandslos → Singleton.
 builder.Services.AddSingleton(builder.Configuration.GetSection("Media").Get<MediaOptions>() ?? new MediaOptions());
 builder.Services.AddSingleton<IMediaStorage, LocalMediaStorage>();
+// Test-Anmerkungen: Der kontenübergreifende Blick (`?scope=all`) ist in der **Entwicklung** offen und sonst
+// zu. Die Vorgabe steht hier und nicht in einer appsettings-Datei, damit sie einen frischen Clone ohne
+// Zusatzschritt richtig bedient; ein ausdrückliches `Remarks:GlobalRead` in der Konfiguration gewinnt.
+builder.Services.AddSingleton(builder.Configuration.GetSection("Remarks").Get<RemarkOptions>()
+    ?? new RemarkOptions { GlobalRead = builder.Environment.IsDevelopment() });
 builder.Services.AddSingleton<MediaImageProcessor>();
 // Pflegt die stabil identifizierten Items einer Vokabelübung (ID-erhaltender Abgleich Config → Item-Tabelle).
 builder.Services.AddScoped<ExerciseItemService>();

@@ -1,5 +1,6 @@
 import { useId, useState } from "react";
 import { StatusBanner } from "../components/StatusBanner";
+import { FieldLabel } from "../components/InfoHint";
 import { api } from "../lib/api";
 import { useAction } from "../lib/useAction";
 import { useAsync } from "../lib/useAsync";
@@ -96,17 +97,17 @@ function MissionManager({ childId }: { childId: number }) {
       <form className="form-grid" onSubmit={submit} style={{ alignItems: "end" }}>
         <div className="field" style={{ minWidth: 200 }}><label htmlFor={`${uid}-title`}>Titel</label>
           <input id={`${uid}-title`} value={form.title} onChange={(e) => up("title", e.target.value)} placeholder="Tagesziel: 10 richtig" /></div>
-        <div className="field"><label htmlFor={`${uid}-metric`}>Ziel-Metrik</label>
+        <div className="field"><FieldLabel htmlFor={`${uid}-metric`} topic="missionMetric">Ziel-Metrik</FieldLabel>
           <select id={`${uid}-metric`} value={form.metric} onChange={(e) => up("metric", e.target.value as ProgressMetric)}>
             {METRICS.map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}
           </select></div>
-        <div className="field" style={{ maxWidth: 100 }}><label htmlFor={`${uid}-target`}>Zielwert</label>
+        <div className="field" style={{ maxWidth: 100 }}><FieldLabel htmlFor={`${uid}-target`} topic="missionTarget">Zielwert</FieldLabel>
           <input id={`${uid}-target`} type="number" min={1} value={form.target} onChange={(e) => up("target", Number(e.target.value))} /></div>
-        <div className="field"><label htmlFor={`${uid}-period`}>Zeitraum</label>
+        <div className="field"><FieldLabel htmlFor={`${uid}-period`} topic="missionPeriod">Zeitraum</FieldLabel>
           <select id={`${uid}-period`} value={form.period} onChange={(e) => up("period", e.target.value as MissionPeriod)}>
             {PERIODS.map((p) => <option key={p.value} value={p.value}>{p.label}</option>)}
           </select></div>
-        <div className="field" style={{ maxWidth: 120 }}><label htmlFor={`${uid}-reward`}>Belohnung 💎</label>
+        <div className="field" style={{ maxWidth: 120 }}><FieldLabel htmlFor={`${uid}-reward`} topic="missionReward">Belohnung 💎</FieldLabel>
           <input id={`${uid}-reward`} type="number" min={0} value={form.rewardPoints} onChange={(e) => up("rewardPoints", Number(e.target.value))} /></div>
         <button type="submit" className="btn inline-btn" style={{ width: "auto" }} disabled={action.busy}>
           {action.busy ? "Lege an…" : "Anlegen"}
@@ -183,13 +184,13 @@ function AchievementManager({ childId }: { childId: number }) {
           <input id={`${uid}-icon`} value={form.icon ?? ""} onChange={(e) => up("icon", e.target.value)} placeholder="🏆" /></div>
         <div className="field" style={{ minWidth: 200 }}><label htmlFor={`${uid}-title`}>Titel</label>
           <input id={`${uid}-title`} value={form.title} onChange={(e) => up("title", e.target.value)} placeholder="Test-Ass" /></div>
-        <div className="field"><label htmlFor={`${uid}-metric`}>Ziel-Metrik</label>
+        <div className="field"><FieldLabel htmlFor={`${uid}-metric`} topic="missionMetric">Ziel-Metrik</FieldLabel>
           <select id={`${uid}-metric`} value={form.metric} onChange={(e) => up("metric", e.target.value as ProgressMetric)}>
             {METRICS.map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}
           </select></div>
-        <div className="field" style={{ maxWidth: 100 }}><label htmlFor={`${uid}-threshold`}>Schwelle</label>
+        <div className="field" style={{ maxWidth: 100 }}><FieldLabel htmlFor={`${uid}-threshold`} topic="achievementThreshold">Schwelle</FieldLabel>
           <input id={`${uid}-threshold`} type="number" min={1} value={form.threshold} onChange={(e) => up("threshold", Number(e.target.value))} /></div>
-        <div className="field" style={{ maxWidth: 120 }}><label htmlFor={`${uid}-reward`}>Belohnung 💎</label>
+        <div className="field" style={{ maxWidth: 120 }}><FieldLabel htmlFor={`${uid}-reward`} topic="missionReward">Belohnung 💎</FieldLabel>
           <input id={`${uid}-reward`} type="number" min={0} value={form.rewardPoints} onChange={(e) => up("rewardPoints", Number(e.target.value))} /></div>
         <button type="submit" className="btn inline-btn" style={{ width: "auto" }} disabled={action.busy}>
           {action.busy ? "Lege an…" : "Anlegen"}

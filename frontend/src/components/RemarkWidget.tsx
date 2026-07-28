@@ -7,15 +7,17 @@
  * Enter. Die Kategorie ist ein optionaler Klick, kein Pflichtfeld – einordnen kann der Skill später aus
  * dem Text.
  *
- * Das Widget ist **Eingang plus Lesesicht**, kein Chat: Die Liste zeigt Antworten an, bietet aber kein
- * Antwortfeld. Rückfragen stellst du in Claude Code, wo du ohnehin stehst.
+ * Das Widget ist **Eingang plus Lesesicht** – und seit dem Verlauf auch ein knapper Rückkanal: Zu einer
+ * Antwort lässt sich hier nachhaken, ohne ins Terminal zu wechseln. Ein Chat wird es dadurch nicht: Es gibt
+ * keine Zustellung und keine Ungelesen-Marker, gelesen wird beim nächsten Testen. Wer mehr Platz braucht,
+ * nimmt `/vater/anmerkungen` – dieses Panel ist 360px breit und bleibt der schnelle Weg, nicht der bequeme.
  */
 import { useCallback, useEffect, useRef, useState } from "react";
 import { api } from "../lib/api";
 import { clearRecentErrors } from "../lib/remarks";
 import { useRemarkSnapshot } from "../lib/remarkContext";
 import { useAction } from "../lib/useAction";
-import type { Remark, RemarkCategory } from "../lib/types";
+import type { Remark, RemarkCategory, RemarkComment } from "../lib/types";
 import { StatusBanner } from "./StatusBanner";
 
 /** Ein Klick genügt – aber keiner ist auch in Ordnung. */
@@ -247,16 +249,87 @@ export function RemarkWidget({ bottomOffset = 12 }: { bottomOffset?: number } = 
               </div>
               <div style={{ fontSize: 13 }}>{r.text}</div>
               {r.answer && (
-                // Lesesicht, kein Antwortfeld – hier begänne sonst der Weg zum Messenger.
+                // Die gepinnte Auflösung: das belegte Ergebnis, nicht der Weg dorthin.
                 <div className="muted" style={{ fontSize: 12, marginTop: 4, whiteSpace: "pre-wrap" }}>
                   ↳ {r.answer}
                 </div>
               )}
+              <Thread remark={r} onStatusMaybeChanged={() => setMine(null)} />
             </article>
           ))}
         </div>
       )}
     </section>
+  );
+}
+
+/**
+ * Der Verlauf einer Anmerkung im Widget: eingeklappt, weil dreißig Einträge in der Liste sonst dreißig
+ * Abfragen wären – geladen wird erst beim Aufklappen.
+ *
+ * Das Antwortfeld ist einzeilig und sendet mit Enter, wie das Erfassen darüber. Nachhaken zu einer
+ * erledigten Anmerkung holt sie serverseitig zurück auf „offen"; darum wird die Liste danach neu geholt,
+ * sonst stünde daneben weiter „erledigt".
+ */
+function Thread({ remark, onStatusMaybeChanged }: { remark: Remark; onStatusMaybeChanged: () => void }) {
+  const [open, setOpen] = useState(false);
+  const [comments, setComments] = useState<RemarkComment[] | null>(null);
+  const [text, setText] = useState("");
+  const action = useAction();
+
+  const load = useCallback(async () => {
+    try {
+      setComments(await api.remarkComments(remark.id));
+    } catch {
+      // Der Verlauf ist Beiwerk – scheitert er, bleibt der Rest des Widgets benutzbar.
+      setComments([]);
+    }
+  }, [remark.id]);
+
+  useEffect(() => {
+    if (open && comments === null) void load();
+  }, [open, comments, load]);
+
+  async function send() {
+    const body = text.trim();
+    if (!body) return;
+    if (!await action.run(() => api.addRemarkComment(remark.id, { body }))) return;
+    setText("");
+    await load();
+    if (remark.status === "Done" || remark.status === "Rejected") onStatusMaybeChanged();
+  }
+
+  const count = comments?.length ?? remark.commentCount;
+
+  return (
+    <div style={{ marginTop: 6 }}>
+      <button type="button" className="btn ghost small" style={{ width: "auto" }}
+        aria-expanded={open} onClick={() => setOpen((v) => !v)}>
+        {open ? "Verlauf zu" : count > 0 ? `Verlauf (${count})` : "Nachhaken"}
+      </button>
+
+      {open && (
+        <div style={{ display: "grid", gap: 4, marginTop: 6 }}>
+          {comments === null && <span className="muted" style={{ fontSize: 12 }}>Lädt …</span>}
+          {comments?.map((c) => (
+            <div key={c.id} style={{ fontSize: 12, whiteSpace: "pre-wrap" }}>
+              <b>{c.authorLabel ?? (c.author === "Assistant" ? "claude" : "ich")}</b>{" "}
+              <span className="muted">{new Date(c.createdAt).toLocaleString()}</span>
+              <div>{c.body}</div>
+            </div>
+          ))}
+          <input value={text} onChange={(e) => setText(e.target.value)}
+            placeholder="Nachhaken … (Enter sendet)" aria-label={`Beitrag zu Anmerkung ${remark.id}`}
+            disabled={action.busy}
+            onKeyDown={(e) => {
+              if (e.key !== "Enter" || e.repeat) return;
+              e.preventDefault();
+              void send();
+            }} />
+          <StatusBanner message={action.message} />
+        </div>
+      )}
+    </div>
   );
 }
 

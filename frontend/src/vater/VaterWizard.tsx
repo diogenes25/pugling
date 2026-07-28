@@ -1,10 +1,11 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { api, errorMessage } from "../lib/api";
 import { useAsync } from "../lib/useAsync";
 import { useAuth } from "../lib/auth";
 import { SCHOOL_TYPES } from "../lib/labels";
 import { TruncationHint } from "../components/ListControls";
+import { FieldLabel, InfoHint } from "../components/InfoHint";
 import { authorText } from "./ExerciseAttribution";
 import type {
   ChildResponse, CreatePlanDto, CreatePositionDto, ExerciseSummary, Paged, SchoolType, SubjectResponse,
@@ -105,8 +106,11 @@ export function VaterWizard() {
   const exercises = useAsync<Paged<ExerciseSummary>>(
     () => (subjectId === "" ? Promise.resolve({ items: [], total: 0 }) : api.searchExercises({
       subjectId: Number(subjectId), grade: effectiveGrade, schoolType: effectiveSchoolType,
+      // Der Suchbegriff geht an den Server, nicht in einen Filter über der geladenen Seite: sonst
+      // durchsucht das Feld nur die erste Seite und meldet „nichts gefunden", obwohl es Treffer gibt.
+      search: contentSearch.trim() || undefined,
     })),
-    [subjectId, effectiveGrade, effectiveSchoolType],
+    [subjectId, effectiveGrade, effectiveSchoolType, contentSearch],
   );
 
   // Erstes Kind vorwählen; wenn schon Kinder existieren, „bestehendes" als Standard.
@@ -116,11 +120,8 @@ export function VaterWizard() {
     }
   }, [children.data]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const filteredExercises = useMemo(() => {
-    const list = exercises.data?.items ?? [];
-    const s = contentSearch.trim().toLowerCase();
-    return s ? list.filter((x) => x.title.toLowerCase().includes(s)) : list;
-  }, [exercises.data, contentSearch]);
+  // Gefiltert wird serverseitig (siehe `search` oben) – hier steht nur noch, was angekommen ist.
+  const filteredExercises = exercises.data?.items ?? [];
 
   // Voreinstellungen aus dem Fragenkatalog ableiten, solange der Vater den Feinschliff nicht angefasst hat.
   function applyDefaults() {
@@ -356,14 +357,14 @@ export function VaterWizard() {
           <div className="form-grid" onChange={() => setTouchedFineTune(true)}>
             <div className="field"><label htmlFor="wiz-title">Titel</label><input id="wiz-title" title="Titel" value={title} onChange={(e) => setTitle(e.target.value)} /></div>
             <div className="field"><label htmlFor="wiz-start">Start</label><input id="wiz-start" title="Startdatum" type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} /></div>
-            <div className="field"><label htmlFor="wiz-duration">Dauer (Tage)</label><input id="wiz-duration" title="Dauer" type="number" min={1} value={durationDays} onChange={(e) => setDurationDays(Number(e.target.value))} /></div>
-            <div className="field"><label htmlFor="wiz-pass">Bestehen ab %</label><input id="wiz-pass" title="Bestehen ab Prozent" type="number" min={1} max={100} value={passPercent} onChange={(e) => setPassPercent(Number(e.target.value))} /></div>
-            <div className="field"><label htmlFor="wiz-points">Punkte je Ziel</label><input id="wiz-points" title="Punkte je erreichtem Ziel" type="number" min={0} value={pointsGoalMet} onChange={(e) => setPointsGoalMet(Number(e.target.value))} /></div>
+            <div className="field"><FieldLabel htmlFor="wiz-duration" topic="planDuration">Dauer (Tage)</FieldLabel><input id="wiz-duration" title="Dauer" type="number" min={1} value={durationDays} onChange={(e) => setDurationDays(Number(e.target.value))} /></div>
+            <div className="field"><FieldLabel htmlFor="wiz-pass" topic="goalThreshold">Bestehen ab %</FieldLabel><input id="wiz-pass" title="Bestehen ab Prozent" type="number" min={1} max={100} value={passPercent} onChange={(e) => setPassPercent(Number(e.target.value))} /></div>
+            <div className="field"><FieldLabel htmlFor="wiz-points" topic="pointsGoalMet">Punkte je Ziel</FieldLabel><input id="wiz-points" title="Punkte je erreichtem Ziel" type="number" min={0} value={pointsGoalMet} onChange={(e) => setPointsGoalMet(Number(e.target.value))} /></div>
             {/* Der „Stick": verpasste Pflicht kostet Münzen. 0 = reine Belohnung, Schulden sind erlaubt. */}
-            <div className="field"><label htmlFor="wiz-penalty">Münz-Malus bei Versäumnis</label><input id="wiz-penalty" title="Münz-Malus bei gerissener Pflicht" type="number" min={0} value={penaltyCoins} onChange={(e) => setPenaltyCoins(Number(e.target.value))} /></div>
-            <div className="field"><label htmlFor="wiz-combo-threshold">Combo alle … Treffer</label><input id="wiz-combo-threshold" title="Combo-Schwelle" type="number" min={0} value={comboThreshold} onChange={(e) => setComboThreshold(Number(e.target.value))} /></div>
-            <div className="field"><label htmlFor="wiz-combo-bonus">Combo-Bonuspunkte</label><input id="wiz-combo-bonus" title="Combo-Bonuspunkte" type="number" min={0} value={comboBonusPoints} onChange={(e) => setComboBonusPoints(Number(e.target.value))} /></div>
-            <div className="field"><label>Test-Stufe</label>
+            <div className="field"><FieldLabel htmlFor="wiz-penalty" topic="penaltyCoins">Münz-Malus bei Versäumnis</FieldLabel><input id="wiz-penalty" title="Münz-Malus bei gerissener Pflicht" type="number" min={0} value={penaltyCoins} onChange={(e) => setPenaltyCoins(Number(e.target.value))} /></div>
+            <div className="field"><FieldLabel htmlFor="wiz-combo-threshold" topic="comboThreshold">Combo alle … Treffer</FieldLabel><input id="wiz-combo-threshold" title="Combo-Schwelle" type="number" min={0} value={comboThreshold} onChange={(e) => setComboThreshold(Number(e.target.value))} /></div>
+            <div className="field"><FieldLabel htmlFor="wiz-combo-bonus" topic="comboBonusPoints">Combo-Bonuspunkte</FieldLabel><input id="wiz-combo-bonus" title="Combo-Bonuspunkte" type="number" min={0} value={comboBonusPoints} onChange={(e) => setComboBonusPoints(Number(e.target.value))} /></div>
+            <div className="field"><FieldLabel topic="defaultStage">Test-Stufe</FieldLabel>
               <select aria-label="Test-Stufe" value={defaultStage} onChange={(e) => setDefaultStage(Number(e.target.value))}>
                 <option value={1}>1 · Zeigen</option>
                 <option value={2}>2 · Selbstcheck</option>
@@ -374,8 +375,14 @@ export function VaterWizard() {
             </div>
           </div>
           <div className="row" style={{ marginTop: 12, gap: 20, flexWrap: "wrap" }}>
-            <label className="checkline"><input type="checkbox" checked={useLeitner} onChange={(e) => { setTouchedFineTune(true); setUseLeitner(e.target.checked); }} /> Leitner-Kasten (Übungspunkte)</label>
-            <label className="checkline"><input type="checkbox" checked={requireTyped} onChange={(e) => { setTouchedFineTune(true); setRequireTyped(e.target.checked); }} /> Nur getippte Tests zählen</label>
+            <span className="label-row">
+              <label className="checkline"><input type="checkbox" checked={useLeitner} onChange={(e) => { setTouchedFineTune(true); setUseLeitner(e.target.checked); }} /> Leitner-Kasten (Übungspunkte)</label>
+              <InfoHint topic="useLeitner" />
+            </span>
+            <span className="label-row">
+              <label className="checkline"><input type="checkbox" checked={requireTyped} onChange={(e) => { setTouchedFineTune(true); setRequireTyped(e.target.checked); }} /> Nur getippte Tests zählen</label>
+              <InfoHint topic="requireTypedTest" />
+            </span>
           </div>
           <p className="sub" style={{ marginTop: 12 }}>
             Der <strong>Münz-Malus</strong> greift, wenn ein Tagesziel am Ende des Tages nicht erreicht wurde –

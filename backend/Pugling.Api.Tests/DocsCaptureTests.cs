@@ -971,6 +971,25 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
                 status = "Done",
             }, HttpStatusCode.OK);
 
+        // Der Verlauf: Was nach der Auflösung passiert, überschreibt sie nicht mehr. Die Umsetzungsnotiz
+        // kommt von Claude (`Assistant`) und lässt den Stand bewusst unberührt – sonst riss jede eigene
+        // Notiz den Vorgang wieder auf.
+        await Capture(father, g, "Umsetzungsnotiz in den Verlauf schreiben", HttpMethod.Post,
+            $"/api/v1/remarks/{remarkId}/comments",
+            new
+            {
+                body = "Gebaut: Formular unter /vater/profil ergänzt (VaterProfil.tsx), PATCH über api.updateFather.",
+                author = "Assistant",
+                authorLabel = "claude-code",
+            }, HttpStatusCode.Created);
+
+        await Capture(father, g, "Verlauf einer Anmerkung lesen", HttpMethod.Get,
+            $"/api/v1/remarks/{remarkId}/comments", null, HttpStatusCode.OK);
+
+        await Capture(father, g, "Leeren Beitrag schreiben", HttpMethod.Post,
+            $"/api/v1/remarks/{remarkId}/comments", new { body = "   " },
+            HttpStatusCode.BadRequest, ApiErrors.ValidationError.Code);
+
         await Capture(father, g, "Folgeanmerkung mit Verweis anlegen", HttpMethod.Post, "/api/v1/remarks",
             new
             {
@@ -1001,6 +1020,29 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
         // Nur der Supervisor darf exportieren: Antworten tragen Datei- und Zeilenverweise, also Code-Interna.
         await Capture(child, g, "Export als Sohn abrufen", HttpMethod.Get, "/api/v1/remarks/export",
             null, HttpStatusCode.Forbidden, ApiErrors.Forbidden.Code);
+
+        // Wiederaufnahme – steht bewusst *nach* dem Export, damit dessen Beispiel (`status=Done`) den
+        // abgeschlossenen Fall zeigt. Ein Beitrag des **Menschen** holt die Anmerkung zurück auf `Open`;
+        // das ist der Mechanismus, mit dem der Nachbereitungs-Skill sie beim nächsten Lauf wieder vorlegt.
+        await Capture(father, g, "Nachhaken (holt die Anmerkung zurück auf offen)", HttpMethod.Post,
+            $"/api/v1/remarks/{remarkId}/comments",
+            new { body = "Und wie ändere ich die Adresse des Kindes?" }, HttpStatusCode.Created);
+
+        await Capture(father, g, "Anmerkung nach dem Nachhaken lesen", HttpMethod.Get,
+            $"/api/v1/remarks/{remarkId}", null, HttpStatusCode.OK);
+
+        // Der kontenübergreifende Blick: die Sicht des Nachbereitungs-Skills. Sie hängt am Schalter
+        // `Remarks:GlobalRead` (in der Entwicklung an) und **nicht** an einer Rolle – beim Testen entstehen
+        // ständig Wegwerf-Konten, weil manche Fehler nur in einer bestimmten Konstellation auftreten, und
+        // jedes einzeln zu berechtigen wäre Verwaltungsarbeit ohne Gegenwert. Ist der Schalter aus (Vorgabe
+        // außerhalb der Entwicklung), antwortet derselbe Aufruf mit `403 remark_scope_forbidden`.
+        await Capture(father, g, "Anmerkungen aller Konten lesen (scope=all)", HttpMethod.Get,
+            "/api/v1/remarks?scope=all&take=5", null, HttpStatusCode.OK);
+
+        // Ein Student bleibt in jedem Fall ausgeschlossen – auch mit eingeschaltetem Schalter: Antworten und
+        // Verlauf tragen Datei- und Zeilenverweise.
+        await Capture(child, g, "Alle Konten lesen als Sohn", HttpMethod.Get,
+            "/api/v1/remarks?scope=all", null, HttpStatusCode.Forbidden, ApiErrors.RemarkScopeForbidden.Code);
 
         // Zuletzt löschen – die Folgeanmerkung hängt per `SetNull` daran und bleibt bestehen.
         await Capture(father, g, "Anmerkung löschen", HttpMethod.Delete, $"/api/v1/remarks/{remarkId}",

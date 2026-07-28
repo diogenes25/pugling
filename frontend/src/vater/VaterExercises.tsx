@@ -8,6 +8,7 @@ import { ExerciseAttribution } from "./ExerciseAttribution";
 import { ExerciseEditModal } from "./ExerciseEditModal";
 import { ExercisePreviewModal } from "./ExercisePreviewModal";
 import { PAGE_SIZE, Pager, SortControl } from "../components/ListControls";
+import { FieldLabel } from "../components/InfoHint";
 import { SCHOOL_TYPES } from "../lib/labels";
 import { LANGUAGES } from "../lib/languages";
 import type {
@@ -246,10 +247,10 @@ export function VaterExercises() {
             </select>
           </div>
           <div className="field"><label htmlFor="ex-title">Titel</label><input id="ex-title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="z. B. Vokabeln Unit 1" /></div>
-          <div className="field"><label htmlFor="ex-points">Punkte</label><input id="ex-points" type="number" min={0} value={rewardPoints} onChange={(e) => setRewardPoints(Number(e.target.value))} /></div>
+          <div className="field"><FieldLabel htmlFor="ex-points" topic="exercisePoints">Punkte</FieldLabel><input id="ex-points" type="number" min={0} value={rewardPoints} onChange={(e) => setRewardPoints(Number(e.target.value))} /></div>
           <div className="field"><label htmlFor="ex-grade-min">Klasse von</label><input id="ex-grade-min" type="number" min={1} max={13} value={gradeMin} onChange={(e) => setGradeMin(e.target.value === "" ? "" : Number(e.target.value))} /></div>
           <div className="field"><label htmlFor="ex-grade-max">Klasse bis</label><input id="ex-grade-max" type="number" min={1} max={13} value={gradeMax} onChange={(e) => setGradeMax(e.target.value === "" ? "" : Number(e.target.value))} /></div>
-          <div className="field"><label htmlFor="ex-source">Quelle (Lehrbuch)</label><input id="ex-source" value={source} onChange={(e) => setSource(e.target.value)} placeholder="z. B. Green Line 1, Unit 1" /></div>
+          <div className="field"><FieldLabel htmlFor="ex-source" topic="exerciseSource">Quelle (Lehrbuch)</FieldLabel><input id="ex-source" value={source} onChange={(e) => setSource(e.target.value)} placeholder="z. B. Green Line 1, Unit 1" /></div>
         </div>
         <div className="field" style={{ marginTop: 10 }}>
           <label htmlFor="ex-description">Beschreibung <span className="muted">(optional)</span></label>
@@ -257,7 +258,7 @@ export function VaterExercises() {
             placeholder="Worum geht es, worauf achten? Hilft beim Wiederfinden im Lehrplan-Bau." />
         </div>
         <div className="field" style={{ marginTop: 10 }}>
-          <label>Schularten</label>
+          <FieldLabel topic="exerciseSchoolTypes">Schularten</FieldLabel>
           <div className="row" style={{ gap: 14, flexWrap: "wrap" }}>
             {SCHOOL_TYPES.map((s) => (
               <label key={s} className="checkline"><input type="checkbox" checked={schoolTypes.includes(s)} onChange={() => toggleSchool(s)} /> {s}</label>
@@ -272,13 +273,13 @@ export function VaterExercises() {
           </div>
         </div>
         <div className="field" style={{ marginTop: 10, maxWidth: 220 }}>
-          <label htmlFor="ex-default-item-count">Standard-Menge</label>
+          <FieldLabel htmlFor="ex-default-item-count" topic="defaultItemCount">Standard-Menge</FieldLabel>
           <input id="ex-default-item-count" type="number" min={1} value={defaultItemCount}
             placeholder="alle" onChange={(e) => setDefaultItemCount(e.target.value === "" ? "" : Number(e.target.value))} />
         </div>
         {type === "Vocabulary" && (
           <div className="field" style={{ marginTop: 10, maxWidth: 300 }}>
-            <label>Standard-Abfrageform</label>
+            <FieldLabel topic="defaultStage">Standard-Abfrageform</FieldLabel>
             <select aria-label="Standard-Abfrageform" value={defaultStage}
               onChange={(e) => setDefaultStage(e.target.value === "" ? "" : Number(e.target.value))}>
               {VOCAB_FORMS.map((f) => <option key={f.label} value={f.value}>{f.label}</option>)}
@@ -548,6 +549,16 @@ function ExerciseManageRow({ exercise, subjectId, route, label, onChanged, onPre
         )}
         {exercise.isOwn && !known && (
           <span className="muted" style={{ fontSize: 12 }}>Typ hier nicht bearbeitbar</span>
+        )}
+        {/*
+          Ohne diesen Hinweis war das Fehlen von „Bearbeiten" nicht von einem Fehler zu unterscheiden: Die
+          Attribution nennt zwar den Autor, sagt aber nicht, dass daran das Schreibrecht hängt. Die Übung
+          bleibt nutzbar – ausprobieren und einem Lehrplan zuweisen geht mit Leserecht.
+        */}
+        {!exercise.isOwn && (
+          <span className="muted" style={{ fontSize: 12 }} title="Bearbeiten und Löschen brauchen Schreibrecht an dieser Übung.">
+            kein Schreibrecht – nur ausprobieren &amp; zuweisen
+          </span>
         )}
       </div>
       {exercise.description && <div className="muted" style={{ marginTop: 2, fontSize: 13 }}>{exercise.description}</div>}

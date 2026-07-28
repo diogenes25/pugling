@@ -19,6 +19,7 @@ import { VaterKind } from "./VaterKind";
 import { VaterProfil } from "./VaterProfil";
 import { VaterLernstand } from "./VaterLernstand";
 import { VaterZiele } from "./VaterZiele";
+import { VaterAnmerkungen } from "./VaterAnmerkungen";
 
 export function VaterApp() {
   const { session, signOut } = useAuth();
@@ -41,6 +42,8 @@ export function VaterApp() {
           <NavLink to="/vater/konto">💰 Kontostand</NavLink>
           <NavLink to="/vater/class-tests">📝 Klassenarbeiten</NavLink>
           <NavLink to="/vater/plan/new">Neuer Plan</NavLink>
+          {/* Werkzeug für die Entwicklung, wie das Erfassungs-Widget: im Prod-Bundle wegoptimiert. */}
+          {import.meta.env.DEV && <NavLink to="/vater/anmerkungen">📝 Anmerkungen</NavLink>}
         </nav>
         <span className="spacer" />
         {/* Die Id ist der Login-Name – sie steht hier, damit sie nicht verloren geht. */}
@@ -67,6 +70,7 @@ export function VaterApp() {
           <Route path="class-tests" element={<VaterClassTests />} />
           <Route path="plan/new" element={<VaterPlanCreate />} />
           <Route path="plan/:planId" element={<VaterPlanDetail />} />
+          {import.meta.env.DEV && <Route path="anmerkungen" element={<VaterAnmerkungen />} />}
           <Route path="*" element={<Navigate to="/vater" replace />} />
         </Routes>
       </main>

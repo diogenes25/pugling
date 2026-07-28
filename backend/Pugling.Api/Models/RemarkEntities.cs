@@ -53,11 +53,25 @@ public class Remark
 
     /// <summary>
     /// Optionaler Verweis auf die Anmerkung, aus der diese hervorging – die Spur von der Frage zu der
-    /// daraus entstandenen Aufgabe. Gesetzt wird sie vom Skill, nicht vom Widget: Rückfragen führt der
-    /// Mensch in Claude Code, das Widget bleibt Eingang und wird kein Chat.
+    /// daraus entstandenen Aufgabe. Gesetzt wird sie vom Skill, nicht vom Widget.
+    /// <para>
+    /// Nicht zu verwechseln mit <see cref="Comments"/>: Der Verweis führt <b>zwischen</b> Vorgängen
+    /// (aus der Frage wurde eine Aufgabe), der Verlauf liegt <b>innerhalb</b> eines Vorgangs.
+    /// </para>
     /// </summary>
     public int? ParentRemarkId { get; set; }
     public Remark? ParentRemark { get; set; }
+
+    /// <summary>
+    /// Der Verlauf: Analyse-Nachträge, Rückfragen des Menschen, Umsetzungsnotizen. Ergänzt
+    /// <see cref="Answer"/>, ersetzt es nicht – die Antwort bleibt die *eine* belegte Auflösung, der Verlauf
+    /// trägt alles, was danach kommt.
+    /// <para>
+    /// Der Verlauf ist der Grund, warum die Anmerkung einen Arbeitsgang übersteht: Vorher überschrieb eine
+    /// Umsetzungsnotiz die vorangegangene Analyse, und die Vorarbeit war verloren.
+    /// </para>
+    /// </summary>
+    public ICollection<RemarkComment> Comments { get; set; } = [];
 
     // --- Autor ---
 
@@ -117,6 +131,52 @@ public class Remark
 
     /// <summary>Browserkennung – trennt Handy-Beobachtungen von Desktop-Beobachtungen.</summary>
     public string? UserAgent { get; set; }
+
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+}
+
+/// <summary>
+/// Ein Beitrag im Verlauf einer <see cref="Remark"/>: Analyse-Nachtrag, Rückfrage des Menschen,
+/// Umsetzungsnotiz.
+/// <para>
+/// <b>Warum es das gibt:</b> Mit nur einem <see cref="Remark.Answer"/>-Feld überschrieb jeder zweite
+/// Arbeitsgang den ersten – die belegte Analyse verschwand hinter dem „gebaut: …". Der Verlauf hält die
+/// Reihenfolge fest, die der Arbeitsweise entspricht: analysieren, zurückstellen, später umsetzen.
+/// </para>
+/// <para>
+/// <b>Und was es nicht ist:</b> kein Chat. Es gibt keine Zustellung, keine Ungelesen-Marker und keine
+/// Erwartung, dass jemand wartet – gelesen wird beim nächsten Testen oder im nächsten Skill-Lauf.
+/// </para>
+/// </summary>
+public class RemarkComment
+{
+    public int Id { get; set; }
+
+    /// <summary>Die Anmerkung, zu der der Beitrag gehört. FK <b>Cascade</b>: Ein Verlauf ohne Vorgang ist sinnlos.</summary>
+    public int RemarkId { get; set; }
+    public Remark? Remark { get; set; }
+
+    /// <summary>Der Text – das einzige Pflichtfeld.</summary>
+    public string Body { get; set; } = "";
+
+    /// <summary>
+    /// Mensch oder Claude. Steuert die Wiederaufnahme: Ein <see cref="RemarkCommentAuthor.Human"/>-Beitrag
+    /// holt eine erledigte Anmerkung zurück auf <see cref="RemarkStatus.Open"/>.
+    /// </summary>
+    public RemarkCommentAuthor Author { get; set; } = RemarkCommentAuthor.Human;
+
+    /// <summary>
+    /// Anzeigename des Urhebers, z. B. <c>claude-code</c>. Bewusst ein Protokoll-<c>string</c> wie
+    /// <see cref="Remark.AnsweredBy"/> – so kann später ein weiterer Beteiligter dazukommen, ohne Schema-Umbau.
+    /// </summary>
+    public string? AuthorLabel { get; set; }
+
+    /// <summary>
+    /// Konto des Schreibers. FK <c>SetNull</c>, denn ein gelöschtes Konto darf den Verlauf nicht mitnehmen –
+    /// die fachliche Aussage des Beitrags gilt weiter.
+    /// </summary>
+    public int? AuthorAccountId { get; set; }
+    public Account? AuthorAccount { get; set; }
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }

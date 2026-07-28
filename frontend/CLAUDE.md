@@ -19,6 +19,16 @@ Einlösen in Claude Code. Nur `import.meta.env.DEV` – im Prod-Bundle ist es we
 `localStorage["pugling.remarks.off"]="1"` abgeschaltet (gesetzt in `playwright.config.ts` via
 `use.storageState`); `e2e/anmerkungen.spec.ts` hebt das für sich auf. Plan: [docs/anmerkungen-plan.md](../docs/anmerkungen-plan.md).
 
+**Feld-Erklärungen** (`src/components/InfoHint.tsx` + `src/lib/fieldHelp.ts`): Erklärungsbedürftige
+Eingabefelder tragen statt `<label>` ein `<FieldLabel htmlFor=… topic="…">`, das ein „ⓘ" mit Popover
+anhängt (Checkbox-Zeilen: `<span className="label-row">` um `<label className="checkline">` + `<InfoHint>`).
+**Der Text steht nie am Feld, sondern in `fieldHelp.ts`** – dieselbe Größe wird an mehreren Stellen
+eingestellt (der Assistent stellt dieselbe Position ein wie die Plan-Seite), und zwei Formulierungen
+desselben Begriffs werden zwei Bedeutungen; `HelpTopic` lässt einen Tippfehler beim Übersetzen auffallen.
+Der Hinweis-Knopf heißt `Erklärung zu „<Feldname>"` – **`getByLabel` in Tests darum mit `{ exact: true }`**,
+sonst trifft der Teilstring-Vergleich den Knopf statt das Eingabefeld.
+E2E: [e2e/feldhilfe.spec.ts](e2e/feldhilfe.spec.ts) prüft Feld → *richtiger* Text, nicht „irgendein Popover".
+
 **Neue Abhängigkeiten bitte mit `--legacy-peer-deps` installieren:** `vite-plugin-pwa@0.21` deklariert
 Peer `vite@^3…^6`, installiert ist `vite@8` – jede Neuauflösung bricht sonst mit `ERESOLVE` ab
 (vorbestehend, der Build läuft trotzdem).

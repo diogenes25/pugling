@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { StatusBanner } from "../components/StatusBanner";
+import { FieldLabel } from "../components/InfoHint";
 import { api } from "../lib/api";
 import { useAction } from "../lib/useAction";
 import { useAsync } from "../lib/useAsync";
@@ -112,11 +113,11 @@ function GrantForm({ childId, onGranted }: { childId: number; onGranted: () => v
       <p className="muted">Belohne dein Kind unabhängig von der App oder gleiche Malus-Schulden aus.</p>
       <div className="row" style={{ gap: 12, alignItems: "flex-end", flexWrap: "wrap" }}>
         <div className="field" style={{ maxWidth: 120 }}>
-          <label htmlFor="grant-amount">Betrag</label>
+          <FieldLabel htmlFor="grant-amount" topic="grantAmount">Betrag</FieldLabel>
           <input id="grant-amount" type="number" min={1} value={amount} onChange={(e) => setAmount(Number(e.target.value))} />
         </div>
         <div className="field" style={{ maxWidth: 150 }}>
-          <label htmlFor="grant-currency">Währung</label>
+          <FieldLabel htmlFor="grant-currency" topic="grantCurrency">Währung</FieldLabel>
           <select id="grant-currency" value={currency} onChange={(e) => setCurrency(e.target.value as Currency)}>
             <option value="Coins">🪙 Münzen</option>
             <option value="Gems">💎 Gems</option>

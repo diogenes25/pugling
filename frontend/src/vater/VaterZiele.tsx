@@ -1,6 +1,7 @@
 import { useId, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { StatusBanner } from "../components/StatusBanner";
+import { FieldLabel } from "../components/InfoHint";
 import { api, errorMessage } from "../lib/api";
 import { useAction, type ActionState } from "../lib/useAction";
 import { confirmAction } from "../lib/ui";
@@ -268,7 +269,7 @@ function NewLearnGoal({ childId, subjects, action, onCreated }: {
       <div className="form-grid" style={{ alignItems: "end" }}>
         <ScopePicker value={scope} onChange={setScope} subjects={subjects} />
         <div className="field">
-          <label htmlFor="lg-metric">Messlatte</label>
+          <FieldLabel htmlFor="lg-metric" topic="learnGoalMetric">Messlatte</FieldLabel>
           <select id="lg-metric" value={metric}
             onChange={(e) => {
               const next = e.target.value as LearnGoalMetric;
@@ -280,7 +281,7 @@ function NewLearnGoal({ childId, subjects, action, onCreated }: {
           </select>
         </div>
         <div className="field">
-          <label htmlFor="lg-target">{meta?.max ? "Obergrenze" : "Zielwert"}</label>
+          <FieldLabel htmlFor="lg-target" topic="learnGoalTarget">{meta?.max ? "Obergrenze" : "Zielwert"}</FieldLabel>
           <input id="lg-target" type="number" min={0} value={targetValue} onChange={(e) => setTargetValue(Number(e.target.value))} />
         </div>
         <div className="field">
@@ -461,7 +462,7 @@ function KeyResultForm({ subjects, onSubmit }: {
       <div className="form-grid" style={{ alignItems: "end" }}>
         <ScopePicker value={scope} onChange={setScope} subjects={subjects} />
         <div className="field">
-          <label htmlFor={`${uid}-kr-metric`}>Messlatte</label>
+          <FieldLabel htmlFor={`${uid}-kr-metric`} topic="learnGoalMetric">Messlatte</FieldLabel>
           <select id={`${uid}-kr-metric`} value={metric}
             onChange={(e) => {
               const next = e.target.value as KeyResultMetric;
@@ -472,7 +473,7 @@ function KeyResultForm({ subjects, onSubmit }: {
           </select>
         </div>
         <div className="field">
-          <label htmlFor={`${uid}-kr-target`}>{meta?.max ? "Obergrenze" : "Zielwert"}</label>
+          <FieldLabel htmlFor={`${uid}-kr-target`} topic="learnGoalTarget">{meta?.max ? "Obergrenze" : "Zielwert"}</FieldLabel>
           <input id={`${uid}-kr-target`} type="number" min={0} value={targetValue} onChange={(e) => setTargetValue(Number(e.target.value))} />
         </div>
         <div className="field">
@@ -534,7 +535,7 @@ function NewObjective({ childId, subjects, action, onCreated }: {
       <div className="form-grid" style={{ alignItems: "end" }}>
         <div className="field"><label htmlFor="ob-title">Titel</label>
           <input id="ob-title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Englisch aufholen bis Ostern" /></div>
-        <div className="field"><label htmlFor="ob-kind">Art</label>
+        <div className="field"><FieldLabel htmlFor="ob-kind" topic="objectiveKind">Art</FieldLabel>
           <select id="ob-kind" value={kind} onChange={(e) => setKind(e.target.value as ObjectiveKind)}>
             <option value="Committed">verbindlich (zahlt Münzen)</option>
             <option value="Stretch">Dehnungsziel (zahlt Gems)</option>
@@ -543,9 +544,9 @@ function NewObjective({ childId, subjects, action, onCreated }: {
           <input id="ob-start" type="date" value={start} onChange={(e) => setStart(e.target.value)} /></div>
         <div className="field"><label htmlFor="ob-due">Termin <span className="muted">(optional)</span></label>
           <input id="ob-due" type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} /></div>
-        <div className="field"><label htmlFor="ob-reward">Belohnung bei Abschluss</label>
+        <div className="field"><FieldLabel htmlFor="ob-reward" topic="objectiveReward">Belohnung bei Abschluss</FieldLabel>
           <input id="ob-reward" type="number" min={0} value={rewardOnComplete} onChange={(e) => setRewardOnComplete(Number(e.target.value))} /></div>
-        <div className="field"><label htmlFor="ob-reward-kr">Belohnung je Etappe</label>
+        <div className="field"><FieldLabel htmlFor="ob-reward-kr" topic="objectiveRewardPerKr">Belohnung je Etappe</FieldLabel>
           <input id="ob-reward-kr" type="number" min={0} value={rewardPerKeyResult} onChange={(e) => setRewardPerKeyResult(Number(e.target.value))} /></div>
       </div>
       <div className="field">

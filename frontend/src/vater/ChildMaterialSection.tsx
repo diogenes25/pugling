@@ -22,10 +22,15 @@ import type {
  * Titel und Kapitel bleiben als Freitext-Rückfallebene: ein Buch ohne katalogisierte Reihe ist erlaubt,
  * es liefert dem Creator aber nur seinen Namen.
  */
-export function ChildMaterialSection({ childId, childName }: { childId: number; childName: string }) {
+export function ChildMaterialSection({ childId, childName, subjects }: {
+  childId: number;
+  childName: string;
+  /* Von der Kind-Seite durchgereicht: Der Stundenplan daneben braucht dieselbe Liste, und zweimal
+     dieselbe Fächer-Abfrage je Seitenaufruf ist eine Runde zu viel. */
+  subjects: SubjectResponse[];
+}) {
   const books = useAsync<TextbookResponse[]>(() => api.childTextbooks(childId), [childId]);
   const series = useAsync<TextbookSeriesResponse[]>(() => api.textbookSeries(), []);
-  const subjects = useAsync<SubjectResponse[]>(() => api.subjects(), []);
   const [editing, setEditing] = useState<number | null>(null);
 
   return (
@@ -75,7 +80,7 @@ export function ChildMaterialSection({ childId, childName }: { childId: number; 
                   <tr>
                     <td colSpan={5}>
                       <TextbookForm
-                        childId={childId} book={b} series={series.data ?? []} subjects={subjects.data ?? []}
+                        childId={childId} book={b} series={series.data ?? []} subjects={subjects}
                         onDone={() => { setEditing(null); books.reload(); }}
                       />
                     </td>
@@ -90,12 +95,17 @@ export function ChildMaterialSection({ childId, childName }: { childId: number; 
       <div style={{ marginTop: 12 }}>
         <h4 className="h-section" style={{ fontSize: "1rem" }}>Buch hinzufügen</h4>
         <TextbookForm
-          childId={childId} series={series.data ?? []} subjects={subjects.data ?? []}
+          childId={childId} series={series.data ?? []} subjects={subjects}
           onDone={books.reload}
         />
       </div>
 
-      <MatchPanel childId={childId} childName={childName} books={books.data ?? []} />
+      {/* Erst mit geladenen Büchern: Das Panel leitet sein Fach AUS ihnen ab. Vorher (`?? []`) fragte es
+          erst ohne Fach und gleich darauf noch einmal mit – eine überflüssige Runde und dazwischen eine
+          Trefferliste, die schon wieder falsch war. */}
+      {books.data
+        ? <MatchPanel childId={childId} childName={childName} books={books.data} />
+        : <div className="loading">Lade…</div>}
     </section>
   );
 }

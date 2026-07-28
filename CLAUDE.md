@@ -62,6 +62,18 @@ Details: [backend/Pugling.Agent.Creator/README.md](backend/Pugling.Agent.Creator
   Widget erfassen (Alt+A) → **Log-Id** → in Claude Code per Skill `anmerkungen` belegt beantworten.
   Der Wert steckt im automatisch mitgeschnittenen Kontext (Route, Kind/Übung, letzte Fehler), nicht im
   Text. Ringpuffer speichert **nur Metadaten** – der Login-Request trägt die PIN im Body.
+  **Der Vorgang hat einen Verlauf** (`RemarkComment`, `…/remarks/{id}/comments`): `Answer` bleibt die *eine*
+  gepinnte Auflösung, Beiträge tragen alles danach – sonst überschreibt die Umsetzungsnotiz die Analyse
+  (genau so passiert). Herkunft `Human`/`Assistant` ist ein **eigenes Feld**, weil Claude mit dem Token des
+  Menschen schreibt; daran hängt die Wiederaufnahme: ein *menschlicher* Beitrag holt eine erledigte
+  Anmerkung zurück auf `Open`, ein Assistant-Beitrag nie. **Erfassen darf jedes Vater-Konto ohne
+  Sonderrechte** (Wegwerf-Konten sind der Regelfall beim Testen – manche Fehler zeigen sich nur in einer
+  Konstellation, die der geseedete Papa nie hat); **kontenübergreifend lesen** hängt am Schalter
+  `Remarks:GlobalRead` (Vorgabe `IsDevelopment()`, [RemarkOptions](backend/Pugling.Api/Services/Shared/RemarkOptions.cs)):
+  `?scope=all` auf Liste und Export, bei einer einzelnen Id genügt die Berechtigung, sonst
+  `403 remark_scope_forbidden`. **Nicht** an `Roles.Admin` gebunden – die Rolle umgeht auch die Übungs-RWX
+  und hätte hier zwei Dinge verkoppelt; **Löschen** bleibt eng (Eigentümer bzw. Admin), ein Student immer
+  ausgeschlossen. Bedienung im Widget und unter `/vater/anmerkungen` (beide nur `import.meta.env.DEV`).
   Details: [docs/anmerkungen-plan.md](docs/anmerkungen-plan.md).
 - **Identität/Auth** ([Auth/](backend/Pugling.Api/Auth/)): Ein `Account` (Login/PIN-Hash) trägt über
   `AccountProfile` **mehrere Rollen** (`ProfileRole` Creator/Supervisor/Student → `Father`/`Child`-Profil);
