@@ -455,6 +455,59 @@ daneben – Stock-Bilder liegen oft schon irgendwo.
   Varianten deshalb **im Speicher** sortieren – sonst widersprechen sich `media/{id}` und
   `media/{id}/variants` bei identischen Daten.
 
+## Regeln in Kurzform (aus der Root-CLAUDE.md hierher verlagert)
+
+Diese Zusammenfassung lag bis 2026-07-28 in der [CLAUDE.md im Repo-Root](../CLAUDE.md) und damit in
+*jeder* Sitzung im Kontext. Sie beschreibt **ein** Subsystem – das Detail gehört hierher. **Nicht**
+verlagert wurden die Anti-Cheat-Schranken: die bleiben in der Root-CLAUDE.md, weil sie beim Bauen einer
+Ausspielung greifen müssen, auch wenn niemand dieses Dokument geöffnet hat.
+
+**Modell.** Zwei Achsen bleiben getrennt: `MediaAsset` ist *eine Darstellung* („laufendes Einhorn im
+Comic-Stil") mit Stil-Tags und `ContentRating`, `MediaVariant` dieselbe Darstellung in einer Auflösung –
+adressiert über den semantischen `MediaPurpose` (Thumb/Card/Full/Hero), nicht über Pixelmaße. Bytes liegen
+nie in der DB, nur URLs. Route: `api/v1/creator/media` (+ `…/{id}/variants`, `…/{id}/tags`).
+
+**Der Angelpunkt ist die geteilte Taxonomie:** `InterestTag` (Slug + Facette, u. a. `Style`) wird von
+Bildern *und* Kindern referenziert (`ChildInterest` mit Gewicht **-3…+3**, negativ = Abneigung, unter
+`api/v1/supervisor/children/{}/interests`). Nur weil beide Seiten aus **einem** Vokabular schöpfen, ist die
+Bildauswahl berechenbar – deshalb läuft jedes Findet-sonst-legt-an über `InterestTagService`.
+`Child.Interests` (Freitext) bleibt daneben: es ist die Sprache des KI-Creators. `ContentRating` +
+`Child.AllowedContentRating` liegen **als int** in der DB (ordnender Vergleich – als String wäre er
+alphabetisch und damit falsch).
+
+**Zuordnung** über `MediaLink` – **n:m in beide Richtungen** (ein Wort trägt viele Darstellungen, ein Bild
+dient vielen Wörtern), deshalb eigene Tabelle statt Spalte am Träger wie beim 1:1-Aussprache-Audio. Genau
+*ein* Träger je Zeile (DB-Check-Constraint): `Vocabulary` = Regel für alle Übungen
+(`api/v1/creator/vocabulary/{}/media`, jeder Creator), `ExerciseItem` = übungslokale Übersteuerung und
+`Exercise` = Titelbild (beide unter `api/v1/creator/exercises/{}/…`, **Schreibrecht** nötig).
+Genauigkeits-Kaskade: Item schlägt Vokabel. Rückrichtung `media/{id}/usage`; Löschen ist bewusst *nicht*
+gesperrt (kein Platzhalter wie bei Vokabeln – die Auswahl schrumpft nur).
+
+**Auswahl je Kind** (`MediaSelector`): hart filtern (Eignung über Freigabe, Abneigung = negativ gewichteter
+Tag, bereits abgelehnt, keine Variante) → nach Interessen bewerten (Thema ×2, Stil ×1; `MediaLink.Weight`
+bricht nur Gleichstände, gefolgt von einem stabilen FNV-Hash – **kein** `Random` und **kein**
+`string.GetHashCode`, der ist pro Prozess randomisiert) → **einfrieren** in `ChildMediaPick`. Das Einfrieren
+ist der Kern: beim Vokabellernen ist Bildkonstanz der Merkeffekt, ein nachträglich hinzugefügtes Bild darf
+die laufende Wahl nicht kippen. „Anderes Bild" über
+`api/v1/student/children/{}/media-picks/reshuffle` (lehnt dauerhaft ab; ohne Alternative
+`409 media_no_alternative`, statt den letzten Kandidaten zu verbrennen).
+
+**Weg zur Karte:** `ItemsOfAsync(exercise, childId)` → `ContentItem.ImageUrl/ImageAlt` → `StageFacets` →
+`CardFacets` → `PracticeCard`/`TestItem`.
+
+**Upload** (Etappe 5): `POST creator/media/upload` (multipart) → `MediaImageProcessor` skaliert auf
+Thumb/Card/Full (WebP, **nie hochskalieren, nie beschneiden** – daher kein `Hero`) und ermittelt eine
+Platzhalterfarbe; `IMediaStorage` legt ab. Der Ordner ist **nicht** `wwwroot` (das überschreibt der
+Frontend-Deploy), sondern `Media:RootPath` (Default `media-uploads`), ausgeliefert unter `Media:PublicPath`
+(`/media`); Ordnername ist die Asset-**Id**, nie der nutzergesetzte Key. Bildbibliothek ist **SkiaSharp**
+(MIT/BSD) – ImageSharp 4 bricht den Build ohne Lizenzschlüssel ab.
+
+**Frontend** (Etappe 6): `/vater/kind/:id` (gewichtete Interessen + Bild-Freigabe), `/vater/media`
+(Bibliothek), Bilder-Panel je Vokabelzeile, Bild + „anderes Bild" auf der Sohn-Karte; E2E
+[frontend/e2e/bilder.spec.ts](../frontend/e2e/bilder.spec.ts).
+
+**Offen:** Stufe „Bild → Wort" (7).
+
 ---
 
 **Verwandt:** [endpunkt-beziehungen.md](endpunkt-beziehungen.md) ·
