@@ -295,6 +295,15 @@ public sealed class CreatorApi(HttpClient http)
         Http.GetAsync<UsageResponse>($"{Root}/exercises/{exerciseId}/usage", ct);
 
     /// <summary>
+    /// Gibt eine Übung frei oder zieht sie zurück (nur Owner). <c>false</c> stoppt <b>neue</b> Zuweisungen
+    /// durch Fremde; laufende Lehrpläne bleiben unberührt. Für einen Creator-Agenten der Weg, eigenes
+    /// Material aus dem Verkehr zu nehmen – Löschen verweigert eine benutzte Übung.
+    /// </summary>
+    public Task<ExerciseSharingResponse> SetExerciseSharingAsync(int exerciseId, bool executePublic, CancellationToken ct = default) =>
+        Http.PatchAsync<ExerciseSharingResponse>($"{Root}/exercises/{exerciseId}/sharing",
+            new SetExerciseSharingDto(executePublic), ct);
+
+    /// <summary>
     /// Testmodus: die Aufgaben ohne Lösungen, nebenwirkungsfrei. Typen ohne prüfbare Einzelaufgaben
     /// (z. B. <c>Essay</c>) antworten mit <c>400 no_checkable_content</c>.
     /// </summary>

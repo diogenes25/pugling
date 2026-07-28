@@ -142,7 +142,14 @@ export function VaterExercises() {
             ]}
             value={sort} dir={dir} onChange={(k, d) => { setSort(k); setDir(d); }} />
         </div>
-        {existing.loading ? <div className="loading">Lade…</div>
+        {/*
+          Der Platzhalter gilt nur fürs **erste** Laden. Jede Änderung an einer Zeile frischt die Liste auf,
+          und ein „Lade…" an dieser Stelle hängt dabei sämtliche Zeilen aus: die aufgeklappte
+          Verwendungs-Anzeige verschwand mitten in der Arbeit, samt ihres Zurückziehen-Schalters. Dieselbe
+          Falle wie in VaterKatalog – `useAsync` behält `data` über ein `reload`, also darf der Platzhalter
+          nur greifen, solange es noch keine gibt.
+        */}
+        {existing.loading && existing.data === null ? <div className="loading">Lade…</div>
           : (existing.data?.items.length ?? 0) === 0 ? <div className="muted">Noch keine Übungen.</div> : (
           <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
             {existing.data?.items.map((e) => (
@@ -181,28 +188,57 @@ export function VaterExercises() {
  *
  * Namen fremder Kinder tauchen in **keinem** der beiden Fälle auf: sie gehören ihrem Betreuer.
  */
-function UsagePanel({ usage }: { usage: ExerciseUsage }) {
+function UsagePanel({ usage, exercise, busy, onToggleSharing }: {
+  usage: ExerciseUsage;
+  exercise: ExerciseSummary;
+  busy: boolean;
+  onToggleSharing: () => void;
+}) {
   const others = usage.otherLearnersCount;
   const childWord = others === 1 ? "Kind" : "Kindern";
   const hasOwn = usage.plans.length > 0 || usage.classTests.length > 0;
+  // Der Ausweg, wenn Löschen gesperrt ist – aber nur für den Owner, denn nur er darf zurückziehen.
+  const wayOut = exercise.isOwner && exercise.executePublic
+    ? " Zurückziehen kannst du sie trotzdem: das stoppt neue Zuweisungen, ohne laufende Pläne zu brechen."
+    : "";
 
-  if (!hasOwn) {
-    return (
-      <div className="muted" style={{ marginTop: 6, fontSize: 13 }}>
-        {others === 0
-          ? "Wird derzeit nirgends eingesetzt – weder bei deinen Kindern noch bei anderen. Löschen ist möglich."
-          : <>Im Einsatz bei <strong>{others}</strong> {childWord} – nicht von dir betreut, darum ohne Namen
-            und ohne Plan-Titel. Löschen ist deshalb gesperrt.</>}
-      </div>
-    );
-  }
   return (
     <div className="muted" style={{ marginTop: 6, fontSize: 13 }}>
-      <div>Lehrpläne: {usage.plans.length === 0 ? "—" : usage.plans.map((p) => `${p.planTitle} (${p.childName})`).join(", ")}</div>
-      <div>Klassenarbeiten: {usage.classTests.length === 0 ? "—" : usage.classTests.map((c) => `${c.title} (${c.childName})`).join(", ")}</div>
-      {others > 0 && (
-        <div style={{ marginTop: 2 }}>
-          Außerdem bei <strong>{others}</strong> {childWord} anderer Betreuer im Einsatz.
+      {hasOwn ? (
+        <>
+          <div>Lehrpläne: {usage.plans.length === 0 ? "—" : usage.plans.map((p) => `${p.planTitle} (${p.childName})`).join(", ")}</div>
+          <div>Klassenarbeiten: {usage.classTests.length === 0 ? "—" : usage.classTests.map((c) => `${c.title} (${c.childName})`).join(", ")}</div>
+          {others > 0 && (
+            <div style={{ marginTop: 2 }}>
+              Außerdem bei <strong>{others}</strong> {childWord} anderer Betreuer im Einsatz.
+            </div>
+          )}
+        </>
+      ) : (
+        <div>
+          {others === 0
+            ? "Wird derzeit nirgends eingesetzt – weder bei deinen Kindern noch bei anderen. Löschen ist möglich."
+            : <>Im Einsatz bei <strong>{others}</strong> {childWord} – nicht von dir betreut, darum ohne Namen
+              und ohne Plan-Titel. Löschen ist deshalb gesperrt.{wayOut}</>}
+        </div>
+      )}
+
+      {/*
+        Die Rücknahme steht **hier** und nicht in der Zeile: sie ist eine seltene Verwaltungs-Entscheidung,
+        und als fünfter Knopf neben „Ausprobieren"/„Bearbeiten" brach die Zeile um – dieselbe Überfüllung,
+        gegen die Anmerkung 11 ging. Hier steht sie neben der Auskunft, die sie begründet.
+      */}
+      {exercise.isOwner && (
+        <div className="row" style={{ marginTop: 8, gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+          <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} disabled={busy}
+            onClick={onToggleSharing}>
+            {exercise.executePublic ? "⬇️ Zurückziehen" : "⬆️ Wieder freigeben"}
+          </button>
+          <span style={{ fontSize: 12 }}>
+            {exercise.executePublic
+              ? "Nimmt sie aus dem Verkehr: niemand kann sie mehr neu zuweisen. Laufende Lehrpläne bleiben unberührt."
+              : "Derzeit zurückgezogen – nur wer ein ausdrückliches Recht hält, kann sie noch zuweisen."}
+          </span>
         </div>
       )}
     </div>
@@ -236,6 +272,24 @@ function ExerciseManageRow({ exercise, subjectId, route, label, onChanged, onPre
     try { await api.deleteExercise(subjectId, exercise.chapterId, route!, exercise.id); onChanged(); }
     catch (e) { setErr(errorMessage(e)); setBusy(false); }
   }
+  /*
+   * Freigeben / Zurückziehen – die Gegenbewegung zum Veröffentlichen und der **einzige** Weg, Material aus
+   * dem Verkehr zu nehmen: Löschen verweigert eine benutzte Übung, und das zu Recht, denn laufende Pflichten
+   * dürfen nicht unter dem Kind wegbrechen.
+   *
+   * Nur das Zurückziehen fragt nach. Freigeben ist harmlos und jederzeit umkehrbar; Zurückziehen wirkt auf
+   * fremde Familien, die die Übung ab dann nicht mehr zuweisen können.
+   */
+  async function toggleSharing() {
+    const withdraw = exercise.executePublic;
+    if (withdraw && !confirmAction(
+      "Übung zurückziehen? Andere Väter können sie dann nicht mehr neu zuweisen. "
+      + "Laufende Lehrpläne bleiben unberührt – wer sie heute lernt, lernt sie weiter.")) return;
+    setBusy(true); setErr(null);
+    try { await api.setExerciseSharing(exercise.id, !withdraw); onChanged(); }
+    catch (e) { setErr(errorMessage(e)); }
+    finally { setBusy(false); }
+  }
 
   return (
     <div style={{ border: "1px solid var(--stroke)", borderRadius: 8, padding: "6px 10px" }}>
@@ -244,6 +298,17 @@ function ExerciseManageRow({ exercise, subjectId, route, label, onChanged, onPre
         <span className="muted">· {label}</span>
         {/* Attribution der geteilten Bibliothek: eigene vs. von anderen Vätern erstellt vs. System. */}
         <ExerciseAttribution e={exercise} />
+        {/*
+          Der Freigabe-Stand steht sichtbar in der Zeile, nicht nur im Dialog: „zurückgezogen" ist der
+          Zustand, in dem sich eine Übung anders verhält als alle anderen (niemand kann sie neu zuweisen),
+          und ein unsichtbarer Sonderzustand wird später als Fehler gemeldet. Für **jeden** sichtbar, nicht
+          nur für den Owner – wer sie nicht zuweisen kann, soll den Grund sehen.
+        */}
+        {!exercise.executePublic && (
+          <span className="pill mag" title="Neue Zuweisungen nur mit ausdrücklichem Recht. Laufende Lehrpläne bleiben unberührt.">
+            zurückgezogen
+          </span>
+        )}
         <span style={{ marginLeft: "auto" }} />
         <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} onClick={onPreview}>🧪 Ausprobieren</button>
         {/*
@@ -274,7 +339,7 @@ function ExerciseManageRow({ exercise, subjectId, route, label, onChanged, onPre
       </div>
       {exercise.description && <div className="muted" style={{ marginTop: 2, fontSize: 13 }}>{exercise.description}</div>}
       {err && <div className="banner err" style={{ marginTop: 6 }}>{err}</div>}
-      {open && usage && <UsagePanel usage={usage} />}
+      {open && usage && <UsagePanel usage={usage} exercise={exercise} busy={busy} onToggleSharing={toggleSharing} />}
     </div>
   );
 }

@@ -896,9 +896,19 @@ export interface ExerciseSummary {
   /** Autor der Übung (Vater); null = geseedete System-Übung. Grundlage der „von …"-Attribution. */
   authorFatherId: number | null;
   authorName: string | null;
-  /** Gehört die Übung dem anfragenden Vater? Nur dann darf er sie ändern/löschen. */
+  /** Darf der anfragende Vater sie **ändern**? (Owner- oder Write-Recht.) */
   isOwn: boolean;
+  /** Darf er sie **verwalten**? Nur der Owner darf löschen, Rechte vergeben und zurückziehen. */
+  isOwner: boolean;
+  /**
+   * Ist sie für **jeden** Creator zuweisbar? `false` = zurückgezogen: nur wer ein ausdrückliches Recht
+   * hält, kann sie noch einem Kind zuweisen. Laufende Lehrpläne bleiben davon unberührt.
+   */
+  executePublic: boolean;
 }
+
+/** Der Freigabe-Stand einer Übung nach dem Umschalten (Antwort von `setExerciseSharing`). */
+export interface ExerciseSharing { id: number; executePublic: boolean; grantCount: number; }
 
 /** Server-paginierte Liste: eine Seite plus Gesamtzahl (kommt aus dem X-Total-Count-Header). */
 export interface Paged<T> {

@@ -6,7 +6,7 @@ import type {
   ExerciseGrant, GrantPermission,
   CreateFatherDto, FatherResponse, UpdateFatherDto,
   ExerciseDetail, ExercisePreviewAnswer, ExercisePreviewData, ExercisePreviewResult, ExerciseTypeManifest,
-  ExerciseSearchParams, ExerciseSummary, ExerciseUsage, KlassenarbeitDetail, KlassenarbeitPractice, KlassenarbeitRepeat,
+  ExerciseSearchParams, ExerciseSharing, ExerciseSummary, ExerciseUsage, KlassenarbeitDetail, KlassenarbeitPractice, KlassenarbeitRepeat,
   KlassenarbeitResponse, KlassenarbeitStatus, LoginResponse, MissionDef, MissionStatus, PlanResponse,
   ChildrenDashboard, CreatePositionDto, PositionResponse, PositionReport, UpdatePositionDto, OverviewResponse, PositionSession, PracticeCard,
   ProgressResponse, ReviewInput, ReviewOutcome,
@@ -307,6 +307,13 @@ export const api = {
   // Typ-übergreifender Detail-Abruf (mit Config) + „wo verwendet".
   getExercise: (id: number) => http<ExerciseDetail>(`${V1}/creator/exercises/${id}`),
   exerciseUsage: (id: number) => http<ExerciseUsage>(`${V1}/creator/exercises/${id}/usage`),
+  /**
+   * Übung freigeben oder **zurückziehen** (nur Owner). `false` stoppt neue Zuweisungen durch Fremde;
+   * laufende Lehrpläne bleiben unberührt. Der einzige Weg, Material aus dem Verkehr zu nehmen – Löschen
+   * verweigert eine benutzte Übung.
+   */
+  setExerciseSharing: (id: number, executePublic: boolean) =>
+    http<ExerciseSharing>(`${V1}/creator/exercises/${id}/sharing`, "PATCH", { executePublic }),
   // Testmodus: eine Übung nebenwirkungsfrei durchspielen (keine Punkte/kein Fortschritt) und bewerten lassen.
   previewExercise: (id: number, stage?: number) =>
     http<ExercisePreviewData>(`${V1}/creator/exercises/${id}/preview${stage != null ? `?stage=${stage}` : ""}`),

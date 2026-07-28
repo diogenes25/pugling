@@ -68,6 +68,17 @@ Kopien liefen zwangsläufig auseinander. Die Formulare je Typ stehen in
 [src/vater/exerciseConfig.tsx](src/vater/exerciseConfig.tsx) (Hin- **und** Rückweg, siehe
 [wiki/08-erweitern.md](../wiki/08-erweitern.md)); `e2e/uebungstypen.spec.ts` vergleicht das
 Typ-Pulldown gegen das Manifest und schlägt fehl, sobald ein Server-Typ kein UI hat.
+**Material zurückziehen** (`PATCH creator/exercises/{id}/sharing`, nur Owner): der einzige Weg, eine Übung
+aus dem Verkehr zu nehmen – Löschen verweigert eine benutzte Übung, und das zu Recht (laufende Pflichten
+dürfen nicht unter dem Kind wegbrechen). Zurückziehen stoppt nur **neue** Zuweisungen. Der Schalter sitzt in
+der Verwendungs-Anzeige, nicht in der Zeile: eine seltene Verwaltungs-Entscheidung neben der Auskunft, die
+sie begründet. Der Zustand steht als Pille „zurückgezogen" in der Zeile, für jeden sichtbar.
+
+**Wiederkehrende Falle bei Listen mit aufklappbaren Zeilen:** `useAsync` behält `data` über ein `reload`,
+setzt aber `loading` erneut. Wer `{loading ? "Lade…" : rows}` schreibt, hängt bei **jeder** Änderung alle
+Zeilen aus – aufgeklappte Bereiche und ihr Zustand sind weg. Der Platzhalter darf nur greifen, solange es
+noch keine Daten gibt (`loading && data === null`); getroffen hat es schon `VaterKatalog` und `VaterExercises`.
+
 Übungen sind über `/vater/exercises` **bearbeitbar**
 (Metadaten per PUT — den geladenen `config`/`suggestedBonus`/`executePublic` mitschicken, sonst löscht der
 Vollersatz sie; Vokabelpaare einzeln über `…/vocabulary/{id}/items`, damit die Item-Ids und der Lernstand

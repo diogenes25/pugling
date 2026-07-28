@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Pugling.Api.Auth;
 using Pugling.Api.Data;
+using Pugling.Api.Errors;
 using Pugling.Api.Models;
 
 namespace Pugling.Api.Controllers.Creator;
@@ -145,6 +146,36 @@ public class ExerciseCatalogController(PuglingDbContext db) : ControllerBase
             e.ExecutePublic, e.Grants.Count,
             JsonSerializer.Deserialize<JsonElement>(string.IsNullOrWhiteSpace(e.ConfigJson) ? "{}" : e.ConfigJson, JsonOptions),
             e.Description, e.DefaultUseLeitner, e.DefaultRequireTypedTest);
+    }
+
+    /// <summary>
+    /// Gibt eine Übung frei oder <b>zieht sie zurück</b> – die Gegenbewegung zum Veröffentlichen, und der
+    /// einzige Weg, Material aus dem Verkehr zu nehmen: Löschen verweigert eine benutzte Übung (der FK
+    /// <c>PlanPosition→Exercise</c> ist <c>Restrict</c>), und das ist auch richtig – laufende Pflichten
+    /// dürfen nicht unter dem Kind wegbrechen.
+    /// <para>
+    /// Bewusst ein <b>eigener</b> Endpunkt statt des typisierten Voll-<c>PUT</c>: dieses Flag hat nichts mit
+    /// dem Übungstyp zu tun, und für einen einzelnen Schalter die ganze Übung samt <c>ConfigJson</c> zu
+    /// ersetzen ist der kurze Weg zum stillen Inhaltsverlust.
+    /// </para>
+    /// <para>
+    /// Nur der <b>Owner</b> darf umschalten (wie beim Rechte-Vergeben) – ein Write-Grantee darf Inhalte
+    /// pflegen, aber nicht über die Weitergabe entscheiden.
+    /// </para>
+    /// </summary>
+    [HttpPatch("{id:int}/sharing")]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<ExerciseSharingResponse>> SetSharing(int id, SetExerciseSharingDto dto, CancellationToken ct)
+    {
+        var e = await db.Exercises.Include(x => x.Grants).FirstOrDefaultAsync(x => x.Id == id, ct);
+        if (e is null) return NotFound();
+        if (!ExercisePermissionService.CanAdminister(e.Grants, User.FatherId(), User.IsAdmin()))
+            return this.ProblemWithCode(ApiErrors.NotOwner, "Only an owner can share or withdraw this exercise.");
+
+        e.ExecutePublic = dto.ExecutePublic;
+        await db.SaveChangesAsync(ct);
+        return new ExerciseSharingResponse(e.Id, e.ExecutePublic, e.Grants.Count);
     }
 
     /// <summary>
