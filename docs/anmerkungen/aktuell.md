@@ -1,6 +1,6 @@
 # Anmerkungen – Export
 
-Stand: 2026-07-28 14:05 UTC · 11 Einträge · Filter: alle
+Stand: 2026-07-28 20:12 UTC · 12 Einträge · Filter: alle
 
 > Erzeugt von `GET api/v1/remarks/export`. **Nicht von Hand bearbeiten** – die Quelle ist
 > die Datenbank. Status und Antworten ändert der Skill `anmerkungen` über die API.
@@ -180,4 +180,12 @@ KORRIGIERT. Der Befund stimmt (leere Vokabel-Uebungen existieren und scheitern e
 > **claude-code** · 2026-07-28 14:05 UTC, Konto 1
 > 
 > Gebaut. Drei Aenderungen, alle Backend: (1) Neuer Fehlercode exercise_empty (ApiErrors.cs) - bewusst getrennt von no_checkable_content, weil dort 'nichts zu pruefen' eine Eigenschaft des Typs ist (Aufsatz) und hier ein unfertiger Datenstand. (2) PlanPositionsController lehnt das Zuweisen einer ungefuellten Uebung ab (400 exercise_empty). 'Ungefuellt' ist registry-getrieben definiert: nur Typen mit StoreResolution.ItemTable und null Items - ein Aufsatz hat typbedingt nie Items und bleibt zuweisbar (eigener Regressionstest). (3) refs-from-tags weist einen leeren Treffersatz ab und laesst die Items unberuehrt, statt die Uebung lautlos zu leeren. Dazu: die Vorschau nennt jetzt den Grund (exercise_empty statt des allgemeinen no_checkable_content), damit ein leeres 'Ausprobieren' nicht wie ein Fehler der App aussieht - genau der Fall aus dem Mitschnitt von Anmerkung 10. NICHT gebaut, mit Begruendung in der korrigierten Antwort: keine Schranke am POST (zerstoerte 'erst anlegen, dann fuellen') und keine am Item-DELETE. Geprueft: 464/464 Tests gruen (6 neue in EmptyExerciseGuardTests.cs, darunter der Regressionsschutz fuer Aufsatz und fuer 'erst anlegen, dann fuellen'), dotnet format sauber, und docs/api-examples traegt ein verifiziertes Beispiel (Abdeckung 31/48 Codes).
+
+## #14 · Bug · offen
+
+- **Erfasst:** 2026-07-28 20:12 UTC von Konto 1 (Supervisor)
+- **Wo:** _(keine Route)_ (?)
+- **Folgt aus:** #13
+
+'Verwendung' sagt 'nirgends', Loeschen sagt '409 exercise_in_use' - und der Autor kann nicht herausfinden, wo. Die beiden Pruefungen haben unterschiedliche Sichtbarkeitsbereiche: ExerciseCatalogController.Usage (Zeile 156-180) filtert auf die eigenen Kinder (SupervisorLinks.Any(l => l.SupervisorId == fid), Zeile 164 und 176; die Zusage steht so auch am DTO, ExerciseCatalogDtos.cs:37), die Loeschpruefung in ExerciseControllerBase.cs:343-345 schaut dagegen GLOBAL ueber alle PlanPositions und KlassenarbeitExercises. Steckt die Uebung im Plan eines Kindes, das der Aufrufer nicht betreut, meldet die Verwendungs-Anzeige leer und das Loeschen scheitert trotzdem. Belegt am 2026-07-28 an Uebung 24 ('Einfach Vokabeln'): usage lieferte fuer Vater 1 UND fuer den Owner Vater 6 jeweils {plans:[],classTests:[]}, DELETE antwortete 409. Tatsaechlich lag sie in Position 24 von Plan 11 ('Englisch - Unit 1', aktiv) fuer Kind 6 - betreut von Vater 7. Aufloesen liess sich das nur, indem Vater 7 die Position entfernte; ueber die API allein war die Ursache nicht auffindbar. Das trifft die geteilte Bibliothek im Kern: je mehr Vaeter eine Uebung uebernehmen, desto haeufiger liegt die Verwendung ausserhalb der eigenen Sicht. Der Autor bekommt dann eine Uebung, die er nicht loeschen und deren Grund er nicht sehen kann. Moegliche Richtungen (nicht entschieden): (a) die 409-Meldung nennt die ANZAHL fremder Verwendungen ohne Namen zu verraten ('in 1 Lehrplan eines anderen Betreuers') - loest das Raetsel, ohne fremde Kinder offenzulegen; (b) usage bekommt ein Feld othersCount in derselben Absicht; (c) die Loeschpruefung wird auf den eigenen Bereich verengt - halte ich fuer falsch, sie schuetzt einen FK mit Restrict und muss global bleiben. Vorzug: (a), weil die Meldung genau dort steht, wo der Nutzer haengt.
 
