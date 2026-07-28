@@ -108,6 +108,10 @@ public static class ApiErrors
     public static readonly ApiError UnknownExerciseType = new("unknown_exercise_type", 500, "The exercise has an unknown type.");
     /// <summary>Anmerkung existiert nicht oder ist für den Aufrufer nicht sichtbar (404).</summary>
     public static readonly ApiError RemarkNotFound = new("remark_not_found", 404, "Remark not found.");
+    /// <summary>Beitrag im Verlauf existiert nicht, gehört zu einer anderen Anmerkung oder einem anderen Konto (404).</summary>
+    public static readonly ApiError RemarkCommentNotFound = new("remark_comment_not_found", 404, "Remark comment not found.");
+    /// <summary>Der kontenübergreifende Zugriff (<c>scope=all</c>) ist auf dieser Instanz nicht offen (403).</summary>
+    public static readonly ApiError RemarkScopeForbidden = new("remark_scope_forbidden", 403, "Reading across accounts is disabled on this instance.");
 
     /// <summary>
     /// Alle bekannten Codes (per Reflection über die Felder, einmalig materialisiert). Speist das

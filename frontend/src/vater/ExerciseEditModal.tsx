@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { api, errorMessage } from "../lib/api";
 import { Modal } from "../components/Modal";
 import { StatusBanner } from "../components/StatusBanner";
+import { FieldLabel } from "../components/InfoHint";
 import { SCHOOL_TYPES } from "../lib/labels";
 import { confirmAction } from "../lib/ui";
 import { useAction } from "../lib/useAction";
@@ -186,7 +187,7 @@ function MetaEditor({ detail, type, route, onSaved }: {
       <div className="form-grid">
         <div className="field"><label htmlFor="ed-title">Titel</label>
           <input id="ed-title" value={form.title} onChange={(e) => up("title", e.target.value)} /></div>
-        <div className="field"><label htmlFor="ed-points">Punkte</label>
+        <div className="field"><FieldLabel htmlFor="ed-points" topic="exercisePoints">Punkte</FieldLabel>
           <input id="ed-points" type="number" min={0} value={form.rewardPoints} onChange={(e) => up("rewardPoints", Number(e.target.value))} /></div>
         <div className="field"><label htmlFor="ed-grade-min">Klasse von</label>
           <input id="ed-grade-min" type="number" min={1} max={13} value={form.gradeMin}
@@ -194,9 +195,9 @@ function MetaEditor({ detail, type, route, onSaved }: {
         <div className="field"><label htmlFor="ed-grade-max">Klasse bis</label>
           <input id="ed-grade-max" type="number" min={1} max={13} value={form.gradeMax}
             onChange={(e) => up("gradeMax", e.target.value === "" ? "" : Number(e.target.value))} /></div>
-        <div className="field"><label htmlFor="ed-source">Quelle (Lehrbuch)</label>
+        <div className="field"><FieldLabel htmlFor="ed-source" topic="exerciseSource">Quelle (Lehrbuch)</FieldLabel>
           <input id="ed-source" value={form.source} onChange={(e) => up("source", e.target.value)} /></div>
-        <div className="field"><label htmlFor="ed-item-count">Standard-Menge</label>
+        <div className="field"><FieldLabel htmlFor="ed-item-count" topic="defaultItemCount">Standard-Menge</FieldLabel>
           <input id="ed-item-count" type="number" min={1} placeholder="alle" value={form.defaultItemCount}
             onChange={(e) => up("defaultItemCount", e.target.value === "" ? "" : Number(e.target.value))} /></div>
       </div>
@@ -205,7 +206,7 @@ function MetaEditor({ detail, type, route, onSaved }: {
         <textarea id="ed-description" rows={2} value={form.description} onChange={(e) => up("description", e.target.value)} />
       </div>
       <div className="field">
-        <label>Schularten</label>
+        <FieldLabel topic="exerciseSchoolTypes">Schularten</FieldLabel>
         <div className="row" style={{ gap: 14, flexWrap: "wrap" }}>
           {SCHOOL_TYPES.map((s) => (
             <label key={s} className="checkline">
@@ -228,7 +229,7 @@ function MetaEditor({ detail, type, route, onSaved }: {
       {type === "Vocabulary" && (
         <>
           <div className="field" style={{ maxWidth: 300 }}>
-            <label htmlFor="ed-stage">Standard-Abfrageform</label>
+            <FieldLabel htmlFor="ed-stage" topic="defaultStage">Standard-Abfrageform</FieldLabel>
             <select id="ed-stage" value={form.defaultStage}
               onChange={(e) => up("defaultStage", e.target.value === "" ? "" : Number(e.target.value))}>
               {VOCAB_FORMS.map((f) => <option key={f.label} value={f.value}>{f.label}</option>)}
@@ -325,6 +326,19 @@ function ItemEditor({ detail }: { detail: ExerciseDetail }) {
     if (await action.run(fn, okText)) items.reload();
   }
 
+  /*
+   * Weg vom Wortpaar zum Store-Eintrag: Die Übung zeigt nur Wort und Übersetzung, gepflegt werden Wortart,
+   * Grundform, Tags und Bilder aber im Vokabel-Store – und dorthin gab es von hier keinen Weg. Sprachpaar
+   * kommt mit, damit die Zielseite nicht auf ihrem Standard (en→de) stehen bleibt und den Treffer verdeckt.
+   */
+  const { sourceLang, targetLang } = langsOf(detail);
+  function storeHref(word: string): string {
+    const p = new URLSearchParams({ search: word });
+    if (sourceLang) p.set("src", sourceLang);
+    if (targetLang) p.set("tgt", targetLang);
+    return `/vater/vocab?${p}`;
+  }
+
   return (
     <section>
       <h4 className="h-section" style={{ fontSize: 16 }}>
@@ -345,6 +359,7 @@ function ItemEditor({ detail }: { detail: ExerciseDetail }) {
             <tbody>
               {items.data.map((it, i) => (
                 <ItemRow key={it.id} item={it} position={i + 1} busy={action.busy} exerciseId={detail.id}
+                  storeHref={storeHref(it.front)}
                   onHint={(hint) => act(() => api.patchExerciseItem(detail.subjectId, detail.chapterId, detail.id, it.id, { hint }), "Hinweis gespeichert.")}
                   onRemove={() => {
                     if (!confirmAction(`„${it.front} → ${it.back}" aus dieser Übung entfernen? Die Vokabel bleibt im Store.`)) return;
@@ -365,8 +380,10 @@ function ItemEditor({ detail }: { detail: ExerciseDetail }) {
   );
 }
 
-function ItemRow({ item, position, busy, exerciseId, onHint, onRemove }: {
+function ItemRow({ item, position, busy, exerciseId, storeHref, onHint, onRemove }: {
   item: VocabItemResponse; position: number; busy: boolean; exerciseId: number;
+  /** Ziel im Vokabel-Store, vorgefiltert auf dieses Wort. */
+  storeHref: string;
   onHint: (hint: string) => void; onRemove: () => void;
 }) {
   const [hint, setHint] = useState(item.hint ?? "");
@@ -377,7 +394,16 @@ function ItemRow({ item, position, busy, exerciseId, onHint, onRemove }: {
     <>
       <tr>
         <td className="num">{position}</td>
-        <td>{item.front}</td>
+        <td>
+          {/*
+            Bewusst ein neues Tab (`target`) und kein Router-Link: Dieser Dialog hält ungespeicherte Eingaben
+            (Hinweise, Metadaten). Ein Wechsel im gleichen Tab würde ihn schließen und sie verwerfen.
+          */}
+          <a href={storeHref} target="_blank" rel="noreferrer"
+            title={`„${item.front}" im Vokabel-Store öffnen (Wortart, Grundform, Tags, Bilder)`}>
+            {item.front}
+          </a>
+        </td>
         <td className="muted">{item.back}</td>
         <td>
           <span className="row" style={{ gap: 4 }}>

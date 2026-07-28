@@ -1889,6 +1889,38 @@ export interface Remark {
   context: RemarkContext;
   userAgent: string | null;
   createdAt: string;
+  /** Beiträge im Verlauf – liegt an der Anmerkung, damit die Liste „3 Beiträge" ohne Nachladen zeigt. */
+  commentCount: number;
+}
+
+/** Herkunft eines Beitrags im Verlauf: der Mensch oder Claude. */
+export type RemarkCommentAuthor = "Human" | "Assistant";
+
+/**
+ * Ein Beitrag im Verlauf einer Anmerkung. Ergänzt `answer` (die eine belegte Auflösung), ersetzt sie nicht:
+ * Analyse, Rückfrage und Umsetzungsnotiz stehen nebeneinander.
+ */
+export interface RemarkComment {
+  id: number;
+  remarkId: number;
+  body: string;
+  author: RemarkCommentAuthor;
+  /** Anzeigename, z. B. `claude-code` oder der Kontoname. */
+  authorLabel: string | null;
+  authorAccountId: number | null;
+  /** Nur eigene Beiträge lassen sich zurücknehmen. */
+  isOwn: boolean;
+  createdAt: string;
+}
+
+/**
+ * Einen Beitrag hinzufügen. **Nebenwirkung mit Absicht:** Ein `Human`-Beitrag zu einer erledigten oder
+ * verworfenen Anmerkung holt sie zurück auf `Open` – so legt der Nachbereitungs-Skill sie wieder vor.
+ */
+export interface CreateRemarkCommentDto {
+  body: string;
+  author?: RemarkCommentAuthor;
+  authorLabel?: string;
 }
 
 /** Was beim Erfassen zum Server geht. Pflicht ist allein der Text. */

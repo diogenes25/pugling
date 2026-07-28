@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { StatusBanner } from "../components/StatusBanner";
 import { api, errorMessage } from "../lib/api";
 import { useAction } from "../lib/useAction";
@@ -17,6 +18,21 @@ interface PairRow { word: string; translation: string; }
 const emptyPair = (): PairRow => ({ word: "", translation: "" });
 
 /**
+ * Stil der Aktionsspalte einer Store-Zeile – geteilt von Ansicht und Bearbeiten-Modus.
+ *
+ * `flexWrap` ist keine Kosmetik: Ohne es steht die Spalte in einer einzigen Zeile, die Tabelle wird breiter
+ * als ihr Container, und die **letzten** Knöpfe („Löschen") wandern in den horizontalen Überlauf – sichtbar
+ * nur für den, der auf die Idee kommt, seitwärts zu scrollen. Umbrechen dürfen sie; unerreichbar sein nicht.
+ *
+ * `minWidth` gehört dazu: Eine Flex-Zelle ohne Untergrenze lässt die Tabelle die Spalte auf die Breite eines
+ * einzelnen Knopfes zusammendrücken, und dann steht jeder Knopf auf einer eigenen Zeile (vierfache
+ * Zeilenhöhe). 230px halten die gewollte Aufteilung 2×2.
+ */
+const actionCell: React.CSSProperties = {
+  gap: 6, justifyContent: "flex-end", flexWrap: "wrap", minWidth: 230,
+};
+
+/**
  * Vokabel-Verwaltung: Quell- und Zielsprache werden EINMAL oben gewählt (feste Liste, kein Freitext,
  * mit Flaggen) und gelten für alle darunter eingegebenen Wort-Paare sowie für den Store darunter –
  * dieser zeigt nur die gewählte Sprach-Kombination. Gespeichert wird zeilenweise als ein Batch.
@@ -24,14 +40,22 @@ const emptyPair = (): PairRow => ({ word: "", translation: "" });
  * gewählte Kind – kind-skopierte Tags (z. B. „relevant für die nächste Klassenarbeit").
  */
 export function VaterVocab() {
+  /*
+   * Einsprung von außen: Ein Link aus dem Übungs-Editor („dieses Wort im Store ansehen") trägt Wort und
+   * Sprachpaar als Query mit, damit man nach dem Wechsel nicht erneut sucht und einstellt. Bewusst nur als
+   * **Startwert** gelesen – danach gehört die Auswahl dem Nutzer, und ein Nachziehen der Query würde seine
+   * Eingaben beim Zurück-Navigieren überschreiben.
+   */
+  const [params] = useSearchParams();
+
   // Eine Sprach-Auswahl steuert Eingabe UND Store-Filter (Punkte 1, 2, 4).
-  const [src, setSrc] = useState("en");
-  const [tgt, setTgt] = useState("de");
+  const [src, setSrc] = useState(params.get("src") || "en");
+  const [tgt, setTgt] = useState(params.get("tgt") || "de");
 
   const [rows, setRows] = useState<PairRow[]>([emptyPair()]);
   const action = useAction();
 
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState(params.get("search") ?? "");
   // Feste Suchparameter neben dem Freitext: Wortart + globale Tags (Punkt „Vokabel-Store durchsuchbar").
   const [posFilter, setPosFilter] = useState<PartOfSpeech | "">("");
   const [tagFilter, setTagFilter] = useState<string[]>([]);
@@ -209,6 +233,8 @@ export function VaterVocab() {
                 <SortableTh label="Wort" sortKey="word" active={sort === "word"} dir={dir} onSort={onSort} />
                 <SortableTh label="Übersetzung" sortKey="translation" active={sort === "translation"} dir={dir} onSort={onSort} />
                 <SortableTh label="Wortart" sortKey="pos" active={sort === "pos"} dir={dir} onSort={onSort} />
+                {/* Nicht sortierbar: der Server sortiert über key/word/translation/pos, Tags sind keine Spalte. */}
+                <th>Tags</th>
                 <th>Aktionen</th>
               </tr></thead>
               <tbody>
@@ -218,7 +244,7 @@ export function VaterVocab() {
                     globalTags={globalTags.data ?? []} reloadGlobalTags={globalTags.reload}
                     childTagOptions={childTagOpts.data ?? []} reloadChildTags={childTagOpts.reload} />
                 ))}
-                {list.data?.items.length === 0 && <tr><td colSpan={5} className="muted">Keine Vokabeln in dieser Sprach-Kombination.</td></tr>}
+                {list.data?.items.length === 0 && <tr><td colSpan={6} className="muted">Keine Vokabeln in dieser Sprach-Kombination.</td></tr>}
               </tbody>
             </table>
           </div>
@@ -315,7 +341,9 @@ function VocabRow({ v, onChanged, childId, globalTags, reloadGlobalTags, childTa
                 {POS.map((p) => <option key={p} value={p}>{POS_LABEL[p]}</option>)}
               </select>
             </td>
-            <td className="row" style={{ gap: 6, justifyContent: "flex-end" }}>
+            {/* Tags bleiben auch im Bearbeiten-Modus sichtbar – geändert werden sie im Tag-Editor, nicht hier. */}
+            <TagsCell tags={v.tags} />
+            <td className="row" style={actionCell}>
               {action.message && !action.message.ok && (
                 <span className="muted" role="status" aria-live="polite"
                   style={{ color: "var(--danger, #c00)", fontSize: 12 }}>{action.message.text}</span>
@@ -328,7 +356,8 @@ function VocabRow({ v, onChanged, childId, globalTags, reloadGlobalTags, childTa
           <>
             <td>{v.word}</td><td>{v.translation}</td>
             <td>{POS_LABEL[v.partOfSpeech]}{detailSummary(v) && <div className="muted" style={{ fontSize: 11 }}>{detailSummary(v)}</div>}</td>
-            <td className="row" style={{ gap: 6, justifyContent: "flex-end" }}>
+            <TagsCell tags={v.tags} />
+            <td className="row" style={actionCell}>
               {action.message && !action.message.ok && (
                 <span className="muted" role="status" aria-live="polite"
                   style={{ color: "var(--danger, #c00)", fontSize: 12 }}>{action.message.text}</span>
@@ -349,17 +378,18 @@ function VocabRow({ v, onChanged, childId, globalTags, reloadGlobalTags, childTa
       </tr>
       {editing && (
         <tr>
-          <td colSpan={5} style={{ background: "rgba(255,255,255,.02)" }}>
+          <td colSpan={6} style={{ background: "rgba(255,255,255,.02)" }}>
             <VocabDetailsEditor pos={pos} noun={noun} setNoun={setNoun} verb={verb} setVerb={setVerb}
               baseFormKey={baseFormKey} setBaseFormKey={setBaseFormKey}
               baseFormRelation={baseFormRelation} setBaseFormRelation={setBaseFormRelation}
-              audioUrl={audioUrl} setAudioUrl={setAudioUrl} selfKey={v.key} />
+              audioUrl={audioUrl} setAudioUrl={setAudioUrl}
+              selfId={v.id} sourceLanguage={v.sourceLanguage} targetLanguage={v.targetLanguage} />
           </td>
         </tr>
       )}
       {showTags && !editing && (
         <tr>
-          <td colSpan={5} style={{ background: "rgba(255,255,255,.02)" }}>
+          <td colSpan={6} style={{ background: "rgba(255,255,255,.02)" }}>
             <TagEditor v={v} onGlobalChanged={() => { onChanged(); reloadGlobalTags(); }}
               childId={childId} globalTags={globalTags} childTagOptions={childTagOptions}
               reloadChildTags={reloadChildTags} />
@@ -368,7 +398,7 @@ function VocabRow({ v, onChanged, childId, globalTags, reloadGlobalTags, childTa
       )}
       {showMedia && !editing && (
         <tr>
-          <td colSpan={5} style={{ background: "rgba(255,255,255,.02)" }}>
+          <td colSpan={6} style={{ background: "rgba(255,255,255,.02)" }}>
             <VocabMediaPanel vocabularyId={v.id} word={v.word} />
           </td>
         </tr>
@@ -394,16 +424,40 @@ function detailSummary(v: VocabularyResponse): string {
   return parts.join(" · ");
 }
 
+/**
+ * Die Tag-Namen einer Vokabel in der Store-Zeile. Sie stehen hier und nicht erst hinter dem Aufklapper: beim
+ * Durchsehen des Stores ist „welche Schlagworte hängen dran" die gesuchte Information, und `v.tags` ist mit
+ * der Liste ohnehin geladen – die Anzahl allein am Knopf nützt niemandem. Nur lesend; geändert wird im
+ * Tag-Editor, wo auch die kind-skopierten Tags stehen.
+ */
+function TagsCell({ tags }: { tags: string[] }) {
+  if (tags.length === 0) return <td className="muted" style={{ fontSize: 12 }}>–</td>;
+  return (
+    <td>
+      {/* `nowrap` je Chip: ohne es bricht ein zweiteiliger Tag-Name („Englisch 101-1000") mitten im Wort um
+          und die Zeile wird doppelt so hoch. Umbrechen darf die *Liste*, nicht der einzelne Name. */}
+      <span className="row" style={{ gap: 4, flexWrap: "wrap", maxWidth: 240 }}>
+        {tags.map((name) => (
+          <span key={name} className="chip" style={{ fontSize: 12, whiteSpace: "nowrap" }}>{name}</span>
+        ))}
+      </span>
+    </td>
+  );
+}
+
 /** Editor für den komplexen Vokabel-Datensatz: Substantiv-/Verb-Details, Grundform-Kante, Aussprache-Audio. */
 function VocabDetailsEditor({ pos, noun, setNoun, verb, setVerb, baseFormKey, setBaseFormKey,
-  baseFormRelation, setBaseFormRelation, audioUrl, setAudioUrl, selfKey }: {
+  baseFormRelation, setBaseFormRelation, audioUrl, setAudioUrl, selfId, sourceLanguage, targetLanguage }: {
   pos: PartOfSpeech;
   noun: NounInfo; setNoun: (updater: (n: NounInfo) => NounInfo) => void;
   verb: VerbInfo; setVerb: (updater: (v: VerbInfo) => VerbInfo) => void;
   baseFormKey: string; setBaseFormKey: (v: string) => void;
   baseFormRelation: string; setBaseFormRelation: (v: string) => void;
   audioUrl: string; setAudioUrl: (v: string) => void;
-  selfKey: string;
+  /** Eigene Id – sie fällt aus den Grundform-Treffern heraus (der Server lehnt den Selbstverweis ab). */
+  selfId: number;
+  sourceLanguage: string;
+  targetLanguage: string;
 }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 10, padding: "8px 2px" }}>
@@ -445,9 +499,9 @@ function VocabDetailsEditor({ pos, noun, setNoun, verb, setVerb, baseFormKey, se
       )}
       <div className="row" style={{ gap: 8, alignItems: "flex-end", flexWrap: "wrap" }}>
         <span className="muted" style={{ minWidth: 96, fontSize: 12 }}>Grundform</span>
-        <div className="field" style={{ maxWidth: 180 }}><label>Grundform-Key <span className="muted">(leer = keine)</span></label>
-          <input aria-label="Grundform-Key" value={baseFormKey} placeholder={`z. B. ${selfKey}`}
-            onChange={(e) => setBaseFormKey(e.target.value)} /></div>
+        <div className="field" style={{ maxWidth: 300 }}><label>Grundform <span className="muted">(leer = keine)</span></label>
+          <BaseFormPicker value={baseFormKey} onChange={setBaseFormKey}
+            selfId={selfId} sourceLanguage={sourceLanguage} targetLanguage={targetLanguage} /></div>
         <div className="field" style={{ maxWidth: 160 }}><label>Relation</label>
           <input aria-label="Grundform-Relation" value={baseFormRelation} placeholder="Partizip/Plural…"
             onChange={(e) => setBaseFormRelation(e.target.value)} /></div>
@@ -456,6 +510,82 @@ function VocabDetailsEditor({ pos, noun, setNoun, verb, setVerb, baseFormKey, se
             onChange={(e) => setAudioUrl(e.target.value)} /></div>
       </div>
     </div>
+  );
+}
+
+/**
+ * Auswahl der Grundform („went" → „go").
+ *
+ * Der `BaseFormKey` ist ein **Fremdschlüssel auf eine andere Store-Vokabel**, kein Wert, den man sich
+ * ausdenkt: der Server nimmt nur einen existierenden Key an und weist den Selbstverweis ab
+ * (`VocabularyStoreController`: „BaseFormKey not found" bzw. „cannot be its own base form"). Als Freitextfeld
+ * war das die eine Eingabe, die man zwangsläufig falsch macht – man hätte den generierten Key eines anderen
+ * Eintrags abtippen müssen. Darum wird hier gesucht und ausgewählt; getippt wird das *Wort*, gespeichert der Key.
+ *
+ * Der eigene Key der Vokabel ist davon unberührt – den erzeugt der Server (`VocabKey.Generate`), er wird nie
+ * eingegeben.
+ */
+function BaseFormPicker({ value, onChange, selfId, sourceLanguage, targetLanguage }: {
+  value: string;
+  onChange: (key: string) => void;
+  selfId: number;
+  sourceLanguage: string;
+  targetLanguage: string;
+}) {
+  const [query, setQuery] = useState("");
+  const [hits, setHits] = useState<VocabularyResponse[] | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  async function search() {
+    const q = query.trim();
+    if (!q || busy) return;
+    setBusy(true); setErr(null);
+    try {
+      // Sprachpaar der bearbeiteten Vokabel: eine Grundform in einer anderen Sprache wäre nie richtig.
+      const page = await api.vocabulary({ search: q, sourceLanguage, targetLanguage, take: 8 });
+      setHits(page.items.filter((h) => h.id !== selfId));
+    } catch (e) { setErr(errorMessage(e)); }
+    finally { setBusy(false); }
+  }
+
+  // Gesetzte Grundform: den Key zeigen (er ist der gespeicherte Wert), lösen über „×".
+  if (value) {
+    return (
+      <span className="row" style={{ gap: 6, alignItems: "center" }}>
+        <code style={{ fontSize: 12, wordBreak: "break-all" }}>{value}</code>
+        <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }}
+          aria-label="Grundform-Verknüpfung lösen" onClick={() => { onChange(""); setHits(null); setQuery(""); }}>×</button>
+      </span>
+    );
+  }
+
+  return (
+    <span style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+      <span className="row" style={{ gap: 4, alignItems: "center" }}>
+        <input aria-label="Grundform suchen" value={query} placeholder="Wort der Grundform…"
+          disabled={busy} onChange={(e) => setQuery(e.target.value)}
+          // Kein umgebendes Formular, aber Enter darf hier nichts anderes auslösen als die Suche.
+          onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); void search(); } }} />
+        <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }}
+          disabled={busy || !query.trim()} onClick={() => void search()}>Suchen</button>
+      </span>
+      {err && <span className="muted" style={{ fontSize: 12, color: "var(--danger, #c00)" }}>{err}</span>}
+      {hits !== null && hits.length === 0 && (
+        <span className="muted" style={{ fontSize: 12 }}>Kein Treffer – die Grundform muss selbst im Store liegen.</span>
+      )}
+      {hits !== null && hits.length > 0 && (
+        <span style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+          {hits.map((h) => (
+            <button key={h.id} type="button" className="btn ghost inline-btn"
+              style={{ width: "auto", textAlign: "left", fontSize: 12 }}
+              onClick={() => { onChange(h.key); setHits(null); setQuery(""); }}>
+              {h.word} → {h.translation} <span className="muted">({POS_LABEL[h.partOfSpeech]})</span>
+            </button>
+          ))}
+        </span>
+      )}
+    </span>
   );
 }
 

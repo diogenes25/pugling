@@ -90,11 +90,16 @@ angestoßen vom Menschen.** Nichts läuft automatisch los.
 
 ## Abgrenzung (was das ausdrücklich nicht ist)
 
-- **Kein Issue-Tracker.** Kein Zuweisen, keine Meilensteine. Vier Zustände, mehr nicht.
-- **Kein Chat.** Das Widget ist **Eingang plus Lesesicht**, kein Dialog. Rückfragen zu einer Antwort
-  stellst du direkt in Claude Code, wo du ohnehin stehst – nicht im Widget. Entsteht dort etwas Neues,
-  legt **Claude** eine neue Anmerkung mit Verweis auf die alte an. Sonst brauchst du Threads, Verlauf und
-  Ungelesen-Marker, und das Ding wird ein schlechter Messenger.
+> **Revidiert am 2026-07-28:** Die beiden folgenden Punkte galten so nicht mehr und sind unten ersetzt.
+> Grund war ein konkreter Datenverlust, nicht ein Sinneswandel — siehe „Nachtrag: Verlauf".
+
+- ~~**Kein Issue-Tracker.** Kein Zuweisen, keine Meilensteine. Vier Zustände, mehr nicht.~~
+  → Zuweisen und Meilensteine bleiben draußen, die vier Zustände auch. Dazugekommen ist der **Verlauf**.
+- ~~**Kein Chat.** Das Widget ist Eingang plus Lesesicht, kein Dialog.~~
+  → Nachhaken ist jetzt möglich (Widget und `/vater/anmerkungen`). Die Sorge dahinter bleibt gültig und
+  wird anders abgewehrt: **keine Zustellung, keine Ungelesen-Marker, keine Erwartung, dass jemand wartet.**
+  Gelesen wird beim nächsten Testen oder im nächsten Skill-Lauf. Ein Beitrag je Arbeitsschritt, nicht je
+  Gedanke.
 - **Keine Schüler-Rückmeldung.** „Diese Übung war doof" vom echten Sohn ist ein anderes Feature. Das
   Datenmodell trägt es (Autor + Rolle), das UI zielt aber nicht darauf.
 - **Kein Screenshot.** Bewusst verworfen: Bibliothek im Frontend plus Byte-Ablage, und die Medien-Ablage
@@ -350,6 +355,55 @@ lohnt, wenn genügend Anmerkungen zusammengekommen sind.
 - **Taxonomie-Ausnahme.** `api/v1/remarks` liegt außerhalb der Drei-Ebenen-Struktur. Das ist begründet
   (die Ressource gehört keiner Ebene), muss aber in der CLAUDE.md stehen, sonst wirkt es beim nächsten
   Lesen wie ein Versehen.
+
+## Nachtrag: Verlauf und God-Mode (2026-07-28)
+
+**Anlass war ein Datenverlust, kein Sinneswandel.** Am 2026-07-27 wurden sieben Anmerkungen zuerst
+analysiert (Antwort mit Datei- und Zeilenbelegen), dann wurden die Lücken gebaut — und die Umsetzungsnotiz
+ging wieder als `answer` zurück und **überschrieb die Analyse**. Die Vorarbeit war weg. Genau die
+Reihenfolge „analysieren → zurückstellen → später umsetzen" ist aber der gewollte Ablauf, und ein einzelnes
+Feld kann sie nicht abbilden.
+
+Zweiter Anlass: Der Skill meldete sich als Vater 1 an, die Anmerkungen lagen an Konto 11 — Ergebnis eine
+**leere Liste**. Ein Werkzeug, das seine eigenen Einträge nicht findet, kostet mehr Zeit, als es spart.
+
+Umgesetzt:
+
+- **`RemarkComment`** (Tabelle, FK `Cascade` auf die Anmerkung, `SetNull` aufs Autor-Konto). `answer` bleibt
+  die **eine gepinnte Auflösung**, der Verlauf trägt alles danach. `RemarkDto.CommentCount` liegt an der
+  Anmerkung, damit Listen „3 Beiträge" ohne Nachladen zeigen (Projektion, kein `Include`).
+- **Herkunft `Human`/`Assistant`** als eigenes Feld — nicht aus dem Konto abgeleitet, denn Claude schreibt
+  über den Skill mit dem Token des Menschen. Daran hängt die **Wiederaufnahme**: Ein Beitrag des Menschen zu
+  einer `Done`/`Rejected`-Anmerkung setzt sie zurück auf `Open`; ein Assistant-Beitrag nie (sonst riss jede
+  Umsetzungsnotiz den eigenen Vorgang wieder auf).
+- **Kontenübergreifend lesen als eigene Berechtigung** (`Remarks:GlobalRead`, Vorgabe `IsDevelopment()`).
+  Auf den **Listen** braucht es das ausdrückliche `?scope=all` (sonst `403 remark_scope_forbidden`), damit
+  die Vorgabe eng bleibt und die Widget-Liste nicht plötzlich fremde Einträge zeigt; beim Zugriff auf eine
+  **einzelne Id** genügt die Berechtigung – so beantwortet der Skill eine Anmerkung aus jedem Testkonto.
+  **Löschen** bleibt eng (Eigentümer bzw. `Admin`): Der Schalter heißt „global *read*". Ein **Student** ist
+  immer ausgeschlossen.
+
+  *Erster Anlauf war `Roles.Admin` als Bedingung — verworfen.* Die Rolle umgeht auch die RWX-Rechte auf
+  Übungen (`ExercisePermissionService.cs:24/34/46`): Wer sie jedem Vater gibt, damit der Skill lesen kann,
+  erlaubt jedem Vater zugleich, fremde Übungen zu ändern, zu löschen und umzurechten — `ExerciseGrant` wäre
+  Dekoration. Und weil beim Testen ständig Wegwerf-Konten entstehen (ein frischer Vater ohne Übungen deckt
+  auf, was der geseedete Papa nie zeigt), hätte jedes einzeln ein Flag gebraucht. Als **Break-Glass** bleibt
+  `Admin` zusätzlich erlaubt, taugt aber nicht als Bedingung.
+- **Bedienung:** knapper Aufklapper im Widget, vollständige Sicht auf `/vater/anmerkungen` (Filter, Paging,
+  Kontext, Auflösung, Verlauf, Stand) — beide nur im Dev-Modus.
+
+**Fallstricke, die dabei aufgefallen sind:**
+
+- Ein geseedetes Konto zum Admin zu machen ist eine Falle: `Roles.Admin` umgeht auch die Übungs-Rechte, und
+  weil die Test-Factory über eine Klasse geteilt wird, verlieren andere Tests still ihre Annahme „dieses
+  Konto darf das nicht". Tests legen sich darum je Fall ein **eigenes** Konto an.
+- Ein `IsAdmin`-Flag wirkt **erst nach neuer Anmeldung** — Rollen stecken im JWT. (Einer der Gründe, warum
+  ein Konfigurationsschalter hier das bessere Werkzeug ist: Er wirkt sofort und für alle Konten.)
+- **Berechtigungen nicht durch Ausprobieren erkunden.** Die Anmerkungs-Seite prüfte zuerst mit einem
+  `scope=all&take=1`, ob sie den Umschalter zeigen darf. Der absichtlich provozierte 403 landete über
+  `recordHttpError` im **Fehler-Ringpuffer** — und die nächste erfasste Anmerkung trug ein
+  `remark_scope_forbidden` im Kontext, das mit der Beobachtung nichts zu tun hatte. Der Mitschnitt *ist*
+  hier das Feature. Jetzt entsteht der Eintrag nur nach einem echten Klick.
 
 ## Verwandt
 

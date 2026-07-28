@@ -82,6 +82,10 @@ public record UpdateRemarkDto(
 /// <param name="Context">Der mitgeschnittene Kontext.</param>
 /// <param name="UserAgent">Browserkennung.</param>
 /// <param name="CreatedAt">Erfassungszeitpunkt (UTC).</param>
+/// <param name="CommentCount">
+/// Anzahl der Beiträge im Verlauf. Liegt an der Anmerkung, damit Liste und Widget „3 Beiträge" anzeigen
+/// können, ohne je Zeile den Verlauf nachzuladen.
+/// </param>
 public record RemarkDto(
     int Id,
     string Text,
@@ -96,4 +100,45 @@ public record RemarkDto(
     bool IsOwn,
     RemarkContextDto Context,
     string? UserAgent,
+    DateTime CreatedAt,
+    int CommentCount);
+
+/// <summary>
+/// Ein Beitrag im Verlauf einer Anmerkung. Ergänzt <see cref="RemarkDto.Answer"/> (die eine belegte
+/// Auflösung), ersetzt sie nicht: Analyse, Rückfrage und Umsetzungsnotiz stehen nebeneinander statt
+/// einander zu überschreiben.
+/// </summary>
+/// <param name="Id">Id des Beitrags.</param>
+/// <param name="RemarkId">Anmerkung, zu der er gehört.</param>
+/// <param name="Body">Der Text.</param>
+/// <param name="Author">Mensch oder Claude.</param>
+/// <param name="AuthorLabel">Anzeigename, z. B. <c>claude-code</c>.</param>
+/// <param name="AuthorAccountId">Konto des Schreibers, falls bekannt.</param>
+/// <param name="IsOwn">Ob der Beitrag vom abfragenden Konto stammt – nur eigene lassen sich löschen.</param>
+/// <param name="CreatedAt">Zeitpunkt (UTC).</param>
+public record RemarkCommentDto(
+    int Id,
+    int RemarkId,
+    string Body,
+    RemarkCommentAuthor Author,
+    string? AuthorLabel,
+    int? AuthorAccountId,
+    bool IsOwn,
     DateTime CreatedAt);
+
+/// <summary>
+/// Einen Beitrag zum Verlauf hinzufügen.
+/// <para>
+/// <b>Nebenwirkung mit Absicht:</b> Ein <see cref="RemarkCommentAuthor.Human"/>-Beitrag zu einer
+/// erledigten oder verworfenen Anmerkung holt sie zurück auf <see cref="RemarkStatus.Open"/> – so legt der
+/// Nachbereitungs-Skill sie beim nächsten Lauf wieder vor. Ein <see cref="RemarkCommentAuthor.Assistant"/>-
+/// Beitrag lässt den Stand unberührt; er berichtet, er fragt nicht nach.
+/// </para>
+/// </summary>
+/// <param name="Body">Der Text – Pflicht.</param>
+/// <param name="Author">Herkunft; ohne Angabe <see cref="RemarkCommentAuthor.Human"/>.</param>
+/// <param name="AuthorLabel">Anzeigename, z. B. <c>claude-code</c>.</param>
+public record CreateRemarkCommentDto(
+    string Body,
+    RemarkCommentAuthor? Author,
+    string? AuthorLabel);

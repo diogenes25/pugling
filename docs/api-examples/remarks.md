@@ -48,7 +48,8 @@ Response — `HTTP 201`:
     "recentErrorsJson": "[{\u0022method\u0022:\u0022GET\u0022,\u0022path\u0022:\u0022/api/v1/supervisor/fathers/1\u0022,\u0022status\u0022:404,\u0022code\u0022:\u0022not_found\u0022,\u0022at\u0022:\u00222026-07-27T09:12:44Z\u0022}]"
   },
   "userAgent": null,
-  "createdAt": "<timestamp>"
+  "createdAt": "<timestamp>",
+  "commentCount": 0
 }
 ```
 
@@ -106,7 +107,8 @@ Response — `HTTP 200`:
     "recentErrorsJson": "[{\u0022method\u0022:\u0022GET\u0022,\u0022path\u0022:\u0022/api/v1/supervisor/fathers/1\u0022,\u0022status\u0022:404,\u0022code\u0022:\u0022not_found\u0022,\u0022at\u0022:\u00222026-07-27T09:12:44Z\u0022}]"
   },
   "userAgent": null,
-  "createdAt": "<timestamp>"
+  "createdAt": "<timestamp>",
+  "commentCount": 0
 }
 ```
 
@@ -141,7 +143,8 @@ Response — `HTTP 200`:
       "recentErrorsJson": "[{\u0022method\u0022:\u0022GET\u0022,\u0022path\u0022:\u0022/api/v1/supervisor/fathers/1\u0022,\u0022status\u0022:404,\u0022code\u0022:\u0022not_found\u0022,\u0022at\u0022:\u00222026-07-27T09:12:44Z\u0022}]"
     },
     "userAgent": null,
-    "createdAt": "<timestamp>"
+    "createdAt": "<timestamp>",
+    "commentCount": 0
   }
 ]
 ```
@@ -185,7 +188,81 @@ Response — `HTTP 200`:
     "recentErrorsJson": "[{\u0022method\u0022:\u0022GET\u0022,\u0022path\u0022:\u0022/api/v1/supervisor/fathers/1\u0022,\u0022status\u0022:404,\u0022code\u0022:\u0022not_found\u0022,\u0022at\u0022:\u00222026-07-27T09:12:44Z\u0022}]"
   },
   "userAgent": null,
+  "createdAt": "<timestamp>",
+  "commentCount": 0
+}
+```
+
+## Umsetzungsnotiz in den Verlauf schreiben
+`POST /api/v1/remarks/1/comments`
+
+Rolle: **father** — `Authorization: Bearer <father-token>`
+
+Request:
+```json
+{
+  "body": "Gebaut: Formular unter /vater/profil erg\u00E4nzt (VaterProfil.tsx), PATCH \u00FCber api.updateFather.",
+  "author": "Assistant",
+  "authorLabel": "claude-code"
+}
+```
+
+Response — `HTTP 201`:
+```json
+{
+  "id": 1,
+  "remarkId": 1,
+  "body": "Gebaut: Formular unter /vater/profil erg\u00E4nzt (VaterProfil.tsx), PATCH \u00FCber api.updateFather.",
+  "author": "Assistant",
+  "authorLabel": "claude-code",
+  "authorAccountId": 1,
+  "isOwn": true,
   "createdAt": "<timestamp>"
+}
+```
+
+## Verlauf einer Anmerkung lesen
+`GET /api/v1/remarks/1/comments`
+
+Rolle: **father** — `Authorization: Bearer <father-token>`
+
+Response — `HTTP 200`:
+```json
+[
+  {
+    "id": 1,
+    "remarkId": 1,
+    "body": "Gebaut: Formular unter /vater/profil erg\u00E4nzt (VaterProfil.tsx), PATCH \u00FCber api.updateFather.",
+    "author": "Assistant",
+    "authorLabel": "claude-code",
+    "authorAccountId": 1,
+    "isOwn": true,
+    "createdAt": "<timestamp>"
+  }
+]
+```
+
+### Leeren Beitrag schreiben — Fehlerfall
+`POST /api/v1/remarks/1/comments`
+
+Rolle: **father** — `Authorization: Bearer <father-token>`
+
+Request:
+```json
+{
+  "body": "   "
+}
+```
+
+Response — `HTTP 400`:
+```json
+{
+  "type": "https://pugling.app/errors/validation_error",
+  "title": "Invalid request.",
+  "status": 400,
+  "detail": "Body is required.",
+  "code": "validation_error",
+  "traceId": "<trace-id>"
 }
 ```
 
@@ -228,7 +305,8 @@ Response — `HTTP 201`:
     "recentErrorsJson": null
   },
   "userAgent": null,
-  "createdAt": "<timestamp>"
+  "createdAt": "<timestamp>",
+  "commentCount": 0
 }
 ```
 
@@ -329,6 +407,12 @@ Ich will meine E-Mail-Adresse ändern und finde keine Stelle dafür.
 
 Die API kann das über PATCH api/v1/supervisor/fathers/{id} (FathersController.Update); im Vater-Web gibt es dafür kein Formular.
 
+**Verlauf** (1):
+
+> **claude-code** · <timestamp>
+> 
+> Gebaut: Formular unter /vater/profil ergänzt (VaterProfil.tsx), PATCH über api.updateFather.
+
 
 ````
 
@@ -345,6 +429,142 @@ Response — `HTTP 403`:
   "status": 403,
   "traceId": "<trace-id>",
   "code": "forbidden"
+}
+```
+
+## Nachhaken (holt die Anmerkung zurück auf offen)
+`POST /api/v1/remarks/1/comments`
+
+Rolle: **father** — `Authorization: Bearer <father-token>`
+
+Request:
+```json
+{
+  "body": "Und wie \u00E4ndere ich die Adresse des Kindes?"
+}
+```
+
+Response — `HTTP 201`:
+```json
+{
+  "id": 2,
+  "remarkId": 1,
+  "body": "Und wie \u00E4ndere ich die Adresse des Kindes?",
+  "author": "Human",
+  "authorLabel": "Papa",
+  "authorAccountId": 1,
+  "isOwn": true,
+  "createdAt": "<timestamp>"
+}
+```
+
+## Anmerkung nach dem Nachhaken lesen
+`GET /api/v1/remarks/1`
+
+Rolle: **father** — `Authorization: Bearer <father-token>`
+
+Response — `HTTP 200`:
+```json
+{
+  "id": 1,
+  "text": "Ich will meine E-Mail-Adresse \u00E4ndern und finde keine Stelle daf\u00FCr.",
+  "category": "Question",
+  "status": "Open",
+  "answer": "Die API kann das \u00FCber PATCH api/v1/supervisor/fathers/{id} (FathersController.Update); im Vater-Web gibt es daf\u00FCr kein Formular.",
+  "answeredAt": "<timestamp>",
+  "answeredBy": "claude-code",
+  "parentRemarkId": null,
+  "accountId": 1,
+  "authorRole": "Supervisor",
+  "isOwn": true,
+  "context": {
+    "route": "/vater/kind/1",
+    "appArea": "vater",
+    "childId": 1,
+    "exerciseId": 13,
+    "studyPlanId": null,
+    "planPositionId": null,
+    "contextJson": "{\u0022tab\u0022:\u0022stammdaten\u0022}",
+    "recentErrorsJson": "[{\u0022method\u0022:\u0022GET\u0022,\u0022path\u0022:\u0022/api/v1/supervisor/fathers/1\u0022,\u0022status\u0022:404,\u0022code\u0022:\u0022not_found\u0022,\u0022at\u0022:\u00222026-07-27T09:12:44Z\u0022}]"
+  },
+  "userAgent": null,
+  "createdAt": "<timestamp>",
+  "commentCount": 2
+}
+```
+
+## Anmerkungen aller Konten lesen (scope=all)
+`GET /api/v1/remarks?scope=all&take=5`
+
+Rolle: **father** — `Authorization: Bearer <father-token>`
+
+Response — `HTTP 200`:
+```json
+[
+  {
+    "id": 2,
+    "text": "Formular f\u00FCr die E-Mail-Adresse im Vater-Web nachziehen.",
+    "category": "Idea",
+    "status": "Open",
+    "answer": null,
+    "answeredAt": null,
+    "answeredBy": null,
+    "parentRemarkId": 1,
+    "accountId": 1,
+    "authorRole": "Supervisor",
+    "isOwn": true,
+    "context": {
+      "route": "",
+      "appArea": "",
+      "childId": null,
+      "exerciseId": null,
+      "studyPlanId": null,
+      "planPositionId": null,
+      "contextJson": null,
+      "recentErrorsJson": null
+    },
+    "userAgent": null,
+    "createdAt": "<timestamp>",
+    "commentCount": 0
+  },
+  {
+    "id": 1,
+    "text": "Ich will meine E-Mail-Adresse \u00E4ndern und finde keine Stelle daf\u00FCr.",
+    "category": "Question",
+    "status": "Open",
+    "answer": "Die API kann das \u00FCber PATCH api/v1/supervisor/fathers/{id} (FathersController.Update); im Vater-Web gibt es daf\u00FCr kein Formular.",
+    "answeredAt": "<timestamp>",
+    "answeredBy": "claude-code",
+    "parentRemarkId": null,
+    "accountId": 1,
+    "authorRole": "Supervisor",
+    "isOwn": true,
+    "context": {
+      "route": "/vater/kind/1",
+      "appArea": "vater",
+      "childId": 1,
+      "exerciseId": 13,
+      "studyPlanId": null,
+      "planPositionId": null,
+      "contextJson": "{\u0022tab\u0022:\u0022stammdaten\u0022}",
+      "recentErrorsJson": "[{\u0022method\u0022:\u0022GET\u0022,\u0022path\u0022:\u0022/api/v1/supervisor/fathers/1\
+… (gekürzt)
+```
+
+### Alle Konten lesen als Sohn — Fehlerfall
+`GET /api/v1/remarks?scope=all`
+
+Rolle: **child** — `Authorization: Bearer <child-token>`
+
+Response — `HTTP 403`:
+```json
+{
+  "type": "https://pugling.app/errors/remark_scope_forbidden",
+  "title": "Reading across accounts is disabled on this instance.",
+  "status": 403,
+  "detail": "Reading across accounts is disabled on this instance.",
+  "code": "remark_scope_forbidden",
+  "traceId": "<trace-id>"
 }
 ```
 

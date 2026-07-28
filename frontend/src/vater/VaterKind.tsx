@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { ChildMaterialSection } from "./ChildMaterialSection";
 import { SupervisorsSection, TimetableSection } from "./ChildCarePanels";
 import { StatusBanner } from "../components/StatusBanner";
+import { FieldLabel } from "../components/InfoHint";
 import { api } from "../lib/api";
 import { useAction } from "../lib/useAction";
 import { interestSlug } from "../lib/interests";
@@ -62,7 +63,7 @@ export function VaterKind() {
         Direkt hinter den Stammdaten: Klasse und Schulart von oben entscheiden mit, welcher Fachlehrer
         zu diesem Kind passt – die Wirkung soll auf demselben Blick sichtbar sein.
       */}
-      <ChildMaterialSection childId={childId} childName={me.name} />
+      <ChildMaterialSection childId={childId} childName={me.name} subjects={subjects.data ?? []} />
 
       {/* Wer betreut das Kind (gemeinsames Wallet) und wann welches Fach ansteht – beides Profilwissen. */}
       <SupervisorsSection childId={childId} childName={me.name} />
@@ -366,13 +367,13 @@ function InterestEditor({ childId, current, known, onSaved }: {
           <input id="int-label" value={label} onChange={(e) => setLabel(e.target.value)} placeholder="z.B. Pokémon" />
         </div>
         <div className="field">
-          <label htmlFor="int-facet">Art</label>
+          <FieldLabel htmlFor="int-facet" topic="interestFacet">Art</FieldLabel>
           <select id="int-facet" value={facet} onChange={(e) => setFacet(e.target.value as InterestFacet)}>
             {INTEREST_FACETS.map((f) => <option key={f.value} value={f.value}>{f.label}</option>)}
           </select>
         </div>
         <div className="field">
-          <label htmlFor="int-weight">Wie sehr?</label>
+          <FieldLabel htmlFor="int-weight" topic="interestWeight">Wie sehr?</FieldLabel>
           <select id="int-weight" value={weight} onChange={(e) => setWeight(Number(e.target.value))}>
             {WEIGHTS.map((w) => <option key={w.value} value={w.value}>{w.label}</option>)}
           </select>

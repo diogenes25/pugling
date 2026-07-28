@@ -172,6 +172,29 @@ a { color: var(--cyan); }
 .field input, .field select, .field textarea { background: #0c0e2c; border: 1.5px solid var(--stroke); border-radius: 12px; color: var(--ink); padding: 12px; font-size: 15px; font-family: inherit; }
 .field input:focus, .field select:focus, .field textarea:focus { outline: 2px solid var(--cyan); border-color: var(--cyan); }
 
+/* Beschriftung + „ⓘ" nebeneinander. Das .field bleibt eine Spalte – die Zeile ist nur der Kopf darin. */
+.label-row { display: flex; align-items: center; gap: 6px; }
+.info-hint { position: relative; display: inline-flex; line-height: 0; }
+.info-hint-btn {
+  width: 16px; height: 16px; border-radius: 50%; padding: 0; cursor: pointer;
+  background: transparent; border: 1.5px solid var(--stroke); color: var(--muted);
+  font: 700 11px/1 var(--font-body); font-style: italic;
+}
+.info-hint-btn:hover { color: var(--ink); border-color: var(--cyan); }
+.info-hint-btn:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+.info-hint-btn[aria-expanded="true"] { color: var(--bg); background: var(--cyan); border-color: var(--cyan); }
+/* Über allem, was danach kommt (Tabellenzeilen, Karten) – sonst schiebt sich das nächste Feld davor. */
+.info-hint-pop {
+  position: absolute; top: calc(100% + 6px); left: -6px; z-index: 30;
+  width: max-content; max-width: min(320px, 78vw);
+  display: flex; flex-direction: column; gap: 5px;
+  background: var(--card-hi); border: 1.5px solid var(--stroke); border-radius: 12px;
+  padding: 10px 12px; box-shadow: 0 14px 28px -12px var(--shadow);
+  font: 400 13px/1.45 var(--font-body); color: var(--ink);
+  text-transform: none; letter-spacing: normal;
+}
+.info-hint-pop b { font-size: 12px; color: var(--cyan); }
+
 /* =========================================================================
    Vater-Web (Admin): heller, sachlicher – gleiche Tokens, andere Dichte.
    ========================================================================= */

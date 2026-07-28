@@ -38,7 +38,7 @@ kann das, seine Basis-URL ist überschreibbar:
 ```bash
 export TUTORIAL_API_BASE=http://localhost:5200
 source .claude/scripts/tutorial-api.sh
-TOK=$(login_father 1 0000)          # das Konto des Nutzers, nicht der Seed-Lehrer
+TOK=$(login_father 1 0000)          # ein beliebiges Vater-Konto genügt
 api_get /api/v1/auth/me             # Kontrolle: roles enthält "Supervisor"
 ```
 
@@ -46,6 +46,38 @@ Läuft dort nichts (`curl` scheitert), **nicht** eine Wegwerf-Instanz hochfahren
 Anmerkungen nicht. Stattdessen den Nutzer bitten, das Backend zu starten.
 
 Helfer: `api_get`, `api_post`, `api_patch` (setzen `TOK` voraus).
+
+### Immer `scope=all` — sonst suchst du am falschen Ort
+
+```bash
+api_get "/api/v1/remarks?scope=all&take=100"      # kontenübergreifend
+```
+
+**Eine leere Liste heißt „falscher Filter", nicht „keine Anmerkungen".** Genau daran ist der erste Lauf
+dieses Skills gescheitert: Anmeldung als Vater 1, sieben Anmerkungen an Konto 11, Ergebnis `[]`.
+
+Der Grund, warum es diesen Parameter überhaupt gibt: **Der Nutzer testet aus vielen Konten.** Manche Fehler
+treten nur in einer bestimmten Konstellation auf — ein frisch registrierter Vater ohne Übungen deckt Dinge
+auf, die beim geseedeten Papa nie sichtbar werden, weil der von Anfang an Inhalte hat. Für solche Fälle
+entstehen Wegwerf-Konten, und deren Anmerkungen gehören dem jeweiligen Konto.
+
+- **Erfassen** kann jedes Vater-Konto, ohne Sonderrechte. Ein neues Testkonto ist sofort einsatzbereit.
+- **Lesen über Kontogrenzen** darf jeder Erwachsene, solange `Remarks:GlobalRead` an ist — in der
+  Entwicklung ist es das (`Program.cs`, Vorgabe `IsDevelopment()`). Sonst `403 remark_scope_forbidden`;
+  dann läuft die Instanz produktiv konfiguriert, und du fragst den Nutzer statt am Schalter zu drehen.
+- **Ein Student** ist immer ausgeschlossen, auch bei eingeschaltetem Schalter.
+
+Für den Zugriff auf eine **einzelne** Id brauchst du den Parameter nicht: `GET /remarks/123`,
+`PATCH /remarks/123` und die Verlauf-Endpunkte lassen dich ohnehin durch — genau so beantwortest du eine
+Anmerkung aus einem fremden Testkonto.
+
+**Nicht offen ist das Löschen:** Eine fremde Anmerkung wegzuwerfen bleibt dem Eigentümer (bzw. einem
+`Admin`) vorbehalten. Der Schalter heißt „global *read*" und meint das auch so.
+
+> Die Rolle `Roles.Admin` taugt hierfür ausdrücklich **nicht** als Bedingung: Sie umgeht auch die
+> RWX-Rechte auf Übungen (`ExercisePermissionService.cs:24/34/46`) — mit ihr dürfte jeder Vater fremde
+> Übungen ändern, löschen und umrechten. Zwei Dinge, die nichts miteinander zu tun haben, hingen dann an
+> einem Schalter. Als Break-Glass bleibt sie zusätzlich erlaubt.
 
 ## Einsatz A — eine Frage beantworten
 
@@ -55,7 +87,11 @@ Auslöser: „Beantworte die Frage 123."
 
 ```bash
 api_get /api/v1/remarks/123
+api_get /api/v1/remarks/123/comments     # der Verlauf, sobald commentCount > 0
 ```
+
+**Den Verlauf immer mitlesen.** Steht dort schon eine Analyse von früher, ist die Frage vielleicht keine
+neue, sondern ein Nachhaken — dann beantworte *das*, statt die Anmerkung von vorn zu bearbeiten.
 
 Der Kontext ist der Grund, warum diese Anmerkung mehr wert ist als eine Zeile im Textdokument — lies ihn
 vollständig, bevor du suchst:
@@ -98,6 +134,30 @@ api_patch /api/v1/remarks/123 '{"answer":"Geht bereits: /vater/profil hat ein E-
 **ASCII-only im `-d`-Body** (Windows/Git-Bash-Fallstrick aus dem Helfer): Umlaute werden sonst zu
 ungültigem UTF-8. Formuliere die gespeicherte Antwort ohne Umlaute oder schreibe sie über eine Datei.
 
+### 3b. Was du gebaut hast, gehört in den Verlauf — nicht in `answer`
+
+`answer` ist **die eine belegte Auflösung**, gepinnt. Alles, was danach passiert, kommt als Beitrag dazu:
+
+```bash
+api_post /api/v1/remarks/123/comments '{"body":"Gebaut: E-Mail-Feld in VaterProfil.tsx ergaenzt, verifiziert im Browser.","author":"Assistant","authorLabel":"claude-code"}'
+```
+
+**Verbindlich: Hast du an einer Anmerkung gearbeitet, entsteht ein kurzer `Assistant`-Beitrag** — gebaut,
+verworfen samt Grund, oder auch nur „geprüft, tritt nicht mehr auf". Ein `PATCH answer` an dieser Stelle
+wäre ein Datenverlust.
+
+> Warum die Regel existiert: Am 2026-07-27 wurden sieben Anmerkungen erst analysiert (Antwort mit
+> Datei- und Zeilenbelegen) und dann umgesetzt — die Umsetzungsnotiz ging als `answer` zurück und hat die
+> **Analyse überschrieben**. Die Vorarbeit war weg. Genau diese Reihenfolge (analysieren → zurückstellen →
+> später umsetzen) ist aber der gewollte Ablauf.
+
+Zwei Dinge, die dabei zählen:
+
+- **`author: "Assistant"` nicht vergessen.** Ein Beitrag ohne das Feld gilt als menschlich und setzt eine
+  erledigte Anmerkung serverseitig zurück auf `Open` — du würdest deinen eigenen Vorgang wieder aufreißen.
+- **Korrigiere `answer`, wenn die Analyse falsch war** (statt die Korrektur nur anzuhängen): Der Export
+  liest sich sonst wie ein geprüfter Befund, der es nicht ist. Der Verlauf hält fest, *dass* korrigiert wurde.
+
 ### 4. Nachfragen, wie es weitergeht
 
 Frage den Nutzer — und setze den Stand danach:
@@ -110,6 +170,10 @@ Frage den Nutzer — und setze den Stand danach:
 
 **Die Antwort bleibt in beiden Fällen stehen.** Ein zurückgestellter Fall ist damit kein offener Zettel
 mehr, sondern ein analysierter Backlog-Eintrag — die Vorarbeit ist getan.
+
+Den Stand musst du ohnehin nicht gegen den Nutzer verteidigen: Hakt er später im Widget oder auf
+`/vater/anmerkungen` nach, springt die Anmerkung von selbst zurück auf `Open` und liegt beim nächsten
+Sammel-Lauf wieder oben.
 
 Entsteht aus der Antwort eine **neue Aufgabe**, lege sie als eigene Anmerkung mit Verweis an, statt die
 Frage umzudeuten:
@@ -126,11 +190,15 @@ Ein Markdown-Schnappschuss der sichtbaren Anmerkungen – versioniert und ohne l
 
 ```bash
 # Ohne status-Filter, damit auch `eingeplant` mitkommt – die Rollen-Skills lesen ausdruecklich beides,
-# und gerade die eingeplanten tragen schon eine Analyse. `-f`, damit ein 401/403 nicht als
+# und gerade die eingeplanten tragen schon eine Analyse. `scope=all`, damit die Datei alle Konten
+# abdeckt (sonst fehlt im Repo, was aus einem anderen Testkonto kam). `-f`, damit ein 401/403 nicht als
 # ProblemDetails-JSON in der Exportdatei landet (api_get schluckt den Fehler).
-curl -sf "$TUTORIAL_API_BASE/api/v1/remarks/export" -H "Authorization: Bearer $TOK" \
+curl -sf "$TUTORIAL_API_BASE/api/v1/remarks/export?scope=all" -H "Authorization: Bearer $TOK" \
   -o docs/anmerkungen/aktuell.md
 ```
+
+Der Export trägt den **Verlauf** je Anmerkung als Zitat mit — deshalb weiß ein Schnappschuss von heute
+noch, was gestern analysiert wurde.
 
 Das ist zugleich die **einzige Brücke zu den Test-Skills**: `creator`, `supervisor`, `student` und
 `/smoke-test` laufen gegen eine Wegwerf-DB und sehen die echten Anmerkungen nur als Datei im Repo.
@@ -146,10 +214,15 @@ Befund**, den `pm-loop` als Feedback-Quelle liest.
 ### 1. Holen
 
 ```bash
-api_get "/api/v1/remarks?status=Open&take=100"
+api_get "/api/v1/remarks?status=Open&scope=all&take=100"
 ```
 
-Nichts offen? Sagen und aufhören – kein Befund über ein leeres Feld.
+Nichts offen? Sagen und aufhören – kein Befund über ein leeres Feld. (Aber erst prüfen, ob `scope=all`
+wirklich griff: ohne Admin-Rolle wäre die Antwort `403`, und `api_get` gibt den Fehler mit aus.)
+
+**Was auf `Open` steht, kann ein Wiederaufgriff sein:** Hakt der Nutzer an einer erledigten Anmerkung nach,
+setzt der Server sie zurück. Eine Anmerkung mit `commentCount > 0` und vorhandener `answer` ist also kein
+unbearbeiteter Zettel — lies erst den Verlauf, sonst analysierst du zum zweiten Mal dasselbe.
 
 ### 2. Einordnen
 
@@ -168,6 +241,8 @@ in den Befund kommt:
 - Inzwischen behoben? → dem Nutzer vorschlagen, sie auf `Done` zu setzen. **Nicht selbst entscheiden.**
 - Nicht mehr nachvollziehbar (Route existiert nicht mehr, Übung gelöscht)? → als solches kennzeichnen.
 - Doppelt? → zusammenfassen, alle Ids nennen (die Häufung ist selbst ein Signal).
+- Trägt sie einen **neuen menschlichen Beitrag**? → Das ist ein Nachhaken und gehört *oben* in den Befund:
+  Der Nutzer hat auf eine Antwort reagiert, das wiegt schwerer als ein Zettel, den noch niemand gesehen hat.
 
 Es gilt dieselbe **Belegpflicht** wie in Einsatz A: „ist behoben" ohne Datei und Zeile ist geraten.
 
@@ -203,6 +278,9 @@ dort, nicht hier.
 
 - **Das Widget ist der Eingang, dieser Skill nicht.** Lege keine Anmerkungen „für den Nutzer" an; die
   einzige Ausnahme ist die Folge-Aufgabe aus Schritt 4.
-- **Kein Chat.** Rückfragen des Nutzers beantwortest du hier im Gespräch, nicht als weitere Anmerkung.
+- **Der Verlauf ist ein Protokoll, kein Chat.** Er hält fest, was analysiert, gebaut oder verworfen wurde —
+  einen Beitrag je Arbeitsschritt, nicht je Gedanke. Sitzt der Nutzer im Gespräch vor dir, antworte **hier**
+  im Terminal und nicht über die API: Ein Beitrag, den er sowieso gerade liest, ist Papier.
 - **Fixen ist eine eigene Entscheidung.** Eine beantwortete Frage ist keine Beauftragung: Wenn aus der
-  Antwort Arbeit folgt, frage, ob du sie jetzt machen sollst.
+  Antwort Arbeit folgt, frage, ob du sie jetzt machen sollst. Ist sie getan, gehört sie als Beitrag in den
+  Verlauf (Schritt 3b).

@@ -26,7 +26,8 @@ namespace Pugling.Api.Controllers;
 [Tags("Remarks")]
 [Produces("application/json")]
 [Authorize]
-public class RemarksController(PuglingDbContext db, RemarkExportService export, AuthAccess access) : ControllerBase
+public class RemarksController(
+    PuglingDbContext db, RemarkExportService export, AuthAccess access, RemarkOptions options) : ControllerBase
 {
     /// <summary>Sortierschlüssel der Liste (Whitelist – kein dynamischer Property-Zugriff).</summary>
     private static IQueryable<Remark> ApplySort(IQueryable<Remark> q, string? key, bool desc) => key switch
@@ -49,7 +50,7 @@ public class RemarksController(PuglingDbContext db, RemarkExportService export, 
     /// Export Supervisor-only ist – ohne den Filter widerspräche sich beides, denn das Widget der
     /// Sohn-Arcade zeigt die Antwort zur eigenen Anmerkung an.
     /// </summary>
-    private static RemarkDto ToDto(Remark r, int? viewerAccountId, bool withAnswer) => new(
+    private static RemarkDto ToDto(Remark r, int? viewerAccountId, bool withAnswer, int commentCount) => new(
         r.Id, r.Text, r.Category, r.Status,
         withAnswer ? r.Answer : null,
         withAnswer ? r.AnsweredAt : null,
@@ -58,10 +59,58 @@ public class RemarksController(PuglingDbContext db, RemarkExportService export, 
         r.AccountId, r.AuthorRole, r.AccountId == viewerAccountId,
         new RemarkContextDto(r.Route, r.AppArea, r.ChildId, r.ExerciseId, r.StudyPlanId, r.PlanPositionId,
             r.ContextJson, r.RecentErrorsJson),
-        r.UserAgent, r.CreatedAt);
+        r.UserAgent, r.CreatedAt,
+        // Für einen Student immer 0: Er darf den Verlauf nicht sehen, und schon die Anzahl wäre eine
+        // Auskunft darüber, dass über seine Anmerkung gesprochen wurde.
+        withAnswer ? commentCount : 0);
 
-    /// <summary>Ob der Aufrufer Antworten sehen darf – Student nicht, siehe <see cref="ToDto"/>.</summary>
+    /// <summary>Projektion eines Beitrags; <paramref name="viewerAccountId"/> entscheidet über <c>IsOwn</c> (nur eigene sind löschbar).</summary>
+    private static RemarkCommentDto ToDto(RemarkComment c, int? viewerAccountId) => new(
+        c.Id, c.RemarkId, c.Body, c.Author, c.AuthorLabel, c.AuthorAccountId,
+        c.AuthorAccountId is { } a && a == viewerAccountId, c.CreatedAt);
+
+    /// <summary>
+    /// Ob der Aufrufer Antworten und Verlauf sehen darf – Student nicht, siehe <see cref="ToDto(Remark, int?, bool, int)"/>.
+    /// </summary>
     private bool MaySeeAnswers => !User.IsStudent() || User.IsSupervisor();
+
+    /// <summary>
+    /// Der Anmerkungs-Bestand, auf den der Aufrufer zugreifen darf – die <b>eine</b> Stelle, an der die
+    /// Sichtbarkeit entschieden wird.
+    /// <para>
+    /// <paramref name="allAccounts"/> hebt die Einschränkung auf. Die Berechtigung dafür ist
+    /// <see cref="MayReadAllAccounts"/>; auf den <b>Listen</b> kommt das ausdrückliche <c>scope=all</c>
+    /// hinzu, damit die Vorgabe eng bleibt (sonst zeigte die Liste im Widget fremde Einträge). Beim Zugriff
+    /// auf eine <b>einzelne Id</b> genügt die Berechtigung – genau das braucht der Skill, um eine Anmerkung
+    /// aus einem beliebigen Testkonto zu beantworten.
+    /// </para>
+    /// </summary>
+    private async Task<IQueryable<Remark>> ScopedAsync(bool allAccounts, CancellationToken ct)
+    {
+        if (allAccounts) return db.Remarks;
+        var visible = await VisibleAccountIdsAsync(ct);
+        return db.Remarks.Where(r => visible.Contains(r.AccountId));
+    }
+
+    private static bool WantsAllAccounts(string? scope) => string.Equals(scope, "all", StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// Ob der Aufrufer über Konto-Grenzen lesen darf.
+    /// <para>
+    /// Das ist <b>an den Schalter <see cref="RemarkOptions.GlobalRead"/> gebunden, nicht an eine Rolle</b>:
+    /// Beim Testen entstehen ständig Wegwerf-Konten (ein Fehler zeigt sich oft nur in einer bestimmten
+    /// Konstellation – ein frischer Vater ohne Übungen deckt auf, was beim geseedeten Papa nie auffällt), und
+    /// jedes einzeln mit einem Flag zu versehen wäre Verwaltungsarbeit ohne Gegenwert. <c>Admin</c> bleibt
+    /// zusätzlich erlaubt, taugt aber nicht als <i>Bedingung</i>: Die Rolle umgeht auch die RWX-Rechte auf
+    /// Übungen, und die haben mit Anmerkungen nichts zu tun.
+    /// </para>
+    /// <para>
+    /// Ein <b>Student</b> ist immer ausgeschlossen – auch mit eingeschaltetem <c>GlobalRead</c>. Antworten und
+    /// Verlauf tragen Datei- und Zeilenverweise; an dem Tag, an dem das Kind das Widget sieht, darf es die
+    /// Testnotizen der Erwachsenen nicht mitlesen.
+    /// </para>
+    /// </summary>
+    private bool MayReadAllAccounts => !User.IsStudent() && (options.GlobalRead || User.IsAdmin());
 
     /// <summary>
     /// Die Konten, deren Anmerkungen der Aufrufer sehen darf: immer das eigene, für einen Supervisor
@@ -172,20 +221,30 @@ public class RemarksController(PuglingDbContext db, RemarkExportService export, 
 
         db.Remarks.Add(remark);
         await db.SaveChangesAsync(ct);
-        return CreatedAtAction(nameof(GetOne), new { id = remark.Id, version = "1.0" }, ToDto(remark, accountId, MaySeeAnswers));
+        // Frisch erfasst: Der Verlauf ist zwangsläufig leer.
+        return CreatedAtAction(nameof(GetOne), new { id = remark.Id, version = "1.0" }, ToDto(remark, accountId, MaySeeAnswers, 0));
     }
 
     /// <summary>
     /// Anmerkungen auflisten. <c>mine=true</c> beschränkt auf die eigenen – das ist die Abfrage hinter der
     /// Liste im Widget; ohne den Filter sähe ein Supervisor auch die des Kindes.
+    /// <para>
+    /// <c>scope=all</c> hebt die Konten-Grenze auf – das ist die Sicht des Nachbereitungs-Skills, der
+    /// Anmerkungen aus allen Testkonten einsammelt. Erlaubt, wenn <see cref="MayReadAllAccounts"/> gilt
+    /// (Schalter <c>Remarks:GlobalRead</c>, in der Entwicklung an), sonst <c>403</c>. Bewusst ein
+    /// <b>ausdrücklicher</b> Parameter: Die Vorgabe muss eng bleiben, sonst zeigte die Liste im Widget
+    /// plötzlich fremde Einträge. <c>mine=true</c> gewinnt immer.
+    /// </para>
     /// </summary>
     [HttpGet]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult<IEnumerable<RemarkDto>>> List(
         [FromQuery] RemarkStatus? status,
         [FromQuery] RemarkCategory? category,
         [FromQuery] int? childId,
         [FromQuery] string? appArea,
         [FromQuery] bool mine = false,
+        [FromQuery] string? scope = null,
         [FromQuery] string? sort = null,
         [FromQuery] string? dir = null,
         [FromQuery] int skip = 0,
@@ -193,29 +252,48 @@ public class RemarksController(PuglingDbContext db, RemarkExportService export, 
         CancellationToken ct = default)
     {
         var self = User.AccountId();
-        var visible = mine ? (self is { } s ? [s] : new List<int>()) : await VisibleAccountIdsAsync(ct);
+        var all = WantsAllAccounts(scope) && !mine;
+        if (all && !MayReadAllAccounts)
+            return this.ProblemWithCode(ApiErrors.RemarkScopeForbidden,
+                "Reading across accounts is disabled on this instance.");
 
-        var q = db.Remarks.AsNoTracking().Where(r => visible.Contains(r.AccountId));
+        var q = mine
+            ? db.Remarks.Where(r => self != null && r.AccountId == self)
+            : await ScopedAsync(all, ct);
+        q = q.AsNoTracking();
+
         if (status is { } st) q = q.Where(r => r.Status == st);
         if (category is { } cat) q = q.Where(r => r.Category == cat);
         if (childId is { } cid) q = q.Where(r => r.ChildId == cid);
         if (!string.IsNullOrWhiteSpace(appArea)) q = q.Where(r => r.AppArea == appArea);
 
         var (key, desc) = SortingExtensions.ParseSort(sort, dir);
-        var rows = await ApplySort(q, key, desc).ToPagedListAsync(Response, skip, take, ct);
-        return rows.Select(r => ToDto(r, self, MaySeeAnswers)).ToList();
+        // Die Beitragszahl als **Projektion**, nicht per `Include`: Sonst lüde die Liste die vollständigen
+        // Verläufe aller Zeilen mit, nur um sie zu zählen.
+        var rows = await ApplySort(q, key, desc)
+            .Select(r => new { Remark = r, Comments = r.Comments.Count })
+            .ToPagedListAsync(Response, skip, take, ct);
+        return rows.Select(x => ToDto(x.Remark, self, MaySeeAnswers, x.Comments)).ToList();
     }
 
-    /// <summary>Eine einzelne Anmerkung – der Einstieg des Skills für „Beantworte die Frage 123".</summary>
+    /// <summary>
+    /// Eine einzelne Anmerkung – der Einstieg des Skills für „Beantworte die Frage 123".
+    /// <para>
+    /// Ein Admin greift hier <b>ohne</b> <c>scope=all</c> zu: Eine Id gezielt aufzurufen ist genau der
+    /// Break-Glass-Fall, und ein Parameter, den man immer mitschicken müsste, wäre nur Rauschen.
+    /// </para>
+    /// </summary>
     [HttpGet("{id:int}")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<RemarkDto>> GetOne(int id, CancellationToken ct)
     {
-        var visible = await VisibleAccountIdsAsync(ct);
-        var remark = await db.Remarks.AsNoTracking()
-            .FirstOrDefaultAsync(r => r.Id == id && visible.Contains(r.AccountId), ct);
-        if (remark is null) return this.ProblemWithCode(ApiErrors.RemarkNotFound, "Remark not found.");
-        return ToDto(remark, User.AccountId(), MaySeeAnswers);
+        var scoped = await ScopedAsync(MayReadAllAccounts, ct);
+        var row = await scoped.AsNoTracking()
+            .Where(r => r.Id == id)
+            .Select(r => new { Remark = r, Comments = r.Comments.Count })
+            .FirstOrDefaultAsync(ct);
+        if (row is null) return this.ProblemWithCode(ApiErrors.RemarkNotFound, "Remark not found.");
+        return ToDto(row.Remark, User.AccountId(), MaySeeAnswers, row.Comments);
     }
 
     /// <summary>
@@ -226,8 +304,8 @@ public class RemarksController(PuglingDbContext db, RemarkExportService export, 
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<RemarkDto>> Update(int id, UpdateRemarkDto dto, CancellationToken ct)
     {
-        var visible = await VisibleAccountIdsAsync(ct);
-        var remark = await db.Remarks.FirstOrDefaultAsync(r => r.Id == id && visible.Contains(r.AccountId), ct);
+        var scoped = await ScopedAsync(MayReadAllAccounts, ct);
+        var remark = await scoped.FirstOrDefaultAsync(r => r.Id == id, ct);
         if (remark is null) return this.ProblemWithCode(ApiErrors.RemarkNotFound, "Remark not found.");
 
         if (dto.Text is { } text)
@@ -256,7 +334,113 @@ public class RemarksController(PuglingDbContext db, RemarkExportService export, 
         if (dto.ClearParent) remark.ParentRemarkId = null;
 
         await db.SaveChangesAsync(ct);
-        return ToDto(remark, User.AccountId(), MaySeeAnswers);
+        var comments = await db.RemarkComments.CountAsync(c => c.RemarkId == remark.Id, ct);
+        return ToDto(remark, User.AccountId(), MaySeeAnswers, comments);
+    }
+
+    // ── Verlauf ───────────────────────────────────────────────────────────────────────────────────────
+    //
+    // Der Verlauf macht aus der Anmerkung einen Vorgang, der einen Arbeitsgang übersteht: Analyse,
+    // Rückfrage und Umsetzungsnotiz stehen nebeneinander, statt einander zu überschreiben. Was er
+    // ausdrücklich *nicht* ist: ein Chat. Es gibt keine Zustellung und keine Ungelesen-Marker – gelesen
+    // wird beim nächsten Testen oder im nächsten Skill-Lauf.
+
+    /// <summary>
+    /// Der Verlauf einer Anmerkung, <b>älteste zuerst</b> – ein Vorgang liest sich chronologisch, anders als
+    /// die Liste der Anmerkungen (neueste zuerst).
+    /// </summary>
+    [HttpGet("{id:int}/comments")]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<IEnumerable<RemarkCommentDto>>> Comments(int id, CancellationToken ct)
+    {
+        if (!MaySeeAnswers) return this.ProblemWithCode(ApiErrors.Forbidden, "Students cannot read the discussion.");
+
+        var scoped = await ScopedAsync(MayReadAllAccounts, ct);
+        if (!await scoped.AnyAsync(r => r.Id == id, ct))
+            return this.ProblemWithCode(ApiErrors.RemarkNotFound, "Remark not found.");
+
+        var rows = await db.RemarkComments.AsNoTracking()
+            .Where(c => c.RemarkId == id)
+            .OrderBy(c => c.CreatedAt).ThenBy(c => c.Id)
+            .ToListAsync(ct);
+        var self = User.AccountId();
+        return rows.Select(c => ToDto(c, self)).ToList();
+    }
+
+    /// <summary>
+    /// Einen Beitrag zum Verlauf hinzufügen.
+    /// <para>
+    /// <b>Wiederaufnahme:</b> Ein Beitrag des <b>Menschen</b> zu einer erledigten oder verworfenen Anmerkung
+    /// setzt sie zurück auf <see cref="RemarkStatus.Open"/> – genau das macht aus dem Verlauf einen
+    /// Arbeitsablauf, denn der Nachbereitungs-Skill legt offene Anmerkungen beim nächsten Lauf wieder vor.
+    /// Ein Beitrag von Claude lässt den Stand unberührt: Er berichtet, er hakt nicht nach. Sonst würde jede
+    /// Umsetzungsnotiz die eigene Anmerkung wieder aufreißen.
+    /// </para>
+    /// </summary>
+    [HttpPost("{id:int}/comments")]
+    [ProducesResponseType(StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<RemarkCommentDto>> AddComment(int id, CreateRemarkCommentDto dto, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(dto.Body)) return this.ProblemWithCode(ApiErrors.ValidationError, "Body is required.");
+        if (!MaySeeAnswers) return this.ProblemWithCode(ApiErrors.Forbidden, "Students cannot take part in the discussion.");
+
+        var accountId = User.AccountId();
+        if (accountId is null) return this.ProblemWithCode(ApiErrors.Unauthorized, "Token carries no account.");
+
+        var scoped = await ScopedAsync(MayReadAllAccounts, ct);
+        var remark = await scoped.FirstOrDefaultAsync(r => r.Id == id, ct);
+        if (remark is null) return this.ProblemWithCode(ApiErrors.RemarkNotFound, "Remark not found.");
+
+        var author = dto.Author ?? RemarkCommentAuthor.Human;
+        // Ohne Angabe den Anzeigenamen des Kontos einsetzen: Im Export steht sonst „Human", und wer den
+        // Schnappschuss Wochen später liest, weiß nicht, wer geschrieben hat.
+        var label = dto.AuthorLabel?.Trim() is { Length: > 0 } given
+            ? given
+            : await db.Accounts.AsNoTracking().Where(a => a.Id == accountId).Select(a => a.DisplayName).FirstOrDefaultAsync(ct);
+
+        var comment = new RemarkComment
+        {
+            RemarkId = id,
+            Body = dto.Body.Trim(),
+            Author = author,
+            AuthorLabel = label,
+            AuthorAccountId = accountId,
+        };
+        db.RemarkComments.Add(comment);
+
+        if (author == RemarkCommentAuthor.Human && remark.Status is RemarkStatus.Done or RemarkStatus.Rejected)
+            remark.Status = RemarkStatus.Open;
+
+        await db.SaveChangesAsync(ct);
+        return CreatedAtAction(nameof(Comments), new { id, version = "1.0" }, ToDto(comment, accountId));
+    }
+
+    /// <summary>
+    /// Einen eigenen Beitrag zurücknehmen (Tippfehler). Fremde Beiträge darf nur ein Admin entfernen – ein
+    /// Verlauf, aus dem jeder alles löschen kann, ist kein Protokoll mehr.
+    /// </summary>
+    [HttpDelete("{id:int}/comments/{commentId:int}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> DeleteComment(int id, int commentId, CancellationToken ct)
+    {
+        var scoped = await ScopedAsync(MayReadAllAccounts, ct);
+        if (!await scoped.AnyAsync(r => r.Id == id, ct))
+            return this.ProblemWithCode(ApiErrors.RemarkNotFound, "Remark not found.");
+
+        var self = User.AccountId();
+        var comment = await db.RemarkComments.FirstOrDefaultAsync(c => c.Id == commentId && c.RemarkId == id, ct);
+        // Fremder Beitrag: bewusst 404 statt 403 – ein „das darfst du nicht" wäre die Auskunft, dass es ihn gibt.
+        if (comment is null || (comment.AuthorAccountId != self && !User.IsAdmin()))
+            return this.ProblemWithCode(ApiErrors.RemarkCommentNotFound, "Remark comment not found.");
+
+        db.RemarkComments.Remove(comment);
+        await db.SaveChangesAsync(ct);
+        return NoContent();
     }
 
     /// <summary>
@@ -272,34 +456,54 @@ public class RemarksController(PuglingDbContext db, RemarkExportService export, 
     [Authorize(Roles = Roles.Supervisor)]
     [Produces("text/markdown")]
     [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> Export(
         [FromQuery] RemarkStatus? status,
+        [FromQuery] string? scope = null,
         [FromQuery] int take = 200,
         CancellationToken ct = default)
     {
-        var visible = await VisibleAccountIdsAsync(ct);
-        var q = db.Remarks.AsNoTracking().Where(r => visible.Contains(r.AccountId));
+        var all = WantsAllAccounts(scope);
+        if (all && !MayReadAllAccounts)
+            return this.ProblemWithCode(ApiErrors.RemarkScopeForbidden,
+                "Reading across accounts is disabled on this instance.");
+
+        var scoped = await ScopedAsync(all, ct);
+        var q = scoped.AsNoTracking();
         if (status is { } st) q = q.Where(r => r.Status == st);
 
         // Älteste zuerst: Der Export wird gelesen wie ein Protokoll, und beim Nacharbeiten ist die
         // Reihenfolge des Auffallens die hilfreichere – anders als in der Widget-Liste.
+        // Der Verlauf kommt per `Include` mit: Hier wird alles gerendert, anders als in der Liste, wo nur
+        // gezählt wird.
         var rows = await q.OrderBy(r => r.Id)
+            .Include(r => r.Comments)
             .Take(Math.Clamp(take, 1, 1000))
             .ToListAsync(ct);
 
         var filterNote = status is { } s ? $"status={s}" : "alle";
-        var markdown = export.Render(rows, filterNote, DateTime.UtcNow);
+        // Bei kontenübergreifendem Export muss das Autor-Konto mit in den Text: Im Repo-Schnappschuss wäre
+        // sonst nicht erkennbar, wessen Beobachtung eine Zeile ist.
+        var markdown = export.Render(rows, filterNote, DateTime.UtcNow, showAccounts: all);
         return Content(markdown, "text/markdown", Encoding.UTF8);
     }
 
-    /// <summary>Anmerkung löschen.</summary>
+    /// <summary>
+    /// Anmerkung löschen.
+    /// <para>
+    /// Bewusst <b>eng</b>, auch bei eingeschaltetem <c>GlobalRead</c>: Der Schalter heißt „global
+    /// <i>read</i>" und meint genau das. Beantworten und Kommentieren über Kontogrenzen sind der Sinn der
+    /// Sache; die Beobachtung eines anderen Kontos wegzuwerfen ist es nicht. Ein Admin darf es weiterhin
+    /// (Break-Glass).
+    /// </para>
+    /// </summary>
     [HttpDelete("{id:int}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(int id, CancellationToken ct)
     {
-        var visible = await VisibleAccountIdsAsync(ct);
-        var remark = await db.Remarks.FirstOrDefaultAsync(r => r.Id == id && visible.Contains(r.AccountId), ct);
+        var scoped = await ScopedAsync(User.IsAdmin(), ct);
+        var remark = await scoped.FirstOrDefaultAsync(r => r.Id == id, ct);
         if (remark is null) return this.ProblemWithCode(ApiErrors.RemarkNotFound, "Remark not found.");
 
         db.Remarks.Remove(remark);

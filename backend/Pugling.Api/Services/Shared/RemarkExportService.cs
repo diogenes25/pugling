@@ -28,10 +28,14 @@ public class RemarkExportService
     };
 
     /// <summary>Markdown für die übergebenen Anmerkungen (bereits gefiltert und sortiert).</summary>
-    /// <param name="remarks">Die zu exportierenden Anmerkungen.</param>
+    /// <param name="remarks">Die zu exportierenden Anmerkungen; <c>Comments</c> sollte geladen sein, sonst fehlt der Verlauf.</param>
     /// <param name="filterNote">Menschenlesbare Beschreibung des Filters, für den Kopf des Dokuments.</param>
     /// <param name="generatedAt">Erzeugungszeitpunkt (UTC) – wird durchgereicht statt intern gelesen, damit der Test ihn festnageln kann.</param>
-    public string Render(IReadOnlyList<Remark> remarks, string filterNote, DateTime generatedAt)
+    /// <param name="showAccounts">
+    /// Beim kontenübergreifenden Export (<c>scope=all</c>) das Konto je Beitrag ausweisen. Im Normalfall
+    /// stammt alles aus einer Hand und die Angabe wäre nur Rauschen.
+    /// </param>
+    public string Render(IReadOnlyList<Remark> remarks, string filterNote, DateTime generatedAt, bool showAccounts = false)
     {
         var sb = new StringBuilder();
         sb.AppendLine("# Anmerkungen – Export");
@@ -102,9 +106,39 @@ public class RemarkExportService
                 sb.AppendLine(r.Answer!.Trim());
                 sb.AppendLine();
             }
+
+            AppendComments(sb, r, showAccounts);
         }
 
         return sb.ToString();
+    }
+
+    /// <summary>
+    /// Der Verlauf, chronologisch, unter der Antwort. Als Zitat gesetzt, damit beim Lesen klar bleibt, was
+    /// die belegte Auflösung ist (die <c>Antwort</c>) und was der Weg dorthin war.
+    /// <para>
+    /// Der Verlauf ist der Grund, warum ein Export von heute noch etwas über gestern weiß: Vorher überschrieb
+    /// die Umsetzungsnotiz die Analyse.
+    /// </para>
+    /// </summary>
+    private static void AppendComments(StringBuilder sb, Remark r, bool showAccounts)
+    {
+        if (r.Comments.Count == 0) return;
+
+        sb.AppendLine(CultureInfo.InvariantCulture, $"**Verlauf** ({r.Comments.Count}):");
+        sb.AppendLine();
+        foreach (var c in r.Comments.OrderBy(x => x.CreatedAt).ThenBy(x => x.Id))
+        {
+            var who = string.IsNullOrWhiteSpace(c.AuthorLabel) ? c.Author.ToString() : c.AuthorLabel!;
+            var account = showAccounts && c.AuthorAccountId is { } a ? $", Konto {a}" : "";
+            sb.AppendLine(CultureInfo.InvariantCulture, $"> **{who}** · {Iso(c.CreatedAt)}{account}");
+            sb.AppendLine("> ");
+            // Jede Zeile einzeln zitieren: Ein mehrzeiliger Beitrag bräche das Zitat sonst nach der ersten
+            // Zeile auf, und der Rest stünde als gewöhnlicher Absatz da.
+            foreach (var line in c.Body.Trim().ReplaceLineEndings("\n").Split('\n'))
+                sb.AppendLine(CultureInfo.InvariantCulture, $"> {line}");
+            sb.AppendLine();
+        }
     }
 
     private static string Iso(DateTime value) =>
