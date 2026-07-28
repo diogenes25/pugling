@@ -169,4 +169,36 @@ public class PlanPositionCrudTests(PuglingWebAppFactory factory) : IClassFixture
         // Die referenzierte Katalog-Übung bleibt erhalten.
         Assert.Equal(HttpStatusCode.OK, (await father.GetAsync($"/api/v1/creator/exercises/{exerciseId}")).StatusCode);
     }
+
+    /*
+     * `goalThreshold` ist eine Prozent-Bestehensgrenze. Wer sie mit einer Trefferzahl verwechselt, soll ein
+     * 400 sehen statt einer Pflicht, die lautlos jeden Versuch durchwinkt – 0 und 120 sind beides keine
+     * Prozentangaben, und „Standard" sagt man mit dem Auslassen des Feldes.
+     */
+    [Theory]
+    [InlineData(0)]
+    [InlineData(101)]
+    [InlineData(-5)]
+    public async Task Position_SchwelleAusserhalbProzent_WirdAbgewiesen(int goalThreshold)
+    {
+        var father = await TestApi.FatherAsync(_factory);
+        var exerciseId = await TestApi.CreateVocabExerciseAsync(father);
+        var planId = await EmptyPlanAsync(father);
+        var url = $"/api/v1/supervisor/study-plans/{planId}/positions";
+
+        var create = await father.PostAsJsonAsync(url, new { exerciseId, cadence = "Daily", goalThreshold });
+        Assert.Equal(HttpStatusCode.BadRequest, create.StatusCode);
+        Assert.Equal("validation_error",
+            (await create.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("code").GetString());
+
+        // Auch nachträglich nicht: sonst ginge über PATCH genau das hinein, was POST abweist.
+        var posId = await TestApi.IdAsync(await father.PostAsJsonAsync(url, new { exerciseId, cadence = "Daily" }));
+        var patch = await father.PatchAsJsonAsync($"{url}/{posId}", new { goalThreshold });
+        Assert.Equal(HttpStatusCode.BadRequest, patch.StatusCode);
+
+        // Die gültige Grenze geht durch und kommt zurück.
+        var ok = await father.PatchAsJsonAsync($"{url}/{posId}", new { goalThreshold = 90 });
+        Assert.Equal(HttpStatusCode.OK, ok.StatusCode);
+        Assert.Equal(90, (await ok.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("goalThreshold").GetInt32());
+    }
 }

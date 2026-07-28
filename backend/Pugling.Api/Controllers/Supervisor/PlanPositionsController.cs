@@ -45,6 +45,17 @@ public class PlanPositionsController(PuglingDbContext db, ExercisePermissionServ
         db.PlanPositions.Include(p => p.Exercise)
             .FirstOrDefaultAsync(p => p.Id == positionId && p.StudyPlanId == planId);
 
+    /*
+     * Die Ziel-Schwelle ist ein PROZENTWERT (siehe PlanPosition.GoalThreshold). Ohne diese Prüfung ist eine
+     * Verwechslung mit einer Trefferzahl lautlos und wirkt genau falsch: „3" nimmt der Pflicht die Zähne,
+     * statt sie zu verschärfen (jeder Versuch über 3 % gilt als bestanden). Genau das stand einmal im Seed.
+     * `null` bleibt der Weg, „Standard" zu sagen – 0 wäre eine zweite Schreibweise dafür.
+     */
+    private static string? ThresholdProblem(int? goalThreshold) =>
+        goalThreshold is null or (>= 1 and <= 100)
+            ? null
+            : "goalThreshold is a pass percentage and must be between 1 and 100 (omit it for the default of 80).";
+
     /// <summary>Eine einzelne Position.</summary>
     [HttpGet("{positionId:int}")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -60,6 +71,9 @@ public class PlanPositionsController(PuglingDbContext db, ExercisePermissionServ
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<PositionResponse>> Create(int planId, CreatePositionDto dto)
     {
+        if (ThresholdProblem(dto.GoalThreshold) is { } problem)
+            return this.ProblemWithCode(ApiErrors.ValidationError, problem);
+
         var exercise = await db.Exercises.FirstOrDefaultAsync(e => e.Id == dto.ExerciseId);
         if (exercise is null) return this.ProblemWithCode(ApiErrors.InvalidReference, $"Exercise {dto.ExerciseId} not found.");
         // Execute-Gate: nicht öffentlich ausführbare Übungen darf nur zuweisen, wer ein Owner-/Write-/Execute-Recht hält.
@@ -110,6 +124,9 @@ public class PlanPositionsController(PuglingDbContext db, ExercisePermissionServ
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<PositionResponse>> Update(int planId, int positionId, UpdatePositionDto dto)
     {
+        if (ThresholdProblem(dto.GoalThreshold) is { } problem)
+            return this.ProblemWithCode(ApiErrors.ValidationError, problem);
+
         var pos = await FindAsync(planId, positionId);
         if (pos is null) return NotFound();
 

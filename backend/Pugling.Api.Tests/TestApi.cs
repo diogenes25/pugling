@@ -60,8 +60,14 @@ internal static class TestApi
     }
 
     /// <summary>Legt (als Vater) Fach → Kapitel → eine Rechen-Übung an und liefert deren Ids.</summary>
-    public static async Task<(int subjectId, int chapterId, int exerciseId)> CreateArithmeticExerciseAsync(HttpClient father)
+    /// <param name="problems">
+    /// Aufgaben der Übung; leer = die eine Standard-Aufgabe „7 × 6". Mehrere braucht man, sobald eine
+    /// Trefferquote zwischen 0 % und 100 % geprüft werden soll.
+    /// </param>
+    public static async Task<(int subjectId, int chapterId, int exerciseId)> CreateArithmeticExerciseAsync(
+        HttpClient father, params (string Prompt, int Answer)[] problems)
     {
+        var tasks = problems.Length > 0 ? problems : [("7 × 6", 42)];
         var subjectId = await IdAsync(await father.PostAsJsonAsync("/api/v1/creator/subjects", new { name = "Katalog-Test" }));
         var chapterId = await IdAsync(await father.PostAsJsonAsync(
             $"/api/v1/creator/subjects/{subjectId}/chapters", new { name = "Kapitel 1", orderIndex = 1 }));
@@ -71,7 +77,7 @@ internal static class TestApi
                 title = "Kleines 1×1",
                 orderIndex = 1,
                 rewardPoints = 10,
-                config = new { problems = new[] { new { prompt = "7 × 6", answer = 42, tolerance = 0 } } },
+                config = new { problems = tasks.Select(t => new { prompt = t.Prompt, answer = t.Answer, tolerance = 0 }) },
             }));
         return (subjectId, chapterId, exerciseId);
     }
