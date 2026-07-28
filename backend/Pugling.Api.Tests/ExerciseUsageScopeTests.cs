@@ -64,7 +64,7 @@ public class ExerciseUsageScopeTests(PuglingWebAppFactory factory) : IClassFixtu
         var usage = await owner.GetFromJsonAsync<JsonElement>($"/api/v1/creator/exercises/{exerciseId}/usage");
         Assert.Empty(usage.GetProperty("plans").EnumerateArray());
         Assert.Empty(usage.GetProperty("classTests").EnumerateArray());
-        Assert.Equal(1, usage.GetProperty("otherCarersCount").GetInt32());
+        Assert.Equal(1, usage.GetProperty("otherLearnersCount").GetInt32());
 
         // Und das Löschen scheitert – mit einer Meldung, die dieselbe Zahl nennt statt zu schweigen.
         var del = await owner.DeleteAsync(
@@ -80,7 +80,7 @@ public class ExerciseUsageScopeTests(PuglingWebAppFactory factory) : IClassFixtu
         // Gegenprobe aus Sicht von Vater B: für ihn ist es eine ganz normale, sichtbare Verwendung.
         var otherUsage = await other.GetFromJsonAsync<JsonElement>($"/api/v1/creator/exercises/{exerciseId}/usage");
         Assert.Single(otherUsage.GetProperty("plans").EnumerateArray());
-        Assert.Equal(0, otherUsage.GetProperty("otherCarersCount").GetInt32());
+        Assert.Equal(0, otherUsage.GetProperty("otherLearnersCount").GetInt32());
     }
 
     [Fact]
@@ -97,7 +97,62 @@ public class ExerciseUsageScopeTests(PuglingWebAppFactory factory) : IClassFixtu
         var usage = await father.GetFromJsonAsync<JsonElement>($"/api/v1/creator/exercises/{exerciseId}/usage");
         Assert.Single(usage.GetProperty("plans").EnumerateArray());
         // Der Kern der Trennung: die eigene Verwendung darf NICHT als „fremd" mitgezählt werden.
-        Assert.Equal(0, usage.GetProperty("otherCarersCount").GetInt32());
+        Assert.Equal(0, usage.GetProperty("otherLearnersCount").GetInt32());
+    }
+
+    /// <summary>
+    /// Der Fall, für den die Zahl eigentlich da ist: ein <b>Creator ohne eigene Kinder</b> – ein Lehrer oder
+    /// eine KI-Creator-App. Seine beiden Listen können sich nie füllen, weil er niemanden betreut. Gezählt
+    /// werden <b>Kinder</b>, nicht Stellen: zwei Positionen im Plan desselben Kindes bleiben ein Nutzer.
+    /// </summary>
+    [Fact]
+    public async Task CreatorOhneKinder_ZaehltNutzendeKinder_NichtVerwendungsstellen()
+    {
+        var creator = await NewFatherAsync("Nur-Creator", "1618");
+        var subjectId = await TestApi.IdAsync(await creator.PostAsJsonAsync("/api/v1/creator/subjects", new { name = $"Lehrer-Fach {Guid.NewGuid():N}" }));
+        var chapterId = await TestApi.IdAsync(await creator.PostAsJsonAsync(
+            $"/api/v1/creator/subjects/{subjectId}/chapters", new { name = "Unit", orderIndex = 1 }));
+        var exerciseId = await TestApi.IdAsync(await creator.PostAsJsonAsync(
+            $"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/vocabulary",
+            new
+            {
+                title = "Lehrer-Material",
+                orderIndex = 1,
+                rewardPoints = 10,
+                config = new
+                {
+                    direction = "front-to-back",
+                    sourceLang = "en",
+                    targetLang = "de",
+                    items = new[] { new { front = "island", back = "Insel" } },
+                },
+            }));
+        // Er betreut niemanden – das ist die Voraussetzung, nicht ein Zwischenzustand.
+        Assert.Empty((await creator.GetFromJsonAsync<List<JsonElement>>("/api/v1/supervisor/children"))!);
+
+        // Eine Familie nimmt das Material in ZWEI Pläne desselben Kindes.
+        var family = await NewFatherAsync("Nutzende Familie", "2358");
+        var childId = await TestApi.IdAsync(await family.PostAsJsonAsync(
+            "/api/v1/supervisor/children", new { name = "Lernkind", pin = "5555" }));
+        foreach (var title in new[] { "Plan A", "Plan B" })
+        {
+            var planId = await TestApi.IdAsync(await family.PostAsJsonAsync(
+                "/api/v1/supervisor/study-plans", new { childId, title, durationDays = 10 }));
+            (await family.PostAsJsonAsync($"/api/v1/supervisor/study-plans/{planId}/positions",
+                new { exerciseId, cadence = "Daily" })).EnsureSuccessStatusCode();
+        }
+
+        var usage = await creator.GetFromJsonAsync<JsonElement>($"/api/v1/creator/exercises/{exerciseId}/usage");
+        Assert.Empty(usage.GetProperty("plans").EnumerateArray());
+        // EIN Kind, obwohl es zwei Verwendungsstellen sind – sonst wäre die Zahl für ihn irreführend.
+        Assert.Equal(1, usage.GetProperty("otherLearnersCount").GetInt32());
+
+        // Das Löschen bleibt gesperrt und nennt die *Stellen* – dort müsste jemand aufräumen.
+        var del = await creator.DeleteAsync(
+            $"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/vocabulary/{exerciseId}");
+        Assert.Equal(HttpStatusCode.Conflict, del.StatusCode);
+        var detail = (await del.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("detail").GetString()!;
+        Assert.Contains("2 usages outside your care", detail);
     }
 
     [Fact]
@@ -111,7 +166,7 @@ public class ExerciseUsageScopeTests(PuglingWebAppFactory factory) : IClassFixtu
         var c = detail.GetProperty("chapterId").GetInt32();
 
         var usage = await father.GetFromJsonAsync<JsonElement>($"/api/v1/creator/exercises/{exerciseId}/usage");
-        Assert.Equal(0, usage.GetProperty("otherCarersCount").GetInt32());
+        Assert.Equal(0, usage.GetProperty("otherLearnersCount").GetInt32());
 
         var del = await father.DeleteAsync($"/api/v1/creator/subjects/{s}/chapters/{c}/vocabulary/{exerciseId}");
         Assert.Equal(HttpStatusCode.NoContent, del.StatusCode);

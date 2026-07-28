@@ -170,6 +170,45 @@ export function VaterExercises() {
   );
 }
 
+/**
+ * Wo eine Übung verwendet wird – aus **zwei** Blickwinkeln, weil es zwei Sorten Nutzer gibt.
+ *
+ * Ein Vater sieht die Pläne seiner Kinder und will wissen, was er anfasst, bevor er ändert. Ein Creator
+ * ohne eigene Kinder – ein Lehrer oder eine KI-Creator-App – sieht in diesen Listen **nie** etwas: er
+ * betreut niemanden. Zwei „—"-Zeilen lesen sich für ihn wie „wird nicht benutzt", und genau das ist die
+ * Falschaussage, um die es in Anmerkung 14 ging. Für ihn ist die Zahl der fremden Kinder die Hauptaussage,
+ * nicht der Nachsatz – darum tritt sie an die Stelle der leeren Listen.
+ *
+ * Namen fremder Kinder tauchen in **keinem** der beiden Fälle auf: sie gehören ihrem Betreuer.
+ */
+function UsagePanel({ usage }: { usage: ExerciseUsage }) {
+  const others = usage.otherLearnersCount;
+  const childWord = others === 1 ? "Kind" : "Kindern";
+  const hasOwn = usage.plans.length > 0 || usage.classTests.length > 0;
+
+  if (!hasOwn) {
+    return (
+      <div className="muted" style={{ marginTop: 6, fontSize: 13 }}>
+        {others === 0
+          ? "Wird derzeit nirgends eingesetzt – weder bei deinen Kindern noch bei anderen. Löschen ist möglich."
+          : <>Im Einsatz bei <strong>{others}</strong> {childWord} – nicht von dir betreut, darum ohne Namen
+            und ohne Plan-Titel. Löschen ist deshalb gesperrt.</>}
+      </div>
+    );
+  }
+  return (
+    <div className="muted" style={{ marginTop: 6, fontSize: 13 }}>
+      <div>Lehrpläne: {usage.plans.length === 0 ? "—" : usage.plans.map((p) => `${p.planTitle} (${p.childName})`).join(", ")}</div>
+      <div>Klassenarbeiten: {usage.classTests.length === 0 ? "—" : usage.classTests.map((c) => `${c.title} (${c.childName})`).join(", ")}</div>
+      {others > 0 && (
+        <div style={{ marginTop: 2 }}>
+          Außerdem bei <strong>{others}</strong> {childWord} anderer Betreuer im Einsatz.
+        </div>
+      )}
+    </div>
+  );
+}
+
 /** Eine Zeile der Übungsliste mit Verwendungs-Anzeige, Testmodus und Löschen (409-bewusst). */
 function ExerciseManageRow({ exercise, subjectId, route, label, onChanged, onPreview, onEdit }: {
   exercise: ExerciseSummary; subjectId: number;
@@ -235,23 +274,7 @@ function ExerciseManageRow({ exercise, subjectId, route, label, onChanged, onPre
       </div>
       {exercise.description && <div className="muted" style={{ marginTop: 2, fontSize: 13 }}>{exercise.description}</div>}
       {err && <div className="banner err" style={{ marginTop: 6 }}>{err}</div>}
-      {open && usage && (
-        <div className="muted" style={{ marginTop: 6, fontSize: 13 }}>
-          <div>Lehrpläne: {usage.plans.length === 0 ? "—" : usage.plans.map((p) => `${p.planTitle} (${p.childName})`).join(", ")}</div>
-          <div>Klassenarbeiten: {usage.classTests.length === 0 ? "—" : usage.classTests.map((c) => `${c.title} (${c.childName})`).join(", ")}</div>
-          {/*
-            Die Zahl ohne Namen: fremde Kinder gehören einem anderen Betreuer und dürfen hier nicht stehen.
-            Sie muss aber sichtbar sein – sonst las diese Anzeige „nirgends", während das Löschen mit 409
-            scheiterte, und niemand konnte den Widerspruch auflösen (Anmerkung 14).
-          */}
-          {usage.otherCarersCount > 0 && (
-            <div style={{ marginTop: 2 }}>
-              Außerdem <strong>{usage.otherCarersCount}×</strong> bei Kindern, die du nicht betreust – darum
-              lässt sich diese Übung nicht löschen.
-            </div>
-          )}
-        </div>
-      )}
+      {open && usage && <UsagePanel usage={usage} />}
     </div>
   );
 }

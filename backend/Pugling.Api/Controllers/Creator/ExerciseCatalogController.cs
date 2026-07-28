@@ -153,9 +153,10 @@ public class ExerciseCatalogController(PuglingDbContext db) : ControllerBase
     /// zugewiesen ODER über einen gemeinsamen Tag. Hinweis: das alte StudyPlanItem-Modell trägt keine
     /// Übungs-Referenz und wird daher nicht erfasst.
     /// <para>
-    /// Dazu <see cref="UsageResponse.OtherCarersCount"/>: die <b>Zahl</b> der Verwendungen bei fremd
-    /// betreuten Kindern. Ohne sie behauptete diese Antwort „nirgends", während das Löschen mit
-    /// <c>409</c> scheiterte – dieselbe Zählung liefert jetzt beide Stellen (Anmerkung 14).
+    /// Dazu <see cref="UsageResponse.OtherLearnersCount"/>: die <b>Zahl der Kinder</b> fremder Betreuer, die
+    /// die Übung einsetzen. Ohne sie behauptete diese Antwort „nirgends", während das Löschen mit <c>409</c>
+    /// scheiterte – dieselbe Zählung liefert jetzt beide Stellen (Anmerkung 14). Für einen Creator ohne
+    /// eigene Kinder (Lehrer, KI-Creator-App) ist sie die <i>einzige</i> aussagekräftige Angabe hier.
     /// </para>
     /// </summary>
     [HttpGet("{id:int}/usage")]
@@ -183,8 +184,10 @@ public class ExerciseCatalogController(PuglingDbContext db) : ControllerBase
             .ToListAsync();
 
         // Dieselbe Zählung, die auch das Löschen benutzt – eine Quelle, damit die beiden Auskünfte nicht
-        // wieder auseinanderlaufen können.
+        // wieder auseinanderlaufen können. Herausgegeben wird die Zahl der **Kinder**, nicht der Stellen:
+        // das ist die Antwort auf „wird mein Material benutzt", und Stellen wären für einen Creator ohne
+        // eigene Kinder eine Zahl ohne Bedeutung.
         var blocking = await ExerciseUsageQueries.CountBlockingAsync(db, id, fid, ct);
-        return new UsageResponse(plans, classTests, blocking.Hidden);
+        return new UsageResponse(plans, classTests, blocking.HiddenLearners);
     }
 }

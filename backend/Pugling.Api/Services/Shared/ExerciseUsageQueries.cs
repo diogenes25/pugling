@@ -11,7 +11,15 @@ namespace Pugling.Api.Services.Shared;
 /// <param name="HiddenPlans">Lehrplan-Positionen bei Kindern, die er <b>nicht</b> betreut – für ihn unsichtbar.</param>
 /// <param name="OwnClassTests">Direkt zugewiesene Klassenarbeiten eigener Kinder.</param>
 /// <param name="HiddenClassTests">Direkt zugewiesene Klassenarbeiten fremd betreuter Kinder.</param>
-public readonly record struct BlockingUsage(int OwnPlans, int HiddenPlans, int OwnClassTests, int HiddenClassTests)
+/// <param name="HiddenLearners">
+/// Wie viele <b>verschiedene Kinder</b> hinter den verborgenen Verwendungen stehen. Eine eigene Zahl, weil
+/// sie eine andere Frage beantwortet als <see cref="Hidden"/>: die Verwendungs-Zahl sagt „an wie vielen
+/// Stellen müsste jemand aufräumen", diese sagt „von wie vielen Kindern wird mein Material gelernt". Für
+/// einen Creator ohne eigene Kinder ist die zweite die einzige, die ihn interessiert – und drei Positionen
+/// in den Plänen desselben Kindes sind eben nicht drei Nutzer.
+/// </param>
+public readonly record struct BlockingUsage(
+    int OwnPlans, int HiddenPlans, int OwnClassTests, int HiddenClassTests, int HiddenLearners)
 {
     /// <summary>Verwendungen, die der Aufrufer in der Verwendungs-Anzeige findet.</summary>
     public int Own => OwnPlans + OwnClassTests;
@@ -61,9 +69,24 @@ public static class ExerciseUsageQueries
             .CountAsync(x => x.ExerciseId == exerciseId
                 && x.Klassenarbeit!.Child!.SupervisorLinks.Any(l => l.SupervisorId == fid), ct);
 
+        // Wie viele verschiedene KINDER hinter den verborgenen Verwendungen stehen – nicht wie viele
+        // Stellen. Drei Positionen in den Plänen desselben Kindes sind ein Nutzer, nicht drei; und für
+        // einen Creator ohne eigene Kinder ist das die einzige Zahl, die etwas aussagt.
+        var hiddenLearners = await db.PlanPositions.AsNoTracking()
+            .Where(p => p.ExerciseId == exerciseId
+                && !p.StudyPlan!.Child!.SupervisorLinks.Any(l => l.SupervisorId == fid))
+            .Select(p => p.StudyPlan!.ChildId)
+            .Union(db.KlassenarbeitExercises.AsNoTracking()
+                .Where(x => x.ExerciseId == exerciseId
+                    && !x.Klassenarbeit!.Child!.SupervisorLinks.Any(l => l.SupervisorId == fid))
+                .Select(x => x.Klassenarbeit!.ChildId))
+            .Distinct()
+            .CountAsync(ct);
+
         return new BlockingUsage(
             OwnPlans: planMine, HiddenPlans: planTotal - planMine,
-            OwnClassTests: testMine, HiddenClassTests: testTotal - testMine);
+            OwnClassTests: testMine, HiddenClassTests: testTotal - testMine,
+            HiddenLearners: hiddenLearners);
     }
 
     /// <summary>

@@ -812,10 +812,12 @@ export interface PlanUsage { planId: number; planTitle: string; childId: number;
 export interface ClassTestUsage { id: number; title: string; childId: number; childName: string; }
 /**
  * Wo eine Übung verwendet wird. `plans`/`classTests` nennen nur die **eigenen** Kinder;
- * `otherCarersCount` ist die Zahl der Verwendungen bei fremd betreuten Kindern – ohne sie behauptete die
- * Anzeige „nirgends", während das Löschen mit 409 scheiterte (Anmerkung 14).
+ * `otherLearnersCount` ist die Zahl der **Kinder** (nicht Stellen) fremder Betreuer, die sie einsetzen.
+ *
+ * Für einen Creator ohne eigene Kinder – einen Lehrer oder eine KI-Creator-App – sind die beiden Listen
+ * dauerhaft leer, und diese Zahl ist die einzige Antwort auf „wird mein Material benutzt?".
  */
-export interface ExerciseUsage { plans: PlanUsage[]; classTests: ClassTestUsage[]; otherCarersCount: number; }
+export interface ExerciseUsage { plans: PlanUsage[]; classTests: ClassTestUsage[]; otherLearnersCount: number; }
 
 // ---- Testmodus („Ausprobieren"): Vater spielt eine Übung nebenwirkungsfrei durch ----
 

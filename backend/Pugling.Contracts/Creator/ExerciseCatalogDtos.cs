@@ -40,12 +40,19 @@ public record ClassTestUsage(int Id, string Title, int ChildId, string ChildName
 /// </summary>
 /// <param name="Plans">Lehrpläne eigener Kinder, in denen die Übung als Position steckt.</param>
 /// <param name="ClassTests">Klassenarbeiten eigener Kinder (direkt zugewiesen oder über einen Tag).</param>
-/// <param name="OtherCarersCount">
-/// Anzahl der Verwendungen bei Kindern, die der Aufrufer <b>nicht betreut</b> – nur die Zahl, ohne Namen.
-/// Ohne sie melden die Listen „nirgends", während das Löschen mit <c>409 exercise_in_use</c> scheitert, und
-/// der Autor hat keinen Weg, den Widerspruch aufzulösen (Anmerkung 14). Gezählt werden dieselben
-/// FK-relevanten Verwendungen, die das Löschen blockieren – eine nur über einen Tag eingesammelte
-/// Klassenarbeit hindert es nicht und zählt darum nicht mit.
+/// <param name="OtherLearnersCount">
+/// Wie viele <b>verschiedene Kinder</b> die Übung einsetzen, die der Aufrufer <b>nicht betreut</b> – nur die
+/// Zahl, ohne Namen. Zwei Gründe:
+/// <list type="bullet">
+/// <item>Ohne sie melden die Listen „nirgends", während das Löschen mit <c>409 exercise_in_use</c>
+/// scheitert – ein Widerspruch, den der Autor nicht auflösen kann (Anmerkung 14).</item>
+/// <item>Für einen <b>Creator ohne eigene Kinder</b> (ein Lehrer, oder eine KI-Creator-App) sind die beiden
+/// Listen dauerhaft leer. Diese Zahl ist dann nicht die Fußnote, sondern die einzige Antwort auf seine
+/// eigentliche Frage: wird mein Material benutzt?</item>
+/// </list>
+/// Gezählt werden <b>Kinder</b>, nicht Verwendungsstellen: drei Positionen in den Plänen desselben Kindes
+/// sind ein Nutzer. Grundlage sind die FK-relevanten Verwendungen, die auch das Löschen blockieren – eine
+/// nur über einen Tag eingesammelte Klassenarbeit hindert es nicht und zählt darum nicht mit.
 /// </param>
 public record UsageResponse(
-    IReadOnlyList<PlanUsage> Plans, IReadOnlyList<ClassTestUsage> ClassTests, int OtherCarersCount);
+    IReadOnlyList<PlanUsage> Plans, IReadOnlyList<ClassTestUsage> ClassTests, int OtherLearnersCount);
