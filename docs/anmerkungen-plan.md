@@ -405,6 +405,30 @@ Umgesetzt:
   `remark_scope_forbidden` im Kontext, das mit der Beobachtung nichts zu tun hatte. Der Mitschnitt *ist*
   hier das Feature. Jetzt entsteht der Eintrag nur nach einem echten Klick.
 
+## Regeln in Kurzform (aus der Root-CLAUDE.md hierher verlagert)
+
+Diese Zusammenfassung lag bis 2026-07-28 in der [CLAUDE.md im Repo-Root](../CLAUDE.md) und damit in
+*jeder* Sitzung im Kontext. Weil die Anmerkungen ein **Dev-Werkzeug und kein Produktfeature** sind,
+gehört das Detail dorthin, wo es gebraucht wird – in dieses Dokument.
+
+- **Ablauf:** Beobachtung im Widget erfassen (Alt+A) → **Log-Id** → in Claude Code per Skill
+  `anmerkungen` belegt beantworten. Der Wert steckt im automatisch mitgeschnittenen Kontext (Route,
+  Kind/Übung, letzte Fehler), nicht im Text. Der Ringpuffer speichert **nur Metadaten** – der
+  Login-Request trägt die PIN im Body.
+- **Der Vorgang hat einen Verlauf** (`RemarkComment`, `…/remarks/{id}/comments`): `Answer` bleibt die
+  *eine* gepinnte Auflösung, Beiträge tragen alles danach – sonst überschreibt die Umsetzungsnotiz die
+  Analyse (genau so passiert). Herkunft `Human`/`Assistant` ist ein **eigenes Feld**, weil Claude mit dem
+  Token des Menschen schreibt; daran hängt die Wiederaufnahme: ein *menschlicher* Beitrag holt eine
+  erledigte Anmerkung zurück auf `Open`, ein Assistant-Beitrag nie.
+- **Erfassen darf jedes Vater-Konto ohne Sonderrechte** (Wegwerf-Konten sind der Regelfall beim Testen –
+  manche Fehler zeigen sich nur in einer Konstellation, die der geseedete Papa nie hat).
+- **Kontenübergreifend lesen** hängt am Schalter `Remarks:GlobalRead` (Vorgabe `IsDevelopment()`,
+  [RemarkOptions](../backend/Pugling.Api/Services/Shared/RemarkOptions.cs)): `?scope=all` auf Liste und
+  Export, bei einer einzelnen Id genügt die Berechtigung, sonst `403 remark_scope_forbidden`. **Nicht** an
+  `Roles.Admin` gebunden – die Rolle umgeht auch die Übungs-RWX und hätte hier zwei Dinge verkoppelt.
+- **Löschen** bleibt eng (Eigentümer bzw. Admin), ein Student immer ausgeschlossen.
+- Bedienung im Widget und unter `/vater/anmerkungen` (beide nur `import.meta.env.DEV`).
+
 ## Verwandt
 
 - [pm-loop-Skill](../.claude/skills/pm-loop/SKILL.md) – nimmt die aufbereiteten Befunde entgegen
