@@ -36,6 +36,14 @@ Peer `vite@^3…^6`, installiert ist `vite@8` – jede Neuauflösung bricht sons
 Rollen im SPA: `/` Produktseite, `/vater` Web-Admin (inkl. `/vater/wizard` Lehrplan-Assistent,
 `/vater/lehrwerke` Buchreihen + Units, `/vater/fachlehrer` Creator-Profile), `/sohn` Arcade-PWA.
 
+**Zwei Konto-Arten** ([docs/lehrer-konto-plan.md](../docs/lehrer-konto-plan.md)): ein **Vater**-Konto trägt
+die Rollen Creator + Supervisor, ein **Lehrer**-Konto nur Creator. `session.role` (`Supervisor` | `Creator` |
+`Student`) entscheidet, was die Oberfläche zeigt: ein Lehrer sieht nur die Erstellen-Perspektive, keinen
+Umschalter, keinen Profil-Link (der zeigt auf einen Supervisor-Endpunkt). Wer eine neue Seite ergänzt, muss
+sie einer Perspektive zuordnen oder in `NEUTRAL_PREFIXES` eintragen – sonst leitet die Schranke ein
+Lehrer-Konto von ihr weg. Die Rechteprüfung bleibt beim Server; das Frontend zeigt nur keine Türen, die
+verschlossen sind.
+
 **Informationsarchitektur des Vater-Webs** ([docs/vater-perspektiven-plan.md](../docs/vater-perspektiven-plan.md),
 Vorgänger: [docs/vater-informationsarchitektur-plan.md](../docs/vater-informationsarchitektur-plan.md)):
 Das Vater-Web hat **drei Perspektiven** – 👀 Betreuen (`/vater`), 🎯 Zuweisen (`/vater/plaene`),

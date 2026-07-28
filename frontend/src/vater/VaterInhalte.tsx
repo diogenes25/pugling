@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { api } from "../lib/api";
+import { useAuth } from "../lib/auth";
 import { useAsync } from "../lib/useAsync";
 import type { Paged, ExerciseSummary, SubjectResponse } from "../lib/types";
 
@@ -15,6 +16,9 @@ import type { Paged, ExerciseSummary, SubjectResponse } from "../lib/types";
  * Perspektive – sonst schleicht sich das Betreuen in die Autorenarbeit zurück.
  */
 export function VaterInhalte() {
+  // Ein Lehrer-Konto hat keine Zuweisen-Perspektive – ein Link dorthin würde ihn zurückwerfen.
+  const { session } = useAuth();
+  const isTeacher = session?.role === "Creator";
   // Zwei Zahlen genügen als Standortbestimmung („habe ich überhaupt schon etwas?"). Mehr wäre eine
   // Auswertung, und die gehört nicht in eine Werkstatt.
   const subjects = useAsync<SubjectResponse[]>(() => api.subjects(), []);
@@ -30,8 +34,10 @@ export function VaterInhalte() {
         </Link>
       </div>
       <p className="sub">
-        Hier entsteht der Stoff – unabhängig von einem Kind. Zugewiesen wird er später unter{" "}
-        <Link to="/vater/plaene">Zuweisen</Link>.
+        {isTeacher
+          ? "Hier entsteht der Stoff – unabhängig von einem Kind. Zuweisen tun die Eltern in ihren eigenen Lehrplänen; du gibst dein Material nur frei."
+          : <>Hier entsteht der Stoff – unabhängig von einem Kind. Zugewiesen wird er später unter{" "}
+            <Link to="/vater/plaene">Zuweisen</Link>.</>}
       </p>
 
       <section className="card">

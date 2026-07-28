@@ -3,7 +3,9 @@ import { Link, NavLink, Navigate, Route, Routes, useLocation, useNavigate } from
 import { RemarkWidget } from "../components/RemarkWidget";
 import { useAuth } from "../lib/auth";
 import {
-  PERSPECTIVES, perspective, perspectiveOfPath, rememberPerspective, rememberedPerspective,
+  homeFor, isNeutralPath, perspective, perspectiveOfPath, perspectivesFor, rememberPerspective,
+  rememberedPerspective,
+  type Perspective,
 } from "./navigation";
 import { VaterLogin } from "./VaterLogin";
 import { VaterDashboard } from "./VaterDashboard";
@@ -34,9 +36,6 @@ export function VaterApp() {
   const { session, signOut } = useAuth();
   const { pathname } = useLocation();
   const navigate = useNavigate();
-  // Vor dem Login gibt es keine Perspektive – die Hooks müssen aber laufen, bevor wir aussteigen.
-  const active = perspective(perspectiveOfPath(pathname));
-
   /*
    * Nach dem **Anmelden** in die zuletzt bewusst gewählte Perspektive führen: ein Lehrer landet in seiner
    * Werkstatt statt jedes Mal in der Vater-Sicht.
@@ -51,19 +50,45 @@ export function VaterApp() {
    * ein Vater, der einmal „Erstellen" gewählt hat, käme nie wieder auf seine Startseite und könnte sie
    * auch nicht als Lesezeichen halten.
    */
-  const wasSignedIn = useRef(!!session && session.role === "Supervisor");
+  // „Erwachsener" = Supervisor (Vater) oder Creator (Lehrer-Konto). Der Unterschied steckt in `role`.
+  const adultRole = session?.role === "Supervisor" || session?.role === "Creator" ? session.role : null;
+  const wasSignedIn = useRef(adultRole !== null);
   useEffect(() => {
-    const signedIn = !!session && session.role === "Supervisor";
+    const signedIn = adultRole !== null;
     const justSignedIn = signedIn && !wasSignedIn.current;
     wasSignedIn.current = signedIn;
     if (!justSignedIn || pathname !== "/vater") return;
+    // Ein Lehrer hat nur eine Perspektive – er gehört immer in die Werkstatt, unabhängig vom Gemerkten.
+    if (adultRole === "Creator") { navigate(homeFor("Creator"), { replace: true }); return; }
     const remembered = rememberedPerspective();
     if (remembered && remembered !== "betreuen") navigate(perspective(remembered).home, { replace: true });
     // Absichtlich nur an `session` gekoppelt: der Effekt beschreibt den Anmelde-Übergang, nicht jeden Pfadwechsel.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session]);
 
-  if (!session || session.role !== "Supervisor") return <VaterLogin />;
+  if (!session || adultRole === null) return <VaterLogin />;
+
+  /*
+   * Ein Lehrer-Konto hat nur die Erstellen-Perspektive. Ruft es eine Betreuungs-Seite auf – per Lesezeichen
+   * oder weil es `/vater` eintippt –, führt der Weg in die Werkstatt statt in einen Bereich, dessen
+   * Endpunkte ihn ohnehin mit 403 abweisen. Die Rechteprüfung bleibt beim Server; das hier ist nur
+   * Höflichkeit gegenüber dem Nutzer.
+   *
+   * Ausgenommen sind die perspektivlosen Seiten (Konto, Anmerkungen): sie gehören keiner Ebene, und
+   * `perspectiveOfPath` fällt für sie auf „Betreuen" zurück – ohne diese Ausnahme käme ein Lehrer nicht
+   * an sein eigenes Profil.
+   */
+  const allowed = perspectivesFor(adultRole);
+  const pathKey = perspectiveOfPath(pathname);
+  const neutral = isNeutralPath(pathname);
+  if (!neutral && !allowed.some((p) => p.key === pathKey)) {
+    return <Navigate to={homeFor(adultRole)} replace />;
+  }
+  // Auf einer perspektivlosen Seite zeigt die Navigation die Heimat des Kontos – nicht „Betreuen" für einen
+  // Lehrer, der dort nichts zu suchen hat.
+  const active = allowed.some((p) => p.key === pathKey)
+    ? perspective(pathKey)
+    : perspective(adultRole === "Creator" ? "erstellen" : "betreuen");
 
   return (
     <div className="app-vater">
@@ -71,10 +96,19 @@ export function VaterApp() {
         {/* Kopfzeile und Bereichs-Navigation liegen in **eigenen** Zeilen: lagen beide in einem Flex,
             schob jeder Umbruch der Navigation den rechten Block (Profil, Abmelden) mit. */}
         <div className="vater-top-row">
-          <span className="brand">🛠️ Pugling · Vater</span>
+          {/* Die Marke nennt die Rolle: ein Lehrer-Konto ist kein Vater-Bereich, auch wenn die Routen
+              (bewusst) unter /vater liegen – ein Umzug wäre Kosmetik gegen den Preis aller Lesezeichen. */}
+          <span className="brand">{adultRole === "Creator" ? "🎓 Pugling · Lehrer" : "🛠️ Pugling · Vater"}</span>
           <span className="spacer" />
           {/* Die Id ist der Login-Name – sie steht hier, damit sie nicht verloren geht. */}
-          <NavLink to="/vater/profil" className="muted" style={{ fontSize: 14 }}>👤 {session.name} (#{session.id})</NavLink>
+          {/*
+            Der Profil-Link nur für den Vater: `FathersController` ist Supervisor-gegated, ein Lehrer bekäme
+            dort 403. Lieber den Namen ohne Link zeigen als eine Tür, die sich nicht öffnet – die
+            Selbstverwaltung des Lehrer-Kontos ist noch offen (siehe docs/lehrer-konto-plan.md).
+          */}
+          {adultRole === "Supervisor"
+            ? <NavLink to="/vater/profil" className="muted" style={{ fontSize: 14 }}>👤 {session.name} (#{session.id})</NavLink>
+            : <span className="muted" style={{ fontSize: 14 }}>🎓 {session.name} (#{session.id})</span>}
           <button type="button" className="btn ghost inline-btn" onClick={signOut} style={{ width: "auto" }}>Abmelden</button>
         </div>
         {/*
@@ -85,7 +119,7 @@ export function VaterApp() {
           Die aktive Perspektive kommt aus dem **Pfad**, nicht aus einem State: sonst öffnete ein
           Lesezeichen die richtige Seite in der falschen Perspektive.
         */}
-        <PerspectiveSwitch />
+        <PerspectiveSwitch available={allowed} />
         <nav className="vater-nav" aria-label={`Bereiche: ${active.label}`}>
           {active.entries.map((e) => (
             <NavLink key={e.to} to={e.to} end={e.end}>{e.label}</NavLink>
@@ -149,12 +183,14 @@ export function VaterApp() {
  * – der Vergleich läuft über die aus dem Pfad abgeleitete Perspektive, nicht über den Link selbst, denn
  * auf `/vater/kind/3` ist keine der drei Startseiten aktiv und „Betreuen" muss es trotzdem sein.
  */
-function PerspectiveSwitch() {
+function PerspectiveSwitch({ available }: { available: Perspective[] }) {
   const { pathname } = useLocation();
   const activeKey = perspectiveOfPath(pathname);
+  // Ein Schalter mit einer Stellung ist Dekoration – ein Lehrer-Konto hat nur die Werkstatt.
+  if (available.length < 2) return null;
   return (
     <nav className="perspective-switch" aria-label="Perspektive">
-      {PERSPECTIVES.map((p) => {
+      {available.map((p) => {
         const current = p.key === activeKey;
         return (
           <Link key={p.key} to={p.home} title={p.purpose}

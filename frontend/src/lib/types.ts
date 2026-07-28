@@ -2,7 +2,11 @@
 // Enums werden serverseitig als Strings serialisiert (JsonStringEnumConverter).
 
 // Technischer Rollen-Diskriminator aus dem Login (die Ebenen-Rolle); die UI-Vokabel bleibt Vater/Sohn.
-export type Role = "Supervisor" | "Student";
+/**
+ * Die primäre Ebene fürs Routing (aus `LoginResponse.role`). `Creator` ist das **Lehrer-Konto**: ein
+ * Erwachsener, der Inhalte erstellt und kein Kind betreut – sein Token trägt keinen Supervisor-Claim.
+ */
+export type Role = "Supervisor" | "Creator" | "Student";
 
 export type PartOfSpeech =
   | "Noun" | "Verb" | "Adjective" | "Adverb" | "Pronoun" | "Preposition"
@@ -905,6 +909,14 @@ export interface ExerciseSummary {
    * hält, kann sie noch einem Kind zuweisen. Laufende Lehrpläne bleiben davon unberührt.
    */
   executePublic: boolean;
+}
+
+/**
+ * Ein **Lehrer-Konto**: ein Erwachsener, der Inhalte erstellt und kein Kind betreut. `roles` enthält darum
+ * nur `"Creator"` – genau das unterscheidet es von einem Vater-Konto. `creatorId` ist der Login-Name.
+ */
+export interface TeacherAccount {
+  creatorId: number; accountId: number; name: string; email: string | null; roles: string[];
 }
 
 /** Der Freigabe-Stand einer Übung nach dem Umschalten (Antwort von `setExerciseSharing`). */

@@ -5,7 +5,12 @@ namespace Pugling.Contracts.Auth;
 
 /// <summary>Antwort aller Login-Endpunkte: JWT samt primärer Ebene fürs UI-Routing.</summary>
 /// <param name="Token">Das ausgestellte JWT (Bearer).</param>
-/// <param name="Role">Primäre Ebene fürs UI-Routing (<c>Supervisor</c> bzw. <c>Student</c>).</param>
+/// <param name="Role">
+/// Primäre Ebene fürs UI-Routing: <c>Supervisor</c>, <c>Creator</c> oder <c>Student</c>. Rangfolge in dieser
+/// Reihenfolge – ein Vater trägt Creator <i>und</i> Supervisor und gehört in die Betreuungs-Sicht, ein
+/// <b>Lehrer</b> hat nur Creator und gehört in die Werkstatt. Das Token selbst trägt <i>alle</i> Rollen des
+/// Kontos; dieses Feld sagt nur, wo die Oberfläche starten soll.
+/// </param>
 /// <param name="Id">Fachliche Id des eingeloggten Profils (Father- bzw. Child-Id, beim Konto-Login die Konto-Id).</param>
 /// <param name="Name">Anzeigename.</param>
 /// <param name="ExpiresAt">Ablaufzeitpunkt des Tokens (UTC).</param>

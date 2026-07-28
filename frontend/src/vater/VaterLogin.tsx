@@ -3,7 +3,9 @@ import { api, ApiError, errorMessage } from "../lib/api";
 import { useAuth } from "../lib/auth";
 
 /**
- * Der Einstieg für den Vater – bewusst mit **zwei** Modi.
+ * Der Einstieg für Erwachsene – bewusst mit **zwei** Modi, und die Registrierung mit **zwei Konto-Arten**:
+ * Vater (betreut und erstellt) oder Lehrer (erstellt nur). Der Unterschied sind die Rollen des Kontos, und
+ * die entstehen beim Anlegen – darum ist es eine Wahl hier und keine Einstellung später.
  *
  * Anmelden geht über die fachliche Vater-Id (so schneidet der Server den Login), Registrieren über den
  * einen anonymen Schreibpfad der API. Beides gehört auf denselben Schirm: ohne Registrierung könnte ein
@@ -36,7 +38,7 @@ export function VaterLogin() {
 
         {registeredId !== null && (
           <div className="banner ok" role="status" aria-live="polite">
-            Konto angelegt. Deine <strong>Vater-Id ist {registeredId}</strong> – die brauchst du bei jeder
+            Konto angelegt. Deine <strong>Id ist {registeredId}</strong> – die brauchst du bei jeder
             Anmeldung. Notiere sie.
           </div>
         )}
@@ -96,6 +98,12 @@ function LoginForm() {
  */
 function RegisterForm({ onRegistered }: { onRegistered: (id: number) => void }) {
   const { signIn } = useAuth();
+  /*
+   * Zwei Arten Konto, und der Unterschied ist keine Einstellung, die man später umstellt: er steckt in den
+   * **Rollen**, und die entstehen beim Anlegen. Ein Vater-Konto trägt Creator + Supervisor, ein Lehrer-Konto
+   * nur Creator – ihm fehlt damit der Betreuungsauftrag und alles, was daran hängt.
+   */
+  const [kind, setKind] = useState<"father" | "teacher">("father");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [pin, setPin] = useState("");
@@ -111,12 +119,16 @@ function RegisterForm({ onRegistered }: { onRegistered: (id: number) => void }) 
     if (pin !== pin2) { setError("Die beiden PINs stimmen nicht überein."); return; }
     setBusy(true);
     try {
-      const created = await api.registerFather({ name: name.trim(), email: email.trim() || null, pin });
-      onRegistered(created.id);
-      localStorage.setItem(LAST_ID_KEY, String(created.id));
+      const dto = { name: name.trim(), email: email.trim() || null, pin };
+      // Beide Wege liefern eine fachliche Id, die zugleich der Login-Name ist.
+      const id = kind === "teacher"
+        ? (await api.registerTeacher(dto)).creatorId
+        : (await api.registerFather(dto)).id;
+      onRegistered(id);
+      localStorage.setItem(LAST_ID_KEY, String(id));
       // Direkt anmelden: die Registrierung liefert kein Token, und ein Zwischenschritt „jetzt einloggen"
       // wäre genau die Stelle, an der die frisch vergebene Id verloren geht.
-      signIn(await api.loginFather(created.id, pin));
+      signIn(await api.loginFather(id, pin));
     } catch (err) {
       setError(errorMessage(err));
     } finally {
@@ -126,8 +138,19 @@ function RegisterForm({ onRegistered }: { onRegistered: (id: number) => void }) 
 
   return (
     <form style={{ display: "flex", flexDirection: "column", gap: 14 }} onSubmit={submit}>
+      <div className="row" style={{ gap: 8 }} role="radiogroup" aria-label="Art des Kontos">
+        {([["father", "👤 Vater"], ["teacher", "🎓 Lehrer"]] as const).map(([value, label]) => (
+          <button
+            key={value} type="button" className={`pill toggle-pill ${kind === value ? "lime" : ""}`}
+            role="radio" aria-checked={kind === value} onClick={() => setKind(value)}
+          >{label}</button>
+        ))}
+      </div>
       <p className="sub" style={{ margin: 0 }}>
-        Lege dein Vater-Konto an. Du steuerst damit die Lernpläne deiner Kinder und erstellst Übungen.
+        {kind === "father"
+          ? "Lege dein Vater-Konto an. Du steuerst damit die Lernpläne deiner Kinder und erstellst Übungen."
+          : "Lege dein Lehrer-Konto an: du erstellst Übungen und Material für andere. Kinder betreuen und "
+            + "Lehrpläne zuweisen tun die Eltern – dafür brauchst du kein Konto."}
       </p>
       <div className="field">
         <label htmlFor="reg-name">Name</label>

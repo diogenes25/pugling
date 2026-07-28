@@ -6,7 +6,7 @@ import type {
   ExerciseGrant, GrantPermission,
   CreateFatherDto, FatherResponse, UpdateFatherDto,
   ExerciseDetail, ExercisePreviewAnswer, ExercisePreviewData, ExercisePreviewResult, ExerciseTypeManifest,
-  ExerciseSearchParams, ExerciseSharing, ExerciseSummary, ExerciseUsage, KlassenarbeitDetail, KlassenarbeitPractice, KlassenarbeitRepeat,
+  ExerciseSearchParams, ExerciseSharing, ExerciseSummary, TeacherAccount, ExerciseUsage, KlassenarbeitDetail, KlassenarbeitPractice, KlassenarbeitRepeat,
   KlassenarbeitResponse, KlassenarbeitStatus, LoginResponse, MissionDef, MissionStatus, PlanResponse,
   ChildrenDashboard, CreatePositionDto, PositionResponse, PositionReport, UpdatePositionDto, OverviewResponse, PositionSession, PracticeCard,
   ProgressResponse, ReviewInput, ReviewOutcome,
@@ -227,6 +227,12 @@ export const api = {
   // nur per Seed entstehen. Der Server legt dabei zugleich das Login-Konto (Creator+Supervisor) an.
   registerFather: (dto: CreateFatherDto) =>
     http<FatherResponse>(`${V1}/supervisor/fathers`, "POST", dto),
+  /**
+   * Registriert ein **Lehrer-Konto**: nur die Creator-Rolle, kein Betreuungsauftrag. Eigener Pfad, weil
+   * sich nicht der Datensatz unterscheidet, sondern die Rollen des Kontos – und die entstehen beim Anlegen.
+   */
+  registerTeacher: (dto: { name: string; email: string | null; pin: string }) =>
+    http<TeacherAccount>(`${V1}/creator/teacher-accounts`, "POST", dto),
   father: (fatherId: number) => http<FatherResponse>(`${V1}/supervisor/fathers/${fatherId}`),
   updateFather: (fatherId: number, dto: UpdateFatherDto) =>
     http<FatherResponse>(`${V1}/supervisor/fathers/${fatherId}`, "PATCH", dto),

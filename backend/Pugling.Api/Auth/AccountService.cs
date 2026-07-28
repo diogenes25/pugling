@@ -13,15 +13,35 @@ namespace Pugling.Api.Auth;
 public class AccountService(PuglingDbContext db)
 {
     /// <summary>Konto (inkl. Profile) für den Vater – Rollen Creator + Supervisor. Legt es idempotent an.</summary>
-    public async Task<Account> EnsureForFatherAsync(Father father, CancellationToken ct = default)
+    public Task<Account> EnsureForFatherAsync(Father father, CancellationToken ct = default) =>
+        EnsureAsync(father, supervises: true, ct);
+
+    /// <summary>
+    /// Konto für einen <b>Lehrer</b>: Rolle <see cref="ProfileRole.Creator"/> – und <b>keine</b>
+    /// Supervisor-Rolle. Damit trägt sein Token keinen Supervisor-Claim, und alle Betreuungs-Endpunkte
+    /// (<c>[Authorize(Roles = Roles.Supervisor)]</c>) weisen ihn ab, ohne dass irgendwo eine Sonderregel nötig wäre.
+    /// <para>
+    /// Fachlich hängt er weiter an einer <see cref="Father"/>-Zeile – daran hängen Autorschaft
+    /// (<c>Exercise.AuthorFatherId</c>) und die RWX-Rechte (<c>ExerciseGrant.CreatorId</c>). Ein Lehrer ist
+    /// also kein neuer Entitätstyp, sondern <b>ein Erwachsener ohne Betreuungsauftrag</b>. Die Rollen sind
+    /// vom Login entkoppelt (siehe docs/grundprinzip.md); genau diese Entkopplung wird hier zum ersten Mal
+    /// ausgenutzt, statt sie mit einer parallelen Identität zu umgehen.
+    /// </para>
+    /// </summary>
+    public Task<Account> EnsureForTeacherAsync(Father teacher, CancellationToken ct = default) =>
+        EnsureAsync(teacher, supervises: false, ct);
+
+    private async Task<Account> EnsureAsync(Father father, bool supervises, CancellationToken ct)
     {
         var account = await db.Accounts.Include(a => a.Profiles)
             .FirstOrDefaultAsync(a => a.Profiles.Any(p => p.FatherId == father.Id), ct);
+        // Idempotent und **nicht** nachrüstend: ein bestehendes Konto behält seine Rollen. Sonst hätte ein
+        // zweiter Registrierungs-Aufruf einem Lehrer stillschweigend den Betreuungsauftrag verliehen.
         if (account is not null) return account;
 
         account = new Account { DisplayName = father.Name, Email = father.Email, PinHash = father.Pin, CreatedAt = father.CreatedAt };
         account.Profiles.Add(new AccountProfile { Role = ProfileRole.Creator, FatherId = father.Id });
-        account.Profiles.Add(new AccountProfile { Role = ProfileRole.Supervisor, FatherId = father.Id });
+        if (supervises) account.Profiles.Add(new AccountProfile { Role = ProfileRole.Supervisor, FatherId = father.Id });
         db.Accounts.Add(account);
         await db.SaveChangesAsync(ct);
         return account;

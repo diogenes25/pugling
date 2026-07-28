@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using Pugling.Api.Auth;
 using Pugling.Api.Data;
 using Pugling.Api.Errors;
+using Pugling.Api.Models;
 
 namespace Pugling.Api.Controllers;
 
@@ -18,7 +19,32 @@ namespace Pugling.Api.Controllers;
 public class AuthController(PuglingDbContext db, TokenService tokens, AccountService accounts,
     Services.Shared.PositionProgressService progress, Services.Shared.ObjectiveRewardService objectiveRewards) : ControllerBase
 {
-    /// <summary>Vater-Login per Id + PIN. Löst das Konto auf und stellt ein Mehrrollen-Token aus.</summary>
+    /// <summary>
+    /// Die <b>primäre Ebene</b> fürs UI-Routing – wohin der Nutzer nach dem Anmelden gehört.
+    ///
+    /// Rangfolge Supervisor → Creator → Student, weil sie von „darf am meisten steuern" nach „lernt selbst"
+    /// verläuft: ein Vater trägt Creator <i>und</i> Supervisor und will in seine Betreuungs-Sicht, ein
+    /// <b>Lehrer</b> hat nur Creator und gehört in die Werkstatt. Vorher stand hier
+    /// <c>Any(p =&gt; p.Role != Student) ? Supervisor : Student</c> – das klappte Creator auf Supervisor
+    /// zusammen und hätte einem Lehrer die Vater-Oberfläche vorgesetzt.
+    /// </summary>
+    private static string PrimaryRoleOf(IEnumerable<AccountProfile> profiles)
+    {
+        var roles = profiles.Select(p => p.Role).ToList();
+        if (roles.Contains(ProfileRole.Supervisor)) return Roles.Supervisor;
+        if (roles.Contains(ProfileRole.Creator)) return Roles.Creator;
+        return Roles.Student;
+    }
+
+    /// <summary>
+    /// Login per fachlicher Id + PIN. Löst das Konto auf und stellt ein Mehrrollen-Token aus.
+    /// <para>
+    /// Trägt weiterhin den Namen <c>father</c>, weil sich nichts am Ablauf ändert – gilt aber genauso für ein
+    /// <b>Lehrer-Konto</b>: dessen Id ist ebenfalls eine <see cref="Father"/>-Id, und die Antwort nennt dann
+    /// <c>Creator</c> statt <c>Supervisor</c>. Ein bestehendes Konto bekommt dabei keine Rolle nachgereicht
+    /// (siehe <see cref="AccountService"/>), ein Lehrer wird durch das Anmelden also nicht zum Betreuer.
+    /// </para>
+    /// </summary>
     [HttpPost("father")]
     [AllowAnonymous]
     [EnableRateLimiting("login")]
@@ -31,7 +57,7 @@ public class AuthController(PuglingDbContext db, TokenService tokens, AccountSer
 
         var account = await accounts.EnsureForFatherAsync(father);
         var (token, expires) = tokens.IssueForAccount(account, account.Profiles, isAdmin: father.IsAdmin);
-        return new LoginResponse(token, Roles.Supervisor, father.Id, father.Name, expires);
+        return new LoginResponse(token, PrimaryRoleOf(account.Profiles), father.Id, father.Name, expires);
     }
 
     /// <summary>Sohn-Login per Id + PIN. Löst das Konto auf und stellt ein Rollen-Token aus.</summary>
@@ -75,8 +101,7 @@ public class AuthController(PuglingDbContext db, TokenService tokens, AccountSer
         var fatherIds = account.Profiles.Where(p => p.FatherId is not null).Select(p => p.FatherId!.Value).ToList();
         var isAdmin = fatherIds.Count > 0 && await db.Fathers.AnyAsync(f => fatherIds.Contains(f.Id) && f.IsAdmin);
         var (token, expires) = tokens.IssueForAccount(account, account.Profiles, isAdmin);
-        var primaryRole = account.Profiles.Any(p => p.Role != ProfileRole.Student) ? Roles.Supervisor : Roles.Student;
-        return new LoginResponse(token, primaryRole, account.Id, account.DisplayName, expires);
+        return new LoginResponse(token, PrimaryRoleOf(account.Profiles), account.Id, account.DisplayName, expires);
     }
 
     /// <summary>Gibt die aktuelle Identität aus dem Token zurück (Konto, alle Rollen, fid/cid).</summary>
@@ -86,8 +111,12 @@ public class AuthController(PuglingDbContext db, TokenService tokens, AccountSer
     public ActionResult<object> Me() => new
     {
         AccountId = int.TryParse(User.FindFirstValue("aid"), out var aid) ? aid : (int?)null,
-        // Primäre Ebene fürs UI-Routing: Student → Student, jeder Erwachsene (auch reiner Creator) → Supervisor.
-        Role = User.IsStudent() ? Roles.Student : User.IsSupervisor() || User.IsCreator() ? Roles.Supervisor : "?",
+        // Primäre Ebene fürs UI-Routing – dieselbe Rangfolge wie beim Login (Supervisor → Creator → Student).
+        // Vorher stand hier „jeder Erwachsene (auch reiner Creator) → Supervisor": ein Lehrer, der die Seite
+        // neu lädt, hätte damit trotz Creator-Token die Vater-Oberfläche bekommen.
+        Role = User.IsSupervisor() ? Roles.Supervisor
+            : User.IsCreator() ? Roles.Creator
+            : User.IsStudent() ? Roles.Student : "?",
         Roles = User.FindAll(System.Security.Claims.ClaimTypes.Role).Select(c => c.Value).ToArray(),
         FatherId = User.FatherId(),
         ChildId = User.ChildId(),

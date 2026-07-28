@@ -135,6 +135,38 @@ export function perspectiveOfPath(pathname: string): PerspectiveKey {
 export const perspective = (key: PerspectiveKey): Perspective =>
   PERSPECTIVES.find((p) => p.key === key)!;
 
+/**
+ * Seiten, die zu **keiner** Perspektive gehören: das eigene Konto und das Entwicklungswerkzeug. Sie sind
+ * für jedes Konto erreichbar und dürfen von der Perspektiven-Schranke nicht weggeleitet werden – ein Lehrer
+ * käme sonst nicht an sein Profil, weil `perspectiveOfPath` für Unbekanntes auf „Betreuen" zurückfällt.
+ */
+const NEUTRAL_PREFIXES = ["/vater/profil", "/vater/anmerkungen"];
+
+/** Gehört der Pfad zu keiner Perspektive (Konto, Entwicklungswerkzeug)? */
+export const isNeutralPath = (pathname: string): boolean =>
+  NEUTRAL_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`));
+
+/**
+ * Welche Perspektiven ein Konto überhaupt hat.
+ *
+ * Ein **Lehrer-Konto** (`Creator`) betreut kein Kind – Betreuen und Zuweisen wären für ihn leere Räume, und
+ * die dahinterliegenden Endpunkte weisen ihn ohnehin ab. Er sieht darum nur die Werkstatt; bei einer
+ * einzigen Perspektive entfällt der Umschalter ganz, denn ein Schalter mit einer Stellung ist Dekoration.
+ *
+ * Das ist **keine** Rechteprüfung: die sitzt im Server. Hier geht es darum, niemandem Türen zu zeigen, die
+ * für ihn verschlossen sind.
+ */
+export function perspectivesFor(role: "Supervisor" | "Creator"): Perspective[] {
+  return role === "Creator" ? PERSPECTIVES.filter((p) => p.key === "erstellen") : PERSPECTIVES;
+}
+
+/**
+ * Die Startseite eines Kontos: der Vater beginnt beim Betreuen, der Lehrer in seiner Werkstatt.
+ * Gebraucht an zwei Stellen – nach dem Anmelden und wenn ein Lehrer `/vater` direkt aufruft.
+ */
+export const homeFor = (role: "Supervisor" | "Creator"): string =>
+  perspective(role === "Creator" ? "erstellen" : "betreuen").home;
+
 const STORAGE_KEY = "pugling.vater.perspective";
 
 /**
