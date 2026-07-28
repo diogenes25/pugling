@@ -62,7 +62,8 @@ Details: [backend/Pugling.Agent.Creator/README.md](backend/Pugling.Agent.Creator
   ohne Betreuungsauftrag. „Vater" bleibt richtig, wo ein Vater gemeint ist – etwa in
   `SupervisorRelation.Father` als Verwandtschaftsangabe und in der Oberfläche. Der Token-Claim heißt
   weiter `fid` (er steckt in ausgestellten Tokens), der Zugriff `User.AdultId()`. Der **Vertrag** ist
-  unverändert: `FatherResponse`, `supervisor/fathers` und `auth/father` heißen weiter so.
+  unverändert: `FatherResponse`, `supervisor/fathers` und `auth/father` heißen weiter so – das Nachziehen
+  liegt als Übergabe in [docs/father-zu-adult-etappe2-plan.md](docs/father-zu-adult-etappe2-plan.md).
 - **Identität/Auth** ([Auth/](backend/Pugling.Api/Auth/)): Ein `Account` (Login/PIN-Hash) trägt über
   `AccountProfile` **mehrere Rollen** (`ProfileRole` Creator/Supervisor/Student → `Adult`/`Child`-Profil);
   ein Vater ist zugleich Creator+Supervisor. PIN-Login (`auth/{father|child}` oder konto-zentrisch `auth/login`)
