@@ -60,6 +60,19 @@ fi
   printf '%s\n' "$out" | grep -iE "error [A-Z]+[0-9]+" | head -10
   printf '%s\n' "$out" | grep -iE "^(Failed!|Fehlgeschlagen!)" | head -3
 
+  # **Der Abdeckungs-Wächter braucht eine Extrawurst.** Er urteilt im Aufräumen eines Assembly-Fixtures
+  # (nur dort steht fest, dass alle Tests durch sind). Eine Ausnahme von dort lässt den Lauf scheitern
+  # (Exit 1, und die .trx trägt die Meldung), aber der Konsolen-Zusammenzug meldet trotzdem "Passed!" und
+  # zeigt bloß `Xunit.Sdk.TestPipelineException` – ohne Grund. Selbst Console.WriteLine aus dem Fixture
+  # kommt nicht durch. Ohne die folgenden Zeilen wäre das ein rotes Tor ohne Befund.
+  if printf '%s\n' "$out" | grep -q "Cleanup Failure"; then
+    echo "— Assembly-Fixture (Abdeckungs-Wächter) hat abgebrochen; die Konsole verschluckt die Meldung."
+    if [ -f "$root/TestResults/endpoint-coverage.txt" ]; then
+      echo "— Nicht abgedeckte Actions (TestResults/endpoint-coverage.txt):"
+      head -25 "$root/TestResults/endpoint-coverage.txt"
+    fi
+  fi
+
   echo "→ Ursache beheben, nicht das Tor umgehen. Beabsichtigt roter Zwischenstand: PUGLING_SKIP_TEST_GATE=1."
 } >&2
 exit 2

@@ -26,6 +26,9 @@ public sealed class PuglingWebAppFactory : WebApplicationFactory<Program>
         // Der In-Process-TestServer teilt sich eine IP-Partition; ohne Abschalten würden die vielen
         // Test-Logins am Login-Rate-Limit (429) scheitern. Ein eigener Test aktiviert es gezielt.
         builder.UseSetting("RateLimiting:LoginEnabled", "false");
+        // Zählt prozessweit mit, welche Actions erfolgreich bedient wurden – Datenquelle des
+        // Abdeckungs-Wächters (EndpointCoverageGuard). Rein beobachtend, ändert kein Verhalten.
+        builder.ConfigureServices(s => s.AddSingleton<IStartupFilter, EndpointCoverageStartupFilter>());
     }
 
     /// <summary>

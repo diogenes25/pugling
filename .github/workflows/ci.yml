@@ -60,11 +60,39 @@ jobs:
 
       # `--no-build`: die Solution ist im Schritt davor schon in Release gebaut. Warm liegt die ganze
       # Suite bei ~63 s – es gibt damit kein Laufzeit-Argument gegen dieses Tor.
+      #
+      # `--collect` (C5): die Zweigabdeckung ist der aussagekräftige Wert (die 97,9 % Zeilen sind ein
+      # Artefakt der async-State-Machines). Sie wird **berichtet, nicht erzwungen** – eine Quote als
+      # Selbstzweck ist die typische Coverage-Falle. Erzwungen wird stattdessen die
+      # **Endpunkt**-Vollständigkeit, und zwar im Testlauf selbst (EndpointCoverageGuard).
       - name: Test
         run: >
           dotnet test Pugling.sln -c Release --no-build
           --logger "trx;LogFileName=test-results.trx"
+          --collect:"XPlat Code Coverage"
           --results-directory TestResults
+
+      # **Der Abdeckungs-Wächter urteilt im Aufräumen eines Assembly-Fixtures.** Der Konsolen-Zusammenzug
+      # von `dotnet test` meldet dann trotzdem "Passed!" und zeigt bloß `Xunit.Sdk.TestPipelineException`
+      # (der Exit-Code ist korrekt 1, und die .trx trägt die Meldung). Ohne diesen Schritt wäre ein rotes
+      # CI ohne Befund; die Datei nennt die nicht abgedeckten Actions.
+      - name: Endpunkt-Abdeckung ausgeben
+        if: ${{ failure() }}
+        run: cat TestResults/endpoint-coverage.txt || echo "(kein Abdeckungs-Bericht – der Lauf scheiterte vorher)"
+
+      - name: Zweigabdeckung ausgeben
+        if: ${{ !cancelled() }}
+        shell: bash
+        run: |
+          # Die Zahl aus der Cobertura-Ausgabe ins Job-Summary, ohne Schwelle. Erst wenn sie über mehrere
+          # Läufe stabil ist, lohnt eine Untergrenze (siehe docs/codequalitaet-gates-plan.md, C5).
+          report=$(find TestResults -name 'coverage.cobertura.xml' | head -1)
+          [ -z "$report" ] && { echo "Kein Cobertura-Bericht gefunden."; exit 0; }
+          rate=$(grep -o 'branch-rate="[0-9.]*"' "$report" | head -1 | grep -o '[0-9.]*')
+          lines=$(grep -o 'line-rate="[0-9.]*"' "$report" | head -1 | grep -o '[0-9.]*')
+          echo "### Abdeckung" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Zweige: ${rate} (die aussagekräftige Zahl)" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Zeilen: ${lines} (irreführend hoch – async-State-Machines)" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Testergebnisse hochladen
         if: ${{ !cancelled() }}
@@ -73,6 +101,8 @@ jobs:
           name: test-results
           path: |
             TestResults/**/*.trx
+            TestResults/**/coverage.cobertura.xml
+            TestResults/endpoint-coverage.txt
           if-no-files-found: warn
           retention-days: 14
 
