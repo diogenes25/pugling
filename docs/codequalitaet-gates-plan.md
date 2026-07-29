@@ -87,10 +87,19 @@ der Empfehlung, die hier vorher stand; beide waren erzwungen, nicht Geschmack:
 **25 von 25 grün in 1,5 min** (2026-07-29). `CI=1` ist der Punkt – damit greift `reuseExistingServer: false`
 auch für Vite, es lief also genau der Pfad, den der Runner nimmt: beide Server frisch, Wegwerf-DB, kein
 Rückgriff auf einen stehenden Entwicklungs-Server. Der Vorbau-Schritt ist mitgeprüft (`dotnet build
-backend/Pugling.Api` in Debug, 2,5 s warm). **Der nächste geplante Schritt ist D3.**
-Parallel dazu offen: die **Nacharbeit aus B** (CS1591 in `Pugling.Api`,
-die 188 `CancellationToken`-Altlasten, das Frontend gegen `unknown_field`) und der **Peer-Konflikt**
-`vite-plugin-pwa` ↔ `vite@8`, den D1 nur benannt, nicht behoben hat; die Punkte sind voneinander unabhängig.
+backend/Pugling.Api` in Debug, 2,5 s warm).
+
+**D3 und D4 sind seither ebenfalls erledigt** (2026-07-29, siehe „Einstieg für eine frische Sitzung" oben) –
+**A bis D4 sind damit vollständig**, CI ist grün (alle drei Jobs: Backend inkl. D4-Diff-Check, Frontend,
+Markdown-Lint). Offen bleiben, unabhängig voneinander:
+
+- **Nacharbeit aus B** (CS1591 in `Pugling.Api`, die 188 `CancellationToken`-Altlasten, das Frontend gegen
+  `unknown_field` durchspielen) – Details unten unter „Nacharbeit aus B".
+- **Der Peer-Konflikt** `vite-plugin-pwa` ↔ `vite@8`, den D1 nur benannt, nicht behoben hat.
+- **E2E hat immer noch keinen echten CI-Lauf** (Stand 2026-07-29) – der erste kommt über einen PR oder die
+  nächste Nightly (03:00 UTC); erst dann ist D2 nicht nur lokal, sondern auch in CI belegt.
+- **Azure-Secret** (`AZURE_WEBAPP_PUBLISH_PROFILE`) fehlt weiterhin – laut Rückmeldung bewusst, noch nicht
+  konfiguriert, keine Aufgabe für eine Code-Sitzung.
 
 **Wo die Wächter ihre Befunde ablegen** – das muss man wissen, bevor man ein rotes Tor deutet:
 `ConventionGuardTests` und `PatchSemanticsTests` melden wie gewohnt als Test. Der Endpunkt-Abdeckungs-Wächter
