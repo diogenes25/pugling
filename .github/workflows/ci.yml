@@ -81,6 +81,18 @@ jobs:
           --collect:"XPlat Code Coverage"
           --results-directory TestResults
 
+      # D4: `DocsCaptureTests` überschreibt `docs/api-examples/` bei *jedem* Lauf (Wanduhr in der
+      # WebAppFactory neutralisiert, `TZ: UTC` oben) – die Behauptung "byte-stabil" war bis hierhin
+      # nur eine Annahme, die niemand einfing. Ein Diff hier heißt: der Runner erzeugt einen anderen
+      # Stand als zuletzt committet wurde (Zeitzone, Locale, Zeilenenden, Testreihenfolge).
+      - name: Docs-Byte-Stabilität prüfen (D4)
+        if: ${{ !cancelled() }}
+        run: |
+          if ! git diff --exit-code -- docs/api-examples; then
+            echo "::error::docs/api-examples weicht nach DocsCaptureTests vom committeten Stand ab – neu erzeugen und committen (siehe docs/codequalitaet-gates-plan.md, D4)."
+            exit 1
+          fi
+
       # **Der Abdeckungs-Wächter urteilt im Aufräumen eines Assembly-Fixtures.** Der Konsolen-Zusammenzug
       # von `dotnet test` meldet dann trotzdem "Passed!" und zeigt bloß `Xunit.Sdk.TestPipelineException`
       # (der Exit-Code ist korrekt 1, und die .trx trägt die Meldung). Ohne diesen Schritt wäre ein rotes
