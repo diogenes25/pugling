@@ -93,8 +93,9 @@ backend/Pugling.Api` in Debug, 2,5 s warm).
 **A bis D4 sind damit vollständig**, CI ist grün (alle drei Jobs: Backend inkl. D4-Diff-Check, Frontend,
 Markdown-Lint). Offen bleiben, unabhängig voneinander:
 
-- **Nacharbeit aus B** (CS1591 in `Pugling.Api`, die 188 `CancellationToken`-Altlasten, das Frontend gegen
-  `unknown_field` durchspielen) – Details unten unter „Nacharbeit aus B".
+- **Nacharbeit aus B**: CS1591 ist seither erledigt (2026-07-29, 123 statt der geschätzten 117 Lücken,
+  siehe „Nacharbeit aus B" unten). Offen bleiben die 188 `CancellationToken`-Altlasten und das Frontend
+  gegen `unknown_field` durchspielen.
 - **Der Peer-Konflikt** `vite-plugin-pwa` ↔ `vite@8`, den D1 nur benannt, nicht behoben hat.
 - **E2E hat immer noch keinen echten CI-Lauf** (Stand 2026-07-29) – der erste kommt über einen PR oder die
   nächste Nightly (03:00 UTC); erst dann ist D2 nicht nur lokal, sondern auch in CI belegt.
@@ -401,9 +402,16 @@ steht im Code neben der Einstellung:
 
 #### Nacharbeit aus B
 
-- **CS1591 in `Pugling.Api` scharf stellen**: ~117 echte Lücken in `Controllers/`, `Auth/`, `Errors/`,
-  `Services/`, `Exercises/` nachziehen, dann per `.editorconfig` pfadweise scharf stellen und
-  `Models/`+`Data/` (EF-Entities, 428 Stellen) ausnehmen. Erst dann kann die `NoWarn`-Zeile im csproj weg.
+- **CS1591 in `Pugling.Api` scharf gestellt (2026-07-29).** Neu gemessen statt der alten ~117-Schätzung
+  zu vertrauen: **123** echte Lücken (nicht 117) in `Controllers/`, `Auth/`, `Errors/`, `Services/`,
+  `Exercises/` und den Nicht-EF-Helfern unter `Data/` (`Seed.cs`, die drei `*Backfill.cs`,
+  `PuglingDbContextFactory.cs`). Die Doku-Arbeit lief parallel über drei Subagenten in Worktree-Isolation
+  (Exercises-Modul 67 Member, Services/Controllers 33, Auth/Errors/Data-Helfer 23); die Ergebnisse wurden
+  anschließend in einem Build/Test-Durchlauf zusammengeführt und verifiziert. Ausgenommen bleiben `Models/`
+  (718 Stellen) und `PuglingDbContext.cs` (128 `DbSet<T>`-Properties) – beide sind nur wegen EF `public`,
+  dafür jetzt **namentlich** in der `.editorconfig` begründet statt pauschal im csproj unterdrückt. Die
+  `NoWarn`-Zeile im csproj ist weg. Endstand: `dotnet build Pugling.sln` 0 Warnungen, 587/587 Tests,
+  `dotnet format --verify-no-changes` sauber.
 - **Die Actions ohne `CancellationToken`** abarbeiten und die Baseline in `ConventionGuardTests`
   mitsenken. Der Test nennt bei jedem Lauf die vollständige Liste. Stand: **188** (Etappe C hat
   `AdultsController.Delete` mitgezogen – und die Ratsche hat prompt die Absenkung verlangt, genau wie

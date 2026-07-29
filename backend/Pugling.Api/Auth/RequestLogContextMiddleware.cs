@@ -10,6 +10,7 @@ namespace Pugling.Api.Auth;
 /// </summary>
 public sealed class RequestLogContextMiddleware(RequestDelegate next)
 {
+    /// <summary>Reichert den Log-Kontext des Requests an und ruft dann die nächste Middleware auf.</summary>
     public async Task InvokeAsync(HttpContext context)
     {
         // Dieselbe TraceId, die AddProblemDetails in die Fehlerantwort schreibt.

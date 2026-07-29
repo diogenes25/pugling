@@ -28,6 +28,7 @@ internal static class ExerciseRoutes
 public class VocabularyController(PuglingDbContext db, ExerciseTypeRegistry registry, ExerciseItemService items, VocabularyStoreService store)
     : ExerciseControllerBase<VocabularyConfig>(db, registry)
 {
+    /// <inheritdoc/>
     protected override string TypeKey => ExerciseTypeKeys.Vocabulary;
 
     /// <summary>
@@ -285,6 +286,7 @@ public class VocabularyController(PuglingDbContext db, ExerciseTypeRegistry regi
 [Tags("Creator – Reading")]
 public class ReadingController(PuglingDbContext db, ExerciseTypeRegistry registry) : ExerciseControllerBase<ReadingConfig>(db, registry)
 {
+    /// <inheritdoc/>
     protected override string TypeKey => ExerciseTypeKeys.Reading;
 }
 
@@ -293,6 +295,7 @@ public class ReadingController(PuglingDbContext db, ExerciseTypeRegistry registr
 [Tags("Creator – Cloze")]
 public class ClozeController(PuglingDbContext db, ExerciseTypeRegistry registry) : ExerciseControllerBase<ClozeConfig>(db, registry)
 {
+    /// <inheritdoc/>
     protected override string TypeKey => ExerciseTypeKeys.Cloze;
 
     /// <summary>Sichert beim Anlegen/Ändern zu, dass alle in Lücken referenzierten Store-Keys existieren.</summary>
@@ -312,6 +315,7 @@ public class ClozeController(PuglingDbContext db, ExerciseTypeRegistry registry)
 [Tags("Creator – Essays")]
 public class EssaysController(PuglingDbContext db, ExerciseTypeRegistry registry) : ExerciseControllerBase<EssayConfig>(db, registry)
 {
+    /// <inheritdoc/>
     protected override string TypeKey => ExerciseTypeKeys.Essay;
 }
 
@@ -320,6 +324,7 @@ public class EssaysController(PuglingDbContext db, ExerciseTypeRegistry registry
 [Tags("Creator – Listening")]
 public class ListeningController(PuglingDbContext db, ExerciseTypeRegistry registry) : ExerciseControllerBase<ListeningConfig>(db, registry)
 {
+    /// <inheritdoc/>
     protected override string TypeKey => ExerciseTypeKeys.Listening;
 }
 
@@ -328,6 +333,7 @@ public class ListeningController(PuglingDbContext db, ExerciseTypeRegistry regis
 [Tags("Creator – Grammar")]
 public class GrammarController(PuglingDbContext db, ExerciseTypeRegistry registry) : ExerciseControllerBase<GrammarConfig>(db, registry)
 {
+    /// <inheritdoc/>
     protected override string TypeKey => ExerciseTypeKeys.Grammar;
 }
 
@@ -337,6 +343,7 @@ public class GrammarController(PuglingDbContext db, ExerciseTypeRegistry registr
 public class MatchingController(PuglingDbContext db, ExerciseTypeRegistry registry)
     : ExerciseControllerBase<MatchingConfig>(db, registry)
 {
+    /// <inheritdoc/>
     protected override string TypeKey => ExerciseTypeKeys.Matching;
 
     /// <summary>Wertet die Zuordnungen aus: je Paar zählt die zur linken Seite genannte rechte Seite.</summary>
@@ -354,6 +361,7 @@ public class MatchingController(PuglingDbContext db, ExerciseTypeRegistry regist
 [Tags("Creator – Translation")]
 public class TranslationController(PuglingDbContext db, ExerciseTypeRegistry registry, VocabularyStoreService store) : ExerciseControllerBase<TranslationConfig>(db, registry)
 {
+    /// <inheritdoc/>
     protected override string TypeKey => ExerciseTypeKeys.Translation;
 
     /// <summary>Verpflichtet die Sprachcodes, sobald Paare ohne <see cref="TranslationItem.VocabularyId"/> anzulegen sind.</summary>
@@ -405,6 +413,7 @@ public class TranslationController(PuglingDbContext db, ExerciseTypeRegistry reg
 public class BirkenbihlController(PuglingDbContext db, ExerciseTypeRegistry registry, BirkenbihlDecodingService decoder, VocabularyStoreService store)
     : ExerciseControllerBase<BirkenbihlConfig>(db, registry)
 {
+    /// <inheritdoc/>
     protected override string TypeKey => ExerciseTypeKeys.Birkenbihl;
 
     /// <summary>Ergänzt je dekodiertem Wort den abgeleiteten Selbstlink <c>_self</c> aus seiner Vokabel-ID (nicht persistiert).</summary>
@@ -623,6 +632,7 @@ public class BirkenbihlController(PuglingDbContext db, ExerciseTypeRegistry regi
 public class ArithmeticController(PuglingDbContext db, ExerciseTypeRegistry registry)
     : ExerciseControllerBase<ArithmeticConfig>(db, registry)
 {
+    /// <inheritdoc/>
     protected override string TypeKey => ExerciseTypeKeys.Arithmetic;
 
     /// <summary>Bewertet die Lösungen des Kindes gegen die hinterlegten Aufgaben (numerisch, mit Toleranz).</summary>
@@ -642,6 +652,7 @@ public class ArithmeticController(PuglingDbContext db, ExerciseTypeRegistry regi
 public class ArithmeticDrillController(PuglingDbContext db, ExerciseTypeRegistry registry)
     : ExerciseControllerBase<ArithmeticDrillConfig>(db, registry)
 {
+    /// <inheritdoc/>
     protected override string TypeKey => ExerciseTypeKeys.ArithmeticDrill;
 
     private IGeneratingExerciseType DrillType => (IGeneratingExerciseType)Registry.Require(TypeKey);
@@ -685,6 +696,7 @@ public class ArithmeticDrillController(PuglingDbContext db, ExerciseTypeRegistry
 public class ListController(PuglingDbContext db, ExerciseTypeRegistry registry)
     : ExerciseControllerBase<ListConfig>(db, registry)
 {
+    /// <inheritdoc/>
     protected override string TypeKey => ExerciseTypeKeys.List;
 
     /// <summary>Bewertet die genannten Einträge – als Menge, oder positionsgenau bei <c>Ordered</c>.</summary>

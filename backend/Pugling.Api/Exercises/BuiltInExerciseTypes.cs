@@ -10,10 +10,13 @@ namespace Pugling.Api.Exercises;
 /// <summary>Leseverständnis: Text + Verständnisfragen (reine Inhaltsübung, kein automatischer Check).</summary>
 public sealed class ReadingExerciseType : ExerciseTypeBase
 {
+    /// <inheritdoc/>
     public override string Key => ExerciseTypeKeys.Reading;
+    /// <inheritdoc/>
     public override ExerciseTypeManifest Manifest { get; } = new(
         ExerciseTypeKeys.Reading, "Leseverständnis", "reading", 1, "reading",
         ExerciseCheckMode.None, null, null, []);
+    /// <inheritdoc/>
     public override IReadOnlyList<ContentItem> ItemsOf(string configJson) =>
         AnswerChecking.FromQuestions(Deserialize<ReadingConfig>(configJson).Questions);
 }
@@ -21,10 +24,13 @@ public sealed class ReadingExerciseType : ExerciseTypeBase
 /// <summary>Hörverständnis: Audioquelle + Verständnisfragen.</summary>
 public sealed class ListeningExerciseType : ExerciseTypeBase
 {
+    /// <inheritdoc/>
     public override string Key => ExerciseTypeKeys.Listening;
+    /// <inheritdoc/>
     public override ExerciseTypeManifest Manifest { get; } = new(
         ExerciseTypeKeys.Listening, "Hörverständnis", "listening", 1, "listening",
         ExerciseCheckMode.None, null, null, ["audio", "transcript"]);
+    /// <inheritdoc/>
     public override IReadOnlyList<ContentItem> ItemsOf(string configJson) =>
         AnswerChecking.FromQuestions(Deserialize<ListeningConfig>(configJson).Questions);
 }
@@ -32,20 +38,26 @@ public sealed class ListeningExerciseType : ExerciseTypeBase
 /// <summary>Aufsatz: freier Text, kein Item-für-Item-Abgleich – daher keine prüfbaren Inhalte.</summary>
 public sealed class EssayExerciseType : ExerciseTypeBase
 {
+    /// <inheritdoc/>
     public override string Key => ExerciseTypeKeys.Essay;
+    /// <inheritdoc/>
     public override ExerciseTypeManifest Manifest { get; } = new(
         ExerciseTypeKeys.Essay, "Aufsatz", "essay", 1, "essays",
         ExerciseCheckMode.None, null, null, ["rubric", "wordCount"]);
+    /// <inheritdoc/>
     public override IReadOnlyList<ContentItem> ItemsOf(string configJson) => [];
 }
 
 /// <summary>Grammatik: Umformungs-/Regelaufgaben.</summary>
 public sealed class GrammarExerciseType : ExerciseTypeBase
 {
+    /// <inheritdoc/>
     public override string Key => ExerciseTypeKeys.Grammar;
+    /// <inheritdoc/>
     public override ExerciseTypeManifest Manifest { get; } = new(
         ExerciseTypeKeys.Grammar, "Grammatik", "prompts", 1, "grammar",
         ExerciseCheckMode.None, null, null, ["ruleHints"]);
+    /// <inheritdoc/>
     public override IReadOnlyList<ContentItem> ItemsOf(string configJson)
     {
         var c = Deserialize<GrammarConfig>(configJson);
@@ -56,10 +68,13 @@ public sealed class GrammarExerciseType : ExerciseTypeBase
 /// <summary>Übersetzung: Sätze mit erwarteter Übersetzung (+ Alternativen).</summary>
 public sealed class TranslationExerciseType : ExerciseTypeBase
 {
+    /// <inheritdoc/>
     public override string Key => ExerciseTypeKeys.Translation;
+    /// <inheritdoc/>
     public override ExerciseTypeManifest Manifest { get; } = new(
         ExerciseTypeKeys.Translation, "Übersetzung", "prompts", 1, "translation",
         ExerciseCheckMode.None, null, null, ["alternatives"]);
+    /// <inheritdoc/>
     public override IReadOnlyList<ContentItem> ItemsOf(string configJson)
     {
         var c = Deserialize<TranslationConfig>(configJson);
@@ -70,10 +85,13 @@ public sealed class TranslationExerciseType : ExerciseTypeBase
 /// <summary>Birkenbihl: Wort-für-Wort-Dekodierung; reine Inhaltsübung ohne aktives Abfragen.</summary>
 public sealed class BirkenbihlExerciseType : ExerciseTypeBase
 {
+    /// <inheritdoc/>
     public override string Key => ExerciseTypeKeys.Birkenbihl;
+    /// <inheritdoc/>
     public override ExerciseTypeManifest Manifest { get; } = new(
         ExerciseTypeKeys.Birkenbihl, "Birkenbihl", "birkenbihl", 1, "birkenbihl",
         ExerciseCheckMode.None, null, null, ["wordByWord", "autoDecode", "vocabLinked"]);
+    /// <inheritdoc/>
     public override IReadOnlyList<ContentItem> ItemsOf(string configJson)
     {
         // Prompt = Satz der Lernsprache, „Antwort" = natürliche Übersetzung (für Anzeige/Fortschritt, nicht zum Tippen).
@@ -85,23 +103,31 @@ public sealed class BirkenbihlExerciseType : ExerciseTypeBase
 /// <summary>Lückentext: ein Item je Lücke; Store-gestützt (Lösung kann aus dem Vokabelspeicher kommen).</summary>
 public sealed class ClozeExerciseType : ExerciseTypeBase
 {
+    /// <inheritdoc/>
     public override string Key => ExerciseTypeKeys.Cloze;
+    /// <inheritdoc/>
     public override ExerciseTypeManifest Manifest { get; } = new(
         ExerciseTypeKeys.Cloze, "Lückentext", "cloze", 1, "cloze",
         ExerciseCheckMode.StudyPlanTest, "tests", LearningMethod.Cloze,
         ["wordBank", "translation", "letterHints", "vocabStore"]);
 
+    /// <inheritdoc/>
     public override IReadOnlyList<ContentItem> ItemsOf(string configJson)
     {
         var c = Deserialize<ClozeConfig>(configJson);
         return [.. c.Gaps.Select((g, i) => new ContentItem(i, c.Text, g.Answer, Accepted(g.Answer, g.Alternatives), Hint: null, GapIndex: g.Index))];
     }
 
+    /// <inheritdoc/>
     public override int DefaultStage => (int)ClozeStage.TranslationWordBank;
+    /// <inheritdoc/>
     public override int PreviewStage => (int)ClozeStage.TranslationFreeText;
+    /// <inheritdoc/>
     public override bool IsTypedStage(int stage) => StageMechanics.IsTyped((ClozeStage)stage);
+    /// <inheritdoc/>
     public override StoreResolution StoreResolution => StoreResolution.VocabRefs;
 
+    /// <inheritdoc/>
     public override IReadOnlyList<StageOption> StageOptions { get; } =
     [
         new((int)ClozeStage.TranslationWordBank, "Wortbank"),
@@ -113,21 +139,27 @@ public sealed class ClozeExerciseType : ExerciseTypeBase
 /// <summary>Zuordnung: Paare links ↔ rechts. StudyPlan-Test und zusätzlich ein Katalog-Direktcheck.</summary>
 public sealed class MatchingExerciseType : ExerciseTypeBase
 {
+    /// <inheritdoc/>
     public override string Key => ExerciseTypeKeys.Matching;
+    /// <inheritdoc/>
     public override ExerciseTypeManifest Manifest { get; } = new(
         ExerciseTypeKeys.Matching, "Zuordnung", "matching", 1, "matching",
         ExerciseCheckMode.StudyPlanTest, "tests", LearningMethod.Matching,
         ["distractors", "reverse"]);
 
+    /// <inheritdoc/>
     public override int DefaultStage => (int)MatchStage.Direct;
+    /// <inheritdoc/>
     public override int PreviewStage => (int)MatchStage.Direct;
 
+    /// <inheritdoc/>
     public override IReadOnlyList<ContentItem> ItemsOf(string configJson)
     {
         var c = Deserialize<MatchingConfig>(configJson);
         return [.. c.Pairs.Select((p, i) => new ContentItem(i, p.Left, p.Right, [p.Right]))];
     }
 
+    /// <inheritdoc/>
     public override CheckResult Check(string configJson, IReadOnlyList<GivenAnswer> answers, int? seed)
     {
         var c = Deserialize<MatchingConfig>(configJson);
@@ -144,11 +176,14 @@ public sealed class MatchingExerciseType : ExerciseTypeBase
 /// <summary>Feste Rechenaufgaben: numerischer Vergleich je Aufgabe im Rahmen der Toleranz.</summary>
 public sealed class ArithmeticExerciseType : ExerciseTypeBase
 {
+    /// <inheritdoc/>
     public override string Key => ExerciseTypeKeys.Arithmetic;
+    /// <inheritdoc/>
     public override ExerciseTypeManifest Manifest { get; } = new(
         ExerciseTypeKeys.Arithmetic, "Rechenaufgaben", "arithmetic", 1, "arithmetic",
         ExerciseCheckMode.CatalogCheck, null, null, ["tolerance"]);
 
+    /// <inheritdoc/>
     public override IReadOnlyList<ContentItem> ItemsOf(string configJson)
     {
         var c = Deserialize<ArithmeticConfig>(configJson);
@@ -159,6 +194,7 @@ public sealed class ArithmeticExerciseType : ExerciseTypeBase
         })];
     }
 
+    /// <inheritdoc/>
     public override CheckResult Check(string configJson, IReadOnlyList<GivenAnswer> answers, int? seed)
     {
         var c = Deserialize<ArithmeticConfig>(configJson);
@@ -180,12 +216,15 @@ public sealed class ArithmeticExerciseType : ExerciseTypeBase
 public sealed class ArithmeticDrillExerciseType(ArithmeticProblemGenerator generator)
     : ExerciseTypeBase, IGeneratingExerciseType
 {
+    /// <inheritdoc/>
     public override string Key => ExerciseTypeKeys.ArithmeticDrill;
+    /// <inheritdoc/>
     public override ExerciseTypeManifest Manifest { get; } = new(
         ExerciseTypeKeys.ArithmeticDrill, "Rechen-Drill", "arithmetic", 1, "arithmetic-drill",
         ExerciseCheckMode.CatalogGenerateCheck, null, null, ["generated", "seed"]);
 
     // Aufgaben werden pro Abruf erzeugt – keine festen, einzeln abfragbaren Inhalte.
+    /// <inheritdoc/>
     public override IReadOnlyList<ContentItem> ItemsOf(string configJson) => [];
 
     /// <summary>Prüft die Config-Grenzen; Fehlermeldung oder <c>null</c>, wenn alles passt.</summary>
@@ -195,6 +234,7 @@ public sealed class ArithmeticDrillExerciseType(ArithmeticProblemGenerator gener
         : c.ProblemCount is < 1 or > 100 ? "ProblemCount must be between 1 and 100."
         : null;
 
+    /// <inheritdoc/>
     public (int Seed, IReadOnlyList<GeneratedProblem> Problems) Generate(string configJson, int? seed)
     {
         var config = Deserialize<ArithmeticDrillConfig>(configJson);
@@ -215,17 +255,21 @@ public sealed class ArithmeticDrillExerciseType(ArithmeticProblemGenerator gener
 /// <summary>Auswendig zu lernende Liste (z. B. die Bundesländer): als Menge, oder positionsgenau bei <c>Ordered</c>.</summary>
 public sealed class ListExerciseType : ExerciseTypeBase
 {
+    /// <inheritdoc/>
     public override string Key => ExerciseTypeKeys.List;
+    /// <inheritdoc/>
     public override ExerciseTypeManifest Manifest { get; } = new(
         ExerciseTypeKeys.List, "Liste", "list", 1, "list",
         ExerciseCheckMode.CatalogCheck, null, null, ["orderedOptional", "alternatives"]);
 
+    /// <inheritdoc/>
     public override IReadOnlyList<ContentItem> ItemsOf(string configJson)
     {
         var c = Deserialize<ListConfig>(configJson);
         return [.. c.Items.Select((e, i) => new ContentItem(i, c.Instruction ?? "", e.Value, Accepted(e.Value, e.Alternatives)))];
     }
 
+    /// <inheritdoc/>
     public override CheckResult Check(string configJson, IReadOnlyList<GivenAnswer> answers, int? seed)
     {
         var c = Deserialize<ListConfig>(configJson);

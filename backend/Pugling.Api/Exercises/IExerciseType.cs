@@ -97,16 +97,28 @@ public interface IGeneratingExerciseType : IExerciseType
 /// </summary>
 public static class ExerciseTypeKeys
 {
+    /// <summary>Schlüssel des Vokabeltrainings.</summary>
     public const string Vocabulary = "Vocabulary";
+    /// <summary>Schlüssel des Leseverständnisses.</summary>
     public const string Reading = "Reading";
+    /// <summary>Schlüssel des Lückentexts.</summary>
     public const string Cloze = "Cloze";
+    /// <summary>Schlüssel des Aufsatzes.</summary>
     public const string Essay = "Essay";
+    /// <summary>Schlüssel des Hörverständnisses.</summary>
     public const string Listening = "Listening";
+    /// <summary>Schlüssel der Grammatikübung.</summary>
     public const string Grammar = "Grammar";
+    /// <summary>Schlüssel der Zuordnungsübung.</summary>
     public const string Matching = "Matching";
+    /// <summary>Schlüssel der Übersetzungsübung.</summary>
     public const string Translation = "Translation";
+    /// <summary>Schlüssel der festen Rechenaufgaben.</summary>
     public const string Arithmetic = "Arithmetic";
+    /// <summary>Schlüssel des Rechen-Drills (seed-basiert generiert).</summary>
     public const string ArithmeticDrill = "ArithmeticDrill";
+    /// <summary>Schlüssel der Listenübung (Auswendiglernen).</summary>
     public const string List = "List";
+    /// <summary>Schlüssel der Birkenbihl-Wort-für-Wort-Dekodierung.</summary>
     public const string Birkenbihl = "Birkenbihl";
 }

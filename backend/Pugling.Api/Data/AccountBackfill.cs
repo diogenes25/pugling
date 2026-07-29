@@ -11,6 +11,7 @@ namespace Pugling.Api.Data;
 /// </summary>
 public static class AccountBackfill
 {
+    /// <summary>Führt den Backfill für alle bestehenden Adults und Children aus.</summary>
     public static async Task RunAsync(PuglingDbContext db, AccountService accounts, CancellationToken ct = default)
     {
         foreach (var father in await db.Adults.AsNoTracking().ToListAsync(ct))

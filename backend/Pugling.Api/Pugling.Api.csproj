@@ -7,16 +7,6 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>Pugling.Api</RootNamespace>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <!--
-      CS1591 hier (noch) unterdrückt – anders als in Contracts/Client/Agent.Creator, wo die Regel scharf ist.
-      Gemessen: 545 Stellen im Projekt, davon **428 in `Models/` und `Data/`** – EF-Entities und der
-      DbContext, die nur wegen EF `public` sind. Für die trägt die Begründung der Doku-Regel („fließt in
-      Swagger") nicht, und eine Ratsche mit 428 Ausnahmen ist keine. Die verbleibenden ~117 in
-      `Controllers/`, `Auth/`, `Errors/`, `Services/` und `Exercises/` sind echte Lücken – sie nachzuziehen
-      und CS1591 dann per `.editorconfig` pfadweise scharf zu stellen, steht als Nacharbeit in
-      docs/codequalitaet-gates-plan.md.
-    -->
-    <NoWarn>$(NoWarn);CS1591</NoWarn>
   </PropertyGroup>
 
   <!-- Projektweit verfügbar, damit [ApiVersion] an den Controllern kein per-Datei-using braucht. -->

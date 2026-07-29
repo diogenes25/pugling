@@ -23,6 +23,7 @@ public sealed class CodeStampingProblemDetailsFactory(IOptions<ApiBehaviorOption
 {
     private readonly ApiBehaviorOptions _options = options.Value;
 
+    /// <summary>Erzeugt ein <see cref="ProblemDetails"/> und stempelt Titel, TraceId sowie einen status-basierten Default-<c>code</c>, sofern keiner gesetzt ist.</summary>
     public override ProblemDetails CreateProblemDetails(HttpContext httpContext, int? statusCode = null,
         string? title = null, string? type = null, string? detail = null, string? instance = null)
     {
@@ -39,6 +40,7 @@ public sealed class CodeStampingProblemDetailsFactory(IOptions<ApiBehaviorOption
         return problem;
     }
 
+    /// <summary>Erzeugt ein <see cref="ValidationProblemDetails"/> aus dem Model-State und stempelt den festen Code <see cref="ApiErrors.ValidationError"/> sowie Titel/TraceId.</summary>
     public override ValidationProblemDetails CreateValidationProblemDetails(HttpContext httpContext,
         ModelStateDictionary modelStateDictionary, int? statusCode = null, string? title = null,
         string? type = null, string? detail = null, string? instance = null)

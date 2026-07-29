@@ -10,6 +10,7 @@ namespace Pugling.Api.Data;
 /// </summary>
 public sealed class PuglingDbContextFactory : IDesignTimeDbContextFactory<PuglingDbContext>
 {
+    /// <summary>Erstellt einen <see cref="PuglingDbContext"/> gegen die lokale SQLite-Datei, ausschließlich für die Design-Time-Werkzeuge.</summary>
     public PuglingDbContext CreateDbContext(string[] args)
     {
         var options = new DbContextOptionsBuilder<PuglingDbContext>()

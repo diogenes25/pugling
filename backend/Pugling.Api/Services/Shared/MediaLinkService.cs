@@ -13,7 +13,15 @@ namespace Pugling.Api.Services.Shared;
 public class MediaLinkService(PuglingDbContext db)
 {
     /// <summary>Welcher Träger gemeint ist; bestimmt die zu setzende FK-Spalte.</summary>
-    public enum Carrier { Vocabulary, ExerciseItem, Exercise }
+    public enum Carrier
+    {
+        /// <summary>Eine Vokabel im Store.</summary>
+        Vocabulary,
+        /// <summary>Ein einzelnes Vokabel-Item einer Übung.</summary>
+        ExerciseItem,
+        /// <summary>Eine ganze Übung.</summary>
+        Exercise,
+    }
 
     /// <summary>
     /// Legt eine Zuordnung an. Liefert entweder den fertigen Link oder einen Fehler-Code, den der

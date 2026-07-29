@@ -213,6 +213,11 @@ public class ChildrenController(PuglingDbContext db, WalletService wallet, Accou
         return new ChildPointsResponse(childId, coins, gems, entries);
     }
 
+    /// <summary>
+    /// Bucht eine manuelle Punktegutschrift oder -belastung (Verschenken/Abziehen außerhalb von Shop und
+    /// Ziel-Malus). Die Währung bestimmt das <see cref="PointKind"/>: Coins → <see cref="PointKind.Manual"/>,
+    /// Gems → <see cref="PointKind.ManualGems"/>.
+    /// </summary>
     [HttpPost("{childId:int}/points")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

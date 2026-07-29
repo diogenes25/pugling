@@ -3,8 +3,15 @@ using Pugling.Api.Models;
 
 namespace Pugling.Api.Data;
 
+/// <summary>
+/// Sät die Demo-/Entwicklungsdaten beim Start: Zeitfenster, Admin-Familie, Lern-Katalog (Englisch/Mathe/
+/// Erdkunde), Lehrbuch-Profil, Vokabel-Store, Französisch-Inhalte, Klassenarbeiten, Gamification, eine
+/// Lehrer-Bibliothek, den Familien-Shop und einen vollständigen Demo-Lehrplan. Jede Teilroutine ist
+/// additiv-idempotent, damit ein Neustart auf einer bereits befüllten DB nichts dupliziert.
+/// </summary>
 public static class Seed
 {
+    /// <summary>Führt alle Seed-Routinen der Reihe nach aus.</summary>
     public static void Run(PuglingDbContext db)
     {
         SeedTimeSlots(db);

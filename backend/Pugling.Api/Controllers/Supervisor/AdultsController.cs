@@ -25,6 +25,7 @@ public class AdultsController(PuglingDbContext db, AccountService accounts) : Co
         if (context.ActionArguments.TryGetValue("adultId", out var v) && v is int aid && User.AdultId() != aid)
             context.Result = Forbid();
     }
+    /// <summary>Ungenutzter Teil des Filter-Paars (die Prüfung sitzt vollständig in <see cref="OnActionExecuting"/>).</summary>
     [NonAction]
     public void OnActionExecuted(ActionExecutedContext context) { }
 

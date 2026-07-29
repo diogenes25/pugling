@@ -15,23 +15,36 @@ public class ShopService(PuglingDbContext db, WalletService wallet)
     /// <summary>Fehlerursache eines Shop-Vorgangs (None = erfolgreich).</summary>
     public enum ShopError
     {
+        /// <summary>Kein Fehler – der Vorgang war erfolgreich.</summary>
         None = 0,
+        /// <summary>Das referenzierte Objekt (Artikel, Angebot, Anfrage, …) existiert nicht.</summary>
         NotFound,
+        /// <summary>Das Angebot ist deaktiviert und darf nicht gekauft werden.</summary>
         ListingInactive,
+        /// <summary>Der Bestand des Angebots reicht für die gewünschte Menge nicht aus.</summary>
         InsufficientStock,
+        /// <summary>Das Wallet des Kindes hat nicht genug Münzen für den Kauf.</summary>
         InsufficientCoins,
+        /// <summary>Das Wallet des Kindes hat nicht genug Gems für den Kauf.</summary>
         InsufficientGems,
+        /// <summary>Das Inventar des Kindes enthält nicht genug Exemplare des Artikels.</summary>
         InsufficientInventory,
+        /// <summary>Die angeforderte Menge ist nicht positiv oder sonst ungültig.</summary>
         InvalidQuantity,
+        /// <summary>Der Kauf ist gerade nicht möglich (z. B. Angebot außerhalb seines Zeitfensters).</summary>
         NotOpen,
+        /// <summary>Die Aktivierungsanfrage ist nicht mehr offen (bereits genehmigt/abgelehnt).</summary>
         NotPending,
+        /// <summary>Ein gleichzeitiger Schreibzugriff hat den erwarteten Datenstand verändert (Concurrency).</summary>
         Conflict,
     }
 
     /// <summary>Ergebnis mit optionaler Nutzlast.</summary>
     public record Result<T>(ShopError Error, T? Value) where T : class
     {
+        /// <summary>Erzeugt ein erfolgreiches Ergebnis mit der gegebenen Nutzlast.</summary>
         public static Result<T> Ok(T value) => new(ShopError.None, value);
+        /// <summary>Erzeugt ein Fehler-Ergebnis ohne Nutzlast.</summary>
         public static Result<T> Fail(ShopError error) => new(error, null);
     }
 

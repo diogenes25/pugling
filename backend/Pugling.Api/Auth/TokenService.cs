@@ -14,6 +14,7 @@ public class TokenService(IConfiguration config)
     /// <summary>Signierschlüssel aus Konfiguration (Dev-Fallback; in Prod über Jwt:Key setzen).</summary>
     private string Key => config["Jwt:Key"] ?? "pugling-dev-signing-key-change-me-please-0123456789";
 
+    /// <summary>Der symmetrische Schlüssel, mit dem ausgestellte Tokens signiert werden (aus <see cref="Key"/> abgeleitet).</summary>
     public SymmetricSecurityKey SigningKey => new(Encoding.UTF8.GetBytes(Key));
 
     /// <summary>

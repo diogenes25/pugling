@@ -10,6 +10,7 @@ public sealed class ExerciseTypeRegistry
 {
     private readonly IReadOnlyDictionary<string, IExerciseType> _byKey;
 
+    /// <summary>Baut die Registry aus allen per DI registrierten <see cref="IExerciseType"/>-Singletons, geschlüsselt über <see cref="IExerciseType.Key"/>.</summary>
     public ExerciseTypeRegistry(IEnumerable<IExerciseType> types) =>
         _byKey = types.ToDictionary(t => t.Key, StringComparer.Ordinal);
 

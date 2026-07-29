@@ -19,6 +19,7 @@ public static class InterestTagBackfill
     /// <summary>Startgewicht der übernommenen Interessen: eine klare, aber nicht dominante Vorliebe.</summary>
     private const int DefaultWeight = 2;
 
+    /// <summary>Führt den Backfill für alle Kinder ohne bereits gepflegte <see cref="ChildInterest"/>-Einträge aus.</summary>
     public static async Task RunAsync(PuglingDbContext db, InterestTagService tags, CancellationToken ct = default)
     {
         var childrenWithEntries = await db.ChildInterests.Select(i => i.ChildId).Distinct().ToListAsync(ct);

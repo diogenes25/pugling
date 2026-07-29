@@ -10,13 +10,16 @@ namespace Pugling.Api.Exercises;
 /// </summary>
 public sealed class VocabularyExerciseType : ExerciseTypeBase
 {
+    /// <inheritdoc/>
     public override string Key => ExerciseTypeKeys.Vocabulary;
 
+    /// <inheritdoc/>
     public override ExerciseTypeManifest Manifest { get; } = new(
         ExerciseTypeKeys.Vocabulary, "Vokabeln", "flashcards", 1, "vocabulary",
         ExerciseCheckMode.StudyPlanTest, "tests", LearningMethod.Vocabulary,
         ["letterHints", "audio", "selfAssess", "multipleChoice"]);
 
+    /// <inheritdoc/>
     public override IReadOnlyList<ContentItem> ItemsOf(string configJson)
     {
         var c = Deserialize<VocabularyConfig>(configJson);
@@ -25,8 +28,10 @@ public sealed class VocabularyExerciseType : ExerciseTypeBase
     }
 
     // Fürs Ausprobieren die getippte Freitext-Stufe (schwierigster, aussagekräftigster Test).
+    /// <inheritdoc/>
     public override int PreviewStage => (int)TestStage.FreeText;
 
+    /// <inheritdoc/>
     public override bool IsTypedStage(int stage) => StageMechanics.IsTyped((TestStage)stage);
 
     /// <summary>
@@ -69,6 +74,7 @@ public sealed class VocabularyExerciseType : ExerciseTypeBase
          (TestStage)stage == TestStage.Audio ? item.AudioUrl : null,
          IsTypedStage(stage) ? null : item.ImageUrl);
 
+    /// <inheritdoc/>
     public override IReadOnlyList<StageOption> StageOptions { get; } =
     [
         new((int)TestStage.SelfAssess, "Selbsteinschätzung"),
@@ -78,8 +84,12 @@ public sealed class VocabularyExerciseType : ExerciseTypeBase
         new((int)TestStage.Audio, "Hören → tippen"),
     ];
 
+    /// <inheritdoc/>
     public override bool SupportsItemProgress => true;
+    /// <inheritdoc/>
     public override bool SupportsLearnGoals => true;
+    /// <inheritdoc/>
     public override bool SupportsObjectives => true;
+    /// <inheritdoc/>
     public override StoreResolution StoreResolution => StoreResolution.ItemTable;
 }

@@ -22,8 +22,11 @@ public class CreatorProfileService(PuglingDbContext db)
 
     /// <summary>Stabile Begründungs-Codes (kein Fließtext – die Oberfläche formuliert, siehe i18n-Regel).</summary>
     public const string ReasonSeries = "series_match";
+    /// <summary>Das Profil ist auf dasselbe Fach festgelegt wie die Anfrage.</summary>
     public const string ReasonSubject = "subject_match";
+    /// <summary>Die Klassenstufe des Kindes liegt im Klassenstufen-Bereich des Profils.</summary>
     public const string ReasonGrade = "grade_in_range";
+    /// <summary>Die Schulart des Profils passt zur Schulart des Kindes.</summary>
     public const string ReasonSchoolType = "school_type_match";
 
     /// <summary>

@@ -12,6 +12,7 @@ namespace Pugling.Api.Auth;
 /// </summary>
 public class ChildOwnershipFilter(AuthAccess access) : IAsyncActionFilter
 {
+    /// <summary>Prüft die Kind-Eigentümerschaft für die aktuelle Action und bricht mit 404 ab, falls sie fehlt.</summary>
     public async Task OnActionExecutionAsync(ActionExecutingContext ctx, ActionExecutionDelegate next)
     {
         if (ctx.ActionArguments.TryGetValue("childId", out var v) && v is int childId

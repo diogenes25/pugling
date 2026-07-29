@@ -15,6 +15,7 @@ public static class ExerciseItemBackfill
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
+    /// <summary>Führt den Backfill für alle Vokabelübungen mit noch nicht materialisierten Items/Refs aus.</summary>
     public static async Task RunAsync(PuglingDbContext db, ExerciseItemService items, CancellationToken ct = default)
     {
         var vocabExercises = await db.Exercises

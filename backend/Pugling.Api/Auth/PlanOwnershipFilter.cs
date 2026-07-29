@@ -14,6 +14,7 @@ namespace Pugling.Api.Auth;
 /// </summary>
 public class PlanOwnershipFilter(PuglingDbContext db, AuthAccess access) : IAsyncActionFilter
 {
+    /// <summary>Prüft Existenz und Eigentümerschaft des Plans für die aktuelle Action und bricht mit 404 bzw. 403 ab.</summary>
     public async Task OnActionExecutionAsync(ActionExecutingContext ctx, ActionExecutionDelegate next)
     {
         if (ctx.ActionArguments.TryGetValue("planId", out var v) && v is int planId)

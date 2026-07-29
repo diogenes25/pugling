@@ -12,8 +12,11 @@ namespace Pugling.Api.Auth;
 /// </summary>
 public static class Roles
 {
+    /// <summary>Ebenen-Rolle für Inhalte: erstellt/verwaltet den Lern-Katalog (Fächer, Kapitel, Übungen).</summary>
     public const string Creator = "Creator";
+    /// <summary>Ebenen-Rolle für Steuerung: verwaltet Kinder, Lehrpläne und Belohnungen.</summary>
     public const string Supervisor = "Supervisor";
+    /// <summary>Ebenen-Rolle fürs Lernen: spielt Übungen und Tests.</summary>
     public const string Student = "Student";
     /// <summary>Plattform-Superuser (Break-Glass). Umgeht die RWX-Rechteprüfung auf Übungen – z. B. um
     /// verwaiste (ownerlose) Übungen im Notfall zu bearbeiten. Wird nicht per API vergeben, sondern über
@@ -31,7 +34,9 @@ public static class ClaimsPrincipalExtensions
     // Der Claim heißt weiterhin `fid`, obwohl die Entität `Adult` heißt: er steht in bereits ausgestellten
     // Tokens. Ihn umzubenennen würde jede offene Sitzung ungültig machen – für einen Namen, den niemand
     // sieht. Der Zugriff heißt `AdultId()`, damit der Code die richtige Sprache spricht.
+    /// <summary>Die <c>Adult</c>-Id aus dem Claim <c>fid</c> (Creator-/Supervisor-Profil), sofern vorhanden.</summary>
     public static int? AdultId(this ClaimsPrincipal u) => int.TryParse(u.FindFirstValue("fid"), out var v) ? v : null;
+    /// <summary>Die <c>Child</c>-Id aus dem Claim <c>cid</c> (Student-Profil), sofern vorhanden.</summary>
     public static int? ChildId(this ClaimsPrincipal u) => int.TryParse(u.FindFirstValue("cid"), out var v) ? v : null;
 
     /// <summary>
@@ -42,13 +47,19 @@ public static class ClaimsPrincipalExtensions
     public static int? AccountId(this ClaimsPrincipal u) => int.TryParse(u.FindFirstValue("aid"), out var v) ? v : null;
 
     // Ebenen-Rollen und ihre Ziel-IDs.
+    /// <summary>Trägt der Principal die Ebenen-Rolle <see cref="Roles.Creator"/>?</summary>
     public static bool IsCreator(this ClaimsPrincipal u) => u.IsInRole(Roles.Creator);
+    /// <summary>Trägt der Principal die Ebenen-Rolle <see cref="Roles.Supervisor"/>?</summary>
     public static bool IsSupervisor(this ClaimsPrincipal u) => u.IsInRole(Roles.Supervisor);
+    /// <summary>Trägt der Principal die Ebenen-Rolle <see cref="Roles.Student"/>?</summary>
     public static bool IsStudent(this ClaimsPrincipal u) => u.IsInRole(Roles.Student);
     /// <summary>Plattform-Superuser (Break-Glass, siehe <see cref="Roles.Admin"/>).</summary>
     public static bool IsAdmin(this ClaimsPrincipal u) => u.IsInRole(Roles.Admin);
+    /// <summary>Die <c>Adult</c>-Id des Supervisor-Profils (identisch zu <see cref="AdultId"/>).</summary>
     public static int? SupervisorId(this ClaimsPrincipal u) => u.AdultId();
+    /// <summary>Die <c>Adult</c>-Id des Creator-Profils (identisch zu <see cref="AdultId"/>).</summary>
     public static int? CreatorId(this ClaimsPrincipal u) => u.AdultId();
+    /// <summary>Die <c>Child</c>-Id des Student-Profils (identisch zu <see cref="ChildId"/>).</summary>
     public static int? StudentId(this ClaimsPrincipal u) => u.ChildId();
 
     /// <summary>

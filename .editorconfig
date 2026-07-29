@@ -166,3 +166,14 @@ generated_code = true
 
 [**/obj/**.cs]
 generated_code = true
+
+# ---------------------------------------------------------------- CS1591 pfadweise scharf (Nacharbeit aus B)
+# EF-Entities (Models/) und der DbContext sind nur wegen EF `public` – die Doku-Regel („fließt in
+# Swagger") trägt für sie nicht. Gemessen 2026-07-29: 718 Stellen in `Models/`, 128 in
+# `PuglingDbContext.cs` (die `DbSet<T>`-Properties). Alles andere unter `Pugling.Api` (Controllers,
+# Auth, Errors, Services, Exercises, die restlichen `Data/`-Helfer) ist echte Lücke und scharf.
+[backend/Pugling.Api/Models/**.cs]
+dotnet_diagnostic.CS1591.severity = none
+
+[backend/Pugling.Api/Data/PuglingDbContext.cs]
+dotnet_diagnostic.CS1591.severity = none
