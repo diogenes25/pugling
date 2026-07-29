@@ -5,7 +5,7 @@ aliases: [Codequalität-Gates, Test-Gate, CI-Plan, Integrationstests bewerten]
 
 # Codequalität: von Disziplin zu mechanischen Toren
 
-Status: **Etappen A, B und C umgesetzt (2026-07-29), D offen.** Alle Zahlen im Abschnitt „Ist-Zustand" sind
+Status: **Etappen A, B und C umgesetzt und committet (2026-07-29), D offen.** Alle Zahlen im Abschnitt „Ist-Zustand" sind
 am 2026-07-29 am damaligen Arbeitsstand gemessen (Etappe 2 der `Father`→`Adult`-Umbenennung im Baum, noch
 nicht committet – sie ist seither als `1ee1538` committet); der Stand **nach C** steht unter „Was Etappe C
 gebracht hat". Was A gebracht hat, steht unter „Etappe A"; der **erste Fund des neuen Tors** unter „Was das
@@ -17,31 +17,32 @@ Diese Seite ist die vollständige Übergabe – **nicht neu messen, nicht neu er
 unter „Ist-Zustand" (Momentaufnahme 2026-07-29), der erreichte Stand unter „Was Etappe C gebracht hat", die
 Arbeit unter „Der Plan".
 
-**Arbeitsstand nach Etappe C (2026-07-29):**
+**Arbeitsstand nach Etappe C (2026-07-29): A, B und C sind committet – D0 ist erledigt.**
 
-- `HEAD` = `1ee1538` „Vertrag heißt `adult` – Etappe 2 der Father→Adult-Umbenennung".
-- **A, B und C liegen vollständig im Baum, aber nicht committet**: 96 Dateien geändert, 17 unversioniert
-  (davon 12 `.cs`). Der Baum ist **grün**: 587 Tests, `dotnet build Pugling.sln` 0 Warnungen,
-  `dotnet format --verify-no-changes` sauber, Testlauf-Exit-Code 0.
+- `main` trägt drei Commits über `1ee1538` („Vertrag heißt `adult`"). Der Endstand ist **grün**: 587 Tests,
+  `dotnet build Pugling.sln` 0 Warnungen, `dotnet format --verify-no-changes` sauber.
 - Die Tore stehen und greifen: CI-Workflow, `workflow_run`-Kopplung des Deploys, Stop-Hook,
   `Directory.Build.props`, `.editorconfig`, `UnmappedMemberHandling.Disallow` und **sieben** reflexive
   Wächter (vier aus B4, dazu Ownership-Matrix, PATCH-Semantik und Endpunkt-Abdeckung aus C).
 
-**Empfehlung: erst committen, dann Etappe D.** Ein 113-Dateien-Stand aus drei Etappen und die nächsten
-Tore im selben roten CI-Lauf sind nicht auseinanderzuhalten. Sinnvoller Schnitt in drei Commits:
+| Commit | Inhalt | Beim Schnitt gemessen |
+|---|---|---|
+| `05f1a67` | **Die Tore (A+B)** – `ci.yml`, `deploy-azure.yml`, `test-gate.sh`, `Directory.Build.props`, `.editorconfig`, `UnmappedMemberHandling` + `unknown_field`, `UnknownFieldTests`, dazu die Folgeänderungen (66 unbenutzte `using`, 5 CA-Fundstellen, die still verworfenen Payload-Felder der Testsuite, `TimetableController` an den Ownership-Filter) | **grün**: 494 Tests, 0 Warnungen |
+| `70a16f4` | **Die sieben Wächter (B4 + C1/C2/C4/C5)** – `ApiSurface`, `ConventionGuardTests`, `SampleJson`, `OwnershipMatrixTests`, `PatchSemanticsTests`, `EndpointCoverage`(+`Guard`), die Coverage-Schritte in `ci.yml`, der Bericht-Zweig im Stop-Hook | **absichtlich rot**: 550 grün, dazu die eine Meldung des Abdeckungs-Wächters mit 49 offenen Actions – er ist ja das Werkzeug, mit dem der nächste Commit sie schließt |
+| `74f2606` | **Die Defektfixes samt Tests (C3)** – `AdultsController` (Kaskade + `duplicate_email`), `CreatorProfilesController` (`duplicate_profile_name`), `TagsController` (EF-`Include`-Fehler), die beiden neuen `ApiErrors`, `AdultLifecycleTests`, `CatalogReadDeleteTests`, `ExerciseCheckEndpointTests`, `MediaLinkTeardownTests` + Ergänzungen in bestehenden Testklassen | **grün**: 587 Tests, 0 Warnungen |
 
-1. **Die Tore (A+B)** – `ci.yml`, `deploy-azure.yml`, `test-gate.sh`, `Directory.Build.props`,
-   `.editorconfig`, `UnmappedMemberHandling` + `unknown_field`, `ConventionGuardTests`,
-   `UnknownFieldTests`, dazu die Folgeänderungen (66 unbenutzte `using`, 5 CA-Fundstellen, die drei
-   still verworfenen Payload-Felder in der Testsuite, `TimetableController` an den Ownership-Filter).
-2. **Die Wächter (C1/C2/C4/C5)** – `ApiSurface`, `SampleJson`, `OwnershipMatrixTests`,
-   `PatchSemanticsTests`, `EndpointCoverage`(+`Guard`), die Coverage-Schritte in `ci.yml`, der
-   Bericht-Zweig im Stop-Hook.
-3. **Die Defektfixes samt Tests (C3)** – `AdultsController` (Kaskade + `duplicate_email`),
-   `CreatorProfilesController` (`duplicate_profile_name`), `TagsController` (EF-`Include`-Fehler),
-   die beiden neuen `ApiErrors`, `AdultLifecycleTests`, `CatalogReadDeleteTests`,
-   `ExerciseCheckEndpointTests`, `MediaLinkTeardownTests` und die Ergänzungen in den bestehenden
-   Testklassen.
+Der mittlere Commit ist damit der einzige Punkt, an dem `git bisect` über diese drei Commits stolpert – und
+zwar sichtbar am Abdeckungs-Wächter, nicht an einem Fachtest. Zwei Dinge liefen beim Schnitt anders als in
+der Empfehlung, die hier vorher stand; beide waren erzwungen, nicht Geschmack:
+
+- **`ConventionGuardTests` liegt beim Wächter-Commit, nicht bei den Toren.** Es teilt die Routen-Auflösung
+  mit `ApiSurface`, und dessen `<see cref="EndpointCoverage"/>` wäre ohne `EndpointCoverage.cs` ein CS1574 –
+  unter der neuen Ratsche also ein Build-Fehler. Alle sieben Wächter in einem Commit ist ohnehin die
+  ehrlichere Einheit.
+- **Der Reihenfolge-Fix in `CreatorAgentTests` gehört zu den Toren, nicht zu C3.** Erst die Payload-Fixes
+  legen an, was der Server vorher still verwarf; das verschiebt die Ids im klassenweit geteilten
+  Vokabelspeicher und legt die schlummernde Ordnungsabhängigkeit der Dedupe-Prüfung offen. Mit dem Fix in
+  C3 war der Tore-Commit rot – gemessen, nicht vermutet.
 
 **Der erste inhaltliche Schritt ist D1** (siehe Etappe D) – er berührt nur `.github/workflows/ci.yml`,
 keinen Produktivcode. Parallel dazu ist die **Nacharbeit aus B** offen (CS1591 in `Pugling.Api`, die 188
@@ -473,8 +474,9 @@ Gegenprobe: einen Test auf `[Fact(Skip = …)]` gesetzt → Exit 1, und der Beri
 | D3 | `markdownlint-cli2` (Konfiguration liegt bereits im Root) in `ci.yml` – die Doku ist in diesem Projekt Produkt, nicht Beiwerk | Erst messen: `npx markdownlint-cli2` läuft heute **nicht** sauber. In `CLAUDE.md` stehen zwei MD004-Treffer (Zeilen 118/124), die keine Listen sind, sondern Zeilenfortsetzungen mit `+`. Also entweder umformulieren oder MD004 abschalten – **nicht** den Umbruch „reparieren". |
 | D4 | Prüfen, ob `/smoke-test` und `DocsCaptureTests` in CI reproduzierbar byte-stabil laufen (die Wanduhr-Neutralisierung ist dafür gebaut; auf einem UTC-Runner erst zu verifizieren) | `ci.yml` setzt schon `TZ: UTC`. `DocsCaptureTests` **überschreibt** `docs/api-examples/` bei jedem Lauf – ein Diff dort nach einem CI-Lauf ist der Befund, kein Versehen. |
 
-**D0 (empfohlen, vor D1): die drei Etappen committen.** Siehe „Einstieg für eine frische Sitzung" – dort
-steht der Schnitt in drei Commits. Ohne das laufen A+B+C und D im ersten roten CI-Lauf zusammen.
+**D0 (erledigt): die drei Etappen sind committet.** Der Schnitt und die je Commit gemessenen Zahlen stehen
+unter „Einstieg für eine frische Sitzung". D beginnt damit auf einem Stand, auf dem ein roter CI-Lauf
+eindeutig dem neuen Tor zuzuordnen ist.
 
 ## Was bewusst nicht getan wird
 
