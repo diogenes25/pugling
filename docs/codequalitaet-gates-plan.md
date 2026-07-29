@@ -42,6 +42,12 @@ Arbeit unter „Der Plan".
 >
 > **D3 ist umgesetzt** (siehe „Was D3 vorfindet" unten für die Vorher-Zahlen und die getroffenen
 > Entscheidungen) – `markdownlint-cli2` läuft jetzt als eigener Job in `ci.yml`, 0 Treffer.
+>
+> **Nach dem Pipefail-Fix lief das Deploy zum ersten Mal seit dem 2026-07-05er `vite`-Bruch überhaupt an**
+> (`workflow_run` griff endlich, weil CI grün war) – scheiterte dann aber an `azure/webapps-deploy@v3` mit
+> „No credentials found". `gh secret list` zeigt **kein einziges** Repo-Secret, `AZURE_WEBAPP_PUBLISH_PROFILE`
+> fehlt also komplett. **Kein neuer Befund – Azure ist schlicht noch nicht konfiguriert.** Frontend-Build und
+> `dotnet publish` liefen davor beide grün durch; sobald das Secret gesetzt ist, sollte der Rest laufen.
 
 **Arbeitsstand nach Etappe C (2026-07-29): A, B und C sind committet – D0 ist erledigt.**
 
