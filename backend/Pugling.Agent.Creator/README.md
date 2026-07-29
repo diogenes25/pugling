@@ -27,7 +27,7 @@ trägt Band, Bezeichnung und – entscheidend – **Themen, Grammatik und Wortsc
 Lehrbuch des Kindes (`supervisor/children/{id}/textbooks` mit `seriesId`/`currentUnitId`) und das Profil
 denselben Datensatz nennen, kann der Agent den passenden Lehrer *finden* statt zu raten:
 
-```
+```text
 Kind (Klasse 8, Gymnasium, Lehrbuch → Reihe „Access", Unit 3)
         │  GET creator/profiles/match?childId=…
         ▼
@@ -46,7 +46,7 @@ die begründete Trefferliste). Wer lieber die API bedient: [docs/REST/Creator.ht
 Nicht das Sprachmodell, sondern C#. Das Modell liefert ausschließlich **strukturierten Inhalt**
 (JSON nach Schema), der Ablauf ist fest verdrahtet:
 
-```
+```text
 1  Briefing   Profil + Reihe/Unit (Creator-API), Fach/Kapitel + vorhandene Übungen (Creator-API),
               optional Kind-Profil + Interessen + Lehrbuch (Supervisor-API) und Lernstand (Student-API)
 2  Entwurf    IChatClient.GetResponseAsync<TDraft>()  →  typisierter Entwurf
@@ -61,12 +61,14 @@ echten In-Process-Server mit einem `FakeChatClient` statt Ollama.
 
 ## Voraussetzungen
 
-1. **Die API läuft**: `cd backend/Pugling.Api && dotnet run` (http://localhost:5200).
+1. **Die API läuft**: `cd backend/Pugling.Api && dotnet run` (<http://localhost:5200>).
 2. **Ollama läuft** mit einem Instruct-Modell, das verlässlich JSON nach Schema liefert:
+
    ```bash
    ollama pull qwen2.5:14b-instruct    # gutes Deutsch, stabiles JSON
    ollama pull llama3.1:8b             # Alternative bei knapper Hardware
    ```
+
    Roleplay-Finetunes taugen nicht. Kleine Modelle (2–4 B) liefern zwar meist gültiges JSON, aber
    inhaltlich schwache Aufgaben – der Validator fängt einiges davon ab.
 3. **Ein Konto mit Creator-Rolle.** Für **allgemeine** Übungen (`--profile`, ohne `--child`) genügt das.

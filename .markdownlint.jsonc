@@ -10,5 +10,12 @@
   "MD024": { "siblings_only": true },
 
   // Tabellen einheitlich mit Leer-Padding an den Pipes.
-  "MD060": { "style": "leading_and_trailing" }
+  "MD060": { "style": "leading_and_trailing" },
+
+  // Bewusstes Inline-HTML in der Doku (z. B. <br>, <details>) ist gelebte Praxis, kein Versehen.
+  "MD033": false,
+
+  // In CLAUDE.md trägt `+` an zwei Stellen eine Zeilenfortsetzung, keine Liste – MD004 würde das
+  // als Stilbruch melden und ein "Reparieren" verfälschte den Satz.
+  "MD004": false
 }

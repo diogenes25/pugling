@@ -3,11 +3,13 @@
 _Automatisch erzeugt von `DocsCaptureTests` (Integrationstest). Jedes Beispiel ist verifiziert: Status und – bei Fehlern – der maschinenlesbare `code` wurden im Testlauf geprüft. Nicht von Hand bearbeiten._
 
 ## Artikel anlegen
+
 `POST /api/v1/supervisor/shop/articles`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
 Request:
+
 ```json
 {
   "articleNumber": "TV-900",
@@ -19,6 +21,7 @@ Request:
 ```
 
 Response — `HTTP 201`:
+
 ```json
 {
   "id": 5,
@@ -32,11 +35,13 @@ Response — `HTTP 201`:
 ```
 
 ### Artikel mit doppelter Nummer anlegen — Fehlerfall
+
 `POST /api/v1/supervisor/shop/articles`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
 Request:
+
 ```json
 {
   "articleNumber": "TV-900",
@@ -47,6 +52,7 @@ Request:
 ```
 
 Response — `HTTP 409`:
+
 ```json
 {
   "type": "https://pugling.app/errors/duplicate_key",
@@ -59,11 +65,13 @@ Response — `HTTP 409`:
 ```
 
 ## Artikel auflisten
+
 `GET /api/v1/supervisor/shop/articles`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
 Response — `HTTP 200`:
+
 ```json
 [
   {
@@ -115,11 +123,13 @@ Response — `HTTP 200`:
 ```
 
 ## Artikel auflisten (Suche)
+
 `GET /api/v1/supervisor/shop/articles?search=Fernseh`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
 Response — `HTTP 200`:
+
 ```json
 [
   {
@@ -144,11 +154,13 @@ Response — `HTTP 200`:
 ```
 
 ## Artikel ändern
+
 `PATCH /api/v1/supervisor/shop/articles/5`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
 Request:
+
 ```json
 {
   "title": "Fernsehzeit (30 Min)",
@@ -157,6 +169,7 @@ Request:
 ```
 
 Response — `HTTP 200`:
+
 ```json
 {
   "id": 5,
@@ -170,11 +183,13 @@ Response — `HTTP 200`:
 ```
 
 ## Angebot anlegen
+
 `POST /api/v1/supervisor/shop/articles/5/listings`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
 Request:
+
 ```json
 {
   "title": "30 Min Fernsehen",
@@ -188,6 +203,7 @@ Request:
 ```
 
 Response — `HTTP 201`:
+
 ```json
 {
   "id": 7,
@@ -211,11 +227,13 @@ Response — `HTTP 201`:
 ```
 
 ### Angebot anlegen (ungültiger Preis) — Fehlerfall
+
 `POST /api/v1/supervisor/shop/articles/5/listings`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
 Request:
+
 ```json
 {
   "coinPrice": 0,
@@ -227,6 +245,7 @@ Request:
 ```
 
 Response — `HTTP 400`:
+
 ```json
 {
   "type": "https://pugling.app/errors/validation_error",
@@ -239,11 +258,13 @@ Response — `HTTP 400`:
 ```
 
 ## Angebote auflisten
+
 `GET /api/v1/supervisor/shop/articles/5/listings`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
 Response — `HTTP 200`:
+
 ```json
 [
   {
@@ -269,11 +290,13 @@ Response — `HTTP 200`:
 ```
 
 ## Angebot ändern (Bestand auffüllen)
+
 `PATCH /api/v1/supervisor/shop/articles/5/listings/7`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
 Request:
+
 ```json
 {
   "currentStock": 5,
@@ -282,6 +305,7 @@ Request:
 ```
 
 Response — `HTTP 200`:
+
 ```json
 {
   "id": 7,
@@ -305,11 +329,13 @@ Response — `HTTP 200`:
 ```
 
 ## Shop-Sicht (Sohn)
+
 `GET /api/v1/student/me/shop`
 
 Rolle: **child** — `Authorization: Bearer <child-token>`
 
 Response — `HTTP 200`:
+
 ```json
 {
   "coins": 300,
@@ -375,16 +401,19 @@ Response — `HTTP 200`:
 ```
 
 ## Shop-Angebot kaufen
+
 `POST /api/v1/student/me/shop/listings/7/purchase`
 
 Rolle: **child** — `Authorization: Bearer <child-token>`
 
 Request:
+
 ```json
 {}
 ```
 
 Response — `HTTP 200`:
+
 ```json
 {
   "coins": 180,
@@ -450,16 +479,19 @@ Response — `HTTP 200`:
 ```
 
 ### Shop-Angebot kaufen (ausverkauft) — Fehlerfall
+
 `POST /api/v1/student/me/shop/listings/8/purchase`
 
 Rolle: **child** — `Authorization: Bearer <child-token>`
 
 Request:
+
 ```json
 {}
 ```
 
 Response — `HTTP 409`:
+
 ```json
 {
   "type": "https://pugling.app/errors/shop_insufficient_stock",
@@ -472,16 +504,19 @@ Response — `HTTP 409`:
 ```
 
 ### Shop-Angebot kaufen (deaktiviert) — Fehlerfall
+
 `POST /api/v1/student/me/shop/listings/8/purchase`
 
 Rolle: **child** — `Authorization: Bearer <child-token>`
 
 Request:
+
 ```json
 {}
 ```
 
 Response — `HTTP 400`:
+
 ```json
 {
   "type": "https://pugling.app/errors/shop_listing_inactive",
@@ -494,16 +529,19 @@ Response — `HTTP 400`:
 ```
 
 ### Shop-Angebot kaufen (kein Guthaben) — Fehlerfall
+
 `POST /api/v1/student/me/shop/listings/7/purchase`
 
 Rolle: **child** — `Authorization: Bearer <child-token>`
 
 Request:
+
 ```json
 {}
 ```
 
 Response — `HTTP 400`:
+
 ```json
 {
   "type": "https://pugling.app/errors/insufficient_coins",
@@ -516,11 +554,13 @@ Response — `HTTP 400`:
 ```
 
 ## Aktivierungsanfrage stellen
+
 `POST /api/v1/student/me/shop/inventory/5/activate`
 
 Rolle: **child** — `Authorization: Bearer <child-token>`
 
 Request:
+
 ```json
 {
   "quantity": 30
@@ -528,6 +568,7 @@ Request:
 ```
 
 Response — `HTTP 200`:
+
 ```json
 {
   "id": 1,
@@ -543,11 +584,13 @@ Response — `HTTP 200`:
 ```
 
 ### Aktivierungsanfrage (Inventar erschöpft) — Fehlerfall
+
 `POST /api/v1/student/me/shop/inventory/5/activate`
 
 Rolle: **child** — `Authorization: Bearer <child-token>`
 
 Request:
+
 ```json
 {
   "quantity": 999
@@ -555,6 +598,7 @@ Request:
 ```
 
 Response — `HTTP 400`:
+
 ```json
 {
   "type": "https://pugling.app/errors/insufficient_inventory",
@@ -567,11 +611,13 @@ Response — `HTTP 400`:
 ```
 
 ## Eigenes Inventar (Sohn)
+
 `GET /api/v1/student/me/shop/inventory`
 
 Rolle: **child** — `Authorization: Bearer <child-token>`
 
 Response — `HTTP 200`:
+
 ```json
 [
   {
@@ -586,11 +632,13 @@ Response — `HTTP 200`:
 ```
 
 ## Eigene Aktivierungen (Sohn)
+
 `GET /api/v1/student/me/shop/activations`
 
 Rolle: **child** — `Authorization: Bearer <child-token>`
 
 Response — `HTTP 200`:
+
 ```json
 [
   {
@@ -619,11 +667,13 @@ Response — `HTTP 200`:
 ```
 
 ## Kind-Inventar
+
 `GET /api/v1/supervisor/children/6/shop/inventory`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
 Response — `HTTP 200`:
+
 ```json
 [
   {
@@ -638,11 +688,13 @@ Response — `HTTP 200`:
 ```
 
 ## Kind-Käufe
+
 `GET /api/v1/supervisor/children/6/shop/purchases`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
 Response — `HTTP 200`:
+
 ```json
 [
   {
@@ -664,11 +716,13 @@ Response — `HTTP 200`:
 ```
 
 ## Kind-Aktivierungen
+
 `GET /api/v1/supervisor/children/6/shop/activations`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
 Response — `HTTP 200`:
+
 ```json
 [
   {
@@ -703,11 +757,13 @@ Response — `HTTP 200`:
 ```
 
 ## Aktivierung genehmigen
+
 `POST /api/v1/supervisor/children/6/shop/activations/1/approve`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
 Response — `HTTP 200`:
+
 ```json
 {
   "id": 1,
@@ -726,11 +782,13 @@ Response — `HTTP 200`:
 ```
 
 ### Aktivierung erneut genehmigen — Fehlerfall
+
 `POST /api/v1/supervisor/children/6/shop/activations/1/approve`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
 Response — `HTTP 409`:
+
 ```json
 {
   "type": "https://pugling.app/errors/activation_not_pending",
@@ -743,11 +801,13 @@ Response — `HTTP 409`:
 ```
 
 ### Aktivierung genehmigen (Inventar erschöpft) — Fehlerfall
+
 `POST /api/v1/supervisor/children/6/shop/activations/2/approve`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
 Response — `HTTP 400`:
+
 ```json
 {
   "type": "https://pugling.app/errors/insufficient_inventory",
@@ -760,11 +820,13 @@ Response — `HTTP 400`:
 ```
 
 ## Aktivierung ablehnen
+
 `POST /api/v1/supervisor/children/6/shop/activations/2/reject`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
 Response — `HTTP 200`:
+
 ```json
 {
   "id": 2,
@@ -783,11 +845,13 @@ Response — `HTTP 200`:
 ```
 
 ## Kauf stornieren (Vater)
+
 `POST /api/v1/supervisor/children/6/shop/purchases/1/cancel`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
 Response — `HTTP 200`:
+
 ```json
 {
   "id": 1,
@@ -807,22 +871,25 @@ Response — `HTTP 200`:
 ```
 
 ## Angebot löschen
+
 `DELETE /api/v1/supervisor/shop/articles/5/listings/7`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
 Response — `HTTP 204`:
+
 ```json
 (kein Inhalt)
 ```
 
 ## Artikel löschen
+
 `DELETE /api/v1/supervisor/shop/articles/5`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
 Response — `HTTP 204`:
+
 ```json
 (kein Inhalt)
 ```
-

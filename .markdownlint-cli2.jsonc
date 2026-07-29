@@ -1,10 +1,12 @@
 {
   // Läufer-Konfiguration für markdownlint-cli2. Die Regeln stehen in .markdownlint.jsonc,
-  // hier stehen nur die auszuschließenden Pfade (operative Prompts + generierte Artefakte).
+  // hier stehen nur der Geltungsbereich (Glob) und die auszuschließenden Pfade.
+  "globs": ["**/*.md"],
   "ignores": [
-    "node_modules/**",
+    "**/node_modules/**",
     "frontend/**",
     ".claude/**",
+    ".agents/**",
     "lehrplan/**"
   ]
 }

@@ -49,7 +49,7 @@ gegen eine laufende Instanz verifiziert. Export als Markdown über `GET remarks/
 > verworfen (`RemarkTests.UngueltigerKontext_VerhindertDasErfassenNicht`); dieselbe Haltung wie die
 > `SetNull`-FKs. Der ausdrücklich gesetzte `parentRemarkId` bleibt bewusst ein 400 – den setzt der Skill,
 > ein Fehlgriff dort ist ein Fehler und keine verwelkte Automatik.
-
+>
 > Beim Bauen von Etappe 3 aufgefallen: Die E2E-Suite lief in die **Login-Bremse** (`PermitLimit` 10/Minute,
 > pro IP – alle Specs teilen die localhost-Partition). Sie lag knapp darunter; die drei neuen Tests
 > brachten sie darüber, was einen *späteren* Spec mit „Login fehlgeschlagen" umwarf. Behoben über

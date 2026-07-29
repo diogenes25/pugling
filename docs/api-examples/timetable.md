@@ -3,11 +3,13 @@
 _Automatisch erzeugt von `DocsCaptureTests` (Integrationstest). Jedes Beispiel ist verifiziert: Status und – bei Fehlern – der maschinenlesbare `code` wurden im Testlauf geprüft. Nicht von Hand bearbeiten._
 
 ## Stundenplan-Eintrag anlegen
+
 `POST /api/v1/supervisor/children/1/timetable`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
 Request:
+
 ```json
 {
   "subjectId": 5,
@@ -17,6 +19,7 @@ Request:
 ```
 
 Response — `HTTP 201`:
+
 ```json
 {
   "id": 1,
@@ -29,11 +32,13 @@ Response — `HTTP 201`:
 ```
 
 ### Gleiches Fach am selben Wochentag — Fehlerfall
+
 `POST /api/v1/supervisor/children/1/timetable`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
 Request:
+
 ```json
 {
   "subjectId": 5,
@@ -43,6 +48,7 @@ Request:
 ```
 
 Response — `HTTP 409`:
+
 ```json
 {
   "type": "https://pugling.app/errors/timetable_slot_taken",
@@ -55,11 +61,13 @@ Response — `HTTP 409`:
 ```
 
 ### Unbekanntes Feld im Body — Fehlerfall
+
 `POST /api/v1/supervisor/children/1/timetable`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
 Request:
+
 ```json
 {
   "subjectId": 5,
@@ -70,6 +78,7 @@ Request:
 ```
 
 Response — `HTTP 400`:
+
 ```json
 {
   "type": "https://pugling.app/errors/unknown_field",
@@ -84,4 +93,3 @@ Response — `HTTP 400`:
   "traceId": "<trace-id>"
 }
 ```
-

@@ -63,7 +63,7 @@ Gebaut. Die Store-Tabelle hat jetzt eine Spalte "Tags": die Namen der globalen T
 **Verlauf** (1):
 
 > **claude-code** · 2026-07-27 22:52 UTC, Konto 11
-> 
+>
 > Gebaut am 2026-07-28: Tag-Spalte in der Store-Zeile (TagsCell in VaterVocab.tsx), Namen als Chips mit nowrap. Die neue Spalte schnitt "Loeschen" ab - deshalb dort gleich flexWrap + minWidth, siehe #4.
 
 ## #6 · Bug · erledigt
@@ -108,15 +108,15 @@ KORRIGIERT (die erste Fassung bezog sich auf /vater; gemeint war die Kopfzeilen-
 **Verlauf** (3):
 
 > **claude-code** · 2026-07-28 12:27 UTC, Konto 1
-> 
+>
 > Analyse zu 10 korrigiert: erste Fassung bezog sich auf die Seite /vater, gemeint war die Kopfzeilen-Navigation (VaterApp.tsx:32-47). Nachgezogen: fehlende Gruppierung, 'Neuer Plan' als Aktion zwischen Orten, uneinheitliche Emoji-Beschriftung, Umbruch im geteilten Header-Flex.
-
+>
 > **claude-code** · 2026-07-28 12:30 UTC, Konto 1
-> 
+>
 > Eingeplant in docs/vater-informationsarchitektur-plan.md (10+11+12 sind ein Thema: das Vater-Web hat keine Informationsarchitektur). Etappe 1: Nav in Gruppen Inhalte/Steuern/Belohnen (entlang der drei Ebenen), 'Uebersicht' -> 'Kinder & Plaene', 'Neuer Plan' raus (Aktion, doppelt), Beschriftung einheitlich, nav aus dem geteilten Header-Flex. Keine Dropdowns - flache Reihe mit role=group.
-
+>
 > **claude-code** · 2026-07-28 13:12 UTC, Konto 1
-> 
+>
 > Gebaut (Etappe 1 des Plans docs/vater-informationsarchitektur-plan.md): Nav in Gruppen Inhalte / Steuern / Belohnen / Entwicklung (neue Komponente NavGroup mit role=group + aria-label, sichtbare Beschriftung aria-hidden, sonst doppelte Ansage); Kopfzeile und Navigation in getrennten Zeilen, damit der Umbruch nicht mehr den rechten Block schiebt; 'Uebersicht' -> 'Kinder & Plaene' (mit Haus-Symbol); 'Neuer Plan' aus der Nav entfernt (Aktion, steht am Abschnitt Lehrplaene); alle Eintraege mit Symbol, Anmerkungen auf ein eigenes Zeichen (vorher zweimal dasselbe wie Klassenarbeiten). Sieben Textstellen mit dem alten Seitennamen mitgezogen (VaterKind, VaterPlanDetail, VaterWizard, VaterClassTests, VaterKonto, VaterRewards, VaterShop). E2E full-flow.spec.ts:39 und bilder.spec.ts:119 auf den Dashboard-Knopf umgestellt. Geprueft: npm run build + npm test gruen, im Dev-Server nachgesehen (12 Nav-Links, Umbruch faellt zwischen die Gruppen, Gruppennamen nicht als eigene Vorlesestelle im Accessibility-Baum). NICHT geprueft: Playwright - Port 5200 war von der echten Instanz belegt, die Suite verlangt eine eigene Wegwerf-DB.
 
 ## #11 · Ui · erledigt
@@ -134,11 +134,11 @@ Bestaetigt, mit einer Einschraenkung. /vater/exercises traegt vier Anliegen in e
 **Verlauf** (2):
 
 > **claude-code** · 2026-07-28 12:30 UTC, Konto 1
-> 
+>
 > Eingeplant in docs/vater-informationsarchitektur-plan.md (10+11+12 sind ein Thema: das Vater-Web hat keine Informationsarchitektur). Etappe 3: /vater/exercises wird die Verwaltung, /vater/exercises/neu das Anlegen; 'Neues Fach'/'Neues Kapitel' verlieren die Buehne und verweisen auf den Katalog. Noch nicht angefasst.
-
+>
 > **claude-code** · 2026-07-28 13:47 UTC, Konto 1
-> 
+>
 > Gebaut (Etappe 3 des Plans docs/vater-informationsarchitektur-plan.md): Anlegen und Verwalten sind getrennt. /vater/exercises verwaltet (Filter, Liste, Ausprobieren/Bearbeiten/Verwendung/Loeschen, Sortierung, Paging), /vater/exercises/neu legt an (VaterExerciseCreate.tsx mit VocabRefPicker). Die 575-Zeilen-Datei mit vier Anliegen in EINEM form ist damit aufgeloest. Die Anlege-Route traegt bewusst keinen Nav-Eintrag - sie ist eine Aktion, erreichbar ueber '+ Neue Uebung' (dieselbe Regel wie bei 'Neuer Plan'). 'Neues Fach' und 'Neues Kapitel' sind aus dem Formular verschwunden; an ihrer Stelle steht ein Satz mit Link auf den Katalog, der das seit Etappe 2 selbst kann. Zwei Dinge kamen beim Schneiden dazu: die Auswahl reist als ?subjectId=&chapterId= in beide Richtungen mit (sonst muesste man Fach und Kapitel nach jedem Wechsel neu einstellen), und Fach/Kapitel sind in der Verwaltung ein FILTER statt Pflicht - die Liste erscheint jetzt, sobald ein Fach gewaehlt ist. Zur Notiz in der Anmerkung: 'Zuweisen' war auf dieser Seite gar nicht vorhanden (das passiert in PlanPositions.tsx bzw. im Assistenten), von hier gab es nur den Lese-Blick 'Verwendung' - die dritte Trennung war schon da. Geprueft: npm run build, npm test und 14/14 Playwright gruen (uebungstypen und vater-von-null fahren den neuen Schnitt vollstaendig durch).
 
 ## #12 · Content · erledigt
@@ -156,11 +156,11 @@ Nutzen: 'Katalog verwalten' (CatalogAdmin.tsx) ist die einzige Stelle, an der Fa
 **Verlauf** (2):
 
 > **claude-code** · 2026-07-28 12:30 UTC, Konto 1
-> 
+>
 > Eingeplant in docs/vater-informationsarchitektur-plan.md (10+11+12 sind ein Thema: das Vater-Web hat keine Informationsarchitektur). Etappe 2: Katalog bekommt die eigene Route /vater/katalog (samt Nav-Eintrag unter 'Inhalte'), der Einklapper entfaellt; Lueckentexte analog /vater/lueckentexte. Die Frage nach dem Nutzen ist beantwortet, das 'versteckt' wird behoben.
-
+>
 > **claude-code** · 2026-07-28 13:47 UTC, Konto 1
-> 
+>
 > Gebaut (Etappe 2 des Plans docs/vater-informationsarchitektur-plan.md): Der Katalog hat eine eigene Route /vater/katalog (VaterKatalog.tsx, laedt die Faecher selbst) samt Nav-Eintrag in der Gruppe 'Inhalte'; der Einklapper samt 'Schliessen' ist entfallen - eine eigene Seite muss sich nicht aufklappen. Der Lueckentext-Store analog unter /vater/lueckentexte. Auf der Uebungen-Seite stehen zwei Links dorthin, damit man sie bei fehlendem Kapitel nicht in der Navigation suchen muss. Ueber den Plan hinaus noetig: Fach und Kapitel lassen sich im Katalog jetzt auch ANLEGEN (ein neues Fach wird gleich ausgewaehlt) - sonst waere es eine Seite, auf der man nur umbenennen und loeschen kann, und Etappe 3 haette die Anlege-Felder nicht wegnehmen koennen. Dabei bekam NewName ein fieldId von aussen: mit drei Instanzen war die feste DOM-id dreifach vergeben und jedes label zeigte auf dasselbe Feld; die drei 'Anlegen'-Knoepfe tragen jetzt unterscheidbare zugaengliche Namen. Ein Fund aus dem Test hat die Umsetzung geaendert: der erste Wurf tauschte CatalogAdmin bei jeder Aenderung gegen 'Lade...', weil onCatalogChanged ein reload ausloest und das loading erneut auf true setzt (useAsync.ts:27) - die Fach-Auswahl sprang zurueck und die Erfolgsmeldung erschien nie. Geprueft: npm run build, npm test und 14/14 Playwright gruen.
 
 ## #13 · Bug · erledigt
@@ -178,7 +178,7 @@ KORRIGIERT. Der Befund stimmt (leere Vokabel-Uebungen existieren und scheitern e
 **Verlauf** (1):
 
 > **claude-code** · 2026-07-28 14:05 UTC, Konto 1
-> 
+>
 > Gebaut. Drei Aenderungen, alle Backend: (1) Neuer Fehlercode exercise_empty (ApiErrors.cs) - bewusst getrennt von no_checkable_content, weil dort 'nichts zu pruefen' eine Eigenschaft des Typs ist (Aufsatz) und hier ein unfertiger Datenstand. (2) PlanPositionsController lehnt das Zuweisen einer ungefuellten Uebung ab (400 exercise_empty). 'Ungefuellt' ist registry-getrieben definiert: nur Typen mit StoreResolution.ItemTable und null Items - ein Aufsatz hat typbedingt nie Items und bleibt zuweisbar (eigener Regressionstest). (3) refs-from-tags weist einen leeren Treffersatz ab und laesst die Items unberuehrt, statt die Uebung lautlos zu leeren. Dazu: die Vorschau nennt jetzt den Grund (exercise_empty statt des allgemeinen no_checkable_content), damit ein leeres 'Ausprobieren' nicht wie ein Fehler der App aussieht - genau der Fall aus dem Mitschnitt von Anmerkung 10. NICHT gebaut, mit Begruendung in der korrigierten Antwort: keine Schranke am POST (zerstoerte 'erst anlegen, dann fuellen') und keine am Item-DELETE. Geprueft: 464/464 Tests gruen (6 neue in EmptyExerciseGuardTests.cs, darunter der Regressionsschutz fuer Aufsatz und fuer 'erst anlegen, dann fuellen'), dotnet format sauber, und docs/api-examples traegt ein verifiziertes Beispiel (Abdeckung 31/48 Codes).
 
 ## #14 · Bug · erledigt
@@ -196,10 +196,9 @@ Bestaetigt und behoben. Die Ursache war nicht eine falsche Pruefung, sondern das
 **Verlauf** (2):
 
 > **claude-code** · 2026-07-28 20:42 UTC, Konto 1
-> 
+>
 > Gebaut. Backend: neue gemeinsame Quelle ExerciseUsageQueries (BlockingUsage mit Own/Hidden + Explain), genutzt von ExerciseCatalogController.Usage und ExerciseControllerBase.Delete; UsageResponse um otherCarersCount erweitert; CancellationToken in Usage und Delete durchgereicht. Frontend: ExerciseUsage-Typ ergaenzt, die Verwendungs-Anzeige nennt 'Ausserdem N x bei Kindern, die du nicht betreust - darum laesst sich diese Uebung nicht loeschen.' Geprueft: 468/468 Backend-Tests (3 neue in ExerciseUsageScopeTests: zwei Vaeter, fremd betreutes Kind, plus die Gegenproben 'eigene Verwendung zaehlt nicht als fremd' und 'unbenutzt laesst sich loeschen'), 21 Vitest, 20 Playwright, dotnet format sauber. Zusaetzlich an den ECHTEN Daten nachgewiesen: Uebung 18 (Owner Vater 1) steckt in Plan 11 eines von Vater 7 betreuten Kindes - usage liefert jetzt otherCarersCount=1 statt zu schweigen, das 409 nennt denselben Grund, und die Anzeige im Browser zeigt den Satz. Das docs/api-examples-Beispiel zum 409 ist neu erzeugt.
-
+>
 > **claude-code** · 2026-07-28 21:03 UTC, Konto 1
-> 
+>
 > Nachgezogen fuer die Creator-Sicht. Auslegung vom Nutzer: dass ein Vater die Uebungen eines anderen nutzt, ist gewollt - es gibt Lehrer/Creator praktisch ohne Kinder, und diesen Part sollen KI-Creator-Apps uebernehmen. Damit kippt die Bedeutung der Zahl: fuer so ein Konto sind die beiden Listen DAUERHAFT leer, und 'Ausserdem N x bei Kindern, die du nicht betreust' unterstellt Kinder, die es nicht gibt. Belegt am geseedeten Vater 2 'Herr Schmidt (Englischlehrer)': keine Kinder, 4 eigene Uebungen, und fuer Uebung 12 liefert usage plans=0, classTests=0, otherLearnersCount=1. Zwei Aenderungen: (1) Gezaehlt werden jetzt KINDER, nicht Verwendungsstellen - das Feld hiess otherCarersCount, hielt aber eine Stellenzahl (eigener Fehler von vorher). Zwei Positionen im Plan desselben Kindes sind ein Nutzer; das 409 nennt weiterhin die Stellen, weil dort jemand aufraeumen muss. Feld heisst jetzt OtherLearnersCount. (2) Hat der Aufrufer keine eigene Verwendung, ERSETZT die Zahl die zwei leeren Listen statt sie zu ergaenzen: 'Im Einsatz bei 1 Kind - nicht von dir betreut, darum ohne Namen und ohne Plan-Titel. Loeschen ist deshalb gesperrt.' Zwei '-'-Zeilen lasen sich fuer einen Lehrer wie 'wird nicht benutzt' - genau die Falschaussage dieser Anmerkung. Dabei aufgefallen und NICHT behauptet: einen Satz 'zurueckziehen kannst du sie trotzdem' hatte ich geschrieben und wieder gestrichen - executePublic wird im Bearbeiten-Dialog nur durchgereicht (ExerciseEditModal.tsx:112), es gibt kein Bedienelement dafuer. Die Ruecknahme von Material ist also nur ueber die API moeglich; das bleibt offen. Geprueft: 469/469 Backend-Tests (neu: CreatorOhneKinder_ZaehltNutzendeKinder_NichtVerwendungsstellen - zwei Plaene desselben Kindes ergeben 1, nicht 2), 21 Vitest, 20 Playwright, dotnet format sauber, und im Browser an Uebung 18 nachgesehen.
-

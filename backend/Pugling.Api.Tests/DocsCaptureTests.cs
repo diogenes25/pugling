@@ -1080,9 +1080,9 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
 
         var groups = _entries.GroupBy(e => e.ResourceGroup).OrderBy(gr => gr.Key, StringComparer.Ordinal).ToList();
         foreach (var group in groups)
-            File.WriteAllText(Path.Combine(outDir, $"{group.Key}.md"), RenderGroup(group.Key, [.. group]));
+            File.WriteAllText(Path.Combine(outDir, $"{group.Key}.md"), NormalizeTrailingNewline(RenderGroup(group.Key, [.. group])));
 
-        File.WriteAllText(Path.Combine(outDir, "index.md"), RenderIndex(groups));
+        File.WriteAllText(Path.Combine(outDir, "index.md"), NormalizeTrailingNewline(RenderIndex(groups)));
     }
 
     private void WriteOpenApiExamples()
@@ -1152,7 +1152,7 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
 
         foreach (var e in entries)
         {
-            sb.AppendLine(e.IsError ? $"### {e.Title} — Fehlerfall" : $"## {e.Title}");
+            sb.AppendLine(e.IsError ? $"### {e.Title} — Fehlerfall" : $"## {e.Title}").AppendLine();
             sb.AppendLine($"`{e.Method} {e.Path}`").AppendLine();
             var bearer = e.Role switch
             {
@@ -1165,11 +1165,11 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
 
             if (e.RequestBodyJson is { } rq)
             {
-                sb.AppendLine("Request:").AppendLine("```json").AppendLine(rq).AppendLine("```").AppendLine();
+                sb.AppendLine("Request:").AppendLine().AppendLine("```json").AppendLine(rq).AppendLine("```").AppendLine();
             }
 
             var mediaNote = e.IsJsonResponse ? "" : $" (`{e.ResponseMediaType}`)";
-            sb.AppendLine($"Response — `HTTP {e.ActualStatus}`{mediaNote}:");
+            sb.AppendLine($"Response — `HTTP {e.ActualStatus}`{mediaNote}:").AppendLine();
             var body = Truncate(e.ResponseBodyJson) ?? "(kein Inhalt)";
             // Zaun und Sprache aus dem Antwort-Typ: Der Markdown-Export enthält selbst ```json-Blöcke,
             // ein dreifacher Zaun würde vorzeitig schließen und die Seite zerlegen (CommonMark).
@@ -1226,6 +1226,10 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
         }
         return sb.ToString();
     }
+
+    // `AppendLine` am Ende jeder Sektion summiert sich zu mehreren Leerzeilen (MD012); markdownlint
+    // will außerdem genau einen abschließenden Zeilenumbruch (MD047), keinen zusätzlichen.
+    private static string NormalizeTrailingNewline(string markdown) => markdown.TrimEnd() + "\n";
 
     /// <summary>Findet die Repo-Wurzel: von <see cref="AppContext.BaseDirectory"/> aufwärts, bis <c>backend</c>+<c>docs</c> (oder <c>.git</c>) vorliegen.</summary>
     private static string RepoRoot()

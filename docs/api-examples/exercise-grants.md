@@ -3,11 +3,13 @@
 _Automatisch erzeugt von `DocsCaptureTests` (Integrationstest). Jedes Beispiel ist verifiziert: Status und – bei Fehlern – der maschinenlesbare `code` wurden im Testlauf geprüft. Nicht von Hand bearbeiten._
 
 ## Rechte einer Übung auflisten (nur Owner)
+
 `GET /api/v1/creator/exercises/13/grants`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
 Response — `HTTP 200`:
+
 ```json
 [
   {
@@ -21,11 +23,13 @@ Response — `HTTP 200`:
 ```
 
 ### Rechte einer fremden Übung auflisten — Fehlerfall
+
 `GET /api/v1/creator/exercises/13/grants`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
 Response — `HTTP 403`:
+
 ```json
 {
   "type": "https://pugling.app/errors/not_owner",
@@ -38,11 +42,13 @@ Response — `HTTP 403`:
 ```
 
 ## Write-Recht an anderen Creator vergeben
+
 `POST /api/v1/creator/exercises/13/grants`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
 Request:
+
 ```json
 {
   "creatorId": 4,
@@ -51,6 +57,7 @@ Request:
 ```
 
 Response — `HTTP 201`:
+
 ```json
 {
   "creatorId": 4,
@@ -62,11 +69,13 @@ Response — `HTTP 201`:
 ```
 
 ### Letzten Owner entfernen — Fehlerfall
+
 `DELETE /api/v1/creator/exercises/13/grants/1/Owner`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
 Response — `HTTP 409`:
+
 ```json
 {
   "type": "https://pugling.app/errors/last_owner",
@@ -79,11 +88,13 @@ Response — `HTTP 409`:
 ```
 
 ## Nicht öffentlich ausführbare Übung anlegen
+
 `POST /api/v1/creator/subjects/5/chapters/7/vocabulary`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
 Request:
+
 ```json
 {
   "title": "Nur intern",
@@ -99,6 +110,7 @@ Request:
 ```
 
 Response — `HTTP 201`:
+
 ```json
 {
   "id": 25,
@@ -136,11 +148,13 @@ Response — `HTTP 201`:
 ```
 
 ## Lehrplan für eigenes Kind anlegen
+
 `POST /api/v1/supervisor/study-plans`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
 Request:
+
 ```json
 {
   "childId": 3,
@@ -150,6 +164,7 @@ Request:
 ```
 
 Response — `HTTP 201`:
+
 ```json
 {
   "id": 3,
@@ -166,11 +181,13 @@ Response — `HTTP 201`:
 ```
 
 ### Nicht ausführbare Übung zuweisen — Fehlerfall
+
 `POST /api/v1/supervisor/study-plans/3/positions`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
 Request:
+
 ```json
 {
   "exerciseId": 25
@@ -178,6 +195,7 @@ Request:
 ```
 
 Response — `HTTP 403`:
+
 ```json
 {
   "type": "https://pugling.app/errors/exercise_not_executable",
@@ -188,4 +206,3 @@ Response — `HTTP 403`:
   "traceId": "<trace-id>"
 }
 ```
-

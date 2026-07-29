@@ -3,11 +3,13 @@
 _Automatisch erzeugt von `DocsCaptureTests` (Integrationstest). Jedes Beispiel ist verifiziert: Status und – bei Fehlern – der maschinenlesbare `code` wurden im Testlauf geprüft. Nicht von Hand bearbeiten._
 
 ## Eigene Kinder auflisten
+
 `GET /api/v1/supervisor/children`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
 Response — `HTTP 200`:
+
 ```json
 [
   {
@@ -32,11 +34,13 @@ Response — `HTTP 200`:
 ```
 
 ## Kind anlegen
+
 `POST /api/v1/supervisor/children`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
 Request:
+
 ```json
 {
   "name": "Doku-Kind",
@@ -45,6 +49,7 @@ Request:
 ```
 
 Response — `HTTP 201`:
+
 ```json
 {
   "id": 4,
@@ -63,11 +68,13 @@ Response — `HTTP 201`:
 ```
 
 ### Kind ohne Namen anlegen — Fehlerfall
+
 `POST /api/v1/supervisor/children`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
 Request:
+
 ```json
 {
   "name": "",
@@ -76,6 +83,7 @@ Request:
 ```
 
 Response — `HTTP 400`:
+
 ```json
 {
   "type": "https://pugling.app/errors/validation_error",
@@ -88,11 +96,13 @@ Response — `HTTP 400`:
 ```
 
 ## Einzelnes Kind lesen
+
 `GET /api/v1/supervisor/children/4`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
 Response — `HTTP 200`:
+
 ```json
 {
   "id": 4,
@@ -111,11 +121,13 @@ Response — `HTTP 200`:
 ```
 
 ## Kind ändern (Klassenstufe)
+
 `PATCH /api/v1/supervisor/children/4`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
 Request:
+
 ```json
 {
   "grade": 4
@@ -123,6 +135,7 @@ Request:
 ```
 
 Response — `HTTP 200`:
+
 ```json
 {
   "id": 4,
@@ -141,11 +154,13 @@ Response — `HTTP 200`:
 ```
 
 ### Fremdes Kind lesen — Fehlerfall
+
 `GET /api/v1/supervisor/children/3`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
 Response — `HTTP 404`:
+
 ```json
 {
   "type": "https://pugling.app/errors/not_found",
@@ -158,12 +173,13 @@ Response — `HTTP 404`:
 ```
 
 ## Kind löschen
+
 `DELETE /api/v1/supervisor/children/4`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
 Response — `HTTP 204`:
+
 ```json
 (kein Inhalt)
 ```
-

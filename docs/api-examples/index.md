@@ -78,4 +78,3 @@ Verifiziert: **33 / 52** Codes aus `ApiErrors`.
 - `rate_limited` — Login-Rate-Limit ist in der Test-Factory bewusst abgeschaltet (`RateLimiting:LoginEnabled=false`), sonst würden die vielen Test-Logins scheitern.
 - `remark_comment_not_found` — Über HTTP im In-Process-Test nicht erreichbar.
 - `unknown_exercise_type` — Über HTTP im In-Process-Test nicht erreichbar.
-

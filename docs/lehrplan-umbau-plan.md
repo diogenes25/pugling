@@ -9,7 +9,7 @@ und [docs/api-examples/study-plans.md](api-examples/study-plans.md).
 Ein **Lehrplan** ist die **Zusammenstellung mehrerer Übungen** mit individuellen
 Zielen (Tag/Woche) und Punkten – gemischte Verfahren erlaubt. Beispiel:
 
-```
+```text
 Lehrplan für Sohn 1
  - Englisch
    - Vokabeln (10 Vokabeln, neu, Zeigen)   → Tagesziel
@@ -26,6 +26,7 @@ Vätern teilbar. **Lehrpläne** existieren unabhängig und referenzieren Übunge
 ## Ausgangsbefund (Ist-Zustand)
 
 Es existieren heute **zwei getrennte, duplizierte Inhaltswelten**:
+
 - **Katalog** (`Subject → Chapter → Exercise`): Inhalt liegt **inline in `Exercise.ConfigJson`**
   (z. B. die 30 Vokabeln in `VocabularyConfig.Items`). Vom Lern-Motor **abgekoppelt**.
 - **Lehrplan-Welt** (`StudyPlan → StudyPlanItem`): `StudyPlanItem` verweist direkt auf

@@ -226,7 +226,7 @@ per Slug/Synonym auf einen `InterestTag` abgebildet und sonst als neuer Tag ange
 
 Eine Stelle, ein Service – analog zum `ScoringService` als *der* Ort für Punkte.
 
-```
+```text
 Eingang: (Träger, Kind, MediaPurpose)
 Ausgang: MediaVariant + Alt-Text  |  null (kein Bild)
 ```

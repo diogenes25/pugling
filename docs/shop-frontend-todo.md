@@ -32,7 +32,9 @@ React-Frontend hatte dafür zunächst **keine Oberfläche**; diese Lücke ist mi
 ## Zu bauen
 
 ### 1. Sohn-Shop-Screen (`/sohn/shop`, Nav 🛒)
+
 Gegenstück zu `SohnSkins`. Drei Bereiche (siehe [Sohn-App-Funktionsbeschreibung §4.7](sohn-app-funktionsbeschreibung.md)):
+
 - **Kaufen:** `GET /api/v1/student/me/shop` → `{ coins, gems, available[], inventory[], purchases[] }`;
   Kauf `POST /api/v1/student/me/shop/listings/{listingId}/purchase`.
 - **Inventar + Einlösen beantragen:** `GET …/me/shop/inventory`, `POST …/me/shop/inventory/{articleId}/activate { quantity }`.
@@ -40,6 +42,7 @@ Gegenstück zu `SohnSkins`. Drei Bereiche (siehe [Sohn-App-Funktionsbeschreibung
 - Nav-Eintrag in `SohnApp.tsx` ergänzen; Konto-Text (`SohnKonto.tsx`) zeigt dann korrekt auf den echten Tab.
 
 ### 2. Vater-Shop-Verwaltung (`/vater/shop`)
+
 - **Artikel-Katalog:** `GET/POST /api/v1/supervisor/shop/articles`, `PATCH/DELETE …/articles/{id}`.
 - **Angebote je Artikel:** `GET/POST …/articles/{id}/listings`, `PATCH/DELETE …/listings/{lid}` (Coin/Gem-Preis,
   `unitsPerPurchase`, Bestand, `ShopRefillKind`).
@@ -48,6 +51,7 @@ Gegenstück zu `SohnSkins`. Drei Bereiche (siehe [Sohn-App-Funktionsbeschreibung
 - Nav-Eintrag in `VaterApp.tsx`; Konto-Text (`VaterKonto.tsx`) auf den echten Tab zeigen lassen.
 
 ### 3. API-Client + Typen ergänzen
+
 Shop-Methoden in `api.ts` und Typen in `types.ts` (analog zu den entfernten Reward-Typen). Verifizierte
 Request/Response-Beispiele: [`docs/api-examples/shop.md`](api-examples/shop.md).
 
@@ -60,6 +64,7 @@ Request/Response-Beispiele: [`docs/api-examples/shop.md`](api-examples/shop.md).
   Missionen + Auszeichnungen; „Rewards" ist ein Namensfossil).
 
 ## Verweise
+
 - Ökonomie-/Endpunkt-Details: [wiki/05](../wiki/05-punkte-und-bonus.md), [wiki/06](../wiki/06-sohn-app.md),
   [wiki/07 API-Referenz](../wiki/07-api-referenz.md).
 - E2E ([`frontend/e2e/full-flow.spec.ts`](../frontend/e2e/full-flow.spec.ts)) fährt den Shop bislang **nicht** –

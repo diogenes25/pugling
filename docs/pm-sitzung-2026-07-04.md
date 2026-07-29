@@ -20,6 +20,7 @@ wurde als bekannte konzeptionelle Doppelspur notiert (siehe Backlog B-9).
 ## Runde 1 — Vorstellung & Feedback
 
 ### PM-Vorstellung (Kurzfassung, was demonstriert wurde)
+
 - **Vater-Web** (`/vater`): Login, Kinder anlegen (Name/Klasse/PIN) + Punktestand, Vokabel-Store,
   Lehrplan-Assistent (Kind → „Wo hakt es?" → Vokabeln → Feinschliff → erstellen), Plan-Detail mit
   Punkte/Tage/Streak, Tagesverlauf und Leitner-Boxen.
@@ -43,10 +44,12 @@ wurde als bekannte konzeptionelle Doppelspur notiert (siehe Backlog B-9).
 ![Sohn-App mit Tagesmission](images/sohn-tagesmission.png)
 
 ### Feedback Vater (O-Ton, gekürzt)
+
 **Gefällt:** Lehrplan-Assistent („ich will steuern, nicht basteln"); server-vergebene Punkte
 (fälschungssicher = Grundvoraussetzung); Plan-Detail als Beleg der Wirkung; die Arcade zieht das Kind rein.
 
 **Stört / fehlt:**
+
 - **Klassenarbeiten** nicht anlegbar — „der eigentliche Ernstfall entscheidet die Note".
 - Kein **Lern-Report**, welche Vokabel sitzt/nicht sitzt (wird berechnet, aber nicht gezeigt).
 - **Belohnungen/Missionen** nicht selbst festlegbar — „mein Motivationshebel, beim Sohn aktuell leer".
@@ -54,15 +57,18 @@ wurde als bekannte konzeptionelle Doppelspur notiert (siehe Backlog B-9).
 - Keine **Tages-/Mehr-Kind-Übersicht** („wer hat gestern was verpasst?").
 
 **Top-3 (K.-o.-Kriterien):**
+
 1. Klassenarbeiten anlegen, vorbereiten, nachüben.
 2. Belohnungen/Missionen selbst festlegen.
 3. Pläne nachträglich ändern/verlängern.
 
 ### Feedback Sohn (O-Ton, gekürzt)
+
 **Mega:** Helden-Login; **Combo** (⚡, fliegender Ninja ab ×10); knuffiges Maskottchen +
 Münzen sammeln; „SIEG!"-Prozent-Ring.
 
 **Nervt / verarscht:**
+
 - **Skin-Kauf ist Fake**: Münzen gehen nicht runter, auf anderem Gerät ist der Skin weg. „Dann spar ich nie wieder."
 - Manches Üben zählt **0 Münzen/keine Combo** ohne Erklärung (fühlt sich kaputt an).
 - **Kein Sound / kein Vibrieren**; **keine Feier** bei Mission/Badge.
@@ -70,13 +76,14 @@ Münzen sammeln; „SIEG!"-Prozent-Ring.
 - Üben immer gleich → langweilig; kein Tempo-Modus, kein Level-Pfad, keine Buchstaben-Kästchen.
 
 **Top-3 Wünsche:**
+
 1. **Skins richtig kaufen** (Münzen weg, Skin bleibt, geräteübergreifend).
 2. **Sound + Haptik + „TADAA"-Moment** bei Combo/Sieg/Badge.
 3. **Abwechslung** (Tempo-Modus, Buchstaben-Kästchen mit Tipp-Knopf).
 
 ---
 
-## PM-Synthese & Priorisierung (→ Entwickler)
+## PM-Synthese & Priorisierung Sitzung 1 (→ Entwickler)
 
 **Beobachtung:** Fast alles, was der Vater vermisst, existiert bereits im Backend, aber ohne
 Vater-UI. Fast alles, was den Sohn nervt, ist Frontend-Politur — **außer** dem Skin-Kauf, der ein
@@ -96,6 +103,7 @@ Vater setzt Belohnung → Sohn verdient Münzen → Sohn gibt Münzen wirklich a
 | P3 | Übungs-Abwechslung (Tempo-Modus, LetterBoxes, Tipp-Knopf) | L, Frontend | Roadmap |
 
 **Entwickler-Brief Iteration 1 (P0):** Skin-Kauf serverseitig echt machen.
+
 - Server ist Quelle der Wahrheit für Kosten & Besitz (kein Client-Betrug).
 - Kauf = negative Punkte-Buchung (neuer `PointKind`) + Besitz/ausgerüsteter Skin am `Child`.
 - Guards: existiert, nicht schon besessen, Deckung; Rollen-/Ownership-sauber (nur der Sohn selbst).
@@ -106,6 +114,7 @@ Vater setzt Belohnung → Sohn verdient Münzen → Sohn gibt Münzen wirklich a
 ## Iteration 1 — umgesetzt (P0: Skin-Kauf server-autoritativ)
 
 **Backend (API-First):**
+
 - Neuer `PointKind.SkinPurchase`; Skin-Kauf = negative Punkte-Buchung.
 - `Child.SelectedSkin` + `Child.OwnedSkins` (JSON) — Besitz/Auswahl persistieren am Kind
   (geräteübergreifend). Migration `SkinOwnership` (Bestandskinder: Starter „pug" vorbelegt).
@@ -125,8 +134,7 @@ Vater-Zugriff→403). **Gesamte Suite: 87/87 grün.**
 
 ## Runde 2 — Re-Review
 
-**Sohn:** Wunsch #1 (Skins) erfüllt und getestet („auf Papas Handy eingeloggt und mein Skin war da").
-#2 (Sound/Feier) und #3 (Abwechslung) bleiben gewünscht, aber **kein Muss-sofort**.
+**Sohn:** Wunsch #1 (Skins) erfüllt und getestet („auf Papas Handy eingeloggt und mein Skin war da"). Wunsch #2 (Sound/Feier) und #3 (Abwechslung) bleiben gewünscht, aber **kein Muss-sofort**.
 → **Für den Moment ZUFRIEDEN**, mit dem Versprechen, dass #2/#3 als Nächstes kommen.
 
 **Vater:** Akzeptiert die Begründung, dass zuerst der Skin-Fehler behoben wurde („einmaliger
@@ -181,7 +189,7 @@ Gibt die Sohn-Wünsche #2/#3 ausdrücklich für die nächste Runde frei.
 **Sohn:** bereits in Runde 2 zufrieden; durch Iterationen 2–4 nichts an seiner Erfahrung verschlechtert,
 seine Belohnungs-Panels werden nun (durch die Vater-Missionen) gefüllt.
 
-### ✅ Ergebnis: Beide zufrieden — Iteration abgeschlossen.
+### ✅ Ergebnis: Beide zufrieden — Iteration abgeschlossen
 
 - **Sohn:** zufrieden (echter Skin-Kauf); #2/#3 als Nächstes zugesagt.
 - **Vater:** wirklich zufrieden (alle drei Top-3-Punkte in der Oberfläche bedienbar), formell abgenommen.
@@ -209,6 +217,7 @@ seine Belohnungs-Panels werden nun (durch die Vater-Missionen) gefüllt.
 ## Nachtrag — Code-Review-Fixes (gleiche Sitzung)
 
 Nach der Abnahme lief ein High-Effort-Code-Review (8 Finder-Angles). Behobene Korrektheits-Findings:
+
 - **PlanEditForm nullt keine Schwellen mehr:** String-basiertes Formular; leere Zahlenfelder werden
   ausgelassen statt als `0` gespeichert (verhinderte stilles „bestehen ab 0 %").
 - **Skin-Kauf nebenläufigkeitssicher:** `Child.ConcurrencyStamp` als EF-Concurrency-Token (Migration
@@ -229,6 +238,7 @@ Design-Entscheidungen (vom Nutzer bestätigt): **Vater genehmigt vorher** (Münz
 **feste Prämien** (Titel + Münzpreis).
 
 **Backend (API-First):**
+
 - Neue Entitäten `Reward` (einlösbare Prämie) + `RewardRedemption` (Anfrage mit Status
   Requested/Approved/Rejected, Titel/Kosten als Momentaufnahme); `PointKind.Reward`; Migration
   `RewardsRedemptions`. Beispiel-Prämien geseedet (30 Min Fernsehen usw.).
@@ -238,6 +248,7 @@ Design-Entscheidungen (vom Nutzer bestätigt): **Vater genehmigt vorher** (Münz
   `POST me/rewards/{id}/redeem` (Anfrage, **keine** Abbuchung; Doppel-Anfrage → 409).
 
 **Frontend:**
+
 - Vater: „Prämien zum Einlösen"-Manager auf dem Belohnungen-Screen; neuer Screen **„💰 Konto"**
   (`/vater/konto`): Münzstand, offene Anfragen genehmigen/ablehnen, Entschieden-Historie, **Buchungsverlauf**.
 - Sohn: neuer Tab **„💰 Konto"** (`/sohn/konto`): Münzstand, Prämien anfragen, eigene Anfragen mit
@@ -252,7 +263,7 @@ Offen (Vater-Komfort-Rest, nicht-blockierend): Mehr-Kind-Tagesdashboard, Mastery
 ---
 ---
 
-# PM-Sitzung 2 (gleicher Tag): „Erfolg fühlbar machen"
+## PM-Sitzung 2 (gleicher Tag): „Erfolg fühlbar machen"
 
 **Datum:** 2026-07-04  ·  **Moderation:** PM
 **Teilnehmer:** Vater (steuert) · Sohn (~11, 5. Klasse, Französisch) · Entwickler
@@ -268,6 +279,7 @@ Zwei Recon-Durchgänge durch die reale App (Sohn-Arcade `frontend/src/sohn`, Vat
 ### Feedback Sohn (O-Ton) — belegt an Datei:Zeile
 
 **Nervt / fehlt (belegt):**
+
 - **Alles ist stumm.** Kein einziger Ton bei Treffer, Combo, Sieg — projektweit **0** Treffer für
   `Audio`/`AudioContext`/`.play()` außer dem nativen Vokabel-Anhör-Player im Test
   ([SohnTest.tsx:96](frontend/src/sohn/SohnTest.tsx#L96)). „Ein Spiel ohne Sound? Fühlt sich tot an."
@@ -292,6 +304,7 @@ Zwei Recon-Durchgänge durch die reale App (Sohn-Arcade `frontend/src/sohn`, Vat
 
 Der Vater hat seine Top-3 in Sitzung 1 abgenommen und die Sohn-Wünsche freigegeben. Offen bleibt
 sein *nicht-blockierender* Komfort:
+
 - **Lern-Report „welche Vokabel sitzt/sitzt nicht" wird berechnet, aber nicht gezeigt.** Der Endpunkt
   `GET /study-plans/{planId}/report` liefert pro Vokabel `MasteryPercent`, Test-Trefferquote, Box,
   Test-Historie, Sohn-Bewertungen ([StudyPlansController.cs:292-303](backend/Pugling.Api/Controllers/Supervisor/StudyPlansController.cs#L292-L303)),
@@ -304,9 +317,10 @@ sein *nicht-blockierender* Komfort:
 **Top (nicht-blockierend, vom Vater als „kann warten" markiert):** 1) Mastery-Report-Ansicht.
 2) Mehr-Kind-Tagesdashboard.
 
-## PM-Synthese & Priorisierung (→ Entwickler)
+## PM-Synthese & Priorisierung Sitzung 2 (→ Entwickler)
 
 **Beobachtung — nach „wo liegt die Arbeit wirklich":**
+
 - Sohns #1 ist zu ~80 % *Verkabelung vorhandener Mechanik*: die Feier-Engine steht, sie ist nur
   stumm und nicht an Mission/Badge gehängt. Sound/Haptik sind netto-neu, aber klein (WebAudio
   synthetisiert → keine Asset-Dateien, offline-tauglich; `navigator.vibrate` trivial). **Reines
@@ -329,6 +343,7 @@ jeder Erfolg (Treffer, Combo, Sieg, **Mission, Badge**) bekommt denselben mehrsi
 
 **Entwickler-Brief Iteration 6 (P0):** Jeden Erfolg mehrsinnig machen — ohne die Flow-Robustheit zu
 gefährden.
+
 - **Zentralisieren:** `celebrate(tier,…)` löst künftig *automatisch* Ton + Haptik passend zur Stufe
   aus. Dann erben die bestehenden Aufrufe (Combo, Sieg) den Ton geschenkt, ohne jede Call-Site
   anzufassen.
@@ -346,6 +361,7 @@ gefährden.
 ## Iteration 6 — umgesetzt (P0: „Erfolg fühlbar machen")
 
 **Frontend (kein Backend nötig — Feier-Engine existierte, war nur stumm und nicht verkabelt):**
+
 - **Neu [feedback.ts](frontend/src/lib/feedback.ts):** synthetisierter Erfolgs-Ton (WebAudio,
   `triangle`-Oszillator, C-Dur-Arpeggio bei „big" — keine Asset-Dateien, offline-tauglich) + Haptik
   (`navigator.vibrate`) + Mute in `localStorage`. Hart abgesichert: fehlt `AudioContext`/`vibrate`
@@ -362,6 +378,7 @@ gefährden.
   Wochenziele feiern nach Reset erneut.
 
 **Verifikation (real):**
+
 - **Frontend-Build sauber** (`tsc -b && vite build`, 0 Fehler).
 - **E2E grün** (`npm run test:e2e`: 1 passed, 30 s) — bestätigt zugleich die Kern-Abnahmebedingung:
   die Audio-/Haptik-Guards **werfen im Headless-Chromium nicht**, der Vater→Sohn-Loop läuft unverändert.
@@ -383,7 +400,7 @@ respektiert (seine Komfort-Punkte wurden nicht übersprungen — Mastery-Report 
 *vor* weiterer Sohn-Politur). → **Einverstanden.** Bedingung fürs nächste Mal: sein Mastery-Report
 kommt jetzt dran.
 
-### ✅ Ergebnis: P0 geliefert & verifiziert; beide einverstanden — mit einem ehrlichen Geräte-Vorbehalt beim Klang.
+### ✅ Ergebnis: P0 geliefert & verifiziert; beide einverstanden — mit einem ehrlichen Geräte-Vorbehalt beim Klang
 
 ## Offene Roadmap (nach Iteration 6, priorisiert)
 
@@ -406,4 +423,3 @@ kommt jetzt dran.
   entfernt), `GamificationPanels.tsx` (Feier bei neuer Mission/neuem Badge), `index.css` (`.mute-toggle`).
 - **Kein Backend, keine Migration, keine neuen Integrationstests** (rein Frontend); Absicherung über
   Build + E2E + adversarialen Review.
-

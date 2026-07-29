@@ -3,11 +3,13 @@
 _Automatisch erzeugt von `DocsCaptureTests` (Integrationstest). Jedes Beispiel ist verifiziert: Status und – bei Fehlern – der maschinenlesbare `code` wurden im Testlauf geprüft. Nicht von Hand bearbeiten._
 
 ## Vater registrieren (anonym)
+
 `POST /api/v1/supervisor/adults`
 
 Rolle: **anonymous** — _(kein Token)_
 
 Request:
+
 ```json
 {
   "name": "Neuer Papa",
@@ -16,6 +18,7 @@ Request:
 ```
 
 Response — `HTTP 201`:
+
 ```json
 {
   "id": 5,
@@ -27,11 +30,13 @@ Response — `HTTP 201`:
 ```
 
 ## Vater-Login
+
 `POST /api/v1/auth/adult`
 
 Rolle: **anonymous** — _(kein Token)_
 
 Request:
+
 ```json
 {
   "adultId": 1,
@@ -40,6 +45,7 @@ Request:
 ```
 
 Response — `HTTP 200`:
+
 ```json
 {
   "token": "<redacted-jwt>",
@@ -51,11 +57,13 @@ Response — `HTTP 200`:
 ```
 
 ## Sohn-Login
+
 `POST /api/v1/auth/child`
 
 Rolle: **anonymous** — _(kein Token)_
 
 Request:
+
 ```json
 {
   "childId": 1,
@@ -64,6 +72,7 @@ Request:
 ```
 
 Response — `HTTP 200`:
+
 ```json
 {
   "token": "<redacted-jwt>",
@@ -75,11 +84,13 @@ Response — `HTTP 200`:
 ```
 
 ### Login mit falscher PIN — Fehlerfall
+
 `POST /api/v1/auth/adult`
 
 Rolle: **anonymous** — _(kein Token)_
 
 Request:
+
 ```json
 {
   "adultId": 1,
@@ -88,6 +99,7 @@ Request:
 ```
 
 Response — `HTTP 401`:
+
 ```json
 {
   "type": "https://pugling.app/errors/invalid_credentials",
@@ -100,11 +112,13 @@ Response — `HTTP 401`:
 ```
 
 ### Login mit nicht-numerischer adultId — Fehlerfall
+
 `POST /api/v1/auth/adult`
 
 Rolle: **anonymous** — _(kein Token)_
 
 Request:
+
 ```json
 {
   "adultId": "1a",
@@ -113,6 +127,7 @@ Request:
 ```
 
 Response — `HTTP 400`:
+
 ```json
 {
   "type": "https://pugling.app/errors/validation_error",
@@ -129,11 +144,13 @@ Response — `HTTP 400`:
 ```
 
 ### Selbstauskunft ohne Token — Fehlerfall
+
 `GET /api/v1/auth/me`
 
 Rolle: **anonymous** — _(kein Token)_
 
 Response — `HTTP 401`:
+
 ```json
 {
   "type": "https://pugling.app/errors/unauthorized",
@@ -143,4 +160,3 @@ Response — `HTTP 401`:
   "code": "unauthorized"
 }
 ```
-

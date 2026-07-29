@@ -3,11 +3,13 @@
 _Automatisch erzeugt von `DocsCaptureTests` (Integrationstest). Jedes Beispiel ist verifiziert: Status und – bei Fehlern – der maschinenlesbare `code` wurden im Testlauf geprüft. Nicht von Hand bearbeiten._
 
 ## Tag anlegen (Vater)
+
 `POST /api/v1/creator/tags`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
 Request:
+
 ```json
 {
   "childId": 1,
@@ -17,6 +19,7 @@ Request:
 ```
 
 Response — `HTTP 201`:
+
 ```json
 {
   "id": 3,
@@ -31,11 +34,13 @@ Response — `HTTP 201`:
 ```
 
 ## Tag anlegen (Sohn)
+
 `POST /api/v1/creator/tags`
 
 Rolle: **child** — `Authorization: Bearer <child-token>`
 
 Request:
+
 ```json
 {
   "childId": 1,
@@ -45,6 +50,7 @@ Request:
 ```
 
 Response — `HTTP 201`:
+
 ```json
 {
   "id": 4,
@@ -59,11 +65,13 @@ Response — `HTTP 201`:
 ```
 
 ### Tag mit doppeltem Namen — Fehlerfall
+
 `POST /api/v1/creator/tags`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
 Request:
+
 ```json
 {
   "childId": 1,
@@ -72,6 +80,7 @@ Request:
 ```
 
 Response — `HTTP 400`:
+
 ```json
 {
   "type": "https://pugling.app/errors/duplicate_tag_name",
@@ -84,11 +93,13 @@ Response — `HTTP 400`:
 ```
 
 ### Tag für fremdes Kind anlegen — Fehlerfall
+
 `POST /api/v1/creator/tags`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
 Request:
+
 ```json
 {
   "childId": 3,
@@ -97,6 +108,7 @@ Request:
 ```
 
 Response — `HTTP 403`:
+
 ```json
 {
   "type": "https://pugling.app/errors/forbidden",
@@ -108,11 +120,13 @@ Response — `HTTP 403`:
 ```
 
 ### Unbekannte Übungen taggen — Fehlerfall
+
 `POST /api/v1/creator/tags/3/exercises`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
 Request:
+
 ```json
 {
   "exerciseIds": [
@@ -122,6 +136,7 @@ Request:
 ```
 
 Response — `HTTP 400`:
+
 ```json
 {
   "type": "https://pugling.app/errors/invalid_reference",
@@ -132,4 +147,3 @@ Response — `HTTP 400`:
   "traceId": "<trace-id>"
 }
 ```
-

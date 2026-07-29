@@ -8,9 +8,9 @@ name: CI
 # soll zuerst im Log stehen; die Formatprüfung ist mit ~140 s der teuerste Schritt und sagt fachlich nichts.
 # Das Deployment hängt über `workflow_run` an diesem Workflow (siehe deploy-azure.yml).
 #
-# Zwei Jobs, **bewusst ohne `needs:` zwischen ihnen** (Etappe D1): Backend und Frontend prüfen
-# Unabhängiges und laufen parallel. Das Deploy hängt am Gesamtergebnis des Workflows, zieht den
-# Frontend-Job also automatisch mit – ohne dass hier eine Reihenfolge erfunden werden muss.
+# Drei Jobs, **bewusst ohne `needs:` zwischen ihnen** (Etappe D1/D3): Backend, Frontend und Markdown
+# prüfen Unabhängiges und laufen parallel. Das Deploy hängt am Gesamtergebnis des Workflows, zieht
+# alle drei also automatisch mit – ohne dass hier eine Reihenfolge erfunden werden muss.
 
 on:
   push:
@@ -97,8 +97,11 @@ jobs:
           # Läufe stabil ist, lohnt eine Untergrenze (siehe docs/codequalitaet-gates-plan.md, C5).
           report=$(find TestResults -name 'coverage.cobertura.xml' | head -1)
           [ -z "$report" ] && { echo "Kein Cobertura-Bericht gefunden."; exit 0; }
-          rate=$(grep -o 'branch-rate="[0-9.]*"' "$report" | head -1 | grep -o '[0-9.]*')
-          lines=$(grep -o 'line-rate="[0-9.]*"' "$report" | head -1 | grep -o '[0-9.]*')
+          # `grep -m1` statt `| head -1`: Letzteres schließt die Pipe nach der ersten Zeile und lässt den
+          # schreibenden grep mit SIGPIPE/"Broken pipe" scheitern – unter `pipefail` bricht das den Schritt,
+          # obwohl der Wert korrekt ermittelt wurde (gemessen: alle fünf CI-Läufe seit D0 rot genau hieran).
+          rate=$(grep -m1 -o 'branch-rate="[0-9.]*"' "$report" | grep -o '[0-9.]*')
+          lines=$(grep -m1 -o 'line-rate="[0-9.]*"' "$report" | grep -o '[0-9.]*')
           echo "### Abdeckung" >> "$GITHUB_STEP_SUMMARY"
           echo "- Zweige: ${rate} (die aussagekräftige Zahl)" >> "$GITHUB_STEP_SUMMARY"
           echo "- Zeilen: ${lines} (irreführend hoch – async-State-Machines)" >> "$GITHUB_STEP_SUMMARY"
@@ -155,3 +158,15 @@ jobs:
       - name: Vitest
         working-directory: frontend
         run: npm test
+
+  # Etappe D3. Die Doku ist in diesem Projekt Produkt, nicht Beiwerk (docs/api-examples ist sogar
+  # verifizierter Vertrag). Eigener, unabhängiger Job – kein .NET/Node-Setup außer `npx` nötig.
+  markdownlint:
+    name: Markdown-Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - run: npx markdownlint-cli2

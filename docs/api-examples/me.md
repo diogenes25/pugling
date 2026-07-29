@@ -3,11 +3,13 @@
 _Automatisch erzeugt von `DocsCaptureTests` (Integrationstest). Jedes Beispiel ist verifiziert: Status und – bei Fehlern – der maschinenlesbare `code` wurden im Testlauf geprüft. Nicht von Hand bearbeiten._
 
 ## Eigener Kontostand (Wallet)
+
 `GET /api/v1/student/me/points`
 
 Rolle: **child** — `Authorization: Bearer <child-token>`
 
 Response — `HTTP 200`:
+
 ```json
 {
   "childId": 1,
@@ -17,11 +19,13 @@ Response — `HTTP 200`:
 ```
 
 ## Eigene Buchungen (Liste)
+
 `GET /api/v1/student/me/points/entries`
 
 Rolle: **child** — `Authorization: Bearer <child-token>`
 
 Response — `HTTP 200`:
+
 ```json
 [
   {
@@ -49,11 +53,13 @@ Response — `HTTP 200`:
 ```
 
 ## Einzelne Buchung
+
 `GET /api/v1/student/me/points/entries/5`
 
 Rolle: **child** — `Authorization: Bearer <child-token>`
 
 Response — `HTTP 200`:
+
 ```json
 {
   "id": 5,
@@ -65,11 +71,13 @@ Response — `HTTP 200`:
 ```
 
 ## Eigene Missionen (Liste)
+
 `GET /api/v1/student/me/missions`
 
 Rolle: **child** — `Authorization: Bearer <child-token>`
 
 Response — `HTTP 200`:
+
 ```json
 [
   {
@@ -116,11 +124,13 @@ Response — `HTTP 200`:
 ```
 
 ## Einzelne Mission
+
 `GET /api/v1/student/me/missions/1`
 
 Rolle: **child** — `Authorization: Bearer <child-token>`
 
 Response — `HTTP 200`:
+
 ```json
 {
   "id": 1,
@@ -135,11 +145,13 @@ Response — `HTTP 200`:
 ```
 
 ## Eigene Auszeichnungen (Liste)
+
 `GET /api/v1/student/me/achievements`
 
 Rolle: **child** — `Authorization: Bearer <child-token>`
 
 Response — `HTTP 200`:
+
 ```json
 [
   {
@@ -201,11 +213,13 @@ Response — `HTTP 200`:
 ```
 
 ## Einzelne Auszeichnung
+
 `GET /api/v1/student/me/achievements/4`
 
 Rolle: **child** — `Authorization: Bearer <child-token>`
 
 Response — `HTTP 200`:
+
 ```json
 {
   "id": 4,
@@ -221,11 +235,13 @@ Response — `HTTP 200`:
 ```
 
 ## Eigener Skin-Zustand
+
 `GET /api/v1/student/me/skins`
 
 Rolle: **child** — `Authorization: Bearer <child-token>`
 
 Response — `HTTP 200`:
+
 ```json
 {
   "gems": 300,
@@ -237,11 +253,13 @@ Response — `HTTP 200`:
 ```
 
 ### Vater greift auf Sohn-Route zu — Fehlerfall
+
 `GET /api/v1/student/me/points`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
 Response — `HTTP 403`:
+
 ```json
 {
   "type": "https://pugling.app/errors/forbidden",
@@ -253,16 +271,19 @@ Response — `HTTP 403`:
 ```
 
 ### Bereits besessenen Skin kaufen — Fehlerfall
+
 `POST /api/v1/student/me/skins/pug/purchase`
 
 Rolle: **child** — `Authorization: Bearer <child-token>`
 
 Request:
+
 ```json
 {}
 ```
 
 Response — `HTTP 409`:
+
 ```json
 {
   "type": "https://pugling.app/errors/skin_already_unlocked",
@@ -275,16 +296,19 @@ Response — `HTTP 409`:
 ```
 
 ### Skin kaufen ohne Gems — Fehlerfall
+
 `POST /api/v1/student/me/skins/fox/purchase`
 
 Rolle: **child** — `Authorization: Bearer <child-token>`
 
 Request:
+
 ```json
 {}
 ```
 
 Response — `HTTP 400`:
+
 ```json
 {
   "type": "https://pugling.app/errors/insufficient_gems",
@@ -297,16 +321,19 @@ Response — `HTTP 400`:
 ```
 
 ### Unbekannten Skin kaufen — Fehlerfall
+
 `POST /api/v1/student/me/skins/banane/purchase`
 
 Rolle: **child** — `Authorization: Bearer <child-token>`
 
 Request:
+
 ```json
 {}
 ```
 
 Response — `HTTP 404`:
+
 ```json
 {
   "type": "https://pugling.app/errors/not_found",
@@ -319,16 +346,19 @@ Response — `HTTP 404`:
 ```
 
 ## Skin kaufen (mit Gems)
+
 `POST /api/v1/student/me/skins/ninja/purchase`
 
 Rolle: **child** — `Authorization: Bearer <child-token>`
 
 Request:
+
 ```json
 {}
 ```
 
 Response — `HTTP 200`:
+
 ```json
 {
   "gems": 500,
@@ -341,16 +371,19 @@ Response — `HTTP 200`:
 ```
 
 ## Besessenen Skin ausrüsten
+
 `POST /api/v1/student/me/skins/pug/equip`
 
 Rolle: **child** — `Authorization: Bearer <child-token>`
 
 Request:
+
 ```json
 {}
 ```
 
 Response — `HTTP 200`:
+
 ```json
 {
   "gems": 500,
@@ -363,16 +396,19 @@ Response — `HTTP 200`:
 ```
 
 ### Nicht besessenen Skin ausrüsten — Fehlerfall
+
 `POST /api/v1/student/me/skins/fox/equip`
 
 Rolle: **child** — `Authorization: Bearer <child-token>`
 
 Request:
+
 ```json
 {}
 ```
 
 Response — `HTTP 400`:
+
 ```json
 {
   "type": "https://pugling.app/errors/skin_not_unlocked",
@@ -383,4 +419,3 @@ Response — `HTTP 400`:
   "traceId": "<trace-id>"
 }
 ```
-

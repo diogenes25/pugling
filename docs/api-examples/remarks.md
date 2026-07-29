@@ -3,11 +3,13 @@
 _Automatisch erzeugt von `DocsCaptureTests` (Integrationstest). Jedes Beispiel ist verifiziert: Status und – bei Fehlern – der maschinenlesbare `code` wurden im Testlauf geprüft. Nicht von Hand bearbeiten._
 
 ## Anmerkung erfassen (mit Kontext)
+
 `POST /api/v1/remarks`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
 Request:
+
 ```json
 {
   "text": "Ich will meine E-Mail-Adresse \u00E4ndern und finde keine Stelle daf\u00FCr.",
@@ -24,6 +26,7 @@ Request:
 ```
 
 Response — `HTTP 201`:
+
 ```json
 {
   "id": 1,
@@ -54,11 +57,13 @@ Response — `HTTP 201`:
 ```
 
 ### Anmerkung ohne Text erfassen — Fehlerfall
+
 `POST /api/v1/remarks`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
 Request:
+
 ```json
 {
   "text": "   "
@@ -66,6 +71,7 @@ Request:
 ```
 
 Response — `HTTP 400`:
+
 ```json
 {
   "type": "https://pugling.app/errors/validation_error",
@@ -78,11 +84,13 @@ Response — `HTTP 400`:
 ```
 
 ## Anmerkung zur Log-Id lesen
+
 `GET /api/v1/remarks/1`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
 Response — `HTTP 200`:
+
 ```json
 {
   "id": 1,
@@ -113,11 +121,13 @@ Response — `HTTP 200`:
 ```
 
 ## Eigene Anmerkungen (Liste im Widget)
+
 `GET /api/v1/remarks?mine=true&take=5`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
 Response — `HTTP 200`:
+
 ```json
 [
   {
@@ -150,11 +160,13 @@ Response — `HTTP 200`:
 ```
 
 ## Antwort zurückschreiben und abschließen
+
 `PATCH /api/v1/remarks/1`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
 Request:
+
 ```json
 {
   "answer": "Die API kann das \u00FCber PATCH api/v1/supervisor/adults/{id} (AdultsController.Update); im Vater-Web gibt es daf\u00FCr kein Formular.",
@@ -164,6 +176,7 @@ Request:
 ```
 
 Response — `HTTP 200`:
+
 ```json
 {
   "id": 1,
@@ -194,11 +207,13 @@ Response — `HTTP 200`:
 ```
 
 ## Umsetzungsnotiz in den Verlauf schreiben
+
 `POST /api/v1/remarks/1/comments`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
 Request:
+
 ```json
 {
   "body": "Gebaut: Formular unter /vater/profil erg\u00E4nzt (VaterProfil.tsx), PATCH \u00FCber api.updateAdult.",
@@ -208,6 +223,7 @@ Request:
 ```
 
 Response — `HTTP 201`:
+
 ```json
 {
   "id": 1,
@@ -222,11 +238,13 @@ Response — `HTTP 201`:
 ```
 
 ## Verlauf einer Anmerkung lesen
+
 `GET /api/v1/remarks/1/comments`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
 Response — `HTTP 200`:
+
 ```json
 [
   {
@@ -243,11 +261,13 @@ Response — `HTTP 200`:
 ```
 
 ### Leeren Beitrag schreiben — Fehlerfall
+
 `POST /api/v1/remarks/1/comments`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
 Request:
+
 ```json
 {
   "body": "   "
@@ -255,6 +275,7 @@ Request:
 ```
 
 Response — `HTTP 400`:
+
 ```json
 {
   "type": "https://pugling.app/errors/validation_error",
@@ -267,11 +288,13 @@ Response — `HTTP 400`:
 ```
 
 ## Folgeanmerkung mit Verweis anlegen
+
 `POST /api/v1/remarks`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
 Request:
+
 ```json
 {
   "text": "Formular f\u00FCr die E-Mail-Adresse im Vater-Web nachziehen.",
@@ -281,6 +304,7 @@ Request:
 ```
 
 Response — `HTTP 201`:
+
 ```json
 {
   "id": 2,
@@ -311,11 +335,13 @@ Response — `HTTP 201`:
 ```
 
 ### Verweis auf unbekannte Vorgänger-Anmerkung — Fehlerfall
+
 `POST /api/v1/remarks`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
 Request:
+
 ```json
 {
   "text": "Bezug ins Leere",
@@ -324,6 +350,7 @@ Request:
 ```
 
 Response — `HTTP 400`:
+
 ```json
 {
   "type": "https://pugling.app/errors/invalid_reference",
@@ -336,11 +363,13 @@ Response — `HTTP 400`:
 ```
 
 ### Fremde Anmerkung lesen (Sohn) — Fehlerfall
+
 `GET /api/v1/remarks/1`
 
 Rolle: **child** — `Authorization: Bearer <child-token>`
 
 Response — `HTTP 404`:
+
 ```json
 {
   "type": "https://pugling.app/errors/remark_not_found",
@@ -353,11 +382,13 @@ Response — `HTTP 404`:
 ```
 
 ### Unbekannte Anmerkung lesen — Fehlerfall
+
 `GET /api/v1/remarks/999999`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
 Response — `HTTP 404`:
+
 ```json
 {
   "type": "https://pugling.app/errors/remark_not_found",
@@ -370,11 +401,13 @@ Response — `HTTP 404`:
 ```
 
 ## Anmerkungen als Markdown exportieren
+
 `GET /api/v1/remarks/export?status=Done`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
 Response — `HTTP 200` (`text/markdown`):
+
 ````markdown
 # Anmerkungen – Export
 
@@ -410,18 +443,20 @@ Die API kann das über PATCH api/v1/supervisor/adults/{id} (AdultsController.Upd
 **Verlauf** (1):
 
 > **claude-code** · <timestamp>
-> 
+>
 > Gebaut: Formular unter /vater/profil ergänzt (VaterProfil.tsx), PATCH über api.updateAdult.
 
 
 ````
 
 ### Export als Sohn abrufen — Fehlerfall
+
 `GET /api/v1/remarks/export`
 
 Rolle: **child** — `Authorization: Bearer <child-token>`
 
 Response — `HTTP 403`:
+
 ```json
 {
   "type": "https://pugling.app/errors/forbidden",
@@ -433,11 +468,13 @@ Response — `HTTP 403`:
 ```
 
 ## Nachhaken (holt die Anmerkung zurück auf offen)
+
 `POST /api/v1/remarks/1/comments`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
 Request:
+
 ```json
 {
   "body": "Und wie \u00E4ndere ich die Adresse des Kindes?"
@@ -445,6 +482,7 @@ Request:
 ```
 
 Response — `HTTP 201`:
+
 ```json
 {
   "id": 2,
@@ -459,11 +497,13 @@ Response — `HTTP 201`:
 ```
 
 ## Anmerkung nach dem Nachhaken lesen
+
 `GET /api/v1/remarks/1`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
 Response — `HTTP 200`:
+
 ```json
 {
   "id": 1,
@@ -494,11 +534,13 @@ Response — `HTTP 200`:
 ```
 
 ## Anmerkungen aller Konten lesen (scope=all)
+
 `GET /api/v1/remarks?scope=all&take=5`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
 Response — `HTTP 200`:
+
 ```json
 [
   {
@@ -552,11 +594,13 @@ Response — `HTTP 200`:
 ```
 
 ### Alle Konten lesen als Sohn — Fehlerfall
+
 `GET /api/v1/remarks?scope=all`
 
 Rolle: **child** — `Authorization: Bearer <child-token>`
 
 Response — `HTTP 403`:
+
 ```json
 {
   "type": "https://pugling.app/errors/remark_scope_forbidden",
@@ -569,12 +613,13 @@ Response — `HTTP 403`:
 ```
 
 ## Anmerkung löschen
+
 `DELETE /api/v1/remarks/1`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
 Response — `HTTP 204`:
+
 ```json
 (kein Inhalt)
 ```
-

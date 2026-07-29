@@ -3,11 +3,13 @@
 _Automatisch erzeugt von `DocsCaptureTests` (Integrationstest). Jedes Beispiel ist verifiziert: Status und – bei Fehlern – der maschinenlesbare `code` wurden im Testlauf geprüft. Nicht von Hand bearbeiten._
 
 ## Lehrplan anlegen
+
 `POST /api/v1/supervisor/study-plans`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
 Request:
+
 ```json
 {
   "childId": 1,
@@ -17,6 +19,7 @@ Request:
 ```
 
 Response — `HTTP 201`:
+
 ```json
 {
   "id": 4,
@@ -33,11 +36,13 @@ Response — `HTTP 201`:
 ```
 
 ## Position anlegen
+
 `POST /api/v1/supervisor/study-plans/4/positions`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
 Request:
+
 ```json
 {
   "exerciseId": 13,
@@ -48,6 +53,7 @@ Request:
 ```
 
 Response — `HTTP 201`:
+
 ```json
 {
   "id": 18,
@@ -78,11 +84,13 @@ Response — `HTTP 201`:
 ```
 
 ### Position mit unbekannter Übung — Fehlerfall
+
 `POST /api/v1/supervisor/study-plans/4/positions`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
 Request:
+
 ```json
 {
   "exerciseId": 999999
@@ -90,6 +98,7 @@ Request:
 ```
 
 Response — `HTTP 400`:
+
 ```json
 {
   "type": "https://pugling.app/errors/invalid_reference",
@@ -102,11 +111,13 @@ Response — `HTTP 400`:
 ```
 
 ### Unbekannten Lehrplan lesen — Fehlerfall
+
 `GET /api/v1/supervisor/study-plans/999999`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
 Response — `HTTP 404`:
+
 ```json
 {
   "type": "https://pugling.app/errors/not_found",
@@ -119,11 +130,13 @@ Response — `HTTP 404`:
 ```
 
 ## Übungssitzung starten (Lern-Modus)
+
 `POST /api/v1/student/study-plans/4/positions/18/practice-sessions`
 
 Rolle: **child** — `Authorization: Bearer <child-token>`
 
 Request:
+
 ```json
 {
   "mode": "Lern"
@@ -131,6 +144,7 @@ Request:
 ```
 
 Response — `HTTP 201`:
+
 ```json
 {
   "id": 1,
@@ -148,11 +162,13 @@ Response — `HTTP 201`:
 ```
 
 ## Nächste Karte (server-geführter Cursor)
+
 `GET /api/v1/student/study-plans/4/positions/18/practice-sessions/1/next`
 
 Rolle: **child** — `Authorization: Bearer <child-token>`
 
 Response — `HTTP 200`:
+
 ```json
 {
   "card": {
@@ -175,11 +191,13 @@ Response — `HTTP 200`:
 ```
 
 ## Karte bewerten (Review, mit nächster Karte)
+
 `POST /api/v1/student/study-plans/4/positions/18/practice-sessions/1/review`
 
 Rolle: **child** — `Authorization: Bearer <child-token>`
 
 Request:
+
 ```json
 {
   "itemIndex": 0,
@@ -188,6 +206,7 @@ Request:
 ```
 
 Response — `HTTP 200`:
+
 ```json
 {
   "wasCorrect": true,
@@ -216,11 +235,13 @@ Response — `HTTP 200`:
 ```
 
 ## Übungssitzung starten (Info-Modus, freies Üben)
+
 `POST /api/v1/student/study-plans/4/positions/18/practice-sessions`
 
 Rolle: **child** — `Authorization: Bearer <child-token>`
 
 Request:
+
 ```json
 {
   "mode": "Info"
@@ -228,6 +249,7 @@ Request:
 ```
 
 Response — `HTTP 201`:
+
 ```json
 {
   "id": 2,
@@ -245,11 +267,13 @@ Response — `HTTP 201`:
 ```
 
 ## Karten am Stück (Info-Modus/Offline-Batch)
+
 `GET /api/v1/student/study-plans/4/positions/18/practice-sessions/2/cards`
 
 Rolle: **child** — `Authorization: Bearer <child-token>`
 
 Response — `HTTP 200`:
+
 ```json
 [
   {
@@ -282,11 +306,13 @@ Response — `HTTP 200`:
 ```
 
 ## Review im Info-Modus (kein Feedback → 204)
+
 `POST /api/v1/student/study-plans/4/positions/18/practice-sessions/2/review`
 
 Rolle: **child** — `Authorization: Bearer <child-token>`
 
 Request:
+
 ```json
 {
   "itemIndex": 0,
@@ -295,21 +321,25 @@ Request:
 ```
 
 Response — `HTTP 204`:
+
 ```json
 (kein Inhalt)
 ```
 
 ## Test starten (Klausur, ohne Aufgaben-Bulk)
+
 `POST /api/v1/student/study-plans/4/positions/18/tests`
 
 Rolle: **child** — `Authorization: Bearer <child-token>`
 
 Request:
+
 ```json
 {}
 ```
 
 Response — `HTTP 201`:
+
 ```json
 {
   "attemptId": 1,
@@ -322,11 +352,13 @@ Response — `HTTP 201`:
 ```
 
 ## Nächste Prüfungsfrage (One-at-a-time)
+
 `GET /api/v1/student/study-plans/4/positions/18/tests/1/next`
 
 Rolle: **child** — `Authorization: Bearer <child-token>`
 
 Response — `HTTP 200`:
+
 ```json
 {
   "item": {
@@ -348,11 +380,13 @@ Response — `HTTP 200`:
 ```
 
 ## Prüfungsantwort abgeben (ohne Korrektheit)
+
 `POST /api/v1/student/study-plans/4/positions/18/tests/1/answer`
 
 Rolle: **child** — `Authorization: Bearer <child-token>`
 
 Request:
+
 ```json
 {
   "givenAnswer": "hallo"
@@ -360,6 +394,7 @@ Request:
 ```
 
 Response — `HTTP 200`:
+
 ```json
 {
   "done": true,
@@ -369,16 +404,19 @@ Response — `HTTP 200`:
 ```
 
 ## Test abgeben (auswerten)
+
 `POST /api/v1/student/study-plans/4/positions/18/tests/1/submit`
 
 Rolle: **child** — `Authorization: Bearer <child-token>`
 
 Request:
+
 ```json
 {}
 ```
 
 Response — `HTTP 200`:
+
 ```json
 {
   "attemptId": 1,
@@ -401,16 +439,19 @@ Response — `HTTP 200`:
 ```
 
 ### Test erneut abgeben — Fehlerfall
+
 `POST /api/v1/student/study-plans/4/positions/18/tests/1/submit`
 
 Rolle: **child** — `Authorization: Bearer <child-token>`
 
 Request:
+
 ```json
 {}
 ```
 
 Response — `HTTP 400`:
+
 ```json
 {
   "type": "https://pugling.app/errors/test_already_submitted",
@@ -423,11 +464,13 @@ Response — `HTTP 400`:
 ```
 
 ## Tagesmission (Overview)
+
 `GET /api/v1/student/study-plans/4/overview`
 
 Rolle: **child** — `Authorization: Bearer <child-token>`
 
 Response — `HTTP 200`:
+
 ```json
 {
   "planId": 4,
@@ -466,11 +509,13 @@ Response — `HTTP 200`:
 ```
 
 ## Verlauf – Paging & Sortierung (neueste zuerst)
+
 `GET /api/v1/student/study-plans/4/overview/progress?take=3&sort=-day`
 
 Rolle: **child** — `Authorization: Bearer <child-token>`
 
 Response — `HTTP 200`:
+
 ```json
 {
   "planId": 4,
@@ -507,11 +552,13 @@ Response — `HTTP 200`:
 ```
 
 ## Verlauf – nur erledigte Tage
+
 `GET /api/v1/student/study-plans/4/overview/progress?dutyDone=true`
 
 Rolle: **child** — `Authorization: Bearer <child-token>`
 
 Response — `HTTP 200`:
+
 ```json
 {
   "planId": 4,
@@ -534,16 +581,19 @@ Response — `HTTP 200`:
 ```
 
 ### Test auf Übung ohne prüfbaren Inhalt — Fehlerfall
+
 `POST /api/v1/student/study-plans/4/positions/19/tests`
 
 Rolle: **child** — `Authorization: Bearer <child-token>`
 
 Request:
+
 ```json
 {}
 ```
 
 Response — `HTTP 400`:
+
 ```json
 {
   "type": "https://pugling.app/errors/no_checkable_content",
@@ -556,11 +606,13 @@ Response — `HTTP 400`:
 ```
 
 ### Ungefüllte Übung zuweisen — Fehlerfall
+
 `POST /api/v1/supervisor/study-plans/4/positions`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
 Request:
+
 ```json
 {
   "exerciseId": 27,
@@ -569,6 +621,7 @@ Request:
 ```
 
 Response — `HTTP 400`:
+
 ```json
 {
   "type": "https://pugling.app/errors/exercise_empty",
@@ -581,11 +634,13 @@ Response — `HTTP 400`:
 ```
 
 ### Tag-Schnappschuss ohne Treffer — Fehlerfall
+
 `POST /api/v1/creator/subjects/5/chapters/7/vocabulary/27/refs-from-tags`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
 Request:
+
 ```json
 {
   "tags": [
@@ -595,6 +650,7 @@ Request:
 ```
 
 Response — `HTTP 400`:
+
 ```json
 {
   "type": "https://pugling.app/errors/no_tag_matches",
@@ -607,11 +663,13 @@ Response — `HTTP 400`:
 ```
 
 ### Bespielte Position löschen — Fehlerfall
+
 `DELETE /api/v1/supervisor/study-plans/4/positions/18`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
 Response — `HTTP 409`:
+
 ```json
 {
   "type": "https://pugling.app/errors/position_has_data",
@@ -624,16 +682,19 @@ Response — `HTTP 409`:
 ```
 
 ### Deaktivierten Plan spielen — Fehlerfall
+
 `POST /api/v1/student/study-plans/4/positions/18/practice-sessions`
 
 Rolle: **child** — `Authorization: Bearer <child-token>`
 
 Request:
+
 ```json
 {}
 ```
 
 Response — `HTTP 403`:
+
 ```json
 {
   "type": "https://pugling.app/errors/plan_inactive",
@@ -644,4 +705,3 @@ Response — `HTTP 403`:
   "traceId": "<trace-id>"
 }
 ```
-

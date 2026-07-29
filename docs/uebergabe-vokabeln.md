@@ -94,6 +94,7 @@ beim Bauen von Übungen/Übungstexten gezielt Teilmengen ziehen (z. B. „nur Ka
 - Vokabel↔Tag: `POST …/{id}/tags` `{ tags:[…] }`, `DELETE …/{id}/tags/{tagId}`.
 
 Umgesetzt in [VocabularyStoreController.cs](../backend/Pugling.Api/Controllers/Creator/VocabularyStoreController.cs)
+
 + [VocabularyTagsController.cs](../backend/Pugling.Api/Controllers/Creator/VocabularyTagsController.cs);
 Modell in [VocabEntities.cs](../backend/Pugling.Api/Models/VocabEntities.cs); Migration
 `VocabTagsAndBaseFormRelation`. Tests: `VocabAgentApiTests` (157 grün gesamt).
@@ -156,7 +157,7 @@ Tests: `PlanPositionCrudTests`, `VocabExerciseAuthoringTests` (165 grün). Kein 
 
 ## So testen / API-Beispiele (Pfad, den auch ein Agent nutzt)
 
-```
+```http
 # Login (Vater) → Token
 POST /api/v1/auth/adult        { "adultId": 1, "pin": "0000" }
 

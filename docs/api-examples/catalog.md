@@ -3,11 +3,13 @@
 _Automatisch erzeugt von `DocsCaptureTests` (Integrationstest). Jedes Beispiel ist verifiziert: Status und – bei Fehlern – der maschinenlesbare `code` wurden im Testlauf geprüft. Nicht von Hand bearbeiten._
 
 ## Fach anlegen
+
 `POST /api/v1/creator/subjects`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
 Request:
+
 ```json
 {
   "name": "Doku-Fach"
@@ -15,6 +17,7 @@ Request:
 ```
 
 Response — `HTTP 201`:
+
 ```json
 {
   "id": 5,
@@ -25,11 +28,13 @@ Response — `HTTP 201`:
 ```
 
 ### Fach ohne Namen anlegen — Fehlerfall
+
 `POST /api/v1/creator/subjects`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
 Request:
+
 ```json
 {
   "name": ""
@@ -37,6 +42,7 @@ Request:
 ```
 
 Response — `HTTP 400`:
+
 ```json
 {
   "type": "https://pugling.app/errors/validation_error",
@@ -49,11 +55,13 @@ Response — `HTTP 400`:
 ```
 
 ## Kapitel anlegen
+
 `POST /api/v1/creator/subjects/5/chapters`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
 Request:
+
 ```json
 {
   "name": "Kapitel 1",
@@ -62,6 +70,7 @@ Request:
 ```
 
 Response — `HTTP 201`:
+
 ```json
 {
   "id": 7,
@@ -73,11 +82,13 @@ Response — `HTTP 201`:
 ```
 
 ## Vokabel-Übung anlegen
+
 `POST /api/v1/creator/subjects/5/chapters/7/vocabulary`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
 Request:
+
 ```json
 {
   "title": "Begr\u00FC\u00DFungen",
@@ -92,6 +103,7 @@ Request:
 ```
 
 Response — `HTTP 201`:
+
 ```json
 {
   "id": 13,
@@ -129,11 +141,13 @@ Response — `HTTP 201`:
 ```
 
 ## Vokabelpaar hinzufügen
+
 `POST /api/v1/creator/subjects/5/chapters/7/vocabulary/13/items`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
 Request:
+
 ```json
 {
   "front": "hello",
@@ -142,6 +156,7 @@ Request:
 ```
 
 Response — `HTTP 201`:
+
 ```json
 {
   "id": 15,
@@ -156,11 +171,13 @@ Response — `HTTP 201`:
 ```
 
 ### Unbekannte Übung lesen — Fehlerfall
+
 `GET /api/v1/creator/exercises/999999`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
 Response — `HTTP 404`:
+
 ```json
 {
   "type": "https://pugling.app/errors/not_found",
@@ -172,11 +189,13 @@ Response — `HTTP 404`:
 ```
 
 ## Art (Kategorie) anlegen
+
 `POST /api/v1/creator/subjects/5/categories`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
 Request:
+
 ```json
 {
   "name": "Vokabeln"
@@ -184,6 +203,7 @@ Request:
 ```
 
 Response — `HTTP 201`:
+
 ```json
 {
   "id": 8,
@@ -194,11 +214,13 @@ Response — `HTTP 201`:
 ```
 
 ### Doppelte Art anlegen — Fehlerfall
+
 `POST /api/v1/creator/subjects/5/categories`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
 Request:
+
 ```json
 {
   "name": "Vokabeln"
@@ -206,6 +228,7 @@ Request:
 ```
 
 Response — `HTTP 409`:
+
 ```json
 {
   "type": "https://pugling.app/errors/conflict",
@@ -218,11 +241,13 @@ Response — `HTTP 409`:
 ```
 
 ### Verwendete Übung löschen — Fehlerfall
+
 `DELETE /api/v1/creator/subjects/5/chapters/7/vocabulary/13`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
 Response — `HTTP 409`:
+
 ```json
 {
   "type": "https://pugling.app/errors/exercise_in_use",
@@ -235,11 +260,13 @@ Response — `HTTP 409`:
 ```
 
 ### Fremd-Autor-Übung bearbeiten — Fehlerfall
+
 `PUT /api/v1/creator/subjects/1/chapters/6/vocabulary/10`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
 Request:
+
 ```json
 {
   "title": "\u00DCbernahmeversuch",
@@ -250,6 +277,7 @@ Request:
 ```
 
 Response — `HTTP 403`:
+
 ```json
 {
   "type": "https://pugling.app/errors/not_author",
@@ -262,11 +290,13 @@ Response — `HTTP 403`:
 ```
 
 ## Leseübung anlegen
+
 `POST /api/v1/creator/subjects/5/chapters/7/reading`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
 Request:
+
 ```json
 {
   "title": "Der Wetterbericht",
@@ -290,6 +320,7 @@ Request:
 ```
 
 Response — `HTTP 201`:
+
 ```json
 {
   "id": 14,
@@ -334,11 +365,13 @@ Response — `HTTP 201`:
 ```
 
 ## Lückentext anlegen
+
 `POST /api/v1/creator/subjects/5/chapters/7/cloze`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
 Request:
+
 ```json
 {
   "title": "Present Simple",
@@ -367,6 +400,7 @@ Request:
 ```
 
 Response — `HTTP 201`:
+
 ```json
 {
   "id": 15,
@@ -420,11 +454,13 @@ Response — `HTTP 201`:
 ```
 
 ## Aufsatz anlegen
+
 `POST /api/v1/creator/subjects/5/chapters/7/essays`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
 Request:
+
 ```json
 {
   "title": "My last holiday",
@@ -449,6 +485,7 @@ Request:
 ```
 
 Response — `HTTP 201`:
+
 ```json
 {
   "id": 16,
@@ -494,11 +531,13 @@ Response — `HTTP 201`:
 ```
 
 ## Hörübung anlegen
+
 `POST /api/v1/creator/subjects/5/chapters/7/listening`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
 Request:
+
 ```json
 {
   "title": "At the station",
@@ -523,6 +562,7 @@ Request:
 ```
 
 Response — `HTTP 201`:
+
 ```json
 {
   "id": 17,
@@ -568,11 +608,13 @@ Response — `HTTP 201`:
 ```
 
 ## Grammatikübung anlegen
+
 `POST /api/v1/creator/subjects/5/chapters/7/grammar`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
 Request:
+
 ```json
 {
   "title": "Simple Past",
@@ -597,6 +639,7 @@ Request:
 ```
 
 Response — `HTTP 201`:
+
 ```json
 {
   "id": 18,
@@ -642,11 +685,13 @@ Response — `HTTP 201`:
 ```
 
 ## Zuordnungsübung anlegen
+
 `POST /api/v1/creator/subjects/5/chapters/7/matching`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
 Request:
+
 ```json
 {
   "title": "Countries \u0026 capitals",
@@ -669,6 +714,7 @@ Request:
 ```
 
 Response — `HTTP 201`:
+
 ```json
 {
   "id": 19,
@@ -712,11 +758,13 @@ Response — `HTTP 201`:
 ```
 
 ## Übersetzungsübung anlegen
+
 `POST /api/v1/creator/subjects/5/chapters/7/translation`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
 Request:
+
 ```json
 {
   "title": "Everyday phrases",
@@ -746,6 +794,7 @@ Request:
 ```
 
 Response — `HTTP 201`:
+
 ```json
 {
   "id": 20,
@@ -800,11 +849,13 @@ Response — `HTTP 201`:
 ```
 
 ## Feste Rechenaufgaben anlegen
+
 `POST /api/v1/creator/subjects/5/chapters/7/arithmetic`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
 Request:
+
 ```json
 {
   "title": "Kopfrechnen gemischt",
@@ -828,6 +879,7 @@ Request:
 ```
 
 Response — `HTTP 201`:
+
 ```json
 {
   "id": 21,
@@ -872,11 +924,13 @@ Response — `HTTP 201`:
 ```
 
 ## Rechen-Drill (Regeln) anlegen
+
 `POST /api/v1/creator/subjects/5/chapters/7/arithmetic-drill`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
 Request:
+
 ```json
 {
   "title": "Einmaleins-Drill",
@@ -896,6 +950,7 @@ Request:
 ```
 
 Response — `HTTP 201`:
+
 ```json
 {
   "id": 22,
@@ -937,11 +992,13 @@ Response — `HTTP 201`:
 ```
 
 ## Merkliste anlegen
+
 `POST /api/v1/creator/subjects/5/chapters/7/list`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
 Request:
+
 ```json
 {
   "title": "Die vier Himmelsrichtungen",
@@ -969,6 +1026,7 @@ Request:
 ```
 
 Response — `HTTP 201`:
+
 ```json
 {
   "id": 23,
@@ -1017,11 +1075,13 @@ Response — `HTTP 201`:
 ```
 
 ## Birkenbihl-Übung anlegen
+
 `POST /api/v1/creator/subjects/5/chapters/7/birkenbihl`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
 Request:
+
 ```json
 {
   "title": "Birkenbihl: Small talk",
@@ -1036,6 +1096,7 @@ Request:
 ```
 
 Response — `HTTP 201`:
+
 ```json
 {
   "id": 24,
@@ -1071,4 +1132,3 @@ Response — `HTTP 201`:
   "defaultItemCount": null
 }
 ```
-

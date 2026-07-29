@@ -3,11 +3,13 @@
 _Automatisch erzeugt von `DocsCaptureTests` (Integrationstest). Jedes Beispiel ist verifiziert: Status und – bei Fehlern – der maschinenlesbare `code` wurden im Testlauf geprüft. Nicht von Hand bearbeiten._
 
 ## Vokabel anlegen
+
 `POST /api/v1/creator/vocabulary`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
 Request:
+
 ```json
 {
   "key": "en_doku_de_beispiel",
@@ -20,6 +22,7 @@ Request:
 ```
 
 Response — `HTTP 201`:
+
 ```json
 {
   "id": 28,
@@ -42,11 +45,13 @@ Response — `HTTP 201`:
 ```
 
 ### Vokabel mit doppeltem Key — Fehlerfall
+
 `POST /api/v1/creator/vocabulary`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
 Request:
+
 ```json
 {
   "key": "en_doku_de_beispiel",
@@ -59,6 +64,7 @@ Request:
 ```
 
 Response — `HTTP 409`:
+
 ```json
 {
   "type": "https://pugling.app/errors/duplicate_key",
@@ -71,11 +77,13 @@ Response — `HTTP 409`:
 ```
 
 ## Grundform-Vokabel lesen
+
 `GET /api/v1/creator/vocabulary/by-key/en_go_de_gehen`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
 Response — `HTTP 200`:
+
 ```json
 {
   "id": 2,
@@ -104,11 +112,13 @@ Response — `HTTP 200`:
 ```
 
 ### Verwendete Grundform löschen — Fehlerfall
+
 `DELETE /api/v1/creator/vocabulary/2`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
 Response — `HTTP 409`:
+
 ```json
 {
   "type": "https://pugling.app/errors/vocabulary_in_use",
@@ -119,4 +129,3 @@ Response — `HTTP 409`:
   "traceId": "<trace-id>"
 }
 ```
-

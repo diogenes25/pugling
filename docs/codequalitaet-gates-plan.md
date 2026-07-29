@@ -5,7 +5,7 @@ aliases: [Codequalität-Gates, Test-Gate, CI-Plan, Integrationstests bewerten]
 
 # Codequalität: von Disziplin zu mechanischen Toren
 
-Status: **Etappen A, B und C umgesetzt und committet, D1 und D2 dazu (2026-07-29); D3 und D4 offen.** Alle Zahlen im Abschnitt „Ist-Zustand" sind
+Status: **Etappen A–D3 umgesetzt und committet (2026-07-29); D4 lokal geprüft, als CI-Tor weiter offen.** Alle Zahlen im Abschnitt „Ist-Zustand" sind
 am 2026-07-29 am damaligen Arbeitsstand gemessen (Etappe 2 der `Father`→`Adult`-Umbenennung im Baum, noch
 nicht committet – sie ist seither als `1ee1538` committet); der Stand **nach C** steht unter „Was Etappe C
 gebracht hat". Was A gebracht hat, steht unter „Etappe A"; der **erste Fund des neuen Tors** unter „Was das
@@ -17,14 +17,31 @@ Diese Seite ist die vollständige Übergabe – **nicht neu messen, nicht neu er
 unter „Ist-Zustand" (Momentaufnahme 2026-07-29), der erreichte Stand unter „Was Etappe C gebracht hat", die
 Arbeit unter „Der Plan".
 
-> **Erster Schritt jeder frischen Sitzung: nachsehen, was CI gesagt hat.** Alles unter A–D2 ist auf `main`
-> gepusht, aber **kein einziger CI-Lauf wurde bisher angesehen** – `gh` ist auf dem Entwicklungsrechner
-> nicht installiert, und der Browser stand nicht zur Verfügung. Die Läufe stehen unter
-> <https://github.com/diogenes25/pugling/actions>. Dort hängt auch die Antwort auf **D4**: ob
-> `DocsCaptureTests` auf einem UTC-Linux-Runner byte-stabil bleibt, zeigt sich als Diff in
-> `docs/api-examples/` bzw. als roter Test – nicht durch Nachdenken. Ein roter Lauf ist zu erwarten und wäre
-> kein Rückschritt, sondern der erste echte Befund des Tors. **Kein neues Tor einziehen, solange der Zustand
-> der bestehenden unbekannt ist.**
+> **CI wurde jetzt angesehen (2026-07-29, `gh` ist inzwischen installiert und authentifiziert).** Alle fünf
+> CI-Läufe seit D0 waren rot – **aber nicht wegen der Tests.** Jeder Lauf scheiterte exakt am selben Schritt
+> „Zweigabdeckung ausgeben" mit `grep: write error: Broken pipe` (`grep … | head -1 | grep …` unter
+> `set -e -o pipefail`: `head` schließt die Pipe nach der ersten Zeile, der schreibende `grep` bekommt
+> SIGPIPE). Der `Test`-Schritt selbst war in jedem Lauf grün (zuletzt 587/587) – das aus „Was das Tor sofort
+> gefunden hat" bekannte `CreatorAgentTests`-Isolationsproblem ist also längst gefixt. Weil der Coverage-
+> Schritt aber crashte, lief `Format prüfen` nie, und weil CI insgesamt „failure" meldete, blieb
+> `Deploy to Azure App Service` durchgehend `skipped` (`workflow_run` mit `if: conclusion == 'success'`) –
+> das Deploy war also weiterhin blockiert, nur jetzt aus einem anderen Grund als dem `npm ci`-Problem, das D1
+> gefunden hat. **Gefixt**: `grep -m1` statt `| head -1` (kein Broken Pipe mehr, lokal gegen eine
+> Beispiel-Cobertura-Datei unter `pipefail` verifiziert).
+>
+> **E2E hatte zum Zeitpunkt der Prüfung null Läufe** (`gh api .../workflows/e2e.yml/runs` → `total_count: 0`).
+> Der Workflow triggert nur auf `pull_request`, nightly (03:00 UTC) und Handbetrieb; bisher ging alles per
+> direktem Push auf `main`. Die „25/25 grün"-Aussage aus der vorherigen Übergabe ist ein **lokaler** Beleg
+> (`CI=1 npx playwright test`), kein CI-Beleg – der fehlt weiterhin, bis ein PR oder die erste Nightly läuft.
+>
+> **D4 lässt sich aus den CI-Logs nicht beantworten** – `ci.yml` hat keinen Schritt, der `docs/api-examples/`
+> nach dem Testlauf gegen den committeten Stand diffed; die Annahme „ein Diff dort ist der Befund" hat nichts,
+> das den Diff einfängt. Lokal mit `TZ=UTC` nur `DocsCaptureTests` laufen lassen: `git diff --stat
+> docs/api-examples` danach leer, kein Bytefehler gefunden – aber auf Windows, nicht dem Ubuntu-Runner. Für
+> einen echten CI-Beleg fehlt weiterhin ein `git diff --exit-code -- docs/api-examples`-Schritt.
+>
+> **D3 ist umgesetzt** (siehe „Was D3 vorfindet" unten für die Vorher-Zahlen und die getroffenen
+> Entscheidungen) – `markdownlint-cli2` läuft jetzt als eigener Job in `ci.yml`, 0 Treffer.
 
 **Arbeitsstand nach Etappe C (2026-07-29): A, B und C sind committet – D0 ist erledigt.**
 
@@ -481,20 +498,26 @@ Schnitt käme „berührt" über „Soll" hinaus.
 Gegenprobe: einen Test auf `[Fact(Skip = …)]` gesetzt → Exit 1, und der Bericht nennt genau
 `MediaVariantsController.Delete`.
 
-### Etappe D · Frontend und Rand (1–2 Tage) – **D1 und D2 umgesetzt, D3/D4 offen**
+### Etappe D · Frontend und Rand (1–2 Tage) – **D1–D3 umgesetzt, D4 lokal geprüft, als CI-Tor offen**
 
 | # | Aufgabe | Worauf zu achten ist |
 |---|---|---|
 | D1 | **umgesetzt** – Job `frontend` in `ci.yml`: `npm ci --legacy-peer-deps` → `npm run build` (`tsc -b && vite build`) → `npm test` (Vitest) | Eigener Job mit `actions/setup-node` + `cache: npm` (`cache-dependency-path: frontend/package-lock.json`, das Lockfile liegt nicht im Root), **parallel** zum .NET-Job, kein `needs:`. `NODE_VERSION` deckt sich mit `deploy-azure.yml` – ein Tor, das eine andere Umgebung prüft als die, in der deployt wird, bewacht nichts. Gemessen aus frischem Checkout: Install, Build und 21 Vitest-Tests grün. |
-| D2 | **umgesetzt** – [.github/workflows/e2e.yml](../.github/workflows/e2e.yml) auf `pull_request` + nightly (03:00 UTC) + Handbetrieb: nur Chromium (`install --with-deps chromium`), Backend **vorgebaut**, die 25 Tests in 10 Specs, Trace/Screenshot als Artefakt bei Rot | Belegt mit `CI=1 npx playwright test`: **25/25 grün in 1,5 min**. Server startet Playwright selbst (`webServer` in `playwright.config.ts`, Wegwerf-DB + Vite). Zwei Dinge sind Entscheidung, nicht Zufall: **kein `push: main`** (das Deploy hängt an `CI`, nicht hier – rote E2E sind Diagnose, kein Freigabe-Tor) und **kein Retry** (die Specs teilen eine DB je Lauf; ein Retry liefe auf der beschriebenen DB und könnte grün werden, ohne dass der Fehler weg ist). Das Vorbauen ist nötig, weil `dotnet run` sonst Restore+Build in das 120-s-Fenster des `webServer` legen müsste. |
-| D3 | `markdownlint-cli2` (Konfiguration liegt bereits im Root) in `ci.yml` – die Doku ist in diesem Projekt Produkt, nicht Beiwerk | **Gemessen 2026-07-29 (`npx markdownlint-cli2 "**/*.md"`): 536 Treffer in 27 Dateien.** Der Befund zerfällt in drei Teile, und nur einer ist Handarbeit – Details und Entscheidungen unten unter „Was D3 vorfindet". Vor dem Einziehen des Tors sind **drei Entscheidungen** zu treffen (Glob, generierte Dateien, MD033), keine davon ist Formatierarbeit. |
-| D4 | Prüfen, ob `/smoke-test` und `DocsCaptureTests` in CI reproduzierbar byte-stabil laufen (die Wanduhr-Neutralisierung ist dafür gebaut; auf einem UTC-Runner erst zu verifizieren) | `ci.yml` setzt schon `TZ: UTC`. `DocsCaptureTests` **überschreibt** `docs/api-examples/` bei jedem Lauf – ein Diff dort nach einem CI-Lauf ist der Befund, kein Versehen. |
+| D2 | **umgesetzt** – [.github/workflows/e2e.yml](../.github/workflows/e2e.yml) auf `pull_request` + nightly (03:00 UTC) + Handbetrieb: nur Chromium (`install --with-deps chromium`), Backend **vorgebaut**, die 25 Tests in 10 Specs, Trace/Screenshot als Artefakt bei Rot | Lokal belegt mit `CI=1 npx playwright test`: **25/25 grün in 1,5 min**. **In echtem CI bisher null Läufe** (gemessen 2026-07-29 über `gh api .../workflows/e2e.yml/runs`) – der Workflow triggert nur auf `pull_request`/nightly/Handbetrieb, bisher ging alles per direktem Push auf `main`. Zwei Dinge sind Entscheidung, nicht Zufall: **kein `push: main`** (das Deploy hängt an `CI`, nicht hier – rote E2E sind Diagnose, kein Freigabe-Tor) und **kein Retry** (die Specs teilen eine DB je Lauf; ein Retry liefe auf der beschriebenen DB und könnte grün werden, ohne dass der Fehler weg ist). |
+| D3 | **umgesetzt** – `markdownlint-cli2` als eigener Job `markdownlint` in `ci.yml` | Ausgangsbefund 2026-07-29: 536 Treffer in 27 Dateien (Details unten unter „Was D3 vorfindet"). Alle drei Entscheidungen mit Empfehlung vorgelegt und vom Nutzer bestätigt: Glob fest in `.markdownlint-cli2.jsonc` (`globs: ["**/*.md"]`), Generator (`DocsCaptureTests.WriteMarkdown`/`RenderGroup`) lint-konform gemacht statt Ausnahme, MD033+MD004 projektweit abgeschaltet. Endstand: **0 Treffer**, `dotnet test Pugling.sln` weiterhin 587/587, `dotnet format --verify-no-changes` sauber. |
+| D4 | Prüfen, ob `/smoke-test` und `DocsCaptureTests` in CI reproduzierbar byte-stabil laufen (die Wanduhr-Neutralisierung ist dafür gebaut; auf einem UTC-Runner erst zu verifizieren) | `ci.yml` setzt schon `TZ: UTC`, hat aber **keinen Schritt, der den Diff tatsächlich prüft** (kein `git diff --exit-code -- docs/api-examples` nach dem Testlauf) – die Annahme „ein Diff ist der Befund" fängt sich selbst nichts. Lokal mit `TZ=UTC` nachgestellt (2026-07-29): `DocsCaptureTests` isoliert laufen lassen, `git diff --stat docs/api-examples` danach leer – kein Bytefehler, aber auf Windows statt dem Ubuntu-Runner gemessen. **Weiterhin offen**: der `git diff --exit-code`-Schritt in `ci.yml`, um D4 als echtes CI-Tor statt Prosa-Annahme zu schließen. |
 
 **D0 (erledigt): die drei Etappen sind committet.** Der Schnitt und die je Commit gemessenen Zahlen stehen
 unter „Einstieg für eine frische Sitzung". D beginnt damit auf einem Stand, auf dem ein roter CI-Lauf
 eindeutig dem neuen Tor zuzuordnen ist.
 
 #### Was D3 vorfindet (gemessen 2026-07-29, damit die nächste Sitzung nicht neu erhebt)
+
+> **Erledigt.** Der Ausgangsbefund unten ist die Momentaufnahme, gegen die die drei Entscheidungen getroffen
+> wurden; die Zahlen sind historisch (das Muster ist die Aussage, nicht die Zahl – wie bei den 57/63 nie
+> aufgerufenen Actions oben). Endstand nach Umsetzung: **0 Treffer**, `markdownlint`-Job in `ci.yml`. Ein
+> vierter, ungeplanter Fund unterwegs: `--fix` korrigiert nicht immer sicher – zwei echte Regressionen
+> traten auf und wurden von Hand zurückgedreht (siehe „Was D3 zusätzlich gefunden hat" unten).
 
 `npx markdownlint-cli2 "**/*.md"` meldet **536 Treffer in 27 Dateien**. Die Zahl schreckt nur, solange man
 sie nicht aufteilt:
@@ -516,6 +539,45 @@ Drei Entscheidungen also, bevor eine einzige Leerzeile gesetzt wird: **(1)** wel
 bares `npx markdownlint-cli2` lintet **nichts**, die `.markdownlint-cli2.jsonc` nennt keine `globs`),
 **(2)** generierte Dateien ignorieren oder den Generator sauber ausgeben lassen, **(3)** MD033 und MD004.
 Erst danach ist der Rest mechanisch – und `--fix` erledigt MD009/MD012/MD031/MD022 größtenteils selbst.
+
+#### Was D3 zusätzlich gefunden hat
+
+Alle drei Entscheidungen fielen auf die empfohlene Option (Glob in der Config, Generator fixen, MD033+MD004
+abschalten). Umgesetzt: `globs` in `.markdownlint-cli2.jsonc`, `**/node_modules/**` statt `node_modules/**`
+(traf sonst nur den Root), `.agents/**` neu in `ignores` (ein lokal installiertes, `.gitignore`tes
+Drittanbieter-Skill-Paket, keine Projekt-Doku – 8 Treffer, die dem Repo gar nicht gehören). `RenderGroup`
+in `DocsCaptureTests.cs` bekam die fehlenden Leerzeilen um Überschriften/Codezäune (MD022/MD031: 380 → 13
+Treffer), dazu eine `NormalizeTrailingNewline`-Hilfe gegen doppelte Leerzeilen am Dateiende (MD012/MD047).
+Der Rest ging über `npx markdownlint-cli2 --fix` – **aber nicht blind**: `--fix` traf zweimal eine falsche
+Entscheidung, die eine echte Bedeutungsänderung gewesen wäre, hätte niemand den Diff gelesen:
+
+- **`docs/pm-sitzung-2026-07-04.md`**: Fließtext „`#2 (Sound/Feier) und #3 …`" (Verweis auf Wunsch Nr. 2,
+  keine Überschrift) stand am Zeilenanfang. MD018 (kein Leerzeichen nach `#`) interpretierte das als
+  ATX-Überschrift ohne Leerzeichen und „reparierte" es zu `# 2 (Sound/Feier) …` – eine **echte** H1-Überschrift,
+  wo vorher Prosa stand. Von Hand zurückgedreht (Zeile mit dem Vorsatz verschmolzen, damit `#2` nicht mehr am
+  Zeilenanfang steht).
+- **`docs/perf-explain-2026-07-12.md`**: Eine 8er-Liste (`1.` … `8.`) hatte je Punkt eine direkt folgende,
+  nicht eingerückte `-`-Zeile („Erwarteter Index: …") ohne Leerzeile dazwischen. Der MD032-Fix fügte die
+  Leerzeile ein – wodurch CommonMark jeden nummerierten Punkt und seine Erklärung als **eigene, unabhängige
+  Einzelpunkt-Liste** parst (jeder Markerwechsel `1.`→`-` beginnt ohnehin eine neue Liste). `--fix` erkannte
+  das und normierte MD029 (ol-prefix) auf „alle `1.`" – rendert zufällig richtig (jede Einzelpunkt-Liste startet
+  bei ihrer eigenen Zahl), liest sich im Quelltext aber falsch. Behoben, indem die Erklärzeile als
+  **eingerücktes** Unterelement des jeweiligen Listenpunkts steht (drei Leerzeichen + `- Erwarteter Index: …`) –
+  damit ist es strukturell eine durchgehende 8er-Liste, keine acht einzelne.
+- **`docs/pm-sitzung-2026-07-04.md`**: Nach dem Umbau der zweiten `# PM-Sitzung 2 …`-Überschrift zu `##`
+  (gegen MD025, zwei H1 im selben Dokument) wurden zwei „`## PM-Synthese & Priorisierung (→ Entwickler)`"
+  zu echten Geschwistern (MD024, `siblings_only`). Je Sitzung benannt: „… Sitzung 1 …" / „… Sitzung 2 …".
+- **`docs/anmerkungen-plan.md` + `docs/anmerkungen/aktuell.md`** (MD028, Leerzeile im Blockzitat): Der
+  eigentliche Fund lag im **Export-Service**, nicht in der Doku – `RemarkExportService.AppendComments`
+  (backend/Pugling.Api/Services/Shared/RemarkExportService.cs) trennte aufeinanderfolgende Kommentare eines
+  Verlaufs mit einer **nackten** Leerzeile mitten im Zitat. Gefixt an der Quelle (zitierte Leerzeile `>`
+  zwischen zwei Beiträgen, nackte Leerzeile nur nach dem letzten); die bereits committete `aktuell.md`
+  (echter Datenexport, keine Testausgabe) von Hand auf densel­ben Stand nachgezogen, da sie nicht durch
+  einen Testlauf neu entsteht.
+
+**Lehre**: `--fix` ist ein guter erster Durchgang, aber kein Ersatz für `git diff` danach – bei
+Regel-Umschreibungen, die auf Heuristiken beruhen (MD018, MD029), kann „lint-konform" und „bedeutungsgleich"
+auseinanderfallen.
 
 #### Was D1 sofort gefunden hat: das Deploy war 24 Tage kaputt
 

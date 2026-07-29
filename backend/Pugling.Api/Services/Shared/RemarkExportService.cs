@@ -127,18 +127,23 @@ public class RemarkExportService
 
         sb.AppendLine(CultureInfo.InvariantCulture, $"**Verlauf** ({r.Comments.Count}):");
         sb.AppendLine();
-        foreach (var c in r.Comments.OrderBy(x => x.CreatedAt).ThenBy(x => x.Id))
+        var ordered = r.Comments.OrderBy(x => x.CreatedAt).ThenBy(x => x.Id).ToList();
+        for (var i = 0; i < ordered.Count; i++)
         {
+            var c = ordered[i];
             var who = string.IsNullOrWhiteSpace(c.AuthorLabel) ? c.Author.ToString() : c.AuthorLabel!;
             var account = showAccounts && c.AuthorAccountId is { } a ? $", Konto {a}" : "";
             sb.AppendLine(CultureInfo.InvariantCulture, $"> **{who}** · {Iso(c.CreatedAt)}{account}");
-            sb.AppendLine("> ");
+            sb.AppendLine(">");
             // Jede Zeile einzeln zitieren: Ein mehrzeiliger Beitrag bräche das Zitat sonst nach der ersten
             // Zeile auf, und der Rest stünde als gewöhnlicher Absatz da.
             foreach (var line in c.Body.Trim().ReplaceLineEndings("\n").Split('\n'))
                 sb.AppendLine(CultureInfo.InvariantCulture, $"> {line}");
-            sb.AppendLine();
+            // Trennzeile zwischen zwei Beiträgen bleibt Teil des Zitats (zitiertes "> "), nicht nackt –
+            // sonst liest das MD028-Regelwerk sie als Blockquote-Ende mitten im Verlauf (markdownlint).
+            if (i < ordered.Count - 1) sb.AppendLine(">");
         }
+        sb.AppendLine();
     }
 
     private static string Iso(DateTime value) =>
