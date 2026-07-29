@@ -2,7 +2,6 @@ using Microsoft.EntityFrameworkCore;
 using Pugling.Api.Data;
 using Pugling.Api.Errors;
 using Pugling.Api.Models;
-using Pugling.Api.Services.Shared;
 
 namespace Pugling.Api.Services.Supervisor;
 

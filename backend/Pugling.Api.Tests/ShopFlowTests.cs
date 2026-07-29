@@ -4,7 +4,6 @@ using System.Text.Json;
 using Microsoft.Extensions.DependencyInjection;
 using Pugling.Api.Data;
 using Pugling.Api.Models;
-using Pugling.Api.Services;
 
 namespace Pugling.Api.Tests;
 

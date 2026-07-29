@@ -56,14 +56,18 @@ public record VocabItem(string? Front = null, string? Back = null, string? Hint 
 /// <summary>Leseverständnis: Text + Verständnisfragen.</summary>
 public class ReadingConfig
 {
+    /// <summary>Der zu lesende Text.</summary>
     public string Text { get; set; } = "";
+    /// <summary>Fragen zum Text – sie sind die bewerteten Inhalts-Atome der Übung.</summary>
     public List<Question> Questions { get; set; } = new();
 }
 
 /// <summary>Lückentext: Text mit Platzhaltern {{1}}, {{2}} … + Lösungen.</summary>
 public class ClozeConfig
 {
+    /// <summary>Der Text mit Platzhaltern <c>{{1}}</c>, <c>{{2}}</c> … an den Lückenstellen.</summary>
     public string Text { get; set; } = "";
+    /// <summary>Die Lücken; ihr <c>Index</c> verweist auf den gleichnamigen Platzhalter im Text.</summary>
     public List<Gap> Gaps { get; set; } = new();
     /// <summary>Optionaler Wortpool zur Auswahl.</summary>
     public List<string>? WordBank { get; set; }
@@ -78,12 +82,19 @@ public record Gap(int Index, string Answer, List<string>? Alternatives = null, s
 /// <summary>Aufsatz: Schreibauftrag + Rahmenbedingungen.</summary>
 public class EssayConfig
 {
+    /// <summary>Der Schreibauftrag.</summary>
     public string Prompt { get; set; } = "";
+    /// <summary>Mindestlänge in Wörtern (leer = keine Untergrenze).</summary>
     public int? MinWords { get; set; }
+    /// <summary>Höchstlänge in Wörtern (leer = keine Obergrenze).</summary>
     public int? MaxWords { get; set; }
     /// <summary>Optionale Bewertungskriterien.</summary>
     public List<RubricCriterion>? Rubric { get; set; }
 }
+
+/// <summary>Ein Bewertungskriterium eines Aufsatzes.</summary>
+/// <param name="Criterion">Worauf geachtet wird (z. B. „Aufbau", „Wortschatz").</param>
+/// <param name="MaxScore">Höchstpunktzahl, die dieses Kriterium erreichen kann.</param>
 public record RubricCriterion(string Criterion, int MaxScore);
 
 /// <summary>Hörverständnis: Audioquelle + Verständnisfragen.</summary>
@@ -91,31 +102,49 @@ public class ListeningConfig
 {
     /// <summary>URL / Referenz auf die Audiodatei.</summary>
     public string AudioUrl { get; set; } = "";
+    /// <summary>Optionaler Volltext der Aufnahme – nur für den Creator, nie fürs Kind (Anti-Cheat).</summary>
     public string? Transcript { get; set; }
+    /// <summary>Fragen zur Aufnahme – sie sind die bewerteten Inhalts-Atome der Übung.</summary>
     public List<Question> Questions { get; set; } = new();
 }
 
 /// <summary>Grammatik: Umformungs- / Regelaufgaben.</summary>
 public class GrammarConfig
 {
+    /// <summary>Optionaler Arbeitsauftrag über allen Aufgaben (z. B. „Setze das Verb in die richtige Form").</summary>
     public string? Instruction { get; set; }
+    /// <summary>Die Einzelaufgaben – die bewerteten Inhalts-Atome der Übung.</summary>
     public List<GrammarTask> Tasks { get; set; } = new();
 }
+
+/// <summary>Eine Grammatikaufgabe.</summary>
+/// <param name="Prompt">Die Aufgabenstellung, üblicherweise mit Lücke („He ___ (to feed) the horse").</param>
+/// <param name="Answer">Die erwartete Lösung.</param>
+/// <param name="RuleHint">Optionaler Regelhinweis, der nach der Antwort gezeigt werden darf.</param>
 public record GrammarTask(string Prompt, string Answer, string? RuleHint = null);
 
 /// <summary>Zuordnung: Paare links ↔ rechts.</summary>
 public class MatchingConfig
 {
+    /// <summary>Optionaler Arbeitsauftrag über allen Paaren.</summary>
     public string? Instruction { get; set; }
+    /// <summary>Die zuzuordnenden Paare – die bewerteten Inhalts-Atome der Übung.</summary>
     public List<MatchPair> Pairs { get; set; } = new();
 }
+
+/// <summary>Ein zuzuordnendes Paar.</summary>
+/// <param name="Left">Der vorgegebene Eintrag (linke Spalte).</param>
+/// <param name="Right">Der passende Gegeneintrag (rechte Spalte).</param>
 public record MatchPair(string Left, string Right);
 
 /// <summary>Übersetzung: Sätze mit erwarteter Übersetzung.</summary>
 public class TranslationConfig
 {
+    /// <summary>Ausgangssprache als Sprachcode (z. B. "en").</summary>
     public string SourceLang { get; set; } = "";
+    /// <summary>Zielsprache als Sprachcode (z. B. "de").</summary>
     public string TargetLang { get; set; } = "";
+    /// <summary>Die Satzpaare – die bewerteten Inhalts-Atome der Übung.</summary>
     public List<TranslationItem> Items { get; set; } = new();
 }
 /// <summary>
@@ -128,6 +157,7 @@ public record TranslationItem(string Source, string Target, List<string>? Altern
 /// <summary>Feste Rechenaufgaben: manuell gepflegte Liste aus Ausdruck und erwarteter Lösung.</summary>
 public class ArithmeticConfig
 {
+    /// <summary>Die festen Aufgaben – die bewerteten Inhalts-Atome der Übung.</summary>
     public List<ArithmeticProblem> Problems { get; set; } = new();
 }
 /// <summary>
@@ -137,7 +167,17 @@ public class ArithmeticConfig
 public record ArithmeticProblem(string Prompt, decimal Answer, decimal Tolerance = 0m);
 
 /// <summary>Rechenart einer erzeugten Aufgabe.</summary>
-public enum ArithmeticOperation { Addition, Subtraction, Multiplication, Division }
+public enum ArithmeticOperation
+{
+    /// <summary>Addition.</summary>
+    Addition,
+    /// <summary>Subtraktion – ob ein negatives Ergebnis erlaubt ist, steuert <see cref="ArithmeticDrillConfig.AllowNegativeResults"/>.</summary>
+    Subtraction,
+    /// <summary>Multiplikation.</summary>
+    Multiplication,
+    /// <summary>Division – ob sie ohne Rest aufgehen muss, steuert <see cref="ArithmeticDrillConfig.DivisionMustBeWhole"/>.</summary>
+    Division,
+}
 
 /// <summary>
 /// Regeln für zufällig erzeugte Rechenaufgaben. Gespeichert werden nur die Regeln;
@@ -153,8 +193,8 @@ public class ArithmeticDrillConfig
     public int MaxOperand { get; set; } = 10;
     /// <summary>Anzahl der pro Durchlauf erzeugten Aufgaben.</summary>
     public int ProblemCount { get; set; } = 10;
-    /// <summary>Ob Subtraktionen ein negatives Ergebnis liefern dürfen.</summary>
-    public bool AllowNegativeResults { get; set; } = false;
+    /// <summary>Ob Subtraktionen ein negatives Ergebnis liefern dürfen. Default: nein.</summary>
+    public bool AllowNegativeResults { get; set; }
     /// <summary>Ob Divisionen ohne Rest aufgehen müssen (ganzzahliges Ergebnis).</summary>
     public bool DivisionMustBeWhole { get; set; } = true;
     /// <summary>Optionaler fester Seed für reproduzierbare Durchläufe (leer = echter Zufall).</summary>
@@ -171,6 +211,7 @@ public class ListConfig
     public string? Instruction { get; set; }
     /// <summary>Ob die Reihenfolge für die Bewertung zählt.</summary>
     public bool Ordered { get; set; }
+    /// <summary>Die zu nennenden Einträge – die bewerteten Inhalts-Atome der Übung.</summary>
     public List<ListEntry> Items { get; set; } = new();
 }
 /// <summary>Ein Listeneintrag; <paramref name="Alternatives"/> erlaubt zulässige Synonyme/Schreibweisen.</summary>

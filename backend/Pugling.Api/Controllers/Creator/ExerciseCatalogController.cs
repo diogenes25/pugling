@@ -200,7 +200,7 @@ public class ExerciseCatalogController(PuglingDbContext db) : ControllerBase
         var plans = (await db.PlanPositions.AsNoTracking()
                 .Where(p => p.ExerciseId == id && p.StudyPlan!.Child!.SupervisorLinks.Any(l => l.SupervisorId == fid))
                 .Select(p => new PlanUsage(p.StudyPlanId, p.StudyPlan!.Title, p.StudyPlan.ChildId, p.StudyPlan.Child!.Name))
-                .ToListAsync())
+                .ToListAsync(ct))
             .DistinctBy(u => u.PlanId).ToList();
 
         // Klassenarbeit gilt als Nutzer, wenn die Übung direkt zugewiesen ist oder einen ihr zugeordneten Tag trägt.
@@ -212,7 +212,7 @@ public class ExerciseCatalogController(PuglingDbContext db) : ControllerBase
         var classTests = await db.Klassenarbeiten.AsNoTracking()
             .Where(k => testIds.Contains(k.Id) && k.Child!.SupervisorLinks.Any(l => l.SupervisorId == fid))
             .Select(k => new ClassTestUsage(k.Id, k.Title, k.ChildId, k.Child!.Name))
-            .ToListAsync();
+            .ToListAsync(ct);
 
         // Dieselbe Zählung, die auch das Löschen benutzt – eine Quelle, damit die beiden Auskünfte nicht
         // wieder auseinanderlaufen können. Herausgegeben wird die Zahl der **Kinder**, nicht der Stellen:

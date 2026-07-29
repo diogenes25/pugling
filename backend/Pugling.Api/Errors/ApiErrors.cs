@@ -15,6 +15,13 @@ public static class ApiErrors
     public static readonly ApiError ValidationError = new("validation_error", 400, "Invalid request.");
     /// <summary>Generischer Bad-Request-Default für 400 ohne spezifischeren Code.</summary>
     public static readonly ApiError BadRequest = new("bad_request", 400, "Invalid request.");
+    /// <summary>
+    /// Der Body enthält ein Feld, das der Vertrag nicht kennt (400). Eigener Code neben
+    /// <see cref="ValidationError"/>, weil die Ursache eine andere ist: nicht „Wert falsch", sondern
+    /// „Feld existiert nicht" – ein vertipptes oder veraltetes Feld beim Aufrufer. Vor dieser Regel nahm
+    /// der Server solche Felder still an und meldete 201 (siehe docs/codequalitaet-gates-plan.md, L3).
+    /// </summary>
+    public static readonly ApiError UnknownField = new("unknown_field", 400, "Invalid request.");
     /// <summary>Im Request-Body referenzierte Entität existiert nicht / gehört nicht zum Kontext (400).</summary>
     public static readonly ApiError InvalidReference = new("invalid_reference", 400, "Invalid request.");
     /// <summary>Kein/ungültiges Token – Authentifizierung erforderlich (401).</summary>

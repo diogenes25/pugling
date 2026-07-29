@@ -1,11 +1,9 @@
-using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Pugling.Api.Auth;
 using Pugling.Api.Data;
 using Pugling.Api.Errors;
 using Pugling.Api.Models;
-using Pugling.Api.Services;
 
 namespace Pugling.Api.Controllers.Creator;
 

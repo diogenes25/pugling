@@ -54,3 +54,34 @@ Response — `HTTP 409`:
 }
 ```
 
+### Unbekanntes Feld im Body — Fehlerfall
+`POST /api/v1/supervisor/children/1/timetable`
+
+Rolle: **father** — `Authorization: Bearer <father-token>`
+
+Request:
+```json
+{
+  "subjectId": 5,
+  "dayOfWeek": "Wednesday",
+  "timeOfDay": "Vormittag",
+  "tageszeit": "Vormittag"
+}
+```
+
+Response — `HTTP 400`:
+```json
+{
+  "type": "https://pugling.app/errors/unknown_field",
+  "title": "Invalid request.",
+  "status": 400,
+  "errors": {
+    "tageszeit": [
+      "Unknown field. The request contract has no such field \u2013 remove it or check the API documentation."
+    ]
+  },
+  "code": "unknown_field",
+  "traceId": "<trace-id>"
+}
+```
+

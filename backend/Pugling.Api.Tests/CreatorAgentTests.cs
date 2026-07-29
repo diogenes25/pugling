@@ -170,14 +170,29 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
     {
         var (pipeline, creator, _) = BuildAgent(VocabularyJson);
         var (subjectId, chapterId) = await FreshChapterAsync(creator, "Dedupe");
-        var existing = await creator.CreateVocabularyAsync(
+        await creator.CreateVocabularyAsync(
             new CreateVocabularyDto(null, "en", "de", "the horse", "das Pferd", PartOfSpeech.Noun));
+
+        // Der Vokabelspeicher ist – anders als Fach und Kapitel – **klassenweit geteilt**: frühere Tests
+        // dieser Klasse spielen denselben `VocabularyJson` durch und haben „the horse" womöglich längst
+        // materialisiert. Die Aussage darf darum nicht „zeigt auf *meine* Zeile" sein (dann hängt der Test
+        // an der Ausführungsreihenfolge), sondern genau die, die der Name verspricht: **keine neue Zeile,
+        // Verweis auf eine bestehende.**
+        var before = await KnownHorsesAsync(creator);
+        Assert.NotEmpty(before);
 
         var (_, outcome) = await pipeline.CreateAsync(Request(subjectId, chapterId, "Vocabulary"));
 
+        Assert.Equal(before, await KnownHorsesAsync(creator));
         var items = await creator.ListItemsAsync(subjectId, chapterId, outcome.ExerciseId!.Value);
-        Assert.Equal(existing.Id, Assert.Single(items, i => i.Front == "the horse").VocabularyId);
+        Assert.Contains(Assert.Single(items, i => i.Front == "the horse").VocabularyId, before);
     }
+
+    /// <summary>Die Ids aller „the horse"-Zeilen (en→de) im geteilten Speicher – die Vergleichsbasis für die Dedupe-Prüfung.</summary>
+    private static async Task<HashSet<int>> KnownHorsesAsync(CreatorApi creator) =>
+        [.. (await creator.SearchVocabularyAsync(word: "the horse", sourceLanguage: "en", targetLanguage: "de"))
+            .Where(v => v.Word == "the horse")
+            .Select(v => v.Id)];
 
     [Fact]
     public async Task Lueckentext_entsteht_und_besteht_den_Selbsttest()

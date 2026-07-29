@@ -67,7 +67,7 @@ public class OwnershipTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
     public async Task FremderVater_KannPlanNichtSehen_403()
     {
         var father1 = await TestApi.FatherAsync(factory);
-        var planId = await TestApi.CreateVocabPlanAsync(father1);
+        var planId = await TestApi.CreateEmptyPlanAsync(father1);
 
         var id2 = await RegisterFatherAsync("2222");
         var father2 = await TestApi.FatherAsync(factory, id2, "2222");

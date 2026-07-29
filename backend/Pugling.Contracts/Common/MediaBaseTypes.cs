@@ -6,8 +6,11 @@ namespace Pugling.Contracts;
 /// <summary>Medienart eines Assets. Heute werden nur Bilder ausgeliefert; der Store ist bewusst offen.</summary>
 public enum MediaKind
 {
+    /// <summary>Bild – der einzige heute ausgespielte Typ (siehe docs/medien-bilder.md).</summary>
     Image = 0,
+    /// <summary>Tonaufnahme (z. B. Aussprache). Im Store vorgesehen, noch nicht ausgespielt.</summary>
     Audio = 1,
+    /// <summary>Video. Im Store vorgesehen, noch nicht ausgespielt.</summary>
     Video = 2,
 }
 
@@ -50,6 +53,7 @@ public enum MediaPurpose
 /// <summary>Herkunft eines Assets – macht generierte und fremde Inhalte im Katalog unterscheidbar.</summary>
 public enum MediaOrigin
 {
+    /// <summary>Herkunft nicht erfasst – Default für Altbestände.</summary>
     Unknown = 0,
     /// <summary>Vom Creator selbst hochgeladen/bereitgestellt.</summary>
     Upload = 1,
@@ -67,15 +71,21 @@ public enum MediaOrigin
 /// </summary>
 public enum InterestFacet
 {
+    /// <summary>Keiner der übrigen Facetten zuzuordnen. Default beim Anlegen eines Schlagworts.</summary>
     Other = 0,
     /// <summary>Marke/Serie/Spiel („Pokémon", „Brawl Stars", „Star Wars").</summary>
     Franchise = 1,
+    /// <summary>Sportart oder Verein („Fußball", „Skateboard").</summary>
     Sport = 2,
+    /// <summary>Tier oder Tiergruppe („Pferd", „Dinosaurier").</summary>
     Animal = 3,
+    /// <summary>Fahrzeug („Traktor", „Feuerwehrauto", „Rakete").</summary>
     Vehicle = 4,
+    /// <summary>Musik – Genre, Band oder Instrument.</summary>
     Music = 5,
     /// <summary>Freizeit/Tätigkeit („Kochen", „Angeln", „Programmieren").</summary>
     Hobby = 6,
+    /// <summary>Natur und Landschaft („Wald", „Meer", „Weltraum").</summary>
     Nature = 7,
     /// <summary>Darstellungsstil („Comic", „Foto", „Pixel-Art") – orthogonal zum Thema.</summary>
     Style = 8,

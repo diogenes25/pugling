@@ -4,9 +4,16 @@ name: Deploy to Azure App Service
 # Ablauf: Frontend bauen → nach wwwroot kopieren → dotnet publish → nach Azure.
 # Voraussetzung: Repo-Secret AZURE_WEBAPP_PUBLISH_PROFILE (Portal → App Service →
 # "Bereitstellungscenter" bzw. "Veröffentlichungsprofil abrufen").
+#
+# **Kein Deploy ohne grünes CI.** Getriggert wird nicht mehr direkt vom Push, sondern vom Abschluss des
+# CI-Workflows auf `main` (`workflow_run`) – und nur, wenn dessen `conclusion == success` ist. `needs:`
+# geht hier nicht, weil das Tor in einem eigenen Workflow steckt. Siehe docs/codequalitaet-gates-plan.md (A2).
+# `workflow_dispatch` bleibt als Handbetrieb (deployt dann den Stand des gewählten Branch).
 
 on:
-  push:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
     branches: [main]
   workflow_dispatch: {}
 
@@ -18,9 +25,15 @@ env:
 
 jobs:
   build-and-deploy:
+    # Roter (oder abgebrochener) CI-Lauf → dieser Job läuft gar nicht an.
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     steps:
+      # Bei `workflow_run` checkt Actions per Default den Default-Branch-HEAD aus, **nicht** den Commit,
+      # der geprüft wurde. Ohne dieses `ref` könnte ein ungeprüfter Folge-Commit mitdeployen.
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.ref }}
 
       # 1) Frontend bauen und in das wwwroot der API legen (same-origin: /api + SPA aus einer Domain)
       - uses: actions/setup-node@v4

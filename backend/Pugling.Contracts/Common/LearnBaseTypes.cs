@@ -8,12 +8,19 @@ namespace Pugling.Contracts;
 [Flags]
 public enum SchoolTypes
 {
+    /// <summary>Keine Einschränkung – die Übung passt zu jeder Schulart.</summary>
     None = 0,
+    /// <summary>Grundschule.</summary>
     Grundschule = 1,
+    /// <summary>Hauptschule.</summary>
     Hauptschule = 2,
+    /// <summary>Realschule.</summary>
     Realschule = 4,
+    /// <summary>Gymnasium.</summary>
     Gymnasium = 8,
+    /// <summary>Gesamtschule.</summary>
     Gesamtschule = 16,
+    /// <summary>Berufsschule.</summary>
     Berufsschule = 32,
 }
 
@@ -39,7 +46,10 @@ public record SuggestedBonus(
 /// </summary>
 public enum GrantPermission
 {
+    /// <summary>Voller Zugriff: ändern, löschen, Freigabe umschalten, Rechte vergeben und entziehen.</summary>
     Owner,
+    /// <summary>Darf die Übung inhaltlich ändern, aber nicht löschen und keine Rechte vergeben.</summary>
     Write,
+    /// <summary>Darf die Übung einem betreuten Kind zuweisen und ausspielen, aber nicht ändern.</summary>
     Execute,
 }

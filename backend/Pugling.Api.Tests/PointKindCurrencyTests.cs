@@ -1,6 +1,3 @@
-using Pugling.Api.Models;
-using Pugling.Api.Services;
-
 namespace Pugling.Api.Tests;
 
 /// <summary>

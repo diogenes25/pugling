@@ -1,6 +1,6 @@
+using System.Globalization;
 using System.Net;
 using System.Net.Http.Json;
-using System.Globalization;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -774,6 +774,11 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
         await Capture(father, g, "Gleiches Fach am selben Wochentag", HttpMethod.Post, "/api/v1/supervisor/children/1/timetable",
             new { subjectId = docSubjectId, dayOfWeek = "Tuesday", timeOfDay = "Vormittag" },
             HttpStatusCode.Conflict, ApiErrors.TimetableSlotTaken.Code);
+        // Unbekanntes Feld: der Server lehnt ab, statt es still zu verwerfen. Gehört in die
+        // Beispielsammlung, weil es jeden Endpunkt betrifft und generierte Clients davon abhängen.
+        await Capture(father, g, "Unbekanntes Feld im Body", HttpMethod.Post, "/api/v1/supervisor/children/1/timetable",
+            new { subjectId = docSubjectId, dayOfWeek = "Wednesday", timeOfDay = "Vormittag", tageszeit = "Vormittag" },
+            HttpStatusCode.BadRequest, ApiErrors.UnknownField.Code);
     }
 
     // ── shop (Vater-Admin + Sohn-Seite) ──────────────────────────────────────────────────────────
@@ -819,8 +824,7 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
                 unitsPerPurchase = 30,
                 currentStock = 5,
                 maxStock = 5
-            },
-            HttpStatusCode.Created);
+            }, HttpStatusCode.Created);
         var listingId = listingEl.GetProperty("id").GetInt32();
 
         await Capture(father, g, "Angebot anlegen (ungültiger Preis)", HttpMethod.Post,

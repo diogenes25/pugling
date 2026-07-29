@@ -1,8 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Pugling.Api.Auth;
-using Pugling.Api.Services;
-using Pugling.Api.Services.Supervisor;
 
 namespace Pugling.Api.Controllers.Student;
 

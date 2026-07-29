@@ -3,11 +3,17 @@ namespace Pugling.Contracts;
 /// <summary>Verwandtschaftsrolle eines Supervisors zum Studenten (rein deskriptiv).</summary>
 public enum SupervisorRelation
 {
+    /// <summary>Vater. Hier heißt „Vater" wirklich Vater – die fachliche Zeile dahinter ist ein <c>Adult</c>.</summary>
     Father = 0,
+    /// <summary>Mutter.</summary>
     Mother = 1,
+    /// <summary>Großmutter.</summary>
     Grandma = 2,
+    /// <summary>Großvater.</summary>
     Grandpa = 3,
+    /// <summary>Sorgeberechtigte Person ohne Verwandtschaft (Vormund, Pflegeeltern).</summary>
     Guardian = 4,
+    /// <summary>Sonstige betreuende Person – etwa eine Lehrkraft mit Betreuungsauftrag.</summary>
     Other = 5,
 }
 
@@ -15,9 +21,13 @@ public enum SupervisorRelation
 /// Lehrplan-Generator nutzt es allenfalls für die sprachliche Ansprache, nie für die Filterung des Stoffs.</summary>
 public enum Gender
 {
+    /// <summary>Keine Angabe. Default – die Oberfläche spricht das Kind dann geschlechtsneutral an.</summary>
     None = 0,
+    /// <summary>Männlich.</summary>
     Male = 1,
+    /// <summary>Weiblich.</summary>
     Female = 2,
+    /// <summary>Divers.</summary>
     Diverse = 3,
 }
 

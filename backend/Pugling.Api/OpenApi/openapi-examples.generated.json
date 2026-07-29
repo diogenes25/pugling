@@ -1209,6 +1209,19 @@
     "expectedCode": "timetable_slot_taken"
   },
   {
+    "key": "timetable-unbekanntes-feld-im-body",
+    "resourceGroup": "timetable",
+    "title": "Unbekanntes Feld im Body",
+    "method": "POST",
+    "path": "/api/v1/supervisor/children/1/timetable",
+    "role": "father",
+    "requestBodyJson": "{\r\n  \u0022subjectId\u0022: 5,\r\n  \u0022dayOfWeek\u0022: \u0022Wednesday\u0022,\r\n  \u0022timeOfDay\u0022: \u0022Vormittag\u0022,\r\n  \u0022tageszeit\u0022: \u0022Vormittag\u0022\r\n}",
+    "expectedStatus": 400,
+    "responseBodyJson": "{\r\n  \u0022type\u0022: \u0022https://pugling.app/errors/unknown_field\u0022,\r\n  \u0022title\u0022: \u0022Invalid request.\u0022,\r\n  \u0022status\u0022: 400,\r\n  \u0022errors\u0022: {\r\n    \u0022tageszeit\u0022: [\r\n      \u0022Unknown field. The request contract has no such field \\u2013 remove it or check the API documentation.\u0022\r\n    ]\r\n  },\r\n  \u0022code\u0022: \u0022unknown_field\u0022,\r\n  \u0022traceId\u0022: \u0022\u003Ctrace-id\u003E\u0022\r\n}",
+    "isError": true,
+    "expectedCode": "unknown_field"
+  },
+  {
     "key": "shop-artikel-anlegen",
     "resourceGroup": "shop",
     "title": "Artikel anlegen",

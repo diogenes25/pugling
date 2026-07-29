@@ -364,12 +364,17 @@ public class MediaSelectionTests(PuglingWebAppFactory factory) : IClassFixture<P
             childId,
             title = $"{marker}-Plan",
             startDate = today.AddDays(-1).ToString("yyyy-MM-dd"),
-            endDate = today.AddDays(30).ToString("yyyy-MM-dd"),
-            active = true,
+            // Der Plan soll laufen. Früher stand hier `endDate`/`active` – Felder, die es nur im
+            // Update-DTO gibt und die der Server beim Anlegen still verwarf; die Laufzeit ergab sich
+            // in Wahrheit aus dem Default. `durationDays` ist das Feld, das der Vertrag dafür vorsieht.
+            durationDays = 31,
         }));
         var positionId = await TestApi.IdAsync(await father.PostAsJsonAsync(
             $"/api/v1/supervisor/study-plans/{planId}/positions",
-            new { exerciseId, order = 1, goalCadence = "Daily", goalThreshold = 1, goalPoints = 5 }));
+            // `cadence`/`pointsGoalMet` – früher stand hier `goalCadence`/`goalPoints`. Beide Namen gibt
+            // es im Vertrag nicht; der Server verwarf sie still, die Position hatte also nie den
+            // Pflichtrhythmus und die Punkte, die dieser Aufbau vorgibt.
+            new { exerciseId, order = 1, cadence = "Daily", goalThreshold = 1, pointsGoalMet = 5 }));
 
         return new Scenario(marker, childId, planId, positionId, exerciseId, itemId, vocabularyId);
     }

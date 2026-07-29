@@ -196,6 +196,26 @@ Details: [backend/Pugling.Agent.Creator/README.md](backend/Pugling.Agent.Creator
   `ApiRoutes.V1` ([Controllers/ApiRoutes.cs](backend/Pugling.Api/Controllers/ApiRoutes.cs)), Controller
   tragen `[ApiVersion("1.0")]`. Bis zur Publikation bleiben wir bei 1.0 und ändern frei; ein Bruch danach
   läuft über eine parallele `v2` (neue Controller/DTOs neben v1), nicht über Abwärtskompatibilität.
+- **Mechanische Tore statt Disziplin** ([Directory.Build.props](Directory.Build.props), [.editorconfig](.editorconfig),
+  `ConventionGuardTests`): Warnungen **sind Fehler** (`TreatWarningsAsErrors`; NuGet-Audit NU1901–1904 bewusst
+  nicht, die ändern sich ohne Codeänderung), fehlende `/// <summary>` (CS1591) brechen den Build in
+  `Contracts`/`Client`/`Agent.Creator` – in `Pugling.Api` noch nicht (428 der Treffer sind EF-Entities,
+  siehe csproj-Kommentar). Vier reflexive Wächter halten fest, was vorher nur Prosa war: Fehler nur über
+  `ProblemWithCode`, Antworttypen nur aus `Pugling.Contracts`, dortige Typnamen global eindeutig,
+  Ownership über die geteilten Filter. `CancellationToken` an Actions ist eine **Zuwachs-Sperre** mit
+  Baseline (188 Altlasten) statt einer harten Regel – sie darf nur sinken, und sinkt sie, verlangt der Test
+  die Absenkung. Dazu drei Wächter aus [Etappe C](docs/codequalitaet-gates-plan.md): die **Ownership-Matrix**
+  (jede Action unter `{childId}`/`{planId}` wird mit fremdem Zugang aufgerufen und muss abweisen), der
+  **PATCH-Semantik-Guard** (`null` ändert nichts, `Clear…` leert und gewinnt – reflexiv gegen *alle*
+  `Update…Dto`/`Update…Request` geprüft) und der **Endpunkt-Abdeckungs-Wächter**: keine Controller-Action
+  ohne einen Test, der sie mit Status < 400 aufruft. Letzterer urteilt im Assembly-Fixture, weil erst dort
+  alle Tests durch sind – die Konsole verschluckt seine Meldung, sie steht in
+  `TestResults/endpoint-coverage.txt` (Stop-Hook und CI geben sie aus). Neue Regel scharf stellen? Erst
+  messen – Begründung in [docs/codequalitaet-gates-plan.md](docs/codequalitaet-gates-plan.md).
+- **Unbekannte Felder werden abgelehnt** (`UnmappedMemberHandling.Disallow`): ein Feld, das der Vertrag
+  nicht kennt, liefert `400` mit `code: unknown_field` – nicht mehr `201` mit stillem Datenverlust. Wer
+  einen Payload schreibt (Test, Client, Frontend), muss die Feldnamen des DTOs treffen; ein vertippter
+  Name ist ab jetzt ein Fehler und kein Nichts.
 - **Fehler** einheitlich als `ProblemDetails` (RFC 7807) mit **maschinenlesbarem `code`**: statt
   `Problem(statusCode:, detail:)` immer `return this.ProblemWithCode(ApiErrors.<Code>, "…")` nutzen
   (Registry: [Errors/ApiErrors.cs](backend/Pugling.Api/Errors/ApiErrors.cs); Status/Titel/`type`-URI
@@ -250,6 +270,14 @@ Details: [backend/Pugling.Agent.Creator/README.md](backend/Pugling.Agent.Creator
   `Contracts`/`Client`, der einen abhängigen Nachbarn bricht (`dotnet build Pugling.sln`), und alles
   jenseits von Einrückung/Umbrüchen (`dotnet format Pugling.sln` – kostet mit Analyzern ~23 s, darum
   nicht im Hook).
+- **Test-Tor am Ende der Antwort** (Stop-Hook [.claude/hooks/test-gate.sh](.claude/hooks/test-gate.sh)):
+  Weichen `.cs`-Dateien von `HEAD` ab, läuft `dotnet test Pugling.sln -c Release` (~63 s) – rot blockt und
+  meldet die gefallenen Tests zurück. Zweimal derselbe Stand wird nicht zweimal getestet (Fingerprint), und
+  `PUGLING_SKIP_TEST_GATE=1` schaltet ab, wenn rot der beabsichtigte Zwischenstand eines Umbaus ist.
+  `Release` ist Absicht: ein parallel laufender Dev-Server sperrt sonst die Debug-Ausgabe.
+  Dasselbe Tor steht in CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)) vor jedem Push und
+  Pull Request; das Azure-Deploy hängt per `workflow_run` daran und läuft **nur bei grün** an.
+  Hintergrund und die offenen Etappen: [docs/codequalitaet-gates-plan.md](docs/codequalitaet-gates-plan.md).
 - Änderungen mit echtem Laufzeit-Effekt per `/smoke-test` oder gezieltem `curl` gegen `localhost:5200` prüfen,
   nicht nur kompilieren. Für nichttriviale Änderungen einen Integrationstest in `Pugling.Api.Tests` ergänzen.
 - Weitere Doku unter [docs/](docs/): Architektur-Resümee, Code-Review, Tutorials, Klassenarbeiten/Tagging.

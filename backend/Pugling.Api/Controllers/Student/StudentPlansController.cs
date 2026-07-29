@@ -2,7 +2,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Pugling.Api.Auth;
-using Pugling.Api.Controllers.Supervisor;
 using Pugling.Api.Data;
 
 namespace Pugling.Api.Controllers.Student;

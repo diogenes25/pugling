@@ -1,6 +1,5 @@
 using System.Net;
 using System.Net.Http.Json;
-using Microsoft.AspNetCore.Hosting;
 using Pugling.Api.Auth;
 
 namespace Pugling.Api.Tests;

@@ -9,7 +9,7 @@ namespace Pugling.Client;
 /// genau einer Handler-Kette hängen, der Token-Zustand soll aber gerade <i>nicht</i> je Client
 /// verdoppelt werden – sonst meldete sich jede Fassade eigenständig an.
 /// </summary>
-public sealed class PuglingTokenStore(IOptions<PuglingClientOptions> options)
+public sealed class PuglingTokenStore(IOptions<PuglingClientOptions> options) : IDisposable
 {
     private const string LoginPath = "api/v1/auth/login";
 
@@ -64,4 +64,7 @@ public sealed class PuglingTokenStore(IOptions<PuglingClientOptions> options)
     }
 
     private bool IsFresh() => _token is not null && DateTime.UtcNow < _expiresAtUtc - _options.RefreshSkew;
+
+    /// <summary>Gibt das Anmelde-Gate frei. Als DI-Singleton übernimmt das der Container beim Herunterfahren.</summary>
+    public void Dispose() => _gate.Dispose();
 }

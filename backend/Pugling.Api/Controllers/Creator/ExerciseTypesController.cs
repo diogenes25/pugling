@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Pugling.Api.Models;
 
 namespace Pugling.Api.Controllers.Creator;
 

@@ -4,7 +4,6 @@ using Microsoft.EntityFrameworkCore;
 using Pugling.Api.Auth;
 using Pugling.Api.Data;
 using Pugling.Api.Models;
-using Pugling.Api.Services;
 
 namespace Pugling.Api.Controllers.Student;
 

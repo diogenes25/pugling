@@ -1,6 +1,6 @@
 # API-Beispiele – Übersicht
 
-Automatisch erzeugt von `backend/Pugling.Api.Tests/DocsCaptureTests.cs`. Insgesamt **140** Beispiele in **12** Gruppen.
+Automatisch erzeugt von `backend/Pugling.Api.Tests/DocsCaptureTests.cs`. Insgesamt **141** Beispiele in **12** Gruppen.
 
 | Gruppe | Beispiele | Fehlerfälle | Datei |
 | --- | ---: | ---: | --- |
@@ -14,12 +14,12 @@ Automatisch erzeugt von `backend/Pugling.Api.Tests/DocsCaptureTests.cs`. Insgesa
 | shop | 28 | 8 | [`shop.md`](./shop.md) |
 | study-plans | 23 | 8 | [`study-plans.md`](./study-plans.md) |
 | tags | 5 | 3 | [`tags.md`](./tags.md) |
-| timetable | 2 | 1 | [`timetable.md`](./timetable.md) |
+| timetable | 3 | 2 | [`timetable.md`](./timetable.md) |
 | vocabulary | 4 | 2 | [`vocabulary.md`](./vocabulary.md) |
 
 ## Fehler-Code-Abdeckung
 
-Verifiziert: **32 / 49** Codes aus `ApiErrors`.
+Verifiziert: **33 / 52** Codes aus `ApiErrors`.
 
 | Code | Beispiel |
 | --- | --- |
@@ -53,6 +53,7 @@ Verifiziert: **32 / 49** Codes aus `ApiErrors`.
 | `test_already_submitted` | study-plans – Test erneut abgeben |
 | `timetable_slot_taken` | timetable – Gleiches Fach am selben Wochentag |
 | `unauthorized` | auth – Selbstauskunft ohne Token |
+| `unknown_field` | timetable – Unbekanntes Feld im Body |
 | `validation_error` | auth – Login mit nicht-numerischer adultId |
 | `vocabulary_in_use` | vocabulary – Verwendete Grundform löschen |
 
@@ -60,6 +61,8 @@ Verifiziert: **32 / 49** Codes aus `ApiErrors`.
 
 - `bad_request` — Generischer 400-Default (`ForStatus`): nur Sicherheitsnetz für Framework-Antworten ohne spezifischen Code – alle regulären 400-Pfade tragen bereits einen fachlichen Code.
 - `concurrency_conflict` — Erfordert eine echte Schreib-Kollision (Doppelklick/Retry) über das Concurrency-Token; in-process nicht deterministisch per HTTP auslösbar (siehe SkinPurchaseTests, direkt über DbContext).
+- `duplicate_email` — Über HTTP im In-Process-Test nicht erreichbar.
+- `duplicate_profile_name` — Über HTTP im In-Process-Test nicht erreichbar.
 - `http_error` — Über HTTP im In-Process-Test nicht erreichbar.
 - `internal_error` — 500-Fallback für unbehandelte Ausnahmen – kein sicherer, gezielter Auslöser über die öffentliche API.
 - `item_not_found` — Über HTTP im In-Process-Test nicht erreichbar.

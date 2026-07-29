@@ -11,6 +11,7 @@ namespace Pugling.Contracts;
 /// </summary>
 public sealed class VocabRefJsonConverter : JsonConverter<VocabRef>
 {
+    /// <summary>Liest beide Formen: nackter String (Alt-Form, Key) oder Objekt <c>{ vocabularyId, key, _self }</c>.</summary>
     public override VocabRef Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
         // Alt-Form: nackter String = Store-Key (ID noch unbekannt → 0; Resolver löst per Key auf).
@@ -40,6 +41,7 @@ public sealed class VocabRefJsonConverter : JsonConverter<VocabRef>
         throw new JsonException("Unerwartetes Ende beim Lesen eines VocabRef.");
     }
 
+    /// <summary>Schreibt stets die Objekt-Form; <c>_self</c> nur, wenn gesetzt (gespeicherte Configs bleiben linkfrei).</summary>
     public override void Write(Utf8JsonWriter writer, VocabRef value, JsonSerializerOptions options)
     {
         writer.WriteStartObject();

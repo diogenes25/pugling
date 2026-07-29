@@ -1,5 +1,3 @@
-using Pugling.Api.Models;
-
 namespace Pugling.Api.Services.Shared;
 
 /// <summary>

@@ -1,5 +1,3 @@
-using Pugling.Api.Models;
-
 namespace Pugling.Api.Services.Shared;
 
 // Currency lebt im Vertrags-Projekt (Pugling.Contracts).

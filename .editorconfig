@@ -1,0 +1,168 @@
+# Pugling – Codestil, soweit er sich mechanisch prüfen lässt.
+#
+# Zweck (docs/codequalitaet-gates-plan.md, B2): die Konventionen aus CLAUDE.md, die eine Maschine
+# nachhalten kann, aus der Prosa in den Compiler verlagern. Zusammen mit `EnforceCodeStyleInBuild` +
+# `TreatWarningsAsErrors` (Directory.Build.props) heißt `severity = warning` hier **Build-Fehler**.
+#
+# Deshalb gilt: **jede Regel auf `warning` wurde gegen den Bestand gemessen und ist erfüllt.** Alles,
+# was heute nicht flächig gilt, steht bewusst auf `suggestion` – eine Ratsche, die 300 Ausnahmen
+# braucht, ist keine. Verschärft wird erst, wenn der Bestand nachgezogen ist.
+#
+# **`end_of_line` ist absichtlich nicht gesetzt.** `.gitattributes` normalisiert `.cs` auf LF im Repo,
+# `core.eol=native` checkt sie unter Windows als CRLF aus. Ein fester Wert würde `dotnet format
+# --verify-no-changes` auf genau einer der beiden Plattformen scheitern lassen – lokal oder in CI.
+
+root = true
+
+[*]
+charset = utf-8
+indent_style = space
+indent_size = 4
+trim_trailing_whitespace = true
+insert_final_newline = true
+
+[*.{json,yml,yaml}]
+indent_size = 2
+
+[*.md]
+# Zeilenumbrüche am Ende sind in Markdown bedeutungstragend (harter Umbruch).
+trim_trailing_whitespace = false
+
+[*.cs]
+
+# ---------------------------------------------------------------- using-Direktiven
+dotnet_sort_system_directives_first = true
+dotnet_separate_import_directive_groups = false
+# Außerhalb des Namespace – im Bestand ausnahmslos so.
+csharp_using_directive_placement = outside_namespace:warning
+# Unbenutzte usings sind toter Code und verstecken echte Abhängigkeiten.
+dotnet_diagnostic.IDE0005.severity = warning
+
+# ---------------------------------------------------------------- Datei-/Typ-Struktur
+# `namespace X;` statt Block – im handgeschriebenen Bestand ausnahmslos so (gemessen: 290 : 0;
+# die 101 Block-Namespaces sind generierte EF-Migrationen und obj/, beide unten ausgenommen).
+csharp_style_namespace_declarations = file_scoped:warning
+
+# ---------------------------------------------------------------- Klammern und Guard Clauses
+# **`when_multiline` ist die mechanische Fassung von „Guard Clauses zuerst"** (CLAUDE.md): der
+# einzeilige Wächter `if (x is null) return NotFound();` bleibt klammerfrei und damit als Wächter
+# lesbar, während mehrzeilige Blöcke Klammern tragen müssen.
+csharp_prefer_braces = when_multiline:suggestion
+csharp_new_line_before_open_brace = all
+csharp_new_line_before_else = true
+csharp_new_line_before_catch = true
+csharp_new_line_before_finally = true
+csharp_new_line_before_members_in_object_initializers = true
+csharp_new_line_between_query_expression_clauses = true
+
+# ---------------------------------------------------------------- Einrückung / Abstände
+csharp_indent_case_contents = true
+csharp_indent_switch_labels = true
+csharp_indent_labels = one_less_than_current
+csharp_space_after_cast = false
+csharp_space_after_keywords_in_control_flow_statements = true
+csharp_space_between_method_declaration_parameter_list_parentheses = false
+csharp_space_between_method_call_parameter_list_parentheses = false
+csharp_space_between_parentheses = false
+csharp_preserve_single_line_blocks = true
+# **`true` ist zwingend, nicht Geschmack.** Auf `false` bricht `dotnet format` jeden kompakten Wächter
+# (`if (!int.TryParse(parts[1], out var i)) return false;`) auf zwei Zeilen um – beim Einziehen dieser
+# Datei hat das in einem Lauf **162 Dateien** angefasst und damit genau die Schreibweise umgeschrieben,
+# die CLAUDE.md mit „Guard Clauses zuerst" meint. Eine Ratsche friert den Bestand ein, sie restyled ihn nicht.
+csharp_preserve_single_line_statements = true
+
+# ---------------------------------------------------------------- Sprachfeatures
+# Der Bestand nutzt beides reichlich, aber nicht lückenlos – darum Empfehlung, nicht Zwang.
+csharp_style_var_for_built_in_types = false:silent
+csharp_style_var_when_type_is_apparent = true:suggestion
+csharp_style_var_elsewhere = true:suggestion
+csharp_style_expression_bodied_methods = when_on_single_line:suggestion
+csharp_style_expression_bodied_properties = true:suggestion
+csharp_style_expression_bodied_accessors = true:suggestion
+csharp_style_expression_bodied_lambdas = true:suggestion
+csharp_style_pattern_matching_over_is_with_cast_check = true:suggestion
+csharp_style_pattern_matching_over_as_with_null_check = true:suggestion
+csharp_style_prefer_pattern_matching = true:suggestion
+csharp_style_prefer_not_pattern = true:suggestion
+csharp_style_prefer_switch_expression = true:suggestion
+csharp_style_conditional_delegate_call = true:suggestion
+csharp_style_throw_expression = true:suggestion
+csharp_style_inlined_variable_declaration = true:suggestion
+csharp_style_deconstructed_variable_declaration = true:suggestion
+csharp_style_prefer_index_operator = true:suggestion
+csharp_style_prefer_range_operator = true:suggestion
+csharp_prefer_simple_using_statement = true:suggestion
+csharp_prefer_static_local_function = true:suggestion
+csharp_style_prefer_primary_constructors = true:suggestion
+csharp_style_prefer_readonly_struct = true:suggestion
+csharp_style_unused_value_assignment_preference = discard_variable:suggestion
+csharp_style_unused_value_expression_statement_preference = discard_variable:silent
+
+dotnet_style_qualification_for_field = false:suggestion
+dotnet_style_qualification_for_property = false:suggestion
+dotnet_style_qualification_for_method = false:suggestion
+dotnet_style_qualification_for_event = false:suggestion
+dotnet_style_predefined_type_for_locals_parameters_members = true:suggestion
+dotnet_style_predefined_type_for_member_access = true:suggestion
+dotnet_style_object_initializer = true:suggestion
+dotnet_style_collection_initializer = true:suggestion
+dotnet_style_prefer_collection_expression = when_types_loosely_match:suggestion
+dotnet_style_coalesce_expression = true:suggestion
+dotnet_style_null_propagation = true:suggestion
+dotnet_style_prefer_is_null_check_over_reference_equality_method = true:suggestion
+dotnet_style_prefer_conditional_expression_over_assignment = true:suggestion
+dotnet_style_prefer_conditional_expression_over_return = true:suggestion
+dotnet_style_prefer_auto_properties = true:suggestion
+dotnet_style_prefer_compound_assignment = true:suggestion
+dotnet_style_prefer_simplified_boolean_expressions = true:suggestion
+dotnet_style_prefer_simplified_interpolation = true:suggestion
+dotnet_style_readonly_field = true:suggestion
+dotnet_style_require_accessibility_modifiers = for_non_interface_members:suggestion
+
+# ---------------------------------------------------------------- Namensregeln
+dotnet_naming_rule.interfaces_beginnen_mit_i.severity = warning
+dotnet_naming_rule.interfaces_beginnen_mit_i.symbols = interface_symbols
+dotnet_naming_rule.interfaces_beginnen_mit_i.style = i_prefix
+dotnet_naming_symbols.interface_symbols.applicable_kinds = interface
+dotnet_naming_style.i_prefix.required_prefix = I
+dotnet_naming_style.i_prefix.capitalization = pascal_case
+
+dotnet_naming_rule.typen_pascal_case.severity = warning
+dotnet_naming_rule.typen_pascal_case.symbols = type_symbols
+dotnet_naming_rule.typen_pascal_case.style = pascal_case
+dotnet_naming_symbols.type_symbols.applicable_kinds = class,struct,enum,delegate
+dotnet_naming_style.pascal_case.capitalization = pascal_case
+
+dotnet_naming_rule.konstanten_pascal_case.severity = suggestion
+dotnet_naming_rule.konstanten_pascal_case.symbols = const_symbols
+dotnet_naming_rule.konstanten_pascal_case.style = pascal_case
+dotnet_naming_symbols.const_symbols.applicable_kinds = field
+dotnet_naming_symbols.const_symbols.required_modifiers = const
+
+# ---------------------------------------------------------------- Ausgewählte Analyzer-Regeln
+# `AnalysisLevel` bleibt auf dem SDK-Default (`latest-recommended` = 1358 Warnungen, siehe
+# Directory.Build.props). Scharf gestellt werden nur Regeln mit fachlichem Gehalt für dieses Projekt:
+#
+# CA2016: `CancellationToken` an die aufgerufene Methode weiterreichen. Genau die Konvention aus
+# CLAUDE.md („CancellationToken durchreichen"); ein verschluckter Token macht Abbrüche wirkungslos.
+dotnet_diagnostic.CA2016.severity = warning
+#
+# CA1001: Typ mit `IDisposable`-Feldern ist selbst nicht disposable – Ressourcenleck.
+dotnet_diagnostic.CA1001.severity = warning
+#
+# CA1805: unnötige Initialisierung auf den Default-Wert.
+dotnet_diagnostic.CA1805.severity = warning
+#
+# **Bewusst NICHT scharf:** CA1707 (Bezeichner ohne Unterstriche) – die deutschsprachigen Testnamen
+# (`Bekannte_Vokabeln_werden_verlinkt_statt_dupliziert`) sind eine gewollte Konvention, 926 Treffer.
+dotnet_diagnostic.CA1707.severity = none
+
+# ---------------------------------------------------------------- Generierter Code
+# EF-Migrationen trägt niemand von Hand nach; sie würden gegen jede Stilregel verstoßen (Block-
+# Namespaces, keine Doku). `generated_code` nimmt sie aus der Analyse, statt Regel für Regel
+# Ausnahmen zu pflegen.
+[**/Data/Migrations/*.cs]
+generated_code = true
+
+[**/obj/**.cs]
+generated_code = true

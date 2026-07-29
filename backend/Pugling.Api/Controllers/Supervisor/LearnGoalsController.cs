@@ -2,7 +2,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Pugling.Api.Auth;
 using Pugling.Api.Errors;
-using Pugling.Api.Services;
 
 namespace Pugling.Api.Controllers.Supervisor;
 

@@ -44,22 +44,30 @@ internal static class TestApi
         return (await res.Content.ReadFromJsonAsync<JsonElement>()).GetProperty(key).GetInt32();
     }
 
-    /// <summary>Legt (als Vater) einen Vokabel-Lehrplan mit zwei Seed-Vokabeln an und liefert dessen Id.</summary>
-    public static async Task<int> CreateVocabPlanAsync(HttpClient father, int childId = 1, bool dailyTestRequired = true)
+    /// <summary>
+    /// Legt (als Vater) einen <b>leeren</b> Lehrplan-Container an und liefert dessen Id. Inhalt kommt
+    /// über Positionen dazu (<see cref="SeedLeitnerPosition"/>) – der Plan selbst trägt keinen.
+    /// <para>
+    /// Hieß früher <c>CreateVocabPlanAsync</c> und behauptete „mit zwei Seed-Vokabeln": der Payload schickte
+    /// <c>method</c>, <c>contentKeys</c> und <c>dailyTestRequired</c>, also drei Felder des beim
+    /// Lehrplan-Umbau entfernten <c>StudyPlanItem</c>/<c>Method</c>-Modells. Der Server verwarf sie still
+    /// (<c>UnmappedMemberHandling.Skip</c>) und meldete 201 – niemand merkte es. Genau dieser Helfer war der
+    /// Beleg für die Lücke, die B3 geschlossen hat; heute käme dafür ein 400 <c>unknown_field</c>.
+    /// </para>
+    /// </summary>
+    public static async Task<int> CreateEmptyPlanAsync(HttpClient father, int childId = 1)
     {
         var res = await father.PostAsJsonAsync("/api/v1/supervisor/study-plans", new
         {
             childId,
             title = "Test-Plan",
-            method = "Vocabulary",
             durationDays = 5,
-            contentKeys = new[] { "en_house_de_haus", "en_go_de_gehen" },
-            dailyTestRequired,
         });
         return await IdAsync(res);
     }
 
     /// <summary>Legt (als Vater) Fach → Kapitel → eine Rechen-Übung an und liefert deren Ids.</summary>
+    /// <param name="father">Angemeldeter Creator-/Supervisor-Client.</param>
     /// <param name="problems">
     /// Aufgaben der Übung; leer = die eine Standard-Aufgabe „7 × 6". Mehrere braucht man, sobald eine
     /// Trefferquote zwischen 0 % und 100 % geprüft werden soll.

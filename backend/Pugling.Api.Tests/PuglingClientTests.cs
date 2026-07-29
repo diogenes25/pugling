@@ -1,9 +1,6 @@
 using System.Net;
 using Microsoft.Extensions.DependencyInjection;
 using Pugling.Client;
-using Pugling.Contracts;
-using Pugling.Contracts.Creator;
-using Pugling.Contracts.Supervisor;
 
 namespace Pugling.Api.Tests;
 

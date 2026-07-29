@@ -101,7 +101,7 @@ public class PlanPositionsController(PuglingDbContext db, ExercisePermissionServ
                 "This exercise has no items yet. Add its content before assigning it to a study plan.");
 
         var order = dto.Order ?? ((await db.PlanPositions.Where(p => p.StudyPlanId == planId)
-            .MaxAsync(p => (int?)p.Order)) ?? -1) + 1;
+            .MaxAsync(p => (int?)p.Order, ct)) ?? -1) + 1;
         var sb = exercise.SuggestedBonus;
 
         var pos = new PlanPosition
@@ -132,7 +132,7 @@ public class PlanPositionsController(PuglingDbContext db, ExercisePermissionServ
             SpeedBonusPoints = dto.SpeedBonusPoints ?? sb?.SpeedBonusPoints ?? 0,
         };
         db.PlanPositions.Add(pos);
-        await db.SaveChangesAsync();
+        await db.SaveChangesAsync(ct);
 
         pos.Exercise = exercise;
         return CreatedAtAction(nameof(Get), new { planId, positionId = pos.Id }, Map(pos));

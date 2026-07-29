@@ -1,0 +1,82 @@
+name: CI
+
+# Das Tor vor `main`: macht die vorhandene Integrationstest-Suite wirksam.
+# Vorher gab es zwischen "Code entsteht" und "Code ist deployt" keinen Schritt, der die Tests aufmacht –
+# `deploy-azure.yml` baute und deployte ohne `dotnet test`. Siehe docs/codequalitaet-gates-plan.md (Etappe A).
+#
+# Reihenfolge ist Absicht: **erst Tests, dann Format.** Der inhaltliche Befund ("welche Regel ist gebrochen")
+# soll zuerst im Log stehen; die Formatprüfung ist mit ~140 s der teuerste Schritt und sagt fachlich nichts.
+# Das Deployment hängt über `workflow_run` an diesem Workflow (siehe deploy-azure.yml).
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+# Auf einem PR darf ein neuer Push den alten Lauf abbrechen. Auf `main` **nicht**: dort hängt das Deploy
+# am Ergebnis, und ein abgebrochener Lauf sähe wie "nie geprüft" aus.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  DOTNET_VERSION: "10.0.x"
+  DOTNET_NOLOGO: "true"
+  DOTNET_CLI_TELEMETRY_OPTOUT: "true"
+  # Die Testsuite fährt je Testklasse eine frische SQLite hoch; ohne UTC-Runner-Annahme arbeiten die
+  # Tests ohnehin (Wanduhr ist in der WebAppFactory neutralisiert), aber explizit ist besser als implizit.
+  TZ: UTC
+
+jobs:
+  ci:
+    name: Build, Test, Format
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      # NuGet-Cache (A3): ohne ihn kostet `restore` den Großteil der Job-Laufzeit. Schlüssel über alle
+      # csproj – eine neue PackageReference invalidiert den Cache, ein Codeedit nicht.
+      - name: NuGet-Cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', 'Directory.*.props', '.config/dotnet-tools.json') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
+      - name: Restore
+        run: dotnet restore Pugling.sln
+
+      - name: Build
+        run: dotnet build Pugling.sln -c Release --no-restore
+
+      # `--no-build`: die Solution ist im Schritt davor schon in Release gebaut. Warm liegt die ganze
+      # Suite bei ~63 s – es gibt damit kein Laufzeit-Argument gegen dieses Tor.
+      - name: Test
+        run: >
+          dotnet test Pugling.sln -c Release --no-build
+          --logger "trx;LogFileName=test-results.trx"
+          --results-directory TestResults
+
+      - name: Testergebnisse hochladen
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: |
+            TestResults/**/*.trx
+          if-no-files-found: warn
+          retention-days: 14
+
+      # Bewusst hinter den Tests: langsamster Schritt, geringste fachliche Aussage. `--no-restore`, weil
+      # oben schon restauriert wurde. Stand bei Einziehen des Tors: sauber.
+      - name: Format prüfen
+        run: dotnet format Pugling.sln --verify-no-changes --no-restore

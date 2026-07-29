@@ -105,7 +105,7 @@ public class SharedLibraryScenarioTests(PuglingWebAppFactory factory) : IClassFi
 
         // 5) Aber er darf sie in einen EIGENEN Lehrplan übernehmen (Katalog global nutzbar).
         var planId = await TestApi.IdAsync(await other.PostAsJsonAsync("/api/v1/supervisor/study-plans",
-            new { childId, title = "Toms Englisch-Plan", method = "Vocabulary", durationDays = 14 }));
+            new { childId, title = "Toms Englisch-Plan", durationDays = 14 }));
         var posRes = await other.PostAsJsonAsync($"/api/v1/supervisor/study-plans/{planId}/positions",
             new { exerciseId, useLeitner = true });
         Assert.Equal(HttpStatusCode.Created, posRes.StatusCode);

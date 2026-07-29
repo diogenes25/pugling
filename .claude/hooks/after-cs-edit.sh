@@ -53,7 +53,13 @@ shopt -u nocasematch
 dotnet format whitespace "$proj" --include "$rel" --verbosity quiet >/dev/null 2>&1 || true
 
 # Bauen; bei Fehler die relevanten Zeilen an Claude zurückgeben (exit 2 blockt + zeigt stderr).
-if ! out=$(dotnet build "$proj" -clp:NoSummary -v q 2>&1); then
+#
+# **`-c Release` ist Absicht** (gleiche Begründung wie in test-gate.sh): läuft parallel ein Dev-Server
+# (`dotnet run` gegen localhost:5200 – laut CLAUDE.md der Normalfall beim Prüfen), hält er
+# `bin/Debug/…/Pugling.Contracts.dll` gesperrt, und jeder Debug-Build scheitert mit MSB3021/MSB3027.
+# Der Hook meldete dann bei *jedem* .cs-Edit einen Fehler, der keiner ist – die Rückkopplung wurde
+# unbrauchbar, genau solange der Server lief. Release schreibt nach `bin/Release` und ist unabhängig.
+if ! out=$(dotnet build "$proj" -c Release -clp:NoSummary -v q 2>&1); then
   {
     echo "❌ dotnet build ($proj) fehlgeschlagen nach Änderung an $file:"
     printf '%s\n' "$out" | grep -iE "error|warning" | head -30

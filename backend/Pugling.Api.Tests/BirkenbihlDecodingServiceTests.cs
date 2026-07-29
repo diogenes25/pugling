@@ -1,5 +1,4 @@
 using Microsoft.Extensions.DependencyInjection;
-using Pugling.Api.Services;
 
 namespace Pugling.Api.Tests;
 

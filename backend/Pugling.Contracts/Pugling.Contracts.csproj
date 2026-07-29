@@ -7,7 +7,9 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>Pugling.Contracts</RootNamespace>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <NoWarn>$(NoWarn);CS1591</NoWarn>
+    <!-- CS1591 (fehlende `/// <summary>`) bleibt scharf: der Vertrag *ist* das Produkt, seine Doku
+         fließt in Swagger. War früher per NoWarn unterdrückt – gemessen ohne einen einzigen Treffer,
+         also war die Unterdrückung toter Ballast, der die Regel aus CLAUDE.md still ausgehebelt hätte. -->
   </PropertyGroup>
 
 </Project>

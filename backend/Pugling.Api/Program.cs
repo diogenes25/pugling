@@ -1,18 +1,15 @@
 using System.Text.Json.Nodes;
 using System.Threading.RateLimiting;
-using Asp.Versioning;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using Pugling.Api.Auth;
 using Pugling.Api.Data;
 using Pugling.Api.Errors;
 using Pugling.Api.OpenApi;
-using Pugling.Api.Services;
 using Scalar.AspNetCore;
 using Serilog;
 using Serilog.Formatting.Compact;
@@ -31,8 +28,16 @@ builder.Host.UseSerilog((context, services, config) => config
         rollingInterval: RollingInterval.Day, retainedFileCountLimit: 14, shared: true));
 
 builder.Services.AddControllers()
-    .AddJsonOptions(o => o.JsonSerializerOptions.Converters.Add(
-        new System.Text.Json.Serialization.JsonStringEnumConverter()));
+    .AddJsonOptions(o =>
+    {
+        o.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
+        // **Unbekannte Felder werden abgelehnt, nicht verschluckt.** Der Default `Skip` machte aus einem
+        // vertippten oder veralteten Feld ein stilles Nichts: der Aufrufer bekam 201 Created und glaubte,
+        // sein Wert sei angekommen. Für ein API-First-Produkt, dessen Konsumenten generierte Clients und
+        // KI-Agenten sind, ist das die teuerste Voreinstellung überhaupt – sie verwandelt einen
+        // Vertragsfehler in stillen Datenverlust. Siehe docs/codequalitaet-gates-plan.md (L3/B3).
+        o.JsonSerializerOptions.UnmappedMemberHandling = System.Text.Json.Serialization.JsonUnmappedMemberHandling.Disallow;
+    });
 
 // Modell-Validierungsfehler als sauberes, englisches ProblemDetails ausliefern. Zwei Probleme der
 // Voreinstellung werden hier behoben: (1) Schlägt die JSON-Deserialisierung fehl (z. B. String statt
@@ -60,6 +65,9 @@ builder.Services.Configure<ApiBehaviorOptions>(o =>
         // um bei ungültigen Enum-Werten die zulässigen Werte nennen zu können.
         var parameterTypes = context.ActionDescriptor.Parameters.Select(p => p.ParameterType);
         var errors = new Dictionary<string, string[]>();
+        // Ein unbekanntes Feld ist keine fehlgeschlagene Wertprüfung, sondern ein Vertragsfehler beim
+        // Aufrufer – es bekommt darum den eigenen Code `unknown_field` statt `validation_error`.
+        var hasUnknownField = false;
         foreach (var (key, entry) in modelState)
         {
             if (entry.Errors.Count == 0) continue;
@@ -69,8 +77,16 @@ builder.Services.Configure<ApiBehaviorOptions>(o =>
 
             // Ist der Pfad ein Enum-Feld, kennen wir dessen erlaubte Werte – unabhängig von der Rohmeldung.
             var enumType = EnumSchemaHelp.EnumTypeForJsonPath(parameterTypes, key);
+            // Unbekanntes Feld (`UnmappedMemberHandling.Disallow`): Die Rohmeldung von System.Text.Json
+            // nennt den internen DTO-Typnamen und darf darum – wie bei den Konvertierungsfehlern – nicht
+            // nach außen. Erkannt wird sie am Meldungstext; das ist derselbe Weg wie beim bereits
+            // bestehenden „could not be converted" und von `UnknownFieldTests` festgenagelt.
+            if (entry.Errors.Any(e => e.ErrorMessage.Contains("could not be mapped to any .NET member", StringComparison.Ordinal)))
+                hasUnknownField = true;
             var messages = entry.Errors
-                .Select(e => e.ErrorMessage.Contains("could not be converted", StringComparison.Ordinal)
+                .Select(e => e.ErrorMessage.Contains("could not be mapped to any .NET member", StringComparison.Ordinal)
+                    ? "Unknown field. The request contract has no such field – remove it or check the API documentation."
+                    : e.ErrorMessage.Contains("could not be converted", StringComparison.Ordinal)
                     ? enumType is not null
                         // Ungültiger Enum-Wert: die zulässigen Werte nennen (statt „irgendwas stimmte nicht").
                         ? $"The value is not one of the allowed values: {string.Join(", ", EnumSchemaHelp.AllowedValues(enumType))}."
@@ -84,15 +100,16 @@ builder.Services.Configure<ApiBehaviorOptions>(o =>
             errors[name] = messages;
         }
 
+        var apiError = hasUnknownField ? ApiErrors.UnknownField : ApiErrors.ValidationError;
         var problem = new ValidationProblemDetails(errors)
         {
             Status = StatusCodes.Status400BadRequest,
-            Title = ApiErrors.ValidationError.Title,
-            Type = ApiErrors.ValidationError.TypeUri,
+            Title = apiError.Title,
+            Type = apiError.TypeUri,
         };
         // Maschinenlesbarer Code + traceId – dieser Pfad baut das ProblemDetails selbst (umgeht die
         // Factory), muss die traceId-Extension daher wie alle anderen Fehlerpfade selbst setzen.
-        problem.Extensions["code"] = ApiErrors.ValidationError.Code;
+        problem.Extensions["code"] = apiError.Code;
         ProblemDetailsStamping.ApplyTraceId(problem, context.HttpContext);
         return new BadRequestObjectResult(problem) { ContentTypes = { "application/problem+json" } };
     };

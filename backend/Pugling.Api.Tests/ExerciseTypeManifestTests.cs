@@ -3,7 +3,6 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using Microsoft.Extensions.DependencyInjection;
 using Pugling.Api.Exercises;
-using Pugling.Api.Models;
 
 namespace Pugling.Api.Tests;
 

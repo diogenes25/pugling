@@ -1,8 +1,5 @@
 using System.Text.Json;
 using Pugling.Api.Exercises;
-using Pugling.Api.Models;
-using Pugling.Api.Services;
-using Pugling.Api.Services.Shared;
 
 namespace Pugling.Api.Tests;
 

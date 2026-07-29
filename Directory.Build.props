@@ -1,0 +1,39 @@
+<Project>
+
+  <!--
+    Die Ratsche: friert den heutigen guten Stand ein, statt ihn nur zu beschreiben.
+    Siehe docs/codequalitaet-gates-plan.md (Etappe B). Gilt für alle Projekte unter dem Repo-Root und
+    damit **lokal genauso wie in CI** – deshalb hier und nicht als `-warnaserror` an der CI-Kommandozeile.
+  -->
+  <PropertyGroup>
+    <!--
+      Beim Einziehen gemessen: `dotnet build Pugling.sln` = 0 Warnungen, auch mit wieder aktiviertem
+      CS1591 (fehlende `/// <summary>`). Die Verschärfung kostet also nichts und verhindert ab sofort
+      jede Drift – insbesondere die undokumentierte öffentliche API, die CLAUDE.md verbietet.
+    -->
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+
+    <!--
+      NuGet-Audit **bewusst nicht** als Fehler: NU1901–NU1904 melden Sicherheitsadvisories und ändern
+      sich, ohne dass eine Zeile Code angefasst wurde. Als Fehler bräche ein neu veröffentlichtes
+      Advisory jeden Build – auch den lokalen Arbeitsfluss – und zwar an einem Commit, der gestern grün
+      war. Als Warnung bleibt der Befund sichtbar und handhabbar.
+    -->
+    <WarningsNotAsErrors>NU1901;NU1902;NU1903;NU1904</WarningsNotAsErrors>
+
+    <!--
+      Codestil im Build erzwingen. Ohne `.editorconfig` folgenlos (gemessen: 0 Warnungen) – die
+      Schärfe kommt dosiert aus der `.editorconfig` daneben.
+    -->
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+
+    <!--
+      `AnalysisLevel` bleibt auf dem SDK-Default. `latest-recommended` wurde gemessen und ergibt
+      **1358 Warnungen**, davon 926× CA1707 („Bezeichner ohne Unterstriche") – das trifft die
+      deutschsprachigen Testnamen, also eine bewusste Konvention, keinen Mangel. Eine Ratsche, die
+      1358 Ausnahmen braucht, ist keine. Einzelne CA-Regeln mit echtem fachlichen Gehalt werden
+      stattdessen namentlich in der `.editorconfig` scharf gestellt.
+    -->
+  </PropertyGroup>
+
+</Project>

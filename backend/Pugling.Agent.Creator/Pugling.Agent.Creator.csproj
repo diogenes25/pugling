@@ -9,7 +9,7 @@
     <RootNamespace>Pugling.Agent.Creator</RootNamespace>
     <AssemblyName>pugling-creator</AssemblyName>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <NoWarn>$(NoWarn);CS1591</NoWarn>
+    <!-- CS1591 bleibt scharf – siehe Pugling.Contracts.csproj. -->
     <!-- Die PIN gehört nicht in appsettings.json: dotnet user-secrets set "Pugling:Pin" "0000" -->
     <UserSecretsId>pugling-agent-creator</UserSecretsId>
   </PropertyGroup>
