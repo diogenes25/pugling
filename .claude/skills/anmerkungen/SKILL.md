@@ -38,7 +38,7 @@ kann das, seine Basis-URL ist überschreibbar:
 ```bash
 export TUTORIAL_API_BASE=http://localhost:5200
 source .claude/scripts/tutorial-api.sh
-TOK=$(login_father 1 0000)          # ein beliebiges Vater-Konto genügt
+TOK=$(login_adult 1 0000)          # ein beliebiges Vater-Konto genügt
 api_get /api/v1/auth/me             # Kontrolle: roles enthält "Supervisor"
 ```
 
@@ -123,7 +123,7 @@ Die Wissenskarte spart Sucherei: [docs/endpunkt-beziehungen.md](../../../docs/en
 Zuerst dem Nutzer im Terminal antworten — knapp, mit Beleg. Dann festhalten:
 
 ```bash
-api_patch /api/v1/remarks/123 '{"answer":"Geht bereits: /vater/profil hat ein E-Mail-Feld (VaterProfil.tsx:87) ueber api.updateFather (api.ts:211) auf PATCH supervisor/fathers/{id}; Backend FathersController.cs:76.","answeredBy":"claude-code","status":"Done"}'
+api_patch /api/v1/remarks/123 '{"answer":"Geht bereits: /vater/profil hat ein E-Mail-Feld (VaterProfil.tsx:87) ueber api.updateAdult (api.ts:211) auf PATCH supervisor/adults/{id}; Backend AdultsController.cs:76.","answeredBy":"claude-code","status":"Done"}'
 ```
 
 > Dieses Beispiel ist echt und stammt aus dem Verifikationslauf — und es zeigt, warum die Belegregel

@@ -52,7 +52,7 @@ Das war der ganze Umbau im Kern:
 
 1. `AccountService` hängte jedem Vater beide Profile an → neuer Weg `EnsureForTeacherAsync`, und das
    Anlegen ist **nicht nachrüstend**: ein bestehendes Konto behält seine Rollen. Ohne diese Zusage hätte
-   `auth/father` (das `EnsureForFatherAsync` ruft) dem Lehrer beim ersten Login stillschweigend den
+   `auth/adult` (das `EnsureForFatherAsync` ruft) dem Lehrer beim ersten Login stillschweigend den
    Betreuungsauftrag verliehen – die Trennung hätte sich selbst aufgehoben.
 2. `AuthController.Login` klappte jede Nicht-Student-Rolle auf `Supervisor` zusammen → Rangfolge
    Supervisor → Creator → Student in `PrimaryRoleOf`.
@@ -81,7 +81,7 @@ Lesezeichen und E2E – dieselbe Abwägung wie beim Perspektiven-Umbau.
 - **`GET supervisor/study-plans` antwortet einem Lehrer `200`, nicht `403`** – und das ist Absicht: die
   *lesende* Liste dient Vater und Sohn und trennt inline (CLAUDE.md). Für einen Lehrer ist sie **leer**,
   weil über `SupervisorLinks` gefiltert wird. Kein Datenleck; meine Test-Erwartung war falsch, nicht der Code.
-- **Der Profil-Link führte ins Leere.** `FathersController` ist Supervisor-gegated; ein Lehrer bekäme dort
+- **Der Profil-Link führte ins Leere.** `AdultsController` ist Supervisor-gegated; ein Lehrer bekäme dort
   403. Er sieht seinen Namen jetzt ohne Link.
 
 ## Selbstverwaltung: `PATCH auth/me`
@@ -95,7 +95,7 @@ Drei Entscheidungen, die darin stecken:
 
 - **Zwei Stellen schreiben.** Das `Account` trägt den Login, die `Father`-Zeile den fachlichen Namen (er
   erscheint als Autor an den Übungen). Der PIN-Hash *musste* schon immer gespiegelt werden, sonst läuft
-  `auth/login` aus dem Takt; Name und E-Mail werden hier **mit** gespiegelt. `FathersController` tat das
+  `auth/login` aus dem Takt; Name und E-Mail werden hier **mit** gespiegelt. `AdultsController` tat das
   bisher nicht – Konto- und Vater-Name konnten auseinanderdriften.
 - **Kein Kind.** Ein Kind ändert Name und PIN nicht selbst: die PIN ist der Zugang, den der Vater vergibt.
   Sonst hätte sich das Kind der Aufsicht entzogen, und zwar über einen Endpunkt, der „mein Konto" heißt.

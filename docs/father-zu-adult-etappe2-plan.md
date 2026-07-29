@@ -5,9 +5,18 @@ aliases: [Etappe 2, Vertrag umbenennen, AdultResponse, auth/adult]
 
 # Etappe 2: den Vertrag von `father` auf `adult` nachziehen
 
-Status: **offen, vorbereitet.** Etappe 1 (Entität + Datenbank) ist umgesetzt und gepusht (`ba21dd8`).
-Diese Datei ist die Übergabe – sie enthält alles, was zum Weiterarbeiten nötig ist, damit keine frühere
-Sitzung im Kopf sein muss.
+Status: **umgesetzt (2026-07-29).** Etappe 1 (Entität + Datenbank) steckt in `ba21dd8`, Etappe 2 – der
+Vertrag – ist damit nachgezogen. Die Datei bleibt als Begründung stehen: das Inventar unten beschreibt den
+Stand *vorher*, die Regel „was nicht mitwandert" gilt weiter.
+
+Über das Inventar hinaus mitgezogen, weil es sonst ins Leere gezeigt hätte: der Swagger-Hinweis auf den
+Login-Pfad, die REST-Client-Variablen in `.vscode/settings.json` (`adultId`/`adultPin`, passend zu
+`docs/REST/*.http`), der Bruno-Generator (`tools/bruno/generate-bruno.mjs`), die Dev-Skripte
+(`login_father` → `login_adult`) und `tools/vokabel-import` (`-FatherId` → `-AdultId`).
+
+**Bewusst nicht angefasst** – rein interne Namen, die kein Konsument sieht: `EnsureForFatherAsync`,
+`FatherOwnsChildAsync`, `ListingsForFatherAsync`, `IsOwnedBy(authorFatherId, fatherId)` und lokale
+`fatherId`-Variablen in Controllern/Services. Sie bleiben Aufräumarbeit ohne Vertrags-Wirkung.
 
 ## Ausgangslage
 

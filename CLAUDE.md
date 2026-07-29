@@ -62,8 +62,10 @@ Details: [backend/Pugling.Agent.Creator/README.md](backend/Pugling.Agent.Creator
   ohne Betreuungsauftrag. „Vater" bleibt richtig, wo ein Vater gemeint ist – etwa in
   `SupervisorRelation.Father` als Verwandtschaftsangabe und in der Oberfläche. Der Token-Claim heißt
   weiter `fid` (er steckt in ausgestellten Tokens), der Zugriff `User.AdultId()`. Der **Vertrag** ist
-  unverändert: `FatherResponse`, `supervisor/fathers` und `auth/father` heißen weiter so – das Nachziehen
-  liegt als Übergabe in [docs/father-zu-adult-etappe2-plan.md](docs/father-zu-adult-etappe2-plan.md).
+  nachgezogen ([Etappe 2](docs/father-zu-adult-etappe2-plan.md)): `AdultResponse`/`CreateAdultDto`,
+  `supervisor/adults` und `auth/adult` (letzterer meldet auch das Lehrer-Konto an, darum der Name),
+  dazu die Felder `AuthorAdultId`/`OwnerAdultId`/`GrantedByAdultId`/`MeResponse.AdultId`. Rein interne
+  Namen (`EnsureForFatherAsync`, `FatherOwnsChildAsync`, lokale `fatherId`) tragen den alten Namen noch.
 - **Identität/Auth** ([Auth/](backend/Pugling.Api/Auth/)): Ein `Account` (Login/PIN-Hash) trägt über
   `AccountProfile` **mehrere Rollen** (`ProfileRole` Creator/Supervisor/Student → `Adult`/`Child`-Profil);
   ein Vater ist zugleich Creator+Supervisor. PIN-Login (`auth/{father|child}` oder konto-zentrisch `auth/login`)
@@ -227,7 +229,7 @@ Details: [backend/Pugling.Agent.Creator/README.md](backend/Pugling.Agent.Creator
   `*.db` ist gitignored; eine alte, per `EnsureCreated` erzeugte DB einmalig löschen (wird neu migriert + geseedet).
 - **PINs sind gehasht** (`Auth/PinHasher`): `Adult.Pin`/`Child.Pin` und `Account.PinHash` halten den Hash,
   nie den Klartext. Wer eine PIN setzt, muss durch `PinHasher.Hash` und den Hash **auf das Konto spiegeln**
-  (sonst läuft der konto-zentrische `/auth/login` aus dem Takt) – siehe `ChildrenController`/`FathersController`.
+  (sonst läuft der konto-zentrische `/auth/login` aus dem Takt) – siehe `ChildrenController`/`AdultsController`.
   Der PIN-Login ist zusätzlich per `AddRateLimiter` gebremst (Policy `login`, über `RateLimiting:LoginEnabled`
   abschaltbar – der In-Process-TestServer teilt sonst eine IP-Partition und bekäme 429).
 - **`TimeSlotRule`** ist das *einzige* bewusst erhaltene Legacy-Entity (Leitner-Multiplikator). Alles

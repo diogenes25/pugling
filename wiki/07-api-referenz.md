@@ -28,7 +28,7 @@ Kompakter Überblick über alle Routen. **Autoritative Quelle bleibt Swagger** (
 
 | Rolle | Methode & Route | Zweck |
 | --- | --- | --- |
-| ∅ | `POST /auth/father` | Vater-Login (fatherId + pin) → JWT |
+| ∅ | `POST /auth/adult` | Login eines Erwachsenen – Vater wie Lehrer (adultId + pin) → JWT |
 | ∅ | `POST /auth/child` | Sohn-Login (childId + pin) → JWT |
 | A | `GET /auth/me` | Identität aus dem Token |
 | S | `GET /me/points` · `GET …/entries` · `GET …/entries/{entryId}` | Kontostand (Salden) + Buchungen (Liste, paginiert, + Einzeln) |
@@ -42,8 +42,8 @@ Kompakter Überblick über alle Routen. **Autoritative Quelle bleibt Swagger** (
 
 | Rolle | Methode & Route | Zweck |
 | --- | --- | --- |
-| ∅ | `POST /fathers` | Vater registrieren |
-| V | `GET/PATCH/DELETE /fathers/{fatherId}` · `GET /fathers` | eigener Vater-Datensatz |
+| ∅ | `POST /adults` | Vater registrieren |
+| V | `GET/PATCH/DELETE /adults/{adultId}` · `GET /adults` | eigener Erwachsenen-Datensatz |
 | V | `GET/POST /children` · `GET/PATCH/DELETE /children/{childId}` | Kinder verwalten (inkl. `pointsBalance`) |
 | V | `GET /children/{childId}/points` | Punkte-Ledger des Kindes |
 | V | `POST /children/{childId}/points` | manuelle Buchung `{ amount, reason }` |

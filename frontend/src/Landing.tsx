@@ -96,7 +96,7 @@ export function Landing() {
             ein 14-jähriger Sohn mit Schwächen in Französisch.
           </p>
           <div className="card lp-steps">
-            <Step no="1" t="Konto anlegen oder anmelden" d="Beim ersten Mal „Neu registrieren“ – du bekommst deine Vater-Id, mit der du dich künftig anmeldest. Zum Ausprobieren: Id 1, PIN 0000." />
+            <Step no="1" t="Konto anlegen oder anmelden" d="Beim ersten Mal „Neu registrieren“ – du bekommst deine Id, mit der du dich künftig anmeldest. Zum Ausprobieren: Id 1, PIN 0000." />
             <Step no="2" t="Kind wählen oder anlegen" d="Name, Geburtsjahr, Klasse (z.B. 8.) und Schulart – die Klasse filtert später passende Übungen." />
             <Step no="3" t="Problemfeld eingrenzen" d="Fach (Französisch), Thema, Ziel (Klassenarbeit / Aufholen / Regelmäßig) und Intensität – daraus schlägt der Assistent Pensum und Test-Stufe vor." />
             <Step no="4" t="Inhalte auswählen" d="Vorhandene Vokabeln aus dem Store übernehmen – passende Katalog-Übungen (z.B. „Découvertes 1, Unité 2“) werden angezeigt." />

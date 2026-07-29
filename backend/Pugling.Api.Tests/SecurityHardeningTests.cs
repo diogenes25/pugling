@@ -49,7 +49,7 @@ public class SecurityHardeningTests(PuglingWebAppFactory factory) : IClassFixtur
         var statuses = new List<HttpStatusCode>();
         for (var i = 0; i < 12; i++)
         {
-            var res = await client.PostAsJsonAsync("/api/v1/auth/father", new { fatherId = 1, pin = "falsch" });
+            var res = await client.PostAsJsonAsync("/api/v1/auth/adult", new { adultId = 1, pin = "falsch" });
             statuses.Add(res.StatusCode);
         }
 

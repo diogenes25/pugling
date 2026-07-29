@@ -1119,7 +1119,7 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
         });
         var anon = factory.CreateClient();
         var strangerId = await TestApi.IdAsync(
-            await anon.PostAsJsonAsync("/api/v1/supervisor/fathers", new { name = "Fremder Papa", pin = "2222" }));
+            await anon.PostAsJsonAsync("/api/v1/supervisor/adults", new { name = "Fremder Papa", pin = "2222" }));
         var stranger = await TestApi.FatherAsync(factory, strangerId, "2222");
 
         Assert.Equal(HttpStatusCode.NotFound,

@@ -53,7 +53,7 @@ Verifiziert: **32 / 49** Codes aus `ApiErrors`.
 | `test_already_submitted` | study-plans – Test erneut abgeben |
 | `timetable_slot_taken` | timetable – Gleiches Fach am selben Wochentag |
 | `unauthorized` | auth – Selbstauskunft ohne Token |
-| `validation_error` | auth – Login mit nicht-numerischer fatherId |
+| `validation_error` | auth – Login mit nicht-numerischer adultId |
 | `vocabulary_in_use` | vocabulary – Verwendete Grundform löschen |
 
 ## Nicht automatisch erfassbar

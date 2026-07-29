@@ -9,7 +9,7 @@ namespace Pugling.Api.Tests;
 /// Selbstverwaltung des eigenen Kontos (<c>PATCH auth/me</c>): Name, E-Mail, PIN.
 ///
 /// Der Anlass war das <b>Lehrer-Konto</b> – ihm fehlt die Supervisor-Rolle, und damit war
-/// <c>supervisor/fathers/{id}</c> für es verschlossen: es konnte seine eigene PIN nicht ändern. Weil das
+/// <c>supervisor/adults/{id}</c> für es verschlossen: es konnte seine eigene PIN nicht ändern. Weil das
 /// Konto zu keiner Ebene gehört (derselbe Mensch bedient es aus jeder Rolle), liegt der Weg bei
 /// <c>auth/…</c> und gilt für <b>beide</b> Erwachsenen-Arten.
 /// </summary>
@@ -31,7 +31,7 @@ public class AccountSelfServiceTests(PuglingWebAppFactory factory) : IClassFixtu
         created.EnsureSuccessStatusCode();
         var id = (await created.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("creatorId").GetInt32();
 
-        var login = await _factory.CreateClient().PostAsJsonAsync("/api/v1/auth/father", new { fatherId = id, pin });
+        var login = await _factory.CreateClient().PostAsJsonAsync("/api/v1/auth/adult", new { adultId = id, pin });
         login.EnsureSuccessStatusCode();
         var token = (await login.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("token").GetString()!;
         return (id, WithToken(token));
@@ -63,11 +63,11 @@ public class AccountSelfServiceTests(PuglingWebAppFactory factory) : IClassFixtu
 
         // Die alte PIN gilt nicht mehr …
         Assert.Equal(HttpStatusCode.Unauthorized,
-            (await _factory.CreateClient().PostAsJsonAsync("/api/v1/auth/father",
-                new { fatherId = creatorId, pin = "2323" })).StatusCode);
+            (await _factory.CreateClient().PostAsJsonAsync("/api/v1/auth/adult",
+                new { adultId = creatorId, pin = "2323" })).StatusCode);
         // … die neue schon, und zwar auf beiden Login-Wegen (der Hash wird aufs Konto gespiegelt).
-        var byFid = await _factory.CreateClient().PostAsJsonAsync("/api/v1/auth/father",
-            new { fatherId = creatorId, pin = "9090" });
+        var byFid = await _factory.CreateClient().PostAsJsonAsync("/api/v1/auth/adult",
+            new { adultId = creatorId, pin = "9090" });
         byFid.EnsureSuccessStatusCode();
         var accountId = (await (await WithToken((await byFid.Content.ReadFromJsonAsync<JsonElement>())
             .GetProperty("token").GetString()!).GetAsync("/api/v1/auth/me"))

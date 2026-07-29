@@ -14,7 +14,7 @@ Response — `HTTP 200`:
     "creatorId": 1,
     "creatorName": "Papa",
     "permission": "Owner",
-    "grantedByFatherId": 1,
+    "grantedByAdultId": 1,
     "createdAt": "<timestamp>"
   }
 ]
@@ -56,7 +56,7 @@ Response — `HTTP 201`:
   "creatorId": 4,
   "creatorName": "Zweiter Papa",
   "permission": "Write",
-  "grantedByFatherId": 1,
+  "grantedByAdultId": 1,
   "createdAt": "<timestamp>"
 }
 ```
@@ -122,7 +122,7 @@ Response — `HTTP 201`:
   "source": null,
   "categoryId": null,
   "categoryName": null,
-  "authorFatherId": 1,
+  "authorAdultId": 1,
   "isOwn": true,
   "isOwner": true,
   "executePublic": false,

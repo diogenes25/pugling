@@ -24,7 +24,7 @@ public record ExercisePayload<TConfig>(string Title, int OrderIndex, int RewardP
 public record ExerciseResponse<TConfig>(int Id, int ChapterId, string Type, string Title,
     int OrderIndex, int RewardPoints, DateTime CreatedAt, TConfig Config, SuggestedBonus? SuggestedBonus,
     int? GradeMin, int? GradeMax, SchoolTypes SchoolTypes, string? Source, int? CategoryId, string? CategoryName,
-    int? AuthorFatherId, bool IsOwn, bool IsOwner, bool ExecutePublic, int GrantCount, string? Description,
+    int? AuthorAdultId, bool IsOwn, bool IsOwner, bool ExecutePublic, int GrantCount, string? Description,
     bool DefaultUseLeitner, bool DefaultRequireTypedTest,
     int? DefaultStage, int? DefaultItemCount);
 

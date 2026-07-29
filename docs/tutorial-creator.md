@@ -39,11 +39,11 @@ Quelle, Kategorie) für die spätere Suche und Vorfilterung.
 
 ## 1. Anmelden als Creator (Herr Schmidt)
 
-Der Lehrer meldet sich per PIN an. Seed-Konto in diesem Tutorial: `fatherId=2`, PIN `9999`.
+Der Lehrer meldet sich per PIN an. Seed-Konto in diesem Tutorial: `adultId=2`, PIN `9999`.
 
 ```http
-POST /api/v1/auth/father
-{ "fatherId": 2, "pin": "9999" }
+POST /api/v1/auth/adult
+{ "adultId": 2, "pin": "9999" }
 → { "token": "…", "role": "Supervisor", … }
 ```
 
@@ -57,7 +57,7 @@ Authorization: Bearer <token>
   "accountId": 2,
   "role": "Supervisor",
   "roles": ["Creator", "Supervisor"],
-  "fatherId": 2,
+  "adultId": 2,
   "childId": null,
   "name": "Herr Schmidt (Englischlehrer)"
 }
@@ -173,7 +173,7 @@ POST /api/v1/creator/subjects/5/chapters/7/vocabulary
   "chapterId": 7,
   "type": "Vocabulary",
   "title": "Zell-Vokabeln",
-  "authorFatherId": 2,
+  "authorAdultId": 2,
   "isOwn": true,
   …
 }
@@ -187,7 +187,7 @@ Beachtenswert:
   Referenzen wurden beim Speichern in **stabile Item-Zeilen** überführt. Die Vokabelpaare
   leben jetzt als eigene Ebene unter `…/items`, nicht mehr in der Config. Die Config trägt danach
   nur noch Einstellungen (Richtung, Sprachen).
-- `authorFatherId: 2` + `isOwn: true` — Herr Schmidt ist Autor **und** (Auto-)Owner, darf also ändern.
+- `authorAdultId: 2` + `isOwn: true` — Herr Schmidt ist Autor **und** (Auto-)Owner, darf also ändern.
   `isOwn` = Schreibrecht (Owner **oder** Write-Grant), `isOwner` = Verwaltungsrecht (Owner: löschen, Rechte
   vergeben, Sichtbarkeit umschalten). Andere Creator sehen die Übung mit `isOwn: false` und dürfen sie **nicht**
   ändern, solange ihnen kein Recht erteilt wurde (siehe Abschnitt „Rechte teilen (RWX)").
@@ -322,13 +322,13 @@ GET /api/v1/creator/exercises?type=Vocabulary&take=3
 ```
 
 Jede Zeile trägt `gradeMin`/`gradeMax` (Klassenstufe), `schoolTypes`, `source`, `categoryName`
-sowie `authorFatherId`/`authorName` und `isOwn`. Alle Filter sind optional und **UND-verknüpft**:
+sowie `authorAdultId`/`authorName` und `isOwn`. Alle Filter sind optional und **UND-verknüpft**:
 
 ```http
 GET /api/v1/creator/exercises?subjectId=5&grade=9&schoolType=Gymnasium&type=Vocabulary&search=Zell
 ```
 
-Übungen mit `authorFatherId: 2` sind die von Herrn Schmidt (für ihn `isOwn: true`). Standardmäßig darf nur
+Übungen mit `authorAdultId: 2` sind die von Herrn Schmidt (für ihn `isOwn: true`). Standardmäßig darf nur
 der Owner ändern; alle anderen dürfen lesen und in ihre Pläne übernehmen (geteilte Bibliothek). Über
 **RWX-Grants** kann der Owner das gezielt aufweichen (nächster Abschnitt).
 

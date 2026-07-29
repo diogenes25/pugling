@@ -193,7 +193,7 @@ public class RemarkTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWe
 
         var res = await father.PatchAsJsonAsync($"{Url}/{id}", new
         {
-            answer = "Geht über PATCH supervisor/fathers/{id}; im Vater-Web fehlt das Formular (VaterProfil.tsx).",
+            answer = "Geht über PATCH supervisor/adults/{id}; im Vater-Web fehlt das Formular (VaterProfil.tsx).",
             answeredBy = "claude-code",
             status = "Planned",
         });
@@ -641,7 +641,7 @@ public class RemarkTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWe
 
     private async Task<int> RegisterFatherAsync(string name, string pin)
     {
-        var res = await _factory.CreateClient().PostAsJsonAsync("/api/v1/supervisor/fathers", new { name, pin });
+        var res = await _factory.CreateClient().PostAsJsonAsync("/api/v1/supervisor/adults", new { name, pin });
         res.EnsureSuccessStatusCode();
         return (await res.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetInt32();
     }

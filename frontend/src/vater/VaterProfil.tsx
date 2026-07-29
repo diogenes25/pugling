@@ -4,7 +4,7 @@ import { api } from "../lib/api";
 import { useAction } from "../lib/useAction";
 import { useAsync } from "../lib/useAsync";
 import { useAuth } from "../lib/auth";
-import type { FatherResponse, TeacherAccount, UpdateMyAccountDto } from "../lib/types";
+import type { AdultResponse, TeacherAccount, UpdateMyAccountDto } from "../lib/types";
 
 /**
  * Das eigene Konto – für **beide** Erwachsenen-Arten. Zwei Dinge stehen hier, die sonst nirgends
@@ -24,23 +24,23 @@ export function VaterProfil() {
 
   // Zwei Quellen, weil zwei Rollen: der Vater-Endpunkt kennt betreute Kinder und das Anlege-Datum, das
   // Lehrer-Konto seine Rollen. Für einen Lehrer wäre der Vater-Endpunkt ein 403.
-  const father = useAsync<FatherResponse | null>(
-    () => (isTeacher ? Promise.resolve(null) : api.father(session!.id)), [session!.id, isTeacher]);
+  const adult = useAsync<AdultResponse | null>(
+    () => (isTeacher ? Promise.resolve(null) : api.adult(session!.id)), [session!.id, isTeacher]);
   const teacher = useAsync<TeacherAccount | null>(
     () => (isTeacher ? api.teacherAccount(session!.id) : Promise.resolve(null)), [session!.id, isTeacher]);
 
-  const loading = isTeacher ? teacher.loading : father.loading;
-  const error = isTeacher ? teacher.error : father.error;
+  const loading = isTeacher ? teacher.loading : adult.loading;
+  const error = isTeacher ? teacher.error : adult.error;
   /*
    * Ob überhaupt schon Daten da sind – und nur dann darf der Platzhalter greifen. `onSaved` frischt den
    * Datensatz auf, und ein „Lade…" an dieser Stelle hängt das Formular aus: es verliert die Bestätigung,
    * die der Nutzer gerade lesen soll, und die eingegebenen Werte. Dieselbe Falle wie in VaterKatalog und
    * VaterExercises (siehe frontend/CLAUDE.md) – `useAsync` behält `data` über ein `reload`.
    */
-  const hasData = (isTeacher ? teacher.data : father.data) !== null;
-  const name = (isTeacher ? teacher.data?.name : father.data?.name) ?? "";
-  const email = (isTeacher ? teacher.data?.email : father.data?.email) ?? null;
-  const reload = () => { if (isTeacher) teacher.reload(); else father.reload(); };
+  const hasData = (isTeacher ? teacher.data : adult.data) !== null;
+  const name = (isTeacher ? teacher.data?.name : adult.data?.name) ?? "";
+  const email = (isTeacher ? teacher.data?.email : adult.data?.email) ?? null;
+  const reload = () => { if (isTeacher) teacher.reload(); else adult.reload(); };
 
   return (
     <>
@@ -70,11 +70,11 @@ export function VaterProfil() {
                 : (
                   <>
                     <div className="card"><div className="muted">Betreute Kinder</div>
-                      <div className="h-section">{father.data?.childrenCount}</div></div>
+                      <div className="h-section">{adult.data?.childrenCount}</div></div>
                     <div className="card">
                       <div className="muted">Konto seit</div>
                       <div className="h-section" style={{ fontSize: 20 }}>
-                        {father.data && new Date(father.data.createdAt).toLocaleDateString()}
+                        {adult.data && new Date(adult.data.createdAt).toLocaleDateString()}
                       </div>
                     </div>
                   </>

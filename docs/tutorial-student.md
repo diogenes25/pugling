@@ -64,13 +64,13 @@ GET /api/v1/auth/me
   "accountId": 3,
   "role": "Student",
   "roles": ["Student"],
-  "fatherId": null,
+  "adultId": null,
   "childId": 1,
   "name": "Sohn"
 }
 ```
 
-`fatherId` ist `null` — ein reiner Student-Token trägt keine Supervisor-Identität. `childId` ist die
+`adultId` ist `null` — ein reiner Student-Token trägt keine Supervisor-Identität. `childId` ist die
 eigene Kind-ID; sämtliche `me/…`-Routen und die eigenen Pläne hängen daran. Ein Student sieht **nur
 seine eigenen** Pläne, Punkte und Käufe; fremde Ressourcen liefern `403 forbidden`.
 

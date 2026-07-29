@@ -19,7 +19,7 @@ import type { SubjectResponse, SupervisorLink, SupervisorRelation, TimetableEntr
  */
 
 /**
- * Die Betreuer dieses Kindes. Hinzufügen geht über die **Vater-Id** des anderen Betreuers: er muss schon
+ * Die Betreuer dieses Kindes. Hinzufügen geht über die **Id** des anderen Betreuers: er muss schon
  * ein eigenes Konto haben (Registrierung unter `/vater`), denn er soll sich anmelden können – ein bloßer
  * Name wäre kein Zugang.
  */
@@ -32,7 +32,7 @@ export function SupervisorsSection({ childId, childName }: { childId: number; ch
   async function add(e: React.FormEvent) {
     e.preventDefault();
     const id = Number(supervisorId);
-    if (!id) { action.fail("Bitte die Vater-Id des Betreuers angeben."); return; }
+    if (!id) { action.fail("Bitte die Id des Betreuers angeben."); return; }
     if (!await action.run(() => api.addChildSupervisor(childId, id, relation), "Betreuer hinzugefügt.")) return;
     // Erst nach dem Erfolg räumen: bei einer abgelehnten Id soll sie zum Korrigieren stehen bleiben.
     setSupervisorId("");
@@ -82,7 +82,7 @@ export function SupervisorsSection({ childId, childName }: { childId: number; ch
 
       <form className="row" style={{ gap: 10, alignItems: "flex-end", flexWrap: "wrap", marginTop: 10 }} onSubmit={add}>
         <div className="field" style={{ maxWidth: 160 }}>
-          <label htmlFor="sup-id">Vater-Id des Betreuers</label>
+          <label htmlFor="sup-id">Id des Betreuers</label>
           <input id="sup-id" inputMode="numeric" autoComplete="off" value={supervisorId}
             onChange={(e) => setSupervisorId(e.target.value.replace(/\D/g, ""))} placeholder="z. B. 4" />
         </div>
@@ -100,7 +100,7 @@ export function SupervisorsSection({ childId, childName }: { childId: number; ch
       </form>
       <p className="sub" style={{ marginTop: 6 }}>
         Der andere Betreuer braucht ein <strong>eigenes Konto</strong>: er registriert sich unter
-        <code> /vater</code> und nennt dir seine Vater-Id.
+        <code> /vater</code> und nennt dir seine Id.
       </p>
       <StatusBanner message={action.message} />
     </section>

@@ -11,7 +11,7 @@ public class OwnershipTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
     /// <summary>Registriert (anonym) einen zweiten Vater und liefert dessen Id.</summary>
     private async Task<int> RegisterFatherAsync(string pin)
     {
-        var res = await factory.CreateClient().PostAsJsonAsync("/api/v1/supervisor/fathers", new { name = "Papa2", pin });
+        var res = await factory.CreateClient().PostAsJsonAsync("/api/v1/supervisor/adults", new { name = "Papa2", pin });
         res.EnsureSuccessStatusCode();
         return (await res.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetInt32();
     }
@@ -33,7 +33,7 @@ public class OwnershipTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
         await RegisterFatherAsync("2222"); // es existiert nun ein zweiter Vater …
         var father1 = await TestApi.FatherAsync(factory);
 
-        var list = await (await father1.GetAsync("/api/v1/supervisor/fathers")).Content.ReadFromJsonAsync<JsonElement>();
+        var list = await (await father1.GetAsync("/api/v1/supervisor/adults")).Content.ReadFromJsonAsync<JsonElement>();
 
         // … die Liste zeigt trotzdem nur den eigenen Datensatz.
         Assert.Equal(1, list.GetArrayLength());
@@ -46,8 +46,8 @@ public class OwnershipTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
         var id2 = await RegisterFatherAsync("2222");
         var father1 = await TestApi.FatherAsync(factory);
 
-        Assert.Equal(HttpStatusCode.Forbidden, (await father1.GetAsync($"/api/v1/supervisor/fathers/{id2}")).StatusCode);
-        Assert.Equal(HttpStatusCode.Forbidden, (await father1.DeleteAsync($"/api/v1/supervisor/fathers/{id2}")).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, (await father1.GetAsync($"/api/v1/supervisor/adults/{id2}")).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, (await father1.DeleteAsync($"/api/v1/supervisor/adults/{id2}")).StatusCode);
     }
 
     [Fact]

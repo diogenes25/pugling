@@ -3,10 +3,10 @@
   "rest-client.environmentVariables": {
     "$shared": {
       "baseUrl": "http://localhost:5200/api/v1",
-      "fatherId": "1",
+      "adultId": "1",
       "teacherId": "2",
       "childId": "1",
-      "fatherPin": "0000",
+      "adultPin": "0000",
       "teacherPin": "9999",
       "childPin": "1111"
     },

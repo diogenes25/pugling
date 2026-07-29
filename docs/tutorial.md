@@ -10,7 +10,7 @@ Anleitung folgt den **drei Ebenen** — **Creator** (Inhalte), **Supervisor** (S
 API geprüft, nicht von Hand erfunden).
 
 **Rollen vs. Produkt-Metapher:** Technisch gibt es Creator/Supervisor/Student. Im Produkt hält der **Vater**
-zugleich **Creator + Supervisor** (Login `auth/father`), der **Sohn** ist der **Student** (Login `auth/child`).
+zugleich **Creator + Supervisor** (Login `auth/adult`), der **Sohn** ist der **Student** (Login `auth/child`).
 Der reine Creator-Archetyp ist der **Lehrer** (Seed: *Herr Schmidt*), der nur Katalog kuratiert.
 
 ## Die drei Tutorials
@@ -28,7 +28,7 @@ Der natürliche End-to-End-Loop läuft in dieser Reihenfolge: **Creator baut →
 
 - Basis-URL der Beispiele: `http://localhost:5200` (siehe [Backend starten](../CLAUDE.md)). Geschützte Aufrufe
   brauchen den JWT im Header `Authorization: Bearer <token>`.
-- **Seed-Zugänge:** Vater `fatherId=1` PIN `0000` (Creator+Supervisor) · Lehrer `fatherId=2` PIN `9999`
+- **Seed-Zugänge:** Vater `adultId=1` PIN `0000` (Creator+Supervisor) · Lehrer `adultId=2` PIN `9999`
   (reiner Creator) · Sohn `childId=1` PIN `1111` (Student). Login-Antwort trägt `role` = `Supervisor`
   bzw. `Student`.
 - Volle, verifizierte Response-Bodies liegen unter [api-examples/](api-examples/index.md) (aus echten

@@ -20,7 +20,7 @@ public class ExerciseSharingTests(PuglingWebAppFactory factory) : IClassFixture<
     private async Task<(HttpClient client, int fatherId)> NewFatherAsync(string name, string pin)
     {
         var id = await TestApi.IdAsync(await _factory.CreateClient()
-            .PostAsJsonAsync("/api/v1/supervisor/fathers", new { name, pin }));
+            .PostAsJsonAsync("/api/v1/supervisor/adults", new { name, pin }));
         return (await TestApi.FatherAsync(_factory, id, pin), id);
     }
 
@@ -126,7 +126,7 @@ public class ExerciseSharingTests(PuglingWebAppFactory factory) : IClassFixture<
         var (creator, _) = await NewFatherAsync("Owner mit Kreis", "6666");
         var (_, _, exerciseId) = await PublishVocabAsync(creator);
         var (planId, family) = await FamilyWithPlanAsync("Eingeweihte Familie", "7777");
-        var familyFatherId = (await family.GetFromJsonAsync<JsonElement>("/api/v1/auth/me")).GetProperty("fatherId").GetInt32();
+        var familyFatherId = (await family.GetFromJsonAsync<JsonElement>("/api/v1/auth/me")).GetProperty("adultId").GetInt32();
 
         (await creator.PatchAsJsonAsync($"/api/v1/creator/exercises/{exerciseId}/sharing",
             new { executePublic = false })).EnsureSuccessStatusCode();

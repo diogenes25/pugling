@@ -4,7 +4,7 @@ namespace Pugling.Contracts.Creator;
 
 /// <summary>Ein vergebenes Recht an einen Creator.</summary>
 public record GrantResponse(int CreatorId, string CreatorName, GrantPermission Permission,
-    int? GrantedByFatherId, DateTime CreatedAt);
+    int? GrantedByAdultId, DateTime CreatedAt);
 
 /// <summary>Eingabe zum Vergeben eines Rechts.</summary>
 public record AddGrantDto(int CreatorId, GrantPermission Permission);

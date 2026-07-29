@@ -11,7 +11,7 @@ public class ExerciseGrantsTests(PuglingWebAppFactory factory) : IClassFixture<P
 {
     private async Task<int> RegisterFatherAsync(string pin)
     {
-        var res = await factory.CreateClient().PostAsJsonAsync("/api/v1/supervisor/fathers", new { name = "Papa2", pin });
+        var res = await factory.CreateClient().PostAsJsonAsync("/api/v1/supervisor/adults", new { name = "Papa2", pin });
         res.EnsureSuccessStatusCode();
         return (await res.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetInt32();
     }
@@ -250,7 +250,7 @@ public class ExerciseGrantsTests(PuglingWebAppFactory factory) : IClassFixture<P
 
         var baseUrl = $"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/vocabulary";
         var ownDetail = await f1.GetFromJsonAsync<JsonElement>($"/api/v1/creator/exercises/{ownExerciseId}");
-        var ownCreatorId = ownDetail.GetProperty("authorFatherId").GetInt32();
+        var ownCreatorId = ownDetail.GetProperty("authorAdultId").GetInt32();
 
         var ownOnlyBeforeGrant = await f1.GetFromJsonAsync<List<JsonElement>>($"{baseUrl}?isOwn=true");
         Assert.Single(ownOnlyBeforeGrant!);

@@ -13,7 +13,7 @@ Klassenarbeiten — und am Ende liest der Supervisor den Lernstand seines Kindes
 > **Technische Rollen vs. Produkt-Metapher.** Pugling schneidet API und Code nach den technischen Rollen
 > **Creator** (Inhalte), **Supervisor** (Steuerung) und **Student** (Lernen). Die Produkt-Sprache bleibt
 > **Vater/Sohn**. Die Brücke ein für alle Mal: **Im Produkt ist der Vater zugleich Creator und Supervisor**
-> (Seed-Konto: *Papa*, `fatherId 1`). Er baut also erst den Katalog (Creator-Seat,
+> (Seed-Konto: *Papa*, `adultId 1`). Er baut also erst den Katalog (Creator-Seat,
 > [tutorial-creator.md](tutorial-creator.md)) und steuert dann als Supervisor sein Kind — mit demselben Login.
 
 **Basis für alle Beispiele:** `http://localhost:5200`, geschützte Aufrufe mit `Authorization: Bearer <token>`,
@@ -50,28 +50,28 @@ Existiert noch kein Vater, legt ihn die **Registrierung** an – der einzige ano
 Supervisor; die vergebene `id` ist der Login-Name für jede weitere Anmeldung.
 
 ```http
-POST /api/v1/supervisor/fathers
+POST /api/v1/supervisor/adults
 { "name": "Thomas", "email": "t@example.com", "pin": "4711" }
 → 201 { "id": 7, "name": "Thomas", "childrenCount": 0, … }
 ```
 
 Danach meldet sich der Vater per PIN an und erhält ein JWT. Weil ein Vater zugleich Creator und Supervisor
-ist, trägt das Token beide Rollen; die `fatherId` steckt als `fid`-Claim drin.
+ist, trägt das Token beide Rollen; die `adultId` steckt als `fid`-Claim drin.
 
 ```http
-POST /api/v1/auth/father
-{ "fatherId": 1, "pin": "0000" }
-→ { "token": "…", "role": "Supervisor", "fatherId": 1, … }
+POST /api/v1/auth/adult
+{ "adultId": 1, "pin": "0000" }
+→ { "token": "…", "role": "Supervisor", "adultId": 1, … }
 ```
 
 Alle folgenden `POST/PATCH/DELETE`-Aufrufe brauchen `Authorization: Bearer <token>`.
 
 Das eigene Konto lesen und ändern (Name, E-Mail, **PIN**) geht nur für den eigenen Datensatz – ein anderer
-`fatherId` in der Route ergibt `403`:
+`adultId` in der Route ergibt `403`:
 
 ```http
-GET   /api/v1/supervisor/fathers/7
-PATCH /api/v1/supervisor/fathers/7   { "pin": "1234" }
+GET   /api/v1/supervisor/adults/7
+PATCH /api/v1/supervisor/adults/7   { "pin": "1234" }
 ```
 
 > **Im Web-UI:** `/vater` bietet beides an („Anmelden" / „Neu registrieren"); die Registrierung meldet direkt
@@ -499,7 +499,7 @@ Kompletter Supervisor-Loop für Kind 1 (Vater eingeloggt, Katalog-Übung `1` = �
 
 ```http
 # 0) Login
-POST /api/v1/auth/father          { "fatherId": 1, "pin": "0000" }
+POST /api/v1/auth/adult          { "adultId": 1, "pin": "0000" }
 
 # 1) Kind prüfen
 GET  /api/v1/supervisor/children

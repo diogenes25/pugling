@@ -72,13 +72,13 @@ Der Import braucht einen **Vater-Login** (der Store ist `[Authorize(Roles = Vate
   ./tools/vokabel-import/data/fr-de-101-1000.json
 
 # Andere API/Zugangsdaten
-./tools/vokabel-import/import-vokabeln.ps1 -BaseUrl http://localhost:5200 -FatherId 1 -Pin 0000
+./tools/vokabel-import/import-vokabeln.ps1 -BaseUrl http://localhost:5200 -AdultId 1 -Pin 0000
 ```
 
 > **Reihenfolge-Hinweis:** Der Batch ist idempotent (gesetzte Keys → `existing`), die Dateien
 > können in beliebiger Reihenfolge und mehrfach gefahren werden.
 
-Parameter: `-BaseUrl` (Default `http://localhost:5200`), `-FatherId` (`1`),
+Parameter: `-BaseUrl` (Default `http://localhost:5200`), `-AdultId` (`1`),
 `-Pin` (`0000`), `-Files` (Default: beide `data/*.json`), `-Tags` (optional).
 
 > **PIN-Hinweis:** Vater 1 („Papa") hat im Seed die PIN **`0000`**. Die `1111` ist die

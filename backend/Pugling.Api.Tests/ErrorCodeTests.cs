@@ -22,9 +22,9 @@ public class ErrorCodeTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
     [Fact]
     public async Task Validierung_LiefertValidationErrorCode()
     {
-        // Pfad (b): der InvalidModelStateResponseFactory (nicht-int fatherId → Parse-Fehler).
+        // Pfad (b): der InvalidModelStateResponseFactory (nicht-int adultId → Parse-Fehler).
         var client = factory.CreateClient();
-        var res = await client.PostAsJsonAsync("/api/v1/auth/father", new { fatherId = "1a", pin = "0000" });
+        var res = await client.PostAsJsonAsync("/api/v1/auth/adult", new { adultId = "1a", pin = "0000" });
 
         Assert.Equal(HttpStatusCode.BadRequest, res.StatusCode);
         var body = await BodyAsync(res);
@@ -39,7 +39,7 @@ public class ErrorCodeTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
     {
         // Regression: ein Wurzel-Parse-Fehler (Pfad „$") darf nicht zu einem leeren errors-Schlüssel werden.
         var client = factory.CreateClient();
-        var res = await client.PostAsync("/api/v1/auth/father",
+        var res = await client.PostAsync("/api/v1/auth/adult",
             new StringContent("{ not valid json", System.Text.Encoding.UTF8, "application/json"));
 
         Assert.Equal(HttpStatusCode.BadRequest, res.StatusCode);
@@ -63,7 +63,7 @@ public class ErrorCodeTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
     {
         // Pfad (a): fachliches ProblemWithCode; prüft zugleich type-URI-Form und traceId-Erhalt.
         var client = factory.CreateClient();
-        var res = await client.PostAsJsonAsync("/api/v1/auth/father", new { fatherId = 1, pin = "9998" });
+        var res = await client.PostAsJsonAsync("/api/v1/auth/adult", new { adultId = 1, pin = "9998" });
 
         Assert.Equal(HttpStatusCode.Unauthorized, res.StatusCode);
         var body = await BodyAsync(res);

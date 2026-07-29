@@ -51,8 +51,8 @@ export interface LoginResponse {
 
 // ---- Vater: eigenes Konto (Registrierung + Selbstauskunft) ----
 
-/** Der eigene Vater-Datensatz; die PIN liefert der Server nie aus. */
-export interface FatherResponse {
+/** Der eigene Erwachsenen-Datensatz; die PIN liefert der Server nie aus. */
+export interface AdultResponse {
   id: number;
   name: string;
   email: string | null;
@@ -61,14 +61,14 @@ export interface FatherResponse {
 }
 
 /** Registrierung eines Vaters – der einzige Weg, ohne Anmeldung ein Konto zu erzeugen. */
-export interface CreateFatherDto {
+export interface CreateAdultDto {
   name: string;
   email?: string | null;
   pin?: string | null;
 }
 
 /** Partielle Änderung des eigenen Kontos; weggelassene Felder bleiben unverändert. */
-export interface UpdateFatherDto {
+export interface UpdateAdultDto {
   name?: string | null;
   email?: string | null;
   pin?: string | null;
@@ -112,7 +112,7 @@ export interface TextbookSeriesResponse {
   sourceLanguage: string | null;
   targetLanguage: string | null;
   notes: string | null;
-  ownerFatherId: number | null;
+  ownerAdultId: number | null;
   /** Ob das angemeldete Konto die Reihe ändern darf (lesen darf jeder Creator). */
   isOwn: boolean;
   unitCount: number;
@@ -214,7 +214,7 @@ export type UpdateTextbookDto = Partial<CreateTextbookDto> & {
 export interface CreatorProfileResponse {
   id: number;
   name: string;
-  ownerFatherId: number | null;
+  ownerAdultId: number | null;
   isOwn: boolean;
   subjectName: string | null;
   subjectId: number | null;
@@ -489,7 +489,7 @@ export interface ExerciseGrant {
   creatorId: number;
   creatorName: string;
   permission: GrantPermission;
-  grantedByFatherId: number | null;
+  grantedByAdultId: number | null;
   createdAt: string;
 }
 
@@ -786,7 +786,7 @@ export interface ExerciseDetail {
   /** Übungs-Standard „nur getippte Tests" (Position erbt ihn, kann übersteuern). */
   defaultRequireTypedTest: boolean;
   /** Autor der Übung (Vater); null = geseedete System-Übung. */
-  authorFatherId: number | null;
+  authorAdultId: number | null;
   authorName: string | null;
   /** Darf der anfragende Vater die Übung **ändern** (Owner oder Write-Grant)? */
   isOwn: boolean;
@@ -898,7 +898,7 @@ export interface ExerciseSummary {
   defaultUseLeitner: boolean;
   defaultRequireTypedTest: boolean;
   /** Autor der Übung (Vater); null = geseedete System-Übung. Grundlage der „von …"-Attribution. */
-  authorFatherId: number | null;
+  authorAdultId: number | null;
   authorName: string | null;
   /** Darf der anfragende Vater sie **ändern**? (Owner- oder Write-Recht.) */
   isOwn: boolean;
@@ -922,7 +922,7 @@ export interface TeacherAccount {
 /** Die eigene Identität (`GET auth/me`) – Konto, alle Rollen, fachliche Ids. */
 export interface MeResponse {
   accountId: number | null; role: Role; roles: string[];
-  fatherId: number | null; childId: number | null; name: string | null;
+  adultId: number | null; childId: number | null; name: string | null;
 }
 
 /**

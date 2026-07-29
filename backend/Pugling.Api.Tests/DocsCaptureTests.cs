@@ -190,7 +190,7 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
             var child = await TestApi.ChildAsync(factory);         // Sohn (id 1 / PIN 1111)
 
             // Zweiter Vater (anonyme Registrierung) für Cross-Ownership-404/403.
-            var father2Id = await TestApi.IdAsync(await anon.PostAsJsonAsync("/api/v1/supervisor/fathers", new { name = "Zweiter Papa", pin = "2222" }));
+            var father2Id = await TestApi.IdAsync(await anon.PostAsJsonAsync("/api/v1/supervisor/adults", new { name = "Zweiter Papa", pin = "2222" }));
             var father2 = await TestApi.FatherAsync(factory, father2Id, "2222");
             var foreignChildId = await TestApi.IdAsync(await father2.PostAsJsonAsync("/api/v1/supervisor/children", new { name = "Fremdes Kind", pin = "3333" }));
 
@@ -221,16 +221,16 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
     private async Task CaptureAuthAsync(HttpClient anon)
     {
         const string g = "auth";
-        await Capture(anon, g, "Vater registrieren (anonym)", HttpMethod.Post, "/api/v1/supervisor/fathers",
+        await Capture(anon, g, "Vater registrieren (anonym)", HttpMethod.Post, "/api/v1/supervisor/adults",
             new { name = "Neuer Papa", pin = "1234" }, HttpStatusCode.Created);
-        await Capture(anon, g, "Vater-Login", HttpMethod.Post, "/api/v1/auth/father",
-            new { fatherId = 1, pin = "0000" }, HttpStatusCode.OK);
+        await Capture(anon, g, "Vater-Login", HttpMethod.Post, "/api/v1/auth/adult",
+            new { adultId = 1, pin = "0000" }, HttpStatusCode.OK);
         await Capture(anon, g, "Sohn-Login", HttpMethod.Post, "/api/v1/auth/child",
             new { childId = 1, pin = "1111" }, HttpStatusCode.OK);
-        await Capture(anon, g, "Login mit falscher PIN", HttpMethod.Post, "/api/v1/auth/father",
-            new { fatherId = 1, pin = "9998" }, HttpStatusCode.Unauthorized, ApiErrors.InvalidCredentials.Code);
-        await Capture(anon, g, "Login mit nicht-numerischer fatherId", HttpMethod.Post, "/api/v1/auth/father",
-            new { fatherId = "1a", pin = "0000" }, HttpStatusCode.BadRequest, ApiErrors.ValidationError.Code);
+        await Capture(anon, g, "Login mit falscher PIN", HttpMethod.Post, "/api/v1/auth/adult",
+            new { adultId = 1, pin = "9998" }, HttpStatusCode.Unauthorized, ApiErrors.InvalidCredentials.Code);
+        await Capture(anon, g, "Login mit nicht-numerischer adultId", HttpMethod.Post, "/api/v1/auth/adult",
+            new { adultId = "1a", pin = "0000" }, HttpStatusCode.BadRequest, ApiErrors.ValidationError.Code);
         await Capture(anon, g, "Selbstauskunft ohne Token", HttpMethod.Get, "/api/v1/auth/me",
             null, HttpStatusCode.Unauthorized, ApiErrors.Unauthorized.Code);
     }
@@ -306,7 +306,7 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
             $"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/vocabulary/{exerciseId}",
             null, HttpStatusCode.Conflict, ApiErrors.ExerciseInUse.Code);
 
-        // Fremd-Autor-Übung (Lehrer-Bibliothek, AuthorFatherId = Lehrer) bearbeiten → 403 not_author.
+        // Fremd-Autor-Übung (Lehrer-Bibliothek, AuthorAdultId = Lehrer) bearbeiten → 403 not_author.
         var foreign = await FindForeignAuthoredExerciseAsync(father);
         if (foreign is { } ex)
             await Capture(father, g, "Fremd-Autor-Übung bearbeiten", HttpMethod.Put,
@@ -542,7 +542,7 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
         var list = await father.GetFromJsonAsync<List<JsonElement>>("/api/v1/creator/exercises?type=Vocabulary&take=500");
         foreach (var e in list ?? [])
         {
-            var author = e.TryGetProperty("authorFatherId", out var a) && a.ValueKind == JsonValueKind.Number ? a.GetInt32() : (int?)null;
+            var author = e.TryGetProperty("authorAdultId", out var a) && a.ValueKind == JsonValueKind.Number ? a.GetInt32() : (int?)null;
             var isOwn = e.TryGetProperty("isOwn", out var o) && o.GetBoolean();
             if (author is { } id && id != 1 && !isOwn)
                 return new ForeignExercise(e.GetProperty("id").GetInt32(),
@@ -964,7 +964,7 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
                     contextJson = """{"tab":"stammdaten"}""",
                     // Ringpuffer: ausschließlich Metadaten – keine Bodies, Header oder Tokens.
                     // Der Login-Request trägt die PIN im Body; ein roher Mitschnitt legte sie in die DB.
-                    recentErrorsJson = """[{"method":"GET","path":"/api/v1/supervisor/fathers/1","status":404,"code":"not_found","at":"2026-07-27T09:12:44Z"}]""",
+                    recentErrorsJson = """[{"method":"GET","path":"/api/v1/supervisor/adults/1","status":404,"code":"not_found","at":"2026-07-27T09:12:44Z"}]""",
                 },
             }, HttpStatusCode.Created);
         var remarkId = created.GetProperty("id").GetInt32();
@@ -983,7 +983,7 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
         await Capture(father, g, "Antwort zurückschreiben und abschließen", HttpMethod.Patch, $"/api/v1/remarks/{remarkId}",
             new
             {
-                answer = "Die API kann das über PATCH api/v1/supervisor/fathers/{id} (FathersController.Update); im Vater-Web gibt es dafür kein Formular.",
+                answer = "Die API kann das über PATCH api/v1/supervisor/adults/{id} (AdultsController.Update); im Vater-Web gibt es dafür kein Formular.",
                 answeredBy = "claude-code",
                 status = "Done",
             }, HttpStatusCode.OK);
@@ -995,7 +995,7 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
             $"/api/v1/remarks/{remarkId}/comments",
             new
             {
-                body = "Gebaut: Formular unter /vater/profil ergänzt (VaterProfil.tsx), PATCH über api.updateFather.",
+                body = "Gebaut: Formular unter /vater/profil ergänzt (VaterProfil.tsx), PATCH über api.updateAdult.",
                 author = "Assistant",
                 authorLabel = "claude-code",
             }, HttpStatusCode.Created);

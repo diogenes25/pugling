@@ -78,7 +78,7 @@ Ein Teil der Anmerkungen sind **Fragen, die keine Codeänderung brauchen** – �
 1. Frage im Widget erfassen → Antwort des Servers nennt die **Id** („Gespeichert als **#123**").
 2. In Claude Code: *„Beantworte die Frage 123."* Der Skill liest die Anmerkung samt Kontext über die
    laufende API, recherchiert im Code und antwortet – z. B. „Die API kann das über
-   `PATCH api/v1/supervisor/fathers/{id}`, im Vater-Web gibt es dafür kein Formular."
+   `PATCH api/v1/supervisor/adults/{id}`, im Vater-Web gibt es dafür kein Formular."
 3. Der Skill fragt nach: **beantwortet** (→ `Done`) oder **zurückgestellt** (→ `Planned`)?
 
 Der entscheidende Punkt: Die **Antwort bleibt in beiden Fällen erhalten**. Ein zurückgestellter Fall ist
@@ -262,7 +262,7 @@ Beobachtungen bei ihnen ankommen. Der Export rückt deshalb in den Etappen vor d
 ## Skill
 
 Neuer Skill `.claude/skills/anmerkungen/SKILL.md`, Login über den vorhandenen Helfer
-`.claude/scripts/tutorial-api.sh` (`login_father`) – kein neues Credential-Konzept.
+`.claude/scripts/tutorial-api.sh` (`login_adult`) – kein neues Credential-Konzept.
 
 **Einsatz A – einzelne Frage beantworten** (*„Beantworte die Frage 123"*):
 

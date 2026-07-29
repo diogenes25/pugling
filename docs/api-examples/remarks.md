@@ -18,7 +18,7 @@ Request:
     "childId": 1,
     "exerciseId": 13,
     "contextJson": "{\u0022tab\u0022:\u0022stammdaten\u0022}",
-    "recentErrorsJson": "[{\u0022method\u0022:\u0022GET\u0022,\u0022path\u0022:\u0022/api/v1/supervisor/fathers/1\u0022,\u0022status\u0022:404,\u0022code\u0022:\u0022not_found\u0022,\u0022at\u0022:\u00222026-07-27T09:12:44Z\u0022}]"
+    "recentErrorsJson": "[{\u0022method\u0022:\u0022GET\u0022,\u0022path\u0022:\u0022/api/v1/supervisor/adults/1\u0022,\u0022status\u0022:404,\u0022code\u0022:\u0022not_found\u0022,\u0022at\u0022:\u00222026-07-27T09:12:44Z\u0022}]"
   }
 }
 ```
@@ -45,7 +45,7 @@ Response — `HTTP 201`:
     "studyPlanId": null,
     "planPositionId": null,
     "contextJson": "{\u0022tab\u0022:\u0022stammdaten\u0022}",
-    "recentErrorsJson": "[{\u0022method\u0022:\u0022GET\u0022,\u0022path\u0022:\u0022/api/v1/supervisor/fathers/1\u0022,\u0022status\u0022:404,\u0022code\u0022:\u0022not_found\u0022,\u0022at\u0022:\u00222026-07-27T09:12:44Z\u0022}]"
+    "recentErrorsJson": "[{\u0022method\u0022:\u0022GET\u0022,\u0022path\u0022:\u0022/api/v1/supervisor/adults/1\u0022,\u0022status\u0022:404,\u0022code\u0022:\u0022not_found\u0022,\u0022at\u0022:\u00222026-07-27T09:12:44Z\u0022}]"
   },
   "userAgent": null,
   "createdAt": "<timestamp>",
@@ -104,7 +104,7 @@ Response — `HTTP 200`:
     "studyPlanId": null,
     "planPositionId": null,
     "contextJson": "{\u0022tab\u0022:\u0022stammdaten\u0022}",
-    "recentErrorsJson": "[{\u0022method\u0022:\u0022GET\u0022,\u0022path\u0022:\u0022/api/v1/supervisor/fathers/1\u0022,\u0022status\u0022:404,\u0022code\u0022:\u0022not_found\u0022,\u0022at\u0022:\u00222026-07-27T09:12:44Z\u0022}]"
+    "recentErrorsJson": "[{\u0022method\u0022:\u0022GET\u0022,\u0022path\u0022:\u0022/api/v1/supervisor/adults/1\u0022,\u0022status\u0022:404,\u0022code\u0022:\u0022not_found\u0022,\u0022at\u0022:\u00222026-07-27T09:12:44Z\u0022}]"
   },
   "userAgent": null,
   "createdAt": "<timestamp>",
@@ -140,7 +140,7 @@ Response — `HTTP 200`:
       "studyPlanId": null,
       "planPositionId": null,
       "contextJson": "{\u0022tab\u0022:\u0022stammdaten\u0022}",
-      "recentErrorsJson": "[{\u0022method\u0022:\u0022GET\u0022,\u0022path\u0022:\u0022/api/v1/supervisor/fathers/1\u0022,\u0022status\u0022:404,\u0022code\u0022:\u0022not_found\u0022,\u0022at\u0022:\u00222026-07-27T09:12:44Z\u0022}]"
+      "recentErrorsJson": "[{\u0022method\u0022:\u0022GET\u0022,\u0022path\u0022:\u0022/api/v1/supervisor/adults/1\u0022,\u0022status\u0022:404,\u0022code\u0022:\u0022not_found\u0022,\u0022at\u0022:\u00222026-07-27T09:12:44Z\u0022}]"
     },
     "userAgent": null,
     "createdAt": "<timestamp>",
@@ -157,7 +157,7 @@ Rolle: **father** — `Authorization: Bearer <father-token>`
 Request:
 ```json
 {
-  "answer": "Die API kann das \u00FCber PATCH api/v1/supervisor/fathers/{id} (FathersController.Update); im Vater-Web gibt es daf\u00FCr kein Formular.",
+  "answer": "Die API kann das \u00FCber PATCH api/v1/supervisor/adults/{id} (AdultsController.Update); im Vater-Web gibt es daf\u00FCr kein Formular.",
   "answeredBy": "claude-code",
   "status": "Done"
 }
@@ -170,7 +170,7 @@ Response — `HTTP 200`:
   "text": "Ich will meine E-Mail-Adresse \u00E4ndern und finde keine Stelle daf\u00FCr.",
   "category": "Question",
   "status": "Done",
-  "answer": "Die API kann das \u00FCber PATCH api/v1/supervisor/fathers/{id} (FathersController.Update); im Vater-Web gibt es daf\u00FCr kein Formular.",
+  "answer": "Die API kann das \u00FCber PATCH api/v1/supervisor/adults/{id} (AdultsController.Update); im Vater-Web gibt es daf\u00FCr kein Formular.",
   "answeredAt": "<timestamp>",
   "answeredBy": "claude-code",
   "parentRemarkId": null,
@@ -185,7 +185,7 @@ Response — `HTTP 200`:
     "studyPlanId": null,
     "planPositionId": null,
     "contextJson": "{\u0022tab\u0022:\u0022stammdaten\u0022}",
-    "recentErrorsJson": "[{\u0022method\u0022:\u0022GET\u0022,\u0022path\u0022:\u0022/api/v1/supervisor/fathers/1\u0022,\u0022status\u0022:404,\u0022code\u0022:\u0022not_found\u0022,\u0022at\u0022:\u00222026-07-27T09:12:44Z\u0022}]"
+    "recentErrorsJson": "[{\u0022method\u0022:\u0022GET\u0022,\u0022path\u0022:\u0022/api/v1/supervisor/adults/1\u0022,\u0022status\u0022:404,\u0022code\u0022:\u0022not_found\u0022,\u0022at\u0022:\u00222026-07-27T09:12:44Z\u0022}]"
   },
   "userAgent": null,
   "createdAt": "<timestamp>",
@@ -201,7 +201,7 @@ Rolle: **father** — `Authorization: Bearer <father-token>`
 Request:
 ```json
 {
-  "body": "Gebaut: Formular unter /vater/profil erg\u00E4nzt (VaterProfil.tsx), PATCH \u00FCber api.updateFather.",
+  "body": "Gebaut: Formular unter /vater/profil erg\u00E4nzt (VaterProfil.tsx), PATCH \u00FCber api.updateAdult.",
   "author": "Assistant",
   "authorLabel": "claude-code"
 }
@@ -212,7 +212,7 @@ Response — `HTTP 201`:
 {
   "id": 1,
   "remarkId": 1,
-  "body": "Gebaut: Formular unter /vater/profil erg\u00E4nzt (VaterProfil.tsx), PATCH \u00FCber api.updateFather.",
+  "body": "Gebaut: Formular unter /vater/profil erg\u00E4nzt (VaterProfil.tsx), PATCH \u00FCber api.updateAdult.",
   "author": "Assistant",
   "authorLabel": "claude-code",
   "authorAccountId": 1,
@@ -232,7 +232,7 @@ Response — `HTTP 200`:
   {
     "id": 1,
     "remarkId": 1,
-    "body": "Gebaut: Formular unter /vater/profil erg\u00E4nzt (VaterProfil.tsx), PATCH \u00FCber api.updateFather.",
+    "body": "Gebaut: Formular unter /vater/profil erg\u00E4nzt (VaterProfil.tsx), PATCH \u00FCber api.updateAdult.",
     "author": "Assistant",
     "authorLabel": "claude-code",
     "authorAccountId": 1,
@@ -400,18 +400,18 @@ Ich will meine E-Mail-Adresse ändern und finde keine Stelle dafür.
 **Letzte Fehler:**
 
 ```json
-[{"method":"GET","path":"/api/v1/supervisor/fathers/1","status":404,"code":"not_found","at":"<timestamp>"}]
+[{"method":"GET","path":"/api/v1/supervisor/adults/1","status":404,"code":"not_found","at":"<timestamp>"}]
 ```
 
 **Antwort** (claude-code, <timestamp>):
 
-Die API kann das über PATCH api/v1/supervisor/fathers/{id} (FathersController.Update); im Vater-Web gibt es dafür kein Formular.
+Die API kann das über PATCH api/v1/supervisor/adults/{id} (AdultsController.Update); im Vater-Web gibt es dafür kein Formular.
 
 **Verlauf** (1):
 
 > **claude-code** · <timestamp>
 > 
-> Gebaut: Formular unter /vater/profil ergänzt (VaterProfil.tsx), PATCH über api.updateFather.
+> Gebaut: Formular unter /vater/profil ergänzt (VaterProfil.tsx), PATCH über api.updateAdult.
 
 
 ````
@@ -470,7 +470,7 @@ Response — `HTTP 200`:
   "text": "Ich will meine E-Mail-Adresse \u00E4ndern und finde keine Stelle daf\u00FCr.",
   "category": "Question",
   "status": "Open",
-  "answer": "Die API kann das \u00FCber PATCH api/v1/supervisor/fathers/{id} (FathersController.Update); im Vater-Web gibt es daf\u00FCr kein Formular.",
+  "answer": "Die API kann das \u00FCber PATCH api/v1/supervisor/adults/{id} (AdultsController.Update); im Vater-Web gibt es daf\u00FCr kein Formular.",
   "answeredAt": "<timestamp>",
   "answeredBy": "claude-code",
   "parentRemarkId": null,
@@ -485,7 +485,7 @@ Response — `HTTP 200`:
     "studyPlanId": null,
     "planPositionId": null,
     "contextJson": "{\u0022tab\u0022:\u0022stammdaten\u0022}",
-    "recentErrorsJson": "[{\u0022method\u0022:\u0022GET\u0022,\u0022path\u0022:\u0022/api/v1/supervisor/fathers/1\u0022,\u0022status\u0022:404,\u0022code\u0022:\u0022not_found\u0022,\u0022at\u0022:\u00222026-07-27T09:12:44Z\u0022}]"
+    "recentErrorsJson": "[{\u0022method\u0022:\u0022GET\u0022,\u0022path\u0022:\u0022/api/v1/supervisor/adults/1\u0022,\u0022status\u0022:404,\u0022code\u0022:\u0022not_found\u0022,\u0022at\u0022:\u00222026-07-27T09:12:44Z\u0022}]"
   },
   "userAgent": null,
   "createdAt": "<timestamp>",
@@ -532,7 +532,7 @@ Response — `HTTP 200`:
     "text": "Ich will meine E-Mail-Adresse \u00E4ndern und finde keine Stelle daf\u00FCr.",
     "category": "Question",
     "status": "Open",
-    "answer": "Die API kann das \u00FCber PATCH api/v1/supervisor/fathers/{id} (FathersController.Update); im Vater-Web gibt es daf\u00FCr kein Formular.",
+    "answer": "Die API kann das \u00FCber PATCH api/v1/supervisor/adults/{id} (AdultsController.Update); im Vater-Web gibt es daf\u00FCr kein Formular.",
     "answeredAt": "<timestamp>",
     "answeredBy": "claude-code",
     "parentRemarkId": null,
@@ -547,7 +547,7 @@ Response — `HTTP 200`:
       "studyPlanId": null,
       "planPositionId": null,
       "contextJson": "{\u0022tab\u0022:\u0022stammdaten\u0022}",
-      "recentErrorsJson": "[{\u0022method\u0022:\u0022GET\u0022,\u0022path\u0022:\u0022/api/v1/supervisor/fathers/1\
+      "recentErrorsJson": "[{\u0022method\u0022:\u0022GET\u0022,\u0022path\u0022:\u0022/api/v1/supervisor/adults/1\u00
 … (gekürzt)
 ```
 

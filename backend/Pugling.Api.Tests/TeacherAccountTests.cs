@@ -25,8 +25,8 @@ public class TeacherAccountTests(PuglingWebAppFactory factory) : IClassFixture<P
         Assert.Equal(HttpStatusCode.Created, res.StatusCode);
         var account = await res.Content.ReadFromJsonAsync<JsonElement>();
 
-        var login = await _factory.CreateClient().PostAsJsonAsync("/api/v1/auth/father",
-            new { fatherId = account.GetProperty("creatorId").GetInt32(), pin });
+        var login = await _factory.CreateClient().PostAsJsonAsync("/api/v1/auth/adult",
+            new { adultId = account.GetProperty("creatorId").GetInt32(), pin });
         login.EnsureSuccessStatusCode();
         var body = await login.Content.ReadFromJsonAsync<JsonElement>();
         var client = _factory.CreateClient();
@@ -59,14 +59,14 @@ public class TeacherAccountTests(PuglingWebAppFactory factory) : IClassFixture<P
     {
         var (account, _) = await RegisterTeacherAsync("Herr Fels", "2345");
 
-        var teacherLogin = await _factory.CreateClient().PostAsJsonAsync("/api/v1/auth/father",
-            new { fatherId = account.GetProperty("creatorId").GetInt32(), pin = "2345" });
+        var teacherLogin = await _factory.CreateClient().PostAsJsonAsync("/api/v1/auth/adult",
+            new { adultId = account.GetProperty("creatorId").GetInt32(), pin = "2345" });
         Assert.Equal("Creator",
             (await teacherLogin.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("role").GetString());
 
         // Gegenprobe: der geseedete Vater bleibt Supervisor.
-        var fatherLogin = await _factory.CreateClient().PostAsJsonAsync("/api/v1/auth/father",
-            new { fatherId = 1, pin = "0000" });
+        var fatherLogin = await _factory.CreateClient().PostAsJsonAsync("/api/v1/auth/adult",
+            new { adultId = 1, pin = "0000" });
         Assert.Equal("Supervisor",
             (await fatherLogin.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("role").GetString());
 
@@ -156,7 +156,7 @@ public class TeacherAccountTests(PuglingWebAppFactory factory) : IClassFixture<P
     }
 
     /// <summary>
-    /// Das Anmelden darf keine Rolle nachreichen. <c>auth/father</c> ruft <c>EnsureForFatherAsync</c>, und
+    /// Das Anmelden darf keine Rolle nachreichen. <c>auth/adult</c> ruft <c>EnsureForFatherAsync</c>, und
     /// würde das ein bestehendes Konto „vervollständigen", wäre der Lehrer nach dem ersten Login stiller
     /// Betreuer – die Trennung hätte sich selbst aufgehoben.
     /// </summary>
@@ -168,8 +168,8 @@ public class TeacherAccountTests(PuglingWebAppFactory factory) : IClassFixture<P
 
         for (var i = 0; i < 3; i++)
         {
-            var login = await _factory.CreateClient().PostAsJsonAsync("/api/v1/auth/father",
-                new { fatherId = creatorId, pin = "6789" });
+            var login = await _factory.CreateClient().PostAsJsonAsync("/api/v1/auth/adult",
+                new { adultId = creatorId, pin = "6789" });
             login.EnsureSuccessStatusCode();
             Assert.Equal("Creator",
                 (await login.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("role").GetString());

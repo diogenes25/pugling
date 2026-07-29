@@ -16,10 +16,10 @@ kommt aus einem PIN-Login und trägt die Rolle plus die Identitäts-Claims.
 ### Vater
 
 ```http
-POST /api/v1/auth/father
+POST /api/v1/auth/adult
 Content-Type: application/json
 
-{ "fatherId": 1, "pin": "0000" }
+{ "adultId": 1, "pin": "0000" }
 ```
 
 Antwort (`LoginResponse`):
@@ -42,7 +42,7 @@ In Swagger den „Authorize"-Button nutzen.
 ### Selbstauskunft
 
 ```http
-GET /api/v1/auth/me        → { role, fatherId, childId, name }
+GET /api/v1/auth/me        → { role, adultId, childId, name }
 ```
 
 ---
@@ -52,7 +52,7 @@ GET /api/v1/auth/me        → { role, fatherId, childId, name }
 Ein neuer **Vater** kann sich **anonym** anlegen (einziger nicht authentifizierter Schreibpfad):
 
 ```http
-POST /api/v1/supervisor/fathers
+POST /api/v1/supervisor/adults
 { "name": "Klaus", "email": "klaus@example.com", "pin": "1234" }
 ```
 

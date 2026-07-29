@@ -7,7 +7,7 @@ namespace Pugling.Contracts.Creator;
 /// Ein Creator-Profil samt eigener Rechte-Sicht. <c>IsOwn</c> sagt, ob das aufrufende Konto das Profil
 /// ändern darf; <c>DefaultTypes</c> sind die bevorzugten Übungstypen (Schlüssel aus dem Typ-Manifest).
 /// </summary>
-public record CreatorProfileResponse(int Id, string Name, int? OwnerFatherId, bool IsOwn,
+public record CreatorProfileResponse(int Id, string Name, int? OwnerAdultId, bool IsOwn,
     string? SubjectName, int? SubjectId, SchoolTypes SchoolTypes, int? GradeMin, int? GradeMax,
     int? SeriesId, string? SeriesName, string SourceLang, string TargetLang,
     string? Persona, string? Didactics, IReadOnlyList<string> DefaultTypes, bool Active, DateTime CreatedAt);

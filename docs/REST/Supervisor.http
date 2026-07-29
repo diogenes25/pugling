@@ -12,12 +12,12 @@
 
 ### Login als Vater (Supervisor)
 # @name login
-POST {{baseUrl}}/auth/father
+POST {{baseUrl}}/auth/adult
 Content-Type: application/json
 
 {
-  "fatherId": {{fatherId}},
-  "pin": "{{fatherPin}}"
+  "adultId": {{adultId}},
+  "pin": "{{adultPin}}"
 }
 
 ### Token aus der Login-Antwort ziehen

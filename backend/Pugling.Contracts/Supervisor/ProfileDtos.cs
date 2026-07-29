@@ -1,16 +1,16 @@
 namespace Pugling.Contracts.Supervisor;
 
-// Vertrag der Stamm- und Profildaten, die der Supervisor pflegt: der eigene Vater-Datensatz,
+// Vertrag der Stamm- und Profildaten, die der Supervisor pflegt: der eigene Erwachsenen-Datensatz,
 // die Lehrbücher des Kindes und sein Stundenplan (beides übungsunabhängiges Profil).
 
-/// <summary>Vater ohne PIN (wird nie ausgeliefert).</summary>
-public record FatherResponse(int Id, string Name, string? Email, DateTime CreatedAt, int ChildrenCount);
+/// <summary>Erwachsener ohne PIN (wird nie ausgeliefert).</summary>
+public record AdultResponse(int Id, string Name, string? Email, DateTime CreatedAt, int ChildrenCount);
 
-/// <summary>Eingabe der Vater-Registrierung.</summary>
-public record CreateFatherDto(string Name, string? Email, string? Pin);
+/// <summary>Eingabe der Registrierung eines Erwachsenen.</summary>
+public record CreateAdultDto(string Name, string? Email, string? Pin);
 
 /// <summary>Nur gesetzte Felder werden geändert.</summary>
-public record UpdateFatherDto(string? Name, string? Email, string? Pin);
+public record UpdateAdultDto(string? Name, string? Email, string? Pin);
 
 /// <summary>
 /// Ein vom Kind verwendetes Lehrbuch samt aktuellem Kapitel. <c>SeriesId</c>/<c>CurrentUnitId</c> sind

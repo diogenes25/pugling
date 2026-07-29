@@ -96,22 +96,22 @@ describe("Sicherheitsregel am echten API-Client", () => {
 
     // Der Server weist ab – genau der Pfad, auf dem der Puffer greift.
     globalThis.fetch = vi.fn(async () =>
-      new Response(JSON.stringify({ detail: "Invalid father ID or PIN.", code: "invalid_credentials" }), {
+      new Response(JSON.stringify({ detail: "Invalid adult ID or PIN.", code: "invalid_credentials" }), {
         status: 401,
         headers: { "content-type": "application/problem+json" },
       }),
     ) as unknown as typeof fetch;
 
     const { api } = await import("./api");
-    await expect(api.loginFather(1, pin)).rejects.toThrow();
+    await expect(api.loginAdult(1, pin)).rejects.toThrow();
 
     const dump = recentErrorsJson()!;
     // Der Puffer hat den Fehlschlag festgehalten …
     expect(dump).toContain("invalid_credentials");
-    expect(dump).toContain("/api/v1/auth/father");
+    expect(dump).toContain("/api/v1/auth/adult");
     // … aber weder die PIN noch den Antworttext.
     expect(dump).not.toContain(pin);
-    expect(dump).not.toContain("Invalid father ID or PIN");
+    expect(dump).not.toContain("Invalid adult ID or PIN");
 
     const [entry] = recentErrors();
     expect(Object.keys(entry).sort()).toEqual(["at", "code", "kind", "method", "path", "status"]);
@@ -124,7 +124,7 @@ describe("Sicherheitsregel am echten API-Client", () => {
     }) as unknown as typeof fetch;
 
     const { api } = await import("./api");
-    await expect(api.loginFather(1, "4242")).rejects.toThrow();
+    await expect(api.loginAdult(1, "4242")).rejects.toThrow();
 
     const dump = recentErrorsJson()!;
     expect(dump).toContain("Failed to fetch");

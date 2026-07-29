@@ -44,7 +44,7 @@ builder.Services.Configure<ApiBehaviorOptions>(o =>
     o.InvalidModelStateResponseFactory = context =>
     {
         var modelState = context.ModelState;
-        // JSON-Deserialisierungsfehler kommen mit „$"-Pfad-Keys (z. B. „$.fatherId"). Existiert ein
+        // JSON-Deserialisierungsfehler kommen mit „$"-Pfad-Keys (z. B. „$.adultId"). Existiert ein
         // solcher, konnte der Body nicht geparst werden – der als null gebundene Body-Parameter erzeugt
         // dann einen irreführenden „field is required"-Eintrag (ohne „$"). Nur DEN unterdrücken, nicht
         // echte Route-/Query-/Feld-Fehler (die trotz Body-Parse-Fehler legitim sind).
@@ -288,7 +288,7 @@ builder.Services.AddOpenApi(o =>
             Scheme = "bearer",
             BearerFormat = "JWT",
             In = ParameterLocation.Header,
-            Description = "JWT aus POST /api/auth/father bzw. /api/auth/child einfügen.",
+            Description = "JWT aus POST /api/auth/adult bzw. /api/auth/child einfügen.",
         };
         doc.Security =
         [

@@ -7,15 +7,20 @@ import { useAuth } from "../lib/auth";
  * Vater (betreut und erstellt) oder Lehrer (erstellt nur). Der Unterschied sind die Rollen des Kontos, und
  * die entstehen beim Anlegen – darum ist es eine Wahl hier und keine Einstellung später.
  *
- * Anmelden geht über die fachliche Vater-Id (so schneidet der Server den Login), Registrieren über den
+ * Anmelden geht über die fachliche Id des Erwachsenen (so schneidet der Server den Login), Registrieren über den
  * einen anonymen Schreibpfad der API. Beides gehört auf denselben Schirm: ohne Registrierung könnte ein
  * Vater nur per Seed entstehen, und wer sich gerade registriert hat, kennt seine Id noch nicht.
  * Deshalb loggt die Registrierung direkt ein und nennt die neue Id danach unübersehbar – sie ist der
  * Schlüssel für jede weitere Anmeldung.
  */
 
-/** Die zuletzt benutzte Vater-Id vorbelegen; sie ist der Login-Name und wird sonst leicht vergessen. */
-const LAST_ID_KEY = "pugling.lastFatherId";
+/** Die zuletzt benutzte Id vorbelegen; sie ist der Login-Name und wird sonst leicht vergessen. */
+const LAST_ID_KEY = "pugling.lastLoginId";
+/**
+ * Der frühere Schlüssel. Er hält **Nutzerdaten** – wer ihn beim Umbenennen fallen lässt, nimmt jedem die
+ * vorbelegte Id. Darum einmalig als Rückfall lesen; die eine Zeile darf bleiben.
+ */
+const LEGACY_LAST_ID_KEY = "pugling.lastFatherId";
 
 export function VaterLogin() {
   const [mode, setMode] = useState<"login" | "register">("login");
@@ -53,7 +58,8 @@ export function VaterLogin() {
 
 function LoginForm() {
   const { signIn } = useAuth();
-  const [fatherId, setFatherId] = useState(() => localStorage.getItem(LAST_ID_KEY) ?? "");
+  const [adultId, setAdultId] = useState(
+    () => localStorage.getItem(LAST_ID_KEY) ?? localStorage.getItem(LEGACY_LAST_ID_KEY) ?? "");
   const [pin, setPin] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -63,11 +69,11 @@ function LoginForm() {
     setError(null);
     setBusy(true);
     try {
-      const res = await api.loginFather(Number(fatherId), pin);
-      localStorage.setItem(LAST_ID_KEY, fatherId);
+      const res = await api.loginAdult(Number(adultId), pin);
+      localStorage.setItem(LAST_ID_KEY, adultId);
       signIn(res);
     } catch (err) {
-      setError(err instanceof ApiError && err.status === 401 ? "Vater-Id oder PIN falsch." : "Login fehlgeschlagen.");
+      setError(err instanceof ApiError && err.status === 401 ? "Id oder PIN falsch." : "Login fehlgeschlagen.");
     } finally {
       setBusy(false);
     }
@@ -75,11 +81,12 @@ function LoginForm() {
 
   return (
     <form style={{ display: "flex", flexDirection: "column", gap: 14 }} onSubmit={submit}>
-      <p className="sub" style={{ margin: 0 }}>Melde dich mit deiner Vater-Id und PIN an.</p>
+      <p className="sub" style={{ margin: 0 }}>Melde dich mit deiner Id und PIN an.</p>
       <div className="field">
-        <label htmlFor="fid">Vater-Id</label>
-        <input id="fid" name="fatherId" inputMode="numeric" autoComplete="username" value={fatherId}
-          onChange={(e) => setFatherId(e.target.value.replace(/\D/g, ""))} placeholder="z.B. 1" />
+        {/* „Deine Id" statt „Vater-Id": dasselbe Formular meldet auch ein Lehrer-Konto an. */}
+        <label htmlFor="fid">Deine Id</label>
+        <input id="fid" name="adultId" inputMode="numeric" autoComplete="username" value={adultId}
+          onChange={(e) => setAdultId(e.target.value.replace(/\D/g, ""))} placeholder="z.B. 1" />
       </div>
       <div className="field">
         <label htmlFor="pin">PIN</label>
@@ -123,12 +130,12 @@ function RegisterForm({ onRegistered }: { onRegistered: (id: number) => void }) 
       // Beide Wege liefern eine fachliche Id, die zugleich der Login-Name ist.
       const id = kind === "teacher"
         ? (await api.registerTeacher(dto)).creatorId
-        : (await api.registerFather(dto)).id;
+        : (await api.registerAdult(dto)).id;
       onRegistered(id);
       localStorage.setItem(LAST_ID_KEY, String(id));
       // Direkt anmelden: die Registrierung liefert kein Token, und ein Zwischenschritt „jetzt einloggen"
       // wäre genau die Stelle, an der die frisch vergebene Id verloren geht.
-      signIn(await api.loginFather(id, pin));
+      signIn(await api.loginAdult(id, pin));
     } catch (err) {
       setError(errorMessage(err));
     } finally {
@@ -171,7 +178,7 @@ function RegisterForm({ onRegistered }: { onRegistered: (id: number) => void }) 
       {error && <div className="banner err" role="alert">{error}</div>}
       <button type="submit" className="btn" disabled={busy}>{busy ? "…" : "Konto anlegen"}</button>
       <p className="sub" style={{ margin: 0 }}>
-        Angemeldet wird danach mit der <strong>Vater-Id</strong>, die du beim Anlegen bekommst – nicht mit der E-Mail.
+        Angemeldet wird danach mit der <strong>Id</strong>, die du beim Anlegen bekommst – nicht mit der E-Mail.
       </p>
     </form>
   );

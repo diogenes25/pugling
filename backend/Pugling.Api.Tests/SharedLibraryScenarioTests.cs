@@ -13,7 +13,7 @@ public class SharedLibraryScenarioTests(PuglingWebAppFactory factory) : IClassFi
 {
     private async Task<(int id, HttpClient client)> RegisterAndLoginAsync(string name, string pin)
     {
-        var reg = await factory.CreateClient().PostAsJsonAsync("/api/v1/supervisor/fathers", new { name, pin });
+        var reg = await factory.CreateClient().PostAsJsonAsync("/api/v1/supervisor/adults", new { name, pin });
         reg.EnsureSuccessStatusCode();
         var id = (await reg.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetInt32();
         return (id, await TestApi.FatherAsync(factory, id, pin));
@@ -62,7 +62,7 @@ public class SharedLibraryScenarioTests(PuglingWebAppFactory factory) : IClassFi
             .Content.ReadFromJsonAsync<JsonElement>();
 
         var mine = hits.EnumerateArray().Single(e => e.GetProperty("id").GetInt32() == exerciseId);
-        Assert.Equal(teacherId, mine.GetProperty("authorFatherId").GetInt32());
+        Assert.Equal(teacherId, mine.GetProperty("authorAdultId").GetInt32());
         Assert.Equal("Herr Schmidt", mine.GetProperty("authorName").GetString());
         JsonAssert.True(mine, "isOwn");
     }
@@ -142,7 +142,7 @@ public class SharedLibraryScenarioTests(PuglingWebAppFactory factory) : IClassFi
         var hits = await (await father.GetAsync("/api/v1/creator/exercises?search=Begrüßungen"))
             .Content.ReadFromJsonAsync<JsonElement>();
         var seeded = hits.EnumerateArray().First();
-        Assert.True(seeded.GetProperty("authorFatherId").ValueKind == JsonValueKind.Null);
+        Assert.True(seeded.GetProperty("authorAdultId").ValueKind == JsonValueKind.Null);
 
         var subjectId = seeded.GetProperty("subjectId").GetInt32();
         var chapterId = seeded.GetProperty("chapterId").GetInt32();

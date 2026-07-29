@@ -47,7 +47,7 @@ auf einmal einbeziehen.
 
 ## API
 
-Alle Endpunkte unter `[Authorize]`; JWT wie üblich per PIN-Login (`POST /api/v1/auth/father` bzw.
+Alle Endpunkte unter `[Authorize]`; JWT wie üblich per PIN-Login (`POST /api/v1/auth/adult` bzw.
 `/api/v1/auth/child`).
 
 ### Tags – `api/v1/creator/tags`

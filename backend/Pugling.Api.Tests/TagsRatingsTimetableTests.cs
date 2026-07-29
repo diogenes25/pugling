@@ -65,7 +65,7 @@ public class TagsRatingsTimetableTests(PuglingWebAppFactory factory) : IClassFix
             new { childId = 1, name = "Fremd", color = "#ef4444" }));
 
         // Zweiter Vater darf weder das fremde Kind abfragen (403) noch dessen Tag bespielen (404, kein Enumerieren).
-        var res = await factory.CreateClient().PostAsJsonAsync("/api/v1/supervisor/fathers", new { name = "Papa2", pin = "2222" });
+        var res = await factory.CreateClient().PostAsJsonAsync("/api/v1/supervisor/adults", new { name = "Papa2", pin = "2222" });
         res.EnsureSuccessStatusCode();
         var id2 = (await res.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetInt32();
         var father2 = await TestApi.FatherAsync(factory, id2, "2222");

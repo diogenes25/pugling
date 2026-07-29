@@ -22,7 +22,7 @@ public class ExerciseUsageScopeTests(PuglingWebAppFactory factory) : IClassFixtu
     private async Task<HttpClient> NewFatherAsync(string name, string pin)
     {
         var id = await TestApi.IdAsync(await _factory.CreateClient()
-            .PostAsJsonAsync("/api/v1/supervisor/fathers", new { name, pin }));
+            .PostAsJsonAsync("/api/v1/supervisor/adults", new { name, pin }));
         return await TestApi.FatherAsync(_factory, id, pin);
     }
 

@@ -27,7 +27,7 @@ public class MultiSupervisorTests(PuglingWebAppFactory factory) : IClassFixture<
         var supA = await TestApi.FatherAsync(_factory);
 
         // Supervisor B neu registrieren (anonym) und einloggen.
-        var reg = await _factory.CreateClient().PostAsJsonAsync("/api/v1/supervisor/fathers",
+        var reg = await _factory.CreateClient().PostAsJsonAsync("/api/v1/supervisor/adults",
             new { name = "Mama", email = (string?)null, pin = "2222" });
         var supBId = await TestApi.IdAsync(reg);
         var supB = await TestApi.FatherAsync(_factory, supBId, "2222");

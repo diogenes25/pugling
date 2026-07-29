@@ -1,16 +1,16 @@
-@fatherId = 6
+@adultId = 6
 @subjectId = 1
 @chapterId = 1
 @authToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3ODQ4ODcyMTAsImh0dHA6Ly9zY2hlbWFzLnhtbHNvYXAub3JnL3dzLzIwMDUvMDUvaWRlbnRpdHkvY2xhaW1zL25hbWVpZGVudGlmaWVyIjoiOSIsImFpZCI6IjkiLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1lIjoiVGphcmsiLCJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL3dzLzIwMDgvMDYvaWRlbnRpdHkvY2xhaW1zL3JvbGUiOlsiQ3JlYXRvciIsIlN1cGVydmlzb3IiXSwiZmlkIjoiNiIsImlhdCI6MTc4NDg0NDAxMCwibmJmIjoxNzg0ODQ0MDEwfQ.mGVhZdKm7CUShF7picUTc0uBBuYv2-oQnZwIUuXPGaA
 
 ### Login als Vater (hält Creator+Supervisor)
 # @name login
-POST {{baseUrl}}/auth/father
+POST {{baseUrl}}/auth/adult
 Content-Type: application/json
 
 {
-  "fatherId": {{fatherId}},
-  "pin": "{{fatherPin}}"
+  "adultId": {{adultId}},
+  "pin": "{{adultPin}}"
 }
 
 ### Token aus der Login-Antwort ziehen

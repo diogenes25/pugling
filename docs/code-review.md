@@ -31,7 +31,7 @@ Lehrplan-Assistent, Playwright-E2E). Siehe Migrationsplan in [architektur-entsch
 | # | Sev | Befund | Fix | Verifikation |
 |---|-----|--------|-----|--------------|
 | H1 | HIGH | 4 Legacy-Controller (`Points/Sessions/Settings/Vocab`) komplett **anonym** erreichbar (u. a. `POST /points/adjust` = beliebige Punkte ohne Token) | `[Authorize(Roles=Vater)]` ergänzt | `POST /points/adjust` ohne Token → **401** |
-| H2 | HIGH | **IDOR** in `FathersController`: jeder Vater konnte fremde Väter lesen/ändern/**löschen** (Kaskade!) | `IActionFilter` (Route-`fatherId` == Token-`fid`) + `List` nur eigener Datensatz | Vater2 GET/DELETE `/fathers/1` → **403**; `List` → nur `[1]` |
+| H2 | HIGH | **IDOR** in `AdultsController`: jeder Vater konnte fremde Väter lesen/ändern/**löschen** (Kaskade!) | `IActionFilter` (Route-`adultId` == Token-`fid`) + `List` nur eigener Datensatz | Vater2 GET/DELETE `/adults/1` → **403**; `List` → nur `[1]` |
 | H4 | HIGH | Hartkodierter JWT-Dev-Fallback-Key → in Prod Token fälschbar | Fail-fast: außerhalb Dev ohne `Jwt:Key` Startabbruch | Build ok (Dev unverändert) |
 | M1 | MED | Kind konnte **eigene Teststufe wählen** → `stage=ShowBoth` = 100 % Gratis-Punkte | Für Sohn serverseitig **Fahrplan-Stufe erzwungen** (nur Vater darf wählen) | Sohn `stage=ShowBoth` → erzwungen **SelfAssess** |
 | M2 | MED | Heartbeat akzeptierte unbegrenzte Sekunden → Zeit-Cheat (1 Call = 20 min) | Pro Heartbeat auf 120 s geclampt | `seconds:1200` → nur **2 min** angerechnet |

@@ -3,7 +3,7 @@
 _Automatisch erzeugt von `DocsCaptureTests` (Integrationstest). Jedes Beispiel ist verifiziert: Status und – bei Fehlern – der maschinenlesbare `code` wurden im Testlauf geprüft. Nicht von Hand bearbeiten._
 
 ## Vater registrieren (anonym)
-`POST /api/v1/supervisor/fathers`
+`POST /api/v1/supervisor/adults`
 
 Rolle: **anonymous** — _(kein Token)_
 
@@ -27,14 +27,14 @@ Response — `HTTP 201`:
 ```
 
 ## Vater-Login
-`POST /api/v1/auth/father`
+`POST /api/v1/auth/adult`
 
 Rolle: **anonymous** — _(kein Token)_
 
 Request:
 ```json
 {
-  "fatherId": 1,
+  "adultId": 1,
   "pin": "0000"
 }
 ```
@@ -75,14 +75,14 @@ Response — `HTTP 200`:
 ```
 
 ### Login mit falscher PIN — Fehlerfall
-`POST /api/v1/auth/father`
+`POST /api/v1/auth/adult`
 
 Rolle: **anonymous** — _(kein Token)_
 
 Request:
 ```json
 {
-  "fatherId": 1,
+  "adultId": 1,
   "pin": "9998"
 }
 ```
@@ -93,21 +93,21 @@ Response — `HTTP 401`:
   "type": "https://pugling.app/errors/invalid_credentials",
   "title": "Invalid credentials.",
   "status": 401,
-  "detail": "Invalid father ID or PIN.",
+  "detail": "Invalid adult ID or PIN.",
   "code": "invalid_credentials",
   "traceId": "<trace-id>"
 }
 ```
 
-### Login mit nicht-numerischer fatherId — Fehlerfall
-`POST /api/v1/auth/father`
+### Login mit nicht-numerischer adultId — Fehlerfall
+`POST /api/v1/auth/adult`
 
 Rolle: **anonymous** — _(kein Token)_
 
 Request:
 ```json
 {
-  "fatherId": "1a",
+  "adultId": "1a",
   "pin": "0000"
 }
 ```
@@ -119,7 +119,7 @@ Response — `HTTP 400`:
   "title": "Invalid request.",
   "status": 400,
   "errors": {
-    "fatherId": [
+    "adultId": [
       "The value is not of the expected type."
     ]
   },

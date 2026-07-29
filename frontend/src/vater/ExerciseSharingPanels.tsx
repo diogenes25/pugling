@@ -32,7 +32,7 @@ export function GrantsSection({ exerciseId, isOwner }: { exerciseId: number; isO
   async function add(e: React.FormEvent) {
     e.preventDefault();
     const id = Number(creatorId);
-    if (!id) { action.fail("Bitte die Vater-Id des Creators angeben."); return; }
+    if (!id) { action.fail("Bitte die Creator-Id angeben."); return; }
     if (!await action.run(() => api.addExerciseGrant(exerciseId, id, permission), "Recht vergeben.")) return;
     // Die eingegebene Id bleibt stehen, wenn der Server ablehnt – sonst müsste sie neu getippt werden.
     setCreatorId("");
@@ -64,7 +64,7 @@ export function GrantsSection({ exerciseId, isOwner }: { exerciseId: number; isO
               <tr key={`${g.creatorId}-${g.permission}`}>
                 <td>{g.creatorName} <span className="muted">(#{g.creatorId})</span></td>
                 <td>{grantPermissionLabel(g.permission)}</td>
-                <td className="muted">{g.grantedByFatherId != null ? `#${g.grantedByFatherId}` : "beim Anlegen"}</td>
+                <td className="muted">{g.grantedByAdultId != null ? `#${g.grantedByAdultId}` : "beim Anlegen"}</td>
                 <td style={{ textAlign: "right" }}>
                   {isOwner && (
                     <button type="button" className="btn ghost small" style={{ width: "auto" }} disabled={action.busy}
@@ -82,7 +82,7 @@ export function GrantsSection({ exerciseId, isOwner }: { exerciseId: number; isO
       {isOwner ? (
         <form className="row" style={{ gap: 10, alignItems: "flex-end", flexWrap: "wrap", marginTop: 10 }} onSubmit={add}>
           <div className="field" style={{ maxWidth: 160 }}>
-            <label htmlFor="grant-creator">Vater-Id des Creators</label>
+            <label htmlFor="grant-creator">Creator-Id</label>
             <input id="grant-creator" inputMode="numeric" autoComplete="off" value={creatorId}
               onChange={(e) => setCreatorId(e.target.value.replace(/\D/g, ""))} placeholder="z. B. 4" />
           </div>

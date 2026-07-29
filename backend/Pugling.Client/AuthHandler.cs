@@ -47,7 +47,7 @@ public sealed class AuthHandler(PuglingTokenStore tokens) : DelegatingHandler
     /// authentifizierten Auth-Routen (<c>auth/me</c>): die gingen dann ohne Token hinaus, und weil der
     /// Kurzschluss auch den 401-Retry überspringt, bekäme der Aufrufer immer <c>unauthorized</c>.
     /// </summary>
-    private static readonly string[] LoginPaths = ["/auth/login", "/auth/father", "/auth/child"];
+    private static readonly string[] LoginPaths = ["/auth/login", "/auth/adult", "/auth/child"];
 
     private static bool IsLogin(HttpRequestMessage request) =>
         request.RequestUri?.AbsolutePath is { } path

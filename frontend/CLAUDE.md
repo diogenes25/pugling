@@ -64,7 +64,7 @@ und Lückentexte neben dem Anlegen statt eingeklappt darin); und **eine Auswahl 
 Anlegen und Verwalten sind getrennt: `/vater/exercises` verwaltet, `/vater/exercises/neu` legt an.
 API-Client + Types zentral unter [src/lib/](src/lib/).
 Ein Vater entsteht **im UI**: `/vater` hat neben „Anmelden" den Modus „Neu registrieren" (gegen das anonyme
-`POST supervisor/fathers`, meldet direkt an und nennt die neue Vater-Id — sie ist der Login-Name); das eigene
+`POST supervisor/adults`, meldet direkt an und nennt die neue Id — sie ist der Login-Name); das eigene
 Konto liegt unter `/vater/profil`. `/vater/kind/:id` ist der **Kind-Hub** (Stammdaten inkl. PIN, Bild-Freigabe,
 gewichtete Interessen) und verlinkt alles Kindbezogene per `?childId=`; darunter
 `/vater/kind/:id/lernstand` (plan-übergreifender Lernstand: schwache Wörter + Katalog-Drilldown) und

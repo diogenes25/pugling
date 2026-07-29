@@ -158,7 +158,7 @@ Tests: `PlanPositionCrudTests`, `VocabExerciseAuthoringTests` (165 grün). Kein 
 
 ```
 # Login (Vater) → Token
-POST /api/v1/auth/father        { "fatherId": 1, "pin": "0000" }
+POST /api/v1/auth/adult        { "adultId": 1, "pin": "0000" }
 
 # Vokabel einfach anlegen (Key + Wortart macht der Server)
 POST /api/v1/creator/vocabulary   { "sourceLanguage":"en","targetLanguage":"de","word":"cat","translation":"Katze" }

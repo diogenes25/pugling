@@ -13,9 +13,9 @@ const output = args.output ?? args.o ?? defaultOutput;
 const force = args.force === true;
 
 const knownVariables = new Map([
-  ['fatherId', '1'],
+  ['adultId', '1'],
   ['childId', '1'],
-  ['fatherPin', '0000'],
+  ['adultPin', '0000'],
   ['childPin', '1111'],
   ['subjectId', '1'],
   ['chapterId', '1'],
@@ -43,7 +43,7 @@ const knownVariables = new Map([
 const discoveredVariables = new Set(knownVariables.keys());
 
 const resourceIdBySegment = new Map([
-  ['fathers', 'fatherId'],
+  ['adults', 'adultId'],
   ['children', 'childId'],
   ['subjects', 'subjectId'],
   ['chapters', 'chapterId'],
@@ -560,7 +560,7 @@ function replacePathVariables(apiPath) {
 }
 
 function isAuthEndpoint(apiPath) {
-  return apiPath.startsWith('/api/v1/auth/father') || apiPath.startsWith('/api/v1/auth/child');
+  return apiPath.startsWith('/api/v1/auth/adult') || apiPath.startsWith('/api/v1/auth/child');
 }
 
 function sampleBodyText(api, operation) {
@@ -609,7 +609,7 @@ function sampleFromSchema(api, schema) {
 function valueForProperty(api, name, schema) {
   const variableName = toVariableName(name);
   if (knownVariables.has(variableName)) return `{{${variableName}}}`;
-  if (name.toLowerCase() === 'pin') return '{{fatherPin}}';
+  if (name.toLowerCase() === 'pin') return '{{adultPin}}';
   if (schema.format === 'date') return '{{date}}';
   return sampleFromSchema(api, schema);
 }
@@ -632,7 +632,7 @@ function resolveSchema(api, schema) {
 function substituteVariables(value) {
   if (Array.isArray(value)) return value.map(substituteVariables);
   if (value && typeof value === 'object') {
-    const loginPin = value.childId !== undefined ? '{{childPin}}' : value.fatherId !== undefined ? '{{fatherPin}}' : undefined;
+    const loginPin = value.childId !== undefined ? '{{childPin}}' : value.adultId !== undefined ? '{{adultPin}}' : undefined;
     return Object.fromEntries(Object.entries(value).map(([key, entry]) => [key, substituteVariablesForKey(key, entry, loginPin)]));
   }
   return value;
@@ -641,12 +641,12 @@ function substituteVariables(value) {
 function substituteVariablesForKey(key, value, loginPin) {
   const variableName = toVariableName(key);
   if (knownVariables.has(variableName)) return `{{${variableName}}}`;
-  if (key.toLowerCase() === 'pin') return loginPin ?? '{{fatherPin}}';
+  if (key.toLowerCase() === 'pin') return loginPin ?? '{{adultPin}}';
   return substituteVariables(value);
 }
 
 function captureVariablesFor(apiPath) {
-  if (apiPath === '/api/v1/auth/father') return ['token', 'fatherId'];
+  if (apiPath === '/api/v1/auth/adult') return ['token', 'adultId'];
   if (apiPath === '/api/v1/auth/child') return ['token', 'childId'];
 
   const variables = new Set(collectPathParameters(apiPath).map(toVariableName));

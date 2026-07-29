@@ -7,12 +7,12 @@ import type { ChildResponse, ChildrenDashboard, PlanResponse } from "../lib/type
 
 export function VaterDashboard() {
   const { session } = useAuth();
-  const fatherId = session!.id;
+  const adultId = session!.id;
 
-  const children = useAsync<ChildResponse[]>(() => api.children(), [fatherId]);
+  const children = useAsync<ChildResponse[]>(() => api.children(), [adultId]);
   // Nur für die Standortbestimmung „gibt es überhaupt einen Plan?" – die Liste selbst liegt beim Zuweisen.
-  const plans = useAsync<PlanResponse[]>(() => api.plans(), [fatherId]);
-  const today = useAsync<ChildrenDashboard>(() => api.childrenDaily(), [fatherId]);
+  const plans = useAsync<PlanResponse[]>(() => api.plans(), [adultId]);
+  const today = useAsync<ChildrenDashboard>(() => api.childrenDaily(), [adultId]);
 
   const [name, setName] = useState("");
   const [grade, setGrade] = useState("");

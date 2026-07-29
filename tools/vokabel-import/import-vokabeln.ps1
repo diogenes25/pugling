@@ -15,7 +15,7 @@
 .PARAMETER BaseUrl
     Basis-URL der laufenden API. Default: http://localhost:5200
 
-.PARAMETER FatherId
+.PARAMETER AdultId
     Vater-Id fuer den Login. Default: 1
 
 .PARAMETER Pin
@@ -39,7 +39,7 @@
 [CmdletBinding()]
 param(
     [string]   $BaseUrl  = "http://localhost:5200",
-    [int]      $FatherId = 1,
+    [int]      $AdultId = 1,
     [string]   $Pin      = "0000",   # Vater 1 = 'Papa' (Seed). Achtung: 1111 ist die SOHN-PIN.
     [string[]] $Files,
     [string[]] $Tags
@@ -57,11 +57,11 @@ if (-not $Files -or $Files.Count -eq 0) {
 }
 
 # --- 1) Login (Vater) -> JWT ---------------------------------------------------
-Write-Host "Login als Vater $FatherId gegen $BaseUrl ..." -ForegroundColor Cyan
+Write-Host "Login als Vater $AdultId gegen $BaseUrl ..." -ForegroundColor Cyan
 try {
-    $login = Invoke-RestMethod -Method Post -Uri "$BaseUrl/api/v1/auth/father" `
+    $login = Invoke-RestMethod -Method Post -Uri "$BaseUrl/api/v1/auth/adult" `
         -ContentType "application/json" `
-        -Body (@{ fatherId = $FatherId; pin = $Pin } | ConvertTo-Json)
+        -Body (@{ adultId = $AdultId; pin = $Pin } | ConvertTo-Json)
 }
 catch {
     throw "Login fehlgeschlagen ($($_.Exception.Message)). Laeuft das Backend? Stimmen Id/PIN?"

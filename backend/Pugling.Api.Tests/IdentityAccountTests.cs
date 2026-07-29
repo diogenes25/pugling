@@ -31,7 +31,7 @@ public class IdentityAccountTests(PuglingWebAppFactory factory) : IClassFixture<
         Assert.Contains("Creator", roles);
         Assert.Contains("Supervisor", roles);
         Assert.DoesNotContain("Vater", roles); // Alias entfernt – nur noch Ebenen-Rollen
-        Assert.Equal(1, me.GetProperty("fatherId").GetInt32());
+        Assert.Equal(1, me.GetProperty("adultId").GetInt32());
         Assert.True(me.GetProperty("accountId").GetInt32() > 0);
 
         // Ein und dasselbe Token erreicht die Creator-Ebene UND die Supervisor-Ebene.

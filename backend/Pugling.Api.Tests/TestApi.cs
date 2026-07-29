@@ -22,7 +22,7 @@ internal static class TestApi
     public static async Task<HttpClient> FatherAsync(WebApplicationFactory<Program> f, int id = 1, string pin = "0000")
     {
         var c = f.CreateClient();
-        c.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", await TokenAsync(c, "father", new { fatherId = id, pin }));
+        c.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", await TokenAsync(c, "adult", new { adultId = id, pin }));
         return c;
     }
 

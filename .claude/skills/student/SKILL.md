@@ -24,7 +24,7 @@ Zwei Ziele in einem Lauf: **(1)** die Student-Endpunkte end-to-end **verifiziere
 
 Der Student braucht einen **spielbaren Plan** (aktiv + heute in Laufzeit) mit mindestens einer Position.
 Der Seed liefert Katalog, aber **keinen** fertigen Plan → lege vor dem Student-Flow einen an
-(Supervisor-Login `login_father 1 0000`): `POST /api/v1/supervisor/study-plans` +
+(Supervisor-Login `login_adult 1 0000`): `POST /api/v1/supervisor/study-plans` +
 `POST …/study-plans/{planId}/positions {"exerciseId":1}`. (Der `supervisor`-Skill macht genau das.)
 
 ## Ablauf

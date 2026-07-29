@@ -3,7 +3,7 @@
 #
 # Rolle: Creator (Inhalte anlegen). Login als Vater 1 – ein Vater hält die
 # Creator- UND Supervisor-Rolle, und besitzt Kind 1 (nötig für den Tag-Schritt).
-# Ein reiner Lehrer (fatherId 2 / PIN 9999) kann alle Katalog-Schritte ebenso,
+# Ein reiner Lehrer (adultId 2 / PIN 9999) kann alle Katalog-Schritte ebenso,
 # nur die child-skopierten Tags nicht (kein eigenes Kind).
 #
 # Von oben nach unten senden: jeder Request zieht Token/IDs aus der vorherigen
@@ -15,12 +15,12 @@
 
 ### Login als Vater (hält Creator+Supervisor)
 # @name login
-POST {{baseUrl}}/auth/father
+POST {{baseUrl}}/auth/adult
 Content-Type: application/json
 
 {
-  "fatherId": {{fatherId}},
-  "pin": "{{fatherPin}}"
+  "adultId": {{adultId}},
+  "pin": "{{adultPin}}"
 }
 
 ### Token aus der Login-Antwort ziehen

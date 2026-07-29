@@ -10,7 +10,7 @@ namespace Pugling.Contracts.Creator;
 /// </summary>
 public record TextbookSeriesResponse(int Id, string Name, string Slug, string? Publisher,
     string? SubjectName, int? SubjectId, SchoolTypes SchoolTypes, string? SourceLanguage,
-    string? TargetLanguage, string? Notes, int? OwnerFatherId, bool IsOwn, int UnitCount, DateTime CreatedAt);
+    string? TargetLanguage, string? Notes, int? OwnerAdultId, bool IsOwn, int UnitCount, DateTime CreatedAt);
 
 /// <summary>
 /// Eingabe zum Anlegen einer Reihe. Der Slug entsteht aus dem Namen; eine bereits vorhandene Reihe

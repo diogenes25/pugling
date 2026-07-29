@@ -100,7 +100,7 @@ public class CreatorProfileTests(PuglingWebAppFactory factory) : IClassFixture<P
         var owner = await TestApi.FatherAsync(factory);
         var seriesId = await CreateSeriesAsync(owner, "Lighthouse");
 
-        var strangerId = await TestApi.IdAsync(await owner.PostAsJsonAsync("/api/v1/supervisor/fathers",
+        var strangerId = await TestApi.IdAsync(await owner.PostAsJsonAsync("/api/v1/supervisor/adults",
             new { name = $"Fremder {Guid.NewGuid():N}", pin = "4321" }));
         var stranger = await TestApi.FatherAsync(factory, strangerId, "4321");
 
@@ -230,7 +230,7 @@ public class CreatorProfileTests(PuglingWebAppFactory factory) : IClassFixture<P
         var childId = await TestApi.IdAsync(await supervisor.PostAsJsonAsync("/api/v1/supervisor/children",
             new { name = "Fremd-Kind", pin = "8211", grade = 8 }));
 
-        var strangerId = await TestApi.IdAsync(await supervisor.PostAsJsonAsync("/api/v1/supervisor/fathers",
+        var strangerId = await TestApi.IdAsync(await supervisor.PostAsJsonAsync("/api/v1/supervisor/adults",
             new { name = $"Fremder {Guid.NewGuid():N}", pin = "4322" }));
         var stranger = await TestApi.FatherAsync(factory, strangerId, "4322");
 

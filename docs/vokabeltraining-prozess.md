@@ -169,9 +169,9 @@ Klaus wollte, dass die Schwierigkeit über die 10 Tage steigt. Umgesetzt:
 
 **Umgesetzt:**
 
-- **Login** (`/api/v1/auth/father`, `/api/v1/auth/child`) per Id + PIN → signiertes JWT (`TokenService`, `JsonWebTokenHandler`, HS256, 12 h). Claims: Rolle, `fid`/`cid`, Name. `Child.Pin` ergänzt.
+- **Login** (`/api/v1/auth/adult`, `/api/v1/auth/child`) per Id + PIN → signiertes JWT (`TokenService`, `JsonWebTokenHandler`, HS256, 12 h). Claims: Rolle, `fid`/`cid`, Name. `Child.Pin` ergänzt.
 - **Rollen:** `[Authorize(Roles=Vater)]` auf Stores (Vokabel/Lückentext), Katalog, Admin (Fathers/Children) und allen Plan-Mutationen. `[Authorize]` (authentifiziert) auf Lesen/Üben/Testen.
-- **Ownership** (`AuthAccess`): Sohn nur eigene Pläne (`plan.ChildId == cid`), Vater nur Pläne eigener Kinder. In Practice/Tests/Cloze zentral über einen `IAsyncActionFilter` (planId → Existenz + Ownership); Children-Admin über `IActionFilter` (Route-`fatherId` == Token-`fid`).
+- **Ownership** (`AuthAccess`): Sohn nur eigene Pläne (`plan.ChildId == cid`), Vater nur Pläne eigener Kinder. In Practice/Tests/Cloze zentral über einen `IAsyncActionFilter` (planId → Existenz + Ownership); Children-Admin über `IActionFilter` (Route-`adultId` == Token-`fid`).
 - **Anti-Schummel:** `day`-Backfill (Tag ≠ heute) nur für Vater.
 - **Swagger:** OpenAPI-Dokument-Transformer fügt ein `Bearer`-Schema + globale Security-Anforderung hinzu → „Authorize"-Button.
 

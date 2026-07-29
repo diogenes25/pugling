@@ -41,7 +41,7 @@ aktiven Plan sehen soll, ist das auch serverseitig die sauberste Form.
 ## 2. Algorithmus
 
 ```text
-1. Als Vater einloggen (POST /auth/father).
+1. Als Vater einloggen (POST /auth/adult).
 2. Kind bestimmen (GET /children → gemeintes Kind wählen oder anlegen).
 3. Für jedes Fach/Thema:
    a. Fach/Kapitel im Katalog finden oder anlegen.
@@ -109,7 +109,7 @@ der Planbeschreibung und über Positionen ab:
 
 ```http
 ### Login
-POST /api/v1/auth/father   { "fatherId": 1, "pin": "0000" }
+POST /api/v1/auth/adult   { "adultId": 1, "pin": "0000" }
 
 ### Plan-Container
 POST /api/v1/supervisor/study-plans

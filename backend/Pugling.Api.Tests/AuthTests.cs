@@ -11,7 +11,7 @@ public class AuthTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWebA
     public async Task LoginFather_MitSeedZugangsdaten_LiefertToken()
     {
         var client = factory.CreateClient();
-        var res = await client.PostAsJsonAsync("/api/v1/auth/father", new { fatherId = 1, pin = "0000" });
+        var res = await client.PostAsJsonAsync("/api/v1/auth/adult", new { adultId = 1, pin = "0000" });
 
         Assert.Equal(HttpStatusCode.OK, res.StatusCode);
         var body = await res.Content.ReadFromJsonAsync<JsonElement>();
@@ -23,19 +23,19 @@ public class AuthTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWebA
     public async Task LoginFather_MitFalscherPin_Liefert401()
     {
         var client = factory.CreateClient();
-        var res = await client.PostAsJsonAsync("/api/v1/auth/father", new { fatherId = 1, pin = "9999" });
+        var res = await client.PostAsJsonAsync("/api/v1/auth/adult", new { adultId = 1, pin = "9999" });
 
         Assert.Equal(HttpStatusCode.Unauthorized, res.StatusCode);
     }
 
     [Fact]
-    public async Task LoginFather_MitNichtNumerischerId_LiefertSauberesEnglischesProblem()
+    public async Task LoginAdult_MitNichtNumerischerId_LiefertSauberesEnglischesProblem()
     {
-        // Regressionsschutz für die InvalidModelStateResponseFactory: Ein nicht in int konvertierbarer
-        // fatherId ("1a") darf (1) NICHT den internen DTO-Typnamen leaken, (2) NICHT das irreführende
+        // Regressionsschutz für die InvalidModelStateResponseFactory: Eine nicht in int konvertierbare
+        // adultId ("1a") darf (1) NICHT den internen DTO-Typnamen leaken, (2) NICHT das irreführende
         // "The dto field is required." zeigen und (3) muss eine englische Meldung liefern.
         var client = factory.CreateClient();
-        var res = await client.PostAsJsonAsync("/api/v1/auth/father", new { fatherId = "1a", pin = "0000" });
+        var res = await client.PostAsJsonAsync("/api/v1/auth/adult", new { adultId = "1a", pin = "0000" });
 
         Assert.Equal(HttpStatusCode.BadRequest, res.StatusCode);
 
@@ -48,7 +48,7 @@ public class AuthTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWebA
         var errors = body.GetProperty("errors");
         Assert.False(errors.TryGetProperty("dto", out _));  // kein irreführendes "field is required"
         Assert.Equal("The value is not of the expected type.",
-            errors.GetProperty("fatherId")[0].GetString());
+            errors.GetProperty("adultId")[0].GetString());
     }
 
     [Fact]

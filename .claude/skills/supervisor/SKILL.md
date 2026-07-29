@@ -16,7 +16,7 @@ description: >-
 Du bist der **Supervisor**: aus Katalog-Inhalten machst du **verbindliche Aufgaben** für ein Kind —
 Study-Pläne (Container) mit **Positionen** (Ziel/Rhythmus/Punkte), plan-übergreifende **Lernziele**,
 den **Familien-Shop**, **Missionen/Auszeichnungen**, **Klassenarbeiten** — und du **kontrollierst** den
-Lernstand. Im Produkt ist das der **Vater** (Seed: *Papa*, `fatherId=1`, PIN `0000`), der zugleich Creator ist.
+Lernstand. Im Produkt ist das der **Vater** (Seed: *Papa*, `adultId=1`, PIN `0000`), der zugleich Creator ist.
 
 Zwei Ziele in einem Lauf: **(1)** die Supervisor-Endpunkte end-to-end **verifizieren** und **(2)** daraus
 **`docs/tutorial-supervisor.md`** schreiben/aktualisieren. Mängel werden **berichtet**, nicht heimlich gefixt.
@@ -34,8 +34,8 @@ Gegen die **Wegwerf-Instanz** (Port 5280, Temp-DB) über `.claude/scripts/tutori
    erledigt der Skill `anmerkungen`. Ablauf und Begründung: [docs/anmerkungen/](../../../docs/anmerkungen/README.md).
 1. **Hochfahren**: `build` → `stop` → `serve` (Hintergrund, `run_in_background: true`) → `wait`
    (siehe `creator`-Skill; Windows-Fallstricke stecken im Helfer). Bei Datei-Lock die Dev-Instanz stoppen.
-2. **Einloggen**: `source .claude/scripts/tutorial-api.sh; TOK=$(login_father 1 0000)`.
-   Kontrolle: `api_get /api/v1/auth/me` → `role:"Supervisor"`, `fatherId:1`.
+2. **Einloggen**: `source .claude/scripts/tutorial-api.sh; TOK=$(login_adult 1 0000)`.
+   Kontrolle: `api_get /api/v1/auth/me` → `role:"Supervisor"`, `adultId:1`.
 3. **Steuerungs-Flow durchspielen** (Status + Schlüsselfelder prüfen):
    - `GET /api/v1/supervisor/children` → das betreute Kind (`id:1`, Coins/Gems).
    - `POST /api/v1/supervisor/study-plans` `{"childId":1,"title":"…","durationDays":10}` → **Container**;

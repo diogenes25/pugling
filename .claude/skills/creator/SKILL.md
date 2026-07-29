@@ -15,7 +15,7 @@ description: >-
 Du bist der **Creator**: du baust den **gemeinsamen, kindneutralen Lern-Katalog** (Fächer → Kapitel →
 typisierte Übungen), pflegst den **Vokabel-Store** als „single source of truth" und taggst Übungen.
 Im Produkt hält der **Vater** diese Rolle (zusammen mit Supervisor); der reine Creator-Archetyp ist der
-**Lehrer** (Seed: *Herr Schmidt*, `fatherId=2`, PIN `9999`), der Inhalte kuratiert, ohne ein Kind zu betreuen.
+**Lehrer** (Seed: *Herr Schmidt*, `adultId=2`, PIN `9999`), der Inhalte kuratiert, ohne ein Kind zu betreuen.
 
 Zwei Ziele in einem Lauf: **(1)** die Creator-Endpunkte end-to-end **verifizieren** und **(2)** daraus das
 verifizierte Tutorial **`docs/tutorial-creator.md`** schreiben/aktualisieren. Entdeckte API-Mängel werden
@@ -39,8 +39,8 @@ die Seed-IDs sind stabil. Der gemeinsame Helfer `.claude/scripts/tutorial-api.sh
    - `bash .claude/scripts/tutorial-api.sh serve` **im Hintergrund** (`run_in_background: true`)
    - `bash .claude/scripts/tutorial-api.sh wait`
    - Läuft eine Dev-Instanz und blockiert der Build den Datei-Lock: den `Pugling.Api`-Prozess stoppen.
-2. **Einloggen** als Creator: `source .claude/scripts/tutorial-api.sh; TOK=$(login_father 2 9999)`.
-   Kontrolle: `api_get /api/v1/auth/me` → `roles:["Creator","Supervisor"]`, `fatherId:2`.
+2. **Einloggen** als Creator: `source .claude/scripts/tutorial-api.sh; TOK=$(login_adult 2 9999)`.
+   Kontrolle: `api_get /api/v1/auth/me` → `roles:["Creator","Supervisor"]`, `adultId:2`.
 3. **Katalog-Flow durchspielen und jede Antwort prüfen** (Status + Schlüsselfelder). Reihenfolge:
    - `POST /api/v1/creator/subjects` `{"name":"…"}` → merke `id`.
    - `POST …/subjects/{id}/chapters` `{"name":"…","orderIndex":1}` → merke `id`.
@@ -52,7 +52,7 @@ die Seed-IDs sind stabil. Der gemeinsame Helfer `.claude/scripts/tutorial-api.sh
      und (auf einer sprachtragenden Übung) inline `{"front":"…","back":"…"}`.
    - `GET …/vocabulary/{exerciseId}/items` → materialisierte Items (Tabelle, `_self`-Links).
    - `GET /api/v1/creator/exercises?type=Vocabulary&take=3` → kindneutrale Katalogsuche (Metadaten,
-     `isOwn` nach `authorFatherId`).
+     `isOwn` nach `authorAdultId`).
    - `GET /api/v1/creator/exercises/{id}/preview` → **Testmodus**: Aufgaben ohne Lösung (bzw. `reveal` je
      Stufe), nebenwirkungsfrei — der Creator probiert die Übung selbst durch.
    - Optional: ein zweiter Übungstyp (`…/cloze`, `…/matching`, `…/arithmetic`) und `/api/v1/creator/tags`.

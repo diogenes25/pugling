@@ -21,7 +21,7 @@ Erzeugen:
 ```bash
 export TUTORIAL_API_BASE=http://localhost:5200
 source .claude/scripts/tutorial-api.sh
-TOK=$(login_father 1 0000)
+TOK=$(login_adult 1 0000)
 # Ohne status-Filter: liefert offene UND eingeplante Einträge. Ein `?status=Open` wäre hier falsch –
 # die Rollen-Skills sollen ausdrücklich auch `eingeplant` sehen, und genau die tragen schon eine Analyse.
 curl -sf "$TUTORIAL_API_BASE/api/v1/remarks/export" -H "Authorization: Bearer $TOK" \

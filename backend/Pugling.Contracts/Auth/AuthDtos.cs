@@ -11,7 +11,7 @@ namespace Pugling.Contracts.Auth;
 /// <b>Lehrer</b> hat nur Creator und gehört in die Werkstatt. Das Token selbst trägt <i>alle</i> Rollen des
 /// Kontos; dieses Feld sagt nur, wo die Oberfläche starten soll.
 /// </param>
-/// <param name="Id">Fachliche Id des eingeloggten Profils (Father- bzw. Child-Id, beim Konto-Login die Konto-Id).</param>
+/// <param name="Id">Fachliche Id des eingeloggten Profils (Adult- bzw. Child-Id, beim Konto-Login die Konto-Id).</param>
 /// <param name="Name">Anzeigename.</param>
 /// <param name="ExpiresAt">Ablaufzeitpunkt des Tokens (UTC).</param>
 public record LoginResponse(string Token, string Role, int Id, string Name, DateTime ExpiresAt);
@@ -22,11 +22,11 @@ public record LoginResponse(string Token, string Role, int Id, string Name, Date
 /// <param name="AccountId">Konto-Id (Subjekt des Tokens); <c>null</c> bei einem Alt-Token ohne <c>aid</c>.</param>
 /// <param name="Role">Primäre Ebene fürs Routing – siehe <see cref="LoginResponse"/>.</param>
 /// <param name="Roles">Alle Rollen des Tokens. Bei einem Lehrer-Konto genau <c>["Creator"]</c>.</param>
-/// <param name="FatherId">Fachliche Id des Erwachsenen (Creator/Supervisor), sonst <c>null</c>.</param>
+/// <param name="AdultId">Fachliche Id des Erwachsenen (Creator/Supervisor), sonst <c>null</c>.</param>
 /// <param name="ChildId">Fachliche Id des Kindes (Student), sonst <c>null</c>.</param>
 /// <param name="Name">Anzeigename.</param>
 public record MeResponse(int? AccountId, string Role, IReadOnlyList<string> Roles,
-    int? FatherId, int? ChildId, string? Name);
+    int? AdultId, int? ChildId, string? Name);
 
 /// <summary>
 /// Selbstverwaltung des eigenen Kontos (<c>PATCH auth/me</c>) – für <b>jede</b> Erwachsenen-Rolle, also auch
@@ -45,8 +45,8 @@ public record MeResponse(int? AccountId, string Role, IReadOnlyList<string> Role
 /// bewusst stillgelegt werden kann; <c>null</c> = unverändert.</param>
 public record UpdateMyAccountDto(string? Name, string? Email, bool ClearEmail = false, string? Pin = null);
 
-/// <summary>Vater-Login per fachlicher Father-Id + PIN.</summary>
-public record FatherLoginDto(int FatherId, string Pin);
+/// <summary>Login eines Erwachsenen (Vater wie Lehrer) per fachlicher Adult-Id + PIN.</summary>
+public record AdultLoginDto(int AdultId, string Pin);
 
 /// <summary>Sohn-Login per fachlicher Child-Id + PIN.</summary>
 public record ChildLoginDto(int ChildId, string Pin);

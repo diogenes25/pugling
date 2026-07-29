@@ -28,7 +28,7 @@ code=$(curl -s -o /dev/null -w "%{http_code}" "$BASE/api/v1/supervisor/study-pla
 [ "$code" = "401" ] && pass "401 ohne Token" || bad "erwartete 401, war $code"
 
 # 2) Vater-Login liefert Token
-TOK=$(curl -s -X POST "$BASE/api/v1/auth/father" -H "Content-Type: application/json" -d '{"fatherId":1,"pin":"0000"}' | jget token)
+TOK=$(curl -s -X POST "$BASE/api/v1/auth/adult" -H "Content-Type: application/json" -d '{"adultId":1,"pin":"0000"}' | jget token)
 [ -n "$TOK" ] && pass "Vater-Login liefert Token" || bad "Login fehlgeschlagen"
 AUTH=(-H "Authorization: Bearer $TOK")
 

@@ -11,7 +11,7 @@
 #        wait  : blockiert (Vordergrund), bis /openapi/v1.json antwortet
 #        stop  : 5280-Instanz killen + Temp-DB löschen (idempotent; auch zum Vor-Aufräumen)
 #   2) Gesourcet:  source .claude/scripts/tutorial-api.sh
-#        -> Helfer jget / login_father / login_child / api_get / api_post (BASE/TOK vorausgesetzt)
+#        -> Helfer jget / login_adult / login_child / api_get / api_post (BASE/TOK vorausgesetzt)
 #
 # Windows/Git-Bash-Fallstricke (aus smoke-checks.sh übernommen, nicht abweichen):
 #   - relative *.db (kein /tmp-Pfad: "unable to open database file")
@@ -51,8 +51,8 @@ api_wait() {
   echo "❌ API unter $BASE nicht bereit" >&2; return 1
 }
 
-# Seed-Logins (Defaults = Seed-Zugänge). Creator-Archetyp: login_father 2 9999 (Lehrer Herr Schmidt).
-login_father() { curl -s -X POST "$BASE/api/v1/auth/father" -H "Content-Type: application/json" -d "{\"fatherId\":${1:-1},\"pin\":\"${2:-0000}\"}" | jget token; }
+# Seed-Logins (Defaults = Seed-Zugänge). Creator-Archetyp: login_adult 2 9999 (Lehrer Herr Schmidt).
+login_adult() { curl -s -X POST "$BASE/api/v1/auth/adult" -H "Content-Type: application/json" -d "{\"adultId\":${1:-1},\"pin\":\"${2:-0000}\"}" | jget token; }
 login_child()  { curl -s -X POST "$BASE/api/v1/auth/child"  -H "Content-Type: application/json" -d "{\"childId\":${1:-1},\"pin\":\"${2:-1111}\"}"  | jget token; }
 
 # Authentifizierte Aufrufe – setzt eine Variable TOK voraus.

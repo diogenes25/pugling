@@ -4,7 +4,7 @@ import type {
   UpdateChildDto, SupervisorLink, SupervisorRelation, TimetableEntry, Weekday,
   ClozeResponse, CreateClozeDto, UpdateClozeDto,
   ExerciseGrant, GrantPermission,
-  CreateFatherDto, FatherResponse, UpdateFatherDto,
+  CreateAdultDto, AdultResponse, UpdateAdultDto,
   ExerciseDetail, ExercisePreviewAnswer, ExercisePreviewData, ExercisePreviewResult, ExerciseTypeManifest,
   ExerciseSearchParams, ExerciseSharing, ExerciseSummary, MeResponse, TeacherAccount, UpdateMyAccountDto, ExerciseUsage, KlassenarbeitDetail, KlassenarbeitPractice, KlassenarbeitRepeat,
   KlassenarbeitResponse, KlassenarbeitStatus, LoginResponse, MissionDef, MissionStatus, PlanResponse,
@@ -217,16 +217,16 @@ const V1 = "/api/v1";
 
 export const api = {
   // ---- Auth ----
-  loginFather: (fatherId: number, pin: string) =>
-    http<LoginResponse>(`${V1}/auth/father`, "POST", { fatherId, pin }),
+  loginAdult: (adultId: number, pin: string) =>
+    http<LoginResponse>(`${V1}/auth/adult`, "POST", { adultId, pin }),
   loginChild: (childId: number, pin: string) =>
     http<LoginResponse>(`${V1}/auth/child`, "POST", { childId, pin }),
 
   // ---- Vater: eigenes Konto ----
   // Die Registrierung ist der einzige anonyme Schreibpfad der API: ohne sie könnte ein neuer Vater
   // nur per Seed entstehen. Der Server legt dabei zugleich das Login-Konto (Creator+Supervisor) an.
-  registerFather: (dto: CreateFatherDto) =>
-    http<FatherResponse>(`${V1}/supervisor/fathers`, "POST", dto),
+  registerAdult: (dto: CreateAdultDto) =>
+    http<AdultResponse>(`${V1}/supervisor/adults`, "POST", dto),
   /**
    * Registriert ein **Lehrer-Konto**: nur die Creator-Rolle, kein Betreuungsauftrag. Eigener Pfad, weil
    * sich nicht der Datensatz unterscheidet, sondern die Rollen des Kontos – und die entstehen beim Anlegen.
@@ -245,9 +245,9 @@ export const api = {
    */
   updateMyAccount: (dto: UpdateMyAccountDto) =>
     http<MeResponse>(`${V1}/auth/me`, "PATCH", dto),
-  father: (fatherId: number) => http<FatherResponse>(`${V1}/supervisor/fathers/${fatherId}`),
-  updateFather: (fatherId: number, dto: UpdateFatherDto) =>
-    http<FatherResponse>(`${V1}/supervisor/fathers/${fatherId}`, "PATCH", dto),
+  adult: (adultId: number) => http<AdultResponse>(`${V1}/supervisor/adults/${adultId}`),
+  updateAdult: (adultId: number, dto: UpdateAdultDto) =>
+    http<AdultResponse>(`${V1}/supervisor/adults/${adultId}`, "PATCH", dto),
 
   // ---- Vater: Kinder (der Vater ergibt sich serverseitig aus dem JWT) ----
   children: () => http<ChildResponse[]>(`${V1}/supervisor/children`),

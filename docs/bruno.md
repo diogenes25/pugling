@@ -1,6 +1,6 @@
 # Bruno-Export
 
-Der Bruno-Export wird aus der laufenden OpenAPI-Spezifikation erzeugt. Damit bleiben Pfadwerte wie `{{fatherId}}`, `{{childId}}`, `{{planId}}` und die Auth-Scripts nach jedem API-Import reproduzierbar.
+Der Bruno-Export wird aus der laufenden OpenAPI-Spezifikation erzeugt. Damit bleiben Pfadwerte wie `{{adultId}}`, `{{childId}}`, `{{planId}}` und die Auth-Scripts nach jedem API-Import reproduzierbar.
 
 ## Erzeugen
 
@@ -27,12 +27,12 @@ node tools/bruno/generate-bruno.mjs --input .\openapi.json --output tools\bruno\
 
 ## Was der Generator einsetzt
 
-- Pfadparameter werden direkt als Bruno-Variablen in die URL geschrieben, z. B. `/api/v1/supervisor/fathers/{{fatherId}}`.
-- Request-Bodies erhalten bekannte IDs und PINs als Variablen, z. B. `{{fatherId}}`, `{{childId}}`, `{{fatherPin}}`.
-- `POST /api/v1/auth/father` speichert `fatherToken`, `fatherId` und `authToken` ins aktive Environment.
+- Pfadparameter werden direkt als Bruno-Variablen in die URL geschrieben, z. B. `/api/v1/supervisor/adults/{{adultId}}`.
+- Request-Bodies erhalten bekannte IDs und PINs als Variablen, z. B. `{{adultId}}`, `{{childId}}`, `{{adultPin}}`.
+- `POST /api/v1/auth/adult` speichert `adultToken`, `adultId` und `authToken` ins aktive Environment.
 - `POST /api/v1/auth/child` speichert `childToken`, `childId` und `authToken` ins aktive Environment.
-- Vater-Endpunkte senden `Authorization: Bearer {{fatherToken}}`.
+- Vater-Endpunkte senden `Authorization: Bearer {{adultToken}}`.
 - Sohn-Endpunkte unter `/api/v1/student/me` senden `Authorization: Bearer {{childToken}}`.
 - Antwort-IDs werden, soweit erkennbar, ebenfalls persistent ins Environment übernommen.
 
-Die lokale Umgebung wird als `tools/bruno/Pugling.Api/environments/local.bru` erzeugt. Die Seed-Werte sind aktuell `fatherId=1`, `fatherPin=0000`, `childId=1`, `childPin=1111`.
+Die lokale Umgebung wird als `tools/bruno/Pugling.Api/environments/local.bru` erzeugt. Die Seed-Werte sind aktuell `adultId=1`, `adultPin=0000`, `childId=1`, `childPin=1111`.
