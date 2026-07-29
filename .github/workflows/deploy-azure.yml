@@ -39,10 +39,15 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
+      # `--legacy-peer-deps`: `vite-plugin-pwa@0.21` deklariert Peer `vite ^3…^6`, installiert ist
+      # `vite@8` (siehe frontend/CLAUDE.md). Ohne das Flag brach `npm ci` hier mit ERESOLVE ab – seit
+      # dem Vite-8-Sprung (2c4eb69, 2026-07-05) also **jeder** Deploy, unbemerkt, weil niemand das
+      # Ergebnis las. Aufgefallen beim Einziehen des Frontend-Tors in ci.yml (Etappe D1), das denselben
+      # Befehl ausführt und darum absichtlich dieselbe Umgebung benutzt.
       - name: Frontend bauen
         working-directory: frontend
         run: |
-          npm ci
+          npm ci --legacy-peer-deps
           npm run build
       - name: Frontend nach wwwroot kopieren
         run: cp -r frontend/dist/. ${{ env.API_PROJECT }}/wwwroot/

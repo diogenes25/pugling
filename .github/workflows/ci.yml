@@ -7,6 +7,10 @@ name: CI
 # Reihenfolge ist Absicht: **erst Tests, dann Format.** Der inhaltliche Befund ("welche Regel ist gebrochen")
 # soll zuerst im Log stehen; die Formatprüfung ist mit ~140 s der teuerste Schritt und sagt fachlich nichts.
 # Das Deployment hängt über `workflow_run` an diesem Workflow (siehe deploy-azure.yml).
+#
+# Zwei Jobs, **bewusst ohne `needs:` zwischen ihnen** (Etappe D1): Backend und Frontend prüfen
+# Unabhängiges und laufen parallel. Das Deploy hängt am Gesamtergebnis des Workflows, zieht den
+# Frontend-Job also automatisch mit – ohne dass hier eine Reihenfolge erfunden werden muss.
 
 on:
   push:
@@ -27,6 +31,11 @@ env:
   DOTNET_VERSION: "10.0.x"
   DOTNET_NOLOGO: "true"
   DOTNET_CLI_TELEMETRY_OPTOUT: "true"
+  # **Dieselbe Version wie in deploy-azure.yml** – ein Tor, das eine andere Umgebung prüft als die,
+  # in der gebaut und deployt wird, bewacht nichts. `setup-node` zieht bei "20" das neueste 20.x und
+  # erfüllt damit `vite@8` (engines `^20.19.0 || >=22.12.0`); wer hier auf ein älteres 20.x pinnt,
+  # bricht den Build.
+  NODE_VERSION: "20"
   # Die Testsuite fährt je Testklasse eine frische SQLite hoch; ohne UTC-Runner-Annahme arbeiten die
   # Tests ohnehin (Wanduhr ist in der WebAppFactory neutralisiert), aber explizit ist besser als implizit.
   TZ: UTC
@@ -110,3 +119,39 @@ jobs:
       # oben schon restauriert wurde. Stand bei Einziehen des Tors: sauber.
       - name: Format prüfen
         run: dotnet format Pugling.sln --verify-no-changes --no-restore
+
+  # Etappe D1. Billig (~1 min) und fängt genau die Fehlerklasse, die das Backend-Tor nicht sieht:
+  # das Frontend hängt an `api/v1`, und ein Vertragsbruch schlägt dort als **Typfehler** auf. Playwright
+  # bleibt bewusst draußen (eigener Workflow, D2) – Browser-Runner und Startzeit gehören nicht ins Haupttor.
+  frontend:
+    name: Frontend – Typecheck, Build, Vitest
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          # Das Lockfile liegt nicht im Repo-Root, sondern unter frontend/ – ohne diesen Pfad findet
+          # der Cache-Schlüssel nichts und der Cache bleibt wirkungslos.
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      # **`--legacy-peer-deps` ist keine Bequemlichkeit, sondern der dokumentierte Stand des Projekts**
+      # (frontend/CLAUDE.md): `vite-plugin-pwa@0.21` deklariert Peer `vite ^3…^6`, installiert ist
+      # `vite@8`. Ohne das Flag bricht `npm ci` mit ERESOLVE ab, bevor eine Zeile geprüft wird –
+      # gemessen, und zwar seit dem Vite-8-Sprung (2c4eb69, 2026-07-05) auch im Deploy-Workflow, der
+      # daran 24 Tage lang unbemerkt scheiterte. Genau dieser blinde Fleck ist der Grund für dieses Tor.
+      - name: Abhängigkeiten installieren
+        working-directory: frontend
+        run: npm ci --legacy-peer-deps
+
+      # `npm run build` = `tsc -b && vite build`. Der Typecheck ist der eigentliche Gewinn, der
+      # Bundle-Build der Nachweis, dass auch das Deploy-Artefakt entstehen kann.
+      - name: Typecheck + Build
+        working-directory: frontend
+        run: npm run build
+
+      - name: Vitest
+        working-directory: frontend
+        run: npm test

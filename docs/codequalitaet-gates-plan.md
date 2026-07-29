@@ -5,7 +5,7 @@ aliases: [Codequalität-Gates, Test-Gate, CI-Plan, Integrationstests bewerten]
 
 # Codequalität: von Disziplin zu mechanischen Toren
 
-Status: **Etappen A, B und C umgesetzt und committet (2026-07-29), D offen.** Alle Zahlen im Abschnitt „Ist-Zustand" sind
+Status: **Etappen A, B und C umgesetzt und committet, D1 dazu (2026-07-29); D2–D4 offen.** Alle Zahlen im Abschnitt „Ist-Zustand" sind
 am 2026-07-29 am damaligen Arbeitsstand gemessen (Etappe 2 der `Father`→`Adult`-Umbenennung im Baum, noch
 nicht committet – sie ist seither als `1ee1538` committet); der Stand **nach C** steht unter „Was Etappe C
 gebracht hat". Was A gebracht hat, steht unter „Etappe A"; der **erste Fund des neuen Tors** unter „Was das
@@ -44,9 +44,11 @@ der Empfehlung, die hier vorher stand; beide waren erzwungen, nicht Geschmack:
   Vokabelspeicher und legt die schlummernde Ordnungsabhängigkeit der Dedupe-Prüfung offen. Mit dem Fix in
   C3 war der Tore-Commit rot – gemessen, nicht vermutet.
 
-**Der erste inhaltliche Schritt ist D1** (siehe Etappe D) – er berührt nur `.github/workflows/ci.yml`,
-keinen Produktivcode. Parallel dazu ist die **Nacharbeit aus B** offen (CS1591 in `Pugling.Api`, die 188
-`CancellationToken`-Altlasten, das Frontend gegen `unknown_field`); die drei sind voneinander unabhängig.
+**D1 ist erledigt** (Frontend-Job in `ci.yml`) und hat beim Messen gefunden, dass das Azure-Deploy seit
+2026-07-05 am `npm ci` scheiterte – siehe „Was D1 sofort gefunden hat". **Der nächste Schritt ist D2**
+(Playwright als eigener Workflow). Parallel dazu offen: die **Nacharbeit aus B** (CS1591 in `Pugling.Api`,
+die 188 `CancellationToken`-Altlasten, das Frontend gegen `unknown_field`) und der **Peer-Konflikt**
+`vite-plugin-pwa` ↔ `vite@8`, den D1 nur benannt, nicht behoben hat; die Punkte sind voneinander unabhängig.
 
 **Wo die Wächter ihre Befunde ablegen** – das muss man wissen, bevor man ein rotes Tor deutet:
 `ConventionGuardTests` und `PatchSemanticsTests` melden wie gewohnt als Test. Der Endpunkt-Abdeckungs-Wächter
@@ -465,11 +467,11 @@ Schnitt käme „berührt" über „Soll" hinaus.
 Gegenprobe: einen Test auf `[Fact(Skip = …)]` gesetzt → Exit 1, und der Bericht nennt genau
 `MediaVariantsController.Delete`.
 
-### Etappe D · Frontend und Rand (1–2 Tage) – **offen, der nächste Schritt**
+### Etappe D · Frontend und Rand (1–2 Tage) – **D1 umgesetzt, D2–D4 offen**
 
 | # | Aufgabe | Worauf zu achten ist |
 |---|---|---|
-| D1 | `npm run build` (also `tsc -b`) + `vitest run` in `ci.yml` aufnehmen – billig, fängt Typfehler im Frontend | Eigener Job mit `actions/setup-node` + `cache: npm`, **parallel** zum .NET-Job (keine Abhängigkeit). Das Deploy hängt per `workflow_run` am Gesamt-Ergebnis von `CI`, zieht also automatisch mit. |
+| D1 | **umgesetzt** – Job `frontend` in `ci.yml`: `npm ci --legacy-peer-deps` → `npm run build` (`tsc -b && vite build`) → `npm test` (Vitest) | Eigener Job mit `actions/setup-node` + `cache: npm` (`cache-dependency-path: frontend/package-lock.json`, das Lockfile liegt nicht im Root), **parallel** zum .NET-Job, kein `needs:`. `NODE_VERSION` deckt sich mit `deploy-azure.yml` – ein Tor, das eine andere Umgebung prüft als die, in der deployt wird, bewacht nichts. Gemessen aus frischem Checkout: Install, Build und 21 Vitest-Tests grün. |
 | D2 | Playwright als **eigener** Workflow (`e2e.yml`) auf `pull_request` + nightly, nicht im Haupt-Tor: Backend hochfahren, `npx playwright install --with-deps`, die 10 Specs | Bewusst nicht im Haupt-Tor (Browser-Runner + Startzeit). Die E2E teilen sich laut [frontend/CLAUDE.md](../frontend/CLAUDE.md) eine DB – Auswahl **nie** per Index, siehe den Fallstrick in `sohntest-doppelter-versuch`. |
 | D3 | `markdownlint-cli2` (Konfiguration liegt bereits im Root) in `ci.yml` – die Doku ist in diesem Projekt Produkt, nicht Beiwerk | Erst messen: `npx markdownlint-cli2` läuft heute **nicht** sauber. In `CLAUDE.md` stehen zwei MD004-Treffer (Zeilen 118/124), die keine Listen sind, sondern Zeilenfortsetzungen mit `+`. Also entweder umformulieren oder MD004 abschalten – **nicht** den Umbruch „reparieren". |
 | D4 | Prüfen, ob `/smoke-test` und `DocsCaptureTests` in CI reproduzierbar byte-stabil laufen (die Wanduhr-Neutralisierung ist dafür gebaut; auf einem UTC-Runner erst zu verifizieren) | `ci.yml` setzt schon `TZ: UTC`. `DocsCaptureTests` **überschreibt** `docs/api-examples/` bei jedem Lauf – ein Diff dort nach einem CI-Lauf ist der Befund, kein Versehen. |
@@ -477,6 +479,23 @@ Gegenprobe: einen Test auf `[Fact(Skip = …)]` gesetzt → Exit 1, und der Beri
 **D0 (erledigt): die drei Etappen sind committet.** Der Schnitt und die je Commit gemessenen Zahlen stehen
 unter „Einstieg für eine frische Sitzung". D beginnt damit auf einem Stand, auf dem ein roter CI-Lauf
 eindeutig dem neuen Tor zuzuordnen ist.
+
+#### Was D1 sofort gefunden hat: das Deploy war 24 Tage kaputt
+
+Bevor der Job geschrieben war, wurde gemessen, was er ausführen würde – und `npm ci` **scheitert aus dem
+Leerstand** mit `ERESOLVE`: `vite-plugin-pwa@0.21` deklariert Peer `vite ^3…^6`, installiert ist `vite@8`.
+Dass lokal alles läuft, liegt an einem `node_modules`, das einmal mit `--legacy-peer-deps` entstanden ist
+(so steht es auch in [frontend/CLAUDE.md](../frontend/CLAUDE.md)); ein frischer Runner hat das nicht.
+
+Damit war nicht nur der neue Job rot, sondern **`deploy-azure.yml` an derselben Zeile schon die ganze Zeit**:
+seit dem Vite-8-Sprung (`2c4eb69`, 2026-07-05) konnte kein Deploy mehr den Frontend-Build erreichen. Nichts
+hat es gemeldet, weil niemand das Ergebnis gelesen hat – genau die Lücke, die dieser Plan schließt, hier
+einmal in Reinform: **ein Schritt, den kein Tor prüft, ist ein Schritt, dessen Zustand niemand kennt.**
+Beide Workflows installieren jetzt mit `--legacy-peer-deps`.
+
+Der Peer-Konflikt selbst bleibt bestehen und ist damit **nicht** behoben, nur benannt: `vite-plugin-pwa` auf
+eine Vite-8-fähige Fassung zu heben (oder Vite zu pinnen) ist eine Dependency-Entscheidung mit Wirkung auf
+das PWA-Artefakt und gehört nicht in ein CI-Tor. Offener Punkt, kein Nebenbei-Fix.
 
 ## Was bewusst nicht getan wird
 

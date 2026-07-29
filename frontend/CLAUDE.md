@@ -31,7 +31,10 @@ E2E: [e2e/feldhilfe.spec.ts](e2e/feldhilfe.spec.ts) prüft Feld → *richtiger* 
 
 **Neue Abhängigkeiten bitte mit `--legacy-peer-deps` installieren:** `vite-plugin-pwa@0.21` deklariert
 Peer `vite@^3…^6`, installiert ist `vite@8` – jede Neuauflösung bricht sonst mit `ERESOLVE` ab
-(vorbestehend, der Build läuft trotzdem).
+(vorbestehend, der Build läuft trotzdem). **Das gilt auch für `npm ci`** und damit für jede frische
+Maschine: CI (`ci.yml`, Job `frontend`) und Deploy (`deploy-azure.yml`) installieren deshalb mit dem Flag.
+Ohne es scheiterte das Deploy von 2026-07-05 bis 2026-07-29 unbemerkt am Install – Hintergrund in
+[docs/codequalitaet-gates-plan.md](../docs/codequalitaet-gates-plan.md) (Etappe D1).
 
 Rollen im SPA: `/` Produktseite, `/vater` Web-Admin (inkl. `/vater/wizard` Lehrplan-Assistent,
 `/vater/lehrwerke` Buchreihen + Units, `/vater/fachlehrer` Creator-Profile), `/sohn` Arcade-PWA.
