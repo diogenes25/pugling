@@ -167,9 +167,11 @@ public class TagsController(PuglingDbContext db, AuthAccess access) : Controller
         var tag = await FindOwnedAsync(tagId);
         if (tag is null) return NotFound();
 
-        var exercises = await db.ExerciseTags
-            .Where(x => x.TagId == tagId)
-            .Select(x => x.Exercise!)
+        // Von `Exercises` aus filtern, **nicht** von `ExerciseTags` über `.Select(x => x.Exercise!)`:
+        // EF Core lässt `Include` nur an einer Entity-Wurzel zu, nach einer Projektion wirft es zur Laufzeit.
+        // Die Route lieferte darum bei jedem Aufruf 500 – aufgefallen erst, als C3 sie zum ersten Mal aufrief.
+        var exercises = await db.Exercises
+            .Where(e => db.ExerciseTags.Any(x => x.TagId == tagId && x.ExerciseId == e.Id))
             .Include(e => e.Chapter!).ThenInclude(c => c.Subject)
             .OrderBy(e => e.Chapter!.SubjectId).ThenBy(e => e.ChapterId).ThenBy(e => e.OrderIndex).ThenBy(e => e.Id)
             .AsNoTracking()

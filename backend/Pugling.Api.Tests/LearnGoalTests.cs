@@ -152,4 +152,23 @@ public class LearnGoalTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
         Assert.Equal(HttpStatusCode.NoContent, (await father.DeleteAsync($"{Url(1)}/{goalId}")).StatusCode);
         Assert.Equal(HttpStatusCode.NotFound, (await father.GetAsync($"{Url(1)}/{goalId}")).StatusCode);
     }
+
+    [Fact]
+    public async Task Einzelnes_Ziel_Wird_Mit_Ausgewertetem_Status_Gelesen()
+    {
+        // Die Einzelansicht war bisher nur über ihren 404 belegt (nach dem Löschen). Ein Endpunkt, dessen
+        // Erfolgsfall kein Test aufruft, ist unbelegt – der Abdeckungs-Wächter (C4) zählt darum nur 2xx.
+        var father = await TestApi.FatherAsync(_factory);
+        var (subjectId, _, _) = await VocabAsync(father, "Ziel-Einzelsicht", ("koala", "Koala"));
+        var goalId = await TestApi.IdAsync(await father.PostAsJsonAsync(Url(1),
+            new { subjectId, metric = "Coverage", targetValue = 1, title = "Ein Wort reicht" }));
+
+        var goal = await (await father.GetAsync($"{Url(1)}/{goalId}")).Content.ReadFromJsonAsync<JsonElement>();
+
+        Assert.Equal(goalId, goal.GetProperty("id").GetInt32());
+        Assert.Equal("Ein Wort reicht", goal.GetProperty("title").GetString());
+        Assert.Equal(subjectId, goal.GetProperty("subjectId").GetInt32());
+        // Der Status kommt live aus dem Lernstand – ohne Übungsfortschritt ist das Ziel offen.
+        Assert.Equal("open", goal.GetProperty("status").GetString());
+    }
 }

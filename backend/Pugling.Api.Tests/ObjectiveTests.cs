@@ -240,4 +240,56 @@ public class ObjectiveTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
         var afterDelete = await father.GetFromJsonAsync<JsonElement>($"{Url(childId)}/{objectiveId}");
         Assert.Equal(0, afterDelete.GetProperty("totalCount").GetInt32());
     }
+
+    // ─────────────────────────────────── Liste, Löschen, Sohn-Einzelsicht (C3-Abdeckungslücke)
+
+    /// <summary>Legt ein Objective mit einer Etappe an und liefert dessen Id.</summary>
+    private static async Task<int> AnlegenAsync(HttpClient father, int childId, int subjectId, string title)
+    {
+        var created = await JsonAsync(await father.PostAsJsonAsync(Url(childId), new
+        {
+            title,
+            kind = "Committed",
+            rewardOnComplete = 20,
+            rewardPerKeyResult = 5,
+            keyResults = new[] { new { subjectId, metric = "MaxWeakItems", targetValue = 0, title = "Keine Wackelkandidaten" } },
+        }));
+        return created.GetProperty("id").GetInt32();
+    }
+
+    [Fact]
+    public async Task Liste_Zeigt_Die_Ziele_Des_Kindes_Und_Loeschen_Entfernt_Sie()
+    {
+        var father = await TestApi.FatherAsync(factory);
+        var subjectId = await SubjectAsync(father, "Obj-Liste");
+        var childId = await FreshChildIdAsync(father, "7301");
+        var ersterId = await AnlegenAsync(father, childId, subjectId, "Erstes Ziel");
+        await AnlegenAsync(father, childId, subjectId, "Zweites Ziel");
+
+        var liste = await JsonAsync(await father.GetAsync(Url(childId)));
+        Assert.Equal(2, liste.GetArrayLength());
+
+        Assert.Equal(HttpStatusCode.NoContent, (await father.DeleteAsync($"{Url(childId)}/{ersterId}")).StatusCode);
+        Assert.Equal(1, (await JsonAsync(await father.GetAsync(Url(childId)))).GetArrayLength());
+        // Zweimal löschen ist der Fehlerfall der Route – nicht still erfolgreich.
+        Assert.Equal(HttpStatusCode.NotFound, (await father.DeleteAsync($"{Url(childId)}/{ersterId}")).StatusCode);
+    }
+
+    [Fact]
+    public async Task Sohn_Liest_Sein_Ziel_Einzeln_Ein_Deaktiviertes_Nicht()
+    {
+        var father = await TestApi.FatherAsync(factory);
+        var subjectId = await SubjectAsync(father, "Obj-Sohnsicht");
+        var childId = await FreshChildIdAsync(father, "7302");
+        var objectiveId = await AnlegenAsync(father, childId, subjectId, "Mein großes Ziel");
+
+        var sohn = await TestApi.ChildAsync(factory, childId, "7302");
+        var eigenes = await JsonAsync(await sohn.GetAsync($"/api/v1/student/me/objectives/{objectiveId}"));
+        Assert.Equal("Mein großes Ziel", eigenes.GetProperty("title").GetString());
+
+        // Deaktiviert der Vater das Ziel, verschwindet es aus der Sohn-Sicht – deckungsgleich zur Liste,
+        // damit die Einzelansicht nicht zeigt, was die Liste verbirgt.
+        (await father.PatchAsJsonAsync($"{Url(childId)}/{objectiveId}", new { active = false })).EnsureSuccessStatusCode();
+        Assert.Equal(HttpStatusCode.NotFound, (await sohn.GetAsync($"/api/v1/student/me/objectives/{objectiveId}")).StatusCode);
+    }
 }

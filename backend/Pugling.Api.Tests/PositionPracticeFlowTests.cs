@@ -103,4 +103,25 @@ public class PositionPracticeFlowTests(PuglingWebAppFactory factory) : IClassFix
             $"/api/v1/student/study-plans/{planId}/positions/{positionId + 999}/practice-sessions", new { });
         Assert.Equal(HttpStatusCode.NotFound, res.StatusCode);
     }
+
+    [Fact]
+    public async Task Sitzung_Wird_Einzeln_Gelesen()
+    {
+        // Die Einzelansicht der Sitzung (C3-Abdeckungslücke): der Client holt sie nach einem Neuladen, um
+        // Cursor und Modus wiederzufinden, ohne eine zweite Sitzung zu starten.
+        var father = await TestApi.FatherAsync(_factory);
+        var exerciseId = await TestApi.CreateVocabExerciseAsync(father);
+        var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.FreeText);
+        var child = await TestApi.ChildAsync(_factory);
+        var sessionId = await TestApi.StartPositionSessionAsync(child, planId, positionId);
+
+        var sitzung = await (await child.GetAsync($"{TestApi.PracticeBase(planId, positionId)}/{sessionId}"))
+            .Content.ReadFromJsonAsync<JsonElement>();
+
+        Assert.Equal(sessionId, sitzung.GetProperty("id").GetInt32());
+        Assert.Equal(positionId, sitzung.GetProperty("positionId").GetInt32());
+        Assert.Equal(0, sitzung.GetProperty("reviewCount").GetInt32());
+        Assert.Equal(HttpStatusCode.NotFound,
+            (await child.GetAsync($"{TestApi.PracticeBase(planId, positionId)}/{sessionId + 999}")).StatusCode);
+    }
 }

@@ -67,4 +67,36 @@ public class MultiSupervisorTests(PuglingWebAppFactory factory) : IClassFixture<
         (await supB.PostAsJsonAsync($"/api/v1/supervisor/children/1/shop/purchases/{purchaseBId}/cancel", new { }))
             .EnsureSuccessStatusCode();
     }
+
+    // ─────────────────────────────────── Betreuung lesen und lösen (C3-Abdeckungslücke)
+
+    [Fact]
+    public async Task Betreuer_Liste_Und_Entfernen_Der_Letzte_Bleibt()
+    {
+        var supA = await TestApi.FatherAsync(_factory);
+        var childId = await TestApi.IdAsync(await supA.PostAsJsonAsync("/api/v1/supervisor/children",
+            new { name = "Betreutes Kind", pin = "6201" }));
+        var url = $"/api/v1/supervisor/children/{childId}/supervisors";
+
+        // Mit nur einem Betreuer lässt sich dieser **nicht** entfernen – ein Student ohne jeden Supervisor
+        // wäre genau die Waise, die niemand mehr sehen oder verwalten kann.
+        var letzter = await supA.DeleteAsync($"{url}/1");
+        Assert.Equal(HttpStatusCode.BadRequest, letzter.StatusCode);
+        Assert.Equal("validation_error",
+            (await letzter.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("code").GetString());
+
+        var reg = await _factory.CreateClient().PostAsJsonAsync("/api/v1/supervisor/adults",
+            new { name = "Oma", pin = "6202" });
+        var omaId = await TestApi.IdAsync(reg);
+        (await supA.PostAsJsonAsync(url, new { supervisorId = omaId, relation = "Grandma" })).EnsureSuccessStatusCode();
+
+        var liste = await (await supA.GetAsync(url)).Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal(2, liste.GetArrayLength());
+        Assert.Contains(omaId, liste.EnumerateArray().Select(l => l.GetProperty("supervisorId").GetInt32()));
+
+        // Jetzt gibt es einen zweiten – die Oma darf gehen.
+        Assert.Equal(HttpStatusCode.NoContent, (await supA.DeleteAsync($"{url}/{omaId}")).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await supA.DeleteAsync($"{url}/{omaId}")).StatusCode);
+        Assert.Equal(1, (await (await supA.GetAsync(url)).Content.ReadFromJsonAsync<JsonElement>()).GetArrayLength());
+    }
 }

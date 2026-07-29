@@ -201,4 +201,26 @@ public class PlanPositionCrudTests(PuglingWebAppFactory factory) : IClassFixture
         Assert.Equal(HttpStatusCode.OK, ok.StatusCode);
         Assert.Equal(90, (await ok.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("goalThreshold").GetInt32());
     }
+
+    [Fact]
+    public async Task Einzelne_Position_Wird_Gelesen_Eine_Fremde_Nicht()
+    {
+        // Die Einzelansicht der Position (C3-Abdeckungslücke): bisher war nur die Liste belegt.
+        var father = await TestApi.FatherAsync(_factory);
+        var exerciseId = await TestApi.CreateVocabExerciseAsync(father);
+        var planId = await EmptyPlanAsync(father);
+        var url = $"/api/v1/supervisor/study-plans/{planId}/positions";
+        var posId = await TestApi.IdAsync(await father.PostAsJsonAsync(url, new { exerciseId, stage = 2 }));
+
+        var position = await (await father.GetAsync($"{url}/{posId}")).Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal(posId, position.GetProperty("id").GetInt32());
+        Assert.Equal(exerciseId, position.GetProperty("exerciseId").GetInt32());
+        Assert.Equal(2, position.GetProperty("stage").GetInt32());
+
+        // Eine Position, die zu einem *anderen* Plan gehört, ist unter diesem Plan nicht zu finden – sonst
+        // ließe sich über einen eigenen Plan die Position eines fremden lesen.
+        var andererPlan = await EmptyPlanAsync(father);
+        Assert.Equal(HttpStatusCode.NotFound,
+            (await father.GetAsync($"/api/v1/supervisor/study-plans/{andererPlan}/positions/{posId}")).StatusCode);
+    }
 }

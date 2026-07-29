@@ -89,6 +89,8 @@ public class CreatorProfilesController(PuglingDbContext db, CreatorProfileServic
         if (await ReferenceProblemAsync(dto.SubjectId, dto.SeriesId, ct) is { } problem) return problem;
         if (dto.GradeMin > dto.GradeMax)
             return this.ProblemWithCode(ApiErrors.ValidationError, "GradeMin must not be greater than GradeMax.");
+        if (await NameTakenAsync(dto.Name.Trim(), User.CreatorId(), ct))
+            return this.ProblemWithCode(ApiErrors.DuplicateProfileName, "A profile with this name already exists.");
 
         var profile = new CreatorProfile
         {
@@ -133,6 +135,8 @@ public class CreatorProfilesController(PuglingDbContext db, CreatorProfileServic
         {
             var name = dto.Name.Trim();
             if (name.Length == 0) return this.ProblemWithCode(ApiErrors.ValidationError, "Name must not be empty.");
+            if (await NameTakenAsync(name, fid, ct, exceptProfileId: profileId))
+                return this.ProblemWithCode(ApiErrors.DuplicateProfileName, "A profile with this name already exists.");
             profile.Name = name;
         }
         if (dto.SubjectName is not null) profile.SubjectName = Trimmed(dto.SubjectName);
@@ -181,6 +185,17 @@ public class CreatorProfilesController(PuglingDbContext db, CreatorProfileServic
         await db.SaveChangesAsync(ct);
         return NoContent();
     }
+
+    /// <summary>
+    /// Trägt schon ein anderes Profil desselben Creators diesen Namen? Der Name ist je Creator eindeutig
+    /// (Unique-Index <c>CreatorProfile(OwnerAdultId, Name)</c>) – ohne diese Vorprüfung quittierte das
+    /// Anlegen eines zweiten „Frau Meier" mit <b>500</b> statt mit einem Fachfehler am Namensfeld.
+    /// </summary>
+    private Task<bool> NameTakenAsync(string name, int? ownerAdultId, CancellationToken ct, int? exceptProfileId = null) =>
+        ownerAdultId is null
+            ? Task.FromResult(false) // Ohne Owner greift der gefilterte Index nicht.
+            : db.CreatorProfiles.AsNoTracking().AnyAsync(p => p.OwnerAdultId == ownerAdultId
+                && p.Name == name && p.Id != exceptProfileId, ct);
 
     /// <summary>Fach und Reihe müssen existieren – ein Profil, das ins Leere zeigt, findet nie ein Kind.</summary>
     private async Task<ObjectResult?> ReferenceProblemAsync(int? subjectId, int? seriesId, CancellationToken ct)

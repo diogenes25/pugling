@@ -57,4 +57,24 @@ public class MissionsAdminTests(PuglingWebAppFactory factory) : IClassFixture<Pu
 
         Assert.True(res.StatusCode is HttpStatusCode.Forbidden or HttpStatusCode.NotFound);
     }
+
+    // ─────────────────────────────────── Auszeichnungen lesen und löschen (C3-Abdeckungslücke)
+
+    [Fact]
+    public async Task Auszeichnungen_Liste_Und_Loeschen()
+    {
+        var father = await TestApi.FatherAsync(factory);
+        var childId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/supervisor/children",
+            new { name = "Auszeichnungs-Kind", pin = "6301" }));
+        var url = $"/api/v1/supervisor/children/{childId}/achievements";
+        var id = await TestApi.IdAsync(await father.PostAsJsonAsync(url,
+            new { title = "Hundert Wörter", metric = "NewWords", threshold = 100, rewardPoints = 50 }));
+
+        var liste = await (await father.GetAsync(url)).Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Contains(id, liste.EnumerateArray().Select(a => a.GetProperty("id").GetInt32()));
+
+        Assert.Equal(HttpStatusCode.NoContent, (await father.DeleteAsync($"{url}/{id}")).StatusCode);
+        Assert.Empty((await (await father.GetAsync(url)).Content.ReadFromJsonAsync<JsonElement>()).EnumerateArray());
+        Assert.Equal(HttpStatusCode.NotFound, (await father.DeleteAsync($"{url}/{id}")).StatusCode);
+    }
 }

@@ -91,6 +91,17 @@ public static class ApiErrors
     public static readonly ApiError MediaUploadTooLarge = new("media_upload_too_large", 400, "The uploaded file is too large.");
     /// <summary>Tag mit diesem Namen existiert bereits (400).</summary>
     public static readonly ApiError DuplicateTagName = new("duplicate_tag_name", 400, "Tag name already exists.");
+    /// <summary>
+    /// Die E-Mail-Adresse ist bereits einem Konto zugeordnet (409). <c>Account.Email</c> trägt einen
+    /// gefilterten Unique-Index; ohne diesen Fehler quittierte die Registrierung eine zweite Anmeldung mit
+    /// derselben Adresse als <b>500</b>, und ein Formular konnte den Grund nicht anzeigen.
+    /// </summary>
+    public static readonly ApiError DuplicateEmail = new("duplicate_email", 409, "Email already in use.");
+    /// <summary>
+    /// Der Fachlehrer trägt diesen Namen schon (409). Der Name ist je Creator eindeutig
+    /// (<c>CreatorProfile(OwnerAdultId, Name)</c>) – er ist der Anzeigename in der Profil-Auswahl.
+    /// </summary>
+    public static readonly ApiError DuplicateProfileName = new("duplicate_profile_name", 409, "A profile with this name already exists.");
     /// <summary>Übung wird in Lehrplan/Klassenarbeit verwendet und kann nicht gelöscht werden (409).</summary>
     public static readonly ApiError ExerciseInUse = new("exercise_in_use", 409, "Exercise is in use.");
     /// <summary>Übung ist nicht öffentlich ausführbar und darf ohne Execute-/Write-/Owner-Recht nicht zugewiesen werden (403).</summary>

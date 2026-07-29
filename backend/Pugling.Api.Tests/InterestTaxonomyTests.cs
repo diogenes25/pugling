@@ -228,6 +228,50 @@ public class InterestTaxonomyTests(PuglingWebAppFactory factory) : IClassFixture
         Assert.Equal(1, tags.GetArrayLength());
     }
 
+    // ─────────────────────────────── Einzelnes Gewicht setzen, Interesse und Tag löschen (C3-Lücke)
+
+    [Fact]
+    public async Task Gewicht_Einzeln_Setzen_Und_Interesse_Wieder_Entfernen()
+    {
+        var father = await TestApi.FatherAsync(factory);
+        var childId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/supervisor/children",
+            new { name = "Interessen-Kind", pin = "6401" }));
+        var tagId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/interest-tags",
+            new { label = $"Skaten-{Guid.NewGuid():N}"[..14] }));
+        var url = $"/api/v1/supervisor/children/{childId}/interests";
+
+        // Ein Gewicht außerhalb -3…3 ist der Fehlerfall der Route.
+        Assert.Equal(HttpStatusCode.BadRequest,
+            (await father.PutAsJsonAsync($"{url}/{tagId}", new { weight = 4 })).StatusCode);
+
+        // Upsert: das einzelne Gewicht legt die Zuordnung an, wenn es sie noch nicht gibt.
+        var gesetzt = await father.PutAsJsonAsync($"{url}/{tagId}", new { weight = 3 });
+        gesetzt.EnsureSuccessStatusCode();
+        Assert.Equal(3, (await gesetzt.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("weight").GetInt32());
+
+        // Und derselbe Aufruf ändert es, statt eine zweite Zeile anzulegen.
+        (await father.PutAsJsonAsync($"{url}/{tagId}", new { weight = 2 })).EnsureSuccessStatusCode();
+        var liste = await GetAsync(father, url);
+        Assert.Equal(1, liste.GetArrayLength());
+        Assert.Equal(2, liste[0].GetProperty("weight").GetInt32());
+
+        Assert.Equal(HttpStatusCode.NoContent, (await father.DeleteAsync($"{url}/{tagId}")).StatusCode);
+        Assert.Empty((await GetAsync(father, url)).EnumerateArray());
+        Assert.Equal(HttpStatusCode.NotFound, (await father.DeleteAsync($"{url}/{tagId}")).StatusCode);
+    }
+
+    [Fact]
+    public async Task Interessen_Tag_Laesst_Sich_Aus_Dem_Katalog_Loeschen()
+    {
+        var father = await TestApi.FatherAsync(factory);
+        var tagId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/interest-tags",
+            new { label = $"Einhorn-{Guid.NewGuid():N}"[..16] }));
+
+        Assert.Equal(HttpStatusCode.NoContent, (await father.DeleteAsync($"/api/v1/creator/interest-tags/{tagId}")).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await father.GetAsync($"/api/v1/creator/interest-tags/{tagId}")).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await father.DeleteAsync($"/api/v1/creator/interest-tags/{tagId}")).StatusCode);
+    }
+
     private static async Task SetInterestsAsync(HttpClient father, object[] interests, int childId = 1)
     {
         var res = await father.PutAsJsonAsync($"/api/v1/supervisor/children/{childId}/interests", new { interests });

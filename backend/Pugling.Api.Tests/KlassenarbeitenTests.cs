@@ -87,4 +87,87 @@ public class KlassenarbeitenTests(PuglingWebAppFactory factory) : IClassFixture<
 
         Assert.Equal(HttpStatusCode.Forbidden, res.StatusCode);
     }
+
+    // ─────────────────────────────────────────── Zuordnungen lösen und löschen (C3-Abdeckungslücke)
+
+    /// <summary>Legt eine Klassenarbeit für Kind 1 an und liefert ihre Id.</summary>
+    private static async Task<int> AnlegenAsync(HttpClient father, string title)
+    {
+        var res = await father.PostAsJsonAsync("/api/v1/supervisor/class-tests",
+            new { childId = 1, title, scheduledDate = "2099-03-01" });
+        res.EnsureSuccessStatusCode();
+        return (await res.Content.ReadFromJsonAsync<JsonElement>())
+            .GetProperty("klassenarbeit").GetProperty("id").GetInt32();
+    }
+
+    [Fact]
+    public async Task Uebungs_Zuordnung_Laesst_Sich_Wieder_Loesen()
+    {
+        var father = await TestApi.FatherAsync(factory);
+        var id = await AnlegenAsync(father, "Zuordnung lösen");
+        var exerciseId = await TestApi.CreateVocabExerciseAsync(father);
+        (await father.PostAsJsonAsync($"/api/v1/supervisor/class-tests/{id}/exercises",
+            new { exerciseIds = new[] { exerciseId } })).EnsureSuccessStatusCode();
+
+        Assert.Equal(HttpStatusCode.NoContent,
+            (await father.DeleteAsync($"/api/v1/supervisor/class-tests/{id}/exercises/{exerciseId}")).StatusCode);
+
+        // Nach dem Lösen ist die Übung nicht mehr relevant – sonst übte das Kind weiter für nichts.
+        var practice = await (await father.GetAsync($"/api/v1/supervisor/class-tests/{id}/practice"))
+            .Content.ReadFromJsonAsync<JsonElement>();
+        Assert.DoesNotContain(exerciseId, practice.GetProperty("exercises").EnumerateArray().Select(e => e.GetProperty("id").GetInt32()));
+
+        // Ein zweites Lösen findet nichts mehr – das ist der Fehlerfall dieser Route.
+        Assert.Equal(HttpStatusCode.NotFound,
+            (await father.DeleteAsync($"/api/v1/supervisor/class-tests/{id}/exercises/{exerciseId}")).StatusCode);
+    }
+
+    [Fact]
+    public async Task Tag_Verknuepfen_Und_Wieder_Loesen()
+    {
+        var father = await TestApi.FatherAsync(factory);
+        var id = await AnlegenAsync(father, "Tag verknüpfen");
+        var tagId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/tags",
+            new { childId = 1, name = $"Unit-{Guid.NewGuid():N}"[..12] }));
+
+        var verknuepft = await father.PostAsJsonAsync($"/api/v1/supervisor/class-tests/{id}/tags/{tagId}", new { });
+        verknuepft.EnsureSuccessStatusCode();
+        Assert.Contains(tagId, (await verknuepft.Content.ReadFromJsonAsync<JsonElement>())
+            .GetProperty("tags").EnumerateArray().Select(t => t.GetProperty("id").GetInt32()));
+
+        Assert.Equal(HttpStatusCode.NoContent,
+            (await father.DeleteAsync($"/api/v1/supervisor/class-tests/{id}/tags/{tagId}")).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound,
+            (await father.DeleteAsync($"/api/v1/supervisor/class-tests/{id}/tags/{tagId}")).StatusCode);
+    }
+
+    [Fact]
+    public async Task Tag_Eines_Fremden_Kindes_Laesst_Sich_Nicht_Verknuepfen()
+    {
+        // Der fachlich interessante Fehlerfall: ein Tag gehört immer *einem* Kind. Ließe er sich an die Arbeit
+        // eines anderen hängen, zöge „relevante Übungen" fremden Stoff herein.
+        var father = await TestApi.FatherAsync(factory);
+        var id = await AnlegenAsync(father, "Fremder Tag");
+        var anderesKind = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/supervisor/children",
+            new { name = "Geschwister", pin = "6101" }));
+        var fremderTag = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/tags",
+            new { childId = anderesKind, name = $"Fremd-{Guid.NewGuid():N}"[..12] }));
+
+        var res = await father.PostAsJsonAsync($"/api/v1/supervisor/class-tests/{id}/tags/{fremderTag}", new { });
+
+        Assert.Equal(HttpStatusCode.BadRequest, res.StatusCode);
+        Assert.Equal("invalid_reference",
+            (await res.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("code").GetString());
+    }
+
+    [Fact]
+    public async Task Loeschen_Entfernt_Die_Klassenarbeit()
+    {
+        var father = await TestApi.FatherAsync(factory);
+        var id = await AnlegenAsync(father, "Zum Löschen");
+
+        Assert.Equal(HttpStatusCode.NoContent, (await father.DeleteAsync($"/api/v1/supervisor/class-tests/{id}")).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await father.GetAsync($"/api/v1/supervisor/class-tests/{id}")).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await father.DeleteAsync($"/api/v1/supervisor/class-tests/{id}")).StatusCode);
+    }
 }

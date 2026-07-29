@@ -128,8 +128,17 @@ public class ExerciseItemsAndProgressTests(PuglingWebAppFactory factory) : IClas
         Assert.Contains(weak!, p => p.GetProperty("front").GetString() == "banana");
         Assert.All(weak!, p => Assert.True(p.GetProperty("masteryPercent").GetInt32() < 50));
 
-        // Historie je Item (ItemId global eindeutig → nur diese Übung schrieb dorthin).
+        // Einzelsicht je Item – dieselben Zahlen wie in der Liste, nur ohne Filter drumherum.
         var itemId = apple.GetProperty("itemId").GetInt32();
+        var einzeln = await father.GetFromJsonAsync<JsonElement>($"/api/v1/student/children/1/vocabulary-progress/{itemId}");
+        Assert.Equal(itemId, einzeln.GetProperty("itemId").GetInt32());
+        Assert.Equal("apple", einzeln.GetProperty("front").GetString());
+        Assert.Equal(apple.GetProperty("box").GetInt32(), einzeln.GetProperty("box").GetInt32());
+        // Ein Item ohne Lernstand für dieses Kind gibt es nicht – nicht etwa Nullwerte.
+        Assert.Equal(HttpStatusCode.NotFound,
+            (await father.GetAsync("/api/v1/student/children/1/vocabulary-progress/999999")).StatusCode);
+
+        // Historie je Item (ItemId global eindeutig → nur diese Übung schrieb dorthin).
         var history = await father.GetFromJsonAsync<List<JsonElement>>($"/api/v1/student/children/1/vocabulary-progress/{itemId}/history");
         Assert.Single(history!);
         JsonAssert.True(history![0], "wasCorrect");

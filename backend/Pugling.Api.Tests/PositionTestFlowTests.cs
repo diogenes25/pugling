@@ -1,3 +1,4 @@
+using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using Pugling.Api.Models;
@@ -116,5 +117,34 @@ public class PositionTestFlowTests(PuglingWebAppFactory factory) : IClassFixture
         Assert.Equal(50, res.GetProperty("scorePercent").GetInt32());
         Assert.Equal(goalThreshold, res.GetProperty("passPercent").GetInt32());
         Assert.Equal(expectPassed, res.GetProperty("passed").GetBoolean());
+    }
+
+    [Fact]
+    public async Task Versuch_Wird_Einzeln_Mit_Ergebnissen_Gelesen()
+    {
+        // Die Einzelansicht des Versuchs (C3-Abdeckungslücke): sie ist die Auswertung, die der Sohn nach dem
+        // Abgeben sieht – und die einzige Stelle, an der die Ergebnisse je Item nachlesbar sind.
+        var father = await TestApi.FatherAsync(_factory);
+        var exerciseId = await TestApi.CreateVocabExerciseAsync(father);
+        var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.FreeText);
+        var child = await TestApi.ChildAsync(_factory);
+        var baseUrl = $"/api/v1/student/study-plans/{planId}/positions/{positionId}/tests";
+        var attemptId = await TestApi.IdWithKeyAsync(await child.PostAsJsonAsync(baseUrl, new { }), "attemptId");
+
+        // Vor dem Abgeben ist der Versuch schon lesbar – nur ohne Abschluss.
+        var offen = await (await child.GetAsync($"{baseUrl}/{attemptId}")).Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal(attemptId, offen.GetProperty("id").GetInt32());
+        Assert.Equal(JsonValueKind.Null, offen.GetProperty("completedAt").ValueKind);
+
+        (await child.PostAsJsonAsync($"{baseUrl}/{attemptId}/submit", new
+        {
+            answers = new[] { new { itemIndex = 0, givenAnswer = "hallo" }, new { itemIndex = 1, givenAnswer = "falsch" } },
+        })).EnsureSuccessStatusCode();
+
+        var fertig = await (await child.GetAsync($"{baseUrl}/{attemptId}")).Content.ReadFromJsonAsync<JsonElement>();
+        Assert.NotEqual(JsonValueKind.Null, fertig.GetProperty("completedAt").ValueKind);
+        Assert.Equal(1, fertig.GetProperty("correctItems").GetInt32());
+        Assert.Equal(2, fertig.GetProperty("results").GetArrayLength());
+        Assert.Equal(HttpStatusCode.NotFound, (await child.GetAsync($"{baseUrl}/{attemptId + 999}")).StatusCode);
     }
 }

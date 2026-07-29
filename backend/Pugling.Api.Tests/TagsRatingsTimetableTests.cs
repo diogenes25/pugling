@@ -88,4 +88,50 @@ public class TagsRatingsTimetableTests(PuglingWebAppFactory factory) : IClassFix
         var list = await (await father.GetAsync("/api/v1/supervisor/children/1/timetable")).Content.ReadFromJsonAsync<JsonElement>();
         Assert.True(list.GetArrayLength() >= 1);
     }
+
+    // ─────────────────────────────────── Löschpfade von Tag und Stundenplan (C3-Abdeckungslücke)
+
+    [Fact]
+    public async Task Tag_Uebungen_Lesen_Zuordnung_Loesen_Und_Tag_Loeschen()
+    {
+        var father = await TestApi.FatherAsync(factory);
+        var exerciseId = await TestApi.CreateVocabExerciseAsync(father);
+        var tagId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/tags",
+            new { childId = 1, name = $"Löschtag-{Guid.NewGuid():N}"[..14] }));
+        (await father.PostAsJsonAsync($"/api/v1/creator/tags/{tagId}/exercises",
+            new { exerciseIds = new[] { exerciseId } })).EnsureSuccessStatusCode();
+
+        // Die Übungen hinter dem Tag – die Sicht, aus der die Klassenarbeit ihren „relevanten Stoff" zieht.
+        var gelesen = await father.GetAsync($"/api/v1/creator/tags/{tagId}/exercises");
+        Assert.True(gelesen.IsSuccessStatusCode,
+            $"GET tags/{tagId}/exercises → {(int)gelesen.StatusCode}: {await gelesen.Content.ReadAsStringAsync()}");
+        var uebungen = await gelesen.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Contains(exerciseId, uebungen.EnumerateArray().Select(e => e.GetProperty("id").GetInt32()));
+
+        Assert.Equal(HttpStatusCode.NoContent,
+            (await father.DeleteAsync($"/api/v1/creator/tags/{tagId}/exercises/{exerciseId}")).StatusCode);
+        Assert.Empty((await (await father.GetAsync($"/api/v1/creator/tags/{tagId}/exercises"))
+            .Content.ReadFromJsonAsync<JsonElement>()).EnumerateArray());
+        // Eine schon gelöste Zuordnung noch einmal lösen ist der Fehlerfall – nicht still erfolgreich.
+        Assert.Equal(HttpStatusCode.NotFound,
+            (await father.DeleteAsync($"/api/v1/creator/tags/{tagId}/exercises/{exerciseId}")).StatusCode);
+
+        Assert.Equal(HttpStatusCode.NoContent, (await father.DeleteAsync($"/api/v1/creator/tags/{tagId}")).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await father.DeleteAsync($"/api/v1/creator/tags/{tagId}")).StatusCode);
+    }
+
+    [Fact]
+    public async Task Stundenplan_Eintrag_Laesst_Sich_Loeschen()
+    {
+        var father = await TestApi.FatherAsync(factory);
+        var subjectId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/subjects",
+            new { name = $"Stundenplan-{Guid.NewGuid():N}"[..18] }));
+        var entryId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/supervisor/children/1/timetable",
+            new { subjectId, dayOfWeek = "Thursday" }));
+
+        Assert.Equal(HttpStatusCode.NoContent,
+            (await father.DeleteAsync($"/api/v1/supervisor/children/1/timetable/{entryId}")).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound,
+            (await father.DeleteAsync($"/api/v1/supervisor/children/1/timetable/{entryId}")).StatusCode);
+    }
 }
