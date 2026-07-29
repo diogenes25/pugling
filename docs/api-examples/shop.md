@@ -396,7 +396,9 @@ Response — `HTTP 200`:
       "title": "50 g Naschpaket",
       "description": "",
       "coinPrice": 300,
-      "gemPrice"
+      "gemPrice": 10,
+      "unitsPerPurchase": 50,
+      "currentStock": 4
 … (gekürzt)
 ```
 
@@ -474,7 +476,9 @@ Response — `HTTP 200`:
       "title": "50 g Naschpaket",
       "description": "",
       "coinPrice": 300,
-      "gemPrice
+      "gemPrice": 10,
+      "unitsPerPurchase": 50,
+      "currentStock": 
 … (gekürzt)
 ```
 

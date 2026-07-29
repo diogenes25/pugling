@@ -589,7 +589,7 @@ Response — `HTTP 200`:
       "studyPlanId": null,
       "planPositionId": null,
       "contextJson": "{\u0022tab\u0022:\u0022stammdaten\u0022}",
-      "recentErrorsJson": "[{\u0022method\u0022:\u0022GET\u0022,\u0022path\u0022:\u0022/api/v1/supervisor/adults/1\u00
+      "recentErrorsJson": "[{\u0022method\u0022:\u0022GET\u0022,\u0022path\u0022:\u0022/api/v1/supervisor/adults/1\u0022,\u0022status\u0022:404,\u0022code\u0022:\u00
 … (gekürzt)
 ```
 

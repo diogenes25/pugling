@@ -21,7 +21,11 @@ namespace Pugling.Api.Tests;
 /// </summary>
 public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWebAppFactory>
 {
-    private static readonly JsonSerializerOptions Indented = new(JsonSerializerDefaults.Web) { WriteIndented = true };
+    // `NewLine = "\n"`: ohne diese Angabe hängt der Zeilenumbruch der Einrückung an `Environment.NewLine`
+    // (CRLF unter Windows, LF unter Linux) – bei gleichem Inhalt zählt Windows dann mehr Bytes, und die
+    // feste 1500-Zeichen-Kürzung in `Truncate` schneidet auf beiden Plattformen an unterschiedlicher
+    // Stelle mitten im JSON ab (gemessen: D4-CI-Gate fand genau das als ersten echten Diff).
+    private static readonly JsonSerializerOptions Indented = new(JsonSerializerDefaults.Web) { WriteIndented = true, NewLine = "\n" };
 
     /// <summary>
     /// Ein aufgezeichnetes Request/Response-Paar (kein echtes Token – Bearer wird maskiert).
