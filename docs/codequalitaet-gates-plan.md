@@ -5,7 +5,7 @@ aliases: [Codequalität-Gates, Test-Gate, CI-Plan, Integrationstests bewerten]
 
 # Codequalität: von Disziplin zu mechanischen Toren
 
-Status: **Etappen A, B und C umgesetzt und committet, D1 dazu (2026-07-29); D2–D4 offen.** Alle Zahlen im Abschnitt „Ist-Zustand" sind
+Status: **Etappen A, B und C umgesetzt und committet, D1 und D2 dazu (2026-07-29); D3 und D4 offen.** Alle Zahlen im Abschnitt „Ist-Zustand" sind
 am 2026-07-29 am damaligen Arbeitsstand gemessen (Etappe 2 der `Father`→`Adult`-Umbenennung im Baum, noch
 nicht committet – sie ist seither als `1ee1538` committet); der Stand **nach C** steht unter „Was Etappe C
 gebracht hat". Was A gebracht hat, steht unter „Etappe A"; der **erste Fund des neuen Tors** unter „Was das
@@ -45,8 +45,14 @@ der Empfehlung, die hier vorher stand; beide waren erzwungen, nicht Geschmack:
   C3 war der Tore-Commit rot – gemessen, nicht vermutet.
 
 **D1 ist erledigt** (Frontend-Job in `ci.yml`) und hat beim Messen gefunden, dass das Azure-Deploy seit
-2026-07-05 am `npm ci` scheiterte – siehe „Was D1 sofort gefunden hat". **Der nächste Schritt ist D2**
-(Playwright als eigener Workflow). Parallel dazu offen: die **Nacharbeit aus B** (CS1591 in `Pugling.Api`,
+2026-07-05 am `npm ci` scheiterte – siehe „Was D1 sofort gefunden hat". **D2 ist erledigt**
+([e2e.yml](../.github/workflows/e2e.yml)), aber mit einer offenen Lücke: die Suite selbst wurde beim Bauen
+des Workflows **nicht** gelaufen, weil ein lokaler Lauf die Ports 5200/5173 braucht und dort ein
+Entwicklungs-Server saß (`reuseExistingServer: false` fürs Backend). Statisch geprüft ist alles
+(25 Tests in 10 Specs werden gesammelt, nur Chromium nötig, YAML gültig) – **der erste echte Beleg ist der
+erste PR- oder Nachtlauf.** Wer als Nächstes hier arbeitet: einmal `npm run test:e2e` bei freien Ports
+laufen lassen und das Ergebnis hier eintragen. **Der nächste geplante Schritt ist D3.**
+Parallel dazu offen: die **Nacharbeit aus B** (CS1591 in `Pugling.Api`,
 die 188 `CancellationToken`-Altlasten, das Frontend gegen `unknown_field`) und der **Peer-Konflikt**
 `vite-plugin-pwa` ↔ `vite@8`, den D1 nur benannt, nicht behoben hat; die Punkte sind voneinander unabhängig.
 
@@ -467,12 +473,12 @@ Schnitt käme „berührt" über „Soll" hinaus.
 Gegenprobe: einen Test auf `[Fact(Skip = …)]` gesetzt → Exit 1, und der Bericht nennt genau
 `MediaVariantsController.Delete`.
 
-### Etappe D · Frontend und Rand (1–2 Tage) – **D1 umgesetzt, D2–D4 offen**
+### Etappe D · Frontend und Rand (1–2 Tage) – **D1 und D2 umgesetzt, D3/D4 offen**
 
 | # | Aufgabe | Worauf zu achten ist |
 |---|---|---|
 | D1 | **umgesetzt** – Job `frontend` in `ci.yml`: `npm ci --legacy-peer-deps` → `npm run build` (`tsc -b && vite build`) → `npm test` (Vitest) | Eigener Job mit `actions/setup-node` + `cache: npm` (`cache-dependency-path: frontend/package-lock.json`, das Lockfile liegt nicht im Root), **parallel** zum .NET-Job, kein `needs:`. `NODE_VERSION` deckt sich mit `deploy-azure.yml` – ein Tor, das eine andere Umgebung prüft als die, in der deployt wird, bewacht nichts. Gemessen aus frischem Checkout: Install, Build und 21 Vitest-Tests grün. |
-| D2 | Playwright als **eigener** Workflow (`e2e.yml`) auf `pull_request` + nightly, nicht im Haupt-Tor: Backend hochfahren, `npx playwright install --with-deps`, die 10 Specs | Bewusst nicht im Haupt-Tor (Browser-Runner + Startzeit). Die E2E teilen sich laut [frontend/CLAUDE.md](../frontend/CLAUDE.md) eine DB – Auswahl **nie** per Index, siehe den Fallstrick in `sohntest-doppelter-versuch`. |
+| D2 | **umgesetzt** – [.github/workflows/e2e.yml](../.github/workflows/e2e.yml) auf `pull_request` + nightly (03:00 UTC) + Handbetrieb: nur Chromium (`install --with-deps chromium`), Backend **vorgebaut**, die 25 Tests in 10 Specs, Trace/Screenshot als Artefakt bei Rot | Server startet Playwright selbst (`webServer` in `playwright.config.ts`, Wegwerf-DB + Vite). Zwei Dinge sind Entscheidung, nicht Zufall: **kein `push: main`** (das Deploy hängt an `CI`, nicht hier – rote E2E sind Diagnose, kein Freigabe-Tor) und **kein Retry** (die Specs teilen eine DB je Lauf; ein Retry liefe auf der beschriebenen DB und könnte grün werden, ohne dass der Fehler weg ist). Das Vorbauen ist nötig, weil `dotnet run` sonst Restore+Build in das 120-s-Fenster des `webServer` legen müsste. |
 | D3 | `markdownlint-cli2` (Konfiguration liegt bereits im Root) in `ci.yml` – die Doku ist in diesem Projekt Produkt, nicht Beiwerk | Erst messen: `npx markdownlint-cli2` läuft heute **nicht** sauber. In `CLAUDE.md` stehen zwei MD004-Treffer (Zeilen 118/124), die keine Listen sind, sondern Zeilenfortsetzungen mit `+`. Also entweder umformulieren oder MD004 abschalten – **nicht** den Umbruch „reparieren". |
 | D4 | Prüfen, ob `/smoke-test` und `DocsCaptureTests` in CI reproduzierbar byte-stabil laufen (die Wanduhr-Neutralisierung ist dafür gebaut; auf einem UTC-Runner erst zu verifizieren) | `ci.yml` setzt schon `TZ: UTC`. `DocsCaptureTests` **überschreibt** `docs/api-examples/` bei jedem Lauf – ein Diff dort nach einem CI-Lauf ist der Befund, kein Versehen. |
 

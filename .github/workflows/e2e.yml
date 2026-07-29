@@ -1,0 +1,107 @@
+name: E2E
+
+# Playwright bewusst **nicht** im Haupttor (ci.yml): ein Browser-Runner plus zwei hochzufahrende Server
+# kostet Minuten, und das Haupttor soll billig bleiben, damit es niemand umgeht.
+# Siehe docs/codequalitaet-gates-plan.md (Etappe D2).
+#
+# **Kein `push: main`-Trigger, und das ist eine Entscheidung, kein Vergessen.** Das Deploy hängt per
+# `workflow_run` am Workflow `CI`, nicht an diesem hier. Die E2E fahren einen echten Browser gegen zwei
+# Server – flankierende Diagnose, nicht das Freigabe-Tor für einen Release. Wer sie zum Tor machen will,
+# muss deploy-azure.yml zusätzlich auf diesen Workflow warten lassen; bis dahin gilt: rote E2E blocken
+# kein Deploy, sie melden sich am PR und nachts.
+#
+# Die Specs teilen sich laut frontend/CLAUDE.md **eine** Wegwerf-DB je Lauf (playwright.config.ts legt sie
+# in den Temp-Ordner). Darum `workers: 1` und `retries: 0` dort – und darum wird hier **nichts**
+# nachgeholt: ein Retry liefe auf der bereits beschriebenen DB und könnte grün werden, ohne dass der
+# Fehler weg ist. Ein Rot soll hier ein Rot bleiben.
+
+on:
+  pull_request:
+  schedule:
+    # 03:00 UTC. Geplante Läufe gibt es nur auf dem Default-Branch – der nächtliche Lauf prüft also `main`.
+    - cron: "0 3 * * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: e2e-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  DOTNET_VERSION: "10.0.x"
+  # Dieselbe Node-Version wie in ci.yml und deploy-azure.yml.
+  NODE_VERSION: "20"
+  DOTNET_NOLOGO: "true"
+  DOTNET_CLI_TELEMETRY_OPTOUT: "true"
+  TZ: UTC
+
+jobs:
+  e2e:
+    name: Playwright (Vater→Sohn-Durchstich)
+    runs-on: ubuntu-latest
+    # Reißleine gegen einen hängenden Server: ohne sie wartet ein blockierter `webServer`-Start bis zum
+    # Runner-Limit. Die Suite braucht 25 Tests bei `workers: 1`; 30 Minuten sind reichlich, aber endlich.
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: NuGet-Cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', 'Directory.*.props', '.config/dotnet-tools.json') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
+      # `--legacy-peer-deps`: vite-plugin-pwa@0.21 deklariert Peer `vite ^3…^6`, installiert ist `vite@8`.
+      # Ohne das Flag bricht `npm ci` mit ERESOLVE ab (siehe frontend/CLAUDE.md und Etappe D1).
+      - name: Abhängigkeiten installieren
+        working-directory: frontend
+        run: npm ci --legacy-peer-deps
+
+      # Nur Chromium: playwright.config.ts fährt genau ein Projekt (`devices["Desktop Chrome"]`, ohne
+      # `channel`, also das gebündelte Chromium). Firefox und WebKit mitzuladen kostete Minuten für
+      # Browser, die kein Test anfasst. `--with-deps` zieht die Systembibliotheken nach, die dem
+      # ubuntu-Runner fehlen.
+      - name: Playwright-Browser installieren
+        working-directory: frontend
+        run: npx playwright install --with-deps chromium
+
+      # **Das Backend wird vorgebaut, nicht nur gestartet.** playwright.config.ts startet es per
+      # `dotnet run` und gibt dem Port 120 s. Kalt müsste `dotnet run` in diesem Fenster erst
+      # restaurieren und bauen – auf einem frischen Runner reicht das nicht zuverlässig, und der Lauf
+      # scheiterte dann am Timeout statt an einem Testfehler. Vorgebaut startet der Server in Sekunden.
+      # Debug ist Absicht: `dotnet run` ohne `-c` nimmt Debug, also genau diese Artefakte.
+      - name: Backend vorbauen
+        run: dotnet build backend/Pugling.Api
+
+      # Die Server (API mit Wegwerf-DB + Vite) startet Playwright selbst – `webServer` in
+      # playwright.config.ts. `CI` ist auf dem Runner gesetzt, damit greift dort
+      # `reuseExistingServer: false` auch für Vite: kein stehengelassener Server verfälscht den Lauf.
+      - name: E2E
+        working-directory: frontend
+        run: npx playwright test
+
+      # Bei Rot sind Trace und Screenshot der ganze Wert des Laufs: `trace: "retain-on-failure"` und
+      # `screenshot: "only-on-failure"` legen sie unter frontend/test-results ab. Ohne diesen Schritt
+      # wäre ein roter nächtlicher Lauf eine Meldung ohne Befund.
+      - name: Trace und Screenshots hochladen
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-artefakte
+          path: frontend/test-results/**
+          if-no-files-found: warn
+          retention-days: 14
