@@ -5,7 +5,7 @@ aliases: [Codequalität-Gates, Test-Gate, CI-Plan, Integrationstests bewerten]
 
 # Codequalität: von Disziplin zu mechanischen Toren
 
-Status: **Etappen A–D3 umgesetzt und committet (2026-07-29); D4 lokal geprüft, als CI-Tor weiter offen.** Alle Zahlen im Abschnitt „Ist-Zustand" sind
+Status: **Etappen A–D4 umgesetzt und committet (2026-07-29).** Alle Zahlen im Abschnitt „Ist-Zustand" sind
 am 2026-07-29 am damaligen Arbeitsstand gemessen (Etappe 2 der `Father`→`Adult`-Umbenennung im Baum, noch
 nicht committet – sie ist seither als `1ee1538` committet); der Stand **nach C** steht unter „Was Etappe C
 gebracht hat". Was A gebracht hat, steht unter „Etappe A"; der **erste Fund des neuen Tors** unter „Was das
@@ -34,11 +34,16 @@ Arbeit unter „Der Plan".
 > direktem Push auf `main`. Die „25/25 grün"-Aussage aus der vorherigen Übergabe ist ein **lokaler** Beleg
 > (`CI=1 npx playwright test`), kein CI-Beleg – der fehlt weiterhin, bis ein PR oder die erste Nightly läuft.
 >
-> **D4 lässt sich aus den CI-Logs nicht beantworten** – `ci.yml` hat keinen Schritt, der `docs/api-examples/`
-> nach dem Testlauf gegen den committeten Stand diffed; die Annahme „ein Diff dort ist der Befund" hat nichts,
-> das den Diff einfängt. Lokal mit `TZ=UTC` nur `DocsCaptureTests` laufen lassen: `git diff --stat
-> docs/api-examples` danach leer, kein Bytefehler gefunden – aber auf Windows, nicht dem Ubuntu-Runner. Für
-> einen echten CI-Beleg fehlt weiterhin ein `git diff --exit-code -- docs/api-examples`-Schritt.
+> **D4 ist jetzt ein echtes CI-Tor** (`git diff --exit-code -- docs/api-examples` direkt nach `Test` in
+> `ci.yml`) – und der erste echte Lauf schlug sofort an, **kein Umgebungsunterschied wie vermutet, sondern ein
+> echter Bug**: `Truncate()` (feste 1500-Zeichen-Grenze für lange Responses in der Doku) schneidet am rohen,
+> von `JsonSerializer(WriteIndented: true)` erzeugten String, und dessen Zeilenumbruch hing ohne explizite
+> Angabe an `Environment.NewLine` – `\r\n` unter Windows, `\n` unter Linux. Bei identischem Inhalt zählt
+> Windows also mehr Bytes pro Zeile, der Schnitt landet auf beiden Plattformen an unterschiedlicher Stelle
+> mitten im JSON (betraf nur `shop.md`/`remarks.md`, die einzigen zwei Antworten, die über die Grenze kommen –
+> git normalisiert Zeilenenden beim Commit ohnehin, sonst wäre der Effekt überall sichtbar gewesen). Gefixt:
+> `Indented`-Optionen bekommen `NewLine = "\n"` explizit; der neu erzeugte Diff war byteidentisch mit dem, den
+> CI gemeldet hatte. Zweiter CI-Lauf danach **komplett grün** (alle drei Jobs).
 >
 > **D3 ist umgesetzt** (siehe „Was D3 vorfindet" unten für die Vorher-Zahlen und die getroffenen
 > Entscheidungen) – `markdownlint-cli2` läuft jetzt als eigener Job in `ci.yml`, 0 Treffer.
@@ -504,14 +509,14 @@ Schnitt käme „berührt" über „Soll" hinaus.
 Gegenprobe: einen Test auf `[Fact(Skip = …)]` gesetzt → Exit 1, und der Bericht nennt genau
 `MediaVariantsController.Delete`.
 
-### Etappe D · Frontend und Rand (1–2 Tage) – **D1–D3 umgesetzt, D4 lokal geprüft, als CI-Tor offen**
+### Etappe D · Frontend und Rand (1–2 Tage) – **D1–D4 umgesetzt**
 
 | # | Aufgabe | Worauf zu achten ist |
 |---|---|---|
 | D1 | **umgesetzt** – Job `frontend` in `ci.yml`: `npm ci --legacy-peer-deps` → `npm run build` (`tsc -b && vite build`) → `npm test` (Vitest) | Eigener Job mit `actions/setup-node` + `cache: npm` (`cache-dependency-path: frontend/package-lock.json`, das Lockfile liegt nicht im Root), **parallel** zum .NET-Job, kein `needs:`. `NODE_VERSION` deckt sich mit `deploy-azure.yml` – ein Tor, das eine andere Umgebung prüft als die, in der deployt wird, bewacht nichts. Gemessen aus frischem Checkout: Install, Build und 21 Vitest-Tests grün. |
 | D2 | **umgesetzt** – [.github/workflows/e2e.yml](../.github/workflows/e2e.yml) auf `pull_request` + nightly (03:00 UTC) + Handbetrieb: nur Chromium (`install --with-deps chromium`), Backend **vorgebaut**, die 25 Tests in 10 Specs, Trace/Screenshot als Artefakt bei Rot | Lokal belegt mit `CI=1 npx playwright test`: **25/25 grün in 1,5 min**. **In echtem CI bisher null Läufe** (gemessen 2026-07-29 über `gh api .../workflows/e2e.yml/runs`) – der Workflow triggert nur auf `pull_request`/nightly/Handbetrieb, bisher ging alles per direktem Push auf `main`. Zwei Dinge sind Entscheidung, nicht Zufall: **kein `push: main`** (das Deploy hängt an `CI`, nicht hier – rote E2E sind Diagnose, kein Freigabe-Tor) und **kein Retry** (die Specs teilen eine DB je Lauf; ein Retry liefe auf der beschriebenen DB und könnte grün werden, ohne dass der Fehler weg ist). |
 | D3 | **umgesetzt** – `markdownlint-cli2` als eigener Job `markdownlint` in `ci.yml` | Ausgangsbefund 2026-07-29: 536 Treffer in 27 Dateien (Details unten unter „Was D3 vorfindet"). Alle drei Entscheidungen mit Empfehlung vorgelegt und vom Nutzer bestätigt: Glob fest in `.markdownlint-cli2.jsonc` (`globs: ["**/*.md"]`), Generator (`DocsCaptureTests.WriteMarkdown`/`RenderGroup`) lint-konform gemacht statt Ausnahme, MD033+MD004 projektweit abgeschaltet. Endstand: **0 Treffer**, `dotnet test Pugling.sln` weiterhin 587/587, `dotnet format --verify-no-changes` sauber. |
-| D4 | Prüfen, ob `/smoke-test` und `DocsCaptureTests` in CI reproduzierbar byte-stabil laufen (die Wanduhr-Neutralisierung ist dafür gebaut; auf einem UTC-Runner erst zu verifizieren) | `ci.yml` setzt schon `TZ: UTC`, hat aber **keinen Schritt, der den Diff tatsächlich prüft** (kein `git diff --exit-code -- docs/api-examples` nach dem Testlauf) – die Annahme „ein Diff ist der Befund" fängt sich selbst nichts. Lokal mit `TZ=UTC` nachgestellt (2026-07-29): `DocsCaptureTests` isoliert laufen lassen, `git diff --stat docs/api-examples` danach leer – kein Bytefehler, aber auf Windows statt dem Ubuntu-Runner gemessen. **Weiterhin offen**: der `git diff --exit-code`-Schritt in `ci.yml`, um D4 als echtes CI-Tor statt Prosa-Annahme zu schließen. |
+| D4 | **umgesetzt** – `git diff --exit-code -- docs/api-examples` direkt nach `Test` in `ci.yml` | War zuerst nur eine Annahme ohne CI-Beleg (`ci.yml` diffte nie tatsächlich). Als echtes Tor eingezogen, **erster Lauf sofort rot** – kein Umgebungsunterschied, sondern ein echter Bug: `Truncate()` (1500-Zeichen-Grenze) schneidet am rohen `JsonSerializer(WriteIndented: true)`-String, dessen Zeilenumbruch ohne explizite Angabe an `Environment.NewLine` hing (`\r\n` Windows, `\n` Linux) – der Schnitt landete je Plattform an unterschiedlicher Stelle mitten im JSON (nur `shop.md`/`remarks.md` betroffen, die einzigen Antworten über der Grenze). Gefixt: `NewLine = "\n"` explizit in den `Indented`-Optionen (`DocsCaptureTests.cs`). Zweiter Lauf **komplett grün**, alle drei Jobs. |
 
 **D0 (erledigt): die drei Etappen sind committet.** Der Schnitt und die je Commit gemessenen Zahlen stehen
 unter „Einstieg für eine frische Sitzung". D beginnt damit auf einem Stand, auf dem ein roter CI-Lauf
