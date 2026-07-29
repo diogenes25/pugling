@@ -17,6 +17,15 @@ Diese Seite ist die vollständige Übergabe – **nicht neu messen, nicht neu er
 unter „Ist-Zustand" (Momentaufnahme 2026-07-29), der erreichte Stand unter „Was Etappe C gebracht hat", die
 Arbeit unter „Der Plan".
 
+> **Erster Schritt jeder frischen Sitzung: nachsehen, was CI gesagt hat.** Alles unter A–D2 ist auf `main`
+> gepusht, aber **kein einziger CI-Lauf wurde bisher angesehen** – `gh` ist auf dem Entwicklungsrechner
+> nicht installiert, und der Browser stand nicht zur Verfügung. Die Läufe stehen unter
+> <https://github.com/diogenes25/pugling/actions>. Dort hängt auch die Antwort auf **D4**: ob
+> `DocsCaptureTests` auf einem UTC-Linux-Runner byte-stabil bleibt, zeigt sich als Diff in
+> `docs/api-examples/` bzw. als roter Test – nicht durch Nachdenken. Ein roter Lauf ist zu erwarten und wäre
+> kein Rückschritt, sondern der erste echte Befund des Tors. **Kein neues Tor einziehen, solange der Zustand
+> der bestehenden unbekannt ist.**
+
 **Arbeitsstand nach Etappe C (2026-07-29): A, B und C sind committet – D0 ist erledigt.**
 
 - `main` trägt drei Commits über `1ee1538` („Vertrag heißt `adult`"). Der Endstand ist **grün**: 587 Tests,
@@ -478,12 +487,35 @@ Gegenprobe: einen Test auf `[Fact(Skip = …)]` gesetzt → Exit 1, und der Beri
 |---|---|---|
 | D1 | **umgesetzt** – Job `frontend` in `ci.yml`: `npm ci --legacy-peer-deps` → `npm run build` (`tsc -b && vite build`) → `npm test` (Vitest) | Eigener Job mit `actions/setup-node` + `cache: npm` (`cache-dependency-path: frontend/package-lock.json`, das Lockfile liegt nicht im Root), **parallel** zum .NET-Job, kein `needs:`. `NODE_VERSION` deckt sich mit `deploy-azure.yml` – ein Tor, das eine andere Umgebung prüft als die, in der deployt wird, bewacht nichts. Gemessen aus frischem Checkout: Install, Build und 21 Vitest-Tests grün. |
 | D2 | **umgesetzt** – [.github/workflows/e2e.yml](../.github/workflows/e2e.yml) auf `pull_request` + nightly (03:00 UTC) + Handbetrieb: nur Chromium (`install --with-deps chromium`), Backend **vorgebaut**, die 25 Tests in 10 Specs, Trace/Screenshot als Artefakt bei Rot | Belegt mit `CI=1 npx playwright test`: **25/25 grün in 1,5 min**. Server startet Playwright selbst (`webServer` in `playwright.config.ts`, Wegwerf-DB + Vite). Zwei Dinge sind Entscheidung, nicht Zufall: **kein `push: main`** (das Deploy hängt an `CI`, nicht hier – rote E2E sind Diagnose, kein Freigabe-Tor) und **kein Retry** (die Specs teilen eine DB je Lauf; ein Retry liefe auf der beschriebenen DB und könnte grün werden, ohne dass der Fehler weg ist). Das Vorbauen ist nötig, weil `dotnet run` sonst Restore+Build in das 120-s-Fenster des `webServer` legen müsste. |
-| D3 | `markdownlint-cli2` (Konfiguration liegt bereits im Root) in `ci.yml` – die Doku ist in diesem Projekt Produkt, nicht Beiwerk | Erst messen: `npx markdownlint-cli2` läuft heute **nicht** sauber. In `CLAUDE.md` stehen zwei MD004-Treffer (Zeilen 118/124), die keine Listen sind, sondern Zeilenfortsetzungen mit `+`. Also entweder umformulieren oder MD004 abschalten – **nicht** den Umbruch „reparieren". |
+| D3 | `markdownlint-cli2` (Konfiguration liegt bereits im Root) in `ci.yml` – die Doku ist in diesem Projekt Produkt, nicht Beiwerk | **Gemessen 2026-07-29 (`npx markdownlint-cli2 "**/*.md"`): 536 Treffer in 27 Dateien.** Der Befund zerfällt in drei Teile, und nur einer ist Handarbeit – Details und Entscheidungen unten unter „Was D3 vorfindet". Vor dem Einziehen des Tors sind **drei Entscheidungen** zu treffen (Glob, generierte Dateien, MD033), keine davon ist Formatierarbeit. |
 | D4 | Prüfen, ob `/smoke-test` und `DocsCaptureTests` in CI reproduzierbar byte-stabil laufen (die Wanduhr-Neutralisierung ist dafür gebaut; auf einem UTC-Runner erst zu verifizieren) | `ci.yml` setzt schon `TZ: UTC`. `DocsCaptureTests` **überschreibt** `docs/api-examples/` bei jedem Lauf – ein Diff dort nach einem CI-Lauf ist der Befund, kein Versehen. |
 
 **D0 (erledigt): die drei Etappen sind committet.** Der Schnitt und die je Commit gemessenen Zahlen stehen
 unter „Einstieg für eine frische Sitzung". D beginnt damit auf einem Stand, auf dem ein roter CI-Lauf
 eindeutig dem neuen Tor zuzuordnen ist.
+
+#### Was D3 vorfindet (gemessen 2026-07-29, damit die nächste Sitzung nicht neu erhebt)
+
+`npx markdownlint-cli2 "**/*.md"` meldet **536 Treffer in 27 Dateien**. Die Zahl schreckt nur, solange man
+sie nicht aufteilt:
+
+| Anteil | Treffer | Was damit zu tun ist |
+|---|---|---|
+| `docs/api-examples/**` | **380** | **Nicht von Hand anfassen.** Diese Dateien schreibt `DocsCaptureTests` bei *jedem* Testlauf neu (siehe D4) – eine Handkorrektur ist beim nächsten `dotnet test` weg. Entweder in `ignores` aufnehmen oder den Generator lint-konform ausgeben lassen (fast alles ist MD031/MD022: fehlende Leerzeile um Codeblöcke und Überschriften – im Generator eine Kleinigkeit, danach dauerhaft sauber). |
+| Fremdes `node_modules` | **50** | `.opencode/node_modules/zod/README.md`. Die `ignores`-Liste hat `node_modules/**`, und das greift **nur im Root**. Fix ist eine Zeile: `**/node_modules/**`. Reine Lücke der Konfiguration, keine Doku-Frage. |
+| Handgeschriebene Doku | **106** | Die eigentliche Arbeit, verteilt auf 13 Dateien. Spitzenreiter: `docs/perf-explain-2026-07-12.md` (31), `docs/pm-sitzung-2026-07-04.md` (24), `docs/anmerkungen/aktuell.md` (20 – ebenfalls ein **Export**, gehört eher zu Zeile 1). Nach Regel: 40× MD032 (Leerzeile um Listen), 12× MD022, 11× MD009 (Leerzeichen am Zeilenende), 9× MD031, 7× MD029, 6× MD028, 5× MD040 (Codeblock ohne Sprache), 4× MD004. |
+
+Dazu **50× MD033/no-inline-html**, quer über die generierten Dateien: bewusstes HTML in der Doku. Das ist
+eine Regel-Entscheidung (abschalten oder pfadweise erlauben), keine Fundstelle zum Reparieren.
+
+Die zwei bekannten `CLAUDE.md`-Treffer stehen weiterhin auf **Zeile 118 und 124** (MD004/ul-style, `+` statt
+`-`): das sind **keine Listen**, sondern Zeilenfortsetzungen. Umformulieren oder MD004 abschalten –
+**nicht** den Umbruch „reparieren", der Satz wird dabei falsch.
+
+Drei Entscheidungen also, bevor eine einzige Leerzeile gesetzt wird: **(1)** welchen Glob ruft CI auf (ein
+bares `npx markdownlint-cli2` lintet **nichts**, die `.markdownlint-cli2.jsonc` nennt keine `globs`),
+**(2)** generierte Dateien ignorieren oder den Generator sauber ausgeben lassen, **(3)** MD033 und MD004.
+Erst danach ist der Rest mechanisch – und `--fix` erledigt MD009/MD012/MD031/MD022 größtenteils selbst.
 
 #### Was D1 sofort gefunden hat: das Deploy war 24 Tage kaputt
 
