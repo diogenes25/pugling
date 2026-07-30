@@ -4,7 +4,7 @@ using System.Text.Json;
 
 namespace Pugling.Api.Tests;
 
-/// <summary>Zweistufige Vokabel-Eingabe: „einfach" (ohne Key/Wortart) → Auto-Key + Default Other; später „komplex" per PATCH.</summary>
+/// <summary>Two-step vocabulary entry: "simple" (without key/part of speech) → auto key + default Other; later "complex" via PATCH.</summary>
 public class VocabTwoStepTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWebAppFactory>
 {
     private readonly PuglingWebAppFactory _factory = factory;

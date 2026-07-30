@@ -8,12 +8,12 @@ using Pugling.Api.Data;
 namespace Pugling.Api.Tests;
 
 /// <summary>
-/// Lebenszyklus eines Erwachsenen: Registrieren, doppelte Adresse abweisen, sich selbst löschen.
+/// Lifecycle of an adult: registering, rejecting a duplicate address, deleting oneself.
 /// <para>
-/// Angelegt beim Schließen der Abdeckungslücke (docs/codequalitaet-gates-plan.md, C3). <c>Delete</c> stand
-/// dort an erster Stelle, weil daran die <b>Kaskade</b> hängt: mit dem Erwachsenen fallen seine Kinder,
-/// Fächer und Kapitel. Ein Löschpfad, den kein Test aufruft, ist der teuerste blinde Fleck – er fällt erst
-/// auf, wenn Daten schon weg sind.
+/// Added while closing the coverage gap (docs/codequalitaet-gates-plan.md, C3). <c>Delete</c> was
+/// listed first there, because the <b>cascade</b> hangs off it: deleting the adult takes their children,
+/// subjects and chapters with it. A delete path that no test exercises is the most expensive blind spot - it
+/// only surfaces once the data is already gone.
 /// </para>
 /// </summary>
 public class AdultLifecycleTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWebAppFactory>
@@ -68,17 +68,17 @@ public class AdultLifecycleTests(PuglingWebAppFactory factory) : IClassFixture<P
     }
 
     /// <summary>
-    /// Der transitive Weg desselben Defekts – und der, der dem Umbau den Namen gab: Löschen eines
-    /// Supervisors nahm seine Shop-Artikel mit (Cascade, so gewollt), und die nahmen über eine zweite
-    /// Cascade das <b>bezahlte Inventar</b> aller betreuten Kinder mit. Zwei einzeln vernünftige
-    /// Kaskaden ergaben zusammen Geldvernichtung; die Kaufbelege blieben per <c>SetNull</c> stehen und
-    /// wiesen auf einen Bestand, den es nicht mehr gab.
+    /// The transitive path of the same defect - and the one that gave the rebuild its name: deleting a
+    /// supervisor took their shop articles with it (cascade, intended), and those took the <b>paid inventory</b>
+    /// of all supervised children with them through a second cascade. Two individually reasonable
+    /// cascades combined to destroy value; the purchase receipts remained via <c>SetNull</c> and
+    /// pointed at stock that no longer existed.
     /// <para>
-    /// Sichtbar ist der Restbestand danach für das <b>Kind</b>, nicht für die verbleibende Betreuerin: die
-    /// Ökonomie ist ausstellergebunden (<c>SupervisorId</c>-Momentaufnahme), der Shop der Mutter ist nicht
-    /// der des Vaters. Das ist die bestehende Regel, keine neue Lücke – einlösbar ist der Posten damit
-    /// aber nicht mehr (die Aktivierung adressiert einen lebenden Artikel), und der Ausgleich läuft über
-    /// das vorhandene Druckventil <c>POST children/{id}/points</c>.
+    /// The remaining stock afterwards is visible to the <b>child</b>, not to the remaining supervisor: the
+    /// economy is issuer-bound (<c>SupervisorId</c> snapshot), the mother's shop is not
+    /// the father's. That is the existing rule, not a new gap - however, the item can no longer be
+    /// redeemed (activation targets a live article), and the compensation runs through
+    /// the existing pressure valve <c>POST children/{id}/points</c>.
     /// </para>
     /// </summary>
     [Fact]

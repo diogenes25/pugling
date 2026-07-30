@@ -13,11 +13,11 @@ using Pugling.Api.OpenApi;
 namespace Pugling.Api.Tests;
 
 /// <summary>
-/// Integrationstest-gesteuerte „Capture-Harness": fährt die echte API mit geseedeten Zugangsdaten,
-/// prüft je Antwort HTTP-Status UND maschinenlesbaren Fehler-<c>code</c> und schreibt verifizierte
-/// Request/Response-Beispielpaare als Markdown unter <c>docs/api-examples/</c>. Ist zugleich CI-Gate
-/// (jede fehlgeschlagene Erwartung lässt den Test rot werden) und Doku-Generator: die Beispiele sind
-/// per Definition korrekt, weil sie erst nach bestandener Assertion aufgezeichnet werden.
+/// Integration-test-driven "capture harness": drives the real API with seeded credentials,
+/// checks HTTP status AND machine-readable error <c>code</c> for every response, and writes verified
+/// request/response example pairs as Markdown under <c>docs/api-examples/</c>. Is both a CI gate
+/// (any failed expectation turns the test red) and a doc generator: the examples are correct by
+/// construction, because they are only recorded after the assertion has passed.
 /// </summary>
 public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWebAppFactory>
 {
@@ -28,16 +28,16 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
     private static readonly JsonSerializerOptions Indented = new(JsonSerializerDefaults.Web) { WriteIndented = true, NewLine = "\n" };
 
     /// <summary>
-    /// Ein aufgezeichnetes Request/Response-Paar (kein echtes Token – Bearer wird maskiert).
-    /// <paramref name="ResponseMediaType"/> kommt aus dem Antwort-Header: Nicht jede Antwort ist JSON
-    /// (<c>remarks/export</c> liefert Markdown), und ein falsch etikettierter Code-Block wäre in der Doku
-    /// schlimmer als keiner.
+    /// A recorded request/response pair (no real token – bearer is redacted).
+    /// <paramref name="ResponseMediaType"/> comes from the response header: not every response is JSON
+    /// (<c>remarks/export</c> returns Markdown), and a mislabeled code block would be worse in the docs
+    /// than none at all.
     /// </summary>
     private sealed record Entry(string ResourceGroup, string Title, string Method, string Path, string Role,
         string? RequestBodyJson, int ExpectedStatus, int ActualStatus, string? ResponseBodyJson, bool IsError,
         string? ResponseMediaType)
     {
-        /// <summary>Ob der Antwort-Rumpf JSON ist – nur solche taugen als OpenAPI-Beispiel (dort wird geparst).</summary>
+        /// <summary>Whether the response body is JSON – only those qualify as an OpenAPI example (parsed there).</summary>
         public bool IsJsonResponse => ResponseMediaType is null
             || ResponseMediaType.Contains("json", StringComparison.OrdinalIgnoreCase);
     }
@@ -100,7 +100,7 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
         return bodyEl;
     }
 
-    /// <summary>Leitet die Rolle aus dem Bearer-Token ab (nur zur Doku – das Token selbst wird nie geschrieben).</summary>
+    /// <summary>Derives the role from the bearer token (for documentation only – the token itself is never written).</summary>
     private static string RoleOf(HttpClient client)
     {
         var auth = client.DefaultRequestHeaders.Authorization;
@@ -142,12 +142,12 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
             m => IsRunRelativeDate(m.Value.Trim('"')) ? "\"<date>\"" : m.Value);
     }
 
-    /// <summary>Datum in Reichweite des Testlaufs (±1 Jahr)? Nur solche Werte verschieben sich von Lauf zu Lauf.</summary>
+    /// <summary>Date within reach of the test run (±1 year)? Only such values shift from run to run.</summary>
     private static bool IsRunRelativeDate(string value) =>
         DateOnly.TryParseExact(value, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var date)
         && Math.Abs(date.DayNumber - DateOnly.FromDateTime(DateTime.UtcNow).DayNumber) <= 366;
 
-    /// <summary>Sprachkennung des Code-Blocks – ein als JSON etikettierter Markdown-Block wäre eine Falschaussage.</summary>
+    /// <summary>Language tag of the code block – a Markdown block labeled as JSON would be a false statement.</summary>
     private static string LanguageOf(Entry entry) => entry.ResponseMediaType switch
     {
         null => "json",
@@ -156,7 +156,7 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
         _ => "text",
     };
 
-    /// <summary>Längste zusammenhängende Backtick-Folge im Inhalt (bestimmt die nötige Zaunlänge).</summary>
+    /// <summary>Longest run of consecutive backticks in the content (determines the required fence length).</summary>
     private static int LongestBacktickRun(string content)
     {
         var longest = 0;
@@ -540,7 +540,7 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
 
     private sealed record ForeignExercise(int Id, int SubjectId, int ChapterId);
 
-    /// <summary>Sucht im Katalog eine Vokabel-Übung mit fremdem Autor (≠ Papa, ≠ System) für den not_author-Fall.</summary>
+    /// <summary>Searches the catalog for a vocabulary exercise with a foreign author (≠ father, ≠ system) for the not_author case.</summary>
     private static async Task<ForeignExercise?> FindForeignAuthoredExerciseAsync(HttpClient father)
     {
         var list = await father.GetFromJsonAsync<List<JsonElement>>("/api/v1/creator/exercises?type=Vocabulary&take=500");
@@ -1235,7 +1235,7 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
     // will außerdem genau einen abschließenden Zeilenumbruch (MD047), keinen zusätzlichen.
     private static string NormalizeTrailingNewline(string markdown) => markdown.TrimEnd() + "\n";
 
-    /// <summary>Findet die Repo-Wurzel: von <see cref="AppContext.BaseDirectory"/> aufwärts, bis <c>backend</c>+<c>docs</c> (oder <c>.git</c>) vorliegen.</summary>
+    /// <summary>Finds the repo root: upward from <see cref="AppContext.BaseDirectory"/> until <c>backend</c>+<c>docs</c> (or <c>.git</c>) are present.</summary>
     private static string RepoRoot()
     {
         var dir = new DirectoryInfo(AppContext.BaseDirectory);

@@ -5,7 +5,7 @@ using Pugling.Api.Models;
 
 namespace Pugling.Api.Tests;
 
-/// <summary>Happy-Path des Lern-Katalogs: Fach → Kapitel → Übung (CRUD + Auswertung).</summary>
+/// <summary>Happy path of the learning catalog: subject → chapter → exercise (CRUD + scoring).</summary>
 public class CatalogExerciseTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWebAppFactory>
 {
     [Fact]

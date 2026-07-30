@@ -5,9 +5,9 @@ using System.Text.Json;
 namespace Pugling.Api.Tests;
 
 /// <summary>
-/// Sichert den Vater-Lebenszyklus für Missionen ab, den die Belohnungs-Oberfläche nutzt
-/// (Liste → Anlegen → aktiv/inaktiv schalten → Löschen). Der Kauf-/Fortschritts-Teil ist in
-/// <c>GamificationTests</c> abgedeckt; hier geht es um die reinen Verwaltungs-Verben.
+/// Secures the father lifecycle for missions used by the reward UI (list → create → toggle
+/// active/inactive → delete). The purchase/progress part is covered in <c>GamificationTests</c>; here
+/// it's just the pure administrative verbs.
 /// </summary>
 public class MissionsAdminTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWebAppFactory>
 {

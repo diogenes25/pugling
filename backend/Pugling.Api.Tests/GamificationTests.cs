@@ -6,9 +6,9 @@ using Pugling.Api.Models;
 namespace Pugling.Api.Tests;
 
 /// <summary>
-/// Prüft Missionen (zeitgebundene Ziele) und Auszeichnungen (Badges): serverseitige Auswertung der
-/// Metriken aus dem Positions-Motor, idempotente Belohnung (je Zeitraum/Auszeichnung genau einmal)
-/// und die Sohn-Sicht unter <c>api/me/missions</c> bzw. <c>api/me/achievements</c>.
+/// Checks missions (time-bound goals) and awards (badges): server-side evaluation of the
+/// metrics from the position engine, idempotent reward (exactly once per period/award)
+/// and the child's view under <c>api/me/missions</c> resp. <c>api/me/achievements</c>.
 /// </summary>
 public class GamificationTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWebAppFactory>
 {

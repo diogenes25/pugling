@@ -5,9 +5,9 @@ using Pugling.Api.Models;
 namespace Pugling.Api.Tests;
 
 /// <summary>
-/// Prüft den serverseitig gezählten Combo-Bonus einer Lehrplan-Position und dass er über die
-/// Positions-Einstellungen (<c>ComboThreshold</c>/<c>ComboBonusPoints</c>) konfigurierbar bzw.
-/// abschaltbar ist. Stufe 2 = SelfAssess: ohne RequireTypedTest zählt das WasKnown-Flag voll.
+/// Checks the server-counted combo bonus of a study plan position and that it is configurable, or can be
+/// switched off, via the position settings (<c>ComboThreshold</c>/<c>ComboBonusPoints</c>).
+/// Stage 2 = SelfAssess: without RequireTypedTest, the WasKnown flag counts fully.
 /// </summary>
 public class ComboTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWebAppFactory>
 {

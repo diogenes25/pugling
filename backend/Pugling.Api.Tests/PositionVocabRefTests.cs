@@ -5,8 +5,8 @@ using Pugling.Api.Models;
 namespace Pugling.Api.Tests;
 
 /// <summary>
-/// Vokabel-Übung, die den Store per Key referenziert (Block 3): Inhalt/Karten kommen aus dem Komplextyp,
-/// und eine zentrale Store-Änderung wirkt in der Übung (Verknüpfung über Übungen hinweg).
+/// Vocabulary exercise that references the store via key (block 3): content/cards come from the complex
+/// type, and a central store change takes effect in the exercise (linking across exercises).
 /// </summary>
 public class PositionVocabRefTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWebAppFactory>
 {

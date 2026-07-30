@@ -8,19 +8,19 @@ using Pugling.Api.Data;
 namespace Pugling.Api.Tests;
 
 /// <summary>
-/// Nagelt fest, was der Seed nach außen zusagt: die <b>Ids und PINs der geseedeten Konten</b>.
+/// Pins down what the seed guarantees to the outside world: the <b>ids and PINs of the seeded accounts</b>.
 /// <para>
-/// Diese Ids sind Reihenfolge-Artefakte von <see cref="Seed"/> – und sie sind an mehreren Stellen
-/// <b>außerhalb des Repos-Testlaufs</b> hart verdrahtet, die niemand rot werden lässt:
+/// These ids are ordering artifacts of <see cref="Seed"/> - and they are hard-wired in several places
+/// <b>outside the repo's test run</b> that nobody flags red:
 /// <list type="bullet">
-///   <item><c>frontend/playwright.config.ts</c> und <c>frontend/e2e/*.spec.ts</c> (E2E läuft nachts, blockt kein Deploy)</item>
-///   <item><c>.claude/scripts/tutorial-api.sh</c> („login_adult 2 9999" = Lehrer Herr Schmidt)</item>
-///   <item><c>.claude/skills/{creator,supervisor,student,anmerkungen}/SKILL.md</c> (kein Test deckt sie ab)</item>
-///   <item>die eingecheckten Ausgaben von <see cref="DocsCaptureTests"/> unter <c>docs/api-examples/</c></item>
+///   <item><c>frontend/playwright.config.ts</c> and <c>frontend/e2e/*.spec.ts</c> (E2E runs nightly, doesn't block a deploy)</item>
+///   <item><c>.claude/scripts/tutorial-api.sh</c> ("login_adult 2 9999" = teacher Herr Schmidt)</item>
+///   <item><c>.claude/skills/{creator,supervisor,student,anmerkungen}/SKILL.md</c> (no test covers them)</item>
+///   <item>the checked-in output of <see cref="DocsCaptureTests"/> under <c>docs/api-examples/</c></item>
 /// </list>
-/// Verschiebt eine neue Seed-Routine die Reihenfolge, brechen alle vier lautlos. Wird dieser Test rot,
-/// ist die Ursache fast immer eine Einfügung <i>vor</i> <see cref="Seed"/>s identitätstragenden Schritten –
-/// neue Routinen gehören ans Ende.
+/// If a new seed routine shifts the order, all four break silently. If this test turns red, the cause is
+/// almost always an insertion <i>before</i> <see cref="Seed"/>'s identity-bearing steps -
+/// new routines belong at the end.
 /// </para>
 /// </summary>
 public class SeedContractTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWebAppFactory>

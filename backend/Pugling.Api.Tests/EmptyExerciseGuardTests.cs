@@ -5,14 +5,14 @@ using System.Text.Json;
 namespace Pugling.Api.Tests;
 
 /// <summary>
-/// Eine <b>ungefüllte</b> Übung (Typ trägt seine Inhalte als Item-Tabelle, hat aber kein Item) darf nicht
-/// unbemerkt in einen Lehrplan wandern – das Kind bekäme eine Pflicht, die es nicht spielen kann, und erfuhr
-/// es bisher erst im Test als <c>no_checkable_content</c>.
+/// An <b>unfilled</b> exercise (a type that carries its content as an item table, but has no item) must
+/// not migrate unnoticed into a study plan – the child would get a mandatory goal it cannot play, and
+/// this used to only surface in the test as <c>no_checkable_content</c>.
 ///
-/// Der Riegel sitzt bewusst beim <b>Zuweisen</b>, nicht beim Anlegen: „erst anlegen, dann füllen" ist ein
-/// gewollter Weg (POST mit leeren <c>refs</c>, danach <c>/items</c> bzw. <c>/refs-from-tags</c>) – siehe
-/// <see cref="ErstAnlegenDannFuellen_BleibtMoeglich"/>. Und er gilt nur für item-basierte Typen: ein Aufsatz
-/// hat *nie* Items, ein Rechen-Drill erzeugt seine Aufgaben aus Regeln.
+/// The guard deliberately sits at <b>assignment</b>, not at creation: "create first, fill later" is an
+/// intended path (POST with empty <c>refs</c>, then <c>/items</c> or <c>/refs-from-tags</c>) – see
+/// <see cref="ErstAnlegenDannFuellen_BleibtMoeglich"/>. And it only applies to item-based types: an essay
+/// *never* has items, an arithmetic drill generates its tasks from rules.
 /// </summary>
 public class EmptyExerciseGuardTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWebAppFactory>
 {
@@ -26,7 +26,7 @@ public class EmptyExerciseGuardTests(PuglingWebAppFactory factory) : IClassFixtu
         return (subjectId, chapterId);
     }
 
-    /// <summary>Vokabelübung ohne jedes Wort – der Datenstand, den Anmerkung 13 gemeldet hat.</summary>
+    /// <summary>Vocabulary exercise without a single word – the data state reported by remark 13.</summary>
     private static async Task<int> EmptyVocabExerciseAsync(HttpClient father, int subjectId, int chapterId) =>
         await TestApi.IdAsync(await father.PostAsJsonAsync(
             $"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/vocabulary",
@@ -72,8 +72,8 @@ public class EmptyExerciseGuardTests(PuglingWebAppFactory factory) : IClassFixtu
     }
 
     /// <summary>
-    /// Der Ablauf, den eine Schranke beim Anlegen zerstört hätte: leer anlegen, per Item-Endpunkt füllen,
-    /// dann zuweisen. Genau so arbeitet auch <c>refs-from-tags</c>.
+    /// The flow that a guard at creation time would have broken: create empty, fill via the item
+    /// endpoint, then assign. This is exactly how <c>refs-from-tags</c> works too.
     /// </summary>
     [Fact]
     public async Task ErstAnlegenDannFuellen_BleibtMoeglich()
@@ -104,8 +104,8 @@ public class EmptyExerciseGuardTests(PuglingWebAppFactory factory) : IClassFixtu
     }
 
     /// <summary>
-    /// Regressionsschutz: Der Riegel darf nur item-basierte Typen treffen. Ein Aufsatz hat typbedingt keine
-    /// Items und bleibt zuweisbar – sonst hätte der Fix eine ganze Lernform unbrauchbar gemacht.
+    /// Regression guard: the guard may only affect item-based types. An essay has no items by its very
+    /// type and remains assignable – otherwise the fix would have made an entire learning form unusable.
     /// </summary>
     [Fact]
     public async Task Aufsatz_OhneItems_BleibtZuweisbar()
@@ -125,9 +125,9 @@ public class EmptyExerciseGuardTests(PuglingWebAppFactory factory) : IClassFixtu
     }
 
     /// <summary>
-    /// „Zuweisbar" heißt: die Position steht danach auch <b>am Plan</b>. Ein 201 belegt nur, dass der Riegel
-    /// nicht zugeschlagen hat – nicht, dass die Zuweisung auf der richtigen Übung landete. Das ist die
-    /// Fehlerklasse „Erfolgsstatus zugesichert, Effekt nie nachgelesen" (docs/testplan.md, Etappe 1a).
+    /// "Assignable" means: the position afterwards actually shows up <b>on the plan</b>. A 201 only
+    /// proves that the guard did not strike – not that the assignment landed on the right exercise. This
+    /// is the error class "success status asserted, effect never verified" (docs/testplan.md, stage 1a).
     /// </summary>
     private static async Task AssertPositionOnPlanAsync(HttpClient father, int planId, int exerciseId)
     {
@@ -137,8 +137,8 @@ public class EmptyExerciseGuardTests(PuglingWebAppFactory factory) : IClassFixtu
     }
 
     /// <summary>
-    /// Die Vorschau nennt jetzt den Grund: „noch nicht gefüllt" statt des allgemeinen
-    /// <c>no_checkable_content</c>, das beim Aufsatz eine Typ-Eigenschaft beschreibt.
+    /// The preview now states the reason: "not yet filled" instead of the generic
+    /// <c>no_checkable_content</c>, which for an essay describes a type property.
     /// </summary>
     [Fact]
     public async Task Vorschau_LeereVokabeluebung_MeldetExerciseEmpty()
@@ -155,8 +155,8 @@ public class EmptyExerciseGuardTests(PuglingWebAppFactory factory) : IClassFixtu
     }
 
     /// <summary>
-    /// Ein Snapshot ohne Treffer darf die Übung nicht lautlos leeren – ein vertippter Tag sah vorher wie ein
-    /// Erfolg aus und ließ eine Übung ohne Wörter zurück.
+    /// A snapshot with no matches must not silently empty the exercise – a mistyped tag used to look like
+    /// a success and left behind an exercise with no words.
     /// </summary>
     [Fact]
     public async Task RefsFromTags_OhneTreffer_LaesstItemsUnberuehrt()

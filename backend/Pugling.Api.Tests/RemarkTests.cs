@@ -8,9 +8,9 @@ using Pugling.Api.Data;
 namespace Pugling.Api.Tests;
 
 /// <summary>
-/// Test-Anmerkungen (<c>api/v1/remarks</c>): Erfassen samt Kontext-Schnappschuss, der Rückkanal
-/// (Antwort aus Claude Code) und vor allem die <b>Sichtbarkeitstrennung</b> – ein Student darf weder
-/// die Notizen seines Supervisors noch deren Antworten sehen, die tragen Code-Interna.
+/// Test remarks (<c>api/v1/remarks</c>): capturing with a context snapshot, the back channel
+/// (answer from Claude Code) and above all the <b>visibility separation</b> - a student may see neither
+/// their supervisor's notes nor their answers, which carry code internals.
 /// </summary>
 public class RemarkTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWebAppFactory>
 {
@@ -632,7 +632,7 @@ public class RemarkTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWe
     // Konstellation zeigen (ein frischer Vater ohne Übungen deckt auf, was beim geseedeten Papa nie
     // auffällt). Jedes solche Konto erst mit einem Flag zu versehen wäre Verwaltungsarbeit ohne Gegenwert.
 
-    /// <summary>Registriert einen Vater und liefert einen Client dafür – ein Wegwerf-Konto ohne Sonderrechte.</summary>
+    /// <summary>Registers a father and returns a client for it - a throwaway account with no special permissions.</summary>
     private async Task<HttpClient> FreshFatherAsync(string pin)
     {
         var id = await RegisterFatherAsync("Wegwerf-Vater", pin);
@@ -647,13 +647,13 @@ public class RemarkTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWe
     }
 
     /// <summary>
-    /// Registriert einen Vater <b>mit</b> <c>Adult.IsAdmin</c> und liefert dessen Id – für den Nachweis, dass
-    /// die Rolle als Break-Glass weiterhin trägt, auch wenn der Schalter aus ist.
+    /// Registers a father <b>with</b> <c>Adult.IsAdmin</c> and returns its id - to prove that
+    /// the role still holds as a break-glass, even when the switch is off.
     /// <para>
-    /// Bewusst ein <b>eigenes</b> Konto und kein geseedetes: Die Factory ist über die Testklasse geteilt, und
-    /// <c>Roles.Admin</c> umgeht auch die RWX-Rechte auf Übungen. Würde hier Papa oder der Lehrer umgewidmet,
-    /// verlöre jeder andere Test seine Annahme „dieses Konto darf das nicht" – abhängig von der
-    /// Ausführungsreihenfolge. (Genau das ist beim ersten Anlauf passiert.)
+    /// Deliberately a <b>separate</b> account and not a seeded one: the factory is shared across the test class,
+    /// and <c>Roles.Admin</c> also bypasses the RWX permissions on exercises. If Papa or the teacher were
+    /// repurposed here, every other test would lose its assumption that "this account may not do that" -
+    /// depending on the execution order. (That is exactly what happened on the first attempt.)
     /// </para>
     /// </summary>
     private async Task<int> RegisterAdminFatherAsync(string pin)
@@ -668,8 +668,8 @@ public class RemarkTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWe
     }
 
     /// <summary>
-    /// Client gegen <b>dieselbe Datenbank</b>, aber mit abgeschaltetem <c>GlobalRead</c> – so verhält sich eine
-    /// Produktions-Instanz. Das Token wird hier ausgestellt, damit die Rollen-Claims stimmen.
+    /// Client against the <b>same database</b>, but with <c>GlobalRead</c> switched off - this is how a
+    /// production instance behaves. The token is issued here so that the role claims are correct.
     /// </summary>
     private async Task<HttpClient> FatherWithoutGlobalReadAsync(int id = 1, string pin = "0000")
     {

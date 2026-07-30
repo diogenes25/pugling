@@ -7,9 +7,9 @@ using Pugling.Api.Models;
 namespace Pugling.Api.Tests;
 
 /// <summary>
-/// Sichert die server-autoritative Bewertung der Leitner-Übungsschleife einer Position (<c>/review</c>) ab:
-/// der Sohn schickt seine Antwort, der Server prüft gegen die Item-Lösung und vergibt darauf Punkte.
-/// Ein gefälschtes "richtig" ist nicht möglich, und die Übungskarten kommen lösungsfrei.
+/// Verifies the server-authoritative grading of a position's Leitner practice loop (<c>/review</c>):
+/// the student submits the answer, the server checks it against the item's solution and awards points
+/// accordingly. A faked "correct" is not possible, and the practice cards arrive solution-free.
 /// </summary>
 public class ReviewGradingTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWebAppFactory>
 {

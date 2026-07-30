@@ -7,10 +7,10 @@ using Pugling.Api.Models;
 namespace Pugling.Api.Tests;
 
 /// <summary>
-/// Sichert den „Stick" ab: ein gerissenes Pflichtziel einer Lehrplan-Position zieht beim Lazy Settlement
-/// (Kind-Login / Shop-Kauf) einmalig den Münz-Malus ab – Schulden (negativer Saldo) sind erlaubt, ein
-/// inaktiver Plan bleibt verschont (Fairness). Zusätzlich: der Vater kann Gems verschenken (Gem-Zwilling
-/// der manuellen Münz-Buchung) – das Druckventil gegen die Schulden-Todesspirale.
+/// Secures the "penalty": a missed mandatory goal of a study plan position deducts the coin penalty once
+/// during lazy settlement (child login / shop purchase) – debt (negative balance) is allowed, an
+/// inactive plan is spared (fairness). In addition: the father can gift gems (gem twin of the manual
+/// coin ledger entry) – the pressure valve against the debt death spiral.
 /// </summary>
 public class PflichtMalusTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWebAppFactory>
 {
@@ -20,7 +20,7 @@ public class PflichtMalusTests(PuglingWebAppFactory factory) : IClassFixture<Pug
         return await res.Content.ReadFromJsonAsync<JsonElement>();
     }
 
-    /// <summary>Seedet direkt einen Plan mit einer Pflicht-Position samt Malus und (ggf. vergangenem) Start.</summary>
+    /// <summary>Directly seeds a plan with a mandatory position including penalty and (possibly past) start date.</summary>
     private static (int planId, int positionId) SeedPenaltyPlan(PuglingWebAppFactory f, int childId, int exerciseId,
         DateOnly start, int penaltyCoins, bool active = true, GoalCadence cadence = GoalCadence.Daily,
         string title = "Malus-Plan", int durationDays = 10)
@@ -84,13 +84,13 @@ public class PflichtMalusTests(PuglingWebAppFactory factory) : IClassFixture<Pug
     }
 
     /// <summary>
-    /// Der Buchungstext des Malus benennt den <b>Rhythmus</b> der gerissenen Pflicht – „Tagesziel" bzw.
-    /// „Wochenziel". Das ist alles, was das Kind im Punkte-Verlauf über den Abzug erfährt; sind die beiden
-    /// vertauscht, ist keine Buchung falsch, aber die Begründung eine Lüge (docs/testplan.md, Injektion B08).
+    /// The ledger text of the penalty names the <b>cadence</b> of the missed mandatory goal – "daily goal"
+    /// or "weekly goal". That is all the child learns about the deduction in the points history; if the two
+    /// are swapped, no entry is wrong, but the justification is a lie (docs/testplan.md, injection B08).
     /// <para>
-    /// Beide Rhythmen laufen in <b>einem</b> Test gegen <b>ein</b> Kind, und die Zuordnung geht über den
-    /// Plan-Titel im Text. Zwei getrennte Prüfungen „irgendein Eintrag sagt Tagesziel" und „irgendeiner sagt
-    /// Wochenziel" wären gegen genau die Vertauschung blind, die hier gemeint ist – beide Texte kämen ja vor.
+    /// Both cadences run in <b>one</b> test against <b>one</b> child, and the assignment goes via the
+    /// plan title in the text. Two separate checks "some entry says daily goal" and "some entry says
+    /// weekly goal" would be blind to exactly the swap meant here – both texts would occur either way.
     /// </para>
     /// </summary>
     [Fact]

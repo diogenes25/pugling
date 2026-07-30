@@ -5,14 +5,14 @@ using System.Text.Json;
 namespace Pugling.Api.Tests;
 
 /// <summary>
-/// Integrationstests für den Birkenbihl-Übungstyp: das geerbte CRUD (typisiertes Zurücklesen der Config)
-/// sowie die vokabel-gestützte Automatik – automatisches Dekodieren eines Satzes gegen den Vokabelspeicher,
-/// einzelnes Austauschen von Wörtern (Homonym-Korrektur), Kandidaten mehrdeutiger Wörter, die zustandslose
-/// Vorschau und die Rollen-Absicherung der neuen Endpunkte.
+/// Integration tests for the Birkenbihl exercise type: the inherited CRUD (typed read-back of the config)
+/// as well as the vocabulary-driven automation - automatic decoding of a sentence against the vocabulary store,
+/// individually swapping words (homonym correction), candidates for ambiguous words, the stateless
+/// preview and the role protection of the new endpoints.
 /// </summary>
 public class BirkenbihlExerciseTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWebAppFactory>
 {
-    /// <summary>Legt Fach + Kapitel an und gibt die Basis-Route der Birkenbihl-Übungen zurück.</summary>
+    /// <summary>Creates a subject + chapter and returns the base route of the Birkenbihl exercises.</summary>
     private static async Task<string> CreateChapterAsync(HttpClient father)
     {
         var subjectRes = await father.PostAsJsonAsync("/api/v1/creator/subjects", new { name = "Birkenbihl-Test" });
@@ -25,7 +25,7 @@ public class BirkenbihlExerciseTests(PuglingWebAppFactory factory) : IClassFixtu
         return $"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/birkenbihl";
     }
 
-    /// <summary>Legt eine leere Birkenbihl-Übung mit Sprachpaar an und gibt (Basis-Route, ExerciseId) zurück.</summary>
+    /// <summary>Creates an empty Birkenbihl exercise with a language pair and returns (base route, exercise id).</summary>
     private static async Task<(string Route, int ExerciseId)> CreateExerciseAsync(
         HttpClient father, string learningLang = "en", string nativeLang = "de")
     {
@@ -42,7 +42,7 @@ public class BirkenbihlExerciseTests(PuglingWebAppFactory factory) : IClassFixtu
         return (route, id);
     }
 
-    /// <summary>Legt eine Store-Vokabel an und gibt ihre Id zurück (über den geteilten Helfer).</summary>
+    /// <summary>Creates a store vocabulary entry and returns its id (via the shared helper).</summary>
     private static async Task<int> CreateVocabAsync(HttpClient father, string word, string translation) =>
         (await TestApi.CreateStoreVocabAsync(father, word, translation)).id;
 
@@ -107,9 +107,9 @@ public class BirkenbihlExerciseTests(PuglingWebAppFactory factory) : IClassFixtu
     }
 
     /// <summary>
-    /// Das Anlege-Formular liefert Sätze OHNE ids/Zähler (so wie der Frontend-Client). Der Server muss beim
-    /// Speichern übungsweit eindeutige sentenceId/wordId vergeben (NormalizeConfig), damit die Wort-Endpunkte
-    /// funktionieren – und ein späteres AddSentence darf keine bereits vergebene wordId erneut ausgeben.
+    /// The creation form supplies sentences WITHOUT ids/counters (just like the frontend client). The server must
+    /// assign exercise-wide unique sentenceId/wordId on save (NormalizeConfig) so the word endpoints
+    /// work - and a later AddSentence must not reissue a wordId that has already been assigned.
     /// </summary>
     [Fact]
     public async Task Create_OhneIds_VergibtEindeutigeIds_UndAddSentenceKollidiertNicht()

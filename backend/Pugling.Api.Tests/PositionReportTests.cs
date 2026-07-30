@@ -6,9 +6,9 @@ using Pugling.Api.Models;
 namespace Pugling.Api.Tests;
 
 /// <summary>
-/// Lern-Report je Position (Vater-Sicht „welche Vokabel sitzt/sitzt nicht"): spiegelt den Leitner-Stand
-/// (Box → Beherrschung) und die Test-Trefferquote je Inhalt. Ersetzt den beim Lehrplan-Umbau entfallenen
-/// plan-weiten Report.
+/// Learning report per position (father's view "which vocabulary sticks/doesn't stick"): reflects the
+/// Leitner state (box → mastery) and the test hit rate per content item. Replaces the plan-wide
+/// report that was dropped in the study plan rebuild.
 /// </summary>
 public class PositionReportTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWebAppFactory>
 {

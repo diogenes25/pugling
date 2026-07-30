@@ -5,13 +5,13 @@ using System.Text.Json;
 namespace Pugling.Api.Tests;
 
 /// <summary>
-/// Nagelt die Vertragsverschärfung aus <c>UnmappedMemberHandling.Disallow</c> fest: der Server
-/// <b>lehnt</b> ein Feld ab, das er nicht kennt, statt es still zu verwerfen.
+/// Pins down the contract tightening from <c>UnmappedMemberHandling.Disallow</c>: the server
+/// <b>rejects</b> a field it doesn't know instead of silently discarding it.
 /// <para>
-/// Vorher meldete er <c>201 Created</c> und der Aufrufer glaubte, sein Wert sei angekommen – für ein
-/// API-First-Produkt mit generierten Clients und KI-Agenten die teuerste Voreinstellung überhaupt, weil
-/// sie einen Vertragsfehler in stillen Datenverlust verwandelt. Der eigene Beleg dafür stand im
-/// Testhelfer <c>TestApi.CreateEmptyPlanAsync</c> (siehe dessen Doku). Hintergrund:
+/// Previously it reported <c>201 Created</c> and the caller believed its value had arrived - for an
+/// API-first product with generated clients and AI agents this is the most expensive default of all,
+/// because it turns a contract error into silent data loss. The evidence for this used to live in the
+/// test helper <c>TestApi.CreateEmptyPlanAsync</c> (see its docs). Background:
 /// docs/codequalitaet-gates-plan.md (L3/B3).
 /// </para>
 /// </summary>

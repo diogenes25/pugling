@@ -7,9 +7,9 @@ using SkiaSharp;
 namespace Pugling.Api.Tests;
 
 /// <summary>
-/// Bild-Upload (Etappe 5): der Server nimmt <b>eine</b> Datei entgegen und erzeugt die Auflösungen
-/// selbst. Die Tests sichern vor allem die Regeln der Aufbereitung ab – sie sind nachträglich teuer zu
-/// ändern, weil bereits erzeugte Dateien dann nicht mehr zur Regel passen.
+/// Image upload (stage 5): the server accepts <b>one</b> file and generates the resolutions
+/// itself. The tests mainly secure the processing rules – they are expensive to change afterwards,
+/// because already generated files would then no longer match the rule.
 /// </summary>
 public class MediaUploadTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWebAppFactory>
 {
@@ -129,7 +129,7 @@ public class MediaUploadTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
 
     // ---- Helfer -------------------------------------------------------------------------------------
 
-    /// <summary>Ein echtes, dekodierbares PNG – der Prozessor soll an echten Bytes arbeiten, nicht an einer Attrappe.</summary>
+    /// <summary>A real, decodable PNG – the processor should work on real bytes, not a dummy.</summary>
     private static byte[] Png(int width, int height, SKColor color)
     {
         using var bitmap = new SKBitmap(width, height);

@@ -6,8 +6,8 @@ using Pugling.Api.Models;
 namespace Pugling.Api.Tests;
 
 /// <summary>
-/// Store-verknüpftes Erstellen von Übungen: Lückentext bezieht die Lösung aus dem Vokabel-Store (P1),
-/// Vokabel-Refs aus Tags materialisieren (P2), Ref-Validierung + Vokabel-Usage/Lösch-Schutz (P3).
+/// Store-linked authoring of exercises: cloze draws its solution from the vocabulary store (P1),
+/// materializing vocabulary refs from tags (P2), ref validation + vocabulary usage/delete protection (P3).
 /// </summary>
 public class VocabExerciseAuthoringTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWebAppFactory>
 {

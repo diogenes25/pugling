@@ -5,9 +5,9 @@ using System.Text.Json;
 namespace Pugling.Api.Tests;
 
 /// <summary>
-/// Medien-Store (Etappe 1): ein Motiv, viele Darstellungen – und je Darstellung mehrere Auflösungen.
-/// Die Tests halten die beiden Achsen auseinander und sichern die Eignungs-Filterung ab, auf der die
-/// Zielgruppen-Trennung später beruht.
+/// Media store (stage 1): one motif, many representations – and per representation multiple
+/// resolutions. The tests keep the two axes apart and secure the suitability filtering that the later
+/// audience separation relies on.
 /// </summary>
 public class MediaStoreTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWebAppFactory>
 {
@@ -102,10 +102,10 @@ public class MediaStoreTests(PuglingWebAppFactory factory) : IClassFixture<Pugli
     }
 
     /// <summary>
-    /// „Nach Zweck" heißt <b>semantisch</b> (Thumb → Card → Full → Hero), nicht alphabetisch. Weil
-    /// <c>Purpose</c> als String persistiert wird, sortierte ein <c>OrderBy</c> in SQL nach Buchstaben
-    /// (Card, Full, Hero, Thumb) – und widersprach damit derselben Liste am Asset, die in-memory nach
-    /// Enum-Wert sortiert. Zwei Endpunkte, zwei Reihenfolgen für dieselben Daten.
+    /// "By purpose" means <b>semantic</b> ordering (Thumb → Card → Full → Hero), not alphabetical.
+    /// Because <c>Purpose</c> is persisted as a string, an <c>OrderBy</c> in SQL sorted by letters
+    /// (Card, Full, Hero, Thumb) – and thereby contradicted the same list on the asset, which sorts
+    /// in-memory by enum value. Two endpoints, two orderings for the same data.
     /// </summary>
     [Fact]
     public async Task Varianten_SindNachZweckSortiert_NichtAlphabetisch()

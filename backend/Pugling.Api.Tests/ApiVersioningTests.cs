@@ -5,8 +5,8 @@ using System.Text.Json;
 namespace Pugling.Api.Tests;
 
 /// <summary>
-/// Absicherung des Versionierungs-Gerüsts (URL-Segment /api/v1/…) und des einheitlichen
-/// Fehlerschemas (RFC-konformes application/problem+json statt nackter Strings).
+/// Coverage of the versioning scaffolding (URL segment /api/v1/…) and the unified
+/// error schema (RFC-compliant application/problem+json instead of bare strings).
 /// </summary>
 public class ApiVersioningTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWebAppFactory>
 {

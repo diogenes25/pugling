@@ -5,11 +5,11 @@ using Microsoft.AspNetCore.Mvc;
 namespace Pugling.Api.Tests;
 
 /// <summary>
-/// Konventions-Guard für die Swagger-Gruppierung: In den Tier-Ordnern
-/// (Controllers/{Creator|Supervisor|Student}) muss jedes <c>[Tags(...)]</c> – ob auf Controller- oder
-/// Action-Ebene – mit dem passenden Ebenen-Präfix beginnen. Verhindert genau die Drift, die die
-/// Ebenen-Umstellung behoben hat (ein Controller im Supervisor-Ordner versehentlich als
-/// „Learn – …"/„Admin – …" getaggt), ohne dass es sonst etwas bemerkt. Rein reflexiv, kein Host nötig.
+/// Convention guard for the Swagger grouping: in the tier folders
+/// (Controllers/{Creator|Supervisor|Student}) every <c>[Tags(...)]</c> - whether at controller or
+/// action level - must start with the matching tier prefix. Prevents exactly the drift that the
+/// tier restructuring fixed (a controller in the Supervisor folder accidentally tagged as
+/// "Learn - ..."/"Admin - ..."), which nothing else would otherwise notice. Purely reflective, no host needed.
 /// </summary>
 public class TagConventionTests
 {
@@ -47,7 +47,7 @@ public class TagConventionTests
             "Tag-Praefix passt nicht zum Tier-Ordner:\n" + string.Join("\n", offenders));
     }
 
-    /// <summary>Alle Tag-Strings eines Controllers – Controller-Ebene und jede Action-Ebene.</summary>
+    /// <summary>All tag strings of a controller - controller level and every action level.</summary>
     private static IEnumerable<(string Member, string Tag)> TagsOf(Type type)
     {
         foreach (var a in type.GetCustomAttributes<TagsAttribute>(inherit: true))

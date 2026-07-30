@@ -5,8 +5,8 @@ using Pugling.Api.Auth;
 namespace Pugling.Api.Tests;
 
 /// <summary>
-/// Baseline-Härtung: PINs werden gehasht gespeichert (mit Klartext-Fallback für Alt-Konten) und das
-/// Login ist gegen Brute-Force ratenbegrenzt.
+/// Baseline hardening: PINs are stored hashed (with a plaintext fallback for legacy accounts), and
+/// login is rate-limited against brute force.
 /// </summary>
 public class SecurityHardeningTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWebAppFactory>
 {

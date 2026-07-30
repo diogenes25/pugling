@@ -6,9 +6,9 @@ using Pugling.Api.Models;
 namespace Pugling.Api.Tests;
 
 /// <summary>
-/// Kind-/Scope-bezogene Ergebnis-Lernziele (<c>children/{}/learn-goals</c>): der Vater setzt Beherrschungs-/
-/// Abdeckungsziele auf Fach/Kapitel/Übung, der Status wird live aus dem Lernstand berechnet
-/// (offen/erreicht/überfällig). Deckt Auswertung, Validierung, Rollen/Ownership und CRUD ab.
+/// Child-/scope-related outcome learn goals (<c>children/{}/learn-goals</c>): the father sets mastery/
+/// coverage goals on subject/chapter/exercise, the status is computed live from the learning progress
+/// (open/achieved/overdue). Covers evaluation, validation, roles/ownership and CRUD.
 /// </summary>
 public class LearnGoalTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWebAppFactory>
 {

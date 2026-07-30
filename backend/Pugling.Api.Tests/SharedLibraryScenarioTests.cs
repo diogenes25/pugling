@@ -5,9 +5,10 @@ using System.Text.Json;
 namespace Pugling.Api.Tests;
 
 /// <summary>
-/// Kern-Szenario der geteilten Übungs-Bibliothek: Ein <b>Englischlehrer</b> (Vater-Account) erstellt Übungen
-/// auf Niveau der 9. Klasse Gymnasium. Ein <b>anderer Vater</b> findet sie über den globalen Katalog, übernimmt
-/// sie in einen eigenen Lehrplan und richtet eine individuelle Belohnung ein – darf sie aber nicht ändern/löschen.
+/// Core scenario of the shared exercise library: An <b>English teacher</b> (father account) creates
+/// exercises at the level of 9th-grade Gymnasium. <b>Another father</b> finds them via the global
+/// catalog, adopts them into their own study plan, and sets up an individual reward – but must not
+/// modify/delete them.
 /// </summary>
 public class SharedLibraryScenarioTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWebAppFactory>
 {
@@ -19,7 +20,7 @@ public class SharedLibraryScenarioTests(PuglingWebAppFactory factory) : IClassFi
         return (id, await TestApi.FatherAsync(factory, id, pin));
     }
 
-    /// <summary>Legt als Lehrer Fach → Kapitel → eine 9.-Klasse-Gymnasium-Vokabelübung an; liefert die Ids.</summary>
+    /// <summary>Creates, as a teacher, subject → chapter → a 9th-grade Gymnasium vocabulary exercise; returns the ids.</summary>
     private static async Task<(int subjectId, int chapterId, int exerciseId)> CreateGrade9GymExerciseAsync(HttpClient teacher)
     {
         var subjectId = await TestApi.IdAsync(await teacher.PostAsJsonAsync("/api/v1/creator/subjects", new { name = "Englisch (geteilt)" }));

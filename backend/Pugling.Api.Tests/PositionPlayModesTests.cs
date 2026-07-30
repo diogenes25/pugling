@@ -8,9 +8,9 @@ using Pugling.Api.Models;
 namespace Pugling.Api.Tests;
 
 /// <summary>
-/// Server-getriebene Ausspiel-Modi (Info / Lern / Klausur): eingefrorene Reihenfolge + Cursor. Prüft die
-/// neue One-at-a-time-Auslieferung (<c>/next</c>), das mitgelieferte „nächste Karte"-Feedback in
-/// <c>/review</c>, den feedbacklosen Info-Modus und den strikt server-getriebenen Klausur-Fluss.
+/// Server-driven playback modes (Info / Lern / Klausur): frozen order + cursor. Checks the
+/// one-at-a-time delivery (<c>/next</c>), the "next card" feedback included in
+/// <c>/review</c>, the feedback-free Info mode, and the strictly server-driven class-test flow.
 /// </summary>
 public class PositionPlayModesTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWebAppFactory>
 {

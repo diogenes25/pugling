@@ -8,8 +8,8 @@ using Pugling.Api.Data;
 namespace Pugling.Api.Tests;
 
 /// <summary>
-/// Startet die API in-process gegen eine frische, isolierte SQLite-Datei je Testklasse.
-/// Die echte <c>pugling.db</c> bleibt unberührt; Umgebung = Development (Seed läuft, Dev-JWT-Key greift).
+/// Starts the API in-process against a fresh, isolated SQLite file per test class.
+/// The real <c>pugling.db</c> stays untouched; environment = Development (seed runs, dev JWT key applies).
 /// </summary>
 public sealed class PuglingWebAppFactory : WebApplicationFactory<Program>
 {
@@ -19,8 +19,8 @@ public sealed class PuglingWebAppFactory : WebApplicationFactory<Program>
     private readonly string _mediaPath = Path.Combine(Path.GetTempPath(), $"pugling_media_{Guid.NewGuid():N}");
 
     /// <summary>
-    /// Die Uhr dieses Hosts – standardmäßig die echte. Testklassen, die eine Regel im Sekunden-Bereich
-    /// prüfen (Schnelle-Antwort-Bonus), frieren sie ein und rücken sie selbst vor.
+    /// This host's clock – the real one by default. Test classes that check a rule in the seconds
+    /// range (speed bonus) freeze it and advance it themselves.
     /// </summary>
     public TestClock Clock { get; } = new();
 
@@ -42,16 +42,16 @@ public sealed class PuglingWebAppFactory : WebApplicationFactory<Program>
     }
 
     /// <summary>
-    /// Nach dem Start die <b>geseedeten Zeitfenster löschen</b> (Wanduhr-Neutralisierung).
+    /// After startup, <b>delete the seeded time slots</b> (wall-clock neutralization).
     /// <para>
-    /// Der Seed legt Multiplikatoren über den Tag (Vormittag ×1,5, Nachmittag ×1,0, Abend ×0,8). Damit
-    /// hängt die Punktzahl derselben richtigen Antwort an der Uhrzeit des Testlaufs – ein Lauf um 9 Uhr
-    /// buchte 15, einer um 19 Uhr 8. Für Zusicherungen auf „&gt; 0" ist das harmlos, für die von
-    /// <see cref="DocsCaptureTests"/> <b>eingecheckte</b> Doku nicht: Jeder Lauf zu anderer Tageszeit
-    /// erzeugte Diff-Rauschen in <c>docs/api-examples/</c>. Ohne Fenster gilt Faktor 1,0.
+    /// The seed sets up multipliers across the day (morning ×1.5, afternoon ×1.0, evening ×0.8). That
+    /// makes the score for the same correct answer depend on the time of day the test run happens at –
+    /// a run at 9 am booked 15, one at 7 pm booked 8. For assertions on "&gt; 0" that's harmless, but not
+    /// for the docs <b>checked in</b> by <see cref="DocsCaptureTests"/>: every run at a different time of
+    /// day produced diff noise in <c>docs/api-examples/</c>. Without a time slot, the factor is 1.0.
     /// </para>
-    /// Tests, die den Multiplikator selbst prüfen, legen ihre Fenster ausdrücklich an
-    /// (<see cref="ScoringTimeSlotTests"/>) – die sind damit erst recht unabhängig von der Wanduhr.
+    /// Tests that check the multiplier itself set up their own time slots explicitly
+    /// (<see cref="ScoringTimeSlotTests"/>) – making them independent of the wall clock regardless.
     /// </summary>
     protected override IHost CreateHost(IHostBuilder builder)
     {

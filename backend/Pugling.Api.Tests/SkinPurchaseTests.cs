@@ -9,13 +9,13 @@ using Pugling.Api.Models;
 namespace Pugling.Api.Tests;
 
 /// <summary>
-/// Deckt die server-autoritative Skin-Ökonomie ab (<c>api/v1/student/me/skins…</c>): Der Kauf bucht echte
-/// <b>Gems</b> ab (nicht Münzen), Besitz/Auswahl liegen am Kind. Nutzt frisch angelegte Kinder, damit
-/// die Salden trotz geteilter Test-DB deterministisch sind.
+/// Covers the server-authoritative skin economy (<c>api/v1/student/me/skins…</c>): the purchase deducts real
+/// <b>gems</b> (not coins), ownership/selection live on the child. Uses freshly created children so that
+/// the balances are deterministic despite the shared test database.
 /// </summary>
 public class SkinPurchaseTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWebAppFactory>
 {
-    /// <summary>Legt (als Vater) ein frisches Kind an und liefert dessen Id + einen Sohn-Client dafür.</summary>
+    /// <summary>Creates a fresh child (as the supervisor) and returns its id + a student client for it.</summary>
     private async Task<(int childId, HttpClient child)> FreshChildAsync(HttpClient father, string pin)
     {
         var childId = await TestApi.IdAsync(
@@ -24,7 +24,7 @@ public class SkinPurchaseTests(PuglingWebAppFactory factory) : IClassFixture<Pug
         return (childId, child);
     }
 
-    /// <summary>Schreibt dem Kind Gems gut (kein API-Weg dafür – Gems entstehen aus Boni; Achievement → Gems).</summary>
+    /// <summary>Credits the child with gems (no API path for this - gems arise from bonuses; Achievement → Gems).</summary>
     private async Task GrantGemsAsync(int childId, int amount)
     {
         using var scope = factory.Services.CreateScope();

@@ -3,17 +3,17 @@ using Microsoft.Extensions.AI;
 namespace Pugling.Api.Tests;
 
 /// <summary>
-/// Ein <see cref="IChatClient"/>, der vorbereitete Antworten ausgibt, statt ein Modell zu fragen.
-/// Damit läuft die komplette Creator-Pipeline im Test gegen den echten In-Process-Server – ohne
-/// laufendes Ollama und ohne die Unschärfe eines Sprachmodells. Geprüft wird also genau das, was
-/// unter unserer Kontrolle steht: Regeln, Reparatur-Runde, Abbildung auf die API und der Selbsttest.
+/// An <see cref="IChatClient"/> that emits prepared responses instead of asking a model.
+/// This lets the complete creator pipeline run in the test against the real in-process server –
+/// without a running Ollama and without the fuzziness of a language model. What gets checked is
+/// exactly what is under our control: rules, the repair round, mapping onto the API, and the self-test.
 /// </summary>
 public sealed class FakeChatClient(params string[] responses) : IChatClient
 {
-    /// <summary>Wie oft das „Modell" gefragt wurde – macht die Reparatur-Runde sichtbar.</summary>
+    /// <summary>How often the "model" was asked – makes the repair round visible.</summary>
     public int Calls { get; private set; }
 
-    /// <summary>Die zuletzt gestellten Nachrichten (um Prompt-Inhalte zu prüfen).</summary>
+    /// <summary>The most recently asked messages (to check prompt content).</summary>
     public IReadOnlyList<ChatMessage> LastMessages { get; private set; } = [];
 
     public Task<ChatResponse> GetResponseAsync(IEnumerable<ChatMessage> messages,

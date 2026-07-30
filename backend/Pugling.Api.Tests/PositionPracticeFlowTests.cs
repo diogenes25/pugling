@@ -8,9 +8,9 @@ using Pugling.Api.Models;
 namespace Pugling.Api.Tests;
 
 /// <summary>
-/// End-to-End des neuen positions-basierten Übens (Etappe 3): eine Katalog-Übung wird über eine
-/// Lehrplan-Position gespielt, Inhalt kommt aus der Übungs-Config, Leitner-Fortschritt läuft über
-/// <see cref="PositionItemProgress"/>. Die Position wird direkt geseedet (Positions-CRUD folgt in Etappe 5).
+/// End-to-end of the new position-based practicing (stage 3): a catalog exercise is played via a
+/// study plan position, content comes from the exercise config, Leitner progress runs through
+/// <see cref="PositionItemProgress"/>. The position is seeded directly (position CRUD follows in stage 5).
 /// </summary>
 public class PositionPracticeFlowTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWebAppFactory>
 {

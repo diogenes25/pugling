@@ -4,10 +4,10 @@ using Pugling.Api.Models;
 namespace Pugling.Api.Tests;
 
 /// <summary>
-/// Unit-Tests der Multiple-Choice-Ablenkerwahl (<see cref="IExerciseType.Choices"/>, hier
-/// <see cref="VocabularyExerciseType"/>): zustandslos, ohne DB/HTTP. Sichert die Anti-Rate-Zusagen: genau eine
-/// richtige Antwort plus bis zu drei <b>distinkte</b> Ablenker, deterministische Rotation (die Lösung steht nicht
-/// immer vorne) und keine Auswahl für andere Verfahren/Stufen.
+/// Unit tests of the multiple-choice distractor selection (<see cref="IExerciseType.Choices"/>, here
+/// <see cref="VocabularyExerciseType"/>): stateless, without DB/HTTP. Secures the anti-guessing guarantees:
+/// exactly one correct answer plus up to three <b>distinct</b> distractors, deterministic rotation (the
+/// solution isn't always in front), and no selection for other techniques/stages.
 /// </summary>
 public class PositionPlayChoicesTests
 {

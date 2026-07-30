@@ -6,12 +6,12 @@ using System.Text.Json;
 namespace Pugling.Api.Tests;
 
 /// <summary>
-/// Selbstverwaltung des eigenen Kontos (<c>PATCH auth/me</c>): Name, E-Mail, PIN.
+/// Self-service for one's own account (<c>PATCH auth/me</c>): name, email, PIN.
 ///
-/// Der Anlass war das <b>Lehrer-Konto</b> – ihm fehlt die Supervisor-Rolle, und damit war
-/// <c>supervisor/adults/{id}</c> für es verschlossen: es konnte seine eigene PIN nicht ändern. Weil das
-/// Konto zu keiner Ebene gehört (derselbe Mensch bedient es aus jeder Rolle), liegt der Weg bei
-/// <c>auth/…</c> und gilt für <b>beide</b> Erwachsenen-Arten.
+/// The trigger was the <b>teacher account</b> – it lacks the supervisor role, and so
+/// <c>supervisor/adults/{id}</c> was closed to it: it could not change its own PIN. Because the
+/// account does not belong to any tier (the same person operates it from every role), the route lives
+/// under <c>auth/…</c> and applies to <b>both</b> adult kinds.
 /// </summary>
 public class AccountSelfServiceTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWebAppFactory>
 {
@@ -77,8 +77,8 @@ public class AccountSelfServiceTests(PuglingWebAppFactory factory) : IClassFixtu
     }
 
     /// <summary>
-    /// Ohne den Schalter meldete ein Formular mit geleertem Feld „gespeichert", und die alte Adresse stünde
-    /// weiter da – <c>null</c> heißt in dieser API „nicht angegeben", nicht „leeren".
+    /// Without the switch, a form with a cleared field would report "saved", and the old address would
+    /// still be there – <c>null</c> means "not specified" in this API, not "clear".
     /// </summary>
     [Fact]
     public async Task EMailLeeren_BrauchtDenSchalter()
@@ -121,8 +121,8 @@ public class AccountSelfServiceTests(PuglingWebAppFactory factory) : IClassFixtu
     }
 
     /// <summary>
-    /// Ein Kind darf seine PIN nicht selbst umstellen – sie ist der Zugang, den der Vater vergibt. Sonst
-    /// hätte sich das Kind der Aufsicht entzogen, und zwar über einen Endpunkt, der „mein Konto" heißt.
+    /// A child may not change its own PIN – it is the access the father grants. Otherwise the child
+    /// would have escaped supervision, and via an endpoint called "my account" no less.
     /// </summary>
     [Fact]
     public async Task Kind_DarfSichNichtSelbstVerwalten()

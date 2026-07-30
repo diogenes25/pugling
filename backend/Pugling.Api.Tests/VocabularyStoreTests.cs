@@ -4,7 +4,7 @@ using System.Text.Json;
 
 namespace Pugling.Api.Tests;
 
-/// <summary>Happy-Path des atomaren Vokabel-Stores (Anlegen/Lesen, Key-Eindeutigkeit).</summary>
+/// <summary>Happy path of the atomic vocabulary store (create/read, key uniqueness).</summary>
 public class VocabularyStoreTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWebAppFactory>
 {
     [Fact]

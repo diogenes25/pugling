@@ -4,7 +4,7 @@ using System.Text.Json;
 
 namespace Pugling.Api.Tests;
 
-/// <summary>Happy-Paths für Tags, Inhalts-Bewertungen (Sohn) und Stundenplan.</summary>
+/// <summary>Happy paths for tags, content ratings (student) and timetable.</summary>
 public class TagsRatingsTimetableTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWebAppFactory>
 {
     [Fact]

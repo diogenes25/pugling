@@ -6,37 +6,37 @@ using Microsoft.AspNetCore.Mvc.Routing;
 namespace Pugling.Api.Tests;
 
 /// <summary>
-/// Die API-Fläche per Reflexion: Controller, Actions, Routen-Vorlagen. Geteilte Grundlage der reflexiven
-/// Wächter (<see cref="ConventionGuardTests"/>, <see cref="OwnershipMatrixTests"/>,
-/// <see cref="EndpointCoverage"/>) – dieselbe Definition von „was ist eine Action" für alle, sonst
-/// bewachen drei Tests drei verschiedene Flächen und keiner merkt es.
+/// The API surface via reflection: controllers, actions, route templates. Shared foundation of the
+/// reflective guards (<see cref="ConventionGuardTests"/>, <see cref="OwnershipMatrixTests"/>,
+/// <see cref="EndpointCoverage"/>) – the same definition of "what is an action" for all of them, otherwise
+/// three tests guard three different surfaces and nobody notices.
 /// </summary>
 internal static class ApiSurface
 {
-    /// <summary>Alle instanziierbaren Controller der API.</summary>
+    /// <summary>All instantiable controllers of the API.</summary>
     public static IEnumerable<Type> Controllers() =>
         typeof(Program).Assembly.GetTypes()
             .Where(t => typeof(ControllerBase).IsAssignableFrom(t) && !t.IsAbstract);
 
-    /// <summary>Die öffentlichen Actions eines Controllers (deklariert, nicht geerbt).</summary>
+    /// <summary>The public actions of a controller (declared, not inherited).</summary>
     public static IEnumerable<MethodInfo> Actions(Type controller) =>
         controller.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly)
             .Where(m => !m.IsSpecialName && m.GetCustomAttributes<HttpMethodAttribute>().Any());
 
-    /// <summary>Schlüssel einer Action – <c>Controller.Action</c>, die Sprache aller Wächter-Meldungen.</summary>
+    /// <summary>Key of an action – <c>Controller.Action</c>, the language of all guard messages.</summary>
     public static string Key(string controller, string action) => $"{controller}.{action}";
 
     /// <inheritdoc cref="Key(string,string)"/>
     public static string Key(Type controller, MethodInfo action) => Key(controller.Name, action.Name);
 
     /// <summary>
-    /// Route-Vorlage einer Action: Controller-<c>[Route]</c> + Vorlage des HTTP-Verbs.
+    /// Route template of an action: controller <c>[Route]</c> + template of the HTTP verb.
     /// <para>
-    /// Eine mit <c>~/</c> (oder <c>/</c>) beginnende Action-Vorlage <b>ersetzt</b> das Controller-Präfix,
-    /// sie hängt nicht daran – so führt etwa <c>ShopController</c> unter seinem Shop-Präfix zugleich
-    /// kindgebundene Routen. Naives Verketten ergäbe Unsinn wie
-    /// <c>api/v1/supervisor/shop/~/api/v1/supervisor/children/3/…</c>; die Wächter prüften dann eine Route,
-    /// die es nicht gibt.
+    /// An action template starting with <c>~/</c> (or <c>/</c>) <b>replaces</b> the controller prefix,
+    /// it doesn't append to it – this is how, for instance, <c>ShopController</c> also serves
+    /// child-scoped routes under its shop prefix. Naive concatenation would produce nonsense like
+    /// <c>api/v1/supervisor/shop/~/api/v1/supervisor/children/3/…</c>; the guards would then check a route
+    /// that doesn't exist.
     /// </para>
     /// </summary>
     public static string RouteOf(Type controller, MethodInfo action)
@@ -50,23 +50,23 @@ internal static class ApiSurface
         return $"{prefix}/{suffix}";
     }
 
-    /// <summary>Das HTTP-Verb einer Action (<c>GET</c>, <c>POST</c>, …).</summary>
+    /// <summary>The HTTP verb of an action (<c>GET</c>, <c>POST</c>, …).</summary>
     public static string MethodOf(MethodInfo action) =>
         action.GetCustomAttributes<HttpMethodAttribute>().First().HttpMethods.First();
 
-    /// <summary>Ein Route-Platzhalter samt Constraint: <c>{childId:int}</c>, <c>{version:apiVersion}</c>.</summary>
+    /// <summary>A route placeholder including constraint: <c>{childId:int}</c>, <c>{version:apiVersion}</c>.</summary>
     private static readonly Regex Placeholder = new(@"\{(?<name>[A-Za-z0-9_]+)(?::[^}]*)?\}", RegexOptions.Compiled);
 
-    /// <summary>Die Platzhalter-Namen einer Route-Vorlage, ohne Constraint und ohne das Versionssegment.</summary>
+    /// <summary>The placeholder names of a route template, without constraint and without the version segment.</summary>
     public static IEnumerable<string> RouteParameters(string template) =>
         Placeholder.Matches(template)
             .Select(m => m.Groups["name"].Value)
             .Where(n => !n.Equals("version", StringComparison.OrdinalIgnoreCase));
 
     /// <summary>
-    /// Setzt eine Route-Vorlage zu einer konkreten URL zusammen. <c>{version:apiVersion}</c> wird zu
-    /// <c>1</c>, alle übrigen Platzhalter kommen aus <paramref name="values"/>; ein fehlender Wert ist ein
-    /// Fehler und keine leere Stelle – sonst entstünde eine URL, die nichts trifft, und der Test wäre grün.
+    /// Assembles a route template into a concrete URL. <c>{version:apiVersion}</c> becomes
+    /// <c>1</c>, all other placeholders come from <paramref name="values"/>; a missing value is an
+    /// error, not an empty slot – otherwise a URL would result that matches nothing, and the test would pass.
     /// </summary>
     public static string BuildUrl(string template, IReadOnlyDictionary<string, string> values)
     {
@@ -84,7 +84,7 @@ internal static class ApiSurface
         return Regex.Replace(url, "/{2,}", "/").TrimEnd('/');
     }
 
-    /// <summary>Repo-Wurzel: von <see cref="AppContext.BaseDirectory"/> aufwärts bis <c>backend</c>+<c>docs</c> bzw. <c>.git</c>.</summary>
+    /// <summary>Repo root: upward from <see cref="AppContext.BaseDirectory"/> until <c>backend</c>+<c>docs</c> or <c>.git</c>.</summary>
     public static string RepoRoot()
     {
         var dir = new DirectoryInfo(AppContext.BaseDirectory);

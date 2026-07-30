@@ -6,10 +6,10 @@ using Pugling.Api.Errors;
 namespace Pugling.Api.Tests;
 
 /// <summary>
-/// Sichert das maschinenlesbare Fehler-Code-System ab: jeder Emit-Pfad (Validierung, fachliches
-/// <c>ProblemWithCode</c>, Framework/Middleware, Ownership-Filter) liefert einen stabilen <c>code</c>,
-/// der <c>type</c>-URI passt dazu, <c>traceId</c> bleibt erhalten, und das OpenAPI-<c>enum</c> deckt
-/// sich mit der Registry (Drift-Schutz).
+/// Secures the machine-readable error code system: every emit path (validation, domain-specific
+/// <c>ProblemWithCode</c>, framework/middleware, ownership filter) returns a stable <c>code</c>, the
+/// <c>type</c> URI matches it, <c>traceId</c> is preserved, and the OpenAPI <c>enum</c> matches the
+/// registry (drift protection).
 /// </summary>
 public class ErrorCodeTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWebAppFactory>
 {

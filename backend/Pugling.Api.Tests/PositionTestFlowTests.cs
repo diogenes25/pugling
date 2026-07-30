@@ -8,8 +8,8 @@ using Pugling.Api.Models;
 namespace Pugling.Api.Tests;
 
 /// <summary>
-/// End-to-End des positions-basierten Abschlusstests (Etappe 3): Inhalt aus der Übungs-Config,
-/// typ-neutrale Bewertung gegen die Item-Lösung, Bestehen an <see cref="PlanPosition.GoalThreshold"/>.
+/// End-to-end of the position-based final test (stage 3): content from the exercise config,
+/// type-neutral scoring against the item solution, passing based on <see cref="PlanPosition.GoalThreshold"/>.
 /// </summary>
 public class PositionTestFlowTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWebAppFactory>
 {
@@ -122,16 +122,16 @@ public class PositionTestFlowTests(PuglingWebAppFactory factory) : IClassFixture
     }
 
     /// <summary>
-    /// Der Grenzfall der Bestehensgrenze: ein Ergebnis <b>genau auf</b> der Schwelle gilt als bestanden
-    /// (<c>ScorePercent &gt;= passPercent</c>), nicht erst darüber.
+    /// The edge case of the pass threshold: a result <b>exactly at</b> the threshold counts as passed
+    /// (<c>ScorePercent &gt;= passPercent</c>), not only above it.
     /// <para>
-    /// Warum eigens: die übrigen Tests dieser Klasse prüfen 100 gegen 80, 50 gegen 80, 50 gegen 40, 50 gegen 3
-    /// und 50 gegen 90 – jedes Mal echt darüber oder echt darunter. Aus <c>&gt;=</c> ein <c>&gt;</c> zu machen
-    /// blieb darum vollständig grün (docs/testplan.md, Injektion D01 – die teuerste Lücke der Messung). Der
-    /// Fehler kostet echtes Guthaben in <b>beide</b> Richtungen: <see cref="TestAttempt.Passed"/> entscheidet
-    /// über <c>IsGoalMetAsync</c> gleichzeitig die Ziel-Punkte (<see cref="PointKind.Goal"/>) und das
-    /// Ausbleiben des Münz-Malus – ein Kind mit exakt der geforderten Quote verlöre die Belohnung
-    /// <i>und</i> bekäme den Abzug.
+    /// Why this needs its own test: the other tests in this class check 100 against 80, 50 against 80,
+    /// 50 against 40, 50 against 3, and 50 against 90 – always genuinely above or genuinely below. Turning
+    /// <c>&gt;=</c> into a <c>&gt;</c> therefore stayed fully green (docs/testplan.md, injection D01 – the most
+    /// expensive gap of the measurement). The bug costs real balance in <b>both</b> directions:
+    /// <see cref="TestAttempt.Passed"/> decides, via <c>IsGoalMetAsync</c>, both the goal points
+    /// (<see cref="PointKind.Goal"/>) and whether the coin penalty is skipped – a child with exactly the
+    /// required rate would lose the reward <i>and</i> get the deduction.
     /// </para>
     /// </summary>
     [Fact]

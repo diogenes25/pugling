@@ -5,10 +5,10 @@ using Pugling.Api.Models;
 namespace Pugling.Api.Tests;
 
 /// <summary>
-/// Prüft den Zeitfenster-Multiplikator der Basispunkte (<see cref="ScoringService"/>): eine richtige
-/// Wiederholung wird mit dem Faktor des zur Uhrzeit aktiven <see cref="TimeSlotRule"/> gewichtet;
-/// außerhalb aller Fenster gilt Faktor 1,0. Direkter Service-Test mit FIXER Uhrzeit – kein Wanduhr-Bezug,
-/// darum reihenfolge-/zeitunabhängig.
+/// Checks the time-slot multiplier of the base points (<see cref="ScoringService"/>): a correct
+/// review is weighted with the factor of the <see cref="TimeSlotRule"/> active at that time of day;
+/// outside all slots, factor 1.0 applies. Direct service test with a FIXED time of day – no wall-clock
+/// dependency, hence order-/time-independent.
 /// </summary>
 public class ScoringTimeSlotTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWebAppFactory>
 {
@@ -46,9 +46,9 @@ public class ScoringTimeSlotTests(PuglingWebAppFactory factory) : IClassFixture<
     }
 
     /// <summary>
-    /// Überlappende Fenster sind erlaubt (das Anlegen verbietet sie nicht) – dann muss die Auswahl trotzdem
-    /// **festliegen**: das engste, also am spätesten beginnende Fenster gewinnt. Ohne diese Ordnung entschied
-    /// die Datenbank-Laune, und dieselbe richtige Antwort brachte mal 30, mal 50 Punkte.
+    /// Overlapping slots are allowed (creation does not forbid them) – but the selection must still be
+    /// **deterministic**: the narrowest slot, i.e. the one starting latest, wins. Without this ordering,
+    /// the database's whim decided, and the same correct answer sometimes yielded 30, sometimes 50 points.
     /// </summary>
     [Fact]
     public async Task Bei_ueberlappenden_Fenstern_gewinnt_deterministisch_das_engste()

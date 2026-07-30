@@ -7,9 +7,9 @@ using Pugling.Api.Models;
 namespace Pugling.Api.Tests;
 
 /// <summary>
-/// Ziel-/Punkte-Engine des Positions-Modells (Etappe 4): ein bestandener Positions-Test erfüllt das
-/// Tagesziel der Position, bucht die Ziel-Punkte einmalig (<see cref="PointKind.Goal"/>) und lässt die
-/// Tagesmission (<c>overview</c>) als erledigt gelten. Ein zweiter Abschluss zahlt nicht doppelt.
+/// Goal/points engine of the position model (stage 4): a passed position test fulfills the
+/// position's daily goal, books the goal points once (<see cref="PointKind.Goal"/>) and lets the
+/// daily mission (<c>overview</c>) count as done. A second completion does not pay out twice.
 /// </summary>
 public class PositionGoalOverviewTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWebAppFactory>
 {
@@ -74,11 +74,11 @@ public class PositionGoalOverviewTests(PuglingWebAppFactory factory) : IClassFix
     }
 
     /// <summary>
-    /// Eine Position darf ein Pflichtziel <b>ohne</b> Belohnung tragen (<c>PointsGoalMet == 0</c>): die
-    /// Pflicht gilt, es gibt nur nichts dafür. Dann darf auch nichts gebucht werden – weder eine
-    /// Belohnungs-Zeile noch eine Ledger-Buchung über 0. Der Saldo bliebe zwar gleich, aber Verlauf und
-    /// Auswertung füllten sich mit Nullzeilen, die eine Belohnung <i>behaupten</i> (docs/testplan.md,
-    /// Injektion B06). Eigenes Kind, damit „keine Ziel-Buchung" über das ganze Konto prüfbar ist.
+    /// A position may carry a mandatory goal <b>without</b> a reward (<c>PointsGoalMet == 0</c>): the
+    /// mandatory goal applies, there is just nothing for it. Then nothing may be booked either - neither a
+    /// reward row nor a ledger entry of 0. The balance would stay the same, but history and
+    /// reporting would fill up with zero rows that <i>claim</i> a reward (docs/testplan.md,
+    /// injection B06). Own child, so that "no goal booking" can be checked across the whole account.
     /// </summary>
     [Fact]
     public async Task ZielOhnePunkte_ErfuelltDiePflicht_BuchtAberNichts()
@@ -116,18 +116,18 @@ public class PositionGoalOverviewTests(PuglingWebAppFactory factory) : IClassFix
     }
 
     /// <summary>
-    /// Der <b>Verlierer eines nebenläufigen Zielabschlusses</b> darf keinen Fehler bekommen. Zwei
-    /// gleichzeitige Abschlüsse derselben Periode (Doppeltipp auf „Abgeben", zwei offene Tabs) laufen beide
-    /// durch die Existenzprüfung; der zweite trifft danach den Unique-Index
-    /// <c>(PlanPositionId, PeriodKey)</c>. Fachlich ist nichts offen – die Belohnung liegt, sie ist je
-    /// Periode einmalig – also wäre ein 500 auf einen gelungenen Abschluss die einzige Wirkung.
+    /// The <b>loser of a concurrent goal completion</b> must not get an error. Two
+    /// simultaneous completions of the same period (double-tap on "submit", two open tabs) both run
+    /// through the existence check; the second then hits the unique index
+    /// <c>(PlanPositionId, PeriodKey)</c>. Nothing is open from a business standpoint - the reward is settled, it
+    /// is unique per period - so a 500 on a successful completion would be the only effect.
     /// <para>
-    /// Das Rennen wird hier <b>deterministisch</b> gestellt, statt zwei Submits parallel abzuschicken: das
-    /// Fenster zwischen Prüfung und <c>SaveChanges</c> ist Bruchteile einer Millisekunde breit, ein
-    /// paralleler Doppel-Submit träfe es fast nie und wäre grün, ohne den Pfad je zu betreten. Stattdessen
-    /// wird der Zustand des Verlierers hergestellt: die Belohnung ist vom echten Gewinner (dem Submit
-    /// oben) schon <i>festgeschrieben</i>, und ein zweiter Kontext hält die Buchung noch <i>ungespeichert</i>
-    /// vor – genau die Lage, in der seine Prüfung vor dem Commit des Gewinners lief.
+    /// The race is staged <b>deterministically</b> here instead of sending two submits in parallel: the
+    /// window between the check and <c>SaveChanges</c> is a fraction of a millisecond wide, a
+    /// parallel double submit would almost never hit it and would pass green without ever exercising the path.
+    /// Instead the loser's state is constructed directly: the reward is already <i>committed</i> by the real
+    /// winner (the submit above), and a second context still holds the entry <i>unsaved</i>
+    /// - exactly the situation in which its check ran before the winner's commit.
     /// </para>
     /// </summary>
     [Fact]
@@ -183,9 +183,9 @@ public class PositionGoalOverviewTests(PuglingWebAppFactory factory) : IClassFix
     }
 
     /// <summary>
-    /// Ein einmal erreichtes <b>Wochenziel</b> darf im Verlauf (<c>overview/progress</c>) genau einmal zählen –
-    /// nicht an jedem Tag der Woche. Regression: die Belohnung trägt den Wochen-Montag als Perioden-Schlüssel,
-    /// der Tages-Rollup muss deshalb über den echten Buchungstag summieren, sonst überhöht sich TotalPoints (bis 7×).
+    /// A <b>weekly goal</b>, once reached, must count exactly once in the history (<c>overview/progress</c>) -
+    /// not on every day of the week. Regression: the reward carries the week's Monday as the period key,
+    /// so the daily rollup must sum over the actual booking day, otherwise TotalPoints is inflated (up to 7x).
     /// </summary>
     [Fact]
     public async Task Wochenziel_WirdImVerlauf_NurEinmalGezaehlt()
@@ -223,9 +223,9 @@ public class PositionGoalOverviewTests(PuglingWebAppFactory factory) : IClassFix
     }
 
     /// <summary>
-    /// Der Verlauf (<c>overview/progress</c>) unterstützt Filter (Datumsbereich), Sortierung und Paging.
-    /// Wichtig: Paging/Filter wirken nur auf die <c>days</c>-Liste; die Kennzahlen (<c>totalDays</c> etc.)
-    /// bleiben über die gesamte Laufzeit stabil, und <c>X-Total-Count</c> spiegelt die <b>gefilterte</b> Gesamtzahl.
+    /// The history (<c>overview/progress</c>) supports filtering (date range), sorting and paging.
+    /// Important: paging/filtering only affect the <c>days</c> list; the metrics (<c>totalDays</c> etc.)
+    /// stay stable across the whole run, and <c>X-Total-Count</c> reflects the <b>filtered</b> total count.
     /// </summary>
     [Fact]
     public async Task Verlauf_Progress_UnterstuetztFilterSortUndPaging()

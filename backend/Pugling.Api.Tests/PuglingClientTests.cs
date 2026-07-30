@@ -5,9 +5,9 @@ using Pugling.Client;
 namespace Pugling.Api.Tests;
 
 /// <summary>
-/// Fährt <c>Pugling.Client</c> gegen die echte API (In-Process-TestServer). Das ist der Beweis, dass die
-/// geteilte HTTP-Schicht trägt, bevor die KI-Agenten darauf aufsetzen: Login/Token, Enum-als-String-Parität,
-/// ProblemDetails→Ausnahme mit stabilem <c>code</c> und die typisierten Wrapper beider Ebenen.
+/// Drives <c>Pugling.Client</c> against the real API (in-process test server). This is the proof that the
+/// shared HTTP layer holds up before the AI agents build on it: login/token, enum-as-string parity,
+/// ProblemDetails→exception with a stable <c>code</c>, and the typed wrappers of both tiers.
 /// </summary>
 public class PuglingClientTests : IClassFixture<PuglingWebAppFactory>
 {
@@ -32,10 +32,10 @@ public class PuglingClientTests : IClassFixture<PuglingWebAppFactory>
     private StudentApi ProgressOfChild() => new(Authenticated(1, "0000"));
 
     /// <summary>
-    /// Ohne Token gehen <b>nur</b> die Anmelde-Routen hinaus. Der Filter des Handlers traf vorher jeden
-    /// Pfad mit „/auth/" – also auch das <c>[Authorize]</c>-geschützte <c>auth/me</c>: das ging ohne
-    /// Bearer hinaus, und weil derselbe Kurzschluss den 401-Retry überspringt, bekam der Aufrufer
-    /// unweigerlich <c>unauthorized</c> statt seiner Identität.
+    /// Without a token, <b>only</b> the login routes go out unauthenticated. The handler's filter used to
+    /// match every path containing "/auth/" – including the <c>[Authorize]</c>-protected <c>auth/me</c>:
+    /// that went out without a bearer token, and because the same shortcut skips the 401 retry, the caller
+    /// inevitably got <c>unauthorized</c> instead of its identity.
     /// </summary>
     [Fact]
     public async Task Authentifizierte_Auth_Routen_bekommen_ihr_Token()
@@ -200,9 +200,9 @@ public class PuglingClientTests : IClassFixture<PuglingWebAppFactory>
     }
 
     /// <summary>
-    /// Der Weg, den ein Creator-Agent geht: Reihe und Unit anlegen, ein Profil darauf setzen, die Reihe am
-    /// Lehrbuch des Kindes hinterlegen – und dann das passende Profil <b>finden</b>. Das Matching ist der
-    /// Grund für die ganze Kette; ohne die Reihe am Kind wäre es Raten.
+    /// The path a Creator agent takes: create series and unit, set a profile on it, attach the series to
+    /// the child's textbook – and then <b>find</b> the matching profile. The matching is the reason for
+    /// the whole chain; without the series on the child it would be guesswork.
     /// </summary>
     [Fact]
     public async Task Creator_legt_Buchreihe_und_Profil_an_und_findet_es_zum_Kind()
@@ -336,9 +336,9 @@ public class PuglingClientTests : IClassFixture<PuglingWebAppFactory>
     }
 
     /// <summary>
-    /// Der Beweis, dass die <b>geteilte</b> Taxonomie über die Ebenen hinweg trägt: der Creator taggt ein
-    /// Bild, der Supervisor pflegt dasselbe Interesse am Kind – und beide landen auf demselben Tag. Genau
-    /// darauf setzt die spätere Bildauswahl auf; zwei getrennte Vokabulare könnten nur raten.
+    /// The proof that the <b>shared</b> taxonomy holds up across tiers: the Creator tags an image, the
+    /// Supervisor maintains the same interest on the child – and both land on the same tag. The later
+    /// image selection builds exactly on this; two separate vocabularies could only guess.
     /// </summary>
     [Fact]
     public async Task Medien_und_Kind_Interessen_treffen_denselben_Tag()
@@ -375,9 +375,9 @@ public class PuglingClientTests : IClassFixture<PuglingWebAppFactory>
     }
 
     /// <summary>
-    /// Die Zuordnung ist n:m in beide Richtungen – der Grund für eine eigene Ressource statt einer Spalte
-    /// am Träger. Hier über den Client: ein Motiv bekommt zwei Darstellungen, eine davon dient zusätzlich
-    /// einem zweiten Wort.
+    /// The mapping is n:m in both directions – the reason for a dedicated resource instead of a column
+    /// on the carrier. Here via the client: one motif gets two renderings, one of which also serves a
+    /// second word.
     /// </summary>
     [Fact]
     public async Task Ein_Motiv_traegt_mehrere_Bilder_und_ein_Bild_dient_mehreren_Woertern()
@@ -412,8 +412,8 @@ public class PuglingClientTests : IClassFixture<PuglingWebAppFactory>
     }
 
     /// <summary>
-    /// Der Upload über den Client: ein Agent liefert Bytes, der Server macht daraus die Auflösungen.
-    /// Genau der Weg, den ein KI-Creator später nimmt – er kann Bilder erzeugen, aber nicht hosten.
+    /// The upload via the client: an agent supplies bytes, the server produces the resolutions from
+    /// them. Exactly the path an AI Creator later takes – it can generate images, but not host them.
     /// </summary>
     [Fact]
     public async Task Client_laedt_ein_Bild_hoch_und_der_Server_erzeugt_die_Aufloesungen()
@@ -434,7 +434,7 @@ public class PuglingClientTests : IClassFixture<PuglingWebAppFactory>
         Assert.Matches("^#[0-9a-f]{6}$", asset.Placeholder!);
     }
 
-    /// <summary>Ein echtes PNG – der Server soll an dekodierbaren Bytes arbeiten, nicht an einer Attrappe.</summary>
+    /// <summary>A real PNG – the server should work on decodable bytes, not on a dummy.</summary>
     private static byte[] TinyPng(int width, int height)
     {
         using var bitmap = new SkiaSharp.SKBitmap(width, height);
@@ -444,7 +444,7 @@ public class PuglingClientTests : IClassFixture<PuglingWebAppFactory>
         return data.ToArray();
     }
 
-    /// <summary>Der Eignungs-Filter blendet aus, was ein Kindprofil nie sehen dürfte.</summary>
+    /// <summary>The suitability filter hides what a child profile should never see.</summary>
     [Fact]
     public async Task MaxRating_blendet_nicht_freigegebene_Darstellungen_aus()
     {

@@ -4,12 +4,12 @@ using Pugling.Api.Data;
 namespace Pugling.Api.Tests;
 
 /// <summary>
-/// Tore für die <b>Form des Datenbankschemas</b> (docs/codequalitaet-gates-plan.md). Sie prüfen das
-/// EF-Modell selbst, nicht sein Verhalten – deshalb brauchen sie keinen Host und keine Datenbank:
-/// Modell und Migrations-Snapshot liegen beide in der Assembly.
+/// Gates for the <b>shape of the database schema</b> (docs/codequalitaet-gates-plan.md). They check the
+/// EF model itself, not its behavior – which is why they need no host and no database:
+/// the model and the migration snapshot both live in the assembly.
 /// <para>
-/// Jeder Test trägt einen <b>Selbstschutz gegen falsch-grün</b>: greift die Reflexion nicht (leer
-/// gebauter Kontext, verschobene Migrations-Assembly), sähe sie nichts und bestünde inhaltsleer.
+/// Every test carries a <b>self-protection against false-green</b>: if the reflection doesn't catch
+/// anything (an empty-built context, a moved migrations assembly), it would see nothing and pass vacuously.
 /// </para>
 /// </summary>
 public class SchemaGuardTests
@@ -22,10 +22,10 @@ public class SchemaGuardTests
             .Options);
 
     /// <summary>
-    /// <b>G1 – kein Modell-Drift.</b> Weicht das Modell vom Snapshot der letzten Migration ab, fehlt eine
-    /// Migration. Das fiel bisher <i>nirgends</i> auf: die Tests fahren <c>Migrate()</c>, und eine Spalte,
-    /// die nur im Modell existiert, wird von SQLite beim Lesen einfach nicht gefunden – der Fehler landet
-    /// als scheinbar fachlicher Testfehler an ganz anderer Stelle.
+    /// <b>G1 – no model drift.</b> If the model diverges from the snapshot of the last migration, a
+    /// migration is missing. This has gone unnoticed <i>anywhere</i> so far: the tests run <c>Migrate()</c>,
+    /// and a column that only exists in the model is simply not found by SQLite when reading – the error
+    /// surfaces as an apparently domain-specific test failure at a completely different spot.
     /// </summary>
     [Fact]
     public void Modell_Und_Migrationen_Stimmen_Ueberein()
@@ -45,15 +45,15 @@ public class SchemaGuardTests
     }
 
     /// <summary>
-    /// <b>G1b – die Kette bleibt bei genau einer Migration.</b> Solange die App unveröffentlicht ist und
-    /// Altdaten verzichtbar sind, wird vor jedem Etappenabschluss neu gefaltet
-    /// (<c>Data/Migrations</c> löschen + <c>migrations add InitialCreate</c>). Das macht
-    /// Spaltenumbenennungen und Typwechsel kostenlos – kein generierter SQLite-Tabellen-Neubau, den
-    /// jemand abnehmen muss.
+    /// <b>G1b – the chain stays at exactly one migration.</b> As long as the app is unpublished and
+    /// legacy data is dispensable, it gets refolded before every stage is completed
+    /// (delete <c>Data/Migrations</c> + <c>migrations add InitialCreate</c>). This makes
+    /// column renames and type changes free – no generated SQLite table rebuild that
+    /// someone has to sign off on.
     /// <para>
-    /// Diese Zusicherung ist <b>bewusst endlich</b>: mit der ersten Veröffentlichung braucht es einen
-    /// echten Upgrade-Pfad, und dann wird sie entfernt. Dass das eine sichtbare Entscheidung ist statt
-    /// einer stillen Erosion, ist ihr eigentlicher Zweck.
+    /// This assertion is <b>deliberately finite</b>: the first release will need a
+    /// real upgrade path, and then it gets removed. That this is a visible decision rather than
+    /// a silent erosion is its actual purpose.
     /// </para>
     /// </summary>
     [Fact]
@@ -71,17 +71,17 @@ public class SchemaGuardTests
     }
 
     /// <summary>
-    /// <b>G9 – nur bewusste DB-Defaults.</b> Ein SQL-<c>DEFAULT</c> ist eine Zusage an Schreiber
-    /// <i>außerhalb</i> von EF; EF selbst benennt in jedem <c>INSERT</c> alle gemappten Properties und
-    /// konsultiert ihn nie. Vor dem Squash trugen 15 Spalten eine solche Klausel, ohne dass sie irgendwo
-    /// im Modell stand: sie waren ein Nebenprodukt davon, per <c>AddColumn(defaultValue:…)</c> angehängt
-    /// worden zu sein. Zwei davon waren sogar schädlich – ein <c>ConcurrencyStamp</c> mit Vorgabewert
-    /// macht die optimistische Sperre für jede nicht über EF eingefügte Zeile wirkungslos, und das an
-    /// geldrelevanten Tabellen.
+    /// <b>G9 – only deliberate DB defaults.</b> A SQL <c>DEFAULT</c> is a promise to writers
+    /// <i>outside</i> of EF; EF itself names all mapped properties in every <c>INSERT</c> and
+    /// never consults it. Before the squash, 15 columns carried such a clause without it appearing
+    /// anywhere in the model: they were a byproduct of having been attached via <c>AddColumn(defaultValue:…)</c>.
+    /// Two of them were even harmful – a <c>ConcurrencyStamp</c> with a default value
+    /// renders the optimistic lock ineffective for any row not inserted via EF, and that on
+    /// money-relevant tables.
     /// <para>
-    /// Dieser Wächter verhindert, dass sie über die nächsten Migrationen wieder nachwachsen. Ein neuer
-    /// Default ist erlaubt – aber nur als <c>HasDefaultValue</c> im Modell und mit einem Eintrag hier,
-    /// also als Entscheidung statt als Nebenwirkung.
+    /// This guard prevents them from growing back over the next migrations. A new
+    /// default is allowed – but only as <c>HasDefaultValue</c> in the model and with an entry here,
+    /// i.e. as a decision instead of a side effect.
     /// </para>
     /// </summary>
     [Fact]
@@ -119,14 +119,14 @@ public class SchemaGuardTests
     }
 
     /// <summary>
-    /// <b>G4 – jedes persistierte Enum liegt als String in der DB.</b> Der Vertrag spricht nach außen
-    /// ohnehin Strings (<c>JsonStringEnumConverter</c>); waren es innen Zahlen, gab es zwei Darstellungen
-    /// desselben Werts und eine stille Kopplung an die Mitglieder-Reihenfolge – ein eingeschobener
-    /// Enum-Wert hätte gespeicherte Daten umgedeutet.
+    /// <b>G4 – every persisted enum is stored as a string in the DB.</b> The contract speaks strings
+    /// externally anyway (<c>JsonStringEnumConverter</c>); if they were numbers internally, there would be
+    /// two representations of the same value and a silent coupling to member order – an inserted
+    /// enum value would have reinterpreted stored data.
     /// <para>
-    /// Erlaubte Ausnahmen sind <c>[Flags]</c> (eine Bit-Kombination hat keinen Namen) und die ordnend
-    /// verglichenen Enums, die im DbContext namentlich mit Grund gelistet sind. Dieser Test liest genau
-    /// jene Liste, damit Regel und Ausnahme nicht an zwei Orten gepflegt werden müssen.
+    /// Allowed exceptions are <c>[Flags]</c> (a bit combination has no name) and the enums compared for
+    /// ordering that are listed by name with a reason in the DbContext. This test reads exactly
+    /// that list, so the rule and the exception don't have to be maintained in two places.
     /// </para>
     /// </summary>
     [Fact]
@@ -166,24 +166,24 @@ public class SchemaGuardTests
     }
 
     /// <summary>
-    /// <b>G2 – jeder Fremdschlüssel hat ein abgenommenes Löschverhalten.</b> Ein Löschverhalten ist die
-    /// gefährlichste stille Entscheidung im Modell: es entscheidet, ob eine Zeile <i>Daten mitnimmt</i>.
-    /// Genau dort saß der teuerste Fund dieses Umbaus – <c>Adult→ShopArticle→ChildInventory</c> war
-    /// durchgehend <c>Cascade</c>, sodass das Löschen eines Supervisors bezahltes Kind-Inventar vernichtete,
-    /// während die Kaufbelege daneben stehenblieben.
+    /// <b>G2 – every foreign key has a signed-off delete behavior.</b> A delete behavior is the
+    /// most dangerous silent decision in the model: it decides whether a row <i>takes data down with it</i>.
+    /// That is exactly where the most expensive finding of this restructuring sat –
+    /// <c>Adult→ShopArticle→ChildInventory</c> was <c>Cascade</c> throughout, so deleting a supervisor
+    /// destroyed paid-for child inventory while the purchase receipts next to it remained standing.
     /// <para>
-    /// Warum eine <b>literal gepinnte Tabelle</b> und keine schlaue Regel: Reflexion kann „ausdrücklich
-    /// gesetzt" nicht von „von der EF-Konvention geerbt" unterscheiden. Eine Regel könnte also nur die
-    /// <i>Werte</i> prüfen, nicht die Absicht – und wäre bei jeder neuen FK stumm. Die Tabelle ist der
-    /// ehrliche Ersatz: sie erzwingt bei jeder neuen Beziehung <b>eine bewusste Zeile</b>, und sie schlägt
-    /// in beide Richtungen an (auch bei einer FK, die verschwindet).
+    /// Why a <b>literally pinned table</b> and not a clever rule: reflection cannot distinguish "explicitly
+    /// set" from "inherited from the EF convention". A rule could therefore only check the
+    /// <i>values</i>, not the intent – and would stay silent for every new FK. The table is the
+    /// honest substitute: it forces <b>one deliberate line</b> for every new relationship, and it
+    /// triggers in both directions (also for an FK that disappears).
     /// </para>
     /// <para>
-    /// Zusätzlich verboten ist <see cref="DeleteBehavior.ClientSetNull"/> – der Konventions-Default für
-    /// optionale Beziehungen. Er räumt nur im <i>geladenen</i> ChangeTracker auf und lässt die DB-Seite
-    /// offen. Dieselbe Zusicherung fing beim Ausschreiben der Konventions-Cascades einen echten Fehler:
-    /// ein <c>WithMany()</c> ohne die vorhandene Gegen-Navigation ließ EF eine <b>zweite</b> Beziehung
-    /// (<c>ChildId1</c>) anlegen, und die trug genau diesen Wert.
+    /// Additionally forbidden is <see cref="DeleteBehavior.ClientSetNull"/> – the convention default for
+    /// optional relationships. It only cleans up in the <i>loaded</i> ChangeTracker and leaves the DB side
+    /// open. This very assertion caught a real bug while writing out the convention cascades:
+    /// a <c>WithMany()</c> without the existing counter-navigation let EF create a <b>second</b>
+    /// relationship (<c>ChildId1</c>), and that one carried exactly this value.
     /// </para>
     /// </summary>
     [Fact]

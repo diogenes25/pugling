@@ -5,18 +5,18 @@ using System.Text.Json;
 namespace Pugling.Api.Tests;
 
 /// <summary>
-/// Die <c>check</c>-/<c>generate</c>-Endpunkte der typisierten Übungen: die Naht zwischen geprüfter Logik
-/// und unbelegter Ausspielung.
+/// The <c>check</c>/<c>generate</c> endpoints of the typed exercises: the seam between tested logic
+/// and untested delivery.
 /// <para>
-/// Angelegt beim Schließen der Abdeckungslücke (docs/codequalitaet-gates-plan.md, C3). Der Plan nennt genau
-/// dieses Muster als lehrreich: <c>ArithmeticProblemGeneratorTests</c> prüft den <b>Algorithmus</b>, aber
-/// den <b>Endpunkt</b>, der ihn nach außen gibt, rief nie jemand auf. Bei generiertem Code reißt es
-/// typischerweise dort – die Logik stimmt, die Ausspielung nicht.
+/// Created while closing the coverage gap (docs/codequalitaet-gates-plan.md, C3). The plan names exactly
+/// this pattern as instructive: <c>ArithmeticProblemGeneratorTests</c> checks the <b>algorithm</b>, but
+/// the <b>endpoint</b> that exposes it was never called by anyone. With generated code, this is typically
+/// where it breaks – the logic is correct, the delivery isn't.
 /// </para>
 /// </summary>
 public class ExerciseCheckEndpointTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWebAppFactory>
 {
-    /// <summary>Fach + Kapitel, unter denen die Übungen dieses Tests hängen.</summary>
+    /// <summary>Subject + chapter under which the exercises of this test hang.</summary>
     private static async Task<string> ChapterBaseAsync(HttpClient creator, string fach)
     {
         var subjectId = await TestApi.IdAsync(await creator.PostAsJsonAsync("/api/v1/creator/subjects",

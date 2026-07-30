@@ -4,7 +4,7 @@ using System.Text.Json;
 
 namespace Pugling.Api.Tests;
 
-/// <summary>Integrationstests für den PIN-Login und die Selbstauskunft.</summary>
+/// <summary>Integration tests for the PIN login and the self-info lookup.</summary>
 public class AuthTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWebAppFactory>
 {
     [Fact]

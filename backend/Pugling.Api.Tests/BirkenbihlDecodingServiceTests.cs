@@ -3,10 +3,10 @@ using Microsoft.Extensions.DependencyInjection;
 namespace Pugling.Api.Tests;
 
 /// <summary>
-/// Tests der Birkenbihl-Dekodierung: der Tokenizer (<see cref="BirkenbihlDecodingService.Tokenize"/>)
-/// arbeitet zustandslos; der Speicher-Nachschlag (<see cref="BirkenbihlDecodingService.LookupAsync"/>)
-/// vergleicht die Wort-Oberfläche case-insensitiv, die Sprachcodes aber bewusst EXAKT – eine dokumentierte
-/// Zusage (fail-closed), die bislang ungeprüft war.
+/// Tests for the Birkenbihl decoding: the tokenizer (<see cref="BirkenbihlDecodingService.Tokenize"/>)
+/// works statelessly; the store lookup (<see cref="BirkenbihlDecodingService.LookupAsync"/>)
+/// compares the word surface case-insensitively, but the language codes deliberately EXACTLY - a documented
+/// guarantee (fail-closed) that had been untested so far.
 /// </summary>
 public class BirkenbihlDecodingServiceTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWebAppFactory>
 {

@@ -10,18 +10,18 @@ using Microsoft.AspNetCore.Mvc.Routing;
 namespace Pugling.Api.Tests;
 
 /// <summary>
-/// Sammelt prozessweit, <b>welche</b> Controller-Actions die Testsuite tatsächlich erfolgreich aufgerufen
-/// hat – die Datenquelle des Abdeckungs-Wächters (<see cref="EndpointCoverageGuard"/>,
+/// Collects process-wide <b>which</b> controller actions the test suite has actually invoked
+/// successfully – the data source for the coverage guard (<see cref="EndpointCoverageGuard"/>,
 /// docs/codequalitaet-gates-plan.md, C4).
 /// <para>
-/// Warum nicht die Zeilen-/Zweigabdeckung? Weil sie lügt: 97,9 % Zeilen bei 57 nie aufgerufenen Actions.
-/// Coverlet zählt async-State-Machines und kleine <c>Get</c>-Rümpfe mit, und eine hohe Quote entsteht auch
-/// dann, wenn ein ganzer Endpunkt nie über HTTP bedient wurde. Gezählt wird darum die Einheit, die das
-/// Produkt nach außen gibt: die <b>Action</b>.
+/// Why not line/branch coverage? Because it lies: 97.9% lines with 57 never-invoked actions.
+/// Coverlet counts async state machines and small <c>Get</c> bodies too, and a high ratio arises even
+/// when an entire endpoint was never served over HTTP. What is counted instead is the unit that the
+/// product exposes externally: the <b>action</b>.
 /// </para>
 /// <para>
-/// Prozessweit statisch, weil jede Testklasse ihren eigenen Host samt Wegwerf-SQLite fährt
-/// (<see cref="PuglingWebAppFactory"/>) – die Summe über alle Hosts ist die Aussage, nicht der einzelne.
+/// Process-wide static, because every test class runs its own host with a disposable SQLite
+/// (<see cref="PuglingWebAppFactory"/>) – the sum across all hosts is what matters, not the individual one.
 /// </para>
 /// </summary>
 internal static class EndpointCoverage
@@ -29,22 +29,22 @@ internal static class EndpointCoverage
     private static readonly ConcurrentDictionary<string, byte> TouchedActions = new(StringComparer.Ordinal);
 
     /// <summary>
-    /// Hält eine Action als „berührt" fest – <b>nur bei Status &lt; 400</b>.
+    /// Marks an action as "touched" – <b>only for status &lt; 400</b>.
     /// <para>
-    /// Der Statuscode ist hier die eigentliche Regel. „Die Route wurde einmal angesprochen" wäre wertlos:
-    /// der Ownership-Matrix-Test (C1) ruft jede kindes-/plan-gebundene Action mit einem fremden Vater auf
-    /// und bekäme 403/404 – damit gälte jede dieser Actions als abgedeckt, ohne dass ihr Rumpf je gelaufen
-    /// ist. Ein 2xx/3xx dagegen belegt, dass die Action <em>ausgeführt</em> und ihr Ergebnis geprüft werden
-    /// konnte. Genau das verlangt C3 („Happy Path + der eine fachlich interessante Fehlerfall").
+    /// The status code is the actual rule here. "The route was hit once" would be worthless:
+    /// the ownership matrix test (C1) calls every child-/plan-bound action with a different supervisor
+    /// and gets 403/404 – that would count every such action as covered without its body ever having
+    /// run. A 2xx/3xx, in contrast, proves that the action was <em>executed</em> and its result could be
+    /// checked. That is exactly what C3 demands ("happy path + the one business-relevant error case").
     /// </para>
     /// </summary>
     public static void RecordSuccess(string controller, string action) =>
         TouchedActions.TryAdd(Key(controller, action), 0);
 
-    /// <summary>Schlüssel einer Action – <c>Controller.Action</c>, wie in den Fehlermeldungen der Wächter.</summary>
+    /// <summary>Key of an action – <c>Controller.Action</c>, as in the guard's error messages.</summary>
     public static string Key(string controller, string action) => $"{controller}.{action}";
 
-    /// <summary>Alle Actions aller Controller der API – das Soll.</summary>
+    /// <summary>All actions of all controllers in the API – the target set.</summary>
     public static IReadOnlyList<string> Inventory() =>
         [.. typeof(Program).Assembly.GetTypes()
             .Where(t => typeof(ControllerBase).IsAssignableFrom(t) && !t.IsAbstract)
@@ -54,30 +54,30 @@ internal static class EndpointCoverage
             .Distinct(StringComparer.Ordinal)
             .OrderBy(k => k, StringComparer.Ordinal)];
 
-    /// <summary>Die Actions, die kein Test erfolgreich aufgerufen hat.</summary>
+    /// <summary>The actions that no test has successfully invoked.</summary>
     public static IReadOnlyList<string> Untouched() =>
         [.. Inventory().Where(k => !TouchedActions.ContainsKey(k))];
 
     /// <summary>
-    /// Anzahl der erfolgreich berührten Actions <b>aus dem Soll</b> – der Selbstschutz der Wächter gegen
-    /// falsch-grün.
+    /// Number of successfully touched actions <b>from the target set</b> – the guard's self-protection
+    /// against false-green.
     /// <para>
-    /// Der Schnitt mit dem Soll ist nötig, nicht kosmetisch: <see cref="Inventory"/> zählt wie die übrigen
-    /// Wächter nur <c>DeclaredOnly</c>, die Middleware sieht dagegen auch die aus
-    /// <c>ExerciseControllerBase</c> <b>geerbten</b> CRUD-Actions der typisierten Übungs-Controller. Ohne
-    /// Schnitt käme „berührt" über „Soll" hinaus und die gemeldete Quote wäre falsch.
+    /// The intersection with the target set is necessary, not cosmetic: <see cref="Inventory"/>, like the
+    /// other guards, counts only <c>DeclaredOnly</c>, whereas the middleware also sees the CRUD actions of
+    /// the typed exercise controllers <b>inherited</b> from <c>ExerciseControllerBase</c>. Without the
+    /// intersection, "touched" would exceed the "target set" and the reported ratio would be wrong.
     /// </para>
     /// </summary>
     public static int TouchedCount => Inventory().Count(TouchedActions.ContainsKey);
 }
 
 /// <summary>
-/// Hängt den Zähler von <see cref="EndpointCoverage"/> in die Pipeline des Test-Hosts.
+/// Hooks the counter from <see cref="EndpointCoverage"/> into the test host's pipeline.
 /// <para>
-/// Als <see cref="IStartupFilter"/> und nicht per <c>IWebHostBuilder.Configure</c>, weil letzteres die
-/// Pipeline von <c>Program.cs</c> <b>ersetzen</b> würde. Die Middleware sitzt ganz vorn und liest den
-/// Endpunkt erst <em>nach</em> <c>next()</c>: gesetzt wird er weiter hinten vom Routing, und er bleibt
-/// danach am <c>HttpContext</c> stehen.
+/// As an <see cref="IStartupFilter"/> and not via <c>IWebHostBuilder.Configure</c>, because the latter
+/// would <b>replace</b> the pipeline from <c>Program.cs</c>. The middleware sits right at the front and
+/// only reads the endpoint <em>after</em> <c>next()</c>: it gets set further downstream by routing, and
+/// stays attached to the <c>HttpContext</c> afterwards.
 /// </para>
 /// </summary>
 internal sealed class EndpointCoverageStartupFilter : IStartupFilter

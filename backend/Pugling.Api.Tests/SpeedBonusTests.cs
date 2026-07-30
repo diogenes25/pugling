@@ -5,16 +5,16 @@ using Pugling.Api.Models;
 namespace Pugling.Api.Tests;
 
 /// <summary>
-/// Prüft den Schnelle-Antwort-Bonus einer Position: serverseitig aus der Zeit seit der letzten Antwort
-/// gemessen, per Positions-Einstellung (<c>SpeedThresholdSeconds</c>/<c>SpeedBonusPoints</c>)
-/// konfigurierbar. Die erste Karte einer Sitzung hat keinen Vorgänger und darum keinen Bonus.
+/// Verifies the fast-answer bonus of a position: measured server-side from the time since the last
+/// answer, configurable per position setting (<c>SpeedThresholdSeconds</c>/<c>SpeedBonusPoints</c>).
+/// The first card of a session has no predecessor and therefore no bonus.
 /// <para>
-/// Die Uhr des Testhosts ist hier <b>eingefroren</b> (<see cref="TestClock"/>): die Antwortzeit wird
-/// eingespeist, nicht erhofft. Vorher standen hier <c>Task.Delay(1200)</c> und – schlimmer – die stille
-/// Annahme, zwei aufeinanderfolgende Requests lägen unter der Anti-Farming-Untergrenze von einer Sekunde.
-/// Das riss unter Last: der Test fiel bei zwei Injektionen mit, die den <c>ShopService</c> betrafen und mit
-/// Bonuspunkten nichts zu tun hatten (docs/testplan.md, Etappe 3). Ein Flake genau hier ist besonders
-/// teuer, weil er wie ein Punkte-Regress aussieht.
+/// The test host's clock is <b>frozen</b> here (<see cref="TestClock"/>): the answer time is fed in,
+/// not hoped for. This used to have <c>Task.Delay(1200)</c> and – worse – the silent assumption that
+/// two consecutive requests would fall under the anti-farming floor of one second. That broke under
+/// load: the test failed alongside two injected defects that concerned the <c>ShopService</c> and had
+/// nothing to do with bonus points (docs/testplan.md, stage 3). A flake right here is especially
+/// costly, because it looks like a points regression.
 /// </para>
 /// </summary>
 public class SpeedBonusTests : IClassFixture<PuglingWebAppFactory>
@@ -73,10 +73,10 @@ public class SpeedBonusTests : IClassFixture<PuglingWebAppFactory>
     }
 
     /// <summary>
-    /// Die Untergrenze ist eine Anti-Farming-Regel: sie verhindert Punkte durch Doppelklicks. Geprüft wird
-    /// sie <b>an</b> ihrer Grenze – 0,9 s bringt nichts, 1,0 s bringt den Bonus. Genau dieses Paar war mit
-    /// der Wanduhr nicht erreichbar; ohne die zweite Zeile wäre die Grenze nur einseitig belegt und dürfte
-    /// nach oben wandern, ohne dass ein Test fällt.
+    /// The floor is an anti-farming rule: it prevents points from double-clicks. It is checked
+    /// <b>right at</b> its boundary – 0.9s yields nothing, 1.0s yields the bonus. This exact pair was
+    /// unreachable with a wall clock; without the second line, the boundary would only be covered on
+    /// one side and could drift upward without any test failing.
     /// </summary>
     [Theory]
     [InlineData(900, 0)]
@@ -93,7 +93,7 @@ public class SpeedBonusTests : IClassFixture<PuglingWebAppFactory>
     }
 
     /// <summary>
-    /// Und oberhalb der Schwelle gibt es nichts mehr – die andere Kante desselben Fensters.
+    /// And above the threshold there is nothing left – the other edge of the same window.
     /// </summary>
     [Fact]
     public async Task ZuLangsameAntwort_UeberDerSchwelle_BringtKeinenBonus()

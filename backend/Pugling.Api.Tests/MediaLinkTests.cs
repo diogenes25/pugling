@@ -5,10 +5,10 @@ using System.Text.Json;
 namespace Pugling.Api.Tests;
 
 /// <summary>
-/// Zuordnung Bild ⇢ Träger (Etappe 3). Der Kern dieser Tests ist die <b>n:m-Eigenschaft in beide
-/// Richtungen</b> – sie ist der Grund, warum die Zuordnung eine eigene Tabelle ist und keine Spalte am
-/// Träger (wie es das Aussprache-Audio 1:1 macht). Dazu die Genauigkeits-Kaskade Item ⊐ Vokabel und die
-/// Rechte-Trennung: der kindneutrale Store ist frei pflegbar, ein Eingriff an einer Übung nicht.
+/// Link between an image and its carrier (stage 3). The core of these tests is the <b>n:m property in both
+/// directions</b> - it's the reason the link is its own table rather than a column on the carrier
+/// (the way pronunciation audio does it 1:1). Plus the specificity cascade item ⊐ vocabulary and the
+/// permission split: the child-neutral store is freely editable, tampering with an exercise is not.
 /// </summary>
 public class MediaLinkTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWebAppFactory>
 {
@@ -267,7 +267,7 @@ public class MediaLinkTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
     private static async Task<int> FirstItemVocabIdAsync(HttpClient father, int exerciseId) =>
         (await ItemsAsync(father, exerciseId))[0].GetProperty("vocabularyId").GetInt32();
 
-    /// <summary>Items über den HATEOAS-Link der Übung lesen – ohne subject/chapter im Test zu wiederholen.</summary>
+    /// <summary>Reads items via the exercise's HATEOAS link - without repeating subject/chapter in the test.</summary>
     private static async Task<JsonElement> ItemsAsync(HttpClient father, int exerciseId)
     {
         var exercise = await GetAsync(father, $"/api/v1/creator/exercises/{exerciseId}");

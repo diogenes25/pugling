@@ -5,9 +5,9 @@ using System.Text.Json;
 namespace Pugling.Api.Tests;
 
 /// <summary>
-/// Interessen-Taxonomie (Etappe 2). Der Kern, den diese Tests absichern: Bild-Tags und Kind-Interessen
-/// schöpfen aus <b>einem</b> Vokabular. Fiele das auseinander, liefe die spätere Bildauswahl ins Leere –
-/// deshalb prüfen die Tests vor allem, dass verschiedene Schreibweisen denselben Tag treffen.
+/// Interest taxonomy (stage 2). The core these tests secure: image tags and child interests draw from
+/// <b>one</b> vocabulary. If this fell apart, the later image selection would run into a void – that's
+/// why the tests mainly check that different spellings hit the same tag.
 /// </summary>
 public class InterestTaxonomyTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWebAppFactory>
 {
@@ -170,9 +170,9 @@ public class InterestTaxonomyTests(PuglingWebAppFactory factory) : IClassFixture
     }
 
     /// <summary>
-    /// Der Backfill überführt die vorhandenen Freitext-Interessen der Bestandskinder beim Start in die
-    /// Taxonomie – ohne ihn stünde die Bildauswahl für jedes bereits gepflegte Kind bei null. Geprüft am
-    /// geseedeten Demo-Kind („Minecraft", „Basketball"), das keiner der übrigen Tests anfasst.
+    /// The backfill migrates the existing children's free-text interests into the taxonomy at startup –
+    /// without it, the image selection would start at zero for every already-maintained child. Verified
+    /// against the seeded demo child ("Minecraft", "Basketball"), which none of the other tests touch.
     /// </summary>
     [Fact]
     public async Task Backfill_UebernimmtFreitextInteressenDerBestandskinder()
@@ -197,11 +197,11 @@ public class InterestTaxonomyTests(PuglingWebAppFactory factory) : IClassFixture
     }
 
     /// <summary>
-    /// Zwei Schreibweisen desselben Slugs in <b>einem</b> Aufruf. Der indizierte Slug-Treffer allein reicht
-    /// dafür nicht: der eben angelegte Tag hängt noch ungespeichert im ChangeTracker und ist für jede
-    /// Abfrage unsichtbar – beide Eingaben legten je eine Zeile an und das Speichern risse den
-    /// Unique-Index. Dasselbe traf den <c>InterestTagBackfill</c> beim Start, für jedes Bestandskind mit
-    /// zwei Schreibweisen im Freitext.
+    /// Two spellings of the same slug in <b>one</b> call. The indexed slug lookup alone is not enough
+    /// for this: the tag just created still hangs unsaved in the ChangeTracker and is invisible to any
+    /// query – both inputs would each create a row and saving would violate the unique index. The same
+    /// hit the <c>InterestTagBackfill</c> at startup, for every existing child with two spellings in the
+    /// free text.
     /// </summary>
     [Fact]
     public async Task ZweiSchreibweisenInEinemAufruf_TreffenDenselbenTag()

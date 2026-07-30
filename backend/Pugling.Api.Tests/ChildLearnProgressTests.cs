@@ -8,9 +8,9 @@ using Pugling.Api.Models;
 namespace Pugling.Api.Tests;
 
 /// <summary>
-/// Kind-zentrische Drill-down-Sicht auf den Vokabel-Lernstand entlang der Katalog-Hierarchie
-/// (Fach → Kapitel → Übung → Item). „Zugewiesen" wird aus den Lehrplänen abgeleitet – auch noch nicht
-/// geübte Übungen erscheinen (Null-Fortschritt), Fortschritt kommt aus dem server-autoritativen Üben.
+/// Child-centric drill-down view of vocabulary learning progress along the catalog hierarchy
+/// (subject → chapter → exercise → item). "Assigned" is derived from the study plans - even exercises not
+/// yet practiced appear (zero progress), progress comes from server-authoritative practicing.
 /// </summary>
 public class ChildLearnProgressTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWebAppFactory>
 {

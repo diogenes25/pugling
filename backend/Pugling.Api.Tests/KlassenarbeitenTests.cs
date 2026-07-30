@@ -4,7 +4,7 @@ using System.Text.Json;
 
 namespace Pugling.Api.Tests;
 
-/// <summary>Happy-Path der Klassenarbeiten: planen, lesen, gezielt üben, schlecht benotete wiederholen.</summary>
+/// <summary>Happy path of class tests: schedule, read, practice in a targeted way, repeat poorly graded ones.</summary>
 public class KlassenarbeitenTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWebAppFactory>
 {
     [Fact]
@@ -90,7 +90,7 @@ public class KlassenarbeitenTests(PuglingWebAppFactory factory) : IClassFixture<
 
     // ─────────────────────────────────────────── Zuordnungen lösen und löschen (C3-Abdeckungslücke)
 
-    /// <summary>Legt eine Klassenarbeit für Kind 1 an und liefert ihre Id.</summary>
+    /// <summary>Creates a class test for child 1 and returns its id.</summary>
     private static async Task<int> AnlegenAsync(HttpClient father, string title)
     {
         var res = await father.PostAsJsonAsync("/api/v1/supervisor/class-tests",

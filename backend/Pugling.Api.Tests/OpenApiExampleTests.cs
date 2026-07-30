@@ -3,7 +3,7 @@ using System.Text.Json;
 
 namespace Pugling.Api.Tests;
 
-/// <summary>Regressionstests für die in Swagger auswählbaren, verifizierten Beispiele.</summary>
+/// <summary>Regression tests for the verified examples selectable in Swagger.</summary>
 public class OpenApiExampleTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWebAppFactory>
 {
     [Fact]

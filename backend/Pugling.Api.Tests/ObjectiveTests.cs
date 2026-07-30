@@ -5,11 +5,11 @@ using System.Text.Json;
 namespace Pugling.Api.Tests;
 
 /// <summary>
-/// „Große Ziele" (Objectives, der kindgerechte OKR-Kern): der Vater setzt eine terminierte Klammer über
-/// messbaren Etappen (Key Results), der Fortschritt wird live aus Lernstand + Klassenarbeits-Note berechnet.
-/// Deckt ab: Anlage/Auswertung, die idempotente Belohnung (Etappen-Häppchen + Voll-Abschluss, Münzen bei
-/// Committed / Gems bei Stretch), den Noten-Anker (ClassTestGrade) sowie Validierung/Rollen. Jeder Test nutzt
-/// ein frisches Kind (isolierte Wallet), damit absolute Salden geprüft werden können.
+/// "Big goals" (objectives, the child-friendly OKR core): the father sets a time-boxed bracket over
+/// measurable milestones (key results), and progress is computed live from learning state + class test
+/// grade. Covers: creation/evaluation, the idempotent reward (milestone chunk + full completion, coins
+/// for Committed / gems for Stretch), the grade anchor (ClassTestGrade), and validation/roles. Every
+/// test uses a fresh child (isolated wallet) so that absolute balances can be checked.
 /// </summary>
 public class ObjectiveTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWebAppFactory>
 {
@@ -243,7 +243,7 @@ public class ObjectiveTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
 
     // ─────────────────────────────────── Liste, Löschen, Sohn-Einzelsicht (C3-Abdeckungslücke)
 
-    /// <summary>Legt ein Objective mit einer Etappe an und liefert dessen Id.</summary>
+    /// <summary>Creates an objective with one key result and returns its id.</summary>
     private static async Task<int> AnlegenAsync(HttpClient father, int childId, int subjectId, string title)
     {
         var created = await JsonAsync(await father.PostAsJsonAsync(Url(childId), new
