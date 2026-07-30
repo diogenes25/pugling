@@ -27,12 +27,12 @@ public class TimetableController(PuglingDbContext db) : ControllerBase
     /// <summary>Stundenplan des Kindes.</summary>
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<IEnumerable<EntryResponse>>> List(int childId)
+    public async Task<ActionResult<IEnumerable<EntryResponse>>> List(int childId, CancellationToken ct = default)
     {
         var entries = await db.Timetable.AsNoTracking().Include(t => t.Subject)
             .Where(t => t.ChildId == childId)
             .OrderBy(t => t.DayOfWeek).ThenBy(t => t.Subject!.Name)
-            .ToListAsync();
+            .ToListAsync(ct);
         return entries.Select(Map).ToList();
     }
 
@@ -42,16 +42,16 @@ public class TimetableController(PuglingDbContext db) : ControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
-    public async Task<ActionResult<EntryResponse>> Create(int childId, CreateEntryDto dto)
+    public async Task<ActionResult<EntryResponse>> Create(int childId, CreateEntryDto dto, CancellationToken ct = default)
     {
-        if (!await db.Subjects.AnyAsync(s => s.Id == dto.SubjectId)) return this.ProblemWithCode(ApiErrors.InvalidReference, "Subject not found.");
-        if (await db.Timetable.AnyAsync(t => t.ChildId == childId && t.SubjectId == dto.SubjectId && t.DayOfWeek == dto.DayOfWeek))
+        if (!await db.Subjects.AnyAsync(s => s.Id == dto.SubjectId, ct)) return this.ProblemWithCode(ApiErrors.InvalidReference, "Subject not found.");
+        if (await db.Timetable.AnyAsync(t => t.ChildId == childId && t.SubjectId == dto.SubjectId && t.DayOfWeek == dto.DayOfWeek, ct))
             return this.ProblemWithCode(ApiErrors.TimetableSlotTaken, "This subject is already scheduled on this weekday.");
 
         var entry = new TimetableEntry { ChildId = childId, SubjectId = dto.SubjectId, DayOfWeek = dto.DayOfWeek, TimeOfDay = dto.TimeOfDay };
         db.Timetable.Add(entry);
-        await db.SaveChangesAsync();
-        await db.Entry(entry).Reference(t => t.Subject).LoadAsync();
+        await db.SaveChangesAsync(ct);
+        await db.Entry(entry).Reference(t => t.Subject).LoadAsync(ct);
         return CreatedAtAction(nameof(List), new { childId }, Map(entry));
     }
 
@@ -59,12 +59,12 @@ public class TimetableController(PuglingDbContext db) : ControllerBase
     [HttpDelete("{entryId:int}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> Delete(int childId, int entryId)
+    public async Task<IActionResult> Delete(int childId, int entryId, CancellationToken ct = default)
     {
-        var entry = await db.Timetable.FirstOrDefaultAsync(t => t.Id == entryId && t.ChildId == childId);
+        var entry = await db.Timetable.FirstOrDefaultAsync(t => t.Id == entryId && t.ChildId == childId, ct);
         if (entry is null) return NotFound();
         db.Timetable.Remove(entry);
-        await db.SaveChangesAsync();
+        await db.SaveChangesAsync(ct);
         return NoContent();
     }
 }

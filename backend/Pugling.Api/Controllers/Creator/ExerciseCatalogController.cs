@@ -39,12 +39,13 @@ public class ExerciseCatalogController(PuglingDbContext db) : ControllerBase
     /// <param name="dir"><c>asc</c> (Default) oder <c>desc</c>; hat Vorrang vor einem <c>-</c>-Präfix in <paramref name="sort"/>.</param>
     /// <param name="skip">Anzahl zu überspringender Einträge (Paging).</param>
     /// <param name="take">Maximale Trefferzahl (1..500). Gesamtzahl im Header <c>X-Total-Count</c>.</param>
+    /// <param name="ct">Abbruch-Token.</param>
     [HttpGet]
     public async Task<IEnumerable<ExerciseSummary>> Search(
         [FromQuery] int? subjectId, [FromQuery] int? chapterId, [FromQuery] int? grade, [FromQuery] SchoolTypes? schoolType,
         [FromQuery] int? categoryId, [FromQuery] string? type, [FromQuery] string? search,
         [FromQuery] bool? mineOnly, [FromQuery] string? sort = null, [FromQuery] string? dir = null,
-        [FromQuery] int skip = 0, [FromQuery] int take = PagingExtensions.DefaultTake)
+        [FromQuery] int skip = 0, [FromQuery] int take = PagingExtensions.DefaultTake, CancellationToken ct = default)
     {
         var fid = User.AdultId();
         var isAdmin = User.IsAdmin();
@@ -93,7 +94,7 @@ public class ExerciseCatalogController(PuglingDbContext db) : ControllerBase
                 isAdmin || (fid != null && e.Grants.Any(g => g.CreatorId == fid && g.Permission == GrantPermission.Owner)),
                 e.ExecutePublic, e.Description,
                 e.DefaultUseLeitner, e.DefaultRequireTypedTest))
-            .ToPagedListAsync(Response, skip, take);
+            .ToPagedListAsync(Response, skip, take, ct);
     }
 
     /// <summary>
@@ -125,14 +126,14 @@ public class ExerciseCatalogController(PuglingDbContext db) : ControllerBase
     /// <summary>Eine einzelne Übung typ-übergreifend per Id (mit Config + Metadaten).</summary>
     [HttpGet("{id:int}")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<ExerciseDetail>> Get(int id)
+    public async Task<ActionResult<ExerciseDetail>> Get(int id, CancellationToken ct = default)
     {
         var e = await db.Exercises.AsNoTracking()
             .Include(x => x.Chapter!).ThenInclude(c => c.Subject)
             .Include(x => x.Category)
             .Include(x => x.Author)
             .Include(x => x.Grants)
-            .FirstOrDefaultAsync(x => x.Id == id);
+            .FirstOrDefaultAsync(x => x.Id == id, ct);
         if (e is null) return NotFound();
 
         var fid = User.AdultId();

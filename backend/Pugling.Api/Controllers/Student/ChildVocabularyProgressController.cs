@@ -39,7 +39,7 @@ public class ChildVocabularyProgressController(PuglingDbContext db) : Controller
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<IEnumerable<ItemProgressResponse>>> List(int childId,
         [FromQuery] int? exerciseId, [FromQuery] int? maxBox, [FromQuery] bool onlyWeak = false,
-        [FromQuery] int skip = 0, [FromQuery] int take = PagingExtensions.DefaultTake)
+        [FromQuery] int skip = 0, [FromQuery] int take = PagingExtensions.DefaultTake, CancellationToken ct = default)
     {
         var q = db.ItemProgress.AsNoTracking().Where(p => p.ChildId == childId);
         if (exerciseId is { } ex) q = q.Where(p => p.ExerciseId == ex);
@@ -55,7 +55,7 @@ public class ChildVocabularyProgressController(PuglingDbContext db) : Controller
                 v == null ? "" : v.Word, v == null ? "" : v.Translation,
                 p.Box, p.MasteryPercent, p.SeenCount, p.CorrectCount, p.IntroducedAt, p.LastAnswerAt, p.LastCorrect);
 
-        var page = await projected.ToPagedListAsync(Response, skip, take);
+        var page = await projected.ToPagedListAsync(Response, skip, take, ct);
         return page.Select(MapRow).ToList();
     }
 
@@ -67,7 +67,7 @@ public class ChildVocabularyProgressController(PuglingDbContext db) : Controller
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<IEnumerable<WordMasteryResponse>>> ByWord(int childId,
         [FromQuery] bool onlyWeak = false,
-        [FromQuery] int skip = 0, [FromQuery] int take = PagingExtensions.DefaultTake)
+        [FromQuery] int skip = 0, [FromQuery] int take = PagingExtensions.DefaultTake, CancellationToken ct = default)
     {
         var groups = db.ItemProgress.AsNoTracking()
             .Where(p => p.ChildId == childId)
@@ -85,11 +85,11 @@ public class ChildVocabularyProgressController(PuglingDbContext db) : Controller
 
         var page = await groups
             .OrderBy(x => x.AvgMastery).ThenByDescending(x => x.Seen).ThenBy(x => x.VocabularyId)
-            .ToPagedListAsync(Response, skip, take);
+            .ToPagedListAsync(Response, skip, take, ct);
 
         var ids = page.Select(g => g.VocabularyId).ToList();
         var vocabById = await db.Vocabulary.AsNoTracking().Where(v => ids.Contains(v.Id))
-            .ToDictionaryAsync(v => v.Id, v => new { v.Word, v.Translation });
+            .ToDictionaryAsync(v => v.Id, v => new { v.Word, v.Translation }, ct);
         return page.Select(g =>
         {
             var v = vocabById.GetValueOrDefault(g.VocabularyId);
@@ -102,7 +102,7 @@ public class ChildVocabularyProgressController(PuglingDbContext db) : Controller
     /// <summary>Der Item-Lernstand des Kindes zu einem einzelnen Item (404, wenn dazu noch kein Fortschritt existiert).</summary>
     [HttpGet("{itemId:int}")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<ItemProgressResponse>> Get(int childId, int itemId)
+    public async Task<ActionResult<ItemProgressResponse>> Get(int childId, int itemId, CancellationToken ct = default)
     {
         var row = await (
             from p in db.ItemProgress.AsNoTracking().Where(p => p.ChildId == childId && p.ItemId == itemId)
@@ -111,7 +111,7 @@ public class ChildVocabularyProgressController(PuglingDbContext db) : Controller
             select new Row(p.ItemId, p.ExerciseId, p.VocabularyId,
                 v == null ? "" : v.Word, v == null ? "" : v.Translation,
                 p.Box, p.MasteryPercent, p.SeenCount, p.CorrectCount, p.IntroducedAt, p.LastAnswerAt, p.LastCorrect))
-            .FirstOrDefaultAsync();
+            .FirstOrDefaultAsync(ct);
         return row is null ? NotFound() : MapRow(row);
     }
 
@@ -119,13 +119,13 @@ public class ChildVocabularyProgressController(PuglingDbContext db) : Controller
     [HttpGet("{itemId:int}/history")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<IEnumerable<HistoryResponse>>> History(int childId, int itemId,
-        [FromQuery] int skip = 0, [FromQuery] int take = PagingExtensions.DefaultTake)
+        [FromQuery] int skip = 0, [FromQuery] int take = PagingExtensions.DefaultTake, CancellationToken ct = default)
     {
         var events = await db.ItemReviewEvents.AsNoTracking()
             .Where(e => e.ChildId == childId && e.ItemId == itemId)
             .OrderByDescending(e => e.At).ThenByDescending(e => e.Id)
             .Select(e => new HistoryResponse(e.At, e.Source.ToString(), e.StageValue, e.GivenAnswer, e.WasCorrect, e.PlanPositionId))
-            .ToPagedListAsync(Response, skip, take);
+            .ToPagedListAsync(Response, skip, take, ct);
         return events;
     }
 

@@ -28,7 +28,7 @@ public class StudentPlansController(PuglingDbContext db) : ControllerBase
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult<IEnumerable<PlanResponse>>> List()
+    public async Task<ActionResult<IEnumerable<PlanResponse>>> List(CancellationToken ct = default)
     {
         var cid = User.ChildId();
         if (cid is null) return Forbid();
@@ -38,6 +38,6 @@ public class StudentPlansController(PuglingDbContext db) : ControllerBase
             .Where(p => p.ChildId == cid.Value && p.Active && p.StartDate <= today && p.EndDate >= today)
             .OrderByDescending(p => p.CreatedAt)
             .Select(StudyPlansController.ToResponse(today))
-            .ToListAsync());
+            .ToListAsync(ct));
     }
 }
