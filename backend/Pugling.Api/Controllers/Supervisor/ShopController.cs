@@ -53,11 +53,13 @@ public class ShopController(PuglingDbContext db, ShopService shop) : ControllerB
     /// <param name="search">Freitext-Suche in Artikelnummer und Titel (Teilstring, optional).</param>
     /// <param name="skip">Anzahl übersprungener Einträge (Offset, Standard 0).</param>
     /// <param name="take">Maximale Anzahl zurückgegebener Einträge (Standard 100, Max 500).</param>
+    /// <param name="ct">Abbruch-Token.</param>
     [HttpGet("articles")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<ActionResult<IReadOnlyList<ShopArticleDto>>> Articles(
         [FromQuery] string? search,
-        [FromQuery] int skip = 0, [FromQuery] int take = PagingExtensions.DefaultTake)
+        [FromQuery] int skip = 0, [FromQuery] int take = PagingExtensions.DefaultTake,
+        CancellationToken ct = default)
     {
         var fatherId = User.AdultId()!.Value;
         var query = db.ShopArticles
@@ -67,7 +69,7 @@ public class ShopController(PuglingDbContext db, ShopService shop) : ControllerB
             query = query.Where(a => a.Title.Contains(search) || a.ArticleNumber.Contains(search));
         return (await query
             .OrderBy(a => a.ArticleNumber)
-            .ToPagedListAsync(Response, skip, take))
+            .ToPagedListAsync(Response, skip, take, ct))
             .Select(MapArticle)
             .ToList();
     }
@@ -76,11 +78,11 @@ public class ShopController(PuglingDbContext db, ShopService shop) : ControllerB
     [HttpGet("articles/{articleId:int}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<ShopArticleDto>> Article(int articleId)
+    public async Task<ActionResult<ShopArticleDto>> Article(int articleId, CancellationToken ct = default)
     {
         var fatherId = User.AdultId()!.Value;
         var article = await db.ShopArticles.AsNoTracking()
-            .FirstOrDefaultAsync(a => a.Id == articleId && a.AdultId == fatherId);
+            .FirstOrDefaultAsync(a => a.Id == articleId && a.AdultId == fatherId, ct);
         if (article is null) return NotFound();
         return MapArticle(article);
     }
@@ -90,7 +92,7 @@ public class ShopController(PuglingDbContext db, ShopService shop) : ControllerB
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
-    public async Task<ActionResult<ShopArticleDto>> CreateArticle(CreateShopArticleDto dto)
+    public async Task<ActionResult<ShopArticleDto>> CreateArticle(CreateShopArticleDto dto, CancellationToken ct = default)
     {
         if (string.IsNullOrWhiteSpace(dto.ArticleNumber))
             return this.ProblemWithCode(ApiErrors.ValidationError, "Article number is required.");
@@ -99,7 +101,7 @@ public class ShopController(PuglingDbContext db, ShopService shop) : ControllerB
 
         var fatherId = User.AdultId()!.Value;
         var articleNumber = dto.ArticleNumber.Trim();
-        if (await db.ShopArticles.AnyAsync(a => a.AdultId == fatherId && a.ArticleNumber == articleNumber))
+        if (await db.ShopArticles.AnyAsync(a => a.AdultId == fatherId && a.ArticleNumber == articleNumber, ct))
             return this.ProblemWithCode(ApiErrors.DuplicateKey, "Article number already exists in this family shop.");
 
         var article = new ShopArticle
@@ -112,7 +114,7 @@ public class ShopController(PuglingDbContext db, ShopService shop) : ControllerB
             ActionType = dto.ActionType,
         };
         db.ShopArticles.Add(article);
-        await db.SaveChangesAsync();
+        await db.SaveChangesAsync(ct);
         return CreatedAtAction(nameof(Article), new { articleId = article.Id }, MapArticle(article));
     }
 
@@ -122,10 +124,11 @@ public class ShopController(PuglingDbContext db, ShopService shop) : ControllerB
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
-    public async Task<ActionResult<ShopArticleDto>> UpdateArticle(int articleId, UpdateShopArticleDto dto)
+    public async Task<ActionResult<ShopArticleDto>> UpdateArticle(
+        int articleId, UpdateShopArticleDto dto, CancellationToken ct = default)
     {
         var fatherId = User.AdultId()!.Value;
-        var article = await db.ShopArticles.FirstOrDefaultAsync(a => a.Id == articleId && a.AdultId == fatherId);
+        var article = await db.ShopArticles.FirstOrDefaultAsync(a => a.Id == articleId && a.AdultId == fatherId, ct);
         if (article is null) return NotFound();
 
         var nextNumber = dto.ArticleNumber?.Trim() ?? article.ArticleNumber;
@@ -135,7 +138,7 @@ public class ShopController(PuglingDbContext db, ShopService shop) : ControllerB
             return this.ProblemWithCode(ApiErrors.ValidationError, "Title must not be empty.");
 
         if (nextNumber != article.ArticleNumber
-            && await db.ShopArticles.AnyAsync(a => a.AdultId == fatherId && a.ArticleNumber == nextNumber && a.Id != articleId))
+            && await db.ShopArticles.AnyAsync(a => a.AdultId == fatherId && a.ArticleNumber == nextNumber && a.Id != articleId, ct))
             return this.ProblemWithCode(ApiErrors.DuplicateKey, "Article number already exists in this family shop.");
 
         article.ArticleNumber = nextNumber;
@@ -143,7 +146,7 @@ public class ShopController(PuglingDbContext db, ShopService shop) : ControllerB
         if (dto.Description is not null) article.Description = dto.Description.Trim();
         if (dto.UnitType is not null) article.UnitType = dto.UnitType.Value;
         if (dto.ActionType is not null) article.ActionType = dto.ActionType.Value;
-        await db.SaveChangesAsync();
+        await db.SaveChangesAsync(ct);
         return MapArticle(article);
     }
 
@@ -151,13 +154,13 @@ public class ShopController(PuglingDbContext db, ShopService shop) : ControllerB
     [HttpDelete("articles/{articleId:int}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> DeleteArticle(int articleId)
+    public async Task<IActionResult> DeleteArticle(int articleId, CancellationToken ct = default)
     {
         var fatherId = User.AdultId()!.Value;
-        var article = await db.ShopArticles.FirstOrDefaultAsync(a => a.Id == articleId && a.AdultId == fatherId);
+        var article = await db.ShopArticles.FirstOrDefaultAsync(a => a.Id == articleId && a.AdultId == fatherId, ct);
         if (article is null) return NotFound();
         db.ShopArticles.Remove(article);
-        await db.SaveChangesAsync();
+        await db.SaveChangesAsync(ct);
         return NoContent();
     }
 
@@ -167,14 +170,14 @@ public class ShopController(PuglingDbContext db, ShopService shop) : ControllerB
     [HttpGet("articles/{articleId:int}/listings")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<IReadOnlyList<ShopListingDto>>> Listings(int articleId)
+    public async Task<ActionResult<IReadOnlyList<ShopListingDto>>> Listings(int articleId, CancellationToken ct = default)
     {
         var fatherId = User.AdultId()!.Value;
         var article = await db.ShopArticles.AsNoTracking()
-            .FirstOrDefaultAsync(a => a.Id == articleId && a.AdultId == fatherId);
+            .FirstOrDefaultAsync(a => a.Id == articleId && a.AdultId == fatherId, ct);
         if (article is null) return NotFound();
 
-        var listings = await shop.ListingsForFatherAsync(fatherId, activeOnly: false, DateTime.UtcNow);
+        var listings = await shop.ListingsForFatherAsync(fatherId, activeOnly: false, DateTime.UtcNow, ct);
         return listings.Where(l => l.ShopArticleId == articleId).Select(MapListing).ToList();
     }
 
@@ -182,7 +185,7 @@ public class ShopController(PuglingDbContext db, ShopService shop) : ControllerB
     [HttpGet("articles/{articleId:int}/listings/{listingId:int}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<ShopListingDto>> Listing(int articleId, int listingId)
+    public async Task<ActionResult<ShopListingDto>> Listing(int articleId, int listingId, CancellationToken ct = default)
     {
         var fatherId = User.AdultId()!.Value;
         // Nur DIESES Angebot laden (kein Voll-Scan aller Vater-Angebote). AsNoTracking + rein
@@ -192,7 +195,7 @@ public class ShopController(PuglingDbContext db, ShopService shop) : ControllerB
         var listing = await db.ShopListings.AsNoTracking()
             .Include(l => l.ShopArticle)
             .FirstOrDefaultAsync(l => l.Id == listingId && l.ShopArticleId == articleId
-                && l.ShopArticle!.AdultId == fatherId);
+                && l.ShopArticle!.AdultId == fatherId, ct);
         if (listing is null) return NotFound();
 
         ShopService.ApplyDueRefill(listing, DateTime.UtcNow);
@@ -204,10 +207,11 @@ public class ShopController(PuglingDbContext db, ShopService shop) : ControllerB
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<ShopListingDto>> CreateListing(int articleId, CreateShopListingDto dto)
+    public async Task<ActionResult<ShopListingDto>> CreateListing(
+        int articleId, CreateShopListingDto dto, CancellationToken ct = default)
     {
         var fatherId = User.AdultId()!.Value;
-        var article = await db.ShopArticles.FirstOrDefaultAsync(a => a.Id == articleId && a.AdultId == fatherId);
+        var article = await db.ShopArticles.FirstOrDefaultAsync(a => a.Id == articleId && a.AdultId == fatherId, ct);
         if (article is null) return NotFound();
 
         var validation = ValidateListing(dto.CoinPrice, dto.GemPrice, dto.UnitsPerPurchase,
@@ -229,7 +233,7 @@ public class ShopController(PuglingDbContext db, ShopService shop) : ControllerB
             RefillDayOfWeek = dto.RefillDayOfWeek,
         };
         db.ShopListings.Add(listing);
-        await db.SaveChangesAsync();
+        await db.SaveChangesAsync(ct);
         listing.ShopArticle = article;
         return CreatedAtAction(nameof(Listing), new { articleId, listingId = listing.Id }, MapListing(listing));
     }
@@ -240,13 +244,13 @@ public class ShopController(PuglingDbContext db, ShopService shop) : ControllerB
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<ShopListingDto>> UpdateListing(
-        int articleId, int listingId, UpdateShopListingDto dto)
+        int articleId, int listingId, UpdateShopListingDto dto, CancellationToken ct = default)
     {
         var fatherId = User.AdultId()!.Value;
         var listing = await db.ShopListings
             .Include(l => l.ShopArticle)
             .FirstOrDefaultAsync(l => l.Id == listingId && l.ShopArticleId == articleId
-                && l.ShopArticle!.AdultId == fatherId);
+                && l.ShopArticle!.AdultId == fatherId, ct);
         if (listing is null) return NotFound();
 
         var nextCoin = dto.CoinPrice ?? listing.CoinPrice;
@@ -274,7 +278,7 @@ public class ShopController(PuglingDbContext db, ShopService shop) : ControllerB
         listing.RefillDayOfWeek = nextRefillDay;
         if (dto.Active is not null) listing.Active = dto.Active.Value;
         listing.ConcurrencyStamp = Guid.NewGuid();
-        await db.SaveChangesAsync();
+        await db.SaveChangesAsync(ct);
         return MapListing(listing);
     }
 
@@ -282,16 +286,16 @@ public class ShopController(PuglingDbContext db, ShopService shop) : ControllerB
     [HttpDelete("articles/{articleId:int}/listings/{listingId:int}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> DeleteListing(int articleId, int listingId)
+    public async Task<IActionResult> DeleteListing(int articleId, int listingId, CancellationToken ct = default)
     {
         var fatherId = User.AdultId()!.Value;
         var listing = await db.ShopListings
             .Include(l => l.ShopArticle)
             .FirstOrDefaultAsync(l => l.Id == listingId && l.ShopArticleId == articleId
-                && l.ShopArticle!.AdultId == fatherId);
+                && l.ShopArticle!.AdultId == fatherId, ct);
         if (listing is null) return NotFound();
         db.ShopListings.Remove(listing);
-        await db.SaveChangesAsync();
+        await db.SaveChangesAsync(ct);
         return NoContent();
     }
 
@@ -301,12 +305,14 @@ public class ShopController(PuglingDbContext db, ShopService shop) : ControllerB
     /// <param name="childId">Id des Kindes.</param>
     /// <param name="skip">Anzahl übersprungener Einträge (Offset, Standard 0).</param>
     /// <param name="take">Maximale Anzahl zurückgegebener Einträge (Standard 100, Max 500).</param>
+    /// <param name="ct">Abbruch-Token.</param>
     [HttpGet("~/" + ApiRoutes.Supervisor + "/children/{childId:int}/shop/inventory")]
     [ServiceFilter(typeof(ChildOwnershipFilter))]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<IReadOnlyList<InventoryItemDto>>> ChildInventory(int childId,
-        [FromQuery] int skip = 0, [FromQuery] int take = PagingExtensions.DefaultTake)
+        [FromQuery] int skip = 0, [FromQuery] int take = PagingExtensions.DefaultTake,
+        CancellationToken ct = default)
     {
         var fid = User.AdultId();
         var query = db.ChildInventories.AsNoTracking()
@@ -315,7 +321,7 @@ public class ShopController(PuglingDbContext db, ShopService shop) : ControllerB
             .Select(i => new InventoryItemDto(
                 i.ShopArticleId, i.ShopArticle!.ArticleNumber, i.ShopArticle!.Title,
                 i.ShopArticle!.UnitType, i.ShopArticle!.ActionType, i.Quantity));
-        return await query.ToPagedListAsync(Response, skip, take);
+        return await query.ToPagedListAsync(Response, skip, take, ct);
     }
 
     // ─── Kaufhistorie ────────────────────────────────────────────────────────
@@ -327,7 +333,8 @@ public class ShopController(PuglingDbContext db, ShopService shop) : ControllerB
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<IReadOnlyList<ShopPurchaseDto>>> ChildPurchases(int childId,
         [FromQuery] ShopPurchaseStatus? status,
-        [FromQuery] int skip = 0, [FromQuery] int take = PagingExtensions.DefaultTake)
+        [FromQuery] int skip = 0, [FromQuery] int take = PagingExtensions.DefaultTake,
+        CancellationToken ct = default)
     {
         var fid = User.AdultId();
         var query = db.ShopPurchases.AsNoTracking().Where(p => p.ChildId == childId && p.SupervisorId == fid);
@@ -337,7 +344,7 @@ public class ShopController(PuglingDbContext db, ShopService shop) : ControllerB
             .OrderBy(p => p.Status == ShopPurchaseStatus.Owned ? 0 : 1)
             .ThenByDescending(p => p.PurchasedAt).ThenByDescending(p => p.Id)
             .Select(p => MapPurchase(p))
-            .ToPagedListAsync(Response, skip, take);
+            .ToPagedListAsync(Response, skip, take, ct);
     }
 
     /// <summary>Storniert einen offenen Kauf und erstattet Coins/Gems zurück.</summary>
@@ -346,9 +353,10 @@ public class ShopController(PuglingDbContext db, ShopService shop) : ControllerB
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
-    public async Task<ActionResult<ShopPurchaseDto>> CancelPurchase(int childId, int purchaseId)
+    public async Task<ActionResult<ShopPurchaseDto>> CancelPurchase(
+        int childId, int purchaseId, CancellationToken ct = default)
     {
-        var result = await shop.CancelPurchaseAsync(User.AdultId()!.Value, childId, purchaseId, DateTime.UtcNow);
+        var result = await shop.CancelPurchaseAsync(User.AdultId()!.Value, childId, purchaseId, DateTime.UtcNow, ct);
         return result.Error switch
         {
             ShopService.ShopError.None => MapPurchase(result.Value!),
@@ -367,7 +375,8 @@ public class ShopController(PuglingDbContext db, ShopService shop) : ControllerB
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<IReadOnlyList<ActivationRequestDto>>> ChildActivations(int childId,
         [FromQuery] ActivationRequestStatus? status,
-        [FromQuery] int skip = 0, [FromQuery] int take = PagingExtensions.DefaultTake)
+        [FromQuery] int skip = 0, [FromQuery] int take = PagingExtensions.DefaultTake,
+        CancellationToken ct = default)
     {
         var fid = User.AdultId();
         var query = db.ActivationRequests.AsNoTracking().Where(r => r.ChildId == childId && r.SupervisorId == fid);
@@ -377,7 +386,7 @@ public class ShopController(PuglingDbContext db, ShopService shop) : ControllerB
             .OrderBy(r => r.Status == ActivationRequestStatus.Pending ? 0 : 1)
             .ThenByDescending(r => r.RequestedAt)
             .Select(r => MapActivation(r))
-            .ToPagedListAsync(Response, skip, take);
+            .ToPagedListAsync(Response, skip, take, ct);
     }
 
     /// <summary>Genehmigt eine offene Aktivierungsanfrage; das Inventar des Kindes wird reduziert.</summary>
@@ -387,9 +396,10 @@ public class ShopController(PuglingDbContext db, ShopService shop) : ControllerB
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
-    public async Task<ActionResult<ActivationRequestDto>> ApproveActivation(int childId, int requestId)
+    public async Task<ActionResult<ActivationRequestDto>> ApproveActivation(
+        int childId, int requestId, CancellationToken ct = default)
     {
-        var result = await shop.ApproveActivationAsync(User.AdultId()!.Value, childId, requestId, DateTime.UtcNow);
+        var result = await shop.ApproveActivationAsync(User.AdultId()!.Value, childId, requestId, DateTime.UtcNow, ct);
         return ActivationResult(result);
     }
 
@@ -399,9 +409,10 @@ public class ShopController(PuglingDbContext db, ShopService shop) : ControllerB
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
-    public async Task<ActionResult<ActivationRequestDto>> RejectActivation(int childId, int requestId)
+    public async Task<ActionResult<ActivationRequestDto>> RejectActivation(
+        int childId, int requestId, CancellationToken ct = default)
     {
-        var result = await shop.RejectActivationAsync(User.AdultId()!.Value, childId, requestId, DateTime.UtcNow);
+        var result = await shop.RejectActivationAsync(User.AdultId()!.Value, childId, requestId, DateTime.UtcNow, ct);
         return ActivationResult(result);
     }
 
