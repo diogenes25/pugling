@@ -530,8 +530,10 @@ direktem Push auf `main`, und darauf triggert der Workflow bewusst nicht). Um **
 Nightly – und war grün** (`event: schedule`, `conclusion: success`, auf `5a09417`). Der lokale
 „25/25 grün"-Beleg aus der vorherigen Übergabe hat damit endlich seine CI-Bestätigung.
 
-Was **bleibt**: das E2E-Tor ist kein Freigabe-Tor. `deploy-azure.yml` hängt per `workflow_run` an `CI`, nicht
-an diesem Workflow – rote E2E blocken also weiterhin kein Deploy, sie melden sich am PR und nachts. Genau so
+Was **bleibt**: das E2E-Tor ist kein Freigabe-Tor. `deploy-azure.yml` hing per `workflow_run` an `CI`, nicht
+an diesem Workflow (und ist seit 2026-07-30 ganz stillgelegt, siehe
+[codequalitaet-gates-plan.md](codequalitaet-gates-plan.md), A2) – rote E2E blocken also weiterhin kein
+Deploy, sie melden sich am PR und nachts. Genau so
 ist es im Kopf von `e2e.yml` als Entscheidung dokumentiert. Der Satz des Plans stimmt also im Ergebnis
 („verhindert nichts"), aber aus einem anderen Grund als angenommen: nicht weil der Workflow fehlt oder nie
 läuft, sondern weil er absichtlich nicht am Release hängt.

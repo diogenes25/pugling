@@ -58,9 +58,10 @@ Arbeit unter „Der Plan".
 
 - `main` trägt drei Commits über `1ee1538` („Vertrag heißt `adult`"). Der Endstand ist **grün**: 587 Tests,
   `dotnet build Pugling.sln` 0 Warnungen, `dotnet format --verify-no-changes` sauber.
-- Die Tore stehen und greifen: CI-Workflow, `workflow_run`-Kopplung des Deploys, Stop-Hook,
-  `Directory.Build.props`, `.editorconfig`, `UnmappedMemberHandling.Disallow` und **sieben** reflexive
-  Wächter (vier aus B4, dazu Ownership-Matrix, PATCH-Semantik und Endpunkt-Abdeckung aus C).
+- Die Tore stehen und greifen: CI-Workflow, Stop-Hook, `Directory.Build.props`, `.editorconfig`,
+  `UnmappedMemberHandling.Disallow` und **sieben** reflexive Wächter (vier aus B4, dazu Ownership-Matrix,
+  PATCH-Semantik und Endpunkt-Abdeckung aus C). Die `workflow_run`-Kopplung des Deploys stand hier
+  ebenfalls, ist aber seit **2026-07-30 stillgelegt** – siehe A2.
 
 | Commit | Inhalt | Beim Schnitt gemessen |
 |---|---|---|
@@ -101,6 +102,17 @@ Markdown-Lint). Offen bleiben, unabhängig voneinander:
   nächste Nightly (03:00 UTC); erst dann ist D2 nicht nur lokal, sondern auch in CI belegt.
 - **Azure-Secret** (`AZURE_WEBAPP_PUBLISH_PROFILE`) fehlt weiterhin – laut Rückmeldung bewusst, noch nicht
   konfiguriert, keine Aufgabe für eine Code-Sitzung.
+  **Nachtrag 2026-07-30: A2 ist stillgelegt und das Thema damit vom Tisch, bis Azure existiert.** Nachdem CI
+  erstmals dauerhaft grün lief, lief das Deploy zum ersten Mal wirklich an – und scheiterte ab da nach
+  *jedem* grünen Lauf an „No credentials found" (`gh secret list` ist leer: es ist überhaupt kein Secret
+  gesetzt, nicht nur dieses). Ein Tor, das immer rot ist, erzieht zum Wegsehen und entwertet das echte Rot
+  daneben; es widerspricht damit dem Zweck dieses ganzen Plans. Entscheidung des Eigentümers: das
+  Deployment wird später **komplett neu** gebaut. Umgesetzt als **Stilllegung, nicht Löschung** – der
+  `workflow_run`-Block in [deploy-azure.yml](../.github/workflows/deploy-azure.yml) ist auskommentiert,
+  `workflow_dispatch` und die `if:`-Bedingung bleiben. Grund: in der Datei stehen die beiden Fallstricke,
+  die zusammen 24 Tage unbemerkten Deploy-Ausfall gekostet haben (`npm ci --legacy-peer-deps` und der
+  `workflow_run.head_sha`-Checkout) – eine Neufassung soll dort anfangen, nicht bei null. Wieder scharf =
+  Secret setzen + einen Block einkommentieren.
 
 **Wo die Wächter ihre Befunde ablegen** – das muss man wissen, bevor man ein rotes Tor deutet:
 `ConventionGuardTests` und `PatchSemanticsTests` melden wie gewohnt als Test. Der Endpunkt-Abdeckungs-Wächter
@@ -303,7 +315,7 @@ C ist die eigentliche inhaltliche Arbeit.
 | # | Aufgabe | Stand |
 |---|---|---|
 | A1 | `.github/workflows/ci.yml`: auf `push` (main), `pull_request` und `workflow_dispatch` → `restore` → `build -c Release` → `test -c Release --no-build` → `format --verify-no-changes`. Ein Job, `ubuntu-latest`, `10.0.x`. Format **hinter** die Tests, damit der inhaltliche Befund zuerst kommt; `.trx` als Artefakt. | **fertig** – YAML validiert; der rote Lauf ist noch am echten Push zu sehen |
-| A2 | `deploy-azure.yml` hängt an A1 – nicht per `needs:` (getrennter Workflow), sondern per `workflow_run` auf `[CI]`/`main` mit `if: conclusion == 'success'`. Der Checkout nimmt ausdrücklich `workflow_run.head_sha`, sonst deployte der Default-Branch-HEAD und damit womöglich ein **ungeprüfter** Folge-Commit. | **fertig** |
+| A2 | `deploy-azure.yml` hängt an A1 – nicht per `needs:` (getrennter Workflow), sondern per `workflow_run` auf `[CI]`/`main` mit `if: conclusion == 'success'`. Der Checkout nimmt ausdrücklich `workflow_run.head_sha`, sonst deployte der Default-Branch-HEAD und damit womöglich ein **ungeprüfter** Folge-Commit. | **stillgelegt 2026-07-30** (war fertig, s. u.) |
 | A3 | `actions/cache` auf `~/.nuget/packages`, Schlüssel über alle `*.csproj` + `dotnet-tools.json`. `--no-build` beim Test spart den zweiten Build. | **fertig** – Laufzeit erst am echten Lauf messbar |
 | A4 | Test-Tor im Arbeitsfluss (L2) als **Stop-Hook** `.claude/hooks/test-gate.sh`. Drei Sparmaßnahmen: keine `.cs`-Abweichung gegenüber `HEAD` → nichts tun; gleicher Inhalt wie beim letzten grünen Lauf → Skip über Fingerprint (`.claude/.test-gate-state`, gitignored); `PUGLING_SKIP_TEST_GATE=1` schaltet ab. `stop_hook_active` verhindert die Schleife. Rot → `exit 2` mit den gefallenen Tests. | **fertig, beide Zweige verifiziert** (absichtlich gebrochener Test → `exit 2` + Namen; Fingerprint-Treffer → `exit 0` in 1 s) |
 

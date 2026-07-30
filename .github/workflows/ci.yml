@@ -6,11 +6,14 @@ name: CI
 #
 # Reihenfolge ist Absicht: **erst Tests, dann Format.** Der inhaltliche Befund ("welche Regel ist gebrochen")
 # soll zuerst im Log stehen; die Formatprüfung ist mit ~140 s der teuerste Schritt und sagt fachlich nichts.
-# Das Deployment hängt über `workflow_run` an diesem Workflow (siehe deploy-azure.yml).
+#
+# Das Deployment hing über `workflow_run` an diesem Workflow und ist seit 2026-07-30 **stillgelegt**
+# (deploy-azure.yml: Azure nicht konfiguriert). Dieses Tor steht unabhängig davon – es bewacht `main`,
+# nicht das Deploy. Kommt der Trigger zurück, hängt das Deploy wieder am Gesamtergebnis.
 #
 # Drei Jobs, **bewusst ohne `needs:` zwischen ihnen** (Etappe D1/D3): Backend, Frontend und Markdown
-# prüfen Unabhängiges und laufen parallel. Das Deploy hängt am Gesamtergebnis des Workflows, zieht
-# alle drei also automatisch mit – ohne dass hier eine Reihenfolge erfunden werden muss.
+# prüfen Unabhängiges und laufen parallel. Ein wieder scharfes Deploy hängt am Gesamtergebnis des
+# Workflows, zieht alle drei also automatisch mit – ohne dass hier eine Reihenfolge erfunden werden muss.
 
 on:
   push:
@@ -21,8 +24,9 @@ on:
 permissions:
   contents: read
 
-# Auf einem PR darf ein neuer Push den alten Lauf abbrechen. Auf `main` **nicht**: dort hängt das Deploy
-# am Ergebnis, und ein abgebrochener Lauf sähe wie "nie geprüft" aus.
+# Auf einem PR darf ein neuer Push den alten Lauf abbrechen. Auf `main` **nicht**: dort ist das Ergebnis
+# der Freigabe-Nachweis (und trägt, sobald das Deploy wieder scharf ist, dessen Trigger) – ein
+# abgebrochener Lauf sähe wie "nie geprüft" aus.
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}

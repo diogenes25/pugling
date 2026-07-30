@@ -1,20 +1,44 @@
 name: Deploy to Azure App Service
 
+# ⚠️ **STILLGELEGT am 2026-07-30 – kein automatischer Trigger mehr.**
+#
+# Azure ist nicht konfiguriert: es ist **überhaupt kein Repo-Secret gesetzt** (`gh secret list` leer),
+# also fehlt `AZURE_WEBAPP_PUBLISH_PROFILE`. Solange das so ist, scheitert `azure/webapps-deploy` mit
+# "No credentials found" – und weil das Deploy per `workflow_run` an jedem grünen CI hing, kam nach
+# jedem erfolgreichen Lauf ein roter Deploy-Lauf hinterher. Ein Tor, das *immer* rot ist, erzieht zum
+# Wegsehen und entwertet das echte Rot daneben (docs/codequalitaet-gates-plan.md, „mechanische Tore
+# statt Disziplin"). Darum: Trigger raus, Datei bleibt.
+#
+# **Warum nicht gelöscht?** Wegen der beiden Fallstricke weiter unten. Beide haben schon einmal Geld
+# gekostet, und den zweiten merkt man nicht:
+#   1. `npm ci --legacy-peer-deps` – ohne das Flag brach der Deploy **24 Tage unbemerkt** (`2c4eb69`).
+#   2. Der Checkout muss `workflow_run.head_sha` nehmen, sonst deployt der Default-Branch-HEAD und
+#      damit womöglich ein **ungeprüfter** Folge-Commit.
+# Wer das Deployment neu baut, fängt bei diesen zwei Punkten an, nicht bei null.
+#
+# **Wieder scharf stellen** (wenn der App Service existiert): Secret setzen (Portal → App Service →
+# „Veröffentlichungsprofil abrufen"), `AZURE_WEBAPP_NAME` prüfen, und den `workflow_run`-Block unten
+# wieder einkommentieren. Die `if:`-Bedingung am Job ist bewusst stehen geblieben und trägt beide Fälle
+# schon – am Job selbst ist dann nichts zu ändern.
+#
+# ---
+#
 # Deployt den Single-Host (React-PWA + .NET-API in einem App Service).
 # Ablauf: Frontend bauen → nach wwwroot kopieren → dotnet publish → nach Azure.
-# Voraussetzung: Repo-Secret AZURE_WEBAPP_PUBLISH_PROFILE (Portal → App Service →
-# "Bereitstellungscenter" bzw. "Veröffentlichungsprofil abrufen").
 #
-# **Kein Deploy ohne grünes CI.** Getriggert wird nicht mehr direkt vom Push, sondern vom Abschluss des
+# **Kein Deploy ohne grünes CI.** Getriggert wurde nicht direkt vom Push, sondern vom Abschluss des
 # CI-Workflows auf `main` (`workflow_run`) – und nur, wenn dessen `conclusion == success` ist. `needs:`
 # geht hier nicht, weil das Tor in einem eigenen Workflow steckt. Siehe docs/codequalitaet-gates-plan.md (A2).
-# `workflow_dispatch` bleibt als Handbetrieb (deployt dann den Stand des gewählten Branch).
 
 on:
-  workflow_run:
-    workflows: [CI]
-    types: [completed]
-    branches: [main]
+  # Stillgelegt (s. o.) – dieser Block ist der eine Schalter, der das Deploy wieder ans CI hängt:
+  # workflow_run:
+  #   workflows: [CI]
+  #   types: [completed]
+  #   branches: [main]
+  #
+  # Handbetrieb bleibt: deployt den Stand des gewählten Branch – scheitert ohne Secret bewusst laut,
+  # statt Erfolg vorzutäuschen.
   workflow_dispatch: {}
 
 env:
@@ -25,7 +49,9 @@ env:
 
 jobs:
   build-and-deploy:
-    # Roter (oder abgebrochener) CI-Lauf → dieser Job läuft gar nicht an.
+    # Roter (oder abgebrochener) CI-Lauf → dieser Job läuft gar nicht an. Bleibt trotz stillgelegtem
+    # `workflow_run` stehen: solange nur der Handbetrieb triggert, ist der linke Zweig immer wahr; kommt
+    # der Trigger zurück, greift der rechte sofort wieder. Nichts umzustellen.
     if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     steps:
