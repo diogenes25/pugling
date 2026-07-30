@@ -546,6 +546,9 @@ Tests, von denen niemand weiß, ob sie etwas festhalten. Danach die volle Suite 
 
 ## Verwandt
 
+- [testaudit-nacharbeit-plan.md](testaudit-nacharbeit-plan.md) – **die Reste dieses Befunds als Arbeitsplan**:
+  die sechs unbewachten Regeln ohne Geldwirkung, der `SpeedBonusTests`-Flake, der Produktivcode-Fund im
+  Reward-Pfad und die Entscheidung über den vorgeschlagenen Wächter
 - [codequalitaet-gates-plan.md](codequalitaet-gates-plan.md) – die Tore, deren Wirksamkeit hier geprüft wird
 - [code-review.md](code-review.md) – der Review, der die Integrationstests angestoßen hat
 - [endpunkt-beziehungen.md](endpunkt-beziehungen.md) – die Wissenskarte für die Regel→Test-Landkarte
