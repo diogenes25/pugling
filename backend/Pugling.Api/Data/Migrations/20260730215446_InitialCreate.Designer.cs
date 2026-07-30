@@ -11,7 +11,7 @@ using Pugling.Api.Data;
 namespace Pugling.Api.Data.Migrations
 {
     [DbContext(typeof(PuglingDbContext))]
-    [Migration("20260730213243_InitialCreate")]
+    [Migration("20260730215446_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -88,7 +88,10 @@ namespace Pugling.Api.Data.Migrations
                         .IsUnique()
                         .HasFilter("[ChildId] IS NOT NULL");
 
-                    b.ToTable("AccountProfiles");
+                    b.ToTable("AccountProfiles", t =>
+                        {
+                            t.HasCheckConstraint("CK_AccountProfile_SingleProfile", "(CASE WHEN \"AdultId\" IS NULL THEN 0 ELSE 1 END\r\n + CASE WHEN \"ChildId\" IS NULL THEN 0 ELSE 1 END) = 1");
+                        });
                 });
 
             modelBuilder.Entity("Pugling.Api.Models.Achievement", b =>

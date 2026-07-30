@@ -119,6 +119,15 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
         // Gefilterte Unique-Indizes verhindern doppelte Profile beim (wiederholten) Backfill.
         modelBuilder.Entity<AccountProfile>(e =>
         {
+            // Genau eines von AdultId/ChildId – bisher nur als Kommentar an der Entity behauptet. Beide
+            // gesetzt wäre ein Login mit zwei Identitäten dahinter, keines eine Rolle, die auf nichts zeigt
+            // (AuthAccess prüfte dann stumm ins Leere). Gleiche Bauart wie bei MediaLink/ChildMediaPick.
+            e.ToTable(t => t.HasCheckConstraint("CK_AccountProfile_SingleProfile",
+                """
+                (CASE WHEN "AdultId" IS NULL THEN 0 ELSE 1 END
+                 + CASE WHEN "ChildId" IS NULL THEN 0 ELSE 1 END) = 1
+                """));
+
             e.Property(p => p.Role).HasConversion<string>();
             e.HasOne(p => p.Account).WithMany(a => a.Profiles)
                 .HasForeignKey(p => p.AccountId).OnDelete(DeleteBehavior.Cascade);

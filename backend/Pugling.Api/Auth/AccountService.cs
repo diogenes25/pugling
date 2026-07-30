@@ -61,6 +61,47 @@ public class AccountService(PuglingDbContext db)
         return account;
     }
 
+    /// <summary>
+    /// Spiegelt Anzeigename, E-Mail und PIN-Hash des Erwachsenen auf sein Login-Konto. Die
+    /// <see cref="Adult"/>-Zeile ist die <b>Quelle</b>, das Konto die Kopie – nie umgekehrt.
+    /// <para>
+    /// Warum es die Kopie gibt: der konto-zentrische Login (<c>POST auth/login</c>) kennt nur das Konto,
+    /// und der Anzeigename wandert von dort als <c>ClaimTypes.Name</c> ins Token. Wer nur die fachliche
+    /// Zeile ändert, benennt darum nichts um, was der Nutzer nach dem Anmelden sieht.
+    /// </para>
+    /// <para>
+    /// Bei der <b>E-Mail</b> ist die Drift nicht kosmetisch: der gefilterte Unique-Index hängt an beiden
+    /// Zeilen, und die Kollisionsprüfung läuft gegen das Konto. Blieb es stehen, hielt eine aufgegebene
+    /// Adresse den Adressraum weiter besetzt, und eine belegte sah <i>frei</i> aus – die Prüfung ließ sie
+    /// durch, der Index am <see cref="Adult"/> schlug zu, und aus dem fälligen 409 wurde ein 500 mit halb
+    /// gespeichertem Zustand.
+    /// </para>
+    /// <para>
+    /// Gespiegelt wird <b>unbedingt</b>, nicht nur das gerade geänderte Feld: „das Konto trägt, was die
+    /// fachliche Zeile trägt" ist als Invariante prüfbar, „das Konto trägt, was der letzte PATCH mitschickte"
+    /// nicht. Bestehende Drift heilt damit beim nächsten Schreibzugriff. Das Speichern bleibt beim Aufrufer,
+    /// damit fachliche Änderung und Spiegelung in <b>einem</b> Commit landen.
+    /// </para>
+    /// </summary>
+    public async Task MirrorAsync(Adult adult, CancellationToken ct)
+    {
+        var account = await EnsureForFatherAsync(adult, ct);
+        account.DisplayName = adult.Name;
+        account.Email = adult.Email;
+        account.PinHash = adult.Pin;
+    }
+
+    /// <summary>
+    /// Dasselbe für das Kind – ohne E-Mail, die hat es nicht (siehe <see cref="MirrorAsync(Adult, CancellationToken)"/>
+    /// für die Begründung der Spiegelung).
+    /// </summary>
+    public async Task MirrorAsync(Child child, CancellationToken ct)
+    {
+        var account = await EnsureForChildAsync(child, ct);
+        account.DisplayName = child.Name;
+        account.PinHash = child.Pin;
+    }
+
     /// <summary>Lädt ein Konto samt Profilen für die Token-Ausstellung (Login über Konto-Id).</summary>
     public Task<Account?> FindWithProfilesAsync(int accountId, CancellationToken ct = default) =>
         db.Accounts.Include(a => a.Profiles).FirstOrDefaultAsync(a => a.Id == accountId, ct);

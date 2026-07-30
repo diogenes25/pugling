@@ -114,12 +114,11 @@ public class ChildrenController(PuglingDbContext db, WalletService wallet, Accou
         if (dto.Interests is not null) child.Interests = [.. dto.Interests];
         if (dto.ProfileNotes is not null) child.ProfileNotes = dto.ProfileNotes;
         if (dto.AllowedContentRating.HasValue) child.AllowedContentRating = dto.AllowedContentRating.Value;
-        if (dto.Pin is not null)
-        {
-            child.Pin = string.IsNullOrEmpty(dto.Pin) ? "" : PinHasher.Hash(dto.Pin);
-            // PIN-Hash auf das Login-Konto spiegeln (konto-zentrischer Login /auth/login bleibt synchron).
-            (await accounts.EnsureForChildAsync(child, ct)).PinHash = child.Pin;
-        }
+        if (dto.Pin is not null) child.Pin = string.IsNullOrEmpty(dto.Pin) ? "" : PinHasher.Hash(dto.Pin);
+        // Name und PIN-Hash aufs Login-Konto spiegeln – im SELBEN Commit. Vorher ging nur die PIN mit, und
+        // ein umbenanntes Kind wurde nach dem nächsten Anmelden weiter mit dem alten Namen begrüßt (der
+        // Anzeigename kommt vom Konto). Siehe AccountService.MirrorAsync.
+        await accounts.MirrorAsync(child, ct);
         await db.SaveChangesAsync(ct);
 
         return (await ProjectOne(childId, ct))!;

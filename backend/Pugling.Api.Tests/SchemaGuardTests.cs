@@ -1,4 +1,6 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Metadata;
 using Pugling.Api.Data;
 
 namespace Pugling.Api.Tests;
@@ -321,5 +323,47 @@ public class SchemaGuardTests
         // Der Konventions-Default für optionale Beziehungen räumt nur im geladenen ChangeTracker auf und
         // lässt die DB-Seite offen – als *Absicht* ist er nie richtig.
         Assert.DoesNotContain(DeleteBehavior.ClientSetNull, tatsaechlich.Values);
+    }
+
+    /// <summary>
+    /// <b>G8 – „genau eines von N" steht in der Datenbank, nicht im Kommentar.</b> Drei Tabellen tragen
+    /// dieselbe Frage: welcher der mehreren optionalen Fremdschlüssel ist der gültige? Zwei davon
+    /// (<c>MediaLink</c>, <c>ChildMediaPick</c>) beantworteten sie vorbildlich per Check-Constraint, die
+    /// dritte (<c>AccountProfile</c>) behauptete sie nur im XML-Kommentar – und ein Profil mit beiden
+    /// Zielen wäre ein Login mit zwei Identitäten gewesen.
+    /// <para>
+    /// Ein Wächter auf einer <i>Menge</i> statt auf „mindestens diese drei": eine verschwundene
+    /// Invariante ist genauso ein Fund wie eine neue ohne Eintrag. Die gefilterten Unique-Indizes daneben
+    /// hängen an derselben Bauart – wer den Constraint entfernt, entfernt auch ihre Voraussetzung.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public void Erwartete_Check_Constraints_Stehen_Im_Modell()
+    {
+        string[] erwartet =
+        [
+            "AccountProfile.CK_AccountProfile_SingleProfile",
+            "ChildMediaPick.CK_ChildMediaPick_SingleCarrier",
+            "MediaLink.CK_MediaLink_SingleCarrier",
+        ];
+
+        using var db = Context();
+        // Nicht `db.Model`: das laufzeit-optimierte Modell wirft für Check-Constraints ausdrücklich
+        // („not stored in the read-optimized model"). EF wirft sie weg, weil zur Laufzeit niemand sie
+        // liest – gefragt ist darum das Design-Time-Modell, dasselbe, aus dem die Migration entsteht.
+        var entities = db.GetService<IDesignTimeModel>().Model.GetEntityTypes().ToList();
+
+        // Selbstschutz: greift die Reflexion nicht, wäre die Menge leer – und der Vergleich meldete
+        // fälschlich „alle drei fehlen" statt „der Test ist kaputt".
+        Assert.True(entities.Count >= 55, $"Zu wenige Entity-Typen im Modell ({entities.Count}).");
+
+        // Entity-Name statt Tabellenname als Schlüssel: E11 zieht Tabellennamen auf die DbSet-Namen, und
+        // dieser Wächter prüft eine Invariante, nicht die Benennung.
+        var gefunden = entities
+            .SelectMany(e => e.GetCheckConstraints().Select(c => $"{e.ClrType.Name}.{c.Name}"))
+            .OrderBy(n => n, StringComparer.Ordinal)
+            .ToArray();
+
+        Assert.Equal(erwartet, gefunden);
     }
 }

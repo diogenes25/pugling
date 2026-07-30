@@ -246,6 +246,7 @@ namespace Pugling.Api.Data.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_AccountProfiles", x => x.Id);
+                    table.CheckConstraint("CK_AccountProfile_SingleProfile", "(CASE WHEN \"AdultId\" IS NULL THEN 0 ELSE 1 END\r\n + CASE WHEN \"ChildId\" IS NULL THEN 0 ELSE 1 END) = 1");
                     table.ForeignKey(
                         name: "FK_AccountProfiles_Accounts_AccountId",
                         column: x => x.AccountId,

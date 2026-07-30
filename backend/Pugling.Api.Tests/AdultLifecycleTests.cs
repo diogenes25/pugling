@@ -178,6 +178,72 @@ public class AdultLifecycleTests(PuglingWebAppFactory factory) : IClassFixture<P
             new { name = "Papa neu", email = "zweiter@example.test" })).EnsureSuccessStatusCode();
     }
 
+    /// <summary>
+    /// Der Anzeigename lebt an <b>zwei</b> Stellen: die <c>Adult</c>-Zeile trägt den fachlichen Namen (er
+    /// erscheint als Autor an den Übungen), das <c>Account</c> den des Logins. <c>PATCH auth/me</c> zog
+    /// beide nach – <c>PATCH supervisor/adults/{id}</c> nur den fachlichen, und damit begrüßte die
+    /// Oberfläche nach dem nächsten Anmelden weiter den alten Namen.
+    /// </summary>
+    [Fact]
+    public async Task Umbenennen_Zieht_Den_Namen_Des_Kontos_Nach()
+    {
+        var (papa, adultId) = await RegistriereAsync("5120");
+        var accountId = (await papa.GetFromJsonAsync<JsonElement>("/api/v1/auth/me"))
+            .GetProperty("accountId").GetInt32();
+
+        (await papa.PatchAsJsonAsync($"/api/v1/supervisor/adults/{adultId}", new { name = "Papa Umbenannt" }))
+            .EnsureSuccessStatusCode();
+
+        // Der konto-zentrische Login liest den Namen vom Konto (und legt ihn als ClaimTypes.Name ins Token),
+        // nicht von der Adult-Zeile – er ist damit die sichtbare Seite der Spiegelung.
+        var login = await factory.CreateClient().PostAsJsonAsync("/api/v1/auth/login",
+            new { accountId, pin = "5120" });
+        login.EnsureSuccessStatusCode();
+        Assert.Equal("Papa Umbenannt",
+            (await login.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("name").GetString());
+    }
+
+    [Fact]
+    public async Task Adresswechsel_Gibt_Die_Alte_Adresse_Wieder_Frei()
+    {
+        var (papa, adultId) = await RegistriereAsync("5121", "vorher@example.test");
+        (await papa.PatchAsJsonAsync($"/api/v1/supervisor/adults/{adultId}",
+            new { email = "nachher@example.test" })).EnsureSuccessStatusCode();
+
+        using (var scope = factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
+            Assert.True(await db.Accounts.AnyAsync(a => a.Email == "nachher@example.test"));
+            Assert.False(await db.Accounts.AnyAsync(a => a.Email == "vorher@example.test"));
+        }
+
+        // Blieb die alte Adresse am Konto stehen, hielt ein Erwachsener eine Adresse besetzt, die er nicht
+        // mehr trägt – und niemand konnte sie je wieder bekommen.
+        Assert.Equal(HttpStatusCode.Created, (await factory.CreateClient().PostAsJsonAsync(
+            "/api/v1/supervisor/adults",
+            new { name = "Nachmieter", email = "vorher@example.test", pin = "5122" })).StatusCode);
+    }
+
+    /// <summary>
+    /// Die scharfe Seite derselben Drift: die Kollisionsprüfung läuft gegen <c>Account.Email</c>, weil dort
+    /// der gefilterte Unique-Index sitzt – <c>Adult.Email</c> trägt seit E5 aber ebenfalls einen. Zog das
+    /// Konto nicht nach, sah eine belegte Adresse <b>frei</b> aus: die Prüfung ließ sie durch, der Index am
+    /// <c>Adult</c> schlug zu, und aus dem fälligen 409 wurde ein 500 mit halb gespeichertem Zustand.
+    /// </summary>
+    [Fact]
+    public async Task Adresswechsel_Macht_Die_Neue_Adresse_Fuer_Andere_Belegt()
+    {
+        var (erster, erstenId) = await RegistriereAsync("5123", "wandert@example.test");
+        var (zweiter, zweiterId) = await RegistriereAsync("5124", "bleibt@example.test");
+        (await erster.PatchAsJsonAsync($"/api/v1/supervisor/adults/{erstenId}",
+            new { email = "ziel@example.test" })).EnsureSuccessStatusCode();
+
+        var kollision = await zweiter.PatchAsJsonAsync($"/api/v1/supervisor/adults/{zweiterId}",
+            new { email = "ziel@example.test" });
+        Assert.Equal(HttpStatusCode.Conflict, kollision.StatusCode);
+        Assert.Equal("duplicate_email", await CodeAsync(kollision));
+    }
+
     private static async Task<string?> CodeAsync(HttpResponseMessage res) =>
         (await res.Content.ReadFromJsonAsync<System.Text.Json.JsonElement>()).GetProperty("code").GetString();
 }

@@ -131,11 +131,11 @@ public class AuthController(PuglingDbContext db, TokenService tokens, AccountSer
     /// Supervisor-Rolle, es konnte seine eigene PIN nicht ändern.
     /// </para>
     /// <para>
-    /// Geschrieben wird an <b>zwei</b> Stellen, weil die Identität an zwei hängt: das <see cref="Account"/>
-    /// trägt den Login, die <see cref="Adult"/>-Zeile den fachlichen Namen (er erscheint als Autor an den
-    /// Übungen). Der PIN-Hash muss ohnehin gespiegelt werden, sonst läuft der konto-zentrische Login aus dem
-    /// Takt; Name und E-Mail werden hier <i>mit</i> gespiegelt – <c>AdultsController</c> tut das nicht,
-    /// weshalb Konto- und Adult-Name sonst auseinanderdriften könnten.
+    /// Die Identität hängt an <b>zwei</b> Zeilen: die <see cref="Adult"/>-Zeile trägt den fachlichen Namen
+    /// (er erscheint als Autor an den Übungen), das <see cref="Account"/> den Login. Geschrieben wird hier
+    /// nur die fachliche; das Konto zieht <see cref="AccountService.MirrorAsync(Adult, CancellationToken)"/>
+    /// nach – dieselbe eine Stelle, die auch <c>supervisor/adults/{id}</c> und
+    /// <c>supervisor/children/{id}</c> benutzen.
     /// </para>
     /// <para>
     /// <b>Nur Erwachsene.</b> Ein Kind ändert seinen Namen und seine PIN nicht selbst: die PIN ist der
@@ -165,7 +165,6 @@ public class AuthController(PuglingDbContext db, TokenService tokens, AccountSer
             var name = dto.Name.Trim();
             if (name.Length == 0) return this.ProblemWithCode(ApiErrors.ValidationError, "Name must not be empty.");
             adult.Name = name;
-            account.DisplayName = name;
         }
 
         // Erst der Wert, dann der Schalter – so gewinnt „leeren", wenn ein Formular beides schickt.
@@ -175,16 +174,15 @@ public class AuthController(PuglingDbContext db, TokenService tokens, AccountSer
             if (email.Length > 0 && await db.Accounts.AnyAsync(a => a.Id != accountId && a.Email == email, ct))
                 return this.ProblemWithCode(ApiErrors.Conflict, "This e-mail is already used by another account.");
             adult.Email = email.Length == 0 ? null : email;
-            account.Email = adult.Email;
         }
-        if (dto.ClearEmail) { adult.Email = null; account.Email = null; }
+        if (dto.ClearEmail) adult.Email = null;
 
-        if (dto.Pin is not null)
-        {
-            adult.Pin = dto.Pin.Length == 0 ? "" : PinHasher.Hash(dto.Pin);
-            account.PinHash = adult.Pin;
-        }
+        if (dto.Pin is not null) adult.Pin = dto.Pin.Length == 0 ? "" : PinHasher.Hash(dto.Pin);
 
+        // Geschrieben wird nur die fachliche Zeile; das Konto ist ihre Spiegelung (AccountService.MirrorAsync)
+        // – dieselbe eine Stelle, die auch die beiden Supervisor-PATCHes benutzen. `account` ist dieselbe
+        // verfolgte Instanz, die Antwort unten sieht den gespiegelten Stand also schon.
+        await accounts.MirrorAsync(adult, ct);
         await db.SaveChangesAsync(ct);
 
         // Der Name im Token ist jetzt veraltet – die Antwort nennt darum den **gespeicherten** Stand, damit

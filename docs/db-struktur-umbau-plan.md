@@ -4,7 +4,8 @@ tags: [bereich/architektur, bereich/datenmodell, status/laufend]
 
 # DB-/EF-Struktur-Umbau
 
-> **Übergabe-Dokument.** E0–E6 sind umgesetzt und verifiziert, E7–E14 offen. Dieses Dokument ist so
+> **Übergabe-Dokument.** E0–E6 und E8 sind umgesetzt und verifiziert; offen sind E7 und E9–E14. Beide
+> echten Defekte sind damit behoben – der Rest ist Struktur. Dieses Dokument ist so
 > geschrieben, dass jemand ohne Vorwissen die restlichen Etappen zu Ende führen kann: es nennt die
 > getroffenen Entscheidungen, die Arbeitsregeln, die Belege, die bewussten Abweichungen und die
 > Fallstricke, die beim Umsetzen Zeit gekostet haben.
@@ -17,11 +18,12 @@ und ~20 als int (in `Remarks` sogar beides in derselben Tabelle), kein einziges 
 8 Fremdschlüssel verließen sich auf Konventions-Cascade, 14 Spalten sahen wie Fremdschlüssel aus und
 waren keine, und `Subjects`/`Adults` hatten außer dem Primärschlüssel überhaupt keinen Index.
 
-Dazu zwei echte Defekte, von denen einer noch offen ist:
+Dazu zwei echte Defekte, **beide behoben**:
 1. **Löschen eines Supervisors vernichtete bezahltes Kind-Inventar** (`Adult→ShopArticle` Cascade →
-   `ShopArticle→ChildInventory` Cascade, während die Kaufbelege per SetNull stehenblieben) → **E6, behoben**.
-2. **PATCH auf Name/E-Mail eines Erwachsenen zieht das Konto nicht nach**, obwohl der gefilterte
-   Unique-Index dort sitzt und die Kollisionsprüfung gegen den veralteten Wert läuft → **E8**, offen.
+   `ShopArticle→ChildInventory` Cascade, während die Kaufbelege per SetNull stehenblieben) → **E6**.
+2. **PATCH auf Name/E-Mail eines Erwachsenen zog das Konto nicht nach**, obwohl der gefilterte
+   Unique-Index dort sitzt und die Kollisionsprüfung gegen den veralteten Wert lief – aus dem fälligen 409
+   wurde ein 500 mit halb gespeichertem Zustand → **E8**.
 
 Altdaten sind ausdrücklich verzichtbar: die DB darf gelöscht und über den Seed neu gebaut werden. Genau
 diese Freiheit trägt den Umbau – siehe „Arbeitsregeln".
@@ -74,7 +76,7 @@ Die Langfassung steht in der Plandatei dieser Sitzung.
    E13 (`LearnGoal.ChildId` fällt weg, drei `KeyResult`-Scope-FKs kommen). Das Tor **soll** dabei rot sein –
    die bewusste Zeile ist der Zweck. Bei mehreren Änderungen lohnt der Wegwerf-Dump aus E6 wieder.
 
-## Umgesetzt: E0–E6
+## Umgesetzt: E0–E6, E8
 
 ### E0 · Netz spannen — keine Migration
 
@@ -252,7 +254,55 @@ welche Zeile fehlt oder anders ist), plus das Verbot von `ClientSetNull`. Falsch
 
 **Stand:** 604 Tests grün, Kette bei 1, `docs/api-examples` unverändert.
 
-## Offen: E7–E14
+### E8 · Konto-Drift + Profil-Invariante
+
+Der zweite echte Defekt, und der billigste Wert im Umbau: **das Konto ist die Spiegelung der fachlichen
+Zeile, nicht ein zweiter Datenstand.** Drei Schreibpfade behaupteten das, zwei hielten es nicht.
+
+**Der Befund war größer als „ein Name driftet".** Die Kollisionsprüfung in `AdultsController` liest
+`Account.Email` (dort sitzt der gefilterte Unique-Index), seit E5 trägt aber **auch** `Adult.Email` einen.
+Blieb das Konto stehen, ging die Drift in **beide** Richtungen falsch:
+- eine aufgegebene Adresse hielt den Adressraum weiter besetzt – niemand konnte sie je wieder bekommen;
+- eine belegte Adresse sah **frei** aus: die Vorprüfung ließ sie durch, der Index am `Adult` schlug zu, und
+  aus dem fälligen 409 wurde ein **500 mit halb gespeichertem Zustand**. Genau das zeigte der Test
+  `AdultLifecycleTests.Adresswechsel_Macht_Die_Neue_Adresse_Fuer_Andere_Belegt` als erstes Rot
+  (`InternalServerError`).
+
+**Umgesetzt:**
+- **Eine** Stelle trägt die Invariante: `AccountService.MirrorAsync(Adult, ct)` und
+  `MirrorAsync(Child, ct)` – Anzeigename, E-Mail und PIN-Hash von der fachlichen Zeile aufs Konto,
+  **unbedingt**, nicht nur das gerade geänderte Feld. „Das Konto trägt, was die fachliche Zeile trägt" ist
+  als Invariante prüfbar, „das Konto trägt, was der letzte PATCH mitschickte" nicht – und bestehende Drift
+  heilt so beim nächsten Schreibzugriff. Das `SaveChanges` bleibt beim Aufrufer, damit fachliche Änderung
+  und Spiegelung in **einem** Commit landen.
+- Aufrufer: `AdultsController.Update`, `ChildrenController.Update` und `AuthController.UpdateMe`. Letzterer
+  spiegelte schon vorher korrekt – seine drei Zuweisungen sind auf denselben Aufruf zusammengelaufen, damit
+  die Regel nicht an drei Orten gepflegt wird. Sein XML-Doc nannte die Lücke im `AdultsController`
+  ausdrücklich; der Satz ist entfernt.
+- Check-Constraint `CK_AccountProfile_SingleProfile` (genau eines von `AdultId`/`ChildId`) in der DB,
+  gleiche Bauart wie `MediaLink`/`ChildMediaPick`.
+
+**Neue Tests, alle vorher rot gesehen** (5 an der Zahl): Name-Spiegelung über den konto-zentrischen Login
+(`Umbenennen_Zieht_Den_Namen_Des_Kontos_Nach`), Adresse wird wieder frei
+(`Adresswechsel_Gibt_Die_Alte_Adresse_Wieder_Frei`), der 500→409-Fall (oben), der Kindname
+(`IdentityAccountTests.UmbenanntesKind_MeldetSichMitDemNeuenNamenAn`) und die XOR-Regel
+(`ProfilOhneGenauEinZiel_WeistDieDatenbankAb`, beide Verstöße: beides gesetzt und keines gesetzt).
+
+**Tor G8 steht** (`SchemaGuardTests.Erwartete_Check_Constraints_Stehen_Im_Modell`): die **Menge** der
+Check-Constraints, nicht „mindestens diese drei" – eine verschwundene Invariante ist genauso ein Fund wie
+eine neue ohne Eintrag. Falsch-Grün-Probe: Constraint umbenannt → rot mit lesbarer Meldung; zurückgenommen.
+**Fallstrick dabei:** `db.Model.GetCheckConstraints()` *wirft* („not stored in the read-optimized model") –
+EF wirft Check-Constraints aus dem Laufzeitmodell, weil sie dort niemand liest. Gefragt ist
+`db.GetService<IDesignTimeModel>().Model` (Namespace `Microsoft.EntityFrameworkCore.Metadata`), dasselbe
+Modell, aus dem die Migration entsteht. Der Schlüssel ist bewusst der **Entity**-Name, nicht der
+Tabellenname – E11 zieht Tabellennamen um, die Invariante bleibt.
+
+**Stand:** 610 Tests grün, Kette bei 1 (`20260730215446_InitialCreate`), Snapshot-Diff genau 5 Zeilen (der
+Constraint), `docs/api-examples` unverändert, Abdeckung weiter 268/268. Live gegengeprüft: PATCH auf
+Name+E-Mail → `auth/login` liefert `"name":"Papa E8"`, zweite Registrierung auf dieselbe Adresse → **409
+`duplicate_email`** (vorher 500).
+
+## Offen: E7, E9–E14
 
 Jede Etappe endet grün, mit neu gefalteter Migration (siehe Arbeitsregeln).
 
@@ -274,19 +324,6 @@ Ein Spaltenname, drei Formate, alle vier Vorkommen idempotenz-tragend:
 **Vorher prüfen**, ob `periodKey` in einem Response-DTO steht; wenn ja, dieses Feld zurückstellen.
 Tests: `PositionGoalOverviewTests`, `PflichtMalusTests`, `ObjectiveTests`, `GamificationTests`, plus je
 ein Doppelbuchungs-Test (zweimal dieselbe Periode → eine Buchung). Danach Tor **G6** (kein Datum als Text).
-
-### E8 · Konto-Drift + Profil-Invariante
-- `AdultsController.cs` (~:80-86): PATCH setzt `adult.Name`/`.Email`, spiegelt aber nur die PIN aufs Konto.
-  `Account.DisplayName`/`Account.Email` bleiben stehen – und der gefilterte Unique-Index sitzt auf
-  `Account.Email`, gegen den die Kollisionsprüfung läuft. Ein Erwachsener kann sich damit eine Adresse
-  geben, die laut Index noch frei aussieht. Analog `ChildrenController.cs` (~:105) für den Kindnamen
-  (wirkt auf `LoginResponse` und den `ClaimTypes.Name`-Claim).
-- `AccountProfile`: Check-Constraint `CK_AccountProfile_SingleProfile` (genau eines von `AdultId`/`ChildId`)
-  in die DB. `IdentityEntities.cs` behauptet die Invariante seit immer; das Muster steht daneben in
-  `MediaLink` und `ChildMediaPick`. Das Unique `(AccountId, Role)` kam bereits in E5.
-
-Tests zuerst rot in `AccountSelfServiceTests`/`AdultLifecycleTests`. Danach Tor **G8** (erwartete
-Check-Constraints existieren).
 
 ### E9 · Backfills ins Seed + `ExerciseGrants`-Lücke
 Die drei „Backfills" sind **kein Altdaten-Pfad, sondern Seed-Nachlauf**: ohne sie hat die frische DB
@@ -419,6 +456,14 @@ einer Funktion.
 7. **Der Stop-Hook testet die ganze Solution** (~55 s) und der Edit-Hook baut nach jeder `.cs`-Änderung
    das besitzende Projekt. Bei einer Reihe zusammengehöriger Edits ruhig weiterarbeiten; der Hook nennt
    die kaputten Aufrufstellen und ist damit die schnellste Liste dessen, was noch nachzuziehen ist.
+8. **`db.Model` ist nicht das ganze Modell.** Das laufzeit-optimierte Modell wirft für Check-Constraints
+   ausdrücklich („not stored in the read-optimized model") – EF wirft weg, was zur Laufzeit niemand liest.
+   Wer Schema-*Form* prüft, fragt `db.GetService<IDesignTimeModel>().Model` (Namespace
+   `Microsoft.EntityFrameworkCore.Metadata`) bzw. `GetRelationalModel()` für DDL-Details wie DEFAULTs. Kostete
+   in E8 und E1 je einen Anlauf.
+9. **Der Login-Rate-Limiter bremst auch die Handprobe.** Ein Dutzend `curl` gegen `auth/*` in Folge endet in
+   `429 rate_limited` – das ist die Policy `login`, kein Fehler. In der Testsuite ist sie über
+   `RateLimiting:LoginEnabled` aus (der In-Process-TestServer teilte sonst eine IP-Partition).
 
 ## Betriebsschritt (einmalig, außerhalb des Repos) — **vor dem nächsten Deploy**
 
@@ -434,7 +479,7 @@ E1 ist wirksam: die Azure-DB stammt aus der alten Kette und wird vom Historien-G
 
 ## Verifikation
 
-**Pro Etappe:** `dotnet test Pugling.sln -c Release` (~55 s, aktuell **601** Tests) und
+**Pro Etappe:** `dotnet test Pugling.sln -c Release` (~55 s, aktuell **610** Tests) und
 `git diff -- docs/api-examples` prüfen (leer, oder im gleichen Commit neu erzeugt).
 
 **Laufzeit statt nur Kompilieren:** `/smoke-test` (Wegwerf-DB, lässt `pugling.db` unangetastet) nach E6,

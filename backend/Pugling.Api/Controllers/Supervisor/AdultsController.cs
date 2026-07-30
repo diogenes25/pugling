@@ -79,12 +79,11 @@ public class AdultsController(PuglingDbContext db, AccountService accounts) : Co
 
         if (dto.Name is not null) adult.Name = dto.Name.Trim();
         if (dto.Email is not null) adult.Email = dto.Email;
-        if (dto.Pin is not null)
-        {
-            adult.Pin = string.IsNullOrEmpty(dto.Pin) ? "" : PinHasher.Hash(dto.Pin);
-            // PIN-Hash auf das Login-Konto spiegeln, damit der konto-zentrische Login (/auth/login) synchron bleibt.
-            (await accounts.EnsureForFatherAsync(adult, ct)).PinHash = adult.Pin;
-        }
+        if (dto.Pin is not null) adult.Pin = string.IsNullOrEmpty(dto.Pin) ? "" : PinHasher.Hash(dto.Pin);
+        // Name, Adresse und PIN-Hash aufs Login-Konto spiegeln – im SELBEN Commit. Vorher ging nur die PIN
+        // mit, und die Adresse driftete: die Kollisionsprüfung oben liest das Konto, der Unique-Index sitzt
+        // aber auch am Adult. Siehe AccountService.MirrorAsync.
+        await accounts.MirrorAsync(adult, ct);
         await db.SaveChangesAsync(ct);
 
         return (await Project(db.Adults.Where(a => a.Id == adultId)).FirstAsync(ct));
