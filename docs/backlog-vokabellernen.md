@@ -1,3 +1,11 @@
+<!--
+  MD029 nur für dieses Dokument aus: die **zehn Entscheidungen** sind über die drei Ideen hinweg
+  durchlaufend nummeriert (1–4, 5–7, 8–10), und der Text verweist auf diese Nummern
+  („siehe Entscheidung 8", „Entscheidung 10", „Entscheidung 3"). Ein Neubeginn bei 1 je Abschnitt,
+  wie die Regel ihn verlangt, würde genau diese Querverweise ins Leere zeigen lassen.
+-->
+<!-- markdownlint-disable-file MD029 -->
+
 # Backlog: drei Vokabellern-Ideen (gegen den Code gegrillt)
 
 **Datum:** 2026-07-30  ·  **Moderation:** PM

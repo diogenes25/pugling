@@ -256,9 +256,9 @@ gemeldet, nicht nebenbei gefixt (dieselbe Trennung wie beim CancellationToken-Um
 
 ---
 
-# Befund (gemessen 2026-07-30)
+## Befund (gemessen 2026-07-30)
 
-## Aufbau der Messung
+### Aufbau der Messung
 
 Vier Worktrees auf `3cd7aae` (`git worktree add`), `PUGLING_SKIP_TEST_GATE=1`, nach jeder Injektion
 `git checkout -- .` **plus** `git clean` auf `docs/api-examples` (die `DocsCaptureTests` schreiben dort bei
@@ -280,7 +280,7 @@ Zweigpunkte der fünf Risiko-Services, sortiert nach Datei:Zeile – `MediaSelec
 `ScoringService` 8, `ShopService` 44, `WalletService` 0 (die Klasse hat gar keinen Zweigpunkt) = **123**.
 Gezogen wurde jeder 8. (k = ⌊123/14⌋), also die Indizes 8, 16, … 112.
 
-## Zwei Quoten, getrennt berichtet
+### Zwei Quoten, getrennt berichtet
 
 | Hälfte | Injektionen | rot | grün | bemerkt |
 |---|---|---|---|---|
@@ -294,7 +294,7 @@ ist gegenüber einem beliebigen Fehler ungefähr so empfindlich wie gegenüber e
 Das ist gleichzeitig die gute und die schlechte Nachricht: keine Selbstbestätigung, aber auch etwa **vier von
 zehn plausiblen Programmierfehlern bleiben unbemerkt**.
 
-## Die 30 Injektionen
+### Die 30 Injektionen
 
 `Streu` = Anzahl gefallener Tests. „gepinnt" = ein fallender Test **benennt** die Regel; „mitgeprüft" = rot,
 aber kein Name trifft die Regel; „unbewacht" = grün.
@@ -334,7 +334,7 @@ aber kein Name trifft die Regel; „unbewacht" = grün.
 
 **Urteil in Zahlen:** 17 gepinnt, 1 zufällig mitgeprüft, 12 unbewacht.
 
-### Protokollierte Übersprünge (drei, mit Grund)
+#### Protokollierte Übersprünge (drei, mit Grund)
 
 Der Plan verlangt, unverletzbare Ziehungen zu überspringen **und den Grund zu nennen**, damit die Verzerrung
 nicht durch die Hintertür zurückkehrt. Für jeden rückte die nächste Stelle der sortierten Liste nach:
@@ -345,7 +345,7 @@ nicht durch die Hintertür zurückkehrt. Für jeden rückte die nächste Stelle 
 | `PositionProgressService.cs:195` (`if (positions.Count == 0) return 0;`) | Reiner Früh-Ausstieg; die Schleife darunter läuft über eine leere Liste ohnehin nicht. Ohne beobachtbare Wirkung. | `:204` (B07) |
 | `ShopService.cs:136` (`if (child is null) …`) | Null-Fall auf diesem Pfad nicht erreichbar (`childId` kommt aus einer Route hinter dem `ChildOwnershipFilter`); der Zweig ist im Bericht nur halb abgedeckt. Entfernen erzeugte zudem `CS8602` → Build-Fehler, keine Messung. | `:143` (B11) |
 
-### Streubreite: unauffällig
+#### Streubreite: unauffällig
 
 Der Plan setzt die Grenze bei **mehr als 10** gefallenen Tests je Defekt („Signal im Lärm"). **Kein einziger
 Fall überschreitet sie**; das Maximum ist 10 (B09 und D14). Zwei Beobachtungen trotzdem:
@@ -358,18 +358,18 @@ Fall überschreitet sie**; das Maximum ist 10 (B09 und D14). Zwei Beobachtungen 
   der Suite und liefert dabei die **beste** Meldung von allen (er zitiert Route, erwarteten und tatsächlichen
   Status samt Body) – Lärm mit hohem Informationsgehalt, kein Streichkandidat.
 
-### Meldungsqualität
+#### Meldungsqualität
 
 Verständlich waren die Meldungen dort, wo der Testname die Regel trägt (D04, D10, B13: je **ein** Test, Name
 sagt alles). Unbrauchbar allein aus der Meldung: `Assert.Equal() Failure: Values differ` ohne Kontext – das
 betrifft D09, D10, B05 und die meisten `AntiCheatTests`. Der Name rettet es jeweils; der reine
 Assert-Text tut es nicht.
 
-## Was grün war – und warum (die zwölf unbewachten Stellen)
+### Was grün war – und warum (die zwölf unbewachten Stellen)
 
 Nicht jedes „grün" ist eine Lücke. Drei Klassen:
 
-**(a) Echte Lücke mit Geldwirkung – wird im zweiten Commit geschlossen**
+#### (a) Echte Lücke mit Geldwirkung – im zweiten Commit geschlossen
 
 1. **D01 · `PositionTestsController.cs:282` – die Bestehensgrenze ist an der Grenze nicht geprüft.**
    `>=` zu `>` zu machen fällt niemandem auf, weil **kein Test genau auf der Schwelle sitzt**: die Suite
@@ -383,9 +383,9 @@ Nicht jedes „grün" ist eine Lücke. Drei Klassen:
    zurückliest (siehe 1a). Geldwirkung indirekt aber echt: der Nachtrag ist der Weg, eine gerissene Periode
    zu heilen; landet er auf „heute", bleibt der Malus für gestern stehen.
 
-**(b) Grün, weil eine zweite Schranke hält – kein Loch, sondern Tiefenverteidigung**
+#### (b) Grün, weil eine zweite Schranke hält – kein Loch, sondern Tiefenverteidigung
 
-3. **D03 / D13 · die Idempotenz-Prüfungen in `PositionProgressService`.** Beide Existenz-Checks auf die
+1. **D03 / D13 · die Idempotenz-Prüfungen in `PositionProgressService`.** Beide Existenz-Checks auf die
    falsche Spalte zu setzen bleibt unbemerkt, weil die **echte** Garantie im Schema steht: `PositionGoalReward`
    und `PositionGoalPenalty` tragen je einen Unique-Index auf `(PlanPositionId, PeriodKey)`, und den pinnen
    `PflichtMalusTests` und `PositionGoalOverviewTests` mit exakten Anzahlen. Beim Malus fängt
@@ -393,13 +393,13 @@ Nicht jedes „grün" ist eine Lücke. Drei Klassen:
    der zweite Abschluss zum **500**, und niemand merkt es, weil
    `PositionGoalOverviewTests` (Zeile 60) die Antwort des zweiten Submits **verwirft**. Diese eine Zeile
    gehört nachgezogen (Commit 2), die Existenz-Checks selbst brauchen keinen eigenen Test.
-4. **B07 · `PositionProgressService.cs:204`.** Das gedrehte Ternär ist **wirkungslos**: nachgelagert filtert
+2. **B07 · `PositionProgressService.cs:204`.** Das gedrehte Ternär ist **wirkungslos**: nachgelagert filtert
    `PlanDueForPeriod` alle Perioden außerhalb der Plan-Laufzeit weg. Grün ist hier die richtige Antwort.
-5. **B01 · `MediaSelector.cs:88`.** Das nicht gelöschte `Superseded` hinterlässt eine Waisen-Zeile; der
+3. **B01 · `MediaSelector.cs:88`.** Das nicht gelöschte `Superseded` hinterlässt eine Waisen-Zeile; der
    nächste Abruf zieht sie erneut zurück und `SaveFreezeAsync` verschluckt den Index-Konflikt bewusst. Kein
    beobachtbarer Effekt – genau das, was der Kommentar dort behauptet.
 
-**(c) Echte Lücke ohne Geldwirkung – benannte Restliste, nach Schadenshöhe**
+#### (c) Echte Lücke ohne Geldwirkung – benannte Restliste, nach Schadenshöhe
 
 | Rang | Stelle | Was unbemerkt durchgeht |
 |---|---|---|
@@ -410,7 +410,7 @@ Nicht jedes „grün" ist eine Lücke. Drei Klassen:
 | 5 | **B08** `PositionProgressService.cs:228` | Der Ledger-Text verwechselt „Tagesziel" und „Wochenziel". Sichtbar im Punkte-Verlauf des Kindes, keine Buchung falsch. |
 | 6 | **B06** `PositionProgressService.cs:129` | Positionen mit `PointsGoalMet == 0` bekommen eine Reward-Zeile und eine Ledger-Buchung über **0** Münzen. Saldo unverändert, aber Rauschen in Verlauf und Auswertung. |
 
-## Etappe 1a – die flachen Zusicherungen: **8**, wie geschätzt
+### Etappe 1a – die flachen Zusicherungen: **8**, wie geschätzt
 
 Mechanisch gesucht (Schreibpfad + keine Zusicherung, die einen Wert nachliest): **81** Rohtreffer. Davon
 fallen 56 als **gültige** Negativtests oder Folgestatus-Belege heraus (`204` → `404`, `201` → `409`), 25
@@ -430,7 +430,7 @@ bleiben **8** Tests, die einen Erfolg zusichern, ohne ihn irgendwo nachzulesen:
 
 Die Zahl **96 aus dem Plan-Entwurf war zu hoch, die Korrektur auf „~8" trifft**: gemessen genau 8.
 
-## Etappe 1b – Tautologien: **keine gefunden**
+### Etappe 1b – Tautologien: **keine gefunden**
 
 Der Hochrisiko-Pfad hält. `ReviewGradingTests`, `PositionTestFlowTests` und `PositionPracticeFlowTests`
 nehmen die richtige Antwort **hart aus dem Test** (`"hallo"`, `"tschüss"`, `"2"`, `"4"`), nicht aus dem
@@ -440,7 +440,7 @@ Karten-Payload – die Karten werden im Gegenteil daraufhin geprüft, dass sie *
 `Assert.Equal`, deren *beide* Seiten aus einer Server-Antwort stammen) → **0 Treffer**. Dass B09 (Richtig-
 Weiche invertiert) 10 Tests umlegt, ist der positive Beleg dafür.
 
-## Etappe 1c – stumme Wächter: **einer ohne Untergrenze, Wirkung aber vorhanden**
+### Etappe 1c – stumme Wächter: **einer ohne Untergrenze, Wirkung aber vorhanden**
 
 Sechs der sieben reflexiven Wächter tragen einen Selbstschutz: `ConventionGuardTests` viermal
 (`files.Length >= 30`, `blessedHits >= 100`, `types.Count >= 200`, `checkedActions >= 100/150/50`),
@@ -458,7 +458,7 @@ verlassen sollte: bei leerer Liste lässt der OpenAPI-Transformer die `enum`-Eig
 der eigentliche Schutz. Der Selbstschutz ist damit **zufällig, nicht gebaut**; eine Untergrenze in einer Zeile
 gehört nachgezogen (Commit 2).
 
-## Etappe 2 – Regeln ohne pinnenden Test
+### Etappe 2 – Regeln ohne pinnenden Test
 
 **Keine der 15 Regeln steht ganz ohne Test da** – jede hat mindestens die im Plan vermutete Testklasse, und
 die Injektionen belegen es: 9 der 15 dokumentierten Regeln wurden von einem Test mit passendem Namen
@@ -468,7 +468,7 @@ Grenze bzw. ihrer Zusage im Detail* – D01 (Schwelle geprüft, aber nie **auf**
 D15 (Matching geprüft, aber nie die Rangfolge der Gewichte). Das ist die Fehlerklasse, die dieser Vorgang
 sichtbar machen sollte: **Regel bekannt, Test vorhanden, Grenzfall offen.**
 
-## Etappe 4 – Struktur-Robustheit: beide Punkte grün
+### Etappe 4 – Struktur-Robustheit: beide Punkte grün
 
 1. **Wiederholbarkeit.** Zwei Läufe hintereinander auf identischem Stand: **587/587** und **587/587**. Die
    47 × `Assert.Single` / 38 × `Assert.Empty` arbeiten also tatsächlich auf frisch angelegten Elternobjekten,
@@ -486,7 +486,7 @@ bei drei parallel laufenden Suiten auf 20 Kernen reißt das. Das ist kein Produk
 Fragilität des Tests – auf einem langsamen oder ausgelasteten CI-Runner wird sie zum Flake. Der saubere Weg
 wäre, die gemessene Zeit einzuspeisen statt sie zu erwarten; hier nur gemeldet, nicht behoben.
 
-## Die E2E-Specs – der Satz, präziser als im Plan
+### Die E2E-Specs – der Satz, präziser als im Plan
 
 Der Plan schreibt, die 10 Playwright-Specs unter `frontend/e2e/` „laufen in keiner CI und verhindern darum
 nichts". Das ist zu scharf und in einem Punkt falsch: **`.github/workflows/e2e.yml` existiert** und ist auf
@@ -505,7 +505,7 @@ ist es im Kopf von `e2e.yml` als Entscheidung dokumentiert. Der Satz des Plans s
 („verhindert nichts"), aber aus einem anderen Grund als angenommen: nicht weil der Workflow fehlt oder nie
 läuft, sondern weil er absichtlich nicht am Release hängt.
 
-## Vorschlag: ein weiterer reflexiver Wächter
+### Vorschlag: ein weiterer reflexiver Wächter
 
 Ein Muster trat mehrfach auf und lässt sich mechanisch fassen statt mit Einzeltests
 („mechanische Tore statt Disziplin"): **ein Test, der auf einem Schreibpfad einen Erfolgsstatus zusichert und
@@ -517,7 +517,7 @@ nicht sofort blocken. Das Skript der Messung liegt bereit; **bewusst nicht** in 
 gestellt, weil der Plan „kein Umbau der Suite" sagt und die Heuristik (25 Rohtreffer → 8 echte) noch zu
 grob für ein hartes Tor ist.
 
-## Was der zweite Commit nachgezogen hat
+### Was der zweite Commit nachgezogen hat
 
 Bewusst begrenzt auf **Geldwirkung** plus den 1c-Selbstschutz; alles andere steht oben als benannte Restliste.
 Vier Änderungen, alle in `Pugling.Api.Tests` – **kein Produktivcode**:
@@ -533,7 +533,7 @@ Vier Änderungen, alle in `Pugling.Api.Tests` – **kein Produktivcode**:
 eingesetzt und der zuständige Test einzeln gefahren – **alle vier wurden rot**. Ohne diesen Schritt wären es
 Tests, von denen niemand weiß, ob sie etwas festhalten. Danach die volle Suite grün.
 
-## Verifikation dieses Vorgangs
+### Verifikation dieses Vorgangs
 
 - Kalibrierung war **nachweislich rot** (K1, 5 Tests) – erst damit sind die 12 „grün" oben etwas wert.
 - Kein Produktivcode wurde geändert; alle 30 Injektionen sind zurückgenommen. `git status` im Hauptbaum war
