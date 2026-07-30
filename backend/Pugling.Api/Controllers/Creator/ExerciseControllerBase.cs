@@ -35,9 +35,9 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db, Exerc
     /// der Wahrheit). Abgeleitete Controller, deren Typ einen Direkt-Check anbietet, exponieren darauf ihre
     /// dünne <c>/check</c>-Action.
     /// </summary>
-    protected async Task<ActionResult<CheckResult>> RunCheckAsync(int subjectId, int chapterId, int exerciseId, CheckDto body)
+    protected async Task<ActionResult<CheckResult>> RunCheckAsync(int subjectId, int chapterId, int exerciseId, CheckDto body, CancellationToken ct = default)
     {
-        var exercise = await FindAsync(subjectId, chapterId, exerciseId);
+        var exercise = await FindAsync(subjectId, chapterId, exerciseId, ct);
         if (exercise is null) return NotFound();
         return registry.Require(TypeKey).Check(exercise.ConfigJson, body.Answers, body.Seed) is { } result
             ? result
@@ -49,7 +49,7 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db, Exerc
     /// überschreiben dies, um z. B. Store-Referenzen (Vokabel-Keys) zu prüfen; Rückgabe = Fehlertext (→ 400)
     /// oder <c>null</c>, wenn alles in Ordnung ist.
     /// </summary>
-    protected virtual Task<string?> ValidateConfigAsync(int subjectId, TConfig config) =>
+    protected virtual Task<string?> ValidateConfigAsync(int subjectId, TConfig config, CancellationToken ct = default) =>
         Task.FromResult<string?>(null);
 
     /// <summary>
@@ -64,7 +64,7 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db, Exerc
     /// wenn die Invariante DB-Zugriff braucht – z. B. Vokabel-Übungen, die inline genutzte Wörter im Store anlegen
     /// und mit ihrer Store-ID verknüpfen. Läuft nach <see cref="NormalizeConfig"/> und darf <c>SaveChanges</c> nutzen.
     /// </summary>
-    protected virtual Task NormalizeConfigAsync(int subjectId, TConfig config) => Task.CompletedTask;
+    protected virtual Task NormalizeConfigAsync(int subjectId, TConfig config, CancellationToken ct = default) => Task.CompletedTask;
 
     /// <summary>
     /// Formt die Config für die Antwort (Standard: wie gespeichert). Abgeleitete Controller überschreiben dies,
@@ -79,21 +79,21 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db, Exerc
     /// <see cref="Exercise.Id"/> brauchen (z. B. Vokabelübungen, die ihre Items in eine eigene Tabelle materialisieren).
     /// <paramref name="isCreate"/> unterscheidet POST (Erstanlage) von PUT (Ersatz).
     /// </summary>
-    protected virtual Task AfterSaveAsync(Exercise exercise, TConfig config, bool isCreate) => Task.CompletedTask;
+    protected virtual Task AfterSaveAsync(Exercise exercise, TConfig config, bool isCreate, CancellationToken ct = default) => Task.CompletedTask;
 
     /// <summary>DbContext für abgeleitete Controller mit Zusatz-Endpunkten über das reine CRUD hinaus.</summary>
     protected PuglingDbContext Db => db;
 
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
-    private Task<bool> ChapterExists(int subjectId, int chapterId) =>
-        db.Chapters.AnyAsync(c => c.Id == chapterId && c.SubjectId == subjectId);
+    private Task<bool> ChapterExists(int subjectId, int chapterId, CancellationToken ct = default) =>
+        db.Chapters.AnyAsync(c => c.Id == chapterId && c.SubjectId == subjectId, ct);
 
     /// <summary>Prüft, dass eine gesetzte Art zum Fach der Übung gehört (fremde Fächer verhindern).</summary>
-    private Task<bool> CategoryValid(int subjectId, int? categoryId) =>
+    private Task<bool> CategoryValid(int subjectId, int? categoryId, CancellationToken ct = default) =>
         categoryId is null
             ? Task.FromResult(true)
-            : db.ExerciseCategories.AnyAsync(c => c.Id == categoryId && c.SubjectId == subjectId);
+            : db.ExerciseCategories.AnyAsync(c => c.Id == categoryId && c.SubjectId == subjectId, ct);
 
     /// <summary>
     /// Prüft das <b>Schreibrecht</b> (ändern) auf eine Übung: Der Katalog ist global (jeder Creator darf jede
@@ -116,10 +116,10 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db, Exerc
             : this.ProblemWithCode(ApiErrors.NotOwner, "Only an owner can delete this exercise or manage its permissions.");
 
     /// <summary>Lädt eine Übung dieses Typs inkl. ihrer Grants (für die Rechteprüfung/-anzeige); Basis für abgeleitete Zusatz-Endpunkte.</summary>
-    protected Task<Exercise?> FindAsync(int subjectId, int chapterId, int exerciseId) =>
+    protected Task<Exercise?> FindAsync(int subjectId, int chapterId, int exerciseId, CancellationToken ct = default) =>
         db.Exercises.Include(e => e.Category).Include(e => e.Grants)
             .FirstOrDefaultAsync(e => e.Id == exerciseId && e.ChapterId == chapterId
-                && e.Type == TypeKey && e.Chapter!.SubjectId == subjectId);
+                && e.Type == TypeKey && e.Chapter!.SubjectId == subjectId, ct);
 
     /// <summary>Deserialisiert die typisierte Konfiguration einer Übung (nie null; fällt auf Default zurück).</summary>
     protected TConfig ConfigOf(Exercise exercise) =>
@@ -147,15 +147,17 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db, Exerc
     /// <param name="isOwner">Optionaler Rechtefilter auf Verwaltungsrecht (Owner-Grant; Admin gilt als <c>true</c>).</param>
     /// <param name="skip">Anzahl zu überspringender Einträge (Paging).</param>
     /// <param name="take">Maximale Trefferzahl (1..500). Gesamtzahl im Header <c>X-Total-Count</c>.</param>
+    /// <param name="ct">Abbruch-Token.</param>
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<IEnumerable<ExerciseResponse<TConfig>>>> List(
         int subjectId, int chapterId,
         [FromQuery] bool? isOwn = null,
         [FromQuery] bool? isOwner = null,
-        [FromQuery] int skip = 0, [FromQuery] int take = PagingExtensions.DefaultTake)
+        [FromQuery] int skip = 0, [FromQuery] int take = PagingExtensions.DefaultTake,
+        CancellationToken ct = default)
     {
-        if (!await ChapterExists(subjectId, chapterId)) return NotFound();
+        if (!await ChapterExists(subjectId, chapterId, ct)) return NotFound();
         var fid = User.AdultId();
         var isAdmin = User.IsAdmin();
 
@@ -203,16 +205,16 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db, Exerc
 
         var exercises = await query
             .OrderBy(e => e.OrderIndex).ThenBy(e => e.Id)
-            .ToPagedListAsync(Response, skip, take);
+            .ToPagedListAsync(Response, skip, take, ct);
         return exercises.Select(e => Map(e, fid)).ToList();
     }
 
     /// <summary>Eine einzelne Übung.</summary>
     [HttpGet("{exerciseId:int}")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<ExerciseResponse<TConfig>>> Get(int subjectId, int chapterId, int exerciseId)
+    public async Task<ActionResult<ExerciseResponse<TConfig>>> Get(int subjectId, int chapterId, int exerciseId, CancellationToken ct = default)
     {
-        var exercise = await FindAsync(subjectId, chapterId, exerciseId);
+        var exercise = await FindAsync(subjectId, chapterId, exerciseId, ct);
         return exercise is null ? NotFound() : Map(exercise, User.AdultId());
     }
 
@@ -221,15 +223,15 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db, Exerc
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<ExerciseResponse<TConfig>>> Create(int subjectId, int chapterId, ExercisePayload<TConfig> body)
+    public async Task<ActionResult<ExerciseResponse<TConfig>>> Create(int subjectId, int chapterId, ExercisePayload<TConfig> body, CancellationToken ct = default)
     {
-        if (!await ChapterExists(subjectId, chapterId)) return NotFound();
+        if (!await ChapterExists(subjectId, chapterId, ct)) return NotFound();
         if (string.IsNullOrWhiteSpace(body.Title)) return this.ProblemWithCode(ApiErrors.ValidationError, "Title is required.");
-        if (!await CategoryValid(subjectId, body.CategoryId)) return this.ProblemWithCode(ApiErrors.InvalidReference, "Unknown category for this subject.");
+        if (!await CategoryValid(subjectId, body.CategoryId, ct)) return this.ProblemWithCode(ApiErrors.InvalidReference, "Unknown category for this subject.");
         var config = body.Config ?? new TConfig();
-        if (await ValidateConfigAsync(subjectId, config) is { } createErr) return this.ProblemWithCode(ApiErrors.ValidationError, createErr);
+        if (await ValidateConfigAsync(subjectId, config, ct) is { } createErr) return this.ProblemWithCode(ApiErrors.ValidationError, createErr);
         NormalizeConfig(config);
-        await NormalizeConfigAsync(subjectId, config);
+        await NormalizeConfigAsync(subjectId, config, ct);
 
         var exercise = new Exercise
         {
@@ -256,7 +258,7 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db, Exerc
             AuthorAdultId = User.AdultId(),
         };
         db.Exercises.Add(exercise);
-        await db.SaveChangesAsync();
+        await db.SaveChangesAsync(ct);
 
         // Der Anleger wird erster Owner (Editier-/Lösch-/Verwaltungsrecht). Ohne fid (kein Creator-Profil)
         // bleibt die Übung ownerlos wie eine System-Übung – dann aber ohnehin nur über [Authorize] erreichbar.
@@ -270,17 +272,17 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db, Exerc
                 GrantedByAdultId = authorId,
             };
             db.ExerciseGrants.Add(ownerGrant);
-            await db.SaveChangesAsync();
+            await db.SaveChangesAsync(ct);
             // Kein `exercise.Grants.Add(ownerGrant)`: EFs Relationship-Fixup hat den Grant beim Speichern
             // schon in die geladene Navigation gehängt. Ein zweites Anhängen zählte ihn doppelt – die
             // POST-Antwort meldete `grantCount: 2`, obwohl GET und /grants korrekt 1 lieferten.
         }
 
-        await AfterSaveAsync(exercise, config, isCreate: true);
+        await AfterSaveAsync(exercise, config, isCreate: true, ct);
 
         // Für CategoryName in der Antwort die Art nachladen (billig; nur beim Erzeugen).
         if (exercise.CategoryId is not null)
-            exercise.Category = await db.ExerciseCategories.FindAsync(exercise.CategoryId);
+            exercise.Category = await db.ExerciseCategories.FindAsync([exercise.CategoryId], ct);
 
         return CreatedAtAction(nameof(Get), new { subjectId, chapterId, exerciseId = exercise.Id }, Map(exercise, User.AdultId()));
     }
@@ -289,17 +291,17 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db, Exerc
     [HttpPut("{exerciseId:int}")]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<ExerciseResponse<TConfig>>> Update(int subjectId, int chapterId, int exerciseId, ExercisePayload<TConfig> body)
+    public async Task<ActionResult<ExerciseResponse<TConfig>>> Update(int subjectId, int chapterId, int exerciseId, ExercisePayload<TConfig> body, CancellationToken ct = default)
     {
-        var exercise = await FindAsync(subjectId, chapterId, exerciseId);
+        var exercise = await FindAsync(subjectId, chapterId, exerciseId, ct);
         if (exercise is null) return NotFound();
         if (EnsureCanWrite(exercise) is { } forbidden) return forbidden;
         if (string.IsNullOrWhiteSpace(body.Title)) return this.ProblemWithCode(ApiErrors.ValidationError, "Title is required.");
-        if (!await CategoryValid(subjectId, body.CategoryId)) return this.ProblemWithCode(ApiErrors.InvalidReference, "Unknown category for this subject.");
+        if (!await CategoryValid(subjectId, body.CategoryId, ct)) return this.ProblemWithCode(ApiErrors.InvalidReference, "Unknown category for this subject.");
         // Die Ausführ-Sichtbarkeit ist ein Owner-Recht (kontrollierte Weitergabe) – ein Write-Grantee darf sie nicht umschalten.
         if (body.ExecutePublic != exercise.ExecutePublic && EnsureCanAdminister(exercise) is { } adminForbidden) return adminForbidden;
         var config = body.Config ?? new TConfig();
-        if (await ValidateConfigAsync(subjectId, config) is { } updateErr) return this.ProblemWithCode(ApiErrors.ValidationError, updateErr);
+        if (await ValidateConfigAsync(subjectId, config, ct) is { } updateErr) return this.ProblemWithCode(ApiErrors.ValidationError, updateErr);
         NormalizeConfig(config);
 
         exercise.ExecutePublic = body.ExecutePublic;
@@ -318,13 +320,13 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db, Exerc
         exercise.DefaultRequireTypedTest = body.DefaultRequireTypedTest;
         exercise.DefaultStage = body.DefaultStage;
         exercise.DefaultItemCount = body.DefaultItemCount;
-        await db.SaveChangesAsync();
-        await AfterSaveAsync(exercise, config, isCreate: false);
+        await db.SaveChangesAsync(ct);
+        await AfterSaveAsync(exercise, config, isCreate: false, ct);
 
         // Navigation nach evtl. geänderter CategoryId aktualisieren, damit CategoryName stimmt.
         exercise.Category = exercise.CategoryId is null
             ? null
-            : await db.ExerciseCategories.FindAsync(exercise.CategoryId);
+            : await db.ExerciseCategories.FindAsync([exercise.CategoryId], ct);
 
         return Map(exercise, User.AdultId());
     }
@@ -336,7 +338,7 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db, Exerc
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<IActionResult> Delete(int subjectId, int chapterId, int exerciseId, CancellationToken ct)
     {
-        var exercise = await FindAsync(subjectId, chapterId, exerciseId);
+        var exercise = await FindAsync(subjectId, chapterId, exerciseId, ct);
         if (exercise is null) return NotFound();
         if (EnsureCanAdminister(exercise) is { } forbidden) return forbidden;
         /*

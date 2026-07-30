@@ -30,16 +30,17 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
     private const int DefaultPassPercent = 80;
 
 
-    private Task<StudyPlan?> GetPlan(int planId) => db.StudyPlans.FirstOrDefaultAsync(p => p.Id == planId);
+    private Task<StudyPlan?> GetPlan(int planId, CancellationToken ct = default) =>
+        db.StudyPlans.FirstOrDefaultAsync(p => p.Id == planId, ct);
 
     // Der Plan kommt mit, weil die Bebilderung das Kind braucht (die Auswahl hängt an seinem Profil).
-    private Task<PlanPosition?> GetPosition(int planId, int positionId) =>
+    private Task<PlanPosition?> GetPosition(int planId, int positionId, CancellationToken ct = default) =>
         db.PlanPositions.Include(p => p.Exercise).Include(p => p.StudyPlan)
-            .FirstOrDefaultAsync(p => p.Id == positionId && p.StudyPlanId == planId);
+            .FirstOrDefaultAsync(p => p.Id == positionId && p.StudyPlanId == planId, ct);
 
-    private Task<TestAttempt?> LoadAttempt(int planId, int positionId, int attemptId) =>
+    private Task<TestAttempt?> LoadAttempt(int planId, int positionId, int attemptId, CancellationToken ct = default) =>
         db.TestAttempts.Include(t => t.Results)
-            .FirstOrDefaultAsync(t => t.Id == attemptId && t.StudyPlanId == planId && t.PlanPositionId == positionId);
+            .FirstOrDefaultAsync(t => t.Id == attemptId && t.StudyPlanId == planId && t.PlanPositionId == positionId, ct);
 
     private static TestItem ToItem(IReadOnlyList<ContentItem> items, ContentItem item, IExerciseType type, int stage, bool typed)
     {
@@ -60,14 +61,14 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<AttemptResponse>> Start(int planId, int positionId, StartTestDto dto)
+    public async Task<ActionResult<AttemptResponse>> Start(int planId, int positionId, StartTestDto dto, CancellationToken ct = default)
     {
-        var plan = await GetPlan(planId);
+        var plan = await GetPlan(planId, ct);
         if (plan is null) return NotFound();
-        var pos = await GetPosition(planId, positionId);
+        var pos = await GetPosition(planId, positionId, ct);
         if (pos?.Exercise is null) return NotFound();
 
-        var items = await play.ItemsOfAsync(pos, pos.StudyPlan?.ChildId);
+        var items = await play.ItemsOfAsync(pos, pos.StudyPlan?.ChildId, ct);
         var poolSize = play.PoolSize(pos, items.Count);
         if (poolSize == 0) return this.ProblemWithCode(ApiErrors.NoCheckableContent, "The exercise contains no checkable content.");
 
@@ -87,7 +88,7 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
         // (sperrt nicht, wenn per Üben noch nichts „fällig" ist).
         var progress = await db.PositionItemProgress
             .Where(p => p.PlanPositionId == positionId && p.ItemIndex < poolSize)
-            .ToDictionaryAsync(p => p.ItemIndex);
+            .ToDictionaryAsync(p => p.ItemIndex, ct);
         var introduced = progress.Values.Where(p => p.IntroducedAt != null).Select(p => p.ItemIndex).ToList();
         var pool = introduced.Count > 0 ? introduced : Enumerable.Range(0, poolSize).ToList();
         // Prüfungsreihenfolge gemäß Strategie der Position EINFRIEREN (strikt server-getrieben, kein Zurück).
@@ -105,7 +106,7 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
             Results = order.Select(i => new TestItemResult { ContentId = pos.ExerciseId, ItemIndex = i, StageValue = stage }).ToList(),
         };
         db.TestAttempts.Add(attempt);
-        await db.SaveChangesAsync();
+        await db.SaveChangesAsync(ct);
 
         return CreatedAtAction(nameof(Get), new { planId, positionId, attemptId = attempt.Id },
             new AttemptResponse(attempt.Id, planId, positionId, day, stage, attempt.TotalItems));
@@ -118,24 +119,24 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
     /// </summary>
     [HttpGet("{attemptId:int}/next")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<TestNextResponse>> Next(int planId, int positionId, int attemptId)
+    public async Task<ActionResult<TestNextResponse>> Next(int planId, int positionId, int attemptId, CancellationToken ct = default)
     {
-        var attempt = await LoadAttempt(planId, positionId, attemptId);
+        var attempt = await LoadAttempt(planId, positionId, attemptId, ct);
         if (attempt is null) return NotFound();
         if (attempt.CompletedAt is not null)
             return new TestNextResponse(null, true, attempt.Cursor, attempt.TotalItems);
-        var plan = (await GetPlan(planId))!;
+        var plan = (await GetPlan(planId, ct))!;
         if (User.IsStudent() && !PositionPlayService.PlanPlayableForChild(plan, DateOnly.FromDateTime(DateTime.UtcNow)))
             return this.ProblemWithCode(ApiErrors.PlanInactive, "This study plan is not currently active. Ask your parent.");
-        var pos = await GetPosition(planId, positionId);
+        var pos = await GetPosition(planId, positionId, ct);
         if (pos?.Exercise is null) return NotFound();
 
-        var items = await play.ItemsOfAsync(pos, pos.StudyPlan?.ChildId);
+        var items = await play.ItemsOfAsync(pos, pos.StudyPlan?.ChildId, ct);
         if (play.TypeOf(pos.Exercise) is not { } type)
             return this.ProblemWithCode(ApiErrors.UnknownExerciseType, "The exercise has an unknown type.");
         var typed = type.IsTypedStage(attempt.StageValue);
         var cursor = PositionPlayService.SkipRemoved(attempt.Order, attempt.Cursor, items.Count);
-        if (cursor != attempt.Cursor) { attempt.Cursor = cursor; await db.SaveChangesAsync(); }
+        if (cursor != attempt.Cursor) { attempt.Cursor = cursor; await db.SaveChangesAsync(ct); }
         if (cursor >= attempt.Order.Count) return new TestNextResponse(null, true, cursor, attempt.TotalItems);
 
         var item = ToItem(items, items[attempt.Order[cursor]], type, attempt.StageValue, typed);
@@ -152,18 +153,18 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
     [HttpPost("{attemptId:int}/answer")]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<AnswerAck>> Answer(int planId, int positionId, int attemptId, AnswerDto dto)
+    public async Task<ActionResult<AnswerAck>> Answer(int planId, int positionId, int attemptId, AnswerDto dto, CancellationToken ct = default)
     {
-        var attempt = await LoadAttempt(planId, positionId, attemptId);
+        var attempt = await LoadAttempt(planId, positionId, attemptId, ct);
         if (attempt is null) return NotFound();
         if (attempt.CompletedAt is not null) return this.ProblemWithCode(ApiErrors.TestAlreadySubmitted, "The test has already been submitted.");
-        var plan = (await GetPlan(planId))!;
+        var plan = (await GetPlan(planId, ct))!;
         if (User.IsStudent() && !PositionPlayService.PlanPlayableForChild(plan, DateOnly.FromDateTime(DateTime.UtcNow)))
             return this.ProblemWithCode(ApiErrors.PlanInactive, "This study plan is not currently active. Ask your parent.");
-        var pos = await GetPosition(planId, positionId);
+        var pos = await GetPosition(planId, positionId, ct);
         if (pos?.Exercise is null) return NotFound();
 
-        var items = await play.ItemsOfAsync(pos, pos.StudyPlan?.ChildId);
+        var items = await play.ItemsOfAsync(pos, pos.StudyPlan?.ChildId, ct);
         if (play.TypeOf(pos.Exercise) is not { } type)
             return this.ProblemWithCode(ApiErrors.UnknownExerciseType, "The exercise has an unknown type.");
         var typed = type.IsTypedStage(attempt.StageValue);
@@ -187,7 +188,7 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
             cursor++;
         }
         attempt.Cursor = PositionPlayService.SkipRemoved(attempt.Order, cursor, items.Count);
-        await db.SaveChangesAsync();
+        await db.SaveChangesAsync(ct);
         return new AnswerAck(attempt.Cursor >= attempt.Order.Count, attempt.Cursor, attempt.TotalItems);
     }
 
@@ -195,9 +196,9 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
     /// <summary>Ein Testversuch samt Einzelergebnissen.</summary>
     [HttpGet("{attemptId:int}")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<AttemptDetail>> Get(int planId, int positionId, int attemptId)
+    public async Task<ActionResult<AttemptDetail>> Get(int planId, int positionId, int attemptId, CancellationToken ct = default)
     {
-        var a = await LoadAttempt(planId, positionId, attemptId);
+        var a = await LoadAttempt(planId, positionId, attemptId, ct);
         if (a is null) return NotFound();
         return new AttemptDetail(a.Id, a.StudyPlanId, positionId, a.Day, a.StageValue, a.StartedAt, a.CompletedAt,
             a.TotalItems, a.CorrectItems, a.ScorePercent, a.Passed,
@@ -213,20 +214,20 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
     [HttpPost("{attemptId:int}/submit")]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<SubmitResponse>> Submit(int planId, int positionId, int attemptId, SubmitDto dto)
+    public async Task<ActionResult<SubmitResponse>> Submit(int planId, int positionId, int attemptId, SubmitDto dto, CancellationToken ct = default)
     {
-        var attempt = await LoadAttempt(planId, positionId, attemptId);
+        var attempt = await LoadAttempt(planId, positionId, attemptId, ct);
         if (attempt is null) return NotFound();
         if (attempt.CompletedAt is not null) return this.ProblemWithCode(ApiErrors.TestAlreadySubmitted, "The test has already been submitted.");
-        var plan = (await GetPlan(planId))!;
+        var plan = (await GetPlan(planId, ct))!;
         // Anti-Schummel: einen inzwischen deaktivierten oder abgelaufenen Plan darf der Sohn auch nicht über
         // einen offenen Testversuch abschließen und bepunkten (der Vater bleibt ausgenommen).
         if (User.IsStudent() && !PositionPlayService.PlanPlayableForChild(plan, DateOnly.FromDateTime(DateTime.UtcNow)))
             return this.ProblemWithCode(ApiErrors.PlanInactive, "This study plan is not currently active. Ask your parent.");
-        var pos = await GetPosition(planId, positionId);
+        var pos = await GetPosition(planId, positionId, ct);
         if (pos?.Exercise is null) return NotFound();
 
-        var items = await play.ItemsOfAsync(pos, pos.StudyPlan?.ChildId);
+        var items = await play.ItemsOfAsync(pos, pos.StudyPlan?.ChildId, ct);
         if (play.TypeOf(pos.Exercise) is not { } type)
             return this.ProblemWithCode(ApiErrors.UnknownExerciseType, "The exercise has an unknown type.");
         var typed = type.IsTypedStage(attempt.StageValue);
@@ -266,7 +267,7 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
             var item = items[index];
             outcomes.Add(new ItemOutcome(index, item.Prompt, item.Answer, r.GivenAnswer, r.WasCorrect));
             await itemProgress.RecordAsync(plan.ChildId, pos.ExerciseId, item, r.WasCorrect, attempt.StageValue,
-                typed ? r.GivenAnswer : null, ItemReviewSource.Test, positionId, attempt.Day, countsForMastery: true);
+                typed ? r.GivenAnswer : null, ItemReviewSource.Test, positionId, attempt.Day, countsForMastery: true, ct: ct);
         }
 
         var passPercent = pos.GoalThreshold is > 0 ? pos.GoalThreshold.Value : DefaultPassPercent;
@@ -278,13 +279,13 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
             : (int)Math.Round(100.0 * attempt.CorrectItems / attempt.TotalItems);
         attempt.Passed = attempt.ScorePercent >= passPercent;
         attempt.CompletedAt = DateTime.UtcNow;
-        await db.SaveChangesAsync();
+        await db.SaveChangesAsync(ct);
 
         // Ziel-Punkte der Position (idempotent) VOR der Gamification buchen, damit münz-basierte
         // Missionen die frische Gutschrift bereits sehen.
-        await progress.EvaluateAndAwardAsync(plan, attempt.Day);
+        await progress.EvaluateAndAwardAsync(plan, attempt.Day, ct);
         // Metrik-basierte Missionen/Auszeichnungen (z. B. „Tests bestanden") auch am Test-Abschluss auswerten.
-        await gamification.EvaluateAndAwardAsync(plan.ChildId, attempt.Day);
+        await gamification.EvaluateAndAwardAsync(plan.ChildId, attempt.Day, ct);
 
         return new SubmitResponse(attempt.Id, attempt.StageValue, attempt.TotalItems, attempt.CorrectItems,
             attempt.ScorePercent, attempt.Passed, passPercent, outcomes);
