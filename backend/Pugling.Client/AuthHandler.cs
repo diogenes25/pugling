@@ -5,17 +5,17 @@ using Microsoft.Extensions.Options;
 namespace Pugling.Client;
 
 /// <summary>
-/// Hängt jedem Aufruf das JWT an und hält es aktuell: Login beim ersten Aufruf (konto-zentrisch über
-/// <c>POST api/v1/auth/login</c>), proaktive Erneuerung kurz vor Ablauf und ein einmaliger Retry, falls
-/// der Server trotzdem mit <c>401</c> antwortet (z. B. weil der Serverneustart den Signaturschlüssel wechselte).
-/// Der Token-Zustand liegt im geteilten <see cref="PuglingTokenStore"/>; der Handler selbst ist
-/// zustandslos und gehört – wie jeder <see cref="DelegatingHandler"/> – in genau eine Handler-Kette.
+/// Attaches the JWT to every call and keeps it current: login on first use (account-centric via
+/// <c>POST api/v1/auth/login</c>), proactive renewal shortly before expiry, and a single retry if
+/// the server still responds with <c>401</c> (e.g. because a server restart changed the signing key).
+/// Token state lives in the shared <see cref="PuglingTokenStore"/>; the handler itself is
+/// stateless and belongs — like every <see cref="DelegatingHandler"/> — in exactly one handler chain.
 /// </summary>
 public sealed class AuthHandler(PuglingTokenStore tokens) : DelegatingHandler
 {
     /// <summary>
-    /// Weg ohne DI (Tests, kleine Werkzeuge): Handler mit eigenem Token-Speicher. Bewusst eine
-    /// Fabrikmethode und kein zweiter Konstruktor – der DI-Container lehnt mehrdeutige Konstruktoren ab.
+    /// Path without DI (tests, small tools): a handler with its own token store. Deliberately a
+    /// factory method rather than a second constructor — the DI container rejects ambiguous constructors.
     /// </summary>
     public static AuthHandler Standalone(PuglingClientOptions options) =>
         new(new PuglingTokenStore(Options.Create(options)));
@@ -42,9 +42,9 @@ public sealed class AuthHandler(PuglingTokenStore tokens) : DelegatingHandler
     }
 
     /// <summary>
-    /// Die Anmelde-Endpunkte – und <b>nur</b> die. Ein <c>Contains("/auth/")</c> träfe auch die
-    /// authentifizierten Auth-Routen (<c>auth/me</c>): die gingen dann ohne Token hinaus, und weil der
-    /// Kurzschluss auch den 401-Retry überspringt, bekäme der Aufrufer immer <c>unauthorized</c>.
+    /// The login endpoints — and <b>only</b> those. A <c>Contains("/auth/")</c> would also match the
+    /// authenticated auth routes (<c>auth/me</c>): those would then go out without a token, and because the
+    /// short-circuit also skips the 401 retry, the caller would always get <c>unauthorized</c>.
     /// </summary>
     private static readonly string[] LoginPaths = ["/auth/login", "/auth/adult", "/auth/child"];
 

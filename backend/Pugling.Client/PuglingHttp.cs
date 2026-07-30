@@ -5,8 +5,8 @@ using System.Net.Http.Json;
 namespace Pugling.Client;
 
 /// <summary>
-/// Dünne Sende-/Lese-Helfer, auf denen <see cref="CreatorApi"/> und <see cref="SupervisorApi"/> aufsetzen:
-/// eine Stelle für Serialisierung, Fehlerabbildung und Query-Bau – die Wrapper bleiben dadurch einzeilig.
+/// Thin send/read helpers that <see cref="CreatorApi"/> and <see cref="SupervisorApi"/> build on:
+/// a single place for serialization, error mapping, and query building – this keeps the wrappers one-liners.
 /// </summary>
 internal static class PuglingHttp
 {
@@ -23,9 +23,9 @@ internal static class PuglingHttp
     }
 
     /// <summary>
-    /// POST mit vorgefertigtem Inhalt statt JSON – für Datei-Uploads (multipart). Der Aufrufer baut den
-    /// <see cref="MultipartFormDataContent"/>; Fehlerbehandlung und Deserialisierung bleiben hier, damit
-    /// die Upload-Fassade kein eigenes HTTP-Plumbing braucht.
+    /// POST with prebuilt content instead of JSON – for file uploads (multipart). The caller builds the
+    /// <see cref="MultipartFormDataContent"/>; error handling and deserialization stay here so
+    /// the upload facade doesn't need its own HTTP plumbing.
     /// </summary>
     internal static async Task<T> PostContentAsync<T>(this HttpClient http, string uri, HttpContent content,
         CancellationToken ct)
@@ -46,7 +46,7 @@ internal static class PuglingHttp
         return await ReadAsync<T>(response, ct);
     }
 
-    /// <summary>Für Endpunkte ohne Nutzlast in der Antwort (204) – prüft nur den Status.</summary>
+    /// <summary>For endpoints without a payload in the response (204) – only checks the status.</summary>
     internal static async Task SendAsync(this HttpClient http, HttpMethod method, string uri, object? body, CancellationToken ct)
     {
         using var request = new HttpRequestMessage(method, uri) { Content = Body(body) };
@@ -75,9 +75,9 @@ internal static class PuglingHttp
     }
 
     /// <summary>
-    /// Baut einen Query-String aus optionalen Parametern; <c>null</c> wird weggelassen. Werte werden
-    /// invariant formatiert (Enums als Name, <c>bool</c> klein, <see cref="DateOnly"/> als ISO-Datum),
-    /// damit sie zur String-Enum-Bindung des Servers passen.
+    /// Builds a query string from optional parameters; <c>null</c> is omitted. Values are
+    /// formatted invariantly (enums as name, <c>bool</c> lowercase, <see cref="DateOnly"/> as ISO date),
+    /// so they match the server's string-enum binding.
     /// </summary>
     internal static string Query(params (string Name, object? Value)[] parameters)
     {

@@ -3,14 +3,14 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Pugling.Client;
 
-/// <summary>DI-Registrierung des Pugling-Clients.</summary>
+/// <summary>DI registration of the Pugling client.</summary>
 public static class ServiceCollectionExtensions
 {
     /// <summary>
-    /// Registriert <see cref="CreatorApi"/>, <see cref="SupervisorApi"/> und <see cref="StudentApi"/> als
-    /// typisierte HttpClients samt <see cref="AuthHandler"/>. Die Optionen werden aus dem angegebenen Konfigurationsabschnitt
-    /// gebunden und beim ersten Zugriff validiert – eine fehlende PIN fällt so beim Start auf, nicht
-    /// erst beim ersten API-Aufruf.
+    /// Registers <see cref="CreatorApi"/>, <see cref="SupervisorApi"/>, and <see cref="StudentApi"/> as
+    /// typed HttpClients including <see cref="AuthHandler"/>. The options are bound from the given configuration
+    /// section and validated on first access – a missing PIN thus surfaces at startup, not
+    /// only at the first API call.
     /// </summary>
     public static IServiceCollection AddPuglingClient(this IServiceCollection services,
         IConfiguration configuration, string sectionName = PuglingClientOptions.SectionName)
@@ -23,7 +23,7 @@ public static class ServiceCollectionExtensions
         return services.AddPuglingClientCore();
     }
 
-    /// <summary>Variante für Aufrufer, die die Optionen im Code setzen (Tests, Konsolen-Flags).</summary>
+    /// <summary>Variant for callers who set the options in code (tests, console flags).</summary>
     public static IServiceCollection AddPuglingClient(this IServiceCollection services,
         Action<PuglingClientOptions> configure)
     {

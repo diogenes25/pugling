@@ -4,16 +4,16 @@ using Microsoft.Extensions.Options;
 namespace Pugling.Client;
 
 /// <summary>
-/// Hält das JWT <b>eine</b> Anmeldung lang – geteilt über alle Fassaden (Creator/Supervisor/Student).
-/// Bewusst getrennt vom <see cref="AuthHandler"/>: eine <c>DelegatingHandler</c>-Instanz darf nur in
-/// genau einer Handler-Kette hängen, der Token-Zustand soll aber gerade <i>nicht</i> je Client
-/// verdoppelt werden – sonst meldete sich jede Fassade eigenständig an.
+/// Holds the JWT for <b>one</b> login session – shared across all facades (Creator/Supervisor/Student).
+/// Deliberately separate from <see cref="AuthHandler"/>: a <c>DelegatingHandler</c> instance may hang in
+/// exactly one handler chain, but the token state must specifically <i>not</i> be duplicated per client –
+/// otherwise every facade would log in independently.
 /// </summary>
 public sealed class PuglingTokenStore(IOptions<PuglingClientOptions> options) : IDisposable
 {
     private const string LoginPath = "api/v1/auth/login";
 
-    /// <summary>Sendeweg für den Login – der Handler reicht seine eigene Kette herein.</summary>
+    /// <summary>Send path for the login – the handler passes in its own chain.</summary>
     public delegate Task<HttpResponseMessage> Send(HttpRequestMessage request, CancellationToken ct);
 
     private readonly PuglingClientOptions _options = options.Value;
@@ -27,8 +27,8 @@ public sealed class PuglingTokenStore(IOptions<PuglingClientOptions> options) : 
     private DateTime _expiresAtUtc;
 
     /// <summary>
-    /// Liefert ein gültiges Token; meldet sich an, wenn keines da ist, es demnächst abläuft oder der
-    /// Aufrufer die Erneuerung erzwingt (nach einem <c>401</c>).
+    /// Returns a valid token; logs in if none is present, it is about to expire, or the
+    /// caller forces renewal (after a <c>401</c>).
     /// </summary>
     public async Task<string> GetTokenAsync(Send send, bool force, CancellationToken ct)
     {
@@ -65,6 +65,6 @@ public sealed class PuglingTokenStore(IOptions<PuglingClientOptions> options) : 
 
     private bool IsFresh() => _token is not null && DateTime.UtcNow < _expiresAtUtc - _options.RefreshSkew;
 
-    /// <summary>Gibt das Anmelde-Gate frei. Als DI-Singleton übernimmt das der Container beim Herunterfahren.</summary>
+    /// <summary>Releases the login gate. As a DI singleton, the container handles this on shutdown.</summary>
     public void Dispose() => _gate.Dispose();
 }
