@@ -50,7 +50,7 @@ public class ExerciseMediaController(PuglingDbContext db, MediaLinkService links
     public async Task<ActionResult<MediaLinkResponse>> LinkExercise(int exerciseId, AddMediaLinkDto dto, CancellationToken ct)
     {
         if (!await db.Exercises.AnyAsync(e => e.Id == exerciseId, ct)) return NotFound();
-        if (await EnsureCanWriteAsync(exerciseId) is { } forbidden) return forbidden;
+        if (await EnsureCanWriteAsync(exerciseId, ct) is { } forbidden) return forbidden;
 
         var (link, error, detail) = await links.LinkAsync(MediaLinkService.Carrier.Exercise, exerciseId, dto, ct);
         if (error is { } failure) return this.ProblemWithCode(failure, detail);
@@ -65,7 +65,7 @@ public class ExerciseMediaController(PuglingDbContext db, MediaLinkService links
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> UnlinkExercise(int exerciseId, int linkId, CancellationToken ct)
     {
-        if (await EnsureCanWriteAsync(exerciseId) is { } forbidden) return forbidden;
+        if (await EnsureCanWriteAsync(exerciseId, ct) is { } forbidden) return forbidden;
 
         var link = await links.FindAsync(MediaLinkService.Carrier.Exercise, exerciseId, linkId, ct);
         if (link is null) return this.ProblemWithCode(ApiErrors.MediaLinkNotFound, "The link does not belong to this exercise.");
@@ -98,7 +98,7 @@ public class ExerciseMediaController(PuglingDbContext db, MediaLinkService links
     {
         if (!await ItemBelongsAsync(exerciseId, itemId, ct))
             return this.ProblemWithCode(ApiErrors.ItemNotFound, "The exercise item does not exist in this exercise.");
-        if (await EnsureCanWriteAsync(exerciseId) is { } forbidden) return forbidden;
+        if (await EnsureCanWriteAsync(exerciseId, ct) is { } forbidden) return forbidden;
 
         var (link, error, detail) = await links.LinkAsync(MediaLinkService.Carrier.ExerciseItem, itemId, dto, ct);
         if (error is { } failure) return this.ProblemWithCode(failure, detail);
@@ -115,7 +115,7 @@ public class ExerciseMediaController(PuglingDbContext db, MediaLinkService links
     {
         if (!await ItemBelongsAsync(exerciseId, itemId, ct))
             return this.ProblemWithCode(ApiErrors.ItemNotFound, "The exercise item does not exist in this exercise.");
-        if (await EnsureCanWriteAsync(exerciseId) is { } forbidden) return forbidden;
+        if (await EnsureCanWriteAsync(exerciseId, ct) is { } forbidden) return forbidden;
 
         var link = await links.FindAsync(MediaLinkService.Carrier.ExerciseItem, itemId, linkId, ct);
         if (link is null) return this.ProblemWithCode(ApiErrors.MediaLinkNotFound, "The link does not belong to this exercise item.");
@@ -131,8 +131,8 @@ public class ExerciseMediaController(PuglingDbContext db, MediaLinkService links
         db.ExerciseItems.AnyAsync(i => i.Id == itemId && i.ExerciseId == exerciseId, ct);
 
     /// <summary><c>null</c> = darf schreiben; sonst die fertige 403-Antwort (Muster wie im Übungs-CRUD).</summary>
-    private async Task<ActionResult?> EnsureCanWriteAsync(int exerciseId) =>
-        await perms.CanWriteAsync(User, exerciseId)
+    private async Task<ActionResult?> EnsureCanWriteAsync(int exerciseId, CancellationToken ct) =>
+        await perms.CanWriteAsync(User, exerciseId, ct)
             ? null
             : this.ProblemWithCode(ApiErrors.NotAuthor, "You need write permission on this exercise.");
 }

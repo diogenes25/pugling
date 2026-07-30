@@ -29,13 +29,13 @@ public class MediaVariantsController(PuglingDbContext db) : ControllerBase
     /// <summary>Alle Auflösungen eines Assets (nach Zweck, dann Format).</summary>
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<IEnumerable<MediaVariantResponse>>> List(int assetId)
+    public async Task<ActionResult<IEnumerable<MediaVariantResponse>>> List(int assetId, CancellationToken ct = default)
     {
-        if (!await db.MediaAssets.AnyAsync(a => a.Id == assetId)) return NotFound();
+        if (!await db.MediaAssets.AnyAsync(a => a.Id == assetId, ct)) return NotFound();
 
         var variants = await db.MediaVariants.AsNoTracking()
             .Where(v => v.MediaAssetId == assetId)
-            .ToListAsync();
+            .ToListAsync(ct);
 
         // Sortiert wird bewusst im Speicher: `Purpose` liegt als String in der DB, ein `OrderBy` in SQL
         // ordnete daher alphabetisch (Card, Full, Hero, Thumb) statt in der semantischen Reihenfolge des
@@ -53,21 +53,21 @@ public class MediaVariantsController(PuglingDbContext db) : ControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
-    public async Task<ActionResult<MediaVariantResponse>> Create(int assetId, CreateMediaVariantDto dto)
+    public async Task<ActionResult<MediaVariantResponse>> Create(int assetId, CreateMediaVariantDto dto, CancellationToken ct = default)
     {
-        if (!await db.MediaAssets.AnyAsync(a => a.Id == assetId)) return NotFound();
+        if (!await db.MediaAssets.AnyAsync(a => a.Id == assetId, ct)) return NotFound();
         if (MediaAssetsController.Validate(dto.Url, dto.Width, dto.Height, dto.Format) is { } error)
             return this.ProblemWithCode(ApiErrors.ValidationError, error);
 
         var format = dto.Format.Trim().ToLowerInvariant();
-        if (await db.MediaVariants.AnyAsync(v => v.MediaAssetId == assetId && v.Purpose == dto.Purpose && v.Format == format))
+        if (await db.MediaVariants.AnyAsync(v => v.MediaAssetId == assetId && v.Purpose == dto.Purpose && v.Format == format, ct))
             return this.ProblemWithCode(ApiErrors.MediaVariantExists,
                 $"The asset already has a variant for purpose '{dto.Purpose}' and format '{format}'.");
 
         var variant = MediaAssetsController.NewVariant(dto);
         variant.MediaAssetId = assetId;
         db.MediaVariants.Add(variant);
-        await db.SaveChangesAsync();
+        await db.SaveChangesAsync(ct);
 
         return CreatedAtAction(nameof(List), new { assetId }, Map(variant));
     }
@@ -77,9 +77,9 @@ public class MediaVariantsController(PuglingDbContext db) : ControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
-    public async Task<ActionResult<MediaVariantResponse>> Update(int assetId, int variantId, UpdateMediaVariantDto dto)
+    public async Task<ActionResult<MediaVariantResponse>> Update(int assetId, int variantId, UpdateMediaVariantDto dto, CancellationToken ct = default)
     {
-        var variant = await db.MediaVariants.FirstOrDefaultAsync(v => v.Id == variantId && v.MediaAssetId == assetId);
+        var variant = await db.MediaVariants.FirstOrDefaultAsync(v => v.Id == variantId && v.MediaAssetId == assetId, ct);
         if (variant is null) return this.ProblemWithCode(ApiErrors.MediaVariantNotFound, "The variant does not belong to this asset.");
 
         if (MediaAssetsController.Validate(dto.Url ?? variant.Url, dto.Width ?? variant.Width,
@@ -92,7 +92,7 @@ public class MediaVariantsController(PuglingDbContext db) : ControllerBase
         // deshalb vorher als klarer Konflikt melden.
         if ((purpose != variant.Purpose || format != variant.Format)
             && await db.MediaVariants.AnyAsync(v => v.MediaAssetId == assetId && v.Id != variantId
-                && v.Purpose == purpose && v.Format == format))
+                && v.Purpose == purpose && v.Format == format, ct))
             return this.ProblemWithCode(ApiErrors.MediaVariantExists,
                 $"The asset already has a variant for purpose '{purpose}' and format '{format}'.");
 
@@ -103,7 +103,7 @@ public class MediaVariantsController(PuglingDbContext db) : ControllerBase
         if (dto.Height.HasValue) variant.Height = dto.Height.Value;
         if (dto.Bytes.HasValue) variant.Bytes = dto.Bytes;
 
-        await db.SaveChangesAsync();
+        await db.SaveChangesAsync(ct);
         return Map(variant);
     }
 
@@ -111,13 +111,13 @@ public class MediaVariantsController(PuglingDbContext db) : ControllerBase
     [HttpDelete("{variantId:int}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> Delete(int assetId, int variantId)
+    public async Task<IActionResult> Delete(int assetId, int variantId, CancellationToken ct = default)
     {
-        var variant = await db.MediaVariants.FirstOrDefaultAsync(v => v.Id == variantId && v.MediaAssetId == assetId);
+        var variant = await db.MediaVariants.FirstOrDefaultAsync(v => v.Id == variantId && v.MediaAssetId == assetId, ct);
         if (variant is null) return this.ProblemWithCode(ApiErrors.MediaVariantNotFound, "The variant does not belong to this asset.");
 
         db.MediaVariants.Remove(variant);
-        await db.SaveChangesAsync();
+        await db.SaveChangesAsync(ct);
         return NoContent();
     }
 }

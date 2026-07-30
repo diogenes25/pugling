@@ -24,41 +24,43 @@ public class ClozeTextsController(PuglingDbContext db) : ControllerBase
     /// <param name="search">Freitext in Titel, Text oder Key (Teilstring).</param>
     /// <param name="skip">Anzahl zu überspringender Einträge (Paging).</param>
     /// <param name="take">Maximale Trefferzahl (1..500). Gesamtzahl im Header <c>X-Total-Count</c>.</param>
+    /// <param name="ct">Abbruch-Token.</param>
     [HttpGet]
     public async Task<IEnumerable<ClozeResponse>> List(
         [FromQuery] string? search = null,
-        [FromQuery] int skip = 0, [FromQuery] int take = PagingExtensions.DefaultTake)
+        [FromQuery] int skip = 0, [FromQuery] int take = PagingExtensions.DefaultTake,
+        CancellationToken ct = default)
     {
         var query = db.ClozeTexts.AsNoTracking().AsQueryable();
         if (!string.IsNullOrWhiteSpace(search))
             query = query.Where(c => c.Title.Contains(search) || c.Text.Contains(search) || c.Key.Contains(search));
-        var items = await query.OrderBy(c => c.Key).ToPagedListAsync(Response, skip, take);
+        var items = await query.OrderBy(c => c.Key).ToPagedListAsync(Response, skip, take, ct);
         return items.Select(Map);
     }
 
     /// <summary>Ein Lückentext per Id.</summary>
     [HttpGet("{id:int}")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<ClozeResponse>> Get(int id) =>
-        await db.ClozeTexts.FindAsync(id) is { } c ? Map(c) : NotFound();
+    public async Task<ActionResult<ClozeResponse>> Get(int id, CancellationToken ct = default) =>
+        await db.ClozeTexts.FindAsync([id], ct) is { } c ? Map(c) : NotFound();
 
     /// <summary>Ein Lückentext per Key.</summary>
     [HttpGet("by-key/{key}")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<ClozeResponse>> GetByKey(string key) =>
-        await db.ClozeTexts.AsNoTracking().FirstOrDefaultAsync(c => c.Key == key) is { } c ? Map(c) : NotFound();
+    public async Task<ActionResult<ClozeResponse>> GetByKey(string key, CancellationToken ct = default) =>
+        await db.ClozeTexts.AsNoTracking().FirstOrDefaultAsync(c => c.Key == key, ct) is { } c ? Map(c) : NotFound();
 
     /// <summary>Erstellt einen Lückentext. Key muss eindeutig sein; mind. eine Lücke.</summary>
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
-    public async Task<ActionResult<ClozeResponse>> Create(CreateClozeDto dto)
+    public async Task<ActionResult<ClozeResponse>> Create(CreateClozeDto dto, CancellationToken ct = default)
     {
         if (string.IsNullOrWhiteSpace(dto.Key)) return this.ProblemWithCode(ApiErrors.ValidationError, "Key is required.");
         if (string.IsNullOrWhiteSpace(dto.Text)) return this.ProblemWithCode(ApiErrors.ValidationError, "Text is required.");
         if (dto.Gaps is null or { Count: 0 }) return this.ProblemWithCode(ApiErrors.ValidationError, "At least one gap is required.");
-        if (await db.ClozeTexts.AnyAsync(c => c.Key == dto.Key)) return this.ProblemWithCode(ApiErrors.DuplicateKey, $"Key '{dto.Key}' already exists.");
+        if (await db.ClozeTexts.AnyAsync(c => c.Key == dto.Key, ct)) return this.ProblemWithCode(ApiErrors.DuplicateKey, $"Key '{dto.Key}' already exists.");
 
         var cloze = new ClozeText
         {
@@ -72,16 +74,16 @@ public class ClozeTextsController(PuglingDbContext db) : ControllerBase
             WordBank = dto.WordBank,
         };
         db.ClozeTexts.Add(cloze);
-        await db.SaveChangesAsync();
+        await db.SaveChangesAsync(ct);
         return CreatedAtAction(nameof(Get), new { id = cloze.Id }, Map(cloze));
     }
 
     /// <summary>Ändert einen Lückentext (partiell).</summary>
     [HttpPatch("{id:int}")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<ClozeResponse>> Update(int id, UpdateClozeDto dto)
+    public async Task<ActionResult<ClozeResponse>> Update(int id, UpdateClozeDto dto, CancellationToken ct = default)
     {
-        var cloze = await db.ClozeTexts.FindAsync(id);
+        var cloze = await db.ClozeTexts.FindAsync([id], ct);
         if (cloze is null) return NotFound();
 
         if (dto.Gaps is { Count: 0 }) return this.ProblemWithCode(ApiErrors.ValidationError, "At least one gap is required.");
@@ -93,7 +95,7 @@ public class ClozeTextsController(PuglingDbContext db) : ControllerBase
         if (dto.ClearTranslation) cloze.Translation = null;
         if (dto.WordBank is not null) cloze.WordBank = dto.WordBank;
         if (dto.ClearWordBank) cloze.WordBank = null;
-        await db.SaveChangesAsync();
+        await db.SaveChangesAsync(ct);
         return Map(cloze);
     }
 
@@ -102,12 +104,12 @@ public class ClozeTextsController(PuglingDbContext db) : ControllerBase
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
-    public async Task<IActionResult> Delete(int id)
+    public async Task<IActionResult> Delete(int id, CancellationToken ct = default)
     {
-        var cloze = await db.ClozeTexts.FindAsync(id);
+        var cloze = await db.ClozeTexts.FindAsync([id], ct);
         if (cloze is null) return NotFound();
         db.ClozeTexts.Remove(cloze);
-        await db.SaveChangesAsync();
+        await db.SaveChangesAsync(ct);
         return NoContent();
     }
 }
