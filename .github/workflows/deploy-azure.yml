@@ -2,24 +2,17 @@ name: Deploy to Azure App Service
 
 # ⚠️ **STILLGELEGT am 2026-07-30 – kein automatischer Trigger mehr.**
 #
-# Azure ist nicht konfiguriert: es ist **überhaupt kein Repo-Secret gesetzt** (`gh secret list` leer),
-# also fehlt `AZURE_WEBAPP_PUBLISH_PROFILE`. Solange das so ist, scheitert `azure/webapps-deploy` mit
-# "No credentials found" – und weil das Deploy per `workflow_run` an jedem grünen CI hing, kam nach
-# jedem erfolgreichen Lauf ein roter Deploy-Lauf hinterher. Ein Tor, das *immer* rot ist, erzieht zum
-# Wegsehen und entwertet das echte Rot daneben (docs/codequalitaet-gates-plan.md, „mechanische Tore
-# statt Disziplin"). Darum: Trigger raus, Datei bleibt.
+# Zielbild, die beiden teuer bezahlten Fallstricke, der Grund der Stilllegung und der Weg zurück stehen
+# in **docs/deployment-azure.md** – eine Stelle, nicht zwei. Kurzfassung:
 #
-# **Warum nicht gelöscht?** Wegen der beiden Fallstricke weiter unten. Beide haben schon einmal Geld
-# gekostet, und den zweiten merkt man nicht:
-#   1. `npm ci --legacy-peer-deps` – ohne das Flag brach der Deploy **24 Tage unbemerkt** (`2c4eb69`).
-#   2. Der Checkout muss `workflow_run.head_sha` nehmen, sonst deployt der Default-Branch-HEAD und
-#      damit womöglich ein **ungeprüfter** Folge-Commit.
-# Wer das Deployment neu baut, fängt bei diesen zwei Punkten an, nicht bei null.
+# Azure ist nicht konfiguriert (`gh secret list` ist leer, es fehlt also nicht nur
+# `AZURE_WEBAPP_PUBLISH_PROFILE`). Das Deploy hing per `workflow_run` an jedem grünen CI und wurde
+# darum nach jedem erfolgreichen Lauf rot. Ein Tor, das *immer* rot ist, erzieht zum Wegsehen und
+# entwertet das echte Rot daneben. Trigger raus, Datei bleibt – wegen der Fallstricke, die in den
+# Kommentaren unten an genau der Zeile stehen, die sie betreffen.
 #
-# **Wieder scharf stellen** (wenn der App Service existiert): Secret setzen (Portal → App Service →
-# „Veröffentlichungsprofil abrufen"), `AZURE_WEBAPP_NAME` prüfen, und den `workflow_run`-Block unten
-# wieder einkommentieren. Die `if:`-Bedingung am Job ist bewusst stehen geblieben und trägt beide Fälle
-# schon – am Job selbst ist dann nichts zu ändern.
+# Wieder scharf: Secret setzen, `AZURE_WEBAPP_NAME` prüfen, den `workflow_run`-Block unten
+# einkommentieren. Checkliste in docs/deployment-azure.md.
 #
 # ---
 #
@@ -55,8 +48,9 @@ jobs:
     if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     steps:
-      # Bei `workflow_run` checkt Actions per Default den Default-Branch-HEAD aus, **nicht** den Commit,
-      # der geprüft wurde. Ohne dieses `ref` könnte ein ungeprüfter Folge-Commit mitdeployen.
+      # **Fallstrick 2** (docs/deployment-azure.md): bei `workflow_run` checkt Actions per Default den
+      # Default-Branch-HEAD aus, **nicht** den Commit, der geprüft wurde. Ohne dieses `ref` könnte ein
+      # ungeprüfter Folge-Commit mitdeployen – und zwar mit grünem Häkchen daneben.
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.workflow_run.head_sha || github.ref }}
@@ -65,6 +59,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
+      # **Fallstrick 1** (docs/deployment-azure.md):
       # `--legacy-peer-deps`: `vite-plugin-pwa@0.21` deklariert Peer `vite ^3…^6`, installiert ist
       # `vite@8` (siehe frontend/CLAUDE.md). Ohne das Flag brach `npm ci` hier mit ERESOLVE ab – seit
       # dem Vite-8-Sprung (2c4eb69, 2026-07-05) also **jeder** Deploy, unbemerkt, weil niemand das

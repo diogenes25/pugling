@@ -109,9 +109,10 @@ Markdown-Lint). Offen bleiben, unabhängig voneinander:
   daneben; es widerspricht damit dem Zweck dieses ganzen Plans. Entscheidung des Eigentümers: das
   Deployment wird später **komplett neu** gebaut. Umgesetzt als **Stilllegung, nicht Löschung** – der
   `workflow_run`-Block in [deploy-azure.yml](../.github/workflows/deploy-azure.yml) ist auskommentiert,
-  `workflow_dispatch` und die `if:`-Bedingung bleiben. Grund: in der Datei stehen die beiden Fallstricke,
-  die zusammen 24 Tage unbemerkten Deploy-Ausfall gekostet haben (`npm ci --legacy-peer-deps` und der
-  `workflow_run.head_sha`-Checkout) – eine Neufassung soll dort anfangen, nicht bei null. Wieder scharf =
+  `workflow_dispatch` und die `if:`-Bedingung bleiben. Grund: die beiden Fallstricke, die zusammen 24 Tage
+  unbemerkten Deploy-Ausfall gekostet haben (`npm ci --legacy-peer-deps` und der
+  `workflow_run.head_sha`-Checkout) – eine Neufassung soll dort anfangen, nicht bei null. Sie stehen samt
+  Zielbild und Reaktivierungs-Checkliste in **[deployment-azure.md](deployment-azure.md)**; wieder scharf =
   Secret setzen + einen Block einkommentieren.
 
 **Wo die Wächter ihre Befunde ablegen** – das muss man wissen, bevor man ein rotes Tor deutet:
