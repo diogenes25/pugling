@@ -21,7 +21,7 @@ namespace Pugling.Api.Controllers.Supervisor;
 [ServiceFilter(typeof(ChildOwnershipFilter))]
 public class ChildrenController(PuglingDbContext db, WalletService wallet, AccountService accounts) : ControllerBase
 {
-    Task<ChildResponse?> ProjectOne(int childId) =>
+    Task<ChildResponse?> ProjectOne(int childId, CancellationToken ct) =>
         db.Children
             .Where(c => c.Id == childId)
             .Select(c => new ChildResponse(c.Id, c.Name, c.BirthYear, c.Grade, c.SchoolType,
@@ -29,11 +29,11 @@ public class ChildrenController(PuglingDbContext db, WalletService wallet, Accou
                 c.CreatedAt,
                 c.PointsEntries.Where(p => PointKindCurrency.CoinKinds.Contains(p.Kind)).Sum(p => (int?)p.Amount) ?? 0,
                 c.PointsEntries.Where(p => PointKindCurrency.GemKinds.Contains(p.Kind)).Sum(p => (int?)p.Amount) ?? 0))
-            .FirstOrDefaultAsync();
+            .FirstOrDefaultAsync(ct);
 
     /// <summary>Liste der vom angemeldeten Supervisor betreuten Studenten.</summary>
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<ChildResponse>>> List()
+    public async Task<ActionResult<IEnumerable<ChildResponse>>> List(CancellationToken ct = default)
     {
         var fatherId = User.AdultId();
         return await db.Children
@@ -44,15 +44,15 @@ public class ChildrenController(PuglingDbContext db, WalletService wallet, Accou
                 c.CreatedAt,
                 c.PointsEntries.Where(p => PointKindCurrency.CoinKinds.Contains(p.Kind)).Sum(p => (int?)p.Amount) ?? 0,
                 c.PointsEntries.Where(p => PointKindCurrency.GemKinds.Contains(p.Kind)).Sum(p => (int?)p.Amount) ?? 0))
-            .ToListAsync();
+            .ToListAsync(ct);
     }
 
     /// <summary>Ein einzelnes Kind.</summary>
     [HttpGet("{childId:int}")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<ChildResponse>> Get(int childId)
+    public async Task<ActionResult<ChildResponse>> Get(int childId, CancellationToken ct = default)
     {
-        var child = await ProjectOne(childId);
+        var child = await ProjectOne(childId, ct);
         return child is null ? NotFound() : child;
     }
 
@@ -60,7 +60,7 @@ public class ChildrenController(PuglingDbContext db, WalletService wallet, Accou
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<ChildResponse>> Create(CreateChildDto dto)
+    public async Task<ActionResult<ChildResponse>> Create(CreateChildDto dto, CancellationToken ct = default)
     {
         if (string.IsNullOrWhiteSpace(dto.Name)) return this.ProblemWithCode(ApiErrors.ValidationError, "Name is required.");
 
@@ -78,12 +78,12 @@ public class ChildrenController(PuglingDbContext db, WalletService wallet, Accou
             Pin = string.IsNullOrEmpty(dto.Pin) ? "" : PinHasher.Hash(dto.Pin),
         };
         db.Children.Add(child);
-        await db.SaveChangesAsync();
+        await db.SaveChangesAsync(ct);
         // Betreuung durch den anlegenden Supervisor herstellen (ein Student kann später weitere bekommen).
         db.SupervisorLinks.Add(new SupervisorLink { SupervisorId = User.AdultId()!.Value, StudentId = child.Id });
-        await db.SaveChangesAsync();
+        await db.SaveChangesAsync(ct);
         // Login-Konto (Student) sofort anlegen, damit sich das neue Kind einloggen kann.
-        await accounts.EnsureForChildAsync(child);
+        await accounts.EnsureForChildAsync(child, ct);
 
         var response = new ChildResponse(child.Id, child.Name, child.BirthYear, child.Grade,
             child.SchoolType, child.Gender, child.Interests, child.ProfileNotes,
@@ -94,9 +94,9 @@ public class ChildrenController(PuglingDbContext db, WalletService wallet, Accou
     /// <summary>Ändert ein Kind (partiell).</summary>
     [HttpPatch("{childId:int}")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<ChildResponse>> Update(int childId, UpdateChildDto dto)
+    public async Task<ActionResult<ChildResponse>> Update(int childId, UpdateChildDto dto, CancellationToken ct = default)
     {
-        var child = await db.Children.FirstOrDefaultAsync(c => c.Id == childId);
+        var child = await db.Children.FirstOrDefaultAsync(c => c.Id == childId, ct);
         if (child is null) return NotFound();
 
         if (dto.Name is not null) child.Name = dto.Name.Trim();
@@ -115,23 +115,23 @@ public class ChildrenController(PuglingDbContext db, WalletService wallet, Accou
         {
             child.Pin = string.IsNullOrEmpty(dto.Pin) ? "" : PinHasher.Hash(dto.Pin);
             // PIN-Hash auf das Login-Konto spiegeln (konto-zentrischer Login /auth/login bleibt synchron).
-            (await accounts.EnsureForChildAsync(child)).PinHash = child.Pin;
+            (await accounts.EnsureForChildAsync(child, ct)).PinHash = child.Pin;
         }
-        await db.SaveChangesAsync();
+        await db.SaveChangesAsync(ct);
 
-        return (await ProjectOne(childId))!;
+        return (await ProjectOne(childId, ct))!;
     }
 
     /// <summary>Löscht ein Kind samt aller Fächer, Kapitel, Lektionen und Punkte-Buchungen.</summary>
     [HttpDelete("{childId:int}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> Delete(int childId)
+    public async Task<IActionResult> Delete(int childId, CancellationToken ct = default)
     {
-        var child = await db.Children.FirstOrDefaultAsync(c => c.Id == childId);
+        var child = await db.Children.FirstOrDefaultAsync(c => c.Id == childId, ct);
         if (child is null) return NotFound();
         db.Children.Remove(child);
-        await db.SaveChangesAsync();
+        await db.SaveChangesAsync(ct);
         return NoContent();
     }
 
@@ -141,12 +141,12 @@ public class ChildrenController(PuglingDbContext db, WalletService wallet, Accou
     [HttpGet("{childId:int}/supervisors")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<IEnumerable<SupervisorLinkResponse>>> Supervisors(int childId) =>
+    public async Task<ActionResult<IEnumerable<SupervisorLinkResponse>>> Supervisors(int childId, CancellationToken ct = default) =>
         await db.SupervisorLinks.AsNoTracking()
             .Where(l => l.StudentId == childId)
             .OrderBy(l => l.CreatedAt)
             .Select(l => new SupervisorLinkResponse(l.SupervisorId, l.Supervisor!.Name, l.Relation, l.CreatedAt))
-            .ToListAsync();
+            .ToListAsync(ct);
 
     /// <summary>
     /// Fügt dem Studenten einen weiteren Supervisor hinzu (z. B. Mutter/Oma). Der handelnde Supervisor
@@ -157,15 +157,15 @@ public class ChildrenController(PuglingDbContext db, WalletService wallet, Accou
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<SupervisorLinkResponse>> AddSupervisor(int childId, AddSupervisorDto dto)
+    public async Task<ActionResult<SupervisorLinkResponse>> AddSupervisor(int childId, AddSupervisorDto dto, CancellationToken ct = default)
     {
-        var supervisor = await db.Adults.FirstOrDefaultAsync(f => f.Id == dto.SupervisorId);
+        var supervisor = await db.Adults.FirstOrDefaultAsync(f => f.Id == dto.SupervisorId, ct);
         if (supervisor is null) return this.ProblemWithCode(ApiErrors.InvalidReference, "Supervisor not found.");
 
-        if (!await db.SupervisorLinks.AnyAsync(l => l.StudentId == childId && l.SupervisorId == dto.SupervisorId))
+        if (!await db.SupervisorLinks.AnyAsync(l => l.StudentId == childId && l.SupervisorId == dto.SupervisorId, ct))
         {
             db.SupervisorLinks.Add(new SupervisorLink { StudentId = childId, SupervisorId = dto.SupervisorId, Relation = dto.Relation });
-            await db.SaveChangesAsync();
+            await db.SaveChangesAsync(ct);
         }
         return CreatedAtAction(nameof(Supervisors), new { childId },
             new SupervisorLinkResponse(supervisor.Id, supervisor.Name, dto.Relation, DateTime.UtcNow));
@@ -176,14 +176,14 @@ public class ChildrenController(PuglingDbContext db, WalletService wallet, Accou
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> RemoveSupervisor(int childId, int supervisorId)
+    public async Task<IActionResult> RemoveSupervisor(int childId, int supervisorId, CancellationToken ct = default)
     {
-        var link = await db.SupervisorLinks.FirstOrDefaultAsync(l => l.StudentId == childId && l.SupervisorId == supervisorId);
+        var link = await db.SupervisorLinks.FirstOrDefaultAsync(l => l.StudentId == childId && l.SupervisorId == supervisorId, ct);
         if (link is null) return NotFound();
-        if (await db.SupervisorLinks.CountAsync(l => l.StudentId == childId) <= 1)
+        if (await db.SupervisorLinks.CountAsync(l => l.StudentId == childId, ct) <= 1)
             return this.ProblemWithCode(ApiErrors.ValidationError, "Cannot remove the last supervisor of a student.");
         db.SupervisorLinks.Remove(link);
-        await db.SaveChangesAsync();
+        await db.SaveChangesAsync(ct);
         return NoContent();
     }
 
@@ -193,22 +193,24 @@ public class ChildrenController(PuglingDbContext db, WalletService wallet, Accou
     /// <param name="childId">Kind, dessen Kontostand gelesen wird.</param>
     /// <param name="skip">Anzahl zu überspringender Buchungen (Paging).</param>
     /// <param name="take">Maximale Buchungszahl (1..500). Gesamtzahl im Header <c>X-Total-Count</c>.</param>
+    /// <param name="ct">Abbruch-Token.</param>
     [HttpGet("{childId:int}/points")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<ChildPointsResponse>> GetPoints(
-        int childId, [FromQuery] int skip = 0, [FromQuery] int take = PagingExtensions.DefaultTake)
+        int childId, [FromQuery] int skip = 0, [FromQuery] int take = PagingExtensions.DefaultTake,
+        CancellationToken ct = default)
     {
         // Saldo je Währung über ALLE Buchungen (in der DB summiert) – die Liste ist seitenweise (Default 100).
         // Sonst wiche der angezeigte Kontostand von der Seite ab, sobald ein Kind mehr Buchungen hat als eine
         // Seite fasst (Basis/Combo/Speed + Missionen/Auszeichnungen erzeugen viele kleine Zeilen pro Sitzung).
-        var (coins, gems) = await wallet.BalancesAsync(childId);
+        var (coins, gems) = await wallet.BalancesAsync(childId, ct);
 
         var entries = await db.ChildPoints
             .AsNoTracking()
             .Where(p => p.ChildId == childId)
             .OrderByDescending(p => p.CreatedAt).ThenByDescending(p => p.Id)
             .Select(p => new PointsEntryResponse(p.Id, p.ChildId, p.Amount, p.Kind, p.Reason, p.CreatedAt))
-            .ToPagedListAsync(Response, skip, take);
+            .ToPagedListAsync(Response, skip, take, ct);
 
         return new ChildPointsResponse(childId, coins, gems, entries);
     }
@@ -221,13 +223,13 @@ public class ChildrenController(PuglingDbContext db, WalletService wallet, Accou
     [HttpPost("{childId:int}/points")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<PointsEntryResponse>> AddPoints(int childId, PointsEntryDto dto)
+    public async Task<ActionResult<PointsEntryResponse>> AddPoints(int childId, PointsEntryDto dto, CancellationToken ct = default)
     {
         // Währung → Buchungs-Kind: Gems über den Manual-Zwilling, sonst die klassische Münz-Manualbuchung.
         var kind = dto.Currency == Currency.Gems ? PointKind.ManualGems : PointKind.Manual;
         var entry = new ChildPointsEntry { ChildId = childId, Kind = kind, Amount = dto.Amount, Reason = dto.Reason ?? "" };
         db.ChildPoints.Add(entry);
-        await db.SaveChangesAsync();
+        await db.SaveChangesAsync(ct);
 
         var response = new PointsEntryResponse(entry.Id, childId, entry.Amount, entry.Kind, entry.Reason, entry.CreatedAt);
         return CreatedAtAction(nameof(GetPoints), new { childId }, response);

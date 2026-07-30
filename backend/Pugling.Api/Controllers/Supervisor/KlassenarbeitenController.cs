@@ -37,11 +37,11 @@ public class KlassenarbeitenController(PuglingDbContext db, AuthAccess access, E
         .Include(k => k.Exercises)
         .Include(k => k.Tags).ThenInclude(t => t.Tag);
 
-    private async Task<Klassenarbeit?> FindOwnedAsync(int id)
+    private async Task<Klassenarbeit?> FindOwnedAsync(int id, CancellationToken ct)
     {
-        var k = await WithRelations().FirstOrDefaultAsync(k => k.Id == id);
+        var k = await WithRelations().FirstOrDefaultAsync(k => k.Id == id, ct);
         if (k is null) return null;
-        return await access.OwnsChildAsync(User, k.ChildId) ? k : null;
+        return await access.OwnsChildAsync(User, k.ChildId, ct) ? k : null;
     }
 
     private static string? ValidateGrade(decimal? grade) =>
@@ -55,32 +55,33 @@ public class KlassenarbeitenController(PuglingDbContext db, AuthAccess access, E
     /// <param name="subjectId">Optionaler Fachfilter.</param>
     /// <param name="skip">Anzahl zu überspringender Einträge (Paging).</param>
     /// <param name="take">Maximale Trefferzahl (1..500). Gesamtzahl im Header <c>X-Total-Count</c>.</param>
+    /// <param name="ct">Abbruch-Token.</param>
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult<IEnumerable<KlassenarbeitResponse>>> List(
         [FromQuery] int childId, [FromQuery] KlassenarbeitStatus? status, [FromQuery] int? subjectId,
-        [FromQuery] int skip = 0, [FromQuery] int take = PagingExtensions.DefaultTake)
+        [FromQuery] int skip = 0, [FromQuery] int take = PagingExtensions.DefaultTake, CancellationToken ct = default)
     {
-        if (!await access.OwnsChildAsync(User, childId)) return Forbid();
+        if (!await access.OwnsChildAsync(User, childId, ct)) return Forbid();
 
         var query = WithRelations().AsNoTracking().Where(k => k.ChildId == childId);
         if (status is not null) query = query.Where(k => k.Status == status);
         if (subjectId is not null) query = query.Where(k => k.SubjectId == subjectId);
 
-        var list = await query.OrderBy(k => k.ScheduledDate).ThenBy(k => k.Id).ToPagedListAsync(Response, skip, take);
+        var list = await query.OrderBy(k => k.ScheduledDate).ThenBy(k => k.Id).ToPagedListAsync(Response, skip, take, ct);
         return list.Select(Map).ToList();
     }
 
     /// <summary>Eine Klassenarbeit inkl. der direkt zugewiesenen Übungen (nur eigene).</summary>
     [HttpGet("{id:int}")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<KlassenarbeitDetail>> Get(int id)
+    public async Task<ActionResult<KlassenarbeitDetail>> Get(int id, CancellationToken ct = default)
     {
-        var k = await FindOwnedAsync(id);
+        var k = await FindOwnedAsync(id, ct);
         if (k is null) return NotFound();
 
         var exIds = k.Exercises.Select(x => x.ExerciseId).ToList();
-        var exercises = await LoadExercisesAsync(e => exIds.Contains(e.Id));
+        var exercises = await LoadExercisesAsync(e => exIds.Contains(e.Id), ct);
         return new KlassenarbeitDetail(Map(k), exercises);
     }
 
@@ -92,12 +93,12 @@ public class KlassenarbeitenController(PuglingDbContext db, AuthAccess access, E
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult<KlassenarbeitDetail>> Create(CreateClassTestDto dto)
+    public async Task<ActionResult<KlassenarbeitDetail>> Create(CreateClassTestDto dto, CancellationToken ct = default)
     {
         if (string.IsNullOrWhiteSpace(dto.Title)) return this.ProblemWithCode(ApiErrors.ValidationError, "Title is required.");
-        if (!await access.OwnsChildAsync(User, dto.ChildId)) return Forbid();
+        if (!await access.OwnsChildAsync(User, dto.ChildId, ct)) return Forbid();
         if (ValidateGrade(dto.Grade) is { } gradeError) return this.ProblemWithCode(ApiErrors.ValidationError, gradeError);
-        if (dto.SubjectId is { } sid && !await db.Subjects.AnyAsync(s => s.Id == sid))
+        if (dto.SubjectId is { } sid && !await db.Subjects.AnyAsync(s => s.Id == sid, ct))
             return this.ProblemWithCode(ApiErrors.InvalidReference, "Subject not found.");
 
         var k = new Klassenarbeit
@@ -112,16 +113,16 @@ public class KlassenarbeitenController(PuglingDbContext db, AuthAccess access, E
             GradeComment = dto.GradeComment?.Trim(),
         };
 
-        if (await BuildExerciseLinksAsync(dto.ChildId, dto.ExerciseIds, k.Exercises) is { } exErr) return exErr;
-        if (await BuildTagLinksAsync(dto.ChildId, dto.TagIds, k.Tags) is { } tagErr) return this.ProblemWithCode(ApiErrors.InvalidReference, tagErr);
+        if (await BuildExerciseLinksAsync(dto.ChildId, dto.ExerciseIds, k.Exercises, ct) is { } exErr) return exErr;
+        if (await BuildTagLinksAsync(dto.ChildId, dto.TagIds, k.Tags, ct) is { } tagErr) return this.ProblemWithCode(ApiErrors.InvalidReference, tagErr);
 
         db.Klassenarbeiten.Add(k);
-        await db.SaveChangesAsync();
+        await db.SaveChangesAsync(ct);
 
-        var created = (await FindOwnedAsync(k.Id))!;
+        var created = (await FindOwnedAsync(k.Id, ct))!;
         var exIds = created.Exercises.Select(x => x.ExerciseId).ToList();
         return CreatedAtAction(nameof(Get), new { id = k.Id },
-            new KlassenarbeitDetail(Map(created), await LoadExercisesAsync(e => exIds.Contains(e.Id))));
+            new KlassenarbeitDetail(Map(created), await LoadExercisesAsync(e => exIds.Contains(e.Id), ct)));
     }
 
     /// <summary>Ändert eine Klassenarbeit partiell – u. a. Note nachtragen und Status setzen. Nur Vater.</summary>
@@ -129,9 +130,9 @@ public class KlassenarbeitenController(PuglingDbContext db, AuthAccess access, E
     [Authorize(Roles = Roles.Supervisor)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<KlassenarbeitResponse>> Update(int id, UpdateClassTestDto dto)
+    public async Task<ActionResult<KlassenarbeitResponse>> Update(int id, UpdateClassTestDto dto, CancellationToken ct = default)
     {
-        var k = await FindOwnedAsync(id);
+        var k = await FindOwnedAsync(id, ct);
         if (k is null) return NotFound();
 
         if (dto.Title is not null)
@@ -142,7 +143,7 @@ public class KlassenarbeitenController(PuglingDbContext db, AuthAccess access, E
         if (dto.Topic is not null) k.Topic = dto.Topic.Trim() is { Length: > 0 } t ? t : null;
         if (dto.SubjectId is { } sid)
         {
-            if (!await db.Subjects.AnyAsync(s => s.Id == sid)) return this.ProblemWithCode(ApiErrors.InvalidReference, "Subject not found.");
+            if (!await db.Subjects.AnyAsync(s => s.Id == sid, ct)) return this.ProblemWithCode(ApiErrors.InvalidReference, "Subject not found.");
             k.SubjectId = sid;
         }
         if (dto.ScheduledDate is not null) k.ScheduledDate = dto.ScheduledDate.Value;
@@ -162,7 +163,7 @@ public class KlassenarbeitenController(PuglingDbContext db, AuthAccess access, E
         if (dto.Status is not null) k.Status = dto.Status.Value;
         else if (k.Grade is not null && k.Status == KlassenarbeitStatus.Planned) k.Status = KlassenarbeitStatus.Written;
 
-        await db.SaveChangesAsync();
+        await db.SaveChangesAsync(ct);
         return Map(k);
     }
 
@@ -171,12 +172,12 @@ public class KlassenarbeitenController(PuglingDbContext db, AuthAccess access, E
     [Authorize(Roles = Roles.Supervisor)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> Delete(int id)
+    public async Task<IActionResult> Delete(int id, CancellationToken ct = default)
     {
-        var k = await FindOwnedAsync(id);
+        var k = await FindOwnedAsync(id, ct);
         if (k is null) return NotFound();
         db.Klassenarbeiten.Remove(k);
-        await db.SaveChangesAsync();
+        await db.SaveChangesAsync(ct);
         return NoContent();
     }
 
@@ -187,16 +188,16 @@ public class KlassenarbeitenController(PuglingDbContext db, AuthAccess access, E
     [Authorize(Roles = Roles.Supervisor)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<KlassenarbeitDetail>> AssignExercises(int id, AssignExercisesDto dto)
+    public async Task<ActionResult<KlassenarbeitDetail>> AssignExercises(int id, AssignExercisesDto dto, CancellationToken ct = default)
     {
-        var k = await FindOwnedAsync(id);
+        var k = await FindOwnedAsync(id, ct);
         if (k is null) return NotFound();
         if (dto.ExerciseIds is not { Count: > 0 }) return this.ProblemWithCode(ApiErrors.ValidationError, "At least one exercise is required.");
-        if (await BuildExerciseLinksAsync(k.ChildId, dto.ExerciseIds, k.Exercises) is { } error) return error;
+        if (await BuildExerciseLinksAsync(k.ChildId, dto.ExerciseIds, k.Exercises, ct) is { } error) return error;
 
-        await db.SaveChangesAsync();
+        await db.SaveChangesAsync(ct);
         var exIds = k.Exercises.Select(x => x.ExerciseId).ToList();
-        return new KlassenarbeitDetail(Map(k), await LoadExercisesAsync(e => exIds.Contains(e.Id)));
+        return new KlassenarbeitDetail(Map(k), await LoadExercisesAsync(e => exIds.Contains(e.Id), ct));
     }
 
     /// <summary>Entfernt die direkte Zuordnung einer Übung. Nur Vater.</summary>
@@ -204,14 +205,14 @@ public class KlassenarbeitenController(PuglingDbContext db, AuthAccess access, E
     [Authorize(Roles = Roles.Supervisor)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> UnassignExercise(int id, int exerciseId)
+    public async Task<IActionResult> UnassignExercise(int id, int exerciseId, CancellationToken ct = default)
     {
-        var k = await FindOwnedAsync(id);
+        var k = await FindOwnedAsync(id, ct);
         if (k is null) return NotFound();
         var link = k.Exercises.FirstOrDefault(x => x.ExerciseId == exerciseId);
         if (link is null) return NotFound();
         db.KlassenarbeitExercises.Remove(link);
-        await db.SaveChangesAsync();
+        await db.SaveChangesAsync(ct);
         return NoContent();
     }
 
@@ -220,18 +221,18 @@ public class KlassenarbeitenController(PuglingDbContext db, AuthAccess access, E
     [Authorize(Roles = Roles.Supervisor)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<KlassenarbeitResponse>> LinkTag(int id, int tagId)
+    public async Task<ActionResult<KlassenarbeitResponse>> LinkTag(int id, int tagId, CancellationToken ct = default)
     {
-        var k = await FindOwnedAsync(id);
+        var k = await FindOwnedAsync(id, ct);
         if (k is null) return NotFound();
-        if (!await db.Tags.AnyAsync(t => t.Id == tagId && t.ChildId == k.ChildId))
+        if (!await db.Tags.AnyAsync(t => t.Id == tagId && t.ChildId == k.ChildId, ct))
             return this.ProblemWithCode(ApiErrors.InvalidReference, "The tag does not belong to this child.");
         if (k.Tags.All(t => t.TagId != tagId))
         {
             k.Tags.Add(new KlassenarbeitTag { TagId = tagId });
-            await db.SaveChangesAsync();
+            await db.SaveChangesAsync(ct);
         }
-        return Map((await FindOwnedAsync(id))!);
+        return Map((await FindOwnedAsync(id, ct))!);
     }
 
     /// <summary>Löst die Verknüpfung eines Tags mit der Klassenarbeit. Nur Vater.</summary>
@@ -239,14 +240,14 @@ public class KlassenarbeitenController(PuglingDbContext db, AuthAccess access, E
     [Authorize(Roles = Roles.Supervisor)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> UnlinkTag(int id, int tagId)
+    public async Task<IActionResult> UnlinkTag(int id, int tagId, CancellationToken ct = default)
     {
-        var k = await FindOwnedAsync(id);
+        var k = await FindOwnedAsync(id, ct);
         if (k is null) return NotFound();
         var link = k.Tags.FirstOrDefault(t => t.TagId == tagId);
         if (link is null) return NotFound();
         db.KlassenarbeitTags.Remove(link);
-        await db.SaveChangesAsync();
+        await db.SaveChangesAsync(ct);
         return NoContent();
     }
 
@@ -258,12 +259,12 @@ public class KlassenarbeitenController(PuglingDbContext db, AuthAccess access, E
     /// </summary>
     [HttpGet("{id:int}/practice")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<PracticeResponse>> Practice(int id)
+    public async Task<ActionResult<PracticeResponse>> Practice(int id, CancellationToken ct = default)
     {
-        var k = await FindOwnedAsync(id);
+        var k = await FindOwnedAsync(id, ct);
         if (k is null) return NotFound();
 
-        var exercises = await LoadRelevantExercisesAsync(new[] { id });
+        var exercises = await LoadRelevantExercisesAsync(new[] { id }, ct);
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
         return new PracticeResponse(k.Id, k.Title, k.ScheduledDate, k.ScheduledDate.DayNumber - today.DayNumber, exercises);
     }
@@ -274,20 +275,21 @@ public class KlassenarbeitenController(PuglingDbContext db, AuthAccess access, E
     /// </summary>
     [HttpGet("repeat")]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult<RepeatResponse>> Repeat([FromQuery] int childId, [FromQuery] decimal? minBadGrade)
+    public async Task<ActionResult<RepeatResponse>> Repeat(
+        [FromQuery] int childId, [FromQuery] decimal? minBadGrade, CancellationToken ct = default)
     {
-        if (!await access.OwnsChildAsync(User, childId)) return Forbid();
+        if (!await access.OwnsChildAsync(User, childId, ct)) return Forbid();
         var threshold = minBadGrade ?? DefaultBadGrade;
 
         var sources = await WithRelations()
             .Where(k => k.ChildId == childId && k.Status == KlassenarbeitStatus.Written
                         && k.Grade != null && k.Grade >= threshold)
             .OrderByDescending(k => k.ScheduledDate)
-            .ToListAsync();
+            .ToListAsync(ct);
 
         var exercises = sources.Count == 0
             ? new List<ExerciseBrief>()
-            : await LoadRelevantExercisesAsync(sources.Select(k => k.Id).ToList());
+            : await LoadRelevantExercisesAsync(sources.Select(k => k.Id).ToList(), ct);
 
         return new RepeatResponse(threshold, sources.Select(Map).ToList(), exercises);
     }
@@ -296,14 +298,14 @@ public class KlassenarbeitenController(PuglingDbContext db, AuthAccess access, E
 
     /// <summary>Lädt Übungen nach Prädikat inkl. Kapitel/Fach, sortiert und ohne Tracking.</summary>
     private async Task<List<ExerciseBrief>> LoadExercisesAsync(
-        System.Linq.Expressions.Expression<Func<Exercise, bool>> predicate)
+        System.Linq.Expressions.Expression<Func<Exercise, bool>> predicate, CancellationToken ct)
     {
         var exercises = await db.Exercises
             .Where(predicate)
             .Include(e => e.Chapter!).ThenInclude(c => c.Subject)
             .OrderBy(e => e.Chapter!.SubjectId).ThenBy(e => e.ChapterId).ThenBy(e => e.OrderIndex)
             .AsNoTracking()
-            .ToListAsync();
+            .ToListAsync(ct);
         return exercises.Select(ExerciseBriefMapping.From).ToList();
     }
 
@@ -311,31 +313,32 @@ public class KlassenarbeitenController(PuglingDbContext db, AuthAccess access, E
     /// Vereinigt (dublettenfrei) die direkt zugewiesenen und die über verknüpfte Tags relevanten
     /// Übungen der angegebenen Klassenarbeiten.
     /// </summary>
-    private async Task<List<ExerciseBrief>> LoadRelevantExercisesAsync(IReadOnlyCollection<int> klassenarbeitIds)
+    private async Task<List<ExerciseBrief>> LoadRelevantExercisesAsync(IReadOnlyCollection<int> klassenarbeitIds, CancellationToken ct)
     {
         var directIds = await db.KlassenarbeitExercises
             .Where(x => klassenarbeitIds.Contains(x.KlassenarbeitId))
-            .Select(x => x.ExerciseId).ToListAsync();
+            .Select(x => x.ExerciseId).ToListAsync(ct);
         var tagIds = await db.KlassenarbeitTags
             .Where(x => klassenarbeitIds.Contains(x.KlassenarbeitId))
-            .Select(x => x.TagId).ToListAsync();
+            .Select(x => x.TagId).ToListAsync(ct);
 
         return await LoadExercisesAsync(e => directIds.Contains(e.Id)
-            || db.ExerciseTags.Any(et => et.ExerciseId == e.Id && tagIds.Contains(et.TagId)));
+            || db.ExerciseTags.Any(et => et.ExerciseId == e.Id && tagIds.Contains(et.TagId)), ct);
     }
 
     /// <summary>Prüft die Übungs-Ids (Existenz + Execute-Recht) und hängt neue Zuordnungen an; gibt ein Fehler-Ergebnis zurück oder null.</summary>
-    private async Task<ObjectResult?> BuildExerciseLinksAsync(int childId, List<int>? exerciseIds, List<KlassenarbeitExercise> target)
+    private async Task<ObjectResult?> BuildExerciseLinksAsync(
+        int childId, List<int>? exerciseIds, List<KlassenarbeitExercise> target, CancellationToken ct)
     {
         if (exerciseIds is not { Count: > 0 }) return null;
         var ids = exerciseIds.Distinct().ToList();
-        var known = await db.Exercises.Where(e => ids.Contains(e.Id)).ToListAsync();
+        var known = await db.Exercises.Where(e => ids.Contains(e.Id)).ToListAsync(ct);
         var missing = ids.Except(known.Select(e => e.Id)).ToList();
         if (missing.Count > 0) return this.ProblemWithCode(ApiErrors.InvalidReference, $"Unknown exercise IDs: {string.Join(", ", missing)}");
 
         // Execute-Gate: nur öffentlich ausführbare oder eigens freigegebene Übungen darf der Vater in die Arbeit aufnehmen.
         foreach (var exercise in known)
-            if (!await perms.CanExecuteAsync(User, exercise))
+            if (!await perms.CanExecuteAsync(User, exercise, ct))
                 return this.ProblemWithCode(ApiErrors.ExerciseNotExecutable,
                     $"Exercise {exercise.Id} is not publicly assignable; you need execute permission from its owner.");
 
@@ -346,11 +349,12 @@ public class KlassenarbeitenController(PuglingDbContext db, AuthAccess access, E
     }
 
     /// <summary>Prüft die Tag-Ids (müssen zum Kind gehören) und hängt neue Verknüpfungen an.</summary>
-    private async Task<string?> BuildTagLinksAsync(int childId, List<int>? tagIds, List<KlassenarbeitTag> target)
+    private async Task<string?> BuildTagLinksAsync(
+        int childId, List<int>? tagIds, List<KlassenarbeitTag> target, CancellationToken ct)
     {
         if (tagIds is not { Count: > 0 }) return null;
         var ids = tagIds.Distinct().ToList();
-        var known = await db.Tags.Where(t => ids.Contains(t.Id) && t.ChildId == childId).Select(t => t.Id).ToListAsync();
+        var known = await db.Tags.Where(t => ids.Contains(t.Id) && t.ChildId == childId).Select(t => t.Id).ToListAsync(ct);
         var invalid = ids.Except(known).ToList();
         if (invalid.Count > 0) return $"Tags do not belong to this child or do not exist: {string.Join(", ", invalid)}";
 
