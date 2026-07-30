@@ -20,9 +20,9 @@ Lernstand wieder aus. Alle Routen unter `api/v1/…`. Konzept-Hintergrund:
 - [Anmerkungen beim Testen](#daneben-anmerkungen-beim-testen-apiv1remarks) – die Ressource neben der Kette.
 - [Durchstich Vater→Sohn](#durchstich-vater-weist-zu--sohn-sieht-denselben-plan) – konkrete Request/Response-Kette.
 - [Übung ↔ Auswertung](#3-übung--auswertung-des-kindes) – positionsgebundener und kindweiter Lernstand.
-- [Lernziele](#4-lernziele-ergebnis-ziele-auf-der-auswertung) – Vater-Ziele auf Live-Auswertung.
+- [Große Ziele](#4-grosse-ziele-ergebnis-ziele-auf-der-auswertung) – Vater-Ziele mit Etappen auf Live-Auswertung.
 - [Punkte & Gamification](#5-was-der-fortschritt-auslöst-punkte--gamification) – Punkte, Missionen, Auszeichnungen.
-- [Weitere Vater→Sohn-Zusammenhänge](#6-weitere-vatersohn-zusammenhänge) – Lernziele, Missionen, Rewards, Shop, nächste Planung.
+- [Weitere Vater→Sohn-Zusammenhänge](#6-weitere-vatersohn-zusammenhänge) – große Ziele, Missionen, Rewards, Shop, nächste Planung.
 
 Obsidian-Hinweis: Die Produkt-Doku nutzt bewusst relative Markdown-Links statt `[[Wikilinks]]`
 (siehe [Obsidian-Konvention](obsidian.md#leitplanken-verbindlich)). Obsidian indiziert diese Links trotzdem
@@ -365,7 +365,7 @@ Authorization: Bearer <father-token>
 ```
 
 Antwort auf: „Wie sieht Sohn 1 nach Fach/Kapitel/Übung aggregiert aus?" Das ist die hierarchische Sicht,
-aus der sich neue Lernziele ableiten lassen.
+aus der sich neue Ziel-Etappen ableiten lassen.
 
 ## 3. Übung ↔ Auswertung des Kindes
 
@@ -425,22 +425,33 @@ sie bleibt mit **`active: false`** sichtbar. `ItemProgress` kann keine gelöscht
 über `ExerciseItem`), daher gibt es keine „toten" Fortschrittszeilen; eine hart gelöschte Übung lebt nur
 noch im Wort-Rollup der flachen Sicht (`ItemReviewEvent` mit denormalisierter `VocabularyId`) weiter.
 
-## 4. Lernziele: Ergebnis-Ziele auf der Auswertung
+## 4. Große Ziele: Ergebnis-Ziele auf der Auswertung
 
-Der Vater setzt **Beherrschungs-/Abdeckungsziele** je Kind auf einem Katalog-Scope (Fach/Kapitel/Übung);
-der Status (`open` / `achieved` / `overdue`) wird **live** aus denselben Aggregaten wie in §3 berechnet –
-kein materialisierter Zustand, keine Belohnung (v1). Plan-übergreifend: das Ziel hängt am Kind + Scope
-(nicht an einer Position) und überlebt das Abhängen einer Übung.
+Der Vater setzt je Kind ein **großes Ziel** (`Objective`) mit messbaren **Etappen** (`KeyResult`) auf einem
+Katalog-Scope (Fach/Kapitel/Übung); der Status (`open` / `achieved` / `overdue`) wird **live** aus denselben
+Aggregaten wie in §3 berechnet – kein materialisierter Zustand. Plan-übergreifend: das Ziel hängt am Kind,
+die Etappe am Scope (nicht an einer Position) und überlebt das Abhängen einer Übung.
 
 | Endpunkt | Wohin |
 | --- | --- |
-| `GET/POST /children/{childId}/learn-goals` · `GET/PATCH/DELETE …/{goalId}` | [LearnGoalsController](../backend/Pugling.Api/Controllers/Supervisor/LearnGoalsController.cs) → [LearnGoalService](../backend/Pugling.Api/Services/LearnGoalService.cs) |
+| `GET/POST /children/{childId}/objectives` · `GET/PATCH/DELETE …/{objectiveId}` | [ObjectivesController](../backend/Pugling.Api/Controllers/Supervisor/ObjectivesController.cs) → [ObjectiveService](../backend/Pugling.Api/Services/Supervisor/ObjectiveService.cs) |
+| `POST …/{objectiveId}/key-results` · `PATCH/DELETE …/key-results/{keyResultId}` | [KeyResultsController](../backend/Pugling.Api/Controllers/Supervisor/KeyResultsController.cs) → dieselbe Stelle |
 
-- **Metriken** bilden direkt Felder des `MasteryRollup` (§3) ab: `AvgMastery`, `Coverage`,
-  `MasteredPercent` (jeweils „≥ Zielwert") und `MaxWeakItems` („≤ Zielwert").
-- **Lesen**: Vater **und** Kind (Motivation); **Schreiben**: nur Vater. Filter `?subjectId=`/`?status=`.
+- **Etappen gehen beim Anlegen inline mit** (`keyResults` im `POST`) – ein Ein-Satz-Ziel bleibt **ein**
+  Request. Genau das war die Bedingung dafür, die frühere zweite Ebene (`learn-goals`) auflösen zu können:
+  sie war ein KeyResult ohne Klammer, ohne Belohnungslog und ohne Klassenarbeits-Metrik.
+- **Metriken** bilden Felder des `MasteryRollup` (§3) ab: `AvgMastery`, `MasteredPercent` (je „≥ Zielwert"),
+  `MaxWeakItems` und `ClassTestGrade` (je „≤ Zielwert"). `Coverage` fehlt bewusst – sie steigt schon durchs
+  bloße Sehen von Vokabeln und wäre farmbar.
+- **Belohnt** wird idempotent am Kind-Login: je erreichter Etappe `rewardPerKeyResult`, beim Voll-Abschluss
+  `rewardOnComplete`; Währung nach `kind` (🪙 `Committed` / 💎 `Stretch`). Kein Malus, kein Clawback.
+- **Lesen**: Vater **und** Kind (Motivation); **Schreiben**: nur Vater. Filter `?status=`/`?kind=`.
+- **Katalog-Kopplung:** der Scope einer Etappe ist ein echter Fremdschlüssel. Fach = Cascade (ein Ziel auf
+  einem gelöschten Fach ist bedeutungslos), Kapitel/Übung = **Restrict** – deren Löschen antwortet mit
+  `409 exercise_in_use`, solange eine Etappe darauf zeigt. Bewusst nicht `SetNull`: das würde ein
+  Kapitel-Ziel lautlos zum Fach-Ziel aufweiten, also die Messlatte heimlich verschieben.
 - **Abgrenzung:** das plan-gebundene Pflicht-Ziel der Position (`GoalCadence`, Tag/Woche) und die
-  aktivitätsbasierten [Missionen](../wiki/05-punkte-und-bonus.md) sind eigene Konzepte – Lernziele messen
+  aktivitätsbasierten [Missionen](../wiki/05-punkte-und-bonus.md) sind eigene Konzepte – große Ziele messen
   den **Lernstand** (Ergebnis), nicht die Aktivität.
 
 ## 5. Was der Fortschritt auslöst: Punkte & Gamification
@@ -459,33 +470,33 @@ Die gleiche Denkfigur taucht an mehreren Stellen wieder auf: **Vater schreibt ei
 oder ein Angebot**, **Sohn liest sie über `/me` oder planbezogene Endpunkte**, **eine Sohn-Aktion erzeugt
 Folgezustand**, den der Vater wieder verwaltet oder auswertet.
 
-### a) Vater setzt Lernziel → Sohn/Familie sieht Zielstatus aus Live-Fortschritt
+### a) Vater setzt ein großes Ziel → Sohn/Familie sieht den Status aus Live-Fortschritt
 
 ```http
-POST /api/v1/supervisor/children/1/learn-goals
+POST /api/v1/supervisor/children/1/objectives
 Authorization: Bearer <father-token>
 Content-Type: application/json
 
 {
-  "subjectId": 3,
-  "chapterId": 8,
-  "exerciseId": 13,
-  "metric": "MasteredPercent",
-  "targetValue": 80,
+  "title": "Begrüßungen sicher beherrschen",
+  "kind": "Committed",
   "dueDate": "2026-07-17",
-  "title": "Begrüßungen sicher beherrschen"
+  "rewardOnComplete": 50,
+  "rewardPerKeyResult": 10,
+  "keyResults": [
+    { "subjectId": 3, "chapterId": 8, "exerciseId": 13, "metric": "MasteredPercent", "targetValue": 80 }
+  ]
 }
 ```
 
 ```http
-GET /api/v1/supervisor/children/1/learn-goals?status=open
+GET /api/v1/supervisor/children/1/objectives?status=open
 Authorization: Bearer <father-token>
 ```
 
-**Zusammenhang:** Das Ziel speichert nicht jeden Fortschritt selbst. Es verweist auf ein Kind und einen
+**Zusammenhang:** Das Ziel speichert nicht jeden Fortschritt selbst. Seine Etappen verweisen auf einen
 Katalog-Scope; der Status wird beim Lesen live aus der kindweiten Auswertung berechnet. Wenn der Sohn
-später dieselbe Übung in einem anderen Plan wiederholt, kann dieses Ziel trotzdem näher an `achieved`
-rücken.
+später dieselbe Übung in einem anderen Plan wiederholt, rückt dieses Ziel trotzdem näher an `achieved`.
 
 ### b) Vater definiert Mission → Sohn sieht Tages-/Wochenauftrag unter `/me`
 

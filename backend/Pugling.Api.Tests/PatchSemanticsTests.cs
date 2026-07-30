@@ -1,4 +1,4 @@
-using System.Net.Http.Json;
+﻿using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -292,16 +292,6 @@ public class PatchSemanticsTests(PuglingWebAppFactory factory) : IClassFixture<P
             var id = await TestApi.IdAsync(await c.PostAsJsonAsync($"/api/v1/supervisor/shop/articles/{article}/listings",
                 new { title = "Ein Eis", coinPrice = 10, gemPrice = 0, unitsPerPurchase = 1, currentStock = 5, maxStock = 5 }));
             return new Ziel(c, $"/api/v1/supervisor/shop/articles/{article}/listings/{id}");
-        }, []),
-
-        new(typeof(UpdateLearnGoalRequest), "title", "Lernziel neu", async f =>
-        {
-            var c = await TestApi.FatherAsync(f);
-            var childId = await NeuesKindAsync(c);
-            var subjectId = await TestApi.IdAsync(await c.PostAsJsonAsync("/api/v1/creator/subjects", new { name = Eindeutig("Fach") }));
-            var id = await TestApi.IdAsync(await c.PostAsJsonAsync($"/api/v1/supervisor/children/{childId}/learn-goals",
-                new { subjectId, metric = "AvgMastery", targetValue = 70, title = "Vokabeln sitzen" }));
-            return new Ziel(c, $"/api/v1/supervisor/children/{childId}/learn-goals/{id}");
         }, []),
 
         new(typeof(UpdateObjectiveRequest), "title", "Objective neu", async f =>

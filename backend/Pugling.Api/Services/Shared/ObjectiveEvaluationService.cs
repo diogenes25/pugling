@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Pugling.Api.Data;
 using Pugling.Api.Models;
 
@@ -6,7 +6,7 @@ namespace Pugling.Api.Services.Shared;
 
 /// <summary>
 /// Wertet <see cref="Objective"/>s (große Ziele) und ihre <see cref="KeyResult"/>s (Etappen) <b>live</b> aus.
-/// Die Beherrschungs-Metriken kommen – wie beim <see cref="LearnGoal"/> – aus einem einmal geladenen Lernstand-
+/// Die Beherrschungs-Metriken kommen aus einem einmal geladenen Lernstand-
 /// Snapshot (<see cref="ChildLearnProgressService.ScopeEvaluator"/>), die Noten-Metrik aus den nachgetragenen
 /// Klassenarbeits-Noten. Geteilte Grundlage für die Vater-CRUD-Sicht (<c>ObjectiveService</c>) und die
 /// idempotente Belohnung (<c>ObjectiveRewardService</c>); es gibt keinen materialisierten Zustand.

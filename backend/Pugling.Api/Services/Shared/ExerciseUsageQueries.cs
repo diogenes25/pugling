@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Pugling.Api.Data;
 using Pugling.Api.Models;
 
@@ -12,6 +12,8 @@ namespace Pugling.Api.Services.Shared;
 /// <param name="HiddenPlans">Lehrplan-Positionen bei Kindern, die er <b>nicht</b> betreut – für ihn unsichtbar.</param>
 /// <param name="OwnClassTests">Direkt zugewiesene Klassenarbeiten eigener Kinder.</param>
 /// <param name="HiddenClassTests">Direkt zugewiesene Klassenarbeiten fremd betreuter Kinder.</param>
+/// <param name="OwnGoals">Etappen großer Ziele (<c>KeyResult</c>) eigener Kinder, die auf die Übung zeigen.</param>
+/// <param name="HiddenGoals">Dieselben Etappen bei fremd betreuten Kindern.</param>
 /// <param name="HiddenLearners">
 /// Wie viele <b>verschiedene Kinder</b> hinter den verborgenen Verwendungen stehen. Eine eigene Zahl, weil
 /// sie eine andere Frage beantwortet als <see cref="Hidden"/>: die Verwendungs-Zahl sagt „an wie vielen
@@ -20,13 +22,14 @@ namespace Pugling.Api.Services.Shared;
 /// in den Plänen desselben Kindes sind eben nicht drei Nutzer.
 /// </param>
 public readonly record struct BlockingUsage(
-    int OwnPlans, int HiddenPlans, int OwnClassTests, int HiddenClassTests, int HiddenLearners)
+    int OwnPlans, int HiddenPlans, int OwnClassTests, int HiddenClassTests, int HiddenLearners,
+    int OwnGoals = 0, int HiddenGoals = 0)
 {
     /// <summary>Verwendungen, die der Aufrufer in der Verwendungs-Anzeige findet.</summary>
-    public int Own => OwnPlans + OwnClassTests;
+    public int Own => OwnPlans + OwnClassTests + OwnGoals;
 
     /// <summary>Verwendungen, die ihm verborgen bleiben – die Zahl, ohne die ein 409 ein Rätsel ist.</summary>
-    public int Hidden => HiddenPlans + HiddenClassTests;
+    public int Hidden => HiddenPlans + HiddenClassTests + HiddenGoals;
 
     /// <summary>Blockiert überhaupt etwas das Löschen?</summary>
     public bool Any => Own + Hidden > 0;
@@ -69,6 +72,13 @@ public static class ExerciseUsageQueries
         var testMine = await db.KlassenarbeitExercises.AsNoTracking()
             .CountAsync(x => x.ExerciseId == exerciseId
                 && x.Klassenarbeit!.Child!.SupervisorLinks.Any(l => l.SupervisorId == fid), ct);
+        // Seit dem Scope-Fremdschlüssel (Restrict) hindert auch eine Ziel-Etappe das Löschen. Ohne diese
+        // Zählung wäre der 409 ein 500 – genau die Sorte Lücke, für die es diese Klasse gibt.
+        var goalTotal = await db.KeyResults.AsNoTracking()
+            .CountAsync(k => k.ExerciseId == exerciseId, ct);
+        var goalMine = await db.KeyResults.AsNoTracking()
+            .CountAsync(k => k.ExerciseId == exerciseId
+                && k.Objective!.Child!.SupervisorLinks.Any(l => l.SupervisorId == fid), ct);
 
         // Wie viele verschiedene KINDER hinter den verborgenen Verwendungen stehen – nicht wie viele
         // Stellen. Drei Positionen in den Plänen desselben Kindes sind ein Nutzer, nicht drei; und für
@@ -81,13 +91,18 @@ public static class ExerciseUsageQueries
                 .Where(x => x.ExerciseId == exerciseId
                     && !x.Klassenarbeit!.Child!.SupervisorLinks.Any(l => l.SupervisorId == fid))
                 .Select(x => x.Klassenarbeit!.ChildId))
+            .Union(db.KeyResults.AsNoTracking()
+                .Where(k => k.ExerciseId == exerciseId
+                    && !k.Objective!.Child!.SupervisorLinks.Any(l => l.SupervisorId == fid))
+                .Select(k => k.Objective!.ChildId))
             .Distinct()
             .CountAsync(ct);
 
         return new BlockingUsage(
             OwnPlans: planMine, HiddenPlans: planTotal - planMine,
             OwnClassTests: testMine, HiddenClassTests: testTotal - testMine,
-            HiddenLearners: hiddenLearners);
+            HiddenLearners: hiddenLearners,
+            OwnGoals: goalMine, HiddenGoals: goalTotal - goalMine);
     }
 
     /// <summary>
@@ -104,11 +119,18 @@ public static class ExerciseUsageQueries
     /// </para>
     /// </summary>
     public static async Task<bool> AnyBlockingAsync(
-        PuglingDbContext db, IQueryable<Exercise> scope, CancellationToken ct)
+        PuglingDbContext db, IQueryable<Exercise> scope, IQueryable<Chapter> chapterScope, CancellationToken ct)
     {
         var ids = scope.Select(x => x.Id);
+        var chapterIds = chapterScope.Select(c => c.Id);
         return await db.PlanPositions.AsNoTracking().AnyAsync(p => ids.Contains(p.ExerciseId), ct)
-            || await db.KlassenarbeitExercises.AsNoTracking().AnyAsync(x => ids.Contains(x.ExerciseId), ct);
+            || await db.KlassenarbeitExercises.AsNoTracking().AnyAsync(x => ids.Contains(x.ExerciseId), ct)
+            // Ziel-Etappen zeigen auf die Übung ODER direkt auf das Kapitel – beide FKs sind Restrict, und
+            // ein Kapitel-Ziel hängt an keiner Übung. Wer nur den Übungs-Scope prüfte, ließe das Löschen
+            // eines Kapitels mit Kapitel-Ziel in die FK-Verletzung laufen.
+            || await db.KeyResults.AsNoTracking().AnyAsync(k =>
+                (k.ExerciseId != null && ids.Contains(k.ExerciseId.Value))
+                || (k.ChapterId != null && chapterIds.Contains(k.ChapterId.Value)), ct);
     }
 
     /// <summary>
@@ -123,6 +145,7 @@ public static class ExerciseUsageQueries
         var own = new List<string>();
         if (usage.OwnPlans > 0) own.Add(Plural(usage.OwnPlans, "study plan"));
         if (usage.OwnClassTests > 0) own.Add(Plural(usage.OwnClassTests, "class test"));
+        if (usage.OwnGoals > 0) own.Add(Plural(usage.OwnGoals, "objective milestone"));
 
         var parts = new List<string>();
         if (own.Count > 0) parts.Add($"{string.Join(" and ", own)} of yours");

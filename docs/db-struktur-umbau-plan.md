@@ -4,7 +4,7 @@ tags: [bereich/architektur, bereich/datenmodell, status/laufend]
 
 # DB-/EF-Struktur-Umbau
 
-> **Übergabe-Dokument.** E0–E12 sind umgesetzt und verifiziert; offen sind E13–E14. Beide
+> **Übergabe-Dokument.** E0–E13 sind umgesetzt und verifiziert; offen ist nur noch E14 (Abschluss). Beide
 > echten Defekte sind damit behoben – der Rest ist Struktur. Dieses Dokument ist so
 > geschrieben, dass jemand ohne Vorwissen die restlichen Etappen zu Ende führen kann: es nennt die
 > getroffenen Entscheidungen, die Arbeitsregeln, die Belege, die bewussten Abweichungen und die
@@ -69,8 +69,7 @@ Die Langfassung steht in der Plandatei dieser Sitzung.
    statt Playwright nachts.
 4. **`docs/api-examples/` im gleichen Commit neu erzeugen**, wenn eine Etappe die Antwortform ändert –
    `DocsCaptureTests` schreibt die Dateien beim Testlauf, CI-Tor D4 prüft danach Byte-Stabilität.
-5. **Numerische Ratschen mitziehen:** `EndpointCoverageGuard.FullRunTouchedActions` (aktuell **268**,
-   sinkt in E13 um die entfallenden LearnGoal-Actions) und `ConventionGuardTests` (`types.Count >= 200`,
+5. **Numerische Ratschen mitziehen:** `EndpointCoverageGuard.FullRunTouchedActions` (aktuell **263**, in E13 von 268 gesenkt) und `ConventionGuardTests` (`types.Count >= 200`,
    in E13 prüfen).
 6. **Jedes neue Tor braucht eine Falsch-Grün-Probe:** die Regel lokal brechen, das Tor rot sehen,
    zurücknehmen, nicht committen. Ein Wächter, der nie rot war, ist kein Wächter.
@@ -79,7 +78,7 @@ Die Langfassung steht in der Plandatei dieser Sitzung.
    E13 (`LearnGoal.ChildId` fällt weg, drei `KeyResult`-Scope-FKs kommen). Das Tor **soll** dabei rot sein –
    die bewusste Zeile ist der Zweck. Bei mehreren Änderungen lohnt der Wegwerf-Dump aus E6 wieder.
 
-## Umgesetzt: E0–E12
+## Umgesetzt: E0–E13
 
 ### E0 · Netz spannen — keine Migration
 
@@ -524,43 +523,60 @@ Legacy-Entity". Das ist jetzt falsch und steht im Startkontext jeder Sitzung –
 **Stand:** 617 Tests grün, Kette bei 1, `docs/api-examples` unverändert, Abdeckung weiter 268/268,
 `TimeSlots` im Schema nicht mehr vorhanden.
 
-## Offen: E13–E14
-
-Jede Etappe endet grün, mit neu gefalteter Migration (siehe Arbeitsregeln).
-
 ### E13 · `LearnGoal` löschen — der eine bewusste Vertragsbruch
 
-`LearnGoal` und `KeyResult` sind strukturell identisch (gleiches Scope-Tripel, gleicher Evaluator
-`ChildLearnProgressService.ScopeEvaluator`; `LearnGoalService` und `ObjectiveEvaluationService` sind
-derselbe Code zweimal). `KeyResult` ist der Superset (Objective-Klammer, Belohnungslog, `ClassTestGrade`).
-Die eine Metrik, die `LearnGoal` mehr hat, ist **`Coverage` – und `KeyResultMetric` schließt sie
-ausdrücklich aus**, mit Begründung „steigt schon durchs bloße Sehen von Vokabeln"
-(`Contracts/Common/ObjectiveBaseTypes.cs`). Die Konsolidierung entfernt also eine farmbare Metrik statt
-einer Funktion.
+`LearnGoal` und `KeyResult` waren strukturell identisch: gleiches Scope-Tripel, gleicher Evaluator, gleiche
+Achieved-/Progress-Arithmetik. `KeyResult` ist der Superset (Objective-Klammer, Belohnungslog,
+`ClassTestGrade`). Die eine Metrik, die `LearnGoal` mehr hatte, war **`Coverage` – und `KeyResultMetric`
+schließt sie ausdrücklich aus**, weil sie schon durchs bloße Sehen von Vokabeln steigt. Die Konsolidierung
+hat also eine **farmbare Metrik** entfernt, keine Funktion.
 
-1. **Bedingung zuerst:** `CreateObjectiveRequest` nimmt eine optionale `keyResults`-Liste (additiv), damit
-   „ein Ziel anlegen" **ein** Aufruf bleibt. Ohne das wird ein Ein-Satz-Ziel zu zwei Requests und
-   `LearnGoal` kommt in sechs Monaten zurück.
-2. Löschen (Fläche per Grep verifiziert): `Models/LearnGoalEntities.cs`,
-   `Services/Supervisor/LearnGoalService.cs`, `Controllers/Supervisor/LearnGoalsController.cs`,
-   `Contracts/Common/LearnGoalBaseTypes.cs`, die LearnGoal-DTOs in `Contracts/Supervisor/GoalDtos.cs`,
-   `Pugling.Client/SupervisorApi.cs`, `Pugling.Api.Tests/LearnGoalTests.cs`, das `DbSet` und die
-   Konfiguration im `PuglingDbContext`. Berührt außerdem: `Program.cs` (DI),
-   `Pugling.Api.Tests/PatchSemanticsTests.cs`, `Pugling.Api.Tests/PuglingClientTests.cs`.
-3. `KeyResult`-Scope wird echt (behebt den Pflichtfeld-ohne-FK-Zombie): `SubjectId` FK **Cascade**,
-   `ChapterId`/`ExerciseId` FK **Restrict** + Aufnahme in `ExerciseUsageQueries` → Löschen einer Übung, auf
-   die ein Ziel zeigt, gibt einen sauberen 409. Bewusst nicht `SetNull`: das würde ein Kapitel-Ziel
-   lautlos zum Fach-Ziel aufweiten, also die Messlatte heimlich verschieben.
-4. Unique auf den Scope: **drei gefilterte** Indizes (`Subject`-only / `+Chapter` / `+Exercise`) – wegen
-   der NULL-Falle aus E7.
-5. Frontend: `frontend/src/vater/VaterZiele.tsx` (LearnGoals-Sektion), `frontend/src/lib/types.ts`,
-   `frontend/src/lib/api.ts`, `frontend/src/lib/fieldHelp.ts`. Danach `npx tsc --noEmit` in `frontend/`.
-6. Doku/Agenten: `.claude/skills/supervisor/SKILL.md`, `docs/tutorial-supervisor.md`,
-   `docs/endpunkt-beziehungen.md`, `docs/REST/Supervisor.http`, `docs/lernziele-objectives-plan.md`
-   (als „zurückgenommen" fortschreiben, nicht löschen – die Begründung ist wertvoll).
-7. **Ratschen senken:** `EndpointCoverageGuard.FullRunTouchedActions` (268 → minus die entfallenden
-   Actions) und `ConventionGuardTests` (`types.Count >= 200`) prüfen. Sie schlagen bewusst in *beide*
-   Richtungen an – das ist Absicht, kostet aber 10 Minuten Verwirrung, wenn man es nicht erwartet.
+**Die Bedingung war schon erfüllt:** `CreateObjectiveRequest` nahm die Etappen bereits inline
+(`keyResults`), und `ObjectiveService.CreateAsync` verarbeitete sie. Ein Ein-Satz-Ziel bleibt also **ein**
+Request – ohne das wäre `LearnGoal` in sechs Monaten zurückgekommen.
+
+**Gelöscht:** `Models/LearnGoalEntities.cs`, `Services/Supervisor/LearnGoalService.cs`,
+`Controllers/Supervisor/LearnGoalsController.cs`, `Contracts/Common/LearnGoalBaseTypes.cs`, die drei
+LearnGoal-DTOs, vier `Pugling.Client`-Methoden, `LearnGoalTests.cs`, `DbSet` + Konfiguration + DI. Dazu ein
+Fund: **`IExerciseType.SupportsLearnGoals`** war damit toter Code (der einzige Leser war der gelöschte
+Service) – weg, samt Implementierungen und den drei Doku-Stellen.
+
+**Der Scope einer Etappe ist jetzt ein echter Fremdschlüssel** (behebt den Pflichtfeld-ohne-FK-Zombie:
+`SubjectId` war Pflicht *ohne* Beziehung, nichts hinderte am Verweis auf ein gelöschtes Fach, und die
+Auswertung lieferte dann stumm 0 %):
+- `SubjectId` **Cascade** – ein Ziel auf einem gelöschten Fach ist bedeutungslos. Zwei unabhängige Roots
+  (Subject, Objective), kein Diamant – Bauart wie `ItemProgress`.
+- `ChapterId`/`ExerciseId` **Restrict**, bewusst nicht `SetNull`: das würde ein Kapitel-Ziel lautlos zum
+  Fach-Ziel aufweiten, also die Messlatte heimlich verschieben.
+- **Drei gefilterte** Uniques auf `(ObjectiveId, Scope, Metric)` – dieselbe Etappe zweimal im selben Ziel
+  wäre eine Dublette, und `RewardPerKeyResult` zahlte doppelt. Gefiltert wegen der NULL-Falle aus E7.
+
+**Damit aus Restrict kein nackter 500 wird**, kennt `ExerciseUsageQueries` jetzt die Etappen – wie schon die
+Lehrplan-Positionen. **Ein Detail, das beim Nachdenken auffiel und sonst eine 500 geblieben wäre:** eine
+Etappe kann direkt auf ein **Kapitel** zeigen (`ChapterId` gesetzt, `ExerciseId` null) und hängt dann an
+*keiner* Übung. Der bisherige Übungs-Scope hätte sie nicht gesehen, und das Löschen des Kapitels wäre in die
+FK-Verletzung gelaufen. `AnyBlockingAsync` nimmt darum einen **zweiten** Scope (die Kapitel) mit. Live
+gegengeprüft: beide Fälle antworten mit `409 exercise_in_use`.
+
+**Ratsche gesenkt:** `EndpointCoverageGuard.FullRunTouchedActions` 268 → **263**, genau die fünf entfallenen
+Actions. `ConventionGuardTests` (`types.Count >= 200`) bleibt erfüllt.
+
+**Doku, die vorher eine Lücke hatte:** `docs/tutorial-supervisor.md` §4 und `docs/endpunkt-beziehungen.md`
+§4/§6a beschrieben ausschließlich die *Lernziele* – **Objectives kamen in beiden Dokumenten gar nicht vor**.
+Beide Abschnitte sind jetzt auf die verbleibende Ebene umgeschrieben, mit den Feinheiten, die vorher fehlten
+(Währung nach `kind`, inline `keyResults`, `ClassTestGrade` als Note ×10, die Restrict-Kopplung an den
+Katalog). `docs/lernziele-objectives-plan.md` trägt einen Nachtrag „zweite Ebene entfallen" und bleibt
+sonst als Begründung stehen. Die Backlog-Story **B-14** („Belohnung, wenn ein Lernziel erreicht ist") ist
+damit **gegenstandslos**: das `KeyResult` bezahlt längst, idempotent, mit `ConcurrencyStamp`-Bump – genau
+das Muster, das die Story forderte.
+
+**Verifikation:** 610 Tests grün, Kette bei 1, `docs/api-examples` unverändert, Abdeckung 263/263,
+`npx tsc --noEmit` im Frontend sauber, `frontend/e2e/full-flow` + `perspektiven` grün (7 Tests), und live:
+`GET learn-goals` → **404**, Ziel samt Etappe in einem Aufruf → **201**, Kapitel mit Etappe löschen → **409**.
+
+## Offen: E14
+
+Jede Etappe endet grün, mit neu gefalteter Migration (siehe Arbeitsregeln).
 
 ### E14 · Abschluss
 
@@ -617,7 +633,7 @@ E1 ist wirksam: die Azure-DB stammt aus der alten Kette und wird vom Historien-G
 
 ## Verifikation
 
-**Pro Etappe:** `dotnet test Pugling.sln -c Release` (~55 s, aktuell **617** Tests) und
+**Pro Etappe:** `dotnet test Pugling.sln -c Release` (~55 s, aktuell **610** Tests) und
 `git diff -- docs/api-examples` prüfen (leer, oder im gleichen Commit neu erzeugt).
 
 **Laufzeit statt nur Kompilieren:** `/smoke-test` (Wegwerf-DB, lässt `pugling.db` unangetastet) nach E6,

@@ -15,8 +15,8 @@ import type {
   VocabBatchResult, VocabularyResponse, VocabTagResponse, ChildTagResponse, Wallet, WalletBalance, WalletEntry, Currency,
   Paged, VocabularySearchParams, VocabItemInput, VocabItemResponse,
   ChapterProgress, ExerciseProgress, ItemHistoryEntry, ItemProgressResponse, SubjectProgress, WordMastery,
-  CreateKeyResultRequest, CreateLearnGoalRequest, CreateObjectiveRequest, GoalStatus, KeyResult, LearnGoal,
-  Objective, ObjectiveKind, UpdateKeyResultRequest, UpdateLearnGoalRequest, UpdateObjectiveRequest,
+  CreateKeyResultRequest, CreateObjectiveRequest, GoalStatus, KeyResult,
+  Objective, ObjectiveKind, UpdateKeyResultRequest, UpdateObjectiveRequest,
   ShopArticle, CreateShopArticleDto, UpdateShopArticleDto, ShopListing, CreateShopListingDto, UpdateShopListingDto,
   InventoryItem, ShopPurchase, ActivationRequest, ShopPurchaseStatus, ActivationRequestStatus,
   ShopView, MyActivation,
@@ -497,19 +497,6 @@ export const api = {
   // ---- Ziele über dem Lernstand: Lernziele (einzeln) und Objectives (Klammer aus Etappen) ----
   // Beide werden bei jeder Abfrage live aus dem Lernstand ausgewertet – deshalb keine „Fortschritt
   // aktualisieren"-Aktion: es gibt keinen gespeicherten Stand, der veralten könnte.
-  learnGoals: (childId: number, p: { subjectId?: number; status?: GoalStatus } = {}) => {
-    const q = new URLSearchParams();
-    if (p.subjectId != null) q.set("subjectId", String(p.subjectId));
-    if (p.status) q.set("status", p.status);
-    const qs = q.toString();
-    return httpPaged<LearnGoal>(`${V1}/supervisor/children/${childId}/learn-goals${qs ? `?${qs}` : ""}`);
-  },
-  createLearnGoal: (childId: number, dto: CreateLearnGoalRequest) =>
-    http<LearnGoal>(`${V1}/supervisor/children/${childId}/learn-goals`, "POST", dto),
-  updateLearnGoal: (childId: number, goalId: number, dto: UpdateLearnGoalRequest) =>
-    http<LearnGoal>(`${V1}/supervisor/children/${childId}/learn-goals/${goalId}`, "PATCH", dto),
-  deleteLearnGoal: (childId: number, goalId: number) =>
-    http<void>(`${V1}/supervisor/children/${childId}/learn-goals/${goalId}`, "DELETE"),
 
   objectives: (childId: number, p: { status?: GoalStatus; kind?: ObjectiveKind } = {}) => {
     const q = new URLSearchParams();

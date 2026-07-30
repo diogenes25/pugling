@@ -94,8 +94,6 @@ public sealed class VocabularyExerciseType : ExerciseTypeBase
     /// <inheritdoc/>
     public override bool SupportsItemProgress => true;
     /// <inheritdoc/>
-    public override bool SupportsLearnGoals => true;
-    /// <inheritdoc/>
     public override bool SupportsObjectives => true;
     /// <inheritdoc/>
     public override StoreResolution StoreResolution => StoreResolution.ItemTable;

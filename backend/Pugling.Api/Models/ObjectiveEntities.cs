@@ -1,4 +1,4 @@
-namespace Pugling.Api.Models;
+﻿namespace Pugling.Api.Models;
 
 // ObjectiveKind/KeyResultMetric leben im Vertrags-Projekt (Pugling.Contracts).
 
@@ -44,7 +44,7 @@ public class Objective
 
 /// <summary>
 /// Eine messbare <b>Etappe</b> eines <see cref="Objective"/> auf einem Katalog-Scope (Fach, optional Kapitel/Übung).
-/// Die Beherrschungs-Metriken werden – wie beim <see cref="LearnGoal"/> – live über den <c>ScopeEvaluator</c>
+/// Die Beherrschungs-Metriken werden live über den <c>ScopeEvaluator</c>
 /// des Lernstands ausgewertet; <see cref="KeyResultMetric.ClassTestGrade"/> liest die vom Vater nachgetragene
 /// <see cref="Klassenarbeit.Grade"/> des Fachs (Scope dann nur Fach).
 /// </summary>

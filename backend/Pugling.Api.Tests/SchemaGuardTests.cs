@@ -232,14 +232,17 @@ public class SchemaGuardTests
             ["ItemReviewEvent.ChildId"] = DeleteBehavior.Cascade, // -> Child
             // Die Historie überlebt das Item: die Aussage „richtig beantwortet" gilt weiter.
             ["ItemReviewEvent.ItemId"] = DeleteBehavior.SetNull, // -> ExerciseItem
+            ["KeyResult.ChapterId"] = DeleteBehavior.Restrict, // -> Chapter (Ziel erst wegnehmen, dann Kapitel)
+            ["KeyResult.ExerciseId"] = DeleteBehavior.Restrict, // -> Exercise (dito)
             ["KeyResult.ObjectiveId"] = DeleteBehavior.Cascade, // -> Objective
+            // Cascade: ein Ziel auf einem gelöschten Fach ist bedeutungslos.
+            ["KeyResult.SubjectId"] = DeleteBehavior.Cascade, // -> Subject
             ["Klassenarbeit.ChildId"] = DeleteBehavior.Cascade, // -> Child
             ["Klassenarbeit.SubjectId"] = DeleteBehavior.SetNull, // -> Subject
             ["KlassenarbeitExercise.ExerciseId"] = DeleteBehavior.Cascade, // -> Exercise
             ["KlassenarbeitExercise.KlassenarbeitId"] = DeleteBehavior.Cascade, // -> Klassenarbeit
             ["KlassenarbeitTag.KlassenarbeitId"] = DeleteBehavior.Cascade, // -> Klassenarbeit
             ["KlassenarbeitTag.TagId"] = DeleteBehavior.Cascade, // -> Tag
-            ["LearnGoal.ChildId"] = DeleteBehavior.Cascade, // -> Child (fällt mit E13 weg)
             ["MediaLink.ExerciseId"] = DeleteBehavior.Cascade, // -> Exercise
             ["MediaLink.ExerciseItemId"] = DeleteBehavior.Cascade, // -> ExerciseItem
             ["MediaLink.MediaAssetId"] = DeleteBehavior.Cascade, // -> MediaAsset

@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Pugling.Api.Auth;
@@ -83,9 +83,11 @@ public class SubjectsController(PuglingDbContext db) : ControllerBase
         // Subject→Chapter→Exercise kaskadiert, PlanPosition→Exercise ist Restrict. Welche Tabellen das
         // Löschen blockieren, weiß ExerciseUsageQueries – hier steht nur der Scope und die Meldung.
         if (await ExerciseUsageQueries.AnyBlockingAsync(db,
-                db.Exercises.Where(x => x.Chapter!.SubjectId == subjectId), ct))
+                db.Exercises.Where(x => x.Chapter!.SubjectId == subjectId),
+                db.Chapters.Where(c => c.SubjectId == subjectId), ct))
             return this.ProblemWithCode(ApiErrors.ExerciseInUse,
-                "Exercises in this subject are used in a study plan or a class test; remove them there first.");
+                "Content in this subject is still used in a study plan, a class test or an objective "
+                + "milestone; remove it there first.");
         db.Subjects.Remove(subject);
         await db.SaveChangesAsync(ct);
         return NoContent();

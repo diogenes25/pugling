@@ -103,7 +103,7 @@ public sealed class TrueFalseExerciseType : ExerciseTypeBase
 
 > Welche Facetten überschreibst du sonst noch? `DefaultStage`/`PreviewStage`/`IsTypedStage`/`StageOptions`
 > (mehrstufige Verfahren), `Choices`/`StageFacets` (Multiple-Choice, Buchstabenkästchen, Audio),
-> `SupportsItemProgress`/`SupportsLearnGoals`/`SupportsObjectives` (Item-Lernstand/Ziele) und
+> `SupportsItemProgress`/`SupportsObjectives` (Item-Lernstand/Ziele) und
 > `StoreResolution` (DB-gestützte Inhalte, siehe Abschnitt B). Vorlage: `VocabularyExerciseType`.
 
 ### Schritt 3 — Registrieren (die eine Zeile)
@@ -196,7 +196,7 @@ Am Muster von `VocabularyExerciseType`/`ClozeExerciseType`:
    die DB-Auflösung in [ExerciseContentResolver.cs](../backend/Pugling.Api/Services/Shared/ExerciseContentResolver.cs).
    Der `ExerciseContentProvider` bleibt die Store-freie Projektion (dünne Fassade über die Registry).
 5. **Item-Lernstand/Ziele:** `SupportsItemProgress` (plan-übergreifender `ItemProgress`),
-   `SupportsLearnGoals`/`SupportsObjectives` (Lernziele/Objectives dürfen gesetzt werden).
+   `SupportsObjectives` (Ziel-Etappen dürfen auf diesen Typ gesetzt werden).
 6. **Zielregel:** [PositionProgressService.cs](../backend/Pugling.Api/Services/Shared/PositionProgressService.cs)
    liest den `CheckMode` aus dem Manifest — prüfen, ob die „erledigt"-Regel für den neuen Modus passt.
 7. **Migration** nur, falls neue Entities/Spalten hinzukamen (z. B. ein neuer Store).

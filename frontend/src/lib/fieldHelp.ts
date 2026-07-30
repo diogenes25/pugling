@@ -30,9 +30,11 @@ export const FIELD_HELP = {
       + "Ziel der Periode erledigt ist. Leer lassen heißt 80 %.",
   },
   itemCount: {
-    title: "Inhalte je Durchgang",
-    text: "Wie viele Vokabeln/Aufgaben eine Sitzung höchstens vorlegt. Leer = alle Inhalte der Übung. "
-      + "Eine kleine Zahl macht die tägliche Pflicht kurz genug, dass sie auch wirklich passiert.",
+    title: "Inhalte dauerhaft begrenzen",
+    text: "Begrenzt die Übung dauerhaft auf ihre ersten N Inhalte – die übrigen werden nie abgefragt, "
+      + "auch nicht an einem anderen Tag. Leer = alle Inhalte der Übung, und das ist meist richtig. "
+      + "Wie viel an einem einzelnen Tag drankommt, entscheidet der Leitner-Kasten über die Fälligkeit "
+      + "und nicht dieses Feld.",
   },
   orderStrategy: {
     title: "Reihenfolge",
@@ -99,9 +101,10 @@ export const FIELD_HELP = {
       + "zusätzlich am Zeitfenster und an Boni (Combo, schnelle Antwort).",
   },
   defaultItemCount: {
-    title: "Standard-Menge",
-    text: "Vorschlag, wie viele Inhalte eine Sitzung zeigen soll. Er wird übernommen, sobald die Übung in "
-      + "einen Lehrplan aufgenommen wird – dort lässt er sich je Plan überschreiben.",
+    title: "Standard-Begrenzung",
+    text: "Vorschlag für die dauerhafte Inhalte-Begrenzung: auf wie viele der ersten Inhalte die Übung "
+      + "beschränkt wird. Er wird übernommen, sobald die Übung in einen Lehrplan aufgenommen wird – dort "
+      + "lässt er sich je Plan überschreiben. Leer lassen heißt: alle Inhalte werden abgefragt.",
   },
   defaultStage: {
     title: "Standard-Abfrageform",
@@ -195,12 +198,12 @@ export const FIELD_HELP = {
   },
 
   // ---- Lernziele & Objectives ----
-  learnGoalMetric: {
+  keyResultMetric: {
     title: "Messlatte",
     text: "Woran der Erfolg gemessen wird – etwa wie viele Wörter sicher sitzen oder welche Note eine "
       + "Klassenarbeit bringt. Die Auswertung läuft live aus dem Lernstand, du musst nichts abhaken.",
   },
-  learnGoalTarget: {
+  keyResultTarget: {
     title: "Zielwert",
     text: "Der Wert, ab dem das Ziel erreicht ist. Bei einer Note ist es eine Obergrenze (kleiner ist "
       + "besser), sonst ein Mindestwert.",

@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Pugling.Api.Auth;
@@ -98,9 +98,11 @@ public class ChaptersController(PuglingDbContext db) : ControllerBase
         if (chapter is null) return NotFound();
         // Chapter→Exercise kaskadiert, PlanPosition→Exercise ist Restrict – vgl. ExerciseControllerBase.Delete.
         if (await ExerciseUsageQueries.AnyBlockingAsync(db,
-                db.Exercises.Where(x => x.ChapterId == chapterId), ct))
+                db.Exercises.Where(x => x.ChapterId == chapterId),
+                db.Chapters.Where(c => c.Id == chapterId), ct))
             return this.ProblemWithCode(ApiErrors.ExerciseInUse,
-                "Exercises in this chapter are used in a study plan or a class test; remove them there first.");
+                "Content in this chapter is still used in a study plan, a class test or an objective "
+                + "milestone; remove it there first.");
         db.Chapters.Remove(chapter);
         await db.SaveChangesAsync(ct);
         return NoContent();

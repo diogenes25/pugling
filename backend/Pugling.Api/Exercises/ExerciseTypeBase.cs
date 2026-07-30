@@ -1,4 +1,4 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 using Pugling.Api.Models;
 
 namespace Pugling.Api.Exercises;
@@ -47,7 +47,6 @@ public abstract class ExerciseTypeBase : IExerciseType
     public virtual bool SupportsItemProgress => false;
 
     /// <inheritdoc/>
-    public virtual bool SupportsLearnGoals => false;
 
     /// <inheritdoc/>
     public virtual bool SupportsObjectives => false;

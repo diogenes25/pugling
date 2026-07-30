@@ -1,4 +1,4 @@
-namespace Pugling.Contracts;
+﻿namespace Pugling.Contracts;
 
 /// <summary>
 /// Art eines <c>Objective</c> – bestimmt Ton und Währung der Belohnung. <see cref="Committed"/> ist ein
@@ -20,7 +20,8 @@ public enum ObjectiveKind
 /// aus <c>MasteryRollup</c>) und die vom Vater getippte Klassenarbeits-Note
 /// (<see cref="ClassTestGrade"/>). Reine Aktivitäts-Zähler (Minuten/Wiederholungen) fehlen absichtlich –
 /// sie belohnen Wiederholen statt Können und wären farmbar. Die abdeckungsbasierte „Coverage" (Wert 1 beim
-/// verwandten <c>LearnGoalMetric</c>) fehlt hier bewusst: sie steigt schon durchs bloße Sehen von Vokabeln.
+/// früheren <c>LearnGoalMetric</c>) fehlt hier bewusst: sie steigt schon durchs bloße Sehen von Vokabeln – sie
+/// war der einzige Unterschied der entfallenen Lernziel-Ebene, und zwar ein farmbarer.
 /// </summary>
 public enum KeyResultMetric
 {

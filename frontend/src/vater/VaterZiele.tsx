@@ -8,7 +8,7 @@ import { confirmAction } from "../lib/ui";
 import { useAsync } from "../lib/useAsync";
 import type {
   ChapterResponse, ChildResponse, CreateKeyResultRequest, ExerciseSummary, GoalStatus, KeyResult,
-  KeyResultMetric, LearnGoal, LearnGoalMetric, Objective, ObjectiveKind, Paged, SubjectResponse,
+  KeyResultMetric, Objective, ObjectiveKind, Paged, SubjectResponse,
 } from "../lib/types";
 
 /**
@@ -23,13 +23,6 @@ import type {
  * Abfrage neu ausgewertet – „open/achieved/overdue" ist nie ein gespeicherter, veralteter Wert.
  */
 
-const GOAL_METRICS: { value: LearnGoalMetric; label: string; hint: string; max?: boolean }[] = [
-  { value: "AvgMastery", label: "Ø Beherrschung", hint: "Durchschnitt über die begonnenen Wörter, in Prozent" },
-  { value: "Coverage", label: "Abdeckung", hint: "Anteil der überhaupt begonnenen Wörter, in Prozent" },
-  { value: "MasteredPercent", label: "Anteil „sitzt sicher“", hint: "Anteil der Wörter in der höchsten Box, in Prozent" },
-  { value: "MaxWeakItems", label: "Höchstens N schwache Wörter", hint: "Anzahl – hier ist der Zielwert eine Obergrenze", max: true },
-];
-
 const KR_METRICS: { value: KeyResultMetric; label: string; hint: string; max?: boolean }[] = [
   { value: "AvgMastery", label: "Ø Beherrschung", hint: "Durchschnitt über die begonnenen Wörter, in Prozent" },
   { value: "MasteredPercent", label: "Anteil „sitzt sicher“", hint: "Anteil der Wörter in der höchsten Box, in Prozent" },
@@ -37,21 +30,20 @@ const KR_METRICS: { value: KeyResultMetric; label: string; hint: string; max?: b
   { value: "ClassTestGrade", label: "Klassenarbeits-Note", hint: "Note als Zahl ×10 (20 = mindestens 2,0) – Obergrenze", max: true },
 ];
 
-const goalMetric = (m: LearnGoalMetric) => GOAL_METRICS.find((x) => x.value === m);
 const krMetric = (m: KeyResultMetric) => KR_METRICS.find((x) => x.value === m);
 
 /**
  * Zielwert menschenlesbar. `ClassTestGrade` ist im Vertrag Note ×10 – ungerechnet gelesen ergäbe „Ziel 20"
  * eine unsinnige Aussage.
  */
-function valueLabel(metric: LearnGoalMetric | KeyResultMetric, value: number): string {
+function valueLabel(metric: KeyResultMetric, value: number): string {
   if (metric === "ClassTestGrade") return (value / 10).toFixed(1);
   if (metric === "MaxWeakItems") return String(value);
   return `${value} %`;
 }
 
 /** „mindestens" bzw. „höchstens" – ohne diese Richtung liest man jeden Balken falsch. */
-function directionLabel(metric: LearnGoalMetric | KeyResultMetric): string {
+function directionLabel(metric: KeyResultMetric): string {
   return metric === "MaxWeakItems" || metric === "ClassTestGrade" ? "höchstens" : "mindestens";
 }
 
@@ -97,7 +89,6 @@ export function VaterZiele() {
         <Link to={`/vater/kind/${childId}/lernstand`}>Lernstand</Link>.
       </p>
 
-      <LearnGoals childId={childId} subjects={subjects.data ?? []} />
       <Objectives childId={childId} subjects={subjects.data ?? []} />
     </>
   );
@@ -165,142 +156,6 @@ const scopeToDto = (s: Scope) => ({
   chapterId: s.chapterId === "" ? null : Number(s.chapterId),
   exerciseId: s.exerciseId === "" ? null : Number(s.exerciseId),
 });
-
-// ─── Lernziele ────────────────────────────────────────────────────────────────
-
-function LearnGoals({ childId, subjects }: { childId: number; subjects: SubjectResponse[] }) {
-  const goals = useAsync<Paged<LearnGoal>>(() => api.learnGoals(childId), [childId]);
-  const action = useAction();
-
-  async function act(fn: () => Promise<unknown>, okText: string) {
-    if (await action.run(fn, okText)) goals.reload();
-  }
-
-  return (
-    <section>
-      <h3 className="h-section">Lernziele {goals.data ? `(${goals.data.total})` : ""}</h3>
-
-      <NewLearnGoal childId={childId} subjects={subjects} action={action} onCreated={goals.reload} />
-
-      <StatusBanner message={action.message} style={{ marginTop: 10 }} />
-
-      {goals.loading ? <div className="loading">Lade…</div> : goals.error ? <div className="banner err">{goals.error}</div> : (
-        <div style={{ overflowX: "auto", marginTop: 10 }}>
-          <table className="table">
-            <thead><tr>
-              <th>Ziel</th><th>Bereich</th><th>Messlatte</th><th>Stand</th><th>Termin</th><th>Status</th><th />
-            </tr></thead>
-            <tbody>
-              {goals.data?.items.map((g) => (
-                <LearnGoalRow key={g.id} goal={g}
-                  onSave={(target) => act(() => api.updateLearnGoal(childId, g.id, { targetValue: target }), "Zielwert geändert.")}
-                  onDelete={() => {
-                    if (!confirmAction(`Lernziel „${g.title ?? g.scope}" löschen?`)) return;
-                    act(() => api.deleteLearnGoal(childId, g.id), "Lernziel gelöscht.");
-                  }} />
-              ))}
-              {goals.data?.items.length === 0 && (
-                <tr><td colSpan={7} className="muted">Noch keine Lernziele – lege oben eines an.</td></tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      )}
-    </section>
-  );
-}
-
-function LearnGoalRow({ goal, onSave, onDelete }: {
-  goal: LearnGoal; onSave: (target: number) => void; onDelete: () => void;
-}) {
-  const [target, setTarget] = useState(String(goal.targetValue));
-  const meta = goalMetric(goal.metric);
-  const dirty = target.trim() !== "" && Number(target) !== goal.targetValue;
-
-  return (
-    <tr>
-      <td>{goal.title ?? <span className="muted">(ohne Titel)</span>}</td>
-      <td className="muted">{goal.scope}</td>
-      <td>
-        {meta?.label ?? goal.metric}
-        <div className="muted" style={{ fontSize: 12 }}>{directionLabel(goal.metric)} {valueLabel(goal.metric, goal.targetValue)}</div>
-      </td>
-      <td>
-        <ProgressBar percent={goal.progressPercent} />
-        <div className="muted" style={{ fontSize: 12 }}>aktuell {valueLabel(goal.metric, goal.currentValue)}</div>
-      </td>
-      <td className="muted">{goal.dueDate ?? "—"}</td>
-      <td><StatusPill status={goal.status} /></td>
-      <td style={{ whiteSpace: "nowrap", textAlign: "right" }}>
-        <input aria-label={`Zielwert für ${goal.title ?? goal.scope}`} type="number" min={0} value={target}
-          onChange={(e) => setTarget(e.target.value)} style={{ width: 70 }} />{" "}
-        {dirty && <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }}
-          onClick={() => onSave(Number(target))}>OK</button>}{" "}
-        <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} onClick={onDelete}>Löschen</button>
-      </td>
-    </tr>
-  );
-}
-
-function NewLearnGoal({ childId, subjects, action, onCreated }: {
-  childId: number; subjects: SubjectResponse[]; action: ActionState; onCreated: () => void;
-}) {
-  const [scope, setScope] = useState<Scope>(emptyScope);
-  const [metric, setMetric] = useState<LearnGoalMetric>("AvgMastery");
-  const [targetValue, setTargetValue] = useState(80);
-  const [dueDate, setDueDate] = useState("");
-  const [title, setTitle] = useState("");
-  const meta = goalMetric(metric);
-
-  async function submit(e: React.FormEvent) {
-    e.preventDefault();
-    if (scope.subjectId === "") { action.fail("Bitte ein Fach wählen."); return; }
-    const ok = await action.run(() => api.createLearnGoal(childId, {
-      ...scopeToDto(scope), metric, targetValue,
-      dueDate: dueDate || null, title: title.trim() || null,
-    }), "Lernziel angelegt.");
-    if (!ok) return;
-    setTitle("");
-    onCreated();
-  }
-
-  return (
-    <form className="card" onSubmit={submit} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-      <div className="form-grid" style={{ alignItems: "end" }}>
-        <ScopePicker value={scope} onChange={setScope} subjects={subjects} />
-        <div className="field">
-          <FieldLabel htmlFor="lg-metric" topic="learnGoalMetric">Messlatte</FieldLabel>
-          <select id="lg-metric" value={metric}
-            onChange={(e) => {
-              const next = e.target.value as LearnGoalMetric;
-              setMetric(next);
-              // Der sinnvolle Startwert hängt an der Richtung: Prozent-Ziele hoch, Obergrenzen niedrig.
-              setTargetValue(next === "MaxWeakItems" ? 3 : 80);
-            }}>
-            {GOAL_METRICS.map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}
-          </select>
-        </div>
-        <div className="field">
-          <FieldLabel htmlFor="lg-target" topic="learnGoalTarget">{meta?.max ? "Obergrenze" : "Zielwert"}</FieldLabel>
-          <input id="lg-target" type="number" min={0} value={targetValue} onChange={(e) => setTargetValue(Number(e.target.value))} />
-        </div>
-        <div className="field">
-          <label htmlFor="lg-due">Stichtag <span className="muted">(optional)</span></label>
-          <input id="lg-due" type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
-        </div>
-        <div className="field">
-          <label htmlFor="lg-title">Titel <span className="muted">(optional)</span></label>
-          <input id="lg-title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Unit 1 sitzt" />
-        </div>
-        <button type="submit" className="btn inline-btn" style={{ width: "auto" }} disabled={action.busy}>{action.busy ? "Lege an…" : "Lernziel anlegen"}</button>
-      </div>
-      <p className="sub" style={{ margin: 0 }}>
-        {meta?.hint} {meta?.max && <strong>Der Zielwert ist hier eine Obergrenze.</strong>}
-        {" "}Ohne Stichtag bleibt das Ziel offen, bis es erreicht ist – es kann nie „verpasst" werden.
-      </p>
-    </form>
-  );
-}
 
 // ─── Objectives (Klammer mit Etappen) ─────────────────────────────────────────
 
@@ -462,7 +317,7 @@ function KeyResultForm({ subjects, onSubmit }: {
       <div className="form-grid" style={{ alignItems: "end" }}>
         <ScopePicker value={scope} onChange={setScope} subjects={subjects} />
         <div className="field">
-          <FieldLabel htmlFor={`${uid}-kr-metric`} topic="learnGoalMetric">Messlatte</FieldLabel>
+          <FieldLabel htmlFor={`${uid}-kr-metric`} topic="keyResultMetric">Messlatte</FieldLabel>
           <select id={`${uid}-kr-metric`} value={metric}
             onChange={(e) => {
               const next = e.target.value as KeyResultMetric;
@@ -473,7 +328,7 @@ function KeyResultForm({ subjects, onSubmit }: {
           </select>
         </div>
         <div className="field">
-          <FieldLabel htmlFor={`${uid}-kr-target`} topic="learnGoalTarget">{meta?.max ? "Obergrenze" : "Zielwert"}</FieldLabel>
+          <FieldLabel htmlFor={`${uid}-kr-target`} topic="keyResultTarget">{meta?.max ? "Obergrenze" : "Zielwert"}</FieldLabel>
           <input id={`${uid}-kr-target`} type="number" min={0} value={targetValue} onChange={(e) => setTargetValue(Number(e.target.value))} />
         </div>
         <div className="field">

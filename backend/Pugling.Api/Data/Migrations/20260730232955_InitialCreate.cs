@@ -301,33 +301,6 @@ namespace Pugling.Api.Data.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "LearnGoals",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    ChildId = table.Column<int>(type: "INTEGER", nullable: false),
-                    SubjectId = table.Column<int>(type: "INTEGER", nullable: false),
-                    ChapterId = table.Column<int>(type: "INTEGER", nullable: true),
-                    ExerciseId = table.Column<int>(type: "INTEGER", nullable: true),
-                    Metric = table.Column<string>(type: "TEXT", nullable: false),
-                    TargetValue = table.Column<int>(type: "INTEGER", nullable: false),
-                    DueDate = table.Column<DateOnly>(type: "TEXT", nullable: true),
-                    Title = table.Column<string>(type: "TEXT", maxLength: 200, nullable: true),
-                    CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_LearnGoals", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_LearnGoals_Children_ChildId",
-                        column: x => x.ChildId,
-                        principalTable: "Children",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "Missions",
                 columns: table => new
                 {
@@ -854,31 +827,6 @@ namespace Pugling.Api.Data.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "KeyResults",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    ObjectiveId = table.Column<int>(type: "INTEGER", nullable: false),
-                    SubjectId = table.Column<int>(type: "INTEGER", nullable: false),
-                    ChapterId = table.Column<int>(type: "INTEGER", nullable: true),
-                    ExerciseId = table.Column<int>(type: "INTEGER", nullable: true),
-                    Metric = table.Column<string>(type: "TEXT", nullable: false),
-                    TargetValue = table.Column<int>(type: "INTEGER", nullable: false),
-                    Title = table.Column<string>(type: "TEXT", maxLength: 200, nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_KeyResults", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_KeyResults_Objectives_ObjectiveId",
-                        column: x => x.ObjectiveId,
-                        principalTable: "Objectives",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "ObjectiveRewards",
                 columns: table => new
                 {
@@ -1192,6 +1140,49 @@ namespace Pugling.Api.Data.Migrations
                         name: "FK_ExerciseTags_Tags_TagId",
                         column: x => x.TagId,
                         principalTable: "Tags",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "KeyResults",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    ObjectiveId = table.Column<int>(type: "INTEGER", nullable: false),
+                    SubjectId = table.Column<int>(type: "INTEGER", nullable: false),
+                    ChapterId = table.Column<int>(type: "INTEGER", nullable: true),
+                    ExerciseId = table.Column<int>(type: "INTEGER", nullable: true),
+                    Metric = table.Column<string>(type: "TEXT", nullable: false),
+                    TargetValue = table.Column<int>(type: "INTEGER", nullable: false),
+                    Title = table.Column<string>(type: "TEXT", maxLength: 200, nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_KeyResults", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_KeyResults_Chapters_ChapterId",
+                        column: x => x.ChapterId,
+                        principalTable: "Chapters",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_KeyResults_Exercises_ExerciseId",
+                        column: x => x.ExerciseId,
+                        principalTable: "Exercises",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_KeyResults_Objectives_ObjectiveId",
+                        column: x => x.ObjectiveId,
+                        principalTable: "Objectives",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_KeyResults_Subjects_SubjectId",
+                        column: x => x.SubjectId,
+                        principalTable: "Subjects",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -2025,9 +2016,40 @@ namespace Pugling.Api.Data.Migrations
                 column: "ItemId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_KeyResults_ObjectiveId",
+                name: "IX_KeyResults_ChapterId",
                 table: "KeyResults",
-                column: "ObjectiveId");
+                column: "ChapterId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_KeyResults_ExerciseId",
+                table: "KeyResults",
+                column: "ExerciseId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_KeyResults_ObjectiveId_ChapterId_Metric",
+                table: "KeyResults",
+                columns: new[] { "ObjectiveId", "ChapterId", "Metric" },
+                unique: true,
+                filter: "[ChapterId] IS NOT NULL AND [ExerciseId] IS NULL");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_KeyResults_ObjectiveId_ExerciseId_Metric",
+                table: "KeyResults",
+                columns: new[] { "ObjectiveId", "ExerciseId", "Metric" },
+                unique: true,
+                filter: "[ExerciseId] IS NOT NULL");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_KeyResults_ObjectiveId_SubjectId_Metric",
+                table: "KeyResults",
+                columns: new[] { "ObjectiveId", "SubjectId", "Metric" },
+                unique: true,
+                filter: "[ChapterId] IS NULL AND [ExerciseId] IS NULL");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_KeyResults_SubjectId",
+                table: "KeyResults",
+                column: "SubjectId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Klassenarbeiten_ChildId",
@@ -2060,11 +2082,6 @@ namespace Pugling.Api.Data.Migrations
                 name: "IX_KlassenarbeitTags_TagId",
                 table: "KlassenarbeitTags",
                 column: "TagId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_LearnGoals_ChildId",
-                table: "LearnGoals",
-                column: "ChildId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_MediaAssets_Key",
@@ -2486,9 +2503,6 @@ namespace Pugling.Api.Data.Migrations
 
             migrationBuilder.DropTable(
                 name: "KlassenarbeitTags");
-
-            migrationBuilder.DropTable(
-                name: "LearnGoals");
 
             migrationBuilder.DropTable(
                 name: "MediaLinks");

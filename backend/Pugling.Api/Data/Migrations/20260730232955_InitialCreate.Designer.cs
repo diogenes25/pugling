@@ -11,7 +11,7 @@ using Pugling.Api.Data;
 namespace Pugling.Api.Data.Migrations
 {
     [DbContext(typeof(PuglingDbContext))]
-    [Migration("20260730231825_InitialCreate")]
+    [Migration("20260730232955_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -996,7 +996,23 @@ namespace Pugling.Api.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ObjectiveId");
+                    b.HasIndex("ChapterId");
+
+                    b.HasIndex("ExerciseId");
+
+                    b.HasIndex("SubjectId");
+
+                    b.HasIndex("ObjectiveId", "ChapterId", "Metric")
+                        .IsUnique()
+                        .HasFilter("[ChapterId] IS NOT NULL AND [ExerciseId] IS NULL");
+
+                    b.HasIndex("ObjectiveId", "ExerciseId", "Metric")
+                        .IsUnique()
+                        .HasFilter("[ExerciseId] IS NOT NULL");
+
+                    b.HasIndex("ObjectiveId", "SubjectId", "Metric")
+                        .IsUnique()
+                        .HasFilter("[ChapterId] IS NULL AND [ExerciseId] IS NULL");
 
                     b.ToTable("KeyResults");
                 });
@@ -1094,48 +1110,6 @@ namespace Pugling.Api.Data.Migrations
                         .IsUnique();
 
                     b.ToTable("KlassenarbeitTags");
-                });
-
-            modelBuilder.Entity("Pugling.Api.Models.LearnGoal", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int?>("ChapterId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("ChildId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateOnly?>("DueDate")
-                        .HasColumnType("TEXT");
-
-                    b.Property<int?>("ExerciseId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("Metric")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("SubjectId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("TargetValue")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("Title")
-                        .HasMaxLength(200)
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ChildId");
-
-                    b.ToTable("LearnGoals");
                 });
 
             modelBuilder.Entity("Pugling.Api.Models.MediaAsset", b =>
@@ -2885,9 +2859,25 @@ namespace Pugling.Api.Data.Migrations
 
             modelBuilder.Entity("Pugling.Api.Models.KeyResult", b =>
                 {
+                    b.HasOne("Pugling.Api.Models.Chapter", null)
+                        .WithMany()
+                        .HasForeignKey("ChapterId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Pugling.Api.Models.Exercise", null)
+                        .WithMany()
+                        .HasForeignKey("ExerciseId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("Pugling.Api.Models.Objective", "Objective")
                         .WithMany("KeyResults")
                         .HasForeignKey("ObjectiveId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Pugling.Api.Models.Subject", null)
+                        .WithMany()
+                        .HasForeignKey("SubjectId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -2948,17 +2938,6 @@ namespace Pugling.Api.Data.Migrations
                     b.Navigation("Klassenarbeit");
 
                     b.Navigation("Tag");
-                });
-
-            modelBuilder.Entity("Pugling.Api.Models.LearnGoal", b =>
-                {
-                    b.HasOne("Pugling.Api.Models.Child", "Child")
-                        .WithMany()
-                        .HasForeignKey("ChildId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Child");
                 });
 
             modelBuilder.Entity("Pugling.Api.Models.MediaLink", b =>

@@ -3,7 +3,7 @@
 #
 # Rolle: Supervisor (steuern & belohnen). Login als Vater 1.
 # Legt einen Lehrplan-Container an, hängt eine Position (referenzierte Übung mit
-# Ziel/Punkten/Leitner) ein, setzt ein Lernziel, pflegt den Familien-Shop, eine
+# Ziel/Punkten/Leitner) ein, setzt ein großes Ziel, pflegt den Familien-Shop, eine
 # Mission, bucht Punkte – und liest zur Kontrolle die Student-Sicht mit.
 #
 # Von oben nach unten senden (Chaining ist datei-lokal). Umgebung im
@@ -75,17 +75,21 @@ Content-Type: application/json
 ### Neue Position-ID merken
 @positionId = {{createPosition.response.body.id}}
 
-### Lernziel setzen (Durchschnitts-Beherrschung ≥ 70 % im Fach)
-# @name createLearnGoal
-POST {{baseUrl}}/supervisor/children/{{childId}}/learn-goals
+### Großes Ziel mit Etappe setzen (Durchschnitts-Beherrschung ≥ 70 % im Fach)
+# Die Etappen gehen im selben Aufruf mit – ein Ein-Satz-Ziel bleibt ein Request.
+# @name createObjective
+POST {{baseUrl}}/supervisor/children/{{childId}}/objectives
 Authorization: Bearer {{authToken}}
 Content-Type: application/json
 
 {
-  "subjectId": 1,
-  "metric": "AvgMastery",
-  "targetValue": 70,
-  "title": "REST-Demo Ziel"
+  "title": "REST-Demo Ziel",
+  "kind": "Committed",
+  "rewardOnComplete": 0,
+  "rewardPerKeyResult": 0,
+  "keyResults": [
+    { "subjectId": 1, "metric": "AvgMastery", "targetValue": 70, "title": "70 % im Fach" }
+  ]
 }
 
 ### Shop-Artikel anlegen (articleNumber je Vater eindeutig → Zeitstempel)

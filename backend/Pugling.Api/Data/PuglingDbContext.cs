@@ -1,4 +1,4 @@
-﻿using System.Text.Json;
+using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Pugling.Api.Models;
@@ -70,8 +70,6 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
     // Plan-übergreifender Lernstand je (Kind, Item) + Antwort-Historie (stabile ItemId, denormalisierte VocabularyId).
     public DbSet<ItemProgress> ItemProgress => Set<ItemProgress>();
     public DbSet<ItemReviewEvent> ItemReviewEvents => Set<ItemReviewEvent>();
-    // Kind-/Scope-bezogene Ergebnis-Lernziele (Beherrschung/Abdeckung), live gegen den Lernstand ausgewertet.
-    public DbSet<LearnGoal> LearnGoals => Set<LearnGoal>();
     // „Große Ziele" (OKR-Kern): Objective als Container über messbaren KeyResults + idempotenter Belohnungs-Log.
     public DbSet<Objective> Objectives => Set<Objective>();
     public DbSet<KeyResult> KeyResults => Set<KeyResult>();
@@ -590,13 +588,39 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
         });
 
         // Objective (großes Ziel) gehört einem Kind (Cascade); seine KeyResults hängen am Objective (Cascade).
-        // Der Katalog-Scope eines KeyResults ist bewusst NICHT als FK modelliert (nur Ids), wie beim LearnGoal –
-        // die Auswertung läuft über den Lernstand-Snapshot, nicht über Navigationspfade.
         modelBuilder.Entity<Objective>(e =>
         {
             e.HasOne(o => o.Child).WithMany().HasForeignKey(o => o.ChildId).OnDelete(DeleteBehavior.Cascade);
             e.HasMany(o => o.KeyResults).WithOne(k => k.Objective!).HasForeignKey(k => k.ObjectiveId)
                 .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // Der Katalog-Scope einer Etappe ist jetzt ein ECHTER Fremdschlüssel. Vorher waren es nur Ids –
+        // `SubjectId` ein Pflichtfeld ohne Beziehung, also ein Zombie: nichts hinderte daran, auf ein
+        // gelöschtes Fach zu zeigen, und die Auswertung lieferte dann stumm 0 %.
+        //
+        // Fach = Cascade: ein Ziel auf einem gelöschten Fach ist bedeutungslos. (Zwei unabhängige Roots –
+        // Subject und Objective –, kein Diamant; gleiche Bauart wie ItemProgress.)
+        //
+        // Kapitel/Übung = **Restrict**, bewusst nicht SetNull: SetNull würde ein Kapitel-Ziel lautlos zum
+        // Fach-Ziel aufweiten, also die Messlatte heimlich verschieben. Restrict heißt: erst das Ziel
+        // wegnehmen, dann das Kapitel. Damit daraus kein nackter 500 wird, kennt `ExerciseUsageQueries` die
+        // Etappen – wie schon die Lehrplan-Positionen.
+        modelBuilder.Entity<KeyResult>(e =>
+        {
+            e.HasOne<Subject>().WithMany().HasForeignKey(k => k.SubjectId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne<Chapter>().WithMany().HasForeignKey(k => k.ChapterId).OnDelete(DeleteBehavior.Restrict);
+            e.HasOne<Exercise>().WithMany().HasForeignKey(k => k.ExerciseId).OnDelete(DeleteBehavior.Restrict);
+
+            // Dieselbe Etappe zweimal im selben Ziel wäre eine Dublette – und `RewardPerKeyResult` zahlte
+            // doppelt. Drei GEFILTERTE Uniques, weil SQLite NULLs als verschieden behandelt (der Fallstrick
+            // aus E7): ein einzelner Index über die nullable Scope-Spalten hielte die Invariante nicht.
+            e.HasIndex(k => new { k.ObjectiveId, k.SubjectId, k.Metric }).IsUnique()
+                .HasFilter("[ChapterId] IS NULL AND [ExerciseId] IS NULL");
+            e.HasIndex(k => new { k.ObjectiveId, k.ChapterId, k.Metric }).IsUnique()
+                .HasFilter("[ChapterId] IS NOT NULL AND [ExerciseId] IS NULL");
+            e.HasIndex(k => new { k.ObjectiveId, k.ExerciseId, k.Metric }).IsUnique()
+                .HasFilter("[ExerciseId] IS NOT NULL");
         });
 
         // Objective-Belohnungs-Log: höchstens eine Buchung je (Objective, Anlass) – die Idempotenz-Garantie
@@ -856,9 +880,6 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
         // hier wuchs so eine Spalte `ChildId1` nach. Der Wächter G2 hat genau das gefangen.
         modelBuilder.Entity<ChildPointsEntry>()
             .HasOne(p => p.Child).WithMany(c => c.PointsEntries).HasForeignKey(p => p.ChildId)
-            .OnDelete(DeleteBehavior.Cascade);
-        modelBuilder.Entity<LearnGoal>()
-            .HasOne(g => g.Child).WithMany().HasForeignKey(g => g.ChildId)
             .OnDelete(DeleteBehavior.Cascade);
 
         // Ausspiel-Historie: Sitzung/Test gehören dem Plan, ihre Einzelantworten der Sitzung bzw. dem

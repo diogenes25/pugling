@@ -1,4 +1,4 @@
-using System.Text.Json.Nodes;
+﻿using System.Text.Json.Nodes;
 using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Mvc;
@@ -204,7 +204,6 @@ builder.Services.AddScoped<ItemProgressService>();
 // Kind-zentrische Drill-down-Sicht auf den Vokabel-Lernstand entlang der Katalog-Hierarchie (Fach→Kapitel→Übung→Item).
 builder.Services.AddScoped<ChildLearnProgressService>();
 // Ergebnis-/Beherrschungsziele je Kind auf einem Katalog-Scope; live gegen den Lernstand ausgewertet.
-builder.Services.AddScoped<LearnGoalService>();
 // „Große Ziele" (OKR-Kern): Auswertung (Lernstand + Klassenarbeits-Note), Vater-CRUD und idempotente Belohnung.
 builder.Services.AddScoped<ObjectiveEvaluationService>();
 builder.Services.AddScoped<ObjectiveService>();

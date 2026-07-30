@@ -1,4 +1,4 @@
-using Pugling.Api.Models;
+﻿using Pugling.Api.Models;
 
 namespace Pugling.Api.Exercises;
 
@@ -69,9 +69,6 @@ public interface IExerciseType
 
     /// <summary>Trägt der Typ plan-übergreifenden Item-Lernstand (heute nur Vokabeln)?</summary>
     bool SupportsItemProgress { get; }
-
-    /// <summary>Dürfen für diesen Typ Lernziele (LearnGoals) gesetzt werden?</summary>
-    bool SupportsLearnGoals { get; }
 
     /// <summary>Dürfen für diesen Typ Objectives/KeyResults gesetzt werden?</summary>
     bool SupportsObjectives { get; }

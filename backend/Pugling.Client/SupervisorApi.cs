@@ -1,4 +1,4 @@
-namespace Pugling.Client;
+﻿namespace Pugling.Client;
 
 /// <summary>
 /// Typisierter Zugriff auf die Supervisor-Ebene (<c>api/v1/supervisor/…</c>): Kinder, Lehrpläne und ihre
@@ -139,27 +139,9 @@ public sealed class SupervisorApi(HttpClient http)
     public Task DeletePositionAsync(int planId, int positionId, CancellationToken ct = default) =>
         Http.SendAsync(HttpMethod.Delete, $"{Root}/study-plans/{planId}/positions/{positionId}", null, ct);
 
-    // ---------------------------------------------------------------- Lernziele & Objectives (OKR)
+    // ---------------------------------------------------------------- Objectives (OKR)
 
-    /// <summary>Ergebnisziele eines Kindes auf Katalog-Scope (live ausgewertet).</summary>
-    public Task<IReadOnlyList<LearnGoalResponse>> ListLearnGoalsAsync(int childId, CancellationToken ct = default) =>
-        Http.GetAsync<IReadOnlyList<LearnGoalResponse>>($"{Root}/children/{childId}/learn-goals", ct);
-
-    /// <summary>Legt ein Lernziel an.</summary>
-    public Task<LearnGoalResponse> CreateLearnGoalAsync(int childId, CreateLearnGoalRequest request,
-        CancellationToken ct = default) =>
-        Http.PostAsync<LearnGoalResponse>($"{Root}/children/{childId}/learn-goals", request, ct);
-
-    /// <summary>Ändert ein Lernziel.</summary>
-    public Task<LearnGoalResponse> UpdateLearnGoalAsync(int childId, int goalId, UpdateLearnGoalRequest request,
-        CancellationToken ct = default) =>
-        Http.PatchAsync<LearnGoalResponse>($"{Root}/children/{childId}/learn-goals/{goalId}", request, ct);
-
-    /// <summary>Löscht ein Lernziel.</summary>
-    public Task DeleteLearnGoalAsync(int childId, int goalId, CancellationToken ct = default) =>
-        Http.SendAsync(HttpMethod.Delete, $"{Root}/children/{childId}/learn-goals/{goalId}", null, ct);
-
-    /// <summary>Objectives (OKR-Klammer über den Lernzielen) eines Kindes.</summary>
+    /// <summary>Objectives (terminierte Klammer über mehreren Etappen) eines Kindes.</summary>
     public Task<IReadOnlyList<ObjectiveResponse>> ListObjectivesAsync(int childId, CancellationToken ct = default) =>
         Http.GetAsync<IReadOnlyList<ObjectiveResponse>>($"{Root}/children/{childId}/objectives", ct);
 

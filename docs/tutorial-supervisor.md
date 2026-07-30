@@ -7,7 +7,7 @@ aliases: [Supervisor-Tutorial, Lernplan bauen, Vater-Tutorial]
 
 Dieses Tutorial führt die **Supervisor-Rolle** der Pugling-API von vorne bis hinten durch: Aus
 Katalog-Inhalten werden **verbindliche Aufgaben** für ein Kind — Lehrpläne (Container) mit Positionen
-(Ziel, Rhythmus, Punkte), plan-übergreifende Lernziele, der Familien-Shop, Missionen/Auszeichnungen und
+(Ziel, Rhythmus, Punkte), plan-übergreifende große Ziele, der Familien-Shop, Missionen/Auszeichnungen und
 Klassenarbeiten — und am Ende liest der Supervisor den Lernstand seines Kindes wieder aus.
 
 > **Technische Rollen vs. Produkt-Metapher.** Pugling schneidet API und Code nach den technischen Rollen
@@ -36,7 +36,7 @@ liest ihn aus.
 4. Kontrolle             → Overview / Report / Lernstand        GET  /student/study-plans/{id}/overview …
 ```
 
-Dazu kommen die **Steuer- und Belohnungshebel**, die alle am Kind hängen: **Lernziele** (plan-übergreifend),
+Dazu kommen die **Steuer- und Belohnungshebel**, die alle am Kind hängen: **große Ziele** (plan-übergreifend),
 der **Familien-Shop** (der einzige Münz-Ausgabeweg), **Missionen/Auszeichnungen**, **manuelle Punkte /
 Verschenken** und **Klassenarbeiten**. Der einzige **„Stick"** (Konsequenz fürs *Nicht*-Lernen) ist der
 **Münz-Malus** einer Pflichtposition (Schritt 3) — alle anderen Hebel sind Belohnung.
@@ -277,49 +277,72 @@ Eine Position mit bereits vorhandenen Übungs-/Testdaten kann **nicht** gelösch
 
 ---
 
-## 4. Lernziele — plan-übergreifende Ergebnis-Ziele
+## 4. Große Ziele — plan-übergreifende Ergebnis-Ziele
 
-Positionen messen **Aktivität** (heute geübt?). **Lernziele** messen den **Lernstand** (wie gut sitzt der
-Stoff?) — und zwar **plan-übergreifend**: Das Ziel hängt am Kind + einem Katalog-Scope, nicht an einer
-Position. Es überlebt das Abhängen einer Übung und wird beim Lesen **live** ausgewertet.
+Positionen messen **Aktivität** (heute geübt?). Ein **großes Ziel** (`Objective`) messt den **Lernstand**
+(wie gut sitzt der Stoff?) — und zwar **plan-übergreifend**: Es hängt am Kind, seine **Etappen**
+(`keyResults`) je an einem Katalog-Scope, nicht an einer Position. Es überlebt das Abhängen einer Übung und
+wird beim Lesen **live** ausgewertet.
+
+> Früher gab es hier zwei Ebenen: einzelne „Lernziele" *und* Objectives. Sie waren strukturell dasselbe –
+> gleiches Scope-Tripel, gleiche Auswertung –, nur hatte die einfache Ebene keine Klammer, keinen
+> Belohnungslog und keine Klassenarbeits-Metrik. Die einfache Ebene ist entfallen; ein Ein-Satz-Ziel ist
+> heute ein Objective mit **einer** Etappe, und die geht im selben Aufruf mit.
 
 ```http
-POST /api/v1/supervisor/children/1/learn-goals
-{ "subjectId": 1, "metric": "MasteredPercent", "targetValue": 80, "title": "80% Englisch sicher" }
+POST /api/v1/supervisor/children/1/objectives
+{
+  "title": "80% Englisch sicher",
+  "kind": "Committed",
+  "rewardOnComplete": 50,
+  "rewardPerKeyResult": 10,
+  "keyResults": [
+    { "subjectId": 1, "metric": "MasteredPercent", "targetValue": 80, "title": "80 % im Fach" }
+  ]
+}
 → {
-  "id": 1,
-  "childId": 1,
-  "subjectId": 1,
-  "chapterId": null,
-  "exerciseId": null,
-  "scope": "subject",
-  "metric": "MasteredPercent",
-  "targetValue": 80,
-  "currentValue": 0,
-  "progressPercent": 0,
-  "status": "open",
-  "title": "80% Englisch sicher"
+  "id": 1, "childId": 1, "title": "80% Englisch sicher", "kind": "Committed",
+  "status": "open", "achievedCount": 0, "totalCount": 1, "rewarded": false,
+  "keyResults": [
+    { "id": 1, "objectiveId": 1, "subjectId": 1, "chapterId": null, "exerciseId": null,
+      "scope": "subject", "metric": "MasteredPercent", "targetValue": 80,
+      "currentValue": 0, "progressPercent": 0, "status": "open", "title": "80 % im Fach" }
+  ]
 }
 ```
 
 **Feld-Feinheiten (leicht zu verwechseln):**
 
-- **Scope** = `subjectId` (Pflicht) + optional `chapterId`/`exerciseId` — **nicht** `scopeType`/`scopeId`.
-  Der `scope`-String in der Antwort (`subject`/`chapter`/`exercise`) leitet sich aus dem gesetzten Feld ab.
+- **Scope** der Etappe = `subjectId` (Pflicht) + optional `chapterId`/`exerciseId` — **nicht**
+  `scopeType`/`scopeId`. Der `scope`-String in der Antwort (`subject`/`chapter`/`exercise`) leitet sich aus
+  dem gesetzten Feld ab. Der Scope ist nach dem Anlegen **fix**: zum Umhängen eine neue Etappe anlegen.
 - Der Zielwert heißt **`targetValue`** — **nicht** `target` (das ist das Missions-Feld, Schritt 6).
-- **Metrik-Enum:** `AvgMastery` | `Coverage` | `MasteredPercent` (jeweils „≥ Zielwert") | `MaxWeakItems`
-  („≤ Zielwert"). Sie bilden direkt Felder des `MasteryRollup` aus der Auswertung ab.
-- **Status** wird live berechnet: `open` / `achieved` / `overdue` (bei gesetztem `dueDate`).
-- **Lesen** dürfen Vater **und** Kind (Motivation); **Schreiben** nur der Vater. Filter: `?subjectId=`, `?status=`.
+- **Metrik-Enum:** `AvgMastery` | `MasteredPercent` (jeweils „≥ Zielwert") | `MaxWeakItems` und
+  `ClassTestGrade` (jeweils „≤ Zielwert"; die Note als Zahl ×10, also `20` = mindestens 2,0).
+  `Coverage` gibt es hier bewusst **nicht**: sie steigt schon durchs bloße Sehen von Vokabeln, wäre also
+  farmbar.
+- **`kind`** bestimmt die **Währung** der Belohnung: `Committed` zahlt 🪙 Münzen (real einlösbar),
+  `Stretch` zahlt 💎 Gems (Skins).
+- **Status** wird live berechnet: `open` / `achieved` / `overdue` (bei gesetztem `dueDate`). Belohnt wird
+  idempotent beim Kind-Login – je erreichter Etappe `rewardPerKeyResult`, beim Voll-Abschluss
+  `rewardOnComplete`. Kein Malus und **kein Clawback**: eine verdiente Etappe bleibt bezahlt.
+- **Lesen** dürfen Vater **und** Kind (Motivation); **Schreiben** nur der Vater. Filter: `?status=`, `?kind=`.
 
 ```http
-GET    /api/v1/supervisor/children/1/learn-goals?status=open
-PATCH  /api/v1/supervisor/children/1/learn-goals/1
-DELETE /api/v1/supervisor/children/1/learn-goals/1
+GET    /api/v1/supervisor/children/1/objectives?status=open
+PATCH  /api/v1/supervisor/children/1/objectives/1
+DELETE /api/v1/supervisor/children/1/objectives/1
+POST   /api/v1/supervisor/children/1/objectives/1/key-results     # Etappe nachtragen
+PATCH  /api/v1/supervisor/children/1/objectives/1/key-results/1
+DELETE /api/v1/supervisor/children/1/objectives/1/key-results/1
 ```
 
-Abgrenzung: Lernziele ≠ das plan-gebundene Pflichtziel der Position (`cadence`) ≠ die aktivitätsbasierten
-Missionen. Drei getrennte Konzepte — siehe [endpunkt-beziehungen.md §4](endpunkt-beziehungen.md#4-lernziele-ergebnis-ziele-auf-der-auswertung).
+**Löschen im Katalog:** eine Etappe auf einem Kapitel oder einer Übung **hindert deren Löschen** (409
+`exercise_in_use`) – erst die Etappe wegnehmen. Bewusst so: ein Kapitel-Ziel stillschweigend zum Fach-Ziel
+aufzuweiten würde die Messlatte heimlich verschieben.
+
+Abgrenzung: große Ziele ≠ das plan-gebundene Pflichtziel der Position (`cadence`) ≠ die aktivitätsbasierten
+Missionen. Drei getrennte Konzepte — siehe [endpunkt-beziehungen.md §4](endpunkt-beziehungen.md#4-grosse-ziele-ergebnis-ziele-auf-der-auswertung).
 
 ---
 
@@ -383,7 +406,7 @@ POST /api/v1/supervisor/children/1/missions
 
 - **Metrik-Enum:** `NewWords` | `CorrectReviews` | `TestsPassed` | `MinutesPracticed` | `DaysComplete` | `StreakDays`.
 - **Zeitraum:** `Daily` | `Weekly` | `OneOff`.
-- Das Zielfeld heißt hier **`target`** (nicht `targetValue` wie beim Lernziel).
+- Das Zielfeld heißt hier **`target`** (nicht `targetValue` wie bei der Ziel-Etappe).
 
 Der Sohn sieht seine eigene Projektion — nicht die fremde Kinder-ID — unter `GET /api/v1/student/me/missions`
 bzw. `…/me/achievements`; `current` speist sich aus denselben Review-/Testdaten wie Overview und Auswertung.
@@ -518,9 +541,10 @@ POST /api/v1/supervisor/study-plans/1/positions
   "speedThresholdSeconds": 8, "speedBonusPoints": 3 }
 → { "id": 1, "exerciseTitle": "Begrüßungen", … }
 
-# 4) Plan-übergreifendes Lernziel
-POST /api/v1/supervisor/children/1/learn-goals
-{ "subjectId": 1, "metric": "MasteredPercent", "targetValue": 80, "title": "80% Englisch sicher" }
+# 4) Plan-übergreifendes großes Ziel (Etappen inline)
+POST /api/v1/supervisor/children/1/objectives
+{ "title": "80% Englisch sicher", "kind": "Committed", "rewardOnComplete": 50, "rewardPerKeyResult": 10,
+  "keyResults": [{ "subjectId": 1, "metric": "MasteredPercent", "targetValue": 80 }] }
 
 # 5) Familien-Shop (Artikel + Angebot)
 POST /api/v1/supervisor/shop/articles

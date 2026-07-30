@@ -142,10 +142,14 @@ public class PuglingClientTests : IClassFixture<PuglingWebAppFactory>
         Assert.Equal(20, position.PointsGoalMet);
         Assert.Equal(5, position.PenaltyCoins);
 
-        var goal = await supervisor.CreateLearnGoalAsync(child.Id, new CreateLearnGoalRequest(
-            subject.Id, null, null, LearnGoalMetric.MasteredPercent, 80, null, "80 % beherrschen"));
-        Assert.Equal(80, goal.TargetValue);
-        Assert.Contains(await supervisor.ListLearnGoalsAsync(child.Id), g => g.Id == goal.Id);
+        // Das große Ziel samt Etappe in EINEM Aufruf – das war die Bedingung dafür, die frühere
+        // Lernziel-Ebene ersetzen zu können, ohne dass ein Ein-Satz-Ziel zu zwei Requests wird.
+        var objective = await supervisor.CreateObjectiveAsync(child.Id, new CreateObjectiveRequest(
+            "Vokabeln sitzen", null, ObjectiveKind.Committed, null, null, 0, 0,
+            [new CreateKeyResultRequest(subject.Id, null, null, KeyResultMetric.MasteredPercent, 80, "80 % beherrschen")]));
+        var etappe = Assert.Single(objective.KeyResults);
+        Assert.Equal(80, etappe.TargetValue);
+        Assert.Contains(await supervisor.ListObjectivesAsync(child.Id), o => o.Id == objective.Id);
     }
 
     [Fact]

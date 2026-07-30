@@ -1,5 +1,19 @@
 # Umbauplan: Lernziele/Objectives (OKR-Klammer über dem Lernstand)
 
+> **Nachtrag 31.07.2026 (DB-Struktur-Umbau, E13): die zweite Ebene ist entfallen.** Die einfachen
+> **Lernziele** (`LearnGoal`, Route `children/{id}/learn-goals`) gibt es nicht mehr – sie waren strukturell
+> dasselbe wie ein einzelnes `KeyResult`: gleiches Scope-Tripel, gleicher Evaluator, gleiche
+> Achieved-/Progress-Arithmetik. `KeyResult` ist der Superset (Objective-Klammer, Belohnungslog,
+> `ClassTestGrade`). Die eine Metrik, die `LearnGoal` mehr hatte, war `Coverage` – und die schließt
+> `KeyResultMetric` ausdrücklich aus, weil sie schon durchs bloße Sehen von Vokabeln steigt. Die
+> Konsolidierung hat also eine **farmbare Metrik** entfernt, keine Funktion.
+>
+> Bedingung war, dass ein Ein-Satz-Ziel **ein** Request bleibt: `POST objectives` nimmt die Etappen inline
+> (`keyResults`) – sonst wäre `LearnGoal` in sechs Monaten zurückgekommen.
+>
+> Der Rest dieses Dokuments bleibt als **Begründung** stehen: warum es die Klammer gibt, warum kein Malus,
+> warum live ausgewertet wird. Wo es „Lernziele" als eigene Ebene beschreibt, ist es historisch.
+
 Status: **Backend umgesetzt** (Etappen 1–6). Stand 2026-07-12. Build grün, 297 Tests grün
 (inkl. `ObjectiveTests`: Committed→Münzen + Etappe/Abschluss + Idempotenz, Stretch→Gems ohne Abschluss,
 ClassTestGrade-Anker, Validierung/Rollen, Etappen-CRUD), Migration `AddObjectives`. **Offen: Etappe 7 (Frontend).**

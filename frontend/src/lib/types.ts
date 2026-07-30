@@ -611,53 +611,10 @@ export interface ItemHistoryEntry {
   planPositionId: number | null;
 }
 
-// ---- Ziele über dem Lernstand: Lernziele (einzeln) und Objectives (OKR-Klammer) ----
+// ---- Ziele über dem Lernstand: Objectives (OKR-Klammer über messbaren Etappen) ----
 
-/**
- * Metrik eines Lernziels. Achtung auf die Richtung: `MaxWeakItems` ist ein **Höchstwert** („nicht mehr als
- * N wackelige Wörter"), alle anderen sind Mindestwerte in Prozent.
- */
-export type LearnGoalMetric = "AvgMastery" | "Coverage" | "MasteredPercent" | "MaxWeakItems";
-
-/** Wie ein Lernziel/eine Etappe gerade steht; live aus dem Lernstand berechnet, nie gespeichert. */
+/** Wie eine Etappe gerade steht; live aus dem Lernstand berechnet, nie gespeichert. */
 export type GoalStatus = "open" | "achieved" | "overdue";
-
-/** Ein ausgewertetes Lernziel auf einem Katalog-Scope (Fach, optional Kapitel, optional Übung). */
-export interface LearnGoal {
-  id: number;
-  childId: number;
-  subjectId: number;
-  chapterId: number | null;
-  exerciseId: number | null;
-  /** Menschenlesbarer Scope-Text vom Server (z. B. „Englisch · Unit 1"). */
-  scope: string;
-  metric: LearnGoalMetric;
-  targetValue: number;
-  currentValue: number;
-  progressPercent: number;
-  dueDate: string | null;
-  status: GoalStatus;
-  title: string | null;
-  createdAt: string;
-}
-
-export interface CreateLearnGoalRequest {
-  subjectId: number;
-  chapterId?: number | null;
-  exerciseId?: number | null;
-  metric: LearnGoalMetric;
-  targetValue: number;
-  dueDate?: string | null;
-  title?: string | null;
-}
-
-/** Nur gesetzte Felder ändern sich; der Scope bleibt fix (zum Umhängen neu anlegen). */
-export interface UpdateLearnGoalRequest {
-  metric?: LearnGoalMetric;
-  targetValue?: number;
-  dueDate?: string | null;
-  title?: string | null;
-}
 
 /**
  * Art eines Objectives – sie bestimmt die **Währung** der Belohnung: `Committed` ist verbindlich und zahlt

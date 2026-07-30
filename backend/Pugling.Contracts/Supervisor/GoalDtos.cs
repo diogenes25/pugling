@@ -1,21 +1,9 @@
-namespace Pugling.Contracts.Supervisor;
+﻿namespace Pugling.Contracts.Supervisor;
 
-// Vertrag der beiden Ziel-Ebenen über dem Lernstand:
-//   * Lernziele (LearnGoal) – einzelne Ergebnis-/Beherrschungsziele auf einem Katalog-Scope,
-//   * Objectives (OKR-Kern) – terminierte Klammer über mehreren Etappen (KeyResults).
-// Beide werden bei jeder Abfrage live aus dem aggregierten Lernstand ausgewertet; kein Malus.
-
-/// <summary>Ausgewertetes Lernziel inkl. aktuellem Wert und Status (<c>open</c>/<c>achieved</c>/<c>overdue</c>).</summary>
-public record LearnGoalResponse(int Id, int ChildId, int SubjectId, int? ChapterId, int? ExerciseId,
-    string Scope, string Metric, int TargetValue, int CurrentValue, int ProgressPercent,
-    DateOnly? DueDate, string Status, string? Title, DateTime CreatedAt);
-
-/// <summary>Anlage-Request (Scope + Metrik + Zielwert + optionaler Stichtag/Titel).</summary>
-public record CreateLearnGoalRequest(int SubjectId, int? ChapterId, int? ExerciseId,
-    LearnGoalMetric Metric, int TargetValue, DateOnly? DueDate, string? Title);
-
-/// <summary>Teil-Update: nur gesetzte Felder ändern sich (Scope bleibt fix – zum Umhängen neu anlegen).</summary>
-public record UpdateLearnGoalRequest(LearnGoalMetric? Metric, int? TargetValue, DateOnly? DueDate, string? Title);
+// Vertrag der Ziel-Ebene über dem Lernstand: **Objectives** (OKR-Kern) – eine terminierte Klammer über
+// mehreren Etappen (KeyResults), bei jeder Abfrage live aus dem aggregierten Lernstand ausgewertet; kein Malus.
+// Die zweite Ebene (`LearnGoal`) ist entfallen: sie war strukturell dasselbe wie ein einzelnes KeyResult,
+// nur ohne Klammer und ohne Belohnungslog (siehe docs/lernziele-objectives-plan.md).
 
 /// <summary>Ausgewertete Etappe eines Objectives.</summary>
 public record KeyResultResponse(int Id, int ObjectiveId, int SubjectId, int? ChapterId, int? ExerciseId,

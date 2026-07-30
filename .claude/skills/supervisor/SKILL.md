@@ -2,7 +2,7 @@
 name: supervisor
 description: >-
   Drive the Pugling REST API from the SUPERVISOR seat (api/v1/supervisor/*) to steer a child —
-  study plans, positions with goals/points, learn-goals, the family shop, missions/achievements,
+  study plans, positions with goals/points, objectives with milestones, the family shop, missions/achievements,
   class-tests — and read the child's progress; AND, in the same pass, smoke-test that the Supervisor
   surface works and (re)write the verified Supervisor tutorial. Use this whenever the user wants to
   exercise/validate the Supervisor API, set up a child's plan against the running app, or refresh
@@ -14,7 +14,7 @@ description: >-
 # supervisor — der Steuernde (technische Rolle „Supervisor")
 
 Du bist der **Supervisor**: aus Katalog-Inhalten machst du **verbindliche Aufgaben** für ein Kind —
-Study-Pläne (Container) mit **Positionen** (Ziel/Rhythmus/Punkte), plan-übergreifende **Lernziele**,
+Study-Pläne (Container) mit **Positionen** (Ziel/Rhythmus/Punkte), plan-übergreifende **große Ziele** (Objectives mit Etappen),
 den **Familien-Shop**, **Missionen/Auszeichnungen**, **Klassenarbeiten** — und du **kontrollierst** den
 Lernstand. Im Produkt ist das der **Vater** (Seed: *Papa*, `adultId=1`, PIN `0000`), der zugleich Creator ist.
 
@@ -46,10 +46,13 @@ Gegen die **Wegwerf-Instanz** (Port 5280, Temp-DB) über `.claude/scripts/tutori
      `stageSchedule:[{"dayNumber":1,"stage":2},…]`. **Wichtig** (im Lauf aufgefallen): ohne `stageSchedule`
      fällt der Abschlusstest des Kindes auf **Stufe 2 (Selbsteinschätzung)** zurück — auch wenn
      `requireTypedTest:true` gesetzt ist. Für einen echten Tipp-Test eine `stageSchedule` mit Stufe 4 setzen.
-   - `POST …/children/{childId}/learn-goals` — **plan-übergreifendes** Beherrschungsziel auf Katalog-Scope:
-     `{"subjectId":1,"chapterId":null,"exerciseId":null,"metric":"MasteredPercent","targetValue":80,"title":"…"}`.
-     Metrik-Enum: `AvgMastery | Coverage | MasteredPercent | MaxWeakItems` (Feld heißt `targetValue`, **nicht**
-     `target`; Scope ist `subjectId`/`chapterId`/`exerciseId`, **nicht** scopeType/scopeId).
+   - `POST …/children/{childId}/objectives` — **plan-übergreifendes** großes Ziel; die Etappen (`keyResults`)
+     gehen im selben Aufruf mit, ein Ein-Satz-Ziel bleibt also **ein** Request:
+     `{"title":"Unit 3 sicher","kind":"Committed","rewardOnComplete":50,"rewardPerKeyResult":10,`
+     `"keyResults":[{"subjectId":1,"chapterId":null,"exerciseId":null,"metric":"MasteredPercent","targetValue":80}]}`.
+     Metrik-Enum: `AvgMastery | MasteredPercent | MaxWeakItems | ClassTestGrade` (Feld heißt `targetValue`,
+     **nicht** `target`; Scope ist `subjectId`/`chapterId`/`exerciseId`, **nicht** scopeType/scopeId).
+     Die frühere zweite Ebene `learn-goals` gibt es nicht mehr – sie war ein KeyResult ohne Klammer.
    - Familien-Shop: `POST /api/v1/supervisor/shop/articles` `{articleNumber,title,unitType,actionType}` →
      dann `POST …/shop/articles/{id}/listings` `{title,coinPrice,gemPrice,unitsPerPurchase,currentStock,maxStock}`.
    - `POST …/children/{childId}/missions` `{"title":"…","metric":"CorrectReviews","target":10,"period":"Daily","rewardPoints":15}`

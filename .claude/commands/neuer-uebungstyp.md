@@ -34,8 +34,8 @@ nur mehr Facetten. Ausführlich: [wiki/08-erweitern.md](wiki/08-erweitern.md).
    - `DefaultStage`/`PreviewStage`/`IsTypedStage`/`StageOptions` — mehrstufige/getippte Verfahren
      (Stufen-Enum analog `TestStage`/`ClozeStage`/`MatchStage`, „getippt" via `StageMechanics.IsTyped`).
    - `Choices`/`StageFacets` — Multiple-Choice-Ablenker, Buchstabenkästchen-Länge, Audioquelle je Stufe.
-   - `SupportsItemProgress`/`SupportsLearnGoals`/`SupportsObjectives` — plan-übergreifender Item-Lernstand
-     bzw. erlaubte Lernziele/Objectives.
+   - `SupportsItemProgress`/`SupportsObjectives` — plan-übergreifender Item-Lernstand bzw. erlaubte
+     Ziel-Etappen (Objectives).
    - `StoreResolution` (`ItemTable`/`VocabRefs`) — nur wenn Inhalte DB-gestützt aus dem Vokabel-Store
      kommen; dann die Auflösung in [ExerciseContentResolver.cs](backend/Pugling.Api/Services/Shared/ExerciseContentResolver.cs)
      ergänzen. Vorlage für den Vollumfang: `VocabularyExerciseType`.
