@@ -42,13 +42,15 @@ public class TextbookSeriesController(PuglingDbContext db) : ControllerBase
     /// <param name="mineOnly">true = nur eigene Reihen.</param>
     /// <param name="skip">Anzahl zu überspringender Einträge (Paging).</param>
     /// <param name="take">Maximale Trefferzahl (1..500).</param>
+    /// <param name="ct">Abbruch-Token.</param>
     [HttpGet]
     public async Task<IEnumerable<TextbookSeriesResponse>> List(
         [FromQuery] string? search = null,
         [FromQuery] int? subjectId = null,
         [FromQuery] bool? mineOnly = null,
         [FromQuery] int skip = 0,
-        [FromQuery] int take = PagingExtensions.DefaultTake)
+        [FromQuery] int take = PagingExtensions.DefaultTake,
+        CancellationToken ct = default)
     {
         var fid = User.CreatorId();
         var query = db.TextbookSeries.AsNoTracking().AsQueryable();
@@ -60,16 +62,16 @@ public class TextbookSeriesController(PuglingDbContext db) : ControllerBase
         if (mineOnly is true) query = query.Where(s => s.OwnerAdultId == fid);
 
         return await Project(query.OrderBy(s => s.Name).ThenBy(s => s.Id), fid)
-            .ToPagedListAsync(Response, skip, take);
+            .ToPagedListAsync(Response, skip, take, ct);
     }
 
     /// <summary>Eine Reihe per Id.</summary>
     [HttpGet("{seriesId:int}")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<TextbookSeriesResponse>> Get(int seriesId)
+    public async Task<ActionResult<TextbookSeriesResponse>> Get(int seriesId, CancellationToken ct = default)
     {
         var series = await Project(db.TextbookSeries.AsNoTracking().Where(s => s.Id == seriesId), User.CreatorId())
-            .FirstOrDefaultAsync();
+            .FirstOrDefaultAsync(ct);
         return series is null ? NotFound() : series;
     }
 
@@ -82,17 +84,17 @@ public class TextbookSeriesController(PuglingDbContext db) : ControllerBase
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<TextbookSeriesResponse>> Create(CreateTextbookSeriesDto dto)
+    public async Task<ActionResult<TextbookSeriesResponse>> Create(CreateTextbookSeriesDto dto, CancellationToken ct = default)
     {
         if (string.IsNullOrWhiteSpace(dto.Name)) return this.ProblemWithCode(ApiErrors.ValidationError, "Name is required.");
 
         var slug = InterestSlug.From(dto.Name);
         if (slug.Length == 0) return this.ProblemWithCode(ApiErrors.ValidationError, "Name must contain at least one letter or digit.");
-        if (dto.SubjectId is int sid && !await db.Subjects.AnyAsync(s => s.Id == sid))
+        if (dto.SubjectId is int sid && !await db.Subjects.AnyAsync(s => s.Id == sid, ct))
             return this.ProblemWithCode(ApiErrors.InvalidReference, "SubjectId does not reference an existing subject.");
 
         var fid = User.CreatorId();
-        var existing = await Project(db.TextbookSeries.AsNoTracking().Where(s => s.Slug == slug), fid).FirstOrDefaultAsync();
+        var existing = await Project(db.TextbookSeries.AsNoTracking().Where(s => s.Slug == slug), fid).FirstOrDefaultAsync(ct);
         if (existing is not null) return Ok(existing);
 
         var series = new TextbookSeries
@@ -109,10 +111,10 @@ public class TextbookSeriesController(PuglingDbContext db) : ControllerBase
             OwnerAdultId = fid,
         };
         db.TextbookSeries.Add(series);
-        await db.SaveChangesAsync();
+        await db.SaveChangesAsync(ct);
 
         return CreatedAtAction(nameof(Get), new { seriesId = series.Id },
-            await Project(db.TextbookSeries.AsNoTracking().Where(s => s.Id == series.Id), fid).FirstAsync());
+            await Project(db.TextbookSeries.AsNoTracking().Where(s => s.Id == series.Id), fid).FirstAsync(ct));
     }
 
     /// <summary>Ändert eine Reihe (partiell, nur Owner). Der Slug bleibt unveränderlich.</summary>
@@ -120,14 +122,14 @@ public class TextbookSeriesController(PuglingDbContext db) : ControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<TextbookSeriesResponse>> Update(int seriesId, UpdateTextbookSeriesDto dto)
+    public async Task<ActionResult<TextbookSeriesResponse>> Update(int seriesId, UpdateTextbookSeriesDto dto, CancellationToken ct = default)
     {
-        var series = await db.TextbookSeries.FirstOrDefaultAsync(s => s.Id == seriesId);
+        var series = await db.TextbookSeries.FirstOrDefaultAsync(s => s.Id == seriesId, ct);
         if (series is null) return NotFound();
         var fid = User.CreatorId();
         if (!ClaimsPrincipalExtensions.IsOwnedBy(series.OwnerAdultId, fid))
             return this.ProblemWithCode(ApiErrors.NotOwner, "Only the owner may change this textbook series.");
-        if (dto.SubjectId is int sid && !await db.Subjects.AnyAsync(s => s.Id == sid))
+        if (dto.SubjectId is int sid && !await db.Subjects.AnyAsync(s => s.Id == sid, ct))
             return this.ProblemWithCode(ApiErrors.InvalidReference, "SubjectId does not reference an existing subject.");
 
         if (dto.Name is not null)
@@ -144,8 +146,8 @@ public class TextbookSeriesController(PuglingDbContext db) : ControllerBase
         if (dto.TargetLanguage is not null) series.TargetLanguage = Trimmed(dto.TargetLanguage);
         if (dto.Notes is not null) series.Notes = Trimmed(dto.Notes);
 
-        await db.SaveChangesAsync();
-        return await Project(db.TextbookSeries.AsNoTracking().Where(s => s.Id == seriesId), fid).FirstAsync();
+        await db.SaveChangesAsync(ct);
+        return await Project(db.TextbookSeries.AsNoTracking().Where(s => s.Id == seriesId), fid).FirstAsync(ct);
     }
 
     /// <summary>
@@ -156,15 +158,15 @@ public class TextbookSeriesController(PuglingDbContext db) : ControllerBase
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> Delete(int seriesId)
+    public async Task<IActionResult> Delete(int seriesId, CancellationToken ct = default)
     {
-        var series = await db.TextbookSeries.FirstOrDefaultAsync(s => s.Id == seriesId);
+        var series = await db.TextbookSeries.FirstOrDefaultAsync(s => s.Id == seriesId, ct);
         if (series is null) return NotFound();
         if (!ClaimsPrincipalExtensions.IsOwnedBy(series.OwnerAdultId, User.CreatorId()))
             return this.ProblemWithCode(ApiErrors.NotOwner, "Only the owner may delete this textbook series.");
 
         db.TextbookSeries.Remove(series);
-        await db.SaveChangesAsync();
+        await db.SaveChangesAsync(ct);
         return NoContent();
     }
 

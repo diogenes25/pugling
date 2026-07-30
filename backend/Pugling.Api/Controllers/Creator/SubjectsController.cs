@@ -19,21 +19,21 @@ public class SubjectsController(PuglingDbContext db) : ControllerBase
 {
     /// <summary>Liste aller Fächer.</summary>
     [HttpGet]
-    public async Task<IEnumerable<SubjectResponse>> List() =>
+    public async Task<IEnumerable<SubjectResponse>> List(CancellationToken ct = default) =>
         await db.Subjects
             .OrderBy(s => s.Name)
             .Select(s => new SubjectResponse(s.Id, s.Name, s.CreatedAt, s.Chapters.Count))
-            .ToListAsync();
+            .ToListAsync(ct);
 
     /// <summary>Ein einzelnes Fach.</summary>
     [HttpGet("{subjectId:int}")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<SubjectResponse>> Get(int subjectId)
+    public async Task<ActionResult<SubjectResponse>> Get(int subjectId, CancellationToken ct = default)
     {
         var subject = await db.Subjects
             .Where(s => s.Id == subjectId)
             .Select(s => new SubjectResponse(s.Id, s.Name, s.CreatedAt, s.Chapters.Count))
-            .FirstOrDefaultAsync();
+            .FirstOrDefaultAsync(ct);
         return subject is null ? NotFound() : subject;
     }
 
@@ -41,13 +41,13 @@ public class SubjectsController(PuglingDbContext db) : ControllerBase
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<SubjectResponse>> Create(CreateSubjectDto dto)
+    public async Task<ActionResult<SubjectResponse>> Create(CreateSubjectDto dto, CancellationToken ct = default)
     {
         if (string.IsNullOrWhiteSpace(dto.Name)) return this.ProblemWithCode(ApiErrors.ValidationError, "Name is required.");
 
         var subject = new Subject { Name = dto.Name.Trim() };
         db.Subjects.Add(subject);
-        await db.SaveChangesAsync();
+        await db.SaveChangesAsync(ct);
 
         var response = new SubjectResponse(subject.Id, subject.Name, subject.CreatedAt, 0);
         return CreatedAtAction(nameof(Get), new { subjectId = subject.Id }, response);
@@ -56,16 +56,16 @@ public class SubjectsController(PuglingDbContext db) : ControllerBase
     /// <summary>Ändert ein Fach (partiell).</summary>
     [HttpPatch("{subjectId:int}")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<SubjectResponse>> Update(int subjectId, UpdateSubjectDto dto)
+    public async Task<ActionResult<SubjectResponse>> Update(int subjectId, UpdateSubjectDto dto, CancellationToken ct = default)
     {
-        var subject = await db.Subjects.FirstOrDefaultAsync(s => s.Id == subjectId);
+        var subject = await db.Subjects.FirstOrDefaultAsync(s => s.Id == subjectId, ct);
         if (subject is null) return NotFound();
 
         if (dto.Name is not null) subject.Name = dto.Name.Trim();
-        await db.SaveChangesAsync();
+        await db.SaveChangesAsync(ct);
 
         return new SubjectResponse(subject.Id, subject.Name, subject.CreatedAt,
-            await db.Chapters.CountAsync(c => c.SubjectId == subjectId));
+            await db.Chapters.CountAsync(c => c.SubjectId == subjectId, ct));
     }
 
     /// <summary>
@@ -76,18 +76,18 @@ public class SubjectsController(PuglingDbContext db) : ControllerBase
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
-    public async Task<IActionResult> Delete(int subjectId)
+    public async Task<IActionResult> Delete(int subjectId, CancellationToken ct = default)
     {
-        var subject = await db.Subjects.FindAsync(subjectId);
+        var subject = await db.Subjects.FindAsync([subjectId], ct);
         if (subject is null) return NotFound();
         // Subject→Chapter→Exercise kaskadiert, PlanPosition→Exercise ist Restrict: ohne diese Prüfung
         // stirbt das Löschen als FK-Verletzung in einer nackten 500, statt zu sagen, was im Weg steht.
-        if (await db.PlanPositions.AnyAsync(p => p.Exercise!.Chapter!.SubjectId == subjectId)
-            || await db.KlassenarbeitExercises.AnyAsync(x => x.Exercise!.Chapter!.SubjectId == subjectId))
+        if (await db.PlanPositions.AnyAsync(p => p.Exercise!.Chapter!.SubjectId == subjectId, ct)
+            || await db.KlassenarbeitExercises.AnyAsync(x => x.Exercise!.Chapter!.SubjectId == subjectId, ct))
             return this.ProblemWithCode(ApiErrors.ExerciseInUse,
                 "Exercises in this subject are used in a study plan or a class test; remove them there first.");
         db.Subjects.Remove(subject);
-        await db.SaveChangesAsync();
+        await db.SaveChangesAsync(ct);
         return NoContent();
     }
 }

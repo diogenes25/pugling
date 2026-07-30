@@ -20,33 +20,33 @@ namespace Pugling.Api.Controllers.Creator;
 [Authorize(Roles = Roles.Creator)]
 public class ExerciseCategoriesController(PuglingDbContext db) : ControllerBase
 {
-    Task<bool> SubjectExists(int subjectId) => db.Subjects.AnyAsync(s => s.Id == subjectId);
+    Task<bool> SubjectExists(int subjectId, CancellationToken ct) => db.Subjects.AnyAsync(s => s.Id == subjectId, ct);
 
-    Task<CategoryResponse?> ProjectOne(int subjectId, int categoryId) =>
+    Task<CategoryResponse?> ProjectOne(int subjectId, int categoryId, CancellationToken ct) =>
         db.ExerciseCategories
             .Where(c => c.Id == categoryId && c.SubjectId == subjectId)
             .Select(c => new CategoryResponse(c.Id, c.SubjectId, c.Name, c.CreatedAt))
-            .FirstOrDefaultAsync();
+            .FirstOrDefaultAsync(ct);
 
     /// <summary>Liste der Arten eines Fachs.</summary>
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<IEnumerable<CategoryResponse>>> List(int subjectId)
+    public async Task<ActionResult<IEnumerable<CategoryResponse>>> List(int subjectId, CancellationToken ct = default)
     {
-        if (!await SubjectExists(subjectId)) return NotFound();
+        if (!await SubjectExists(subjectId, ct)) return NotFound();
         return await db.ExerciseCategories
             .Where(c => c.SubjectId == subjectId)
             .OrderBy(c => c.Name)
             .Select(c => new CategoryResponse(c.Id, c.SubjectId, c.Name, c.CreatedAt))
-            .ToListAsync();
+            .ToListAsync(ct);
     }
 
     /// <summary>Eine einzelne Art.</summary>
     [HttpGet("{categoryId:int}")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<CategoryResponse>> Get(int subjectId, int categoryId)
+    public async Task<ActionResult<CategoryResponse>> Get(int subjectId, int categoryId, CancellationToken ct = default)
     {
-        var category = await ProjectOne(subjectId, categoryId);
+        var category = await ProjectOne(subjectId, categoryId, ct);
         return category is null ? NotFound() : category;
     }
 
@@ -56,18 +56,18 @@ public class ExerciseCategoriesController(PuglingDbContext db) : ControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
-    public async Task<ActionResult<CategoryResponse>> Create(int subjectId, CreateCategoryDto dto)
+    public async Task<ActionResult<CategoryResponse>> Create(int subjectId, CreateCategoryDto dto, CancellationToken ct = default)
     {
-        if (!await SubjectExists(subjectId)) return NotFound();
+        if (!await SubjectExists(subjectId, ct)) return NotFound();
         if (string.IsNullOrWhiteSpace(dto.Name)) return this.ProblemWithCode(ApiErrors.ValidationError, "Name is required.");
 
         var name = dto.Name.Trim();
-        if (await db.ExerciseCategories.AnyAsync(c => c.SubjectId == subjectId && c.Name == name))
+        if (await db.ExerciseCategories.AnyAsync(c => c.SubjectId == subjectId && c.Name == name, ct))
             return this.ProblemWithCode(ApiErrors.Conflict, "This category already exists in the subject.");
 
         var category = new ExerciseCategory { SubjectId = subjectId, Name = name };
         db.ExerciseCategories.Add(category);
-        await db.SaveChangesAsync();
+        await db.SaveChangesAsync(ct);
 
         var response = new CategoryResponse(category.Id, subjectId, category.Name, category.CreatedAt);
         return CreatedAtAction(nameof(Get), new { subjectId, categoryId = category.Id }, response);
@@ -78,9 +78,9 @@ public class ExerciseCategoriesController(PuglingDbContext db) : ControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
-    public async Task<ActionResult<CategoryResponse>> Update(int subjectId, int categoryId, UpdateCategoryDto dto)
+    public async Task<ActionResult<CategoryResponse>> Update(int subjectId, int categoryId, UpdateCategoryDto dto, CancellationToken ct = default)
     {
-        var category = await db.ExerciseCategories.FirstOrDefaultAsync(c => c.Id == categoryId && c.SubjectId == subjectId);
+        var category = await db.ExerciseCategories.FirstOrDefaultAsync(c => c.Id == categoryId && c.SubjectId == subjectId, ct);
         if (category is null) return NotFound();
 
         if (dto.Name is not null)
@@ -88,25 +88,25 @@ public class ExerciseCategoriesController(PuglingDbContext db) : ControllerBase
             var name = dto.Name.Trim();
             if (name.Length == 0) return this.ProblemWithCode(ApiErrors.ValidationError, "Name must not be empty.");
             if (name != category.Name &&
-                await db.ExerciseCategories.AnyAsync(c => c.SubjectId == subjectId && c.Name == name))
+                await db.ExerciseCategories.AnyAsync(c => c.SubjectId == subjectId && c.Name == name, ct))
                 return this.ProblemWithCode(ApiErrors.Conflict, "This category already exists in the subject.");
             category.Name = name;
         }
-        await db.SaveChangesAsync();
+        await db.SaveChangesAsync(ct);
 
-        return (await ProjectOne(subjectId, categoryId))!;
+        return (await ProjectOne(subjectId, categoryId, ct))!;
     }
 
     /// <summary>Löscht eine Art; zugeordnete Übungen bleiben erhalten (FK wird auf null gesetzt).</summary>
     [HttpDelete("{categoryId:int}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> Delete(int subjectId, int categoryId)
+    public async Task<IActionResult> Delete(int subjectId, int categoryId, CancellationToken ct = default)
     {
-        var category = await db.ExerciseCategories.FirstOrDefaultAsync(c => c.Id == categoryId && c.SubjectId == subjectId);
+        var category = await db.ExerciseCategories.FirstOrDefaultAsync(c => c.Id == categoryId && c.SubjectId == subjectId, ct);
         if (category is null) return NotFound();
         db.ExerciseCategories.Remove(category);
-        await db.SaveChangesAsync();
+        await db.SaveChangesAsync(ct);
         return NoContent();
     }
 }

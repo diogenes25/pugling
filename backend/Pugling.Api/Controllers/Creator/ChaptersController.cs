@@ -17,33 +17,33 @@ namespace Pugling.Api.Controllers.Creator;
 [Authorize(Roles = Roles.Creator)]
 public class ChaptersController(PuglingDbContext db) : ControllerBase
 {
-    Task<bool> SubjectExists(int subjectId) => db.Subjects.AnyAsync(s => s.Id == subjectId);
+    Task<bool> SubjectExists(int subjectId, CancellationToken ct) => db.Subjects.AnyAsync(s => s.Id == subjectId, ct);
 
-    Task<ChapterResponse?> ProjectOne(int subjectId, int chapterId) =>
+    Task<ChapterResponse?> ProjectOne(int subjectId, int chapterId, CancellationToken ct) =>
         db.Chapters
             .Where(c => c.Id == chapterId && c.SubjectId == subjectId)
             .Select(c => new ChapterResponse(c.Id, c.SubjectId, c.Name, c.OrderIndex, c.Exercises.Count))
-            .FirstOrDefaultAsync();
+            .FirstOrDefaultAsync(ct);
 
     /// <summary>Liste der Kapitel eines Fachs.</summary>
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<IEnumerable<ChapterResponse>>> List(int subjectId)
+    public async Task<ActionResult<IEnumerable<ChapterResponse>>> List(int subjectId, CancellationToken ct = default)
     {
-        if (!await SubjectExists(subjectId)) return NotFound();
+        if (!await SubjectExists(subjectId, ct)) return NotFound();
         return await db.Chapters
             .Where(c => c.SubjectId == subjectId)
             .OrderBy(c => c.OrderIndex).ThenBy(c => c.Id)
             .Select(c => new ChapterResponse(c.Id, c.SubjectId, c.Name, c.OrderIndex, c.Exercises.Count))
-            .ToListAsync();
+            .ToListAsync(ct);
     }
 
     /// <summary>Ein einzelnes Kapitel.</summary>
     [HttpGet("{chapterId:int}")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<ChapterResponse>> Get(int subjectId, int chapterId)
+    public async Task<ActionResult<ChapterResponse>> Get(int subjectId, int chapterId, CancellationToken ct = default)
     {
-        var chapter = await ProjectOne(subjectId, chapterId);
+        var chapter = await ProjectOne(subjectId, chapterId, ct);
         return chapter is null ? NotFound() : chapter;
     }
 
@@ -52,14 +52,14 @@ public class ChaptersController(PuglingDbContext db) : ControllerBase
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<ChapterResponse>> Create(int subjectId, CreateChapterDto dto)
+    public async Task<ActionResult<ChapterResponse>> Create(int subjectId, CreateChapterDto dto, CancellationToken ct = default)
     {
-        if (!await SubjectExists(subjectId)) return NotFound();
+        if (!await SubjectExists(subjectId, ct)) return NotFound();
         if (string.IsNullOrWhiteSpace(dto.Name)) return this.ProblemWithCode(ApiErrors.ValidationError, "Name is required.");
 
         var chapter = new Chapter { SubjectId = subjectId, Name = dto.Name.Trim(), OrderIndex = dto.OrderIndex };
         db.Chapters.Add(chapter);
-        await db.SaveChangesAsync();
+        await db.SaveChangesAsync(ct);
 
         var response = new ChapterResponse(chapter.Id, subjectId, chapter.Name, chapter.OrderIndex, 0);
         return CreatedAtAction(nameof(Get), new { subjectId, chapterId = chapter.Id }, response);
@@ -68,16 +68,16 @@ public class ChaptersController(PuglingDbContext db) : ControllerBase
     /// <summary>Ändert ein Kapitel (partiell).</summary>
     [HttpPatch("{chapterId:int}")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<ChapterResponse>> Update(int subjectId, int chapterId, UpdateChapterDto dto)
+    public async Task<ActionResult<ChapterResponse>> Update(int subjectId, int chapterId, UpdateChapterDto dto, CancellationToken ct = default)
     {
-        var chapter = await db.Chapters.FirstOrDefaultAsync(c => c.Id == chapterId && c.SubjectId == subjectId);
+        var chapter = await db.Chapters.FirstOrDefaultAsync(c => c.Id == chapterId && c.SubjectId == subjectId, ct);
         if (chapter is null) return NotFound();
 
         if (dto.Name is not null) chapter.Name = dto.Name.Trim();
         if (dto.OrderIndex.HasValue) chapter.OrderIndex = dto.OrderIndex.Value;
-        await db.SaveChangesAsync();
+        await db.SaveChangesAsync(ct);
 
-        return (await ProjectOne(subjectId, chapterId))!;
+        return (await ProjectOne(subjectId, chapterId, ct))!;
     }
 
     /// <summary>
@@ -88,17 +88,17 @@ public class ChaptersController(PuglingDbContext db) : ControllerBase
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
-    public async Task<IActionResult> Delete(int subjectId, int chapterId)
+    public async Task<IActionResult> Delete(int subjectId, int chapterId, CancellationToken ct = default)
     {
-        var chapter = await db.Chapters.FirstOrDefaultAsync(c => c.Id == chapterId && c.SubjectId == subjectId);
+        var chapter = await db.Chapters.FirstOrDefaultAsync(c => c.Id == chapterId && c.SubjectId == subjectId, ct);
         if (chapter is null) return NotFound();
         // Chapter→Exercise kaskadiert, PlanPosition→Exercise ist Restrict – vgl. ExerciseControllerBase.Delete.
-        if (await db.PlanPositions.AnyAsync(p => p.Exercise!.ChapterId == chapterId)
-            || await db.KlassenarbeitExercises.AnyAsync(x => x.Exercise!.ChapterId == chapterId))
+        if (await db.PlanPositions.AnyAsync(p => p.Exercise!.ChapterId == chapterId, ct)
+            || await db.KlassenarbeitExercises.AnyAsync(x => x.Exercise!.ChapterId == chapterId, ct))
             return this.ProblemWithCode(ApiErrors.ExerciseInUse,
                 "Exercises in this chapter are used in a study plan or a class test; remove them there first.");
         db.Chapters.Remove(chapter);
-        await db.SaveChangesAsync();
+        await db.SaveChangesAsync(ct);
         return NoContent();
     }
 }
