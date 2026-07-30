@@ -24,28 +24,28 @@ public class VocabularyTagsController(PuglingDbContext db) : ControllerBase
 {
     /// <summary>Alle Vokabel-Tags (alphabetisch), jeweils mit Anzahl verknüpfter Vokabeln.</summary>
     [HttpGet("tags")]
-    public async Task<IEnumerable<VocabTagResponse>> List() =>
+    public async Task<IEnumerable<VocabTagResponse>> List(CancellationToken ct = default) =>
         await db.VocabTags.AsNoTracking().OrderBy(t => t.Name)
             .Select(t => new VocabTagResponse(t.Id, t.Name, t.Color, t.Links.Count, t.CreatedAt))
-            .ToListAsync();
+            .ToListAsync(ct);
 
     /// <summary>Legt einen Tag an (Name global eindeutig). Existiert er bereits, wird der bestehende zurückgegeben (idempotent).</summary>
     [HttpPost("tags")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<VocabTagResponse>> Create(CreateVocabTagDto dto)
+    public async Task<ActionResult<VocabTagResponse>> Create(CreateVocabTagDto dto, CancellationToken ct = default)
     {
         if (string.IsNullOrWhiteSpace(dto.Name)) return this.ProblemWithCode(ApiErrors.ValidationError, "Name is required.");
         var name = dto.Name.Trim();
 
-        var existing = await db.VocabTags.FirstOrDefaultAsync(t => t.Name == name);
+        var existing = await db.VocabTags.FirstOrDefaultAsync(t => t.Name == name, ct);
         if (existing is not null)
             return Ok(new VocabTagResponse(existing.Id, existing.Name, existing.Color, existing.Links.Count, existing.CreatedAt));
 
         var tag = new VocabTag { Name = name, Color = dto.Color?.Trim() is { Length: > 0 } c ? c : null };
         db.VocabTags.Add(tag);
-        await db.SaveChangesAsync();
+        await db.SaveChangesAsync(ct);
         return CreatedAtAction(nameof(List), new VocabTagResponse(tag.Id, tag.Name, tag.Color, 0, tag.CreatedAt));
     }
 
@@ -53,23 +53,23 @@ public class VocabularyTagsController(PuglingDbContext db) : ControllerBase
     [HttpPatch("tags/{id:int}")]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<VocabTagResponse>> Update(int id, UpdateVocabTagDto dto)
+    public async Task<ActionResult<VocabTagResponse>> Update(int id, UpdateVocabTagDto dto, CancellationToken ct = default)
     {
-        var tag = await db.VocabTags.FirstOrDefaultAsync(t => t.Id == id);
+        var tag = await db.VocabTags.FirstOrDefaultAsync(t => t.Id == id, ct);
         if (tag is null) return NotFound();
 
         if (dto.Name is not null)
         {
             var name = dto.Name.Trim();
             if (name.Length == 0) return this.ProblemWithCode(ApiErrors.ValidationError, "Name must not be empty.");
-            if (name != tag.Name && await db.VocabTags.AnyAsync(t => t.Name == name))
+            if (name != tag.Name && await db.VocabTags.AnyAsync(t => t.Name == name, ct))
                 return this.ProblemWithCode(ApiErrors.DuplicateTagName, "A tag with this name already exists.");
             tag.Name = name;
         }
         if (dto.Color is not null) tag.Color = dto.Color.Trim() is { Length: > 0 } c ? c : null;
 
-        await db.SaveChangesAsync();
-        var count = await db.VocabTagLinks.CountAsync(l => l.VocabTagId == id);
+        await db.SaveChangesAsync(ct);
+        var count = await db.VocabTagLinks.CountAsync(l => l.VocabTagId == id, ct);
         return new VocabTagResponse(tag.Id, tag.Name, tag.Color, count, tag.CreatedAt);
     }
 
@@ -77,12 +77,12 @@ public class VocabularyTagsController(PuglingDbContext db) : ControllerBase
     [HttpDelete("tags/{id:int}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> Delete(int id)
+    public async Task<IActionResult> Delete(int id, CancellationToken ct = default)
     {
-        var tag = await db.VocabTags.FindAsync(id);
+        var tag = await db.VocabTags.FindAsync([id], ct);
         if (tag is null) return NotFound();
         db.VocabTags.Remove(tag);
-        await db.SaveChangesAsync();
+        await db.SaveChangesAsync(ct);
         return NoContent();
     }
 
@@ -90,16 +90,16 @@ public class VocabularyTagsController(PuglingDbContext db) : ControllerBase
     [HttpPost("{vocabularyId:int}/tags")]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<IEnumerable<VocabTagResponse>>> AttachTags(int vocabularyId, TagVocabDto dto)
+    public async Task<ActionResult<IEnumerable<VocabTagResponse>>> AttachTags(int vocabularyId, TagVocabDto dto, CancellationToken ct = default)
     {
         var vocab = await db.Vocabulary.Include(v => v.TagLinks).ThenInclude(l => l.VocabTag)
-            .FirstOrDefaultAsync(v => v.Id == vocabularyId);
+            .FirstOrDefaultAsync(v => v.Id == vocabularyId, ct);
         if (vocab is null) return NotFound();
 
         var names = (dto.Tags ?? []).Select(n => n.Trim()).Where(n => n.Length > 0).Distinct(StringComparer.Ordinal).ToList();
         if (names.Count == 0) return this.ProblemWithCode(ApiErrors.ValidationError, "At least one tag is required.");
 
-        var existing = await db.VocabTags.Where(t => names.Contains(t.Name)).ToListAsync();
+        var existing = await db.VocabTags.Where(t => names.Contains(t.Name)).ToListAsync(ct);
         var byName = existing.ToDictionary(t => t.Name, StringComparer.Ordinal);
         var already = vocab.TagLinks.Where(l => l.VocabTag is not null).Select(l => l.VocabTag!.Name).ToHashSet(StringComparer.Ordinal);
 
@@ -113,7 +113,7 @@ public class VocabularyTagsController(PuglingDbContext db) : ControllerBase
             }
             vocab.TagLinks.Add(new VocabTagLink { VocabTag = tag, Vocabulary = vocab });
         }
-        await db.SaveChangesAsync();
+        await db.SaveChangesAsync(ct);
 
         return vocab.TagLinks.Select(l => l.VocabTag!)
             .OrderBy(t => t.Name, StringComparer.Ordinal)
@@ -124,12 +124,12 @@ public class VocabularyTagsController(PuglingDbContext db) : ControllerBase
     [HttpDelete("{vocabularyId:int}/tags/{tagId:int}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> DetachTag(int vocabularyId, int tagId)
+    public async Task<IActionResult> DetachTag(int vocabularyId, int tagId, CancellationToken ct = default)
     {
-        var link = await db.VocabTagLinks.FirstOrDefaultAsync(l => l.VocabularyId == vocabularyId && l.VocabTagId == tagId);
+        var link = await db.VocabTagLinks.FirstOrDefaultAsync(l => l.VocabularyId == vocabularyId && l.VocabTagId == tagId, ct);
         if (link is null) return NotFound();
         db.VocabTagLinks.Remove(link);
-        await db.SaveChangesAsync();
+        await db.SaveChangesAsync(ct);
         return NoContent();
     }
 }
