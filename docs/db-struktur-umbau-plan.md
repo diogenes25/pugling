@@ -4,7 +4,7 @@ tags: [bereich/architektur, bereich/datenmodell, status/laufend]
 
 # DB-/EF-Struktur-Umbau
 
-> **Übergabe-Dokument.** E0–E9 sind umgesetzt und verifiziert; offen sind E10–E14. Beide
+> **Übergabe-Dokument.** E0–E10 sind umgesetzt und verifiziert; offen sind E11–E14. Beide
 > echten Defekte sind damit behoben – der Rest ist Struktur. Dieses Dokument ist so
 > geschrieben, dass jemand ohne Vorwissen die restlichen Etappen zu Ende führen kann: es nennt die
 > getroffenen Entscheidungen, die Arbeitsregeln, die Belege, die bewussten Abweichungen und die
@@ -76,7 +76,7 @@ Die Langfassung steht in der Plandatei dieser Sitzung.
    E13 (`LearnGoal.ChildId` fällt weg, drei `KeyResult`-Scope-FKs kommen). Das Tor **soll** dabei rot sein –
    die bewusste Zeile ist der Zweck. Bei mehreren Änderungen lohnt der Wegwerf-Dump aus E6 wieder.
 
-## Umgesetzt: E0–E9
+## Umgesetzt: E0–E10
 
 ### E0 · Netz spannen — keine Migration
 
@@ -411,17 +411,36 @@ seine Übungen selbst an und berührt die Lehrer-Bibliothek nicht.
 **Stand:** 614 Tests grün, `docs/api-examples` unverändert, Abdeckung weiter 268/268, keine
 Schemaänderung (Kette unverändert bei `20260730222450_InitialCreate`).
 
-## Offen: E10–E14
+### E10 · Legacy-Lesepfad entfernen — keine Migration
+
+Vokabelübungen hatten **zwei** Inhaltswege: die `ExerciseItem`-Tabelle und – als Rückfall, wenn dort keine
+Zeile lag – die Projektion aus der `ConfigJson`. Zwei Wege heißen zwei Wahrheiten, und hier eine teure: nur
+der erste trägt stabile `ItemId`s und damit den plan-übergreifenden Lernstand. Der Rückfall hätte eine halb
+bearbeitete Übung mit *alten* Items bespielt, ohne Lernstand-Anbindung.
+
+**Umgesetzt:**
+- `ExerciseContentResolver.ResolveVocabularyItemsAsync`: `if (rows.Count == 0) return provider.ItemsOf(...)`
+  → `return []`. Ohne Item-Zeilen ist die Übung **leer** – und der Vorschau-Endpunkt sagt das auch so
+  (`exercise_empty`).
+- `VocabularyExerciseType.ItemsOf` gibt jetzt `[]` zurück (die Methode ist im Interface abstrakt, kann also
+  nicht wegfallen). Die Doku dort sagt, warum: `VocabularyConfig.Items`/`.Refs` sind reine **Eingabeform**,
+  der Inhalt liegt in der Tabelle. Wer über die Config fragt, bekommt bewusst nichts statt etwas Plausibles
+  ohne `ItemId`.
+
+**Ein Test kippte um, und das war richtig:** `ExerciseContentProviderTests.Vocabulary_Projiziert…` prüfte
+genau die entfernte Projektion. Er heißt jetzt `Vocabulary_LiefertKeineItemsAusDerConfig` und hält den
+zweiten Weg zu, statt ihn zu belegen.
+
+**Verifikation über die Laufzeit, nicht über „kompiliert":** gegen eine frische DB tragen beide geseedeten
+Vokabelübungen ihre Items in der Tabelle (3 bzw. 6) und ihre Config ist auf Einstellungen reduziert
+(`"items": []`) – der Rückfall war also tatsächlich unerreichbar. Dazu `/smoke-test` 13/13 grün und der
+Vater→Sohn-Durchstich `frontend/e2e/full-flow.spec.ts` grün (27 s).
+
+**Stand:** 614 Tests grün, `docs/api-examples` unverändert, keine Schemaänderung.
+
+## Offen: E11–E14
 
 Jede Etappe endet grün, mit neu gefalteter Migration (siehe Arbeitsregeln).
-
-### E10 · Legacy-Lesepfad entfernen — **zwingend nach E9** (E9 ist durch)
-`Services/Shared/ExerciseContentResolver.cs` (`if (rows.Count == 0) return provider.ItemsOf(exercise);` –
-Fallback auf Inline-`ConfigJson`-Items) und `Exercises/VocabularyExerciseType.ItemsOf`. In einer neuen DB
-unerreichbar, weil `VocabularyController.AfterSaveAsync` die Config nach dem Materialisieren leert.
-`VocabularyConfig.Items`/`.Refs` bleiben als **Eingabeform** im Vertrag. Solange die Items nur über den
-Backfill entstehen, ist der Fallback für geseedete Übungen der einzige Inhaltsweg – daher die Reihenfolge.
-Tests: `ExerciseContentProviderTests`, `ExerciseItemsAndProgressTests`, `VocabTwoStepTests`.
 
 ### E11 · String-Längen + Tabellennamen
 **Längen** als zweite Konventionsschleife in `OnModelCreating` (Muster: `ApplyEnumConvention`):

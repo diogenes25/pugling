@@ -19,13 +19,20 @@ public sealed class VocabularyExerciseType : ExerciseTypeBase
         ExerciseCheckMode.StudyPlanTest, "tests", LearningMethod.Vocabulary,
         ["letterHints", "audio", "selfAssess", "multipleChoice"]);
 
-    /// <inheritdoc/>
-    public override IReadOnlyList<ContentItem> ItemsOf(string configJson)
-    {
-        var c = Deserialize<VocabularyConfig>(configJson);
-        return [.. c.Items.Select((v, i) => ExerciseContentProvider.WithDirection(
-            new ContentItem(i, v.Front ?? "", v.Back ?? "", [v.Back ?? ""], v.Hint), c.Direction))];
-    }
+    /// <summary>
+    /// <b>Immer leer</b> – und das ist der Punkt: die Inhalte dieses Typs liegen in der
+    /// <see cref="ExerciseItem"/>-Tabelle (<see cref="StoreResolution.ItemTable"/>), nicht in der Config.
+    /// <c>VocabularyConfig.Items</c>/<c>.Refs</c> sind reine <b>Eingabeform</b>; nach dem Anlegen leert
+    /// <c>VocabularyController.AfterSaveAsync</c> sie.
+    /// <para>
+    /// Hier stand die Projektion aus der Config. Sie war der zweite Inhaltsweg desselben Typs und damit die
+    /// zweite Wahrheit – erreichbar nur über einen Datenstand, den es seit dem Materialisieren nicht mehr
+    /// gibt. Wer Vokabel-Inhalte braucht, geht über <c>ExerciseContentResolver.ItemsOfAsync</c>; der Weg
+    /// über die Config gibt bewusst nichts zurück, statt etwas Plausibles ohne ItemId zu erfinden
+    /// (das kostete den plan-übergreifenden Lernstand).
+    /// </para>
+    /// </summary>
+    public override IReadOnlyList<ContentItem> ItemsOf(string configJson) => [];
 
     // Fürs Ausprobieren die getippte Freitext-Stufe (schwierigster, aussagekräftigster Test).
     /// <inheritdoc/>

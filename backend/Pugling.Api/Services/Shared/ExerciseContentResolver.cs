@@ -58,9 +58,17 @@ public class ExerciseContentResolver(PuglingDbContext db, ExerciseContentProvide
     /// <see cref="ExerciseItem.OrderIndex"/>, Id) – so bleibt er lückenlos/stabil, unabhängig vom Sortierschlüssel.
     /// Ein optionaler Zeilen-Hinweis übersteuert den abgeleiteten Store-Hinweis (z. B. Artikel). Fehlt der
     /// Store-Eintrag, bleibt ein Platzhalter auf gleichem Index (Leitner-/Test-Fortschritt kippt nicht).
-    /// Ohne Item-Zeilen (nicht migrierte/leere Übung) greift die zustandslose Config-Projektion als Fallback.
+    /// <b>Ohne Item-Zeilen ist die Übung leer</b> – die Item-Tabelle ist die einzige Inhaltsquelle. Hier stand
+    /// früher ein Rückfall auf die Config-Projektion; der war seit dem Materialisieren der Items unerreichbar
+    /// (<c>VocabularyController.AfterSaveAsync</c> leert die Config danach, und der Seed lässt sie über
+    /// <c>SeedExerciseItems</c> laufen). Zwei Inhaltswege für denselben Typ heißen zwei Wahrheiten: der
+    /// Fallback hätte eine halb bearbeitete Übung mit <i>alten</i> Items bespielt, ohne ItemId und damit ohne
+    /// Lernstand. „Leer" ist die richtige Antwort – der Vorschau-Endpunkt sagt sie auch so
+    /// (<c>exercise_empty</c>).
+    /// <para>
     /// Ist ein <paramref name="childId"/> gegeben, wählt der <see cref="MediaSelector"/> zusätzlich je Item
     /// das für dieses Kind passende Bild (ein Batch-Aufruf für die ganze Übung, kein N+1 je Karte).
+    /// </para>
     /// </summary>
     private async Task<IReadOnlyList<ContentItem>> ResolveVocabularyItemsAsync(Exercise exercise, string? direction,
         int? childId, CancellationToken ct)
@@ -70,7 +78,7 @@ public class ExerciseContentResolver(PuglingDbContext db, ExerciseContentProvide
             .OrderBy(i => i.OrderIndex).ThenBy(i => i.Id)
             .Select(i => new { i.Id, i.VocabularyId, i.Hint })
             .ToListAsync(ct);
-        if (rows.Count == 0) return provider.ItemsOf(exercise);
+        if (rows.Count == 0) return [];
 
         var ids = rows.Select(r => r.VocabularyId).Distinct().ToList();
         var byId = await db.Vocabulary.AsNoTracking().Where(v => ids.Contains(v.Id)).ToDictionaryAsync(v => v.Id, ct);

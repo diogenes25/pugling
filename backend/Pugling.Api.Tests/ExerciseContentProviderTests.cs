@@ -22,8 +22,19 @@ public class ExerciseContentProviderTests
 
     // ---- Vokabeln ----
 
+    /// <summary>
+    /// Der zustandslose Provider liefert für Vokabeln <b>bewusst nichts</b>: deren Inhalte liegen in der
+    /// <c>ExerciseItem</c>-Tabelle, und <c>VocabularyConfig.Items</c>/<c>.Refs</c> sind reine
+    /// <b>Eingabeform</b> (nach dem Anlegen leert <c>AfterSaveAsync</c> sie).
+    /// <para>
+    /// Vorher stand hier die Gegenprobe – dieser Test prüfte die Config-Projektion, also den <i>zweiten</i>
+    /// Inhaltsweg desselben Typs. Zwei Wege heißen zwei Wahrheiten: der eine trägt stabile ItemIds und damit
+    /// den plan-übergreifenden Lernstand, der andere nicht. Erreichbar war er längst nicht mehr; jetzt ist er
+    /// weg, und dieser Test hält ihn zu.
+    /// </para>
+    /// </summary>
     [Fact]
-    public void Vocabulary_ProjiziertVorderseiteRueckseiteUndHinweis()
+    public void Vocabulary_LiefertKeineItemsAusDerConfig()
     {
         var config = new VocabularyConfig
         {
@@ -34,15 +45,7 @@ public class ExerciseContentProviderTests
             }
         };
 
-        var items = _provider.ItemsOf(ExerciseTypeKeys.Vocabulary, Json(config));
-
-        Assert.Equal(2, items.Count);
-        Assert.Equal(0, items[0].Index);
-        Assert.Equal("hello", items[0].Prompt);
-        Assert.Equal("hallo", items[0].Answer);
-        Assert.Equal(["hallo"], items[0].AcceptedAnswers);
-        Assert.Null(items[0].Hint);
-        Assert.Equal("Höflichkeit", items[1].Hint);
+        Assert.Empty(_provider.ItemsOf(ExerciseTypeKeys.Vocabulary, Json(config)));
     }
 
     // ---- Lückentext ----
