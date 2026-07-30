@@ -17,9 +17,9 @@ namespace Pugling.Api.Data.Migrations
                 {
                     Id = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
-                    DisplayName = table.Column<string>(type: "TEXT", nullable: false),
-                    Email = table.Column<string>(type: "TEXT", nullable: true),
-                    PinHash = table.Column<string>(type: "TEXT", nullable: false),
+                    DisplayName = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
+                    Email = table.Column<string>(type: "TEXT", maxLength: 200, nullable: true),
+                    PinHash = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
@@ -33,9 +33,9 @@ namespace Pugling.Api.Data.Migrations
                 {
                     Id = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
-                    Name = table.Column<string>(type: "TEXT", nullable: false),
-                    Email = table.Column<string>(type: "TEXT", nullable: true),
-                    Pin = table.Column<string>(type: "TEXT", nullable: false),
+                    Name = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
+                    Email = table.Column<string>(type: "TEXT", maxLength: 200, nullable: true),
+                    Pin = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
                     IsAdmin = table.Column<bool>(type: "INTEGER", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false)
                 },
@@ -50,17 +50,17 @@ namespace Pugling.Api.Data.Migrations
                 {
                     Id = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
-                    Name = table.Column<string>(type: "TEXT", nullable: false),
+                    Name = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
                     BirthYear = table.Column<int>(type: "INTEGER", nullable: true),
                     Grade = table.Column<int>(type: "INTEGER", nullable: true),
                     SchoolType = table.Column<int>(type: "INTEGER", nullable: false),
                     Gender = table.Column<string>(type: "TEXT", nullable: false),
                     Interests = table.Column<string>(type: "TEXT", nullable: false),
-                    ProfileNotes = table.Column<string>(type: "TEXT", nullable: true),
+                    ProfileNotes = table.Column<string>(type: "TEXT", maxLength: 2000, nullable: true),
                     AllowedContentRating = table.Column<int>(type: "INTEGER", nullable: false),
-                    Pin = table.Column<string>(type: "TEXT", nullable: false),
+                    Pin = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    SelectedSkin = table.Column<string>(type: "TEXT", nullable: false),
+                    SelectedSkin = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
                     OwnedSkins = table.Column<string>(type: "TEXT", nullable: false),
                     ConcurrencyStamp = table.Column<Guid>(type: "TEXT", nullable: false)
                 },
@@ -75,12 +75,12 @@ namespace Pugling.Api.Data.Migrations
                 {
                     Id = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
-                    Key = table.Column<string>(type: "TEXT", nullable: false),
-                    Title = table.Column<string>(type: "TEXT", nullable: false),
-                    SourceLanguage = table.Column<string>(type: "TEXT", nullable: false),
-                    TargetLanguage = table.Column<string>(type: "TEXT", nullable: false),
-                    Text = table.Column<string>(type: "TEXT", nullable: false),
-                    Translation = table.Column<string>(type: "TEXT", nullable: true),
+                    Key = table.Column<string>(type: "TEXT", maxLength: 128, nullable: false),
+                    Title = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
+                    SourceLanguage = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
+                    TargetLanguage = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
+                    Text = table.Column<string>(type: "TEXT", maxLength: 2000, nullable: false),
+                    Translation = table.Column<string>(type: "TEXT", maxLength: 200, nullable: true),
                     Gaps = table.Column<string>(type: "TEXT", nullable: false),
                     WordBank = table.Column<string>(type: "TEXT", nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false)
@@ -96,11 +96,11 @@ namespace Pugling.Api.Data.Migrations
                 {
                     Id = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
-                    Slug = table.Column<string>(type: "TEXT", nullable: false),
-                    Label = table.Column<string>(type: "TEXT", nullable: false),
+                    Slug = table.Column<string>(type: "TEXT", maxLength: 128, nullable: false),
+                    Label = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
                     Facet = table.Column<string>(type: "TEXT", nullable: false),
                     Synonyms = table.Column<string>(type: "TEXT", nullable: false),
-                    Color = table.Column<string>(type: "TEXT", nullable: true),
+                    Color = table.Column<string>(type: "TEXT", maxLength: 200, nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
@@ -114,15 +114,15 @@ namespace Pugling.Api.Data.Migrations
                 {
                     Id = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
-                    Key = table.Column<string>(type: "TEXT", nullable: false),
-                    Description = table.Column<string>(type: "TEXT", nullable: false),
+                    Key = table.Column<string>(type: "TEXT", maxLength: 128, nullable: false),
+                    Description = table.Column<string>(type: "TEXT", maxLength: 2000, nullable: false),
                     Kind = table.Column<string>(type: "TEXT", nullable: false),
                     Rating = table.Column<int>(type: "INTEGER", nullable: false),
-                    License = table.Column<string>(type: "TEXT", nullable: true),
-                    Attribution = table.Column<string>(type: "TEXT", nullable: true),
+                    License = table.Column<string>(type: "TEXT", maxLength: 200, nullable: true),
+                    Attribution = table.Column<string>(type: "TEXT", maxLength: 200, nullable: true),
                     Origin = table.Column<string>(type: "TEXT", nullable: false),
-                    Source = table.Column<string>(type: "TEXT", nullable: true),
-                    Placeholder = table.Column<string>(type: "TEXT", nullable: true),
+                    Source = table.Column<string>(type: "TEXT", maxLength: 200, nullable: true),
+                    Placeholder = table.Column<string>(type: "TEXT", maxLength: 200, nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
@@ -136,7 +136,7 @@ namespace Pugling.Api.Data.Migrations
                 {
                     Id = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
-                    Name = table.Column<string>(type: "TEXT", nullable: false),
+                    Name = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
@@ -150,7 +150,7 @@ namespace Pugling.Api.Data.Migrations
                 {
                     Id = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
-                    Name = table.Column<string>(type: "TEXT", nullable: false),
+                    Name = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
                     StartTime = table.Column<TimeOnly>(type: "TEXT", nullable: false),
                     EndTime = table.Column<TimeOnly>(type: "TEXT", nullable: false),
                     Multiplier = table.Column<double>(type: "REAL", nullable: false)
@@ -166,8 +166,8 @@ namespace Pugling.Api.Data.Migrations
                 {
                     Id = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
-                    Name = table.Column<string>(type: "TEXT", nullable: false),
-                    Color = table.Column<string>(type: "TEXT", nullable: true),
+                    Name = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
+                    Color = table.Column<string>(type: "TEXT", maxLength: 200, nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
@@ -176,32 +176,32 @@ namespace Pugling.Api.Data.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Vocabulary",
+                name: "Vocabularies",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
-                    Key = table.Column<string>(type: "TEXT", nullable: false),
-                    Version = table.Column<string>(type: "TEXT", nullable: false),
-                    SourceLanguage = table.Column<string>(type: "TEXT", nullable: false),
-                    TargetLanguage = table.Column<string>(type: "TEXT", nullable: false),
-                    Word = table.Column<string>(type: "TEXT", nullable: false, collation: "NOCASE"),
-                    Translation = table.Column<string>(type: "TEXT", nullable: false, collation: "NOCASE"),
+                    Key = table.Column<string>(type: "TEXT", maxLength: 128, nullable: false),
+                    Version = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
+                    SourceLanguage = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
+                    TargetLanguage = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
+                    Word = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false, collation: "NOCASE"),
+                    Translation = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false, collation: "NOCASE"),
                     PartOfSpeech = table.Column<string>(type: "TEXT", nullable: false),
                     Noun = table.Column<string>(type: "TEXT", nullable: true),
                     Verb = table.Column<string>(type: "TEXT", nullable: true),
                     BaseFormId = table.Column<int>(type: "INTEGER", nullable: true),
-                    BaseFormRelation = table.Column<string>(type: "TEXT", nullable: true),
-                    PronunciationAudioUrl = table.Column<string>(type: "TEXT", nullable: true),
+                    BaseFormRelation = table.Column<string>(type: "TEXT", maxLength: 200, nullable: true),
+                    PronunciationAudioUrl = table.Column<string>(type: "TEXT", maxLength: 200, nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Vocabulary", x => x.Id);
+                    table.PrimaryKey("PK_Vocabularies", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Vocabulary_Vocabulary_BaseFormId",
+                        name: "FK_Vocabularies_Vocabularies_BaseFormId",
                         column: x => x.BaseFormId,
-                        principalTable: "Vocabulary",
+                        principalTable: "Vocabularies",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                 });
@@ -213,9 +213,9 @@ namespace Pugling.Api.Data.Migrations
                     Id = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
                     AdultId = table.Column<int>(type: "INTEGER", nullable: false),
-                    ArticleNumber = table.Column<string>(type: "TEXT", nullable: false),
-                    Title = table.Column<string>(type: "TEXT", nullable: false),
-                    Description = table.Column<string>(type: "TEXT", nullable: false),
+                    ArticleNumber = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
+                    Title = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
+                    Description = table.Column<string>(type: "TEXT", maxLength: 2000, nullable: false),
                     UnitType = table.Column<string>(type: "TEXT", nullable: false),
                     ActionType = table.Column<string>(type: "TEXT", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false)
@@ -274,8 +274,8 @@ namespace Pugling.Api.Data.Migrations
                     Id = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
                     ChildId = table.Column<int>(type: "INTEGER", nullable: false),
-                    Title = table.Column<string>(type: "TEXT", nullable: false),
-                    Icon = table.Column<string>(type: "TEXT", nullable: true),
+                    Title = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
+                    Icon = table.Column<string>(type: "TEXT", maxLength: 200, nullable: true),
                     Metric = table.Column<string>(type: "TEXT", nullable: false),
                     Threshold = table.Column<int>(type: "INTEGER", nullable: false),
                     RewardPoints = table.Column<int>(type: "INTEGER", nullable: false),
@@ -294,7 +294,7 @@ namespace Pugling.Api.Data.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "ChildPoints",
+                name: "ChildPointsEntries",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "INTEGER", nullable: false)
@@ -302,14 +302,14 @@ namespace Pugling.Api.Data.Migrations
                     ChildId = table.Column<int>(type: "INTEGER", nullable: false),
                     Amount = table.Column<int>(type: "INTEGER", nullable: false),
                     Kind = table.Column<string>(type: "TEXT", nullable: false),
-                    Reason = table.Column<string>(type: "TEXT", nullable: false),
+                    Reason = table.Column<string>(type: "TEXT", maxLength: 2000, nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_ChildPoints", x => x.Id);
+                    table.PrimaryKey("PK_ChildPointsEntries", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_ChildPoints_Children_ChildId",
+                        name: "FK_ChildPointsEntries_Children_ChildId",
                         column: x => x.ChildId,
                         principalTable: "Children",
                         principalColumn: "Id",
@@ -329,7 +329,7 @@ namespace Pugling.Api.Data.Migrations
                     Metric = table.Column<string>(type: "TEXT", nullable: false),
                     TargetValue = table.Column<int>(type: "INTEGER", nullable: false),
                     DueDate = table.Column<DateOnly>(type: "TEXT", nullable: true),
-                    Title = table.Column<string>(type: "TEXT", nullable: true),
+                    Title = table.Column<string>(type: "TEXT", maxLength: 200, nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
@@ -350,7 +350,7 @@ namespace Pugling.Api.Data.Migrations
                     Id = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
                     ChildId = table.Column<int>(type: "INTEGER", nullable: false),
-                    Title = table.Column<string>(type: "TEXT", nullable: false),
+                    Title = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
                     Metric = table.Column<string>(type: "TEXT", nullable: false),
                     Target = table.Column<int>(type: "INTEGER", nullable: false),
                     Period = table.Column<string>(type: "TEXT", nullable: false),
@@ -376,8 +376,8 @@ namespace Pugling.Api.Data.Migrations
                     Id = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
                     ChildId = table.Column<int>(type: "INTEGER", nullable: false),
-                    Title = table.Column<string>(type: "TEXT", nullable: false),
-                    Motivation = table.Column<string>(type: "TEXT", nullable: true),
+                    Title = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
+                    Motivation = table.Column<string>(type: "TEXT", maxLength: 200, nullable: true),
                     Kind = table.Column<string>(type: "TEXT", nullable: false),
                     Start = table.Column<DateOnly>(type: "TEXT", nullable: true),
                     DueDate = table.Column<DateOnly>(type: "TEXT", nullable: true),
@@ -432,8 +432,8 @@ namespace Pugling.Api.Data.Migrations
                     Id = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
                     ChildId = table.Column<int>(type: "INTEGER", nullable: false),
-                    Name = table.Column<string>(type: "TEXT", nullable: false),
-                    Color = table.Column<string>(type: "TEXT", nullable: true),
+                    Name = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
+                    Color = table.Column<string>(type: "TEXT", maxLength: 200, nullable: true),
                     CreatedBy = table.Column<string>(type: "TEXT", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false)
                 },
@@ -512,8 +512,8 @@ namespace Pugling.Api.Data.Migrations
                     Purpose = table.Column<string>(type: "TEXT", nullable: false),
                     Width = table.Column<int>(type: "INTEGER", nullable: false),
                     Height = table.Column<int>(type: "INTEGER", nullable: false),
-                    Format = table.Column<string>(type: "TEXT", nullable: false),
-                    Url = table.Column<string>(type: "TEXT", nullable: false),
+                    Format = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
+                    Url = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
                     Bytes = table.Column<long>(type: "INTEGER", nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false)
                 },
@@ -535,7 +535,7 @@ namespace Pugling.Api.Data.Migrations
                     Id = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
                     SubjectId = table.Column<int>(type: "INTEGER", nullable: false),
-                    Name = table.Column<string>(type: "TEXT", nullable: false),
+                    Name = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
                     OrderIndex = table.Column<int>(type: "INTEGER", nullable: false)
                 },
                 constraints: table =>
@@ -556,7 +556,7 @@ namespace Pugling.Api.Data.Migrations
                     Id = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
                     SubjectId = table.Column<int>(type: "INTEGER", nullable: false),
-                    Name = table.Column<string>(type: "TEXT", nullable: false),
+                    Name = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
@@ -578,12 +578,12 @@ namespace Pugling.Api.Data.Migrations
                         .Annotation("Sqlite:Autoincrement", true),
                     ChildId = table.Column<int>(type: "INTEGER", nullable: false),
                     SubjectId = table.Column<int>(type: "INTEGER", nullable: true),
-                    Title = table.Column<string>(type: "TEXT", nullable: false),
-                    Topic = table.Column<string>(type: "TEXT", nullable: true),
+                    Title = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
+                    Topic = table.Column<string>(type: "TEXT", maxLength: 200, nullable: true),
                     ScheduledDate = table.Column<DateOnly>(type: "TEXT", nullable: false),
                     Status = table.Column<string>(type: "TEXT", nullable: false),
                     Grade = table.Column<decimal>(type: "TEXT", precision: 3, scale: 1, nullable: true),
-                    GradeComment = table.Column<string>(type: "TEXT", nullable: true),
+                    GradeComment = table.Column<string>(type: "TEXT", maxLength: 2000, nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
@@ -610,8 +610,8 @@ namespace Pugling.Api.Data.Migrations
                     Id = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
                     ChildId = table.Column<int>(type: "INTEGER", nullable: false),
-                    Title = table.Column<string>(type: "TEXT", nullable: false),
-                    Description = table.Column<string>(type: "TEXT", nullable: true),
+                    Title = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
+                    Description = table.Column<string>(type: "TEXT", maxLength: 2000, nullable: true),
                     SubjectId = table.Column<int>(type: "INTEGER", nullable: true),
                     StartDate = table.Column<DateOnly>(type: "TEXT", nullable: false),
                     EndDate = table.Column<DateOnly>(type: "TEXT", nullable: false),
@@ -641,15 +641,15 @@ namespace Pugling.Api.Data.Migrations
                 {
                     Id = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
-                    Name = table.Column<string>(type: "TEXT", nullable: false),
-                    Slug = table.Column<string>(type: "TEXT", nullable: false),
-                    Publisher = table.Column<string>(type: "TEXT", nullable: true),
-                    SubjectName = table.Column<string>(type: "TEXT", nullable: true),
+                    Name = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
+                    Slug = table.Column<string>(type: "TEXT", maxLength: 128, nullable: false),
+                    Publisher = table.Column<string>(type: "TEXT", maxLength: 200, nullable: true),
+                    SubjectName = table.Column<string>(type: "TEXT", maxLength: 200, nullable: true),
                     SubjectId = table.Column<int>(type: "INTEGER", nullable: true),
                     SchoolTypes = table.Column<int>(type: "INTEGER", nullable: false),
-                    SourceLanguage = table.Column<string>(type: "TEXT", nullable: true),
-                    TargetLanguage = table.Column<string>(type: "TEXT", nullable: true),
-                    Notes = table.Column<string>(type: "TEXT", nullable: true),
+                    SourceLanguage = table.Column<string>(type: "TEXT", maxLength: 200, nullable: true),
+                    TargetLanguage = table.Column<string>(type: "TEXT", maxLength: 200, nullable: true),
+                    Notes = table.Column<string>(type: "TEXT", maxLength: 2000, nullable: true),
                     OwnerAdultId = table.Column<int>(type: "INTEGER", nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false)
                 },
@@ -671,7 +671,7 @@ namespace Pugling.Api.Data.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Timetable",
+                name: "TimetableEntries",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "INTEGER", nullable: false)
@@ -679,20 +679,20 @@ namespace Pugling.Api.Data.Migrations
                     ChildId = table.Column<int>(type: "INTEGER", nullable: false),
                     SubjectId = table.Column<int>(type: "INTEGER", nullable: false),
                     DayOfWeek = table.Column<string>(type: "TEXT", nullable: false),
-                    TimeOfDay = table.Column<string>(type: "TEXT", nullable: true),
+                    TimeOfDay = table.Column<string>(type: "TEXT", maxLength: 200, nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Timetable", x => x.Id);
+                    table.PrimaryKey("PK_TimetableEntries", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Timetable_Children_ChildId",
+                        name: "FK_TimetableEntries_Children_ChildId",
                         column: x => x.ChildId,
                         principalTable: "Children",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_Timetable_Subjects_SubjectId",
+                        name: "FK_TimetableEntries_Subjects_SubjectId",
                         column: x => x.SubjectId,
                         principalTable: "Subjects",
                         principalColumn: "Id",
@@ -718,9 +718,9 @@ namespace Pugling.Api.Data.Migrations
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_VocabTagLinks_Vocabulary_VocabularyId",
+                        name: "FK_VocabTagLinks_Vocabularies_VocabularyId",
                         column: x => x.VocabularyId,
-                        principalTable: "Vocabulary",
+                        principalTable: "Vocabularies",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -736,7 +736,7 @@ namespace Pugling.Api.Data.Migrations
                     SupervisorId = table.Column<int>(type: "INTEGER", nullable: false),
                     RequestedQuantity = table.Column<int>(type: "INTEGER", nullable: false),
                     Status = table.Column<string>(type: "TEXT", nullable: false),
-                    ArticleTitle = table.Column<string>(type: "TEXT", nullable: false),
+                    ArticleTitle = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
                     UnitType = table.Column<string>(type: "TEXT", nullable: false),
                     ActionType = table.Column<string>(type: "TEXT", nullable: false),
                     RequestedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
@@ -768,8 +768,8 @@ namespace Pugling.Api.Data.Migrations
                     ChildId = table.Column<int>(type: "INTEGER", nullable: false),
                     ShopArticleId = table.Column<int>(type: "INTEGER", nullable: true),
                     SupervisorId = table.Column<int>(type: "INTEGER", nullable: false),
-                    ArticleNumber = table.Column<string>(type: "TEXT", nullable: false),
-                    ArticleTitle = table.Column<string>(type: "TEXT", nullable: false),
+                    ArticleNumber = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
+                    ArticleTitle = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
                     UnitType = table.Column<string>(type: "TEXT", nullable: false),
                     ActionType = table.Column<string>(type: "TEXT", nullable: false),
                     Quantity = table.Column<int>(type: "INTEGER", nullable: false),
@@ -799,8 +799,8 @@ namespace Pugling.Api.Data.Migrations
                     Id = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
                     ShopArticleId = table.Column<int>(type: "INTEGER", nullable: false),
-                    Title = table.Column<string>(type: "TEXT", nullable: false),
-                    Description = table.Column<string>(type: "TEXT", nullable: false),
+                    Title = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
+                    Description = table.Column<string>(type: "TEXT", maxLength: 2000, nullable: false),
                     CoinPrice = table.Column<int>(type: "INTEGER", nullable: false),
                     GemPrice = table.Column<int>(type: "INTEGER", nullable: false),
                     UnitsPerPurchase = table.Column<int>(type: "INTEGER", nullable: false),
@@ -881,7 +881,7 @@ namespace Pugling.Api.Data.Migrations
                     ExerciseId = table.Column<int>(type: "INTEGER", nullable: true),
                     Metric = table.Column<string>(type: "TEXT", nullable: false),
                     TargetValue = table.Column<int>(type: "INTEGER", nullable: false),
-                    Title = table.Column<string>(type: "TEXT", nullable: true)
+                    Title = table.Column<string>(type: "TEXT", maxLength: 200, nullable: true)
                 },
                 constraints: table =>
                 {
@@ -936,9 +936,9 @@ namespace Pugling.Api.Data.Migrations
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_VocabularyTags_Vocabulary_VocabularyId",
+                        name: "FK_VocabularyTags_Vocabularies_VocabularyId",
                         column: x => x.VocabularyId,
-                        principalTable: "Vocabulary",
+                        principalTable: "Vocabularies",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -950,9 +950,9 @@ namespace Pugling.Api.Data.Migrations
                     Id = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
                     ChapterId = table.Column<int>(type: "INTEGER", nullable: false),
-                    Type = table.Column<string>(type: "TEXT", nullable: false),
-                    Title = table.Column<string>(type: "TEXT", nullable: false),
-                    Description = table.Column<string>(type: "TEXT", nullable: true),
+                    Type = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
+                    Title = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
+                    Description = table.Column<string>(type: "TEXT", maxLength: 2000, nullable: true),
                     OrderIndex = table.Column<int>(type: "INTEGER", nullable: false),
                     RewardPoints = table.Column<int>(type: "INTEGER", nullable: false),
                     ConfigJson = table.Column<string>(type: "TEXT", nullable: false),
@@ -964,7 +964,7 @@ namespace Pugling.Api.Data.Migrations
                     GradeMin = table.Column<int>(type: "INTEGER", nullable: true),
                     GradeMax = table.Column<int>(type: "INTEGER", nullable: true),
                     SchoolTypes = table.Column<int>(type: "INTEGER", nullable: false),
-                    Source = table.Column<string>(type: "TEXT", nullable: true),
+                    Source = table.Column<string>(type: "TEXT", maxLength: 200, nullable: true),
                     CategoryId = table.Column<int>(type: "INTEGER", nullable: true),
                     AuthorAdultId = table.Column<int>(type: "INTEGER", nullable: true),
                     ExecutePublic = table.Column<bool>(type: "INTEGER", nullable: false, defaultValue: true),
@@ -1025,18 +1025,18 @@ namespace Pugling.Api.Data.Migrations
                 {
                     Id = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
-                    Name = table.Column<string>(type: "TEXT", nullable: false),
+                    Name = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
                     OwnerAdultId = table.Column<int>(type: "INTEGER", nullable: true),
-                    SubjectName = table.Column<string>(type: "TEXT", nullable: true),
+                    SubjectName = table.Column<string>(type: "TEXT", maxLength: 200, nullable: true),
                     SubjectId = table.Column<int>(type: "INTEGER", nullable: true),
                     SchoolTypes = table.Column<int>(type: "INTEGER", nullable: false),
                     GradeMin = table.Column<int>(type: "INTEGER", nullable: true),
                     GradeMax = table.Column<int>(type: "INTEGER", nullable: true),
                     SeriesId = table.Column<int>(type: "INTEGER", nullable: true),
-                    SourceLang = table.Column<string>(type: "TEXT", nullable: false),
-                    TargetLang = table.Column<string>(type: "TEXT", nullable: false),
-                    Persona = table.Column<string>(type: "TEXT", nullable: true),
-                    Didactics = table.Column<string>(type: "TEXT", nullable: true),
+                    SourceLang = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
+                    TargetLang = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
+                    Persona = table.Column<string>(type: "TEXT", maxLength: 2000, nullable: true),
+                    Didactics = table.Column<string>(type: "TEXT", maxLength: 2000, nullable: true),
                     DefaultTypes = table.Column<string>(type: "TEXT", nullable: false),
                     Active = table.Column<bool>(type: "INTEGER", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false)
@@ -1073,10 +1073,10 @@ namespace Pugling.Api.Data.Migrations
                     SeriesId = table.Column<int>(type: "INTEGER", nullable: false),
                     Grade = table.Column<int>(type: "INTEGER", nullable: true),
                     OrderIndex = table.Column<int>(type: "INTEGER", nullable: false),
-                    Label = table.Column<string>(type: "TEXT", nullable: false),
-                    Topics = table.Column<string>(type: "TEXT", nullable: true),
-                    Grammar = table.Column<string>(type: "TEXT", nullable: true),
-                    VocabularyNotes = table.Column<string>(type: "TEXT", nullable: true),
+                    Label = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
+                    Topics = table.Column<string>(type: "TEXT", maxLength: 200, nullable: true),
+                    Grammar = table.Column<string>(type: "TEXT", maxLength: 200, nullable: true),
+                    VocabularyNotes = table.Column<string>(type: "TEXT", maxLength: 2000, nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
@@ -1099,9 +1099,9 @@ namespace Pugling.Api.Data.Migrations
                     ChildId = table.Column<int>(type: "INTEGER", nullable: false),
                     ShopListingId = table.Column<int>(type: "INTEGER", nullable: true),
                     SupervisorId = table.Column<int>(type: "INTEGER", nullable: false),
-                    ArticleNumber = table.Column<string>(type: "TEXT", nullable: false),
-                    Title = table.Column<string>(type: "TEXT", nullable: false),
-                    Description = table.Column<string>(type: "TEXT", nullable: false),
+                    ArticleNumber = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
+                    Title = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
+                    Description = table.Column<string>(type: "TEXT", maxLength: 2000, nullable: false),
                     CoinPrice = table.Column<int>(type: "INTEGER", nullable: false),
                     GemPrice = table.Column<int>(type: "INTEGER", nullable: false),
                     UnitsPerPurchase = table.Column<int>(type: "INTEGER", nullable: false),
@@ -1165,7 +1165,7 @@ namespace Pugling.Api.Data.Migrations
                     ExerciseId = table.Column<int>(type: "INTEGER", nullable: false),
                     OrderIndex = table.Column<int>(type: "INTEGER", nullable: false),
                     VocabularyId = table.Column<int>(type: "INTEGER", nullable: false),
-                    Hint = table.Column<string>(type: "TEXT", nullable: true),
+                    Hint = table.Column<string>(type: "TEXT", maxLength: 200, nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
@@ -1178,9 +1178,9 @@ namespace Pugling.Api.Data.Migrations
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_ExerciseItems_Vocabulary_VocabularyId",
+                        name: "FK_ExerciseItems_Vocabularies_VocabularyId",
                         column: x => x.VocabularyId,
-                        principalTable: "Vocabulary",
+                        principalTable: "Vocabularies",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                 });
@@ -1292,13 +1292,13 @@ namespace Pugling.Api.Data.Migrations
                     Id = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
                     ChildId = table.Column<int>(type: "INTEGER", nullable: false),
-                    Title = table.Column<string>(type: "TEXT", nullable: false),
-                    SubjectName = table.Column<string>(type: "TEXT", nullable: true),
+                    Title = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
+                    SubjectName = table.Column<string>(type: "TEXT", maxLength: 200, nullable: true),
                     SubjectId = table.Column<int>(type: "INTEGER", nullable: true),
                     Grade = table.Column<int>(type: "INTEGER", nullable: true),
-                    Publisher = table.Column<string>(type: "TEXT", nullable: true),
-                    Isbn = table.Column<string>(type: "TEXT", nullable: true),
-                    CurrentChapter = table.Column<string>(type: "TEXT", nullable: true),
+                    Publisher = table.Column<string>(type: "TEXT", maxLength: 200, nullable: true),
+                    Isbn = table.Column<string>(type: "TEXT", maxLength: 200, nullable: true),
+                    CurrentChapter = table.Column<string>(type: "TEXT", maxLength: 200, nullable: true),
                     SeriesId = table.Column<int>(type: "INTEGER", nullable: true),
                     CurrentUnitId = table.Column<int>(type: "INTEGER", nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false)
@@ -1368,9 +1368,9 @@ namespace Pugling.Api.Data.Migrations
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_ChildMediaPicks_Vocabulary_VocabularyId",
+                        name: "FK_ChildMediaPicks_Vocabularies_VocabularyId",
                         column: x => x.VocabularyId,
-                        principalTable: "Vocabulary",
+                        principalTable: "Vocabularies",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -1423,7 +1423,7 @@ namespace Pugling.Api.Data.Migrations
                     PlanPositionId = table.Column<int>(type: "INTEGER", nullable: true),
                     Source = table.Column<string>(type: "TEXT", nullable: false),
                     StageValue = table.Column<int>(type: "INTEGER", nullable: false),
-                    GivenAnswer = table.Column<string>(type: "TEXT", nullable: true),
+                    GivenAnswer = table.Column<string>(type: "TEXT", maxLength: 2000, nullable: true),
                     WasCorrect = table.Column<bool>(type: "INTEGER", nullable: false),
                     At = table.Column<DateTime>(type: "TEXT", nullable: false)
                 },
@@ -1480,9 +1480,9 @@ namespace Pugling.Api.Data.Migrations
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_MediaLinks_Vocabulary_VocabularyId",
+                        name: "FK_MediaLinks_Vocabularies_VocabularyId",
                         column: x => x.VocabularyId,
-                        principalTable: "Vocabulary",
+                        principalTable: "Vocabularies",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -1599,24 +1599,24 @@ namespace Pugling.Api.Data.Migrations
                 {
                     Id = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
-                    Text = table.Column<string>(type: "TEXT", nullable: false),
+                    Text = table.Column<string>(type: "TEXT", maxLength: 2000, nullable: false),
                     Category = table.Column<string>(type: "TEXT", nullable: false),
                     Status = table.Column<string>(type: "TEXT", nullable: false),
-                    Answer = table.Column<string>(type: "TEXT", nullable: true),
+                    Answer = table.Column<string>(type: "TEXT", maxLength: 2000, nullable: true),
                     AnsweredAt = table.Column<DateTime>(type: "TEXT", nullable: true),
-                    AnsweredBy = table.Column<string>(type: "TEXT", nullable: true),
+                    AnsweredBy = table.Column<string>(type: "TEXT", maxLength: 200, nullable: true),
                     ParentRemarkId = table.Column<int>(type: "INTEGER", nullable: true),
                     AccountId = table.Column<int>(type: "INTEGER", nullable: false),
                     AuthorRole = table.Column<string>(type: "TEXT", nullable: false),
-                    Route = table.Column<string>(type: "TEXT", nullable: false),
-                    AppArea = table.Column<string>(type: "TEXT", nullable: false),
+                    Route = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
+                    AppArea = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
                     ChildId = table.Column<int>(type: "INTEGER", nullable: true),
                     ExerciseId = table.Column<int>(type: "INTEGER", nullable: true),
                     StudyPlanId = table.Column<int>(type: "INTEGER", nullable: true),
                     PlanPositionId = table.Column<int>(type: "INTEGER", nullable: true),
                     ContextJson = table.Column<string>(type: "TEXT", nullable: true),
                     RecentErrorsJson = table.Column<string>(type: "TEXT", nullable: true),
-                    UserAgent = table.Column<string>(type: "TEXT", nullable: true),
+                    UserAgent = table.Column<string>(type: "TEXT", maxLength: 200, nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
@@ -1725,9 +1725,9 @@ namespace Pugling.Api.Data.Migrations
                     Id = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
                     RemarkId = table.Column<int>(type: "INTEGER", nullable: false),
-                    Body = table.Column<string>(type: "TEXT", nullable: false),
+                    Body = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
                     Author = table.Column<string>(type: "TEXT", nullable: false),
-                    AuthorLabel = table.Column<string>(type: "TEXT", nullable: true),
+                    AuthorLabel = table.Column<string>(type: "TEXT", maxLength: 200, nullable: true),
                     AuthorAccountId = table.Column<int>(type: "INTEGER", nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false)
                 },
@@ -1757,7 +1757,7 @@ namespace Pugling.Api.Data.Migrations
                     TestAttemptId = table.Column<int>(type: "INTEGER", nullable: false),
                     ItemIndex = table.Column<int>(type: "INTEGER", nullable: true),
                     StageValue = table.Column<int>(type: "INTEGER", nullable: false),
-                    GivenAnswer = table.Column<string>(type: "TEXT", nullable: true),
+                    GivenAnswer = table.Column<string>(type: "TEXT", maxLength: 2000, nullable: true),
                     WasCorrect = table.Column<bool>(type: "INTEGER", nullable: false),
                     HintsUsed = table.Column<int>(type: "INTEGER", nullable: false)
                 },
@@ -1902,13 +1902,13 @@ namespace Pugling.Api.Data.Migrations
                 column: "VocabularyId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_ChildPoints_ChildId_CreatedAt_Id",
-                table: "ChildPoints",
+                name: "IX_ChildPointsEntries_ChildId_CreatedAt_Id",
+                table: "ChildPointsEntries",
                 columns: new[] { "ChildId", "CreatedAt", "Id" });
 
             migrationBuilder.CreateIndex(
-                name: "IX_ChildPoints_ChildId_Kind",
-                table: "ChildPoints",
+                name: "IX_ChildPointsEntries_ChildId_Kind",
+                table: "ChildPointsEntries",
                 columns: new[] { "ChildId", "Kind" });
 
             migrationBuilder.CreateIndex(
@@ -2392,14 +2392,14 @@ namespace Pugling.Api.Data.Migrations
                 column: "SubjectId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Timetable_ChildId_SubjectId_DayOfWeek",
-                table: "Timetable",
+                name: "IX_TimetableEntries_ChildId_SubjectId_DayOfWeek",
+                table: "TimetableEntries",
                 columns: new[] { "ChildId", "SubjectId", "DayOfWeek" },
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_Timetable_SubjectId",
-                table: "Timetable",
+                name: "IX_TimetableEntries_SubjectId",
+                table: "TimetableEntries",
                 column: "SubjectId");
 
             migrationBuilder.CreateIndex(
@@ -2420,24 +2420,24 @@ namespace Pugling.Api.Data.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_Vocabulary_BaseFormId",
-                table: "Vocabulary",
+                name: "IX_Vocabularies_BaseFormId",
+                table: "Vocabularies",
                 column: "BaseFormId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Vocabulary_Key",
-                table: "Vocabulary",
+                name: "IX_Vocabularies_Key",
+                table: "Vocabularies",
                 column: "Key",
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_Vocabulary_Translation",
-                table: "Vocabulary",
+                name: "IX_Vocabularies_Translation",
+                table: "Vocabularies",
                 column: "Translation");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Vocabulary_Word",
-                table: "Vocabulary",
+                name: "IX_Vocabularies_Word",
+                table: "Vocabularies",
                 column: "Word");
 
             migrationBuilder.CreateIndex(
@@ -2474,7 +2474,7 @@ namespace Pugling.Api.Data.Migrations
                 name: "ChildMediaPicks");
 
             migrationBuilder.DropTable(
-                name: "ChildPoints");
+                name: "ChildPointsEntries");
 
             migrationBuilder.DropTable(
                 name: "ClozeTexts");
@@ -2552,7 +2552,7 @@ namespace Pugling.Api.Data.Migrations
                 name: "TimeSlots");
 
             migrationBuilder.DropTable(
-                name: "Timetable");
+                name: "TimetableEntries");
 
             migrationBuilder.DropTable(
                 name: "VocabTagLinks");
@@ -2603,7 +2603,7 @@ namespace Pugling.Api.Data.Migrations
                 name: "Tags");
 
             migrationBuilder.DropTable(
-                name: "Vocabulary");
+                name: "Vocabularies");
 
             migrationBuilder.DropTable(
                 name: "Accounts");

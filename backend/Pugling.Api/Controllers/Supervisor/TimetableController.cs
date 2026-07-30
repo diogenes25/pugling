@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Pugling.Api.Auth;
@@ -29,7 +29,7 @@ public class TimetableController(PuglingDbContext db) : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<IEnumerable<EntryResponse>>> List(int childId, CancellationToken ct = default)
     {
-        var entries = await db.Timetable.AsNoTracking().Include(t => t.Subject)
+        var entries = await db.TimetableEntries.AsNoTracking().Include(t => t.Subject)
             .Where(t => t.ChildId == childId)
             .OrderBy(t => t.DayOfWeek).ThenBy(t => t.Subject!.Name)
             .ToListAsync(ct);
@@ -45,11 +45,11 @@ public class TimetableController(PuglingDbContext db) : ControllerBase
     public async Task<ActionResult<EntryResponse>> Create(int childId, CreateEntryDto dto, CancellationToken ct = default)
     {
         if (!await db.Subjects.AnyAsync(s => s.Id == dto.SubjectId, ct)) return this.ProblemWithCode(ApiErrors.InvalidReference, "Subject not found.");
-        if (await db.Timetable.AnyAsync(t => t.ChildId == childId && t.SubjectId == dto.SubjectId && t.DayOfWeek == dto.DayOfWeek, ct))
+        if (await db.TimetableEntries.AnyAsync(t => t.ChildId == childId && t.SubjectId == dto.SubjectId && t.DayOfWeek == dto.DayOfWeek, ct))
             return this.ProblemWithCode(ApiErrors.TimetableSlotTaken, "This subject is already scheduled on this weekday.");
 
         var entry = new TimetableEntry { ChildId = childId, SubjectId = dto.SubjectId, DayOfWeek = dto.DayOfWeek, TimeOfDay = dto.TimeOfDay };
-        db.Timetable.Add(entry);
+        db.TimetableEntries.Add(entry);
         await db.SaveChangesAsync(ct);
         await db.Entry(entry).Reference(t => t.Subject).LoadAsync(ct);
         return CreatedAtAction(nameof(List), new { childId }, Map(entry));
@@ -61,9 +61,9 @@ public class TimetableController(PuglingDbContext db) : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(int childId, int entryId, CancellationToken ct = default)
     {
-        var entry = await db.Timetable.FirstOrDefaultAsync(t => t.Id == entryId && t.ChildId == childId, ct);
+        var entry = await db.TimetableEntries.FirstOrDefaultAsync(t => t.Id == entryId && t.ChildId == childId, ct);
         if (entry is null) return NotFound();
-        db.Timetable.Remove(entry);
+        db.TimetableEntries.Remove(entry);
         await db.SaveChangesAsync(ct);
         return NoContent();
     }

@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Pugling.Api.Data;
 using Pugling.Api.Models;
 
@@ -35,7 +35,7 @@ public class GamificationService(PuglingDbContext db, MetricsService metrics, IL
                 PeriodStart = from,
                 Points = m.RewardPoints,
             });
-            db.ChildPoints.Add(new ChildPointsEntry
+            db.ChildPointsEntries.Add(new ChildPointsEntry
             {
                 ChildId = childId,
                 Kind = PointKind.Mission,
@@ -55,7 +55,7 @@ public class GamificationService(PuglingDbContext db, MetricsService metrics, IL
 
             db.AchievementAwards.Add(new AchievementAward { AchievementId = a.Id, Points = a.RewardPoints });
             if (a.RewardPoints > 0)
-                db.ChildPoints.Add(new ChildPointsEntry
+                db.ChildPointsEntries.Add(new ChildPointsEntry
                 {
                     ChildId = childId,
                     Kind = PointKind.Achievement,

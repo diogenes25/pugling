@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Pugling.Api.Controllers;
 using Pugling.Api.Data;
 using Pugling.Api.Models;
@@ -282,7 +282,7 @@ public class ChildLearnProgressService(PuglingDbContext db, ExerciseTypeRegistry
     {
         var joined =
             from p in db.ItemProgress.AsNoTracking().Where(p => p.ChildId == childId && p.ExerciseId == exerciseId)
-            join v in db.Vocabulary.AsNoTracking() on p.VocabularyId equals v.Id into vj
+            join v in db.Vocabularies.AsNoTracking() on p.VocabularyId equals v.Id into vj
             from v in vj.DefaultIfEmpty()
             select new { P = p, Word = v == null ? "" : v.Word, Translation = v == null ? "" : v.Translation };
 

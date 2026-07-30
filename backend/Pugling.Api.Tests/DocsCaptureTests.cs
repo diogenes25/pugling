@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using System.Net;
 using System.Net.Http.Json;
 using System.Text;
@@ -179,7 +179,7 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
     {
         using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
-        db.ChildPoints.Add(new ChildPointsEntry { ChildId = childId, Amount = amount, Kind = kind, Reason = reason });
+        db.ChildPointsEntries.Add(new ChildPointsEntry { ChildId = childId, Amount = amount, Kind = kind, Reason = reason });
         await db.SaveChangesAsync();
     }
 

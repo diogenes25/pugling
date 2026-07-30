@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Pugling.Api.Auth;
@@ -35,9 +35,9 @@ public class ChildrenController(PuglingDbContext db, WalletService wallet, Accou
     [HttpGet]
     public async Task<ActionResult<IEnumerable<ChildResponse>>> List(CancellationToken ct = default)
     {
-        var fatherId = User.AdultId();
+        var supervisorId = User.AdultId();
         return await db.Children
-            .Where(c => c.SupervisorLinks.Any(l => l.SupervisorId == fatherId))
+            .Where(c => c.SupervisorLinks.Any(l => l.SupervisorId == supervisorId))
             .OrderBy(c => c.Name)
             .Select(c => new ChildResponse(c.Id, c.Name, c.BirthYear, c.Grade, c.SchoolType,
                 c.Gender, c.Interests, c.ProfileNotes, c.AllowedContentRating,
@@ -207,7 +207,7 @@ public class ChildrenController(PuglingDbContext db, WalletService wallet, Accou
         // Seite fasst (Basis/Combo/Speed + Missionen/Auszeichnungen erzeugen viele kleine Zeilen pro Sitzung).
         var (coins, gems) = await wallet.BalancesAsync(childId, ct);
 
-        var entries = await db.ChildPoints
+        var entries = await db.ChildPointsEntries
             .AsNoTracking()
             .Where(p => p.ChildId == childId)
             .OrderByDescending(p => p.CreatedAt).ThenByDescending(p => p.Id)
@@ -230,7 +230,7 @@ public class ChildrenController(PuglingDbContext db, WalletService wallet, Accou
         // Währung → Buchungs-Kind: Gems über den Manual-Zwilling, sonst die klassische Münz-Manualbuchung.
         var kind = dto.Currency == Currency.Gems ? PointKind.ManualGems : PointKind.Manual;
         var entry = new ChildPointsEntry { ChildId = childId, Kind = kind, Amount = dto.Amount, Reason = dto.Reason ?? "" };
-        db.ChildPoints.Add(entry);
+        db.ChildPointsEntries.Add(entry);
         await db.SaveChangesAsync(ct);
 
         var response = new PointsEntryResponse(entry.Id, childId, entry.Amount, entry.Kind, entry.Reason, entry.CreatedAt);

@@ -1,4 +1,4 @@
-using System.Net.Http.Json;
+﻿using System.Net.Http.Json;
 using System.Text.Json;
 using Microsoft.Extensions.DependencyInjection;
 using Pugling.Api.Data;
@@ -112,7 +112,7 @@ public class PositionGoalOverviewTests(PuglingWebAppFactory factory) : IClassFix
         using var scope = _factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
         Assert.Empty(db.PositionGoalRewards.Where(r => r.PlanPositionId == positionId));
-        Assert.Equal(0, db.ChildPoints.Count(p => p.ChildId == childId && p.Kind == PointKind.Goal));
+        Assert.Equal(0, db.ChildPointsEntries.Count(p => p.ChildId == childId && p.Kind == PointKind.Goal));
     }
 
     /// <summary>
@@ -151,7 +151,7 @@ public class PositionGoalOverviewTests(PuglingWebAppFactory factory) : IClassFix
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
         using var scope = _factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
-        var ledgerBefore = db.ChildPoints.Count(p => p.Kind == PointKind.Goal);
+        var ledgerBefore = db.ChildPointsEntries.Count(p => p.Kind == PointKind.Goal);
 
         // Der Verlierer: dieselbe Periode, Buchung steht im ChangeTracker und ist noch nicht geschrieben.
         var plan = db.StudyPlans.First(p => p.Id == planId);
@@ -163,7 +163,7 @@ public class PositionGoalOverviewTests(PuglingWebAppFactory factory) : IClassFix
             Day = today,
             Points = 20,
         });
-        db.ChildPoints.Add(new ChildPointsEntry
+        db.ChildPointsEntries.Add(new ChildPointsEntry
         {
             ChildId = plan.ChildId,
             Kind = PointKind.Goal,
@@ -180,7 +180,7 @@ public class PositionGoalOverviewTests(PuglingWebAppFactory factory) : IClassFix
         var fresh = check.ServiceProvider.GetRequiredService<PuglingDbContext>();
         // Weder halb noch doppelt gebucht: der Konflikt verwirft die ganze Transaktion des Verlierers.
         Assert.Equal(1, fresh.PositionGoalRewards.Count(r => r.PlanPositionId == positionId));
-        Assert.Equal(ledgerBefore, fresh.ChildPoints.Count(p => p.Kind == PointKind.Goal));
+        Assert.Equal(ledgerBefore, fresh.ChildPointsEntries.Count(p => p.Kind == PointKind.Goal));
     }
 
     /// <summary>

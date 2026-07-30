@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 
@@ -164,8 +164,8 @@ public class InterestTaxonomyTests(PuglingWebAppFactory factory) : IClassFixture
     public async Task FremdesKind_BleibtVerschlossen()
     {
         // Demo-Vater aus dem Seed (angelegt nach Papa und dem Lehrer, daher Id 3).
-        var demoFather = await TestApi.FatherAsync(factory, id: 3, pin: "0001");
-        var res = await demoFather.GetAsync("/api/v1/supervisor/children/1/interests");
+        var demoSupervisor = await TestApi.FatherAsync(factory, id: 3, pin: "0001");
+        var res = await demoSupervisor.GetAsync("/api/v1/supervisor/children/1/interests");
         Assert.Equal(HttpStatusCode.NotFound, res.StatusCode);
     }
 
@@ -178,12 +178,12 @@ public class InterestTaxonomyTests(PuglingWebAppFactory factory) : IClassFixture
     public async Task Backfill_UebernimmtFreitextInteressenDerBestandskinder()
     {
         // Demo-Vater aus dem Seed (angelegt nach Papa und dem Lehrer, daher Id 3).
-        var demoFather = await TestApi.FatherAsync(factory, id: 3, pin: "0001");
-        var children = await GetAsync(demoFather, "/api/v1/supervisor/children");
+        var demoSupervisor = await TestApi.FatherAsync(factory, id: 3, pin: "0001");
+        var children = await GetAsync(demoSupervisor, "/api/v1/supervisor/children");
         var demoChildId = children.EnumerateArray()
             .First(c => c.GetProperty("name").GetString() == "Demo-Kind").GetProperty("id").GetInt32();
 
-        var interests = await GetAsync(demoFather, $"/api/v1/supervisor/children/{demoChildId}/interests");
+        var interests = await GetAsync(demoSupervisor, $"/api/v1/supervisor/children/{demoChildId}/interests");
         var slugs = interests.EnumerateArray().Select(i => i.GetProperty("slug").GetString()).ToList();
 
         Assert.Contains("minecraft", slugs);
@@ -192,7 +192,7 @@ public class InterestTaxonomyTests(PuglingWebAppFactory factory) : IClassFixture
         Assert.All(interests.EnumerateArray(), i => Assert.Equal(2, i.GetProperty("weight").GetInt32()));
 
         // Der Freitext bleibt erhalten: der KI-Creator lebt davon.
-        var child = await GetAsync(demoFather, $"/api/v1/supervisor/children/{demoChildId}");
+        var child = await GetAsync(demoSupervisor, $"/api/v1/supervisor/children/{demoChildId}");
         Assert.Contains("Minecraft", child.GetProperty("interests").EnumerateArray().Select(i => i.GetString()));
     }
 

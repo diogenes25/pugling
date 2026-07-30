@@ -1,4 +1,4 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Pugling.Api.Data;
 using Pugling.Api.Models;
@@ -81,7 +81,7 @@ public class ExerciseContentResolver(PuglingDbContext db, ExerciseContentProvide
         if (rows.Count == 0) return [];
 
         var ids = rows.Select(r => r.VocabularyId).Distinct().ToList();
-        var byId = await db.Vocabulary.AsNoTracking().Where(v => ids.Contains(v.Id)).ToDictionaryAsync(v => v.Id, ct);
+        var byId = await db.Vocabularies.AsNoTracking().Where(v => ids.Contains(v.Id)).ToDictionaryAsync(v => v.Id, ct);
 
         var images = childId is { } cid
             ? await media.SelectForItemsAsync(cid, [.. rows.Select(r => (r.Id, r.VocabularyId))], ct: ct)
@@ -111,7 +111,7 @@ public class ExerciseContentResolver(PuglingDbContext db, ExerciseContentProvide
     {
         var keys = config.Gaps.Where(g => !string.IsNullOrWhiteSpace(g.VocabKey))
             .Select(g => g.VocabKey!).Distinct().ToList();
-        var byKey = await db.Vocabulary.AsNoTracking()
+        var byKey = await db.Vocabularies.AsNoTracking()
             .Where(v => keys.Contains(v.Key))
             .ToDictionaryAsync(v => v.Key, ct);
 

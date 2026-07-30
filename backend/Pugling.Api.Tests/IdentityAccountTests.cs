@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
@@ -87,7 +87,7 @@ public class IdentityAccountTests(PuglingWebAppFactory factory) : IClassFixture<
     {
         var first = (await MeAsync(await TestApi.FatherAsync(_factory))).GetProperty("accountId").GetInt32();
         var second = (await MeAsync(await TestApi.FatherAsync(_factory))).GetProperty("accountId").GetInt32();
-        Assert.Equal(first, second); // EnsureForFatherAsync ist idempotent
+        Assert.Equal(first, second); // EnsureForAdultAsync ist idempotent
     }
 
     /// <summary>

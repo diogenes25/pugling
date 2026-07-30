@@ -1,4 +1,4 @@
-using System.Security.Claims;
+﻿using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
 using Pugling.Api.Data;
 using Pugling.Api.Models;
@@ -74,8 +74,8 @@ public static class ClaimsPrincipalExtensions
     /// Fehlt der Autor (geseedete System-Übung) oder der <c>fid</c>, ist das Ergebnis <c>false</c>
     /// (fail-closed) – sonst würde ein fehlender Claim System-Übungen fälschlich freigeben.
     /// </summary>
-    public static bool IsOwnedBy(int? authorFatherId, int? fatherId) =>
-        authorFatherId is { } author && author == fatherId;
+    public static bool IsOwnedBy(int? authorFatherId, int? supervisorId) =>
+        authorFatherId is { } author && author == supervisorId;
 }
 
 /// <summary>
@@ -96,7 +96,7 @@ public class AuthAccess(PuglingDbContext db)
     }
 
     /// <summary>Betreut der angemeldete Supervisor dieses Kind (Mitgliedschaft über <see cref="SupervisorLink"/>)?</summary>
-    public async Task<bool> FatherOwnsChildAsync(ClaimsPrincipal user, int childId, CancellationToken ct = default)
+    public async Task<bool> SupervisorOwnsChildAsync(ClaimsPrincipal user, int childId, CancellationToken ct = default)
     {
         var fid = user.SupervisorId();
         return fid is not null && await db.SupervisorLinks.AnyAsync(l => l.StudentId == childId && l.SupervisorId == fid, ct);
@@ -109,6 +109,6 @@ public class AuthAccess(PuglingDbContext db)
     public async Task<bool> OwnsChildAsync(ClaimsPrincipal user, int childId, CancellationToken ct = default)
     {
         if (user.IsStudent() && user.StudentId() == childId) return true;
-        return user.IsSupervisor() && await FatherOwnsChildAsync(user, childId, ct);
+        return user.IsSupervisor() && await SupervisorOwnsChildAsync(user, childId, ct);
     }
 }

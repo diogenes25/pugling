@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Pugling.Api.Auth;
@@ -61,10 +61,10 @@ public class ShopController(PuglingDbContext db, ShopService shop) : ControllerB
         [FromQuery] int skip = 0, [FromQuery] int take = PagingExtensions.DefaultTake,
         CancellationToken ct = default)
     {
-        var fatherId = User.AdultId()!.Value;
+        var supervisorId = User.AdultId()!.Value;
         var query = db.ShopArticles
             .AsNoTracking()
-            .Where(a => a.AdultId == fatherId);
+            .Where(a => a.AdultId == supervisorId);
         if (!string.IsNullOrWhiteSpace(search))
             query = query.Where(a => a.Title.Contains(search) || a.ArticleNumber.Contains(search));
         return (await query
@@ -80,9 +80,9 @@ public class ShopController(PuglingDbContext db, ShopService shop) : ControllerB
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<ShopArticleDto>> Article(int articleId, CancellationToken ct = default)
     {
-        var fatherId = User.AdultId()!.Value;
+        var supervisorId = User.AdultId()!.Value;
         var article = await db.ShopArticles.AsNoTracking()
-            .FirstOrDefaultAsync(a => a.Id == articleId && a.AdultId == fatherId, ct);
+            .FirstOrDefaultAsync(a => a.Id == articleId && a.AdultId == supervisorId, ct);
         if (article is null) return NotFound();
         return MapArticle(article);
     }
@@ -99,14 +99,14 @@ public class ShopController(PuglingDbContext db, ShopService shop) : ControllerB
         if (string.IsNullOrWhiteSpace(dto.Title))
             return this.ProblemWithCode(ApiErrors.ValidationError, "Title is required.");
 
-        var fatherId = User.AdultId()!.Value;
+        var supervisorId = User.AdultId()!.Value;
         var articleNumber = dto.ArticleNumber.Trim();
-        if (await db.ShopArticles.AnyAsync(a => a.AdultId == fatherId && a.ArticleNumber == articleNumber, ct))
+        if (await db.ShopArticles.AnyAsync(a => a.AdultId == supervisorId && a.ArticleNumber == articleNumber, ct))
             return this.ProblemWithCode(ApiErrors.DuplicateKey, "Article number already exists in this family shop.");
 
         var article = new ShopArticle
         {
-            AdultId = fatherId,
+            AdultId = supervisorId,
             ArticleNumber = articleNumber,
             Title = dto.Title.Trim(),
             Description = dto.Description?.Trim() ?? "",
@@ -127,8 +127,8 @@ public class ShopController(PuglingDbContext db, ShopService shop) : ControllerB
     public async Task<ActionResult<ShopArticleDto>> UpdateArticle(
         int articleId, UpdateShopArticleDto dto, CancellationToken ct = default)
     {
-        var fatherId = User.AdultId()!.Value;
-        var article = await db.ShopArticles.FirstOrDefaultAsync(a => a.Id == articleId && a.AdultId == fatherId, ct);
+        var supervisorId = User.AdultId()!.Value;
+        var article = await db.ShopArticles.FirstOrDefaultAsync(a => a.Id == articleId && a.AdultId == supervisorId, ct);
         if (article is null) return NotFound();
 
         var nextNumber = dto.ArticleNumber?.Trim() ?? article.ArticleNumber;
@@ -138,7 +138,7 @@ public class ShopController(PuglingDbContext db, ShopService shop) : ControllerB
             return this.ProblemWithCode(ApiErrors.ValidationError, "Title must not be empty.");
 
         if (nextNumber != article.ArticleNumber
-            && await db.ShopArticles.AnyAsync(a => a.AdultId == fatherId && a.ArticleNumber == nextNumber && a.Id != articleId, ct))
+            && await db.ShopArticles.AnyAsync(a => a.AdultId == supervisorId && a.ArticleNumber == nextNumber && a.Id != articleId, ct))
             return this.ProblemWithCode(ApiErrors.DuplicateKey, "Article number already exists in this family shop.");
 
         article.ArticleNumber = nextNumber;
@@ -156,8 +156,8 @@ public class ShopController(PuglingDbContext db, ShopService shop) : ControllerB
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> DeleteArticle(int articleId, CancellationToken ct = default)
     {
-        var fatherId = User.AdultId()!.Value;
-        var article = await db.ShopArticles.FirstOrDefaultAsync(a => a.Id == articleId && a.AdultId == fatherId, ct);
+        var supervisorId = User.AdultId()!.Value;
+        var article = await db.ShopArticles.FirstOrDefaultAsync(a => a.Id == articleId && a.AdultId == supervisorId, ct);
         if (article is null) return NotFound();
         db.ShopArticles.Remove(article);
         await db.SaveChangesAsync(ct);
@@ -172,12 +172,12 @@ public class ShopController(PuglingDbContext db, ShopService shop) : ControllerB
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<IReadOnlyList<ShopListingDto>>> Listings(int articleId, CancellationToken ct = default)
     {
-        var fatherId = User.AdultId()!.Value;
+        var supervisorId = User.AdultId()!.Value;
         var article = await db.ShopArticles.AsNoTracking()
-            .FirstOrDefaultAsync(a => a.Id == articleId && a.AdultId == fatherId, ct);
+            .FirstOrDefaultAsync(a => a.Id == articleId && a.AdultId == supervisorId, ct);
         if (article is null) return NotFound();
 
-        var listings = await shop.ListingsForFatherAsync(fatherId, activeOnly: false, DateTime.UtcNow, ct);
+        var listings = await shop.ListingsForFatherAsync(supervisorId, activeOnly: false, DateTime.UtcNow, ct);
         return listings.Where(l => l.ShopArticleId == articleId).Select(MapListing).ToList();
     }
 
@@ -187,7 +187,7 @@ public class ShopController(PuglingDbContext db, ShopService shop) : ControllerB
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<ShopListingDto>> Listing(int articleId, int listingId, CancellationToken ct = default)
     {
-        var fatherId = User.AdultId()!.Value;
+        var supervisorId = User.AdultId()!.Value;
         // Nur DIESES Angebot laden (kein Voll-Scan aller Vater-Angebote). AsNoTracking + rein
         // anzeigeseitige Auffüllung (ApplyDueRefill mutiert nur das nicht getrackte Objekt, kein
         // SaveChanges) – ein GET darf keinen Schreib-Nebeneffekt haben. Persistiert wird die Auffüllung
@@ -195,7 +195,7 @@ public class ShopController(PuglingDbContext db, ShopService shop) : ControllerB
         var listing = await db.ShopListings.AsNoTracking()
             .Include(l => l.ShopArticle)
             .FirstOrDefaultAsync(l => l.Id == listingId && l.ShopArticleId == articleId
-                && l.ShopArticle!.AdultId == fatherId, ct);
+                && l.ShopArticle!.AdultId == supervisorId, ct);
         if (listing is null) return NotFound();
 
         ShopService.ApplyDueRefill(listing, DateTime.UtcNow);
@@ -210,8 +210,8 @@ public class ShopController(PuglingDbContext db, ShopService shop) : ControllerB
     public async Task<ActionResult<ShopListingDto>> CreateListing(
         int articleId, CreateShopListingDto dto, CancellationToken ct = default)
     {
-        var fatherId = User.AdultId()!.Value;
-        var article = await db.ShopArticles.FirstOrDefaultAsync(a => a.Id == articleId && a.AdultId == fatherId, ct);
+        var supervisorId = User.AdultId()!.Value;
+        var article = await db.ShopArticles.FirstOrDefaultAsync(a => a.Id == articleId && a.AdultId == supervisorId, ct);
         if (article is null) return NotFound();
 
         var validation = ValidateListing(dto.CoinPrice, dto.GemPrice, dto.UnitsPerPurchase,
@@ -246,11 +246,11 @@ public class ShopController(PuglingDbContext db, ShopService shop) : ControllerB
     public async Task<ActionResult<ShopListingDto>> UpdateListing(
         int articleId, int listingId, UpdateShopListingDto dto, CancellationToken ct = default)
     {
-        var fatherId = User.AdultId()!.Value;
+        var supervisorId = User.AdultId()!.Value;
         var listing = await db.ShopListings
             .Include(l => l.ShopArticle)
             .FirstOrDefaultAsync(l => l.Id == listingId && l.ShopArticleId == articleId
-                && l.ShopArticle!.AdultId == fatherId, ct);
+                && l.ShopArticle!.AdultId == supervisorId, ct);
         if (listing is null) return NotFound();
 
         var nextCoin = dto.CoinPrice ?? listing.CoinPrice;
@@ -288,11 +288,11 @@ public class ShopController(PuglingDbContext db, ShopService shop) : ControllerB
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> DeleteListing(int articleId, int listingId, CancellationToken ct = default)
     {
-        var fatherId = User.AdultId()!.Value;
+        var supervisorId = User.AdultId()!.Value;
         var listing = await db.ShopListings
             .Include(l => l.ShopArticle)
             .FirstOrDefaultAsync(l => l.Id == listingId && l.ShopArticleId == articleId
-                && l.ShopArticle!.AdultId == fatherId, ct);
+                && l.ShopArticle!.AdultId == supervisorId, ct);
         if (listing is null) return NotFound();
         db.ShopListings.Remove(listing);
         await db.SaveChangesAsync(ct);

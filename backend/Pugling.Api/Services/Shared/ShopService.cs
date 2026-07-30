@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Pugling.Api.Data;
 using Pugling.Api.Errors;
 using Pugling.Api.Models;
@@ -68,11 +68,11 @@ public class ShopService(PuglingDbContext db, WalletService wallet)
     /// fällige Refill-Regeln idempotent an.
     /// </summary>
     public async Task<IReadOnlyList<ShopListing>> ListingsForFatherAsync(
-        int fatherId, bool activeOnly, DateTime nowUtc, CancellationToken ct = default)
+        int supervisorId, bool activeOnly, DateTime nowUtc, CancellationToken ct = default)
     {
         var query = db.ShopListings
             .Include(l => l.ShopArticle)
-            .Where(l => l.ShopArticle!.AdultId == fatherId);
+            .Where(l => l.ShopArticle!.AdultId == supervisorId);
         if (activeOnly) query = query.Where(l => l.Active);
 
         var listings = await query
@@ -90,7 +90,7 @@ public class ShopService(PuglingDbContext db, WalletService wallet)
         db.ChangeTracker.Clear();
         var fresh = db.ShopListings.AsNoTracking()
             .Include(l => l.ShopArticle)
-            .Where(l => l.ShopArticle!.AdultId == fatherId);
+            .Where(l => l.ShopArticle!.AdultId == supervisorId);
         if (activeOnly) fresh = fresh.Where(l => l.Active);
         return await fresh
             .OrderByDescending(l => l.Active)
@@ -153,7 +153,7 @@ public class ShopService(PuglingDbContext db, WalletService wallet)
         var article = listing.ShopArticle!;
 
         if (listing.CoinPrice > 0)
-            db.ChildPoints.Add(new ChildPointsEntry
+            db.ChildPointsEntries.Add(new ChildPointsEntry
             {
                 ChildId = childId,
                 Amount = -listing.CoinPrice,
@@ -162,7 +162,7 @@ public class ShopService(PuglingDbContext db, WalletService wallet)
                 CreatedAt = nowUtc,
             });
         if (listing.GemPrice > 0)
-            db.ChildPoints.Add(new ChildPointsEntry
+            db.ChildPointsEntries.Add(new ChildPointsEntry
             {
                 ChildId = childId,
                 Amount = -listing.GemPrice,
@@ -240,7 +240,7 @@ public class ShopService(PuglingDbContext db, WalletService wallet)
         purchase.ConcurrencyStamp = Guid.NewGuid();
 
         if (purchase.CoinPrice > 0)
-            db.ChildPoints.Add(new ChildPointsEntry
+            db.ChildPointsEntries.Add(new ChildPointsEntry
             {
                 ChildId = childId,
                 Amount = purchase.CoinPrice,
@@ -249,7 +249,7 @@ public class ShopService(PuglingDbContext db, WalletService wallet)
                 CreatedAt = nowUtc,
             });
         if (purchase.GemPrice > 0)
-            db.ChildPoints.Add(new ChildPointsEntry
+            db.ChildPointsEntries.Add(new ChildPointsEntry
             {
                 ChildId = childId,
                 Amount = purchase.GemPrice,

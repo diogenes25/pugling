@@ -1,4 +1,4 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Pugling.Api.Models;
@@ -20,7 +20,7 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
     // Vom Kind verwendete Lehrbücher (übungsunabhängiges Profil, Grundlage für einen späteren Lehrplan-Generator).
     public DbSet<Textbook> Textbooks => Set<Textbook>();
     public DbSet<SupervisorLink> SupervisorLinks => Set<SupervisorLink>();
-    public DbSet<ChildPointsEntry> ChildPoints => Set<ChildPointsEntry>();
+    public DbSet<ChildPointsEntry> ChildPointsEntries => Set<ChildPointsEntry>();
 
     // Unterrichts-Seite des Katalogs: Lehrwerk-Reihe -> Unit, dazu die Creator-Profile („Fachlehrer").
     public DbSet<TextbookSeries> TextbookSeries => Set<TextbookSeries>();
@@ -38,7 +38,7 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
     public DbSet<ExerciseItem> ExerciseItems => Set<ExerciseItem>();
 
     // Sprachlernen: atomarer Vokabel-Store + Lückentext-Store
-    public DbSet<Vocabulary> Vocabulary => Set<Vocabulary>();
+    public DbSet<Vocabulary> Vocabularies => Set<Vocabulary>();
     public DbSet<ClozeText> ClozeTexts => Set<ClozeText>();
     // Kindneutrale Schlagworte für den Vokabel-Katalog (Kapitel/Klasse/Thema)
     public DbSet<VocabTag> VocabTags => Set<VocabTag>();
@@ -81,7 +81,7 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
     public DbSet<ObjectiveReward> ObjectiveRewards => Set<ObjectiveReward>();
 
     // Stundenplan-Steuerung
-    public DbSet<TimetableEntry> Timetable => Set<TimetableEntry>();
+    public DbSet<TimetableEntry> TimetableEntries => Set<TimetableEntry>();
 
     // Gamification: Missionen (zeitgebundene Ziele) + Auszeichnungen (Badges) je Kind, mit Vergabe-Log
     public DbSet<Mission> Missions => Set<Mission>();
@@ -820,6 +820,7 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
         });
 
         ApplyEnumConvention(modelBuilder);
+        ApplyStringLengthConvention(modelBuilder);
     }
 
     /// <summary>
@@ -933,6 +934,86 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
                 if (property.GetValueConverter() is not null) continue;
                 property.SetValueConverter(
                     typeof(EnumToStringConverter<>).MakeGenericType(type));
+            }
+        }
+    }
+
+    /// <summary>
+    /// String-Spalten, die <b>absichtlich</b> unbegrenzt bleiben: Property → warum. Es sind ausnahmslos
+    /// serialisierte Strukturen (JSON) oder eingefrorene Reihenfolgen – ihre Länge folgt aus dem Inhalt,
+    /// nicht aus einer Eingabe, und eine Obergrenze wäre eine willkürliche Kappungsgrenze mitten im
+    /// Datenmodell.
+    /// </summary>
+    private static readonly Dictionary<string, string> UnlimitedByDesign = new(StringComparer.Ordinal)
+    {
+        ["Exercise.ConfigJson"] = "Typspezifische Übungs-Config als JSON – wächst mit dem Übungsinhalt.",
+        ["Exercise.SuggestedBonus"] = "Bonus-Vorschlag als JSON-Objekt.",
+        ["Remark.ContextJson"] = "Automatischer Kontext-Mitschnitt der Anmerkung – das IST das Feature.",
+        ["Remark.RecentErrorsJson"] = "Mitgeschnittene letzte Fehler; Länge folgt dem Vorfall.",
+        ["Vocabulary.Noun"] = "Substantiv-Formen als JSON-Objekt.",
+        ["Vocabulary.Verb"] = "Verb-Formen als JSON-Objekt.",
+        ["ClozeText.Gaps"] = "Lücken des Textes als JSON-Liste – wächst mit dem Text.",
+        ["ClozeText.WordBank"] = "Wortbank als JSON-Liste.",
+        ["Child.Interests"] = "Freitext-Interessen als JSON-Liste (Sprache des KI-Creators).",
+        ["Child.OwnedSkins"] = "Freigeschaltete Skins als JSON-Liste – wächst mit dem Spielstand.",
+        ["CreatorProfile.DefaultTypes"] = "Voreingestellte Übungstypen als JSON-Liste.",
+        ["PlanPosition.BoxIntervalDays"] = "Leitner-Intervalle als JSON-Liste.",
+        ["PlanPosition.StageSchedule"] = "Stufenplan als JSON-Liste.",
+        ["PracticeSession.Order"] = "Eingefrorene Ausspiel-Reihenfolge als JSON-Liste – so lang wie der Pool.",
+        ["TestAttempt.Order"] = "Eingefrorene Test-Reihenfolge als JSON-Liste – so lang wie der Pool.",
+    };
+
+    /// <summary>Ob die Spalte bewusst unbegrenzt bleibt. Der Wächter G3 liest diese Liste, statt eine zweite zu führen.</summary>
+    public static bool UnbegrenztErlaubt(string entityDotProperty) =>
+        UnlimitedByDesign.ContainsKey(entityDotProperty);
+
+    /// <summary>Standard-Länge einer String-Spalte, wenn nichts anderes gesagt ist.</summary>
+    private const int DefaultLength = 200;
+    /// <summary>Länge für Freitext-Felder (Beschreibung, Notizen, Anmerkungstext).</summary>
+    private const int FreeTextLength = 2000;
+    /// <summary>Länge für Slugs/Schlüssel – kurz, weil sie in Unique-Indizes stehen.</summary>
+    private const int KeyLength = 128;
+
+    /// <summary>Namens-Endungen, die ein Freitext-Feld verraten (großzügigere Länge).</summary>
+    private static readonly string[] FreeTextSuffixes =
+        ["Description", "Notes", "Text", "Reason", "Persona", "Didactics", "Comment", "Message", "Answer"];
+
+    /// <summary>Namens-Endungen, die einen Slug/Schlüssel verraten (kurze Länge, oft unique-indiziert).</summary>
+    private static readonly string[] KeySuffixes = ["Key", "Slug"];
+
+    /// <summary>
+    /// <b>Eine Regel statt 143 Einzelentscheidungen:</b> jede String-Spalte bekommt eine Länge – Standard
+    /// 200, Freitext 2000, Slugs/Schlüssel 128. Vorher trug <b>keine einzige</b> Spalte im ganzen Modell ein
+    /// <c>HasMaxLength</c>.
+    /// <para>
+    /// <b>Ehrlich dazugesagt:</b> SQLite setzt die Länge nicht durch, und EF validiert sie beim
+    /// <c>SaveChanges</c> auch nicht. Der Wert liegt woanders: bei einem Provider-Wechsel entstünde sonst
+    /// überall <c>NVARCHAR(MAX)</c> – und darauf lässt sich in SQL Server kein Unique-Index anlegen, was
+    /// genau die Spalten trifft, die die Idempotenz tragen. Deshalb gilt zusätzlich <b>hart</b>: eine
+    /// unique-indizierte String-Spalte MUSS begrenzt sein. Eingabe-Durchsetzung bleibt Sache der
+    /// DTO-Validierung und ist nicht Teil dieser Regel.
+    /// </para>
+    /// <para>
+    /// Die Ausnahmen (<see cref="UnlimitedByDesign"/>) sind ausnahmslos serialisierte Strukturen: ihre Länge
+    /// folgt dem Inhalt, eine Obergrenze wäre eine willkürliche Kappung mitten im Datenmodell.
+    /// </para>
+    /// </summary>
+    private static void ApplyStringLengthConvention(ModelBuilder modelBuilder)
+    {
+        foreach (var entity in modelBuilder.Model.GetEntityTypes())
+        {
+            foreach (var property in entity.GetProperties())
+            {
+                if (property.ClrType != typeof(string)) continue;
+                if (UnlimitedByDesign.ContainsKey($"{entity.ClrType.Name}.{property.Name}")) continue;
+                // Eine ausdrückliche Länge weiter oben gewinnt gegen die Konvention.
+                if (property.GetMaxLength() is not null) continue;
+
+                var name = property.Name;
+                property.SetMaxLength(
+                    KeySuffixes.Any(s => name.EndsWith(s, StringComparison.Ordinal)) ? KeyLength
+                    : FreeTextSuffixes.Any(s => name.EndsWith(s, StringComparison.Ordinal)) ? FreeTextLength
+                    : DefaultLength);
             }
         }
     }

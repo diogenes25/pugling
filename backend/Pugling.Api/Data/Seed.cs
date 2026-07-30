@@ -1,4 +1,4 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Pugling.Api.Auth;
 using Pugling.Api.Models;
@@ -122,7 +122,7 @@ public static class Seed
     /// Ein Erwachsener <b>ohne betreutes Kind ist ein Lehrer-Konto</b> und bekommt darum
     /// <see cref="AccountService.EnsureForTeacherAsync"/> (Creator, <i>kein</i> Supervisor) – genau die
     /// fachliche Unterscheidung aus docs/lehrer-konto-plan.md: ein Erwachsener ohne Betreuungsauftrag.
-    /// Vorher rief der Start hier für <i>jeden</i> Adult <c>EnsureForFatherAsync</c>, und der geseedete
+    /// Vorher rief der Start hier für <i>jeden</i> Adult <c>EnsureForAdultAsync</c>, und der geseedete
     /// Lehrer bekam die Supervisor-Rolle, obwohl die Creator-only-Variante genau für ihn existiert und
     /// nie erreicht wurde.
     /// </para>
@@ -136,7 +136,7 @@ public static class Seed
     {
         foreach (var adult in await db.Adults.AsNoTracking().Include(a => a.SupervisedLinks).ToListAsync(ct))
         {
-            if (adult.SupervisedLinks.Count > 0) await accounts.EnsureForFatherAsync(adult, ct);
+            if (adult.SupervisedLinks.Count > 0) await accounts.EnsureForAdultAsync(adult, ct);
             else await accounts.EnsureForTeacherAsync(adult, ct);
         }
 
@@ -231,17 +231,17 @@ public static class Seed
     private static void SeedDemoPlan(PuglingDbContext db)
     {
         const string planTitle = "Demo: Alle Lernarten (Frontend-Testdaten)";
-        const string demoFatherEmail = "demo-vater@example.com";
+        const string demoSupervisorEmail = "demo-vater@example.com";
 
         // Bewusst eine EIGENE Demo-Familie statt des primären Seed-Kindes „Sohn": So bleibt „Sohn" ein
         // sauberer Ausgangszustand (u. a. für die Tests, die dort ihre eigenen Pläne/Ziele aufbauen),
         // während dieses reichhaltige Frontend-Testdaten-Set isoliert daneben liegt. Get-or-create,
         // damit ein Nachlauf auf befüllter DB weder dupliziert noch fremde Accounts anfasst.
-        var demoFather = db.Adults.FirstOrDefault(f => f.Email == demoFatherEmail);
-        if (demoFather is null)
+        var demoSupervisor = db.Adults.FirstOrDefault(f => f.Email == demoSupervisorEmail);
+        if (demoSupervisor is null)
         {
-            demoFather = new Adult { Name = "Demo-Vater", Email = demoFatherEmail, Pin = Auth.PinHasher.Hash("0001") };
-            db.Adults.Add(demoFather);
+            demoSupervisor = new Adult { Name = "Demo-Vater", Email = demoSupervisorEmail, Pin = Auth.PinHasher.Hash("0001") };
+            db.Adults.Add(demoSupervisor);
             db.SaveChanges();
         }
 
@@ -265,7 +265,7 @@ public static class Seed
             };
             db.Children.Add(child);
             db.SaveChanges();
-            db.SupervisorLinks.Add(new SupervisorLink { SupervisorId = demoFather.Id, StudentId = child.Id, Relation = SupervisorRelation.Father });
+            db.SupervisorLinks.Add(new SupervisorLink { SupervisorId = demoSupervisor.Id, StudentId = child.Id, Relation = SupervisorRelation.Father });
             db.SaveChanges();
         }
 
@@ -584,8 +584,8 @@ public static class Seed
         foreach (var w in woerter)
         {
             var key = VocabKey.Generate("fr", w.Word, "de", w.De);
-            if (db.Vocabulary.Any(v => v.Key == key)) continue;
-            db.Vocabulary.Add(new Vocabulary
+            if (db.Vocabularies.Any(v => v.Key == key)) continue;
+            db.Vocabularies.Add(new Vocabulary
             {
                 Key = key,
                 SourceLanguage = "fr",
@@ -758,10 +758,10 @@ public static class Seed
 
     private static void SeedVocabulary(PuglingDbContext db)
     {
-        if (db.Vocabulary.Any()) return;
+        if (db.Vocabularies.Any()) return;
 
         // Substantiv + Verb-Grundform
-        db.Vocabulary.AddRange(
+        db.Vocabularies.AddRange(
             new Vocabulary
             {
                 Key = "en_house_de_haus",
@@ -785,8 +785,8 @@ public static class Seed
         db.SaveChanges();
 
         // Flektierte Form, die auf die Grundform verweist
-        var baseId = db.Vocabulary.Where(v => v.Key == "en_go_de_gehen").Select(v => v.Id).First();
-        db.Vocabulary.Add(new Vocabulary
+        var baseId = db.Vocabularies.Where(v => v.Key == "en_go_de_gehen").Select(v => v.Id).First();
+        db.Vocabularies.Add(new Vocabulary
         {
             Key = "en_goes_de_geht",
             SourceLanguage = "en",

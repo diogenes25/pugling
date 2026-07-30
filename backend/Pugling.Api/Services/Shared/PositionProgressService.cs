@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Pugling.Api.Data;
 using Pugling.Api.Models;
 
@@ -154,7 +154,7 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
                 Day = day,
                 Points = pos.PointsGoalMet,
             });
-            db.ChildPoints.Add(new ChildPointsEntry
+            db.ChildPointsEntries.Add(new ChildPointsEntry
             {
                 ChildId = plan.ChildId,
                 Kind = PointKind.Goal,
@@ -263,7 +263,7 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
                     Day = to,
                     Points = pos.PenaltyCoins,
                 });
-                db.ChildPoints.Add(new ChildPointsEntry
+                db.ChildPointsEntries.Add(new ChildPointsEntry
                 {
                     ChildId = childId,
                     Kind = PointKind.GoalPenalty,

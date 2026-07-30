@@ -11,7 +11,7 @@ using Pugling.Api.Data;
 namespace Pugling.Api.Data.Migrations
 {
     [DbContext(typeof(PuglingDbContext))]
-    [Migration("20260730222450_InitialCreate")]
+    [Migration("20260730230256_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -31,13 +31,16 @@ namespace Pugling.Api.Data.Migrations
 
                     b.Property<string>("DisplayName")
                         .IsRequired()
+                        .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Email")
+                        .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("PinHash")
                         .IsRequired()
+                        .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
@@ -110,6 +113,7 @@ namespace Pugling.Api.Data.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Icon")
+                        .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Metric")
@@ -124,6 +128,7 @@ namespace Pugling.Api.Data.Migrations
 
                     b.Property<string>("Title")
                         .IsRequired()
+                        .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
@@ -169,6 +174,7 @@ namespace Pugling.Api.Data.Migrations
 
                     b.Property<string>("ArticleTitle")
                         .IsRequired()
+                        .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
                     b.Property<int>("ChildId")
@@ -216,6 +222,7 @@ namespace Pugling.Api.Data.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Email")
+                        .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
                     b.Property<bool>("IsAdmin")
@@ -223,10 +230,12 @@ namespace Pugling.Api.Data.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
+                        .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Pin")
                         .IsRequired()
+                        .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
@@ -246,6 +255,7 @@ namespace Pugling.Api.Data.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
+                        .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
                     b.Property<int>("OrderIndex")
@@ -294,6 +304,7 @@ namespace Pugling.Api.Data.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
+                        .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("OwnedSkins")
@@ -302,9 +313,11 @@ namespace Pugling.Api.Data.Migrations
 
                     b.Property<string>("Pin")
                         .IsRequired()
+                        .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("ProfileNotes")
+                        .HasMaxLength(2000)
                         .HasColumnType("TEXT");
 
                     b.Property<int>("SchoolType")
@@ -312,6 +325,7 @@ namespace Pugling.Api.Data.Migrations
 
                     b.Property<string>("SelectedSkin")
                         .IsRequired()
+                        .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
@@ -359,10 +373,12 @@ namespace Pugling.Api.Data.Migrations
 
                     b.Property<string>("ArticleNumber")
                         .IsRequired()
+                        .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("ArticleTitle")
                         .IsRequired()
+                        .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
                     b.Property<int>("ChildId")
@@ -465,6 +481,7 @@ namespace Pugling.Api.Data.Migrations
 
                     b.Property<string>("Reason")
                         .IsRequired()
+                        .HasMaxLength(2000)
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
@@ -473,7 +490,7 @@ namespace Pugling.Api.Data.Migrations
 
                     b.HasIndex("ChildId", "CreatedAt", "Id");
 
-                    b.ToTable("ChildPoints");
+                    b.ToTable("ChildPointsEntries");
                 });
 
             modelBuilder.Entity("Pugling.Api.Models.ClozeText", b =>
@@ -491,25 +508,31 @@ namespace Pugling.Api.Data.Migrations
 
                     b.Property<string>("Key")
                         .IsRequired()
+                        .HasMaxLength(128)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("SourceLanguage")
                         .IsRequired()
+                        .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("TargetLanguage")
                         .IsRequired()
+                        .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Text")
                         .IsRequired()
+                        .HasMaxLength(2000)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Title")
                         .IsRequired()
+                        .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Translation")
+                        .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("WordBank")
@@ -540,6 +563,7 @@ namespace Pugling.Api.Data.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Didactics")
+                        .HasMaxLength(2000)
                         .HasColumnType("TEXT");
 
                     b.Property<int?>("GradeMax")
@@ -550,12 +574,14 @@ namespace Pugling.Api.Data.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
+                        .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
                     b.Property<int?>("OwnerAdultId")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Persona")
+                        .HasMaxLength(2000)
                         .HasColumnType("TEXT");
 
                     b.Property<int>("SchoolTypes")
@@ -566,16 +592,19 @@ namespace Pugling.Api.Data.Migrations
 
                     b.Property<string>("SourceLang")
                         .IsRequired()
+                        .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
                     b.Property<int?>("SubjectId")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("SubjectName")
+                        .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("TargetLang")
                         .IsRequired()
+                        .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
@@ -626,6 +655,7 @@ namespace Pugling.Api.Data.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Description")
+                        .HasMaxLength(2000)
                         .HasColumnType("TEXT");
 
                     b.Property<bool>("ExecutePublic")
@@ -649,6 +679,7 @@ namespace Pugling.Api.Data.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Source")
+                        .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("SuggestedBonus")
@@ -656,10 +687,12 @@ namespace Pugling.Api.Data.Migrations
 
                     b.Property<string>("Title")
                         .IsRequired()
+                        .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Type")
                         .IsRequired()
+                        .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
@@ -686,6 +719,7 @@ namespace Pugling.Api.Data.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
+                        .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
                     b.Property<int>("SubjectId")
@@ -744,6 +778,7 @@ namespace Pugling.Api.Data.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Hint")
+                        .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
                     b.Property<int>("OrderIndex")
@@ -796,6 +831,7 @@ namespace Pugling.Api.Data.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Color")
+                        .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
                     b.Property<DateTime>("CreatedAt")
@@ -807,10 +843,12 @@ namespace Pugling.Api.Data.Migrations
 
                     b.Property<string>("Label")
                         .IsRequired()
+                        .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Slug")
                         .IsRequired()
+                        .HasMaxLength(128)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Synonyms")
@@ -894,6 +932,7 @@ namespace Pugling.Api.Data.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("GivenAnswer")
+                        .HasMaxLength(2000)
                         .HasColumnType("TEXT");
 
                     b.Property<int?>("ItemId")
@@ -952,6 +991,7 @@ namespace Pugling.Api.Data.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Title")
+                        .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
@@ -978,6 +1018,7 @@ namespace Pugling.Api.Data.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<string>("GradeComment")
+                        .HasMaxLength(2000)
                         .HasColumnType("TEXT");
 
                     b.Property<DateOnly>("ScheduledDate")
@@ -992,9 +1033,11 @@ namespace Pugling.Api.Data.Migrations
 
                     b.Property<string>("Title")
                         .IsRequired()
+                        .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Topic")
+                        .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
@@ -1085,6 +1128,7 @@ namespace Pugling.Api.Data.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Title")
+                        .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
@@ -1101,6 +1145,7 @@ namespace Pugling.Api.Data.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Attribution")
+                        .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
                     b.Property<DateTime>("CreatedAt")
@@ -1108,10 +1153,12 @@ namespace Pugling.Api.Data.Migrations
 
                     b.Property<string>("Description")
                         .IsRequired()
+                        .HasMaxLength(2000)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Key")
                         .IsRequired()
+                        .HasMaxLength(128)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Kind")
@@ -1119,6 +1166,7 @@ namespace Pugling.Api.Data.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<string>("License")
+                        .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Origin")
@@ -1126,12 +1174,14 @@ namespace Pugling.Api.Data.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Placeholder")
+                        .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
                     b.Property<int>("Rating")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Source")
+                        .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
@@ -1232,6 +1282,7 @@ namespace Pugling.Api.Data.Migrations
 
                     b.Property<string>("Format")
                         .IsRequired()
+                        .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
                     b.Property<int>("Height")
@@ -1246,6 +1297,7 @@ namespace Pugling.Api.Data.Migrations
 
                     b.Property<string>("Url")
                         .IsRequired()
+                        .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
                     b.Property<int>("Width")
@@ -1290,6 +1342,7 @@ namespace Pugling.Api.Data.Migrations
 
                     b.Property<string>("Title")
                         .IsRequired()
+                        .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
@@ -1357,6 +1410,7 @@ namespace Pugling.Api.Data.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Motivation")
+                        .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
                     b.Property<int>("RewardOnComplete")
@@ -1370,6 +1424,7 @@ namespace Pugling.Api.Data.Migrations
 
                     b.Property<string>("Title")
                         .IsRequired()
+                        .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
@@ -1651,16 +1706,19 @@ namespace Pugling.Api.Data.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Answer")
+                        .HasMaxLength(2000)
                         .HasColumnType("TEXT");
 
                     b.Property<DateTime?>("AnsweredAt")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("AnsweredBy")
+                        .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("AppArea")
                         .IsRequired()
+                        .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("AuthorRole")
@@ -1694,6 +1752,7 @@ namespace Pugling.Api.Data.Migrations
 
                     b.Property<string>("Route")
                         .IsRequired()
+                        .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Status")
@@ -1705,9 +1764,11 @@ namespace Pugling.Api.Data.Migrations
 
                     b.Property<string>("Text")
                         .IsRequired()
+                        .HasMaxLength(2000)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("UserAgent")
+                        .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
@@ -1743,10 +1804,12 @@ namespace Pugling.Api.Data.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("AuthorLabel")
+                        .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Body")
                         .IsRequired()
+                        .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
                     b.Property<DateTime>("CreatedAt")
@@ -1799,10 +1862,12 @@ namespace Pugling.Api.Data.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Grammar")
+                        .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Label")
                         .IsRequired()
+                        .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
                     b.Property<int>("OrderIndex")
@@ -1812,9 +1877,11 @@ namespace Pugling.Api.Data.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Topics")
+                        .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("VocabularyNotes")
+                        .HasMaxLength(2000)
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
@@ -1839,6 +1906,7 @@ namespace Pugling.Api.Data.Migrations
 
                     b.Property<string>("ArticleNumber")
                         .IsRequired()
+                        .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
                     b.Property<DateTime>("CreatedAt")
@@ -1846,10 +1914,12 @@ namespace Pugling.Api.Data.Migrations
 
                     b.Property<string>("Description")
                         .IsRequired()
+                        .HasMaxLength(2000)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Title")
                         .IsRequired()
+                        .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("UnitType")
@@ -1888,6 +1958,7 @@ namespace Pugling.Api.Data.Migrations
 
                     b.Property<string>("Description")
                         .IsRequired()
+                        .HasMaxLength(2000)
                         .HasColumnType("TEXT");
 
                     b.Property<int>("GemPrice")
@@ -1914,6 +1985,7 @@ namespace Pugling.Api.Data.Migrations
 
                     b.Property<string>("Title")
                         .IsRequired()
+                        .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
                     b.Property<int>("UnitsPerPurchase")
@@ -1934,6 +2006,7 @@ namespace Pugling.Api.Data.Migrations
 
                     b.Property<string>("ArticleNumber")
                         .IsRequired()
+                        .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
                     b.Property<int>("ChildId")
@@ -1951,6 +2024,7 @@ namespace Pugling.Api.Data.Migrations
 
                     b.Property<string>("Description")
                         .IsRequired()
+                        .HasMaxLength(2000)
                         .HasColumnType("TEXT");
 
                     b.Property<int>("GemPrice")
@@ -1971,6 +2045,7 @@ namespace Pugling.Api.Data.Migrations
 
                     b.Property<string>("Title")
                         .IsRequired()
+                        .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
                     b.Property<int>("UnitsPerPurchase")
@@ -2001,6 +2076,7 @@ namespace Pugling.Api.Data.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Description")
+                        .HasMaxLength(2000)
                         .HasColumnType("TEXT");
 
                     b.Property<DateOnly>("EndDate")
@@ -2014,6 +2090,7 @@ namespace Pugling.Api.Data.Migrations
 
                     b.Property<string>("Title")
                         .IsRequired()
+                        .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
@@ -2036,6 +2113,7 @@ namespace Pugling.Api.Data.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
+                        .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
@@ -2084,6 +2162,7 @@ namespace Pugling.Api.Data.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Color")
+                        .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
                     b.Property<DateTime>("CreatedAt")
@@ -2095,6 +2174,7 @@ namespace Pugling.Api.Data.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
+                        .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
@@ -2167,6 +2247,7 @@ namespace Pugling.Api.Data.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("GivenAnswer")
+                        .HasMaxLength(2000)
                         .HasColumnType("TEXT");
 
                     b.Property<int>("HintsUsed")
@@ -2204,6 +2285,7 @@ namespace Pugling.Api.Data.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<string>("CurrentChapter")
+                        .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
                     b.Property<int?>("CurrentUnitId")
@@ -2213,9 +2295,11 @@ namespace Pugling.Api.Data.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Isbn")
+                        .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Publisher")
+                        .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
                     b.Property<int?>("SeriesId")
@@ -2225,10 +2309,12 @@ namespace Pugling.Api.Data.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("SubjectName")
+                        .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Title")
                         .IsRequired()
+                        .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
@@ -2255,15 +2341,18 @@ namespace Pugling.Api.Data.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
+                        .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Notes")
+                        .HasMaxLength(2000)
                         .HasColumnType("TEXT");
 
                     b.Property<int?>("OwnerAdultId")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Publisher")
+                        .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
                     b.Property<int>("SchoolTypes")
@@ -2271,18 +2360,22 @@ namespace Pugling.Api.Data.Migrations
 
                     b.Property<string>("Slug")
                         .IsRequired()
+                        .HasMaxLength(128)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("SourceLanguage")
+                        .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
                     b.Property<int?>("SubjectId")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("SubjectName")
+                        .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("TargetLanguage")
+                        .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
@@ -2311,6 +2404,7 @@ namespace Pugling.Api.Data.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
+                        .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
                     b.Property<TimeOnly>("StartTime")
@@ -2341,6 +2435,7 @@ namespace Pugling.Api.Data.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("TimeOfDay")
+                        .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
@@ -2350,7 +2445,7 @@ namespace Pugling.Api.Data.Migrations
                     b.HasIndex("ChildId", "SubjectId", "DayOfWeek")
                         .IsUnique();
 
-                    b.ToTable("Timetable");
+                    b.ToTable("TimetableEntries");
                 });
 
             modelBuilder.Entity("Pugling.Api.Models.VocabTag", b =>
@@ -2360,6 +2455,7 @@ namespace Pugling.Api.Data.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Color")
+                        .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
                     b.Property<DateTime>("CreatedAt")
@@ -2367,6 +2463,7 @@ namespace Pugling.Api.Data.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
+                        .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
@@ -2409,6 +2506,7 @@ namespace Pugling.Api.Data.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("BaseFormRelation")
+                        .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
                     b.Property<DateTime>("CreatedAt")
@@ -2416,6 +2514,7 @@ namespace Pugling.Api.Data.Migrations
 
                     b.Property<string>("Key")
                         .IsRequired()
+                        .HasMaxLength(128)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Noun")
@@ -2426,18 +2525,22 @@ namespace Pugling.Api.Data.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<string>("PronunciationAudioUrl")
+                        .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("SourceLanguage")
                         .IsRequired()
+                        .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("TargetLanguage")
                         .IsRequired()
+                        .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Translation")
                         .IsRequired()
+                        .HasMaxLength(200)
                         .HasColumnType("TEXT")
                         .UseCollation("NOCASE");
 
@@ -2446,10 +2549,12 @@ namespace Pugling.Api.Data.Migrations
 
                     b.Property<string>("Version")
                         .IsRequired()
+                        .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Word")
                         .IsRequired()
+                        .HasMaxLength(200)
                         .HasColumnType("TEXT")
                         .UseCollation("NOCASE");
 
@@ -2464,7 +2569,7 @@ namespace Pugling.Api.Data.Migrations
 
                     b.HasIndex("Word");
 
-                    b.ToTable("Vocabulary");
+                    b.ToTable("Vocabularies");
                 });
 
             modelBuilder.Entity("Pugling.Api.Models.VocabularyTag", b =>

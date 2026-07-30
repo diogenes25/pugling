@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
@@ -47,7 +47,7 @@ public class SeedContractTests(PuglingWebAppFactory factory) : IClassFixture<Pug
         // Adult 2 – der Lehrer. Entsteht in SeedTeacherLibrary, also *nach* SeedAdmin; mehrere
         // Bestandstests (MediaLinkTests, RemarkTests) setzen genau diese 2 voraus.
         // Die Rolle ist jetzt zusicherbar: **Creator, nicht Supervisor**. Vorher rief der Start für jeden
-        // Adult `EnsureForFatherAsync`, und der Lehrer bekam die Supervisor-Rolle, obwohl
+        // Adult `EnsureForAdultAsync`, und der Lehrer bekam die Supervisor-Rolle, obwohl
         // `EnsureForTeacherAsync` genau für ihn existierte und nie erreicht wurde. Der Seed unterscheidet
         // jetzt am Betreuungsauftrag – dieser Test ist die Zusage, dass es dabei bleibt.
         var lehrer = await LoginAsync(c, "adult", new { adultId = 2, pin = "9999" });
@@ -77,7 +77,7 @@ public class SeedContractTests(PuglingWebAppFactory factory) : IClassFixture<Pug
         // Selbstschutz: liefe der Seed gar nicht (oder nur halb), bestünde die Zusicherung oben zufällig,
         // und jeder Test, der auf geseedete Inhalte baut, scheiterte an einer anderen Stelle.
         Assert.True(await db.Subjects.CountAsync() >= 3, "Weniger als drei geseedete Fächer – lief SeedCatalog?");
-        Assert.True(await db.Vocabulary.CountAsync() >= 10, "Zu wenige geseedete Vokabeln – lief SeedVocabulary?");
+        Assert.True(await db.Vocabularies.CountAsync() >= 10, "Zu wenige geseedete Vokabeln – lief SeedVocabulary?");
         Assert.True(await db.StudyPlans.AnyAsync(), "Kein geseedeter Lehrplan – lief SeedDemoPlan?");
     }
 

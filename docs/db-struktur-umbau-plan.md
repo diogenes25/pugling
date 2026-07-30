@@ -4,7 +4,7 @@ tags: [bereich/architektur, bereich/datenmodell, status/laufend]
 
 # DB-/EF-Struktur-Umbau
 
-> **Übergabe-Dokument.** E0–E10 sind umgesetzt und verifiziert; offen sind E11–E14. Beide
+> **Übergabe-Dokument.** E0–E11 sind umgesetzt und verifiziert; offen sind E12–E14. Beide
 > echten Defekte sind damit behoben – der Rest ist Struktur. Dieses Dokument ist so
 > geschrieben, dass jemand ohne Vorwissen die restlichen Etappen zu Ende führen kann: es nennt die
 > getroffenen Entscheidungen, die Arbeitsregeln, die Belege, die bewussten Abweichungen und die
@@ -19,6 +19,7 @@ und ~20 als int (in `Remarks` sogar beides in derselben Tabelle), kein einziges 
 waren keine, und `Subjects`/`Adults` hatten außer dem Primärschlüssel überhaupt keinen Index.
 
 Dazu zwei echte Defekte, **beide behoben**:
+
 1. **Löschen eines Supervisors vernichtete bezahltes Kind-Inventar** (`Adult→ShopArticle` Cascade →
    `ShopArticle→ChildInventory` Cascade, während die Kaufbelege per SetNull stehenblieben) → **E6**.
 2. **PATCH auf Name/E-Mail eines Erwachsenen zog das Konto nicht nach**, obwohl der gefilterte
@@ -50,10 +51,12 @@ Die Langfassung steht in der Plandatei dieser Sitzung.
 1. **Jede Etappe endet grün** (`dotnet test Pugling.sln -c Release`, ~55 s). Rot ist nie der
    Übergabezustand einer Etappe.
 2. **Die Migrationskette bleibt bei genau 1.** Am Ende jeder Etappe mit Schemaänderung:
+
    ```bash
    rm -rf backend/Pugling.Api/Data/Migrations
    dotnet dotnet-ef migrations add InitialCreate --project backend/Pugling.Api --output-dir Data/Migrations
    ```
+
    Das macht Spaltenumbenennungen und Typwechsel kostenlos – kein generierter SQLite-Tabellen-Neubau, den
    jemand abnehmen muss. `dotnet-ef` ist auf 10.0.9 gepinnt (`.config/dotnet-tools.json`), vorher einmal
    `dotnet tool restore`. Tor **G1b** (`SchemaGuardTests`) schlägt fehl, wenn es mehr als eine Migration
@@ -76,7 +79,7 @@ Die Langfassung steht in der Plandatei dieser Sitzung.
    E13 (`LearnGoal.ChildId` fällt weg, drei `KeyResult`-Scope-FKs kommen). Das Tor **soll** dabei rot sein –
    die bewusste Zeile ist der Zweck. Bei mehreren Änderungen lohnt der Wegwerf-Dump aus E6 wieder.
 
-## Umgesetzt: E0–E10
+## Umgesetzt: E0–E11
 
 ### E0 · Netz spannen — keine Migration
 
@@ -126,6 +129,7 @@ Entfernt: `ReviewEvent.ContentId/.ItemIndex/.StageValue` (write-only), `TestItem
 `StudyPlanItem`-Kommentare.
 
 **Zwei Abweichungen zur Bestandsaufnahme:**
+
 - `TestItemResult.HintsUsed` **bleibt** – es steckt in `ItemResultDto` (`Pugling.Contracts/Student/TestDtos.cs`),
   Entfernen wäre ein Vertragsbruch. Ist jetzt als „wird nie gesetzt, immer 0" kommentiert. Entweder
   befüllen (die Tipps existieren in der Ausspielung) oder mit dem DTO gemeinsam streichen.
@@ -262,6 +266,7 @@ Zeile, nicht ein zweiter Datenstand.** Drei Schreibpfade behaupteten das, zwei h
 **Der Befund war größer als „ein Name driftet".** Die Kollisionsprüfung in `AdultsController` liest
 `Account.Email` (dort sitzt der gefilterte Unique-Index), seit E5 trägt aber **auch** `Adult.Email` einen.
 Blieb das Konto stehen, ging die Drift in **beide** Richtungen falsch:
+
 - eine aufgegebene Adresse hielt den Adressraum weiter besetzt – niemand konnte sie je wieder bekommen;
 - eine belegte Adresse sah **frei** aus: die Vorprüfung ließ sie durch, der Index am `Adult` schlug zu, und
   aus dem fälligen 409 wurde ein **500 mit halb gespeichertem Zustand**. Genau das zeigte der Test
@@ -269,6 +274,7 @@ Blieb das Konto stehen, ging die Drift in **beide** Richtungen falsch:
   (`InternalServerError`).
 
 **Umgesetzt:**
+
 - **Eine** Stelle trägt die Invariante: `AccountService.MirrorAsync(Adult, ct)` und
   `MirrorAsync(Child, ct)` – Anzeigename, E-Mail und PIN-Hash von der fachlichen Zeile aufs Konto,
   **unbedingt**, nicht nur das gerade geänderte Feld. „Das Konto trägt, was die fachliche Zeile trägt" ist
@@ -318,6 +324,7 @@ erreicht wird, steht der Montag im einen und der Mittwoch im anderen Feld. Beide
 Periode statt nach dem Tag zu filtern überhöht Wochenziele um bis zu 7×.)
 
 **Umgesetzt:**
+
 - `PositionGoalReward`/`PositionGoalPenalty`: `string PeriodKey` → `GoalCadence Cadence` +
   `DateOnly PeriodStart`, Unique auf `(PlanPositionId, Cadence, PeriodStart)`.
 - `MissionAward`: → `MissionPeriod Period` + `DateOnly? PeriodStart`, **zwei gefilterte** Uniques
@@ -372,6 +379,7 @@ war das Missverständnis. Sie sind jetzt vier private Routinen am Ende von `Seed
 (`AccountBackfill.cs`, `ExerciseItemBackfill.cs`, `InterestTagBackfill.cs`) sind gelöscht.
 
 **Umgesetzt:**
+
 - `Seed.Run(db)` → `Seed.RunAsync(db, ExerciseItemService, AccountService, InterestTagService, ct)` mit
   **expliziten** Parametern (kein `IServiceProvider`). Die 11 bestehenden Routinen unverändert, dann
   `SeedExerciseGrantsAsync`, `SeedExerciseItemsAsync`, `SeedAccountsAsync`, `SeedChildInterestsAsync`.
@@ -394,6 +402,7 @@ war das Missverständnis. Sie sind jetzt vier private Routinen am Ende von `Seed
   ohne das Flag läuft alles wie vorher.
 
 **Zwei neue Tests, beide vorher rot:**
+
 - `Seed_Zweimal_Ausgefuehrt_Dupliziert_Nichts` – vergleicht die Zeilenzahlen **aller** Tabellen (über die
   rohe Verbindung, damit Tabellen ohne DbSet mitzählen). Das prüfte bisher **nichts**, obwohl der Start den
   Seed bei jedem Hochfahren ruft. *Fallstrick beim Schreiben:* die Test-Factory löscht nach dem Start die
@@ -419,6 +428,7 @@ der erste trägt stabile `ItemId`s und damit den plan-übergreifenden Lernstand.
 bearbeitete Übung mit *alten* Items bespielt, ohne Lernstand-Anbindung.
 
 **Umgesetzt:**
+
 - `ExerciseContentResolver.ResolveVocabularyItemsAsync`: `if (rows.Count == 0) return provider.ItemsOf(...)`
   → `return []`. Ohne Item-Zeilen ist die Übung **leer** – und der Vorschau-Endpunkt sagt das auch so
   (`exercise_empty`).
@@ -438,31 +448,59 @@ Vater→Sohn-Durchstich `frontend/e2e/full-flow.spec.ts` grün (27 s).
 
 **Stand:** 614 Tests grün, `docs/api-examples` unverändert, keine Schemaänderung.
 
-## Offen: E11–E14
+### E11 · String-Längen + Tabellennamen
+
+**Längen** als zweite Konventionsschleife (`ApplyStringLengthConvention`, Muster: `ApplyEnumConvention`):
+Standard **200**, Freitext **2000**, Slugs/Schlüssel **128** – abgeleitet aus der Namens-Endung, nicht
+aus 143 Einzelentscheidungen. Vorher trug **keine einzige** Spalte im ganzen Modell ein `HasMaxLength`.
+15 begründete Ausnahmen in `UnlimitedByDesign`; es sind ausnahmslos serialisierte Strukturen (JSON) oder
+eingefrorene Reihenfolgen – ihre Länge folgt dem Inhalt, eine Obergrenze wäre eine willkürliche Kappung
+mitten im Datenmodell.
+
+**Ehrlich dazugesagt:** SQLite setzt die Länge nicht durch, und EF validiert sie beim `SaveChanges` nicht.
+Der Wert liegt in der Portabilität: bei einem Provider-Wechsel entstünde sonst überall `NVARCHAR(MAX)`, und
+darauf lässt sich in SQL Server **kein Unique-Index anlegen** – was genau die Spalten trifft, die die
+Idempotenz tragen. Deshalb ist die zweite Zusicherung von G3 die scharfe: unbegrenzt *und* unique geht
+nicht, auch nicht mit Eintrag in der Ausnahmeliste. Eingabe-Durchsetzung bleibt Sache der DTO-Validierung.
+
+**Tabellennamen** über die DbSet-Namen normalisiert (mit Kette=1 gratis): `Vocabulary → Vocabularies`,
+`ChildPoints → ChildPointsEntries`, `Timetable → TimetableEntries`. Der Tabellenname folgt in EF dem
+DbSet-Namen, also wurden die **Properties** umbenannt und der Compiler hat die ~90 Aufrufstellen gezeigt –
+sicherer als ein Text-Ersetzen, das die gleichnamigen *Navigations*-Properties (`item.Vocabulary`) mitgerissen
+hätte. Dazu die internen Namensreste ohne Vertragswirkung: `FatherOwnsChildAsync → SupervisorOwnsChildAsync`,
+`EnsureForFatherAsync → EnsureForAdultAsync`, `demoFather → demoSupervisor`, lokale `fatherId → supervisorId`
+(19 Dateien).
+
+**Zwei Tore stehen:**
+- **G3** (`Jede_String_Spalte_Hat_Eine_Laenge`) – zwei Zusicherungen, die harte zuerst.
+- **G7** (`Jede_Json_Spalte_Hat_Einen_ValueComparer`) – macht die bislang vorbildlich befolgte
+  `CLAUDE.md`-Regel zum Tor. Sie hing an Disziplin, ihr Bruch ist unsichtbar (EF vergleicht ohne Comparer
+  per **Referenz**, eine In-Place-Mutation geht beim `SaveChanges` still verloren), und die nächste
+  JSON-Spalte kommt bestimmt.
+
+Falsch-Grün-Proben: `Vocabulary.Key` in die Unbegrenzt-Liste eingetragen → G3 rot mit genau dieser Zeile;
+einen `SetValueComparer`-Aufruf entfernt → G7 rot mit `Child.OwnedSkins`. Beides zurückgenommen.
+
+**Fallstrick, schon zum zweiten Mal:** G7 war zunächst falsch-rot und meldete fünf Spalten, die sehr wohl
+einen Comparer haben. Grund war wieder das laufzeit-optimierte Modell – es wirft die **Annotationen** weg,
+und die Annotation ist die einzige Spur der *ausdrücklichen* Konfiguration (`GetValueComparer()` liefert
+immer etwas, im Zweifel den referenzvergleichenden Default – also genau den Fehlerfall). Wie bei G8:
+`db.GetService<IDesignTimeModel>().Model`.
+
+**Ein Bestandstest kippte, und zwar zu Recht:** `QueryPlanSmokeTests` schreibt rohes SQL und nennt Tabellen
+und Indizes namentlich (`FROM ChildPoints`, `IX_Vocabulary_Word`). Er ist der einzige Nicht-EF-Leser der
+Codebasis und darum die einzige Stelle, an der eine Tabellenumbenennung überhaupt auffällt – genau dafür
+gibt es ihn. Nachgezogen. Der dazugehörige Messbericht `docs/perf-explain-2026-07-12.md` trägt jetzt einen
+Hinweis, dass seine Indexnamen historisch sind – eine Momentaufnahme wird nicht umgeschrieben.
+
+**Stand:** 616 Tests grün, Kette bei 1, `docs/api-examples` unverändert, Abdeckung weiter 268/268.
+
+## Offen: E12–E14
 
 Jede Etappe endet grün, mit neu gefalteter Migration (siehe Arbeitsregeln).
 
-### E11 · String-Längen + Tabellennamen
-**Längen** als zweite Konventionsschleife in `OnModelCreating` (Muster: `ApplyEnumConvention`):
-Standard 200, Slugs/Keys 128, Freitext 2000. `UnlimitedByDesign`-Liste mit Begründung: `*.ConfigJson`,
-`Remark.ContextJson/.RecentErrorsJson`, `Vocabulary.Noun/Verb`, `ClozeText.Gaps/WordBank`,
-`Child.Interests/OwnedSkins`, `CreatorProfile.DefaultTypes`, `PlanPosition.BoxIntervalDays/StageSchedule`,
-`Exercise.SuggestedBonus`, `PracticeSession.Order`, `TestAttempt.Order`. **Harte Zusatzregel:** eine
-unique-indizierte String-Spalte MUSS begrenzt sein (`Vocabulary.Key`, `MediaAsset.Key`,
-`TextbookSeries.Slug`, `ClozeText.Key` sind es nicht).
-
-**Ehrlich dazugesagt:** SQLite setzt `HasMaxLength` nicht durch und EF validiert es nicht beim
-`SaveChanges`. Der Wert liegt in der Portabilität (sonst bei einem Provider-Wechsel `NVARCHAR(MAX)` mit
-nicht anlegbaren Unique-Indizes) und in Tor **G3** – deshalb steht die Etappe spät. Eingabe-Durchsetzung
-ist Sache der DTO-Validierung und nicht Teil dieses Umbaus.
-
-**Tabellennamen** auf die DbSet-Namen ziehen (mit Kette=1 gratis): `Vocabulary → Vocabularies`,
-`ChildPoints → ChildPointsEntries`, `Timetable → TimetableEntries`. Dazu die internen Namensreste ohne
-Vertragswirkung: `AuthAccess.FatherOwnsChildAsync → SupervisorOwnsChildAsync`,
-`AccountService.EnsureForFatherAsync → EnsureForAdultAsync`, `Seed.demoFather → demoSupervisor`, lokale
-`fatherId`-Variablen. Danach Tore **G3** und **G7** (JSON-Comparer).
-
 ### E12 · `TimeSlotRule` in Konfiguration auflösen
+
 Keine API, kein Schreibpfad außer dem Seed, kein Index, kein Unique, keine Überlappungsprüfung
 (`ScoringService` nimmt bei Überlappung willkürlich eine Regel) – und `PuglingWebAppFactory` **löscht die
 Zeilen**, um deterministische Tests zu bekommen. Eine Tabelle, deren Zeilen die Test-Suite wegräumen muss,
@@ -474,6 +512,7 @@ Entity + DbSet + `SeedTimeSlots` weg, `Scoring:TimeSlots` in `appsettings.json`,
 `ExecuteDelete` nicht mehr.
 
 ### E13 · `LearnGoal` löschen — der eine bewusste Vertragsbruch
+
 `LearnGoal` und `KeyResult` sind strukturell identisch (gleiches Scope-Tripel, gleicher Evaluator
 `ChildLearnProgressService.ScopeEvaluator`; `LearnGoalService` und `ObjectiveEvaluationService` sind
 derselbe Code zweimal). `KeyResult` ist der Superset (Objective-Klammer, Belohnungslog, `ClassTestGrade`).
@@ -507,6 +546,7 @@ einer Funktion.
    Richtungen an – das ist Absicht, kostet aber 10 Minuten Verwirrung, wenn man es nicht erwartet.
 
 ### E14 · Abschluss
+
 - `CLAUDE.md` „Konventionen"/„Fallstricke": die neuen Schema-Regeln + die Tore; die `TimeSlotRule`-Ausnahme
   entfernen (nach E12); die Kette-bleibt-1-Regel aufnehmen.
 - `docs/codequalitaet-gates-plan.md` um G1–G9 als neue Etappe fortschreiben.
@@ -560,7 +600,7 @@ E1 ist wirksam: die Azure-DB stammt aus der alten Kette und wird vom Historien-G
 
 ## Verifikation
 
-**Pro Etappe:** `dotnet test Pugling.sln -c Release` (~55 s, aktuell **614** Tests) und
+**Pro Etappe:** `dotnet test Pugling.sln -c Release` (~55 s, aktuell **616** Tests) und
 `git diff -- docs/api-examples` prüfen (leer, oder im gleichen Commit neu erzeugt).
 
 **Laufzeit statt nur Kompilieren:** `/smoke-test` (Wegwerf-DB, lässt `pugling.db` unangetastet) nach E6,

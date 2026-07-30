@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
@@ -41,7 +41,7 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
     {
         using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
-        db.ChildPoints.Add(new ChildPointsEntry
+        db.ChildPointsEntries.Add(new ChildPointsEntry
         {
             ChildId = childId,
             Amount = amount,

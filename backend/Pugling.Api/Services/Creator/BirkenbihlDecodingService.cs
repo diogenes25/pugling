@@ -1,4 +1,4 @@
-using System.Text.RegularExpressions;
+﻿using System.Text.RegularExpressions;
 using Microsoft.EntityFrameworkCore;
 using Pugling.Api.Data;
 
@@ -46,7 +46,7 @@ public partial class BirkenbihlDecodingService(PuglingDbContext db)
         if (surfaces.Count == 0) return [];
 
         var lowered = surfaces.Select(s => s.ToLowerInvariant()).Distinct().ToList();
-        var matches = await db.Vocabulary.AsNoTracking()
+        var matches = await db.Vocabularies.AsNoTracking()
             .Where(v => v.SourceLanguage == learningLang && v.TargetLanguage == nativeLang
                 && lowered.Contains(v.Word.ToLower()))
             .Select(v => new VocabHit(v.Id, v.Word, v.Translation, v.PartOfSpeech))

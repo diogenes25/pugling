@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
@@ -156,7 +156,7 @@ public class TeacherAccountTests(PuglingWebAppFactory factory) : IClassFixture<P
     }
 
     /// <summary>
-    /// Das Anmelden darf keine Rolle nachreichen. <c>auth/adult</c> ruft <c>EnsureForFatherAsync</c>, und
+    /// Das Anmelden darf keine Rolle nachreichen. <c>auth/adult</c> ruft <c>EnsureForAdultAsync</c>, und
     /// würde das ein bestehendes Konto „vervollständigen", wäre der Lehrer nach dem ersten Login stiller
     /// Betreuer – die Trennung hätte sich selbst aufgehoben.
     /// </summary>

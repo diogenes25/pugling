@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Pugling.Api.Data;
 using Pugling.Api.Models;
 
@@ -29,7 +29,7 @@ public class ExerciseItemService(PuglingDbContext db, VocabularyStoreService sto
                 .Select(r => r.Key!).Distinct().ToList();
             var idByKey = keys.Count == 0
                 ? new Dictionary<string, int>()
-                : await db.Vocabulary.Where(v => keys.Contains(v.Key)).ToDictionaryAsync(v => v.Key, v => v.Id, ct);
+                : await db.Vocabularies.Where(v => keys.Contains(v.Key)).ToDictionaryAsync(v => v.Key, v => v.Id, ct);
             var fromRefs = new List<DesiredItem>(refs.Count);
             foreach (var r in refs)
             {

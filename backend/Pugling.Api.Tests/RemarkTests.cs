@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
@@ -104,7 +104,7 @@ public class RemarkTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWe
         var father = await TestApi.FatherAsync(_factory);
         var child = await TestApi.ChildAsync(_factory);
 
-        var fatherId = await CreateAsync(father, "Interne Notiz mit Codebezug");
+        var supervisorId = await CreateAsync(father, "Interne Notiz mit Codebezug");
         var childId = await CreateAsync(child, "Die Karte lädt langsam");
 
         // Der Sohn sieht ausschließlich seine eigene Anmerkung – Antworten des Vaters tragen
@@ -112,10 +112,10 @@ public class RemarkTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWe
         var list = await child.GetFromJsonAsync<JsonElement>(Url);
         var ids = list.EnumerateArray().Select(r => r.GetProperty("id").GetInt32()).ToList();
         Assert.Contains(childId, ids);
-        Assert.DoesNotContain(fatherId, ids);
+        Assert.DoesNotContain(supervisorId, ids);
 
         // Auch der direkte Zugriff ist zu – und zwar als 404, nicht als 403 (kein Existenz-Leak).
-        var direct = await child.GetAsync($"{Url}/{fatherId}");
+        var direct = await child.GetAsync($"{Url}/{supervisorId}");
         Assert.Equal(HttpStatusCode.NotFound, direct.StatusCode);
         var problem = await direct.Content.ReadFromJsonAsync<JsonElement>();
         Assert.Equal("remark_not_found", problem.GetProperty("code").GetString());

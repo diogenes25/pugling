@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using Microsoft.Extensions.DependencyInjection;
@@ -43,11 +43,11 @@ public class ExerciseGrantsTests(PuglingWebAppFactory factory) : IClassFixture<P
     }
 
     /// <summary>Markiert einen Vater als Plattform-Admin (kein API-Weg – bewusst nur über die DB, wie im echten Betrieb).</summary>
-    private void MakeAdmin(int fatherId)
+    private void MakeAdmin(int supervisorId)
     {
         using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
-        db.Adults.First(f => f.Id == fatherId).IsAdmin = true;
+        db.Adults.First(f => f.Id == supervisorId).IsAdmin = true;
         db.SaveChanges();
     }
 

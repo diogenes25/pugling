@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Pugling.Api.Auth;
@@ -73,7 +73,7 @@ public class CreatorProfilesController(PuglingDbContext db, CreatorProfileServic
         [FromQuery] int childId, [FromQuery] int? subjectId, CancellationToken ct)
     {
         if (!await db.Children.AnyAsync(c => c.Id == childId, ct)) return NotFound();
-        if (!await access.FatherOwnsChildAsync(User, childId, ct))
+        if (!await access.SupervisorOwnsChildAsync(User, childId, ct))
             return this.ProblemWithCode(ApiErrors.Forbidden, "You do not supervise this child.");
 
         return Ok(await profiles.MatchAsync(childId, subjectId, User.CreatorId(), ct));

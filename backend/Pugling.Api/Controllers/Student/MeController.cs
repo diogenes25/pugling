@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Pugling.Api.Auth;
@@ -49,7 +49,7 @@ public class MeController(PuglingDbContext db, GamificationService gamification,
         var cid = User.ChildId();
         if (cid is null) return Forbid();
 
-        return await db.ChildPoints
+        return await db.ChildPointsEntries
             .AsNoTracking()
             .Where(p => p.ChildId == cid)
             .OrderByDescending(p => p.CreatedAt).ThenByDescending(p => p.Id)
@@ -67,7 +67,7 @@ public class MeController(PuglingDbContext db, GamificationService gamification,
         var cid = User.ChildId();
         if (cid is null) return Forbid();
 
-        var entry = await db.ChildPoints
+        var entry = await db.ChildPointsEntries
             .AsNoTracking()
             .Where(p => p.Id == entryId && p.ChildId == cid)
             .Select(p => new MyPointsEntryResponse(p.Id, p.Amount, p.Kind, p.Reason, p.CreatedAt))
@@ -185,7 +185,7 @@ public class MeController(PuglingDbContext db, GamificationService gamification,
         if (gems < cost)
             return this.ProblemWithCode(ApiErrors.InsufficientGems, $"Not enough gems: {gems}/{cost} for '{skinId}'.");
 
-        db.ChildPoints.Add(new ChildPointsEntry
+        db.ChildPointsEntries.Add(new ChildPointsEntry
         {
             ChildId = cid.Value,
             Amount = -cost.Value,

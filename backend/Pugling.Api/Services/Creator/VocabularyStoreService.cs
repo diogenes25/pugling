@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Pugling.Api.Data;
 using Pugling.Api.Models;
 
@@ -23,10 +23,10 @@ public class VocabularyStoreService(PuglingDbContext db)
         var key = VocabKey.Generate(sourceLanguage, word, targetLanguage, translation);
 
         // Schon in dieser Unit-of-Work angelegt (mehrere Items derselben Vokabel in einer Übung)?
-        var local = db.Vocabulary.Local.FirstOrDefault(v => v.Key == key);
+        var local = db.Vocabularies.Local.FirstOrDefault(v => v.Key == key);
         if (local is not null) return local;
 
-        var existing = await db.Vocabulary.FirstOrDefaultAsync(v => v.Key == key, ct);
+        var existing = await db.Vocabularies.FirstOrDefaultAsync(v => v.Key == key, ct);
         if (existing is not null) return existing;
 
         var vocab = new Vocabulary
@@ -38,7 +38,7 @@ public class VocabularyStoreService(PuglingDbContext db)
             Translation = translation,
             PartOfSpeech = partOfSpeech ?? PartOfSpeech.Other,
         };
-        db.Vocabulary.Add(vocab);
+        db.Vocabularies.Add(vocab);
         return vocab;
     }
 }

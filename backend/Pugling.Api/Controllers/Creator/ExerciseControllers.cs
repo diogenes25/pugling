@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Pugling.Api.Auth;
 using Pugling.Api.Data;
@@ -42,7 +42,7 @@ public class VocabularyController(PuglingDbContext db, ExerciseTypeRegistry regi
             if (refs.Any(r => r.VocabularyId <= 0))
                 return "Every reference needs a valid vocabularyId (> 0).";
             var ids = refs.Select(r => r.VocabularyId).Distinct().ToList();
-            var existing = await Db.Vocabulary.Where(v => ids.Contains(v.Id)).Select(v => v.Id).ToListAsync(ct);
+            var existing = await Db.Vocabularies.Where(v => ids.Contains(v.Id)).Select(v => v.Id).ToListAsync(ct);
             var missing = ids.Except(existing).ToList();
             if (missing.Count > 0) return $"Unknown vocabulary item IDs: {string.Join(", ", missing)}";
         }
@@ -59,7 +59,7 @@ public class VocabularyController(PuglingDbContext db, ExerciseTypeRegistry regi
         var itemIds = config.Items.Where(i => i.VocabularyId is > 0).Select(i => i.VocabularyId!.Value).Distinct().ToList();
         if (itemIds.Count > 0)
         {
-            var existing = await Db.Vocabulary.Where(v => itemIds.Contains(v.Id)).Select(v => v.Id).ToListAsync(ct);
+            var existing = await Db.Vocabularies.Where(v => itemIds.Contains(v.Id)).Select(v => v.Id).ToListAsync(ct);
             var missing = itemIds.Except(existing).ToList();
             if (missing.Count > 0) return $"Unknown vocabulary item IDs: {string.Join(", ", missing)}";
         }
@@ -104,7 +104,7 @@ public class VocabularyController(PuglingDbContext db, ExerciseTypeRegistry regi
         var tags = (dto.Tags ?? []).Select(t => t.Trim()).Where(t => t.Length > 0).Distinct().ToList();
         if (tags.Count == 0) return this.ProblemWithCode(ApiErrors.ValidationError, "At least one tag is required.");
 
-        var query = Db.Vocabulary.AsNoTracking().AsQueryable();
+        var query = Db.Vocabularies.AsNoTracking().AsQueryable();
         if (dto.BaseFormsOnly) query = query.Where(v => v.BaseFormId == null);
         if (dto.MatchAll)
             foreach (var name in tags) query = query.Where(v => v.TagLinks.Any(l => l.VocabTag!.Name == name));
@@ -197,7 +197,7 @@ public class VocabularyController(PuglingDbContext db, ExerciseTypeRegistry regi
         Db.ExerciseItems.Add(item);
         await Db.SaveChangesAsync(ct);
 
-        item.Vocabulary = await Db.Vocabulary.FindAsync([vocabId], ct);
+        item.Vocabulary = await Db.Vocabularies.FindAsync([vocabId], ct);
         return CreatedAtAction(nameof(GetItem), new { subjectId, chapterId, exerciseId, itemId = item.Id },
             MapItem(subjectId, chapterId, exerciseId, item));
     }
@@ -232,7 +232,7 @@ public class VocabularyController(PuglingDbContext db, ExerciseTypeRegistry regi
         }
         await Db.SaveChangesAsync(ct);
 
-        item.Vocabulary = await Db.Vocabulary.FindAsync([item.VocabularyId], ct);
+        item.Vocabulary = await Db.Vocabularies.FindAsync([item.VocabularyId], ct);
         return MapItem(subjectId, chapterId, exerciseId, item);
     }
 
@@ -280,7 +280,7 @@ public class VocabularyController(PuglingDbContext db, ExerciseTypeRegistry regi
     private async Task<int?> ResolveVocabularyIdAsync(VocabItemInput body, VocabularyConfig config, CancellationToken ct)
     {
         if (body.VocabularyId is { } id)
-            return await Db.Vocabulary.AnyAsync(v => v.Id == id, ct) ? id : null;
+            return await Db.Vocabularies.AnyAsync(v => v.Id == id, ct) ? id : null;
         if (string.IsNullOrWhiteSpace(body.Front) || string.IsNullOrWhiteSpace(body.Back)
             || string.IsNullOrWhiteSpace(config.SourceLang) || string.IsNullOrWhiteSpace(config.TargetLang))
             return null;
@@ -313,7 +313,7 @@ public class ClozeController(PuglingDbContext db, ExerciseTypeRegistry registry)
         var keys = config.Gaps.Where(g => !string.IsNullOrWhiteSpace(g.VocabKey))
             .Select(g => g.VocabKey!).Distinct().ToList();
         if (keys.Count == 0) return null;
-        var existing = await Db.Vocabulary.Where(v => keys.Contains(v.Key)).Select(v => v.Key).ToListAsync(ct);
+        var existing = await Db.Vocabularies.Where(v => keys.Contains(v.Key)).Select(v => v.Key).ToListAsync(ct);
         var missing = keys.Except(existing).ToList();
         return missing.Count == 0 ? null : $"Unknown vocabulary keys in gaps: {string.Join(", ", missing)}";
     }
@@ -540,7 +540,7 @@ public class BirkenbihlController(PuglingDbContext db, ExerciseTypeRegistry regi
         if (body.VocabularyId is { } vocabId)
         {
             // Karte muss existieren und zum Sprachpaar der Übung passen – sonst würde eine fremde Glosse gesetzt.
-            var card = await Db.Vocabulary.AsNoTracking()
+            var card = await Db.Vocabularies.AsNoTracking()
                 .FirstOrDefaultAsync(v => v.Id == vocabId
                     && v.SourceLanguage == config.LearningLang && v.TargetLanguage == config.NativeLang, ct);
             if (card is null) return this.ProblemWithCode(ApiErrors.InvalidReference, "Vocabulary item not found or its language pair does not match the exercise.");

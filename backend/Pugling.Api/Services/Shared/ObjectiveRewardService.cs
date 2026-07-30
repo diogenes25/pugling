@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Pugling.Api.Data;
 using Pugling.Api.Models;
 
@@ -87,7 +87,7 @@ public class ObjectiveRewardService(PuglingDbContext db, ObjectiveEvaluationServ
             PaidKeyResultId = paidKeyResultId,
             Points = points,
         });
-        db.ChildPoints.Add(new ChildPointsEntry { ChildId = childId, Kind = kind, Amount = points, Reason = reason });
+        db.ChildPointsEntries.Add(new ChildPointsEntry { ChildId = childId, Kind = kind, Amount = points, Reason = reason });
     }
 
     private static string Label(KeyResult kr) =>

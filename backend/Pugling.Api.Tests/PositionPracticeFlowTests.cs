@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using Microsoft.Extensions.DependencyInjection;
@@ -48,7 +48,7 @@ public class PositionPracticeFlowTests(PuglingWebAppFactory factory) : IClassFix
         var prog = db.PositionItemProgress.Single(p => p.PlanPositionId == positionId && p.ItemIndex == 0);
         Assert.Equal(2, prog.Box);
         Assert.NotNull(prog.IntroducedAt);
-        Assert.True(db.ChildPoints.Where(e => e.ChildId == 1 && e.Kind == PointKind.Base).Sum(e => e.Amount) > 0);
+        Assert.True(db.ChildPointsEntries.Where(e => e.ChildId == 1 && e.Kind == PointKind.Base).Sum(e => e.Amount) > 0);
     }
 
     [Fact]

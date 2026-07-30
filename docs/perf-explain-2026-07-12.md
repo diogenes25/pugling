@@ -1,5 +1,10 @@
 # EXPLAIN Query Plan Check (2026-07-12)
 
+> **Momentaufnahme vom 12.07.2026 – Indexnamen unten sind historisch.** Der DB-Struktur-Umbau (E11) hat die
+> Tabelle `ChildPoints` in `ChildPointsEntries` und `Vocabulary` in `Vocabularies` umbenannt; die zugehörigen
+> Indizes heißen entsprechend `IX_ChildPointsEntries_…` bzw. `IX_Vocabularies_…`. Die Messung selbst bleibt
+> gültig – der laufende Nachweis steht in `QueryPlanSmokeTests`, nicht hier.
+
 ## Ziel
 
 Nachweis, dass die neu eingefuehrten Hotpath-Indizes vom SQLite-Optimizer fuer zentrale EF-Query-Muster verwendet werden.

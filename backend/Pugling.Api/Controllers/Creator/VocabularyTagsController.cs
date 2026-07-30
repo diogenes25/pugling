@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Pugling.Api.Auth;
@@ -92,7 +92,7 @@ public class VocabularyTagsController(PuglingDbContext db) : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<IEnumerable<VocabTagResponse>>> AttachTags(int vocabularyId, TagVocabDto dto, CancellationToken ct = default)
     {
-        var vocab = await db.Vocabulary.Include(v => v.TagLinks).ThenInclude(l => l.VocabTag)
+        var vocab = await db.Vocabularies.Include(v => v.TagLinks).ThenInclude(l => l.VocabTag)
             .FirstOrDefaultAsync(v => v.Id == vocabularyId, ct);
         if (vocab is null) return NotFound();
 

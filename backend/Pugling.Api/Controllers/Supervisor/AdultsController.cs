@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.EntityFrameworkCore;
@@ -60,7 +60,7 @@ public class AdultsController(PuglingDbContext db, AccountService accounts) : Co
         db.Adults.Add(adult);
         await db.SaveChangesAsync(ct);
         // Login-Konto (Creator+Supervisor) sofort anlegen, damit der neue Vater sich einloggen kann.
-        await accounts.EnsureForFatherAsync(adult, ct);
+        await accounts.EnsureForAdultAsync(adult, ct);
 
         var response = new AdultResponse(adult.Id, adult.Name, adult.Email, adult.CreatedAt, 0);
         return CreatedAtAction(nameof(Get), new { adultId = adult.Id }, response);

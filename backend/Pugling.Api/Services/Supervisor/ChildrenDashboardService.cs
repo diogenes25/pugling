@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Pugling.Api.Data;
 
 namespace Pugling.Api.Services.Supervisor;
@@ -14,10 +14,10 @@ public class ChildrenDashboardService(PuglingDbContext db, PositionProgressServi
     // ChildDay/Dashboard leben im Vertrags-Projekt (Pugling.Contracts.Supervisor).
 
     /// <summary>Baut den Tagesüberblick für alle Kinder des Vaters am angegebenen Tag.</summary>
-    public async Task<Dashboard> BuildAsync(int fatherId, DateOnly date, CancellationToken ct = default)
+    public async Task<Dashboard> BuildAsync(int supervisorId, DateOnly date, CancellationToken ct = default)
     {
         var children = await db.Children.AsNoTracking()
-            .Where(c => c.SupervisorLinks.Any(l => l.SupervisorId == fatherId))
+            .Where(c => c.SupervisorLinks.Any(l => l.SupervisorId == supervisorId))
             .OrderBy(c => c.Name)
             .Select(c => new { c.Id, c.Name })
             .ToListAsync(ct);

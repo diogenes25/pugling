@@ -1,4 +1,4 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -83,7 +83,7 @@ public class VocabularyStoreController(PuglingDbContext db) : ControllerBase
         [FromQuery] int take = PagingExtensions.DefaultTake,
         CancellationToken ct = default)
     {
-        var query = db.Vocabulary.AsNoTracking().AsQueryable();
+        var query = db.Vocabularies.AsNoTracking().AsQueryable();
 
         if (partOfSpeech is not null)
             query = query.Where(v => v.PartOfSpeech == partOfSpeech);
@@ -147,7 +147,7 @@ public class VocabularyStoreController(PuglingDbContext db) : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<VocabularyResponse>> Get(int id, CancellationToken ct = default)
     {
-        var v = await WithGraph(db.Vocabulary.AsNoTracking()).FirstOrDefaultAsync(x => x.Id == id, ct);
+        var v = await WithGraph(db.Vocabularies.AsNoTracking()).FirstOrDefaultAsync(x => x.Id == id, ct);
         return v is null ? NotFound() : Map(v);
     }
 
@@ -156,7 +156,7 @@ public class VocabularyStoreController(PuglingDbContext db) : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<VocabularyResponse>> GetByKey(string key, CancellationToken ct = default)
     {
-        var v = await WithGraph(db.Vocabulary.AsNoTracking()).FirstOrDefaultAsync(x => x.Key == key, ct);
+        var v = await WithGraph(db.Vocabularies.AsNoTracking()).FirstOrDefaultAsync(x => x.Key == key, ct);
         return v is null ? NotFound() : Map(v);
     }
 
@@ -169,12 +169,12 @@ public class VocabularyStoreController(PuglingDbContext db) : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<IEnumerable<VocabularyResponse>>> Forms(int id, CancellationToken ct = default)
     {
-        var self = await db.Vocabulary.AsNoTracking().Select(v => new { v.Id, v.BaseFormId })
+        var self = await db.Vocabularies.AsNoTracking().Select(v => new { v.Id, v.BaseFormId })
             .FirstOrDefaultAsync(v => v.Id == id, ct);
         if (self is null) return NotFound();
 
         var baseId = self.BaseFormId ?? self.Id;
-        var family = await WithGraph(db.Vocabulary.AsNoTracking())
+        var family = await WithGraph(db.Vocabularies.AsNoTracking())
             .Where(v => v.Id == baseId || v.BaseFormId == baseId)
             .ToListAsync(ct);
 
@@ -221,14 +221,14 @@ public class VocabularyStoreController(PuglingDbContext db) : ControllerBase
         else
         {
             key = dto.Key.Trim();
-            if (await db.Vocabulary.AnyAsync(v => v.Key == key, ct))
+            if (await db.Vocabularies.AnyAsync(v => v.Key == key, ct))
                 return new(CreateKind.Conflict, null, key, $"Key '{key}' already exists.");
         }
 
         int? baseFormId = null;
         if (!string.IsNullOrWhiteSpace(dto.BaseFormKey))
         {
-            baseFormId = await db.Vocabulary.Where(v => v.Key == dto.BaseFormKey)
+            baseFormId = await db.Vocabularies.Where(v => v.Key == dto.BaseFormKey)
                 .Select(v => (int?)v.Id).FirstOrDefaultAsync(ct);
             if (baseFormId is null) return new(CreateKind.Error, null, key, $"BaseFormKey '{dto.BaseFormKey}' not found.");
         }
@@ -248,7 +248,7 @@ public class VocabularyStoreController(PuglingDbContext db) : ControllerBase
             BaseFormRelation = string.IsNullOrWhiteSpace(dto.BaseFormRelation) ? null : dto.BaseFormRelation.Trim(),
             PronunciationAudioUrl = dto.PronunciationAudioUrl,
         };
-        db.Vocabulary.Add(vocab);
+        db.Vocabularies.Add(vocab);
         await ApplyTagsAsync(vocab, dto.Tags, ct);
         await db.SaveChangesAsync(ct);
 
@@ -260,11 +260,11 @@ public class VocabularyStoreController(PuglingDbContext db) : ControllerBase
     private async Task<string> UniqueKeyAsync(string baseKey, CancellationToken ct)
     {
         var key = string.IsNullOrWhiteSpace(baseKey) ? "vokabel" : baseKey;
-        if (!await db.Vocabulary.AnyAsync(v => v.Key == key, ct)) return key;
+        if (!await db.Vocabularies.AnyAsync(v => v.Key == key, ct)) return key;
         for (var n = 2; ; n++)
         {
             var candidate = $"{key}_{n}";
-            if (!await db.Vocabulary.AnyAsync(v => v.Key == candidate, ct)) return candidate;
+            if (!await db.Vocabularies.AnyAsync(v => v.Key == candidate, ct)) return candidate;
         }
     }
 
@@ -288,7 +288,7 @@ public class VocabularyStoreController(PuglingDbContext db) : ControllerBase
     /// <summary>Gemeinsame Update-Logik für Einzel-PATCH und Batch (lädt Grundform + Tags für die Antwort).</summary>
     private async Task<(UpdateStatus Status, Vocabulary? Vocab, string? Error)> UpdateCoreAsync(int id, UpdateVocabularyDto dto, CancellationToken ct)
     {
-        var vocab = await db.Vocabulary.Include(v => v.TagLinks).ThenInclude(l => l.VocabTag)
+        var vocab = await db.Vocabularies.Include(v => v.TagLinks).ThenInclude(l => l.VocabTag)
             .FirstOrDefaultAsync(v => v.Id == id, ct);
         if (vocab is null) return (UpdateStatus.NotFound, null, null);
 
@@ -312,7 +312,7 @@ public class VocabularyStoreController(PuglingDbContext db) : ControllerBase
             else
             {
                 if (dto.BaseFormKey == vocab.Key) return (UpdateStatus.Error, null, "A vocabulary item cannot be its own base form.");
-                var baseFormId = await db.Vocabulary.Where(v => v.Key == dto.BaseFormKey)
+                var baseFormId = await db.Vocabularies.Where(v => v.Key == dto.BaseFormKey)
                     .Select(v => (int?)v.Id).FirstOrDefaultAsync(ct);
                 if (baseFormId is null) return (UpdateStatus.Error, null, $"BaseFormKey '{dto.BaseFormKey}' not found.");
                 vocab.BaseFormId = baseFormId;
@@ -334,17 +334,17 @@ public class VocabularyStoreController(PuglingDbContext db) : ControllerBase
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<IActionResult> Delete(int id, CancellationToken ct = default)
     {
-        var vocab = await db.Vocabulary.FindAsync([id], ct);
+        var vocab = await db.Vocabularies.FindAsync([id], ct);
         if (vocab is null) return NotFound();
 
-        if (await db.Vocabulary.AnyAsync(v => v.BaseFormId == id, ct))
+        if (await db.Vocabularies.AnyAsync(v => v.BaseFormId == id, ct))
             return this.ProblemWithCode(ApiErrors.VocabularyInUse, "The vocabulary item is the base form of other entries and cannot be deleted.");
 
         // Verhindert stille „(Vokabel fehlt)"-Platzhalter in Übungen, die die Vokabel referenzieren.
         if ((await ReferencingExercisesAsync(vocab.Id, vocab.Key, ct)).Count > 0)
             return this.ProblemWithCode(ApiErrors.VocabularyInUse, "The vocabulary item is used in one or more exercises and cannot be deleted.");
 
-        db.Vocabulary.Remove(vocab);
+        db.Vocabularies.Remove(vocab);
         await db.SaveChangesAsync(ct);
         return NoContent();
     }
@@ -357,7 +357,7 @@ public class VocabularyStoreController(PuglingDbContext db) : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<IEnumerable<VocabUsage>>> Usage(int id, CancellationToken ct = default)
     {
-        var key = await db.Vocabulary.Where(v => v.Id == id).Select(v => v.Key).FirstOrDefaultAsync(ct);
+        var key = await db.Vocabularies.Where(v => v.Id == id).Select(v => v.Key).FirstOrDefaultAsync(ct);
         if (key is null) return NotFound();
         return await ReferencingExercisesAsync(id, key, ct);
     }
@@ -419,7 +419,7 @@ public class VocabularyStoreController(PuglingDbContext db) : ControllerBase
             // groß-/kleinschreibungsunabhängig – und *nur* ohne den Ausdruck um die Spalte greift der
             // Index auf Word. Vorher war das ein vollständiger Tabellendurchlauf über den größten Store,
             // im heißesten Creator-Pfad (Dubletten-Lookup beim Anlegen).
-            var q = db.Vocabulary.AsNoTracking().Where(v => words.Contains(v.Word));
+            var q = db.Vocabularies.AsNoTracking().Where(v => words.Contains(v.Word));
             if (!string.IsNullOrWhiteSpace(request.SourceLanguage))
                 q = q.Where(v => v.SourceLanguage == request.SourceLanguage);
             if (!string.IsNullOrWhiteSpace(request.TargetLanguage))
@@ -437,7 +437,7 @@ public class VocabularyStoreController(PuglingDbContext db) : ControllerBase
         var keys = (request.Keys ?? []).Select(k => k.Trim()).Where(k => k.Length > 0).Distinct(StringComparer.Ordinal).ToList();
         var existingKeys = keys.Count == 0
             ? []
-            : await db.Vocabulary.AsNoTracking().Where(v => keys.Contains(v.Key)).Select(v => v.Key).ToListAsync(ct);
+            : await db.Vocabularies.AsNoTracking().Where(v => keys.Contains(v.Key)).Select(v => v.Key).ToListAsync(ct);
 
         return new LookupResponse(results, existingKeys);
     }
@@ -465,7 +465,7 @@ public class VocabularyStoreController(PuglingDbContext db) : ControllerBase
                     break;
                 case CreateKind.Conflict:
                     // Idempotent: der Eintrag mit diesem Key existiert bereits – zurückmelden statt Fehler.
-                    var existingId = await db.Vocabulary.Where(v => v.Key == outcome.Key).Select(v => (int?)v.Id).FirstOrDefaultAsync(ct);
+                    var existingId = await db.Vocabularies.Where(v => v.Key == outcome.Key).Select(v => (int?)v.Id).FirstOrDefaultAsync(ct);
                     results.Add(new(i, "existing", existingId, outcome.Key, null));
                     break;
                 default:

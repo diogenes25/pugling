@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Pugling.Api.Data;
@@ -323,6 +323,106 @@ public class SchemaGuardTests
         // Der Konventions-Default für optionale Beziehungen räumt nur im geladenen ChangeTracker auf und
         // lässt die DB-Seite offen – als *Absicht* ist er nie richtig.
         Assert.DoesNotContain(DeleteBehavior.ClientSetNull, tatsaechlich.Values);
+    }
+
+    /// <summary>
+    /// <b>G3 – jede String-Spalte hat eine Länge, und eine unique-indizierte MUSS eine haben.</b> Vorher trug
+    /// <i>keine einzige</i> Spalte im ganzen Modell ein <c>HasMaxLength</c>.
+    /// <para>
+    /// <b>Ehrlich dazugesagt:</b> SQLite setzt die Länge nicht durch, und EF validiert sie beim
+    /// <c>SaveChanges</c> nicht. Der Wert liegt in der Portabilität – bei einem Provider-Wechsel entstünde
+    /// sonst überall <c>NVARCHAR(MAX)</c>, und darauf lässt sich in SQL Server <b>kein Unique-Index anlegen</b>.
+    /// Das trifft genau die Spalten, die die Idempotenz tragen. Darum ist die zweite Zusicherung die
+    /// scharfe: unbegrenzt <i>und</i> unique geht nicht, auch nicht mit Eintrag in der Ausnahmeliste.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public void Jede_String_Spalte_Hat_Eine_Laenge()
+    {
+        using var db = Context();
+
+        var alle = new List<string>();
+        var ohneLaenge = new List<string>();
+        var uniqueOhneLaenge = new List<string>();
+        foreach (var entity in db.Model.GetEntityTypes())
+        {
+            // Spalten, die in einem Unique-Index stehen – für die zweite, harte Zusicherung.
+            var inUnique = entity.GetIndexes().Where(i => i.IsUnique)
+                .SelectMany(i => i.Properties).Select(p => p.Name).ToHashSet(StringComparer.Ordinal);
+
+            foreach (var property in entity.GetProperties())
+            {
+                if (property.ClrType != typeof(string)) continue;
+                var name = $"{entity.ClrType.Name}.{property.Name}";
+                alle.Add(name);
+                if (property.GetMaxLength() is not null) continue;
+
+                if (inUnique.Contains(property.Name)) uniqueOhneLaenge.Add(name);
+                // Die Ausnahmeliste des DbContext ist die Quelle – hier wird sie nur gelesen.
+                else if (!PuglingDbContext.UnbegrenztErlaubt(name)) ohneLaenge.Add(name);
+            }
+        }
+
+        // Selbstschutz: findet die Reflexion keine String-Spalten, bestünde der Test inhaltsleer.
+        Assert.True(alle.Count >= 100, $"Zu wenige String-Spalten gefunden ({alle.Count}).");
+
+        Assert.True(uniqueOhneLaenge.Count == 0,
+            "Diese String-Spalten stehen in einem Unique-Index und sind unbegrenzt. Das ist die harte Regel: "
+            + "ein Unique-Index auf NVARCHAR(MAX) ist bei einem Provider-Wechsel nicht anlegbar – und es sind "
+            + "die Spalten, die die Idempotenz tragen:\n  "
+            + string.Join("\n  ", uniqueOhneLaenge.OrderBy(n => n, StringComparer.Ordinal)));
+
+        Assert.True(ohneLaenge.Count == 0,
+            "Diese String-Spalten haben keine Länge. Entweder greift die Konvention nicht, oder sie brauchen "
+            + "einen begründeten Eintrag in PuglingDbContext.UnlimitedByDesign:\n  "
+            + string.Join("\n  ", ohneLaenge.OrderBy(n => n, StringComparer.Ordinal)));
+    }
+
+    /// <summary>
+    /// <b>G7 – jede JSON-Spalte hat einen ValueComparer.</b> Eine Sammlung, die über einen String-Converter in
+    /// die DB geht, vergleicht EF ohne eigenen Comparer per <b>Referenz</b>: eine In-Place-Mutation
+    /// (<c>list.Add(...)</c>) gilt dann als „unverändert" und geht beim <c>SaveChanges</c> <b>still verloren</b>.
+    /// <para>
+    /// Diese Regel steht in <c>CLAUDE.md</c> und wurde bislang vorbildlich befolgt – 13 Comparer, keine Lücke.
+    /// Genau deshalb ist sie ein guter Kandidat für ein Tor: sie hängt an Disziplin, ihr Bruch ist unsichtbar,
+    /// und die nächste JSON-Spalte kommt bestimmt.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public void Jede_Json_Spalte_Hat_Einen_ValueComparer()
+    {
+        using var db = Context();
+        // Wieder das Design-Time-Modell, nicht `db.Model`: das laufzeit-optimierte wirft die Annotationen
+        // weg (dieselbe Falle wie bei G8) – und die Annotation ist hier die gesuchte Spur.
+        var jsonSpalten = new List<string>();
+        var ohneComparer = new List<string>();
+        foreach (var entity in db.GetService<IDesignTimeModel>().Model.GetEntityTypes())
+            foreach (var property in entity.GetProperties())
+            {
+                // JSON-Spalte = Sammlungs-/Komplextyp, der als String persistiert wird. Strings selbst und
+                // die Enum-Konvertierungen aus G4 sind keine.
+                var clr = property.ClrType;
+                if (clr == typeof(string) || (Nullable.GetUnderlyingType(clr) ?? clr).IsEnum) continue;
+                if (property.GetValueConverter()?.ProviderClrType != typeof(string)) continue;
+
+                var name = $"{entity.ClrType.Name}.{property.Name}";
+                jsonSpalten.Add(name);
+                // Gefragt ist „wurde einer *gesetzt*", nicht „gibt es einen": `GetValueComparer()` liefert
+                // immer etwas – im Zweifel den referenzvergleichenden Default, und genau der ist der Fehler.
+                // Die Annotation ist die einzige Spur der ausdrücklichen Konfiguration.
+                if (!property.GetAnnotations().Any(a =>
+                        a.Name is "ValueComparer" && a.Value is not null))
+                    ohneComparer.Add(name);
+            }
+
+        // Selbstschutz: findet die Reflexion keine JSON-Spalten, bestünde der Test inhaltsleer.
+        Assert.True(jsonSpalten.Count >= 10,
+            $"Zu wenige JSON-Spalten gefunden ({jsonSpalten.Count}) – greift die Reflexion?");
+
+        Assert.True(ohneComparer.Count == 0,
+            "Diese JSON-Spalten haben keinen ValueComparer. EF vergleicht sie dann per Referenz, und eine "
+            + "In-Place-Mutation geht beim SaveChanges still verloren (siehe Data/JsonValueComparer.cs):\n  "
+            + string.Join("\n  ", ohneComparer.OrderBy(n => n, StringComparer.Ordinal)));
     }
 
     /// <summary>

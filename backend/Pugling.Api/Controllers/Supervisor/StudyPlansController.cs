@@ -1,4 +1,4 @@
-using System.Linq.Expressions;
+﻿using System.Linq.Expressions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -82,7 +82,7 @@ public class StudyPlansController(PuglingDbContext db, AuthAccess access) : Cont
     {
         if (string.IsNullOrWhiteSpace(dto.Title)) return this.ProblemWithCode(ApiErrors.ValidationError, "Title is required.");
         // Eigentums-Prüfung zuerst: einheitlich 404 für "existiert nicht" und "nicht mein Kind".
-        if (!await access.FatherOwnsChildAsync(User, dto.ChildId, ct)) return this.ProblemWithCode(ApiErrors.NotFound, "Child not found.");
+        if (!await access.SupervisorOwnsChildAsync(User, dto.ChildId, ct)) return this.ProblemWithCode(ApiErrors.NotFound, "Child not found.");
         if (dto.SubjectId is { } sid && !await db.Subjects.AnyAsync(s => s.Id == sid, ct)) return this.ProblemWithCode(ApiErrors.InvalidReference, "Subject not found.");
 
         var start = dto.StartDate ?? DateOnly.FromDateTime(DateTime.UtcNow);
@@ -129,7 +129,7 @@ public class StudyPlansController(PuglingDbContext db, AuthAccess access) : Cont
         // Umzuweisung an ein anderes Kind: nur an ein eigenes Kind des Vaters (sonst 404, wie beim Anlegen).
         if (dto.ChildId is { } newChildId && newChildId != plan.ChildId)
         {
-            if (!await access.FatherOwnsChildAsync(User, newChildId, ct)) return this.ProblemWithCode(ApiErrors.NotFound, "Child not found.");
+            if (!await access.SupervisorOwnsChildAsync(User, newChildId, ct)) return this.ProblemWithCode(ApiErrors.NotFound, "Child not found.");
             plan.ChildId = newChildId;
         }
         if (dto.Title is not null && dto.Title.Trim().Length > 0) plan.Title = dto.Title.Trim();

@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Pugling.Api.Auth;
@@ -206,7 +206,7 @@ public class TagsController(PuglingDbContext db, AuthAccess access) : Controller
         if (dto.VocabularyIds is not { Count: > 0 }) return this.ProblemWithCode(ApiErrors.ValidationError, "At least one vocabulary item is required.");
 
         var ids = dto.VocabularyIds.Distinct().ToList();
-        var existing = await db.Vocabulary.Where(v => ids.Contains(v.Id)).Select(v => v.Id).ToListAsync(ct);
+        var existing = await db.Vocabularies.Where(v => ids.Contains(v.Id)).Select(v => v.Id).ToListAsync(ct);
         var missing = ids.Except(existing).ToList();
         if (missing.Count > 0) return this.ProblemWithCode(ApiErrors.InvalidReference, $"Unknown vocabulary item IDs: {string.Join(", ", missing)}");
 

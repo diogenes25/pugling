@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 
@@ -17,7 +17,7 @@ public class ExerciseSharingTests(PuglingWebAppFactory factory) : IClassFixture<
 {
     private readonly PuglingWebAppFactory _factory = factory;
 
-    private async Task<(HttpClient client, int fatherId)> NewFatherAsync(string name, string pin)
+    private async Task<(HttpClient client, int supervisorId)> NewFatherAsync(string name, string pin)
     {
         var id = await TestApi.IdAsync(await _factory.CreateClient()
             .PostAsJsonAsync("/api/v1/supervisor/adults", new { name, pin }));

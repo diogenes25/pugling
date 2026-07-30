@@ -12,9 +12,12 @@ namespace Pugling.Api.Auth;
 /// </summary>
 public class AccountService(PuglingDbContext db)
 {
-    /// <summary>Konto (inkl. Profile) für den Vater – Rollen Creator + Supervisor. Legt es idempotent an.</summary>
-    public Task<Account> EnsureForFatherAsync(Adult father, CancellationToken ct = default) =>
-        EnsureAsync(father, supervises: true, ct);
+    /// <summary>
+    /// Konto (inkl. Profile) für einen Erwachsenen <b>mit</b> Betreuungsauftrag – Rollen Creator +
+    /// Supervisor. Legt es idempotent an. Gegenstück: <see cref="EnsureForTeacherAsync"/>.
+    /// </summary>
+    public Task<Account> EnsureForAdultAsync(Adult adult, CancellationToken ct = default) =>
+        EnsureAsync(adult, supervises: true, ct);
 
     /// <summary>
     /// Konto für einen <b>Lehrer</b>: Rolle <see cref="ProfileRole.Creator"/> – und <b>keine</b>
@@ -31,17 +34,17 @@ public class AccountService(PuglingDbContext db)
     public Task<Account> EnsureForTeacherAsync(Adult teacher, CancellationToken ct = default) =>
         EnsureAsync(teacher, supervises: false, ct);
 
-    private async Task<Account> EnsureAsync(Adult father, bool supervises, CancellationToken ct)
+    private async Task<Account> EnsureAsync(Adult adult, bool supervises, CancellationToken ct)
     {
         var account = await db.Accounts.Include(a => a.Profiles)
-            .FirstOrDefaultAsync(a => a.Profiles.Any(p => p.AdultId == father.Id), ct);
+            .FirstOrDefaultAsync(a => a.Profiles.Any(p => p.AdultId == adult.Id), ct);
         // Idempotent und **nicht** nachrüstend: ein bestehendes Konto behält seine Rollen. Sonst hätte ein
         // zweiter Registrierungs-Aufruf einem Lehrer stillschweigend den Betreuungsauftrag verliehen.
         if (account is not null) return account;
 
-        account = new Account { DisplayName = father.Name, Email = father.Email, PinHash = father.Pin, CreatedAt = father.CreatedAt };
-        account.Profiles.Add(new AccountProfile { Role = ProfileRole.Creator, AdultId = father.Id });
-        if (supervises) account.Profiles.Add(new AccountProfile { Role = ProfileRole.Supervisor, AdultId = father.Id });
+        account = new Account { DisplayName = adult.Name, Email = adult.Email, PinHash = adult.Pin, CreatedAt = adult.CreatedAt };
+        account.Profiles.Add(new AccountProfile { Role = ProfileRole.Creator, AdultId = adult.Id });
+        if (supervises) account.Profiles.Add(new AccountProfile { Role = ProfileRole.Supervisor, AdultId = adult.Id });
         db.Accounts.Add(account);
         await db.SaveChangesAsync(ct);
         return account;
@@ -85,7 +88,7 @@ public class AccountService(PuglingDbContext db)
     /// </summary>
     public async Task MirrorAsync(Adult adult, CancellationToken ct)
     {
-        var account = await EnsureForFatherAsync(adult, ct);
+        var account = await EnsureForAdultAsync(adult, ct);
         account.DisplayName = adult.Name;
         account.Email = adult.Email;
         account.PinHash = adult.Pin;

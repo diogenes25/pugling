@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Pugling.Api.Auth;
 using Pugling.Api.Data;
 using Pugling.Api.Models;
@@ -31,11 +31,11 @@ public class CreatorProfileService(PuglingDbContext db)
 
     /// <summary>
     /// Die passenden Profile, bestes zuerst. <paramref name="subjectId"/> verengt hart auf ein Fach
-    /// (fachfremde Profile fallen heraus, fachneutrale bleiben); <paramref name="fatherId"/> dient nur
+    /// (fachfremde Profile fallen heraus, fachneutrale bleiben); <paramref name="supervisorId"/> dient nur
     /// der <c>IsOwn</c>-Anzeige.
     /// </summary>
     public async Task<IReadOnlyList<CreatorProfileMatch>> MatchAsync(int childId, int? subjectId,
-        int? fatherId, CancellationToken ct = default)
+        int? supervisorId, CancellationToken ct = default)
     {
         var child = await db.Children.AsNoTracking()
             .Where(c => c.Id == childId)
@@ -90,7 +90,7 @@ public class CreatorProfileService(PuglingDbContext db)
                 reasons.Add(ReasonSchoolType);
             }
 
-            matches.Add(new CreatorProfileMatch(Map(profile, fatherId), score, reasons));
+            matches.Add(new CreatorProfileMatch(Map(profile, supervisorId), score, reasons));
         }
 
         // Punkte absteigend, danach die Id aufsteigend: die Reihenfolge ist reproduzierbar.
@@ -111,8 +111,8 @@ public class CreatorProfileService(PuglingDbContext db)
     }
 
     /// <summary>Die eine Abbildung Entität → Vertrag; auch der Controller nutzt sie.</summary>
-    public static CreatorProfileResponse Map(CreatorProfile p, int? fatherId) =>
-        new(p.Id, p.Name, p.OwnerAdultId, ClaimsPrincipalExtensions.IsOwnedBy(p.OwnerAdultId, fatherId),
+    public static CreatorProfileResponse Map(CreatorProfile p, int? supervisorId) =>
+        new(p.Id, p.Name, p.OwnerAdultId, ClaimsPrincipalExtensions.IsOwnedBy(p.OwnerAdultId, supervisorId),
             p.SubjectName, p.SubjectId, p.SchoolTypes, p.GradeMin, p.GradeMax,
             p.SeriesId, p.Series?.Name, p.SourceLang, p.TargetLang,
             p.Persona, p.Didactics, p.DefaultTypes, p.Active, p.CreatedAt);

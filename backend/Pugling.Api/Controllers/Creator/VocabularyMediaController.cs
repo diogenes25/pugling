@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Pugling.Api.Auth;
@@ -28,7 +28,7 @@ public class VocabularyMediaController(PuglingDbContext db, MediaLinkService lin
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<IEnumerable<MediaLinkResponse>>> List(int vocabularyId, CancellationToken ct)
     {
-        if (!await db.Vocabulary.AnyAsync(v => v.Id == vocabularyId, ct)) return NotFound();
+        if (!await db.Vocabularies.AnyAsync(v => v.Id == vocabularyId, ct)) return NotFound();
         return (await links.ListAsync(Carrier, vocabularyId, ct)).Select(MediaLinkService.Map).ToList();
     }
 
@@ -40,7 +40,7 @@ public class VocabularyMediaController(PuglingDbContext db, MediaLinkService lin
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<ActionResult<MediaLinkResponse>> Link(int vocabularyId, AddMediaLinkDto dto, CancellationToken ct)
     {
-        if (!await db.Vocabulary.AnyAsync(v => v.Id == vocabularyId, ct)) return NotFound();
+        if (!await db.Vocabularies.AnyAsync(v => v.Id == vocabularyId, ct)) return NotFound();
 
         var (link, error, detail) = await links.LinkAsync(Carrier, vocabularyId, dto, ct);
         if (error is { } failure) return this.ProblemWithCode(failure, detail);

@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using Microsoft.Extensions.DependencyInjection;
@@ -19,7 +19,7 @@ public class ExercisePreviewTests(PuglingWebAppFactory factory) : IClassFixture<
     {
         using var scope = _factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
-        return (db.ChildPoints.Count(), db.TestAttempts.Count(),
+        return (db.ChildPointsEntries.Count(), db.TestAttempts.Count(),
             db.PositionItemProgress.Count(), db.PracticeSessions.Count());
     }
 

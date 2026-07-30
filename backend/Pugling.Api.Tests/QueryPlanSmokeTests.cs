@@ -1,4 +1,4 @@
-using Microsoft.Data.Sqlite;
+﻿using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Pugling.Api.Data;
 using Pugling.Api.Models;
@@ -41,14 +41,14 @@ public sealed class QueryPlanSmokeTests
         await con.OpenAsync();
 
         await AssertUsesIndexAsync(con,
-            $"SELECT Id FROM ChildPoints WHERE ChildId = {ids.Child} ORDER BY CreatedAt DESC, Id DESC LIMIT 20;",
-            "IX_ChildPoints_ChildId_CreatedAt_Id");
+            $"SELECT Id FROM ChildPointsEntries WHERE ChildId = {ids.Child} ORDER BY CreatedAt DESC, Id DESC LIMIT 20;",
+            "IX_ChildPointsEntries_ChildId_CreatedAt_Id");
 
         // `Kind` liegt seit der Enum-Konvention als TEXT in der DB (der Vertrag sprach immer schon Strings).
         // Der Komposit-Index muss auch darauf greifen – genau das prüft diese Zusicherung.
         await AssertUsesIndexAsync(con,
-            $"SELECT SUM(Amount) FROM ChildPoints WHERE ChildId = {ids.Child} AND Kind IN ('Base', 'Combo', 'Manual');",
-            "IX_ChildPoints_ChildId_Kind");
+            $"SELECT SUM(Amount) FROM ChildPointsEntries WHERE ChildId = {ids.Child} AND Kind IN ('Base', 'Combo', 'Manual');",
+            "IX_ChildPointsEntries_ChildId_Kind");
 
         await AssertUsesIndexAsync(con,
             $"SELECT EXISTS(SELECT 1 FROM PracticeSessions WHERE PlanPositionId = {ids.Position} AND Day >= '2026-01-01' AND Day <= '2026-12-31' AND Mode = 1);",
@@ -79,8 +79,8 @@ public sealed class QueryPlanSmokeTests
         // Spaltenindex. Erst Collation NOCASE + Wegfall des ToLower() machen ihn nutzbar; diese
         // Zusicherung ist der Beweis, dass beides zusammen wirkt und nicht nur der Index existiert.
         await AssertUsesIndexAsync(con,
-            "SELECT Id FROM Vocabulary WHERE Word = 'w';",
-            "IX_Vocabulary_Word");
+            "SELECT Id FROM Vocabularies WHERE Word = 'w';",
+            "IX_Vocabularies_Word");
 
         // Die Gegenrichtung der Medien-Verknüpfung („welche Verknüpfungen hat dieses Asset?"). Die drei
         // gefilterten Unique-Indizes beginnen mit MediaAssetId, können diese Query aber nicht bedienen.

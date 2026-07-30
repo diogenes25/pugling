@@ -1,4 +1,4 @@
-using System.Security.Claims;
+﻿using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
@@ -55,7 +55,7 @@ public class AuthController(PuglingDbContext db, TokenService tokens, AccountSer
         var adult = await db.Adults.FirstOrDefaultAsync(a => a.Id == dto.AdultId, ct);
         if (adult is null || !PinHasher.Verify(dto.Pin, adult.Pin)) return this.ProblemWithCode(ApiErrors.InvalidCredentials, "Invalid adult ID or PIN.");
 
-        var account = await accounts.EnsureForFatherAsync(adult, ct);
+        var account = await accounts.EnsureForAdultAsync(adult, ct);
         var (token, expires) = tokens.IssueForAccount(account, account.Profiles, isAdmin: adult.IsAdmin);
         return new LoginResponse(token, PrimaryRoleOf(account.Profiles), adult.Id, adult.Name, expires);
     }

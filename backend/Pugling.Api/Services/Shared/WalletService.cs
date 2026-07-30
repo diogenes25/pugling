@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Pugling.Api.Data;
 
 namespace Pugling.Api.Services.Shared;
@@ -21,7 +21,7 @@ public class WalletService(PuglingDbContext db)
     /// <summary>Beide Kontostände in einem Rundtrip.</summary>
     public async Task<Balances> BalancesAsync(int childId, CancellationToken ct = default)
     {
-        var grouped = await db.ChildPoints
+        var grouped = await db.ChildPointsEntries
             .Where(p => p.ChildId == childId)
             .GroupBy(p => PointKindCurrency.CoinKinds.Contains(p.Kind))
             .Select(g => new { IsCoin = g.Key, Sum = g.Sum(p => p.Amount) })
@@ -33,7 +33,7 @@ public class WalletService(PuglingDbContext db)
     }
 
     private async Task<int> SumAsync(int childId, PointKind[] kinds, CancellationToken ct) =>
-        await db.ChildPoints
+        await db.ChildPointsEntries
             .Where(p => p.ChildId == childId && kinds.Contains(p.Kind))
             .SumAsync(p => (int?)p.Amount, ct) ?? 0;
 }

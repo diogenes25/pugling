@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Pugling.Api.Auth;
@@ -48,7 +48,7 @@ public class ChildVocabularyProgressController(PuglingDbContext db) : Controller
 
         var projected =
             from p in q
-            join v in db.Vocabulary.AsNoTracking() on p.VocabularyId equals v.Id into vj
+            join v in db.Vocabularies.AsNoTracking() on p.VocabularyId equals v.Id into vj
             from v in vj.DefaultIfEmpty()
             orderby p.MasteryPercent, p.SeenCount descending, p.ItemId
             select new Row(p.ItemId, p.ExerciseId, p.VocabularyId,
@@ -88,7 +88,7 @@ public class ChildVocabularyProgressController(PuglingDbContext db) : Controller
             .ToPagedListAsync(Response, skip, take, ct);
 
         var ids = page.Select(g => g.VocabularyId).ToList();
-        var vocabById = await db.Vocabulary.AsNoTracking().Where(v => ids.Contains(v.Id))
+        var vocabById = await db.Vocabularies.AsNoTracking().Where(v => ids.Contains(v.Id))
             .ToDictionaryAsync(v => v.Id, v => new { v.Word, v.Translation }, ct);
         return page.Select(g =>
         {
@@ -106,7 +106,7 @@ public class ChildVocabularyProgressController(PuglingDbContext db) : Controller
     {
         var row = await (
             from p in db.ItemProgress.AsNoTracking().Where(p => p.ChildId == childId && p.ItemId == itemId)
-            join v in db.Vocabulary.AsNoTracking() on p.VocabularyId equals v.Id into vj
+            join v in db.Vocabularies.AsNoTracking() on p.VocabularyId equals v.Id into vj
             from v in vj.DefaultIfEmpty()
             select new Row(p.ItemId, p.ExerciseId, p.VocabularyId,
                 v == null ? "" : v.Word, v == null ? "" : v.Translation,

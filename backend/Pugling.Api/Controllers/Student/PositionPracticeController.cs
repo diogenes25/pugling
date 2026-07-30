@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Pugling.Api.Auth;
@@ -324,7 +324,7 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
             var score = await scoring.ScoreReviewAsync(cfg, preReviewCount, preBox, prog.Box, wasCorrect, combo,
                 DateTime.Now, elapsedSeconds, ct);
             foreach (var c in score.Contributions)
-                db.ChildPoints.Add(new ChildPointsEntry { ChildId = plan.ChildId, Kind = c.Kind, Amount = c.Amount, Reason = c.Reason });
+                db.ChildPointsEntries.Add(new ChildPointsEntry { ChildId = plan.ChildId, Kind = c.Kind, Amount = c.Amount, Reason = c.Reason });
             awarded = score.BasePoints;
             comboBonus = score.ComboBonus;
             speedBonus = score.SpeedBonus;
