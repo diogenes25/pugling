@@ -174,8 +174,11 @@ Details: [backend/Pugling.Agent.Creator/README.md](backend/Pugling.Agent.Creator
 
 ## Konventionen (an bestehendem Code orientieren!)
 
-- **Doku auf Deutsch.** Öffentliche Typen/Members tragen `/// <summary>` (fließt in Swagger).
-  Kommentare erklären das *Warum* (Geschäftsregel, Anti-Cheat), nicht das Was.
+- **XML-Doku auf Englisch.** Öffentliche Typen/Members tragen `/// <summary>` (fließt in Swagger) – der
+  Text darin ist **englisch**. Kommentare erklären das *Warum* (Geschäftsregel, Anti-Cheat), nicht das Was.
+  Inline-`//`-Kommentare und die Markdown-Doku bleiben (noch) deutsch; Glossar, Fortschritt und
+  Fallstricke der Umstellung stehen in [docs/translate.md](docs/translate.md) – dort auch die bewusst
+  ausgenommenen Pfade (`Pugling.Api/Models/`, `Data/`).
 - **Controller dünn**, Logik in Services. DTOs als `record` projizieren – nie EF-Entities zurückgeben.
 - **Vertrag im eigenen Projekt** ([backend/Pugling.Contracts/](backend/Pugling.Contracts/)): *alle* Request-/
   Response-`record`s und die geteilten Basistypen (Enums, `StageStep`, die Übungs-Configs) liegen dort –
