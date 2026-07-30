@@ -199,6 +199,13 @@ public class ShopService(PuglingDbContext db, WalletService wallet)
             {
                 ChildId = childId,
                 ShopArticleId = article.Id,
+                // Momentaufnahme wie am Kaufbeleg: sie trägt Anzeige und Vater-Filter, nachdem der
+                // Artikel gelöscht ist (FK SetNull) – bezahlte Einheiten sind Geld.
+                SupervisorId = article.AdultId,
+                ArticleNumber = article.ArticleNumber,
+                ArticleTitle = article.Title,
+                UnitType = article.UnitType,
+                ActionType = article.ActionType,
                 Quantity = listing.UnitsPerPurchase,
             });
         else

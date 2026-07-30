@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Pugling.Api.Data;
+using Pugling.Api.Models;
 
 namespace Pugling.Api.Services.Shared;
 
@@ -87,6 +88,27 @@ public static class ExerciseUsageQueries
             OwnPlans: planMine, HiddenPlans: planTotal - planMine,
             OwnClassTests: testMine, HiddenClassTests: testTotal - testMine,
             HiddenLearners: hiddenLearners);
+    }
+
+    /// <summary>
+    /// Blockiert <b>irgendeine</b> Übung aus <paramref name="scope"/> das Löschen? Für die Ebenen über der
+    /// Übung: ein Fach oder Kapitel kaskadiert auf seine Übungen, und <c>PlanPosition→Exercise</c> ist
+    /// <c>Restrict</c> – ohne diese Vorprüfung stirbt das Löschen als FK-Verletzung in einer nackten 500,
+    /// statt zu sagen, was im Weg steht.
+    /// <para>
+    /// Sie steht hier und nicht in den beiden Controllern, weil die Antwort auf „welche Tabellen hindern
+    /// das Löschen einer Übung" <b>einen</b> Ort braucht. Vorher stand die Zeile dreimal wörtlich da; eine
+    /// vierte verweisende Tabelle hätte man an allen drei Stellen finden müssen – und die eine vergessene
+    /// wäre wieder eine 500. Die <i>Meldungstexte</i> bleiben bei den Aufrufern: sie benennen die Ebene
+    /// („in this subject" / „in this chapter") und sind nicht dieselbe Aussage.
+    /// </para>
+    /// </summary>
+    public static async Task<bool> AnyBlockingAsync(
+        PuglingDbContext db, IQueryable<Exercise> scope, CancellationToken ct)
+    {
+        var ids = scope.Select(x => x.Id);
+        return await db.PlanPositions.AsNoTracking().AnyAsync(p => ids.Contains(p.ExerciseId), ct)
+            || await db.KlassenarbeitExercises.AsNoTracking().AnyAsync(x => ids.Contains(x.ExerciseId), ct);
     }
 
     /// <summary>

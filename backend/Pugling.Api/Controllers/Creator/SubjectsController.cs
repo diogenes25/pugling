@@ -80,10 +80,10 @@ public class SubjectsController(PuglingDbContext db) : ControllerBase
     {
         var subject = await db.Subjects.FindAsync([subjectId], ct);
         if (subject is null) return NotFound();
-        // Subject→Chapter→Exercise kaskadiert, PlanPosition→Exercise ist Restrict: ohne diese Prüfung
-        // stirbt das Löschen als FK-Verletzung in einer nackten 500, statt zu sagen, was im Weg steht.
-        if (await db.PlanPositions.AnyAsync(p => p.Exercise!.Chapter!.SubjectId == subjectId, ct)
-            || await db.KlassenarbeitExercises.AnyAsync(x => x.Exercise!.Chapter!.SubjectId == subjectId, ct))
+        // Subject→Chapter→Exercise kaskadiert, PlanPosition→Exercise ist Restrict. Welche Tabellen das
+        // Löschen blockieren, weiß ExerciseUsageQueries – hier steht nur der Scope und die Meldung.
+        if (await ExerciseUsageQueries.AnyBlockingAsync(db,
+                db.Exercises.Where(x => x.Chapter!.SubjectId == subjectId), ct))
             return this.ProblemWithCode(ApiErrors.ExerciseInUse,
                 "Exercises in this subject are used in a study plan or a class test; remove them there first.");
         db.Subjects.Remove(subject);

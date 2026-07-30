@@ -1594,9 +1594,14 @@ export interface UpdateShopListingDto {
   refillDayOfWeek?: DayOfWeek | null;
 }
 
-/** Aggregierter Inventar-Eintrag eines Kindes: Artikel-Typ → verfügbare Gesamtmenge. */
+/**
+ * Aggregierter Inventar-Eintrag eines Kindes: Artikel-Typ → verfügbare Gesamtmenge.
+ * `shopArticleId` ist `null`, wenn der Artikel nach dem Kauf gelöscht wurde – bezahlte Einheiten
+ * überleben Katalogpflege, Titel und Einheit kommen dann aus der Momentaufnahme am Inventar. Ein
+ * solcher Posten ist nicht einlösbar (die Aktivierung adressiert die Artikel-Id).
+ */
 export interface InventoryItem {
-  shopArticleId: number;
+  shopArticleId: number | null;
   articleNumber: string;
   title: string;
   unitType: UnitType;

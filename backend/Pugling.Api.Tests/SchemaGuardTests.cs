@@ -164,4 +164,162 @@ public class SchemaGuardTests
             + "brauchen einen begründeten Eintrag in PuglingDbContext.IntEnumsByDesign:\n  "
             + string.Join("\n  ", alsZahl.OrderBy(n => n, StringComparer.Ordinal)));
     }
+
+    /// <summary>
+    /// <b>G2 – jeder Fremdschlüssel hat ein abgenommenes Löschverhalten.</b> Ein Löschverhalten ist die
+    /// gefährlichste stille Entscheidung im Modell: es entscheidet, ob eine Zeile <i>Daten mitnimmt</i>.
+    /// Genau dort saß der teuerste Fund dieses Umbaus – <c>Adult→ShopArticle→ChildInventory</c> war
+    /// durchgehend <c>Cascade</c>, sodass das Löschen eines Supervisors bezahltes Kind-Inventar vernichtete,
+    /// während die Kaufbelege daneben stehenblieben.
+    /// <para>
+    /// Warum eine <b>literal gepinnte Tabelle</b> und keine schlaue Regel: Reflexion kann „ausdrücklich
+    /// gesetzt" nicht von „von der EF-Konvention geerbt" unterscheiden. Eine Regel könnte also nur die
+    /// <i>Werte</i> prüfen, nicht die Absicht – und wäre bei jeder neuen FK stumm. Die Tabelle ist der
+    /// ehrliche Ersatz: sie erzwingt bei jeder neuen Beziehung <b>eine bewusste Zeile</b>, und sie schlägt
+    /// in beide Richtungen an (auch bei einer FK, die verschwindet).
+    /// </para>
+    /// <para>
+    /// Zusätzlich verboten ist <see cref="DeleteBehavior.ClientSetNull"/> – der Konventions-Default für
+    /// optionale Beziehungen. Er räumt nur im <i>geladenen</i> ChangeTracker auf und lässt die DB-Seite
+    /// offen. Dieselbe Zusicherung fing beim Ausschreiben der Konventions-Cascades einen echten Fehler:
+    /// ein <c>WithMany()</c> ohne die vorhandene Gegen-Navigation ließ EF eine <b>zweite</b> Beziehung
+    /// (<c>ChildId1</c>) anlegen, und die trug genau diesen Wert.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public void Jeder_Fremdschluessel_Hat_Ein_Abgenommenes_Loeschverhalten()
+    {
+        // Abnahme-Tabelle: "Entity.FkProperty" → beabsichtigtes Verhalten. Der Kommentar nennt das Ziel.
+        // Kommt eine FK dazu, gehört sie hier eingetragen – bewusst, nicht durch Erben einer Konvention.
+        var abgenommen = new Dictionary<string, DeleteBehavior>(StringComparer.Ordinal)
+        {
+            ["AccountProfile.AccountId"] = DeleteBehavior.Cascade, // -> Account
+            ["AccountProfile.AdultId"] = DeleteBehavior.Cascade, // -> Adult
+            ["AccountProfile.ChildId"] = DeleteBehavior.Cascade, // -> Child
+            ["Achievement.ChildId"] = DeleteBehavior.Cascade, // -> Child
+            ["AchievementAward.AchievementId"] = DeleteBehavior.Cascade, // -> Achievement
+            ["ActivationRequest.ChildId"] = DeleteBehavior.Cascade, // -> Child
+            ["ActivationRequest.ShopArticleId"] = DeleteBehavior.SetNull, // -> ShopArticle
+            ["Chapter.SubjectId"] = DeleteBehavior.Cascade, // -> Subject
+            ["ChildInterest.ChildId"] = DeleteBehavior.Cascade, // -> Child
+            ["ChildInterest.InterestTagId"] = DeleteBehavior.Cascade, // -> InterestTag
+            ["ChildInventory.ChildId"] = DeleteBehavior.Cascade, // -> Child
+            // Der Fund: bezahlte Einheiten sind Geld und dürfen nicht mit dem Katalogeintrag verschwinden.
+            ["ChildInventory.ShopArticleId"] = DeleteBehavior.SetNull, // -> ShopArticle
+            ["ChildMediaPick.ChildId"] = DeleteBehavior.Cascade, // -> Child
+            ["ChildMediaPick.ExerciseItemId"] = DeleteBehavior.Cascade, // -> ExerciseItem
+            ["ChildMediaPick.MediaAssetId"] = DeleteBehavior.Cascade, // -> MediaAsset
+            ["ChildMediaPick.VocabularyId"] = DeleteBehavior.Cascade, // -> Vocabulary
+            ["ChildPointsEntry.ChildId"] = DeleteBehavior.Cascade, // -> Child
+            ["CreatorProfile.OwnerAdultId"] = DeleteBehavior.SetNull, // -> Adult
+            ["CreatorProfile.SeriesId"] = DeleteBehavior.SetNull, // -> TextbookSeries
+            ["CreatorProfile.SubjectId"] = DeleteBehavior.SetNull, // -> Subject
+            ["Exercise.AuthorAdultId"] = DeleteBehavior.SetNull, // -> Adult
+            ["Exercise.CategoryId"] = DeleteBehavior.SetNull, // -> ExerciseCategory
+            ["Exercise.ChapterId"] = DeleteBehavior.Cascade, // -> Chapter
+            ["ExerciseCategory.SubjectId"] = DeleteBehavior.Cascade, // -> Subject
+            ["ExerciseGrant.CreatorId"] = DeleteBehavior.Cascade, // -> Adult
+            ["ExerciseGrant.ExerciseId"] = DeleteBehavior.Cascade, // -> Exercise
+            ["ExerciseItem.ExerciseId"] = DeleteBehavior.Cascade, // -> Exercise
+            // Restrict: eine Store-Vokabel, die eine Übung benutzt, wird nicht mitgelöscht (409 statt Verlust).
+            ["ExerciseItem.VocabularyId"] = DeleteBehavior.Restrict, // -> Vocabulary
+            ["ExerciseTag.ExerciseId"] = DeleteBehavior.Cascade, // -> Exercise
+            ["ExerciseTag.TagId"] = DeleteBehavior.Cascade, // -> Tag
+            ["ItemProgress.ChildId"] = DeleteBehavior.Cascade, // -> Child
+            ["ItemProgress.ItemId"] = DeleteBehavior.Cascade, // -> ExerciseItem
+            ["ItemReviewEvent.ChildId"] = DeleteBehavior.Cascade, // -> Child
+            // Die Historie überlebt das Item: die Aussage „richtig beantwortet" gilt weiter.
+            ["ItemReviewEvent.ItemId"] = DeleteBehavior.SetNull, // -> ExerciseItem
+            ["KeyResult.ObjectiveId"] = DeleteBehavior.Cascade, // -> Objective
+            ["Klassenarbeit.ChildId"] = DeleteBehavior.Cascade, // -> Child
+            ["Klassenarbeit.SubjectId"] = DeleteBehavior.SetNull, // -> Subject
+            ["KlassenarbeitExercise.ExerciseId"] = DeleteBehavior.Cascade, // -> Exercise
+            ["KlassenarbeitExercise.KlassenarbeitId"] = DeleteBehavior.Cascade, // -> Klassenarbeit
+            ["KlassenarbeitTag.KlassenarbeitId"] = DeleteBehavior.Cascade, // -> Klassenarbeit
+            ["KlassenarbeitTag.TagId"] = DeleteBehavior.Cascade, // -> Tag
+            ["LearnGoal.ChildId"] = DeleteBehavior.Cascade, // -> Child (fällt mit E13 weg)
+            ["MediaLink.ExerciseId"] = DeleteBehavior.Cascade, // -> Exercise
+            ["MediaLink.ExerciseItemId"] = DeleteBehavior.Cascade, // -> ExerciseItem
+            ["MediaLink.MediaAssetId"] = DeleteBehavior.Cascade, // -> MediaAsset
+            ["MediaLink.VocabularyId"] = DeleteBehavior.Cascade, // -> Vocabulary
+            ["MediaTagLink.InterestTagId"] = DeleteBehavior.Cascade, // -> InterestTag
+            ["MediaTagLink.MediaAssetId"] = DeleteBehavior.Cascade, // -> MediaAsset
+            ["MediaVariant.MediaAssetId"] = DeleteBehavior.Cascade, // -> MediaAsset
+            ["Mission.ChildId"] = DeleteBehavior.Cascade, // -> Child
+            ["MissionAward.MissionId"] = DeleteBehavior.Cascade, // -> Mission
+            ["Objective.ChildId"] = DeleteBehavior.Cascade, // -> Child
+            ["ObjectiveReward.ObjectiveId"] = DeleteBehavior.Cascade, // -> Objective
+            // Restrict: eine Übung, die in einem Lehrplan steckt, wird nicht mitgelöscht (409 statt Verlust).
+            ["PlanPosition.ExerciseId"] = DeleteBehavior.Restrict, // -> Exercise
+            ["PlanPosition.StudyPlanId"] = DeleteBehavior.Cascade, // -> StudyPlan
+            ["PositionGoalPenalty.PlanPositionId"] = DeleteBehavior.Cascade, // -> PlanPosition
+            ["PositionGoalReward.PlanPositionId"] = DeleteBehavior.Cascade, // -> PlanPosition
+            ["PositionItemProgress.PlanPositionId"] = DeleteBehavior.Cascade, // -> PlanPosition
+            // SetNull, damit in SQLite kein zweiter Cascade-Pfad (Plan → Position → Sitzung/Test) neben
+            // Plan → Sitzung/Test entsteht; am Plan hängen beide schon.
+            ["PracticeSession.PlanPositionId"] = DeleteBehavior.SetNull, // -> PlanPosition
+            ["PracticeSession.StudyPlanId"] = DeleteBehavior.Cascade, // -> StudyPlan
+            ["Remark.AccountId"] = DeleteBehavior.Cascade, // -> Account
+            // Jeder Kontext-Bezug der Anmerkung darf verblassen; die Beobachtung bleibt.
+            ["Remark.ChildId"] = DeleteBehavior.SetNull, // -> Child
+            ["Remark.ExerciseId"] = DeleteBehavior.SetNull, // -> Exercise
+            ["Remark.ParentRemarkId"] = DeleteBehavior.SetNull, // -> Remark
+            ["Remark.PlanPositionId"] = DeleteBehavior.SetNull, // -> PlanPosition
+            ["Remark.StudyPlanId"] = DeleteBehavior.SetNull, // -> StudyPlan
+            ["RemarkComment.AuthorAccountId"] = DeleteBehavior.SetNull, // -> Account
+            ["RemarkComment.RemarkId"] = DeleteBehavior.Cascade, // -> Remark
+            ["ReviewEvent.PracticeSessionId"] = DeleteBehavior.Cascade, // -> PracticeSession
+            ["SeriesUnit.SeriesId"] = DeleteBehavior.Cascade, // -> TextbookSeries
+            // Cascade bleibt Absicht: ein Vater mit Artikeln muss sich selbst löschen können.
+            ["ShopArticle.AdultId"] = DeleteBehavior.Cascade, // -> Adult
+            ["ShopListing.ShopArticleId"] = DeleteBehavior.Cascade, // -> ShopArticle
+            ["ShopPurchase.ChildId"] = DeleteBehavior.Cascade, // -> Child
+            ["ShopPurchase.ShopListingId"] = DeleteBehavior.SetNull, // -> ShopListing
+            ["StudyPlan.ChildId"] = DeleteBehavior.Cascade, // -> Child
+            ["StudyPlan.SubjectId"] = DeleteBehavior.SetNull, // -> Subject
+            ["SupervisorLink.StudentId"] = DeleteBehavior.Cascade, // -> Child
+            ["SupervisorLink.SupervisorId"] = DeleteBehavior.Cascade, // -> Adult
+            ["Tag.ChildId"] = DeleteBehavior.Cascade, // -> Child
+            ["TestAttempt.PlanPositionId"] = DeleteBehavior.SetNull, // -> PlanPosition
+            ["TestAttempt.StudyPlanId"] = DeleteBehavior.Cascade, // -> StudyPlan
+            ["TestItemResult.TestAttemptId"] = DeleteBehavior.Cascade, // -> TestAttempt
+            ["Textbook.ChildId"] = DeleteBehavior.Cascade, // -> Child
+            ["Textbook.CurrentUnitId"] = DeleteBehavior.SetNull, // -> SeriesUnit
+            ["Textbook.SeriesId"] = DeleteBehavior.SetNull, // -> TextbookSeries
+            ["Textbook.SubjectId"] = DeleteBehavior.SetNull, // -> Subject
+            ["TextbookSeries.OwnerAdultId"] = DeleteBehavior.SetNull, // -> Adult
+            ["TextbookSeries.SubjectId"] = DeleteBehavior.SetNull, // -> Subject
+            ["TimetableEntry.ChildId"] = DeleteBehavior.Cascade, // -> Child
+            ["TimetableEntry.SubjectId"] = DeleteBehavior.Cascade, // -> Subject
+            ["VocabTagLink.VocabTagId"] = DeleteBehavior.Cascade, // -> VocabTag
+            ["VocabTagLink.VocabularyId"] = DeleteBehavior.Cascade, // -> Vocabulary
+            // Restrict: die Grundform darf nicht verschwinden, solange eine Beugung auf sie zeigt.
+            ["Vocabulary.BaseFormId"] = DeleteBehavior.Restrict, // -> Vocabulary
+            ["VocabularyTag.TagId"] = DeleteBehavior.Cascade, // -> Tag
+            ["VocabularyTag.VocabularyId"] = DeleteBehavior.Cascade, // -> Vocabulary
+        };
+
+        using var db = Context();
+
+        var tatsaechlich = new Dictionary<string, DeleteBehavior>(StringComparer.Ordinal);
+        foreach (var entity in db.Model.GetEntityTypes())
+            foreach (var fk in entity.GetForeignKeys())
+                tatsaechlich[$"{entity.ClrType.Name}.{string.Join("+", fk.Properties.Select(p => p.Name))}"]
+                    = fk.DeleteBehavior;
+
+        // Selbstschutz: greift die Reflexion nicht, wäre die Menge leer und der Vergleich inhaltsleer.
+        Assert.True(tatsaechlich.Count >= 90,
+            $"Zu wenige Fremdschlüssel gefunden ({tatsaechlich.Count}) – greift die Reflexion?");
+
+        // Ein sortierter Zeilenvergleich statt Mengendifferenzen: die Fehlermeldung zeigt dann direkt,
+        // welche Zeile fehlt, überzählig ist oder ein anderes Verhalten trägt.
+        static string[] Zeilen(IDictionary<string, DeleteBehavior> d) =>
+            d.OrderBy(p => p.Key, StringComparer.Ordinal).Select(p => $"{p.Key} = {p.Value}").ToArray();
+
+        Assert.Equal(Zeilen(abgenommen), Zeilen(tatsaechlich));
+
+        // Der Konventions-Default für optionale Beziehungen räumt nur im geladenen ChangeTracker auf und
+        // lässt die DB-Seite offen – als *Absicht* ist er nie richtig.
+        Assert.DoesNotContain(DeleteBehavior.ClientSetNull, tatsaechlich.Values);
+    }
 }

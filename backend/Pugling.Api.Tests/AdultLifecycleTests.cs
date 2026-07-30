@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
+using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Pugling.Api.Data;
@@ -64,6 +65,60 @@ public class AdultLifecycleTests(PuglingWebAppFactory factory) : IClassFixture<P
         // Und die Mutter ist weiterhin Betreuerin – sie hat das Kind nicht mit verloren.
         var mutter = await TestApi.FatherAsync(factory, mutterId, "5109");
         Assert.Equal(HttpStatusCode.OK, (await mutter.GetAsync($"/api/v1/supervisor/children/{childId}")).StatusCode);
+    }
+
+    /// <summary>
+    /// Der transitive Weg desselben Defekts – und der, der dem Umbau den Namen gab: Löschen eines
+    /// Supervisors nahm seine Shop-Artikel mit (Cascade, so gewollt), und die nahmen über eine zweite
+    /// Cascade das <b>bezahlte Inventar</b> aller betreuten Kinder mit. Zwei einzeln vernünftige
+    /// Kaskaden ergaben zusammen Geldvernichtung; die Kaufbelege blieben per <c>SetNull</c> stehen und
+    /// wiesen auf einen Bestand, den es nicht mehr gab.
+    /// <para>
+    /// Sichtbar ist der Restbestand danach für das <b>Kind</b>, nicht für die verbleibende Betreuerin: die
+    /// Ökonomie ist ausstellergebunden (<c>SupervisorId</c>-Momentaufnahme), der Shop der Mutter ist nicht
+    /// der des Vaters. Das ist die bestehende Regel, keine neue Lücke – einlösbar ist der Posten damit
+    /// aber nicht mehr (die Aktivierung adressiert einen lebenden Artikel), und der Ausgleich läuft über
+    /// das vorhandene Druckventil <c>POST children/{id}/points</c>.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public async Task Loeschen_Vernichtet_Kein_Bezahltes_Kind_Inventar()
+    {
+        var (vater, vaterId) = await RegistriereAsync("5113");
+        var (_, mutterId) = await RegistriereAsync("5114");
+        var childId = await TestApi.IdAsync(await vater.PostAsJsonAsync("/api/v1/supervisor/children",
+            new { name = "Kind mit Guthaben", pin = "5115" }));
+        (await vater.PostAsJsonAsync($"/api/v1/supervisor/children/{childId}/supervisors",
+            new { supervisorId = mutterId, relation = "Mother" })).EnsureSuccessStatusCode();
+
+        var articleId = await TestApi.IdAsync(await vater.PostAsJsonAsync("/api/v1/supervisor/shop/articles",
+            new { articleNumber = "TV-513", title = "Fernsehen", unitType = "Minute", actionType = "TV" }));
+        var listingId = await TestApi.IdAsync(await vater.PostAsJsonAsync(
+            $"/api/v1/supervisor/shop/articles/{articleId}/listings",
+            new { title = "60 Minuten", coinPrice = 50, unitsPerPurchase = 60, currentStock = 1, maxStock = 1 }));
+        (await vater.PostAsJsonAsync($"/api/v1/supervisor/children/{childId}/points",
+            new { amount = 50, reason = "Coins" })).EnsureSuccessStatusCode();
+        var kind = await TestApi.ChildAsync(factory, childId, "5115");
+        (await kind.PostAsJsonAsync($"/api/v1/student/me/shop/listings/{listingId}/purchase", new { }))
+            .EnsureSuccessStatusCode();
+
+        Assert.Equal(HttpStatusCode.NoContent, (await vater.DeleteAsync($"/api/v1/supervisor/adults/{vaterId}")).StatusCode);
+
+        using (var scope = factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
+            Assert.False(await db.ShopArticles.AnyAsync(a => a.Id == articleId)); // Artikel weg, wie gewollt
+            var inv = await db.ChildInventories.AsNoTracking().SingleAsync(i => i.ChildId == childId);
+            Assert.Equal(60, inv.Quantity);
+            Assert.Null(inv.ShopArticleId);
+        }
+
+        // Das Kind sieht seinen Bestand weiter, benannt aus der Momentaufnahme.
+        var meins = await kind.GetAsync("/api/v1/student/me/shop/inventory");
+        meins.EnsureSuccessStatusCode();
+        var posten = Assert.Single((await meins.Content.ReadFromJsonAsync<JsonElement>()).EnumerateArray());
+        Assert.Equal(60, posten.GetProperty("quantity").GetInt32());
+        Assert.Equal("Fernsehen", posten.GetProperty("title").GetString());
     }
 
     [Fact]

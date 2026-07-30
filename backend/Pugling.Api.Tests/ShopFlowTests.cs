@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Pugling.Api.Data;
 using Pugling.Api.Models;
@@ -1205,5 +1206,70 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
         Assert.Contains("allowed values", message!, StringComparison.OrdinalIgnoreCase);
         foreach (var name in Enum.GetNames<UnitType>())
             Assert.Contains(name, message);
+    }
+
+    // ─── Bezahltes Inventar überlebt Katalogpflege ────────────────────────────
+
+    /// <summary>
+    /// <b>Bezahlte Einheiten sind Geld – Geld überlebt Katalogpflege.</b> Der Artikel kaskadierte bis in
+    /// das <c>ChildInventory</c> und löschte damit gekaufte, noch nicht verbrauchte Einheiten; die
+    /// Kaufbelege blieben per <c>SetNull</c> daneben stehen. Der Vater bekam die Münzen nicht zurück, das
+    /// Kind verlor die Ware, und die einzige Spur war ein Beleg ohne Gegenwert. Dass der XML-Kommentar am
+    /// Löschendpunkt „Kaufhistorie bleibt als Snapshot erhalten" versprach, machte es nicht besser: die
+    /// Historie blieb, der Bestand nicht.
+    /// </summary>
+    [Fact]
+    public async Task ArtikelLoeschen_LaesstBezahltesInventarStehen()
+    {
+        var father = await TestApi.FatherAsync(factory);
+        var (childId, child) = await FreshChildAsync(father, "9361");
+        var articleId = await CreateArticleAsync(father, new
+        {
+            articleNumber = "TV-961",
+            title = "Fernsehen",
+            unitType = "Minute",
+            actionType = "TV",
+        });
+        var listingId = await CreateListingAsync(father, articleId, new
+        {
+            title = "120 Minuten Fernsehen",
+            coinPrice = 100,
+            unitsPerPurchase = 120,
+            currentStock = 1,
+            maxStock = 1,
+        });
+        (await father.PostAsJsonAsync($"/api/v1/supervisor/children/{childId}/points",
+            new { amount = 100, reason = "Coins" })).EnsureSuccessStatusCode();
+        (await child.PostAsJsonAsync($"/api/v1/student/me/shop/listings/{listingId}/purchase", new { }))
+            .EnsureSuccessStatusCode();
+
+        Assert.Equal(HttpStatusCode.NoContent,
+            (await father.DeleteAsync($"/api/v1/supervisor/shop/articles/{articleId}")).StatusCode);
+
+        // In der Datenbank: die Zeile lebt, nur der Katalog-Verweis ist leer.
+        using (var scope = factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
+            var inv = await db.ChildInventories.AsNoTracking()
+                .SingleAsync(i => i.ChildId == childId);
+            Assert.Equal(120, inv.Quantity);
+            Assert.Null(inv.ShopArticleId);
+        }
+
+        // Und in beiden Sichten, aus der Momentaufnahme statt aus dem gelöschten Artikel. Ohne sie fiele
+        // der Posten aus der Vater-Liste (die filtert auf `ShopArticle.AdultId`) und aus der Sohn-Liste
+        // (die sortiert nach `ShopArticle.ArticleNumber`) heraus – unsichtbar wäre so gut wie gelöscht.
+        var meins = await JsonAsync(await child.GetAsync("/api/v1/student/me/shop/inventory"));
+        var posten = Assert.Single(meins.EnumerateArray());
+        Assert.Equal(120, posten.GetProperty("quantity").GetInt32());
+        Assert.Equal("Fernsehen", posten.GetProperty("title").GetString());
+        Assert.Equal("Minute", posten.GetProperty("unitType").GetString());
+        Assert.Equal(JsonValueKind.Null, posten.GetProperty("shopArticleId").ValueKind);
+
+        var vaterSicht = await JsonAsync(
+            await father.GetAsync($"/api/v1/supervisor/children/{childId}/shop/inventory"));
+        var vaterPosten = Assert.Single(vaterSicht.EnumerateArray());
+        Assert.Equal(120, vaterPosten.GetProperty("quantity").GetInt32());
+        Assert.Equal("Fernsehen", vaterPosten.GetProperty("title").GetString());
     }
 }

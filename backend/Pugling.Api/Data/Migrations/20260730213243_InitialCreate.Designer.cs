@@ -11,7 +11,7 @@ using Pugling.Api.Data;
 namespace Pugling.Api.Data.Migrations
 {
     [DbContext(typeof(PuglingDbContext))]
-    [Migration("20260730123746_InitialCreate")]
+    [Migration("20260730213243_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -350,6 +350,18 @@ namespace Pugling.Api.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
+                    b.Property<string>("ActionType")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ArticleNumber")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ArticleTitle")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
                     b.Property<int>("ChildId")
                         .HasColumnType("INTEGER");
 
@@ -360,15 +372,25 @@ namespace Pugling.Api.Data.Migrations
                     b.Property<int>("Quantity")
                         .HasColumnType("INTEGER");
 
-                    b.Property<int>("ShopArticleId")
+                    b.Property<int?>("ShopArticleId")
                         .HasColumnType("INTEGER");
+
+                    b.Property<int>("SupervisorId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("UnitType")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
 
                     b.HasKey("Id");
 
                     b.HasIndex("ShopArticleId");
 
                     b.HasIndex("ChildId", "ShopArticleId")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("[ShopArticleId] IS NOT NULL");
+
+                    b.HasIndex("ChildId", "SupervisorId");
 
                     b.ToTable("ChildInventories");
                 });
@@ -2553,8 +2575,7 @@ namespace Pugling.Api.Data.Migrations
                     b.HasOne("Pugling.Api.Models.ShopArticle", "ShopArticle")
                         .WithMany()
                         .HasForeignKey("ShopArticleId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("Child");
 

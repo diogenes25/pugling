@@ -54,6 +54,11 @@ public record UpdateShopListingDto(string? Title, string? Description,
     int? CurrentStock, int? MaxStock, ShopRefillKind? RefillKind,
     DateTime? RefillAtUtc, DayOfWeek? RefillDayOfWeek);
 
-/// <summary>Eine Position im aggregierten Inventar des Kindes.</summary>
-public record InventoryItemDto(int ShopArticleId, string ArticleNumber, string Title,
+/// <summary>
+/// Eine Position im aggregierten Inventar des Kindes. <c>ShopArticleId</c> ist <c>null</c>, wenn der
+/// Artikel nach dem Kauf gelöscht wurde – Titel und Einheit kommen dann aus der Momentaufnahme am
+/// Inventar (wie bei <see cref="ActivationRequestDto"/>). Ein solcher Posten ist nicht mehr aktivierbar:
+/// die Aktivierung wird über die Artikel-Id adressiert.
+/// </summary>
+public record InventoryItemDto(int? ShopArticleId, string ArticleNumber, string Title,
     UnitType UnitType, ActionType ActionType, int Quantity);

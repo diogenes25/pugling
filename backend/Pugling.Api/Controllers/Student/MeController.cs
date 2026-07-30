@@ -306,12 +306,15 @@ public class MeController(PuglingDbContext db, GamificationService gamification,
         var cid = User.ChildId();
         if (cid is null) return Forbid();
 
+        // Aus der Momentaufnahme, nicht aus der Navigation: bezahlte Einheiten überleben das Löschen des
+        // Artikels (FK SetNull), und `ShopArticle!.ArticleNumber` wäre dann NULL – die Sortierung hätte
+        // den Posten stillschweigend nach vorne gezogen, die Anzeige wäre namenlos.
         return await db.ChildInventories.AsNoTracking()
             .Where(i => i.ChildId == cid && i.Quantity > 0)
-            .OrderBy(i => i.ShopArticle!.ArticleNumber)
+            .OrderBy(i => i.ArticleNumber)
             .Select(i => new MyInventoryItemResponse(
-                i.ShopArticleId, i.ShopArticle!.ArticleNumber, i.ShopArticle!.Title,
-                i.ShopArticle!.UnitType, i.ShopArticle!.ActionType, i.Quantity))
+                i.ShopArticleId, i.ArticleNumber, i.ArticleTitle,
+                i.UnitType, i.ActionType, i.Quantity))
             .ToPagedListAsync(Response, skip, take, ct);
     }
 
@@ -392,13 +395,13 @@ public class MeController(PuglingDbContext db, GamificationService gamification,
             })
             .ToList();
 
+        // Wie in `MyInventory`: die Momentaufnahme trägt die Anzeige, das `Include` ist damit hinfällig.
         var inventory = await db.ChildInventories.AsNoTracking()
-            .Include(i => i.ShopArticle)
             .Where(i => i.ChildId == childId && i.Quantity > 0)
-            .OrderBy(i => i.ShopArticle!.ArticleNumber)
+            .OrderBy(i => i.ArticleNumber)
             .Select(i => new MyInventoryItemResponse(
-                i.ShopArticleId, i.ShopArticle!.ArticleNumber, i.ShopArticle.Title,
-                i.ShopArticle.UnitType, i.ShopArticle.ActionType, i.Quantity))
+                i.ShopArticleId, i.ArticleNumber, i.ArticleTitle,
+                i.UnitType, i.ActionType, i.Quantity))
             .ToListAsync(ct);
 
         var purchases = await db.ShopPurchases.AsNoTracking()

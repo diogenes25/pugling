@@ -18,8 +18,13 @@ public record ShopListingResponse(int Id, int ShopArticleId, string ArticleNumbe
     UnitType UnitType, ActionType ActionType, string Title, string Description,
     int CoinPrice, int GemPrice, int UnitsPerPurchase, int CurrentStock, bool Affordable);
 
-/// <summary>Ein Eintrag im aggregierten Sohn-Inventar: Artikel-Typ → Gesamtmenge.</summary>
-public record MyInventoryItemResponse(int ShopArticleId, string ArticleNumber, string Title,
+/// <summary>
+/// Ein Eintrag im aggregierten Sohn-Inventar: Artikel-Typ → Gesamtmenge. <c>ShopArticleId</c> ist
+/// <c>null</c>, wenn der Artikel nach dem Kauf gelöscht wurde; Titel und Einheit stammen dann aus der
+/// Momentaufnahme am Inventar. Bezahltes bleibt sichtbar – nur einlösen kann der Sohn es nicht mehr,
+/// weil die Aktivierung über die Artikel-Id adressiert wird.
+/// </summary>
+public record MyInventoryItemResponse(int? ShopArticleId, string ArticleNumber, string Title,
     UnitType UnitType, ActionType ActionType, int Quantity);
 
 /// <summary>Eigene Kaufbuchung im Sohn-Kassenbuch.</summary>

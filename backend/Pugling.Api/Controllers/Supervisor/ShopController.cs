@@ -315,12 +315,15 @@ public class ShopController(PuglingDbContext db, ShopService shop) : ControllerB
         CancellationToken ct = default)
     {
         var fid = User.AdultId();
+        // Gefiltert und projiziert wird über die Momentaufnahme, nicht über die Navigation: der Artikel
+        // darf gelöscht sein (FK SetNull), der bezahlte Bestand bleibt. Über `ShopArticle.AdultId` fiele
+        // der Posten dann aus dieser Liste – unsichtbar ist für den Vater so gut wie gelöscht.
         var query = db.ChildInventories.AsNoTracking()
-            .Where(i => i.ChildId == childId && i.Quantity > 0 && i.ShopArticle!.AdultId == fid) // nur eigene Artikel
-            .OrderBy(i => i.ShopArticle!.ArticleNumber)
+            .Where(i => i.ChildId == childId && i.Quantity > 0 && i.SupervisorId == fid) // nur eigene Artikel
+            .OrderBy(i => i.ArticleNumber)
             .Select(i => new InventoryItemDto(
-                i.ShopArticleId, i.ShopArticle!.ArticleNumber, i.ShopArticle!.Title,
-                i.ShopArticle!.UnitType, i.ShopArticle!.ActionType, i.Quantity));
+                i.ShopArticleId, i.ArticleNumber, i.ArticleTitle,
+                i.UnitType, i.ActionType, i.Quantity));
         return await query.ToPagedListAsync(Response, skip, take, ct);
     }
 

@@ -395,6 +395,8 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
             e.HasOne(p => p.MediaAsset).WithMany().HasForeignKey(p => p.MediaAssetId).OnDelete(DeleteBehavior.Cascade);
         });
 
+        ApplyExplicitCascades(modelBuilder);
+
         // Kapitelnamen sind je Fach eindeutig: zwei „Unit 1" im selben Fach sind eine Dublette, und
         // Auswahllisten wie die Zuordnung durch den Agenten hängen am Namen.
         modelBuilder.Entity<Chapter>().HasIndex(c => new { c.SubjectId, c.Name }).IsUnique();
@@ -663,8 +665,7 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
         // Angebote (ShopListing): gehören zum Artikel (Cascade).
         // Käufe (ShopPurchase): gehören zum Kind (Cascade); Angebots-Referenz wird auf null gesetzt,
         //   wenn das Angebot gelöscht wird, damit die Kaufhistorie erhalten bleibt.
-        // Inventar (ChildInventory): Kind-Artikel-Kombination eindeutig; gehören zum Kind (Cascade);
-        //   Artikel-Referenz Cascade (Inventar verschwindet mit Artikel).
+        // Inventar (ChildInventory): gehört zum Kind (Cascade); Artikel-Referenz SetNull (s. u.).
         // Aktivierungsanfragen: gehören zum Kind (Cascade); Artikel-Referenz SetNull für Histor stabil.
         modelBuilder.Entity<ShopArticle>(e =>
         {
@@ -684,10 +685,23 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
         });
         modelBuilder.Entity<ChildInventory>(e =>
         {
-            e.HasIndex(i => new { i.ChildId, i.ShopArticleId }).IsUnique();
+            // GEFILTERT eindeutig – und der Filter ist keine Kosmetik: SQLite behandelt NULLs als
+            // verschieden, ein Unique über die nullable Spalte hielte die Invariante also nur für Zeilen
+            // mit Artikel. Genau so ist es gewollt: je lebendem Artikel höchstens eine Zeile, während
+            // zwei verschiedene gelöschte Artikel zwei verwaiste Bestände hinterlassen dürfen, die nicht
+            // miteinander kollidieren (und die der Upsert-Lookup `== article.Id` nie wieder trifft).
+            e.HasIndex(i => new { i.ChildId, i.ShopArticleId }).IsUnique()
+                .HasFilter("[ShopArticleId] IS NOT NULL");
+            // Der Vater-Filter läuft seit der Momentaufnahme über SupervisorId statt über die Navigation.
+            e.HasIndex(i => new { i.ChildId, i.SupervisorId });
             e.Property(i => i.ConcurrencyStamp).IsConcurrencyToken();
             e.HasOne(i => i.Child).WithMany().HasForeignKey(i => i.ChildId).OnDelete(DeleteBehavior.Cascade);
-            e.HasOne(i => i.ShopArticle).WithMany().HasForeignKey(i => i.ShopArticleId).OnDelete(DeleteBehavior.Cascade);
+            // SetNull statt Cascade: bezahlte Einheiten sind Geld und dürfen nicht mit dem Katalogeintrag
+            // verschwinden. Die Kaufbelege standen schon so daneben – das Inventar nicht, sodass Löschen
+            // eines Artikels den Gegenwert vernichtete und nur den Beleg übrigließ. Der Artikel selbst
+            // bleibt bewusst Cascade unter dem Erwachsenen: ein Vater mit Artikeln muss sich löschen können.
+            e.HasOne(i => i.ShopArticle).WithMany().HasForeignKey(i => i.ShopArticleId)
+                .OnDelete(DeleteBehavior.SetNull);
         });
         modelBuilder.Entity<ActivationRequest>(e =>
         {
@@ -776,6 +790,63 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
         });
 
         ApplyEnumConvention(modelBuilder);
+    }
+
+    /// <summary>
+    /// Schreibt die Löschverhalten aus, die bisher nur aus der EF-<b>Konvention</b> kamen (Pflicht-FK ⇒
+    /// <c>Cascade</c>). Das Verhalten ändert sich dadurch nicht – sichtbar wird die <b>Absicht</b>.
+    /// <para>
+    /// Warum das nicht kosmetisch ist: Reflexion kann „ausdrücklich gesetzt" nicht von „von der Konvention
+    /// geerbt" unterscheiden, ein Wächter kann die Regel also nicht am Modell prüfen. Erst wenn jede FK
+    /// eine Zeile hat, ist die Zusicherungs-Tabelle in <c>SchemaGuardTests</c> (G2) vollständig – und ein
+    /// Konventionswechsel in einer künftigen EF-Version verschiebt hier nichts mehr lautlos.
+    /// </para>
+    /// <para>
+    /// Es sind Kompositions-Beziehungen: das Kind gehört dem Eltern-Datensatz und hat ohne ihn keine
+    /// Bedeutung (ein Kapitel ohne Fach, ein Testergebnis ohne Testversuch). Die Gegenprobe ist die Suite:
+    /// sie muss <b>unverändert</b> grün bleiben – jede Abweichung heißt, die ausgeschriebene Absicht war
+    /// nicht die gelebte.
+    /// </para>
+    /// </summary>
+    private static void ApplyExplicitCascades(ModelBuilder modelBuilder)
+    {
+        // Katalog: Fach ⇒ Kapitel ⇒ Übung. Löscht ein Fach, fällt der ganze Ast (der Restrict-Guard auf
+        // PlanPosition→Exercise fängt vorher ab, was noch in einem Lehrplan steckt).
+        modelBuilder.Entity<Chapter>()
+            .HasOne(c => c.Subject).WithMany(s => s.Chapters).HasForeignKey(c => c.SubjectId)
+            .OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<Exercise>()
+            .HasOne(x => x.Chapter).WithMany(c => c.Exercises).HasForeignKey(x => x.ChapterId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // Alles, was am Kind hängt und ohne es sinnlos ist: Lehrpläne, das Kassenbuch, die Lernziele.
+        modelBuilder.Entity<StudyPlan>()
+            .HasOne(p => p.Child).WithMany().HasForeignKey(p => p.ChildId)
+            .OnDelete(DeleteBehavior.Cascade);
+        // Die Gegen-Navigation MUSS benannt werden, wo sie existiert: `WithMany()` ohne sie lässt EF die
+        // vorhandene, per Konvention gefundene Beziehung nicht wiedererkennen und legt eine ZWEITE an –
+        // hier wuchs so eine Spalte `ChildId1` nach. Der Wächter G2 hat genau das gefangen.
+        modelBuilder.Entity<ChildPointsEntry>()
+            .HasOne(p => p.Child).WithMany(c => c.PointsEntries).HasForeignKey(p => p.ChildId)
+            .OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<LearnGoal>()
+            .HasOne(g => g.Child).WithMany().HasForeignKey(g => g.ChildId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // Ausspiel-Historie: Sitzung/Test gehören dem Plan, ihre Einzelantworten der Sitzung bzw. dem
+        // Versuch. Der Positions-Verweis daneben ist bewusst SetNull (kein zweiter Cascade-Pfad in SQLite).
+        modelBuilder.Entity<PracticeSession>()
+            .HasOne(s => s.StudyPlan).WithMany().HasForeignKey(s => s.StudyPlanId)
+            .OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<TestAttempt>()
+            .HasOne(t => t.StudyPlan).WithMany().HasForeignKey(t => t.StudyPlanId)
+            .OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<ReviewEvent>()
+            .HasOne(r => r.PracticeSession).WithMany(s => s.Reviews).HasForeignKey(r => r.PracticeSessionId)
+            .OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<TestItemResult>()
+            .HasOne(r => r.TestAttempt).WithMany(t => t.Results).HasForeignKey(r => r.TestAttemptId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 
     /// <summary>

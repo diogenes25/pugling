@@ -765,7 +765,12 @@ namespace Pugling.Api.Data.Migrations
                     Id = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
                     ChildId = table.Column<int>(type: "INTEGER", nullable: false),
-                    ShopArticleId = table.Column<int>(type: "INTEGER", nullable: false),
+                    ShopArticleId = table.Column<int>(type: "INTEGER", nullable: true),
+                    SupervisorId = table.Column<int>(type: "INTEGER", nullable: false),
+                    ArticleNumber = table.Column<string>(type: "TEXT", nullable: false),
+                    ArticleTitle = table.Column<string>(type: "TEXT", nullable: false),
+                    UnitType = table.Column<string>(type: "TEXT", nullable: false),
+                    ActionType = table.Column<string>(type: "TEXT", nullable: false),
                     Quantity = table.Column<int>(type: "INTEGER", nullable: false),
                     ConcurrencyStamp = table.Column<Guid>(type: "TEXT", nullable: false)
                 },
@@ -783,7 +788,7 @@ namespace Pugling.Api.Data.Migrations
                         column: x => x.ShopArticleId,
                         principalTable: "ShopArticles",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.SetNull);
                 });
 
             migrationBuilder.CreateTable(
@@ -1850,7 +1855,13 @@ namespace Pugling.Api.Data.Migrations
                 name: "IX_ChildInventories_ChildId_ShopArticleId",
                 table: "ChildInventories",
                 columns: new[] { "ChildId", "ShopArticleId" },
-                unique: true);
+                unique: true,
+                filter: "[ShopArticleId] IS NOT NULL");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ChildInventories_ChildId_SupervisorId",
+                table: "ChildInventories",
+                columns: new[] { "ChildId", "SupervisorId" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_ChildInventories_ShopArticleId",

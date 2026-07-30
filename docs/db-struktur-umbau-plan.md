@@ -4,7 +4,7 @@ tags: [bereich/architektur, bereich/datenmodell, status/laufend]
 
 # DB-/EF-Struktur-Umbau
 
-> **Übergabe-Dokument.** E0–E5 sind umgesetzt und verifiziert, E6–E14 offen. Dieses Dokument ist so
+> **Übergabe-Dokument.** E0–E6 sind umgesetzt und verifiziert, E7–E14 offen. Dieses Dokument ist so
 > geschrieben, dass jemand ohne Vorwissen die restlichen Etappen zu Ende führen kann: es nennt die
 > getroffenen Entscheidungen, die Arbeitsregeln, die Belege, die bewussten Abweichungen und die
 > Fallstricke, die beim Umsetzen Zeit gekostet haben.
@@ -18,8 +18,8 @@ und ~20 als int (in `Remarks` sogar beides in derselben Tabelle), kein einziges 
 waren keine, und `Subjects`/`Adults` hatten außer dem Primärschlüssel überhaupt keinen Index.
 
 Dazu zwei echte Defekte, von denen einer noch offen ist:
-1. **Löschen eines Supervisors vernichtet bezahltes Kind-Inventar** (`Adult→ShopArticle` Cascade →
-   `ShopArticle→ChildInventory` Cascade, während die Kaufbelege per SetNull stehenbleiben) → **E6**, offen.
+1. **Löschen eines Supervisors vernichtete bezahltes Kind-Inventar** (`Adult→ShopArticle` Cascade →
+   `ShopArticle→ChildInventory` Cascade, während die Kaufbelege per SetNull stehenblieben) → **E6, behoben**.
 2. **PATCH auf Name/E-Mail eines Erwachsenen zieht das Konto nicht nach**, obwohl der gefilterte
    Unique-Index dort sitzt und die Kollisionsprüfung gegen den veralteten Wert läuft → **E8**, offen.
 
@@ -69,8 +69,12 @@ Die Langfassung steht in der Plandatei dieser Sitzung.
    in E13 prüfen).
 6. **Jedes neue Tor braucht eine Falsch-Grün-Probe:** die Regel lokal brechen, das Tor rot sehen,
    zurücknehmen, nicht committen. Ein Wächter, der nie rot war, ist kein Wächter.
+7. **Wer eine Beziehung anfasst, zieht die G2-Tabelle mit** (`SchemaGuardTests`, literal gepinnte Liste
+   aller 95 FKs). Das betrifft E7 (`ObjectiveReward.PaidKeyResultId`), E12 (`TimeSlotRule` fällt weg) und
+   E13 (`LearnGoal.ChildId` fällt weg, drei `KeyResult`-Scope-FKs kommen). Das Tor **soll** dabei rot sein –
+   die bewusste Zeile ist der Zweck. Bei mehreren Änderungen lohnt der Wegwerf-Dump aus E6 wieder.
 
-## Umgesetzt: E0–E5
+## Umgesetzt: E0–E6
 
 ### E0 · Netz spannen — keine Migration
 
@@ -187,31 +191,70 @@ Reihenfolge ist keine Identität. Auch die im Plan genannten „unbenutzten FK-I
 entfernen erfordert das Abschalten der `ForeignKeyIndexConvention` – global, für alle 95 FKs. Aufwand und
 Risiko stehen in keinem Verhältnis zum Gewinn.
 
-## Offen: E6–E14
+### E6 · Löschverhalten explizit + bezahltes Inventar retten
+
+**6a:** Es waren **neun** Konventions-Cascades, nicht acht – `ChildPointsEntry→Child` fehlte im Plan. Alle
+stehen jetzt in `PuglingDbContext.ApplyExplicitCascades`. Verhalten unverändert, Suite unverändert grün.
+
+Zwei Dinge, die dabei zu lernen waren:
+
+1. **Die Gegen-Navigation MUSS benannt werden, wo sie existiert.** `HasOne(p => p.Child).WithMany()` ohne
+   `c => c.PointsEntries` lässt EF die per Konvention gefundene Beziehung nicht wiedererkennen und legt
+   eine **zweite** an – im Modell wuchs eine Spalte `ChildId1` nach. Gefangen hat das die
+   `ClientSetNull`-Zusicherung von G2, noch vor dem ersten Testlauf.
+2. **Vor dem Ausschreiben einen Ist-Abzug machen.** Ein Wegwerf-Test, der alle FKs mit ihrem
+   `DeleteBehavior` in eine Datei schreibt, liefert die G2-Tabelle und gleichzeitig die Baseline: der Diff
+   nach der Etappe muss **genau** die beabsichtigte Zeile zeigen (hier: `ChildInventory.ShopArticleId`
+   `Cascade` → `SetNull`). Ohne den Abzug hätte niemand die zusätzliche `ChildId1`-Zeile gesehen.
+
+Die beiden handkopierten Guards (`SubjectsController`, `ChaptersController`) laufen jetzt über
+`ExerciseUsageQueries.AnyBlockingAsync(db, scope, ct)`. Die Klasse existierte schon und war reicher als die
+Kopien – neu ist nur die Scope-Frage („blockiert *irgendeine* Übung aus diesem Fach/Kapitel"). Die
+**Meldungstexte bleiben bei den Aufrufern**: sie benennen die Ebene und sind nicht dieselbe Aussage.
+
+**6b, der Datenverlust-Defekt – behoben.** `ChildInventory.ShopArticleId` ist nullable mit **SetNull**, und
+die Momentaufnahme daneben ist **größer als geplant**: nicht nur `ArticleTitle`/`UnitType`/`ActionType`,
+sondern auch `ArticleNumber` und `SupervisorId`. Beide fielen erst beim Umstellen der Lesepfade auf:
+
+- `ArticleNumber` ist der **Sortierschlüssel** beider Inventar-Sichten. Über die Navigation wäre er nach dem
+  Löschen NULL – der Posten wäre stillschweigend nach vorne gerutscht und namenlos angezeigt worden.
+- `SupervisorId` trägt den **Vater-Filter**. Der lief über `i.ShopArticle!.AdultId == fid`; ohne Snapshot
+  wäre der verwaiste Posten aus der Vater-Liste gefallen – und unsichtbar ist so gut wie gelöscht.
+
+Der Unique ist **gefiltert** (`WHERE ShopArticleId IS NOT NULL`), und das ist keine Kosmetik: SQLite
+behandelt NULLs als verschieden. Genau so ist es gewollt – je lebendem Artikel höchstens eine Zeile, aber
+zwei verschiedene gelöschte Artikel dürfen zwei verwaiste Bestände hinterlassen, die nicht kollidieren.
+
+**Zwei Tests, beide vorher rot** (der erste sogar als Compile-Fehler: der xUnit-Analyzer verbot
+`Assert.Null` auf dem damals nicht-nullbaren `int` – der Defekt war vor dem Testlauf bewiesen):
+`ShopFlowTests.ArtikelLoeschen_LaesstBezahltesInventarStehen` (der direkte Weg) und
+`AdultLifecycleTests.Loeschen_Vernichtet_Kein_Bezahltes_Kind_Inventar` (der transitive über zwei Kaskaden).
+`Adult→ShopArticle` bleibt bewusst `Cascade`: ein Vater mit Artikeln muss sich selbst löschen können.
+
+**Vertragswirkung, klein aber vorhanden:** `InventoryItemDto.ShopArticleId` und
+`MyInventoryItemResponse.ShopArticleId` sind `int?`. Das folgt dem Schwester-DTO `ActivationRequestDto`,
+das für dieselbe Lage schon `int?` trug. Frontend nachgezogen (`InventoryItem.shopArticleId: number | null`,
+Schlüssel-Rückfall auf den Titel, Einlöse-Button deaktiviert, Hinweis „gibt's bei Papa nicht mehr").
+`docs/api-examples` blieb byte-stabil.
+
+**Bewusst offen geblieben – ein verwaister Posten ist nicht mehr einlösbar.** Die Aktivierung wird über die
+**Artikel-Id** adressiert (`POST me/shop/inventory/{articleId}/activate`); ohne Artikel gibt es keinen
+Schlüssel. Der Bestand bleibt sichtbar und prüfbar, und der Ausgleich läuft über das vorhandene Druckventil
+`POST children/{id}/points`. Ihn wieder einlösbar zu machen heißt: eine Route auf der **Inventar-Id** –
+neuer Endpunkt, eigene Entscheidung, nicht Teil einer Struktur-Etappe. Ebenso bewusst: der Restbestand ist
+für das **Kind** sichtbar, nicht für eine zweite Betreuerin – die Ökonomie ist ausstellergebunden
+(`SupervisorId`-Momentaufnahme), das ist die bestehende Regel und keine neue Lücke.
+
+**Tor G2 steht** (`SchemaGuardTests.Jeder_Fremdschluessel_Hat_Ein_Abgenommenes_Loeschverhalten`): eine
+literal gepinnte Tabelle über alle 95 FKs, verglichen als sortierte Zeilen (die Meldung zeigt dann direkt,
+welche Zeile fehlt oder anders ist), plus das Verbot von `ClientSetNull`. Falsch-Grün-Probe:
+`TestItemResult→TestAttempt` auf `Restrict` gedreht → rot mit lesbarer Meldung; zurückgenommen.
+
+**Stand:** 604 Tests grün, Kette bei 1, `docs/api-examples` unverändert.
+
+## Offen: E7–E14
 
 Jede Etappe endet grün, mit neu gefalteter Migration (siehe Arbeitsregeln).
-
-### E6 · Löschverhalten explizit + bezahltes Inventar retten
-**6a, rein deklarativ:** die 8 Konventions-Cascades in `PuglingDbContext` ausschreiben – `Chapter→Subject`,
-`Exercise→Chapter`, `StudyPlan→Child`, `PracticeSession→StudyPlan`, `TestAttempt→StudyPlan`,
-`ReviewEvent→PracticeSession`, `TestItemResult→TestAttempt`, `LearnGoal→Child` (letzterer entfällt mit
-E13 – Reihenfolge beachten oder E13 vorziehen). Verhalten bleibt gleich, nur die Absicht wird sichtbar:
-die Suite muss **unverändert** grün sein; jede Abweichung heißt, die ausgeschriebene Absicht war nicht die
-gelebte. Dazu die drei handkopierten App-Guards zum `Restrict` bei `PlanPosition→Exercise` in
-`Services/Shared/ExerciseUsageQueries.cs` zusammenziehen (`SubjectsController`, `ChaptersController`,
-`ExerciseControllerBase.Delete`).
-
-**6b, der Datenverlust-Defekt:** `ChildInventory.ShopArticleId` nullable + **SetNull**, dazu die
-Momentaufnahme-Felder, die `ActivationRequest` schon hat (`ArticleTitle`, `UnitType`, `ActionType`).
-Bezahlte 120 Minuten Fernsehen sind Geld; Geld überlebt Katalogpflege. **Nicht** `Adult→ShopArticle` auf
-Restrict setzen – dann könnte sich ein Vater mit Artikeln nicht mehr selbst löschen und
-`AdultLifecycleTests` wäre rot; die Kaskade ist dort ausdrücklich gewollt.
-
-Test **zuerst rot**: „Vater löschen lässt bezahltes Kind-Inventar stehen" in `AdultLifecycleTests` bzw.
-`ShopFlowTests`. Tragende Bestandstests: `MediaLinkTeardownTests`, `AdultLifecycleTests`.
-Danach Tor **G2** (Löschverhalten) einziehen: eine im Test literal gepinnte Approval-Liste
-`"Entity.Fk" → DeleteBehavior`. Reflexion kann „explizit" nicht von „Konvention" unterscheiden – das ist
-der ehrliche Ersatz, und er erzwingt bei jeder neuen FK eine bewusste Zeile.
 
 ### E7 · `PeriodKey` aufspalten
 Ein Spaltenname, drei Formate, alle vier Vorkommen idempotenz-tragend:

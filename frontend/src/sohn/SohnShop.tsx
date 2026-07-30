@@ -67,6 +67,12 @@ export function SohnShop() {
 
   async function requestActivation(item: InventoryItem, quantity: number) {
     if (busy) return;
+    // Papa hat den Artikel gelöscht: die Einheiten bleiben (bezahlt ist bezahlt), einlösen geht aber
+    // nicht mehr, weil die Anfrage über die Artikel-Id läuft. Lieber sagen, warum, als 404 zeigen.
+    if (item.shopArticleId === null) {
+      flash("Das gibt es bei Papa nicht mehr – frag ihn direkt danach. 🙋");
+      return;
+    }
     if (!confirmAction(`${unitAmount(quantity, item.unitType)} „${item.title}" bei Papa anfragen?`)) return;
     setBusy(true);
     try {
@@ -173,7 +179,11 @@ function StuffTab({ inventory, busy, onActivate }: {
     return <p className="sub">Noch nichts gekauft. Hol dir im Tab <b>Kaufen</b> etwas Schönes! 🎁</p>;
   return (
     <div className="list">
-      {inventory.map((item) => <InventoryRow key={item.shopArticleId} item={item} busy={busy} onActivate={onActivate} />)}
+      {inventory.map((item) => (
+        // Der Schlüssel fällt auf den Titel zurück: bei gelöschtem Artikel ist die Id null, und zwei
+        // verwaiste Posten dürften sich nicht denselben Schlüssel teilen.
+        <InventoryRow key={item.shopArticleId ?? `weg:${item.title}`} item={item} busy={busy} onActivate={onActivate} />
+      ))}
     </div>
   );
 }
@@ -185,13 +195,17 @@ function InventoryRow({ item, busy, onActivate }: {
 }) {
   const [qty, setQty] = useState(item.quantity);
   const clamped = Math.min(Math.max(1, qty || 1), item.quantity);
+  const weg = item.shopArticleId === null;
   return (
     <div className="card">
       <div className="row">
         <span style={{ fontSize: 26 }} aria-hidden="true">{ACTION_EMOJI[item.actionType]}</span>
         <div style={{ flex: 1 }}>
           <b>{item.title}</b>
-          <div className="sub">Du hast {unitAmount(item.quantity, item.unitType)}</div>
+          <div className="sub">
+            Du hast {unitAmount(item.quantity, item.unitType)}
+            {weg && " · gibt's bei Papa nicht mehr"}
+          </div>
         </div>
       </div>
       <div className="row" style={{ marginTop: 8, gap: 8 }}>
@@ -205,7 +219,7 @@ function InventoryRow({ item, busy, onActivate }: {
           style={{ width: 90, background: "#0c0e2c", border: "1.5px solid var(--stroke)", borderRadius: 12, color: "var(--ink)", padding: 10, fontSize: 15 }}
         />
         <button type="button" className="btn small lime" style={{ width: "auto", flex: 1 }}
-          disabled={busy} onClick={() => onActivate(item, clamped)}>
+          disabled={busy || weg} onClick={() => onActivate(item, clamped)}>
           Einlösen beantragen
         </button>
       </div>

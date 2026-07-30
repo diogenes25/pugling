@@ -141,14 +141,36 @@ public class ShopListing
 /// Aggregiertes Inventar eines Kindes für einen <see cref="ShopArticle"/>. Mehrere Käufe desselben
 /// Artikels (über verschiedene <see cref="ShopListing"/>s oder zu unterschiedlichen Zeiten) summieren
 /// sich hier auf. Das Kind kann aus diesem Bestand Aktivierungsanfragen stellen.
+/// <para>
+/// <b>Bezahlte Einheiten sind Geld und überleben darum Katalogpflege.</b> Der Artikelbezug ist deshalb
+/// optional (FK <c>SetNull</c>) und die anzeigetragenden Felder liegen als <b>Momentaufnahme</b> daneben –
+/// dasselbe Muster wie bei <see cref="ShopPurchase"/> und <see cref="ActivationRequest"/>. Vorher
+/// kaskadierte das Löschen eines Artikels bis hierher und vernichtete gekaufte, noch nicht verbrauchte
+/// Einheiten, während der Kaufbeleg per <c>SetNull</c> daneben stehenblieb: ein Beleg ohne Gegenwert.
+/// </para>
 /// </summary>
 public class ChildInventory
 {
     public int Id { get; set; }
     public int ChildId { get; set; }
     public Child? Child { get; set; }
-    public int ShopArticleId { get; set; }
+    /// <summary>Referenz auf den Artikel; wird auf null gesetzt, falls der Artikel später gelöscht wird.</summary>
+    public int? ShopArticleId { get; set; }
     public ShopArticle? ShopArticle { get; set; }
+    /// <summary>
+    /// Ausstellender Supervisor (Momentaufnahme aus <c>ShopArticle.AdultId</c>). Trägt die Vater-Sicht,
+    /// nachdem der Artikel gelöscht ist – die filterte vorher über <c>ShopArticle.AdultId</c> und hätte
+    /// den Posten unsichtbar gemacht, was so gut wie gelöscht ist.
+    /// </summary>
+    public int SupervisorId { get; set; }
+    // Momentaufnahmen (Bestand bleibt lesbar und sortierbar, auch nachdem der Artikel gelöscht ist)
+    /// <summary>Artikelnummer zum Kaufzeitpunkt; sie ist auch der Sortierschlüssel beider Inventar-Sichten.</summary>
+    public string ArticleNumber { get; set; } = "";
+    public string ArticleTitle { get; set; } = "";
+    /// <summary>Maßeinheit der Menge (z. B. <see cref="UnitType.Minute"/>).</summary>
+    public UnitType UnitType { get; set; }
+    /// <summary>Aktionstyp (z. B. <see cref="ActionType.TV"/>).</summary>
+    public ActionType ActionType { get; set; }
     /// <summary>Verfügbare Gesamtmenge in der Einheit des Artikels (z. B. 120 Minuten TV).</summary>
     public int Quantity { get; set; }
     /// <summary>Nebenläufigkeits-Marke: verhindert, dass gleichzeitige Aktivierungen den Bestand überziehen.</summary>

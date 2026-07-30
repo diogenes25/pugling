@@ -414,7 +414,12 @@ function ChildShopView({ childId }: { childId: number }) {
             <thead><tr><th>Artikel</th><th className="num">Menge</th></tr></thead>
             <tbody>
               {inventory.data?.map((i) => (
-                <tr key={i.shopArticleId}><td>{i.title}</td><td className="num">{unitAmount(i.quantity, i.unitType)}</td></tr>
+                // Bei gelöschtem Artikel ist die Id null (bezahlte Einheiten bleiben): Schlüssel und
+                // Hinweis fallen auf den eingefrorenen Titel zurück.
+                <tr key={i.shopArticleId ?? `weg:${i.articleNumber}`}>
+                  <td>{i.title}{i.shopArticleId === null && <span className="muted"> · Artikel gelöscht</span>}</td>
+                  <td className="num">{unitAmount(i.quantity, i.unitType)}</td>
+                </tr>
               ))}
               {inventory.data?.length === 0 && <tr><td colSpan={2} className="muted">Inventar leer.</td></tr>}
             </tbody>
