@@ -7,14 +7,14 @@ using Pugling.Api.Errors;
 namespace Pugling.Api.Auth;
 
 /// <summary>
-/// Action-Filter für alle Endpunkte unterhalb eines Lehrplans (Route-Parameter <c>planId</c>):
-/// stellt zentral sicher, dass der Plan existiert und dem angemeldeten Nutzer gehört
-/// (Sohn = eigener Plan, Vater = Plan eines eigenen Kindes). Andernfalls 404 bzw. 403.
-/// Per <c>[ServiceFilter(typeof(PlanOwnershipFilter))]</c> an den Study-Controllern anzubringen.
+/// Action filter for all endpoints below a study plan (route parameter <c>planId</c>):
+/// centrally ensures that the plan exists and belongs to the logged-in user
+/// (student = own plan, supervisor = plan of one of their own children). Otherwise 404 or 403.
+/// Attach via <c>[ServiceFilter(typeof(PlanOwnershipFilter))]</c> on the study controllers.
 /// </summary>
 public class PlanOwnershipFilter(PuglingDbContext db, AuthAccess access) : IAsyncActionFilter
 {
-    /// <summary>Prüft Existenz und Eigentümerschaft des Plans für die aktuelle Action und bricht mit 404 bzw. 403 ab.</summary>
+    /// <summary>Checks existence and ownership of the plan for the current action and aborts with 404 or 403.</summary>
     public async Task OnActionExecutionAsync(ActionExecutingContext ctx, ActionExecutionDelegate next)
     {
         if (ctx.ActionArguments.TryGetValue("planId", out var v) && v is int planId)

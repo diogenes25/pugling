@@ -1,28 +1,28 @@
 namespace Pugling.Api.Services.Shared;
 
 /// <summary>
-/// Einstellungen der Test-Anmerkungen (Abschnitt <c>Remarks</c>).
+/// Settings for test remarks (<c>Remarks</c> section).
 /// </summary>
 public class RemarkOptions
 {
     /// <summary>
-    /// Ob <c>?scope=all</c> jedem Erwachsenen offensteht – also der kontenübergreifende Blick, den der
-    /// Nachbereitungs-Skill braucht.
+    /// Whether <c>?scope=all</c> is open to every adult – i.e. the cross-account view that the
+    /// follow-up skill needs.
     /// <para>
-    /// <b>Warum das ein eigener Schalter ist und nicht die Rolle <c>Admin</c>:</b> Ein Fehler zeigt sich oft
-    /// nur in einer bestimmten Konstellation – ein frisch registrierter Vater ohne Übungen deckt Dinge auf,
-    /// die beim geseedeten Papa nie auffallen, weil der von Anfang an Inhalte hat. Beim Testen entstehen
-    /// darum ständig Wegwerf-Konten, und jedes müsste sonst erst mit einem Flag versehen werden.
-    /// <c>Admin</c> ist dafür das falsche Werkzeug: Die Rolle umgeht auch die RWX-Rechte auf Übungen
-    /// (<see cref="Auth.ExercisePermissionService"/>) – mit ihr dürfte jeder Vater fremde Übungen ändern,
-    /// löschen und umrechten, und <c>ExerciseGrant</c> wäre Dekoration. Zwei Dinge, die nichts miteinander
-    /// zu tun haben, hingen dann an einem Schalter.
+    /// <b>Why this is its own switch and not the <c>Admin</c> role:</b> A bug often only shows up
+    /// in a particular constellation – a freshly registered adult without exercises surfaces things
+    /// that never show up for the seeded dad, because he has content from the start. Testing therefore
+    /// constantly produces throwaway accounts, and each one would otherwise first need to be flagged.
+    /// <c>Admin</c> is the wrong tool for this: the role also bypasses the RWX rights on exercises
+    /// (<see cref="Auth.ExercisePermissionService"/>) – with it, every adult could change, delete and
+    /// re-permission other people's exercises, and <c>ExerciseGrant</c> would be decoration. Two things
+    /// that have nothing to do with each other would then hang on a single switch.
     /// </para>
     /// <para>
-    /// Vorgabe ist <c>true</c> in der Entwicklung und <c>false</c> sonst (gesetzt in <c>Program.cs</c>): Auf
-    /// einer Entwicklungs-Instanz gehören alle Konten demselben Menschen, in Produktion läsen sonst fremde
-    /// Familien gegenseitig ihre Testnotizen – und Antworten tragen Datei- und Zeilenverweise.
-    /// Ein Student bleibt in <b>jedem</b> Fall ausgeschlossen.
+    /// The default is <c>true</c> in development and <c>false</c> otherwise (set in <c>Program.cs</c>):
+    /// on a development instance all accounts belong to the same person, whereas in production other
+    /// families would otherwise read each other's test notes – and answers carry file and line references.
+    /// A student remains excluded in <b>every</b> case.
     /// </para>
     /// </summary>
     public bool GlobalRead { get; set; }

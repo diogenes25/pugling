@@ -9,13 +9,13 @@ using Pugling.Api.Models;
 namespace Pugling.Api.Controllers.Creator;
 
 /// <summary>
-/// Medien-Store: <b>ein Motiv, viele Bilder</b>. Ein Asset ist nicht „das Bild zu <i>laufen</i>", sondern
-/// eine konkrete <b>Darstellung</b> – das laufende Einhorn im Comic-Stil, Flash, die joggende Person als
-/// Foto. Welche davon ein Kind später sieht, entscheidet sein Profil; hier wird nur der Vorrat gepflegt.
+/// Media store: <b>one motif, many images</b>. An asset is not "the image for <i>running</i>", but
+/// a concrete <b>representation</b> – the running unicorn in comic style, cartoon, the jogging person as
+/// a photo. Which of these a child later sees is decided by their profile; here only the stock is maintained.
 /// <para>
-/// Zwei Achsen bleiben strikt getrennt: die <b>inhaltliche</b> (dieses Asset, mit Stil-Tags und Eignung)
-/// und die <b>technische</b> (Auflösungen desselben Assets, siehe <see cref="MediaVariantsController"/>).
-/// Bytes liegen nie in der DB – nur URLs, wie bei der Aussprache-Audioquelle des Vokabel-Stores.
+/// Two axes stay strictly separate: the <b>content</b> axis (this asset, with style tags and suitability)
+/// and the <b>technical</b> axis (resolutions of the same asset, see <see cref="MediaVariantsController"/>).
+/// Bytes never live in the DB – only URLs, as with the pronunciation audio source of the vocabulary store.
 /// </para>
 /// </summary>
 [ApiController]
@@ -34,29 +34,29 @@ public class MediaAssetsController(PuglingDbContext db, InterestTagService tags,
             [.. a.TagLinks.Where(l => l.InterestTag is not null).Select(l => l.InterestTag!.Slug).OrderBy(s => s, StringComparer.Ordinal)],
             a.CreatedAt);
 
-    /// <summary>Basis-Query mit den für <see cref="Map"/> nötigen Navigationen (Varianten + Tags).</summary>
+    /// <summary>Base query with the navigations needed for <see cref="Map"/> (variants + tags).</summary>
     private static IQueryable<MediaAsset> WithGraph(IQueryable<MediaAsset> q) =>
         q.Include(a => a.Variants).Include(a => a.TagLinks).ThenInclude(l => l.InterestTag);
 
     /// <summary>
-    /// Liste der Assets, optional gefiltert. <paramref name="maxRating"/> ist der Filter, der die
-    /// Zielgruppen-Trennung sichtbar macht: er liefert nur, was für die genannte Stufe freigegeben ist –
-    /// derselbe Schnitt, den die spätere automatische Auswahl je Kind hart anwendet. Die Gesamtzahl
-    /// (vor Paging) steht im Header <c>X-Total-Count</c>.
+    /// List of assets, optionally filtered. <paramref name="maxRating"/> is the filter that makes the
+    /// target-audience separation visible: it returns only what is approved for the given level –
+    /// the same cut that the later automatic selection per child applies strictly. The total count
+    /// (before paging) is in the <c>X-Total-Count</c> header.
     /// </summary>
-    /// <param name="search">Teilstring in Beschreibung oder Key.</param>
-    /// <param name="tag">Ein oder mehrere Tag-Slugs (wiederholbar).</param>
-    /// <param name="matchAll">Bei mehreren Tags: true = alle (UND), false = beliebiger (ODER, Default).</param>
-    /// <param name="kind">Nur Assets dieser Medienart.</param>
-    /// <param name="maxRating">Höchste zulässige Eignungsstufe (z. B. <c>Everyone</c> für die Kindersicht).</param>
-    /// <param name="origin">Nur Assets dieser Herkunft (z. B. nur KI-generierte).</param>
-    /// <param name="withoutVariants">true = nur Assets ohne jede Datei (unfertig, wie der Vokabel-Filter <c>incomplete</c>).</param>
-    /// <param name="untagged">true = nur Assets ohne Schlagworte (für die Auswahl praktisch unsichtbar).</param>
-    /// <param name="sort">Sortierspalte: <c>key</c> (Default), <c>description</c>, <c>rating</c>, <c>created</c>. Kurzform <c>-created</c> = absteigend.</param>
-    /// <param name="dir"><c>asc</c> (Default) oder <c>desc</c>; hat Vorrang vor einem <c>-</c>-Präfix in <paramref name="sort"/>.</param>
-    /// <param name="skip">Anzahl zu überspringender Einträge (Paging).</param>
-    /// <param name="take">Maximale Trefferzahl (1..500).</param>
-    /// <param name="ct">Abbruch-Token.</param>
+    /// <param name="search">Substring in description or key.</param>
+    /// <param name="tag">One or more tag slugs (repeatable).</param>
+    /// <param name="matchAll">With multiple tags: true = all (AND), false = any (OR, default).</param>
+    /// <param name="kind">Only assets of this media kind.</param>
+    /// <param name="maxRating">Highest allowed suitability level (e.g. <c>Everyone</c> for the child view).</param>
+    /// <param name="origin">Only assets of this origin (e.g. only AI-generated ones).</param>
+    /// <param name="withoutVariants">true = only assets without any file (unfinished, like the vocabulary filter <c>incomplete</c>).</param>
+    /// <param name="untagged">true = only assets without tags (practically invisible for selection).</param>
+    /// <param name="sort">Sort column: <c>key</c> (default), <c>description</c>, <c>rating</c>, <c>created</c>. Short form <c>-created</c> = descending.</param>
+    /// <param name="dir"><c>asc</c> (default) or <c>desc</c>; takes precedence over a <c>-</c> prefix in <paramref name="sort"/>.</param>
+    /// <param name="skip">Number of entries to skip (paging).</param>
+    /// <param name="take">Maximum number of hits (1..500).</param>
+    /// <param name="ct">Cancellation token.</param>
     [HttpGet]
     public async Task<IEnumerable<MediaAssetResponse>> List(
         [FromQuery] string? search = null,
@@ -105,8 +105,8 @@ public class MediaAssetsController(PuglingDbContext db, InterestTagService tags,
     }
 
     /// <summary>
-    /// Wendet die per Whitelist erlaubte Sortierung an; jede Variante endet mit <c>Id</c> als Tiebreaker,
-    /// damit das Paging-Fenster deterministisch bleibt. Unbekannte/leere Keys → Standard nach <c>Key</c>.
+    /// Applies the sorting allowed via whitelist; every variant ends with <c>Id</c> as a tiebreaker,
+    /// so the paging window stays deterministic. Unknown/empty keys → default by <c>Key</c>.
     /// </summary>
     private static IOrderedQueryable<MediaAsset> ApplySort(IQueryable<MediaAsset> q, (string? Key, bool Desc) sort) =>
         (sort.Key?.ToLowerInvariant(), sort.Desc) switch
@@ -121,7 +121,7 @@ public class MediaAssetsController(PuglingDbContext db, InterestTagService tags,
             _ => q.OrderBy(a => a.Key).ThenBy(a => a.Id),
         };
 
-    /// <summary>Ein Asset per numerischer Id.</summary>
+    /// <summary>An asset by numeric id.</summary>
     [HttpGet("{id:int}")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<MediaAssetResponse>> Get(int id, CancellationToken ct = default)
@@ -130,7 +130,7 @@ public class MediaAssetsController(PuglingDbContext db, InterestTagService tags,
         return asset is null ? NotFound() : Map(asset);
     }
 
-    /// <summary>Ein Asset per stabilem Key (Referenz-Slug).</summary>
+    /// <summary>An asset by stable key (reference slug).</summary>
     [HttpGet("by-key/{key}")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<MediaAssetResponse>> GetByKey(string key, CancellationToken ct = default)
@@ -140,8 +140,8 @@ public class MediaAssetsController(PuglingDbContext db, InterestTagService tags,
     }
 
     /// <summary>
-    /// Legt ein Asset an. Fehlt der Key, wird ein eindeutiger aus der Beschreibung erzeugt. Tags (Slugs)
-    /// und Varianten dürfen gleich mitkommen – ein Agent legt so eine fertige Darstellung in einem Zug an.
+    /// Creates an asset. If the key is missing, a unique one is generated from the description. Tags (slugs)
+    /// and variants may be included right away – an agent thus creates a finished representation in one go.
     /// </summary>
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status201Created)]
@@ -199,13 +199,13 @@ public class MediaAssetsController(PuglingDbContext db, InterestTagService tags,
     }
 
     /// <summary>
-    /// Legt ein Asset aus einer <b>hochgeladenen Datei</b> an: der Server dekodiert sie und erzeugt die
-    /// Auflösungen selbst (Thumb/Card/Full, seitenverhältnis-erhaltend, WebP) plus eine Platzhalterfarbe.
-    /// Das ist der bequeme Weg gegenüber dem URL-Endpunkt – der Creator braucht weder eine Bildquelle im
-    /// Netz noch ein Grafikprogramm zum Skalieren.
+    /// Creates an asset from an <b>uploaded file</b>: the server decodes it and generates the
+    /// resolutions itself (thumb/card/full, aspect-ratio-preserving, WebP) plus a placeholder color.
+    /// This is the convenient path compared to the URL endpoint – the creator needs neither an image source on
+    /// the web nor a graphics program to scale it.
     /// <para>
-    /// Kein <see cref="MediaPurpose.Hero"/>: das breite Aufmacherformat verlangt Beschnitt, und wo ein
-    /// Motiv beschnitten werden darf, kann nur ein Mensch entscheiden.
+    /// No <see cref="MediaPurpose.Hero"/>: the wide header format requires cropping, and where a
+    /// motif may be cropped, only a human can decide.
     /// </para>
     /// </summary>
     [HttpPost("upload")]
@@ -286,7 +286,7 @@ public class MediaAssetsController(PuglingDbContext db, InterestTagService tags,
         return CreatedAtAction(nameof(Get), new { id = asset.Id }, Map(asset));
     }
 
-    /// <summary>Ändert ein Asset (partiell). Tags werden <b>ergänzt</b>, nicht ersetzt (Lösen per DELETE).</summary>
+    /// <summary>Changes an asset (partial). Tags are <b>added</b>, not replaced (removal via DELETE).</summary>
     [HttpPatch("{id:int}")]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -315,10 +315,10 @@ public class MediaAssetsController(PuglingDbContext db, InterestTagService tags,
     }
 
     /// <summary>
-    /// Wo dieses Bild zugeordnet ist (Vokabeln, Übungs-Items, Übungen) – die Rückrichtung zur Zuordnung.
-    /// Bewusst als eigener Endpunkt statt als Löschsperre: anders als eine fehlende Vokabel hinterlässt
-    /// ein fehlendes Bild keinen Platzhalter, es schrumpft nur die Auswahl. Der Creator soll vor dem
-    /// Löschen <i>sehen</i> können, was er verliert – aufgehalten wird er nicht.
+    /// Where this image is assigned (vocabulary entries, exercise items, exercises) – the reverse direction of the assignment.
+    /// Deliberately its own endpoint rather than a delete lock: unlike a missing vocabulary entry, a
+    /// missing image leaves no placeholder, it only shrinks the selection. The creator should be able to
+    /// <i>see</i> what they lose before deleting – they are not held back.
     /// </summary>
     [HttpGet("{id:int}/usage")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -350,8 +350,8 @@ public class MediaAssetsController(PuglingDbContext db, InterestTagService tags,
     }
 
     /// <summary>
-    /// Löscht ein Asset samt seiner Varianten, Tag-Verknüpfungen und Zuordnungen (Cascade). Nicht
-    /// gesperrt, wenn es in Gebrauch ist – siehe <see cref="Usage"/> für die Begründung.
+    /// Deletes an asset along with its variants, tag links, and assignments (cascade). Not
+    /// locked while it is in use – see <see cref="Usage"/> for the rationale.
     /// </summary>
     [HttpDelete("{id:int}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
@@ -373,8 +373,8 @@ public class MediaAssetsController(PuglingDbContext db, InterestTagService tags,
     }
 
     /// <summary>
-    /// Verknüpft ein Asset mit Schlagworten der geteilten Taxonomie (create-if-missing, bereits
-    /// verknüpfte werden übersprungen). Liefert das Asset mit seinen aktuellen Tags.
+    /// Links an asset with tags from the shared taxonomy (create-if-missing, already
+    /// linked ones are skipped). Returns the asset with its current tags.
     /// </summary>
     [HttpPost("{id:int}/tags")]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -390,7 +390,7 @@ public class MediaAssetsController(PuglingDbContext db, InterestTagService tags,
         return Map(asset);
     }
 
-    /// <summary>Löst die Verknüpfung eines Assets mit einem Schlagwort (der Tag selbst bleibt bestehen).</summary>
+    /// <summary>Removes the link of an asset with a tag (the tag itself remains).</summary>
     [HttpDelete("{id:int}/tags/{tagId:int}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -405,7 +405,7 @@ public class MediaAssetsController(PuglingDbContext db, InterestTagService tags,
 
     // ---- Helfer -------------------------------------------------------------------------------------
 
-    /// <summary>Hängt die genannten Schlagworte an (erwartet geladene <c>TagLinks</c>); speichert nicht.</summary>
+    /// <summary>Attaches the named tags (expects loaded <c>TagLinks</c>); does not save.</summary>
     private async Task AttachAsync(MediaAsset asset, List<string>? names, CancellationToken ct)
     {
         if (names is null) return;
@@ -415,7 +415,7 @@ public class MediaAssetsController(PuglingDbContext db, InterestTagService tags,
                 asset.TagLinks.Add(new MediaTagLink { MediaAsset = asset, InterestTag = tag });
     }
 
-    /// <summary>Macht einen generierten Basiskey eindeutig, indem bei Kollision _2, _3 … angehängt wird.</summary>
+    /// <summary>Makes a generated base key unique by appending _2, _3 … on collision.</summary>
     private async Task<string> UniqueKeyAsync(string baseKey, CancellationToken ct)
     {
         var key = string.IsNullOrWhiteSpace(baseKey) ? "medium" : baseKey;
@@ -427,7 +427,7 @@ public class MediaAssetsController(PuglingDbContext db, InterestTagService tags,
         }
     }
 
-    /// <summary>Gemeinsame Variantenprüfung für Anlegen (hier) und Nachreichen (Varianten-Controller).</summary>
+    /// <summary>Shared variant validation for creation (here) and adding later (variants controller).</summary>
     internal static string? Validate(string? url, int? width, int? height, string? format)
     {
         if (string.IsNullOrWhiteSpace(url)) return "Variant url is required.";
@@ -448,7 +448,7 @@ public class MediaAssetsController(PuglingDbContext db, InterestTagService tags,
 
     private static string? Trimmed(string? value) => value?.Trim() is { Length: > 0 } v ? v : null;
 
-    /// <summary>Multipart kennt keine Listen wie JSON – Schlagworte kommen dort als eine kommagetrennte Zeile.</summary>
+    /// <summary>Multipart has no lists like JSON – tags arrive there as a single comma-separated line.</summary>
     private static List<string> SplitTags(string? tags) =>
         [.. (tags ?? "").Split(',').Select(t => t.Trim()).Where(t => t.Length > 0)];
 }

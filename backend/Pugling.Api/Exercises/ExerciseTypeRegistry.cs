@@ -1,44 +1,44 @@
 namespace Pugling.Api.Exercises;
 
 /// <summary>
-/// Die eine Auflösungsstelle für Übungstypen: bildet die registrierten <see cref="IExerciseType"/> auf ihren
-/// <see cref="IExerciseType.Key"/> ab und ersetzt damit das frühere <c>ExerciseType</c>-Enum + <c>switch</c>.
-/// Trägt zugleich die Manifest-Liste (früher hartkodiert) und abgeleitete Sichten für DB-Filter (Capabilities
-/// lassen sich nicht direkt in SQL prüfen – daher die Key-Mengen).
+/// The one resolution point for exercise types: maps the registered <see cref="IExerciseType"/>s onto their
+/// <see cref="IExerciseType.Key"/>, replacing the former <c>ExerciseType</c> enum + <c>switch</c>.
+/// Also carries the manifest list (formerly hardcoded) and derived views for DB filters (capabilities
+/// cannot be checked directly in SQL – hence the key sets).
 /// </summary>
 public sealed class ExerciseTypeRegistry
 {
     private readonly IReadOnlyDictionary<string, IExerciseType> _byKey;
 
-    /// <summary>Baut die Registry aus allen per DI registrierten <see cref="IExerciseType"/>-Singletons, geschlüsselt über <see cref="IExerciseType.Key"/>.</summary>
+    /// <summary>Builds the registry from all <see cref="IExerciseType"/> singletons registered via DI, keyed by <see cref="IExerciseType.Key"/>.</summary>
     public ExerciseTypeRegistry(IEnumerable<IExerciseType> types) =>
         _byKey = types.ToDictionary(t => t.Key, StringComparer.Ordinal);
 
-    /// <summary>Alle registrierten Typen.</summary>
+    /// <summary>All registered types.</summary>
     public IReadOnlyCollection<IExerciseType> All => (IReadOnlyCollection<IExerciseType>)_byKey.Values;
 
-    /// <summary>Typ zum Schlüssel oder <c>null</c>, wenn unbekannt.</summary>
+    /// <summary>Type for the key, or <c>null</c> if unknown.</summary>
     public IExerciseType? ByKey(string key) => _byKey.GetValueOrDefault(key);
 
-    /// <summary>Typ zum Schlüssel; wirft, wenn unbekannt (interner Konsistenzbruch, kein Nutzerfehler).</summary>
+    /// <summary>Type for the key; throws if unknown (internal consistency break, not a user error).</summary>
     public IExerciseType Require(string key) =>
         _byKey.GetValueOrDefault(key) ?? throw new InvalidOperationException($"Unknown exercise type '{key}'.");
 
-    /// <summary>Manifeste aller Typen – die Wahrheit für den <c>exercise-types</c>-Endpunkt.</summary>
+    /// <summary>Manifests of all types – the source of truth for the <c>exercise-types</c> endpoint.</summary>
     public IReadOnlyList<ExerciseTypeManifest> Manifests => [.. _byKey.Values.Select(t => t.Manifest)];
 
-    /// <summary>Schlüssel der Typen mit plan-übergreifendem Item-Lernstand – für In-DB-Filter (Capability geht nicht in SQL).</summary>
+    /// <summary>Keys of the types with cross-plan item learning progress – for in-DB filters (capability can't go into SQL).</summary>
     public IReadOnlyList<string> KeysSupportingItemProgress =>
         [.. _byKey.Values.Where(t => t.SupportsItemProgress).Select(t => t.Key)];
 }
 
-/// <summary>DI-Registrierung der eingebauten Übungstypen + der Registry.</summary>
+/// <summary>DI registration of the built-in exercise types + the registry.</summary>
 public static class ExerciseTypeServiceCollectionExtensions
 {
     /// <summary>
-    /// Registriert jeden eingebauten Übungstyp als <see cref="IExerciseType"/> (zustandslose Singletons) und die
-    /// <see cref="ExerciseTypeRegistry"/>. Ein neuer Typ = eine Zeile hier + eine Klasse (kein Enum-/Switch-Edit).
-    /// (Assembly-Scan/externe Plugins sind der spätere Stufe-2-Schritt.)
+    /// Registers every built-in exercise type as an <see cref="IExerciseType"/> (stateless singletons) and the
+    /// <see cref="ExerciseTypeRegistry"/>. A new type = one line here + one class (no enum/switch edit).
+    /// (Assembly scanning/external plugins are the later stage-2 step.)
     /// </summary>
     public static IServiceCollection AddExerciseTypes(this IServiceCollection services)
     {

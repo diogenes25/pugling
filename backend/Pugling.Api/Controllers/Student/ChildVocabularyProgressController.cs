@@ -8,11 +8,11 @@ using Pugling.Api.Models;
 namespace Pugling.Api.Controllers.Student;
 
 /// <summary>
-/// Kind-zentrische Sicht auf den Vokabel-Lernfortschritt: „welche Vokabeln sitzen bei diesem Kind, welche nicht?"
-/// Der Fortschritt ist Eigentum des Kindes (Ownership über <see cref="ChildOwnershipFilter"/>: Vater = eigenes Kind,
-/// Sohn = er selbst). Liest den plan-übergreifenden Stand je Item (<see cref="ItemProgress"/>) und – über die
-/// denormalisierte <c>vocabularyId</c> – das Wort-Rollup über alle Übungen hinweg (Grundlage für gezielte
-/// Wiederholungs-Übungen aus schlecht gelernten Wörtern). Historie je Item aus <see cref="ItemReviewEvent"/>.
+/// Child-centric view of vocabulary learning progress: "which words has this child got down, and which not?"
+/// The progress is owned by the child (ownership via <see cref="ChildOwnershipFilter"/>: father = own child,
+/// child = themself). Reads the plan-wide status per item (<see cref="ItemProgress"/>) and – via the
+/// denormalized <c>vocabularyId</c> – the word rollup across all exercises (basis for targeted
+/// review exercises from poorly learned words). History per item from <see cref="ItemReviewEvent"/>.
 /// </summary>
 [ApiController]
 [ApiVersion("1.0")]
@@ -23,7 +23,7 @@ namespace Pugling.Api.Controllers.Student;
 [ServiceFilter(typeof(ChildOwnershipFilter))]
 public class ChildVocabularyProgressController(PuglingDbContext db) : ControllerBase
 {
-    /// <summary>Ab welcher Beherrschung (Prozent) ein Item/Wort als „schwach" gilt (Filter <c>onlyWeak</c>); geteilte Schwelle.</summary>
+    /// <summary>The mastery (percent) below which an item/word counts as "weak" (filter <c>onlyWeak</c>); a shared threshold.</summary>
     private const int WeakBelowPercent = ItemProgress.WeakBelowPercent;
 
     // EF-Projektion ohne den abgeleiteten Link (im Speicher ergänzt).
@@ -32,8 +32,8 @@ public class ChildVocabularyProgressController(PuglingDbContext db) : Controller
         DateOnly? IntroducedAt, DateTime? LastAnswerAt, bool? LastCorrect);
 
     /// <summary>
-    /// Der Item-Lernstand des Kindes, schwächste zuerst. Filter: <paramref name="exerciseId"/> (nur eine Übung),
-    /// <paramref name="maxBox"/> (Box ≤ N), <paramref name="onlyWeak"/> (Beherrschung &lt; 50 %). Gesamtzahl im Header <c>X-Total-Count</c>.
+    /// The item learning progress of the child, weakest first. Filter: <paramref name="exerciseId"/> (a single exercise only),
+    /// <paramref name="maxBox"/> (box ≤ N), <paramref name="onlyWeak"/> (mastery &lt; 50 %). Total count in the <c>X-Total-Count</c> header.
     /// </summary>
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -60,8 +60,8 @@ public class ChildVocabularyProgressController(PuglingDbContext db) : Controller
     }
 
     /// <summary>
-    /// Wort-Rollup: aggregiert den Stand je Store-Vokabel über alle Übungen des Kindes (schwächste zuerst).
-    /// <paramref name="onlyWeak"/> beschränkt auf Wörter mit Ø-Beherrschung &lt; 50 % – die Kandidaten für gezielte Wiederholung.
+    /// Word rollup: aggregates the status per store vocabulary across all exercises of the child (weakest first).
+    /// <paramref name="onlyWeak"/> restricts to words with average mastery &lt; 50 % – the candidates for targeted review.
     /// </summary>
     [HttpGet("by-word")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -99,7 +99,7 @@ public class ChildVocabularyProgressController(PuglingDbContext db) : Controller
         }).ToList();
     }
 
-    /// <summary>Der Item-Lernstand des Kindes zu einem einzelnen Item (404, wenn dazu noch kein Fortschritt existiert).</summary>
+    /// <summary>The item learning progress of the child for a single item (404 if no progress exists for it yet).</summary>
     [HttpGet("{itemId:int}")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<ItemProgressResponse>> Get(int childId, int itemId, CancellationToken ct = default)
@@ -115,7 +115,7 @@ public class ChildVocabularyProgressController(PuglingDbContext db) : Controller
         return row is null ? NotFound() : MapRow(row);
     }
 
-    /// <summary>Die Antwort-Historie des Kindes zu einem Item, neueste zuerst. Gesamtzahl im Header <c>X-Total-Count</c>.</summary>
+    /// <summary>The answer history of the child for an item, newest first. Total count in the <c>X-Total-Count</c> header.</summary>
     [HttpGet("{itemId:int}/history")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<IEnumerable<HistoryResponse>>> History(int childId, int itemId,

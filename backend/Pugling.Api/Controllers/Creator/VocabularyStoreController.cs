@@ -10,11 +10,11 @@ using Pugling.Api.Models;
 namespace Pugling.Api.Controllers.Creator;
 
 /// <summary>
-/// Atomarer Vokabel-Store ("Single Source of Truth"). Sätze und Übungen referenzieren diese Einträge
-/// später über ihren <c>Key</c>. Der Store ist kindneutral (gemeinsamer Katalog, nur Vater) und so
-/// gebaut, dass die Datenarbeit an einen Agenten auslagerbar ist: „einfach" (nur Word) anlegen,
-/// unfertige Vokabeln gezielt filtern, per Batch/Lookup massenhaft anlegen/vervollständigen und die
-/// Formen-Familie (go→went→gone) über die Grundform-Kante navigieren.
+/// Atomic vocabulary store ("single source of truth"). Sentences and exercises later reference these entries
+/// via their <c>Key</c>. The store is child-neutral (shared catalog, adult only) and built
+/// so that the data work can be offloaded to an agent: create "simply" (word only),
+/// specifically filter unfinished vocabulary entries, mass-create/complete via batch/lookup, and
+/// navigate the form family (go→went→gone) via the base-form edge.
 /// </summary>
 [ApiController]
 [ApiVersion("1.0")]
@@ -33,36 +33,36 @@ public class VocabularyStoreController(PuglingDbContext db) : ControllerBase
             v.TagLinks.Select(l => l.VocabTag!.Name).OrderBy(n => n, StringComparer.Ordinal).ToList(),
             v.CreatedAt);
 
-    /// <summary>Basis-Query mit den für <see cref="Map"/> nötigen Navigationen (Grundform + Tags).</summary>
+    /// <summary>Base query with the navigations needed for <see cref="Map"/> (base form + tags).</summary>
     private IQueryable<Vocabulary> WithGraph(IQueryable<Vocabulary> q) =>
         q.Include(v => v.BaseForm).Include(v => v.TagLinks).ThenInclude(l => l.VocabTag);
 
     /// <summary>
-    /// Liste der Vokabeln, optional gefiltert. Die Vollständigkeits-Filter bilden die drei Agenten-Kriterien
-    /// ab: <paramref name="untranslated"/> (nicht übersetzt), <paramref name="incomplete"/> (unvollständig)
-    /// und <paramref name="linked"/> (mit/ohne Grundform-Verknüpfung). Über <paramref name="tag"/> lässt sich
-    /// nach Schlagworten filtern (z. B. „Kapitel 5"); mehrere Tags sind per Default ODER-verknüpft,
-    /// <paramref name="matchAll"/> schaltet auf UND. Die Gesamtzahl (vor Paging) steht im Header
+    /// List of vocabulary entries, optionally filtered. The completeness filters map the three agent criteria:
+    /// <paramref name="untranslated"/> (not translated), <paramref name="incomplete"/> (incomplete),
+    /// and <paramref name="linked"/> (with/without base-form link). <paramref name="tag"/> lets you
+    /// filter by tags (e.g. "chapter 5"); multiple tags are OR-combined by default,
+    /// <paramref name="matchAll"/> switches to AND. The total count (before paging) is in the header
     /// <c>X-Total-Count</c>.
     /// </summary>
-    /// <param name="search">Volltext in Word/Translation/Key (Teilstring).</param>
-    /// <param name="word">Teilstring-Filter allein auf das Wort (Ausgangssprache).</param>
-    /// <param name="translation">Teilstring-Filter allein auf die Übersetzung (Zielsprache).</param>
-    /// <param name="partOfSpeech">Exakte Wortart.</param>
-    /// <param name="untranslated">true = nur Einträge ohne Übersetzung.</param>
-    /// <param name="incomplete">true = nur unvollständige Einträge (keine Übersetzung / Wortart „Other" / fehlende Noun-/Verb-Details).</param>
-    /// <param name="linked">true = nur verknüpfte (Grundform gesetzt), false = nur unverknüpfte.</param>
-    /// <param name="baseFormsOnly">true = nur Grundformen (keine flektierten Formen); klarer Alias für Authoring, fachlich wie <c>linked=false</c>.</param>
-    /// <param name="sourceLanguage">Filter auf die Ausgangssprache.</param>
-    /// <param name="targetLanguage">Filter auf die Zielsprache.</param>
-    /// <param name="tag">Ein oder mehrere Tag-Namen (wiederholbar).</param>
-    /// <param name="matchAll">Bei mehreren Tags: true = alle (UND), false = beliebiger (ODER, Default).</param>
-    /// <param name="sort">Sortierspalte: <c>key</c> (Default), <c>word</c>, <c>translation</c>, <c>pos</c>, <c>created</c>.
-    /// Kurzform <c>-word</c> = absteigend.</param>
-    /// <param name="dir"><c>asc</c> (Default) oder <c>desc</c>; hat Vorrang vor einem <c>-</c>-Präfix in <paramref name="sort"/>.</param>
-    /// <param name="skip">Anzahl zu überspringender Einträge (Paging).</param>
-    /// <param name="take">Maximale Trefferzahl (1..500).</param>
-    /// <param name="ct">Abbruch-Token.</param>
+    /// <param name="search">Full text in word/translation/key (substring).</param>
+    /// <param name="word">Substring filter on the word alone (source language).</param>
+    /// <param name="translation">Substring filter on the translation alone (target language).</param>
+    /// <param name="partOfSpeech">Exact part of speech.</param>
+    /// <param name="untranslated">true = only entries without translation.</param>
+    /// <param name="incomplete">true = only incomplete entries (no translation / part of speech "Other" / missing noun/verb details).</param>
+    /// <param name="linked">true = only linked (base form set), false = only unlinked.</param>
+    /// <param name="baseFormsOnly">true = only base forms (no inflected forms); clear alias for authoring, functionally like <c>linked=false</c>.</param>
+    /// <param name="sourceLanguage">Filter on the source language.</param>
+    /// <param name="targetLanguage">Filter on the target language.</param>
+    /// <param name="tag">One or more tag names (repeatable).</param>
+    /// <param name="matchAll">With multiple tags: true = all (AND), false = any (OR, default).</param>
+    /// <param name="sort">Sort column: <c>key</c> (default), <c>word</c>, <c>translation</c>, <c>pos</c>, <c>created</c>.
+    /// Short form <c>-word</c> = descending.</param>
+    /// <param name="dir"><c>asc</c> (default) or <c>desc</c>; takes precedence over a <c>-</c> prefix in <paramref name="sort"/>.</param>
+    /// <param name="skip">Number of entries to skip (paging).</param>
+    /// <param name="take">Maximum number of hits (1..500).</param>
+    /// <param name="ct">Cancellation token.</param>
     [HttpGet]
     public async Task<IEnumerable<VocabularyResponse>> List(
         [FromQuery] string? search = null,
@@ -124,8 +124,8 @@ public class VocabularyStoreController(PuglingDbContext db) : ControllerBase
     }
 
     /// <summary>
-    /// Wendet die per Whitelist erlaubte Sortierung an; jede Variante endet mit <c>Id</c> als Tiebreaker,
-    /// damit das Paging-Fenster deterministisch bleibt. Unbekannte/leere Keys → Standard nach <c>Key</c>.
+    /// Applies the sorting allowed via whitelist; every variant ends with <c>Id</c> as a tiebreaker,
+    /// so the paging window stays deterministic. Unknown/empty keys → default by <c>Key</c>.
     /// </summary>
     private static IOrderedQueryable<Vocabulary> ApplySort(IQueryable<Vocabulary> q, (string? Key, bool Desc) sort) =>
         (sort.Key?.ToLowerInvariant(), sort.Desc) switch
@@ -142,7 +142,7 @@ public class VocabularyStoreController(PuglingDbContext db) : ControllerBase
             _ => q.OrderBy(v => v.Key).ThenBy(v => v.Id),
         };
 
-    /// <summary>Eine Vokabel per numerischer Id.</summary>
+    /// <summary>A vocabulary entry by numeric id.</summary>
     [HttpGet("{id:int}")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<VocabularyResponse>> Get(int id, CancellationToken ct = default)
@@ -151,7 +151,7 @@ public class VocabularyStoreController(PuglingDbContext db) : ControllerBase
         return v is null ? NotFound() : Map(v);
     }
 
-    /// <summary>Eine Vokabel per stabilem Key (Referenz-Slug).</summary>
+    /// <summary>A vocabulary entry by stable key (reference slug).</summary>
     [HttpGet("by-key/{key}")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<VocabularyResponse>> GetByKey(string key, CancellationToken ct = default)
@@ -161,9 +161,9 @@ public class VocabularyStoreController(PuglingDbContext db) : ControllerBase
     }
 
     /// <summary>
-    /// Alle Formen einer Grundform-Familie (z. B. go → went → gone). Ausgehend von einer beliebigen Form
-    /// wird die Grundform bestimmt (<c>BaseFormId ?? Id</c>) und samt aller darauf verweisenden Formen
-    /// geliefert – jede mit ihrem <c>BaseFormRelation</c>-Label. Grundform steht zuerst.
+    /// All forms of a base-form family (e.g. go → went → gone). Starting from an arbitrary form,
+    /// the base form is determined (<c>BaseFormId ?? Id</c>) and delivered along with all forms referencing it –
+    /// each with its <c>BaseFormRelation</c> label. The base form comes first.
     /// </summary>
     [HttpGet("{id:int}/forms")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -184,7 +184,7 @@ public class VocabularyStoreController(PuglingDbContext db) : ControllerBase
             .Select(Map).ToList();
     }
 
-    /// <summary>Erstellt eine Vokabel. Fehlt der Key, wird ein eindeutiger generiert; BaseFormKey (falls gesetzt) muss existieren.</summary>
+    /// <summary>Creates a vocabulary entry. If the key is missing, a unique one is generated; BaseFormKey (if set) must exist.</summary>
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -204,9 +204,9 @@ public class VocabularyStoreController(PuglingDbContext db) : ControllerBase
     private record CreateOutcome(CreateKind Kind, Vocabulary? Vocab, string? Key, string? Error);
 
     /// <summary>
-    /// Gemeinsame Anlege-Logik für Einzel-POST und Batch. Legt an und lädt Grundform + Tags für die Antwort.
-    /// Ein bereits vergebener, explizit gesetzter Key liefert <see cref="CreateKind.Conflict"/> (der Aufrufer
-    /// entscheidet: 409 einzeln bzw. idempotentes „existing" im Batch).
+    /// Shared creation logic for single POST and batch. Creates and loads base form + tags for the response.
+    /// An already taken, explicitly set key returns <see cref="CreateKind.Conflict"/> (the caller
+    /// decides: 409 individually or idempotent "existing" in the batch).
     /// </summary>
     private async Task<CreateOutcome> CreateCoreAsync(CreateVocabularyDto dto, CancellationToken ct)
     {
@@ -256,7 +256,7 @@ public class VocabularyStoreController(PuglingDbContext db) : ControllerBase
         return new(CreateKind.Created, vocab, key, null);
     }
 
-    /// <summary>Macht einen generierten Basiskey eindeutig, indem bei Kollision _2, _3 … angehängt wird.</summary>
+    /// <summary>Makes a generated base key unique by appending _2, _3 … on collision.</summary>
     private async Task<string> UniqueKeyAsync(string baseKey, CancellationToken ct)
     {
         var key = string.IsNullOrWhiteSpace(baseKey) ? "vokabel" : baseKey;
@@ -268,7 +268,7 @@ public class VocabularyStoreController(PuglingDbContext db) : ControllerBase
         }
     }
 
-    /// <summary>Ändert eine Vokabel (partiell).</summary>
+    /// <summary>Changes a vocabulary entry (partial).</summary>
     [HttpPatch("{id:int}")]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -285,7 +285,7 @@ public class VocabularyStoreController(PuglingDbContext db) : ControllerBase
 
     private enum UpdateStatus { Ok, NotFound, Error }
 
-    /// <summary>Gemeinsame Update-Logik für Einzel-PATCH und Batch (lädt Grundform + Tags für die Antwort).</summary>
+    /// <summary>Shared update logic for single PATCH and batch (loads base form + tags for the response).</summary>
     private async Task<(UpdateStatus Status, Vocabulary? Vocab, string? Error)> UpdateCoreAsync(int id, UpdateVocabularyDto dto, CancellationToken ct)
     {
         var vocab = await db.Vocabulary.Include(v => v.TagLinks).ThenInclude(l => l.VocabTag)
@@ -327,7 +327,7 @@ public class VocabularyStoreController(PuglingDbContext db) : ControllerBase
         return (UpdateStatus.Ok, vocab, null);
     }
 
-    /// <summary>Löscht eine Vokabel. Nicht möglich, solange sie Grundform anderer Vokabeln ist.</summary>
+    /// <summary>Deletes a vocabulary entry. Not possible while it is the base form of other entries.</summary>
     [HttpDelete("{id:int}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -350,8 +350,8 @@ public class VocabularyStoreController(PuglingDbContext db) : ControllerBase
     }
 
     /// <summary>
-    /// Welche Übungen die Vokabel referenzieren – Vokabel-Übungen über ihre <see cref="ExerciseItem"/>-Zeilen (per Id),
-    /// Lückentexte über <see cref="Gap.VocabKey"/> in der Config. Grundlage für den Lösch-Schutz und die Autoren-Sicht.
+    /// Which exercises reference the vocabulary entry – vocabulary exercises via their <see cref="ExerciseItem"/> rows (by id),
+    /// cloze texts via <see cref="Gap.VocabKey"/> in the config. Basis for the delete protection and the author view.
     /// </summary>
     [HttpGet("{id:int}/usage")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -363,8 +363,8 @@ public class VocabularyStoreController(PuglingDbContext db) : ControllerBase
     }
 
     /// <summary>
-    /// Findet referenzierende Übungen: Vokabelübungen über die <see cref="ExerciseItem"/>-Tabelle (per Vokabel-Id),
-    /// Lückentexte weiterhin per Key in der ConfigJson (SQL-Vorfilter + präzise JSON-Prüfung).
+    /// Finds referencing exercises: vocabulary exercises via the <see cref="ExerciseItem"/> table (by vocabulary id),
+    /// cloze texts still by key in the ConfigJson (SQL pre-filter + precise JSON check).
     /// </summary>
     private async Task<List<VocabUsage>> ReferencingExercisesAsync(int id, string key, CancellationToken ct)
     {
@@ -401,9 +401,9 @@ public class VocabularyStoreController(PuglingDbContext db) : ControllerBase
     // ---- Agenten-Primitive: Lookup (Dedup) + Batch-Anlegen/-Nachtragen ------------------------------
 
     /// <summary>
-    /// Existenz-Prüfung für die Text→Vokabel-Extraktion (Dedup, bevor der Agent anlegt). Der Vergleich läuft
-    /// case-insensitiv über <c>Word</c>, optional gefiltert nach Sprachpaar. Zusätzlich lässt sich prüfen,
-    /// welche <paramref name="request"/>.Keys bereits existieren (z. B. zum Validieren von Übungs-Refs).
+    /// Existence check for the text→vocabulary extraction (dedup before the agent creates). The comparison runs
+    /// case-insensitively over <c>Word</c>, optionally filtered by language pair. Additionally, it can be checked
+    /// which <paramref name="request"/>.Keys already exist (e.g. to validate exercise refs).
     /// </summary>
     [HttpPost("lookup")]
     public async Task<ActionResult<LookupResponse>> Lookup(LookupRequest request, CancellationToken ct = default)
@@ -443,10 +443,10 @@ public class VocabularyStoreController(PuglingDbContext db) : ControllerBase
     }
 
     /// <summary>
-    /// Legt viele Vokabeln in einem Aufruf an – idempotent: ein bereits existierender, explizit gesetzter
-    /// Key liefert Status <c>existing</c> (kein Fehler), sodass derselbe Batch gefahrlos wiederholt werden
-    /// kann. Ohne Key generiert der Server einen eindeutigen (Status <c>created</c>). Sprachlogik
-    /// (Tokenisieren/Übersetzen) liegt beim Aufrufer – die API verwaltet nur die Daten.
+    /// Creates many vocabulary entries in one call – idempotent: an already existing, explicitly set
+    /// key returns status <c>existing</c> (no error), so the same batch can be safely repeated.
+    /// Without a key, the server generates a unique one (status <c>created</c>). Language logic
+    /// (tokenizing/translating) is up to the caller – the API only manages the data.
     /// </summary>
     [HttpPost("batch")]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -476,7 +476,7 @@ public class VocabularyStoreController(PuglingDbContext db) : ControllerBase
         return results;
     }
 
-    /// <summary>Trägt Felder vieler Vokabeln in einem Aufruf nach (gleiche Merge-Semantik wie Einzel-PATCH).</summary>
+    /// <summary>Adds fields to many vocabulary entries in one call (same merge semantics as single PATCH).</summary>
     [HttpPatch("batch")]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<IEnumerable<BatchItemResult>>> UpdateBatch(List<BatchUpdateItem> items, CancellationToken ct = default)
@@ -502,7 +502,7 @@ public class VocabularyStoreController(PuglingDbContext db) : ControllerBase
 
     // ---- Helfer -------------------------------------------------------------------------------------
 
-    /// <summary>Lädt Grundform + Tags einer getrackten Vokabel für die Antwort-Projektion nach.</summary>
+    /// <summary>Loads base form + tags of a tracked vocabulary entry for the response projection.</summary>
     private async Task LoadGraphAsync(Vocabulary vocab, CancellationToken ct)
     {
         await db.Entry(vocab).Reference(v => v.BaseForm).LoadAsync(ct);
@@ -510,8 +510,8 @@ public class VocabularyStoreController(PuglingDbContext db) : ControllerBase
     }
 
     /// <summary>
-    /// Verknüpft die Vokabel mit den genannten Tags (create-if-missing, exakter Name, additiv – bereits
-    /// verknüpfte werden übersprungen). Erwartet, dass vorhandene <c>TagLinks</c> der Vokabel geladen sind.
+    /// Links the vocabulary entry with the named tags (create-if-missing, exact name, additive – already
+    /// linked ones are skipped). Expects the vocabulary entry's existing <c>TagLinks</c> to be loaded.
     /// </summary>
     private async Task ApplyTagsAsync(Vocabulary vocab, List<string>? tagNames, CancellationToken ct)
     {

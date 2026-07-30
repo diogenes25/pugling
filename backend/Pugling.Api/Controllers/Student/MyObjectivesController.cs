@@ -5,12 +5,12 @@ using Pugling.Api.Auth;
 namespace Pugling.Api.Controllers.Student;
 
 /// <summary>
-/// Die „großen Ziele" des Sohns aus seiner eigenen Sicht (reine Lesesicht): das große Ziel, seine Etappen mit
-/// Fortschritt und die Belohnungs-Vorschau. Der Fortschritt wird live berechnet; das <c>rewarded</c>-Flag zeigt,
-/// ob der Abschluss-Batzen schon geflossen ist. Verdiente Belohnungen werden am <b>Kind-Login</b> idempotent
-/// gutgeschrieben (<c>AuthController</c> → <c>ObjectiveRewardService</c>, es gibt keinen Scheduler) – dieser
-/// Endpunkt bleibt bewusst nebenwirkungsfrei (GET). Nur <b>aktive</b> Ziele werden gezeigt. Die Verwaltung liegt
-/// beim Vater (<c>supervisor/children/{childId}/objectives</c>).
+/// The child's "big goals" from their own perspective (read-only view): the big goal, its key results with
+/// progress and the reward preview. The progress is computed live; the <c>rewarded</c> flag shows
+/// whether the completion payout has already been credited. Earned rewards are credited idempotently
+/// on <b>child login</b> (<c>AuthController</c> → <c>ObjectiveRewardService</c>, there is no scheduler) – this
+/// endpoint deliberately stays side-effect-free (GET). Only <b>active</b> goals are shown. Management lies
+/// with the father (<c>supervisor/children/{childId}/objectives</c>).
 /// </summary>
 [ApiController]
 [ApiVersion("1.0")]
@@ -21,8 +21,8 @@ namespace Pugling.Api.Controllers.Student;
 public class MyObjectivesController(ObjectiveService objectives) : ControllerBase
 {
     /// <summary>
-    /// Eigene aktive große Ziele mit Etappen-Fortschritt (offene/überfällige zuerst), seitenweise.
-    /// Gesamtzahl im Header <c>X-Total-Count</c>.
+    /// Own active big goals with key-result progress (open/overdue first), paged.
+    /// Total count in the <c>X-Total-Count</c> header.
     /// </summary>
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status200OK)]
@@ -37,7 +37,7 @@ public class MyObjectivesController(ObjectiveService objectives) : ControllerBas
         return all.ToPagedList(Response, skip, take);
     }
 
-    /// <summary>Ein einzelnes eigenes großes Ziel (Einzelansicht zur Liste). 404, wenn es (für dich) nicht existiert.</summary>
+    /// <summary>A single own big goal (detail view for the list). 404 if it does not exist (for you).</summary>
     [HttpGet("{objectiveId:int}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]

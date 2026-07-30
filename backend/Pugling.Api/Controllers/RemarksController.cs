@@ -10,14 +10,14 @@ using Pugling.Api.Models;
 namespace Pugling.Api.Controllers;
 
 /// <summary>
-/// Anmerkungen beim Testen: Fragen, Beobachtungen und Befunde samt dem Kontext, in dem sie aufgefallen
-/// sind. Erfasst wird im UI-Widget, beantwortet wird durch Claude Code – angestoßen vom Menschen über die
-/// hier vergebene Id („Beantworte die Frage 123").
+/// Remarks made while testing: questions, observations and findings together with the context in which
+/// they came up. Captured in the UI widget, answered by Claude Code – triggered by the human via the
+/// id assigned here ("Answer question 123").
 /// <para>
-/// <b>Bewusst tier-neutral</b> (kein <c>creator</c>/<c>supervisor</c>/<c>student</c>-Präfix, Präzedenz
-/// <see cref="AuthController"/>): Die Ressource gehört keiner der drei Ebenen – derselbe Mensch erfasst
-/// mal aus dem Vater-Web, mal aus der Sohn-Arcade. Gegated wird darum nur mit <c>[Authorize]</c>, die
-/// Rollen werden inline getrennt (Muster der Student-Endpunkte).
+/// <b>Deliberately tier-neutral</b> (no <c>creator</c>/<c>supervisor</c>/<c>student</c> prefix, precedent
+/// <see cref="AuthController"/>): the resource belongs to none of the three tiers – the same person captures
+/// them sometimes from the father web app, sometimes from the child arcade. Gated therefore only with <c>[Authorize]</c>, the
+/// roles are separated inline (the pattern of the student endpoints).
 /// </para>
 /// </summary>
 [ApiController]
@@ -29,7 +29,7 @@ namespace Pugling.Api.Controllers;
 public class RemarksController(
     PuglingDbContext db, RemarkExportService export, AuthAccess access, RemarkOptions options) : ControllerBase
 {
-    /// <summary>Sortierschlüssel der Liste (Whitelist – kein dynamischer Property-Zugriff).</summary>
+    /// <summary>Sort key of the list (whitelist – no dynamic property access).</summary>
     private static IQueryable<Remark> ApplySort(IQueryable<Remark> q, string? key, bool desc) => key switch
     {
         // Tiebreaker wie in den anderen Zweigen: Das Widget ist ein Schnellerfassungs-Werkzeug, zwei
@@ -45,10 +45,10 @@ public class RemarksController(
     };
 
     /// <summary>
-    /// Projektion auf den Vertrag. <paramref name="withAnswer"/> blendet die Antwort aus: Sie stammt aus
-    /// Claude Code und trägt Datei-/Zeilenverweise, also Code-Interna. Dieselbe Begründung, mit der der
-    /// Export Supervisor-only ist – ohne den Filter widerspräche sich beides, denn das Widget der
-    /// Sohn-Arcade zeigt die Antwort zur eigenen Anmerkung an.
+    /// Projection onto the contract. <paramref name="withAnswer"/> hides the answer: it comes from
+    /// Claude Code and carries file/line references, i.e. code internals. Same reasoning as why the
+    /// export is supervisor-only – without the filter the two would contradict each other, since the widget
+    /// of the child arcade shows the answer to its own remark.
     /// </summary>
     private static RemarkDto ToDto(Remark r, int? viewerAccountId, bool withAnswer, int commentCount) => new(
         r.Id, r.Text, r.Category, r.Status,
@@ -64,25 +64,25 @@ public class RemarksController(
         // Auskunft darüber, dass über seine Anmerkung gesprochen wurde.
         withAnswer ? commentCount : 0);
 
-    /// <summary>Projektion eines Beitrags; <paramref name="viewerAccountId"/> entscheidet über <c>IsOwn</c> (nur eigene sind löschbar).</summary>
+    /// <summary>Projection of an entry; <paramref name="viewerAccountId"/> determines <c>IsOwn</c> (only own entries are deletable).</summary>
     private static RemarkCommentDto ToDto(RemarkComment c, int? viewerAccountId) => new(
         c.Id, c.RemarkId, c.Body, c.Author, c.AuthorLabel, c.AuthorAccountId,
         c.AuthorAccountId is { } a && a == viewerAccountId, c.CreatedAt);
 
     /// <summary>
-    /// Ob der Aufrufer Antworten und Verlauf sehen darf – Student nicht, siehe <see cref="ToDto(Remark, int?, bool, int)"/>.
+    /// Whether the caller may see answers and history – not a student, see <see cref="ToDto(Remark, int?, bool, int)"/>.
     /// </summary>
     private bool MaySeeAnswers => !User.IsStudent() || User.IsSupervisor();
 
     /// <summary>
-    /// Der Anmerkungs-Bestand, auf den der Aufrufer zugreifen darf – die <b>eine</b> Stelle, an der die
-    /// Sichtbarkeit entschieden wird.
+    /// The set of remarks the caller may access – the <b>one</b> place where
+    /// visibility is decided.
     /// <para>
-    /// <paramref name="allAccounts"/> hebt die Einschränkung auf. Die Berechtigung dafür ist
-    /// <see cref="MayReadAllAccounts"/>; auf den <b>Listen</b> kommt das ausdrückliche <c>scope=all</c>
-    /// hinzu, damit die Vorgabe eng bleibt (sonst zeigte die Liste im Widget fremde Einträge). Beim Zugriff
-    /// auf eine <b>einzelne Id</b> genügt die Berechtigung – genau das braucht der Skill, um eine Anmerkung
-    /// aus einem beliebigen Testkonto zu beantworten.
+    /// <paramref name="allAccounts"/> lifts the restriction. The permission for that is
+    /// <see cref="MayReadAllAccounts"/>; on <b>lists</b> the explicit <c>scope=all</c> is required
+    /// in addition, so the default stays narrow (otherwise the list in the widget would show entries from
+    /// other accounts). When accessing a <b>single id</b>, the permission alone is enough – that's exactly what
+    /// the skill needs to answer a remark from any test account.
     /// </para>
     /// </summary>
     private async Task<IQueryable<Remark>> ScopedAsync(bool allAccounts, CancellationToken ct)
@@ -95,30 +95,30 @@ public class RemarksController(
     private static bool WantsAllAccounts(string? scope) => string.Equals(scope, "all", StringComparison.OrdinalIgnoreCase);
 
     /// <summary>
-    /// Ob der Aufrufer über Konto-Grenzen lesen darf.
+    /// Whether the caller may read across account boundaries.
     /// <para>
-    /// Das ist <b>an den Schalter <see cref="RemarkOptions.GlobalRead"/> gebunden, nicht an eine Rolle</b>:
-    /// Beim Testen entstehen ständig Wegwerf-Konten (ein Fehler zeigt sich oft nur in einer bestimmten
-    /// Konstellation – ein frischer Vater ohne Übungen deckt auf, was beim geseedeten Papa nie auffällt), und
-    /// jedes einzeln mit einem Flag zu versehen wäre Verwaltungsarbeit ohne Gegenwert. <c>Admin</c> bleibt
-    /// zusätzlich erlaubt, taugt aber nicht als <i>Bedingung</i>: Die Rolle umgeht auch die RWX-Rechte auf
-    /// Übungen, und die haben mit Anmerkungen nichts zu tun.
+    /// This is <b>tied to the <see cref="RemarkOptions.GlobalRead"/> switch, not a role</b>:
+    /// testing constantly produces throwaway accounts (a bug often only shows up in a specific
+    /// constellation – a fresh father account with no exercises reveals what never shows up with the seeded
+    /// dad), and giving each one a flag individually would be administrative work with no payoff. <c>Admin</c>
+    /// remains allowed in addition, but doesn't work as the <i>condition</i>: that role also bypasses the RWX
+    /// permissions on exercises, and those have nothing to do with remarks.
     /// </para>
     /// <para>
-    /// Ein <b>Student</b> ist immer ausgeschlossen – auch mit eingeschaltetem <c>GlobalRead</c>. Antworten und
-    /// Verlauf tragen Datei- und Zeilenverweise; an dem Tag, an dem das Kind das Widget sieht, darf es die
-    /// Testnotizen der Erwachsenen nicht mitlesen.
+    /// A <b>student</b> is always excluded – even with <c>GlobalRead</c> switched on. Answers and
+    /// history carry file and line references; on the day the child sees the widget, it must not be able to
+    /// read the adults' testing notes.
     /// </para>
     /// </summary>
     private bool MayReadAllAccounts => !User.IsStudent() && (options.GlobalRead || User.IsAdmin());
 
     /// <summary>
-    /// Die Konten, deren Anmerkungen der Aufrufer sehen darf: immer das eigene, für einen Supervisor
-    /// zusätzlich die Konten der von ihm betreuten Kinder.
+    /// The accounts whose remarks the caller may see: always its own, and for a supervisor
+    /// additionally the accounts of the children it supervises.
     /// <para>
-    /// Die Trennung ist keine Förmlichkeit: Antworten tragen Datei- und Zeilenverweise, also Code-Interna.
-    /// An dem Tag, an dem das Kind das Widget sieht, darf es weder die Testnotizen des Vaters noch deren
-    /// Antworten mitlesen – deshalb sieht ein Student <b>ausschließlich</b> eigene Anmerkungen.
+    /// The separation is not a formality: answers carry file and line references, i.e. code internals.
+    /// On the day the child sees the widget, it must be able to read neither the father's testing notes nor
+    /// their answers – which is why a student sees <b>exclusively</b> its own remarks.
     /// </para>
     /// </summary>
     private async Task<List<int>> VisibleAccountIdsAsync(CancellationToken ct)
@@ -143,16 +143,16 @@ public class RemarksController(
     }
 
     /// <summary>
-    /// Liefert die Id zurück, wenn der Verweis existiert – sonst <c>null</c>. Geprüft wird nur, was
-    /// gesetzt ist; für den Normalfall (kein Bezug) fällt keine Abfrage an.
+    /// Returns the id if the reference exists – otherwise <c>null</c>. Only what is
+    /// set is checked; in the normal case (no reference) no query is made.
     /// </summary>
     private static async Task<int?> ExistingAsync(int? id, Func<int, Task<bool>> exists) =>
         id is { } value && await exists(value) ? value : null;
 
     /// <summary>
-    /// Eine Anmerkung erfassen. Pflicht ist allein der Text; Autor und Rolle kommen aus dem Token, der
-    /// Kontext aus dem Widget. Die Antwort trägt die <b>Id</b> – sie ist der Schlüssel, mit dem die Frage
-    /// später in Claude Code eingelöst wird.
+    /// Capture a remark. Only the text is mandatory; author and role come from the token, the
+    /// context from the widget. The response carries the <b>id</b> – it's the key used to later
+    /// redeem the question in Claude Code.
     /// </summary>
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status201Created)]
@@ -226,14 +226,14 @@ public class RemarksController(
     }
 
     /// <summary>
-    /// Anmerkungen auflisten. <c>mine=true</c> beschränkt auf die eigenen – das ist die Abfrage hinter der
-    /// Liste im Widget; ohne den Filter sähe ein Supervisor auch die des Kindes.
+    /// List remarks. <c>mine=true</c> restricts to one's own – that's the query behind the
+    /// list in the widget; without the filter a supervisor would also see the child's.
     /// <para>
-    /// <c>scope=all</c> hebt die Konten-Grenze auf – das ist die Sicht des Nachbereitungs-Skills, der
-    /// Anmerkungen aus allen Testkonten einsammelt. Erlaubt, wenn <see cref="MayReadAllAccounts"/> gilt
-    /// (Schalter <c>Remarks:GlobalRead</c>, in der Entwicklung an), sonst <c>403</c>. Bewusst ein
-    /// <b>ausdrücklicher</b> Parameter: Die Vorgabe muss eng bleiben, sonst zeigte die Liste im Widget
-    /// plötzlich fremde Einträge. <c>mine=true</c> gewinnt immer.
+    /// <c>scope=all</c> lifts the account boundary – that's the view of the follow-up skill that
+    /// collects remarks from all test accounts. Allowed if <see cref="MayReadAllAccounts"/> holds
+    /// (switch <c>Remarks:GlobalRead</c>, on in development), otherwise <c>403</c>. Deliberately an
+    /// <b>explicit</b> parameter: the default must stay narrow, otherwise the list in the widget would
+    /// suddenly show entries from other accounts. <c>mine=true</c> always wins.
     /// </para>
     /// </summary>
     [HttpGet]
@@ -277,10 +277,10 @@ public class RemarksController(
     }
 
     /// <summary>
-    /// Eine einzelne Anmerkung – der Einstieg des Skills für „Beantworte die Frage 123".
+    /// A single remark – the entry point of the skill for "Answer question 123".
     /// <para>
-    /// Ein Admin greift hier <b>ohne</b> <c>scope=all</c> zu: Eine Id gezielt aufzurufen ist genau der
-    /// Break-Glass-Fall, und ein Parameter, den man immer mitschicken müsste, wäre nur Rauschen.
+    /// An admin accesses this <b>without</b> <c>scope=all</c>: targeting a single id is exactly the
+    /// break-glass case, and a parameter you'd always have to send along would just be noise.
     /// </para>
     /// </summary>
     [HttpGet("{id:int}")]
@@ -297,8 +297,8 @@ public class RemarksController(
     }
 
     /// <summary>
-    /// Anmerkung ändern – Text/Einordnung/Stand und der Rückkanal (<c>answer</c>). PATCH-Semantik:
-    /// <c>null</c> lässt den Wert stehen, geleert wird nur über die <c>clear…</c>-Schalter.
+    /// Change a remark – text/categorization/status and the return channel (<c>answer</c>). PATCH semantics:
+    /// <c>null</c> leaves the value as is, clearing happens only via the <c>clear…</c> switches.
     /// </summary>
     [HttpPatch("{id:int}")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -346,8 +346,8 @@ public class RemarksController(
     // wird beim nächsten Testen oder im nächsten Skill-Lauf.
 
     /// <summary>
-    /// Der Verlauf einer Anmerkung, <b>älteste zuerst</b> – ein Vorgang liest sich chronologisch, anders als
-    /// die Liste der Anmerkungen (neueste zuerst).
+    /// The history of a remark, <b>oldest first</b> – a case reads chronologically, unlike
+    /// the list of remarks (newest first).
     /// </summary>
     [HttpGet("{id:int}/comments")]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -369,13 +369,13 @@ public class RemarksController(
     }
 
     /// <summary>
-    /// Einen Beitrag zum Verlauf hinzufügen.
+    /// Add an entry to the history.
     /// <para>
-    /// <b>Wiederaufnahme:</b> Ein Beitrag des <b>Menschen</b> zu einer erledigten oder verworfenen Anmerkung
-    /// setzt sie zurück auf <see cref="RemarkStatus.Open"/> – genau das macht aus dem Verlauf einen
-    /// Arbeitsablauf, denn der Nachbereitungs-Skill legt offene Anmerkungen beim nächsten Lauf wieder vor.
-    /// Ein Beitrag von Claude lässt den Stand unberührt: Er berichtet, er hakt nicht nach. Sonst würde jede
-    /// Umsetzungsnotiz die eigene Anmerkung wieder aufreißen.
+    /// <b>Reopening:</b> an entry by the <b>human</b> on a done or rejected remark
+    /// resets it to <see cref="RemarkStatus.Open"/> – that's exactly what turns the history into a
+    /// workflow, since the follow-up skill re-presents open remarks on its next run.
+    /// An entry from Claude leaves the status untouched: it reports, it doesn't follow up. Otherwise every
+    /// implementation note would reopen its own remark.
     /// </para>
     /// </summary>
     [HttpPost("{id:int}/comments")]
@@ -420,8 +420,8 @@ public class RemarksController(
     }
 
     /// <summary>
-    /// Einen eigenen Beitrag zurücknehmen (Tippfehler). Fremde Beiträge darf nur ein Admin entfernen – ein
-    /// Verlauf, aus dem jeder alles löschen kann, ist kein Protokoll mehr.
+    /// Retract one of your own entries (typo). Entries from others may only be removed by an admin – a
+    /// history from which anyone can delete anything is no longer a record.
     /// </summary>
     [HttpDelete("{id:int}/comments/{commentId:int}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
@@ -444,13 +444,13 @@ public class RemarksController(
     }
 
     /// <summary>
-    /// Markdown-Schnappschuss der sichtbaren Anmerkungen. Der Skill legt ihn unter <c>docs/anmerkungen/</c>
-    /// ab – damit ist der Stand versioniert und beim Nacharbeiten muss kein Server laufen.
+    /// Markdown snapshot of the visible remarks. The skill saves it under <c>docs/anmerkungen/</c>
+    /// – that way the state is version-controlled and no server needs to be running during follow-up.
     /// <para>
-    /// Zugleich die <b>einzige Brücke zu den Test-Skills</b>: <c>creator</c>/<c>supervisor</c>/<c>student</c>
-    /// laufen gegen eine Wegwerf-DB und kommen an die echten Anmerkungen nur über diese Datei.
+    /// At the same time the <b>only bridge to the test skills</b>: <c>creator</c>/<c>supervisor</c>/<c>student</c>
+    /// run against a throwaway DB and can only reach the real remarks via this file.
     /// </para>
-    /// Nur für Supervisor: Die Antworten tragen Datei- und Zeilenverweise, also Code-Interna.
+    /// Supervisor only: the answers carry file and line references, i.e. code internals.
     /// </summary>
     [HttpGet("export")]
     [Authorize(Roles = Roles.Supervisor)]
@@ -489,12 +489,12 @@ public class RemarksController(
     }
 
     /// <summary>
-    /// Anmerkung löschen.
+    /// Delete a remark.
     /// <para>
-    /// Bewusst <b>eng</b>, auch bei eingeschaltetem <c>GlobalRead</c>: Der Schalter heißt „global
-    /// <i>read</i>" und meint genau das. Beantworten und Kommentieren über Kontogrenzen sind der Sinn der
-    /// Sache; die Beobachtung eines anderen Kontos wegzuwerfen ist es nicht. Ein Admin darf es weiterhin
-    /// (Break-Glass).
+    /// Deliberately <b>narrow</b>, even with <c>GlobalRead</c> switched on: the switch is called "global
+    /// <i>read</i>" and means exactly that. Answering and commenting across account boundaries is the point of
+    /// the feature; discarding another account's observation is not. An admin may still do it
+    /// (break-glass).
     /// </para>
     /// </summary>
     [HttpDelete("{id:int}")]

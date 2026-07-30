@@ -1,12 +1,12 @@
 namespace Pugling.Api.Controllers;
 
 /// <summary>
-/// Zentrale Routen-Bausteine. Das Versionssegment steckt nur hier – ein künftiger Versionswechsel
-/// (bzw. das Parallelführen einer v2) berührt damit die Controller nicht flächig.
+/// Central route building blocks. The version segment lives only here – a future version change
+/// (or running a v2 in parallel) therefore doesn't touch the controllers across the board.
 /// </summary>
 public static class ApiRoutes
 {
-    /// <summary>Präfix aller versionierten Routen; <c>{version:apiVersion}</c> wird von Asp.Versioning ersetzt.</summary>
+    /// <summary>Prefix of all versioned routes; <c>{version:apiVersion}</c> is replaced by Asp.Versioning.</summary>
     public const string V1 = "api/v{version:apiVersion}";
 
     // Die drei fachlichen Ebenen (siehe docs/grundprinzip.md) sind der erste Pfadbaustein nach der Version.
@@ -14,12 +14,12 @@ public static class ApiRoutes
     // Method-Level-[Authorize]. Einzelne Routen (z. B. Reports) sind bewusst dual – ein Supervisor liest
     // dann eine Student-getaggte Route und umgekehrt.
 
-    /// <summary>Ebene 1 – Creator: Inhalte/Übungen erstellen (Fach → Kapitel → Übung, Stores, Tags).</summary>
+    /// <summary>Tier 1 – Creator: create content/exercises (subject → chapter → exercise, stores, tags).</summary>
     public const string Creator = V1 + "/creator";
 
-    /// <summary>Ebene 2 – Supervisor: Lehrpläne, Ziele/Punkte, Shop/Angebote, Kind-Verwaltung.</summary>
+    /// <summary>Tier 2 – Supervisor: study plans, goals/points, shop/offers, child management.</summary>
     public const string Supervisor = V1 + "/supervisor";
 
-    /// <summary>Ebene 3 – Student: Spielen, Verdienen, Kaufen/Aktivieren, eigener Fortschritt.</summary>
+    /// <summary>Tier 3 – Student: play, earn, buy/activate, own progress.</summary>
     public const string Student = V1 + "/student";
 }

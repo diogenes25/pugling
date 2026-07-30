@@ -9,11 +9,11 @@ using Pugling.Api.Models;
 namespace Pugling.Api.Controllers.Creator;
 
 /// <summary>
-/// Die geteilte Interessen-/Stil-Taxonomie – <b>ein</b> kontrolliertes Vokabular für zwei Verbraucher:
-/// Bilder tragen die Schlagworte als Eigenschaft (<c>creator/media/{id}/tags</c>), Kinder als gewichtete
-/// Vorliebe oder Abneigung (<c>supervisor/children/{id}/interests</c>). Genau diese Doppelnutzung macht
-/// die individualisierte Bildauswahl berechenbar; zwei getrennte Vokabulare könnten nur raten.
-/// Gepflegt wird sie vom Creator, ist aber – wie der Vokabel-Store – kindneutral und global.
+/// The shared interest/style taxonomy – <b>one</b> controlled vocabulary for two consumers:
+/// images carry the tags as a property (<c>creator/media/{id}/tags</c>), children as a weighted
+/// preference or aversion (<c>supervisor/children/{id}/interests</c>). This exact dual use makes
+/// individualized image selection computable; two separate vocabularies could only guess.
+/// Maintained by the creator, but – like the vocabulary store – child-neutral and global.
 /// </summary>
 [ApiController]
 [ApiVersion("1.0")]
@@ -23,21 +23,21 @@ namespace Pugling.Api.Controllers.Creator;
 [Authorize(Roles = Roles.Creator)]
 public class InterestTagsController(PuglingDbContext db) : ControllerBase
 {
-    /// <summary>Projiziert samt Nutzungszahlen beider Seiten – sie zeigen, ob ein Tag „tot" ist.</summary>
+    /// <summary>Projects along with usage counts from both sides – they show whether a tag is "dead".</summary>
     private static IQueryable<InterestTagResponse> Project(IQueryable<InterestTag> q) =>
         q.Select(t => new InterestTagResponse(t.Id, t.Slug, t.Label, t.Facet, t.Synonyms, t.Color,
             t.MediaLinks.Count, t.ChildInterests.Count, t.CreatedAt));
 
     /// <summary>
-    /// Alle Schlagworte (alphabetisch nach Slug), optional gefiltert. Die Gesamtzahl (vor Paging) steht
-    /// im Header <c>X-Total-Count</c>.
+    /// All tags (alphabetically by slug), optionally filtered. The total count (before paging) is
+    /// in the <c>X-Total-Count</c> header.
     /// </summary>
-    /// <param name="search">Teilstring in Slug oder Label.</param>
-    /// <param name="facet">Nur Schlagworte dieser Facette (z. B. nur Stile).</param>
-    /// <param name="unused">true = nur Schlagworte ohne jede Verwendung (Aufräum-Sicht).</param>
-    /// <param name="skip">Anzahl zu überspringender Einträge (Paging).</param>
-    /// <param name="take">Maximale Trefferzahl (1..500).</param>
-    /// <param name="ct">Abbruch-Token.</param>
+    /// <param name="search">Substring in slug or label.</param>
+    /// <param name="facet">Only tags of this facet (e.g. only styles).</param>
+    /// <param name="unused">true = only tags with no usage at all (cleanup view).</param>
+    /// <param name="skip">Number of entries to skip (paging).</param>
+    /// <param name="take">Maximum number of hits (1..500).</param>
+    /// <param name="ct">Cancellation token.</param>
     [HttpGet]
     public async Task<IEnumerable<InterestTagResponse>> List(
         [FromQuery] string? search = null,
@@ -59,7 +59,7 @@ public class InterestTagsController(PuglingDbContext db) : ControllerBase
         return await Project(query.OrderBy(t => t.Slug).ThenBy(t => t.Id)).ToPagedListAsync(Response, skip, take, ct);
     }
 
-    /// <summary>Ein Schlagwort per Id.</summary>
+    /// <summary>A tag by id.</summary>
     [HttpGet("{id:int}")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<InterestTagResponse>> Get(int id, CancellationToken ct = default)
@@ -69,9 +69,9 @@ public class InterestTagsController(PuglingDbContext db) : ControllerBase
     }
 
     /// <summary>
-    /// Legt ein Schlagwort an. Fehlt der Slug, wird er aus dem Label abgeleitet. Existiert der Slug
-    /// bereits, kommt der bestehende Eintrag zurück (idempotent) – so kann ein Agent denselben
-    /// Katalog-Aufbau gefahrlos wiederholen.
+    /// Creates a tag. If the slug is missing, it is derived from the label. If the slug already
+    /// exists, the existing entry comes back (idempotent) – so an agent can safely repeat the same
+    /// catalog build.
     /// </summary>
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status201Created)]
@@ -103,8 +103,8 @@ public class InterestTagsController(PuglingDbContext db) : ControllerBase
     }
 
     /// <summary>
-    /// Ändert Label, Facette, Synonyme oder Farbe. Der <c>Slug</c> ist bewusst <b>unveränderlich</b> –
-    /// er ist die stabile Referenz, an der Bilder und Kind-Profile hängen.
+    /// Changes label, facet, synonyms, or color. The <c>Slug</c> is deliberately <b>immutable</b> –
+    /// it is the stable reference that images and child profiles hang off.
     /// </summary>
     [HttpPatch("{id:int}")]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -130,8 +130,8 @@ public class InterestTagsController(PuglingDbContext db) : ControllerBase
     }
 
     /// <summary>
-    /// Löscht ein Schlagwort samt seiner Verknüpfungen zu Bildern und Kindern (Cascade). Bewusst ohne
-    /// Verwendungs-Sperre: ein Tag trägt keine Inhalte, sein Verlust kostet nur Auswahl-Qualität.
+    /// Deletes a tag along with its links to images and children (cascade). Deliberately without a
+    /// usage lock: a tag carries no content, its loss only costs selection quality.
     /// </summary>
     [HttpDelete("{id:int}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
@@ -145,7 +145,7 @@ public class InterestTagsController(PuglingDbContext db) : ControllerBase
         return NoContent();
     }
 
-    /// <summary>Trimmt, verwirft Leereinträge und dedupliziert – Synonyme sind reine Suchhilfe.</summary>
+    /// <summary>Trims, discards empty entries, and deduplicates – synonyms are a pure search aid.</summary>
     private static List<string> Clean(List<string>? values) =>
         [.. (values ?? []).Select(s => s.Trim()).Where(s => s.Length > 0).Distinct(StringComparer.OrdinalIgnoreCase)];
 }

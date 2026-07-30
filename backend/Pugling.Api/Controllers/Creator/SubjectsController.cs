@@ -8,7 +8,7 @@ using Pugling.Api.Models;
 
 namespace Pugling.Api.Controllers.Creator;
 
-/// <summary>Schulfächer im gemeinsamen Lehrplan-Katalog.</summary>
+/// <summary>School subjects in the shared study plan catalog.</summary>
 [ApiController]
 [ApiVersion("1.0")]
 [Route(ApiRoutes.Creator + "/subjects")]
@@ -17,7 +17,7 @@ namespace Pugling.Api.Controllers.Creator;
 [Authorize(Roles = Roles.Creator)]
 public class SubjectsController(PuglingDbContext db) : ControllerBase
 {
-    /// <summary>Liste aller Fächer.</summary>
+    /// <summary>List of all subjects.</summary>
     [HttpGet]
     public async Task<IEnumerable<SubjectResponse>> List(CancellationToken ct = default) =>
         await db.Subjects
@@ -25,7 +25,7 @@ public class SubjectsController(PuglingDbContext db) : ControllerBase
             .Select(s => new SubjectResponse(s.Id, s.Name, s.CreatedAt, s.Chapters.Count))
             .ToListAsync(ct);
 
-    /// <summary>Ein einzelnes Fach.</summary>
+    /// <summary>A single subject.</summary>
     [HttpGet("{subjectId:int}")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<SubjectResponse>> Get(int subjectId, CancellationToken ct = default)
@@ -37,7 +37,7 @@ public class SubjectsController(PuglingDbContext db) : ControllerBase
         return subject is null ? NotFound() : subject;
     }
 
-    /// <summary>Erstellt ein Fach.</summary>
+    /// <summary>Creates a subject.</summary>
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -53,7 +53,7 @@ public class SubjectsController(PuglingDbContext db) : ControllerBase
         return CreatedAtAction(nameof(Get), new { subjectId = subject.Id }, response);
     }
 
-    /// <summary>Ändert ein Fach (partiell).</summary>
+    /// <summary>Changes a subject (partial).</summary>
     [HttpPatch("{subjectId:int}")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<SubjectResponse>> Update(int subjectId, UpdateSubjectDto dto, CancellationToken ct = default)
@@ -69,8 +69,8 @@ public class SubjectsController(PuglingDbContext db) : ControllerBase
     }
 
     /// <summary>
-    /// Löscht ein Fach samt aller Kapitel und Übungen. Nicht möglich, solange eine Übung darunter
-    /// in einem Lehrplan oder einer Klassenarbeit verwendet wird.
+    /// Deletes a subject along with all its chapters and exercises. Not possible while an exercise under it
+    /// is used in a study plan or a class test.
     /// </summary>
     [HttpDelete("{subjectId:int}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]

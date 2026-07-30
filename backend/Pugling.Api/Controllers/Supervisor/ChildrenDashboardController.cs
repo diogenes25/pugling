@@ -5,8 +5,8 @@ using Pugling.Api.Auth;
 namespace Pugling.Api.Controllers.Supervisor;
 
 /// <summary>
-/// Kindübergreifender Tagesüberblick für den Vater („wer hat heute/gestern was geschafft?"). Aggregiert
-/// den Tagesstand aller eigenen Kinder; die Berechnung liegt im <see cref="ChildrenDashboardService"/>.
+/// Cross-child daily overview for the father ("who accomplished what today/yesterday?"). Aggregates
+/// the daily status of all own children; the computation lives in <see cref="ChildrenDashboardService"/>.
 /// </summary>
 [ApiController]
 [ApiVersion("1.0")]
@@ -16,7 +16,7 @@ namespace Pugling.Api.Controllers.Supervisor;
 [Authorize(Roles = Roles.Supervisor)]
 public class ChildrenDashboardController(ChildrenDashboardService dashboard) : ControllerBase
 {
-    /// <summary>Tagesstand aller eigenen Kinder; <paramref name="date"/> optional (Standard: heute, UTC).</summary>
+    /// <summary>Daily status of all own children; <paramref name="date"/> optional (default: today, UTC).</summary>
     [HttpGet]
     public async Task<ActionResult<Dashboard>> Get([FromQuery] DateOnly? date, CancellationToken ct)
     {

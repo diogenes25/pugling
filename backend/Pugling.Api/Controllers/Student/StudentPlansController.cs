@@ -7,10 +7,10 @@ using Pugling.Api.Data;
 namespace Pugling.Api.Controllers.Student;
 
 /// <summary>
-/// Plan-Discovery für den angemeldeten Sohn: findet hier seinen einen aktuell spielbaren Lehrplan,
-/// ohne die planId raten zu müssen – der Einstieg vor Overview/Practice/Test. Namensraum-treuer
-/// Alias zur <see cref="StudyPlansController"/>-Liste (die den Student-Fall zwar mitliest, aber
-/// unter <c>supervisor/</c> liegt); gibt dieselbe <see cref="PlanResponse"/> zurück.
+/// Plan discovery for the logged-in child: finds its one currently playable study plan here,
+/// without having to guess the planId – the entry point before overview/practice/test. Namespace-faithful
+/// alias to the <see cref="StudyPlansController"/> list (which does read the student case too, but
+/// lives under <c>supervisor/</c>); returns the same <see cref="PlanResponse"/>.
 /// </summary>
 [ApiController]
 [ApiVersion("1.0")]
@@ -21,9 +21,9 @@ namespace Pugling.Api.Controllers.Student;
 public class StudentPlansController(PuglingDbContext db) : ControllerBase
 {
     /// <summary>
-    /// Die spielbaren Lehrpläne des angemeldeten Sohns (praktisch genau einer): aktiv <b>und</b> heute
-    /// in Laufzeit. Inaktive/abgelaufene bleiben bewusst verborgen (Anti-Cheat: kein leichter
-    /// Punkte-Plan zum Aussuchen). Aus dem Ergebnis nimmt der Client die <c>id</c> für die weiteren Schritte.
+    /// The playable study plans of the logged-in child (practically exactly one): active <b>and</b> today
+    /// within its run time. Inactive/expired ones stay deliberately hidden (anti-cheat: no easy
+    /// points plan to pick). From the result the client takes the <c>id</c> for the next steps.
     /// </summary>
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status200OK)]

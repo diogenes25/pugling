@@ -3,15 +3,15 @@ namespace Pugling.Api.Services.Shared;
 // GeneratedProblem lebt im Vertrags-Projekt (Pugling.Contracts.Shared).
 
 /// <summary>
-/// Erzeugt zufällige Rechenaufgaben aus den Regeln einer <see cref="ArithmeticDrillConfig"/>.
-/// Bewusst zustandslos: die Zufallsquelle wird übergeben, damit Aufrufe mit festem Seed
-/// reproduzierbar – und damit testbar – sind.
+/// Generates random arithmetic problems from the rules of an <see cref="ArithmeticDrillConfig"/>.
+/// Deliberately stateless: the random source is passed in so that calls with a fixed seed are
+/// reproducible – and therefore testable.
 /// </summary>
 public class ArithmeticProblemGenerator
 {
-    /// <summary>Erzeugt <see cref="ArithmeticDrillConfig.ProblemCount"/> Aufgaben nach den Regeln der Konfiguration.</summary>
-    /// <param name="config">Die geprüften Erzeugungsregeln.</param>
-    /// <param name="random">Zufallsquelle; für reproduzierbare Sätze mit festem Seed anlegen.</param>
+    /// <summary>Generates <see cref="ArithmeticDrillConfig.ProblemCount"/> problems according to the configuration's rules.</summary>
+    /// <param name="config">The validated generation rules.</param>
+    /// <param name="random">Random source; create with a fixed seed for reproducible sets.</param>
     public IReadOnlyList<GeneratedProblem> Generate(ArithmeticDrillConfig config, Random random)
     {
         ArgumentNullException.ThrowIfNull(config);
@@ -40,7 +40,7 @@ public class ArithmeticProblemGenerator
             _ => throw new ArgumentOutOfRangeException(nameof(operation), operation, "Unbekannte Rechenart."),
         };
 
-    /// <summary>Aufgabe mit zwei Operanden im konfigurierten Bereich und der gegebenen Verknüpfung.</summary>
+    /// <summary>Problem with two operands within the configured range and the given operator.</summary>
     private static GeneratedProblem Binary(ArithmeticDrillConfig c, Random r, string symbol, Func<int, int, int> op)
     {
         int a = Operand(c, r), b = Operand(c, r);
@@ -71,6 +71,6 @@ public class ArithmeticProblemGenerator
         return new GeneratedProblem($"{dividend} ÷ {divisor}", Math.Round((decimal)dividend / divisor, 2));
     }
 
-    /// <summary>Ein zufälliger Operand im Bereich [MinOperand, MaxOperand] (beide inklusive).</summary>
+    /// <summary>A random operand within the range [MinOperand, MaxOperand] (both inclusive).</summary>
     private static int Operand(ArithmeticDrillConfig c, Random r) => r.Next(c.MinOperand, c.MaxOperand + 1);
 }

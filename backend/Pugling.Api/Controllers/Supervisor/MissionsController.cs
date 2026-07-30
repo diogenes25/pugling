@@ -9,9 +9,9 @@ using Pugling.Api.Models;
 namespace Pugling.Api.Controllers.Supervisor;
 
 /// <summary>
-/// Missionen eines Kindes verwalten (nur Vater, nur eigene Kinder): zeitgebundene Ziele mit Belohnung.
-/// Eigentum sichert der <see cref="ChildOwnershipFilter"/>; der Fortschritt/Status wird beim Kind über
-/// <c>GET api/v1/student/me/missions</c> gelesen.
+/// Manage missions of a child (father only, own children only): time-bound goals with a reward.
+/// Ownership is secured by the <see cref="ChildOwnershipFilter"/>; progress/status is read for the child via
+/// <c>GET api/v1/student/me/missions</c>.
 /// </summary>
 [ApiController]
 [ApiVersion("1.0")]
@@ -24,7 +24,7 @@ public class MissionsController(PuglingDbContext db) : ControllerBase
 {
     static MissionDto Map(Mission m) => new(m.Id, m.Title, m.Metric, m.Target, m.Period, m.RewardPoints, m.Active);
 
-    /// <summary>Alle Missionen des Kindes (Definitionen zur Verwaltung).</summary>
+    /// <summary>All missions of the child (definitions for management).</summary>
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<IReadOnlyList<MissionDto>>> List(int childId, CancellationToken ct = default) =>
@@ -32,7 +32,7 @@ public class MissionsController(PuglingDbContext db) : ControllerBase
             .OrderBy(m => m.Period).ThenBy(m => m.Id)
             .Select(m => Map(m)).ToListAsync(ct);
 
-    /// <summary>Legt eine Mission für das Kind an.</summary>
+    /// <summary>Creates a mission for the child.</summary>
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -56,7 +56,7 @@ public class MissionsController(PuglingDbContext db) : ControllerBase
         return CreatedAtAction(nameof(List), new { childId }, Map(mission));
     }
 
-    /// <summary>Ändert eine Mission (partiell).</summary>
+    /// <summary>Changes a mission (partial).</summary>
     [HttpPatch("{missionId:int}")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<MissionDto>> Update(int childId, int missionId, UpdateMissionDto dto, CancellationToken ct = default)
@@ -72,7 +72,7 @@ public class MissionsController(PuglingDbContext db) : ControllerBase
         return Map(mission);
     }
 
-    /// <summary>Löscht eine Mission (samt Vergabe-Log per Cascade).</summary>
+    /// <summary>Deletes a mission (together with the award log via cascade).</summary>
     [HttpDelete("{missionId:int}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -87,9 +87,9 @@ public class MissionsController(PuglingDbContext db) : ControllerBase
 }
 
 /// <summary>
-/// Auszeichnungen (Badges) eines Kindes verwalten (nur Vater, nur eigene Kinder): permanente
-/// Meilensteine. Eigentum sichert der <see cref="ChildOwnershipFilter"/>; der Status wird beim Kind
-/// über <c>GET api/v1/student/me/achievements</c> gelesen.
+/// Manage awards (badges) of a child (father only, own children only): permanent
+/// milestones. Ownership is secured by the <see cref="ChildOwnershipFilter"/>; the status is read for the child
+/// via <c>GET api/v1/student/me/achievements</c>.
 /// </summary>
 [ApiController]
 [ApiVersion("1.0")]
@@ -103,7 +103,7 @@ public class AchievementsController(PuglingDbContext db) : ControllerBase
     static AchievementDto Map(Achievement a) =>
         new(a.Id, a.Title, a.Icon, a.Metric, a.Threshold, a.RewardPoints, a.Active);
 
-    /// <summary>Alle Auszeichnungen des Kindes (Definitionen zur Verwaltung).</summary>
+    /// <summary>All awards of the child (definitions for management).</summary>
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<IReadOnlyList<AchievementDto>>> List(int childId, CancellationToken ct = default) =>
@@ -111,7 +111,7 @@ public class AchievementsController(PuglingDbContext db) : ControllerBase
             .OrderBy(a => a.Metric).ThenBy(a => a.Threshold)
             .Select(a => Map(a)).ToListAsync(ct);
 
-    /// <summary>Legt eine Auszeichnung für das Kind an.</summary>
+    /// <summary>Creates an award for the child.</summary>
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -135,7 +135,7 @@ public class AchievementsController(PuglingDbContext db) : ControllerBase
         return CreatedAtAction(nameof(List), new { childId }, Map(achievement));
     }
 
-    /// <summary>Ändert eine Auszeichnung (partiell).</summary>
+    /// <summary>Changes an award (partial).</summary>
     [HttpPatch("{achievementId:int}")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<AchievementDto>> Update(int childId, int achievementId, UpdateAchievementDto dto, CancellationToken ct = default)
@@ -152,7 +152,7 @@ public class AchievementsController(PuglingDbContext db) : ControllerBase
         return Map(achievement);
     }
 
-    /// <summary>Löscht eine Auszeichnung (samt Vergabe-Log per Cascade).</summary>
+    /// <summary>Deletes an award (together with the award log via cascade).</summary>
     [HttpDelete("{achievementId:int}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

@@ -3,14 +3,14 @@ using Serilog.Context;
 namespace Pugling.Api.Auth;
 
 /// <summary>
-/// Reichert jeden Request-Log-Kontext um die Identität (<c>Fid</c>/<c>Cid</c>/<c>Role</c>) und die
-/// <c>TraceId</c> an. Damit trägt <em>jede</em> Log-Zeile innerhalb eines Requests dieselbe TraceId,
-/// die auch im <c>problem+json</c>-Fehler an den Client geht – so lässt sich eine gemeldete Referenz
-/// (z. B. aus dem Frontend) direkt auf die zugehörigen Server-Logs zurückführen.
+/// Enriches every request's log context with the identity (<c>Fid</c>/<c>Cid</c>/<c>Role</c>) and the
+/// <c>TraceId</c>. That way <em>every</em> log line within a request carries the same TraceId
+/// that also goes to the client in the <c>problem+json</c> error – so a reported reference
+/// (e.g. from the frontend) can be traced directly to the corresponding server logs.
 /// </summary>
 public sealed class RequestLogContextMiddleware(RequestDelegate next)
 {
-    /// <summary>Reichert den Log-Kontext des Requests an und ruft dann die nächste Middleware auf.</summary>
+    /// <summary>Enriches the request's log context and then calls the next middleware.</summary>
     public async Task InvokeAsync(HttpContext context)
     {
         // Dieselbe TraceId, die AddProblemDetails in die Fehlerantwort schreibt.

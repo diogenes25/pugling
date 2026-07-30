@@ -4,54 +4,54 @@ using Pugling.Api.Models;
 
 namespace Pugling.Api.Services.Shared;
 
-/// <summary>Das für ein Kind gewählte Bild eines Trägers – fertig zum Ausliefern.</summary>
-/// <param name="MediaAssetId">Das gewählte Asset (für „anderes Bild" und Diagnose).</param>
-/// <param name="Url">URL der Variante im angefragten Zweck (oder der nächstbesten).</param>
-/// <param name="Alt">Beschreibung des Assets – Alt-Text für die Barrierefreiheit.</param>
+/// <summary>The image chosen for a child for a given carrier – ready to serve.</summary>
+/// <param name="MediaAssetId">The chosen asset (for "reshuffle" and diagnostics).</param>
+/// <param name="Url">URL of the variant for the requested purpose (or the next best one).</param>
+/// <param name="Alt">Description of the asset – alt text for accessibility.</param>
 public record SelectedMedia(int MediaAssetId, string Url, string Alt);
 
 /// <summary>
-/// Wählt für <b>ein bestimmtes Kind</b> aus den Darstellungen eines Motivs die passende aus – die Stelle,
-/// an der Medien-Store und Kind-Profil zusammenkommen und aus „viele Bilder" ein Bild wird.
+/// Selects, for <b>a specific child</b>, the matching one from a motif's renditions – the place where
+/// the media store and the child's profile meet and "many images" become one image.
 /// <para>
-/// Der Ablauf ist bewusst in dieser Reihenfolge:
+/// The flow is deliberately in this order:
 /// <list type="number">
-/// <item><b>Kandidaten</b> – Item-Zuordnungen schlagen Store-Zuordnungen (Genauigkeits-Kaskade). Hat das
-/// Item eigene Bilder, gilt <i>nur</i> diese Menge.</item>
-/// <item><b>Hart filtern</b> – Eignung über der Freigabe des Kindes, Abneigung (negativ gewichteter Tag)
-/// oder bereits abgelehnt: raus. Eine Abneigung rankt nicht schlechter, sie schließt aus.</item>
-/// <item><b>Eingefrorene Wahl</b> – gibt es eine gültige, nicht abgelehnte Wahl, gewinnt sie <i>immer</i>.
-/// Bildkonstanz ist beim Vokabellernen der Merkeffekt; neu hinzugefügte Bilder dürfen ihn nicht kippen.</item>
-/// <item><b>Bewerten</b> – Summe der Interessens-Gewichte über die Tag-Schnittmenge; der redaktionelle
-/// Rang der Zuordnung bricht Gleichstände, danach ein <b>deterministischer</b> Hash.</item>
-/// <item><b>Einfrieren</b> – damit Schritt 3 beim nächsten Mal greift.</item>
+/// <item><b>Candidates</b> – item links beat store links (specificity cascade). If the item has its own
+/// images, <i>only</i> that set counts.</item>
+/// <item><b>Hard filter</b> – eligibility against the child's content rating, dislike (negatively
+/// weighted tag), or already rejected: out. A dislike does not rank lower, it excludes.</item>
+/// <item><b>Frozen pick</b> – if there is a valid, not-rejected pick, it <i>always</i> wins. Image
+/// constancy is the retention effect in vocabulary learning; newly added images must not upset it.</item>
+/// <item><b>Score</b> – sum of interest weights over the tag intersection; the link's editorial rank
+/// breaks ties, then a <b>deterministic</b> hash.</item>
+/// <item><b>Freeze</b> – so step 3 applies next time.</item>
 /// </list>
-/// Kein Treffer heißt <b>kein Bild</b> – nie ein Notnagel. Eine unbebilderte Karte ist besser als eine
-/// irreführend bebilderte.
+/// No match means <b>no image</b> – never a stopgap. An unillustrated card is better than a misleadingly
+/// illustrated one.
 /// </para>
 /// </summary>
 public class MediaSelector(PuglingDbContext db, ILogger<MediaSelector> logger)
 {
-    /// <summary>Themen-Tags wiegen doppelt so schwer wie Stil-Tags: <i>was</i> zu sehen ist, bindet stärker als <i>wie</i>.</summary>
+    /// <summary>Theme tags weigh twice as much as style tags: <i>what</i> is shown binds more strongly than <i>how</i>.</summary>
     private const int ThemeFactor = 2;
     private const int StyleFactor = 1;
 
     /// <summary>
-    /// Fallback-Reihenfolge, wenn der gefragte Zweck keine Variante hat: lieber ein zu großes Bild als
-    /// gar keines. Der Client skaliert; ein fehlendes Bild kann er nicht ersetzen.
+    /// Fallback order when the requested purpose has no variant: better an oversized image than none
+    /// at all. The client can scale it down; it cannot replace a missing image.
     /// </summary>
     private static readonly MediaPurpose[] PurposeFallback =
         [MediaPurpose.Card, MediaPurpose.Full, MediaPurpose.Thumb, MediaPurpose.Hero];
 
     /// <summary>
-    /// Wählt für mehrere Träger auf einmal (eine Übung = viele Items). Bewusst als Batch: die
-    /// Alternative wäre ein N+1 über Zuordnungen, Wahl und Interessen pro Karte.
+    /// Selects for multiple carriers at once (one exercise = many items). Deliberately a batch: the
+    /// alternative would be an N+1 over links, pick, and interests per card.
     /// </summary>
-    /// <param name="childId">Das Kind, für das gewählt wird.</param>
-    /// <param name="carriers">Je Item die stabile Item-Id und die dahinterliegende Store-Vokabel.</param>
-    /// <param name="purpose">Gewünschter Auslieferungs-Slot (Übungskarte = <see cref="MediaPurpose.Card"/>).</param>
-    /// <param name="ct">Abbruch-Token.</param>
-    /// <returns>Je Item-Id das gewählte Bild; Items ohne Treffer fehlen in der Map.</returns>
+    /// <param name="childId">The child for whom the selection is made.</param>
+    /// <param name="carriers">For each item, the stable item id and the store vocabulary entry behind it.</param>
+    /// <param name="purpose">Desired delivery slot (exercise card = <see cref="MediaPurpose.Card"/>).</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>The chosen image per item id; items with no match are missing from the map.</returns>
     public async Task<IReadOnlyDictionary<int, SelectedMedia>> SelectForItemsAsync(
         int childId, IReadOnlyList<(int ItemId, int VocabularyId)> carriers,
         MediaPurpose purpose = MediaPurpose.Card, CancellationToken ct = default)
@@ -92,10 +92,10 @@ public class MediaSelector(PuglingDbContext db, ILogger<MediaSelector> logger)
     }
 
     /// <summary>
-    /// „Anderes Bild": lehnt die aktuelle Wahl ab und zieht neu. Gibt es keine Alternative, bleibt der
-    /// Bestand <b>unverändert</b> – lieber dasselbe Bild behalten als das Kind bildlos zurücklassen.
+    /// "Reshuffle": rejects the current pick and draws a new one. If there is no alternative, the
+    /// existing pick stays <b>unchanged</b> – better to keep the same image than leave the child without one.
     /// </summary>
-    /// <returns>Das neue Bild, oder <c>null</c>, wenn es keine Alternative gab.</returns>
+    /// <returns>The new image, or <c>null</c> if there was no alternative.</returns>
     public async Task<SelectedMedia?> ReshuffleAsync(int childId, int? vocabularyId, int? exerciseItemId,
         MediaPurpose purpose = MediaPurpose.Card, CancellationToken ct = default)
     {
@@ -143,19 +143,18 @@ public class MediaSelector(PuglingDbContext db, ILogger<MediaSelector> logger)
     }
 
     /// <summary>
-    /// Speichert Einfrierung und Rückzug – und verschluckt <b>genau</b> den nebenläufigen Konflikt.
+    /// Saves the freeze and the withdrawal – and swallows <b>exactly</b> the concurrent conflict.
     /// <para>
-    /// Zwei gleichzeitige Abrufe für dasselbe Kind (React-StrictMode-Doppelaufruf, Doppeltipp auf
-    /// „neu laden", zwei offene Tabs) frieren denselben Träger ein bzw. ziehen dieselbe veraltete Wahl
-    /// zurück. Der Verlierer läuft in den gefilterten Unique-Index oder löscht eine schon gelöschte Zeile.
-    /// Beides ist <b>harmlos</b>, und zwar nicht zufällig: die Auswahl ist deterministisch (gleiche
-    /// Eingaben, stabiler Tiebreak), der Gewinner hat also genau dieselbe Zeile geschrieben. Der Konflikt
-    /// heißt hier immer „schon erledigt". Das Einfrieren ist ein Cache-Auffüllen, das Ergebnis steht
-    /// bereits fest – ein 500 wäre die einzige Wirkung eines durchgereichten Fehlers.
+    /// Two simultaneous requests for the same child (React StrictMode double-invoke, a double-tap on
+    /// "reload", two open tabs) freeze the same carrier or withdraw the same stale pick. The loser hits
+    /// the filtered unique index or deletes an already-deleted row. Both are <b>harmless</b>, and not
+    /// by accident: the selection is deterministic (same inputs, stable tiebreak), so the winner wrote
+    /// exactly the same row. The conflict here always means "already done". Freezing is a cache fill,
+    /// the result is already fixed – a 500 would be the only effect of a propagated error.
     /// </para>
-    /// Die betroffenen Einträge werden abgehängt, damit ein späteres <c>SaveChanges</c> desselben
-    /// Requests (z. B. das Buchen einer Wiederholung) nicht erneut darüber stolpert; den Rückzug
-    /// wiederholt der nächste Abruf.
+    /// The affected entries are detached so that a later <c>SaveChanges</c> of the same request
+    /// (e.g. recording a repetition) does not stumble over it again; the next request repeats the
+    /// withdrawal.
     /// </summary>
     private async Task SaveFreezeAsync(CancellationToken ct)
     {
@@ -172,10 +171,10 @@ public class MediaSelector(PuglingDbContext db, ILogger<MediaSelector> logger)
     }
 
     /// <summary>
-    /// „Anderes Bild" aus Sicht einer <b>Übungskarte</b>. Der Client kann das nicht selbst adressieren:
-    /// ob die Wahl am Item (Übersteuerung) oder an der Vokabel hängt, ergibt sich erst aus der
-    /// Genauigkeits-Kaskade – und die kennt nur der Server. Deshalb nimmt diese Überladung beide Ids und
-    /// bestimmt den Träger genauso wie die Ausspielung.
+    /// "Reshuffle" from the perspective of an <b>exercise card</b>. The client cannot address this
+    /// itself: whether the pick hangs off the item (override) or the vocabulary entry only follows from
+    /// the specificity cascade – and only the server knows that. That is why this overload takes both ids
+    /// and determines the carrier the same way delivery does.
     /// </summary>
     public async Task<SelectedMedia?> ReshuffleForItemAsync(int childId, int itemId, int vocabularyId,
         MediaPurpose purpose = MediaPurpose.Card, CancellationToken ct = default)
@@ -190,7 +189,7 @@ public class MediaSelector(PuglingDbContext db, ILogger<MediaSelector> logger)
 
     private enum Carrier { Vocabulary, Item }
 
-    /// <summary>Wählt aus den Kandidaten eines Trägers; <paramref name="isNew"/> zeigt an, ob eingefroren werden muss.</summary>
+    /// <summary>Chooses from a carrier's candidates; <paramref name="isNew"/> indicates whether a freeze is needed.</summary>
     private static (SelectedMedia Media, MediaLink Link)? Choose(SelectionContext ctx, IReadOnlyList<MediaLink> links,
         Carrier carrier, int carrierId, MediaPurpose purpose, out bool isNew)
     {
@@ -224,9 +223,9 @@ public class MediaSelector(PuglingDbContext db, ILogger<MediaSelector> logger)
     }
 
     /// <summary>
-    /// Harte Ausschlüsse – <b>vor</b> jeder Bewertung. Die Eignung ist die tragende Achse der
-    /// Zielgruppen-Trennung, eine Abneigung darf nicht durch starke Interessen überstimmt werden, und ein
-    /// Asset ohne ausspielbare Datei nützt niemandem.
+    /// Hard exclusions – <b>before</b> any scoring. Eligibility is the load-bearing axis of audience
+    /// separation, a dislike must not be overridden by strong interests, and an asset without a
+    /// deliverable file is of no use to anyone.
     /// </summary>
     private static bool Eligible(SelectionContext ctx, MediaLink link, MediaPurpose purpose)
     {
@@ -237,7 +236,7 @@ public class MediaSelector(PuglingDbContext db, ILogger<MediaSelector> logger)
         return Variant(asset, purpose) is not null;
     }
 
-    /// <summary>Summe der Interessens-Gewichte über die Tag-Schnittmenge (Thema zählt doppelt).</summary>
+    /// <summary>Sum of interest weights over the tag intersection (theme counts double).</summary>
     private static int Score(SelectionContext ctx, MediaLink link) =>
         Tags(link.MediaAsset!).Sum(t => ctx.Weights.GetValueOrDefault(t.InterestTagId)
             * (t.InterestTag!.Facet == InterestFacet.Style ? StyleFactor : ThemeFactor));
@@ -251,7 +250,7 @@ public class MediaSelector(PuglingDbContext db, ILogger<MediaSelector> logger)
         return new SelectedMedia(asset.Id, Variant(asset, purpose)!.Url, asset.Description);
     }
 
-    /// <summary>Variante im gefragten Zweck, sonst die nächstbeste; Format-Tiebreak für Reproduzierbarkeit.</summary>
+    /// <summary>Variant for the requested purpose, otherwise the next best one; format tiebreak for reproducibility.</summary>
     private static MediaVariant? Variant(MediaAsset asset, MediaPurpose purpose)
     {
         if (asset.Variants.Count == 0) return null;
@@ -263,9 +262,9 @@ public class MediaSelector(PuglingDbContext db, ILogger<MediaSelector> logger)
     }
 
     /// <summary>
-    /// Deterministischer Tiebreak (FNV-1a). Bewusst <b>kein</b> <c>Random</c> und kein
-    /// <c>string.GetHashCode</c>: Letzterer ist pro Prozess randomisiert, ein Neustart würde die Wahl
-    /// eines noch nicht eingefrorenen Trägers verschieben.
+    /// Deterministic tiebreak (FNV-1a). Deliberately <b>no</b> <c>Random</c> and no
+    /// <c>string.GetHashCode</c>: the latter is randomized per process, a restart would shift the pick
+    /// for a carrier not yet frozen.
     /// </summary>
     private static uint StableTiebreak(int childId, int carrierId, int assetId)
     {
@@ -292,23 +291,23 @@ public class MediaSelector(PuglingDbContext db, ILogger<MediaSelector> logger)
 
     // ---- Kontext-Ladung (ein Satz Queries statt N+1) --------------------------------------------------
 
-    /// <summary>Alles, was die Auswahl braucht – in einem Rutsch geladen.</summary>
+    /// <summary>Everything the selection needs – loaded in a single pass.</summary>
     private sealed class SelectionContext
     {
         public required int ChildId { get; init; }
         public required ContentRating AllowedRating { get; init; }
-        /// <summary>Interessens-Gewicht je Tag-Id (negativ = Abneigung).</summary>
+        /// <summary>Interest weight per tag id (negative = dislike).</summary>
         public required Dictionary<int, int> Weights { get; init; }
         public required Dictionary<int, List<MediaLink>> LinksByVocabulary { get; init; }
         public required Dictionary<int, List<MediaLink>> LinksByItem { get; init; }
         public required List<ChildMediaPick> Picks { get; init; }
-        /// <summary>Abgelehnte Kombinationen (Träger + Asset) – schnell nachschlagbar.</summary>
+        /// <summary>Rejected combinations (carrier + asset) – quick to look up.</summary>
         public required HashSet<(int? VocabularyId, int? ItemId, int AssetId)> RejectedAssets { get; init; }
 
         /// <summary>
-        /// Zurückgezogene Einfrierungen – vom Aufrufer zu löschen. Bewusst gesammelt statt sofort
-        /// entfernt: das <see cref="PuglingDbContext"/> kennt diese Klasse nicht, und die Löschung
-        /// gehört in dasselbe <c>SaveChanges</c> wie die Neuwahl, die sie ersetzt.
+        /// Withdrawn freezes – to be deleted by the caller. Deliberately collected instead of removed
+        /// immediately: the <see cref="PuglingDbContext"/> does not know this class, and the deletion
+        /// belongs in the same <c>SaveChanges</c> as the new pick that replaces it.
         /// </summary>
         public List<ChildMediaPick> Superseded { get; } = [];
 
@@ -318,7 +317,7 @@ public class MediaSelector(PuglingDbContext db, ILogger<MediaSelector> logger)
         public ChildMediaPick? ActivePick(Carrier carrier, int carrierId) =>
             ActivePicks(carrier, carrierId).FirstOrDefault();
 
-        /// <summary>Zieht eine Einfrierung zurück – sofort auch im Kontext, damit die Neuwahl sie nicht mehr sieht.</summary>
+        /// <summary>Withdraws a freeze – immediately in the context too, so the new pick no longer sees it.</summary>
         public void Supersede(ChildMediaPick pick)
         {
             Picks.Remove(pick);

@@ -6,10 +6,10 @@ using Pugling.Api.Models;
 namespace Pugling.Api.Services.Creator;
 
 /// <summary>
-/// Findet zu einem Kind die fachkundigen Creator-Profile. Die Auswahl ist bewusst <b>deterministisch</b>
-/// (harte Ausschlüsse, dann Punkte, Gleichstand über die Id – kein <c>Random</c>, kein
-/// <c>string.GetHashCode</c>, vgl. <c>MediaSelector</c>): derselbe Datenstand muss denselben Lehrer
-/// liefern, sonst wäre die Herkunft einer generierten Übung nicht nachvollziehbar.
+/// Finds the subject-matter-competent creator profiles for a child. The selection is deliberately
+/// <b>deterministic</b> (hard exclusions, then score, ties broken by id – no <c>Random</c>, no
+/// <c>string.GetHashCode</c>, cf. <c>MediaSelector</c>): the same data state must produce the same
+/// teacher, otherwise the origin of a generated exercise would not be traceable.
 /// </summary>
 public class CreatorProfileService(PuglingDbContext db)
 {
@@ -20,19 +20,19 @@ public class CreatorProfileService(PuglingDbContext db)
     private const int WeightGrade = 2;
     private const int WeightSchoolType = 1;
 
-    /// <summary>Stabile Begründungs-Codes (kein Fließtext – die Oberfläche formuliert, siehe i18n-Regel).</summary>
+    /// <summary>Stable reason codes (no free text – the UI does the wording, see i18n rule).</summary>
     public const string ReasonSeries = "series_match";
-    /// <summary>Das Profil ist auf dasselbe Fach festgelegt wie die Anfrage.</summary>
+    /// <summary>The profile is fixed to the same subject as the request.</summary>
     public const string ReasonSubject = "subject_match";
-    /// <summary>Die Klassenstufe des Kindes liegt im Klassenstufen-Bereich des Profils.</summary>
+    /// <summary>The child's grade lies within the profile's grade range.</summary>
     public const string ReasonGrade = "grade_in_range";
-    /// <summary>Die Schulart des Profils passt zur Schulart des Kindes.</summary>
+    /// <summary>The profile's school type matches the child's school type.</summary>
     public const string ReasonSchoolType = "school_type_match";
 
     /// <summary>
-    /// Die passenden Profile, bestes zuerst. <paramref name="subjectId"/> verengt hart auf ein Fach
-    /// (fachfremde Profile fallen heraus, fachneutrale bleiben); <paramref name="fatherId"/> dient nur
-    /// der <c>IsOwn</c>-Anzeige.
+    /// The matching profiles, best first. <paramref name="subjectId"/> hard-restricts to one subject
+    /// (profiles for other subjects fall out, subject-neutral ones remain); <paramref name="fatherId"/>
+    /// only serves the <c>IsOwn</c> display.
     /// </summary>
     public async Task<IReadOnlyList<CreatorProfileMatch>> MatchAsync(int childId, int? subjectId,
         int? fatherId, CancellationToken ct = default)
@@ -98,8 +98,8 @@ public class CreatorProfileService(PuglingDbContext db)
     }
 
     /// <summary>
-    /// Harte Ausschlüsse: ein Profil, das die Klassenstufe nicht unterrichtet oder für eine andere
-    /// Schulart gedacht ist, ist kein schlechterer Treffer – es ist keiner.
+    /// Hard exclusions: a profile that doesn't teach the grade or is meant for a different
+    /// school type is not a worse match – it is not a match at all.
     /// </summary>
     private static bool Fits(CreatorProfile profile, int? grade, SchoolTypes schoolType)
     {
@@ -110,7 +110,7 @@ public class CreatorProfileService(PuglingDbContext db)
         return true;
     }
 
-    /// <summary>Die eine Abbildung Entität → Vertrag; auch der Controller nutzt sie.</summary>
+    /// <summary>The single entity → contract mapping; the controller uses it too.</summary>
     public static CreatorProfileResponse Map(CreatorProfile p, int? fatherId) =>
         new(p.Id, p.Name, p.OwnerAdultId, ClaimsPrincipalExtensions.IsOwnedBy(p.OwnerAdultId, fatherId),
             p.SubjectName, p.SubjectId, p.SchoolTypes, p.GradeMin, p.GradeMax,

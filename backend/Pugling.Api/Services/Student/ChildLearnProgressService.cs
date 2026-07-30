@@ -6,20 +6,20 @@ using Pugling.Api.Models;
 namespace Pugling.Api.Services.Student;
 
 /// <summary>
-/// Kind-zentrische Drill-down-Sicht auf den Vokabel-Lernstand entlang der Katalog-Hierarchie
-/// (Fach → Kapitel → Übung → Item). Ergänzt die flache <see cref="Controllers.Student.ChildVocabularyProgressController"/>-Sicht
-/// um aggregierte Roll-ups je Ebene. Angezeigt wird die <b>relevante Menge</b>: alles, was dem Kind über einen
-/// <see cref="StudyPlan"/> zugewiesen ist (auch mit 0 % Fortschritt, damit die Abdeckung sichtbar wird)
-/// <b>plus</b> alles, wozu bereits Lernstand existiert (<see cref="ItemProgress"/>) – so verschwindet ein einmal
-/// erarbeiteter Fortschritt nicht, wenn die Übung später abgehängt oder ihr Plan deaktiviert wird. Das Flag
-/// <c>Active</c> unterscheidet „aktuell über einen aktiven Plan zugewiesen" von „nur noch historisch / inaktiv".
-/// Nur Vokabelübungen sind item-getrackt (stabile <see cref="ExerciseItem.Id"/>), daher ist die Sicht bewusst
-/// vokabel-skopiert. Der Fortschritt wird nicht neu berechnet, sondern aus <see cref="ItemProgress"/> gelesen
-/// (fortgeschrieben vom <see cref="ItemProgressService"/> an den Bewertungspunkten).
+/// Child-centric drill-down view of vocabulary learning progress along the catalog hierarchy
+/// (subject → chapter → exercise → item). Complements the flat <see cref="Controllers.Student.ChildVocabularyProgressController"/> view
+/// with aggregated roll-ups per level. Displays the <b>relevant set</b>: everything assigned to the child via a
+/// <see cref="StudyPlan"/> (even with 0% progress, so coverage is visible)
+/// <b>plus</b> everything for which progress already exists (<see cref="ItemProgress"/>) – so progress once
+/// earned doesn't disappear when the exercise is later dropped or its plan deactivated. The
+/// <c>Active</c> flag distinguishes "currently assigned via an active plan" from "only historical / inactive".
+/// Only vocabulary exercises are item-tracked (stable <see cref="ExerciseItem.Id"/>), so the view is deliberately
+/// vocabulary-scoped. The progress is not recalculated but read from <see cref="ItemProgress"/>
+/// (updated by the <see cref="ItemProgressService"/> at the grading points).
 /// </summary>
 public class ChildLearnProgressService(PuglingDbContext db, ExerciseTypeRegistry registry)
 {
-    /// <summary>Ab welcher Beherrschung (Prozent) ein Item als „schwach" gilt – geteilt mit der flachen Sicht.</summary>
+    /// <summary>The mastery threshold (percent) below which an item counts as "weak" – shared with the flat view.</summary>
     private const int WeakBelowPercent = ItemProgress.WeakBelowPercent;
 
     // MasteryRollup/Subject-/Chapter-/ExerciseProgressResponse/ItemProgressResponse leben im
@@ -129,7 +129,7 @@ public class ChildLearnProgressService(PuglingDbContext db, ExerciseTypeRegistry
         return acc;
     }
 
-    /// <summary>Leerer Roll-up (Scope ohne relevante Übungen / ohne Fortschritt).</summary>
+    /// <summary>Empty roll-up (scope without relevant exercises / without progress).</summary>
     public static readonly MasteryRollup EmptyRollup = new(0, 0, 0, 0, 0, 0, 0, 0, null);
 
     // Ø-Beherrschung über die EINGEFÜHRTEN Items (nicht über alle), Trefferquote über gesehene Antworten.
@@ -148,9 +148,9 @@ public class ChildLearnProgressService(PuglingDbContext db, ExerciseTypeRegistry
     private static bool Matches(string text, string term) => text.Contains(term, StringComparison.OrdinalIgnoreCase);
 
     /// <summary>
-    /// Alle relevanten Fächer des Kindes mit aggregiertem Vokabel-Fortschritt. Optional gefiltert nach
-    /// <paramref name="search"/> (Fachname), <paramref name="active"/> (nur (in)aktive) und sortiert
-    /// (<c>name</c> [Standard], <c>mastery</c>, <c>coverage</c>, <c>weak</c>, <c>activity</c>).
+    /// All relevant subjects of the child with aggregated vocabulary progress. Optionally filtered by
+    /// <paramref name="search"/> (subject name), <paramref name="active"/> (only (in)active) and sorted
+    /// (<c>name</c> [default], <c>mastery</c>, <c>coverage</c>, <c>weak</c>, <c>activity</c>).
     /// </summary>
     public async Task<List<SubjectProgressResponse>> SubjectsAsync(int childId, string? search,
         (string? Key, bool Desc) sort, bool? active, CancellationToken ct = default)
@@ -186,7 +186,7 @@ public class ChildLearnProgressService(PuglingDbContext db, ExerciseTypeRegistry
             _ => rows.OrderBy(r => r.Name).ThenBy(r => r.SubjectId),
         };
 
-    /// <summary>Ein einzelnes relevantes Fach; <c>null</c>, wenn dem Kind darin nichts zugewiesen ist und kein Fortschritt existiert.</summary>
+    /// <summary>A single relevant subject; <c>null</c> if nothing is assigned to the child in it and no progress exists.</summary>
     public async Task<SubjectProgressResponse?> SubjectAsync(int childId, int subjectId, CancellationToken ct = default)
     {
         var relevant = (await LoadRelevantAsync(childId, ct)).Where(r => r.SubjectId == subjectId).ToList();
@@ -200,8 +200,8 @@ public class ChildLearnProgressService(PuglingDbContext db, ExerciseTypeRegistry
     }
 
     /// <summary>
-    /// Kapitel eines Fachs mit Fortschritt; <c>null</c>, wenn das Fach nicht relevant ist. Filter/Sortierung wie
-    /// bei den Fächern (Sort-Keys zusätzlich <c>order</c> [Standard, Kapitelreihenfolge]).
+    /// Chapters of a subject with progress; <c>null</c> if the subject is not relevant. Filter/sorting as
+    /// for subjects (sort keys additionally <c>order</c> [default, chapter order]).
     /// </summary>
     public async Task<List<ChapterProgressResponse>?> ChaptersAsync(int childId, int subjectId, string? search,
         (string? Key, bool Desc) sort, bool? active, CancellationToken ct = default)
@@ -233,8 +233,8 @@ public class ChildLearnProgressService(PuglingDbContext db, ExerciseTypeRegistry
         };
 
     /// <summary>
-    /// Relevante Vokabelübungen eines Kapitels mit Fortschritt je Übung; <c>null</c>, wenn das Kapitel nicht relevant ist.
-    /// Filter/Sortierung wie bei Kapiteln (Sort-Keys zusätzlich <c>title</c>, <c>active</c>; Standard <c>order</c>).
+    /// Relevant vocabulary exercises of a chapter with progress per exercise; <c>null</c> if the chapter is not relevant.
+    /// Filter/sorting as for chapters (sort keys additionally <c>title</c>, <c>active</c>; default <c>order</c>).
     /// </summary>
     public async Task<List<ExerciseProgressResponse>?> ExercisesAsync(int childId, int subjectId, int chapterId, string? search,
         (string? Key, bool Desc) sort, bool? active, CancellationToken ct = default)
@@ -267,15 +267,15 @@ public class ChildLearnProgressService(PuglingDbContext db, ExerciseTypeRegistry
             _ => rows.OrderBy(r => r.OrderIndex).ThenBy(r => r.ExerciseId),
         };
 
-    /// <summary>Prüft, ob diese Vokabelübung unter genau diesem Fach/Kapitel für das Kind relevant ist (Blatt-Guard).</summary>
+    /// <summary>Checks whether this vocabulary exercise is relevant for the child under exactly this subject/chapter (leaf guard).</summary>
     public async Task<bool> IsRelevantExerciseAsync(int childId, int subjectId, int chapterId, int exerciseId, CancellationToken ct = default) =>
         (await LoadRelevantAsync(childId, ct))
             .Any(r => r.SubjectId == subjectId && r.ChapterId == chapterId && r.ExerciseId == exerciseId);
 
     /// <summary>
-    /// Item-Lernstand des Kindes für eine Übung. Standard: schwächste zuerst. Optional <paramref name="search"/>
-    /// (Wort/Übersetzung) und Sortierung (<c>word</c>, <c>mastery</c>, <c>box</c>, <c>seen</c>, <c>activity</c>).
-    /// Gesamtzahl im Header <c>X-Total-Count</c>.
+    /// Item learning progress of the child for an exercise. Default: weakest first. Optional <paramref name="search"/>
+    /// (word/translation) and sorting (<c>word</c>, <c>mastery</c>, <c>box</c>, <c>seen</c>, <c>activity</c>).
+    /// Total count in the <c>X-Total-Count</c> header.
     /// </summary>
     public async Task<List<ItemProgressResponse>> ItemsAsync(int childId, int exerciseId, string? search,
         (string? Key, bool Desc) sort, HttpResponse response, int skip, int take, CancellationToken ct = default)
@@ -318,9 +318,9 @@ public class ChildLearnProgressService(PuglingDbContext db, ExerciseTypeRegistry
     }
 
     /// <summary>
-    /// Lädt den relevanten Lernstand des Kindes <b>einmal</b> und liefert einen Evaluator, der daraus den
-    /// <see cref="MasteryRollup"/> für beliebige Katalog-Scopes im Speicher berechnet – ohne erneute DB-Abfragen
-    /// (Grundlage der Lernziel-Auswertung über viele Ziele hinweg).
+    /// Loads the child's relevant learning progress <b>once</b> and returns an evaluator that computes the
+    /// <see cref="MasteryRollup"/> for arbitrary catalog scopes in memory – without further DB queries
+    /// (the foundation for evaluating learn goals across many goals).
     /// </summary>
     public async Task<ScopeEvaluator> LoadScopeEvaluatorAsync(int childId, CancellationToken ct = default)
     {
@@ -331,7 +331,7 @@ public class ChildLearnProgressService(PuglingDbContext db, ExerciseTypeRegistry
         return new ScopeEvaluator(relevant, total, prog);
     }
 
-    /// <summary>Berechnet Roll-ups für Katalog-Scopes aus einem einmal geladenen Lernstand-Snapshot.</summary>
+    /// <summary>Computes roll-ups for catalog scopes from a once-loaded learning-progress snapshot.</summary>
     public sealed class ScopeEvaluator
     {
         // Private-Typen im Konstruktor → bewusst privater Ctor; nur die umschließende Klasse erzeugt den Evaluator.
@@ -347,7 +347,7 @@ public class ChildLearnProgressService(PuglingDbContext db, ExerciseTypeRegistry
             _prog = prog;
         }
 
-        /// <summary>Roll-up für einen Scope (Fach, optional Kapitel/Übung). Leerer Roll-up, wenn nichts passt.</summary>
+        /// <summary>Roll-up for a scope (subject, optionally chapter/exercise). Empty roll-up if nothing matches.</summary>
         public MasteryRollup For(int subjectId, int? chapterId, int? exerciseId)
         {
             var parts = _relevant

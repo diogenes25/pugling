@@ -8,7 +8,7 @@ using Pugling.Api.Models;
 
 namespace Pugling.Api.Controllers.Creator;
 
-/// <summary>Lückentext-Store: Lerngrundlagen für das Lückentext-Verfahren (vom Vater gepflegt).</summary>
+/// <summary>Cloze store: learning material for the cloze method (maintained by the adult).</summary>
 [ApiController]
 [ApiVersion("1.0")]
 [Route(ApiRoutes.Creator + "/cloze-texts")]
@@ -20,11 +20,11 @@ public class ClozeTextsController(PuglingDbContext db) : ControllerBase
     static ClozeResponse Map(ClozeText c) =>
         new(c.Id, c.Key, c.Title, c.SourceLanguage, c.TargetLanguage, c.Text, c.Translation, c.Gaps, c.WordBank, c.CreatedAt);
 
-    /// <summary>Liste der Lückentexte, optional per Volltext gefiltert.</summary>
-    /// <param name="search">Freitext in Titel, Text oder Key (Teilstring).</param>
-    /// <param name="skip">Anzahl zu überspringender Einträge (Paging).</param>
-    /// <param name="take">Maximale Trefferzahl (1..500). Gesamtzahl im Header <c>X-Total-Count</c>.</param>
-    /// <param name="ct">Abbruch-Token.</param>
+    /// <summary>List of cloze texts, optionally filtered by full text.</summary>
+    /// <param name="search">Free text in title, text, or key (substring).</param>
+    /// <param name="skip">Number of entries to skip (paging).</param>
+    /// <param name="take">Maximum number of hits (1..500). Total count in the <c>X-Total-Count</c> header.</param>
+    /// <param name="ct">Cancellation token.</param>
     [HttpGet]
     public async Task<IEnumerable<ClozeResponse>> List(
         [FromQuery] string? search = null,
@@ -38,19 +38,19 @@ public class ClozeTextsController(PuglingDbContext db) : ControllerBase
         return items.Select(Map);
     }
 
-    /// <summary>Ein Lückentext per Id.</summary>
+    /// <summary>A cloze text by id.</summary>
     [HttpGet("{id:int}")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<ClozeResponse>> Get(int id, CancellationToken ct = default) =>
         await db.ClozeTexts.FindAsync([id], ct) is { } c ? Map(c) : NotFound();
 
-    /// <summary>Ein Lückentext per Key.</summary>
+    /// <summary>A cloze text by key.</summary>
     [HttpGet("by-key/{key}")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<ClozeResponse>> GetByKey(string key, CancellationToken ct = default) =>
         await db.ClozeTexts.AsNoTracking().FirstOrDefaultAsync(c => c.Key == key, ct) is { } c ? Map(c) : NotFound();
 
-    /// <summary>Erstellt einen Lückentext. Key muss eindeutig sein; mind. eine Lücke.</summary>
+    /// <summary>Creates a cloze text. Key must be unique; at least one gap.</summary>
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -78,7 +78,7 @@ public class ClozeTextsController(PuglingDbContext db) : ControllerBase
         return CreatedAtAction(nameof(Get), new { id = cloze.Id }, Map(cloze));
     }
 
-    /// <summary>Ändert einen Lückentext (partiell).</summary>
+    /// <summary>Changes a cloze text (partial).</summary>
     [HttpPatch("{id:int}")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<ClozeResponse>> Update(int id, UpdateClozeDto dto, CancellationToken ct = default)
@@ -99,7 +99,7 @@ public class ClozeTextsController(PuglingDbContext db) : ControllerBase
         return Map(cloze);
     }
 
-    /// <summary>Löscht einen Lückentext. Nicht möglich, solange er in einem Lehrplan verwendet wird.</summary>
+    /// <summary>Deletes a cloze text. Not possible while it is used in a study plan.</summary>
     [HttpDelete("{id:int}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

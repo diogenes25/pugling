@@ -9,9 +9,9 @@ using Pugling.Api.Models;
 namespace Pugling.Api.Controllers.Creator;
 
 /// <summary>
-/// Rechteverwaltung einer Übung (RWX-Grants). Übungs-global (nicht kapitelgebunden), daher top-level unter
-/// <c>api/v1/creator/exercises/{exerciseId}/grants</c>. Nur ein <see cref="GrantPermission.Owner"/> darf die
-/// Rechte einsehen und vergeben/entziehen. Der Katalog bleibt für alle lesbar – Read ist bewusst kein Recht.
+/// Permission management of an exercise (RWX grants). Exercise-global (not chapter-bound), hence top-level under
+/// <c>api/v1/creator/exercises/{exerciseId}/grants</c>. Only an <see cref="GrantPermission.Owner"/> may view
+/// the permissions and grant/revoke them. The catalog stays readable for everyone – Read is deliberately not a permission.
 /// </summary>
 [ApiController]
 [ApiVersion("1.0")]
@@ -34,7 +34,7 @@ public class ExerciseGrantsController(PuglingDbContext db, ExercisePermissionSer
             : this.ProblemWithCode(ApiErrors.NotOwner, "Only an owner can view or manage the permissions of this exercise.");
     }
 
-    /// <summary>Alle vergebenen Rechte der Übung (nur für Owner sichtbar).</summary>
+    /// <summary>All permissions granted for the exercise (visible only to owners).</summary>
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -50,8 +50,8 @@ public class ExerciseGrantsController(PuglingDbContext db, ExercisePermissionSer
     }
 
     /// <summary>
-    /// Vergibt einem Creator ein Recht (Owner/Write/Execute). Nur ein Owner darf vergeben; der begünstigte
-    /// Creator muss existieren. Idempotent: ein bereits vorhandenes (Creator, Recht) wird nicht dupliziert.
+    /// Grants a creator a permission (Owner/Write/Execute). Only an owner may grant; the beneficiary
+    /// creator must exist. Idempotent: an already existing (creator, permission) pair is not duplicated.
     /// </summary>
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status201Created)]
@@ -81,8 +81,8 @@ public class ExerciseGrantsController(PuglingDbContext db, ExercisePermissionSer
     }
 
     /// <summary>
-    /// Entzieht einem Creator ein Recht. Nur ein Owner darf entziehen. Der <b>letzte Owner</b> kann nicht
-    /// entfernt werden – sonst wäre die Übung verwaist (nur noch geseedete System-Übungen sind ownerlos).
+    /// Revokes a permission from a creator. Only an owner may revoke. The <b>last owner</b> cannot
+    /// be removed – otherwise the exercise would be orphaned (only seeded system exercises are ownerless).
     /// </summary>
     [HttpDelete("{creatorId:int}/{permission}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]

@@ -4,14 +4,14 @@ using Microsoft.AspNetCore.Mvc;
 namespace Pugling.Api.Errors;
 
 /// <summary>
-/// Geteilte Helfer, die den Fehler-Code + <c>type</c>-URI + <c>traceId</c> auf ein
-/// <see cref="ProblemDetails"/> stempeln. Eine einzige Stelle für die Regeln, damit die drei
-/// Emit-Pfade (fachliches <c>ProblemWithCode</c>, die <see cref="CodeStampingProblemDetailsFactory"/>
-/// und der <c>CustomizeProblemDetails</c>-Hook) nicht auseinanderdriften.
+/// Shared helpers that stamp the error code + <c>type</c> URI + <c>traceId</c> onto a
+/// <see cref="ProblemDetails"/>. A single place for the rules, so the three
+/// emit paths (domain-specific <c>ProblemWithCode</c>, the <see cref="CodeStampingProblemDetailsFactory"/>,
+/// and the <c>CustomizeProblemDetails</c> hook) don't drift apart.
 /// </summary>
 public static class ProblemDetailsStamping
 {
-    /// <summary>Setzt die <c>traceId</c>-Extension wie die <c>DefaultProblemDetailsFactory</c> (Log-Korrelation).</summary>
+    /// <summary>Sets the <c>traceId</c> extension like the <c>DefaultProblemDetailsFactory</c> (log correlation).</summary>
     public static void ApplyTraceId(ProblemDetails problem, HttpContext httpContext)
     {
         if ((Activity.Current?.Id ?? httpContext.TraceIdentifier) is { } traceId)
@@ -19,7 +19,7 @@ public static class ProblemDetailsStamping
     }
 
     /// <summary>
-    /// Stempelt einen <b>spezifischen</b> Fehler autoritativ (Status, Titel, <c>type</c>-URI, <c>code</c>).
+    /// Stamps a <b>specific</b> error authoritatively (status, title, <c>type</c> URI, <c>code</c>).
     /// </summary>
     public static void StampSpecific(ProblemDetails problem, ApiError error)
     {
@@ -30,8 +30,8 @@ public static class ProblemDetailsStamping
     }
 
     /// <summary>
-    /// Stempelt einen status-basierten Default – aber nur, wenn noch <b>kein</b> <c>code</c> gesetzt ist
-    /// (spezifische Codes gewinnen). Normalisiert den <c>type</c> bewusst auf den pugling-Fehler-URI.
+    /// Stamps a status-based default – but only if <b>no</b> <c>code</c> is set yet
+    /// (specific codes win). Deliberately normalizes the <c>type</c> to the pugling error URI.
     /// </summary>
     public static void StampFallback(ProblemDetails problem, int status)
     {

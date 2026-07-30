@@ -9,7 +9,7 @@ using Pugling.Api.Models;
 
 namespace Pugling.Api.Controllers.Supervisor;
 
-/// <summary>Verwaltung der Erwachsenen (oberste Ebene des Admin-Bereichs).</summary>
+/// <summary>Management of adults (top tier of the admin area).</summary>
 [ApiController]
 [ApiVersion("1.0")]
 [Route(ApiRoutes.Supervisor + "/adults")]
@@ -18,26 +18,26 @@ namespace Pugling.Api.Controllers.Supervisor;
 [Authorize(Roles = Roles.Supervisor)]
 public class AdultsController(PuglingDbContext db, AccountService accounts) : ControllerBase, IActionFilter
 {
-    /// <summary>Ein Erwachsener darf nur seinen eigenen Datensatz lesen/ändern/löschen (Route-adultId == Token-fid).</summary>
+    /// <summary>An adult may only read/change/delete their own record (route adultId == token fid).</summary>
     [NonAction]
     public void OnActionExecuting(ActionExecutingContext context)
     {
         if (context.ActionArguments.TryGetValue("adultId", out var v) && v is int aid && User.AdultId() != aid)
             context.Result = Forbid();
     }
-    /// <summary>Ungenutzter Teil des Filter-Paars (die Prüfung sitzt vollständig in <see cref="OnActionExecuting"/>).</summary>
+    /// <summary>Unused part of the filter pair (the check sits entirely in <see cref="OnActionExecuting"/>).</summary>
     [NonAction]
     public void OnActionExecuted(ActionExecutedContext context) { }
 
     IQueryable<AdultResponse> Project(IQueryable<Adult> q) =>
         q.Select(a => new AdultResponse(a.Id, a.Name, a.Email, a.CreatedAt, a.SupervisedLinks.Count));
 
-    /// <summary>Der eigene Datensatz (Selbstauskunft).</summary>
+    /// <summary>The caller's own record (self-service lookup).</summary>
     [HttpGet]
     public async Task<IEnumerable<AdultResponse>> List(CancellationToken ct = default) =>
         await Project(db.Adults.Where(a => a.Id == User.AdultId())).ToListAsync(ct);
 
-    /// <summary>Ein einzelner Erwachsener.</summary>
+    /// <summary>A single adult.</summary>
     [HttpGet("{adultId:int}")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<AdultResponse>> Get(int adultId, CancellationToken ct = default)
@@ -46,7 +46,7 @@ public class AdultsController(PuglingDbContext db, AccountService accounts) : Co
         return adult is null ? NotFound() : adult;
     }
 
-    /// <summary>Erstellt einen neuen Vater (Registrierung, ohne Anmeldung erreichbar).</summary>
+    /// <summary>Creates a new father (registration, reachable without login).</summary>
     [HttpPost]
     [AllowAnonymous]
     [ProducesResponseType(StatusCodes.Status201Created)]
@@ -66,7 +66,7 @@ public class AdultsController(PuglingDbContext db, AccountService accounts) : Co
         return CreatedAtAction(nameof(Get), new { adultId = adult.Id }, response);
     }
 
-    /// <summary>Ändert einen Erwachsenen (partiell).</summary>
+    /// <summary>Changes an adult (partial).</summary>
     [HttpPatch("{adultId:int}")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<AdultResponse>> Update(int adultId, UpdateAdultDto dto, CancellationToken ct = default)
@@ -91,17 +91,17 @@ public class AdultsController(PuglingDbContext db, AccountService accounts) : Co
     }
 
     /// <summary>
-    /// Ist die E-Mail-Adresse schon von einem <b>anderen</b> Konto belegt?
+    /// Is the email address already taken by <b>another</b> account?
     /// <para>
-    /// Geprüft wird an <c>Account.Email</c>, nicht an <c>Adult.Email</c>: dort sitzt der (gefilterte)
-    /// Unique-Index. Ohne diese Vorprüfung lief die Registrierung auf halbem Weg auf: <c>Adult</c> war
-    /// schon gespeichert, das Anlegen des Kontos scheiterte am Index, und der Aufrufer bekam <b>500</b> –
-    /// zurück blieb ein Erwachsener ohne Login.
+    /// Checked against <c>Account.Email</c>, not <c>Adult.Email</c>: that's where the (filtered)
+    /// unique index sits. Without this pre-check, registration used to run aground halfway: <c>Adult</c> was
+    /// already saved, creating the account failed on the index, and the caller got <b>500</b> –
+    /// leaving behind an adult with no login.
     /// </para>
     /// </summary>
-    /// <param name="email">Die gewünschte Adresse; leer heißt „keine", das kollidiert nie (Index ist gefiltert).</param>
-    /// <param name="exceptAdultId">Beim Ändern der eigene Erwachsene – seine eigene Adresse ist keine Kollision.</param>
-    /// <param name="ct">Abbruch-Token.</param>
+    /// <param name="email">The desired address; empty means "none", which never collides (the index is filtered).</param>
+    /// <param name="exceptAdultId">The adult's own record when updating – its own address is not a collision.</param>
+    /// <param name="ct">Cancellation token.</param>
     private Task<bool> EmailTakenAsync(string? email, int? exceptAdultId = null, CancellationToken ct = default) =>
         string.IsNullOrWhiteSpace(email)
             ? Task.FromResult(false)
@@ -109,16 +109,15 @@ public class AdultsController(PuglingDbContext db, AccountService accounts) : Co
                 && (exceptAdultId == null || !a.Profiles.Any(p => p.AdultId == exceptAdultId)), ct);
 
     /// <summary>
-    /// Löscht einen Erwachsenen – samt der Kinder, die dadurch <b>ihren letzten Supervisor</b> verlieren,
-    /// und samt seines Login-Kontos.
+    /// Deletes an adult – together with any children who thereby lose <b>their last supervisor</b>,
+    /// and together with its login account.
     /// <para>
-    /// Ein von mehreren betreutes Kind (Vater <i>und</i> Mutter) bleibt bestehen; es verliert nur diesen
-    /// einen Betreuer. Nur das Kind, dem niemand bleibt, geht mit – denn seit dem Multi-Supervisor-Umbau
-    /// hängt ein <see cref="Child"/> <b>nicht</b> mehr per Fremdschlüssel am Erwachsenen, sondern über
-    /// <see cref="SupervisorLink"/>. Die Kaskade der Datenbank räumt darum nur die Verknüpfung ab und ließ
-    /// das Kind als <b>Waise</b> zurück: von keinem Erwachsenen mehr sichtbar oder löschbar, aber mit
-    /// weiterhin funktionierendem PIN-Login. Die frühere Zusicherung „samt aller Kinder, Fächer, Kapitel"
-    /// war seit dem Umbau falsch – Fächer gehören ohnehin keinem Erwachsenen.
+    /// A child supervised by several people (father <i>and</i> mother) continues to exist; it only loses this
+    /// one caregiver. Only the child left with no one remaining is removed as well – because since the
+    /// multi-supervisor restructuring, a <see cref="Child"/> is <b>no longer</b> attached to the adult via a
+    /// foreign key, but via <see cref="SupervisorLink"/>. The database cascade therefore only clears the
+    /// link and would leave the child behind as an <b>orphan</b>: no longer visible or deletable by any adult,
+    /// but with a still-functioning PIN login.
     /// </para>
     /// </summary>
     [HttpDelete("{adultId:int}")]

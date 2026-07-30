@@ -8,9 +8,9 @@ using Pugling.Api.Models;
 namespace Pugling.Api.Controllers.Student;
 
 /// <summary>
-/// Tages-/Verlaufs-Sicht eines Lehrplans über seine <see cref="PlanPosition"/>en (neues Modell).
-/// Der Sohn holt hier seine Tagesmission (welche Übungen sind heute dran, was ist erledigt, Streak),
-/// der Vater den Tag-für-Tag-Verlauf. Ersetzt die plan-weite Today/Progress-Sicht des alten Modells.
+/// Daily/history view of a study plan via its <see cref="PlanPosition"/>s (new model).
+/// Here the child fetches their daily mission (which exercises are due today, what's done, streak),
+/// the father the day-by-day history. Replaces the plan-wide today/progress view of the old model.
 /// </summary>
 [ApiController]
 [ApiVersion("1.0")]
@@ -26,7 +26,7 @@ public class PlanOverviewController(PuglingDbContext db, PositionProgressService
     private Task<StudyPlan?> GetPlan(int planId, CancellationToken ct) =>
         db.StudyPlans.AsNoTracking().FirstOrDefaultAsync(p => p.Id == planId, ct);
 
-    /// <summary>Tagesmission: heute fällige Positionen mit Status, erledigte Pflicht und aktuelle Streak.</summary>
+    /// <summary>Daily mission: positions due today with status, mandatory goal completion and current streak.</summary>
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<OverviewResponse>> Get(int planId, CancellationToken ct = default)
@@ -42,19 +42,19 @@ public class PlanOverviewController(PuglingDbContext db, PositionProgressService
     }
 
     /// <summary>
-    /// Tag-für-Tag-Verlauf über die gesamte Laufzeit (erledigte Tage, erreichte Ziele, Punkte).
-    /// Die Kennzahlen (<c>DaysComplete</c>/<c>TotalPoints</c>/<c>CurrentStreak</c>) beziehen sich bewusst
-    /// auf die <b>gesamte</b> Laufzeit; Filter/Sortierung/Paging wirken nur auf <c>Days</c>. Die gefilterte
-    /// Gesamtzahl der Tage steht im Header <c>X-Total-Count</c>.
+    /// Day-by-day history over the entire run time (completed days, goals reached, points).
+    /// The metrics (<c>DaysComplete</c>/<c>TotalPoints</c>/<c>CurrentStreak</c>) deliberately refer
+    /// to the <b>entire</b> run time; filter/sort/paging only affect <c>Days</c>. The filtered
+    /// total number of days is in the <c>X-Total-Count</c> header.
     /// </summary>
-    /// <param name="planId">Lehrplan, dessen Verlauf gelesen wird.</param>
-    /// <param name="from">Nur Tage ab diesem Datum (inklusive).</param>
-    /// <param name="to">Nur Tage bis zu diesem Datum (inklusive).</param>
-    /// <param name="dutyDone">Nur Tage mit erledigter (<c>true</c>) bzw. offener (<c>false</c>) Pflicht.</param>
-    /// <param name="sort">Sortierung: <c>day</c> (Standard), <c>-day</c>, <c>points</c>, <c>-points</c>.</param>
-    /// <param name="skip">Anzahl zu überspringender Tage (Paging).</param>
-    /// <param name="take">Maximale Tages-Zahl (1..500). Gesamtzahl im Header <c>X-Total-Count</c>.</param>
-    /// <param name="ct">Abbruch-Token.</param>
+    /// <param name="planId">Study plan whose history is being read.</param>
+    /// <param name="from">Only days from this date (inclusive).</param>
+    /// <param name="to">Only days up to this date (inclusive).</param>
+    /// <param name="dutyDone">Only days with completed (<c>true</c>) or open (<c>false</c>) mandatory goal.</param>
+    /// <param name="sort">Sort: <c>day</c> (default), <c>-day</c>, <c>points</c>, <c>-points</c>.</param>
+    /// <param name="skip">Number of days to skip (paging).</param>
+    /// <param name="take">Maximum number of days (1..500). Total count in the <c>X-Total-Count</c> header.</param>
+    /// <param name="ct">Cancellation token.</param>
     [HttpGet("progress")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<ProgressResponse>> Progress(int planId,

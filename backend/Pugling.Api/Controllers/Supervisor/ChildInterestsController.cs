@@ -9,13 +9,13 @@ using Pugling.Api.Models;
 namespace Pugling.Api.Controllers.Supervisor;
 
 /// <summary>
-/// Die gewichteten Interessen eines Kindes – <b>referenziert</b> auf die geteilte Taxonomie und damit
-/// maschinell auswertbar, anders als das freie <c>Child.Interests</c> (das bleibt: es ist die Sprache
-/// des KI-Creators, der den Stoff sprachlich einkleidet).
+/// The weighted interests of a child – <b>referenced</b> against the shared taxonomy and thereby
+/// machine-evaluable, unlike the free-form <c>Child.Interests</c> (that stays: it is the language
+/// of the AI creator, which clothes the material in language).
 /// <para>
-/// Das Vorzeichen trägt die Hauptaussage: <b>negative Gewichte sind Abneigungen</b>. Sie sind für ein
-/// gutes Ergebnis wichtiger als die Vorlieben – ein abstoßendes Bild kehrt den Lerneffekt um –, deshalb
-/// schließen sie passende Bilder später hart aus, statt nur schlechter zu ranken.
+/// The sign carries the main message: <b>negative weights are dislikes</b>. They matter more for a
+/// good result than the preferences do – a repellent image reverses the learning effect –, which is why
+/// they later hard-exclude matching images instead of merely ranking them lower.
 /// </para>
 /// </summary>
 [ApiController]
@@ -27,7 +27,7 @@ namespace Pugling.Api.Controllers.Supervisor;
 [ServiceFilter(typeof(ChildOwnershipFilter))]
 public class ChildInterestsController(PuglingDbContext db, InterestTagService tags) : ControllerBase
 {
-    /// <summary>Alle Interessen des Kindes – stärkste Vorlieben zuerst, Abneigungen zuletzt.</summary>
+    /// <summary>All interests of the child – strongest preferences first, dislikes last.</summary>
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IEnumerable<ChildInterestResponse>> List(int childId, CancellationToken ct = default) =>
@@ -39,10 +39,10 @@ public class ChildInterestsController(PuglingDbContext db, InterestTagService ta
             .ToListAsync(ct);
 
     /// <summary>
-    /// Ersetzt die Interessen des Kindes vollständig (leere Liste = alle entfernen). Bewusst ersetzend:
-    /// das UI bearbeitet die Menge als Ganzes, und nur so lässt sich ein Eintrag auch wieder loswerden.
-    /// Unbekannte Schlagworte werden angelegt (create-if-missing), damit der Vater frei tippen kann,
-    /// ohne vorher den Katalog zu pflegen.
+    /// Replaces the child's interests completely (empty list = remove all). Deliberately a replacement:
+    /// the UI edits the set as a whole, and that's the only way to get rid of an entry again.
+    /// Unknown tags are created (create-if-missing), so the father can type freely
+    /// without maintaining the catalog beforehand.
     /// </summary>
     [HttpPut]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -78,7 +78,7 @@ public class ChildInterestsController(PuglingDbContext db, InterestTagService ta
         return Ok(await List(childId, ct));
     }
 
-    /// <summary>Setzt oder ändert das Gewicht eines einzelnen Schlagworts (Upsert).</summary>
+    /// <summary>Sets or changes the weight of a single tag (upsert).</summary>
     [HttpPut("{tagId:int}")]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -106,7 +106,7 @@ public class ChildInterestsController(PuglingDbContext db, InterestTagService ta
         return new ChildInterestResponse(tag.Id, tag.Slug, tag.Label, tag.Facet, entry.Weight, entry.CreatedAt);
     }
 
-    /// <summary>Entfernt ein Interesse (das Schlagwort selbst bleibt im Katalog).</summary>
+    /// <summary>Removes an interest (the tag itself stays in the catalog).</summary>
     [HttpDelete("{tagId:int}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -122,7 +122,7 @@ public class ChildInterestsController(PuglingDbContext db, InterestTagService ta
 
     // ---- Helfer -------------------------------------------------------------------------------------
 
-    /// <summary>Löst die Eingabe zu einem Tag auf: bevorzugt per Id, sonst per Slug/Label (create-if-missing).</summary>
+    /// <summary>Resolves the input to a tag: preferably by id, otherwise by slug/label (create-if-missing).</summary>
     private async Task<InterestTag?> ResolveAsync(ChildInterestInput input, CancellationToken ct)
     {
         if (input.TagId is { } id)
@@ -132,7 +132,7 @@ public class ChildInterestsController(PuglingDbContext db, InterestTagService ta
         return string.IsNullOrWhiteSpace(text) ? null : await tags.EnsureAsync(text, input.Label, input.Facet, ct);
     }
 
-    /// <summary>Prüft das Gewicht gegen die Skala; <c>null</c> = außerhalb (der Aufrufer meldet 400).</summary>
+    /// <summary>Checks the weight against the scale; <c>null</c> = out of range (the caller reports 400).</summary>
     private static int? Weight(int value) =>
         value is >= ChildInterest.MinWeight and <= ChildInterest.MaxWeight ? value : null;
 }

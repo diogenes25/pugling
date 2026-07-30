@@ -1,14 +1,14 @@
 namespace Pugling.Api.Controllers;
 
 /// <summary>
-/// Parst die Sortier-Angabe der Listen-Endpunkte. Unterstützt zwei Schreibweisen, die dieselbe Wirkung haben:
-/// <c>?sort=title&amp;dir=desc</c> und die Kurzform <c>?sort=-title</c> (führendes <c>-</c> = absteigend, <c>+</c>/nichts = aufsteigend).
-/// Ein explizites <c>dir</c> hat Vorrang vor dem Präfix. Welche <c>Key</c>s zulässig sind,
-/// entscheidet der jeweilige Endpunkt (Whitelist) – hier findet bewusst kein dynamischer Property-Zugriff statt.
+/// Parses the sort specification of the list endpoints. Supports two notations with the same effect:
+/// <c>?sort=title&amp;dir=desc</c> and the short form <c>?sort=-title</c> (leading <c>-</c> = descending, <c>+</c>/none = ascending).
+/// An explicit <c>dir</c> takes precedence over the prefix. Which <c>Key</c>s are allowed
+/// is decided by the respective endpoint (whitelist) – no dynamic property access happens here, by design.
 /// </summary>
 public static class SortingExtensions
 {
-    /// <summary>Zerlegt die Angabe in (Spalten-Key, absteigend?). Ohne Angabe ist <c>Key</c> null → Endpunkt-Standard.</summary>
+    /// <summary>Splits the specification into (column key, descending?). Without a value, <c>Key</c> is null → endpoint default.</summary>
     public static (string? Key, bool Desc) ParseSort(string? sort, string? dir = null)
     {
         if (string.IsNullOrWhiteSpace(sort)) return (null, false);

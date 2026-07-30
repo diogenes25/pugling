@@ -5,17 +5,17 @@ using Pugling.Api.Models;
 namespace Pugling.Api.Services.Creator;
 
 /// <summary>
-/// Sorgt dafür, dass eine genutzte Vokabel im zentralen Store liegt: findet einen Eintrag über seinen
-/// stabilen Key (Sprache + Wort + Übersetzung, siehe <see cref="VocabKey"/>) oder legt ihn an. So bekommt
-/// jede in einer Übung verwendete Vokabel eine Store-ID und ist über mehrere Übungen hinweg verknüpfbar.
+/// Ensures that a used vocabulary entry lives in the central store: finds an entry via its
+/// stable key (language + word + translation, see <see cref="VocabKey"/>) or creates it. This way
+/// every vocabulary entry used in an exercise gets a store ID and can be linked across multiple exercises.
 /// </summary>
 public class VocabularyStoreService(PuglingDbContext db)
 {
     /// <summary>
-    /// Liefert den vorhandenen Store-Eintrag zum Wort/zur Übersetzung oder legt ihn an (noch ohne
-    /// <c>SaveChanges</c> – der Aufrufer speichert, damit mehrere Vokabeln einer Übung in einem Zug landen).
-    /// Bereits in derselben Unit-of-Work angelegte Einträge werden über <see cref="DbSet{T}.Local"/> erkannt,
-    /// damit dieselbe Vokabel nicht doppelt entsteht (Key-Eindeutigkeit).
+    /// Returns the existing store entry for the word/translation or creates it (not yet with
+    /// <c>SaveChanges</c> – the caller saves, so multiple vocabulary entries of an exercise land in one go).
+    /// Entries already created in the same unit of work are detected via <see cref="DbSet{T}.Local"/>,
+    /// so the same vocabulary entry is not created twice (key uniqueness).
     /// </summary>
     public async Task<Vocabulary> GetOrCreateAsync(string sourceLanguage, string word, string targetLanguage,
         string translation, PartOfSpeech? partOfSpeech = null, CancellationToken ct = default)

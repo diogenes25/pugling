@@ -6,17 +6,17 @@ using Pugling.Api.Models;
 namespace Pugling.Api.Services.Supervisor;
 
 /// <summary>
-/// Verwaltet und wertet <see cref="LearnGoal"/>s aus: Ergebnis-/Beherrschungsziele je Kind auf einem
-/// Katalog-Scope (Fach/Kapitel/Übung). Der Zielstatus wird <b>live</b> aus dem aggregierten Lernstand
-/// berechnet (Reuse von <see cref="ChildLearnProgressService"/>), es gibt keinen materialisierten Zustand
-/// und in v1 keine Belohnung. Validiert Scope (Katalog-Referenzen + Hierarchie) und Zielwert-Bereich.
+/// Manages and evaluates <see cref="LearnGoal"/>s: result/mastery goals per child on a
+/// catalog scope (subject/chapter/exercise). The goal status is computed <b>live</b> from the aggregated
+/// learning progress (reuse of <see cref="ChildLearnProgressService"/>), there is no materialized state
+/// and no reward in v1. Validates scope (catalog references + hierarchy) and target value range.
 /// </summary>
 public class LearnGoalService(PuglingDbContext db, ChildLearnProgressService progress, ExerciseTypeRegistry registry)
 {
     // LearnGoalResponse/Create-/UpdateLearnGoalRequest leben im Vertrags-Projekt (Pugling.Contracts.Supervisor);
     // das Result-Paar bleibt hier, weil es den API-internen ApiError trägt.
 
-    /// <summary>Ergebnis mit optionalem Fehler-Code; <c>Value</c> und <c>Error</c> beide <c>null</c> = nicht gefunden.</summary>
+    /// <summary>Result with optional error code; <c>Value</c> and <c>Error</c> both <c>null</c> = not found.</summary>
     public record Result(LearnGoalResponse? Value, ApiError? Error);
 
     private static string ScopeOf(LearnGoal g) =>
@@ -87,7 +87,7 @@ public class LearnGoalService(PuglingDbContext db, ChildLearnProgressService pro
         return null;
     }
 
-    /// <summary>Alle Lernziele des Kindes, live ausgewertet; optional nach Fach und Status gefiltert.</summary>
+    /// <summary>All learn goals of the child, evaluated live; optionally filtered by subject and status.</summary>
     public async Task<List<LearnGoalResponse>> ListAsync(int childId, int? subjectId, string? status, CancellationToken ct = default)
     {
         var q = db.LearnGoals.AsNoTracking().Where(g => g.ChildId == childId);
@@ -102,7 +102,7 @@ public class LearnGoalService(PuglingDbContext db, ChildLearnProgressService pro
         return mapped.ToList();
     }
 
-    /// <summary>Ein Lernziel live ausgewertet; <c>null</c>, wenn es (für dieses Kind) nicht existiert.</summary>
+    /// <summary>A learn goal evaluated live; <c>null</c> if it (for this child) does not exist.</summary>
     public async Task<LearnGoalResponse?> GetAsync(int childId, int goalId, CancellationToken ct = default)
     {
         var g = await db.LearnGoals.AsNoTracking().FirstOrDefaultAsync(x => x.Id == goalId && x.ChildId == childId, ct);
@@ -111,7 +111,7 @@ public class LearnGoalService(PuglingDbContext db, ChildLearnProgressService pro
         return Map(g, eval.For(g.SubjectId, g.ChapterId, g.ExerciseId), Today);
     }
 
-    /// <summary>Legt ein Lernziel an (nach Scope-/Zielwert-Validierung) und liefert es ausgewertet zurück.</summary>
+    /// <summary>Creates a learn goal (after scope/target value validation) and returns it evaluated.</summary>
     public async Task<Result> CreateAsync(int childId, CreateLearnGoalRequest req, CancellationToken ct = default)
     {
         if (await ValidateAsync(req.SubjectId, req.ChapterId, req.ExerciseId, req.Metric, req.TargetValue, ct) is { } err)
@@ -135,7 +135,7 @@ public class LearnGoalService(PuglingDbContext db, ChildLearnProgressService pro
         return new Result(Map(goal, eval.For(goal.SubjectId, goal.ChapterId, goal.ExerciseId), Today), null);
     }
 
-    /// <summary>Ändert Metrik/Zielwert/Stichtag/Titel eines Ziels (Scope bleibt fix). Not-found = beide null.</summary>
+    /// <summary>Changes metric/target value/due date/title of a goal (scope stays fixed). Not-found = both null.</summary>
     public async Task<Result> UpdateAsync(int childId, int goalId, UpdateLearnGoalRequest req, CancellationToken ct = default)
     {
         var goal = await db.LearnGoals.FirstOrDefaultAsync(x => x.Id == goalId && x.ChildId == childId, ct);
@@ -157,7 +157,7 @@ public class LearnGoalService(PuglingDbContext db, ChildLearnProgressService pro
         return new Result(Map(goal, eval.For(goal.SubjectId, goal.ChapterId, goal.ExerciseId), Today), null);
     }
 
-    /// <summary>Löscht ein Lernziel; <c>false</c>, wenn es (für dieses Kind) nicht existiert.</summary>
+    /// <summary>Deletes a learn goal; <c>false</c> if it (for this child) does not exist.</summary>
     public async Task<bool> DeleteAsync(int childId, int goalId, CancellationToken ct = default)
     {
         var goal = await db.LearnGoals.FirstOrDefaultAsync(x => x.Id == goalId && x.ChildId == childId, ct);

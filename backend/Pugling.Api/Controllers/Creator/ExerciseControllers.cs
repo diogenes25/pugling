@@ -11,17 +11,17 @@ namespace Pugling.Api.Controllers.Creator;
 // ExerciseControllerBase<TConfig> und legt nur Route, Tag und Type fest.
 // Dadurch bekommt jeder Typ einen eigenen Pfad und ein eigenes Config-Schema in Swagger.
 
-/// <summary>Gemeinsames Routen-Präfix aller Übungstypen.</summary>
+/// <summary>Shared route prefix of all exercise types.</summary>
 internal static class ExerciseRoutes
 {
     public const string Base = ApiRoutes.Creator + "/subjects/{subjectId:int}/chapters/{chapterId:int}";
 }
 
 /// <summary>
-/// Vokabelübungen. Die Übung selbst beschreibt Art/Ziel/Wert; ihre Vokabelpaare leben eine Ebene tiefer als
-/// stabil identifizierte <see cref="ExerciseItem"/>s (CRUD unter <c>{exerciseId}/items/{itemId}</c>). Beim Anlegen
-/// akzeptiert der POST weiterhin inline <see cref="VocabItem"/>/<see cref="VocabRef"/> im Payload und materialisiert
-/// sie in die Item-Tabelle; jede genutzte Vokabel wird dabei im Store angelegt/verknüpft.
+/// Vocabulary exercises. The exercise itself describes type/goal/value; its vocabulary pairs live one level deeper as
+/// stably identified <see cref="ExerciseItem"/>s (CRUD under <c>{exerciseId}/items/{itemId}</c>). On creation,
+/// the POST still accepts inline <see cref="VocabItem"/>/<see cref="VocabRef"/> in the payload and materializes
+/// them into the item table; every vocabulary entry used is thereby created/linked in the store.
 /// </summary>
 [Route(ExerciseRoutes.Base + "/vocabulary")]
 [Tags("Creator – Vocabulary")]
@@ -32,8 +32,8 @@ public class VocabularyController(PuglingDbContext db, ExerciseTypeRegistry regi
     protected override string TypeKey => ExerciseTypeKeys.Vocabulary;
 
     /// <summary>
-    /// Sichert beim Anlegen/Ändern zu, dass alle per ID referenzierten Store-Einträge existieren und – falls
-    /// Inline-Vokabeln ohne ID vorliegen – die Sprachcodes gesetzt sind (nötig, um sie im Store anzulegen).
+    /// Ensures on create/change that all store entries referenced by ID exist and – if
+    /// inline vocabulary entries without an ID are present – that the language codes are set (needed to create them in the store).
     /// </summary>
     protected override async Task<string?> ValidateConfigAsync(int subjectId, VocabularyConfig config, CancellationToken ct = default)
     {
@@ -67,10 +67,10 @@ public class VocabularyController(PuglingDbContext db, ExerciseTypeRegistry regi
     }
 
     /// <summary>
-    /// Materialisiert die Items der Übung nach dem Speichern in die <see cref="ExerciseItem"/>-Tabelle (stabile ItemIds):
-    /// beim POST aus dem Payload, beim PUT nur, wenn der Payload überhaupt Items/Refs trägt (ein reiner Einstellungs-PUT
-    /// lässt die per <c>/items</c> gepflegte Item-Menge unangetastet). Der Abgleich bewahrt die Id überlebender Wörter.
-    /// Anschließend wird die Config auf reine Einstellungen reduziert – Items/Refs sind ab jetzt die Tabelle (eine Quelle).
+    /// Materializes the items of the exercise after saving into the <see cref="ExerciseItem"/> table (stable item IDs):
+    /// on POST from the payload, on PUT only if the payload carries any items/refs at all (a pure settings PUT
+    /// leaves the item set maintained via <c>/items</c> untouched). The reconciliation preserves the id of surviving words.
+    /// The config is then reduced to pure settings – items/refs are now the table (a single source).
     /// </summary>
     protected override async Task AfterSaveAsync(Exercise exercise, VocabularyConfig config, bool isCreate, CancellationToken ct = default)
     {
@@ -87,9 +87,9 @@ public class VocabularyController(PuglingDbContext db, ExerciseTypeRegistry regi
     }
 
     /// <summary>
-    /// Setzt die Items der Übung als Snapshot auf die aktuellen Vokabeln der genannten Tags (optional nur
-    /// Grundformen, optional alle Tags per UND). Der Vater materialisiert damit „alle Wörter aus Unit 3" – der
-    /// Abgleich bewahrt die Id (und den Fortschritt) überlebender Wörter; nur weggefallene verschwinden.
+    /// Sets the items of the exercise as a snapshot to the current vocabulary of the named tags (optionally only
+    /// base forms, optionally all tags via AND). The adult thereby materializes "all words from unit 3" – the
+    /// reconciliation preserves the id (and the progress) of surviving words; only dropped ones disappear.
     /// </summary>
     [HttpPost("{exerciseId:int}/refs-from-tags")]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -132,7 +132,7 @@ public class VocabularyController(PuglingDbContext db, ExerciseTypeRegistry regi
         new(item.Id, item.OrderIndex, item.VocabularyId, item.Vocabulary?.Word ?? "", item.Vocabulary?.Translation ?? "",
             item.Hint, ItemSelf(subjectId, chapterId, exerciseId, item.Id), VocabLink.Path + item.VocabularyId);
 
-    /// <summary>Alle Items der Übung in Reihenfolge (Front/Rückseite aus dem Store).</summary>
+    /// <summary>All items of the exercise in order (front/back from the store).</summary>
     [HttpGet("{exerciseId:int}/items")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<IEnumerable<VocabItemResponse>>> ListItems(int subjectId, int chapterId, int exerciseId, CancellationToken ct = default)
@@ -146,7 +146,7 @@ public class VocabularyController(PuglingDbContext db, ExerciseTypeRegistry regi
         return rows.Select(i => MapItem(subjectId, chapterId, exerciseId, i)).ToList();
     }
 
-    /// <summary>Ein einzelnes Item der Übung.</summary>
+    /// <summary>A single item of the exercise.</summary>
     [HttpGet("{exerciseId:int}/items/{itemId:int}")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<VocabItemResponse>> GetItem(int subjectId, int chapterId, int exerciseId, int itemId, CancellationToken ct = default)
@@ -159,7 +159,7 @@ public class VocabularyController(PuglingDbContext db, ExerciseTypeRegistry regi
             : MapItem(subjectId, chapterId, exerciseId, item);
     }
 
-    /// <summary>Fügt der Übung ein Vokabelpaar hinzu (per Store-Id oder inline). Neue Items landen ans Ende.</summary>
+    /// <summary>Adds a vocabulary pair to the exercise (by store id or inline). New items land at the end.</summary>
     [HttpPost("{exerciseId:int}/items")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -202,7 +202,7 @@ public class VocabularyController(PuglingDbContext db, ExerciseTypeRegistry regi
             MapItem(subjectId, chapterId, exerciseId, item));
     }
 
-    /// <summary>Ändert ein Item: Vokabel austauschen (per Id oder inline), Hinweis oder Reihenfolge anpassen.</summary>
+    /// <summary>Changes an item: swap the vocabulary entry (by id or inline), adjust the hint or order.</summary>
     [HttpPatch("{exerciseId:int}/items/{itemId:int}")]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -236,7 +236,7 @@ public class VocabularyController(PuglingDbContext db, ExerciseTypeRegistry regi
         return MapItem(subjectId, chapterId, exerciseId, item);
     }
 
-    /// <summary>Entfernt ein Item aus der Übung.</summary>
+    /// <summary>Removes an item from the exercise.</summary>
     [HttpDelete("{exerciseId:int}/items/{itemId:int}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -274,8 +274,8 @@ public class VocabularyController(PuglingDbContext db, ExerciseTypeRegistry regi
         string.IsNullOrWhiteSpace(hint) ? null : hint.Trim();
 
     /// <summary>
-    /// Ermittelt die Ziel-Vokabel eines Item-Eingabe: bevorzugt die gegebene Store-Id (muss existieren), sonst
-    /// legt sie Front/Rückseite inline im Store an (braucht die Sprachcodes der Übung). Rückgabe <c>null</c> = unzureichende Eingabe.
+    /// Determines the target vocabulary entry of an item input: prefers the given store id (must exist), otherwise
+    /// creates front/back inline in the store (needs the exercise's language codes). Return value <c>null</c> = insufficient input.
     /// </summary>
     private async Task<int?> ResolveVocabularyIdAsync(VocabItemInput body, VocabularyConfig config, CancellationToken ct)
     {
@@ -290,7 +290,7 @@ public class VocabularyController(PuglingDbContext db, ExerciseTypeRegistry regi
     }
 }
 
-/// <summary>Leseverständnis-Übungen.</summary>
+/// <summary>Reading comprehension exercises.</summary>
 [Route(ExerciseRoutes.Base + "/reading")]
 [Tags("Creator – Reading")]
 public class ReadingController(PuglingDbContext db, ExerciseTypeRegistry registry) : ExerciseControllerBase<ReadingConfig>(db, registry)
@@ -299,7 +299,7 @@ public class ReadingController(PuglingDbContext db, ExerciseTypeRegistry registr
     protected override string TypeKey => ExerciseTypeKeys.Reading;
 }
 
-/// <summary>Lückentext-Übungen. Lücken dürfen per <see cref="Gap.VocabKey"/> den Vokabel-Store referenzieren.</summary>
+/// <summary>Cloze exercises. Gaps may reference the vocabulary store via <see cref="Gap.VocabKey"/>.</summary>
 [Route(ExerciseRoutes.Base + "/cloze")]
 [Tags("Creator – Cloze")]
 public class ClozeController(PuglingDbContext db, ExerciseTypeRegistry registry) : ExerciseControllerBase<ClozeConfig>(db, registry)
@@ -307,7 +307,7 @@ public class ClozeController(PuglingDbContext db, ExerciseTypeRegistry registry)
     /// <inheritdoc/>
     protected override string TypeKey => ExerciseTypeKeys.Cloze;
 
-    /// <summary>Sichert beim Anlegen/Ändern zu, dass alle in Lücken referenzierten Store-Keys existieren.</summary>
+    /// <summary>Ensures on create/change that all store keys referenced in gaps exist.</summary>
     protected override async Task<string?> ValidateConfigAsync(int subjectId, ClozeConfig config, CancellationToken ct = default)
     {
         var keys = config.Gaps.Where(g => !string.IsNullOrWhiteSpace(g.VocabKey))
@@ -319,7 +319,7 @@ public class ClozeController(PuglingDbContext db, ExerciseTypeRegistry registry)
     }
 }
 
-/// <summary>Aufsatz-Übungen.</summary>
+/// <summary>Essay exercises.</summary>
 [Route(ExerciseRoutes.Base + "/essays")]
 [Tags("Creator – Essays")]
 public class EssaysController(PuglingDbContext db, ExerciseTypeRegistry registry) : ExerciseControllerBase<EssayConfig>(db, registry)
@@ -328,7 +328,7 @@ public class EssaysController(PuglingDbContext db, ExerciseTypeRegistry registry
     protected override string TypeKey => ExerciseTypeKeys.Essay;
 }
 
-/// <summary>Hörverständnis-Übungen.</summary>
+/// <summary>Listening comprehension exercises.</summary>
 [Route(ExerciseRoutes.Base + "/listening")]
 [Tags("Creator – Listening")]
 public class ListeningController(PuglingDbContext db, ExerciseTypeRegistry registry) : ExerciseControllerBase<ListeningConfig>(db, registry)
@@ -337,7 +337,7 @@ public class ListeningController(PuglingDbContext db, ExerciseTypeRegistry regis
     protected override string TypeKey => ExerciseTypeKeys.Listening;
 }
 
-/// <summary>Grammatik-Übungen.</summary>
+/// <summary>Grammar exercises.</summary>
 [Route(ExerciseRoutes.Base + "/grammar")]
 [Tags("Creator – Grammar")]
 public class GrammarController(PuglingDbContext db, ExerciseTypeRegistry registry) : ExerciseControllerBase<GrammarConfig>(db, registry)
@@ -346,7 +346,7 @@ public class GrammarController(PuglingDbContext db, ExerciseTypeRegistry registr
     protected override string TypeKey => ExerciseTypeKeys.Grammar;
 }
 
-/// <summary>Zuordnungs-Übungen (Paare). Neben dem CRUD bewertet <see cref="Check"/> die genannten Zuordnungen.</summary>
+/// <summary>Matching exercises (pairs). Besides the CRUD, <see cref="Check"/> evaluates the given matches.</summary>
 [Route(ExerciseRoutes.Base + "/matching")]
 [Tags("Creator – Matching")]
 public class MatchingController(PuglingDbContext db, ExerciseTypeRegistry registry)
@@ -355,7 +355,7 @@ public class MatchingController(PuglingDbContext db, ExerciseTypeRegistry regist
     /// <inheritdoc/>
     protected override string TypeKey => ExerciseTypeKeys.Matching;
 
-    /// <summary>Wertet die Zuordnungen aus: je Paar zählt die zur linken Seite genannte rechte Seite.</summary>
+    /// <summary>Evaluates the matches: per pair, the right side given for the left side counts.</summary>
     [HttpPost("{exerciseId:int}/check")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public Task<ActionResult<CheckResult>> Check(int subjectId, int chapterId, int exerciseId, CheckDto body, CancellationToken ct = default) =>
@@ -363,8 +363,8 @@ public class MatchingController(PuglingDbContext db, ExerciseTypeRegistry regist
 }
 
 /// <summary>
-/// Übersetzungs-Übungen. Jedes Übersetzungspaar ohne <see cref="TranslationItem.VocabularyId"/> wird beim Speichern
-/// automatisch im Store angelegt und verknüpft; die Antwort ergänzt je Paar den Link <c>_self</c>.
+/// Translation exercises. Every translation pair without <see cref="TranslationItem.VocabularyId"/> is
+/// automatically created in the store and linked on save; the response adds the link <c>_self</c> per pair.
 /// </summary>
 [Route(ExerciseRoutes.Base + "/translation")]
 [Tags("Creator – Translation")]
@@ -373,14 +373,14 @@ public class TranslationController(PuglingDbContext db, ExerciseTypeRegistry reg
     /// <inheritdoc/>
     protected override string TypeKey => ExerciseTypeKeys.Translation;
 
-    /// <summary>Verpflichtet die Sprachcodes, sobald Paare ohne <see cref="TranslationItem.VocabularyId"/> anzulegen sind.</summary>
+    /// <summary>Requires the language codes as soon as pairs without <see cref="TranslationItem.VocabularyId"/> need to be created.</summary>
     protected override Task<string?> ValidateConfigAsync(int subjectId, TranslationConfig config, CancellationToken ct = default) =>
         Task.FromResult(config.Items.Any(i => i.VocabularyId is null)
             && (string.IsNullOrWhiteSpace(config.SourceLang) || string.IsNullOrWhiteSpace(config.TargetLang))
             ? "sourceLang and targetLang are required to create translation pairs in the store."
             : null);
 
-    /// <summary>Legt jedes noch nicht verknüpfte Paar im Store an (bzw. findet es) und verknüpft es per ID.</summary>
+    /// <summary>Creates each not-yet-linked pair in the store (or finds it) and links it by ID.</summary>
     protected override async Task NormalizeConfigAsync(int subjectId, TranslationConfig config, CancellationToken ct = default)
     {
         var pending = new List<(int Index, Vocabulary Vocab)>();
@@ -396,7 +396,7 @@ public class TranslationController(PuglingDbContext db, ExerciseTypeRegistry reg
             config.Items[index] = config.Items[index] with { VocabularyId = vocab.Id };
     }
 
-    /// <summary>Ergänzt je Übersetzungspaar den abgeleiteten Selbstlink <c>_self</c> (nicht persistiert).</summary>
+    /// <summary>Adds the derived self-link <c>_self</c> per translation pair (not persisted).</summary>
     protected override TranslationConfig ConfigForResponse(Exercise exercise)
     {
         var config = ConfigOf(exercise);
@@ -411,11 +411,11 @@ public class TranslationController(PuglingDbContext db, ExerciseTypeRegistry reg
 
 
 /// <summary>
-/// Birkenbihl-Methode: Texte in der Lernsprache mit grammatik-unabhängiger Wort-für-Wort-Dekodierung
-/// plus natürlicher Übersetzung. Reine Inhaltsübung zum Lesen/Hören – bewusst ohne <c>/check</c>, da das
-/// Verfahren nicht aktiv abfragt. Neben dem geerbten CRUD (Übung + Sprachen + Sätze en bloc) bietet der
-/// Controller die vokabel-gestützte Automatik: Sätze werden Wort für Wort im gemeinsamen Vokabelspeicher
-/// nachgeschlagen und einzeln korrigierbar (Homonyme).
+/// Birkenbihl method: texts in the learning language with grammar-independent word-for-word decoding
+/// plus natural translation. Pure content exercise for reading/listening – deliberately without <c>/check</c>, since the
+/// method does not actively query. Besides the inherited CRUD (exercise + languages + sentences en bloc), the
+/// controller offers the vocabulary-backed automation: sentences are looked up word for word in the shared vocabulary store
+/// and are individually correctable (homonyms).
 /// </summary>
 [Route(ExerciseRoutes.Base + "/birkenbihl")]
 [Tags("Creator – Birkenbihl")]
@@ -425,7 +425,7 @@ public class BirkenbihlController(PuglingDbContext db, ExerciseTypeRegistry regi
     /// <inheritdoc/>
     protected override string TypeKey => ExerciseTypeKeys.Birkenbihl;
 
-    /// <summary>Ergänzt je dekodiertem Wort den abgeleiteten Selbstlink <c>_self</c> aus seiner Vokabel-ID (nicht persistiert).</summary>
+    /// <summary>Adds the derived self-link <c>_self</c> per decoded word from its vocabulary ID (not persisted).</summary>
     protected override BirkenbihlConfig ConfigForResponse(Exercise exercise)
     {
         var config = ConfigOf(exercise);
@@ -436,9 +436,9 @@ public class BirkenbihlController(PuglingDbContext db, ExerciseTypeRegistry regi
     }
 
     /// <summary>
-    /// Vergibt fehlende (≤ 0) Satz-/Wort-IDs beim Speichern über das generische CRUD: Das Anlege-Formular
-    /// liefert die Sätze ohne IDs, die vokabel-gestützten Zusatz-Endpunkte (<c>.../words/{wordId}</c>) brauchen
-    /// aber übungsweit eindeutige IDs. Bereits vergebene IDs bleiben erhalten – so kollidiert nichts.
+    /// Assigns missing (≤ 0) sentence/word IDs on save via the generic CRUD: the create form
+    /// delivers the sentences without IDs, but the vocabulary-backed additional endpoints (<c>.../words/{wordId}</c>)
+    /// need exercise-wide unique IDs. Already assigned IDs remain – so nothing collides.
     /// </summary>
     protected override void NormalizeConfig(BirkenbihlConfig config)
     {
@@ -473,9 +473,9 @@ public class BirkenbihlController(PuglingDbContext db, ExerciseTypeRegistry regi
         new(w.WordId, w.LearningWord, w.Gloss, w.VocabularyId, VocabLink.Self(w.VocabularyId), candidates);
 
     /// <summary>
-    /// Dekodiert einen Satz automatisch über den Vokabelspeicher und <b>speichert</b> ihn in der Übung.
-    /// Jedes Wort erhält eine übungsweit eindeutige <c>wordId</c> (→ später einzeln austauschbar), der Satz
-    /// eine <c>sentenceId</c>. Unbekannte Wörter kommen mit leerer Glosse zurück; mehrdeutige mit Kandidaten.
+    /// Decodes a sentence automatically via the vocabulary store and <b>saves</b> it in the exercise.
+    /// Every word gets an exercise-wide unique <c>wordId</c> (→ individually exchangeable later), the sentence
+    /// gets a <c>sentenceId</c>. Unknown words come back with an empty gloss; ambiguous ones with candidates.
     /// </summary>
     [HttpPost("{exerciseId:int}/sentences")]
     [ProducesResponseType(StatusCodes.Status201Created)]
@@ -517,8 +517,8 @@ public class BirkenbihlController(PuglingDbContext db, ExerciseTypeRegistry regi
     }
 
     /// <summary>
-    /// Tauscht die Bedeutung eines einzelnen Worts aus (Homonym-Korrektur). Mit <c>vocabularyId</c> folgt die
-    /// Glosse der gewählten Karte; nur mit <c>gloss</c> wird eine freie Glosse ohne Karte gesetzt.
+    /// Swaps the meaning of a single word (homonym correction). With <c>vocabularyId</c>, the gloss follows
+    /// the chosen card; with only <c>gloss</c>, a free gloss without a card is set.
     /// </summary>
     [HttpPut("{exerciseId:int}/words/{wordId:int}")]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -569,7 +569,7 @@ public class BirkenbihlController(PuglingDbContext db, ExerciseTypeRegistry regi
         return ToDecodedWord(updated, lookups.Count > 0 ? CandidatesOf(lookups[0]) : null);
     }
 
-    /// <summary>Alle passenden Vokabelkarten zur aktuellen Schreibweise eines Worts (für die Auswahl der Bedeutung).</summary>
+    /// <summary>All matching vocabulary cards for the current spelling of a word (for choosing the meaning).</summary>
     [HttpGet("{exerciseId:int}/words/{wordId:int}/candidates")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<IReadOnlyList<VocabCandidate>>> WordCandidates(
@@ -586,7 +586,7 @@ public class BirkenbihlController(PuglingDbContext db, ExerciseTypeRegistry regi
         return lookups.Count == 0 ? new List<VocabCandidate>() : lookups[0].Candidates.Select(ToCandidate).ToList();
     }
 
-    /// <summary>Entfernt einen Satz aus der Übung.</summary>
+    /// <summary>Removes a sentence from the exercise.</summary>
     [HttpDelete("{exerciseId:int}/sentences/{sentenceId:int}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -607,9 +607,9 @@ public class BirkenbihlController(PuglingDbContext db, ExerciseTypeRegistry regi
     }
 
     /// <summary>
-    /// Zustandslose Vorschau: dekodiert einen Satz über den Vokabelspeicher und gibt die Wort-Tuple zurück,
-    /// <b>ohne</b> etwas zu speichern (IDs sind hier <c>0</c>). Praktisch, um vor dem Anlegen zu prüfen, welche
-    /// Wörter schon im Speicher liegen.
+    /// Stateless preview: decodes a sentence via the vocabulary store and returns the word tuples,
+    /// <b>without</b> saving anything (IDs are <c>0</c> here). Handy to check before creating which
+    /// words already exist in the store.
     /// </summary>
     [HttpPost("~/" + ApiRoutes.Creator + "/birkenbihl/decode")]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -635,7 +635,7 @@ public class BirkenbihlController(PuglingDbContext db, ExerciseTypeRegistry regi
     }
 }
 
-/// <summary>Feste Rechenaufgaben (manuell gepflegte Liste). <see cref="Check"/> wertet die Antworten aus.</summary>
+/// <summary>Fixed arithmetic problems (manually maintained list). <see cref="Check"/> evaluates the answers.</summary>
 [Route(ExerciseRoutes.Base + "/arithmetic")]
 [Tags("Creator – Arithmetic")]
 public class ArithmeticController(PuglingDbContext db, ExerciseTypeRegistry registry)
@@ -644,7 +644,7 @@ public class ArithmeticController(PuglingDbContext db, ExerciseTypeRegistry regi
     /// <inheritdoc/>
     protected override string TypeKey => ExerciseTypeKeys.Arithmetic;
 
-    /// <summary>Bewertet die Lösungen des Kindes gegen die hinterlegten Aufgaben (numerisch, mit Toleranz).</summary>
+    /// <summary>Evaluates the child's solutions against the stored problems (numeric, with tolerance).</summary>
     [HttpPost("{exerciseId:int}/check")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public Task<ActionResult<CheckResult>> Check(int subjectId, int chapterId, int exerciseId, CheckDto body, CancellationToken ct = default) =>
@@ -652,9 +652,9 @@ public class ArithmeticController(PuglingDbContext db, ExerciseTypeRegistry regi
 }
 
 /// <summary>
-/// Zufalls-Rechenaufgaben: Gespeichert werden die Regeln (Config), die konkreten Aufgaben liefert
-/// <see cref="Generate"/> auf Abruf. <see cref="Check"/> erzeugt den Satz aus demselben Seed erneut
-/// und bewertet ihn – dadurch bleibt die Prüfung serverseitig. Das CRUD der Regeln erbt der Controller.
+/// Random arithmetic problems: the rules (config) are stored, the concrete problems are delivered by
+/// <see cref="Generate"/> on demand. <see cref="Check"/> regenerates the set from the same seed
+/// and evaluates it – this keeps the check server-side. The controller inherits the CRUD of the rules.
 /// </summary>
 [Route(ExerciseRoutes.Base + "/arithmetic-drill")]
 [Tags("Creator – Arithmetic Drill")]
@@ -667,8 +667,8 @@ public class ArithmeticDrillController(PuglingDbContext db, ExerciseTypeRegistry
     private IGeneratingExerciseType DrillType => (IGeneratingExerciseType)Registry.Require(TypeKey);
 
     /// <summary>
-    /// Erzeugt einen Zufallssatz nach den gespeicherten Regeln. Zurückgegeben wird auch der verwendete
-    /// <c>Seed</c> – ihn beim späteren <see cref="Check"/> mitschicken, damit exakt dieser Satz bewertet wird.
+    /// Generates a random set according to the stored rules. The used
+    /// <c>Seed</c> is also returned – send it along with the later <see cref="Check"/>, so exactly this set is evaluated.
     /// </summary>
     [HttpPost("{exerciseId:int}/generate")]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -683,7 +683,7 @@ public class ArithmeticDrillController(PuglingDbContext db, ExerciseTypeRegistry
         return new GeneratedDrill(exercise.Id, exercise.Title, effectiveSeed, problems);
     }
 
-    /// <summary>Wertet einen zuvor generierten Satz aus: derselbe <c>Seed</c> wird erneut erzeugt und geprüft.</summary>
+    /// <summary>Evaluates a previously generated set: the same <c>Seed</c> is regenerated and checked.</summary>
     [HttpPost("{exerciseId:int}/check")]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -699,7 +699,7 @@ public class ArithmeticDrillController(PuglingDbContext db, ExerciseTypeRegistry
     }
 }
 
-/// <summary>Auswendig zu lernende Listen (z. B. die Bundesländer). <see cref="Check"/> zählt die genannten Einträge.</summary>
+/// <summary>Lists to be memorized (e.g. the federal states). <see cref="Check"/> counts the given entries.</summary>
 [Route(ExerciseRoutes.Base + "/list")]
 [Tags("Creator – List")]
 public class ListController(PuglingDbContext db, ExerciseTypeRegistry registry)
@@ -708,7 +708,7 @@ public class ListController(PuglingDbContext db, ExerciseTypeRegistry registry)
     /// <inheritdoc/>
     protected override string TypeKey => ExerciseTypeKeys.List;
 
-    /// <summary>Bewertet die genannten Einträge – als Menge, oder positionsgenau bei <c>Ordered</c>.</summary>
+    /// <summary>Evaluates the given entries – as a set, or position-exact with <c>Ordered</c>.</summary>
     [HttpPost("{exerciseId:int}/check")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public Task<ActionResult<CheckResult>> Check(int subjectId, int chapterId, int exerciseId, CheckDto body, CancellationToken ct = default) =>

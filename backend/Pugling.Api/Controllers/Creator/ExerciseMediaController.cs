@@ -8,17 +8,17 @@ using Pugling.Api.Errors;
 namespace Pugling.Api.Controllers.Creator;
 
 /// <summary>
-/// Bilder an einer Übung – die beiden Fälle, die die Store-Zuordnung
-/// (<see cref="VocabularyMediaController"/>) nicht abdeckt:
+/// Images on an exercise – the two cases that the store assignment
+/// (<see cref="VocabularyMediaController"/>) does not cover:
 /// <list type="bullet">
-/// <item><b>Item-Übersteuerung</b> (<c>items/{itemId}/media</c>): in <i>dieser</i> Übung soll ein
-/// anderes Bild stehen als das, was am Wort im Store hängt – ohne den Store zu verbiegen. Der Resolver
-/// liest später von unten nach oben: Item schlägt Vokabel.</item>
-/// <item><b>Titelbild</b> (<c>media</c>): der Aufmacher einer Text-/Lese-/Satzübung, die gar kein
-/// einzelnes Wort bebildert.</item>
+/// <item><b>Item override</b> (<c>items/{itemId}/media</c>): in <i>this</i> exercise, a
+/// different image should appear than the one hanging off the word in the store – without bending the store. The resolver
+/// later reads bottom-up: item beats vocabulary entry.</item>
+/// <item><b>Title image</b> (<c>media</c>): the header image of a text/reading/sentence exercise that has no
+/// single word to illustrate at all.</item>
 /// </list>
-/// Beides ändert den Inhalt einer Übung und verlangt daher <b>Schreibrecht</b> – anders als der
-/// kindneutrale Store, den jeder Creator pflegen darf.
+/// Both change the content of an exercise and therefore require <b>write permission</b> – unlike the
+/// child-neutral store, which every creator may maintain.
 /// </summary>
 [ApiController]
 [ApiVersion("1.0")]
@@ -31,7 +31,7 @@ public class ExerciseMediaController(PuglingDbContext db, MediaLinkService links
 {
     // ---- Titelbild der Übung -------------------------------------------------------------------------
 
-    /// <summary>Die Titelbilder der Übung, bester redaktioneller Rang zuerst.</summary>
+    /// <summary>The title images of the exercise, best editorial rank first.</summary>
     [HttpGet("media")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<IEnumerable<MediaLinkResponse>>> ListForExercise(int exerciseId, CancellationToken ct)
@@ -40,7 +40,7 @@ public class ExerciseMediaController(PuglingDbContext db, MediaLinkService links
         return (await links.ListAsync(MediaLinkService.Carrier.Exercise, exerciseId, ct)).Select(MediaLinkService.Map).ToList();
     }
 
-    /// <summary>Ordnet der Übung ein Titelbild zu (Schreibrecht nötig).</summary>
+    /// <summary>Assigns a title image to the exercise (write permission required).</summary>
     [HttpPost("media")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -58,7 +58,7 @@ public class ExerciseMediaController(PuglingDbContext db, MediaLinkService links
         return CreatedAtAction(nameof(ListForExercise), new { exerciseId }, MediaLinkService.Map(link!));
     }
 
-    /// <summary>Löst ein Titelbild von der Übung (Schreibrecht nötig).</summary>
+    /// <summary>Removes a title image from the exercise (write permission required).</summary>
     [HttpDelete("media/{linkId:int}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -76,7 +76,7 @@ public class ExerciseMediaController(PuglingDbContext db, MediaLinkService links
 
     // ---- Übungslokale Übersteuerung je Item ----------------------------------------------------------
 
-    /// <summary>Die Bilder, die für dieses Item die Store-Zuordnung übersteuern.</summary>
+    /// <summary>The images that override the store assignment for this item.</summary>
     [HttpGet("items/{itemId:int}/media")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<IEnumerable<MediaLinkResponse>>> ListForItem(int exerciseId, int itemId, CancellationToken ct)
@@ -87,7 +87,7 @@ public class ExerciseMediaController(PuglingDbContext db, MediaLinkService links
         return (await links.ListAsync(MediaLinkService.Carrier.ExerciseItem, itemId, ct)).Select(MediaLinkService.Map).ToList();
     }
 
-    /// <summary>Ordnet dem Item ein Bild zu – gilt nur in dieser Übung (Schreibrecht nötig).</summary>
+    /// <summary>Assigns an image to the item – applies only in this exercise (write permission required).</summary>
     [HttpPost("items/{itemId:int}/media")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -106,7 +106,7 @@ public class ExerciseMediaController(PuglingDbContext db, MediaLinkService links
         return CreatedAtAction(nameof(ListForItem), new { exerciseId, itemId }, MediaLinkService.Map(link!));
     }
 
-    /// <summary>Löst die Übersteuerung – danach greift wieder das Bild aus dem Store (Schreibrecht nötig).</summary>
+    /// <summary>Removes the override – after this, the image from the store applies again (write permission required).</summary>
     [HttpDelete("items/{itemId:int}/media/{linkId:int}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -126,11 +126,11 @@ public class ExerciseMediaController(PuglingDbContext db, MediaLinkService links
 
     // ---- Helfer --------------------------------------------------------------------------------------
 
-    /// <summary>Verhindert, dass ein fremdes Item über eine beliebige Übungs-Route adressiert wird.</summary>
+    /// <summary>Prevents a foreign item from being addressed via an arbitrary exercise route.</summary>
     private Task<bool> ItemBelongsAsync(int exerciseId, int itemId, CancellationToken ct) =>
         db.ExerciseItems.AnyAsync(i => i.Id == itemId && i.ExerciseId == exerciseId, ct);
 
-    /// <summary><c>null</c> = darf schreiben; sonst die fertige 403-Antwort (Muster wie im Übungs-CRUD).</summary>
+    /// <summary><c>null</c> = may write; otherwise the ready-made 403 response (same pattern as in the exercise CRUD).</summary>
     private async Task<ActionResult?> EnsureCanWriteAsync(int exerciseId, CancellationToken ct) =>
         await perms.CanWriteAsync(User, exerciseId, ct)
             ? null

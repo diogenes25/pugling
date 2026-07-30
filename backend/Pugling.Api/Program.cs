@@ -502,5 +502,5 @@ app.MapControllers();
 app.MapFallbackToFile("index.html");
 app.Run();
 
-/// <summary>Sichtbar gemacht für Integrationstests (WebApplicationFactory&lt;Program&gt;).</summary>
+/// <summary>Made visible for integration tests (WebApplicationFactory&lt;Program&gt;).</summary>
 public partial class Program;

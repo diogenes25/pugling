@@ -5,13 +5,13 @@ using Pugling.Api.Auth;
 namespace Pugling.Api.Controllers.Student;
 
 /// <summary>
-/// Kind-zentrische Drill-down-Sicht auf den Vokabel-Lernstand entlang der Katalog-Hierarchie
-/// (Fach → Kapitel → Übung → Item). Spiegelt den globalen Katalogpfad <c>learn/subjects/{}/chapters/{}/vocabulary</c>,
-/// liefert aber je Ebene den <b>aggregierten Lernstand des Kindes</b> statt der Übungsdarstellung. Ergänzt die
-/// flache <see cref="ChildVocabularyProgressController"/>-Sicht (schwächste Wörter übergreifend) um die Hierarchie.
-/// Eigentum über <see cref="ChildOwnershipFilter"/> (Vater = eigenes Kind, Sohn = er selbst). Angezeigt wird die
-/// relevante Menge (zugewiesen ∪ mit Fortschritt); das Flag <c>active</c> unterscheidet aktuell zugewiesene von
-/// nur noch historischen (abgehängten/deaktivierten) Übungen – Logik im <see cref="ChildLearnProgressService"/>.
+/// Child-centric drill-down view of vocabulary learning progress along the catalog hierarchy
+/// (subject → chapter → exercise → item). Mirrors the global catalog path <c>learn/subjects/{}/chapters/{}/vocabulary</c>,
+/// but returns at each level the <b>aggregated learning progress of the child</b> instead of the exercise representation. Complements the
+/// flat <see cref="ChildVocabularyProgressController"/> view (weakest words across the board) with the hierarchy.
+/// Ownership via <see cref="ChildOwnershipFilter"/> (father = own child, child = themself). What's shown is the
+/// relevant set (assigned ∪ with progress); the <c>active</c> flag distinguishes currently assigned from
+/// merely historical (unlinked/deactivated) exercises – logic in the <see cref="ChildLearnProgressService"/>.
 /// </summary>
 [ApiController]
 [ApiVersion("1.0")]
@@ -23,9 +23,9 @@ namespace Pugling.Api.Controllers.Student;
 public class ChildLearnProgressController(ChildLearnProgressService progress) : ControllerBase
 {
     /// <summary>
-    /// Relevante Fächer des Kindes mit aggregiertem Vokabel-Fortschritt. <paramref name="search"/> filtert nach
-    /// Fachname, <paramref name="active"/> auf (in)aktive Fächer. Sortierung: <c>name</c> (Standard), <c>mastery</c>,
-    /// <c>coverage</c>, <c>weak</c>, <c>activity</c> (Kurzform <c>-name</c> = absteigend). Gesamtzahl im Header <c>X-Total-Count</c>.
+    /// Relevant subjects of the child with aggregated vocabulary progress. <paramref name="search"/> filters by
+    /// subject name, <paramref name="active"/> by (in)active subjects. Sort: <c>name</c> (default), <c>mastery</c>,
+    /// <c>coverage</c>, <c>weak</c>, <c>activity</c> (short form <c>-name</c> = descending). Total count in the <c>X-Total-Count</c> header.
     /// </summary>
     [HttpGet("subjects")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -36,7 +36,7 @@ public class ChildLearnProgressController(ChildLearnProgressService progress) : 
         (await progress.SubjectsAsync(childId, search, SortingExtensions.ParseSort(sort, dir), active, ct))
             .ToPagedList(Response, skip, take);
 
-    /// <summary>Ein einzelnes relevantes Fach (404, wenn dem Kind darin nichts zugewiesen ist und kein Fortschritt existiert).</summary>
+    /// <summary>A single relevant subject (404 if the child has nothing assigned in it and no progress exists).</summary>
     [HttpGet("subjects/{subjectId:int}")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<SubjectProgressResponse>> Subject(
@@ -44,8 +44,8 @@ public class ChildLearnProgressController(ChildLearnProgressService progress) : 
         await progress.SubjectAsync(childId, subjectId, ct) is { } s ? s : NotFound();
 
     /// <summary>
-    /// Kapitel eines Fachs mit Fortschritt (404, wenn das Fach nicht relevant ist). Filter wie bei den Fächern;
-    /// Sortierung zusätzlich <c>order</c> (Standard, Kapitelreihenfolge). Gesamtzahl im Header <c>X-Total-Count</c>.
+    /// Chapters of a subject with progress (404 if the subject is not relevant). Filters as for subjects;
+    /// sort additionally <c>order</c> (default, chapter order). Total count in the <c>X-Total-Count</c> header.
     /// </summary>
     [HttpGet("subjects/{subjectId:int}/chapters")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -58,9 +58,9 @@ public class ChildLearnProgressController(ChildLearnProgressService progress) : 
             : NotFound();
 
     /// <summary>
-    /// Relevante Vokabelübungen eines Kapitels mit Fortschritt je Übung (404, wenn das Kapitel nicht relevant ist).
-    /// Filter wie bei Kapiteln; Sortierung zusätzlich <c>title</c>, <c>active</c> (Standard <c>order</c>).
-    /// Gesamtzahl im Header <c>X-Total-Count</c>.
+    /// Relevant vocabulary exercises of a chapter with progress per exercise (404 if the chapter is not relevant).
+    /// Filters as for chapters; sort additionally <c>title</c>, <c>active</c> (default <c>order</c>).
+    /// Total count in the <c>X-Total-Count</c> header.
     /// </summary>
     [HttpGet("subjects/{subjectId:int}/chapters/{chapterId:int}/vocabulary")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -73,10 +73,10 @@ public class ChildLearnProgressController(ChildLearnProgressService progress) : 
             : NotFound();
 
     /// <summary>
-    /// Item-Lernstand des Kindes für eine relevante Vokabelübung, schwächste zuerst
-    /// (404, wenn die Übung dem Kind unter diesem Fach/Kapitel weder zugewiesen ist noch Fortschritt trägt).
-    /// <paramref name="search"/> filtert nach Wort/Übersetzung; Sortierung: <c>word</c>, <c>mastery</c>, <c>box</c>,
-    /// <c>seen</c>, <c>activity</c>. Gesamtzahl im Header <c>X-Total-Count</c>.
+    /// Item learning progress of the child for a relevant vocabulary exercise, weakest first
+    /// (404 if the exercise is neither assigned to the child under this subject/chapter nor carries progress).
+    /// <paramref name="search"/> filters by word/translation; sort: <c>word</c>, <c>mastery</c>, <c>box</c>,
+    /// <c>seen</c>, <c>activity</c>. Total count in the <c>X-Total-Count</c> header.
     /// </summary>
     [HttpGet("subjects/{subjectId:int}/chapters/{chapterId:int}/vocabulary/{exerciseId:int}/items")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

@@ -5,21 +5,21 @@ using Pugling.Api.Models;
 namespace Pugling.Api.Services.Shared;
 
 /// <summary>
-/// Ziel-/Punkte-Engine des Positions-Modells (Etappe 4): entscheidet je <see cref="PlanPosition"/>,
-/// ob ihr Ziel in der laufenden Periode <em>erledigt</em> ist (Regel nach <see cref="ExerciseCheckMode"/>
-/// der referenzierten Übung), schreibt die Ziel-Punkte <b>idempotent</b> gut (<see cref="PositionGoalReward"/>)
-/// und rollt den Tages-/Wochen-Status eines ganzen Lehrplans zusammen. Das positions-weite Gegenstück zum
-/// früheren plan-weiten Fortschritts-Service – Pflicht und Punkte hängen jetzt an der Übung, nicht am Plan.
+/// Goal/points engine of the plan-position model (stage 4): decides per <see cref="PlanPosition"/>
+/// whether its goal is <em>done</em> in the current period (rule based on the <see cref="ExerciseCheckMode"/>
+/// of the referenced exercise), credits the goal points <b>idempotently</b> (<see cref="PositionGoalReward"/>),
+/// and rolls up the daily/weekly status of an entire study plan. The position-wide counterpart to the
+/// former plan-wide progress service – mandatory goal and points now hang off the exercise, not the plan.
 /// </summary>
 public class PositionProgressService(PuglingDbContext db, PositionPlayService play, ExerciseTypeRegistry registry)
 {
-    /// <summary>Standard-Bestehensgrenze eines Positions-Tests, wenn die Position keine eigene Schwelle setzt.</summary>
+    /// <summary>Default pass threshold of a plan-position test when the position doesn't set its own.</summary>
     private const int DefaultPassPercent = 80;
 
     /// <summary>
-    /// Wie weit das Lazy Settlement (<see cref="SettleClosedPeriodsAsync"/>) höchstens zurückrechnet. Im
-    /// Normalbetrieb ist die einzige offene Periode „gestern"; der Deckel begrenzt nur Nachrechnungen nach
-    /// längerer Abwesenheit, ohne je die gesamte Historie zu scannen.
+    /// How far back the lazy settlement (<see cref="SettleClosedPeriodsAsync"/>) recalculates at most. In
+    /// normal operation the only open period is "yesterday"; the cap only limits catch-up recalculation
+    /// after a longer absence, without ever scanning the entire history.
     /// </summary>
     private const int MaxSettleLookbackDays = 14;
 
@@ -27,31 +27,31 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
 
     // ---- Perioden ----
 
-    /// <summary>Montag der Woche, in der <paramref name="day"/> liegt (Woche = Mo–So).</summary>
+    /// <summary>Monday of the week that <paramref name="day"/> falls in (week = Mon–Sun).</summary>
     private static DateOnly WeekMonday(DateOnly day) => day.AddDays(-(((int)day.DayOfWeek + 6) % 7));
 
-    /// <summary>Zeitraum [von, bis] der Periode, in der die Position ihr Ziel erfüllen muss.</summary>
+    /// <summary>Range [from, to] of the period in which the position must meet its goal.</summary>
     private static (DateOnly From, DateOnly To) PeriodRange(GoalCadence cadence, DateOnly day) => cadence switch
     {
         GoalCadence.Weekly => (WeekMonday(day), WeekMonday(day).AddDays(6)),
         _ => (day, day),
     };
 
-    /// <summary>Eindeutiger Schlüssel der Periode für die idempotente Belohnung (Tag bzw. Wochen-Montag).</summary>
+    /// <summary>Unique key of the period for the idempotent reward (day, or the week's Monday).</summary>
     private static string PeriodKey(GoalCadence cadence, DateOnly day) =>
         (cadence == GoalCadence.Weekly ? WeekMonday(day) : day).ToString("yyyy-MM-dd");
 
     // ---- Erledigt-Regel je Prüfmodus ----
 
-    /// <summary>Prüfmodus der Übung dieser Position (Standard <see cref="ExerciseCheckMode.None"/>).</summary>
+    /// <summary>Check mode of this position's exercise (default <see cref="ExerciseCheckMode.None"/>).</summary>
     private ExerciseCheckMode CheckModeOf(PlanPosition pos) =>
         pos.Exercise is { } ex ? registry.ByKey(ex.Type)?.Manifest.CheckMode ?? ExerciseCheckMode.None : ExerciseCheckMode.None;
 
     /// <summary>
-    /// Ist das Ziel der Position in ihrer Periode um <paramref name="day"/> erledigt? Reine Inhalts-/
-    /// Leseübungen (<see cref="ExerciseCheckMode.None"/>) gelten als erledigt, sobald eine Übungssitzung
-    /// mit Aktivität vorliegt; prüfbare Typen (Test/Katalog-Check), sobald ein Test in der Periode
-    /// bestanden wurde (bei <see cref="PlanPosition.RequireTypedTest"/> nur ein gewerteter Versuch).
+    /// Is the position's goal done in its period around <paramref name="day"/>? Pure content/reading
+    /// exercises (<see cref="ExerciseCheckMode.None"/>) count as done as soon as a practice session with
+    /// activity exists; checkable types (test/catalog check) count as done as soon as a test has been
+    /// passed within the period (with <see cref="PlanPosition.RequireTypedTest"/> only a graded attempt counts).
     /// </summary>
     public async Task<bool> IsGoalMetAsync(PlanPosition pos, DateOnly day, CancellationToken ct = default)
     {
@@ -76,17 +76,18 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
             .ToListAsync(ct);
 
     /// <summary>
-    /// Punkte, die dieser Plan an genau diesem Kalendertag aus erreichten Positions-Zielen gebucht hat.
-    /// Bewusst über <see cref="PositionGoalReward.Day"/> (der Buchungstag) statt über den <see cref="PositionGoalReward.PeriodKey"/>:
-    /// Wochenziele tragen den Wochen-Montag als Perioden-Schlüssel; würde man danach filtern, zählte dieselbe
-    /// Wochen-Belohnung an jedem Tag der Woche mit und der aufsummierte Verlauf (Progress) überhöhte die Punkte um bis zu 7×.
+    /// Points this plan has booked from reached plan-position goals on exactly this calendar day.
+    /// Deliberately via <see cref="PositionGoalReward.Day"/> (the booking day) rather than
+    /// <see cref="PositionGoalReward.PeriodKey"/>: weekly goals carry the week's Monday as their period
+    /// key; filtering on that would count the same weekly reward on every day of the week, and the
+    /// summed-up progress history would overstate the points by up to 7×.
     /// </summary>
     private async Task<int> PointsAwardedAsync(int planId, DateOnly day, CancellationToken ct) =>
         await db.PositionGoalRewards
             .Where(r => r.PlanPosition!.StudyPlanId == planId && r.Day == day)
             .SumAsync(r => (int?)r.Points, ct) ?? 0;
 
-    /// <summary>Berechnet den Tages-Status eines Plans über seine Positionen (ohne Punkte zu vergeben).</summary>
+    /// <summary>Computes a plan's daily status across its positions (without awarding points).</summary>
     public async Task<DayOverview> ComputeDayAsync(StudyPlan plan, DateOnly day, CancellationToken ct = default)
     {
         var positions = await LoadPositionsAsync(plan.Id, ct);
@@ -120,12 +121,12 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
     }
 
     /// <summary>
-    /// Wertet den Tag aus und schreibt für jede Position mit erreichtem Ziel die Ziel-Punkte einmalig gut
-    /// (idempotent je Periode via <see cref="PositionGoalReward"/>). Gibt den aktuellen Tages-Status zurück.
+    /// Evaluates the day and credits the goal points once for every position with a reached goal
+    /// (idempotent per period via <see cref="PositionGoalReward"/>). Returns the current daily status.
     /// <para>
-    /// Der Existenz-Check unten ist nur die schnelle Vorprüfung; die <b>Garantie</b> steht im gefilterten
-    /// Unique-Index auf <c>(PlanPositionId, PeriodKey)</c>. Genau wie beim Malus
-    /// (<see cref="SettleClosedPeriodsAsync"/>) darf der nebenläufige Verlierer daran nicht zerbrechen.
+    /// The existence check below is only the fast pre-check; the <b>guarantee</b> lives in the filtered
+    /// unique index on <c>(PlanPositionId, PeriodKey)</c>. Exactly as with the penalty
+    /// (<see cref="SettleClosedPeriodsAsync"/>), the concurrent loser must not break on this.
     /// </para>
     /// </summary>
     public async Task<DayOverview> EvaluateAndAwardAsync(StudyPlan plan, DateOnly day, CancellationToken ct = default)
@@ -168,16 +169,16 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
 
     // ---- Malus fürs Nicht-Lernen (Lazy Settlement) ----
 
-    /// <summary>Ist der Plan in der Periode [<paramref name="from"/>,<paramref name="to"/>] fällig gewesen? (Fairness).</summary>
+    /// <summary>Was the plan due in the period [<paramref name="from"/>,<paramref name="to"/>]? (fairness).</summary>
     /// <remarks>
-    /// Überlappungs-Variante der Anti-Schummel-Regel <c>PlanPlayableForChild</c>: kein Malus, wenn der Plan
-    /// inaktiv ist oder die Periode gar nicht in seine Laufzeit fällt. So wird nicht für Tage bestraft, an
-    /// denen der Vater den Plan aus hatte oder außerhalb des Datumsfensters gar nicht gelernt werden durfte.
+    /// Overlap variant of the anti-cheating rule <c>PlanPlayableForChild</c>: no penalty if the plan is
+    /// inactive or the period doesn't fall within its runtime at all. This avoids punishing days on which
+    /// the supervisor had the plan turned off, or which fell outside the date window where learning wasn't allowed at all.
     /// </remarks>
     private static bool PlanDueForPeriod(StudyPlan plan, DateOnly from, DateOnly to) =>
         plan.Active && from <= plan.EndDate && to >= plan.StartDate;
 
-    /// <summary>Alle bereits <b>abgeschlossenen</b> Perioden eines Rhythmus im Fenster [<paramref name="windowStart"/>, heute).</summary>
+    /// <summary>All already <b>closed</b> periods of a cadence within the window [<paramref name="windowStart"/>, today).</summary>
     private static IEnumerable<(DateOnly From, DateOnly To, string Key)> ClosedPeriods(
         GoalCadence cadence, DateOnly windowStart, DateOnly today)
     {
@@ -195,14 +196,15 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
     }
 
     /// <summary>
-    /// Rechnet für ein Kind alle <b>abgeschlossenen</b> Pflicht-Perioden nach und bucht für jede
-    /// <b>gerissene</b> (Ziel nicht erreicht) einmalig den Münz-Malus (<see cref="PlanPosition.PenaltyCoins"/>)
-    /// als negative <see cref="PointKind.GoalPenalty"/>-Buchung. Der „Stick" gegen Nicht-Lernen. Es gibt keinen
-    /// Scheduler; diese Methode wird an POST-Nahtstellen (Login, Shop-Kauf) aufgerufen und ist über den
-    /// Unique-Index (<see cref="PositionGoalPenalty"/>) sowie die Existenz-Checks <b>idempotent</b> – mehrfaches
-    /// Auslösen doppelt nicht. Schulden sind erlaubt: der Münz-Saldo darf negativ werden (kein Clamp).
+    /// Recalculates all <b>closed</b> mandatory periods for a child and books the coin penalty
+    /// (<see cref="PlanPosition.PenaltyCoins"/>) once for every period <b>missed</b> (goal not reached),
+    /// as a negative <see cref="PointKind.GoalPenalty"/> ledger entry. The "penalty" against not learning.
+    /// There is no scheduler; this method is called at POST seams (login, shop purchase) and is
+    /// <b>idempotent</b> via the unique index (<see cref="PositionGoalPenalty"/>) and the existence
+    /// checks – triggering it multiple times doesn't double it. Debt is allowed: the coin balance may go
+    /// negative (no clamp).
     /// </summary>
-    /// <returns>Summe der in diesem Lauf abgezogenen Münzen (0 = nichts fällig).</returns>
+    /// <returns>Sum of the coins deducted in this run (0 = nothing due).</returns>
     public async Task<int> SettleClosedPeriodsAsync(int childId, DateOnly today, CancellationToken ct = default)
     {
         var child = await db.Children.FirstOrDefaultAsync(c => c.Id == childId, ct);
@@ -271,7 +273,7 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
         return appliedCoins;
     }
 
-    /// <summary>Tag-für-Tag-Status über die Laufzeit bis heute (für die Vater-Auswertung).</summary>
+    /// <summary>Day-by-day status across the runtime up to today (for the supervisor evaluation view).</summary>
     public async Task<IReadOnlyList<ProgressDay>> ProgressAsync(StudyPlan plan, DateOnly until,
         CancellationToken ct = default)
     {
@@ -284,7 +286,7 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
         return days;
     }
 
-    /// <summary>Aktuelle Streak: aufeinanderfolgende erledigte Tage bis <paramref name="today"/> (rückwärts).</summary>
+    /// <summary>Current streak: consecutive completed days up to <paramref name="today"/> (counting backward).</summary>
     public static int Streak(IEnumerable<ProgressDay> days, DateOnly today)
     {
         var streak = 0;
@@ -296,11 +298,11 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
     }
 
     /// <summary>
-    /// Aufbereiteter Verlauf für die Vater-Auswertung: die Kennzahlen (<see cref="ProgressView.DaysComplete"/>
-    /// / <see cref="ProgressView.TotalPoints"/> / <see cref="ProgressView.CurrentStreak"/>) beziehen sich stets
-    /// auf die <b>gesamte</b> Laufzeit; Filter (<paramref name="from"/>/<paramref name="to"/>/<paramref name="dutyDone"/>)
-    /// und Sortierung (<paramref name="sort"/>: <c>day</c>/<c>-day</c>/<c>points</c>/<c>-points</c>) wirken nur auf
-    /// die zurückgegebenen <see cref="ProgressView.Days"/>. Das HTTP-seitige Paging setzt der Controller darauf.
+    /// Processed history for the supervisor evaluation view: the key figures (<see cref="ProgressView.DaysComplete"/>
+    /// / <see cref="ProgressView.TotalPoints"/> / <see cref="ProgressView.CurrentStreak"/>) always relate to
+    /// the <b>entire</b> runtime; the filter (<paramref name="from"/>/<paramref name="to"/>/<paramref name="dutyDone"/>)
+    /// and sort (<paramref name="sort"/>: <c>day</c>/<c>-day</c>/<c>points</c>/<c>-points</c>) affect only
+    /// the returned <see cref="ProgressView.Days"/>. The controller layers its HTTP-side paging on top of this.
     /// </summary>
     public async Task<ProgressView> ProgressViewAsync(StudyPlan plan, DateOnly today,
         DateOnly? from, DateOnly? to, bool? dutyDone, string? sort, CancellationToken ct = default)

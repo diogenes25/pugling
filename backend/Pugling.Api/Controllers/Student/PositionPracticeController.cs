@@ -9,10 +9,10 @@ using Pugling.Api.Models;
 namespace Pugling.Api.Controllers.Student;
 
 /// <summary>
-/// Üben einer einzelnen Lehrplan-Position (neues Modell): der Sohn spielt die Inhalte EINER Übung,
-/// der Fortschritt läuft pro Inhalts-Atom über <see cref="PositionItemProgress"/>. Inhalt kommt aus der
-/// Übungs-Config (<see cref="ExerciseContentProvider"/>), bewertet wird typ-neutral gegen die Item-Lösung.
-/// Ersetzt die frühere plan-weite Übungssitzung.
+/// Practicing a single study plan position (new model): the child plays the content of ONE exercise,
+/// progress runs per content atom via <see cref="PositionItemProgress"/>. Content comes from the
+/// exercise config (<see cref="ExerciseContentProvider"/>), grading is type-neutral against the item solution.
+/// Replaces the former plan-wide practice session.
 /// </summary>
 [ApiController]
 [ApiVersion("1.0")]
@@ -27,7 +27,7 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
     TimeProvider time)
     : ControllerBase
 {
-    /// <summary>Obergrenze der pro Heartbeat anrechenbaren Sekunden (Anti-Zeit-Cheat).</summary>
+    /// <summary>Upper bound of the seconds creditable per heartbeat (anti time cheat).</summary>
     private const int MaxHeartbeatSeconds = 120;
 
     private static SessionResponse Map(PracticeSession s) =>
@@ -48,7 +48,7 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         db.PracticeSessions.Include(s => s.Reviews)
             .FirstOrDefaultAsync(s => s.Id == sessionId && s.StudyPlanId == planId && s.PlanPositionId == positionId, ct);
 
-    /// <summary>Startet eine Übungssitzung für die Position. Day nur zum Nachtragen (Vater); sonst heute.</summary>
+    /// <summary>Starts a practice session for the position. Day only for backdating (father); otherwise today.</summary>
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -77,13 +77,13 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         return CreatedAtAction(nameof(Get), new { planId, positionId, sessionId = session.Id }, Map(session));
     }
 
-    /// <summary>Eine Übungssitzung der Position.</summary>
+    /// <summary>A practice session of the position.</summary>
     [HttpGet("{sessionId:int}")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<SessionResponse>> Get(int planId, int positionId, int sessionId, CancellationToken ct = default) =>
         await GetSession(planId, positionId, sessionId, ct) is { } s ? Map(s) : NotFound();
 
-    /// <summary>Fügt (aktive) Übungssekunden hinzu (Anti-Zeit-Cheat: pro Heartbeat gedeckelt).</summary>
+    /// <summary>Adds (active) practice seconds (anti time cheat: capped per heartbeat).</summary>
     [HttpPost("{sessionId:int}/heartbeat")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<SessionResponse>> Heartbeat(int planId, int positionId, int sessionId, HeartbeatDto dto, CancellationToken ct = default)
@@ -96,9 +96,9 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
     }
 
     /// <summary>
-    /// Baut eine Übungskarte aus einem Inhalts-Atom. Getippte Stufen halten die Lösung zurück
-    /// (der Server bewertet, nie das Frontend); Anzeige-/Selbsteinschätzung und die Hör-Stufe decken
-    /// per Design auf bzw. geben die Audioquelle mit.
+    /// Builds a practice card from a content atom. Typed stages withhold the solution
+    /// (the server grades, never the frontend); display/self-assessment and the listening stage reveal
+    /// it by design, or supply the audio source.
     /// </summary>
     private static PracticeCard BuildCard(IExerciseType type, int stage, bool typed,
         IReadOnlyList<ContentItem> items, int index)
@@ -110,9 +110,9 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
     }
 
     /// <summary>
-    /// Liefert alle Karten der Sitzung in der beim Start eingefrorenen Reihenfolge – für den Info-Modus
-    /// (freies Üben, Frontend iteriert) und als Offline-Fallback des Lern-Modus (Antworten werden gepuffert
-    /// und bei Reconnect über <see cref="Review"/> nachgesendet). Der Lern-Modus nutzt sonst <see cref="Next"/>.
+    /// Returns all cards of the session in the order frozen at start – for the info mode
+    /// (free practice, frontend iterates) and as an offline fallback of the learn mode (answers are buffered
+    /// and sent later via <see cref="Review"/> on reconnect). The learn mode otherwise uses <see cref="Next"/>.
     /// </summary>
     [HttpGet("{sessionId:int}/cards")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -140,19 +140,19 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
     }
 
     /// <summary>
-    /// „Anderes Bild" für eine Karte. Bewusst hier und nicht beim Kind adressiert: welcher Träger die
-    /// Wahl hält – die übungslokale Übersteuerung oder die Store-Vokabel – ergibt sich erst aus der
-    /// Genauigkeits-Kaskade, die nur der Server kennt. Der Client hat nur die Karte vor sich.
+    /// "Different image" for a card. Deliberately addressed here and not at the child: which carrier
+    /// holds the pick – the exercise-local override or the store vocabulary – only follows from the
+    /// specificity cascade that only the server knows. The client only has the card in front of it.
     /// <para>
-    /// Das abgelehnte Bild kommt für diesen Träger nie wieder. Gibt es keine Alternative, bleibt alles
-    /// unverändert (<c>409 media_no_alternative</c>) statt die Karte bildlos zurückzulassen.
+    /// The rejected image never comes up again for this carrier. If there is no alternative, everything
+    /// stays unchanged (<c>409 media_no_alternative</c>) instead of leaving the card without an image.
     /// </para>
     /// <para>
-    /// Der Endpunkt <b>gibt ein Bild heraus</b> und trägt darum dieselben Schranken wie die Ausspielung
-    /// selbst: nur der spielbare Plan, nur Karten dieser Sitzung, und nur wo die Karte auch ein Bild
-    /// zeigt. Ohne die letzte Schranke wäre er das Loch in der Anti-Cheat-Regel – auf einer getippten
-    /// Stufe lieferte er Bild <i>und</i> Alt-Text und damit die Bedeutung genau des Wortes, das getippt
-    /// werden soll (<see cref="PositionPlayService.CardFacets"/> hält dort beides bewusst zurück).
+    /// The endpoint <b>hands out an image</b> and therefore carries the same guards as the playback
+    /// itself: only the playable plan, only cards of this session, and only where the card actually shows an
+    /// image. Without the last guard it would be the hole in the anti-cheat rule – on a typed
+    /// stage it would deliver image <i>and</i> alt text and thereby the meaning of exactly the word that is
+    /// supposed to be typed (<see cref="PositionPlayService.CardFacets"/> deliberately withholds both there).
     /// </para>
     /// </summary>
     [HttpPost("{sessionId:int}/cards/{itemIndex:int}/image/reshuffle")]
@@ -195,8 +195,8 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
     }
 
     /// <summary>
-    /// Liefert die aktuelle Karte an der Cursor-Position der Sitzung (Lern-Modus, One-at-a-time). Übersprungen
-    /// werden seit dem Start entfernte Items. Ist der Cursor am Ende, kommt <see cref="NextResponse.Done"/>.
+    /// Returns the current card at the session's cursor position (learn mode, one-at-a-time). Items removed
+    /// since the start are skipped. If the cursor is at the end, <see cref="NextResponse.Done"/> is returned.
     /// </summary>
     [HttpGet("{sessionId:int}/next")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -225,12 +225,12 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
     }
 
     /// <summary>
-    /// Nimmt die Antwort zu einer Übungskarte entgegen, bewertet sie serverseitig gegen die Item-Lösung
-    /// und protokolliert die Wiederholung. Bei Leitner-Positionen wandert das Atom die Box hoch/runter,
-    /// richtige Antworten bringen Punkte (+ Combo-/Speed-Bonus). Anti-Farming: gewertet wird nur eine
-    /// fällige Karte und höchstens einmal pro Tag; nicht-getippte Selbsteinschätzung zählt bei
-    /// <see cref="PlanPosition.RequireTypedTest"/> nicht. Danach rückt der Server-Cursor eine Karte weiter
-    /// und liefert die nächste gleich mit. Im <see cref="PlayMode.Info"/> fließt kein Feedback (204).
+    /// Accepts the answer to a practice card, grades it server-side against the item solution
+    /// and logs the review. For Leitner positions the atom moves the box up/down,
+    /// correct answers earn points (+ combo/speed bonus). Anti-farming: only one
+    /// due card is scored and at most once per day; non-typed self-assessment does not count with
+    /// <see cref="PlanPosition.RequireTypedTest"/>. The server cursor then advances one card
+    /// and returns the next one right away. In <see cref="PlayMode.Info"/> no feedback flows (204).
     /// </summary>
     [HttpPost("{sessionId:int}/review")]
     [ProducesResponseType(StatusCodes.Status200OK)]
@@ -353,7 +353,7 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
             comboBonus, speedBonus, next, done);
     }
 
-    /// <summary>Beendet die Sitzung und wertet zeitbasierte Missionen aus.</summary>
+    /// <summary>Ends the session and evaluates time-based missions.</summary>
     [HttpPost("{sessionId:int}/end")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<SessionResponse>> End(int planId, int positionId, int sessionId, CancellationToken ct = default)

@@ -6,22 +6,22 @@ using System.Text.Json.Serialization.Metadata;
 namespace Pugling.Api.Errors;
 
 /// <summary>
-/// Liefert die erlaubten Werte von Enums – geteilt von zwei Stellen: (1) die Modell-Validierung übersetzt
-/// einen rohen System.Text.Json-Konvertierungsfehler in eine hilfreiche „allowed values"-Meldung,
-/// (2) der OpenAPI-Schema-Transformer schreibt dieselben Werte in die Beschreibung, damit Swagger/Scalar
-/// die zulässigen Werte ausweisen.
+/// Provides the allowed values of enums – shared by two places: (1) model validation translates
+/// a raw System.Text.Json conversion error into a helpful "allowed values" message,
+/// (2) the OpenAPI schema transformer writes the same values into the description, so Swagger/Scalar
+/// show the permitted values.
 /// </summary>
 public static class EnumSchemaHelp
 {
-    /// <summary>Die erlaubten Werte eines Enums, so wie der <c>JsonStringEnumConverter</c> sie erwartet (per Name).</summary>
+    /// <summary>The allowed values of an enum, as the <c>JsonStringEnumConverter</c> expects them (by name).</summary>
     public static string[] AllowedValues(Type enumType) => Enum.GetNames(enumType);
 
     /// <summary>
-    /// Die tatsächlich <b>pflicht</b>-Felder eines DTOs als JSON-Namen. Der .NET-OpenAPI-Generator markiert
-    /// jeden Positional-Record-Konstruktorparameter als <c>required</c> – auch nullbare (optionale) wie
-    /// <c>string?</c>/<c>TEnum?</c>. Wir rechnen die Liste anhand der <b>Nullbarkeit</b> neu: nicht-nullbare
-    /// Referenztypen und nicht-nullbare Werttypen sind Pflicht, alles Nullbare ist optional. Explizit als
-    /// <c>required</c>/<c>[JsonRequired]</c> deklarierte Member bleiben Pflicht (auch wenn nullbar).
+    /// The actually <b>required</b> fields of a DTO as JSON names. The .NET OpenAPI generator marks
+    /// every positional record constructor parameter as <c>required</c> – even nullable (optional) ones like
+    /// <c>string?</c>/<c>TEnum?</c>. We recompute the list based on <b>nullability</b>: non-nullable
+    /// reference types and non-nullable value types are required, everything nullable is optional. Members
+    /// explicitly declared as <c>required</c>/<c>[JsonRequired]</c> remain required (even when nullable).
     /// </summary>
     public static IReadOnlyList<string> RequiredJsonPropertyNames(JsonTypeInfo typeInfo)
     {
@@ -55,11 +55,11 @@ public static class EnumSchemaHelp
         info.ReadState == NullabilityState.NotNull || info.WriteState == NullabilityState.NotNull;
 
     /// <summary>
-    /// Ermittelt zu einem fehlgeschlagenen JSON-Feld den zugehörigen Enum-Typ – <c>null</c>, wenn das Feld
-    /// kein Enum ist (z. B. „String statt int"). System.Text.Json nennt in der Fehlermeldung nur den DTO-Typ,
-    /// nicht den Enum-Typ; verlässlich ist allein der JSON-Pfad (Model-State-Key, z. B. <c>$.unitType</c>).
-    /// Der Pfad wird daher gegen die Parameter-Typen der Action aufgelöst (inkl. verschachtelter Objekte
-    /// und Listen), was den passenden Enum-Typ liefert.
+    /// Determines the associated enum type for a failed JSON field – <c>null</c> if the field is
+    /// not an enum (e.g. "string instead of int"). System.Text.Json's error message only names the DTO type,
+    /// not the enum type; the only reliable thing is the JSON path (model-state key, e.g. <c>$.unitType</c>).
+    /// The path is therefore resolved against the action's parameter types (incl. nested objects
+    /// and lists), which yields the matching enum type.
     /// </summary>
     public static Type? EnumTypeForJsonPath(IEnumerable<Type> rootTypes, string jsonPath)
     {

@@ -9,10 +9,10 @@ using Pugling.Api.Models;
 namespace Pugling.Api.Controllers.Creator;
 
 /// <summary>
-/// Kindneutrale Schlagworte für den gemeinsamen Vokabel-Katalog (z. B. „Kapitel 5", „Klasse 7",
-/// „unregelmäßige Verben"). Sie machen Vokabeln such- und gruppierbar – das Filtern nach Tags läuft über
-/// den Store-Endpunkt (<c>GET learn/vocabulary?tag=…</c>). Bewusst getrennt vom kind-skopierten
-/// <see cref="Tag"/> (Klassenarbeits-Relevanz), weil der Vokabel-Store selbst kindneutral ist.
+/// Child-neutral tags for the shared vocabulary catalog (e.g. "chapter 5", "grade 7",
+/// "irregular verbs"). They make vocabulary entries searchable and groupable – filtering by tags runs via
+/// the store endpoint (<c>GET learn/vocabulary?tag=…</c>). Deliberately separate from the child-scoped
+/// <see cref="Tag"/> (class test relevance), because the vocabulary store itself is child-neutral.
 /// </summary>
 [ApiController]
 [ApiVersion("1.0")]
@@ -22,14 +22,14 @@ namespace Pugling.Api.Controllers.Creator;
 [Authorize(Roles = Roles.Creator)]
 public class VocabularyTagsController(PuglingDbContext db) : ControllerBase
 {
-    /// <summary>Alle Vokabel-Tags (alphabetisch), jeweils mit Anzahl verknüpfter Vokabeln.</summary>
+    /// <summary>All vocabulary tags (alphabetically), each with the count of linked vocabulary entries.</summary>
     [HttpGet("tags")]
     public async Task<IEnumerable<VocabTagResponse>> List(CancellationToken ct = default) =>
         await db.VocabTags.AsNoTracking().OrderBy(t => t.Name)
             .Select(t => new VocabTagResponse(t.Id, t.Name, t.Color, t.Links.Count, t.CreatedAt))
             .ToListAsync(ct);
 
-    /// <summary>Legt einen Tag an (Name global eindeutig). Existiert er bereits, wird der bestehende zurückgegeben (idempotent).</summary>
+    /// <summary>Creates a tag (name globally unique). If it already exists, the existing one is returned (idempotent).</summary>
     [HttpPost("tags")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status200OK)]
@@ -49,7 +49,7 @@ public class VocabularyTagsController(PuglingDbContext db) : ControllerBase
         return CreatedAtAction(nameof(List), new VocabTagResponse(tag.Id, tag.Name, tag.Color, 0, tag.CreatedAt));
     }
 
-    /// <summary>Benennt einen Tag um oder ändert seine Farbe.</summary>
+    /// <summary>Renames a tag or changes its color.</summary>
     [HttpPatch("tags/{id:int}")]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -73,7 +73,7 @@ public class VocabularyTagsController(PuglingDbContext db) : ControllerBase
         return new VocabTagResponse(tag.Id, tag.Name, tag.Color, count, tag.CreatedAt);
     }
 
-    /// <summary>Löscht einen Tag (entfernt automatisch alle Vokabel-Verknüpfungen).</summary>
+    /// <summary>Deletes a tag (automatically removes all vocabulary links).</summary>
     [HttpDelete("tags/{id:int}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -86,7 +86,7 @@ public class VocabularyTagsController(PuglingDbContext db) : ControllerBase
         return NoContent();
     }
 
-    /// <summary>Verknüpft eine Vokabel mit einem oder mehreren Tags (create-if-missing; bereits verknüpfte werden übersprungen). Liefert die aktuellen Tags der Vokabel.</summary>
+    /// <summary>Links a vocabulary entry with one or more tags (create-if-missing; already linked ones are skipped). Returns the current tags of the vocabulary entry.</summary>
     [HttpPost("{vocabularyId:int}/tags")]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -120,7 +120,7 @@ public class VocabularyTagsController(PuglingDbContext db) : ControllerBase
             .Select(t => new VocabTagResponse(t.Id, t.Name, t.Color, 0, t.CreatedAt)).ToList();
     }
 
-    /// <summary>Löst die Verknüpfung einer Vokabel mit einem Tag (der Tag selbst bleibt bestehen).</summary>
+    /// <summary>Removes the link of a vocabulary entry with a tag (the tag itself remains).</summary>
     [HttpDelete("{vocabularyId:int}/tags/{tagId:int}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

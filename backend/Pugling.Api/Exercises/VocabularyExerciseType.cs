@@ -3,10 +3,10 @@ using Pugling.Api.Models;
 namespace Pugling.Api.Exercises;
 
 /// <summary>
-/// Vokabeltraining: Wort ↔ Übersetzung über mehrere Stufen (Selbsteinschätzung, Multiple-Choice, Buchstaben­kästchen,
-/// Freitext, Hören). Trägt den Löwenanteil der typ-spezifischen Regeln – Store-gestützte Items, Ablenker, Stufen und
-/// den plan-übergreifenden Item-Lernstand. Kanonische Projektion Vorderseite → Rückseite; die Abfragerichtung dreht
-/// das Item (<see cref="ExerciseContentProvider.WithDirection"/>).
+/// Vocabulary training: word ↔ translation across several stages (self-assessment, multiple choice, letter boxes,
+/// free text, listening). Carries the lion's share of the type-specific rules – store-backed items, distractors, stages,
+/// and cross-plan item learning progress. Canonical projection front → back; the query direction flips
+/// the item (<see cref="ExerciseContentProvider.WithDirection"/>).
 /// </summary>
 public sealed class VocabularyExerciseType : ExerciseTypeBase
 {
@@ -35,8 +35,8 @@ public sealed class VocabularyExerciseType : ExerciseTypeBase
     public override bool IsTypedStage(int stage) => StageMechanics.IsTyped((TestStage)stage);
 
     /// <summary>
-    /// Multiple-Choice-Auswahl: richtige Antwort plus bis zu drei Ablenker aus den übrigen Items (dedupliziert,
-    /// normalisiert). Deterministische Rotation je Index, damit die Lösung nicht immer vorn steht (kein Zufall).
+    /// Multiple-choice options: correct answer plus up to three distractors from the remaining items (deduplicated,
+    /// normalized). Deterministic rotation per index, so the solution isn't always at the front (no randomness).
     /// </summary>
     public override IReadOnlyList<string>? Choices(IReadOnlyList<ContentItem> items, ContentItem item, int stage)
     {
@@ -58,15 +58,15 @@ public sealed class VocabularyExerciseType : ExerciseTypeBase
     }
 
     /// <summary>
-    /// Buchstabenkästchen geben die Länge, die Hör-Stufe die Audioquelle – und das Bild erscheint
-    /// <b>nur auf nicht-getippten Stufen</b>.
+    /// Letter boxes give the length, the listening stage the audio source – and the image appears
+    /// <b>only on non-typed stages</b>.
     /// <para>
-    /// Das ist strenger als beim Audio, und zwar aus einem konkreten Grund: die Aussprache liest ein
-    /// einzelnes Wort vor (nach dem Richtungstausch entfällt sie deshalb gezielt), ein Motiv dagegen zeigt
-    /// die <i>Bedeutung</i>. „Ein Einhorn läuft" verrät bei <c>run → laufen</c> die Lösung genauso wie eine
-    /// vorgesprochene Antwort. Deshalb hier die konservative Regel statt einer richtungsabhängigen
-    /// Feinunterscheidung: gezeigt wird nur, wo die Lösung ohnehin aufgedeckt ist (Selbsteinschätzung) –
-    /// genau die Stufe, auf der das Bild seinen Zweck erfüllt, nämlich das Einprägen.
+    /// This is stricter than for audio, for a concrete reason: the pronunciation reads out a
+    /// single word (after the direction swap it is therefore deliberately dropped), whereas a motif shows
+    /// the <i>meaning</i>. "A unicorn is running" gives away the solution for <c>run → laufen</c> just as much as a
+    /// spoken-out answer would. Hence the conservative rule here instead of a direction-dependent
+    /// fine distinction: it is shown only where the solution is revealed anyway (self-assessment) –
+    /// exactly the stage where the image serves its purpose, namely memorization.
     /// </para>
     /// </summary>
     public override (int? LetterBoxLength, string? AudioUrl, string? ImageUrl) StageFacets(ContentItem item, int stage) =>

@@ -4,16 +4,16 @@ using Pugling.Api.Data;
 namespace Pugling.Api.Services.Supervisor;
 
 /// <summary>
-/// Kindübergreifendes Tages-Dashboard für den Vater: fasst je Kind den Stand eines Tages über alle aktiven
-/// Lehrpläne zusammen (Tagesziele erfüllt?, erreichte Punkte, überhaupt geübt?) – beantwortet „wer hat heute
-/// bzw. gestern was geschafft/verpasst". Baut auf dem plan-weiten Tages-Rollup des
-/// <see cref="PositionProgressService"/> auf.
+/// Cross-child daily dashboard for the supervisor: summarizes, per child, the status of a day across
+/// all active study plans (daily goals met?, points earned, practiced at all?) – answers "who
+/// achieved/missed what today or yesterday". Builds on the plan-wide daily rollup of
+/// <see cref="PositionProgressService"/>.
 /// </summary>
 public class ChildrenDashboardService(PuglingDbContext db, PositionProgressService progress)
 {
     // ChildDay/Dashboard leben im Vertrags-Projekt (Pugling.Contracts.Supervisor).
 
-    /// <summary>Baut den Tagesüberblick für alle Kinder des Vaters am angegebenen Tag.</summary>
+    /// <summary>Builds the daily overview for all of the supervisor's children on the given day.</summary>
     public async Task<Dashboard> BuildAsync(int fatherId, DateOnly date, CancellationToken ct = default)
     {
         var children = await db.Children.AsNoTracking()

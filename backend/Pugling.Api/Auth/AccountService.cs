@@ -5,27 +5,27 @@ using Pugling.Api.Models;
 namespace Pugling.Api.Auth;
 
 /// <summary>
-/// Sorgt dafür, dass zu jedem fachlichen Profil (<see cref="Adult"/>/<see cref="Child"/>) ein Login-Konto
-/// mit den passenden Rollen existiert – idempotent. Genutzt beim Start-Backfill, beim Anlegen neuer
-/// Väter/Kinder und beim Login (als Sicherheitsnetz), damit ein frisch angelegter Nutzer sofort ein
-/// Token mit allen seinen Rollen erhält. PIN-Hashes werden beim Anlegen vom Adult/Child übernommen.
+/// Ensures that a login account with the matching roles exists for every domain profile
+/// (<see cref="Adult"/>/<see cref="Child"/>) – idempotent. Used during the startup backfill, when
+/// creating new adults/children, and at login (as a safety net), so that a freshly created user
+/// immediately gets a token with all of their roles. PIN hashes are taken over from the Adult/Child on creation.
 /// </summary>
 public class AccountService(PuglingDbContext db)
 {
-    /// <summary>Konto (inkl. Profile) für den Vater – Rollen Creator + Supervisor. Legt es idempotent an.</summary>
+    /// <summary>Account (incl. profiles) for the adult – Creator + Supervisor roles. Creates it idempotently.</summary>
     public Task<Account> EnsureForFatherAsync(Adult father, CancellationToken ct = default) =>
         EnsureAsync(father, supervises: true, ct);
 
     /// <summary>
-    /// Konto für einen <b>Lehrer</b>: Rolle <see cref="ProfileRole.Creator"/> – und <b>keine</b>
-    /// Supervisor-Rolle. Damit trägt sein Token keinen Supervisor-Claim, und alle Betreuungs-Endpunkte
-    /// (<c>[Authorize(Roles = Roles.Supervisor)]</c>) weisen ihn ab, ohne dass irgendwo eine Sonderregel nötig wäre.
+    /// Account for a <b>teacher</b>: role <see cref="ProfileRole.Creator"/> – and <b>no</b>
+    /// Supervisor role. So their token carries no Supervisor claim, and all supervision endpoints
+    /// (<c>[Authorize(Roles = Roles.Supervisor)]</c>) reject them without needing any special-case rule anywhere.
     /// <para>
-    /// Fachlich hängt er weiter an einer <see cref="Adult"/>-Zeile – daran hängen Autorschaft
-    /// (<c>Exercise.AuthorAdultId</c>) und die RWX-Rechte (<c>ExerciseGrant.CreatorId</c>). Ein Lehrer ist
-    /// also kein neuer Entitätstyp, sondern <b>ein Erwachsener ohne Betreuungsauftrag</b>. Die Rollen sind
-    /// vom Login entkoppelt (siehe docs/grundprinzip.md); genau diese Entkopplung wird hier zum ersten Mal
-    /// ausgenutzt, statt sie mit einer parallelen Identität zu umgehen.
+    /// Domain-wise they still hang off an <see cref="Adult"/> row – authorship
+    /// (<c>Exercise.AuthorAdultId</c>) and the RWX permissions (<c>ExerciseGrant.CreatorId</c>) attach to that.
+    /// A teacher is thus not a new entity type, but <b>an adult without a supervision mandate</b>. The roles
+    /// are decoupled from the login (see docs/grundprinzip.md); this exact decoupling is exploited here for
+    /// the first time, instead of working around it with a parallel identity.
     /// </para>
     /// </summary>
     public Task<Account> EnsureForTeacherAsync(Adult teacher, CancellationToken ct = default) =>
@@ -47,7 +47,7 @@ public class AccountService(PuglingDbContext db)
         return account;
     }
 
-    /// <summary>Konto (inkl. Profil) für das Kind – Rolle Student. Legt es idempotent an.</summary>
+    /// <summary>Account (incl. profile) for the child – Student role. Creates it idempotently.</summary>
     public async Task<Account> EnsureForChildAsync(Child child, CancellationToken ct = default)
     {
         var account = await db.Accounts.Include(a => a.Profiles)
@@ -61,7 +61,7 @@ public class AccountService(PuglingDbContext db)
         return account;
     }
 
-    /// <summary>Lädt ein Konto samt Profilen für die Token-Ausstellung (Login über Konto-Id).</summary>
+    /// <summary>Loads an account with its profiles for token issuance (login via account id).</summary>
     public Task<Account?> FindWithProfilesAsync(int accountId, CancellationToken ct = default) =>
         db.Accounts.Include(a => a.Profiles).FirstOrDefaultAsync(a => a.Id == accountId, ct);
 }

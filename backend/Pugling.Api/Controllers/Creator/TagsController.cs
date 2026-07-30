@@ -9,8 +9,8 @@ using Pugling.Api.Models;
 namespace Pugling.Api.Controllers.Creator;
 
 /// <summary>
-/// Schlagwörter (Tags) pro Kind zum Markieren von Katalog-Übungen. Vater UND Sohn dürfen taggen
-/// (z. B. „relevant für die nächste Klassenarbeit"); die Zugehörigkeit läuft über das Kind.
+/// Tags per child for marking catalog exercises. Both adult AND student may tag
+/// (e.g. "relevant for the next class test"); ownership runs through the child.
 /// </summary>
 [ApiController]
 [ApiVersion("1.0")]
@@ -28,15 +28,15 @@ public class TagsController(PuglingDbContext db, AuthAccess access) : Controller
         new(t.Id, t.ChildId, t.Name, t.Color, t.CreatedBy, t.ExerciseTags.Count, t.VocabularyTags.Count, t.CreatedAt);
 
     /// <summary>
-    /// Projiziert Tags direkt in die Antwort. Die beiden Zähler entstehen dabei als <c>COUNT</c> in der
-    /// Datenbank – die Listen-Endpunkte luden zuvor über zwei <c>Include</c>s *alle* Verknüpfungszeilen,
-    /// nur um sie im Speicher zu zählen (und bekamen sie obendrein nachverfolgt zurück).
+    /// Projects tags directly into the response. The two counters are computed as <c>COUNT</c> in the
+    /// database – the list endpoints previously loaded *all* link rows via two <c>Include</c>s,
+    /// only to count them in memory (and got them back tracked on top of that).
     /// </summary>
     private static IQueryable<TagResponse> Project(IQueryable<Tag> q) =>
         q.Select(t => new TagResponse(t.Id, t.ChildId, t.Name, t.Color, t.CreatedBy,
             t.ExerciseTags.Count, t.VocabularyTags.Count, t.CreatedAt));
 
-    /// <summary>Lädt einen Tag samt Links (Übungen + Vokabeln), sofern der Nutzer auf das zugehörige Kind zugreifen darf.</summary>
+    /// <summary>Loads a tag along with its links (exercises + vocabulary), provided the user may access the associated child.</summary>
     private async Task<Tag?> FindOwnedAsync(int tagId, CancellationToken ct)
     {
         var tag = await db.Tags.Include(t => t.ExerciseTags).Include(t => t.VocabularyTags)
@@ -45,7 +45,7 @@ public class TagsController(PuglingDbContext db, AuthAccess access) : Controller
         return await access.OwnsChildAsync(User, tag.ChildId, ct) ? tag : null;
     }
 
-    /// <summary>Alle Tags eines Kindes (Sohn: nur eigene, Vater: nur eigene Kinder).</summary>
+    /// <summary>All tags of a child (student: own only, adult: own children only).</summary>
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult<IEnumerable<TagResponse>>> List([FromQuery] int childId, CancellationToken ct = default)
@@ -54,7 +54,7 @@ public class TagsController(PuglingDbContext db, AuthAccess access) : Controller
         return await Project(db.Tags.Where(t => t.ChildId == childId).OrderBy(t => t.Name)).ToListAsync(ct);
     }
 
-    /// <summary>Legt einen Tag für ein Kind an (Name je Kind eindeutig).</summary>
+    /// <summary>Creates a tag for a child (name unique per child).</summary>
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -80,7 +80,7 @@ public class TagsController(PuglingDbContext db, AuthAccess access) : Controller
         return CreatedAtAction(nameof(GetExercises), new { tagId = tag.Id }, Map(tag));
     }
 
-    /// <summary>Benennt einen Tag um oder ändert seine Farbe.</summary>
+    /// <summary>Renames a tag or changes its color.</summary>
     [HttpPatch("{tagId:int}")]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -104,7 +104,7 @@ public class TagsController(PuglingDbContext db, AuthAccess access) : Controller
         return Map(tag);
     }
 
-    /// <summary>Löscht einen Tag (entfernt automatisch alle Markierungen und Klassenarbeits-Verknüpfungen).</summary>
+    /// <summary>Deletes a tag (automatically removes all markings and class test links).</summary>
     [HttpDelete("{tagId:int}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -117,7 +117,7 @@ public class TagsController(PuglingDbContext db, AuthAccess access) : Controller
         return NoContent();
     }
 
-    /// <summary>Markiert eine oder mehrere Katalog-Übungen mit diesem Tag (bereits markierte werden übersprungen).</summary>
+    /// <summary>Marks one or more catalog exercises with this tag (already marked ones are skipped).</summary>
     [HttpPost("{tagId:int}/exercises")]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -140,7 +140,7 @@ public class TagsController(PuglingDbContext db, AuthAccess access) : Controller
         return Map(tag);
     }
 
-    /// <summary>Entfernt die Markierung einer Übung mit diesem Tag.</summary>
+    /// <summary>Removes the marking of an exercise with this tag.</summary>
     [HttpDelete("{tagId:int}/exercises/{exerciseId:int}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -155,11 +155,11 @@ public class TagsController(PuglingDbContext db, AuthAccess access) : Controller
         return NoContent();
     }
 
-    /// <summary>Alle Übungen, die mit diesem Tag markiert sind.</summary>
-    /// <param name="tagId">Tag, dessen Übungen gelesen werden.</param>
-    /// <param name="skip">Anzahl zu überspringender Einträge (Paging).</param>
-    /// <param name="take">Maximale Trefferzahl (1..500). Gesamtzahl im Header <c>X-Total-Count</c>.</param>
-    /// <param name="ct">Abbruch-Token.</param>
+    /// <summary>All exercises marked with this tag.</summary>
+    /// <param name="tagId">Tag whose exercises are read.</param>
+    /// <param name="skip">Number of entries to skip (paging).</param>
+    /// <param name="take">Maximum number of hits (1..500). Total count in the <c>X-Total-Count</c> header.</param>
+    /// <param name="ct">Cancellation token.</param>
     [HttpGet("{tagId:int}/exercises")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<IEnumerable<ExerciseBrief>>> GetExercises(
@@ -181,7 +181,7 @@ public class TagsController(PuglingDbContext db, AuthAccess access) : Controller
         return exercises.Select(ExerciseBriefMapping.From).ToList();
     }
 
-    /// <summary>Die Tags, mit denen eine bestimmte Übung im Kontext eines Kindes markiert ist.</summary>
+    /// <summary>The tags with which a specific exercise is marked in the context of a child.</summary>
     [HttpGet("for-exercise/{exerciseId:int}")]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult<IEnumerable<TagResponse>>> ForExercise(
@@ -195,7 +195,7 @@ public class TagsController(PuglingDbContext db, AuthAccess access) : Controller
 
     // ---- Vokabeln taggen (kind-skopiert) -----------------------------------------------------------
 
-    /// <summary>Markiert eine oder mehrere Store-Vokabeln mit diesem Tag (bereits markierte werden übersprungen).</summary>
+    /// <summary>Marks one or more store vocabulary entries with this tag (already marked ones are skipped).</summary>
     [HttpPost("{tagId:int}/vocabulary")]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -218,7 +218,7 @@ public class TagsController(PuglingDbContext db, AuthAccess access) : Controller
         return Map(tag);
     }
 
-    /// <summary>Entfernt die Markierung einer Vokabel mit diesem Tag (der Tag selbst bleibt bestehen).</summary>
+    /// <summary>Removes the marking of a vocabulary entry with this tag (the tag itself remains).</summary>
     [HttpDelete("{tagId:int}/vocabulary/{vocabularyId:int}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -233,11 +233,11 @@ public class TagsController(PuglingDbContext db, AuthAccess access) : Controller
         return NoContent();
     }
 
-    /// <summary>Alle Vokabeln, die mit diesem Tag markiert sind (alphabetisch nach Key).</summary>
-    /// <param name="tagId">Tag, dessen Vokabeln gelesen werden.</param>
-    /// <param name="skip">Anzahl zu überspringender Einträge (Paging).</param>
-    /// <param name="take">Maximale Trefferzahl (1..500). Gesamtzahl im Header <c>X-Total-Count</c>.</param>
-    /// <param name="ct">Abbruch-Token.</param>
+    /// <summary>All vocabulary entries marked with this tag (alphabetically by key).</summary>
+    /// <param name="tagId">Tag whose vocabulary entries are read.</param>
+    /// <param name="skip">Number of entries to skip (paging).</param>
+    /// <param name="take">Maximum number of hits (1..500). Total count in the <c>X-Total-Count</c> header.</param>
+    /// <param name="ct">Cancellation token.</param>
     [HttpGet("{tagId:int}/vocabulary")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<IEnumerable<TaggedVocabularyDto>>> GetVocabulary(
@@ -256,7 +256,7 @@ public class TagsController(PuglingDbContext db, AuthAccess access) : Controller
             .ToPagedListAsync(Response, skip, take, ct);
     }
 
-    /// <summary>Die Tags, mit denen eine bestimmte Vokabel im Kontext eines Kindes markiert ist.</summary>
+    /// <summary>The tags with which a specific vocabulary entry is marked in the context of a child.</summary>
     [HttpGet("for-vocabulary/{vocabularyId:int}")]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult<IEnumerable<TagResponse>>> ForVocabulary(

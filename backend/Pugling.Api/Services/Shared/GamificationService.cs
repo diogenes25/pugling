@@ -6,15 +6,15 @@ using Pugling.Api.Models;
 namespace Pugling.Api.Services.Shared;
 
 /// <summary>
-/// Wertet Missionen (zeitgebundene Ziele) und Auszeichnungen (permanente Meilensteine) eines Kindes
-/// aus und schreibt fällige Belohnungen idempotent gut – je Mission/Zeitraum bzw. je Auszeichnung genau
-/// einmal (analog zum früheren plan-weiten Fortschritts-Service). Liefert außerdem den aktuellen Status fürs Frontend.
+/// Evaluates missions (time-bound goals) and achievements (permanent milestones) of a child and
+/// credits due rewards idempotently – exactly once per mission/period resp. per achievement (analogous
+/// to the former plan-wide progress service). Also returns the current status for the frontend.
 /// </summary>
 public class GamificationService(PuglingDbContext db, MetricsService metrics, ILogger<GamificationService> logger)
 {
     // MissionStatus/AchievementStatus leben im Vertrags-Projekt (Pugling.Contracts.Student).
 
-    /// <summary>Wertet alle aktiven Missionen und Auszeichnungen aus und vergibt fällige Belohnungen.</summary>
+    /// <summary>Evaluates all active missions and achievements and grants due rewards.</summary>
     public async Task EvaluateAndAwardAsync(int childId, DateOnly today, CancellationToken ct = default)
     {
         var child = await db.Children.FirstOrDefaultAsync(c => c.Id == childId, ct);
@@ -62,9 +62,9 @@ public class GamificationService(PuglingDbContext db, MetricsService metrics, IL
     }
 
     /// <summary>
-    /// Aktueller Missions-Status für die Anzeige beim Kind/Vater – reine Lesesicht, ohne Punktevergabe.
-    /// Belohnungen fließen an den Schreib-Nahtstellen (Wiederholung, Test-Abschluss, Sitzungsende), nicht
-    /// beim Ansehen: ein GET darf keine Punkte buchen (sichere HTTP-Methode, kein Prefetch-/Retry-Effekt).
+    /// Current mission status for the display shown to the child/father – a pure read view, without
+    /// granting points. Rewards flow at the write seams (repetition, test completion, session end), not
+    /// when viewed: a GET must never book points (safe HTTP method, no prefetch/retry side effect).
     /// </summary>
     public async Task<(IReadOnlyList<MissionStatus> Items, int Total)> MissionStatusesAsync(
         int childId, DateOnly today, int skip, int take, CancellationToken ct = default)
@@ -91,7 +91,7 @@ public class GamificationService(PuglingDbContext db, MetricsService metrics, IL
             Math.Min(current, m.Target), completed, m.RewardPoints);
     }
 
-    /// <summary>Aktueller Auszeichnungs-Status (reine Lesesicht, ohne Punktevergabe), erreichte zuerst.</summary>
+    /// <summary>Current achievement status (pure read view, without granting points), achieved ones first.</summary>
     public async Task<(IReadOnlyList<AchievementStatus> Items, int Total)> AchievementStatusesAsync(
         int childId, DateOnly today, int skip, int take, CancellationToken ct = default)
     {
@@ -119,7 +119,7 @@ public class GamificationService(PuglingDbContext db, MetricsService metrics, IL
             current, earnedAt is not null, earnedAt, a.RewardPoints);
     }
 
-    /// <summary>Status einer einzelnen Mission des Kindes (Einzelansicht); <c>null</c>, wenn nicht vorhanden/aktiv/eigen.</summary>
+    /// <summary>Status of a single mission of the child (single view); <c>null</c> if not present/active/own.</summary>
     public async Task<MissionStatus?> MissionStatusAsync(int childId, int missionId, DateOnly today,
         CancellationToken ct = default)
     {
@@ -127,7 +127,7 @@ public class GamificationService(PuglingDbContext db, MetricsService metrics, IL
         return m is null ? null : await MapMissionAsync(childId, m, today, ct);
     }
 
-    /// <summary>Status einer einzelnen Auszeichnung des Kindes (Einzelansicht); <c>null</c>, wenn nicht vorhanden/aktiv/eigen.</summary>
+    /// <summary>Status of a single achievement of the child (single view); <c>null</c> if not present/active/own.</summary>
     public async Task<AchievementStatus?> AchievementStatusAsync(int childId, int achievementId, DateOnly today,
         CancellationToken ct = default)
     {
@@ -138,7 +138,7 @@ public class GamificationService(PuglingDbContext db, MetricsService metrics, IL
         return await MapAchievementAsync(childId, a, at, today, ct);
     }
 
-    /// <summary>Tages-/Wochen-/Einmal-Fenster + Schlüssel für die idempotente Vergabe.</summary>
+    /// <summary>Daily/weekly/one-time window + key for the idempotent grant.</summary>
     private static (DateOnly? from, DateOnly? to, string key) PeriodWindow(MissionPeriod period, DateOnly today) =>
         period switch
         {
@@ -157,10 +157,10 @@ public class GamificationService(PuglingDbContext db, MetricsService metrics, IL
     }
 
     /// <summary>
-    /// Speichert; ein paralleler Doppel-Request greift den Unique-Index ab, ohne doppelte Punkte/500.
-    /// Liefert <c>true</c>, wenn tatsächlich gebucht wurde, <c>false</c> beim abgefangenen Duplikat –
-    /// damit der Aufrufer nur echte Buchungen ins Audit-Log schreibt. <paramref name="alreadyAwardedAsync"/>
-    /// prüft, ob die Belohnung inzwischen (durch den Konkurrenz-Request) existiert.
+    /// Saves; a parallel duplicate request is caught by the unique index, without duplicate points/500.
+    /// Returns <c>true</c> if a booking actually happened, <c>false</c> for a caught duplicate –
+    /// so that the caller only writes genuine bookings to the audit log. <paramref name="alreadyAwardedAsync"/>
+    /// checks whether the reward already exists in the meantime (due to the competing request).
     /// </summary>
     private async Task<bool> SaveIgnoringDuplicateAsync(Func<Task<bool>> alreadyAwardedAsync, CancellationToken ct)
     {

@@ -1,21 +1,21 @@
 namespace Pugling.Api.Services.Shared;
 
 /// <summary>
-/// Bewertet die vom Kind abgegebenen Antworten gegen die hinterlegte Lösung – die eine, gemeinsame
-/// Vergleichsregel für die Abschlusstests (Vokabel/Zuordnung/Lückentext) und die Leitner-Übungsschleife
-/// (<c>/review</c>). Zustandslos und ohne DB-Zugriff; Textvergleiche laufen über
-/// <see cref="StageMechanics.Normalize"/> (Groß-/Kleinschreibung und Mehrfach-Leerzeichen sind egal).
+/// Grades the answers submitted by the child against the stored solution – the one shared
+/// comparison rule for the final tests (vocabulary/matching/cloze) and the Leitner practice loop
+/// (<c>/review</c>). Stateless and without DB access; text comparisons go through
+/// <see cref="StageMechanics.Normalize"/> (case and repeated whitespace do not matter).
 /// </summary>
 public class AnswerGrader
 {
-    /// <summary>Textantwort (Vokabel/Zuordnung) gegen die erwartete Lösung. Leere Eingabe gilt nie als korrekt.</summary>
+    /// <summary>Text answer (vocabulary/matching) against the expected solution. An empty input is never considered correct.</summary>
     public bool Matches(string? given, string expected)
     {
         var g = StageMechanics.Normalize(given);
         return g.Length > 0 && g == StageMechanics.Normalize(expected);
     }
 
-    /// <summary>Eine Lücke: nicht leer und trifft die Lösung oder eine hinterlegte Alternative.</summary>
+    /// <summary>A gap: not empty and matches the solution or a stored alternative.</summary>
     public bool MatchesGap(Gap gap, string? given)
     {
         var g = StageMechanics.Normalize(given);

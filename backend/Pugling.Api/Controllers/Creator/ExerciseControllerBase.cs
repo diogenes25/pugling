@@ -12,10 +12,10 @@ namespace Pugling.Api.Controllers.Creator;
 // ExercisePayload<TConfig>/ExerciseResponse<TConfig> leben im Vertrags-Projekt (Pugling.Contracts.Creator).
 
 /// <summary>
-/// Gemeinsame CRUD-Logik für alle Übungstypen unter einem Kapitel.
-/// Konkrete Controller setzen nur Route + <see cref="Type"/>; die typ-spezifische
-/// Konfiguration (<typeparamref name="TConfig"/>) wird als JSON gespeichert und
-/// im API voll typisiert übertragen.
+/// Shared CRUD logic for all exercise types under a chapter.
+/// Concrete controllers set only the route + <see cref="Type"/>; the type-specific
+/// configuration (<typeparamref name="TConfig"/>) is stored as JSON and
+/// transferred fully typed in the API.
 /// </summary>
 [ApiController]
 [ApiVersion("1.0")]
@@ -24,16 +24,16 @@ namespace Pugling.Api.Controllers.Creator;
 public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db, ExerciseTypeRegistry registry) : ControllerBase
     where TConfig : class, new()
 {
-    /// <summary>Übungstyp-Schlüssel, den dieser Controller verwaltet (= <see cref="IExerciseType.Key"/>, Wert von <see cref="Exercise.Type"/>).</summary>
+    /// <summary>Exercise type key managed by this controller (= <see cref="IExerciseType.Key"/>, value of <see cref="Exercise.Type"/>).</summary>
     protected abstract string TypeKey { get; }
 
-    /// <summary>Registry der Übungstypen – für abgeleitete Zusatz-Endpunkte (/check, /generate).</summary>
+    /// <summary>Registry of the exercise types – for derived additional endpoints (/check, /generate).</summary>
     protected ExerciseTypeRegistry Registry => registry;
 
     /// <summary>
-    /// Bewertet Antworten am Katalog-Endpunkt über den <see cref="IExerciseType.Check"/> des Typs (eine Quelle
-    /// der Wahrheit). Abgeleitete Controller, deren Typ einen Direkt-Check anbietet, exponieren darauf ihre
-    /// dünne <c>/check</c>-Action.
+    /// Evaluates answers at the catalog endpoint via the type's <see cref="IExerciseType.Check"/> (a single
+    /// source of truth). Derived controllers whose type offers a direct check expose their
+    /// thin <c>/check</c> action on top of it.
     /// </summary>
     protected async Task<ActionResult<CheckResult>> RunCheckAsync(int subjectId, int chapterId, int exerciseId, CheckDto body, CancellationToken ct = default)
     {
@@ -45,43 +45,43 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db, Exerc
     }
 
     /// <summary>
-    /// Typ-spezifische Validierung der Config beim Anlegen/Ändern. Standard: keine. Abgeleitete Controller
-    /// überschreiben dies, um z. B. Store-Referenzen (Vokabel-Keys) zu prüfen; Rückgabe = Fehlertext (→ 400)
-    /// oder <c>null</c>, wenn alles in Ordnung ist.
+    /// Type-specific validation of the config on create/change. Default: none. Derived controllers
+    /// override this to e.g. check store references (vocabulary keys); return value = error text (→ 400)
+    /// or <c>null</c> if everything is fine.
     /// </summary>
     protected virtual Task<string?> ValidateConfigAsync(int subjectId, TConfig config, CancellationToken ct = default) =>
         Task.FromResult<string?>(null);
 
     /// <summary>
-    /// Normalisiert die Config vor dem Speichern (Standard: unverändert). Abgeleitete Controller überschreiben
-    /// dies, um serverseitige Invarianten herzustellen – z. B. übungsweit eindeutige IDs zu vergeben, wenn der
-    /// Aufrufer sie (wie das Anlege-Formular) nicht selbst pflegt.
+    /// Normalizes the config before saving (default: unchanged). Derived controllers override this
+    /// to establish server-side invariants – e.g. assigning exercise-wide unique IDs when the
+    /// caller (like the create form) does not maintain them itself.
     /// </summary>
     protected virtual void NormalizeConfig(TConfig config) { }
 
     /// <summary>
-    /// Asynchrone Normalisierung vor dem Speichern (Standard: nichts). Abgeleitete Controller überschreiben dies,
-    /// wenn die Invariante DB-Zugriff braucht – z. B. Vokabel-Übungen, die inline genutzte Wörter im Store anlegen
-    /// und mit ihrer Store-ID verknüpfen. Läuft nach <see cref="NormalizeConfig"/> und darf <c>SaveChanges</c> nutzen.
+    /// Asynchronous normalization before saving (default: nothing). Derived controllers override this
+    /// when the invariant needs DB access – e.g. vocabulary exercises that create inline used words in the store
+    /// and link them with their store ID. Runs after <see cref="NormalizeConfig"/> and may use <c>SaveChanges</c>.
     /// </summary>
     protected virtual Task NormalizeConfigAsync(int subjectId, TConfig config, CancellationToken ct = default) => Task.CompletedTask;
 
     /// <summary>
-    /// Formt die Config für die Antwort (Standard: wie gespeichert). Abgeleitete Controller überschreiben dies,
-    /// um abgeleitete, nicht persistierte Felder zu füllen – z. B. den HATEOAS-Link <c>_self</c> je Vokabel aus
-    /// ihrer ID. Rein rechnerisch (kein DB-Zugriff), da pro Zeile der Liste aufgerufen.
+    /// Shapes the config for the response (default: as stored). Derived controllers override this
+    /// to fill derived, non-persisted fields – e.g. the HATEOAS link <c>_self</c> per vocabulary entry from
+    /// its ID. Purely computational (no DB access), since it is called per row of the list.
     /// </summary>
     protected virtual TConfig ConfigForResponse(Exercise exercise) => ConfigOf(exercise);
 
     /// <summary>
-    /// Läuft nach dem Speichern beim Anlegen/Ändern (Standard: nichts). Abgeleitete Controller überschreiben dies,
-    /// wenn sie – über die reine ConfigJson hinaus – abhängige Zeilen pflegen müssen, die die gerade vergebene
-    /// <see cref="Exercise.Id"/> brauchen (z. B. Vokabelübungen, die ihre Items in eine eigene Tabelle materialisieren).
-    /// <paramref name="isCreate"/> unterscheidet POST (Erstanlage) von PUT (Ersatz).
+    /// Runs after saving on create/change (default: nothing). Derived controllers override this
+    /// when they – beyond the pure ConfigJson – need to maintain dependent rows that need the just-assigned
+    /// <see cref="Exercise.Id"/> (e.g. vocabulary exercises that materialize their items into their own table).
+    /// <paramref name="isCreate"/> distinguishes POST (initial creation) from PUT (replacement).
     /// </summary>
     protected virtual Task AfterSaveAsync(Exercise exercise, TConfig config, bool isCreate, CancellationToken ct = default) => Task.CompletedTask;
 
-    /// <summary>DbContext für abgeleitete Controller mit Zusatz-Endpunkten über das reine CRUD hinaus.</summary>
+    /// <summary>DbContext for derived controllers with additional endpoints beyond pure CRUD.</summary>
     protected PuglingDbContext Db => db;
 
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
@@ -92,17 +92,17 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db, Exerc
     private Task<bool> ChapterExists(int subjectId, int chapterId, CancellationToken ct) =>
         db.Chapters.AnyAsync(c => c.Id == chapterId && c.SubjectId == subjectId, ct);
 
-    /// <summary>Prüft, dass eine gesetzte Art zum Fach der Übung gehört (fremde Fächer verhindern).</summary>
+    /// <summary>Checks that a set category belongs to the exercise's subject (prevents foreign subjects).</summary>
     private Task<bool> CategoryValid(int subjectId, int? categoryId, CancellationToken ct) =>
         categoryId is null
             ? Task.FromResult(true)
             : db.ExerciseCategories.AnyAsync(c => c.Id == categoryId && c.SubjectId == subjectId, ct);
 
     /// <summary>
-    /// Prüft das <b>Schreibrecht</b> (ändern) auf eine Übung: Der Katalog ist global (jeder Creator darf jede
-    /// Übung finden und in seine Lehrpläne übernehmen), aber ändern darf nur, wer einen Owner- oder Write-Grant
-    /// hält. Setzt voraus, dass die Grants der Übung geladen sind (<see cref="FindAsync"/> lädt sie mit).
-    /// Gibt bei fehlendem Recht ein <c>403</c>-<see cref="ProblemDetails"/> zurück, sonst <c>null</c>.
+    /// Checks the <b>write permission</b> (change) on an exercise: the catalog is global (every creator may find
+    /// any exercise and adopt it into their study plans), but only whoever holds an owner or write grant may
+    /// change it. Requires the exercise's grants to be loaded (<see cref="FindAsync"/> loads them along).
+    /// Returns a <c>403</c> <see cref="ProblemDetails"/> if the permission is missing, otherwise <c>null</c>.
     /// </summary>
     protected ObjectResult? EnsureCanWrite(Exercise exercise) =>
         ExercisePermissionService.CanWrite(exercise.Grants, User.AdultId(), User.IsAdmin())
@@ -110,29 +110,29 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db, Exerc
             : this.ProblemWithCode(ApiErrors.NotAuthor, "You need owner or write permission to modify this exercise.");
 
     /// <summary>
-    /// Prüft das <b>Verwaltungsrecht</b> (nur Owner): löschen, Rechte vergeben/entziehen, Sichtbarkeit umschalten.
-    /// Setzt geladene Grants voraus (siehe <see cref="FindAsync"/>).
+    /// Checks the <b>administration permission</b> (owner only): deleting, granting/revoking permissions, toggling visibility.
+    /// Requires loaded grants (see <see cref="FindAsync"/>).
     /// </summary>
     protected ObjectResult? EnsureCanAdminister(Exercise exercise) =>
         ExercisePermissionService.CanAdminister(exercise.Grants, User.AdultId(), User.IsAdmin())
             ? null
             : this.ProblemWithCode(ApiErrors.NotOwner, "Only an owner can delete this exercise or manage its permissions.");
 
-    /// <summary>Lädt eine Übung dieses Typs inkl. ihrer Grants (für die Rechteprüfung/-anzeige); Basis für abgeleitete Zusatz-Endpunkte.</summary>
+    /// <summary>Loads an exercise of this type incl. its grants (for permission checking/display); basis for derived additional endpoints.</summary>
     protected Task<Exercise?> FindAsync(int subjectId, int chapterId, int exerciseId, CancellationToken ct) =>
         db.Exercises.Include(e => e.Category).Include(e => e.Grants)
             .FirstOrDefaultAsync(e => e.Id == exerciseId && e.ChapterId == chapterId
                 && e.Type == TypeKey && e.Chapter!.SubjectId == subjectId, ct);
 
-    /// <summary>Deserialisiert die typisierte Konfiguration einer Übung (nie null; fällt auf Default zurück).</summary>
+    /// <summary>Deserializes the typed configuration of an exercise (never null; falls back to default).</summary>
     protected TConfig ConfigOf(Exercise exercise) =>
         JsonSerializer.Deserialize<TConfig>(exercise.ConfigJson, JsonOptions) ?? new TConfig();
 
-    /// <summary>Schreibt die typisierte Konfiguration zurück in die Übung (JSON) – für abgeleitete Zusatz-Endpunkte.</summary>
+    /// <summary>Writes the typed configuration back into the exercise (JSON) – for derived additional endpoints.</summary>
     protected void SetConfig(Exercise exercise, TConfig config) =>
         exercise.ConfigJson = JsonSerializer.Serialize(config, JsonOptions);
 
-    /// <summary>Projiziert eine Übung; <paramref name="fid"/> wird einmal pro Request ermittelt (nicht pro Zeile). Erwartet geladene <see cref="Exercise.Grants"/>.</summary>
+    /// <summary>Projects an exercise; <paramref name="fid"/> is determined once per request (not per row). Expects loaded <see cref="Exercise.Grants"/>.</summary>
     protected ExerciseResponse<TConfig> Map(Exercise e, int? fid)
     {
         var isAdmin = User.IsAdmin();
@@ -143,14 +143,14 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db, Exerc
             e.DefaultUseLeitner, e.DefaultRequireTypedTest, e.DefaultStage, e.DefaultItemCount);
     }
 
-    /// <summary>Liste der Übungen dieses Typs im Kapitel.</summary>
-    /// <param name="subjectId">Fach, zu dem das Kapitel gehört.</param>
-    /// <param name="chapterId">Kapitel, dessen Übungen gelesen werden.</param>
-    /// <param name="isOwn">Optionaler Rechtefilter auf Änderungsrecht (Owner/Write-Grant; Admin gilt als <c>true</c>).</param>
-    /// <param name="isOwner">Optionaler Rechtefilter auf Verwaltungsrecht (Owner-Grant; Admin gilt als <c>true</c>).</param>
-    /// <param name="skip">Anzahl zu überspringender Einträge (Paging).</param>
-    /// <param name="take">Maximale Trefferzahl (1..500). Gesamtzahl im Header <c>X-Total-Count</c>.</param>
-    /// <param name="ct">Abbruch-Token.</param>
+    /// <summary>List of the exercises of this type in the chapter.</summary>
+    /// <param name="subjectId">Subject the chapter belongs to.</param>
+    /// <param name="chapterId">Chapter whose exercises are read.</param>
+    /// <param name="isOwn">Optional permission filter on write permission (owner/write grant; admin counts as <c>true</c>).</param>
+    /// <param name="isOwner">Optional permission filter on administration permission (owner grant; admin counts as <c>true</c>).</param>
+    /// <param name="skip">Number of entries to skip (paging).</param>
+    /// <param name="take">Maximum number of hits (1..500). Total count in the <c>X-Total-Count</c> header.</param>
+    /// <param name="ct">Cancellation token.</param>
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<IEnumerable<ExerciseResponse<TConfig>>>> List(
@@ -212,7 +212,7 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db, Exerc
         return exercises.Select(e => Map(e, fid)).ToList();
     }
 
-    /// <summary>Eine einzelne Übung.</summary>
+    /// <summary>A single exercise.</summary>
     [HttpGet("{exerciseId:int}")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<ExerciseResponse<TConfig>>> Get(int subjectId, int chapterId, int exerciseId, CancellationToken ct = default)
@@ -221,7 +221,7 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db, Exerc
         return exercise is null ? NotFound() : Map(exercise, User.AdultId());
     }
 
-    /// <summary>Erstellt eine Übung dieses Typs im Kapitel.</summary>
+    /// <summary>Creates an exercise of this type in the chapter.</summary>
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -290,7 +290,7 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db, Exerc
         return CreatedAtAction(nameof(Get), new { subjectId, chapterId, exerciseId = exercise.Id }, Map(exercise, User.AdultId()));
     }
 
-    /// <summary>Ersetzt eine Übung vollständig (inkl. Config).</summary>
+    /// <summary>Replaces an exercise completely (incl. config).</summary>
     [HttpPut("{exerciseId:int}")]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -334,7 +334,7 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db, Exerc
         return Map(exercise, User.AdultId());
     }
 
-    /// <summary>Löscht eine Übung. Nicht möglich, solange sie in einem Lehrplan oder einer Klassenarbeit steckt.</summary>
+    /// <summary>Deletes an exercise. Not possible while it is embedded in a study plan or a class test.</summary>
     [HttpDelete("{exerciseId:int}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

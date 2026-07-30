@@ -3,16 +3,16 @@ using Pugling.Api.Models;
 namespace Pugling.Api.Services.Shared;
 
 /// <summary>
-/// Ein einzelnes übbares/prüfbares Element einer Übung, verfahrensneutral aus der Übungs-Config projiziert.
-/// <paramref name="Index"/> ist der stabile Positionsbezug (→ <see cref="PositionItemProgress.ItemIndex"/>).
-/// <paramref name="AcceptedAnswers"/> enthält die erwartete Lösung plus zulässige Alternativen (roh, der
-/// Textvergleich normalisiert später über <see cref="AnswerGrader"/>). <paramref name="GapIndex"/> ist nur
-/// bei Lückentexten gesetzt (die {{n}}-Nummer der Lücke). <paramref name="ItemId"/> und
-/// <paramref name="VocabularyId"/> tragen (nur bei Vokabelübungen) die stabile Item- bzw. Store-Identität –
-/// die Grundlage für den je Kind/Item protokollierten Lernfortschritt; bei allen anderen Typen <c>null</c>.
-/// <paramref name="ImageUrl"/>/<paramref name="ImageAlt"/> sind das für <b>dieses Kind</b> ausgewählte Bild
-/// (siehe <see cref="MediaSelector"/>) – nur gefüllt, wenn der Auflöser mit einem Kind aufgerufen wurde;
-/// kind-neutrale Pfade (Vorschau, Auswertung) lassen sie leer.
+/// A single practicable/checkable element of an exercise, projected type-agnostically from the exercise config.
+/// <paramref name="Index"/> is the stable position reference (→ <see cref="PositionItemProgress.ItemIndex"/>).
+/// <paramref name="AcceptedAnswers"/> contains the expected solution plus permitted alternatives (raw, the
+/// text comparison normalizes later via <see cref="AnswerGrader"/>). <paramref name="GapIndex"/> is only
+/// set for cloze texts (the {{n}} number of the gap). <paramref name="ItemId"/> and
+/// <paramref name="VocabularyId"/> carry (only for vocabulary exercises) the stable item resp. store identity –
+/// the basis for the learning progress logged per child/item; <c>null</c> for all other types.
+/// <paramref name="ImageUrl"/>/<paramref name="ImageAlt"/> are the image selected for <b>this child</b>
+/// (see <see cref="MediaSelector"/>) – only populated when the resolver was called with a child;
+/// child-neutral paths (preview, evaluation) leave them empty.
 /// </summary>
 public record ContentItem(
     int Index,
@@ -28,24 +28,24 @@ public record ContentItem(
     string? ImageAlt = null);
 
 /// <summary>
-/// Dünne Fassade über die <see cref="ExerciseTypeRegistry"/>: projiziert die Inhalte einer Katalog-<see cref="Exercise"/>
-/// verfahrensneutral in <see cref="ContentItem"/>s, indem sie an den passenden <see cref="IExerciseType"/> delegiert
-/// (Store-freie Projektion; die DB-gestützte Auflösung macht der <see cref="ExerciseContentResolver"/>). Ersetzt den
-/// früheren typ-<c>switch</c>; die Richtungs-Drehung (<see cref="WithDirection"/>) bleibt geteilter Helper.
+/// Thin facade over the <see cref="ExerciseTypeRegistry"/>: projects the contents of a catalog <see cref="Exercise"/>
+/// type-agnostically into <see cref="ContentItem"/>s by delegating to the matching <see cref="IExerciseType"/>
+/// (store-free projection; the DB-backed resolution is done by the <see cref="ExerciseContentResolver"/>). Replaces the
+/// former type <c>switch</c>; the direction flip (<see cref="WithDirection"/>) remains a shared helper.
 /// </summary>
 public class ExerciseContentProvider(ExerciseTypeRegistry registry)
 {
-    /// <summary>Die Inhalte einer Übung als verfahrensneutrale Item-Liste.</summary>
+    /// <summary>The contents of an exercise as a type-agnostic item list.</summary>
     public IReadOnlyList<ContentItem> ItemsOf(Exercise exercise) => ItemsOf(exercise.Type, exercise.ConfigJson);
 
-    /// <summary>Wie <see cref="ItemsOf(Exercise)"/>, aber direkt aus Typ-Schlüssel + Roh-JSON (unbekannter Typ → leer).</summary>
+    /// <summary>Same as <see cref="ItemsOf(Exercise)"/>, but directly from type key + raw JSON (unknown type → empty).</summary>
     public IReadOnlyList<ContentItem> ItemsOf(string typeKey, string configJson) =>
         registry.ByKey(typeKey)?.ItemsOf(configJson) ?? [];
 
     /// <summary>
-    /// Wendet die Abfragerichtung einer Vokabel auf ein kanonisch (Wort → Übersetzung) gebautes Item an:
-    /// <c>back-to-front</c> vertauscht Prompt/Antwort, <c>both</c> vertauscht deterministisch bei ungeradem
-    /// Index (stabil pro Item, ohne Zufall). Der Index bleibt gleich – der Leitner-/Test-Fortschritt kippt nicht.
+    /// Applies the vocabulary query direction to an item built canonically (word → translation):
+    /// <c>back-to-front</c> swaps prompt/answer, <c>both</c> swaps deterministically for an odd
+    /// index (stable per item, without randomness). The index stays the same – the Leitner/test progress does not flip.
     /// </summary>
     public static ContentItem WithDirection(ContentItem item, string? direction) => direction switch
     {

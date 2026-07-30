@@ -8,10 +8,10 @@ using Pugling.Api.Errors;
 namespace Pugling.Api.Controllers.Creator;
 
 /// <summary>
-/// Bilder einer Store-Vokabel – die <b>Regelzuordnung</b>: einmal gepflegt, wirkt sie in jeder Übung,
-/// die das Wort nutzt. Mehrere Zuordnungen sind der Normalfall und der Sinn der Sache: erst die Auswahl
-/// mehrerer Darstellungen macht die Individualisierung je Kind möglich. Eine einzelne Übung kann davon
-/// abweichen – siehe die Item-Zuordnung im <see cref="ExerciseMediaController"/>.
+/// Images of a store vocabulary entry – the <b>default assignment</b>: maintained once, it takes effect in every
+/// exercise that uses the word. Multiple assignments are the normal case and the whole point: only the choice
+/// among several representations makes per-child individualization possible. A single exercise can deviate
+/// from this – see the item assignment in <see cref="ExerciseMediaController"/>.
 /// </summary>
 [ApiController]
 [ApiVersion("1.0")]
@@ -23,7 +23,7 @@ public class VocabularyMediaController(PuglingDbContext db, MediaLinkService lin
 {
     private const MediaLinkService.Carrier Carrier = MediaLinkService.Carrier.Vocabulary;
 
-    /// <summary>Die Bilder dieser Vokabel, bester redaktioneller Rang zuerst.</summary>
+    /// <summary>The images of this vocabulary entry, best editorial rank first.</summary>
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<IEnumerable<MediaLinkResponse>>> List(int vocabularyId, CancellationToken ct)
@@ -32,7 +32,7 @@ public class VocabularyMediaController(PuglingDbContext db, MediaLinkService lin
         return (await links.ListAsync(Carrier, vocabularyId, ct)).Select(MediaLinkService.Map).ToList();
     }
 
-    /// <summary>Ordnet der Vokabel ein Bild zu (per Id oder Key). Dasselbe Bild nur einmal je Vokabel.</summary>
+    /// <summary>Assigns an image to the vocabulary entry (by id or key). The same image only once per vocabulary entry.</summary>
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -48,7 +48,7 @@ public class VocabularyMediaController(PuglingDbContext db, MediaLinkService lin
         return CreatedAtAction(nameof(List), new { vocabularyId }, MediaLinkService.Map(link!));
     }
 
-    /// <summary>Ändert den redaktionellen Rang einer Zuordnung.</summary>
+    /// <summary>Changes the editorial rank of an assignment.</summary>
     [HttpPatch("{linkId:int}")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<MediaLinkResponse>> Update(int vocabularyId, int linkId,
@@ -65,7 +65,7 @@ public class VocabularyMediaController(PuglingDbContext db, MediaLinkService lin
         return MediaLinkService.Map(refreshed);
     }
 
-    /// <summary>Löst die Zuordnung. Das Bild bleibt im Store (es hängt womöglich an anderen Wörtern).</summary>
+    /// <summary>Removes the assignment. The image stays in the store (it may still hang off other words).</summary>
     [HttpDelete("{linkId:int}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

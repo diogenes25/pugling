@@ -6,50 +6,50 @@ using Pugling.Api.Models;
 namespace Pugling.Api.Services.Shared;
 
 /// <summary>
-/// Positions-basierter Lern-Motor (neues Modell): wählt die heute fälligen Inhalte einer
-/// <see cref="PlanPosition"/>, terminiert ihren Karteikasten-Fortschritt (<see cref="PositionItemProgress"/>)
-/// und löst die Teststufe auf. Der Inhalt kommt aus der Übungs-Config über den
-/// <see cref="ExerciseContentProvider"/>, die Bewertung bleibt beim <see cref="AnswerGrader"/>.
-/// Das Gegenstück zu den früheren plan-weiten Schedule-/Fortschritts-Services, aber pro Übung
-/// statt pro Plan – Ziele und Punkte hängen jetzt an der Position.
+/// Position-based learning engine (new model): selects the content due today for a
+/// <see cref="PlanPosition"/>, schedules its Leitner box progress (<see cref="PositionItemProgress"/>)
+/// and resolves the test stage. The content comes from the exercise config via the
+/// <see cref="ExerciseContentProvider"/>, grading stays with the <see cref="AnswerGrader"/>.
+/// The counterpart to the former plan-wide schedule/progress services, but per exercise
+/// instead of per plan – goals and points now hang off the position.
 /// </summary>
 public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver content, ExerciseTypeRegistry registry)
 {
     /// <summary>
-    /// Der <see cref="IExerciseType"/> hinter einer Übung (für Stufen-/Facetten-Regeln) oder <c>null</c>, wenn ihr
-    /// Typ-Schlüssel unbekannt ist. Null-sicher wie die Inhalts-Auflösung (<see cref="ExerciseContentResolver"/>),
-    /// damit ein Datenintegritätsfehler als sauberer <see cref="ApiErrors.UnknownExerciseType"/> statt als
-    /// unbehandelte Ausnahme beim Aufrufer landet.
+    /// The <see cref="IExerciseType"/> behind an exercise (for stage/facet rules), or <c>null</c> if its
+    /// type key is unknown. Null-safe like the content resolution (<see cref="ExerciseContentResolver"/>),
+    /// so a data integrity error reaches the caller as a clean <see cref="ApiErrors.UnknownExerciseType"/>
+    /// instead of an unhandled exception.
     /// </summary>
     public IExerciseType? TypeOf(Exercise exercise) => registry.ByKey(exercise.Type);
 
-    /// <summary>Standard-Leitner-Intervalle in Tagen (Index = Box; Index 0 ungenutzt).</summary>
+    /// <summary>Default Leitner intervals in days (index = box; index 0 unused).</summary>
     private static readonly int[] DefaultBoxIntervalDays = [0, 1, 2, 4, 7, 14];
 
-    /// <summary>Leitner-Intervalle der Position (eigene, sonst Standard).</summary>
+    /// <summary>Leitner intervals of the position (own, otherwise default).</summary>
     public IReadOnlyList<int> BoxIntervals(PlanPosition pos) =>
         pos.BoxIntervalDays is { Count: > 1 } custom ? custom : DefaultBoxIntervalDays;
 
     /// <summary>
-    /// Die Inhalts-Items der Übung dieser Position (Store-aufgelöst bei referenzierten Vokabeln).
-    /// <paramref name="childId"/> schaltet die Bebilderung frei – nur die spielenden Pfade (Übungskarte,
-    /// Testaufgabe) geben ihn mit; Auswertung und Ziel-Berechnung brauchen kein Bild und sparen die Auswahl.
+    /// The content items of this position's exercise (store-resolved for referenced vocabulary items).
+    /// <paramref name="childId"/> unlocks image selection – only the playing paths (practice card,
+    /// test item) pass it; evaluation and goal calculation don't need an image and skip the selection.
     /// </summary>
     public async Task<IReadOnlyList<ContentItem>> ItemsOfAsync(PlanPosition pos, int? childId = null,
         CancellationToken ct = default) =>
         pos.Exercise is { } ex ? await content.ItemsOfAsync(ex, childId, ct) : [];
 
     /// <summary>
-    /// Darf der Sohn diesen Plan heute spielen (üben/testen)? Nur ein aktiver Plan innerhalb seiner
-    /// Laufzeit ist spielbar – so kann sich das Kind keinen leichten oder abgelaufenen Plan zum bequemen
-    /// Punktesammeln aussuchen (Anti-Schummel). Der Vater ist davon ausgenommen (Vorschau/Nachtrag).
+    /// May the child play this plan today (practice/test)? Only an active plan within its
+    /// runtime is playable – this way the child can't pick an easy or expired plan for convenient
+    /// point farming (anti-cheating). The supervisor is exempt from this (preview/backfill).
     /// </summary>
     public static bool PlanPlayableForChild(StudyPlan plan, DateOnly today) =>
         plan.Active && plan.StartDate <= today && today <= plan.EndDate;
 
     /// <summary>
-    /// Für einen Tag geltende Teststufe der Position: Fahrplan (falls gesetzt) → Positions-Override →
-    /// Übungs-Default → Verfahrens-Standard. Serverseitig erzwungen (nicht vom Client wählbar).
+    /// Test stage of the position applicable for a given day: study plan (if set) → position override →
+    /// exercise default → method default. Enforced server-side (not selectable by the client).
     /// </summary>
     public static int StageForDay(PlanPosition pos, StudyPlan plan, DateOnly day, IExerciseType type)
     {
@@ -61,16 +61,16 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
         return step?.Stage ?? pos.Stage ?? pos.Exercise?.DefaultStage ?? type.DefaultStage;
     }
 
-    /// <summary>Anzahl genutzter Inhalte der Position (Override, Übungs-Default, sonst alle vorhandenen).</summary>
+    /// <summary>Number of content items used by the position (override, exercise default, otherwise all available).</summary>
     public int PoolSize(PlanPosition pos, int available) =>
         (pos.ItemCount ?? pos.Exercise?.DefaultItemCount) is > 0 and var count ? Math.Min(count, available) : available;
 
     /// <summary>
-    /// Wählt die Item-Indizes, die heute dran sind: begrenzt auf den Pool (<see cref="PlanPosition.ItemCount"/>),
-    /// gefiltert nach <see cref="ItemScope"/> (neu/alt/alle) und – bei Leitner – nur die fälligen
-    /// (nie gesehen zählt als fällig). Die Reihenfolge bestimmt <paramref name="strategy"/> (Standard =
-    /// schwächste zuerst = bisheriges Verhalten). Der Fortschritt wird dazu geladen, aber NICHT neu angelegt
-    /// (das passiert erst beim Bewerten in <see cref="ApplyReview"/>).
+    /// Selects the item indices due today: limited to the pool (<see cref="PlanPosition.ItemCount"/>),
+    /// filtered by <see cref="ItemScope"/> (new/old/all) and – for Leitner – only the due ones
+    /// (never seen counts as due). <paramref name="strategy"/> determines the order (default =
+    /// weakest first = previous behavior). The progress is loaded for this, but NOT newly created
+    /// (that only happens when grading in <see cref="ApplyReview"/>).
     /// </summary>
     public async Task<IReadOnlyList<int>> DueItemIndicesAsync(PlanPosition pos, DateOnly day,
         PracticeOrder strategy = PracticeOrder.WeakestFirst, bool dueOnly = true, CancellationToken ct = default)
@@ -90,9 +90,9 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
     }
 
     /// <summary>
-    /// Rückt einen Cursor über die eingefrorene Reihenfolge (<paramref name="order"/>) hinweg über Item-Indizes,
-    /// die seit dem Start entfernt wurden (out-of-range gegenüber <paramref name="itemCount"/>). Geteilt vom
-    /// Übungs- und vom Test-Cursor, damit die Skip-Regel an genau einer Stelle lebt.
+    /// Advances a cursor across the frozen order (<paramref name="order"/>) past item indices
+    /// that have been removed since the start (out-of-range relative to <paramref name="itemCount"/>). Shared by
+    /// the practice and the test cursor, so the skip rule lives in exactly one place.
     /// </summary>
     public static int SkipRemoved(IReadOnlyList<int> order, int cursor, int itemCount)
     {
@@ -101,10 +101,10 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
     }
 
     /// <summary>
-    /// Die pro Stufe zulässige Darstellung eines Inhalts-Atoms als Karte/Testaufgabe (Anti-Cheat an einer Stelle):
-    /// getippte Stufen halten die Lösung (<c>Reveal</c>) zurück, Anzeige-/Selbsteinschätzung deckt sie auf;
-    /// Buchstabenkästchen geben die Länge, die Hör-Stufe die Audioquelle, Multiple-Choice die Auswahl.
-    /// Geteilt von Übungskarte (<c>PracticeCard</c>) und Testaufgabe (<c>TestItem</c>).
+    /// The representation of a content atom permitted per stage as a card/test item (anti-cheat in one place):
+    /// typed stages withhold the solution (<c>Reveal</c>), display/self-assessment reveals it;
+    /// letter boxes give the length, the listening stage the audio source, multiple choice the options.
+    /// Shared by practice card (<c>PracticeCard</c>) and test item (<c>TestItem</c>).
     /// </summary>
     public static (string? Hint, int? AnswerLength, string? Reveal, IReadOnlyList<string>? Choices,
         string? AudioUrl, string? ImageUrl, string? ImageAlt)
@@ -124,9 +124,9 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
     }
 
     /// <summary>
-    /// Ordnet eine Menge (Index, Fortschritt) gemäß der gewählten Strategie und gibt die Indizes zurück.
-    /// Wird beim Einfrieren der Sitzungs-/Prüfungsreihenfolge genutzt; der Zufall (Random/NewestWeighted)
-    /// fällt daher nur <b>einmal</b> beim Start, nicht bei jedem Aufruf.
+    /// Orders a set (index, progress) according to the chosen strategy and returns the indices.
+    /// Used when freezing the session/exam order; the randomness (Random/NewestWeighted)
+    /// therefore falls only <b>once</b> at the start, not on every call.
     /// </summary>
     public static IReadOnlyList<int> OrderIndices(
         IEnumerable<(int Index, PositionItemProgress? Prog)> items, PracticeOrder strategy)
@@ -142,9 +142,9 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
     }
 
     /// <summary>
-    /// Gewichtete Ziehung ohne Zurücklegen: zuletzt eingeführte (bzw. noch nie eingeführte) Inhalte erhalten
-    /// deutlich höheres Gewicht (Rang-Gewicht 1, 1/2, 1/3 …), stehen also mit hoher Wahrscheinlichkeit vorn –
-    /// die „neueste zuerst, aber nicht starr"-Regel.
+    /// Weighted draw without replacement: most recently introduced (or never introduced) content items receive
+    /// significantly higher weight (rank weight 1, 1/2, 1/3 …), so they are placed near the front with high
+    /// probability – the "newest first, but not rigid" rule.
     /// </summary>
     private static List<int> WeightedNewest(List<(int Index, PositionItemProgress? Prog)> items)
     {
@@ -183,7 +183,7 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
     private static bool IsDue(PositionItemProgress? prog, DateOnly day) =>
         prog is null || prog.DueOn is null || prog.DueOn <= day;
 
-    /// <summary>Holt den Fortschritts-Satz eines Inhaltsatoms der Position oder legt ihn (nachverfolgt) an.</summary>
+    /// <summary>Retrieves the progress record of a position's content atom, or creates it (tracked) if missing.</summary>
     public async Task<PositionItemProgress> ProgressForAsync(int positionId, int itemIndex,
         CancellationToken ct = default)
     {
@@ -198,8 +198,8 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
     }
 
     /// <summary>
-    /// Verbucht eine Leitner-Wiederholung auf dem Fortschritt: richtig → eine Box höher (längeres
-    /// Intervall), falsch → zurück in Box 1 und sofort wieder fällig. Der Aufrufer speichert.
+    /// Records a Leitner review on the progress: correct → one box higher (longer
+    /// interval), incorrect → back to box 1 and due again immediately. The caller saves.
     /// </summary>
     public void ApplyReview(PlanPosition pos, PositionItemProgress prog, bool correct, DateOnly today, DateTime nowUtc)
     {
