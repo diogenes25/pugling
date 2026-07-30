@@ -8,9 +8,9 @@ using Pugling.Client;
 namespace Pugling.Agent.Creator.Drafting;
 
 /// <summary>
-/// Lückentext – der Typ, bei dem die Interessen am stärksten wirken: dieselben Lückenwörter, aber
-/// Sätze aus der Lebenswelt des Kindes. Die riskanteste Stelle ist die Kopplung zwischen den
-/// Platzhaltern im Text und den Lücken; genau die prüft der Validator vollständig nach.
+/// Cloze text - the type where interests take effect most strongly: the same gap words, but sentences
+/// from the child's world. The riskiest spot is the coupling between the placeholders in the text and
+/// the gaps; that is exactly what the validator checks completely.
 /// </summary>
 public sealed partial class ClozeStrategy(IChatClient chat, CreatorApi creator,
     IOptions<AgentOptions> options, ILogger<ClozeStrategy> logger)
@@ -110,7 +110,7 @@ public sealed partial class ClozeStrategy(IChatClient chat, CreatorApi creator,
         return Task.FromResult(Payload(draft.Title, config, briefing, request));
     }
 
-    /// <summary>Leere Einträge und Dubletten raus; komplett leere Listen werden zu <c>null</c>.</summary>
+    /// <summary>Strips empty entries and duplicates; completely empty lists become <c>null</c>.</summary>
     private static List<string>? Clean(List<string>? values)
     {
         var cleaned = (values ?? [])

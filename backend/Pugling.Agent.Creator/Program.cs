@@ -12,13 +12,13 @@ using Pugling.Client;
 namespace Pugling.Agent.Creator;
 
 /// <summary>
-/// Einstiegspunkt des KI-Creators. Die App bedient die Pugling-API von außen – sie ist ein
-/// <b>Konsument</b> der REST-Oberfläche, kein Teil des Servers. Alles läuft lokal: die API auf
-/// <c>localhost:5200</c>, das Sprachmodell in Ollama.
+/// Entry point of the AI creator. The app drives the Pugling API from the outside - it is a
+/// <b>consumer</b> of the REST surface, not part of the server. Everything runs locally: the API on
+/// <c>localhost:5200</c>, the language model in Ollama.
 /// </summary>
 public static class Program
 {
-    /// <summary>Exit-Codes: 0 = fertig, 1 = fachlich gescheitert, 2 = falsch aufgerufen, 130 = abgebrochen.</summary>
+    /// <summary>Exit codes: 0 = done, 1 = failed on domain grounds, 2 = invoked incorrectly, 130 = cancelled.</summary>
     public static async Task<int> Main(string[] args)
     {
         try
@@ -78,8 +78,9 @@ public static class Program
     }
 
     /// <summary>
-    /// Baut den Host. Die Argumente gehen bewusst <b>nicht</b> in die Konfiguration – der eigene Parser
-    /// kennt Schalter ohne Wert (<c>--dry-run</c>), an denen der Kommandozeilen-Konfigurationsanbieter scheitert.
+    /// Builds the host. The arguments deliberately do <b>not</b> go into the configuration - the custom
+    /// parser understands switches without a value (<c>--dry-run</c>), which the command-line configuration
+    /// provider fails on.
     /// </summary>
     private static IHost BuildHost()
     {
@@ -113,8 +114,8 @@ public static class Program
     }
 
     /// <summary>
-    /// Das lokale Sprachmodell über Ollamas eigene API. Der HttpClient trägt das Zeitlimit – lokale
-    /// Modelle rechnen auf CPU spürbar lange, und der Standard von 100 Sekunden reißt dabei zu früh.
+    /// The local language model via Ollama's own API. The HttpClient carries the timeout - local models
+    /// take noticeably long computing on CPU, and the default of 100 seconds cuts them off too early.
     /// </summary>
     private static IChatClient CreateChatClient(IServiceProvider services)
     {

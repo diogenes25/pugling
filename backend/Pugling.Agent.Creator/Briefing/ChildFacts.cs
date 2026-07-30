@@ -3,10 +3,10 @@ using System.Text;
 namespace Pugling.Agent.Creator.Briefing;
 
 /// <summary>
-/// Alles, was den Zuschnitt einer Übung auf <b>ein bestimmtes Kind</b> ausmacht: wer es ist, was es mag
-/// (und was nicht) und wo es steht. Fehlt dieser Teil, entsteht eine allgemeine Katalog-Übung – die
-/// fachliche Trennung bleibt in beiden Fällen dieselbe: der Lernstoff ist gesetzt, die
-/// <see cref="Interests">Interessen</see> bestimmen nur die <i>Einkleidung</i>.
+/// Everything that makes up tailoring an exercise to <b>one specific child</b>: who they are, what they
+/// like (and what not) and where they stand. If this part is missing, a general catalog exercise results
+/// - the domain separation stays the same in both cases: the material is fixed, the
+/// <see cref="Interests">interests</see> only determine how it is <i>dressed up</i>.
 /// </summary>
 public sealed record ChildFacts(
     int ChildId,
@@ -22,13 +22,13 @@ public sealed record ChildFacts(
     IReadOnlyList<TextbookResponse> Textbooks,
     IReadOnlyList<WordMasteryResponse> WeakWords)
 {
-    /// <summary>Das Lehrbuch, an dem sich der Stoff ausrichtet (das erste zum Fach passende, sonst das erste überhaupt).</summary>
+    /// <summary>The textbook the material is aligned to (the first one matching the subject, otherwise the first one at all).</summary>
     public TextbookResponse? PrimaryTextbook(int subjectId, string subjectName) =>
         Textbooks.FirstOrDefault(b => b.SubjectId == subjectId
                                       || string.Equals(b.SubjectName, subjectName, StringComparison.OrdinalIgnoreCase))
         ?? Textbooks.FirstOrDefault();
 
-    /// <summary>Der Kind-Abschnitt des Auftrags.</summary>
+    /// <summary>The child section of the request.</summary>
     public string ToPromptText()
     {
         var text = new StringBuilder();

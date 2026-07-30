@@ -7,9 +7,9 @@ using Pugling.Client;
 namespace Pugling.Agent.Creator.Drafting;
 
 /// <summary>
-/// Übersetzungsübung: ganze Sätze statt Einzelwörter. Der Pflicht-Wortschatz muss hier nicht als
-/// eigener Eintrag auftauchen, sondern <b>in</b> den Sätzen vorkommen – geprüft wird entsprechend
-/// auf Vorkommen, nicht auf Gleichheit.
+/// Translation exercise: whole sentences instead of single words. The required vocabulary does not
+/// need to appear here as its own entry, but <b>within</b> the sentences - checked accordingly for
+/// occurrence, not equality.
 /// </summary>
 public sealed class TranslationStrategy(IChatClient chat, CreatorApi creator,
     IOptions<AgentOptions> options, ILogger<TranslationStrategy> logger)

@@ -3,11 +3,11 @@ using System.Text;
 namespace Pugling.Agent.Creator.Briefing;
 
 /// <summary>
-/// Der <b>Lehrer</b>, in dessen Auftrag entworfen wird: Fach, Schulzweig, Klassenstufen und – wenn
-/// hinterlegt – das konkrete Lehrwerk samt der Unit, die gerade dran ist. Das ist die Hälfte des
-/// Briefings, die <i>ohne Kind</i> trägt: eine allgemeine Katalog-Übung entsteht allein hieraus.
-/// <see cref="Persona"/> und <see cref="Didactics"/> gehen bewusst in den <b>System</b>-Prompt (sie
-/// beschreiben, wer entwirft), alles andere in den Auftrag (er beschreibt, was entworfen wird).
+/// The <b>teacher</b> on whose behalf the design is made: subject, school branch, grade range and - if
+/// set - the concrete textbook series along with the unit currently in progress. This is the half of the
+/// briefing that carries <i>without a child</i>: a general catalog exercise arises from this alone.
+/// <see cref="Persona"/> and <see cref="Didactics"/> deliberately go into the <b>system</b> prompt (they
+/// describe who is designing), everything else into the request (it describes what is being designed).
 /// </summary>
 public sealed record ProfileFacts(
     int ProfileId,
@@ -26,14 +26,14 @@ public sealed record ProfileFacts(
     string? SeriesNotes,
     SeriesUnitResponse? Unit)
 {
-    /// <summary>Das Lehrwerk in einer Zeile („Access (Cornelsen)"), sofern eine Reihe hinterlegt ist.</summary>
+    /// <summary>The textbook series in one line ("Access (Cornelsen)"), if a series is set.</summary>
     public string? SeriesLabel => SeriesName is { Length: > 0 } name
         ? SeriesPublisher is { Length: > 0 } publisher ? $"{name} ({publisher})" : name
         : null;
 
     /// <summary>
-    /// Quellenangabe für die Übungs-Metadaten („Access, Klasse 8, Unit 3 – Growing up"). Sie ist der
-    /// Faden, an dem der Supervisor die generierte Übung später im Katalog wiederfindet.
+    /// Source attribution for the exercise metadata ("Access, grade 8, Unit 3 - Growing up"). It is the
+    /// thread by which the supervisor later rediscovers the generated exercise in the catalog.
     /// </summary>
     public string? Source
     {
@@ -47,7 +47,7 @@ public sealed record ProfileFacts(
         }
     }
 
-    /// <summary>Der Lehrwerk-Teil des Auftrags. Leer, wenn das Profil werkunabhängig ist.</summary>
+    /// <summary>The textbook-series part of the request. Empty if the profile is series-independent.</summary>
     public string ToPromptText()
     {
         var text = new StringBuilder();

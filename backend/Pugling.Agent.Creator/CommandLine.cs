@@ -3,14 +3,14 @@ using System.Globalization;
 namespace Pugling.Agent.Creator;
 
 /// <summary>
-/// Fehlerhafte Aufrufsyntax. Wird in <c>Program</c> abgefangen und als Kurzhilfe ausgegeben –
-/// ein Tippfehler soll keinen Stacktrace produzieren.
+/// Incorrect invocation syntax. Caught in <c>Program</c> and printed as short help - a typo should not
+/// produce a stack trace.
 /// </summary>
 public sealed class AgentUsageException(string message) : Exception(message);
 
 /// <summary>
-/// Minimaler Parser für <c>verb --option wert --flag</c>. Bewusst handgeschrieben statt einer
-/// Kommandozeilen-Bibliothek: der Agent hat drei Verben, und das Projekt bleibt so abhängigkeitsarm.
+/// Minimal parser for <c>verb --option value --flag</c>. Deliberately hand-written instead of a
+/// command-line library: the agent has three verbs, and this keeps the project low on dependencies.
 /// </summary>
 public sealed class CommandLine
 {
@@ -18,10 +18,10 @@ public sealed class CommandLine
 
     private CommandLine(string verb) => Verb = verb;
 
-    /// <summary>Das gewählte Verb (<c>create</c>, <c>briefing</c>, <c>types</c>, <c>help</c>).</summary>
+    /// <summary>The chosen verb (<c>create</c>, <c>briefing</c>, <c>types</c>, <c>help</c>).</summary>
     public string Verb { get; }
 
-    /// <summary>Zerlegt die Argumente; ohne Verb gilt <c>help</c>.</summary>
+    /// <summary>Parses the arguments; without a verb, <c>help</c> applies.</summary>
     public static CommandLine Parse(string[] args)
     {
         var hasVerb = args.Length > 0 && !args[0].StartsWith('-');
@@ -62,14 +62,14 @@ public sealed class CommandLine
         return line;
     }
 
-    /// <summary>Wert einer Option oder <c>null</c>.</summary>
+    /// <summary>Value of an option, or <c>null</c>.</summary>
     public string? Value(string name) => _options.TryGetValue(name, out var v) ? v : null;
 
-    /// <summary>Ist der Schalter gesetzt (mit oder ohne Wert)?</summary>
+    /// <summary>Is the switch set (with or without a value)?</summary>
     public bool Flag(string name) => _options.ContainsKey(name)
         && Value(name) is not ("false" or "0" or "no");
 
-    /// <summary>Zahl-Option mit Vorgabewert.</summary>
+    /// <summary>Numeric option with a default value.</summary>
     public int Int(string name, int fallback) =>
         Value(name) is { } raw
             ? int.TryParse(raw, NumberStyles.Integer, CultureInfo.InvariantCulture, out var value)
@@ -77,15 +77,15 @@ public sealed class CommandLine
                 : throw new AgentUsageException($"--{name} erwartet eine Zahl, bekam '{raw}'.")
             : fallback;
 
-    /// <summary>Pflicht-Zahl-Option.</summary>
+    /// <summary>Required numeric option.</summary>
     public int RequiredInt(string name) =>
         Value(name) is null ? throw new AgentUsageException($"--{name} fehlt.") : Int(name, 0);
 
-    /// <summary>Pflicht-Text-Option.</summary>
+    /// <summary>Required text option.</summary>
     public string RequiredValue(string name) =>
         Value(name) is { Length: > 0 } value ? value : throw new AgentUsageException($"--{name} fehlt.");
 
-    /// <summary>Komma-getrennte Liste (z. B. <c>--words apple,pear,plum</c>); leer, wenn nicht gesetzt.</summary>
+    /// <summary>Comma-separated list (e.g. <c>--words apple,pear,plum</c>); empty if not set.</summary>
     public IReadOnlyList<string> List(string name) =>
         Value(name) is { Length: > 0 } raw
             ? [.. raw.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)]

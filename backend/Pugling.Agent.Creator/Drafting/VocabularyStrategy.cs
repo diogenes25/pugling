@@ -7,10 +7,10 @@ using Pugling.Client;
 namespace Pugling.Agent.Creator.Drafting;
 
 /// <summary>
-/// Vokabelübung. Der Wortschatz ist der eigentliche Lernstoff – hier wirken die Interessen nur im
-/// Hinweis und in der Wortauswahl, wenn kein Pflicht-Wortschatz vorgegeben ist. Vor dem Anlegen läuft
-/// der <b>Lookup gegen den Vokabelspeicher</b>: ein exakt gleiches Paar wird wiederverwendet statt
-/// dupliziert, alles andere legt der Server beim Speichern neu an und verlinkt es.
+/// Vocabulary exercise. The vocabulary is the actual learning material - here the interests only affect
+/// the hint and the word selection when no required vocabulary is prescribed. Before creation, a
+/// <b>lookup against the vocabulary store</b> runs: an exactly matching pair is reused instead of
+/// duplicated, everything else the server creates anew and links when saving.
 /// </summary>
 public sealed class VocabularyStrategy(IChatClient chat, CreatorApi creator,
     IOptions<AgentOptions> options, ILogger<VocabularyStrategy> logger)
@@ -82,9 +82,9 @@ public sealed class VocabularyStrategy(IChatClient chat, CreatorApi creator,
     }
 
     /// <summary>
-    /// Fragt den Speicher nach den Wörtern des Entwurfs. Wiederverwendet wird nur bei <b>exakt gleichem
-    /// Paar</b> (Wort und Übersetzung): ein gleich geschriebenes Wort mit anderer Bedeutung wäre eine
-    /// andere Vokabel – und der Selbsttest würde zu Recht scheitern.
+    /// Queries the store for the draft's words. Reuse happens only for an <b>exactly matching pair</b>
+    /// (word and translation): an identically spelled word with a different meaning would be a different
+    /// vocabulary item - and the self-test would rightly fail.
     /// </summary>
     private async Task<Dictionary<string, int>> LookupKnownPairsAsync(VocabularyDraft draft,
         CreatorBriefing briefing, CancellationToken ct)

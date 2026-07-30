@@ -4,22 +4,22 @@ using Pugling.Agent.Creator.Drafting;
 namespace Pugling.Agent.Creator;
 
 /// <summary>
-/// Der Ablauf des Agenten in einem Satz: erst das Kind verstehen, dann den passenden Übungstyp
-/// arbeiten lassen. Die Reihenfolge ist bewusst hier verdrahtet und nicht dem Sprachmodell überlassen –
-/// das Modell liefert Inhalt, die Steuerung bleibt deterministisch und damit prüfbar.
+/// The agent's flow in one sentence: first understand the child, then let the matching exercise type do
+/// its work. The order is deliberately wired here and not left to the language model - the model delivers
+/// content, control stays deterministic and thus verifiable.
 /// </summary>
 public sealed class CreatorPipeline(BriefingBuilder briefings, IEnumerable<IExerciseStrategy> strategies)
 {
     private readonly IReadOnlyList<IExerciseStrategy> _strategies = [.. strategies];
 
-    /// <summary>Die Übungstypen, die der Agent erzeugen kann.</summary>
+    /// <summary>The exercise types the agent can generate.</summary>
     public IReadOnlyList<string> SupportedTypes => [.. _strategies.Select(s => s.TypeKey)];
 
-    /// <summary>Nur das Briefing bauen (Verb <c>briefing</c>) – ohne Sprachmodell, ohne Schreibzugriff.</summary>
+    /// <summary>Build only the briefing (verb <c>briefing</c>) - without a language model, without write access.</summary>
     public Task<CreatorBriefing> BriefAsync(GenerationRequest request, CancellationToken ct = default) =>
         briefings.BuildAsync(request, ct);
 
-    /// <summary>Briefing bauen und die Übung erzeugen.</summary>
+    /// <summary>Build the briefing and generate the exercise.</summary>
     public async Task<(CreatorBriefing Briefing, GenerationOutcome Outcome)> CreateAsync(
         GenerationRequest request, CancellationToken ct = default)
     {
