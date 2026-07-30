@@ -1,57 +1,57 @@
 namespace Pugling.Contracts;
 
 /// <summary>
-/// Einordnung einer Anmerkung. <see cref="Unspecified"/> ist der Regelfall beim Erfassen: Beim Testen zu
-/// kategorisieren kostet mehr Zeit, als es einbringt – die Einordnung zieht der Nachbereitungs-Skill aus
-/// dem Text nach.
+/// Classification of a remark. <see cref="Unspecified"/> is the common case when capturing it: categorizing
+/// while testing costs more time than it's worth – the follow-up skill derives the classification from
+/// the text afterward.
 /// </summary>
 public enum RemarkCategory
 {
-    /// <summary>Nicht eingeordnet (Vorgabe) – der Skill leitet die Kategorie später aus dem Text ab.</summary>
+    /// <summary>Not classified (default) – the skill derives the category from the text later.</summary>
     Unspecified = 0,
-    /// <summary>Etwas funktioniert nicht wie erwartet.</summary>
+    /// <summary>Something doesn't work as expected.</summary>
     Bug = 1,
-    /// <summary>Bedienung/Darstellung: Beschriftung, Anordnung, Verständlichkeit.</summary>
+    /// <summary>Usability/display: labeling, layout, clarity.</summary>
     Ui = 2,
-    /// <summary>Frage oder Beobachtung zur Umsetzung im Code.</summary>
+    /// <summary>Question or observation about the implementation in the code.</summary>
     Code = 3,
-    /// <summary>Fachlicher Inhalt: Übungen, Vokabeln, Lernstoff.</summary>
+    /// <summary>Domain content: exercises, vocabulary, learning material.</summary>
     Content = 4,
-    /// <summary>Vorschlag für etwas Neues.</summary>
+    /// <summary>Suggestion for something new.</summary>
     Idea = 5,
-    /// <summary>Reine Wissensfrage – erwartet eine Antwort, keine Änderung.</summary>
+    /// <summary>Pure knowledge question – expects an answer, not a change.</summary>
     Question = 6,
 }
 
 /// <summary>
-/// Bearbeitungsstand einer Anmerkung. Bewusst schlank: kein Zuweisen, keine Meilensteine – vier Zustände
-/// reichen, damit der Nachbereitungs-Skill nicht bei jedem Lauf dieselben Anmerkungen wieder vorlegt.
+/// Processing state of a remark. Deliberately lean: no assignment, no milestones – four states
+/// are enough so the follow-up skill doesn't present the same remarks again on every run.
 /// </summary>
 public enum RemarkStatus
 {
-    /// <summary>Erfasst, noch nicht angesehen.</summary>
+    /// <summary>Captured, not yet reviewed.</summary>
     Open = 0,
-    /// <summary>Zurückgestellt: Es ist etwas zu tun, aber nicht jetzt. Eine vorhandene Antwort bleibt als Vorarbeit erhalten.</summary>
+    /// <summary>Deferred: there is something to do, but not now. An existing answer is kept as preliminary work.</summary>
     Planned = 1,
-    /// <summary>Erledigt – Frage beantwortet oder Änderung umgesetzt.</summary>
+    /// <summary>Done – question answered or change implemented.</summary>
     Done = 2,
-    /// <summary>Verworfen: kein Handlungsbedarf.</summary>
+    /// <summary>Rejected: no action needed.</summary>
     Rejected = 3,
 }
 
 /// <summary>
-/// Herkunft eines Beitrags im Verlauf einer Anmerkung.
+/// Origin of a contribution in a remark's history.
 /// <para>
-/// Bewusst ein eigenes Feld und <b>nicht</b> aus dem Autor-Konto abgeleitet: Claude schreibt über den Skill
-/// mit dem Token des Menschen, beide Beiträge trügen also dasselbe Konto. An der Unterscheidung hängt aber
-/// eine Regel – ein <see cref="Human"/>-Beitrag öffnet eine erledigte Anmerkung wieder, ein
-/// <see cref="Assistant"/>-Beitrag lässt den Stand unberührt.
+/// Deliberately a dedicated field and <b>not</b> derived from the author account: Claude writes via the
+/// skill using the human's token, so both contributions would carry the same account. A rule hinges on
+/// this distinction, though – a <see cref="Human"/> contribution reopens a done remark, while an
+/// <see cref="Assistant"/> contribution leaves the state untouched.
 /// </para>
 /// </summary>
 public enum RemarkCommentAuthor
 {
-    /// <summary>Der Mensch – im Widget oder auf der Anmerkungs-Seite geschrieben (Vorgabe).</summary>
+    /// <summary>The human – written in the widget or on the remarks page (default).</summary>
     Human = 0,
-    /// <summary>Claude Code, über den Skill.</summary>
+    /// <summary>Claude Code, via the skill.</summary>
     Assistant = 1,
 }

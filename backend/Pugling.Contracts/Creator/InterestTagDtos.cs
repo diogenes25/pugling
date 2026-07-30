@@ -5,21 +5,21 @@ namespace Pugling.Contracts.Creator;
 // „welches Bild passt zu diesem Kind" überhaupt rechnen.
 
 /// <summary>
-/// Ein Schlagwort der Taxonomie samt Nutzungszahlen auf beiden Seiten: <c>MediaCount</c> zählt die
-/// Assets, die es tragen, <c>ChildCount</c> die Kinder, die es als Vorliebe/Abneigung führen. <c>Slug</c>
-/// ist der stabile Referenzname (kleingeschrieben, ohne Diakritika), <c>Facet</c> unterscheidet Thema von
-/// Darstellungsstil, <c>Synonyms</c> hält alternative Schreibweisen gegen Dubletten aus Freitext.
+/// A tag of the taxonomy including usage counts on both sides: <c>MediaCount</c> counts the
+/// assets carrying it, <c>ChildCount</c> the children who list it as a like/dislike. <c>Slug</c>
+/// is the stable reference name (lowercase, no diacritics), <c>Facet</c> distinguishes theme from
+/// presentation style, <c>Synonyms</c> holds alternative spellings against duplicates from free text.
 /// </summary>
 public record InterestTagResponse(int Id, string Slug, string Label, InterestFacet Facet,
     IReadOnlyList<string> Synonyms, string? Color, int MediaCount, int ChildCount, DateTime CreatedAt);
 
 /// <summary>
-/// Anlegen eines Schlagworts. Der <c>Slug</c> darf entfallen – er wird dann aus dem <c>Label</c>
-/// abgeleitet. Existiert der Slug bereits, liefert der Endpunkt den bestehenden Eintrag (idempotent).
+/// Creating a tag. The <c>Slug</c> may be omitted – it is then derived from the <c>Label</c>.
+/// If the slug already exists, the endpoint returns the existing entry (idempotent).
 /// </summary>
 public record CreateInterestTagDto(string Label, string? Slug = null,
     InterestFacet Facet = InterestFacet.Other, List<string>? Synonyms = null, string? Color = null);
 
-/// <summary>Nur gesetzte Felder werden geändert; <c>Synonyms</c> ersetzt die Liste vollständig.</summary>
+/// <summary>Only fields that are set are changed; <c>Synonyms</c> replaces the list entirely.</summary>
 public record UpdateInterestTagDto(string? Label = null, InterestFacet? Facet = null,
     List<string>? Synonyms = null, string? Color = null);

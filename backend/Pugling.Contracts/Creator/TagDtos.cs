@@ -4,33 +4,33 @@ namespace Pugling.Contracts.Creator;
 //   * kind-skopierte Tags an Übungen UND Vokabeln (Tag/TagResponse) – Vater und Sohn dürfen taggen,
 //   * kindneutrale Vokabel-Tags am Store (VocabTagResponse).
 
-/// <summary>Tag in der Antwort inkl. Anzahl markierter Übungen und Vokabeln.</summary>
+/// <summary>Tag in the response incl. count of tagged exercises and vocabulary entries.</summary>
 public record TagResponse(int Id, int ChildId, string Name, string? Color, TaggedBy CreatedBy,
     int ExerciseCount, int VocabularyCount, DateTime CreatedAt);
 
-/// <summary>Eingabe zum Anlegen eines kind-skopierten Tags.</summary>
+/// <summary>Input for creating a child-scoped tag.</summary>
 public record CreateTagDto(int ChildId, string Name, string? Color);
 
-/// <summary>Partielle Änderung eines Tags; leere Felder bleiben unverändert.</summary>
+/// <summary>Partial change to a tag; empty fields remain unchanged.</summary>
 public record UpdateTagDto(string? Name, string? Color);
 
-/// <summary>Eingabe zum Markieren von Übungen mit einem Tag.</summary>
+/// <summary>Input for tagging exercises with a tag.</summary>
 public record TagExercisesDto(List<int> ExerciseIds);
 
-/// <summary>Schlanke Vokabel-Sicht für die Tag-Zuordnung (ohne die kindneutralen Store-Details).</summary>
+/// <summary>Lean vocabulary view for the tag assignment (without the child-neutral store details).</summary>
 public record TaggedVocabularyDto(int Id, string Key, string Word, string Translation);
 
-/// <summary>Eingabe zum Markieren von Vokabeln mit einem kind-skopierten Tag.</summary>
+/// <summary>Input for tagging vocabulary entries with a child-scoped tag.</summary>
 public record TagVocabularyDto(List<int> VocabularyIds);
 
-/// <summary>Kindneutraler Vokabel-Tag inkl. Anzahl verknüpfter Vokabeln.</summary>
+/// <summary>Child-neutral vocabulary tag incl. count of linked vocabulary entries.</summary>
 public record VocabTagResponse(int Id, string Name, string? Color, int VocabCount, DateTime CreatedAt);
 
-/// <summary>Eingabe zum Anlegen eines kindneutralen Vokabel-Tags.</summary>
+/// <summary>Input for creating a child-neutral vocabulary tag.</summary>
 public record CreateVocabTagDto(string Name, string? Color);
 
-/// <summary>Partielle Änderung eines Vokabel-Tags; leere Felder bleiben unverändert.</summary>
+/// <summary>Partial change to a vocabulary tag; empty fields remain unchanged.</summary>
 public record UpdateVocabTagDto(string? Name, string? Color);
 
-/// <summary>Eingabe zum Verknüpfen einer Vokabel mit Tags (create-if-missing über die Namen).</summary>
+/// <summary>Input for linking a vocabulary entry with tags (create-if-missing via the names).</summary>
 public record TagVocabDto(List<string> Tags);

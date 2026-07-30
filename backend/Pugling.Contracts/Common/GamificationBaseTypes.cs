@@ -1,97 +1,97 @@
 namespace Pugling.Contracts;
 
 /// <summary>
-/// Messbare Größe der Lern-Aktivität eines Kindes – gemeinsame Basis für Missionen und Auszeichnungen.
-/// Alle Werte werden serverseitig aus den bestehenden Tabellen berechnet (kein Client-Vertrauen).
+/// Measurable quantity of a child's learning activity – shared basis for missions and awards.
+/// All values are computed server-side from the existing tables (no client trust).
 /// </summary>
 public enum ProgressMetric
 {
-    /// <summary>Neu eingeführte Inhalte (PositionItemProgress.IntroducedAt).</summary>
+    /// <summary>Newly introduced content (PositionItemProgress.IntroducedAt).</summary>
     NewWords = 0,
-    /// <summary>Richtige Leitner-Wiederholungen (ReviewEvent.WasCorrect).</summary>
+    /// <summary>Correct Leitner repetitions (ReviewEvent.WasCorrect).</summary>
     CorrectReviews = 1,
-    /// <summary>Bestandene Abschlusstests (TestAttempt.Passed).</summary>
+    /// <summary>Passed final tests (TestAttempt.Passed).</summary>
     TestsPassed = 2,
-    /// <summary>Geübte Minuten (PracticeSession.ActiveSeconds).</summary>
+    /// <summary>Minutes practiced (PracticeSession.ActiveSeconds).</summary>
     MinutesPracticed = 3,
-    /// <summary>Vollständig geschaffte Tage nach der Tagesregel des <c>PositionProgressService</c>.</summary>
+    /// <summary>Fully completed days per the day rule of the <c>PositionProgressService</c>.</summary>
     DaysComplete = 4,
-    /// <summary>Aktuelle Serie aufeinanderfolgender vollständiger Tage (nur sinnvoll für Auszeichnungen).</summary>
+    /// <summary>Current streak of consecutive complete days (only meaningful for awards).</summary>
     StreakDays = 5,
 }
 
-/// <summary>Zeitraum, über den eine Mission zählt und sich erneuert.</summary>
+/// <summary>Period over which a mission counts and renews.</summary>
 public enum MissionPeriod
 {
-    /// <summary>Pro Kalendertag (UTC); erneuert sich täglich.</summary>
+    /// <summary>Per calendar day (UTC); renews daily.</summary>
     Daily = 0,
-    /// <summary>Pro ISO-Woche (Mo–So); erneuert sich wöchentlich.</summary>
+    /// <summary>Per ISO week (Mon–Sun); renews weekly.</summary>
     Weekly = 1,
-    /// <summary>Einmalig; erfüllt und dann dauerhaft erledigt.</summary>
+    /// <summary>One-off; completed once and then permanently done.</summary>
     OneOff = 2,
 }
 
-/// <summary>Maßeinheit des Artikels – bestimmt, wie Mengen im Inventar und bei der Aktivierung dargestellt werden.</summary>
+/// <summary>Unit of measurement of the item – determines how quantities are displayed in the inventory and upon activation.</summary>
 public enum UnitType
 {
-    /// <summary>Einheiten ohne spezifische Maßeinheit (Stückzahl).</summary>
+    /// <summary>Units without a specific unit of measurement (piece count).</summary>
     Stueck = 0,
-    /// <summary>Zeiteinheit Minuten (z. B. „30 Minuten Fernsehen").</summary>
+    /// <summary>Time unit minutes (e.g. "30 minutes of TV").</summary>
     Minute = 1,
-    /// <summary>Zeiteinheit Stunden.</summary>
+    /// <summary>Time unit hours.</summary>
     Stunde = 2,
-    /// <summary>Gewichtseinheit Gramm (z. B. Süßigkeiten).</summary>
+    /// <summary>Weight unit grams (e.g. candy).</summary>
     Gramm = 3,
-    /// <summary>Allgemeine Mal-Angabe (z. B. „3 Mal Eisessen").</summary>
+    /// <summary>Generic count of times (e.g. "3 times having ice cream").</summary>
     Mal = 4,
 }
 
-/// <summary>Typ der Aktion, die der Artikel repräsentiert – kategorisiert den Artikel für den Vater.</summary>
+/// <summary>Type of action the item represents – categorizes the item for the supervisor.</summary>
 public enum ActionType
 {
-    /// <summary>Sonstige / nicht kategorisiert.</summary>
+    /// <summary>Other / not categorized.</summary>
     Sonstiges = 0,
-    /// <summary>Fernsehen / Medienkonsum.</summary>
+    /// <summary>TV / media consumption.</summary>
     TV = 1,
-    /// <summary>Videospielen / Zocken.</summary>
+    /// <summary>Video gaming.</summary>
     Zocken = 2,
-    /// <summary>Süßigkeiten / Snacks.</summary>
+    /// <summary>Candy / snacks.</summary>
     Suessigkeit = 3,
-    /// <summary>Ausflug / Freizeitaktivität.</summary>
+    /// <summary>Outing / leisure activity.</summary>
     Ausflug = 4,
 }
 
-/// <summary>Automatische Auffüll-Regel eines Shop-Angebots (<c>ShopListing</c>).</summary>
+/// <summary>Automatic restock rule for a shop listing (<c>ShopListing</c>).</summary>
 public enum ShopRefillKind
 {
-    /// <summary>Keine automatische Auffüllung; Bestand wird nur vom Vater geändert.</summary>
+    /// <summary>No automatic restocking; stock is only changed by the supervisor.</summary>
     None = 0,
-    /// <summary>Einmalig zu einem festen Zeitpunkt auffüllen.</summary>
+    /// <summary>Restock once at a fixed point in time.</summary>
     Once = 1,
-    /// <summary>Einmal täglich auffüllen.</summary>
+    /// <summary>Restock once daily.</summary>
     Daily = 2,
-    /// <summary>Zweimal täglich auffüllen.</summary>
+    /// <summary>Restock twice daily.</summary>
     TwiceDaily = 3,
-    /// <summary>Einmal wöchentlich an einem festen Wochentag auffüllen.</summary>
+    /// <summary>Restock once weekly on a fixed weekday.</summary>
     Weekly = 4,
 }
 
-/// <summary>Stand einer historischen Shop-Kaufbuchung.</summary>
+/// <summary>State of a historical shop purchase entry.</summary>
 public enum ShopPurchaseStatus
 {
-    /// <summary>Kauf aktiv – die erworbenen Einheiten liegen im aggregierten Inventar (<c>ChildInventory</c>) des Sohns.</summary>
+    /// <summary>Purchase active – the acquired units are in the child's aggregated inventory (<c>ChildInventory</c>).</summary>
     Owned = 0,
-    /// <summary>Kauf vom Vater storniert; Währung erstattet, Inventar entsprechend reduziert.</summary>
+    /// <summary>Purchase cancelled by the supervisor; currency refunded, inventory reduced accordingly.</summary>
     Cancelled = 1,
 }
 
-/// <summary>Status einer Aktivierungsanfrage des Sohns.</summary>
+/// <summary>Status of a child's activation request.</summary>
 public enum ActivationRequestStatus
 {
-    /// <summary>Anfrage gestellt – wartet auf Vater-Entscheidung.</summary>
+    /// <summary>Request submitted – awaiting the supervisor's decision.</summary>
     Pending = 0,
-    /// <summary>Vom Vater genehmigt – Einheiten aus dem Inventar entnommen.</summary>
+    /// <summary>Approved by the supervisor – units taken from the inventory.</summary>
     Approved = 1,
-    /// <summary>Vom Vater abgelehnt – Einheiten verbleiben im Inventar.</summary>
+    /// <summary>Rejected by the supervisor – units remain in the inventory.</summary>
     Rejected = 2,
 }

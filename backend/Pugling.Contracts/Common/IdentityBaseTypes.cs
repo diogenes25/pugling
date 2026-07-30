@@ -1,12 +1,12 @@
 namespace Pugling.Contracts;
 
-/// <summary>Die drei fachlichen Ebenen als Rolle – unabhängig vom Login.</summary>
+/// <summary>The three domain tiers as a role – independent of login.</summary>
 public enum ProfileRole
 {
-    /// <summary>Erstellt Inhalte/Übungen (heute: an ein <c>Adult</c>-Profil gebunden).</summary>
+    /// <summary>Creates content/exercises (today: bound to an <c>Adult</c> profile).</summary>
     Creator = 0,
-    /// <summary>Steuert: Lehrpläne, Ziele/Punkte, Shop (heute: <c>Adult</c>-Profil).</summary>
+    /// <summary>Controls: study plans, goals/points, shop (today: <c>Adult</c> profile).</summary>
     Supervisor = 1,
-    /// <summary>Lernt, verdient, kauft/aktiviert (heute: <c>Child</c>-Profil).</summary>
+    /// <summary>Learns, earns, buys/activates (today: <c>Child</c> profile).</summary>
     Student = 2,
 }

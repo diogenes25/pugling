@@ -3,38 +3,38 @@ namespace Pugling.Contracts.Supervisor;
 // Vertrag der Stamm- und Profildaten, die der Supervisor pflegt: der eigene Erwachsenen-Datensatz,
 // die Lehrbücher des Kindes und sein Stundenplan (beides übungsunabhängiges Profil).
 
-/// <summary>Erwachsener ohne PIN (wird nie ausgeliefert).</summary>
+/// <summary>Adult without PIN (never delivered).</summary>
 public record AdultResponse(int Id, string Name, string? Email, DateTime CreatedAt, int ChildrenCount);
 
-/// <summary>Eingabe der Registrierung eines Erwachsenen.</summary>
+/// <summary>Input for registering an adult.</summary>
 public record CreateAdultDto(string Name, string? Email, string? Pin);
 
-/// <summary>Nur gesetzte Felder werden geändert.</summary>
+/// <summary>Only fields that are set are changed.</summary>
 public record UpdateAdultDto(string? Name, string? Email, string? Pin);
 
 /// <summary>
-/// Ein vom Kind verwendetes Lehrbuch samt aktuellem Kapitel. <c>SeriesId</c>/<c>CurrentUnitId</c> sind
-/// die katalogisierte Form von Titel und Kapitel: erst über sie findet das Profil-Matching den Creator,
-/// der dieses Werk kennt.
+/// A textbook used by the child, together with its current chapter. <c>SeriesId</c>/<c>CurrentUnitId</c>
+/// are the cataloged form of title and chapter: only through them does the profile matching find the
+/// creator who knows this work.
 /// </summary>
 public record TextbookResponse(int Id, string Title, string? SubjectName, int? SubjectId, int? Grade,
     string? Publisher, string? Isbn, string? CurrentChapter, DateTime CreatedAt,
     int? SeriesId = null, string? SeriesName = null, int? CurrentUnitId = null, string? CurrentUnitLabel = null);
 
-/// <summary>Eingabe zum Anlegen eines Lehrbuchs.</summary>
+/// <summary>Input for creating a textbook.</summary>
 public record CreateTextbookDto(string Title, string? SubjectName, int? SubjectId, int? Grade,
     string? Publisher, string? Isbn, string? CurrentChapter,
     int? SeriesId = null, int? CurrentUnitId = null);
 
-/// <summary>Partielle Änderung eines Lehrbuchs; weggelassene Felder bleiben unverändert.</summary>
+/// <summary>Partial change to a textbook; omitted fields stay unchanged.</summary>
 /// <summary>
-/// Partielle Änderung eines Lehrbuchs; weggelassene Felder bleiben unverändert.
+/// Partial change to a textbook; omitted fields stay unchanged.
 /// <para>
-/// <c>null</c> heißt im PATCH „nicht angegeben" und kann darum nichts <b>leeren</b> – dafür stehen die
-/// <c>Clear…</c>-Schalter (vgl. <c>ClearGrade</c> an der Klassenarbeit): <c>ClearSeries</c> löst das Buch aus
-/// dem Katalog („nicht katalogisiert") und nimmt die aktuelle Unit mit, weil sie ohne ihre Reihe nichts
-/// bezeichnet; <c>ClearUnit</c> setzt nur die Unit zurück; <c>ClearSubject</c> entfernt Fach-Id und -Name;
-/// <c>ClearGrade</c> die Klassenstufe des Buchs.
+/// In a PATCH, <c>null</c> means "not specified" and therefore cannot <b>clear</b> anything – that is
+/// what the <c>Clear…</c> switches are for (cf. <c>ClearGrade</c> on the class test): <c>ClearSeries</c>
+/// detaches the book from the catalog ("not cataloged") and takes the current unit with it, because the
+/// unit means nothing without its series; <c>ClearUnit</c> only resets the unit; <c>ClearSubject</c>
+/// removes the subject id and name; <c>ClearGrade</c> the grade level of the book.
 /// </para>
 /// </summary>
 public record UpdateTextbookDto(string? Title, string? SubjectName, int? SubjectId, int? Grade,
@@ -43,8 +43,8 @@ public record UpdateTextbookDto(string? Title, string? SubjectName, int? Subject
     bool ClearSeries = false, bool ClearUnit = false,
     bool ClearSubject = false, bool ClearGrade = false);
 
-/// <summary>Ein Stundenplan-Eintrag: Fach an einem Wochentag.</summary>
+/// <summary>A timetable entry: subject on a weekday.</summary>
 public record EntryResponse(int Id, int ChildId, int SubjectId, string SubjectName, DayOfWeek DayOfWeek, string? TimeOfDay);
 
-/// <summary>Eingabe zum Eintragen eines Fachs an einem Wochentag.</summary>
+/// <summary>Input for entering a subject on a weekday.</summary>
 public record CreateEntryDto(int SubjectId, DayOfWeek DayOfWeek, string? TimeOfDay);

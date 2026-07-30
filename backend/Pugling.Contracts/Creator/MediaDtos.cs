@@ -4,10 +4,10 @@ namespace Pugling.Contracts.Creator;
 // *Darstellung* eines Motivs (Stil/Zielgruppe), die Variante eine *Auflösung* derselben Darstellung.
 
 /// <summary>
-/// Ein Asset des Medien-Stores samt seiner Auflösungen und Schlagworte. <c>Description</c> ist zugleich
-/// der Alt-Text für die Barrierefreiheit, <c>Rating</c> die Eignung (die Auswahl liefert nie ein Asset
-/// über der Freigabe des Kindes), <c>Placeholder</c> Farbe/Blur-Hash fürs ruckelfreie Nachladen und
-/// <c>Tags</c> die Slugs der verknüpften Interessen-/Stil-Schlagworte.
+/// An asset of the media store including its resolutions and tags. <c>Description</c> is at the same time
+/// the alt text for accessibility, <c>Rating</c> the suitability (selection never returns an asset
+/// above the child's clearance), <c>Placeholder</c> color/blur hash for smooth lazy-loading, and
+/// <c>Tags</c> the slugs of the linked interest/style tags.
 /// </summary>
 public record MediaAssetResponse(int Id, string Key, string Description, MediaKind Kind,
     ContentRating Rating, string? License, string? Attribution, MediaOrigin Origin, string? Source,
@@ -15,33 +15,33 @@ public record MediaAssetResponse(int Id, string Key, string Description, MediaKi
     DateTime CreatedAt);
 
 /// <summary>
-/// Anlegen eines Assets. <c>Key</c> darf leer bleiben – der Server bildet dann einen eindeutigen Slug aus
-/// der Beschreibung. <c>Tags</c> (Slugs) werden create-if-missing verknüpft; <c>Variants</c> lassen sich
-/// gleich mitgeben oder später einzeln nachreichen.
+/// Creating an asset. <c>Key</c> may stay empty – the server then forms a unique slug from
+/// the description. <c>Tags</c> (slugs) are linked create-if-missing; <c>Variants</c> can be
+/// supplied right away or added individually later.
 /// </summary>
 public record CreateMediaAssetDto(string Description, string? Key = null, MediaKind Kind = MediaKind.Image,
     ContentRating Rating = ContentRating.Everyone, string? License = null, string? Attribution = null,
     MediaOrigin Origin = MediaOrigin.Unknown, string? Source = null, string? Placeholder = null,
     List<string>? Tags = null, List<CreateMediaVariantDto>? Variants = null);
 
-/// <summary>Nur gesetzte Felder werden geändert; <c>Tags</c> werden ergänzt (nicht ersetzt).</summary>
+/// <summary>Only fields that are set are changed; <c>Tags</c> are appended (not replaced).</summary>
 public record UpdateMediaAssetDto(string? Description = null, MediaKind? Kind = null,
     ContentRating? Rating = null, string? License = null, string? Attribution = null,
     MediaOrigin? Origin = null, string? Source = null, string? Placeholder = null, List<string>? Tags = null);
 
-/// <summary>Eine Auflösung/ein Format eines Assets – adressiert über den semantischen Zweck.</summary>
+/// <summary>A resolution/format of an asset – addressed via its semantic purpose.</summary>
 public record MediaVariantResponse(int Id, MediaPurpose Purpose, int Width, int Height,
     string Format, string Url, long? Bytes);
 
-/// <summary>Anlegen einer Variante. Je Asset ist (Zweck, Format) eindeutig.</summary>
+/// <summary>Creating a variant. (Purpose, format) is unique per asset.</summary>
 public record CreateMediaVariantDto(MediaPurpose Purpose, string Url, int Width, int Height,
     string Format = "webp", long? Bytes = null);
 
-/// <summary>Nur gesetzte Felder werden geändert.</summary>
+/// <summary>Only fields that are set are changed.</summary>
 public record UpdateMediaVariantDto(MediaPurpose? Purpose = null, string? Url = null, int? Width = null,
     int? Height = null, string? Format = null, long? Bytes = null);
 
-/// <summary>Verknüpft ein Asset mit Schlagworten der geteilten Taxonomie (Slugs, create-if-missing).</summary>
+/// <summary>Links an asset with tags of the shared taxonomy (slugs, create-if-missing).</summary>
 public record TagMediaDto(List<string> Tags);
 
 // ---- Zuordnung Bild ⇢ Träger ------------------------------------------------------------------------
@@ -49,22 +49,22 @@ public record TagMediaDto(List<string> Tags);
 // ein Asset dient vielen Vokabeln/Items. Deshalb eine eigene Ressource statt einer Spalte am Träger.
 
 /// <summary>
-/// Eine Bild-Zuordnung samt des zugeordneten Assets (die Liste soll ohne Nachladen darstellbar sein).
-/// <c>Weight</c> ist der redaktionelle Rang und entscheidet erst bei Gleichstand der Interessens-Bewertung.
+/// An image assignment including the assigned asset (the list should be renderable without an extra fetch).
+/// <c>Weight</c> is the editorial rank and only decides ties in the interest score.
 /// </summary>
 public record MediaLinkResponse(int Id, int Weight, MediaAssetResponse Asset);
 
 /// <summary>
-/// Ordnet ein Asset zu – per <paramref name="MediaAssetId"/> oder per <paramref name="Key"/> (praktisch
-/// für Agenten, die den Store über sprechende Keys aufbauen). Genau eines von beiden ist nötig.
+/// Assigns an asset – via <paramref name="MediaAssetId"/> or via <paramref name="Key"/> (handy
+/// for agents building up the store via descriptive keys). Exactly one of the two is required.
 /// </summary>
 public record AddMediaLinkDto(int? MediaAssetId = null, string? Key = null, int Weight = 0);
 
-/// <summary>Ändert den redaktionellen Rang einer bestehenden Zuordnung.</summary>
+/// <summary>Changes the editorial rank of an existing assignment.</summary>
 public record UpdateMediaLinkDto(int Weight);
 
 /// <summary>
-/// Wo ein Asset zugeordnet ist – die Rückrichtung zur Zuordnung. <c>Carrier</c> ist
-/// <c>vocabulary</c> | <c>item</c> | <c>exercise</c>, <c>Label</c> eine lesbare Bezeichnung des Trägers.
+/// Where an asset is assigned – the reverse direction of the assignment. <c>Carrier</c> is
+/// <c>vocabulary</c> | <c>item</c> | <c>exercise</c>, <c>Label</c> a readable designation of the carrier.
 /// </summary>
 public record MediaUsage(string Carrier, int CarrierId, string Label, int Weight);

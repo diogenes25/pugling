@@ -1,31 +1,31 @@
 namespace Pugling.Contracts;
 
 /// <summary>
-/// Lernverfahren – nur noch die Selbstbeschreibung im Übungstyp-Manifest (<see cref="ExerciseTypeManifest"/>)
-/// braucht diese Zuordnung. Kein plan-weites Verfahren mehr.
+/// Learning method – only the self-description in the exercise type manifest (<see cref="ExerciseTypeManifest"/>)
+/// still needs this mapping. No more plan-wide method.
 /// </summary>
 public enum LearningMethod
 {
-    /// <summary>Vokabellernen (Karte mit Vorder-/Rückseite, Leitner-Boxen).</summary>
+    /// <summary>Vocabulary learning (card with front/back, Leitner boxes).</summary>
     Vocabulary = 0,
-    /// <summary>Lückentext.</summary>
+    /// <summary>Cloze.</summary>
     Cloze = 1,
-    /// <summary>Zuordnen von Paaren.</summary>
+    /// <summary>Matching pairs.</summary>
     Matching = 2,
 }
 
-/// <summary>Ein Schritt im Stufen-Fahrplan: ab Tag <c>DayNumber</c> (1-basiert) gilt Stufe <c>Stage</c>.</summary>
+/// <summary>A step in the stage schedule: from day <c>DayNumber</c> (1-based) onward, stage <c>Stage</c> applies.</summary>
 public record StageStep(int DayNumber, int Stage);
 
 /// <summary>
-/// Ausspiel-Modus einer Übungssitzung. <see cref="Info"/> = freies Üben: Inhalte am Stück, das Frontend
-/// führt die Iteration, es fließt <b>kein</b> Lernfeedback (keine Bewertung/Punkte/Leitner, zählt nicht aufs
-/// Ziel). <see cref="Lern"/> = server-geführt: der Server hält Cursor + eingefrorene Reihenfolge und bewertet.
+/// Play mode of an exercise session. <see cref="Info"/> = free practice: content all in a row, the frontend
+/// drives the iteration, and <b>no</b> learning feedback flows (no grading/points/Leitner, doesn't count toward
+/// the goal). <see cref="Lern"/> = server-driven: the server holds the cursor + frozen order and grades.
 /// </summary>
 public enum PlayMode
 {
-    /// <summary>Freies Üben ohne Lernfeedback – das Frontend führt die Iteration.</summary>
+    /// <summary>Free practice without learning feedback – the frontend drives the iteration.</summary>
     Info = 0,
-    /// <summary>Server-geführtes Lernen mit Cursor, Bewertung, Punkten und Leitner-Terminierung.</summary>
+    /// <summary>Server-driven learning with cursor, grading, points, and Leitner scheduling.</summary>
     Lern = 1,
 }

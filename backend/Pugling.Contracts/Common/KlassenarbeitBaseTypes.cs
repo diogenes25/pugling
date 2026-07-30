@@ -1,21 +1,21 @@
 namespace Pugling.Contracts;
 
-/// <summary>Wer eine Markierung vorgenommen hat (für Nachvollziehbarkeit im Dashboard).</summary>
+/// <summary>Who made a tagging (for traceability in the dashboard).</summary>
 public enum TaggedBy
 {
-    /// <summary>Der Supervisor hat markiert.</summary>
+    /// <summary>The supervisor tagged it.</summary>
     Vater = 0,
-    /// <summary>Der Student hat selbst markiert (etwa „das kam in der Arbeit vor").</summary>
+    /// <summary>The student tagged it themselves (e.g. "this came up in the test").</summary>
     Sohn = 1,
 }
 
-/// <summary>Status einer Klassenarbeit im Lebenszyklus.</summary>
+/// <summary>Status of a class test in its lifecycle.</summary>
 public enum KlassenarbeitStatus
 {
-    /// <summary>Geplant / steht noch an.</summary>
+    /// <summary>Planned / still upcoming.</summary>
     Planned = 0,
-    /// <summary>Geschrieben (Note kann nachgetragen sein).</summary>
+    /// <summary>Written (grade may be added later).</summary>
     Written = 1,
-    /// <summary>Entfällt / abgesagt.</summary>
+    /// <summary>Cancelled / called off.</summary>
     Cancelled = 2,
 }

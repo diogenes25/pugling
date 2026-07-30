@@ -4,14 +4,14 @@ namespace Pugling.Contracts.Student;
 // fertige Bild, das Umwählen ist eine eigene, ausdrückliche Handlung des Kindes.
 
 /// <summary>
-/// „Anderes Bild": lehnt das aktuell gewählte Bild eines Trägers ab und zieht ein neues. Genau eines der
-/// beiden Felder ist zu setzen – <paramref name="ExerciseItemId"/>, wenn die Übung eine eigene Zuordnung
-/// trägt, sonst <paramref name="VocabularyId"/> für das Wort selbst (dann wirkt die neue Wahl überall).
+/// "Different picture": rejects the currently chosen image of a carrier and draws a new one. Exactly one of
+/// the two fields must be set – <paramref name="ExerciseItemId"/> if the exercise carries its own
+/// mapping, otherwise <paramref name="VocabularyId"/> for the word itself (then the new pick applies everywhere).
 /// </summary>
 public record ReshuffleMediaDto(int? VocabularyId = null, int? ExerciseItemId = null);
 
-/// <summary>Das nach dem Umwählen gültige Bild.</summary>
-/// <param name="MediaAssetId">Das gewählte Asset.</param>
-/// <param name="ImageUrl">URL in der Kartengröße.</param>
-/// <param name="ImageAlt">Beschreibung des Motivs (Alt-Text).</param>
+/// <summary>The image valid after reshuffling.</summary>
+/// <param name="MediaAssetId">The chosen asset.</param>
+/// <param name="ImageUrl">URL at card size.</param>
+/// <param name="ImageAlt">Description of the motif (alt text).</param>
 public record SelectedMediaResponse(int MediaAssetId, string ImageUrl, string ImageAlt);

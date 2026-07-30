@@ -1,13 +1,13 @@
 namespace Pugling.Contracts;
 
 /// <summary>
-/// Die beiden Währungen der App. <see cref="Coins"/> („Münzen") kauft <b>reale</b> Vater-Angebote,
-/// <see cref="Gems"/> kauft <b>kosmetische/spielerische</b> Dinge (Skins, künftige Spielfeatures).
+/// The app's two currencies. <see cref="Coins"/> ("coins") buys <b>real-world</b> supervisor offers,
+/// <see cref="Gems"/> buys <b>cosmetic/playful</b> things (skins, future game features).
 /// </summary>
 public enum Currency
 {
-    /// <summary>Münzen 🪙 – für reale Angebote des Vaters (Spielzeit, Taschengeld …).</summary>
+    /// <summary>Coins 🪙 – for real-world offers from the supervisor (playtime, allowance …).</summary>
     Coins = 0,
-    /// <summary>Gems 💎 – für Avatar/Skins und Spielfeatures.</summary>
+    /// <summary>Gems 💎 – for avatar/skins and game features.</summary>
     Gems = 1,
 }

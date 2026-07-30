@@ -3,53 +3,53 @@ namespace Pugling.Contracts.Auth;
 // Vertrag der Login-Ebene (api/v1/auth/…). Die Records sind reine Transportformen: kein Verhalten,
 // keine Abhängigkeit auf Entities – damit ein Client sie ohne die API-Assembly verwenden kann.
 
-/// <summary>Antwort aller Login-Endpunkte: JWT samt primärer Ebene fürs UI-Routing.</summary>
-/// <param name="Token">Das ausgestellte JWT (Bearer).</param>
+/// <summary>Response of all login endpoints: JWT plus primary tier for UI routing.</summary>
+/// <param name="Token">The issued JWT (Bearer).</param>
 /// <param name="Role">
-/// Primäre Ebene fürs UI-Routing: <c>Supervisor</c>, <c>Creator</c> oder <c>Student</c>. Rangfolge in dieser
-/// Reihenfolge – ein Vater trägt Creator <i>und</i> Supervisor und gehört in die Betreuungs-Sicht, ein
-/// <b>Lehrer</b> hat nur Creator und gehört in die Werkstatt. Das Token selbst trägt <i>alle</i> Rollen des
-/// Kontos; dieses Feld sagt nur, wo die Oberfläche starten soll.
+/// Primary tier for UI routing: <c>Supervisor</c>, <c>Creator</c>, or <c>Student</c>. Ranked in this
+/// order – a father holds Creator <i>and</i> Supervisor and belongs in the supervision view, a
+/// <b>teacher</b> only holds Creator and belongs in the workshop. The token itself carries <i>all</i>
+/// roles of the account; this field only says where the UI should start.
 /// </param>
-/// <param name="Id">Fachliche Id des eingeloggten Profils (Adult- bzw. Child-Id, beim Konto-Login die Konto-Id).</param>
-/// <param name="Name">Anzeigename.</param>
-/// <param name="ExpiresAt">Ablaufzeitpunkt des Tokens (UTC).</param>
+/// <param name="Id">Domain id of the logged-in profile (adult or child id; account id for account login).</param>
+/// <param name="Name">Display name.</param>
+/// <param name="ExpiresAt">Expiry of the token (UTC).</param>
 public record LoginResponse(string Token, string Role, int Id, string Name, DateTime ExpiresAt);
 
 /// <summary>
-/// Die eigene Identität aus dem Token (<c>GET auth/me</c>) – Konto, alle Rollen und die fachlichen Ids.
+/// The caller's own identity from the token (<c>GET auth/me</c>) – account, all roles, and the domain ids.
 /// </summary>
-/// <param name="AccountId">Konto-Id (Subjekt des Tokens); <c>null</c> bei einem Alt-Token ohne <c>aid</c>.</param>
-/// <param name="Role">Primäre Ebene fürs Routing – siehe <see cref="LoginResponse"/>.</param>
-/// <param name="Roles">Alle Rollen des Tokens. Bei einem Lehrer-Konto genau <c>["Creator"]</c>.</param>
-/// <param name="AdultId">Fachliche Id des Erwachsenen (Creator/Supervisor), sonst <c>null</c>.</param>
-/// <param name="ChildId">Fachliche Id des Kindes (Student), sonst <c>null</c>.</param>
-/// <param name="Name">Anzeigename.</param>
+/// <param name="AccountId">Account id (subject of the token); <c>null</c> for a legacy token without <c>aid</c>.</param>
+/// <param name="Role">Primary tier for routing – see <see cref="LoginResponse"/>.</param>
+/// <param name="Roles">All roles of the token. For a teacher account, exactly <c>["Creator"]</c>.</param>
+/// <param name="AdultId">Domain id of the adult (Creator/Supervisor), otherwise <c>null</c>.</param>
+/// <param name="ChildId">Domain id of the child (Student), otherwise <c>null</c>.</param>
+/// <param name="Name">Display name.</param>
 public record MeResponse(int? AccountId, string Role, IReadOnlyList<string> Roles,
     int? AdultId, int? ChildId, string? Name);
 
 /// <summary>
-/// Selbstverwaltung des eigenen Kontos (<c>PATCH auth/me</c>) – für <b>jede</b> Erwachsenen-Rolle, also auch
-/// für ein Lehrer-Konto, dem die Vater-Endpunkte verschlossen sind.
+/// Self-service management of the caller's own account (<c>PATCH auth/me</c>) – for <b>every</b> adult
+/// role, including a teacher account that has no access to the supervisor endpoints.
 ///
 /// <para>
-/// <b>PATCH-Semantik:</b> <c>null</c> heißt „nicht angegeben" (der Wert bleibt). Die E-Mail ist das einzige
-/// löschbare Feld und braucht dafür <see cref="ClearEmail"/> – ohne den Schalter meldete ein Formular mit
-/// leerem Feld „gespeichert", und die alte Adresse stünde weiter da.
+/// <b>PATCH semantics:</b> <c>null</c> means "not specified" (the value stays). Email is the only
+/// clearable field and needs <see cref="ClearEmail"/> for that – without the switch, a form with an
+/// empty field would report "saved" while the old address stayed in place.
 /// </para>
 /// </summary>
-/// <param name="Name">Neuer Anzeigename; erscheint auch als Autor an den eigenen Übungen.</param>
-/// <param name="Email">Neue E-Mail. Muss kontoweit eindeutig sein.</param>
-/// <param name="ClearEmail">E-Mail entfernen. Gewinnt gegen <paramref name="Email"/>, wenn beides kommt.</param>
-/// <param name="Pin">Neue Anmelde-PIN (wird gehasht). Leerer String = PIN entfernen, damit ein Konto
-/// bewusst stillgelegt werden kann; <c>null</c> = unverändert.</param>
+/// <param name="Name">New display name; also appears as the author on the account's own exercises.</param>
+/// <param name="Email">New email. Must be unique account-wide.</param>
+/// <param name="ClearEmail">Remove the email. Wins over <paramref name="Email"/> if both are sent.</param>
+/// <param name="Pin">New login PIN (will be hashed). Empty string = remove the PIN, so an account can
+/// be deliberately deactivated; <c>null</c> = unchanged.</param>
 public record UpdateMyAccountDto(string? Name, string? Email, bool ClearEmail = false, string? Pin = null);
 
-/// <summary>Login eines Erwachsenen (Vater wie Lehrer) per fachlicher Adult-Id + PIN.</summary>
+/// <summary>Login of an adult (father or teacher) via domain adult id + PIN.</summary>
 public record AdultLoginDto(int AdultId, string Pin);
 
-/// <summary>Sohn-Login per fachlicher Child-Id + PIN.</summary>
+/// <summary>Child login via domain child id + PIN.</summary>
 public record ChildLoginDto(int ChildId, string Pin);
 
-/// <summary>Konto-zentrischer Login: ein Token über alle Rollen des Kontos.</summary>
+/// <summary>Account-centric login: one token across all roles of the account.</summary>
 public record AccountLoginDto(int AccountId, string Pin);

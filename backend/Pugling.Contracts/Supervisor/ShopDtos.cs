@@ -4,61 +4,61 @@ namespace Pugling.Contracts.Supervisor;
 // Angebote (Preis + Bestand); gekauft wird ins aggregierte Inventar, eingelöst per Aktivierungsanfrage.
 // Käufe und Aktivierungen sind ausstellergebunden (SupervisorId-Snapshot).
 
-/// <summary>Ein Basis-Katalogartikel des Vaters: die <em>Art</em> des Artikels (Einheit + Kategorie).</summary>
+/// <summary>A basic catalog article of the supervisor: the <em>kind</em> of article (unit + category).</summary>
 public record ShopArticleDto(int Id, string ArticleNumber, string Title, string Description,
     UnitType UnitType, ActionType ActionType, DateTime CreatedAt);
 
-/// <summary>Ein Angebot zu einem Artikel: Preis in beiden Währungen, Bestand und Auffüll-Regel.</summary>
+/// <summary>A listing for an article: price in both currencies, stock, and refill rule.</summary>
 public record ShopListingDto(int Id, int ShopArticleId, string ArticleNumber, string ArticleTitle,
     string Title, string Description, int CoinPrice, int GemPrice, int UnitsPerPurchase,
     bool Active, int CurrentStock, int MaxStock, ShopRefillKind RefillKind,
     DateTime? RefillAtUtc, DayOfWeek? RefillDayOfWeek, DateTime? LastRefilledAtUtc, DateTime CreatedAt);
 
-/// <summary>Eine historische Kaufbuchung des Kindes.</summary>
+/// <summary>A historical purchase entry of the child.</summary>
 public record ShopPurchaseDto(int Id, int ChildId, int? ShopListingId, string ArticleNumber,
     string Title, string Description, int CoinPrice, int GemPrice, int UnitsPerPurchase,
     ShopPurchaseStatus Status, DateTime PurchasedAt, DateTime? ClosedAt)
 {
-    /// <summary>Darf der Vater diesen Kauf jetzt stornieren und erstatten?</summary>
+    /// <summary>May the supervisor cancel and refund this purchase now?</summary>
     public bool CanCancel { get; init; }
 }
 
-/// <summary>Eine Aktivierungsanfrage des Sohns auf Einheiten aus seinem Inventar.</summary>
+/// <summary>An activation request from the child for units from their inventory.</summary>
 public record ActivationRequestDto(int Id, int ChildId, int? ShopArticleId, string ArticleTitle,
     UnitType UnitType, ActionType ActionType, int RequestedQuantity,
     ActivationRequestStatus Status, DateTime RequestedAt, DateTime? ClosedAt)
 {
-    /// <summary>Darf der Vater diese Anfrage jetzt genehmigen?</summary>
+    /// <summary>May the supervisor approve this request now?</summary>
     public bool CanApprove { get; init; }
-    /// <summary>Darf der Vater diese Anfrage jetzt ablehnen?</summary>
+    /// <summary>May the supervisor reject this request now?</summary>
     public bool CanReject { get; init; }
 }
 
-/// <summary>Eingabe zum Anlegen eines Katalogartikels.</summary>
+/// <summary>Input for creating a catalog article.</summary>
 public record CreateShopArticleDto(string ArticleNumber, string Title, string? Description,
     UnitType UnitType, ActionType ActionType);
 
-/// <summary>Partielle Änderung eines Katalogartikels; weggelassene Felder bleiben unverändert.</summary>
+/// <summary>Partial change to a catalog article; omitted fields stay unchanged.</summary>
 public record UpdateShopArticleDto(string? ArticleNumber, string? Title, string? Description,
     UnitType? UnitType, ActionType? ActionType);
 
-/// <summary>Eingabe zum Anlegen eines Angebots zu einem Artikel.</summary>
+/// <summary>Input for creating a listing for an article.</summary>
 public record CreateShopListingDto(string? Title, string? Description,
     int CoinPrice, int GemPrice, int UnitsPerPurchase, int CurrentStock, int MaxStock,
     ShopRefillKind RefillKind = ShopRefillKind.None,
     DateTime? RefillAtUtc = null, DayOfWeek? RefillDayOfWeek = null);
 
-/// <summary>Partielle Änderung eines Angebots; weggelassene Felder bleiben unverändert.</summary>
+/// <summary>Partial change to a listing; omitted fields stay unchanged.</summary>
 public record UpdateShopListingDto(string? Title, string? Description,
     int? CoinPrice, int? GemPrice, int? UnitsPerPurchase, bool? Active,
     int? CurrentStock, int? MaxStock, ShopRefillKind? RefillKind,
     DateTime? RefillAtUtc, DayOfWeek? RefillDayOfWeek);
 
 /// <summary>
-/// Eine Position im aggregierten Inventar des Kindes. <c>ShopArticleId</c> ist <c>null</c>, wenn der
-/// Artikel nach dem Kauf gelöscht wurde – Titel und Einheit kommen dann aus der Momentaufnahme am
-/// Inventar (wie bei <see cref="ActivationRequestDto"/>). Ein solcher Posten ist nicht mehr aktivierbar:
-/// die Aktivierung wird über die Artikel-Id adressiert.
+/// An entry in the child's aggregated inventory. <c>ShopArticleId</c> is <c>null</c> if the
+/// article was deleted after purchase – title and unit then come from the snapshot on the
+/// inventory (as with <see cref="ActivationRequestDto"/>). Such an entry can no longer be activated:
+/// activation is addressed via the article id.
 /// </summary>
 public record InventoryItemDto(int? ShopArticleId, string ArticleNumber, string Title,
     UnitType UnitType, ActionType ActionType, int Quantity);

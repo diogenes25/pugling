@@ -1,17 +1,17 @@
 namespace Pugling.Contracts;
 
 /// <summary>
-/// Kennzahl, an der ein <c>LearnGoal</c> gemessen wird – jede bildet direkt ein Feld des
-/// aggregierten Lernstands (siehe <c>MasteryRollup</c>) ab.
+/// Metric by which a <c>LearnGoal</c> is measured – each one maps directly to a field of the
+/// aggregated learning progress (see <c>MasteryRollup</c>).
 /// </summary>
 public enum LearnGoalMetric
 {
-    /// <summary>Ø-Beherrschung in Prozent über die eingeführten Items (Ziel: ≥ Zielwert).</summary>
+    /// <summary>Average mastery in percent across introduced items (goal: ≥ target value).</summary>
     AvgMastery = 0,
-    /// <summary>Abdeckung in Prozent: eingeführte / vorhandene Items (Ziel: ≥ Zielwert).</summary>
+    /// <summary>Coverage in percent: introduced / existing items (goal: ≥ target value).</summary>
     Coverage = 1,
-    /// <summary>Anteil beherrschter Items in Prozent: Box ≥ MaxBox / vorhandene Items (Ziel: ≥ Zielwert).</summary>
+    /// <summary>Share of mastered items in percent: box ≥ MaxBox / existing items (goal: ≥ target value).</summary>
     MasteredPercent = 2,
-    /// <summary>Höchstzahl schwacher Items (Beherrschung &lt; 50 %) – „nicht mehr als N" (Ziel: ≤ Zielwert).</summary>
+    /// <summary>Maximum number of weak items (mastery &lt; 50%) – "no more than N" (goal: ≤ target value).</summary>
     MaxWeakItems = 3,
 }
