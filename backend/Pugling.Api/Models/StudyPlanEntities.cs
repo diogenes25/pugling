@@ -7,17 +7,24 @@ namespace Pugling.Api.Models;
 
 // LearningMethod lebt im Vertrags-Projekt (Pugling.Contracts).
 
-/// <summary>Stufe des Zuordnungs-Verfahrens (steigende Schwierigkeit). Nutzt den Vokabel-Store.</summary>
+/// <summary>
+/// Stufe des Zuordnungs-Verfahrens (steigende Schwierigkeit). Nutzt den Vokabel-Store.
+/// <para>
+/// <b>Achtung, halb umgesetzt:</b> <c>MatchingExerciseType</c> überschreibt weder <c>StageOptions</c> noch
+/// <c>IsTypedStage</c> noch <c>Choices</c> – es gibt also keinen Code, der auf diesen Enum verzweigt.
+/// <see cref="PlanPosition.Stage"/> wird für Zuordnungs-Positionen gespeichert und beim Ausspielen
+/// ignoriert. Die beiden Rückwärts-Stufen (<c>Reverse</c>, <c>ReverseDistractors</c>) sind entfallen, weil
+/// sie nirgends vorkamen; die verbleibenden zwei bleiben, weil <c>Direct</c> als <c>DefaultStage</c> und
+/// <c>Distractors</c> im Seed gesetzt werden. Den Enum wirklich wirksam zu machen ist ein
+/// Verhaltensumbau, kein Struktur-Schritt.
+/// </para>
+/// </summary>
 public enum MatchStage
 {
     /// <summary>Wort → Übersetzung, keine Ablenker.</summary>
     Direct = 1,
     /// <summary>Wort → Übersetzung, mit Zusatz-Ablenkern im Auswahl-Pool.</summary>
     Distractors = 2,
-    /// <summary>Übersetzung → Wort, keine Ablenker.</summary>
-    Reverse = 3,
-    /// <summary>Übersetzung → Wort, mit Ablenkern.</summary>
-    ReverseDistractors = 4,
 }
 
 /// <summary>Teststufe des Vokabel-Lernkartentests (steigende Schwierigkeit).</summary>
@@ -94,17 +101,22 @@ public class PracticeSession
     public List<ReviewEvent> Reviews { get; set; } = new();
 }
 
-/// <summary>Einzelne Wiederholung innerhalb einer Übungssitzung (verfahrensneutral).</summary>
+/// <summary>
+/// Einzelne Wiederholung innerhalb einer Übungssitzung (verfahrensneutral). Bewusst schmal: gelesen
+/// werden nur <see cref="WasCorrect"/> und <see cref="At"/> – daraus entstehen die Combo-Serie und die
+/// Antwortzeit (siehe <c>PositionPracticeController.Review</c>) sowie die Metrik <c>CorrectReviews</c>.
+/// <para>
+/// Was das Atom war, steht <b>nicht</b> hier: dafür gibt es <see cref="ItemReviewEvent"/> mit der stabilen
+/// <c>ItemId</c>. Die früheren Felder <c>ContentId</c> (eine FK-lose Kopie von
+/// <see cref="PlanPosition.ExerciseId"/>), <c>ItemIndex</c> und <c>StageValue</c> wurden geschrieben und
+/// von niemandem gelesen – eine zweite, index-adressierte Wahrheit ohne Konsumenten.
+/// </para>
+/// </summary>
 public class ReviewEvent
 {
     public int Id { get; set; }
     public int PracticeSessionId { get; set; }
     public PracticeSession? PracticeSession { get; set; }
-    /// <summary>Übungs-Id der Position (der Inhalt lebt in der Übungs-Config).</summary>
-    public int ContentId { get; set; }
-    /// <summary>Index des Inhaltsatoms in der Übung der Position.</summary>
-    public int? ItemIndex { get; set; }
-    public int StageValue { get; set; }
     public bool WasCorrect { get; set; }
     public DateTime At { get; set; } = DateTime.UtcNow;
 }
@@ -147,14 +159,16 @@ public class TestItemResult
     public int Id { get; set; }
     public int TestAttemptId { get; set; }
     public TestAttempt? TestAttempt { get; set; }
-    /// <summary>Übungs-Id der Position (der Inhalt lebt in der Übungs-Config).</summary>
-    public int ContentId { get; set; }
     /// <summary>Index des Inhaltsatoms in der Übung der Position.</summary>
     public int? ItemIndex { get; set; }
-    /// <summary>Bei Lückentext: Index der Lücke; sonst null.</summary>
-    public int? GapIndex { get; set; }
     public int StageValue { get; set; }
     public string? GivenAnswer { get; set; }
     public bool WasCorrect { get; set; }
+    /// <summary>
+    /// Genutzte Buchstaben-Tipps. <b>Wird von keinem Pfad gesetzt</b> und ist daher immer 0 – die Spalte
+    /// bleibt nur, weil sie über <c>ItemResultDto</c> im Vertrag steht; sie zu entfernen wäre ein
+    /// Vertragsbruch und gehört damit nicht in einen reinen Struktur-Umbau. Entweder befüllen (die Tipps
+    /// existieren in der Ausspielung) oder mit dem DTO gemeinsam streichen.
+    /// </summary>
     public int HintsUsed { get; set; }
 }

@@ -1,12 +1,13 @@
 namespace Pugling.Api.Models;
 
-// Neues Lehrplan-Modell (Strangler): Ein Lehrplan wird zur verfahrens-GEMISCHTEN Zusammenstellung
-// von Positionen. Jede Position verweist auf eine Katalog-Übung (Exercise) und trägt ihre EIGENEN
-// Ziele (Rhythmus Tag/Woche) und Punkte. Der Inhalt lebt allein in der Übungs-Config; hier wird nur
-// der Lern-FORTSCHRITT pro Inhalts-Atom materialisiert (PositionItemProgress).
+// Lehrplan-Modell: Ein Lehrplan ist eine verfahrens-GEMISCHTE Zusammenstellung von Positionen. Jede
+// Position verweist auf eine Katalog-Übung (Exercise) und trägt ihre EIGENEN Ziele (Rhythmus Tag/Woche)
+// und Punkte. Der Inhalt lebt allein in der Übungs-Config; hier wird nur der Lern-FORTSCHRITT pro
+// Inhalts-Atom materialisiert (PositionItemProgress).
 //
-// Läuft in Etappe 1 ADDITIV neben dem alten StudyPlanItem/Method-Modell. Der Übungs-/Test-/Ziel-Motor
-// wird erst in späteren Etappen umgeschlüsselt; danach entfällt das Alt-Modell.
+// Der Strangler ist abgeschlossen: das frühere plan-weite StudyPlanItem/Method-Modell wurde mit der
+// Migration `PlanContainerCleanup` (2026-07-05) vollständig entfernt – es gibt kein Alt-Modell mehr,
+// neben dem hier noch etwas „additiv" laufen würde.
 
 // GoalCadence/ItemScope/PracticeOrder leben im Vertrags-Projekt (Pugling.Contracts).
 

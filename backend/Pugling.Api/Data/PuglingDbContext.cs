@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Pugling.Api.Models;
 
 namespace Pugling.Api.Data;
@@ -66,7 +67,9 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
     public DbSet<PracticeSession> PracticeSessions => Set<PracticeSession>();
     public DbSet<ReviewEvent> ReviewEvents => Set<ReviewEvent>();
     public DbSet<TestAttempt> TestAttempts => Set<TestAttempt>();
-    public DbSet<TestItemResult> TestItemResults => Set<TestItemResult>();
+    // Kein DbSet für TestItemResult: die Tabelle existiert (über die Beziehung unten), wird aber
+    // ausschließlich über TestAttempt.Results erreicht – ein eigenes Set wäre ein zweiter Zugang, den
+    // niemand nutzt und der zur Umgehung des Versuchs-Kontexts einlädt.
     // Plan-übergreifender Lernstand je (Kind, Item) + Antwort-Historie (stabile ItemId, denormalisierte VocabularyId).
     public DbSet<ItemProgress> ItemProgress => Set<ItemProgress>();
     public DbSet<ItemReviewEvent> ItemReviewEvents => Set<ItemReviewEvent>();
@@ -125,6 +128,10 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
                 .HasForeignKey(p => p.ChildId).OnDelete(DeleteBehavior.Cascade);
             e.HasIndex(p => new { p.Role, p.AdultId }).IsUnique().HasFilter("[AdultId] IS NOT NULL");
             e.HasIndex(p => new { p.Role, p.ChildId }).IsUnique().HasFilter("[ChildId] IS NOT NULL");
+            // Ein Konto trägt jede Rolle höchstens einmal. Die zwei Indizes oben verhindern nur, dass
+            // dasselbe *Profil* zweimal in einer Rolle hängt – nicht, dass ein Konto zwei Creator-Profile
+            // auf verschiedene Adults bekommt. Genau das wäre eine zweite Identität hinter einem Login.
+            e.HasIndex(p => new { p.AccountId, p.Role }).IsUnique();
         });
         modelBuilder.Entity<Account>()
             .HasIndex(a => a.Email).IsUnique().HasFilter("[Email] IS NOT NULL");
@@ -235,6 +242,19 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
         {
             e.HasIndex(v => v.Key).IsUnique();
 
+            // Wort/Übersetzung sind der heißeste Lesepfad des Katalogs (Dubletten-Lookup beim Anlegen,
+            // Freitextsuche) und hatten keinen Index. Ein Index allein hätte aber nichts gebracht: die
+            // Suche verglich `LOWER(Word)`, und über einen Ausdruck greift kein Spaltenindex. Erst die
+            // Collation NOCASE macht den Vergleich selbst groß-/kleinschreibungsunabhängig – dann darf
+            // das `ToLower()` im Query entfallen und der Index wird benutzt.
+            // Folge, die man wissen muss: `Word == "march"` findet ab jetzt auch „March". Für einen
+            // Vokabelspeicher ist das gewollt (Groß-/Kleinschreibung ist keine eigene Vokabel), und
+            // die Eindeutigkeit hängt ohnehin am `Key`, nicht am Wort.
+            e.Property(v => v.Word).UseCollation("NOCASE");
+            e.Property(v => v.Translation).UseCollation("NOCASE");
+            e.HasIndex(v => v.Word);
+            e.HasIndex(v => v.Translation);
+
             // noun/verb als JSON-Spalten (null bleibt DB-NULL, Converter läuft nur für Werte).
             e.Property(v => v.Noun).HasConversion(
                 v => JsonSerializer.Serialize(v, JsonOptions),
@@ -336,6 +356,10 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
             e.HasIndex(l => new { l.MediaAssetId, l.VocabularyId }).IsUnique().HasFilter("[VocabularyId] IS NOT NULL");
             e.HasIndex(l => new { l.MediaAssetId, l.ExerciseItemId }).IsUnique().HasFilter("[ExerciseItemId] IS NOT NULL");
             e.HasIndex(l => new { l.MediaAssetId, l.ExerciseId }).IsUnique().HasFilter("[ExerciseId] IS NOT NULL");
+            // Die Gegenrichtung: „welche Verknüpfungen hat dieses Asset?" (Aufräumen beim Löschen).
+            // Die drei gefilterten Uniques oben beginnen mit MediaAssetId, können diese Query aber
+            // nicht bedienen: ohne Einschränkung auf einen Träger ist ihr Filter nicht impliziert.
+            e.HasIndex(l => l.MediaAssetId);
             // Die heiße Richtung der Auswahl: „welche Bilder hängen an dieser Vokabel / diesem Item?"
             e.HasIndex(l => l.VocabularyId);
             e.HasIndex(l => l.ExerciseItemId);
@@ -360,15 +384,34 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
 
             e.HasIndex(p => new { p.ChildId, p.VocabularyId, p.MediaAssetId }).IsUnique().HasFilter("[VocabularyId] IS NOT NULL");
             e.HasIndex(p => new { p.ChildId, p.ExerciseItemId, p.MediaAssetId }).IsUnique().HasFilter("[ExerciseItemId] IS NOT NULL");
-            // Die heiße Richtung der Ausspielung: „was ist für dieses Kind an diesem Träger gewählt?"
-            e.HasIndex(p => new { p.ChildId, p.VocabularyId });
-            e.HasIndex(p => new { p.ChildId, p.ExerciseItemId });
+            // Kein zusätzlicher Index auf (ChildId, VocabularyId)/(ChildId, ExerciseItemId): per
+            // EXPLAIN QUERY PLAN gemessen wählt SQLite für „was ist für dieses Kind an diesem Träger
+            // gewählt?" die gefilterten Unique-Indizes oben – eine Gleichheit auf der Trägerspalte
+            // impliziert deren `IS NOT NULL`-Filter. Die früheren Zusatzindizes wurden nie benutzt.
 
             e.HasOne(p => p.Child).WithMany().HasForeignKey(p => p.ChildId).OnDelete(DeleteBehavior.Cascade);
             e.HasOne(p => p.Vocabulary).WithMany().HasForeignKey(p => p.VocabularyId).OnDelete(DeleteBehavior.Cascade);
             e.HasOne(p => p.ExerciseItem).WithMany().HasForeignKey(p => p.ExerciseItemId).OnDelete(DeleteBehavior.Cascade);
             e.HasOne(p => p.MediaAsset).WithMany().HasForeignKey(p => p.MediaAssetId).OnDelete(DeleteBehavior.Cascade);
         });
+
+        // Kapitelnamen sind je Fach eindeutig: zwei „Unit 1" im selben Fach sind eine Dublette, und
+        // Auswahllisten wie die Zuordnung durch den Agenten hängen am Namen.
+        modelBuilder.Entity<Chapter>().HasIndex(c => new { c.SubjectId, c.Name }).IsUnique();
+        // Immerhin ein Index auf den Fach-Namen: `Subjects` hatte außer dem Primärschlüssel keinen,
+        // obwohl jede Katalog-Ansicht danach sucht und sortiert.
+        modelBuilder.Entity<Subject>().HasIndex(s => s.Name);
+        // BEWUSST NICHT eindeutig. Naheliegend wäre es – „Englisch" zweimal ist unschön. Aber `Subject`
+        // trägt keinen Owner: ein globaler Unique machte den wichtigsten Namensraum des Katalogs
+        // first-come-first-served über alle Creator hinweg, und jeder weitere Lehrer müsste seine Kapitel
+        // an ein Fach hängen, das ihm nicht gehört. Das ist eine Produktentscheidung über Katalog-Eigentum
+        // (und ein Vertragsbruch: POST /subjects antwortete dann 409), nicht das Schließen einer
+        // Strukturlücke. Erst entscheiden, wem ein Fach gehört – dann eindeutig machen.
+
+        // Die E-Mail des Erwachsenen ist ein Login-Merkmal und war frei duplizierbar, während der
+        // gefilterte Unique-Index nur am Konto hing. Gefiltert, weil die Adresse optional bleibt
+        // (ein Kind-betreuender Vater braucht keine).
+        modelBuilder.Entity<Adult>().HasIndex(a => a.Email).IsUnique().HasFilter("[Email] IS NOT NULL");
 
         // Bonus-Vorschlag der Übung als JSON-Spalte (null bleibt DB-NULL; Converter läuft nur für Werte).
         modelBuilder.Entity<Exercise>()
@@ -415,6 +458,8 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
 
         // Bislang gab es keinen Index auf den Autor; die neuen Grant-Joins und der `mineOnly`-Filter profitieren.
         modelBuilder.Entity<Exercise>().HasIndex(e => e.AuthorAdultId);
+        // Der Übungstyp ist der häufigste Katalogfilter (Typ-Listen, ExerciseControllerBase).
+        modelBuilder.Entity<Exercise>().HasIndex(e => e.Type);
 
         // RWX-Grant: Recht eines Creator auf eine Übung. Leaf auf zwei unabhängige Roots (Exercise, Adult) –
         // beide FKs Cascade, kein SQLite-Diamant (Muster wie SupervisorLink). Paar+Recht eindeutig (Idempotenz).
@@ -437,6 +482,10 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
         modelBuilder.Entity<ExerciseItem>(e =>
         {
             e.HasIndex(i => new { i.ExerciseId, i.OrderIndex });
+            // Dieselbe Store-Vokabel darf in einer Übung nur einmal vorkommen. Ohne diese Zusicherung
+            // entstehen zwei Items für dasselbe Wort und damit zwei konkurrierende ItemProgress-Zeilen –
+            // der Lernstand desselben Worts liefe innerhalb einer Übung auseinander.
+            e.HasIndex(i => new { i.ExerciseId, i.VocabularyId }).IsUnique();
             e.HasOne(i => i.Exercise).WithMany().HasForeignKey(i => i.ExerciseId).OnDelete(DeleteBehavior.Cascade);
             e.HasOne(i => i.Vocabulary).WithMany().HasForeignKey(i => i.VocabularyId).OnDelete(DeleteBehavior.Restrict);
         });
@@ -587,6 +636,10 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
         });
 
         // Mission gehört einem Kind (Cascade); jede Mission wird je Zeitraum höchstens einmal belohnt.
+        // Der Lesepfad ist immer „die aktiven Missionen dieses Kindes". Bewusst *kein* Unique auf
+        // (ChildId, Metric): „20 Wörter täglich" und „100 Wörter wöchentlich" sind zwei legitime
+        // Missionen auf derselben Metrik.
+        modelBuilder.Entity<Mission>().HasIndex(m => new { m.ChildId, m.Active });
         modelBuilder.Entity<Mission>()
             .HasOne(m => m.Child).WithMany().HasForeignKey(m => m.ChildId).OnDelete(DeleteBehavior.Cascade);
         modelBuilder.Entity<MissionAward>(e =>
@@ -595,7 +648,9 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
             e.HasOne(a => a.Mission).WithMany().HasForeignKey(a => a.MissionId).OnDelete(DeleteBehavior.Cascade);
         });
 
-        // Auszeichnung gehört einem Kind (Cascade); wird genau einmal verliehen.
+        // Auszeichnung gehört einem Kind (Cascade); wird genau einmal verliehen. Dieselbe Schwelle
+        // derselben Metrik zweimal anzulegen wäre eine Dublette – die Badge käme doppelt.
+        modelBuilder.Entity<Achievement>().HasIndex(a => new { a.ChildId, a.Metric, a.Threshold }).IsUnique();
         modelBuilder.Entity<Achievement>()
             .HasOne(a => a.Child).WithMany().HasForeignKey(a => a.ChildId).OnDelete(DeleteBehavior.Cascade);
         modelBuilder.Entity<AchievementAward>(e =>
@@ -719,5 +774,65 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
             // Der einzige Lesepfad: der Verlauf einer Anmerkung, chronologisch.
             e.HasIndex(c => new { c.RemarkId, c.CreatedAt });
         });
+
+        ApplyEnumConvention(modelBuilder);
+    }
+
+    /// <summary>
+    /// Enums, die in einer Ausnahmeliste dieser Klasse stehen, bleiben <c>int</c> – jeweils mit Grund.
+    /// Der Schlüssel ist <c>Entity.Property</c>.
+    /// </summary>
+    private static readonly Dictionary<string, string> IntEnumsByDesign = new(StringComparer.Ordinal)
+    {
+        ["Child.AllowedContentRating"] =
+            "Wird ORDNEND verglichen (asset.Rating <= child.AllowedContentRating) – als Text wäre der "
+            + "Vergleich lexikografisch und die Altersfreigabe stillschweigend falsch.",
+        ["MediaAsset.Rating"] =
+            "Gegenstück zu Child.AllowedContentRating: dieselbe Ordnung, dieselbe Begründung.",
+    };
+
+    /// <summary>
+    /// Ob <paramref name="entityDotProperty"/> (Form <c>Entity.Property</c>) bewusst als <c>int</c>
+    /// gespeichert wird. Der Wächter <c>SchemaGuardTests</c> liest diese Liste, statt eine zweite zu
+    /// führen – sonst wären Regel und Ausnahme an zwei Orten zu pflegen.
+    /// </summary>
+    public static bool IntEnumErlaubt(string entityDotProperty) =>
+        IntEnumsByDesign.ContainsKey(entityDotProperty);
+
+    /// <summary>
+    /// <b>Eine Regel statt 32 Einzelfällen:</b> jedes persistierte Enum wird als <b>String</b> gespeichert.
+    /// <para>
+    /// Vorher waren 12 Enums per <c>HasConversion&lt;string&gt;()</c> konvertiert und ~20 implizit <c>int</c> –
+    /// ohne erkennbare Regel, in <c>Remarks</c> sogar beides in derselben Tabelle (<c>AuthorRole</c> als Text
+    /// neben <c>Status</c>/<c>Category</c> als Zahl). String ist die richtige Seite, weil der Vertrag nach
+    /// außen ohnehin Strings spricht (<c>JsonStringEnumConverter</c>): damit entfällt die Übersetzungsstufe
+    /// zwischen dem, was in der DB steht, und dem, was die API sagt – und der gespeicherte Wert wird
+    /// unabhängig von der Mitglieder-Reihenfolge, was das Entfernen toter Enum-Werte erst gefahrlos macht.
+    /// </para>
+    /// <para>
+    /// Zwei Arten von Ausnahmen: <see cref="IntEnumsByDesign"/> (ordnend verglichen) und <c>[Flags]</c>.
+    /// Eine Flags-Kombination hat keinen Namen – <c>HasConversion&lt;string&gt;</c> erzeugte
+    /// <c>"Gymnasium, Realschule"</c> und machte jede bitweise Mengenabfrage kaputt.
+    /// </para>
+    /// </summary>
+    private static void ApplyEnumConvention(ModelBuilder modelBuilder)
+    {
+        foreach (var entity in modelBuilder.Model.GetEntityTypes())
+        {
+            foreach (var property in entity.GetProperties())
+            {
+                // Nullable entpacken: `GoalCadence?` ist so zu behandeln wie `GoalCadence`.
+                var type = Nullable.GetUnderlyingType(property.ClrType) ?? property.ClrType;
+                if (!type.IsEnum) continue;
+                if (type.IsDefined(typeof(FlagsAttribute), inherit: false)) continue;
+                if (IntEnumsByDesign.ContainsKey($"{entity.ClrType.Name}.{property.Name}")) continue;
+
+                // Nur setzen, wo noch nichts steht: eine ausdrückliche Konfiguration weiter oben
+                // (oder ein eigener Converter) gewinnt gegen die Konvention.
+                if (property.GetValueConverter() is not null) continue;
+                property.SetValueConverter(
+                    typeof(EnumToStringConverter<>).MakeGenericType(type));
+            }
+        }
     }
 }

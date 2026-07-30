@@ -62,13 +62,11 @@ public static class ClaimsPrincipalExtensions
     /// <summary>Die <c>Child</c>-Id des Student-Profils (identisch zu <see cref="ChildId"/>).</summary>
     public static int? StudentId(this ClaimsPrincipal u) => u.ChildId();
 
-    /// <summary>
-    /// Ob der Principal Autor der Übung ist und sie daher ändern/löschen darf. Die eine Stelle,
-    /// an der die Autorschafts-Regel lebt (Anzeige-<c>IsOwn</c> wie serverseitige Durchsetzung),
-    /// damit beide nicht auseinanderdriften.
-    /// </summary>
-    public static bool Owns(this ClaimsPrincipal u, Exercise exercise) =>
-        IsOwnedBy(exercise.AuthorAdultId, u.AdultId());
+    // `Owns(this ClaimsPrincipal, Exercise)` wurde entfernt: Es behauptete, „die eine Stelle" der
+    // Autorschafts-Regel zu sein, war aber nach dem RWX-Umbau von niemandem mehr aufgerufen –
+    // durchgesetzt wird ausschließlich über die Grants (siehe ExercisePermissionService). Ein toter
+    // Helfer mit genau diesem Kommentar ist schlimmer als keiner: er lädt dazu ein, die Rechteprüfung
+    // an ihm statt an den Grants festzumachen.
 
     /// <summary>
     /// Reiner Eigentums-Vergleich (für Hot-Paths/Projektionen, wo der <c>fid</c> einmal ermittelt wird):

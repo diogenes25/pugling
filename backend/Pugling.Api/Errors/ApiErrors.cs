@@ -69,6 +69,10 @@ public static class ApiErrors
     public static readonly ApiError ActivationNotPending = new("activation_not_pending", 409, "Activation request is not pending.");
     /// <summary>Schlüssel existiert bereits (z. B. Vokabel-/Cloze-/Medien-Key) (409).</summary>
     public static readonly ApiError DuplicateKey = new("duplicate_key", 409, "Key already exists.");
+    /// <summary>Das Fach hat bereits ein Kapitel dieses Namens (409).</summary>
+    public static readonly ApiError DuplicateChapterName = new("duplicate_chapter_name", 409, "The subject already has a chapter with this name.");
+    /// <summary>Diese Vokabel steckt schon in der Übung – ein Wort darf je Übung nur ein Item haben (409).</summary>
+    public static readonly ApiError DuplicateVocabularyInExercise = new("duplicate_vocabulary_in_exercise", 409, "This vocabulary entry is already an item of the exercise.");
     /// <summary>Bild-Variante existiert nicht / gehört nicht zu diesem Asset (404).</summary>
     public static readonly ApiError MediaVariantNotFound = new("media_variant_not_found", 404, "Media variant not found.");
     /// <summary>Für diesen Zweck und dieses Format hat das Asset bereits eine Variante (409).</summary>

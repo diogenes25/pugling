@@ -57,7 +57,11 @@ public class ChaptersController(PuglingDbContext db) : ControllerBase
         if (!await SubjectExists(subjectId, ct)) return NotFound();
         if (string.IsNullOrWhiteSpace(dto.Name)) return this.ProblemWithCode(ApiErrors.ValidationError, "Name is required.");
 
-        var chapter = new Chapter { SubjectId = subjectId, Name = dto.Name.Trim(), OrderIndex = dto.OrderIndex };
+        var name = dto.Name.Trim();
+        if (await db.Chapters.AnyAsync(c => c.SubjectId == subjectId && c.Name == name, ct))
+            return this.ProblemWithCode(ApiErrors.DuplicateChapterName, $"Chapter '{name}' already exists in this subject.");
+
+        var chapter = new Chapter { SubjectId = subjectId, Name = name, OrderIndex = dto.OrderIndex };
         db.Chapters.Add(chapter);
         await db.SaveChangesAsync(ct);
 

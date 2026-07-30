@@ -70,11 +70,12 @@ namespace Pugling.Api.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("AccountId");
-
                     b.HasIndex("AdultId");
 
                     b.HasIndex("ChildId");
+
+                    b.HasIndex("AccountId", "Role")
+                        .IsUnique();
 
                     b.HasIndex("Role", "AdultId")
                         .IsUnique()
@@ -105,8 +106,9 @@ namespace Pugling.Api.Data.Migrations
                     b.Property<string>("Icon")
                         .HasColumnType("TEXT");
 
-                    b.Property<int>("Metric")
-                        .HasColumnType("INTEGER");
+                    b.Property<string>("Metric")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
 
                     b.Property<int>("RewardPoints")
                         .HasColumnType("INTEGER");
@@ -120,7 +122,8 @@ namespace Pugling.Api.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ChildId");
+                    b.HasIndex("ChildId", "Metric", "Threshold")
+                        .IsUnique();
 
                     b.ToTable("Achievements");
                 });
@@ -154,8 +157,9 @@ namespace Pugling.Api.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<int>("ActionType")
-                        .HasColumnType("INTEGER");
+                    b.Property<string>("ActionType")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("ArticleTitle")
                         .IsRequired()
@@ -176,14 +180,16 @@ namespace Pugling.Api.Data.Migrations
                     b.Property<int?>("ShopArticleId")
                         .HasColumnType("INTEGER");
 
-                    b.Property<int>("Status")
-                        .HasColumnType("INTEGER");
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
 
                     b.Property<int>("SupervisorId")
                         .HasColumnType("INTEGER");
 
-                    b.Property<int>("UnitType")
-                        .HasColumnType("INTEGER");
+                    b.Property<string>("UnitType")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
 
                     b.HasKey("Id");
 
@@ -219,6 +225,10 @@ namespace Pugling.Api.Data.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("Email")
+                        .IsUnique()
+                        .HasFilter("[Email] IS NOT NULL");
+
                     b.ToTable("Adults");
                 });
 
@@ -240,7 +250,8 @@ namespace Pugling.Api.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("SubjectId");
+                    b.HasIndex("SubjectId", "Name")
+                        .IsUnique();
 
                     b.ToTable("Chapters");
                 });
@@ -391,10 +402,6 @@ namespace Pugling.Api.Data.Migrations
 
                     b.HasIndex("VocabularyId");
 
-                    b.HasIndex("ChildId", "ExerciseItemId");
-
-                    b.HasIndex("ChildId", "VocabularyId");
-
                     b.HasIndex("ChildId", "ExerciseItemId", "MediaAssetId")
                         .IsUnique()
                         .HasFilter("[ExerciseItemId] IS NOT NULL");
@@ -424,8 +431,9 @@ namespace Pugling.Api.Data.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("TEXT");
 
-                    b.Property<int>("Kind")
-                        .HasColumnType("INTEGER");
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("Reason")
                         .IsRequired()
@@ -634,6 +642,8 @@ namespace Pugling.Api.Data.Migrations
 
                     b.HasIndex("ChapterId");
 
+                    b.HasIndex("Type");
+
                     b.ToTable("Exercises");
                 });
 
@@ -720,6 +730,9 @@ namespace Pugling.Api.Data.Migrations
 
                     b.HasIndex("ExerciseId", "OrderIndex");
 
+                    b.HasIndex("ExerciseId", "VocabularyId")
+                        .IsUnique();
+
                     b.ToTable("ExerciseItems");
                 });
 
@@ -736,9 +749,6 @@ namespace Pugling.Api.Data.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<int>("TagId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("TaggedByRole")
                         .HasColumnType("INTEGER");
 
                     b.HasKey("Id");
@@ -864,8 +874,9 @@ namespace Pugling.Api.Data.Migrations
                     b.Property<int?>("PlanPositionId")
                         .HasColumnType("INTEGER");
 
-                    b.Property<int>("Source")
-                        .HasColumnType("INTEGER");
+                    b.Property<string>("Source")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
 
                     b.Property<int>("StageValue")
                         .HasColumnType("INTEGER");
@@ -899,8 +910,9 @@ namespace Pugling.Api.Data.Migrations
                     b.Property<int?>("ExerciseId")
                         .HasColumnType("INTEGER");
 
-                    b.Property<int>("Metric")
-                        .HasColumnType("INTEGER");
+                    b.Property<string>("Metric")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
 
                     b.Property<int>("ObjectiveId")
                         .HasColumnType("INTEGER");
@@ -943,8 +955,9 @@ namespace Pugling.Api.Data.Migrations
                     b.Property<DateOnly>("ScheduledDate")
                         .HasColumnType("TEXT");
 
-                    b.Property<int>("Status")
-                        .HasColumnType("INTEGER");
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
 
                     b.Property<int?>("SubjectId")
                         .HasColumnType("INTEGER");
@@ -1033,8 +1046,9 @@ namespace Pugling.Api.Data.Migrations
                     b.Property<int?>("ExerciseId")
                         .HasColumnType("INTEGER");
 
-                    b.Property<int>("Metric")
-                        .HasColumnType("INTEGER");
+                    b.Property<string>("Metric")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
 
                     b.Property<int>("SubjectId")
                         .HasColumnType("INTEGER");
@@ -1131,6 +1145,8 @@ namespace Pugling.Api.Data.Migrations
                     b.HasIndex("ExerciseId");
 
                     b.HasIndex("ExerciseItemId");
+
+                    b.HasIndex("MediaAssetId");
 
                     b.HasIndex("VocabularyId");
 
@@ -1230,11 +1246,13 @@ namespace Pugling.Api.Data.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("TEXT");
 
-                    b.Property<int>("Metric")
-                        .HasColumnType("INTEGER");
+                    b.Property<string>("Metric")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
 
-                    b.Property<int>("Period")
-                        .HasColumnType("INTEGER");
+                    b.Property<string>("Period")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
 
                     b.Property<int>("RewardPoints")
                         .HasColumnType("INTEGER");
@@ -1248,7 +1266,7 @@ namespace Pugling.Api.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ChildId");
+                    b.HasIndex("ChildId", "Active");
 
                     b.ToTable("Missions");
                 });
@@ -1298,8 +1316,9 @@ namespace Pugling.Api.Data.Migrations
                     b.Property<DateOnly?>("DueDate")
                         .HasColumnType("TEXT");
 
-                    b.Property<int>("Kind")
-                        .HasColumnType("INTEGER");
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("Motivation")
                         .HasColumnType("TEXT");
@@ -1360,8 +1379,9 @@ namespace Pugling.Api.Data.Migrations
                     b.Property<string>("BoxIntervalDays")
                         .HasColumnType("TEXT");
 
-                    b.Property<int>("Cadence")
-                        .HasColumnType("INTEGER");
+                    b.Property<string>("Cadence")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
 
                     b.Property<int>("ComboBonusPoints")
                         .HasColumnType("INTEGER");
@@ -1390,8 +1410,9 @@ namespace Pugling.Api.Data.Migrations
                     b.Property<int>("Order")
                         .HasColumnType("INTEGER");
 
-                    b.Property<int>("OrderStrategy")
-                        .HasColumnType("INTEGER");
+                    b.Property<string>("OrderStrategy")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
 
                     b.Property<int>("PenaltyCoins")
                         .HasColumnType("INTEGER");
@@ -1402,8 +1423,9 @@ namespace Pugling.Api.Data.Migrations
                     b.Property<bool>("RequireTypedTest")
                         .HasColumnType("INTEGER");
 
-                    b.Property<int>("Scope")
-                        .HasColumnType("INTEGER");
+                    b.Property<string>("Scope")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
 
                     b.Property<int>("SpeedBonusPoints")
                         .HasColumnType("INTEGER");
@@ -1545,8 +1567,9 @@ namespace Pugling.Api.Data.Migrations
                     b.Property<DateTime?>("EndedAt")
                         .HasColumnType("TEXT");
 
-                    b.Property<int>("Mode")
-                        .HasColumnType("INTEGER");
+                    b.Property<string>("Mode")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("Order")
                         .IsRequired()
@@ -1596,8 +1619,9 @@ namespace Pugling.Api.Data.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<int>("Category")
-                        .HasColumnType("INTEGER");
+                    b.Property<string>("Category")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
 
                     b.Property<int?>("ChildId")
                         .HasColumnType("INTEGER");
@@ -1624,8 +1648,9 @@ namespace Pugling.Api.Data.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<int>("Status")
-                        .HasColumnType("INTEGER");
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
 
                     b.Property<int?>("StudyPlanId")
                         .HasColumnType("INTEGER");
@@ -1700,16 +1725,7 @@ namespace Pugling.Api.Data.Migrations
                     b.Property<DateTime>("At")
                         .HasColumnType("TEXT");
 
-                    b.Property<int>("ContentId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int?>("ItemIndex")
-                        .HasColumnType("INTEGER");
-
                     b.Property<int>("PracticeSessionId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("StageValue")
                         .HasColumnType("INTEGER");
 
                     b.Property<bool>("WasCorrect")
@@ -1766,8 +1782,9 @@ namespace Pugling.Api.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<int>("ActionType")
-                        .HasColumnType("INTEGER");
+                    b.Property<string>("ActionType")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
 
                     b.Property<int>("AdultId")
                         .HasColumnType("INTEGER");
@@ -1787,8 +1804,9 @@ namespace Pugling.Api.Data.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<int>("UnitType")
-                        .HasColumnType("INTEGER");
+                    b.Property<string>("UnitType")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
 
                     b.HasKey("Id");
 
@@ -1836,11 +1854,12 @@ namespace Pugling.Api.Data.Migrations
                     b.Property<DateTime?>("RefillAtUtc")
                         .HasColumnType("TEXT");
 
-                    b.Property<int?>("RefillDayOfWeek")
-                        .HasColumnType("INTEGER");
+                    b.Property<string>("RefillDayOfWeek")
+                        .HasColumnType("TEXT");
 
-                    b.Property<int>("RefillKind")
-                        .HasColumnType("INTEGER");
+                    b.Property<string>("RefillKind")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
 
                     b.Property<int>("ShopArticleId")
                         .HasColumnType("INTEGER");
@@ -1895,8 +1914,9 @@ namespace Pugling.Api.Data.Migrations
                     b.Property<int?>("ShopListingId")
                         .HasColumnType("INTEGER");
 
-                    b.Property<int>("Status")
-                        .HasColumnType("INTEGER");
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
 
                     b.Property<int>("SupervisorId")
                         .HasColumnType("INTEGER");
@@ -1972,6 +1992,8 @@ namespace Pugling.Api.Data.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("Name");
+
                     b.ToTable("Subjects");
                 });
 
@@ -2019,8 +2041,9 @@ namespace Pugling.Api.Data.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("TEXT");
 
-                    b.Property<int>("CreatedBy")
-                        .HasColumnType("INTEGER");
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -2095,12 +2118,6 @@ namespace Pugling.Api.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<int>("ContentId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int?>("GapIndex")
-                        .HasColumnType("INTEGER");
-
                     b.Property<string>("GivenAnswer")
                         .HasColumnType("TEXT");
 
@@ -2123,7 +2140,7 @@ namespace Pugling.Api.Data.Migrations
 
                     b.HasIndex("TestAttemptId");
 
-                    b.ToTable("TestItemResults");
+                    b.ToTable("TestItemResult");
                 });
 
             modelBuilder.Entity("Pugling.Api.Models.Textbook", b =>
@@ -2268,8 +2285,9 @@ namespace Pugling.Api.Data.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("TEXT");
 
-                    b.Property<int>("DayOfWeek")
-                        .HasColumnType("INTEGER");
+                    b.Property<string>("DayOfWeek")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
 
                     b.Property<int>("SubjectId")
                         .HasColumnType("INTEGER");
@@ -2355,8 +2373,9 @@ namespace Pugling.Api.Data.Migrations
                     b.Property<string>("Noun")
                         .HasColumnType("TEXT");
 
-                    b.Property<int>("PartOfSpeech")
-                        .HasColumnType("INTEGER");
+                    b.Property<string>("PartOfSpeech")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("PronunciationAudioUrl")
                         .HasColumnType("TEXT");
@@ -2371,7 +2390,8 @@ namespace Pugling.Api.Data.Migrations
 
                     b.Property<string>("Translation")
                         .IsRequired()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("TEXT")
+                        .UseCollation("NOCASE");
 
                     b.Property<string>("Verb")
                         .HasColumnType("TEXT");
@@ -2382,7 +2402,8 @@ namespace Pugling.Api.Data.Migrations
 
                     b.Property<string>("Word")
                         .IsRequired()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("TEXT")
+                        .UseCollation("NOCASE");
 
                     b.HasKey("Id");
 
@@ -2390,6 +2411,10 @@ namespace Pugling.Api.Data.Migrations
 
                     b.HasIndex("Key")
                         .IsUnique();
+
+                    b.HasIndex("Translation");
+
+                    b.HasIndex("Word");
 
                     b.ToTable("Vocabulary");
                 });
@@ -2404,9 +2429,6 @@ namespace Pugling.Api.Data.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<int>("TagId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("TaggedByRole")
                         .HasColumnType("INTEGER");
 
                     b.Property<int>("VocabularyId")

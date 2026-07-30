@@ -41,38 +41,28 @@ public enum PointKind
     Base = 0,
     /// <summary>Manuelle Vater-Buchung (Gutschrift/Einlösung).</summary>
     Manual = 1,
-    /// <summary>Tagesziel Übungszeit erreicht.</summary>
-    Minutes = 2,
-    /// <summary>Abschlusstest bestanden.</summary>
-    Test = 3,
-    /// <summary>Tag vollständig (Zeit + Test).</summary>
-    DayComplete = 4,
     /// <summary>Combo-Bonus (Treffer in Folge).</summary>
-    Combo = 5,
+    Combo = 2,
     /// <summary>Bonus für schnelle Antwort.</summary>
-    Speed = 6,
-    /// <summary>Bonus für durchgehende Lernzeit.</summary>
-    Duration = 7,
+    Speed = 3,
     /// <summary>Belohnung für eine erfüllte Mission (Tages-/Wochen-/Zusatzziel).</summary>
-    Mission = 8,
+    Mission = 4,
     /// <summary>Belohnung für eine erreichte Auszeichnung.</summary>
-    Achievement = 9,
+    Achievement = 5,
     /// <summary>Einlösung von Münzen für einen Skin (negative Buchung).</summary>
-    SkinPurchase = 10,
-    /// <summary>Einlösung von Münzen für eine reale Prämie (z. B. Fernseh-/Spielzeit; negative Buchung).</summary>
-    Reward = 11,
+    SkinPurchase = 6,
     /// <summary>Ziel einer Lehrplan-Position erreicht (Tages-/Wochenziel der Übung).</summary>
-    Goal = 12,
+    Goal = 7,
     /// <summary>Einlösung von Münzen für einen Familien-Shop-Artikel (negative Buchung).</summary>
-    ShopCoins = 13,
+    ShopCoins = 8,
     /// <summary>Einlösung von Gems für einen Familien-Shop-Artikel (negative Buchung).</summary>
-    ShopGems = 14,
+    ShopGems = 9,
     /// <summary>Manuelle Vater-Buchung in Gems (Gem-Zwilling zu <see cref="Manual"/>; Geschenk/Korrektur).</summary>
-    ManualGems = 15,
+    ManualGems = 10,
     /// <summary>Malus, weil ein Pflichtziel einer Lehrplan-Position in der Periode gerissen wurde (negative Buchung).</summary>
-    GoalPenalty = 16,
+    GoalPenalty = 11,
     /// <summary>Belohnung für ein erreichtes verbindliches Lernziel/Objective bzw. eine seiner Etappen (Münzen).</summary>
-    ObjectiveCoins = 17,
+    ObjectiveCoins = 12,
     /// <summary>Belohnung für ein erreichtes Dehnungs-Objective bzw. eine seiner Etappen (Gems).</summary>
-    ObjectiveGems = 18,
+    ObjectiveGems = 13,
 }

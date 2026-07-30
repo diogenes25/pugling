@@ -557,9 +557,9 @@ public static class Seed
         db.SaveChanges();
 
         foreach (var e in exEnglisch)
-            db.ExerciseTags.Add(new ExerciseTag { TagId = tagUnit1.Id, ExerciseId = e.Id, TaggedByRole = TaggedBy.Vater });
+            db.ExerciseTags.Add(new ExerciseTag { TagId = tagUnit1.Id, ExerciseId = e.Id });
         foreach (var e in exMathe)
-            db.ExerciseTags.Add(new ExerciseTag { TagId = tag1x1.Id, ExerciseId = e.Id, TaggedByRole = TaggedBy.Sohn });
+            db.ExerciseTags.Add(new ExerciseTag { TagId = tag1x1.Id, ExerciseId = e.Id });
         db.SaveChanges();
 
         var today = DateOnly.FromDateTime(DateTime.UtcNow);

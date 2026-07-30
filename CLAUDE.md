@@ -23,7 +23,9 @@ Format und Build übernimmt nach `.cs`-Edits ohnehin der Hook. Nicht erratbar is
 
 ```bash
 dotnet tool restore                          # einmalig nach dem Clone (installiert dotnet-ef aus dem Manifest)
-dotnet ef migrations add <Name> --project backend/Pugling.Api --output-dir Data/Migrations   # bei Schemaänderung
+# Bei Schemaänderung: die Kette wird NEU GEFALTET, nicht verlängert (siehe Fallstricke → EF-Migrationen).
+rm -rf backend/Pugling.Api/Data/Migrations
+dotnet dotnet-ef migrations add InitialCreate --project backend/Pugling.Api --output-dir Data/Migrations
 ```
 
 Dazu die Kommandos `/smoke-test` (lässt die echte `pugling.db` unangetastet) und `/neuer-uebungstyp`.
@@ -253,11 +255,29 @@ Details: [backend/Pugling.Agent.Creator/README.md](backend/Pugling.Agent.Creator
 
 ## Fallstricke
 
-- **EF-Migrationen** ([Program.cs](backend/Pugling.Api/Program.cs) ruft beim Start `db.Database.Migrate()`):
-  Bei jeder Schemaänderung eine Migration erzeugen (`dotnet ef migrations add …`, siehe Befehle) – **nicht**
-  auf `EnsureCreated` zurückfallen. Die EF-Tools laufen über die Design-Time-Factory
-  ([Data/PuglingDbContextFactory.cs](backend/Pugling.Api/Data/PuglingDbContextFactory.cs)), nicht über den Web-Host.
-  `*.db` ist gitignored; eine alte, per `EnsureCreated` erzeugte DB einmalig löschen (wird neu migriert + geseedet).
+- **EF-Migrationen: die Kette ist genau EINE Migration** ([Program.cs](backend/Pugling.Api/Program.cs) ruft
+  beim Start `db.Database.Migrate()`). Solange die App unveröffentlicht ist und Altdaten verzichtbar sind,
+  wird bei jeder Schemaänderung **neu gefaltet** statt verlängert (`Data/Migrations` löschen +
+  `migrations add InitialCreate`, siehe Befehle) – das macht Spaltenumbenennungen und Typwechsel kostenlos,
+  weil kein SQLite-Tabellen-Neubau generiert wird, den jemand abnehmen müsste. Der Wächter
+  `SchemaGuardTests` erzwingt beides: **kein Modell-Drift** (`HasPendingModelChanges`) und **Kettenlänge 1**.
+  Nach dem Falten muss der `git diff` am `PuglingDbContextModelSnapshot.cs` genau die beabsichtigte
+  Änderung zeigen. Ein zweiter Migrations-Eintrag ist also kein Fortschritt, sondern ein rotes Tor – und
+  die Regel endet mit der ersten Veröffentlichung, dann wird sie *ausdrücklich* entfernt.
+  **Nicht** auf `EnsureCreated` zurückfallen. Die EF-Tools laufen über die Design-Time-Factory
+  ([Data/PuglingDbContextFactory.cs](backend/Pugling.Api/Data/PuglingDbContextFactory.cs)), nicht über den Web-Host;
+  `database update` braucht dabei **kein** `--no-build` (sonst läuft es gegen die Assembly von vor dem
+  `migrations add`). `*.db` ist gitignored; eine DB aus einer *alten* Kette weist der Start mit einer
+  handlungsfähigen Meldung ab (ein Upgrade-Pfad existiert bewusst nicht).
+  Stand, Entscheidungen und die offenen Etappen: [docs/db-struktur-umbau-plan.md](docs/db-struktur-umbau-plan.md).
+- **Schema-Konventionen** (mechanisch gehalten von `SchemaGuardTests`): jedes persistierte **Enum liegt als
+  String** in der DB – Ausnahmen nur `[Flags]` und die ordnend verglichenen aus
+  `PuglingDbContext.IntEnumsByDesign`, jeweils mit Grund im Code. **DB-Defaults** gibt es genau einen
+  (`Exercises.ExecutePublic`, ein Fail-Safe); ein `AddColumn(defaultValue:…)` darf keine weiteren
+  nachwachsen lassen. Neue **Eindeutigkeit** braucht immer eine Vorprüfung im Controller plus einen
+  `ApiErrors`-Code – ohne sie wird aus dem 409 ein 500 mit halb gespeichertem Zustand. Und ein Index auf
+  einer Spalte, die die Query in einen Ausdruck wickelt (`LOWER(Word)`), wird **nie** benutzt: dafür trägt
+  `Vocabulary.Word`/`.Translation` die Collation `NOCASE`.
 - **PINs sind gehasht** (`Auth/PinHasher`): `Adult.Pin`/`Child.Pin` und `Account.PinHash` halten den Hash,
   nie den Klartext. Wer eine PIN setzt, muss durch `PinHasher.Hash` und den Hash **auf das Konto spiegeln**
   (sonst läuft der konto-zentrische `/auth/login` aus dem Takt) – siehe `ChildrenController`/`AdultsController`.

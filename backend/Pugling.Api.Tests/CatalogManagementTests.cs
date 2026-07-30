@@ -25,6 +25,33 @@ public class CatalogManagementTests(PuglingWebAppFactory factory) : IClassFixtur
     }
 
     [Fact]
+    public async Task Kapitel_MitVorhandenemNamen_Liefert409()
+    {
+        var father = await TestApi.FatherAsync(_factory);
+        var subjectId = await TestApi.IdAsync(await father.PostAsJsonAsync(
+            "/api/v1/creator/subjects", new { name = $"Dublette-Fach {Guid.NewGuid():N}" }));
+
+        var first = await father.PostAsJsonAsync(
+            $"/api/v1/creator/subjects/{subjectId}/chapters", new { name = "Unit 1", orderIndex = 1 });
+        Assert.Equal(HttpStatusCode.Created, first.StatusCode);
+
+        // Zwei „Unit 1" im selben Fach sind eine Dublette. Ohne die Vorprüfung im Controller schlüge der
+        // Unique-Index als unbehandelter 500 durch – der Test hält beides fest: Status UND Code.
+        var second = await father.PostAsJsonAsync(
+            $"/api/v1/creator/subjects/{subjectId}/chapters", new { name = "Unit 1", orderIndex = 2 });
+        Assert.Equal(HttpStatusCode.Conflict, second.StatusCode);
+        var problem = await second.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal("duplicate_chapter_name", problem.GetProperty("code").GetString());
+
+        // Derselbe Name unter einem ANDEREN Fach bleibt erlaubt – eindeutig ist (Fach, Name), nicht der Name.
+        var otherSubject = await TestApi.IdAsync(await father.PostAsJsonAsync(
+            "/api/v1/creator/subjects", new { name = $"Dublette-Fach-2 {Guid.NewGuid():N}" }));
+        var elsewhere = await father.PostAsJsonAsync(
+            $"/api/v1/creator/subjects/{otherSubject}/chapters", new { name = "Unit 1", orderIndex = 1 });
+        Assert.Equal(HttpStatusCode.Created, elsewhere.StatusCode);
+    }
+
+    [Fact]
     public async Task Usage_ListetLehrplanMitKind()
     {
         var father = await TestApi.FatherAsync(_factory);

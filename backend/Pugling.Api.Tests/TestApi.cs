@@ -11,6 +11,15 @@ namespace Pugling.Api.Tests;
 /// <summary>Geteilte Helfer für die Integrationstests: Login (Vater/Sohn) und Plan-Anlage.</summary>
 internal static class TestApi
 {
+    // Fach-Namen sind seit dem DB-Struktur-Umbau eindeutig (der Katalog ist geteilt: „Englisch" darf es
+    // nur einmal geben). Diese Helfer werden in derselben Testklasse – und damit gegen dieselbe DB –
+    // mehrfach gerufen; ohne eigene Namen kollidierte der zweite Aufruf mit 409. Ein Zähler statt einer
+    // GUID, damit die Namen innerhalb eines Laufs reproduzierbar bleiben.
+    private static int _catalogSeq;
+
+    private static string UniqueName(string prefix) =>
+        $"{prefix} {Interlocked.Increment(ref _catalogSeq)}";
+
     private static async Task<string> TokenAsync(HttpClient c, string role, object dto)
     {
         var res = await c.PostAsJsonAsync($"/api/v1/auth/{role}", dto);
@@ -76,7 +85,7 @@ internal static class TestApi
         HttpClient father, params (string Prompt, int Answer)[] problems)
     {
         var tasks = problems.Length > 0 ? problems : [("7 × 6", 42)];
-        var subjectId = await IdAsync(await father.PostAsJsonAsync("/api/v1/creator/subjects", new { name = "Katalog-Test" }));
+        var subjectId = await IdAsync(await father.PostAsJsonAsync("/api/v1/creator/subjects", new { name = UniqueName("Katalog-Test") }));
         var chapterId = await IdAsync(await father.PostAsJsonAsync(
             $"/api/v1/creator/subjects/{subjectId}/chapters", new { name = "Kapitel 1", orderIndex = 1 }));
         var exerciseId = await IdAsync(await father.PostAsJsonAsync(
@@ -94,7 +103,7 @@ internal static class TestApi
     public static async Task<int> CreateVocabExerciseAsync(HttpClient father, params (string Front, string Back)[] items)
     {
         var vocab = items.Length > 0 ? items : [("hello", "hallo"), ("goodbye", "tschüss")];
-        var subjectId = await IdAsync(await father.PostAsJsonAsync("/api/v1/creator/subjects", new { name = "Englisch-Pos" }));
+        var subjectId = await IdAsync(await father.PostAsJsonAsync("/api/v1/creator/subjects", new { name = UniqueName("Englisch-Pos") }));
         var chapterId = await IdAsync(await father.PostAsJsonAsync(
             $"/api/v1/creator/subjects/{subjectId}/chapters", new { name = "Unit 1", orderIndex = 1 }));
         return await IdAsync(await father.PostAsJsonAsync(
@@ -147,7 +156,7 @@ internal static class TestApi
         var ids = new List<int>();
         foreach (var key in keys) ids.Add(await ResolveVocabIdAsync(father, key));
 
-        var subjectId = await IdAsync(await father.PostAsJsonAsync("/api/v1/creator/subjects", new { name = "Englisch-Ref" }));
+        var subjectId = await IdAsync(await father.PostAsJsonAsync("/api/v1/creator/subjects", new { name = UniqueName("Englisch-Ref") }));
         var chapterId = await IdAsync(await father.PostAsJsonAsync(
             $"/api/v1/creator/subjects/{subjectId}/chapters", new { name = "Unit 1", orderIndex = 1 }));
         return await IdAsync(await father.PostAsJsonAsync(

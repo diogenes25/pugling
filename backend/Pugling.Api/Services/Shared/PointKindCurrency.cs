@@ -4,10 +4,8 @@ namespace Pugling.Api.Services.Shared;
 
 /// <summary>
 /// Ordnet jedem <see cref="PointKind"/> genau eine <see cref="Currency"/> zu. Fleiß fürs Lernen
-/// (Basis/Zeit/Test/Tag) sowie manuelle Vater-Buchungen und Familien-Shop-Käufe laufen über Münzen;
-/// alle Motivations-Boni (Combo/Speed/Dauer/Missionen/Auszeichnungen) und Skin-Käufe über Gems.
-/// <c>PointKind.Reward</c> ist nur ein Tombstone für historische Buchungen des entfernten Angebots-Systems
-/// (bleibt Münzen zugeordnet, damit alte Ledger-Einträge nicht still aus dem Saldo fallen).
+/// (Basis, erreichte Ziele) sowie manuelle Vater-Buchungen und Familien-Shop-Käufe laufen über Münzen;
+/// alle Motivations-Boni (Combo/Speed/Missionen/Auszeichnungen) und Skin-Käufe über Gems.
 /// <para>
 /// Bewusst wird die Währung <b>aus dem Kind abgeleitet</b> statt als eigene Spalte gespeichert:
 /// so bleibt der bestehende Ledger unverändert (keine Migration/kein Backfill), und der Kontostand
@@ -20,10 +18,9 @@ public static class PointKindCurrency
     /// <summary>Währung, zu der eine Buchung des <paramref name="kind"/> zählt.</summary>
     public static Currency Of(PointKind kind) => kind switch
     {
-        PointKind.Base or PointKind.Minutes or PointKind.Test or PointKind.DayComplete
-            or PointKind.Goal or PointKind.Manual or PointKind.Reward or PointKind.ShopCoins
+        PointKind.Base or PointKind.Goal or PointKind.Manual or PointKind.ShopCoins
             or PointKind.GoalPenalty or PointKind.ObjectiveCoins => Currency.Coins,
-        PointKind.Combo or PointKind.Speed or PointKind.Duration or PointKind.Mission
+        PointKind.Combo or PointKind.Speed or PointKind.Mission
             or PointKind.Achievement or PointKind.SkinPurchase or PointKind.ShopGems
             or PointKind.ManualGems or PointKind.ObjectiveGems => Currency.Gems,
         _ => throw new ArgumentOutOfRangeException(nameof(kind), kind, "PointKind ohne Währungs-Zuordnung"),

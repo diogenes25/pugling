@@ -39,8 +39,6 @@ public class ExerciseTag
     public Tag? Tag { get; set; }
     public int ExerciseId { get; set; }
     public Exercise? Exercise { get; set; }
-    /// <summary>Wer diese Übung mit dem Tag markiert hat (kann von <see cref="Tag.CreatedBy"/> abweichen).</summary>
-    public TaggedBy TaggedByRole { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }
 
@@ -57,8 +55,6 @@ public class VocabularyTag
     public Tag? Tag { get; set; }
     public int VocabularyId { get; set; }
     public Vocabulary? Vocabulary { get; set; }
-    /// <summary>Wer diese Vokabel mit dem Tag markiert hat (kann von <see cref="Tag.CreatedBy"/> abweichen).</summary>
-    public TaggedBy TaggedByRole { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }
 

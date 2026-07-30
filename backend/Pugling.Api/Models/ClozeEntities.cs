@@ -6,8 +6,11 @@ namespace Pugling.Api.Models;
 /// <summary>Stufe des Lückentext-Verfahrens (steigende Schwierigkeit / weniger Hilfe).</summary>
 public enum ClozeStage
 {
-    /// <summary>Auswahl möglicher Wörter (Wortpool), ohne Übersetzung.</summary>
-    WordBank = 1,
+    // `WordBank = 1` (Wortpool ohne Übersetzung) ist entfallen: der Wert stand in keiner
+    // `StageOptions`, war nirgends `DefaultStage`/`PreviewStage` und wurde von keinem Seed gesetzt –
+    // eine Stufe, die niemand auswählen konnte. Die Zahlenwerte sind seit der Enum-Konvention
+    // (String in der DB) ohne Bedeutung, die Lücke bei 1 ist also keine.
+
     /// <summary>Übersetzung + Auswahl möglicher Wörter.</summary>
     TranslationWordBank = 2,
     /// <summary>Übersetzung + Freitexteingabe.</summary>

@@ -181,9 +181,8 @@ public class ExerciseCatalogController(PuglingDbContext db) : ControllerBase
 
     /// <summary>
     /// In welchen Lehrplänen und Klassenarbeiten (welcher eigenen Kinder) eine Übung steckt.
-    /// Lehrpläne über das neue Positions-Modell (<see cref="PlanPosition"/>); Klassenarbeiten direkt
-    /// zugewiesen ODER über einen gemeinsamen Tag. Hinweis: das alte StudyPlanItem-Modell trägt keine
-    /// Übungs-Referenz und wird daher nicht erfasst.
+    /// Lehrpläne über das Positions-Modell (<see cref="PlanPosition"/>); Klassenarbeiten direkt
+    /// zugewiesen ODER über einen gemeinsamen Tag.
     /// <para>
     /// Dazu <see cref="UsageResponse.OtherLearnersCount"/>: die <b>Zahl der Kinder</b> fremder Betreuer, die
     /// die Übung einsetzen. Ohne sie behauptete diese Antwort „nirgends", während das Löschen mit <c>409</c>

@@ -34,6 +34,27 @@ public class ExerciseItemsAndProgressTests(PuglingWebAppFactory factory) : IClas
     // ---- /items CRUD -------------------------------------------------------------------------------
 
     [Fact]
+    public async Task Item_MitBereitsEnthaltenerVokabel_Liefert409()
+    {
+        var father = await TestApi.FatherAsync(_factory);
+        var (s, c, exerciseId) = await VocabWithItemsAsync(father, ("hello", "hallo"));
+
+        var items = await father.GetFromJsonAsync<List<JsonElement>>(
+            $"/api/v1/creator/subjects/{s}/chapters/{c}/vocabulary/{exerciseId}/items");
+        var vocabularyId = items!.Single().GetProperty("vocabularyId").GetInt32();
+
+        // Dieselbe Store-Vokabel ein zweites Mal: zwei Items auf dasselbe Wort erzeugten zwei
+        // konkurrierende ItemProgress-Zeilen, und der Lernstand desselben Worts liefe innerhalb einer
+        // Übung auseinander. Die DB verbietet es (Unique), der Controller meldet es als 409.
+        var again = await father.PostAsJsonAsync(
+            $"/api/v1/creator/subjects/{s}/chapters/{c}/vocabulary/{exerciseId}/items",
+            new { vocabularyId });
+        Assert.Equal(HttpStatusCode.Conflict, again.StatusCode);
+        var problem = await again.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal("duplicate_vocabulary_in_exercise", problem.GetProperty("code").GetString());
+    }
+
+    [Fact]
     public async Task Items_CrudFullCycle_InlineUndPerStoreId()
     {
         var father = await TestApi.FatherAsync(_factory);

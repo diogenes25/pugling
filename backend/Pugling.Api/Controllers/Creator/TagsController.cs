@@ -134,7 +134,7 @@ public class TagsController(PuglingDbContext db, AuthAccess access) : Controller
 
         var already = tag.ExerciseTags.Select(x => x.ExerciseId).ToHashSet();
         foreach (var id in ids.Where(id => !already.Contains(id)))
-            tag.ExerciseTags.Add(new ExerciseTag { ExerciseId = id, TaggedByRole = CurrentRole() });
+            tag.ExerciseTags.Add(new ExerciseTag { ExerciseId = id });
 
         await db.SaveChangesAsync(ct);
         return Map(tag);
@@ -212,7 +212,7 @@ public class TagsController(PuglingDbContext db, AuthAccess access) : Controller
 
         var already = tag.VocabularyTags.Select(x => x.VocabularyId).ToHashSet();
         foreach (var id in ids.Where(id => !already.Contains(id)))
-            tag.VocabularyTags.Add(new VocabularyTag { VocabularyId = id, TaggedByRole = CurrentRole() });
+            tag.VocabularyTags.Add(new VocabularyTag { VocabularyId = id });
 
         await db.SaveChangesAsync(ct);
         return Map(tag);

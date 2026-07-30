@@ -176,6 +176,13 @@ public class VocabularyController(PuglingDbContext db, ExerciseTypeRegistry regi
         if (resolved is not { } vocabId) return this.ProblemWithCode(ApiErrors.ValidationError,
             "Provide an existing vocabularyId, or front and back (plus the exercise's sourceLang/targetLang) to create one.");
 
+        // Eine Vokabel darf je Übung nur ein Item haben (Unique in der DB): zwei Items auf dasselbe Wort
+        // erzeugten zwei konkurrierende ItemProgress-Zeilen, und der Lernstand desselben Worts liefe
+        // innerhalb einer Übung auseinander. Ohne diese Vorprüfung käme der Index als 500 durch.
+        if (await Db.ExerciseItems.AnyAsync(i => i.ExerciseId == exerciseId && i.VocabularyId == vocabId, ct))
+            return this.ProblemWithCode(ApiErrors.DuplicateVocabularyInExercise,
+                "This vocabulary entry is already an item of the exercise.");
+
         // Anfügen ans Ende verschiebt keine bestehenden Positionen (sicher); eine feste Einfügeposition schon.
         if (body.OrderIndex is not null && await ExerciseInPlanAsync(exerciseId, ct)) return ShiftBlockedProblem();
         var nextOrder = body.OrderIndex ??

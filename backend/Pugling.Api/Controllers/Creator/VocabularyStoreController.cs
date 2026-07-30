@@ -415,8 +415,11 @@ public class VocabularyStoreController(PuglingDbContext db) : ControllerBase
         var results = new List<LookupResult>();
         if (words.Count > 0)
         {
-            var lowered = words.Select(w => w.ToLower()).ToList();
-            var q = db.Vocabulary.AsNoTracking().Where(v => lowered.Contains(v.Word.ToLower()));
+            // Kein ToLower(): die Spalte trägt die Collation NOCASE, der Vergleich ist also von sich aus
+            // groß-/kleinschreibungsunabhängig – und *nur* ohne den Ausdruck um die Spalte greift der
+            // Index auf Word. Vorher war das ein vollständiger Tabellendurchlauf über den größten Store,
+            // im heißesten Creator-Pfad (Dubletten-Lookup beim Anlegen).
+            var q = db.Vocabulary.AsNoTracking().Where(v => words.Contains(v.Word));
             if (!string.IsNullOrWhiteSpace(request.SourceLanguage))
                 q = q.Where(v => v.SourceLanguage == request.SourceLanguage);
             if (!string.IsNullOrWhiteSpace(request.TargetLanguage))

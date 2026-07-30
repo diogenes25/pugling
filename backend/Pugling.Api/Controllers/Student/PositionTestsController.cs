@@ -105,7 +105,9 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
             Graded = typed,
             TotalItems = pool.Count,
             Order = [.. order],
-            Results = order.Select(i => new TestItemResult { ContentId = pos.ExerciseId, ItemIndex = i, StageValue = stage }).ToList(),
+            // Die Übung steht am Versuch (über die Position), nicht an jeder Ergebniszeile: ContentId war
+            // eine FK-lose Kopie von PlanPosition.ExerciseId, die niemand gelesen hat.
+            Results = order.Select(i => new TestItemResult { ItemIndex = i, StageValue = stage }).ToList(),
         };
         db.TestAttempts.Add(attempt);
         await db.SaveChangesAsync(ct);

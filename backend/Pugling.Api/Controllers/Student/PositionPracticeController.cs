@@ -294,12 +294,12 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         var now = time.GetUtcNow().UtcDateTime;
         double? elapsedSeconds = lastAt is { } la ? (now - la).TotalSeconds : null;
 
+        // Nur Korrektheit und Zeitpunkt: daraus entstehen Combo-Serie, Antwortzeit und die Metrik
+        // CorrectReviews. Welches Atom es war, protokolliert der ItemReviewEvent unten über die stabile
+        // ItemId – hier wäre es eine index-adressierte Zweitwahrheit ohne Leser.
         db.ReviewEvents.Add(new ReviewEvent
         {
             PracticeSessionId = sessionId,
-            ContentId = pos.ExerciseId,
-            ItemIndex = dto.ItemIndex,
-            StageValue = stage,
             WasCorrect = wasCorrect && scored,
             At = now,
         });

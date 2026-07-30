@@ -1853,9 +1853,12 @@ export interface TestSubmitResponse {
 // ---- Sohn-Wallet ----
 
 export type PointKind =
-  | "Base" | "Manual" | "Minutes" | "Test" | "DayComplete" | "Goal"
-  | "Combo" | "Speed" | "Duration" | "Mission" | "Achievement" | "SkinPurchase" | "Reward"
-  | "ManualGems" | "GoalPenalty";
+  // Vollständig gegen PointKind in Pugling.Contracts: ShopCoins/ShopGems/ObjectiveCoins/ObjectiveGems
+  // fehlten hier bisher – pointKindLabel fiel für sie stillschweigend auf den Rohwert zurück.
+  | "Base" | "Manual" | "Goal"
+  | "Combo" | "Speed" | "Mission" | "Achievement" | "SkinPurchase"
+  | "ShopCoins" | "ShopGems" | "ManualGems" | "GoalPenalty"
+  | "ObjectiveCoins" | "ObjectiveGems";
 
 /** Die beiden Währungen der App (Münzen fürs echte Leben, Gems für Kosmetik). */
 export type Currency = "Coins" | "Gems";

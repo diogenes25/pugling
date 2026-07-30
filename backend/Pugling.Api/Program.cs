@@ -434,6 +434,22 @@ using (var scope = app.Services.CreateScope())
         db.Database.GetConnectionString()).DataSource;
     if (Path.GetDirectoryName(Path.GetFullPath(dataSource)) is { Length: > 0 } dbDir)
         Directory.CreateDirectory(dbDir);
+    // Die Migrationskette wurde zu einer einzigen `InitialCreate` zusammengefaltet (Altdaten waren
+    // ausdrücklich verzichtbar). Eine DB, die noch Einträge der *alten* Kette trägt, hat damit ein
+    // vollständiges Schema, aber keine der bekannten Migrationen – `Migrate()` würde die InitialCreate
+    // anwenden wollen und mit `table "Adults" already exists` scheitern. Diese Meldung weist auf nichts
+    // hin, also wird sie hier abgefangen und durch eine ersetzt, aus der die Handlung folgt.
+    if (await db.Database.CanConnectAsync())
+    {
+        var known = db.Database.GetMigrations().ToHashSet(StringComparer.Ordinal);
+        var applied = (await db.Database.GetAppliedMigrationsAsync()).ToList();
+        if (applied.Count > 0 && applied.TrueForAll(m => !known.Contains(m)))
+            throw new InvalidOperationException(
+                $"Die Datenbank '{dataSource}' stammt aus der alten Migrationskette "
+                + $"({applied.Count} angewandte, davon keine bekannt – z. B. '{applied[0]}'). "
+                + "Die Kette wurde zu einer InitialCreate zusammengefaltet. Zeige den ConnectionString "
+                + "auf eine neue Datei oder lösche die vorhandene – ein Upgrade-Pfad existiert bewusst nicht.");
+    }
     // Durchgehend `await`: Top-Level-Statements dürfen das, und ein blockierendes
     // `GetAwaiter().GetResult()` beim Start ist genau das Muster, das anderswo Deadlocks erzeugt.
     await db.Database.MigrateAsync(); // wendet ausstehende EF-Migrationen an (Schema-Upgrade-Pfad)

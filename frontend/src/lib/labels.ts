@@ -6,20 +6,18 @@ import type {
 const POINT_KIND_LABELS: Record<PointKind, string> = {
   Base: "Wiederholung",
   Manual: "Papa-Buchung",
-  Minutes: "Übungszeit",
-  Test: "Test bestanden",
-  DayComplete: "Tag komplett",
   Goal: "Ziel erreicht",
   Combo: "Combo-Bonus",
   Speed: "Schnell-Bonus",
-  Duration: "Ausdauer-Bonus",
   Mission: "Mission",
   Achievement: "Auszeichnung",
   SkinPurchase: "Skin gekauft",
-  // Tombstone: historische Buchungen des entfernten Angebots-Systems.
-  Reward: "Prämie eingelöst",
+  ShopCoins: "Im Shop gekauft",
+  ShopGems: "Im Shop gekauft (Gems)",
   ManualGems: "Papa-Geschenk (Gems)",
   GoalPenalty: "Pflicht gerissen (Malus)",
+  ObjectiveCoins: "Ziel-Etappe erreicht",
+  ObjectiveGems: "Ziel-Etappe erreicht (Gems)",
 };
 export const pointKindLabel = (k: PointKind): string => POINT_KIND_LABELS[k] ?? k;
 
