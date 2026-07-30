@@ -16,20 +16,47 @@ Testklasse. Dazu sieben reflexive Wächter und der
 (268/268), Zweigabdeckung 69,2 %, Zeilenabdeckung 98,2 % (in
 [codequalitaet-gates-plan.md](codequalitaet-gates-plan.md) selbst als „irreführend hoch" markiert).
 
-**Was heute niemand messt: ob ein Test einen Defekt auch *bemerkt*.** Erreicht ≠ geprüft. Zwei Indizien,
-dass die Frage berechtigt ist:
+**Was heute niemand messt: ob ein Test einen Defekt auch *bemerkt*.** Erreicht ≠ geprüft.
 
-- **96 von 506 Testmethoden treffen ausschließlich Statuscode-Zusicherungen** (maschinell erhoben, s. u.) –
-  bei Negativtests (401/403) legitim, bei einem `200`/`204` auf einem Schreibpfad heißt es: der Effekt wurde
-  nie nachgesehen.
-- Die 88 Tests aus Etappe C entstanden **um eine Abdeckungslücke zu schließen**, nicht um eine Regel zu
-  pinnen – genau das Muster, aus dem flache Tests entstehen.
+Die Begründung trägt **ein** Indiz, nicht zwei: die 88 Tests aus Etappe C entstanden, **um eine
+Abdeckungslücke zu schließen**, nicht um eine Regel zu pinnen – genau das Muster, aus dem flache Tests
+entstehen. Ein zweites Indiz („96 Tests prüfen nur Statuscodes") hat die Nachprüfung nicht überlebt, siehe
+den nächsten Abschnitt.
 
 Ziel: ein belegter Befund, **welche Geschäftsregeln bei absichtlicher Verletzung rot werden und welche
-nicht**, plus eine benannte Liste nachzuziehender Tests. Kein Umbau der Suite, keine Abdeckungsquote als
+nicht**, plus die Schließung der Lücken mit Geldwirkung. Kein Umbau der Suite, keine Abdeckungsquote als
 Ziel – dieselbe Haltung wie im Gates-Plan.
 
-Umfang: **die ganze Suite**. Verfahren: **Defektinjektion (Gegenproben)** als harte Messung.
+### Drei Zahlen, die bei der Nachprüfung geschrumpft sind
+
+Alle drei ließen den Mangel größer erscheinen, als er ist. Sie stehen hier, damit der Plan nicht mit
+Zahlen argumentiert, die er selbst nicht hält:
+
+| erste Behauptung | nachgeprüft |
+|---|---|
+| 96 Testmethoden prüfen nur Statuscodes | **66** sind reine Negativtests (der Status *ist* die Aussage), 3 Lesepfade, **27** auf Schreibpfaden – und die meisten davon belegen den Effekt sehr wohl über einen Status (`DELETE → 204`, dann `GET → 404`). Echte Verdächtige: **~8** |
+| Sechs Wächter ohne Selbstschutz gegen falsch-grün | **zwei** urteilen über eine reflexiv ermittelte Fläche (`ErrorCodeTests:159`, `OpenApiExampleTests` vergleichen gegen Listen aus dem OpenAPI-Dokument). `PointKindCurrencyTests` iteriert `Enum.GetValues<PointKind>()` (nie leer), `PatchClearFieldTests`/`UnknownFieldTests`/`ApiVersioningTests` prüfen feste Einzelfälle |
+| „Prüfen, ob das Tor wirklich blockt" | **schon belegt** in Etappe A4 des Gates-Plans (absichtlich gebrochener Test → `exit 2` mit Namen; Fingerprint-Treffer → `exit 0`), CI über den D0-Nachweis. Fällt hier weg |
+
+## Entschiedene Rahmenbedingungen
+
+Ergebnis der Durchsprache – diese acht Punkte sind gesetzt, nicht mehr offen:
+
+1. **Einmalige Messung.** Keine versionierte Patch-Serie, kein CI-Job. Der Wert steckt im Befund.
+2. **Zwei Commits.** Erst Messung + Bericht, dann die fehlenden Tests.
+3. **50/50-Ziehung.** Die Hälfte der Injektionen aus dokumentierten Regeln (*Konformität*: hält die Suite,
+   was `CLAUDE.md` behauptet?), die andere Hälfte blind gezogen (*Sensitivität*: bemerkt die Suite einen
+   beliebigen Fehler?). **Beide Quoten getrennt berichten** – der Plan hatte die zwei Fragen vermischt.
+4. **„Blind" heißt mechanisch.** Jeder k-te *ausgeführte* Zweigpunkt der Risiko-Services, sortiert nach
+   Datei:Zeile. Unverletzbare Stelle → überspringen **und mit Grund protokollieren** (sonst kehrt die
+   Verzerrung durch die Hintertür zurück).
+5. **Urteil in drei Klassen plus Streubreite** (s. Etappe 3).
+6. **E2E zählt nicht mit.** Bewertet wird nur, was ein Tor fahren kann. Dass die 10 Playwright-Specs unter
+   `frontend/e2e/` in keiner CI laufen und darum nichts verhindern, wird als Satz im Bericht vermerkt.
+7. **Etappe 4 auf zwei Punkte gekürzt** (Wiederholbarkeit, Reihenfolge).
+8. **Fester Nenner: 30 Injektionen**, komplett durchgefahren – nur bei festem Nenner ist das Ergebnis eine
+   Quote und keine Anekdote. Kalibrier-Injektion zuerst. Nachzug im zweiten Commit: **alles mit
+   Geldwirkung**, der Rest bleibt benannte Restliste.
 
 ---
 
@@ -49,19 +76,20 @@ Die Injektionen ändern Produktivcode. Drei Fallen im Arbeitsbaum:
    falsche Beispiele in den Diff.
 
 Referenzlauf zum Vergleich: `dotnet test Pugling.sln -c Release` (~63 s) muss **vor** der ersten Injektion
-grün sein, sonst ist jedes „rot" mehrdeutig.
+grün sein, sonst ist jedes „rot" mehrdeutig. Läufe mit `--logger trx`, weil die Streubreite die Namen der
+gefallenen Tests braucht.
 
 ---
 
-## Etappe 1 · Statische Sichtung: taugen die Zusicherungen?
+## Etappe 1 · Statische Sichtung + Ziehungsgrundlage
 
-Drei mechanische Erhebungen, jede liefert eine Liste zum Triagieren – nicht jeder Treffer ist ein Mangel.
-
-**1a Zusicherungs-Tiefe.** Die Erhebung ist bereits gefahren: **96/506 Tests prüfen nur Statuscodes.**
-Diese Liste je Test einordnen in *legitim* (Negativtest 401/403/404/409 – der Status **ist** die Aussage)
-vs. *flach* (2xx auf einem Schreibpfad ohne Nachlesen des Effekts). Kandidaten aus dem ersten Blick:
-`AntiCheatTests.Vater_DarfFremdenTagNachtragen`, `AntiCheatTests.Vater_DarfInaktivenPlanTrotzdemDurchspielen`,
-`EmptyExerciseGuardTests.*_BleibtZuweisbar`. Ergebnis: Liste „Effekt-Zusicherung fehlt".
+**1a Zusicherungs-Tiefe (klein geworden).** Zu prüfen sind die **~8** Tests, die einen Erfolg auf einem
+Schreibpfad zusichern, ohne den Effekt nachzulesen – nicht 96. Namentlich u. a.
+`AntiCheatTests.Vater_DarfFremdenTagNachtragen` (200, aber wurde der Tag nachgetragen?),
+`AntiCheatTests.Vater_DarfInaktivenPlanTrotzdemDurchspielen`,
+`EmptyExerciseGuardTests.Aufsatz_OhneItems_BleibtZuweisbar`. Die 27er-Liste je Test durchsehen und die
+aussortieren, die ihren Effekt über einen Folgestatus belegen (`204` → `404`) – das ist eine gültige
+Zusicherung, kein Mangel.
 
 **1b Tautologien.** Suchen, wo ein Test den erwarteten Wert **vom Server selbst** bezieht und
 zurückspiegelt – dann kann die geprüfte Logik beliebig falsch sein und der Test bleibt grün. Hochriskante
@@ -69,29 +97,29 @@ Stelle ist der server-autoritative Antwortpfad: Woher nehmen `ReviewGradingTests
 `PositionPracticeFlowTests` die *richtige* Antwort? Aus dem Karten-Payload (tautologisch) oder aus im Test
 hart hinterlegten Vokabeln (belastbar)? Gleiche Frage für Punkte-Erwartungen gegen `ScoringService`.
 
-**1c Stumme Wächter.** Ein reflexiver Wächter, dessen Reflexion nicht greift, findet 0 Verstöße und ist
-grün – **schlimmer als kein Wächter**, weil er Deckung behauptet. `ConventionGuardTests`,
-`OwnershipMatrixTests`, `PatchSemanticsTests`, `TagConventionTests` und der `EndpointCoverageGuard` tragen
-solche Selbstschutz-Untergrenzen bereits (`Assert.True(files.Length >= 30)` usw.) – **geprüft, vorhanden.**
-Offen bleiben die ohne Untergrenze: `PatchClearFieldTests` (184 Zeilen, kein Mindest-Count),
-`UnknownFieldTests`, `ErrorCodeTests`, `OpenApiExampleTests`, `ApiVersioningTests`, `PointKindCurrencyTests`.
-Je Datei entscheiden: braucht sie eine Untergrenze (weil sie über eine reflexiv/über Listen ermittelte
-Fläche urteilt) oder nicht (weil sie feste Einzelfälle prüft)?
+**1c Stumme Wächter (zwei Kandidaten).** Ein reflexiver Wächter, dessen Reflexion nicht greift, findet 0
+Verstöße und ist grün – **schlimmer als kein Wächter**, weil er Deckung behauptet. Fünf Wächter tragen die
+Untergrenze schon (`Assert.True(files.Length >= 30)` usw., geprüft). Zu entscheiden bleibt sie für
+`ErrorCodeTests` und `OpenApiExampleTests`: dort ist zu prüfen, ob eine **leere** (nicht: fehlende) Liste aus
+dem OpenAPI-Dokument die Zusicherung vakuum-grün werden lässt – das hängt an der Assert-Richtung. Eine
+nötige Untergrenze gehört in den **zweiten** Commit.
 
-**1d Nie genommene Zweige.** Aus dem Cobertura-Bericht die 30,8 % ungenommenen Zweige ziehen und nach Art
-klassifizieren (Guard Clause / Fehlerpfad / toter Code). Kommando steht schon in der CI
-([ci.yml](../.github/workflows/ci.yml), Schritt „Zweigabdeckung ausgeben") – wiederverwenden, nicht neu
-bauen: `dotnet test Pugling.sln --collect:"XPlat Code Coverage" --results-directory ./TestResults`.
-Ergebnis: die ungenommenen Zweige in den Services mit Geldwirkung (`WalletService`, `ShopService`,
-`PositionProgressService`, `ScoringService`) sind die Prioritätsliste.
+**1d Coverage-Lauf – Vorbedingung für Etappe 3, nicht Nebenstrang.** Aus dem Cobertura-Bericht die
+ausgeführten Zweigpunkte ziehen; sie sind die **Ziehungsgrundlage** der blinden Hälfte. Der Grund ist
+zwingend: **eine Injektion in nie genommenen Code ist zwangsläufig grün** und messt nichts – sie wiederholt
+nur den Coverage-Bericht. Zusätzlich die 30,8 % ungenommenen Zweige nach Art klassifizieren (Guard Clause /
+Fehlerpfad / toter Code). Kommando steht schon in der CI ([ci.yml](../.github/workflows/ci.yml), Schritt
+„Zweigabdeckung ausgeben") – wiederverwenden, nicht neu bauen:
+`dotnet test Pugling.sln --collect:"XPlat Code Coverage" --results-directory ./TestResults`.
 
 ---
 
-## Etappe 2 · Regel → Test-Landkarte
+## Etappe 2 · Regel → Test-Landkarte (die dokumentierte Hälfte)
 
 Der Zweck der Tests ist nicht „Zeilen ausführen", sondern **die Geschäftsregeln festhalten**. Die Regeln
 stehen bereits geschrieben in [CLAUDE.md](../CLAUDE.md) – daraus eine Tabelle *Regel → pinnender Test →
-Injektion*. Die Regeln, um die es geht (Auswahl nach Schadenshöhe, nicht vollständig):
+Injektion*. Bewusst gesagt: diese Auswahl ist **verzerrt**. Was dokumentiert wurde, wurde bewusst gebaut und
+ist überproportional wahrscheinlich getestet; darum steht daneben die blinde Ziehung.
 
 | Regel | Fundstelle | vermutet pinnender Test |
 |---|---|---|
@@ -112,15 +140,22 @@ Injektion*. Die Regeln, um die es geht (Auswahl nach Schadenshöhe, nicht vollst
 | Leere Übung wird beim Zuweisen abgewiesen | `EmptyExerciseGuard`-Pfad | `EmptyExerciseGuardTests` |
 
 **Regel ohne zugeordneten Test = Befund, ohne dass eine Injektion nötig wäre.** Das ist der billigste Teil
-der Kontrolle und liefert vermutlich schon Treffer.
+der Kontrolle.
 
 ---
 
 ## Etappe 3 · Defektinjektion: die harte Messung
 
-Für jede Zeile aus Etappe 2 **eine minimale, fachlich sinnvolle Verletzung** einbauen (kein Syntaxmüll,
-kein `throw` – die Injektion muss aussehen wie ein plausibler Programmierfehler), Suite fahren, Ergebnis
-protokollieren. Beispiele für den Zuschnitt:
+**30 Injektionen, feste Zahl:** 1 Kalibrierung + ~15 aus Etappe 2 + ~14 blind gezogen. Jede ist eine
+**minimale, fachlich plausible Verletzung** (kein Syntaxmüll, kein `throw` – sie muss aussehen wie ein
+Programmierfehler, den ein Mensch macht).
+
+**Reihenfolge ist Zwang, nicht Geschmack:** Die **Kalibrier-Injektion läuft zuerst** – ein
+`[ServiceFilter(typeof(ChildOwnershipFilter))]` entfernen, im Gates-Plan als Gegenprobe belegt („ein fremdes
+Kind bekam einen Stundenplan-Eintrag"). Bleibt sie grün, ist das Verfahren kaputt und der Vorgang **bricht
+sofort ab**; jede weitere Zahl wäre wertlos.
+
+Zuschnitt der dokumentierten Hälfte (Beispiele):
 
 - Vergleichsrichtung drehen: `>=` → `>` bei der Bestehensgrenze.
 - Prozent-Schranke aufweichen: die 1–100-Prüfung entfernen.
@@ -129,73 +164,87 @@ protokollieren. Beispiele für den Zuschnitt:
 - `SupervisorId`-Snapshot beim Kauf nicht setzen.
 - Bild-Schranke lockern: Bild auch auf getippten Stufen ausspielen.
 - `MediaSelector`-Determinismus brechen: Gleichstand nicht über die `Id` auflösen.
-- Einen `[ServiceFilter(typeof(ChildOwnershipFilter))]` entfernen (**Referenz-Injektion** – diese muss rot
-  werden, sie ist im Gates-Plan als Gegenprobe belegt und dient hier als Kalibrierung des Verfahrens).
-- Reflexion eines Wächters ins Leere laufen lassen (falscher Ordnername) – prüft, ob der Selbstschutz aus 1c
-  greift.
+- Reflexion eines Wächters ins Leere laufen lassen (falscher Ordnername) – prüft den Selbstschutz aus 1c.
 
-Protokoll je Injektion: **Regel · Datei:Zeile · Änderung · rot? · welcher Test hat gemeldet · Meldung
-verständlich?** Die letzte Spalte ist nicht Kosmetik: ein Test, der rot wird, aber nicht sagt *warum*,
-kostet beim nächsten echten Regress eine halbe Stunde.
+Blinde Hälfte: jeder k-te ausgeführte Zweigpunkt aus 1d in `WalletService`, `ShopService`,
+`PositionProgressService`, `ScoringService`, `MediaSelector`, sortiert nach Datei:Zeile. Lässt sich eine
+gezogene Stelle nicht plausibel verletzen (Null-Prüfung ohne erreichbaren Null-Fall, Logging,
+`switch`-Default), wird sie **übersprungen und mit Grund protokolliert** – die nächste Stelle rückt nach.
 
-Drei Ausgänge, drei Bedeutungen:
+**Protokoll je Injektion:** Regel · Datei:Zeile · Änderung · Ausgang · **Anzahl und Namen der gefallenen
+Tests** · war die Meldung verständlich? Die letzte Spalte ist nicht Kosmetik: ein Test, der rot wird, aber
+nicht sagt *warum*, kostet beim nächsten echten Regress eine halbe Stunde.
 
-- **rot, richtiger Test, klare Meldung** → Regel ist gepinnt. Nichts zu tun.
-- **rot, aber irgendein weit entfernter Test** → Regel ist nur *zufällig* mitgeprüft. Befund: fehlender
-  gezielter Test (der entfernte Test kann jederzeit umgebaut werden und nimmt die Deckung mit).
-- **grün** → **die Regel ist unbewacht.** Der eigentliche Ertrag dieses Vorgangs.
+**Urteil in drei Klassen:**
 
-Aufwand: ~60 s je Lauf, 20–30 Injektionen ⇒ **eine halbe Stunde Rechenzeit**, der Rest ist Lesen. Läufe
-seriell fahren (der `EndpointCoverageGuard` urteilt erst bei ≥ 60 % Vollbestand, ein `--filter`-Teillauf
-verschweigt sein Urteil – für die Injektionen ist das egal, aber der Referenzlauf muss vollständig sein).
+- **gepinnt** – ein Test fällt, **dessen Name die Regel benennt**. Nichts zu tun.
+- **zufällig mitgeprüft** – rot, aber kein fallender Test benennt die Regel. Befund: die Deckung ist ein
+  Nebeneffekt und verschwindet beim nächsten Test-Umbau.
+- **unbewacht** – grün. Der eigentliche Ertrag dieses Vorgangs.
+
+Dazu die **Streubreite** als eigene Achse: fallen bei *einem* Defekt mehr als **10** Tests, ist die Regel
+zwar bewacht, aber beim echten Regress geht das Signal im Lärm unter – eigener Befund („Signal im Lärm").
+
+Aufwand: Build + Vollauf je Injektion, ~45 min Rechenzeit für 30 Stück; der Rest ist Lesen. Seriell fahren
+(der `EndpointCoverageGuard` urteilt erst bei ≥ 60 % Vollbestand – für die Injektionen egal, der Referenzlauf
+muss aber vollständig sein).
 
 ---
 
-## Etappe 4 · Struktur-Robustheit
-
-Vier Eigenschaften, ohne die eine grüne Suite nichts aussagt:
+## Etappe 4 · Struktur-Robustheit (auf zwei Punkte gekürzt)
 
 1. **Wiederholbarkeit.** Zweimal hintereinander laufen lassen (Fingerprint des Stop-Hooks umgehen). Innerhalb
    einer Testklasse teilen alle Tests **eine** SQLite-Datei – Tests, die absolute Anzahlen zusichern
    (`Assert.Equal(1, …GetArrayLength())`, 47 × `Assert.Single`, 38 × `Assert.Empty`) sind genau dann stabil,
    wenn sie auf frisch angelegten Elternobjekten arbeiten. Gegenprobe fahren, statt es anzunehmen.
-2. **Reihenfolge-Unabhängigkeit.** xUnit parallelisiert über Collections; Reihenfolge innerhalb einer Klasse
-   ist nicht garantiert. Wiederholte Läufe mit veränderter Parallelität zeigen versteckte Kopplung.
-3. **Das Tor blockt wirklich.** Stichprobe: einen Test absichtlich brechen und prüfen, dass Stop-Hook **und**
-   CI rot melden – inkl. der Eigenheit des Assembly-Fixtures („Passed!" trotz Exit-Code 1), die der
-   Gates-Plan beschreibt. Das ist der Unterschied zwischen „Test existiert" und „Test verhindert etwas".
-4. **Zeit/Uhrzeit-Unabhängigkeit.** Die Factory löscht die geseedeten `TimeSlots` (Wanduhr-Neutralisierung).
-   Gegenprobe: Lauf mit anderer `TZ` bzw. nahe Mitternacht – die `DateTime.UtcNow`/`DateOnly`-Logik ist der
-   bekannte Fallstrick aus CLAUDE.md.
+2. **Reihenfolge-Unabhängigkeit.** Ein Lauf mit `maxParallelThreads=1`. Kein hypothetisches Risiko: der
+   Gates-Plan nennt einen **Reihenfolge-Fix in `CreatorAgentTests`** und ein Isolationsproblem derselben
+   Klasse – in dieser Suite hat die Kopplung schon einmal zugeschlagen.
+
+Gestrichen, weil belegt: „prüfen, ob das Tor blockt" (A4) und die Zeitzonen-Gegenprobe (CI fährt `TZ: UTC`,
+D4 prüft Byte-Stabilität). Zusammen ~3 min statt eines halben Nachmittags.
 
 ---
 
 ## Ergebnis
 
 Der Befund wird **in dieses Dokument** zurückgeschrieben, im Stil von
-[codequalitaet-gates-plan.md](codequalitaet-gates-plan.md) – also mit Zahlen, nicht mit Adjektiven:
+[codequalitaet-gates-plan.md](codequalitaet-gates-plan.md) – mit Zahlen, nicht mit Adjektiven:
 
-- Die Injektions-Tabelle vollständig (auch die grünen, besonders die grünen).
-- Die triagierte Liste der flachen Tests aus 1a und der Tautologien aus 1b.
+**Commit 1 – Messung und Bericht:**
+
+- Die Injektions-Tabelle vollständig, **30 Zeilen**, samt Streubreite und den protokollierten Übersprüngen
+  (auch die grünen, besonders die grünen).
+- **Zwei getrennte Quoten:** Konformität (dokumentierte Hälfte) und Sensitivität (blinde Hälfte). Sie zu
+  einer Zahl zu verrühren wäre der Fehler, den der Plan zuerst gemacht hat.
+- Die ~8 flachen Tests aus 1a und die Tautologien aus 1b.
 - Die Regeln aus Etappe 2 ohne pinnenden Test.
-- Eine **priorisierte Liste nachzuziehender Tests** – nach Schadenshöhe, nicht nach Bequemlichkeit
-  (Geldwirkung > Anti-Cheat > CRUD-Schwanz).
+- Der Satz zu den E2E-Specs: sie laufen in keiner CI und verhindern darum nichts.
 - Wo ein Muster mehrfach auftrat: Vorschlag für einen **weiteren reflexiven Wächter** statt Einzeltests –
   die im Projekt etablierte Antwort („mechanische Tore statt Disziplin").
 
-Kein Produktivcode wird in diesem Vorgang geändert; alle Injektionen werden zurückgenommen. Gefundene
-Defekte werden **gemeldet, nicht nebenbei gefixt** (dieselbe Trennung wie beim CancellationToken-Umbau, wo
-der `ExerciseControllerBase.Update`-Fund bewusst offen blieb).
+**Commit 2 – Lücken schließen, begrenzt:**
+
+- Nachgezogen wird **jede unbewachte Regel mit Geldwirkung** (Münzen/Gems/Wallet/Shop/Malus) – dort kostet
+  ein Fehler den Sohn echtes Guthaben.
+- Dazu, falls 1c es ergibt, die Selbstschutz-Untergrenzen in `ErrorCodeTests`/`OpenApiExampleTests`.
+- Alles andere bleibt **benannte Restliste** im Bericht, nach Schadenshöhe sortiert – nicht stillschweigend
+  fallen gelassen.
+
+Kein Produktivcode wird geändert; alle Injektionen werden zurückgenommen. Gefundene **Defekte** werden
+gemeldet, nicht nebenbei gefixt (dieselbe Trennung wie beim CancellationToken-Umbau, wo der
+`ExerciseControllerBase.Update`-Fund bewusst offen blieb).
 
 ## Verifikation
 
-- `git status` im Hauptbaum am Ende **identisch** zum Stand vor Etappe 0 (Injektions-Worktree entfernt:
+- Die **Kalibrier-Injektion war nachweislich rot.** Ohne diesen Punkt ist jedes „grün" im Protokoll wertlos –
+  darum läuft sie zuerst und bricht den Vorgang ab, wenn sie hält.
+- `git status` im Hauptbaum am Ende **identisch** zum Stand vor Etappe 0 (Worktree entfernt:
   `git worktree remove`), insbesondere kein Diff in `docs/api-examples/`.
-- `dotnet test Pugling.sln -c Release` grün: 518+ Tests, und `TestResults/endpoint-coverage.txt` meldet
-  weiter **0 offene Actions**.
-- Die Referenz-Injektion (`ChildOwnershipFilter` entfernen) wurde nachweislich **rot** – belegt, dass das
-  Verfahren überhaupt greift. Ohne diesen Kalibrierpunkt ist jedes „grün" im Protokoll wertlos.
-- Jede Zeile der Injektions-Tabelle nennt Datei und Zeile, ist also nachfahrbar.
+- `dotnet test Pugling.sln -c Release` grün, und `TestResults/endpoint-coverage.txt` meldet weiter
+  **0 offene Actions**.
+- Jede Zeile der Injektions-Tabelle nennt Datei und Zeile, ist also nachfahrbar; jeder Übersprung nennt
+  seinen Grund.
 
 ## Verwandt
 
