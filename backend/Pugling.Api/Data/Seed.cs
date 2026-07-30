@@ -33,7 +33,6 @@ public static class Seed
     public static async Task RunAsync(PuglingDbContext db, ExerciseItemService items,
         AccountService accounts, InterestTagService tags, CancellationToken ct)
     {
-        SeedTimeSlots(db);
         SeedAdmin(db);
         SeedCatalog(db);
         SeedStudentProfile(db);
@@ -941,19 +940,6 @@ public static class Seed
         db.ShopArticles.AddRange(tv, gaming, sweets, cinema);
         db.SaveChanges();
     }
-
-    private static void SeedTimeSlots(PuglingDbContext db)
-    {
-        if (db.TimeSlots.Any()) return;
-
-        // Zeitfenster mit Punkte-Multiplikator für Leitner-Wiederholungen (vom Vater änderbar).
-        db.TimeSlots.AddRange(
-            new TimeSlotRule { Name = "Vormittag", StartTime = new(8, 0), EndTime = new(12, 0), Multiplier = 1.5 },
-            new TimeSlotRule { Name = "Nachmittag", StartTime = new(12, 0), EndTime = new(18, 0), Multiplier = 1.0 },
-            new TimeSlotRule { Name = "Abend", StartTime = new(18, 0), EndTime = new(21, 0), Multiplier = 0.8 });
-        db.SaveChanges();
-    }
-
     private static void SeedAdmin(PuglingDbContext db)
     {
         if (db.Adults.Any()) return;

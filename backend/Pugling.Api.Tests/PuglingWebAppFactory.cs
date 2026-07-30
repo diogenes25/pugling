@@ -1,9 +1,6 @@
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using Pugling.Api.Data;
 
 namespace Pugling.Api.Tests;
 
@@ -32,6 +29,13 @@ public sealed class PuglingWebAppFactory : WebApplicationFactory<Program>
         // Der In-Process-TestServer teilt sich eine IP-Partition; ohne Abschalten würden die vielen
         // Test-Logins am Login-Rate-Limit (429) scheitern. Ein eigener Test aktiviert es gezielt.
         builder.UseSetting("RateLimiting:LoginEnabled", "false");
+        // Wanduhr-Neutralisierung: die Zeitfenster gewichten die Punkte über den Tag (Vormittag ×1,5,
+        // Abend ×0,8). Damit hinge die Punktzahl derselben richtigen Antwort an der Uhrzeit des Testlaufs –
+        // ein Lauf um 9 Uhr buchte 15, einer um 19 Uhr 8. Für „> 0" harmlos, für die von
+        // DocsCaptureTests **eingecheckte** Doku nicht: das wäre Diff-Rauschen in docs/api-examples/.
+        // Bis E12 war das ein `db.TimeSlots.ExecuteDelete()` NACH dem Start – jetzt eine Einstellung
+        // VOR ihm, weil die Fenster Konfiguration sind und keine Tabelle mehr.
+        builder.UseSetting("Scoring:TimeSlotsEnabled", "false");
         // Zählt prozessweit mit, welche Actions erfolgreich bedient wurden – Datenquelle des
         // Abdeckungs-Wächters (EndpointCoverageGuard). Rein beobachtend, ändert kein Verhalten.
         builder.ConfigureServices(s =>
@@ -39,27 +43,6 @@ public sealed class PuglingWebAppFactory : WebApplicationFactory<Program>
             s.AddSingleton<IStartupFilter, EndpointCoverageStartupFilter>();
             s.AddSingleton<TimeProvider>(Clock);
         });
-    }
-
-    /// <summary>
-    /// Nach dem Start die <b>geseedeten Zeitfenster löschen</b> (Wanduhr-Neutralisierung).
-    /// <para>
-    /// Der Seed legt Multiplikatoren über den Tag (Vormittag ×1,5, Nachmittag ×1,0, Abend ×0,8). Damit
-    /// hängt die Punktzahl derselben richtigen Antwort an der Uhrzeit des Testlaufs – ein Lauf um 9 Uhr
-    /// buchte 15, einer um 19 Uhr 8. Für Zusicherungen auf „&gt; 0" ist das harmlos, für die von
-    /// <see cref="DocsCaptureTests"/> <b>eingecheckte</b> Doku nicht: Jeder Lauf zu anderer Tageszeit
-    /// erzeugte Diff-Rauschen in <c>docs/api-examples/</c>. Ohne Fenster gilt Faktor 1,0.
-    /// </para>
-    /// Tests, die den Multiplikator selbst prüfen, legen ihre Fenster ausdrücklich an
-    /// (<see cref="ScoringTimeSlotTests"/>) – die sind damit erst recht unabhängig von der Wanduhr.
-    /// </summary>
-    protected override IHost CreateHost(IHostBuilder builder)
-    {
-        var host = base.CreateHost(builder); // startet den Host – Migrate + Seed sind danach durch
-        using var scope = host.Services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
-        db.TimeSlots.ExecuteDelete();
-        return host;
     }
 
     protected override void Dispose(bool disposing)

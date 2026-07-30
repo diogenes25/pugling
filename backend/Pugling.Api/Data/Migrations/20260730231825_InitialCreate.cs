@@ -145,22 +145,6 @@ namespace Pugling.Api.Data.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "TimeSlots",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    Name = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
-                    StartTime = table.Column<TimeOnly>(type: "TEXT", nullable: false),
-                    EndTime = table.Column<TimeOnly>(type: "TEXT", nullable: false),
-                    Multiplier = table.Column<double>(type: "REAL", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_TimeSlots", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "VocabTags",
                 columns: table => new
                 {
@@ -2547,9 +2531,6 @@ namespace Pugling.Api.Data.Migrations
 
             migrationBuilder.DropTable(
                 name: "Textbooks");
-
-            migrationBuilder.DropTable(
-                name: "TimeSlots");
 
             migrationBuilder.DropTable(
                 name: "TimetableEntries");

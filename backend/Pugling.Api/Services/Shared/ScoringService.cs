@@ -1,5 +1,4 @@
-using Microsoft.EntityFrameworkCore;
-using Pugling.Api.Data;
+﻿using Microsoft.Extensions.Options;
 using Pugling.Api.Models;
 
 namespace Pugling.Api.Services.Shared;
@@ -9,9 +8,12 @@ namespace Pugling.Api.Services.Shared;
 /// (Box/Neuheit × Zeitfenster-Faktor) plus Ereignis-Boni (Combo; später Schnelle Antwort, Dauer).
 /// Bündelt bewusst, was vorher über <c>PointsService</c> und den Controller verstreut war, damit
 /// neue Bonusarten an genau einer Stelle andocken und jede Buchung ihre <see cref="PointKind"/> trägt.
-/// Zustandslos bis auf den Zeitfenster-Lookup (DB).
+/// <b>Vollständig zustandslos</b> – eine reine Funktion. Bis E12 hing hier ein <c>PuglingDbContext</c>, und
+/// zwar einzig für den Zeitfenster-Lookup; seit die Fenster Konfiguration sind
+/// (<see cref="ScoringOptions"/>), braucht die Punkte-Rechnung keine Datenbank und keinen Abbruch-Token
+/// mehr. Das macht sie ohne Host testbar.
 /// </summary>
-public class ScoringService(PuglingDbContext db)
+public class ScoringService(IOptions<ScoringOptions> options)
 {
     /// <summary>Ein einzelner Punkte-Beitrag einer Wiederholung – wird 1:1 zu einer <see cref="ChildPointsEntry"/>.</summary>
     public record Contribution(PointKind Kind, int Amount, string Reason);
@@ -49,14 +51,14 @@ public class ScoringService(PuglingDbContext db)
     /// dem Aufstieg, nur für den Buchungstext. <paramref name="elapsedSeconds"/> ist die serverseitig
     /// gemessene Zeit seit der letzten Antwort (null bei der ersten Karte einer Sitzung).
     /// </summary>
-    public async Task<ReviewScore> ScoreReviewAsync(ScoreConfig cfg, int reviewCount, int box, int postBox,
-        bool wasCorrect, int combo, DateTime nowLocal, double? elapsedSeconds = null, CancellationToken ct = default)
+    public ReviewScore ScoreReview(ScoreConfig cfg, int reviewCount, int box, int postBox,
+        bool wasCorrect, int combo, DateTime nowLocal, double? elapsedSeconds = null)
     {
         var contributions = new List<Contribution>();
         if (!wasCorrect)
             return new ReviewScore(contributions, combo);
 
-        var basePoints = await BasePointsAsync(cfg, reviewCount, box, nowLocal, ct);
+        var basePoints = BasePoints(cfg, reviewCount, box, nowLocal);
         if (basePoints > 0)
             contributions.Add(new Contribution(PointKind.Base, basePoints,
                 $"[{cfg.Label}] Leitner-Wiederholung richtig → Box {postBox}"));
@@ -96,22 +98,34 @@ public class ScoringService(PuglingDbContext db)
     /// (<paramref name="reviewCount"/> 0) zählt am meisten, spätere je höher die <paramref name="box"/>
     /// weniger; gewichtet nach dem zur Uhrzeit aktiven Zeitfenster.
     /// </summary>
-    private async Task<int> BasePointsAsync(ScoreConfig cfg, int reviewCount, int box, DateTime nowLocal,
-        CancellationToken ct)
+    private int BasePoints(ScoreConfig cfg, int reviewCount, int box, DateTime nowLocal)
     {
         int basePoints = reviewCount == 0
             ? cfg.NewContentPoints                // neuer Inhalt (konfigurierbar)
             : Math.Max(2, 8 - box);               // Wiederholung: je höher die Box, desto weniger
 
-        var time = TimeOnly.FromDateTime(nowLocal);
-        // Deterministisch ordnen: überlappende Zeitfenster sind erlaubt (niemand verbietet sie beim Anlegen),
-        // und ohne OrderBy entschiede die Datenbank-Laune, welcher Multiplikator gilt – dieselbe Antwort
-        // brächte dann unterschiedlich viele Punkte. Das engste Fenster gewinnt, bei Gleichstand die Id.
-        var slot = await db.TimeSlots
-            .Where(s => s.StartTime <= time && time < s.EndTime)
-            .OrderByDescending(s => s.StartTime).ThenBy(s => s.EndTime).ThenBy(s => s.Id)
-            .FirstOrDefaultAsync(ct);
+        return (int)Math.Round(basePoints * MultiplierAt(TimeOnly.FromDateTime(nowLocal)));
+    }
 
-        return (int)Math.Round(basePoints * (slot?.Multiplier ?? 1.0));
+    /// <summary>
+    /// Der Multiplikator zur Uhrzeit; 1,0 außerhalb aller Fenster oder wenn die Fenster abgeschaltet sind.
+    /// <para>
+    /// Deterministisch geordnet: überlappende Fenster sind erlaubt (die Konfiguration verbietet sie nicht),
+    /// und ohne feste Ordnung entschiede die Reihenfolge in der Datei, welcher Multiplikator gilt – dieselbe
+    /// richtige Antwort brächte dann unterschiedlich viele Punkte. Das am spätesten beginnende (engste)
+    /// Fenster gewinnt, bei Gleichstand das früher endende.
+    /// </para>
+    /// </summary>
+    private double MultiplierAt(TimeOnly time)
+    {
+        var cfg = options.Value;
+        if (!cfg.TimeSlotsEnabled) return 1.0;
+
+        return cfg.TimeSlots
+            .Where(s => s.Start <= time && time < s.End)
+            .OrderByDescending(s => s.Start).ThenBy(s => s.End)
+            .Select(s => s.Multiplier)
+            .DefaultIfEmpty(1.0)
+            .First();
     }
 }

@@ -11,7 +11,7 @@ using Pugling.Api.Data;
 namespace Pugling.Api.Data.Migrations
 {
     [DbContext(typeof(PuglingDbContext))]
-    [Migration("20260730230256_InitialCreate")]
+    [Migration("20260730231825_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -2388,31 +2388,6 @@ namespace Pugling.Api.Data.Migrations
                     b.HasIndex("SubjectId");
 
                     b.ToTable("TextbookSeries");
-                });
-
-            modelBuilder.Entity("Pugling.Api.Models.TimeSlotRule", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<TimeOnly>("EndTime")
-                        .HasColumnType("TEXT");
-
-                    b.Property<double>("Multiplier")
-                        .HasColumnType("REAL");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("TEXT");
-
-                    b.Property<TimeOnly>("StartTime")
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("TimeSlots");
                 });
 
             modelBuilder.Entity("Pugling.Api.Models.TimetableEntry", b =>

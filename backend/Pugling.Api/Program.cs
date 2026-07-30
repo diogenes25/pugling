@@ -152,6 +152,9 @@ builder.Services.AddDbContext<PuglingDbContext>(o =>
 // mit Kalendertagen prüfbar, die Antwortzeit nicht. Ohne diese Naht müsste ein Test zwei Requests binnen
 // einer Sekunde durchbringen und wäre auf einem ausgelasteten Runner ein Flake.
 builder.Services.AddSingleton(TimeProvider.System);
+// Die Zeitfenster des Punkte-Multiplikators sind Konfiguration, keine Tabelle (E12) – der Service ist
+// damit eine reine Funktion und braucht weder DB noch Abbruch-Token.
+builder.Services.Configure<ScoringOptions>(builder.Configuration.GetSection(ScoringOptions.SectionName));
 builder.Services.AddScoped<ScoringService>();
 builder.Services.AddScoped<WalletService>();
 builder.Services.AddScoped<ShopService>();

@@ -1,4 +1,4 @@
-﻿using System.Globalization;
+using System.Globalization;
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
@@ -111,10 +111,6 @@ public class SeedContractTests(PuglingWebAppFactory factory) : IClassFixture<Pug
         await SeedAsync(sp, db);
 
         Assert.Equal(vorher, await ZeilenzahlenAsync(db));
-
-        // Die Zeitfenster wieder abräumen, damit die Punktzahlen in dieser Klasse nicht plötzlich an der
-        // Uhrzeit des Laufs hängen (dasselbe, was die Factory nach dem Start tut).
-        await db.TimeSlots.ExecuteDeleteAsync();
     }
 
     private static Task SeedAsync(IServiceProvider sp, PuglingDbContext db) =>

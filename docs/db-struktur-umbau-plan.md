@@ -4,7 +4,7 @@ tags: [bereich/architektur, bereich/datenmodell, status/laufend]
 
 # DB-/EF-Struktur-Umbau
 
-> **Übergabe-Dokument.** E0–E11 sind umgesetzt und verifiziert; offen sind E12–E14. Beide
+> **Übergabe-Dokument.** E0–E12 sind umgesetzt und verifiziert; offen sind E13–E14. Beide
 > echten Defekte sind damit behoben – der Rest ist Struktur. Dieses Dokument ist so
 > geschrieben, dass jemand ohne Vorwissen die restlichen Etappen zu Ende führen kann: es nennt die
 > getroffenen Entscheidungen, die Arbeitsregeln, die Belege, die bewussten Abweichungen und die
@@ -79,7 +79,7 @@ Die Langfassung steht in der Plandatei dieser Sitzung.
    E13 (`LearnGoal.ChildId` fällt weg, drei `KeyResult`-Scope-FKs kommen). Das Tor **soll** dabei rot sein –
    die bewusste Zeile ist der Zweck. Bei mehreren Änderungen lohnt der Wegwerf-Dump aus E6 wieder.
 
-## Umgesetzt: E0–E11
+## Umgesetzt: E0–E12
 
 ### E0 · Netz spannen — keine Migration
 
@@ -495,21 +495,38 @@ Hinweis, dass seine Indexnamen historisch sind – eine Momentaufnahme wird nich
 
 **Stand:** 616 Tests grün, Kette bei 1, `docs/api-examples` unverändert, Abdeckung weiter 268/268.
 
-## Offen: E12–E14
-
-Jede Etappe endet grün, mit neu gefalteter Migration (siehe Arbeitsregeln).
-
 ### E12 · `TimeSlotRule` in Konfiguration auflösen
 
-Keine API, kein Schreibpfad außer dem Seed, kein Index, kein Unique, keine Überlappungsprüfung
-(`ScoringService` nimmt bei Überlappung willkürlich eine Regel) – und `PuglingWebAppFactory` **löscht die
-Zeilen**, um deterministische Tests zu bekommen. Eine Tabelle, deren Zeilen die Test-Suite wegräumen muss,
-um sinnvolle Ergebnisse zu erhalten, ist Konfiguration.
+Keine API, kein Schreibpfad außer dem Seed, kein Index, kein Unique, keine Überlappungsprüfung – und die
+Test-Factory **löschte die Zeilen** nach dem Start, um deterministische Punktzahlen zu bekommen. Eine
+Tabelle, deren Zeilen die Suite wegräumen muss, um sinnvolle Ergebnisse zu erhalten, ist Konfiguration.
 
-Entity + DbSet + `SeedTimeSlots` weg, `Scoring:TimeSlots` in `appsettings.json`, `ScoringService` liest
-`IOptions`, `ScoringTimeSlotTests` überschreibt per `UseSetting`. Damit fällt auch die Legacy-Ausnahme aus
-`CLAUDE.md` („das *einzige* bewusst erhaltene Legacy-Entity") weg – und `PuglingWebAppFactory` braucht das
-`ExecuteDelete` nicht mehr.
+**Umgesetzt:** Entity, `DbSet` und `SeedTimeSlots` weg; neu `ScoringOptions`/`ScoringTimeSlot` mit dem
+Abschnitt `Scoring` in `appsettings.json` (die drei Fenster 1:1 aus dem Seed). Der Schalter
+`Scoring:TimeSlotsEnabled` gehört dazu und ist kein Test-Kniff, sondern derselbe Vertrag wie
+`RateLimiting:LoginEnabled`: mit Fenstern hängt die Punktzahl derselben richtigen Antwort an der **Uhrzeit
+des Laufs** (vormittags ×1,5, abends ×0,8), und für die von `DocsCaptureTests` eingecheckte Doku ist das
+Diff-Rauschen. Die Factory setzt ihn jetzt **vor** dem Start, statt danach Zeilen zu löschen.
+
+**Der eigentliche Gewinn war nicht die Tabelle, sondern der Service.** Der `PuglingDbContext` hing in
+`ScoringService` einzig am Zeitfenster-Lookup. Ohne ihn ist die Punkte-Rechnung eine **reine Funktion**:
+`ScoreReviewAsync(… , ct)` → `ScoreReview(…)`, kein `await`, kein Abbruch-Token, keine Datenbank. Es gab
+genau einen Produktions-Aufrufer.
+
+**Und der Test wurde dadurch ein anderer.** `ScoringTimeSlotTests` brauchte vorher die Web-Factory, einen
+Scope, eine SQLite-Datei und ein `SaveChanges` – für eine Multiplikation. Jetzt stehen die Fenster im Test
+selbst, direkt neben der Erwartung, ohne Host und ohne DB. Dazu ein dritter Fall, den es vorher nicht gab:
+dass der Abschalter wirklich Faktor 1,0 bedeutet (die ganze Suite fährt damit – also gehört er geprüft).
+
+**Nachgezogen:** die `CLAUDE.md`-Fallstricke behaupteten, `TimeSlotRule` sei „das *einzige* bewusst erhaltene
+Legacy-Entity". Das ist jetzt falsch und steht im Startkontext jeder Sitzung – korrigiert.
+
+**Stand:** 617 Tests grün, Kette bei 1, `docs/api-examples` unverändert, Abdeckung weiter 268/268,
+`TimeSlots` im Schema nicht mehr vorhanden.
+
+## Offen: E13–E14
+
+Jede Etappe endet grün, mit neu gefalteter Migration (siehe Arbeitsregeln).
 
 ### E13 · `LearnGoal` löschen — der eine bewusste Vertragsbruch
 
@@ -600,7 +617,7 @@ E1 ist wirksam: die Azure-DB stammt aus der alten Kette und wird vom Historien-G
 
 ## Verifikation
 
-**Pro Etappe:** `dotnet test Pugling.sln -c Release` (~55 s, aktuell **616** Tests) und
+**Pro Etappe:** `dotnet test Pugling.sln -c Release` (~55 s, aktuell **617** Tests) und
 `git diff -- docs/api-examples` prüfen (leer, oder im gleichen Commit neu erzeugt).
 
 **Laufzeit statt nur Kompilieren:** `/smoke-test` (Wegwerf-DB, lässt `pugling.db` unangetastet) nach E6,

@@ -2387,31 +2387,6 @@ namespace Pugling.Api.Data.Migrations
                     b.ToTable("TextbookSeries");
                 });
 
-            modelBuilder.Entity("Pugling.Api.Models.TimeSlotRule", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<TimeOnly>("EndTime")
-                        .HasColumnType("TEXT");
-
-                    b.Property<double>("Multiplier")
-                        .HasColumnType("REAL");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("TEXT");
-
-                    b.Property<TimeOnly>("StartTime")
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("TimeSlots");
-                });
-
             modelBuilder.Entity("Pugling.Api.Models.TimetableEntry", b =>
                 {
                     b.Property<int>("Id")

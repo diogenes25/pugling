@@ -7,9 +7,6 @@ namespace Pugling.Api.Data;
 
 public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbContext(options)
 {
-    // Zeitfenster mit Punkte-Multiplikator (Leitner-Wiederholungen, siehe PointsService).
-    public DbSet<TimeSlotRule> TimeSlots => Set<TimeSlotRule>();
-
     // Identität: Login-Konto mit einer/mehreren Rollen (Creator/Supervisor/Student), entkoppelt von Adult/Child.
     public DbSet<Account> Accounts => Set<Account>();
     public DbSet<AccountProfile> AccountProfiles => Set<AccountProfile>();
