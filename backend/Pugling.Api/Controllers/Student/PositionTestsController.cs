@@ -30,15 +30,17 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
     private const int DefaultPassPercent = 80;
 
 
-    private Task<StudyPlan?> GetPlan(int planId, CancellationToken ct = default) =>
+    // Kein Vorgabewert für `ct`: er ließe die Aufrufstelle korrekt aussehen, während der Abbruch des
+    // Clients verpufft – ein weggelassenes optionales Argument sieht weder CA2016 noch der Wächter.
+    private Task<StudyPlan?> GetPlan(int planId, CancellationToken ct) =>
         db.StudyPlans.FirstOrDefaultAsync(p => p.Id == planId, ct);
 
     // Der Plan kommt mit, weil die Bebilderung das Kind braucht (die Auswahl hängt an seinem Profil).
-    private Task<PlanPosition?> GetPosition(int planId, int positionId, CancellationToken ct = default) =>
+    private Task<PlanPosition?> GetPosition(int planId, int positionId, CancellationToken ct) =>
         db.PlanPositions.Include(p => p.Exercise).Include(p => p.StudyPlan)
             .FirstOrDefaultAsync(p => p.Id == positionId && p.StudyPlanId == planId, ct);
 
-    private Task<TestAttempt?> LoadAttempt(int planId, int positionId, int attemptId, CancellationToken ct = default) =>
+    private Task<TestAttempt?> LoadAttempt(int planId, int positionId, int attemptId, CancellationToken ct) =>
         db.TestAttempts.Include(t => t.Results)
             .FirstOrDefaultAsync(t => t.Id == attemptId && t.StudyPlanId == planId && t.PlanPositionId == positionId, ct);
 

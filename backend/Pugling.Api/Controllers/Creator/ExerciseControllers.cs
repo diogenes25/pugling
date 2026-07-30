@@ -248,13 +248,15 @@ public class VocabularyController(PuglingDbContext db, ExerciseTypeRegistry regi
         return NoContent();
     }
 
-    private Task<ExerciseItem?> FindItemAsync(int exerciseId, int itemId, CancellationToken ct = default) =>
+    // Kein Vorgabewert für `ct` (hier wie in den übrigen Helfern): ein weggelassenes optionales Argument
+    // sieht weder CA2016 noch der Signatur-Wächter – ohne Default erzwingt der Compiler das Durchreichen.
+    private Task<ExerciseItem?> FindItemAsync(int exerciseId, int itemId, CancellationToken ct) =>
         Db.ExerciseItems.Include(i => i.Vocabulary).FirstOrDefaultAsync(i => i.Id == itemId && i.ExerciseId == exerciseId, ct);
 
     // Wird die Übung in einem Lehrplan gespielt? Dann verankert PositionItemProgress den Leitner-Fortschritt
     // je Position auf der (positionalen) Item-Reihenfolge – index-verschiebende Item-Mutationen (Löschen,
     // Umsortieren, Einfügen an fester Position) würden gespeicherten Fortschritt aufs falsche Wort umbiegen.
-    private Task<bool> ExerciseInPlanAsync(int exerciseId, CancellationToken ct = default) =>
+    private Task<bool> ExerciseInPlanAsync(int exerciseId, CancellationToken ct) =>
         Db.PlanPositions.AnyAsync(p => p.ExerciseId == exerciseId, ct);
 
     private ObjectResult ShiftBlockedProblem() =>

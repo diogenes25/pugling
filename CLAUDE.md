@@ -209,6 +209,12 @@ Details: [backend/Pugling.Agent.Creator/README.md](backend/Pugling.Agent.Creator
   EF-/Service-Aufruf durch. Der Wächter prüft die **Signatur**, nicht die Kette dahinter: ein Helfer ohne
   Token-Parameter verbirgt jeden Aufruf in seinem Rumpf vor CA2016, und in Lambdas schweigt der Analyzer
   ohnehin – ein neuer Helfer nimmt den Token also mit, sonst versickert er lautlos hinter grünem Build.
+  Und zwar **ohne `= default`**: das Weglassen eines optionalen Arguments rügt CA2016 nicht, ein Helfer
+  ohne Vorgabewert lässt den Compiler das Durchreichen erzwingen. Der Vorgabewert bleibt den Actions
+  vorbehalten (dort erzwingt ihn die Parameter-Reihenfolge). Umgekehrt gilt für **kompensierende Schritte
+  nach dem Commit** (Dateien wegräumen o. Ä.) bewusst `CancellationToken.None` – ein Client-Abbruch darf
+  nicht entscheiden, ob aufgeräumt wird, und ein Abbruch *des Clients* endet über den
+  `ClientAbortExceptionHandler` als 499 ohne Fehler-Log, nicht als 500.
   Dazu drei Wächter aus [Etappe C](docs/codequalitaet-gates-plan.md): die **Ownership-Matrix**
   (jede Action unter `{childId}`/`{planId}` wird mit fremdem Zugang aufgerufen und muss abweisen), der
   **PATCH-Semantik-Guard** (`null` ändert nichts, `Clear…` leert und gewinnt – reflexiv gegen *alle*

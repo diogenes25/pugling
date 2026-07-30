@@ -365,7 +365,10 @@ public class MediaAssetsController(PuglingDbContext db, InterestTagService tags,
         // Erst nach dem erfolgreichen Löschen in der DB die Dateien wegräumen: bricht die DB ab, sind die
         // Dateien noch da (verwaiste Datei ist harmlos, ein Asset ohne Datei wäre eine kaputte Karte).
         // Assets, die nur per URL eingetragen wurden, haben keinen eigenen Ordner – das Löschen läuft leer.
-        await storage.DeleteFolderAsync(asset.Id.ToString(), ct);
+        // Bewusst OHNE den Request-Token: der Löschvorgang ist committet, das Wegräumen ist der
+        // kompensierende Schritt. Ein Client-Abbruch darf nicht entscheiden, ob er läuft – sonst blieben
+        // die Varianten-Dateien ohne besitzende Zeile für immer liegen (es gibt keinen Aufräum-Job).
+        await storage.DeleteFolderAsync(asset.Id.ToString(), CancellationToken.None);
         return NoContent();
     }
 

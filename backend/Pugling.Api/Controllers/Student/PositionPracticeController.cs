@@ -33,15 +33,17 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         new(s.Id, s.StudyPlanId, s.PlanPositionId ?? 0, s.Day, s.StartedAt, s.EndedAt, s.ActiveSeconds,
             s.Reviews.Count, s.Mode, s.Cursor, s.Order.Count);
 
-    private Task<StudyPlan?> GetPlan(int planId, CancellationToken ct = default) =>
+    // Kein Vorgabewert für `ct`: er ließe die Aufrufstelle korrekt aussehen, während der Abbruch des
+    // Clients verpufft – ein weggelassenes optionales Argument sieht weder CA2016 noch der Wächter.
+    private Task<StudyPlan?> GetPlan(int planId, CancellationToken ct) =>
         db.StudyPlans.FirstOrDefaultAsync(p => p.Id == planId, ct);
 
     // Der Plan kommt mit, weil die Bebilderung das Kind braucht (die Auswahl hängt an seinem Profil).
-    private Task<PlanPosition?> GetPosition(int planId, int positionId, CancellationToken ct = default) =>
+    private Task<PlanPosition?> GetPosition(int planId, int positionId, CancellationToken ct) =>
         db.PlanPositions.Include(p => p.Exercise).Include(p => p.StudyPlan)
             .FirstOrDefaultAsync(p => p.Id == positionId && p.StudyPlanId == planId, ct);
 
-    private Task<PracticeSession?> GetSession(int planId, int positionId, int sessionId, CancellationToken ct = default) =>
+    private Task<PracticeSession?> GetSession(int planId, int positionId, int sessionId, CancellationToken ct) =>
         db.PracticeSessions.Include(s => s.Reviews)
             .FirstOrDefaultAsync(s => s.Id == sessionId && s.StudyPlanId == planId && s.PlanPositionId == positionId, ct);
 

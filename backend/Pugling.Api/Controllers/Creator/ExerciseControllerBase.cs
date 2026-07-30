@@ -86,11 +86,14 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db, Exerc
 
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
-    private Task<bool> ChapterExists(int subjectId, int chapterId, CancellationToken ct = default) =>
+    // Kein Vorgabewert für `ct` in den Helfern: er ließe die Aufrufstelle korrekt aussehen, während der
+    // Abbruch des Clients verpufft – und weder CA2016 noch der Signatur-Wächter sehen ein weggelassenes
+    // optionales Argument. Ohne Default erzwingt der Compiler das Durchreichen.
+    private Task<bool> ChapterExists(int subjectId, int chapterId, CancellationToken ct) =>
         db.Chapters.AnyAsync(c => c.Id == chapterId && c.SubjectId == subjectId, ct);
 
     /// <summary>Prüft, dass eine gesetzte Art zum Fach der Übung gehört (fremde Fächer verhindern).</summary>
-    private Task<bool> CategoryValid(int subjectId, int? categoryId, CancellationToken ct = default) =>
+    private Task<bool> CategoryValid(int subjectId, int? categoryId, CancellationToken ct) =>
         categoryId is null
             ? Task.FromResult(true)
             : db.ExerciseCategories.AnyAsync(c => c.Id == categoryId && c.SubjectId == subjectId, ct);
@@ -116,7 +119,7 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db, Exerc
             : this.ProblemWithCode(ApiErrors.NotOwner, "Only an owner can delete this exercise or manage its permissions.");
 
     /// <summary>Lädt eine Übung dieses Typs inkl. ihrer Grants (für die Rechteprüfung/-anzeige); Basis für abgeleitete Zusatz-Endpunkte.</summary>
-    protected Task<Exercise?> FindAsync(int subjectId, int chapterId, int exerciseId, CancellationToken ct = default) =>
+    protected Task<Exercise?> FindAsync(int subjectId, int chapterId, int exerciseId, CancellationToken ct) =>
         db.Exercises.Include(e => e.Category).Include(e => e.Grants)
             .FirstOrDefaultAsync(e => e.Id == exerciseId && e.ChapterId == chapterId
                 && e.Type == TypeKey && e.Chapter!.SubjectId == subjectId, ct);

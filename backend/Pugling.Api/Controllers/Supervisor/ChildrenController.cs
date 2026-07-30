@@ -78,9 +78,12 @@ public class ChildrenController(PuglingDbContext db, WalletService wallet, Accou
             Pin = string.IsNullOrEmpty(dto.Pin) ? "" : PinHasher.Hash(dto.Pin),
         };
         db.Children.Add(child);
-        await db.SaveChangesAsync(ct);
-        // Betreuung durch den anlegenden Supervisor herstellen (ein Student kann später weitere bekommen).
-        db.SupervisorLinks.Add(new SupervisorLink { SupervisorId = User.AdultId()!.Value, StudentId = child.Id });
+        // Betreuung durch den anlegenden Supervisor herstellen (ein Student kann später weitere bekommen)
+        // – im SELBEN Commit wie das Kind: bräche der Request zwischen zwei SaveChanges ab (Client weg,
+        // Verbindung tot), bliebe ein Kind ohne Link zurück, und das ist für niemanden mehr erreichbar
+        // (List filtert über die Links, jeder Einzelzugriff läuft über ChildOwnershipFilter → 404).
+        // Die StudentId füllt EF aus der Navigation, darum kein zweiter Durchgang für die Id.
+        child.SupervisorLinks.Add(new SupervisorLink { SupervisorId = User.AdultId()!.Value });
         await db.SaveChangesAsync(ct);
         // Login-Konto (Student) sofort anlegen, damit sich das neue Kind einloggen kann.
         await accounts.EnsureForChildAsync(child, ct);

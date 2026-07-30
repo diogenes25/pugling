@@ -132,6 +132,8 @@ builder.Services.AddApiVersioning(o =>
 // RFC-konforme application/problem+json statt nackter Strings. Der CustomizeProblemDetails-Hook läuft
 // für die Middleware-Pfade (UseExceptionHandler/UseStatusCodePages: leere 401/403/404/429, 500) und
 // stempelt dort einen status-basierten Fehler-Code, falls keiner gesetzt ist.
+// Vor dem ProblemDetails-Fallback: ein Client-Abbruch ist kein Serverfehler (siehe Handler).
+builder.Services.AddExceptionHandler<ClientAbortExceptionHandler>();
 builder.Services.AddProblemDetails(o => o.CustomizeProblemDetails = ctx =>
 {
     var status = ctx.ProblemDetails.Status ?? ctx.HttpContext.Response.StatusCode;
@@ -397,12 +399,24 @@ app.UseStaticFiles();
 
 // Eine Zusammenfassungszeile je Request (Methode, Pfad, Status, Dauer) statt der lärmenden
 // Framework-Defaults; angereichert um Identität/TraceId, damit ein 4xx/5xx sofort zuordenbar ist.
-app.UseSerilogRequestLogging(options => options.EnrichDiagnosticContext = (diag, http) =>
+app.UseSerilogRequestLogging(options =>
 {
-    diag.Set("TraceId", System.Diagnostics.Activity.Current?.Id ?? http.TraceIdentifier);
-    if (http.User.FindFirst("fid")?.Value is { } fid) diag.Set("Fid", fid);
-    if (http.User.FindFirst("cid")?.Value is { } cid) diag.Set("Cid", cid);
-    if (http.User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value is { } role) diag.Set("Role", role);
+    options.EnrichDiagnosticContext = (diag, http) =>
+    {
+        diag.Set("TraceId", System.Diagnostics.Activity.Current?.Id ?? http.TraceIdentifier);
+        if (http.User.FindFirst("fid")?.Value is { } fid) diag.Set("Fid", fid);
+        if (http.User.FindFirst("cid")?.Value is { } cid) diag.Set("Cid", cid);
+        if (http.User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value is { } role) diag.Set("Role", role);
+    };
+    // Diese Middleware liegt INNERHALB von UseExceptionHandler, sieht den Abbruch also noch als
+    // Exception – ohne diese Stufe protokollierte sie ihn auf Error, obwohl der Handler ihn danach als
+    // 499 abräumt. Ein weggenavigierter Nutzer soll die Fehlerliste nicht füllen.
+    options.GetLevel = (http, _, ex) =>
+        ex is OperationCanceledException && http.RequestAborted.IsCancellationRequested
+            ? Serilog.Events.LogEventLevel.Debug
+            : ex is not null || http.Response.StatusCode >= StatusCodes.Status500InternalServerError
+                ? Serilog.Events.LogEventLevel.Error
+                : Serilog.Events.LogEventLevel.Information;
 });
 
 using (var scope = app.Services.CreateScope())
