@@ -147,6 +147,11 @@ builder.Services.AddSingleton<Microsoft.AspNetCore.Mvc.Infrastructure.ProblemDet
     CodeStampingProblemDetailsFactory>();
 builder.Services.AddDbContext<PuglingDbContext>(o =>
     o.UseSqlite(builder.Configuration.GetConnectionString("Default") ?? "Data Source=pugling.db"));
+// Die Uhr als Abhängigkeit – bewusst nur dort genutzt, wo eine Regel im Sekunden-Bereich greift (die
+// Anti-Farming-Untergrenze des Schnelle-Antwort-Bonus). Tageslogik bleibt bei `DateTime.UtcNow`: sie ist
+// mit Kalendertagen prüfbar, die Antwortzeit nicht. Ohne diese Naht müsste ein Test zwei Requests binnen
+// einer Sekunde durchbringen und wäre auf einem ausgelasteten Runner ein Flake.
+builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddScoped<ScoringService>();
 builder.Services.AddScoped<WalletService>();
 builder.Services.AddScoped<ShopService>();

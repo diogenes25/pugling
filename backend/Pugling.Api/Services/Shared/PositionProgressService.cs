@@ -122,6 +122,11 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
     /// <summary>
     /// Wertet den Tag aus und schreibt für jede Position mit erreichtem Ziel die Ziel-Punkte einmalig gut
     /// (idempotent je Periode via <see cref="PositionGoalReward"/>). Gibt den aktuellen Tages-Status zurück.
+    /// <para>
+    /// Der Existenz-Check unten ist nur die schnelle Vorprüfung; die <b>Garantie</b> steht im gefilterten
+    /// Unique-Index auf <c>(PlanPositionId, PeriodKey)</c>. Genau wie beim Malus
+    /// (<see cref="SettleClosedPeriodsAsync"/>) darf der nebenläufige Verlierer daran nicht zerbrechen.
+    /// </para>
     /// </summary>
     public async Task<DayOverview> EvaluateAndAwardAsync(StudyPlan plan, DateOnly day, CancellationToken ct = default)
     {
@@ -142,7 +147,22 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
                 Reason = $"[{plan.Title} · {pos.Exercise?.Title}] {(pos.Cadence == GoalCadence.Weekly ? "Wochenziel" : "Tagesziel")} erreicht",
             });
         }
-        await db.SaveChangesAsync(ct);
+
+        try
+        {
+            await db.SaveChangesAsync(ct);
+        }
+        catch (DbUpdateException)
+        {
+            // Zwei gleichzeitige Zielabschlüsse derselben Periode (Doppeltipp auf „Abgeben", zwei offene
+            // Tabs, React-StrictMode-Doppelaufruf) laufen beide durch den Existenz-Check und der Verlierer
+            // in den Unique-Index. Fachlich ist nichts offen: die Belohnung liegt, sie ist je Periode
+            // einmalig, und der Betrag ist derselbe – der Konflikt heißt hier immer „schon gebucht".
+            // Ein durchgereichter Fehler hätte als einzige Wirkung einen 500 auf einen gelungenen Abschluss.
+            // Abhängen, damit ein späteres SaveChanges desselben Requests nicht erneut darüber stolpert;
+            // der Tages-Status unten wird ohnehin frisch aus der Datenbank gelesen.
+            db.ChangeTracker.Clear();
+        }
         return await ComputeDayAsync(plan, day, ct);
     }
 

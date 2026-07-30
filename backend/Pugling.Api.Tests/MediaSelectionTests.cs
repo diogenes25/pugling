@@ -1,6 +1,10 @@
 using System.Net;
 using System.Net.Http.Json;
+using System.Reflection;
 using System.Text.Json;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Pugling.Api.Data;
 
 namespace Pugling.Api.Tests;
 
@@ -131,6 +135,83 @@ public class MediaSelectionTests(PuglingWebAppFactory factory) : IClassFixture<P
 
         // Entscheidend: der einzige Kandidat wurde NICHT verbrannt – die Karte trägt weiter ihr Bild.
         Assert.Equal(before, (await FirstCardAsync(father, setup, SelfAssess)).GetProperty("imageUrl").GetString());
+    }
+
+    /// <summary>
+    /// <b>Punktgleichstand</b> ist der einzige Fall, in dem der Tiebreak überhaupt entscheidet – und genau
+    /// deshalb war die dokumentierte Determinismus-Zusage („kein <c>Random</c>, kein
+    /// <c>string.GetHashCode</c>") unbewacht: keiner der übrigen Tests erzeugt einen Gleichstand
+    /// (docs/testplan.md, Injektion D07). Bildkonstanz <i>ist</i> beim Vokabellernen der Merkeffekt; ein
+    /// zufälliger Tiebreak zerstört ihn für jeden Träger, der noch nicht eingefroren ist.
+    /// <para>
+    /// Der Test räumt zwischen den Runden die Einfrierung weg – sonst prüfte er nur, dass Schritt 3 der
+    /// Kaskade (die eingefrorene Wahl gewinnt) funktioniert, und der Tiebreak käme nie wieder dran.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public async Task Punktgleichstand_WirdDeterministischGebrochen_NichtZufaellig()
+    {
+        var father = await TestApi.FatherAsync(factory);
+        var setup = await ScenarioAsync(father, "auswahl-gleichstand", assetCount: 0);
+
+        // Zwei Darstellungen ohne Tags und mit gleichem redaktionellem Rang: identische Punktzahl (0 –
+        // das Kind hat keine Interessen), identisches Gewicht. Damit hängt die Wahl allein am Tiebreak.
+        foreach (var variant in new[] { "a", "b" })
+        {
+            var assetId = await CreateAssetAsync(father, $"{setup.Marker}_{variant}", $"Variante {variant}", []);
+            (await father.PostAsJsonAsync($"/api/v1/creator/vocabulary/{setup.VocabularyId}/media",
+                new { mediaAssetId = assetId, weight = 0 })).EnsureSuccessStatusCode();
+        }
+
+        var seen = new List<string?>();
+        for (var round = 0; round < 8; round++)
+        {
+            ClearPicks(setup.ChildId);
+            seen.Add((await FirstCardAsync(father, setup, SelfAssess)).GetProperty("imageUrl").GetString());
+        }
+        Assert.Single(seen.Distinct());
+
+        // Gegenprobe gegen einen vakuum-grünen Test: nur wenn wirklich BEIDE Bilder zur Wahl standen, hat
+        // der Tiebreak etwas entschieden. „Anderes Bild" muss also das zweite herausgeben.
+        var other = await father.PostAsJsonAsync($"/api/v1/student/children/{setup.ChildId}/media-picks/reshuffle",
+            new { vocabularyId = setup.VocabularyId });
+        other.EnsureSuccessStatusCode();
+        Assert.DoesNotContain((await other.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("imageUrl").GetString(), seen);
+    }
+
+    /// <summary>
+    /// Die Zusage lautet <b>prozessunabhängig</b> deterministisch, nicht bloß „innerhalb eines Laufs
+    /// gleich". Genau darin unterscheidet sich FNV-1a von <c>string.GetHashCode</c>, dessen Startwert pro
+    /// Prozess randomisiert ist: ein Neustart verschöbe die Wahl jedes noch nicht eingefrorenen Trägers.
+    /// Ein Vergleich zweier Aufrufe im selben Prozess kann das nicht zeigen – festgeschriebene Goldwerte
+    /// können es. Fällt dieser Test, hat sich der Hash geändert und mit ihm die Bildwahl aller Kinder,
+    /// deren Träger noch nicht eingefroren sind.
+    /// </summary>
+    [Fact]
+    public void Tiebreak_LiefertFestgeschriebeneGoldwerte()
+    {
+        Assert.Equal(467997332u, Tiebreak(1, 1, 1));
+        Assert.Equal(2034659765u, Tiebreak(1, 2, 3));
+        Assert.Equal(3601875931u, Tiebreak(7, 42, 99));
+    }
+
+    /// <summary>Räumt die eingefrorenen Bildwahlen eines Kindes weg, damit die Auswahl erneut rechnet.</summary>
+    private void ClearPicks(int childId)
+    {
+        using var scope = factory.Services.CreateScope();
+        scope.ServiceProvider.GetRequiredService<PuglingDbContext>()
+            .ChildMediaPicks.Where(p => p.ChildId == childId).ExecuteDelete();
+    }
+
+    /// <summary>
+    /// Der Tiebreak ist privat (er gehört niemandem außer der Auswahl) – für die Goldwerte wird er
+    /// reflexiv gerufen. Verschwindet er, soll dieser Test laut scheitern und nicht still verschwinden.
+    /// </summary>
+    private static uint Tiebreak(int childId, int carrierId, int assetId)
+    {
+        var method = typeof(MediaSelector).GetMethod("StableTiebreak", BindingFlags.NonPublic | BindingFlags.Static);
+        Assert.NotNull(method);
+        return (uint)method.Invoke(null, [childId, carrierId, assetId])!;
     }
 
     /// <summary>

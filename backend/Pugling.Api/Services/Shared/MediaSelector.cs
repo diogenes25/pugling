@@ -113,6 +113,12 @@ public class MediaSelector(PuglingDbContext db, ILogger<MediaSelector> logger)
         var current = context.ActivePick(carrier, carrierId);
         // Erst prüfen, ob es überhaupt eine Alternative gibt – sonst würde die Ablehnung den einzigen
         // Kandidaten verbrennen und die Karte dauerhaft bildlos machen.
+        // Der Guard ist heute *nicht* die einzige Schranke: fällt er weg, findet die Neuwahl unten nichts
+        // mehr und steigt vor SaveFreezeAsync aus – die Ablehnung bleibt ungespeichert, das Verhalten also
+        // gleich. Genau darum blieb seine Entfernung in der Defektinjektion grün (docs/testplan.md, B02):
+        // API-seitig ist er nicht beobachtbar und darum auch nicht testbar. Er bleibt trotzdem stehen und
+        // ist Voraussetzung, nicht Zierde: wer unten ein SaveChanges vorzieht, verbrennt ohne ihn sofort
+        // den letzten Kandidaten – und dann führt kein API-Weg zurück.
         var alternatives = links
             .Where(l => l.MediaAssetId != current?.MediaAssetId)
             .Where(l => Eligible(context, l, purpose))

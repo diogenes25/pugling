@@ -27,9 +27,9 @@ public class ExerciseGrantsTests(PuglingWebAppFactory factory) : IClassFixture<P
         return (subjectId, chapterId, exerciseId);
     }
 
-    private static object VocabPayload(bool executePublic = true) => new
+    private static object VocabPayload(bool executePublic = true, string title = "Wörter") => new
     {
-        title = "Wörter",
+        title,
         orderIndex = 1,
         rewardPoints = 10,
         executePublic,
@@ -164,6 +164,12 @@ public class ExerciseGrantsTests(PuglingWebAppFactory factory) : IClassFixture<P
 
         var ok = await f2.PostAsJsonAsync($"/api/v1/supervisor/study-plans/{planId}/positions", new { exerciseId });
         Assert.Equal(HttpStatusCode.Created, ok.StatusCode);
+
+        // „Zuweisbar" heißt: die Position hängt danach auch am Plan und auf der richtigen Übung. Der 201
+        // allein belegt nur, dass das Execute-Gate nicht zugeschlagen hat (docs/testplan.md, Etappe 1a).
+        var positions = await f2.GetFromJsonAsync<List<JsonElement>>(
+            $"/api/v1/supervisor/study-plans/{planId}/positions");
+        Assert.Contains(positions!, p => p.GetProperty("exerciseId").GetInt32() == exerciseId);
     }
 
     [Fact]
@@ -176,8 +182,16 @@ public class ExerciseGrantsTests(PuglingWebAppFactory factory) : IClassFixture<P
         var admin = await TestApi.FatherAsync(factory, adminId, "9999");
         var url = $"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/vocabulary/{exerciseId}";
 
-        Assert.Equal(HttpStatusCode.OK, (await admin.PutAsJsonAsync(url, VocabPayload())).StatusCode);
+        // Mit GEÄNDERTEM Titel schreiben und ihn zurücklesen: ein PUT, der die Übung unangetastet lässt,
+        // antwortet ebenfalls mit 200. Vorher schickte der Test dieselben Werte, die schon drinstanden –
+        // der Erfolgsstatus war zugesichert, der Effekt nie nachgelesen (docs/testplan.md, Etappe 1a).
+        Assert.Equal(HttpStatusCode.OK,
+            (await admin.PutAsJsonAsync(url, VocabPayload(title: "Vom Admin geändert"))).StatusCode);
+        var changed = await admin.GetFromJsonAsync<JsonElement>(url);
+        Assert.Equal("Vom Admin geändert", changed.GetProperty("title").GetString());
+
         Assert.Equal(HttpStatusCode.NoContent, (await admin.DeleteAsync(url)).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await admin.GetAsync(url)).StatusCode);
     }
 
     [Fact]
@@ -194,7 +208,10 @@ public class ExerciseGrantsTests(PuglingWebAppFactory factory) : IClassFixture<P
         var adminId = await RegisterFatherAsync("9999");
         MakeAdmin(adminId);
         var admin = await TestApi.FatherAsync(factory, adminId, "9999");
-        Assert.Equal(HttpStatusCode.OK, (await admin.PutAsJsonAsync(url, VocabPayload())).StatusCode);
+        Assert.Equal(HttpStatusCode.OK,
+            (await admin.PutAsJsonAsync(url, VocabPayload(title: "Adoptiert"))).StatusCode);
+        // Und die Änderung steht auch drin – sonst belegte der Test nur, dass der Admin nicht abgewiesen wird.
+        Assert.Equal("Adoptiert", (await admin.GetFromJsonAsync<JsonElement>(url)).GetProperty("title").GetString());
     }
 
     /// <summary>

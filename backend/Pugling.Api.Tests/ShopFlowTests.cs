@@ -104,6 +104,59 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
     }
 
     /// <summary>
+    /// Der Kauf-Beleg friert einen <b>Titel</b> ein: den des Angebots, wenn es einen eigenen trägt, sonst
+    /// den des Artikels. Der Rückfall ist der Punkt – ein Angebot <i>darf</i> titellos sein (dann ist es
+    /// einfach „der Artikel zu diesem Preis"), und ohne ihn stünde in der Kaufhistorie eine namenlose
+    /// Zeile, die niemand mehr zuordnen kann (docs/testplan.md, Injektion B12).
+    /// <para>
+    /// Beide Fälle gehören in denselben Test: eine Fallunterscheidung, von der nur ein Zweig geprüft ist,
+    /// lässt sich lautlos zu einer Konstante flachdrücken.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public async Task KaufBeleg_NimmtDenAngebotsTitel_UndSonstDenDesArtikels()
+    {
+        var father = await TestApi.FatherAsync(factory);
+        var (childId, child) = await FreshChildAsync(father, "9303");
+        var articleId = await CreateArticleAsync(father, new
+        {
+            articleNumber = "TITEL-001",
+            title = "Fernsehen",
+            unitType = "Minute",
+            actionType = "TV",
+        });
+        // Ohne eigenen Titel – der Beleg muss „Fernsehen" erben.
+        var untitled = await CreateListingAsync(father, articleId, new
+        {
+            coinPrice = 10,
+            unitsPerPurchase = 15,
+            currentStock = 1,
+            maxStock = 1,
+        });
+        // Mit eigenem Titel – er muss gewinnen.
+        var titled = await CreateListingAsync(father, articleId, new
+        {
+            title = "30 Minuten Fernsehen",
+            coinPrice = 10,
+            unitsPerPurchase = 30,
+            currentStock = 1,
+            maxStock = 1,
+        });
+
+        (await father.PostAsJsonAsync($"/api/v1/supervisor/children/{childId}/points", new { amount = 100, reason = "Coins" }))
+            .EnsureSuccessStatusCode();
+        await JsonAsync(await child.PostAsJsonAsync($"/api/v1/student/me/shop/listings/{untitled}/purchase", new { }));
+        var view = await JsonAsync(await child.PostAsJsonAsync($"/api/v1/student/me/shop/listings/{titled}/purchase", new { }));
+
+        string TitleOf(int listingId) => view.GetProperty("purchases").EnumerateArray()
+            .Single(p => p.GetProperty("shopListingId").GetInt32() == listingId)
+            .GetProperty("title").GetString()!;
+
+        Assert.Equal("Fernsehen", TitleOf(untitled));
+        Assert.Equal("30 Minuten Fernsehen", TitleOf(titled));
+    }
+
+    /// <summary>
     /// Ein gekaufter Artikel erscheint im dedizierten Sohn-Bestand (<c>GET me/shop/inventory</c>) –
     /// dem Gegenstück zum Aktivierungs-POST; die Gesamtzahl steht im Header <c>X-Total-Count</c>.
     /// </summary>

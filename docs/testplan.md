@@ -318,7 +318,7 @@ aber kein Name trifft die Regel; „unbewacht" = grün.
 | D14 | dok. | `TextbooksController.cs:140` | `unit.SeriesId != seriesId` → `==` | 10 | gepinnt | `CreatorProfileTests.Eine_Unit_aus_fremder_Reihe_am_Lehrbuch_wird_abgewiesen` |
 | D15 | dok. | `CreatorProfileService.cs:18` | `WeightSeries` 8 → 4 | 0 | **unbewacht** | – |
 | B01 | blind | `MediaSelector.cs:88` | `RemoveRange(Superseded)` entfernt | 0 | **unbewacht** | – |
-| B02 | blind | `MediaSelector.cs:120` | Alternativen-Guard zu breit | 0 | **unbewacht** | – |
+| B02 | blind | `MediaSelector.cs:120` | Alternativen-Guard zu breit | 0 | **unbewacht** (redundant, s. u. – 2026-07-30 umgestuft) | – |
 | B03 | blind | `MediaSelector.cs:207` | `==` → `!=` bei der eingefrorenen Wahl | 3 | gepinnt | `MediaSelectionTests.DieWahlBleibtStabil_AuchWennSpaeterEinBesseresBildDazukommt` |
 | B04 | blind | `MediaSelector.cs:282` | Träger-Ternäre in `NewPick` vertauscht | 3 | gepinnt | `MediaSelectionTests.OhneAlternative_BleibtDasBildStehen_StattZuVerschwinden` |
 | B05 | blind | `PositionProgressService.cs:59` | Prüfmodus-Weiche invertiert | 3 | gepinnt | `PositionGoalOverviewTests.BestandenerPositionsTest_ErfuelltTagesziel_…` |
@@ -398,17 +398,32 @@ Nicht jedes „grün" ist eine Lücke. Drei Klassen:
 3. **B01 · `MediaSelector.cs:88`.** Das nicht gelöschte `Superseded` hinterlässt eine Waisen-Zeile; der
    nächste Abruf zieht sie erneut zurück und `SaveFreezeAsync` verschluckt den Index-Konflikt bewusst. Kein
    beobachtbarer Effekt – genau das, was der Kommentar dort behauptet.
+4. **B02 · `MediaSelector.cs:120` – nachträglich hierher umgestuft (2026-07-30).** Stand ursprünglich als
+   Rang 1 der Restliste unten, und zwar falsch. Beim Versuch, den vorgeschlagenen Test zu schreiben, fiel auf:
+   der Guard ist **nicht beobachtbar**. Fällt er weg, wird die aktuelle Wahl zwar auf `Rejected` gesetzt, aber
+   die anschließende Neuwahl findet nichts mehr und `ReshuffleAsync` steigt bei `chosen is null` **vor**
+   `SaveFreezeAsync` aus – die Ablehnung wird nie geschrieben. Beide Endpunkte
+   (`ChildMediaPicksController`, `PositionPracticeController.ReshuffleImage`) antworten danach `409` ohne
+   eigenes `SaveChanges`. Der Fall „genau ein Kandidat" ist von
+   `MediaSelectionTests.OhneAlternative_BleibtDasBildStehen_StattZuVerschwinden` bereits vollständig
+   abgedeckt – der Test war unter der Injektion grün, weil es **nichts zu sehen** gab, nicht weil er
+   wegsah. Der Guard bleibt trotzdem stehen (er ist Voraussetzung, sobald jemand ein `SaveChanges` vorzieht);
+   der Grund steht jetzt im Kommentar an der Stelle. Nachgemessen, nicht vermutet: Injektion erneut gesetzt,
+   alle 48 Medien-Tests grün.
 
 #### (c) Echte Lücke ohne Geldwirkung – benannte Restliste, nach Schadenshöhe
 
-| Rang | Stelle | Was unbemerkt durchgeht |
-|---|---|---|
-| 1 | **B02** `MediaSelector.cs:120` | „Anderes Bild" verbrennt den **einzigen** Kandidaten → die Karte ist für dieses Kind **dauerhaft** bildlos, ohne Weg zurück über die API. Genau der Schaden, den der Kommentar an der Stelle abwenden will. |
-| 2 | **D07** `MediaSelector.cs:275` | Der Tiebreak darf zufällig werden. Kein Test erzeugt einen Punktgleichstand, also ist die dokumentierte Determinismus-Zusage („kein `Random`, kein `GetHashCode`") unbewacht – und Bildkonstanz *ist* laut `CLAUDE.md` der Merkeffekt. |
-| 3 | **D15** `CreatorProfileService.cs:18` | Die Gewichtung `Reihe 8 > Fach 4` darf zum Gleichstand flachgedrückt werden. Die dokumentierte Rangfolge ist nirgends festgenagelt; nur „ein Profil gewinnt" ist geprüft. |
-| 4 | **B12** `ShopService.cs:177` | Der Kauf-Beleg (`ShopPurchase.Title`) kann leer werden, wenn das Angebot keinen eigenen Titel trägt – der Vater sieht in der Kaufhistorie eine namenlose Zeile. |
-| 5 | **B08** `PositionProgressService.cs:228` | Der Ledger-Text verwechselt „Tagesziel" und „Wochenziel". Sichtbar im Punkte-Verlauf des Kindes, keine Buchung falsch. |
-| 6 | **B06** `PositionProgressService.cs:129` | Positionen mit `PointsGoalMet == 0` bekommen eine Reward-Zeile und eine Ledger-Buchung über **0** Münzen. Saldo unverändert, aber Rauschen in Verlauf und Auswertung. |
+**Stand 2026-07-30: abgearbeitet.** Alle fünf verbliebenen Ränge sind geschlossen, jeder mit Gegenprobe
+(Injektion erneut gesetzt, zuständiger Test rot). B02 ist nach (b) umgestuft – siehe dort.
+
+| Rang | Stelle | Was unbemerkt durchging | jetzt gepinnt von |
+|---|---|---|---|
+| ~~1~~ | **B02** `MediaSelector.cs:120` | – *umgestuft nach (b): nicht beobachtbar, kein Loch* | – |
+| 2 | **D07** `MediaSelector.cs:275` | Der Tiebreak darf zufällig werden. Kein Test erzeugt einen Punktgleichstand, also ist die dokumentierte Determinismus-Zusage („kein `Random`, kein `GetHashCode`") unbewacht – und Bildkonstanz *ist* laut `CLAUDE.md` der Merkeffekt. | `MediaSelectionTests.Punktgleichstand_WirdDeterministischGebrochen_NichtZufaellig` (+ `Tiebreak_LiefertFestgeschriebeneGoldwerte` für die **prozessunabhängige** Zusage, die ein Vergleich im selben Prozess nicht zeigen kann) |
+| 3 | **D15** `CreatorProfileService.cs:18` | Die Gewichtung `Reihe 8 > Fach 4` darf zum Gleichstand flachgedrückt werden. Die dokumentierte Rangfolge ist nirgends festgenagelt; nur „ein Profil gewinnt" ist geprüft. | `CreatorProfileTests.Das_Matching_haelt_die_Rangfolge_der_Gewichte_ein` – pinnt die tragende Aussage: **Reihe allein schlägt Fach + Stufe + Schulart zusammen** (8 > 7) |
+| 4 | **B12** `ShopService.cs:177` | Der Kauf-Beleg (`ShopPurchase.Title`) kann leer werden, wenn das Angebot keinen eigenen Titel trägt – der Vater sieht in der Kaufhistorie eine namenlose Zeile. | `ShopFlowTests.KaufBeleg_NimmtDenAngebotsTitel_UndSonstDenDesArtikels` (beide Zweige, sonst lässt sich die Weiche zur Konstante flachdrücken) |
+| 5 | **B08** `PositionProgressService.cs:228` | Der Ledger-Text verwechselt „Tagesziel" und „Wochenziel". Sichtbar im Punkte-Verlauf des Kindes, keine Buchung falsch. | `PflichtMalusTests.MalusBuchungstext_BenenntTagesZielUndWochenziel_JeweilsRichtig` – Zuordnung über den Plan-Titel im Text; zwei getrennte „irgendwo steht Tagesziel"-Prüfungen wären gegen die Vertauschung blind |
+| 6 | **B06** `PositionProgressService.cs:129` | Positionen mit `PointsGoalMet == 0` bekommen eine Reward-Zeile und eine Ledger-Buchung über **0** Münzen. Saldo unverändert, aber Rauschen in Verlauf und Auswertung. | `PositionGoalOverviewTests.ZielOhnePunkte_ErfuelltDiePflicht_BuchtAberNichts` |
 
 ### Etappe 1a – die flachen Zusicherungen: **8**, wie geschätzt
 
@@ -429,6 +444,12 @@ bleiben **8** Tests, die einen Erfolg zusichern, ohne ihn irgendwo nachzulesen:
 | `ExerciseGrantsTests.Admin_KannVerwaisteUebungBearbeiten_AutorNichtMehr` | `200` | ob die Änderung wirkte |
 
 Die Zahl **96 aus dem Plan-Entwurf war zu hoch, die Korrektur auf „~8" trifft**: gemessen genau 8.
+
+**Stand 2026-07-30: alle acht behoben** (Nr. 1 im zweiten Commit, die übrigen sieben im dritten). Jeder liest
+seinen Effekt jetzt nach – die Sitzung liefert wirklich eine Karte, die Position hängt wirklich am Plan, der
+`PUT` schreibt einen **geänderten** Titel und der wird zurückgelesen. Letzteres war die eigentliche Lücke bei
+den beiden Admin-Tests: sie schickten die Werte, die schon drinstanden, ein wirkungsloser `PUT` hätte
+ebenfalls `200` geliefert.
 
 ### Etappe 1b – Tautologien: **keine gefunden**
 
@@ -486,6 +507,16 @@ bei drei parallel laufenden Suiten auf 20 Kernen reißt das. Das ist kein Produk
 Fragilität des Tests – auf einem langsamen oder ausgelasteten CI-Runner wird sie zum Flake. Der saubere Weg
 wäre, die gemessene Zeit einzuspeisen statt sie zu erwarten; hier nur gemeldet, nicht behoben.
 
+**Behoben 2026-07-30 (dritter Commit).** Die Naht ist ein injizierter `TimeProvider`: `Program.cs` registriert
+`TimeProvider.System`, `PositionPracticeController` nimmt ihn und stempelt damit **sowohl** `ReviewEvent.At`
+**als auch** die gemessene Antwortzeit – beides muss aus derselben Uhr kommen, sonst vergleicht man Äpfel mit
+Birnen. Im Testhost ersetzt `PuglingWebAppFactory.Clock` (`TestClock`) ihn; die Uhr ist standardmäßig
+**durchreichend**, nur `SpeedBonusTests` friert sie ein und rückt sie selbst vor. Bewusst so klein: die
+Tageslogik bleibt bei `DateTime.UtcNow`, denn sie ist mit Kalendertagen prüfbar – die Antwortzeit nicht.
+Nebeneffekt: die beiden `Task.Delay(1200)` sind weg, und die Untergrenze ist jetzt **an** ihrer Grenze
+gepinnt (900 ms → kein Bonus, 1000 ms → Bonus) statt nur einseitig. Gegenprobe: `MinSpeedSeconds` auf 0,5
+gesetzt → der 900-ms-Fall fällt.
+
 ### Die E2E-Specs – der Satz, präziser als im Plan
 
 Der Plan schreibt, die 10 Playwright-Specs unter `frontend/e2e/` „laufen in keiner CI und verhindern darum
@@ -517,6 +548,33 @@ nicht sofort blocken. Das Skript der Messung liegt bereit; **bewusst nicht** in 
 gestellt, weil der Plan „kein Umbau der Suite" sagt und die Heuristik (25 Rohtreffer → 8 echte) noch zu
 grob für ein hartes Tor ist.
 
+#### Entscheidung 2026-07-30: **kein Wächter.** Nachgemessen statt geschätzt
+
+Die offene Frage lautete nicht „bauen oder nicht", sondern: **lässt sich die Heuristik auf die echten Fälle
+verengen, ohne eine Ausnahmeliste zu pflegen?** Antwort: nein. Gemessen auf dem Stand vor der Reparatur:
+
+| Verengung | Treffer | davon echt | davon verloren |
+|---|---|---|---|
+| Roh (Schreibpfad + Erfolgsstatus + kein Nachlesen) | 24 | 7 | – |
+| + Folgestatus als Beleg ausgenommen (`204`→`404`, `201`→`409`) | **8** | 6 | 1 |
+| + Id-/`GetFromJsonAsync`-Vergleich ausgenommen | 5 | 3 | 4 |
+| + Fehlercode-/Header-/Textprüfung ausgenommen | 3 | 3 | 4 |
+
+Keine Stufe erreicht gleichzeitig brauchbare Genauigkeit **und** Vollständigkeit: bei 8 Treffern sind 2 falsch
+und einer fehlt; wer die beiden Falschen wegfiltert, verliert vier echte. Ein Tor mit dieser Kennlinie
+produziert Ausnahmen statt Qualität – genau das, was [codequalitaet-gates-plan.md](codequalitaet-gates-plan.md)
+vermeiden will.
+
+Der zweite, härtere Grund kam erst nach der Reparatur heraus: zwei der reparierten Tests **bleiben** in der
+Trefferliste, weil ihr Nachlesen in einen gemeinsamen Helfer gewandert ist (`AssertPositionOnPlanAsync`). Die
+Heuristik sieht nur den Methodenrumpf und kann „liest über einen Helfer nach" nicht von „liest nie nach"
+unterscheiden – **dieselbe** Blindheit, die im Projekt schon für CA2016 und tokenlose Helfer dokumentiert ist
+(`CLAUDE.md`, „Mechanische Tore statt Disziplin"). Ein Tor, das die saubere Refaktorierung bestraft und die
+Lücke durchlässt, ist das falsche Werkzeug.
+
+Also: die sieben Altlasten **einzeln repariert** (eine bis drei Zeilen je Test), Skript verworfen. Die
+Fehlerklasse bleibt als Prüffrage im Review, nicht als Tor.
+
 ### Was der zweite Commit nachgezogen hat
 
 Bewusst begrenzt auf **Geldwirkung** plus den 1c-Selbstschutz; alles andere steht oben als benannte Restliste.
@@ -532,6 +590,44 @@ Vier Änderungen, alle in `Pugling.Api.Tests` – **kein Produktivcode**:
 **Gegenprobe gefahren, nicht angenommen:** jede der vier Injektionen wurde in einem eigenen Worktree erneut
 eingesetzt und der zuständige Test einzeln gefahren – **alle vier wurden rot**. Ohne diesen Schritt wären es
 Tests, von denen niemand weiß, ob sie etwas festhalten. Danach die volle Suite grün.
+
+### Was der dritte Commit nachgezogen hat (2026-07-30)
+
+Die Nacharbeit nach [testaudit-nacharbeit-plan.md](testaudit-nacharbeit-plan.md) – die dort benannte Restliste
+ist damit leer. **Ein** Produktivcode-Fund, der Rest Tests. Stand danach: **597/597 grün, 268/268 Actions,
+Build warnungsfrei, `dotnet format` sauber.**
+
+| # | Änderung | pinnt / behebt |
+|---|---|---|
+| 1 | `PositionProgressService.EvaluateAndAwardAsync`: `catch (DbUpdateException)` + `ChangeTracker.Clear()` (**Produktivcode**) | der nebenläufige Verlierer eines Zielabschlusses bekam einen **500** auf einen gelungenen Abschluss – beim Malus war derselbe Fall längst als „gutartig" ausformuliert |
+| 2 | `PositionGoalOverviewTests.NebenlaeufigeZielbuchung_VerliertDasRennen_…` (neu) | Nr. 1, **deterministisch** – siehe unten |
+| 3 | `MediaSelectionTests` × 2 (neu) | **D07** Determinismus des Tiebreaks, in-process *und* prozessunabhängig |
+| 4 | `CreatorProfileTests.Das_Matching_haelt_die_Rangfolge_der_Gewichte_ein` (neu) | **D15** |
+| 5 | `ShopFlowTests.KaufBeleg_…` (neu) | **B12** |
+| 6 | `PflichtMalusTests.MalusBuchungstext_…` (neu) | **B08** |
+| 7 | `PositionGoalOverviewTests.ZielOhnePunkte_…` (neu) | **B06** |
+| 8 | `TimeProvider`-Naht + `TestClock`, `SpeedBonusTests` neu geschrieben | der wanduhr-abhängige Test (Etappe 4, Nebenfund) |
+| 9 | sieben Tests in `AntiCheatTests`/`EmptyExerciseGuardTests`/`ExerciseGrantsTests` erweitert | die flachen Zusicherungen aus Etappe 1a |
+| 10 | Kommentar an `MediaSelector.cs:120` | hält fest, **warum** B02 nicht testbar ist – damit niemand denselben Weg noch einmal geht |
+
+**Zwei Abweichungen von der Vorlage, beide bewusst:**
+
+1. **B02 wurde nicht getestet, sondern umgestuft.** Der vorgeschlagene Test existiert längst und kann die
+   Injektion prinzipiell nicht fangen (Begründung unter (b)). Ein Test zu schreiben, der nicht fallen *kann*,
+   wäre schlechter als keiner: er behauptet eine Absicherung.
+2. **Der Nebenläufigkeits-Test schickt keine zwei parallelen Submits.** Das Fenster zwischen Existenzprüfung
+   und `SaveChanges` ist Bruchteile einer Millisekunde breit; zwei parallele HTTP-Requests treffen es fast nie,
+   der Test wäre grün geblieben, **ohne den Pfad je zu betreten** – dieselbe Sorte Scheinsicherheit wie eine
+   flache Zusicherung. Stattdessen wird der Zustand des Verlierers hergestellt: die Belohnung ist vom echten
+   Gewinner (einem bestandenen Test über HTTP) festgeschrieben, ein zweiter Kontext hält die Buchung noch
+   ungespeichert vor. Der Konflikt tritt damit **immer** ein. Gegenprobe: ohne den `catch` wird der Test rot
+   (`SqliteException: UNIQUE constraint failed`).
+
+**Offene Frage der Vorlage beantwortet:** „Ist der 500 je real aufgetreten?" – **nein.** In den 14
+Logtagen unter `backend/Pugling.Api/logs/` steht kein einziger 500 auf einem Test-/Overview-Pfad. Die 108
+gefundenen 500 sind `supervisor/children/daily-overview` und alle vom selben Typ: `TaskCanceledException`
+durch Client-Abbruch, sämtlich **vor** `179cc06` („Client-Abbruch ist kein Serverfehler") – heute wären es
+499 ohne Fehler-Log. Also blieb die Reihenfolge der Vorlage richtig: erst der Fix, dann die Tests.
 
 ### Verifikation dieses Vorgangs
 

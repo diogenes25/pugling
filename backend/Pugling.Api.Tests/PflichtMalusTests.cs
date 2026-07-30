@@ -20,18 +20,19 @@ public class PflichtMalusTests(PuglingWebAppFactory factory) : IClassFixture<Pug
         return await res.Content.ReadFromJsonAsync<JsonElement>();
     }
 
-    /// <summary>Seedet direkt einen Plan mit einer Tagespflicht-Position samt Malus und (ggf. vergangenem) Start.</summary>
+    /// <summary>Seedet direkt einen Plan mit einer Pflicht-Position samt Malus und (ggf. vergangenem) Start.</summary>
     private static (int planId, int positionId) SeedPenaltyPlan(PuglingWebAppFactory f, int childId, int exerciseId,
-        DateOnly start, int penaltyCoins, bool active = true)
+        DateOnly start, int penaltyCoins, bool active = true, GoalCadence cadence = GoalCadence.Daily,
+        string title = "Malus-Plan", int durationDays = 10)
     {
         using var scope = f.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
-        var plan = new StudyPlan { ChildId = childId, Title = "Malus-Plan", StartDate = start, EndDate = start.AddDays(10), Active = active };
+        var plan = new StudyPlan { ChildId = childId, Title = title, StartDate = start, EndDate = start.AddDays(durationDays), Active = active };
         plan.Positions.Add(new PlanPosition
         {
             ExerciseId = exerciseId,
             Order = 0,
-            Cadence = GoalCadence.Daily,
+            Cadence = cadence,
             PointsGoalMet = 20,
             PenaltyCoins = penaltyCoins,
             UseLeitner = true,
@@ -80,6 +81,44 @@ public class PflichtMalusTests(PuglingWebAppFactory factory) : IClassFixture<Pug
         var childAgain = await TestApi.ChildAsync(factory, childId, "7001");
         var wallet2 = await JsonAsync(await childAgain.GetAsync("/api/v1/student/me/points"));
         Assert.Equal(-40, wallet2.GetProperty("coins").GetInt32());
+    }
+
+    /// <summary>
+    /// Der Buchungstext des Malus benennt den <b>Rhythmus</b> der gerissenen Pflicht – „Tagesziel" bzw.
+    /// „Wochenziel". Das ist alles, was das Kind im Punkte-Verlauf über den Abzug erfährt; sind die beiden
+    /// vertauscht, ist keine Buchung falsch, aber die Begründung eine Lüge (docs/testplan.md, Injektion B08).
+    /// <para>
+    /// Beide Rhythmen laufen in <b>einem</b> Test gegen <b>ein</b> Kind, und die Zuordnung geht über den
+    /// Plan-Titel im Text. Zwei getrennte Prüfungen „irgendein Eintrag sagt Tagesziel" und „irgendeiner sagt
+    /// Wochenziel" wären gegen genau die Vertauschung blind, die hier gemeint ist – beide Texte kämen ja vor.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public async Task MalusBuchungstext_BenenntTagesZielUndWochenziel_JeweilsRichtig()
+    {
+        var father = await TestApi.FatherAsync(factory);
+        var exerciseId = await TestApi.CreateVocabExerciseAsync(father);
+        var childId = await FreshChildIdAsync(father, "7004");
+
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        SeedPenaltyPlan(factory, childId, exerciseId, today.AddDays(-2), penaltyCoins: 5, title: "Tages-Plan");
+        // Eine Woche zählt erst als gerissen, wenn sie voll abgeschlossen ist (Sonntag < heute) – der Start
+        // liegt darum 14 Tage zurück, damit mindestens eine geschlossene Woche in der Laufzeit liegt.
+        SeedPenaltyPlan(factory, childId, exerciseId, today.AddDays(-14), penaltyCoins: 7,
+            cadence: GoalCadence.Weekly, title: "Wochen-Plan", durationDays: 20);
+
+        var child = await TestApi.ChildAsync(factory, childId, "7004");
+        var entries = await JsonAsync(await child.GetAsync("/api/v1/student/me/points/entries"));
+        var reasons = entries.EnumerateArray()
+            .Where(e => e.GetProperty("kind").GetString() == "GoalPenalty")
+            .Select(e => e.GetProperty("reason").GetString()!)
+            .ToList();
+
+        Assert.All(reasons.Where(r => r.Contains("[Tages-Plan")), r => Assert.Contains("Tagesziel gerissen", r));
+        Assert.All(reasons.Where(r => r.Contains("[Wochen-Plan")), r => Assert.Contains("Wochenziel gerissen", r));
+        // Nicht vakuum-grün: beide Rhythmen müssen überhaupt abgerechnet worden sein.
+        Assert.Contains(reasons, r => r.Contains("[Tages-Plan"));
+        Assert.Contains(reasons, r => r.Contains("[Wochen-Plan"));
     }
 
     [Fact]

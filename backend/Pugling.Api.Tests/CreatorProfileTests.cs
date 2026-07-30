@@ -220,6 +220,87 @@ public class CreatorProfileTests(PuglingWebAppFactory factory) : IClassFixture<P
     }
 
     /// <summary>
+    /// Die <b>Rangfolge der Gewichte</b> – Reihe 8 &gt; Fach 4 &gt; Klassenstufe 2 &gt; Schulart 1 – ist die
+    /// eigentliche fachliche Aussage des Matchings, war aber nirgends festgenagelt: geprüft war nur, <i>dass</i>
+    /// ein Profil gewinnt, nicht <i>warum</i>. Die Gewichte durften darum flachgedrückt werden, ohne dass ein
+    /// Test fiel (docs/testplan.md, Injektion D15).
+    /// <para>
+    /// Der Kern ist nicht „8 ist größer als 4", sondern: <b>die Reihe allein schlägt alles andere zusammen</b>
+    /// (8 &gt; 4 + 2 + 1). Nur die Reihe verrät, ob der Creator das konkrete Material kennt; Fach, Stufe und
+    /// Schulart treffen bloß das Regal. Genau um einen Punkt – wer an den Gewichten dreht, kippt das.
+    /// </para>
+    /// Das schwächere Profil wird jeweils <b>zuerst</b> angelegt: bei Gleichstand entscheidet die Id
+    /// aufsteigend, ein flachgedrücktes Gewicht dreht damit die Reihenfolge und der Test fällt. Wäre es
+    /// umgekehrt, bliebe er auch beim Gleichstand grün.
+    /// </summary>
+    [Fact]
+    public async Task Das_Matching_haelt_die_Rangfolge_der_Gewichte_ein()
+    {
+        var creator = await TestApi.FatherAsync(factory);
+        var subjectId = await TestApi.IdAsync(
+            await creator.PostAsJsonAsync("/api/v1/creator/subjects", new { name = $"Englisch {Guid.NewGuid():N}" }));
+        var seriesId = await CreateSeriesAsync(creator, "Access", subjectId: subjectId);
+
+        var childId = await TestApi.IdAsync(await creator.PostAsJsonAsync("/api/v1/supervisor/children", new
+        {
+            name = "Gewichte-Kind",
+            pin = "8214",
+            grade = 8,
+            schoolType = "Gymnasium",
+        }));
+        (await creator.PostAsJsonAsync($"/api/v1/supervisor/children/{childId}/textbooks", new
+        {
+            title = "Access 8",
+            subjectName = "Englisch",
+            subjectId,
+            seriesId,
+        })).EnsureSuccessStatusCode();
+
+        // Fach + Klassenstufe + Schulart, aber die falsche Reihe: 4 + 2 + 1 = 7.
+        var allesAusserReihe = await CreateWeightedProfileAsync(creator, "Fach+Stufe+Schulart",
+            subjectId: subjectId, seriesId: null, gradeMin: 7, gradeMax: 9, schoolTypes: "Gymnasium");
+        // Nur die Reihe: 8. Muss trotzdem vorn stehen.
+        var nurReihe = await CreateWeightedProfileAsync(creator, "Nur Reihe",
+            subjectId: null, seriesId: seriesId, gradeMin: null, gradeMax: null, schoolTypes: null);
+
+        // Klassenstufe (2) gegen Schulart (1) – dasselbe Muster eine Ebene tiefer.
+        var nurSchulart = await CreateWeightedProfileAsync(creator, "Nur Schulart",
+            subjectId: null, seriesId: null, gradeMin: null, gradeMax: null, schoolTypes: "Gymnasium");
+        var nurStufe = await CreateWeightedProfileAsync(creator, "Nur Stufe",
+            subjectId: null, seriesId: null, gradeMin: 7, gradeMax: 9, schoolTypes: null);
+
+        var ranked = (await creator.GetFromJsonAsync<JsonElement>(
+            $"{ProfileRoot}/match?childId={childId}&subjectId={subjectId}")).EnumerateArray().ToList();
+        var ids = ranked.Select(m => m.GetProperty("profile").GetProperty("id").GetInt32()).ToList();
+        int ScoreOf(int id) => ranked[ids.IndexOf(id)].GetProperty("score").GetInt32();
+
+        Assert.Equal(8, ScoreOf(nurReihe));
+        Assert.Equal(7, ScoreOf(allesAusserReihe));
+        Assert.Equal(2, ScoreOf(nurStufe));
+        Assert.Equal(1, ScoreOf(nurSchulart));
+
+        // Und die Punkte müssen die Sortierung auch tatsächlich tragen (die Liste kommt „bestes zuerst").
+        Assert.True(ids.IndexOf(nurReihe) < ids.IndexOf(allesAusserReihe));
+        Assert.True(ids.IndexOf(nurStufe) < ids.IndexOf(nurSchulart));
+    }
+
+    /// <summary>
+    /// Wie <c>CreateProfileAsync</c>, aber jede punktende Eigenschaft ist einzeln abwählbar – nur so lässt
+    /// sich ein Profil bauen, das <b>ausschließlich</b> über ein Gewicht punktet.
+    /// </summary>
+    private static async Task<int> CreateWeightedProfileAsync(HttpClient creator, string name,
+        int? subjectId, int? seriesId, int? gradeMin, int? gradeMax, string? schoolTypes) =>
+        await TestApi.IdAsync(await creator.PostAsJsonAsync(ProfileRoot, new
+        {
+            name = $"{name} {Guid.NewGuid():N}",
+            subjectId,
+            seriesId,
+            gradeMin,
+            gradeMax,
+            schoolTypes,
+        }));
+
+    /// <summary>
     /// Der Match-Endpunkt liest Kind-Daten. Ein Creator, der das Kind nicht betreut, darf ihn nicht als
     /// Seitenkanal auf fremde Kind-Profile benutzen.
     /// </summary>

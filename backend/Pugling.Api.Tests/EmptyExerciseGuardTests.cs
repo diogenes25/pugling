@@ -68,6 +68,7 @@ public class EmptyExerciseGuardTests(PuglingWebAppFactory factory) : IClassFixtu
             new { exerciseId, cadence = "Daily" });
 
         Assert.Equal(HttpStatusCode.Created, res.StatusCode);
+        await AssertPositionOnPlanAsync(father, planId, exerciseId);
     }
 
     /// <summary>
@@ -89,11 +90,17 @@ public class EmptyExerciseGuardTests(PuglingWebAppFactory factory) : IClassFixtu
             new { front = "sun", back = "Sonne" });
         Assert.Equal(HttpStatusCode.Created, addRes.StatusCode);
 
+        // Das Wort ist wirklich drin – ein 201 auf den Item-POST sagt darüber nichts.
+        var items = await father.GetFromJsonAsync<List<JsonElement>>(
+            $"/api/v1/creator/subjects/{s}/chapters/{c}/vocabulary/{exerciseId}/items");
+        Assert.Contains(items!, i => i.GetProperty("front").GetString() == "sun");
+
         // … und nach dem Füllen greift der Riegel nicht mehr.
         var planId = await EmptyPlanAsync(father);
         var res = await father.PostAsJsonAsync($"/api/v1/supervisor/study-plans/{planId}/positions",
             new { exerciseId, cadence = "Daily" });
         Assert.Equal(HttpStatusCode.Created, res.StatusCode);
+        await AssertPositionOnPlanAsync(father, planId, exerciseId);
     }
 
     /// <summary>
@@ -114,6 +121,19 @@ public class EmptyExerciseGuardTests(PuglingWebAppFactory factory) : IClassFixtu
             new { exerciseId, cadence = "Daily" });
 
         Assert.Equal(HttpStatusCode.Created, res.StatusCode);
+        await AssertPositionOnPlanAsync(father, planId, exerciseId);
+    }
+
+    /// <summary>
+    /// „Zuweisbar" heißt: die Position steht danach auch <b>am Plan</b>. Ein 201 belegt nur, dass der Riegel
+    /// nicht zugeschlagen hat – nicht, dass die Zuweisung auf der richtigen Übung landete. Das ist die
+    /// Fehlerklasse „Erfolgsstatus zugesichert, Effekt nie nachgelesen" (docs/testplan.md, Etappe 1a).
+    /// </summary>
+    private static async Task AssertPositionOnPlanAsync(HttpClient father, int planId, int exerciseId)
+    {
+        var positions = await father.GetFromJsonAsync<List<JsonElement>>(
+            $"/api/v1/supervisor/study-plans/{planId}/positions");
+        Assert.Contains(positions!, p => p.GetProperty("exerciseId").GetInt32() == exerciseId);
     }
 
     /// <summary>

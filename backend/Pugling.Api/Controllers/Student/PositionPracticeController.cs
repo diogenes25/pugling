@@ -23,7 +23,8 @@ namespace Pugling.Api.Controllers.Student;
 [ServiceFilter(typeof(PlanOwnershipFilter))]
 public class PositionPracticeController(PuglingDbContext db, PositionPlayService play, ScoringService scoring,
     PositionProgressService progress, GamificationService gamification, AnswerGrader grader,
-    ItemProgressService itemProgress, MediaSelector selector, ILogger<PositionPracticeController> logger)
+    ItemProgressService itemProgress, MediaSelector selector, ILogger<PositionPracticeController> logger,
+    TimeProvider time)
     : ControllerBase
 {
     /// <summary>Obergrenze der pro Heartbeat anrechenbaren Sekunden (Anti-Zeit-Cheat).</summary>
@@ -283,8 +284,15 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         {
             if (r.WasCorrect) prevStreak++; else break;
         }
+        // Antwortzeit und Zeitstempel kommen aus DERSELBEN Uhr (<see cref="TimeProvider"/>): der Abstand
+        // zwischen zwei Antworten ist die Grundlage des Schnelle-Antwort-Bonus samt seiner
+        // Anti-Farming-Untergrenze von einer Sekunde. Eine Regel im Sekunden-Bereich lässt sich mit der
+        // Wanduhr nicht prüfen – ein Test müsste zwei Requests binnen einer Sekunde durchbringen und wird
+        // unter Last zum Flake, der wie ein Punkte-Regress aussieht (docs/testplan.md, Etappe 3). Mit der
+        // gemeinsamen, ersetzbaren Uhr ist die gemessene Zeit eine Eingabe statt einer Hoffnung.
         var lastAt = session.Reviews.Count > 0 ? session.Reviews.Max(r => r.At) : (DateTime?)null;
-        double? elapsedSeconds = lastAt is { } la ? (DateTime.UtcNow - la).TotalSeconds : null;
+        var now = time.GetUtcNow().UtcDateTime;
+        double? elapsedSeconds = lastAt is { } la ? (now - la).TotalSeconds : null;
 
         db.ReviewEvents.Add(new ReviewEvent
         {
@@ -293,6 +301,7 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
             ItemIndex = dto.ItemIndex,
             StageValue = stage,
             WasCorrect = wasCorrect && scored,
+            At = now,
         });
 
         // Plan-übergreifenden Item-Fortschritt + Antwort-Historie mitschreiben (nur Vokabel-Items mit stabiler ItemId).

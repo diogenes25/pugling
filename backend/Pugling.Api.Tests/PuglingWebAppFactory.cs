@@ -18,6 +18,12 @@ public sealed class PuglingWebAppFactory : WebApplicationFactory<Program>
     // Medien-Ordner des Entwicklungsbaums und ließe dort Dateien liegen.
     private readonly string _mediaPath = Path.Combine(Path.GetTempPath(), $"pugling_media_{Guid.NewGuid():N}");
 
+    /// <summary>
+    /// Die Uhr dieses Hosts – standardmäßig die echte. Testklassen, die eine Regel im Sekunden-Bereich
+    /// prüfen (Schnelle-Antwort-Bonus), frieren sie ein und rücken sie selbst vor.
+    /// </summary>
+    public TestClock Clock { get; } = new();
+
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Development");
@@ -28,7 +34,11 @@ public sealed class PuglingWebAppFactory : WebApplicationFactory<Program>
         builder.UseSetting("RateLimiting:LoginEnabled", "false");
         // Zählt prozessweit mit, welche Actions erfolgreich bedient wurden – Datenquelle des
         // Abdeckungs-Wächters (EndpointCoverageGuard). Rein beobachtend, ändert kein Verhalten.
-        builder.ConfigureServices(s => s.AddSingleton<IStartupFilter, EndpointCoverageStartupFilter>());
+        builder.ConfigureServices(s =>
+        {
+            s.AddSingleton<IStartupFilter, EndpointCoverageStartupFilter>();
+            s.AddSingleton<TimeProvider>(Clock);
+        });
     }
 
     /// <summary>

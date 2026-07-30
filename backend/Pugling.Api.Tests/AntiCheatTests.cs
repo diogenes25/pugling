@@ -137,6 +137,15 @@ public class AntiCheatTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
         var res = await father.PostAsJsonAsync(TestApi.PracticeBase(planId, positionId), new { });
 
         Assert.Equal(HttpStatusCode.Created, res.StatusCode);
+
+        // „Durchspielen" heißt Karten bekommen: der 201 allein belegt nur, dass die Sitzung angelegt wurde.
+        // Ohne diese Zeile blieb der Test grün, auch wenn die Plan-Sperre erst beim Ausspielen zuschlägt –
+        // dann wäre die Vorschau des Vaters eine leere Hülle (docs/testplan.md, Etappe 1a).
+        var sid = await TestApi.IdAsync(res);
+        var next = await father.GetFromJsonAsync<JsonElement>(
+            $"{TestApi.PracticeBase(planId, positionId)}/{sid}/next");
+        JsonAssert.False(next, "done");
+        Assert.NotEqual(JsonValueKind.Null, next.GetProperty("card").ValueKind);
     }
 
     [Fact]
