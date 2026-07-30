@@ -1,10 +1,10 @@
 ---
-tags: [bereich/architektur, bereich/datenmodell, status/laufend]
+tags: [bereich/architektur, bereich/datenmodell, status/abgeschlossen]
 ---
 
 # DB-/EF-Struktur-Umbau
 
-> **Übergabe-Dokument.** E0–E13 sind umgesetzt und verifiziert; offen ist nur noch E14 (Abschluss). Beide
+> **Abgeschlossen (31.07.2026).** Alle Etappen E0–E14 sind umgesetzt und verifiziert. Beide
 > echten Defekte sind damit behoben – der Rest ist Struktur. Dieses Dokument ist so
 > geschrieben, dass jemand ohne Vorwissen die restlichen Etappen zu Ende führen kann: es nennt die
 > getroffenen Entscheidungen, die Arbeitsregeln, die Belege, die bewussten Abweichungen und die
@@ -78,7 +78,7 @@ Die Langfassung steht in der Plandatei dieser Sitzung.
    E13 (`LearnGoal.ChildId` fällt weg, drei `KeyResult`-Scope-FKs kommen). Das Tor **soll** dabei rot sein –
    die bewusste Zeile ist der Zweck. Bei mehreren Änderungen lohnt der Wegwerf-Dump aus E6 wieder.
 
-## Umgesetzt: E0–E13
+## Die Etappen: E0–E14
 
 ### E0 · Netz spannen — keine Migration
 
@@ -574,17 +574,46 @@ das Muster, das die Story forderte.
 `npx tsc --noEmit` im Frontend sauber, `frontend/e2e/full-flow` + `perspektiven` grün (7 Tests), und live:
 `GET learn-goals` → **404**, Ziel samt Etappe in einem Aufruf → **201**, Kapitel mit Etappe löschen → **409**.
 
-## Offen: E14
-
-Jede Etappe endet grün, mit neu gefalteter Migration (siehe Arbeitsregeln).
-
 ### E14 · Abschluss
 
-- `CLAUDE.md` „Konventionen"/„Fallstricke": die neuen Schema-Regeln + die Tore; die `TimeSlotRule`-Ausnahme
-  entfernen (nach E12); die Kette-bleibt-1-Regel aufnehmen.
-- `docs/codequalitaet-gates-plan.md` um G1–G9 als neue Etappe fortschreiben.
-- Dieses Dokument auf „abgeschlossen" fortschreiben.
-- Die alte Azure-Datei `/home/data/pugling.db*` löschen, wenn v2 mehrere Tage steht.
+- **`CLAUDE.md`** trägt jetzt die drei Schema-Regeln, die bei einer *beliebigen* Änderung eine Entscheidung
+  erzwingen (neue Beziehung → G2-Zeile; neue String-Spalte → Länge bzw. begründete Ausnahme, unique ⇒ immer
+  begrenzt; neue „genau eines von N"-Invariante → Check-Constraint + G8), dazu „kein Datum als Text" und der
+  Hinweis, dass Tor G7 die JSON-Comparer-Regel jetzt hält. Die falsche Behauptung, `TimeSlotRule` sei „das
+  *einzige* bewusst erhaltene Legacy-Entity", ist raus – sie stand im Startkontext **jeder** Sitzung.
+- **`docs/codequalitaet-gates-plan.md`** hat eine Etappe E mit der Tor-Tabelle G1–G9, den zwei
+  wiederkehrenden Fallstricken (Laufzeitmodell vs. Design-Time-Modell; „gibt es einen" ≠ „wurde einer
+  gesetzt") und der ehrlichen Notiz, dass **G5 nie gebaut wurde**: die Liste FK-loser `…Id`-Spalten wäre
+  reine Buchhaltung, solange G2 jede echte FK erzwingt – die Begründungen stehen an den Spalten.
+- Dieses Dokument ist damit **abgeschlossen**.
+
+**Offen bleibt nur eine Handlung außerhalb des Repos** (siehe unten): die Azure-Einstellungen vor dem
+nächsten Deploy, und das Löschen der alten Azure-Datei, wenn v2 mehrere Tage steht.
+
+## Ergebnis
+
+| | vorher | nachher |
+|---|---|---|
+| Migrationen | 48 | **1** (neu gefaltet, Tor G1b) |
+| Enums als String / als int | 12 / ~20 | **alle** (2 begründete Ausnahmen, Tor G4) |
+| `HasMaxLength` | **0** | Konvention über alle String-Spalten (15 begründete Ausnahmen, Tor G3) |
+| Zufällige DB-DEFAULTs | 15 | **1** (gewollt, Tor G9) |
+| FKs mit stillem Konventions-Verhalten | 9 | **0** (Tor G2, `ClientSetNull` verboten) |
+| Datum/Periode als Text | 4 idempotenz-tragende Spalten | **0** (Tor G6) |
+| Invarianten nur als Kommentar | `AccountProfile` | **0** (Tor G8) |
+| Legacy-Entities | `TimeSlotRule` | **0** (Konfiguration) |
+| Doppelte Ziel-Ebenen | `LearnGoal` + `KeyResult` | **1** (`KeyResult`) |
+| Zwei Inhaltswege für Vokabeln | Item-Tabelle + Config-Fallback | **1** (Item-Tabelle) |
+| Schema-Tore | 0 | **9**, jedes mit Falsch-Grün-Probe |
+
+**Die zwei echten Defekte sind behoben:** das Löschen eines Supervisors vernichtete bezahltes Kind-Inventar
+(E6), und ein PATCH auf Name/E-Mail zog das Konto nicht nach – aus dem fälligen 409 wurde ein 500 mit halb
+gespeichertem Zustand (E8).
+
+**Was der Umbau *nicht* angefasst hat**, steht unter „Getroffene Entscheidungen" → „Bewusst ausgeklammert"
+und ist jeweils begründet, nicht vergessen. Zwei Dinge sind unterwegs bewusst offen geblieben und stehen bei
+ihrer Etappe: ein verwaister Inventar-Posten ist nicht mehr **einlösbar** (E6), und `Subject.Name` bleibt
+**nicht** eindeutig, weil das eine Produktentscheidung über Katalog-Eigentum wäre (E5).
 
 ## Fallstricke (haben beim Umsetzen Zeit gekostet)
 
@@ -627,7 +656,7 @@ E1 ist wirksam: die Azure-DB stammt aus der alten Kette und wird vom Historien-G
    **und** `Seed__Enabled=true` (Letzteres, weil E9 ein Umgebungs-Gate einführt und die neue Datei sonst
    leer bliebe).
 2. Die alte Datei **nicht löschen** – sie ist die Rückfallebene, das Zurückflippen der Einstellung ist der
-   komplette Rollback. Aufräumen erst in E14.
+   komplette Rollback. Aufräumen, wenn v2 mehrere Tage steht.
 3. Lokal ist die Dev-DB bereits ersetzt. `PuglingDbContextFactory` hardcodet `Data Source=pugling.db`;
    eine DB aus der alten Kette muss weg, sonst wirft der Start (mit einer Meldung, die das sagt).
 

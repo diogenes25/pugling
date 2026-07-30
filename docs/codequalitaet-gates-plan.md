@@ -711,6 +711,41 @@ Der Peer-Konflikt selbst bleibt bestehen und ist damit **nicht** behoben, nur be
 eine Vite-8-fähige Fassung zu heben (oder Vite zu pinnen) ist eine Dependency-Entscheidung mit Wirkung auf
 das PWA-Artefakt und gehört nicht in ein CI-Tor. Offener Punkt, kein Nebenbei-Fix.
 
+### Etappe E · Schema-Tore (G1–G9) – **umgesetzt 2026-07-31**
+
+Die Tore A–D halten *Code*-Konventionen. Für die **Form des Datenbankschemas** gab es keine – und dort saßen
+zwei echte Datenverlust-Defekte. Der DB-Struktur-Umbau
+([db-struktur-umbau-plan.md](db-struktur-umbau-plan.md)) hat sie behoben und die Regeln danach mechanisch
+festgenagelt: neun Tore in `backend/Pugling.Api.Tests/SchemaGuardTests.cs`, jedes **mit der Etappe eingezogen,
+die es grün machte**, jedes mit Selbstschutz gegen falsch-grün und jedes mit einer gesehenen
+Falsch-Grün-Probe.
+
+| Tor | Regel | Mechanik |
+|---|---|---|
+| **G1** | Kein Modell-Drift | `HasPendingModelChanges() == false` |
+| **G1b** | Migrationskette == **1** | `GetMigrations().Count() == 1`; **bewusst endlich** – endet mit der ersten Veröffentlichung, und dann wird das Tor *ausdrücklich* entfernt statt zu erodieren |
+| **G2** | Jede FK hat ein abgenommenes `OnDelete` | literal gepinnte Tabelle über alle FKs, als sortierte Zeilen verglichen; zusätzlich **`ClientSetNull` verboten** (der Konventions-Default räumt nur im geladenen ChangeTracker auf) |
+| **G3** | Jede String-Spalte hat eine Länge – eine unique-indizierte **muss** eine haben | `GetMaxLength()`, Ausnahmen aus `PuglingDbContext.UnlimitedByDesign` |
+| **G4** | Jedes persistierte Enum liegt als String | ValueConverter auf `string`; Ausnahmen `IntEnumsByDesign` + `[Flags]` |
+| **G6** | Kein Zeitpunkt/Zeitraum als Text | Namensregel (`…Key/Period/Day/Date/On/At/Time/Week/Month/Year`), **case-sensitiv**; Ausnahmen namentlich mit Grund |
+| **G7** | Jede JSON-Spalte hat einen ValueComparer | Sammlungs-/Komplextyp mit String-Converter ⇒ Annotation `ValueComparer` gesetzt |
+| **G8** | Die erwarteten Check-Constraints existieren | **Mengen**-Vergleich (eine verschwundene Invariante ist genauso ein Fund wie eine neue ohne Eintrag) |
+| **G9** | Genau **ein** gewollter DB-Default | `IColumn.DefaultValue` über das relationale Modell |
+
+**Zwei Fallstricke, die dabei Zeit gekostet haben** und für jedes weitere Schema-Tor gelten:
+
+1. **`db.Model` ist nicht das ganze Modell.** Das laufzeit-optimierte Modell wirft weg, was zur Laufzeit
+   niemand liest: Check-Constraints (es *wirft* dann sogar – „not stored in the read-optimized model") und
+   **Annotationen**. G8 und G7 brauchen darum `db.GetService<IDesignTimeModel>().Model`
+   (`Microsoft.EntityFrameworkCore.Metadata`), G9 das relationale Modell.
+2. **„Gibt es einen" ist nicht „wurde einer gesetzt".** `GetValueComparer()` liefert immer etwas – im
+   Zweifel den referenzvergleichenden Default, also genau den Fehlerfall. Gefragt ist die Annotation.
+
+**Bewusst nicht mechanisiert:** „jeder Idempotenz-Log hat einen Unique-Index" – „Idempotenz-Log" ist keine
+reflektierbare Eigenschaft, und ein Tor auf Tabellennamen-Heuristik ist ein Tor, das man umbenennt statt
+erfüllt. Ebenso **G5** (FK-lose `…Id`-Spalten): die Liste wäre reine Buchhaltung ohne mechanischen Nutzen,
+solange G2 jede echte FK schon erzwingt – die Begründungen stehen stattdessen an den Spalten selbst.
+
 ## Was bewusst nicht getan wird
 
 - **Keine parallele Unit-Test-Schicht über den Services.** Die Fehlerklassen dieses Projekts sind
