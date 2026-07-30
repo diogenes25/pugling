@@ -170,7 +170,7 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         // ganzen Übung durchzählen – auch die der Karten, die diese Sitzung nie zeigt.
         if (!session.Order.Contains(itemIndex)) return NotFound();
 
-        var items = await play.ItemsOfAsync(pos, pos.StudyPlan.ChildId);
+        var items = await play.ItemsOfAsync(pos, pos.StudyPlan.ChildId, ct);
         if (items.FirstOrDefault(i => i.Index == itemIndex) is not
             { ItemId: { } itemId, VocabularyId: { } vocabId } item)
             return NotFound();

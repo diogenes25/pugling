@@ -186,14 +186,14 @@ public class RemarksController(
         //
         // Der `ParentRemarkId` oben wird bewusst anders behandelt (400): Den setzt der Skill ausdrücklich,
         // ein Fehlgriff dort ist ein Fehler und keine verwelkte Automatik.
-        var childId = await ExistingAsync(ctx?.ChildId, id => access.OwnsChildAsync(User, id));
+        var childId = await ExistingAsync(ctx?.ChildId, id => access.OwnsChildAsync(User, id, ct));
         var planId = await ExistingAsync(ctx?.StudyPlanId, async id =>
             await db.StudyPlans.AsNoTracking().FirstOrDefaultAsync(p => p.Id == id, ct) is { } plan
-            && await access.OwnsPlanAsync(User, plan));
+            && await access.OwnsPlanAsync(User, plan, ct));
         var positionId = await ExistingAsync(ctx?.PlanPositionId, async id =>
             await db.PlanPositions.AsNoTracking().Include(p => p.StudyPlan)
                 .FirstOrDefaultAsync(p => p.Id == id, ct) is { StudyPlan: { } plan }
-            && await access.OwnsPlanAsync(User, plan));
+            && await access.OwnsPlanAsync(User, plan, ct));
         // Übungen sind bewusst global lesbar (der geteilte Katalog) – ihre Existenz ist kein Geheimnis,
         // hier genügt die Existenzprüfung.
         var exerciseId = await ExistingAsync(ctx?.ExerciseId, id => db.Exercises.AnyAsync(x => x.Id == id, ct));

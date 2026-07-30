@@ -26,7 +26,7 @@ public class PositionReportService(PuglingDbContext db, PositionPlayService play
         if (pos?.Exercise is null) return null;
 
         // Inhalte der Übung (verfahrensneutral) – Reihenfolge = stabiler ItemIndex.
-        var items = await play.ItemsOfAsync(pos);
+        var items = await play.ItemsOfAsync(pos, ct: ct);
 
         // Leitner-/Einführungsstand je Item (ein Plan = ein Kind), in der DB gefiltert.
         var progress = await db.PositionItemProgress.AsNoTracking()

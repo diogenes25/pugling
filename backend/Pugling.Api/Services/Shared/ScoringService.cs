@@ -50,13 +50,13 @@ public class ScoringService(PuglingDbContext db)
     /// gemessene Zeit seit der letzten Antwort (null bei der ersten Karte einer Sitzung).
     /// </summary>
     public async Task<ReviewScore> ScoreReviewAsync(ScoreConfig cfg, int reviewCount, int box, int postBox,
-        bool wasCorrect, int combo, DateTime nowLocal, double? elapsedSeconds = null)
+        bool wasCorrect, int combo, DateTime nowLocal, double? elapsedSeconds = null, CancellationToken ct = default)
     {
         var contributions = new List<Contribution>();
         if (!wasCorrect)
             return new ReviewScore(contributions, combo);
 
-        var basePoints = await BasePointsAsync(cfg, reviewCount, box, nowLocal);
+        var basePoints = await BasePointsAsync(cfg, reviewCount, box, nowLocal, ct);
         if (basePoints > 0)
             contributions.Add(new Contribution(PointKind.Base, basePoints,
                 $"[{cfg.Label}] Leitner-Wiederholung richtig → Box {postBox}"));
@@ -96,7 +96,8 @@ public class ScoringService(PuglingDbContext db)
     /// (<paramref name="reviewCount"/> 0) zählt am meisten, spätere je höher die <paramref name="box"/>
     /// weniger; gewichtet nach dem zur Uhrzeit aktiven Zeitfenster.
     /// </summary>
-    private async Task<int> BasePointsAsync(ScoreConfig cfg, int reviewCount, int box, DateTime nowLocal)
+    private async Task<int> BasePointsAsync(ScoreConfig cfg, int reviewCount, int box, DateTime nowLocal,
+        CancellationToken ct)
     {
         int basePoints = reviewCount == 0
             ? cfg.NewContentPoints                // neuer Inhalt (konfigurierbar)
@@ -109,7 +110,7 @@ public class ScoringService(PuglingDbContext db)
         var slot = await db.TimeSlots
             .Where(s => s.StartTime <= time && time < s.EndTime)
             .OrderByDescending(s => s.StartTime).ThenBy(s => s.EndTime).ThenBy(s => s.Id)
-            .FirstOrDefaultAsync();
+            .FirstOrDefaultAsync(ct);
 
         return (int)Math.Round(basePoints * (slot?.Multiplier ?? 1.0));
     }

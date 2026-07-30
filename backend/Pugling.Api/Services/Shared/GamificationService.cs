@@ -15,17 +15,17 @@ public class GamificationService(PuglingDbContext db, MetricsService metrics, IL
     // MissionStatus/AchievementStatus leben im Vertrags-Projekt (Pugling.Contracts.Student).
 
     /// <summary>Wertet alle aktiven Missionen und Auszeichnungen aus und vergibt fällige Belohnungen.</summary>
-    public async Task EvaluateAndAwardAsync(int childId, DateOnly today)
+    public async Task EvaluateAndAwardAsync(int childId, DateOnly today, CancellationToken ct = default)
     {
-        var child = await db.Children.FirstOrDefaultAsync(c => c.Id == childId);
+        var child = await db.Children.FirstOrDefaultAsync(c => c.Id == childId, ct);
         if (child is null) return;
 
-        foreach (var m in await db.Missions.Where(m => m.ChildId == childId && m.Active).ToListAsync())
+        foreach (var m in await db.Missions.Where(m => m.ChildId == childId && m.Active).ToListAsync(ct))
         {
             var (from, to, key) = PeriodWindow(m.Period, today);
-            var current = await metrics.ValueAsync(childId, m.Metric, from, to, today);
+            var current = await metrics.ValueAsync(childId, m.Metric, from, to, today, ct);
             if (current < m.Target || m.RewardPoints <= 0) continue;
-            if (await db.MissionAwards.AnyAsync(a => a.MissionId == m.Id && a.PeriodKey == key)) continue;
+            if (await db.MissionAwards.AnyAsync(a => a.MissionId == m.Id && a.PeriodKey == key, ct)) continue;
 
             db.MissionAwards.Add(new MissionAward { MissionId = m.Id, PeriodKey = key, Points = m.RewardPoints });
             db.ChildPoints.Add(new ChildPointsEntry
@@ -35,16 +35,16 @@ public class GamificationService(PuglingDbContext db, MetricsService metrics, IL
                 Amount = m.RewardPoints,
                 Reason = $"Mission erfüllt: {m.Title}",
             });
-            if (await SaveIgnoringDuplicateAsync(() => db.MissionAwards.AnyAsync(a => a.MissionId == m.Id && a.PeriodKey == key)))
+            if (await SaveIgnoringDuplicateAsync(() => db.MissionAwards.AnyAsync(a => a.MissionId == m.Id && a.PeriodKey == key, ct), ct))
                 logger.LogInformation("Belohnung gebucht: Kind {ChildId} +{Points} (Mission) – \"{Title}\" ({PeriodKey})",
                     childId, m.RewardPoints, m.Title, key);
         }
 
-        foreach (var a in await db.Achievements.Where(a => a.ChildId == childId && a.Active).ToListAsync())
+        foreach (var a in await db.Achievements.Where(a => a.ChildId == childId && a.Active).ToListAsync(ct))
         {
-            var current = await metrics.ValueAsync(childId, a.Metric, null, null, today);
+            var current = await metrics.ValueAsync(childId, a.Metric, null, null, today, ct);
             if (current < a.Threshold) continue;
-            if (await db.AchievementAwards.AnyAsync(x => x.AchievementId == a.Id)) continue;
+            if (await db.AchievementAwards.AnyAsync(x => x.AchievementId == a.Id, ct)) continue;
 
             db.AchievementAwards.Add(new AchievementAward { AchievementId = a.Id, Points = a.RewardPoints });
             if (a.RewardPoints > 0)
@@ -55,7 +55,7 @@ public class GamificationService(PuglingDbContext db, MetricsService metrics, IL
                     Amount = a.RewardPoints,
                     Reason = $"Auszeichnung erreicht: {a.Title}",
                 });
-            if (await SaveIgnoringDuplicateAsync(() => db.AchievementAwards.AnyAsync(x => x.AchievementId == a.Id)))
+            if (await SaveIgnoringDuplicateAsync(() => db.AchievementAwards.AnyAsync(x => x.AchievementId == a.Id, ct), ct))
                 logger.LogInformation("Belohnung gebucht: Kind {ChildId} +{Points} (Auszeichnung) – \"{Title}\"",
                     childId, a.RewardPoints, a.Title);
         }
@@ -67,25 +67,25 @@ public class GamificationService(PuglingDbContext db, MetricsService metrics, IL
     /// beim Ansehen: ein GET darf keine Punkte buchen (sichere HTTP-Methode, kein Prefetch-/Retry-Effekt).
     /// </summary>
     public async Task<(IReadOnlyList<MissionStatus> Items, int Total)> MissionStatusesAsync(
-        int childId, DateOnly today, int skip, int take)
+        int childId, DateOnly today, int skip, int take, CancellationToken ct = default)
     {
         var missions = await db.Missions.AsNoTracking()
             .Where(m => m.ChildId == childId && m.Active)
             .OrderBy(m => m.Id)
-            .ToListAsync();
+            .ToListAsync(ct);
 
         // Nur für die zurückgegebene Seite die (teure) Metrik berechnen – nicht für alle Missionen.
         var items = new List<MissionStatus>();
         foreach (var m in missions.Skip(skip).Take(take))
-            items.Add(await MapMissionAsync(childId, m, today));
+            items.Add(await MapMissionAsync(childId, m, today, ct));
         return (items, missions.Count);
     }
 
-    private async Task<MissionStatus> MapMissionAsync(int childId, Mission m, DateOnly today)
+    private async Task<MissionStatus> MapMissionAsync(int childId, Mission m, DateOnly today, CancellationToken ct)
     {
         var (from, to, key) = PeriodWindow(m.Period, today);
-        var current = await metrics.ValueAsync(childId, m.Metric, from, to, today);
-        var completed = await db.MissionAwards.AnyAsync(a => a.MissionId == m.Id && a.PeriodKey == key)
+        var current = await metrics.ValueAsync(childId, m.Metric, from, to, today, ct);
+        var completed = await db.MissionAwards.AnyAsync(a => a.MissionId == m.Id && a.PeriodKey == key, ct)
             || current >= m.Target;
         return new MissionStatus(m.Id, m.Title, m.Metric, m.Period, m.Target,
             Math.Min(current, m.Target), completed, m.RewardPoints);
@@ -93,46 +93,49 @@ public class GamificationService(PuglingDbContext db, MetricsService metrics, IL
 
     /// <summary>Aktueller Auszeichnungs-Status (reine Lesesicht, ohne Punktevergabe), erreichte zuerst.</summary>
     public async Task<(IReadOnlyList<AchievementStatus> Items, int Total)> AchievementStatusesAsync(
-        int childId, DateOnly today, int skip, int take)
+        int childId, DateOnly today, int skip, int take, CancellationToken ct = default)
     {
-        var achievements = await db.Achievements.AsNoTracking().Where(a => a.ChildId == childId && a.Active).ToListAsync();
+        var achievements = await db.Achievements.AsNoTracking().Where(a => a.ChildId == childId && a.Active).ToListAsync(ct);
         // Award-Lookup ist billig und wird sowohl für die Sortierung (erreichte zuerst) als auch den
         // Earned-Status gebraucht – die teure Metrik berechnen wir erst für die Seite.
         var awards = await db.AchievementAwards
             .Where(x => achievements.Select(a => a.Id).Contains(x.AchievementId))
-            .ToDictionaryAsync(x => x.AchievementId, x => x.EarnedAt);
+            .ToDictionaryAsync(x => x.AchievementId, x => x.EarnedAt, ct);
 
         var page = achievements
             .OrderByDescending(a => awards.ContainsKey(a.Id)).ThenBy(a => a.Threshold)
             .Skip(skip).Take(take);
         var items = new List<AchievementStatus>();
         foreach (var a in page)
-            items.Add(await MapAchievementAsync(childId, a, awards.TryGetValue(a.Id, out var at) ? at : null, today));
+            items.Add(await MapAchievementAsync(childId, a, awards.TryGetValue(a.Id, out var at) ? at : null, today, ct));
         return (items, achievements.Count);
     }
 
-    private async Task<AchievementStatus> MapAchievementAsync(int childId, Achievement a, DateTime? earnedAt, DateOnly today)
+    private async Task<AchievementStatus> MapAchievementAsync(int childId, Achievement a, DateTime? earnedAt,
+        DateOnly today, CancellationToken ct)
     {
-        var current = await metrics.ValueAsync(childId, a.Metric, null, null, today);
+        var current = await metrics.ValueAsync(childId, a.Metric, null, null, today, ct);
         return new AchievementStatus(a.Id, a.Title, a.Icon, a.Metric, a.Threshold,
             current, earnedAt is not null, earnedAt, a.RewardPoints);
     }
 
     /// <summary>Status einer einzelnen Mission des Kindes (Einzelansicht); <c>null</c>, wenn nicht vorhanden/aktiv/eigen.</summary>
-    public async Task<MissionStatus?> MissionStatusAsync(int childId, int missionId, DateOnly today)
+    public async Task<MissionStatus?> MissionStatusAsync(int childId, int missionId, DateOnly today,
+        CancellationToken ct = default)
     {
-        var m = await db.Missions.AsNoTracking().FirstOrDefaultAsync(m => m.Id == missionId && m.ChildId == childId && m.Active);
-        return m is null ? null : await MapMissionAsync(childId, m, today);
+        var m = await db.Missions.AsNoTracking().FirstOrDefaultAsync(m => m.Id == missionId && m.ChildId == childId && m.Active, ct);
+        return m is null ? null : await MapMissionAsync(childId, m, today, ct);
     }
 
     /// <summary>Status einer einzelnen Auszeichnung des Kindes (Einzelansicht); <c>null</c>, wenn nicht vorhanden/aktiv/eigen.</summary>
-    public async Task<AchievementStatus?> AchievementStatusAsync(int childId, int achievementId, DateOnly today)
+    public async Task<AchievementStatus?> AchievementStatusAsync(int childId, int achievementId, DateOnly today,
+        CancellationToken ct = default)
     {
-        var a = await db.Achievements.AsNoTracking().FirstOrDefaultAsync(a => a.Id == achievementId && a.ChildId == childId && a.Active);
+        var a = await db.Achievements.AsNoTracking().FirstOrDefaultAsync(a => a.Id == achievementId && a.ChildId == childId && a.Active, ct);
         if (a is null) return null;
 
-        var at = await db.AchievementAwards.Where(x => x.AchievementId == a.Id).Select(x => (DateTime?)x.EarnedAt).FirstOrDefaultAsync();
-        return await MapAchievementAsync(childId, a, at, today);
+        var at = await db.AchievementAwards.Where(x => x.AchievementId == a.Id).Select(x => (DateTime?)x.EarnedAt).FirstOrDefaultAsync(ct);
+        return await MapAchievementAsync(childId, a, at, today, ct);
     }
 
     /// <summary>Tages-/Wochen-/Einmal-Fenster + Schlüssel für die idempotente Vergabe.</summary>
@@ -159,11 +162,11 @@ public class GamificationService(PuglingDbContext db, MetricsService metrics, IL
     /// damit der Aufrufer nur echte Buchungen ins Audit-Log schreibt. <paramref name="alreadyAwardedAsync"/>
     /// prüft, ob die Belohnung inzwischen (durch den Konkurrenz-Request) existiert.
     /// </summary>
-    private async Task<bool> SaveIgnoringDuplicateAsync(Func<Task<bool>> alreadyAwardedAsync)
+    private async Task<bool> SaveIgnoringDuplicateAsync(Func<Task<bool>> alreadyAwardedAsync, CancellationToken ct)
     {
         try
         {
-            await db.SaveChangesAsync();
+            await db.SaveChangesAsync(ct);
             return true;
         }
         catch (DbUpdateException ex)

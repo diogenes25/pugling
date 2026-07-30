@@ -90,7 +90,7 @@ public class PlanPositionsController(PuglingDbContext db, ExercisePermissionServ
         var exercise = await db.Exercises.FirstOrDefaultAsync(e => e.Id == dto.ExerciseId, ct);
         if (exercise is null) return this.ProblemWithCode(ApiErrors.InvalidReference, $"Exercise {dto.ExerciseId} not found.");
         // Execute-Gate: nicht öffentlich ausführbare Übungen darf nur zuweisen, wer ein Owner-/Write-/Execute-Recht hält.
-        if (!await perms.CanExecuteAsync(User, exercise))
+        if (!await perms.CanExecuteAsync(User, exercise, ct))
             return this.ProblemWithCode(ApiErrors.ExerciseNotExecutable, "This exercise is not publicly assignable; you need execute permission from its owner.");
         // Eine ungefüllte Übung ist hier zu stoppen und nicht beim Anlegen: „erst anlegen, dann füllen" ist
         // ein gewollter Weg (POST mit leeren refs, danach /items oder /refs-from-tags). Erst das Zuweisen

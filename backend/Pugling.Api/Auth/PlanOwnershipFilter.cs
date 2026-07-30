@@ -21,7 +21,7 @@ public class PlanOwnershipFilter(PuglingDbContext db, AuthAccess access) : IAsyn
         {
             var plan = await db.StudyPlans.FirstOrDefaultAsync(p => p.Id == planId);
             if (plan is null) { ctx.Result = ControllerBaseErrorExtensions.ProblemResult(ctx.HttpContext, ApiErrors.NotFound, "Study plan not found."); return; }
-            if (!await access.OwnsPlanAsync(ctx.HttpContext.User, plan)) { ctx.Result = new ForbidResult(); return; }
+            if (!await access.OwnsPlanAsync(ctx.HttpContext.User, plan, ctx.HttpContext.RequestAborted)) { ctx.Result = new ForbidResult(); return; }
         }
         await next();
     }

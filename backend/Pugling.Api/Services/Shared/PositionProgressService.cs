@@ -53,27 +53,27 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
     /// mit Aktivität vorliegt; prüfbare Typen (Test/Katalog-Check), sobald ein Test in der Periode
     /// bestanden wurde (bei <see cref="PlanPosition.RequireTypedTest"/> nur ein gewerteter Versuch).
     /// </summary>
-    public async Task<bool> IsGoalMetAsync(PlanPosition pos, DateOnly day)
+    public async Task<bool> IsGoalMetAsync(PlanPosition pos, DateOnly day, CancellationToken ct = default)
     {
         var (from, to) = PeriodRange(pos.Cadence, day);
         if (CheckModeOf(pos) == ExerciseCheckMode.None)
             // Nur echte Lern-Sitzungen zählen aufs Ziel – Info-Sitzungen (freies Üben ohne Feedback) nicht.
             return await db.PracticeSessions.AnyAsync(s =>
                 s.PlanPositionId == pos.Id && s.Day >= from && s.Day <= to && s.Mode == PlayMode.Lern
-                && (s.EndedAt != null || s.ActiveSeconds > 0));
+                && (s.EndedAt != null || s.ActiveSeconds > 0), ct);
 
         return await db.TestAttempts.AnyAsync(t =>
             t.PlanPositionId == pos.Id && t.Day >= from && t.Day <= to
-            && t.CompletedAt != null && t.Passed && (!pos.RequireTypedTest || t.Graded));
+            && t.CompletedAt != null && t.Passed && (!pos.RequireTypedTest || t.Graded), ct);
     }
 
     // ---- Rollup + Punkte ----
 
-    private Task<List<PlanPosition>> LoadPositionsAsync(int planId) =>
+    private Task<List<PlanPosition>> LoadPositionsAsync(int planId, CancellationToken ct) =>
         db.PlanPositions.Include(p => p.Exercise)
             .Where(p => p.StudyPlanId == planId)
             .OrderBy(p => p.Order).ThenBy(p => p.Id)
-            .ToListAsync();
+            .ToListAsync(ct);
 
     /// <summary>
     /// Punkte, die dieser Plan an genau diesem Kalendertag aus erreichten Positions-Zielen gebucht hat.
@@ -81,25 +81,25 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
     /// Wochenziele tragen den Wochen-Montag als Perioden-Schlüssel; würde man danach filtern, zählte dieselbe
     /// Wochen-Belohnung an jedem Tag der Woche mit und der aufsummierte Verlauf (Progress) überhöhte die Punkte um bis zu 7×.
     /// </summary>
-    private async Task<int> PointsAwardedAsync(int planId, DateOnly day) =>
+    private async Task<int> PointsAwardedAsync(int planId, DateOnly day, CancellationToken ct) =>
         await db.PositionGoalRewards
             .Where(r => r.PlanPosition!.StudyPlanId == planId && r.Day == day)
-            .SumAsync(r => (int?)r.Points) ?? 0;
+            .SumAsync(r => (int?)r.Points, ct) ?? 0;
 
     /// <summary>Berechnet den Tages-Status eines Plans über seine Positionen (ohne Punkte zu vergeben).</summary>
-    public async Task<DayOverview> ComputeDayAsync(StudyPlan plan, DateOnly day)
+    public async Task<DayOverview> ComputeDayAsync(StudyPlan plan, DateOnly day, CancellationToken ct = default)
     {
-        var positions = await LoadPositionsAsync(plan.Id);
+        var positions = await LoadPositionsAsync(plan.Id, ct);
         var statuses = new List<PositionStatus>(positions.Count);
 
         foreach (var pos in positions)
         {
             var manifest = pos.Exercise is { } ex ? registry.ByKey(ex.Type)?.Manifest : null;
             var checkMode = CheckModeOf(pos);
-            var items = await play.ItemsOfAsync(pos);
+            var items = await play.ItemsOfAsync(pos, ct: ct);
             var poolSize = play.PoolSize(pos, items.Count);
-            var dueCount = pos.UseLeitner ? (await play.DueItemIndicesAsync(pos, day)).Count : 0;
-            var goalMet = pos.Cadence == GoalCadence.None || await IsGoalMetAsync(pos, day);
+            var dueCount = pos.UseLeitner ? (await play.DueItemIndicesAsync(pos, day, ct: ct)).Count : 0;
+            var goalMet = pos.Cadence == GoalCadence.None || await IsGoalMetAsync(pos, day, ct);
 
             statuses.Add(new PositionStatus(
                 pos.Id, pos.ExerciseId, pos.Exercise?.Title ?? "", pos.Exercise?.Type.ToString() ?? "",
@@ -116,21 +116,21 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
             .ToList();
 
         return new DayOverview(day, dutyDone, obligations.Count, met,
-            await PointsAwardedAsync(plan.Id, day), outstanding, statuses);
+            await PointsAwardedAsync(plan.Id, day, ct), outstanding, statuses);
     }
 
     /// <summary>
     /// Wertet den Tag aus und schreibt für jede Position mit erreichtem Ziel die Ziel-Punkte einmalig gut
     /// (idempotent je Periode via <see cref="PositionGoalReward"/>). Gibt den aktuellen Tages-Status zurück.
     /// </summary>
-    public async Task<DayOverview> EvaluateAndAwardAsync(StudyPlan plan, DateOnly day)
+    public async Task<DayOverview> EvaluateAndAwardAsync(StudyPlan plan, DateOnly day, CancellationToken ct = default)
     {
-        var positions = await LoadPositionsAsync(plan.Id);
+        var positions = await LoadPositionsAsync(plan.Id, ct);
         foreach (var pos in positions.Where(p => p.Cadence != GoalCadence.None && p.PointsGoalMet > 0))
         {
-            if (!await IsGoalMetAsync(pos, day)) continue;
+            if (!await IsGoalMetAsync(pos, day, ct)) continue;
             var periodKey = PeriodKey(pos.Cadence, day);
-            if (await db.PositionGoalRewards.AnyAsync(r => r.PlanPositionId == pos.Id && r.PeriodKey == periodKey))
+            if (await db.PositionGoalRewards.AnyAsync(r => r.PlanPositionId == pos.Id && r.PeriodKey == periodKey, ct))
                 continue;
 
             db.PositionGoalRewards.Add(new PositionGoalReward { PlanPositionId = pos.Id, PeriodKey = periodKey, Day = day, Points = pos.PointsGoalMet });
@@ -142,8 +142,8 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
                 Reason = $"[{plan.Title} · {pos.Exercise?.Title}] {(pos.Cadence == GoalCadence.Weekly ? "Wochenziel" : "Tagesziel")} erreicht",
             });
         }
-        await db.SaveChangesAsync();
-        return await ComputeDayAsync(plan, day);
+        await db.SaveChangesAsync(ct);
+        return await ComputeDayAsync(plan, day, ct);
     }
 
     // ---- Malus fürs Nicht-Lernen (Lazy Settlement) ----
@@ -183,15 +183,15 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
     /// Auslösen doppelt nicht. Schulden sind erlaubt: der Münz-Saldo darf negativ werden (kein Clamp).
     /// </summary>
     /// <returns>Summe der in diesem Lauf abgezogenen Münzen (0 = nichts fällig).</returns>
-    public async Task<int> SettleClosedPeriodsAsync(int childId, DateOnly today)
+    public async Task<int> SettleClosedPeriodsAsync(int childId, DateOnly today, CancellationToken ct = default)
     {
-        var child = await db.Children.FirstOrDefaultAsync(c => c.Id == childId);
+        var child = await db.Children.FirstOrDefaultAsync(c => c.Id == childId, ct);
         if (child is null) return 0;
 
         // Nur bestrafbare Positionen: echte Pflicht (Tag/Woche) mit gesetztem Malus, aus den Plänen des Kindes.
         var positions = await db.PlanPositions.Include(p => p.Exercise).Include(p => p.StudyPlan)
             .Where(p => p.StudyPlan!.ChildId == childId && p.Cadence != GoalCadence.None && p.PenaltyCoins > 0)
-            .ToListAsync();
+            .ToListAsync(ct);
         if (positions.Count == 0) return 0;
 
         var lookbackFloor = today.AddDays(-MaxSettleLookbackDays);
@@ -207,11 +207,11 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
             {
                 if (!PlanDueForPeriod(plan, from, to)) continue;
                 // Ziel in der Periode belohnt (erreicht) oder bereits bestraft? → nichts nachzuholen.
-                if (await db.PositionGoalRewards.AnyAsync(r => r.PlanPositionId == pos.Id && r.PeriodKey == key)) continue;
-                if (await db.PositionGoalPenalties.AnyAsync(r => r.PlanPositionId == pos.Id && r.PeriodKey == key)) continue;
+                if (await db.PositionGoalRewards.AnyAsync(r => r.PlanPositionId == pos.Id && r.PeriodKey == key, ct)) continue;
+                if (await db.PositionGoalPenalties.AnyAsync(r => r.PlanPositionId == pos.Id && r.PeriodKey == key, ct)) continue;
                 // Absicherung gegen ein Rennen mit dem Belohnungspfad (PointsGoalMet == 0 bucht keinen Reward,
                 // das Ziel kann trotzdem erfüllt sein): nur bei tatsächlich gerissener Periode bestrafen.
-                if (await IsGoalMetAsync(pos, to)) continue;
+                if (await IsGoalMetAsync(pos, to, ct)) continue;
 
                 db.PositionGoalPenalties.Add(new PositionGoalPenalty
                 {
@@ -239,7 +239,7 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
         child.ConcurrencyStamp = Guid.NewGuid();
         try
         {
-            await db.SaveChangesAsync();
+            await db.SaveChangesAsync(ct);
         }
         catch (DbUpdateException)
         {
@@ -252,12 +252,13 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
     }
 
     /// <summary>Tag-für-Tag-Status über die Laufzeit bis heute (für die Vater-Auswertung).</summary>
-    public async Task<IReadOnlyList<ProgressDay>> ProgressAsync(StudyPlan plan, DateOnly until)
+    public async Task<IReadOnlyList<ProgressDay>> ProgressAsync(StudyPlan plan, DateOnly until,
+        CancellationToken ct = default)
     {
         var days = new List<ProgressDay>();
         for (var d = plan.StartDate; d <= plan.EndDate && d <= until; d = d.AddDays(1))
         {
-            var o = await ComputeDayAsync(plan, d);
+            var o = await ComputeDayAsync(plan, d, ct);
             days.Add(new ProgressDay(d, o.DutyDone, o.GoalsTotal, o.GoalsMet, o.PointsAwarded));
         }
         return days;
@@ -282,9 +283,9 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
     /// die zurückgegebenen <see cref="ProgressView.Days"/>. Das HTTP-seitige Paging setzt der Controller darauf.
     /// </summary>
     public async Task<ProgressView> ProgressViewAsync(StudyPlan plan, DateOnly today,
-        DateOnly? from, DateOnly? to, bool? dutyDone, string? sort)
+        DateOnly? from, DateOnly? to, bool? dutyDone, string? sort, CancellationToken ct = default)
     {
-        var days = await ProgressAsync(plan, plan.EndDate);
+        var days = await ProgressAsync(plan, plan.EndDate, ct);
         var totalDays = plan.EndDate.DayNumber - plan.StartDate.DayNumber + 1;
 
         IEnumerable<ProgressDay> filtered = days;

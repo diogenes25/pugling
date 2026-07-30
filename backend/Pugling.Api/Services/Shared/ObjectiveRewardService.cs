@@ -21,9 +21,9 @@ public class ObjectiveRewardService(PuglingDbContext db, ObjectiveEvaluationServ
     /// Rechnet alle aktiven Ziele des Kindes nach und bucht offene Etappen-/Abschluss-Belohnungen einmalig.
     /// </summary>
     /// <returns>Summe der in diesem Lauf gutgeschriebenen Punkte (0 = nichts fällig).</returns>
-    public async Task<int> SettleAsync(int childId, DateOnly today)
+    public async Task<int> SettleAsync(int childId, DateOnly today, CancellationToken ct = default)
     {
-        var evals = await evaluation.EvaluateAllAsync(childId, today, activeOnly: true);
+        var evals = await evaluation.EvaluateAllAsync(childId, today, activeOnly: true, ct);
         if (evals.Count == 0) return 0;
 
         var objectiveIds = evals.Select(e => e.Objective.Id).ToList();
@@ -32,7 +32,7 @@ public class ObjectiveRewardService(PuglingDbContext db, ObjectiveEvaluationServ
         var booked = (await db.ObjectiveRewards.AsNoTracking()
             .Where(r => objectiveIds.Contains(r.ObjectiveId))
             .Select(r => new { r.ObjectiveId, r.PeriodKey })
-            .ToListAsync())
+            .ToListAsync(ct))
             .Select(x => (x.ObjectiveId, x.PeriodKey)).ToHashSet();
 
         var awarded = 0;
@@ -67,7 +67,7 @@ public class ObjectiveRewardService(PuglingDbContext db, ObjectiveEvaluationServ
 
         try
         {
-            await db.SaveChangesAsync();
+            await db.SaveChangesAsync(ct);
         }
         catch (DbUpdateException)
         {

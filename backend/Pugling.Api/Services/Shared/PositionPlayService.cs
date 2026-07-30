@@ -35,8 +35,9 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
     /// <paramref name="childId"/> schaltet die Bebilderung frei – nur die spielenden Pfade (Übungskarte,
     /// Testaufgabe) geben ihn mit; Auswertung und Ziel-Berechnung brauchen kein Bild und sparen die Auswahl.
     /// </summary>
-    public async Task<IReadOnlyList<ContentItem>> ItemsOfAsync(PlanPosition pos, int? childId = null) =>
-        pos.Exercise is { } ex ? await content.ItemsOfAsync(ex, childId) : [];
+    public async Task<IReadOnlyList<ContentItem>> ItemsOfAsync(PlanPosition pos, int? childId = null,
+        CancellationToken ct = default) =>
+        pos.Exercise is { } ex ? await content.ItemsOfAsync(ex, childId, ct) : [];
 
     /// <summary>
     /// Darf der Sohn diesen Plan heute spielen (üben/testen)? Nur ein aktiver Plan innerhalb seiner
@@ -72,14 +73,14 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
     /// (das passiert erst beim Bewerten in <see cref="ApplyReview"/>).
     /// </summary>
     public async Task<IReadOnlyList<int>> DueItemIndicesAsync(PlanPosition pos, DateOnly day,
-        PracticeOrder strategy = PracticeOrder.WeakestFirst, bool dueOnly = true)
+        PracticeOrder strategy = PracticeOrder.WeakestFirst, bool dueOnly = true, CancellationToken ct = default)
     {
-        var poolSize = PoolSize(pos, (await ItemsOfAsync(pos)).Count);
+        var poolSize = PoolSize(pos, (await ItemsOfAsync(pos, ct: ct)).Count);
         if (poolSize == 0) return [];
 
         var progress = await db.PositionItemProgress
             .Where(p => p.PlanPositionId == pos.Id && p.ItemIndex < poolSize)
-            .ToDictionaryAsync(p => p.ItemIndex);
+            .ToDictionaryAsync(p => p.ItemIndex, ct);
 
         var due = Enumerable.Range(0, poolSize)
             .Select(i => (Index: i, Prog: progress.GetValueOrDefault(i)))
@@ -183,10 +184,11 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
         prog is null || prog.DueOn is null || prog.DueOn <= day;
 
     /// <summary>Holt den Fortschritts-Satz eines Inhaltsatoms der Position oder legt ihn (nachverfolgt) an.</summary>
-    public async Task<PositionItemProgress> ProgressForAsync(int positionId, int itemIndex)
+    public async Task<PositionItemProgress> ProgressForAsync(int positionId, int itemIndex,
+        CancellationToken ct = default)
     {
         var prog = await db.PositionItemProgress
-            .FirstOrDefaultAsync(p => p.PlanPositionId == positionId && p.ItemIndex == itemIndex);
+            .FirstOrDefaultAsync(p => p.PlanPositionId == positionId && p.ItemIndex == itemIndex, ct);
         if (prog is null)
         {
             prog = new PositionItemProgress { PlanPositionId = positionId, ItemIndex = itemIndex };

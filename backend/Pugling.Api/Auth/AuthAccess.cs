@@ -89,28 +89,28 @@ public class AuthAccess(PuglingDbContext db)
     // Haushalten). Jede Rolle wird eigenständig geprüft; erfüllt eine, ist der Zugriff erlaubt.
 
     /// <summary>Gehört der Plan dem angemeldeten Nutzer (Student = eigener Plan, Supervisor = Plan eines betreuten Kindes)?</summary>
-    public async Task<bool> OwnsPlanAsync(ClaimsPrincipal user, StudyPlan plan)
+    public async Task<bool> OwnsPlanAsync(ClaimsPrincipal user, StudyPlan plan, CancellationToken ct = default)
     {
         if (user.IsStudent() && plan.ChildId == user.StudentId()) return true;
         var fid = user.SupervisorId();
         return user.IsSupervisor() && fid is not null
-            && await db.SupervisorLinks.AnyAsync(l => l.StudentId == plan.ChildId && l.SupervisorId == fid);
+            && await db.SupervisorLinks.AnyAsync(l => l.StudentId == plan.ChildId && l.SupervisorId == fid, ct);
     }
 
     /// <summary>Betreut der angemeldete Supervisor dieses Kind (Mitgliedschaft über <see cref="SupervisorLink"/>)?</summary>
-    public async Task<bool> FatherOwnsChildAsync(ClaimsPrincipal user, int childId)
+    public async Task<bool> FatherOwnsChildAsync(ClaimsPrincipal user, int childId, CancellationToken ct = default)
     {
         var fid = user.SupervisorId();
-        return fid is not null && await db.SupervisorLinks.AnyAsync(l => l.StudentId == childId && l.SupervisorId == fid);
+        return fid is not null && await db.SupervisorLinks.AnyAsync(l => l.StudentId == childId && l.SupervisorId == fid, ct);
     }
 
     /// <summary>
     /// Darf der angemeldete Nutzer auf die kindbezogenen Daten dieses Kindes zugreifen?
     /// Student = nur sein eigenes Profil, Supervisor = jedes von ihm betreute Kind.
     /// </summary>
-    public async Task<bool> OwnsChildAsync(ClaimsPrincipal user, int childId)
+    public async Task<bool> OwnsChildAsync(ClaimsPrincipal user, int childId, CancellationToken ct = default)
     {
         if (user.IsStudent() && user.StudentId() == childId) return true;
-        return user.IsSupervisor() && await FatherOwnsChildAsync(user, childId);
+        return user.IsSupervisor() && await FatherOwnsChildAsync(user, childId, ct);
     }
 }
