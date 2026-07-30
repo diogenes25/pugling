@@ -74,19 +74,34 @@ public class KeyResult
 
 /// <summary>
 /// Protokolliert eine <b>einmalige</b> Belohnungs-Buchung eines <see cref="Objective"/> – das Objective-Gegenstück
-/// zu <see cref="PositionGoalReward"/>. Ein Unique-Index auf <c>(ObjectiveId, PeriodKey)</c> garantiert, dass
-/// jede Etappe (<see cref="PeriodKey"/> = <c>kr:{keyResultId}</c>) und der Voll-Abschluss (<see cref="PeriodKey"/> =
-/// <c>done</c>) je Objective höchstens einmal ausgezahlt werden – auch wenn das Lazy Settlement mehrfach läuft.
-/// Anders als bei den periodischen Positions-Zielen ist die Belohnung hier <b>einmalig</b> (kein Periodenschlüssel):
+/// zu <see cref="PositionGoalReward"/>. Zwei <b>gefilterte</b> Unique-Indizes garantieren, dass jede Etappe und
+/// der Voll-Abschluss je Objective höchstens einmal ausgezahlt werden – auch wenn das Lazy Settlement mehrfach läuft.
+/// Anders als bei den periodischen Positions-Zielen ist die Belohnung hier <b>einmalig</b> (keine Periode):
 /// ein späterer Rückfall des Lernstands nimmt eine bereits verdiente Etappe nicht zurück (kein Malus auf Objectives).
+/// <para>
+/// Der Anlass steckt in <see cref="PaidKeyResultId"/>: gesetzt = diese Etappe, <c>null</c> = der Voll-Abschluss.
+/// Vorher stand dort ein Text (<c>kr:42</c> bzw. <c>done</c>) in einer Spalte namens <c>PeriodKey</c> – ein
+/// Name, der keine Periode benannte, und ein Format, das jeder Leser parsen musste.
+/// </para>
 /// </summary>
 public class ObjectiveReward
 {
     public int Id { get; set; }
     public int ObjectiveId { get; set; }
     public Objective? Objective { get; set; }
-    /// <summary>Anlass der Buchung: <c>kr:{keyResultId}</c> je Etappe bzw. <c>done</c> für den Voll-Abschluss.</summary>
-    public string PeriodKey { get; set; } = "";
+    /// <summary>
+    /// Die bezahlte Etappe; <c>null</c> steht für den Voll-Abschluss des Objectives.
+    /// <para>
+    /// Bewusst <b>kein</b> Fremdschlüssel auf <see cref="KeyResult"/>, aus drei Gründen, die alle in
+    /// dieselbe Richtung zeigen: <c>SetNull</c> würde eine Etappen-Buchung beim Löschen der Etappe lautlos in
+    /// die <i>Abschluss</i>-Buchung verwandeln (ein Diskriminator darf nicht durch ein Löschen kippen);
+    /// <c>Cascade</c> ergäbe einen zweiten Kaskadenpfad vom Objective her (Objective → KeyResult → Reward
+    /// neben Objective → Reward), also genau den SQLite-Diamanten, den dieses Modell sonst vermeidet; und die
+    /// Buchung soll die Etappe ohnehin <b>überleben</b> – bezahlt ist bezahlt. Damit ist die Spalte eine
+    /// Audit-Momentaufnahme wie <c>ShopPurchase.SupervisorId</c>.
+    /// </para>
+    /// </summary>
+    public int? PaidKeyResultId { get; set; }
     /// <summary>Gutgeschriebene Menge (positiver Betrag; Münzen bzw. Gems je <see cref="ObjectiveKind"/>).</summary>
     public int Points { get; set; }
     public DateTime AwardedAt { get; set; } = DateTime.UtcNow;

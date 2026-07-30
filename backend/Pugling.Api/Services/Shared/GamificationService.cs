@@ -1,4 +1,3 @@
-using System.Globalization;
 using Microsoft.EntityFrameworkCore;
 using Pugling.Api.Data;
 using Pugling.Api.Models;
@@ -22,12 +21,20 @@ public class GamificationService(PuglingDbContext db, MetricsService metrics, IL
 
         foreach (var m in await db.Missions.Where(m => m.ChildId == childId && m.Active).ToListAsync(ct))
         {
-            var (from, to, key) = PeriodWindow(m.Period, today);
+            // `from` IST der Perioden-Anfang (bzw. null bei OneOff) – ein eigener Schlüssel wird nicht gebraucht.
+            var (from, to) = PeriodWindow(m.Period, today);
+            var period = m.Period;
             var current = await metrics.ValueAsync(childId, m.Metric, from, to, today, ct);
             if (current < m.Target || m.RewardPoints <= 0) continue;
-            if (await db.MissionAwards.AnyAsync(a => a.MissionId == m.Id && a.PeriodKey == key, ct)) continue;
+            if (await AlreadyAwardedAsync(m.Id, period, from, ct)) continue;
 
-            db.MissionAwards.Add(new MissionAward { MissionId = m.Id, PeriodKey = key, Points = m.RewardPoints });
+            db.MissionAwards.Add(new MissionAward
+            {
+                MissionId = m.Id,
+                Period = period,
+                PeriodStart = from,
+                Points = m.RewardPoints,
+            });
             db.ChildPoints.Add(new ChildPointsEntry
             {
                 ChildId = childId,
@@ -35,9 +42,9 @@ public class GamificationService(PuglingDbContext db, MetricsService metrics, IL
                 Amount = m.RewardPoints,
                 Reason = $"Mission erfüllt: {m.Title}",
             });
-            if (await SaveIgnoringDuplicateAsync(() => db.MissionAwards.AnyAsync(a => a.MissionId == m.Id && a.PeriodKey == key, ct), ct))
-                logger.LogInformation("Belohnung gebucht: Kind {ChildId} +{Points} (Mission) – \"{Title}\" ({PeriodKey})",
-                    childId, m.RewardPoints, m.Title, key);
+            if (await SaveIgnoringDuplicateAsync(() => AlreadyAwardedAsync(m.Id, period, from, ct), ct))
+                logger.LogInformation("Belohnung gebucht: Kind {ChildId} +{Points} (Mission) – \"{Title}\" ({Period} ab {PeriodStart})",
+                    childId, m.RewardPoints, m.Title, period, from);
         }
 
         foreach (var a in await db.Achievements.Where(a => a.ChildId == childId && a.Active).ToListAsync(ct))
@@ -83,10 +90,9 @@ public class GamificationService(PuglingDbContext db, MetricsService metrics, IL
 
     private async Task<MissionStatus> MapMissionAsync(int childId, Mission m, DateOnly today, CancellationToken ct)
     {
-        var (from, to, key) = PeriodWindow(m.Period, today);
+        var (from, to) = PeriodWindow(m.Period, today);
         var current = await metrics.ValueAsync(childId, m.Metric, from, to, today, ct);
-        var completed = await db.MissionAwards.AnyAsync(a => a.MissionId == m.Id && a.PeriodKey == key, ct)
-            || current >= m.Target;
+        var completed = await AlreadyAwardedAsync(m.Id, m.Period, from, ct) || current >= m.Target;
         return new MissionStatus(m.Id, m.Title, m.Metric, m.Period, m.Target,
             Math.Min(current, m.Target), completed, m.RewardPoints);
     }
@@ -138,23 +144,36 @@ public class GamificationService(PuglingDbContext db, MetricsService metrics, IL
         return await MapAchievementAsync(childId, a, at, today, ct);
     }
 
-    /// <summary>Tages-/Wochen-/Einmal-Fenster + Schlüssel für die idempotente Vergabe.</summary>
-    private static (DateOnly? from, DateOnly? to, string key) PeriodWindow(MissionPeriod period, DateOnly today) =>
+    /// <summary>
+    /// Tages-/Wochen-/Einmal-Fenster. <c>from</c> ist zugleich der Perioden-Anfang der Buchung
+    /// (<c>null</c> bei <see cref="MissionPeriod.OneOff"/> – dort gibt es keinen Zeitraum).
+    /// <para>
+    /// Vorher stand hier zusätzlich ein Text-Schlüssel, der die Woche als <c>2026-W27</c> aus
+    /// <c>ISOWeek</c> berechnete, während direkt daneben schon der Montag derselben Woche stand: zwei
+    /// Darstellungen desselben Zeitraums, von denen eine geparst werden musste. Der Montag bestimmt die
+    /// ISO-Woche eindeutig, die Umstellung ist also verhaltensgleich.
+    /// </para>
+    /// </summary>
+    private static (DateOnly? From, DateOnly? To) PeriodWindow(MissionPeriod period, DateOnly today) =>
         period switch
         {
-            MissionPeriod.Daily => (today, today, today.ToString("yyyy-MM-dd")),
-            MissionPeriod.Weekly => WeeklyWindow(today),
-            _ => (null, null, "once"),
+            MissionPeriod.Daily => (today, today),
+            // Montag der ISO-Woche (DayOfWeek: So=0 → 6 Tage zurück, Mo=1 → 0).
+            MissionPeriod.Weekly => WeekMonday(today) is var monday ? (monday, monday.AddDays(6)) : default,
+            _ => (null, null),
         };
 
-    private static (DateOnly? from, DateOnly? to, string key) WeeklyWindow(DateOnly today)
-    {
-        // Montag der ISO-Woche (DayOfWeek: So=0 → 6 Tage zurück, Mo=1 → 0).
-        var monday = today.AddDays(-(((int)today.DayOfWeek + 6) % 7));
-        var dt = today.ToDateTime(TimeOnly.MinValue);
-        var key = $"{ISOWeek.GetYear(dt)}-W{ISOWeek.GetWeekOfYear(dt):D2}";
-        return (monday, monday.AddDays(6), key);
-    }
+    private static DateOnly WeekMonday(DateOnly day) => day.AddDays(-(((int)day.DayOfWeek + 6) % 7));
+
+    /// <summary>
+    /// Liegt die Belohnung dieser Mission für diesen Zeitraum schon? Die Zeitraum-Art gehört in die
+    /// Bedingung: sie ist auf der Buchung eine Momentaufnahme, und nach einem Wechsel täglich→wöchentlich
+    /// verweist derselbe Perioden-Anfang auf zwei verschiedene Zeiträume.
+    /// </summary>
+    private Task<bool> AlreadyAwardedAsync(int missionId, MissionPeriod period, DateOnly? periodStart,
+        CancellationToken ct) =>
+        db.MissionAwards.AnyAsync(a => a.MissionId == missionId
+            && a.Period == period && a.PeriodStart == periodStart, ct);
 
     /// <summary>
     /// Speichert; ein paralleler Doppel-Request greift den Unique-Index ab, ohne doppelte Punkte/500.

@@ -853,7 +853,8 @@ namespace Pugling.Api.Data.Migrations
                     Id = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
                     MissionId = table.Column<int>(type: "INTEGER", nullable: false),
-                    PeriodKey = table.Column<string>(type: "TEXT", nullable: false),
+                    Period = table.Column<string>(type: "TEXT", nullable: false),
+                    PeriodStart = table.Column<DateOnly>(type: "TEXT", nullable: true),
                     Points = table.Column<int>(type: "INTEGER", nullable: false),
                     AwardedAt = table.Column<DateTime>(type: "TEXT", nullable: false)
                 },
@@ -900,7 +901,7 @@ namespace Pugling.Api.Data.Migrations
                     Id = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
                     ObjectiveId = table.Column<int>(type: "INTEGER", nullable: false),
-                    PeriodKey = table.Column<string>(type: "TEXT", nullable: false),
+                    PaidKeyResultId = table.Column<int>(type: "INTEGER", nullable: true),
                     Points = table.Column<int>(type: "INTEGER", nullable: false),
                     AwardedAt = table.Column<DateTime>(type: "TEXT", nullable: false)
                 },
@@ -1493,7 +1494,8 @@ namespace Pugling.Api.Data.Migrations
                     Id = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
                     PlanPositionId = table.Column<int>(type: "INTEGER", nullable: false),
-                    PeriodKey = table.Column<string>(type: "TEXT", nullable: false),
+                    Cadence = table.Column<string>(type: "TEXT", nullable: false),
+                    PeriodStart = table.Column<DateOnly>(type: "TEXT", nullable: false),
                     Day = table.Column<DateOnly>(type: "TEXT", nullable: false),
                     Points = table.Column<int>(type: "INTEGER", nullable: false),
                     AppliedAt = table.Column<DateTime>(type: "TEXT", nullable: false)
@@ -1516,7 +1518,8 @@ namespace Pugling.Api.Data.Migrations
                     Id = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
                     PlanPositionId = table.Column<int>(type: "INTEGER", nullable: false),
-                    PeriodKey = table.Column<string>(type: "TEXT", nullable: false),
+                    Cadence = table.Column<string>(type: "TEXT", nullable: false),
+                    PeriodStart = table.Column<DateOnly>(type: "TEXT", nullable: false),
                     Day = table.Column<DateOnly>(type: "TEXT", nullable: false),
                     Points = table.Column<int>(type: "INTEGER", nullable: false),
                     AwardedAt = table.Column<DateTime>(type: "TEXT", nullable: false)
@@ -2149,10 +2152,18 @@ namespace Pugling.Api.Data.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_MissionAwards_MissionId_PeriodKey",
+                name: "IX_MissionAwards_MissionId_Period",
                 table: "MissionAwards",
-                columns: new[] { "MissionId", "PeriodKey" },
-                unique: true);
+                columns: new[] { "MissionId", "Period" },
+                unique: true,
+                filter: "[PeriodStart] IS NULL");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_MissionAwards_MissionId_Period_PeriodStart",
+                table: "MissionAwards",
+                columns: new[] { "MissionId", "Period", "PeriodStart" },
+                unique: true,
+                filter: "[PeriodStart] IS NOT NULL");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Missions_ChildId_Active",
@@ -2160,10 +2171,23 @@ namespace Pugling.Api.Data.Migrations
                 columns: new[] { "ChildId", "Active" });
 
             migrationBuilder.CreateIndex(
-                name: "IX_ObjectiveRewards_ObjectiveId_PeriodKey",
+                name: "IX_ObjectiveRewards_ObjectiveId",
                 table: "ObjectiveRewards",
-                columns: new[] { "ObjectiveId", "PeriodKey" },
-                unique: true);
+                column: "ObjectiveId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ObjectiveRewards_ObjectiveId_Complete",
+                table: "ObjectiveRewards",
+                column: "ObjectiveId",
+                unique: true,
+                filter: "[PaidKeyResultId] IS NULL");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ObjectiveRewards_ObjectiveId_PaidKeyResultId",
+                table: "ObjectiveRewards",
+                columns: new[] { "ObjectiveId", "PaidKeyResultId" },
+                unique: true,
+                filter: "[PaidKeyResultId] IS NOT NULL");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Objectives_ChildId",
@@ -2181,15 +2205,15 @@ namespace Pugling.Api.Data.Migrations
                 columns: new[] { "StudyPlanId", "Order", "Id" });
 
             migrationBuilder.CreateIndex(
-                name: "IX_PositionGoalPenalties_PlanPositionId_PeriodKey",
+                name: "IX_PositionGoalPenalties_PlanPositionId_Cadence_PeriodStart",
                 table: "PositionGoalPenalties",
-                columns: new[] { "PlanPositionId", "PeriodKey" },
+                columns: new[] { "PlanPositionId", "Cadence", "PeriodStart" },
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_PositionGoalRewards_PlanPositionId_PeriodKey",
+                name: "IX_PositionGoalRewards_PlanPositionId_Cadence_PeriodStart",
                 table: "PositionGoalRewards",
-                columns: new[] { "PlanPositionId", "PeriodKey" },
+                columns: new[] { "PlanPositionId", "Cadence", "PeriodStart" },
                 unique: true);
 
             migrationBuilder.CreateIndex(

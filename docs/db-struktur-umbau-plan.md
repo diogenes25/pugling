@@ -4,7 +4,7 @@ tags: [bereich/architektur, bereich/datenmodell, status/laufend]
 
 # DB-/EF-Struktur-Umbau
 
-> **Übergabe-Dokument.** E0–E6 und E8 sind umgesetzt und verifiziert; offen sind E7 und E9–E14. Beide
+> **Übergabe-Dokument.** E0–E8 sind umgesetzt und verifiziert; offen sind E9–E14. Beide
 > echten Defekte sind damit behoben – der Rest ist Struktur. Dieses Dokument ist so
 > geschrieben, dass jemand ohne Vorwissen die restlichen Etappen zu Ende führen kann: es nennt die
 > getroffenen Entscheidungen, die Arbeitsregeln, die Belege, die bewussten Abweichungen und die
@@ -72,11 +72,11 @@ Die Langfassung steht in der Plandatei dieser Sitzung.
 6. **Jedes neue Tor braucht eine Falsch-Grün-Probe:** die Regel lokal brechen, das Tor rot sehen,
    zurücknehmen, nicht committen. Ein Wächter, der nie rot war, ist kein Wächter.
 7. **Wer eine Beziehung anfasst, zieht die G2-Tabelle mit** (`SchemaGuardTests`, literal gepinnte Liste
-   aller 95 FKs). Das betrifft E7 (`ObjectiveReward.PaidKeyResultId`), E12 (`TimeSlotRule` fällt weg) und
+   aller 95 FKs). Das betrifft E12 (`TimeSlotRule` fällt weg) und
    E13 (`LearnGoal.ChildId` fällt weg, drei `KeyResult`-Scope-FKs kommen). Das Tor **soll** dabei rot sein –
    die bewusste Zeile ist der Zweck. Bei mehreren Änderungen lohnt der Wegwerf-Dump aus E6 wieder.
 
-## Umgesetzt: E0–E6, E8
+## Umgesetzt: E0–E8
 
 ### E0 · Netz spannen — keine Migration
 
@@ -302,28 +302,71 @@ Constraint), `docs/api-examples` unverändert, Abdeckung weiter 268/268. Live ge
 Name+E-Mail → `auth/login` liefert `"name":"Papa E8"`, zweite Registrierung auf dieselbe Adresse → **409
 `duplicate_email`** (vorher 500).
 
-## Offen: E7, E9–E14
+### E7 · `PeriodKey` aufspalten
+
+Ein Spaltenname, **drei** Formate (`2026-07-04`, `2026-W27`, `once`, dazu `kr:42`/`done`), **vier**
+Tabellen – und alle vier Vorkommen idempotenz-tragend, also Teil eines Unique-Index. Ein Tippfehler im
+Format hätte doppelt gezahlt, ohne dass irgendetwas auffällt. **Vertragsneutral:** `periodKey` steht in
+keinem DTO, die Spalte war rein intern (vorab geprüft).
+
+**Eine Korrektur am Plan:** dort stand, bei `PositionGoalReward`/`PositionGoalPenalty` „entfällt die
+Spalte, das `DateOnly Day` daneben trägt dieselbe Periode doppelt". **Das ist falsch.** `Day` ist der
+Buchungs- bzw. Auswertungstag, `PeriodStart` der Perioden-Anfang: bei einem Wochenziel, das am Mittwoch
+erreicht wird, steht der Montag im einen und der Mittwoch im anderen Feld. Beide sind nötig – der Tag für
+`PointsAwardedAsync` und die Tages-/Serien-Metriken, die Periode für die Idempotenz. Die Spalte wurde also
+**typisiert**, nicht gestrichen. (Genau davor warnt der Kommentar in `PositionProgressService`: nach der
+Periode statt nach dem Tag zu filtern überhöht Wochenziele um bis zu 7×.)
+
+**Umgesetzt:**
+- `PositionGoalReward`/`PositionGoalPenalty`: `string PeriodKey` → `GoalCadence Cadence` +
+  `DateOnly PeriodStart`, Unique auf `(PlanPositionId, Cadence, PeriodStart)`.
+- `MissionAward`: → `MissionPeriod Period` + `DateOnly? PeriodStart`, **zwei gefilterte** Uniques
+  (`PeriodStart IS NOT NULL` / `IS NULL` für `OneOff`). Nebengewinn: die ISO-Wochen-Rechnung
+  (`ISOWeek.GetYear/GetWeekOfYear`) fällt weg – der Montag stand direkt daneben schon da und bestimmt die
+  ISO-Woche eindeutig. Zwei Darstellungen desselben Zeitraums, eine davon zu parsen, sind jetzt eine.
+- `ObjectiveReward`: → `PaidKeyResultId int?`, NULL = Voll-Abschluss, zwei gefilterte Uniques.
+
+**Warum die Taktung mit auf die Log-Zeile** (`Cadence` bzw. `Period` als Momentaufnahme): ohne sie deutet
+ein Wechsel Tag→Woche rückwirkend gebuchte Perioden um. Die Belohnung für Montag als *Tages*ziel würde die
+Woche, die an diesem Montag beginnt, stillschweigend als „schon bezahlt" abweisen.
+
+**Warum `PaidKeyResultId` bewusst KEIN Fremdschlüssel ist** (drei Gründe, alle in dieselbe Richtung):
+`SetNull` würde eine Etappen-Buchung beim Löschen der Etappe lautlos in die *Abschluss*-Buchung verwandeln –
+ein Diskriminator darf nicht durch ein Löschen kippen; `Cascade` ergäbe einen zweiten Kaskadenpfad vom
+Objective her (Objective → KeyResult → Reward **neben** Objective → Reward), also genau den SQLite-Diamanten,
+den dieses Modell sonst vermeidet; und die Buchung soll die Etappe ohnehin überleben – bezahlt ist bezahlt.
+Damit ist die Spalte eine Audit-Momentaufnahme wie `ShopPurchase.SupervisorId` (G5-Liste).
+
+**Fallstrick, der Zeit gekostet hat – ein gefilterter Index verdrängt den Fremdschlüssel-Index.** EF legt
+den FK-Index nur an, solange die Spalte *keinen* Index hat; ein gefilterter zählt für die Konvention mit,
+taugt aber nicht: ein partieller Index bedient ein blankes `WHERE ObjectiveId IN (…)` nicht. Nach dem ersten
+Falten war der Index also weg – und genau diese Abfrage ist der heiße Lesepfad
+(`ObjectiveRewardService` lädt bei jedem Kind-Login die gebuchten Anlässe). Darum steht dort jetzt ein
+**namentlich** deklarierter FK-Index. `MissionAwards` braucht ihn nicht: jede Abfrage nennt
+`(MissionId, Period, PeriodStart)` vollständig, nur die Kaskade sucht auf `MissionId` allein.
+
+**Neuer Test:** `GamificationTests.Einmal_Mission_WirdNichtDoppeltBelohnt_UndDieDatenbankHaeltDagegen` –
+der `OneOff`/NULL-Pfad war bisher ungetestet, und er ist der einzige, an dem der NULL-Diskriminator hängt.
+Der Test prüft **beides**: dass die Auswertung nicht doppelt bucht (Existenz-Check im Code) *und* dass die
+DB eine zweite Buchung ablehnt (die harte Garantie). Nur die erste Hälfte zu prüfen wäre die Fehlerklasse
+„Regel getestet, Grenzfall offen" – der Test bliebe grün, wenn genau die Absicherung fehlte, die er belegen
+soll. Die Idempotenz der drei anderen Logs deckten `PositionGoalOverviewTests`, `PflichtMalusTests` und
+`ObjectiveTests` schon ab.
+
+**Tor G6 steht** (`SchemaGuardTests.Keine_Zeitangabe_Als_Text`): keine `string`-Spalte, deren Name auf
+`Key`/`Period`/`Day`/`Date`/`On`/`At`/`Time`/`Week`/`Month`/`Year` endet – case-sensitiv, damit er
+`PeriodKey` trifft und nicht jedes Wort, das auf „on" endet. Ausnahmen namentlich mit Grund: die drei
+fachlichen Naturschlüssel (`Vocabulary.Key`, `MediaAsset.Key`, `ClozeText.Key`) und **ein echter Fund beim
+ersten Lauf**: `TimetableEntry.TimeOfDay` ist Freitext („Nachmittag", „1./2. Stunde"), keine Uhrzeit – bleibt
+also, mit Begründung. Falsch-Grün-Probe: einen Naturschlüssel aus der Liste genommen → rot mit Namen;
+zurückgenommen.
+
+**Stand:** 612 Tests grün, Kette bei 1 (`20260730222450_InitialCreate`), `docs/api-examples` unverändert,
+Abdeckung weiter 268/268.
+
+## Offen: E9–E14
 
 Jede Etappe endet grün, mit neu gefalteter Migration (siehe Arbeitsregeln).
-
-### E7 · `PeriodKey` aufspalten
-Ein Spaltenname, drei Formate, alle vier Vorkommen idempotenz-tragend:
-- `PositionGoalReward`/`PositionGoalPenalty` (`PlanPositionEntities.cs`, `yyyy-MM-dd`): Spalte **entfällt**,
-  das `DateOnly Day` daneben trägt dieselbe Periode doppelt. Unique auf
-  `(PlanPositionId, Cadence, PeriodStart)`, mit `Cadence` als Snapshot auf der Log-Zeile – sonst deutet ein
-  Wechsel Tag→Woche rückwirkend gebuchte Perioden um. Macht den Kommentar in
-  `PositionProgressService.cs:80-83` („nach PeriodKey filtern überhöht Wochenziele um bis zu 7×") vom
-  Kommentar zum Typ.
-- `MissionAward` (`2026-W27`/`once`): `(MissionId, Period, PeriodStart DateOnly?)` mit **zwei gefilterten**
-  Unique-Indizes (`PeriodStart IS NOT NULL` / `IS NULL` für `OneOff`). **Fallstrick:** SQLite behandelt
-  NULLs als verschieden – ein einzelner Unique über eine nullable Spalte hält die Invariante *nicht*.
-  Genau das machte den Text-Key ursprünglich attraktiv.
-- `ObjectiveReward` (`kr:42`/`done`): keine Periode, sondern ein Anlass mit zwei Ausprägungen →
-  `PaidKeyResultId int?` + NULL als Diskriminator + zwei gefilterte Uniques (Bauart wie `MediaLink`).
-
-**Vorher prüfen**, ob `periodKey` in einem Response-DTO steht; wenn ja, dieses Feld zurückstellen.
-Tests: `PositionGoalOverviewTests`, `PflichtMalusTests`, `ObjectiveTests`, `GamificationTests`, plus je
-ein Doppelbuchungs-Test (zweimal dieselbe Periode → eine Buchung). Danach Tor **G6** (kein Datum als Text).
 
 ### E9 · Backfills ins Seed + `ExerciseGrants`-Lücke
 Die drei „Backfills" sind **kein Altdaten-Pfad, sondern Seed-Nachlauf**: ohne sie hat die frische DB
@@ -479,7 +522,7 @@ E1 ist wirksam: die Azure-DB stammt aus der alten Kette und wird vom Historien-G
 
 ## Verifikation
 
-**Pro Etappe:** `dotnet test Pugling.sln -c Release` (~55 s, aktuell **610** Tests) und
+**Pro Etappe:** `dotnet test Pugling.sln -c Release` (~55 s, aktuell **612** Tests) und
 `git diff -- docs/api-examples` prüfen (leer, oder im gleichen Commit neu erzeugt).
 
 **Laufzeit statt nur Kompilieren:** `/smoke-test` (Wegwerf-DB, lässt `pugling.db` unangetastet) nach E6,

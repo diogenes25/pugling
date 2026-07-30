@@ -326,6 +326,64 @@ public class SchemaGuardTests
     }
 
     /// <summary>
+    /// <b>G6 – kein Zeitpunkt und kein Zeitraum als Text.</b> Eine <c>string</c>-Spalte, deren Name eine
+    /// Zeitangabe verspricht, ist der teuerste Schema-Fehler dieses Modells gewesen: <c>PeriodKey</c> trug
+    /// <b>drei</b> Formate (<c>2026-07-04</c>, <c>2026-W27</c>, <c>once</c>) in <b>vier</b> Tabellen, und alle
+    /// vier waren Teil eines Unique-Index – also idempotenz-tragend. Ein Tippfehler im Format hätte doppelt
+    /// gezahlt, ohne dass irgendetwas auffällt.
+    /// <para>
+    /// Der Wächter greift über den <b>Namen</b>, weil das die einzige reflektierbare Spur einer
+    /// Zeit-Bedeutung ist. Namen wie <c>Key</c>/<c>Slug</c>, die einen fachlichen <i>Natur</i>schlüssel
+    /// bezeichnen, sind erlaubt – aber nur namentlich und mit Grund, damit die nächste <c>…Key</c>-Spalte
+    /// eine Entscheidung erzwingt statt sich einzuschleichen. Der Vergleich ist <b>case-sensitiv</b>: er soll
+    /// <c>PeriodKey</c> treffen, nicht jedes Wort, das auf „on" endet.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public void Keine_Zeitangabe_Als_Text()
+    {
+        // Verdächtige Endungen: alles, was nach Zeitpunkt oder Zeitraum klingt.
+        string[] verdaechtig = ["Key", "Period", "Day", "Date", "On", "At", "Time", "Week", "Month", "Year"];
+
+        // Begründete Ausnahmen: Property → warum der Text hier keine Zeitangabe ist.
+        var erlaubt = new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            ["Vocabulary.Key"] = "Fachlicher Naturschlüssel der Store-Vokabel (en:hello:de), slug-idempotent.",
+            ["MediaAsset.Key"] = "Fachlicher Naturschlüssel des Motivs, Grundlage der Wiedererkennung.",
+            ["ClozeText.Key"] = "Fachlicher Naturschlüssel des Lückentexts.",
+            // Der einzige echte Fund dieses Wächters beim ersten Lauf – und ein berechtigter:
+            ["TimetableEntry.TimeOfDay"] =
+                "Freitext und ausdrücklich KEINE Uhrzeit: der Vater schreibt 'Nachmittag' oder "
+                + "'1./2. Stunde' hinein. Ein Zeittyp könnte das nicht abbilden, und das Feld steht im "
+                + "Vertrag (EntryResponse/CreateEntryDto) – Typisieren wäre ein Bruch ohne Gewinn.",
+        };
+
+        using var db = Context();
+
+        var alleStrings = new List<string>();
+        var treffer = new List<string>();
+        foreach (var entity in db.Model.GetEntityTypes())
+            foreach (var property in entity.GetProperties())
+            {
+                if (property.ClrType != typeof(string)) continue;
+                var name = $"{entity.ClrType.Name}.{property.Name}";
+                alleStrings.Add(name);
+                if (verdaechtig.Any(s => property.Name.EndsWith(s, StringComparison.Ordinal))
+                    && !erlaubt.ContainsKey(name))
+                    treffer.Add(name);
+            }
+
+        // Selbstschutz: findet die Reflexion keine String-Spalten, bestünde der Test inhaltsleer.
+        Assert.True(alleStrings.Count >= 100, $"Zu wenige String-Spalten gefunden ({alleStrings.Count}).");
+
+        Assert.True(treffer.Count == 0,
+            "Diese String-Spalten tragen dem Namen nach eine Zeitangabe. Nimm einen echten Typ "
+            + "(DateOnly/DateTime/Enum) – oder trage sie mit Grund in die Ausnahmeliste ein, falls es ein "
+            + "fachlicher Naturschlüssel ist:\n  "
+            + string.Join("\n  ", treffer.OrderBy(n => n, StringComparer.Ordinal)));
+    }
+
+    /// <summary>
     /// <b>G8 – „genau eines von N" steht in der Datenbank, nicht im Kommentar.</b> Drei Tabellen tragen
     /// dieselbe Frage: welcher der mehreren optionalen Fremdschlüssel ist der gültige? Zwei davon
     /// (<c>MediaLink</c>, <c>ChildMediaPick</c>) beantworteten sie vorbildlich per Check-Constraint, die

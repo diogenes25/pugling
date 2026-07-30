@@ -58,7 +58,7 @@ public class PositionGoalOverviewTests(PuglingWebAppFactory factory) : IClassFix
             .Content.ReadFromJsonAsync<JsonElement>();
         var attemptId2 = attempt2.GetProperty("attemptId").GetInt32();
         // Der Status des zweiten Submits gehört geprüft, nicht verworfen: die Idempotenz hängt an ZWEI
-        // Dingen – der Existenzprüfung im Code und dem Unique-Index (PlanPositionId, PeriodKey). Fällt die
+        // Dingen – der Existenzprüfung im Code und dem Unique-Index (PlanPositionId, Cadence, PeriodStart). Fällt die
         // Prüfung aus, hält der Index die Anzahl unten, aber `EvaluateAndAwardAsync` hat kein
         // `catch (DbUpdateException)` – der Verstoß wird zum **500**. Ohne diese Zeile blieb genau das
         // unbemerkt (docs/testplan.md, Injektion D13): die Reward-Anzahl war weiter 1, der Fehler unsichtbar.
@@ -119,7 +119,7 @@ public class PositionGoalOverviewTests(PuglingWebAppFactory factory) : IClassFix
     /// Der <b>Verlierer eines nebenläufigen Zielabschlusses</b> darf keinen Fehler bekommen. Zwei
     /// gleichzeitige Abschlüsse derselben Periode (Doppeltipp auf „Abgeben", zwei offene Tabs) laufen beide
     /// durch die Existenzprüfung; der zweite trifft danach den Unique-Index
-    /// <c>(PlanPositionId, PeriodKey)</c>. Fachlich ist nichts offen – die Belohnung liegt, sie ist je
+    /// <c>(PlanPositionId, Cadence, PeriodStart)</c>. Fachlich ist nichts offen – die Belohnung liegt, sie ist je
     /// Periode einmalig – also wäre ein 500 auf einen gelungenen Abschluss die einzige Wirkung.
     /// <para>
     /// Das Rennen wird hier <b>deterministisch</b> gestellt, statt zwei Submits parallel abzuschicken: das
@@ -158,7 +158,8 @@ public class PositionGoalOverviewTests(PuglingWebAppFactory factory) : IClassFix
         db.PositionGoalRewards.Add(new PositionGoalReward
         {
             PlanPositionId = positionId,
-            PeriodKey = today.ToString("yyyy-MM-dd"),
+            Cadence = GoalCadence.Daily,
+            PeriodStart = today,
             Day = today,
             Points = 20,
         });

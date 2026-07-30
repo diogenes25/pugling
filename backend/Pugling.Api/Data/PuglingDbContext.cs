@@ -574,9 +574,11 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
 
         // Ziel-Belohnung je Position/Periode: höchstens eine Buchung pro (Position, Periode) – die
         // Idempotenz-Garantie der Ziel-Punkte. Verschwindet mit der Position (Cascade).
+        // Die Taktung gehört in den Schlüssel: sie ist auf der Buchung eine Momentaufnahme, und nach einem
+        // Wechsel Tag→Woche bezeichnet derselbe Perioden-Anfang zwei verschiedene Perioden.
         modelBuilder.Entity<PositionGoalReward>(e =>
         {
-            e.HasIndex(r => new { r.PlanPositionId, r.PeriodKey }).IsUnique();
+            e.HasIndex(r => new { r.PlanPositionId, r.Cadence, r.PeriodStart }).IsUnique();
             e.HasOne(r => r.PlanPosition).WithMany().HasForeignKey(r => r.PlanPositionId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
@@ -585,7 +587,7 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
         // gegen doppelte Bestrafung, wenn das Lazy Settlement mehrfach über dieselbe Periode läuft. Cascade mit der Position.
         modelBuilder.Entity<PositionGoalPenalty>(e =>
         {
-            e.HasIndex(r => new { r.PlanPositionId, r.PeriodKey }).IsUnique();
+            e.HasIndex(r => new { r.PlanPositionId, r.Cadence, r.PeriodStart }).IsUnique();
             e.HasOne(r => r.PlanPosition).WithMany().HasForeignKey(r => r.PlanPositionId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
@@ -602,9 +604,20 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
 
         // Objective-Belohnungs-Log: höchstens eine Buchung je (Objective, Anlass) – die Idempotenz-Garantie
         // gegen doppelte Auszahlung, wenn das Lazy Settlement mehrfach läuft. Cascade mit dem Objective.
+        // Zwei GEFILTERTE Uniques statt einem, weil der Anlass zwei Ausprägungen hat und SQLite NULLs als
+        // verschieden behandelt: ein einzelner Unique über die nullable Spalte ließe beliebig viele
+        // Abschluss-Buchungen zu – und das ist der große Batzen, also Geld.
         modelBuilder.Entity<ObjectiveReward>(e =>
         {
-            e.HasIndex(r => new { r.ObjectiveId, r.PeriodKey }).IsUnique();
+            e.HasIndex(r => new { r.ObjectiveId, r.PaidKeyResultId }).IsUnique()
+                .HasFilter("[PaidKeyResultId] IS NOT NULL");
+            e.HasIndex(r => r.ObjectiveId, "IX_ObjectiveRewards_ObjectiveId_Complete").IsUnique()
+                .HasFilter("[PaidKeyResultId] IS NULL");
+            // Der Fremdschlüssel-Index von Hand, weil die Konvention ihn nur anlegt, solange die Spalte
+            // *keinen* Index hat – die zwei gefilterten oben zählen für sie mit, taugen aber nicht: ein
+            // partieller Index bedient ein blankes `WHERE ObjectiveId IN (…)` nicht. Und genau das ist der
+            // heiße Lesepfad (ObjectiveRewardService lädt bei jedem Kind-Login die gebuchten Anlässe).
+            e.HasIndex(r => r.ObjectiveId, "IX_ObjectiveRewards_ObjectiveId");
             e.HasOne(r => r.Objective).WithMany().HasForeignKey(r => r.ObjectiveId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
@@ -653,9 +666,17 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
         modelBuilder.Entity<Mission>().HasIndex(m => new { m.ChildId, m.Active });
         modelBuilder.Entity<Mission>()
             .HasOne(m => m.Child).WithMany().HasForeignKey(m => m.ChildId).OnDelete(DeleteBehavior.Cascade);
+        // Zwei GEFILTERTE Uniques wie beim ObjectiveReward: `OneOff` hat keinen Zeitraum (PeriodStart NULL),
+        // und SQLite behandelt NULLs als verschieden – ein einzelner Unique über die nullable Spalte ließe
+        // beliebig viele Einmal-Belohnungen zu. Genau dieser Fallstrick machte den Text-Schlüssel attraktiv.
+        // Anders als dort braucht es hier KEINEN zusätzlichen Fremdschlüssel-Index: jede Abfrage auf
+        // MissionAwards nennt (MissionId, Period, PeriodStart) vollständig, es gibt keinen Lesepfad auf
+        // MissionId allein. Nur die Kaskade sucht so – auf einer Tabelle mit einer Handvoll Zeilen je Mission.
         modelBuilder.Entity<MissionAward>(e =>
         {
-            e.HasIndex(a => new { a.MissionId, a.PeriodKey }).IsUnique();
+            e.HasIndex(a => new { a.MissionId, a.Period, a.PeriodStart }).IsUnique()
+                .HasFilter("[PeriodStart] IS NOT NULL");
+            e.HasIndex(a => new { a.MissionId, a.Period }).IsUnique().HasFilter("[PeriodStart] IS NULL");
             e.HasOne(a => a.Mission).WithMany().HasForeignKey(a => a.MissionId).OnDelete(DeleteBehavior.Cascade);
         });
 

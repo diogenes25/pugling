@@ -11,7 +11,7 @@ using Pugling.Api.Data;
 namespace Pugling.Api.Data.Migrations
 {
     [DbContext(typeof(PuglingDbContext))]
-    [Migration("20260730215446_InitialCreate")]
+    [Migration("20260730222450_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -1311,8 +1311,11 @@ namespace Pugling.Api.Data.Migrations
                     b.Property<int>("MissionId")
                         .HasColumnType("INTEGER");
 
-                    b.Property<string>("PeriodKey")
+                    b.Property<string>("Period")
                         .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateOnly?>("PeriodStart")
                         .HasColumnType("TEXT");
 
                     b.Property<int>("Points")
@@ -1320,8 +1323,13 @@ namespace Pugling.Api.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("MissionId", "PeriodKey")
-                        .IsUnique();
+                    b.HasIndex("MissionId", "Period")
+                        .IsUnique()
+                        .HasFilter("[PeriodStart] IS NULL");
+
+                    b.HasIndex("MissionId", "Period", "PeriodStart")
+                        .IsUnique()
+                        .HasFilter("[PeriodStart] IS NOT NULL");
 
                     b.ToTable("MissionAwards");
                 });
@@ -1383,17 +1391,23 @@ namespace Pugling.Api.Data.Migrations
                     b.Property<int>("ObjectiveId")
                         .HasColumnType("INTEGER");
 
-                    b.Property<string>("PeriodKey")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
+                    b.Property<int?>("PaidKeyResultId")
+                        .HasColumnType("INTEGER");
 
                     b.Property<int>("Points")
                         .HasColumnType("INTEGER");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ObjectiveId", "PeriodKey")
-                        .IsUnique();
+                    b.HasIndex("ObjectiveId", "PaidKeyResultId")
+                        .IsUnique()
+                        .HasFilter("[PaidKeyResultId] IS NOT NULL");
+
+                    b.HasIndex(new[] { "ObjectiveId" }, "IX_ObjectiveRewards_ObjectiveId");
+
+                    b.HasIndex(new[] { "ObjectiveId" }, "IX_ObjectiveRewards_ObjectiveId_Complete")
+                        .IsUnique()
+                        .HasFilter("[PaidKeyResultId] IS NULL");
 
                     b.ToTable("ObjectiveRewards");
                 });
@@ -1491,11 +1505,14 @@ namespace Pugling.Api.Data.Migrations
                     b.Property<DateTime>("AppliedAt")
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("Cadence")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
                     b.Property<DateOnly>("Day")
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("PeriodKey")
-                        .IsRequired()
+                    b.Property<DateOnly>("PeriodStart")
                         .HasColumnType("TEXT");
 
                     b.Property<int>("PlanPositionId")
@@ -1506,7 +1523,7 @@ namespace Pugling.Api.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("PlanPositionId", "PeriodKey")
+                    b.HasIndex("PlanPositionId", "Cadence", "PeriodStart")
                         .IsUnique();
 
                     b.ToTable("PositionGoalPenalties");
@@ -1521,11 +1538,14 @@ namespace Pugling.Api.Data.Migrations
                     b.Property<DateTime>("AwardedAt")
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("Cadence")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
                     b.Property<DateOnly>("Day")
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("PeriodKey")
-                        .IsRequired()
+                    b.Property<DateOnly>("PeriodStart")
                         .HasColumnType("TEXT");
 
                     b.Property<int>("PlanPositionId")
@@ -1536,7 +1556,7 @@ namespace Pugling.Api.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("PlanPositionId", "PeriodKey")
+                    b.HasIndex("PlanPositionId", "Cadence", "PeriodStart")
                         .IsUnique();
 
                     b.ToTable("PositionGoalRewards");

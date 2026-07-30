@@ -28,14 +28,27 @@ public class Mission
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }
 
-/// <summary>Protokolliert die einmalige Belohnung einer Mission je Zeitraum (idempotent, Anti-Doppelvergabe).</summary>
+/// <summary>
+/// Protokolliert die einmalige Belohnung einer Mission je Zeitraum (idempotent, Anti-Doppelvergabe).
+/// <para>
+/// Der Zeitraum ist <b>(<see cref="Period"/>, <see cref="PeriodStart"/>)</b>. Die Art ist wie bei
+/// <see cref="PositionGoalReward"/> eine <b>Momentaufnahme</b> der Mission: ohne sie würde ein Wechsel
+/// täglich→wöchentlich die Belohnung für einen Montag als die der Woche mitzählen, die an ihm beginnt.
+/// Bei <see cref="MissionPeriod.OneOff"/> gibt es keinen Zeitraum – dann ist <see cref="PeriodStart"/>
+/// <c>null</c>, und genau dieses NULL ist der Diskriminator der beiden gefilterten Unique-Indizes
+/// (SQLite behandelt NULLs als verschieden; ein einzelner Unique über eine nullable Spalte hielte die
+/// Invariante <b>nicht</b> – das machte den früheren Text-Schlüssel attraktiv).
+/// </para>
+/// </summary>
 public class MissionAward
 {
     public int Id { get; set; }
     public int MissionId { get; set; }
     public Mission? Mission { get; set; }
-    /// <summary>Zeitraum-Schlüssel: "2026-07-04" (täglich), "2026-W27" (wöchentlich) oder "once".</summary>
-    public string PeriodKey { get; set; } = "";
+    /// <summary>Zeitraum-Art zum Zeitpunkt der Buchung (Momentaufnahme – siehe Klassen-Doku).</summary>
+    public MissionPeriod Period { get; set; }
+    /// <summary>Erster Tag des Zeitraums (Tag bzw. Wochen-Montag); <c>null</c> bei <see cref="MissionPeriod.OneOff"/>.</summary>
+    public DateOnly? PeriodStart { get; set; }
     public int Points { get; set; }
     public DateTime AwardedAt { get; set; } = DateTime.UtcNow;
 }

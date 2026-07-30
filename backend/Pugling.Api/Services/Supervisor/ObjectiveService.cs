@@ -23,7 +23,6 @@ public class ObjectiveService(PuglingDbContext db, ObjectiveEvaluationService ev
     public record KeyResultResult(KeyResultResponse? Value, ApiError? Error);
 
     private static DateOnly Today => DateOnly.FromDateTime(DateTime.UtcNow);
-    private const string DoneKey = "done";
 
     private static string KrScope(KeyResult k) =>
         k.ExerciseId is not null ? "exercise" : k.ChapterId is not null ? "chapter" : "subject";
@@ -88,9 +87,11 @@ public class ObjectiveService(PuglingDbContext db, ObjectiveEvaluationService ev
         string.IsNullOrWhiteSpace(title) || !Enum.IsDefined(kind) || rewardOnComplete < 0 || rewardPerKeyResult < 0
             ? ApiErrors.ValidationError : null;
 
-    // Ob der große Abschluss-Batzen bereits gebucht wurde (fürs Rewarded-Flag der Antwort).
+    // Ob der große Abschluss-Batzen bereits gebucht wurde (fürs Rewarded-Flag der Antwort). Die
+    // Abschluss-Buchung ist die ohne Etappe – `PaidKeyResultId is null` ist ihr Diskriminator.
     private async Task<bool> IsRewardedAsync(int objectiveId, CancellationToken ct) =>
-        await db.ObjectiveRewards.AsNoTracking().AnyAsync(r => r.ObjectiveId == objectiveId && r.PeriodKey == DoneKey, ct);
+        await db.ObjectiveRewards.AsNoTracking()
+            .AnyAsync(r => r.ObjectiveId == objectiveId && r.PaidKeyResultId == null, ct);
 
     /// <summary>Alle Objectives des Kindes, live ausgewertet; optional nach Status/Art gefiltert.</summary>
     public async Task<List<ObjectiveResponse>> ListAsync(int childId, string? status, ObjectiveKind? kind, CancellationToken ct = default)
@@ -102,7 +103,7 @@ public class ObjectiveService(PuglingDbContext db, ObjectiveEvaluationService ev
         // Projektion im Query-Ausdruck), die EF eindeutig parametrisiert.
         var objectiveIds = evals.Select(e => e.Objective.Id).ToList();
         var rewardedIds = (await db.ObjectiveRewards.AsNoTracking()
-            .Where(r => r.PeriodKey == DoneKey && objectiveIds.Contains(r.ObjectiveId))
+            .Where(r => r.PaidKeyResultId == null && objectiveIds.Contains(r.ObjectiveId))
             .Select(r => r.ObjectiveId).ToListAsync(ct)).ToHashSet();
 
         IEnumerable<ObjectiveResponse> mapped = evals.Select(e => MapObjective(e, rewardedIds.Contains(e.Objective.Id)));

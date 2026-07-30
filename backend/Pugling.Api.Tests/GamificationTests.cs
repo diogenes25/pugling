@@ -1,6 +1,9 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Pugling.Api.Data;
 using Pugling.Api.Models;
 
 namespace Pugling.Api.Tests;
@@ -60,6 +63,58 @@ public class GamificationTests(PuglingWebAppFactory factory) : IClassFixture<Pug
         // Genau einmal belohnt – auch nach weiteren Treffern (Idempotenz je Tag).
         await ReviewAsync(child, planId, positionId, sid, 0);
         Assert.Equal(1, await CountPointReasonAsync(child, $"Mission erfüllt: {missionTitle}"));
+    }
+
+    /// <summary>
+    /// Die <b>Einmal-Mission</b> (<c>OneOff</c>) hat keinen Zeitraum – ihre Buchung trägt darum
+    /// <c>PeriodStart = null</c>, und dieses NULL ist der Diskriminator der beiden gefilterten
+    /// Unique-Indizes. Der Fall braucht einen eigenen Test, weil SQLite NULLs als <b>verschieden</b>
+    /// behandelt: fiele der Index auf <c>(MissionId, Period) WHERE PeriodStart IS NULL</c> weg, wären
+    /// beliebig viele Einmal-Belohnungen erlaubt, ohne dass irgendetwas rot würde.
+    /// <para>
+    /// Deshalb prüft der Test <b>beides</b>: dass die Auswertung nicht doppelt bucht (der Existenz-Check
+    /// im Code) <i>und</i> dass die Datenbank eine zweite Buchung ablehnt (die harte Garantie). Nur die
+    /// erste Hälfte zu prüfen ist die Fehlerklasse „Regel getestet, Grenzfall offen" – der Test bliebe
+    /// grün, wenn genau die Absicherung fehlte, die er belegen soll.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public async Task Einmal_Mission_WirdNichtDoppeltBelohnt_UndDieDatenbankHaeltDagegen()
+    {
+        var father = await TestApi.FatherAsync(factory);
+        var missionTitle = "TEST Einmal 1 Treffer";
+        var missionId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/supervisor/children/1/missions", new
+        {
+            title = missionTitle,
+            metric = "CorrectReviews",
+            target = 1,
+            period = "OneOff",
+            rewardPoints = 40,
+        }));
+
+        var (planId, positionId, sid) = await SetupAsync();
+        var child = await TestApi.ChildAsync(factory);
+        await ReviewAsync(child, planId, positionId, sid, 0); // Ziel (1) erreicht
+
+        // Weitere Treffer zahlen nicht nach – der Existenz-Check greift.
+        await ReviewAsync(child, planId, positionId, sid, 1);
+        Assert.Equal(1, await CountPointReasonAsync(child, $"Mission erfüllt: {missionTitle}"));
+
+        using var scope = factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
+        var gebucht = await db.MissionAwards.AsNoTracking().SingleAsync(a => a.MissionId == missionId);
+        Assert.Equal(MissionPeriod.OneOff, gebucht.Period);
+        Assert.Null(gebucht.PeriodStart); // kein Zeitraum – und genau darum NULL
+
+        // Und die Datenbank lässt keine zweite zu, obwohl beide Zeilen NULL tragen.
+        db.MissionAwards.Add(new MissionAward
+        {
+            MissionId = missionId,
+            Period = MissionPeriod.OneOff,
+            PeriodStart = null,
+            Points = 40,
+        });
+        await Assert.ThrowsAnyAsync<DbUpdateException>(() => db.SaveChangesAsync());
     }
 
     [Fact]

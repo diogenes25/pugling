@@ -108,16 +108,28 @@ public class PlanPosition
 /// Protokolliert die <b>einmalige</b> Punkte-Gutschrift für ein erreichtes Positions-Ziel je Periode –
 /// das Positions-Gegenstück zur idempotenten Tages-Belohnung. Verhindert, dass die Ziel-Punkte
 /// (<see cref="PlanPosition.PointsGoalMet"/>) doppelt fließen, wenn dieselbe Position in derselben
-/// Periode mehrfach abgeschlossen/aufgerufen wird. <see cref="PeriodKey"/> identifiziert die Periode:
-/// der Kalendertag (<c>yyyy-MM-dd</c>) beim Tagesziel, der Montag der Woche beim Wochenziel.
+/// Periode mehrfach abgeschlossen/aufgerufen wird.
+/// <para>
+/// Die Periode ist <b>(<see cref="Cadence"/>, <see cref="PeriodStart"/>)</b>, und die Taktung gehört
+/// ausdrücklich dazu: sie ist eine <b>Momentaufnahme</b> der Position zum Zeitpunkt der Buchung. Ohne sie
+/// deutete ein Wechsel Tag→Woche rückwirkend gebuchte Perioden um – die Belohnung für Montag als Tagesziel
+/// würde die Woche, die an diesem Montag beginnt, stillschweigend als „schon bezahlt" abweisen.
+/// </para>
+/// <para>
+/// <see cref="PeriodStart"/> ist <b>nicht</b> dasselbe wie <see cref="Day"/>: bei einem Wochenziel, das am
+/// Mittwoch erreicht wird, steht der Montag im einen und der Mittwoch im anderen Feld. Beide werden
+/// gebraucht – der Tag für die Tages-/Serien-Metriken, die Periode für die Idempotenz.
+/// </para>
 /// </summary>
 public class PositionGoalReward
 {
     public int Id { get; set; }
     public int PlanPositionId { get; set; }
     public PlanPosition? PlanPosition { get; set; }
-    /// <summary>Periode, für die belohnt wurde (Tag <c>yyyy-MM-dd</c> bzw. Wochen-Montag <c>yyyy-MM-dd</c>).</summary>
-    public string PeriodKey { get; set; } = "";
+    /// <summary>Taktung der Position zum Zeitpunkt der Buchung (Momentaufnahme – siehe Klassen-Doku).</summary>
+    public GoalCadence Cadence { get; set; }
+    /// <summary>Erster Tag der belohnten Periode: der Tag selbst beim Tagesziel, der Montag beim Wochenziel.</summary>
+    public DateOnly PeriodStart { get; set; }
     /// <summary>Kalendertag, an dem das Ziel erreicht wurde (Grundlage der Tages-/Serien-Metriken).</summary>
     public DateOnly Day { get; set; }
     public int Points { get; set; }
@@ -127,18 +139,20 @@ public class PositionGoalReward
 /// <summary>
 /// Protokolliert den <b>einmaligen</b> Münz-Malus für ein <b>gerissenes</b> Positions-Pflichtziel je Periode –
 /// das negative Gegenstück zu <see cref="PositionGoalReward"/>. Ein Unique-Index auf
-/// <c>(PlanPositionId, PeriodKey)</c> garantiert, dass der Malus (<see cref="PlanPosition.PenaltyCoins"/>) je
-/// Periode höchstens einmal abgezogen wird – auch wenn das Lazy Settlement mehrfach über dieselbe abgeschlossene
-/// Periode läuft. <see cref="PeriodKey"/> identifiziert die Periode wie beim Reward
-/// (Kalendertag <c>yyyy-MM-dd</c> beim Tagesziel, Wochen-Montag beim Wochenziel).
+/// <c>(PlanPositionId, Cadence, PeriodStart)</c> garantiert, dass der Malus
+/// (<see cref="PlanPosition.PenaltyCoins"/>) je Periode höchstens einmal abgezogen wird – auch wenn das Lazy
+/// Settlement mehrfach über dieselbe abgeschlossene Periode läuft. Die Periode ist identisch aufgebaut wie
+/// beim Reward, samt der Momentaufnahme der Taktung (Begründung dort).
 /// </summary>
 public class PositionGoalPenalty
 {
     public int Id { get; set; }
     public int PlanPositionId { get; set; }
     public PlanPosition? PlanPosition { get; set; }
-    /// <summary>Periode, für die der Malus fiel (Tag <c>yyyy-MM-dd</c> bzw. Wochen-Montag <c>yyyy-MM-dd</c>).</summary>
-    public string PeriodKey { get; set; } = "";
+    /// <summary>Taktung der Position zum Zeitpunkt der Buchung (Momentaufnahme, siehe <see cref="PositionGoalReward"/>).</summary>
+    public GoalCadence Cadence { get; set; }
+    /// <summary>Erster Tag der gerissenen Periode: der Tag selbst beim Tagesziel, der Montag beim Wochenziel.</summary>
+    public DateOnly PeriodStart { get; set; }
     /// <summary>Letzter Tag der gerissenen Periode (Tag selbst bzw. Wochen-Sonntag) – für die Auswertung.</summary>
     public DateOnly Day { get; set; }
     /// <summary>Abgezogene Münzen (positiver Betrag; die Ledger-Buchung ist negativ).</summary>

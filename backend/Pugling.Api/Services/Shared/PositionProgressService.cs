@@ -37,9 +37,13 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
         _ => (day, day),
     };
 
-    /// <summary>Eindeutiger Schlüssel der Periode für die idempotente Belohnung (Tag bzw. Wochen-Montag).</summary>
-    private static string PeriodKey(GoalCadence cadence, DateOnly day) =>
-        (cadence == GoalCadence.Weekly ? WeekMonday(day) : day).ToString("yyyy-MM-dd");
+    /// <summary>
+    /// Erster Tag der Periode – zusammen mit der Taktung die Identität der Periode für die idempotente
+    /// Buchung. Ist derselbe Wert wie <c>PeriodRange(...).From</c>; die eigene Methode existiert, damit der
+    /// Buchungspfad nicht den ungenutzten zweiten Teil des Bereichs auspacken muss.
+    /// </summary>
+    private static DateOnly PeriodStart(GoalCadence cadence, DateOnly day) =>
+        cadence == GoalCadence.Weekly ? WeekMonday(day) : day;
 
     // ---- Erledigt-Regel je Prüfmodus ----
 
@@ -77,9 +81,11 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
 
     /// <summary>
     /// Punkte, die dieser Plan an genau diesem Kalendertag aus erreichten Positions-Zielen gebucht hat.
-    /// Bewusst über <see cref="PositionGoalReward.Day"/> (der Buchungstag) statt über den <see cref="PositionGoalReward.PeriodKey"/>:
-    /// Wochenziele tragen den Wochen-Montag als Perioden-Schlüssel; würde man danach filtern, zählte dieselbe
-    /// Wochen-Belohnung an jedem Tag der Woche mit und der aufsummierte Verlauf (Progress) überhöhte die Punkte um bis zu 7×.
+    /// Bewusst über <see cref="PositionGoalReward.Day"/> (der Buchungstag) statt über
+    /// <see cref="PositionGoalReward.PeriodStart"/>: Wochenziele tragen dort den Wochen-Montag; würde man danach
+    /// filtern, zählte dieselbe Wochen-Belohnung an jedem Tag der Woche mit und der aufsummierte Verlauf
+    /// (Progress) überhöhte die Punkte um bis zu 7×. <b>Beide Felder sind darum nötig</b> – der Tag für die
+    /// Metriken, die Periode für die Idempotenz.
     /// </summary>
     private async Task<int> PointsAwardedAsync(int planId, DateOnly day, CancellationToken ct) =>
         await db.PositionGoalRewards
@@ -134,11 +140,20 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
         foreach (var pos in positions.Where(p => p.Cadence != GoalCadence.None && p.PointsGoalMet > 0))
         {
             if (!await IsGoalMetAsync(pos, day, ct)) continue;
-            var periodKey = PeriodKey(pos.Cadence, day);
-            if (await db.PositionGoalRewards.AnyAsync(r => r.PlanPositionId == pos.Id && r.PeriodKey == periodKey, ct))
+            var periodStart = PeriodStart(pos.Cadence, day);
+            var cadence = pos.Cadence;
+            if (await db.PositionGoalRewards.AnyAsync(r => r.PlanPositionId == pos.Id
+                    && r.Cadence == cadence && r.PeriodStart == periodStart, ct))
                 continue;
 
-            db.PositionGoalRewards.Add(new PositionGoalReward { PlanPositionId = pos.Id, PeriodKey = periodKey, Day = day, Points = pos.PointsGoalMet });
+            db.PositionGoalRewards.Add(new PositionGoalReward
+            {
+                PlanPositionId = pos.Id,
+                Cadence = cadence,
+                PeriodStart = periodStart,
+                Day = day,
+                Points = pos.PointsGoalMet,
+            });
             db.ChildPoints.Add(new ChildPointsEntry
             {
                 ChildId = plan.ChildId,
@@ -177,20 +192,24 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
     private static bool PlanDueForPeriod(StudyPlan plan, DateOnly from, DateOnly to) =>
         plan.Active && from <= plan.EndDate && to >= plan.StartDate;
 
-    /// <summary>Alle bereits <b>abgeschlossenen</b> Perioden eines Rhythmus im Fenster [<paramref name="windowStart"/>, heute).</summary>
-    private static IEnumerable<(DateOnly From, DateOnly To, string Key)> ClosedPeriods(
+    /// <summary>
+    /// Alle bereits <b>abgeschlossenen</b> Perioden eines Rhythmus im Fenster [<paramref name="windowStart"/>, heute).
+    /// <c>From</c> ist zugleich der Perioden-Anfang der Buchung – derselbe Wert, den <see cref="PeriodStart"/>
+    /// für einen Tag <i>in</i> der Periode liefert.
+    /// </summary>
+    private static IEnumerable<(DateOnly From, DateOnly To)> ClosedPeriods(
         GoalCadence cadence, DateOnly windowStart, DateOnly today)
     {
         if (cadence == GoalCadence.Weekly)
         {
-            // Nur voll abgeschlossene Wochen (Sonntag < heute); Schlüssel = Wochen-Montag wie beim Reward.
+            // Nur voll abgeschlossene Wochen (Sonntag < heute); Anfang = Wochen-Montag wie beim Reward.
             for (var monday = WeekMonday(windowStart); monday.AddDays(6) < today; monday = monday.AddDays(7))
-                yield return (monday, monday.AddDays(6), monday.ToString("yyyy-MM-dd"));
+                yield return (monday, monday.AddDays(6));
         }
         else
         {
             for (var d = windowStart; d < today; d = d.AddDays(1))
-                yield return (d, d, d.ToString("yyyy-MM-dd"));
+                yield return (d, d);
         }
     }
 
@@ -223,12 +242,15 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
             var plan = pos.StudyPlan!;
             var windowStart = plan.StartDate > lookbackFloor ? plan.StartDate : lookbackFloor;
 
-            foreach (var (from, to, key) in ClosedPeriods(pos.Cadence, windowStart, today))
+            var cadence = pos.Cadence;
+            foreach (var (from, to) in ClosedPeriods(cadence, windowStart, today))
             {
                 if (!PlanDueForPeriod(plan, from, to)) continue;
                 // Ziel in der Periode belohnt (erreicht) oder bereits bestraft? → nichts nachzuholen.
-                if (await db.PositionGoalRewards.AnyAsync(r => r.PlanPositionId == pos.Id && r.PeriodKey == key, ct)) continue;
-                if (await db.PositionGoalPenalties.AnyAsync(r => r.PlanPositionId == pos.Id && r.PeriodKey == key, ct)) continue;
+                if (await db.PositionGoalRewards.AnyAsync(r => r.PlanPositionId == pos.Id
+                        && r.Cadence == cadence && r.PeriodStart == from, ct)) continue;
+                if (await db.PositionGoalPenalties.AnyAsync(r => r.PlanPositionId == pos.Id
+                        && r.Cadence == cadence && r.PeriodStart == from, ct)) continue;
                 // Absicherung gegen ein Rennen mit dem Belohnungspfad (PointsGoalMet == 0 bucht keinen Reward,
                 // das Ziel kann trotzdem erfüllt sein): nur bei tatsächlich gerissener Periode bestrafen.
                 if (await IsGoalMetAsync(pos, to, ct)) continue;
@@ -236,7 +258,8 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
                 db.PositionGoalPenalties.Add(new PositionGoalPenalty
                 {
                     PlanPositionId = pos.Id,
-                    PeriodKey = key,
+                    Cadence = cadence,
+                    PeriodStart = from,
                     Day = to,
                     Points = pos.PenaltyCoins,
                 });
