@@ -1,6 +1,8 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
+using Microsoft.Extensions.DependencyInjection;
+using Pugling.Api.Data;
 using Pugling.Api.Models;
 
 namespace Pugling.Api.Tests;
@@ -117,6 +119,47 @@ public class PositionTestFlowTests(PuglingWebAppFactory factory) : IClassFixture
         Assert.Equal(50, res.GetProperty("scorePercent").GetInt32());
         Assert.Equal(goalThreshold, res.GetProperty("passPercent").GetInt32());
         Assert.Equal(expectPassed, res.GetProperty("passed").GetBoolean());
+    }
+
+    /// <summary>
+    /// Der Grenzfall der Bestehensgrenze: ein Ergebnis <b>genau auf</b> der Schwelle gilt als bestanden
+    /// (<c>ScorePercent &gt;= passPercent</c>), nicht erst darüber.
+    /// <para>
+    /// Warum eigens: die übrigen Tests dieser Klasse prüfen 100 gegen 80, 50 gegen 80, 50 gegen 40, 50 gegen 3
+    /// und 50 gegen 90 – jedes Mal echt darüber oder echt darunter. Aus <c>&gt;=</c> ein <c>&gt;</c> zu machen
+    /// blieb darum vollständig grün (docs/testplan.md, Injektion D01 – die teuerste Lücke der Messung). Der
+    /// Fehler kostet echtes Guthaben in <b>beide</b> Richtungen: <see cref="TestAttempt.Passed"/> entscheidet
+    /// über <c>IsGoalMetAsync</c> gleichzeitig die Ziel-Punkte (<see cref="PointKind.Goal"/>) und das
+    /// Ausbleiben des Münz-Malus – ein Kind mit exakt der geforderten Quote verlöre die Belohnung
+    /// <i>und</i> bekäme den Abzug.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public async Task Test_ErgebnisGenauAufDerSchwelle_IstBestanden()
+    {
+        var father = await TestApi.FatherAsync(_factory);
+        var exerciseId = await TestApi.CreateVocabExerciseAsync(father); // hello→hallo, goodbye→tschüss
+        // Schwelle genau 50 %: bei zwei Aufgaben ist eine richtige Antwort exakt die Grenze.
+        var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.FreeText,
+            goalThreshold: 50);
+        var child = await TestApi.ChildAsync(_factory);
+        var baseUrl = $"/api/v1/student/study-plans/{planId}/positions/{positionId}/tests";
+
+        var attemptId = await TestApi.IdWithKeyAsync(await child.PostAsJsonAsync(baseUrl, new { }), "attemptId");
+        var submit = await child.PostAsJsonAsync($"{baseUrl}/{attemptId}/submit", new
+        {
+            answers = new[] { new { itemIndex = 0, givenAnswer = "hallo" }, new { itemIndex = 1, givenAnswer = "falsch" } },
+        });
+
+        var res = await submit.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal(50, res.GetProperty("scorePercent").GetInt32());
+        Assert.Equal(50, res.GetProperty("passPercent").GetInt32());
+        JsonAssert.True(res, "passed"); // genau erreicht IST erreicht
+
+        // Und die Geldwirkung dahinter: das Tagesziel ist damit erfüllt und die Ziel-Punkte sind gebucht.
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
+        Assert.Equal(1, db.PositionGoalRewards.Count(r => r.PlanPositionId == positionId));
     }
 
     [Fact]

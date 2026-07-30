@@ -90,6 +90,13 @@ public class AntiCheatTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
             $"/api/v1/student/study-plans/{planId}/positions/{positionId}/tests", new { day = yesterday });
 
         Assert.Equal(HttpStatusCode.Created, res.StatusCode);
+
+        // Der Status allein war die Zusicherung – und damit zu wenig: `var day = dto.Day ?? today` zu
+        // `var day = today` zu verkürzen blieb grün (docs/testplan.md, Injektion D11). Der Nachtrag ist der
+        // Weg, eine gerissene Pflicht-Periode zu heilen; landete er auf „heute", bliebe der Malus für
+        // gestern stehen. Also muss der gebuchte Tag nachgelesen werden, nicht nur das Gelingen.
+        var attempt = await res.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal(yesterday, attempt.GetProperty("day").GetString());
     }
 
     [Fact]

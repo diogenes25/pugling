@@ -4,8 +4,9 @@ tags: [bereich/qualitaet, bereich/tests]
 
 # Kontrolle: Erfüllen die Integrationstests ihren Zweck?
 
-Status: **Messung durchgeführt am 2026-07-30** auf `3cd7aae`, in vier Wegwerf-Worktrees.
-30 Injektionen komplett gefahren, Kalibrierung nachweislich rot. Ergebnis unter
+Status: **Abgeschlossen am 2026-07-30** auf `3cd7aae`, gemessen in vier Wegwerf-Worktrees.
+30 Injektionen komplett gefahren, Kalibrierung nachweislich rot; die vier Lücken mit Geldwirkung sind
+geschlossen und per Gegenprobe belegt. Ergebnis unter
 [Befund](#befund-gemessen-2026-07-30) – **Konformität 60 %, Sensitivität 57 %**.
 Der Plan darüber bleibt als Beschreibung des Verfahrens stehen (nachfahrbar), die Zahlen darin sind
 Vorab-Schätzungen; wo die Messung sie korrigiert, steht es im Befund.
@@ -508,15 +509,21 @@ nicht sofort blocken. Das Skript der Messung liegt bereit; **bewusst nicht** in 
 gestellt, weil der Plan „kein Umbau der Suite" sagt und die Heuristik (25 Rohtreffer → 8 echte) noch zu
 grob für ein hartes Tor ist.
 
-## Was der zweite Commit nachzieht
+## Was der zweite Commit nachgezogen hat
 
-Bewusst begrenzt auf **Geldwirkung** plus den 1c-Selbstschutz; alles andere steht oben als benannte Restliste:
+Bewusst begrenzt auf **Geldwirkung** plus den 1c-Selbstschutz; alles andere steht oben als benannte Restliste.
+Vier Änderungen, alle in `Pugling.Api.Tests` – **kein Produktivcode**:
 
-1. Grenzfall der Bestehensgrenze: Ergebnis **genau** auf der Schwelle → bestanden (pinnt D01).
-2. Der Vater-Nachtrag belegt den **Tag** der Buchung (pinnt D11).
-3. Der zweite Abschluss desselben Ziels wird auf seinen **Status** geprüft, nicht nur auf die Reward-Anzahl
-   (macht den 500 aus D13 sichtbar).
-4. Untergrenze in `ErrorCodeTests`, damit der Drift-Wächter nicht vom Zufall lebt (1c).
+| # | Test | pinnt |
+|---|---|---|
+| 1 | `PositionTestFlowTests.Test_ErgebnisGenauAufDerSchwelle_IstBestanden` (neu) | **D01** – Ergebnis genau auf der Schwelle gilt als bestanden, und die Ziel-Punkte sind gebucht |
+| 2 | `AntiCheatTests.Vater_DarfFremdenTagNachtragen` (erweitert) | **D11** – der gebuchte `day` ist der nachgetragene, nicht „heute" |
+| 3 | `PositionGoalOverviewTests.BestandenerPositionsTest_…` (erweitert) | **D13** – der zweite Abschluss wird auf seinen **Status** geprüft, nicht nur auf die Reward-Anzahl (macht den 500 sichtbar) |
+| 4 | `ErrorCodeTests.OpenApi_CodeEnum_DecktSichMitRegistry` (erweitert) | **1c** – Untergrenze `AllCodes.Count >= 40`, damit der Drift-Wächter nicht vom Zufall lebt |
+
+**Gegenprobe gefahren, nicht angenommen:** jede der vier Injektionen wurde in einem eigenen Worktree erneut
+eingesetzt und der zuständige Test einzeln gefahren – **alle vier wurden rot**. Ohne diesen Schritt wären es
+Tests, von denen niemand weiß, ob sie etwas festhalten. Danach die volle Suite grün.
 
 ## Verifikation dieses Vorgangs
 

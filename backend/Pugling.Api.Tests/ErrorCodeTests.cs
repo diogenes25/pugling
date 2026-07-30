@@ -158,6 +158,14 @@ public class ErrorCodeTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
             .GetProperty("ProblemDetails").GetProperty("properties").GetProperty("code")
             .GetProperty("enum").EnumerateArray().Select(e => e.GetString()!).ToHashSet();
 
+        // Selbstschutz gegen falsch-grün – der einzige reflexive Wächter der Suite, dem er fehlte
+        // (docs/testplan.md, Etappe 1c): BEIDE Seiten des Vergleichs stammen aus ApiErrors.AllCodes. Greift
+        // die Reflexion dort nicht mehr (Felder umbenannt, Sichtbarkeit geändert), stünde nach Papierform
+        // `leer == leer` – und der Drift-Test bestünde inhaltsleer. Dass er es real nicht tut, ist Zufall:
+        // bei leerer Liste lässt der Generator die `enum`-Eigenschaft ganz weg, und erst der
+        // KeyNotFoundException darüber legt ihn um. Diese Zeile macht den Schutz absichtlich.
+        Assert.True(ApiErrors.AllCodes.Count >= 40,
+            $"Zu wenige Fehler-Codes gefunden ({ApiErrors.AllCodes.Count}) – die Reflexion in ApiErrors greift nicht.");
         Assert.Equal(ApiErrors.AllCodes.ToHashSet(), enumValues);
     }
 }

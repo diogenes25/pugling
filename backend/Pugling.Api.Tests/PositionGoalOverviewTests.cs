@@ -57,7 +57,13 @@ public class PositionGoalOverviewTests(PuglingWebAppFactory factory) : IClassFix
         var attempt2 = await (await child.PostAsJsonAsync(testsUrl, new { }))
             .Content.ReadFromJsonAsync<JsonElement>();
         var attemptId2 = attempt2.GetProperty("attemptId").GetInt32();
-        await child.PostAsJsonAsync($"{testsUrl}/{attemptId2}/submit", new { answers });
+        // Der Status des zweiten Submits gehört geprüft, nicht verworfen: die Idempotenz hängt an ZWEI
+        // Dingen – der Existenzprüfung im Code und dem Unique-Index (PlanPositionId, PeriodKey). Fällt die
+        // Prüfung aus, hält der Index die Anzahl unten, aber `EvaluateAndAwardAsync` hat kein
+        // `catch (DbUpdateException)` – der Verstoß wird zum **500**. Ohne diese Zeile blieb genau das
+        // unbemerkt (docs/testplan.md, Injektion D13): die Reward-Anzahl war weiter 1, der Fehler unsichtbar.
+        (await child.PostAsJsonAsync($"{testsUrl}/{attemptId2}/submit", new { answers }))
+            .EnsureSuccessStatusCode();
 
         using (var scope = _factory.Services.CreateScope())
         {
