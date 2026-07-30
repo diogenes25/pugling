@@ -37,13 +37,15 @@ public class InterestTagsController(PuglingDbContext db) : ControllerBase
     /// <param name="unused">true = nur Schlagworte ohne jede Verwendung (Aufräum-Sicht).</param>
     /// <param name="skip">Anzahl zu überspringender Einträge (Paging).</param>
     /// <param name="take">Maximale Trefferzahl (1..500).</param>
+    /// <param name="ct">Abbruch-Token.</param>
     [HttpGet]
     public async Task<IEnumerable<InterestTagResponse>> List(
         [FromQuery] string? search = null,
         [FromQuery] InterestFacet? facet = null,
         [FromQuery] bool? unused = null,
         [FromQuery] int skip = 0,
-        [FromQuery] int take = PagingExtensions.DefaultTake)
+        [FromQuery] int take = PagingExtensions.DefaultTake,
+        CancellationToken ct = default)
     {
         var query = db.InterestTags.AsNoTracking().AsQueryable();
 
@@ -54,15 +56,15 @@ public class InterestTagsController(PuglingDbContext db) : ControllerBase
         if (unused is true)
             query = query.Where(t => t.MediaLinks.Count == 0 && t.ChildInterests.Count == 0);
 
-        return await Project(query.OrderBy(t => t.Slug).ThenBy(t => t.Id)).ToPagedListAsync(Response, skip, take);
+        return await Project(query.OrderBy(t => t.Slug).ThenBy(t => t.Id)).ToPagedListAsync(Response, skip, take, ct);
     }
 
     /// <summary>Ein Schlagwort per Id.</summary>
     [HttpGet("{id:int}")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<InterestTagResponse>> Get(int id)
+    public async Task<ActionResult<InterestTagResponse>> Get(int id, CancellationToken ct = default)
     {
-        var tag = await Project(db.InterestTags.AsNoTracking().Where(t => t.Id == id)).FirstOrDefaultAsync();
+        var tag = await Project(db.InterestTags.AsNoTracking().Where(t => t.Id == id)).FirstOrDefaultAsync(ct);
         return tag is null ? NotFound() : tag;
     }
 
@@ -75,14 +77,14 @@ public class InterestTagsController(PuglingDbContext db) : ControllerBase
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<InterestTagResponse>> Create(CreateInterestTagDto dto)
+    public async Task<ActionResult<InterestTagResponse>> Create(CreateInterestTagDto dto, CancellationToken ct = default)
     {
         if (string.IsNullOrWhiteSpace(dto.Label)) return this.ProblemWithCode(ApiErrors.ValidationError, "Label is required.");
 
         var slug = InterestSlug.From(string.IsNullOrWhiteSpace(dto.Slug) ? dto.Label : dto.Slug);
         if (slug.Length == 0) return this.ProblemWithCode(ApiErrors.ValidationError, "Label must contain at least one letter or digit.");
 
-        var existing = await Project(db.InterestTags.AsNoTracking().Where(t => t.Slug == slug)).FirstOrDefaultAsync();
+        var existing = await Project(db.InterestTags.AsNoTracking().Where(t => t.Slug == slug)).FirstOrDefaultAsync(ct);
         if (existing is not null) return Ok(existing);
 
         var tag = new InterestTag
@@ -94,7 +96,7 @@ public class InterestTagsController(PuglingDbContext db) : ControllerBase
             Color = dto.Color?.Trim() is { Length: > 0 } c ? c : null,
         };
         db.InterestTags.Add(tag);
-        await db.SaveChangesAsync();
+        await db.SaveChangesAsync(ct);
 
         return CreatedAtAction(nameof(Get), new { id = tag.Id },
             new InterestTagResponse(tag.Id, tag.Slug, tag.Label, tag.Facet, tag.Synonyms, tag.Color, 0, 0, tag.CreatedAt));
@@ -107,9 +109,9 @@ public class InterestTagsController(PuglingDbContext db) : ControllerBase
     [HttpPatch("{id:int}")]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<InterestTagResponse>> Update(int id, UpdateInterestTagDto dto)
+    public async Task<ActionResult<InterestTagResponse>> Update(int id, UpdateInterestTagDto dto, CancellationToken ct = default)
     {
-        var tag = await db.InterestTags.FirstOrDefaultAsync(t => t.Id == id);
+        var tag = await db.InterestTags.FirstOrDefaultAsync(t => t.Id == id, ct);
         if (tag is null) return NotFound();
 
         if (dto.Label is not null)
@@ -123,8 +125,8 @@ public class InterestTagsController(PuglingDbContext db) : ControllerBase
         if (dto.Synonyms is not null) tag.Synonyms = Clean(dto.Synonyms);
         if (dto.Color is not null) tag.Color = dto.Color.Trim() is { Length: > 0 } c ? c : null;
 
-        await db.SaveChangesAsync();
-        return await Project(db.InterestTags.AsNoTracking().Where(t => t.Id == id)).FirstAsync();
+        await db.SaveChangesAsync(ct);
+        return await Project(db.InterestTags.AsNoTracking().Where(t => t.Id == id)).FirstAsync(ct);
     }
 
     /// <summary>
@@ -134,12 +136,12 @@ public class InterestTagsController(PuglingDbContext db) : ControllerBase
     [HttpDelete("{id:int}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> Delete(int id)
+    public async Task<IActionResult> Delete(int id, CancellationToken ct = default)
     {
-        var tag = await db.InterestTags.FindAsync(id);
+        var tag = await db.InterestTags.FindAsync([id], ct);
         if (tag is null) return NotFound();
         db.InterestTags.Remove(tag);
-        await db.SaveChangesAsync();
+        await db.SaveChangesAsync(ct);
         return NoContent();
     }
 

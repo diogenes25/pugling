@@ -35,14 +35,14 @@ public class VocabularyController(PuglingDbContext db, ExerciseTypeRegistry regi
     /// Sichert beim Anlegen/Ändern zu, dass alle per ID referenzierten Store-Einträge existieren und – falls
     /// Inline-Vokabeln ohne ID vorliegen – die Sprachcodes gesetzt sind (nötig, um sie im Store anzulegen).
     /// </summary>
-    protected override async Task<string?> ValidateConfigAsync(int subjectId, VocabularyConfig config)
+    protected override async Task<string?> ValidateConfigAsync(int subjectId, VocabularyConfig config, CancellationToken ct = default)
     {
         if (config.Refs is { Count: > 0 } refs)
         {
             if (refs.Any(r => r.VocabularyId <= 0))
                 return "Every reference needs a valid vocabularyId (> 0).";
             var ids = refs.Select(r => r.VocabularyId).Distinct().ToList();
-            var existing = await Db.Vocabulary.Where(v => ids.Contains(v.Id)).Select(v => v.Id).ToListAsync();
+            var existing = await Db.Vocabulary.Where(v => ids.Contains(v.Id)).Select(v => v.Id).ToListAsync(ct);
             var missing = ids.Except(existing).ToList();
             if (missing.Count > 0) return $"Unknown vocabulary item IDs: {string.Join(", ", missing)}";
         }
@@ -59,7 +59,7 @@ public class VocabularyController(PuglingDbContext db, ExerciseTypeRegistry regi
         var itemIds = config.Items.Where(i => i.VocabularyId is > 0).Select(i => i.VocabularyId!.Value).Distinct().ToList();
         if (itemIds.Count > 0)
         {
-            var existing = await Db.Vocabulary.Where(v => itemIds.Contains(v.Id)).Select(v => v.Id).ToListAsync();
+            var existing = await Db.Vocabulary.Where(v => itemIds.Contains(v.Id)).Select(v => v.Id).ToListAsync(ct);
             var missing = itemIds.Except(existing).ToList();
             if (missing.Count > 0) return $"Unknown vocabulary item IDs: {string.Join(", ", missing)}";
         }
@@ -72,17 +72,17 @@ public class VocabularyController(PuglingDbContext db, ExerciseTypeRegistry regi
     /// lässt die per <c>/items</c> gepflegte Item-Menge unangetastet). Der Abgleich bewahrt die Id überlebender Wörter.
     /// Anschließend wird die Config auf reine Einstellungen reduziert – Items/Refs sind ab jetzt die Tabelle (eine Quelle).
     /// </summary>
-    protected override async Task AfterSaveAsync(Exercise exercise, VocabularyConfig config, bool isCreate)
+    protected override async Task AfterSaveAsync(Exercise exercise, VocabularyConfig config, bool isCreate, CancellationToken ct = default)
     {
         var hasPayloadItems = config.Items.Count > 0 || config.Refs is { Count: > 0 };
         if (isCreate || hasPayloadItems)
-            await items.SyncFromConfigAsync(exercise.Id, config);
+            await items.SyncFromConfigAsync(exercise.Id, config, ct);
         if (hasPayloadItems)
         {
             config.Items = [];
             config.Refs = null;
             SetConfig(exercise, config);
-            await Db.SaveChangesAsync();
+            await Db.SaveChangesAsync(ct);
         }
     }
 
@@ -95,9 +95,9 @@ public class VocabularyController(PuglingDbContext db, ExerciseTypeRegistry regi
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<ExerciseResponse<VocabularyConfig>>> RefsFromTags(
-        int subjectId, int chapterId, int exerciseId, RefsFromTagsDto dto)
+        int subjectId, int chapterId, int exerciseId, RefsFromTagsDto dto, CancellationToken ct = default)
     {
-        var exercise = await FindAsync(subjectId, chapterId, exerciseId);
+        var exercise = await FindAsync(subjectId, chapterId, exerciseId, ct);
         if (exercise is null) return NotFound();
         if (EnsureCanWrite(exercise) is { } forbidden) return forbidden;
 
@@ -110,7 +110,7 @@ public class VocabularyController(PuglingDbContext db, ExerciseTypeRegistry regi
             foreach (var name in tags) query = query.Where(v => v.TagLinks.Any(l => l.VocabTag!.Name == name));
         else
             query = query.Where(v => v.TagLinks.Any(l => tags.Contains(l.VocabTag!.Name)));
-        var hitIds = await query.OrderBy(v => v.Key).Select(v => v.Id).ToListAsync();
+        var hitIds = await query.OrderBy(v => v.Key).Select(v => v.Id).ToListAsync(ct);
         // Ein Snapshot ohne Treffer würde die Übung **leeren** – und zwar lautlos: ein vertippter Tag
         // (oder `baseFormsOnly` auf einer Liste rein flektierter Formen) sähe wie ein Erfolg aus und ließe
         // eine Übung ohne Wörter zurück. Nichts ändern ist hier die einzige vertretbare Antwort.
@@ -118,7 +118,7 @@ public class VocabularyController(PuglingDbContext db, ExerciseTypeRegistry regi
             return this.ProblemWithCode(ApiErrors.NoTagMatches,
                 "No vocabulary matched these tags; the exercise was left unchanged.");
 
-        await items.ReconcileAsync(exercise.Id, hitIds.Select(id => new DesiredItem(id, null)).ToList());
+        await items.ReconcileAsync(exercise.Id, hitIds.Select(id => new DesiredItem(id, null)).ToList(), ct);
         return Map(exercise, User.AdultId());
     }
 
@@ -135,25 +135,25 @@ public class VocabularyController(PuglingDbContext db, ExerciseTypeRegistry regi
     /// <summary>Alle Items der Übung in Reihenfolge (Front/Rückseite aus dem Store).</summary>
     [HttpGet("{exerciseId:int}/items")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<IEnumerable<VocabItemResponse>>> ListItems(int subjectId, int chapterId, int exerciseId)
+    public async Task<ActionResult<IEnumerable<VocabItemResponse>>> ListItems(int subjectId, int chapterId, int exerciseId, CancellationToken ct = default)
     {
-        var exercise = await FindAsync(subjectId, chapterId, exerciseId);
+        var exercise = await FindAsync(subjectId, chapterId, exerciseId, ct);
         if (exercise is null) return NotFound();
         var rows = await Db.ExerciseItems.AsNoTracking().Include(i => i.Vocabulary)
             .Where(i => i.ExerciseId == exerciseId)
             .OrderBy(i => i.OrderIndex).ThenBy(i => i.Id)
-            .ToListAsync();
+            .ToListAsync(ct);
         return rows.Select(i => MapItem(subjectId, chapterId, exerciseId, i)).ToList();
     }
 
     /// <summary>Ein einzelnes Item der Übung.</summary>
     [HttpGet("{exerciseId:int}/items/{itemId:int}")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<VocabItemResponse>> GetItem(int subjectId, int chapterId, int exerciseId, int itemId)
+    public async Task<ActionResult<VocabItemResponse>> GetItem(int subjectId, int chapterId, int exerciseId, int itemId, CancellationToken ct = default)
     {
-        var exercise = await FindAsync(subjectId, chapterId, exerciseId);
+        var exercise = await FindAsync(subjectId, chapterId, exerciseId, ct);
         if (exercise is null) return NotFound();
-        var item = await FindItemAsync(exerciseId, itemId);
+        var item = await FindItemAsync(exerciseId, itemId, ct);
         return item is null
             ? this.ProblemWithCode(ApiErrors.ItemNotFound, "The exercise item does not exist in this exercise.")
             : MapItem(subjectId, chapterId, exerciseId, item);
@@ -167,7 +167,7 @@ public class VocabularyController(PuglingDbContext db, ExerciseTypeRegistry regi
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<VocabItemResponse>> AddItem(int subjectId, int chapterId, int exerciseId, VocabItemInput body, CancellationToken ct)
     {
-        var exercise = await FindAsync(subjectId, chapterId, exerciseId);
+        var exercise = await FindAsync(subjectId, chapterId, exerciseId, ct);
         if (exercise is null) return NotFound();
         if (EnsureCanWrite(exercise) is { } forbidden) return forbidden;
 
@@ -177,7 +177,7 @@ public class VocabularyController(PuglingDbContext db, ExerciseTypeRegistry regi
             "Provide an existing vocabularyId, or front and back (plus the exercise's sourceLang/targetLang) to create one.");
 
         // Anfügen ans Ende verschiebt keine bestehenden Positionen (sicher); eine feste Einfügeposition schon.
-        if (body.OrderIndex is not null && await ExerciseInPlanAsync(exerciseId)) return ShiftBlockedProblem();
+        if (body.OrderIndex is not null && await ExerciseInPlanAsync(exerciseId, ct)) return ShiftBlockedProblem();
         var nextOrder = body.OrderIndex ??
             (await Db.ExerciseItems.Where(i => i.ExerciseId == exerciseId).Select(i => (int?)i.OrderIndex).MaxAsync(ct) is { } max ? max + 1 : 0);
         var item = new ExerciseItem
@@ -202,10 +202,10 @@ public class VocabularyController(PuglingDbContext db, ExerciseTypeRegistry regi
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<VocabItemResponse>> PatchItem(int subjectId, int chapterId, int exerciseId, int itemId, VocabItemInput body, CancellationToken ct)
     {
-        var exercise = await FindAsync(subjectId, chapterId, exerciseId);
+        var exercise = await FindAsync(subjectId, chapterId, exerciseId, ct);
         if (exercise is null) return NotFound();
         if (EnsureCanWrite(exercise) is { } forbidden) return forbidden;
-        var item = await FindItemAsync(exerciseId, itemId);
+        var item = await FindItemAsync(exerciseId, itemId, ct);
         if (item is null) return this.ProblemWithCode(ApiErrors.ItemNotFound, "The exercise item does not exist in this exercise.");
 
         if (body.VocabularyId is not null || body.Front is not null || body.Back is not null)
@@ -220,7 +220,7 @@ public class VocabularyController(PuglingDbContext db, ExerciseTypeRegistry regi
         if (body.OrderIndex is { } order && order != item.OrderIndex)
         {
             // Umsortieren verschiebt Positionen → bei in-Plan gespielter Übung blocken (siehe ExerciseInPlanAsync).
-            if (await ExerciseInPlanAsync(exerciseId)) return ShiftBlockedProblem();
+            if (await ExerciseInPlanAsync(exerciseId, ct)) return ShiftBlockedProblem();
             item.OrderIndex = order;
         }
         await Db.SaveChangesAsync(ct);
@@ -236,26 +236,26 @@ public class VocabularyController(PuglingDbContext db, ExerciseTypeRegistry regi
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> DeleteItem(int subjectId, int chapterId, int exerciseId, int itemId, CancellationToken ct)
     {
-        var exercise = await FindAsync(subjectId, chapterId, exerciseId);
+        var exercise = await FindAsync(subjectId, chapterId, exerciseId, ct);
         if (exercise is null) return NotFound();
         if (EnsureCanWrite(exercise) is { } forbidden) return forbidden;
-        var item = await FindItemAsync(exerciseId, itemId);
+        var item = await FindItemAsync(exerciseId, itemId, ct);
         if (item is null) return this.ProblemWithCode(ApiErrors.ItemNotFound, "The exercise item does not exist in this exercise.");
         // Löschen verschiebt Folgepositionen → bei in-Plan gespielter Übung blocken (Fortschritt bliebe fehl-verankert).
-        if (await ExerciseInPlanAsync(exerciseId)) return ShiftBlockedProblem();
+        if (await ExerciseInPlanAsync(exerciseId, ct)) return ShiftBlockedProblem();
         Db.ExerciseItems.Remove(item);
         await Db.SaveChangesAsync(ct);
         return NoContent();
     }
 
-    private Task<ExerciseItem?> FindItemAsync(int exerciseId, int itemId) =>
-        Db.ExerciseItems.Include(i => i.Vocabulary).FirstOrDefaultAsync(i => i.Id == itemId && i.ExerciseId == exerciseId);
+    private Task<ExerciseItem?> FindItemAsync(int exerciseId, int itemId, CancellationToken ct = default) =>
+        Db.ExerciseItems.Include(i => i.Vocabulary).FirstOrDefaultAsync(i => i.Id == itemId && i.ExerciseId == exerciseId, ct);
 
     // Wird die Übung in einem Lehrplan gespielt? Dann verankert PositionItemProgress den Leitner-Fortschritt
     // je Position auf der (positionalen) Item-Reihenfolge – index-verschiebende Item-Mutationen (Löschen,
     // Umsortieren, Einfügen an fester Position) würden gespeicherten Fortschritt aufs falsche Wort umbiegen.
-    private Task<bool> ExerciseInPlanAsync(int exerciseId) =>
-        Db.PlanPositions.AnyAsync(p => p.ExerciseId == exerciseId);
+    private Task<bool> ExerciseInPlanAsync(int exerciseId, CancellationToken ct = default) =>
+        Db.PlanPositions.AnyAsync(p => p.ExerciseId == exerciseId, ct);
 
     private ObjectResult ShiftBlockedProblem() =>
         this.ProblemWithCode(ApiErrors.ExerciseInUse,
@@ -299,12 +299,12 @@ public class ClozeController(PuglingDbContext db, ExerciseTypeRegistry registry)
     protected override string TypeKey => ExerciseTypeKeys.Cloze;
 
     /// <summary>Sichert beim Anlegen/Ändern zu, dass alle in Lücken referenzierten Store-Keys existieren.</summary>
-    protected override async Task<string?> ValidateConfigAsync(int subjectId, ClozeConfig config)
+    protected override async Task<string?> ValidateConfigAsync(int subjectId, ClozeConfig config, CancellationToken ct = default)
     {
         var keys = config.Gaps.Where(g => !string.IsNullOrWhiteSpace(g.VocabKey))
             .Select(g => g.VocabKey!).Distinct().ToList();
         if (keys.Count == 0) return null;
-        var existing = await Db.Vocabulary.Where(v => keys.Contains(v.Key)).Select(v => v.Key).ToListAsync();
+        var existing = await Db.Vocabulary.Where(v => keys.Contains(v.Key)).Select(v => v.Key).ToListAsync(ct);
         var missing = keys.Except(existing).ToList();
         return missing.Count == 0 ? null : $"Unknown vocabulary keys in gaps: {string.Join(", ", missing)}";
     }
@@ -349,8 +349,8 @@ public class MatchingController(PuglingDbContext db, ExerciseTypeRegistry regist
     /// <summary>Wertet die Zuordnungen aus: je Paar zählt die zur linken Seite genannte rechte Seite.</summary>
     [HttpPost("{exerciseId:int}/check")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public Task<ActionResult<CheckResult>> Check(int subjectId, int chapterId, int exerciseId, CheckDto body) =>
-        RunCheckAsync(subjectId, chapterId, exerciseId, body);
+    public Task<ActionResult<CheckResult>> Check(int subjectId, int chapterId, int exerciseId, CheckDto body, CancellationToken ct = default) =>
+        RunCheckAsync(subjectId, chapterId, exerciseId, body, ct);
 }
 
 /// <summary>
@@ -365,24 +365,24 @@ public class TranslationController(PuglingDbContext db, ExerciseTypeRegistry reg
     protected override string TypeKey => ExerciseTypeKeys.Translation;
 
     /// <summary>Verpflichtet die Sprachcodes, sobald Paare ohne <see cref="TranslationItem.VocabularyId"/> anzulegen sind.</summary>
-    protected override Task<string?> ValidateConfigAsync(int subjectId, TranslationConfig config) =>
+    protected override Task<string?> ValidateConfigAsync(int subjectId, TranslationConfig config, CancellationToken ct = default) =>
         Task.FromResult(config.Items.Any(i => i.VocabularyId is null)
             && (string.IsNullOrWhiteSpace(config.SourceLang) || string.IsNullOrWhiteSpace(config.TargetLang))
             ? "sourceLang and targetLang are required to create translation pairs in the store."
             : null);
 
     /// <summary>Legt jedes noch nicht verknüpfte Paar im Store an (bzw. findet es) und verknüpft es per ID.</summary>
-    protected override async Task NormalizeConfigAsync(int subjectId, TranslationConfig config)
+    protected override async Task NormalizeConfigAsync(int subjectId, TranslationConfig config, CancellationToken ct = default)
     {
         var pending = new List<(int Index, Vocabulary Vocab)>();
         for (var i = 0; i < config.Items.Count; i++)
         {
             var item = config.Items[i];
             if (item.VocabularyId is not null) continue;
-            pending.Add((i, await store.GetOrCreateAsync(config.SourceLang, item.Source, config.TargetLang, item.Target)));
+            pending.Add((i, await store.GetOrCreateAsync(config.SourceLang, item.Source, config.TargetLang, item.Target, ct: ct)));
         }
         if (pending.Count == 0) return;
-        await Db.SaveChangesAsync();
+        await Db.SaveChangesAsync(ct);
         foreach (var (index, vocab) in pending)
             config.Items[index] = config.Items[index] with { VocabularyId = vocab.Id };
     }
@@ -476,7 +476,7 @@ public class BirkenbihlController(PuglingDbContext db, ExerciseTypeRegistry regi
     public async Task<ActionResult<DecodedSentence>> AddSentence(
         int subjectId, int chapterId, int exerciseId, BirkenbihlSentenceInput body, CancellationToken ct)
     {
-        var exercise = await FindAsync(subjectId, chapterId, exerciseId);
+        var exercise = await FindAsync(subjectId, chapterId, exerciseId, ct);
         if (exercise is null) return NotFound();
         if (EnsureCanWrite(exercise) is { } forbidden) return forbidden;
         if (string.IsNullOrWhiteSpace(body.LearningSentence)) return this.ProblemWithCode(ApiErrors.ValidationError, "The sentence in the learning language is required.");
@@ -518,7 +518,7 @@ public class BirkenbihlController(PuglingDbContext db, ExerciseTypeRegistry regi
     public async Task<ActionResult<DecodedWord>> SetWord(
         int subjectId, int chapterId, int exerciseId, int wordId, WordOverride body, CancellationToken ct)
     {
-        var exercise = await FindAsync(subjectId, chapterId, exerciseId);
+        var exercise = await FindAsync(subjectId, chapterId, exerciseId, ct);
         if (exercise is null) return NotFound();
         if (EnsureCanWrite(exercise) is { } forbidden) return forbidden;
 
@@ -566,7 +566,7 @@ public class BirkenbihlController(PuglingDbContext db, ExerciseTypeRegistry regi
     public async Task<ActionResult<IReadOnlyList<VocabCandidate>>> WordCandidates(
         int subjectId, int chapterId, int exerciseId, int wordId, CancellationToken ct)
     {
-        var exercise = await FindAsync(subjectId, chapterId, exerciseId);
+        var exercise = await FindAsync(subjectId, chapterId, exerciseId, ct);
         if (exercise is null) return NotFound();
 
         var config = ConfigOf(exercise);
@@ -585,7 +585,7 @@ public class BirkenbihlController(PuglingDbContext db, ExerciseTypeRegistry regi
     public async Task<IActionResult> DeleteSentence(
         int subjectId, int chapterId, int exerciseId, int sentenceId, CancellationToken ct)
     {
-        var exercise = await FindAsync(subjectId, chapterId, exerciseId);
+        var exercise = await FindAsync(subjectId, chapterId, exerciseId, ct);
         if (exercise is null) return NotFound();
         if (EnsureCanWrite(exercise) is { } forbidden) return forbidden;
 
@@ -638,8 +638,8 @@ public class ArithmeticController(PuglingDbContext db, ExerciseTypeRegistry regi
     /// <summary>Bewertet die Lösungen des Kindes gegen die hinterlegten Aufgaben (numerisch, mit Toleranz).</summary>
     [HttpPost("{exerciseId:int}/check")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public Task<ActionResult<CheckResult>> Check(int subjectId, int chapterId, int exerciseId, CheckDto body) =>
-        RunCheckAsync(subjectId, chapterId, exerciseId, body);
+    public Task<ActionResult<CheckResult>> Check(int subjectId, int chapterId, int exerciseId, CheckDto body, CancellationToken ct = default) =>
+        RunCheckAsync(subjectId, chapterId, exerciseId, body, ct);
 }
 
 /// <summary>
@@ -664,9 +664,9 @@ public class ArithmeticDrillController(PuglingDbContext db, ExerciseTypeRegistry
     [HttpPost("{exerciseId:int}/generate")]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<GeneratedDrill>> Generate(int subjectId, int chapterId, int exerciseId, [FromQuery] int? seed)
+    public async Task<ActionResult<GeneratedDrill>> Generate(int subjectId, int chapterId, int exerciseId, [FromQuery] int? seed, CancellationToken ct = default)
     {
-        var exercise = await FindAsync(subjectId, chapterId, exerciseId);
+        var exercise = await FindAsync(subjectId, chapterId, exerciseId, ct);
         if (exercise is null) return NotFound();
         if (ArithmeticDrillExerciseType.Validate(ConfigOf(exercise)) is { } error) return this.ProblemWithCode(ApiErrors.ValidationError, error);
 
@@ -678,9 +678,9 @@ public class ArithmeticDrillController(PuglingDbContext db, ExerciseTypeRegistry
     [HttpPost("{exerciseId:int}/check")]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<CheckResult>> Check(int subjectId, int chapterId, int exerciseId, CheckDto body)
+    public async Task<ActionResult<CheckResult>> Check(int subjectId, int chapterId, int exerciseId, CheckDto body, CancellationToken ct = default)
     {
-        var exercise = await FindAsync(subjectId, chapterId, exerciseId);
+        var exercise = await FindAsync(subjectId, chapterId, exerciseId, ct);
         if (exercise is null) return NotFound();
         if (ArithmeticDrillExerciseType.Validate(ConfigOf(exercise)) is { } error) return this.ProblemWithCode(ApiErrors.ValidationError, error);
 
@@ -702,6 +702,6 @@ public class ListController(PuglingDbContext db, ExerciseTypeRegistry registry)
     /// <summary>Bewertet die genannten Einträge – als Menge, oder positionsgenau bei <c>Ordered</c>.</summary>
     [HttpPost("{exerciseId:int}/check")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public Task<ActionResult<CheckResult>> Check(int subjectId, int chapterId, int exerciseId, CheckDto body) =>
-        RunCheckAsync(subjectId, chapterId, exerciseId, body);
+    public Task<ActionResult<CheckResult>> Check(int subjectId, int chapterId, int exerciseId, CheckDto body, CancellationToken ct = default) =>
+        RunCheckAsync(subjectId, chapterId, exerciseId, body, ct);
 }

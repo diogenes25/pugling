@@ -34,15 +34,15 @@ public class AdultsController(PuglingDbContext db, AccountService accounts) : Co
 
     /// <summary>Der eigene Datensatz (Selbstauskunft).</summary>
     [HttpGet]
-    public async Task<IEnumerable<AdultResponse>> List() =>
-        await Project(db.Adults.Where(a => a.Id == User.AdultId())).ToListAsync();
+    public async Task<IEnumerable<AdultResponse>> List(CancellationToken ct = default) =>
+        await Project(db.Adults.Where(a => a.Id == User.AdultId())).ToListAsync(ct);
 
     /// <summary>Ein einzelner Erwachsener.</summary>
     [HttpGet("{adultId:int}")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<AdultResponse>> Get(int adultId)
+    public async Task<ActionResult<AdultResponse>> Get(int adultId, CancellationToken ct = default)
     {
-        var adult = await Project(db.Adults.Where(a => a.Id == adultId)).FirstOrDefaultAsync();
+        var adult = await Project(db.Adults.Where(a => a.Id == adultId)).FirstOrDefaultAsync(ct);
         return adult is null ? NotFound() : adult;
     }
 
@@ -51,16 +51,16 @@ public class AdultsController(PuglingDbContext db, AccountService accounts) : Co
     [AllowAnonymous]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<AdultResponse>> Create(CreateAdultDto dto)
+    public async Task<ActionResult<AdultResponse>> Create(CreateAdultDto dto, CancellationToken ct = default)
     {
         if (string.IsNullOrWhiteSpace(dto.Name)) return this.ProblemWithCode(ApiErrors.ValidationError, "Name is required.");
-        if (await EmailTakenAsync(dto.Email)) return this.ProblemWithCode(ApiErrors.DuplicateEmail, "Email already in use.");
+        if (await EmailTakenAsync(dto.Email, ct: ct)) return this.ProblemWithCode(ApiErrors.DuplicateEmail, "Email already in use.");
 
         var adult = new Adult { Name = dto.Name.Trim(), Email = dto.Email, Pin = string.IsNullOrEmpty(dto.Pin) ? "" : PinHasher.Hash(dto.Pin) };
         db.Adults.Add(adult);
-        await db.SaveChangesAsync();
+        await db.SaveChangesAsync(ct);
         // Login-Konto (Creator+Supervisor) sofort anlegen, damit der neue Vater sich einloggen kann.
-        await accounts.EnsureForFatherAsync(adult);
+        await accounts.EnsureForFatherAsync(adult, ct);
 
         var response = new AdultResponse(adult.Id, adult.Name, adult.Email, adult.CreatedAt, 0);
         return CreatedAtAction(nameof(Get), new { adultId = adult.Id }, response);
@@ -69,12 +69,12 @@ public class AdultsController(PuglingDbContext db, AccountService accounts) : Co
     /// <summary>Ändert einen Erwachsenen (partiell).</summary>
     [HttpPatch("{adultId:int}")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<AdultResponse>> Update(int adultId, UpdateAdultDto dto)
+    public async Task<ActionResult<AdultResponse>> Update(int adultId, UpdateAdultDto dto, CancellationToken ct = default)
     {
-        var adult = await db.Adults.FirstOrDefaultAsync(a => a.Id == adultId);
+        var adult = await db.Adults.FirstOrDefaultAsync(a => a.Id == adultId, ct);
         if (adult is null) return NotFound();
 
-        if (dto.Email is not null && await EmailTakenAsync(dto.Email, exceptAdultId: adultId))
+        if (dto.Email is not null && await EmailTakenAsync(dto.Email, exceptAdultId: adultId, ct: ct))
             return this.ProblemWithCode(ApiErrors.DuplicateEmail, "Email already in use.");
 
         if (dto.Name is not null) adult.Name = dto.Name.Trim();
@@ -83,11 +83,11 @@ public class AdultsController(PuglingDbContext db, AccountService accounts) : Co
         {
             adult.Pin = string.IsNullOrEmpty(dto.Pin) ? "" : PinHasher.Hash(dto.Pin);
             // PIN-Hash auf das Login-Konto spiegeln, damit der konto-zentrische Login (/auth/login) synchron bleibt.
-            (await accounts.EnsureForFatherAsync(adult)).PinHash = adult.Pin;
+            (await accounts.EnsureForFatherAsync(adult, ct)).PinHash = adult.Pin;
         }
-        await db.SaveChangesAsync();
+        await db.SaveChangesAsync(ct);
 
-        return (await Project(db.Adults.Where(a => a.Id == adultId)).FirstAsync());
+        return (await Project(db.Adults.Where(a => a.Id == adultId)).FirstAsync(ct));
     }
 
     /// <summary>
@@ -101,11 +101,12 @@ public class AdultsController(PuglingDbContext db, AccountService accounts) : Co
     /// </summary>
     /// <param name="email">Die gewünschte Adresse; leer heißt „keine", das kollidiert nie (Index ist gefiltert).</param>
     /// <param name="exceptAdultId">Beim Ändern der eigene Erwachsene – seine eigene Adresse ist keine Kollision.</param>
-    private Task<bool> EmailTakenAsync(string? email, int? exceptAdultId = null) =>
+    /// <param name="ct">Abbruch-Token.</param>
+    private Task<bool> EmailTakenAsync(string? email, int? exceptAdultId = null, CancellationToken ct = default) =>
         string.IsNullOrWhiteSpace(email)
             ? Task.FromResult(false)
             : db.Accounts.AsNoTracking().AnyAsync(a => a.Email == email
-                && (exceptAdultId == null || !a.Profiles.Any(p => p.AdultId == exceptAdultId)));
+                && (exceptAdultId == null || !a.Profiles.Any(p => p.AdultId == exceptAdultId)), ct);
 
     /// <summary>
     /// Löscht einen Erwachsenen – samt der Kinder, die dadurch <b>ihren letzten Supervisor</b> verlieren,

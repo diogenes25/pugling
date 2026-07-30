@@ -45,18 +45,20 @@ public class PlanPositionsController(PuglingDbContext db, ExercisePermissionServ
 
     /// <summary>Alle Positionen des Lehrplans in ihrer Reihenfolge.</summary>
     [HttpGet]
-    public async Task<IEnumerable<PositionResponse>> List(int planId)
+    public async Task<IEnumerable<PositionResponse>> List(int planId, CancellationToken ct = default)
     {
         var positions = await db.PlanPositions.AsNoTracking().Include(p => p.Exercise)
             .Where(p => p.StudyPlanId == planId)
             .OrderBy(p => p.Order).ThenBy(p => p.Id)
-            .ToListAsync();
+            .ToListAsync(ct);
         return positions.Select(Map);
     }
 
-    private Task<PlanPosition?> FindAsync(int planId, int positionId) =>
+    // Kein Vorgabewert für `ct` (wie bei IsUnfilledAsync): er ließe die Aufrufstelle korrekt aussehen,
+    // während der Abbruch des Clients verpufft.
+    private Task<PlanPosition?> FindAsync(int planId, int positionId, CancellationToken ct) =>
         db.PlanPositions.Include(p => p.Exercise)
-            .FirstOrDefaultAsync(p => p.Id == positionId && p.StudyPlanId == planId);
+            .FirstOrDefaultAsync(p => p.Id == positionId && p.StudyPlanId == planId, ct);
 
     /*
      * Die Ziel-Schwelle ist ein PROZENTWERT (siehe PlanPosition.GoalThreshold). Ohne diese Prüfung ist eine
@@ -72,9 +74,9 @@ public class PlanPositionsController(PuglingDbContext db, ExercisePermissionServ
     /// <summary>Eine einzelne Position.</summary>
     [HttpGet("{positionId:int}")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<PositionResponse>> Get(int planId, int positionId)
+    public async Task<ActionResult<PositionResponse>> Get(int planId, int positionId, CancellationToken ct = default)
     {
-        var pos = await FindAsync(planId, positionId);
+        var pos = await FindAsync(planId, positionId, ct);
         return pos is null ? NotFound() : Map(pos);
     }
 
@@ -90,7 +92,7 @@ public class PlanPositionsController(PuglingDbContext db, ExercisePermissionServ
         var exercise = await db.Exercises.FirstOrDefaultAsync(e => e.Id == dto.ExerciseId, ct);
         if (exercise is null) return this.ProblemWithCode(ApiErrors.InvalidReference, $"Exercise {dto.ExerciseId} not found.");
         // Execute-Gate: nicht öffentlich ausführbare Übungen darf nur zuweisen, wer ein Owner-/Write-/Execute-Recht hält.
-        if (!await perms.CanExecuteAsync(User, exercise))
+        if (!await perms.CanExecuteAsync(User, exercise, ct))
             return this.ProblemWithCode(ApiErrors.ExerciseNotExecutable, "This exercise is not publicly assignable; you need execute permission from its owner.");
         // Eine ungefüllte Übung ist hier zu stoppen und nicht beim Anlegen: „erst anlegen, dann füllen" ist
         // ein gewollter Weg (POST mit leeren refs, danach /items oder /refs-from-tags). Erst das Zuweisen
@@ -142,12 +144,12 @@ public class PlanPositionsController(PuglingDbContext db, ExercisePermissionServ
     [HttpPatch("{positionId:int}")]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<PositionResponse>> Update(int planId, int positionId, UpdatePositionDto dto)
+    public async Task<ActionResult<PositionResponse>> Update(int planId, int positionId, UpdatePositionDto dto, CancellationToken ct = default)
     {
         if (ThresholdProblem(dto.GoalThreshold) is { } problem)
             return this.ProblemWithCode(ApiErrors.ValidationError, problem);
 
-        var pos = await FindAsync(planId, positionId);
+        var pos = await FindAsync(planId, positionId, ct);
         if (pos is null) return NotFound();
 
         if (dto.Order is not null) pos.Order = dto.Order.Value;
@@ -170,7 +172,7 @@ public class PlanPositionsController(PuglingDbContext db, ExercisePermissionServ
         if (dto.SpeedThresholdSeconds is not null) pos.SpeedThresholdSeconds = dto.SpeedThresholdSeconds.Value;
         if (dto.SpeedBonusPoints is not null) pos.SpeedBonusPoints = dto.SpeedBonusPoints.Value;
 
-        await db.SaveChangesAsync();
+        await db.SaveChangesAsync(ct);
         return Map(pos);
     }
 
@@ -183,17 +185,17 @@ public class PlanPositionsController(PuglingDbContext db, ExercisePermissionServ
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
-    public async Task<IActionResult> Delete(int planId, int positionId)
+    public async Task<IActionResult> Delete(int planId, int positionId, CancellationToken ct = default)
     {
-        var pos = await FindAsync(planId, positionId);
+        var pos = await FindAsync(planId, positionId, ct);
         if (pos is null) return NotFound();
 
-        if (await db.TestAttempts.AnyAsync(t => t.PlanPositionId == positionId)
-            || await db.PracticeSessions.AnyAsync(s => s.PlanPositionId == positionId))
+        if (await db.TestAttempts.AnyAsync(t => t.PlanPositionId == positionId, ct)
+            || await db.PracticeSessions.AnyAsync(s => s.PlanPositionId == positionId, ct))
             return this.ProblemWithCode(ApiErrors.PositionHasData, "This position already has practice/test data and cannot be deleted.");
 
         db.PlanPositions.Remove(pos);
-        await db.SaveChangesAsync();
+        await db.SaveChangesAsync(ct);
         return NoContent();
     }
 }

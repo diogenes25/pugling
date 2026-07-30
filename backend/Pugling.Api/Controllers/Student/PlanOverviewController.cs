@@ -21,20 +21,22 @@ namespace Pugling.Api.Controllers.Student;
 [ServiceFilter(typeof(PlanOwnershipFilter))]
 public class PlanOverviewController(PuglingDbContext db, PositionProgressService progress) : ControllerBase
 {
-    private Task<StudyPlan?> GetPlan(int planId) =>
-        db.StudyPlans.AsNoTracking().FirstOrDefaultAsync(p => p.Id == planId);
+    // Kein Vorgabewert für `ct`: er ließe die Aufrufstelle korrekt aussehen, während der Abbruch des
+    // Clients verpufft.
+    private Task<StudyPlan?> GetPlan(int planId, CancellationToken ct) =>
+        db.StudyPlans.AsNoTracking().FirstOrDefaultAsync(p => p.Id == planId, ct);
 
     /// <summary>Tagesmission: heute fällige Positionen mit Status, erledigte Pflicht und aktuelle Streak.</summary>
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<OverviewResponse>> Get(int planId)
+    public async Task<ActionResult<OverviewResponse>> Get(int planId, CancellationToken ct = default)
     {
-        var plan = await GetPlan(planId);
+        var plan = await GetPlan(planId, ct);
         if (plan is null) return NotFound();
 
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
-        var days = await progress.ProgressAsync(plan, today);
-        var todayOverview = await progress.ComputeDayAsync(plan, today);
+        var days = await progress.ProgressAsync(plan, today, ct);
+        var todayOverview = await progress.ComputeDayAsync(plan, today, ct);
         return new OverviewResponse(plan.Id, plan.Title, plan.StartDate, plan.EndDate, plan.Active,
             PositionProgressService.Streak(days, today), todayOverview);
     }
@@ -52,18 +54,19 @@ public class PlanOverviewController(PuglingDbContext db, PositionProgressService
     /// <param name="sort">Sortierung: <c>day</c> (Standard), <c>-day</c>, <c>points</c>, <c>-points</c>.</param>
     /// <param name="skip">Anzahl zu überspringender Tage (Paging).</param>
     /// <param name="take">Maximale Tages-Zahl (1..500). Gesamtzahl im Header <c>X-Total-Count</c>.</param>
+    /// <param name="ct">Abbruch-Token.</param>
     [HttpGet("progress")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<ProgressResponse>> Progress(int planId,
         [FromQuery] DateOnly? from = null, [FromQuery] DateOnly? to = null, [FromQuery] bool? dutyDone = null,
         [FromQuery] string? sort = null,
-        [FromQuery] int skip = 0, [FromQuery] int take = PagingExtensions.DefaultTake)
+        [FromQuery] int skip = 0, [FromQuery] int take = PagingExtensions.DefaultTake, CancellationToken ct = default)
     {
-        var plan = await GetPlan(planId);
+        var plan = await GetPlan(planId, ct);
         if (plan is null) return NotFound();
 
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
-        var view = await progress.ProgressViewAsync(plan, today, from, to, dutyDone, sort);
+        var view = await progress.ProgressViewAsync(plan, today, from, to, dutyDone, sort, ct);
         // Paging (HTTP-Belang) auf die bereits gefilterte/sortierte Tagesliste; X-Total-Count = gefilterte Gesamtzahl.
         var page = view.Days.ToPagedList(Response, skip, take);
 

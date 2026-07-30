@@ -33,32 +33,33 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         new(s.Id, s.StudyPlanId, s.PlanPositionId ?? 0, s.Day, s.StartedAt, s.EndedAt, s.ActiveSeconds,
             s.Reviews.Count, s.Mode, s.Cursor, s.Order.Count);
 
-    private Task<StudyPlan?> GetPlan(int planId) => db.StudyPlans.FirstOrDefaultAsync(p => p.Id == planId);
+    private Task<StudyPlan?> GetPlan(int planId, CancellationToken ct = default) =>
+        db.StudyPlans.FirstOrDefaultAsync(p => p.Id == planId, ct);
 
     // Der Plan kommt mit, weil die Bebilderung das Kind braucht (die Auswahl hängt an seinem Profil).
-    private Task<PlanPosition?> GetPosition(int planId, int positionId) =>
+    private Task<PlanPosition?> GetPosition(int planId, int positionId, CancellationToken ct = default) =>
         db.PlanPositions.Include(p => p.Exercise).Include(p => p.StudyPlan)
-            .FirstOrDefaultAsync(p => p.Id == positionId && p.StudyPlanId == planId);
+            .FirstOrDefaultAsync(p => p.Id == positionId && p.StudyPlanId == planId, ct);
 
-    private Task<PracticeSession?> GetSession(int planId, int positionId, int sessionId) =>
+    private Task<PracticeSession?> GetSession(int planId, int positionId, int sessionId, CancellationToken ct = default) =>
         db.PracticeSessions.Include(s => s.Reviews)
-            .FirstOrDefaultAsync(s => s.Id == sessionId && s.StudyPlanId == planId && s.PlanPositionId == positionId);
+            .FirstOrDefaultAsync(s => s.Id == sessionId && s.StudyPlanId == planId && s.PlanPositionId == positionId, ct);
 
     /// <summary>Startet eine Übungssitzung für die Position. Day nur zum Nachtragen (Vater); sonst heute.</summary>
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<SessionResponse>> Start(int planId, int positionId, StartPracticeDto dto)
+    public async Task<ActionResult<SessionResponse>> Start(int planId, int positionId, StartPracticeDto dto, CancellationToken ct = default)
     {
-        var pos = await GetPosition(planId, positionId);
+        var pos = await GetPosition(planId, positionId, ct);
         if (pos is null) return NotFound();
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
         if (dto.Day is { } d && d != today && !User.IsSupervisor())
             return Forbid(); // Nachtragen anderer Tage nur für den Vater (Anti-Schummel).
         // Anti-Schummel: der Sohn darf nur seinen aktiven, laufenden Plan spielen – kein Cherry-Picking
         // leichter oder abgelaufener Pläne für bequeme Punkte. Der Vater darf jederzeit (Vorschau/Nachtrag).
-        if (User.IsStudent() && await GetPlan(planId) is { } plan && !PositionPlayService.PlanPlayableForChild(plan, today))
+        if (User.IsStudent() && await GetPlan(planId, ct) is { } plan && !PositionPlayService.PlanPlayableForChild(plan, today))
             return this.ProblemWithCode(ApiErrors.PlanInactive, "This study plan is not currently active. Ask your parent.");
 
         var day = dto.Day ?? today;
@@ -67,27 +68,27 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         // verschiebt und Cursor (Lern) bzw. Batch (Info/Offline) dieselbe stabile Sequenz nutzen.
         // Info = freies Üben: der ganze scope-gefilterte Pool (ohne Leitner-Fälligkeit), damit auch bereits
         // gelernte Vokabeln wiederholbar sind. Lern = nur die heute fälligen Karten.
-        session.Order = [.. await play.DueItemIndicesAsync(pos, day, pos.OrderStrategy, dueOnly: dto.Mode != PlayMode.Info)];
+        session.Order = [.. await play.DueItemIndicesAsync(pos, day, pos.OrderStrategy, dueOnly: dto.Mode != PlayMode.Info, ct)];
         db.PracticeSessions.Add(session);
-        await db.SaveChangesAsync();
+        await db.SaveChangesAsync(ct);
         return CreatedAtAction(nameof(Get), new { planId, positionId, sessionId = session.Id }, Map(session));
     }
 
     /// <summary>Eine Übungssitzung der Position.</summary>
     [HttpGet("{sessionId:int}")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<SessionResponse>> Get(int planId, int positionId, int sessionId) =>
-        await GetSession(planId, positionId, sessionId) is { } s ? Map(s) : NotFound();
+    public async Task<ActionResult<SessionResponse>> Get(int planId, int positionId, int sessionId, CancellationToken ct = default) =>
+        await GetSession(planId, positionId, sessionId, ct) is { } s ? Map(s) : NotFound();
 
     /// <summary>Fügt (aktive) Übungssekunden hinzu (Anti-Zeit-Cheat: pro Heartbeat gedeckelt).</summary>
     [HttpPost("{sessionId:int}/heartbeat")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<SessionResponse>> Heartbeat(int planId, int positionId, int sessionId, HeartbeatDto dto)
+    public async Task<ActionResult<SessionResponse>> Heartbeat(int planId, int positionId, int sessionId, HeartbeatDto dto, CancellationToken ct = default)
     {
-        var session = await GetSession(planId, positionId, sessionId);
+        var session = await GetSession(planId, positionId, sessionId, ct);
         if (session is null) return NotFound();
         if (dto.Active && dto.Seconds > 0) session.ActiveSeconds += Math.Clamp(dto.Seconds, 0, MaxHeartbeatSeconds);
-        await db.SaveChangesAsync();
+        await db.SaveChangesAsync(ct);
         return Map(session);
     }
 
@@ -112,19 +113,19 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
     /// </summary>
     [HttpGet("{sessionId:int}/cards")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<IReadOnlyList<PracticeCard>>> Cards(int planId, int positionId, int sessionId)
+    public async Task<ActionResult<IReadOnlyList<PracticeCard>>> Cards(int planId, int positionId, int sessionId, CancellationToken ct = default)
     {
-        var session = await GetSession(planId, positionId, sessionId);
+        var session = await GetSession(planId, positionId, sessionId, ct);
         if (session is null) return NotFound();
-        var plan = (await GetPlan(planId))!;
+        var plan = (await GetPlan(planId, ct))!;
         // Anti-Schummel: auch mit einer noch offenen Session darf der Sohn einen inzwischen deaktivierten
         // oder abgelaufenen Plan nicht weiter beüben (der Vater bleibt für Vorschau/Nachtrag ausgenommen).
         if (User.IsStudent() && !PositionPlayService.PlanPlayableForChild(plan, DateOnly.FromDateTime(DateTime.UtcNow)))
             return this.ProblemWithCode(ApiErrors.PlanInactive, "This study plan is not currently active. Ask your parent.");
-        var pos = await GetPosition(planId, positionId);
+        var pos = await GetPosition(planId, positionId, ct);
         if (pos?.Exercise is null) return NotFound();
 
-        var items = await play.ItemsOfAsync(pos, pos.StudyPlan?.ChildId);
+        var items = await play.ItemsOfAsync(pos, pos.StudyPlan?.ChildId, ct);
         if (play.TypeOf(pos.Exercise) is not { } type)
             return this.ProblemWithCode(ApiErrors.UnknownExerciseType, "The exercise has an unknown type.");
         var stage = PositionPlayService.StageForDay(pos, plan, session.Day, type);
@@ -157,9 +158,9 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
     public async Task<ActionResult<SelectedMediaResponse>> ReshuffleImage(int planId, int positionId,
         int sessionId, int itemIndex, CancellationToken ct)
     {
-        var session = await GetSession(planId, positionId, sessionId);
+        var session = await GetSession(planId, positionId, sessionId, ct);
         if (session is null) return NotFound();
-        var pos = await GetPosition(planId, positionId);
+        var pos = await GetPosition(planId, positionId, ct);
         if (pos?.Exercise is null || pos.StudyPlan is null) return NotFound();
         if (User.IsStudent()
             && !PositionPlayService.PlanPlayableForChild(pos.StudyPlan, DateOnly.FromDateTime(DateTime.UtcNow)))
@@ -170,7 +171,7 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         // ganzen Übung durchzählen – auch die der Karten, die diese Sitzung nie zeigt.
         if (!session.Order.Contains(itemIndex)) return NotFound();
 
-        var items = await play.ItemsOfAsync(pos, pos.StudyPlan.ChildId);
+        var items = await play.ItemsOfAsync(pos, pos.StudyPlan.ChildId, ct);
         if (items.FirstOrDefault(i => i.Index == itemIndex) is not
             { ItemId: { } itemId, VocabularyId: { } vocabId } item)
             return NotFound();
@@ -196,24 +197,24 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
     /// </summary>
     [HttpGet("{sessionId:int}/next")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<NextResponse>> Next(int planId, int positionId, int sessionId)
+    public async Task<ActionResult<NextResponse>> Next(int planId, int positionId, int sessionId, CancellationToken ct = default)
     {
-        var session = await GetSession(planId, positionId, sessionId);
+        var session = await GetSession(planId, positionId, sessionId, ct);
         if (session is null) return NotFound();
-        var plan = (await GetPlan(planId))!;
+        var plan = (await GetPlan(planId, ct))!;
         if (User.IsStudent() && !PositionPlayService.PlanPlayableForChild(plan, DateOnly.FromDateTime(DateTime.UtcNow)))
             return this.ProblemWithCode(ApiErrors.PlanInactive, "This study plan is not currently active. Ask your parent.");
-        var pos = await GetPosition(planId, positionId);
+        var pos = await GetPosition(planId, positionId, ct);
         if (pos?.Exercise is null) return NotFound();
 
-        var items = await play.ItemsOfAsync(pos, pos.StudyPlan?.ChildId);
+        var items = await play.ItemsOfAsync(pos, pos.StudyPlan?.ChildId, ct);
         if (play.TypeOf(pos.Exercise) is not { } type)
             return this.ProblemWithCode(ApiErrors.UnknownExerciseType, "The exercise has an unknown type.");
         var stage = PositionPlayService.StageForDay(pos, plan, session.Day, type);
         var typed = type.IsTypedStage(stage);
 
         var cursor = PositionPlayService.SkipRemoved(session.Order, session.Cursor, items.Count);
-        if (cursor != session.Cursor) { session.Cursor = cursor; await db.SaveChangesAsync(); }
+        if (cursor != session.Cursor) { session.Cursor = cursor; await db.SaveChangesAsync(ct); }
         if (cursor >= session.Order.Count) return new NextResponse(null, true, cursor, session.Order.Count);
 
         var card = BuildCard(type, stage, typed, items, session.Order[cursor]);
@@ -232,22 +233,22 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<ReviewOutcome>> Review(int planId, int positionId, int sessionId, ReviewDto dto)
+    public async Task<ActionResult<ReviewOutcome>> Review(int planId, int positionId, int sessionId, ReviewDto dto, CancellationToken ct = default)
     {
-        var session = await GetSession(planId, positionId, sessionId);
+        var session = await GetSession(planId, positionId, sessionId, ct);
         if (session is null) return NotFound();
-        var plan = (await GetPlan(planId))!;
+        var plan = (await GetPlan(planId, ct))!;
         // Anti-Schummel: auch mit einer noch offenen Session darf der Sohn einen inzwischen deaktivierten
         // oder abgelaufenen Plan nicht weiter beüben (der Vater bleibt für Vorschau/Nachtrag ausgenommen).
         if (User.IsStudent() && !PositionPlayService.PlanPlayableForChild(plan, DateOnly.FromDateTime(DateTime.UtcNow)))
             return this.ProblemWithCode(ApiErrors.PlanInactive, "This study plan is not currently active. Ask your parent.");
-        var pos = await GetPosition(planId, positionId);
+        var pos = await GetPosition(planId, positionId, ct);
         if (pos?.Exercise is null) return NotFound();
 
         // Info-Modus: freies Üben ohne jegliches Lernfeedback – nichts protokollieren, nichts bepunkten.
         if (session.Mode == PlayMode.Info) return NoContent();
 
-        var items = await play.ItemsOfAsync(pos, pos.StudyPlan?.ChildId);
+        var items = await play.ItemsOfAsync(pos, pos.StudyPlan?.ChildId, ct);
         if (dto.ItemIndex < 0 || dto.ItemIndex >= play.PoolSize(pos, items.Count))
             return this.ProblemWithCode(ApiErrors.NotFound, "The content does not belong to this position.");
         var item = items[dto.ItemIndex];
@@ -261,7 +262,7 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
             ? item.AcceptedAnswers.Any(a => grader.Matches(dto.GivenAnswer, a))
             : dto.WasKnown ?? false;
 
-        var prog = await play.ProgressForAsync(positionId, dto.ItemIndex);
+        var prog = await play.ProgressForAsync(positionId, dto.ItemIndex, ct);
         // Erstkontakt zählt als Einführung – sonst stünde IntroducedAt/DueOn bei rein übungsbasiertem
         // Lernen still (Fälligkeit, Scope „neu/alt").
         if (prog.IntroducedAt is null)
@@ -296,7 +297,7 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         // Bewusst mit der tatsächlichen Korrektheit (nicht anti-farming-gedämpft) – dies ist eine Auswertungsebene,
         // nicht die Punktequelle; persistiert wird über das SaveChanges unten.
         await itemProgress.RecordAsync(plan.ChildId, pos.ExerciseId, item, wasCorrect, stage,
-            typed ? dto.GivenAnswer : null, ItemReviewSource.Practice, positionId, session.Day, countsForMastery: scored);
+            typed ? dto.GivenAnswer : null, ItemReviewSource.Practice, positionId, session.Day, countsForMastery: scored, ct: ct);
 
         // Punkte/Box nur bei Leitner-Positionen und nur für gewertete Karten (Anti-Farming). Sonst 0.
         int awarded = 0, comboBonus = 0, speedBonus = 0, combo = 0;
@@ -310,7 +311,7 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
             var cfg = new ScoringService.ScoreConfig($"{plan.Title} · {pos.Exercise.Title}", pos.NewContentPoints,
                 pos.ComboThreshold, pos.ComboBonusPoints, pos.SpeedThresholdSeconds, pos.SpeedBonusPoints);
             var score = await scoring.ScoreReviewAsync(cfg, preReviewCount, preBox, prog.Box, wasCorrect, combo,
-                DateTime.Now, elapsedSeconds);
+                DateTime.Now, elapsedSeconds, ct);
             foreach (var c in score.Contributions)
                 db.ChildPoints.Add(new ChildPointsEntry { ChildId = plan.ChildId, Kind = c.Kind, Amount = c.Amount, Reason = c.Reason });
             awarded = score.BasePoints;
@@ -330,10 +331,10 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         if (cursor < session.Order.Count) cursor++;
         session.Cursor = PositionPlayService.SkipRemoved(session.Order, cursor, items.Count);
 
-        await db.SaveChangesAsync();
+        await db.SaveChangesAsync(ct);
 
         if (leitnerScored)
-            await gamification.EvaluateAndAwardAsync(plan.ChildId, session.Day);
+            await gamification.EvaluateAndAwardAsync(plan.ChildId, session.Day, ct);
 
         var done = session.Cursor >= session.Order.Count;
         var next = done ? null : BuildCard(type, stage, typed, items, session.Order[session.Cursor]);
@@ -344,18 +345,18 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
     /// <summary>Beendet die Sitzung und wertet zeitbasierte Missionen aus.</summary>
     [HttpPost("{sessionId:int}/end")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<SessionResponse>> End(int planId, int positionId, int sessionId)
+    public async Task<ActionResult<SessionResponse>> End(int planId, int positionId, int sessionId, CancellationToken ct = default)
     {
-        var session = await GetSession(planId, positionId, sessionId);
+        var session = await GetSession(planId, positionId, sessionId, ct);
         if (session is null) return NotFound();
         session.EndedAt = DateTime.UtcNow;
-        await db.SaveChangesAsync();
+        await db.SaveChangesAsync(ct);
 
-        var plan = (await GetPlan(planId))!;
+        var plan = (await GetPlan(planId, ct))!;
         // Ziel-Punkte der Position (idempotent): erfasst v. a. reine Inhalts-/Leseübungen, deren Ziel mit
         // dem Beenden der Sitzung erfüllt ist. VOR der Gamification, damit Missionen die Gutschrift sehen.
-        await progress.EvaluateAndAwardAsync(plan, session.Day);
-        await gamification.EvaluateAndAwardAsync(plan.ChildId, session.Day);
+        await progress.EvaluateAndAwardAsync(plan, session.Day, ct);
+        await gamification.EvaluateAndAwardAsync(plan.ChildId, session.Day, ct);
         return Map(session);
     }
 }

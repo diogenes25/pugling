@@ -56,6 +56,7 @@ public class MediaAssetsController(PuglingDbContext db, InterestTagService tags,
     /// <param name="dir"><c>asc</c> (Default) oder <c>desc</c>; hat Vorrang vor einem <c>-</c>-Präfix in <paramref name="sort"/>.</param>
     /// <param name="skip">Anzahl zu überspringender Einträge (Paging).</param>
     /// <param name="take">Maximale Trefferzahl (1..500).</param>
+    /// <param name="ct">Abbruch-Token.</param>
     [HttpGet]
     public async Task<IEnumerable<MediaAssetResponse>> List(
         [FromQuery] string? search = null,
@@ -69,7 +70,8 @@ public class MediaAssetsController(PuglingDbContext db, InterestTagService tags,
         [FromQuery] string? sort = null,
         [FromQuery] string? dir = null,
         [FromQuery] int skip = 0,
-        [FromQuery] int take = PagingExtensions.DefaultTake)
+        [FromQuery] int take = PagingExtensions.DefaultTake,
+        CancellationToken ct = default)
     {
         var query = db.MediaAssets.AsNoTracking().AsQueryable();
 
@@ -98,7 +100,7 @@ public class MediaAssetsController(PuglingDbContext db, InterestTagService tags,
         }
 
         var items = await WithGraph(ApplySort(query, SortingExtensions.ParseSort(sort, dir)))
-            .ToPagedListAsync(Response, skip, take);
+            .ToPagedListAsync(Response, skip, take, ct);
         return items.Select(Map);
     }
 
@@ -122,18 +124,18 @@ public class MediaAssetsController(PuglingDbContext db, InterestTagService tags,
     /// <summary>Ein Asset per numerischer Id.</summary>
     [HttpGet("{id:int}")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<MediaAssetResponse>> Get(int id)
+    public async Task<ActionResult<MediaAssetResponse>> Get(int id, CancellationToken ct = default)
     {
-        var asset = await WithGraph(db.MediaAssets.AsNoTracking()).FirstOrDefaultAsync(a => a.Id == id);
+        var asset = await WithGraph(db.MediaAssets.AsNoTracking()).FirstOrDefaultAsync(a => a.Id == id, ct);
         return asset is null ? NotFound() : Map(asset);
     }
 
     /// <summary>Ein Asset per stabilem Key (Referenz-Slug).</summary>
     [HttpGet("by-key/{key}")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<MediaAssetResponse>> GetByKey(string key)
+    public async Task<ActionResult<MediaAssetResponse>> GetByKey(string key, CancellationToken ct = default)
     {
-        var asset = await WithGraph(db.MediaAssets.AsNoTracking()).FirstOrDefaultAsync(a => a.Key == key);
+        var asset = await WithGraph(db.MediaAssets.AsNoTracking()).FirstOrDefaultAsync(a => a.Key == key, ct);
         return asset is null ? NotFound() : Map(asset);
     }
 
@@ -145,7 +147,7 @@ public class MediaAssetsController(PuglingDbContext db, InterestTagService tags,
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
-    public async Task<ActionResult<MediaAssetResponse>> Create(CreateMediaAssetDto dto)
+    public async Task<ActionResult<MediaAssetResponse>> Create(CreateMediaAssetDto dto, CancellationToken ct = default)
     {
         if (string.IsNullOrWhiteSpace(dto.Description))
             return this.ProblemWithCode(ApiErrors.ValidationError, "Description is required (it doubles as the alt text).");
@@ -153,12 +155,12 @@ public class MediaAssetsController(PuglingDbContext db, InterestTagService tags,
         string key;
         if (string.IsNullOrWhiteSpace(dto.Key))
         {
-            key = await UniqueKeyAsync(InterestSlug.From(dto.Description));
+            key = await UniqueKeyAsync(InterestSlug.From(dto.Description), ct);
         }
         else
         {
             key = dto.Key.Trim();
-            if (await db.MediaAssets.AnyAsync(a => a.Key == key))
+            if (await db.MediaAssets.AnyAsync(a => a.Key == key, ct))
                 return this.ProblemWithCode(ApiErrors.DuplicateKey, $"Key '{key}' already exists.");
         }
 
@@ -189,10 +191,10 @@ public class MediaAssetsController(PuglingDbContext db, InterestTagService tags,
         };
         db.MediaAssets.Add(asset);
 
-        foreach (var tag in await tags.EnsureManyAsync(dto.Tags ?? []))
+        foreach (var tag in await tags.EnsureManyAsync(dto.Tags ?? [], ct: ct))
             asset.TagLinks.Add(new MediaTagLink { MediaAsset = asset, InterestTag = tag });
 
-        await db.SaveChangesAsync();
+        await db.SaveChangesAsync(ct);
         return CreatedAtAction(nameof(Get), new { id = asset.Id }, Map(asset));
     }
 
@@ -223,7 +225,7 @@ public class MediaAssetsController(PuglingDbContext db, InterestTagService tags,
         string key;
         if (string.IsNullOrWhiteSpace(form.Key))
         {
-            key = await UniqueKeyAsync(InterestSlug.From(form.Description));
+            key = await UniqueKeyAsync(InterestSlug.From(form.Description), ct);
         }
         else
         {
@@ -288,9 +290,9 @@ public class MediaAssetsController(PuglingDbContext db, InterestTagService tags,
     [HttpPatch("{id:int}")]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<MediaAssetResponse>> Update(int id, UpdateMediaAssetDto dto)
+    public async Task<ActionResult<MediaAssetResponse>> Update(int id, UpdateMediaAssetDto dto, CancellationToken ct = default)
     {
-        var asset = await WithGraph(db.MediaAssets).FirstOrDefaultAsync(a => a.Id == id);
+        var asset = await WithGraph(db.MediaAssets).FirstOrDefaultAsync(a => a.Id == id, ct);
         if (asset is null) return NotFound();
 
         if (dto.Description is not null)
@@ -307,8 +309,8 @@ public class MediaAssetsController(PuglingDbContext db, InterestTagService tags,
         if (dto.Source is not null) asset.Source = Trimmed(dto.Source);
         if (dto.Placeholder is not null) asset.Placeholder = Trimmed(dto.Placeholder);
 
-        await AttachAsync(asset, dto.Tags);
-        await db.SaveChangesAsync();
+        await AttachAsync(asset, dto.Tags, ct);
+        await db.SaveChangesAsync(ct);
         return Map(asset);
     }
 
@@ -320,9 +322,9 @@ public class MediaAssetsController(PuglingDbContext db, InterestTagService tags,
     /// </summary>
     [HttpGet("{id:int}/usage")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<IEnumerable<MediaUsage>>> Usage(int id)
+    public async Task<ActionResult<IEnumerable<MediaUsage>>> Usage(int id, CancellationToken ct = default)
     {
-        if (!await db.MediaAssets.AnyAsync(a => a.Id == id)) return NotFound();
+        if (!await db.MediaAssets.AnyAsync(a => a.Id == id, ct)) return NotFound();
 
         var rows = await db.MediaLinks.AsNoTracking()
             .Where(l => l.MediaAssetId == id)
@@ -337,7 +339,7 @@ public class MediaAssetsController(PuglingDbContext db, InterestTagService tags,
                 l.ExerciseId,
                 ExerciseTitle = l.Exercise!.Title,
             })
-            .ToListAsync();
+            .ToListAsync(ct);
 
         return rows.Select(r => r switch
         {
@@ -354,16 +356,16 @@ public class MediaAssetsController(PuglingDbContext db, InterestTagService tags,
     [HttpDelete("{id:int}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> Delete(int id)
+    public async Task<IActionResult> Delete(int id, CancellationToken ct = default)
     {
-        var asset = await db.MediaAssets.FindAsync(id);
+        var asset = await db.MediaAssets.FindAsync([id], ct);
         if (asset is null) return NotFound();
         db.MediaAssets.Remove(asset);
-        await db.SaveChangesAsync();
+        await db.SaveChangesAsync(ct);
         // Erst nach dem erfolgreichen Löschen in der DB die Dateien wegräumen: bricht die DB ab, sind die
         // Dateien noch da (verwaiste Datei ist harmlos, ein Asset ohne Datei wäre eine kaputte Karte).
         // Assets, die nur per URL eingetragen wurden, haben keinen eigenen Ordner – das Löschen läuft leer.
-        await storage.DeleteFolderAsync(asset.Id.ToString());
+        await storage.DeleteFolderAsync(asset.Id.ToString(), ct);
         return NoContent();
     }
 
@@ -374,14 +376,14 @@ public class MediaAssetsController(PuglingDbContext db, InterestTagService tags,
     [HttpPost("{id:int}/tags")]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<MediaAssetResponse>> AttachTags(int id, TagMediaDto dto)
+    public async Task<ActionResult<MediaAssetResponse>> AttachTags(int id, TagMediaDto dto, CancellationToken ct = default)
     {
-        var asset = await WithGraph(db.MediaAssets).FirstOrDefaultAsync(a => a.Id == id);
+        var asset = await WithGraph(db.MediaAssets).FirstOrDefaultAsync(a => a.Id == id, ct);
         if (asset is null) return NotFound();
         if (dto.Tags is not { Count: > 0 }) return this.ProblemWithCode(ApiErrors.ValidationError, "At least one tag is required.");
 
-        await AttachAsync(asset, dto.Tags);
-        await db.SaveChangesAsync();
+        await AttachAsync(asset, dto.Tags, ct);
+        await db.SaveChangesAsync(ct);
         return Map(asset);
     }
 
@@ -389,36 +391,36 @@ public class MediaAssetsController(PuglingDbContext db, InterestTagService tags,
     [HttpDelete("{id:int}/tags/{tagId:int}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> DetachTag(int id, int tagId)
+    public async Task<IActionResult> DetachTag(int id, int tagId, CancellationToken ct = default)
     {
-        var link = await db.MediaTagLinks.FirstOrDefaultAsync(l => l.MediaAssetId == id && l.InterestTagId == tagId);
+        var link = await db.MediaTagLinks.FirstOrDefaultAsync(l => l.MediaAssetId == id && l.InterestTagId == tagId, ct);
         if (link is null) return NotFound();
         db.MediaTagLinks.Remove(link);
-        await db.SaveChangesAsync();
+        await db.SaveChangesAsync(ct);
         return NoContent();
     }
 
     // ---- Helfer -------------------------------------------------------------------------------------
 
     /// <summary>Hängt die genannten Schlagworte an (erwartet geladene <c>TagLinks</c>); speichert nicht.</summary>
-    private async Task AttachAsync(MediaAsset asset, List<string>? names)
+    private async Task AttachAsync(MediaAsset asset, List<string>? names, CancellationToken ct)
     {
         if (names is null) return;
         var already = asset.TagLinks.Where(l => l.InterestTag is not null).Select(l => l.InterestTag!.Slug).ToHashSet(StringComparer.Ordinal);
-        foreach (var tag in await tags.EnsureManyAsync(names))
+        foreach (var tag in await tags.EnsureManyAsync(names, ct: ct))
             if (already.Add(tag.Slug))
                 asset.TagLinks.Add(new MediaTagLink { MediaAsset = asset, InterestTag = tag });
     }
 
     /// <summary>Macht einen generierten Basiskey eindeutig, indem bei Kollision _2, _3 … angehängt wird.</summary>
-    private async Task<string> UniqueKeyAsync(string baseKey)
+    private async Task<string> UniqueKeyAsync(string baseKey, CancellationToken ct)
     {
         var key = string.IsNullOrWhiteSpace(baseKey) ? "medium" : baseKey;
-        if (!await db.MediaAssets.AnyAsync(a => a.Key == key)) return key;
+        if (!await db.MediaAssets.AnyAsync(a => a.Key == key, ct)) return key;
         for (var n = 2; ; n++)
         {
             var candidate = $"{key}_{n}";
-            if (!await db.MediaAssets.AnyAsync(a => a.Key == candidate)) return candidate;
+            if (!await db.MediaAssets.AnyAsync(a => a.Key == candidate, ct)) return candidate;
         }
     }
 

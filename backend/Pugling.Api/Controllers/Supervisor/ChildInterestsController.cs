@@ -30,13 +30,13 @@ public class ChildInterestsController(PuglingDbContext db, InterestTagService ta
     /// <summary>Alle Interessen des Kindes – stärkste Vorlieben zuerst, Abneigungen zuletzt.</summary>
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IEnumerable<ChildInterestResponse>> List(int childId) =>
+    public async Task<IEnumerable<ChildInterestResponse>> List(int childId, CancellationToken ct = default) =>
         await db.ChildInterests.AsNoTracking()
             .Where(i => i.ChildId == childId)
             .OrderByDescending(i => i.Weight).ThenBy(i => i.InterestTag!.Slug)
             .Select(i => new ChildInterestResponse(i.InterestTagId, i.InterestTag!.Slug, i.InterestTag.Label,
                 i.InterestTag.Facet, i.Weight, i.CreatedAt))
-            .ToListAsync();
+            .ToListAsync(ct);
 
     /// <summary>
     /// Ersetzt die Interessen des Kindes vollständig (leere Liste = alle entfernen). Bewusst ersetzend:
@@ -47,7 +47,7 @@ public class ChildInterestsController(PuglingDbContext db, InterestTagService ta
     [HttpPut]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<IEnumerable<ChildInterestResponse>>> Replace(int childId, SetChildInterestsDto dto)
+    public async Task<ActionResult<IEnumerable<ChildInterestResponse>>> Replace(int childId, SetChildInterestsDto dto, CancellationToken ct = default)
     {
         var inputs = dto.Interests ?? [];
         foreach (var input in inputs)
@@ -59,39 +59,39 @@ public class ChildInterestsController(PuglingDbContext db, InterestTagService ta
         var resolved = new List<(InterestTag Tag, int Weight)>();
         foreach (var input in inputs)
         {
-            var tag = await ResolveAsync(input);
+            var tag = await ResolveAsync(input, ct);
             if (tag is null)
                 return this.ProblemWithCode(ApiErrors.InvalidReference,
                     "Each interest needs an existing tagId or a slug/label to create one from.");
             resolved.Add((tag, input.Weight));
         }
         // Neu angelegte Tags haben noch keine Id – speichern, bevor die Gewichte darauf verweisen.
-        await db.SaveChangesAsync();
+        await db.SaveChangesAsync(ct);
 
-        db.ChildInterests.RemoveRange(await db.ChildInterests.Where(i => i.ChildId == childId).ToListAsync());
+        db.ChildInterests.RemoveRange(await db.ChildInterests.Where(i => i.ChildId == childId).ToListAsync(ct));
         // Dubletten innerhalb der Eingabe (zwei Schreibweisen desselben Tags) würden den Unique-Index
         // reißen – der letzte Eintrag gewinnt, wie bei einer Zuweisung.
         foreach (var (tag, weight) in resolved.GroupBy(r => r.Tag.Id).Select(g => g.Last()))
             db.ChildInterests.Add(new ChildInterest { ChildId = childId, InterestTagId = tag.Id, Weight = weight });
 
-        await db.SaveChangesAsync();
-        return Ok(await List(childId));
+        await db.SaveChangesAsync(ct);
+        return Ok(await List(childId, ct));
     }
 
     /// <summary>Setzt oder ändert das Gewicht eines einzelnen Schlagworts (Upsert).</summary>
     [HttpPut("{tagId:int}")]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<ChildInterestResponse>> SetWeight(int childId, int tagId, SetChildInterestWeightDto dto)
+    public async Task<ActionResult<ChildInterestResponse>> SetWeight(int childId, int tagId, SetChildInterestWeightDto dto, CancellationToken ct = default)
     {
         if (Weight(dto.Weight) is not { } weight)
             return this.ProblemWithCode(ApiErrors.ValidationError,
                 $"Weight must be between {ChildInterest.MinWeight} and {ChildInterest.MaxWeight}.");
 
-        var tag = await db.InterestTags.AsNoTracking().FirstOrDefaultAsync(t => t.Id == tagId);
+        var tag = await db.InterestTags.AsNoTracking().FirstOrDefaultAsync(t => t.Id == tagId, ct);
         if (tag is null) return NotFound();
 
-        var entry = await db.ChildInterests.FirstOrDefaultAsync(i => i.ChildId == childId && i.InterestTagId == tagId);
+        var entry = await db.ChildInterests.FirstOrDefaultAsync(i => i.ChildId == childId && i.InterestTagId == tagId, ct);
         if (entry is null)
         {
             entry = new ChildInterest { ChildId = childId, InterestTagId = tagId, Weight = weight };
@@ -102,7 +102,7 @@ public class ChildInterestsController(PuglingDbContext db, InterestTagService ta
             entry.Weight = weight;
         }
 
-        await db.SaveChangesAsync();
+        await db.SaveChangesAsync(ct);
         return new ChildInterestResponse(tag.Id, tag.Slug, tag.Label, tag.Facet, entry.Weight, entry.CreatedAt);
     }
 
@@ -110,26 +110,26 @@ public class ChildInterestsController(PuglingDbContext db, InterestTagService ta
     [HttpDelete("{tagId:int}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> Remove(int childId, int tagId)
+    public async Task<IActionResult> Remove(int childId, int tagId, CancellationToken ct = default)
     {
-        var entry = await db.ChildInterests.FirstOrDefaultAsync(i => i.ChildId == childId && i.InterestTagId == tagId);
+        var entry = await db.ChildInterests.FirstOrDefaultAsync(i => i.ChildId == childId && i.InterestTagId == tagId, ct);
         if (entry is null) return NotFound();
 
         db.ChildInterests.Remove(entry);
-        await db.SaveChangesAsync();
+        await db.SaveChangesAsync(ct);
         return NoContent();
     }
 
     // ---- Helfer -------------------------------------------------------------------------------------
 
     /// <summary>Löst die Eingabe zu einem Tag auf: bevorzugt per Id, sonst per Slug/Label (create-if-missing).</summary>
-    private async Task<InterestTag?> ResolveAsync(ChildInterestInput input)
+    private async Task<InterestTag?> ResolveAsync(ChildInterestInput input, CancellationToken ct)
     {
         if (input.TagId is { } id)
-            return await db.InterestTags.FirstOrDefaultAsync(t => t.Id == id);
+            return await db.InterestTags.FirstOrDefaultAsync(t => t.Id == id, ct);
 
         var text = input.Slug ?? input.Label;
-        return string.IsNullOrWhiteSpace(text) ? null : await tags.EnsureAsync(text, input.Label, input.Facet);
+        return string.IsNullOrWhiteSpace(text) ? null : await tags.EnsureAsync(text, input.Label, input.Facet, ct);
     }
 
     /// <summary>Prüft das Gewicht gegen die Skala; <c>null</c> = außerhalb (der Aufrufer meldet 400).</summary>

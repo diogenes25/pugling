@@ -19,34 +19,34 @@ namespace Pugling.Api.Auth;
 public class ExercisePermissionService(PuglingDbContext db)
 {
     /// <summary>Darf der anfragende Creator die Übung inhaltlich ändern (Owner- oder Write-Grant, oder Admin)?</summary>
-    public async Task<bool> CanWriteAsync(ClaimsPrincipal user, int exerciseId)
+    public async Task<bool> CanWriteAsync(ClaimsPrincipal user, int exerciseId, CancellationToken ct = default)
     {
         if (user.IsAdmin()) return true;
         var fid = user.AdultId();
         return fid is not null && await db.ExerciseGrants.AnyAsync(g =>
             g.ExerciseId == exerciseId && g.CreatorId == fid
-            && (g.Permission == GrantPermission.Owner || g.Permission == GrantPermission.Write));
+            && (g.Permission == GrantPermission.Owner || g.Permission == GrantPermission.Write), ct);
     }
 
     /// <summary>Darf der anfragende Creator die Übung verwalten – löschen, Rechte vergeben/entziehen, Sichtbarkeit umschalten (Owner-Grant, oder Admin)?</summary>
-    public async Task<bool> CanAdministerAsync(ClaimsPrincipal user, int exerciseId)
+    public async Task<bool> CanAdministerAsync(ClaimsPrincipal user, int exerciseId, CancellationToken ct = default)
     {
         if (user.IsAdmin()) return true;
         var fid = user.AdultId();
         return fid is not null && await db.ExerciseGrants.AnyAsync(g =>
-            g.ExerciseId == exerciseId && g.CreatorId == fid && g.Permission == GrantPermission.Owner);
+            g.ExerciseId == exerciseId && g.CreatorId == fid && g.Permission == GrantPermission.Owner, ct);
     }
 
     /// <summary>
     /// Darf der anfragende Creator die Übung zuweisen (in Lehrplan/Klassenarbeit aufnehmen)? Öffentlich
     /// ausführbare Übungen (Default) darf jeder; sonst nur mit einem Owner-/Write-/Execute-Grant (oder Admin).
     /// </summary>
-    public async Task<bool> CanExecuteAsync(ClaimsPrincipal user, Exercise exercise)
+    public async Task<bool> CanExecuteAsync(ClaimsPrincipal user, Exercise exercise, CancellationToken ct = default)
     {
         if (exercise.ExecutePublic || user.IsAdmin()) return true;
         var fid = user.AdultId();
         return fid is not null && await db.ExerciseGrants.AnyAsync(g =>
-            g.ExerciseId == exercise.Id && g.CreatorId == fid);
+            g.ExerciseId == exercise.Id && g.CreatorId == fid, ct);
     }
 
     // ── In-Memory-Varianten für Projektionen mit bereits geladenen Grants (kein DB-Roundtrip pro Zeile) ──

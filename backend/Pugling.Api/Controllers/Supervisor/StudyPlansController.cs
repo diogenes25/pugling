@@ -41,7 +41,7 @@ public class StudyPlansController(PuglingDbContext db, AuthAccess access) : Cont
 
     /// <summary>Lehrpläne auflisten. Sohn sieht nur eigene, Vater nur die seiner Kinder.</summary>
     [HttpGet]
-    public async Task<IEnumerable<PlanResponse>> List([FromQuery] int? childId = null)
+    public async Task<IEnumerable<PlanResponse>> List([FromQuery] int? childId = null, CancellationToken ct = default)
     {
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
         IQueryable<StudyPlan> scoped = db.StudyPlans.AsNoTracking();
@@ -57,17 +57,17 @@ public class StudyPlansController(PuglingDbContext db, AuthAccess access) : Cont
             scoped = scoped.Where(p => db.SupervisorLinks.Any(l => l.StudentId == p.ChildId && l.SupervisorId == fid));
             if (childId is not null) scoped = scoped.Where(p => p.ChildId == childId);
         }
-        return await scoped.OrderByDescending(p => p.CreatedAt).Select(ToResponse(today)).ToListAsync();
+        return await scoped.OrderByDescending(p => p.CreatedAt).Select(ToResponse(today)).ToListAsync(ct);
     }
 
     /// <summary>Ein Lehrplan (nur eigener).</summary>
     [HttpGet("{planId:int}")]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<PlanResponse>> Get(int planId)
+    public async Task<ActionResult<PlanResponse>> Get(int planId, CancellationToken ct = default)
     {
         var plan = await db.StudyPlans.AsNoTracking().Where(p => p.Id == planId)
-            .Select(ToResponse(DateOnly.FromDateTime(DateTime.UtcNow))).FirstOrDefaultAsync();
+            .Select(ToResponse(DateOnly.FromDateTime(DateTime.UtcNow))).FirstOrDefaultAsync(ct);
         return plan is null ? NotFound() : plan;
     }
 
@@ -78,12 +78,12 @@ public class StudyPlansController(PuglingDbContext db, AuthAccess access) : Cont
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<PlanResponse>> Create(CreatePlanDto dto)
+    public async Task<ActionResult<PlanResponse>> Create(CreatePlanDto dto, CancellationToken ct = default)
     {
         if (string.IsNullOrWhiteSpace(dto.Title)) return this.ProblemWithCode(ApiErrors.ValidationError, "Title is required.");
         // Eigentums-Prüfung zuerst: einheitlich 404 für "existiert nicht" und "nicht mein Kind".
-        if (!await access.FatherOwnsChildAsync(User, dto.ChildId)) return this.ProblemWithCode(ApiErrors.NotFound, "Child not found.");
-        if (dto.SubjectId is { } sid && !await db.Subjects.AnyAsync(s => s.Id == sid)) return this.ProblemWithCode(ApiErrors.InvalidReference, "Subject not found.");
+        if (!await access.FatherOwnsChildAsync(User, dto.ChildId, ct)) return this.ProblemWithCode(ApiErrors.NotFound, "Child not found.");
+        if (dto.SubjectId is { } sid && !await db.Subjects.AnyAsync(s => s.Id == sid, ct)) return this.ProblemWithCode(ApiErrors.InvalidReference, "Subject not found.");
 
         var start = dto.StartDate ?? DateOnly.FromDateTime(DateTime.UtcNow);
         var duration = dto.DurationDays > 0 ? dto.DurationDays : 10;
@@ -97,10 +97,10 @@ public class StudyPlansController(PuglingDbContext db, AuthAccess access) : Cont
             EndDate = start.AddDays(duration - 1),
         };
         db.StudyPlans.Add(plan);
-        await db.SaveChangesAsync();
+        await db.SaveChangesAsync(ct);
         // Invariante „höchstens ein aktiver Plan je Kind": ein neuer (per Default aktiver) Plan wird zum
         // einzig spielbaren – die bisherigen des Kindes werden stillgelegt.
-        if (plan.Active) await DeactivateSiblingPlansAsync(plan.ChildId, plan.Id);
+        if (plan.Active) await DeactivateSiblingPlansAsync(plan.ChildId, plan.Id, ct);
         return CreatedAtAction(nameof(Get), new { planId = plan.Id }, Map(plan, DateOnly.FromDateTime(DateTime.UtcNow)));
     }
 
@@ -108,9 +108,11 @@ public class StudyPlansController(PuglingDbContext db, AuthAccess access) : Cont
     /// Erzwingt „höchstens ein aktiver Plan je Kind": deaktiviert alle anderen Pläne des Kindes.
     /// So kann der Sohn nicht zwischen mehreren aktiven Plänen den leichtesten wählen (Anti-Schummel).
     /// </summary>
-    private Task DeactivateSiblingPlansAsync(int childId, int keepPlanId) =>
+    // Kein Vorgabewert für `ct`: er ließe die Aufrufstelle korrekt aussehen, während der Abbruch des
+    // Clients verpufft.
+    private Task DeactivateSiblingPlansAsync(int childId, int keepPlanId, CancellationToken ct) =>
         db.StudyPlans.Where(p => p.ChildId == childId && p.Id != keepPlanId && p.Active)
-            .ExecuteUpdateAsync(s => s.SetProperty(p => p.Active, false));
+            .ExecuteUpdateAsync(s => s.SetProperty(p => p.Active, false), ct);
 
     /// <summary>Ändert den Lehrplan-Container (partiell, nur Vater/eigener). <see cref="UpdatePlanDto.ChildId"/> weist den Plan einem anderen eigenen Kind zu.</summary>
     [HttpPatch("{planId:int}")]
@@ -118,32 +120,32 @@ public class StudyPlansController(PuglingDbContext db, AuthAccess access) : Cont
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<PlanResponse>> Update(int planId, UpdatePlanDto dto)
+    public async Task<ActionResult<PlanResponse>> Update(int planId, UpdatePlanDto dto, CancellationToken ct = default)
     {
         // Nur Skalarfelder werden geändert – die Positionen bleiben unangetastet und müssen nicht geladen/getrackt werden.
-        var plan = await db.StudyPlans.FirstOrDefaultAsync(p => p.Id == planId);
+        var plan = await db.StudyPlans.FirstOrDefaultAsync(p => p.Id == planId, ct);
         if (plan is null) return NotFound();
 
         // Umzuweisung an ein anderes Kind: nur an ein eigenes Kind des Vaters (sonst 404, wie beim Anlegen).
         if (dto.ChildId is { } newChildId && newChildId != plan.ChildId)
         {
-            if (!await access.FatherOwnsChildAsync(User, newChildId)) return this.ProblemWithCode(ApiErrors.NotFound, "Child not found.");
+            if (!await access.FatherOwnsChildAsync(User, newChildId, ct)) return this.ProblemWithCode(ApiErrors.NotFound, "Child not found.");
             plan.ChildId = newChildId;
         }
         if (dto.Title is not null && dto.Title.Trim().Length > 0) plan.Title = dto.Title.Trim();
         if (dto.Description is not null) plan.Description = dto.Description.Trim() is { Length: > 0 } d ? d : null;
         if (dto.SubjectId is { } sid)
         {
-            if (!await db.Subjects.AnyAsync(s => s.Id == sid)) return this.ProblemWithCode(ApiErrors.InvalidReference, "Subject not found.");
+            if (!await db.Subjects.AnyAsync(s => s.Id == sid, ct)) return this.ProblemWithCode(ApiErrors.InvalidReference, "Subject not found.");
             plan.SubjectId = sid;
         }
         if (dto.StartDate is not null) plan.StartDate = dto.StartDate.Value;
         if (dto.EndDate is not null) plan.EndDate = dto.EndDate.Value;
         if (dto.Active is not null) plan.Active = dto.Active.Value;
-        await db.SaveChangesAsync();
+        await db.SaveChangesAsync(ct);
         // Nach Aktivierung oder Umzug die Invariante „ein aktiver Plan je Kind" wiederherstellen.
-        if (plan.Active) await DeactivateSiblingPlansAsync(plan.ChildId, plan.Id);
-        var positionCount = await db.PlanPositions.CountAsync(pp => pp.StudyPlanId == planId);
+        if (plan.Active) await DeactivateSiblingPlansAsync(plan.ChildId, plan.Id, ct);
+        var positionCount = await db.PlanPositions.CountAsync(pp => pp.StudyPlanId == planId, ct);
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
         return new PlanResponse(plan.Id, plan.ChildId, plan.Title, plan.SubjectId,
             plan.StartDate, plan.EndDate, plan.Active, positionCount, plan.Description)
@@ -162,12 +164,12 @@ public class StudyPlansController(PuglingDbContext db, AuthAccess access) : Cont
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> Delete(int planId)
+    public async Task<IActionResult> Delete(int planId, CancellationToken ct = default)
     {
-        var plan = await db.StudyPlans.FirstOrDefaultAsync(p => p.Id == planId);
+        var plan = await db.StudyPlans.FirstOrDefaultAsync(p => p.Id == planId, ct);
         if (plan is null) return NotFound();
         db.StudyPlans.Remove(plan);
-        await db.SaveChangesAsync();
+        await db.SaveChangesAsync(ct);
         return NoContent();
     }
 }

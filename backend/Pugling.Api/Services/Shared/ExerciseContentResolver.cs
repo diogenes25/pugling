@@ -25,7 +25,8 @@ public class ExerciseContentResolver(PuglingDbContext db, ExerciseContentProvide
     /// Ziel-Berechnung) lassen ihn weg und bekommen dieselben Items ohne Bild – bewusst explizit statt implizit
     /// über eine geladene Navigation, sonst hinge die Bebilderung an einem vergessenen <c>Include</c>.
     /// </summary>
-    public async Task<IReadOnlyList<ContentItem>> ItemsOfAsync(Exercise exercise, int? childId = null)
+    public async Task<IReadOnlyList<ContentItem>> ItemsOfAsync(Exercise exercise, int? childId = null,
+        CancellationToken ct = default)
     {
         // Die Verzweigung folgt der StoreResolution-Fähigkeit des Typs (enum-frei); die DB-Logik bleibt hier.
         switch (registry.ByKey(exercise.Type)?.StoreResolution)
@@ -34,7 +35,7 @@ public class ExerciseContentResolver(PuglingDbContext db, ExerciseContentProvide
                 var vocab = string.IsNullOrWhiteSpace(exercise.ConfigJson)
                     ? new VocabularyConfig()
                     : JsonSerializer.Deserialize<VocabularyConfig>(exercise.ConfigJson, JsonOptions) ?? new VocabularyConfig();
-                return await ResolveVocabularyItemsAsync(exercise, vocab.Direction, childId);
+                return await ResolveVocabularyItemsAsync(exercise, vocab.Direction, childId, ct);
 
             case StoreResolution.VocabRefs:
                 var cloze = string.IsNullOrWhiteSpace(exercise.ConfigJson)
@@ -42,7 +43,7 @@ public class ExerciseContentResolver(PuglingDbContext db, ExerciseContentProvide
                     : JsonSerializer.Deserialize<ClozeConfig>(exercise.ConfigJson, JsonOptions) ?? new ClozeConfig();
                 // Nur wenn mindestens eine Lücke den Store referenziert – sonst reicht die Inline-Projektion.
                 if (cloze.Gaps.Any(g => !string.IsNullOrWhiteSpace(g.VocabKey)))
-                    return await ResolveClozeRefsAsync(cloze);
+                    return await ResolveClozeRefsAsync(cloze, ct);
                 break;
         }
 
@@ -62,20 +63,20 @@ public class ExerciseContentResolver(PuglingDbContext db, ExerciseContentProvide
     /// das für dieses Kind passende Bild (ein Batch-Aufruf für die ganze Übung, kein N+1 je Karte).
     /// </summary>
     private async Task<IReadOnlyList<ContentItem>> ResolveVocabularyItemsAsync(Exercise exercise, string? direction,
-        int? childId)
+        int? childId, CancellationToken ct)
     {
         var rows = await db.ExerciseItems.AsNoTracking()
             .Where(i => i.ExerciseId == exercise.Id)
             .OrderBy(i => i.OrderIndex).ThenBy(i => i.Id)
             .Select(i => new { i.Id, i.VocabularyId, i.Hint })
-            .ToListAsync();
+            .ToListAsync(ct);
         if (rows.Count == 0) return provider.ItemsOf(exercise);
 
         var ids = rows.Select(r => r.VocabularyId).Distinct().ToList();
-        var byId = await db.Vocabulary.AsNoTracking().Where(v => ids.Contains(v.Id)).ToDictionaryAsync(v => v.Id);
+        var byId = await db.Vocabulary.AsNoTracking().Where(v => ids.Contains(v.Id)).ToDictionaryAsync(v => v.Id, ct);
 
         var images = childId is { } cid
-            ? await media.SelectForItemsAsync(cid, [.. rows.Select(r => (r.Id, r.VocabularyId))])
+            ? await media.SelectForItemsAsync(cid, [.. rows.Select(r => (r.Id, r.VocabularyId))], ct: ct)
             : new Dictionary<int, SelectedMedia>();
 
         // Die Aussprache-Audioquelle gehört zum Wort und wird richtungsunabhängig mitgetragen (die Hör-Stufe
@@ -98,13 +99,13 @@ public class ExerciseContentResolver(PuglingDbContext db, ExerciseContentProvide
     /// Lücken ohne Key nutzen die inline <see cref="Gap.Answer"/>. Der Item-Index bleibt die Lücken-Reihenfolge –
     /// ein fehlender Key wird zum Platzhalter, verschiebt aber keine Indizes (Leitner-/Test-Fortschritt bleibt stabil).
     /// </summary>
-    private async Task<IReadOnlyList<ContentItem>> ResolveClozeRefsAsync(ClozeConfig config)
+    private async Task<IReadOnlyList<ContentItem>> ResolveClozeRefsAsync(ClozeConfig config, CancellationToken ct)
     {
         var keys = config.Gaps.Where(g => !string.IsNullOrWhiteSpace(g.VocabKey))
             .Select(g => g.VocabKey!).Distinct().ToList();
         var byKey = await db.Vocabulary.AsNoTracking()
             .Where(v => keys.Contains(v.Key))
-            .ToDictionaryAsync(v => v.Key);
+            .ToDictionaryAsync(v => v.Key, ct);
 
         return config.Gaps.Select((g, i) =>
         {

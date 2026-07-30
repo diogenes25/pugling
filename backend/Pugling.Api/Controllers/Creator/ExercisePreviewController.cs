@@ -53,7 +53,7 @@ public class ExercisePreviewController(PuglingDbContext db, ExercisePreviewServi
         if (exercise is null) return NotFound();
 
         // Optionaler stage-Parameter: der Vater probiert eine bestimmte Abfrageform durch (sonst Übungs-Standard).
-        var data = await preview.BuildAsync(exercise, stage);
+        var data = await preview.BuildAsync(exercise, stage, ct);
         if (data is null) return await NoContentProblemAsync(exercise, ct);
         return data;
     }
@@ -70,7 +70,7 @@ public class ExercisePreviewController(PuglingDbContext db, ExercisePreviewServi
         var exercise = await db.Exercises.AsNoTracking().FirstOrDefaultAsync(e => e.Id == id, ct);
         if (exercise is null) return NotFound();
 
-        var result = await preview.CheckAsync(exercise, dto.Answers ?? [], dto.Stage);
+        var result = await preview.CheckAsync(exercise, dto.Answers ?? [], dto.Stage, ct);
         if (result is null) return await NoContentProblemAsync(exercise, ct);
         return result;
     }

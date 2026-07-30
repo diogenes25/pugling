@@ -16,7 +16,7 @@ public class ChildOwnershipFilter(AuthAccess access) : IAsyncActionFilter
     public async Task OnActionExecutionAsync(ActionExecutingContext ctx, ActionExecutionDelegate next)
     {
         if (ctx.ActionArguments.TryGetValue("childId", out var v) && v is int childId
-            && !await access.OwnsChildAsync(ctx.HttpContext.User, childId))
+            && !await access.OwnsChildAsync(ctx.HttpContext.User, childId, ctx.HttpContext.RequestAborted))
         {
             ctx.Result = ControllerBaseErrorExtensions.ProblemResult(ctx.HttpContext, ApiErrors.NotFound, "Child not found.");
             return;

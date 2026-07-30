@@ -23,9 +23,10 @@ public class ExercisePreviewService(ExerciseContentResolver content, AnswerGrade
     /// Baut den spielbaren Zustand einer Übung. Liefert <c>null</c>, wenn die Übung keine prüfbaren Inhalte hat
     /// (z. B. leere Konfiguration oder ein Typ ohne Item-für-Item-Abgleich).
     /// </summary>
-    public async Task<PreviewData?> BuildAsync(Exercise exercise, int? stageOverride = null)
+    public async Task<PreviewData?> BuildAsync(Exercise exercise, int? stageOverride = null,
+        CancellationToken ct = default)
     {
-        var items = await content.ItemsOfAsync(exercise);
+        var items = await content.ItemsOfAsync(exercise, ct: ct);
         if (items.Count == 0) return null;
 
         if (registry.ByKey(exercise.Type) is not { } type) return null;
@@ -41,9 +42,10 @@ public class ExercisePreviewService(ExerciseContentResolver content, AnswerGrade
     /// Bewertet die Antworten typ-neutral gegen die Item-Lösungen – identisch zum echten Position-Test, aber ohne
     /// jede Persistenz. Liefert <c>null</c>, wenn die Übung keine prüfbaren Inhalte hat.
     /// </summary>
-    public async Task<PreviewResult?> CheckAsync(Exercise exercise, IReadOnlyList<PreviewAnswer> answers, int? stageOverride = null)
+    public async Task<PreviewResult?> CheckAsync(Exercise exercise, IReadOnlyList<PreviewAnswer> answers,
+        int? stageOverride = null, CancellationToken ct = default)
     {
-        var items = await content.ItemsOfAsync(exercise);
+        var items = await content.ItemsOfAsync(exercise, ct: ct);
         if (items.Count == 0) return null;
 
         if (registry.ByKey(exercise.Type) is not { } type) return null;

@@ -33,7 +33,7 @@ public class ChildrenDashboardService(PuglingDbContext db, PositionProgressServi
             int goalsTotal = 0, goalsMet = 0, points = 0, plansWithDuty = 0, plansDone = 0;
             foreach (var plan in plans)
             {
-                var day = await progress.ComputeDayAsync(plan, date);
+                var day = await progress.ComputeDayAsync(plan, date, ct);
                 goalsTotal += day.GoalsTotal;
                 goalsMet += day.GoalsMet;
                 points += day.PointsAwarded;

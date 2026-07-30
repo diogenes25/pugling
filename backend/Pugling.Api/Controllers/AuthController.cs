@@ -50,12 +50,12 @@ public class AuthController(PuglingDbContext db, TokenService tokens, AccountSer
     [EnableRateLimiting("login")]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
-    public async Task<ActionResult<LoginResponse>> LoginAdult(AdultLoginDto dto)
+    public async Task<ActionResult<LoginResponse>> LoginAdult(AdultLoginDto dto, CancellationToken ct = default)
     {
-        var adult = await db.Adults.FirstOrDefaultAsync(a => a.Id == dto.AdultId);
+        var adult = await db.Adults.FirstOrDefaultAsync(a => a.Id == dto.AdultId, ct);
         if (adult is null || !PinHasher.Verify(dto.Pin, adult.Pin)) return this.ProblemWithCode(ApiErrors.InvalidCredentials, "Invalid adult ID or PIN.");
 
-        var account = await accounts.EnsureForFatherAsync(adult);
+        var account = await accounts.EnsureForFatherAsync(adult, ct);
         var (token, expires) = tokens.IssueForAccount(account, account.Profiles, isAdmin: adult.IsAdmin);
         return new LoginResponse(token, PrimaryRoleOf(account.Profiles), adult.Id, adult.Name, expires);
     }
@@ -66,19 +66,19 @@ public class AuthController(PuglingDbContext db, TokenService tokens, AccountSer
     [EnableRateLimiting("login")]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
-    public async Task<ActionResult<LoginResponse>> LoginChild(ChildLoginDto dto)
+    public async Task<ActionResult<LoginResponse>> LoginChild(ChildLoginDto dto, CancellationToken ct = default)
     {
-        var child = await db.Children.FirstOrDefaultAsync(c => c.Id == dto.ChildId);
+        var child = await db.Children.FirstOrDefaultAsync(c => c.Id == dto.ChildId, ct);
         if (child is null || !PinHasher.Verify(dto.Pin, child.Pin)) return this.ProblemWithCode(ApiErrors.InvalidCredentials, "Invalid child ID or PIN.");
 
-        var account = await accounts.EnsureForChildAsync(child);
+        var account = await accounts.EnsureForChildAsync(child, ct);
         // Beim Einloggen offene Pflicht-Perioden nachrechnen: ein Malus fürs Nicht-Lernen landet so, bevor
         // der Sohn seinen Kontostand sieht oder etwas ausgibt (es gibt keinen Scheduler; idempotent).
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
-        await progress.SettleClosedPeriodsAsync(child.Id, today);
+        await progress.SettleClosedPeriodsAsync(child.Id, today, ct);
         // Ebenso die verdienten Belohnungen erreichter „großer Ziele" idempotent gutschreiben (Carrot),
         // damit der Sohn sie direkt beim Login auf dem Konto hat.
-        await objectiveRewards.SettleAsync(child.Id, today);
+        await objectiveRewards.SettleAsync(child.Id, today, ct);
         var (token, expires) = tokens.IssueForAccount(account, account.Profiles);
         return new LoginResponse(token, Roles.Student, child.Id, child.Name, expires);
     }
@@ -92,14 +92,14 @@ public class AuthController(PuglingDbContext db, TokenService tokens, AccountSer
     [EnableRateLimiting("login")]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
-    public async Task<ActionResult<LoginResponse>> Login(AccountLoginDto dto)
+    public async Task<ActionResult<LoginResponse>> Login(AccountLoginDto dto, CancellationToken ct = default)
     {
-        var account = await accounts.FindWithProfilesAsync(dto.AccountId);
+        var account = await accounts.FindWithProfilesAsync(dto.AccountId, ct);
         if (account is null || !PinHasher.Verify(dto.Pin, account.PinHash)) return this.ProblemWithCode(ApiErrors.InvalidCredentials, "Invalid account ID or PIN.");
 
         // Break-Glass-Admin: gilt, wenn ein an das Konto gebundener Vater als Admin markiert ist.
         var adultIds = account.Profiles.Where(p => p.AdultId is not null).Select(p => p.AdultId!.Value).ToList();
-        var isAdmin = adultIds.Count > 0 && await db.Adults.AnyAsync(a => adultIds.Contains(a.Id) && a.IsAdmin);
+        var isAdmin = adultIds.Count > 0 && await db.Adults.AnyAsync(a => adultIds.Contains(a.Id) && a.IsAdmin, ct);
         var (token, expires) = tokens.IssueForAccount(account, account.Profiles, isAdmin);
         return new LoginResponse(token, PrimaryRoleOf(account.Profiles), account.Id, account.DisplayName, expires);
     }
