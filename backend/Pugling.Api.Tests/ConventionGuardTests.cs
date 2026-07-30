@@ -118,23 +118,22 @@ public class ConventionGuardTests
 
     // ─────────────────────────────────────────────────────── (d) CancellationToken durchreichen
 
-    /// <summary>
-    /// Obergrenze der async Actions ohne <c>CancellationToken</c>, gemessen am 2026-07-29: **189**.
-    /// <para>
-    /// Anders als die übrigen drei Konventionen ist „CancellationToken durchreichen" (CLAUDE.md) im
-    /// Bestand <b>nicht</b> lückenlos befolgt – 189 von 337 async Actions nehmen keinen. Als harte Regel
-    /// wäre dieser Wächter darum nur abschaltbar oder unbrauchbar. Er ist stattdessen eine
-    /// <b>Sperre gegen Zuwachs</b>: neuer Code muss den Token nehmen, und jede abgearbeitete Altlast
-    /// senkt die Zahl hier mit. Sie darf nur kleiner werden.
-    /// </para>
-    /// </summary>
-    private const int AsyncActionsWithoutTokenBaseline = 188;
-
     [Fact]
-    public void Async_Actions_Ohne_CancellationToken_Werden_Nicht_Mehr()
+    public void Async_Actions_Nehmen_Einen_CancellationToken()
     {
         // „CancellationToken durchreichen" (CLAUDE.md) beginnt an der Action: ohne Parameter gibt es
         // nichts weiterzureichen, und ein abgebrochener Request läuft serverseitig weiter.
+        //
+        // War bis 2026-07-30 eine Zuwachs-Sperre mit Baseline, weil die Konvention im Bestand *nicht*
+        // befolgt war (189 von 337 async Actions ohne Token, gemessen am 2026-07-29) – eine harte Regel
+        // wäre damals nur abschaltbar gewesen. Die Altlast ist abgearbeitet, also gilt sie jetzt hart
+        // wie die übrigen drei dieser Klasse.
+        //
+        // Was dieser Wächter *nicht* prüft: dass der Token auch ankommt. Er sieht die **Signatur** der
+        // Action, nicht die Kette dahinter. Ein Helfer ohne Token-Parameter verbirgt jeden Aufruf in
+        // seinem Rumpf vor CA2016, und in Lambdas schweigt der Analyzer ohnehin – beim Abarbeiten der
+        // Altlast war genau das die Fehlerklasse (ein Abbruch-Leak in `MediaAssetsController.Upload`
+        // saß hinter einer Action, die den Token längst hatte, und war darum hier nie sichtbar).
         var offenders = new List<string>();
         var checkedActions = 0;
 
@@ -150,14 +149,11 @@ public class ConventionGuardTests
             }
 
         Assert.True(checkedActions >= 150, $"Zu wenige async Actions gefunden ({checkedActions}) – Reflexion greift nicht.");
-        Assert.True(offenders.Count <= AsyncActionsWithoutTokenBaseline,
-            $"Neue async Action(s) ohne CancellationToken: {offenders.Count} statt höchstens "
-            + $"{AsyncActionsWithoutTokenBaseline}. Neuer Code nimmt den Token.\n" + string.Join("\n", offenders));
-        // Gegenrichtung: sinkt die Zahl, muss die Baseline mitsinken – sonst wäre die Sperre in dem Moment
-        // wieder locker, in dem jemand Altlast abgearbeitet hat.
-        Assert.False(offenders.Count < AsyncActionsWithoutTokenBaseline,
-            $"Erfreulich: nur noch {offenders.Count} Actions ohne CancellationToken. "
-            + $"Bitte {nameof(AsyncActionsWithoutTokenBaseline)} auf diesen Wert senken.");
+        Assert.True(offenders.Count == 0,
+            $"{offenders.Count} async Action(s) ohne CancellationToken. Der Token gehört als letzter "
+            + "Parameter an die Action (`CancellationToken ct = default` – der Vorgabewert ist nötig, "
+            + "weil C# keinen erforderlichen Parameter nach den optionalen `[FromQuery]`-Werten erlaubt) "
+            + "und von dort in jeden EF-/Service-Aufruf:\n" + string.Join("\n", offenders));
     }
 
     // ─────────────────────────────────────────────────────── (b) Eigentum über die geteilten Filter

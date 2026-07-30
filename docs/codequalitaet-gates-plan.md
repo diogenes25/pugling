@@ -93,9 +93,9 @@ backend/Pugling.Api` in Debug, 2,5 s warm).
 **A bis D4 sind damit vollständig**, CI ist grün (alle drei Jobs: Backend inkl. D4-Diff-Check, Frontend,
 Markdown-Lint). Offen bleiben, unabhängig voneinander:
 
-- **Nacharbeit aus B**: CS1591 ist seither erledigt (2026-07-29, 123 statt der geschätzten 117 Lücken,
-  siehe „Nacharbeit aus B" unten). Offen bleiben die 188 `CancellationToken`-Altlasten und das Frontend
-  gegen `unknown_field` durchspielen.
+- **Nacharbeit aus B**: CS1591 ist erledigt (2026-07-29, 123 statt der geschätzten 117 Lücken) und die
+  **188 `CancellationToken`-Altlasten sind es seit 2026-07-30** – der Wächter ist damit hart, siehe
+  „Nacharbeit aus B" unten. Offen bleibt nur, das Frontend gegen `unknown_field` durchzuspielen.
 - **Der Peer-Konflikt** `vite-plugin-pwa` ↔ `vite@8`, den D1 nur benannt, nicht behoben hat.
 - **E2E hat immer noch keinen echten CI-Lauf** (Stand 2026-07-29) – der erste kommt über einen PR oder die
   nächste Nightly (03:00 UTC); erst dann ist D2 nicht nur lokal, sondern auch in CI belegt.
@@ -381,8 +381,9 @@ steht im Code neben der Einstellung:
    Zeile in der `.editorconfig` einmal `git diff --stat` ansehen, bevor man weitermacht.
 4. **„Konventionen werden lückenlos befolgt" (L4) gilt für drei von vier Regeln.** `ProblemWithCode`,
    Vertragstypen und Namens-Eindeutigkeit: null Verstöße, sofort hart. `CancellationToken` an Actions:
-   **189 von 337** async Actions nehmen keinen. Der Wächter ist darum eine **Zuwachs-Sperre** mit
-   Baseline – sie darf nur sinken, und sinkt sie, meldet der Test das und verlangt die Absenkung.
+   **189 von 337** async Actions nehmen keinen. Der Wächter war darum zunächst eine **Zuwachs-Sperre** mit
+   Baseline – sie durfte nur sinken, und sank sie, verlangte der Test die Absenkung. Die Altlast ist am
+   2026-07-30 abgearbeitet, der Wächter seither **hart** (siehe „Die CancellationToken-Altlast" unten).
 
 #### Was Etappe B gefunden hat
 
@@ -412,10 +413,9 @@ steht im Code neben der Einstellung:
   dafür jetzt **namentlich** in der `.editorconfig` begründet statt pauschal im csproj unterdrückt. Die
   `NoWarn`-Zeile im csproj ist weg. Endstand: `dotnet build Pugling.sln` 0 Warnungen, 587/587 Tests,
   `dotnet format --verify-no-changes` sauber.
-- **Die Actions ohne `CancellationToken`** abarbeiten und die Baseline in `ConventionGuardTests`
-  mitsenken. Der Test nennt bei jedem Lauf die vollständige Liste. Stand: **188** (Etappe C hat
-  `AdultsController.Delete` mitgezogen – und die Ratsche hat prompt die Absenkung verlangt, genau wie
-  vorgesehen).
+- **Die `CancellationToken`-Altlast abgearbeitet (2026-07-30), der Wächter ist jetzt hart.** Siehe
+  „Die CancellationToken-Altlast" unten – dort steht auch, was die Arbeit über die Grenzen von CA2016
+  gelehrt hat.
 - **Frontend gegen `unknown_field` prüfen.** Die Verschärfung aus B3 trifft jeden Aufrufer, und die
   Playwright-E2E laufen noch nicht in CI (D2). Schickt eine Maske ein Feld, das der Vertrag nicht kennt,
   bekommt sie jetzt 400 statt stillem Erfolg – das ist der Sinn der Sache, will aber einmal durchgespielt
@@ -424,6 +424,80 @@ steht im Code neben der Einstellung:
 Zu B4 (c): die Namens-Eindeutigkeit ist bereits als Fallstrick dokumentiert (der OpenAPI-Generator schlüsselt
 Schemas über den einfachen Typnamen, gleichnamige Records verschmelzen still). Der Reflexionstest darüber
 kostet zwanzig Zeilen und macht aus einem stillen Vertragsfehler einen roten Test.
+
+#### Die CancellationToken-Altlast (2026-07-30)
+
+Der vierte B4-Wächter ist von der Zuwachs-Sperre auf eine **harte Regel** umgestellt: `Async_Actions_Nehmen_Einen_CancellationToken`
+verlangt jetzt **0** Verstöße, die Baseline-Konstante ist weg. Erreicht in zwei Schichten, und die Reihenfolge
+war nicht Geschmack, sondern erzwungen:
+
+**Schicht 1 – die Kaskade** (Commit „Kaskadenschicht"): 26 Methoden in 10 Dateien, 78 Aufrufstellen. 20 public
+async Service-Methoden (Cluster: `PositionProgressService` 6/6, `GamificationService` 5/5, `PositionPlayService`
+3/3) plus `AuthAccess` (3) und `ExercisePermissionService` (3), dazu die privaten async Helfer dieser Klassen.
+
+**Warum diese Schicht zuerst und in einem Stück:** CA2016 **koppelt Aufrufer an Aufgerufene**. In dem Moment,
+in dem ein Callee einen Token akzeptiert, wird jeder schon tokenisierte Aufrufer, der ihn nicht weiterreicht,
+zur CA2016-Warnung und damit zum Build-Fehler. Ein Schnitt „Services jetzt, Aufrufer später" hat deshalb
+**keinen grünen Zwischenstand**; die 11 Forwards, die dieser Commit außerhalb seiner 10 Dateien setzt, sind
+genau diese Kopplung. Die beiden Ownership-Filter können keinen Parameter bekommen (Signatur durch
+`IAsyncActionFilter` festgelegt) und reichen `ctx.HttpContext.RequestAborted` weiter.
+
+**Schicht 2 – die Actions**: 192 Actions in 31 Dateien, 495 Aufrufstellen, 38 stille Helfer. Sieben Gruppen
+parallel, disjunkt pro Datei, in Worktree-Isolation (dasselbe Muster wie bei CS1591), zusammengeführt als ein
+Octopus-Merge.
+
+| Gruppe | Actions | Aufrufstellen | stille Helfer |
+|---|---|---|---|
+| Shop + Me | 31 | 53 | 3 |
+| Tags + Vokabelspeicher | 29 | 77 | 7 |
+| Missionen + Katalog-CRUD | 28 | 54 | 4 |
+| Medien + Lückentexte + Interessen | 28 | 69 | 2 |
+| Pläne + Auth + Rest | 27 | 62 | 3 |
+| Klassenarbeiten + Kinder + Erwachsene | 25 | 74 | 7 |
+| Übungs-Controller + Positions-Spiel | 24 | 106 | 12 |
+
+192 statt 188, weil die vier Actions der abstrakten `ExerciseControllerBase` mitgezogen wurden – der Wächter
+zählt sie per `DeclaredOnly` nicht.
+
+**Die Konvention, mechanisch:** `CancellationToken ct = default` als **letzter** Parameter. Der Vorgabewert ist
+kein Stil, sondern Zwang – C# verbietet einen erforderlichen Parameter nach den optionalen
+`[FromQuery] int skip = 0`. Private Helfer tragen ihn ohne Vorgabewert (sie werden immer explizit gerufen).
+EF-`FindAsync` nimmt ihn nur als `FindAsync([id], ct)`; die Annahme, man könne solche Stellen notfalls
+auslassen, ist falsch – **CA2016 feuert auch dort** und bricht den Build.
+
+##### Was die Arbeit über CA2016 gelehrt hat
+
+Der Analyzer ist ein guter erster Durchgang, **aber kein Netz**. Er prüft die *Kante* zwischen zwei Methoden,
+die beide schon einen Token haben – er findet kein fehlendes Glied einer Kette. Drei Blindstellen, alle
+gemessen, nicht vermutet:
+
+1. **Lambdas.** Drei Stellen in `RemarksController` und mehrere in `GamificationService` blieben ungemeldet.
+2. **Jeder Helfer ohne Token-Parameter** verbirgt sämtliche Aufrufe in seinem Rumpf. Das gilt nicht nur für
+   nicht-`async`, Task-rückgebende Ausdrucks-Bodies (die zusätzlich *beidseitig* unsichtbar sind), sondern
+   auch für ganz normale `private async Task`-Helfer. In `MeController` hingen an drei solchen Helfern
+   8 Aufrufstellen in Actions und 7 EF-/Service-Aufrufe in den Rümpfen: 15 Stellen, die ein grüner Build
+   gedeckt hat. Suchkriterium ist der **Rückgabetyp `Task`/`Task<…>` ohne `async`, unabhängig vom
+   Sichtbarkeitsmodifikator** – „such nach `private Task`" verpasst die implizit privaten.
+3. **Der Wächter selbst misst Signaturen, nicht Ketten.** Die Zahl 188 hat das Problem darum *unterschätzt*.
+   Beleg: `MediaAssetsController.Upload` trug den Token längst, der Helfer `UniqueKeyAsync` nicht – dessen
+   beide `AnyAsync`-Abfragen liefen **unabbrechbar**, ein echter Abbruch-Leak hinter einer „fertigen" Action.
+   Weder der Wächter noch der Scan über die 188 konnten ihn sehen; gefunden hat ihn nur das Lesen.
+
+##### Fallstrick der Worktree-Isolation
+
+**Alle sieben Worktrees zweigten von `main` ab, nicht vom Zweig mit Schicht 1.** Dort nahm `AuthAccess` also
+noch keinen Token – und weil CA2016 schweigt, wenn der Callee keinen nimmt, war der Build in diesen Worktrees
+**grün, obwohl Forwards fehlten**. Nach dem Rebase kamen nachweislich **28 Forwards** dazu (Übungs-/Positions-Gruppe
+17, Shop+Me 5, Tags 5, Medien 1; zwei Gruppen hatten den Fehler selbst bemerkt und vorher korrigiert). Merksatz:
+**bei paralleler Arbeit über eine gemeinsame Basisänderung die Basis der Worktrees prüfen, nicht annehmen** –
+ein grüner Build im Worktree beweist nur Konsistenz mit *dessen* Basis.
+
+**Endstand:** `dotnet build Pugling.sln` 0 Warnungen/0 Fehler, `dotnet format --verify-no-changes` sauber,
+`dotnet test -c Release` 587/587, Endpunkt-Abdeckung 268/268, unabhängiger Quell-Scan 0 verbleibende Actions.
+Kein Verhalten geändert. **Ein Befund blieb bewusst ungefixt** (gemeldet, nicht nebenbei behoben):
+`ExerciseControllerBase.Update` ruft `NormalizeConfigAsync` nicht, `Create` schon – beim PATCH einer
+Übersetzungsübung werden Paare ohne `vocabularyId` daher nicht im Vokabelspeicher angelegt. Sieht nach Lücke
+aus, nicht nach Absicht; eigener Vorgang.
 
 ### Etappe C · Die Lücken schließen – die eigentliche Arbeit · **umgesetzt 2026-07-29**
 

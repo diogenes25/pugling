@@ -202,9 +202,14 @@ Details: [backend/Pugling.Agent.Creator/README.md](backend/Pugling.Agent.Creator
   `Contracts`/`Client`/`Agent.Creator` – in `Pugling.Api` noch nicht (428 der Treffer sind EF-Entities,
   siehe csproj-Kommentar). Vier reflexive Wächter halten fest, was vorher nur Prosa war: Fehler nur über
   `ProblemWithCode`, Antworttypen nur aus `Pugling.Contracts`, dortige Typnamen global eindeutig,
-  Ownership über die geteilten Filter. `CancellationToken` an Actions ist eine **Zuwachs-Sperre** mit
-  Baseline (188 Altlasten) statt einer harten Regel – sie darf nur sinken, und sinkt sie, verlangt der Test
-  die Absenkung. Dazu drei Wächter aus [Etappe C](docs/codequalitaet-gates-plan.md): die **Ownership-Matrix**
+  Ownership über die geteilten Filter. `CancellationToken` an Actions gilt seit 2026-07-30 ebenfalls **hart**
+  (vorher Zuwachs-Sperre mit Baseline; die 188 Altlasten sind abgearbeitet): jede async Action nimmt
+  `CancellationToken ct = default` als **letzten** Parameter – der Vorgabewert ist nötig, weil C# keinen
+  erforderlichen Parameter nach den optionalen `[FromQuery]`-Werten erlaubt – und reicht ihn in jeden
+  EF-/Service-Aufruf durch. Der Wächter prüft die **Signatur**, nicht die Kette dahinter: ein Helfer ohne
+  Token-Parameter verbirgt jeden Aufruf in seinem Rumpf vor CA2016, und in Lambdas schweigt der Analyzer
+  ohnehin – ein neuer Helfer nimmt den Token also mit, sonst versickert er lautlos hinter grünem Build.
+  Dazu drei Wächter aus [Etappe C](docs/codequalitaet-gates-plan.md): die **Ownership-Matrix**
   (jede Action unter `{childId}`/`{planId}` wird mit fremdem Zugang aufgerufen und muss abweisen), der
   **PATCH-Semantik-Guard** (`null` ändert nichts, `Clear…` leert und gewinnt – reflexiv gegen *alle*
   `Update…Dto`/`Update…Request` geprüft) und der **Endpunkt-Abdeckungs-Wächter**: keine Controller-Action
