@@ -4,9 +4,16 @@ tags: [bereich/qualitaet, bereich/tests]
 
 # Kontrolle: Erfüllen die Integrationstests ihren Zweck?
 
+Status: **Messung durchgeführt am 2026-07-30** auf `3cd7aae`, in vier Wegwerf-Worktrees.
+30 Injektionen komplett gefahren, Kalibrierung nachweislich rot. Ergebnis unter
+[Befund](#befund-gemessen-2026-07-30) – **Konformität 60 %, Sensitivität 57 %**.
+Der Plan darüber bleibt als Beschreibung des Verfahrens stehen (nachfahrbar), die Zahlen darin sind
+Vorab-Schätzungen; wo die Messung sie korrigiert, steht es im Befund.
+
 ## Warum dieser Vorgang
 
-Das Projekt hat eine große Integrationstest-Suite: **88 Dateien, 518 Testmethoden, ~16.500 Zeilen** in
+Das Projekt hat eine große Integrationstest-Suite: **85 Dateien, 518 Testmethoden (= 587 Testfälle mit den
+`Theory`-Zeilen), 14.105 Zeilen** in
 [backend/Pugling.Api.Tests](../backend/Pugling.Api.Tests), gefahren in-process über
 [PuglingWebAppFactory](../backend/Pugling.Api.Tests/PuglingWebAppFactory.cs) gegen eine Wegwerf-SQLite je
 Testklasse. Dazu sieben reflexive Wächter und der
@@ -245,6 +252,282 @@ gemeldet, nicht nebenbei gefixt (dieselbe Trennung wie beim CancellationToken-Um
   **0 offene Actions**.
 - Jede Zeile der Injektions-Tabelle nennt Datei und Zeile, ist also nachfahrbar; jeder Übersprung nennt
   seinen Grund.
+
+---
+
+# Befund (gemessen 2026-07-30)
+
+## Aufbau der Messung
+
+Vier Worktrees auf `3cd7aae` (`git worktree add`), `PUGLING_SKIP_TEST_GATE=1`, nach jeder Injektion
+`git checkout -- .` **plus** `git clean` auf `docs/api-examples` (die `DocsCaptureTests` schreiben dort bei
+jedem Lauf). Jede Injektion war eine **exakt-eindeutige** Textersetzung – der Treiber bricht ab, wenn der
+Anker nicht genau einmal passt, damit keine unkontrollierte Zweitänderung mitläuft. Drei Worktrees fuhren
+die Injektionen parallel, der vierte Etappe 4.
+
+**Referenzlauf vor der ersten Injektion:** `dotnet test Pugling.sln -c Release` → **587/587 grün**,
+`TestResults/endpoint-coverage.txt` → **268/268 Actions, 0 offen**. Zeilenabdeckung **98,15 %**,
+Zweigabdeckung **69,08 %** (bestätigt die Zahlen des Gates-Plans).
+
+**Kalibrierung (K1) lief zuerst und war rot** – ohne diesen Beleg wäre jedes „grün" unten wertlos.
+`[ServiceFilter(typeof(ChildOwnershipFilter))]` aus `ChildrenController` entfernt → 5 gefallene Tests,
+davon drei, die die Regel benennen (`ConventionGuardTests.Actions_Unter_ChildId_Oder_PlanId_Tragen_Den_Ownership_Filter`,
+`OwnershipMatrixTests.Fremder_Supervisor_…`, `OwnershipTests.Vater_KannFremdesKind_NichtSehen_404`).
+
+**Ziehungsgrundlage der blinden Hälfte** (Etappe 1d): aus dem Cobertura-Bericht die **ausgeführten**
+Zweigpunkte der fünf Risiko-Services, sortiert nach Datei:Zeile – `MediaSelector` 36, `PositionProgressService` 35,
+`ScoringService` 8, `ShopService` 44, `WalletService` 0 (die Klasse hat gar keinen Zweigpunkt) = **123**.
+Gezogen wurde jeder 8. (k = ⌊123/14⌋), also die Indizes 8, 16, … 112.
+
+## Zwei Quoten, getrennt berichtet
+
+| Hälfte | Injektionen | rot | grün | bemerkt |
+|---|---|---|---|---|
+| **Konformität** (dokumentierte Regeln aus `CLAUDE.md`) | 15 | 9 | 6 | **60 %** |
+| **Sensitivität** (blind gezogene Zweigpunkte) | 14 | 8 | 6 | **57 %** |
+| Kalibrierung | 1 | 1 | – | Verfahren belegt |
+
+**Das ist das eigentliche Ergebnis:** die beiden Quoten liegen praktisch gleich. Die Vermutung des Plans –
+dokumentierte Regeln seien überproportional getestet, die Auswahl also verzerrt – **trägt nicht.** Die Suite
+ist gegenüber einem beliebigen Fehler ungefähr so empfindlich wie gegenüber einem, den die Doku ankündigt.
+Das ist gleichzeitig die gute und die schlechte Nachricht: keine Selbstbestätigung, aber auch etwa **vier von
+zehn plausiblen Programmierfehlern bleiben unbemerkt**.
+
+## Die 30 Injektionen
+
+`Streu` = Anzahl gefallener Tests. „gepinnt" = ein fallender Test **benennt** die Regel; „mitgeprüft" = rot,
+aber kein Name trifft die Regel; „unbewacht" = grün.
+
+| # | Hälfte | Stelle | Änderung | Streu | Urteil | erster benennender Test |
+|---|---|---|---|---|---|---|
+| K1 | kalib. | `ChildrenController.cs:21` | Ownership-Filter entfernt | 5 | gepinnt | `ConventionGuardTests.Actions_Unter_ChildId_…_Ownership_Filter` |
+| D01 | dok. | `PositionTestsController.cs:282` | `>= passPercent` → `>` | 0 | **unbewacht** | – |
+| D02 | dok. | `PlanPositionsController.cs:70` | Schranke `1–100` → `0–1000` | 2 | gepinnt | `PlanPositionCrudTests.Position_SchwelleAusserhalbProzent_WirdAbgewiesen` |
+| D03 | dok. | `PositionProgressService.cs:211` | Malus-Idempotenz: `pos.Id` → `pos.StudyPlanId` | 0 | **unbewacht** (redundant, s. u.) | – |
+| D04 | dok. | `ShopService.cs:214` | `child.ConcurrencyStamp`-Bump entfernt | 1 | gepinnt | `ShopFlowTests.Kauf_BumptChildConcurrencyStamp_SchuetztWalletVorParallelemDoppelkauf` |
+| D05 | dok. | `ShopService.cs:182` | `SupervisorId = article.AdultId` → `childId` | 7 | gepinnt | `MultiSupervisorTests.ZweiSupervisor_GemeinsamesWallet_AberEinloesungAusstellergebunden` |
+| D06 | dok. | `VocabularyExerciseType.cs:75` | Bild auch auf getippten Stufen | 2 | gepinnt | `MediaSelectionTests.GetippteStufen_ZeigenKeinBild_DennEinMotivVerraetDieBedeutung` |
+| D07 | dok. | `MediaSelector.cs:275` | Tiebreak `return hash` → `Random.Shared` | 0 | **unbewacht** | – |
+| D08 | dok. | `ApiErrors.cs:154` | Reflexion ins Leere (`Public` → `NonPublic`) | 2 | gepinnt | `ErrorCodeTests.HttpError_FallbackCode_IstImKatalog` |
+| D09 | dok. | `PositionPlayService.cs:48` | `plan.Active &&` entfernt | 6 | gepinnt | `AntiCheatTests.Sohn_KannInaktivenPlanNichtUeben_403` |
+| D10 | dok. | `PositionTestsController.cs:86` | Sohn darf Teststufe wählen | 1 | gepinnt | `AntiCheatTests.Sohn_KannTeststufeNichtWaehlen_FahrplanStufeErzwungen` |
+| D11 | dok. | `PositionTestsController.cs:82` | `dto.Day ?? today` → `today` | 0 | **unbewacht** | – |
+| D12 | dok. | `PointKindCurrency.cs:24` | `ShopCoins` zählt auf Gems | 6 | gepinnt | `PointKindCurrencyTests.Zuordnung_EntsprichtDerFachlichenTrennung(ShopCoins)` |
+| D13 | dok. | `PositionProgressService.cs:133` | Reward-Idempotenz: `pos.Id` → `pos.StudyPlanId` | 0 | **unbewacht** (redundant, s. u.) | – |
+| D14 | dok. | `TextbooksController.cs:140` | `unit.SeriesId != seriesId` → `==` | 10 | gepinnt | `CreatorProfileTests.Eine_Unit_aus_fremder_Reihe_am_Lehrbuch_wird_abgewiesen` |
+| D15 | dok. | `CreatorProfileService.cs:18` | `WeightSeries` 8 → 4 | 0 | **unbewacht** | – |
+| B01 | blind | `MediaSelector.cs:88` | `RemoveRange(Superseded)` entfernt | 0 | **unbewacht** | – |
+| B02 | blind | `MediaSelector.cs:120` | Alternativen-Guard zu breit | 0 | **unbewacht** | – |
+| B03 | blind | `MediaSelector.cs:207` | `==` → `!=` bei der eingefrorenen Wahl | 3 | gepinnt | `MediaSelectionTests.DieWahlBleibtStabil_AuchWennSpaeterEinBesseresBildDazukommt` |
+| B04 | blind | `MediaSelector.cs:282` | Träger-Ternäre in `NewPick` vertauscht | 3 | gepinnt | `MediaSelectionTests.OhneAlternative_BleibtDasBildStehen_StattZuVerschwinden` |
+| B05 | blind | `PositionProgressService.cs:59` | Prüfmodus-Weiche invertiert | 3 | gepinnt | `PositionGoalOverviewTests.BestandenerPositionsTest_ErfuelltTagesziel_…` |
+| B06 | blind | `PositionProgressService.cs:129` | `&& p.PointsGoalMet > 0` entfernt | 0 | **unbewacht** | – |
+| B07 | blind | `PositionProgressService.cs:204` | Fenster-Ternär gedreht | 0 | **unbewacht** (wirkungslos, s. u.) | – |
+| B08 | blind | `PositionProgressService.cs:228` | Buchungstext Tag/Woche vertauscht | 0 | **unbewacht** | – |
+| B09 | blind | `ScoringService.cs:56` | `if (!wasCorrect)` → `if (wasCorrect)` | 10 | gepinnt | `ReviewGradingTests.RichtigeAntwort_WirdServerseitigGewertet_UndBringtPunkte` |
+| B10 | blind | `ShopService.cs:57` | `InsufficientCoins` → `InsufficientGems` | 3 | gepinnt | `ShopFlowTests.Kauf_OhneCoins_400_KeineAbbuchung` |
+| B11 | blind | `ShopService.cs:143` | unbekanntes Angebot → `ListingInactive` | 1 | **mitgeprüft** | – (nur `ShopFlowTests.Sohn_SiehtKeineAngeboteAusFremderFamilie`) |
+| B12 | blind | `ShopService.cs:177` | Kauf-Titel prüft falsche Variable | 0 | **unbewacht** | – |
+| B13 | blind | `ShopService.cs:265` | Storno-Rückbuchung nur bei Überschuss | 1 | gepinnt | `ShopFlowTests.Storno_ErstattetCoinsUndGems_ReduziertInventar` |
+| B14 | blind | `ShopService.cs:335` | `ShopArticleId is not null` → `is null` | 3 | gepinnt | `ShopFlowTests.Aktivierung_SohnStellt_VaterGenehmigt_InventarSinkt` |
+
+**Urteil in Zahlen:** 17 gepinnt, 1 zufällig mitgeprüft, 12 unbewacht.
+
+### Protokollierte Übersprünge (drei, mit Grund)
+
+Der Plan verlangt, unverletzbare Ziehungen zu überspringen **und den Grund zu nennen**, damit die Verzerrung
+nicht durch die Hintertür zurückkehrt. Für jeden rückte die nächste Stelle der sortierten Liste nach:
+
+| gezogen | Grund des Übersprungs | Ersatz |
+|---|---|---|
+| `MediaSelector.cs:270` (`foreach` über die Hash-Bytes) | Reine Hash-Schleife: jede Änderung bleibt **deterministisch**, und Determinismus ist die einzige zugesicherte Eigenschaft. Nicht plausibel verletzbar. (Die Regel selbst wurde stattdessen als D07 gezielt gebrochen – und war grün.) | `:282` (B04) |
+| `PositionProgressService.cs:195` (`if (positions.Count == 0) return 0;`) | Reiner Früh-Ausstieg; die Schleife darunter läuft über eine leere Liste ohnehin nicht. Ohne beobachtbare Wirkung. | `:204` (B07) |
+| `ShopService.cs:136` (`if (child is null) …`) | Null-Fall auf diesem Pfad nicht erreichbar (`childId` kommt aus einer Route hinter dem `ChildOwnershipFilter`); der Zweig ist im Bericht nur halb abgedeckt. Entfernen erzeugte zudem `CS8602` → Build-Fehler, keine Messung. | `:143` (B11) |
+
+### Streubreite: unauffällig
+
+Der Plan setzt die Grenze bei **mehr als 10** gefallenen Tests je Defekt („Signal im Lärm"). **Kein einziger
+Fall überschreitet sie**; das Maximum ist 10 (B09 und D14). Zwei Beobachtungen trotzdem:
+
+- **D14 (10 Tests)** ist der lauteste Fall, und der Lärm ist hausgemacht: 6 der 10 kommen aus den
+  **reflexiven** PATCH-Wächtern (`PatchSemanticsTests`/`PatchClearFieldTests` × `UpdateTextbookDto`), die jede
+  Störung an einem DTO in mehrere Zeilen vervielfachen. Der eine Test, der die Regel *benennt*
+  (`CreatorProfileTests.Eine_Unit_aus_fremder_Reihe_am_Lehrbuch_wird_abgewiesen`), geht dazwischen unter.
+- **`DocsCaptureTests.CaptureAll`** fiel bei 6 von 18 roten Injektionen mit. Er ist der breiteste Einzeltest
+  der Suite und liefert dabei die **beste** Meldung von allen (er zitiert Route, erwarteten und tatsächlichen
+  Status samt Body) – Lärm mit hohem Informationsgehalt, kein Streichkandidat.
+
+### Meldungsqualität
+
+Verständlich waren die Meldungen dort, wo der Testname die Regel trägt (D04, D10, B13: je **ein** Test, Name
+sagt alles). Unbrauchbar allein aus der Meldung: `Assert.Equal() Failure: Values differ` ohne Kontext – das
+betrifft D09, D10, B05 und die meisten `AntiCheatTests`. Der Name rettet es jeweils; der reine
+Assert-Text tut es nicht.
+
+## Was grün war – und warum (die zwölf unbewachten Stellen)
+
+Nicht jedes „grün" ist eine Lücke. Drei Klassen:
+
+**(a) Echte Lücke mit Geldwirkung – wird im zweiten Commit geschlossen**
+
+1. **D01 · `PositionTestsController.cs:282` – die Bestehensgrenze ist an der Grenze nicht geprüft.**
+   `>=` zu `>` zu machen fällt niemandem auf, weil **kein Test genau auf der Schwelle sitzt**: die Suite
+   prüft 100 % vs. 80 %, 50 % vs. 80 %, 50 % vs. 40 %, 50 % vs. 3 % und 50 % vs. 90 % – jedes Mal echt
+   darüber oder echt darunter. Das ist die teuerste Lücke des ganzen Vorgangs: `TestAttempt.Passed` steuert
+   über `IsGoalMetAsync` **beides**, die Ziel-Punkte (`PointKind.Goal`) *und* das Ausbleiben des Malus. Ein
+   Kind mit exakt 80 % verlöre die Belohnung **und** bekäme den Abzug.
+2. **D11 · `PositionTestsController.cs:82` – der Nachtrag-Tag des Vaters wird nicht belegt.**
+   `var day = dto.Day ?? today` zu `var day = today` zu verkürzen bleibt grün, weil
+   `AntiCheatTests.Vater_DarfFremdenTagNachtragen` nur `201 Created` zusichert und den gebuchten Tag nie
+   zurückliest (siehe 1a). Geldwirkung indirekt aber echt: der Nachtrag ist der Weg, eine gerissene Periode
+   zu heilen; landet er auf „heute", bleibt der Malus für gestern stehen.
+
+**(b) Grün, weil eine zweite Schranke hält – kein Loch, sondern Tiefenverteidigung**
+
+3. **D03 / D13 · die Idempotenz-Prüfungen in `PositionProgressService`.** Beide Existenz-Checks auf die
+   falsche Spalte zu setzen bleibt unbemerkt, weil die **echte** Garantie im Schema steht: `PositionGoalReward`
+   und `PositionGoalPenalty` tragen je einen Unique-Index auf `(PlanPositionId, PeriodKey)`, und den pinnen
+   `PflichtMalusTests` und `PositionGoalOverviewTests` mit exakten Anzahlen. Beim Malus fängt
+   `catch (DbUpdateException)` den Verstoß sauber ab. **Aber:** beim Reward gibt es kein `catch` – dort wird
+   der zweite Abschluss zum **500**, und niemand merkt es, weil
+   `PositionGoalOverviewTests` (Zeile 60) die Antwort des zweiten Submits **verwirft**. Diese eine Zeile
+   gehört nachgezogen (Commit 2), die Existenz-Checks selbst brauchen keinen eigenen Test.
+4. **B07 · `PositionProgressService.cs:204`.** Das gedrehte Ternär ist **wirkungslos**: nachgelagert filtert
+   `PlanDueForPeriod` alle Perioden außerhalb der Plan-Laufzeit weg. Grün ist hier die richtige Antwort.
+5. **B01 · `MediaSelector.cs:88`.** Das nicht gelöschte `Superseded` hinterlässt eine Waisen-Zeile; der
+   nächste Abruf zieht sie erneut zurück und `SaveFreezeAsync` verschluckt den Index-Konflikt bewusst. Kein
+   beobachtbarer Effekt – genau das, was der Kommentar dort behauptet.
+
+**(c) Echte Lücke ohne Geldwirkung – benannte Restliste, nach Schadenshöhe**
+
+| Rang | Stelle | Was unbemerkt durchgeht |
+|---|---|---|
+| 1 | **B02** `MediaSelector.cs:120` | „Anderes Bild" verbrennt den **einzigen** Kandidaten → die Karte ist für dieses Kind **dauerhaft** bildlos, ohne Weg zurück über die API. Genau der Schaden, den der Kommentar an der Stelle abwenden will. |
+| 2 | **D07** `MediaSelector.cs:275` | Der Tiebreak darf zufällig werden. Kein Test erzeugt einen Punktgleichstand, also ist die dokumentierte Determinismus-Zusage („kein `Random`, kein `GetHashCode`") unbewacht – und Bildkonstanz *ist* laut `CLAUDE.md` der Merkeffekt. |
+| 3 | **D15** `CreatorProfileService.cs:18` | Die Gewichtung `Reihe 8 > Fach 4` darf zum Gleichstand flachgedrückt werden. Die dokumentierte Rangfolge ist nirgends festgenagelt; nur „ein Profil gewinnt" ist geprüft. |
+| 4 | **B12** `ShopService.cs:177` | Der Kauf-Beleg (`ShopPurchase.Title`) kann leer werden, wenn das Angebot keinen eigenen Titel trägt – der Vater sieht in der Kaufhistorie eine namenlose Zeile. |
+| 5 | **B08** `PositionProgressService.cs:228` | Der Ledger-Text verwechselt „Tagesziel" und „Wochenziel". Sichtbar im Punkte-Verlauf des Kindes, keine Buchung falsch. |
+| 6 | **B06** `PositionProgressService.cs:129` | Positionen mit `PointsGoalMet == 0` bekommen eine Reward-Zeile und eine Ledger-Buchung über **0** Münzen. Saldo unverändert, aber Rauschen in Verlauf und Auswertung. |
+
+## Etappe 1a – die flachen Zusicherungen: **8**, wie geschätzt
+
+Mechanisch gesucht (Schreibpfad + keine Zusicherung, die einen Wert nachliest): **81** Rohtreffer. Davon
+fallen 56 als **gültige** Negativtests oder Folgestatus-Belege heraus (`204` → `404`, `201` → `409`), 25
+bleiben, und von denen sichern 17 ihren Effekt doch über einen zweiten Aufruf oder einen Id-Vergleich. Es
+bleiben **8** Tests, die einen Erfolg zusichern, ohne ihn irgendwo nachzulesen:
+
+| Test | zugesichert | nicht geprüft |
+|---|---|---|
+| `AntiCheatTests.Vater_DarfFremdenTagNachtragen` | `201` | ob der Versuch **auf dem gewünschten Tag** liegt → **von D11 bestätigt** |
+| `AntiCheatTests.Vater_DarfInaktivenPlanTrotzdemDurchspielen` | `201` | ob die Sitzung benutzbar ist |
+| `EmptyExerciseGuardTests.GefuellteVokabeluebung_LaesstSichWeiterZuweisen` | `201` | ob die Position entstand |
+| `EmptyExerciseGuardTests.ErstAnlegenDannFuellen_BleibtMoeglich` | `201`, `201` | dito |
+| `EmptyExerciseGuardTests.Aufsatz_OhneItems_BleibtZuweisbar` | `201` | dito |
+| `ExerciseGrantsTests.OeffentlicheUebung_BleibtFuerFremdeZuweisbar` | `201` | dito |
+| `ExerciseGrantsTests.Admin_DarfFremdeUebungAendernUndLoeschen` | `200`, `204` | ob Änderung und Löschung wirkten |
+| `ExerciseGrantsTests.Admin_KannVerwaisteUebungBearbeiten_AutorNichtMehr` | `200` | ob die Änderung wirkte |
+
+Die Zahl **96 aus dem Plan-Entwurf war zu hoch, die Korrektur auf „~8" trifft**: gemessen genau 8.
+
+## Etappe 1b – Tautologien: **keine gefunden**
+
+Der Hochrisiko-Pfad hält. `ReviewGradingTests`, `PositionTestFlowTests` und `PositionPracticeFlowTests`
+nehmen die richtige Antwort **hart aus dem Test** (`"hallo"`, `"tschüss"`, `"2"`, `"4"`), nicht aus dem
+Karten-Payload – die Karten werden im Gegenteil daraufhin geprüft, dass sie **keine** Lösung mitgeben
+(`Cards_LiefernKeineLoesung_FuerGetippteStufe`). Genauso die Punkte-Erwartungen gegen den `ScoringService`:
+`ComboTests` und `SpeedBonusTests` nennen `7`, `4`, `0` als feste Zahlen. Mechanische Gegenprobe (eine
+`Assert.Equal`, deren *beide* Seiten aus einer Server-Antwort stammen) → **0 Treffer**. Dass B09 (Richtig-
+Weiche invertiert) 10 Tests umlegt, ist der positive Beleg dafür.
+
+## Etappe 1c – stumme Wächter: **einer ohne Untergrenze, Wirkung aber vorhanden**
+
+Sechs der sieben reflexiven Wächter tragen einen Selbstschutz: `ConventionGuardTests` viermal
+(`files.Length >= 30`, `blessedHits >= 100`, `types.Count >= 200`, `checkedActions >= 100/150/50`),
+`TagConventionTests` (`checkedTags >= 25`), `OwnershipMatrixTests` (`checkedActions >= 60`);
+`PointKindCurrencyTests` iteriert `Enum.GetValues<PointKind>()` (nie leer) **und** hat eine
+`InlineData`-Tabelle. `OpenApiExampleTests` prüft mit `Assert.Contains`/`Assert.True(found)` – eine leere
+Liste lässt ihn fallen, kein Vakuum.
+
+Übrig bleibt **`ErrorCodeTests.OpenApi_CodeEnum_DecktSichMitRegistry`**: er vergleicht zwei Mengen, die
+**beide** aus `ApiErrors.AllCodes` stammen. Wird die Reflexion dort blind (D08), müsste er nach Papierform
+`leer == leer` vergleichen und grün bleiben. **Er wurde rot** – aber aus einem Grund, auf den man sich nicht
+verlassen sollte: bei leerer Liste lässt der OpenAPI-Transformer die `enum`-Eigenschaft ganz weg, also fliegt
+`GetProperty("enum")` mit `KeyNotFoundException`. Zusätzlich fiel
+`ErrorCodeTests.HttpError_FallbackCode_IstImKatalog` (`Assert.Contains("http_error", AllCodes)`) – **der** ist
+der eigentliche Schutz. Der Selbstschutz ist damit **zufällig, nicht gebaut**; eine Untergrenze in einer Zeile
+gehört nachgezogen (Commit 2).
+
+## Etappe 2 – Regeln ohne pinnenden Test
+
+**Keine der 15 Regeln steht ganz ohne Test da** – jede hat mindestens die im Plan vermutete Testklasse, und
+die Injektionen belegen es: 9 der 15 dokumentierten Regeln wurden von einem Test mit passendem Namen
+gefangen. Was fehlt, ist feiner: bei **vier** Regeln existiert ein Test *zur Regel*, aber nicht *zu ihrer
+Grenze bzw. ihrer Zusage im Detail* – D01 (Schwelle geprüft, aber nie **auf** der Schwelle), D07
+(`MediaSelector` breit geprüft, aber nie mit Gleichstand), D11 (Nachtrag geprüft, aber nur der Statuscode),
+D15 (Matching geprüft, aber nie die Rangfolge der Gewichte). Das ist die Fehlerklasse, die dieser Vorgang
+sichtbar machen sollte: **Regel bekannt, Test vorhanden, Grenzfall offen.**
+
+## Etappe 4 – Struktur-Robustheit: beide Punkte grün
+
+1. **Wiederholbarkeit.** Zwei Läufe hintereinander auf identischem Stand: **587/587** und **587/587**. Die
+   47 × `Assert.Single` / 38 × `Assert.Empty` arbeiten also tatsächlich auf frisch angelegten Elternobjekten,
+   obwohl alle Tests einer Klasse **eine** SQLite-Datei teilen – angenommen war das, jetzt ist es geprüft.
+2. **Reihenfolge-Unabhängigkeit.** Ein Lauf mit `parallelizeTestCollections: false` + `maxParallelThreads: 1`:
+   **587/587**. Dass die Konfiguration wirklich griff, zeigt die Laufzeit: **12 min** seriell gegen ~5 min
+   parallel. Das im Gates-Plan genannte `CreatorAgentTests`-Isolationsproblem ist damit auch von dieser Seite
+   bestätigt erledigt.
+
+**Nebenfund (nicht geplant, aber belegt): ein wanduhr-abhängiger Test ist unter Last unzuverlässig.**
+`SpeedBonusTests.ZuSchnelleAntwort_UnterAntiCheatUntergrenze_BringtKeinenBonus` fiel bei zwei Injektionen
+(D05, B10) mit, obwohl beide `ShopService` betreffen und mit Bonuspunkten nichts zu tun haben. Der Test
+setzt voraus, dass zwei aufeinanderfolgende Antworten **unter** 1 s auseinanderliegen (Anti-Farming-Grenze);
+bei drei parallel laufenden Suiten auf 20 Kernen reißt das. Das ist kein Produktfehler, sondern eine
+Fragilität des Tests – auf einem langsamen oder ausgelasteten CI-Runner wird sie zum Flake. Der saubere Weg
+wäre, die gemessene Zeit einzuspeisen statt sie zu erwarten; hier nur gemeldet, nicht behoben.
+
+## Die E2E-Specs – der Satz, präziser als im Plan
+
+Der Plan schreibt, die 10 Playwright-Specs unter `frontend/e2e/` „laufen in keiner CI und verhindern darum
+nichts". Das ist zu scharf und in einem Punkt falsch: **`.github/workflows/e2e.yml` existiert** und ist auf
+`pull_request`, nightly (03:00 UTC) und Handbetrieb verdrahtet. Richtig bleibt die Wirkung – `gh api
+.../workflows/e2e.yml/runs` meldet **`total_count: 0`**, der Workflow hat also **nie gelaufen**, und er hängt
+bewusst *nicht* am Deploy (das `workflow_run` von `deploy-azure.yml` zeigt auf `CI`). Also: **das Tor ist
+gebaut, aber noch nie durchschritten** – es verhindert heute tatsächlich nichts, aus einem anderen Grund als
+angenommen. Deckt sich mit dem Befund in [codequalitaet-gates-plan.md](codequalitaet-gates-plan.md) (Stand
+2026-07-29) und ändert sich mit dem ersten Pull Request von selbst.
+
+## Vorschlag: ein weiterer reflexiver Wächter
+
+Ein Muster trat mehrfach auf und lässt sich mechanisch fassen statt mit Einzeltests
+(„mechanische Tore statt Disziplin"): **ein Test, der auf einem Schreibpfad einen Erfolgsstatus zusichert und
+den Effekt nirgends nachliest.** Genau das ist die Fehlerklasse hinter D11, und die 1a-Liste zeigt acht
+Vertreter. Ein Wächter über den Testquellen (Methode enthält `PostAsJsonAsync`/`Patch…`/`Delete…`, prüft
+`HttpStatusCode.OK|Created|NoContent`, enthält aber kein `GetProperty`/`ReadFromJsonAsync<`/`JsonAssert.`/
+DB-Scope) fände sie – mit einer Baseline-Liste wie beim `CancellationToken`-Wächter, damit die acht Altlasten
+nicht sofort blocken. Das Skript der Messung liegt bereit; **bewusst nicht** in diesem Vorgang scharf
+gestellt, weil der Plan „kein Umbau der Suite" sagt und die Heuristik (25 Rohtreffer → 8 echte) noch zu
+grob für ein hartes Tor ist.
+
+## Was der zweite Commit nachzieht
+
+Bewusst begrenzt auf **Geldwirkung** plus den 1c-Selbstschutz; alles andere steht oben als benannte Restliste:
+
+1. Grenzfall der Bestehensgrenze: Ergebnis **genau** auf der Schwelle → bestanden (pinnt D01).
+2. Der Vater-Nachtrag belegt den **Tag** der Buchung (pinnt D11).
+3. Der zweite Abschluss desselben Ziels wird auf seinen **Status** geprüft, nicht nur auf die Reward-Anzahl
+   (macht den 500 aus D13 sichtbar).
+4. Untergrenze in `ErrorCodeTests`, damit der Drift-Wächter nicht vom Zufall lebt (1c).
+
+## Verifikation dieses Vorgangs
+
+- Kalibrierung war **nachweislich rot** (K1, 5 Tests) – erst damit sind die 12 „grün" oben etwas wert.
+- Kein Produktivcode wurde geändert; alle 30 Injektionen sind zurückgenommen. `git status` im Hauptbaum war
+  vor Etappe 0 und nach Etappe 4 leer, **insbesondere ohne Diff in `docs/api-examples/`** (die Worktrees
+  wurden nach jeder Injektion auch dort bereinigt). Die vier Worktrees sind entfernt.
+- Jede Tabellenzeile nennt Datei **und** Zeile, ist also nachfahrbar; jeder der drei Übersprünge nennt seinen
+  Grund.
+- Gefundene Defekte wurden **gemeldet, nicht nebenbei gefixt** – die vier Punkte oben sind Tests, kein
+  Produktivcode. Der Flake in `SpeedBonusTests` bleibt bewusst offen.
 
 ## Verwandt
 
