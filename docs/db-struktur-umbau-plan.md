@@ -4,7 +4,7 @@ tags: [bereich/architektur, bereich/datenmodell, status/laufend]
 
 # DB-/EF-Struktur-Umbau
 
-> **Übergabe-Dokument.** E0–E8 sind umgesetzt und verifiziert; offen sind E9–E14. Beide
+> **Übergabe-Dokument.** E0–E9 sind umgesetzt und verifiziert; offen sind E10–E14. Beide
 > echten Defekte sind damit behoben – der Rest ist Struktur. Dieses Dokument ist so
 > geschrieben, dass jemand ohne Vorwissen die restlichen Etappen zu Ende führen kann: es nennt die
 > getroffenen Entscheidungen, die Arbeitsregeln, die Belege, die bewussten Abweichungen und die
@@ -59,7 +59,7 @@ Die Langfassung steht in der Plandatei dieser Sitzung.
    `dotnet tool restore`. Tor **G1b** (`SchemaGuardTests`) schlägt fehl, wenn es mehr als eine Migration
    gibt – die Regel endet bewusst mit der ersten Veröffentlichung, und dann wird das Tor *ausdrücklich*
    entfernt statt zu erodieren.
-3. **Die Reihenfolge in `Seed.Run` ist eingefroren.** Neue Seed-Routinen kommen ans Ende. Die Seed-IDs
+3. **Die Reihenfolge in `Seed.RunAsync` ist eingefroren.** Neue Seed-Routinen kommen ans Ende. Die Seed-IDs
    sind außerhalb des Testlaufs hart verdrahtet: `frontend/playwright.config.ts`, `frontend/e2e/*.spec.ts`,
    `.claude/scripts/tutorial-api.sh`, `.claude/skills/{creator,supervisor,student,anmerkungen}/SKILL.md`
    und die eingecheckten `docs/api-examples/`. `SeedContractTests` fängt eine Verschiebung in 60 s ab,
@@ -76,7 +76,7 @@ Die Langfassung steht in der Plandatei dieser Sitzung.
    E13 (`LearnGoal.ChildId` fällt weg, drei `KeyResult`-Scope-FKs kommen). Das Tor **soll** dabei rot sein –
    die bewusste Zeile ist der Zweck. Bei mehreren Änderungen lohnt der Wegwerf-Dump aus E6 wieder.
 
-## Umgesetzt: E0–E8
+## Umgesetzt: E0–E9
 
 ### E0 · Netz spannen — keine Migration
 
@@ -364,39 +364,58 @@ zurückgenommen.
 **Stand:** 612 Tests grün, Kette bei 1 (`20260730222450_InitialCreate`), `docs/api-examples` unverändert,
 Abdeckung weiter 268/268.
 
-## Offen: E9–E14
+### E9 · Backfills ins Seed + `ExerciseGrants`-Lücke — keine Migration
+
+Die drei „Backfills" waren **kein Altdaten-Pfad, sondern Seed-Nachlauf**: ohne sie hat eine *frische* DB
+Adults/Children ohne Login, Vokabelübungen ohne Items und Kinder ohne referenzierte Interessen. Der Name
+war das Missverständnis. Sie sind jetzt vier private Routinen am Ende von `Seed.RunAsync`; die drei Dateien
+(`AccountBackfill.cs`, `ExerciseItemBackfill.cs`, `InterestTagBackfill.cs`) sind gelöscht.
+
+**Umgesetzt:**
+- `Seed.Run(db)` → `Seed.RunAsync(db, ExerciseItemService, AccountService, InterestTagService, ct)` mit
+  **expliziten** Parametern (kein `IServiceProvider`). Die 11 bestehenden Routinen unverändert, dann
+  `SeedExerciseGrantsAsync`, `SeedExerciseItemsAsync`, `SeedAccountsAsync`, `SeedChildInterestsAsync`.
+- **Die Lücke:** `ExerciseGrants` seedete niemand – die Vergabe steckte als Raw-SQL in einer Migration, die
+  auf leerer DB ein No-op ist. Rechte laufen aber **ausschließlich** über Grants
+  (`ExercisePermissionService`), **der geseedete Lehrer konnte seine eigenen drei Übungen also nicht
+  bearbeiten.** `SeedExerciseGrantsAsync` gibt jeder Übung mit Autor einen Owner-Grant – genau was
+  `ExerciseControllerBase` beim Anlegen tut. Idempotent über „diese Übung hat *überhaupt keinen* Grant",
+  bewusst nicht über „hat keinen Owner-Grant für ihren Autor": nach einer Eigentumsübertragung gäbe der
+  Start dem alten Autor sein Recht sonst bei jedem Hochfahren zurück.
+- **Der Zusatzbefund ist behoben:** `AccountBackfill` rief für *jeden* Adult `EnsureForFatherAsync`, der
+  geseedete Lehrer bekam also Creator **und** Supervisor, obwohl `EnsureForTeacherAsync` (Creator-only)
+  genau für ihn existiert und nie erreicht wurde. `SeedAccountsAsync` unterscheidet jetzt am
+  **Betreuungsauftrag** (`SupervisedLinks.Count > 0`) – exakt die fachliche Definition aus
+  docs/lehrer-konto-plan.md. Dass die Routine am *Ende* läuft, ist Teil der Regel: erst dann stehen die
+  Betreuungen. `SeedContractTests` sichert die Rolle jetzt zu (`role == "Creator"`), wo vorher bewusst
+  keine Zusage stand.
+- **Umgebungs-Gate `Seed:Enabled`**, Vorgabe `IsDevelopment()`. Live geprüft: mit `Seed__Enabled=false`
+  bootet die App gegen eine frische DB und der Login von Adult 1 endet mit **401** (nichts geseedet);
+  ohne das Flag läuft alles wie vorher.
+
+**Zwei neue Tests, beide vorher rot:**
+- `Seed_Zweimal_Ausgefuehrt_Dupliziert_Nichts` – vergleicht die Zeilenzahlen **aller** Tabellen (über die
+  rohe Verbindung, damit Tabellen ohne DbSet mitzählen). Das prüfte bisher **nichts**, obwohl der Start den
+  Seed bei jedem Hochfahren ruft. *Fallstrick beim Schreiben:* die Test-Factory löscht nach dem Start die
+  Zeitfenster (Wanduhr-Neutralisierung) – ein „Startzustand vs. nach einem Lauf"-Vergleich wäre an ihrem
+  Aufräumen gescheitert, nicht an einem Seed-Fehler. Darum: einmal säen, messen, erneut säen, vergleichen –
+  und die Zeitfenster danach wieder abräumen.
+- `Lehrer_Darf_Seine_Geseedete_Uebung_Bearbeiten` – über einen **additiven** Schreibzugriff (ein Item
+  anlegen), nicht über das vollständige `PUT`: derselbe Rechte-Pfad, aber ohne die geseedete Übung zu
+  ersetzen. Genau dieser Aufruf liefert einem fremden Creator 403.
+
+**Erwartung, die nicht eintrat:** der Plan sagte, `docs/api-examples/catalog.md` bekomme andere
+`grantCount`/`canWrite`-Werte und müsse neu erzeugt werden. Der Diff ist **leer** – `DocsCaptureTests` legt
+seine Übungen selbst an und berührt die Lehrer-Bibliothek nicht.
+
+**Stand:** 614 Tests grün, `docs/api-examples` unverändert, Abdeckung weiter 268/268, keine
+Schemaänderung (Kette unverändert bei `20260730222450_InitialCreate`).
+
+## Offen: E10–E14
 
 Jede Etappe endet grün, mit neu gefalteter Migration (siehe Arbeitsregeln).
 
-### E9 · Backfills ins Seed + `ExerciseGrants`-Lücke
-Die drei „Backfills" sind **kein Altdaten-Pfad, sondern Seed-Nachlauf**: ohne sie hat die frische DB
-Adults/Children ohne Login (`AccountBackfill`), keine `ExerciseItems` (`ExerciseItemBackfill` – der Seed
-schreibt Items inline in `ConfigJson`) und keine `InterestTags` (`InterestTagBackfill`). Sie hängen heute
-in `Program.cs` hinter `Seed.Run`.
-
-1. `Seed.Run(db)` → `Seed.RunAsync(db, ExerciseItemService, AccountService, InterestTagService, ct)` –
-   explizite Parameter, kein `IServiceProvider`.
-2. Die 11 bestehenden Routinen **unverändert**, dann `SeedExerciseGrants`, `SeedExerciseItems`,
-   `SeedAccounts`, `SeedChildInterests`. Die drei `Data/*Backfill.cs` werden gelöscht.
-3. **Die Idempotenz muss überleben** – `Program.cs` ruft das bei jedem Start. Neuer Test:
-   `RunAsync` zweimal gegen dieselbe DB → alle Zeilenzahlen unverändert. Das prüft heute nichts.
-4. **Die Lücke:** `ExerciseGrants` werden von niemandem geseedet – die Vergabe steckt als Raw-SQL in einer
-   Migration, die auf leerer DB ein No-op war (und mit dem Squash entfiel). Rechte laufen aber
-   ausschließlich über Grants (`Auth/ExercisePermissionService.cs`), **der geseedete Lehrer kann seine
-   eigenen drei Übungen also nicht bearbeiten.** `SeedExerciseGrants` gibt jeder Übung mit
-   `AuthorAdultId != null` einen Owner-Grant mit `GrantedByAdultId = AuthorAdultId` – wie
-   `ExerciseControllerBase` beim Anlegen. Das ist eine **Verhaltensänderung**:
-   `docs/api-examples/catalog.md` bekommt andere `grantCount`/`canWrite`-Werte → neu erzeugen und
-   mitcommitten. Positivtest in `SeedContractTests`: Lehrer (2/9999) PATCHt seine geseedete Übung → 200.
-5. **Zusatzbefund aus E0, hier mit erledigen:** `AccountBackfill.cs` ruft `EnsureForFatherAsync` für
-   *jeden* Adult – der geseedete Lehrer bekommt damit Creator **und** Supervisor, obwohl
-   `AccountService.EnsureForTeacherAsync` (Creator-only) genau für ihn existiert und nie erreicht wird.
-   `SeedAccounts` muss unterscheiden (ein Adult ohne `SupervisorLink` ist ein Lehrer). `SeedContractTests`
-   lässt die Rollen-Zusicherung deshalb bewusst offen, mit Kommentar – danach nachziehen.
-6. **Umgebungs-Gate** `Seed:Enabled`, Vorgabe `IsDevelopment()`. **Falle:** Azure läuft in Production und
-   seedet heute – siehe „Betriebsschritt" unten, `Seed__Enabled=true` muss dort gesetzt sein.
-
-### E10 · Legacy-Lesepfad entfernen — **zwingend nach E9**
+### E10 · Legacy-Lesepfad entfernen — **zwingend nach E9** (E9 ist durch)
 `Services/Shared/ExerciseContentResolver.cs` (`if (rows.Count == 0) return provider.ItemsOf(exercise);` –
 Fallback auf Inline-`ConfigJson`-Items) und `Exercises/VocabularyExerciseType.ItemsOf`. In einer neuen DB
 unerreichbar, weil `VocabularyController.AfterSaveAsync` die Config nach dem Materialisieren leert.
@@ -522,7 +541,7 @@ E1 ist wirksam: die Azure-DB stammt aus der alten Kette und wird vom Historien-G
 
 ## Verifikation
 
-**Pro Etappe:** `dotnet test Pugling.sln -c Release` (~55 s, aktuell **612** Tests) und
+**Pro Etappe:** `dotnet test Pugling.sln -c Release` (~55 s, aktuell **614** Tests) und
 `git diff -- docs/api-examples` prüfen (leer, oder im gleichen Commit neu erzeugt).
 
 **Laufzeit statt nur Kompilieren:** `/smoke-test` (Wegwerf-DB, lässt `pugling.db` unangetastet) nach E6,

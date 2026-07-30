@@ -1,4 +1,6 @@
 using System.Text.Json;
+using Microsoft.EntityFrameworkCore;
+using Pugling.Api.Auth;
 using Pugling.Api.Models;
 
 namespace Pugling.Api.Data;
@@ -11,8 +13,25 @@ namespace Pugling.Api.Data;
 /// </summary>
 public static class Seed
 {
-    /// <summary>Führt alle Seed-Routinen der Reihe nach aus.</summary>
-    public static void Run(PuglingDbContext db)
+    /// <summary>
+    /// Führt alle Seed-Routinen der Reihe nach aus. <b>Die Reihenfolge ist Vertrag</b> – die entstehenden
+    /// Ids sind außerhalb des Repos verdrahtet (Playwright, Skills, die eingecheckten API-Beispiele);
+    /// Neues kommt darum ans Ende.
+    /// <para>
+    /// Der zweite Block ist der <b>Nachlauf</b>: er braucht die oben gesäten Zeilen und je einen Service.
+    /// Diese vier Routinen hießen früher „Backfill" und hingen als eigene Klassen hinter <c>Seed.Run</c> im
+    /// <c>Program.cs</c>. Der Name war falsch: es gab keine Altdaten zu füllen – ohne sie hat eine
+    /// <i>frische</i> DB Adults ohne Login, Vokabelübungen ohne Items und Kinder ohne referenzierte
+    /// Interessen. Sie sind also Seed, und hier stehen sie an der Stelle, an der ihre Reihenfolge sichtbar ist.
+    /// </para>
+    /// <para>
+    /// <b>Die Idempotenz jeder Routine ist Bedingung, nicht Beiwerk:</b> der Start ruft das bei <i>jedem</i>
+    /// Hochfahren. Die „hat das Kind schon Einträge?"- und „ist die Config schon reduziert?"-Prüfungen sind
+    /// keine Migrationsartefakte, sondern der Grund, warum ein Neustart nichts dupliziert.
+    /// </para>
+    /// </summary>
+    public static async Task RunAsync(PuglingDbContext db, ExerciseItemService items,
+        AccountService accounts, InterestTagService tags, CancellationToken ct)
     {
         SeedTimeSlots(db);
         SeedAdmin(db);
@@ -25,7 +44,150 @@ public static class Seed
         SeedTeacherLibrary(db);
         SeedShop(db);
         SeedDemoPlan(db);
+
+        // Nachlauf (siehe Doku oben). Reihenfolge: Rechte vor Inhalt, Inhalt vor Login.
+        await SeedExerciseGrantsAsync(db, ct);
+        await SeedExerciseItemsAsync(db, items, ct);
+        await SeedAccountsAsync(db, accounts, ct);
+        await SeedChildInterestsAsync(db, tags, ct);
     }
+
+    /// <summary>
+    /// Gibt jeder Übung mit Autor einen <b>Owner-Grant</b> – genau das, was
+    /// <c>ExerciseControllerBase</c> beim Anlegen über die API tut.
+    /// <para>
+    /// Das schließt eine echte Lücke: die Rechte laufen ausschließlich über <see cref="ExerciseGrant"/>
+    /// (<c>ExercisePermissionService</c>), vergeben wurden sie aber nur von einer Raw-SQL-Zeile in einer
+    /// Migration – und die ist auf einer leeren DB ein No-op. <b>Der geseedete Lehrer konnte seine eigenen
+    /// Übungen also nicht bearbeiten.</b>
+    /// </para>
+    /// <para>
+    /// Idempotent über „diese Übung hat <i>überhaupt keinen</i> Grant". Bewusst nicht über „hat keinen
+    /// Owner-Grant für ihren Autor": nach einer Eigentumsübertragung (Owner umgehängt) würde der Start dem
+    /// alten Autor sein Recht sonst bei jedem Hochfahren zurückgeben.
+    /// </para>
+    /// </summary>
+    private static async Task SeedExerciseGrantsAsync(PuglingDbContext db, CancellationToken ct)
+    {
+        var ohneGrant = await db.Exercises
+            .Where(e => e.AuthorAdultId != null && !db.ExerciseGrants.Any(g => g.ExerciseId == e.Id))
+            .Select(e => new { e.Id, AuthorId = e.AuthorAdultId!.Value })
+            .ToListAsync(ct);
+        if (ohneGrant.Count == 0) return;
+
+        foreach (var e in ohneGrant)
+            db.ExerciseGrants.Add(new ExerciseGrant
+            {
+                ExerciseId = e.Id,
+                CreatorId = e.AuthorId,
+                Permission = GrantPermission.Owner,
+                GrantedByAdultId = e.AuthorId,
+            });
+        await db.SaveChangesAsync(ct);
+    }
+
+    /// <summary>
+    /// Materialisiert die Items der Vokabelübungen aus ihrer <see cref="Exercise.ConfigJson"/> (inline
+    /// <c>Items</c> bzw. ID-<c>Refs</c>) in die <see cref="ExerciseItem"/>-Tabelle und reduziert die Config
+    /// danach auf reine Einstellungen (Richtung/Sprachen). Der Seed schreibt Items inline – ohne diesen
+    /// Schritt hätte eine frische DB Vokabelübungen <b>ohne Inhalt</b>.
+    /// <para>
+    /// Idempotent über „trägt die Config noch Items/Refs?". Der Abgleich
+    /// (<see cref="ExerciseItemService"/>) bewahrt dabei vorhandene ItemIds.
+    /// </para>
+    /// </summary>
+    private static async Task SeedExerciseItemsAsync(PuglingDbContext db, ExerciseItemService items,
+        CancellationToken ct)
+    {
+        foreach (var exercise in await db.Exercises.Where(e => e.Type == ExerciseTypeKeys.Vocabulary).ToListAsync(ct))
+        {
+            var config = string.IsNullOrWhiteSpace(exercise.ConfigJson)
+                ? new VocabularyConfig()
+                : JsonSerializer.Deserialize<VocabularyConfig>(exercise.ConfigJson, SeedJson) ?? new VocabularyConfig();
+            if (config.Items.Count == 0 && (config.Refs is null || config.Refs.Count == 0))
+                continue; // Config bereits auf Einstellungen reduziert – nichts zu tun.
+
+            await items.SyncFromConfigAsync(exercise.Id, config, ct);
+            config.Items = [];
+            config.Refs = null;
+            exercise.ConfigJson = JsonSerializer.Serialize(config, SeedJson);
+            await db.SaveChangesAsync(ct);
+        }
+    }
+
+    /// <summary>
+    /// Legt zu jedem Erwachsenen und jedem Kind ein Login-Konto mit den passenden Rollen an – ohne das
+    /// hätte eine frische DB Personen <b>ohne Login</b>.
+    /// <para>
+    /// Ein Erwachsener <b>ohne betreutes Kind ist ein Lehrer-Konto</b> und bekommt darum
+    /// <see cref="AccountService.EnsureForTeacherAsync"/> (Creator, <i>kein</i> Supervisor) – genau die
+    /// fachliche Unterscheidung aus docs/lehrer-konto-plan.md: ein Erwachsener ohne Betreuungsauftrag.
+    /// Vorher rief der Start hier für <i>jeden</i> Adult <c>EnsureForFatherAsync</c>, und der geseedete
+    /// Lehrer bekam die Supervisor-Rolle, obwohl die Creator-only-Variante genau für ihn existiert und
+    /// nie erreicht wurde.
+    /// </para>
+    /// <para>
+    /// Dass die Routine <b>am Ende</b> läuft, ist Teil der Regel: erst dann stehen die Betreuungen, die sie
+    /// abfragt. Ein Erwachsener, der sich über die API registriert, bekommt seine Rollen ohnehin dort
+    /// (und behält sie – das Ensure rüstet bewusst nicht nach).
+    /// </para>
+    /// </summary>
+    private static async Task SeedAccountsAsync(PuglingDbContext db, AccountService accounts, CancellationToken ct)
+    {
+        foreach (var adult in await db.Adults.AsNoTracking().Include(a => a.SupervisedLinks).ToListAsync(ct))
+        {
+            if (adult.SupervisedLinks.Count > 0) await accounts.EnsureForFatherAsync(adult, ct);
+            else await accounts.EnsureForTeacherAsync(adult, ct);
+        }
+
+        foreach (var child in await db.Children.AsNoTracking().ToListAsync(ct))
+            await accounts.EnsureForChildAsync(child, ct);
+    }
+
+    /// <summary>
+    /// Überführt die <b>Freitext</b>-Interessen der Kinder in die referenzierte Taxonomie
+    /// (<see cref="ChildInterest"/>), damit die Bildauswahl sofort etwas zu rechnen hat. Verlustfrei:
+    /// <c>Child.Interests</c> bleibt unangetastet – es ist weiterhin die Sprache des KI-Creators.
+    /// <para>
+    /// Idempotent über „hat das Kind schon Einträge?": ein Kind, dessen Interessen der Vater bereits
+    /// gepflegt hat, wird übersprungen. Sonst würde ein Neustart bewusst gelöschte Einträge wiederbeleben
+    /// oder Gewichte überschreiben.
+    /// </para>
+    /// </summary>
+    private static async Task SeedChildInterestsAsync(PuglingDbContext db, InterestTagService tags,
+        CancellationToken ct)
+    {
+        var mitEintraegen = await db.ChildInterests.Select(i => i.ChildId).Distinct().ToListAsync(ct);
+        var offen = await db.Children
+            .Where(c => !mitEintraegen.Contains(c.Id))
+            .Select(c => new { c.Id, c.Interests })
+            .ToListAsync(ct);
+
+        foreach (var child in offen)
+        {
+            if (child.Interests.Count == 0) continue;
+
+            // Über den geteilten Service, damit „Pokémon" hier denselben Tag trifft wie später im UI.
+            foreach (var tag in await tags.EnsureManyAsync(child.Interests, ct: ct))
+            {
+                // Neu angelegte Tags haben noch keine Id – erst speichern, dann darauf verweisen.
+                if (tag.Id == 0) await db.SaveChangesAsync(ct);
+                db.ChildInterests.Add(new ChildInterest
+                {
+                    ChildId = child.Id,
+                    InterestTagId = tag.Id,
+                    Weight = InterestStartWeight,
+                });
+            }
+        }
+
+        await db.SaveChangesAsync(ct);
+    }
+
+    /// <summary>Startgewicht der übernommenen Interessen: eine klare, aber nicht dominante Vorliebe.</summary>
+    private const int InterestStartWeight = 2;
+
+    private static readonly JsonSerializerOptions SeedJson = new(JsonSerializerDefaults.Web);
 
     /// <summary>
     /// Übungsunabhängiges Profil des Seed-Kindes: ein verwendetes Lehrbuch als Grundlage für einen späteren

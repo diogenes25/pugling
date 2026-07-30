@@ -453,18 +453,19 @@ using (var scope = app.Services.CreateScope())
     // Durchgehend `await`: Top-Level-Statements dürfen das, und ein blockierendes
     // `GetAwaiter().GetResult()` beim Start ist genau das Muster, das anderswo Deadlocks erzeugt.
     await db.Database.MigrateAsync(); // wendet ausstehende EF-Migrationen an (Schema-Upgrade-Pfad)
-    Seed.Run(db);
-    // Bestehende/geseedete Vokabelübungen einmalig in die Item-Tabelle überführen (idempotent).
-    var itemService = scope.ServiceProvider.GetRequiredService<ExerciseItemService>();
-    await ExerciseItemBackfill.RunAsync(db, itemService);
-    // Zu jedem Adult/Child ein Login-Konto mit Rollen anlegen (idempotent), damit Bestandsnutzer
-    // sich weiterhin einloggen und ein Mehrrollen-Token erhalten.
-    var accountService = scope.ServiceProvider.GetRequiredService<AccountService>();
-    await AccountBackfill.RunAsync(db, accountService);
-    // Freitext-Interessen der Bestandskinder einmalig in die referenzierte Taxonomie überführen
-    // (idempotent; der Freitext bleibt für den KI-Creator erhalten).
-    var interestTagService = scope.ServiceProvider.GetRequiredService<InterestTagService>();
-    await InterestTagBackfill.RunAsync(db, interestTagService);
+
+    // Der Seed ist Demo-/Entwicklungsdaten und läuft darum vorgabemäßig nur in der Entwicklung – aber
+    // über eine Einstellung übersteuerbar, weil die Azure-Instanz in Production läuft und die
+    // Demo-Familie dort braucht (`Seed__Enabled=true`, siehe docs/db-struktur-umbau-plan.md).
+    // Die früheren drei „Backfills" stecken jetzt darin: sie waren kein Altdaten-Pfad, sondern
+    // Seed-Nachlauf – ohne sie hat eine frische DB Personen ohne Login und Vokabelübungen ohne Items.
+    if (app.Configuration.GetValue("Seed:Enabled", app.Environment.IsDevelopment()))
+        await Seed.RunAsync(db,
+            scope.ServiceProvider.GetRequiredService<ExerciseItemService>(),
+            scope.ServiceProvider.GetRequiredService<AccountService>(),
+            scope.ServiceProvider.GetRequiredService<InterestTagService>(),
+            // Bewusst None: das Säen beim Hochfahren hängt an keiner Anfrage, die abbrechen könnte.
+            CancellationToken.None);
 }
 
 // OpenAPI-Dokument unter /openapi/v1.json + Swagger UI unter /swagger + Scalar UI unter /scalar/v1
