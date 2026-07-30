@@ -490,12 +490,20 @@ wäre, die gemessene Zeit einzuspeisen statt sie zu erwarten; hier nur gemeldet,
 
 Der Plan schreibt, die 10 Playwright-Specs unter `frontend/e2e/` „laufen in keiner CI und verhindern darum
 nichts". Das ist zu scharf und in einem Punkt falsch: **`.github/workflows/e2e.yml` existiert** und ist auf
-`pull_request`, nightly (03:00 UTC) und Handbetrieb verdrahtet. Richtig bleibt die Wirkung – `gh api
-.../workflows/e2e.yml/runs` meldet **`total_count: 0`**, der Workflow hat also **nie gelaufen**, und er hängt
-bewusst *nicht* am Deploy (das `workflow_run` von `deploy-azure.yml` zeigt auf `CI`). Also: **das Tor ist
-gebaut, aber noch nie durchschritten** – es verhindert heute tatsächlich nichts, aus einem anderen Grund als
-angenommen. Deckt sich mit dem Befund in [codequalitaet-gates-plan.md](codequalitaet-gates-plan.md) (Stand
-2026-07-29) und ändert sich mit dem ersten Pull Request von selbst.
+`pull_request`, nightly (03:00 UTC) und Handbetrieb verdrahtet.
+
+**Diese Frage hat sich noch während der Messung geändert – darum mit Zeitstempel:** um 04:2x UTC meldete
+`gh api .../workflows/e2e.yml/runs` noch `total_count: 0` (deckt sich mit
+[codequalitaet-gates-plan.md](codequalitaet-gates-plan.md), Stand 2026-07-29 – bis dahin ging alles per
+direktem Push auf `main`, und darauf triggert der Workflow bewusst nicht). Um **05:40 UTC lief die erste
+Nightly – und war grün** (`event: schedule`, `conclusion: success`, auf `5a09417`). Der lokale
+„25/25 grün"-Beleg aus der vorherigen Übergabe hat damit endlich seine CI-Bestätigung.
+
+Was **bleibt**: das E2E-Tor ist kein Freigabe-Tor. `deploy-azure.yml` hängt per `workflow_run` an `CI`, nicht
+an diesem Workflow – rote E2E blocken also weiterhin kein Deploy, sie melden sich am PR und nachts. Genau so
+ist es im Kopf von `e2e.yml` als Entscheidung dokumentiert. Der Satz des Plans stimmt also im Ergebnis
+(„verhindert nichts"), aber aus einem anderen Grund als angenommen: nicht weil der Workflow fehlt oder nie
+läuft, sondern weil er absichtlich nicht am Release hängt.
 
 ## Vorschlag: ein weiterer reflexiver Wächter
 
