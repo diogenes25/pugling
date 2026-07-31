@@ -171,6 +171,14 @@ Frage den Nutzer — und setze den Stand danach:
 **Die Antwort bleibt in beiden Fällen stehen.** Ein zurückgestellter Fall ist damit kein offener Zettel
 mehr, sondern ein analysierter Backlog-Eintrag — die Vorarbeit ist getan.
 
+**Und ab `Planned` gehört er in den Backlog-Bereich.** Wo aus einer Beobachtung *Arbeit* wird, ist die
+Anmerkung der Eingang, nicht der Ablageort: Schlage dem Nutzer eine Story unter
+[docs/backlog/](../../../docs/backlog/README.md) vor (Skill `backlog`), mit `quelle: remark #NN` und der
+schon geschriebenen Analyse als Ist-Stand — das ist bares Geld für die Stufe `ausformuliert`. **Vorschlagen,
+nicht automatisch anlegen.** Nach der Bestätigung einen `Assistant`-Kommentar an die Anmerkung hängen, der
+die Story-Id nennt, damit die Spur in beide Richtungen lesbar bleibt. Besonders bei
+`category: "Idea"` ist das der Regelfall — eine Idee, die nur auf `Planned` steht, findet niemand wieder.
+
 Den Stand musst du ohnehin nicht gegen den Nutzer verteidigen: Hakt er später im Widget oder auf
 `/vater/anmerkungen` nach, springt die Anmerkung von selbst zurück auf `Open` und liegt beim nächsten
 Sammel-Lauf wieder oben.
@@ -261,7 +269,7 @@ als ein offener zu viel.
 
 | Fall | Status |
 |---|---|
-| Im Befund gelandet, es folgt Arbeit | `Planned` |
+| Im Befund gelandet, es folgt Arbeit | `Planned` **+ Story** (siehe unten) |
 | Beim Prüfen als erledigt belegt | `Done` |
 | Trifft nicht mehr zu | `Rejected` |
 | Unklar, muss offen bleiben | unverändert |
@@ -269,10 +277,40 @@ als ein offener zu viel.
 Das ist der Mechanismus, der das System am Leben hält: Was einmal eingeplant ist, liegt beim nächsten Lauf
 nicht wieder oben auf.
 
-### 6. Übergeben
+### 6. `Planned` ohne Story gibt es nicht
 
-Sag dem Nutzer, dass `pm-loop` den Befund als Feedback-Quelle liest – die Entwicklungsentscheidung fällt
-dort, nicht hier.
+**`Planned` allein ist eine Sackgasse.** Die Anmerkung liegt in der Datenbank einer laufenden Instanz, ist
+ohne Server unsichtbar, und außer diesem Sammel-Lauf liest sie niemand wieder — genau der Zettel, den
+[docs/backlog/](../../../docs/backlog/README.md) abschaffen soll. Wer auf `Planned` setzt, legt darum im
+selben Zug eine Story an (Skill `backlog`).
+
+Geschnitten wird **nach Auflösbarkeit, nicht nach Kategorie** — sonst bekäme eine Frage, die in zwei Minuten
+beantwortet ist, eine sechsstufige Kette:
+
+| Anmerkung | Weg |
+|---|---|
+| Beantwortet, nichts zu bauen | bleibt hier → `Done`. **Keine Story.** |
+| Antwort lautet „das gibt es noch nicht" | `Planned` + Story, `art: Wunsch` |
+| Nicht in derselben Sitzung behoben | `Planned` + Story, **immer** |
+
+Beim Anlegen:
+
+- `quelle: remark #NN`, und **die schon geschriebene Analyse wandert als Ist-Stand mit**. Sie ist mit
+  `Datei:Zeile` belegt und entstand, während der Fehler sichtbar war — damit ist die teuerste Stufe der Kette
+  (`ausformuliert`) für diese Story praktisch geschenkt.
+- `art` aus der Kategorie ableiten: `Bug → Defekt`, `Idea`/`Content → Wunsch`, `Ui →` je nachdem (falsche
+  Beschriftung ist ein **Defekt**, hässliches Layout ein **Wunsch**), `Code`/`Question →` in der Regel gar
+  keine Story, sondern eine Antwort.
+- Zurückschreiben: ein `Assistant`-Kommentar an der Anmerkung nennt die Story-Id. Die Anmerkung bleibt der
+  **Beleg** (ihr Kontext-Schnappschuss ist nicht kopierbar), die Story trägt den **Zustand**.
+
+**Vorschlagen, nicht automatisch anlegen** — dieselbe Regel wie beim Status: zeigen, was du anlegen würdest,
+und fragen.
+
+### 7. Übergeben
+
+Sag dem Nutzer, dass `pm-loop` den Befund als Feedback-Quelle liest und die entstandenen Stories im Backlog
+liegen – die Entwicklungsentscheidung fällt dort, nicht hier.
 
 ## Grenzen
 

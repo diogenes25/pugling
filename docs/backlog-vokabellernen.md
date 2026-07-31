@@ -1,3 +1,8 @@
+---
+tags: [typ/plan, bereich/training, bereich/medien, rolle/supervisor, rolle/student, lerntechnik/vokabeln]
+aliases: [Backlog Vokabellernen, Lückensätze mit Bild, Buchstaben-Tausch, Adaptiver Pool]
+---
+
 <!--
   MD029 nur für dieses Dokument aus: die **zehn Entscheidungen** sind über die drei Ideen hinweg
   durchlaufend nummeriert (1–4, 5–7, 8–10), und der Text verweist auf diese Nummern
@@ -17,6 +22,13 @@ treffen und nicht Dinge hinterfragen, die längst existieren. Nichts davon ist u
 > Ergebnis der Grill-Runde: **zehn Entscheidungen**, **fünf zuvor offene Punkte erledigt**, **eine
 > Vorab-Entscheidung revidiert**, **drei Funde außerhalb der Stories** – darunter ein Defekt, der heute
 > schon wirkt.
+
+**Dieses Dokument ist das datierte Grill-Protokoll — den *Zustand* der sechs Punkte trägt seit dem
+2026-07-30 der Backlog-Bereich** ([docs/backlog/](backlog/README.md)): Fund 1 → **B-01**, Fund 2 →
+**B-02**, Idee 1 → **B-03**, Idee 3 → **B-04**, Idee 2 → **B-05**, Fund 3 → **B-06**. Die Stories verweisen
+für Ist-Stand und Entscheidungen hierher zurück, statt sie zu kopieren — die zehn Entscheidungen sind
+durchlaufend über die drei Ideen nummeriert und im Text gegenseitig verlinkt, ein Schnitt in sechs Dateien
+bräche das. Prio und Stufe werden ab jetzt **dort** gepflegt, nicht hier.
 
 Vier Scoping-Entscheidungen standen vorab fest:
 
@@ -287,18 +299,23 @@ das Feature für kaputt.
 
 ## PM-Synthese & Priorisierung
 
-| Prio | Item | Größe | Wo | Status |
+| Prio | Item | Größe | Wo | Story |
 |---|---|---|---|---|
-| P1 | **Fund 1**: Test friert unsichtbare Bildwahlen ein | S | `PositionTestsController`, `TestItem` | Roadmap |
-| P2 | **Fund 2**: `fieldHelp` erklärt `ItemCount` falsch herum | XS | `lib/fieldHelp.ts` | Roadmap |
-| P3 | **Idee 1**: Lückensätze mit Bild | M | `MediaSelector`, `ExerciseContentResolver` | Roadmap |
-| P4 | **Idee 3**: adaptiver Pool (Leitner-Erweiterung) | M | `PositionPlayService`, `LearnGoal` | Roadmap |
-| P5 | **Idee 2**: Buchstaben-Tausch | M | Vokabel-Typ + neue Frontend-Komponente | Roadmap |
-| P6 | **Fund 3**: Cloze-`PreviewStage` bebilderbar machen | XS | `BuiltInExerciseTypes.cs` | Roadmap |
+| P1 | **Fund 1**: Test friert unsichtbare Bildwahlen ein | S | `PositionTestsController`, `TestItem` | [B-01](backlog/README.md) |
+| P2 | **Fund 2**: `fieldHelp` erklärt `ItemCount` falsch herum | XS | `lib/fieldHelp.ts` | [B-02](backlog/README.md) |
+| P3 | **Idee 1**: Lückensätze mit Bild | M | `MediaSelector`, `ExerciseContentResolver` | [B-03](backlog/README.md) |
+| P4 | **Idee 3**: adaptiver Pool (Leitner-Erweiterung) | M | `PositionPlayService`, `LearnGoal` | [B-04](backlog/README.md) |
+| P5 | **Idee 2**: Buchstaben-Tausch | M | Vokabel-Typ + neue Frontend-Komponente | [B-05](backlog/README.md) |
+| P6 | **Fund 3**: Cloze-`PreviewStage` bebilderbar machen | XS | `BuiltInExerciseTypes.cs` | [B-06](backlog/README.md) |
 
-Nichts davon ist umgesetzt – reine Ideensammlung, kein Commit.
+Nichts davon ist umgesetzt – reine Ideensammlung, kein Commit. Die Spalte „Story" verweist auf den
+Bereich, der den Zustand seither führt.
 
 ## Offene Roadmap
+
+> **Momentaufnahme vom 2026-07-30, keine gepflegte Liste.** Der Wert dieses Abschnitts ist die
+> *Begründung* der Reihenfolge — die aktuelle Reihenfolge selbst steht in
+> [docs/backlog/](backlog/README.md).
 
 1. **Fund 1 zuerst.** Er wirkt heute, verfälscht die Bildwahl echter Kinder und ist mit Entscheidung 3 fast
    kostenlos zu beheben.

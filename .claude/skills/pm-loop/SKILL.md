@@ -122,6 +122,12 @@ Produce a ranked backlog table (P0…P3) with size and where the work sits (back
 and pick a **red thread** for the cycle — one coherent story, not a grab-bag (last time: "make the
 reward loop real"). Write the table into the session log.
 
+**The table in the log is a dated snapshot; the durable list is
+[docs/backlog/](../../../docs/backlog/README.md).** Whatever this round surfaces that you do *not* build
+now goes there as a story via `/backlog` (stage `idee`, `quelle: docs/pm-sitzung-<date>.md`), and the
+snapshot cites the story ids. Items that already have a story get their id noted instead of being
+restated — two durable lists drift, and the stale one is the one someone reads.
+
 ## Step 4 — Brief the developer and build it, API-First
 
 For the top item, write a short **Entwickler-Brief**: the goal, the server-side source of truth,
@@ -179,8 +185,11 @@ When each of the three roles is either signed off or resting on a named device/h
 
 1. Record the result plainly in the session log: what each role accepted, the verified quality bar
    (test counts green, build clean), and the concrete change list for the developer/reviewer.
-2. Rewrite the **Offene Roadmap** section — the prioritized carry-over so the next `pm-loop` (or a
-   fresh session) resumes without re-deriving anything.
+2. The **Offene Roadmap** section is no longer a list to rewrite — it is a **pointer to
+   [docs/backlog/](../../../docs/backlog/README.md)** plus, at most, the *reasoning* for the current
+   order (that reasoning is what a snapshot is good for; the order itself is maintained there). Make sure
+   every carry-over actually exists as a story, so the next session resumes from the backlog rather than
+   from your prose.
 3. Update the memory pointer (`MEMORY.md` + the session's memory file) if this cycle changed the
    product's direction, per the memory rules.
 

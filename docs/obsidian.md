@@ -72,7 +72,11 @@ aliases: [Lernstand-Hierarchie]
   `student` (Lernen/Einlösen). Rollenübergreifende Seiten tragen mehrere Rollen-Tags.
 - **`lerntechnik/…`** – fachliche Technik: `vokabeln` (heute), später z. B. `karteikarten`,
   `lueckentext`, `rechnen` … – **eine** neue Tag pro Technik, nie ein paralleler Doku-Baum.
-- **`typ/…`** – Doku-Art: `konzept`, `referenz`, `tutorial`, `plan`, `adr`.
+- **`typ/…`** – Doku-Art: `konzept`, `referenz`, `tutorial`, `plan`, `adr`, `story` (eine Backlog-Story
+  unter [docs/backlog/](backlog/README.md)).
+- **`status/…`** – nur für `typ/story` und Plan-Seiten: die Stufe der Kette (`idee`, `ausformuliert`,
+  `gegrillt`, `geschaetzt`, `in-arbeit`, `abgenommen`, `verworfen`) bzw. `offen`. Bei Stories ist das Tag
+  die **Kopie** des maschinell gelesenen `status:`-Feldes – weichen sie ab, gilt das Feld.
 
 Die **Evergreen-Doku** (`wiki/01–09` + die konzeptionellen/Referenz-Seiten in `docs/`) ist bereits getaggt.
 **Ausgenommen:** generierte Dateien (`docs/api-examples/*`, von `DocsCaptureTests` geschrieben) und
@@ -121,6 +125,8 @@ Der Graph-Hub: Bereich → maßgebliche Seite(n). Von hier aus ist jede Domäne 
 | **Tests, CI & Codequalität** (Befund + Tore) | [docs/codequalitaet-gates-plan.md](codequalitaet-gates-plan.md) · [docs/code-review.md](code-review.md) |
 | **Datenmodell / EF-Struktur** (Umbau: Stand, Entscheidungen, offene Etappen) | [docs/db-struktur-umbau-plan.md](db-struktur-umbau-plan.md) |
 | **Deployment** (Single-Host, Fallstricke, derzeit stillgelegt) | [docs/deployment-azure.md](deployment-azure.md) |
+| **Offene Ideen & User-Stories** (der Bereich mit Stufen-Kette, `/backlog`) | [docs/backlog/](backlog/README.md) |
+| Grill-Protokoll Vokabellernen (Quelle der Stories B-01…B-06) | [docs/backlog-vokabellernen.md](backlog-vokabellernen.md) |
 | KI-Gedächtnis | `MEMORY.md` + Notizen im Memory-Ordner (eigene Vault) |
 
 ## Skills installieren
