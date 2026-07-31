@@ -63,7 +63,7 @@ Details: [backend/Pugling.Agent.Creator/README.md](backend/Pugling.Agent.Creator
   (`EnsureForAdultAsync`, `SupervisorOwnsChildAsync`, `supervisorId`).
 - **Identität/Auth** ([Auth/](backend/Pugling.Api/Auth/)): Ein `Account` (Login/PIN-Hash) trägt über
   `AccountProfile` **mehrere Rollen** (`ProfileRole` Creator/Supervisor/Student → `Adult`/`Child`-Profil);
-  ein Vater ist zugleich Creator+Supervisor. PIN-Login (`auth/{father|child}` oder konto-zentrisch `auth/login`)
+  ein Vater ist zugleich Creator+Supervisor. PIN-Login (`auth/{adult|child}` oder konto-zentrisch `auth/login`)
   → JWT mit `aid` + je Rolle einem Ebenen-Claim (`Creator`/`Supervisor`/`Student`) + `fid`/`cid`. Gegated wird
   direkt auf die Ebenen-Rollen (kein Vater/Sohn-Alias); `LoginResponse.role` ist `Supervisor` bzw. `Student`
   fürs UI-Routing. `AuthAccess` prüft Eigentum **OR-verknüpft je Rolle** (`IsSupervisor`/`IsStudent`);

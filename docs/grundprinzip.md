@@ -110,9 +110,9 @@ Kind darf 10 Minuten fernsehen) passiert **außerhalb** der App.
 
 ## Technische Umsetzung (Kurzabriss)
 
-- **Identität ≠ Rolle:** `Account` (Login + PIN-Hash) → `AccountProfile[]` (`Role` → `Father`/`Child`-Profil).
+- **Identität ≠ Rolle:** `Account` (Login + PIN-Hash) → `AccountProfile[]` (`Role` → `Adult`/`Child`-Profil).
   Das JWT trägt `aid` und **mehrere** Rollen-Claims; `AuthAccess` prüft Eigentum OR-verknüpft je Rolle.
-  Login über `api/v1/auth/{father|child}` oder konto-zentrisch `api/v1/auth/login`.
+  Login über `api/v1/auth/{adult|child}` oder konto-zentrisch `api/v1/auth/login`.
 - **Ein Student, mehrere Supervisor:** `SupervisorLink` (Supervisor ⇢ Student) ersetzt die frühere
   1:1-Bindung. Betreuung verwalten: `…/supervisor/children/{id}/supervisors`.
 - **Gemeinsames Wallet, ausstellergebundene Einlösung:** Der Punkte-Ledger (`ChildPointsEntry`) ist rein
