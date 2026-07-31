@@ -355,17 +355,26 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
 
     /// <summary>Ends the session and evaluates time-based missions.</summary>
     [HttpPost("{sessionId:int}/end")]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<SessionResponse>> End(int planId, int positionId, int sessionId, CancellationToken ct = default)
     {
         var session = await GetSession(planId, positionId, sessionId, ct);
         if (session is null) return NotFound();
+        var plan = (await GetPlan(planId, ct))!;
+        // Anti-Schummel: dieselbe Wand wie Cards/Next/Review – und hier tut sie mehr, als den Zugriff zu
+        // sperren. Der Abschluss bucht unten Ziel-Punkte, und die prüfen selbst nicht auf `Active`: ohne
+        // diesen Wächter ließe sich ein mitten in der Runde deaktivierter Plan noch zu den Punkten der
+        // laufenden Periode bringen. Deshalb steht der Wächter VOR dem Schreiben von EndedAt.
+        if (User.IsStudent() && !PositionPlayService.PlanPlayableForChild(plan, DateOnly.FromDateTime(DateTime.UtcNow)))
+            return this.ProblemWithCode(ApiErrors.PlanInactive, "This study plan is not currently active. Ask your parent.");
+
         session.EndedAt = DateTime.UtcNow;
         await db.SaveChangesAsync(ct);
 
-        var plan = (await GetPlan(planId, ct))!;
         // Ziel-Punkte der Position (idempotent): erfasst v. a. reine Inhalts-/Leseübungen, deren Ziel mit
-        // dem Beenden der Sitzung erfüllt ist. VOR der Gamification, damit Missionen die Gutschrift sehen.
+        // einer ausreichend weit gespielten Runde erfüllt ist. VOR der Gamification, damit Missionen die
+        // Gutschrift sehen.
         await progress.EvaluateAndAwardAsync(plan, session.Day, ct);
         await gamification.EvaluateAndAwardAsync(plan.ChildId, session.Day, ct);
         return Map(session);

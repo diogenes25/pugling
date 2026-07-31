@@ -29,6 +29,18 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
     /// <summary>Default pass threshold when the position sets no threshold of its own.</summary>
     private const int DefaultPassPercent = 80;
 
+    /// <summary>
+    /// How many test attempts the child gets per goal period. A second chance is pedagogically right, the
+    /// fifth is grade farming: without a cap the child can restart until the result is good and silently drop
+    /// every bad run (an abandoned attempt writes nothing – see <see cref="Answer"/>).
+    /// <para>
+    /// Deliberately a constant and not a field on the position: a per-position cap would be a schema change,
+    /// and the migration chain is folded rather than extended. If the cap ever needs to be configurable, this
+    /// is the one place to replace.
+    /// </para>
+    /// </summary>
+    private const int MaxAttemptsPerPeriod = 2;
+
 
     // Kein Vorgabewert für `ct`: er ließe die Aufrufstelle korrekt aussehen, während der Abbruch des
     // Clients verpufft – ein weggelassenes optionales Argument sieht weder CA2016 noch der Wächter.
@@ -80,6 +92,31 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
         if (User.IsStudent() && !PositionPlayService.PlanPlayableForChild(plan, today))
             return this.ProblemWithCode(ApiErrors.PlanInactive, "This study plan is not currently active. Ask your parent.");
         var day = dto.Day ?? today;
+
+        // Der Sohn läuft nicht aus einem laufenden Versuch heraus und bekommt je Periode nur begrenzt viele.
+        // Der Vater bleibt ausgenommen: er nutzt den Endpunkt für Vorschau/Nachtrag mit eigener Stufe.
+        if (User.IsStudent())
+        {
+            // Dieselben Periodengrenzen wie die Ziel-Abrechnung – eine zweite Rechnung würde driften.
+            var (from, to) = PositionProgressService.PeriodRange(pos.Cadence, day);
+
+            // Fortsetzen statt neu anlegen: Cursor und Reihenfolge liegen persistiert vor. Ohne das würde ein
+            // versehentlicher Reload einen der knappen Versuche verbrennen – der Deckel wäre dann eine Strafe
+            // für Pech statt für Farming.
+            if (await db.TestAttempts
+                    .Where(t => t.PlanPositionId == positionId && t.Day >= from && t.Day <= to && t.CompletedAt == null)
+                    .OrderBy(t => t.Id)
+                    .FirstOrDefaultAsync(ct) is { } open)
+                return new AttemptResponse(open.Id, planId, positionId, open.Day, open.StageValue, open.TotalItems);
+
+            // Gezählt wird der START, nicht die Abgabe: sonst bliebe Weglaufen gratis und der Deckel wirkungslos.
+            var used = await db.TestAttempts
+                .CountAsync(t => t.PlanPositionId == positionId && t.Day >= from && t.Day <= to, ct);
+            if (used >= MaxAttemptsPerPeriod)
+                return this.ProblemWithCode(ApiErrors.TestAttemptsExhausted,
+                    "No test attempts left for this period. Ask your parent.");
+        }
+
         // Stufe: nur der Vater darf sie frei wählen; für den Sohn gilt die Fahrplan-/Positions-Stufe des Tages.
         if (play.TypeOf(pos.Exercise) is not { } type)
             return this.ProblemWithCode(ApiErrors.UnknownExerciseType, "The exercise has an unknown type.");

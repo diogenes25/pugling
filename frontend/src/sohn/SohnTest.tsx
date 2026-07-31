@@ -128,6 +128,15 @@ export function SohnTest() {
         <span className="row" style={{ marginLeft: "auto", gap: 8 }}>
           <span className="pill cyan">Frage {Math.min(cursor + 1, total)} / {total}</span>
           <span className="pill mag">{stageLabel(stage)}</span>
+          {/*
+            „Später weiter" statt „Abbrechen": der Versuch bleibt am Cursor stehen und wird beim nächsten
+            Start fortgesetzt (der Server gibt den laufenden Versuch zurück, statt einen neuen anzulegen).
+            Deshalb kein Server-Aufruf und keine Rückfrage – es geht nichts verloren, und ein versehentliches
+            Verlassen verbraucht keinen der begrenzten Versuche.
+          */}
+          <button type="button" className="pill toggle-pill" onClick={() => nav("/sohn")}>
+            Später weiter
+          </button>
         </span>
       </div>
       <p className="sub">{typed ? "Tippe die Lösung – zurück geht nicht." : "Denk nach, dann aufdecken und ehrlich bewerten."}</p>

@@ -580,6 +580,31 @@ Response — `HTTP 200`:
 }
 ```
 
+### Dritter Testversuch der Periode (Deckel) — Fehlerfall
+
+`POST /api/v1/student/study-plans/4/positions/18/tests`
+
+Rolle: **child** — `Authorization: Bearer <child-token>`
+
+Request:
+
+```json
+{}
+```
+
+Response — `HTTP 409`:
+
+```json
+{
+  "type": "https://pugling.app/errors/test_attempts_exhausted",
+  "title": "No test attempts left.",
+  "status": 409,
+  "detail": "No test attempts left for this period. Ask your parent.",
+  "code": "test_attempts_exhausted",
+  "traceId": "<trace-id>"
+}
+```
+
 ### Test auf Übung ohne prüfbaren Inhalt — Fehlerfall
 
 `POST /api/v1/student/study-plans/4/positions/19/tests`

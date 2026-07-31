@@ -1,6 +1,8 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
+using Microsoft.Extensions.DependencyInjection;
+using Pugling.Api.Data;
 using Pugling.Api.Models;
 
 namespace Pugling.Api.Tests;
@@ -111,6 +113,31 @@ public class AntiCheatTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
         var res = await child.PostAsJsonAsync(TestApi.PracticeBase(planId, positionId), new { });
 
         Assert.Equal(HttpStatusCode.Forbidden, res.StatusCode);
+    }
+
+    /// <summary>
+    /// The end of a session is not just a read: it books the position's goal points, and those do not check
+    /// <c>Active</c> themselves. Without this guard a plan deactivated mid-round could still be cashed in.
+    /// </summary>
+    [Fact]
+    public async Task Sohn_KannLaufendeSitzungAufInaktivemPlanNichtAbschliessen_403()
+    {
+        var (planId, positionId) = await SetupAsync();
+        var child = await TestApi.ChildAsync(factory);
+        var baseUrl = TestApi.PracticeBase(planId, positionId);
+
+        // Sitzung starten, WÄHREND der Plan noch spielbar ist.
+        var sessionId = await TestApi.IdAsync(await child.PostAsJsonAsync(baseUrl, new { }));
+
+        var father = await TestApi.FatherAsync(factory);
+        (await father.PatchAsJsonAsync($"/api/v1/supervisor/study-plans/{planId}", new { active = false })).EnsureSuccessStatusCode();
+
+        var res = await child.PostAsJsonAsync($"{baseUrl}/{sessionId}/end", new { });
+
+        Assert.Equal(HttpStatusCode.Forbidden, res.StatusCode);
+        using var scope = factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
+        Assert.Empty(db.PositionGoalRewards.Where(r => r.PlanPositionId == positionId));
     }
 
     [Fact]

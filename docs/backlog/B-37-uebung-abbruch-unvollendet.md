@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/backend, bereich/frontend, rolle/student]
+tags: [typ/story, status/in-arbeit, bereich/backend, bereich/frontend, rolle/student]
 aliases: [Übung abbrechen, Unvollendete Übung, Inaktivitäts-Abbruch, Wann wird eine Übung abgebrochen]
-status: geschaetzt
+status: in-arbeit
 prio: P1
 art: Defekt
 groesse: M
@@ -254,21 +254,43 @@ einen Test dagegen schreibt.
 ## Akzeptanzkriterien
 
 - [x] Die vier Fragen des Nutzers sind mit `Datei:Zeile` beantwortet (siehe Ist-Stand).
-- [ ] **E1/E2:** Bei einem `CheckMode.None`-Typ erfüllt eine Lern-Sitzung mit einem Heartbeat und ohne
+- [x] **E1/E2:** Bei einem `CheckMode.None`-Typ erfüllt eine Lern-Sitzung mit einem Heartbeat und ohne
       gespielte Karte das Positionsziel **nicht** mehr; ab `GoalThreshold` Prozent gespielter Runde schon.
       Ein Regressionstest deckt beide Seiten ab und ist vor der Änderung rot.
-- [ ] **E1/E2:** Bei **leerer** eingefrorener Reihenfolge (nichts fällig) gilt das Ziel weiter als erfüllt.
-- [ ] **E2:** Der Hilfetext zu `GoalThreshold` nennt beide Lesarten; die XML-Doku am Feld behauptet nicht
+      → `LernModus_ReineInhaltsuebung_BlosseAnwesenheit_ErfuelltDieTagespflichtNicht` /
+      `…_GespielteRunde_ErfuelltDieTagespflicht`; die Rot-Probe ist gelaufen (siehe Verlauf).
+- [x] **E1/E2:** Bei **leerer** eingefrorener Reihenfolge (nichts fällig) gilt das Ziel weiter als erfüllt.
+      → `LernModus_ReineInhaltsuebung_LeererPool_ErfuelltDieTagespflicht`.
+- [x] **E2:** Der Hilfetext zu `GoalThreshold` nennt beide Lesarten; die XML-Doku am Feld behauptet nicht
       mehr, der Wert sei bei `CheckMode.None` ungenutzt.
-- [ ] **E3:** Ein dritter Klausur-Start in derselben Periode antwortet mit `TestAttemptsExhausted`;
+- [x] **E3:** Ein dritter Klausur-Start in derselben Periode antwortet mit `TestAttemptsExhausted`;
       verlassene Versuche zählen mit. Der Vater ist nicht gedeckelt.
-- [ ] **E4:** Zwei `Start`-Aufrufe des Sohns hintereinander liefern **denselben** `attemptId` samt Cursor;
+      → `KlausurModus_DritterVersuchDerPeriode_WirdAbgewiesen_VaterNicht`.
+- [x] **E4:** Zwei `Start`-Aufrufe des Sohns hintereinander liefern **denselben** `attemptId` samt Cursor;
       ein Reload mitten in der Klausur setzt an derselben Frage fort und verbraucht keinen Versuch.
       Die Vater-Vorschau bekommt weiter einen frischen Versuch.
-- [ ] **E5:** Beide Rundenarten zeigen während des Spielens einen Ausweg; der Übungs-Knopf beendet die
+      → `KlausurModus_VerlassenerVersuch_SchreibtKeinenLernstand_UndWirdFortgesetzt` **und** im Browser
+      (`full-flow.spec.ts`: Klausur verlassen, wieder betreten, steht auf derselben Frage).
+- [x] **E5:** Beide Rundenarten zeigen während des Spielens einen Ausweg; der Übungs-Knopf beendet die
       Sitzung serverseitig, der Klausur-Knopf verliert keinen Fortschritt.
-- [ ] **E7:** `End` weist einen nicht spielbaren Plan für den Sohn ab und bucht dafür keine Ziel-Punkte.
-- [ ] Nichts von dieser Story endet als „offen:"-Vermerk irgendwo sonst.
+- [x] **E7:** `End` weist einen nicht spielbaren Plan für den Sohn ab und bucht dafür keine Ziel-Punkte.
+      → `Sohn_KannLaufendeSitzungAufInaktivemPlanNichtAbschliessen_403`.
+- [x] Nichts von dieser Story endet als „offen:"-Vermerk irgendwo sonst — die beim Bauen entstandenen
+      Grenzen stehen unten.
+
+### Bekannte Grenzen (beim Bauen entstanden, bewusst)
+
+- **Ein Versuch des Vaters auf derselben Position und Periode ist von dem des Sohns nicht
+  unterscheidbar.** Der Sohn würde ihn fortsetzen, und er zählt gegen den Deckel. Ein Unterscheidungsmerkmal
+  wäre eine Spalte am `TestAttempt` und damit eine Migration — für einen seltenen Vorschau-/Nachtragsfall zu
+  teuer. Der Vater selbst ist nicht gedeckelt.
+- **Der `Mode == Lern`-Filter in der Erledigt-Regel ist jetzt doppelt gesichert**, weil eine Info-Sitzung
+  ihren Cursor nie vorrückt (`Review` antwortet im Info-Modus vor dem Cursor-Schritt mit 204). Er bleibt als
+  Tiefenverteidigung stehen; geprüft wird er über das Paar aus Info- und Lern-Test mit leerem Pool.
+- **`/smoke-test` wurde nicht zusätzlich gefahren.** Die Playwright-E2E deckt dieselbe Fläche ab (echter
+  Server, Wegwerf-DB, ganzer Vater→Sohn-Loop) und prüft zusätzlich den Fortsetzen-Pfad im Browser. Sie nutzt
+  aber eine **Vokabel**-Übung: der `CheckMode.None`-Pfad aus E1 ist nur durch die Integrationstests belegt,
+  nicht durch einen Browser-Lauf.
 
 ## Schätzung
 
@@ -342,3 +364,13 @@ Benannt, nicht behauptet:
   statt der Code: der positive `CheckMode.None`-Fall ist heute **ungetestet** (R3) und
   `KlausurModus_AbgebrochenerVersuch_…` muss durch E4 umgeschrieben werden (R2). Vorarbeit: `PeriodRange`
   teilbar machen.
+- **2026-07-31** — `geschaetzt` → `in-arbeit`: E1–E7 gebaut. **615 Tests grün** (610 vorher, +5 neue),
+  `full-flow.spec.ts` grün inkl. Klausur verlassen/fortsetzen im Browser, `dotnet build Pugling.sln` und
+  `dotnet format --verify-no-changes` sauber. **Rot-Probe gefahren:** mit der alten Regel fällt
+  `LernModus_ReineInhaltsuebung_BlosseAnwesenheit_…` (1 failed) — der Defekt ist also belegt, nicht behauptet;
+  die beiden anderen neuen Tests bleiben unter beiden Regeln grün, wie es sein soll.
+  Zwei Abweichungen von der Schätzung: **R4 löste sich günstiger** (der bestehende Info-Test prüft den
+  Mode-Filter durch den leeren Pool jetzt wirklich — ein Lern-Gegenstück macht das Paar explizit, statt
+  White-Box-Seeding), und ein EF-Fallstrick kam dazu: `Order` ist eine JSON-Spalte, `Order.Count` ist nicht
+  übersetzbar — die Menge wird in der DB gefiltert, der Vergleich läuft im Speicher. Offen für die Abnahme:
+  beide Reviewer und der Commit.

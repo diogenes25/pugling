@@ -1,6 +1,6 @@
 # API-Beispiele – Übersicht
 
-Automatisch erzeugt von `backend/Pugling.Api.Tests/DocsCaptureTests.cs`. Insgesamt **141** Beispiele in **12** Gruppen.
+Automatisch erzeugt von `backend/Pugling.Api.Tests/DocsCaptureTests.cs`. Insgesamt **142** Beispiele in **12** Gruppen.
 
 | Gruppe | Beispiele | Fehlerfälle | Datei |
 | --- | ---: | ---: | --- |
@@ -12,14 +12,14 @@ Automatisch erzeugt von `backend/Pugling.Api.Tests/DocsCaptureTests.cs`. Insgesa
 | me | 15 | 5 | [`me.md`](./me.md) |
 | remarks | 19 | 7 | [`remarks.md`](./remarks.md) |
 | shop | 28 | 8 | [`shop.md`](./shop.md) |
-| study-plans | 23 | 8 | [`study-plans.md`](./study-plans.md) |
+| study-plans | 24 | 9 | [`study-plans.md`](./study-plans.md) |
 | tags | 5 | 3 | [`tags.md`](./tags.md) |
 | timetable | 3 | 2 | [`timetable.md`](./timetable.md) |
 | vocabulary | 4 | 2 | [`vocabulary.md`](./vocabulary.md) |
 
 ## Fehler-Code-Abdeckung
 
-Verifiziert: **33 / 54** Codes aus `ApiErrors`.
+Verifiziert: **34 / 55** Codes aus `ApiErrors`.
 
 | Code | Beispiel |
 | --- | --- |
@@ -51,6 +51,7 @@ Verifiziert: **33 / 54** Codes aus `ApiErrors`.
 | `skin_already_unlocked` | me – Bereits besessenen Skin kaufen |
 | `skin_not_unlocked` | me – Nicht besessenen Skin ausrüsten |
 | `test_already_submitted` | study-plans – Test erneut abgeben |
+| `test_attempts_exhausted` | study-plans – Dritter Testversuch der Periode (Deckel) |
 | `timetable_slot_taken` | timetable – Gleiches Fach am selben Wochentag |
 | `unauthorized` | auth – Selbstauskunft ohne Token |
 | `unknown_field` | timetable – Unbekanntes Feld im Body |

@@ -674,6 +674,20 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
         await Capture(child, g, "Verlauf – nur erledigte Tage", HttpMethod.Get,
             $"/api/v1/student/study-plans/{planId}/overview/progress?dutyDone=true", null, HttpStatusCode.OK);
 
+        // Versuchs-Deckel der Periode. Steht bewusst NACH den Overview-/Verlauf-Aufnahmen: der Aufbau
+        // verbraucht das Kontingent dieser Position, und ein zusätzlicher (nicht bestandener) Versuch würde
+        // sonst in deren Zahlen auftauchen. Ein Versuch ist oben schon abgegeben, der zweite hier – der
+        // dritte ist Noten-Farming und wird abgewiesen.
+        var secondAttempt = await child.PostAsJsonAsync(
+            $"/api/v1/student/study-plans/{planId}/positions/{positionId}/tests", new { });
+        secondAttempt.EnsureSuccessStatusCode();
+        var secondAttemptId = (await secondAttempt.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("attemptId").GetInt32();
+        await child.PostAsJsonAsync(
+            $"/api/v1/student/study-plans/{planId}/positions/{positionId}/tests/{secondAttemptId}/submit", new { });
+        await Capture(child, g, "Dritter Testversuch der Periode (Deckel)", HttpMethod.Post,
+            $"/api/v1/student/study-plans/{planId}/positions/{positionId}/tests", new { },
+            HttpStatusCode.Conflict, ApiErrors.TestAttemptsExhausted.Code);
+
         // Test auf einer Leseübung ohne prüfbaren Inhalt → no_checkable_content.
         var reading = await father.PostAsJsonAsync(
             $"/api/v1/creator/subjects/{docSubjectId}/chapters/{docChapterId}/reading",

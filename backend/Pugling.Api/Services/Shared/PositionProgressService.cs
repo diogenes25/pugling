@@ -30,8 +30,12 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
     /// <summary>Monday of the week that <paramref name="day"/> falls in (week = Mon–Sun).</summary>
     private static DateOnly WeekMonday(DateOnly day) => day.AddDays(-(((int)day.DayOfWeek + 6) % 7));
 
-    /// <summary>Range [from, to] of the period in which the position must meet its goal.</summary>
-    private static (DateOnly From, DateOnly To) PeriodRange(GoalCadence cadence, DateOnly day) => cadence switch
+    /// <summary>
+    /// Range [from, to] of the period in which the position must meet its goal. Public because the period is
+    /// not owned by this service alone: the test attempt cap (<c>PositionTestsController</c>) counts per
+    /// period and must use the very same boundaries – a second implementation would drift.
+    /// </summary>
+    public static (DateOnly From, DateOnly To) PeriodRange(GoalCadence cadence, DateOnly day) => cadence switch
     {
         GoalCadence.Weekly => (WeekMonday(day), WeekMonday(day).AddDays(6)),
         _ => (day, day),
@@ -52,19 +56,43 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
         pos.Exercise is { } ex ? registry.ByKey(ex.Type)?.Manifest.CheckMode ?? ExerciseCheckMode.None : ExerciseCheckMode.None;
 
     /// <summary>
+    /// Has enough of a session's frozen order been played to count the round as done? A content exercise has
+    /// no gradable answer, so the only honest measure is how far the round was actually played:
+    /// mere presence must not fulfil a duty, and active seconds are producible by leaving a tab open.
+    /// <para>
+    /// An <b>empty</b> order means nothing was due – then the goal counts as met, because there was nothing
+    /// to play. Same behaviour as before this rule existed.
+    /// </para>
+    /// </summary>
+    private static bool PlayedEnough(PlanPosition pos, int cursor, int total)
+    {
+        if (total == 0) return true;
+        var percent = Math.Clamp(pos.GoalThreshold ?? DefaultPassPercent, 1, 100);
+        return cursor >= (int)Math.Ceiling(total * percent / 100.0);
+    }
+
+    /// <summary>
     /// Is the position's goal done in its period around <paramref name="day"/>? Pure content/reading
-    /// exercises (<see cref="ExerciseCheckMode.None"/>) count as done as soon as a practice session with
-    /// activity exists; checkable types (test/catalog check) count as done as soon as a test has been
+    /// exercises (<see cref="ExerciseCheckMode.None"/>) count as done once a learn session has played
+    /// <see cref="PlanPosition.GoalThreshold"/> percent of its frozen order (see <see cref="PlayedEnough"/>);
+    /// checkable types (test/catalog check) count as done as soon as a test has been
     /// passed within the period (with <see cref="PlanPosition.RequireTypedTest"/> only a graded attempt counts).
     /// </summary>
     public async Task<bool> IsGoalMetAsync(PlanPosition pos, DateOnly day, CancellationToken ct = default)
     {
         var (from, to) = PeriodRange(pos.Cadence, day);
         if (CheckModeOf(pos) == ExerciseCheckMode.None)
+        {
             // Nur echte Lern-Sitzungen zählen aufs Ziel – Info-Sitzungen (freies Üben ohne Feedback) nicht.
-            return await db.PracticeSessions.AnyAsync(s =>
-                s.PlanPositionId == pos.Id && s.Day >= from && s.Day <= to && s.Mode == PlayMode.Lern
-                && (s.EndedAt != null || s.ActiveSeconds > 0), ct);
+            // Die Menge wird in der DB gefiltert; der Vergleich Cursor↔Order.Count läuft danach im Speicher,
+            // weil `Order` eine JSON-Spalte ist – `s.Order.Count` ist nicht übersetzbar und würde die Query
+            // still zur Client-Auswertung über ALLE Sitzungen zwingen.
+            var rounds = await db.PracticeSessions.AsNoTracking()
+                .Where(s => s.PlanPositionId == pos.Id && s.Day >= from && s.Day <= to && s.Mode == PlayMode.Lern)
+                .Select(s => new { s.Cursor, s.Order })
+                .ToListAsync(ct);
+            return rounds.Any(r => PlayedEnough(pos, r.Cursor, r.Order.Count));
+        }
 
         return await db.TestAttempts.AnyAsync(t =>
             t.PlanPositionId == pos.Id && t.Day >= from && t.Day <= to

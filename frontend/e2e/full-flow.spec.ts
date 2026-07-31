@@ -75,6 +75,9 @@ test("Vater erstellt Plan mit Position, Sohn arbeitet ihn ab, Punkte fließen", 
   await sohn.getByRole("link", { name: /ÜBEN/ }).click();
   const counter = sohn.locator(".pill.cyan", { hasText: /Karte \d+ \/ \d+/ });
   await expect(counter).toBeVisible();
+  // Aus einer laufenden Runde muss ein Ausweg auf dem Schirm stehen (nicht nur Browser-Zurück).
+  // Nur Sichtprüfung: ein Klick würde die Runde beenden und den restlichen Durchstich abschneiden.
+  await expect(sohn.getByRole("button", { name: "Runde beenden" })).toBeVisible();
   const total = Number((await counter.textContent())!.match(/\/ (\d+)/)![1]);
   // Genug Karten, damit der Combo-Meilenstein ×5 sicher fällt (bewusste Coverage, kein stiller Skip).
   expect(total).toBeGreaterThanOrEqual(5);
@@ -96,11 +99,24 @@ test("Vater erstellt Plan mit Position, Sohn arbeitet ihn ab, Punkte fließen", 
   const testCounter = sohn.locator(".pill.cyan", { hasText: /Frage \d+ \/ \d+/ });
   await expect(testCounter).toBeVisible();
   const testTotal = Number((await testCounter.textContent())!.match(/\/ (\d+)/)![1]);
-  for (let i = 0; i < testTotal; i++) {
+
+  const answerOne = async () => {
     const revealBtn = sohn.getByRole("button", { name: "Aufdecken 🔄" });
     if (await revealBtn.count()) await revealBtn.first().click();
     await sohn.getByRole("button", { name: "Gewusst", exact: true }).click();
-  }
+  };
+
+  // Erste Frage beantworten, dann die Klausur VERLASSEN und wieder betreten: der Versuch wird am Cursor
+  // fortgesetzt (der Server gibt den laufenden zurück) – er fängt nicht bei Frage 1 neu an und verbraucht
+  // keinen zweiten der begrenzten Versuche.
+  await answerOne();
+  await expect(testCounter).toHaveText(`Frage 2 / ${testTotal}`);
+  await sohn.getByRole("button", { name: "Später weiter" }).click();
+  await expect(sohn.getByText("Tagesmission")).toBeVisible();
+  await sohn.getByRole("link", { name: /TEST/ }).click();
+  await expect(testCounter).toHaveText(`Frage 2 / ${testTotal}`);
+
+  for (let i = 1; i < testTotal; i++) await answerOne();
   await expect(sohn.locator(".vtitle", { hasText: "SIEG!" })).toBeVisible();
 
   // Wallet: Münzen wurden gutgeschrieben (Test bestanden + ggf. Leitner-Übung)

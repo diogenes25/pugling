@@ -182,6 +182,15 @@ export function SohnPractice() {
           <button type="button" className={`pill toggle-pill ${tempo ? "lime" : ""}`} onClick={toggleTempo} aria-pressed={tempo}>
             ⚡ Tempo
           </button>
+          {/*
+            Sichtbarer Ausweg aus der laufenden Runde. Ohne Rückfrage, weil das Verlassen folgenlos ist:
+            bereits gespielte Karten sind gewertet, der Rest wird nicht bestraft. Der Server-Aufruf (`end`)
+            gehört bewusst NICHT hierher – das Cleanup des Heartbeat-Effekts unten schickt die Rest-Sekunden
+            und beendet die Sitzung; ein zweiter Aufruf hier wäre eine Doppelquelle für dieselbe Sache.
+          */}
+          <button type="button" className="pill toggle-pill" onClick={() => nav("/sohn")}>
+            Runde beenden
+          </button>
         </span>
       </div>
 

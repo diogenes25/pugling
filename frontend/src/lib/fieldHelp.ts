@@ -26,8 +26,11 @@ export const FIELD_HELP = {
   },
   goalThreshold: {
     title: "Bestehen ab %",
-    text: "Ab wie viel Prozent richtiger Antworten der Abschlusstest als bestanden zählt – und damit das "
-      + "Ziel der Periode erledigt ist. Leer lassen heißt 80 %.",
+    text: "Ab wie viel Prozent das Ziel der Periode als erledigt gilt. Leer lassen heißt 80 %. Was gemessen "
+      + "wird, hängt an der Übung: bei prüfbaren Übungen (mit Abschlusstest) sind es Prozent richtiger "
+      + "Antworten. Bei reinen Inhaltsübungen – Lesen, Hören, Aufsatz, Grammatik, Übersetzung, Birkenbihl – "
+      + "gibt es nichts automatisch zu bewerten; dort sind es Prozent der Runde, die durchgespielt wurde. "
+      + "Bloßes Öffnen der Übung erfüllt die Pflicht also nicht.",
   },
   itemCount: {
     title: "Inhalte dauerhaft begrenzen",

@@ -122,6 +122,8 @@ public static class ApiErrors
     public static readonly ApiError PlanInactive = new("plan_inactive", 403, "Study plan is not active.");
     /// <summary>Test has already been submitted (400).</summary>
     public static readonly ApiError TestAlreadySubmitted = new("test_already_submitted", 400, "Test already submitted.");
+    /// <summary>All test attempts of the period are used up (409).</summary>
+    public static readonly ApiError TestAttemptsExhausted = new("test_attempts_exhausted", 409, "No test attempts left.");
     /// <summary>Exercise contains no checkable content (400).</summary>
     public static readonly ApiError NoCheckableContent = new("no_checkable_content", 400, "No checkable content.");
     /// <summary>

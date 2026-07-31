@@ -46,7 +46,13 @@ public class PlanPosition
     /// <summary>Ziel-Rhythmus; <see cref="GoalCadence.None"/> = freies Üben ohne Pflicht.</summary>
     public GoalCadence Cadence { get; set; } = GoalCadence.None;
     /// <summary>
-    /// Bestehensgrenze des Abschlusstests in <b>Prozent</b> richtiger Antworten; <c>null</c> = 80 %.
+    /// Bestehensgrenze der Periode in <b>Prozent</b>; <c>null</c> = 80 %. Der Satz ist immer derselbe –
+    /// „wie viel Prozent musst du schaffen" –, nur der Maßstab folgt dem <c>ExerciseCheckMode</c> der Übung:
+    /// <list type="bullet">
+    /// <item>prüfbare Verfahren (Test/Katalog-Check): Prozent <b>richtiger Antworten</b> im Abschlusstest;</item>
+    /// <item>reine Inhaltsübungen (<c>ExerciseCheckMode.None</c>): Prozent der Runde, die <b>gespielt</b>
+    /// wurde (Cursor gegen die eingefrorene Reihenfolge).</item>
+    /// </list>
     /// <para>
     /// Die Einheit ist <b>typ-unabhängig</b> – auch bei Katalog-Check-Verfahren. Das ist keine
     /// Vereinfachung, sondern folgt daraus, dass ein <see cref="TestAttempt"/> ausschließlich im
@@ -56,8 +62,9 @@ public class PlanPosition
     /// groß der Pool ist, sagt bereits <see cref="ItemCount"/>.
     /// </para>
     /// <para>
-    /// Bei reinen Inhaltsübungen (<c>ExerciseCheckMode.None</c>) bleibt der Wert ungenutzt: dort gilt
-    /// das Ziel schon mit einer Lern-Sitzung als erledigt.
+    /// Bei Inhaltsübungen war der Wert früher ungenutzt: das Ziel galt schon mit einer Lern-Sitzung mit
+    /// <i>irgendeiner</i> Aktivität als erledigt – ein Heartbeat von 12 Sekunden reichte, um die Pflicht zu
+    /// erfüllen und die Ziel-Punkte auszulösen. Genau darum trägt der Wert jetzt auch dort einen Maßstab.
     /// </para>
     /// </summary>
     public int? GoalThreshold { get; set; }
