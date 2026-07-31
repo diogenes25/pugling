@@ -1,4 +1,4 @@
-﻿using System.Text.Json;
+using System.Text.Json;
 using Pugling.Api.Models;
 
 namespace Pugling.Api.Exercises;

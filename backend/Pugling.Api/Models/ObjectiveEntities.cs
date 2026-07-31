@@ -1,4 +1,4 @@
-﻿namespace Pugling.Api.Models;
+namespace Pugling.Api.Models;
 
 // ObjectiveKind/KeyResultMetric leben im Vertrags-Projekt (Pugling.Contracts).
 

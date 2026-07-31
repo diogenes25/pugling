@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Pugling.Api.Data;
 
 namespace Pugling.Api.Services.Shared;

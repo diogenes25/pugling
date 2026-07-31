@@ -1,4 +1,4 @@
-﻿// Assembly-Fixture, weil die Prüfung erst dann etwas weiß, wenn **alle** Tests durch sind. Ein `[Fact]`
+// Assembly-Fixture, weil die Prüfung erst dann etwas weiß, wenn **alle** Tests durch sind. Ein `[Fact]`
 // käme dafür nicht in Frage: xUnit parallelisiert über Collections, eine Reihenfolge „zuletzt" gibt es
 // nicht. Das Aufräumen des Assembly-Fixtures läuft dagegen garantiert nach dem letzten Test.
 [assembly: AssemblyFixture(typeof(Pugling.Api.Tests.EndpointCoverageGuard))]
