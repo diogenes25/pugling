@@ -37,7 +37,10 @@ test("Positions-Formular: jedes erklärungsbedürftige Feld hat den passenden Hi
   const erwartet: [string, RegExp][] = [
     ["Ziel-Rhythmus", /Wochenziel“ einmal pro Woche/],
     ["Bestehen ab %", /Leer lassen heißt 80 %/],
-    ["Inhalte je Durchgang", /Leer = alle Inhalte der Übung/],
+    // Der Text sagt bewusst „dauerhaft" und „nie abgefragt": `ItemCount` schneidet die Item-Liste ab
+    // (`PositionPlayService.DueItemIndicesAsync`), es ist kein rotierendes Tageskontingent. Die alte
+    // Formulierung („Inhalte je Durchgang") behauptete das Gegenteil.
+    ["Inhalte dauerhaft begrenzen", /die übrigen werden nie abgefragt/],
     ["Reihenfolge", /Beim Start einer Sitzung wird die Reihenfolge eingefroren/],
     ["Punkte, wenn das Ziel erreicht ist", /Familien-Shop für echte Belohnungen/],
     ["Münz-Malus bei versäumter Pflicht", /Schulden sind gewollt/],
