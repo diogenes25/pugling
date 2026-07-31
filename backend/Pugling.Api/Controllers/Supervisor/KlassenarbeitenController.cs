@@ -9,9 +9,9 @@ using Pugling.Api.Models;
 namespace Pugling.Api.Controllers.Supervisor;
 
 /// <summary>
-/// Klassenarbeiten eines Kindes: der Vater plant sie, weist relevante Übungen zu (direkt oder über
-/// Tags) und trägt nach dem Schreiben die Note nach. Sohn und Vater können daraus gezielt für eine
-/// anstehende Arbeit üben oder Übungen schlecht benoteter Arbeiten wiederholen.
+/// Class tests of a child: the father plans them, assigns relevant exercises (directly or via
+/// tags) and records the grade after the test is written. Child and father can use this to practice
+/// specifically for an upcoming test or repeat exercises from poorly graded tests.
 /// </summary>
 [ApiController]
 [ApiVersion("1.0")]
@@ -21,7 +21,7 @@ namespace Pugling.Api.Controllers.Supervisor;
 [Authorize]
 public class KlassenarbeitenController(PuglingDbContext db, AuthAccess access, ExercisePermissionService perms) : ControllerBase
 {
-    /// <summary>Grenze, ab der eine Note als „schlecht" gilt (deutsche Skala, höher = schlechter).</summary>
+    /// <summary>Threshold from which a grade counts as "bad" (German scale, higher = worse).</summary>
     private const decimal DefaultBadGrade = 4.0m;
 
     private static KlassenarbeitResponse Map(Klassenarbeit k) => new(
@@ -49,13 +49,13 @@ public class KlassenarbeitenController(PuglingDbContext db, AuthAccess access, E
 
     // ---- Lesen ----
 
-    /// <summary>Klassenarbeiten eines Kindes, optional nach Status/Fach gefiltert (nur eigene).</summary>
-    /// <param name="childId">Kind, dessen Klassenarbeiten gelesen werden.</param>
-    /// <param name="status">Optionaler Statusfilter.</param>
-    /// <param name="subjectId">Optionaler Fachfilter.</param>
-    /// <param name="skip">Anzahl zu überspringender Einträge (Paging).</param>
-    /// <param name="take">Maximale Trefferzahl (1..500). Gesamtzahl im Header <c>X-Total-Count</c>.</param>
-    /// <param name="ct">Abbruch-Token.</param>
+    /// <summary>Class tests of a child, optionally filtered by status/subject (own only).</summary>
+    /// <param name="childId">Child whose class tests are being read.</param>
+    /// <param name="status">Optional status filter.</param>
+    /// <param name="subjectId">Optional subject filter.</param>
+    /// <param name="skip">Number of entries to skip (paging).</param>
+    /// <param name="take">Maximum number of hits (1..500). Total count in the <c>X-Total-Count</c> header.</param>
+    /// <param name="ct">Cancellation token.</param>
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult<IEnumerable<KlassenarbeitResponse>>> List(
@@ -72,7 +72,7 @@ public class KlassenarbeitenController(PuglingDbContext db, AuthAccess access, E
         return list.Select(Map).ToList();
     }
 
-    /// <summary>Eine Klassenarbeit inkl. der direkt zugewiesenen Übungen (nur eigene).</summary>
+    /// <summary>A class test incl. the directly assigned exercises (own only).</summary>
     [HttpGet("{id:int}")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<KlassenarbeitDetail>> Get(int id, CancellationToken ct = default)
@@ -87,7 +87,7 @@ public class KlassenarbeitenController(PuglingDbContext db, AuthAccess access, E
 
     // ---- Anlegen / Ändern (nur Vater) ----
 
-    /// <summary>Plant eine Klassenarbeit (oder trägt eine bereits geschriebene nach). Nur Vater, nur eigene Kinder.</summary>
+    /// <summary>Plans a class test (or records one already written). Father only, own children only.</summary>
     [HttpPost]
     [Authorize(Roles = Roles.Supervisor)]
     [ProducesResponseType(StatusCodes.Status201Created)]
@@ -125,7 +125,7 @@ public class KlassenarbeitenController(PuglingDbContext db, AuthAccess access, E
             new KlassenarbeitDetail(Map(created), await LoadExercisesAsync(e => exIds.Contains(e.Id), ct)));
     }
 
-    /// <summary>Ändert eine Klassenarbeit partiell – u. a. Note nachtragen und Status setzen. Nur Vater.</summary>
+    /// <summary>Partially changes a class test – among other things, records the grade and sets the status. Father only.</summary>
     [HttpPatch("{id:int}")]
     [Authorize(Roles = Roles.Supervisor)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -167,7 +167,7 @@ public class KlassenarbeitenController(PuglingDbContext db, AuthAccess access, E
         return Map(k);
     }
 
-    /// <summary>Löscht eine Klassenarbeit (Zuordnungen und Tag-Verknüpfungen verschwinden mit). Nur Vater.</summary>
+    /// <summary>Deletes a class test (assignments and tag links disappear with it). Father only.</summary>
     [HttpDelete("{id:int}")]
     [Authorize(Roles = Roles.Supervisor)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
@@ -183,7 +183,7 @@ public class KlassenarbeitenController(PuglingDbContext db, AuthAccess access, E
 
     // ---- Übungen zuweisen (nur Vater) ----
 
-    /// <summary>Weist der Klassenarbeit Übungen direkt zu (bereits zugewiesene werden übersprungen). Nur Vater.</summary>
+    /// <summary>Assigns exercises directly to the class test (already assigned ones are skipped). Father only.</summary>
     [HttpPost("{id:int}/exercises")]
     [Authorize(Roles = Roles.Supervisor)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -200,7 +200,7 @@ public class KlassenarbeitenController(PuglingDbContext db, AuthAccess access, E
         return new KlassenarbeitDetail(Map(k), await LoadExercisesAsync(e => exIds.Contains(e.Id), ct));
     }
 
-    /// <summary>Entfernt die direkte Zuordnung einer Übung. Nur Vater.</summary>
+    /// <summary>Removes the direct assignment of an exercise. Father only.</summary>
     [HttpDelete("{id:int}/exercises/{exerciseId:int}")]
     [Authorize(Roles = Roles.Supervisor)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
@@ -216,7 +216,7 @@ public class KlassenarbeitenController(PuglingDbContext db, AuthAccess access, E
         return NoContent();
     }
 
-    /// <summary>Verknüpft einen Tag mit der Klassenarbeit: alle so markierten Übungen gelten als relevant. Nur Vater.</summary>
+    /// <summary>Links a tag to the class test: all exercises marked this way count as relevant. Father only.</summary>
     [HttpPost("{id:int}/tags/{tagId:int}")]
     [Authorize(Roles = Roles.Supervisor)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -235,7 +235,7 @@ public class KlassenarbeitenController(PuglingDbContext db, AuthAccess access, E
         return Map((await FindOwnedAsync(id, ct))!);
     }
 
-    /// <summary>Löst die Verknüpfung eines Tags mit der Klassenarbeit. Nur Vater.</summary>
+    /// <summary>Removes the link of a tag with the class test. Father only.</summary>
     [HttpDelete("{id:int}/tags/{tagId:int}")]
     [Authorize(Roles = Roles.Supervisor)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
@@ -254,8 +254,8 @@ public class KlassenarbeitenController(PuglingDbContext db, AuthAccess access, E
     // ---- Üben / Wiederholen ----
 
     /// <summary>
-    /// Alle für die Klassenarbeit relevanten Übungen: direkt zugewiesene UND über verknüpfte Tags markierte
-    /// (ohne Dubletten). Grundlage zum gezielten Üben für eine anstehende Arbeit.
+    /// All exercises relevant to the class test: directly assigned AND marked via linked tags
+    /// (without duplicates). Basis for targeted practice for an upcoming test.
     /// </summary>
     [HttpGet("{id:int}/practice")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -270,8 +270,8 @@ public class KlassenarbeitenController(PuglingDbContext db, AuthAccess access, E
     }
 
     /// <summary>
-    /// Sammelt die relevanten Übungen aller geschriebenen Klassenarbeiten eines Kindes, deren Note
-    /// mindestens <paramref name="minBadGrade"/> (Standard 4,0) beträgt – zum gezielten Wiederholen.
+    /// Collects the relevant exercises of all written class tests of a child whose grade
+    /// is at least <paramref name="minBadGrade"/> (default 4.0) – for targeted review.
     /// </summary>
     [HttpGet("repeat")]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -296,7 +296,7 @@ public class KlassenarbeitenController(PuglingDbContext db, AuthAccess access, E
 
     // ---- Helfer ----
 
-    /// <summary>Lädt Übungen nach Prädikat inkl. Kapitel/Fach, sortiert und ohne Tracking.</summary>
+    /// <summary>Loads exercises by predicate incl. chapter/subject, sorted and without tracking.</summary>
     private async Task<List<ExerciseBrief>> LoadExercisesAsync(
         System.Linq.Expressions.Expression<Func<Exercise, bool>> predicate, CancellationToken ct)
     {
@@ -310,8 +310,8 @@ public class KlassenarbeitenController(PuglingDbContext db, AuthAccess access, E
     }
 
     /// <summary>
-    /// Vereinigt (dublettenfrei) die direkt zugewiesenen und die über verknüpfte Tags relevanten
-    /// Übungen der angegebenen Klassenarbeiten.
+    /// Merges (without duplicates) the directly assigned exercises and those relevant via linked
+    /// tags of the given class tests.
     /// </summary>
     private async Task<List<ExerciseBrief>> LoadRelevantExercisesAsync(IReadOnlyCollection<int> klassenarbeitIds, CancellationToken ct)
     {
@@ -326,7 +326,7 @@ public class KlassenarbeitenController(PuglingDbContext db, AuthAccess access, E
             || db.ExerciseTags.Any(et => et.ExerciseId == e.Id && tagIds.Contains(et.TagId)), ct);
     }
 
-    /// <summary>Prüft die Übungs-Ids (Existenz + Execute-Recht) und hängt neue Zuordnungen an; gibt ein Fehler-Ergebnis zurück oder null.</summary>
+    /// <summary>Checks the exercise ids (existence + execute permission) and attaches new assignments; returns an error result or null.</summary>
     private async Task<ObjectResult?> BuildExerciseLinksAsync(
         int childId, List<int>? exerciseIds, List<KlassenarbeitExercise> target, CancellationToken ct)
     {
@@ -348,7 +348,7 @@ public class KlassenarbeitenController(PuglingDbContext db, AuthAccess access, E
         return null;
     }
 
-    /// <summary>Prüft die Tag-Ids (müssen zum Kind gehören) und hängt neue Verknüpfungen an.</summary>
+    /// <summary>Checks the tag ids (must belong to the child) and attaches new links.</summary>
     private async Task<string?> BuildTagLinksAsync(
         int childId, List<int>? tagIds, List<KlassenarbeitTag> target, CancellationToken ct)
     {

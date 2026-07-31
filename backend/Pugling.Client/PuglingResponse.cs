@@ -4,13 +4,13 @@ using System.Text.Json;
 namespace Pugling.Client;
 
 /// <summary>
-/// Übersetzt eine Fehlerantwort der API in eine <see cref="PuglingApiException"/>. Öffentlich, damit
-/// auch eigene, nicht von <see cref="CreatorApi"/>/<see cref="SupervisorApi"/> abgedeckte Aufrufe
-/// dieselbe Fehlersemantik bekommen.
+/// Translates an error response from the API into a <see cref="PuglingApiException"/>. Public so that
+/// custom calls not covered by <see cref="CreatorApi"/>/<see cref="SupervisorApi"/> also get
+/// the same error semantics.
 /// </summary>
 public static class PuglingResponse
 {
-    /// <summary>Wirft, wenn die Antwort kein 2xx trägt; sonst kehrt sie unverändert zurück.</summary>
+    /// <summary>Throws if the response is not a 2xx; otherwise it returns unchanged.</summary>
     public static async Task<HttpResponseMessage> EnsureSuccessAsync(HttpResponseMessage response, CancellationToken ct = default)
     {
         if (response.IsSuccessStatusCode) return response;
@@ -18,9 +18,9 @@ public static class PuglingResponse
     }
 
     /// <summary>
-    /// Liest den ProblemDetails-Body und baut daraus die Ausnahme. Antworten ohne (gültigen) JSON-Body –
-    /// etwa ein leeres 403 – bekommen einen aus dem Status abgeleiteten Ersatzcode, damit
-    /// <see cref="PuglingApiException.Code"/> nie leer ist.
+    /// Reads the ProblemDetails body and builds the exception from it. Responses without a (valid) JSON body –
+    /// e.g. an empty 403 – get a substitute code derived from the status, so that
+    /// <see cref="PuglingApiException.Code"/> is never empty.
     /// </summary>
     public static async Task<PuglingApiException> ToExceptionAsync(HttpResponseMessage response, CancellationToken ct = default)
     {

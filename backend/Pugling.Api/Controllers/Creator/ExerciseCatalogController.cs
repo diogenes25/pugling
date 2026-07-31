@@ -10,9 +10,9 @@ using Pugling.Api.Models;
 namespace Pugling.Api.Controllers.Creator;
 
 /// <summary>
-/// Fachübergreifende Übungssuche über strukturierte Metadaten – die Vorfilterung als Grundlage
-/// für die (spätere) automatische Lehrplan-Erstellung. Beispiel: Fach Englisch, 9. Klasse,
-/// Gymnasium, Art „Grammatik" → passende Übungskandidaten.
+/// Cross-subject exercise search over structured metadata – the pre-filtering as a basis
+/// for the (future) automatic study plan generation. Example: subject English, 9th grade,
+/// upper secondary school (Gymnasium), category "grammar" → matching exercise candidates.
 /// </summary>
 [ApiController]
 [ApiVersion("1.0")]
@@ -23,23 +23,23 @@ namespace Pugling.Api.Controllers.Creator;
 public class ExerciseCatalogController(PuglingDbContext db) : ControllerBase
 {
     /// <summary>
-    /// Sucht Übungen über die Metadaten. Alle Parameter sind optional und werden UND-verknüpft.
-    /// Nullbare Grenzen/„None"-Schulart bedeuten „passt immer" und werden nicht ausgeschlossen.
+    /// Searches exercises over the metadata. All parameters are optional and are AND-combined.
+    /// Nullable bounds/school type "None" mean "always matches" and are not excluded.
     /// </summary>
-    /// <param name="subjectId">Fach.</param>
-    /// <param name="chapterId">Kapitel (setzt in der Regel ein Fach voraus).</param>
-    /// <param name="grade">Klassenstufe des Kindes; passt, wenn sie in [GradeMin, GradeMax] liegt.</param>
-    /// <param name="schoolType">Schulart; passt, wenn die Übung sie enthält oder für alle gilt.</param>
-    /// <param name="categoryId">Fachabhängige Art.</param>
-    /// <param name="type">Übungstyp.</param>
-    /// <param name="search">Freitext in Titel oder Beschreibung (Teilstring).</param>
-    /// <param name="mineOnly">Nur eigene Übungen des anfragenden Vaters (Verwaltung statt Entdeckung).</param>
-    /// <param name="sort">Sortierspalte: <c>title</c>, <c>type</c>, <c>grade</c>, <c>source</c>, <c>created</c>.
-    /// Kurzform <c>-title</c> = absteigend. Ohne Angabe: Fach → Kapitel → Reihenfolge.</param>
-    /// <param name="dir"><c>asc</c> (Default) oder <c>desc</c>; hat Vorrang vor einem <c>-</c>-Präfix in <paramref name="sort"/>.</param>
-    /// <param name="skip">Anzahl zu überspringender Einträge (Paging).</param>
-    /// <param name="take">Maximale Trefferzahl (1..500). Gesamtzahl im Header <c>X-Total-Count</c>.</param>
-    /// <param name="ct">Abbruch-Token.</param>
+    /// <param name="subjectId">Subject.</param>
+    /// <param name="chapterId">Chapter (usually implies a subject).</param>
+    /// <param name="grade">Grade level of the child; matches if it lies within [GradeMin, GradeMax].</param>
+    /// <param name="schoolType">School type; matches if the exercise includes it or applies to all.</param>
+    /// <param name="categoryId">Subject-dependent category.</param>
+    /// <param name="type">Exercise type.</param>
+    /// <param name="search">Free text in title or description (substring).</param>
+    /// <param name="mineOnly">Only own exercises of the requesting adult (management rather than discovery).</param>
+    /// <param name="sort">Sort column: <c>title</c>, <c>type</c>, <c>grade</c>, <c>source</c>, <c>created</c>.
+    /// Short form <c>-title</c> = descending. Without a value: subject → chapter → order.</param>
+    /// <param name="dir"><c>asc</c> (default) or <c>desc</c>; takes precedence over a <c>-</c> prefix in <paramref name="sort"/>.</param>
+    /// <param name="skip">Number of entries to skip (paging).</param>
+    /// <param name="take">Maximum number of hits (1..500). Total count in the <c>X-Total-Count</c> header.</param>
+    /// <param name="ct">Cancellation token.</param>
     [HttpGet]
     public async Task<IEnumerable<ExerciseSummary>> Search(
         [FromQuery] int? subjectId, [FromQuery] int? chapterId, [FromQuery] int? grade, [FromQuery] SchoolTypes? schoolType,
@@ -98,9 +98,9 @@ public class ExerciseCatalogController(PuglingDbContext db) : ControllerBase
     }
 
     /// <summary>
-    /// Wendet die per Whitelist erlaubte Sortierung an; jede Variante endet mit <c>Id</c> als Tiebreaker,
-    /// damit das Paging-Fenster deterministisch bleibt. Unbekannte/leere Keys → fachlicher Standard
-    /// (Fach → Kapitel → Reihenfolge).
+    /// Applies the sorting allowed via whitelist; every variant ends with <c>Id</c> as a tiebreaker,
+    /// so the paging window stays deterministic. Unknown/empty keys → business default
+    /// (subject → chapter → order).
     /// </summary>
     private static IOrderedQueryable<Exercise> ApplySort(IQueryable<Exercise> q, (string? Key, bool Desc) sort) =>
         (sort.Key?.ToLowerInvariant(), sort.Desc) switch
@@ -123,7 +123,7 @@ public class ExerciseCatalogController(PuglingDbContext db) : ControllerBase
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
 
-    /// <summary>Eine einzelne Übung typ-übergreifend per Id (mit Config + Metadaten).</summary>
+    /// <summary>A single exercise across all types by id (with config + metadata).</summary>
     [HttpGet("{id:int}")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<ExerciseDetail>> Get(int id, CancellationToken ct = default)
@@ -150,18 +150,18 @@ public class ExerciseCatalogController(PuglingDbContext db) : ControllerBase
     }
 
     /// <summary>
-    /// Gibt eine Übung frei oder <b>zieht sie zurück</b> – die Gegenbewegung zum Veröffentlichen, und der
-    /// einzige Weg, Material aus dem Verkehr zu nehmen: Löschen verweigert eine benutzte Übung (der FK
-    /// <c>PlanPosition→Exercise</c> ist <c>Restrict</c>), und das ist auch richtig – laufende Pflichten
-    /// dürfen nicht unter dem Kind wegbrechen.
+    /// Publishes an exercise or <b>withdraws it</b> – the counter-move to publishing, and the
+    /// only way to take material out of circulation: deleting refuses a used exercise (the FK
+    /// <c>PlanPosition→Exercise</c> is <c>Restrict</c>), and rightly so – ongoing mandatory goals
+    /// must not break out from under the child.
     /// <para>
-    /// Bewusst ein <b>eigener</b> Endpunkt statt des typisierten Voll-<c>PUT</c>: dieses Flag hat nichts mit
-    /// dem Übungstyp zu tun, und für einen einzelnen Schalter die ganze Übung samt <c>ConfigJson</c> zu
-    /// ersetzen ist der kurze Weg zum stillen Inhaltsverlust.
+    /// Deliberately its <b>own</b> endpoint instead of the typed full <c>PUT</c>: this flag has nothing to do
+    /// with the exercise type, and replacing the whole exercise including <c>ConfigJson</c> for a single toggle
+    /// is the short path to silent content loss.
     /// </para>
     /// <para>
-    /// Nur der <b>Owner</b> darf umschalten (wie beim Rechte-Vergeben) – ein Write-Grantee darf Inhalte
-    /// pflegen, aber nicht über die Weitergabe entscheiden.
+    /// Only the <b>owner</b> may toggle it (as with granting permissions) – a write grantee may
+    /// maintain content but not decide on its distribution.
     /// </para>
     /// </summary>
     [HttpPatch("{id:int}/sharing")]
@@ -180,14 +180,14 @@ public class ExerciseCatalogController(PuglingDbContext db) : ControllerBase
     }
 
     /// <summary>
-    /// In welchen Lehrplänen und Klassenarbeiten (welcher eigenen Kinder) eine Übung steckt.
-    /// Lehrpläne über das Positions-Modell (<see cref="PlanPosition"/>); Klassenarbeiten direkt
-    /// zugewiesen ODER über einen gemeinsamen Tag.
+    /// Which study plans and class tests (of which own children) an exercise is embedded in.
+    /// Study plans via the position model (<see cref="PlanPosition"/>); class tests either directly
+    /// assigned OR via a shared tag.
     /// <para>
-    /// Dazu <see cref="UsageResponse.OtherLearnersCount"/>: die <b>Zahl der Kinder</b> fremder Betreuer, die
-    /// die Übung einsetzen. Ohne sie behauptete diese Antwort „nirgends", während das Löschen mit <c>409</c>
-    /// scheiterte – dieselbe Zählung liefert jetzt beide Stellen (Anmerkung 14). Für einen Creator ohne
-    /// eigene Kinder (Lehrer, KI-Creator-App) ist sie die <i>einzige</i> aussagekräftige Angabe hier.
+    /// In addition <see cref="UsageResponse.OtherLearnersCount"/>: the <b>number of children</b> of other
+    /// supervisors who use the exercise. Without it, this response claimed "nowhere" while deletion
+    /// failed with <c>409</c> – the same count now feeds both places (remark 14). For a creator without
+    /// own children (teacher, AI creator app) it is the <i>only</i> meaningful information here.
     /// </para>
     /// </summary>
     [HttpGet("{id:int}/usage")]

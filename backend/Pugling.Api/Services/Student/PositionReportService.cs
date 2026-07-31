@@ -5,20 +5,20 @@ using Pugling.Api.Models;
 namespace Pugling.Api.Services.Student;
 
 /// <summary>
-/// Baut den Lern-Report einer Lehrplan-Position: je Inhalts-Atom (z. B. Vokabel) den Karteikasten-Stand
-/// (Box → Beherrschung), Einführung/Fälligkeit und die Test-Trefferquote. Beantwortet dem Vater die Frage
-/// „welche Vokabel sitzt, welche nicht" – im Positions-Modell aus <see cref="PositionItemProgress"/> und
-/// <see cref="TestItemResult"/> rekonstruiert (ersetzt den plan-weiten Report des Alt-Modells).
+/// Builds the learning report of a study plan position: for each content atom (e.g. vocabulary item) the
+/// Leitner box state (box → mastery), introduction/due date and the test hit rate. Answers the supervisor's
+/// question "which vocabulary is mastered, which isn't" – reconstructed in the position model from
+/// <see cref="PositionItemProgress"/> and <see cref="TestItemResult"/> (replaces the plan-wide report of the old model).
 /// </summary>
 public class PositionReportService(PuglingDbContext db, PositionPlayService play)
 {
     // ItemReport/Report leben im Vertrags-Projekt (Pugling.Contracts.Student).
 
-    /// <summary>Beherrschung in Prozent aus der Leitner-Box (Box 1 = 0 % … MaxBox = 100 %).</summary>
+    /// <summary>Mastery in percent from the Leitner box (box 1 = 0% … MaxBox = 100%).</summary>
     private static int MasteryOf(int box, int maxBox) =>
         maxBox <= 1 ? 100 : (int)Math.Round(100.0 * (Math.Clamp(box, 1, maxBox) - 1) / (maxBox - 1));
 
-    /// <summary>Report der Position oder <c>null</c>, wenn sie (mit Übung) im Plan nicht existiert.</summary>
+    /// <summary>Report of the position, or <c>null</c> if it (with exercise) does not exist in the plan.</summary>
     public async Task<Report?> BuildAsync(int planId, int positionId, CancellationToken ct = default)
     {
         var pos = await db.PlanPositions.AsNoTracking().Include(p => p.Exercise)

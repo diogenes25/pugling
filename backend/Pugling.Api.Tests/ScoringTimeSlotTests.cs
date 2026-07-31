@@ -3,14 +3,14 @@ using Microsoft.Extensions.Options;
 namespace Pugling.Api.Tests;
 
 /// <summary>
-/// Prüft den Zeitfenster-Multiplikator der Basispunkte (<see cref="ScoringService"/>): eine richtige
-/// Wiederholung wird mit dem Faktor des zur Uhrzeit aktiven Fensters gewichtet; außerhalb aller Fenster
-/// gilt Faktor 1,0.
+/// Checks the time-slot multiplier of the base points (<see cref="ScoringService"/>): a correct
+/// review is weighted with the factor of the slot active at that time of day; outside all slots,
+/// factor 1.0 applies.
 /// <para>
-/// <b>Ohne Host und ohne Datenbank.</b> Bis E12 waren die Fenster eine Tabelle, also brauchte dieser Test
-/// die Web-Factory, ein Scope, eine SQLite-Datei und ein <c>SaveChanges</c> – für eine Multiplikation. Seit
-/// die Fenster Konfiguration sind, ist der Service eine reine Funktion: die Fenster stehen im Test selbst,
-/// sichtbar neben der Erwartung. Genau das war der Grund, die Tabelle aufzulösen.
+/// <b>Without a host and without a database.</b> Until E12 the slots were a table, so this test needed the
+/// web factory, a scope, a SQLite file and a <c>SaveChanges</c> – for one multiplication. Ever since the
+/// slots are configuration, the service is a pure function: the slots sit in the test itself, visible next
+/// to the expectation. That was exactly the reason for dissolving the table.
 /// </para>
 /// </summary>
 public class ScoringTimeSlotTests
@@ -39,9 +39,9 @@ public class ScoringTimeSlotTests
     }
 
     /// <summary>
-    /// Überlappende Fenster sind erlaubt (die Konfiguration verbietet sie nicht) – dann muss die Auswahl
-    /// trotzdem <b>festliegen</b>: das am spätesten beginnende, also engste Fenster gewinnt. Ohne diese
-    /// Ordnung entschied die Reihenfolge in der Datei, und dieselbe richtige Antwort brachte mal 30, mal 50.
+    /// Overlapping slots are allowed (the configuration does not forbid them) – but the selection must still
+    /// be <b>deterministic</b>: the narrowest slot, i.e. the one starting latest, wins. Without this ordering
+    /// the order inside the file decided, and the same correct answer sometimes yielded 30, sometimes 50.
     /// </summary>
     [Fact]
     public void Bei_ueberlappenden_Fenstern_gewinnt_deterministisch_das_engste()

@@ -7,9 +7,9 @@ using Pugling.Api.Data;
 namespace Pugling.Api.Tests;
 
 /// <summary>
-/// Sichert das übungsunabhängige Schüler-Profil ab (Grundlage für einen späteren Lehrplan-Generator):
-/// die persönlichen Felder am Kind (Geschlecht/Interessen/Notiz) und die Lehrbuch-Sub-Ressource
-/// (CRUD + Eigentum + Cascade beim Löschen des Kindes).
+/// Verifies the exercise-independent student profile (foundation for a later study plan generator):
+/// the personal fields on the child (gender/interests/note) and the textbook sub-resource
+/// (CRUD + ownership + cascade on child deletion).
 /// </summary>
 public class StudentProfileTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWebAppFactory>
 {

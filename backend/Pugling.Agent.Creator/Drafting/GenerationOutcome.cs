@@ -1,16 +1,16 @@
 namespace Pugling.Agent.Creator.Drafting;
 
 /// <summary>
-/// Was bei einem Generierungslauf herauskam – Erfolg wie Misserfolg in derselben Form, damit die
-/// Ausgabe (und ein Test) beides gleich behandeln kann.
+/// What came out of a generation run - success and failure in the same shape, so the output (and a
+/// test) can treat both the same way.
 /// </summary>
-/// <param name="TypeKey">Der erzeugte Übungstyp.</param>
-/// <param name="Title">Titel des Entwurfs (auch im Trockenlauf gefüllt).</param>
-/// <param name="DraftJson">Der Entwurf als JSON – die Ausgabe von <c>--dry-run</c> und das Beweisstück im Fehlerfall.</param>
-/// <param name="Violations">Regelverstöße, die auch die Reparatur-Runde nicht beheben konnte (leer = sauber).</param>
-/// <param name="ExerciseId">Id der angelegten Übung; <c>null</c> im Trockenlauf oder bei Verstößen.</param>
-/// <param name="SelfTestPercent">Ergebnis des nebenwirkungsfreien Selbsttests; erwartet werden 100 %.</param>
-/// <param name="RolledBack">Ob die Übung wegen eines misslungenen Selbsttests wieder gelöscht wurde.</param>
+/// <param name="TypeKey">The exercise type generated.</param>
+/// <param name="Title">Title of the draft (also filled in during a dry run).</param>
+/// <param name="DraftJson">The draft as JSON - the output of <c>--dry-run</c> and the evidence in case of failure.</param>
+/// <param name="Violations">Rule violations that even the repair round could not fix (empty = clean).</param>
+/// <param name="ExerciseId">Id of the created exercise; <c>null</c> during a dry run or on violations.</param>
+/// <param name="SelfTestPercent">Result of the side-effect-free self-test; 100 % is expected.</param>
+/// <param name="RolledBack">Whether the exercise was deleted again due to a failed self-test.</param>
 public sealed record GenerationOutcome(
     string TypeKey,
     string Title,
@@ -20,9 +20,9 @@ public sealed record GenerationOutcome(
     int? SelfTestPercent,
     bool RolledBack)
 {
-    /// <summary>Der Entwurf hat alle Regeln bestanden.</summary>
+    /// <summary>The draft passed all rules.</summary>
     public bool DraftAccepted => Violations.Count == 0;
 
-    /// <summary>Es steht eine spielbare, selbstgetestete Übung im Katalog.</summary>
+    /// <summary>A playable, self-tested exercise is now in the catalog.</summary>
     public bool Published => ExerciseId is not null && !RolledBack && SelfTestPercent == 100;
 }

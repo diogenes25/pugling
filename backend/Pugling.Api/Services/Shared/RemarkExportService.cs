@@ -5,16 +5,16 @@ using Pugling.Api.Models;
 namespace Pugling.Api.Services.Shared;
 
 /// <summary>
-/// Rendert Anmerkungen als Markdown-Schnappschuss.
+/// Renders remarks as a Markdown snapshot.
 /// <para>
-/// Der Export ist mehr als eine Notlösung für „kein Server läuft": Er ist die <b>einzige Brücke zu den
-/// Test-Skills</b>. <c>creator</c>/<c>supervisor</c>/<c>student</c> und <c>/smoke-test</c> laufen gegen eine
-/// Wegwerf-DB und können die Anmerkungen des Nutzers gar nicht aus der Datenbank lesen – wohl aber aus
-/// einer Datei im Repo.
+/// The export is more than a fallback for "no server running": it is the <b>only bridge to the
+/// test skills</b>. <c>creator</c>/<c>supervisor</c>/<c>student</c> and <c>/smoke-test</c> run against a
+/// throwaway DB and cannot read the user's remarks from the database at all – but they can read them
+/// from a file in the repo.
 /// </para>
 /// <para>
-/// Gelesen wird das Ergebnis von Mensch <i>und</i> Modell, deshalb: feste Überschriftenstruktur, ein
-/// Eintrag je Anmerkung, keine Tabellen (die brechen bei langen Texten).
+/// The result is read by human <i>and</i> model, hence: a fixed heading structure, one entry per remark,
+/// no tables (they break on long texts).
 /// </para>
 /// </summary>
 public class RemarkExportService
@@ -27,13 +27,13 @@ public class RemarkExportService
         [RemarkStatus.Rejected] = "verworfen",
     };
 
-    /// <summary>Markdown für die übergebenen Anmerkungen (bereits gefiltert und sortiert).</summary>
-    /// <param name="remarks">Die zu exportierenden Anmerkungen; <c>Comments</c> sollte geladen sein, sonst fehlt der Verlauf.</param>
-    /// <param name="filterNote">Menschenlesbare Beschreibung des Filters, für den Kopf des Dokuments.</param>
-    /// <param name="generatedAt">Erzeugungszeitpunkt (UTC) – wird durchgereicht statt intern gelesen, damit der Test ihn festnageln kann.</param>
+    /// <summary>Markdown for the given remarks (already filtered and sorted).</summary>
+    /// <param name="remarks">The remarks to export; <c>Comments</c> should be loaded, otherwise the history is missing.</param>
+    /// <param name="filterNote">Human-readable description of the filter, for the document header.</param>
+    /// <param name="generatedAt">Generation timestamp (UTC) – passed in rather than read internally, so the test can pin it down.</param>
     /// <param name="showAccounts">
-    /// Beim kontenübergreifenden Export (<c>scope=all</c>) das Konto je Beitrag ausweisen. Im Normalfall
-    /// stammt alles aus einer Hand und die Angabe wäre nur Rauschen.
+    /// For the cross-account export (<c>scope=all</c>), show the account per contribution. In the normal
+    /// case everything comes from one hand and the info would just be noise.
     /// </param>
     public string Render(IReadOnlyList<Remark> remarks, string filterNote, DateTime generatedAt, bool showAccounts = false)
     {
@@ -114,11 +114,11 @@ public class RemarkExportService
     }
 
     /// <summary>
-    /// Der Verlauf, chronologisch, unter der Antwort. Als Zitat gesetzt, damit beim Lesen klar bleibt, was
-    /// die belegte Auflösung ist (die <c>Antwort</c>) und was der Weg dorthin war.
+    /// The history, chronological, below the answer. Set as a blockquote so that when reading it stays
+    /// clear what the documented resolution is (the <c>Antwort</c>/answer) and what the path there was.
     /// <para>
-    /// Der Verlauf ist der Grund, warum ein Export von heute noch etwas über gestern weiß: Vorher überschrieb
-    /// die Umsetzungsnotiz die Analyse.
+    /// The history is the reason an export from today still knows something about yesterday: before this,
+    /// the implementation note overwrote the analysis.
     /// </para>
     /// </summary>
     private static void AppendComments(StringBuilder sb, Remark r, bool showAccounts)
@@ -149,13 +149,13 @@ public class RemarkExportService
     private static string Iso(DateTime value) =>
         DateTime.SpecifyKind(value, DateTimeKind.Utc).ToString("yyyy-MM-dd HH:mm 'UTC'", CultureInfo.InvariantCulture);
 
-    /// <summary>Entschärft Backticks und Zeilenumbrüche für die Verwendung in Inline-Code.</summary>
+    /// <summary>Defuses backticks and line breaks for use in inline code.</summary>
     private static string Inline(string value) => value.Replace('`', '\'').ReplaceLineEndings(" ");
 
     /// <summary>
-    /// Schreibt einen Code-Block, dessen Zaun länger ist als jede Backtick-Folge im Inhalt (CommonMark).
-    /// Nötig, weil der Inhalt aus dem Frontend stammt und über die API auch von Hand befüllt werden kann –
-    /// ein eingebettetes ``` würde den Block sonst vorzeitig schließen und das Dokument zerlegen.
+    /// Writes a code block whose fence is longer than any run of backticks in the content (CommonMark).
+    /// Necessary because the content comes from the frontend and can also be filled in by hand via the
+    /// API – an embedded ``` would otherwise close the block prematurely and break the document apart.
     /// </summary>
     private static void AppendFenced(StringBuilder sb, string language, string content)
     {

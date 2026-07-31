@@ -4,14 +4,14 @@ using System.Text.Json.Serialization;
 namespace Pugling.Contracts;
 
 /// <summary>
-/// Liest <see cref="VocabRef"/> abwärtskompatibel: sowohl die Alt-Form (nackter String = Store-Key, ID noch
-/// unbekannt → 0, der Resolver löst per Key auf) als auch die neue Objekt-Form <c>{ vocabularyId, key, _self }</c>.
-/// So bleiben bestehende <c>ConfigJson</c>-Zeilen ohne Daten-Migration lesbar. Beim Schreiben wird stets die
-/// Objekt-Form ausgegeben; <c>_self</c> nur, wenn (für Antworten) gesetzt – gespeicherte Configs bleiben linkfrei.
+/// Reads <see cref="VocabRef"/> backward-compatibly: both the legacy form (bare string = store key, ID
+/// still unknown → 0, the resolver resolves by key) and the new object form <c>{ vocabularyId, key, _self }</c>.
+/// This keeps existing <c>ConfigJson</c> rows readable without a data migration. When writing, the
+/// object form is always emitted; <c>_self</c> only when set (for responses) – stored configs remain link-free.
 /// </summary>
 public sealed class VocabRefJsonConverter : JsonConverter<VocabRef>
 {
-    /// <summary>Liest beide Formen: nackter String (Alt-Form, Key) oder Objekt <c>{ vocabularyId, key, _self }</c>.</summary>
+    /// <summary>Reads both forms: bare string (legacy form, key) or object <c>{ vocabularyId, key, _self }</c>.</summary>
     public override VocabRef Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
         // Alt-Form: nackter String = Store-Key (ID noch unbekannt → 0; Resolver löst per Key auf).
@@ -41,7 +41,7 @@ public sealed class VocabRefJsonConverter : JsonConverter<VocabRef>
         throw new JsonException("Unerwartetes Ende beim Lesen eines VocabRef.");
     }
 
-    /// <summary>Schreibt stets die Objekt-Form; <c>_self</c> nur, wenn gesetzt (gespeicherte Configs bleiben linkfrei).</summary>
+    /// <summary>Always writes the object form; <c>_self</c> only when set (stored configs remain link-free).</summary>
     public override void Write(Utf8JsonWriter writer, VocabRef value, JsonSerializerOptions options)
     {
         writer.WriteStartObject();

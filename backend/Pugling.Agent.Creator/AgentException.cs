@@ -1,8 +1,8 @@
 namespace Pugling.Agent.Creator;
 
 /// <summary>
-/// Der Lauf ist an etwas gescheitert, das der Nutzer beheben kann (Modell liefert keinen brauchbaren
-/// Entwurf, Ollama nicht erreichbar, …). Wird in <c>Program</c> als Klartext ausgegeben – ohne Stacktrace.
+/// The run failed on something the user can fix (model does not deliver a usable draft,
+/// Ollama unreachable, …). Printed as plain text in <c>Program</c> - without a stack trace.
 /// </summary>
 public sealed class AgentException(string message, Exception? innerException = null)
     : Exception(message, innerException);

@@ -1,22 +1,22 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Pugling.Api.Data;
 using Pugling.Api.Models;
 
 namespace Pugling.Api.Services.Shared;
 
 /// <summary>
-/// Wertet <see cref="Objective"/>s (große Ziele) und ihre <see cref="KeyResult"/>s (Etappen) <b>live</b> aus.
-/// Die Beherrschungs-Metriken kommen aus einem einmal geladenen Lernstand-
-/// Snapshot (<see cref="ChildLearnProgressService.ScopeEvaluator"/>), die Noten-Metrik aus den nachgetragenen
-/// Klassenarbeits-Noten. Geteilte Grundlage für die Vater-CRUD-Sicht (<c>ObjectiveService</c>) und die
-/// idempotente Belohnung (<c>ObjectiveRewardService</c>); es gibt keinen materialisierten Zustand.
+/// Evaluates <see cref="Objective"/>s (big goals) and their <see cref="KeyResult"/>s (milestones) <b>live</b>.
+/// The mastery metrics come from a learning-progress snapshot loaded once
+/// (<see cref="ChildLearnProgressService.ScopeEvaluator"/>), the grade metric from the recorded
+/// class test grades. Shared foundation for the adult CRUD view (<c>ObjectiveService</c>) and the
+/// idempotent reward (<c>ObjectiveRewardService</c>); there is no materialized state.
 /// </summary>
 public class ObjectiveEvaluationService(PuglingDbContext db, ChildLearnProgressService progress)
 {
-    /// <summary>Ausgewertete Etappe: aktueller Wert, erreicht?, Fortschritt (0..100) und Status.</summary>
+    /// <summary>Evaluated milestone: current value, achieved?, progress (0..100), and status.</summary>
     public record KeyResultEval(KeyResult KeyResult, int Current, bool Achieved, int ProgressPercent, string Status);
 
-    /// <summary>Ausgewertetes Objective inkl. Etappen und Roll-up (wie viele Etappen erreicht + Gesamtstatus).</summary>
+    /// <summary>Evaluated objective incl. milestones and roll-up (how many milestones achieved + overall status).</summary>
     public record ObjectiveEval(Objective Objective, IReadOnlyList<KeyResultEval> KeyResults,
         int AchievedCount, int TotalCount, int ProgressPercent, string Status);
 
@@ -55,9 +55,9 @@ public class ObjectiveEvaluationService(PuglingDbContext db, ChildLearnProgressS
         achieved ? "achieved" : dueDate is { } due && due < today ? "overdue" : "open";
 
     /// <summary>
-    /// Wertet alle Objectives eines Kindes aus (leere Liste, wenn keine existieren). Mit
-    /// <paramref name="activeOnly"/> werden inaktive Ziele schon in der DB weggefiltert – so spart das
-    /// Belohnungs-Settlement die (teurere) Auswertung von Zielen, die es ohnehin nicht abrechnet.
+    /// Evaluates all objectives of a child (empty list if none exist). With
+    /// <paramref name="activeOnly"/>, inactive goals are already filtered out in the DB – this way the
+    /// reward settlement saves the (more expensive) evaluation of goals it would not settle anyway.
     /// </summary>
     public async Task<List<ObjectiveEval>> EvaluateAllAsync(int childId, DateOnly today, bool activeOnly = false, CancellationToken ct = default)
     {
@@ -69,7 +69,7 @@ public class ObjectiveEvaluationService(PuglingDbContext db, ChildLearnProgressS
         return await EvaluateAsync(childId, objectives, today, ct);
     }
 
-    /// <summary>Wertet ein einzelnes Objective aus; <c>null</c>, wenn es (für dieses Kind) nicht existiert.</summary>
+    /// <summary>Evaluates a single objective; <c>null</c> if it does not exist (for this child).</summary>
     public async Task<ObjectiveEval?> EvaluateOneAsync(int childId, int objectiveId, DateOnly today, CancellationToken ct = default)
     {
         var objective = await db.Objectives.AsNoTracking().Include(o => o.KeyResults)

@@ -1,30 +1,30 @@
 namespace Pugling.Api.Tests;
 
 /// <summary>
-/// Die Uhr des Testhosts. Standardmäßig <b>durchreichend</b> (echte Systemzeit) – nur eine Testklasse, die
-/// eine Regel im Sekunden-Bereich prüft, friert sie ein und rückt sie selbst vor.
+/// The test host's clock. By default <b>pass-through</b> (real system time) – only a test class that
+/// checks a rule in the seconds range freezes it and advances it itself.
 /// <para>
-/// Warum überhaupt: der Schnelle-Antwort-Bonus wird serverseitig aus dem Abstand zur letzten Antwort
-/// gemessen und hat eine Anti-Farming-<b>Untergrenze von einer Sekunde</b>. Ein Test, der diese Untergrenze
-/// mit der Wanduhr prüft, muss zwei HTTP-Requests binnen einer Sekunde durchbringen; auf einem
-/// ausgelasteten Runner reißt das, und der Fehlschlag sieht aus wie ein Punkte-Regress. Mit eingefrorener
-/// Uhr ist die gemessene Zeit eine <i>Eingabe</i> des Tests statt einer Hoffnung.
+/// Why this exists at all: the quick-answer bonus is measured server-side from the gap to the last
+/// answer and has an anti-farming <b>lower bound of one second</b>. A test that checks this lower bound
+/// against the wall clock would have to get two HTTP requests through within one second; on a busy
+/// runner that fails, and the failure looks like a points regression. With a frozen clock, the measured
+/// time is an <i>input</i> of the test instead of a hope.
 /// </para>
-/// Bewusst pass-through als Vorgabe: alle übrigen Testklassen teilen sich dieselbe Registrierung und
-/// dürfen von der Naht nichts merken.
+/// Deliberately pass-through by default: all other test classes share the same registration and must
+/// not notice anything of this seam.
 /// </summary>
 public sealed class TestClock : TimeProvider
 {
     private readonly Lock _gate = new();
     private DateTimeOffset? _frozen;
 
-    /// <summary>Hält die Uhr auf der aktuellen Systemzeit an. Danach bewegt sie nur <see cref="Advance"/>.</summary>
+    /// <summary>Freezes the clock at the current system time. After that only <see cref="Advance"/> moves it.</summary>
     public void FreezeNow()
     {
         lock (_gate) _frozen = System.GetUtcNow();
     }
 
-    /// <summary>Rückt die eingefrorene Uhr vor – der Sprung <b>ist</b> die vom Server gemessene Antwortzeit.</summary>
+    /// <summary>Advances the frozen clock – the jump <b>is</b> the response time measured by the server.</summary>
     public void Advance(TimeSpan by)
     {
         lock (_gate)

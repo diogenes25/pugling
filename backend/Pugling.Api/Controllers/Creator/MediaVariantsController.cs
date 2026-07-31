@@ -9,11 +9,11 @@ using Pugling.Api.Models;
 namespace Pugling.Api.Controllers.Creator;
 
 /// <summary>
-/// Die technische Achse des Medien-Stores: <b>dieselbe Darstellung in mehreren Auflösungen/Formaten</b>
-/// (Thumbnail in der Liste, Karte in der Übung, groß in der Vorschau). Adressiert wird über den
-/// semantischen <see cref="MediaPurpose"/>, nicht über Pixelmaße – so kann die Auslieferung später auf
-/// andere Größen umstellen, ohne den Vertrag zu brechen. Je Asset ist (Zweck, Format) eindeutig;
-/// mehrere Formate pro Zweck sind erwünscht (webp + avif für <c>&lt;picture&gt;</c>/srcset).
+/// The technical axis of the media store: <b>the same representation in multiple resolutions/formats</b>
+/// (thumbnail in the list, card in the exercise, large in the preview). Addressed via the
+/// semantic <see cref="MediaPurpose"/>, not via pixel dimensions – so delivery can later switch to
+/// other sizes without breaking the contract. Per asset, (purpose, format) is unique;
+/// multiple formats per purpose are desired (webp + avif for <c>&lt;picture&gt;</c>/srcset).
 /// </summary>
 [ApiController]
 [ApiVersion("1.0")]
@@ -26,7 +26,7 @@ public class MediaVariantsController(PuglingDbContext db) : ControllerBase
     internal static MediaVariantResponse Map(MediaVariant v) =>
         new(v.Id, v.Purpose, v.Width, v.Height, v.Format, v.Url, v.Bytes);
 
-    /// <summary>Alle Auflösungen eines Assets (nach Zweck, dann Format).</summary>
+    /// <summary>All resolutions of an asset (by purpose, then format).</summary>
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<IEnumerable<MediaVariantResponse>>> List(int assetId, CancellationToken ct = default)
@@ -47,7 +47,7 @@ public class MediaVariantsController(PuglingDbContext db) : ControllerBase
             .ToList();
     }
 
-    /// <summary>Reicht eine Auflösung nach. (Zweck, Format) muss am Asset noch frei sein.</summary>
+    /// <summary>Adds a resolution afterward. (Purpose, format) must still be free on the asset.</summary>
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -72,7 +72,7 @@ public class MediaVariantsController(PuglingDbContext db) : ControllerBase
         return CreatedAtAction(nameof(List), new { assetId }, Map(variant));
     }
 
-    /// <summary>Ändert eine Auflösung (partiell).</summary>
+    /// <summary>Changes a resolution (partial).</summary>
     [HttpPatch("{variantId:int}")]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -107,7 +107,7 @@ public class MediaVariantsController(PuglingDbContext db) : ControllerBase
         return Map(variant);
     }
 
-    /// <summary>Löscht eine Auflösung. Das Asset bleibt bestehen (ggf. ohne Datei).</summary>
+    /// <summary>Deletes a resolution. The asset remains (possibly without a file).</summary>
     [HttpDelete("{variantId:int}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

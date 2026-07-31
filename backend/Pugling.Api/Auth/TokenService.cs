@@ -6,25 +6,25 @@ using Pugling.Api.Models;
 
 namespace Pugling.Api.Auth;
 
-/// <summary>Stellt signierte JWTs aus – mit Konto-Subjekt (<c>aid</c>) und einer/mehreren Rollen.</summary>
+/// <summary>Issues signed JWTs – with an account subject (<c>aid</c>) and one or more roles.</summary>
 public class TokenService(IConfiguration config)
 {
     private const int LifetimeHours = 12;
 
-    /// <summary>Signierschlüssel aus Konfiguration (Dev-Fallback; in Prod über Jwt:Key setzen).</summary>
+    /// <summary>Signing key from configuration (dev fallback; set via Jwt:Key in prod).</summary>
     private string Key => config["Jwt:Key"] ?? "pugling-dev-signing-key-change-me-please-0123456789";
 
-    /// <summary>Der symmetrische Schlüssel, mit dem ausgestellte Tokens signiert werden (aus <see cref="Key"/> abgeleitet).</summary>
+    /// <summary>The symmetric key used to sign issued tokens (derived from <see cref="Key"/>).</summary>
     public SymmetricSecurityKey SigningKey => new(Encoding.UTF8.GetBytes(Key));
 
     /// <summary>
-    /// Der kanonische Weg: Token aus einem Konto samt seiner Rollen-Profile. Trägt <c>aid</c> (Konto),
-    /// je Rolle einen <see cref="ClaimTypes.Role"/>-Claim (Creator/Supervisor/Student) sowie <c>fid</c>
-    /// (Adult der Creator/Supervisor-Profile) und <c>cid</c> (Child des Student-Profils), soweit vorhanden.
+    /// The canonical way: token from an account together with its role profiles. Carries <c>aid</c> (account),
+    /// one <see cref="ClaimTypes.Role"/> claim per role (Creator/Supervisor/Student), as well as <c>fid</c>
+    /// (adult of the Creator/Supervisor profiles) and <c>cid</c> (child of the Student profile), where present.
     /// </summary>
-    /// <param name="account">Das Login-Konto, für das das Token ausgestellt wird.</param>
-    /// <param name="profiles">Die Rollen-Profile des Kontos – je Profil ein Ebenen-Claim.</param>
-    /// <param name="isAdmin">Setzt zusätzlich den <see cref="Roles.Admin"/>-Claim (Break-Glass-Superuser, aus <see cref="Adult.IsAdmin"/>).</param>
+    /// <param name="account">The login account for which the token is issued.</param>
+    /// <param name="profiles">The account's role profiles – one tier claim per profile.</param>
+    /// <param name="isAdmin">Additionally sets the <see cref="Roles.Admin"/> claim (break-glass superuser, from <see cref="Adult.IsAdmin"/>).</param>
     public (string token, DateTime expiresAt) IssueForAccount(Account account, IReadOnlyList<AccountProfile> profiles, bool isAdmin = false)
     {
         var claims = new List<Claim>

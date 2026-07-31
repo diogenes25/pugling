@@ -1,40 +1,40 @@
 namespace Pugling.Contracts;
 
-/// <summary>Ziel-Rhythmus einer Lehrplan-Position: in welchem Takt sie erfüllt werden muss.</summary>
+/// <summary>Target cadence of a study plan position: at what interval it must be fulfilled.</summary>
 public enum GoalCadence
 {
-    /// <summary>Kein verpflichtendes Ziel – freies Üben, zählt nicht zum Tages-/Wochenziel.</summary>
+    /// <summary>No mandatory goal – free practice, does not count toward the daily/weekly goal.</summary>
     None = 0,
-    /// <summary>Muss an jedem Übungstag erfüllt werden (Tagesziel).</summary>
+    /// <summary>Must be fulfilled on every practice day (daily goal).</summary>
     Daily = 1,
-    /// <summary>Muss einmal pro Woche erfüllt werden (Wochenziel).</summary>
+    /// <summary>Must be fulfilled once per week (weekly goal).</summary>
     Weekly = 2,
 }
 
-/// <summary>Auswahl-Umfang der Inhalte einer Position aus dem Übungs-Pool.</summary>
+/// <summary>Selection scope of a position's content from the exercise pool.</summary>
 public enum ItemScope
 {
-    /// <summary>Alle Inhalte der Übung.</summary>
+    /// <summary>All content of the exercise.</summary>
     All = 0,
-    /// <summary>Nur noch nicht eingeführte (neue) Inhalte.</summary>
+    /// <summary>Only not-yet-introduced (new) content.</summary>
     New = 1,
-    /// <summary>Nur bereits eingeführte (alte) Inhalte – Wiederholung.</summary>
+    /// <summary>Only already introduced (old) content – review.</summary>
     Old = 2,
 }
 
 /// <summary>
-/// Reihenfolge-Strategie, in der der Server die (fälligen) Inhalte einer Position ausspielt. Die Reihenfolge
-/// wird bei Sitzungs-/Testbeginn <b>einmal</b> materialisiert (eingefroren), damit sie sich nicht mitten im
-/// Lauf verschiebt, wenn sich Boxen durch Antworten ändern.
+/// Ordering strategy in which the server plays out a position's (due) content. The order
+/// is materialized (frozen) <b>once</b> at the start of the session/test, so it doesn't shift mid-run
+/// when boxes change due to answers.
 /// </summary>
 public enum PracticeOrder
 {
-    /// <summary>Schwächste zuerst: nach Leitner-Box aufsteigend, dann Index (Standard, bisheriges Verhalten).</summary>
+    /// <summary>Weakest first: ascending by Leitner box, then index (default, previous behavior).</summary>
     WeakestFirst = 0,
-    /// <summary>Streng seriell nach Item-Index.</summary>
+    /// <summary>Strictly serial by item index.</summary>
     Serial = 1,
-    /// <summary>Zufällige Reihenfolge (einmalig beim Einfrieren gemischt).</summary>
+    /// <summary>Random order (shuffled once at freeze time).</summary>
     Random = 2,
-    /// <summary>Gewichtete Ziehung: zuletzt eingeführte (bzw. noch nie eingeführte) Inhalte stark bevorzugt.</summary>
+    /// <summary>Weighted draw: most recently introduced (or never introduced) content is strongly preferred.</summary>
     NewestWeighted = 3,
 }

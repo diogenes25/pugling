@@ -3,15 +3,15 @@ using Pugling.Api.Models;
 namespace Pugling.Api.Services.Creator;
 
 /// <summary>
-/// Testmodus für den Vater/Lehrer: spielt eine einzelne Katalog-Übung genau so durch, wie sie das Kind im
-/// Abschlusstest einer Lehrplan-Position erlebt – aber <b>vollständig nebenwirkungsfrei</b>. Es entsteht kein
-/// <see cref="TestAttempt"/>, kein <see cref="PositionItemProgress"/>, keine Punkte (<c>ChildPoints</c>) und keine
-/// Gamification. So kann sich der Vater mit der Übung vertraut machen und sie verifizieren, bevor er sie über einen
-/// Lehrplan zuweist – ohne aufs Feedback des Kindes zu warten.
+/// Preview mode for the adult/teacher: plays through a single catalog exercise exactly the way the child
+/// experiences it in a study plan position's final test – but <b>entirely free of side effects</b>. No
+/// <see cref="TestAttempt"/>, no <see cref="PositionItemProgress"/>, no points (<c>ChildPoints</c>) and no
+/// gamification are created. This lets the adult get familiar with the exercise and verify it before
+/// assigning it via a study plan – without having to wait for the child's feedback.
 /// <para>
-/// Die Bewertung ist bewusst dieselbe wie im echten Test (<see cref="IExerciseType.IsTypedStage(int)"/> +
-/// <see cref="AnswerGrader.Matches"/> gegen <see cref="ContentItem.AcceptedAnswers"/>) – eine Quelle der Wahrheit,
-/// keine gedoppelte Prüf-Logik. Nur die persistierenden Schritte des Test-Controllers fallen weg.
+/// Grading is deliberately identical to the real test (<see cref="IExerciseType.IsTypedStage(int)"/> +
+/// <see cref="AnswerGrader.Matches"/> against <see cref="ContentItem.AcceptedAnswers"/>) – one source of truth,
+/// no duplicated grading logic. Only the persisting steps of the test controller are left out.
 /// </para>
 /// </summary>
 public class ExercisePreviewService(ExerciseContentResolver content, AnswerGrader grader, ExerciseTypeRegistry registry)
@@ -20,8 +20,8 @@ public class ExercisePreviewService(ExerciseContentResolver content, AnswerGrade
     // leben im Vertrags-Projekt (Pugling.Contracts.Creator).
 
     /// <summary>
-    /// Baut den spielbaren Zustand einer Übung. Liefert <c>null</c>, wenn die Übung keine prüfbaren Inhalte hat
-    /// (z. B. leere Konfiguration oder ein Typ ohne Item-für-Item-Abgleich).
+    /// Builds the playable state of an exercise. Returns <c>null</c> if the exercise has no gradable content
+    /// (e.g. empty configuration or a type without item-by-item matching).
     /// </summary>
     public async Task<PreviewData?> BuildAsync(Exercise exercise, int? stageOverride = null,
         CancellationToken ct = default)
@@ -39,8 +39,8 @@ public class ExercisePreviewService(ExerciseContentResolver content, AnswerGrade
     }
 
     /// <summary>
-    /// Bewertet die Antworten typ-neutral gegen die Item-Lösungen – identisch zum echten Position-Test, aber ohne
-    /// jede Persistenz. Liefert <c>null</c>, wenn die Übung keine prüfbaren Inhalte hat.
+    /// Grades the answers type-neutrally against the item solutions – identical to the real plan position test,
+    /// but without any persistence. Returns <c>null</c> if the exercise has no gradable content.
     /// </summary>
     public async Task<PreviewResult?> CheckAsync(Exercise exercise, IReadOnlyList<PreviewAnswer> answers,
         int? stageOverride = null, CancellationToken ct = default)

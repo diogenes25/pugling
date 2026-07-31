@@ -6,48 +6,48 @@
 namespace Pugling.Api.Tests;
 
 /// <summary>
-/// Der Abdeckungs-Wächter aus docs/codequalitaet-gates-plan.md (C4): keine Controller-Action darf ohne
-/// einen Test bleiben, der sie <b>erfolgreich</b> aufruft.
+/// The coverage guard from docs/codequalitaet-gates-plan.md (C4): no controller action may go without
+/// a test that invokes it <b>successfully</b>.
 /// <para>
-/// Er macht die Arbeit von C3 dauerhaft. Vorher war die Lücke unsichtbar: 57 von 295 Actions wurden von
-/// keinem Test berührt, während die Zeilenabdeckung 97,9 % meldete. Betroffen war fast immer
-/// <c>Update</c>/<c>Delete</c> – der CRUD-Schwanz, und damit genau die Stellen, an denen PATCH-Semantik
-/// und Eigentumsprüfung sitzen.
+/// It makes the work of C3 permanent. Before this, the gap was invisible: 57 of 295 actions were
+/// touched by no test at all, while line coverage reported 97.9%. What was affected was almost always
+/// <c>Update</c>/<c>Delete</c> – the CRUD tail, and thus exactly the places where PATCH semantics
+/// and ownership checks live.
 /// </para>
 /// <para>
-/// Gezählt wird nur ein Aufruf mit Status &lt; 400 (siehe <see cref="EndpointCoverage.RecordSuccess"/>) –
-/// sonst hätte der Ownership-Matrix-Test aus C1 die Abdeckung mit seinen 403/404 vorgetäuscht.
+/// Only a call with status &lt; 400 is counted (see <see cref="EndpointCoverage.RecordSuccess"/>) –
+/// otherwise the ownership matrix test from C1 would have faked coverage with its 403/404s.
 /// </para>
 /// </summary>
 public sealed class EndpointCoverageGuard : IAsyncDisposable
 {
     /// <summary>
-    /// Erfolgreich berührte Actions bei einem vollständigen Lauf (gemessen 2026-07-29). Dient der
-    /// <b>Teil-Lauf-Erkennung</b>, nicht als Quote: die eigentliche Prüfung ist die Liste der unberührten
-    /// Actions gegen <see cref="Exceptions"/>. Steigt die Abdeckung, verlangt die Gegenrichtung unten,
-    /// diesen Wert mitzuziehen.
+    /// Actions successfully touched in a complete run (measured 2026-07-29). Serves as
+    /// <b>partial-run detection</b>, not a ratio: the actual check is the list of untouched
+    /// actions against <see cref="Exceptions"/>. If coverage increases, the countermeasure below
+    /// requires updating this value accordingly.
     /// </summary>
     private const int FullRunTouchedActions = 263;
 
     /// <summary>
-    /// Ab wie viel Prozent des Vollbestands der Wächter überhaupt urteilt.
+    /// From what percentage of the full inventory the guard judges at all.
     /// <para>
-    /// Ein <c>dotnet test --filter</c> auf eine einzelne Testklasse berührt naturgemäß fast nichts; dort
-    /// wäre eine Meldung über 290 unberührte Actions nur Lärm. Der Schwellwert liegt bewusst <b>weit</b>
-    /// unter dem Vollbestand: fällt die Abdeckung im vollen Lauf um einige Tests, urteilt der Wächter
-    /// weiterhin und die neu entblößte Action fällt auf. Die Tore, an denen es zählt (CI und der
-    /// Stop-Hook), fahren immer die ganze Solution.
+    /// A <c>dotnet test --filter</c> on a single test class naturally touches almost nothing; there, a
+    /// report of 290 untouched actions would just be noise. The threshold is deliberately set <b>far</b>
+    /// below the full inventory: if coverage in a full run drops by a few tests, the guard still judges
+    /// and the newly exposed action stands out. The gates where it matters (CI and the stop hook) always
+    /// run the whole solution.
     /// </para>
     /// </summary>
     private const double PartialRunThreshold = 0.6;
 
     /// <summary>
-    /// Bewusst unabgedeckte Actions – <b>kein</b> Sammelbecken. Jeder Eintrag braucht einen Grund;
-    /// ohne Grund gehört stattdessen ein Test geschrieben.
+    /// Deliberately uncovered actions – <b>not</b> a catch-all. Every entry needs a reason;
+    /// without a reason, a test should be written instead.
     /// </summary>
     private static readonly HashSet<string> Exceptions = new(StringComparer.Ordinal);
 
-    /// <summary>Prüft nach dem letzten Test; eine Ausnahme hier lässt den Lauf rot werden.</summary>
+    /// <summary>Checks after the last test; an exception here makes the run go red.</summary>
     public ValueTask DisposeAsync()
     {
         var inventory = EndpointCoverage.Inventory();
@@ -78,17 +78,17 @@ public sealed class EndpointCoverageGuard : IAsyncDisposable
         return ValueTask.CompletedTask;
     }
 
-    /// <summary>Wo der Befund landet – relativ zur Repo-Wurzel, <c>TestResults/</c> ist gitignored.</summary>
+    /// <summary>Where the report ends up – relative to the repo root, <c>TestResults/</c> is gitignored.</summary>
     public const string BerichtPfad = "TestResults/endpoint-coverage.txt";
 
     /// <summary>
-    /// Schreibt den Befund in eine Datei, <b>weil die Konsole ihn verschluckt.</b>
+    /// Writes the report to a file, <b>because the console swallows it.</b>
     /// <para>
-    /// Eine Ausnahme aus dem Aufräumen eines Assembly-Fixtures lässt den Lauf zwar scheitern (Exit-Code 1,
-    /// und die <c>.trx</c> trägt die vollständige Meldung), aber der Konsolen-Zusammenzug meldet trotzdem
-    /// „Passed!" und zeigt nur <c>Xunit.Sdk.TestPipelineException</c> – ohne den Grund. Auch
-    /// <c>Console.WriteLine</c> aus dem Fixture kommt nicht durch. Damit ein rotes Tor sagt, <em>was</em>
-    /// fehlt, liegt der Befund als Datei bereit: der Stop-Hook gibt sie aus, CI lädt sie als Artefakt hoch.
+    /// An exception from cleaning up an assembly fixture does make the run fail (exit code 1, and the
+    /// <c>.trx</c> carries the full message), but the console summary still reports "Passed!" and shows
+    /// only <c>Xunit.Sdk.TestPipelineException</c> – without the reason. Even <c>Console.WriteLine</c>
+    /// from the fixture does not come through. So that a red gate says <em>what</em> is missing, the
+    /// report is kept ready as a file: the stop hook prints it, CI uploads it as an artifact.
     /// </para>
     /// </summary>
     private static void Bericht(IReadOnlyList<string> untouched, int touched, int inventar)

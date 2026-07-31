@@ -4,9 +4,9 @@ using Microsoft.AspNetCore.Mvc;
 namespace Pugling.Api.Controllers.Creator;
 
 /// <summary>
-/// Selbstbeschreibung der Übungstypen: die eine Quelle, aus der ein Client Routing, Prüfmodus,
-/// Renderer und Fähigkeiten je Typ liest, statt sie fest zu verdrahten. Kindneutraler Katalog –
-/// daher für beide Rollen lesbar (auch der Sohn-Client braucht Play-Route und Renderer).
+/// Self-description of exercise types: the single source from which a client reads routing, check mode,
+/// renderer, and capabilities per type, instead of hard-wiring them. Child-neutral catalog –
+/// therefore readable by both tiers (the student client also needs the play route and renderer).
 /// </summary>
 [ApiController]
 [ApiVersion("1.0")]
@@ -16,11 +16,11 @@ namespace Pugling.Api.Controllers.Creator;
 [Authorize]
 public class ExerciseTypesController(ExerciseTypeRegistry registry) : ControllerBase
 {
-    /// <summary>Manifest aller bekannten Übungstypen.</summary>
+    /// <summary>Manifest of all known exercise types.</summary>
     [HttpGet]
     public IReadOnlyList<ExerciseTypeManifest> List() => registry.Manifests;
 
-    /// <summary>Manifest eines einzelnen Übungstyps.</summary>
+    /// <summary>Manifest of a single exercise type.</summary>
     [HttpGet("{type}")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public ActionResult<ExerciseTypeManifest> Get(string type) =>

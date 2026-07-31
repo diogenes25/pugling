@@ -5,13 +5,13 @@ using System.Text.Json;
 namespace Pugling.Api.Tests;
 
 /// <summary>
-/// Material <b>zurückziehen</b> – die Gegenbewegung zum Veröffentlichen.
+/// <b>Retracting</b> material – the reverse move of publishing.
 ///
-/// Nötig, weil Löschen bei einer benutzten Übung verweigert wird (der FK <c>PlanPosition→Exercise</c> ist
-/// <c>Restrict</c>), und das ist richtig: laufende Pflichten dürfen nicht unter dem Kind wegbrechen. Ein
-/// Creator – ein Lehrer oder eine KI-Creator-App – braucht trotzdem einen Weg, eigenes Material aus dem
-/// Verkehr zu nehmen. Der Schalter ist <c>ExecutePublic</c>; er greift beim <b>Zuweisen</b>, nicht beim
-/// Spielen.
+/// Necessary because deletion is refused for an exercise in use (the FK <c>PlanPosition→Exercise</c>
+/// is <c>Restrict</c>), and that is correct: running mandatory goals must not collapse out from under
+/// the child. A creator – a teacher or an AI creator app – still needs a way to take their own material
+/// out of circulation. The switch is <c>ExecutePublic</c>; it takes effect on <b>assignment</b>, not on
+/// play.
 /// </summary>
 public class ExerciseSharingTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWebAppFactory>
 {
@@ -24,7 +24,7 @@ public class ExerciseSharingTests(PuglingWebAppFactory factory) : IClassFixture<
         return (await TestApi.FatherAsync(_factory, id, pin), id);
     }
 
-    /// <summary>Legt eine gefüllte, öffentlich zuweisbare Vokabelübung an und liefert ihre Ids.</summary>
+    /// <summary>Creates a populated, publicly assignable vocabulary exercise and returns its ids.</summary>
     private static async Task<(int subjectId, int chapterId, int exerciseId)> PublishVocabAsync(HttpClient creator)
     {
         var subjectId = await TestApi.IdAsync(await creator.PostAsJsonAsync("/api/v1/creator/subjects",
@@ -117,8 +117,8 @@ public class ExerciseSharingTests(PuglingWebAppFactory factory) : IClassFixture<
     }
 
     /// <summary>
-    /// Ein ausdrückliches Recht schlägt die Rücknahme – genau dafür ist das RWX-Modell da: der Owner nimmt
-    /// Material aus dem allgemeinen Verkehr, kann es aber weiter gezielt weitergeben.
+    /// An explicit permission overrides the retraction – that is exactly what the RWX model is for: the
+    /// owner takes material out of general circulation but can still share it selectively.
     /// </summary>
     [Fact]
     public async Task ZurueckgezogenAberMitExecuteRecht_BleibtZuweisbar()

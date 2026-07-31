@@ -12,4 +12,4 @@ es pur verwenden kann. Folgerichtig bleibt Entity-Wissen in der API (Mapping-Kla
 siehe `ExerciseBriefMapping`), und Service-Ergebnisse, die `ApiError` oder Entities tragen, bleiben ebenfalls
 dort.
 
-Jedes DTO trägt ein `/// <summary>`.
+Jedes DTO trägt ein `/// <summary>` – **auf Englisch** (siehe [docs/translate.md](../../docs/translate.md)).

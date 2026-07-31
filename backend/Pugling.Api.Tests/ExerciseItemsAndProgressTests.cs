@@ -8,9 +8,9 @@ using Pugling.Api.Models;
 namespace Pugling.Api.Tests;
 
 /// <summary>
-/// Übungs-Items als eigene Sub-Ressource (CRUD unter <c>vocabulary/{id}/items</c>, Autoren-Schutz) und die
-/// kind-zentrische Fortschritts-/Historien-Ebene (pro Item + Wort-Rollup), die aus dem server-autoritativen
-/// Üben/Testen gespeist wird.
+/// Exercise items as their own sub-resource (CRUD under <c>vocabulary/{id}/items</c>, author
+/// protection) and the child-centric progress/history layer (per item + word rollup) fed from
+/// server-authoritative practice/testing.
 /// </summary>
 public class ExerciseItemsAndProgressTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWebAppFactory>
 {

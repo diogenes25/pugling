@@ -3,15 +3,15 @@ using System.Text;
 namespace Pugling.Agent.Creator.Briefing;
 
 /// <summary>
-/// Das vollständige Briefing eines Auftrags – aus <b>zwei</b> Quellen: dem Profil (der Lehrer: Fach,
-/// Schulzweig, Lehrwerk, Didaktik) und optional dem Kind (Interessen, Lernstand). Genau diese Trennung
-/// macht beide Betriebsarten möglich: mit <see cref="Child"/> entsteht eine <i>individuelle</i> Übung,
-/// ohne es eine <i>allgemeine</i> für den geteilten Katalog – und dafür braucht der Agent dann kein
-/// Konto mit Betreuungsrecht.
+/// The complete briefing of a request - from <b>two</b> sources: the profile (the teacher: subject,
+/// school branch, textbook, didactics) and, optionally, the child (interests, learning progress). Exactly
+/// this separation makes both modes of operation possible: with <see cref="Child"/> an <i>individual</i>
+/// exercise results, without it a <i>general</i> one for the shared catalog - and for that the agent then
+/// needs no account with supervision rights.
 /// <para>
-/// Die Durchgriffs-Eigenschaften (<see cref="Grade"/>, <see cref="SchoolType"/>, <see cref="Source"/> …)
-/// bevorzugen die Kind-Fakten und fallen aufs Profil zurück. Dadurch bleiben die Übungstyp-Strategien
-/// unverändert einfach: sie fragen das Briefing, nicht die Herkunft der Angabe.
+/// The pass-through properties (<see cref="Grade"/>, <see cref="SchoolType"/>, <see cref="Source"/> …)
+/// prefer the child facts and fall back to the profile. This keeps the exercise-type strategies simple
+/// as before: they query the briefing, not where the value came from.
 /// </para>
 /// </summary>
 public sealed record CreatorBriefing(
@@ -27,35 +27,35 @@ public sealed record CreatorBriefing(
     IReadOnlyList<string> ExistingExerciseTitles,
     IReadOnlyList<string> RequiredWords)
 {
-    /// <summary>Wird auf ein Kind zugeschnitten (statt für den allgemeinen Katalog)?</summary>
+    /// <summary>Is this tailored to a child (instead of for the general catalog)?</summary>
     public bool Individual => Child is not null;
 
-    /// <summary>Für wen entworfen wird – Kindname bzw. Profilname (nur für Ausgaben).</summary>
+    /// <summary>Who this is designed for - child name or profile name (for output only).</summary>
     public string Audience => Child?.Name ?? Profile?.Name ?? "Allgemeiner Katalog";
 
-    /// <summary>Interessen des Kindes; im allgemeinen Modus bewusst leer (nichts zum Einkleiden).</summary>
+    /// <summary>The child's interests; deliberately empty in general mode (nothing to dress up).</summary>
     public IReadOnlyList<string> Interests => Child?.Interests ?? [];
 
-    /// <summary>Schwach beherrschte Wörter des Kindes; im allgemeinen Modus leer.</summary>
+    /// <summary>The child's weakly mastered words; empty in general mode.</summary>
     public IReadOnlyList<WordMasteryResponse> WeakWords => Child?.WeakWords ?? [];
 
-    /// <summary>Klassenstufe des Kindes, sonst die Untergrenze des Profils.</summary>
+    /// <summary>The child's grade, otherwise the profile's lower bound.</summary>
     public int? Grade => Child?.Grade ?? Profile?.GradeMin;
 
-    /// <summary>Untere Eignungsgrenze der Übungs-Metadaten: beim Kind exakt seine Stufe, sonst der Profil-Bereich.</summary>
+    /// <summary>Lower suitability bound of the exercise metadata: with a child, exactly its grade, otherwise the profile range.</summary>
     public int? GradeMin => Child?.Grade ?? Profile?.GradeMin;
 
-    /// <summary>Obere Eignungsgrenze: beim Kind exakt seine Stufe, sonst der Profil-Bereich.</summary>
+    /// <summary>Upper suitability bound: with a child, exactly its grade, otherwise the profile range.</summary>
     public int? GradeMax => Child?.Grade ?? Profile?.GradeMax;
 
-    /// <summary>Schularten der Übungs-Metadaten (Kind schlägt Profil). Singular benannt wie bei <see cref="ChildFacts"/>.</summary>
+    /// <summary>School types of the exercise metadata (child overrides profile). Named in singular as in <see cref="ChildFacts"/>.</summary>
     public SchoolTypes SchoolType =>
         Child is { SchoolType: not SchoolTypes.None } c ? c.SchoolType
         : Profile?.SchoolTypes ?? SchoolTypes.None;
 
     /// <summary>
-    /// Quellenangabe der Übung: das Lehrwerk des Profils, sonst das Lehrbuch des Kindes, sonst das Thema.
-    /// Das Profil steht vorn, weil es die katalogisierte – also wiederfindbare – Form ist.
+    /// Source attribution of the exercise: the profile's textbook series, otherwise the child's textbook,
+    /// otherwise the topic. The profile comes first because it is the catalogued - i.e. rediscoverable - form.
     /// </summary>
     public string? Source =>
         Profile?.Source
@@ -64,8 +64,8 @@ public sealed record CreatorBriefing(
             : Topic);
 
     /// <summary>
-    /// Das Briefing als kompakter deutscher Fließtext für den Prompt. Bewusst knapp: lokale Modelle
-    /// verlieren bei langen Kontexten die Anweisungen aus dem Blick.
+    /// The briefing as compact German running text for the prompt. Deliberately brief: local models
+    /// lose track of the instructions with long contexts.
     /// </summary>
     public string ToPromptText()
     {

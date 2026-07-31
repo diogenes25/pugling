@@ -5,15 +5,15 @@ using System.Text.Json;
 namespace Pugling.Api.Tests;
 
 /// <summary>
-/// Verwendungs-Anzeige und Löschprüfung müssen **dieselbe** Frage gleich beantworten.
+/// Usage display and deletion check must answer **the same** question consistently.
 ///
-/// Vorher taten sie es nicht: <c>usage</c> filterte auf die eigenen Kinder, die Löschprüfung schaute global.
-/// Steckte eine Übung im Lehrplan eines fremd betreuten Kindes, meldete die Anzeige „nirgends" und das
-/// Löschen scheiterte trotzdem mit <c>409</c> – der Autor hatte keinen Weg, den Grund zu finden
-/// (Anmerkung 14, aufgefallen an einer Übung, die in einem aktiven Plan eines dritten Kontos lag).
+/// Previously they didn't: <c>usage</c> filtered by the creator's own children, while the deletion check looked
+/// globally. If an exercise was sitting in the study plan of a child supervised by someone else, the display
+/// reported "nowhere" and deletion still failed with <c>409</c> - the author had no way to find the reason
+/// (remark 14, spotted on an exercise that sat in an active plan of a third account).
 ///
-/// Der Aufbau hier ist genau diese Konstellation: Vater A **besitzt** die Übung, Vater B **betreut** das
-/// Kind, das sie in seinem Plan hat.
+/// The setup here is exactly that constellation: father A **owns** the exercise, father B **supervises** the
+/// child who has it in their plan.
 /// </summary>
 public class ExerciseUsageScopeTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWebAppFactory>
 {
@@ -101,9 +101,9 @@ public class ExerciseUsageScopeTests(PuglingWebAppFactory factory) : IClassFixtu
     }
 
     /// <summary>
-    /// Der Fall, für den die Zahl eigentlich da ist: ein <b>Creator ohne eigene Kinder</b> – ein Lehrer oder
-    /// eine KI-Creator-App. Seine beiden Listen können sich nie füllen, weil er niemanden betreut. Gezählt
-    /// werden <b>Kinder</b>, nicht Stellen: zwei Positionen im Plan desselben Kindes bleiben ein Nutzer.
+    /// The case the number actually exists for: a <b>creator without their own children</b> - a teacher or
+    /// an AI creator app. Their two lists can never fill up, because they supervise nobody. What is counted
+    /// are <b>children</b>, not usage spots: two positions in the same child's plan remain one user.
     /// </summary>
     [Fact]
     public async Task CreatorOhneKinder_ZaehltNutzendeKinder_NichtVerwendungsstellen()

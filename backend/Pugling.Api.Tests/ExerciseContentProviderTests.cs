@@ -3,7 +3,7 @@ using Pugling.Api.Exercises;
 
 namespace Pugling.Api.Tests;
 
-/// <summary>Unit-Tests der Inhalts-Extraktion aus der Übungs-Config (zustandslos, ohne DB/HTTP).</summary>
+/// <summary>Unit tests of content extraction from the exercise config (stateless, without DB/HTTP).</summary>
 public class ExerciseContentProviderTests
 {
     // Registry aus den eingebauten Typen – der Provider delegiert die Projektion an sie.

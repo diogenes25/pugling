@@ -5,8 +5,8 @@ using Microsoft.Extensions.DependencyInjection;
 namespace Pugling.Api.Tests;
 
 /// <summary>
-/// Startet die API in-process gegen eine frische, isolierte SQLite-Datei je Testklasse.
-/// Die echte <c>pugling.db</c> bleibt unberührt; Umgebung = Development (Seed läuft, Dev-JWT-Key greift).
+/// Starts the API in-process against a fresh, isolated SQLite file per test class.
+/// The real <c>pugling.db</c> stays untouched; environment = Development (seed runs, dev JWT key applies).
 /// </summary>
 public sealed class PuglingWebAppFactory : WebApplicationFactory<Program>
 {
@@ -16,8 +16,8 @@ public sealed class PuglingWebAppFactory : WebApplicationFactory<Program>
     private readonly string _mediaPath = Path.Combine(Path.GetTempPath(), $"pugling_media_{Guid.NewGuid():N}");
 
     /// <summary>
-    /// Die Uhr dieses Hosts – standardmäßig die echte. Testklassen, die eine Regel im Sekunden-Bereich
-    /// prüfen (Schnelle-Antwort-Bonus), frieren sie ein und rücken sie selbst vor.
+    /// This host's clock – the real one by default. Test classes that check a rule in the seconds
+    /// range (speed bonus) freeze it and advance it themselves.
     /// </summary>
     public TestClock Clock { get; } = new();
 

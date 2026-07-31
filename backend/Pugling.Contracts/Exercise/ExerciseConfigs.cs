@@ -10,249 +10,249 @@ namespace Pugling.Contracts;
 // Liegen in Pugling.Contracts, damit Server (Pugling.Api) und die Client-Projekte
 // (Creator/Supervisor) dieselben Config-Typen über die Leitung teilen.
 
-/// <summary>Frage mit optionalen Antwortmöglichkeiten (leer = Freitext).</summary>
+/// <summary>Question with optional answer choices (empty = free text).</summary>
 public record Question(string Prompt, List<string>? Choices, string Answer);
 
 /// <summary>
-/// Vokabelübung. Verweist über <see cref="Refs"/> auf Einträge des Vokabel-Stores (per <see cref="VocabRef.VocabularyId"/>),
-/// damit dieselbe Vokabel über mehrere Übungen hinweg verknüpft und zentral pflegbar ist. Inline-<see cref="Items"/>
-/// ohne eigene <see cref="VocabItem.VocabularyId"/> werden beim Speichern automatisch im Store angelegt und verlinkt –
-/// so liegt garantiert jede genutzte Vokabel im Store. <see cref="SourceLang"/>/<see cref="TargetLang"/> sind dafür
-/// nötig (der Store-Key wird aus Sprache + Wort + Übersetzung gebildet).
+/// Vocabulary exercise. References entries of the vocabulary store via <see cref="Refs"/> (by <see cref="VocabRef.VocabularyId"/>),
+/// so the same vocabulary item can be linked across multiple exercises and maintained centrally. Inline <see cref="Items"/>
+/// without their own <see cref="VocabItem.VocabularyId"/> are automatically created in the store and linked on save –
+/// this guarantees every used vocabulary item lives in the store. <see cref="SourceLang"/>/<see cref="TargetLang"/> are
+/// needed for this (the store key is formed from language + word + translation).
 /// </summary>
 public class VocabularyConfig
 {
-    /// <summary>Abfragerichtung: front-to-back | back-to-front | both.</summary>
+    /// <summary>Query direction: front-to-back | back-to-front | both.</summary>
     public string Direction { get; set; } = "front-to-back";
-    /// <summary>Sprachcode der Ausgangssprache (z. B. „en"); nötig, um Inline-<see cref="Items"/> im Store anzulegen.</summary>
+    /// <summary>Language code of the source language (e.g. "en"); needed to create inline <see cref="Items"/> in the store.</summary>
     public string SourceLang { get; set; } = "";
-    /// <summary>Sprachcode der Zielsprache (z. B. „de"); nötig, um Inline-<see cref="Items"/> im Store anzulegen.</summary>
+    /// <summary>Language code of the target language (e.g. "de"); needed to create inline <see cref="Items"/> in the store.</summary>
     public string TargetLang { get; set; } = "";
-    /// <summary>Referenzen auf Vokabel-Store-Einträge (per ID; die Antwort ergänzt den Link).</summary>
+    /// <summary>References to vocabulary store entries (by ID; the response adds the link).</summary>
     public List<VocabRef>? Refs { get; set; }
-    /// <summary>Inline-Vokabeln; ohne <see cref="VocabItem.VocabularyId"/> beim Speichern automatisch im Store angelegt.</summary>
+    /// <summary>Inline vocabulary items; without <see cref="VocabItem.VocabularyId"/> they are automatically created in the store on save.</summary>
     public List<VocabItem> Items { get; set; } = new();
 }
 
 /// <summary>
-/// Verweis auf einen Vokabel-Store-Eintrag. Persistiert wird die <paramref name="VocabularyId"/> (und – als Lesehilfe –
-/// optional der <paramref name="Key"/>). <paramref name="Self"/> ist ein rein abgeleiteter HATEOAS-Link
-/// (<c>/api/v1/creator/vocabulary/{id}</c>), der nur in Antworten gefüllt und nie gespeichert wird.
+/// Reference to a vocabulary store entry. The <paramref name="VocabularyId"/> is persisted (and – as a reading aid –
+/// optionally the <paramref name="Key"/>). <paramref name="Self"/> is a purely derived HATEOAS link
+/// (<c>/api/v1/creator/vocabulary/{id}</c>) that is only populated in responses and never stored.
 /// </summary>
 [JsonConverter(typeof(VocabRefJsonConverter))]
 public record VocabRef(int VocabularyId, string? Key = null, string? Self = null);
 
 /// <summary>
-/// Inline-Vokabel – dieselbe Eingabeform wie der Item-Endpunkt (<c>VocabItemInput</c>): Wort per
-/// <paramref name="VocabularyId"/> (bestehender Store-Eintrag; <paramref name="Front"/>/<paramref name="Back"/>
-/// kommen dann aus dem Store) <b>oder</b> inline per <paramref name="Front"/>/<paramref name="Back"/> (wird beim
-/// Speichern im Store angelegt/gefunden). Beide sind daher optional; ein Item braucht jedoch entweder die
-/// <paramref name="VocabularyId"/> oder Front <i>und</i> Back. <paramref name="Self"/> ist der abgeleitete, nur
-/// lesend gefüllte HATEOAS-Link.
+/// Inline vocabulary item – the same input shape as the item endpoint (<c>VocabItemInput</c>): word via
+/// <paramref name="VocabularyId"/> (existing store entry; <paramref name="Front"/>/<paramref name="Back"/>
+/// then come from the store) <b>or</b> inline via <paramref name="Front"/>/<paramref name="Back"/> (created/found
+/// in the store on save). Both are therefore optional; an item needs either the
+/// <paramref name="VocabularyId"/> or Front <i>and</i> Back. <paramref name="Self"/> is the derived, read-only
+/// populated HATEOAS link.
 /// </summary>
 public record VocabItem(string? Front = null, string? Back = null, string? Hint = null,
     int? VocabularyId = null, [property: JsonPropertyName("_self")] string? Self = null);
 
-/// <summary>Leseverständnis: Text + Verständnisfragen.</summary>
+/// <summary>Reading comprehension: text + comprehension questions.</summary>
 public class ReadingConfig
 {
-    /// <summary>Der zu lesende Text.</summary>
+    /// <summary>The text to be read.</summary>
     public string Text { get; set; } = "";
-    /// <summary>Fragen zum Text – sie sind die bewerteten Inhalts-Atome der Übung.</summary>
+    /// <summary>Questions about the text – they are the graded content atoms of the exercise.</summary>
     public List<Question> Questions { get; set; } = new();
 }
 
-/// <summary>Lückentext: Text mit Platzhaltern {{1}}, {{2}} … + Lösungen.</summary>
+/// <summary>Cloze: text with placeholders {{1}}, {{2}} … + solutions.</summary>
 public class ClozeConfig
 {
-    /// <summary>Der Text mit Platzhaltern <c>{{1}}</c>, <c>{{2}}</c> … an den Lückenstellen.</summary>
+    /// <summary>The text with placeholders <c>{{1}}</c>, <c>{{2}}</c> … at the gap positions.</summary>
     public string Text { get; set; } = "";
-    /// <summary>Die Lücken; ihr <c>Index</c> verweist auf den gleichnamigen Platzhalter im Text.</summary>
+    /// <summary>The gaps; their <c>Index</c> refers to the placeholder of the same name in the text.</summary>
     public List<Gap> Gaps { get; set; } = new();
-    /// <summary>Optionaler Wortpool zur Auswahl.</summary>
+    /// <summary>Optional word pool to choose from.</summary>
     public List<string>? WordBank { get; set; }
 }
 /// <summary>
-/// Eine Lücke. Ist <paramref name="VocabKey"/> gesetzt, kommt die Lösung aus dem Vokabel-Store
-/// (Wort des Eintrags), zentral pflegbar; das inline <paramref name="Answer"/> bleibt Fallback für
-/// Lücken ohne Store-Bezug. So lässt sich ein Lückentext aus dem gepflegten Wortschatz bauen.
+/// A gap. If <paramref name="VocabKey"/> is set, the solution comes from the vocabulary store
+/// (the entry's word), centrally maintainable; the inline <paramref name="Answer"/> remains a fallback for
+/// gaps without a store reference. This allows building a cloze from the maintained vocabulary.
 /// </summary>
 public record Gap(int Index, string Answer, List<string>? Alternatives = null, string? VocabKey = null);
 
-/// <summary>Aufsatz: Schreibauftrag + Rahmenbedingungen.</summary>
+/// <summary>Essay: writing prompt + constraints.</summary>
 public class EssayConfig
 {
-    /// <summary>Der Schreibauftrag.</summary>
+    /// <summary>The writing prompt.</summary>
     public string Prompt { get; set; } = "";
-    /// <summary>Mindestlänge in Wörtern (leer = keine Untergrenze).</summary>
+    /// <summary>Minimum length in words (empty = no lower bound).</summary>
     public int? MinWords { get; set; }
-    /// <summary>Höchstlänge in Wörtern (leer = keine Obergrenze).</summary>
+    /// <summary>Maximum length in words (empty = no upper bound).</summary>
     public int? MaxWords { get; set; }
-    /// <summary>Optionale Bewertungskriterien.</summary>
+    /// <summary>Optional grading criteria.</summary>
     public List<RubricCriterion>? Rubric { get; set; }
 }
 
-/// <summary>Ein Bewertungskriterium eines Aufsatzes.</summary>
-/// <param name="Criterion">Worauf geachtet wird (z. B. „Aufbau", „Wortschatz").</param>
-/// <param name="MaxScore">Höchstpunktzahl, die dieses Kriterium erreichen kann.</param>
+/// <summary>A grading criterion of an essay.</summary>
+/// <param name="Criterion">What is being assessed (e.g. "structure", "vocabulary").</param>
+/// <param name="MaxScore">Maximum score this criterion can achieve.</param>
 public record RubricCriterion(string Criterion, int MaxScore);
 
-/// <summary>Hörverständnis: Audioquelle + Verständnisfragen.</summary>
+/// <summary>Listening comprehension: audio source + comprehension questions.</summary>
 public class ListeningConfig
 {
-    /// <summary>URL / Referenz auf die Audiodatei.</summary>
+    /// <summary>URL / reference to the audio file.</summary>
     public string AudioUrl { get; set; } = "";
-    /// <summary>Optionaler Volltext der Aufnahme – nur für den Creator, nie fürs Kind (Anti-Cheat).</summary>
+    /// <summary>Optional full transcript of the recording – for the creator only, never for the child (anti-cheat).</summary>
     public string? Transcript { get; set; }
-    /// <summary>Fragen zur Aufnahme – sie sind die bewerteten Inhalts-Atome der Übung.</summary>
+    /// <summary>Questions about the recording – they are the graded content atoms of the exercise.</summary>
     public List<Question> Questions { get; set; } = new();
 }
 
-/// <summary>Grammatik: Umformungs- / Regelaufgaben.</summary>
+/// <summary>Grammar: transformation / rule-based tasks.</summary>
 public class GrammarConfig
 {
-    /// <summary>Optionaler Arbeitsauftrag über allen Aufgaben (z. B. „Setze das Verb in die richtige Form").</summary>
+    /// <summary>Optional instruction covering all tasks (e.g. "Put the verb in the correct form").</summary>
     public string? Instruction { get; set; }
-    /// <summary>Die Einzelaufgaben – die bewerteten Inhalts-Atome der Übung.</summary>
+    /// <summary>The individual tasks – the graded content atoms of the exercise.</summary>
     public List<GrammarTask> Tasks { get; set; } = new();
 }
 
-/// <summary>Eine Grammatikaufgabe.</summary>
-/// <param name="Prompt">Die Aufgabenstellung, üblicherweise mit Lücke („He ___ (to feed) the horse").</param>
-/// <param name="Answer">Die erwartete Lösung.</param>
-/// <param name="RuleHint">Optionaler Regelhinweis, der nach der Antwort gezeigt werden darf.</param>
+/// <summary>A grammar task.</summary>
+/// <param name="Prompt">The task statement, usually with a gap ("He ___ (to feed) the horse").</param>
+/// <param name="Answer">The expected solution.</param>
+/// <param name="RuleHint">Optional rule hint that may be shown after the answer.</param>
 public record GrammarTask(string Prompt, string Answer, string? RuleHint = null);
 
-/// <summary>Zuordnung: Paare links ↔ rechts.</summary>
+/// <summary>Matching: pairs left ↔ right.</summary>
 public class MatchingConfig
 {
-    /// <summary>Optionaler Arbeitsauftrag über allen Paaren.</summary>
+    /// <summary>Optional instruction covering all pairs.</summary>
     public string? Instruction { get; set; }
-    /// <summary>Die zuzuordnenden Paare – die bewerteten Inhalts-Atome der Übung.</summary>
+    /// <summary>The pairs to be matched – the graded content atoms of the exercise.</summary>
     public List<MatchPair> Pairs { get; set; } = new();
 }
 
-/// <summary>Ein zuzuordnendes Paar.</summary>
-/// <param name="Left">Der vorgegebene Eintrag (linke Spalte).</param>
-/// <param name="Right">Der passende Gegeneintrag (rechte Spalte).</param>
+/// <summary>A pair to be matched.</summary>
+/// <param name="Left">The given entry (left column).</param>
+/// <param name="Right">The matching counterpart (right column).</param>
 public record MatchPair(string Left, string Right);
 
-/// <summary>Übersetzung: Sätze mit erwarteter Übersetzung.</summary>
+/// <summary>Translation: sentences with expected translation.</summary>
 public class TranslationConfig
 {
-    /// <summary>Ausgangssprache als Sprachcode (z. B. "en").</summary>
+    /// <summary>Source language as a language code (e.g. "en").</summary>
     public string SourceLang { get; set; } = "";
-    /// <summary>Zielsprache als Sprachcode (z. B. "de").</summary>
+    /// <summary>Target language as a language code (e.g. "de").</summary>
     public string TargetLang { get; set; } = "";
-    /// <summary>Die Satzpaare – die bewerteten Inhalts-Atome der Übung.</summary>
+    /// <summary>The sentence pairs – the graded content atoms of the exercise.</summary>
     public List<TranslationItem> Items { get; set; } = new();
 }
 /// <summary>
-/// Ein Übersetzungspaar. <paramref name="VocabularyId"/> verweist auf den zugehörigen Store-Eintrag
-/// (beim Speichern automatisch angelegt); <paramref name="Self"/> ist der abgeleitete, nur lesend gefüllte Link.
+/// A translation pair. <paramref name="VocabularyId"/> refers to the associated store entry
+/// (automatically created on save); <paramref name="Self"/> is the derived, read-only populated link.
 /// </summary>
 public record TranslationItem(string Source, string Target, List<string>? Alternatives = null,
     int? VocabularyId = null, [property: JsonPropertyName("_self")] string? Self = null);
 
-/// <summary>Feste Rechenaufgaben: manuell gepflegte Liste aus Ausdruck und erwarteter Lösung.</summary>
+/// <summary>Fixed arithmetic problems: manually maintained list of expression and expected solution.</summary>
 public class ArithmeticConfig
 {
-    /// <summary>Die festen Aufgaben – die bewerteten Inhalts-Atome der Übung.</summary>
+    /// <summary>The fixed problems – the graded content atoms of the exercise.</summary>
     public List<ArithmeticProblem> Problems { get; set; } = new();
 }
 /// <summary>
-/// Eine feste Rechenaufgabe. <see cref="Tolerance"/> erlaubt Rundungsspielraum
-/// (0 = exakte Lösung erwartet), z. B. bei nicht glatt aufgehenden Divisionen.
+/// A fixed arithmetic problem. <see cref="Tolerance"/> allows rounding leeway
+/// (0 = exact solution expected), e.g. for divisions that don't come out evenly.
 /// </summary>
 public record ArithmeticProblem(string Prompt, decimal Answer, decimal Tolerance = 0m);
 
-/// <summary>Rechenart einer erzeugten Aufgabe.</summary>
+/// <summary>Operation type of a generated problem.</summary>
 public enum ArithmeticOperation
 {
     /// <summary>Addition.</summary>
     Addition,
-    /// <summary>Subtraktion – ob ein negatives Ergebnis erlaubt ist, steuert <see cref="ArithmeticDrillConfig.AllowNegativeResults"/>.</summary>
+    /// <summary>Subtraction – whether a negative result is allowed is controlled by <see cref="ArithmeticDrillConfig.AllowNegativeResults"/>.</summary>
     Subtraction,
-    /// <summary>Multiplikation.</summary>
+    /// <summary>Multiplication.</summary>
     Multiplication,
-    /// <summary>Division – ob sie ohne Rest aufgehen muss, steuert <see cref="ArithmeticDrillConfig.DivisionMustBeWhole"/>.</summary>
+    /// <summary>Division – whether it must divide evenly is controlled by <see cref="ArithmeticDrillConfig.DivisionMustBeWhole"/>.</summary>
     Division,
 }
 
 /// <summary>
-/// Regeln für zufällig erzeugte Rechenaufgaben. Gespeichert werden nur die Regeln;
-/// die konkreten Aufgaben erzeugt der Server pro Abruf (siehe ArithmeticDrillController.Generate).
+/// Rules for randomly generated arithmetic problems. Only the rules are stored;
+/// the concrete problems are generated by the server per request (see ArithmeticDrillController.Generate).
 /// </summary>
 public class ArithmeticDrillConfig
 {
-    /// <summary>Erlaubte Rechenarten; pro Aufgabe wird zufällig eine davon gewählt.</summary>
+    /// <summary>Allowed operation types; one is chosen at random per problem.</summary>
     public List<ArithmeticOperation> Operations { get; set; } = new() { ArithmeticOperation.Addition };
-    /// <summary>Kleinster Operand (inklusive).</summary>
+    /// <summary>Smallest operand (inclusive).</summary>
     public int MinOperand { get; set; } = 1;
-    /// <summary>Größter Operand (inklusive).</summary>
+    /// <summary>Largest operand (inclusive).</summary>
     public int MaxOperand { get; set; } = 10;
-    /// <summary>Anzahl der pro Durchlauf erzeugten Aufgaben.</summary>
+    /// <summary>Number of problems generated per run.</summary>
     public int ProblemCount { get; set; } = 10;
-    /// <summary>Ob Subtraktionen ein negatives Ergebnis liefern dürfen. Default: nein.</summary>
+    /// <summary>Whether subtractions may yield a negative result. Default: no.</summary>
     public bool AllowNegativeResults { get; set; }
-    /// <summary>Ob Divisionen ohne Rest aufgehen müssen (ganzzahliges Ergebnis).</summary>
+    /// <summary>Whether divisions must come out without a remainder (integer result).</summary>
     public bool DivisionMustBeWhole { get; set; } = true;
-    /// <summary>Optionaler fester Seed für reproduzierbare Durchläufe (leer = echter Zufall).</summary>
+    /// <summary>Optional fixed seed for reproducible runs (empty = true randomness).</summary>
     public int? Seed { get; set; }
 }
 
 /// <summary>
-/// Auswendig zu lernende Liste (z. B. „die 16 Bundesländer"). Bei der Auswertung zählt
-/// standardmäßig nur, ob die Einträge genannt wurden – die Reihenfolge nur, wenn <see cref="Ordered"/> gesetzt ist.
+/// A list to be memorized (e.g. "the 16 German states"). By default, grading only checks
+/// whether the entries were named – order only counts if <see cref="Ordered"/> is set.
 /// </summary>
 public class ListConfig
 {
-    /// <summary>Optionaler Auftrag/Frage (z. B. „Nenne alle 16 Bundesländer").</summary>
+    /// <summary>Optional instruction/question (e.g. "Name all 16 German states").</summary>
     public string? Instruction { get; set; }
-    /// <summary>Ob die Reihenfolge für die Bewertung zählt.</summary>
+    /// <summary>Whether order counts for grading.</summary>
     public bool Ordered { get; set; }
-    /// <summary>Die zu nennenden Einträge – die bewerteten Inhalts-Atome der Übung.</summary>
+    /// <summary>The entries to be named – the graded content atoms of the exercise.</summary>
     public List<ListEntry> Items { get; set; } = new();
 }
-/// <summary>Ein Listeneintrag; <paramref name="Alternatives"/> erlaubt zulässige Synonyme/Schreibweisen.</summary>
+/// <summary>A list entry; <paramref name="Alternatives"/> allows acceptable synonyms/spellings.</summary>
 public record ListEntry(string Value, List<string>? Alternatives = null);
 
 /// <summary>
-/// Birkenbihl-Methode: ein Text in der zu lernenden Sprache wird grammatik-unabhängig
-/// Wort für Wort in die Muttersprache dekodiert. Zu jedem Satz gehört zusätzlich eine
-/// natürliche, grammatikalisch korrekte Übersetzung, damit der Sinn klar wird. Gelernt wird
-/// durch Lesen/Hören der Dekodierung – die Methode verzichtet bewusst auf aktives Abfragen
-/// (deshalb hat der Typ kein <c>/check</c>; die Punkte gibt es fürs Durcharbeiten).
+/// Birkenbihl method: a text in the language being learned is decoded word for word into the
+/// native language, independent of grammar. Each sentence additionally has a
+/// natural, grammatically correct translation so the meaning is clear. Learning happens
+/// through reading/listening to the decoding – the method deliberately forgoes active testing
+/// (which is why this type has no <c>/check</c>; points are awarded for working through it).
 /// </summary>
 public class BirkenbihlConfig
 {
-    /// <summary>Sprachcode der Lernsprache – die Sätze stehen in ihr (z. B. „en"). Muss zum Vokabelspeicher passen.</summary>
+    /// <summary>Language code of the language being learned – the sentences are in it (e.g. "en"). Must match the vocabulary store.</summary>
     public string LearningLang { get; set; } = "";
-    /// <summary>Sprachcode der Muttersprache (Glossen + Übersetzung, z. B. „de"). Muss zum Vokabelspeicher passen.</summary>
+    /// <summary>Language code of the native language (glosses + translation, e.g. "de"). Must match the vocabulary store.</summary>
     public string NativeLang { get; set; } = "";
-    /// <summary>Nächste zu vergebende <see cref="BirkenbihlSentence.SentenceId"/> (monoton, kein Recycling gelöschter IDs).</summary>
+    /// <summary>Next <see cref="BirkenbihlSentence.SentenceId"/> to be assigned (monotonic, no recycling of deleted IDs).</summary>
     public int NextSentenceId { get; set; }
     /// <summary>
-    /// Nächste zu vergebende <see cref="WordPair.WordId"/>. Bewusst <b>übungsweit</b> eindeutig (nicht pro Satz),
-    /// damit der Austausch-Endpunkt <c>.../words/{wordId}</c> ohne Satz-Segment ein Wort eindeutig trifft.
+    /// Next <see cref="WordPair.WordId"/> to be assigned. Deliberately unique <b>exercise-wide</b> (not per sentence),
+    /// so the swap endpoint <c>.../words/{wordId}</c> uniquely addresses a word without a sentence segment.
     /// </summary>
     public int NextWordId { get; set; }
-    /// <summary>Die Sätze des Textes in Lesereihenfolge.</summary>
+    /// <summary>The sentences of the text in reading order.</summary>
     public List<BirkenbihlSentence> Sentences { get; set; } = new();
 }
 
 /// <summary>
-/// Ein Satz der Birkenbihl-Übung: der Originalsatz in der Lernsprache (<paramref name="LearningSentence"/>),
-/// seine positionsgenaue Wort-für-Wort-Dekodierung (<paramref name="Decoding"/>) und eine natürliche,
-/// grammatikalisch korrekte Übersetzung (<paramref name="NaturalTranslation"/>).
+/// A sentence of the Birkenbihl exercise: the original sentence in the language being learned (<paramref name="LearningSentence"/>),
+/// its position-accurate word-for-word decoding (<paramref name="Decoding"/>), and a natural,
+/// grammatically correct translation (<paramref name="NaturalTranslation"/>).
 /// </summary>
 public record BirkenbihlSentence(int SentenceId, string LearningSentence, string NaturalTranslation, List<WordPair> Decoding);
 
 /// <summary>
-/// Ein Wort-Tuple der Dekodierung: <paramref name="LearningWord"/> der Lernsprache → wörtliche muttersprachliche
-/// Glosse <paramref name="Gloss"/>. <paramref name="Gloss"/>/<paramref name="VocabularyId"/> sind <c>null</c>, wenn
-/// das Wort (noch) nicht im Vokabelspeicher liegt und keine manuelle Glosse gesetzt wurde. <paramref name="WordId"/>
-/// ist übungsweit eindeutig (siehe <see cref="BirkenbihlConfig.NextWordId"/>).
+/// A word tuple of the decoding: <paramref name="LearningWord"/> of the language being learned → literal native-language
+/// gloss <paramref name="Gloss"/>. <paramref name="Gloss"/>/<paramref name="VocabularyId"/> are <c>null</c> if
+/// the word is not (yet) in the vocabulary store and no manual gloss was set. <paramref name="WordId"/>
+/// is unique exercise-wide (see <see cref="BirkenbihlConfig.NextWordId"/>).
 /// </summary>
 public record WordPair(int WordId, string LearningWord, string? Gloss, int? VocabularyId,
     [property: JsonPropertyName("_self")] string? Self = null);

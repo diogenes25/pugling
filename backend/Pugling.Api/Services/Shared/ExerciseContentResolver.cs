@@ -1,4 +1,4 @@
-﻿using System.Text.Json;
+using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Pugling.Api.Data;
 using Pugling.Api.Models;
@@ -6,12 +6,12 @@ using Pugling.Api.Models;
 namespace Pugling.Api.Services.Shared;
 
 /// <summary>
-/// DB-gestützte Auflösung der Inhalte einer Übung zu <see cref="ContentItem"/>s. Für die meisten Typen
-/// delegiert er an den zustandslosen <see cref="ExerciseContentProvider"/>; für Vokabel-Übungen, die den
-/// Store per Key referenzieren (<see cref="VocabularyConfig.Refs"/>), lädt er die Store-Vokabeln
-/// (Komplextyp) und baut daraus die Items. So bleibt dieselbe Vokabel über mehrere Übungen hinweg
-/// verknüpft und zentral pflegbar. Legacy-Vokabeln (nur inline <see cref="VocabularyConfig.Items"/>)
-/// laufen weiterhin über den Provider.
+/// DB-backed resolution of an exercise's content into <see cref="ContentItem"/>s. For most types it
+/// delegates to the stateless <see cref="ExerciseContentProvider"/>; for vocabulary exercises that
+/// reference the store by key (<see cref="VocabularyConfig.Refs"/>), it loads the store vocabulary
+/// entries (complex type) and builds the items from them. This keeps the same vocabulary item linked
+/// across multiple exercises and centrally maintainable. Legacy vocabulary (inline
+/// <see cref="VocabularyConfig.Items"/> only) still runs through the provider.
 /// </summary>
 public class ExerciseContentResolver(PuglingDbContext db, ExerciseContentProvider provider,
     ExerciseTypeRegistry registry, MediaSelector media)
@@ -19,11 +19,11 @@ public class ExerciseContentResolver(PuglingDbContext db, ExerciseContentProvide
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
     /// <summary>
-    /// Die Inhalte einer Übung als verfahrensneutrale Item-Liste (mit Store-Auflösung für Vokabeln/Lückentext).
-    /// <paramref name="childId"/> ist der <b>einzige</b> Weg, an dem Bilder ins Spiel kommen: nur mit einem Kind
-    /// lässt sich aus mehreren Darstellungen die passende wählen. Kind-neutrale Aufrufer (Vorschau, Auswertung,
-    /// Ziel-Berechnung) lassen ihn weg und bekommen dieselben Items ohne Bild – bewusst explizit statt implizit
-    /// über eine geladene Navigation, sonst hinge die Bebilderung an einem vergessenen <c>Include</c>.
+    /// The content of an exercise as a method-neutral item list (with store resolution for vocabulary/cloze).
+    /// <paramref name="childId"/> is the <b>only</b> point where images come into play: only with a child can
+    /// the matching one be picked from several renditions. Child-neutral callers (preview, evaluation, goal
+    /// computation) omit it and get the same items without an image – deliberately explicit rather than
+    /// implicit via a loaded navigation, otherwise the image would hinge on a forgotten <c>Include</c>.
     /// </summary>
     public async Task<IReadOnlyList<ContentItem>> ItemsOfAsync(Exercise exercise, int? childId = null,
         CancellationToken ct = default)
@@ -52,22 +52,22 @@ public class ExerciseContentResolver(PuglingDbContext db, ExerciseContentProvide
     }
 
     /// <summary>
-    /// Löst die Items einer Vokabelübung aus der <see cref="ExerciseItem"/>-Tabelle auf: jede Zeile trägt die
-    /// stabile <c>ItemId</c> und verweist per <c>VocabularyId</c> auf den Store (Wort/Übersetzung/Audio kommen
-    /// live von dort, zentral pflegbar). Der Item-Index ergibt sich aus der Listenposition (sortiert nach
-    /// <see cref="ExerciseItem.OrderIndex"/>, Id) – so bleibt er lückenlos/stabil, unabhängig vom Sortierschlüssel.
-    /// Ein optionaler Zeilen-Hinweis übersteuert den abgeleiteten Store-Hinweis (z. B. Artikel). Fehlt der
-    /// Store-Eintrag, bleibt ein Platzhalter auf gleichem Index (Leitner-/Test-Fortschritt kippt nicht).
-    /// <b>Ohne Item-Zeilen ist die Übung leer</b> – die Item-Tabelle ist die einzige Inhaltsquelle. Hier stand
-    /// früher ein Rückfall auf die Config-Projektion; der war seit dem Materialisieren der Items unerreichbar
-    /// (<c>VocabularyController.AfterSaveAsync</c> leert die Config danach, und der Seed lässt sie über
-    /// <c>SeedExerciseItems</c> laufen). Zwei Inhaltswege für denselben Typ heißen zwei Wahrheiten: der
-    /// Fallback hätte eine halb bearbeitete Übung mit <i>alten</i> Items bespielt, ohne ItemId und damit ohne
-    /// Lernstand. „Leer" ist die richtige Antwort – der Vorschau-Endpunkt sagt sie auch so
+    /// Resolves the items of a vocabulary exercise from the <see cref="ExerciseItem"/> table: each row carries
+    /// the stable <c>ItemId</c> and references the store via <c>VocabularyId</c> (word/translation/audio come
+    /// live from there, centrally maintainable). The item index results from the list position (sorted by
+    /// <see cref="ExerciseItem.OrderIndex"/>, Id) – this keeps it gapless/stable, independent of the sort key.
+    /// An optional row hint overrides the derived store hint (e.g. article). If the store entry is missing,
+    /// a placeholder stays at the same index (Leitner/test progress does not shift).
+    /// <b>Without item rows the exercise is empty</b> – the item table is the only content source. There used
+    /// to be a fallback onto the config projection here; it has been unreachable ever since the items are
+    /// materialized (<c>VocabularyController.AfterSaveAsync</c> clears the config afterwards, and the seed
+    /// runs it through <c>SeedExerciseItems</c>). Two content paths for the same type mean two truths: the
+    /// fallback would have played a half-edited exercise with <i>old</i> items, without an ItemId and thus
+    /// without learning progress. "Empty" is the right answer – and the preview endpoint says so
     /// (<c>exercise_empty</c>).
     /// <para>
-    /// Ist ein <paramref name="childId"/> gegeben, wählt der <see cref="MediaSelector"/> zusätzlich je Item
-    /// das für dieses Kind passende Bild (ein Batch-Aufruf für die ganze Übung, kein N+1 je Karte).
+    /// If a <paramref name="childId"/> is given, the <see cref="MediaSelector"/> additionally picks the image
+    /// matching that child per item (one batch call for the whole exercise, no N+1 per card).
     /// </para>
     /// </summary>
     private async Task<IReadOnlyList<ContentItem>> ResolveVocabularyItemsAsync(Exercise exercise, string? direction,
@@ -102,10 +102,10 @@ public class ExerciseContentResolver(PuglingDbContext db, ExerciseContentProvide
     }
 
     /// <summary>
-    /// Baut die Lückentext-Items wie der Provider, zieht aber die Lösung je Lücke aus dem Vokabel-Store,
-    /// wenn <see cref="Gap.VocabKey"/> gesetzt ist (Store-Wort = fehlendes Wort im Text; Übersetzung als Hinweis).
-    /// Lücken ohne Key nutzen die inline <see cref="Gap.Answer"/>. Der Item-Index bleibt die Lücken-Reihenfolge –
-    /// ein fehlender Key wird zum Platzhalter, verschiebt aber keine Indizes (Leitner-/Test-Fortschritt bleibt stabil).
+    /// Builds the cloze items like the provider does, but pulls the solution for each gap from the vocabulary
+    /// store when <see cref="Gap.VocabKey"/> is set (store word = missing word in the text; translation as the
+    /// hint). Gaps without a key use the inline <see cref="Gap.Answer"/>. The item index stays the gap order –
+    /// a missing key becomes a placeholder but does not shift any indices (Leitner/test progress stays stable).
     /// </summary>
     private async Task<IReadOnlyList<ContentItem>> ResolveClozeRefsAsync(ClozeConfig config, CancellationToken ct)
     {

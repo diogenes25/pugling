@@ -3,19 +3,19 @@ namespace Pugling.Api.Services.Shared;
 // Currency lebt im Vertrags-Projekt (Pugling.Contracts).
 
 /// <summary>
-/// Ordnet jedem <see cref="PointKind"/> genau eine <see cref="Currency"/> zu. Fleiß fürs Lernen
-/// (Basis, erreichte Ziele) sowie manuelle Vater-Buchungen und Familien-Shop-Käufe laufen über Münzen;
-/// alle Motivations-Boni (Combo/Speed/Missionen/Auszeichnungen) und Skin-Käufe über Gems.
+/// Maps each <see cref="PointKind"/> to exactly one <see cref="Currency"/>. Diligence for learning
+/// (base, reached goals) as well as manual adult ledger entries and family-shop purchases run on coins;
+/// all motivational bonuses (combo/speed/missions/awards) and skin purchases run on gems.
 /// <para>
-/// Bewusst wird die Währung <b>aus dem Kind abgeleitet</b> statt als eigene Spalte gespeichert:
-/// so bleibt der bestehende Ledger unverändert (keine Migration/kein Backfill), und der Kontostand
-/// je Währung ist die Summe der Buchungen mit passendem Kind. Die Zuordnung ist erschöpfend – ein
-/// nicht gemappter Kind wirft (siehe Test), damit ein neuer Kind niemals still aus dem Saldo fällt.
+/// The currency is deliberately <b>derived from the kind</b> rather than stored as its own column:
+/// that way the existing ledger stays unchanged (no migration/no backfill), and the balance per
+/// currency is the sum of the ledger entries with the matching kind. The mapping is exhaustive – an
+/// unmapped kind throws (see test), so that a new kind never silently drops out of the balance.
 /// </para>
 /// </summary>
 public static class PointKindCurrency
 {
-    /// <summary>Währung, zu der eine Buchung des <paramref name="kind"/> zählt.</summary>
+    /// <summary>The currency a ledger entry of the given <paramref name="kind"/> counts toward.</summary>
     public static Currency Of(PointKind kind) => kind switch
     {
         PointKind.Base or PointKind.Goal or PointKind.Manual or PointKind.ShopCoins
@@ -26,11 +26,11 @@ public static class PointKindCurrency
         _ => throw new ArgumentOutOfRangeException(nameof(kind), kind, "PointKind ohne Währungs-Zuordnung"),
     };
 
-    /// <summary>Alle Buchungs-Kinds, die auf das Münz-Konto zählen (für Saldo-Queries).</summary>
+    /// <summary>All ledger kinds that count toward the coin account (for balance queries).</summary>
     public static readonly PointKind[] CoinKinds =
         [.. Enum.GetValues<PointKind>().Where(k => Of(k) == Currency.Coins)];
 
-    /// <summary>Alle Buchungs-Kinds, die auf das Gem-Konto zählen (für Saldo-Queries).</summary>
+    /// <summary>All ledger kinds that count toward the gem account (for balance queries).</summary>
     public static readonly PointKind[] GemKinds =
         [.. Enum.GetValues<PointKind>().Where(k => Of(k) == Currency.Gems)];
 }

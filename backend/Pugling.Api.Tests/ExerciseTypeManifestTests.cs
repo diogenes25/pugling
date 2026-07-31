@@ -7,9 +7,9 @@ using Pugling.Api.Exercises;
 namespace Pugling.Api.Tests;
 
 /// <summary>
-/// Das Übungstyp-Manifest (<c>GET api/v1/creator/exercise-types</c>): die Single Source of Truth für
-/// Routing/Prüfmodus/Renderer je Typ. Sichert Vollständigkeit (kein Typ ohne Eintrag) und die
-/// Invarianten je Prüfmodus ab – so fällt ein neuer, nicht eingetragener Übungstyp sofort auf.
+/// The exercise type manifest (<c>GET api/v1/creator/exercise-types</c>): the single source of truth for
+/// routing/check mode/renderer per type. Ensures completeness (no type without an entry) and the
+/// invariants per check mode - so a new exercise type without an entry stands out immediately.
 /// </summary>
 public class ExerciseTypeManifestTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWebAppFactory>
 {

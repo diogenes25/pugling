@@ -6,24 +6,24 @@ using Microsoft.Extensions.Options;
 namespace Pugling.Api.Errors;
 
 /// <summary>
-/// Ersetzt die Standard-<see cref="ProblemDetailsFactory"/> von MVC und stempelt in JEDES darüber
-/// erzeugte ProblemDetails einen maschinenlesbaren <c>code</c> (und den passenden <c>type</c>-URI) –
-/// aber nur, wenn noch keiner gesetzt ist, damit spezifische Codes (via <c>ProblemWithCode</c>) gewinnen.
-/// Deckt damit auch die vom [ApiController] automatisch in ProblemDetails gewandelten Status-Ergebnisse
-/// ab (z. B. <c>NotFound()</c>/<c>Conflict()</c>), die NICHT durch <c>CustomizeProblemDetails</c> laufen.
-/// Reproduziert die Defaults der internen <c>DefaultProblemDetailsFactory</c> (Titel-Fallback aus
-/// <see cref="ApiBehaviorOptions.ClientErrorMapping"/> und die <c>traceId</c>-Extension).
+/// Replaces MVC's default <see cref="ProblemDetailsFactory"/> and stamps a machine-readable
+/// <c>code</c> (and the matching <c>type</c> URI) onto EVERY ProblemDetails created through it –
+/// but only if none is set yet, so that specific codes (via <c>ProblemWithCode</c>) win.
+/// This also covers the status results that [ApiController] automatically converts to ProblemDetails
+/// (e.g. <c>NotFound()</c>/<c>Conflict()</c>), which do NOT run through <c>CustomizeProblemDetails</c>.
+/// Reproduces the defaults of the internal <c>DefaultProblemDetailsFactory</c> (title fallback from
+/// <see cref="ApiBehaviorOptions.ClientErrorMapping"/> and the <c>traceId</c> extension).
 /// <para>
-/// <b>Bewusste Abweichung:</b> der <c>type</c> wird für codelose Fehler auf den pugling-Fehler-URI
-/// normalisiert (nicht die RFC-Dummy-Links), damit alle Fehler denselben dereferenzierbaren
-/// <c>type</c>-Raum teilen. Diese Factory ist daher <b>kein</b> 1:1-Drop-in für die Default-Factory.
+/// <b>Deliberate deviation:</b> for codeless errors, the <c>type</c> is normalized to the pugling error URI
+/// (not the RFC dummy links), so that all errors share the same dereferenceable
+/// <c>type</c> space. This factory is therefore <b>not</b> a 1:1 drop-in for the default factory.
 /// </para>
 /// </summary>
 public sealed class CodeStampingProblemDetailsFactory(IOptions<ApiBehaviorOptions> options) : ProblemDetailsFactory
 {
     private readonly ApiBehaviorOptions _options = options.Value;
 
-    /// <summary>Erzeugt ein <see cref="ProblemDetails"/> und stempelt Titel, TraceId sowie einen status-basierten Default-<c>code</c>, sofern keiner gesetzt ist.</summary>
+    /// <summary>Creates a <see cref="ProblemDetails"/> and stamps title, trace id, and a status-based default <c>code</c>, unless one is already set.</summary>
     public override ProblemDetails CreateProblemDetails(HttpContext httpContext, int? statusCode = null,
         string? title = null, string? type = null, string? detail = null, string? instance = null)
     {
@@ -40,7 +40,7 @@ public sealed class CodeStampingProblemDetailsFactory(IOptions<ApiBehaviorOption
         return problem;
     }
 
-    /// <summary>Erzeugt ein <see cref="ValidationProblemDetails"/> aus dem Model-State und stempelt den festen Code <see cref="ApiErrors.ValidationError"/> sowie Titel/TraceId.</summary>
+    /// <summary>Creates a <see cref="ValidationProblemDetails"/> from the model state and stamps the fixed code <see cref="ApiErrors.ValidationError"/> as well as title/trace id.</summary>
     public override ValidationProblemDetails CreateValidationProblemDetails(HttpContext httpContext,
         ModelStateDictionary modelStateDictionary, int? statusCode = null, string? title = null,
         string? type = null, string? detail = null, string? instance = null)

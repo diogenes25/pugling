@@ -6,10 +6,10 @@ using Pugling.Api.Errors;
 namespace Pugling.Api.Controllers.Supervisor;
 
 /// <summary>
-/// Die messbaren Etappen (<see cref="Pugling.Api.Models.KeyResult"/>s) eines großen Ziels. Jede hängt an einem
-/// Katalog-Scope (Fach/Kapitel/Übung) und einer tricksicheren Metrik; der Scope ist nach Anlage fix (zum Umhängen
-/// neu anlegen). Live über den Lernstand bzw. die Klassenarbeits-Note ausgewertet. Eigentum über
-/// <see cref="ChildOwnershipFilter"/> (Kette Kind → Objective → Etappe wird im Service geprüft); Schreiben nur der Vater.
+/// The measurable key results (<see cref="Pugling.Api.Models.KeyResult"/>s) of a big goal. Each is attached to a
+/// catalog scope (subject/chapter/exercise) and a cheat-proof metric; the scope is fixed after creation (create a new
+/// one to re-target). Evaluated live via the learning progress or the class test grade. Ownership via
+/// <see cref="ChildOwnershipFilter"/> (the chain child → objective → key result is checked in the service); writing only by the father.
 /// </summary>
 [ApiController]
 [ApiVersion("1.0")]
@@ -20,7 +20,7 @@ namespace Pugling.Api.Controllers.Supervisor;
 [ServiceFilter(typeof(ChildOwnershipFilter))]
 public class KeyResultsController(ObjectiveService objectives) : ControllerBase
 {
-    /// <summary>Fügt dem Ziel eine Etappe hinzu (nur Vater). 400 bei ungültigem Scope/Zielwert, 404 wenn das Ziel fehlt.</summary>
+    /// <summary>Adds a key result to the goal (supervisor only). 400 on an invalid scope/target value, 404 if the goal is missing.</summary>
     [HttpPost]
     [Authorize(Roles = Roles.Supervisor)]
     [ProducesResponseType(StatusCodes.Status201Created)]
@@ -36,7 +36,7 @@ public class KeyResultsController(ObjectiveService objectives) : ControllerBase
             : NotFound();
     }
 
-    /// <summary>Ändert Metrik/Zielwert/Titel einer Etappe (nur Vater); der Scope bleibt fix.</summary>
+    /// <summary>Changes metric/target value/title of a key result (supervisor only); the scope stays fixed.</summary>
     [HttpPatch("{keyResultId:int}")]
     [Authorize(Roles = Roles.Supervisor)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -49,7 +49,7 @@ public class KeyResultsController(ObjectiveService objectives) : ControllerBase
         return value is not null ? value : NotFound();
     }
 
-    /// <summary>Löscht eine Etappe des Ziels (nur Vater).</summary>
+    /// <summary>Deletes a key result of the goal (supervisor only).</summary>
     [HttpDelete("{keyResultId:int}")]
     [Authorize(Roles = Roles.Supervisor)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]

@@ -5,17 +5,17 @@ using System.Text.Json;
 namespace Pugling.Api.Tests;
 
 /// <summary>
-/// Sichert die Unterrichts-Seite des Katalogs ab: Lehrwerk-Reihen samt Units, die Creator-Profile
-/// („Fachlehrer") und – der eigentliche Zweck – das <b>Matching</b> Kind → Profil. Die Reihe ist der
-/// Angelpunkt: nur weil Kind-Lehrbuch und Profil denselben Datensatz nennen, ist die Frage „wer kennt
-/// das Material dieses Kindes?" mehr als ein Freitext-Vergleich.
+/// Covers the teaching side of the catalog: textbook series with units, creator profiles
+/// ("subject teacher") and - the actual point - the <b>matching</b> of child → profile. The series is the
+/// pivot: only because the child's textbook and the profile name the same record is the question "who knows
+/// this child's material?" more than a free-text comparison.
 /// </summary>
 public class CreatorProfileTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWebAppFactory>
 {
     private const string SeriesRoot = "/api/v1/creator/textbook-series";
     private const string ProfileRoot = "/api/v1/creator/profiles";
 
-    /// <summary>Legt eine Reihe an und liefert ihre Id (Name je Lauf eindeutig – der Slug ist global).</summary>
+    /// <summary>Creates a series and returns its id (name unique per run - the slug is global).</summary>
     private static async Task<int> CreateSeriesAsync(HttpClient creator, string name, string? publisher = "Cornelsen",
         int? subjectId = null, string? schoolTypes = "Gymnasium") =>
         await TestApi.IdAsync(await creator.PostAsJsonAsync(SeriesRoot, new
@@ -73,8 +73,8 @@ public class CreatorProfileTests(PuglingWebAppFactory factory) : IClassFixture<P
     }
 
     /// <summary>
-    /// Der Slug macht das Anlegen idempotent: ein Agent darf denselben Katalog-Aufbau wiederholen, ohne
-    /// „Access" zweimal in den geteilten Katalog zu schreiben.
+    /// The slug makes creation idempotent: an agent may repeat the same catalog setup without
+    /// writing "Access" twice into the shared catalog.
     /// </summary>
     [Fact]
     public async Task Dieselbe_Reihe_zweimal_angelegt_liefert_dieselbe_Reihe()
@@ -91,8 +91,8 @@ public class CreatorProfileTests(PuglingWebAppFactory factory) : IClassFixture<P
     }
 
     /// <summary>
-    /// Der Katalog ist geteilt: lesen darf jeder Creator, ändern nur der Owner. Sonst könnte ein Vater
-    /// die Reihe umbenennen, an der die Profile und Lehrbücher anderer Familien hängen.
+    /// The catalog is shared: any creator may read it, only the owner may change it. Otherwise a father
+    /// could rename the series that other families' profiles and textbooks depend on.
     /// </summary>
     [Fact]
     public async Task Ein_fremder_Creator_darf_lesen_aber_nicht_aendern()
@@ -166,9 +166,8 @@ public class CreatorProfileTests(PuglingWebAppFactory factory) : IClassFixture<P
     }
 
     /// <summary>
-    /// Das Herzstück: das Profil zur <b>Buchreihe des Kindes</b> schlägt das, das nur Fach und
-    /// Klassenstufe trifft. Ein Profil für eine andere Klassenstufe ist kein schlechterer Treffer,
-    /// sondern keiner.
+    /// The core piece: the profile matching the <b>child's book series</b> beats one that only matches
+    /// subject and grade. A profile for a different grade is not a weaker match, it is no match at all.
     /// </summary>
     [Fact]
     public async Task Das_Matching_stellt_den_Reihen_Treffer_nach_vorn()
@@ -220,18 +219,18 @@ public class CreatorProfileTests(PuglingWebAppFactory factory) : IClassFixture<P
     }
 
     /// <summary>
-    /// Die <b>Rangfolge der Gewichte</b> – Reihe 8 &gt; Fach 4 &gt; Klassenstufe 2 &gt; Schulart 1 – ist die
-    /// eigentliche fachliche Aussage des Matchings, war aber nirgends festgenagelt: geprüft war nur, <i>dass</i>
-    /// ein Profil gewinnt, nicht <i>warum</i>. Die Gewichte durften darum flachgedrückt werden, ohne dass ein
-    /// Test fiel (docs/testplan.md, Injektion D15).
+    /// The <b>weight ranking</b> - series 8 &gt; subject 4 &gt; grade 2 &gt; school type 1 - is the
+    /// actual business statement of the matching, but was nowhere pinned down: only <i>that</i>
+    /// a profile wins was checked, not <i>why</i>. The weights could therefore be flattened without any
+    /// test failing (docs/testplan.md, injection D15).
     /// <para>
-    /// Der Kern ist nicht „8 ist größer als 4", sondern: <b>die Reihe allein schlägt alles andere zusammen</b>
-    /// (8 &gt; 4 + 2 + 1). Nur die Reihe verrät, ob der Creator das konkrete Material kennt; Fach, Stufe und
-    /// Schulart treffen bloß das Regal. Genau um einen Punkt – wer an den Gewichten dreht, kippt das.
+    /// The core is not "8 is greater than 4", but: <b>the series alone beats everything else combined</b>
+    /// (8 &gt; 4 + 2 + 1). Only the series reveals whether the creator knows the concrete material; subject, grade
+    /// and school type only match the shelf. By exactly one point - whoever tweaks the weights tips this.
     /// </para>
-    /// Das schwächere Profil wird jeweils <b>zuerst</b> angelegt: bei Gleichstand entscheidet die Id
-    /// aufsteigend, ein flachgedrücktes Gewicht dreht damit die Reihenfolge und der Test fällt. Wäre es
-    /// umgekehrt, bliebe er auch beim Gleichstand grün.
+    /// The weaker profile is always created <b>first</b>: on a tie the id decides
+    /// ascending, so a flattened weight would flip the order and the test would fail. Were it
+    /// the other way round, it would stay green even on a tie.
     /// </summary>
     [Fact]
     public async Task Das_Matching_haelt_die_Rangfolge_der_Gewichte_ein()
@@ -285,8 +284,8 @@ public class CreatorProfileTests(PuglingWebAppFactory factory) : IClassFixture<P
     }
 
     /// <summary>
-    /// Wie <c>CreateProfileAsync</c>, aber jede punktende Eigenschaft ist einzeln abwählbar – nur so lässt
-    /// sich ein Profil bauen, das <b>ausschließlich</b> über ein Gewicht punktet.
+    /// Like <c>CreateProfileAsync</c>, but every scoring property can be deselected individually - only this way
+    /// can a profile be built that scores <b>exclusively</b> through one weight.
     /// </summary>
     private static async Task<int> CreateWeightedProfileAsync(HttpClient creator, string name,
         int? subjectId, int? seriesId, int? gradeMin, int? gradeMax, string? schoolTypes) =>
@@ -301,8 +300,8 @@ public class CreatorProfileTests(PuglingWebAppFactory factory) : IClassFixture<P
         }));
 
     /// <summary>
-    /// Der Match-Endpunkt liest Kind-Daten. Ein Creator, der das Kind nicht betreut, darf ihn nicht als
-    /// Seitenkanal auf fremde Kind-Profile benutzen.
+    /// The match endpoint reads child data. A creator who does not supervise the child must not use it as a
+    /// side channel onto other children's profiles.
     /// </summary>
     [Fact]
     public async Task Ein_fremdes_Kind_wird_beim_Matching_abgewiesen()
@@ -324,8 +323,8 @@ public class CreatorProfileTests(PuglingWebAppFactory factory) : IClassFixture<P
     }
 
     /// <summary>
-    /// Die Unit am Kind muss zur Reihe am Kind gehören. Sonst bekäme der Creator den Stoff eines Buchs,
-    /// das das Kind nicht benutzt – fachlich falsch, aber technisch unauffällig.
+    /// The unit on the child must belong to the series on the child. Otherwise the creator would get the
+    /// material of a book the child does not use - wrong in substance, but technically unremarkable.
     /// </summary>
     [Fact]
     public async Task Eine_Unit_aus_fremder_Reihe_am_Lehrbuch_wird_abgewiesen()
@@ -362,8 +361,8 @@ public class CreatorProfileTests(PuglingWebAppFactory factory) : IClassFixture<P
     }
 
     /// <summary>
-    /// Löschen ist bewusst nicht gesperrt: Kind-Lehrbuch und Profil verlieren nur die Zuordnung
-    /// (SetNull) und bleiben mit ihrem Freitext arbeitsfähig.
+    /// Deletion is deliberately not blocked: the child's textbook and the profile only lose the
+    /// association (SetNull) and remain usable with their free text.
     /// </summary>
     [Fact]
     public async Task Eine_geloeschte_Reihe_leert_nur_die_Zuordnungen()
@@ -405,7 +404,7 @@ public class CreatorProfileTests(PuglingWebAppFactory factory) : IClassFixture<P
             seriesId,
         }));
 
-    /// <summary>Der maschinenlesbare Fehlercode aus dem ProblemDetails-Körper.</summary>
+    /// <summary>The machine-readable error code from the ProblemDetails body.</summary>
     private static async Task<string?> CodeOfAsync(HttpResponseMessage response) =>
         (await response.Content.ReadFromJsonAsync<JsonElement>()).TryGetProperty("code", out var code)
             ? code.GetString()

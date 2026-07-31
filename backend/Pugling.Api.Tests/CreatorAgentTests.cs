@@ -9,9 +9,9 @@ using Pugling.Client;
 namespace Pugling.Api.Tests;
 
 /// <summary>
-/// Der KI-Creator gegen die echte API (In-Process) mit einem <see cref="FakeChatClient"/> statt Ollama.
-/// Die Tests belegen den Teil, der deterministisch sein muss: dass ein sauberer Entwurf zu einer
-/// spielbaren, selbstgetesteten Übung wird – und dass ein unsauberer es nicht in den Katalog schafft.
+/// The AI Creator against the real API (in-process) with a <see cref="FakeChatClient"/> instead of Ollama.
+/// The tests document the part that must be deterministic: that a clean draft turns into a playable,
+/// self-tested exercise – and that an unclean one does not make it into the catalog.
 /// </summary>
 public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWebAppFactory>
 {
@@ -24,7 +24,7 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
             Pin = "0000",
         }));
 
-    /// <summary>Baut die Pipeline mit allen vier Typen und einem Modell, das die übergebenen Antworten liefert.</summary>
+    /// <summary>Builds the pipeline with all four types and a model that returns the given responses.</summary>
     private (CreatorPipeline Pipeline, CreatorApi Creator, FakeChatClient Chat) BuildAgent(params string[] responses)
     {
         var creator = new CreatorApi(Authenticated());
@@ -44,11 +44,11 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
         return (new CreatorPipeline(new BriefingBuilder(creator, supervisor, student), strategies), creator, chat);
     }
 
-    /// <summary>Die Konsolen-Verben mit demselben Unterbau wie der echte Agent (inkl. Klausur-Planer).</summary>
+    /// <summary>The console verbs with the same underpinning as the real agent (incl. class-test planner).</summary>
     private AgentCommands Commands(CreatorApi creator, CreatorPipeline pipeline) =>
         new(creator, pipeline, new ExamPlanner(pipeline, creator, new SupervisorApi(Authenticated())));
 
-    /// <summary>Legt ein leeres Fach mit Kapitel an, damit jeder Test für sich steht.</summary>
+    /// <summary>Creates an empty subject with a chapter so that every test stands on its own.</summary>
     private static async Task<(int SubjectId, int ChapterId)> FreshChapterAsync(CreatorApi creator, string name)
     {
         var subject = await creator.CreateSubjectAsync(new CreateSubjectDto($"Agent-Test {name} {Guid.NewGuid():N}"));
@@ -188,7 +188,7 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
         Assert.Contains(Assert.Single(items, i => i.Front == "the horse").VocabularyId, before);
     }
 
-    /// <summary>Die Ids aller „the horse"-Zeilen (en→de) im geteilten Speicher – die Vergleichsbasis für die Dedupe-Prüfung.</summary>
+    /// <summary>The ids of all "the horse" rows (en→de) in the shared store – the baseline for the dedupe check.</summary>
     private static async Task<HashSet<int>> KnownHorsesAsync(CreatorApi creator) =>
         [.. (await creator.SearchVocabularyAsync(word: "the horse", sourceLanguage: "en", targetLanguage: "de"))
             .Where(v => v.Word == "the horse")
@@ -237,11 +237,11 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
     }
 
     /// <summary>
-    /// Ein Modell darf jedes Feld weglassen – <c>{"title":"Tiere"}</c> ist valides JSON. Die
-    /// Entwurfs-Records deklarieren ihre Felder nicht-nullbar, der Deserialisierer setzt also
-    /// <c>null</c> ein. Der Validator muss daraus einen <i>Regelverstoß</i> machen: vorher zerbrach er
-    /// mit einer <see cref="NullReferenceException"/> und der Agent starb mit Stacktrace an genau der
-    /// Stelle, an der er die Reparatur-Runde anstoßen soll.
+    /// A model is allowed to omit any field – <c>{"title":"Tiere"}</c> is valid JSON. The draft records
+    /// declare their fields non-nullable, so the deserializer plugs in <c>null</c>. The validator must
+    /// turn that into a <i>rule violation</i>: previously it crashed with a
+    /// <see cref="NullReferenceException"/> and the agent died with a stack trace at exactly the
+    /// point where it is supposed to trigger the repair round.
     /// </summary>
     [Fact]
     public async Task Ein_Entwurf_mit_fehlenden_Feldern_wird_abgelehnt_statt_den_Agenten_zu_sprengen()
@@ -260,9 +260,9 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
     }
 
     /// <summary>
-    /// Derselbe Platzhalter zweimal im Text. Eine Mengendifferenz (<c>Except</c>) merkt das nicht, weil
-    /// sie dedupliziert – der Server rendert dann aber ein Feld mehr, als es Lösungen gibt, und das Kind
-    /// bekommt ein Kästchen, das nie richtig werden kann.
+    /// The same placeholder twice in the text. A set difference (<c>Except</c>) does not notice this
+    /// because it deduplicates – but the server then renders one more field than there are solutions,
+    /// and the child gets a box that can never be answered correctly.
     /// </summary>
     [Fact]
     public async Task Ein_doppelter_Platzhalter_wird_abgelehnt()
@@ -285,8 +285,9 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
     }
 
     /// <summary>
-    /// <c>--chapter</c> ohne <c>--subject</c> wurde still verworfen: die Übung landete im ersten Kapitel
-    /// des ersten Fachs. Ein stiller Griff ins falsche Regal ist schlimmer als eine Fehlermeldung.
+    /// <c>--chapter</c> without <c>--subject</c> used to be silently dropped: the exercise ended up in
+    /// the first chapter of the first subject. A silent reach into the wrong shelf is worse than an
+    /// error message.
     /// </summary>
     [Fact]
     public async Task Ein_unbekanntes_Kapitel_wird_gemeldet_statt_still_ins_erste_zu_schreiben()
@@ -303,9 +304,9 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
     }
 
     /// <summary>
-    /// Ein getipptes <c>help</c> ist ein Verb. Die frühere Startbedingung der Options-Schleife
-    /// verwechselte „kein Verb angegeben" mit „Verb heißt help" und las <c>args[0]</c> erneut als Option –
-    /// <c>pugling-creator help</c> brach mit „Unerwartetes Argument 'help'" und Exit-Code 2 ab.
+    /// A typed <c>help</c> is a verb. The previous start condition of the options loop confused
+    /// "no verb given" with "verb is help" and read <c>args[0]</c> again as an option –
+    /// <c>pugling-creator help</c> aborted with "Unexpected argument 'help'" and exit code 2.
     /// </summary>
     [Fact]
     public void Getipptes_help_ist_ein_Verb_und_keine_Option()
@@ -374,8 +375,8 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
     }
 
     /// <summary>
-    /// Legt eine Lehrwerk-Reihe mit einer Unit und ein darauf optimiertes Creator-Profil an – der
-    /// „Fachlehrer", in dessen Namen der Agent entwirft.
+    /// Creates a textbook series with a unit and a Creator profile optimized for it – the
+    /// "subject teacher" in whose name the agent drafts.
     /// </summary>
     private static async Task<(TextbookSeriesResponse Series, SeriesUnitResponse Unit, CreatorProfileResponse Profile)>
         FreshProfileAsync(CreatorApi creator, int? subjectId, string name)
@@ -399,9 +400,9 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
     }
 
     /// <summary>
-    /// Eigener Wortschatz für die Profil-Tests. Bewusst <b>nicht</b> <see cref="VocabularyJson"/>: die
-    /// Tests teilen eine DB, und der Vokabelspeicher ist global – wer dieselben Paare anlegt, verschiebt
-    /// die Erwartung anderer Tests (siehe Dedupe-Test, der auf „seine" Store-Id prüft).
+    /// Its own vocabulary for the profile tests. Deliberately <b>not</b> <see cref="VocabularyJson"/>: the
+    /// tests share a DB, and the vocabulary store is global – whoever creates the same pairs shifts the
+    /// expectation of other tests (see the dedupe test, which checks against "its own" store id).
     /// </summary>
     private const string ProfileVocabularyJson = """
         {"title":"Erwachsen werden","items":[
@@ -411,9 +412,9 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
         """;
 
     /// <summary>
-    /// Ohne Kind entsteht eine Übung für den <b>gemeinsamen Katalog</b>: die Metadaten kommen aus dem
-    /// Profil (Klassenstufen-Bereich statt einer einzelnen Stufe), und im Prompt darf kein Kind-Abschnitt
-    /// stehen – sonst erfände das Modell Vorlieben, die niemandem gehören.
+    /// Without a child, an exercise is created for the <b>shared catalog</b>: the metadata comes from the
+    /// profile (a grade-level range instead of a single grade), and the prompt must not contain a child
+    /// section – otherwise the model would invent preferences that belong to no one.
     /// </summary>
     [Fact]
     public async Task Eine_allgemeine_Uebung_entsteht_ohne_Kind_mit_den_Metadaten_des_Profils()
@@ -451,8 +452,8 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
     }
 
     /// <summary>
-    /// Der eigentliche Gewinn der Unit-Ebene: Themen, Grammatik und Wortschatz der Unit stehen im Prompt.
-    /// Ohne sie müsste das Modell den Stoff erfinden, den das Kind im Unterricht hat.
+    /// The actual gain of the unit level: the unit's topics, grammar and vocabulary are in the prompt.
+    /// Without it, the model would have to invent the material the child has in class.
     /// </summary>
     [Fact]
     public async Task Der_Stoff_der_Unit_steht_im_Prompt()
@@ -474,8 +475,8 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
     }
 
     /// <summary>
-    /// Eine Unit aus einer fremden Reihe wäre schlimmer als keine – das Modell hielte deren Stoff für
-    /// gesichert. Deshalb bricht der Auftrag ab, statt die Angabe still zu verwerfen.
+    /// A unit from a foreign series would be worse than none – the model would take its material as
+    /// established fact. That is why the request aborts instead of silently dropping the value.
     /// </summary>
     [Fact]
     public async Task Eine_Unit_aus_einer_fremden_Reihe_wird_gemeldet()
@@ -492,8 +493,8 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
     }
 
     /// <summary>
-    /// Die Übungsklausur: mehrere Typen zum selben Stoff, gebündelt zu einer geplanten Klassenarbeit mit
-    /// genau diesen Übungen. Erst das macht aus einzelnen Übungen eine Prüfungsvorbereitung.
+    /// The practice class test: multiple types on the same material, bundled into a planned class test
+    /// with exactly these exercises. Only this turns individual exercises into exam preparation.
     /// </summary>
     [Fact]
     public async Task Eine_Uebungsklausur_erzeugt_mehrere_Uebungen_und_eine_Klassenarbeit()
@@ -531,8 +532,8 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
     }
 
     /// <summary>
-    /// Ein gescheiterter Teil kostet die Klausur einen Teil, nicht alle – und er wird gemeldet, statt
-    /// eine unvollständige Arbeit als fertig auszugeben.
+    /// A failed part costs the class test one part, not all of them – and it is reported instead of
+    /// passing off an incomplete test as finished.
     /// </summary>
     [Fact]
     public async Task Eine_Klausur_mit_einem_kaputten_Teil_bleibt_unvollstaendig()

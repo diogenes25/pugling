@@ -4,19 +4,19 @@ using Pugling.Api.Models;
 
 namespace Pugling.Api.Services.Creator;
 
-/// <summary>Ein gewünschtes Item beim Abgleich: welche Store-Vokabel, mit optionalem übungslokalem Hinweis.</summary>
+/// <summary>A desired item for reconciliation: which store vocabulary entry, with an optional exercise-local hint.</summary>
 public readonly record struct DesiredItem(int VocabularyId, string? Hint);
 
 /// <summary>
-/// Pflegt die stabil identifizierten <see cref="ExerciseItem"/>-Zeilen einer Vokabelübung. Übersetzt die
-/// Authoring-Form (<see cref="VocabularyConfig"/> mit inline <c>Items</c> bzw. ID-<c>Refs</c>) in Item-Zeilen
-/// und gleicht sie <b>ID-erhaltend</b> ab: überlebende Wörter behalten ihre <see cref="ExerciseItem.Id"/> (die
-/// „ItemId") und damit den je Kind daran hängenden Lernfortschritt; nur wegfallende Wörter verschwinden, neue
-/// kommen hinzu. Zentrale Stelle für POST/PUT der Übung, den Tag-Snapshot und den einmaligen Backfill.
+/// Maintains the stably identified <see cref="ExerciseItem"/> rows of a vocabulary exercise. Translates the
+/// authoring form (<see cref="VocabularyConfig"/> with inline <c>Items</c> or ID <c>Refs</c>) into item rows
+/// and reconciles them <b>ID-preservingly</b>: surviving words keep their <see cref="ExerciseItem.Id"/> (the
+/// "ItemId") and thus the per-child learning progress attached to it; only dropped words disappear, new
+/// ones are added. Central place for POST/PUT of the exercise, the tag snapshot, and the one-time backfill.
 /// </summary>
 public class ExerciseItemService(PuglingDbContext db, VocabularyStoreService store)
 {
-    /// <summary>Baut die gewünschte Item-Liste aus einer Vokabel-Config und legt inline genutzte Wörter im Store an.</summary>
+    /// <summary>Builds the desired item list from a vocabulary config and creates inline-used words in the store.</summary>
     public async Task<List<DesiredItem>> DesiredFromConfigAsync(VocabularyConfig config, CancellationToken ct = default)
     {
         // Refs haben Vorrang (spiegelt die Auflösungspräzedenz des ExerciseContentResolver: Übung spielt aus
@@ -62,14 +62,14 @@ public class ExerciseItemService(PuglingDbContext db, VocabularyStoreService sto
         return desired.ToList();
     }
 
-    /// <summary>Materialisiert die Items einer Übung aus ihrer Config (Convenience über <see cref="ReconcileAsync"/>).</summary>
+    /// <summary>Materializes the items of an exercise from its config (convenience wrapper over <see cref="ReconcileAsync"/>).</summary>
     public async Task SyncFromConfigAsync(int exerciseId, VocabularyConfig config, CancellationToken ct = default) =>
         await ReconcileAsync(exerciseId, await DesiredFromConfigAsync(config, ct), ct);
 
     /// <summary>
-    /// Gleicht die Item-Zeilen einer Übung auf die gewünschte, geordnete Liste ab. Überlebende Vokabeln
-    /// (per <see cref="ExerciseItem.VocabularyId"/> zugeordnet) behalten ihre Zeile und Id; wegfallende werden
-    /// gelöscht, neue angelegt. <see cref="ExerciseItem.OrderIndex"/> spiegelt die Zielreihenfolge (0-basiert).
+    /// Reconciles the item rows of an exercise against the desired, ordered list. Surviving vocabulary
+    /// entries (matched by <see cref="ExerciseItem.VocabularyId"/>) keep their row and id; dropped ones are
+    /// deleted, new ones created. <see cref="ExerciseItem.OrderIndex"/> reflects the target order (0-based).
     /// </summary>
     public async Task ReconcileAsync(int exerciseId, IReadOnlyList<DesiredItem> desired, CancellationToken ct = default)
     {

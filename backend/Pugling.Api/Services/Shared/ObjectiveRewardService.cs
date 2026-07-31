@@ -1,25 +1,26 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Pugling.Api.Data;
 using Pugling.Api.Models;
 
 namespace Pugling.Api.Services.Shared;
 
 /// <summary>
-/// Bucht die <b>einmalige</b> Belohnung erreichter <see cref="Objective"/>s idempotent – das Objective-Gegenstück
-/// zur Ziel-Belohnung der Position. Je erreichter Etappe ein Häppchen (<see cref="Objective.RewardPerKeyResult"/>,
-/// gebucht auf <see cref="ObjectiveReward.PaidKeyResultId"/>), beim Voll-Abschluss der große Batzen
-/// (<see cref="Objective.RewardOnComplete"/>, gebucht ohne Etappe – also mit <c>null</c>).
-/// Verbindliche Ziele zahlen 🪙 Münzen, Dehnungsziele 💎 Gems. Es gibt keinen Scheduler;
-/// diese Methode wird an POST-Nahtstellen (Kind-Login, Sohn-Sicht der Ziele) aufgerufen und ist über den
-/// Unique-Index (<see cref="ObjectiveReward"/>) idempotent. Bewusst <b>kein Malus</b> und <b>kein Clawback</b>:
-/// eine einmal verdiente Etappe bleibt bezahlt, auch wenn der Lernstand später zurückfällt.
+/// Books the <b>one-time</b> reward for reached <see cref="Objective"/>s idempotently – the objective
+/// counterpart to the plan position's goal reward. A small chunk per reached key result
+/// (<see cref="Objective.RewardPerKeyResult"/>, booked onto <see cref="ObjectiveReward.PaidKeyResultId"/>),
+/// and the big payout on full completion (<see cref="Objective.RewardOnComplete"/>, booked without a key
+/// result – that is, with <c>null</c>). Mandatory goals pay 🪙 coins, stretch goals pay 💎 gems. There is no
+/// scheduler; this method is called at POST seams (child login, student-facing view of goals) and is
+/// idempotent via the unique index (<see cref="ObjectiveReward"/>). Deliberately <b>no penalty</b> and
+/// <b>no clawback</b>: a key result once earned stays paid, even if the learning progress later regresses.
 /// </summary>
 public class ObjectiveRewardService(PuglingDbContext db, ObjectiveEvaluationService evaluation)
 {
     /// <summary>
-    /// Rechnet alle aktiven Ziele des Kindes nach und bucht offene Etappen-/Abschluss-Belohnungen einmalig.
+    /// Recomputes all of a child's active objectives and books any outstanding key-result/completion
+    /// rewards once.
     /// </summary>
-    /// <returns>Summe der in diesem Lauf gutgeschriebenen Punkte (0 = nichts fällig).</returns>
+    /// <returns>Sum of the points credited in this run (0 = nothing due).</returns>
     public async Task<int> SettleAsync(int childId, DateOnly today, CancellationToken ct = default)
     {
         var evals = await evaluation.EvaluateAllAsync(childId, today, activeOnly: true, ct);

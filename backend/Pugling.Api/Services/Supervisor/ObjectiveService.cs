@@ -6,20 +6,21 @@ using Pugling.Api.Models;
 namespace Pugling.Api.Services.Supervisor;
 
 /// <summary>
-/// Verwaltet <see cref="Objective"/>s (große Ziele) und ihre <see cref="KeyResult"/>s (Etappen) und projiziert
-/// sie – live ausgewertet über den <see cref="ObjectiveEvaluationService"/> – in DTOs. Ein Objective ist ein
-/// Container über KeyResults (wie ein <see cref="StudyPlan"/> über <see cref="PlanPosition"/>s); der Scope einer
-/// Etappe ist nach Anlage fix (zum Umhängen neu anlegen). Validiert Scope (Katalog + Hierarchie) und Zielwerte je
-/// Metrik. Die Belohnung selbst bucht der <see cref="ObjectiveRewardService"/> (hier nur das <c>Rewarded</c>-Flag).
+/// Manages <see cref="Objective"/>s (big goals) and their <see cref="KeyResult"/>s (milestones) and projects
+/// them – evaluated live via the <see cref="ObjectiveEvaluationService"/> – into DTOs. An Objective is a
+/// container over KeyResults (like a <see cref="StudyPlan"/> over <see cref="PlanPosition"/>s); the scope of a
+/// milestone is fixed after creation (create a new one to re-scope). Validates scope (catalog + hierarchy) and
+/// target values per metric. The reward itself is booked by the <see cref="ObjectiveRewardService"/> (only the
+/// <c>Rewarded</c> flag here).
 /// </summary>
 public class ObjectiveService(PuglingDbContext db, ObjectiveEvaluationService evaluation, ExerciseTypeRegistry registry)
 {
     // Die Vertrags-Records (KeyResultResponse/ObjectiveResponse/Create-/Update-Requests) leben im
     // Vertrags-Projekt (Pugling.Contracts.Supervisor); die Result-Paare bleiben hier (tragen ApiError).
 
-    /// <summary>Ergebnis mit optionalem Fehler-Code; beide <c>null</c> = nicht gefunden.</summary>
+    /// <summary>Result with optional error code; both <c>null</c> = not found.</summary>
     public record ObjectiveResult(ObjectiveResponse? Value, ApiError? Error);
-    /// <summary>Ergebnis mit optionalem Fehler-Code; beide <c>null</c> = nicht gefunden.</summary>
+    /// <summary>Result with optional error code; both <c>null</c> = not found.</summary>
     public record KeyResultResult(KeyResultResponse? Value, ApiError? Error);
 
     private static DateOnly Today => DateOnly.FromDateTime(DateTime.UtcNow);
@@ -93,7 +94,7 @@ public class ObjectiveService(PuglingDbContext db, ObjectiveEvaluationService ev
         await db.ObjectiveRewards.AsNoTracking()
             .AnyAsync(r => r.ObjectiveId == objectiveId && r.PaidKeyResultId == null, ct);
 
-    /// <summary>Alle Objectives des Kindes, live ausgewertet; optional nach Status/Art gefiltert.</summary>
+    /// <summary>All objectives of the child, evaluated live; optionally filtered by status/kind.</summary>
     public async Task<List<ObjectiveResponse>> ListAsync(int childId, string? status, ObjectiveKind? kind, CancellationToken ct = default)
     {
         var evals = await evaluation.EvaluateAllAsync(childId, Today, ct: ct);
@@ -113,14 +114,14 @@ public class ObjectiveService(PuglingDbContext db, ObjectiveEvaluationService ev
         return mapped.ToList();
     }
 
-    /// <summary>Ein Objective live ausgewertet; <c>null</c>, wenn es (für dieses Kind) nicht existiert.</summary>
+    /// <summary>An objective evaluated live; <c>null</c> if it (for this child) does not exist.</summary>
     public async Task<ObjectiveResponse?> GetAsync(int childId, int objectiveId, CancellationToken ct = default)
     {
         var e = await evaluation.EvaluateOneAsync(childId, objectiveId, Today, ct);
         return e is null ? null : MapObjective(e, await IsRewardedAsync(objectiveId, ct));
     }
 
-    /// <summary>Legt ein Objective (optional mit inline-Etappen) an und liefert es ausgewertet zurück.</summary>
+    /// <summary>Creates an objective (optionally with inline milestones) and returns it evaluated.</summary>
     public async Task<ObjectiveResult> CreateAsync(int childId, CreateObjectiveRequest req, CancellationToken ct = default)
     {
         if (ValidateObjectiveFields(req.Title, req.Kind, req.RewardOnComplete, req.RewardPerKeyResult) is { } fieldErr)
@@ -161,7 +162,7 @@ public class ObjectiveService(PuglingDbContext db, ObjectiveEvaluationService ev
         return new ObjectiveResult(MapObjective(eval!, false), null);
     }
 
-    /// <summary>Ändert Kopf-Felder eines Objectives (Etappen separat). Not-found = beide null.</summary>
+    /// <summary>Changes header fields of an objective (milestones separate). Not-found = both null.</summary>
     public async Task<ObjectiveResult> UpdateAsync(int childId, int objectiveId, UpdateObjectiveRequest req, CancellationToken ct = default)
     {
         var objective = await db.Objectives.FirstOrDefaultAsync(o => o.Id == objectiveId && o.ChildId == childId, ct);
@@ -188,7 +189,7 @@ public class ObjectiveService(PuglingDbContext db, ObjectiveEvaluationService ev
         return new ObjectiveResult(MapObjective(eval!, await IsRewardedAsync(objectiveId, ct)), null);
     }
 
-    /// <summary>Löscht ein Objective (samt Etappen/Belohnungs-Log per Cascade). <c>false</c> = nicht gefunden.</summary>
+    /// <summary>Deletes an objective (including milestones/reward log via cascade). <c>false</c> = not found.</summary>
     public async Task<bool> DeleteAsync(int childId, int objectiveId, CancellationToken ct = default)
     {
         var objective = await db.Objectives.FirstOrDefaultAsync(o => o.Id == objectiveId && o.ChildId == childId, ct);
@@ -198,7 +199,7 @@ public class ObjectiveService(PuglingDbContext db, ObjectiveEvaluationService ev
         return true;
     }
 
-    /// <summary>Fügt einem Objective eine Etappe hinzu und liefert sie ausgewertet zurück. Not-found = beide null.</summary>
+    /// <summary>Adds a milestone to an objective and returns it evaluated. Not-found = both null.</summary>
     public async Task<KeyResultResult> AddKeyResultAsync(int childId, int objectiveId, CreateKeyResultRequest req, CancellationToken ct = default)
     {
         var objective = await db.Objectives.FirstOrDefaultAsync(o => o.Id == objectiveId && o.ChildId == childId, ct);
@@ -222,7 +223,7 @@ public class ObjectiveService(PuglingDbContext db, ObjectiveEvaluationService ev
         return new KeyResultResult(await EvaluatedKrAsync(childId, objectiveId, kr.Id, ct), null);
     }
 
-    /// <summary>Ändert Metrik/Zielwert/Titel einer Etappe (Scope bleibt fix). Not-found = beide null.</summary>
+    /// <summary>Changes metric/target value/title of a milestone (scope stays fixed). Not-found = both null.</summary>
     public async Task<KeyResultResult> UpdateKeyResultAsync(int childId, int objectiveId, int keyResultId, UpdateKeyResultRequest req, CancellationToken ct = default)
     {
         var kr = await db.KeyResults.FirstOrDefaultAsync(
@@ -242,7 +243,7 @@ public class ObjectiveService(PuglingDbContext db, ObjectiveEvaluationService ev
         return new KeyResultResult(await EvaluatedKrAsync(childId, objectiveId, keyResultId, ct), null);
     }
 
-    /// <summary>Löscht eine Etappe eines Objectives. <c>false</c> = nicht gefunden.</summary>
+    /// <summary>Deletes a milestone of an objective. <c>false</c> = not found.</summary>
     public async Task<bool> DeleteKeyResultAsync(int childId, int objectiveId, int keyResultId, CancellationToken ct = default)
     {
         var kr = await db.KeyResults.FirstOrDefaultAsync(

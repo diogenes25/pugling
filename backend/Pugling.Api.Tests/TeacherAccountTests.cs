@@ -1,4 +1,4 @@
-﻿using System.Net;
+using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
@@ -6,18 +6,18 @@ using System.Text.Json;
 namespace Pugling.Api.Tests;
 
 /// <summary>
-/// Das <b>Lehrer-Konto</b>: ein Erwachsener, der Inhalte erstellt und kein Kind betreut.
+/// The <b>teacher account</b>: an adult who creates content and supervises no child.
 ///
-/// Kein neuer Entitätstyp – die drei Ebenen sind Rollen, entkoppelt vom Login. Ein Vater-Konto trägt
-/// Creator <b>und</b> Supervisor, ein Lehrer-Konto nur Creator. Alles hier Geprüfte folgt daraus, ohne dass
-/// irgendwo eine Sonderregel für „Lehrer" steht: die Betreuungs-Endpunkte weisen ihn über ihr vorhandenes
-/// <c>[Authorize(Roles = Roles.Supervisor)]</c> ab, und die Autoren-Endpunkte lassen ihn durch.
+/// No new entity type – the three tiers are roles, decoupled from the login. A father account carries
+/// Creator <b>and</b> Supervisor, a teacher account only Creator. Everything checked here follows from that,
+/// without a special rule for "teacher" existing anywhere: the supervision endpoints turn them away via their
+/// existing <c>[Authorize(Roles = Roles.Supervisor)]</c>, and the authoring endpoints let them through.
 /// </summary>
 public class TeacherAccountTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWebAppFactory>
 {
     private readonly PuglingWebAppFactory _factory = factory;
 
-    /// <summary>Registriert ein Lehrer-Konto und liefert die Antwort samt eines angemeldeten Clients.</summary>
+    /// <summary>Registers a teacher account and returns the response along with a logged-in client.</summary>
     private async Task<(JsonElement account, HttpClient client)> RegisterTeacherAsync(string name, string pin)
     {
         var res = await _factory.CreateClient().PostAsJsonAsync("/api/v1/creator/teacher-accounts",
@@ -51,8 +51,8 @@ public class TeacherAccountTests(PuglingWebAppFactory factory) : IClassFixture<P
     }
 
     /// <summary>
-    /// Die Zeile, die vorher log: <c>primaryRole</c> klappte jede Nicht-Student-Rolle auf
-    /// <c>Supervisor</c> zusammen – ein Lehrer hätte die Vater-Oberfläche bekommen.
+    /// The line that used to lie: <c>primaryRole</c> collapsed every non-Student role onto
+    /// <c>Supervisor</c> – a teacher would have gotten the father UI.
     /// </summary>
     [Fact]
     public async Task Login_MeldetCreatorAlsPrimaereEbene_UndBeimVaterWeiterhinSupervisor()
@@ -113,8 +113,8 @@ public class TeacherAccountTests(PuglingWebAppFactory factory) : IClassFixture<P
     }
 
     /// <summary>
-    /// Die harte Grenze: ohne Supervisor-Rolle ist der Betreuungs-Bereich zu. Nicht durch eine
-    /// Lehrer-Sonderprüfung, sondern durch das Rollen-Attribut, das dort ohnehin steht.
+    /// The hard boundary: without the supervisor role, the supervision area is closed. Not through a
+    /// special teacher check, but through the role attribute that stands there anyway.
     /// </summary>
     [Theory]
     [InlineData("/api/v1/supervisor/children")]
@@ -128,10 +128,10 @@ public class TeacherAccountTests(PuglingWebAppFactory factory) : IClassFixture<P
     }
 
     /// <summary>
-    /// Die <b>lesende</b> Lehrplan-Liste ist bewusst nur <c>[Authorize]</c> – sie dient Vater und Sohn und
-    /// trennt die Rollen inline (siehe CLAUDE.md). Ein Lehrer bekommt darum <c>200</c>, aber eine
-    /// <b>leere</b> Liste: gefiltert wird über <c>SupervisorLinks</c>, und er betreut niemanden. Genau das
-    /// ist hier die Zusage – ein <c>403</c> wäre schöner zu lesen, die Datenfrage ist aber die wichtigere.
+    /// The <b>reading</b> study plan list is deliberately only <c>[Authorize]</c> – it serves father and
+    /// child and separates the roles inline (see CLAUDE.md). A teacher therefore gets <c>200</c>, but an
+    /// <b>empty</b> list: filtering goes through <c>SupervisorLinks</c>, and they supervise nobody. That is
+    /// exactly the guarantee here – a <c>403</c> would read nicer, but the data question is the more important one.
     /// </summary>
     [Fact]
     public async Task Lehrer_SiehtInDerLehrplanListeNichts()
@@ -156,9 +156,9 @@ public class TeacherAccountTests(PuglingWebAppFactory factory) : IClassFixture<P
     }
 
     /// <summary>
-    /// Das Anmelden darf keine Rolle nachreichen. <c>auth/adult</c> ruft <c>EnsureForAdultAsync</c>, und
-    /// würde das ein bestehendes Konto „vervollständigen", wäre der Lehrer nach dem ersten Login stiller
-    /// Betreuer – die Trennung hätte sich selbst aufgehoben.
+    /// Logging in must not add a role after the fact. <c>auth/adult</c> calls <c>EnsureForAdultAsync</c>,
+    /// and if that were to "complete" an existing account, the teacher would become a silent supervisor
+    /// after the first login – the separation would have undone itself.
     /// </summary>
     [Fact]
     public async Task WiederholtesAnmelden_MachtDenLehrerNichtZumBetreuer()

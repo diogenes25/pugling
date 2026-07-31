@@ -9,11 +9,11 @@ using Pugling.Api.Models;
 namespace Pugling.Api.Controllers.Creator;
 
 /// <summary>
-/// Lehrwerk-Reihen („Access", „Green Line") als <b>geteilter</b> Katalog. Sie sind das Bindeglied zwischen
-/// dem Kind (<c>supervisor/children/{id}/textbooks</c> verweist auf die Reihe) und dem Creator-Profil, das
-/// auf dieses Werk optimiert ist – nur weil beide Seiten denselben Datensatz nennen, ist die Frage „wer
-/// kennt das Material dieses Kindes?" maschinell beantwortbar statt ein Freitext-Vergleich.
-/// Eigentum wie bei der Übung: <b>lesen darf jeder Creator</b>, ändern nur der Owner.
+/// Textbook series ("Access", "Green Line") as a <b>shared</b> catalog. They are the link between
+/// the child (<c>supervisor/children/{id}/textbooks</c> refers to the series) and the creator profile that
+/// is optimized for this work – only because both sides name the same record is the question "who
+/// knows this child's material?" machine-answerable instead of a free-text comparison.
+/// Ownership as with the exercise: <b>any creator may read</b>, only the owner may change.
 /// </summary>
 [ApiController]
 [ApiVersion("1.0")]
@@ -24,9 +24,9 @@ namespace Pugling.Api.Controllers.Creator;
 public class TextbookSeriesController(PuglingDbContext db) : ControllerBase
 {
     /// <summary>
-    /// Projektion samt Unit-Zahl. Das Eigentum steht hier <b>ausgeschrieben</b> statt als Aufruf von
-    /// <see cref="ClaimsPrincipalExtensions.IsOwnedBy"/>: EF müsste den Methodenaufruf übersetzen und
-    /// bräche zur Laufzeit. Fehlender <c>fid</c> ⇒ <c>false</c> (fail-closed, gleiche Regel wie dort).
+    /// Projection along with unit count. Ownership is spelled out <b>inline</b> here instead of a call to
+    /// <see cref="ClaimsPrincipalExtensions.IsOwnedBy"/>: EF would need to translate the method call and
+    /// would break at runtime. Missing <c>fid</c> ⇒ <c>false</c> (fail-closed, same rule as there).
     /// </summary>
     private static IQueryable<TextbookSeriesResponse> Project(IQueryable<TextbookSeries> q, int? fid) =>
         q.Select(s => new TextbookSeriesResponse(s.Id, s.Name, s.Slug, s.Publisher, s.SubjectName, s.SubjectId,
@@ -34,15 +34,15 @@ public class TextbookSeriesController(PuglingDbContext db) : ControllerBase
             fid != null && s.OwnerAdultId == fid, s.Units.Count, s.CreatedAt));
 
     /// <summary>
-    /// Alle Reihen (alphabetisch), optional gefiltert. Die Gesamtzahl vor dem Paging steht im Header
+    /// All series (alphabetically), optionally filtered. The total count before paging is in the header
     /// <c>X-Total-Count</c>.
     /// </summary>
-    /// <param name="search">Teilstring in Name, Slug oder Verlag.</param>
-    /// <param name="subjectId">Nur Reihen zu diesem Katalog-Fach.</param>
-    /// <param name="mineOnly">true = nur eigene Reihen.</param>
-    /// <param name="skip">Anzahl zu überspringender Einträge (Paging).</param>
-    /// <param name="take">Maximale Trefferzahl (1..500).</param>
-    /// <param name="ct">Abbruch-Token.</param>
+    /// <param name="search">Substring in name, slug, or publisher.</param>
+    /// <param name="subjectId">Only series for this catalog subject.</param>
+    /// <param name="mineOnly">true = only own series.</param>
+    /// <param name="skip">Number of entries to skip (paging).</param>
+    /// <param name="take">Maximum number of hits (1..500).</param>
+    /// <param name="ct">Cancellation token.</param>
     [HttpGet]
     public async Task<IEnumerable<TextbookSeriesResponse>> List(
         [FromQuery] string? search = null,
@@ -65,7 +65,7 @@ public class TextbookSeriesController(PuglingDbContext db) : ControllerBase
             .ToPagedListAsync(Response, skip, take, ct);
     }
 
-    /// <summary>Eine Reihe per Id.</summary>
+    /// <summary>A series by id.</summary>
     [HttpGet("{seriesId:int}")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<TextbookSeriesResponse>> Get(int seriesId, CancellationToken ct = default)
@@ -76,9 +76,9 @@ public class TextbookSeriesController(PuglingDbContext db) : ControllerBase
     }
 
     /// <summary>
-    /// Legt eine Reihe an. Der Slug entsteht aus dem Namen; ist er schon vergeben, kommt die bestehende
-    /// Reihe zurück (idempotent, Muster <c>interest-tags</c>) – ein Agent darf denselben Katalog-Aufbau
-    /// gefahrlos wiederholen, statt Dubletten zu erzeugen.
+    /// Creates a series. The slug is derived from the name; if it is already taken, the existing
+    /// series comes back (idempotent, same pattern as <c>interest-tags</c>) – an agent may safely repeat the same
+    /// catalog build instead of creating duplicates.
     /// </summary>
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status201Created)]
@@ -117,7 +117,7 @@ public class TextbookSeriesController(PuglingDbContext db) : ControllerBase
             await Project(db.TextbookSeries.AsNoTracking().Where(s => s.Id == series.Id), fid).FirstAsync(ct));
     }
 
-    /// <summary>Ändert eine Reihe (partiell, nur Owner). Der Slug bleibt unveränderlich.</summary>
+    /// <summary>Changes a series (partial, owner only). The slug remains immutable.</summary>
     [HttpPatch("{seriesId:int}")]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -151,8 +151,8 @@ public class TextbookSeriesController(PuglingDbContext db) : ControllerBase
     }
 
     /// <summary>
-    /// Löscht eine Reihe samt Units (nur Owner). Bewusst <b>ohne</b> Verwendungs-Sperre: Kind-Lehrbücher
-    /// und Profile verlieren nur die Zuordnung (SetNull) und bleiben mit ihrem Freitext arbeitsfähig.
+    /// Deletes a series along with its units (owner only). Deliberately <b>without</b> a usage lock: child textbooks
+    /// and profiles only lose the assignment (SetNull) and remain usable with their free text.
     /// </summary>
     [HttpDelete("{seriesId:int}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]

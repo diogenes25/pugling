@@ -1,60 +1,61 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Pugling.Api.Data;
 using Pugling.Api.Models;
 
 namespace Pugling.Api.Services.Shared;
 
 /// <summary>
-/// Wie viele Verwendungen eine Übung <b>am Löschen hindern</b> – aufgeteilt in die, die der Aufrufer
-/// sehen kann, und die, die außerhalb seiner Betreuung liegen.
+/// How many usages <b>prevent an exercise from being deleted</b> – split into the ones the caller
+/// can see, and the ones that lie outside their supervision.
 /// </summary>
-/// <param name="OwnPlans">Lehrplan-Positionen bei Kindern, die der Aufrufer betreut.</param>
-/// <param name="HiddenPlans">Lehrplan-Positionen bei Kindern, die er <b>nicht</b> betreut – für ihn unsichtbar.</param>
-/// <param name="OwnClassTests">Direkt zugewiesene Klassenarbeiten eigener Kinder.</param>
-/// <param name="HiddenClassTests">Direkt zugewiesene Klassenarbeiten fremd betreuter Kinder.</param>
-/// <param name="OwnGoals">Etappen großer Ziele (<c>KeyResult</c>) eigener Kinder, die auf die Übung zeigen.</param>
-/// <param name="HiddenGoals">Dieselben Etappen bei fremd betreuten Kindern.</param>
+/// <param name="OwnPlans">Study plan positions for children the caller supervises.</param>
+/// <param name="HiddenPlans">Study plan positions for children they do <b>not</b> supervise – invisible to them.</param>
+/// <param name="OwnClassTests">Directly assigned class tests of their own children.</param>
+/// <param name="HiddenClassTests">Directly assigned class tests of children supervised by someone else.</param>
+/// <param name="OwnGoals">Milestones of big goals (<c>KeyResult</c>) of their own children pointing at the exercise.</param>
+/// <param name="HiddenGoals">The same milestones for children supervised by someone else.</param>
 /// <param name="HiddenLearners">
-/// Wie viele <b>verschiedene Kinder</b> hinter den verborgenen Verwendungen stehen. Eine eigene Zahl, weil
-/// sie eine andere Frage beantwortet als <see cref="Hidden"/>: die Verwendungs-Zahl sagt „an wie vielen
-/// Stellen müsste jemand aufräumen", diese sagt „von wie vielen Kindern wird mein Material gelernt". Für
-/// einen Creator ohne eigene Kinder ist die zweite die einzige, die ihn interessiert – und drei Positionen
-/// in den Plänen desselben Kindes sind eben nicht drei Nutzer.
+/// How many <b>different children</b> stand behind the hidden usages. A separate number, because
+/// it answers a different question than <see cref="Hidden"/>: the usage count says "how many
+/// places would someone need to clean up", this one says "how many children are learning my material". For
+/// a creator without children of their own, the second is the only one that matters to them – and three
+/// positions in the plans of the same child are not three users.
 /// </param>
 public readonly record struct BlockingUsage(
     int OwnPlans, int HiddenPlans, int OwnClassTests, int HiddenClassTests, int HiddenLearners,
     int OwnGoals = 0, int HiddenGoals = 0)
 {
-    /// <summary>Verwendungen, die der Aufrufer in der Verwendungs-Anzeige findet.</summary>
+    /// <summary>Usages the caller finds in the usage display.</summary>
     public int Own => OwnPlans + OwnClassTests + OwnGoals;
 
-    /// <summary>Verwendungen, die ihm verborgen bleiben – die Zahl, ohne die ein 409 ein Rätsel ist.</summary>
+    /// <summary>Usages that remain hidden from them – the number without which a 409 is a mystery.</summary>
     public int Hidden => HiddenPlans + HiddenClassTests + HiddenGoals;
 
-    /// <summary>Blockiert überhaupt etwas das Löschen?</summary>
+    /// <summary>Does anything block the deletion at all?</summary>
     public bool Any => Own + Hidden > 0;
 }
 
 /// <summary>
-/// Die <b>eine</b> Antwort auf „wo wird diese Übung verwendet".
+/// The <b>one</b> answer to "where is this exercise used".
 ///
-/// Sie steht hier, weil genau diese Frage vorher an zwei Stellen unterschiedlich beantwortet wurde: die
-/// Verwendungs-Anzeige filterte auf die eigenen Kinder, die Löschprüfung schaute global. Steckte eine Übung
-/// im Plan eines fremd betreuten Kindes, meldete die Anzeige „nirgends" – und das Löschen scheiterte
-/// trotzdem mit <c>409</c>, ohne dass der Autor den Grund finden konnte (Anmerkung 14).
+/// It lives here because this exact question used to be answered differently in two places: the
+/// usage display filtered on the caller's own children, the deletion check looked globally. If an
+/// exercise was embedded in the plan of a child supervised by someone else, the display reported
+/// "nowhere" – and deletion still failed with <c>409</c>, without the author being able to find the
+/// reason (remark 14).
 ///
 /// <para>
-/// Bewusst nur die <b>FK-relevanten</b> Verwendungen: Lehrplan-Positionen und <i>direkt</i> zugewiesene
-/// Klassenarbeiten. Eine Klassenarbeit, die die Übung nur über einen gemeinsamen Tag einsammelt, verweist
-/// nicht auf sie und hindert das Löschen darum auch nicht – sie gehört in die Anzeige, aber nicht in diese
-/// Zählung. Wer beides vermischt, baut den nächsten Widerspruch derselben Art.
+/// Deliberately only the <b>FK-relevant</b> usages: study plan positions and <i>directly</i> assigned
+/// class tests. A class test that only collects the exercise via a shared tag does not reference it
+/// and therefore does not block deletion either – it belongs in the display, but not in this count.
+/// Anyone who mixes the two builds the next contradiction of the same kind.
 /// </para>
 /// </summary>
 public static class ExerciseUsageQueries
 {
     /// <summary>
-    /// Zählt, was das Löschen blockiert, getrennt nach „sichtbar für <paramref name="fid"/>" und „verborgen".
-    /// Ohne <paramref name="fid"/> (Creator ohne Vater-Profil) ist alles verborgen – er betreut kein Kind.
+    /// Counts what blocks deletion, split into "visible to <paramref name="fid"/>" and "hidden".
+    /// Without <paramref name="fid"/> (creator without an adult profile) everything is hidden – they supervise no child.
     /// </summary>
     public static async Task<BlockingUsage> CountBlockingAsync(
         PuglingDbContext db, int exerciseId, int? fid, CancellationToken ct = default)
@@ -106,16 +107,16 @@ public static class ExerciseUsageQueries
     }
 
     /// <summary>
-    /// Blockiert <b>irgendeine</b> Übung aus <paramref name="scope"/> das Löschen? Für die Ebenen über der
-    /// Übung: ein Fach oder Kapitel kaskadiert auf seine Übungen, und <c>PlanPosition→Exercise</c> ist
-    /// <c>Restrict</c> – ohne diese Vorprüfung stirbt das Löschen als FK-Verletzung in einer nackten 500,
-    /// statt zu sagen, was im Weg steht.
+    /// Does <b>any</b> exercise from <paramref name="scope"/> block deletion? For the levels above the
+    /// exercise: a subject or chapter cascades to its exercises, and <c>PlanPosition→Exercise</c> is
+    /// <c>Restrict</c> – without this pre-check, deletion dies as an FK violation in a bare 500,
+    /// instead of saying what is in the way.
     /// <para>
-    /// Sie steht hier und nicht in den beiden Controllern, weil die Antwort auf „welche Tabellen hindern
-    /// das Löschen einer Übung" <b>einen</b> Ort braucht. Vorher stand die Zeile dreimal wörtlich da; eine
-    /// vierte verweisende Tabelle hätte man an allen drei Stellen finden müssen – und die eine vergessene
-    /// wäre wieder eine 500. Die <i>Meldungstexte</i> bleiben bei den Aufrufern: sie benennen die Ebene
-    /// („in this subject" / „in this chapter") und sind nicht dieselbe Aussage.
+    /// It lives here and not in the two controllers, because the answer to "which tables block
+    /// the deletion of an exercise" needs <b>one</b> place. Previously the line was written out three
+    /// times verbatim; a fourth referencing table would have had to be found in all three places – and
+    /// the one forgotten would again be a 500. The <i>message texts</i> stay with the callers: they name
+    /// the level ("in this subject" / "in this chapter") and are not the same statement.
     /// </para>
     /// </summary>
     public static async Task<bool> AnyBlockingAsync(
@@ -134,9 +135,9 @@ public static class ExerciseUsageQueries
     }
 
     /// <summary>
-    /// Der Satz, der beim <c>409</c> erklärt, <b>warum</b> nicht gelöscht werden kann – und der die
-    /// verborgenen Verwendungen als <i>Zahl</i> nennt. Absichtlich ohne Namen von Plänen oder Kindern:
-    /// die gehören einem anderen Betreuer, und der Autor braucht nur zu wissen, dass es sie gibt.
+    /// The sentence that explains on <c>409</c> <b>why</b> deletion is not possible – and that names the
+    /// hidden usages as a <i>number</i>. Deliberately without the names of plans or children: those
+    /// belong to a different supervisor, and the author only needs to know that they exist.
     /// </summary>
     public static string Explain(BlockingUsage usage)
     {

@@ -2,33 +2,33 @@ using SkiaSharp;
 
 namespace Pugling.Api.Services.Shared;
 
-/// <summary>Eine erzeugte Auflösung: fertige Bytes plus die Maße, die in die Variante gehören.</summary>
+/// <summary>A generated resolution: the finished bytes plus the dimensions that belong to the variant.</summary>
 public record RenderedVariant(MediaPurpose Purpose, int Width, int Height, string Format, byte[] Content);
 
-/// <summary>Ergebnis der Aufbereitung eines Uploads.</summary>
-/// <param name="Variants">Die erzeugten Auflösungen (mindestens eine).</param>
-/// <param name="Placeholder">Dominante Farbe als Hex – der Client kann die Fläche färben, bevor das Bild da ist.</param>
+/// <summary>Result of processing an upload.</summary>
+/// <param name="Variants">The generated resolutions (at least one).</param>
+/// <param name="Placeholder">Dominant color as hex – the client can color the area before the image arrives.</param>
 public record ProcessedImage(IReadOnlyList<RenderedVariant> Variants, string Placeholder);
 
 /// <summary>
-/// Erzeugt aus einer hochgeladenen Bilddatei die Auflösungen des Medien-Stores.
+/// Generates the resolutions of the media store from an uploaded image file.
 /// <para>
-/// Drei Entscheidungen stecken hier drin, die man später nicht mehr billig ändern kann:
+/// Three decisions are baked in here that can't be changed cheaply later:
 /// <list type="bullet">
-/// <item><b>Kein Hochskalieren.</b> Ist die Quelle kleiner als eine Zielgröße, wird sie nicht aufgeblasen –
-/// das ergäbe nur unscharfe, größere Dateien. Die Variante entsteht dann in Quellgröße.</item>
-/// <item><b>Kein Beschnitt.</b> Skaliert wird immer seitenverhältnis-erhaltend in eine Box. Ein Zuschnitt
-/// auf ein festes Format würde bei einem Motiv wie „laufendes Einhorn" den Kopf abschneiden – solche
-/// Entscheidungen kann nur ein Mensch treffen. Deshalb erzeugt der Upload auch <b>kein</b>
-/// <see cref="MediaPurpose.Hero"/>: das breite Aufmacherformat verlangt redaktionellen Beschnitt.</item>
-/// <item><b>WebP.</b> Ein Format für alle Slots – deutlich kleiner als PNG/JPEG bei gleicher Qualität und
-/// überall unterstützt. Wer AVIF danebenlegen will, reicht die Variante über die API nach.</item>
+/// <item><b>No upscaling.</b> If the source is smaller than a target size, it is not blown up –
+/// that would only produce blurry, larger files. The variant is then created at source size.</item>
+/// <item><b>No cropping.</b> Scaling always preserves the aspect ratio into a box. Cropping to a
+/// fixed format could cut off the head on a motif like "running unicorn" – only a human can make
+/// such a call. That's why the upload also does <b>not</b> generate a
+/// <see cref="MediaPurpose.Hero"/>: the wide hero format requires editorial cropping.</item>
+/// <item><b>WebP.</b> One format for all slots – noticeably smaller than PNG/JPEG at the same
+/// quality and universally supported. Anyone wanting AVIF alongside it can add the variant via the API.</item>
 /// </list>
 /// </para>
 /// </summary>
 public class MediaImageProcessor
 {
-    /// <summary>Zielgrößen je Zweck (längste Kante in Pixeln).</summary>
+    /// <summary>Target sizes per purpose (longest edge in pixels).</summary>
     private static readonly (MediaPurpose Purpose, int LongestEdge)[] Targets =
     [
         (MediaPurpose.Thumb, 128),
@@ -40,8 +40,8 @@ public class MediaImageProcessor
     private const string Format = "webp";
 
     /// <summary>
-    /// Dekodiert den Upload und rendert die Auflösungen. Wirft <see cref="ArgumentException"/>, wenn die
-    /// Datei kein dekodierbares Bild ist – der Controller macht daraus einen sauberen 400.
+    /// Decodes the upload and renders the resolutions. Throws <see cref="ArgumentException"/> if the
+    /// file is not a decodable image – the controller turns that into a clean 400.
     /// </summary>
     public ProcessedImage Process(ReadOnlySpan<byte> source)
     {
@@ -80,8 +80,8 @@ public class MediaImageProcessor
     }
 
     /// <summary>
-    /// Dominante Farbe als <c>#rrggbb</c> – ermittelt, indem das Bild auf 1×1 heruntergerechnet wird
-    /// (das ist der Mittelwert und für einen Platzhalter genau genug).
+    /// Dominant color as <c>#rrggbb</c> – determined by downscaling the image to 1×1
+    /// (that's the average, and precise enough for a placeholder).
     /// </summary>
     private static string DominantColor(SKBitmap original)
     {

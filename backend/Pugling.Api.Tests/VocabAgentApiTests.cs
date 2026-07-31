@@ -5,9 +5,9 @@ using System.Text.Json;
 namespace Pugling.Api.Tests;
 
 /// <summary>
-/// Die Agenten-tauglichen Store-Fähigkeiten: „einfach" (nur Word) anlegen, unfertige Vokabeln filtern,
-/// per Lookup/Batch massenhaft anlegen/nachtragen, die Formen-Familie navigieren und Vokabeln taggen.
-/// Isoliert über ein erfundenes Sprachpaar (fa/fb), damit die Filter nicht mit Seed-Daten kollidieren.
+/// The agent-friendly store capabilities: creating "simple" entries (word only), filtering incomplete
+/// vocabulary, bulk creating/backfilling via lookup/batch, navigating the form family and tagging
+/// vocabulary. Isolated via a made-up language pair (fa/fb) so the filters don't collide with seed data.
 /// </summary>
 public class VocabAgentApiTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWebAppFactory>
 {

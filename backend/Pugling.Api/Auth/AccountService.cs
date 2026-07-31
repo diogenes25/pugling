@@ -5,30 +5,30 @@ using Pugling.Api.Models;
 namespace Pugling.Api.Auth;
 
 /// <summary>
-/// Sorgt dafür, dass zu jedem fachlichen Profil (<see cref="Adult"/>/<see cref="Child"/>) ein Login-Konto
-/// mit den passenden Rollen existiert – idempotent. Genutzt beim Start-Backfill, beim Anlegen neuer
-/// Väter/Kinder und beim Login (als Sicherheitsnetz), damit ein frisch angelegter Nutzer sofort ein
-/// Token mit allen seinen Rollen erhält. PIN-Hashes werden beim Anlegen vom Adult/Child übernommen.
+/// Ensures that a login account with the matching roles exists for every domain profile
+/// (<see cref="Adult"/>/<see cref="Child"/>) – idempotent. Used during the startup backfill, when
+/// creating new adults/children, and at login (as a safety net), so that a freshly created user
+/// immediately gets a token with all of their roles. PIN hashes are taken over from the Adult/Child on creation.
 /// </summary>
 public class AccountService(PuglingDbContext db)
 {
     /// <summary>
-    /// Konto (inkl. Profile) für einen Erwachsenen <b>mit</b> Betreuungsauftrag – Rollen Creator +
-    /// Supervisor. Legt es idempotent an. Gegenstück: <see cref="EnsureForTeacherAsync"/>.
+    /// Account (incl. profiles) for an adult <b>with</b> a supervision mandate – Creator + Supervisor
+    /// roles. Creates it idempotently. Counterpart: <see cref="EnsureForTeacherAsync"/>.
     /// </summary>
     public Task<Account> EnsureForAdultAsync(Adult adult, CancellationToken ct = default) =>
         EnsureAsync(adult, supervises: true, ct);
 
     /// <summary>
-    /// Konto für einen <b>Lehrer</b>: Rolle <see cref="ProfileRole.Creator"/> – und <b>keine</b>
-    /// Supervisor-Rolle. Damit trägt sein Token keinen Supervisor-Claim, und alle Betreuungs-Endpunkte
-    /// (<c>[Authorize(Roles = Roles.Supervisor)]</c>) weisen ihn ab, ohne dass irgendwo eine Sonderregel nötig wäre.
+    /// Account for a <b>teacher</b>: role <see cref="ProfileRole.Creator"/> – and <b>no</b>
+    /// Supervisor role. So their token carries no Supervisor claim, and all supervision endpoints
+    /// (<c>[Authorize(Roles = Roles.Supervisor)]</c>) reject them without needing any special-case rule anywhere.
     /// <para>
-    /// Fachlich hängt er weiter an einer <see cref="Adult"/>-Zeile – daran hängen Autorschaft
-    /// (<c>Exercise.AuthorAdultId</c>) und die RWX-Rechte (<c>ExerciseGrant.CreatorId</c>). Ein Lehrer ist
-    /// also kein neuer Entitätstyp, sondern <b>ein Erwachsener ohne Betreuungsauftrag</b>. Die Rollen sind
-    /// vom Login entkoppelt (siehe docs/grundprinzip.md); genau diese Entkopplung wird hier zum ersten Mal
-    /// ausgenutzt, statt sie mit einer parallelen Identität zu umgehen.
+    /// Domain-wise they still hang off an <see cref="Adult"/> row – authorship
+    /// (<c>Exercise.AuthorAdultId</c>) and the RWX permissions (<c>ExerciseGrant.CreatorId</c>) attach to that.
+    /// A teacher is thus not a new entity type, but <b>an adult without a supervision mandate</b>. The roles
+    /// are decoupled from the login (see docs/grundprinzip.md); this exact decoupling is exploited here for
+    /// the first time, instead of working around it with a parallel identity.
     /// </para>
     /// </summary>
     public Task<Account> EnsureForTeacherAsync(Adult teacher, CancellationToken ct = default) =>
@@ -50,7 +50,7 @@ public class AccountService(PuglingDbContext db)
         return account;
     }
 
-    /// <summary>Konto (inkl. Profil) für das Kind – Rolle Student. Legt es idempotent an.</summary>
+    /// <summary>Account (incl. profile) for the child – Student role. Creates it idempotently.</summary>
     public async Task<Account> EnsureForChildAsync(Child child, CancellationToken ct = default)
     {
         var account = await db.Accounts.Include(a => a.Profiles)
@@ -65,25 +65,24 @@ public class AccountService(PuglingDbContext db)
     }
 
     /// <summary>
-    /// Spiegelt Anzeigename, E-Mail und PIN-Hash des Erwachsenen auf sein Login-Konto. Die
-    /// <see cref="Adult"/>-Zeile ist die <b>Quelle</b>, das Konto die Kopie – nie umgekehrt.
+    /// Mirrors the adult's display name, e-mail and PIN hash onto their login account. The
+    /// <see cref="Adult"/> row is the <b>source</b>, the account the copy – never the other way round.
     /// <para>
-    /// Warum es die Kopie gibt: der konto-zentrische Login (<c>POST auth/login</c>) kennt nur das Konto,
-    /// und der Anzeigename wandert von dort als <c>ClaimTypes.Name</c> ins Token. Wer nur die fachliche
-    /// Zeile ändert, benennt darum nichts um, was der Nutzer nach dem Anmelden sieht.
+    /// Why the copy exists: the account-centric login (<c>POST auth/login</c>) only knows the account,
+    /// and the display name travels from there into the token as <c>ClaimTypes.Name</c>. Changing only the
+    /// domain row therefore renames nothing that the user sees after signing in.
     /// </para>
     /// <para>
-    /// Bei der <b>E-Mail</b> ist die Drift nicht kosmetisch: der gefilterte Unique-Index hängt an beiden
-    /// Zeilen, und die Kollisionsprüfung läuft gegen das Konto. Blieb es stehen, hielt eine aufgegebene
-    /// Adresse den Adressraum weiter besetzt, und eine belegte sah <i>frei</i> aus – die Prüfung ließ sie
-    /// durch, der Index am <see cref="Adult"/> schlug zu, und aus dem fälligen 409 wurde ein 500 mit halb
-    /// gespeichertem Zustand.
+    /// For the <b>e-mail</b> the drift is not cosmetic: the filtered unique index hangs off both rows, and
+    /// the collision check runs against the account. If it went stale, an abandoned address kept occupying
+    /// the address space, and a taken one looked <i>free</i> – the check let it through, the index on the
+    /// <see cref="Adult"/> struck, and the 409 that was due became a 500 with half-saved state.
     /// </para>
     /// <para>
-    /// Gespiegelt wird <b>unbedingt</b>, nicht nur das gerade geänderte Feld: „das Konto trägt, was die
-    /// fachliche Zeile trägt" ist als Invariante prüfbar, „das Konto trägt, was der letzte PATCH mitschickte"
-    /// nicht. Bestehende Drift heilt damit beim nächsten Schreibzugriff. Das Speichern bleibt beim Aufrufer,
-    /// damit fachliche Änderung und Spiegelung in <b>einem</b> Commit landen.
+    /// Mirroring is <b>unconditional</b>, not limited to the field just changed: "the account carries what
+    /// the domain row carries" is checkable as an invariant, "the account carries whatever the last PATCH
+    /// sent along" is not. Existing drift therefore heals on the next write. Saving stays with the caller,
+    /// so that the domain change and the mirroring land in <b>one</b> commit.
     /// </para>
     /// </summary>
     public async Task MirrorAsync(Adult adult, CancellationToken ct)
@@ -95,8 +94,8 @@ public class AccountService(PuglingDbContext db)
     }
 
     /// <summary>
-    /// Dasselbe für das Kind – ohne E-Mail, die hat es nicht (siehe <see cref="MirrorAsync(Adult, CancellationToken)"/>
-    /// für die Begründung der Spiegelung).
+    /// The same for the child – without an e-mail, which it does not have (see
+    /// <see cref="MirrorAsync(Adult, CancellationToken)"/> for why the mirroring exists).
     /// </summary>
     public async Task MirrorAsync(Child child, CancellationToken ct)
     {
@@ -105,7 +104,7 @@ public class AccountService(PuglingDbContext db)
         account.PinHash = child.Pin;
     }
 
-    /// <summary>Lädt ein Konto samt Profilen für die Token-Ausstellung (Login über Konto-Id).</summary>
+    /// <summary>Loads an account with its profiles for token issuance (login via account id).</summary>
     public Task<Account?> FindWithProfilesAsync(int accountId, CancellationToken ct = default) =>
         db.Accounts.Include(a => a.Profiles).FirstOrDefaultAsync(a => a.Id == accountId, ct);
 }

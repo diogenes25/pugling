@@ -1,35 +1,35 @@
 namespace Pugling.Contracts;
 
 /// <summary>
-/// Schularten, für die eine Übung geeignet ist. <c>[Flags]</c>-Enum, damit eine Übung
-/// mehreren Schularten zugeordnet werden kann (z. B. Realschule | Gymnasium).
-/// <see cref="None"/> bedeutet „für alle Schularten" (kein Filter-Ausschluss).
+/// School types for which an exercise is suitable. A <c>[Flags]</c> enum so that an exercise
+/// can be assigned to multiple school types (e.g. Realschule | Gymnasium).
+/// <see cref="None"/> means "for all school types" (no filter exclusion).
 /// </summary>
 [Flags]
 public enum SchoolTypes
 {
-    /// <summary>Keine Einschränkung – die Übung passt zu jeder Schulart.</summary>
+    /// <summary>No restriction – the exercise fits any school type.</summary>
     None = 0,
-    /// <summary>Grundschule.</summary>
+    /// <summary>Primary school (Grundschule).</summary>
     Grundschule = 1,
-    /// <summary>Hauptschule.</summary>
+    /// <summary>Lower secondary school (Hauptschule).</summary>
     Hauptschule = 2,
-    /// <summary>Realschule.</summary>
+    /// <summary>Intermediate secondary school (Realschule).</summary>
     Realschule = 4,
-    /// <summary>Gymnasium.</summary>
+    /// <summary>Academic secondary school (Gymnasium).</summary>
     Gymnasium = 8,
-    /// <summary>Gesamtschule.</summary>
+    /// <summary>Comprehensive school (Gesamtschule).</summary>
     Gesamtschule = 16,
-    /// <summary>Berufsschule.</summary>
+    /// <summary>Vocational school (Berufsschule).</summary>
     Berufsschule = 32,
 }
 
 /// <summary>
-/// Vom Übungsersteller vorgeschlagenes Bonus-System (global an der Übung). Dient nur als Vorlage:
-/// beim Erzeugen eines Lehrplans aus der Übung werden diese Werte EINMAL in dessen Bonus-Felder
-/// kopiert. Spätere Änderungen an der Übung wirken damit NICHT rückwirkend auf bestehende Kind-Pläne –
-/// das laufende Bonus-System bleibt kind-individuell und pro Lehrplan anpassbar (Motivations-Steuerung
-/// je Kind/Übung). Felder spiegeln die Bonus-Knöpfe des <c>StudyPlan</c>.
+/// Bonus system suggested by the exercise author (global on the exercise). Serves only as a template:
+/// when a study plan is created from the exercise, these values are copied ONCE into its bonus fields.
+/// Later changes to the exercise therefore do NOT retroactively affect existing child plans –
+/// the running bonus system remains child-specific and adjustable per study plan (motivation control
+/// per child/exercise). Fields mirror the bonus knobs of the <c>StudyPlan</c>.
 /// </summary>
 public record SuggestedBonus(
     int ComboThreshold,
@@ -39,17 +39,17 @@ public record SuggestedBonus(
     int NewContentPoints);
 
 /// <summary>
-/// RWX-Recht, das ein Owner einem einzelnen Creator an einer Übung erteilt. Hierarchie
-/// <see cref="Owner"/> ⊃ <see cref="Write"/> ⊃ <see cref="Execute"/>: Owner darf zusätzlich löschen,
-/// <c>Exercise.ExecutePublic</c> umschalten und selbst Rechte vergeben/entziehen. Read ist bewusst
-/// nicht Teil des Modells – der Katalog bleibt für alle lesbar (geteilte Bibliothek).
+/// RWX permission that an owner grants to an individual creator on an exercise. Hierarchy
+/// <see cref="Owner"/> ⊃ <see cref="Write"/> ⊃ <see cref="Execute"/>: an owner may additionally delete,
+/// toggle <c>Exercise.ExecutePublic</c>, and grant/revoke permissions themselves. Read is deliberately
+/// not part of the model – the catalog remains readable for everyone (shared library).
 /// </summary>
 public enum GrantPermission
 {
-    /// <summary>Voller Zugriff: ändern, löschen, Freigabe umschalten, Rechte vergeben und entziehen.</summary>
+    /// <summary>Full access: change, delete, toggle sharing, grant and revoke permissions.</summary>
     Owner,
-    /// <summary>Darf die Übung inhaltlich ändern, aber nicht löschen und keine Rechte vergeben.</summary>
+    /// <summary>May change the exercise's content, but not delete it or grant permissions.</summary>
     Write,
-    /// <summary>Darf die Übung einem betreuten Kind zuweisen und ausspielen, aber nicht ändern.</summary>
+    /// <summary>May assign the exercise to a supervised child and play it out, but not change it.</summary>
     Execute,
 }

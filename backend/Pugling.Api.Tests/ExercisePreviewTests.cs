@@ -7,9 +7,9 @@ using Pugling.Api.Data;
 namespace Pugling.Api.Tests;
 
 /// <summary>
-/// Testmodus („Ausprobieren"): Der Vater spielt eine Übung server-autoritativ durch – die Bewertung ist
-/// dieselbe wie beim Kind, aber der Durchlauf ist vollständig nebenwirkungsfrei (keine Punkte, kein
-/// TestAttempt, kein Positions-Fortschritt, keine Session).
+/// Test mode ("try it out"): the father plays through an exercise server-authoritatively – the grading
+/// is the same as for the child, but the run is completely side-effect-free (no points, no
+/// TestAttempt, no position progress, no session).
 /// </summary>
 public class ExercisePreviewTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWebAppFactory>
 {

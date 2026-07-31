@@ -9,22 +9,22 @@ using Pugling.Api.Models;
 namespace Pugling.Api.Controllers.Creator;
 
 /// <summary>
-/// Registrierung eines <b>Lehrer-Kontos</b>: ein Erwachsener, der Inhalte erstellt und <b>kein Kind
-/// betreut</b>.
+/// Registration of a <b>teacher account</b>: an adult who creates content and <b>supervises no
+/// child</b>.
 ///
 /// <para>
-/// Warum das kein neuer Entitätstyp ist: Die drei Ebenen sind <i>Rollen</i>, entkoppelt vom Login
-/// (docs/grundprinzip.md). Ein Konto trägt je Rolle ein <see cref="AccountProfile"/>; ein Vater bekommt
-/// Creator <b>und</b> Supervisor, ein Lehrer nur Creator. Damit fehlt seinem Token der Supervisor-Claim, und
-/// alle Betreuungs-Endpunkte weisen ihn über ihr vorhandenes <c>[Authorize(Roles = Roles.Supervisor)]</c> ab
-/// – ohne eine einzige Sonderregel. Autorschaft (<c>Exercise.AuthorAdultId</c>) und RWX-Rechte
-/// (<c>ExerciseGrant.CreatorId</c>) hängen weiter an derselben <see cref="Adult"/>-Zeile, weshalb Anlegen,
-/// Rechtevergabe, Freigabe und Rücknahme unverändert funktionieren.
+/// Why this is not a new entity type: the three tiers are <i>roles</i>, decoupled from the login
+/// (docs/grundprinzip.md). An account carries one <see cref="AccountProfile"/> per role; a father gets
+/// Creator <b>and</b> Supervisor, a teacher only Creator. This means their token lacks the supervisor claim, and
+/// all supervision endpoints reject them via their existing <c>[Authorize(Roles = Roles.Supervisor)]</c>
+/// – without a single special-case rule. Authorship (<c>Exercise.AuthorAdultId</c>) and RWX permissions
+/// (<c>ExerciseGrant.CreatorId</c>) still hang off the same <see cref="Adult"/> row, which is why creating,
+/// granting permissions, publishing, and withdrawing continue to work unchanged.
 /// </para>
 /// <para>
-/// Nicht zu verwechseln mit dem <c>CreatorProfile</c> („Fachlehrer") unter
-/// <c>api/v1/creator/profiles</c>: das ist die <i>fachliche</i> Beschreibung (Fach, Schulart, Didaktik) für
-/// den KI-Creator. Hier entsteht die <i>Identität</i>, mit der man sich anmeldet.
+/// Not to be confused with the <c>CreatorProfile</c> ("subject teacher") under
+/// <c>api/v1/creator/profiles</c>: that is the <i>subject-matter</i> description (subject, school type, didactics) for
+/// the AI creator. Here, the <i>identity</i> used to log in is created.
 /// </para>
 /// </summary>
 [ApiController]
@@ -35,7 +35,7 @@ namespace Pugling.Api.Controllers.Creator;
 public class TeacherAccountsController(PuglingDbContext db, AccountService accounts) : ControllerBase
 {
     /// <summary>
-    /// Legt ein Lehrer-Konto an (Registrierung, ohne Anmeldung erreichbar – wie die Vater-Registrierung).
+    /// Creates a teacher account (registration, reachable without login – like the father registration).
     /// </summary>
     [HttpPost]
     [AllowAnonymous]
@@ -63,8 +63,8 @@ public class TeacherAccountsController(PuglingDbContext db, AccountService accou
     }
 
     /// <summary>
-    /// Das eigene Lehrer-Konto. Nur der Inhaber – die Route-Id muss der <c>fid</c> im Token entsprechen,
-    /// sonst könnte ein Creator die Konten anderer abfragen.
+    /// The teacher's own account. Owner only – the route id must match the <c>fid</c> in the token,
+    /// otherwise a creator could query the accounts of others.
     /// </summary>
     [HttpGet("{creatorId:int}")]
     [Authorize(Roles = Roles.Creator)]

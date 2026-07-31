@@ -3,14 +3,14 @@ namespace Pugling.Contracts.Shared;
 // Ebenen-übergreifender Vertrag der Antwort-Auswertung: dieselbe Form beim zustandslosen
 // Katalog-Check (Creator) wie beim server-autoritativen Abschlusstest (Student).
 
-/// <summary>Eine vom Kind abgegebene Antwort, positionsbezogen (Index in der jeweiligen Aufgabenliste).</summary>
+/// <summary>An answer submitted by the child, positional (index in the respective item list).</summary>
 public record GivenAnswer(int Index, string? Value);
 
-/// <summary>Auswertung einer einzelnen Position.</summary>
+/// <summary>Evaluation of a single item.</summary>
 public record ItemCheck(int Index, string Prompt, string? Given, string Expected, bool Correct);
 
-/// <summary>Gesamtergebnis einer Auswertung: Trefferzahl, Prozent und Einzelergebnisse.</summary>
+/// <summary>Overall result of an evaluation: hit count, percentage, and individual results.</summary>
 public record CheckResult(int Total, int Correct, int ScorePercent, IReadOnlyList<ItemCheck> Items);
 
-/// <summary>Ein erzeugter Rechenausdruck samt Lösung.</summary>
+/// <summary>A generated arithmetic expression together with its solution.</summary>
 public record GeneratedProblem(string Prompt, decimal Answer);

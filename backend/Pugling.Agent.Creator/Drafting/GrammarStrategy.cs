@@ -7,8 +7,8 @@ using Pugling.Client;
 namespace Pugling.Agent.Creator.Drafting;
 
 /// <summary>
-/// Grammatikübung: Umformungs- und Regelaufgaben mit genau einer richtigen Lösung. Der Regelhinweis
-/// ist bewusst Teil des Entwurfs – er macht aus einer Abfrage eine Übung, aus der man etwas lernt.
+/// Grammar exercise: transformation and rule tasks with exactly one correct answer. The rule hint is
+/// deliberately part of the draft - it turns a quiz into an exercise you learn something from.
 /// </summary>
 public sealed class GrammarStrategy(IChatClient chat, CreatorApi creator,
     IOptions<AgentOptions> options, ILogger<GrammarStrategy> logger)

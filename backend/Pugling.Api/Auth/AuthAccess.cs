@@ -1,4 +1,4 @@
-﻿using System.Security.Claims;
+using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
 using Pugling.Api.Data;
 using Pugling.Api.Models;
@@ -6,25 +6,25 @@ using Pugling.Api.Models;
 namespace Pugling.Api.Auth;
 
 /// <summary>
-/// Rollen-Namen (als Rollen-Claim im JWT) – die drei fachlichen Ebenen. Ein Konto kann mehrere
-/// Rollen tragen (ein Vater ist zugleich Creator und Supervisor). Die <c>[Authorize(Roles=…)]</c>
-/// gaten direkt auf diese Ebenen; das frühere Vater/Sohn-Alias wurde entfernt.
+/// Role names (as a role claim in the JWT) – the three domain tiers. An account can carry several
+/// roles (an adult is simultaneously Creator and Supervisor). The <c>[Authorize(Roles=…)]</c>
+/// gates directly on these tiers; the former father/child alias has been removed.
 /// </summary>
 public static class Roles
 {
-    /// <summary>Ebenen-Rolle für Inhalte: erstellt/verwaltet den Lern-Katalog (Fächer, Kapitel, Übungen).</summary>
+    /// <summary>Tier role for content: creates/manages the learning catalog (subjects, chapters, exercises).</summary>
     public const string Creator = "Creator";
-    /// <summary>Ebenen-Rolle für Steuerung: verwaltet Kinder, Lehrpläne und Belohnungen.</summary>
+    /// <summary>Tier role for control: manages children, study plans, and rewards.</summary>
     public const string Supervisor = "Supervisor";
-    /// <summary>Ebenen-Rolle fürs Lernen: spielt Übungen und Tests.</summary>
+    /// <summary>Tier role for learning: plays exercises and tests.</summary>
     public const string Student = "Student";
-    /// <summary>Plattform-Superuser (Break-Glass). Umgeht die RWX-Rechteprüfung auf Übungen – z. B. um
-    /// verwaiste (ownerlose) Übungen im Notfall zu bearbeiten. Wird nicht per API vergeben, sondern über
-    /// das Flag <see cref="Adult.IsAdmin"/> (DB/Seed) gesetzt und beim Login als Rollen-Claim ausgestellt.</summary>
+    /// <summary>Platform superuser (break-glass). Bypasses the RWX permission check on exercises – e.g. to
+    /// edit orphaned (ownerless) exercises in an emergency. Not granted via the API but set through
+    /// the <see cref="Adult.IsAdmin"/> flag (DB/seed) and issued as a role claim at login.</summary>
     public const string Admin = "Admin";
 }
 
-/// <summary>Zugriff auf Identität aus dem JWT.</summary>
+/// <summary>Access to identity from the JWT.</summary>
 public static class ClaimsPrincipalExtensions
 {
     // Entität-IDs aus dem Token: fid trägt sowohl das Creator- als auch das Supervisor-Profil
@@ -34,32 +34,32 @@ public static class ClaimsPrincipalExtensions
     // Der Claim heißt weiterhin `fid`, obwohl die Entität `Adult` heißt: er steht in bereits ausgestellten
     // Tokens. Ihn umzubenennen würde jede offene Sitzung ungültig machen – für einen Namen, den niemand
     // sieht. Der Zugriff heißt `AdultId()`, damit der Code die richtige Sprache spricht.
-    /// <summary>Die <c>Adult</c>-Id aus dem Claim <c>fid</c> (Creator-/Supervisor-Profil), sofern vorhanden.</summary>
+    /// <summary>The <c>Adult</c> id from the <c>fid</c> claim (Creator/Supervisor profile), if present.</summary>
     public static int? AdultId(this ClaimsPrincipal u) => int.TryParse(u.FindFirstValue("fid"), out var v) ? v : null;
-    /// <summary>Die <c>Child</c>-Id aus dem Claim <c>cid</c> (Student-Profil), sofern vorhanden.</summary>
+    /// <summary>The <c>Child</c> id from the <c>cid</c> claim (Student profile), if present.</summary>
     public static int? ChildId(this ClaimsPrincipal u) => int.TryParse(u.FindFirstValue("cid"), out var v) ? v : null;
 
     /// <summary>
-    /// Das Konto selbst (Claim <c>aid</c>) – rollenunabhängig. Nötig überall dort, wo nicht die Ebene
-    /// zählt, sondern die Person: etwa die Autorschaft einer Anmerkung, die derselbe Mensch mal als
-    /// Supervisor und mal als Student erfasst.
+    /// The account itself (claim <c>aid</c>) – role-independent. Needed wherever what matters is not
+    /// the tier but the person: for instance the authorship of a remark, which the same human records
+    /// sometimes as a supervisor and sometimes as a student.
     /// </summary>
     public static int? AccountId(this ClaimsPrincipal u) => int.TryParse(u.FindFirstValue("aid"), out var v) ? v : null;
 
     // Ebenen-Rollen und ihre Ziel-IDs.
-    /// <summary>Trägt der Principal die Ebenen-Rolle <see cref="Roles.Creator"/>?</summary>
+    /// <summary>Does the principal carry the tier role <see cref="Roles.Creator"/>?</summary>
     public static bool IsCreator(this ClaimsPrincipal u) => u.IsInRole(Roles.Creator);
-    /// <summary>Trägt der Principal die Ebenen-Rolle <see cref="Roles.Supervisor"/>?</summary>
+    /// <summary>Does the principal carry the tier role <see cref="Roles.Supervisor"/>?</summary>
     public static bool IsSupervisor(this ClaimsPrincipal u) => u.IsInRole(Roles.Supervisor);
-    /// <summary>Trägt der Principal die Ebenen-Rolle <see cref="Roles.Student"/>?</summary>
+    /// <summary>Does the principal carry the tier role <see cref="Roles.Student"/>?</summary>
     public static bool IsStudent(this ClaimsPrincipal u) => u.IsInRole(Roles.Student);
-    /// <summary>Plattform-Superuser (Break-Glass, siehe <see cref="Roles.Admin"/>).</summary>
+    /// <summary>Platform superuser (break-glass, see <see cref="Roles.Admin"/>).</summary>
     public static bool IsAdmin(this ClaimsPrincipal u) => u.IsInRole(Roles.Admin);
-    /// <summary>Die <c>Adult</c>-Id des Supervisor-Profils (identisch zu <see cref="AdultId"/>).</summary>
+    /// <summary>The <c>Adult</c> id of the Supervisor profile (identical to <see cref="AdultId"/>).</summary>
     public static int? SupervisorId(this ClaimsPrincipal u) => u.AdultId();
-    /// <summary>Die <c>Adult</c>-Id des Creator-Profils (identisch zu <see cref="AdultId"/>).</summary>
+    /// <summary>The <c>Adult</c> id of the Creator profile (identical to <see cref="AdultId"/>).</summary>
     public static int? CreatorId(this ClaimsPrincipal u) => u.AdultId();
-    /// <summary>Die <c>Child</c>-Id des Student-Profils (identisch zu <see cref="ChildId"/>).</summary>
+    /// <summary>The <c>Child</c> id of the Student profile (identical to <see cref="ChildId"/>).</summary>
     public static int? StudentId(this ClaimsPrincipal u) => u.ChildId();
 
     // `Owns(this ClaimsPrincipal, Exercise)` wurde entfernt: Es behauptete, „die eine Stelle" der
@@ -69,24 +69,24 @@ public static class ClaimsPrincipalExtensions
     // an ihm statt an den Grants festzumachen.
 
     /// <summary>
-    /// Reiner Eigentums-Vergleich (für Hot-Paths/Projektionen, wo der <c>fid</c> einmal ermittelt wird):
-    /// Eine Übung gehört einem Vater nur, wenn sie einen Autor hat <b>und</b> dieser der Vater ist.
-    /// Fehlt der Autor (geseedete System-Übung) oder der <c>fid</c>, ist das Ergebnis <c>false</c>
-    /// (fail-closed) – sonst würde ein fehlender Claim System-Übungen fälschlich freigeben.
+    /// Pure ownership comparison (for hot paths/projections where the <c>fid</c> is determined once):
+    /// An exercise belongs to an adult only if it has an author <b>and</b> that author is the adult.
+    /// If the author is missing (seeded system exercise) or the <c>fid</c> is missing, the result is
+    /// <c>false</c> (fail-closed) – otherwise a missing claim would wrongly unlock system exercises.
     /// </summary>
     public static bool IsOwnedBy(int? authorFatherId, int? supervisorId) =>
         authorFatherId is { } author && author == supervisorId;
 }
 
 /// <summary>
-/// Eigentums-Prüfungen: Vater darf nur seine eigenen Kinder/Pläne, Sohn nur seine eigenen.
+/// Ownership checks: an adult may only access their own children/plans, a child only their own.
 /// </summary>
 public class AuthAccess(PuglingDbContext db)
 {
     // OR-basiert statt if/else: ein Konto kann Student UND Supervisor sein (perspektivisch in verschiedenen
     // Haushalten). Jede Rolle wird eigenständig geprüft; erfüllt eine, ist der Zugriff erlaubt.
 
-    /// <summary>Gehört der Plan dem angemeldeten Nutzer (Student = eigener Plan, Supervisor = Plan eines betreuten Kindes)?</summary>
+    /// <summary>Does the plan belong to the logged-in user (student = own plan, supervisor = plan of a supervised child)?</summary>
     public async Task<bool> OwnsPlanAsync(ClaimsPrincipal user, StudyPlan plan, CancellationToken ct = default)
     {
         if (user.IsStudent() && plan.ChildId == user.StudentId()) return true;
@@ -95,7 +95,7 @@ public class AuthAccess(PuglingDbContext db)
             && await db.SupervisorLinks.AnyAsync(l => l.StudentId == plan.ChildId && l.SupervisorId == fid, ct);
     }
 
-    /// <summary>Betreut der angemeldete Supervisor dieses Kind (Mitgliedschaft über <see cref="SupervisorLink"/>)?</summary>
+    /// <summary>Does the logged-in supervisor supervise this child (membership via <see cref="SupervisorLink"/>)?</summary>
     public async Task<bool> SupervisorOwnsChildAsync(ClaimsPrincipal user, int childId, CancellationToken ct = default)
     {
         var fid = user.SupervisorId();
@@ -103,8 +103,8 @@ public class AuthAccess(PuglingDbContext db)
     }
 
     /// <summary>
-    /// Darf der angemeldete Nutzer auf die kindbezogenen Daten dieses Kindes zugreifen?
-    /// Student = nur sein eigenes Profil, Supervisor = jedes von ihm betreute Kind.
+    /// May the logged-in user access this child's child-related data?
+    /// Student = only their own profile, supervisor = any child they supervise.
     /// </summary>
     public async Task<bool> OwnsChildAsync(ClaimsPrincipal user, int childId, CancellationToken ct = default)
     {

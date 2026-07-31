@@ -9,11 +9,11 @@ using Pugling.Api.Models;
 namespace Pugling.Api.Controllers.Student;
 
 /// <summary>
-/// Abschlusstest einer einzelnen Lehrplan-Position (neues Modell): prüft die Inhalte EINER Übung.
-/// Inhalt kommt aus der Übungs-Config (<see cref="ExerciseContentProvider"/>), bewertet wird typ-neutral
-/// gegen die Item-Lösung. Bestehen misst sich an <see cref="PlanPosition.GoalThreshold"/> (Standard 80 %).
-/// Die Punkte fürs Bestehen (per-Position-Ziel) folgen in der Ziel-/Punkte-Engine (Etappe 4); hier zählt
-/// der Versuch bereits für metrik-basierte Missionen (z. B. „Tests bestanden").
+/// Final test of a single study plan position (new model): tests the content of ONE exercise.
+/// Content comes from the exercise config (<see cref="ExerciseContentProvider"/>), grading is type-neutral
+/// against the item solution. Passing is measured against <see cref="PlanPosition.GoalThreshold"/> (default 80 %).
+/// The points for passing (per-position goal) follow in the goal/points engine (stage 4); here the
+/// attempt already counts for metric-based missions (e.g. "tests passed").
 /// </summary>
 [ApiController]
 [ApiVersion("1.0")]
@@ -26,7 +26,7 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
     PositionProgressService progress, GamificationService gamification, AnswerGrader grader,
     ItemProgressService itemProgress) : ControllerBase
 {
-    /// <summary>Standard-Bestehensgrenze, wenn die Position keine eigene Schwelle setzt.</summary>
+    /// <summary>Default pass threshold when the position sets no threshold of its own.</summary>
     private const int DefaultPassPercent = 80;
 
 
@@ -53,9 +53,9 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
     }
 
     /// <summary>
-    /// Startet einen Testversuch für die Position. Der Klausur-Modus ist strikt server-getrieben: der Start
-    /// friert die Prüfungsreihenfolge ein und liefert nur die Metadaten – die Fragen holt der Client einzeln
-    /// über <see cref="Next"/> und beantwortet sie über <see cref="Answer"/> (kein Zurück, Feedback erst bei
+    /// Starts a test attempt for the position. The class-test mode is strictly server-driven: the start
+    /// freezes the question order and returns only the metadata – the client fetches questions one at a time
+    /// via <see cref="Next"/> and answers them via <see cref="Answer"/> (no going back, feedback only on
     /// <see cref="Submit"/>).
     /// </summary>
     [HttpPost]
@@ -118,8 +118,8 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
 
 
     /// <summary>
-    /// Liefert die aktuelle Prüfungsfrage an der Cursor-Position (One-at-a-time, kein Zurück). Seit dem Start
-    /// entfernte Items werden übersprungen. Am Ende der Reihenfolge kommt <see cref="TestNextResponse.Done"/>.
+    /// Returns the current test question at the cursor position (one-at-a-time, no going back). Items removed
+    /// since the start are skipped. At the end of the order, <see cref="TestNextResponse.Done"/> is returned.
     /// </summary>
     [HttpGet("{attemptId:int}/next")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -149,10 +149,10 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
 
 
     /// <summary>
-    /// Nimmt die Antwort zur aktuellen Prüfungsfrage entgegen, bewertet sie serverseitig (und protokolliert
-    /// den plan-übergreifenden Item-Fortschritt), gibt die Korrektheit aber NICHT zurück (echte Klausur:
-    /// Feedback erst bei <see cref="Submit"/>). Adressiert wird stets die Cursor-Frage – der Client kann die
-    /// Reihenfolge nicht umgehen. Danach rückt der Cursor eine Frage weiter.
+    /// Accepts the answer to the current test question, grades it server-side (and logs
+    /// the plan-wide item progress), but does NOT return correctness (real class test:
+    /// feedback only on <see cref="Submit"/>). Always addresses the cursor question – the client cannot
+    /// bypass the order. The cursor then advances one question.
     /// </summary>
     [HttpPost("{attemptId:int}/answer")]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -197,7 +197,7 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
     }
 
 
-    /// <summary>Ein Testversuch samt Einzelergebnissen.</summary>
+    /// <summary>A test attempt together with individual results.</summary>
     [HttpGet("{attemptId:int}")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<AttemptDetail>> Get(int planId, int positionId, int attemptId, CancellationToken ct = default)
@@ -211,9 +211,9 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
 
 
     /// <summary>
-    /// Schließt den Versuch ab und liefert das Ergebnis (inkl. Lösungen). Im Klausur-Modus wurden die Antworten
-    /// bereits schrittweise über <see cref="Answer"/> bewertet; hier wird nur aggregiert. Wird ausnahmsweise ein
-    /// <paramref name="dto"/> mit Antworten übergeben (Bulk-Abgabe), werden diese noch serverseitig bewertet.
+    /// Concludes the attempt and returns the result (incl. solutions). In class-test mode the answers were
+    /// already graded step by step via <see cref="Answer"/>; here only aggregation happens. If exceptionally a
+    /// <paramref name="dto"/> with answers is passed (bulk submission), these are still graded server-side.
     /// </summary>
     [HttpPost("{attemptId:int}/submit")]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]

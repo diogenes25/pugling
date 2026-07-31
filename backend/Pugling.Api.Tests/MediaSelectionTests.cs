@@ -9,9 +9,9 @@ using Pugling.Api.Data;
 namespace Pugling.Api.Tests;
 
 /// <summary>
-/// Die Auswahl je Kind (Etappe 4) – hier kommt der ganze Entwurf zusammen: aus mehreren Darstellungen
-/// eines Motivs wird für <b>dieses</b> Kind eine, sie wird eingefroren (Bildkonstanz = Merkeffekt), und
-/// sie erscheint nur auf Stufen, auf denen ein Motiv die Lösung nicht verraten kann.
+/// The per-child selection (stage 4) – this is where the whole design comes together: from several
+/// representations of a motif, one is chosen for <b>this</b> child, it is frozen (image constancy =
+/// memory effect), and it only appears on stages where a motif cannot give away the solution.
 /// </summary>
 public class MediaSelectionTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWebAppFactory>
 {
@@ -23,7 +23,7 @@ public class MediaSelectionTests(PuglingWebAppFactory factory) : IClassFixture<P
     private const int FreeText = 4;
     private const int MultipleChoice = 6;
 
-    /// <summary>PIN der Szenario-Kinder – für die Endpunkte, die der Sohn selbst aufruft.</summary>
+    /// <summary>PIN of the scenario children – for the endpoints that the student calls themselves.</summary>
     private const string ChildPin = "9876";
 
     [Fact]
@@ -138,14 +138,14 @@ public class MediaSelectionTests(PuglingWebAppFactory factory) : IClassFixture<P
     }
 
     /// <summary>
-    /// <b>Punktgleichstand</b> ist der einzige Fall, in dem der Tiebreak überhaupt entscheidet – und genau
-    /// deshalb war die dokumentierte Determinismus-Zusage („kein <c>Random</c>, kein
-    /// <c>string.GetHashCode</c>") unbewacht: keiner der übrigen Tests erzeugt einen Gleichstand
-    /// (docs/testplan.md, Injektion D07). Bildkonstanz <i>ist</i> beim Vokabellernen der Merkeffekt; ein
-    /// zufälliger Tiebreak zerstört ihn für jeden Träger, der noch nicht eingefroren ist.
+    /// <b>A tie score</b> is the only case where the tiebreak actually decides anything – and that is
+    /// exactly why the documented determinism guarantee ("no <c>Random</c>, no
+    /// <c>string.GetHashCode</c>") was unguarded: none of the other tests produce a tie
+    /// (docs/testplan.md, injection D07). Image constancy <i>is</i> the memory effect in vocabulary
+    /// learning; a random tiebreak would destroy it for every carrier that has not yet been frozen.
     /// <para>
-    /// Der Test räumt zwischen den Runden die Einfrierung weg – sonst prüfte er nur, dass Schritt 3 der
-    /// Kaskade (die eingefrorene Wahl gewinnt) funktioniert, und der Tiebreak käme nie wieder dran.
+    /// Between rounds, the test clears the freezing – otherwise it would only verify that step 3 of the
+    /// cascade (the frozen choice wins) works, and the tiebreak would never be exercised again.
     /// </para>
     /// </summary>
     [Fact]
@@ -180,12 +180,12 @@ public class MediaSelectionTests(PuglingWebAppFactory factory) : IClassFixture<P
     }
 
     /// <summary>
-    /// Die Zusage lautet <b>prozessunabhängig</b> deterministisch, nicht bloß „innerhalb eines Laufs
-    /// gleich". Genau darin unterscheidet sich FNV-1a von <c>string.GetHashCode</c>, dessen Startwert pro
-    /// Prozess randomisiert ist: ein Neustart verschöbe die Wahl jedes noch nicht eingefrorenen Trägers.
-    /// Ein Vergleich zweier Aufrufe im selben Prozess kann das nicht zeigen – festgeschriebene Goldwerte
-    /// können es. Fällt dieser Test, hat sich der Hash geändert und mit ihm die Bildwahl aller Kinder,
-    /// deren Träger noch nicht eingefroren sind.
+    /// The guarantee is <b>process-independent</b> determinism, not just "the same within a single run".
+    /// This is exactly where FNV-1a differs from <c>string.GetHashCode</c>, whose seed is randomized per
+    /// process: a restart would shift the choice of every carrier that has not yet been frozen. Comparing
+    /// two calls within the same process cannot show this – fixed golden values can. If this test fails,
+    /// the hash has changed, and with it the image choice for all children whose carriers are not yet
+    /// frozen.
     /// </summary>
     [Fact]
     public void Tiebreak_LiefertFestgeschriebeneGoldwerte()
@@ -195,7 +195,7 @@ public class MediaSelectionTests(PuglingWebAppFactory factory) : IClassFixture<P
         Assert.Equal(3601875931u, Tiebreak(7, 42, 99));
     }
 
-    /// <summary>Räumt die eingefrorenen Bildwahlen eines Kindes weg, damit die Auswahl erneut rechnet.</summary>
+    /// <summary>Clears a child's frozen image picks so the selection recalculates.</summary>
     private void ClearPicks(int childId)
     {
         using var scope = factory.Services.CreateScope();
@@ -204,8 +204,8 @@ public class MediaSelectionTests(PuglingWebAppFactory factory) : IClassFixture<P
     }
 
     /// <summary>
-    /// Der Tiebreak ist privat (er gehört niemandem außer der Auswahl) – für die Goldwerte wird er
-    /// reflexiv gerufen. Verschwindet er, soll dieser Test laut scheitern und nicht still verschwinden.
+    /// The tiebreak is private (it belongs to no one but the selection) – it is called reflectively for
+    /// the golden values. If it disappears, this test should fail loudly rather than vanish silently.
     /// </summary>
     private static uint Tiebreak(int childId, int carrierId, int assetId)
     {
@@ -215,11 +215,11 @@ public class MediaSelectionTests(PuglingWebAppFactory factory) : IClassFixture<P
     }
 
     /// <summary>
-    /// Wird die eingefrorene Wahl nachträglich unzulässig (hier: der Vater trägt eine Abneigung gegen ihr
-    /// Motiv nach), muss die alte Einfrierung <b>zurückgezogen</b> werden und nicht bloß übergangen. Sonst
-    /// bliebe sie die aktive Wahl, die Neuwahl fiele bei jedem Abruf erneut, und das zweite Einfrieren
-    /// risse den Unique-Index: die Karte wäre für dieses Kind dauerhaft nicht mehr abrufbar – ohne einen
-    /// Weg zurück über die API.
+    /// If the frozen choice later becomes inadmissible (here: the father adds an aversion against its
+    /// motif afterwards), the old freeze must be <b>withdrawn</b>, not just overridden. Otherwise it
+    /// would remain the active choice, the new selection would be recomputed on every call, and the
+    /// second freeze would violate the unique index: the card would become permanently unavailable for
+    /// this child – with no way back via the API.
     /// </summary>
     [Fact]
     public async Task UnzulaessigGewordeneWahl_WirdZurueckgezogen_StattDieKarteZuVerbrennen()
@@ -241,9 +241,9 @@ public class MediaSelectionTests(PuglingWebAppFactory factory) : IClassFixture<P
     }
 
     /// <summary>
-    /// „Anderes Bild" <b>gibt ein Bild heraus</b> – auf einer getippten Stufe wäre der Endpunkt damit das
-    /// Loch in der Anti-Cheat-Regel: die Karte hält Bild <i>und</i> Alt-Text zurück, weil das Motiv die
-    /// Bedeutung genau des Wortes zeigt, das getippt werden soll. Er muss dieselbe Schranke tragen.
+    /// "Another image" <b>hands out an image</b> – on a typed stage, the endpoint would thus be the hole
+    /// in the anti-cheat rule: the card withholds both image <i>and</i> alt text, because the motif shows
+    /// the meaning of exactly the word that is supposed to be typed. It must carry the same restriction.
     /// </summary>
     [Fact]
     public async Task AnderesBild_AufGetippterStufe_GibtNichtsHeraus()
@@ -266,9 +266,9 @@ public class MediaSelectionTests(PuglingWebAppFactory factory) : IClassFixture<P
     }
 
     /// <summary>
-    /// Der Index adressiert eine Karte <b>dieser Sitzung</b>. Ohne die Grenze ließen sich über einen freien
-    /// Index die Motive und Beschreibungen der ganzen Übung durchzählen – auch die der Karten, die die
-    /// Sitzung nie ausliefert.
+    /// The index addresses a card <b>of this session</b>. Without this boundary, an unrestricted index
+    /// could be used to enumerate the motifs and descriptions of the entire exercise – including those of
+    /// cards the session never delivers.
     /// </summary>
     [Fact]
     public async Task AnderesBild_NurFuerKartenDerSitzung()
@@ -283,8 +283,8 @@ public class MediaSelectionTests(PuglingWebAppFactory factory) : IClassFixture<P
     }
 
     /// <summary>
-    /// Wie jeder spielende Endpunkt: ein stillgelegter Plan ist für den Sohn zu, für den Vater
-    /// (Vorschau/Nachtrag) offen.
+    /// Like every playing endpoint: a deactivated plan is closed for the student, open for the
+    /// supervisor (preview/follow-up).
     /// </summary>
     [Fact]
     public async Task AnderesBild_ImStillgelegtenPlan_BleibtDemSohnVerschlossen()
@@ -380,9 +380,9 @@ public class MediaSelectionTests(PuglingWebAppFactory factory) : IClassFixture<P
         int ExerciseId, int ItemId, int VocabularyId);
 
     /// <summary>
-    /// Baut ein vollständiges, isoliertes Szenario: eigenes Kind, eine Vokabelübung mit einem Wort,
-    /// dazu bis zu drei Darstellungen im Store, und einen aktiven Lehrplan mit einer Position darauf.
-    /// <paramref name="reuse"/> hängt ein zweites Kind an dieselbe Übung (für den Profil-Vergleich).
+    /// Builds a complete, isolated scenario: its own child, one vocabulary exercise with one word, up to
+    /// three representations in the store, and an active study plan with one position on it.
+    /// <paramref name="reuse"/> attaches a second child to the same exercise (for the profile comparison).
     /// </summary>
     private async Task<Scenario> ScenarioAsync(HttpClient father, string marker, int assetCount = 3,
         bool includeMature = false, Scenario? reuse = null)
@@ -460,14 +460,14 @@ public class MediaSelectionTests(PuglingWebAppFactory factory) : IClassFixture<P
         return new Scenario(marker, childId, planId, positionId, exerciseId, itemId, vocabularyId);
     }
 
-    /// <summary>Startet eine Übungssitzung auf der gewünschten Stufe und liefert die erste Karte.</summary>
+    /// <summary>Starts an exercise session at the desired stage and returns the first card.</summary>
     private static async Task<JsonElement> FirstCardAsync(HttpClient father, Scenario s, int stage) =>
         (await SessionAsync(father, father, s, stage)).Card;
 
     /// <summary>
-    /// Wie <see cref="FirstCardAsync"/>, gibt aber auch die Sitzungs-Id zurück und lässt
-    /// <paramref name="player"/> spielen – für die Endpunkte, die das Kind selbst aufruft (die Stufe setzt
-    /// weiterhin nur der Vater).
+    /// Like <see cref="FirstCardAsync"/>, but also returns the session id and lets
+    /// <paramref name="player"/> play – for the endpoints that the child calls themselves (the stage is
+    /// still only set by the supervisor).
     /// </summary>
     private static async Task<(int SessionId, JsonElement Card)> SessionAsync(HttpClient father, HttpClient player,
         Scenario s, int stage)

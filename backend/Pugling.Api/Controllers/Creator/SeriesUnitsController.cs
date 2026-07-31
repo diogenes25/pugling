@@ -9,10 +9,10 @@ using Pugling.Api.Models;
 namespace Pugling.Api.Controllers.Creator;
 
 /// <summary>
-/// Die Units einer Lehrwerk-Reihe. Band und Unit liegen in <b>einer</b> Ebene (<c>grade</c> = Band):
-/// „Access 8, Unit 3" ist eine Zeile. Der fachliche Wert steckt in <c>topics</c>/<c>grammar</c>/
-/// <c>vocabularyNotes</c> – das ist der Stoff, den ein KI-Creator kennen muss, statt ihn zu erfinden.
-/// Lesen darf jeder Creator, schreiben nur der Owner der Reihe.
+/// The units of a textbook series. Volume and unit live at <b>one</b> level (<c>grade</c> = volume):
+/// "Access 8, Unit 3" is one row. The subject-matter value lives in <c>topics</c>/<c>grammar</c>/
+/// <c>vocabularyNotes</c> – that is the material an AI creator must know instead of inventing it.
+/// Any creator may read, only the owner of the series may write.
 /// </summary>
 [ApiController]
 [ApiVersion("1.0")]
@@ -25,10 +25,10 @@ public class SeriesUnitsController(PuglingDbContext db) : ControllerBase
     static SeriesUnitResponse Map(SeriesUnit u) =>
         new(u.Id, u.SeriesId, u.Grade, u.OrderIndex, u.Label, u.Topics, u.Grammar, u.VocabularyNotes, u.CreatedAt);
 
-    /// <summary>Alle Units der Reihe, nach Band und Reihenfolge.</summary>
-    /// <param name="seriesId">Die Reihe.</param>
-    /// <param name="grade">Nur Units dieses Bandes.</param>
-    /// <param name="ct">Abbruch-Token.</param>
+    /// <summary>All units of the series, by volume and order.</summary>
+    /// <param name="seriesId">The series.</param>
+    /// <param name="grade">Only units of this volume.</param>
+    /// <param name="ct">Cancellation token.</param>
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<IReadOnlyList<SeriesUnitResponse>>> List(int seriesId,
@@ -43,7 +43,7 @@ public class SeriesUnitsController(PuglingDbContext db) : ControllerBase
             .Select(u => Map(u)).ToListAsync(ct);
     }
 
-    /// <summary>Eine Unit der Reihe.</summary>
+    /// <summary>A unit of the series.</summary>
     [HttpGet("{unitId:int}")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<SeriesUnitResponse>> Get(int seriesId, int unitId, CancellationToken ct)
@@ -53,7 +53,7 @@ public class SeriesUnitsController(PuglingDbContext db) : ControllerBase
         return unit is null ? NotFound() : Map(unit);
     }
 
-    /// <summary>Hängt eine Unit an die Reihe (nur Owner). Ohne <c>orderIndex</c> landet sie hinten im Band.</summary>
+    /// <summary>Appends a unit to the series (owner only). Without <c>orderIndex</c> it lands at the end of the volume.</summary>
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -83,7 +83,7 @@ public class SeriesUnitsController(PuglingDbContext db) : ControllerBase
         return CreatedAtAction(nameof(Get), new { seriesId, unitId = unit.Id }, Map(unit));
     }
 
-    /// <summary>Ändert eine Unit (partiell, nur Owner der Reihe).</summary>
+    /// <summary>Changes a unit (partial, owner of the series only).</summary>
     [HttpPatch("{unitId:int}")]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -114,8 +114,8 @@ public class SeriesUnitsController(PuglingDbContext db) : ControllerBase
     }
 
     /// <summary>
-    /// Löscht eine Unit (nur Owner der Reihe). Kind-Lehrbücher, die auf sie zeigen, verlieren nur die
-    /// Zuordnung (SetNull) – der Lernstand des Kindes hängt nicht an der Unit.
+    /// Deletes a unit (owner of the series only). Child textbooks pointing to it only lose the
+    /// assignment (SetNull) – the child's learning progress does not hang off the unit.
     /// </summary>
     [HttpDelete("{unitId:int}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
@@ -134,7 +134,7 @@ public class SeriesUnitsController(PuglingDbContext db) : ControllerBase
         return NoContent();
     }
 
-    /// <summary>Nächste freie Position im Band – so muss der Aufrufer die Reihenfolge nicht kennen.</summary>
+    /// <summary>Next free position in the volume – so the caller does not need to know the order.</summary>
     private async Task<int> NextOrderIndexAsync(int seriesId, int? grade, CancellationToken ct)
     {
         var highest = await db.SeriesUnits

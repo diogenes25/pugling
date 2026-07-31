@@ -4,7 +4,7 @@ using System.Text.Json;
 
 namespace Pugling.Api.Tests;
 
-/// <summary>Verwaltung von Katalog-Übungen: Detail-GET mit Config, Usage-Rückwärts-Lookup, Lösch-Schutz.</summary>
+/// <summary>Management of catalog exercises: detail GET with config, usage reverse lookup, delete protection.</summary>
 public class CatalogManagementTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWebAppFactory>
 {
     private readonly PuglingWebAppFactory _factory = factory;
@@ -96,9 +96,9 @@ public class CatalogManagementTests(PuglingWebAppFactory factory) : IClassFixtur
     }
 
     /// <summary>
-    /// Kapitel und Fach kaskadieren auf ihre Übungen – der FK <c>PlanPosition→Exercise</c> ist aber
-    /// Restrict. Ohne eigene Prüfung stürbe das Löschen als FK-Verletzung in einer nackten 500; hier muss
-    /// derselbe klare <c>exercise_in_use</c>-Konflikt kommen wie beim direkten Löschen der Übung.
+    /// Chapter and subject cascade onto their exercises – but the FK <c>PlanPosition→Exercise</c> is
+    /// Restrict. Without its own check, the deletion would crash as an FK violation in a bare 500; here
+    /// the same clear <c>exercise_in_use</c> conflict must come up as with directly deleting the exercise.
     /// </summary>
     [Theory]
     [InlineData(false)]

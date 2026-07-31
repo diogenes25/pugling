@@ -3,10 +3,10 @@ using System.Security.Cryptography;
 namespace Pugling.Api.Auth;
 
 /// <summary>
-/// Hasht Login-PINs (PBKDF2/SHA-256 mit zufälligem Salt) statt sie im Klartext zu speichern. Format:
-/// <c>pbkdf2.{iterations}.{saltB64}.{hashB64}</c>. <see cref="Verify"/> akzeptiert zusätzlich Alt-Klartext
-/// (für vor der Umstellung angelegte Datenbanken), damit niemand ausgesperrt wird; neue Werte über
-/// <see cref="Hash"/> sind immer gesalzen und gehasht.
+/// Hashes login PINs (PBKDF2/SHA-256 with a random salt) instead of storing them as plain text. Format:
+/// <c>pbkdf2.{iterations}.{saltB64}.{hashB64}</c>. <see cref="Verify"/> additionally accepts legacy plain text
+/// (for databases created before the switch), so nobody gets locked out; new values via
+/// <see cref="Hash"/> are always salted and hashed.
 /// </summary>
 public static class PinHasher
 {
@@ -15,7 +15,7 @@ public static class PinHasher
     private const int KeySize = 32;
     private const string Prefix = "pbkdf2";
 
-    /// <summary>Erzeugt den gesalzenen PBKDF2-Hash einer PIN im dokumentierten String-Format.</summary>
+    /// <summary>Produces the salted PBKDF2 hash of a PIN in the documented string format.</summary>
     public static string Hash(string pin)
     {
         var salt = RandomNumberGenerator.GetBytes(SaltSize);
@@ -24,8 +24,8 @@ public static class PinHasher
     }
 
     /// <summary>
-    /// Prüft eine PIN gegen den gespeicherten Wert. Erkennt das Hash-Format; ist der gespeicherte Wert
-    /// kein Hash (Alt-Klartext), wird direkt verglichen – so bleiben vor der Umstellung angelegte Konten nutzbar.
+    /// Checks a PIN against the stored value. Recognizes the hash format; if the stored value is
+    /// not a hash (legacy plain text), it is compared directly – so accounts created before the switch stay usable.
     /// </summary>
     public static bool Verify(string pin, string stored)
     {

@@ -3,22 +3,22 @@ using Microsoft.AspNetCore.Mvc;
 namespace Pugling.Api.Errors;
 
 /// <summary>
-/// Erzeugt RFC-7807-Fehlerantworten mit maschinenlesbarem <c>code</c> aus der zentralen
-/// <see cref="ApiErrors"/>-Registry. Ersetzt das rohe <c>Problem(statusCode:, detail:)</c> in den
-/// Controllern – Status, Titel und <c>type</c>-URI kommen aus dem <see cref="ApiError"/>.
+/// Creates RFC-7807 error responses with a machine-readable <c>code</c> from the central
+/// <see cref="ApiErrors"/> registry. Replaces the raw <c>Problem(statusCode:, detail:)</c> in the
+/// controllers – status, title, and <c>type</c> URI come from the <see cref="ApiError"/>.
 /// </summary>
 public static class ControllerBaseErrorExtensions
 {
     /// <summary>
-    /// Baut ein <c>application/problem+json</c> mit <c>Extensions["code"]</c> und kanonischem
-    /// <c>type</c>-URI. Der optionale <paramref name="detail"/> ist der frei formulierte Klartext.
+    /// Builds an <c>application/problem+json</c> with <c>Extensions["code"]</c> and a canonical
+    /// <c>type</c> URI. The optional <paramref name="detail"/> is the freely worded plain text.
     /// </summary>
     public static ObjectResult ProblemWithCode(this ControllerBase controller, ApiError error, string? detail = null) =>
         ProblemResult(controller.HttpContext, error, detail);
 
     /// <summary>
-    /// Wie <see cref="ProblemWithCode"/>, aber ohne <see cref="ControllerBase"/> – für Action-Filter
-    /// (z. B. Ownership-Filter), die direkt ein <see cref="ObjectResult"/> setzen.
+    /// Like <see cref="ProblemWithCode"/>, but without a <see cref="ControllerBase"/> – for action filters
+    /// (e.g. ownership filters) that set an <see cref="ObjectResult"/> directly.
     /// </summary>
     public static ObjectResult ProblemResult(HttpContext httpContext, ApiError error, string? detail = null)
     {

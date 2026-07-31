@@ -5,13 +5,13 @@ using System.Text.Json;
 namespace Pugling.Api.Tests;
 
 /// <summary>
-/// Sichert die <c>Clear…</c>-Schalter der PATCH-Endpunkte ab.
+/// Verifies the <c>Clear…</c> switches of the PATCH endpoints.
 ///
-/// Hintergrund: In einem PATCH heißt <c>null</c> „nicht angegeben" – ein gesetztes Feld ließe sich damit
-/// nie wieder <b>leeren</b>, der Server würde das <c>null</c> überlesen und still den alten Wert behalten.
-/// Eine Oberfläche, die „keine Angabe" anbietet, wäre dann ein Klick ins Nichts <em>mit</em>
-/// Erfolgsmeldung. Die Schalter (nach dem Muster von <c>ClearGrade</c> an der Klassenarbeit) machen den
-/// Löschwunsch ausdrücklich; diese Tests prüfen beide Richtungen: setzen bleibt setzen, leeren leert wirklich.
+/// Background: in a PATCH, <c>null</c> means "not specified" – a field that was set could therefore
+/// never be <b>cleared</b> again, the server would skip over the <c>null</c> and silently keep the old
+/// value. A UI offering "no value" would then be a click into the void <em>with</em> a success message.
+/// The switches (following the pattern of <c>ClearGrade</c> on the class test) make the intent to clear
+/// explicit; these tests check both directions: setting stays setting, clearing actually clears.
 /// </summary>
 public class PatchClearFieldTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWebAppFactory>
 {

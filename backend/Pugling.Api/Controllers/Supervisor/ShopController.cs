@@ -9,8 +9,8 @@ using Pugling.Api.Models;
 namespace Pugling.Api.Controllers.Supervisor;
 
 /// <summary>
-/// Familien-Shop des Vaters: Artikel-Katalog und Angebote verwalten; kindbezogene Käufe,
-/// Inventar und Aktivierungsanfragen einsehen und entscheiden.
+/// The father's family shop: manage the article catalog and listings; view and decide on
+/// child-related purchases, inventory and activation requests.
 /// </summary>
 [ApiController]
 [ApiVersion("1.0")]
@@ -49,11 +49,11 @@ public class ShopController(PuglingDbContext db, ShopService shop) : ControllerB
 
     // ─── Artikel-CRUD ────────────────────────────────────────────────────────
 
-    /// <summary>Familien-Shop-Artikel des angemeldeten Vaters (ohne Bestands-/Preisdetails).</summary>
-    /// <param name="search">Freitext-Suche in Artikelnummer und Titel (Teilstring, optional).</param>
-    /// <param name="skip">Anzahl übersprungener Einträge (Offset, Standard 0).</param>
-    /// <param name="take">Maximale Anzahl zurückgegebener Einträge (Standard 100, Max 500).</param>
-    /// <param name="ct">Abbruch-Token.</param>
+    /// <summary>Family shop articles of the logged-in father (without stock/price details).</summary>
+    /// <param name="search">Free-text search in article number and title (substring, optional).</param>
+    /// <param name="skip">Number of entries skipped (offset, default 0).</param>
+    /// <param name="take">Maximum number of entries returned (default 100, max 500).</param>
+    /// <param name="ct">Cancellation token.</param>
     [HttpGet("articles")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<ActionResult<IReadOnlyList<ShopArticleDto>>> Articles(
@@ -74,7 +74,7 @@ public class ShopController(PuglingDbContext db, ShopService shop) : ControllerB
             .ToList();
     }
 
-    /// <summary>Einen einzelnen Familien-Shop-Artikel des Vaters lesen.</summary>
+    /// <summary>Read a single family shop article of the father.</summary>
     [HttpGet("articles/{articleId:int}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -87,7 +87,7 @@ public class ShopController(PuglingDbContext db, ShopService shop) : ControllerB
         return MapArticle(article);
     }
 
-    /// <summary>Legt einen Artikel im Familien-Shop an (Typ-Definition ohne Preis/Bestand).</summary>
+    /// <summary>Creates an article in the family shop (type definition without price/stock).</summary>
     [HttpPost("articles")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -118,7 +118,7 @@ public class ShopController(PuglingDbContext db, ShopService shop) : ControllerB
         return CreatedAtAction(nameof(Article), new { articleId = article.Id }, MapArticle(article));
     }
 
-    /// <summary>Ändert einen Familien-Shop-Artikel partiell.</summary>
+    /// <summary>Partially changes a family shop article.</summary>
     [HttpPatch("articles/{articleId:int}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -150,7 +150,7 @@ public class ShopController(PuglingDbContext db, ShopService shop) : ControllerB
         return MapArticle(article);
     }
 
-    /// <summary>Löscht einen Artikel samt aller zugehörigen Angebote. Kaufhistorie bleibt als Snapshot erhalten.</summary>
+    /// <summary>Deletes an article together with all its listings. Purchase history is kept as a snapshot.</summary>
     [HttpDelete("articles/{articleId:int}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -166,7 +166,7 @@ public class ShopController(PuglingDbContext db, ShopService shop) : ControllerB
 
     // ─── Angebots-CRUD (Listings pro Artikel) ────────────────────────────────
 
-    /// <summary>Alle Angebote zu einem Artikel des Vaters.</summary>
+    /// <summary>All listings for an article of the father.</summary>
     [HttpGet("articles/{articleId:int}/listings")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -181,7 +181,7 @@ public class ShopController(PuglingDbContext db, ShopService shop) : ControllerB
         return listings.Where(l => l.ShopArticleId == articleId).Select(MapListing).ToList();
     }
 
-    /// <summary>Ein einzelnes Angebot eines Artikels lesen.</summary>
+    /// <summary>Read a single listing of an article.</summary>
     [HttpGet("articles/{articleId:int}/listings/{listingId:int}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -202,7 +202,7 @@ public class ShopController(PuglingDbContext db, ShopService shop) : ControllerB
         return MapListing(listing);
     }
 
-    /// <summary>Legt ein neues Angebot für einen Artikel an (mit Preis, Menge und Bestand).</summary>
+    /// <summary>Creates a new listing for an article (with price, quantity and stock).</summary>
     [HttpPost("articles/{articleId:int}/listings")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -238,7 +238,7 @@ public class ShopController(PuglingDbContext db, ShopService shop) : ControllerB
         return CreatedAtAction(nameof(Listing), new { articleId, listingId = listing.Id }, MapListing(listing));
     }
 
-    /// <summary>Ändert ein Angebot partiell (Preis, Menge, Bestand, Aktiv-Status).</summary>
+    /// <summary>Partially changes a listing (price, quantity, stock, active status).</summary>
     [HttpPatch("articles/{articleId:int}/listings/{listingId:int}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -282,7 +282,7 @@ public class ShopController(PuglingDbContext db, ShopService shop) : ControllerB
         return MapListing(listing);
     }
 
-    /// <summary>Löscht ein Angebot. Bereits getätigte Käufe bleiben als Snapshot im Inventar erhalten.</summary>
+    /// <summary>Deletes a listing. Purchases already made are kept as a snapshot in the inventory.</summary>
     [HttpDelete("articles/{articleId:int}/listings/{listingId:int}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -301,11 +301,11 @@ public class ShopController(PuglingDbContext db, ShopService shop) : ControllerB
 
     // ─── Kind-Inventar ───────────────────────────────────────────────────────
 
-    /// <summary>Aggregiertes Inventar eines Kindes: pro Artikel-Typ die verfügbare Gesamtmenge.</summary>
-    /// <param name="childId">Id des Kindes.</param>
-    /// <param name="skip">Anzahl übersprungener Einträge (Offset, Standard 0).</param>
-    /// <param name="take">Maximale Anzahl zurückgegebener Einträge (Standard 100, Max 500).</param>
-    /// <param name="ct">Abbruch-Token.</param>
+    /// <summary>Aggregated inventory of a child: the total available quantity per article type.</summary>
+    /// <param name="childId">Id of the child.</param>
+    /// <param name="skip">Number of entries skipped (offset, default 0).</param>
+    /// <param name="take">Maximum number of entries returned (default 100, max 500).</param>
+    /// <param name="ct">Cancellation token.</param>
     [HttpGet("~/" + ApiRoutes.Supervisor + "/children/{childId:int}/shop/inventory")]
     [ServiceFilter(typeof(ChildOwnershipFilter))]
     [ProducesResponseType(StatusCodes.Status200OK)]
@@ -329,7 +329,7 @@ public class ShopController(PuglingDbContext db, ShopService shop) : ControllerB
 
     // ─── Kaufhistorie ────────────────────────────────────────────────────────
 
-    /// <summary>Kaufhistorie eines Kindes, optional nach Status gefiltert.</summary>
+    /// <summary>Purchase history of a child, optionally filtered by status.</summary>
     [HttpGet("~/" + ApiRoutes.Supervisor + "/children/{childId:int}/shop/purchases")]
     [ServiceFilter(typeof(ChildOwnershipFilter))]
     [ProducesResponseType(StatusCodes.Status200OK)]
@@ -350,7 +350,7 @@ public class ShopController(PuglingDbContext db, ShopService shop) : ControllerB
             .ToPagedListAsync(Response, skip, take, ct);
     }
 
-    /// <summary>Storniert einen offenen Kauf und erstattet Coins/Gems zurück.</summary>
+    /// <summary>Cancels an open purchase and refunds coins/gems.</summary>
     [HttpPost("~/" + ApiRoutes.Supervisor + "/children/{childId:int}/shop/purchases/{purchaseId:int}/cancel")]
     [ServiceFilter(typeof(ChildOwnershipFilter))]
     [ProducesResponseType(StatusCodes.Status200OK)]
@@ -371,7 +371,7 @@ public class ShopController(PuglingDbContext db, ShopService shop) : ControllerB
 
     // ─── Aktivierungsanfragen ────────────────────────────────────────────────
 
-    /// <summary>Aktivierungsanfragen eines Kindes, optional nach Status gefiltert (offene zuerst).</summary>
+    /// <summary>Activation requests of a child, optionally filtered by status (open ones first).</summary>
     [HttpGet("~/" + ApiRoutes.Supervisor + "/children/{childId:int}/shop/activations")]
     [ServiceFilter(typeof(ChildOwnershipFilter))]
     [ProducesResponseType(StatusCodes.Status200OK)]
@@ -392,7 +392,7 @@ public class ShopController(PuglingDbContext db, ShopService shop) : ControllerB
             .ToPagedListAsync(Response, skip, take, ct);
     }
 
-    /// <summary>Genehmigt eine offene Aktivierungsanfrage; das Inventar des Kindes wird reduziert.</summary>
+    /// <summary>Approves an open activation request; the child's inventory is reduced.</summary>
     [HttpPost("~/" + ApiRoutes.Supervisor + "/children/{childId:int}/shop/activations/{requestId:int}/approve")]
     [ServiceFilter(typeof(ChildOwnershipFilter))]
     [ProducesResponseType(StatusCodes.Status200OK)]
@@ -406,7 +406,7 @@ public class ShopController(PuglingDbContext db, ShopService shop) : ControllerB
         return ActivationResult(result);
     }
 
-    /// <summary>Lehnt eine offene Aktivierungsanfrage ab; das Inventar des Kindes bleibt unverändert.</summary>
+    /// <summary>Rejects an open activation request; the child's inventory stays unchanged.</summary>
     [HttpPost("~/" + ApiRoutes.Supervisor + "/children/{childId:int}/shop/activations/{requestId:int}/reject")]
     [ServiceFilter(typeof(ChildOwnershipFilter))]
     [ProducesResponseType(StatusCodes.Status200OK)]

@@ -6,9 +6,9 @@ using Microsoft.AspNetCore.Mvc.Testing;
 namespace Pugling.Api.Tests;
 
 /// <summary>
-/// Phase 3: ein Student hat mehrere Supervisor. Er verdient EIN gemeinsames Wallet und kauft aus den
-/// Familien-Shops beider Supervisor; stornieren/einlösen darf aber nur der jeweils ausstellende Supervisor
-/// (aussteller-gebundene Momentaufnahme auf dem <c>ShopPurchase</c>).
+/// Phase 3: a student has multiple supervisors. They earn ONE shared wallet and buy from the
+/// family shops of both supervisors; but only the respective issuing supervisor may cancel/redeem
+/// (issuer-bound snapshot on the <c>ShopPurchase</c>).
 /// </summary>
 public class MultiSupervisorTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWebAppFactory>
 {

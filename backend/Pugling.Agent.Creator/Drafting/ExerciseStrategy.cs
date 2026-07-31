@@ -8,26 +8,26 @@ using Pugling.Client;
 namespace Pugling.Agent.Creator.Drafting;
 
 /// <summary>
-/// Ein Übungstyp, den der Agent erzeugen kann. Die Implementierungen erben von
-/// <see cref="ExerciseStrategy{TDraft,TConfig}"/> – der Ablauf ist für alle gleich, typ-spezifisch
-/// sind nur Prompt, Regeln, Config-Abbildung und Soll-Antworten.
+/// An exercise type the agent can generate. The implementations inherit from
+/// <see cref="ExerciseStrategy{TDraft,TConfig}"/> - the flow is the same for all of them, only the
+/// prompt, rules, config mapping and expected answers are type-specific.
 /// </summary>
 public interface IExerciseStrategy
 {
-    /// <summary>Übungstyp-Schlüssel wie im Manifest (<c>Vocabulary</c>, <c>Cloze</c>, …).</summary>
+    /// <summary>Exercise-type key as in the manifest (<c>Vocabulary</c>, <c>Cloze</c>, …).</summary>
     string TypeKey { get; }
 
-    /// <summary>Erzeugt (und veröffentlicht) eine Übung für dieses Briefing.</summary>
+    /// <summary>Generates (and publishes) an exercise for this briefing.</summary>
     Task<GenerationOutcome> RunAsync(CreatorBriefing briefing, GenerationRequest request, CancellationToken ct = default);
 }
 
 /// <summary>
-/// Der gemeinsame Ablauf aller Typen: entwerfen → prüfen → (reparieren) → anlegen → selbst testen.
-/// Bewusst als Schablone: so gibt es <b>eine</b> Stelle, an der über Reparatur-Runden, Trockenlauf
-/// und Rücknahme entschieden wird, und die Typen bleiben klein.
+/// The shared flow of all types: draft → validate → (repair) → create → self-test. Deliberately a
+/// template: this gives <b>one</b> place where repair rounds, dry run and rollback are decided, and
+/// keeps the types small.
 /// </summary>
-/// <typeparam name="TDraft">Die Entwurfsform, die das Sprachmodell füllt.</typeparam>
-/// <typeparam name="TConfig">Die Vertrags-Config, die am Ende in der API landet.</typeparam>
+/// <typeparam name="TDraft">The draft shape the language model fills.</typeparam>
+/// <typeparam name="TConfig">The contract config that ends up in the API.</typeparam>
 public abstract class ExerciseStrategy<TDraft, TConfig>(
     IChatClient chat,
     CreatorApi creator,
@@ -37,33 +37,33 @@ public abstract class ExerciseStrategy<TDraft, TConfig>(
 {
     private static readonly JsonSerializerOptions PrintOptions = new(JsonSerializerDefaults.Web) { WriteIndented = true };
 
-    /// <summary>Der Katalog-Zugriff – auch die Ableitungen brauchen ihn (Vokabel-Lookup, Items).</summary>
+    /// <summary>The catalog access - the derivations need it too (vocabulary lookup, items).</summary>
     protected CreatorApi Creator { get; } = creator;
 
     /// <inheritdoc/>
     public abstract string TypeKey { get; }
 
-    /// <summary>Die typ-spezifische Auftragsbeschreibung im Prompt.</summary>
+    /// <summary>The type-specific task description in the prompt.</summary>
     protected abstract string TaskInstruction(CreatorBriefing briefing, GenerationRequest request);
 
-    /// <summary>Die deterministischen Regeln dieses Typs.</summary>
+    /// <summary>The deterministic rules of this type.</summary>
     protected abstract IReadOnlyList<string> Validate(TDraft draft, CreatorBriefing briefing, GenerationRequest request);
 
-    /// <summary>Übersetzt den Entwurf in die Nutzlast der API (darf dafür den Vokabelspeicher befragen).</summary>
+    /// <summary>Translates the draft into the API payload (may query the vocabulary store for this).</summary>
     protected abstract Task<ExercisePayload<TConfig>> ToPayloadAsync(TDraft draft, CreatorBriefing briefing,
         GenerationRequest request, CancellationToken ct);
 
-    /// <summary>Die Soll-Antworten in Aufgabenreihenfolge – Grundlage des Selbsttests.</summary>
+    /// <summary>The expected answers in task order - the basis of the self-test.</summary>
     protected abstract IReadOnlyList<string> ExpectedAnswers(TDraft draft);
 
-    /// <summary>Der Titel des Entwurfs (für Ausgabe und Ergebnis).</summary>
+    /// <summary>The draft's title (for output and the result).</summary>
     protected abstract string TitleOf(TDraft draft);
 
     /// <summary>
-    /// Hüllt eine fertige Config in die API-Nutzlast und setzt dabei die Metadaten aus dem Briefing –
-    /// Klassenstufe, Schulart und Quelle sind das, woran der Supervisor die Übung später wiederfindet.
-    /// Individuell steht dort die Stufe des Kindes, allgemein der Bereich des Profils: eine Katalog-Übung
-    /// soll für ihre ganze Zielgruppe auffindbar sein, nicht für genau ein Kind.
+    /// Wraps a finished config into the API payload, setting the metadata from the briefing along the
+    /// way - grade, school type and source are what the supervisor later rediscovers the exercise by.
+    /// Individually it holds the child's grade, generally the profile's range: a catalog exercise should
+    /// be discoverable for its whole target audience, not for exactly one child.
     /// </summary>
     protected ExercisePayload<TConfig> Payload(string title, TConfig config, CreatorBriefing briefing,
         GenerationRequest request) =>
@@ -71,7 +71,7 @@ public abstract class ExerciseStrategy<TDraft, TConfig>(
             GradeMin: briefing.GradeMin, GradeMax: briefing.GradeMax, SchoolTypes: briefing.SchoolType,
             Source: briefing.Source, Description: DescriptionFor(briefing));
 
-    /// <summary>Kurze Herkunftsnotiz an der Übung – macht generierte Inhalte im Katalog erkennbar.</summary>
+    /// <summary>Short provenance note on the exercise - makes generated content recognizable in the catalog.</summary>
     private static string DescriptionFor(CreatorBriefing briefing)
     {
         var origin = briefing.Profile is { } profile ? $"Vom KI-Creator (Profil „{profile.Name}“)" : "Vom KI-Creator";
@@ -125,7 +125,7 @@ public abstract class ExerciseStrategy<TDraft, TConfig>(
         return new GenerationOutcome(TypeKey, title, json, [], created.Id, percent, rolledBack);
     }
 
-    /// <summary>Holt einen Entwurf vom Sprachmodell; <paramref name="violations"/> löst die Reparatur-Runde aus.</summary>
+    /// <summary>Fetches a draft from the language model; <paramref name="violations"/> triggers the repair round.</summary>
     private async Task<TDraft> DraftAsync(CreatorBriefing briefing, GenerationRequest request,
         IReadOnlyList<string> violations, CancellationToken ct)
     {
@@ -163,9 +163,9 @@ public abstract class ExerciseStrategy<TDraft, TConfig>(
     }
 
     /// <summary>
-    /// Spielt die frisch angelegte Übung im nebenwirkungsfreien Testmodus mit den eigenen Soll-Antworten
-    /// durch. Nur so fällt auf, wenn Lösung und Aufgabe nicht zusammenpassen. Bevorzugt wird eine
-    /// <b>getippte</b> Abfrageform – bei Selbsteinschätzung wäre der Test wertlos.
+    /// Plays through the freshly created exercise in side-effect-free test mode with its own expected
+    /// answers. Only this way does it show up when answer and task do not match. A <b>typed</b> answer
+    /// mode is preferred - the test would be worthless with self-assessment.
     /// </summary>
     private async Task<int> SelfTestAsync(int exerciseId, TDraft draft, CancellationToken ct)
     {
@@ -193,7 +193,7 @@ public abstract class ExerciseStrategy<TDraft, TConfig>(
         return result.ScorePercent;
     }
 
-    /// <summary>Das Routen-Segment kommt immer aus dem Manifest – nie geraten.</summary>
+    /// <summary>The route segment always comes from the manifest - never guessed.</summary>
     private async Task<string> ResolveAuthoringRouteAsync(CancellationToken ct)
     {
         var manifest = await Creator.GetExerciseTypesAsync(ct);

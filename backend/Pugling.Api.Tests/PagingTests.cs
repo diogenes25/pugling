@@ -4,12 +4,12 @@ using System.Text.Json;
 namespace Pugling.Api.Tests;
 
 /// <summary>
-/// Offset-Paging der Listen-Endpunkte: <c>skip</c>/<c>take</c> liefern deterministische, disjunkte
-/// Seiten, <c>take</c> wird geklemmt und die Gesamtzahl steht im Header <c>X-Total-Count</c>.
+/// Offset paging of the list endpoints: <c>skip</c>/<c>take</c> deliver deterministic, disjoint
+/// pages, <c>take</c> is clamped and the total count sits in the <c>X-Total-Count</c> header.
 /// </summary>
 public class PagingTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWebAppFactory>
 {
-    /// <summary>Legt <paramref name="count"/> Rechen-Übungen in einem frischen Kapitel an; liefert Fach/Kapitel.</summary>
+    /// <summary>Creates <paramref name="count"/> arithmetic exercises in a fresh chapter; returns subject/chapter.</summary>
     private static async Task<(int subjectId, int chapterId)> SeedExercisesAsync(HttpClient father, int count)
     {
         var subjectId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/subjects", new { name = "Paging-Fach" }));

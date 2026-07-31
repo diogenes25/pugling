@@ -3,28 +3,28 @@ using Microsoft.AspNetCore.Diagnostics;
 namespace Pugling.Api.Errors;
 
 /// <summary>
-/// Fängt den <b>Abbruch durch den Client</b> ab, bevor er als Serverfehler erscheint.
+/// Catches an <b>abort by the client</b> before it appears as a server error.
 ///
 /// <para>
-/// Seit der <c>CancellationToken</c> in jeden EF-/Service-Aufruf durchgereicht wird, wirft eine
-/// abgebrochene Anfrage (Tab geschlossen, Verbindung weg) eine <see cref="OperationCanceledException"/>
-/// aus der Action heraus. Ohne diesen Handler protokolliert <c>UseExceptionHandler</c> sie als
-/// unbehandelte Exception und antwortet 500 – ein Nutzer, der wegnavigiert, sähe damit wie ein
-/// Serverfehler aus (auch im Fehler-Mitschnitt des Anmerkungs-Widgets). Stattdessen: Status 499
-/// (nicht-standardisiert, aber verbreitet für „Client Closed Request"), kein Fehler-Log, kein Body –
-/// es liest ja niemand mehr mit.
+/// Since the <c>CancellationToken</c> is passed through into every EF/service call, an
+/// aborted request (tab closed, connection lost) throws an <see cref="OperationCanceledException"/>
+/// out of the action. Without this handler, <c>UseExceptionHandler</c> logs it as an
+/// unhandled exception and responds 500 – a user who navigates away would thus look like a
+/// server error (also in the remark widget's error capture). Instead: status 499
+/// (non-standard, but widely used for "Client Closed Request"), no error log, no body –
+/// nobody is reading along anymore anyway.
 /// </para>
 /// </summary>
 public sealed class ClientAbortExceptionHandler(ILogger<ClientAbortExceptionHandler> logger) : IExceptionHandler
 {
-    /// <summary>Nicht-standardisierter Status „Client Closed Request" (nginx-Konvention).</summary>
+    /// <summary>Non-standard status "Client Closed Request" (nginx convention).</summary>
     public const int ClientClosedRequest = 499;
 
     /// <summary>
-    /// Behandelt die Exception genau dann, wenn sie ein Abbruch <b>des Clients</b> ist. Ein
-    /// <see cref="OperationCanceledException"/> aus anderer Quelle (z. B. ein Timeout-Token im Service)
-    /// bleibt ein echter Fehler und läuft weiter in den 500er-Pfad – sonst verschluckte dieser Handler
-    /// serverseitige Abbrüche, die man sehen will.
+    /// Handles the exception precisely when it is an abort <b>by the client</b>. An
+    /// <see cref="OperationCanceledException"/> from another source (e.g. a timeout token in a service)
+    /// remains a real error and continues into the 500 path – otherwise this handler would swallow
+    /// server-side aborts that should be visible.
     /// </summary>
     public ValueTask<bool> TryHandleAsync(HttpContext httpContext, Exception exception, CancellationToken cancellationToken)
     {

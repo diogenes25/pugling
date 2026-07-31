@@ -3,29 +3,29 @@ namespace Pugling.Contracts.Creator;
 // Vertrag des Autoren-Katalogs: Fach → Kapitel → (Übungs-)Kategorie.
 // Reine Transportformen ohne Entity-Bezug; die Projektion aus den Entities bleibt in der API.
 
-/// <summary>Ein Schulfach im gemeinsamen Katalog.</summary>
+/// <summary>A school subject in the shared catalog.</summary>
 public record SubjectResponse(int Id, string Name, DateTime CreatedAt, int ChaptersCount);
 
-/// <summary>Eingabe zum Anlegen eines Fachs.</summary>
+/// <summary>Input for creating a subject.</summary>
 public record CreateSubjectDto(string Name);
 
-/// <summary>Partielle Änderung eines Fachs; leere Felder bleiben unverändert.</summary>
+/// <summary>Partial change to a subject; empty fields remain unchanged.</summary>
 public record UpdateSubjectDto(string? Name);
 
-/// <summary>Ein Kapitel innerhalb eines Fachs.</summary>
+/// <summary>A chapter within a subject.</summary>
 public record ChapterResponse(int Id, int SubjectId, string Name, int OrderIndex, int ExercisesCount);
 
-/// <summary>Eingabe zum Anlegen eines Kapitels.</summary>
+/// <summary>Input for creating a chapter.</summary>
 public record CreateChapterDto(string Name, int OrderIndex);
 
-/// <summary>Partielle Änderung eines Kapitels; leere Felder bleiben unverändert.</summary>
+/// <summary>Partial change to a chapter; empty fields remain unchanged.</summary>
 public record UpdateChapterDto(string? Name, int? OrderIndex);
 
-/// <summary>Eine Übungs-Kategorie innerhalb eines Fachs.</summary>
+/// <summary>An exercise category within a subject.</summary>
 public record CategoryResponse(int Id, int SubjectId, string Name, DateTime CreatedAt);
 
-/// <summary>Eingabe zum Anlegen einer Kategorie.</summary>
+/// <summary>Input for creating a category.</summary>
 public record CreateCategoryDto(string Name);
 
-/// <summary>Partielle Änderung einer Kategorie; leere Felder bleiben unverändert.</summary>
+/// <summary>Partial change to a category; empty fields remain unchanged.</summary>
 public record UpdateCategoryDto(string? Name);

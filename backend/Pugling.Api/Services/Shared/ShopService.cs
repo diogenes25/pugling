@@ -6,49 +6,49 @@ using Pugling.Api.Models;
 namespace Pugling.Api.Services.Shared;
 
 /// <summary>
-/// Geschäftslogik des Familien-Shops: Vater verwaltet Artikel-Katalog und Angebote, der Sohn kauft
-/// aus eigenem Wallet (Coins/Gems sofort abgebucht), der Bestand wird reduziert und das aggregierte
-/// Inventar des Kindes erhöht. Aktivierungsanfragen des Sohns genehmigt oder lehnt der Vater ab.
+/// Business logic of the family shop: the adult manages the article catalog and listings, the child buys
+/// from their own wallet (coins/gems debited immediately), stock is reduced and the child's aggregated
+/// inventory increased. The adult approves or rejects the child's activation requests.
 /// </summary>
 public class ShopService(PuglingDbContext db, WalletService wallet)
 {
-    /// <summary>Fehlerursache eines Shop-Vorgangs (None = erfolgreich).</summary>
+    /// <summary>Cause of failure for a shop operation (None = successful).</summary>
     public enum ShopError
     {
-        /// <summary>Kein Fehler – der Vorgang war erfolgreich.</summary>
+        /// <summary>No error – the operation was successful.</summary>
         None = 0,
-        /// <summary>Das referenzierte Objekt (Artikel, Angebot, Anfrage, …) existiert nicht.</summary>
+        /// <summary>The referenced object (article, listing, request, …) does not exist.</summary>
         NotFound,
-        /// <summary>Das Angebot ist deaktiviert und darf nicht gekauft werden.</summary>
+        /// <summary>The listing is deactivated and must not be purchased.</summary>
         ListingInactive,
-        /// <summary>Der Bestand des Angebots reicht für die gewünschte Menge nicht aus.</summary>
+        /// <summary>The listing's stock is not sufficient for the requested quantity.</summary>
         InsufficientStock,
-        /// <summary>Das Wallet des Kindes hat nicht genug Münzen für den Kauf.</summary>
+        /// <summary>The child's wallet does not have enough coins for the purchase.</summary>
         InsufficientCoins,
-        /// <summary>Das Wallet des Kindes hat nicht genug Gems für den Kauf.</summary>
+        /// <summary>The child's wallet does not have enough gems for the purchase.</summary>
         InsufficientGems,
-        /// <summary>Das Inventar des Kindes enthält nicht genug Exemplare des Artikels.</summary>
+        /// <summary>The child's inventory does not contain enough units of the article.</summary>
         InsufficientInventory,
-        /// <summary>Die angeforderte Menge ist nicht positiv oder sonst ungültig.</summary>
+        /// <summary>The requested quantity is not positive or otherwise invalid.</summary>
         InvalidQuantity,
-        /// <summary>Der Kauf ist gerade nicht möglich (z. B. Angebot außerhalb seines Zeitfensters).</summary>
+        /// <summary>The purchase is not currently possible (e.g. listing outside its time slot).</summary>
         NotOpen,
-        /// <summary>Die Aktivierungsanfrage ist nicht mehr offen (bereits genehmigt/abgelehnt).</summary>
+        /// <summary>The activation request is no longer open (already approved/rejected).</summary>
         NotPending,
-        /// <summary>Ein gleichzeitiger Schreibzugriff hat den erwarteten Datenstand verändert (Concurrency).</summary>
+        /// <summary>A concurrent write has changed the expected data state (concurrency).</summary>
         Conflict,
     }
 
-    /// <summary>Ergebnis mit optionaler Nutzlast.</summary>
+    /// <summary>Result with an optional payload.</summary>
     public record Result<T>(ShopError Error, T? Value) where T : class
     {
-        /// <summary>Erzeugt ein erfolgreiches Ergebnis mit der gegebenen Nutzlast.</summary>
+        /// <summary>Creates a successful result with the given payload.</summary>
         public static Result<T> Ok(T value) => new(ShopError.None, value);
-        /// <summary>Erzeugt ein Fehler-Ergebnis ohne Nutzlast.</summary>
+        /// <summary>Creates an error result without a payload.</summary>
         public static Result<T> Fail(ShopError error) => new(error, null);
     }
 
-    /// <summary>Kanonische Zuordnung <see cref="ShopError"/> → <see cref="ApiError"/>.</summary>
+    /// <summary>Canonical mapping <see cref="ShopError"/> → <see cref="ApiError"/>.</summary>
     public static ApiError ToApiError(ShopError error) => error switch
     {
         ShopError.NotFound => ApiErrors.NotFound,
@@ -64,8 +64,8 @@ public class ShopService(PuglingDbContext db, WalletService wallet)
     };
 
     /// <summary>
-    /// Lädt alle Angebote (<see cref="ShopListing"/>s) des Vaters inkl. ihres Artikels und wendet
-    /// fällige Refill-Regeln idempotent an.
+    /// Loads all listings (<see cref="ShopListing"/>s) of the adult incl. their article and applies
+    /// due refill rules idempotently.
     /// </summary>
     public async Task<IReadOnlyList<ShopListing>> ListingsForFatherAsync(
         int supervisorId, bool activeOnly, DateTime nowUtc, CancellationToken ct = default)
@@ -100,8 +100,8 @@ public class ShopService(PuglingDbContext db, WalletService wallet)
     }
 
     /// <summary>
-    /// Lädt die Angebote ALLER Supervisor des Studenten (gemeinsame Shop-Sicht des Kindes), wendet fällige
-    /// Refill-Regeln idempotent an und liefert sie gruppierbar je Aussteller (<see cref="ShopArticle.AdultId"/>).
+    /// Loads the listings of ALL supervisors of the student (the child's shared shop view), applies due
+    /// refill rules idempotently and returns them groupable per issuer (<see cref="ShopArticle.AdultId"/>).
     /// </summary>
     public async Task<IReadOnlyList<ShopListing>> ListingsForStudentAsync(
         int childId, bool activeOnly, DateTime nowUtc, CancellationToken ct = default)
@@ -125,9 +125,9 @@ public class ShopService(PuglingDbContext db, WalletService wallet)
     }
 
     /// <summary>
-    /// Kauft ein Angebot für das Kind: prüft Familienzugehörigkeit, Aktiv-Status, Bestand und beide
-    /// Wallet-Salden, bucht Coins/Gems ab, reduziert den Lagerbestand, legt die Kaufbuchung an und
-    /// erhöht das aggregierte <see cref="ChildInventory"/> des Kinds für den zugehörigen Artikel.
+    /// Purchases a listing for the child: checks family membership, active status, stock and both
+    /// wallet balances, debits coins/gems, reduces stock, creates the purchase ledger entry and
+    /// increases the child's aggregated <see cref="ChildInventory"/> for the associated article.
     /// </summary>
     public async Task<Result<ShopPurchase>> PurchaseAsync(
         int childId, int listingId, DateTime nowUtc, CancellationToken ct = default)
@@ -226,8 +226,8 @@ public class ShopService(PuglingDbContext db, WalletService wallet)
     }
 
     /// <summary>
-    /// Storniert einen offenen Kauf: erstattet Coins/Gems zurück und reduziert das Inventar um
-    /// <see cref="ShopPurchase.UnitsPerPurchase"/> (mindestens 0).
+    /// Cancels an open purchase: refunds coins/gems and reduces the inventory by
+    /// <see cref="ShopPurchase.UnitsPerPurchase"/> (at least 0).
     /// </summary>
     public async Task<Result<ShopPurchase>> CancelPurchaseAsync(
         int supervisorId, int childId, int purchaseId, DateTime nowUtc, CancellationToken ct = default)
@@ -283,9 +283,9 @@ public class ShopService(PuglingDbContext db, WalletService wallet)
     }
 
     /// <summary>
-    /// Stellt eine Aktivierungsanfrage des Sohns: prüft, ob genug Einheiten im Inventar sind, und
-    /// legt eine <see cref="ActivationRequest"/> mit Status <see cref="ActivationRequestStatus.Pending"/> an.
-    /// Das Inventar wird erst bei Genehmigung (<see cref="ApproveActivationAsync"/>) reduziert.
+    /// Files an activation request from the child: checks whether enough units are in the inventory, and
+    /// creates an <see cref="ActivationRequest"/> with status <see cref="ActivationRequestStatus.Pending"/>.
+    /// The inventory is only reduced upon approval (<see cref="ApproveActivationAsync"/>).
     /// </summary>
     public async Task<Result<ActivationRequest>> RequestActivationAsync(
         int childId, int articleId, int quantity, DateTime nowUtc, CancellationToken ct = default)
@@ -325,12 +325,12 @@ public class ShopService(PuglingDbContext db, WalletService wallet)
     }
 
     /// <summary>
-    /// Vater genehmigt eine offene Aktivierungsanfrage: prüft, dass das Inventar die beantragte Menge
-    /// zum Genehmigungszeitpunkt real deckt (sonst <see cref="ShopError.InsufficientInventory"/> – die
-    /// Anfrage bleibt offen), reduziert es um <see cref="ActivationRequest.RequestedQuantity"/> und setzt
-    /// den Status auf Approved. Da der Anfrage-Check nicht-transaktional ist (mehrere offene Anfragen
-    /// können in Summe das Inventar übersteigen), ist erst diese Deckungsprüfung die verbindliche Grenze.
-    /// Das Concurrency-Token am Inventar verhindert parallele Überziehung.
+    /// The adult approves an open activation request: checks that the inventory actually covers the
+    /// requested quantity at approval time (otherwise <see cref="ShopError.InsufficientInventory"/> – the
+    /// request stays open), reduces it by <see cref="ActivationRequest.RequestedQuantity"/> and sets
+    /// the status to Approved. Since the request check is not transactional (multiple open requests
+    /// can together exceed the inventory), this coverage check is the binding boundary. The concurrency
+    /// token on the inventory prevents concurrent overdraw.
     /// </summary>
     public async Task<Result<ActivationRequest>> ApproveActivationAsync(
         int supervisorId, int childId, int requestId, DateTime nowUtc, CancellationToken ct = default)
@@ -359,8 +359,8 @@ public class ShopService(PuglingDbContext db, WalletService wallet)
     }
 
     /// <summary>
-    /// Vater lehnt eine offene Aktivierungsanfrage ab: Status → Rejected. Das Inventar bleibt
-    /// unverändert – die Einheiten verbleiben beim Sohn.
+    /// The adult rejects an open activation request: status → Rejected. The inventory remains
+    /// unchanged – the units remain with the child.
     /// </summary>
     public async Task<Result<ActivationRequest>> RejectActivationAsync(
         int supervisorId, int childId, int requestId, DateTime nowUtc, CancellationToken ct = default)
@@ -376,7 +376,7 @@ public class ShopService(PuglingDbContext db, WalletService wallet)
             : Result<ActivationRequest>.Fail(ShopError.Conflict);
     }
 
-    /// <summary>Wendet eine fällige Refill-Regel idempotent an: fällige Angebote werden auf MaxStock gesetzt.</summary>
+    /// <summary>Applies a due refill rule idempotently: due listings are set to MaxStock.</summary>
     public static bool ApplyDueRefill(ShopListing listing, DateTime nowUtc)
     {
         if (listing.RefillKind == ShopRefillKind.None || listing.MaxStock <= 0) return false;

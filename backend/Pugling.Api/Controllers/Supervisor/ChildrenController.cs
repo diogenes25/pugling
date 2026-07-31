@@ -9,8 +9,8 @@ using Pugling.Api.Models;
 namespace Pugling.Api.Controllers.Supervisor;
 
 /// <summary>
-/// Verwaltung der Kinder des angemeldeten Vaters, inklusive Punktestand. Der Vater ergibt sich aus
-/// dem JWT (<c>fid</c>); kindbezogene Endpunkte sichert der <see cref="ChildOwnershipFilter"/> ab.
+/// Management of the logged-in father's children, including point balance. The father is derived from
+/// the JWT (<c>fid</c>); child-related endpoints are secured by the <see cref="ChildOwnershipFilter"/>.
 /// </summary>
 [ApiController]
 [ApiVersion("1.0")]
@@ -31,7 +31,7 @@ public class ChildrenController(PuglingDbContext db, WalletService wallet, Accou
                 c.PointsEntries.Where(p => PointKindCurrency.GemKinds.Contains(p.Kind)).Sum(p => (int?)p.Amount) ?? 0))
             .FirstOrDefaultAsync(ct);
 
-    /// <summary>Liste der vom angemeldeten Supervisor betreuten Studenten.</summary>
+    /// <summary>List of students supervised by the logged-in supervisor.</summary>
     [HttpGet]
     public async Task<ActionResult<IEnumerable<ChildResponse>>> List(CancellationToken ct = default)
     {
@@ -47,7 +47,7 @@ public class ChildrenController(PuglingDbContext db, WalletService wallet, Accou
             .ToListAsync(ct);
     }
 
-    /// <summary>Ein einzelnes Kind.</summary>
+    /// <summary>A single child.</summary>
     [HttpGet("{childId:int}")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<ChildResponse>> Get(int childId, CancellationToken ct = default)
@@ -56,7 +56,7 @@ public class ChildrenController(PuglingDbContext db, WalletService wallet, Accou
         return child is null ? NotFound() : child;
     }
 
-    /// <summary>Erstellt ein Kind unter dem angemeldeten Vater.</summary>
+    /// <summary>Creates a child under the logged-in father.</summary>
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -94,7 +94,7 @@ public class ChildrenController(PuglingDbContext db, WalletService wallet, Accou
         return CreatedAtAction(nameof(Get), new { childId = child.Id }, response);
     }
 
-    /// <summary>Ändert ein Kind (partiell).</summary>
+    /// <summary>Changes a child (partial).</summary>
     [HttpPatch("{childId:int}")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<ChildResponse>> Update(int childId, UpdateChildDto dto, CancellationToken ct = default)
@@ -124,7 +124,7 @@ public class ChildrenController(PuglingDbContext db, WalletService wallet, Accou
         return (await ProjectOne(childId, ct))!;
     }
 
-    /// <summary>Löscht ein Kind samt aller Fächer, Kapitel, Lektionen und Punkte-Buchungen.</summary>
+    /// <summary>Deletes a child together with all subjects, chapters, lessons and point ledger entries.</summary>
     [HttpDelete("{childId:int}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -139,7 +139,7 @@ public class ChildrenController(PuglingDbContext db, WalletService wallet, Accou
 
     // ---- Ko-Supervisoren (mehrere Betreuer je Student) ----
 
-    /// <summary>Alle Supervisor dieses Studenten (der handelnde Supervisor muss selbst einer sein).</summary>
+    /// <summary>All supervisors of this student (the acting supervisor must be one themself).</summary>
     [HttpGet("{childId:int}/supervisors")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -151,9 +151,9 @@ public class ChildrenController(PuglingDbContext db, WalletService wallet, Accou
             .ToListAsync(ct);
 
     /// <summary>
-    /// Fügt dem Studenten einen weiteren Supervisor hinzu (z. B. Mutter/Oma). Der handelnde Supervisor
-    /// muss den Studenten bereits betreuen (<see cref="ChildOwnershipFilter"/>); der neue Supervisor muss existieren.
-    /// Idempotent: eine bestehende Betreuung wird nicht dupliziert.
+    /// Adds another supervisor to the student (e.g. mother/grandmother). The acting supervisor
+    /// must already supervise the student (<see cref="ChildOwnershipFilter"/>); the new supervisor must exist.
+    /// Idempotent: an existing supervision link is not duplicated.
     /// </summary>
     [HttpPost("{childId:int}/supervisors")]
     [ProducesResponseType(StatusCodes.Status201Created)]
@@ -173,7 +173,7 @@ public class ChildrenController(PuglingDbContext db, WalletService wallet, Accou
             new SupervisorLinkResponse(supervisor.Id, supervisor.Name, dto.Relation, DateTime.UtcNow));
     }
 
-    /// <summary>Entfernt eine Betreuung. Der letzte Supervisor kann nicht entfernt werden (Student wäre verwaist).</summary>
+    /// <summary>Removes a supervision link. The last supervisor cannot be removed (the student would be orphaned).</summary>
     [HttpDelete("{childId:int}/supervisors/{supervisorId:int}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -191,11 +191,11 @@ public class ChildrenController(PuglingDbContext db, WalletService wallet, Accou
 
     // ---- Punkte des Kindes ----
 
-    /// <summary>Kontostand des Kindes (Münzen + Gems) mit den letzten Buchungen (neueste zuerst).</summary>
-    /// <param name="childId">Kind, dessen Kontostand gelesen wird.</param>
-    /// <param name="skip">Anzahl zu überspringender Buchungen (Paging).</param>
-    /// <param name="take">Maximale Buchungszahl (1..500). Gesamtzahl im Header <c>X-Total-Count</c>.</param>
-    /// <param name="ct">Abbruch-Token.</param>
+    /// <summary>Wallet balance of the child (coins + gems) with the latest ledger entries (newest first).</summary>
+    /// <param name="childId">Child whose wallet balance is being read.</param>
+    /// <param name="skip">Number of ledger entries to skip (paging).</param>
+    /// <param name="take">Maximum number of ledger entries (1..500). Total count in the <c>X-Total-Count</c> header.</param>
+    /// <param name="ct">Cancellation token.</param>
     [HttpGet("{childId:int}/points")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<ChildPointsResponse>> GetPoints(
@@ -218,9 +218,9 @@ public class ChildrenController(PuglingDbContext db, WalletService wallet, Accou
     }
 
     /// <summary>
-    /// Bucht eine manuelle Punktegutschrift oder -belastung (Verschenken/Abziehen außerhalb von Shop und
-    /// Ziel-Malus). Die Währung bestimmt das <see cref="PointKind"/>: Coins → <see cref="PointKind.Manual"/>,
-    /// Gems → <see cref="PointKind.ManualGems"/>.
+    /// Books a manual point credit or debit (gifting/deducting outside of the shop and
+    /// goal penalty). The currency determines the <see cref="PointKind"/>: coins → <see cref="PointKind.Manual"/>,
+    /// gems → <see cref="PointKind.ManualGems"/>.
     /// </summary>
     [HttpPost("{childId:int}/points")]
     [ProducesResponseType(StatusCodes.Status201Created)]

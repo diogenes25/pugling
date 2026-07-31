@@ -5,7 +5,7 @@ using Pugling.Api.Models;
 
 namespace Pugling.Api.Tests;
 
-/// <summary>Integrationstests der serverseitigen Anti-Selbstbetrug-Zusagen im Positions-Motor.</summary>
+/// <summary>Integration tests of the server-side anti-cheating guarantees in the position engine.</summary>
 public class AntiCheatTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWebAppFactory>
 {
     private async Task<(int planId, int positionId)> SetupAsync(int stage = (int)TestStage.SelfAssess)

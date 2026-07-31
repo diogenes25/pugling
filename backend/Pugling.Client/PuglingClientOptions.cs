@@ -3,33 +3,33 @@ using System.ComponentModel.DataAnnotations;
 namespace Pugling.Client;
 
 /// <summary>
-/// Verbindungs- und Anmeldedaten für die Pugling-API. Wird typischerweise aus der Konfiguration
-/// (Abschnitt <c>Pugling</c>) bzw. aus User-Secrets gebunden – die PIN gehört nicht in appsettings.json.
+/// Connection and login data for the Pugling API. Typically bound from configuration
+/// (section <c>Pugling</c>) or from user secrets – the PIN does not belong in appsettings.json.
 /// </summary>
 public sealed class PuglingClientOptions
 {
-    /// <summary>Konfigurationsabschnitt, aus dem <c>AddPuglingClient</c> standardmäßig bindet.</summary>
+    /// <summary>Configuration section that <c>AddPuglingClient</c> binds from by default.</summary>
     public const string SectionName = "Pugling";
 
-    /// <summary>Basis-URL der API <b>ohne</b> Versionssegment, z. B. <c>http://localhost:5200</c>.</summary>
+    /// <summary>Base URL of the API <b>without</b> version segment, e.g. <c>http://localhost:5200</c>.</summary>
     [Required]
     public string BaseUrl { get; set; } = "http://localhost:5200";
 
     /// <summary>
-    /// Konto-Id für den konto-zentrischen Login (<c>POST api/v1/auth/login</c>). Ein Konto trägt
-    /// mehrere Rollen; der Creator-Agent braucht ein Konto mit Creator-, der Supervisor-Agent eines
-    /// mit Supervisor-Rolle.
+    /// Account id for the account-centric login (<c>POST api/v1/auth/login</c>). An account carries
+    /// multiple roles; the creator agent needs an account with the Creator role, the supervisor agent
+    /// one with the Supervisor role.
     /// </summary>
     [Range(1, int.MaxValue)]
     public int AccountId { get; set; }
 
-    /// <summary>PIN des Kontos.</summary>
+    /// <summary>PIN of the account.</summary>
     [Required]
     public string Pin { get; set; } = "";
 
     /// <summary>
-    /// Sicherheitsabstand, mit dem das Token <b>vor</b> seinem Ablauf erneuert wird. Verhindert, dass
-    /// ein Aufruf mit einem Token losläuft, das während der Übertragung abläuft.
+    /// Safety margin by which the token is renewed <b>before</b> its expiry. Prevents a call from
+    /// starting out with a token that expires during transmission.
     /// </summary>
     public TimeSpan RefreshSkew { get; set; } = TimeSpan.FromMinutes(1);
 }

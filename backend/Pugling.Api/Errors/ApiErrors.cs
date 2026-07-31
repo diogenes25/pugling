@@ -3,154 +3,154 @@ using System.Reflection;
 namespace Pugling.Api.Errors;
 
 /// <summary>
-/// Zentrale Registry aller Fehler-Codes der API. Wire-Strings sind snake_case und <b>stabiler
-/// Vertragsbestandteil</b> – nie umbenennen, nur additiv erweitern. Jeder Code trägt seinen
-/// kanonischen HTTP-Status; der Aufrufer muss den Status nicht mehr getrennt angeben.
+/// Central registry of all API error codes. Wire strings are snake_case and a <b>stable
+/// contract element</b> – never rename them, only extend additively. Each code carries its
+/// canonical HTTP status; the caller no longer has to specify the status separately.
 /// </summary>
 public static class ApiErrors
 {
     // ── Generisch / status-getriebene Defaults (auch Middleware-, Auth- und Framework-Pfade) ──
 
-    /// <summary>Modell-/Eingabevalidierung fehlgeschlagen (400).</summary>
+    /// <summary>Model/input validation failed (400).</summary>
     public static readonly ApiError ValidationError = new("validation_error", 400, "Invalid request.");
-    /// <summary>Generischer Bad-Request-Default für 400 ohne spezifischeren Code.</summary>
+    /// <summary>Generic bad-request default for a 400 without a more specific code.</summary>
     public static readonly ApiError BadRequest = new("bad_request", 400, "Invalid request.");
     /// <summary>
-    /// Der Body enthält ein Feld, das der Vertrag nicht kennt (400). Eigener Code neben
-    /// <see cref="ValidationError"/>, weil die Ursache eine andere ist: nicht „Wert falsch", sondern
-    /// „Feld existiert nicht" – ein vertipptes oder veraltetes Feld beim Aufrufer. Vor dieser Regel nahm
-    /// der Server solche Felder still an und meldete 201 (siehe docs/codequalitaet-gates-plan.md, L3).
+    /// The body contains a field the contract does not know (400). A separate code next to
+    /// <see cref="ValidationError"/>, because the cause is different: not "value wrong", but
+    /// "field doesn't exist" – a typo or an outdated field on the caller's side. Before this rule
+    /// the server silently accepted such fields and reported 201 (see docs/codequalitaet-gates-plan.md, L3).
     /// </summary>
     public static readonly ApiError UnknownField = new("unknown_field", 400, "Invalid request.");
-    /// <summary>Im Request-Body referenzierte Entität existiert nicht / gehört nicht zum Kontext (400).</summary>
+    /// <summary>Entity referenced in the request body does not exist / does not belong to the context (400).</summary>
     public static readonly ApiError InvalidReference = new("invalid_reference", 400, "Invalid request.");
-    /// <summary>Kein/ungültiges Token – Authentifizierung erforderlich (401).</summary>
+    /// <summary>No/invalid token – authentication required (401).</summary>
     public static readonly ApiError Unauthorized = new("unauthorized", 401, "Authentication required.");
-    /// <summary>Login mit falscher Id/PIN (401).</summary>
+    /// <summary>Login with wrong id/PIN (401).</summary>
     public static readonly ApiError InvalidCredentials = new("invalid_credentials", 401, "Invalid credentials.");
-    /// <summary>Zugriff verweigert (falsche Rolle / fremde Ressource) (403).</summary>
+    /// <summary>Access denied (wrong role / resource not owned) (403).</summary>
     public static readonly ApiError Forbidden = new("forbidden", 403, "Access denied.");
-    /// <summary>Kein Schreibrecht auf die Übung – weder Owner noch Write-Grant (403).</summary>
+    /// <summary>No write permission on the exercise – neither owner nor write grant (403).</summary>
     public static readonly ApiError NotAuthor = new("not_author", 403, "Access denied.");
-    /// <summary>Kein Owner-Recht – Löschen, Rechte-Verwaltung und Sichtbarkeits-Umschaltung nur für Owner (403).</summary>
+    /// <summary>No owner permission – delete, permission management, and visibility toggling are owner-only (403).</summary>
     public static readonly ApiError NotOwner = new("not_owner", 403, "Access denied.");
-    /// <summary>Ressource nicht gefunden / nicht eigenes Kind (404).</summary>
+    /// <summary>Resource not found / not the caller's own child (404).</summary>
     public static readonly ApiError NotFound = new("not_found", 404, "Resource not found.");
-    /// <summary>Generischer Konflikt-Default für 409 ohne spezifischeren Code.</summary>
+    /// <summary>Generic conflict default for a 409 without a more specific code.</summary>
     public static readonly ApiError Conflict = new("conflict", 409, "Conflict.");
-    /// <summary>Nebenläufige Kollision (Doppelklick/Retry) – bitte erneut versuchen (409).</summary>
+    /// <summary>Concurrent collision (double-click/retry) – please retry (409).</summary>
     public static readonly ApiError ConcurrencyConflict = new("concurrency_conflict", 409, "Conflict.");
-    /// <summary>Zu viele Anfragen – Rate-Limit greift (429).</summary>
+    /// <summary>Too many requests – rate limit applies (429).</summary>
     public static readonly ApiError RateLimited = new("rate_limited", 429, "Too many requests.");
-    /// <summary>Unerwarteter Serverfehler (500).</summary>
+    /// <summary>Unexpected server error (500).</summary>
     public static readonly ApiError Internal = new("internal_error", 500, "An unexpected error occurred.");
-    /// <summary>Auffang-Code für sonst nicht abgebildete HTTP-Status (Status variabel).</summary>
+    /// <summary>Catch-all code for HTTP statuses not otherwise mapped (status variable).</summary>
     public static readonly ApiError HttpError = new("http_error", 0, "Error.");
 
     // ── Fachlich (je eine konkrete Geschäftsbedingung) ──
 
-    /// <summary>Skin ist bereits freigeschaltet (409).</summary>
+    /// <summary>Skin is already unlocked (409).</summary>
     public static readonly ApiError SkinAlreadyUnlocked = new("skin_already_unlocked", 409, "Skin already unlocked.");
-    /// <summary>Skin ist (noch) nicht freigeschaltet – kann nicht ausgerüstet werden (400).</summary>
+    /// <summary>Skin is not (yet) unlocked – cannot be equipped (400).</summary>
     public static readonly ApiError SkinNotUnlocked = new("skin_not_unlocked", 400, "Skin not unlocked.");
-    /// <summary>Zu wenig Gems für den Skin-Kauf (400).</summary>
+    /// <summary>Not enough gems for the skin purchase (400).</summary>
     public static readonly ApiError InsufficientGems = new("insufficient_gems", 400, "Not enough gems.");
-    /// <summary>Zu wenig Münzen für den Shop-Kauf (400).</summary>
+    /// <summary>Not enough coins for the shop purchase (400).</summary>
     public static readonly ApiError InsufficientCoins = new("insufficient_coins", 400, "Not enough coins.");
-    /// <summary>Shop-Angebot ist deaktiviert / nicht mehr verfügbar (400).</summary>
+    /// <summary>Shop listing is deactivated / no longer available (400).</summary>
     public static readonly ApiError ShopListingInactive = new("shop_listing_inactive", 400, "Shop listing no longer available.");
-    /// <summary>Shop-Angebot ist nicht ausreichend auf Lager (409).</summary>
+    /// <summary>Shop listing does not have sufficient stock (409).</summary>
     public static readonly ApiError ShopInsufficientStock = new("shop_insufficient_stock", 409, "Shop listing is out of stock.");
-    /// <summary>Kauf steht nicht (mehr) offen – bereits storniert (409).</summary>
+    /// <summary>Purchase is not (or no longer) open – already cancelled (409).</summary>
     public static readonly ApiError PurchaseNotOpen = new("purchase_not_open", 409, "Purchase not open.");
-    /// <summary>Nicht genug Einheiten im Inventar für die beantragte Aktivierungsmenge (400).</summary>
+    /// <summary>Not enough units in inventory for the requested activation quantity (400).</summary>
     public static readonly ApiError InsufficientInventory = new("insufficient_inventory", 400, "Not enough units in inventory.");
-    /// <summary>Aktivierungsanfrage ist nicht (mehr) offen – bereits genehmigt/abgelehnt (409).</summary>
+    /// <summary>Activation request is not (or no longer) pending – already approved/rejected (409).</summary>
     public static readonly ApiError ActivationNotPending = new("activation_not_pending", 409, "Activation request is not pending.");
-    /// <summary>Schlüssel existiert bereits (z. B. Vokabel-/Cloze-/Medien-Key) (409).</summary>
+    /// <summary>Key already exists (e.g. vocabulary/cloze/media key) (409).</summary>
     public static readonly ApiError DuplicateKey = new("duplicate_key", 409, "Key already exists.");
-    /// <summary>Das Fach hat bereits ein Kapitel dieses Namens (409).</summary>
+    /// <summary>The subject already has a chapter with this name (409).</summary>
     public static readonly ApiError DuplicateChapterName = new("duplicate_chapter_name", 409, "The subject already has a chapter with this name.");
-    /// <summary>Diese Vokabel steckt schon in der Übung – ein Wort darf je Übung nur ein Item haben (409).</summary>
+    /// <summary>This vocabulary entry is already an item of the exercise – a word may have only one item per exercise (409).</summary>
     public static readonly ApiError DuplicateVocabularyInExercise = new("duplicate_vocabulary_in_exercise", 409, "This vocabulary entry is already an item of the exercise.");
-    /// <summary>Bild-Variante existiert nicht / gehört nicht zu diesem Asset (404).</summary>
+    /// <summary>Image variant does not exist / does not belong to this asset (404).</summary>
     public static readonly ApiError MediaVariantNotFound = new("media_variant_not_found", 404, "Media variant not found.");
-    /// <summary>Für diesen Zweck und dieses Format hat das Asset bereits eine Variante (409).</summary>
+    /// <summary>The asset already has a variant for this purpose and format (409).</summary>
     public static readonly ApiError MediaVariantExists = new("media_variant_exists", 409, "A variant for this purpose and format already exists.");
-    /// <summary>Das Bild ist diesem Träger (Vokabel/Item/Übung) bereits zugeordnet (409).</summary>
+    /// <summary>The image is already linked to this carrier (vocabulary/item/exercise) (409).</summary>
     public static readonly ApiError MediaAlreadyLinked = new("media_already_linked", 409, "The media asset is already linked to this object.");
-    /// <summary>Bild-Zuordnung existiert nicht / gehört nicht zu diesem Träger (404).</summary>
+    /// <summary>Media link does not exist / does not belong to this carrier (404).</summary>
     public static readonly ApiError MediaLinkNotFound = new("media_link_not_found", 404, "Media link not found.");
-    /// <summary>„Anderes Bild" nicht möglich – es gibt für diesen Träger keine zulässige Alternative (409).</summary>
+    /// <summary>"Different image" not possible – there is no permitted alternative for this carrier (409).</summary>
     public static readonly ApiError MediaNoAlternative = new("media_no_alternative", 409, "No alternative image available.");
     /// <summary>
-    /// „Anderes Bild" auf einer Karte, die gar kein Bild zeigt (409). Deckt zwei Fälle mit <b>einer</b>
-    /// Antwort ab – die getippte Stufe (dort verriete ein Motiv die Lösung) und den fehlenden Treffer –,
-    /// damit aus dem Fehler nicht abzulesen ist, ob es überhaupt ein Bild <i>gäbe</i>.
+    /// "Different image" on a card that does not show an image at all (409). Covers two cases with <b>one</b>
+    /// response – the typed stage (there a motif would give away the answer) and the missing match –
+    /// so the error does not reveal whether an image would even <i>exist</i>.
     /// </summary>
     public static readonly ApiError MediaNotOnCard = new("media_not_on_card", 409, "This card does not show an image.");
-    /// <summary>Die hochgeladene Datei ließ sich nicht als Bild dekodieren (400).</summary>
+    /// <summary>The uploaded file could not be decoded as an image (400).</summary>
     public static readonly ApiError MediaNotAnImage = new("media_not_an_image", 400, "The uploaded file is not a readable image.");
-    /// <summary>Die hochgeladene Datei überschreitet das erlaubte Maximum (400).</summary>
+    /// <summary>The uploaded file exceeds the allowed maximum (400).</summary>
     public static readonly ApiError MediaUploadTooLarge = new("media_upload_too_large", 400, "The uploaded file is too large.");
-    /// <summary>Tag mit diesem Namen existiert bereits (400).</summary>
+    /// <summary>A tag with this name already exists (400).</summary>
     public static readonly ApiError DuplicateTagName = new("duplicate_tag_name", 400, "Tag name already exists.");
     /// <summary>
-    /// Die E-Mail-Adresse ist bereits einem Konto zugeordnet (409). <c>Account.Email</c> trägt einen
-    /// gefilterten Unique-Index; ohne diesen Fehler quittierte die Registrierung eine zweite Anmeldung mit
-    /// derselben Adresse als <b>500</b>, und ein Formular konnte den Grund nicht anzeigen.
+    /// The email address is already assigned to an account (409). <c>Account.Email</c> carries a
+    /// filtered unique index; without this error, registering a second account with the same
+    /// address would have returned <b>500</b>, and a form could not show the reason.
     /// </summary>
     public static readonly ApiError DuplicateEmail = new("duplicate_email", 409, "Email already in use.");
     /// <summary>
-    /// Der Fachlehrer trägt diesen Namen schon (409). Der Name ist je Creator eindeutig
-    /// (<c>CreatorProfile(OwnerAdultId, Name)</c>) – er ist der Anzeigename in der Profil-Auswahl.
+    /// The subject teacher already has this name (409). The name is unique per creator
+    /// (<c>CreatorProfile(OwnerAdultId, Name)</c>) – it is the display name in the profile picker.
     /// </summary>
     public static readonly ApiError DuplicateProfileName = new("duplicate_profile_name", 409, "A profile with this name already exists.");
-    /// <summary>Übung wird in Lehrplan/Klassenarbeit verwendet und kann nicht gelöscht werden (409).</summary>
+    /// <summary>Exercise is used in a study plan/class test and cannot be deleted (409).</summary>
     public static readonly ApiError ExerciseInUse = new("exercise_in_use", 409, "Exercise is in use.");
-    /// <summary>Übung ist nicht öffentlich ausführbar und darf ohne Execute-/Write-/Owner-Recht nicht zugewiesen werden (403).</summary>
+    /// <summary>Exercise is not publicly executable and may not be assigned without an execute/write/owner permission (403).</summary>
     public static readonly ApiError ExerciseNotExecutable = new("exercise_not_executable", 403, "Exercise cannot be assigned.");
-    /// <summary>Der letzte Owner einer Übung kann nicht entfernt werden (409).</summary>
+    /// <summary>The last owner of an exercise cannot be removed (409).</summary>
     public static readonly ApiError LastOwner = new("last_owner", 409, "Cannot remove the last owner.");
-    /// <summary>Übungs-Item (Vokabelpaar) existiert nicht / gehört nicht zu dieser Übung (404).</summary>
+    /// <summary>Exercise item (vocabulary pair) does not exist / does not belong to this exercise (404).</summary>
     public static readonly ApiError ItemNotFound = new("item_not_found", 404, "Exercise item not found.");
-    /// <summary>Vokabel ist Grundform/in Übungen referenziert und kann nicht gelöscht werden (409).</summary>
+    /// <summary>Vocabulary is a base form/referenced in exercises and cannot be deleted (409).</summary>
     public static readonly ApiError VocabularyInUse = new("vocabulary_in_use", 409, "Vocabulary item is in use.");
-    /// <summary>Position hat bereits Übungs-/Testdaten und kann nicht gelöscht werden (409).</summary>
+    /// <summary>Position already has practice/test data and cannot be deleted (409).</summary>
     public static readonly ApiError PositionHasData = new("position_has_data", 409, "Position has practice/test data.");
-    /// <summary>Lehrplan ist gerade nicht aktiv/spielbar (403).</summary>
+    /// <summary>Study plan is currently not active/playable (403).</summary>
     public static readonly ApiError PlanInactive = new("plan_inactive", 403, "Study plan is not active.");
-    /// <summary>Test wurde bereits eingereicht (400).</summary>
+    /// <summary>Test has already been submitted (400).</summary>
     public static readonly ApiError TestAlreadySubmitted = new("test_already_submitted", 400, "Test already submitted.");
-    /// <summary>Übung enthält keine prüfbaren Inhalte (400).</summary>
+    /// <summary>Exercise contains no checkable content (400).</summary>
     public static readonly ApiError NoCheckableContent = new("no_checkable_content", 400, "No checkable content.");
     /// <summary>
-    /// Die Übung ist <b>noch nicht gefüllt</b>: ihr Typ trägt seine Inhalte als Item-Tabelle
-    /// (<see cref="Exercises.StoreResolution.ItemTable"/>), sie hat aber kein einziges Item (400).
-    /// Bewusst getrennt von <see cref="NoCheckableContent"/>: dort ist „keine prüfbaren Aufgaben" eine
-    /// <i>Eigenschaft des Typs</i> (Aufsatz), hier ein unfertiger Datenstand, den der Autor beheben kann.
+    /// The exercise is <b>not yet filled</b>: its type carries its content as an item table
+    /// (<see cref="Exercises.StoreResolution.ItemTable"/>), but it does not have a single item (400).
+    /// Deliberately separate from <see cref="NoCheckableContent"/>: there, "no checkable tasks" is a
+    /// <i>property of the type</i> (essay), here it is an incomplete data state the author can fix.
     /// </summary>
     public static readonly ApiError ExerciseEmpty = new("exercise_empty", 400, "Exercise has no content yet.");
     /// <summary>
-    /// Der Tag-Schnappschuss hätte **keine** Vokabel getroffen – die Übung bleibt unverändert (400).
-    /// Eigener Code statt <see cref="ValidationError"/>, weil ein Aufrufer (KI-Creator, REST-Tutorial) das
-    /// von „gar keinen Tag geschickt" unterscheiden muss: hier hilft ein *anderer* Tag, dort ein Bugfix.
+    /// The tag snapshot would have matched **no** vocabulary – the exercise remains unchanged (400).
+    /// A separate code instead of <see cref="ValidationError"/>, because a caller (AI creator, REST tutorial)
+    /// must distinguish this from "no tag sent at all": here a *different* tag helps, there it's a bugfix.
     /// </summary>
     public static readonly ApiError NoTagMatches = new("no_tag_matches", 400, "No vocabulary matched these tags.");
-    /// <summary>Stundenplan-Slot (Wochentag + Fach) ist bereits belegt (409).</summary>
+    /// <summary>Timetable slot (weekday + subject) is already taken (409).</summary>
     public static readonly ApiError TimetableSlotTaken = new("timetable_slot_taken", 409, "Timetable slot already taken.");
-    /// <summary>Die Übung trägt einen Typ-Schlüssel, den die <see cref="Exercises.ExerciseTypeRegistry"/> nicht kennt – Datenintegritätsfehler, kein Nutzerfehler (500).</summary>
+    /// <summary>The exercise carries a type key the <see cref="Exercises.ExerciseTypeRegistry"/> does not know – a data integrity error, not a user error (500).</summary>
     public static readonly ApiError UnknownExerciseType = new("unknown_exercise_type", 500, "The exercise has an unknown type.");
-    /// <summary>Anmerkung existiert nicht oder ist für den Aufrufer nicht sichtbar (404).</summary>
+    /// <summary>Remark does not exist or is not visible to the caller (404).</summary>
     public static readonly ApiError RemarkNotFound = new("remark_not_found", 404, "Remark not found.");
-    /// <summary>Beitrag im Verlauf existiert nicht, gehört zu einer anderen Anmerkung oder einem anderen Konto (404).</summary>
+    /// <summary>Comment in the history does not exist, belongs to a different remark, or a different account (404).</summary>
     public static readonly ApiError RemarkCommentNotFound = new("remark_comment_not_found", 404, "Remark comment not found.");
-    /// <summary>Der kontenübergreifende Zugriff (<c>scope=all</c>) ist auf dieser Instanz nicht offen (403).</summary>
+    /// <summary>Cross-account access (<c>scope=all</c>) is not open on this instance (403).</summary>
     public static readonly ApiError RemarkScopeForbidden = new("remark_scope_forbidden", 403, "Reading across accounts is disabled on this instance.");
 
     /// <summary>
-    /// Alle bekannten Codes (per Reflection über die Felder, einmalig materialisiert). Speist das
-    /// OpenAPI-<c>enum</c> und den Drift-Regressionstest, damit die Liste nie von der Registry abweicht.
+    /// All known codes (materialized once via reflection over the fields). Feeds the
+    /// OpenAPI <c>enum</c> and the drift regression test, so the list never diverges from the registry.
     /// </summary>
     public static readonly IReadOnlyList<string> AllCodes =
     [
@@ -163,9 +163,9 @@ public static class ApiErrors
     ];
 
     /// <summary>
-    /// Status → generischer Default-Code. Sicherheitsnetz für Framework-/Middleware-Antworten ohne
-    /// spezifischen Code (leere 401/403/404/429, unbehandelte 500, nicht abgebildete Status). Der
-    /// Auffang <see cref="HttpError"/> ist als Feld deklariert und damit in <see cref="AllCodes"/>.
+    /// Status → generic default code. Safety net for framework/middleware responses without
+    /// a specific code (empty 401/403/404/429, unhandled 500, unmapped statuses). The
+    /// catch-all <see cref="HttpError"/> is declared as a field and therefore included in <see cref="AllCodes"/>.
     /// </summary>
     public static ApiError ForStatus(int status) => status switch
     {

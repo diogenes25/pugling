@@ -4,7 +4,7 @@ using Pugling.Api.Exercises;
 
 namespace Pugling.Api.Tests;
 
-/// <summary>Unit-Tests der Zufalls-Aufgaben-Erzeugung: Reproduzierbarkeit, Grenzen, Selbstkonsistenz.</summary>
+/// <summary>Unit tests of the random problem generation: reproducibility, bounds, self-consistency.</summary>
 public class ArithmeticProblemGeneratorTests
 {
     private readonly ArithmeticProblemGenerator _gen = new();

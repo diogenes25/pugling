@@ -6,16 +6,16 @@ using Pugling.Api.Errors;
 namespace Pugling.Api.Controllers.Student;
 
 /// <summary>
-/// „Anderes Bild" – der einzige Weg, die eingefrorene Bildwahl eines Kindes zu ändern.
+/// "Different image" – the only way to change a child's frozen image pick.
 /// <para>
-/// Warum überhaupt eingefroren? Weil beim Vokabellernen <b>Bildkonstanz der Merkeffekt ist</b>: dasselbe
-/// Motiv bei jeder Wiederholung baut die Verknüpfung auf, ein wechselndes Bild zerstört sie. Deshalb
-/// rechnet die Auswahl nicht bei jedem Abruf neu – und deshalb braucht das Umwählen eine ausdrückliche
-/// Handlung statt eines Automatismus.
+/// Why frozen at all? Because in vocabulary learning <b>image constancy is the memory effect</b>: the same
+/// motif on every repetition builds the association, a changing image destroys it. That's why the
+/// selection isn't recomputed on every retrieval – and why re-picking requires an explicit
+/// action instead of an automatism.
 /// </para>
-/// Die Ablehnung ist dauerhaft: das abgelehnte Bild wird für diesen Träger nie wieder gezogen. Damit ist
-/// dieser Endpunkt zugleich das billigste Feedback-Signal, das wir über den Geschmack des Kindes bekommen.
-/// Wie die übrigen Student-Endpunkte nur <c>[Authorize]</c> – der Supervisor darf für sein Kind mitwählen.
+/// The rejection is permanent: the rejected image is never drawn again for this carrier. This makes
+/// this endpoint at the same time the cheapest feedback signal we get about the child's taste.
+/// Like the other student endpoints, only <c>[Authorize]</c> – the supervisor may pick along for their child.
 /// </summary>
 [ApiController]
 [ApiVersion("1.0")]
@@ -27,9 +27,9 @@ namespace Pugling.Api.Controllers.Student;
 public class ChildMediaPicksController(MediaSelector selector) : ControllerBase
 {
     /// <summary>
-    /// Lehnt das aktuelle Bild ab und zieht ein neues. Gibt es keine zulässige Alternative, bleibt der
-    /// Bestand <b>unverändert</b> (<c>409 media_no_alternative</c>) – lieber dasselbe Bild behalten, als
-    /// den letzten Kandidaten zu verbrennen und die Karte dauerhaft bildlos zu machen.
+    /// Rejects the current image and draws a new one. If there is no eligible alternative, the current
+    /// pick stays <b>unchanged</b> (<c>409 media_no_alternative</c>) – better to keep the same image than
+    /// to burn the last candidate and leave the card permanently without an image.
     /// </summary>
     [HttpPost("reshuffle")]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]

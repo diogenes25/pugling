@@ -8,20 +8,20 @@ using Pugling.Api.Models;
 namespace Pugling.Api.Tests;
 
 /// <summary>
-/// Die vollständige Eigentums-Fläche statt einzelner Beispiele (docs/codequalitaet-gates-plan.md, C1):
-/// <b>jede</b> Action unter <c>{childId}</c> bzw. <c>{planId}</c> wird mit einem fremden Zugang
-/// aufgerufen und muss abweisen.
+/// The complete ownership surface instead of individual examples (docs/codequalitaet-gates-plan.md, C1):
+/// <b>every</b> action under <c>{childId}</c> or <c>{planId}</c> is called with a foreign credential
+/// and must reject it.
 /// <para>
-/// Der Unterschied zu <see cref="OwnershipTests"/> (sechs handverlesene Fälle) und zu
+/// The difference to <see cref="OwnershipTests"/> (six hand-picked cases) and to
 /// <see cref="ConventionGuardTests.Actions_Unter_ChildId_Oder_PlanId_Tragen_Den_Ownership_Filter"/>
-/// (prüft nur, dass das <c>[ServiceFilter]</c>-Attribut <em>dransteht</em>) ist die Wirkung: hier läuft
-/// der Filter wirklich. Für generierten Code ist das der wertvollste einzelne Test – eine neue Route ohne
-/// Eigentumsprüfung fällt sofort auf, ohne dass jemand daran denken muss.
+/// (only checks that the <c>[ServiceFilter]</c> attribute <em>is present</em>) is the effect: here the
+/// filter actually runs. For generated code this is the single most valuable test – a new route without
+/// an ownership check stands out immediately, without anyone having to remember to add it.
 /// </para>
 /// </summary>
 public class OwnershipMatrixTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWebAppFactory>
 {
-    /// <summary>Was ein fremder Zugang sehen darf: nichts. 404 verdeckt die Existenz, 403 verweigert sie.</summary>
+    /// <summary>What a foreign credential is allowed to see: nothing. 404 hides the existence, 403 denies it.</summary>
     private static bool IsRejection(HttpStatusCode status) =>
         status is HttpStatusCode.NotFound or HttpStatusCode.Forbidden or HttpStatusCode.Unauthorized;
 
@@ -44,7 +44,7 @@ public class OwnershipMatrixTests(PuglingWebAppFactory factory) : IClassFixture<
         await PruefeMatrixAsync(attacker, victim, "fremdes Kind");
     }
 
-    /// <summary>Kind, Plan und Position eines <b>anderen</b> Erwachsenen – die Ziele des Angriffs.</summary>
+    /// <summary>Child, plan and position of a <b>different</b> adult – the targets of the attack.</summary>
     private async Task<(int ChildId, int PlanId, int PositionId)> FremdeWeltAsync()
     {
         var registered = await factory.CreateClient().PostAsJsonAsync("/api/v1/supervisor/adults",
@@ -114,9 +114,9 @@ public class OwnershipMatrixTests(PuglingWebAppFactory factory) : IClassFixture<
     }
 
     /// <summary>
-    /// Werte für die Route-Platzhalter. <c>childId</c>/<c>planId</c> zeigen auf die fremde Welt, alle
-    /// übrigen Ids bleiben beliebig: die Eigentumsprüfung muss <b>vor</b> ihnen greifen – täte sie es nicht,
-    /// entschiede die Existenz einer Unter-Ressource über den Zugriff.
+    /// Values for the route placeholders. <c>childId</c>/<c>planId</c> point into the foreign world, all
+    /// other ids stay arbitrary: the ownership check must fire <b>before</b> them – if it didn't,
+    /// the existence of a sub-resource would decide access instead.
     /// </summary>
     private static Dictionary<string, string> RouteWerte(MethodInfo action, IEnumerable<string> parameters,
         (int ChildId, int PlanId, int PositionId) victim)
@@ -143,7 +143,7 @@ public class OwnershipMatrixTests(PuglingWebAppFactory factory) : IClassFixture<
     private static bool BrauchtRumpf(string method) =>
         method is "POST" or "PUT" or "PATCH";
 
-    /// <summary>Der aus dem Rumpf gebundene Parameter: ein komplexer Typ ohne andere Bindungsquelle.</summary>
+    /// <summary>The parameter bound from the body: a complex type with no other binding source.</summary>
     private static ParameterInfo? RumpfParameter(MethodInfo action) =>
         action.GetParameters().FirstOrDefault(p =>
             p.ParameterType != typeof(CancellationToken)
@@ -160,8 +160,8 @@ public class OwnershipMatrixTests(PuglingWebAppFactory factory) : IClassFixture<
         RumpfParameter(action) is { } p ? SampleJson.ForType(p.ParameterType) : null;
 
     /// <summary>
-    /// Bewusste Ausnahmen – <b>kein</b> Sammelbecken. Jeder Eintrag braucht einen Grund; ohne Grund
-    /// gehört stattdessen die Lücke geschlossen.
+    /// Deliberate exceptions – <b>not</b> a catch-all. Every entry needs a reason; without a reason
+    /// the gap should be closed instead.
     /// </summary>
     private static readonly HashSet<string> Ausnahmen = new(StringComparer.Ordinal);
 }

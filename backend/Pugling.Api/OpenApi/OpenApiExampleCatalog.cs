@@ -2,7 +2,7 @@ using System.Text.Json;
 
 namespace Pugling.Api.OpenApi;
 
-/// <summary>Lädt die durch Integrationstests verifizierten Swagger-Beispiele.</summary>
+/// <summary>Loads the Swagger examples verified by integration tests.</summary>
 public sealed class OpenApiExampleCatalog
 {
     private static readonly JsonSerializerOptions SerializerOptions = new(JsonSerializerDefaults.Web);
@@ -11,10 +11,10 @@ public sealed class OpenApiExampleCatalog
 
     private OpenApiExampleCatalog(IReadOnlyList<OpenApiExampleEntry> entries) => _entries = entries;
 
-    /// <summary>Alle verifizierten Beispiele.</summary>
+    /// <summary>All verified examples.</summary>
     public IReadOnlyList<OpenApiExampleEntry> Entries => _entries;
 
-    /// <summary>Lädt den generierten Katalog, falls er im Build-Output vorhanden ist.</summary>
+    /// <summary>Loads the generated catalog, if it is present in the build output.</summary>
     public static OpenApiExampleCatalog Load(string contentRootPath)
     {
         var path = Path.Combine(contentRootPath, "OpenApi", "openapi-examples.generated.json");

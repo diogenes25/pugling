@@ -4,15 +4,15 @@ using Pugling.Api.Data;
 namespace Pugling.Api.Services.Shared;
 
 /// <summary>
-/// Berechnet die Fortschritts-Metriken eines Kindes serverseitig aus den bestehenden Tabellen
-/// (Übungssitzungen, Reviews, Tests, Tagesbelohnungen). Eine gemeinsame Quelle für Missionen
-/// (zeitfenster-bezogen) und Auszeichnungen (lebenslang bzw. aktuelle Serie). Nur Lese-Queries.
+/// Calculates a child's progress metrics server-side from the existing tables
+/// (practice sessions, reviews, tests, daily rewards). A shared source for missions
+/// (time-slot related) and awards (lifetime or current streak). Read-only queries only.
 /// </summary>
 public class MetricsService(PuglingDbContext db, PositionProgressService progress)
 {
     /// <summary>
-    /// Wert einer Metrik für ein Kind im halboffenen Tagesfenster [<paramref name="from"/>, <paramref name="to"/>]
-    /// (beide inklusive; null = unbegrenzt). <paramref name="today"/> dient der Serien-Berechnung.
+    /// Value of a metric for a child within the half-open day window [<paramref name="from"/>, <paramref name="to"/>]
+    /// (both inclusive; null = unbounded). <paramref name="today"/> is used for the streak calculation.
     /// </summary>
     public async Task<int> ValueAsync(int childId, ProgressMetric metric, DateOnly? from, DateOnly? to, DateOnly today,
         CancellationToken ct = default)
@@ -51,11 +51,11 @@ public class MetricsService(PuglingDbContext db, PositionProgressService progres
     }
 
     /// <summary>
-    /// Tage bis (einschließlich) <paramref name="until"/>, an denen die Tagespflicht eines Plans des Kindes
-    /// vollständig erledigt war – <b>dieselbe</b> Regel (<see cref="DayOverview.DutyDone"/>),
-    /// die auch die Tagesmission/Overview-Serie beim Sohn nutzt. Bewusst über den Fortschritts-Service statt über
-    /// eine reine Belohnungs-Query: „mindestens ein Ziel gebucht" ≠ „Tag vollständig", und Missionen/Auszeichnungen
-    /// dürfen nicht bei nur teil-erledigten Tagen feuern.
+    /// Days up to and including <paramref name="until"/> on which a child's study plan had its daily
+    /// mandatory goal fully completed – <b>the same</b> rule (<see cref="DayOverview.DutyDone"/>)
+    /// also used by the daily mission/overview streak on the student side. Deliberately routed through the
+    /// progress service rather than a plain reward query: "at least one goal booked" ≠ "day complete", and
+    /// missions/awards must not fire on only partially completed days.
     /// </summary>
     private async Task<IReadOnlyCollection<DateOnly>> CompleteDaysAsync(int childId, DateOnly until,
         CancellationToken ct)
@@ -68,7 +68,7 @@ public class MetricsService(PuglingDbContext db, PositionProgressService progres
         return complete;
     }
 
-    /// <summary>Länge der aktuellen Serie vollständiger Tage bis (einschließlich) heute oder gestern.</summary>
+    /// <summary>Length of the current streak of complete days up to and including today or yesterday.</summary>
     private static int CurrentStreak(IReadOnlyCollection<DateOnly> completeDays, DateOnly today)
     {
         if (completeDays.Count == 0) return 0;

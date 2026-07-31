@@ -1,4 +1,4 @@
-﻿using System.Net;
+using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using Microsoft.Extensions.DependencyInjection;
@@ -6,7 +6,7 @@ using Pugling.Api.Data;
 
 namespace Pugling.Api.Tests;
 
-/// <summary>Integrationstests für das RWX-Grant-Modell der Übungen (Owner/Write/Execute) und das Execute-Gate.</summary>
+/// <summary>Integration tests for the exercises' RWX grant model (Owner/Write/Execute) and the execute gate.</summary>
 public class ExerciseGrantsTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWebAppFactory>
 {
     private async Task<int> RegisterFatherAsync(string pin)
@@ -16,7 +16,7 @@ public class ExerciseGrantsTests(PuglingWebAppFactory factory) : IClassFixture<P
         return (await res.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetInt32();
     }
 
-    /// <summary>Legt (als Creator) Fach → Kapitel → Vokabelübung an und liefert deren Ids (inkl. Ausführ-Sichtbarkeit).</summary>
+    /// <summary>Creates (as the creator) subject → chapter → vocabulary exercise and returns their ids (incl. execute visibility).</summary>
     private static async Task<(int subjectId, int chapterId, int exerciseId)> CreateVocabAsync(HttpClient father, bool executePublic = true)
     {
         var subjectId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/subjects", new { name = "Grant-Fach" }));
@@ -42,7 +42,7 @@ public class ExerciseGrantsTests(PuglingWebAppFactory factory) : IClassFixture<P
         Assert.Equal(code, body.GetProperty("code").GetString());
     }
 
-    /// <summary>Markiert einen Vater als Plattform-Admin (kein API-Weg – bewusst nur über die DB, wie im echten Betrieb).</summary>
+    /// <summary>Marks an adult as a platform admin (no API path – deliberately only via the DB, as in real operation).</summary>
     private void MakeAdmin(int supervisorId)
     {
         using var scope = factory.Services.CreateScope();
@@ -51,7 +51,7 @@ public class ExerciseGrantsTests(PuglingWebAppFactory factory) : IClassFixture<P
         db.SaveChanges();
     }
 
-    /// <summary>Entfernt alle Grants einer Übung – simuliert eine verwaiste (ownerlose) Übung (z. B. nach Vater-Löschung).</summary>
+    /// <summary>Removes all grants of an exercise - simulates an orphaned (ownerless) exercise (e.g. after a father is deleted).</summary>
     private void OrphanExercise(int exerciseId)
     {
         using var scope = factory.Services.CreateScope();
@@ -215,9 +215,9 @@ public class ExerciseGrantsTests(PuglingWebAppFactory factory) : IClassFixture<P
     }
 
     /// <summary>
-    /// Die POST-Antwort muss denselben <c>grantCount</c> nennen wie das anschließende GET. Vorher hängte
-    /// <c>Create</c> den Owner-Grant nach dem Speichern noch einmal an die geladene Navigation, obwohl EFs
-    /// Relationship-Fixup ihn dort schon hatte – die Antwort meldete 2 Rechte, die DB kannte 1.
+    /// The POST response must report the same <c>grantCount</c> as the subsequent GET. Previously
+    /// <c>Create</c> appended the owner grant to the loaded navigation once more after saving, even though EF's
+    /// relationship fixup had already added it there - the response reported 2 grants while the DB knew of 1.
     /// </summary>
     [Fact]
     public async Task CreateAntwort_ZaehltDenOwnerGrantNichtDoppelt()

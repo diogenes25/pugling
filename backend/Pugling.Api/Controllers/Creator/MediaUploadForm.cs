@@ -1,21 +1,21 @@
 namespace Pugling.Api.Controllers.Creator;
 
 /// <summary>
-/// Formular des Bild-Uploads (multipart/form-data).
+/// Form of the image upload (multipart/form-data).
 /// <para>
-/// Bewusst <b>nicht</b> im Vertrags-Projekt: <see cref="IFormFile"/> ist ein ASP.NET-Core-Typ, und
-/// <c>Pugling.Contracts</c> ist ein Blatt ohne Framework-Abhängigkeiten – sonst könnte ein Client es
-/// nicht mehr pur verwenden. Die Antwort ist dafür der reguläre <c>MediaAssetResponse</c> aus dem Vertrag.
+/// Deliberately <b>not</b> in the contracts project: <see cref="IFormFile"/> is an ASP.NET Core type, and
+/// <c>Pugling.Contracts</c> is a leaf without framework dependencies – otherwise a client could no longer
+/// use it in isolation. The response is instead the regular <c>MediaAssetResponse</c> from the contract.
 /// </para>
 /// </summary>
-/// <param name="File">Die Bilddatei; der Server erzeugt daraus alle Auflösungen selbst.</param>
-/// <param name="Description">Was zu sehen ist – zugleich der Alt-Text. Pflicht.</param>
-/// <param name="Key">Optionaler stabiler Referenz-Key; leer = aus der Beschreibung abgeleitet.</param>
-/// <param name="Tags">Schlagworte, kommagetrennt (Multipart kennt keine Listen-Semantik wie JSON).</param>
-/// <param name="Rating">Eignung; ohne Angabe die strengste Stufe.</param>
-/// <param name="Origin">Herkunft; ohne Angabe <see cref="MediaOrigin.Upload"/>.</param>
-/// <param name="License">Lizenz-Kurzbezeichnung, falls die Quelle sie verlangt.</param>
-/// <param name="Attribution">Urhebernennung, falls die Lizenz sie verlangt.</param>
+/// <param name="File">The image file; the server generates all resolutions from it itself.</param>
+/// <param name="Description">What is shown – doubles as the alt text. Required.</param>
+/// <param name="Key">Optional stable reference key; empty = derived from the description.</param>
+/// <param name="Tags">Tags, comma-separated (multipart has no list semantics like JSON).</param>
+/// <param name="Rating">Suitability; without a value, the strictest level.</param>
+/// <param name="Origin">Origin; without a value <see cref="MediaOrigin.Upload"/>.</param>
+/// <param name="License">Short license designation, if the source requires it.</param>
+/// <param name="Attribution">Attribution, if the license requires it.</param>
 public record MediaUploadForm(
     IFormFile? File,
     string? Description,

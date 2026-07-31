@@ -1,68 +1,68 @@
 namespace Pugling.Contracts;
 
-/// <summary>Verwandtschaftsrolle eines Supervisors zum Studenten (rein deskriptiv).</summary>
+/// <summary>Kinship role of a supervisor to the student (purely descriptive).</summary>
 public enum SupervisorRelation
 {
-    /// <summary>Vater. Hier heißt „Vater" wirklich Vater – die fachliche Zeile dahinter ist ein <c>Adult</c>.</summary>
+    /// <summary>Father. Here "father" really does mean father – the underlying domain line is an <c>Adult</c>.</summary>
     Father = 0,
-    /// <summary>Mutter.</summary>
+    /// <summary>Mother.</summary>
     Mother = 1,
-    /// <summary>Großmutter.</summary>
+    /// <summary>Grandmother.</summary>
     Grandma = 2,
-    /// <summary>Großvater.</summary>
+    /// <summary>Grandfather.</summary>
     Grandpa = 3,
-    /// <summary>Sorgeberechtigte Person ohne Verwandtschaft (Vormund, Pflegeeltern).</summary>
+    /// <summary>Legal guardian with no kinship (guardian, foster parents).</summary>
     Guardian = 4,
-    /// <summary>Sonstige betreuende Person – etwa eine Lehrkraft mit Betreuungsauftrag.</summary>
+    /// <summary>Other supervising person – e.g. a teacher with a supervisory mandate.</summary>
     Other = 5,
 }
 
-/// <summary>Geschlecht des Kindes (rein deskriptiv). Teil des übungsunabhängigen Profils; ein späterer
-/// Lehrplan-Generator nutzt es allenfalls für die sprachliche Ansprache, nie für die Filterung des Stoffs.</summary>
+/// <summary>Gender of the child (purely descriptive). Part of the exercise-independent profile; a later
+/// study plan generator uses it at most for the language of address, never for filtering the material.</summary>
 public enum Gender
 {
-    /// <summary>Keine Angabe. Default – die Oberfläche spricht das Kind dann geschlechtsneutral an.</summary>
+    /// <summary>Not specified. Default – the UI then addresses the child in a gender-neutral way.</summary>
     None = 0,
-    /// <summary>Männlich.</summary>
+    /// <summary>Male.</summary>
     Male = 1,
-    /// <summary>Weiblich.</summary>
+    /// <summary>Female.</summary>
     Female = 2,
-    /// <summary>Divers.</summary>
+    /// <summary>Diverse.</summary>
     Diverse = 3,
 }
 
 /// <summary>
-/// Kategorie einer Punkte-Buchung – macht Boni auswertbar/deckelbar (z. B. "wie viele Punkte
-/// kamen aus Combo vs. Uhrzeit?"). <see cref="Base"/> ist der Standard für Altbuchungen.
+/// Category of a points ledger entry – makes bonuses evaluable/cappable (e.g. "how many points
+/// came from combo vs. time of day?"). <see cref="Base"/> is the default for legacy entries.
 /// </summary>
 public enum PointKind
 {
-    /// <summary>Basispunkte einer richtigen Wiederholung (inkl. Zeitfenster-Faktor).</summary>
+    /// <summary>Base points for a correct repetition (incl. time-slot factor).</summary>
     Base = 0,
-    /// <summary>Manuelle Vater-Buchung (Gutschrift/Einlösung).</summary>
+    /// <summary>Manual supervisor ledger entry (credit/redemption).</summary>
     Manual = 1,
-    /// <summary>Combo-Bonus (Treffer in Folge).</summary>
+    /// <summary>Combo bonus (hits in a row).</summary>
     Combo = 2,
-    /// <summary>Bonus für schnelle Antwort.</summary>
+    /// <summary>Bonus for a fast answer.</summary>
     Speed = 3,
-    /// <summary>Belohnung für eine erfüllte Mission (Tages-/Wochen-/Zusatzziel).</summary>
+    /// <summary>Reward for a completed mission (daily/weekly/extra goal).</summary>
     Mission = 4,
-    /// <summary>Belohnung für eine erreichte Auszeichnung.</summary>
+    /// <summary>Reward for an achieved award.</summary>
     Achievement = 5,
-    /// <summary>Einlösung von Münzen für einen Skin (negative Buchung).</summary>
+    /// <summary>Redemption of coins for a skin (negative entry).</summary>
     SkinPurchase = 6,
-    /// <summary>Ziel einer Lehrplan-Position erreicht (Tages-/Wochenziel der Übung).</summary>
+    /// <summary>Goal of a study plan position reached (daily/weekly goal of the exercise).</summary>
     Goal = 7,
-    /// <summary>Einlösung von Münzen für einen Familien-Shop-Artikel (negative Buchung).</summary>
+    /// <summary>Redemption of coins for a family shop item (negative entry).</summary>
     ShopCoins = 8,
-    /// <summary>Einlösung von Gems für einen Familien-Shop-Artikel (negative Buchung).</summary>
+    /// <summary>Redemption of gems for a family shop item (negative entry).</summary>
     ShopGems = 9,
-    /// <summary>Manuelle Vater-Buchung in Gems (Gem-Zwilling zu <see cref="Manual"/>; Geschenk/Korrektur).</summary>
+    /// <summary>Manual supervisor ledger entry in gems (gem counterpart to <see cref="Manual"/>; gift/correction).</summary>
     ManualGems = 10,
-    /// <summary>Malus, weil ein Pflichtziel einer Lehrplan-Position in der Periode gerissen wurde (negative Buchung).</summary>
+    /// <summary>Penalty because a mandatory goal of a study plan position was missed in the period (negative entry).</summary>
     GoalPenalty = 11,
-    /// <summary>Belohnung für ein erreichtes verbindliches Lernziel/Objective bzw. eine seiner Etappen (Münzen).</summary>
+    /// <summary>Reward for an achieved committed learning goal/objective or one of its milestones (coins).</summary>
     ObjectiveCoins = 12,
-    /// <summary>Belohnung für ein erreichtes Dehnungs-Objective bzw. eine seiner Etappen (Gems).</summary>
+    /// <summary>Reward for an achieved stretch objective or one of its milestones (gems).</summary>
     ObjectiveGems = 13,
 }

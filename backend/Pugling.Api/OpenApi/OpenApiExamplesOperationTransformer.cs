@@ -5,7 +5,7 @@ using Microsoft.OpenApi;
 
 namespace Pugling.Api.OpenApi;
 
-/// <summary>Hängt verifizierte Request/Response-Beispiele an passende OpenAPI-Operationen.</summary>
+/// <summary>Attaches verified request/response examples to matching OpenAPI operations.</summary>
 public sealed partial class OpenApiExamplesOperationTransformer(OpenApiExampleCatalog catalog) : IOpenApiOperationTransformer
 {
     /// <inheritdoc />

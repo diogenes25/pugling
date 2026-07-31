@@ -3,21 +3,21 @@ using Pugling.Client;
 namespace Pugling.Agent.Creator.Briefing;
 
 /// <summary>
-/// Trägt das <see cref="CreatorBriefing"/> zusammen: das <b>Profil</b> und die Lehrwerk-Units vom
-/// <b>Creator</b>, Katalog und Wortschatz ebenfalls vom Creator, Kind-Profil und Lehrbücher vom
-/// <b>Supervisor</b>, den Lernstand von den <b>Student</b>-Lesesichten.
+/// Assembles the <see cref="CreatorBriefing"/>: the <b>profile</b> and the textbook units from the
+/// <b>creator</b>, catalog and vocabulary also from the creator, child profile and textbooks from the
+/// <b>supervisor</b>, learning progress from the <b>student</b> read views.
 /// <para>
-/// Der Kind-Teil ist <b>optional</b>, und daran hängt eine Rechte-Frage: nur wer ein Kind nennt, braucht
-/// ein Konto, das dieses Kind betreut. Für allgemeine Katalog-Übungen genügt die Creator-Rolle – deshalb
-/// werden Supervisor- und Student-Sichten hier ausschließlich bei gesetztem Kind angefragt.
+/// The child part is <b>optional</b>, and a permission question hangs on that: only someone who names a
+/// child needs an account that supervises this child. General catalog exercises need only the creator
+/// role - so supervisor and student views are queried here only when a child is set.
 /// </para>
 /// </summary>
 public sealed class BriefingBuilder(CreatorApi creator, SupervisorApi supervisor, StudentApi student)
 {
-    /// <summary>Maximal so viele schwache Wörter gehen in den Prompt – mehr überfrachtet lokale Modelle.</summary>
+    /// <summary>At most this many weak words go into the prompt - more would overload local models.</summary>
     private const int MaxWeakWords = 15;
 
-    /// <summary>Baut das Briefing für einen Auftrag.</summary>
+    /// <summary>Builds the briefing for a request.</summary>
     public async Task<CreatorBriefing> BuildAsync(GenerationRequest request, CancellationToken ct = default)
     {
         var subject = await creator.GetSubjectAsync(request.SubjectId, ct);
@@ -57,9 +57,9 @@ public sealed class BriefingBuilder(CreatorApi creator, SupervisorApi supervisor
     }
 
     /// <summary>
-    /// Das Profil des Auftrags: ausdrücklich genannt, sonst das <b>bestpassende</b> zum Kind. Ohne beides
-    /// bleibt es leer – der Agent arbeitet dann wie bisher als Generalist, statt mit einer Fehlermeldung
-    /// abzubrechen (ein Katalog ohne Profile muss weiter bedienbar sein).
+    /// The request's profile: explicitly named, otherwise the <b>best fit</b> for the child. Without
+    /// either, it stays empty - the agent then works as a generalist as before, instead of aborting with
+    /// an error message (a catalog without profiles must remain usable).
     /// </summary>
     public async Task<CreatorProfileResponse?> ResolveProfileAsync(GenerationRequest request, CancellationToken ct = default)
     {
@@ -82,10 +82,10 @@ public sealed class BriefingBuilder(CreatorApi creator, SupervisorApi supervisor
     }
 
     /// <summary>
-    /// Das Material des Auftrags: die Reihe (aus dem Profil, sonst aus dem Lehrbuch des Kindes) und die
-    /// Unit – ausdrücklich genannt, sonst die aktuelle Unit des Kindes. Die Unit wird <b>gegen die
-    /// Reihe geprüft</b>: eine Unit aus einem fremden Werk wäre schlimmer als keine, weil das Modell
-    /// deren Stoff dann für gesichert hält.
+    /// The request's material: the series (from the profile, otherwise from the child's textbook) and
+    /// the unit - explicitly named, otherwise the child's current unit. The unit is <b>checked against
+    /// the series</b>: a unit from an unrelated work would be worse than none, because the model would
+    /// then treat its material as confirmed.
     /// </summary>
     private async Task<(TextbookSeriesResponse? Series, SeriesUnitResponse? Unit)> ResolveMaterialAsync(
         GenerationRequest request, CreatorProfileResponse? profile, ChildFacts? child,
@@ -117,7 +117,7 @@ public sealed class BriefingBuilder(CreatorApi creator, SupervisorApi supervisor
         return (series, current);
     }
 
-    /// <summary>Verdichtet Profil, Reihe und Unit zu den Prompt-Fakten.</summary>
+    /// <summary>Condenses profile, series and unit into the prompt facts.</summary>
     private static ProfileFacts Facts(CreatorProfileResponse profile, TextbookSeriesResponse? series,
         SeriesUnitResponse? unit) =>
         new(profile.Id, profile.Name, profile.SubjectName, profile.SchoolTypes, profile.GradeMin, profile.GradeMax,
@@ -127,8 +127,8 @@ public sealed class BriefingBuilder(CreatorApi creator, SupervisorApi supervisor
             series?.Id ?? profile.SeriesId, series?.Name ?? profile.SeriesName, series?.Publisher, series?.Notes, unit);
 
     /// <summary>
-    /// Das Kind mit allem, was den Zuschnitt trägt. Ein reines Creator-Konto sieht keine Kinder; darauf
-    /// weist die Ausnahme ausdrücklich hin, statt einen nackten 403 durchzureichen.
+    /// The child with everything that drives the tailoring. A pure creator account sees no children; the
+    /// exception points this out explicitly instead of passing through a bare 403.
     /// </summary>
     private async Task<ChildFacts> LoadChildAsync(int childId, GenerationRequest request, CancellationToken ct)
     {
@@ -170,9 +170,9 @@ public sealed class BriefingBuilder(CreatorApi creator, SupervisorApi supervisor
     }
 
     /// <summary>
-    /// Die gewichteten Interessen aus der geteilten Taxonomie. Für den Prompt zählen vor allem die
-    /// <b>negativen</b>: eine Aufgabe über Spinnen ist fachlich korrekt und trotzdem unbrauchbar, wenn das
-    /// Kind Spinnen nicht erträgt. Fehlen sie (frisch angelegtes Kind), bleibt es beim Freitext.
+    /// The weighted interests from the shared taxonomy. For the prompt, the <b>negative</b> ones matter
+    /// most: a task about spiders is factually correct and still unusable if the child cannot stand
+    /// spiders. If they are missing (freshly created child), the free text is all that remains.
     /// </summary>
     private async Task<IReadOnlyList<ChildInterestResponse>> LoadInterestsAsync(int childId, CancellationToken ct)
     {

@@ -3,90 +3,90 @@ namespace Pugling.Contracts;
 // Geteilte Basistypen des Medien-Stores und der Interessen-Taxonomie (ebenen-neutral: der Creator
 // pflegt Assets/Tags, der Supervisor die Interessen des Kindes, der Student bekommt später das Bild).
 
-/// <summary>Medienart eines Assets. Heute werden nur Bilder ausgeliefert; der Store ist bewusst offen.</summary>
+/// <summary>Media kind of an asset. Today only images are delivered; the store is deliberately open-ended.</summary>
 public enum MediaKind
 {
-    /// <summary>Bild – der einzige heute ausgespielte Typ (siehe docs/medien-bilder.md).</summary>
+    /// <summary>Image – the only type delivered today (see docs/medien-bilder.md).</summary>
     Image = 0,
-    /// <summary>Tonaufnahme (z. B. Aussprache). Im Store vorgesehen, noch nicht ausgespielt.</summary>
+    /// <summary>Audio recording (e.g. pronunciation). Planned in the store, not yet delivered.</summary>
     Audio = 1,
-    /// <summary>Video. Im Store vorgesehen, noch nicht ausgespielt.</summary>
+    /// <summary>Video. Planned in the store, not yet delivered.</summary>
     Video = 2,
 }
 
 /// <summary>
-/// Eignung eines Assets für eine Altersgruppe – die tragende Achse der Zielgruppen-Differenzierung.
-/// Erst sie macht <b>einen gemeinsamen Store für alle Zielgruppen</b> tragfähig: die Auswahl filtert hart
-/// gegen <c>Child.AllowedContentRating</c>, bevor überhaupt nach Interessen sortiert wird.
+/// Suitability of an asset for an age group – the load-bearing axis of target-audience differentiation.
+/// Only this makes <b>a shared store for all target audiences</b> viable: the selection filters hard
+/// against <c>Child.AllowedContentRating</c> before even sorting by interests.
 /// <para>
-/// Die Werte sind <b>aufsteigend geordnet</b> und werden numerisch verglichen (<c>Rating &lt;= Erlaubtes</c>).
-/// Deshalb liegen sie als <c>int</c> in der DB (nicht als String wie die übrigen Enums) und dürfen
-/// <b>nie umnummeriert</b> werden – neue Stufen nur am Ende anhängen.
+/// The values are <b>ordered ascending</b> and compared numerically (<c>Rating &lt;= Allowed</c>).
+/// That's why they are stored as <c>int</c> in the DB (not as a string like the other enums) and must
+/// <b>never be renumbered</b> – new levels are only appended at the end.
 /// </para>
 /// </summary>
 public enum ContentRating
 {
-    /// <summary>Für alle geeignet. Default für neue Assets <i>und</i> neue Kinder.</summary>
+    /// <summary>Suitable for everyone. Default for new assets <i>and</i> new children.</summary>
     Everyone = 0,
-    /// <summary>Ab ca. 12: mildere Grusel-/Konflikt-Motive, jugendliche Themen.</summary>
+    /// <summary>From about age 12: milder horror/conflict motifs, teen themes.</summary>
     Teen = 1,
-    /// <summary>Nur Erwachsene (Freizügigkeit, drastische Darstellung). Für ein Kindprofil nur nach ausdrücklicher Freigabe durch den Supervisor.</summary>
+    /// <summary>Adults only (explicit content, graphic depiction). For a child profile only after explicit approval by the supervisor.</summary>
     Mature = 2,
 }
 
 /// <summary>
-/// Semantischer Auslieferungs-Slot einer Variante. Der Client fragt nach dem <i>Zweck</i>, nicht nach
-/// Pixelmaßen – so bleibt die Auflösungspolitik serverseitig änderbar, ohne den Vertrag zu brechen.
+/// Semantic delivery slot of a variant. The client asks for the <i>purpose</i>, not for
+/// pixel dimensions – this keeps the resolution policy changeable server-side without breaking the contract.
 /// </summary>
 public enum MediaPurpose
 {
-    /// <summary>Winziges Vorschaubild in Listen/Trefferlisten.</summary>
+    /// <summary>Tiny preview image in lists/result lists.</summary>
     Thumb = 0,
-    /// <summary>Standardgröße auf der Übungskarte – der Regelfall beim Lernen.</summary>
+    /// <summary>Standard size on the exercise card – the common case while learning.</summary>
     Card = 1,
-    /// <summary>Große Ansicht (Vorschau/Zoom).</summary>
+    /// <summary>Large view (preview/zoom).</summary>
     Full = 2,
-    /// <summary>Breites Aufmacherformat (Kapitel-/Übungskopf).</summary>
+    /// <summary>Wide header format (chapter/exercise header).</summary>
     Hero = 3,
 }
 
-/// <summary>Herkunft eines Assets – macht generierte und fremde Inhalte im Katalog unterscheidbar.</summary>
+/// <summary>Origin of an asset – makes generated and third-party content distinguishable in the catalog.</summary>
 public enum MediaOrigin
 {
-    /// <summary>Herkunft nicht erfasst – Default für Altbestände.</summary>
+    /// <summary>Origin not recorded – default for legacy assets.</summary>
     Unknown = 0,
-    /// <summary>Vom Creator selbst hochgeladen/bereitgestellt.</summary>
+    /// <summary>Uploaded/provided by the creator themselves.</summary>
     Upload = 1,
-    /// <summary>Aus einer externen Bildquelle übernommen (Lizenz/Attribution pflegen!).</summary>
+    /// <summary>Taken from an external image source (maintain license/attribution!).</summary>
     Stock = 2,
-    /// <summary>KI-generiert; der erzeugende Prompt/das Modell gehört in <c>Source</c>.</summary>
+    /// <summary>AI-generated; the generating prompt/model belongs in <c>Source</c>.</summary>
     Generated = 3,
 }
 
 /// <summary>
-/// Facette eines Interessen-Schlagworts. Sie gruppiert die Taxonomie fachlich, ohne sie zu spalten:
-/// Thema (<see cref="Franchise"/>, <see cref="Sport"/> …) und <see cref="Style"/> liegen bewusst in
-/// <b>derselben</b> Tabelle, weil sie sich bei der Bildauswahl identisch verhalten – nur die Gewichtung
-/// unterscheidet sich. Erweiterungen sind rein additiv.
+/// Facet of an interest tag. It groups the taxonomy by domain without splitting it:
+/// topic (<see cref="Franchise"/>, <see cref="Sport"/> …) and <see cref="Style"/> deliberately live in
+/// <b>the same</b> table because they behave identically during image selection – only the weighting
+/// differs. Extensions are purely additive.
 /// </summary>
 public enum InterestFacet
 {
-    /// <summary>Keiner der übrigen Facetten zuzuordnen. Default beim Anlegen eines Schlagworts.</summary>
+    /// <summary>Cannot be assigned to any of the other facets. Default when creating a tag.</summary>
     Other = 0,
-    /// <summary>Marke/Serie/Spiel („Pokémon", „Brawl Stars", „Star Wars").</summary>
+    /// <summary>Brand/series/game ("Pokémon", "Brawl Stars", "Star Wars").</summary>
     Franchise = 1,
-    /// <summary>Sportart oder Verein („Fußball", „Skateboard").</summary>
+    /// <summary>Sport or club ("football", "skateboarding").</summary>
     Sport = 2,
-    /// <summary>Tier oder Tiergruppe („Pferd", „Dinosaurier").</summary>
+    /// <summary>Animal or animal group ("horse", "dinosaur").</summary>
     Animal = 3,
-    /// <summary>Fahrzeug („Traktor", „Feuerwehrauto", „Rakete").</summary>
+    /// <summary>Vehicle ("tractor", "fire truck", "rocket").</summary>
     Vehicle = 4,
-    /// <summary>Musik – Genre, Band oder Instrument.</summary>
+    /// <summary>Music – genre, band, or instrument.</summary>
     Music = 5,
-    /// <summary>Freizeit/Tätigkeit („Kochen", „Angeln", „Programmieren").</summary>
+    /// <summary>Leisure/activity ("cooking", "fishing", "programming").</summary>
     Hobby = 6,
-    /// <summary>Natur und Landschaft („Wald", „Meer", „Weltraum").</summary>
+    /// <summary>Nature and landscape ("forest", "sea", "space").</summary>
     Nature = 7,
-    /// <summary>Darstellungsstil („Comic", „Foto", „Pixel-Art") – orthogonal zum Thema.</summary>
+    /// <summary>Visual style ("comic", "photo", "pixel art") – orthogonal to the topic.</summary>
     Style = 8,
 }

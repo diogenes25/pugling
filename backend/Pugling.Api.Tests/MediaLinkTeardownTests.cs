@@ -5,13 +5,12 @@ using System.Text.Json;
 namespace Pugling.Api.Tests;
 
 /// <summary>
-/// Bild-Zuordnungen lesen und wieder <b>lösen</b> – an der Übung, am einzelnen Item, an der Variante, sowie
-/// das Nachschlagen eines Motivs über seinen Schlüssel.
+/// Read image links and <b>unlink</b> them again – on the exercise, on the individual item, on the variant,
+/// as well as looking up a motif via its key.
 /// <para>
-/// Angelegt beim Schließen der Abdeckungslücke (docs/codequalitaet-gates-plan.md, C3). Der Aufbau der
-/// Zuordnungen war belegt, das Lösen nicht – und das Lösen ist die Seite, an der ein Bild ungewollt an einer
-/// Karte hängen bleibt (Anti-Cheat: ein Motiv zeigt die Bedeutung in beide Richtungen, siehe
-/// docs/medien-bilder.md).
+/// Created while closing the coverage gap (docs/codequalitaet-gates-plan.md, C3). Building the links was
+/// covered, unlinking was not – and unlinking is the side where an image unintentionally stays attached to a
+/// card (anti-cheat: a motif reveals the meaning in both directions, see docs/medien-bilder.md).
 /// </para>
 /// </summary>
 public class MediaLinkTeardownTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWebAppFactory>
@@ -24,7 +23,7 @@ public class MediaLinkTeardownTests(PuglingWebAppFactory factory) : IClassFixtur
         return await res.Content.ReadFromJsonAsync<JsonElement>();
     }
 
-    /// <summary>Ein Motiv mit einer Karten-Variante – das Minimum, das eine Zuordnung tragen kann.</summary>
+    /// <summary>A motif with one card variant – the minimum a link can carry.</summary>
     private static async Task<(int AssetId, string Key, int VariantId)> MotivAsync(HttpClient creator)
     {
         var key = Eindeutig("m");

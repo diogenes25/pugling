@@ -4,49 +4,49 @@ namespace Pugling.Contracts.Supervisor;
 // (ein Student kann mehrere haben) und das gemeinsame Wallet samt manueller Vater-Buchung.
 
 /// <summary>
-/// Ein betreutes Kind samt Profil und Kontostand beider Währungen. <c>Interests</c> ist der <b>freie</b>
-/// Teil des Profils (Sprache des KI-Creators); die gewichteten, referenzierten Interessen für die
-/// Bildauswahl stehen unter <c>children/{id}/interests</c>. <c>AllowedContentRating</c> ist die
-/// Obergrenze der Bild-Eignung – nur der Supervisor darf sie heben.
+/// A supervised child with profile and balance of both currencies. <c>Interests</c> is the <b>free-form</b>
+/// part of the profile (language for the AI creator); the weighted, referenced interests used for
+/// image selection live under <c>children/{id}/interests</c>. <c>AllowedContentRating</c> is the
+/// upper bound of image suitability – only the supervisor may raise it.
 /// </summary>
 public record ChildResponse(int Id, string Name, int? BirthYear, int? Grade,
     SchoolTypes SchoolType, Gender Gender, IReadOnlyList<string> Interests, string? ProfileNotes,
     ContentRating AllowedContentRating, DateTime CreatedAt, int Coins, int Gems);
 
-/// <summary>Eingabe zum Anlegen eines Kindes.</summary>
+/// <summary>Input for creating a child.</summary>
 public record CreateChildDto(string Name, int? BirthYear, int? Grade, SchoolTypes? SchoolType, string? Pin,
     Gender? Gender = null, List<string>? Interests = null, string? ProfileNotes = null,
     ContentRating? AllowedContentRating = null);
 
 /// <summary>
-/// Partielle Änderung eines Kindes; weggelassene Felder bleiben unverändert. <c>null</c> heißt „nicht
-/// angegeben" und kann darum nichts <b>leeren</b> – dafür stehen die <c>Clear…</c>-Schalter (vgl.
-/// <c>ClearGrade</c> an der Klassenarbeit): <c>ClearBirthYear</c> entfernt das Geburtsjahr,
-/// <c>ClearGrade</c> die Klassenstufe (das Kind fällt damit aus Klassen-Filtern heraus).
+/// Partial change to a child; omitted fields stay unchanged. <c>null</c> means "not specified"
+/// and therefore cannot <b>clear</b> anything – that is what the <c>Clear…</c> switches are for (cf.
+/// <c>ClearGrade</c> on the class test): <c>ClearBirthYear</c> removes the birth year,
+/// <c>ClearGrade</c> the grade level (the child then drops out of grade filters).
 /// </summary>
 public record UpdateChildDto(string? Name, int? BirthYear, int? Grade, SchoolTypes? SchoolType, string? Pin,
     Gender? Gender = null, List<string>? Interests = null, string? ProfileNotes = null,
     ContentRating? AllowedContentRating = null,
     bool ClearBirthYear = false, bool ClearGrade = false);
 
-/// <summary>Eine Betreuungs-Beziehung: welcher Supervisor betreut den Studenten seit wann.</summary>
+/// <summary>A supervision relationship: which supervisor supervises the student since when.</summary>
 public record SupervisorLinkResponse(int SupervisorId, string SupervisorName, SupervisorRelation Relation, DateTime CreatedAt);
 
-/// <summary>Eingabe zum Hinzufügen eines weiteren Supervisors (z. B. Mutter/Oma).</summary>
+/// <summary>Input for adding another supervisor (e.g. mother/grandmother).</summary>
 public record AddSupervisorDto(int SupervisorId, SupervisorRelation Relation = SupervisorRelation.Other);
 
-/// <summary>Eine Punkte-Buchung im Ledger des Kindes.</summary>
+/// <summary>A points ledger entry of the child.</summary>
 public record PointsEntryResponse(int Id, int ChildId, int Amount, PointKind Kind, string Reason, DateTime CreatedAt);
 
-/// <summary>Kontostand des Kindes (beide Währungen) mit einer Seite seiner Buchungen.</summary>
+/// <summary>Balance of the child (both currencies) with a page of its ledger entries.</summary>
 public record ChildPointsResponse(int ChildId, int Coins, int Gems, IEnumerable<PointsEntryResponse> Entries);
 
 /// <summary>
-/// Manuelle Vater-Buchung: positiver Betrag = gutschreiben/verschenken, negativ = abziehen.
-/// Über die Währung kann der Vater neben Münzen auch <b>Gems verschenken</b>
-/// (Belohnung außerhalb der App, Schulden-Erlass).
+/// Manual supervisor ledger entry: positive amount = credit/gift, negative = deduct.
+/// Via the currency, the supervisor can also <b>gift gems</b> alongside coins
+/// (reward outside the app, debt forgiveness).
 /// </summary>
-/// <param name="Amount">Betrag; positiv = gutschreiben/verschenken, negativ = abziehen.</param>
-/// <param name="Reason">Freitext-Begründung fürs Ledger.</param>
-/// <param name="Currency">Zielwährung der Buchung (Default Münzen).</param>
+/// <param name="Amount">Amount; positive = credit/gift, negative = deduct.</param>
+/// <param name="Reason">Free-text justification for the ledger.</param>
+/// <param name="Currency">Target currency of the entry (default coins).</param>
 public record PointsEntryDto(int Amount, string Reason, Currency Currency = Currency.Coins);

@@ -9,8 +9,8 @@ using Pugling.Api.Models;
 namespace Pugling.Api.Controllers.Creator;
 
 /// <summary>
-/// Fachabhängige Übungs-Arten (z. B. Grammatik/Vokabeln bei Englisch). Kontrolliertes
-/// Vokabular je Fach als Grundlage für die Vorfilterung bei der Lehrplan-Erstellung.
+/// Subject-dependent exercise categories (e.g. grammar/vocabulary for English). Controlled
+/// vocabulary per subject as the basis for pre-filtering during study plan creation.
 /// </summary>
 [ApiController]
 [ApiVersion("1.0")]
@@ -28,7 +28,7 @@ public class ExerciseCategoriesController(PuglingDbContext db) : ControllerBase
             .Select(c => new CategoryResponse(c.Id, c.SubjectId, c.Name, c.CreatedAt))
             .FirstOrDefaultAsync(ct);
 
-    /// <summary>Liste der Arten eines Fachs.</summary>
+    /// <summary>List of a subject's categories.</summary>
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<IEnumerable<CategoryResponse>>> List(int subjectId, CancellationToken ct = default)
@@ -41,7 +41,7 @@ public class ExerciseCategoriesController(PuglingDbContext db) : ControllerBase
             .ToListAsync(ct);
     }
 
-    /// <summary>Eine einzelne Art.</summary>
+    /// <summary>A single category.</summary>
     [HttpGet("{categoryId:int}")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<CategoryResponse>> Get(int subjectId, int categoryId, CancellationToken ct = default)
@@ -50,7 +50,7 @@ public class ExerciseCategoriesController(PuglingDbContext db) : ControllerBase
         return category is null ? NotFound() : category;
     }
 
-    /// <summary>Erstellt eine Art unter einem Fach.</summary>
+    /// <summary>Creates a category under a subject.</summary>
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -73,7 +73,7 @@ public class ExerciseCategoriesController(PuglingDbContext db) : ControllerBase
         return CreatedAtAction(nameof(Get), new { subjectId, categoryId = category.Id }, response);
     }
 
-    /// <summary>Ändert eine Art (partiell).</summary>
+    /// <summary>Changes a category (partial).</summary>
     [HttpPatch("{categoryId:int}")]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -97,7 +97,7 @@ public class ExerciseCategoriesController(PuglingDbContext db) : ControllerBase
         return (await ProjectOne(subjectId, categoryId, ct))!;
     }
 
-    /// <summary>Löscht eine Art; zugeordnete Übungen bleiben erhalten (FK wird auf null gesetzt).</summary>
+    /// <summary>Deletes a category; assigned exercises remain (FK is set to null).</summary>
     [HttpDelete("{categoryId:int}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

@@ -9,8 +9,8 @@ using Pugling.Api.Models;
 namespace Pugling.Api.Tests;
 
 /// <summary>
-/// Sichert den Familien-Shop ab: Vater erstellt Artikel + Angebote, Sohn kauft, aggregiertes Inventar
-/// entsteht, Sohn stellt Aktivierungsanfrage, Vater genehmigt/lehnt ab.
+/// Secures the family shop: father creates articles + listings, child buys, aggregated inventory
+/// is created, child submits an activation request, father approves/rejects.
 /// </summary>
 public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWebAppFactory>
 {
@@ -27,12 +27,12 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
         return await res.Content.ReadFromJsonAsync<JsonElement>();
     }
 
-    /// <summary>Erstellt einen Artikel und gibt seine Id zurück.</summary>
+    /// <summary>Creates an article and returns its id.</summary>
     private static async Task<int> CreateArticleAsync(HttpClient father, object body) =>
         (await JsonAsync(await father.PostAsJsonAsync("/api/v1/supervisor/shop/articles", body)))
             .GetProperty("id").GetInt32();
 
-    /// <summary>Erstellt ein Angebot zu einem Artikel und gibt seine Id zurück.</summary>
+    /// <summary>Creates a listing for an article and returns its id.</summary>
     private static async Task<int> CreateListingAsync(HttpClient father, int articleId, object body) =>
         (await JsonAsync(await father.PostAsJsonAsync($"/api/v1/supervisor/shop/articles/{articleId}/listings", body)))
             .GetProperty("id").GetInt32();
@@ -105,13 +105,13 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
     }
 
     /// <summary>
-    /// Der Kauf-Beleg friert einen <b>Titel</b> ein: den des Angebots, wenn es einen eigenen trägt, sonst
-    /// den des Artikels. Der Rückfall ist der Punkt – ein Angebot <i>darf</i> titellos sein (dann ist es
-    /// einfach „der Artikel zu diesem Preis"), und ohne ihn stünde in der Kaufhistorie eine namenlose
-    /// Zeile, die niemand mehr zuordnen kann (docs/testplan.md, Injektion B12).
+    /// The purchase receipt freezes a <b>title</b>: the listing's own title if it has one, otherwise the
+    /// article's. The fallback is the point – a listing <i>may</i> be titleless (then it is simply "the
+    /// article at this price"), and without it the purchase history would show a nameless line that no
+    /// one can attribute anymore (docs/testplan.md, injection B12).
     /// <para>
-    /// Beide Fälle gehören in denselben Test: eine Fallunterscheidung, von der nur ein Zweig geprüft ist,
-    /// lässt sich lautlos zu einer Konstante flachdrücken.
+    /// Both cases belong in the same test: a case distinction where only one branch is checked can
+    /// silently collapse into a constant.
     /// </para>
     /// </summary>
     [Fact]
@@ -158,8 +158,8 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
     }
 
     /// <summary>
-    /// Ein gekaufter Artikel erscheint im dedizierten Sohn-Bestand (<c>GET me/shop/inventory</c>) –
-    /// dem Gegenstück zum Aktivierungs-POST; die Gesamtzahl steht im Header <c>X-Total-Count</c>.
+    /// A purchased article appears in the child's dedicated inventory (<c>GET me/shop/inventory</c>) –
+    /// the counterpart to the activation POST. Total count in the <c>X-Total-Count</c> header.
     /// </summary>
     [Fact]
     public async Task GekaufterArtikel_ErscheintImEigenenBestand()
@@ -1211,12 +1211,12 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
     // ─── Bezahltes Inventar überlebt Katalogpflege ────────────────────────────
 
     /// <summary>
-    /// <b>Bezahlte Einheiten sind Geld – Geld überlebt Katalogpflege.</b> Der Artikel kaskadierte bis in
-    /// das <c>ChildInventory</c> und löschte damit gekaufte, noch nicht verbrauchte Einheiten; die
-    /// Kaufbelege blieben per <c>SetNull</c> daneben stehen. Der Vater bekam die Münzen nicht zurück, das
-    /// Kind verlor die Ware, und die einzige Spur war ein Beleg ohne Gegenwert. Dass der XML-Kommentar am
-    /// Löschendpunkt „Kaufhistorie bleibt als Snapshot erhalten" versprach, machte es nicht besser: die
-    /// Historie blieb, der Bestand nicht.
+    /// <b>Paid units are money – money survives catalog maintenance.</b> The article cascaded down into
+    /// the <c>ChildInventory</c> and thereby deleted purchased, not-yet-consumed units; the purchase
+    /// receipts were left standing next to it via <c>SetNull</c>. The father did not get the coins back,
+    /// the child lost the goods, and the only trace was a receipt with no value behind it. The fact that
+    /// the XML comment on the delete endpoint promised "purchase history is retained as a snapshot" did
+    /// not make it better: the history remained, the inventory did not.
     /// </summary>
     [Fact]
     public async Task ArtikelLoeschen_LaesstBezahltesInventarStehen()

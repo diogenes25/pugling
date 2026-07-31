@@ -6,20 +6,20 @@ using Microsoft.AspNetCore.Http;
 namespace Pugling.Api.Tests;
 
 /// <summary>
-/// Baut aus einem Vertrags-DTO eine <b>gerade eben gültige</b> JSON-Nutzlast – der Zulieferer des
-/// Ownership-Matrix-Tests (<see cref="OwnershipMatrixTests"/>).
+/// Builds a <b>just barely valid</b> JSON payload from a contract DTO – the supplier for the
+/// ownership matrix test (<see cref="OwnershipMatrixTests"/>).
 /// <para>
-/// Warum das nötig ist: <c>ChildOwnershipFilter</c>/<c>PlanOwnershipFilter</c> sind
-/// <c>IAsyncActionFilter</c> und laufen damit <b>nach</b> der Modellbindung – und nach dem
-/// <c>ModelStateInvalidFilter</c> (Order −2000). Ein <c>POST</c> mit leerem Rumpf bekäme also
-/// <b>400</b>, bevor die Eigentumsprüfung überhaupt dran ist, und die Matrix könnte für schreibende
-/// Actions nichts aussagen. Erst ein bindbarer Rumpf macht den 403/404 zur Aussage.
+/// Why this is needed: <c>ChildOwnershipFilter</c>/<c>PlanOwnershipFilter</c> are
+/// <c>IAsyncActionFilter</c> and thus run <b>after</b> model binding – and after the
+/// <c>ModelStateInvalidFilter</c> (order −2000). A <c>POST</c> with an empty body would therefore get
+/// <b>400</b> before the ownership check even runs, and the matrix could not say anything about
+/// write actions. Only a bindable body turns the 403/404 into a meaningful result.
 /// </para>
 /// <para>
-/// Gefüllt werden nur die <b>Pflichtfelder</b>: optionale (nullable oder mit Vorgabewert) bleiben weg –
-/// das hält die Nutzlast klein und umgeht Validierungsattribute auf Feldern, die niemand braucht.
-/// Fachlich sinnvoll ist die Nutzlast nicht und muss es nicht sein: sie darf nur nicht an der Bindung
-/// scheitern.
+/// Only the <b>required fields</b> are filled: optional ones (nullable or with a default value) are
+/// left out – that keeps the payload small and sidesteps validation attributes on fields nobody needs.
+/// The payload does not need to make business sense and does not have to: it just must not fail
+/// binding.
 /// </para>
 /// </summary>
 internal static class SampleJson
@@ -27,7 +27,7 @@ internal static class SampleJson
     private static readonly NullabilityInfoContext Nullability = new();
 
     /// <summary>
-    /// Nutzlast für einen DTO-Typ; <c>null</c>, wenn sich keine bauen lässt (z. B. Datei-Uploads).
+    /// Payload for a DTO type; <c>null</c> if none can be built (e.g. file uploads).
     /// </summary>
     public static JsonNode? ForType(Type type) => Build(type, depth: 0);
 
@@ -75,8 +75,8 @@ internal static class SampleJson
     }
 
     /// <summary>
-    /// Darf das Feld fehlen? Ein Vorgabewert oder eine nullable Annotation heißt „nicht angegeben" – und
-    /// genau das ist in diesem Projekt die PATCH-Semantik, also gehört es weggelassen.
+    /// Is the field allowed to be missing? A default value or a nullable annotation means "not specified" –
+    /// and that is exactly the PATCH semantics in this project, so it belongs left out.
     /// </summary>
     private static bool IsOptional(ParameterInfo p) =>
         p.HasDefaultValue

@@ -1,6 +1,6 @@
 namespace Pugling.Api.OpenApi;
 
-/// <summary>Verifiziertes Request/Response-Beispiel für die OpenAPI-Dokumentation.</summary>
+/// <summary>Verified request/response example for the OpenAPI documentation.</summary>
 public sealed record OpenApiExampleEntry(
     string Key,
     string ResourceGroup,

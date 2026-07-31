@@ -6,8 +6,8 @@ using Pugling.Api.Models;
 namespace Pugling.Api.Tests;
 
 /// <summary>
-/// Positions-CRUD (Etappe 5): der Vater stellt einen Lehrplan aus globalen Katalog-Übungen zusammen –
-/// Position anlegen, abrufen, spielen, löschen (mit Verlaufs-Schutz).
+/// Position CRUD (stage 5): the father assembles a study plan from global catalog exercises –
+/// creating, retrieving, playing, deleting a position (with history protection).
 /// </summary>
 public class PlanPositionCrudTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWebAppFactory>
 {

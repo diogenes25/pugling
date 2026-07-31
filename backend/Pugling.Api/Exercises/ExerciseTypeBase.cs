@@ -4,10 +4,10 @@ using Pugling.Api.Models;
 namespace Pugling.Api.Exercises;
 
 /// <summary>
-/// Bequeme Basis für Übungstypen: liefert für jede Facette einen sinnvollen Default (kein Check, immer getippt,
-/// keine Auswahl/Facetten/Stufen, keine Capabilities, keine Store-Auflösung), sodass eine konkrete Typklasse nur
-/// überschreibt, was sie wirklich braucht – analog zu den <c>virtual</c>-Hooks im <see cref="ExerciseControllerBase{TConfig}"/>.
-/// <see cref="Key"/>, <see cref="Manifest"/> und <see cref="ItemsOf"/> sind bewusst abstrakt (jeder Typ hat sie).
+/// Convenient base for exercise types: provides a sensible default for every facet (no check, always typed,
+/// no choices/facets/stages, no capabilities, no store resolution), so a concrete type class only
+/// overrides what it actually needs – analogous to the <c>virtual</c> hooks in <see cref="ExerciseControllerBase{TConfig}"/>.
+/// <see cref="Key"/>, <see cref="Manifest"/>, and <see cref="ItemsOf"/> are deliberately abstract (every type has them).
 /// </summary>
 public abstract class ExerciseTypeBase : IExerciseType
 {
@@ -54,11 +54,11 @@ public abstract class ExerciseTypeBase : IExerciseType
     /// <inheritdoc/>
     public virtual StoreResolution StoreResolution => StoreResolution.None;
 
-    /// <summary>Deserialisiert die typisierte Config (nie null; fällt auf Default zurück).</summary>
+    /// <summary>Deserializes the typed config (never null; falls back to default).</summary>
     protected static TConfig Deserialize<TConfig>(string configJson) where TConfig : new() =>
         (string.IsNullOrWhiteSpace(configJson) ? default : JsonSerializer.Deserialize<TConfig>(configJson, JsonOptions)) ?? new();
 
-    /// <summary>Erwartete Lösung plus optionale Alternativen als roher Vergleichsvorrat (Normalisierung macht später der Grader).</summary>
+    /// <summary>Expected solution plus optional alternatives as a raw comparison pool (normalization is done later by the grader).</summary>
     protected static IReadOnlyList<string> Accepted(string answer, IEnumerable<string>? alternatives = null) =>
         alternatives is null ? [answer] : [answer, .. alternatives];
 }

@@ -8,7 +8,7 @@ using Pugling.Api.Models;
 
 namespace Pugling.Api.Controllers.Supervisor;
 
-/// <summary>Stundenplan eines Kindes (Fach × Wochentag) – vom Vater gepflegt, steuert Wiederholung vs. neuer Stoff.</summary>
+/// <summary>Timetable of a child (subject × weekday) – maintained by the father, controls review vs. new material.</summary>
 [ApiController]
 [ApiVersion("1.0")]
 [Route(ApiRoutes.Supervisor + "/children/{childId:int}/timetable")]
@@ -24,7 +24,7 @@ public class TimetableController(PuglingDbContext db) : ControllerBase
     static EntryResponse Map(TimetableEntry t) =>
         new(t.Id, t.ChildId, t.SubjectId, t.Subject!.Name, t.DayOfWeek, t.TimeOfDay);
 
-    /// <summary>Stundenplan des Kindes.</summary>
+    /// <summary>Timetable of the child.</summary>
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<IEnumerable<EntryResponse>>> List(int childId, CancellationToken ct = default)
@@ -36,7 +36,7 @@ public class TimetableController(PuglingDbContext db) : ControllerBase
         return entries.Select(Map).ToList();
     }
 
-    /// <summary>Trägt ein Fach an einem Wochentag ein.</summary>
+    /// <summary>Registers a subject on a weekday.</summary>
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -55,7 +55,7 @@ public class TimetableController(PuglingDbContext db) : ControllerBase
         return CreatedAtAction(nameof(List), new { childId }, Map(entry));
     }
 
-    /// <summary>Entfernt einen Stundenplan-Eintrag.</summary>
+    /// <summary>Removes a timetable entry.</summary>
     [HttpDelete("{entryId:int}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

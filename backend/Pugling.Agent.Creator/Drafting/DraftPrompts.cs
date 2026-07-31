@@ -4,17 +4,17 @@ using Pugling.Agent.Creator.Briefing;
 namespace Pugling.Agent.Creator.Drafting;
 
 /// <summary>
-/// Die Prompt-Bausteine. Der System-Prompt trägt die Regeln, die für <b>jeden</b> Übungstyp gelten –
-/// allen voran die fachliche Kernregel: Interessen kleiden den Stoff ein, sie ersetzen ihn nie.
-/// Alles, was sich deterministisch prüfen lässt, steht zusätzlich im <see cref="DraftRules">Validator</see>;
-/// der Prompt ist die Bitte, der Validator die Zusicherung.
+/// The prompt building blocks. The system prompt carries the rules that apply to <b>every</b> exercise
+/// type - foremost the core domain rule: interests dress up the material, they never replace it.
+/// Everything that can be checked deterministically also lives in the <see cref="DraftRules">validator</see>;
+/// the prompt is the request, the validator is the guarantee.
 /// </summary>
 public static class DraftPrompts
 {
     /// <summary>
-    /// Der System-Prompt eines Auftrags: die Persona und die Didaktik des Profils <b>vor</b> den festen
-    /// Regeln. Die Reihenfolge ist die Aussage – ein Profil darf die Rolle prägen, aber keine Regel
-    /// aufweichen; deshalb steht der unveränderliche Block zuletzt und behält das letzte Wort.
+    /// The system prompt of a request: the profile's persona and didactics <b>before</b> the fixed rules.
+    /// The order makes the statement - a profile may shape the role but not soften any rule; that is why
+    /// the immutable block comes last and keeps the final word.
     /// </summary>
     public static string SystemFor(CreatorBriefing briefing)
     {
@@ -32,7 +32,7 @@ public static class DraftPrompts
         return text.ToString();
     }
 
-    /// <summary>Rollen- und Regelbeschreibung; gilt für alle Typen.</summary>
+    /// <summary>Role and rule description; applies to all types.</summary>
     public const string System = """
         Du bist der Creator der Lern-App Pugling und entwirfst Schulübungen für ein einzelnes Kind.
 
@@ -48,7 +48,7 @@ public static class DraftPrompts
         6. Keine Dubletten, keine leeren Felder. Jede Aufgabe hat genau eine eindeutige Lösung.
         """;
 
-    /// <summary>Baut den Auftragsteil: Briefing plus typ-spezifische Anweisung.</summary>
+    /// <summary>Builds the request part: briefing plus type-specific instruction.</summary>
     public static string User(CreatorBriefing briefing, GenerationRequest request, string taskInstruction)
     {
         var prompt = new StringBuilder();
@@ -65,8 +65,8 @@ public static class DraftPrompts
     }
 
     /// <summary>
-    /// Die Reparatur-Runde: der verworfene Entwurf mit den konkreten Verstößen zurück ans Modell.
-    /// Konkrete Verstöße wirken deutlich besser als ein pauschales „versuch es nochmal".
+    /// The repair round: the rejected draft with the concrete violations goes back to the model.
+    /// Concrete violations work considerably better than a blanket "try again".
     /// </summary>
     public static string Repair(IReadOnlyList<string> violations) =>
         $"""

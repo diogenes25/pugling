@@ -6,14 +6,14 @@ using Pugling.Api.Auth;
 namespace Pugling.Api.Tests;
 
 /// <summary>
-/// Macht aus vier Konventionen aus CLAUDE.md ein Tor (docs/codequalitaet-gates-plan.md, B4). Sie wurden
-/// bisher lückenlos befolgt – aber von nichts erzwungen: ein generierter Controller mit
-/// <c>return BadRequest("…")</c> kompiliert, läuft, liefert ein <c>ProblemDetails</c> ohne <c>code</c>,
-/// und kein Test bemerkt es.
+/// Turns four conventions from CLAUDE.md into a gate (docs/codequalitaet-gates-plan.md, B4). They have
+/// been followed without exception so far – but enforced by nothing: a generated controller with
+/// <c>return BadRequest("…")</c> compiles, runs, returns a <c>ProblemDetails</c> without a <c>code</c>,
+/// and no test notices.
 /// <para>
-/// Jeder Test trägt einen <b>Selbstschutz gegen falsch-grün</b>: greift die Reflexion bzw. der Quell-Scan
-/// nicht (umbenannter Namespace, verschobener Ordner, falsches Attribut), findet er nichts und bestünde
-/// inhaltsleer. Darum prüft jeder Test zusätzlich, dass er überhaupt genug gesehen hat.
+/// Every test carries a <b>self-protection against a false green</b>: if the reflection or the source
+/// scan does not engage (renamed namespace, moved folder, wrong attribute), it finds nothing and would
+/// pass with an empty check. That's why every test additionally verifies that it actually saw enough.
 /// </para>
 /// </summary>
 public class ConventionGuardTests
@@ -196,20 +196,20 @@ public class ConventionGuardTests
     }
 
     /// <summary>
-    /// Bewusste Ausnahmen von (b) – **kein** Sammelbecken, sondern Entscheidungen mit Grund. Wächst diese
-    /// Liste, gehört der Grund dazu, sonst höhlt sie das Tor aus.
+    /// Deliberate exceptions to (b) – **not** a catch-all, but decisions with a reason. If this list
+    /// grows, the reason belongs with it, otherwise it hollows out the gate.
     /// </summary>
     private static readonly HashSet<string> OwnershipExceptions = [];
 
     // ─────────────────────────────────────────────────────── Hilfsmittel
 
-    /// <summary>Die Service-Filter-Typen einer Attribut-Menge.</summary>
+    /// <summary>The service filter types of an attribute set.</summary>
     private static IEnumerable<Type> ServiceFilterTypes(IEnumerable<ServiceFilterAttribute> attributes) =>
         attributes.Select(a => a.ServiceType);
 
     private static string RouteOf(Type controller, MethodInfo action) => ApiSurface.RouteOf(controller, action);
 
-    /// <summary>Die Nutzlast hinter <c>Task&lt;ActionResult&lt;T&gt;&gt;</c> &amp; Co.; <c>null</c>, wenn untypisiert.</summary>
+    /// <summary>The payload behind <c>Task&lt;ActionResult&lt;T&gt;&gt;</c> and friends; <c>null</c> if untyped.</summary>
     private static Type? PayloadType(Type returnType)
     {
         var t = returnType;
@@ -220,7 +220,7 @@ public class ConventionGuardTests
         return null;
     }
 
-    /// <summary>Zerlegt Sammlungs-/Nullable-Hüllen bis zu den tatsächlich übertragenen Typen.</summary>
+    /// <summary>Unwraps collection/nullable wrappers down to the actually transmitted types.</summary>
     private static IEnumerable<Type> LeafTypes(Type type)
     {
         if (type.IsGenericType)
@@ -239,7 +239,7 @@ public class ConventionGuardTests
         yield return type;
     }
 
-    /// <summary>Repo-Wurzel: von <see cref="AppContext.BaseDirectory"/> aufwärts bis <c>backend</c>+<c>docs</c> bzw. <c>.git</c>.</summary>
+    /// <summary>Repo root: upward from <see cref="AppContext.BaseDirectory"/> until <c>backend</c>+<c>docs</c> or <c>.git</c>.</summary>
     private static string RepoRoot()
     {
         var dir = new DirectoryInfo(AppContext.BaseDirectory);

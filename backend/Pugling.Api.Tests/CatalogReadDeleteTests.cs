@@ -5,13 +5,13 @@ using System.Text.Json;
 namespace Pugling.Api.Tests;
 
 /// <summary>
-/// Der Lese- und Löschpfad des Creator-Katalogs: Einzelansichten, Listen und das Entfernen von
-/// Kapitel-/Kategorie-/Lückentext-/Unit-/Vokabel-Ressourcen samt ihrer Verknüpfungen.
+/// The read and delete path of the creator catalog: single views, lists, and removing chapter/category/
+/// cloze/unit/vocabulary resources along with their links.
 /// <para>
-/// Angelegt beim Schließen der Abdeckungslücke (docs/codequalitaet-gates-plan.md, C3). Das Muster dort war
-/// eindeutig: getestet war, was ein Durchstich anfasst (anlegen → spielen → auswerten); ungetestet blieb
-/// fast überall <c>Get</c> und <c>Delete</c>. Der Löschpfad ist der teuerste blinde Fleck, weil er erst
-/// auffällt, wenn Daten weg sind – oder eben nicht weggehen.
+/// Added while closing the coverage gap (docs/codequalitaet-gates-plan.md, C3). The pattern there was
+/// clear: what a walkthrough touches (create → play → evaluate) was tested; almost everywhere <c>Get</c>
+/// and <c>Delete</c> remained untested. The delete path is the most expensive blind spot, because it
+/// only becomes noticeable once data is gone – or, precisely, fails to go away.
 /// </para>
 /// </summary>
 public class CatalogReadDeleteTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWebAppFactory>

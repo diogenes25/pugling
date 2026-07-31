@@ -10,9 +10,9 @@ using Pugling.Api.Models;
 namespace Pugling.Api.Controllers.Supervisor;
 
 /// <summary>
-/// Lehrpläne = Container aus Katalog-Übungen (<see cref="PlanPosition"/>). Dieser Controller verwaltet nur
-/// den Container (Titel, Kind, Laufzeit, aktiv). Übungen/Ziele/Punkte laufen über den
-/// <see cref="PlanPositionsController"/>, Tagesmission/Verlauf über den <see cref="PlanOverviewController"/>.
+/// Study plans = containers of catalog exercises (<see cref="PlanPosition"/>). This controller only manages
+/// the container (title, child, run time, active). Exercises/goals/points run through the
+/// <see cref="PlanPositionsController"/>, daily mission/history through the <see cref="PlanOverviewController"/>.
 /// </summary>
 [ApiController]
 [ApiVersion("1.0")]
@@ -23,23 +23,23 @@ namespace Pugling.Api.Controllers.Supervisor;
 [ServiceFilter(typeof(PlanOwnershipFilter))]
 public class StudyPlansController(PuglingDbContext db, AuthAccess access) : ControllerBase
 {
-    /// <summary>In-Memory-Projektion für frisch erstellte Container (Positionen noch leer).</summary>
+    /// <summary>In-memory projection for freshly created containers (positions still empty).</summary>
     private static PlanResponse Map(StudyPlan p, DateOnly today) =>
         new(p.Id, p.ChildId, p.Title, p.SubjectId, p.StartDate, p.EndDate, p.Active, p.Positions.Count, p.Description)
         {
             IsPlayable = p.Active && p.StartDate <= today && p.EndDate >= today,
         };
 
-    /// <summary>DB-Projektion inkl. Positions-Anzahl: EF übersetzt <c>p.Positions.Count</c> in eine COUNT-Subquery,
-    /// ohne die Positions-Zeilen zu materialisieren. <paramref name="today"/> fließt als Parameter in die
-    /// Spielbarkeits-Berechnung ein (dieselbe Laufzeit-Bedingung wie die Sohn-Sichtbarkeit).</summary>
+    /// <summary>DB projection incl. position count: EF translates <c>p.Positions.Count</c> into a COUNT subquery,
+    /// without materializing the position rows. <paramref name="today"/> flows in as a parameter for the
+    /// playability computation (the same run-time condition as the child's visibility).</summary>
     internal static Expression<Func<StudyPlan, PlanResponse>> ToResponse(DateOnly today) =>
         p => new PlanResponse(p.Id, p.ChildId, p.Title, p.SubjectId, p.StartDate, p.EndDate, p.Active, p.Positions.Count, p.Description)
         {
             IsPlayable = p.Active && p.StartDate <= today && p.EndDate >= today,
         };
 
-    /// <summary>Lehrpläne auflisten. Sohn sieht nur eigene, Vater nur die seiner Kinder.</summary>
+    /// <summary>List study plans. Child sees only its own, father only those of his children.</summary>
     [HttpGet]
     public async Task<IEnumerable<PlanResponse>> List([FromQuery] int? childId = null, CancellationToken ct = default)
     {
@@ -60,7 +60,7 @@ public class StudyPlansController(PuglingDbContext db, AuthAccess access) : Cont
         return await scoped.OrderByDescending(p => p.CreatedAt).Select(ToResponse(today)).ToListAsync(ct);
     }
 
-    /// <summary>Ein Lehrplan (nur eigener).</summary>
+    /// <summary>A study plan (own only).</summary>
     [HttpGet("{planId:int}")]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -71,7 +71,7 @@ public class StudyPlansController(PuglingDbContext db, AuthAccess access) : Cont
         return plan is null ? NotFound() : plan;
     }
 
-    /// <summary>Erstellt einen leeren Lehrplan-Container (nur Vater, nur für eigene Kinder).</summary>
+    /// <summary>Creates an empty study plan container (father only, own children only).</summary>
     [HttpPost]
     [Authorize(Roles = Roles.Supervisor)]
     [ProducesResponseType(StatusCodes.Status201Created)]
@@ -105,8 +105,8 @@ public class StudyPlansController(PuglingDbContext db, AuthAccess access) : Cont
     }
 
     /// <summary>
-    /// Erzwingt „höchstens ein aktiver Plan je Kind": deaktiviert alle anderen Pläne des Kindes.
-    /// So kann der Sohn nicht zwischen mehreren aktiven Plänen den leichtesten wählen (Anti-Schummel).
+    /// Enforces "at most one active plan per child": deactivates all other plans of the child.
+    /// This way the child cannot choose the easiest among several active plans (anti-cheating).
     /// </summary>
     // Kein Vorgabewert für `ct`: er ließe die Aufrufstelle korrekt aussehen, während der Abbruch des
     // Clients verpufft.
@@ -114,7 +114,7 @@ public class StudyPlansController(PuglingDbContext db, AuthAccess access) : Cont
         db.StudyPlans.Where(p => p.ChildId == childId && p.Id != keepPlanId && p.Active)
             .ExecuteUpdateAsync(s => s.SetProperty(p => p.Active, false), ct);
 
-    /// <summary>Ändert den Lehrplan-Container (partiell, nur Vater/eigener). <see cref="UpdatePlanDto.ChildId"/> weist den Plan einem anderen eigenen Kind zu.</summary>
+    /// <summary>Changes the study plan container (partial, father/own only). <see cref="UpdatePlanDto.ChildId"/> assigns the plan to another own child.</summary>
     [HttpPatch("{planId:int}")]
     [Authorize(Roles = Roles.Supervisor)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -155,9 +155,9 @@ public class StudyPlansController(PuglingDbContext db, AuthAccess access) : Cont
     }
 
     /// <summary>
-    /// Löscht einen ganzen Lehrplan (nur Vater/eigener). Entfernt per Kaskade seine Positionen inkl.
-    /// Fortschritt, Übungssitzungen, Testversuche und Ziel-Belohnungen. Die referenzierten Katalog-Übungen
-    /// bleiben unberührt (sie gehören dem kindneutralen Katalog, nicht dem Plan).
+    /// Deletes an entire study plan (father/own only). Removes its positions via cascade incl.
+    /// progress, practice sessions, test attempts and goal rewards. The referenced catalog exercises
+    /// remain untouched (they belong to the child-neutral catalog, not the plan).
     /// </summary>
     [HttpDelete("{planId:int}")]
     [Authorize(Roles = Roles.Supervisor)]

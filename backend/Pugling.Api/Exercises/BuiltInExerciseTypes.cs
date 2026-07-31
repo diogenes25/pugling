@@ -7,7 +7,7 @@ namespace Pugling.Api.Exercises;
 // nur Key/Manifest/ItemsOf (+ ggf. Check/Stufen) tragen. Vokabeln stehen wegen ihres Umfangs separat
 // (VocabularyExerciseType). Geteilte Prüf-Primitive liegen in AnswerChecking (unten).
 
-/// <summary>Leseverständnis: Text + Verständnisfragen (reine Inhaltsübung, kein automatischer Check).</summary>
+/// <summary>Reading comprehension: text + comprehension questions (pure content exercise, no automatic check).</summary>
 public sealed class ReadingExerciseType : ExerciseTypeBase
 {
     /// <inheritdoc/>
@@ -21,7 +21,7 @@ public sealed class ReadingExerciseType : ExerciseTypeBase
         AnswerChecking.FromQuestions(Deserialize<ReadingConfig>(configJson).Questions);
 }
 
-/// <summary>Hörverständnis: Audioquelle + Verständnisfragen.</summary>
+/// <summary>Listening comprehension: audio source + comprehension questions.</summary>
 public sealed class ListeningExerciseType : ExerciseTypeBase
 {
     /// <inheritdoc/>
@@ -35,7 +35,7 @@ public sealed class ListeningExerciseType : ExerciseTypeBase
         AnswerChecking.FromQuestions(Deserialize<ListeningConfig>(configJson).Questions);
 }
 
-/// <summary>Aufsatz: freier Text, kein Item-für-Item-Abgleich – daher keine prüfbaren Inhalte.</summary>
+/// <summary>Essay: free text, no item-by-item comparison – hence no checkable content.</summary>
 public sealed class EssayExerciseType : ExerciseTypeBase
 {
     /// <inheritdoc/>
@@ -48,7 +48,7 @@ public sealed class EssayExerciseType : ExerciseTypeBase
     public override IReadOnlyList<ContentItem> ItemsOf(string configJson) => [];
 }
 
-/// <summary>Grammatik: Umformungs-/Regelaufgaben.</summary>
+/// <summary>Grammar: transformation/rule tasks.</summary>
 public sealed class GrammarExerciseType : ExerciseTypeBase
 {
     /// <inheritdoc/>
@@ -65,7 +65,7 @@ public sealed class GrammarExerciseType : ExerciseTypeBase
     }
 }
 
-/// <summary>Übersetzung: Sätze mit erwarteter Übersetzung (+ Alternativen).</summary>
+/// <summary>Translation: sentences with an expected translation (+ alternatives).</summary>
 public sealed class TranslationExerciseType : ExerciseTypeBase
 {
     /// <inheritdoc/>
@@ -82,7 +82,7 @@ public sealed class TranslationExerciseType : ExerciseTypeBase
     }
 }
 
-/// <summary>Birkenbihl: Wort-für-Wort-Dekodierung; reine Inhaltsübung ohne aktives Abfragen.</summary>
+/// <summary>Birkenbihl: word-for-word decoding; pure content exercise with no active querying.</summary>
 public sealed class BirkenbihlExerciseType : ExerciseTypeBase
 {
     /// <inheritdoc/>
@@ -100,7 +100,7 @@ public sealed class BirkenbihlExerciseType : ExerciseTypeBase
     }
 }
 
-/// <summary>Lückentext: ein Item je Lücke; Store-gestützt (Lösung kann aus dem Vokabelspeicher kommen).</summary>
+/// <summary>Cloze: one item per gap; store-backed (the solution can come from the vocabulary store).</summary>
 public sealed class ClozeExerciseType : ExerciseTypeBase
 {
     /// <inheritdoc/>
@@ -136,7 +136,7 @@ public sealed class ClozeExerciseType : ExerciseTypeBase
     ];
 }
 
-/// <summary>Zuordnung: Paare links ↔ rechts. StudyPlan-Test und zusätzlich ein Katalog-Direktcheck.</summary>
+/// <summary>Matching: pairs left ↔ right. Study-plan test and additionally a direct catalog check.</summary>
 public sealed class MatchingExerciseType : ExerciseTypeBase
 {
     /// <inheritdoc/>
@@ -173,7 +173,7 @@ public sealed class MatchingExerciseType : ExerciseTypeBase
     }
 }
 
-/// <summary>Feste Rechenaufgaben: numerischer Vergleich je Aufgabe im Rahmen der Toleranz.</summary>
+/// <summary>Fixed arithmetic problems: numeric comparison per problem within the tolerance.</summary>
 public sealed class ArithmeticExerciseType : ExerciseTypeBase
 {
     /// <inheritdoc/>
@@ -210,8 +210,8 @@ public sealed class ArithmeticExerciseType : ExerciseTypeBase
 }
 
 /// <summary>
-/// Zufalls-Rechenaufgaben: Regeln sind gespeichert, der Satz wird pro Abruf aus einem festen Seed erzeugt
-/// (<see cref="IGeneratingExerciseType"/>) und aus demselben Seed serverseitig erneut geprüft.
+/// Random arithmetic problems: rules are stored, the problem set is generated per request from a fixed seed
+/// (<see cref="IGeneratingExerciseType"/>) and re-checked server-side from the same seed.
 /// </summary>
 public sealed class ArithmeticDrillExerciseType(ArithmeticProblemGenerator generator)
     : ExerciseTypeBase, IGeneratingExerciseType
@@ -227,7 +227,7 @@ public sealed class ArithmeticDrillExerciseType(ArithmeticProblemGenerator gener
     /// <inheritdoc/>
     public override IReadOnlyList<ContentItem> ItemsOf(string configJson) => [];
 
-    /// <summary>Prüft die Config-Grenzen; Fehlermeldung oder <c>null</c>, wenn alles passt.</summary>
+    /// <summary>Checks the config bounds; error message or <c>null</c> if everything is fine.</summary>
     public static string? Validate(ArithmeticDrillConfig c) =>
         c.Operations.Count == 0 ? "At least one operation type is required."
         : c.MaxOperand < c.MinOperand ? "MaxOperand must be ≥ MinOperand."
@@ -243,7 +243,7 @@ public sealed class ArithmeticDrillExerciseType(ArithmeticProblemGenerator gener
         return (effectiveSeed, generator.Generate(config, new Random(effectiveSeed)));
     }
 
-    /// <summary>Erzeugt den Satz aus demselben Seed erneut und bewertet ihn. <c>null</c>, wenn kein Seed vorliegt (→ 400 beim Aufrufer).</summary>
+    /// <summary>Regenerates the set from the same seed and grades it. <c>null</c> if no seed is present (→ 400 for the caller).</summary>
     public override CheckResult? Check(string configJson, IReadOnlyList<GivenAnswer> answers, int? seed)
     {
         var config = Deserialize<ArithmeticDrillConfig>(configJson);
@@ -252,7 +252,7 @@ public sealed class ArithmeticDrillExerciseType(ArithmeticProblemGenerator gener
     }
 }
 
-/// <summary>Auswendig zu lernende Liste (z. B. die Bundesländer): als Menge, oder positionsgenau bei <c>Ordered</c>.</summary>
+/// <summary>List to memorize (e.g. the federal states): as a set, or position-exact with <c>Ordered</c>.</summary>
 public sealed class ListExerciseType : ExerciseTypeBase
 {
     /// <inheritdoc/>
@@ -299,8 +299,8 @@ public sealed class ListExerciseType : ExerciseTypeBase
 }
 
 /// <summary>
-/// Geteilte, zustandslose Prüf-Primitive der Katalog-Checks (früher <c>ExerciseAnswerChecker</c>). Textvergleiche
-/// laufen über <see cref="StageMechanics.Normalize"/>, damit sie sich wie im Vokabeltest verhalten.
+/// Shared, stateless check primitives for the catalog checks (formerly <c>ExerciseAnswerChecker</c>). Text
+/// comparisons run through <see cref="StageMechanics.Normalize"/>, so they behave like in the vocabulary test.
 /// </summary>
 internal static class AnswerChecking
 {
@@ -324,7 +324,7 @@ internal static class AnswerChecking
     public static bool TextMatch(string? given, string expected) =>
         StageMechanics.Normalize(given) == StageMechanics.Normalize(expected);
 
-    /// <summary>Trifft die (rohe oder normalisierte) Antwort den Eintrag oder eine seiner Alternativen?</summary>
+    /// <summary>Does the (raw or normalized) answer match the entry or one of its alternatives?</summary>
     public static bool EntryMatches(ListEntry entry, string? given)
     {
         var value = StageMechanics.Normalize(given);
@@ -333,7 +333,7 @@ internal static class AnswerChecking
         return entry.Alternatives?.Any(alt => value == StageMechanics.Normalize(alt)) ?? false;
     }
 
-    /// <summary>Zufalls-Rechenaufgaben: ganzzahlige Ergebnisse exakt, gerundete mit kleiner Toleranz.</summary>
+    /// <summary>Random arithmetic problems: integer results exact, rounded ones with small tolerance.</summary>
     public static CheckResult CheckGenerated(IReadOnlyList<GeneratedProblem> problems, IReadOnlyList<GivenAnswer> answers)
     {
         var given = ByIndex(answers);

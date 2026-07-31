@@ -9,13 +9,13 @@ using Pugling.Api.Models;
 namespace Pugling.Api.Controllers.Creator;
 
 /// <summary>
-/// Testmodus („Ausprobieren"): Der Vater/Lehrer spielt eine einzelne Katalog-Übung selbst durch, genau wie sie
-/// das Kind im Abschlusstest erlebt – aber <b>nebenwirkungsfrei</b> (keine Punkte, kein Leitner-Fortschritt, kein
-/// <c>TestAttempt</c>, keine Gamification, kein Lehrplan/Kind nötig). So kann er eine frisch erstellte oder
-/// ausgewählte Übung verifizieren und sich mit ihr vertraut machen, ohne aufs Feedback des Kindes zu warten.
+/// Test mode ("try it out"): the adult/teacher plays through a single catalog exercise themselves, exactly as
+/// the child experiences it in the final test – but <b>side-effect-free</b> (no points, no Leitner progress, no
+/// <c>TestAttempt</c>, no gamification, no study plan/child required). This lets them verify a freshly created or
+/// selected exercise and get familiar with it, without waiting for the child's feedback.
 /// <para>
-/// Kein Ownership-Filter: konsistent mit dem global lesbaren Katalog (<see cref="ExerciseCatalogController"/>) –
-/// der Vater soll auch übernommene/fremde Übungen testen können. Beide Endpunkte sind seiteneffektfrei.
+/// No ownership filter: consistent with the globally readable catalog (<see cref="ExerciseCatalogController"/>) –
+/// the adult should be able to test adopted/foreign exercises too. Both endpoints are free of side effects.
 /// </para>
 /// </summary>
 [ApiController]
@@ -27,10 +27,10 @@ namespace Pugling.Api.Controllers.Creator;
 public class ExercisePreviewController(PuglingDbContext db, ExercisePreviewService preview, ExerciseTypeRegistry types) : ControllerBase
 {
     /// <summary>
-    /// Warum es nichts zu spielen gibt – und das ist der Unterschied, der dem Autor die Arbeit spart:
-    /// Bei einem Aufsatz ist „keine prüfbaren Aufgaben" die <b>Eigenschaft des Typs</b>, bei einer
-    /// Vokabelübung ohne Items ein <b>unfertiger Datenstand</b>. Vorher trugen beide Fälle dieselbe Meldung,
-    /// und ein leeres „Ausprobieren" sah aus wie ein Fehler der App statt wie eine Übung ohne Wörter.
+    /// Why there is nothing to play – and this is the distinction that saves the author work:
+    /// for an essay, "no checkable tasks" is a <b>property of the type</b>, for a vocabulary exercise
+    /// without items it is an <b>unfinished data state</b>. Both cases used to carry the same message,
+    /// and an empty "try it out" looked like a bug in the app instead of an exercise without words.
     /// </summary>
     private async Task<ObjectResult> NoContentProblemAsync(Exercise exercise, CancellationToken ct)
     {
@@ -42,7 +42,7 @@ public class ExercisePreviewController(PuglingDbContext db, ExercisePreviewServi
     }
 
     /// <summary>
-    /// Liefert die spielbaren Aufgaben der Übung (ohne Lösung, wenn getippt wird), damit der Vater sie durchspielen kann.
+    /// Returns the playable tasks of the exercise (without the solution, when typed), so the adult can play it through.
     /// </summary>
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -59,8 +59,8 @@ public class ExercisePreviewController(PuglingDbContext db, ExercisePreviewServi
     }
 
     /// <summary>
-    /// Bewertet die Antworten wie im echten Test (server-autoritativ), aber ohne jede Persistenz oder Punktevergabe.
-    /// Die Stufe muss dieselbe sein wie beim Laden (<see cref="Get"/>), damit „getippt" nicht auseinanderdriftet.
+    /// Evaluates the answers like in the real test (server-authoritative), but without any persistence or scoring.
+    /// The stage must be the same as when loading (<see cref="Get"/>), so that "typed" does not drift apart.
     /// </summary>
     [HttpPost("check")]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]

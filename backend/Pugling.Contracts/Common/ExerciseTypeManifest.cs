@@ -1,44 +1,44 @@
 namespace Pugling.Contracts;
 
-/// <summary>Eine im Testmodus umschaltbare Abfrageform (Stufenwert + Anzeigename).</summary>
+/// <summary>A query form that can be switched in test mode (stage value + display label).</summary>
 public record StageOption(int Value, string Label);
 
 /// <summary>
-/// Wie eine Übung dieses Typs primär geprüft/gespielt wird. Beschreibt die tatsächlich vorhandene
-/// API-Oberfläche – kein Wunschbild. Kommt eine Prüfung neu hinzu, wandert der Typ auf den passenden
-/// Modus (und die <see cref="ExerciseTypeManifest.SchemaVersion"/> im Manifest wird erhöht).
+/// How an exercise of this type is primarily checked/played. Describes the API surface that
+/// actually exists – not a wish list. When a new check is added, the type moves to the matching
+/// mode (and the <see cref="ExerciseTypeManifest.SchemaVersion"/> in the manifest is incremented).
 /// </summary>
 public enum ExerciseCheckMode
 {
-    /// <summary>Keine automatische Prüfung – reine Inhalts-/Leseübung (z. B. Birkenbihl) oder (noch) nicht maschinell bewertbar (z. B. Aufsatz).</summary>
+    /// <summary>No automatic check – a pure content/reading exercise (e.g. Birkenbihl) or one that cannot (yet) be machine-graded (e.g. essay).</summary>
     None = 0,
 
-    /// <summary>Server-autoritativer, mehrstufiger Abschlusstest über eine Study-Plan-Position: <c>study-plans/{planId}/positions/{positionId}/{PlayRoute}</c>.</summary>
+    /// <summary>Server-authoritative, multi-stage final test on a study plan position: <c>study-plans/{planId}/positions/{positionId}/{PlayRoute}</c>.</summary>
     StudyPlanTest = 1,
 
-    /// <summary>Zustandsloser Direkt-Check am Katalog-Endpunkt: <c>POST .../{AuthoringRoute}/{id}/check</c>.</summary>
+    /// <summary>Stateless direct check at the catalog endpoint: <c>POST .../{AuthoringRoute}/{id}/check</c>.</summary>
     CatalogCheck = 2,
 
-    /// <summary>Erst Aufgaben erzeugen (<c>POST .../{AuthoringRoute}/{id}/generate</c>), dann seed-gebunden prüfen (<c>.../check</c>).</summary>
+    /// <summary>First generate tasks (<c>POST .../{AuthoringRoute}/{id}/generate</c>), then check against the bound seed (<c>.../check</c>).</summary>
     CatalogGenerateCheck = 3,
 }
 
 /// <summary>
-/// Selbstbeschreibung eines Übungstyps: die Brücke zwischen Autoren-Katalog (<c>IExerciseType</c>),
-/// typischer Lernfamilie (<see cref="LearningMethod"/>), Play-Route und Frontend-Renderer. Das Frontend
-/// liest die Manifest-Liste einmal und verdrahtet Routing, Prüfung und Darstellung generisch; die
-/// eigentliche Render-Komponente bleibt handgebaut pro <see cref="Renderer"/> (die Play-Sicht deckt
-/// je Leitner-Stufe unterschiedlich viel auf – das lässt sich nicht generisch aus JSON erzeugen).
+/// Self-description of an exercise type: the bridge between the authoring catalog (<c>IExerciseType</c>),
+/// typical learning family (<see cref="LearningMethod"/>), play route, and frontend renderer. The frontend
+/// reads the manifest list once and wires up routing, checking, and display generically; the
+/// actual render component remains hand-built per <see cref="Renderer"/> (the play view reveals
+/// a different amount depending on the Leitner box – that cannot be generated generically from JSON).
 /// </summary>
-/// <param name="Type">Übungstyp-Schlüssel (Autoren-Katalog, = <c>IExerciseType.Key</c> und Wert von <c>Exercise.Type</c>).</param>
-/// <param name="Label">Deutscher Anzeigename.</param>
-/// <param name="Renderer">Id der Frontend-Komponente; mehrere Typen dürfen sich einen Renderer teilen (z. B. Arithmetic + ArithmeticDrill → <c>arithmetic</c>).</param>
-/// <param name="SchemaVersion">Version des Typ-Schemas. Bewusst NUR hier (nicht an den Entities) – Verzweigungspunkt für spätere inkompatible Änderungen.</param>
-/// <param name="AuthoringRoute">Routen-Segment der Vater-CRUD unter <c>.../creator/subjects/{subjectId}/chapters/{chapterId}/{AuthoringRoute}</c>.</param>
-/// <param name="CheckMode">Primäre Prüf-/Spieloberfläche.</param>
-/// <param name="PlayRoute">Nur bei <see cref="ExerciseCheckMode.StudyPlanTest"/>: Segment unter <c>study-plans/{planId}/positions/{positionId}/{PlayRoute}</c>; sonst <c>null</c>.</param>
-/// <param name="Method">Nur bei <see cref="ExerciseCheckMode.StudyPlanTest"/>: Lernfamilie für Renderer/Kompatibilität; sonst <c>null</c>.</param>
-/// <param name="Capabilities">Typ-Fähigkeiten, auf die ein Renderer reagieren kann (z. B. <c>wordBank</c>, <c>audio</c>, <c>letterHints</c>).</param>
+/// <param name="Type">Exercise type key (authoring catalog, = <c>IExerciseType.Key</c> and the value of <c>Exercise.Type</c>).</param>
+/// <param name="Label">German display name.</param>
+/// <param name="Renderer">Id of the frontend component; multiple types may share one renderer (e.g. Arithmetic + ArithmeticDrill → <c>arithmetic</c>).</param>
+/// <param name="SchemaVersion">Version of the type schema. Deliberately ONLY here (not on the entities) – branch point for later incompatible changes.</param>
+/// <param name="AuthoringRoute">Route segment of the creator's CRUD under <c>.../creator/subjects/{subjectId}/chapters/{chapterId}/{AuthoringRoute}</c>.</param>
+/// <param name="CheckMode">Primary check/play surface.</param>
+/// <param name="PlayRoute">Only for <see cref="ExerciseCheckMode.StudyPlanTest"/>: segment under <c>study-plans/{planId}/positions/{positionId}/{PlayRoute}</c>; otherwise <c>null</c>.</param>
+/// <param name="Method">Only for <see cref="ExerciseCheckMode.StudyPlanTest"/>: learning family for renderer/compatibility; otherwise <c>null</c>.</param>
+/// <param name="Capabilities">Type capabilities that a renderer can react to (e.g. <c>wordBank</c>, <c>audio</c>, <c>letterHints</c>).</param>
 public record ExerciseTypeManifest(
     string Type,
     string Label,

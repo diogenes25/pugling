@@ -11,8 +11,8 @@ using Pugling.Api.Models;
 namespace Pugling.Api.Tests;
 
 /// <summary>
-/// Identitäts-Ebene (Phase 2): ein Konto trägt mehrere Rollen; Login über Vater/Sohn und über die Konto-Id;
-/// das Ensure/Backfill ist idempotent (kein zweites Konto bei erneutem Login).
+/// Identity layer (phase 2): one account carries multiple roles; login via father/child and via the
+/// account id; the ensure/backfill is idempotent (no second account on repeated login).
 /// </summary>
 public class IdentityAccountTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWebAppFactory>
 {

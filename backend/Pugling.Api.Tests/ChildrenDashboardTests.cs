@@ -5,8 +5,8 @@ using Pugling.Api.Models;
 namespace Pugling.Api.Tests;
 
 /// <summary>
-/// Kindübergreifendes Tages-Dashboard des Vaters: zeigt je Kind, ob das Tagessoll offen oder erledigt ist,
-/// und aktualisiert sich, sobald das Kind seinen Positions-Test besteht.
+/// The father's cross-child daily dashboard: shows for each child whether the daily quota is open or done,
+/// and updates as soon as the child passes their position test.
 /// </summary>
 public class ChildrenDashboardTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWebAppFactory>
 {

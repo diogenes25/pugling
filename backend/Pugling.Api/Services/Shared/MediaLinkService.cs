@@ -6,26 +6,26 @@ using Pugling.Api.Models;
 namespace Pugling.Api.Services.Shared;
 
 /// <summary>
-/// Die geteilte Mechanik der Bild-Zuordnung. Drei Träger (Vokabel, Übungs-Item, Übung) verhalten sich
-/// identisch – auflösen, auf Dublette prüfen, anlegen, listen –, unterscheiden sich aber in Route und
-/// Rechte-Prüfung. Ohne diese Stelle stünde derselbe Ablauf dreimal in zwei Controllern.
+/// The shared mechanics of image linking. Three carriers (vocabulary, exercise item, exercise) behave
+/// identically – resolve, check for duplicate, create, list – but differ in route and permission
+/// check. Without this place, the same flow would sit three times across two controllers.
 /// </summary>
 public class MediaLinkService(PuglingDbContext db)
 {
-    /// <summary>Welcher Träger gemeint ist; bestimmt die zu setzende FK-Spalte.</summary>
+    /// <summary>Which carrier is meant; determines the FK column to set.</summary>
     public enum Carrier
     {
-        /// <summary>Eine Vokabel im Store.</summary>
+        /// <summary>A vocabulary in the store.</summary>
         Vocabulary,
-        /// <summary>Ein einzelnes Vokabel-Item einer Übung.</summary>
+        /// <summary>A single vocabulary item of an exercise.</summary>
         ExerciseItem,
-        /// <summary>Eine ganze Übung.</summary>
+        /// <summary>An entire exercise.</summary>
         Exercise,
     }
 
     /// <summary>
-    /// Legt eine Zuordnung an. Liefert entweder den fertigen Link oder einen Fehler-Code, den der
-    /// Controller unverändert als <c>ProblemDetails</c> ausgibt (die Ebene kennt kein HTTP).
+    /// Creates a link. Returns either the finished link or an error code that the
+    /// controller emits unchanged as <c>ProblemDetails</c> (this layer doesn't know HTTP).
     /// </summary>
     public async Task<(MediaLink? Link, ApiError? Error, string? Detail)> LinkAsync(
         Carrier carrier, int carrierId, AddMediaLinkDto dto, CancellationToken ct = default)
@@ -52,29 +52,29 @@ public class MediaLinkService(PuglingDbContext db)
         return (link, null, null);
     }
 
-    /// <summary>Die Zuordnungen eines Trägers, bester redaktioneller Rang zuerst.</summary>
+    /// <summary>The links of a carrier, best editorial rank first.</summary>
     public async Task<IReadOnlyList<MediaLink>> ListAsync(Carrier carrier, int carrierId, CancellationToken ct = default) =>
         await WithAssetGraph(db.MediaLinks.AsNoTracking())
             .Where(Match(carrier, carrierId))
             .OrderByDescending(l => l.Weight).ThenBy(l => l.Id)
             .ToListAsync(ct);
 
-    /// <summary>Findet eine Zuordnung <b>innerhalb</b> ihres Trägers – so kann eine fremde Zuordnung nie getroffen werden.</summary>
+    /// <summary>Finds a link <b>within</b> its carrier – so a foreign link can never be matched.</summary>
     public Task<MediaLink?> FindAsync(Carrier carrier, int carrierId, int linkId, CancellationToken ct = default) =>
         db.MediaLinks.Where(Match(carrier, carrierId)).FirstOrDefaultAsync(l => l.Id == linkId, ct);
 
-    /// <summary>Löst die Zuordnung. Das Asset selbst bleibt im Store (es hängt womöglich an anderen Objekten).</summary>
+    /// <summary>Removes the link. The asset itself remains in the store (it may still be attached to other objects).</summary>
     public async Task RemoveAsync(MediaLink link, CancellationToken ct = default)
     {
         db.MediaLinks.Remove(link);
         await db.SaveChangesAsync(ct);
     }
 
-    /// <summary>Projiziert eine Zuordnung samt Asset (Varianten + Tags) in den Vertrag.</summary>
+    /// <summary>Projects a link along with its asset (variants + tags) into the contract.</summary>
     public static MediaLinkResponse Map(MediaLink link) =>
         new(link.Id, link.Weight, Controllers.Creator.MediaAssetsController.Map(link.MediaAsset!));
 
-    /// <summary>Lädt Asset samt Varianten/Tags für eine frisch angelegte Zuordnung nach.</summary>
+    /// <summary>Loads the asset along with variants/tags for a freshly created link.</summary>
     private Task<MediaAsset?> LoadAssetGraphAsync(int assetId, CancellationToken ct) =>
         db.MediaAssets.AsNoTracking()
             .Include(a => a.Variants)
@@ -85,7 +85,7 @@ public class MediaLinkService(PuglingDbContext db)
         q.Include(l => l.MediaAsset!).ThenInclude(a => a.Variants)
             .Include(l => l.MediaAsset!).ThenInclude(a => a.TagLinks).ThenInclude(t => t.InterestTag);
 
-    /// <summary>Das Trägerprädikat an einer Stelle – sonst schleicht sich irgendwo die falsche Spalte ein.</summary>
+    /// <summary>The carrier predicate in one place – otherwise the wrong column sneaks in somewhere.</summary>
     private static System.Linq.Expressions.Expression<Func<MediaLink, bool>> Match(Carrier carrier, int carrierId) =>
         carrier switch
         {
@@ -97,7 +97,7 @@ public class MediaLinkService(PuglingDbContext db)
     private Task<bool> ExistsAsync(Carrier carrier, int carrierId, int assetId, CancellationToken ct) =>
         db.MediaLinks.Where(Match(carrier, carrierId)).AnyAsync(l => l.MediaAssetId == assetId, ct);
 
-    /// <summary>Asset per Id oder – für Agenten, die über sprechende Keys arbeiten – per Key.</summary>
+    /// <summary>Asset by id, or – for agents working with descriptive keys – by key.</summary>
     private async Task<MediaAsset?> ResolveAssetAsync(AddMediaLinkDto dto, CancellationToken ct)
     {
         if (dto.MediaAssetId is { } id)

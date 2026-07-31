@@ -4,29 +4,29 @@ namespace Pugling.Contracts.Creator;
 // durch. Bewusst eigene Records neben der Kind-Spielsicht – der Testmodus deckt die Lösung immer auf.
 
 /// <summary>
-/// Eine im Testmodus vorgelegte Aufgabe. <c>Reveal</c> trägt bei Selbsteinschätzung die aufgedeckte Lösung
-/// (bei getippten Stufen <c>null</c>); <c>AnswerLength</c> ist nur bei Vokabel-Buchstabenkästchen gesetzt.
+/// A problem presented in test mode. <c>Reveal</c> carries the revealed solution for self-assessment
+/// (<c>null</c> for typed stages); <c>AnswerLength</c> is only set for vocabulary letter boxes.
 /// </summary>
 public record PreviewItem(int ItemIndex, string Prompt, int? GapIndex, string? Hint, int? AnswerLength, string? Reveal,
     IReadOnlyList<string>? Choices, string? AudioUrl);
 
 /// <summary>
-/// Der spielbare Zustand einer Übung im Testmodus: Typ, gewählte Stufe, ob getippt wird, die Aufgaben und
-/// – zum Durchprobieren – die für diesen Übungstyp umschaltbaren Abfrageformen (<see cref="Stages"/>).
+/// The playable state of an exercise in test mode: type, chosen stage, whether typed, the problems and
+/// – for trying out – the query forms toggleable for this exercise type (<see cref="Stages"/>).
 /// </summary>
 public record PreviewData(string Type, int Stage, bool Typed, IReadOnlyList<StageOption> Stages, IReadOnlyList<PreviewItem> Items);
 
-/// <summary>Eine Antwort des Vaters: getippt (<paramref name="GivenAnswer"/>) oder Selbsteinschätzung (<paramref name="WasKnown"/>).</summary>
+/// <summary>An answer from the supervisor: typed (<paramref name="GivenAnswer"/>) or self-assessment (<paramref name="WasKnown"/>).</summary>
 public record PreviewAnswer(int ItemIndex, string? GivenAnswer, bool? WasKnown);
 
-/// <summary>Einzelauswertung inklusive erwarteter Lösung (im Testmodus wird die Lösung immer offengelegt).</summary>
+/// <summary>Individual evaluation including the expected solution (in test mode the solution is always disclosed).</summary>
 public record PreviewItemOutcome(int ItemIndex, string Prompt, string Expected, string? GivenAnswer, bool WasCorrect);
 
-/// <summary>Gesamtergebnis eines Testmodus-Durchlaufs.</summary>
+/// <summary>Overall result of a test-mode run.</summary>
 public record PreviewResult(int Total, int Correct, int ScorePercent, IReadOnlyList<PreviewItemOutcome> Items);
 
 /// <summary>
-/// Body des Testmodus-Checks: die abgegebenen Antworten und – falls umgeschaltet – die Abfrageform.
-/// Heißt bewusst nicht <c>CheckDto</c>: den Namen trägt der zustandslose Katalog-Check des Übungstyps.
+/// Body of the test-mode check: the submitted answers and – if toggled – the query form.
+/// Deliberately not named <c>CheckDto</c>: that name is used by the stateless catalog check of the exercise type.
 /// </summary>
 public record PreviewCheckDto(List<PreviewAnswer> Answers, int? Stage = null);

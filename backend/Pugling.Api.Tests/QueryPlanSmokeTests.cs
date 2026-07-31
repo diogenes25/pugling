@@ -6,19 +6,19 @@ using Pugling.Api.Models;
 namespace Pugling.Api.Tests;
 
 /// <summary>
-/// Verifiziert per EXPLAIN QUERY PLAN, dass die wichtigsten Hotpath-Queries die Komposit-Indizes
-/// nutzen. Läuft gegen eine frische temp-DB mit allen Migrationen.
+/// Verifies via EXPLAIN QUERY PLAN that the most important hotpath queries use the composite
+/// indexes. Runs against a fresh temp DB with all migrations applied.
 /// <para>
-/// Die Fixture wird <b>über den DbContext</b> aufgebaut, nicht per Roh-<c>INSERT</c>. Das ist keine
-/// Stilfrage: Roh-INSERTs müssen jede NOT-NULL-Spalte selbst benennen und funktionierten hier nur,
-/// weil viele Spalten eine SQL-<c>DEFAULT</c>-Klausel trugen – die aber nicht aus dem Modell stammte,
-/// sondern ein Nebenprodukt davon war, dass sie einst per <c>AddColumn(defaultValue:…)</c> angehängt
-/// wurden. Eine frisch erzeugte <c>CreateTable</c> schreibt diese Klauseln nicht mehr, und der Test
-/// scheiterte mit <c>NOT NULL constraint failed</c> an einer Stelle, die nichts mit Indizes zu tun hat.
-/// Über den Graphen hält der Compiler die Fixture am Schema fest; eine neue Pflichtspalte bricht hier
-/// nicht mehr zur Laufzeit, sondern gar nicht.
+/// The fixture is built <b>via the DbContext</b>, not via raw <c>INSERT</c>. That is not a style
+/// choice: raw inserts have to name every NOT-NULL column themselves, and this only worked here
+/// because many columns carried a SQL <c>DEFAULT</c> clause – which did not originate from the model,
+/// but was a byproduct of once having been appended via <c>AddColumn(defaultValue:…)</c>. A freshly
+/// generated <c>CreateTable</c> no longer writes these clauses, and the test failed with
+/// <c>NOT NULL constraint failed</c> at a spot that has nothing to do with indexes.
+/// Going through the graph, the compiler keeps the fixture aligned with the schema; a new mandatory
+/// column no longer breaks here at runtime, but does not compile at all.
 /// </para>
-/// Die rohe <see cref="SqliteConnection"/> bleibt – <c>EXPLAIN QUERY PLAN</c> gibt es nur dort.
+/// The raw <see cref="SqliteConnection"/> stays – <c>EXPLAIN QUERY PLAN</c> is only available there.
 /// </summary>
 public sealed class QueryPlanSmokeTests
 {
@@ -89,13 +89,13 @@ public sealed class QueryPlanSmokeTests
             "IX_MediaLinks_MediaAssetId");
     }
 
-    /// <summary>Die Ids der Fixture-Zeilen – die Queries oben filtern auf echte Werte, nicht auf geratene.</summary>
+    /// <summary>The ids of the fixture rows – the queries above filter on real values, not guessed ones.</summary>
     private readonly record struct Ids(int Child, int Plan, int Position, int Exercise);
 
     /// <summary>
-    /// Legt genau einen Pfad Kind → Plan → Position → Übung → Item → Fortschritt an. Der Graph ist so
-    /// klein wie möglich: <c>EXPLAIN QUERY PLAN</c> wählt den Index anhand des Schemas, nicht anhand der
-    /// Zeilenzahl (ohne <c>ANALYZE</c> gibt es keine Statistiken, die er heranziehen könnte).
+    /// Creates exactly one path child → plan → position → exercise → item → progress. The graph is as
+    /// small as possible: <c>EXPLAIN QUERY PLAN</c> picks the index based on the schema, not on the
+    /// row count (without <c>ANALYZE</c> there are no statistics it could draw on).
     /// </summary>
     private static async Task<Ids> SeedGraphAsync(PuglingDbContext db)
     {

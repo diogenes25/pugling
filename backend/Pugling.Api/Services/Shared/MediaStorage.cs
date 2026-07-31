@@ -3,56 +3,55 @@ using Microsoft.Extensions.FileProviders;
 namespace Pugling.Api.Services.Shared;
 
 /// <summary>
-/// Einstellungen der Bild-Ablage. <see cref="RootPath"/> liegt bewusst <b>neben</b> und nicht in
-/// <c>wwwroot</c>: dorthin kopiert der Deploy das gebaute Frontend, ein Redeploy würde hochgeladene
-/// Bilder also mitlöschen. Hochgeladene Inhalte gehören nicht in ein Build-Artefakt-Verzeichnis.
+/// Settings for the image store. <see cref="RootPath"/> deliberately lives <b>next to</b>, not inside,
+/// <c>wwwroot</c>: the deploy copies the built frontend there, so a redeploy would delete uploaded
+/// images along with it. Uploaded content does not belong in a build artifact directory.
 /// </summary>
 public class MediaOptions
 {
-    /// <summary>Ablageordner (absolut oder relativ zum Content-Root). Default: <c>media-uploads</c>.</summary>
+    /// <summary>Storage folder (absolute or relative to the content root). Default: <c>media-uploads</c>.</summary>
     public string RootPath { get; set; } = "media-uploads";
 
-    /// <summary>Öffentliches URL-Präfix, unter dem der Ordner ausgeliefert wird.</summary>
+    /// <summary>Public URL prefix under which the folder is served.</summary>
     public string PublicPath { get; set; } = "/media";
 
-    /// <summary>Obergrenze je Upload in Bytes (Default 10 MB) – Schutz vor versehentlichen Riesendateien.</summary>
+    /// <summary>Upper limit per upload in bytes (default 10 MB) – protection against accidentally huge files.</summary>
     public long MaxUploadBytes { get; set; } = 10 * 1024 * 1024;
 }
 
 /// <summary>
-/// Wohin die Bilddateien geschrieben werden. Als Schnittstelle, damit später ein Blob-Storage danebentreten
-/// kann, ohne die Upload-Logik anzufassen – die Alternative wäre <c>File.WriteAllBytes</c> mitten im
-/// Controller und ein Umbau quer durch die Anwendung, sobald ein zweiter Host dazukommt.
+/// Where the image files are written. As an interface, so a blob storage can later step in alongside it
+/// without touching the upload logic – the alternative would be <c>File.WriteAllBytes</c> right in the
+/// middle of the controller and a rebuild across the whole application as soon as a second host is added.
 /// </summary>
 public interface IMediaStorage
 {
-    /// <summary>Schreibt eine Datei und liefert ihre öffentliche URL.</summary>
-    /// <param name="relativePath">Pfad unterhalb der Wurzel, z. B. <c>run_unicorn/card.webp</c>.</param>
-    /// <param name="content">Inhalt der Datei.</param>
-    /// <param name="ct">Abbruch-Token.</param>
+    /// <summary>Writes a file and returns its public URL.</summary>
+    /// <param name="relativePath">Path below the root, e.g. <c>run_unicorn/card.webp</c>.</param>
+    /// <param name="content">Content of the file.</param>
+    /// <param name="ct">Cancellation token.</param>
     Task<string> SaveAsync(string relativePath, ReadOnlyMemory<byte> content, CancellationToken ct = default);
 
-    /// <summary>Entfernt alle Dateien eines Assets (Ordner). Fehlt der Ordner, passiert nichts.</summary>
+    /// <summary>Removes all files of an asset (folder). If the folder is missing, nothing happens.</summary>
     Task DeleteFolderAsync(string folder, CancellationToken ct = default);
 
     /// <summary>
-    /// Der Dateianbieter, über den die Ablage statisch ausgeliefert werden kann – oder <c>null</c>, wenn
-    /// sie ihre Dateien selbst ausliefert (Blob-Storage mit eigenen URLs). Bewusst hier und nicht als
-    /// Pfad: die Static-Files-Middleware braucht genau das. Ein Cast auf die konkrete Klasse im
-    /// Startup-Pfad würde jede zweite Implementierung beim Start sprengen – und genau deshalb gibt es
-    /// diese Schnittstelle.
+    /// The file provider through which the store can be served statically – or <c>null</c> if it serves
+    /// its files itself (blob storage with its own URLs). Deliberately here and not as a path: the
+    /// static files middleware needs exactly that. A cast to the concrete class in the startup path
+    /// would break every other implementation at startup – and that is exactly why this interface exists.
     /// </summary>
     IFileProvider? CreateContentProvider();
 }
 
 /// <summary>
-/// Ablage im lokalen Dateisystem – die Variante für den Single-Host-Deploy. Der Ordner wird per eigener
-/// Static-Files-Middleware unter <see cref="MediaOptions.PublicPath"/> ausgeliefert (siehe Program.cs).
+/// Storage on the local file system – the variant for the single-host deploy. The folder is served
+/// under <see cref="MediaOptions.PublicPath"/> by a dedicated static files middleware (see Program.cs).
 /// </summary>
 public class LocalMediaStorage(MediaOptions options, IWebHostEnvironment env, ILogger<LocalMediaStorage> logger)
     : IMediaStorage
 {
-    /// <summary>Absoluter Ablageordner; relative Konfiguration bezieht sich auf den Content-Root.</summary>
+    /// <summary>Absolute storage folder; relative configuration is relative to the content root.</summary>
     public string Root { get; } = Path.IsPathRooted(options.RootPath)
         ? options.RootPath
         : Path.Combine(env.ContentRootPath, options.RootPath);
@@ -68,8 +67,8 @@ public class LocalMediaStorage(MediaOptions options, IWebHostEnvironment env, IL
 
     /// <inheritdoc/>
     /// <remarks>
-    /// Der Ordner wird hier angelegt, nicht im Konstruktor: <see cref="PhysicalFileProvider"/> verlangt
-    /// ein existierendes Verzeichnis, und beim ersten Start gibt es noch keins.
+    /// The folder is created here, not in the constructor: <see cref="PhysicalFileProvider"/> requires
+    /// an existing directory, and on first start there is none yet.
     /// </remarks>
     public IFileProvider? CreateContentProvider()
     {
@@ -88,9 +87,9 @@ public class LocalMediaStorage(MediaOptions options, IWebHostEnvironment env, IL
     }
 
     /// <summary>
-    /// Löst einen relativen Pfad auf und stellt sicher, dass er <b>innerhalb</b> der Wurzel bleibt.
-    /// Ohne diese Prüfung wäre ein Key wie <c>../../appsettings.json</c> ein Schreibzugriff aufs
-    /// halbe Dateisystem – der Key kommt aus einer Nutzereingabe.
+    /// Resolves a relative path and ensures it stays <b>inside</b> the root. Without this check, a key
+    /// like <c>../../appsettings.json</c> would grant write access to half the file system – the key
+    /// comes from user input.
     /// </summary>
     private string Resolve(string relativePath)
     {

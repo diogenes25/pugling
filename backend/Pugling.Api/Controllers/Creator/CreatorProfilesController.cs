@@ -9,11 +9,11 @@ using Pugling.Api.Models;
 namespace Pugling.Api.Controllers.Creator;
 
 /// <summary>
-/// Creator-Profile: der <b>Fachlehrer</b> hinter einer Übung – ein Fach, ein Schulzweig, ein
-/// Klassenstufen-Bereich, optional eine Buchreihe, dazu Persona und Didaktik. Ein KI-Creator lädt sich
-/// daraus seine Rolle, statt für jedes Fach denselben Generalisten zu spielen; der Match-Endpunkt
-/// beantwortet die eigentliche Frage: <i>welcher Lehrer kennt den Stoff dieses Kindes?</i>
-/// Lesen darf jeder Creator (der Katalog ist geteilt), ändern nur der Owner.
+/// Creator profiles: the <b>subject teacher</b> behind an exercise – a subject, a school branch, a
+/// grade-level range, optionally a book series, plus persona and didactics. An AI creator loads its
+/// role from this instead of playing the same generalist for every subject; the match endpoint
+/// answers the actual question: <i>which teacher knows this child's material?</i>
+/// Any creator may read (the catalog is shared), only the owner may change.
 /// </summary>
 [ApiController]
 [ApiVersion("1.0")]
@@ -24,12 +24,12 @@ namespace Pugling.Api.Controllers.Creator;
 public class CreatorProfilesController(PuglingDbContext db, CreatorProfileService profiles, AuthAccess access)
     : ControllerBase
 {
-    /// <summary>Alle Profile (alphabetisch), optional gefiltert.</summary>
-    /// <param name="subjectId">Nur Profile zu diesem Katalog-Fach.</param>
-    /// <param name="seriesId">Nur Profile zu dieser Lehrwerk-Reihe.</param>
-    /// <param name="mineOnly">true = nur eigene Profile.</param>
-    /// <param name="includeInactive">true = auch stillgelegte Profile.</param>
-    /// <param name="ct">Abbruch-Token.</param>
+    /// <summary>All profiles (alphabetically), optionally filtered.</summary>
+    /// <param name="subjectId">Only profiles for this catalog subject.</param>
+    /// <param name="seriesId">Only profiles for this textbook series.</param>
+    /// <param name="mineOnly">true = only own profiles.</param>
+    /// <param name="includeInactive">true = also decommissioned profiles.</param>
+    /// <param name="ct">Cancellation token.</param>
     [HttpGet]
     public async Task<IReadOnlyList<CreatorProfileResponse>> List(
         [FromQuery] int? subjectId, [FromQuery] int? seriesId, [FromQuery] bool? mineOnly,
@@ -47,7 +47,7 @@ public class CreatorProfilesController(PuglingDbContext db, CreatorProfileServic
         return [.. found.Select(p => CreatorProfileService.Map(p, fid))];
     }
 
-    /// <summary>Ein Profil per Id.</summary>
+    /// <summary>A profile by id.</summary>
     [HttpGet("{profileId:int}")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<CreatorProfileResponse>> Get(int profileId, CancellationToken ct)
@@ -58,14 +58,14 @@ public class CreatorProfilesController(PuglingDbContext db, CreatorProfileServic
     }
 
     /// <summary>
-    /// Die zu einem Kind passenden Profile, bestes zuerst (Reihen-Treffer wiegt am schwersten).
-    /// Der Endpunkt liest Kind-Daten und ist darum an die <b>Betreuung</b> gebunden: ein Creator, der
-    /// dieses Kind nicht betreut, bekommt <c>403</c> – sonst wäre die Profil-Suche ein Seitenkanal auf
-    /// fremde Kind-Profile.
+    /// The profiles matching a child, best first (a series match weighs the heaviest).
+    /// The endpoint reads child data and is therefore bound to <b>supervision</b>: a creator who
+    /// does not supervise this child gets <c>403</c> – otherwise the profile search would be a side
+    /// channel onto other people's child profiles.
     /// </summary>
-    /// <param name="childId">Das Kind, zu dem der passende Creator gesucht wird.</param>
-    /// <param name="subjectId">Optional auf ein Fach verengen (fachneutrale Profile bleiben enthalten).</param>
-    /// <param name="ct">Abbruch-Token.</param>
+    /// <param name="childId">The child for whom the matching creator is sought.</param>
+    /// <param name="subjectId">Optionally narrow to one subject (subject-neutral profiles remain included).</param>
+    /// <param name="ct">Cancellation token.</param>
     [HttpGet("match")]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -79,7 +79,7 @@ public class CreatorProfilesController(PuglingDbContext db, CreatorProfileServic
         return Ok(await profiles.MatchAsync(childId, subjectId, User.CreatorId(), ct));
     }
 
-    /// <summary>Legt ein Profil an (Owner = das aufrufende Konto).</summary>
+    /// <summary>Creates a profile (owner = the calling account).</summary>
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -116,7 +116,7 @@ public class CreatorProfilesController(PuglingDbContext db, CreatorProfileServic
             CreatorProfileService.Map(await LoadWithSeriesAsync(profile.Id, ct), User.CreatorId()));
     }
 
-    /// <summary>Ändert ein Profil (partiell, nur Owner).</summary>
+    /// <summary>Changes a profile (partial, owner only).</summary>
     [HttpPatch("{profileId:int}")]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -167,8 +167,8 @@ public class CreatorProfilesController(PuglingDbContext db, CreatorProfileServic
     }
 
     /// <summary>
-    /// Löscht ein Profil (nur Owner). Bereits erzeugte Übungen bleiben unberührt – das Profil ist die
-    /// Werkbank, nicht der Besitzer des Ergebnisses.
+    /// Deletes a profile (owner only). Already created exercises remain untouched – the profile is the
+    /// workbench, not the owner of the result.
     /// </summary>
     [HttpDelete("{profileId:int}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
@@ -187,9 +187,9 @@ public class CreatorProfilesController(PuglingDbContext db, CreatorProfileServic
     }
 
     /// <summary>
-    /// Trägt schon ein anderes Profil desselben Creators diesen Namen? Der Name ist je Creator eindeutig
-    /// (Unique-Index <c>CreatorProfile(OwnerAdultId, Name)</c>) – ohne diese Vorprüfung quittierte das
-    /// Anlegen eines zweiten „Frau Meier" mit <b>500</b> statt mit einem Fachfehler am Namensfeld.
+    /// Does another profile of the same creator already carry this name? The name is unique per creator
+    /// (unique index <c>CreatorProfile(OwnerAdultId, Name)</c>) – without this pre-check, creating a
+    /// second "Mrs. Miller" would fail with <b>500</b> instead of a business error on the name field.
     /// </summary>
     private Task<bool> NameTakenAsync(string name, int? ownerAdultId, CancellationToken ct, int? exceptProfileId = null) =>
         ownerAdultId is null
@@ -197,7 +197,7 @@ public class CreatorProfilesController(PuglingDbContext db, CreatorProfileServic
             : db.CreatorProfiles.AsNoTracking().AnyAsync(p => p.OwnerAdultId == ownerAdultId
                 && p.Name == name && p.Id != exceptProfileId, ct);
 
-    /// <summary>Fach und Reihe müssen existieren – ein Profil, das ins Leere zeigt, findet nie ein Kind.</summary>
+    /// <summary>Subject and series must exist – a profile pointing into the void will never find a child.</summary>
     private async Task<ObjectResult?> ReferenceProblemAsync(int? subjectId, int? seriesId, CancellationToken ct)
     {
         if (subjectId is int sid && !await db.Subjects.AnyAsync(s => s.Id == sid, ct))
@@ -212,7 +212,7 @@ public class CreatorProfilesController(PuglingDbContext db, CreatorProfileServic
 
     private static string? Trimmed(string? value) => value?.Trim() is { Length: > 0 } v ? v : null;
 
-    /// <summary>Trimmt, verwirft Leereinträge und dedupliziert die bevorzugten Übungstypen.</summary>
+    /// <summary>Trims, discards empty entries, and deduplicates the preferred exercise types.</summary>
     private static List<string> Clean(List<string>? values) =>
         [.. (values ?? []).Select(v => v.Trim()).Where(v => v.Length > 0).Distinct(StringComparer.OrdinalIgnoreCase)];
 }

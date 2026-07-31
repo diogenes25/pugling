@@ -9,10 +9,10 @@ using Pugling.Api.Models;
 namespace Pugling.Api.Controllers.Supervisor;
 
 /// <summary>
-/// Verwaltung der vom Kind verwendeten Lehrbücher (nur Vater, nur eigene Kinder). Übungsunabhängiges Profil:
-/// hält fest, aus welchem Werk und welchem aktuellen Kapitel der Lernstoff kommt – die Grundlage, aus der ein
-/// späterer Lehrplan-Generator „was ist gerade dran" ableitet (siehe wiki/09-llm-kochbuch.md). Eigentum
-/// sichert der <see cref="ChildOwnershipFilter"/>.
+/// Management of the textbooks used by the child (father only, own children only). Exercise-independent profile:
+/// records which series and which current chapter the learning material comes from – the foundation from which a
+/// later study plan generator derives "what's currently due" (see wiki/09-llm-kochbuch.md). Ownership
+/// is secured by the <see cref="ChildOwnershipFilter"/>.
 /// </summary>
 [ApiController]
 [ApiVersion("1.0")]
@@ -24,15 +24,15 @@ namespace Pugling.Api.Controllers.Supervisor;
 public class TextbooksController(PuglingDbContext db) : ControllerBase
 {
     /// <summary>
-    /// Projiziert samt Reihe und Unit. Die Namen kommen mit, damit ein Aufrufer die Zuordnung anzeigen
-    /// kann, ohne den Katalog nachzuladen.
+    /// Projects together with series and unit. The names are included so a caller can display the
+    /// assignment without reloading the catalog.
     /// </summary>
     private static IQueryable<TextbookResponse> Project(IQueryable<Textbook> q) =>
         q.Select(t => new TextbookResponse(t.Id, t.Title, t.SubjectName, t.SubjectId, t.Grade, t.Publisher,
             t.Isbn, t.CurrentChapter, t.CreatedAt,
             t.SeriesId, t.Series!.Name, t.CurrentUnitId, t.CurrentUnit!.Label));
 
-    /// <summary>Alle Lehrbücher des Kindes.</summary>
+    /// <summary>All textbooks of the child.</summary>
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<IReadOnlyList<TextbookResponse>>> List(int childId, CancellationToken ct) =>
@@ -40,7 +40,7 @@ public class TextbooksController(PuglingDbContext db) : ControllerBase
                 .OrderBy(t => t.SubjectName).ThenBy(t => t.Title))
             .ToListAsync(ct);
 
-    /// <summary>Ein einzelnes Lehrbuch des Kindes.</summary>
+    /// <summary>A single textbook of the child.</summary>
     [HttpGet("{textbookId:int}")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<TextbookResponse>> Get(int childId, int textbookId, CancellationToken ct)
@@ -50,7 +50,7 @@ public class TextbooksController(PuglingDbContext db) : ControllerBase
         return book is null ? NotFound() : book;
     }
 
-    /// <summary>Legt ein Lehrbuch für das Kind an.</summary>
+    /// <summary>Creates a textbook for the child.</summary>
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -81,7 +81,7 @@ public class TextbooksController(PuglingDbContext db) : ControllerBase
             await Project(db.Textbooks.AsNoTracking().Where(t => t.Id == book.Id)).FirstAsync(ct));
     }
 
-    /// <summary>Ändert ein Lehrbuch (partiell). Setzt Felder nur, wenn sie im Payload enthalten sind.</summary>
+    /// <summary>Changes a textbook (partial). Only fields that are set are changed.</summary>
     [HttpPatch("{textbookId:int}")]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -122,9 +122,9 @@ public class TextbooksController(PuglingDbContext db) : ControllerBase
     }
 
     /// <summary>
-    /// Prüft die Katalog-Verweise: die Reihe muss existieren, und die Unit muss <b>zu dieser Reihe</b>
-    /// gehören. Ohne die zweite Prüfung stünde am Kind eine Unit aus einem fremden Werk – der Creator
-    /// bekäme dann den Stoff eines Buchs, das das Kind nicht benutzt.
+    /// Checks the catalog references: the series must exist, and the unit must belong <b>to this series</b>.
+    /// Without the second check, the child would end up with a unit from an unrelated series – the creator
+    /// would then get the material of a book the child does not use.
     /// </summary>
     private async Task<ObjectResult?> CatalogProblemAsync(int? seriesId, int? unitId, CancellationToken ct)
     {
@@ -142,7 +142,7 @@ public class TextbooksController(PuglingDbContext db) : ControllerBase
         return null;
     }
 
-    /// <summary>Löscht ein Lehrbuch des Kindes.</summary>
+    /// <summary>Deletes a textbook of the child.</summary>
     [HttpDelete("{textbookId:int}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

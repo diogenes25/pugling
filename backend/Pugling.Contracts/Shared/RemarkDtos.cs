@@ -4,19 +4,19 @@ namespace Pugling.Contracts.Shared;
 // Ressource, die Trennung passiert über die Sichtbarkeit im Controller, nicht über zwei Verträge.
 
 /// <summary>
-/// Der Kontext-Schnappschuss zum Zeitpunkt der Erfassung – der eigentliche Wert einer Anmerkung.
-/// Das Widget füllt ihn automatisch; der Mensch tippt nur den Text.
+/// The context snapshot at the time of capture – the real value of a remark.
+/// The widget fills it in automatically; the human only types the text.
 /// </summary>
-/// <param name="Route">Pfad im SPA, z. B. <c>/vater/kind/3/lernstand</c>.</param>
-/// <param name="AppArea">Anwendungsbereich (<c>vater</c>/<c>sohn</c>).</param>
-/// <param name="ChildId">Kind, das beim Erfassen ausgewählt war.</param>
-/// <param name="ExerciseId">Übung, die beim Erfassen offen war.</param>
-/// <param name="StudyPlanId">Lehrplan, der beim Erfassen offen war.</param>
-/// <param name="PlanPositionId">Position, die beim Erfassen offen war.</param>
-/// <param name="ContextJson">Zustands-Schnappschuss (Filter, Auswahl, offenes Modal) als rohes JSON – nur IDs und Filterwerte, nie geladene Entitäten.</param>
+/// <param name="Route">Path in the SPA, e.g. <c>/vater/kind/3/lernstand</c>.</param>
+/// <param name="AppArea">Application area (<c>vater</c>/<c>sohn</c>).</param>
+/// <param name="ChildId">Child that was selected at capture time.</param>
+/// <param name="ExerciseId">Exercise that was open at capture time.</param>
+/// <param name="StudyPlanId">Study plan that was open at capture time.</param>
+/// <param name="PlanPositionId">Position that was open at capture time.</param>
+/// <param name="ContextJson">State snapshot (filter, selection, open modal) as raw JSON – only IDs and filter values, never loaded entities.</param>
 /// <param name="RecentErrorsJson">
-/// Ringpuffer der letzten Fehler als rohes JSON. <b>Nur Metadaten</b> (Methode, Pfad, Status, Fehler-<c>code</c>,
-/// Zeitstempel) – keine Bodies, Header oder Tokens: Der Login-Request trägt die PIN im Body.
+/// Ring buffer of the most recent errors as raw JSON. <b>Metadata only</b> (method, path, status, error <c>code</c>,
+/// timestamp) – no bodies, headers, or tokens: the login request carries the PIN in the body.
 /// </param>
 public record RemarkContextDto(
     string? Route,
@@ -28,11 +28,11 @@ public record RemarkContextDto(
     string? ContextJson,
     string? RecentErrorsJson);
 
-/// <summary>Eine neue Anmerkung erfassen. Pflicht ist allein der Text – alles andere liefert das Widget oder bleibt leer.</summary>
-/// <param name="Text">Der Beobachtungs-/Fragetext.</param>
-/// <param name="Category">Optionale Einordnung; ohne Angabe <see cref="RemarkCategory.Unspecified"/> (der Skill zieht sie später nach).</param>
-/// <param name="Context">Automatisch erfasster Kontext.</param>
-/// <param name="ParentRemarkId">Optionaler Verweis auf die Anmerkung, aus der diese hervorging (setzt der Skill, nicht das Widget).</param>
+/// <summary>Capture a new remark. Only the text is required – everything else comes from the widget or stays empty.</summary>
+/// <param name="Text">The observation/question text.</param>
+/// <param name="Category">Optional categorization; defaults to <see cref="RemarkCategory.Unspecified"/> if omitted (the skill fills it in later).</param>
+/// <param name="Context">Automatically captured context.</param>
+/// <param name="ParentRemarkId">Optional reference to the remark this one arose from (set by the skill, not the widget).</param>
 public record CreateRemarkDto(
     string Text,
     RemarkCategory? Category,
@@ -40,20 +40,20 @@ public record CreateRemarkDto(
     int? ParentRemarkId);
 
 /// <summary>
-/// Anmerkung ändern. PATCH-Semantik: <c>null</c> heißt „nicht angegeben" (der Wert bleibt), <b>nicht</b>
-/// „leeren" – dafür gibt es die ausdrücklichen <c>Clear…</c>-Schalter.
+/// Change a remark. PATCH semantics: <c>null</c> means "not specified" (the value stays), <b>not</b>
+/// "clear" – that is what the explicit <c>Clear…</c> switches are for.
 /// </summary>
-/// <param name="Text">Neuer Text.</param>
-/// <param name="Category">Neue Einordnung.</param>
-/// <param name="Status">Neuer Bearbeitungsstand.</param>
-/// <param name="Answer">Die Antwort (schreibt der Skill zurück); bleibt auch bei <see cref="RemarkStatus.Planned"/> erhalten.</param>
-/// <param name="AnsweredBy">Wer geantwortet hat, z. B. <c>claude-code</c>. Nur zusammen mit <paramref name="Answer"/> wirksam.</param>
-/// <param name="ClearAnswer">Antwort samt Zeitstempel/Urheber leeren.</param>
-/// <param name="ClearChild">Kind-Bezug leeren.</param>
-/// <param name="ClearExercise">Übungs-Bezug leeren.</param>
-/// <param name="ClearStudyPlan">Lehrplan-Bezug leeren.</param>
-/// <param name="ClearPlanPosition">Positions-Bezug leeren.</param>
-/// <param name="ClearParent">Verweis auf die Vorgänger-Anmerkung leeren.</param>
+/// <param name="Text">New text.</param>
+/// <param name="Category">New categorization.</param>
+/// <param name="Status">New processing state.</param>
+/// <param name="Answer">The answer (written back by the skill); retained even at <see cref="RemarkStatus.Planned"/>.</param>
+/// <param name="AnsweredBy">Who answered, e.g. <c>claude-code</c>. Only takes effect together with <paramref name="Answer"/>.</param>
+/// <param name="ClearAnswer">Clear the answer together with its timestamp/author.</param>
+/// <param name="ClearChild">Clear the child reference.</param>
+/// <param name="ClearExercise">Clear the exercise reference.</param>
+/// <param name="ClearStudyPlan">Clear the study plan reference.</param>
+/// <param name="ClearPlanPosition">Clear the position reference.</param>
+/// <param name="ClearParent">Clear the reference to the parent remark.</param>
 public record UpdateRemarkDto(
     string? Text,
     RemarkCategory? Category,
@@ -67,24 +67,24 @@ public record UpdateRemarkDto(
     bool ClearPlanPosition = false,
     bool ClearParent = false);
 
-/// <summary>Eine Anmerkung, wie die API sie ausliefert.</summary>
-/// <param name="Id">Die dem Menschen gezeigte „Log-Id" – der Schlüssel für „Beantworte die Frage 123".</param>
-/// <param name="Text">Der Beobachtungs-/Fragetext.</param>
-/// <param name="Category">Einordnung.</param>
-/// <param name="Status">Bearbeitungsstand.</param>
-/// <param name="Answer">Antwort, falls vorhanden.</param>
-/// <param name="AnsweredAt">Zeitpunkt der Beantwortung.</param>
-/// <param name="AnsweredBy">Urheber der Antwort.</param>
-/// <param name="ParentRemarkId">Vorgänger-Anmerkung, falls diese aus einer Antwort hervorging.</param>
-/// <param name="AccountId">Konto des Erfassers.</param>
-/// <param name="AuthorRole">Rolle zum Zeitpunkt der Erfassung.</param>
-/// <param name="IsOwn">Ob die Anmerkung vom abfragenden Konto stammt – das Widget zeigt nur eigene.</param>
-/// <param name="Context">Der mitgeschnittene Kontext.</param>
-/// <param name="UserAgent">Browserkennung.</param>
-/// <param name="CreatedAt">Erfassungszeitpunkt (UTC).</param>
+/// <summary>A remark, as delivered by the API.</summary>
+/// <param name="Id">The "log id" shown to the human – the key for "answer question 123".</param>
+/// <param name="Text">The observation/question text.</param>
+/// <param name="Category">Categorization.</param>
+/// <param name="Status">Processing state.</param>
+/// <param name="Answer">Answer, if present.</param>
+/// <param name="AnsweredAt">Time the answer was given.</param>
+/// <param name="AnsweredBy">Author of the answer.</param>
+/// <param name="ParentRemarkId">Predecessor remark, if this one arose from an answer.</param>
+/// <param name="AccountId">Account of the person who captured it.</param>
+/// <param name="AuthorRole">Role at the time of capture.</param>
+/// <param name="IsOwn">Whether the remark originates from the requesting account – the widget shows only its own.</param>
+/// <param name="Context">The captured context.</param>
+/// <param name="UserAgent">Browser identifier.</param>
+/// <param name="CreatedAt">Capture time (UTC).</param>
 /// <param name="CommentCount">
-/// Anzahl der Beiträge im Verlauf. Liegt an der Anmerkung, damit Liste und Widget „3 Beiträge" anzeigen
-/// können, ohne je Zeile den Verlauf nachzuladen.
+/// Number of comments in the thread. Kept on the remark so the list and widget can show "3 comments"
+/// without reloading the thread for every row.
 /// </param>
 public record RemarkDto(
     int Id,
@@ -104,18 +104,18 @@ public record RemarkDto(
     int CommentCount);
 
 /// <summary>
-/// Ein Beitrag im Verlauf einer Anmerkung. Ergänzt <see cref="RemarkDto.Answer"/> (die eine belegte
-/// Auflösung), ersetzt sie nicht: Analyse, Rückfrage und Umsetzungsnotiz stehen nebeneinander statt
-/// einander zu überschreiben.
+/// A comment in the thread of a remark. Complements <see cref="RemarkDto.Answer"/> (the one authoritative
+/// resolution) rather than replacing it: analysis, follow-up question, and implementation note sit
+/// side by side instead of overwriting one another.
 /// </summary>
-/// <param name="Id">Id des Beitrags.</param>
-/// <param name="RemarkId">Anmerkung, zu der er gehört.</param>
-/// <param name="Body">Der Text.</param>
-/// <param name="Author">Mensch oder Claude.</param>
-/// <param name="AuthorLabel">Anzeigename, z. B. <c>claude-code</c>.</param>
-/// <param name="AuthorAccountId">Konto des Schreibers, falls bekannt.</param>
-/// <param name="IsOwn">Ob der Beitrag vom abfragenden Konto stammt – nur eigene lassen sich löschen.</param>
-/// <param name="CreatedAt">Zeitpunkt (UTC).</param>
+/// <param name="Id">Id of the comment.</param>
+/// <param name="RemarkId">Remark it belongs to.</param>
+/// <param name="Body">The text.</param>
+/// <param name="Author">Human or Claude.</param>
+/// <param name="AuthorLabel">Display name, e.g. <c>claude-code</c>.</param>
+/// <param name="AuthorAccountId">Account of the writer, if known.</param>
+/// <param name="IsOwn">Whether the comment originates from the requesting account – only own comments can be deleted.</param>
+/// <param name="CreatedAt">Timestamp (UTC).</param>
 public record RemarkCommentDto(
     int Id,
     int RemarkId,
@@ -127,17 +127,17 @@ public record RemarkCommentDto(
     DateTime CreatedAt);
 
 /// <summary>
-/// Einen Beitrag zum Verlauf hinzufügen.
+/// Add a comment to the thread.
 /// <para>
-/// <b>Nebenwirkung mit Absicht:</b> Ein <see cref="RemarkCommentAuthor.Human"/>-Beitrag zu einer
-/// erledigten oder verworfenen Anmerkung holt sie zurück auf <see cref="RemarkStatus.Open"/> – so legt der
-/// Nachbereitungs-Skill sie beim nächsten Lauf wieder vor. Ein <see cref="RemarkCommentAuthor.Assistant"/>-
-/// Beitrag lässt den Stand unberührt; er berichtet, er fragt nicht nach.
+/// <b>Deliberate side effect:</b> A <see cref="RemarkCommentAuthor.Human"/> comment on a resolved or
+/// dismissed remark pulls it back to <see cref="RemarkStatus.Open"/> – so the follow-up skill surfaces it
+/// again on its next run. A <see cref="RemarkCommentAuthor.Assistant"/> comment leaves the state
+/// untouched; it reports, it does not ask back.
 /// </para>
 /// </summary>
-/// <param name="Body">Der Text – Pflicht.</param>
-/// <param name="Author">Herkunft; ohne Angabe <see cref="RemarkCommentAuthor.Human"/>.</param>
-/// <param name="AuthorLabel">Anzeigename, z. B. <c>claude-code</c>.</param>
+/// <param name="Body">The text – required.</param>
+/// <param name="Author">Origin; defaults to <see cref="RemarkCommentAuthor.Human"/> if omitted.</param>
+/// <param name="AuthorLabel">Display name, e.g. <c>claude-code</c>.</param>
 public record CreateRemarkCommentDto(
     string Body,
     RemarkCommentAuthor? Author,

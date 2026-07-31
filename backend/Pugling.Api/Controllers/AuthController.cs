@@ -1,4 +1,4 @@
-﻿using System.Security.Claims;
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
@@ -10,7 +10,7 @@ using Pugling.Api.Models;
 
 namespace Pugling.Api.Controllers;
 
-/// <summary>PIN-Login; liefert ein JWT mit Konto-Subjekt und einer/mehreren Rollen.</summary>
+/// <summary>PIN login; returns a JWT with account subject and one or more roles.</summary>
 [ApiController]
 [ApiVersion("1.0")]
 [Route(ApiRoutes.V1 + "/auth")]
@@ -20,13 +20,13 @@ public class AuthController(PuglingDbContext db, TokenService tokens, AccountSer
     Services.Shared.PositionProgressService progress, Services.Shared.ObjectiveRewardService objectiveRewards) : ControllerBase
 {
     /// <summary>
-    /// Die <b>primäre Ebene</b> fürs UI-Routing – wohin der Nutzer nach dem Anmelden gehört.
+    /// The <b>primary tier</b> for UI routing – where the user belongs after logging in.
     ///
-    /// Rangfolge Supervisor → Creator → Student, weil sie von „darf am meisten steuern" nach „lernt selbst"
-    /// verläuft: ein Vater trägt Creator <i>und</i> Supervisor und will in seine Betreuungs-Sicht, ein
-    /// <b>Lehrer</b> hat nur Creator und gehört in die Werkstatt. Vorher stand hier
-    /// <c>Any(p =&gt; p.Role != Student) ? Supervisor : Student</c> – das klappte Creator auf Supervisor
-    /// zusammen und hätte einem Lehrer die Vater-Oberfläche vorgesetzt.
+    /// Precedence Supervisor → Creator → Student, because it runs from "gets to control the most" to
+    /// "learns on their own": a father carries Creator <i>and</i> Supervisor and wants their supervision
+    /// view, a <b>teacher</b> has only Creator and belongs in the workshop. This used to read
+    /// <c>Any(p =&gt; p.Role != Student) ? Supervisor : Student</c> – that collapsed Creator into Supervisor
+    /// and would have presented a teacher with the father's UI.
     /// </summary>
     private static string PrimaryRoleOf(IEnumerable<AccountProfile> profiles)
     {
@@ -37,12 +37,12 @@ public class AuthController(PuglingDbContext db, TokenService tokens, AccountSer
     }
 
     /// <summary>
-    /// Login per fachlicher Id + PIN. Löst das Konto auf und stellt ein Mehrrollen-Token aus.
+    /// Login via domain id + PIN. Resolves the account and issues a multi-role token.
     /// <para>
-    /// Heißt <c>adult</c> und nicht <c>father</c>, weil derselbe Endpunkt ein <b>Lehrer-Konto</b> anmeldet:
-    /// dessen Id ist ebenfalls eine <see cref="Adult"/>-Id, und die Antwort nennt dann <c>Creator</c> statt
-    /// <c>Supervisor</c>. Ein bestehendes Konto bekommt dabei keine Rolle nachgereicht
-    /// (siehe <see cref="AccountService"/>), ein Lehrer wird durch das Anmelden also nicht zum Betreuer.
+    /// Named <c>adult</c> and not <c>father</c> because the same endpoint logs in a <b>teacher account</b>:
+    /// its id is likewise an <see cref="Adult"/> id, and the response then names <c>Creator</c> instead of
+    /// <c>Supervisor</c>. An existing account is not granted an additional role in the process
+    /// (see <see cref="AccountService"/>), so a teacher does not become a supervisor by logging in.
     /// </para>
     /// </summary>
     [HttpPost("adult")]
@@ -60,7 +60,7 @@ public class AuthController(PuglingDbContext db, TokenService tokens, AccountSer
         return new LoginResponse(token, PrimaryRoleOf(account.Profiles), adult.Id, adult.Name, expires);
     }
 
-    /// <summary>Sohn-Login per Id + PIN. Löst das Konto auf und stellt ein Rollen-Token aus.</summary>
+    /// <summary>Child login via id + PIN. Resolves the account and issues a role token.</summary>
     [HttpPost("child")]
     [AllowAnonymous]
     [EnableRateLimiting("login")]
@@ -84,8 +84,8 @@ public class AuthController(PuglingDbContext db, TokenService tokens, AccountSer
     }
 
     /// <summary>
-    /// Kanonischer, konto-zentrischer Login: ein Token, das <b>alle</b> Rollen des Kontos trägt
-    /// (z. B. Creator + Supervisor). <c>role</c> in der Antwort ist die primäre Ebene (Supervisor bzw. Student) fürs UI-Routing.
+    /// Canonical, account-centric login: a single token that carries <b>all</b> roles of the account
+    /// (e.g. Creator + Supervisor). <c>role</c> in the response is the primary tier (Supervisor or Student) for UI routing.
     /// </summary>
     [HttpPost("login")]
     [AllowAnonymous]
@@ -104,7 +104,7 @@ public class AuthController(PuglingDbContext db, TokenService tokens, AccountSer
         return new LoginResponse(token, PrimaryRoleOf(account.Profiles), account.Id, account.DisplayName, expires);
     }
 
-    /// <summary>Gibt die aktuelle Identität aus dem Token zurück (Konto, alle Rollen, fid/cid).</summary>
+    /// <summary>Returns the current identity from the token (account, all roles, fid/cid).</summary>
     [HttpGet("me")]
     [Authorize]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -122,24 +122,23 @@ public class AuthController(PuglingDbContext db, TokenService tokens, AccountSer
         Name: User.Identity?.Name);
 
     /// <summary>
-    /// Selbstverwaltung des eigenen Kontos: Anzeigename, E-Mail und PIN.
+    /// Self-management of the account itself: display name, email and PIN.
     ///
     /// <para>
-    /// Liegt bei <c>auth/…</c> und nicht in einer Ebene, weil es zu keiner gehört – <b>derselbe Mensch</b>
-    /// bedient es aus jeder Rolle (die dokumentierte Ausnahme in CLAUDE.md). Vorher ging das nur über
-    /// <c>supervisor/adults/{id}</c>, und damit gar nicht für ein <b>Lehrer-Konto</b>: dem fehlt die
-    /// Supervisor-Rolle, es konnte seine eigene PIN nicht ändern.
+    /// Lives under <c>auth/…</c> and not under a tier because it belongs to none – <b>the same person</b>
+    /// operates it from any role (the documented exception in CLAUDE.md). Previously this only worked via
+    /// <c>supervisor/adults/{id}</c>, and thus not at all for a <b>teacher account</b>: it lacks the
+    /// Supervisor role, so it couldn't change its own PIN.
     /// </para>
     /// <para>
-    /// Die Identität hängt an <b>zwei</b> Zeilen: die <see cref="Adult"/>-Zeile trägt den fachlichen Namen
-    /// (er erscheint als Autor an den Übungen), das <see cref="Account"/> den Login. Geschrieben wird hier
-    /// nur die fachliche; das Konto zieht <see cref="AccountService.MirrorAsync(Adult, CancellationToken)"/>
-    /// nach – dieselbe eine Stelle, die auch <c>supervisor/adults/{id}</c> und
-    /// <c>supervisor/children/{id}</c> benutzen.
+    /// Identity hangs off <b>two</b> rows: the <see cref="Adult"/> row carries the domain name (it appears
+    /// as the author on exercises), the <see cref="Account"/> the login. Only the domain row is written
+    /// here; <see cref="AccountService.MirrorAsync(Adult, CancellationToken)"/> pulls the account along –
+    /// the same single place that <c>supervisor/adults/{id}</c> and <c>supervisor/children/{id}</c> use.
     /// </para>
     /// <para>
-    /// <b>Nur Erwachsene.</b> Ein Kind ändert seinen Namen und seine PIN nicht selbst: die PIN ist der
-    /// Zugang, den der Vater vergibt, und ein Kind, das sie umstellt, hätte sich der Aufsicht entzogen.
+    /// <b>Adults only.</b> A child does not change its own name and PIN: the PIN is the
+    /// access the father grants, and a child that changed it would have escaped supervision.
     /// </para>
     /// </summary>
     [HttpPatch("me")]

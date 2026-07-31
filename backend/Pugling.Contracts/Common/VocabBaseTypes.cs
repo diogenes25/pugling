@@ -1,71 +1,71 @@
 namespace Pugling.Contracts;
 
 /// <summary>
-/// Wortart einer Store-Vokabel. Steuert, welche Zusatzangaben fachlich sinnvoll sind
-/// (<see cref="NounInfo"/> beim Substantiv, <see cref="VerbInfo"/> beim Verb) und ist Filterkriterium
-/// im Vokabelspeicher. <see cref="Other"/> ist der Default, wenn der Anleger nichts angibt.
+/// Part of speech of a store vocabulary item. Determines which additional details make sense
+/// (<see cref="NounInfo"/> for nouns, <see cref="VerbInfo"/> for verbs) and is a filter criterion
+/// in the vocabulary store. <see cref="Other"/> is the default when the author specifies nothing.
 /// </summary>
 public enum PartOfSpeech
 {
-    /// <summary>Substantiv – trägt üblicherweise Artikel/Genus/Plural in <see cref="NounInfo"/>.</summary>
+    /// <summary>Noun – usually carries article/gender/plural in <see cref="NounInfo"/>.</summary>
     Noun = 0,
-    /// <summary>Verb – trägt Infinitiv/Zeitform in <see cref="VerbInfo"/>.</summary>
+    /// <summary>Verb – carries infinitive/tense in <see cref="VerbInfo"/>.</summary>
     Verb = 1,
-    /// <summary>Adjektiv.</summary>
+    /// <summary>Adjective.</summary>
     Adjective = 2,
     /// <summary>Adverb.</summary>
     Adverb = 3,
-    /// <summary>Pronomen.</summary>
+    /// <summary>Pronoun.</summary>
     Pronoun = 4,
-    /// <summary>Präposition.</summary>
+    /// <summary>Preposition.</summary>
     Preposition = 5,
-    /// <summary>Konjunktion.</summary>
+    /// <summary>Conjunction.</summary>
     Conjunction = 6,
-    /// <summary>Artikel.</summary>
+    /// <summary>Article.</summary>
     Article = 7,
-    /// <summary>Zahlwort.</summary>
+    /// <summary>Numeral.</summary>
     Numeral = 8,
-    /// <summary>Interjektion.</summary>
+    /// <summary>Interjection.</summary>
     Interjection = 9,
-    /// <summary>Mehrwortige Wendung („at the weekend") – bewusst keine einzelne Wortart.</summary>
+    /// <summary>Multi-word phrase ("at the weekend") – deliberately not a single part of speech.</summary>
     Phrase = 10,
-    /// <summary>Nicht bestimmt bzw. keine der übrigen Wortarten. Default beim Anlegen.</summary>
+    /// <summary>Not determined, or none of the other parts of speech. Default when creating.</summary>
     Other = 11,
 }
 
-/// <summary>Grammatisches Geschlecht eines Substantivs in der Zielsprache.</summary>
+/// <summary>Grammatical gender of a noun in the target language.</summary>
 public enum Genus
 {
-    /// <summary>Maskulin („der").</summary>
+    /// <summary>Masculine ("der").</summary>
     Masculine,
-    /// <summary>Feminin („die").</summary>
+    /// <summary>Feminine ("die").</summary>
     Feminine,
-    /// <summary>Neutrum („das").</summary>
+    /// <summary>Neuter ("das").</summary>
     Neuter,
 }
 
-/// <summary>Substantiv-spezifische Angaben.</summary>
+/// <summary>Noun-specific details.</summary>
 public class NounInfo
 {
-    /// <summary>Bestimmter Artikel in der Zielsprache (z. B. "der", "die", "das").</summary>
+    /// <summary>Definite article in the target language (e.g. "der", "die", "das").</summary>
     public string? Article { get; set; }
-    /// <summary>Grammatisches Geschlecht in der Zielsprache.</summary>
+    /// <summary>Grammatical gender in the target language.</summary>
     public Genus? Genus { get; set; }
-    /// <summary>Pluralform in der Zielsprache (z. B. "die Pferde").</summary>
+    /// <summary>Plural form in the target language (e.g. "die Pferde").</summary>
     public string? Plural { get; set; }
 }
 
-/// <summary>Verb-spezifische Angaben / Konjugations-Metadaten.</summary>
+/// <summary>Verb-specific details / conjugation metadata.</summary>
 public class VerbInfo
 {
-    /// <summary>true = Grundform (Infinitiv), false = flektierte Form.</summary>
+    /// <summary>true = base form (infinitive), false = inflected form.</summary>
     public bool IsBaseForm { get; set; }
-    /// <summary>Grundform, zu der diese Form gehört (z. B. "to go" bei "went").</summary>
+    /// <summary>Base form this form belongs to (e.g. "to go" for "went").</summary>
     public string? Infinitive { get; set; }
-    /// <summary>Zeitform der flektierten Form (z. B. "present", "past").</summary>
+    /// <summary>Tense of the inflected form (e.g. "present", "past").</summary>
     public string? Tense { get; set; }
-    /// <summary>Person (z. B. "1", "2", "3").</summary>
+    /// <summary>Person (e.g. "1", "2", "3").</summary>
     public string? Person { get; set; }
-    /// <summary>Numerus (z. B. "singular", "plural").</summary>
+    /// <summary>Number (e.g. "singular", "plural").</summary>
     public string? Number { get; set; }
 }

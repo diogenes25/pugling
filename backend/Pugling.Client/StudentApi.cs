@@ -1,24 +1,24 @@
 namespace Pugling.Client;
 
 /// <summary>
-/// Typisierter Zugriff auf die <b>Lesesichten</b> der Student-Ebene (<c>api/v1/student/…</c>): der
-/// plan-übergreifende Vokabel-Lernstand eines Kindes, sein Wort-Rollup und die katalog-hierarchische
-/// Drill-down-Sicht. Diese Endpunkte sind bewusst nur <c>[Authorize]</c> und trennen die Rollen inline –
-/// ein <b>Supervisor</b>-Konto darf den Stand seines Kindes also mitlesen. Genau darauf beruht die
-/// Schwächen-Analyse eines Agenten; das Spielen selbst (Üben/Test) bleibt außen vor.
+/// Typed access to the <b>read views</b> of the Student tier (<c>api/v1/student/…</c>): a child's
+/// cross-plan vocabulary learning state, their word rollup, and the catalog-hierarchical
+/// drill-down view. These endpoints are deliberately only <c>[Authorize]</c> and separate the roles inline –
+/// a <b>Supervisor</b> account may therefore also read its child's state. This is exactly what an agent's
+/// weakness analysis relies on; playing itself (practice/test) is out of scope here.
 /// </summary>
 public sealed class StudentApi(HttpClient http)
 {
     private const string Root = "api/v1/student";
 
-    /// <summary>Der zugrunde liegende HttpClient – Ausweg für Endpunkte, die (noch) keinen Wrapper haben.</summary>
+    /// <summary>The underlying HttpClient – an escape hatch for endpoints that don't (yet) have a wrapper.</summary>
     public HttpClient Http { get; } = http;
 
     // ---------------------------------------------------------------- Vokabel-Lernstand (flach)
 
     /// <summary>
-    /// Der Item-Lernstand eines Kindes über alle Lehrpläne hinweg. <paramref name="onlyWeak"/> liefert die
-    /// Wackelkandidaten (niedrige Box / schlechte Trefferquote) – die Grundlage für gezielte Förderübungen.
+    /// The item learning state of a child across all study plans. <paramref name="onlyWeak"/> returns the
+    /// shaky candidates (low box / poor hit rate) – the basis for targeted remedial exercises.
     /// </summary>
     public Task<IReadOnlyList<ItemProgressResponse>> ListVocabularyProgressAsync(int childId,
         int? exerciseId = null, int? maxBox = null, bool onlyWeak = false,
@@ -28,15 +28,15 @@ public sealed class StudentApi(HttpClient http)
                 ("skip", skip), ("take", take)), ct);
 
     /// <summary>
-    /// Der Lernstand je <b>Wort</b> (über alle Übungen aggregiert, die dieses Store-Wort nutzen) – die Sicht
-    /// „schlecht gelernte Wörter", weil dasselbe Wort in mehreren Übungen stecken kann.
+    /// The learning state per <b>word</b> (aggregated across all exercises using this store word) – the
+    /// "poorly learned words" view, because the same word can appear in multiple exercises.
     /// </summary>
     public Task<IReadOnlyList<WordMasteryResponse>> ListWordMasteryAsync(int childId, bool onlyWeak = false,
         int skip = 0, int take = 50, CancellationToken ct = default) =>
         Http.GetAsync<IReadOnlyList<WordMasteryResponse>>($"{Root}/children/{childId}/vocabulary-progress/by-word"
             + PuglingHttp.Query(("onlyWeak", onlyWeak), ("skip", skip), ("take", take)), ct);
 
-    /// <summary>Die Antwort-Historie eines Items (was wurde wann wie beantwortet).</summary>
+    /// <summary>The answer history of an item (what was answered when and how).</summary>
     public Task<IReadOnlyList<HistoryResponse>> ListItemHistoryAsync(int childId, int itemId,
         int skip = 0, int take = 50, CancellationToken ct = default) =>
         Http.GetAsync<IReadOnlyList<HistoryResponse>>($"{Root}/children/{childId}/vocabulary-progress/{itemId}/history"
@@ -45,8 +45,8 @@ public sealed class StudentApi(HttpClient http)
     // ---------------------------------------------------------------- Lernstand entlang des Katalogs
 
     /// <summary>
-    /// Die für das Kind relevanten Fächer mit aggregiertem Fortschritt. <paramref name="active"/> unterscheidet
-    /// aktuell zugewiesene von nur noch historischen Inhalten.
+    /// The subjects relevant to the child with aggregated progress. <paramref name="active"/> distinguishes
+    /// currently assigned content from purely historical content.
     /// </summary>
     public Task<IReadOnlyList<SubjectProgressResponse>> ListSubjectProgressAsync(int childId,
         string? search = null, bool? active = null, string? sort = null, string? dir = null,
@@ -55,7 +55,7 @@ public sealed class StudentApi(HttpClient http)
             + PuglingHttp.Query(("search", search), ("active", active), ("sort", sort), ("dir", dir),
                 ("skip", skip), ("take", take)), ct);
 
-    /// <summary>Die Kapitel eines Fachs mit aggregiertem Fortschritt.</summary>
+    /// <summary>The chapters of a subject with aggregated progress.</summary>
     public Task<IReadOnlyList<ChapterProgressResponse>> ListChapterProgressAsync(int childId, int subjectId,
         string? search = null, bool? active = null, string? sort = null, string? dir = null,
         int skip = 0, int take = 50, CancellationToken ct = default) =>
@@ -63,7 +63,7 @@ public sealed class StudentApi(HttpClient http)
             + PuglingHttp.Query(("search", search), ("active", active), ("sort", sort), ("dir", dir),
                 ("skip", skip), ("take", take)), ct);
 
-    /// <summary>Die Vokabelübungen eines Kapitels mit dem Fortschritt des Kindes je Übung.</summary>
+    /// <summary>The vocabulary exercises of a chapter with the child's progress per exercise.</summary>
     public Task<IReadOnlyList<ExerciseProgressResponse>> ListExerciseProgressAsync(int childId, int subjectId,
         int chapterId, string? search = null, bool? active = null, string? sort = null, string? dir = null,
         int skip = 0, int take = 50, CancellationToken ct = default) =>
@@ -73,8 +73,8 @@ public sealed class StudentApi(HttpClient http)
                 ("skip", skip), ("take", take)), ct);
 
     /// <summary>
-    /// „Anderes Bild": lehnt die eingefrorene Bildwahl eines Trägers ab und zieht neu. Ohne Alternative
-    /// bleibt der Bestand unverändert (<c>409 media_no_alternative</c>) statt die Karte bildlos zu machen.
+    /// "Different image": rejects the frozen image choice of a carrier and redraws. Without an alternative
+    /// the existing choice remains unchanged (<c>409 media_no_alternative</c>) instead of making the card imageless.
     /// </summary>
     public Task<SelectedMediaResponse> ReshuffleMediaAsync(int childId, ReshuffleMediaDto dto,
         CancellationToken ct = default) =>

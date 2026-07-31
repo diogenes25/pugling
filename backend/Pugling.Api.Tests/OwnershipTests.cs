@@ -5,10 +5,10 @@ using Pugling.Api.Models;
 
 namespace Pugling.Api.Tests;
 
-/// <summary>Integrationstests für Rollen- und Eigentumsgrenzen (IDOR-Regressionsschutz).</summary>
+/// <summary>Integration tests for role and ownership boundaries (IDOR regression protection).</summary>
 public class OwnershipTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWebAppFactory>
 {
-    /// <summary>Registriert (anonym) einen zweiten Vater und liefert dessen Id.</summary>
+    /// <summary>Registers (anonymously) a second father and returns his id.</summary>
     private async Task<int> RegisterFatherAsync(string pin)
     {
         var res = await factory.CreateClient().PostAsJsonAsync("/api/v1/supervisor/adults", new { name = "Papa2", pin });

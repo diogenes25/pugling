@@ -4,16 +4,16 @@ using Pugling.Api.Models;
 namespace Pugling.Api.Controllers.Creator;
 
 /// <summary>
-/// Bildet Katalog-Übungen auf den Vertrags-Record <see cref="ExerciseBrief"/> ab. Der Record selbst
-/// lebt im Vertrags-Projekt (Pugling.Contracts.Creator) – hier bleibt allein die Entity-Kenntnis.
+/// Maps catalog exercises onto the contract record <see cref="ExerciseBrief"/>. The record itself
+/// lives in the contracts project (Pugling.Contracts.Creator) – only the entity knowledge stays here.
 /// </summary>
 public static class ExerciseBriefMapping
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
     /// <summary>
-    /// Bildet eine Übung ab. Erwartet, dass <see cref="Exercise.Chapter"/> und dessen
-    /// <see cref="Chapter.Subject"/> geladen sind (Include), sonst bleiben die Namen leer.
+    /// Maps an exercise. Expects <see cref="Exercise.Chapter"/> and its
+    /// <see cref="Chapter.Subject"/> to be loaded (Include), otherwise the names stay empty.
     /// </summary>
     public static ExerciseBrief From(Exercise e) => new(
         e.Id,

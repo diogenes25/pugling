@@ -5,21 +5,21 @@ using Pugling.Client;
 namespace Pugling.Agent.Creator;
 
 /// <summary>
-/// Die Verben der Konsolen-App. Bewusst dünn: Argumente auflösen, die Pipeline rufen, das Ergebnis
-/// verständlich ausgeben – die Fachlogik liegt in <see cref="CreatorPipeline"/>, <see cref="ExamPlanner"/>
-/// und den Strategien.
+/// The verbs of the console app. Deliberately thin: resolve arguments, call the pipeline, print the
+/// result in an understandable way - the domain logic lives in <see cref="CreatorPipeline"/>, <see cref="ExamPlanner"/>
+/// and the strategies.
 /// </summary>
 public sealed class AgentCommands(CreatorApi creator, CreatorPipeline pipeline, ExamPlanner exams)
 {
-    /// <summary>Standardwerte des Auftrags, wenn die Kommandozeile schweigt.</summary>
+    /// <summary>Default values for the request when the command line is silent.</summary>
     private const int DefaultItemCount = 10;
     private const int DefaultRewardPoints = 10;
     private const int DefaultExamPerType = 6;
 
-    /// <summary>Die Typen, aus denen eine Klausur besteht, wenn keine genannt sind.</summary>
+    /// <summary>The types a class test consists of when none are named.</summary>
     private static readonly string[] DefaultExamTypes = ["Vocabulary", "Cloze", "Grammar"];
 
-    /// <summary>Führt das gewählte Verb aus und liefert den Exit-Code.</summary>
+    /// <summary>Executes the chosen verb and returns the exit code.</summary>
     public async Task<int> RunAsync(CommandLine command, CancellationToken ct)
     {
         switch (command.Verb.ToLowerInvariant())
@@ -45,7 +45,7 @@ public sealed class AgentCommands(CreatorApi creator, CreatorPipeline pipeline, 
         }
     }
 
-    /// <summary>Das Typ-Manifest des Servers – und welche Typen der Agent davon selbst erzeugt.</summary>
+    /// <summary>The server's type manifest - and which of those types the agent can generate itself.</summary>
     private async Task ShowTypesAsync(CancellationToken ct)
     {
         var manifest = await creator.GetExerciseTypesAsync(ct);
@@ -59,8 +59,8 @@ public sealed class AgentCommands(CreatorApi creator, CreatorPipeline pipeline, 
     }
 
     /// <summary>
-    /// Die Creator-Profile. Mit <c>--child</c> in der Reihenfolge ihrer Passung samt Begründung – das ist
-    /// die Antwort auf „welcher Lehrer kennt den Stoff dieses Kindes?".
+    /// The creator profiles. With <c>--child</c>, in order of their fit plus a rationale - that is
+    /// the answer to "which teacher knows this child's material?".
     /// </summary>
     private async Task ShowProfilesAsync(CommandLine command, CancellationToken ct)
     {
@@ -97,7 +97,7 @@ public sealed class AgentCommands(CreatorApi creator, CreatorPipeline pipeline, 
                               + $"{Grades(profile),-10} {profile.SeriesName ?? "(werkunabhängig)"}");
     }
 
-    /// <summary>Zeigt, worauf der Agent die Übung zuschneiden würde – ohne Sprachmodell.</summary>
+    /// <summary>Shows what the agent would tailor the exercise to - without a language model.</summary>
     private async Task ShowBriefingAsync(CommandLine command, CancellationToken ct)
     {
         var request = await BuildRequestAsync(command, typeRequired: false, ct);
@@ -105,7 +105,7 @@ public sealed class AgentCommands(CreatorApi creator, CreatorPipeline pipeline, 
         Console.WriteLine(briefing.ToPromptText());
     }
 
-    /// <summary>Erzeugt eine Übung (oder plant sie im Trockenlauf) und berichtet das Ergebnis.</summary>
+    /// <summary>Generates an exercise (or plans it as a dry run) and reports the result.</summary>
     private async Task<int> CreateAsync(CommandLine command, CancellationToken ct)
     {
         var request = await BuildRequestAsync(command, typeRequired: true, ct);
@@ -126,8 +126,8 @@ public sealed class AgentCommands(CreatorApi creator, CreatorPipeline pipeline, 
     }
 
     /// <summary>
-    /// Erzeugt eine Übungsklausur: mehrere Übungen zum selben Stoff und – mit Kind – die geplante
-    /// Klassenarbeit dazu.
+    /// Generates an exercise-based class test: several exercises on the same material and - with a
+    /// child given - the planned class test to go with them.
     /// </summary>
     private async Task<int> ExamAsync(CommandLine command, CancellationToken ct)
     {
@@ -172,7 +172,7 @@ public sealed class AgentCommands(CreatorApi creator, CreatorPipeline pipeline, 
         return 1;
     }
 
-    /// <summary>Die gemeinsame Ergebnis-Ausgabe eines einzelnen Übungslaufs.</summary>
+    /// <summary>The shared result output of a single exercise run.</summary>
     private static int Report(GenerationOutcome outcome, bool dryRun)
     {
         if (!outcome.DraftAccepted)
@@ -214,9 +214,10 @@ public sealed class AgentCommands(CreatorApi creator, CreatorPipeline pipeline, 
     }
 
     /// <summary>
-    /// Baut den Auftrag aus der Kommandozeile. Entweder <c>--child</c> (individuell) oder <c>--profile</c>
-    /// (allgemein) muss dastehen – ohne beides fehlte sowohl die Zielgruppe als auch das Fachwissen.
-    /// Fach und Kapitel dürfen fehlen: dann zählt das Fach des Profils, sonst das erste Fach mit Kapitel.
+    /// Builds the request from the command line. Either <c>--child</c> (individual) or <c>--profile</c>
+    /// (general) must be present - without either, both the target audience and the subject knowledge
+    /// would be missing. Subject and chapter may be omitted: then the profile's subject applies, otherwise
+    /// the first subject with a chapter.
     /// </summary>
     private async Task<GenerationRequest> BuildRequestAsync(CommandLine command, bool typeRequired, CancellationToken ct)
     {
@@ -249,7 +250,7 @@ public sealed class AgentCommands(CreatorApi creator, CreatorPipeline pipeline, 
             Strict: command.Flag("strict"));
     }
 
-    /// <summary>Lädt das genannte Profil – nur, um sein Fach als Vorgabe für den Katalog-Ort zu kennen.</summary>
+    /// <summary>Loads the named profile - only to know its subject as a default for the catalog location.</summary>
     private async Task<CreatorProfileResponse?> LoadProfileAsync(int profileId, CancellationToken ct)
     {
         try
@@ -296,7 +297,7 @@ public sealed class AgentCommands(CreatorApi creator, CreatorPipeline pipeline, 
             : "Es gibt kein Fach mit Kapitel – lege erst Katalog-Struktur an oder gib --subject und --chapter an.");
     }
 
-    /// <summary>Termin-Option im ISO-Format; ein Tippfehler soll eine Meldung geben, kein Datum von heute.</summary>
+    /// <summary>Date option in ISO format; a typo should produce an error message, not today's date.</summary>
     private static DateOnly? ParseDate(CommandLine command, string name) =>
         command.Value(name) is { Length: > 0 } raw
             ? DateOnly.TryParse(raw, CultureInfo.InvariantCulture, out var date)
@@ -304,7 +305,7 @@ public sealed class AgentCommands(CreatorApi creator, CreatorPipeline pipeline, 
                 : throw new AgentUsageException($"--{name} erwartet ein Datum als JJJJ-MM-TT, bekam '{raw}'.")
             : null;
 
-    /// <summary>Übersetzt die stabilen Begründungs-Codes des Servers in einen lesbaren Satz.</summary>
+    /// <summary>Translates the server's stable rationale codes into a readable sentence.</summary>
     private static string Describe(IReadOnlyList<string> reasons) => reasons.Count == 0
         ? "(nur allgemein passend)"
         : string.Join(", ", reasons.Select(r => r switch
@@ -316,7 +317,7 @@ public sealed class AgentCommands(CreatorApi creator, CreatorPipeline pipeline, 
             _ => r,
         }));
 
-    /// <summary>Der Klassenstufen-Bereich eines Profils in Kurzform.</summary>
+    /// <summary>A profile's grade range in short form.</summary>
     private static string Grades(CreatorProfileResponse profile) => (profile.GradeMin, profile.GradeMax) switch
     {
         ({ } min, { } max) when min == max => $"Klasse {min}",
@@ -326,7 +327,7 @@ public sealed class AgentCommands(CreatorApi creator, CreatorPipeline pipeline, 
         _ => "alle Klassen",
     };
 
-    /// <summary>Kurzhilfe.</summary>
+    /// <summary>Short help text.</summary>
     public static void PrintUsage() => Console.WriteLine("""
         pugling-creator – erzeugt Pugling-Übungen mit einem lokalen Sprachmodell (Ollama).
 

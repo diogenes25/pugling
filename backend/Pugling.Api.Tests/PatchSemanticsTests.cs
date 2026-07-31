@@ -6,42 +6,42 @@ using System.Text.Json.Nodes;
 namespace Pugling.Api.Tests;
 
 /// <summary>
-/// Der PATCH-Semantik-Wächter aus docs/codequalitaet-gates-plan.md (C2) – für <b>jedes</b>
-/// <c>Update…Dto</c> des Vertrags, nicht für eine Handvoll Beispiele.
+/// The PATCH semantics guard from docs/codequalitaet-gates-plan.md (C2) - for <b>every</b>
+/// <c>Update…Dto</c> of the contract, not just a handful of examples.
 /// <para>
-/// Zwei Regeln, mechanisch festgenagelt:
+/// Two rules, mechanically pinned down:
 /// </para>
 /// <list type="number">
-/// <item><b><c>null</c> heißt „nicht angegeben"</b> – ein Feld setzen, dann mit <c>null</c> nachfassen:
-/// der Wert bleibt. Reißt diese Regel, überschreibt jedes Formular, das ein Feld nicht ausfüllt, still den
-/// Bestand.</item>
-/// <item><b>Der <c>Clear…</c>-Schalter leert – und gewinnt.</b> Schickt eine Oberfläche Wert <em>und</em>
-/// Schalter (das „– keine Angabe –" eines Auswahlfelds neben dem alten Wert), muss „leeren" gewinnen. Sonst
-/// meldet sie „Gespeichert." und der alte Wert steht weiter da.</item>
+/// <item><b><c>null</c> means "not specified"</b> - set a field, then follow up with <c>null</c>:
+/// the value stays. If this rule breaks, any form that leaves a field blank silently overwrites the
+/// existing data.</item>
+/// <item><b>The <c>Clear…</c> switch clears - and wins.</b> If a UI sends both a value <em>and</em>
+/// the switch (the "- no value -" of a select field next to the old value), "clear" must win. Otherwise
+/// it reports "Saved." and the old value stays put.</item>
 /// </list>
 /// <para>
-/// Die Vollständigkeit ist selbst geprüft: <see cref="Jedes_UpdateDto_Ist_Belegt"/> und
-/// <see cref="Jeder_ClearSchalter_Ist_Belegt"/> vergleichen die Falltabelle reflexiv mit dem Vertrag. Ein
-/// neues <c>Update…Dto</c> oder ein neuer Schalter macht diesen Test rot, bis ein Fall dazukommt – die
-/// Regel bleibt damit auch dann gedeckt, wenn niemand an diese Datei denkt.
+/// Completeness is itself checked: <see cref="Jedes_UpdateDto_Ist_Belegt"/> and
+/// <see cref="Jeder_ClearSchalter_Ist_Belegt"/> compare the case table reflectively against the contract. A
+/// new <c>Update…Dto</c> or a new switch turns this test red until a case is added - the
+/// rule stays covered even if nobody thinks of this file.
 /// </para>
 /// <para>
-/// Fachlich zugespitzte Einzelfälle (etwa „die Unit fällt mit der Reihe weg") stehen weiterhin in
-/// <see cref="PatchClearFieldTests"/>; hier geht es um die Fläche.
+/// Domain-specific individual cases (e.g. "the unit disappears along with the series") still live in
+/// <see cref="PatchClearFieldTests"/>; this file is about the surface as a whole.
 /// </para>
 /// </summary>
 public class PatchSemanticsTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWebAppFactory>
 {
     // ─────────────────────────────────────────────────────────────────── Die Fläche
 
-    /// <summary>Ein <c>Clear…</c>-Schalter und das Feld, das er leert (die Zuordnung ist nicht ableitbar:
-    /// <c>clearSubject</c> leert <c>subjectId</c>, <c>clearUnit</c> leert <c>currentUnitId</c>).</summary>
+    /// <summary>A <c>Clear…</c> switch and the field it clears (the mapping cannot be inferred:
+    /// <c>clearSubject</c> clears <c>subjectId</c>, <c>clearUnit</c> clears <c>currentUnitId</c>).</summary>
     private sealed record Schalter(string Name, string Feld);
 
-    /// <summary>Wohin gepatcht wird – und wo der Stand zu lesen ist, falls die PATCH-Antwort das Feld nicht zeigt.</summary>
+    /// <summary>Where the patch goes - and where to read the state back if the PATCH response doesn't show the field.</summary>
     private sealed record Ziel(HttpClient Client, string PatchUrl, string? LeseUrl = null);
 
-    /// <summary>Eine patchbare Ressource: Anlage, das Feld für den Rundlauf und die Schalter.</summary>
+    /// <summary>A patchable resource: how to create it, the field for the round trip, and the switches.</summary>
     private sealed record Fall(
         Type UpdateDto,
         string Feld,
@@ -50,7 +50,7 @@ public class PatchSemanticsTests(PuglingWebAppFactory factory) : IClassFixture<P
         Schalter[] Schalter);
 
     /// <summary>
-    /// Update-DTOs ohne Rundlauf – <b>kein</b> Sammelbecken, jeder Eintrag trägt seinen Grund.
+    /// Update DTOs without a round trip - <b>not</b> a catch-all, every entry carries its reason.
     /// </summary>
     private static readonly Dictionary<string, string> Ausnahmen = new(StringComparer.Ordinal)
     {
@@ -434,12 +434,12 @@ public class PatchSemanticsTests(PuglingWebAppFactory factory) : IClassFixture<P
     }
 
     /// <summary>
-    /// Alle Teil-Update-Verträge des Projekts.
+    /// All partial update contracts of the project.
     /// <para>
-    /// <b>Beide</b> Namensformen, und das ist keine Bequemlichkeit: der Vertrag nennt die Ziel-Ebene
-    /// <c>UpdateObjectiveRequest</c>/<c>UpdateKeyResultRequest</c>/<c>UpdateLearnGoalRequest</c>, alles
-    /// andere <c>Update…Dto</c>. Eine Prüfung nur auf <c>…Dto</c> hätte diese vier stillschweigend
-    /// ausgelassen – ein Wächter mit blindem Fleck ist schlimmer als keiner, weil er Deckung behauptet.
+    /// <b>Both</b> naming forms, and that's not a convenience: the target-tier contract names
+    /// <c>UpdateObjectiveRequest</c>/<c>UpdateKeyResultRequest</c>/<c>UpdateLearnGoalRequest</c>, everything
+    /// else <c>Update…Dto</c>. Checking only for <c>…Dto</c> would have silently skipped these four -
+    /// a guard with a blind spot is worse than none, because it claims coverage it doesn't have.
     /// </para>
     /// </summary>
     private static IEnumerable<Type> UpdateDtos() =>
@@ -452,8 +452,8 @@ public class PatchSemanticsTests(PuglingWebAppFactory factory) : IClassFixture<P
     // ─────────────────────────────────────────────────────────────────── Hilfsmittel
 
     /// <summary>
-    /// Patcht und liefert den Stand danach. Ein <c>PATCH</c> mit leerem Rumpf ist dabei zugleich das
-    /// Lesewerkzeug – er ändert nach der null-Semantik nichts und braucht keine eigene GET-Route.
+    /// Patches and returns the state afterwards. A <c>PATCH</c> with an empty body doubles as the
+    /// read tool - per null semantics it changes nothing and needs no dedicated GET route.
     /// </summary>
     private static async Task<JsonElement> PatchAsync(Ziel ziel, JsonObject body)
     {
@@ -471,9 +471,9 @@ public class PatchSemanticsTests(PuglingWebAppFactory factory) : IClassFixture<P
     }
 
     /// <summary>
-    /// Der Name des Eingabefelds im Update-DTO, das denselben Wert setzt – oder <c>null</c>, wenn es keines
-    /// gibt (dann ist das Feld per PATCH nur leerbar). Verglichen wird der erste Pfadabschnitt: ein Feld
-    /// unterhalb von <c>context</c> hat im DTO ohnehin kein Gegenstück.
+    /// The name of the input field in the update DTO that sets the same value - or <c>null</c> if there is
+    /// none (then the field can only be cleared via PATCH). What's compared is the first path segment: a field
+    /// nested under <c>context</c> has no counterpart in the DTO anyway.
     /// </summary>
     private static string? Eingabefeld(Type updateDto, string feldPfad)
     {
@@ -484,7 +484,7 @@ public class PatchSemanticsTests(PuglingWebAppFactory factory) : IClassFixture<P
         return parameter is null || feldPfad.Contains('.') ? null : Camel(parameter.Name!);
     }
 
-    /// <summary>Liest ein Feld, auch verschachtelt (<c>context.childId</c>).</summary>
+    /// <summary>Reads a field, including nested ones (<c>context.childId</c>).</summary>
     private static JsonNode? Lesen(JsonElement wurzel, string pfad)
     {
         var knoten = JsonNode.Parse(wurzel.GetRawText());
@@ -513,7 +513,7 @@ public class PatchSemanticsTests(PuglingWebAppFactory factory) : IClassFixture<P
         await TestApi.IdAsync(await creator.PostAsJsonAsync("/api/v1/creator/media",
             new { description = "Ein Pferd", key = Eindeutig("m") }));
 
-    /// <summary>Kind + Objective mit einer Etappe – die Ziel-Ebene braucht beide Ids.</summary>
+    /// <summary>Child + objective with one key result - the target tier needs both ids.</summary>
     private static async Task<(int ChildId, int KeyResultId, int ObjectiveId)> NeuesObjectiveAsync(HttpClient supervisor)
     {
         var childId = await NeuesKindAsync(supervisor);
@@ -532,7 +532,7 @@ public class PatchSemanticsTests(PuglingWebAppFactory factory) : IClassFixture<P
             objective.GetProperty("id").GetInt32());
     }
 
-    /// <summary>Registriert einen eigenen Erwachsenen und meldet ihn an – für die Fälle, die sich selbst ändern.</summary>
+    /// <summary>Registers its own adult and logs them in - for the cases that modify themselves.</summary>
     private static async Task<(HttpClient Client, int Id)> NeuerErwachsenerAsync(PuglingWebAppFactory f, string? email = null)
     {
         var id = await TestApi.IdAsync(await f.CreateClient().PostAsJsonAsync("/api/v1/supervisor/adults",

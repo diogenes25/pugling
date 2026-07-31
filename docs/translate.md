@@ -1,5 +1,5 @@
 ---
-tags: [typ/plan, bereich/doku, status/offen]
+tags: [typ/plan, bereich/doku, status/laufend]
 aliases: [Übersetzung XML-Docs, Doku auf Englisch, Glossar Übersetzung]
 ---
 
@@ -8,6 +8,19 @@ aliases: [Übersetzung XML-Docs, Doku auf Englisch, Glossar Übersetzung]
 > **Lebendes Nachschlagewerk, kein Wegwerf-Plan.** Diese Seite trägt Glossar und Fortschritt der gesamten
 > Übersetzungsarbeit. Jeder Übersetzungs-Agent bekommt den Abschnitt „Glossar" im Prompt mit; gepflegt wird
 > er **nur hier** und **nur von der steuernden Sitzung** (siehe Entscheidung 4).
+
+## Ausführung: eigener Branch, DB-Layer ausgeklammert
+
+Die Arbeit läuft auf Branch **`docs/xml-docs-englisch`** in einem eigenen Worktree
+(`.claude/worktrees/xml-docs-englisch`), abgezweigt vom damaligen `db-struktur-umbau`-HEAD. Grund: eine
+**parallele Sitzung arbeitet im Haupt-Worktree am DB-Layer** – ein Branch-Wechsel dort hätte ihr den Boden
+weggezogen.
+
+Daraus folgt der wichtigste Scope-Schnitt dieser Umsetzung: **`backend/Pugling.Api/Models/` und
+`backend/Pugling.Api/Data/` bleiben unübersetzt** (398 der 1266 `<summary>` in `Pugling.Api`), damit
+in den Dateien, die die parallele Sitzung umbaut, keine Merge-Konflikte entstehen. Beide Ordner sind von
+`CS1591` ohnehin freigestellt (`.editorconfig`) – sie fließen nicht in Swagger. **Sie sind damit eine
+offene Nachetappe**, sobald der DB-Umbau durch ist (siehe Fortschritts-Tabelle, Etappe 7).
 
 ## Warum
 
@@ -53,6 +66,69 @@ Bedeutung am Code ausrichten, nicht Wort für Wort übersetzen.
 | „Vater" (wirklich der Vater) | **father** | Bleibt richtig, wo ein Vater gemeint ist (`SupervisorRelation.Father`). |
 | „Fahrplan" / „Lehrplan" | **study plan** | Beide Wörter stehen im Fließtext für `StudyPlan` – einheitlich auflösen. |
 | „Klassenarbeit" | **class test** | Deckt sich mit `api/v1/supervisor/class-tests`, `ClassTestGrade`. |
+| „nur Vater" / „als Vater" (Berechtigung) | **supervisor only** / **as the supervisor** | Gegated wird auf `Roles.Supervisor`, nicht auf die Verwandtschaft. |
+| „Buchung" (Punkte/Wallet) | **ledger entry** | `PointLedger`; „booking" wäre im Shop-Kontext irreführend. |
+| „Beherrschung" | **mastery** | |
+| „Leitner-Stufe" / „Box" | **Leitner box** | Ein Begriff für beides, `BoxIntervalDays`. |
+| „Pflichtziel" | **mandatory goal** | Der „Stick" hängt daran (`PenaltyCoins`). |
+| „Übersteuerung" (Bild) | **override** | Positions-Bild schlägt Store-Bild. |
+| „Reihe" (Buchreihe) | **series** | `Textbook`/Units. |
+| „Einlösung" | **redemption** | Ausstellergebunden (`SupervisorId`). |
+| „Wächter" (Konventionstest) | **guard** | `ConventionGuardTests`. |
+| „Tor" (Qualitätstor) | **gate** | Test-Gate/CI. |
+| Anführungszeichen „…" | **"…"** | Deutsche Zitatzeichen werden gerade. |
+
+Im Verlauf entschieden (gemeldet von den Übersetzungs-Agenten, hier zentral festgelegt):
+
+| Deutsch | Englisch | Anmerkung |
+|---|---|---|
+| „Etappe" / `KeyResult` im Fließtext | **milestone** | Der **Codetyp bleibt `KeyResult`**; „milestone" ist die Prosa-Form und im Baum durchgängig. |
+| Schularten („Hauptschule", „Realschule", „Gymnasium") | **Umschreibung + deutscher Begriff in Klammern**, z. B. „Lower secondary school (Hauptschule)" | Es gibt kein 1:1-Äquivalent; die **Enum-Werte bleiben deutsch**. |
+| „Fachlehrer" | **subject teacher** | Creator-Profil. |
+| „Ausspiel-Modus" / „Ausspiel-Reihenfolge" | **playback mode** / **play-out order** | `PracticeOrder`. |
+| „Klausur-Modus" | **class-test mode** | |
+| „Kaufbuchung" | **purchase entry** | Ledger-Sinn, passend zu ledger entry. |
+| „Auffüll-Regel" | **refill rule** | |
+| „Wiedervorlage" | **review** / **review scheduling** | Leitner. |
+| „redaktioneller Rang" | **editorial rank** | Medien-Verknüpfung. |
+| „Existenzprüfung" | **existence check** | Vokabelspeicher. |
+| „Rechenart" | **operation type** | |
+| „Glosse" | **gloss** | Deckt sich mit der Property `Gloss` (Birkenbihl). |
+| „Wort-Oberfläche" | **surface form** | Birkenbihl-Token. |
+| „Freigeben" / „Zurückziehen" (Übung teilen) | **publish** / **withdraw** | |
+| „Träger" (Medien-Verknüpfung) | **carrier** | |
+| „Notnagel" | **stopgap** | |
+| „Merkeffekt" | **retention effect** | |
+| „Bildkonstanz" | **image constancy** | Anti-Cheat bei Bildwahlen. |
+| „Blatt-Guard" | **leaf guard** | |
+| „Zielstatus" | **goal status** | |
+| „Genauigkeits-Kaskade" | **specificity cascade** | |
+| „verfahrensneutral" | **type-agnostic** | |
+| „Vater-Konto" (im Kontrast zum Lehrer-Konto) | **father account** | Hier **bewusst wörtlich**: die Stelle stellt ein reines Lehrer-Konto einem echten Vater-Konto gegenüber – „supervisor" würde den Gegensatz einziehen. |
+| Schulnoten („mindestens 2,0") | **at least 2.0** | Die deutsche 1–6-Skala bleibt als Konvention stehen. |
+| „Darstellung" (Medien) | **asset** | Passt zu `MediaAssetResponse`. |
+| „Ergebnisziel" / „Beherrschungsziel" | **outcome goal** / **mastery goal** | Lernziele. |
+| „Regelzuordnung" (Bild↔Vokabel) | **default assignment** | |
+| „übungslokale Übersteuerung" | **exercise-local override** | |
+| „Wackelkandidat" | **shaky candidate** | |
+| „Sicherheitsabstand" (Token-Refresh) | **safety margin** | |
+| „Ablenker" (Wortbank/MC) | **distractor** | |
+| „Lücke" (einzelne) | **gap** | Der Übungstyp bleibt **cloze**. |
+| „Herkunftsnotiz" | **provenance note** | |
+| „Reparatur-Runde" | **repair round** | KI-Creator-Pipeline. |
+| „Trockenlauf" | **dry run** | |
+| „Selbsttest" | **self-test** | |
+| „Merkhinweis" / „Eselsbrücke" | **memory aid** / **mnemonic** | |
+| „Regelverstoß" | **rule violation** | |
+| „Fachlogik" | **domain logic** | |
+| „Katalog-Ort" | **catalog location** | |
+| „Grundform" | **base form** | |
+| „Break-Glass" | **break-glass** | Etablierter Begriff, bleibt. |
+| „Sichtbarkeitstrennung" | **visibility separation** | |
+| „Wegwerf-Konto" / „Wegwerf-Ordner" | **throwaway account** / **disposable folder** | Tests. |
+| „Ausspielung" | **delivery** | Ergänzt „playback mode". |
+| „Sammelbecken" | **catch-all** | |
+| „Selbstauskunft" (`/auth/me`) | **self-info lookup** | |
 
 Weitere Begriffe entstehen im Verlauf und werden hier nachgetragen (Entscheidung 4).
 
@@ -117,13 +193,53 @@ Jede Etappe = eigener Commit-Kandidat, nach Review stoppbar. Reihenfolge ist bew
 
 | # | Etappe | Umfang | Stand | Belege |
 |---|---|---|---|---|
-| 0 | Mechanischer Regex-Vorlauf (alle 5 Projekte) | – | offen | |
-| 1 | `Pugling.Contracts` – prägt das Glossar | 492 summaries + 181 params | offen | |
-| 2 | `Pugling.Api` – in 2–3 große Blöcke | 1260 summaries | offen | |
-| 3 | `Pugling.Client` | 181 summaries | offen | |
-| 4 | `Pugling.Agent.Creator` | 127 summaries | offen | |
-| 5 | `Pugling.Api.Tests` | 243 summaries | offen | |
-| 6 | Konventionszeile in den `CLAUDE.md` umstellen | 4 Dateien | offen | |
+| 0 | Mechanischer Regex-Vorlauf (alle 5 Projekte) | 24 Regeln | **durch** | 320 Ersetzungen in 110 Dateien; Diff enthält ausschließlich `///`-Zeilen (geprüft) |
+| 1 | `Pugling.Contracts` – prägt das Glossar | 487 summaries | **durch** | 47 Dateien, 881 Zeilen; `<summary>`/`<param>` je Datei unverändert |
+| 2 | `Pugling.Api` **ohne `Models/` + `Data/`** – 4 Blöcke | 868 summaries | **durch** | Controllers/Creator 24 Dat., Supervisor 14, Student 10, Controllers-Wurzel 5, Services 34, Auth 8, Errors 7, Exercises 5, OpenApi 3 |
+| 3 | `Pugling.Client` | 181 summaries | **durch** | 11 Dateien, 258 Zeilen, 181→181 `<summary>` |
+| 4 | `Pugling.Agent.Creator` | 127 summaries | **durch** | 21 Dateien; deutsche LLM-Prompt-Strings unangetastet |
+| 5 | `Pugling.Api.Tests` | 272 summaries | **durch** | 88 Dateien; −7 Zeilen = gekürzte Änderungshistorie in `TestApi.cs` (Entscheidung 2) |
+| 6 | Konventionszeile in den `CLAUDE.md` umstellen | 2 Stellen | **durch** | `CLAUDE.md` („XML-Doku auf Englisch") + `Pugling.Contracts/CLAUDE.md`; `Client`/`Agent.Creator` nennen keine Doku-Sprache |
+| 7 | **Nachetappe:** `Pugling.Api/Models/` + `Data/` | 398 summaries | zurückgestellt | bewusst ausgeklammert, solange die parallele Sitzung am DB-Layer arbeitet |
+
+**Gesamtstand:** 278 `.cs`-Dateien, 4210 Zeilen ersetzt (Zeilenzahl netto unverändert). Verifiziert im Worktree:
+`dotnet build Pugling.sln -c Release` grün (0 Warnungen), `dotnet test Pugling.sln -c Release` **604/604 grün**,
+`dotnet format Pugling.sln --verify-no-changes` ohne Befund, und im gesamten Diff **keine einzige
+Nicht-`///`-Zeile**.
+
+## Fallstricke (beim Umsetzen aufgelaufen)
+
+- **`>` ist in XML-Docs erlaubt, `<` nicht.** Ein „(goal: >= target value)" ging durch, das passende
+  „<= " brach den Build mit **CS1570** („badly formed XML"). In Doku-Text also `&lt;`/`&gt;` oder die
+  Zeichen `≥`/`≤` – letztere standen im deutschen Original ohnehin. Das Tor greift: `TreatWarningsAsErrors`
+  macht CS1570 zum Fehler, ein Übersetzungsfehler dieser Art kommt nie unbemerkt durch.
+- **PowerShells `-ne` vergleicht Strings case-insensitiv.** Im Vorlauf-Skript wurden dadurch die rein
+  groß-/kleinschreibenden Regeln (`(Paging)` → `(paging)`, `(Default)` → `(default)`) still verworfen –
+  Trefferzähler 0, obwohl `grep` die Stellen fand. `-cne` erzwingt den zeichengenauen Vergleich.
+- **Übersetzungs-Agenten rutschen in `//`-Kommentare.** Drei von acht Blöcken haben benachbarte
+  Inline-Kommentare mitübersetzt (zwei fielen es selbst auf und nahmen es zurück; in `Auth/`, `Errors/`
+  und `Controllers/ApiRoutes.cs` blieben 35 Zeilen stehen und wurden zentral zurückgesetzt). Die
+  Gegenprobe ist billig und **gehört nach jedem Block** gefahren – sie zählt je Datei die geänderten
+  Zeilen, die *kein* `///` tragen:
+  `for f in $(git diff --name-only -- '*.cs'); do git diff -U0 -- "$f" | grep '^[+-]' | grep -v '^\(+++\|---\)' | grep -vc '///'; done`
+- **Zwei Blöcke erfinden zwei Wörter für denselben Begriff.** „Genauigkeits-Kaskade" wurde einmal
+  *accuracy*, einmal *specificity cascade*; „Fachlehrer" einmal *subject-matter teacher*. Darum meldet
+  jeder Agent neue Begriffe nur, und die **Entscheidung fällt zentral** (Entscheidung 4) – mit einem
+  `grep`-Abgleich der konkurrierenden Varianten am Ende, nicht im Vertrauen auf das Glossar allein.
+- **Ein Pfad-Ausschluss muss auf vereinheitlichten Trennern vergleichen.** Die Skip-Liste des Vorlaufs
+  („DB-Layer nicht anfassen") lief still ins Leere: `-Root` kam mit `/`, `[IO.Path]::Combine` machte daraus
+  einen Prefix mit **gemischten** Trennern, und `StartsWith` gegen die reinen Backslash-Pfade von
+  `Get-ChildItem` traf nie. Ergebnis: 52 Ersetzungen im ausgeschlossenen `Models/`+`Data/`, zurückgenommen
+  per `git checkout --`. Lehre: nach dem Lauf **prüfen, dass der Ausschluss wirklich leer ist**
+  (`git status -- <ausgeschlossener Pfad>`), nicht nur, dass das Skript ohne Fehler lief.
+- **Der Test-/Build-Hook baut `$CLAUDE_PROJECT_DIR`, nicht den aktuellen Worktree.** Aus einem Worktree
+  heraus prüfen die Hooks also den **Haupt-Worktree** – Meldungen daraus können komplett fremd sein (hier:
+  der rote Zwischenstand der parallelen DB-Sitzung). In dieser Lage jede Verifikation **selbst** im Worktree
+  fahren (`dotnet build`/`dotnet test` mit explizitem Pfad) und Agenten vorab sagen, dass sie
+  Hook-Build-Fehler ignorieren und **niemals** Code „reparieren" sollen.
+- **Das Vorlauf-Skript fasst nur Zeilen an, die auf `^\s*///` passen** (Regex-Callback über den ganzen
+  Dateitext). Ohne diese Einschränkung träfen Bausteine wie `(partiell)` auch String-Literale. BOM und
+  Zeilenenden werden dabei je Datei erhalten (BOM-Erkennung über die ersten drei Bytes).
 
 ## CLAUDE.md-Konvention umstellen
 

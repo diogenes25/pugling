@@ -8,7 +8,7 @@ using Pugling.Api.Models;
 
 namespace Pugling.Api.Tests;
 
-/// <summary>Geteilte Helfer für die Integrationstests: Login (Vater/Sohn) und Plan-Anlage.</summary>
+/// <summary>Shared helpers for the integration tests: login (father/child) and plan creation.</summary>
 internal static class TestApi
 {
     // Fach-Namen sind seit dem DB-Struktur-Umbau eindeutig (der Katalog ist geteilt: „Englisch" darf es
@@ -27,7 +27,7 @@ internal static class TestApi
         return (await res.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("token").GetString()!;
     }
 
-    /// <summary>Client mit Vater-Token (Default: der geseedete Papa, id 1 / PIN 0000).</summary>
+    /// <summary>Client with a father token (default: the seeded father, id 1 / PIN 0000).</summary>
     public static async Task<HttpClient> FatherAsync(WebApplicationFactory<Program> f, int id = 1, string pin = "0000")
     {
         var c = f.CreateClient();
@@ -35,7 +35,7 @@ internal static class TestApi
         return c;
     }
 
-    /// <summary>Client mit Sohn-Token (Default: der geseedete Sohn, id 1 / PIN 1111).</summary>
+    /// <summary>Client with a child token (default: the seeded child, id 1 / PIN 1111).</summary>
     public static async Task<HttpClient> ChildAsync(WebApplicationFactory<Program> f, int id = 1, string pin = "1111")
     {
         var c = f.CreateClient();
@@ -43,10 +43,10 @@ internal static class TestApi
         return c;
     }
 
-    /// <summary>Liest die <c>id</c> aus einer erfolgreichen JSON-Antwort.</summary>
+    /// <summary>Reads the <c>id</c> from a successful JSON response.</summary>
     public static Task<int> IdAsync(HttpResponseMessage res) => IdWithKeyAsync(res, "id");
 
-    /// <summary>Liest eine int-Property (z. B. <c>attemptId</c>) aus einer erfolgreichen JSON-Antwort.</summary>
+    /// <summary>Reads an int property (e.g. <c>attemptId</c>) from a successful JSON response.</summary>
     public static async Task<int> IdWithKeyAsync(HttpResponseMessage res, string key)
     {
         res.EnsureSuccessStatusCode();
@@ -54,15 +54,8 @@ internal static class TestApi
     }
 
     /// <summary>
-    /// Legt (als Vater) einen <b>leeren</b> Lehrplan-Container an und liefert dessen Id. Inhalt kommt
-    /// über Positionen dazu (<see cref="SeedLeitnerPosition"/>) – der Plan selbst trägt keinen.
-    /// <para>
-    /// Hieß früher <c>CreateVocabPlanAsync</c> und behauptete „mit zwei Seed-Vokabeln": der Payload schickte
-    /// <c>method</c>, <c>contentKeys</c> und <c>dailyTestRequired</c>, also drei Felder des beim
-    /// Lehrplan-Umbau entfernten <c>StudyPlanItem</c>/<c>Method</c>-Modells. Der Server verwarf sie still
-    /// (<c>UnmappedMemberHandling.Skip</c>) und meldete 201 – niemand merkte es. Genau dieser Helfer war der
-    /// Beleg für die Lücke, die B3 geschlossen hat; heute käme dafür ein 400 <c>unknown_field</c>.
-    /// </para>
+    /// Creates (as the supervisor) an <b>empty</b> study plan container and returns its id. Content is added
+    /// via positions (<see cref="SeedLeitnerPosition"/>) - the plan itself carries none.
     /// </summary>
     public static async Task<int> CreateEmptyPlanAsync(HttpClient father, int childId = 1)
     {
@@ -75,11 +68,11 @@ internal static class TestApi
         return await IdAsync(res);
     }
 
-    /// <summary>Legt (als Vater) Fach → Kapitel → eine Rechen-Übung an und liefert deren Ids.</summary>
-    /// <param name="father">Angemeldeter Creator-/Supervisor-Client.</param>
+    /// <summary>Creates (as the supervisor) subject → chapter → an arithmetic exercise and returns their ids.</summary>
+    /// <param name="father">Logged-in creator/supervisor client.</param>
     /// <param name="problems">
-    /// Aufgaben der Übung; leer = die eine Standard-Aufgabe „7 × 6". Mehrere braucht man, sobald eine
-    /// Trefferquote zwischen 0 % und 100 % geprüft werden soll.
+    /// Problems for the exercise; empty = the one default problem "7 × 6". Multiple are needed as soon as a
+    /// hit rate between 0% and 100% needs to be tested.
     /// </param>
     public static async Task<(int subjectId, int chapterId, int exerciseId)> CreateArithmeticExerciseAsync(
         HttpClient father, params (string Prompt, int Answer)[] problems)
@@ -99,7 +92,7 @@ internal static class TestApi
         return (subjectId, chapterId, exerciseId);
     }
 
-    /// <summary>Legt (als Vater) eine Vokabel-Übung im Katalog an und liefert ihre Id.</summary>
+    /// <summary>Creates (as the supervisor) a vocabulary exercise in the catalog and returns its id.</summary>
     public static async Task<int> CreateVocabExerciseAsync(HttpClient father, params (string Front, string Back)[] items)
     {
         var vocab = items.Length > 0 ? items : [("hello", "hallo"), ("goodbye", "tschüss")];
@@ -117,9 +110,9 @@ internal static class TestApi
     }
 
     /// <summary>
-    /// Legt (als Supervisor) einen Familien-Shop-Artikel samt einem Angebot (<c>ShopListing</c>) an und
-    /// liefert die Listing-Id. Geteilter Setup-Helfer für die Shop-Tests (statt in jedem Test article+listing
-    /// von Hand zu posten). Artikelnummer ist je Vater eindeutig – bei mehreren Vätern darf sie sich wiederholen.
+    /// Creates (as the supervisor) a family shop article together with a listing (<c>ShopListing</c>) and
+    /// returns the listing id. Shared setup helper for the shop tests (instead of posting article+listing by
+    /// hand in every test). The article number is unique per father - it may repeat across multiple fathers.
     /// </summary>
     public static async Task<int> CreateShopListingAsync(HttpClient supervisor, string articleNumber,
         int coinPrice, int unitsPerPurchase, int stock, string articleTitle = "Test-Artikel",
@@ -131,7 +124,7 @@ internal static class TestApi
             new { title = listingTitle, coinPrice, gemPrice, unitsPerPurchase, currentStock = stock, maxStock = stock }));
     }
 
-    /// <summary>Legt (als Vater) eine Store-Vokabel „einfach" an (Auto-Key) und liefert (id, key).</summary>
+    /// <summary>Creates (as the supervisor) a store vocabulary entry "simply" (auto key) and returns (id, key).</summary>
     public static async Task<(int id, string key)> CreateStoreVocabAsync(HttpClient father, string word, string translation,
         string src = "en", string tgt = "de")
     {
@@ -142,7 +135,7 @@ internal static class TestApi
         return (v.GetProperty("id").GetInt32(), v.GetProperty("key").GetString()!);
     }
 
-    /// <summary>Löst einen Store-Key in seine Id auf (Refs referenzieren jetzt per Id).</summary>
+    /// <summary>Resolves a store key to its id (refs now reference by id).</summary>
     public static async Task<int> ResolveVocabIdAsync(HttpClient father, string key)
     {
         var list = await father.GetFromJsonAsync<List<JsonElement>>(
@@ -150,7 +143,7 @@ internal static class TestApi
         return list!.First(v => v.GetProperty("key").GetString() == key).GetProperty("id").GetInt32();
     }
 
-    /// <summary>Legt (als Vater) eine Vokabel-Übung an, die Store-Einträge per Id referenziert; liefert deren Id.</summary>
+    /// <summary>Creates (as the supervisor) a vocabulary exercise that references store entries by id; returns its id.</summary>
     public static async Task<int> CreateVocabRefExerciseAsync(HttpClient father, params string[] keys)
     {
         var ids = new List<int>();
@@ -169,7 +162,7 @@ internal static class TestApi
             }));
     }
 
-    /// <summary>Seedet direkt einen Plan-Container mit einer (Leitner-)Position auf die Übung.</summary>
+    /// <summary>Seeds a plan container directly with one (Leitner) position on the exercise.</summary>
     public static (int planId, int positionId) SeedLeitnerPosition(WebApplicationFactory<Program> f, int exerciseId,
         int stage, int childId = 1, GoalCadence cadence = GoalCadence.Daily, int? goalThreshold = null,
         bool useLeitner = true, bool requireTypedTest = false, int pointsGoalMet = 20,
@@ -203,15 +196,15 @@ internal static class TestApi
         return (plan.Id, pos.Id);
     }
 
-    /// <summary>Basis-URL der Positions-Übungssitzungen.</summary>
+    /// <summary>Base URL of the position practice sessions.</summary>
     public static string PracticeBase(int planId, int positionId) =>
         $"/api/v1/student/study-plans/{planId}/positions/{positionId}/practice-sessions";
 
-    /// <summary>Startet eine Positions-Übungssitzung und liefert ihre Id.</summary>
+    /// <summary>Starts a position practice session and returns its id.</summary>
     public static async Task<int> StartPositionSessionAsync(HttpClient child, int planId, int positionId) =>
         await IdAsync(await child.PostAsJsonAsync(PracticeBase(planId, positionId), new { }));
 
-    /// <summary>Bewertet eine Karte serverseitig (getippt via <paramref name="givenAnswer"/>, sonst Selbsteinschätzung).</summary>
+    /// <summary>Reviews a card server-side (typed via <paramref name="givenAnswer"/>, otherwise self-assessment).</summary>
     public static Task<HttpResponseMessage> PositionReviewAsync(HttpClient child, int planId, int positionId, int sessionId,
         int itemIndex, string? givenAnswer = null, bool? wasKnown = null) =>
         child.PostAsJsonAsync($"{PracticeBase(planId, positionId)}/{sessionId}/review",

@@ -5,25 +5,25 @@ using Pugling.Api.Models;
 namespace Pugling.Api.Services.Shared;
 
 /// <summary>
-/// Schreibt den plan-übergreifenden Lernstand je (Kind, Item) fort und protokolliert jede Antwort. Wird an den
-/// server-autoritativen Bewertungsstellen (Üben/Test) aufgerufen – ausschließlich für Vokabel-Items, die eine
-/// stabile <see cref="ContentItem.ItemId"/> tragen. Aktualisiert <see cref="ItemProgress"/> (Box/Beherrschung,
-/// Zähler, letzte Antwort) und hängt einen <see cref="ItemReviewEvent"/> an die Historie. Bewusst ohne eigenes
-/// <c>SaveChanges</c>: die aufrufenden Controller speichern gebündelt mit ihren übrigen Schreibvorgängen.
+/// Advances the plan-spanning learning progress per (child, item) and logs every answer. Called at the
+/// server-authoritative grading points (practice/test) – exclusively for vocabulary items that carry a
+/// stable <see cref="ContentItem.ItemId"/>. Updates <see cref="ItemProgress"/> (box/mastery, counters,
+/// last answer) and appends an <see cref="ItemReviewEvent"/> to the history. Deliberately without its
+/// own <c>SaveChanges</c>: the calling controllers save bundled together with their remaining writes.
 /// </summary>
 public class ItemProgressService(PuglingDbContext db)
 {
-    /// <summary>Beherrschung in Prozent aus der Leitner-Box (Box 1 = 0 % … MaxBox = 100 %; wie im Positions-Report).</summary>
+    /// <summary>Mastery in percent derived from the Leitner box (box 1 = 0% … MaxBox = 100%; as in the position report).</summary>
     private static int MasteryOf(int box) =>
         (int)Math.Round(100.0 * (Math.Clamp(box, 1, ItemProgress.MaxBox) - 1) / (ItemProgress.MaxBox - 1));
 
     /// <summary>
-    /// Protokolliert eine bewertete Antwort zu einem Item. Trägt der Inhalt keine stabile Item-/Store-Identität
-    /// (Nicht-Vokabel-Typen), passiert nichts. Die Antwort-Historie (<see cref="ItemReviewEvent"/>) wird immer
-    /// geschrieben; der aggregierte Lernstand (<see cref="ItemProgress"/>: Box/Beherrschung/Zähler) wird nur
-    /// fortgeschrieben, wenn die Antwort <paramref name="countsForMastery"/> ist – sonst ließe sich die Box durch
-    /// Wiederholen derselben Karte in einer Sitzung hochtreiben (Anti-Farming, wie beim Positions-Motor).
-    /// Kein <c>SaveChanges</c> – siehe Klassen-Doku.
+    /// Logs a graded answer for an item. If the content carries no stable item/store identity
+    /// (non-vocabulary types), nothing happens. The answer history (<see cref="ItemReviewEvent"/>) is
+    /// always written; the aggregated learning progress (<see cref="ItemProgress"/>: box/mastery/counters)
+    /// is only advanced if the answer <paramref name="countsForMastery"/> is true – otherwise the box
+    /// could be farmed up by repeating the same card within one session (anti-farming, as with the
+    /// position engine). No <c>SaveChanges</c> – see class doc.
     /// </summary>
     public async Task RecordAsync(int childId, int exerciseId, ContentItem item, bool wasCorrect, int stageValue,
         string? givenAnswer, ItemReviewSource source, int? planPositionId, DateOnly today, bool countsForMastery,

@@ -1,9 +1,9 @@
 namespace Pugling.Api.Tests;
 
 /// <summary>
-/// Sichert die Währungs-Zuordnung ab: jeder <see cref="PointKind"/> muss genau einer <see cref="Currency"/>
-/// zugeordnet sein (kein stiller Verlust aus dem Saldo, wenn ein neuer Kind hinzukommt), und die
-/// Coin-/Gem-Mengen dürfen sich nicht überlappen.
+/// Secures the currency mapping: every <see cref="PointKind"/> must be assigned to exactly one
+/// <see cref="Currency"/> (no silent loss from the balance when a new kind is added), and the coin/gem
+/// amounts must not overlap.
 /// </summary>
 public class PointKindCurrencyTests
 {

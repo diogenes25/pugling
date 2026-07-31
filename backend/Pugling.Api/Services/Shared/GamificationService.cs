@@ -1,19 +1,19 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Pugling.Api.Data;
 using Pugling.Api.Models;
 
 namespace Pugling.Api.Services.Shared;
 
 /// <summary>
-/// Wertet Missionen (zeitgebundene Ziele) und Auszeichnungen (permanente Meilensteine) eines Kindes
-/// aus und schreibt fällige Belohnungen idempotent gut – je Mission/Zeitraum bzw. je Auszeichnung genau
-/// einmal (analog zum früheren plan-weiten Fortschritts-Service). Liefert außerdem den aktuellen Status fürs Frontend.
+/// Evaluates missions (time-bound goals) and achievements (permanent milestones) of a child and
+/// credits due rewards idempotently – exactly once per mission/period resp. per achievement (analogous
+/// to the former plan-wide progress service). Also returns the current status for the frontend.
 /// </summary>
 public class GamificationService(PuglingDbContext db, MetricsService metrics, ILogger<GamificationService> logger)
 {
     // MissionStatus/AchievementStatus leben im Vertrags-Projekt (Pugling.Contracts.Student).
 
-    /// <summary>Wertet alle aktiven Missionen und Auszeichnungen aus und vergibt fällige Belohnungen.</summary>
+    /// <summary>Evaluates all active missions and achievements and grants due rewards.</summary>
     public async Task EvaluateAndAwardAsync(int childId, DateOnly today, CancellationToken ct = default)
     {
         var child = await db.Children.FirstOrDefaultAsync(c => c.Id == childId, ct);
@@ -69,9 +69,9 @@ public class GamificationService(PuglingDbContext db, MetricsService metrics, IL
     }
 
     /// <summary>
-    /// Aktueller Missions-Status für die Anzeige beim Kind/Vater – reine Lesesicht, ohne Punktevergabe.
-    /// Belohnungen fließen an den Schreib-Nahtstellen (Wiederholung, Test-Abschluss, Sitzungsende), nicht
-    /// beim Ansehen: ein GET darf keine Punkte buchen (sichere HTTP-Methode, kein Prefetch-/Retry-Effekt).
+    /// Current mission status for the display shown to the child/father – a pure read view, without
+    /// granting points. Rewards flow at the write seams (repetition, test completion, session end), not
+    /// when viewed: a GET must never book points (safe HTTP method, no prefetch/retry side effect).
     /// </summary>
     public async Task<(IReadOnlyList<MissionStatus> Items, int Total)> MissionStatusesAsync(
         int childId, DateOnly today, int skip, int take, CancellationToken ct = default)
@@ -97,7 +97,7 @@ public class GamificationService(PuglingDbContext db, MetricsService metrics, IL
             Math.Min(current, m.Target), completed, m.RewardPoints);
     }
 
-    /// <summary>Aktueller Auszeichnungs-Status (reine Lesesicht, ohne Punktevergabe), erreichte zuerst.</summary>
+    /// <summary>Current achievement status (pure read view, without granting points), achieved ones first.</summary>
     public async Task<(IReadOnlyList<AchievementStatus> Items, int Total)> AchievementStatusesAsync(
         int childId, DateOnly today, int skip, int take, CancellationToken ct = default)
     {
@@ -125,7 +125,7 @@ public class GamificationService(PuglingDbContext db, MetricsService metrics, IL
             current, earnedAt is not null, earnedAt, a.RewardPoints);
     }
 
-    /// <summary>Status einer einzelnen Mission des Kindes (Einzelansicht); <c>null</c>, wenn nicht vorhanden/aktiv/eigen.</summary>
+    /// <summary>Status of a single mission of the child (single view); <c>null</c> if not present/active/own.</summary>
     public async Task<MissionStatus?> MissionStatusAsync(int childId, int missionId, DateOnly today,
         CancellationToken ct = default)
     {
@@ -133,7 +133,7 @@ public class GamificationService(PuglingDbContext db, MetricsService metrics, IL
         return m is null ? null : await MapMissionAsync(childId, m, today, ct);
     }
 
-    /// <summary>Status einer einzelnen Auszeichnung des Kindes (Einzelansicht); <c>null</c>, wenn nicht vorhanden/aktiv/eigen.</summary>
+    /// <summary>Status of a single achievement of the child (single view); <c>null</c> if not present/active/own.</summary>
     public async Task<AchievementStatus?> AchievementStatusAsync(int childId, int achievementId, DateOnly today,
         CancellationToken ct = default)
     {
@@ -145,13 +145,13 @@ public class GamificationService(PuglingDbContext db, MetricsService metrics, IL
     }
 
     /// <summary>
-    /// Tages-/Wochen-/Einmal-Fenster. <c>from</c> ist zugleich der Perioden-Anfang der Buchung
-    /// (<c>null</c> bei <see cref="MissionPeriod.OneOff"/> – dort gibt es keinen Zeitraum).
+    /// Daily/weekly/one-time window. <c>From</c> is at the same time the period start of the grant
+    /// (<c>null</c> for <see cref="MissionPeriod.OneOff"/> – there is no period there).
     /// <para>
-    /// Vorher stand hier zusätzlich ein Text-Schlüssel, der die Woche als <c>2026-W27</c> aus
-    /// <c>ISOWeek</c> berechnete, während direkt daneben schon der Montag derselben Woche stand: zwei
-    /// Darstellungen desselben Zeitraums, von denen eine geparst werden musste. Der Montag bestimmt die
-    /// ISO-Woche eindeutig, die Umstellung ist also verhaltensgleich.
+    /// This used to carry an additional text key that computed the week as <c>2026-W27</c> from
+    /// <c>ISOWeek</c>, while the Monday of that very week already sat right next to it: two
+    /// representations of the same period, one of which had to be parsed. The Monday determines the
+    /// ISO week unambiguously, so the change is behaviour-preserving.
     /// </para>
     /// </summary>
     private static (DateOnly? From, DateOnly? To) PeriodWindow(MissionPeriod period, DateOnly today) =>
@@ -176,10 +176,10 @@ public class GamificationService(PuglingDbContext db, MetricsService metrics, IL
             && a.Period == period && a.PeriodStart == periodStart, ct);
 
     /// <summary>
-    /// Speichert; ein paralleler Doppel-Request greift den Unique-Index ab, ohne doppelte Punkte/500.
-    /// Liefert <c>true</c>, wenn tatsächlich gebucht wurde, <c>false</c> beim abgefangenen Duplikat –
-    /// damit der Aufrufer nur echte Buchungen ins Audit-Log schreibt. <paramref name="alreadyAwardedAsync"/>
-    /// prüft, ob die Belohnung inzwischen (durch den Konkurrenz-Request) existiert.
+    /// Saves; a parallel duplicate request is caught by the unique index, without duplicate points/500.
+    /// Returns <c>true</c> if a booking actually happened, <c>false</c> for a caught duplicate –
+    /// so that the caller only writes genuine bookings to the audit log. <paramref name="alreadyAwardedAsync"/>
+    /// checks whether the reward already exists in the meantime (due to the competing request).
     /// </summary>
     private async Task<bool> SaveIgnoringDuplicateAsync(Func<Task<bool>> alreadyAwardedAsync, CancellationToken ct)
     {

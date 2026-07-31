@@ -3,46 +3,46 @@ using Pugling.Agent.Creator.Briefing;
 namespace Pugling.Agent.Creator.Drafting;
 
 /// <summary>
-/// Sammelt Regelverstöße eines Entwurfs. Bewusst als Liste statt „erster Fehler gewinnt": das Modell
-/// soll in der Reparatur-Runde <b>alle</b> Mängel auf einmal sehen.
+/// Collects a draft's rule violations. Deliberately a list instead of "first error wins": the model
+/// should see <b>all</b> shortcomings at once in the repair round.
 /// </summary>
 public sealed class Violations
 {
     private readonly List<string> _messages = [];
 
-    /// <summary>Hält die Bedingung nicht, wird die Meldung vermerkt.</summary>
+    /// <summary>If the condition does not hold, the message is recorded.</summary>
     public void Require(bool condition, string message)
     {
         if (!condition) _messages.Add(message);
     }
 
-    /// <summary>Vermerkt eine Meldung unbedingt.</summary>
+    /// <summary>Records a message unconditionally.</summary>
     public void Add(string message) => _messages.Add(message);
 
-    /// <summary>Die gesammelten Verstöße (leer = Entwurf ist verwendbar).</summary>
+    /// <summary>The collected violations (empty = draft is usable).</summary>
     public IReadOnlyList<string> Messages => _messages;
 }
 
 /// <summary>
-/// Die deterministischen Prüfungen, die für mehrere Übungstypen gelten. Sie laufen <b>vor</b> jedem
-/// Schreibzugriff – die API würde vieles zwar auch ablehnen, aber erst nach dem Anlegen und mit
-/// technischen Meldungen; hier entsteht stattdessen ein Reparatur-Hinweis in Fachsprache.
+/// The deterministic checks that apply to several exercise types. They run <b>before</b> any write
+/// access - the API would reject much of this too, but only after creation and with technical messages;
+/// here a repair hint in domain language arises instead.
 /// <para>
-/// Alle Prüfungen sind <b>null-tolerant</b>, und das ist keine Bequemlichkeit: die Entwurfs-Records
-/// deklarieren ihre Felder nicht-nullbar, aber ein Modell darf jedes Feld weglassen – dann setzt der
-/// JSON-Deserialisierer schlicht <c>null</c> ein. Würde der Validator daran mit einer
-/// <see cref="NullReferenceException"/> zerbrechen, stürbe der Agent mit Stacktrace genau dort, wo er
-/// eine Reparatur-Runde anstoßen soll. Ein fehlendes Feld ist ein <i>Regelverstoß</i>, kein Absturz.
+/// All checks are <b>null-tolerant</b>, and that is not a convenience: the draft records declare their
+/// fields non-nullable, but a model may omit any field - then the JSON deserializer simply inserts
+/// <c>null</c>. If the validator broke on that with a <see cref="NullReferenceException"/>, the agent
+/// would die with a stack trace exactly where it is supposed to trigger a repair round. A missing field
+/// is a <i>rule violation</i>, not a crash.
 /// </para>
 /// </summary>
 public static class DraftRules
 {
-    /// <summary>Untergrenze/Obergrenze für die Aufgabenzahl – schützt vor Ein-Wort- und Endlos-Übungen.</summary>
+    /// <summary>Lower/upper bound for the task count - guards against one-item and endless exercises.</summary>
     public const int MinItems = 3;
     /// <inheritdoc cref="MinItems"/>
     public const int MaxItems = 30;
 
-    /// <summary>Titel gesetzt, plausibel lang und nicht schon im Kapitel vergeben.</summary>
+    /// <summary>Title set, plausibly long, and not already used in the chapter.</summary>
     public static void Title(Violations violations, string? title, CreatorBriefing briefing)
     {
         violations.Require(!string.IsNullOrWhiteSpace(title), "Der Titel fehlt.");
@@ -51,7 +51,7 @@ public static class DraftRules
             $"Der Titel '{title}' existiert im Kapitel bereits – wähle einen anderen.");
     }
 
-    /// <summary>Die Aufgabenzahl liegt in den Grenzen und trifft die Vorgabe.</summary>
+    /// <summary>The task count is within bounds and matches the requested value.</summary>
     public static void Count(Violations violations, int actual, GenerationRequest request)
     {
         violations.Require(actual >= MinItems, $"Zu wenige Aufgaben: {actual} (mindestens {MinItems}).");
@@ -60,13 +60,13 @@ public static class DraftRules
             $"Es wurden {actual} Aufgaben geliefert, gefordert waren {request.ItemCount}.");
     }
 
-    /// <summary>Keine leeren Pflichtfelder.</summary>
+    /// <summary>No empty required fields.</summary>
     public static void NotBlank(Violations violations, string? value, string what)
     {
         if (string.IsNullOrWhiteSpace(value)) violations.Add($"{what} ist leer.");
     }
 
-    /// <summary>Keine zweimal vorkommenden Schlüssel (Wörter, Sätze, Aufgabenstellungen).</summary>
+    /// <summary>No keys occurring twice (words, sentences, task prompts).</summary>
     public static void NoDuplicates(Violations violations, IEnumerable<string?>? keys, string what)
     {
         var duplicates = (keys ?? [])
@@ -82,9 +82,9 @@ public static class DraftRules
     }
 
     /// <summary>
-    /// Die harte Regel des Grundprinzips: ist ein Pflicht-Wortschatz vorgegeben, muss er
-    /// <b>vollständig</b> auftauchen. <paramref name="exact"/> vergleicht ganze Einträge
-    /// (Vokabel-/Lückenlösungen), sonst genügt Vorkommen im Text (Sätze, Aufgaben).
+    /// The hard rule of the core principle: if a required vocabulary is prescribed, it must appear
+    /// <b>in full</b>. <paramref name="exact"/> compares whole entries (vocabulary/cloze answers),
+    /// otherwise occurrence within the text suffices (sentences, tasks).
     /// </summary>
     public static void CoversRequiredWords(Violations violations, CreatorBriefing briefing,
         IEnumerable<string?>? produced, bool exact)
@@ -104,9 +104,9 @@ public static class DraftRules
     }
 
     /// <summary>
-    /// Aufgabe und Lösung dürfen nicht identisch sein (sonst ist nichts zu lernen). Fehlt eines von
-    /// beiden, meldet das bereits <see cref="NotBlank"/> – hier bleibt es dann still, statt „leer ist
-    /// gleich leer" als zweiten Verstoß zu melden.
+    /// Task and answer must not be identical (otherwise there is nothing to learn). If either one is
+    /// missing, <see cref="NotBlank"/> already reports it - this stays silent then, instead of reporting
+    /// "empty equals empty" as a second violation.
     /// </summary>
     public static void PromptDiffersFromAnswer(Violations violations, string? prompt, string? answer, int index)
     {

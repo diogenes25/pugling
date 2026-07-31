@@ -9,9 +9,9 @@ using Pugling.Api.Models;
 namespace Pugling.Api.Controllers.Student;
 
 /// <summary>
-/// Selbstauskunft für den angemeldeten Sohn: eigener Punktestand (Wallet) und Kurzprofil.
-/// Schließt die Lücke, dass der kontoübergreifende Punktestand sonst nur der Vater lesen kann
-/// (<see cref="Supervisor.ChildrenController"/> ist <c>Vater</c>-only).
+/// Self-service info for the logged-in child: own point balance (wallet) and short profile.
+/// Closes the gap that the cross-account point balance would otherwise only be readable by the father
+/// (<see cref="Supervisor.ChildrenController"/> is <c>father</c>-only).
 /// </summary>
 [ApiController]
 [ApiVersion("1.0")]
@@ -22,7 +22,7 @@ namespace Pugling.Api.Controllers.Student;
 public class MeController(PuglingDbContext db, GamificationService gamification,
     WalletService wallet, ShopService shop, PositionProgressService progress) : ControllerBase
 {
-    /// <summary>Eigener Kontostand (Münzen + Gems). Die einzelnen Buchungen liegen unter <c>points/entries</c>.</summary>
+    /// <summary>Own wallet balance (coins + gems). The individual ledger entries live under <c>points/entries</c>.</summary>
     [HttpGet("points")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -35,10 +35,10 @@ public class MeController(PuglingDbContext db, GamificationService gamification,
         return new WalletResponse(cid.Value, coins, gems);
     }
 
-    /// <summary>Eigene Punkte-Buchungen (neueste zuerst), seitenweise.</summary>
-    /// <param name="skip">Anzahl zu überspringender Buchungen (Paging).</param>
-    /// <param name="take">Maximale Buchungszahl (1..500). Gesamtzahl im Header <c>X-Total-Count</c>.</param>
-    /// <param name="ct">Abbruch-Token.</param>
+    /// <summary>Own point ledger entries (newest first), paged.</summary>
+    /// <param name="skip">Number of ledger entries to skip (paging).</param>
+    /// <param name="take">Maximum number of ledger entries (1..500). Total count in the <c>X-Total-Count</c> header.</param>
+    /// <param name="ct">Cancellation token.</param>
     [HttpGet("points/entries")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -57,7 +57,7 @@ public class MeController(PuglingDbContext db, GamificationService gamification,
             .ToPagedListAsync(Response, skip, take, ct);
     }
 
-    /// <summary>Eine einzelne eigene Punkte-Buchung (Einzelansicht zur Liste unter <c>points/entries</c>).</summary>
+    /// <summary>A single own point ledger entry (detail view for the list under <c>points/entries</c>).</summary>
     [HttpGet("points/entries/{entryId:int}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -76,10 +76,10 @@ public class MeController(PuglingDbContext db, GamificationService gamification,
         return entry is null ? NotFound() : entry;
     }
 
-    /// <summary>Eigene Missionen (Tages-/Wochen-/Zusatzziele) mit aktuellem Fortschritt (reine Lesesicht), seitenweise.</summary>
-    /// <param name="skip">Anzahl zu überspringender Missionen (Paging).</param>
-    /// <param name="take">Maximale Missions-Zahl (1..500). Gesamtzahl im Header <c>X-Total-Count</c>.</param>
-    /// <param name="ct">Abbruch-Token.</param>
+    /// <summary>Own missions (daily/weekly/extra goals) with current progress (read-only view), paged.</summary>
+    /// <param name="skip">Number of missions to skip (paging).</param>
+    /// <param name="take">Maximum number of missions (1..500). Total count in the <c>X-Total-Count</c> header.</param>
+    /// <param name="ct">Cancellation token.</param>
     [HttpGet("missions")]
     [Tags("Student – Missions")]
     [ProducesResponseType(StatusCodes.Status200OK)]
@@ -96,7 +96,7 @@ public class MeController(PuglingDbContext db, GamificationService gamification,
         return Ok(items);
     }
 
-    /// <summary>Eine einzelne eigene Mission (Einzelansicht zur Liste unter <c>missions</c>).</summary>
+    /// <summary>A single own mission (detail view for the list under <c>missions</c>).</summary>
     [HttpGet("missions/{missionId:int}")]
     [Tags("Student – Missions")]
     [ProducesResponseType(StatusCodes.Status200OK)]
@@ -110,10 +110,10 @@ public class MeController(PuglingDbContext db, GamificationService gamification,
         return status is null ? NotFound() : status;
     }
 
-    /// <summary>Eigene Auszeichnungen (Badges): erreichte und noch offene, erreichte zuerst (reine Lesesicht), seitenweise.</summary>
-    /// <param name="skip">Anzahl zu überspringender Auszeichnungen (Paging).</param>
-    /// <param name="take">Maximale Auszeichnungs-Zahl (1..500). Gesamtzahl im Header <c>X-Total-Count</c>.</param>
-    /// <param name="ct">Abbruch-Token.</param>
+    /// <summary>Own awards (badges): achieved and still open, achieved first (read-only view), paged.</summary>
+    /// <param name="skip">Number of awards to skip (paging).</param>
+    /// <param name="take">Maximum number of awards (1..500). Total count in the <c>X-Total-Count</c> header.</param>
+    /// <param name="ct">Cancellation token.</param>
     [HttpGet("achievements")]
     [Tags("Student – Achievements")]
     [ProducesResponseType(StatusCodes.Status200OK)]
@@ -130,7 +130,7 @@ public class MeController(PuglingDbContext db, GamificationService gamification,
         return Ok(items);
     }
 
-    /// <summary>Eine einzelne eigene Auszeichnung (Einzelansicht zur Liste unter <c>achievements</c>).</summary>
+    /// <summary>A single own award (detail view for the list under <c>achievements</c>).</summary>
     [HttpGet("achievements/{achievementId:int}")]
     [Tags("Student – Achievements")]
     [ProducesResponseType(StatusCodes.Status200OK)]
@@ -144,7 +144,7 @@ public class MeController(PuglingDbContext db, GamificationService gamification,
         return status is null ? NotFound() : status;
     }
 
-    /// <summary>Eigener Skin-Zustand: Gem-Stand, ausgerüsteter Skin und freigeschaltete Skins.</summary>
+    /// <summary>Own skin state: gem balance, equipped skin and unlocked skins.</summary>
     [HttpGet("skins")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -156,11 +156,11 @@ public class MeController(PuglingDbContext db, GamificationService gamification,
     }
 
     /// <summary>
-    /// Schaltet einen Skin für den angemeldeten Sohn frei: bucht die Kosten als negative Punkte-Buchung
-    /// ab und rüstet ihn direkt aus. Kosten und Besitz sind serverseitig autoritativ (kein Client-Betrug).
-    /// Abbuchung und Freischaltung werden in einem <c>SaveChanges</c> committet; das Concurrency-Token am
-    /// Kind verhindert, dass zwei parallele Käufe (Doppelklick/Retry) beide den Deckungs-Check bestehen –
-    /// der zweite scheitert dann und liefert 409 statt doppelt abzubuchen.
+    /// Unlocks a skin for the logged-in child: books the cost as a negative point ledger entry
+    /// and equips it right away. Cost and ownership are authoritative server-side (no client cheating).
+    /// Debit and unlock are committed in one <c>SaveChanges</c>; the concurrency token on the
+    /// child prevents two parallel purchases (double-click/retry) from both passing the balance check –
+    /// the second one then fails and returns 409 instead of debiting twice.
     /// </summary>
     [HttpPost("skins/{skinId}/purchase")]
     [ProducesResponseType(StatusCodes.Status200OK)]
@@ -202,7 +202,7 @@ public class MeController(PuglingDbContext db, GamificationService gamification,
         return await SkinStateAsync(cid.Value, ct);
     }
 
-    /// <summary>Rüstet einen bereits freigeschalteten Skin aus (persistiert geräteübergreifend am Kind).</summary>
+    /// <summary>Equips an already unlocked skin (persisted on the child across devices).</summary>
     [HttpPost("skins/{skinId}/equip")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -226,7 +226,7 @@ public class MeController(PuglingDbContext db, GamificationService gamification,
         return await SkinStateAsync(cid.Value, ct);
     }
 
-    /// <summary>Speichert und fängt eine Nebenläufigkeits-Kollision (Token) ab: false = kollidiert, nichts committet.</summary>
+    /// <summary>Saves and catches a concurrency collision (token): false = collided, nothing committed.</summary>
     private async Task<bool> TrySaveAsync(CancellationToken ct)
     {
         try
@@ -241,7 +241,7 @@ public class MeController(PuglingDbContext db, GamificationService gamification,
     }
 
     /// <summary>
-    /// Familien-Shop: aktive Angebote des Vaters, aggregiertes Inventar und Kaufhistorie des Sohns.
+    /// Family shop: active listings of the father, aggregated inventory and purchase history of the child.
     /// </summary>
     [HttpGet("shop")]
     [Tags("Student – Shop")]
@@ -255,8 +255,8 @@ public class MeController(PuglingDbContext db, GamificationService gamification,
     }
 
     /// <summary>
-    /// Kauft ein Familien-Shop-Angebot: Coins/Gems werden sofort abgebucht, das aggregierte Inventar
-    /// des Sohns für den zugehörigen Artikel wird um <c>UnitsPerPurchase</c> erhöht.
+    /// Buys a family shop listing: coins/gems are debited immediately, the child's aggregated inventory
+    /// for the associated article is increased by <c>UnitsPerPurchase</c>.
     /// </summary>
     [HttpPost("shop/listings/{listingId:int}/purchase")]
     [Tags("Student – Shop")]
@@ -288,13 +288,13 @@ public class MeController(PuglingDbContext db, GamificationService gamification,
     }
 
     /// <summary>
-    /// Eigenes aggregiertes Inventar: pro Artikel-Typ die verfügbare Gesamtmenge (nur was &gt; 0 ist).
-    /// Gegenstück zum Aktivierungs-<c>POST</c> und zur Vater-Sicht (<c>children/{childId}/shop/inventory</c>);
-    /// dieselben Daten stehen gebündelt auch in <c>GET me/shop</c>.
+    /// Own aggregated inventory: the total available quantity per article type (only what is &gt; 0).
+    /// Counterpart to the activation <c>POST</c> and the father view (<c>children/{childId}/shop/inventory</c>);
+    /// the same data is also available bundled in <c>GET me/shop</c>.
     /// </summary>
-    /// <param name="skip">Anzahl übersprungener Einträge (Offset, Standard 0).</param>
-    /// <param name="take">Maximale Einträge (1..500). Gesamtzahl im Header <c>X-Total-Count</c>.</param>
-    /// <param name="ct">Abbruch-Token.</param>
+    /// <param name="skip">Number of entries skipped (offset, default 0).</param>
+    /// <param name="take">Maximum entries (1..500). Total count in the <c>X-Total-Count</c> header.</param>
+    /// <param name="ct">Cancellation token.</param>
     [HttpGet("shop/inventory")]
     [Tags("Student – Shop")]
     [ProducesResponseType(StatusCodes.Status200OK)]
@@ -319,8 +319,8 @@ public class MeController(PuglingDbContext db, GamificationService gamification,
     }
 
     /// <summary>
-    /// Stellt eine Aktivierungsanfrage: der Sohn möchte <c>quantity</c> Einheiten des Artikels
-    /// verbrauchen. Der Vater genehmigt oder lehnt ab; das Inventar wird erst bei Genehmigung reduziert.
+    /// Submits an activation request: the child wants to consume <c>quantity</c> units of the article.
+    /// The father approves or rejects; the inventory is only reduced on approval.
     /// </summary>
     [HttpPost("shop/inventory/{articleId:int}/activate")]
     [Tags("Student – Shop")]
@@ -348,7 +348,7 @@ public class MeController(PuglingDbContext db, GamificationService gamification,
     }
 
 
-    /// <summary>Eigene Aktivierungsanfragen (neueste zuerst), optional nach Status gefiltert.</summary>
+    /// <summary>Own activation requests (newest first), optionally filtered by status.</summary>
     [HttpGet("shop/activations")]
     [Tags("Student – Shop")]
     [ProducesResponseType(StatusCodes.Status200OK)]

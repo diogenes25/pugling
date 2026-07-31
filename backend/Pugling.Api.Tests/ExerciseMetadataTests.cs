@@ -5,8 +5,8 @@ using System.Text.Json;
 namespace Pugling.Api.Tests;
 
 /// <summary>
-/// Strukturierte Übungs-Metadaten (Klassenstufe, Schulart, Quelle, Art) und die
-/// darauf aufbauende Vorfilterung über <c>GET api/learn/exercises</c>.
+/// Structured exercise metadata (grade level, school type, source, category) and the
+/// pre-filtering built on top of it via <c>GET api/learn/exercises</c>.
 /// </summary>
 public class ExerciseMetadataTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWebAppFactory>
 {

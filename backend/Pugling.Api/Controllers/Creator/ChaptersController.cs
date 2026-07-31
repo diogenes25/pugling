@@ -8,7 +8,7 @@ using Pugling.Api.Models;
 
 namespace Pugling.Api.Controllers.Creator;
 
-/// <summary>Kapitel innerhalb eines Fachs.</summary>
+/// <summary>Chapters within a subject.</summary>
 [ApiController]
 [ApiVersion("1.0")]
 [Route(ApiRoutes.Creator + "/subjects/{subjectId:int}/chapters")]
@@ -25,7 +25,7 @@ public class ChaptersController(PuglingDbContext db) : ControllerBase
             .Select(c => new ChapterResponse(c.Id, c.SubjectId, c.Name, c.OrderIndex, c.Exercises.Count))
             .FirstOrDefaultAsync(ct);
 
-    /// <summary>Liste der Kapitel eines Fachs.</summary>
+    /// <summary>List of a subject's chapters.</summary>
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<IEnumerable<ChapterResponse>>> List(int subjectId, CancellationToken ct = default)
@@ -38,7 +38,7 @@ public class ChaptersController(PuglingDbContext db) : ControllerBase
             .ToListAsync(ct);
     }
 
-    /// <summary>Ein einzelnes Kapitel.</summary>
+    /// <summary>A single chapter.</summary>
     [HttpGet("{chapterId:int}")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<ChapterResponse>> Get(int subjectId, int chapterId, CancellationToken ct = default)
@@ -47,7 +47,7 @@ public class ChaptersController(PuglingDbContext db) : ControllerBase
         return chapter is null ? NotFound() : chapter;
     }
 
-    /// <summary>Erstellt ein Kapitel unter einem Fach.</summary>
+    /// <summary>Creates a chapter under a subject.</summary>
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -69,7 +69,7 @@ public class ChaptersController(PuglingDbContext db) : ControllerBase
         return CreatedAtAction(nameof(Get), new { subjectId, chapterId = chapter.Id }, response);
     }
 
-    /// <summary>Ändert ein Kapitel (partiell).</summary>
+    /// <summary>Changes a chapter (partial).</summary>
     [HttpPatch("{chapterId:int}")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<ChapterResponse>> Update(int subjectId, int chapterId, UpdateChapterDto dto, CancellationToken ct = default)
@@ -85,8 +85,8 @@ public class ChaptersController(PuglingDbContext db) : ControllerBase
     }
 
     /// <summary>
-    /// Löscht ein Kapitel samt aller Übungen. Nicht möglich, solange eine Übung darin in einem
-    /// Lehrplan oder einer Klassenarbeit verwendet wird.
+    /// Deletes a chapter along with all its exercises. Not possible while an exercise in it is used in
+    /// a study plan or a class test.
     /// </summary>
     [HttpDelete("{chapterId:int}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]

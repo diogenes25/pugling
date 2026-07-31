@@ -2,21 +2,21 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Pugling.Api.Controllers;
 
-/// <summary>Geteiltes Offset-Paging für Listen-Endpunkte (skip/take + Header <c>X-Total-Count</c>).</summary>
+/// <summary>Shared offset paging for list endpoints (skip/take + <c>X-Total-Count</c> header).</summary>
 public static class PagingExtensions
 {
-    /// <summary>Standard-Seitengröße, wenn der Aufrufer kein take angibt.</summary>
+    /// <summary>Default page size when the caller specifies no take.</summary>
     public const int DefaultTake = 100;
 
-    /// <summary>Obergrenze pro Seite (Schutz vor Voll-Scans).</summary>
+    /// <summary>Upper bound per page (protection against full scans).</summary>
     public const int MaxTake = 500;
 
     /// <summary>
-    /// Führt eine gefilterte, sortierte Query seitenweise aus: setzt zuerst die Gesamttrefferzahl
-    /// in den Header <c>X-Total-Count</c> (vor dem Body!), wendet dann Skip/Take an.
-    /// <paramref name="take"/> wird auf 0..<see cref="MaxTake"/> geklemmt (<c>0</c> = nur zählen, keine Zeilen laden –
-    /// nützlich für reine Kennzahlen), <paramref name="skip"/> auf &gt;= 0.
-    /// Erwartet eine bereits mit <c>OrderBy</c> versehene Query, damit das Fenster deterministisch ist.
+    /// Executes a filtered, sorted query page by page: first sets the total hit count
+    /// in the <c>X-Total-Count</c> header (before the body!), then applies skip/take.
+    /// <paramref name="take"/> is clamped to 0..<see cref="MaxTake"/> (<c>0</c> = count only, load no rows –
+    /// useful for pure metrics), <paramref name="skip"/> to &gt;= 0.
+    /// Expects a query that already has <c>OrderBy</c> applied, so the window is deterministic.
     /// </summary>
     public static async Task<List<T>> ToPagedListAsync<T>(
         this IQueryable<T> query, HttpResponse response, int skip, int take, CancellationToken ct = default)
@@ -26,11 +26,11 @@ public static class PagingExtensions
     }
 
     /// <summary>
-    /// In-Memory-Variante von <see cref="ToPagedListAsync{T}"/> für bereits materialisierte, sortierte
-    /// Listen (z. B. Kennzahlen aus Services ohne <c>IQueryable</c>): schreibt die Gesamtzahl in
-    /// <c>X-Total-Count</c> (vor dem Body!), wendet dann Skip/Take an. <paramref name="take"/> wird auf
-    /// 0..<see cref="MaxTake"/> geklemmt, <paramref name="skip"/> auf &gt;= 0. Erwartet eine bereits
-    /// sortierte Quelle, damit das Fenster deterministisch ist.
+    /// In-memory variant of <see cref="ToPagedListAsync{T}"/> for already materialized, sorted
+    /// lists (e.g. metrics from services without <c>IQueryable</c>): writes the total count into
+    /// <c>X-Total-Count</c> (before the body!), then applies skip/take. <paramref name="take"/> is clamped to
+    /// 0..<see cref="MaxTake"/>, <paramref name="skip"/> to &gt;= 0. Expects an already
+    /// sorted source, so the window is deterministic.
     /// </summary>
     public static List<T> ToPagedList<T>(this IEnumerable<T> source, HttpResponse response, int skip, int take)
     {

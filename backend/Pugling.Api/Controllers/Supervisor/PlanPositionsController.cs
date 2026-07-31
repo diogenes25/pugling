@@ -9,11 +9,11 @@ using Pugling.Api.Models;
 namespace Pugling.Api.Controllers.Supervisor;
 
 /// <summary>
-/// Positions-CRUD des neuen Lehrplan-Modells: der Vater stellt einen Lehrplan aus <b>globalen</b>
-/// Katalog-Übungen zusammen. Jede <see cref="PlanPosition"/> verweist auf eine <see cref="Exercise"/>
-/// (der Inhalt bleibt dort – keine Kopie) und trägt ihre eigenen Overrides (Stufe/Menge/Umfang),
-/// Ziele (Rhythmus + Schwelle), Punkte und Leitner-Einstellungen. Gespielt werden die Positionen über
-/// den <see cref="PositionPracticeController"/> bzw. <see cref="PositionTestsController"/>.
+/// Position CRUD of the new study plan model: the father assembles a study plan from <b>global</b>
+/// catalog exercises. Each <see cref="PlanPosition"/> refers to an <see cref="Exercise"/>
+/// (the content stays there – no copy) and carries its own overrides (stage/count/scope),
+/// goals (cadence + threshold), points and Leitner settings. The positions are played via
+/// the <see cref="PositionPracticeController"/> or <see cref="PositionTestsController"/>.
 /// </summary>
 [ApiController]
 [ApiVersion("1.0")]
@@ -25,11 +25,11 @@ namespace Pugling.Api.Controllers.Supervisor;
 public class PlanPositionsController(PuglingDbContext db, ExercisePermissionService perms, ExerciseTypeRegistry types) : ControllerBase
 {
     /// <summary>
-    /// Ist die Übung <b>noch nicht gefüllt</b>? Gilt nur für Typen, die ihre Inhalte als Item-Tabelle tragen
-    /// (<see cref="StoreResolution.ItemTable"/>, heute Vokabeln): dort ist „kein Item" ein unfertiger
-    /// Datenstand. Bei allen anderen Typen wäre die Frage falsch gestellt – ein Aufsatz hat *nie* Items,
-    /// ein Rechen-Drill erzeugt seine Aufgaben aus Regeln. Darum wird hier nicht auf „prüfbare Inhalte"
-    /// geprüft (das dürfen 0 sein), sondern auf die eine Form von Leere, die niemand gewollt hat.
+    /// Is the exercise <b>not yet filled</b>? Applies only to types that carry their content as an item table
+    /// (<see cref="StoreResolution.ItemTable"/>, currently vocabulary): there, "no item" is an unfinished
+    /// data state. For all other types the question would be misframed – an essay *never* has items,
+    /// a math drill generates its tasks from rules. That's why this doesn't check for "checkable content"
+    /// (that may legitimately be 0), but for the one form of emptiness that nobody intended.
     /// </summary>
     // Kein Vorgabewert für `ct`: er ließe die Aufrufstelle korrekt aussehen, während der Abbruch des
     // Clients verpufft.
@@ -43,7 +43,7 @@ public class PlanPositionsController(PuglingDbContext db, ExercisePermissionServ
             p.UseLeitner, p.MaxBox, p.BoxIntervalDays, p.StageSchedule, p.PointsGoalMet, p.PenaltyCoins, p.NewContentPoints,
             p.ComboThreshold, p.ComboBonusPoints, p.SpeedThresholdSeconds, p.SpeedBonusPoints);
 
-    /// <summary>Alle Positionen des Lehrplans in ihrer Reihenfolge.</summary>
+    /// <summary>All positions of the study plan in their order.</summary>
     [HttpGet]
     public async Task<IEnumerable<PositionResponse>> List(int planId, CancellationToken ct = default)
     {
@@ -71,7 +71,7 @@ public class PlanPositionsController(PuglingDbContext db, ExercisePermissionServ
             ? null
             : "goalThreshold is a pass percentage and must be between 1 and 100 (omit it for the default of 80).";
 
-    /// <summary>Eine einzelne Position.</summary>
+    /// <summary>A single position.</summary>
     [HttpGet("{positionId:int}")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<PositionResponse>> Get(int planId, int positionId, CancellationToken ct = default)
@@ -80,7 +80,7 @@ public class PlanPositionsController(PuglingDbContext db, ExercisePermissionServ
         return pos is null ? NotFound() : Map(pos);
     }
 
-    /// <summary>Fügt dem Lehrplan eine Position auf eine Katalog-Übung hinzu.</summary>
+    /// <summary>Adds a position to the study plan for a catalog exercise.</summary>
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -140,7 +140,7 @@ public class PlanPositionsController(PuglingDbContext db, ExercisePermissionServ
         return CreatedAtAction(nameof(Get), new { planId, positionId = pos.Id }, Map(pos));
     }
 
-    /// <summary>Ändert eine Position (partiell). Setzt nur die angegebenen Felder.</summary>
+    /// <summary>Changes a position (partial). Only fields that are set are changed.</summary>
     [HttpPatch("{positionId:int}")]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -177,9 +177,9 @@ public class PlanPositionsController(PuglingDbContext db, ExercisePermissionServ
     }
 
     /// <summary>
-    /// Löscht eine Position (der zugehörige <see cref="PositionItemProgress"/> verschwindet per Cascade mit).
-    /// Nicht möglich, solange bereits Testversuche für die Position vorliegen – sonst ginge diese Lernhistorie
-    /// verloren (der Fremdschlüssel wäre sonst nur auf <c>null</c> gesetzt).
+    /// Deletes a position (the associated <see cref="PositionItemProgress"/> disappears via cascade too).
+    /// Not possible while test attempts already exist for the position – otherwise this learning history would be
+    /// lost (the foreign key would otherwise only be set to <c>null</c>).
     /// </summary>
     [HttpDelete("{positionId:int}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]

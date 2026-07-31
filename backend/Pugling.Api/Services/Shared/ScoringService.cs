@@ -1,55 +1,54 @@
-﻿using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Options;
 using Pugling.Api.Models;
 
 namespace Pugling.Api.Services.Shared;
 
 /// <summary>
-/// Die eine Stelle, die eine Leitner-Wiederholung in Punkte übersetzt: Basispunkte
-/// (Box/Neuheit × Zeitfenster-Faktor) plus Ereignis-Boni (Combo; später Schnelle Antwort, Dauer).
-/// Bündelt bewusst, was vorher über <c>PointsService</c> und den Controller verstreut war, damit
-/// neue Bonusarten an genau einer Stelle andocken und jede Buchung ihre <see cref="PointKind"/> trägt.
-/// <b>Vollständig zustandslos</b> – eine reine Funktion. Bis E12 hing hier ein <c>PuglingDbContext</c>, und
-/// zwar einzig für den Zeitfenster-Lookup; seit die Fenster Konfiguration sind
-/// (<see cref="ScoringOptions"/>), braucht die Punkte-Rechnung keine Datenbank und keinen Abbruch-Token
-/// mehr. Das macht sie ohne Host testbar.
+/// The single place that translates a Leitner review into points: base points
+/// (box/novelty × time-slot factor) plus event bonuses (combo; later fast answer, duration).
+/// Deliberately bundles what used to be scattered across <c>PointsService</c> and the controller, so
+/// new bonus kinds dock in exactly one place and every ledger entry carries its <see cref="PointKind"/>.
+/// <b>Completely stateless</b> – a pure function. Until E12 a <c>PuglingDbContext</c> hung here, solely for
+/// the time-slot lookup; ever since the slots became configuration (<see cref="ScoringOptions"/>), the point
+/// calculation needs neither a database nor a cancellation token. That makes it testable without a host.
 /// </summary>
 public class ScoringService(IOptions<ScoringOptions> options)
 {
-    /// <summary>Ein einzelner Punkte-Beitrag einer Wiederholung – wird 1:1 zu einer <see cref="ChildPointsEntry"/>.</summary>
+    /// <summary>A single point contribution of a review – maps 1:1 to a <see cref="ChildPointsEntry"/>.</summary>
     public record Contribution(PointKind Kind, int Amount, string Reason);
 
     /// <summary>
-    /// Gesamtergebnis einer bewerteten Wiederholung: die Buchungen (<paramref name="Contributions"/>),
-    /// die erreichte Combo und – als bequemer Direktzugriff fürs Frontend – Basispunkte und Combo-Bonus.
+    /// Overall result of a scored review: the ledger entries (<paramref name="Contributions"/>),
+    /// the combo reached and – as a convenient direct access for the frontend – base points and combo bonus.
     /// </summary>
     public record ReviewScore(IReadOnlyList<Contribution> Contributions, int Combo)
     {
-        /// <summary>Basispunkte (ohne Boni) – für <c>ReviewOutcome.Awarded</c>.</summary>
+        /// <summary>Base points (without bonuses) – for <c>ReviewOutcome.Awarded</c>.</summary>
         public int BasePoints => Contributions.Where(c => c.Kind == PointKind.Base).Sum(c => c.Amount);
-        /// <summary>Combo-Bonus dieser Wiederholung – für <c>ReviewOutcome.ComboBonus</c>.</summary>
+        /// <summary>Combo bonus of this review – for <c>ReviewOutcome.ComboBonus</c>.</summary>
         public int ComboBonus => Contributions.Where(c => c.Kind == PointKind.Combo).Sum(c => c.Amount);
-        /// <summary>Schnelle-Antwort-Bonus dieser Wiederholung.</summary>
+        /// <summary>Fast-answer bonus of this review.</summary>
         public int SpeedBonus => Contributions.Where(c => c.Kind == PointKind.Speed).Sum(c => c.Amount);
-        /// <summary>Summe aller Beiträge (Basis + Boni).</summary>
+        /// <summary>Sum of all contributions (base + bonuses).</summary>
         public int Total => Contributions.Sum(c => c.Amount);
     }
 
-    /// <summary>Untergrenze für die Schnelle-Antwort-Messung: darunter zählt es als Doppel-Klick/Automatik, nicht als „schnell".</summary>
+    /// <summary>Lower bound for the fast-answer measurement: below this it counts as a double click/automation, not as "fast".</summary>
     private const double MinSpeedSeconds = 1.0;
 
     /// <summary>
-    /// Verfahrensneutrale Punkte-Einstellung einer Wiederholung – stammt von der <see cref="PlanPosition"/>
-    /// (pro Übung). <paramref name="Label"/> geht in den Buchungstext ein.
+    /// Procedure-neutral point settings for a review – comes from the <see cref="PlanPosition"/>
+    /// (per exercise). <paramref name="Label"/> goes into the ledger entry text.
     /// </summary>
     public record ScoreConfig(string Label, int NewContentPoints, int ComboThreshold, int ComboBonusPoints,
         int SpeedThresholdSeconds, int SpeedBonusPoints);
 
     /// <summary>
-    /// Bewertet eine Wiederholung und liefert alle fälligen Punkte-Buchungen. VOR dem Box-Aufstieg
-    /// aufrufen (<paramref name="box"/>/<paramref name="reviewCount"/> im Zustand davor – neuer Inhalt
-    /// zählt am meisten). Falsche Antwort → keine Punkte. <paramref name="postBox"/> ist die Box NACH
-    /// dem Aufstieg, nur für den Buchungstext. <paramref name="elapsedSeconds"/> ist die serverseitig
-    /// gemessene Zeit seit der letzten Antwort (null bei der ersten Karte einer Sitzung).
+    /// Scores a review and returns all due point contributions. Call BEFORE the box promotion
+    /// (<paramref name="box"/>/<paramref name="reviewCount"/> in the state before it – new content
+    /// counts the most). Wrong answer → no points. <paramref name="postBox"/> is the box AFTER
+    /// the promotion, only for the ledger entry text. <paramref name="elapsedSeconds"/> is the
+    /// server-side measured time since the last answer (null for the first card of a session).
     /// </summary>
     public ReviewScore ScoreReview(ScoreConfig cfg, int reviewCount, int box, int postBox,
         bool wasCorrect, int combo, DateTime nowLocal, double? elapsedSeconds = null)
@@ -76,17 +75,17 @@ public class ScoringService(IOptions<ScoringOptions> options)
     }
 
     /// <summary>
-    /// Schnell genug für den Bonus? Nur wenn Feature an (Schwelle &amp; Bonus &gt; 0) und die gemessene
-    /// Zeit im Fenster [<see cref="MinSpeedSeconds"/>, Schwelle] liegt – die Untergrenze verhindert
-    /// Punkte-Farming durch Doppel-Submits.
+    /// Fast enough for the bonus? Only if the feature is on (threshold &amp; bonus &gt; 0) and the measured
+    /// time falls within the window [<see cref="MinSpeedSeconds"/>, threshold] – the lower bound prevents
+    /// point farming through double submits.
     /// </summary>
     private static bool IsFastAnswer(ScoreConfig cfg, double? elapsedSeconds) =>
         cfg.SpeedThresholdSeconds > 0 && cfg.SpeedBonusPoints > 0
         && elapsedSeconds is { } s && s >= MinSpeedSeconds && s <= cfg.SpeedThresholdSeconds;
 
     /// <summary>
-    /// Combo-Bonus laut Einstellung: alle <see cref="ScoreConfig.ComboThreshold"/> Treffer in Folge
-    /// ein eskalierender Bonus (Basis × Meilenstein-Nummer). Schwelle oder Basis 0 → Feature aus.
+    /// Combo bonus per settings: every <see cref="ScoreConfig.ComboThreshold"/> hits in a row give
+    /// an escalating bonus (base × milestone number). Threshold or base 0 → feature off.
     /// </summary>
     private static int ComboBonus(ScoreConfig cfg, int combo) =>
         cfg.ComboThreshold > 0 && cfg.ComboBonusPoints > 0 && combo > 0 && combo % cfg.ComboThreshold == 0
@@ -94,9 +93,9 @@ public class ScoringService(IOptions<ScoringOptions> options)
             : 0;
 
     /// <summary>
-    /// Basispunkte einer richtigen Wiederholung, verfahrensneutral: erstmalige Wiederholung
-    /// (<paramref name="reviewCount"/> 0) zählt am meisten, spätere je höher die <paramref name="box"/>
-    /// weniger; gewichtet nach dem zur Uhrzeit aktiven Zeitfenster.
+    /// Base points of a correct review, procedure-neutral: the first review
+    /// (<paramref name="reviewCount"/> 0) counts the most, later ones less the higher the
+    /// <paramref name="box"/>; weighted by the time slot active at that time of day.
     /// </summary>
     private int BasePoints(ScoreConfig cfg, int reviewCount, int box, DateTime nowLocal)
     {
