@@ -471,6 +471,7 @@ hätte. Dazu die internen Namensreste ohne Vertragswirkung: `FatherOwnsChildAsyn
 (19 Dateien).
 
 **Zwei Tore stehen:**
+
 - **G3** (`Jede_String_Spalte_Hat_Eine_Laenge`) – zwei Zusicherungen, die harte zuerst.
 - **G7** (`Jede_Json_Spalte_Hat_Einen_ValueComparer`) – macht die bislang vorbildlich befolgte
   `CLAUDE.md`-Regel zum Tor. Sie hing an Disziplin, ihr Bruch ist unsichtbar (EF vergleicht ohne Comparer
@@ -544,6 +545,7 @@ Service) – weg, samt Implementierungen und den drei Doku-Stellen.
 **Der Scope einer Etappe ist jetzt ein echter Fremdschlüssel** (behebt den Pflichtfeld-ohne-FK-Zombie:
 `SubjectId` war Pflicht *ohne* Beziehung, nichts hinderte am Verweis auf ein gelöschtes Fach, und die
 Auswertung lieferte dann stumm 0 %):
+
 - `SubjectId` **Cascade** – ein Ziel auf einem gelöschten Fach ist bedeutungslos. Zwei unabhängige Roots
   (Subject, Objective), kein Diamant – Bauart wie `ItemProgress`.
 - `ChapterId`/`ExerciseId` **Restrict**, bewusst nicht `SetNull`: das würde ein Kapitel-Ziel lautlos zum

@@ -20,7 +20,7 @@ Lernstand wieder aus. Alle Routen unter `api/v1/…`. Konzept-Hintergrund:
 - [Anmerkungen beim Testen](#daneben-anmerkungen-beim-testen-apiv1remarks) – die Ressource neben der Kette.
 - [Durchstich Vater→Sohn](#durchstich-vater-weist-zu--sohn-sieht-denselben-plan) – konkrete Request/Response-Kette.
 - [Übung ↔ Auswertung](#3-übung--auswertung-des-kindes) – positionsgebundener und kindweiter Lernstand.
-- [Große Ziele](#4-grosse-ziele-ergebnis-ziele-auf-der-auswertung) – Vater-Ziele mit Etappen auf Live-Auswertung.
+- [Große Ziele](#4-große-ziele-ergebnis-ziele-auf-der-auswertung) – Vater-Ziele mit Etappen auf Live-Auswertung.
 - [Punkte & Gamification](#5-was-der-fortschritt-auslöst-punkte--gamification) – Punkte, Missionen, Auszeichnungen.
 - [Weitere Vater→Sohn-Zusammenhänge](#6-weitere-vatersohn-zusammenhänge) – große Ziele, Missionen, Rewards, Shop, nächste Planung.
 
