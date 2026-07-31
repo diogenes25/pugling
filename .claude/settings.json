@@ -87,6 +87,16 @@
             "statusMessage": "Test-Tor: dotnet test Pugling.sln …"
           }
         ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/scripts/context-budget.sh\"",
+            "timeout": 20,
+            "statusMessage": "Budget-Tor: Startkontext messen …"
+          }
+        ]
       }
     ]
   },

@@ -44,3 +44,6 @@ backend/Pugling.Api/media-uploads/
 
 # Fingerprint des letzten grünen Test-Tor-Laufs (.claude/hooks/test-gate.sh) – lokaler Zustand.
 .claude/.test-gate-state
+
+# Zuletzt gemessene Groessen des Startkontexts (.claude/scripts/context-budget.sh) – lokaler Zustand.
+.claude/.context-budget-state
