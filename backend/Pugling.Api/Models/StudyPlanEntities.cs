@@ -134,6 +134,13 @@ public class TestAttempt
     public int StageValue { get; set; }
     /// <summary>Does this attempt count as "graded" (typed/free text)? Set by the controller.</summary>
     public bool Graded { get; set; }
+    /// <summary>
+    /// Was this attempt started by a supervisor (preview/catch-up) instead of the child? The child's rules do
+    /// not apply to such an attempt – it picks its stage freely – so it must stay out of the child's world:
+    /// it is neither resumed by the child (who would then be examined at a foreign stage) nor counted against
+    /// the child's daily attempt cap (two father previews would otherwise burn the child's whole day).
+    /// </summary>
+    public bool BySupervisor { get; set; }
     public DateTime StartedAt { get; set; } = DateTime.UtcNow;
     public DateTime? CompletedAt { get; set; }
     public int TotalItems { get; set; }

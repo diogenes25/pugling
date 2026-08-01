@@ -684,7 +684,7 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
         var secondAttemptId = (await secondAttempt.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("attemptId").GetInt32();
         await child.PostAsJsonAsync(
             $"/api/v1/student/study-plans/{planId}/positions/{positionId}/tests/{secondAttemptId}/submit", new { });
-        await Capture(child, g, "Dritter Testversuch der Periode (Deckel)", HttpMethod.Post,
+        await Capture(child, g, "Dritter Testversuch des Tages (Deckel)", HttpMethod.Post,
             $"/api/v1/student/study-plans/{planId}/positions/{positionId}/tests", new { },
             HttpStatusCode.Conflict, ApiErrors.TestAttemptsExhausted.Code);
 

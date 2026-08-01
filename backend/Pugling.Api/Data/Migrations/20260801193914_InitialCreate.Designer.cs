@@ -11,7 +11,7 @@ using Pugling.Api.Data;
 namespace Pugling.Api.Data.Migrations
 {
     [DbContext(typeof(PuglingDbContext))]
-    [Migration("20260730232955_InitialCreate")]
+    [Migration("20260801193914_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -2163,6 +2163,9 @@ namespace Pugling.Api.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("BySupervisor")
                         .HasColumnType("INTEGER");
 
                     b.Property<DateTime?>("CompletedAt")

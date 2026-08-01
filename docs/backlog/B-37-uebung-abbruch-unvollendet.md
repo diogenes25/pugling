@@ -265,7 +265,8 @@ einen Test dagegen schreibt.
       mehr, der Wert sei bei `CheckMode.None` ungenutzt.
 - [x] **E3:** Ein dritter Klausur-Start in derselben Periode antwortet mit `TestAttemptsExhausted`;
       verlassene Versuche zählen mit. Der Vater ist nicht gedeckelt.
-      → `KlausurModus_DritterVersuchDerPeriode_WirdAbgewiesen_VaterNicht`.
+      → `KlausurModus_DritterVersuchDesTages_WirdAbgewiesen_VaterNicht` (der Deckel zählt **pro Tag**,
+      siehe Nachtrag unten).
 - [x] **E4:** Zwei `Start`-Aufrufe des Sohns hintereinander liefern **denselben** `attemptId` samt Cursor;
       ein Reload mitten in der Klausur setzt an derselben Frage fort und verbraucht keinen Versuch.
       Die Vater-Vorschau bekommt weiter einen frischen Versuch.
@@ -273,20 +274,19 @@ einen Test dagegen schreibt.
       (`full-flow.spec.ts`: Klausur verlassen, wieder betreten, steht auf derselben Frage).
 - [x] **E5:** Beide Rundenarten zeigen während des Spielens einen Ausweg; der Übungs-Knopf beendet die
       Sitzung serverseitig, der Klausur-Knopf verliert keinen Fortschritt.
-- [x] **E7:** `End` weist einen nicht spielbaren Plan für den Sohn ab und bucht dafür keine Ziel-Punkte.
-      → `Sohn_KannLaufendeSitzungAufInaktivemPlanNichtAbschliessen_403`.
+- [x] **E7:** `End` bucht für einen nicht spielbaren Plan keine Ziel-Punkte — schließt die Runde aber
+      trotzdem (siehe Nachtrag unten).
+      → `Sohn_SchliesstLaufendeSitzungAufInaktivemPlan_OhneZielpunkte`.
 - [x] Nichts von dieser Story endet als „offen:"-Vermerk irgendwo sonst — die beim Bauen entstandenen
       Grenzen stehen unten.
 
 ### Bekannte Grenzen (beim Bauen entstanden, bewusst)
 
-- **Ein Versuch des Vaters auf derselben Position und Periode ist von dem des Sohns nicht
-  unterscheidbar.** Der Sohn würde ihn fortsetzen, und er zählt gegen den Deckel. Ein Unterscheidungsmerkmal
-  wäre eine Spalte am `TestAttempt` und damit eine Migration — für einen seltenen Vorschau-/Nachtragsfall zu
-  teuer. Der Vater selbst ist nicht gedeckelt.
+- ~~**Ein Versuch des Vaters ist von dem des Sohns nicht unterscheidbar.**~~ — **nachgezogen**, siehe
+  Nachtrag unten: die Spalte `TestAttempt.BySupervisor` gibt es jetzt.
 - **Der `Mode == Lern`-Filter in der Erledigt-Regel ist jetzt doppelt gesichert**, weil eine Info-Sitzung
   ihren Cursor nie vorrückt (`Review` antwortet im Info-Modus vor dem Cursor-Schritt mit 204). Er bleibt als
-  Tiefenverteidigung stehen; geprüft wird er über das Paar aus Info- und Lern-Test mit leerem Pool.
+  Tiefenverteidigung stehen; geprüft wird er über das Paar aus Info- und Lern-Test ohne Inhalt.
 - **`/smoke-test` wurde nicht zusätzlich gefahren.** Die Playwright-E2E deckt dieselbe Fläche ab (echter
   Server, Wegwerf-DB, ganzer Vater→Sohn-Loop) und prüft zusätzlich den Fortsetzen-Pfad im Browser. Sie nutzt
   aber eine **Vokabel**-Übung: der `CheckMode.None`-Pfad aus E1 ist nur durch die Integrationstests belegt,
@@ -374,3 +374,26 @@ Benannt, nicht behauptet:
   White-Box-Seeding), und ein EF-Fallstrick kam dazu: `Order` ist eine JSON-Spalte, `Order.Count` ist nicht
   übersetzbar — die Menge wird in der DB gefiltert, der Vergleich läuft im Speicher. Offen für die Abnahme:
   beide Reviewer und der Commit.
+- **2026-08-01** — **Nachtrag aus dem Code-Review**: fünf Befunde am gebauten Stand, alle behoben,
+  **628 Tests grün**. Die zwei Vater-Befunde teilen eine Ursache und darum unten einen Punkt. Rot-Probe über
+  alle vier neuen Tests gefahren (mit der alten Regel fallen genau diese vier), die zwei Tests, die unter
+  beiden Regeln grün bleiben müssen, bleiben es.
+  1. **Der Deckel zählt jetzt pro Tag statt pro Zielperiode.** An die Periode gebunden bekam eine
+     Wochen-Position zwei Versuche für die *ganze* Woche: zwei Fehlschläge am Montag sperrten das Kind sechs
+     Tage aus seiner eigenen Pflicht aus — und der Malus kam obendrauf. Der Deckel wehrt den *sofortigen*
+     Neustart ab; ein neuer Tag ist gelernter Stoff, kein Farming. `GoalCadence.None` bleibt bewusst
+     gedeckelt (ein Test schreibt immer Lernstand und füttert die Metrik-Missionen).
+  2. **`TestAttempt.BySupervisor`** — die oben als „zu teuer" verworfene Spalte ist da (Kette **neu
+     gefaltet**, Snapshot-Diff genau drei Zeilen). Ohne sie bekam der Sohn den offenen Vorschau-Versuch des
+     Vaters zum Fortsetzen — samt dessen frei gewählter Stufe und `Graded`-Flag — und zwei Vorschauen
+     verbrauchten seinen Tag. Beide Abfragen im `Start` filtern die Spalte jetzt.
+  3. **Leere Reihenfolge ist nicht gleich leere Reihenfolge.** `PlayedEnough` gab bei `total == 0`
+     bedingungslos „erfüllt" zurück — bei einem Aufsatz (`ItemsOf` liefert *immer* `[]`) also für jede Runde,
+     die nur geöffnet und geschlossen wurde: genau die Anwesenheit, die E1 abschaffen sollte. Getrennt wird
+     jetzt am **Pool**: hat die Position einen und war nur nichts fällig, bleibt es „erfüllt"; hat die Übung
+     überhaupt keine Inhalts-Atome, braucht die Runde Verweildauer und ein bewusstes Beenden
+     (`MinSecondsForContentlessRound`, bewusst schwach — mehr Signal gibt es dort nicht).
+  4. **`End` schließt die Runde wieder.** Der Playable-Wächter aus E7 stand *vor* dem `EndedAt`-Schreiben:
+     eine Runde, die beim Ablaufen des Plans lief, war nie mehr zu schließen (das Frontend beendet sie aus
+     einem Effekt-Cleanup und verschluckt den 403). Gesperrt ist jetzt nur noch die Buchung — die Gefahr war
+     immer nur sie, denn die Erledigt-Regel liest Cursor und Order, nicht `EndedAt`.

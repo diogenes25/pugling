@@ -113,10 +113,9 @@ public class PositionPlayModesTests(PuglingWebAppFactory factory) : IClassFixtur
         var baseUrl = TestApi.PracticeBase(planId, positionId);
 
         // An info session with real activity (a heartbeat) → must NOT fulfill the daily goal.
-        // Together with LernModus_ReineInhaltsuebung_LeererPool_ErfuelltDieTagespflicht it forms a pair: the
-        // same (question-less) exercise, the same flow, only the mode differs. Because an empty pool counts as
-        // "played" by the cursor rule, the `false` here hangs SOLELY on the mode filter - so the test really
-        // checks the info exclusion and not something else on the side.
+        // Together with LernModus_InhaltsuebungOhneInhalt_VerweilteRunde_ErfuelltDieTagespflicht it forms a
+        // pair: the same (question-less) exercise, the same flow, the same dwell time - only the mode differs.
+        // So the `false` here hangs SOLELY on the mode filter and the test really checks the info exclusion.
         var sessionId = await TestApi.IdAsync(await child.PostAsJsonAsync(baseUrl, new { mode = "Info" }));
         await child.PostAsJsonAsync($"{baseUrl}/{sessionId}/heartbeat", new { seconds = 60, active = true });
         await child.PostAsJsonAsync($"{baseUrl}/{sessionId}/end", new { });
@@ -132,7 +131,8 @@ public class PositionPlayModesTests(PuglingWebAppFactory factory) : IClassFixtur
     /// <paramref name="questions"/> content atoms – the exercise kind whose duty used to be fulfilled by a
     /// single heartbeat.
     /// </summary>
-    private async Task<(int planId, int positionId)> SeedReadingPositionAsync(HttpClient father, int questions)
+    private async Task<(int planId, int positionId)> SeedReadingPositionAsync(HttpClient father, int questions,
+        bool useLeitner = false)
     {
         var subjectId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/subjects", new { name = "Lese-Fach" }));
         var chapterId = await TestApi.IdAsync(await father.PostAsJsonAsync(
@@ -151,7 +151,7 @@ public class PositionPlayModesTests(PuglingWebAppFactory factory) : IClassFixtur
                         .Select(i => new { prompt = $"F{i}", answer = $"A{i}" }),
                 },
             }));
-        return TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.FreeText, useLeitner: false);
+        return TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.FreeText, useLeitner: useLeitner);
     }
 
     [Fact]
@@ -198,17 +198,84 @@ public class PositionPlayModesTests(PuglingWebAppFactory factory) : IClassFixtur
         Assert.Equal(1, db.PositionGoalRewards.Count(r => r.PlanPositionId == positionId));
     }
 
+    /// <summary>
+    /// An exercise WITHOUT any content atoms (a text without questions, an essay) always freezes an empty
+    /// order – there is no cursor that could prove anything. Opening and closing a round must therefore not
+    /// discharge the duty, otherwise the presence rule above would have a hole exactly where it cannot be
+    /// measured.
+    /// </summary>
     [Fact]
-    public async Task LernModus_ReineInhaltsuebung_LeererPool_ErfuelltDieTagespflicht()
+    public async Task LernModus_InhaltsuebungOhneInhalt_OeffnenUndSchliessen_ErfuelltDieTagespflichtNicht()
     {
         var father = await TestApi.FatherAsync(_factory);
-        // Nothing due (no questions) → there was nothing to play, the obligation counts as met.
         var (planId, positionId) = await SeedReadingPositionAsync(father, questions: 0);
         var child = await TestApi.ChildAsync(_factory);
         var baseUrl = TestApi.PracticeBase(planId, positionId);
 
         var sessionId = await TestApi.IdAsync(await child.PostAsJsonAsync(baseUrl, new { mode = "Lern" }));
         await child.PostAsJsonAsync($"{baseUrl}/{sessionId}/end", new { });
+
+        var overview = await child.GetFromJsonAsync<JsonElement>($"/api/v1/student/study-plans/{planId}/overview");
+        JsonAssert.False(overview.GetProperty("today"), "dutyDone");
+
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
+        Assert.Empty(db.PositionGoalRewards.Where(r => r.PlanPositionId == positionId));
+    }
+
+    /// <summary>
+    /// The counterpart: a contentless exercise stays fulfillable, otherwise its duty would be an automatic
+    /// <see cref="PlanPosition.PenaltyCoins"/> fine. Dwelling on the text and deliberately closing the round
+    /// is the only evidence that exists there.
+    /// </summary>
+    [Fact]
+    public async Task LernModus_InhaltsuebungOhneInhalt_VerweilteRunde_ErfuelltDieTagespflicht()
+    {
+        var father = await TestApi.FatherAsync(_factory);
+        var (planId, positionId) = await SeedReadingPositionAsync(father, questions: 0);
+        var child = await TestApi.ChildAsync(_factory);
+        var baseUrl = TestApi.PracticeBase(planId, positionId);
+
+        var sessionId = await TestApi.IdAsync(await child.PostAsJsonAsync(baseUrl, new { mode = "Lern" }));
+        await child.PostAsJsonAsync($"{baseUrl}/{sessionId}/heartbeat", new { seconds = 60, active = true });
+        await child.PostAsJsonAsync($"{baseUrl}/{sessionId}/end", new { });
+
+        var overview = await child.GetFromJsonAsync<JsonElement>($"/api/v1/student/study-plans/{planId}/overview");
+        JsonAssert.True(overview.GetProperty("today"), "dutyDone");
+    }
+
+    /// <summary>
+    /// The other cause of an empty order: the position HAS a pool, Leitner simply scheduled everything for
+    /// later. Then there really was nothing to play and the duty stays met – the distinction the two tests
+    /// above hang on.
+    /// </summary>
+    [Fact]
+    public async Task LernModus_PoolVorhandenAberNichtsFaellig_ErfuelltDieTagespflicht()
+    {
+        var father = await TestApi.FatherAsync(_factory);
+        var (planId, positionId) = await SeedReadingPositionAsync(father, questions: 2, useLeitner: true);
+        var tomorrow = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(1);
+        using (var scope = _factory.Services.CreateScope())
+        {
+            // Both contents already boxed up and due tomorrow - today's learn session comes out empty.
+            var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
+            for (var i = 0; i < 2; i++)
+                db.PositionItemProgress.Add(new PositionItemProgress
+                {
+                    PlanPositionId = positionId,
+                    ItemIndex = i,
+                    Box = 2,
+                    DueOn = tomorrow,
+                    IntroducedAt = DateOnly.FromDateTime(DateTime.UtcNow),
+                });
+            db.SaveChanges();
+        }
+
+        var child = await TestApi.ChildAsync(_factory);
+        var baseUrl = TestApi.PracticeBase(planId, positionId);
+        var start = await (await child.PostAsJsonAsync(baseUrl, new { mode = "Lern" })).Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal(0, start.GetProperty("total").GetInt32()); // nothing due, so nothing frozen
+        await child.PostAsJsonAsync($"{baseUrl}/{start.GetProperty("id").GetInt32()}/end", new { });
 
         var overview = await child.GetFromJsonAsync<JsonElement>($"/api/v1/student/study-plans/{planId}/overview");
         JsonAssert.True(overview.GetProperty("today"), "dutyDone");
@@ -331,7 +398,7 @@ public class PositionPlayModesTests(PuglingWebAppFactory factory) : IClassFixtur
     }
 
     [Fact]
-    public async Task KlausurModus_DritterVersuchDerPeriode_WirdAbgewiesen_VaterNicht()
+    public async Task KlausurModus_DritterVersuchDesTages_WirdAbgewiesen_VaterNicht()
     {
         var father = await TestApi.FatherAsync(_factory);
         var exerciseId = await TestApi.CreateVocabExerciseAsync(father, ThreeWords);
@@ -355,6 +422,85 @@ public class PositionPlayModesTests(PuglingWebAppFactory factory) : IClassFixtur
         // The supervisor is not capped (preview/catch-up).
         var fathersTry = await father.PostAsJsonAsync(testsUrl, new { });
         Assert.Equal(HttpStatusCode.Created, fathersTry.StatusCode);
+    }
+
+    /// <summary>
+    /// The cap counts per day, not per goal period. On a weekly position the period bound would grant two
+    /// attempts for the whole week: two Monday failures would lock the child out of its own weekly duty until
+    /// Sunday – and the missed period would then cost it coins.
+    /// </summary>
+    [Fact]
+    public async Task KlausurModus_WochenZiel_DeckelGiltProTag_NichtProWoche()
+    {
+        var father = await TestApi.FatherAsync(_factory);
+        var exerciseId = await TestApi.CreateVocabExerciseAsync(father, ThreeWords);
+        var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.FreeText,
+            cadence: GoalCadence.Weekly);
+        // Another day of the SAME week (Mon–Sun) - never today, whichever weekday the run falls on. On a
+        // Monday there is no earlier day left in the week, so the neighbour is Tuesday.
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var otherDayOfWeek = today.AddDays(today.DayOfWeek == DayOfWeek.Monday ? 1 : -1);
+        using (var scope = _factory.Services.CreateScope())
+        {
+            // Two failed attempts on that day - inside the weekly period the child's duty is settled over.
+            var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
+            for (var i = 0; i < 2; i++)
+                db.TestAttempts.Add(new TestAttempt
+                {
+                    StudyPlanId = planId,
+                    PlanPositionId = positionId,
+                    Day = otherDayOfWeek,
+                    StageValue = (int)TestStage.FreeText,
+                    CompletedAt = DateTime.UtcNow,
+                });
+            db.SaveChanges();
+        }
+
+        var child = await TestApi.ChildAsync(_factory);
+        var testsUrl = $"/api/v1/student/study-plans/{planId}/positions/{positionId}/tests";
+
+        // Today is a fresh day, so the two attempts are there again.
+        for (var i = 0; i < 2; i++)
+        {
+            var res = await child.PostAsJsonAsync(testsUrl, new { });
+            Assert.Equal(HttpStatusCode.Created, res.StatusCode);
+            await child.PostAsJsonAsync(
+                $"{testsUrl}/{await TestApi.IdWithKeyAsync(res, "attemptId")}/submit", new { });
+        }
+        Assert.Equal(HttpStatusCode.Conflict, (await child.PostAsJsonAsync(testsUrl, new { })).StatusCode);
+    }
+
+    /// <summary>
+    /// A supervisor attempt belongs to a different actor under different rules (free stage, no cap). It must
+    /// therefore neither eat the child's attempts nor be handed to the child for continuation – the child
+    /// would then be examined at a stage the supervisor picked, with the supervisor's <c>Graded</c> flag.
+    /// </summary>
+    [Fact]
+    public async Task KlausurModus_VorschauDesVaters_KostetDenSohnKeinenVersuch_UndWirdNichtFortgesetzt()
+    {
+        var father = await TestApi.FatherAsync(_factory);
+        var exerciseId = await TestApi.CreateVocabExerciseAsync(father, ThreeWords);
+        var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.FreeText);
+        var child = await TestApi.ChildAsync(_factory);
+        var testsUrl = $"/api/v1/student/study-plans/{planId}/positions/{positionId}/tests";
+
+        // Two father previews, both left open and both at a stage of his choosing.
+        var fathersIds = new List<int>();
+        for (var i = 0; i < 2; i++)
+            fathersIds.Add(await TestApi.IdWithKeyAsync(
+                await father.PostAsJsonAsync(testsUrl, new { stage = (int)TestStage.ShowBoth }), "attemptId"));
+
+        // The child gets a NEW attempt at ITS scheduled stage, not the father's open one.
+        var mine = await (await child.PostAsJsonAsync(testsUrl, new { })).Content.ReadFromJsonAsync<JsonElement>();
+        Assert.DoesNotContain(mine.GetProperty("attemptId").GetInt32(), fathersIds);
+        Assert.Equal((int)TestStage.FreeText, mine.GetProperty("stage").GetInt32());
+        await child.PostAsJsonAsync($"{testsUrl}/{mine.GetProperty("attemptId").GetInt32()}/submit", new { });
+
+        // And the previews did not consume the day: the child's second attempt still works, the third does not.
+        var second = await child.PostAsJsonAsync(testsUrl, new { });
+        Assert.Equal(HttpStatusCode.Created, second.StatusCode);
+        await child.PostAsJsonAsync($"{testsUrl}/{await TestApi.IdWithKeyAsync(second, "attemptId")}/submit", new { });
+        Assert.Equal(HttpStatusCode.Conflict, (await child.PostAsJsonAsync(testsUrl, new { })).StatusCode);
     }
 
     // ---- Info mode serves the whole pool (cards not due too), learn mode only the due ones ---- ----

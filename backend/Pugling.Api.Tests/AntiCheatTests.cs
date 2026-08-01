@@ -117,10 +117,12 @@ public class AntiCheatTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
 
     /// <summary>
     /// The end of a session is not just a read: it books the position's goal points, and those do not check
-    /// <c>Active</c> themselves. Without this guard a plan deactivated mid-round could still be cashed in.
+    /// <c>Active</c> themselves. A plan deactivated mid-round must therefore not be cashed in – but the round
+    /// itself still has to close, otherwise the session stays open forever (the frontend ends it from an
+    /// effect cleanup and swallows the error, so a rejection would never reach anyone).
     /// </summary>
     [Fact]
-    public async Task Sohn_KannLaufendeSitzungAufInaktivemPlanNichtAbschliessen_403()
+    public async Task Sohn_SchliesstLaufendeSitzungAufInaktivemPlan_OhneZielpunkte()
     {
         var (planId, positionId) = await SetupAsync();
         var child = await TestApi.ChildAsync(factory);
@@ -134,9 +136,10 @@ public class AntiCheatTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
 
         var res = await child.PostAsJsonAsync($"{baseUrl}/{sessionId}/end", new { });
 
-        Assert.Equal(HttpStatusCode.Forbidden, res.StatusCode);
+        res.EnsureSuccessStatusCode();
         using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
+        Assert.NotNull(db.PracticeSessions.Single(s => s.Id == sessionId).EndedAt);
         Assert.Empty(db.PositionGoalRewards.Where(r => r.PlanPositionId == positionId));
     }
 

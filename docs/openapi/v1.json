@@ -8077,7 +8077,7 @@
         "tags": [
           "Student \u2013 Position Practice"
         ],
-        "summary": "Ends the session and evaluates time-based missions.",
+        "summary": "Ends the session and evaluates time-based missions. A round that was in flight when the plan expired\nor was switched off can still be closed; only the goal points are withheld then.",
         "parameters": [
           {
             "name": "planId",
@@ -8111,16 +8111,6 @@
           }
         ],
         "responses": {
-          "403": {
-            "description": "Forbidden",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
           "404": {
             "description": "Not Found",
             "content": {

@@ -580,7 +580,7 @@ Response — `HTTP 200`:
 }
 ```
 
-### Dritter Testversuch der Periode (Deckel) — Fehlerfall
+### Dritter Testversuch des Tages (Deckel) — Fehlerfall
 
 `POST /api/v1/student/study-plans/4/positions/18/tests`
 
@@ -599,7 +599,7 @@ Response — `HTTP 409`:
   "type": "https://pugling.app/errors/test_attempts_exhausted",
   "title": "No test attempts left.",
   "status": 409,
-  "detail": "No test attempts left for this period. Ask your parent.",
+  "detail": "No test attempts left for today. Ask your parent.",
   "code": "test_attempts_exhausted",
   "traceId": "<trace-id>"
 }

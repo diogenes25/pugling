@@ -962,15 +962,15 @@
     "expectedCode": null
   },
   {
-    "key": "study-plans-dritter-testversuch-der-periode-deckel",
+    "key": "study-plans-dritter-testversuch-des-tages-deckel",
     "resourceGroup": "study-plans",
-    "title": "Dritter Testversuch der Periode (Deckel)",
+    "title": "Dritter Testversuch des Tages (Deckel)",
     "method": "POST",
     "path": "/api/v1/student/study-plans/4/positions/18/tests",
     "role": "child",
     "requestBodyJson": "{}",
     "expectedStatus": 409,
-    "responseBodyJson": "{\n  \u0022type\u0022: \u0022https://pugling.app/errors/test_attempts_exhausted\u0022,\n  \u0022title\u0022: \u0022No test attempts left.\u0022,\n  \u0022status\u0022: 409,\n  \u0022detail\u0022: \u0022No test attempts left for this period. Ask your parent.\u0022,\n  \u0022code\u0022: \u0022test_attempts_exhausted\u0022,\n  \u0022traceId\u0022: \u0022\u003Ctrace-id\u003E\u0022\n}",
+    "responseBodyJson": "{\n  \u0022type\u0022: \u0022https://pugling.app/errors/test_attempts_exhausted\u0022,\n  \u0022title\u0022: \u0022No test attempts left.\u0022,\n  \u0022status\u0022: 409,\n  \u0022detail\u0022: \u0022No test attempts left for today. Ask your parent.\u0022,\n  \u0022code\u0022: \u0022test_attempts_exhausted\u0022,\n  \u0022traceId\u0022: \u0022\u003Ctrace-id\u003E\u0022\n}",
     "isError": true,
     "expectedCode": "test_attempts_exhausted"
   },

@@ -30,16 +30,26 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
     private const int DefaultPassPercent = 80;
 
     /// <summary>
-    /// How many test attempts the child gets per goal period. A second chance is pedagogically right, the
+    /// How many test attempts the child gets per <b>day</b>. A second chance is pedagogically right, the
     /// fifth is grade farming: without a cap the child can restart until the result is good and silently drop
     /// every bad run (an abandoned attempt writes nothing – see <see cref="Answer"/>).
+    /// <para>
+    /// Per day and deliberately <em>not</em> per goal period: what the cap defends against is the immediate
+    /// restart, and a fresh day is fresh learning rather than farming. Tied to the period, a weekly position
+    /// would grant two attempts for the entire week – two Monday failures would lock the child out of its own
+    /// duty until Sunday and then fine it (<see cref="PlanPosition.PenaltyCoins"/>) for missing it.
+    /// </para>
+    /// <para>
+    /// It also holds for positions without a duty (<see cref="GoalCadence.None"/>): a test always writes item
+    /// progress and feeds the metric missions, so unlimited restarts are farming there too.
+    /// </para>
     /// <para>
     /// Deliberately a constant and not a field on the position: a per-position cap would be a schema change,
     /// and the migration chain is folded rather than extended. If the cap ever needs to be configurable, this
     /// is the one place to replace.
     /// </para>
     /// </summary>
-    private const int MaxAttemptsPerPeriod = 2;
+    private const int MaxAttemptsPerDay = 2;
 
 
     // No default for `ct`: it would make the call site look correct while the client's cancellation fizzles
@@ -93,27 +103,26 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
             return this.ProblemWithCode(ApiErrors.PlanInactive, "This study plan is not currently active. Ask your parent.");
         var day = dto.Day ?? today;
 
-        // The child does not walk out of a running attempt and gets only a limited number per period.
+        // The child does not walk out of a running attempt and gets only a limited number per day.
         // The supervisor stays exempt: they use the endpoint for preview/catch-up with a stage of their own.
+        // Both queries therefore ignore supervisor attempts (see TestAttempt.BySupervisor) - they belong to a
+        // different actor under different rules and must not leak into the child's day.
         if (User.IsStudent())
         {
-            // The same period bounds as the goal settlement - a second calculation would drift.
-            var (from, to) = PositionProgressService.PeriodRange(pos.Cadence, day);
-
             // Resume instead of creating anew: cursor and order are persisted. Without that, an accidental
             // reload would burn one of the scarce attempts - the cap would then punish bad luck instead of farming.
             if (await db.TestAttempts
-                    .Where(t => t.PlanPositionId == positionId && t.Day >= from && t.Day <= to && t.CompletedAt == null)
+                    .Where(t => t.PlanPositionId == positionId && t.Day == day && t.CompletedAt == null && !t.BySupervisor)
                     .OrderBy(t => t.Id)
                     .FirstOrDefaultAsync(ct) is { } open)
                 return new AttemptResponse(open.Id, planId, positionId, open.Day, open.StageValue, open.TotalItems);
 
             // The START is counted, not the submission: otherwise walking away would be free and the cap toothless.
             var used = await db.TestAttempts
-                .CountAsync(t => t.PlanPositionId == positionId && t.Day >= from && t.Day <= to, ct);
-            if (used >= MaxAttemptsPerPeriod)
+                .CountAsync(t => t.PlanPositionId == positionId && t.Day == day && !t.BySupervisor, ct);
+            if (used >= MaxAttemptsPerDay)
                 return this.ProblemWithCode(ApiErrors.TestAttemptsExhausted,
-                    "No test attempts left for this period. Ask your parent.");
+                    "No test attempts left for today. Ask your parent.");
         }
 
         // Stage: only the supervisor may choose it freely; for the child the day's schedule/position stage applies.
@@ -139,6 +148,8 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
             Day = day,
             StageValue = stage,
             Graded = typed,
+            // Stamp the actor: everything below the child's rules (resume, attempt cap) keys off it.
+            BySupervisor = !User.IsStudent(),
             TotalItems = pool.Count,
             Order = [.. order],
             // The exercise sits on the attempt (through the position), not on every result row: ContentId was

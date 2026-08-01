@@ -30,12 +30,8 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
     /// <summary>Monday of the week that <paramref name="day"/> falls in (week = Mon–Sun).</summary>
     private static DateOnly WeekMonday(DateOnly day) => day.AddDays(-(((int)day.DayOfWeek + 6) % 7));
 
-    /// <summary>
-    /// Range [from, to] of the period in which the position must meet its goal. Public because the period is
-    /// not owned by this service alone: the test attempt cap (<c>PositionTestsController</c>) counts per
-    /// period and must use the very same boundaries – a second implementation would drift.
-    /// </summary>
-    public static (DateOnly From, DateOnly To) PeriodRange(GoalCadence cadence, DateOnly day) => cadence switch
+    /// <summary>Range [from, to] of the period in which the position must meet its goal.</summary>
+    private static (DateOnly From, DateOnly To) PeriodRange(GoalCadence cadence, DateOnly day) => cadence switch
     {
         GoalCadence.Weekly => (WeekMonday(day), WeekMonday(day).AddDays(6)),
         _ => (day, day),
@@ -56,17 +52,24 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
         pos.Exercise is { } ex ? registry.ByKey(ex.Type)?.Manifest.CheckMode ?? ExerciseCheckMode.None : ExerciseCheckMode.None;
 
     /// <summary>
+    /// Minimum practice seconds an <b>empty</b> round must carry when the exercise has no content atoms at
+    /// all. Deliberately weak – seconds are producible by leaving a tab open – but it is the only evidence
+    /// that exists there, and it is strictly more than "a POST happened". See <see cref="IsGoalMetAsync"/>.
+    /// </summary>
+    private const int MinSecondsForContentlessRound = 60;
+
+    /// <summary>
     /// Has enough of a session's frozen order been played to count the round as done? A content exercise has
     /// no gradable answer, so the only honest measure is how far the round was actually played:
     /// mere presence must not fulfil a duty, and active seconds are producible by leaving a tab open.
     /// <para>
-    /// An <b>empty</b> order means nothing was due – then the goal counts as met, because there was nothing
-    /// to play. Same behaviour as before this rule existed.
+    /// An <b>empty</b> order proves nothing either way – its two very different causes are told apart by
+    /// <see cref="IsGoalMetAsync"/>, which alone knows whether the position has a pool.
     /// </para>
     /// </summary>
     private static bool PlayedEnough(PlanPosition pos, int cursor, int total)
     {
-        if (total == 0) return true;
+        if (total == 0) return false;
         var percent = Math.Clamp(pos.GoalThreshold ?? DefaultPassPercent, 1, 100);
         return cursor >= (int)Math.Ceiling(total * percent / 100.0);
     }
@@ -77,6 +80,13 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
     /// <see cref="PlanPosition.GoalThreshold"/> percent of its frozen order (see <see cref="PlayedEnough"/>);
     /// checkable types (test/catalog check) count as done as soon as a test has been
     /// passed within the period (with <see cref="PlanPosition.RequireTypedTest"/> only a graded attempt counts).
+    /// <para>
+    /// An <b>empty</b> frozen order has two causes that look identical on the session but mean the opposite:
+    /// either the position has a pool and Leitner simply had nothing due (nothing to play → done), or the
+    /// exercise carries no content atoms at all (an essay, a text without questions). Only the pool tells
+    /// them apart – and without that distinction the second case would let any duty be discharged by opening
+    /// and closing a round, which is exactly the presence this rule exists to reject.
+    /// </para>
     /// </summary>
     public async Task<bool> IsGoalMetAsync(PlanPosition pos, DateOnly day, CancellationToken ct = default)
     {
@@ -89,9 +99,19 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
             // force client-side evaluation over ALL sessions.
             var rounds = await db.PracticeSessions.AsNoTracking()
                 .Where(s => s.PlanPositionId == pos.Id && s.Day >= from && s.Day <= to && s.Mode == PlayMode.Lern)
-                .Select(s => new { s.Cursor, s.Order })
+                .Select(s => new { s.Cursor, s.Order, s.ActiveSeconds, s.EndedAt })
                 .ToListAsync(ct);
-            return rounds.Any(r => PlayedEnough(pos, r.Cursor, r.Order.Count));
+            if (rounds.Any(r => PlayedEnough(pos, r.Cursor, r.Order.Count))) return true;
+
+            var emptyRounds = rounds.Where(r => r.Order.Count == 0).ToList();
+            if (emptyRounds.Count == 0) return false;
+            // The pool is the only thing that separates "nothing was due" from "there is nothing at all";
+            // it is queried here and not above so that the normal, played round costs no extra round-trip.
+            var items = await play.ItemsOfAsync(pos, ct: ct);
+            if (play.PoolSize(pos, items.Count) > 0) return true;
+            // Contentless exercise: there is no cursor to measure. What is left as evidence is that the child
+            // stayed for a while and closed the round on purpose - see MinSecondsForContentlessRound.
+            return emptyRounds.Any(r => r.EndedAt != null && r.ActiveSeconds >= MinSecondsForContentlessRound);
         }
 
         return await db.TestAttempts.AnyAsync(t =>

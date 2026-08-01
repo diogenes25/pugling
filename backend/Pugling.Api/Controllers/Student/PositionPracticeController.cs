@@ -353,24 +353,28 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
             comboBonus, speedBonus, next, done);
     }
 
-    /// <summary>Ends the session and evaluates time-based missions.</summary>
+    /// <summary>
+    /// Ends the session and evaluates time-based missions. A round that was in flight when the plan expired
+    /// or was switched off can still be closed; only the goal points are withheld then.
+    /// </summary>
     [HttpPost("{sessionId:int}/end")]
-    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<SessionResponse>> End(int planId, int positionId, int sessionId, CancellationToken ct = default)
     {
         var session = await GetSession(planId, positionId, sessionId, ct);
         if (session is null) return NotFound();
         var plan = (await GetPlan(planId, ct))!;
-        // Anti-cheat: the same wall as in cards/next/review - and here it does more than block access. The
-        // completion below books goal points, and those do not check `Active` themselves: without this guard, a
-        // plan deactivated mid-round could still be driven to the points of the running period. Hence the guard
-        // sits BEFORE EndedAt is written.
-        if (User.IsStudent() && !PositionPlayService.PlanPlayableForChild(plan, DateOnly.FromDateTime(DateTime.UtcNow)))
-            return this.ProblemWithCode(ApiErrors.PlanInactive, "This study plan is not currently active. Ask your parent.");
+        // Anti-cheat: the booking below does NOT check `Active` itself, so a plan deactivated or expired
+        // mid-round could otherwise still be driven to the points of the running period.
+        // Closing the round is not the danger and stays allowed on purpose: rejecting the write would leave the
+        // session open forever (the frontend closes it from an effect cleanup and swallows the error), and an
+        // open session is worth no less to the child than a closed one - the goal rule reads cursor and order,
+        // not EndedAt.
+        var payable = !User.IsStudent() || PositionPlayService.PlanPlayableForChild(plan, DateOnly.FromDateTime(DateTime.UtcNow));
 
         session.EndedAt = DateTime.UtcNow;
         await db.SaveChangesAsync(ct);
+        if (!payable) return Map(session);
 
         // The position's goal points (idempotent): this mainly covers pure content/reading exercises whose goal
         // is met by a round played far enough. BEFORE the gamification, so that missions see the credit.

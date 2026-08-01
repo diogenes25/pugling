@@ -1646,6 +1646,7 @@ namespace Pugling.Api.Data.Migrations
                     Day = table.Column<DateOnly>(type: "TEXT", nullable: false),
                     StageValue = table.Column<int>(type: "INTEGER", nullable: false),
                     Graded = table.Column<bool>(type: "INTEGER", nullable: false),
+                    BySupervisor = table.Column<bool>(type: "INTEGER", nullable: false),
                     StartedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
                     CompletedAt = table.Column<DateTime>(type: "TEXT", nullable: true),
                     TotalItems = table.Column<int>(type: "INTEGER", nullable: false),

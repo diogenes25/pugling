@@ -51,7 +51,7 @@ Verifiziert: **34 / 55** Codes aus `ApiErrors`.
 | `skin_already_unlocked` | me – Bereits besessenen Skin kaufen |
 | `skin_not_unlocked` | me – Nicht besessenen Skin ausrüsten |
 | `test_already_submitted` | study-plans – Test erneut abgeben |
-| `test_attempts_exhausted` | study-plans – Dritter Testversuch der Periode (Deckel) |
+| `test_attempts_exhausted` | study-plans – Dritter Testversuch des Tages (Deckel) |
 | `timetable_slot_taken` | timetable – Gleiches Fach am selben Wochentag |
 | `unauthorized` | auth – Selbstauskunft ohne Token |
 | `unknown_field` | timetable – Unbekanntes Feld im Body |
