@@ -259,10 +259,11 @@ Begründungs-Einträge in ihren Ausnahmelisten.
 Der Hauptteil (Etappen 1–7) lief über Übersetzungs-Agenten, die ganze Dateien anfassten. Für die
 `//`-Kommentare war das der falsche Schnitt: sie stehen **zwischen** Code, und genau dort ist ein
 versehentlich mitgeänderter Ausdruck teuer und im Diff schwer zu sehen. Stattdessen ein
-**zeilengenaues Patch-Werkzeug** (JSONL: Datei, Zeile, neuer Text), das per Zusicherung nur Zeilen
-anfasst, die getrimmt mit `//` beginnen; ein Kommentar am Zeilenende darf nur ersetzt werden, wenn der
-**Code-Teil vor dem ersten `//` zeichengenau gleich bleibt**. Bei jedem Verstoß bricht es ab, ohne zu
-schreiben.
+**zeilengenaues Patch-Werkzeug** ([.claude/scripts/patch-comments.py](../.claude/scripts/patch-comments.py),
+JSONL: Datei, Zeile, neuer Text), das per Zusicherung nur Zeilen anfasst, die getrimmt mit `//` beginnen;
+ein Kommentar am Zeilenende darf nur ersetzt werden, wenn der **Code-Teil vor dem ersten `//` zeichengenau
+gleich bleibt**. Bei jedem Verstoß bricht es ab, ohne zu schreiben. Es kann Zeilen auch löschen (Kürzen)
+und Trenner-Zeilen labeln, ohne den Strichlauf zu zerstören.
 
 Daraus folgt der Beweis, den ein Diff-Blick nicht liefert: streicht man aus beiden Ständen alle
 Voll-Zeilen-Kommentare und schneidet jede übrige Zeile am ersten `//` ab, ist das Ergebnis über alle 239
@@ -274,9 +275,9 @@ Zwei Kosmetik-Fallstricke bei den Trenner-Zeilen (`// ──── Label ──�
 bleiben (das Werkzeug ersetzt nur das Label und rechnet die Länge nach), und ein im Label mitgelieferter
 Strichlauf verdoppelt ihn. Beides fiel erst beim Nachlesen des Diffs auf, nicht beim Build.
 
-Für die **Meldungs-Strings** (Etappe 9) greift dieselbe Haltung mit einem zweiten Werkzeug: dort steht die
-Übersetzung in einer echten Code-Zeile, also verlangt es die **alte Zeile zeichengenau** mit und bricht
-sonst ab. Damit ist auch dieser Schritt kein Suchen-und-Ersetzen über Textmuster, das versehentlich einen
+Für die **Meldungs-Strings** (Etappe 9) greift dieselbe Haltung mit einem zweiten Werkzeug
+([.claude/scripts/patch-lines.py](../.claude/scripts/patch-lines.py)): dort steht die Übersetzung in einer
+echten Code-Zeile, also verlangt es die **alte Zeile zeichengenau** mit und bricht sonst ab. Damit ist auch dieser Schritt kein Suchen-und-Ersetzen über Textmuster, das versehentlich einen
 Payload-String trifft. Die Abgrenzung ist dabei die eigentliche Arbeit, nicht die Übersetzung: eine
 Assert-Meldung darf umgestellt werden, ein Payload, den derselbe Test zurückvergleicht, nicht.
 
