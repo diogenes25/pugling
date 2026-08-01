@@ -642,6 +642,54 @@ durch Client-Abbruch, sämtlich **vor** `179cc06` („Client-Abbruch ist kein Se
 - Gefundene Defekte wurden **gemeldet, nicht nebenbei gefixt** – die vier Punkte oben sind Tests, kein
   Produktivcode. Der Flake in `SpeedBonusTests` bleibt bewusst offen.
 
+## Nachmessung 2026-07-31: die drei unbeobachteten Flächen
+
+Der Vorgang oben bewertet die **Backend**-Suite, und zwar bewusst (Rahmenbedingung 6: „E2E zählt nicht mit").
+Am 2026-07-31 ist auf `3b63d1d` eine Bewertung der *gesamten* Test-Abdeckung nachgezogen worden – ein voller
+Lauf mit `--collect:"XPlat Code Coverage"`, **keine** Injektionen, kein Produktivcode geändert. Sie bestätigt
+den Befund oben und findet drei Flächen, über die bis heute **keine** Zahl vorlag.
+
+| Größe | 2026-07-30 (Audit) | 2026-07-31 |
+| --- | --- | --- |
+| Backend-Tests | 597/597 | **615/615** grün, 52 s (Release) |
+| Endpunkt-Abdeckung | 268/268, 0 offen | **263/263, 0 offen** – fünf Actions weniger, Ursache nicht nachgesehen |
+| Zweigabdeckung `Pugling.Api` | 69,1 % | **72,2 %** |
+| Zeilenabdeckung `Pugling.Api` | 98,2 % | 97,0 % |
+| `git status` nach dem Lauf | leer | leer – D4 (Doku-Byte-Stabilität) hält |
+
+**Unit gegen Integration: rund 5 % zu 95 %.** Von 80 Testklassen fahren **71 über HTTP** gegen die in-process
+gestartete App; die 9 übrigen tragen 46 Testfälle, davon 15 reflexive Wächter – bleiben ~31 klassische
+Unit-Tests plus `QueryPlanSmokeTests`. Für ein API-First-Produkt mit dünnen Controllern ist das die passende
+Form: eine dort gepinnte Regel prüft Auth, Ownership, EF-Mapping und Vertrag mit. Der Preis steht in den
+Zahlen oben – **jeder Grenzfall kostet einen vollen Flow**, und genau daran hängt die gemessene Fehlerklasse
+„Regel bekannt, Grenzfall offen". Kombinatorisch sind zwei Ecken: `ScoringService`/`StageMechanics`
+(Combo × Speed × Zeitfenster × Leitner-Stufe) und der `MediaSelector` (4 der 12 unbewachten Injektionen).
+
+Die drei Flächen, die dieser Befund nicht abdeckte:
+
+1. **`Pugling.Client`: Zeilen 61,5 %, Zweige 56,9 %** – **122** öffentliche Methoden gegen 18 Tests
+   ([PuglingClientTests](../backend/Pugling.Api.Tests/PuglingClientTests.cs)). Kein Wächter hält die
+   Routen-Strings gegen das OpenAPI-Dokument; ein Tippfehler in einer der nicht gefahrenen Methoden fällt erst
+   dem Agenten zur Laufzeit auf. (`pugling-creator`: Zeilen 67,0 %, Zweige 51,5 %.)
+2. **Der Produktionspfad ist zu 0 % ausgeführt.**
+   [PuglingWebAppFactory.cs:26](../backend/Pugling.Api.Tests/PuglingWebAppFactory.cs) setzt
+   `UseEnvironment("Development")` und ist die **einzige** `UseEnvironment`-Stelle im Repo. Nie ausgeführt: der
+   Fail-Fast auf fehlenden `Jwt:Key` ([Program.cs:260](../backend/Pugling.Api/Program.cs)),
+   `RemarkOptions.GlobalRead = false` (:198), `Seed:Enabled` aus (:464), der Login-Rate-Limiter und
+   `Migrate()` gegen eine echte Datei.
+3. **Frontend: 21 Vitest-Fälle über 83 Quelldateien**, ausschließlich für `lib/remarks.ts` und
+   `vater/navigation.ts` – **keine** Komponententests (die DOM-Umgebung ist eingerichtet,
+   `vitest.config.ts:13` setzt `environment: "happy-dom"`; es rendert nur niemand), und
+   [types.ts](../frontend/src/lib/types.ts) trägt **1950 handgeschriebene Zeilen** Vertrag ohne Generator. Ein
+   Feldumbau im Backend fällt `tsc` nur auf, wenn jemand die TS-Zeile mitzieht; sonst fängt es erst
+   Playwright – und der läuft an PR und nachts, ist also kein Freigabe-Tor.
+
+**Zur Frage „brauchen wir System-Tests?": als Ebene nein, die gibt es zweimal** – 25 Playwright-Tests durch
+zwei echte Server und einen echten Browser, dazu `/smoke-test` out-of-process von Hand. Was fehlt, sind
+punktuelle Prüfungen an den Nähten oben; sie liegen als Stories im Backlog:
+[B-40](backlog/B-40-client-routen-waechter.md) · [B-41](backlog/B-41-produktions-startup-smoke.md) ·
+[B-42](backlog/B-42-openapi-typen-generieren.md) · [B-43](backlog/B-43-frontend-komponententests.md).
+
 ## Verwandt
 
 - [testaudit-nacharbeit-plan.md](testaudit-nacharbeit-plan.md) – **die Reste dieses Befunds als Arbeitsplan**:
