@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/qualitaet, bereich/frontend, bereich/tests]
+tags: [typ/story, status/abgenommen, bereich/qualitaet, bereich/frontend, bereich/tests]
 aliases: [OpenAPI-Typen generieren, TS-Vertragstor]
-status: in-arbeit
+status: abgenommen
 prio: P2
 art: Aufräumen
 groesse: M
@@ -13,9 +13,10 @@ quelle: docs/testplan.md#nachmessung-2026-07-31-die-drei-unbeobachteten-flächen
 
 # B-42 · TypeScript-Typen aus dem OpenAPI-Dokument erzeugen statt von Hand pflegen
 
-> **Schritt 1 (E3) ist gebaut und belegt** – das vertragsreine Dokument liegt unter
-> [`docs/openapi/v1.json`](../openapi/README.md), das CI-Tor steht. Siehe „Verifikation Schritt 1".
-> Offen ist **Schritt 2 (E6)**: die Typen im Frontend erzeugen. Die Story bleibt deshalb `in-arbeit`.
+> **Beide Schritte sind gebaut und abgenommen.** Schritt 1 (E3): das vertragsreine Dokument liegt unter
+> [`docs/openapi/v1.json`](../openapi/README.md), zwei CI-Tore stehen. Schritt 2 (E6): die Vertragstypen des
+> Frontends kommen aus dem Dokument (`npm run gen:contract`), `types.ts` ist ein Barrel aus Aliasen, von Hand
+> bleiben elf Typen in `uiTypes.ts`. Belege: „Verifikation Schritt 1" und „Verifikation Schritt 2".
 
 `frontend/src/lib/types.ts` trägt **1950 handgeschriebene Zeilen** Vertrag – dieselben Felder, die
 `Pugling.Contracts` besitzt und die der OpenAPI-Generator ohnehin ausgibt. Solange beide Seiten von Hand
@@ -234,6 +235,105 @@ geschrieben).
 - **Ein Schalter mehr im Produktivcode** (`OpenApi:ExamplesEnabled`, Vorgabe `true`). Er existiert nur für
   dieses Artefakt; im Betrieb ändert sich nichts.
 
+## Verifikation Schritt 2 (E6)
+
+Gebaut am **2026-08-01**. Erzeugt wird über `npm run gen:contract`
+([gen-contract.mjs](../../frontend/scripts/gen-contract.mjs)), gehängt an `postinstall`/`predev`/`prebuild`;
+`src/lib/contract.ts` ist **gitignored** – die Quelle ist eingecheckt und von einem Tor bewacht, also kann aus
+ihr nichts driften, was ein zweites Tor bräuchte.
+
+| Beleg | Ergebnis |
+| --- | --- |
+| `npm run build` (`tsc -b && vite build`) | grün; Bündel 577,62 kB (vor E6: 577,55 kB – Typen sind gelöscht) |
+| `npm test` (Vitest) | **48/48 grün**, unverändert |
+| `npm run test:e2e` (Playwright) | **25/25 grün**; in einem von drei Läufen fiel `bilder.spec.ts` einmal aus (allein und im Folgelauf grün) – als Flake vermerkt, nicht als Befund |
+| `dotnet test Pugling.sln -c Release` | **624/624 grün** (der neue Vertragstest ist der 624.) |
+| `dotnet format Pugling.sln --verify-no-changes` | sauber |
+| markdownlint | 0 Treffer in 139 Dateien |
+| Endpunkt-Abdeckung | unverändert (die Konvention ergänzt nur Dokumentation, keine Action) |
+
+### Was die vier Reparaturen jetzt festhält
+
+Das Diff-Tor aus Schritt 1 fängt eine **Rücknahme**, aber es winkt einen **neu eingeführten** Fall derselben
+Klasse durch – dann ändert sich das Dokument ja „richtig". Darum vier Zusicherungen über das geparste Dokument
+in `ContractDocumentTests`, jede mit einer Meldung, die den Mangel **benennt** statt einen 5000-Zeilen-Diff zu
+zeigen. Alle vier sind rot geprobt, nicht behauptet:
+
+| Zusicherung | Eingriff | Meldung |
+| --- | --- | --- |
+| jede Operation hat eine 2xx-Antwort | Konvention abgemeldet | „**167 operations** document no 2xx response" |
+| kein Schema ist nacktes `integer` | `Nullable.GetUnderlyingType` entfernt | „presumably nullable enums: **DayOfWeek, Genus, LearningMethod**" |
+| `required` nie trotz Vorgabewert | Abzug ausgeschaltet | „`AddMediaLinkDto.weight`, `ArithmeticProblem.tolerance`, `CreateMediaVariantDto.format`, …" |
+| kein `clear…`-Schalter ist Pflicht | derselbe Eingriff | rot mit den Schaltern |
+
+Die zweite Probe nennt **drei** statt der sechs Enums, und das ist die Lehre über den Mangel selbst: er ist
+**reihenfolgeabhängig**. Nachdem Mangel 3 behoben war, erreicht der Generator `InterestFacet`,
+`KlassenarbeitStatus` und `ObjectiveKind` über eine der 167 neu dokumentierten Antworten zuerst
+*nicht*-nullable – sie überleben also heute auch ohne die Reparatur. Ein Enum, dessen erste Verwendung morgen
+eine andere ist, fällt wieder um. Genau deshalb ist die Zusicherung nötig und nicht bloß hübsch.
+
+### Die sieben Akzeptanzkriterien
+
+1. **erfüllt** (Schritt 1, unverändert).
+2. **erfüllt** (Schritt 1, unverändert).
+3. **erfüllt** – `types.ts` ist ein Barrel aus 179 `S["…"]`-Aliasen; `npm run build` bricht bei einem
+   umbenannten oder entfernten Feld.
+4. **erfüllt und gemessen.** `ShopArticleDto.Description` → `Beschreibung`: Backend **623/623 grün**,
+   Frontend rot mit `src/vater/VaterShop.tsx(132,26): error TS2339: Property 'description' does not exist on
+   type '{ …; beschreibung: string; … }'` – Datei, Zeile, Feld und der neue Name. Danach zurückgenommen und
+   beides wieder grün.
+5. **erfüllt** – elf Hand-Typen in [uiTypes.ts](../../frontend/src/lib/uiTypes.ts), je mit einem Satz Grund,
+   sortiert nach den drei Ursachen (Vertrag sagt `string` / Schema kann die Form nicht / es ist kein Schema).
+6. **erfüllt** – kein Lockfile-Eingriff in E6 (`openapi-typescript` kam in E4), der Übungstyp-Weg über das
+   Server-Manifest ist unberührt.
+7. **erfüllt** – [B-24](B-24-frontend-unknown-field.md) trägt jetzt die gemessene Restfläche: 34 von 86
+   Schreib-Rümpfen sind Objekt-Literale an einem `body?: unknown`.
+
+### Was die verlangte Messung wirklich ergab
+
+Die Auflage lautete, vor dem Bauen `openapi-typescript` laufen zu lassen und die `tsc`-Fehler zu zählen, weil
+`required`/`nullable` „die unvermessene Größe" sei. Die Zählung hat die Etappe umgeschrieben: **169 Fehler, und
+158 davon aus einer ganz anderen Ursache** – jede Ganzzahl steht im Dokument als
+`type: ["integer","string"]`, weil `JsonSerializerDefaults.Web` `AllowReadingFromString` einschaltet. Der
+Reihe nach: 169 → 36 (Ganzzahl eingeengt) → 6 (drei Dokument-Mängel behoben) → 1 (`defaultNonNullable: false`)
+→ 0. `required`/`nullable` war der **kleinste** der vier Posten: zehn Fehler, alle vom Muster „nullable heißt
+im Dokument auch *darf fehlen*", behoben mit `?? null` bzw. `== null` an fünf Stellen.
+
+Die vier Dokument-Mängel, die dabei auffielen, stehen mit Ursache und Reparatur im
+[Testabdeckungs-Plan](../testabdeckung-plan.md), Abschnitt E6. Der
+schwerste: **167 von 323 Operationen hatten keine Erfolgsantwort**, weil ein einziges `[ProducesResponseType]`
+die abgeleitete Menge ersetzt statt sie zu ergänzen. Damit war das Tor aus Schritt 1 für Antwort-Formen **halb
+blind** – die Story hat sich also selbst im Nachhinein korrigiert.
+
+### Zwei Drifts, die das Tor rückwärts gefunden hat
+
+- **`ExerciseSummary` hatte kein `DefaultItemCount`**, `PlanPositions.tsx` liest es an zwei Stellen: die
+  Vorbelegung der Item-Zahl blieb **stumm leer**. Feld ergänzt.
+- **`UpdateClassTestDto.ClearGrade` hatte keinen Vorgabewert** und war damit als einziger `clear`-Schalter im
+  Repo Pflichtfeld. Nachgezogen.
+
+### Bewusst offen gelassen
+
+- **`Status`/`Scope` bleiben `string`** – ein Enum daraus wäre ein Vertragsbruch (die Werte sind
+  kleingeschrieben). Als [B-59](B-59-status-strings-ohne-werteliste.md) erfasst; `GoalStatus` bleibt bis dahin
+  Hand-Typ und gilt ausdrücklich nur als Whitelist des Filters.
+- **Die Ganzzahl-Einengung sitzt im Generator, nicht im Dokument.** Das Dokument bleibt wahr über die Eingabe;
+  ein anderer Konsument entscheidet selbst. **Kosten:** wer eigene Typen erzeugt, muss dieselbe Entscheidung
+  treffen – sie steht darum als Kommentar am Haken.
+- **`InventoryItem` bedient zwei strukturgleiche Schemata** (Vater- und Sohn-Sicht); aliasiert ist die
+  Vater-Sicht, eine Drift allein auf der Sohn-Seite fiele nicht auf. Im Code vermerkt.
+- **`[Flags] SchoolTypes` bleibt eine falsche Aussage im Dokument** → [B-60](B-60-flags-enum-im-dokument.md).
+  Der Review hat belegt, dass das Schema die sieben Einzelnamen listet, während Server und Frontend
+  `"Realschule, Gymnasium"` austauschen. Das ist der einzige Fall, in dem das Dokument nicht *lückenhaft*,
+  sondern *falsch* ist – und die Reparatur liegt außerhalb dieser Story, weil sie den Transformer für eine
+  ganze Enum-Sorte ändert.
+- **`ArithmeticProblem.tolerance` sieht jetzt optional aus, obwohl es in der Antwort immer da ist.** Grenze
+  des Verfahrens: `required` ist eine Aussage je **Schema**, „hat einen Vorgabewert" eine über die Bindung des
+  **Requests**; wo ein Schema beide Richtungen bedient, lässt sich das im Schema-Transformer nicht auflösen.
+  Der Review hat alle 29 betroffenen Schemata durchgerechnet – 28 sind reine Request-DTOs, dies ist der
+  einzige Doppelgänger. Als Kommentar am Code vermerkt, nicht als Story: die Reparatur wäre eine
+  Read/Write-Trennung im Vertrag und teurer als der Schaden.
+
 ## Verlauf
 
 - **2026-07-31** — angelegt (Quelle: Nachmessung der Test-Abdeckung, [testplan.md](../testplan.md)).
@@ -271,3 +371,34 @@ geschrieben).
 - **2026-08-01** — Schritt 1 in CI belegt: Lauf `30698390816` auf dem Linux-Runner grün, beide Tore
   ausgeführt. Damit ist die Behauptung „ohne Normalisierung an 185 Stellen rot" nicht nur lokal gemessen,
   sondern auf der Plattform geprüft, für die sie gilt. Commit `9aac8b1`.
+- **2026-08-01** — **Schritt 2 gebaut, Story abgenommen.** Die verlangte Vorab-Messung war der Wendepunkt: sie
+  sollte `required`/`nullable` beziffern und fand statt dessen **vier Mängel im Dokument selbst** – sechs Enums
+  ohne Werteliste (nullable Enums sind nicht `IsEnum`), 60 von 60 Eigenschaften mit Vorgabewert als `required`
+  deklariert, `Metric`/`Kind` als `.ToString()` statt als Enum und – der schwerste – **167 von 323 Operationen
+  ohne Erfolgsantwort**, weil ein einziges `[ProducesResponseType]` die Ableitung ersetzt. Der letzte Punkt
+  machte das Tor aus Schritt 1 für Antwort-Formen halb blind; 48 Schemata fehlten ganz. Behoben mit einer
+  `IActionModelConvention` statt 167 Attributen.
+  Die unvermessene Größe war **nicht** `required`/`nullable`, sondern `type: ["integer","string"]` (579
+  Eigenschaften): 158 der ersten 169 `tsc`-Fehler kamen von dort. Eingeengt wird im Generator, mit Begründung.
+  Rückwärts gefunden hat das Tor zwei echte Drifts: `ExerciseSummary.DefaultItemCount` fehlte im Vertrag,
+  weshalb eine Vorbelegung im Positions-Formular stumm leer blieb, und `UpdateClassTestDto.ClearGrade` war
+  ohne Vorgabewert Pflichtfeld. Abgespalten: [B-59](B-59-status-strings-ohne-werteliste.md).
+  Der `frontend-reviewer` hat die 51 Umbenennungen **maschinell** gegen das Dokument nachgeprüft und dabei
+  drei Zuordnungs-Löcher gefunden, die ich geschlossen habe: `WalletEntry` bediente auch `grantPoints`
+  (Vater-Sicht, ein Feld mehr → eigener `ChildPointsEntry`), die Sohn-Seite ritt auf dem Vater-Alias
+  `InventoryItem` (→ `MyInventoryItem`), und meine Begründung für die Hand-Ausnahme `SchoolType` war
+  **falsch**: das Schema listet die Einzelnamen und war zeichengleich mit der Handliste – aliasiert, damit eine
+  neue Schulart im Backend jetzt auch hier rot wird. Dazu drei echte Mängel meiner eigenen Änderung: `signIn`
+  gab bei unbekannter Rolle **still** auf (richtige PIN, tote Maske – jetzt `boolean`, alle drei Aufrufer
+  melden), `StatusPill` verlor mit dem `string`-Typ die Tippfehler-Wache (jetzt `Record<GoalStatus, …>` mit
+  Rückfall), und die gekürzte `CLAUDE.md`-Regel behauptete listenweite Sperre **ohne** den Qualifier „geteilte
+  `ActionState`". Und die Zahl „34 von 86 unbewachten Schreibpfaden" war zu freundlich: sechs der 52
+  „typisierten" bewachten nichts, zwei davon prüften gegen das *Antwort*-Schema (`Partial<MissionDef>`). Alle
+  sechs geschlossen, damit ist die 34 der geprüfte Rest.
+  Der `pugling-reviewer` hat drei Punkte beigetragen, die ich übernommen habe: die Konvention durfte **raten**
+  (ohne benannte Nutzlast schrieb sie `200`, wo eine künftige Delete-Action `204` liefert – jetzt tut sie dort
+  nichts), die vier Reparaturen hingen an einem **Schnappschuss** statt an einer Regel (jetzt vier rot geprobte
+  Zusicherungen in `ContractDocumentTests`, der 624. Test), und der `Default`-Abzug widersprach der
+  dokumentierten Zusage von `RequiredJsonPropertyNames` für explizit `required` markierte Member. Dazu ein
+  vorbestehender Fund, den E6 scharf macht: [B-60](B-60-flags-enum-im-dokument.md).
+  Belegt: 624/624 Backend, 48/48 Vitest, 25/25 Playwright, `tsc -b` grün, Gegenprobe zu AK 4 gemessen.

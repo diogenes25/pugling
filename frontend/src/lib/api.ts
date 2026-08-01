@@ -1,24 +1,25 @@
 import type {
-  AchievementDef, AchievementStatus, AnswerDto, CategoryResponse, ChapterResponse, ChildResponse, CreateAchievementDto,
+  AchievementDef, UpdateAchievementDto, AchievementStatus, AnswerDto, CategoryResponse, ChapterResponse, ChildResponse, CreateAchievementDto,
   CreateChildDto, CreateExercisePayload, CreateKlassenarbeitDto, CreateMissionDto, CreatePlanDto, CreateVocabularyDto,
-  UpdateChildDto, SupervisorLink, SupervisorRelation, TimetableEntry, Weekday,
+  UpdateChildDto, SupervisorLink, SupervisorRelation, TimetableEntry, CreateTimetableEntryDto,
   ClozeResponse, CreateClozeDto, UpdateClozeDto,
   ExerciseGrant, GrantPermission,
   CreateAdultDto, AdultResponse, UpdateAdultDto,
   ExerciseDetail, ExercisePreviewAnswer, ExercisePreviewData, ExercisePreviewResult, ExerciseTypeManifest,
-  ExerciseSearchParams, ExerciseSharing, ExerciseSummary, MeResponse, TeacherAccount, UpdateMyAccountDto, ExerciseUsage, KlassenarbeitDetail, KlassenarbeitPractice, KlassenarbeitRepeat,
-  KlassenarbeitResponse, KlassenarbeitStatus, LoginResponse, MissionDef, MissionStatus, PlanResponse,
+  UpdateChapterDto, CreateChildTagDto, ExerciseWriteResult,
+  ExerciseSearchParams, ExerciseSharing, ExerciseSummary, MeResponse, TeacherAccount, CreateTeacherDto, UpdateMyAccountDto, ExerciseUsage, KlassenarbeitDetail, KlassenarbeitPractice, KlassenarbeitRepeat,
+  KlassenarbeitResponse, KlassenarbeitStatus, LoginResponse, MissionDef, UpdateMissionDto, MissionStatus, PlanResponse,
   ChildrenDashboard, CreatePositionDto, PositionResponse, PositionReport, UpdatePositionDto, OverviewResponse, PositionSession, PracticeCard,
   ProgressResponse, ReviewInput, ReviewOutcome,
   SkinState, SubjectResponse,
   TestAttemptResponse, TestNextResponse, TestAnswerAck, TestSubmitResponse, UpdateKlassenarbeitDto, UpdatePlanDto, UpdateVocabularyDto,
-  VocabBatchResult, VocabularyResponse, VocabTagResponse, ChildTagResponse, Wallet, WalletBalance, WalletEntry, Currency,
+  VocabBatchResult, VocabularyResponse, VocabTagResponse, ChildTagResponse, Wallet, WalletBalance, WalletEntry, ChildPointsEntry, Currency,
   Paged, VocabularySearchParams, VocabItemInput, VocabItemResponse,
   ChapterProgress, ExerciseProgress, ItemHistoryEntry, ItemProgressResponse, SubjectProgress, WordMastery,
   CreateKeyResultRequest, CreateObjectiveRequest, GoalStatus, KeyResult,
   Objective, ObjectiveKind, UpdateKeyResultRequest, UpdateObjectiveRequest,
   ShopArticle, CreateShopArticleDto, UpdateShopArticleDto, ShopListing, CreateShopListingDto, UpdateShopListingDto,
-  InventoryItem, ShopPurchase, ActivationRequest, ShopPurchaseStatus, ActivationRequestStatus,
+  InventoryItem, MyInventoryItem, ShopPurchase, ActivationRequest, ShopPurchaseStatus, ActivationRequestStatus,
   ShopView, MyActivation,
   ContentRating, InterestTagResponse, CreateInterestTagDto, UpdateInterestTagDto,
   ChildInterestResponse, ChildInterestInput,
@@ -231,7 +232,7 @@ export const api = {
    * Registriert ein **Lehrer-Konto**: nur die Creator-Rolle, kein Betreuungsauftrag. Eigener Pfad, weil
    * sich nicht der Datensatz unterscheidet, sondern die Rollen des Kontos – und die entstehen beim Anlegen.
    */
-  registerTeacher: (dto: { name: string; email: string | null; pin: string }) =>
+  registerTeacher: (dto: CreateTeacherDto) =>
     http<TeacherAccount>(`${V1}/creator/teacher-accounts`, "POST", dto),
   /** Das eigene Lehrer-Konto (nur der Inhaber). */
   teacherAccount: (creatorId: number) =>
@@ -266,7 +267,7 @@ export const api = {
   // Stundenplan: welches Fach an welchem Wochentag. Ein Fach je Wochentag (409 `timetable_slot_taken`).
   childTimetable: (childId: number) =>
     http<TimetableEntry[]>(`${V1}/supervisor/children/${childId}/timetable`),
-  addTimetableEntry: (childId: number, dto: { subjectId: number; dayOfWeek: Weekday; timeOfDay?: string | null }) =>
+  addTimetableEntry: (childId: number, dto: CreateTimetableEntryDto) =>
     http<TimetableEntry>(`${V1}/supervisor/children/${childId}/timetable`, "POST", dto),
   removeTimetableEntry: (childId: number, entryId: number) =>
     http<void>(`${V1}/supervisor/children/${childId}/timetable/${entryId}`, "DELETE"),
@@ -295,7 +296,7 @@ export const api = {
     http<SubjectResponse>(`${V1}/creator/subjects/${subjectId}`, "PATCH", { name }),
   /** Löscht das Fach **samt Kapiteln und Übungen** – scheitert, solange eine Übung in einem Plan steckt. */
   deleteSubject: (subjectId: number) => http<void>(`${V1}/creator/subjects/${subjectId}`, "DELETE"),
-  updateChapter: (subjectId: number, chapterId: number, dto: { name?: string; orderIndex?: number }) =>
+  updateChapter: (subjectId: number, chapterId: number, dto: UpdateChapterDto) =>
     http<ChapterResponse>(`${V1}/creator/subjects/${subjectId}/chapters/${chapterId}`, "PATCH", dto),
   deleteChapter: (subjectId: number, chapterId: number) =>
     http<void>(`${V1}/creator/subjects/${subjectId}/chapters/${chapterId}`, "DELETE"),
@@ -316,7 +317,7 @@ export const api = {
     http<CategoryResponse[]>(`${V1}/creator/subjects/${subjectId}/categories`),
   // Übung eines Typs im Kapitel anlegen. Das Routen-Segment (vocabulary/arithmetic/…) bestimmt den Typ.
   createExercise: (subjectId: number, chapterId: number, typeRoute: string, payload: CreateExercisePayload) =>
-    http<ExerciseSummary>(`${V1}/creator/subjects/${subjectId}/chapters/${chapterId}/${typeRoute}`, "POST", payload),
+    http<ExerciseWriteResult>(`${V1}/creator/subjects/${subjectId}/chapters/${chapterId}/${typeRoute}`, "POST", payload),
   /**
    * Typ-Manifest: welche Übungstypen der Server kennt, wie sie heißen und unter welchem Routen-Segment
    * ihre Autoren-CRUD liegt. Einmal laden statt Tabellen im Frontend pflegen (siehe lib/exerciseTypes.ts).
@@ -339,7 +340,7 @@ export const api = {
     http<ExercisePreviewResult>(`${V1}/creator/exercises/${id}/preview/check`, "POST", { answers, stage }),
   // Ersetzen (PUT) bzw. Löschen laufen über die per-Typ-Route.
   updateExercise: (subjectId: number, chapterId: number, typeRoute: string, id: number, payload: CreateExercisePayload) =>
-    http<ExerciseSummary>(`${V1}/creator/subjects/${subjectId}/chapters/${chapterId}/${typeRoute}/${id}`, "PUT", payload),
+    http<ExerciseWriteResult>(`${V1}/creator/subjects/${subjectId}/chapters/${chapterId}/${typeRoute}/${id}`, "PUT", payload),
   deleteExercise: (subjectId: number, chapterId: number, typeRoute: string, id: number) =>
     http<void>(`${V1}/creator/subjects/${subjectId}/chapters/${chapterId}/${typeRoute}/${id}`, "DELETE"),
 
@@ -425,7 +426,7 @@ export const api = {
 
   // ---- Kind-skopierte Tags (auch an Vokabeln) ----
   childTags: (childId: number) => http<ChildTagResponse[]>(`${V1}/creator/tags?childId=${childId}`),
-  createChildTag: (dto: { childId: number; name: string; color?: string | null }) =>
+  createChildTag: (dto: CreateChildTagDto) =>
     http<ChildTagResponse>(`${V1}/creator/tags`, "POST", dto),
   tagsForVocabulary: (vocabId: number, childId: number) =>
     http<ChildTagResponse[]>(`${V1}/creator/tags/for-vocabulary/${vocabId}?childId=${childId}`),
@@ -590,7 +591,7 @@ export const api = {
   missionsFor: (childId: number) => http<MissionDef[]>(`${V1}/supervisor/children/${childId}/missions`),
   createMission: (childId: number, dto: CreateMissionDto) =>
     http<MissionDef>(`${V1}/supervisor/children/${childId}/missions`, "POST", dto),
-  updateMission: (childId: number, missionId: number, dto: Partial<MissionDef>) =>
+  updateMission: (childId: number, missionId: number, dto: UpdateMissionDto) =>
     http<MissionDef>(`${V1}/supervisor/children/${childId}/missions/${missionId}`, "PATCH", dto),
   deleteMission: (childId: number, missionId: number) =>
     http<void>(`${V1}/supervisor/children/${childId}/missions/${missionId}`, "DELETE"),
@@ -599,7 +600,7 @@ export const api = {
   achievementsFor: (childId: number) => http<AchievementDef[]>(`${V1}/supervisor/children/${childId}/achievements`),
   createAchievement: (childId: number, dto: CreateAchievementDto) =>
     http<AchievementDef>(`${V1}/supervisor/children/${childId}/achievements`, "POST", dto),
-  updateAchievement: (childId: number, achievementId: number, dto: Partial<AchievementDef>) =>
+  updateAchievement: (childId: number, achievementId: number, dto: UpdateAchievementDto) =>
     http<AchievementDef>(`${V1}/supervisor/children/${childId}/achievements/${achievementId}`, "PATCH", dto),
   deleteAchievement: (childId: number, achievementId: number) =>
     http<void>(`${V1}/supervisor/children/${childId}/achievements/${achievementId}`, "DELETE"),
@@ -619,7 +620,7 @@ export const api = {
   // Manuelle Vater-Buchung: positiver Betrag = verschenken/gutschreiben, negativ = abziehen; Währung wählbar
   // (auch Gems, das Druckventil gegen zu hohe Malus-Schulden bzw. Belohnung außerhalb der App).
   grantPoints: (childId: number, amount: number, reason: string, currency: Currency) =>
-    http<WalletEntry>(`${V1}/supervisor/children/${childId}/points`, "POST", { amount, reason, currency }),
+    http<ChildPointsEntry>(`${V1}/supervisor/children/${childId}/points`, "POST", { amount, reason, currency }),
 
   // ---- Vater: Klassenarbeiten (planen, Übungen zuweisen, benoten, üben/wiederholen) ----
   classTests: (childId: number, opts: { status?: KlassenarbeitStatus; skip?: number; take?: number } = {}) => {
@@ -651,7 +652,7 @@ export const api = {
   shopView: () => http<ShopView>(`${V1}/student/me/shop`),
   purchaseListing: (listingId: number) =>
     http<ShopView>(`${V1}/student/me/shop/listings/${listingId}/purchase`, "POST", {}),
-  myInventory: () => http<InventoryItem[]>(`${V1}/student/me/shop/inventory`),
+  myInventory: () => http<MyInventoryItem[]>(`${V1}/student/me/shop/inventory`),
   activateInventory: (articleId: number, quantity: number) =>
     http<MyActivation>(`${V1}/student/me/shop/inventory/${articleId}/activate`, "POST", { quantity }),
   myActivations: () => http<MyActivation[]>(`${V1}/student/me/shop/activations`),

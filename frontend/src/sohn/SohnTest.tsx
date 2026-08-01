@@ -54,7 +54,8 @@ export function SohnTest() {
       setAttemptId(a.attemptId); setStage(a.stage); setTotal(a.totalItems);
       const first = await api.nextTest(planId, positionId, a.attemptId);
       if (first.done) await finish(a.attemptId);
-      else { setItem(first.item); setCursor(first.cursor); }
+      // `?? null`: ein nullable Feld darf im Vertrag auch fehlen, der Zustand kennt nur „keine Aufgabe".
+      else { setItem(first.item ?? null); setCursor(first.cursor); }
     } catch (e) { setError(errorMessage(e)); }
   }
 
@@ -83,7 +84,7 @@ export function SohnTest() {
     try {
       const nx = await api.nextTest(planId, positionId, attemptId);
       if (nx.done) { await finish(attemptId); return; }
-      setItem(nx.item); setCursor(nx.cursor); setTypedAnswer(""); setRevealed(false);
+      setItem(nx.item ?? null); setCursor(nx.cursor); setTypedAnswer(""); setRevealed(false);
     } catch (e) { setError(errorMessage(e)); }
   }
 
@@ -96,7 +97,7 @@ export function SohnTest() {
       if (ack.done) { await finish(attemptId); return; }
       const nx = await api.nextTest(planId, positionId, attemptId);
       if (nx.done) { await finish(attemptId); return; }
-      setItem(nx.item); setCursor(nx.cursor); setTypedAnswer(""); setRevealed(false);
+      setItem(nx.item ?? null); setCursor(nx.cursor); setTypedAnswer(""); setRevealed(false);
     } catch (e) {
       setError(errorMessage(e));
     } finally {

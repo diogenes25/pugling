@@ -56,6 +56,68 @@ public class ContractDocumentTests
         Assert.DoesNotContain("\"examples\"", first, StringComparison.Ordinal);
     }
 
+    /// <summary>
+    /// Four statements about the document that were <b>false</b> until B-42 step 2 - and whose breach the diff
+    /// gate cannot report. That gate catches a change to the document; it waves through a newly added endpoint
+    /// or DTO that repeats one of these defects, because then the document changes "correctly". Each assertion
+    /// names its defect instead of showing a five-thousand line diff.
+    /// </summary>
+    [Fact]
+    public async Task Vertragsdokument_BeschreibtDieLeitungWahrheitsgemaess()
+    {
+        var doc = JsonNode.Parse(await GenerateAsync())!;
+        var schemas = doc["components"]!["schemas"]!.AsObject();
+        var methods = new[] { "get", "post", "put", "patch", "delete" };
+
+        // 1. Every operation names a success. Without it a renamed response field moves nothing in the
+        // document - the gate of step 1 was blind to response shapes for half the API.
+        var withoutSuccess = doc["paths"]!.AsObject()
+            .SelectMany(path => path.Value!.AsObject()
+                .Where(op => methods.Contains(op.Key))
+                .Where(op => !(op.Value!["responses"]?.AsObject() ?? []).Any(r => r.Key.StartsWith('2')))
+                .Select(op => $"{op.Key.ToUpperInvariant()} {path.Key}"))
+            .ToList();
+        Assert.True(withoutSuccess.Count == 0,
+            $"{withoutSuccess.Count} operations document no 2xx response. An explicit [ProducesResponseType] "
+            + $"replaces the inferred set - SuccessResponseConvention restores it, but only where the return "
+            + $"type names a payload:\n  {string.Join("\n  ", withoutSuccess.Take(10))}");
+
+        // 2. No enum arrives as a bare integer. Nullable<TEnum> is not IsEnum, so an enum the generator reaches
+        // through a "TEnum?" field first slips past the transformer - and a generated client gets `number`.
+        var bareIntegers = schemas
+            .Where(s => s.Value!["type"]?.GetValue<string>() == "integer"
+                && s.Value!["enum"] is null && s.Value!["properties"] is null)
+            .Select(s => s.Key)
+            .ToList();
+        Assert.True(bareIntegers.Count == 0,
+            $"Schemas without a value list, presumably nullable enums: {string.Join(", ", bareIntegers)}. "
+            + "The API sends the NAME; a bare integer makes the document lie.");
+
+        // 3. A property with a default value is not required - omitting it is legal, the server fills it in.
+        // This hit every `clear<Field>` switch of the PATCH semantics: the document demanded what makes the
+        // difference between "leave as is" and "clear".
+        var requiredDespiteDefault = schemas
+            .SelectMany(s => (s.Value!["required"]?.AsArray() ?? [])
+                .Select(r => r!.GetValue<string>())
+                .Where(name => s.Value!["properties"]?[name]?.AsObject().ContainsKey("default") == true)
+                .Select(name => $"{s.Key}.{name}"))
+            .ToList();
+        Assert.True(requiredDespiteDefault.Count == 0,
+            $"Required despite a default value: {string.Join(", ", requiredDespiteDefault)}");
+
+        // 4. No `clear<Field>` switch is required anywhere. Follows from 3 today, but it is the rule the root
+        // CLAUDE.md states, and it deserves to be nailed down in the CONTRACT, not only in the DTO.
+        var requiredClearSwitches = schemas
+            .SelectMany(s => (s.Value!["required"]?.AsArray() ?? [])
+                .Select(r => r!.GetValue<string>())
+                .Where(name => name.StartsWith("clear", StringComparison.Ordinal))
+                .Select(name => $"{s.Key}.{name}"))
+            .ToList();
+        Assert.True(requiredClearSwitches.Count == 0,
+            $"Clear switches declared as required: {string.Join(", ", requiredClearSwitches)}. A form that "
+            + "changes one field would have to send them along in order to clear nothing.");
+    }
+
     private static async Task<string> GenerateAsync()
     {
         using var factory = new ContractDocumentFactory();

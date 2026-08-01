@@ -93,7 +93,10 @@ public class ExerciseCatalogController(PuglingDbContext db) : ControllerBase
                     && (g.Permission == GrantPermission.Owner || g.Permission == GrantPermission.Write))),
                 isAdmin || (fid != null && e.Grants.Any(g => g.CreatorId == fid && g.Permission == GrantPermission.Owner)),
                 e.ExecutePublic, e.Description,
-                e.DefaultUseLeitner, e.DefaultRequireTypedTest))
+                e.DefaultUseLeitner, e.DefaultRequireTypedTest,
+                // The position form prefills its item count from this (PlanPositions.tsx); while it was
+                // missing from the summary, that prefill silently stayed empty.
+                e.DefaultItemCount))
             .ToPagedListAsync(Response, skip, take, ct);
     }
 

@@ -127,7 +127,7 @@ function ClassTestManager({ childId }: { childId: number }) {
                       ? <span className="pill lime">{STATUS_LABEL[k.status]}</span>
                       : <span className="pill">{STATUS_LABEL[k.status]}</span>}</td>
                     <td className="num">{k.directExerciseCount}{k.tags.length > 0 ? ` +${k.tags.length}🏷️` : ""}</td>
-                    <td><GradeCell key={`${k.id}-${k.grade ?? ""}`} current={k.grade} busy={action.busy} onSave={(g) => saveGrade(k, g)} /></td>
+                    <td><GradeCell key={`${k.id}-${k.grade ?? ""}`} current={k.grade ?? null} busy={action.busy} onSave={(g) => saveGrade(k, g)} /></td>
                     <td style={{ whiteSpace: "nowrap" }}>
                       <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }}
                         onClick={() => setOpenId(openId === k.id ? null : k.id)}>{openId === k.id ? "Schließen" : "Übungen & Vorbereiten"}</button>{" "}

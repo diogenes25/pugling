@@ -32,13 +32,15 @@ public class ObjectiveService(PuglingDbContext db, ObjectiveEvaluationService ev
     {
         var k = e.KeyResult;
         return new KeyResultResponse(k.Id, k.ObjectiveId, k.SubjectId, k.ChapterId, k.ExerciseId,
-            KrScope(k), k.Metric.ToString(), k.TargetValue, e.Current, e.ProgressPercent, e.Status, k.Title);
+            // Metric travels as the ENUM, not as ToString(): the wire value is identical, but a consumer
+            // generated from the document then gets the value list instead of a bare `string`.
+            KrScope(k), k.Metric, k.TargetValue, e.Current, e.ProgressPercent, e.Status, k.Title);
     }
 
     private static ObjectiveResponse MapObjective(ObjectiveEvaluationService.ObjectiveEval e, bool rewarded)
     {
         var o = e.Objective;
-        return new ObjectiveResponse(o.Id, o.ChildId, o.Title, o.Motivation, o.Kind.ToString(),
+        return new ObjectiveResponse(o.Id, o.ChildId, o.Title, o.Motivation, o.Kind,
             o.Start, o.DueDate, o.Active, o.RewardOnComplete, o.RewardPerKeyResult,
             e.AchievedCount, e.TotalCount, e.ProgressPercent, e.Status, rewarded,
             e.KeyResults.Select(MapKr).ToList(), o.CreatedAt);
@@ -108,7 +110,7 @@ public class ObjectiveService(PuglingDbContext db, ObjectiveEvaluationService ev
             .Select(r => r.ObjectiveId).ToListAsync(ct)).ToHashSet();
 
         IEnumerable<ObjectiveResponse> mapped = evals.Select(e => MapObjective(e, rewardedIds.Contains(e.Objective.Id)));
-        if (kind is { } k) mapped = mapped.Where(o => o.Kind.Equals(k.ToString(), StringComparison.OrdinalIgnoreCase));
+        if (kind is { } k) mapped = mapped.Where(o => o.Kind == k);
         if (!string.IsNullOrWhiteSpace(status))
             mapped = mapped.Where(o => o.Status.Equals(status.Trim(), StringComparison.OrdinalIgnoreCase));
         return mapped.ToList();

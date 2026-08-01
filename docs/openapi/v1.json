@@ -56,6 +56,16 @@
                 }
               }
             }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginResponse"
+                }
+              }
+            }
           }
         }
       }
@@ -103,6 +113,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginResponse"
                 }
               }
             }
@@ -156,6 +176,16 @@
                 }
               }
             }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginResponse"
+                }
+              }
+            }
           }
         }
       }
@@ -173,6 +203,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeResponse"
                 }
               }
             }
@@ -241,6 +281,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeResponse"
                 }
               }
             }
@@ -402,6 +452,19 @@
                 }
               }
             }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RemarkDto"
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -431,6 +494,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemarkDto"
                 }
               }
             }
@@ -481,6 +554,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemarkDto"
                 }
               }
             }
@@ -559,6 +642,19 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RemarkCommentDto"
+                  }
                 }
               }
             }
@@ -850,6 +946,16 @@
                 }
               }
             }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdultResponse"
+                }
+              }
+            }
           }
         }
       },
@@ -897,6 +1003,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdultResponse"
                 }
               }
             }
@@ -968,6 +1084,19 @@
                 }
               }
             }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ChildInterestResponse"
+                  }
+                }
+              }
+            }
           }
         }
       },
@@ -1025,6 +1154,19 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ChildInterestResponse"
+                  }
                 }
               }
             }
@@ -1097,6 +1239,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChildInterestResponse"
                 }
               }
             }
@@ -1249,6 +1401,16 @@
                 }
               }
             }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChildResponse"
+                }
+              }
+            }
           }
         }
       },
@@ -1296,6 +1458,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChildResponse"
                 }
               }
             }
@@ -1569,6 +1741,16 @@
                 }
               }
             }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChildPointsResponse"
+                }
+              }
+            }
           }
         }
       },
@@ -1823,6 +2005,16 @@
                 }
               }
             }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KeyResultResponse"
+                }
+              }
+            }
           }
         }
       },
@@ -1963,6 +2155,19 @@
                 }
               }
             }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/KlassenarbeitResponse"
+                  }
+                }
+              }
+            }
           }
         }
       },
@@ -2053,6 +2258,16 @@
                 }
               }
             }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KlassenarbeitDetail"
+                }
+              }
+            }
           }
         }
       },
@@ -2110,6 +2325,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KlassenarbeitResponse"
                 }
               }
             }
@@ -2208,6 +2433,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KlassenarbeitDetail"
                 }
               }
             }
@@ -2311,6 +2546,16 @@
                 }
               }
             }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KlassenarbeitResponse"
+                }
+              }
+            }
           }
         }
       },
@@ -2389,6 +2634,16 @@
                 }
               }
             }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PracticeResponse"
+                }
+              }
+            }
           }
         }
       }
@@ -2435,6 +2690,16 @@
                 }
               }
             }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RepeatResponse"
+                }
+              }
+            }
           }
         }
       }
@@ -2464,6 +2729,19 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MissionDto"
+                  }
                 }
               }
             }
@@ -2599,6 +2877,16 @@
                 }
               }
             }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MissionDto"
+                }
+              }
+            }
           }
         }
       },
@@ -2674,6 +2962,19 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AchievementDto"
+                  }
                 }
               }
             }
@@ -2809,6 +3110,16 @@
                 }
               }
             }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AchievementDto"
+                }
+              }
+            }
           }
         }
       },
@@ -2927,6 +3238,19 @@
                 }
               }
             }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ObjectiveResponse"
+                  }
+                }
+              }
+            }
           }
         }
       },
@@ -3039,6 +3363,16 @@
                 }
               }
             }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectiveResponse"
+                }
+              }
+            }
           }
         }
       },
@@ -3106,6 +3440,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectiveResponse"
                 }
               }
             }
@@ -3292,6 +3636,16 @@
                 }
               }
             }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PositionResponse"
+                }
+              }
+            }
           }
         }
       },
@@ -3359,6 +3713,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PositionResponse"
                 }
               }
             }
@@ -4561,6 +4925,16 @@
                 }
               }
             }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlanResponse"
+                }
+              }
+            }
           }
         }
       },
@@ -4628,6 +5002,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlanResponse"
                 }
               }
             }
@@ -4706,6 +5090,19 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TextbookResponse"
+                  }
                 }
               }
             }
@@ -4821,6 +5218,16 @@
                 }
               }
             }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TextbookResponse"
+                }
+              }
+            }
           }
         }
       },
@@ -4888,6 +5295,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TextbookResponse"
                 }
               }
             }
@@ -4966,6 +5383,19 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EntryResponse"
+                  }
                 }
               }
             }
@@ -5183,6 +5613,19 @@
                 }
               }
             }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SubjectProgressResponse"
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -5222,6 +5665,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubjectProgressResponse"
                 }
               }
             }
@@ -5318,6 +5771,19 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ChapterProgressResponse"
+                  }
                 }
               }
             }
@@ -5424,6 +5890,19 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ExerciseProgressResponse"
+                  }
                 }
               }
             }
@@ -5536,6 +6015,19 @@
                 }
               }
             }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ItemProgressResponse"
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -5605,6 +6097,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SelectedMediaResponse"
                 }
               }
             }
@@ -5698,6 +6200,19 @@
                 }
               }
             }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ItemProgressResponse"
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -5764,6 +6279,19 @@
                 }
               }
             }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/WordMasteryResponse"
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -5803,6 +6331,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItemProgressResponse"
                 }
               }
             }
@@ -5871,6 +6409,19 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/HistoryResponse"
+                  }
                 }
               }
             }
@@ -6879,6 +7430,16 @@
                 }
               }
             }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OverviewResponse"
+                }
+              }
+            }
           }
         }
       }
@@ -6971,6 +7532,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProgressResponse"
                 }
               }
             }
@@ -7108,6 +7679,16 @@
                 }
               }
             }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionResponse"
+                }
+              }
+            }
           }
         }
       }
@@ -7180,6 +7761,16 @@
                 }
               }
             }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionResponse"
+                }
+              }
+            }
           }
         }
       }
@@ -7229,6 +7820,19 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PracticeCard"
+                  }
                 }
               }
             }
@@ -7304,6 +7908,16 @@
                 }
               }
             }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SelectedMediaResponse"
+                }
+              }
+            }
           }
         }
       }
@@ -7353,6 +7967,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NextResponse"
                 }
               }
             }
@@ -7506,6 +8130,16 @@
                 }
               }
             }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionResponse"
+                }
+              }
+            }
           }
         }
       }
@@ -7545,6 +8179,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Report"
                 }
               }
             }
@@ -7692,6 +8336,16 @@
                 }
               }
             }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TestNextResponse"
+                }
+              }
+            }
           }
         }
       }
@@ -7774,6 +8428,16 @@
                 }
               }
             }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnswerAck"
+                }
+              }
+            }
           }
         }
       }
@@ -7823,6 +8487,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AttemptDetail"
                 }
               }
             }
@@ -7908,6 +8582,16 @@
                 }
               }
             }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubmitResponse"
+                }
+              }
+            }
           }
         }
       }
@@ -7970,6 +8654,19 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ChapterResponse"
+                  }
                 }
               }
             }
@@ -8085,6 +8782,16 @@
                 }
               }
             }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChapterResponse"
+                }
+              }
+            }
           }
         }
       },
@@ -8142,6 +8849,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChapterResponse"
                 }
               }
             }
@@ -8352,6 +9069,16 @@
                 }
               }
             }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClozeResponse"
+                }
+              }
+            }
           }
         }
       },
@@ -8399,6 +9126,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClozeResponse"
                 }
               }
             }
@@ -8475,6 +9212,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClozeResponse"
                 }
               }
             }
@@ -8625,6 +9372,16 @@
                 }
               }
             }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreatorProfileResponse"
+                }
+              }
+            }
           }
         }
       },
@@ -8692,6 +9449,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreatorProfileResponse"
                 }
               }
             }
@@ -8796,6 +9563,19 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CreatorProfileMatch"
+                  }
                 }
               }
             }
@@ -8984,6 +9764,16 @@
                 }
               }
             }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExerciseDetail"
+                }
+              }
+            }
           }
         }
       }
@@ -9046,6 +9836,16 @@
                 }
               }
             }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExerciseSharingResponse"
+                }
+              }
+            }
           }
         }
       }
@@ -9078,6 +9878,16 @@
                 }
               }
             }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UsageResponse"
+                }
+              }
+            }
           }
         }
       }
@@ -9107,6 +9917,19 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CategoryResponse"
+                  }
                 }
               }
             }
@@ -9232,6 +10055,16 @@
                 }
               }
             }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CategoryResponse"
+                }
+              }
+            }
           }
         }
       },
@@ -9309,6 +10142,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CategoryResponse"
                 }
               }
             }
@@ -9440,6 +10283,16 @@
                 }
               }
             }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExerciseResponseOfVocabularyConfig"
+                }
+              }
+            }
           }
         }
       }
@@ -9489,6 +10342,19 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/VocabItemResponse"
+                  }
                 }
               }
             }
@@ -9654,6 +10520,16 @@
                 }
               }
             }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VocabItemResponse"
+                }
+              }
+            }
           }
         }
       },
@@ -9751,6 +10627,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VocabItemResponse"
                 }
               }
             }
@@ -9918,6 +10804,19 @@
                 }
               }
             }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ExerciseResponseOfVocabularyConfig"
+                  }
+                }
+              }
+            }
           }
         }
       },
@@ -10049,6 +10948,16 @@
                 }
               }
             }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExerciseResponseOfVocabularyConfig"
+                }
+              }
+            }
           }
         }
       },
@@ -10125,6 +11034,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExerciseResponseOfVocabularyConfig"
                 }
               }
             }
@@ -10282,6 +11201,19 @@
                 }
               }
             }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ExerciseResponseOfReadingConfig"
+                  }
+                }
+              }
+            }
           }
         }
       },
@@ -10413,6 +11345,16 @@
                 }
               }
             }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExerciseResponseOfReadingConfig"
+                }
+              }
+            }
           }
         }
       },
@@ -10489,6 +11431,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExerciseResponseOfReadingConfig"
                 }
               }
             }
@@ -10646,6 +11598,19 @@
                 }
               }
             }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ExerciseResponseOfClozeConfig"
+                  }
+                }
+              }
+            }
           }
         }
       },
@@ -10777,6 +11742,16 @@
                 }
               }
             }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExerciseResponseOfClozeConfig"
+                }
+              }
+            }
           }
         }
       },
@@ -10853,6 +11828,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExerciseResponseOfClozeConfig"
                 }
               }
             }
@@ -11010,6 +11995,19 @@
                 }
               }
             }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ExerciseResponseOfEssayConfig"
+                  }
+                }
+              }
+            }
           }
         }
       },
@@ -11141,6 +12139,16 @@
                 }
               }
             }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExerciseResponseOfEssayConfig"
+                }
+              }
+            }
           }
         }
       },
@@ -11217,6 +12225,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExerciseResponseOfEssayConfig"
                 }
               }
             }
@@ -11374,6 +12392,19 @@
                 }
               }
             }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ExerciseResponseOfListeningConfig"
+                  }
+                }
+              }
+            }
           }
         }
       },
@@ -11505,6 +12536,16 @@
                 }
               }
             }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExerciseResponseOfListeningConfig"
+                }
+              }
+            }
           }
         }
       },
@@ -11581,6 +12622,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExerciseResponseOfListeningConfig"
                 }
               }
             }
@@ -11738,6 +12789,19 @@
                 }
               }
             }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ExerciseResponseOfGrammarConfig"
+                  }
+                }
+              }
+            }
           }
         }
       },
@@ -11869,6 +12933,16 @@
                 }
               }
             }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExerciseResponseOfGrammarConfig"
+                }
+              }
+            }
           }
         }
       },
@@ -11945,6 +13019,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExerciseResponseOfGrammarConfig"
                 }
               }
             }
@@ -12086,6 +13170,16 @@
                 }
               }
             }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckResult"
+                }
+              }
+            }
           }
         }
       }
@@ -12171,6 +13265,19 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ExerciseResponseOfMatchingConfig"
+                  }
                 }
               }
             }
@@ -12305,6 +13412,16 @@
                 }
               }
             }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExerciseResponseOfMatchingConfig"
+                }
+              }
+            }
           }
         }
       },
@@ -12381,6 +13498,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExerciseResponseOfMatchingConfig"
                 }
               }
             }
@@ -12538,6 +13665,19 @@
                 }
               }
             }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ExerciseResponseOfTranslationConfig"
+                  }
+                }
+              }
+            }
           }
         }
       },
@@ -12669,6 +13809,16 @@
                 }
               }
             }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExerciseResponseOfTranslationConfig"
+                }
+              }
+            }
           }
         }
       },
@@ -12745,6 +13895,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExerciseResponseOfTranslationConfig"
                 }
               }
             }
@@ -13018,6 +14178,16 @@
                 }
               }
             }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DecodedWord"
+                }
+              }
+            }
           }
         }
       }
@@ -13077,6 +14247,19 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/VocabCandidate"
+                  }
                 }
               }
             }
@@ -13198,6 +14381,16 @@
                 }
               }
             }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DecodedSentence"
+                }
+              }
+            }
           }
         }
       }
@@ -13283,6 +14476,19 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ExerciseResponseOfBirkenbihlConfig"
+                  }
                 }
               }
             }
@@ -13417,6 +14623,16 @@
                 }
               }
             }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExerciseResponseOfBirkenbihlConfig"
+                }
+              }
+            }
           }
         }
       },
@@ -13493,6 +14709,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExerciseResponseOfBirkenbihlConfig"
                 }
               }
             }
@@ -13634,6 +14860,16 @@
                 }
               }
             }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckResult"
+                }
+              }
+            }
           }
         }
       }
@@ -13719,6 +14955,19 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ExerciseResponseOfArithmeticConfig"
+                  }
                 }
               }
             }
@@ -13853,6 +15102,16 @@
                 }
               }
             }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExerciseResponseOfArithmeticConfig"
+                }
+              }
+            }
           }
         }
       },
@@ -13929,6 +15188,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExerciseResponseOfArithmeticConfig"
                 }
               }
             }
@@ -14072,6 +15341,16 @@
                 }
               }
             }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GeneratedDrill"
+                }
+              }
+            }
           }
         }
       }
@@ -14151,6 +15430,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckResult"
                 }
               }
             }
@@ -14239,6 +15528,19 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ExerciseResponseOfArithmeticDrillConfig"
+                  }
                 }
               }
             }
@@ -14373,6 +15675,16 @@
                 }
               }
             }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExerciseResponseOfArithmeticDrillConfig"
+                }
+              }
+            }
           }
         }
       },
@@ -14449,6 +15761,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExerciseResponseOfArithmeticDrillConfig"
                 }
               }
             }
@@ -14590,6 +15912,16 @@
                 }
               }
             }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckResult"
+                }
+              }
+            }
           }
         }
       }
@@ -14675,6 +16007,19 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ExerciseResponseOfListConfig"
+                  }
                 }
               }
             }
@@ -14809,6 +16154,16 @@
                 }
               }
             }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExerciseResponseOfListConfig"
+                }
+              }
+            }
           }
         }
       },
@@ -14885,6 +16240,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExerciseResponseOfListConfig"
                 }
               }
             }
@@ -15197,6 +16562,19 @@
                 }
               }
             }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MediaLinkResponse"
+                  }
+                }
+              }
+            }
           }
         }
       },
@@ -15384,6 +16762,19 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MediaLinkResponse"
+                  }
                 }
               }
             }
@@ -15609,6 +17000,16 @@
                 }
               }
             }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PreviewData"
+                }
+              }
+            }
           }
         }
       }
@@ -15671,6 +17072,16 @@
                 }
               }
             }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PreviewResult"
+                }
+              }
+            }
           }
         }
       }
@@ -15721,6 +17132,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExerciseTypeManifest"
                 }
               }
             }
@@ -15891,6 +17312,16 @@
                 }
               }
             }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InterestTagResponse"
+                }
+              }
+            }
           }
         }
       },
@@ -15948,6 +17379,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InterestTagResponse"
                 }
               }
             }
@@ -16214,6 +17655,16 @@
                 }
               }
             }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MediaAssetResponse"
+                }
+              }
+            }
           }
         }
       },
@@ -16271,6 +17722,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MediaAssetResponse"
                 }
               }
             }
@@ -16337,6 +17798,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MediaAssetResponse"
                 }
               }
             }
@@ -16449,6 +17920,19 @@
                 }
               }
             }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MediaUsage"
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -16508,6 +17992,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MediaAssetResponse"
                 }
               }
             }
@@ -16588,6 +18082,19 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MediaVariantResponse"
+                  }
                 }
               }
             }
@@ -16753,6 +18260,16 @@
                 }
               }
             }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MediaVariantResponse"
+                }
+              }
+            }
           }
         }
       },
@@ -16842,6 +18359,19 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SeriesUnitResponse"
+                  }
                 }
               }
             }
@@ -16967,6 +18497,16 @@
                 }
               }
             }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SeriesUnitResponse"
+                }
+              }
+            }
           }
         }
       },
@@ -17044,6 +18584,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SeriesUnitResponse"
                 }
               }
             }
@@ -17206,6 +18756,16 @@
                 }
               }
             }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubjectResponse"
+                }
+              }
+            }
           }
         }
       },
@@ -17253,6 +18813,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubjectResponse"
                 }
               }
             }
@@ -17333,6 +18903,19 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TagResponse"
+                  }
                 }
               }
             }
@@ -17466,6 +19049,16 @@
                 }
               }
             }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TagResponse"
+                }
+              }
+            }
           }
         }
       },
@@ -17564,6 +19157,16 @@
                 }
               }
             }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TagResponse"
+                }
+              }
+            }
           }
         }
       },
@@ -17620,6 +19223,19 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ExerciseBrief"
+                  }
                 }
               }
             }
@@ -17715,6 +19331,19 @@
                 }
               }
             }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TagResponse"
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -17777,6 +19406,16 @@
                 }
               }
             }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TagResponse"
+                }
+              }
+            }
           }
         }
       },
@@ -17833,6 +19472,19 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TaggedVocabularyDto"
+                  }
                 }
               }
             }
@@ -17928,6 +19580,19 @@
                 }
               }
             }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TagResponse"
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -18017,6 +19682,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TeacherAccountResponse"
                 }
               }
             }
@@ -18192,6 +19867,16 @@
                 }
               }
             }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TextbookSeriesResponse"
+                }
+              }
+            }
           }
         }
       },
@@ -18259,6 +19944,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TextbookSeriesResponse"
                 }
               }
             }
@@ -18337,6 +20032,19 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MediaLinkResponse"
+                  }
                 }
               }
             }
@@ -18479,6 +20187,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MediaLinkResponse"
                 }
               }
             }
@@ -18787,6 +20505,16 @@
                 }
               }
             }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VocabularyResponse"
+                }
+              }
+            }
           }
         }
       },
@@ -18844,6 +20572,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VocabularyResponse"
                 }
               }
             }
@@ -18923,6 +20661,16 @@
                 }
               }
             }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VocabularyResponse"
+                }
+              }
+            }
           }
         }
       }
@@ -18955,6 +20703,19 @@
                 }
               }
             }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/VocabularyResponse"
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -18984,6 +20745,19 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/VocabUsage"
+                  }
                 }
               }
             }
@@ -19076,6 +20850,19 @@
                 }
               }
             }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/BatchItemResult"
+                  }
+                }
+              }
+            }
           }
         }
       },
@@ -19120,6 +20907,19 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/BatchItemResult"
+                  }
                 }
               }
             }
@@ -19266,6 +21066,16 @@
                 }
               }
             }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VocabTagResponse"
+                }
+              }
+            }
           }
         }
       },
@@ -19361,6 +21171,19 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/VocabTagResponse"
+                  }
                 }
               }
             }
@@ -19703,9 +21526,6 @@
         "description": "Input for granting a permission."
       },
       "AddMediaLinkDto": {
-        "required": [
-          "weight"
-        ],
         "type": "object",
         "properties": {
           "mediaAssetId": {
@@ -19737,7 +21557,6 @@
       },
       "AddSupervisorDto": {
         "required": [
-          "relation",
           "supervisorId"
         ],
         "type": "object",
@@ -19817,6 +21636,36 @@
           }
         },
         "description": "Adult without PIN (never delivered)."
+      },
+      "AnswerAck": {
+        "required": [
+          "cursor",
+          "done",
+          "total"
+        ],
+        "type": "object",
+        "properties": {
+          "done": {
+            "type": "boolean"
+          },
+          "cursor": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "total": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        },
+        "description": "Confirmation of a submitted exam answer \u2013 deliberately WITHOUT correctness (feedback only at completion)."
       },
       "AnswerDto": {
         "required": [
@@ -19942,8 +21791,7 @@
       "ArithmeticProblem": {
         "required": [
           "answer",
-          "prompt",
-          "tolerance"
+          "prompt"
         ],
         "type": "object",
         "properties": {
@@ -19989,6 +21837,105 @@
           }
         },
         "description": "Input for directly assigning exercises to a class test."
+      },
+      "AttemptDetail": {
+        "required": [
+          "correctItems",
+          "day",
+          "id",
+          "passed",
+          "planId",
+          "positionId",
+          "results",
+          "scorePercent",
+          "stage",
+          "startedAt",
+          "totalItems"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "planId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "positionId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "day": {
+            "type": "string",
+            "format": "date"
+          },
+          "stage": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "startedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "completedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "totalItems": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "correctItems": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "scorePercent": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "passed": {
+            "type": "boolean"
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ItemResultDto"
+            }
+          }
+        },
+        "description": "A test attempt with all individual results."
       },
       "AttemptResponse": {
         "required": [
@@ -20047,6 +21994,48 @@
           }
         },
         "description": "Response of the test start. Class-test mode is strictly server-driven: \u003Cb\u003Eno\u003C/b\u003E questions are sent\nin bulk, only the metadata. The client fetches the questions one at a time via the \u0060next\u0060 endpoint (no going back)."
+      },
+      "BatchItemResult": {
+        "required": [
+          "index",
+          "status"
+        ],
+        "type": "object",
+        "properties": {
+          "index": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "status": {
+            "type": "string"
+          },
+          "id": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "key": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "error": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "Result of a single batch element (partial success possible)."
       },
       "BatchUpdateItem": {
         "required": [
@@ -20281,6 +22270,53 @@
         },
         "description": "An exercise category within a subject."
       },
+      "ChapterProgressResponse": {
+        "required": [
+          "active",
+          "chapterId",
+          "exerciseCount",
+          "name",
+          "orderIndex",
+          "progress"
+        ],
+        "type": "object",
+        "properties": {
+          "chapterId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "name": {
+            "type": "string"
+          },
+          "orderIndex": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "exerciseCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "active": {
+            "type": "boolean"
+          },
+          "progress": {
+            "$ref": "#/components/schemas/MasteryRollup"
+          }
+        },
+        "description": "Progress of a chapter. Active = contains \u22651 exercise currently assigned."
+      },
       "ChapterResponse": {
         "required": [
           "exercisesCount",
@@ -20352,6 +22388,48 @@
           }
         },
         "description": "Child\u0027s answers for a direct catalog check, position-based (index in the problem/pair list).\nSeed is only needed for seed-bound types (arithmetic drill) \u2013 the one received when generating."
+      },
+      "CheckResult": {
+        "required": [
+          "correct",
+          "items",
+          "scorePercent",
+          "total"
+        ],
+        "type": "object",
+        "properties": {
+          "total": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "correct": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "scorePercent": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ItemCheck"
+            }
+          }
+        },
+        "description": "Overall result of an evaluation: hit count, percentage, and individual results."
       },
       "ChildDay": {
         "required": [
@@ -20466,6 +22544,49 @@
         },
         "description": "An interest to set. The tag is referenced either by TagId\nor named via Slug/Label \u2013 the latter creates it if needed\n(create-if-missing), so the supervisor can type freely in the UI without maintaining the catalog first."
       },
+      "ChildInterestResponse": {
+        "required": [
+          "createdAt",
+          "facet",
+          "label",
+          "slug",
+          "tagId",
+          "weight"
+        ],
+        "type": "object",
+        "properties": {
+          "tagId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "facet": {
+            "$ref": "#/components/schemas/InterestFacet"
+          },
+          "weight": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "description": "A weighted interest of the child in a taxonomy tag. \u0060Weight\u0060 ranges from\n-3 (strong dislike) through 0 (neutral) to \u002B3 (favorite topic)."
+      },
       "ChildLoginDto": {
         "required": [
           "childId",
@@ -20486,6 +22607,48 @@
           }
         },
         "description": "Child login via domain child id \u002B PIN."
+      },
+      "ChildPointsResponse": {
+        "required": [
+          "childId",
+          "coins",
+          "entries",
+          "gems"
+        ],
+        "type": "object",
+        "properties": {
+          "childId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "coins": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "gems": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "entries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PointsEntryResponse"
+            }
+          }
+        },
+        "description": "Balance of the child (both currencies) with a page of its ledger entries."
       },
       "ChildResponse": {
         "required": [
@@ -20573,6 +22736,40 @@
           }
         },
         "description": "A supervised child with profile and balance of both currencies. \u0060Interests\u0060 is the \u003Cb\u003Efree-form\u003C/b\u003E\npart of the profile (language for the AI creator); the weighted, referenced interests used for\nimage selection live under \u0060children/{id}/interests\u0060. \u0060AllowedContentRating\u0060 is the\nupper bound of image suitability \u2013 only the supervisor may raise it."
+      },
+      "ClassTestUsage": {
+        "required": [
+          "childId",
+          "childName",
+          "id",
+          "title"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "title": {
+            "type": "string"
+          },
+          "childId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "childName": {
+            "type": "string"
+          }
+        },
+        "description": "A class test to which an exercise is assigned (directly or via a tag)."
       },
       "ClozeConfig": {
         "required": [
@@ -21132,7 +23329,6 @@
       },
       "CreateInterestTagDto": {
         "required": [
-          "facet",
           "label"
         ],
         "type": "object",
@@ -21223,10 +23419,7 @@
       },
       "CreateMediaAssetDto": {
         "required": [
-          "description",
-          "kind",
-          "origin",
-          "rating"
+          "description"
         ],
         "type": "object",
         "properties": {
@@ -21295,7 +23488,6 @@
       },
       "CreateMediaVariantDto": {
         "required": [
-          "format",
           "height",
           "purpose",
           "url",
@@ -21864,7 +24056,6 @@
           "currentStock",
           "gemPrice",
           "maxStock",
-          "refillKind",
           "unitsPerPurchase"
         ],
         "type": "object",
@@ -22256,6 +24447,34 @@
         },
         "description": "Creating a vocabulary entry. \u0022Simple\u0022 only needs \u0060Word\u0060 (\u002B languages): \u0060Key\u0060 may stay\nempty (the server generates a unique slug), \u0060Translation\u0060 may be omitted\n(stays empty and is findable via \u0060?untranslated=true\u0060) and \u0060PartOfSpeech\u0060 may be\nomitted (default PartOfSpeech.Other). \u0022Complex\u0022 additionally fills in\nnoun/verb/base form/audio; missing details can be supplied later via PATCH.\n\u0060Tags\u0060 (names) are linked create-if-missing."
       },
+      "CreatorProfileMatch": {
+        "required": [
+          "profile",
+          "reasons",
+          "score"
+        ],
+        "type": "object",
+        "properties": {
+          "profile": {
+            "$ref": "#/components/schemas/CreatorProfileResponse"
+          },
+          "score": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "reasons": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "description": "A match of the profile search for a child. Score is computed deterministically\n(a series match weighs heaviest), Reasons names the reasons in plain text \u2013\nso a console or a UI can explain the choice instead of showing a bare number."
+      },
       "CreatorProfileResponse": {
         "required": [
           "active",
@@ -22408,7 +24627,75 @@
         "description": "The daily overview across all children of a supervisor."
       },
       "DayOfWeek": {
-        "type": "integer"
+        "enum": [
+          "Sunday",
+          "Monday",
+          "Tuesday",
+          "Wednesday",
+          "Thursday",
+          "Friday",
+          "Saturday"
+        ],
+        "type": "string",
+        "description": "Allowed values: Sunday, Monday, Tuesday, Wednesday, Thursday, Friday, Saturday."
+      },
+      "DayOverview": {
+        "required": [
+          "day",
+          "dutyDone",
+          "goalsMet",
+          "goalsTotal",
+          "outstanding",
+          "pointsAwarded",
+          "positions"
+        ],
+        "type": "object",
+        "properties": {
+          "day": {
+            "type": "string",
+            "format": "date"
+          },
+          "dutyDone": {
+            "type": "boolean"
+          },
+          "goalsTotal": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "goalsMet": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "pointsAwarded": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "outstanding": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "positions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PositionStatus"
+            }
+          }
+        },
+        "description": "Daily rollup of a study plan across its positions."
       },
       "DecodedSentence": {
         "required": [
@@ -22683,14 +24970,204 @@
         "type": "string",
         "description": "How an exercise of this type is primarily checked/played. Describes the API surface that\nactually exists \u2013 not a wish list. When a new check is added, the type moves to the matching\nmode (and the int ExerciseTypeManifest.SchemaVersion in the manifest is incremented).\n\nAllowed values: None, StudyPlanTest, CatalogCheck, CatalogGenerateCheck."
       },
-      "ExercisePayloadOfArithmeticConfig": {
+      "ExerciseDetail": {
         "required": [
+          "chapterId",
+          "chapterName",
+          "config",
           "defaultRequireTypedTest",
           "defaultUseLeitner",
           "executePublic",
+          "grantCount",
+          "id",
+          "isOwn",
+          "isOwner",
           "orderIndex",
           "rewardPoints",
           "schoolTypes",
+          "subjectId",
+          "subjectName",
+          "title",
+          "type"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "chapterId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "chapterName": {
+            "type": "string"
+          },
+          "subjectId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "subjectName": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "orderIndex": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "rewardPoints": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "gradeMin": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "gradeMax": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "schoolTypes": {
+            "$ref": "#/components/schemas/SchoolTypes"
+          },
+          "source": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "categoryId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "categoryName": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "suggestedBonus": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/SuggestedBonus"
+              }
+            ]
+          },
+          "defaultStage": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "defaultItemCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "authorAdultId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "authorName": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "isOwn": {
+            "type": "boolean"
+          },
+          "isOwner": {
+            "type": "boolean"
+          },
+          "executePublic": {
+            "type": "boolean"
+          },
+          "grantCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "config": {
+            "$ref": "#/components/schemas/JsonElement"
+          },
+          "description": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "defaultUseLeitner": {
+            "type": "boolean"
+          },
+          "defaultRequireTypedTest": {
+            "type": "boolean"
+          }
+        },
+        "description": "Complete, type-spanning view of an exercise including raw config and all metadata \u2013\nthe basis for editing (load config into the type-specific editor; saving goes through\nthe per-type PUT \u0060.../chapters/{}/\u0026lt;type\u0026gt;/{id}\u0060)."
+      },
+      "ExercisePayloadOfArithmeticConfig": {
+        "required": [
+          "orderIndex",
+          "rewardPoints",
           "title"
         ],
         "type": "object",
@@ -22811,12 +25288,8 @@
       },
       "ExercisePayloadOfArithmeticDrillConfig": {
         "required": [
-          "defaultRequireTypedTest",
-          "defaultUseLeitner",
-          "executePublic",
           "orderIndex",
           "rewardPoints",
-          "schoolTypes",
           "title"
         ],
         "type": "object",
@@ -22937,12 +25410,8 @@
       },
       "ExercisePayloadOfBirkenbihlConfig": {
         "required": [
-          "defaultRequireTypedTest",
-          "defaultUseLeitner",
-          "executePublic",
           "orderIndex",
           "rewardPoints",
-          "schoolTypes",
           "title"
         ],
         "type": "object",
@@ -23063,12 +25532,8 @@
       },
       "ExercisePayloadOfClozeConfig": {
         "required": [
-          "defaultRequireTypedTest",
-          "defaultUseLeitner",
-          "executePublic",
           "orderIndex",
           "rewardPoints",
-          "schoolTypes",
           "title"
         ],
         "type": "object",
@@ -23189,12 +25654,8 @@
       },
       "ExercisePayloadOfEssayConfig": {
         "required": [
-          "defaultRequireTypedTest",
-          "defaultUseLeitner",
-          "executePublic",
           "orderIndex",
           "rewardPoints",
-          "schoolTypes",
           "title"
         ],
         "type": "object",
@@ -23315,12 +25776,8 @@
       },
       "ExercisePayloadOfGrammarConfig": {
         "required": [
-          "defaultRequireTypedTest",
-          "defaultUseLeitner",
-          "executePublic",
           "orderIndex",
           "rewardPoints",
-          "schoolTypes",
           "title"
         ],
         "type": "object",
@@ -23441,12 +25898,8 @@
       },
       "ExercisePayloadOfListConfig": {
         "required": [
-          "defaultRequireTypedTest",
-          "defaultUseLeitner",
-          "executePublic",
           "orderIndex",
           "rewardPoints",
-          "schoolTypes",
           "title"
         ],
         "type": "object",
@@ -23567,12 +26020,8 @@
       },
       "ExercisePayloadOfListeningConfig": {
         "required": [
-          "defaultRequireTypedTest",
-          "defaultUseLeitner",
-          "executePublic",
           "orderIndex",
           "rewardPoints",
-          "schoolTypes",
           "title"
         ],
         "type": "object",
@@ -23693,12 +26142,8 @@
       },
       "ExercisePayloadOfMatchingConfig": {
         "required": [
-          "defaultRequireTypedTest",
-          "defaultUseLeitner",
-          "executePublic",
           "orderIndex",
           "rewardPoints",
-          "schoolTypes",
           "title"
         ],
         "type": "object",
@@ -23819,12 +26264,8 @@
       },
       "ExercisePayloadOfReadingConfig": {
         "required": [
-          "defaultRequireTypedTest",
-          "defaultUseLeitner",
-          "executePublic",
           "orderIndex",
           "rewardPoints",
-          "schoolTypes",
           "title"
         ],
         "type": "object",
@@ -23945,12 +26386,8 @@
       },
       "ExercisePayloadOfTranslationConfig": {
         "required": [
-          "defaultRequireTypedTest",
-          "defaultUseLeitner",
-          "executePublic",
           "orderIndex",
           "rewardPoints",
-          "schoolTypes",
           "title"
         ],
         "type": "object",
@@ -24071,12 +26508,8 @@
       },
       "ExercisePayloadOfVocabularyConfig": {
         "required": [
-          "defaultRequireTypedTest",
-          "defaultUseLeitner",
-          "executePublic",
           "orderIndex",
           "rewardPoints",
-          "schoolTypes",
           "title"
         ],
         "type": "object",
@@ -24194,6 +26627,44 @@
           }
         },
         "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional."
+      },
+      "ExerciseProgressResponse": {
+        "required": [
+          "active",
+          "exerciseId",
+          "orderIndex",
+          "progress",
+          "title"
+        ],
+        "type": "object",
+        "properties": {
+          "exerciseId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "title": {
+            "type": "string"
+          },
+          "orderIndex": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "active": {
+            "type": "boolean"
+          },
+          "progress": {
+            "$ref": "#/components/schemas/MasteryRollup"
+          }
+        },
+        "description": "Progress of a single vocabulary exercise. Active = currently assigned via an active plan."
       },
       "ExerciseResponseOfArithmeticConfig": {
         "required": [
@@ -26379,6 +28850,39 @@
         },
         "description": "Exercise in the response. IsOwn = the requesting creator may \u003Cb\u003Echange\u003C/b\u003E it (owner or\nwrite grant); IsOwner = may \u003Cb\u003Emanage\u003C/b\u003E it (owner: delete, grant permissions,\ntoggle visibility); ExecutePublic = assignable to everyone."
       },
+      "ExerciseSharingResponse": {
+        "required": [
+          "executePublic",
+          "grantCount",
+          "id"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "The exercise.",
+            "format": "int32"
+          },
+          "executePublic": {
+            "type": "boolean",
+            "description": "Is it assignable to everyone?"
+          },
+          "grantCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "How many explicit permissions hang on it. After withdrawing, this is the circle that can still\nassign it \u2013 at \u00601\u0060 (only the owner themselves) it is practically out of circulation.",
+            "format": "int32"
+          }
+        },
+        "description": "The publication status of an exercise after toggling."
+      },
       "ExerciseSummary": {
         "required": [
           "chapterId",
@@ -26502,6 +29006,15 @@
           },
           "defaultRequireTypedTest": {
             "type": "boolean"
+          },
+          "defaultItemCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
           }
         },
         "description": "Lean hit row of the exercise search (child-neutral catalog). \u0060AuthorAdultId\u0060/\u0060AuthorName\u0060 carry the\nattribution of the shared library (\u0060null\u0060 = seeded system exercise); \u0060IsOwn\u0060 = the requesting supervisor\nmay change/delete the exercise."
@@ -26621,8 +29134,72 @@
         "type": "string",
         "description": "Gender of the child (purely descriptive). Part of the exercise-independent profile; a later\n            study plan generator uses it at most for the language of address, never for filtering the material.\n\nAllowed values: None, Male, Female, Diverse."
       },
+      "GeneratedDrill": {
+        "required": [
+          "exerciseId",
+          "problems",
+          "seed",
+          "title"
+        ],
+        "type": "object",
+        "properties": {
+          "exerciseId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "title": {
+            "type": "string"
+          },
+          "seed": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "problems": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GeneratedProblem"
+            }
+          }
+        },
+        "description": "A freshly generated problem set for a drill exercise."
+      },
+      "GeneratedProblem": {
+        "required": [
+          "answer",
+          "prompt"
+        ],
+        "type": "object",
+        "properties": {
+          "prompt": {
+            "type": "string"
+          },
+          "answer": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d\u002B)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          }
+        },
+        "description": "A generated arithmetic expression together with its solution."
+      },
       "Genus": {
-        "type": "integer"
+        "enum": [
+          "Masculine",
+          "Feminine",
+          "Neuter"
+        ],
+        "type": "string",
+        "description": "Allowed values: Masculine, Feminine, Neuter."
       },
       "GivenAnswer": {
         "required": [
@@ -26773,12 +29350,69 @@
         },
         "description": "Reports (active) practice seconds; the server caps them per heartbeat (anti time-cheat)."
       },
+      "HistoryResponse": {
+        "required": [
+          "at",
+          "source",
+          "stageValue",
+          "wasCorrect"
+        ],
+        "type": "object",
+        "properties": {
+          "at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "source": {
+            "type": "string"
+          },
+          "stageValue": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "givenAnswer": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "wasCorrect": {
+            "type": "boolean"
+          },
+          "planPositionId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        },
+        "description": "A logged answer event from the item history."
+      },
       "IFormFile": {
         "type": "string",
         "format": "binary"
       },
       "InterestFacet": {
-        "type": "integer"
+        "enum": [
+          "Other",
+          "Franchise",
+          "Sport",
+          "Animal",
+          "Vehicle",
+          "Music",
+          "Hobby",
+          "Nature",
+          "Style"
+        ],
+        "type": "string",
+        "description": "Facet of an interest tag. It groups the taxonomy by domain without splitting it:\ntopic (InterestFacet.Franchise, InterestFacet.Sport \u2026) and InterestFacet.Style deliberately live in\n\u003Cb\u003Ethe same\u003C/b\u003E table because they behave identically during image selection \u2013 only the weighting\ndiffers. Extensions are purely additive.\n\nAllowed values: Other, Franchise, Sport, Animal, Vehicle, Music, Hobby, Nature, Style."
       },
       "InterestTagResponse": {
         "required": [
@@ -26887,6 +29521,312 @@
         },
         "description": "An entry in the child\u0027s aggregated inventory. \u0060ShopArticleId\u0060 is \u0060null\u0060 if the\narticle was deleted after purchase \u2013 title and unit then come from the snapshot on the\ninventory (as with ActivationRequestDto). Such an entry can no longer be activated:\nactivation is addressed via the article id."
       },
+      "ItemCheck": {
+        "required": [
+          "correct",
+          "expected",
+          "index",
+          "prompt"
+        ],
+        "type": "object",
+        "properties": {
+          "index": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "prompt": {
+            "type": "string"
+          },
+          "given": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "expected": {
+            "type": "string"
+          },
+          "correct": {
+            "type": "boolean"
+          }
+        },
+        "description": "Evaluation of a single item."
+      },
+      "ItemOutcome": {
+        "required": [
+          "expected",
+          "itemIndex",
+          "prompt",
+          "wasCorrect"
+        ],
+        "type": "object",
+        "properties": {
+          "itemIndex": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "prompt": {
+            "type": "string"
+          },
+          "expected": {
+            "type": "string"
+          },
+          "givenAnswer": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "wasCorrect": {
+            "type": "boolean"
+          }
+        },
+        "description": "Evaluation of a single exam question \u2013 here the solution is disclosed."
+      },
+      "ItemProgressResponse": {
+        "required": [
+          "back",
+          "box",
+          "correctCount",
+          "exerciseId",
+          "front",
+          "itemId",
+          "masteryPercent",
+          "maxBox",
+          "seenCount",
+          "vocabulary",
+          "vocabularyId"
+        ],
+        "type": "object",
+        "properties": {
+          "itemId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "exerciseId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "vocabularyId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "front": {
+            "type": "string"
+          },
+          "back": {
+            "type": "string"
+          },
+          "box": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "maxBox": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "masteryPercent": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "seenCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "correctCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "introducedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "lastAnswerAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "lastCorrect": {
+            "type": [
+              "null",
+              "boolean"
+            ]
+          },
+          "vocabulary": {
+            "type": "string"
+          }
+        },
+        "description": "Learning progress of a child on an item (front/back from the store, canonically word \u2192 translation)."
+      },
+      "ItemReport": {
+        "required": [
+          "answer",
+          "box",
+          "introduced",
+          "itemIndex",
+          "masteryPercent",
+          "prompt",
+          "reviewCount",
+          "testsCorrect",
+          "testsSeen"
+        ],
+        "type": "object",
+        "properties": {
+          "itemIndex": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "prompt": {
+            "type": "string"
+          },
+          "answer": {
+            "type": "string"
+          },
+          "introduced": {
+            "type": "boolean"
+          },
+          "box": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "masteryPercent": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "reviewCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "dueOn": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "lastReviewedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "testsSeen": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "testsCorrect": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        },
+        "description": "Report row for a single content item."
+      },
+      "ItemResultDto": {
+        "required": [
+          "hintsUsed",
+          "itemIndex",
+          "wasCorrect"
+        ],
+        "type": "object",
+        "properties": {
+          "itemIndex": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "givenAnswer": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "wasCorrect": {
+            "type": "boolean"
+          },
+          "hintsUsed": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        },
+        "description": "A single result within the completed attempt."
+      },
       "ItemScope": {
         "enum": [
           "All",
@@ -26967,7 +29907,7 @@
             "type": "string"
           },
           "metric": {
-            "type": "string"
+            "$ref": "#/components/schemas/KeyResultMetric"
           },
           "targetValue": {
             "pattern": "^-?(?:0|[1-9]\\d*)$",
@@ -27121,10 +30061,22 @@
         "description": "Class test in list/summary view."
       },
       "KlassenarbeitStatus": {
-        "type": "integer"
+        "enum": [
+          "Planned",
+          "Written",
+          "Cancelled"
+        ],
+        "type": "string",
+        "description": "Status of a class test in its lifecycle.\n\nAllowed values: Planned, Written, Cancelled."
       },
       "LearningMethod": {
-        "type": "integer"
+        "enum": [
+          "Vocabulary",
+          "Cloze",
+          "Matching"
+        ],
+        "type": "string",
+        "description": "Allowed values: Vocabulary, Cloze, Matching."
       },
       "ListConfig": {
         "required": [
@@ -27202,6 +30154,45 @@
           }
         },
         "description": "A list entry; Alternatives allows acceptable synonyms/spellings."
+      },
+      "LoginResponse": {
+        "required": [
+          "expiresAt",
+          "id",
+          "name",
+          "role",
+          "token"
+        ],
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "description": "The issued JWT (Bearer)."
+          },
+          "role": {
+            "type": "string",
+            "description": "Primary tier for UI routing: \u0060Supervisor\u0060, \u0060Creator\u0060, or \u0060Student\u0060. Ranked in this\norder \u2013 a father holds Creator \u003Ci\u003Eand\u003C/i\u003E Supervisor and belongs in the supervision view, a\n\u003Cb\u003Eteacher\u003C/b\u003E only holds Creator and belongs in the workshop. The token itself carries \u003Ci\u003Eall\u003C/i\u003E\nroles of the account; this field only says where the UI should start."
+          },
+          "id": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "Domain id of the logged-in profile (adult or child id; account id for account login).",
+            "format": "int32"
+          },
+          "name": {
+            "type": "string",
+            "description": "Display name."
+          },
+          "expiresAt": {
+            "type": "string",
+            "description": "Expiry of the token (UTC).",
+            "format": "date-time"
+          }
+        },
+        "description": "Response of all login endpoints: JWT plus primary tier for UI routing."
       },
       "LookupRequest": {
         "type": "object",
@@ -27283,6 +30274,93 @@
           }
         },
         "description": "Hit per requested word incl. already existing store entries."
+      },
+      "MasteryRollup": {
+        "required": [
+          "avgMasteryPercent",
+          "correctCount",
+          "correctPercent",
+          "introducedItems",
+          "masteredItems",
+          "seenCount",
+          "totalItems",
+          "weakItems"
+        ],
+        "type": "object",
+        "properties": {
+          "totalItems": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "introducedItems": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "masteredItems": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "weakItems": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "avgMasteryPercent": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "seenCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "correctCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "correctPercent": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "lastActivityAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          }
+        },
+        "description": "Aggregated learning progress across a set of vocabulary items (same shape at every level)."
       },
       "MatchingConfig": {
         "required": [
@@ -27464,6 +30542,40 @@
         "type": "string",
         "description": "Semantic delivery slot of a variant. The client asks for the \u003Ci\u003Epurpose\u003C/i\u003E, not for\npixel dimensions \u2013 this keeps the resolution policy changeable server-side without breaking the contract.\n\nAllowed values: Thumb, Card, Full, Hero."
       },
+      "MediaUsage": {
+        "required": [
+          "carrier",
+          "carrierId",
+          "label",
+          "weight"
+        ],
+        "type": "object",
+        "properties": {
+          "carrier": {
+            "type": "string"
+          },
+          "carrierId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "label": {
+            "type": "string"
+          },
+          "weight": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        },
+        "description": "Where an asset is assigned \u2013 the reverse direction of the assignment. \u0060Carrier\u0060 is\n\u0060vocabulary\u0060 | \u0060item\u0060 | \u0060exercise\u0060, \u0060Label\u0060 a readable designation of the carrier."
+      },
       "MediaVariantResponse": {
         "required": [
           "format",
@@ -27519,6 +30631,64 @@
           }
         },
         "description": "A resolution/format of an asset \u2013 addressed via its semantic purpose."
+      },
+      "MeResponse": {
+        "required": [
+          "role",
+          "roles"
+        ],
+        "type": "object",
+        "properties": {
+          "accountId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "description": "Account id (subject of the token); \u0060null\u0060 for a legacy token without \u0060aid\u0060.",
+            "format": "int32"
+          },
+          "role": {
+            "type": "string",
+            "description": "Primary tier for routing \u2013 see LoginResponse."
+          },
+          "roles": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "All roles of the token. For a teacher account, exactly \u0060[\u0022Creator\u0022]\u0060."
+          },
+          "adultId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "description": "Domain id of the adult (Creator/Supervisor), otherwise \u0060null\u0060.",
+            "format": "int32"
+          },
+          "childId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "description": "Domain id of the child (Student), otherwise \u0060null\u0060.",
+            "format": "int32"
+          },
+          "name": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Display name."
+          }
+        },
+        "description": "The caller\u0027s own identity from the token (\u0060GET auth/me\u0060) \u2013 account, all roles, and the domain ids."
       },
       "MissionDto": {
         "required": [
@@ -27861,6 +31031,46 @@
         },
         "description": "The child\u0027s own purchase ledger entry in their cashbook."
       },
+      "NextResponse": {
+        "required": [
+          "cursor",
+          "done",
+          "total"
+        ],
+        "type": "object",
+        "properties": {
+          "card": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/PracticeCard"
+              }
+            ]
+          },
+          "done": {
+            "type": "boolean"
+          },
+          "cursor": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "total": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        },
+        "description": "The next card in learn mode (or \u0060Done\u0060), server-driven via the session cursor."
+      },
       "NounInfo": {
         "type": "object",
         "properties": {
@@ -27893,7 +31103,12 @@
         "description": "Noun-specific details."
       },
       "ObjectiveKind": {
-        "type": "integer"
+        "enum": [
+          "Committed",
+          "Stretch"
+        ],
+        "type": "string",
+        "description": "Kind of an \u0060Objective\u0060 \u2013 determines the tone and currency of the reward. ObjectiveKind.Committed is a\nbinding goal (reward in \uD83E\uDE99 coins = real-world privileges); ObjectiveKind.Stretch is a\n\u0022stretch goal\u0022 (reward in \uD83D\uDC8E gems = cosmetic). Deliberately, there is \u003Cb\u003Eno penalty\u003C/b\u003E on objectives \u2013\nthe \u0022stick\u0022 lives solely on the mandatory goal of the \u0060PlanPosition\u0060 (see \u0060PenaltyCoins\u0060).\n\nAllowed values: Committed, Stretch."
       },
       "ObjectiveResponse": {
         "required": [
@@ -27940,7 +31155,7 @@
             ]
           },
           "kind": {
-            "type": "string"
+            "$ref": "#/components/schemas/ObjectiveKind"
           },
           "start": {
             "type": [
@@ -28017,6 +31232,54 @@
           }
         },
         "description": "Evaluated objective incl. key results and roll-up (status \u0060open\u0060/\u0060achieved\u0060/\u0060overdue\u0060)."
+      },
+      "OverviewResponse": {
+        "required": [
+          "active",
+          "currentStreak",
+          "endDate",
+          "planId",
+          "startDate",
+          "title",
+          "today"
+        ],
+        "type": "object",
+        "properties": {
+          "planId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "title": {
+            "type": "string"
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "active": {
+            "type": "boolean"
+          },
+          "currentStreak": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "today": {
+            "$ref": "#/components/schemas/DayOverview"
+          }
+        },
+        "description": "Daily mission: the plan overview plus today\u0027s rollup over its positions."
       },
       "PartOfSpeech": {
         "enum": [
@@ -28109,6 +31372,40 @@
         },
         "description": "A study plan container of a child."
       },
+      "PlanUsage": {
+        "required": [
+          "childId",
+          "childName",
+          "planId",
+          "planTitle"
+        ],
+        "type": "object",
+        "properties": {
+          "planId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "planTitle": {
+            "type": "string"
+          },
+          "childId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "childName": {
+            "type": "string"
+          }
+        },
+        "description": "A study plan in which an exercise is used as a position."
+      },
       "PlayMode": {
         "enum": [
           "Info",
@@ -28140,7 +31437,6 @@
       "PointsEntryDto": {
         "required": [
           "amount",
-          "currency",
           "reason"
         ],
         "type": "object",
@@ -28431,6 +31727,100 @@
         },
         "description": "A position in the study plan: the referenced exercise together with its own goal, points, stage, and Leitner settings."
       },
+      "PositionStatus": {
+        "required": [
+          "cadence",
+          "checkMode",
+          "dueCount",
+          "exerciseId",
+          "exerciseTitle",
+          "exerciseType",
+          "goalMet",
+          "order",
+          "pointsGoalMet",
+          "poolSize",
+          "positionId",
+          "renderer",
+          "testable",
+          "useLeitner"
+        ],
+        "type": "object",
+        "properties": {
+          "positionId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "exerciseId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "exerciseTitle": {
+            "type": "string"
+          },
+          "exerciseType": {
+            "type": "string"
+          },
+          "renderer": {
+            "type": "string"
+          },
+          "order": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "cadence": {
+            "$ref": "#/components/schemas/GoalCadence"
+          },
+          "checkMode": {
+            "$ref": "#/components/schemas/ExerciseCheckMode"
+          },
+          "useLeitner": {
+            "type": "boolean"
+          },
+          "testable": {
+            "type": "boolean"
+          },
+          "goalMet": {
+            "type": "boolean"
+          },
+          "dueCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "poolSize": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "pointsGoalMet": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        },
+        "description": "Status of a single position for one day \u2013 enough for the student client to render the right action."
+      },
       "PracticeCard": {
         "required": [
           "itemIndex",
@@ -28523,6 +31913,48 @@
         "type": "string",
         "description": "Ordering strategy in which the server plays out a position\u0027s (due) content. The order\nis materialized (frozen) \u003Cb\u003Eonce\u003C/b\u003E at the start of the session/test, so it doesn\u0027t shift mid-run\nwhen boxes change due to answers.\n\nAllowed values: WeakestFirst, Serial, Random, NewestWeighted."
       },
+      "PracticeResponse": {
+        "required": [
+          "daysUntil",
+          "exercises",
+          "klassenarbeitId",
+          "scheduledDate",
+          "title"
+        ],
+        "type": "object",
+        "properties": {
+          "klassenarbeitId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "title": {
+            "type": "string"
+          },
+          "scheduledDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "daysUntil": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "exercises": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ExerciseBrief"
+            }
+          }
+        },
+        "description": "Exercises relevant to a class test for targeted practice (days until the date, inclusive)."
+      },
       "PreviewAnswer": {
         "required": [
           "itemIndex"
@@ -28575,6 +32007,188 @@
           }
         },
         "description": "Body of the test-mode check: the submitted answers and \u2013 if toggled \u2013 the query form.\nDeliberately not named \u0060CheckDto\u0060: that name is used by the stateless catalog check of the exercise type."
+      },
+      "PreviewData": {
+        "required": [
+          "items",
+          "stage",
+          "stages",
+          "type",
+          "typed"
+        ],
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "stage": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "typed": {
+            "type": "boolean"
+          },
+          "stages": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StageOption"
+            }
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PreviewItem"
+            }
+          }
+        },
+        "description": "The playable state of an exercise in test mode: type, chosen stage, whether typed, the problems and\n\u2013 for trying out \u2013 the query forms toggleable for this exercise type (IReadOnlyList\u0026lt;StageOption\u0026gt; PreviewData.Stages)."
+      },
+      "PreviewItem": {
+        "required": [
+          "itemIndex",
+          "prompt"
+        ],
+        "type": "object",
+        "properties": {
+          "itemIndex": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "prompt": {
+            "type": "string"
+          },
+          "gapIndex": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "hint": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "answerLength": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "reveal": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "choices": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "audioUrl": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "A problem presented in test mode. \u0060Reveal\u0060 carries the revealed solution for self-assessment\n(\u0060null\u0060 for typed stages); \u0060AnswerLength\u0060 is only set for vocabulary letter boxes."
+      },
+      "PreviewItemOutcome": {
+        "required": [
+          "expected",
+          "itemIndex",
+          "prompt",
+          "wasCorrect"
+        ],
+        "type": "object",
+        "properties": {
+          "itemIndex": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "prompt": {
+            "type": "string"
+          },
+          "expected": {
+            "type": "string"
+          },
+          "givenAnswer": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "wasCorrect": {
+            "type": "boolean"
+          }
+        },
+        "description": "Individual evaluation including the expected solution (in test mode the solution is always disclosed)."
+      },
+      "PreviewResult": {
+        "required": [
+          "correct",
+          "items",
+          "scorePercent",
+          "total"
+        ],
+        "type": "object",
+        "properties": {
+          "total": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "correct": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "scorePercent": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PreviewItemOutcome"
+            }
+          }
+        },
+        "description": "Overall result of a test-mode run."
       },
       "ProblemDetails": {
         "required": [
@@ -28687,6 +32301,50 @@
         "type": "string",
         "description": "The three domain tiers as a role \u2013 independent of login.\n\nAllowed values: Creator, Supervisor, Student."
       },
+      "ProgressDay": {
+        "required": [
+          "day",
+          "dutyDone",
+          "goalsMet",
+          "goalsTotal",
+          "pointsAwarded"
+        ],
+        "type": "object",
+        "properties": {
+          "day": {
+            "type": "string",
+            "format": "date"
+          },
+          "dutyDone": {
+            "type": "boolean"
+          },
+          "goalsTotal": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "goalsMet": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "pointsAwarded": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        },
+        "description": "One day in the history (for the supervisor\u0027s evaluation)."
+      },
       "ProgressMetric": {
         "enum": [
           "NewWords",
@@ -28698,6 +32356,76 @@
         ],
         "type": "string",
         "description": "Measurable quantity of a child\u0027s learning activity \u2013 shared basis for missions and awards.\nAll values are computed server-side from the existing tables (no client trust).\n\nAllowed values: NewWords, CorrectReviews, TestsPassed, MinutesPracticed, DaysComplete, StreakDays."
+      },
+      "ProgressResponse": {
+        "required": [
+          "currentStreak",
+          "days",
+          "daysComplete",
+          "endDate",
+          "planId",
+          "startDate",
+          "totalDays",
+          "totalPoints"
+        ],
+        "type": "object",
+        "properties": {
+          "planId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "daysComplete": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "totalDays": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "totalPoints": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "currentStreak": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "days": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProgressDay"
+            }
+          }
+        },
+        "description": "Day-by-day progress over the entire run (completed days, goals reached, points)."
       },
       "Question": {
         "required": [
@@ -28747,8 +32475,6 @@
       },
       "RefsFromTagsDto": {
         "required": [
-          "baseFormsOnly",
-          "matchAll",
           "tags"
         ],
         "type": "object",
@@ -29054,6 +32780,114 @@
         "type": "string",
         "description": "Processing state of a remark. Deliberately lean: no assignment, no milestones \u2013 four states\nare enough so the follow-up skill doesn\u0027t present the same remarks again on every run.\n\nAllowed values: Open, Planned, Done, Rejected."
       },
+      "RepeatResponse": {
+        "required": [
+          "exercises",
+          "minBadGrade",
+          "sources"
+        ],
+        "type": "object",
+        "properties": {
+          "minBadGrade": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d\u002B)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "sources": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/KlassenarbeitResponse"
+            }
+          },
+          "exercises": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ExerciseBrief"
+            }
+          }
+        },
+        "description": "Exercises that should be repeated because of poorly graded class tests."
+      },
+      "Report": {
+        "required": [
+          "exerciseId",
+          "exerciseTitle",
+          "exerciseType",
+          "introducedItems",
+          "items",
+          "masteredItems",
+          "maxBox",
+          "positionId",
+          "totalItems"
+        ],
+        "type": "object",
+        "properties": {
+          "positionId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "exerciseId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "exerciseTitle": {
+            "type": "string"
+          },
+          "exerciseType": {
+            "type": "string"
+          },
+          "maxBox": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "totalItems": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "introducedItems": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "masteredItems": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ItemReport"
+            }
+          }
+        },
+        "description": "Report of a position including headline metrics (introduced/mastered)."
+      },
       "ReshuffleMediaDto": {
         "type": "object",
         "properties": {
@@ -29224,6 +33058,34 @@
         ],
         "type": "string",
         "description": "School types for which an exercise is suitable. A \u0060[Flags]\u0060 enum so that an exercise\ncan be assigned to multiple school types (e.g. Realschule | Gymnasium).\nSchoolTypes.None means \u0022for all school types\u0022 (no filter exclusion).\n\nAllowed values: None, Grundschule, Hauptschule, Realschule, Gymnasium, Gesamtschule, Berufsschule."
+      },
+      "SelectedMediaResponse": {
+        "required": [
+          "imageAlt",
+          "imageUrl",
+          "mediaAssetId"
+        ],
+        "type": "object",
+        "properties": {
+          "mediaAssetId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "The chosen asset.",
+            "format": "int32"
+          },
+          "imageUrl": {
+            "type": "string",
+            "description": "URL at card size."
+          },
+          "imageAlt": {
+            "type": "string",
+            "description": "Description of the motif (alt text)."
+          }
+        },
+        "description": "The image valid after reshuffling."
       },
       "SeriesUnitResponse": {
         "required": [
@@ -29878,6 +33740,27 @@
         },
         "description": "Skin state of the child: current gem balance, equipped and unlocked skins."
       },
+      "StageOption": {
+        "required": [
+          "label",
+          "value"
+        ],
+        "type": "object",
+        "properties": {
+          "value": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "label": {
+            "type": "string"
+          }
+        },
+        "description": "A query form that can be switched in test mode (stage value \u002B display label)."
+      },
       "StageStep": {
         "required": [
           "dayNumber",
@@ -29905,9 +33788,6 @@
         "description": "A step in the stage schedule: from day \u0060DayNumber\u0060 (1-based) onward, stage \u0060Stage\u0060 applies."
       },
       "StartPracticeDto": {
-        "required": [
-          "mode"
-        ],
         "type": "object",
         "properties": {
           "day": {
@@ -29944,6 +33824,53 @@
           }
         },
         "description": "Start payload of the class test. \u0060Day\u0060 only for backfilling (supervisor); otherwise today."
+      },
+      "SubjectProgressResponse": {
+        "required": [
+          "active",
+          "chapterCount",
+          "exerciseCount",
+          "name",
+          "progress",
+          "subjectId"
+        ],
+        "type": "object",
+        "properties": {
+          "subjectId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "name": {
+            "type": "string"
+          },
+          "chapterCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "exerciseCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "active": {
+            "type": "boolean"
+          },
+          "progress": {
+            "$ref": "#/components/schemas/MasteryRollup"
+          }
+        },
+        "description": "Progress of a subject. Active = contains \u22651 exercise currently assigned (via an active plan)."
       },
       "SubjectResponse": {
         "required": [
@@ -29994,6 +33921,79 @@
           }
         },
         "description": "Bulk submission of the test (alternative to individual submission via the \u0060answer\u0060 endpoint)."
+      },
+      "SubmitResponse": {
+        "required": [
+          "attemptId",
+          "correctItems",
+          "items",
+          "passPercent",
+          "passed",
+          "scorePercent",
+          "stage",
+          "totalItems"
+        ],
+        "type": "object",
+        "properties": {
+          "attemptId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "stage": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "totalItems": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "correctItems": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "scorePercent": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "passed": {
+            "type": "boolean"
+          },
+          "passPercent": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ItemOutcome"
+            }
+          }
+        },
+        "description": "Overall result of the class test incl. pass threshold."
       },
       "SuggestedBonus": {
         "required": [
@@ -30117,6 +34117,35 @@
         ],
         "type": "string",
         "description": "Who made a tagging (for traceability in the dashboard).\n\nAllowed values: Vater, Sohn."
+      },
+      "TaggedVocabularyDto": {
+        "required": [
+          "id",
+          "key",
+          "translation",
+          "word"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "key": {
+            "type": "string"
+          },
+          "word": {
+            "type": "string"
+          },
+          "translation": {
+            "type": "string"
+          }
+        },
+        "description": "Lean vocabulary view for the tag assignment (without the child-neutral store details)."
       },
       "TagMediaDto": {
         "required": [
@@ -30305,6 +34334,124 @@
           }
         },
         "description": "The created teacher account. CreatorId is the \u003Cb\u003Elogin name\u003C/b\u003E and at the same time the id\nunder which their authorship and their permissions on exercises hang."
+      },
+      "TestItem": {
+        "required": [
+          "itemIndex",
+          "prompt",
+          "stage"
+        ],
+        "type": "object",
+        "properties": {
+          "itemIndex": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "prompt": {
+            "type": "string"
+          },
+          "stage": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "reveal": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "answerLength": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "hint": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "choices": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "audioUrl": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "imageUrl": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "imageAlt": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "An exam question \u2013 without the solution, except at stages that reveal it by design."
+      },
+      "TestNextResponse": {
+        "required": [
+          "cursor",
+          "done",
+          "total"
+        ],
+        "type": "object",
+        "properties": {
+          "item": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/TestItem"
+              }
+            ]
+          },
+          "done": {
+            "type": "boolean"
+          },
+          "cursor": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "total": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        },
+        "description": "The next exam question (or \u0060Done\u0060), server-driven via the attempt cursor \u2013 without the solution."
       },
       "TextbookResponse": {
         "required": [
@@ -30676,10 +34823,6 @@
         "description": "Partial change to a chapter; empty fields remain unchanged."
       },
       "UpdateChildDto": {
-        "required": [
-          "clearBirthYear",
-          "clearGrade"
-        ],
         "type": "object",
         "properties": {
           "name": {
@@ -30769,9 +34912,6 @@
         "description": "Partial change to a child; omitted fields stay unchanged. \u0060null\u0060 means \u0022not specified\u0022\nand therefore cannot \u003Cb\u003Eclear\u003C/b\u003E anything \u2013 that is what the \u0060Clear\u2026\u0060 switches are for (cf.\n\u0060ClearGrade\u0060 on the class test): \u0060ClearBirthYear\u0060 removes the birth year,\n\u0060ClearGrade\u0060 the grade level (the child then drops out of grade filters)."
       },
       "UpdateClassTestDto": {
-        "required": [
-          "clearGrade"
-        ],
         "type": "object",
         "properties": {
           "title": {
@@ -30822,7 +34962,8 @@
             "format": "double"
           },
           "clearGrade": {
-            "type": "boolean"
+            "type": "boolean",
+            "default": false
           },
           "gradeComment": {
             "type": [
@@ -30834,10 +34975,6 @@
         "description": "Partial change \u2013 among other things, recording a grade and setting status. \u0060ClearGrade\u0060 deletes the grade."
       },
       "UpdateClozeDto": {
-        "required": [
-          "clearTranslation",
-          "clearWordBank"
-        ],
         "type": "object",
         "properties": {
           "title": {
@@ -30888,12 +35025,6 @@
         "description": "Partial change to a cloze: \u0060null\u0060 means \u0022not specified\u0022 (the value remains).\nThe two optional contents are therefore cleared via bool UpdateClozeDto.ClearTranslation resp.\nbool UpdateClozeDto.ClearWordBank \u2013 a field cleared in a form would arrive as \u0060null\u0060 and would\notherwise be indistinguishable from \u0022unchanged\u0022."
       },
       "UpdateCreatorProfileDto": {
-        "required": [
-          "clearGradeMax",
-          "clearGradeMin",
-          "clearSeries",
-          "clearSubject"
-        ],
         "type": "object",
         "properties": {
           "name": {
@@ -31264,9 +35395,6 @@
         "description": "Partial change to a mission; metric and period are immutable."
       },
       "UpdateMyAccountDto": {
-        "required": [
-          "clearEmail"
-        ],
         "type": "object",
         "properties": {
           "name": {
@@ -31619,14 +35747,6 @@
         "description": "Partial change to the overrides/goals/points. The referenced exercise is immutable\n(progress indices).\nPATCH semantics:null means \u0022not specified\u0022 for every field \u2013 the previous\nvalue stays. It does not mean \u0022reset to default\u0022; that would need its own\nClear switch, which this DTO deliberately does not have."
       },
       "UpdateRemarkDto": {
-        "required": [
-          "clearAnswer",
-          "clearChild",
-          "clearExercise",
-          "clearParent",
-          "clearPlanPosition",
-          "clearStudyPlan"
-        ],
         "type": "object",
         "properties": {
           "text": {
@@ -31924,12 +36044,6 @@
         "description": "Partial change to a tag; empty fields remain unchanged."
       },
       "UpdateTextbookDto": {
-        "required": [
-          "clearGrade",
-          "clearSeries",
-          "clearSubject",
-          "clearUnit"
-        ],
         "type": "object",
         "properties": {
           "title": {
@@ -32188,6 +36302,40 @@
           }
         },
         "description": "Only fields that are set are changed. BaseFormKey = \u0022\u0022 removes the link (and its label); tags are appended (not replaced)."
+      },
+      "UsageResponse": {
+        "required": [
+          "classTests",
+          "otherLearnersCount",
+          "plans"
+        ],
+        "type": "object",
+        "properties": {
+          "plans": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PlanUsage"
+            },
+            "description": "Study plans of own children in which the exercise is used as a position."
+          },
+          "classTests": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ClassTestUsage"
+            },
+            "description": "Class tests of own children (assigned directly or via a tag)."
+          },
+          "otherLearnersCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "            How many \u003Cb\u003Edifferent children\u003C/b\u003E use the exercise whom the caller \u003Cb\u003Edoes not supervise\u003C/b\u003E \u2013 just the\n            number, without names. Two reasons:\n            * Without it the lists report \u0022nowhere\u0022 while deletion fails with 409 exercise_in_use \u2013\n            a contradiction the author cannot resolve (remark 14).\n* For a creator without own children (a teacher, or an AI creator app), both\n            lists are permanently empty. This number is then not the footnote but the only answer to their\n            actual question: is my material being used?\u003Cb\u003EChildren\u003C/b\u003E are counted, not usage sites: three positions in the same child\u0027s plans\n            are one user. The basis is the FK-relevant usages that also block deletion \u2013 a class test only\n            collected via a tag does not prevent it and is therefore not counted.",
+            "format": "int32"
+          }
+        },
+        "description": "Where an exercise is used. IReadOnlyList\u0026lt;PlanUsage\u0026gt; UsageResponse.Plans and IReadOnlyList\u0026lt;ClassTestUsage\u0026gt; UsageResponse.ClassTests only name resources of the\ncaller\u0027s \u003Cb\u003Eown\u003C/b\u003E children \u2013 other supervisors\u0027 children must not show up here."
       },
       "VerbInfo": {
         "required": [
@@ -32597,6 +36745,49 @@
         },
         "description": "A store entry with all lexical details and the linked tag names."
       },
+      "VocabUsage": {
+        "required": [
+          "chapterId",
+          "exerciseId",
+          "subjectId",
+          "title",
+          "type"
+        ],
+        "type": "object",
+        "properties": {
+          "exerciseId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "title": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "chapterId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "subjectId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        },
+        "description": "An exercise that references this vocabulary entry (vocabulary refs resp. cloze gap)."
+      },
       "WalletResponse": {
         "required": [
           "childId",
@@ -32631,6 +36822,89 @@
           }
         },
         "description": "Account balance (wallet) of the child per currency. The ledger entries are under \u0060points/entries\u0060."
+      },
+      "WordMasteryResponse": {
+        "required": [
+          "avgMasteryPercent",
+          "correctCount",
+          "correctPercent",
+          "itemCount",
+          "minBox",
+          "seenCount",
+          "translation",
+          "vocabulary",
+          "vocabularyId",
+          "word"
+        ],
+        "type": "object",
+        "properties": {
+          "vocabularyId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "word": {
+            "type": "string"
+          },
+          "translation": {
+            "type": "string"
+          },
+          "itemCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "avgMasteryPercent": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "minBox": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "seenCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "correctCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "correctPercent": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "vocabulary": {
+            "type": "string"
+          }
+        },
+        "description": "Aggregated word mastery status across all exercises that use this store word."
       },
       "WordOverride": {
         "type": "object",

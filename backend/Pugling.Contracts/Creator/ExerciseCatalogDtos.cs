@@ -13,7 +13,7 @@ namespace Pugling.Contracts.Creator;
 public record ExerciseSummary(int Id, int ChapterId, int SubjectId, string Type, string Title,
     int? GradeMin, int? GradeMax, SchoolTypes SchoolTypes, string? Source, int? CategoryId, string? CategoryName,
     int? AuthorAdultId, string? AuthorName, bool IsOwn, bool IsOwner, bool ExecutePublic, string? Description,
-    bool DefaultUseLeitner, bool DefaultRequireTypedTest);
+    bool DefaultUseLeitner, bool DefaultRequireTypedTest, int? DefaultItemCount);
 
 /// <summary>
 /// Complete, type-spanning view of an exercise including raw config and all metadata –

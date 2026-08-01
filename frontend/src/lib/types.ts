@@ -1,97 +1,62 @@
-// DTOs der Pugling-API (Ausschnitt für den Vokabel-Durchstich).
-// Enums werden serverseitig als Strings serialisiert (JsonStringEnumConverter).
+// Der Vertrag der Pugling-API als TypeScript – **erzeugt**, nicht von Hand gepflegt.
+//
+// Jeder Alias unten zeigt auf ein Schema in [contract.ts](contract.ts), das `npm run gen:contract` aus
+// docs/openapi/v1.json erzeugt (das Dokument schreibt `ContractDocumentTests`, ein CI-Tor hält es aktuell).
+// Ein umbenanntes oder entferntes Feld im Backend bricht damit `tsc -b` – vorher fiel es erst in Playwright
+// oder im Betrieb als `400 unknown_field` auf.
+//
+// **Neuer Endpunkt, neues DTO?** Nichts hier von Hand ergänzen: Backend bauen, Testlauf schreibt das
+// Dokument, `npm run gen:contract`, dann eine Alias-Zeile. Der Name links darf vom Schema-Namen abweichen
+// (die Oberfläche hat eigene Vokabeln), rechts steht die Wahrheit.
+//
+// Was **nicht** aus dem Dokument kommen kann, liegt in [uiTypes.ts](uiTypes.ts) – elf Typen, je mit Grund.
+//
+// Nach einem Zweigwechsel mit geändertem Dokument hält der Editor die alte `contract.ts`, bis etwas baut:
+// dann `npm run gen:contract`. CI kann das nicht treffen (`postinstall` läuft dort immer zuerst).
 
-// Technischer Rollen-Diskriminator aus dem Login (die Ebenen-Rolle); die UI-Vokabel bleibt Vater/Sohn.
-/**
- * Die primäre Ebene fürs Routing (aus `LoginResponse.role`). `Creator` ist das **Lehrer-Konto**: ein
- * Erwachsener, der Inhalte erstellt und kein Kind betreut – sein Token trägt keinen Supervisor-Claim.
- */
-export type Role = "Supervisor" | "Creator" | "Student";
+import type { components } from "./contract";
 
-export type PartOfSpeech =
-  | "Noun" | "Verb" | "Adjective" | "Adverb" | "Pronoun" | "Preposition"
-  | "Conjunction" | "Article" | "Numeral" | "Interjection" | "Phrase" | "Other";
+type S = components["schemas"];
+
+export type * from "./uiTypes";
+
+export type PartOfSpeech = S["PartOfSpeech"];
 
 /** Grammatikalisches Geschlecht eines Substantivs. */
-export type Genus = "Masculine" | "Feminine" | "Neuter";
+export type Genus = S["Genus"];
 
 /** Substantiv-spezifische Angaben (Teil des komplexen Vokabel-Datensatzes). */
-export interface NounInfo {
-  article?: string | null;
-  genus?: Genus | null;
-  plural?: string | null;
-}
+export type NounInfo = S["NounInfo"];
 
 /** Verb-spezifische Angaben / Konjugations-Metadaten. */
-export interface VerbInfo {
-  isBaseForm: boolean;
-  infinitive?: string | null;
-  tense?: string | null;
-  person?: string | null;
-  number?: string | null;
-}
-
-/**
- * Schularten – serverseitig ein [Flags]-Enum. Einzelwerte für Auswahl/Filter; der Server kann
- * bei einem Kind auch eine Kombination als kommaseparierten String liefern ("Realschule, Gymnasium").
- */
-export type SchoolType =
-  | "None" | "Grundschule" | "Hauptschule" | "Realschule" | "Gymnasium" | "Gesamtschule" | "Berufsschule";
+export type VerbInfo = S["VerbInfo"];
 
 /** Geschlecht des Kindes – Teil des Profils, aus dem der KI-Creator seine Anrede/Einkleidung ableitet. */
-export type Gender = "None" | "Male" | "Female" | "Diverse";
+export type Gender = S["Gender"];
 
-export interface LoginResponse {
-  token: string;
-  role: Role;
-  id: number;
-  name: string;
-  expiresAt: string;
-}
+/**
+ * Eine **einzelne** Schulart. Serverseitig ist `SchoolTypes` ein `[Flags]`-Enum, das Schema listet aber die
+ * Einzelnamen – für Auswahl und Filter ist genau das richtig. Die **Kombination** („Realschule, Gymnasium")
+ * reist als freier String und ist im Dokument nicht ausdrückbar (B-60).
+ */
+export type SchoolType = S["SchoolTypes"];
+
+export type LoginResponse = S["LoginResponse"];
 
 // ---- Vater: eigenes Konto (Registrierung + Selbstauskunft) ----
 
 /** Der eigene Erwachsenen-Datensatz; die PIN liefert der Server nie aus. */
-export interface AdultResponse {
-  id: number;
-  name: string;
-  email: string | null;
-  createdAt: string;
-  childrenCount: number;
-}
+export type AdultResponse = S["AdultResponse"];
 
 /** Registrierung eines Vaters – der einzige Weg, ohne Anmeldung ein Konto zu erzeugen. */
-export interface CreateAdultDto {
-  name: string;
-  email?: string | null;
-  pin?: string | null;
-}
+export type CreateAdultDto = S["CreateAdultDto"];
 
 /** Partielle Änderung des eigenen Kontos; weggelassene Felder bleiben unverändert. */
-export interface UpdateAdultDto {
-  name?: string | null;
-  email?: string | null;
-  pin?: string | null;
-}
+export type UpdateAdultDto = S["UpdateAdultDto"];
 
 // ---- Vater: Kinder & Vokabel-Store ----
 
-export interface ChildResponse {
-  id: number;
-  name: string;
-  birthYear: number | null;
-  grade: number | null;
-  schoolType: string;
-  gender: Gender;
-  /** Freitext-Interessen: die Sprache des KI-Creators. Die gewichteten Tags stehen separat. */
-  interests: string[];
-  profileNotes: string | null;
-  /** Obergrenze der Bild-Eignung; nur der Vater darf sie heben. */
-  allowedContentRating: ContentRating;
-  createdAt: string;
-  coins: number;
-  gems: number;
-}
+export type ChildResponse = S["ChildResponse"];
 
 // ---- Unterrichtsmaterial: Lehrwerk-Reihe → Unit → Lehrbuch des Kindes ----
 
@@ -100,109 +65,37 @@ export interface ChildResponse {
  * und das Creator-Profil zeigen auf denselben Datensatz. Nur dadurch ist die Frage „welcher Creator
  * kennt das Material dieses Kindes?" berechenbar statt ein Namensvergleich.
  */
-export interface TextbookSeriesResponse {
-  id: number;
-  name: string;
-  /** Normalisierter Schlüssel; unveränderlich und global eindeutig (macht das Anlegen idempotent). */
-  slug: string;
-  publisher: string | null;
-  subjectName: string | null;
-  subjectId: number | null;
-  schoolTypes: string;
-  sourceLanguage: string | null;
-  targetLanguage: string | null;
-  notes: string | null;
-  ownerAdultId: number | null;
-  /** Ob das angemeldete Konto die Reihe ändern darf (lesen darf jeder Creator). */
-  isOwn: boolean;
-  unitCount: number;
-  createdAt: string;
-}
+export type TextbookSeriesResponse = S["TextbookSeriesResponse"];
 
-export interface CreateTextbookSeriesDto {
-  name: string;
-  publisher?: string | null;
-  subjectName?: string | null;
-  subjectId?: number | null;
-  schoolTypes?: SchoolType | null;
-  sourceLanguage?: string | null;
-  targetLanguage?: string | null;
-  notes?: string | null;
-}
+export type CreateTextbookSeriesDto = S["CreateTextbookSeriesDto"];
 
 /** Partielle Änderung einer Reihe; der Slug bleibt fest. */
-export type UpdateTextbookSeriesDto = Partial<CreateTextbookSeriesDto>;
+export type UpdateTextbookSeriesDto = S["UpdateTextbookSeriesDto"];
 
 /**
  * Eine Unit der Reihe samt Band (`grade`). `topics`/`grammar`/`vocabularyNotes` sind der eigentliche
  * Gewinn: sie sind der Stoff, den ein KI-Creator liest, statt ihn zu erfinden.
  */
-export interface SeriesUnitResponse {
-  id: number;
-  seriesId: number;
-  grade: number | null;
-  orderIndex: number;
-  label: string;
-  topics: string | null;
-  grammar: string | null;
-  vocabularyNotes: string | null;
-  createdAt: string;
-}
+export type SeriesUnitResponse = S["SeriesUnitResponse"];
 
-export interface CreateSeriesUnitDto {
-  label: string;
-  grade?: number | null;
-  orderIndex?: number | null;
-  topics?: string | null;
-  grammar?: string | null;
-  vocabularyNotes?: string | null;
-}
+export type CreateSeriesUnitDto = S["CreateSeriesUnitDto"];
 
-export type UpdateSeriesUnitDto = Partial<CreateSeriesUnitDto>;
+export type UpdateSeriesUnitDto = S["UpdateSeriesUnitDto"];
 
 /**
  * Ein vom Kind benutztes Lehrbuch. `seriesId`/`currentUnitId` sind die katalogisierte Form von Titel
  * und Kapitel – erst sie machen aus „irgendein Buch" den auffindbaren Stoff.
  */
-export interface TextbookResponse {
-  id: number;
-  title: string;
-  subjectName: string | null;
-  subjectId: number | null;
-  grade: number | null;
-  publisher: string | null;
-  isbn: string | null;
-  currentChapter: string | null;
-  createdAt: string;
-  seriesId: number | null;
-  seriesName: string | null;
-  currentUnitId: number | null;
-  currentUnitLabel: string | null;
-}
+export type TextbookResponse = S["TextbookResponse"];
 
-export interface CreateTextbookDto {
-  title: string;
-  subjectName?: string | null;
-  subjectId?: number | null;
-  grade?: number | null;
-  publisher?: string | null;
-  isbn?: string | null;
-  currentChapter?: string | null;
-  seriesId?: number | null;
-  currentUnitId?: number | null;
-}
+export type CreateTextbookDto = S["CreateTextbookDto"];
 
 /**
  * Änderung eines Lehrbuchs. Die `clear…`-Schalter sind nötig, weil `null` im PATCH „nicht angegeben"
  * heißt: ohne sie ließe sich ein einmal gesetztes Fach, eine Klasse, eine Reihe oder eine Unit nie
  * wieder loswerden (der Server würde das `null` überlesen und still den alten Wert behalten).
  */
-export type UpdateTextbookDto = Partial<CreateTextbookDto> & {
-  clearSeries?: boolean;
-  clearUnit?: boolean;
-  clearSubject?: boolean;
-  clearGrade?: boolean;
-};
+export type UpdateTextbookDto = S["UpdateTextbookDto"];
 
 // ---- Creator-Profile („Fachlehrer") ----
 
@@ -211,62 +104,19 @@ export type UpdateTextbookDto = Partial<CreateTextbookDto> & {
  * Schulzweig, ein Klassenstufen-Bereich, optional eine Buchreihe. `persona`/`didactics` prägen seine
  * Rolle im Sprachmodell – die festen Inhalts-Regeln des Agenten weichen sie nie auf.
  */
-export interface CreatorProfileResponse {
-  id: number;
-  name: string;
-  ownerAdultId: number | null;
-  isOwn: boolean;
-  subjectName: string | null;
-  subjectId: number | null;
-  schoolTypes: string;
-  gradeMin: number | null;
-  gradeMax: number | null;
-  seriesId: number | null;
-  seriesName: string | null;
-  sourceLang: string;
-  targetLang: string;
-  persona: string | null;
-  didactics: string | null;
-  /** Bevorzugte Übungstypen (Schlüssel aus dem Typ-Manifest). */
-  defaultTypes: string[];
-  active: boolean;
-  createdAt: string;
-}
+export type CreatorProfileResponse = S["CreatorProfileResponse"];
 
-export interface CreateCreatorProfileDto {
-  name: string;
-  subjectName?: string | null;
-  subjectId?: number | null;
-  schoolTypes?: SchoolType | null;
-  gradeMin?: number | null;
-  gradeMax?: number | null;
-  seriesId?: number | null;
-  sourceLang?: string | null;
-  targetLang?: string | null;
-  persona?: string | null;
-  didactics?: string | null;
-  defaultTypes?: string[] | null;
-  active?: boolean | null;
-}
+export type CreateCreatorProfileDto = S["CreateCreatorProfileDto"];
 
 /** Änderung eines Profils; `clear…` leert ein Feld (ein `null` gilt als „nicht angegeben"). */
-export type UpdateCreatorProfileDto = Partial<CreateCreatorProfileDto> & {
-  clearSubject?: boolean;
-  clearSeries?: boolean;
-  clearGradeMin?: boolean;
-  clearGradeMax?: boolean;
-};
+export type UpdateCreatorProfileDto = S["UpdateCreatorProfileDto"];
 
 /**
  * Ein Treffer der Profil-Suche zu einem Kind. `score` entsteht deterministisch (Reihe wiegt am
  * schwersten), `reasons` sind **stabile Codes** – die Formulierung macht die Oberfläche
  * (siehe `matchReasonLabel`).
  */
-export interface CreatorProfileMatch {
-  profile: CreatorProfileResponse;
-  score: number;
-  reasons: string[];
-}
+export type CreatorProfileMatch = S["CreatorProfileMatch"];
 
 // ---- Bilder & Interessen (Individualisierung der Lerninhalte) ----
 
@@ -274,257 +124,104 @@ export interface CreatorProfileMatch {
  * Eignung eines Bildes. Aufsteigend geordnet – die Auswahl liefert einem Kind nie ein Asset über
  * seiner Freigabe.
  */
-export type ContentRating = "Everyone" | "Teen" | "Mature";
+export type ContentRating = S["ContentRating"];
 
 /** Semantischer Auslieferungs-Slot einer Auflösung (der Client fragt nach Zweck, nicht nach Pixeln). */
-export type MediaPurpose = "Thumb" | "Card" | "Full" | "Hero";
+export type MediaPurpose = S["MediaPurpose"];
 
-export type MediaKind = "Image" | "Audio" | "Video";
-export type MediaOrigin = "Unknown" | "Upload" | "Stock" | "Generated";
+export type MediaKind = S["MediaKind"];
+export type MediaOrigin = S["MediaOrigin"];
 
 /**
  * Facette eines Interessen-Schlagworts. `Style` (Comic/Foto/Pixel-Art) liegt bewusst im selben
  * Vokabular wie die Themen – bei der Bildauswahl verhält es sich gleich, nur schwächer gewichtet.
  */
-export type InterestFacet =
-  | "Other" | "Franchise" | "Sport" | "Animal" | "Vehicle" | "Music" | "Hobby" | "Nature" | "Style";
+export type InterestFacet = S["InterestFacet"];
 
 /** Ein Schlagwort der geteilten Taxonomie – Bilder *und* Kinder referenzieren dieselben Einträge. */
-export interface InterestTagResponse {
-  id: number;
-  slug: string;
-  label: string;
-  facet: InterestFacet;
-  synonyms: string[];
-  color: string | null;
-  mediaCount: number;
-  childCount: number;
-  createdAt: string;
-}
+export type InterestTagResponse = S["InterestTagResponse"];
 
-export interface CreateInterestTagDto {
-  label: string;
-  slug?: string;
-  facet?: InterestFacet;
-  synonyms?: string[];
-}
+export type CreateInterestTagDto = S["CreateInterestTagDto"];
 
 /** Eine Lücke im Trägertext: `index` zeigt auf den Platzhalter `{{index}}` im Text. */
-export interface Gap {
-  index: number;
-  answer: string;
-  /** Weitere gültige Antworten (z. B. Kurzform) – die erste bleibt die Musterlösung. */
-  alternatives?: string[] | null;
-  /** Optionale Bindung an eine Store-Vokabel (Key), damit der Lernstand am Wort hängt. */
-  vocabKey?: string | null;
-}
+export type Gap = S["Gap"];
 
 /** Ein Trägertext des Lückentext-Stores – Lerngrundlage, aus der Übungen schöpfen. */
-export interface ClozeResponse {
-  id: number;
-  key: string;
-  title: string;
-  sourceLanguage: string;
-  targetLanguage: string;
-  /** Text mit Platzhaltern `{{1}}`, `{{2}}` … an den Lücken. */
-  text: string;
-  translation: string | null;
-  gaps: Gap[];
-  wordBank: string[] | null;
-  createdAt: string;
-}
+export type ClozeResponse = S["ClozeResponse"];
 
 /** Anlegen eines Trägertexts; `key` muss eindeutig sein, mindestens eine Lücke ist Pflicht. */
-export interface CreateClozeDto {
-  key: string;
-  title: string;
-  sourceLanguage: string;
-  targetLanguage: string;
-  text: string;
-  gaps: Gap[];
-  translation?: string | null;
-  wordBank?: string[] | null;
-}
+export type CreateClozeDto = S["CreateClozeDto"];
 
 /**
  * Änderung eines Trägertexts; der `key` bleibt (stabile Referenz). `null` heißt „unverändert" –
  * geleert werden Übersetzung und Wortpool darum über die beiden `clear`-Schalter.
  */
-export interface UpdateClozeDto {
-  title?: string | null;
-  text?: string | null;
-  translation?: string | null;
-  gaps?: Gap[] | null;
-  wordBank?: string[] | null;
-  clearTranslation?: boolean;
-  clearWordBank?: boolean;
-}
+export type UpdateClozeDto = S["UpdateClozeDto"];
 
 /**
  * Änderung eines Schlagworts. Der `slug` fehlt **absichtlich**: er ist die stabile Referenz, an der Bilder
  * und Kind-Profile hängen – ihn zu ändern hieße, beide Seiten der geteilten Taxonomie zu entkoppeln.
  * `synonyms` ersetzt die Liste vollständig.
  */
-export interface UpdateInterestTagDto {
-  label?: string;
-  facet?: InterestFacet;
-  synonyms?: string[];
-  color?: string;
-}
+export type UpdateInterestTagDto = S["UpdateInterestTagDto"];
 
 /** Ein gewichtetes Interesse des Kindes; negatives Gewicht = Abneigung (schließt Bilder hart aus). */
-export interface ChildInterestResponse {
-  tagId: number;
-  slug: string;
-  label: string;
-  facet: InterestFacet;
-  weight: number;
-  createdAt: string;
-}
+export type ChildInterestResponse = S["ChildInterestResponse"];
 
 /** Eingabe beim Setzen: entweder eine bestehende `tagId` oder ein Label (wird bei Bedarf angelegt). */
-export interface ChildInterestInput {
-  weight: number;
-  tagId?: number | null;
-  label?: string | null;
-  facet?: InterestFacet | null;
-}
+export type ChildInterestInput = S["ChildInterestInput"];
 
 /** Eine technische Ausprägung eines Bildes (dieselbe Darstellung, andere Auflösung/Format). */
-export interface MediaVariantResponse {
-  id: number;
-  purpose: MediaPurpose;
-  width: number;
-  height: number;
-  format: string;
-  url: string;
-  bytes: number | null;
-}
+export type MediaVariantResponse = S["MediaVariantResponse"];
 
 /** Eine *Darstellung* eines Motivs („laufendes Einhorn im Comic-Stil") samt Auflösungen und Tags. */
-export interface MediaAssetResponse {
-  id: number;
-  key: string;
-  /** Was zu sehen ist – zugleich Alt-Text für die Barrierefreiheit. */
-  description: string;
-  kind: MediaKind;
-  rating: ContentRating;
-  license: string | null;
-  attribution: string | null;
-  origin: MediaOrigin;
-  source: string | null;
-  placeholder: string | null;
-  variants: MediaVariantResponse[];
-  /** Slugs der verknüpften Interessen-/Stil-Schlagworte. */
-  tags: string[];
-  createdAt: string;
-}
+export type MediaAssetResponse = S["MediaAssetResponse"];
 
-export interface CreateMediaVariantDto {
-  purpose: MediaPurpose;
-  url: string;
-  width: number;
-  height: number;
-  format?: string;
-}
+export type CreateMediaVariantDto = S["CreateMediaVariantDto"];
 
-export interface CreateMediaAssetDto {
-  description: string;
-  key?: string;
-  rating?: ContentRating;
-  origin?: MediaOrigin;
-  source?: string | null;
-  license?: string | null;
-  attribution?: string | null;
-  tags?: string[];
-  variants?: CreateMediaVariantDto[];
-}
+export type CreateMediaAssetDto = S["CreateMediaAssetDto"];
 
 /** Eine Bild-Zuordnung an einem Träger (Vokabel/Item/Übung) samt des zugeordneten Assets. */
-export interface MediaLinkResponse {
-  id: number;
-  /** Redaktioneller Rang – bricht nur Gleichstände der Interessens-Bewertung. */
-  weight: number;
-  asset: MediaAssetResponse;
-}
+export type MediaLinkResponse = S["MediaLinkResponse"];
 
 /** Wo ein Asset zugeordnet ist (Rückrichtung; `carrier` = vocabulary | item | exercise). */
-export interface MediaUsage {
-  carrier: string;
-  carrierId: number;
-  label: string;
-  weight: number;
-}
+export type MediaUsage = S["MediaUsage"];
 
 /** Das nach „anderes Bild" gültige Bild. */
-export interface SelectedMediaResponse {
-  mediaAssetId: number;
-  imageUrl: string;
-  imageAlt: string;
-}
+export type SelectedMediaResponse = S["SelectedMediaResponse"];
 
-export interface CreateChildDto {
-  name: string;
-  pin?: string;
-  birthYear?: number | null;
-  grade?: number | null;
-  schoolType?: SchoolType;
-  gender?: Gender;
-  /** Freitext-Interessen (Sprache des KI-Creators); die gewichteten Tags laufen über eigene Endpunkte. */
-  interests?: string[];
-  profileNotes?: string | null;
-  /** Obergrenze der Bild-Eignung. Ohne Angabe die strengste Stufe. */
-  allowedContentRating?: ContentRating;
-}
+export type CreateChildDto = S["CreateChildDto"];
 
 /**
  * RWX-Recht an einer Übung. Hierarchie `Owner` ⊃ `Write` ⊃ `Execute`: Owner darf zusätzlich löschen,
  * die Ausführ-Sichtbarkeit umschalten und selbst Rechte vergeben. **Lesen darf jeder Creator** – das
  * regelt kein Grant.
  */
-export type GrantPermission = "Execute" | "Write" | "Owner";
+export type GrantPermission = S["GrantPermission"];
 
 /** Ein vergebenes Recht an einer Übung. */
-export interface ExerciseGrant {
-  creatorId: number;
-  creatorName: string;
-  permission: GrantPermission;
-  grantedByAdultId: number | null;
-  createdAt: string;
-}
+export type ExerciseGrant = S["GrantResponse"];
 
 /**
  * Verwandtschaft eines Betreuers zum Kind. Sie ist reine Beschreibung – die Rechte sind für alle
  * Betreuer gleich; nur die **Einlösung** ist ausstellergebunden (wer den Artikel angelegt hat, gibt frei).
  */
-export type SupervisorRelation = "Father" | "Mother" | "Grandma" | "Grandpa" | "Guardian" | "Other";
+export type SupervisorRelation = S["SupervisorRelation"];
 
 /** Eine Betreuungs-Beziehung: wer betreut dieses Kind seit wann. */
-export interface SupervisorLink {
-  supervisorId: number;
-  supervisorName: string;
-  relation: SupervisorRelation;
-  createdAt: string;
-}
+export type SupervisorLink = S["SupervisorLinkResponse"];
 
 /** Wochentage, wie der Server sie serialisiert (`System.DayOfWeek` als Name). */
-export type Weekday = "Monday" | "Tuesday" | "Wednesday" | "Thursday" | "Friday" | "Saturday" | "Sunday";
+export type Weekday = S["DayOfWeek"];
 
 /** Ein Stundenplan-Eintrag: welches Fach an welchem Wochentag (optional mit Uhrzeit). */
-export interface TimetableEntry {
-  id: number;
-  childId: number;
-  subjectId: number;
-  subjectName: string;
-  dayOfWeek: Weekday;
-  timeOfDay: string | null;
-}
+/** Anlegen eines Stundenplan-Eintrags. */
+export type CreateTimetableEntryDto = S["CreateEntryDto"];
+
+export type TimetableEntry = S["EntryResponse"];
 
 /** Änderung eines Kindes; `clear…` leert ein Feld (ein `null` gilt im PATCH als „nicht angegeben"). */
-export type UpdateChildDto = Partial<CreateChildDto> & {
-  clearBirthYear?: boolean;
-  clearGrade?: boolean;
-};
+export type UpdateChildDto = S["UpdateChildDto"];
 
 // ---- Lernstand eines Kindes (plan-übergreifend, nicht an eine Position gebunden) ----
 
@@ -532,245 +229,71 @@ export type UpdateChildDto = Partial<CreateChildDto> & {
  * Aggregierter Lernstand über eine Menge Vokabel-Items – auf jeder Katalog-Ebene identisch aufgebaut.
  * `weakItems` sind die Kandidaten für gezielte Wiederholung (Beherrschung unter 50 %).
  */
-export interface MasteryRollup {
-  totalItems: number;
-  introducedItems: number;
-  masteredItems: number;
-  weakItems: number;
-  avgMasteryPercent: number;
-  seenCount: number;
-  correctCount: number;
-  correctPercent: number;
-  lastActivityAt: string | null;
-}
+export type MasteryRollup = S["MasteryRollup"];
 
 /** `active` = enthält mindestens eine über einen aktiven Plan zugewiesene Übung (sonst nur Historie). */
-export interface SubjectProgress {
-  subjectId: number;
-  name: string;
-  chapterCount: number;
-  exerciseCount: number;
-  active: boolean;
-  progress: MasteryRollup;
-}
+export type SubjectProgress = S["SubjectProgressResponse"];
 
-export interface ChapterProgress {
-  chapterId: number;
-  name: string;
-  orderIndex: number;
-  exerciseCount: number;
-  active: boolean;
-  progress: MasteryRollup;
-}
+export type ChapterProgress = S["ChapterProgressResponse"];
 
-export interface ExerciseProgress {
-  exerciseId: number;
-  title: string;
-  orderIndex: number;
-  active: boolean;
-  progress: MasteryRollup;
-}
+export type ExerciseProgress = S["ExerciseProgressResponse"];
 
 /** Lernstand des Kindes zu einem einzelnen Übungs-Item. */
-export interface ItemProgressResponse {
-  itemId: number;
-  exerciseId: number;
-  vocabularyId: number;
-  front: string;
-  back: string;
-  box: number;
-  maxBox: number;
-  masteryPercent: number;
-  seenCount: number;
-  correctCount: number;
-  introducedAt: string | null;
-  lastAnswerAt: string | null;
-  lastCorrect: boolean | null;
-}
+export type ItemProgressResponse = S["ItemProgressResponse"];
 
 /** Beherrschung eines Store-Wortes über **alle** Übungen, die es benutzen – die „schlecht gelernten Wörter". */
-export interface WordMastery {
-  vocabularyId: number;
-  word: string;
-  translation: string;
-  itemCount: number;
-  avgMasteryPercent: number;
-  minBox: number;
-  seenCount: number;
-  correctCount: number;
-  correctPercent: number;
-}
+export type WordMastery = S["WordMasteryResponse"];
 
 /** Ein protokolliertes Antwort-Ereignis (Übung oder Test). */
-export interface ItemHistoryEntry {
-  at: string;
-  source: string;
-  stageValue: number;
-  givenAnswer: string | null;
-  wasCorrect: boolean;
-  planPositionId: number | null;
-}
+export type ItemHistoryEntry = S["HistoryResponse"];
 
 // ---- Ziele über dem Lernstand: Objectives (OKR-Klammer über messbaren Etappen) ----
-
-/** Wie eine Etappe gerade steht; live aus dem Lernstand berechnet, nie gespeichert. */
-export type GoalStatus = "open" | "achieved" | "overdue";
 
 /**
  * Art eines Objectives – sie bestimmt die **Währung** der Belohnung: `Committed` ist verbindlich und zahlt
  * Münzen (real einlösbar), `Stretch` ist ein Dehnungsziel und zahlt Gems (Skins).
  */
-export type ObjectiveKind = "Committed" | "Stretch";
+export type ObjectiveKind = S["ObjectiveKind"];
 
 /** Metrik einer Etappe; `ClassTestGrade` ist die Note ×10 als Höchstwert (20 = „mindestens 2,0"). */
-export type KeyResultMetric = "AvgMastery" | "MasteredPercent" | "MaxWeakItems" | "ClassTestGrade";
+export type KeyResultMetric = S["KeyResultMetric"];
 
 /** Eine ausgewertete Etappe eines Objectives. */
-export interface KeyResult {
-  id: number;
-  objectiveId: number;
-  subjectId: number;
-  chapterId: number | null;
-  exerciseId: number | null;
-  scope: string;
-  metric: KeyResultMetric;
-  targetValue: number;
-  currentValue: number;
-  progressPercent: number;
-  status: GoalStatus;
-  title: string | null;
-}
+export type KeyResult = S["KeyResultResponse"];
 
 /** Ein Objective mit Etappen und Roll-up; `rewarded` = die Belohnung ist bereits geflossen. */
-export interface Objective {
-  id: number;
-  childId: number;
-  title: string;
-  motivation: string | null;
-  kind: ObjectiveKind;
-  start: string | null;
-  dueDate: string | null;
-  active: boolean;
-  rewardOnComplete: number;
-  rewardPerKeyResult: number;
-  achievedCount: number;
-  totalCount: number;
-  progressPercent: number;
-  status: GoalStatus;
-  rewarded: boolean;
-  keyResults: KeyResult[];
-  createdAt: string;
-}
+export type Objective = S["ObjectiveResponse"];
 
-export interface CreateKeyResultRequest {
-  subjectId: number;
-  chapterId?: number | null;
-  exerciseId?: number | null;
-  metric: KeyResultMetric;
-  targetValue: number;
-  title?: string | null;
-}
+export type CreateKeyResultRequest = S["CreateKeyResultRequest"];
 
-export interface CreateObjectiveRequest {
-  title: string;
-  motivation?: string | null;
-  kind: ObjectiveKind;
-  start?: string | null;
-  dueDate?: string | null;
-  rewardOnComplete: number;
-  rewardPerKeyResult: number;
-  keyResults?: CreateKeyResultRequest[];
-}
+export type CreateObjectiveRequest = S["CreateObjectiveRequest"];
 
-export interface UpdateObjectiveRequest {
-  title?: string | null;
-  motivation?: string | null;
-  kind?: ObjectiveKind;
-  start?: string | null;
-  dueDate?: string | null;
-  active?: boolean;
-  rewardOnComplete?: number;
-  rewardPerKeyResult?: number;
-}
+export type UpdateObjectiveRequest = S["UpdateObjectiveRequest"];
 
 /** Teil-Update einer Etappe; der Scope bleibt fix. */
-export interface UpdateKeyResultRequest {
-  metric?: KeyResultMetric;
-  targetValue?: number;
-  title?: string | null;
-}
+export type UpdateKeyResultRequest = S["UpdateKeyResultRequest"];
 
 // ---- Katalog: Fächer, Kapitel, Übungssuche ----
 
-export interface SubjectResponse {
-  id: number;
-  name: string;
-  createdAt: string;
-  chaptersCount: number;
-}
+export type SubjectResponse = S["SubjectResponse"];
 
-export interface ChapterResponse {
-  id: number;
-  subjectId: number;
-  name: string;
-  orderIndex: number;
-  exercisesCount: number;
-}
+export type ChapterResponse = S["ChapterResponse"];
+
+/** Partielle Änderung eines Kapitels (Name/Reihenfolge). */
+export type UpdateChapterDto = S["UpdateChapterDto"];
 
 /** Vollständige Sicht einer Übung inkl. roher Config + Metadaten (zum Anzeigen/Bearbeiten). */
-export interface ExerciseDetail {
-  id: number;
-  chapterId: number;
-  chapterName: string;
-  subjectId: number;
-  subjectName: string;
-  type: string;
-  title: string;
-  /** Freier Beschreibungstext (optional) – hilft beim Erkennen der Übung im Lehrplan-Bau. */
-  description: string | null;
-  orderIndex: number;
-  rewardPoints: number;
-  gradeMin: number | null;
-  gradeMax: number | null;
-  schoolTypes: string;
-  source: string | null;
-  categoryId: number | null;
-  categoryName: string | null;
-  defaultStage: number | null;
-  defaultItemCount: number | null;
-  /** Übungs-Standard für Leitner-Kasten (Position erbt ihn, kann übersteuern). */
-  defaultUseLeitner: boolean;
-  /** Übungs-Standard „nur getippte Tests" (Position erbt ihn, kann übersteuern). */
-  defaultRequireTypedTest: boolean;
-  /** Autor der Übung (Vater); null = geseedete System-Übung. */
-  authorAdultId: number | null;
-  authorName: string | null;
-  /** Darf der anfragende Vater die Übung **ändern** (Owner oder Write-Grant)? */
-  isOwn: boolean;
-  /** Darf er sie **verwalten** (löschen, Rechte vergeben, Sichtbarkeit umschalten)? Nur der Owner. */
-  isOwner: boolean;
-  /** Für alle Väter zuweisbar? Umschalten ist ein Owner-Recht. */
-  executePublic: boolean;
-  /** Bonus-Vorschlag, den Lehrplan-Positionen erben; null = Verfahrens-Standard. */
-  suggestedBonus: SuggestedBonus | null;
-  config: unknown;
-}
+export type ExerciseDetail = S["ExerciseDetail"];
 
 /**
  * Bonus-Vorschlag einer Übung. Er gehört an die Übung, weil er inhaltsabhängig ist (kurze Vokabeln
  * vertragen straffere Zeitfenster als lange Sätze); die Position erbt ihn und darf übersteuern.
  */
-export interface SuggestedBonus {
-  comboThreshold: number;
-  comboBonusPoints: number;
-  speedThresholdSeconds: number;
-  speedBonusPoints: number;
-  newContentPoints: number;
-}
+export type SuggestedBonus = S["SuggestedBonus"];
 
 /** Wo eine Übung verwendet wird (nur eigene Kinder). */
-export interface PlanUsage { planId: number; planTitle: string; childId: number; childName: string; }
-export interface ClassTestUsage { id: number; title: string; childId: number; childName: string; }
+export type PlanUsage = S["PlanUsage"];
+export type ClassTestUsage = S["ClassTestUsage"];
 /**
  * Wo eine Übung verwendet wird. `plans`/`classTests` nennen nur die **eigenen** Kinder;
  * `otherLearnersCount` ist die Zahl der **Kinder** (nicht Stellen) fremder Betreuer, die sie einsetzen.
@@ -778,337 +301,94 @@ export interface ClassTestUsage { id: number; title: string; childId: number; ch
  * Für einen Creator ohne eigene Kinder – einen Lehrer oder eine KI-Creator-App – sind die beiden Listen
  * dauerhaft leer, und diese Zahl ist die einzige Antwort auf „wird mein Material benutzt?".
  */
-export interface ExerciseUsage { plans: PlanUsage[]; classTests: ClassTestUsage[]; otherLearnersCount: number; }
+export type ExerciseUsage = S["UsageResponse"];
 
 // ---- Testmodus („Ausprobieren"): Vater spielt eine Übung nebenwirkungsfrei durch ----
 
 /** Eine im Testmodus vorgelegte Aufgabe. `reveal` ist nur bei Selbsteinschätzung gesetzt (Lösung aufgedeckt). */
-export interface ExercisePreviewItem {
-  itemIndex: number;
-  prompt: string;
-  /** Nur bei Lückentexten: die {{n}}-Nummer der Lücke. */
-  gapIndex: number | null;
-  hint: string | null;
-  /** Nur bei Vokabel-Buchstabenkästchen: Länge der Lösung. */
-  answerLength: number | null;
-  /** Bei Selbsteinschätzung die Lösung, bei getippten Stufen null. */
-  reveal: string | null;
-  /** Nur bei Multiple-Choice: die Auswahlmöglichkeiten (Lösung + Ablenker, gemischt). */
-  choices: string[] | null;
-  /** Nur bei der Hör-Stufe: Aussprache-Audioquelle der Vokabel (Wort-Text wird dann ausgeblendet). */
-  audioUrl: string | null;
-}
+export type ExercisePreviewItem = S["PreviewItem"];
 /** Eine im Testmodus umschaltbare Abfrageform (Stufenwert + Anzeigename). */
-export interface ExercisePreviewStage { value: number; label: string; }
+export type ExercisePreviewStage = S["StageOption"];
 /**
  * Spielbarer Zustand einer Übung im Testmodus. `typed` = Antwort wird getippt (sonst Selbsteinschätzung);
  * `stages` = die für diesen Übungstyp durchprobierbaren Abfrageformen (leer, wenn nur eine sinnvoll ist).
  */
-export interface ExercisePreviewData {
-  type: string; stage: number; typed: boolean; stages: ExercisePreviewStage[]; items: ExercisePreviewItem[];
-}
+export type ExercisePreviewData = S["PreviewData"];
 /** Eine Antwort im Testmodus: getippt (`givenAnswer`) oder Selbsteinschätzung (`wasKnown`). */
-export interface ExercisePreviewAnswer { itemIndex: number; givenAnswer?: string | null; wasKnown?: boolean | null; }
+export type ExercisePreviewAnswer = S["PreviewAnswer"];
 /** Einzelauswertung im Testmodus (die Lösung `expected` wird hier immer offengelegt). */
-export interface ExercisePreviewOutcome {
-  itemIndex: number; prompt: string; expected: string; givenAnswer: string | null; wasCorrect: boolean;
-}
+export type ExercisePreviewOutcome = S["PreviewItemOutcome"];
 /** Gesamtergebnis eines Testmodus-Durchlaufs. */
-export interface ExercisePreviewResult {
-  total: number; correct: number; scorePercent: number; items: ExercisePreviewOutcome[];
-}
+export type ExercisePreviewResult = S["PreviewResult"];
 
 /** Partielle Vokabel-Änderung (nur gesetzte Felder). */
-export interface UpdateVocabularyDto {
-  version?: string;
-  sourceLanguage?: string;
-  targetLanguage?: string;
-  word?: string;
-  translation?: string;
-  partOfSpeech?: PartOfSpeech;
-  noun?: NounInfo | null;
-  verb?: VerbInfo | null;
-  /** Key der Grundform; "" hebt die Verknüpfung auf. */
-  baseFormKey?: string | null;
-  baseFormRelation?: string | null;
-  pronunciationAudioUrl?: string | null;
-}
+export type UpdateVocabularyDto = S["UpdateVocabularyDto"];
 
 /** Schlanke Trefferzeile der Übungssuche (Metadaten-Filter über den Katalog). */
-export interface ExerciseSummary {
-  id: number;
-  chapterId: number;
-  subjectId: number;
-  type: string;
-  title: string;
-  /** Freier Beschreibungstext (optional). */
-  description: string | null;
-  gradeMin: number | null;
-  gradeMax: number | null;
-  schoolTypes: string;
-  source: string | null;
-  categoryId: number | null;
-  categoryName: string | null;
-  /** Übungs-Standards für Leitner/getippte Tests (Position erbt sie beim Hinzufügen). */
-  defaultStage: number | null;
-  defaultItemCount: number | null;
-  defaultUseLeitner: boolean;
-  defaultRequireTypedTest: boolean;
-  /** Autor der Übung (Vater); null = geseedete System-Übung. Grundlage der „von …"-Attribution. */
-  authorAdultId: number | null;
-  authorName: string | null;
-  /** Darf der anfragende Vater sie **ändern**? (Owner- oder Write-Recht.) */
-  isOwn: boolean;
-  /** Darf er sie **verwalten**? Nur der Owner darf löschen, Rechte vergeben und zurückziehen. */
-  isOwner: boolean;
-  /**
-   * Ist sie für **jeden** Creator zuweisbar? `false` = zurückgezogen: nur wer ein ausdrückliches Recht
-   * hält, kann sie noch einem Kind zuweisen. Laufende Lehrpläne bleiben davon unberührt.
-   */
-  executePublic: boolean;
-}
+export type ExerciseSummary = S["ExerciseSummary"];
 
 /**
  * Ein **Lehrer-Konto**: ein Erwachsener, der Inhalte erstellt und kein Kind betreut. `roles` enthält darum
  * nur `"Creator"` – genau das unterscheidet es von einem Vater-Konto. `creatorId` ist der Login-Name.
  */
-export interface TeacherAccount {
-  creatorId: number; accountId: number; name: string; email: string | null; roles: string[];
-}
+export type TeacherAccount = S["TeacherAccountResponse"];
+
+/** Anlegen eines Lehrer-Kontos (Creator ohne Betreuungsauftrag). */
+export type CreateTeacherDto = S["CreateTeacherDto"];
 
 /** Die eigene Identität (`GET auth/me`) – Konto, alle Rollen, fachliche Ids. */
-export interface MeResponse {
-  accountId: number | null; role: Role; roles: string[];
-  adultId: number | null; childId: number | null; name: string | null;
-}
+export type MeResponse = S["MeResponse"];
 
 /**
  * Selbstverwaltung des eigenen Kontos. `null`/weggelassen heißt „unverändert"; die E-Mail ist das einzige
  * löschbare Feld und braucht dafür `clearEmail` – ein leeres Textfeld allein löscht nichts.
  */
-export interface UpdateMyAccountDto {
-  name?: string; email?: string | null; clearEmail?: boolean; pin?: string;
-}
+export type UpdateMyAccountDto = S["UpdateMyAccountDto"];
 
 /** Der Freigabe-Stand einer Übung nach dem Umschalten (Antwort von `setExerciseSharing`). */
-export interface ExerciseSharing { id: number; executePublic: boolean; grantCount: number; }
-
-/** Server-paginierte Liste: eine Seite plus Gesamtzahl (kommt aus dem X-Total-Count-Header). */
-export interface Paged<T> {
-  items: T[];
-  total: number;
-}
-
-export type SortDir = "asc" | "desc";
-/** Erlaubte Sortierschlüssel des Übungskatalogs (Server-Whitelist in ExerciseCatalogController). */
-export type ExerciseSortKey = "title" | "type" | "grade" | "source" | "created";
-/** Erlaubte Sortierschlüssel des Vokabel-Stores (Server-Whitelist in VocabularyStoreController). */
-export type VocabSortKey = "key" | "word" | "translation" | "pos" | "created";
-
-export interface ExerciseSearchParams {
-  subjectId?: number;
-  chapterId?: number;
-  grade?: number;
-  schoolType?: SchoolType;
-  categoryId?: number;
-  type?: string;
-  search?: string;
-  /** Nur eigene Übungen des Vaters (Verwaltung statt Entdeckung der geteilten Bibliothek). */
-  mineOnly?: boolean;
-  /** Sortierschlüssel + Richtung (Server-Whitelist); Paginierung per skip/take. */
-  sort?: ExerciseSortKey;
-  dir?: SortDir;
-  skip?: number;
-  take?: number;
-}
-
-/** Suchparameter des Vokabel-Stores (Filter + Sortierung + Paginierung). */
-export interface VocabularySearchParams {
-  search?: string;
-  sourceLanguage?: string;
-  targetLanguage?: string;
-  partOfSpeech?: PartOfSpeech;
-  tags?: string[];
-  matchAll?: boolean;
-  sort?: VocabSortKey;
-  dir?: SortDir;
-  skip?: number;
-  take?: number;
-}
+export type ExerciseSharing = S["ExerciseSharingResponse"];
 
 /** Fachabhängige Übungs-Art ("Kategorie") zur Vorfilterung. */
-export interface CategoryResponse {
-  id: number;
-  subjectId: number;
-  name: string;
-  createdAt: string;
-}
+export type CategoryResponse = S["CategoryResponse"];
 
-export interface VocabularyResponse {
-  id: number;
-  key: string;
-  version: string;
-  sourceLanguage: string;
-  targetLanguage: string;
-  word: string;
-  translation: string;
-  partOfSpeech: PartOfSpeech;
-  /** Substantiv-Details (nur bei Wortart Noun sinnvoll gesetzt). */
-  noun: NounInfo | null;
-  /** Verb-Details (nur bei Wortart Verb sinnvoll gesetzt). */
-  verb: VerbInfo | null;
-  /** Id der Grundform (go→went→gone); null = eigenständig/Grundform. */
-  baseFormId: number | null;
-  /** Key der Grundform (zur Anzeige/Bearbeitung). */
-  baseFormKey: string | null;
-  baseFormRelation: string | null;
-  pronunciationAudioUrl: string | null;
-  /** Globale, kindneutrale Schlagworte (Namen) – vgl. VocabTagResponse. */
-  tags: string[];
-  createdAt: string;
-}
+export type VocabularyResponse = S["VocabularyResponse"];
 
 /** Globaler, kindneutraler Vokabel-Tag (learn/vocabulary/tags). */
-export interface VocabTagResponse {
-  id: number;
-  name: string;
-  color: string | null;
-  vocabCount: number;
-  createdAt: string;
-}
+export type VocabTagResponse = S["VocabTagResponse"];
 
 /**
  * Kind-skopierter Tag (api/v1/creator/tags) – markiert Übungen UND Vokabeln als für ein Kind relevant.
  * Nicht verwechseln mit dem globalen VocabTagResponse.
  */
-export interface ChildTagResponse {
-  id: number;
-  childId: number;
-  name: string;
-  color: string | null;
-  /** "Vater" | "Sohn" – wer den Tag angelegt hat. */
-  createdBy: string;
-  exerciseCount: number;
-  vocabularyCount: number;
-  createdAt: string;
-}
+export type ChildTagResponse = S["TagResponse"];
+
+/** Anlegen eines kind-skopierten Tags. */
+export type CreateChildTagDto = S["CreateTagDto"];
 
 /** Ergebnis eines einzelnen Batch-Elements (POST /learn/vocabulary/batch). */
-export interface VocabBatchResult {
-  index: number;
-  /** "created" | "existing" | "error". */
-  status: string;
-  id: number | null;
-  key: string | null;
-  error: string | null;
-}
+export type VocabBatchResult = S["BatchItemResult"];
 
-export interface CreateVocabularyDto {
-  /** Optional – fehlt er, generiert der Server einen eindeutigen Slug ("einfache" Eingabe). */
-  key?: string;
-  sourceLanguage: string;
-  targetLanguage: string;
-  word: string;
-  translation: string;
-  /** Optional – Default Other ("einfache" Eingabe). */
-  partOfSpeech?: PartOfSpeech;
-  version?: string;
-  noun?: NounInfo | null;
-  verb?: VerbInfo | null;
-  baseFormKey?: string | null;
-  baseFormRelation?: string | null;
-  pronunciationAudioUrl?: string | null;
-}
+export type CreateVocabularyDto = S["CreateVocabularyDto"];
 
 // ---- Katalog: Übungen anlegen (Authoring) ----
-
-/**
- * Übungstypen, für die diese UI einen Editor hat. Deckungsgleich mit den Server-Typen
- * (`ExerciseTypeKeys`) – das **Routen-Segment und der Anzeigename kommen aber aus dem Typ-Manifest**
- * (`GET creator/exercise-types`), nicht aus einer Tabelle hier: sie driften sonst auseinander, und der
- * Server weicht durchaus ab (Aufsatz liegt unter `essays`, nicht `essay`).
- */
-export type ExerciseTypeKey =
-  | "Vocabulary" | "Arithmetic" | "ArithmeticDrill" | "Cloze" | "Matching" | "List" | "Birkenbihl"
-  | "Reading" | "Listening" | "Essay" | "Grammar" | "Translation";
 
 /**
  * Selbstbeschreibung eines Übungstyps vom Server. Das Frontend liest sie einmal und verdrahtet daraus
  * Routen und Beschriftungen; die Editor-/Render-Komponente bleibt handgebaut je Typ (aus JSON allein
  * lässt sich kein Formular erzeugen, das die Fachlichkeit trifft).
  */
-export interface ExerciseTypeManifest {
-  type: string;
-  /** Deutscher Anzeigename. */
-  label: string;
-  /** Id der Render-Komponente; mehrere Typen dürfen sie teilen (Arithmetic + ArithmeticDrill). */
-  renderer: string;
-  schemaVersion: number;
-  /** Routen-Segment der Autoren-CRUD unter `.../chapters/{chapterId}/{authoringRoute}`. */
-  authoringRoute: string;
-  checkMode: ExerciseCheckMode;
-  playRoute: string | null;
-  method: string | null;
-  /** Fähigkeiten, auf die ein Renderer reagieren kann (`audio`, `wordBank`, `rubric` …). */
-  capabilities: string[];
-}
+export type ExerciseTypeManifest = S["ExerciseTypeManifest"];
 
 /** Rechenarten des Rechen-Drills (der Server wählt je Aufgabe zufällig eine der erlaubten). */
-export type ArithmeticOperation = "Addition" | "Subtraction" | "Multiplication" | "Division";
-
-/**
- * Gemeinsame Nutzlast zum Anlegen einer Übung (spiegelt ExercisePayload&lt;TConfig&gt; im Backend).
- * <c>config</c> ist typ-spezifisch – der Server interpretiert es je Routen-Segment.
- */
-export interface CreateExercisePayload {
-  title: string;
-  description?: string | null;
-  orderIndex: number;
-  rewardPoints: number;
-  config: unknown;
-  gradeMin?: number | null;
-  gradeMax?: number | null;
-  schoolTypes?: string;
-  source?: string | null;
-  categoryId?: number | null;
-  defaultUseLeitner?: boolean;
-  defaultRequireTypedTest?: boolean;
-  /** Standard-Abfrageform (TestStage-Wert) – v. a. für Vokabeln (z. B. Multiple-Choice = 6). */
-  defaultStage?: number | null;
-  /** Empfohlene Anzahl genutzter Inhalte je Position; null = alle. */
-  defaultItemCount?: number | null;
-  /**
-   * Bonus-Vorschlag. Beim **Ändern** unbedingt mitschicken: der Server ersetzt die Übung vollständig,
-   * ein Weglassen würde den Vorschlag löschen.
-   */
-  suggestedBonus?: SuggestedBonus | null;
-  /**
-   * Für alle Väter zuweisbar? Beim **Ändern** den vorhandenen Wert mitschicken – der Server-Default ist
-   * `true`, und ein Umschalten verlangt Owner-Rechte (sonst 403 für einen Write-Grantee).
-   */
-  executePublic?: boolean;
-}
+export type ArithmeticOperation = S["ArithmeticOperation"];
 
 // ---- Vokabel-Items einer Übung (eigene Ebene, stabil identifiziert) ----
 
 /** Ein positioniertes Vokabelpaar einer Übung; Front/Back kommen live aus dem Store. */
-export interface VocabItemResponse {
-  id: number;
-  orderIndex: number;
-  vocabularyId: number;
-  front: string;
-  back: string;
-  hint: string | null;
-}
+export type VocabItemResponse = S["VocabItemResponse"];
 
 /** Anlegen/Ändern eines Items: per Store-Id **oder** inline (`front`/`back` werden dann angelegt/gefunden). */
-export interface VocabItemInput {
-  vocabularyId?: number | null;
-  front?: string | null;
-  back?: string | null;
-  hint?: string | null;
-  orderIndex?: number | null;
-}
+export type VocabItemInput = S["VocabItemInput"];
 
 // ---- Lehrpläne ----
 
@@ -1116,351 +396,104 @@ export interface VocabItemInput {
  * Lehrplan = reiner Container aus referenzierten Katalog-Übungen (Positionen). Ziele, Punkte, Stufen und
  * Leitner-Einstellungen leben an der jeweiligen {@link PositionResponse}, nicht mehr am Plan.
  */
-export interface PlanResponse {
-  id: number;
-  childId: number;
-  title: string;
-  description: string | null;
-  subjectId: number | null;
-  startDate: string;
-  endDate: string;
-  active: boolean;
-  positionCount: number;
-  /**
-   * Server-autoritative Affordance: Ob dies der eine, aktuell spielbare Plan des Kindes ist
-   * (aktiv + heute in Laufzeit). Statt die „ein aktiver Plan"-Regel im Client nachzubilden.
-   */
-  isPlayable: boolean;
-}
+export type PlanResponse = S["PlanResponse"];
 
-export interface CreatePlanDto {
-  childId: number;
-  title: string;
-  description?: string | null;
-  subjectId?: number | null;
-  startDate?: string;
-  durationDays: number;
-}
+export type CreatePlanDto = S["CreatePlanDto"];
 
 // ---- Lehrplan-Positionen (neues, verfahrens-gemischtes Modell) ----
 
 /** Ziel-Rhythmus einer Position: kein Pflichtziel / Tagesziel / Wochenziel. */
-export type GoalCadence = "None" | "Daily" | "Weekly";
+export type GoalCadence = S["GoalCadence"];
 /** Umfang der Inhaltsauswahl einer Position aus dem Übungs-Pool. */
-export type ItemScope = "All" | "New" | "Old";
+export type ItemScope = S["ItemScope"];
 /** Server-Reihenfolge, in der fällige Inhalte ausgespielt werden. */
-export type PracticeOrder = "WeakestFirst" | "Serial" | "Random" | "NewestWeighted";
+export type PracticeOrder = S["PracticeOrder"];
 
 /** Stufen-Fahrplan-Eintrag (Tag → Stufe) einer Leitner-Position. */
-export interface StageStep { dayNumber: number; stage: number; }
+export type StageStep = S["StageStep"];
 
 /** Eine Position eines Lehrplans: Verweis auf eine Katalog-Übung + eigene Ziele/Punkte/Leitner. */
-export interface PositionResponse {
-  id: number;
-  studyPlanId: number;
-  exerciseId: number;
-  exerciseTitle: string;
-  exerciseType: string;
-  order: number;
-  stage: number | null;
-  itemCount: number | null;
-  scope: ItemScope;
-  cadence: GoalCadence;
-  orderStrategy: PracticeOrder;
-  goalThreshold: number | null;
-  requireTypedTest: boolean;
-  useLeitner: boolean;
-  maxBox: number;
-  boxIntervalDays: number[] | null;
-  stageSchedule: StageStep[] | null;
-  pointsGoalMet: number;
-  /** Münz-Malus bei gerissener Pflicht-Periode (0 = kein Malus). Nur bei Cadence Tag/Woche wirksam. */
-  penaltyCoins: number;
-  newContentPoints: number;
-  comboThreshold: number;
-  comboBonusPoints: number;
-  speedThresholdSeconds: number;
-  speedBonusPoints: number;
-}
+export type PositionResponse = S["PositionResponse"];
 
 /** Tagesstand eines Kindes im Vater-Dashboard (aggregiert über seine aktiven Lehrpläne). */
-export interface ChildDay {
-  childId: number;
-  name: string;
-  activePlans: number;
-  goalsTotal: number;
-  goalsMet: number;
-  pointsToday: number;
-  dutyDone: boolean;
-  practiced: boolean;
-}
+export type ChildDay = S["ChildDay"];
 
 /** Kindübergreifender Tagesüberblick des Vaters („wer hat heute was geschafft?"). */
-export interface ChildrenDashboard {
-  date: string;
-  children: ChildDay[];
-}
+export type ChildrenDashboard = S["Dashboard"];
 
 /** Eine Report-Zeile: wie gut ein einzelner Inhalt der Position „sitzt". */
-export interface ItemReport {
-  itemIndex: number;
-  prompt: string;
-  answer: string;
-  introduced: boolean;
-  box: number;
-  masteryPercent: number;
-  reviewCount: number;
-  dueOn: string | null;
-  lastReviewedAt: string | null;
-  testsSeen: number;
-  testsCorrect: number;
-}
+export type ItemReport = S["ItemReport"];
 
 /** Lern-Report einer Position: „welche Vokabel sitzt/sitzt nicht" (Box/Beherrschung + Test-Trefferquote). */
-export interface PositionReport {
-  positionId: number;
-  exerciseId: number;
-  exerciseTitle: string;
-  exerciseType: string;
-  maxBox: number;
-  totalItems: number;
-  introducedItems: number;
-  masteredItems: number;
-  items: ItemReport[];
-}
+export type PositionReport = S["Report"];
 
 /** Anlegen einer Position. Leere Felder erben den Vorschlag der Übung (Hybrid-Prinzip). */
-export interface CreatePositionDto {
-  exerciseId: number;
-  order?: number;
-  stage?: number | null;
-  itemCount?: number | null;
-  scope?: ItemScope;
-  cadence?: GoalCadence;
-  orderStrategy?: PracticeOrder;
-  goalThreshold?: number | null;
-  requireTypedTest?: boolean;
-  useLeitner?: boolean;
-  maxBox?: number;
-  pointsGoalMet?: number;
-  /** Münz-Malus bei gerissener Pflicht-Periode (0 = kein Malus). */
-  penaltyCoins?: number;
-  /*
-   * Bonus-Werte sind `null`-fähig, und der Unterschied trägt Bedeutung: `null` heißt „Bonus-Vorschlag der
-   * Übung übernehmen" (Server: `dto.X ?? exercise.SuggestedBonus?.X ?? Default`), eine Zahl überschreibt ihn.
-   */
-  newContentPoints?: number | null;
-  comboThreshold?: number | null;
-  comboBonusPoints?: number | null;
-  speedThresholdSeconds?: number | null;
-  speedBonusPoints?: number | null;
-}
+export type CreatePositionDto = S["CreatePositionDto"];
 
 /** Partielle Änderung einer Position (nur gesetzte Felder). */
-export type UpdatePositionDto = Omit<Partial<CreatePositionDto>, "exerciseId"> & {
-  boxIntervalDays?: number[] | null;
-  stageSchedule?: StageStep[] | null;
-};
+export type UpdatePositionDto = S["UpdatePositionDto"];
 
 // ---- Tagesmission / Fortschritt (über Positionen) ----
 
 /** Prüf-/Spieloberfläche eines Übungstyps (aus dem Typ-Manifest). */
-export type ExerciseCheckMode = "None" | "StudyPlanTest" | "CatalogCheck" | "CatalogGenerateCheck";
+export type ExerciseCheckMode = S["ExerciseCheckMode"];
 
 /** Status einer Position für einen Tag – steuert, welche Aktion der Sohn-Client anbietet. */
-export interface PositionStatus {
-  positionId: number;
-  exerciseId: number;
-  exerciseTitle: string;
-  exerciseType: string;
-  renderer: string;
-  order: number;
-  cadence: GoalCadence;
-  checkMode: ExerciseCheckMode;
-  useLeitner: boolean;
-  testable: boolean;
-  goalMet: boolean;
-  dueCount: number;
-  poolSize: number;
-  pointsGoalMet: number;
-}
+export type PositionStatus = S["PositionStatus"];
 
 /** Tages-Rollup eines Lehrplans über seine Positionen. */
-export interface DayOverview {
-  day: string;
-  dutyDone: boolean;
-  goalsTotal: number;
-  goalsMet: number;
-  pointsAwarded: number;
-  outstanding: string[];
-  positions: PositionStatus[];
-}
+export type DayOverview = S["DayOverview"];
 
 /** Tagesmission des Sohns bzw. Ein-Blick-Status eines Plans. */
-export interface OverviewResponse {
-  planId: number;
-  title: string;
-  startDate: string;
-  endDate: string;
-  active: boolean;
-  currentStreak: number;
-  today: DayOverview;
-}
+export type OverviewResponse = S["OverviewResponse"];
 
 /** Ein Tag im Verlauf (Vater-Auswertung). */
-export interface ProgressDay {
-  day: string;
-  dutyDone: boolean;
-  goalsTotal: number;
-  goalsMet: number;
-  pointsAwarded: number;
-}
+export type ProgressDay = S["ProgressDay"];
 
-export interface ProgressResponse {
-  planId: number;
-  startDate: string;
-  endDate: string;
-  daysComplete: number;
-  totalDays: number;
-  totalPoints: number;
-  currentStreak: number;
-  days: ProgressDay[];
-}
+export type ProgressResponse = S["ProgressResponse"];
 
 // ---- Positions-Üben (Leitner) ----
 
-export type PlayMode = "Info" | "Lern";
+export type PlayMode = S["PlayMode"];
 
-export interface PositionSession {
-  id: number;
-  planId: number;
-  positionId: number;
-  day: string;
-  startedAt: string;
-  endedAt: string | null;
-  activeSeconds: number;
-  reviewCount: number;
-  /** Ausspiel-Modus: `Info` = freies Üben ohne Feedback, `Lern` = server-geführt (Cursor). */
-  mode: PlayMode;
-  /** Aktuelle Cursor-Position im Lern-Modus. */
-  cursor: number;
-  /** Anzahl Karten in der eingefrorenen Reihenfolge. */
-  total: number;
-}
+export type PositionSession = S["SessionResponse"];
 
 /**
  * Eine Übungskarte einer Position. `reveal` ist bei Anzeige-/Selbsteinschätzungs-Stufen die aufgedeckte
  * Lösung (Flip-Karte); bei getippten Stufen ist es `null` (Eingabefeld). `answerLength` nur bei
  * Vokabel-Buchstabenkästchen, `hint` nur bei getippten Stufen.
  */
-export interface PracticeCard {
-  itemIndex: number;
-  stage: number;
-  type: string;
-  prompt: string;
-  hint: string | null;
-  answerLength: number | null;
-  reveal: string | null;
-  /** Nur bei Multiple-Choice: die Auswahlmöglichkeiten (Lösung + Ablenker, gemischt). */
-  choices: string[] | null;
-  /** Nur bei der Hör-Stufe: Aussprache-Audioquelle der Vokabel (Wort-Text wird dann ausgeblendet). */
-  audioUrl: string | null;
-  /**
-   * Das für dieses Kind ausgewählte Bild. Nur auf nicht-getippten Stufen gesetzt – auf getippten
-   * verriete ein Motiv die Lösung, deshalb liefert der Server dort weder URL noch Alt-Text.
-   */
-  imageUrl: string | null;
-  imageAlt: string | null;
-}
+export type PracticeCard = S["PracticeCard"];
 
 /** Antwort zu einer Übungskarte: getippt (`givenAnswer`) oder Selbsteinschätzung (`wasKnown`). */
-export interface ReviewInput {
-  itemIndex: number;
-  givenAnswer?: string | null;
-  wasKnown?: boolean | null;
-}
+export type ReviewInput = S["ReviewDto"];
 
-export interface ReviewOutcome {
-  wasCorrect: boolean;
-  expected: string;
-  awarded: number;
-  box: number;
-  dueOn: string | null;
-  combo: number;
-  comboBonus: number;
-  speedBonus: number;
-  /** Lern-Modus: die nächste Karte, direkt mitgeliefert (server-geführter Cursor); null am Ende. */
-  next: PracticeCard | null;
-  /** Lern-Modus: true, wenn der Lauf zu Ende ist (Cursor am Ende der eingefrorenen Reihenfolge). */
-  done: boolean;
-}
+export type ReviewOutcome = S["ReviewOutcome"];
 
 // ---- Missionen & Auszeichnungen (Gamification) ----
 
-export type ProgressMetric =
-  | "NewWords" | "CorrectReviews" | "TestsPassed" | "MinutesPracticed" | "DaysComplete" | "StreakDays";
-export type MissionPeriod = "Daily" | "Weekly" | "OneOff";
+export type ProgressMetric = S["ProgressMetric"];
+export type MissionPeriod = S["MissionPeriod"];
 
-export interface MissionStatus {
-  id: number;
-  title: string;
-  metric: ProgressMetric;
-  period: MissionPeriod;
-  target: number;
-  current: number;
-  completed: boolean;
-  rewardPoints: number;
-}
+export type MissionStatus = S["MissionStatus"];
 
-export interface AchievementStatus {
-  id: number;
-  title: string;
-  icon: string | null;
-  metric: ProgressMetric;
-  threshold: number;
-  current: number;
-  earned: boolean;
-  earnedAt: string | null;
-  rewardPoints: number;
-}
+export type AchievementStatus = S["AchievementStatus"];
 
 // ---- Vater: Missionen & Auszeichnungen verwalten (Definitionen) ----
 
 /** Missions-Definition zur Verwaltung durch den Vater. */
-export interface MissionDef {
-  id: number;
-  title: string;
-  metric: ProgressMetric;
-  target: number;
-  period: MissionPeriod;
-  rewardPoints: number;
-  active: boolean;
-}
-export interface CreateMissionDto {
-  title: string;
-  metric: ProgressMetric;
-  target: number;
-  period: MissionPeriod;
-  rewardPoints: number;
-}
+export type MissionDef = S["MissionDto"];
+
+/** Änderung einer Mission – **nicht** `Partial<MissionDef>`: die Antwort trägt Felder, die kein PATCH nimmt. */
+export type UpdateMissionDto = S["UpdateMissionDto"];
+export type CreateMissionDto = S["CreateMissionDto"];
 
 /** Auszeichnungs-Definition zur Verwaltung durch den Vater. */
-export interface AchievementDef {
-  id: number;
-  title: string;
-  icon: string | null;
-  metric: ProgressMetric;
-  threshold: number;
-  rewardPoints: number;
-  active: boolean;
-}
-export interface CreateAchievementDto {
-  title: string;
-  icon: string | null;
-  metric: ProgressMetric;
-  threshold: number;
-  rewardPoints: number;
-}
+export type AchievementDef = S["AchievementDto"];
+
+/** Änderung einer Auszeichnung; dieselbe Trennung wie bei `UpdateMissionDto`. */
+export type UpdateAchievementDto = S["UpdateAchievementDto"];
+export type CreateAchievementDto = S["CreateAchievementDto"];
 
 // Hinweis: Das frühere Angebots-System (Reward/Redemption/OfferPeriod) wurde entfernt – der
 // Familien-Shop (siehe unten) ist der einzige Münz-Ausgabeweg.
@@ -1469,87 +502,25 @@ export interface CreateAchievementDto {
 // Enums werden serverseitig als Strings serialisiert (JsonStringEnumConverter).
 
 /** Maßeinheit eines Shop-Artikels (z. B. Minuten Fernsehen, Gramm Süßigkeiten). */
-export type UnitType = "Stueck" | "Minute" | "Stunde" | "Gramm" | "Mal";
+export type UnitType = S["UnitType"];
 /** Art der Belohnung, die ein Artikel repräsentiert (kategorisiert + bebildert). */
-export type ActionType = "Sonstiges" | "TV" | "Zocken" | "Suessigkeit" | "Ausflug";
+export type ActionType = S["ActionType"];
 /** Automatische Auffüll-Regel eines Angebots. */
-export type ShopRefillKind = "None" | "Once" | "Daily" | "TwiceDaily" | "Weekly";
-export type ShopPurchaseStatus = "Owned" | "Cancelled";
-export type ActivationRequestStatus = "Pending" | "Approved" | "Rejected";
+export type ShopRefillKind = S["ShopRefillKind"];
+export type ShopPurchaseStatus = S["ShopPurchaseStatus"];
+export type ActivationRequestStatus = S["ActivationRequestStatus"];
 /** Wochentag (C# DayOfWeek, string-serialisiert) – nur für wöchentliches Auffüllen relevant. */
-export type DayOfWeek =
-  | "Sunday" | "Monday" | "Tuesday" | "Wednesday" | "Thursday" | "Friday" | "Saturday";
+export type DayOfWeek = S["DayOfWeek"];
 
 /** Katalog-Artikel des Vaters: die *Art* der Belohnung (Preis/Bestand liegen an den Angeboten). */
-export interface ShopArticle {
-  id: number;
-  articleNumber: string;
-  title: string;
-  description: string;
-  unitType: UnitType;
-  actionType: ActionType;
-  createdAt: string;
-}
-export interface CreateShopArticleDto {
-  articleNumber: string;
-  title: string;
-  description?: string | null;
-  unitType: UnitType;
-  actionType: ActionType;
-}
-export interface UpdateShopArticleDto {
-  articleNumber?: string;
-  title?: string;
-  description?: string | null;
-  unitType?: UnitType;
-  actionType?: ActionType;
-}
+export type ShopArticle = S["ShopArticleDto"];
+export type CreateShopArticleDto = S["CreateShopArticleDto"];
+export type UpdateShopArticleDto = S["UpdateShopArticleDto"];
 
 /** Ein konkretes Angebot zu einem Artikel: Preis (Coin/Gem), Menge je Kauf und Bestand. */
-export interface ShopListing {
-  id: number;
-  shopArticleId: number;
-  articleNumber: string;
-  articleTitle: string;
-  title: string;
-  description: string;
-  coinPrice: number;
-  gemPrice: number;
-  unitsPerPurchase: number;
-  active: boolean;
-  currentStock: number;
-  maxStock: number;
-  refillKind: ShopRefillKind;
-  refillAtUtc: string | null;
-  refillDayOfWeek: DayOfWeek | null;
-  lastRefilledAtUtc: string | null;
-  createdAt: string;
-}
-export interface CreateShopListingDto {
-  title?: string | null;
-  description?: string | null;
-  coinPrice: number;
-  gemPrice: number;
-  unitsPerPurchase: number;
-  currentStock: number;
-  maxStock: number;
-  refillKind?: ShopRefillKind;
-  refillAtUtc?: string | null;
-  refillDayOfWeek?: DayOfWeek | null;
-}
-export interface UpdateShopListingDto {
-  title?: string | null;
-  description?: string | null;
-  coinPrice?: number;
-  gemPrice?: number;
-  unitsPerPurchase?: number;
-  active?: boolean;
-  currentStock?: number;
-  maxStock?: number;
-  refillKind?: ShopRefillKind;
-  refillAtUtc?: string | null;
-  refillDayOfWeek?: DayOfWeek | null;
-}
+export type ShopListing = S["ShopListingDto"];
+export type CreateShopListingDto = S["CreateShopListingDto"];
+export type UpdateShopListingDto = S["UpdateShopListingDto"];
 
 /**
  * Aggregierter Inventar-Eintrag eines Kindes: Artikel-Typ → verfügbare Gesamtmenge.
@@ -1557,185 +528,54 @@ export interface UpdateShopListingDto {
  * überleben Katalogpflege, Titel und Einheit kommen dann aus der Momentaufnahme am Inventar. Ein
  * solcher Posten ist nicht einlösbar (die Aktivierung adressiert die Artikel-Id).
  */
-export interface InventoryItem {
-  shopArticleId: number | null;
-  articleNumber: string;
-  title: string;
-  unitType: UnitType;
-  actionType: ActionType;
-  quantity: number;
-}
+export type InventoryItem = S["InventoryItemDto"];
+
+/**
+ * Dasselbe von der Sohn-Seite (`student/me/shop/inventory`). Strukturgleich mit `InventoryItem`, aber ein
+ * eigenes Schema – ein Alias für beide hätte eine Drift auf **einer** der zwei Seiten verschwiegen.
+ */
+export type MyInventoryItem = S["MyInventoryItemResponse"];
 
 /** Kaufbuchung eines Kindes (Vater-Sicht, mit Stornier-Affordance). */
-export interface ShopPurchase {
-  id: number;
-  childId: number;
-  shopListingId: number | null;
-  articleNumber: string;
-  title: string;
-  description: string;
-  coinPrice: number;
-  gemPrice: number;
-  unitsPerPurchase: number;
-  status: ShopPurchaseStatus;
-  purchasedAt: string;
-  closedAt: string | null;
-  canCancel: boolean;
-}
+export type ShopPurchase = S["ShopPurchaseDto"];
 
 /** Aktivierungsanfrage eines Kindes (Vater-Sicht, mit Genehmigen/Ablehnen-Affordance). */
-export interface ActivationRequest {
-  id: number;
-  childId: number;
-  shopArticleId: number | null;
-  articleTitle: string;
-  unitType: UnitType;
-  actionType: ActionType;
-  requestedQuantity: number;
-  status: ActivationRequestStatus;
-  requestedAt: string;
-  closedAt: string | null;
-  canApprove: boolean;
-  canReject: boolean;
-}
+export type ActivationRequest = S["ActivationRequestDto"];
 
 // ---- Familien-Shop: Sohn-Sicht ----
 
 /** Ein kaufbares Angebot aus Sohn-Sicht (`affordable` = reicht das aktuelle Guthaben?). */
-export interface ShopAvailableListing {
-  id: number;
-  shopArticleId: number;
-  articleNumber: string;
-  articleTitle: string;
-  unitType: UnitType;
-  actionType: ActionType;
-  title: string;
-  description: string;
-  coinPrice: number;
-  gemPrice: number;
-  unitsPerPurchase: number;
-  currentStock: number;
-  affordable: boolean;
-}
+export type ShopAvailableListing = S["ShopListingResponse"];
 /** Eigene Kaufbuchung aus Sohn-Sicht (Kassenbuch). */
-export interface MyShopPurchase {
-  id: number;
-  shopListingId: number | null;
-  articleNumber: string;
-  title: string;
-  coinPrice: number;
-  gemPrice: number;
-  unitsPerPurchase: number;
-  status: ShopPurchaseStatus;
-  purchasedAt: string;
-  closedAt: string | null;
-}
+export type MyShopPurchase = S["MyShopPurchaseResponse"];
 /** Eigene Aktivierungsanfrage aus Sohn-Sicht. */
-export interface MyActivation {
-  id: number;
-  shopArticleId: number | null;
-  articleTitle: string;
-  unitType: UnitType;
-  actionType: ActionType;
-  requestedQuantity: number;
-  status: ActivationRequestStatus;
-  requestedAt: string;
-  closedAt: string | null;
-}
+export type MyActivation = S["MyActivationResponse"];
 /** Gebündelte Shop-Sicht des Sohns (Salden + kaufbare Angebote + Inventar + Kaufhistorie). */
-export interface ShopView {
-  coins: number;
-  gems: number;
-  available: ShopAvailableListing[];
-  inventory: InventoryItem[];
-  purchases: MyShopPurchase[];
-}
+export type ShopView = S["ShopViewResponse"];
 
 // ---- Vater: Klassenarbeiten ----
 
-export type KlassenarbeitStatus = "Planned" | "Written" | "Cancelled";
+export type KlassenarbeitStatus = S["KlassenarbeitStatus"];
 
-export interface TagRef { id: number; name: string; color: string | null; }
+export type TagRef = S["TagRef"];
 
 /** Kurzform einer Übung aus dem Katalog (für Zuweisung/Üben). */
-export interface ExerciseBrief {
-  id: number;
-  chapterId: number;
-  chapterName: string;
-  subjectId: number | null;
-  subjectName: string;
-  type: string;
-  title: string;
-  rewardPoints: number;
-  config: unknown;
-}
+export type ExerciseBrief = S["ExerciseBrief"];
 
-export interface KlassenarbeitResponse {
-  id: number;
-  childId: number;
-  subjectId: number | null;
-  subjectName: string | null;
-  title: string;
-  topic: string | null;
-  scheduledDate: string;
-  status: KlassenarbeitStatus;
-  grade: number | null;
-  gradeComment: string | null;
-  directExerciseCount: number;
-  tags: TagRef[];
-  createdAt: string;
-}
+export type KlassenarbeitResponse = S["KlassenarbeitResponse"];
 
-export interface KlassenarbeitDetail {
-  klassenarbeit: KlassenarbeitResponse;
-  assignedExercises: ExerciseBrief[];
-}
+export type KlassenarbeitDetail = S["KlassenarbeitDetail"];
 
-export interface CreateKlassenarbeitDto {
-  childId: number;
-  title: string;
-  topic?: string | null;
-  subjectId?: number | null;
-  scheduledDate: string;
-  grade?: number | null;
-}
+export type CreateKlassenarbeitDto = S["CreateClassTestDto"];
 
-export interface UpdateKlassenarbeitDto {
-  title?: string;
-  topic?: string | null;
-  subjectId?: number;
-  scheduledDate?: string;
-  status?: KlassenarbeitStatus;
-  grade?: number | null;
-  clearGrade?: boolean;
-  gradeComment?: string | null;
-}
+export type UpdateKlassenarbeitDto = S["UpdateClassTestDto"];
 
-export interface KlassenarbeitPractice {
-  klassenarbeitId: number;
-  title: string;
-  scheduledDate: string;
-  daysUntil: number;
-  exercises: ExerciseBrief[];
-}
+export type KlassenarbeitPractice = S["PracticeResponse"];
 
-export interface KlassenarbeitRepeat {
-  minBadGrade: number;
-  sources: KlassenarbeitResponse[];
-  exercises: ExerciseBrief[];
-}
+export type KlassenarbeitRepeat = S["RepeatResponse"];
 
 /** Partielle Lehrplan-Änderung durch den Vater (Datumsfelder als "YYYY-MM-DD"). */
-export interface UpdatePlanDto {
-  title?: string;
-  description?: string | null;
-  subjectId?: number | null;
-  startDate?: string;
-  endDate?: string;
-  active?: boolean;
-  /** Umzuweisung an ein anderes eigenes Kind. */
-  childId?: number;
-}
+export type UpdatePlanDto = S["UpdatePlanDto"];
 
 // ---- Positions-Test (Abschlusstest einer Übung) ----
 
@@ -1743,208 +583,80 @@ export interface UpdatePlanDto {
  * Eine im Positions-Test vorgelegte Aufgabe. `reveal` = aufgedeckte Lösung bei Anzeige-/Selbsteinschätzung,
  * `null` bei getippten Stufen; `answerLength` nur bei Vokabel-Buchstabenkästchen, `hint` nur getippt.
  */
-export interface TestItem {
-  itemIndex: number;
-  prompt: string;
-  stage: number;
-  reveal: string | null;
-  answerLength: number | null;
-  hint: string | null;
-  /** Nur bei Multiple-Choice: die Auswahlmöglichkeiten (Lösung + Ablenker, gemischt). */
-  choices: string[] | null;
-  /** Nur bei der Hör-Stufe: Aussprache-Audioquelle der Vokabel (Wort-Text wird dann ausgeblendet). */
-  audioUrl: string | null;
-  /** Wie bei der Übungskarte: nur auf nicht-getippten Stufen gesetzt. */
-  imageUrl: string | null;
-  imageAlt: string | null;
-}
+export type TestItem = S["TestItem"];
 
 /**
  * Antwort des Test-Starts. Der Klausur-Modus ist strikt server-getrieben: es kommen KEINE Aufgaben im Bulk,
  * nur die Metadaten. Die Fragen holt der Client einzeln über `nextTest` (kein Zurück).
  */
-export interface TestAttemptResponse {
-  attemptId: number;
-  planId: number;
-  positionId: number;
-  day: string;
-  stage: number;
-  totalItems: number;
-}
+export type TestAttemptResponse = S["AttemptResponse"];
 
 /** Die nächste Prüfungsfrage (oder `done`), server-geführt über den Attempt-Cursor. */
-export interface TestNextResponse {
-  item: TestItem | null;
-  done: boolean;
-  cursor: number;
-  total: number;
-}
+export type TestNextResponse = S["TestNextResponse"];
 
 /** Bestätigung einer abgegebenen Prüfungsantwort – bewusst OHNE Korrektheit (Feedback erst beim Abschluss). */
-export interface TestAnswerAck {
-  done: boolean;
-  cursor: number;
-  total: number;
-}
+export type TestAnswerAck = S["AnswerAck"];
 
-export interface AnswerDto {
-  itemIndex: number;
-  givenAnswer?: string | null;
-  wasKnown?: boolean | null;
-}
+export type AnswerDto = S["AnswerDto"];
 
-export interface ItemOutcome {
-  itemIndex: number;
-  prompt: string;
-  expected: string;
-  givenAnswer: string | null;
-  wasCorrect: boolean;
-}
+export type ItemOutcome = S["ItemOutcome"];
 
-export interface TestSubmitResponse {
-  attemptId: number;
-  stage: number;
-  totalItems: number;
-  correctItems: number;
-  scorePercent: number;
-  passed: boolean;
-  passPercent: number;
-  items: ItemOutcome[];
-}
+export type TestSubmitResponse = S["SubmitResponse"];
 
 // ---- Sohn-Wallet ----
 
-export type PointKind =
-  // Vollständig gegen PointKind in Pugling.Contracts: ShopCoins/ShopGems/ObjectiveCoins/ObjectiveGems
-  // fehlten hier bisher – pointKindLabel fiel für sie stillschweigend auf den Rohwert zurück.
-  | "Base" | "Manual" | "Goal"
-  | "Combo" | "Speed" | "Mission" | "Achievement" | "SkinPurchase"
-  | "ShopCoins" | "ShopGems" | "ManualGems" | "GoalPenalty"
-  | "ObjectiveCoins" | "ObjectiveGems";
+export type PointKind = S["PointKind"];
 
 /** Die beiden Währungen der App (Münzen fürs echte Leben, Gems für Kosmetik). */
-export type Currency = "Coins" | "Gems";
+export type Currency = S["Currency"];
 
-export interface WalletEntry {
-  id: number;
-  amount: number;
-  kind: PointKind;
-  reason: string;
-  createdAt: string;
-}
+export type WalletEntry = S["MyPointsEntryResponse"];
+
+/** Dieselbe Zeile aus Vater-Sicht: sie nennt zusätzlich das Kind (`grantPoints`). */
+export type ChildPointsEntry = S["PointsEntryResponse"];
 
 /** Reiner Kontostand des Sohns (GET me/points). Die Buchungen liegen unter me/points/entries. */
-export interface WalletBalance {
-  childId: number;
-  coins: number;
-  gems: number;
-}
+export type WalletBalance = S["WalletResponse"];
 
 /** Kombinierte Konto-Sicht des Vaters (GET children/{id}/points): Salden + eingebettete Buchungen. */
-export interface Wallet {
-  childId: number;
-  coins: number;
-  gems: number;
-  entries: WalletEntry[];
-}
+export type Wallet = S["ChildPointsResponse"];
 
 // ---- Sohn-Skins (server-autoritativer Besitz) ----
 
 /** Skin-Zustand des Kindes vom Server: Gem-Stand, ausgerüsteter und freigeschaltete Skins. */
-export interface SkinState {
-  gems: number;
-  selected: string;
-  owned: string[];
-}
+export type SkinState = S["SkinStateResponse"];
 
 // ---- Anmerkungen beim Testen (api/v1/remarks) ----
 
 /** Einordnung einer Anmerkung. `Unspecified` ist der Regelfall – der Nachbereitungs-Skill zieht sie nach. */
-export type RemarkCategory = "Unspecified" | "Bug" | "Ui" | "Code" | "Content" | "Idea" | "Question";
+export type RemarkCategory = S["RemarkCategory"];
 
 /** Bearbeitungsstand einer Anmerkung. */
-export type RemarkStatus = "Open" | "Planned" | "Done" | "Rejected";
+export type RemarkStatus = S["RemarkStatus"];
 
 /** Der Kontext-Schnappschuss, den das Widget automatisch mitschickt. */
-export interface RemarkContext {
-  route: string | null;
-  appArea: string | null;
-  childId: number | null;
-  exerciseId: number | null;
-  studyPlanId: number | null;
-  planPositionId: number | null;
-  contextJson: string | null;
-  /** Fehler-Ringpuffer – ausschließlich Metadaten, nie Bodies/Header/Tokens (siehe `lib/remarks.ts`). */
-  recentErrorsJson: string | null;
-}
+export type RemarkContext = S["RemarkContextDto"];
 
 /** Eine Anmerkung, wie der Server sie ausliefert. */
-export interface Remark {
-  /** Die „Log-Id", die du mitnimmst: „Beantworte die Frage 123". */
-  id: number;
-  text: string;
-  category: RemarkCategory;
-  status: RemarkStatus;
-  /** Antwort aus Claude Code – bleibt auch bei `Planned` erhalten. */
-  answer: string | null;
-  answeredAt: string | null;
-  answeredBy: string | null;
-  parentRemarkId: number | null;
-  accountId: number;
-  authorRole: string;
-  /** Ob die Anmerkung vom eigenen Konto stammt. */
-  isOwn: boolean;
-  context: RemarkContext;
-  userAgent: string | null;
-  createdAt: string;
-  /** Beiträge im Verlauf – liegt an der Anmerkung, damit die Liste „3 Beiträge" ohne Nachladen zeigt. */
-  commentCount: number;
-}
+export type Remark = S["RemarkDto"];
 
 /** Herkunft eines Beitrags im Verlauf: der Mensch oder Claude. */
-export type RemarkCommentAuthor = "Human" | "Assistant";
+export type RemarkCommentAuthor = S["RemarkCommentAuthor"];
 
 /**
  * Ein Beitrag im Verlauf einer Anmerkung. Ergänzt `answer` (die eine belegte Auflösung), ersetzt sie nicht:
  * Analyse, Rückfrage und Umsetzungsnotiz stehen nebeneinander.
  */
-export interface RemarkComment {
-  id: number;
-  remarkId: number;
-  body: string;
-  author: RemarkCommentAuthor;
-  /** Anzeigename, z. B. `claude-code` oder der Kontoname. */
-  authorLabel: string | null;
-  authorAccountId: number | null;
-  /** Nur eigene Beiträge lassen sich zurücknehmen. */
-  isOwn: boolean;
-  createdAt: string;
-}
+export type RemarkComment = S["RemarkCommentDto"];
 
 /**
  * Einen Beitrag hinzufügen. **Nebenwirkung mit Absicht:** Ein `Human`-Beitrag zu einer erledigten oder
  * verworfenen Anmerkung holt sie zurück auf `Open` – so legt der Nachbereitungs-Skill sie wieder vor.
  */
-export interface CreateRemarkCommentDto {
-  body: string;
-  author?: RemarkCommentAuthor;
-  authorLabel?: string;
-}
+export type CreateRemarkCommentDto = S["CreateRemarkCommentDto"];
 
 /** Was beim Erfassen zum Server geht. Pflicht ist allein der Text. */
-export interface CreateRemarkDto {
-  text: string;
-  category?: RemarkCategory;
-  context?: Partial<RemarkContext>;
-  parentRemarkId?: number;
-}
+export type CreateRemarkDto = S["CreateRemarkDto"];
 
 /** Änderungen an einer Anmerkung. `null`/weglassen = „nicht angegeben"; geleert wird über `clear…`. */
-export interface UpdateRemarkDto {
-  text?: string;
-  category?: RemarkCategory;
-  status?: RemarkStatus;
-  answer?: string;
-  answeredBy?: string;
-  clearAnswer?: boolean;
-}
+export type UpdateRemarkDto = S["UpdateRemarkDto"];

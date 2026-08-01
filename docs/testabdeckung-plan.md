@@ -59,7 +59,7 @@ braucht E6 erst am Ende. E0 steht vor beiden, weil es ein offener Defekt ist.
 | **E4** | Werkzeugkette Frontend: beide devDependencies, ein Lockfile-Schritt | – (neu) | Frontend | keine |
 | **E5** | Wiedereintritts-Sperre + Tests auf die geteilten Primitive | [B-43](backlog/B-43-frontend-komponententests.md) | Frontend | E4 |
 | **E5'** | Doppelklick im Lehrplan-Assistenten (zwei Kinder, zwei Pläne) | [B-53](backlog/B-53-wizard-doppelklick.md) | Frontend | keine (mit E5 gebaut) |
-| **E6** | Vertragstypen generieren, `tsc` als Tor | [B-42](backlog/B-42-openapi-typen-generieren.md), Schritt 2 | Frontend | E3, E4, E5 |
+| **E6** | Vertragstypen generieren, `tsc` als Tor | [B-42](backlog/B-42-openapi-typen-generieren.md), Schritt 2 | **beides** (siehe E6) | E3, E4, E5 |
 
 ## Die drei geteilten Nähte
 
@@ -317,32 +317,100 @@ der Grund, warum der Ref den Doppelklick nicht abfing, obwohl er aussah, als tä
 dieses Umbaus hängt damit an `wizardFinish.test.ts` und `tsc` – nicht an einem Durchstich, und das auf dem
 Weg, den B-53 selbst „der Einstiegsweg" nennt. Als [B-58](backlog/B-58-assistent-e2e.md) erfasst.
 
-### E6 · Generierte Vertragstypen (B-42 Schritt 2)
+### E6 · Generierte Vertragstypen ([B-42](backlog/B-42-openapi-typen-generieren.md) Schritt 2) — **abgenommen 2026-08-01**
 
-Über den **Barrel** und in Scheiben (Katalog, Plan, Shop, Wallet, Medien …), jede Scheibe für sich
-`tsc -b`-grün – nicht „einmal am Stück".
+Über den **Barrel** und in Scheiben, `npm run gen:contract` als wiederholbarer Aufruf. Alle sieben
+Akzeptanzkriterien von B-42 sind belegt, die Gegenprobe zu AK 4 gemessen.
 
-E4 hat das Werkzeug installiert und einmal von Hand laufen lassen. **Der Aufruf gehört in ein npm-Skript**
-(Quellpfad `../docs/openapi/v1.json` festgenagelt) – solange er nur in einer Doku-Tabelle steht, ist er nicht
-wiederholbar, und E6 ist die Etappe, die ihn ohnehin braucht.
+**Die Messung, die vor dem Bauen verlangt war, hat die Etappe umgeschrieben.** Sie sollte `required`/`nullable`
+beziffern; stattdessen fand sie vier Mängel **im Dokument** – also in dem Artefakt, das E3 gerade zum Vertrag
+erklärt hatte. Der Weg zur Zahl:
 
-Drei Hand-Ausnahmen sind vorab bekannt, statt sie zu entdecken:
+| Stand | `tsc -b`-Fehler | Was dazwischen lag |
+| --- | --- | --- |
+| naiv generiert, 108 Aliase | **169** | – |
+| Ganzzahl-Union eingeengt | **36** | 158 der 169 kamen aus *einer* Ursache (siehe unten) |
+| drei Dokument-Mängel behoben | **6** | Enums, `required` trotz Vorgabewert, fehlende Erfolgsantworten |
+| `defaultNonNullable: false` | **1** | ein Vorgabewert heißt „optional", nicht „Pflicht" |
+| 179 Aliase (auch umbenannte) | **13 → 0** | die Umbenennungen brachten neue Information, siehe unten |
 
-- **Die Generika** `ExercisePayload<TConfig>`/`ExerciseResponse<TConfig>`: kein Benennungsproblem, sondern
-  Absicht – die Oberfläche kollabiert sie bewusst zu einem `CreateExercisePayload` mit `config: unknown`
-  (`types.ts:1063-1090`), weil der Typ zur Laufzeit aus dem Server-Manifest kommt.
-- **`[Flags] SchoolTypes`** (`Contracts/Common/LearnBaseTypes.cs:8-9`): serialisiert als
-  `"Gymnasium, Realschule"`, im Schema stehen aber die Einzelnamen. Das Frontend deklariert deshalb bewusst
-  `schoolTypes: string` und baut den String von Hand (`ExerciseEditModal.tsx:102`/`:142`). Generiert entstünde
-  hier ein **falsches Rot an einer korrekten Stelle**.
-- **`required`/`nullable` ist die unvermessene Größe**, nicht die Generika: `Program.cs:297-303` rechnet
-  `schema.Required` aus der Nullability neu. Jedes zusätzliche `?` in den generierten Typen ist ein
-  `strictNullChecks`-Fehler an jeder Lesestelle. **Vor der Schätzung von E6 einmal `openapi-typescript` über
-  das Dokument laufen lassen und `tsc -b` die Fehler zählen lassen** – das ist billig und macht die Etappe
-  erst belastbar.
+**Die unvermessene Größe war nicht `required`/`nullable`, sondern `type: ["integer","string"]`.** Jede Ganzzahl
+steht so im Dokument, samt Ziffern-`pattern` – 579 Eigenschaften in 152 Schemata. Das ist keine Merkwürdigkeit,
+sondern die Wahrheit über die *Eingabe*: `JsonSerializerDefaults.Web` schaltet
+`NumberHandling.AllowReadingFromString` ein, der Server nimmt auch `"5"` für eine Id. Geschrieben wird immer
+eine Zahl. Ungefiltert wäre jede Id `number | string` und jedes `id + 1`, jedes `<select value={id}>`, jeder
+Vergleich ein Fehler. **Entschieden:** eingeengt wird im Generator-Skript (eine Stelle, mit Begründung), nicht
+im Dokument – das Dokument bleibt wahr, und kein anderer Konsument wird von einer stillen Umschreibung
+überrascht.
 
-Gute Nachricht, belegt: Enums überleben. `Program.cs:284-295` setzt `schema.Type = String` **und**
-`schema.Enum = [names]`; daraus werden String-Literal-Unions, kein Typverlust gegenüber heute.
+#### Vier Mängel im Vertragsdokument, alle von E6 gefunden
+
+1. **Sechs Enums waren `integer` ohne Werteliste.** `Nullable<TEnum>` ist nicht `IsEnum`, und der Generator
+   erreicht `DayOfWeek`/`Genus`/`InterestFacet`/`KlassenarbeitStatus`/`LearningMethod`/`ObjectiveKind` über
+   ihre nullable Verwendung. Zwei Zeilen in `Program.cs`; jetzt 36 von 36 statt 30 von 36. Die Zusage „Enums
+   überleben" aus der Planung war also zu **83 %** richtig – und Swagger log an diesen sechs Stellen mit.
+2. **60 von 60 Eigenschaften mit Vorgabewert standen als `required`.** Betroffen war **jeder**
+   `clear<Feld>`-Schalter der PATCH-Semantik und `CreateMediaVariantDto.format = "webp"`: das Dokument
+   verlangte, was der Server selbst einsetzt. Die Nullability allein sieht das nicht, der Vorgabewert steht
+   aber schon im Schema.
+3. **167 von 323 Operationen hatten keine Erfolgsantwort** – die Hälfte der API, alle Logins darunter. Ursache:
+   sobald eine Action **irgendein** `[ProducesResponseType]` deklariert, ersetzt das die abgeleitete Menge
+   statt sie zu ergänzen. Gerade die sorgfältig dokumentierten Actions verloren ihre `200`. Das ist der
+   schwerste Fund, weil er **E3s eigenes Tor halb blind machte**: ein umbenanntes Feld einer Antwort bewegte
+   das Dokument für diese 167 Operationen nicht, und 48 Schemata fehlten ganz (`LoginResponse`, `MeResponse`,
+   `ItemProgress` …). Behoben mit einer `IActionModelConvention` statt 167 Attributen.
+4. **`Metric` und `Kind` reisten als `string`.** `KeyResultResponse`/`ObjectiveResponse` riefen `.ToString()`
+   auf echten Enums; das Frontend hatte beide von Hand eingeengt, und diese Einengung war ungedeckt. Jetzt
+   tragen sie ihre Enums – wire-identisch, aber mit Werteliste. `Status`/`Scope` bleiben `string` (die Werte
+   sind kleingeschrieben, ein Enum wäre ein Vertragsbruch) → [B-59](backlog/B-59-status-strings-ohne-werteliste.md).
+
+Ein fünfter Mangel derselben Familie bleibt bewusst offen, weil seine Reparatur eine ganze Enum-Sorte betrifft:
+`[Flags] SchoolTypes` steht als Liste der sieben Einzelnamen im Schema, über die Leitung geht aber
+`"Realschule, Gymnasium"` – das Dokument ist hier nicht lückenhaft, sondern **falsch**
+([B-60](backlog/B-60-flags-enum-im-dokument.md), vom Review belegt).
+
+**Was die vier Reparaturen hält.** Nicht das Diff-Tor: das fängt eine Rücknahme, winkt aber einen *neuen* Fall
+derselben Klasse durch, weil sich das Dokument dann „richtig" ändert. Also vier Zusicherungen über das geparste
+Dokument (`ContractDocumentTests`, der 624. Test), jede rot geprobt – die Meldungen lauteten „**167 operations**
+document no 2xx", „presumably nullable enums: **DayOfWeek, Genus, LearningMethod**" und die Liste der
+`required`-trotz-Vorgabewert. Dass die zweite Probe nur **drei** der sechs Enums nennt, ist die Lehre über den
+Mangel: er ist **reihenfolgeabhängig**. Nachdem Mangel 3 behoben war, erreicht der Generator drei der sechs über
+eine der neu dokumentierten Antworten zuerst nicht-nullable – sie überleben heute auch ohne die Reparatur, und
+morgen vielleicht nicht.
+
+#### Zwei Drifts, die schon Schaden anrichteten
+
+- **`ExerciseSummary.DefaultItemCount` gab es nicht.** `PlanPositions.tsx` liest es an zwei Stellen, um die
+  Item-Zahl einer neuen Position vorzubelegen – der Wert war immer `undefined`, das Feld blieb **stumm leer**.
+  Genau der Fall, für den B-42 gebaut wurde, nur rückwärts gefunden. Feld ergänzt (es liegt auf
+  `ExerciseDetail` seit immer).
+- **`UpdateClassTestDto.ClearGrade` hatte keinen Vorgabewert**, anders als jeder andere `clear`-Schalter im
+  Repo. Nach Mangel 2 blieb es darum als einziges `required` stehen – die Hausregel hatte hier eine Lücke.
+
+#### Was die Etappe **nicht** einlöst
+
+`tsc` bewacht alle Lesepfade und **52 von 86** Schreibpfaden. Die anderen 34 bauen ihren Rumpf als
+Objekt-Literal an `http(…, body?: unknown)`; dort gibt es nichts zu prüfen. Das ist gezählt und an
+[B-24](backlog/B-24-frontend-unknown-field.md) übergeben, deren Zuschnitt damit von „alle Masken durchklicken"
+auf „34 Aufrufe annotieren" schrumpft.
+
+#### Die Hand-Ausnahmen: elf, nicht drei
+
+Vorab bekannt waren die Generika und `[Flags] SchoolTypes` – beide bestätigt. Dazu kamen neun, und die
+Sortierung ist lehrreicher als die Liste: **der Vertrag sagt nur `string`** (`Role`, `GoalStatus`), **das
+Schema kann die Form nicht ausdrücken** (`Paged<T>` – die Gesamtzahl reist im `X-Total-Count`-Header),
+**es ist gar kein Schema** (`ExerciseSearchParams`/`VocabularySearchParams` und die drei Sortierschlüssel –
+Query-Parameter stehen je Operation einzeln). Sie liegen in `src/lib/uiTypes.ts`, je mit einem Satz Grund.
+
+Von den 190 Hand-Typen wurden **128 namensgleich** und **51 über eine belegte Umbenennung** aliasiert
+(`ExerciseGrant → GrantResponse`, `Wallet → ChildPointsResponse`, …). „Belegt" heißt: gleiche **Feldmenge**,
+maschinell verglichen – nicht nach Namensähnlichkeit geraten. Zwei Fälle blieben mehrdeutig und sind im Code
+vermerkt: `InventoryItem` bedient zwei strukturgleiche Schemata (Vater- und Sohn-Sicht), aliasiert ist die
+Vater-Sicht.
+
+Gegenprobe zu AK 4, gemessen: `ShopArticleDto.Description` → `Beschreibung` umbenannt → Backend **623/623
+grün** (der Vertrag darf sich in `v1` frei ändern), Frontend rot mit
+`VaterShop.tsx(132,26): Property 'description' does not exist` – Datei, Zeile, Feld **und** der neue Name.
 
 ## Nicht im Paket
 

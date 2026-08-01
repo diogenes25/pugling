@@ -6,6 +6,10 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "gen:contract": "node scripts/gen-contract.mjs",
+    "postinstall": "node scripts/gen-contract.mjs",
+    "prebuild": "node scripts/gen-contract.mjs",
+    "predev": "node scripts/gen-contract.mjs",
     "preview": "vite preview",
     "test:e2e": "playwright test",
     "test": "vitest run",

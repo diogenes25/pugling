@@ -22,7 +22,10 @@ public record CreateClassTestDto(int ChildId, string Title, string? Topic, int? 
 
 /// <summary>Partial change – among other things, recording a grade and setting status. <c>ClearGrade</c> deletes the grade.</summary>
 public record UpdateClassTestDto(string? Title, string? Topic, int? SubjectId, DateOnly? ScheduledDate,
-    KlassenarbeitStatus? Status, decimal? Grade, bool ClearGrade, string? GradeComment);
+    // ClearGrade has a default like every other clear switch (UpdateChildDto and friends): omitting it must
+    // mean "do not clear". Without one the contract declares it REQUIRED, and a form that only sends a grade
+    // would have to send `clearGrade: false` as well.
+    KlassenarbeitStatus? Status, decimal? Grade, bool ClearGrade = false, string? GradeComment = null);
 
 /// <summary>Input for directly assigning exercises to a class test.</summary>
 public record AssignExercisesDto(List<int> ExerciseIds);

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { api, errorMessage } from "../lib/api";
 import { confirmAction } from "../lib/ui";
 import { ACTION_EMOJI, priceLabel, unitAmount } from "../lib/shop";
-import type { InventoryItem, MyActivation, ShopAvailableListing, ShopView } from "../lib/types";
+import type { MyInventoryItem, MyActivation, ShopAvailableListing, ShopView } from "../lib/types";
 import { useSohn } from "./SohnApp";
 
 type Tab = "buy" | "stuff" | "requests";
@@ -65,11 +65,12 @@ export function SohnShop() {
     }
   }
 
-  async function requestActivation(item: InventoryItem, quantity: number) {
+  async function requestActivation(item: MyInventoryItem, quantity: number) {
     if (busy) return;
     // Papa hat den Artikel gelöscht: die Einheiten bleiben (bezahlt ist bezahlt), einlösen geht aber
     // nicht mehr, weil die Anfrage über die Artikel-Id läuft. Lieber sagen, warum, als 404 zeigen.
-    if (item.shopArticleId === null) {
+    // `== null` fängt beides: der Vertrag erlaubt bei einem nullable Feld auch das Fehlen des Schlüssels.
+    if (item.shopArticleId == null) {
       flash("Das gibt es bei Papa nicht mehr – frag ihn direkt danach. 🙋");
       return;
     }
@@ -171,9 +172,9 @@ function BuyTab({ listings, busy, onBuy }: {
 }
 
 function StuffTab({ inventory, busy, onActivate }: {
-  inventory: InventoryItem[];
+  inventory: MyInventoryItem[];
   busy: boolean;
-  onActivate: (item: InventoryItem, quantity: number) => void;
+  onActivate: (item: MyInventoryItem, quantity: number) => void;
 }) {
   if (inventory.length === 0)
     return <p className="sub">Noch nichts gekauft. Hol dir im Tab <b>Kaufen</b> etwas Schönes! 🎁</p>;
@@ -189,9 +190,9 @@ function StuffTab({ inventory, busy, onActivate }: {
 }
 
 function InventoryRow({ item, busy, onActivate }: {
-  item: InventoryItem;
+  item: MyInventoryItem;
   busy: boolean;
-  onActivate: (item: InventoryItem, quantity: number) => void;
+  onActivate: (item: MyInventoryItem, quantity: number) => void;
 }) {
   const [qty, setQty] = useState(item.quantity);
   const clamped = Math.min(Math.max(1, qty || 1), item.quantity);

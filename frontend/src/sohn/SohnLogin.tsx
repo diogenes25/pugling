@@ -26,7 +26,7 @@ export function SohnLogin() {
     try {
       const res = await api.loginChild(id, pin);
       localStorage.setItem(LAST_ID, String(id));
-      signIn(res);
+      if (!signIn(res)) setError("Mit diesem Konto geht die Arcade nicht. Frag Papa!");
     } catch (e) {
       setError(e instanceof ApiError && e.status === 401 ? "Nummer oder PIN falsch." : "Login fehlgeschlagen.");
       setPin("");

@@ -186,8 +186,11 @@ jobs:
         working-directory: frontend
         run: npm ci --legacy-peer-deps
 
-      # `npm run build` = `tsc -b && vite build`. Der Typecheck ist der eigentliche Gewinn, der
-      # Bundle-Build der Nachweis, dass auch das Deploy-Artefakt entstehen kann.
+      # `npm run build` = `prebuild` (Vertragstypen aus docs/openapi/v1.json erzeugen) + `tsc -b` +
+      # `vite build`. Der Typecheck ist der eigentliche Gewinn – **er ist seit B-42/E6 das Vertragstor des
+      # Frontends**: ein umbenanntes Feld im Backend bricht hier, nicht erst in Playwright.
+      # **Kein `--ignore-scripts` bei `npm ci` oben**: `src/lib/contract.ts` ist nicht eingecheckt und
+      # entsteht in `postinstall`/`prebuild`. Ohne die Skripte fehlt die Datei und jeder Import ist rot.
       - name: Typecheck + Build
         working-directory: frontend
         run: npm run build

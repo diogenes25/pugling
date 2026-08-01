@@ -71,7 +71,9 @@ function LoginForm() {
     try {
       const res = await api.loginAdult(Number(adultId), pin);
       localStorage.setItem(LAST_ID_KEY, adultId);
-      signIn(res);
+      // Unbekannte Rolle: PIN war richtig, aber diese App hat kein Zuhause dafür. Ohne Meldung stünde der
+      // Vater vor einem Formular, das auf den richtigen Knopfdruck nicht reagiert.
+      if (!signIn(res)) setError("Dieses Konto hat eine Rolle, die diese App nicht kennt.");
     } catch (err) {
       setError(err instanceof ApiError && err.status === 401 ? "Id oder PIN falsch." : "Login fehlgeschlagen.");
     } finally {
@@ -135,7 +137,8 @@ function RegisterForm({ onRegistered }: { onRegistered: (id: number) => void }) 
       localStorage.setItem(LAST_ID_KEY, String(id));
       // Direkt anmelden: die Registrierung liefert kein Token, und ein Zwischenschritt „jetzt einloggen"
       // wäre genau die Stelle, an der die frisch vergebene Id verloren geht.
-      signIn(await api.loginAdult(id, pin));
+      if (!signIn(await api.loginAdult(id, pin)))
+        setError("Angelegt, aber die Anmeldung liefert eine unbekannte Rolle – bitte neu anmelden.");
     } catch (err) {
       setError(errorMessage(err));
     } finally {

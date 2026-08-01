@@ -4,6 +4,11 @@ dist/
 dev-dist/
 *.tsbuildinfo
 
+# Die generierten Vertragstypen. Absichtlich NICHT eingecheckt: die Quelle (docs/openapi/v1.json) ist
+# eingecheckt und von einem CI-Tor bewacht, also kann aus ihr nichts driften, was ein zweites Tor bräuchte.
+# Erzeugt wird bei `postinstall`, `predev` und `prebuild` – wer frisch klont, hat die Datei nach `npm install`.
+src/lib/contract.ts
+
 # Playwright / E2E-Artefakte
 test-results/
 playwright-report/

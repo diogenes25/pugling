@@ -27,7 +27,9 @@ builder.Host.UseSerilog((context, services, config) => config
     .WriteTo.File(new CompactJsonFormatter(), "logs/pugling-.clef",
         rollingInterval: RollingInterval.Day, retainedFileCountLimit: 14, shared: true));
 
-builder.Services.AddControllers()
+builder.Services.AddControllers(o =>
+        // Why a convention and not an attribute per action: see SuccessResponseConvention.
+        o.Conventions.Add(new SuccessResponseConvention()))
     .AddJsonOptions(o =>
     {
         o.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
@@ -288,9 +290,12 @@ builder.Services.AddOpenApi(o =>
     // show them readably (and the 400 message "allowed values: …" has its counterpart in the docs).
     o.AddSchemaTransformer((schema, context, _) =>
     {
-        if (context.JsonTypeInfo.Type.IsEnum)
+        // Nullable<TEnum> is NOT IsEnum - so an enum the generator reaches through a "TEnum?" field first
+        // ended up as bare type integer without values, although the API sends the name.
+        var enumType = Nullable.GetUnderlyingType(context.JsonTypeInfo.Type) ?? context.JsonTypeInfo.Type;
+        if (enumType.IsEnum)
         {
-            var names = EnumSchemaHelp.AllowedValues(context.JsonTypeInfo.Type);
+            var names = EnumSchemaHelp.AllowedValues(enumType);
             // The API accepts/returns enums as STRINGS (the global JsonStringEnumConverter); otherwise the
             // generator annotates them as integer without a value list - so write reality into the schema:
             // string + explicit enum values, plus the values in the description for Swagger/Scalar.
@@ -309,8 +314,25 @@ builder.Services.AddOpenApi(o =>
             // document is checked in and diffed (docs/openapi/README.md), that order is now part of a gate;
             // HashSet happened to enumerate in insertion order, which is an implementation detail, not a
             // promise.
+            // A parameter with a DEFAULT VALUE is optional, however non-nullable it may be: omitting
+            // `bool ClearBirthYear = false` or `string Format = "webp"` is legal and the server fills in the
+            // default. Nullability alone cannot see that; the generator has already written the default into
+            // the property schema, so that is the reliable signal. An explicitly `required`/[JsonRequired]
+            // member keeps precedence - otherwise this would silently contradict the promise that
+            // EnumSchemaHelp.RequiredJsonPropertyNames makes.
+            // KNOWN LIMIT: `required` is a statement per SCHEMA, "has a default" one about binding the
+            // REQUEST. Where one schema serves both directions, a field that is always present in the
+            // response now looks optional - today that is only ArithmeticProblem.Tolerance.
+            var explicitlyRequired = context.JsonTypeInfo.Properties
+                .Where(p => p.IsRequired)
+                .Select(p => p.Name)
+                .ToHashSet(StringComparer.Ordinal);
+            var withDefault = schema.Properties
+                .Where(p => p.Value.Default is not null && !explicitlyRequired.Contains(p.Key))
+                .Select(p => p.Key);
             schema.Required = new SortedSet<string>(
-                EnumSchemaHelp.RequiredJsonPropertyNames(context.JsonTypeInfo), StringComparer.Ordinal);
+                EnumSchemaHelp.RequiredJsonPropertyNames(context.JsonTypeInfo).Except(withDefault),
+                StringComparer.Ordinal);
         }
         return Task.CompletedTask;
     });

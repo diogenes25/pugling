@@ -12,12 +12,26 @@ interface Session {
 
 interface AuthContextValue {
   session: Session | null;
-  signIn: (login: LoginResponse) => void;
+  /**
+   * Übernimmt die Anmeldung. Gibt `false` zurück, wenn der Server eine Rolle liefert, die diese App nicht
+   * kennt – der Aufrufer **muss** das melden, sonst sieht ein gültiger Login wie „nichts passiert" aus.
+   */
+  signIn: (login: LoginResponse) => boolean;
   signOut: () => void;
 }
 
 const SESSION_KEY = "pugling.session";
 const AuthContext = createContext<AuthContextValue | null>(null);
+
+/**
+ * Ist die Rolle eine, die diese Oberfläche kennt? Nötig an **zwei** Stellen, und aus zwei Gründen: aus dem
+ * `localStorage` kommt eine womöglich veraltete Sitzung, und aus dem Login kommt laut Vertrag ein nackter
+ * `string` (`LoginResponse.Role` ist im Backend kein Enum, sondern eine Konstante). Statt zu casten wird
+ * geprüft – eine unbekannte Rolle führt zum Re-Login, nicht zu einer Sitzung ohne Zuhause.
+ */
+function isRole(value: string): value is Role {
+  return value === "Supervisor" || value === "Creator" || value === "Student";
+}
 
 function load(): Session | null {
   try {
@@ -28,7 +42,7 @@ function load(): Session | null {
     if (new Date(s.expiresAt).getTime() < Date.now()) return null;
     // Sessions mit einer nicht mehr gültigen Rolle (z. B. altes "Vater"/"Sohn" vor der Ebenen-Umstellung)
     // verwerfen → sauberer Re-Login, statt den Nutzer an einem Guard in den falschen Login zu werfen.
-    if (s.role !== "Supervisor" && s.role !== "Creator" && s.role !== "Student") return null;
+    if (!isRole(s.role)) return null;
     return s;
   } catch {
     return null;
@@ -59,12 +73,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const value = useMemo<AuthContextValue>(() => ({
     session,
     signIn: (login) => {
+      if (!isRole(login.role)) return false;
       const s: Session = {
         token: login.token, role: login.role, id: login.id, name: login.name, expiresAt: login.expiresAt,
       };
       localStorage.setItem(SESSION_KEY, JSON.stringify(s));
       setToken(s.token);
       setSession(s);
+      return true;
     },
     signOut: () => {
       localStorage.removeItem(SESSION_KEY);

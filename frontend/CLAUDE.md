@@ -1,33 +1,39 @@
 # Frontend (Vite + React + TS + PWA)
 
-Diese Datei lädt nur, wenn unter `frontend/` gearbeitet wird – die Landkarte der Oberfläche gehört
-nicht in jede Backend-Sitzung. Der Rahmen (API-First, Ebenen, Konventionen) steht in der
+Lädt nur bei Arbeit unter `frontend/`. Der Rahmen (API-First, Ebenen, Konventionen) steht in der
 [CLAUDE.md im Repo-Root](../CLAUDE.md).
 
 ```bash
-cd frontend && npm install        # einmalig
-cd frontend && npm run dev         # http://localhost:5173, /api-Proxy → :5200 (Backend muss laufen)
-cd frontend && npm run build       # tsc -b && vite build (Typecheck + Prod-Build)
-cd frontend && npm test            # Vitest (src/**/*.test.ts(x), happy-dom) – Logik + Komponenten/Hooks
-cd frontend && npm run test:e2e    # Playwright: startet Backend (Temp-DB) + Vite, fährt den Vater→Sohn-Loop
+cd frontend            # alle Befehle von dort
+npm install            # einmalig; erzeugt dabei auch src/lib/contract.ts
+npm run dev            # http://localhost:5173, /api-Proxy → :5200 (Backend muss laufen)
+npm run build          # tsc -b && vite build (Typecheck + Prod-Build)
+npm test               # Vitest (src/**/*.test.ts(x), happy-dom) – Logik + Komponenten/Hooks
+npm run test:e2e       # Playwright: startet Backend (Temp-DB) + Vite, fährt den Vater→Sohn-Loop
 ```
 
-**Anmerkungs-Widget** (`src/components/RemarkWidget.tsx`, Alt+A, im Vater-Web **und** in der Sohn-Arcade —
-dort mit `bottomOffset={96}`, sonst überdeckt es die klebende `.sohn-nav`): erfasst Beobachtungen beim Testen
-samt Kontext-Schnappschuss und Fehler-Ringpuffer, zeigt die Log-Id fürs Einlösen in Claude Code. Nur
-`import.meta.env.DEV`. Für E2E über `localStorage["pugling.remarks.off"]="1"` abgeschaltet (gesetzt in
-`playwright.config.ts`); `e2e/anmerkungen.spec.ts` hebt das für sich auf.
-Plan: [docs/anmerkungen-plan.md](../docs/anmerkungen-plan.md).
+**Vertragstypen kommen aus dem Dokument, nicht aus der Hand.** `npm run gen:contract` erzeugt
+`src/lib/contract.ts` aus `docs/openapi/v1.json` (bei `postinstall`/`predev`/`prebuild`, gitignored);
+[src/lib/types.ts](src/lib/types.ts) ist nur noch ein Barrel aus `S["…"]`-Aliasen. Ein neues DTO
+wird **nicht hier getippt**: Backend bauen, Testlauf schreibt das Dokument, generieren, eine Alias-Zeile.
+Von Hand bleiben elf Typen in [src/lib/uiTypes.ts](src/lib/uiTypes.ts) – **je mit Grund**, sonst gehört es
+in den Barrel. Grenze: `http(…, body?: unknown)` prüft **keinen** Objekt-Literal-Rumpf (34 von 86,
+[B-24](../docs/backlog/B-24-frontend-unknown-field.md)).
+
+**Anmerkungs-Widget** (`src/components/RemarkWidget.tsx`, Alt+A, nur `import.meta.env.DEV`): erfasst
+Beobachtungen beim Testen und zeigt die Log-Id fürs Einlösen in Claude Code. In der Sohn-Arcade mit
+`bottomOffset={96}`, sonst verdeckt es die `.sohn-nav`; für E2E per `localStorage["pugling.remarks.off"]="1"`
+aus (`anmerkungen.spec.ts` hebt das für sich auf). Plan: [anmerkungen-plan.md](../docs/anmerkungen-plan.md).
 
 **Feld-Erklärungen** (`src/components/InfoHint.tsx` + `src/lib/fieldHelp.ts`): Erklärungsbedürftige
-Eingabefelder tragen statt `<label>` ein `<FieldLabel htmlFor=… topic="…">`, das ein „ⓘ" mit Popover
-anhängt (Checkbox-Zeilen: `<span className="label-row">` um `<label className="checkline">` + `<InfoHint>`).
-**Der Text steht nie am Feld, sondern in `fieldHelp.ts`** – dieselbe Größe wird an mehreren Stellen
-eingestellt (Assistent wie Plan-Seite), und zwei Formulierungen desselben Begriffs werden zwei Bedeutungen;
-`HelpTopic` lässt einen Tippfehler beim Übersetzen auffallen.
-Der Hinweis-Knopf heißt `Erklärung zu „<Feldname>"` – **`getByLabel` in Tests darum mit `{ exact: true }`**,
-sonst trifft der Teilstring-Vergleich den Knopf statt das Eingabefeld.
-E2E: [e2e/feldhilfe.spec.ts](e2e/feldhilfe.spec.ts) prüft Feld → *richtiger* Text, nicht „irgendein Popover".
+Eingabefelder tragen statt `<label>` ein `<FieldLabel htmlFor=… topic="…">`, das ein „ⓘ" mit Popover anhängt
+(Checkbox-Zeile: `<span className="label-row">` um `<label className="checkline">` + `<InfoHint>`).
+**Der Text steht nie am Feld, sondern in `fieldHelp.ts`** – dieselbe Größe wird mehrfach eingestellt
+(Assistent wie Plan-Seite), und zwei Formulierungen desselben Begriffs werden zwei Bedeutungen; `HelpTopic`
+lässt einen Tippfehler beim Übersetzen auffallen. Der Hinweis-Knopf heißt
+`Erklärung zu „<Feldname>"` – **`getByLabel` in Tests darum mit `{ exact: true }`**, sonst trifft der
+Teilstring-Vergleich den Knopf statt das Eingabefeld. E2E:
+[e2e/feldhilfe.spec.ts](e2e/feldhilfe.spec.ts) prüft Feld → *richtiger* Text, nicht „irgendein Popover".
 
 **Komponenten/Hooks testet React Testing Library** (`render`, `renderHook`); der Test liegt beim Geprüften.
 Tragend: `setupFiles: ["src/test-setup.ts"]` räumt das DOM zwischen den Fällen ab – ohne `globals: true` tut
@@ -38,34 +44,34 @@ Regeln hier, Wege durch die App bei Playwright. Klicks per `fireEvent`, nie `nod
 **Jeder Knopf, der eine Mutation auslöst, trägt `disabled={busy}`** – auch wenn `useAction` seinen
 Wiedereintritt selbst sperrt (`useRef`, synchron): es ist der Wartepunkt der Playwright-Actionability und der
 sichtbare Grund, warum eine verworfene zweite Aktion nicht wie „nichts passiert" aussieht. Die Sperre gilt je
-**Hook-Instanz**, in Listen mit geteilter `ActionState` also listenweit. Als **Regel**, nicht als Zustand:
-fünf Vater-Knöpfe (B-54) und die Sohn-Arcade (B-49) folgen ihr noch nicht.
+**Hook-Instanz**, in Listen mit *geteilter* `ActionState` also listenweit. Als **Regel**, nicht als Zustand:
+fünf Vater-Knöpfe (B-54) und
+die Sohn-Arcade (B-49) folgen ihr noch nicht.
 
 **Neue Abhängigkeiten bitte mit `--legacy-peer-deps` installieren:** `vite-plugin-pwa@0.21` deklariert
 Peer `vite@^3…^6`, installiert ist `vite@8` – jede Neuauflösung bricht sonst mit `ERESOLVE` ab
 (vorbestehend, der Build läuft trotzdem). **Das gilt auch für `npm ci`** und damit für jede frische
-Maschine: CI (`ci.yml`, Job `frontend`) und Deploy (`deploy-azure.yml`) installieren deshalb mit dem Flag.
-Ohne es scheiterte ein Deploy drei Wochen unbemerkt am Install –
-[docs/codequalitaet-gates-plan.md](../docs/codequalitaet-gates-plan.md) (D1).
+Maschine: CI (`ci.yml`, Job `frontend`) und Deploy (`deploy-azure.yml`) installieren deshalb mit dem Flag –
+ohne es scheiterte ein Deploy drei Wochen unbemerkt am Install
+([codequalitaet-gates-plan.md](../docs/codequalitaet-gates-plan.md), D1).
 **Preis des Flags: npm installiert fehlende Peers nicht** – jeder gebrauchte Peer muss selbst in den
 `devDependencies` stehen (darum `@testing-library/dom`; fehlt es, fällt der ganze Vitest-Lauf mit
 „Cannot find module").
 
-Rollen im SPA: `/` Produktseite, `/vater` Web-Admin, `/sohn` Arcade-PWA. API-Client + Types unter
-[src/lib/](src/lib/), kein HTTP daneben.
+Rollen im SPA: `/` Produktseite, `/vater` Web-Admin, `/sohn` Arcade-PWA.
+API-Client unter [src/lib/](src/lib/), kein HTTP daneben.
 
 **Zwei Konto-Arten** ([docs/lehrer-konto-plan.md](../docs/lehrer-konto-plan.md)): ein **Vater**-Konto trägt
 die Rollen Creator + Supervisor, ein **Lehrer**-Konto nur Creator. `session.role` (`Supervisor` | `Creator` |
 `Student`) entscheidet, was die Oberfläche zeigt: ein Lehrer sieht nur die Erstellen-Perspektive, keinen
-Umschalter und keinen Profil-Link. Wer eine neue Seite ergänzt, muss
-sie einer Perspektive zuordnen oder in `NEUTRAL_PREFIXES` eintragen – sonst leitet die Schranke ein
-Lehrer-Konto von ihr weg. Die Rechteprüfung bleibt beim Server; das Frontend zeigt nur keine Türen, die
-verschlossen sind.
+Umschalter und keinen Profil-Link. Wer eine neue Seite ergänzt, muss sie einer Perspektive zuordnen oder in
+`NEUTRAL_PREFIXES` eintragen – sonst leitet die Schranke ein Lehrer-Konto von ihr weg. Die Rechteprüfung
+bleibt beim Server; das Frontend zeigt nur keine Türen, die verschlossen sind.
 
-**Informationsarchitektur des Vater-Webs** ([docs/vater-perspektiven-plan.md](../docs/vater-perspektiven-plan.md)):
-Das Vater-Web hat **drei Perspektiven** – 👀 Betreuen (`/vater`), 🎯 Zuweisen (`/vater/plaene`),
-✏️ Erstellen (`/vater/inhalte`). Sie folgen den Ebenen des Produkts (Supervisor / Brücke / Creator) und
-sind **keine Rechte**, sondern eine Antwort auf „woran arbeite ich gerade".
+**Informationsarchitektur des Vater-Webs** ([vater-perspektiven-plan.md](../docs/vater-perspektiven-plan.md)):
+**Drei Perspektiven** – 👀 Betreuen (`/vater`), 🎯 Zuweisen (`/vater/plaene`), ✏️ Erstellen
+(`/vater/inhalte`). Sie folgen den Ebenen des Produkts und sind **keine Rechte**, sondern eine Antwort auf
+„woran arbeite ich gerade".
 
 **Die Architektur liegt als Daten in [src/vater/navigation.ts](src/vater/navigation.ts)** – ein neuer
 Bereich wird *dort* eingetragen, nicht in die Kopfzeile geschrieben. Die aktive Perspektive kommt aus dem
@@ -73,38 +79,34 @@ Bereich wird *dort* eingetragen, nicht in die Kopfzeile geschrieben. Die aktive 
 der falschen Perspektive. Eine neue Unterseite, die nicht selbst Nav-Eintrag ist, braucht darum einen
 Eintrag in `EXTRA_ROUTES` – sonst springt die Navigation auf „Betreuen".
 
-Drei Regeln, die man beim Ergänzen kennen muss:
-**Eine Aktion bekommt keinen Nav-Eintrag** (deshalb stehen „+ Neue Übung" und „+ Neuer Plan" am Bestand,
-den sie erweitern); **ein Bereich, der mehrere Übungen trägt, ist ein eigener Ort** (darum liegen Katalog
-und Lückentexte neben dem Anlegen statt eingeklappt darin); und **eine Auswahl reist als Query mit**
+Drei Regeln beim Ergänzen: **eine Aktion bekommt keinen Nav-Eintrag** (deshalb stehen „+ Neue Übung" und
+„+ Neuer Plan" am Bestand, den sie erweitern); **ein Bereich, der mehrere Übungen trägt, ist ein eigener Ort**
+(darum liegen Katalog und Lückentexte neben dem Anlegen); und **eine Auswahl reist als Query mit**
 (`?childId=`, `?subjectId=&chapterId=`) – sonst steht im Zielformular wieder das erste Kind bzw. Fach.
 Anlegen und Verwalten sind getrennt: `/vater/exercises` verwaltet, `/vater/exercises/neu` legt an.
-Ein Vater entsteht **im UI**: `/vater` hat neben „Anmelden" den Modus „Neu registrieren" (gegen das anonyme
-`POST supervisor/adults`, meldet direkt an und nennt die neue Id — sie ist der Login-Name); das eigene
-Konto liegt unter `/vater/profil`. `/vater/kind/:id` ist der **Kind-Hub** (Stammdaten inkl. PIN, Bild-Freigabe,
-gewichtete Interessen) und verlinkt alles Kindbezogene per `?childId=`; darunter
-`/vater/kind/:id/lernstand` (plan-übergreifender Lernstand: schwache Wörter + Katalog-Drilldown) und
-`/vater/kind/:id/ziele` (Objectives/OKR mit ihren Etappen – die frühere zweite Ebene „Lernziel" ist mit
-dem DB-Umbau E13 gelöscht und vom Key Result beerbt).
+Ein Vater entsteht **im UI**: `/vater` hat neben „Anmelden" den Modus „Neu registrieren" (anonymes
+`POST supervisor/adults`, meldet direkt an und nennt die neue Id — sie ist der Login-Name); das eigene Konto
+liegt unter `/vater/profil`. `/vater/kind/:id` ist der **Kind-Hub** (Stammdaten, PIN, Bild-Freigabe,
+Interessen) und verlinkt alles Kindbezogene per `?childId=`, darunter `…/lernstand` (schwache Wörter +
+Katalog-Drilldown) und `…/ziele` (Objectives/OKR mit ihren Etappen; die alte Ebene „Lernziel" ist gelöscht
+und vom Key Result beerbt).
 **Alle Übungstypen des Servers sind im UI anlegbar** — Anzeigename und Routen-Segment kommen aus dem
 Typ-Manifest (`GET creator/exercise-types`, gelesen über [src/lib/exerciseTypes.ts](src/lib/exerciseTypes.ts)),
 **nicht** aus einer Tabelle im Frontend: der Schlüssel weicht von der Route ab (Aufsatz → `essays`), und drei
 Kopien liefen zwangsläufig auseinander. Die Formulare je Typ stehen in
 [src/vater/exerciseConfig.tsx](src/vater/exerciseConfig.tsx) (Hin- **und** Rückweg, siehe
-[wiki/08-erweitern.md](../wiki/08-erweitern.md)); `e2e/uebungstypen.spec.ts` vergleicht das
-Typ-Pulldown gegen das Manifest und schlägt fehl, sobald ein Server-Typ kein UI hat.
-**Material zurückziehen** (`PATCH creator/exercises/{id}/sharing`, nur Owner): der einzige Weg, eine Übung
-aus dem Verkehr zu nehmen – Löschen verweigert eine benutzte Übung zu Recht (laufende Pflichten dürfen nicht
-unter dem Kind wegbrechen). Zurückziehen stoppt nur **neue** Zuweisungen. Der Schalter sitzt in der
-Verwendungs-Anzeige neben der Auskunft, die ihn begründet; der Zustand steht als Pille in der Zeile.
+[wiki/08-erweitern.md](../wiki/08-erweitern.md)); `e2e/uebungstypen.spec.ts` schlägt fehl, sobald ein
+Server-Typ kein UI hat.
+**Material zurückziehen** (`PATCH creator/exercises/{id}/sharing`, nur Owner): der einzige Weg, eine Übung aus
+dem Verkehr zu nehmen – Löschen verweigert eine benutzte Übung zu Recht (laufende Pflichten dürfen nicht unter
+dem Kind wegbrechen). Es stoppt nur **neue** Zuweisungen; der Schalter sitzt neben der Verwendungs-Anzeige.
 
 **Wiederkehrende Falle bei Listen mit aufklappbaren Zeilen:** `useAsync` behält `data` über ein `reload`,
 setzt aber `loading` erneut. Wer `{loading ? "Lade…" : rows}` schreibt, hängt bei **jeder** Änderung alle
-Zeilen aus – aufgeklappte Bereiche und ihr Zustand sind weg. Der Platzhalter darf nur greifen, solange es
-noch keine Daten gibt (`loading && data === null`).
+Zeilen aus – aufgeklappte Bereiche sind weg. Der Platzhalter greift nur ohne Daten
+(`loading && data === null`).
 
-Übungen sind über `/vater/exercises` **bearbeitbar**
-(Metadaten per PUT — den geladenen `config`/`suggestedBonus`/`executePublic` mitschicken, sonst löscht der
-Vollersatz sie; Vokabelpaare einzeln über `…/vocabulary/{id}/items`, damit die Item-Ids und der Lernstand
-des Kindes erhalten bleiben). Das **Anlege**-Formular liegt daneben auf `/vater/exercises/neu` — wer einen
-neuen Typ ergänzt, braucht beide Wege: dort das Formular, im Dialog den Rückweg.
+Übungen sind über `/vater/exercises` **bearbeitbar**: Metadaten per PUT — den geladenen
+`config`/`suggestedBonus`/`executePublic` **mitschicken**, sonst löscht der Vollersatz sie; Vokabelpaare
+einzeln über `…/vocabulary/{id}/items`, sonst brechen Item-Ids und Lernstand des Kindes weg. Wer einen neuen
+Typ ergänzt, braucht beide Wege: das Formular auf `/vater/exercises/neu`, den Rückweg im Dialog.
