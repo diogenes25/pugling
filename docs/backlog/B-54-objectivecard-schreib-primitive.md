@@ -305,4 +305,4 @@ sind Prosa in Kommentaren). Und meine eigene Rechnung war um eins daneben: 79 âˆ
   Defekte, die beim Bauen von selbst herausfielen (die `useAsync`-Falle an zwei Stellen, drei KnÃ¶pfe mit
   demselben Namen, verlorene Eingabe nach einem Fehlschlag) und vier Reviewer-Befunde, darunter ein
   Wettlauf, den der neue Test jedes Mal geht. Zwei Reste sind als
-  [B-61](B-61-reste-der-schreib-primitiven-runde.md) abgelegt.
+  [B-61](B-61-reste-der-schreib-primitiven-runde.md) abgelegt. Commit `0d010f2`.
