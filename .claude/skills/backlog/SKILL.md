@@ -106,6 +106,13 @@ Danach in die Story schreiben: `## Entscheidungen`, nummeriert, jede mit **Begr�
 („Träger der Bildwahl ist die Vokabel. Folge: dasselbe Motiv wie auf der Karteikarte — gewollt. Kosten:
 ein vokabel-basierter Batch-Pfad im `MediaSelector`."). Eine Entscheidung ohne Kosten ist eine Meinung.
 
+**Wenn die Runde nicht trägt:** Merkst du beim Grillen, dass die offenen Punkte voneinander abhängen und
+die Kette nicht in eine Sitzung passt — jede Antwort legt zwei neue Fragen frei —, dann **schlage die
+Karte vor** (`/wayfinder`, Abschnitt „Karten" im README) und warte auf die Entscheidung des Nutzers.
+Nicht von selbst umschwenken: eine Karte kostet eine eigene Sitzung fürs Kartieren. Umgekehrt gilt
+dasselbe — eine Story, deren Punkte unabhängig sind, wird gegrillt, nicht kartiert, egal wie viele es
+sind.
+
 ### `/backlog neu "…"` — Idee aufnehmen
 
 Reibungsfrei: Titel, ein Absatz, `quelle:`, `prio` (fragen, wenn nicht klar), `unverifiziert: true`,
@@ -156,7 +163,7 @@ Regeln der Ernte:
   in UTC (`CLAUDE.md`, „Zeit/UTC"), also auch hier.
 - Nach jeder Änderung an einer Story: `bash .claude/scripts/backlog-index.sh`. Der Index ist generiert;
   von Hand gepflegt driftet er.
-- Story-Dateien liegen unter `docs/` und werden von `markdownlint-cli2` geprüft (CI-Job „Markdown-Lint"):
+- Story- **und Ticket**-Dateien liegen unter `docs/` und werden von `markdownlint-cli2` geprüft (CI-Job „Markdown-Lint"):
   Leerzeilen um Listen/Überschriften/Codeblöcke, Tabellen mit führendem und schließendem Pipe.
 
 ## Verhältnis zu den Nachbar-Werkzeugen
@@ -167,5 +174,10 @@ Regeln der Ernte:
 - **`anmerkungen`** beantwortet Beobachtungen aus dem Widget. Wo aus einer Beobachtung *Arbeit* wird, endet
   sie hier als Story.
 - **`grilling`** liefert die Entscheidungen für die Stufe `gegrillt`.
+- **`wayfinder`** ist dieselbe Stufe für ein Vorhaben, das nicht in eine Sitzung passt: Die Karte **ist**
+  die Story, ihre Entscheidungs-Tickets liegen unter `docs/backlog/karten/B-<nn>/` und stehen nicht im
+  Index. Er **ersetzt `grilling` nicht**, er ruft ihn — `grilling` ist sein Normalfall-Ticket-Typ. Die
+  Abbildung auf diesen Bereich steht im README unter „Wayfinding operations"; sein mitgelieferter
+  `.scratch/`-Tracker gilt hier nicht.
 - **`pugling-reviewer`** (Backend) und **`frontend-reviewer`** (React) prüfen vor der Abnahme Korrektheit
   und Konventionen — welcher, sagt `wo`.

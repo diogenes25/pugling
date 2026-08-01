@@ -227,7 +227,9 @@ Lernstand – positionsgebunden *und* plan-übergreifend je Vokabel-Item.
   im bestehenden Muster (kein Parallel-Stack), siehe [wiki/08-erweitern.md](wiki/08-erweitern.md).
 - **Neue Idee? Nach [docs/backlog/](docs/backlog/README.md)** – nicht als „offen:"-Vermerk in eine Notiz
   oder ein Plandokument. `/backlog` treibt eine Story **eine** Stufe weiter (idee → ausformuliert →
-  gegrillt → geschaetzt → in-arbeit → abgenommen); Eintrittsbedingungen stehen dort.
+  gegrillt → geschaetzt → in-arbeit → abgenommen); Eintrittsbedingungen stehen dort. Passt ein Vorhaben
+  nicht in eine Sitzung, läuft `gegrillt` als **Karte** (`/wayfinder`) – Ablage und Abbildung dort unter
+  „Wayfinding operations", **nicht** im mitgelieferten `.scratch/`.
 - **Diese Datei ist der Startkontext** – sie wird bei *jeder* Sitzung mitgeladen. Neues Wissen gehört
   darum standardmäßig nach `docs/` oder in die verschachtelte `CLAUDE.md` des Bereichs
   ([backend/Pugling.Api/](backend/Pugling.Api/CLAUDE.md), [frontend/](frontend/CLAUDE.md), `Contracts`,

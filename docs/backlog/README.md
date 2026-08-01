@@ -158,6 +158,87 @@ Wird eine Story zu groß (XL) oder stellt sich als Bündel heraus, geht die **al
 (`B-19a`) — sonst bleibt eine leere Hülle stehen, und beim zweiten Teilen entsteht `B-19a1`. Die Spur ist
 in beide Richtungen lesbar, wie `Remark.ParentRemarkId`.
 
+## Karten: Vorhaben, die nicht in eine Sitzung passen
+
+`/backlog <id> grillen` holt die Entscheidungen einer Story in **einer** Sitzung ab. Manche Vorhaben
+tragen das nicht: die Runde wirft mehr Fragen auf, als sie schließt, weil erst die Antwort auf Frage 3
+sichtbar macht, dass es Frage 7 überhaupt gibt. [Teilen](#teilen-und-zusammenlegen) hilft dann noch
+nicht — man sieht die Teile ja noch nicht.
+
+Für diesen Fall wird die Story als **Karte** gefahren (Skill `/wayfinder`). Die Karte benennt das Ziel
+und hält den Weg dorthin als einzelne **Entscheidungs-Tickets**, die über mehrere Sitzungen eines nach
+dem anderen fallen. Sie ist **Planung, nicht Bau**: fertig ist sie, wenn nichts mehr zu entscheiden ist.
+
+**Die Karte ist die Story, nicht ihr Ersatz.** Sie ist eine gewöhnliche `B-<nn>`-Datei nach dem Muster
+„Sammel-Story mit Link" (siehe [Kein zweiter Ablageort](#kein-zweiter-ablageort)) und läuft dieselbe
+Kette. Ihr Nutzen liegt auf genau einer Stufe: **`ausformuliert → gegrillt`**. Erreicht die Karte
+`gegrillt`, steht jeder Ticket-Beschluss als nummerierte Entscheidung in der Story — dieselbe
+Eintrittsbedingung wie sonst, nur über mehrere Sitzungen erarbeitet statt in einem Gespräch.
+
+**Wann eine Karte statt einer Grill-Runde?** Nicht nach Größe, sondern nach Sicht: Eine Karte lohnt,
+wenn die offenen Punkte voneinander abhängen und man die Kette nicht zu Ende sehen kann. Der Skill hat
+den Abbruch selbst eingebaut — findet er beim Kartieren keinen Nebel, ist keine Karte nötig, und die
+normale Runde genügt. Im Zweifel erst grillen; die Karte entsteht dann aus dem, was die Runde nicht
+geschlossen hat.
+
+Die Tickets stehen **nicht** im Index. Sie sind Zwischenstände einer Entscheidungsfindung, keine offene
+Arbeit — im Index wären sie Rauschen vor dem Signal, und keine der sechs Stufen passt auf ein Ticket
+(es wird nie `geschaetzt` und nie `abgenommen`). Sichtbar bleibt die Karte, und die trägt den Zustand.
+
+### Wayfinding operations
+
+Diese Abbildung liest `/wayfinder`: Der Skill ist tracker-agnostisch und erwartet unter dieser
+Überschrift, wie *dieses* Repo seine Karten ausdrückt. Sein mitgelieferter Vorgabe-Tracker
+(`.scratch/<effort>/`) gilt hier **nicht** — er wäre der zweite Ablageort.
+
+| Beim Skill | Hier |
+| --- | --- |
+| Map | die Story selbst, `docs/backlog/B-<nn>-<slug>.md` |
+| Destination | `## Karte` → `### Ziel` |
+| Notes | `## Karte` → `### Notizen` |
+| Decisions so far | `## Entscheidungen` — der bestehende Abschnitt, nummeriert, mit Begründung und Kosten |
+| Not yet specified | `## Offene Punkte` — was noch zu unscharf für ein Ticket ist |
+| Out of scope | `## Karte` → `### Außerhalb des Ziels` |
+| Child ticket | `docs/backlog/karten/B-<nn>/T-<nn>-<slug>.md`, ab `T-01` |
+| Blocking | Zeile `Blockiert durch: T-01, T-04` im Ticket-Kopf; frei, sobald alle genannten `entschieden` sind |
+| Frontier | die offenen, unblockierten, nicht beanspruchten Tickets; die kleinste Nummer gewinnt |
+| Claim | `Status: beansprucht` setzen und **speichern, bevor** die Arbeit beginnt |
+| Resolve | `## Antwort` ins Ticket, `Status: entschieden`, dann die Entscheidung in die Karte |
+
+Ticket-Format:
+
+```markdown
+# T-03 · Wie wird der Tagesdeckel getragen?
+
+Status: offen           <!-- offen | beansprucht | entschieden -->
+Typ: grilling           <!-- research | prototype | grilling | task -->
+Blockiert durch: T-01
+
+## Frage
+
+<die eine Entscheidung, die dieses Ticket schließt — auf eine Sitzung zugeschnitten>
+
+## Antwort
+
+<erst beim Entscheiden; der Kern wandert danach in die `## Entscheidungen` der Karte>
+```
+
+Zwei Abweichungen von der Vorgabe des Skills, beide bewusst:
+
+- **Die Karte gistet nicht, sie trägt die Entscheidung ganz.** Der Skill will die Entscheidung nur an
+  einer Stelle — im Ticket — und auf der Karte bloß angerissen. Hier gewinnt die Eintrittsbedingung von
+  `gegrillt`: sie verlangt Begründung **und** Kosten in der Story. Die Story muss allein lesbar bleiben,
+  wenn die Tickets längst kalt sind; das Ticket behält den Verlauf (Alternativen, Verworfenes) und wird
+  von der Entscheidung verlinkt.
+- **Ein Ticket je Sitzung**, Recherche-Tickets ausgenommen — die Regel kommt vom Skill und bleibt. Zwei
+  Entscheidungen in einem Rutsch heißt, dass eine davon nicht erarbeitet wurde; dieselbe Regel gilt für
+  die Stufen (`/backlog <id>` schiebt genau eine).
+
+Die vier Ticket-Typen greifen je einen Skill: `research`, `prototype`, `grilling` (der Normalfall,
+zusammen mit `domain-modeling`) und `task` — Handarbeit, die eine Entscheidung erst möglich macht. Ein
+`grilling`- und ein `prototype`-Ticket fallen **nur im Gespräch**; der Agent beantwortet sie nicht
+selbst.
+
 ## Hygiene: der Bereich darf nicht nur wachsen
 
 Ein Backlog, der nur wächst, ist der Zettelberg, den er ersetzen sollte — nur mit YAML davor. Darum meldet
@@ -179,6 +260,10 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 - **`pm-loop`** erzeugt Ideen am laufenden Produkt (Rollen-Feedback) und legt sie hier als `idee` ab; seine
   Prio-Tabelle ist eine *datierte Momentaufnahme* mit Story-Ids. Die dauerhafte Liste ist dieser Bereich —
   Sitzungslogs bleiben Protokolle. Rollen-Feedback und Abnahme-Gate bleiben bei `pm-loop`.
+- **Ticket-Dateien einer [Karte](#karten-vorhaben-die-nicht-in-eine-sitzung-passen)** sind kein zweiter
+  Ablageort, obwohl sie eigene Dateien sind: Sie tragen keinen Story-Zustand, sondern die Arbeitsblätter
+  **einer** Stufe. Der Zustand steht in der Karte, und mit ihr endet die Kette. Fällt die letzte
+  Entscheidung, ist der Ordner Archiv — nichts, was noch gepflegt werden müsste.
 - **Anmerkungen** (`api/v1/remarks`) sind der Eingang aus dem laufenden Betrieb: eine Anmerkung mit
   `Category = Idea`, die auf `Planned` geht, wird auf **Vorschlag** zur Story (`quelle: remark #NN`); die
   Anmerkung bekommt einen `Assistant`-Kommentar mit der Story-Id.
