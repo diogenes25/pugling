@@ -52,7 +52,7 @@ public class ExercisePreviewController(PuglingDbContext db, ExercisePreviewServi
         var exercise = await db.Exercises.AsNoTracking().FirstOrDefaultAsync(e => e.Id == id, ct);
         if (exercise is null) return NotFound();
 
-        // Optionaler stage-Parameter: der Vater probiert eine bestimmte Abfrageform durch (sonst Übungs-Standard).
+        // Optional stage parameter: the supervisor tries a specific question form (otherwise the exercise default).
         var data = await preview.BuildAsync(exercise, stage, ct);
         if (data is null) return await NoContentProblemAsync(exercise, ct);
         return data;

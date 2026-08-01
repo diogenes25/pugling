@@ -38,8 +38,8 @@ public class AccountService(PuglingDbContext db)
     {
         var account = await db.Accounts.Include(a => a.Profiles)
             .FirstOrDefaultAsync(a => a.Profiles.Any(p => p.AdultId == adult.Id), ct);
-        // Idempotent und **nicht** nachrüstend: ein bestehendes Konto behält seine Rollen. Sonst hätte ein
-        // zweiter Registrierungs-Aufruf einem Lehrer stillschweigend den Betreuungsauftrag verliehen.
+        // Idempotent and **not** retrofitting: an existing account keeps its roles. Otherwise a second
+        // registration call would silently grant a teacher a supervision assignment.
         if (account is not null) return account;
 
         account = new Account { DisplayName = adult.Name, Email = adult.Email, PinHash = adult.Pin, CreatedAt = adult.CreatedAt };

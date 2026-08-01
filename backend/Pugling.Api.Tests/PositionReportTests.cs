@@ -23,7 +23,7 @@ public class PositionReportTests(PuglingWebAppFactory factory) : IClassFixture<P
         var child = await TestApi.ChildAsync(_factory);
         var reportUrl = $"/api/v1/student/study-plans/{planId}/positions/{positionId}/report";
 
-        // Üben: beide Inhalte einmal richtig → je eine Box höher und eingeführt.
+        // Practice: both contents correct once → one box up each and introduced.
         var sessionId = await TestApi.StartPositionSessionAsync(child, planId, positionId);
         await TestApi.PositionReviewAsync(child, planId, positionId, sessionId, 0, givenAnswer: "hallo");
         await TestApi.PositionReviewAsync(child, planId, positionId, sessionId, 1, givenAnswer: "tschüss");
@@ -31,16 +31,16 @@ public class PositionReportTests(PuglingWebAppFactory factory) : IClassFixture<P
         var report = await (await father.GetAsync(reportUrl)).Content.ReadFromJsonAsync<JsonElement>();
         Assert.Equal(2, report.GetProperty("totalItems").GetInt32());
         Assert.Equal(2, report.GetProperty("introducedItems").GetInt32());
-        Assert.Equal(0, report.GetProperty("masteredItems").GetInt32()); // MaxBox 5, nach einer Runde nicht erreicht
+        Assert.Equal(0, report.GetProperty("masteredItems").GetInt32()); // MaxBox 5, not reached after one round
 
         var items = report.GetProperty("items").EnumerateArray().ToList();
         var good = items.First(i => i.GetProperty("prompt").GetString() == "hello");
         JsonAssert.True(good, "introduced");
         Assert.True(good.GetProperty("box").GetInt32() > 1);
         Assert.True(good.GetProperty("masteryPercent").GetInt32() > 0);
-        Assert.Equal("hallo", good.GetProperty("answer").GetString()); // Lösung ist für den Vater sichtbar
+        Assert.Equal("hallo", good.GetProperty("answer").GetString()); // the solution is visible to the supervisor
 
-        // Ein Test erzeugt die Test-Trefferquote je Item (item 0 richtig, item 1 falsch).
+        // A test produces the test hit rate per item (item 0 correct, item 1 wrong).
         var testsUrl = $"/api/v1/student/study-plans/{planId}/positions/{positionId}/tests";
         var attemptId = await TestApi.IdWithKeyAsync(await child.PostAsJsonAsync(testsUrl, new { }), "attemptId");
         var answers = new[]

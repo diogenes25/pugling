@@ -22,8 +22,8 @@ public class UnknownFieldTests(PuglingWebAppFactory factory) : IClassFixture<Pug
     {
         var father = await TestApi.FatherAsync(factory);
 
-        // `method` gehörte zum plan-weiten StudyPlanItem/Method-Modell, das beim Lehrplan-Umbau
-        // vollständig entfernt wurde – genau die Art veralteten Felds, die der Server früher schluckte.
+        // `method` belonged to the plan-wide StudyPlanItem/Method model, which was removed completely during
+        // the study plan rebuild - exactly the kind of outdated field the server used to swallow.
         var res = await father.PostAsJsonAsync("/api/v1/supervisor/study-plans", new
         {
             childId = 1,
@@ -34,15 +34,15 @@ public class UnknownFieldTests(PuglingWebAppFactory factory) : IClassFixture<Pug
 
         Assert.Equal(HttpStatusCode.BadRequest, res.StatusCode);
         var body = await res.Content.ReadFromJsonAsync<JsonElement>();
-        // Eigener Code, nicht `validation_error`: die Ursache ist „Feld existiert nicht", nicht „Wert falsch".
+        // Its own code, not `validation_error`: the cause is "the field does not exist", not "the value is wrong".
         Assert.Equal("unknown_field", body.GetProperty("code").GetString());
-        // Das Feld muss benannt werden, sonst sucht der Aufrufer im Dunkeln.
+        // The field has to be named, otherwise the caller searches in the dark.
         var errors = body.GetProperty("errors");
-        Assert.True(errors.TryGetProperty("method", out var messages), "Das unbekannte Feld muss als Schlüssel auftauchen.");
+        Assert.True(errors.TryGetProperty("method", out var messages), "The unknown field has to appear as a key.");
         var text = messages.EnumerateArray().Single().GetString()!;
         Assert.Contains("Unknown field", text, StringComparison.Ordinal);
-        // **Kein Typnamen-Leak.** Die Rohmeldung von System.Text.Json nennt den internen DTO-Typ
-        // („… contained in type 'Pugling.Contracts.Supervisor.CreatePlanDto'"); der darf nicht nach außen.
+        // **No type name leak.** The raw System.Text.Json message names the internal DTO type
+        // ("… contained in type 'Pugling.Contracts.Supervisor.CreatePlanDto'"); that must not reach the outside.
         Assert.DoesNotContain("Pugling.", text, StringComparison.Ordinal);
         Assert.False(string.IsNullOrEmpty(body.GetProperty("traceId").GetString()));
     }
@@ -50,8 +50,8 @@ public class UnknownFieldTests(PuglingWebAppFactory factory) : IClassFixture<Pug
     [Fact]
     public async Task Gueltiger_Body_bleibt_akzeptiert()
     {
-        // Gegenprobe (Selbstschutz gegen falsch-grün): der Test oben wäre auch grün, wenn der Endpunkt
-        // jeden Body ablehnte. Derselbe Payload ohne das Altfeld muss durchgehen.
+        // The counter-check (self-protection against a false green): the test above would also be green if the
+        // endpoint rejected every body. The same payload without the legacy field has to go through.
         var father = await TestApi.FatherAsync(factory);
 
         var planId = await TestApi.CreateEmptyPlanAsync(father);
@@ -62,8 +62,8 @@ public class UnknownFieldTests(PuglingWebAppFactory factory) : IClassFixture<Pug
     [Fact]
     public async Task Falscher_Wert_bleibt_validation_error()
     {
-        // Abgrenzung: ein bekanntes Feld mit falschem Wert ist weiterhin `validation_error`. Sonst
-        // verschmölzen die beiden Ursachen zu einem Code und der Aufrufer könnte sie nicht trennen.
+        // The delimitation: a known field with a wrong value is still `validation_error`. Otherwise the two
+        // causes would merge into one code and the caller could not tell them apart.
         var client = factory.CreateClient();
 
         var res = await client.PostAsJsonAsync("/api/v1/auth/adult", new { adultId = "1a", pin = "0000" });

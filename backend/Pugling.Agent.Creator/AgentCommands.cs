@@ -192,7 +192,7 @@ public sealed class AgentCommands(CreatorApi creator, CreatorPipeline pipeline, 
             return 0;
         }
 
-        // Die Rücknahme zuerst: sonst nennt die Erfolgsmeldung eine Übungs-Id, die es schon nicht mehr gibt.
+        // Withdraw first: otherwise the success message names an exercise id that no longer exists.
         if (outcome.RolledBack)
         {
             Console.Error.WriteLine($"Der Selbsttest erreichte nur {outcome.SelfTestPercent} % – " +
@@ -242,7 +242,7 @@ public sealed class AgentCommands(CreatorApi creator, CreatorPipeline pipeline, 
             ItemCount: command.Int("count", DefaultItemCount),
             Words: command.List("words"),
             UseWeakWords: command.Flag("use-weak"),
-            // Ohne Angabe entscheiden Profil und dann die Vorgaben (en/de) – nicht die Kommandozeile.
+        // With nothing given, the profile decides and then the defaults (en/de) - not the command line.
             SourceLang: command.Value("source-lang"),
             TargetLang: command.Value("target-lang"),
             RewardPoints: command.Int("points", DefaultRewardPoints),
@@ -278,9 +278,9 @@ public sealed class AgentCommands(CreatorApi creator, CreatorPipeline pipeline, 
             var chapters = await creator.ListChaptersAsync(subject.Id, ct);
             if (chapters.Count == 0) continue;
 
-            // `--chapter` ohne `--subject`: das Kapitel bestimmt das Fach. Vorher fiel die Angabe still
-            // durch und die Übung landete im ERSTEN Kapitel des ERSTEN Fachs – ein stiller Griff ins
-            // falsche Regal ist schlimmer als eine Fehlermeldung.
+            // `--chapter` without `--subject`: the chapter determines the subject. It used to fall through
+            // silently and the exercise landed in the FIRST chapter of the FIRST subject - a silent grab into
+            // the wrong shelf is worse than an error message.
             if (wantedChapter is { } wanted)
             {
                 if (chapters.Any(c => c.Id == wanted)) return (subject.Id, wanted);

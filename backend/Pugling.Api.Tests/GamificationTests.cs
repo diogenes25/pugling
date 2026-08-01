@@ -15,7 +15,7 @@ namespace Pugling.Api.Tests;
 /// </summary>
 public class GamificationTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWebAppFactory>
 {
-    // Combo aus (Schwelle 0), damit nur Missions-/Achievement-Punkte auftauchen.
+    // Combo off (threshold 0), so that only mission/achievement points show up.
     private async Task<(int planId, int positionId, int sessionId)> SetupAsync()
     {
         var father = await TestApi.FatherAsync(factory);
@@ -54,28 +54,28 @@ public class GamificationTests(PuglingWebAppFactory factory) : IClassFixture<Pug
         var child = await TestApi.ChildAsync(factory);
 
         await ReviewAsync(child, planId, positionId, sid, 0);
-        await ReviewAsync(child, planId, positionId, sid, 1); // Ziel (2) erreicht → Auswertung nach dem Review
+        await ReviewAsync(child, planId, positionId, sid, 1); // goal (2) reached → evaluation after the review
 
         var missions = await (await child.GetAsync("/api/v1/student/me/missions")).Content.ReadFromJsonAsync<JsonElement>();
         var mine = missions.EnumerateArray().First(m => m.GetProperty("title").GetString() == missionTitle);
         JsonAssert.True(mine, "completed");
 
-        // Genau einmal belohnt – auch nach weiteren Treffern (Idempotenz je Tag).
+        // Rewarded exactly once - even after further hits (idempotent per day).
         await ReviewAsync(child, planId, positionId, sid, 0);
         Assert.Equal(1, await CountPointReasonAsync(child, $"Mission erfüllt: {missionTitle}"));
     }
 
     /// <summary>
-    /// Die <b>Einmal-Mission</b> (<c>OneOff</c>) hat keinen Zeitraum – ihre Buchung trägt darum
-    /// <c>PeriodStart = null</c>, und dieses NULL ist der Diskriminator der beiden gefilterten
-    /// Unique-Indizes. Der Fall braucht einen eigenen Test, weil SQLite NULLs als <b>verschieden</b>
-    /// behandelt: fiele der Index auf <c>(MissionId, Period) WHERE PeriodStart IS NULL</c> weg, wären
-    /// beliebig viele Einmal-Belohnungen erlaubt, ohne dass irgendetwas rot würde.
+    /// The <b>one-off mission</b> (<c>OneOff</c>) has no period - its entry therefore carries
+    /// <c>PeriodStart = null</c>, and that NULL is the discriminator of the two filtered unique indexes.
+    /// The case needs a test of its own, because SQLite treats NULLs as <b>distinct</b>: if the index on
+    /// <c>(MissionId, Period) WHERE PeriodStart IS NULL</c> went away, any number of one-off rewards would be
+    /// allowed without anything turning red.
     /// <para>
-    /// Deshalb prüft der Test <b>beides</b>: dass die Auswertung nicht doppelt bucht (der Existenz-Check
-    /// im Code) <i>und</i> dass die Datenbank eine zweite Buchung ablehnt (die harte Garantie). Nur die
-    /// erste Hälfte zu prüfen ist die Fehlerklasse „Regel getestet, Grenzfall offen" – der Test bliebe
-    /// grün, wenn genau die Absicherung fehlte, die er belegen soll.
+    /// That is why the test checks <b>both</b>: that the evaluation does not book twice (the existence check in
+    /// the code) <i>and</i> that the database rejects a second entry (the hard guarantee). Checking only the
+    /// first half is the failure class "rule tested, edge case open" - the test would stay green if exactly the
+    /// safeguard it is meant to prove were missing.
     /// </para>
     /// </summary>
     [Fact]
@@ -94,9 +94,9 @@ public class GamificationTests(PuglingWebAppFactory factory) : IClassFixture<Pug
 
         var (planId, positionId, sid) = await SetupAsync();
         var child = await TestApi.ChildAsync(factory);
-        await ReviewAsync(child, planId, positionId, sid, 0); // Ziel (1) erreicht
+        await ReviewAsync(child, planId, positionId, sid, 0); // goal (1) reached
 
-        // Weitere Treffer zahlen nicht nach – der Existenz-Check greift.
+        // Further hits pay nothing more - the existence check bites.
         await ReviewAsync(child, planId, positionId, sid, 1);
         Assert.Equal(1, await CountPointReasonAsync(child, $"Mission erfüllt: {missionTitle}"));
 
@@ -104,9 +104,9 @@ public class GamificationTests(PuglingWebAppFactory factory) : IClassFixture<Pug
         var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
         var gebucht = await db.MissionAwards.AsNoTracking().SingleAsync(a => a.MissionId == missionId);
         Assert.Equal(MissionPeriod.OneOff, gebucht.Period);
-        Assert.Null(gebucht.PeriodStart); // kein Zeitraum – und genau darum NULL
+        Assert.Null(gebucht.PeriodStart); // no period - and exactly for that reason NULL
 
-        // Und die Datenbank lässt keine zweite zu, obwohl beide Zeilen NULL tragen.
+        // And the database allows no second one, although both rows carry NULL.
         db.MissionAwards.Add(new MissionAward
         {
             MissionId = missionId,
@@ -133,16 +133,16 @@ public class GamificationTests(PuglingWebAppFactory factory) : IClassFixture<Pug
 
         var (planId, positionId, sid) = await SetupAsync();
         var child = await TestApi.ChildAsync(factory);
-        await ReviewAsync(child, planId, positionId, sid, 0); // Schwelle (1) erreicht
+        await ReviewAsync(child, planId, positionId, sid, 0); // threshold (1) reached
 
         var listRes = await child.GetAsync("/api/v1/student/me/achievements");
-        Assert.True(listRes.Headers.Contains("X-Total-Count")); // Liste ist paginiert
+        Assert.True(listRes.Headers.Contains("X-Total-Count")); // the list is paged
         var achievements = await listRes.Content.ReadFromJsonAsync<JsonElement>();
         var mine = achievements.EnumerateArray().First(a => a.GetProperty("title").GetString() == title);
         JsonAssert.True(mine, "earned");
         Assert.Equal("⭐", mine.GetProperty("icon").GetString());
 
-        // Einzelansicht liefert dieselbe Auszeichnung; unbekannte Id → 404.
+        // The single view returns the same award; an unknown id → 404.
         var achievementId = mine.GetProperty("id").GetInt32();
         var single = await (await child.GetAsync($"/api/v1/student/me/achievements/{achievementId}")).Content.ReadFromJsonAsync<JsonElement>();
         Assert.Equal(title, single.GetProperty("title").GetString());
@@ -150,7 +150,7 @@ public class GamificationTests(PuglingWebAppFactory factory) : IClassFixture<Pug
         Assert.Equal(HttpStatusCode.NotFound,
             (await child.GetAsync("/api/v1/student/me/achievements/999999")).StatusCode);
 
-        // Genau einmal verliehen, auch nach weiteren Treffern.
+        // Granted exactly once, even after further hits.
         await ReviewAsync(child, planId, positionId, sid, 1);
         Assert.Equal(1, await CountPointReasonAsync(child, $"Auszeichnung erreicht: {title}"));
     }
@@ -172,7 +172,7 @@ public class GamificationTests(PuglingWebAppFactory factory) : IClassFixture<Pug
         var (planId, positionId, sid) = await SetupAsync();
         var child = await TestApi.ChildAsync(factory);
 
-        // Zwei bislang unbekannte Inhalte erstmals bearbeiten → 2 heute eingeführte Wörter (ProgressMetric.NewWords).
+        // Working on two so far unknown contents for the first time → 2 words introduced today (ProgressMetric.NewWords).
         await ReviewAsync(child, planId, positionId, sid, 0);
         await ReviewAsync(child, planId, positionId, sid, 1);
 
@@ -198,10 +198,10 @@ public class GamificationTests(PuglingWebAppFactory factory) : IClassFixture<Pug
         var (planId, positionId, sid) = await SetupAsync();
         var child = await TestApi.ChildAsync(factory);
 
-        // 120 aktive Sekunden anrechnen (= 2 Minuten, ProgressMetric.MinutesPracticed = Summe/60) …
+        // Credit 120 active seconds (= 2 minutes, ProgressMetric.MinutesPracticed = sum/60) …
         (await child.PostAsJsonAsync($"{TestApi.PracticeBase(planId, positionId)}/{sid}/heartbeat",
             new { seconds = 120, active = true })).EnsureSuccessStatusCode();
-        // … die Missions-Auswertung läuft beim Beenden der Sitzung.
+        // … the mission evaluation runs when the session ends.
         (await child.PostAsJsonAsync($"{TestApi.PracticeBase(planId, positionId)}/{sid}/end", new { })).EnsureSuccessStatusCode();
 
         var missions = await (await child.GetAsync("/api/v1/student/me/missions")).Content.ReadFromJsonAsync<JsonElement>();
@@ -213,7 +213,7 @@ public class GamificationTests(PuglingWebAppFactory factory) : IClassFixture<Pug
     public async Task Missionen_NurEigene_FremdesKindBekommt404()
     {
         var father = await TestApi.FatherAsync(factory);
-        // Kind 999 gehört dem Vater nicht → der ChildOwnershipFilter liefert 404 (kein Enumerieren).
+        // Child 999 does not belong to the adult → the ChildOwnershipFilter returns 404 (no enumeration).
         var res = await father.GetAsync("/api/v1/supervisor/children/999/missions");
         Assert.Equal(System.Net.HttpStatusCode.NotFound, res.StatusCode);
     }

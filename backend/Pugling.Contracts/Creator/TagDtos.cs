@@ -1,8 +1,8 @@
 namespace Pugling.Contracts.Creator;
 
-// Vertrag der beiden Tag-Ebenen:
-//   * kind-skopierte Tags an Übungen UND Vokabeln (Tag/TagResponse) – Vater und Sohn dürfen taggen,
-//   * kindneutrale Vokabel-Tags am Store (VocabTagResponse).
+// Contract of the two tag tiers:
+//   * child-scoped tags on exercises AND vocabulary entries (Tag/TagResponse) - supervisor and child may tag,
+//   * child-neutral vocabulary tags on the store (VocabTagResponse).
 
 /// <summary>Tag in the response incl. count of tagged exercises and vocabulary entries.</summary>
 public record TagResponse(int Id, int ChildId, string Name, string? Color, TaggedBy CreatedBy,

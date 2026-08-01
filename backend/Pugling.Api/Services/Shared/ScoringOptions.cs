@@ -1,50 +1,50 @@
 namespace Pugling.Api.Services.Shared;
 
 /// <summary>
-/// Punkte-Einstellungen aus der Konfiguration (Abschnitt <c>Scoring</c>).
+/// Scoring settings from the configuration (section <c>Scoring</c>).
 /// <para>
-/// Die Zeitfenster waren bis E12 eine <b>Tabelle</b> (<c>TimeSlotRule</c>) – ohne API, ohne Schreibpfad
-/// außer dem Seed, ohne Index und ohne Überlappungsprüfung. Die Test-Factory musste ihre Zeilen sogar
-/// <i>löschen</i>, um deterministische Punktzahlen zu bekommen. Eine Tabelle, deren Zeilen die Suite
-/// wegräumen muss, um sinnvolle Ergebnisse zu erhalten, ist Konfiguration.
+/// Until E12 the time slots were a <b>table</b> (<c>TimeSlotRule</c>) - without an API, without a write path
+/// besides the seed, without an index and without an overlap check. The test factory even had to <i>delete</i>
+/// its rows to get deterministic scores. A table whose rows the suite has to clear away in order to get
+/// sensible results is configuration.
 /// </para>
 /// </summary>
 public class ScoringOptions
 {
-    /// <summary>Konfigurationsabschnitt.</summary>
+    /// <summary>Configuration section.</summary>
     public const string SectionName = "Scoring";
 
     /// <summary>
-    /// Ob die Zeitfenster überhaupt gelten. <c>false</c> heißt: Faktor 1,0 zu jeder Uhrzeit.
+    /// Whether the time slots apply at all. <c>false</c> means: factor 1.0 at every time of day.
     /// <para>
-    /// Der Schalter existiert für die Test-Suite, und zwar aus einem harten Grund: mit Fenstern hängt die
-    /// Punktzahl derselben richtigen Antwort an der <b>Uhrzeit des Laufs</b> (vormittags ×1,5, abends ×0,8).
-    /// Für die von <c>DocsCaptureTests</c> eingecheckte Doku ist das Diff-Rauschen. Gleiche Bauart wie
-    /// <c>RateLimiting:LoginEnabled</c>, das aus demselben Grund existiert.
+    /// The switch exists for the test suite, and for a hard reason: with slots, the score of the same correct
+    /// answer hangs on the <b>time of the run</b> (mornings ×1.5, evenings ×0.8). For the documentation checked
+    /// in by <c>DocsCaptureTests</c> that is diff noise. The same construction as
+    /// <c>RateLimiting:LoginEnabled</c>, which exists for the same reason.
     /// </para>
     /// </summary>
     public bool TimeSlotsEnabled { get; set; } = true;
 
-    /// <summary>Zeitfenster mit Punkte-Multiplikator; Überlappung ist erlaubt (siehe <see cref="ScoringTimeSlot"/>).</summary>
+    /// <summary>Time slots with a points multiplier; overlap is allowed (see <see cref="ScoringTimeSlot"/>).</summary>
     public List<ScoringTimeSlot> TimeSlots { get; set; } = [];
 }
 
 /// <summary>
-/// Ein Zeitfenster mit Punkte-Multiplikator: wer vormittags lernt, bekommt mehr als spätabends.
+/// A time slot with a points multiplier: learning in the morning yields more than late in the evening.
 /// <para>
-/// Überlappende Fenster sind <b>erlaubt</b> – die Auswahl liegt trotzdem fest: das am spätesten beginnende
-/// (also engste) Fenster gewinnt, bei Gleichstand das früher endende. Ohne diese Ordnung brächte dieselbe
-/// richtige Antwort je nach Reihenfolge unterschiedlich viele Punkte.
+/// Overlapping slots are <b>allowed</b> - the choice is fixed nonetheless: the slot starting latest (i.e. the
+/// narrowest) wins, on a tie the one ending earlier. Without that ordering the same correct answer would
+/// yield a different number of points depending on the order.
 /// </para>
 /// </summary>
 public class ScoringTimeSlot
 {
-    /// <summary>Sprechender Name, nur zur Lesbarkeit der Konfiguration („Vormittag").</summary>
+    /// <summary>Descriptive name, purely for the readability of the configuration ("Vormittag").</summary>
     public string Name { get; set; } = "";
-    /// <summary>Beginn (einschließlich).</summary>
+    /// <summary>Start (inclusive).</summary>
     public TimeOnly Start { get; set; }
-    /// <summary>Ende (ausschließlich).</summary>
+    /// <summary>End (exclusive).</summary>
     public TimeOnly End { get; set; }
-    /// <summary>Faktor auf die Basispunkte.</summary>
+    /// <summary>Factor applied to the base points.</summary>
     public double Multiplier { get; set; } = 1.0;
 }

@@ -16,8 +16,8 @@ namespace Pugling.Api.Tests;
 /// </summary>
 public class SchemaGuardTests
 {
-    // Kein Host, keine Migration: `HasPendingModelChanges` und `GetMigrations` vergleichen das Modell
-    // mit dem in der Assembly liegenden Snapshot – die Verbindung wird dabei nie geöffnet.
+    // No host, no migration: `HasPendingModelChanges` and `GetMigrations` compare the model with the snapshot
+    // sitting in the assembly - the connection is never opened.
     private static PuglingDbContext Context() =>
         new(new DbContextOptionsBuilder<PuglingDbContext>()
             .UseSqlite("Data Source=:memory:")
@@ -34,16 +34,16 @@ public class SchemaGuardTests
     {
         using var db = Context();
 
-        // Selbstschutz: ein leer gebauter Kontext hätte kein Modell und keine Migrationen – dann wäre
-        // die Zusicherung unten wertlos.
+        // Self-protection: a context built empty would have no model and no migrations - the assurance below
+        // would then be worthless.
         Assert.True(db.Model.GetEntityTypes().Count() >= 55,
-            $"Zu wenige Entity-Typen im Modell ({db.Model.GetEntityTypes().Count()}) – greift die Reflexion?");
+            $"Too few entity types in the model ({db.Model.GetEntityTypes().Count()}) - does the reflection bite?");
         var migrations = db.Database.GetMigrations().ToList();
-        Assert.True(migrations.Count >= 1, "Keine Migrationen in der Assembly gefunden – falscher Kontext?");
+        Assert.True(migrations.Count >= 1, "No migrations found in the assembly - wrong context?");
 
         Assert.False(db.Database.HasPendingModelChanges(),
-            "Das EF-Modell weicht vom Snapshot der letzten Migration ab. Erzeuge eine Migration "
-            + "(siehe CLAUDE.md → Befehle) – nicht auf EnsureCreated zurückfallen.");
+            "The EF model deviates from the snapshot of the last migration. Create a migration "
+            + "(see CLAUDE.md → Befehle) - do not fall back to EnsureCreated.");
     }
 
     /// <summary>
@@ -65,10 +65,10 @@ public class SchemaGuardTests
         var migrations = db.Database.GetMigrations().ToList();
 
         Assert.True(migrations.Count == 1,
-            $"Erwartet genau eine Migration, gefunden {migrations.Count}: {string.Join(", ", migrations)}. "
-            + "Falte die Kette neu (Data/Migrations löschen, `dotnet dotnet-ef migrations add InitialCreate "
-            + "--project backend/Pugling.Api --output-dir Data/Migrations`) – oder entferne diese Regel, "
-            + "wenn die App veröffentlicht ist und einen echten Upgrade-Pfad braucht.");
+            $"Expected exactly one migration, found {migrations.Count}: {string.Join(", ", migrations)}. "
+            + "Fold the chain anew (delete Data/Migrations, `dotnet dotnet-ef migrations add InitialCreate "
+            + "--project backend/Pugling.Api --output-dir Data/Migrations`) - or remove this rule "
+            + "once the app is published and needs a real upgrade path.");
         Assert.EndsWith("InitialCreate", migrations[0], StringComparison.Ordinal);
     }
 
@@ -89,22 +89,22 @@ public class SchemaGuardTests
     [Fact]
     public void Nur_Bewusste_Datenbank_Defaults()
     {
-        // Begründete Ausnahmen: Property → warum der Default in der DB stehen muss.
+        // Justified exceptions: property → why the default has to sit in the DB.
         var erlaubt = new Dictionary<string, string>(StringComparer.Ordinal)
         {
-            // Schlüssel sind Tabellen-/Spaltennamen (relationales Modell), nicht Entity-/Property-Namen.
+            // Keys are table/column names (the relational model), not entity/property names.
             ["Exercises.ExecutePublic"] =
-                "Fail-Safe: eine Übung ohne ausdrückliche Angabe bleibt für alle Creator ausführbar "
-                + "(bisheriges Verhalten). Ein fehlender Wert darf hier nicht zu 'gesperrt' werden.",
+                "Fail-safe: an exercise without an explicit value stays executable for every creator "
+                + "(the previous behavior). A missing value must not turn into 'blocked' here.",
         };
 
         using var db = Context();
 
-        // Gefragt wird das *relationale* Modell (Tabellen/Spalten), nicht die Property-Metadaten:
-        // `IProperty.GetDefaultValue()` liefert auch dort einen Wert, wo EF gar keine DEFAULT-Klausel
-        // schreibt (z. B. an jedem `CreatedAt`) – der Test hätte reihenweise Spalten gemeldet, die im
-        // erzeugten DDL keinen Default haben. `IColumn.DefaultValue` ist dagegen genau das, was der
-        // DDL-Generator ausgibt; gegengeprüft an der migrierten Datei (dort steht exakt ein DEFAULT).
+        // What is asked is the *relational* model (tables/columns), not the property metadata:
+        // `IProperty.GetDefaultValue()` also returns a value where EF writes no DEFAULT clause at all (on every
+        // `CreatedAt`, say) - the test would have reported columns by the dozen that have no default in the
+        // generated DDL. `IColumn.DefaultValue`, by contrast, is exactly what the DDL generator emits;
+        // cross-checked against the migrated file (which holds exactly one DEFAULT).
         var tables = db.Model.GetRelationalModel().Tables.ToList();
         var mitDefault = tables
             .SelectMany(t => t.Columns
@@ -113,8 +113,8 @@ public class SchemaGuardTests
             .OrderBy(n => n, StringComparer.Ordinal)
             .ToList();
 
-        // Selbstschutz: greift die Reflexion nicht, wäre die Menge leer und der Test bestünde inhaltsleer –
-        // obendrein wüsste er dann nicht, dass ihm der eine gewollte Default fehlt.
+        // Self-protection: if the reflection does not bite, the set would be empty and the test would pass
+        // vacuously - and on top of that would not notice that the one intended default is missing.
         Assert.True(tables.Count >= 55, $"Zu wenige Tabellen im relationalen Modell ({tables.Count}).");
 
         Assert.Equal(erlaubt.Keys.OrderBy(n => n, StringComparer.Ordinal), mitDefault);
@@ -149,7 +149,7 @@ public class SchemaGuardTests
                 alleEnums.Add(name);
                 if (type.IsDefined(typeof(FlagsAttribute), inherit: false)) continue;
 
-                // Die Ausnahmeliste des DbContext ist die Quelle – hier wird sie nur gelesen.
+                // The DbContext's exception list is the source - it is only read here.
                 if (PuglingDbContext.IntEnumErlaubt(name)) continue;
 
                 if (property.GetProviderClrType() != typeof(string)
@@ -158,12 +158,12 @@ public class SchemaGuardTests
             }
         }
 
-        // Selbstschutz: findet die Reflexion keine Enums, bestünde der Test inhaltsleer.
+        // Self-protection: if the reflection finds no enums, the test would pass vacuously.
         Assert.True(alleEnums.Count >= 30, $"Zu wenige Enum-Properties gefunden ({alleEnums.Count}).");
 
         Assert.True(alsZahl.Count == 0,
-            "Diese Enum-Spalten liegen als Zahl in der DB. Entweder greift die Konvention nicht, oder sie "
-            + "brauchen einen begründeten Eintrag in PuglingDbContext.IntEnumsByDesign:\n  "
+            "These enum columns sit in the DB as numbers. Either the convention does not bite, or they "
+            + "need a justified entry in PuglingDbContext.IntEnumsByDesign:\n  "
             + string.Join("\n  ", alsZahl.OrderBy(n => n, StringComparer.Ordinal)));
     }
 
@@ -191,8 +191,8 @@ public class SchemaGuardTests
     [Fact]
     public void Jeder_Fremdschluessel_Hat_Ein_Abgenommenes_Loeschverhalten()
     {
-        // Abnahme-Tabelle: "Entity.FkProperty" → beabsichtigtes Verhalten. Der Kommentar nennt das Ziel.
-        // Kommt eine FK dazu, gehört sie hier eingetragen – bewusst, nicht durch Erben einer Konvention.
+        // Acceptance table: "Entity.FkProperty" → the intended behavior. The comment names the target.
+        // If an FK is added, it belongs in here - deliberately, not by inheriting a convention.
         var abgenommen = new Dictionary<string, DeleteBehavior>(StringComparer.Ordinal)
         {
             ["AccountProfile.AccountId"] = DeleteBehavior.Cascade, // -> Account
@@ -206,7 +206,7 @@ public class SchemaGuardTests
             ["ChildInterest.ChildId"] = DeleteBehavior.Cascade, // -> Child
             ["ChildInterest.InterestTagId"] = DeleteBehavior.Cascade, // -> InterestTag
             ["ChildInventory.ChildId"] = DeleteBehavior.Cascade, // -> Child
-            // Der Fund: bezahlte Einheiten sind Geld und dürfen nicht mit dem Katalogeintrag verschwinden.
+            // The finding: paid units are money and must not disappear with the catalog entry.
             ["ChildInventory.ShopArticleId"] = DeleteBehavior.SetNull, // -> ShopArticle
             ["ChildMediaPick.ChildId"] = DeleteBehavior.Cascade, // -> Child
             ["ChildMediaPick.ExerciseItemId"] = DeleteBehavior.Cascade, // -> ExerciseItem
@@ -223,19 +223,19 @@ public class SchemaGuardTests
             ["ExerciseGrant.CreatorId"] = DeleteBehavior.Cascade, // -> Adult
             ["ExerciseGrant.ExerciseId"] = DeleteBehavior.Cascade, // -> Exercise
             ["ExerciseItem.ExerciseId"] = DeleteBehavior.Cascade, // -> Exercise
-            // Restrict: eine Store-Vokabel, die eine Übung benutzt, wird nicht mitgelöscht (409 statt Verlust).
+            // Restrict: a store entry used by an exercise is not deleted along with it (409 instead of loss).
             ["ExerciseItem.VocabularyId"] = DeleteBehavior.Restrict, // -> Vocabulary
             ["ExerciseTag.ExerciseId"] = DeleteBehavior.Cascade, // -> Exercise
             ["ExerciseTag.TagId"] = DeleteBehavior.Cascade, // -> Tag
             ["ItemProgress.ChildId"] = DeleteBehavior.Cascade, // -> Child
             ["ItemProgress.ItemId"] = DeleteBehavior.Cascade, // -> ExerciseItem
             ["ItemReviewEvent.ChildId"] = DeleteBehavior.Cascade, // -> Child
-            // Die Historie überlebt das Item: die Aussage „richtig beantwortet" gilt weiter.
+            // The history outlives the item: the statement "answered correctly" still holds.
             ["ItemReviewEvent.ItemId"] = DeleteBehavior.SetNull, // -> ExerciseItem
-            ["KeyResult.ChapterId"] = DeleteBehavior.Restrict, // -> Chapter (Ziel erst wegnehmen, dann Kapitel)
-            ["KeyResult.ExerciseId"] = DeleteBehavior.Restrict, // -> Exercise (dito)
+            ["KeyResult.ChapterId"] = DeleteBehavior.Restrict, // -> Chapter (remove the goal first, then the chapter)
+            ["KeyResult.ExerciseId"] = DeleteBehavior.Restrict, // -> Exercise (ditto)
             ["KeyResult.ObjectiveId"] = DeleteBehavior.Cascade, // -> Objective
-            // Cascade: ein Ziel auf einem gelöschten Fach ist bedeutungslos.
+            // Cascade: a goal on a deleted subject is meaningless.
             ["KeyResult.SubjectId"] = DeleteBehavior.Cascade, // -> Subject
             ["Klassenarbeit.ChildId"] = DeleteBehavior.Cascade, // -> Child
             ["Klassenarbeit.SubjectId"] = DeleteBehavior.SetNull, // -> Subject
@@ -254,18 +254,18 @@ public class SchemaGuardTests
             ["MissionAward.MissionId"] = DeleteBehavior.Cascade, // -> Mission
             ["Objective.ChildId"] = DeleteBehavior.Cascade, // -> Child
             ["ObjectiveReward.ObjectiveId"] = DeleteBehavior.Cascade, // -> Objective
-            // Restrict: eine Übung, die in einem Lehrplan steckt, wird nicht mitgelöscht (409 statt Verlust).
+            // Restrict: an exercise sitting in a study plan is not deleted along with it (409 instead of loss).
             ["PlanPosition.ExerciseId"] = DeleteBehavior.Restrict, // -> Exercise
             ["PlanPosition.StudyPlanId"] = DeleteBehavior.Cascade, // -> StudyPlan
             ["PositionGoalPenalty.PlanPositionId"] = DeleteBehavior.Cascade, // -> PlanPosition
             ["PositionGoalReward.PlanPositionId"] = DeleteBehavior.Cascade, // -> PlanPosition
             ["PositionItemProgress.PlanPositionId"] = DeleteBehavior.Cascade, // -> PlanPosition
-            // SetNull, damit in SQLite kein zweiter Cascade-Pfad (Plan → Position → Sitzung/Test) neben
-            // Plan → Sitzung/Test entsteht; am Plan hängen beide schon.
+            // SetNull, so that no second cascade path (plan → position → session/test) arises in SQLite next to
+            // plan → session/test; both already hang on the plan.
             ["PracticeSession.PlanPositionId"] = DeleteBehavior.SetNull, // -> PlanPosition
             ["PracticeSession.StudyPlanId"] = DeleteBehavior.Cascade, // -> StudyPlan
             ["Remark.AccountId"] = DeleteBehavior.Cascade, // -> Account
-            // Jeder Kontext-Bezug der Anmerkung darf verblassen; die Beobachtung bleibt.
+            // Every context reference of a remark may fade; the observation stays.
             ["Remark.ChildId"] = DeleteBehavior.SetNull, // -> Child
             ["Remark.ExerciseId"] = DeleteBehavior.SetNull, // -> Exercise
             ["Remark.ParentRemarkId"] = DeleteBehavior.SetNull, // -> Remark
@@ -275,7 +275,7 @@ public class SchemaGuardTests
             ["RemarkComment.RemarkId"] = DeleteBehavior.Cascade, // -> Remark
             ["ReviewEvent.PracticeSessionId"] = DeleteBehavior.Cascade, // -> PracticeSession
             ["SeriesUnit.SeriesId"] = DeleteBehavior.Cascade, // -> TextbookSeries
-            // Cascade bleibt Absicht: ein Vater mit Artikeln muss sich selbst löschen können.
+            // Cascade stays intentional: an adult with articles must be able to delete themselves.
             ["ShopArticle.AdultId"] = DeleteBehavior.Cascade, // -> Adult
             ["ShopListing.ShopArticleId"] = DeleteBehavior.Cascade, // -> ShopArticle
             ["ShopPurchase.ChildId"] = DeleteBehavior.Cascade, // -> Child
@@ -298,7 +298,7 @@ public class SchemaGuardTests
             ["TimetableEntry.SubjectId"] = DeleteBehavior.Cascade, // -> Subject
             ["VocabTagLink.VocabTagId"] = DeleteBehavior.Cascade, // -> VocabTag
             ["VocabTagLink.VocabularyId"] = DeleteBehavior.Cascade, // -> Vocabulary
-            // Restrict: die Grundform darf nicht verschwinden, solange eine Beugung auf sie zeigt.
+            // Restrict: the base form must not disappear while an inflection points at it.
             ["Vocabulary.BaseFormId"] = DeleteBehavior.Restrict, // -> Vocabulary
             ["VocabularyTag.TagId"] = DeleteBehavior.Cascade, // -> Tag
             ["VocabularyTag.VocabularyId"] = DeleteBehavior.Cascade, // -> Vocabulary
@@ -312,31 +312,31 @@ public class SchemaGuardTests
                 tatsaechlich[$"{entity.ClrType.Name}.{string.Join("+", fk.Properties.Select(p => p.Name))}"]
                     = fk.DeleteBehavior;
 
-        // Selbstschutz: greift die Reflexion nicht, wäre die Menge leer und der Vergleich inhaltsleer.
+        // Self-protection: if the reflection does not bite, the set would be empty and the comparison vacuous.
         Assert.True(tatsaechlich.Count >= 90,
-            $"Zu wenige Fremdschlüssel gefunden ({tatsaechlich.Count}) – greift die Reflexion?");
+            $"Too few foreign keys found ({tatsaechlich.Count}) - does the reflection bite?");
 
-        // Ein sortierter Zeilenvergleich statt Mengendifferenzen: die Fehlermeldung zeigt dann direkt,
-        // welche Zeile fehlt, überzählig ist oder ein anderes Verhalten trägt.
+        // A sorted line comparison instead of set differences: the failure message then shows directly which
+        // line is missing, superfluous or carries a different behavior.
         static string[] Zeilen(IDictionary<string, DeleteBehavior> d) =>
             d.OrderBy(p => p.Key, StringComparer.Ordinal).Select(p => $"{p.Key} = {p.Value}").ToArray();
 
         Assert.Equal(Zeilen(abgenommen), Zeilen(tatsaechlich));
 
-        // Der Konventions-Default für optionale Beziehungen räumt nur im geladenen ChangeTracker auf und
-        // lässt die DB-Seite offen – als *Absicht* ist er nie richtig.
+        // The convention default for optional relationships only cleans up in the loaded ChangeTracker and
+        // leaves the DB side open - as an *intent* it is never right.
         Assert.DoesNotContain(DeleteBehavior.ClientSetNull, tatsaechlich.Values);
     }
 
     /// <summary>
-    /// <b>G3 – jede String-Spalte hat eine Länge, und eine unique-indizierte MUSS eine haben.</b> Vorher trug
-    /// <i>keine einzige</i> Spalte im ganzen Modell ein <c>HasMaxLength</c>.
+    /// <b>G3 - every string column has a length, and a unique-indexed one MUST have one.</b> Before, <i>not a
+    /// single</i> column in the whole model carried a <c>HasMaxLength</c>.
     /// <para>
-    /// <b>Ehrlich dazugesagt:</b> SQLite setzt die Länge nicht durch, und EF validiert sie beim
-    /// <c>SaveChanges</c> nicht. Der Wert liegt in der Portabilität – bei einem Provider-Wechsel entstünde
-    /// sonst überall <c>NVARCHAR(MAX)</c>, und darauf lässt sich in SQL Server <b>kein Unique-Index anlegen</b>.
-    /// Das trifft genau die Spalten, die die Idempotenz tragen. Darum ist die zweite Zusicherung die
-    /// scharfe: unbegrenzt <i>und</i> unique geht nicht, auch nicht mit Eintrag in der Ausnahmeliste.
+    /// <b>Said honestly:</b> SQLite does not enforce the length, and EF does not validate it on
+    /// <c>SaveChanges</c>. The value lies in portability - on a provider change <c>NVARCHAR(MAX)</c> would
+    /// otherwise appear everywhere, and <b>no unique index can be created</b> on that in SQL Server.
+    /// That hits exactly the columns carrying the idempotency. Which is why the second assurance is the sharp
+    /// one: unlimited <i>and</i> unique is not allowed, not even with an entry in the exception list.
     /// </para>
     /// </summary>
     [Fact]
@@ -349,7 +349,7 @@ public class SchemaGuardTests
         var uniqueOhneLaenge = new List<string>();
         foreach (var entity in db.Model.GetEntityTypes())
         {
-            // Spalten, die in einem Unique-Index stehen – für die zweite, harte Zusicherung.
+            // Columns that appear in a unique index - for the second, hard assurance.
             var inUnique = entity.GetIndexes().Where(i => i.IsUnique)
                 .SelectMany(i => i.Properties).Select(p => p.Name).ToHashSet(StringComparer.Ordinal);
 
@@ -361,104 +361,103 @@ public class SchemaGuardTests
                 if (property.GetMaxLength() is not null) continue;
 
                 if (inUnique.Contains(property.Name)) uniqueOhneLaenge.Add(name);
-                // Die Ausnahmeliste des DbContext ist die Quelle – hier wird sie nur gelesen.
+                // The DbContext's exception list is the source - it is only read here.
                 else if (!PuglingDbContext.UnbegrenztErlaubt(name)) ohneLaenge.Add(name);
             }
         }
 
-        // Selbstschutz: findet die Reflexion keine String-Spalten, bestünde der Test inhaltsleer.
-        Assert.True(alle.Count >= 100, $"Zu wenige String-Spalten gefunden ({alle.Count}).");
+        // Self-protection: if the reflection finds no string columns, the test would pass vacuously.
+        Assert.True(alle.Count >= 100, $"Too few string columns found ({alle.Count}).");
 
         Assert.True(uniqueOhneLaenge.Count == 0,
-            "Diese String-Spalten stehen in einem Unique-Index und sind unbegrenzt. Das ist die harte Regel: "
-            + "ein Unique-Index auf NVARCHAR(MAX) ist bei einem Provider-Wechsel nicht anlegbar – und es sind "
-            + "die Spalten, die die Idempotenz tragen:\n  "
+            "These string columns sit in a unique index and are unlimited. That is the hard rule: "
+            + "a unique index on NVARCHAR(MAX) cannot be created after a provider change - and these are "
+            + "the columns that carry the idempotency:\n  "
             + string.Join("\n  ", uniqueOhneLaenge.OrderBy(n => n, StringComparer.Ordinal)));
 
         Assert.True(ohneLaenge.Count == 0,
-            "Diese String-Spalten haben keine Länge. Entweder greift die Konvention nicht, oder sie brauchen "
-            + "einen begründeten Eintrag in PuglingDbContext.UnlimitedByDesign:\n  "
+            "These string columns have no length. Either the convention does not bite, or they need "
+            + "a justified entry in PuglingDbContext.UnlimitedByDesign:\n  "
             + string.Join("\n  ", ohneLaenge.OrderBy(n => n, StringComparer.Ordinal)));
     }
 
     /// <summary>
-    /// <b>G7 – jede JSON-Spalte hat einen ValueComparer.</b> Eine Sammlung, die über einen String-Converter in
-    /// die DB geht, vergleicht EF ohne eigenen Comparer per <b>Referenz</b>: eine In-Place-Mutation
-    /// (<c>list.Add(...)</c>) gilt dann als „unverändert" und geht beim <c>SaveChanges</c> <b>still verloren</b>.
+    /// <b>G7 - every JSON column has a ValueComparer.</b> A collection that goes into the DB through a string
+    /// converter is compared by <b>reference</b> by EF unless it has its own comparer: an in-place mutation
+    /// (<c>list.Add(...)</c>) then counts as "unchanged" and is <b>lost silently</b> on <c>SaveChanges</c>.
     /// <para>
-    /// Diese Regel steht in <c>CLAUDE.md</c> und wurde bislang vorbildlich befolgt – 13 Comparer, keine Lücke.
-    /// Genau deshalb ist sie ein guter Kandidat für ein Tor: sie hängt an Disziplin, ihr Bruch ist unsichtbar,
-    /// und die nächste JSON-Spalte kommt bestimmt.
+    /// This rule sits in <c>CLAUDE.md</c> and has been followed exemplarily so far - 13 comparers, no gap.
+    /// That is exactly what makes it a good candidate for a gate: it hangs on discipline, breaking it is
+    /// invisible, and the next JSON column will surely come.
     /// </para>
     /// </summary>
     [Fact]
     public void Jede_Json_Spalte_Hat_Einen_ValueComparer()
     {
         using var db = Context();
-        // Wieder das Design-Time-Modell, nicht `db.Model`: das laufzeit-optimierte wirft die Annotationen
-        // weg (dieselbe Falle wie bei G8) – und die Annotation ist hier die gesuchte Spur.
+        // The design-time model again, not `db.Model`: the runtime-optimized one throws the annotations away
+        // (the same trap as in G8) - and the annotation is the trace we are after here.
         var jsonSpalten = new List<string>();
         var ohneComparer = new List<string>();
         foreach (var entity in db.GetService<IDesignTimeModel>().Model.GetEntityTypes())
             foreach (var property in entity.GetProperties())
             {
-                // JSON-Spalte = Sammlungs-/Komplextyp, der als String persistiert wird. Strings selbst und
-                // die Enum-Konvertierungen aus G4 sind keine.
+                // A JSON column = a collection/complex type persisted as a string. Strings themselves and the
+                // enum conversions from G4 are not.
                 var clr = property.ClrType;
                 if (clr == typeof(string) || (Nullable.GetUnderlyingType(clr) ?? clr).IsEnum) continue;
                 if (property.GetValueConverter()?.ProviderClrType != typeof(string)) continue;
 
                 var name = $"{entity.ClrType.Name}.{property.Name}";
                 jsonSpalten.Add(name);
-                // Gefragt ist „wurde einer *gesetzt*", nicht „gibt es einen": `GetValueComparer()` liefert
-                // immer etwas – im Zweifel den referenzvergleichenden Default, und genau der ist der Fehler.
-                // Die Annotation ist die einzige Spur der ausdrücklichen Konfiguration.
+                // The question is "was one *set*", not "is there one": `GetValueComparer()` always returns
+                // something - in case of doubt the reference-comparing default, and that is exactly the bug.
+                // The annotation is the only trace of the explicit configuration.
                 if (!property.GetAnnotations().Any(a =>
                         a.Name is "ValueComparer" && a.Value is not null))
                     ohneComparer.Add(name);
             }
 
-        // Selbstschutz: findet die Reflexion keine JSON-Spalten, bestünde der Test inhaltsleer.
+        // Self-protection: if the reflection finds no JSON columns, the test would pass vacuously.
         Assert.True(jsonSpalten.Count >= 10,
-            $"Zu wenige JSON-Spalten gefunden ({jsonSpalten.Count}) – greift die Reflexion?");
+            $"Too few JSON columns found ({jsonSpalten.Count}) - does the reflection bite?");
 
         Assert.True(ohneComparer.Count == 0,
-            "Diese JSON-Spalten haben keinen ValueComparer. EF vergleicht sie dann per Referenz, und eine "
-            + "In-Place-Mutation geht beim SaveChanges still verloren (siehe Data/JsonValueComparer.cs):\n  "
+            "These JSON columns have no ValueComparer. EF then compares them by reference, and an "
+            + "in-place mutation is lost silently on SaveChanges (see Data/JsonValueComparer.cs):\n  "
             + string.Join("\n  ", ohneComparer.OrderBy(n => n, StringComparer.Ordinal)));
     }
 
     /// <summary>
-    /// <b>G6 – kein Zeitpunkt und kein Zeitraum als Text.</b> Eine <c>string</c>-Spalte, deren Name eine
-    /// Zeitangabe verspricht, ist der teuerste Schema-Fehler dieses Modells gewesen: <c>PeriodKey</c> trug
-    /// <b>drei</b> Formate (<c>2026-07-04</c>, <c>2026-W27</c>, <c>once</c>) in <b>vier</b> Tabellen, und alle
-    /// vier waren Teil eines Unique-Index – also idempotenz-tragend. Ein Tippfehler im Format hätte doppelt
-    /// gezahlt, ohne dass irgendetwas auffällt.
+    /// <b>G6 - no instant and no period as text.</b> A <c>string</c> column whose name promises a time value
+    /// has been the most expensive schema bug of this model: <c>PeriodKey</c> carried <b>three</b> formats
+    /// (<c>2026-07-04</c>, <c>2026-W27</c>, <c>once</c>) across <b>four</b> tables, and all four were part of a
+    /// unique index - i.e. carried the idempotency. A typo in the format would have paid twice without
+    /// anything standing out.
     /// <para>
-    /// Der Wächter greift über den <b>Namen</b>, weil das die einzige reflektierbare Spur einer
-    /// Zeit-Bedeutung ist. Namen wie <c>Key</c>/<c>Slug</c>, die einen fachlichen <i>Natur</i>schlüssel
-    /// bezeichnen, sind erlaubt – aber nur namentlich und mit Grund, damit die nächste <c>…Key</c>-Spalte
-    /// eine Entscheidung erzwingt statt sich einzuschleichen. Der Vergleich ist <b>case-sensitiv</b>: er soll
-    /// <c>PeriodKey</c> treffen, nicht jedes Wort, das auf „on" endet.
+    /// The guard bites through the <b>name</b>, because that is the only reflectable trace of a time meaning.
+    /// Names such as <c>Key</c>/<c>Slug</c> that denote a domain <i>natural</i> key are allowed - but only by
+    /// name and with a reason, so that the next <c>…Key</c> column forces a decision instead of sneaking in.
+    /// The comparison is <b>case-sensitive</b>: it should hit <c>PeriodKey</c>, not every word ending in "on".
     /// </para>
     /// </summary>
     [Fact]
     public void Keine_Zeitangabe_Als_Text()
     {
-        // Verdächtige Endungen: alles, was nach Zeitpunkt oder Zeitraum klingt.
+        // Suspicious suffixes: everything that sounds like an instant or a period.
         string[] verdaechtig = ["Key", "Period", "Day", "Date", "On", "At", "Time", "Week", "Month", "Year"];
 
-        // Begründete Ausnahmen: Property → warum der Text hier keine Zeitangabe ist.
+        // Justified exceptions: property → why the text here is not a time value.
         var erlaubt = new Dictionary<string, string>(StringComparer.Ordinal)
         {
-            ["Vocabulary.Key"] = "Fachlicher Naturschlüssel der Store-Vokabel (en:hello:de), slug-idempotent.",
-            ["MediaAsset.Key"] = "Fachlicher Naturschlüssel des Motivs, Grundlage der Wiedererkennung.",
-            ["ClozeText.Key"] = "Fachlicher Naturschlüssel des Lückentexts.",
-            // Der einzige echte Fund dieses Wächters beim ersten Lauf – und ein berechtigter:
+            ["Vocabulary.Key"] = "Domain natural key of the store entry (en:hello:de), slug-idempotent.",
+            ["MediaAsset.Key"] = "Domain natural key of the motif, the basis of recognition.",
+            ["ClozeText.Key"] = "Domain natural key of the cloze text.",
+            // The only real finding of this guard on its first run - and a justified one:
             ["TimetableEntry.TimeOfDay"] =
-                "Freitext und ausdrücklich KEINE Uhrzeit: der Vater schreibt 'Nachmittag' oder "
-                + "'1./2. Stunde' hinein. Ein Zeittyp könnte das nicht abbilden, und das Feld steht im "
-                + "Vertrag (EntryResponse/CreateEntryDto) – Typisieren wäre ein Bruch ohne Gewinn.",
+                "Free text and explicitly NO time of day: the supervisor writes 'Nachmittag' or "
+                + "'1./2. Stunde' into it. A time type could not represent that, and the field is part of "
+                + "the contract (EntryResponse/CreateEntryDto) - typing it would be a break without a gain.",
         };
 
         using var db = Context();
@@ -476,26 +475,26 @@ public class SchemaGuardTests
                     treffer.Add(name);
             }
 
-        // Selbstschutz: findet die Reflexion keine String-Spalten, bestünde der Test inhaltsleer.
+        // Self-protection: if the reflection finds no string columns, the test would pass vacuously.
         Assert.True(alleStrings.Count >= 100, $"Zu wenige String-Spalten gefunden ({alleStrings.Count}).");
 
         Assert.True(treffer.Count == 0,
-            "Diese String-Spalten tragen dem Namen nach eine Zeitangabe. Nimm einen echten Typ "
-            + "(DateOnly/DateTime/Enum) – oder trage sie mit Grund in die Ausnahmeliste ein, falls es ein "
-            + "fachlicher Naturschlüssel ist:\n  "
+            "These string columns promise a time value by their name. Use a real type "
+            + "(DateOnly/DateTime/Enum) - or add them to the exception list with a reason if it is a "
+            + "domain natural key:\n  "
             + string.Join("\n  ", treffer.OrderBy(n => n, StringComparer.Ordinal)));
     }
 
     /// <summary>
-    /// <b>G8 – „genau eines von N" steht in der Datenbank, nicht im Kommentar.</b> Drei Tabellen tragen
-    /// dieselbe Frage: welcher der mehreren optionalen Fremdschlüssel ist der gültige? Zwei davon
-    /// (<c>MediaLink</c>, <c>ChildMediaPick</c>) beantworteten sie vorbildlich per Check-Constraint, die
-    /// dritte (<c>AccountProfile</c>) behauptete sie nur im XML-Kommentar – und ein Profil mit beiden
-    /// Zielen wäre ein Login mit zwei Identitäten gewesen.
+    /// <b>G8 - "exactly one of N" belongs in the database, not in a comment.</b> Three tables carry the same
+    /// question: which of the several optional foreign keys is the valid one? Two of them
+    /// (<c>MediaLink</c>, <c>ChildMediaPick</c>) answered it exemplarily with a check constraint, the third
+    /// (<c>AccountProfile</c>) only claimed it in an XML comment - and a profile with both targets would have
+    /// been one login with two identities.
     /// <para>
-    /// Ein Wächter auf einer <i>Menge</i> statt auf „mindestens diese drei": eine verschwundene
-    /// Invariante ist genauso ein Fund wie eine neue ohne Eintrag. Die gefilterten Unique-Indizes daneben
-    /// hängen an derselben Bauart – wer den Constraint entfernt, entfernt auch ihre Voraussetzung.
+    /// A guard on a <i>set</i> instead of on "at least these three": a vanished invariant is just as much a
+    /// finding as a new one without an entry. The filtered unique indexes next to it hang on the same
+    /// construction - whoever removes the constraint removes their precondition too.
     /// </para>
     /// </summary>
     [Fact]
@@ -509,17 +508,17 @@ public class SchemaGuardTests
         ];
 
         using var db = Context();
-        // Nicht `db.Model`: das laufzeit-optimierte Modell wirft für Check-Constraints ausdrücklich
-        // („not stored in the read-optimized model"). EF wirft sie weg, weil zur Laufzeit niemand sie
-        // liest – gefragt ist darum das Design-Time-Modell, dasselbe, aus dem die Migration entsteht.
+        // Not `db.Model`: for check constraints the runtime-optimized model explicitly throws ("not stored in
+        // the read-optimized model"). EF discards them because nobody reads them at runtime - so what is asked
+        // is the design-time model, the same one the migration is generated from.
         var entities = db.GetService<IDesignTimeModel>().Model.GetEntityTypes().ToList();
 
-        // Selbstschutz: greift die Reflexion nicht, wäre die Menge leer – und der Vergleich meldete
-        // fälschlich „alle drei fehlen" statt „der Test ist kaputt".
+        // Self-protection: if the reflection does not bite, the set would be empty - and the comparison would
+        // wrongly report "all three are missing" instead of "the test is broken".
         Assert.True(entities.Count >= 55, $"Zu wenige Entity-Typen im Modell ({entities.Count}).");
 
-        // Entity-Name statt Tabellenname als Schlüssel: E11 zieht Tabellennamen auf die DbSet-Namen, und
-        // dieser Wächter prüft eine Invariante, nicht die Benennung.
+        // The entity name as the key instead of the table name: E11 pulls table names onto the DbSet names, and
+        // this guard checks an invariant, not the naming.
         var gefunden = entities
             .SelectMany(e => e.GetCheckConstraints().Select(c => $"{e.ClrType.Name}.{c.Name}"))
             .OrderBy(n => n, StringComparer.Ordinal)

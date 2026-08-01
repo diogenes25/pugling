@@ -9,7 +9,7 @@ namespace Pugling.Api.Errors;
 /// </summary>
 public static class ApiErrors
 {
-    // ── Generisch / status-getriebene Defaults (auch Middleware-, Auth- und Framework-Pfade) ──
+    // ── Generic / status-driven defaults (middleware, auth and framework paths too) ───────────
 
     /// <summary>Model/input validation failed (400).</summary>
     public static readonly ApiError ValidationError = new("validation_error", 400, "Invalid request.");
@@ -47,7 +47,7 @@ public static class ApiErrors
     /// <summary>Catch-all code for HTTP statuses not otherwise mapped (status variable).</summary>
     public static readonly ApiError HttpError = new("http_error", 0, "Error.");
 
-    // ── Fachlich (je eine konkrete Geschäftsbedingung) ──
+    // ── Domain errors (one per concrete business condition) ──
 
     /// <summary>Skin is already unlocked (409).</summary>
     public static readonly ApiError SkinAlreadyUnlocked = new("skin_already_unlocked", 409, "Skin already unlocked.");

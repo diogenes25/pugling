@@ -34,12 +34,12 @@ public class StudentProfileTests(PuglingWebAppFactory factory) : IClassFixture<P
         Assert.Equal(["Brawl Stars", "Pokémon"],
             created.GetProperty("interests").EnumerateArray().Select(i => i.GetString()!).ToArray());
 
-        // GET liefert dieselben Profil-Felder zurück.
+        // GET returns the same profile fields.
         var fetched = await father.GetFromJsonAsync<JsonElement>($"/api/v1/supervisor/children/{childId}");
         Assert.Equal("Male", fetched.GetProperty("gender").GetString());
         Assert.Equal(2, fetched.GetProperty("interests").GetArrayLength());
 
-        // PATCH ersetzt die Interessen-Liste (Neuzuweisung, kein In-Place-Mutieren).
+        // PATCH replaces the interest list (reassignment, no in-place mutation).
         var patched = await (await father.PatchAsJsonAsync($"/api/v1/supervisor/children/{childId}", new
         {
             interests = new[] { "Fußball" },
@@ -57,7 +57,7 @@ public class StudentProfileTests(PuglingWebAppFactory factory) : IClassFixture<P
         var childId = await TestApi.IdAsync(
             await father.PostAsJsonAsync("/api/v1/supervisor/children", new { name = "Buch-Kind", pin = "8101" }));
 
-        // Anlegen
+        // Create
         var created = await (await father.PostAsJsonAsync($"/api/v1/supervisor/children/{childId}/textbooks", new
         {
             title = "Green Line 3",
@@ -69,21 +69,21 @@ public class StudentProfileTests(PuglingWebAppFactory factory) : IClassFixture<P
         var bookId = created.GetProperty("id").GetInt32();
         Assert.Equal("Green Line 3", created.GetProperty("title").GetString());
 
-        // Liste enthält das Buch
+        // The list contains the book
         var list = await father.GetFromJsonAsync<JsonElement>($"/api/v1/supervisor/children/{childId}/textbooks");
         Assert.Contains(bookId, list.EnumerateArray().Select(b => b.GetProperty("id").GetInt32()));
 
-        // Einzeln lesen
+        // Read a single one
         var single = await father.GetFromJsonAsync<JsonElement>($"/api/v1/supervisor/children/{childId}/textbooks/{bookId}");
         Assert.Equal("Unit 4 – Past Tense", single.GetProperty("currentChapter").GetString());
 
-        // PATCH aktualisiert den Lernstand
+        // PATCH updates the position in the book
         var patched = await (await father.PatchAsJsonAsync(
             $"/api/v1/supervisor/children/{childId}/textbooks/{bookId}", new { currentChapter = "Unit 5 – Future" }))
             .Content.ReadFromJsonAsync<JsonElement>();
         Assert.Equal("Unit 5 – Future", patched.GetProperty("currentChapter").GetString());
 
-        // Löschen → erneutes Löschen ist 404
+        // Delete → deleting again is a 404
         (await father.DeleteAsync($"/api/v1/supervisor/children/{childId}/textbooks/{bookId}")).EnsureSuccessStatusCode();
         var again = await father.DeleteAsync($"/api/v1/supervisor/children/{childId}/textbooks/{bookId}");
         Assert.Equal(HttpStatusCode.NotFound, again.StatusCode);

@@ -47,8 +47,8 @@ public class AccountSelfServiceTests(PuglingWebAppFactory factory) : IClassFixtu
         Assert.Equal(HttpStatusCode.OK, res.StatusCode);
         Assert.Equal("Frau Neu", (await res.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("name").GetString());
 
-        // Der Name hängt an ZWEI Stellen: am Konto (Login) und an der fachlichen Zeile, wo er als Autor
-        // erscheint. Die Gegenprobe läuft über einen Creator-Endpunkt, nicht über `auth/me`.
+        // The name hangs in TWO places: on the account (login) and on the domain row, where it appears as the
+        // author. The counter-check runs through a creator endpoint, not through `auth/me`.
         var account = await teacher.GetFromJsonAsync<JsonElement>($"/api/v1/creator/teacher-accounts/{creatorId}");
         Assert.Equal("Frau Neu", account.GetProperty("name").GetString());
         Assert.Equal(mail, account.GetProperty("email").GetString());
@@ -61,11 +61,11 @@ public class AccountSelfServiceTests(PuglingWebAppFactory factory) : IClassFixtu
 
         (await teacher.PatchAsJsonAsync("/api/v1/auth/me", new { pin = "9090" })).EnsureSuccessStatusCode();
 
-        // Die alte PIN gilt nicht mehr …
+        // The old PIN no longer applies …
         Assert.Equal(HttpStatusCode.Unauthorized,
             (await _factory.CreateClient().PostAsJsonAsync("/api/v1/auth/adult",
                 new { adultId = creatorId, pin = "2323" })).StatusCode);
-        // … die neue schon, und zwar auf beiden Login-Wegen (der Hash wird aufs Konto gespiegelt).
+        // … the new one does, and on both login paths (the hash is mirrored onto the account).
         var byFid = await _factory.CreateClient().PostAsJsonAsync("/api/v1/auth/adult",
             new { adultId = creatorId, pin = "9090" });
         byFid.EnsureSuccessStatusCode();
@@ -87,7 +87,7 @@ public class AccountSelfServiceTests(PuglingWebAppFactory factory) : IClassFixtu
         var mail = $"weg-{Guid.NewGuid():N}@schule.example";
         (await teacher.PatchAsJsonAsync("/api/v1/auth/me", new { email = mail })).EnsureSuccessStatusCode();
 
-        // `null` lässt die Adresse stehen.
+        // `null` leaves the address as it is.
         (await teacher.PatchAsJsonAsync("/api/v1/auth/me", new { name = "Frau Post" })).EnsureSuccessStatusCode();
         var still = await teacher.GetFromJsonAsync<JsonElement>($"/api/v1/creator/teacher-accounts/{creatorId}");
         Assert.Equal(mail, still.GetProperty("email").GetString());
@@ -136,7 +136,7 @@ public class AccountSelfServiceTests(PuglingWebAppFactory factory) : IClassFixtu
     [Fact]
     public async Task Vater_KannSichEbenfallsSelbstVerwalten()
     {
-        // Der Weg gilt für beide Erwachsenen-Arten – nicht nur als Lückenfüller für den Lehrer.
+        // The path applies to both kinds of adult - not only as a stopgap for the teacher.
         var father = await TestApi.FatherAsync(_factory);
         var res = await father.PatchAsJsonAsync("/api/v1/auth/me", new { name = "Papa" });
         Assert.Equal(HttpStatusCode.OK, res.StatusCode);

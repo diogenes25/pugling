@@ -21,8 +21,7 @@ namespace Pugling.Api.Controllers.Student;
 [ServiceFilter(typeof(PlanOwnershipFilter))]
 public class PlanOverviewController(PuglingDbContext db, PositionProgressService progress) : ControllerBase
 {
-    // Kein Vorgabewert für `ct`: er ließe die Aufrufstelle korrekt aussehen, während der Abbruch des
-    // Clients verpufft.
+    // No default for `ct`: it would make the call site look correct while the client's cancellation fizzles out.
     private Task<StudyPlan?> GetPlan(int planId, CancellationToken ct) =>
         db.StudyPlans.AsNoTracking().FirstOrDefaultAsync(p => p.Id == planId, ct);
 
@@ -67,7 +66,7 @@ public class PlanOverviewController(PuglingDbContext db, PositionProgressService
 
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
         var view = await progress.ProgressViewAsync(plan, today, from, to, dutyDone, sort, ct);
-        // Paging (HTTP-Belang) auf die bereits gefilterte/sortierte Tagesliste; X-Total-Count = gefilterte Gesamtzahl.
+        // Paging (an HTTP concern) on the already filtered/sorted day list; X-Total-Count = the filtered total.
         var page = view.Days.ToPagedList(Response, skip, take);
 
         return new ProgressResponse(plan.Id, plan.StartDate, plan.EndDate,

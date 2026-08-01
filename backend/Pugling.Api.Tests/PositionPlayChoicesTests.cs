@@ -28,17 +28,17 @@ public class PositionPlayChoicesTests
     {
         var choices = Choices(Vocab, 0, TestStage.MultipleChoice)!;
 
-        Assert.Equal(4, choices.Count);                             // 1 richtige + 3 Ablenker
-        Assert.Contains("Haus", choices);                           // die richtige Antwort ist dabei
-        Assert.Equal(choices.Count, choices.Distinct().Count());    // keine Dubletten
-        Assert.All(choices, c => Assert.Contains(c, Vocab.Select(v => v.Answer))); // nur echte Antworten
+        Assert.Equal(4, choices.Count);                             // 1 correct + 3 distractors
+        Assert.Contains("Haus", choices);                           // the correct answer is among them
+        Assert.Equal(choices.Count, choices.Distinct().Count());    // no duplicates
+        Assert.All(choices, c => Assert.Contains(c, Vocab.Select(v => v.Answer))); // real answers only
     }
 
     [Fact]
     public void MultipleChoice_RotiertDeterministisch_LoesungNichtImmerVorne()
     {
-        // Rotation = Index % Anzahl: Item 0 → Verschiebung 0 (Lösung vorne),
-        // Item 1 → Verschiebung 1 (Lösung rutscht weg von Position 0). Kein Zufall → reproduzierbar.
+        // Rotation = index % count: item 0 → shift 0 (the solution up front), item 1 → shift 1 (the solution
+        // moves away from position 0). No randomness → reproducible.
         Assert.Equal("Haus", Choices(Vocab, 0, TestStage.MultipleChoice)![0]);
         var forItem1 = Choices(Vocab, 1, TestStage.MultipleChoice)!;
         Assert.NotEqual("gehen", forItem1[0]);
@@ -50,7 +50,7 @@ public class PositionPlayChoicesTests
     {
         IReadOnlyList<ContentItem> items = [Item(0, "Haus"), Item(1, "Haus"), Item(2, "gehen")];
 
-        // Für "gehen" ist "Haus" der einzige distinkte Ablenker – die zweite "Haus"-Karte wird dedupliziert.
+        // For "gehen" the only distinct distractor is "Haus" - the second "Haus" card is deduplicated.
         var choices = Choices(items, 2, TestStage.MultipleChoice)!;
         Assert.Equal(new[] { "gehen", "Haus" }, choices);
     }
@@ -58,8 +58,8 @@ public class PositionPlayChoicesTests
     [Fact]
     public void NichtMultipleChoice_LiefertKeineAuswahl()
     {
-        Assert.Null(Choices(Vocab, 0, TestStage.SelfAssess)); // andere Stufe
-        // Anderes Verfahren: Rechnen kennt keine MC-Auswahl (Basis-Default null).
+        Assert.Null(Choices(Vocab, 0, TestStage.SelfAssess)); // a different stage
+        // A different method: arithmetic knows no multiple choice (the base default is null).
         Assert.Null(new ArithmeticExerciseType().Choices(Vocab, Vocab[0], (int)TestStage.MultipleChoice));
     }
 }

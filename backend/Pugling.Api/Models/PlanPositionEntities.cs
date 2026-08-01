@@ -1,20 +1,18 @@
 namespace Pugling.Api.Models;
 
-// Lehrplan-Modell: Ein Lehrplan ist eine verfahrens-GEMISCHTE Zusammenstellung von Positionen. Jede
-// Position verweist auf eine Katalog-Übung (Exercise) und trägt ihre EIGENEN Ziele (Rhythmus Tag/Woche)
-// und Punkte. Der Inhalt lebt allein in der Übungs-Config; hier wird nur der Lern-FORTSCHRITT pro
-// Inhalts-Atom materialisiert (PositionItemProgress).
+// Study plan model: a plan is a method-MIXED composition of positions. Every position references a catalog
+// exercise and carries its OWN goals (daily/weekly cadence) and points. The content lives solely in the
+// exercise config; only the learning PROGRESS per content atom is materialized here (PositionItemProgress).
 //
-// Der Strangler ist abgeschlossen: das frühere plan-weite StudyPlanItem/Method-Modell wurde mit der
-// Migration `PlanContainerCleanup` (2026-07-05) vollständig entfernt – es gibt kein Alt-Modell mehr,
-// neben dem hier noch etwas „additiv" laufen würde.
+// The strangler is finished: the former plan-wide StudyPlanItem/Method model was removed completely - there
+// is no legacy model left that anything here would run "additively" beside.
 
-// GoalCadence/ItemScope/PracticeOrder leben im Vertrags-Projekt (Pugling.Contracts).
+// GoalCadence/ItemScope/PracticeOrder live in the contract project (Pugling.Contracts).
 
 /// <summary>
-/// Eine Position in einem <see cref="StudyPlan"/>: verweist auf eine Katalog-<see cref="Exercise"/>
-/// und legt fest, WIE sie im Plan gespielt wird (Overrides), WELCHES Ziel gilt (Rhythmus + Schwelle)
-/// und WIE Punkte fließen. Leere Override-Felder erben den Vorschlag der Übung (Hybrid-Prinzip).
+/// One position within a <see cref="StudyPlan"/>: it references a catalog <see cref="Exercise"/> and defines
+/// HOW it is played within the plan (overrides), WHICH goal applies (cadence + threshold) and HOW points
+/// flow. Empty override fields inherit the exercise's suggestion (hybrid principle).
 /// </summary>
 public class PlanPosition
 {
@@ -22,110 +20,111 @@ public class PlanPosition
     public int StudyPlanId { get; set; }
     public StudyPlan? StudyPlan { get; set; }
 
-    /// <summary>Referenzierte Katalog-Übung – der Inhalt bleibt dort (keine Kopie in Stores).</summary>
+    /// <summary>Referenced catalog exercise – the content stays there (no copy in any store).</summary>
     public int ExerciseId { get; set; }
     public Exercise? Exercise { get; set; }
 
-    /// <summary>Reihenfolge innerhalb des Plans (Gruppierung nach Fach ergibt sich aus der Übung).</summary>
+    /// <summary>Order within the plan (grouping by subject follows from the exercise).</summary>
     public int Order { get; set; }
 
-    // --- Overrides (null = Vorschlag der Übung erben) ---
-    /// <summary>Übersteuerte Teststufe (verfahrensabhängig interpretiert); null = Übungs-Default.</summary>
+    // --- Overrides (null = inherit the exercise's suggestion) ---
+    /// <summary>Overridden test stage (interpreted per method); null = the exercise's default.</summary>
     public int? Stage { get; set; }
-    /// <summary>Wie viele Inhalte der Übung genutzt werden; null = alle.</summary>
+    /// <summary>How many of the exercise's contents are used; null = all of them.</summary>
     public int? ItemCount { get; set; }
-    /// <summary>Umfang der Inhaltsauswahl (alle/neu/alt).</summary>
+    /// <summary>Scope of the content selection (all/new/old).</summary>
     public ItemScope Scope { get; set; } = ItemScope.All;
     /// <summary>
-    /// Reihenfolge, in der der Server die (fälligen) Inhalte ausspielt (beim Sitzungs-/Testbeginn eingefroren).
-    /// Standard <see cref="PracticeOrder.WeakestFirst"/> = bisheriges Verhalten.
+    /// The order in which the server plays out the (due) contents (frozen when the session/test starts).
+    /// Default <see cref="PracticeOrder.WeakestFirst"/> = the previous behavior.
     /// </summary>
     public PracticeOrder OrderStrategy { get; set; } = PracticeOrder.WeakestFirst;
 
-    // --- Ziel ---
-    /// <summary>Ziel-Rhythmus; <see cref="GoalCadence.None"/> = freies Üben ohne Pflicht.</summary>
+    // --- Goal ---
+    /// <summary>Goal cadence; <see cref="GoalCadence.None"/> = free practice without any obligation.</summary>
     public GoalCadence Cadence { get; set; } = GoalCadence.None;
     /// <summary>
-    /// Bestehensgrenze der Periode in <b>Prozent</b>; <c>null</c> = 80 %. Der Satz ist immer derselbe –
-    /// „wie viel Prozent musst du schaffen" –, nur der Maßstab folgt dem <c>ExerciseCheckMode</c> der Übung:
+    /// Pass threshold of the period in <b>percent</b>; <c>null</c> = 80 %. The sentence is always the same –
+    /// "what percentage do you have to manage" – only the yardstick follows the exercise's
+    /// <c>ExerciseCheckMode</c>:
     /// <list type="bullet">
-    /// <item>prüfbare Verfahren (Test/Katalog-Check): Prozent <b>richtiger Antworten</b> im Abschlusstest;</item>
-    /// <item>reine Inhaltsübungen (<c>ExerciseCheckMode.None</c>): Prozent der Runde, die <b>gespielt</b>
-    /// wurde (Cursor gegen die eingefrorene Reihenfolge).</item>
+    /// <item>checkable methods (test/catalog check): percentage of <b>correct answers</b> in the final test;</item>
+    /// <item>pure content exercises (<c>ExerciseCheckMode.None</c>): percentage of the round that was
+    /// <b>played</b> (cursor against the frozen order).</item>
     /// </list>
     /// <para>
-    /// Die Einheit ist <b>typ-unabhängig</b> – auch bei Katalog-Check-Verfahren. Das ist keine
-    /// Vereinfachung, sondern folgt daraus, dass ein <see cref="TestAttempt"/> ausschließlich im
-    /// Positions-Test entsteht und <c>PositionProgressService.IsGoalMetAsync</c> das Ziel jedes
-    /// prüfbaren Typs an einem bestandenen Versuch misst: es gibt gar keinen zweiten Pfad, der eine
-    /// andere Einheit auswerten könnte. Eine absolute Trefferzahl wäre hier auch überflüssig – wie
-    /// groß der Pool ist, sagt bereits <see cref="ItemCount"/>.
+    /// The unit is <b>type-agnostic</b> – for catalog-check methods too. That is not a simplification but
+    /// follows from the fact that a <see cref="TestAttempt"/> is only ever created in the position test and
+    /// that <c>PositionProgressService.IsGoalMetAsync</c> measures the goal of every checkable type against a
+    /// passed attempt: there simply is no second path that could evaluate a different unit. An absolute number
+    /// of hits would also be redundant here – how large the pool is, is already stated by
+    /// <see cref="ItemCount"/>.
     /// </para>
     /// <para>
-    /// Bei Inhaltsübungen war der Wert früher ungenutzt: das Ziel galt schon mit einer Lern-Sitzung mit
-    /// <i>irgendeiner</i> Aktivität als erledigt – ein Heartbeat von 12 Sekunden reichte, um die Pflicht zu
-    /// erfüllen und die Ziel-Punkte auszulösen. Genau darum trägt der Wert jetzt auch dort einen Maßstab.
+    /// For content exercises the value used to be unused: the goal already counted as done after one learning
+    /// session with <i>any</i> activity – a heartbeat of 12 seconds was enough to fulfill the obligation and
+    /// trigger the goal points. That is exactly why the value now carries a yardstick there as well.
     /// </para>
     /// </summary>
     public int? GoalThreshold { get; set; }
     /// <summary>
-    /// Zählt ein Test nur auf einer „gewerteten" (getippten/Freitext-)Stufe als bestanden?
-    /// Verhindert bloßes Klicken/Auswählen. Nur für test-fähige Verfahren relevant.
+    /// Does a test only count as passed on a "graded" (typed/free-text) stage?
+    /// Prevents mere clicking/selecting. Only relevant for test-capable methods.
     /// </summary>
     public bool RequireTypedTest { get; set; }
 
-    // --- Punkte (Default aus dem Bonus-Vorschlag der Übung, hier pro Position überschreibbar) ---
-    /// <summary>Punkte für das Erreichen des Positionsziels in seiner Periode.</summary>
+    // --- Points (default from the exercise's bonus suggestion, overridable per position here) ---
+    /// <summary>Points for reaching the position's goal within its period.</summary>
     public int PointsGoalMet { get; set; } = 20;
     /// <summary>
-    /// Münz-<b>Malus</b>, der abgezogen wird, wenn das Pflichtziel (<see cref="Cadence"/> Tag/Woche) in
-    /// einer abgeschlossenen Periode <b>gerissen</b> wurde – der „Stick" gegen Nicht-Lernen. 0 = kein Malus
-    /// (reine Belohnung). Nur bei <see cref="GoalCadence.Daily"/>/<see cref="GoalCadence.Weekly"/> wirksam.
-    /// Schulden sind erlaubt: der Münz-Saldo darf dadurch negativ werden.
+    /// Coin <b>penalty</b> that is deducted when the mandatory goal (<see cref="Cadence"/> daily/weekly) was
+    /// <b>missed</b> in a closed period – the "stick" against not learning. 0 = no penalty (reward only).
+    /// Only effective for <see cref="GoalCadence.Daily"/>/<see cref="GoalCadence.Weekly"/>.
+    /// Debt is allowed: the coin balance may go negative because of it.
     /// </summary>
     public int PenaltyCoins { get; set; }
-    /// <summary>Basispunkte für einen erstmals wiederholten (neuen) Inhalt – „neuer Stoff zählt am meisten".</summary>
+    /// <summary>Base points for a content repeated for the first time (new content) – "new material counts most".</summary>
     public int NewContentPoints { get; set; } = 10;
-    /// <summary>Alle N richtigen Antworten in Folge gibt es einen Combo-Bonus. 0 = aus.</summary>
+    /// <summary>Every N correct answers in a row yields a combo bonus. 0 = off.</summary>
     public int ComboThreshold { get; set; } = 5;
-    /// <summary>Basis-Bonuspunkte je Combo-Meilenstein; eskaliert (N-ter Meilenstein → Basis × N). 0 = aus.</summary>
+    /// <summary>Base bonus points per combo milestone; escalating (Nth milestone → base × N). 0 = off.</summary>
     public int ComboBonusPoints { get; set; } = 5;
-    /// <summary>Höchst-Sekunden für eine „schnelle Antwort"; 0 = Feature aus.</summary>
+    /// <summary>Maximum seconds for a "fast answer"; 0 = feature off.</summary>
     public int SpeedThresholdSeconds { get; set; }
-    /// <summary>Bonuspunkte für eine schnelle Antwort. 0 = aus.</summary>
+    /// <summary>Bonus points for a fast answer. 0 = off.</summary>
     public int SpeedBonusPoints { get; set; }
 
-    // --- Leitner-Wiederholung (nur für drill-fähige Verfahren wie Vokabeln/Cloze/Matching) ---
-    /// <summary>Aktiviert die Karteikasten-Terminierung dieser Position.</summary>
+    // --- Leitner review (only for drillable methods such as vocabulary/cloze/matching) ---
+    /// <summary>Enables the Leitner box scheduling of this position.</summary>
     public bool UseLeitner { get; set; }
-    /// <summary>Höchste Box (Standard 5).</summary>
+    /// <summary>Highest box (default 5).</summary>
     public int MaxBox { get; set; } = 5;
-    /// <summary>Intervall in Tagen je Box (Index = Box; Index 0 ungenutzt). Null = Standard <c>[0,1,2,4,7,14]</c>.</summary>
+    /// <summary>Interval in days per box (index = box; index 0 unused). Null = the default <c>[0,1,2,4,7,14]</c>.</summary>
     public List<int>? BoxIntervalDays { get; set; }
-    /// <summary>Optionaler Stufen-Fahrplan (Tag → Stufe); steigert die Schwierigkeit über die Laufzeit.</summary>
+    /// <summary>Optional stage schedule (day → stage); raises the difficulty over the plan's runtime.</summary>
     public List<StageStep>? StageSchedule { get; set; }
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
-    /// <summary>Materialisierter Leitner-/Einführungs-Fortschritt je Inhalts-Atom dieser Position.</summary>
+    /// <summary>Materialized Leitner/introduction progress per content atom of this position.</summary>
     public List<PositionItemProgress> ItemProgress { get; set; } = new();
 }
 
 /// <summary>
-/// Protokolliert die <b>einmalige</b> Punkte-Gutschrift für ein erreichtes Positions-Ziel je Periode –
-/// das Positions-Gegenstück zur idempotenten Tages-Belohnung. Verhindert, dass die Ziel-Punkte
-/// (<see cref="PlanPosition.PointsGoalMet"/>) doppelt fließen, wenn dieselbe Position in derselben
-/// Periode mehrfach abgeschlossen/aufgerufen wird.
+/// Records the <b>one-off</b> points credit for a reached position goal per period – the position counterpart
+/// to the idempotent daily reward. It prevents the goal points
+/// (<see cref="PlanPosition.PointsGoalMet"/>) from flowing twice when the same position is
+/// completed/requested several times within the same period.
 /// <para>
-/// Die Periode ist <b>(<see cref="Cadence"/>, <see cref="PeriodStart"/>)</b>, und die Taktung gehört
-/// ausdrücklich dazu: sie ist eine <b>Momentaufnahme</b> der Position zum Zeitpunkt der Buchung. Ohne sie
-/// deutete ein Wechsel Tag→Woche rückwirkend gebuchte Perioden um – die Belohnung für Montag als Tagesziel
-/// würde die Woche, die an diesem Montag beginnt, stillschweigend als „schon bezahlt" abweisen.
+/// The period is <b>(<see cref="Cadence"/>, <see cref="PeriodStart"/>)</b>, and the cadence explicitly belongs
+/// to it: it is a <b>snapshot</b> of the position at the time of the entry. Without it a switch from daily to
+/// weekly would reinterpret periods booked earlier – the reward for a Monday as a daily goal would silently
+/// reject the week starting on that Monday as "already paid".
 /// </para>
 /// <para>
-/// <see cref="PeriodStart"/> ist <b>nicht</b> dasselbe wie <see cref="Day"/>: bei einem Wochenziel, das am
-/// Mittwoch erreicht wird, steht der Montag im einen und der Mittwoch im anderen Feld. Beide werden
-/// gebraucht – der Tag für die Tages-/Serien-Metriken, die Periode für die Idempotenz.
+/// <see cref="PeriodStart"/> is <b>not</b> the same as <see cref="Day"/>: for a weekly goal reached on a
+/// Wednesday, the Monday sits in one field and the Wednesday in the other. Both are needed – the day for the
+/// daily/streak metrics, the period for idempotency.
 /// </para>
 /// </summary>
 public class PositionGoalReward
@@ -133,44 +132,44 @@ public class PositionGoalReward
     public int Id { get; set; }
     public int PlanPositionId { get; set; }
     public PlanPosition? PlanPosition { get; set; }
-    /// <summary>Taktung der Position zum Zeitpunkt der Buchung (Momentaufnahme – siehe Klassen-Doku).</summary>
+    /// <summary>Cadence of the position at the time of the entry (snapshot – see the class documentation).</summary>
     public GoalCadence Cadence { get; set; }
-    /// <summary>Erster Tag der belohnten Periode: der Tag selbst beim Tagesziel, der Montag beim Wochenziel.</summary>
+    /// <summary>First day of the rewarded period: the day itself for a daily goal, the Monday for a weekly goal.</summary>
     public DateOnly PeriodStart { get; set; }
-    /// <summary>Kalendertag, an dem das Ziel erreicht wurde (Grundlage der Tages-/Serien-Metriken).</summary>
+    /// <summary>Calendar day the goal was reached on (the basis of the daily/streak metrics).</summary>
     public DateOnly Day { get; set; }
     public int Points { get; set; }
     public DateTime AwardedAt { get; set; } = DateTime.UtcNow;
 }
 
 /// <summary>
-/// Protokolliert den <b>einmaligen</b> Münz-Malus für ein <b>gerissenes</b> Positions-Pflichtziel je Periode –
-/// das negative Gegenstück zu <see cref="PositionGoalReward"/>. Ein Unique-Index auf
-/// <c>(PlanPositionId, Cadence, PeriodStart)</c> garantiert, dass der Malus
-/// (<see cref="PlanPosition.PenaltyCoins"/>) je Periode höchstens einmal abgezogen wird – auch wenn das Lazy
-/// Settlement mehrfach über dieselbe abgeschlossene Periode läuft. Die Periode ist identisch aufgebaut wie
-/// beim Reward, samt der Momentaufnahme der Taktung (Begründung dort).
+/// Records the <b>one-off</b> coin penalty for a <b>missed</b> mandatory position goal per period – the
+/// negative counterpart to <see cref="PositionGoalReward"/>. A unique index on
+/// <c>(PlanPositionId, Cadence, PeriodStart)</c> guarantees that the penalty
+/// (<see cref="PlanPosition.PenaltyCoins"/>) is deducted at most once per period – even if the lazy settlement
+/// runs over the same closed period several times. The period is built exactly as for the reward, including
+/// the snapshot of the cadence (rationale there).
 /// </summary>
 public class PositionGoalPenalty
 {
     public int Id { get; set; }
     public int PlanPositionId { get; set; }
     public PlanPosition? PlanPosition { get; set; }
-    /// <summary>Taktung der Position zum Zeitpunkt der Buchung (Momentaufnahme, siehe <see cref="PositionGoalReward"/>).</summary>
+    /// <summary>Cadence of the position at the time of the entry (snapshot, see <see cref="PositionGoalReward"/>).</summary>
     public GoalCadence Cadence { get; set; }
-    /// <summary>Erster Tag der gerissenen Periode: der Tag selbst beim Tagesziel, der Montag beim Wochenziel.</summary>
+    /// <summary>First day of the missed period: the day itself for a daily goal, the Monday for a weekly goal.</summary>
     public DateOnly PeriodStart { get; set; }
-    /// <summary>Letzter Tag der gerissenen Periode (Tag selbst bzw. Wochen-Sonntag) – für die Auswertung.</summary>
+    /// <summary>Last day of the missed period (the day itself, or the week's Sunday) – for reporting.</summary>
     public DateOnly Day { get; set; }
-    /// <summary>Abgezogene Münzen (positiver Betrag; die Ledger-Buchung ist negativ).</summary>
+    /// <summary>Coins deducted (a positive value; the ledger entry is negative).</summary>
     public int Points { get; set; }
     public DateTime AppliedAt { get; set; } = DateTime.UtcNow;
 }
 
 /// <summary>
-/// Lern-Fortschritt eines einzelnen Inhaltsatoms (z. B. einer Vokabel) innerhalb einer
-/// <see cref="PlanPosition"/>. Faul angelegt beim ersten Einführen – der Inhalt selbst bleibt in der
-/// Übungs-Config, hier steht nur der Karteikasten-/Einführungs-Zustand pro Kind (ein Plan = ein Kind).
+/// Learning progress of a single content atom (e.g. one vocabulary pair) within a
+/// <see cref="PlanPosition"/>. Created lazily on the first introduction – the content itself stays in the
+/// exercise config, here only the Leitner box/introduction state per child is kept (one plan = one child).
 /// </summary>
 public class PositionItemProgress
 {
@@ -178,17 +177,17 @@ public class PositionItemProgress
     public int PlanPositionId { get; set; }
     public PlanPosition? PlanPosition { get; set; }
 
-    /// <summary>Index des Inhalts in der Item-Liste der referenzierten Übung.</summary>
+    /// <summary>Index of the content in the item list of the referenced exercise.</summary>
     public int ItemIndex { get; set; }
 
-    /// <summary>Aktuelle Leitner-Box (1 = neu/schwer … MaxBox = sicher).</summary>
+    /// <summary>Current Leitner box (1 = new/hard … MaxBox = safe).</summary>
     public int Box { get; set; } = 1;
-    /// <summary>Tag, an dem der Inhalt das nächste Mal fällig ist. Null = sofort fällig (noch nie bewertet).</summary>
+    /// <summary>Day the content is next due. Null = due immediately (never reviewed yet).</summary>
     public DateOnly? DueOn { get; set; }
-    /// <summary>Wie oft dieser Inhalt schon per Leitner wiederholt wurde.</summary>
+    /// <summary>How often this content has been reviewed through Leitner so far.</summary>
     public int ReviewCount { get; set; }
-    /// <summary>Zeitpunkt der letzten Leitner-Wiederholung.</summary>
+    /// <summary>Instant of the last Leitner review.</summary>
     public DateTime? LastReviewedAt { get; set; }
-    /// <summary>Wann der Inhalt erstmals als „neu" eingeführt wurde. Null = noch nicht eingeführt.</summary>
+    /// <summary>When the content was first introduced as "new". Null = not introduced yet.</summary>
     public DateOnly? IntroducedAt { get; set; }
 }

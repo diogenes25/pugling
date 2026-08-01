@@ -61,8 +61,8 @@ internal static class PuglingHttp
     {
         await PuglingResponse.EnsureSuccessAsync(response, ct);
 
-        // 204/leerer Body ist für einen Aufrufer, der ein T erwartet, ein Vertragsbruch – klar melden,
-        // statt null zu liefern und den Fehler erst beim Zugriff auftauchen zu lassen.
+        // 204/empty body breaks the contract for a caller expecting a T - say so clearly instead of
+        // returning null and letting the error surface on first access.
         if (response.StatusCode == HttpStatusCode.NoContent)
             throw new PuglingApiException("empty_response", response.StatusCode, "Empty response",
                 $"Expected a {typeof(T).Name} body but the server returned 204.",

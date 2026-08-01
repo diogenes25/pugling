@@ -114,7 +114,7 @@ public class TextbooksController(PuglingDbContext db) : ControllerBase
         if (dto.Publisher is not null) book.Publisher = dto.Publisher.Trim();
         if (dto.Isbn is not null) book.Isbn = dto.Isbn.Trim();
         if (dto.CurrentChapter is not null) book.CurrentChapter = dto.CurrentChapter.Trim();
-        // Genau den oben geprüften Zielzustand schreiben – sonst könnten Prüfung und Ergebnis auseinanderlaufen.
+        // Write exactly the target state checked above - otherwise check and result could drift apart.
         book.SeriesId = seriesId;
         book.CurrentUnitId = unitId;
         await db.SaveChangesAsync(ct);

@@ -54,12 +54,12 @@ public class ExerciseContentProvider(ExerciseTypeRegistry registry)
         _ => item,
     };
 
-    // Prompt/Antwort tauschen; die Alternativen des Rückwärts-Falls entfallen (galten für die alte Antwort),
-    // der Artikel-Hinweis ebenso (er gehörte zum nun abgefragten Wort). Die Aussprache-Audioquelle entfällt
-    // ebenfalls: sie liest das Wort vor, das nach dem Tausch die Lösung ist – sonst würde die Hör-Stufe die
-    // Antwort vorsprechen (Anti-Schummel). Rückwärts-Items werden in der Hör-Stufe damit textlich gezeigt.
-    // Das Bild bleibt: es zeigt die *Bedeutung* und ist damit richtungsunabhängig; ob es überhaupt gezeigt
-    // werden darf, entscheidet ohnehin die Stufe (StageFacets), nicht die Richtung.
+    // Swap prompt/answer; the alternatives of the reverse case fall away (they applied to the old answer), as
+    // does the article hint (it belonged to the word now being asked). The pronunciation audio falls away too:
+    // it reads out the word that is the solution after the swap - the listening stage would otherwise speak the
+    // answer out loud (anti-cheat). Reverse items are therefore shown as text in the listening stage.
+    // The image stays: it shows the *meaning* and is thus direction-independent; whether it may be shown at
+    // all is decided by the stage (StageFacets) anyway, not by the direction.
     private static ContentItem Swap(ContentItem it) =>
         it with { Prompt = it.Answer, Answer = it.Prompt, AcceptedAnswers = [it.Prompt], Hint = null, AudioUrl = null };
 }

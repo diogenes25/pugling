@@ -30,7 +30,7 @@ public class TagConventionTests
                      .Where(t => typeof(ControllerBase).IsAssignableFrom(t) && !t.IsAbstract))
         {
             var tier = Tiers.FirstOrDefault(x => type.Namespace == x.Namespace);
-            if (tier.Namespace is null) continue; // z. B. AuthController (Tag „Auth") – kein Tier-Ordner
+            if (tier.Namespace is null) continue; // e.g. AuthController (tag "Auth") - no tier folder
 
             foreach (var (member, tag) in TagsOf(type))
             {
@@ -40,11 +40,11 @@ public class TagConventionTests
             }
         }
 
-        // Selbstschutz gegen falsch-grün: fänden wir die [Tags] gar nicht (falscher Attribut-Typ),
-        // wäre die Liste leer und der Test bestünde inhaltsleer. Es gibt real ~40 Tag-Strings.
-        Assert.True(checkedTags >= 25, $"Zu wenige Tags gefunden ({checkedTags}) – Reflexion greift nicht.");
+        // Self-protection against a false green: if we did not find the [Tags] at all (a wrong attribute type),
+        // the list would be empty and the test would pass vacuously. There really are ~40 tag strings.
+        Assert.True(checkedTags >= 25, $"Too few tags found ({checkedTags}) - the reflection does not bite.");
         Assert.True(offenders.Count == 0,
-            "Tag-Praefix passt nicht zum Tier-Ordner:\n" + string.Join("\n", offenders));
+            "The tag prefix does not match the tier folder:\n" + string.Join("\n", offenders));
     }
 
     /// <summary>All tag strings of a controller - controller level and every action level.</summary>

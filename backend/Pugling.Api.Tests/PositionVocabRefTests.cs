@@ -45,10 +45,10 @@ public class PositionVocabRefTests(PuglingWebAppFactory factory) : IClassFixture
         var child = await TestApi.ChildAsync(_factory);
         var baseUrl = $"/api/v1/student/study-plans/{planId}/positions/{positionId}/practice-sessions";
 
-        // Zentrale Korrektur der Übersetzung im Store …
+        // A central correction of the translation in the store …
         await father.PatchAsJsonAsync($"/api/v1/creator/vocabulary/{id}", new { translation = "Mieze" });
 
-        // … schlägt sofort in der referenzierenden Übung durch: die neue Lösung ist maßgeblich.
+        // … shows through in the referencing exercise at once: the new solution is authoritative.
         var sessionId = await TestApi.IdAsync(await child.PostAsJsonAsync(baseUrl, new { }));
         var outcome = await (await child.PostAsJsonAsync($"{baseUrl}/{sessionId}/review",
             new { itemIndex = 0, givenAnswer = "Mieze" })).Content.ReadFromJsonAsync<JsonElement>();

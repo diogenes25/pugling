@@ -59,7 +59,7 @@ public class AdultsController(PuglingDbContext db, AccountService accounts) : Co
         var adult = new Adult { Name = dto.Name.Trim(), Email = dto.Email, Pin = string.IsNullOrEmpty(dto.Pin) ? "" : PinHasher.Hash(dto.Pin) };
         db.Adults.Add(adult);
         await db.SaveChangesAsync(ct);
-        // Login-Konto (Creator+Supervisor) sofort anlegen, damit der neue Vater sich einloggen kann.
+        // Create the login account (creator+supervisor) right away so the new adult can log in.
         await accounts.EnsureForAdultAsync(adult, ct);
 
         var response = new AdultResponse(adult.Id, adult.Name, adult.Email, adult.CreatedAt, 0);
@@ -80,9 +80,9 @@ public class AdultsController(PuglingDbContext db, AccountService accounts) : Co
         if (dto.Name is not null) adult.Name = dto.Name.Trim();
         if (dto.Email is not null) adult.Email = dto.Email;
         if (dto.Pin is not null) adult.Pin = string.IsNullOrEmpty(dto.Pin) ? "" : PinHasher.Hash(dto.Pin);
-        // Name, Adresse und PIN-Hash aufs Login-Konto spiegeln – im SELBEN Commit. Vorher ging nur die PIN
-        // mit, und die Adresse driftete: die Kollisionsprüfung oben liest das Konto, der Unique-Index sitzt
-        // aber auch am Adult. Siehe AccountService.MirrorAsync.
+        // Mirror name, address and PIN hash onto the login account - in the SAME commit. Only the PIN used to
+        // travel along and the address drifted: the collision check above reads the account, but the unique
+        // index also sits on the adult. See AccountService.MirrorAsync.
         await accounts.MirrorAsync(adult, ct);
         await db.SaveChangesAsync(ct);
 
@@ -127,15 +127,15 @@ public class AdultsController(PuglingDbContext db, AccountService accounts) : Co
         var adult = await db.Adults.FindAsync([adultId], ct);
         if (adult is null) return NotFound();
 
-        // Die Kinder, für die dieser Erwachsene der einzige Betreuer ist.
+        // The children this adult is the only supervisor for.
         var verwaisende = await db.Children
             .Where(c => c.SupervisorLinks.Any(l => l.SupervisorId == adultId)
                 && c.SupervisorLinks.All(l => l.SupervisorId == adultId))
             .ToListAsync(ct);
         db.Children.RemoveRange(verwaisende);
 
-        // Das Login-Konto verliert mit dem Erwachsenen sein letztes Profil und bliebe sonst als leere Hülle
-        // zurück – mitsamt seiner E-Mail, die den (eindeutigen) Adressraum dauerhaft blockiert hätte.
+        // With the adult, the login account loses its last profile and would remain as an empty shell -
+        // together with its e-mail, which would block the (unique) address space forever.
         var konten = await db.Accounts
             .Where(a => a.Profiles.All(p => p.AdultId == adultId))
             .Where(a => a.Profiles.Any(p => p.AdultId == adultId))

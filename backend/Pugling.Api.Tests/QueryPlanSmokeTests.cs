@@ -44,8 +44,8 @@ public sealed class QueryPlanSmokeTests
             $"SELECT Id FROM ChildPointsEntries WHERE ChildId = {ids.Child} ORDER BY CreatedAt DESC, Id DESC LIMIT 20;",
             "IX_ChildPointsEntries_ChildId_CreatedAt_Id");
 
-        // `Kind` liegt seit der Enum-Konvention als TEXT in der DB (der Vertrag sprach immer schon Strings).
-        // Der Komposit-Index muss auch darauf greifen – genau das prüft diese Zusicherung.
+        // Since the enum convention, `Kind` sits in the DB as TEXT (the contract always spoke strings anyway).
+        // The composite index has to apply to that too - which is exactly what this assurance checks.
         await AssertUsesIndexAsync(con,
             $"SELECT SUM(Amount) FROM ChildPointsEntries WHERE ChildId = {ids.Child} AND Kind IN ('Base', 'Combo', 'Manual');",
             "IX_ChildPointsEntries_ChildId_Kind");
@@ -74,16 +74,16 @@ public sealed class QueryPlanSmokeTests
             $"SELECT COUNT(*) FROM ItemProgress WHERE ChildId = {ids.Child} AND ExerciseId = {ids.Exercise};",
             "IX_ItemProgress_ChildId_ExerciseId");
 
-        // Der heißeste Creator-Pfad: Dubletten-Lookup beim Anlegen von Vokabeln. Er lief als vollständiger
-        // Tabellendurchlauf, weil die Query `LOWER(Word)` verglich – über einen Ausdruck greift kein
-        // Spaltenindex. Erst Collation NOCASE + Wegfall des ToLower() machen ihn nutzbar; diese
-        // Zusicherung ist der Beweis, dass beides zusammen wirkt und nicht nur der Index existiert.
+        // The hottest creator path: the duplicate lookup when creating vocabulary. It ran as a full table scan,
+        // because the query compared `LOWER(Word)` - no column index applies over an expression. Only the
+        // NOCASE collation + dropping the ToLower() make it usable; this assurance is the proof that both work
+        // together and not just that the index exists.
         await AssertUsesIndexAsync(con,
             "SELECT Id FROM Vocabularies WHERE Word = 'w';",
             "IX_Vocabularies_Word");
 
-        // Die Gegenrichtung der Medien-Verknüpfung („welche Verknüpfungen hat dieses Asset?"). Die drei
-        // gefilterten Unique-Indizes beginnen mit MediaAssetId, können diese Query aber nicht bedienen.
+        // The opposite direction of the media link ("which links does this asset have?"). The three filtered
+        // unique indexes start with MediaAssetId but cannot serve this query.
         await AssertUsesIndexAsync(con,
             "SELECT Id FROM MediaLinks WHERE MediaAssetId = 1;",
             "IX_MediaLinks_MediaAssetId");
@@ -136,8 +136,8 @@ public sealed class QueryPlanSmokeTests
             new ChildPointsEntry { Child = child, Amount = 10, Kind = PointKind.Base, Reason = "r" });
         await db.SaveChangesAsync();
 
-        // Erst nach dem Speichern: ItemProgress trägt ExerciseId/VocabularyId denormalisiert (ohne FK),
-        // die Werte müssen also aus den vergebenen Ids kommen.
+        // Only after saving: ItemProgress carries ExerciseId/VocabularyId denormalized (without an FK), so the
+        // values have to come from the assigned ids.
         db.Add(new ItemProgress
         {
             ChildId = child.Id,

@@ -80,8 +80,8 @@ public class SubjectsController(PuglingDbContext db) : ControllerBase
     {
         var subject = await db.Subjects.FindAsync([subjectId], ct);
         if (subject is null) return NotFound();
-        // Subject→Chapter→Exercise kaskadiert, PlanPosition→Exercise ist Restrict. Welche Tabellen das
-        // Löschen blockieren, weiß ExerciseUsageQueries – hier steht nur der Scope und die Meldung.
+        // Subject→Chapter→Exercise cascades, PlanPosition→Exercise is Restrict. Which tables block the delete
+        // is known by ExerciseUsageQueries - only the scope and the message live here.
         if (await ExerciseUsageQueries.AnyBlockingAsync(db,
                 db.Exercises.Where(x => x.Chapter!.SubjectId == subjectId),
                 db.Chapters.Where(c => c.SubjectId == subjectId), ct))

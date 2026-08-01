@@ -55,7 +55,7 @@ public class ChildInterestsController(PuglingDbContext db, InterestTagService ta
                 return this.ProblemWithCode(ApiErrors.ValidationError,
                     $"Weight must be between {ChildInterest.MinWeight} and {ChildInterest.MaxWeight}.");
 
-        // Erst alle Schlagworte auflösen: schlägt eines fehl, wird der Bestand nicht angetastet.
+        // Resolve all keywords first: if one fails, the existing set is not touched.
         var resolved = new List<(InterestTag Tag, int Weight)>();
         foreach (var input in inputs)
         {
@@ -65,12 +65,12 @@ public class ChildInterestsController(PuglingDbContext db, InterestTagService ta
                     "Each interest needs an existing tagId or a slug/label to create one from.");
             resolved.Add((tag, input.Weight));
         }
-        // Neu angelegte Tags haben noch keine Id – speichern, bevor die Gewichte darauf verweisen.
+        // Newly created tags have no id yet - save before the weights reference them.
         await db.SaveChangesAsync(ct);
 
         db.ChildInterests.RemoveRange(await db.ChildInterests.Where(i => i.ChildId == childId).ToListAsync(ct));
-        // Dubletten innerhalb der Eingabe (zwei Schreibweisen desselben Tags) würden den Unique-Index
-        // reißen – der letzte Eintrag gewinnt, wie bei einer Zuweisung.
+        // Duplicates within the input (two spellings of the same tag) would violate the unique index -
+        // the last entry wins, as with an assignment.
         foreach (var (tag, weight) in resolved.GroupBy(r => r.Tag.Id).Select(g => g.Last()))
             db.ChildInterests.Add(new ChildInterest { ChildId = childId, InterestTagId = tag.Id, Weight = weight });
 
@@ -120,7 +120,7 @@ public class ChildInterestsController(PuglingDbContext db, InterestTagService ta
         return NoContent();
     }
 
-    // ---- Helfer -------------------------------------------------------------------------------------
+    // ---- Helpers ------------------------------------------------------------------------------------
 
     /// <summary>Resolves the input to a tag: preferably by id, otherwise by slug/label (create-if-missing).</summary>
     private async Task<InterestTag?> ResolveAsync(ChildInterestInput input, CancellationToken ct)

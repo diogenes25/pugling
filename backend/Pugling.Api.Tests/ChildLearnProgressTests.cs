@@ -16,7 +16,7 @@ public class ChildLearnProgressTests(PuglingWebAppFactory factory) : IClassFixtu
 {
     private readonly PuglingWebAppFactory _factory = factory;
 
-    // Legt Fach → Kapitel → eine Vokabelübung an und liefert alle Ids (der Katalog verrät sonst subject/chapter nicht).
+    // Creates subject → chapter → one vocabulary exercise and returns all ids (the catalog does not otherwise reveal subject/chapter).
     private static async Task<(int subjectId, int chapterId, int exerciseId)> VocabAsync(
         HttpClient father, string subjectName, string title, params (string Front, string Back)[] items)
     {
@@ -34,7 +34,7 @@ public class ChildLearnProgressTests(PuglingWebAppFactory factory) : IClassFixtu
         return (subjectId, chapterId, exerciseId);
     }
 
-    // Legt eine weitere Vokabelübung in ein BESTEHENDES Fach/Kapitel und liefert ihre Id.
+    // Creates another vocabulary exercise in an EXISTING subject/chapter and returns its id.
     private static async Task<int> VocabInAsync(HttpClient father, int subjectId, int chapterId, string title, params (string Front, string Back)[] items) =>
         await TestApi.IdAsync(await father.PostAsJsonAsync(
             $"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/vocabulary", new
@@ -45,7 +45,7 @@ public class ChildLearnProgressTests(PuglingWebAppFactory factory) : IClassFixtu
                 config = new { direction = "front-to-back", sourceLang = "en", targetLang = "de", items = items.Select(i => new { front = i.Front, back = i.Back }) },
             }));
 
-    // Bündelt zwei bestehende Übungen als Positionen in EINEM aktiven Plan (ein aktiver Plan je Kind).
+    // Bundles two existing exercises as positions in ONE active plan (one active plan per child).
     private (int planId, int pos1, int pos2) SeedPlanWithTwoPositions(int exercise1, int exercise2, int childId = 1)
     {
         using var scope = _factory.Services.CreateScope();
@@ -61,7 +61,7 @@ public class ChildLearnProgressTests(PuglingWebAppFactory factory) : IClassFixtu
         return (plan.Id, p1.Id, p2.Id);
     }
 
-    // Legt einen (aktiven oder inaktiven) Plan mit Positionen auf die gegebenen Übungen an; liefert die Plan-Id.
+    // Creates an (active or inactive) plan with positions on the given exercises; returns the plan id.
     private int SeedPlan(bool active, params int[] exerciseIds)
     {
         using var scope = _factory.Services.CreateScope();
@@ -89,47 +89,47 @@ public class ChildLearnProgressTests(PuglingWebAppFactory factory) : IClassFixtu
     public async Task Hierarchie_AggregiertFortschritt_ZeigtAbdeckung_UndBlattItems()
     {
         var father = await TestApi.FatherAsync(_factory);
-        // Eindeutige Wörter, damit der pro-Kind geteilte Fortschritt/Store nicht mit anderen Tests kollidiert.
+        // Unique words, so that the per-child shared progress/store does not collide with other tests.
         var (subjectId, chapterId, ex1) = await VocabAsync(father, "Progress-Fach", "Geübt", ("quokka", "Kurzschwanzkänguru"), ("axolotl", "Axolotl"));
         var (_, _, ex2) = await VocabAsync(father, "Progress-Fach-B", "Ungeübt", ("pangolin", "Schuppentier"), ("tapir", "Tapir"));
 
-        // Beide Übungen liegen im SELBEN Fach/Kapitel (ex2 nur für die Position umgehängt): wir nehmen ex1+ex2 in einen Plan.
+        // Both exercises lie in the SAME subject/chapter (ex2 only moved over for the position): we take ex1+ex2 into one plan.
         var (planId, pos1, _) = SeedPlanWithTwoPositions(ex1, ex2);
         var child = await TestApi.ChildAsync(_factory);
 
-        // Nur ex1 üben: eine richtig, eine falsch → 2 von insgesamt 4 Items eingeführt.
+        // Practice ex1 only: one correct, one wrong → 2 of 4 items in total introduced.
         var sessionId = await TestApi.StartPositionSessionAsync(child, planId, pos1);
-        await TestApi.PositionReviewAsync(child, planId, pos1, sessionId, 0, givenAnswer: "Kurzschwanzkänguru"); // richtig
-        await TestApi.PositionReviewAsync(child, planId, pos1, sessionId, 1, givenAnswer: "daneben");             // falsch
+        await TestApi.PositionReviewAsync(child, planId, pos1, sessionId, 0, givenAnswer: "Kurzschwanzkänguru"); // correct
+        await TestApi.PositionReviewAsync(child, planId, pos1, sessionId, 1, givenAnswer: "daneben");             // wrong
 
         var basePath = "/api/v1/student/children/1/learn";
 
-        // Fach-Liste: die beiden zugewiesenen Fächer erscheinen; das geübte Fach zeigt Abdeckung (Total > Introduced).
+        // The subject list: both assigned subjects appear; the practiced subject shows coverage (total > introduced).
         var subjects = await father.GetFromJsonAsync<List<JsonElement>>($"{basePath}/subjects");
         var geubtesFach = subjects!.First(s => s.GetProperty("subjectId").GetInt32() == subjectId);
         var prog = geubtesFach.GetProperty("progress");
         Assert.Equal(1, geubtesFach.GetProperty("exerciseCount").GetInt32());
-        Assert.Equal(2, prog.GetProperty("totalItems").GetInt32());       // beide Vokabeln der Übung
-        Assert.Equal(2, prog.GetProperty("introducedItems").GetInt32());  // beide beantwortet
+        Assert.Equal(2, prog.GetProperty("totalItems").GetInt32());       // both words of the exercise
+        Assert.Equal(2, prog.GetProperty("introducedItems").GetInt32());  // both answered
         Assert.True(prog.GetProperty("avgMasteryPercent").GetInt32() > 0);
         Assert.Equal(2, prog.GetProperty("seenCount").GetInt32());
         Assert.Equal(1, prog.GetProperty("correctCount").GetInt32());
 
-        // Einzelnes Fach: identisches Aggregat.
+        // A single subject: the identical aggregate.
         var subject = await father.GetFromJsonAsync<JsonElement>($"{basePath}/subjects/{subjectId}");
         Assert.Equal(2, subject.GetProperty("progress").GetProperty("totalItems").GetInt32());
 
-        // Kapitel-Ebene.
+        // The chapter level.
         var chapters = await father.GetFromJsonAsync<List<JsonElement>>($"{basePath}/subjects/{subjectId}/chapters");
         Assert.Single(chapters!);
         Assert.Equal(chapterId, chapters![0].GetProperty("chapterId").GetInt32());
 
-        // Übungs-Ebene: die geübte Übung mit Fortschritt.
+        // The exercise level: the practiced exercise with its progress.
         var exercises = await father.GetFromJsonAsync<List<JsonElement>>($"{basePath}/subjects/{subjectId}/chapters/{chapterId}/vocabulary");
         var ex1Row = exercises!.First(e => e.GetProperty("exerciseId").GetInt32() == ex1);
         Assert.Equal(2, ex1Row.GetProperty("progress").GetProperty("introducedItems").GetInt32());
 
-        // Blatt-Ebene: Item-Lernstand, schwächste zuerst.
+        // The leaf level: item progress, weakest first.
         var itemsRes = await father.GetAsync($"{basePath}/subjects/{subjectId}/chapters/{chapterId}/vocabulary/{ex1}/items");
         itemsRes.EnsureSuccessStatusCode();
         var leaf = await itemsRes.Content.ReadFromJsonAsync<List<JsonElement>>();
@@ -150,8 +150,8 @@ public class ChildLearnProgressTests(PuglingWebAppFactory factory) : IClassFixtu
             $"/api/v1/student/children/1/learn/subjects/{subjectId}/chapters/{chapterId}/vocabulary");
         var ex2Row = exercises!.First(e => e.GetProperty("exerciseId").GetInt32() == ex2);
         var prog = ex2Row.GetProperty("progress");
-        Assert.Equal(2, prog.GetProperty("totalItems").GetInt32());       // Übung hat 2 Items …
-        Assert.Equal(0, prog.GetProperty("introducedItems").GetInt32());  // … aber nichts davon geübt
+        Assert.Equal(2, prog.GetProperty("totalItems").GetInt32());       // the exercise has 2 items …
+        Assert.Equal(0, prog.GetProperty("introducedItems").GetInt32());  // … but none of them practiced
         Assert.Equal(0, prog.GetProperty("avgMasteryPercent").GetInt32());
         Assert.True(prog.GetProperty("lastActivityAt").ValueKind == JsonValueKind.Null);
     }
@@ -160,7 +160,7 @@ public class ChildLearnProgressTests(PuglingWebAppFactory factory) : IClassFixtu
     public async Task NichtZugewiesenesFach_Und_NichtZugewieseneÜbung_Liefern404()
     {
         var father = await TestApi.FatherAsync(_factory);
-        // Fach mit Übung, aber KEIN Plan → dem Kind nicht zugewiesen.
+        // A subject with an exercise but NO plan → not assigned to the child.
         var (subjectId, chapterId, exerciseId) = await VocabAsync(father, "Waise-Fach", "Ohne Plan", ("caracal", "Karakal"));
 
         Assert.Equal(HttpStatusCode.NotFound,
@@ -179,11 +179,11 @@ public class ChildLearnProgressTests(PuglingWebAppFactory factory) : IClassFixtu
         var (_, _, ex2) = await VocabAsync(father, "Ownership-Fach-B", "Ungeübt", ("gerenuk", "Giraffengazelle"));
         SeedPlanWithTwoPositions(ex1, ex2);
 
-        // Fremdes/nicht existierendes Kind → Ownership-Filter liefert 404 (kein Enumerieren).
+        // Another/non-existent child → the ownership filter returns 404 (no enumeration).
         Assert.Equal(HttpStatusCode.NotFound,
             (await father.GetAsync("/api/v1/student/children/999/learn/subjects")).StatusCode);
 
-        // Der Sohn darf seinen eigenen Stand lesen.
+        // The child may read its own state.
         var child = await TestApi.ChildAsync(_factory);
         var self = await child.GetAsync("/api/v1/student/children/1/learn/subjects");
         self.EnsureSuccessStatusCode();
@@ -193,7 +193,7 @@ public class ChildLearnProgressTests(PuglingWebAppFactory factory) : IClassFixtu
     public async Task AbgehängterPlan_MachtÜbungInaktiv_FortschrittBleibt()
     {
         var father = await TestApi.FatherAsync(_factory);
-        // Beide Übungen im SELBEN Fach/Kapitel, damit die Vokabel-Liste beide zeigt.
+        // Both exercises in the SAME subject/chapter, so that the vocabulary list shows both.
         var (subjectId, chapterId, ex1) = await VocabAsync(father, "Retention-Fach", "Geübt", ("wombat", "Wombat"), ("kakapo", "Kakapo"));
         var ex2 = await VocabInAsync(father, subjectId, chapterId, "Ungeübt", ("quoll", "Beutelmarder"));
         var (planId, pos1, _) = SeedPlanWithTwoPositions(ex1, ex2);
@@ -205,19 +205,19 @@ public class ChildLearnProgressTests(PuglingWebAppFactory factory) : IClassFixtu
 
         var url = $"/api/v1/student/children/1/learn/subjects/{subjectId}/chapters/{chapterId}/vocabulary";
 
-        // Solange der Plan aktiv ist: ex1 aktiv, mit Fortschritt.
+        // While the plan is active: ex1 is active, with progress.
         var before = await father.GetFromJsonAsync<List<JsonElement>>(url);
         var ex1Before = before!.First(e => e.GetProperty("exerciseId").GetInt32() == ex1);
         Assert.True(ex1Before.GetProperty("active").GetBoolean());
         Assert.Equal(2, ex1Before.GetProperty("progress").GetProperty("introducedItems").GetInt32());
 
-        // Plan deaktivieren → die Übung wird inaktiv, der Fortschritt bleibt erhalten (verschwindet nicht).
+        // Deactivate the plan → the exercise becomes inactive, the progress is preserved (it does not disappear).
         SetPlanActive(planId, false);
         var after = await father.GetFromJsonAsync<List<JsonElement>>(url);
         var ex1After = after!.First(e => e.GetProperty("exerciseId").GetInt32() == ex1);
         Assert.False(ex1After.GetProperty("active").GetBoolean());
         Assert.Equal(2, ex1After.GetProperty("progress").GetProperty("introducedItems").GetInt32());
-        // Die ungeübte Zweit-Übung bleibt als inaktiv sichtbar (0 % Fortschritt).
+        // The unpracticed second exercise stays visible as inactive (0 % progress).
         var ex2After = after!.First(e => e.GetProperty("exerciseId").GetInt32() == ex2);
         Assert.False(ex2After.GetProperty("active").GetBoolean());
     }
@@ -252,12 +252,12 @@ public class ChildLearnProgressTests(PuglingWebAppFactory factory) : IClassFixtu
 
         var url = $"/api/v1/student/children/1/learn/subjects/{subjectId}/chapters/{chapterId}/vocabulary";
 
-        // Suche nach Titel (Teilstring, case-insensitiv).
+        // Search by title (substring, case-insensitive).
         var suche = await father.GetFromJsonAsync<List<JsonElement>>($"{url}?search=tier");
         Assert.Single(suche!);
         Assert.Equal("Tiere", suche![0].GetProperty("title").GetString());
 
-        // Sortierung nach Titel absteigend: "Tiere" vor "Farben".
+        // Sorting by title descending: "Tiere" before "Farben".
         var desc = await father.GetFromJsonAsync<List<JsonElement>>($"{url}?sort=title&dir=desc");
         var titlesDesc = desc!.Select(e => e.GetProperty("title").GetString()).ToList();
         Assert.True(titlesDesc.IndexOf("Tiere") < titlesDesc.IndexOf("Farben"));

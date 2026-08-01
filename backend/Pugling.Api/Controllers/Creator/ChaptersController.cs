@@ -96,7 +96,7 @@ public class ChaptersController(PuglingDbContext db) : ControllerBase
     {
         var chapter = await db.Chapters.FirstOrDefaultAsync(c => c.Id == chapterId && c.SubjectId == subjectId, ct);
         if (chapter is null) return NotFound();
-        // Chapter→Exercise kaskadiert, PlanPosition→Exercise ist Restrict – vgl. ExerciseControllerBase.Delete.
+        // Chapter→Exercise cascades, PlanPosition→Exercise is Restrict - cf. ExerciseControllerBase.Delete.
         if (await ExerciseUsageQueries.AnyBlockingAsync(db,
                 db.Exercises.Where(x => x.ChapterId == chapterId),
                 db.Chapters.Where(c => c.Id == chapterId), ct))

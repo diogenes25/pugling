@@ -79,12 +79,12 @@ public class ExerciseGrantsTests(PuglingWebAppFactory factory) : IClassFixture<P
         var f2 = await TestApi.FatherAsync(factory, id2, "2222");
         var url = $"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/vocabulary/{exerciseId}";
 
-        // Ohne Recht: 403 not_author.
+        // Without a right: 403 not_author.
         var denied = await f2.PutAsJsonAsync(url, VocabPayload());
         Assert.Equal(HttpStatusCode.Forbidden, denied.StatusCode);
         await AssertCodeAsync(denied, "not_author");
 
-        // Owner erteilt Write → B darf ändern.
+        // The owner grants write → B may change it.
         var grant = await f1.PostAsJsonAsync($"/api/v1/creator/exercises/{exerciseId}/grants", new { creatorId = id2, permission = "Write" });
         Assert.Equal(HttpStatusCode.Created, grant.StatusCode);
 
@@ -122,7 +122,7 @@ public class ExerciseGrantsTests(PuglingWebAppFactory factory) : IClassFixture<P
         Assert.Equal(HttpStatusCode.Created, g2.StatusCode);
 
         var list = await f1.GetFromJsonAsync<List<JsonElement>>($"/api/v1/creator/exercises/{exerciseId}/grants");
-        // Genau ein Owner (Auto-Grant des Anlegers) + genau ein (nicht duplizierter) Write.
+        // Exactly one owner (the creator's auto grant) + exactly one (non-duplicated) write.
         Assert.Single(list!, g => g.GetProperty("permission").GetString() == "Owner");
         Assert.Single(list!, g => g.GetProperty("permission").GetString() == "Write");
     }
@@ -133,7 +133,7 @@ public class ExerciseGrantsTests(PuglingWebAppFactory factory) : IClassFixture<P
         var f1 = await TestApi.FatherAsync(factory);
         var (_, _, exerciseId) = await CreateVocabAsync(f1);
 
-        // f1 (Vater-Id 1) ist einziger Owner (Auto-Grant beim Anlegen).
+        // f1 (adult id 1) is the only owner (the auto grant on creation).
         var del = await f1.DeleteAsync($"/api/v1/creator/exercises/{exerciseId}/grants/1/Owner");
         Assert.Equal(HttpStatusCode.Conflict, del.StatusCode);
         await AssertCodeAsync(del, "last_owner");
@@ -159,14 +159,14 @@ public class ExerciseGrantsTests(PuglingWebAppFactory factory) : IClassFixture<P
     public async Task OeffentlicheUebung_BleibtFuerFremdeZuweisbar()
     {
         var f1 = await TestApi.FatherAsync(factory);
-        var (_, _, exerciseId) = await CreateVocabAsync(f1); // executePublic default true
+        var (_, _, exerciseId) = await CreateVocabAsync(f1); // executePublic defaults to true
         var (f2, _, _, planId) = await SecondFatherWithPlanAsync();
 
         var ok = await f2.PostAsJsonAsync($"/api/v1/supervisor/study-plans/{planId}/positions", new { exerciseId });
         Assert.Equal(HttpStatusCode.Created, ok.StatusCode);
 
-        // „Zuweisbar" heißt: die Position hängt danach auch am Plan und auf der richtigen Übung. Der 201
-        // allein belegt nur, dass das Execute-Gate nicht zugeschlagen hat (docs/testplan.md, Etappe 1a).
+        // "Assignable" means: afterwards the position really hangs on the plan and on the right exercise. The
+        // 201 alone only proves that the execute gate did not bite (docs/testplan.md, stage 1a).
         var positions = await f2.GetFromJsonAsync<List<JsonElement>>(
             $"/api/v1/supervisor/study-plans/{planId}/positions");
         Assert.Contains(positions!, p => p.GetProperty("exerciseId").GetInt32() == exerciseId);
@@ -182,9 +182,9 @@ public class ExerciseGrantsTests(PuglingWebAppFactory factory) : IClassFixture<P
         var admin = await TestApi.FatherAsync(factory, adminId, "9999");
         var url = $"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/vocabulary/{exerciseId}";
 
-        // Mit GEÄNDERTEM Titel schreiben und ihn zurücklesen: ein PUT, der die Übung unangetastet lässt,
-        // antwortet ebenfalls mit 200. Vorher schickte der Test dieselben Werte, die schon drinstanden –
-        // der Erfolgsstatus war zugesichert, der Effekt nie nachgelesen (docs/testplan.md, Etappe 1a).
+        // Write with a CHANGED title and read it back: a PUT that leaves the exercise untouched also answers
+        // 200. Before, the test sent the same values that were already there - the success status was asserted,
+        // the effect never read back (docs/testplan.md, stage 1a).
         Assert.Equal(HttpStatusCode.OK,
             (await admin.PutAsJsonAsync(url, VocabPayload(title: "Vom Admin geändert"))).StatusCode);
         var changed = await admin.GetFromJsonAsync<JsonElement>(url);
@@ -199,10 +199,10 @@ public class ExerciseGrantsTests(PuglingWebAppFactory factory) : IClassFixture<P
     {
         var f1 = await TestApi.FatherAsync(factory);
         var (subjectId, chapterId, exerciseId) = await CreateVocabAsync(f1);
-        OrphanExercise(exerciseId); // kein Owner mehr → für niemanden (außer Admin) editierbar
+        OrphanExercise(exerciseId); // no owner left → editable for nobody (except an admin)
         var url = $"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/vocabulary/{exerciseId}";
 
-        // Selbst der ursprüngliche Autor hat ohne Grant kein Schreibrecht mehr.
+        // Even the original author has no write right left without a grant.
         Assert.Equal(HttpStatusCode.Forbidden, (await f1.PutAsJsonAsync(url, VocabPayload())).StatusCode);
 
         var adminId = await RegisterFatherAsync("9999");
@@ -210,7 +210,7 @@ public class ExerciseGrantsTests(PuglingWebAppFactory factory) : IClassFixture<P
         var admin = await TestApi.FatherAsync(factory, adminId, "9999");
         Assert.Equal(HttpStatusCode.OK,
             (await admin.PutAsJsonAsync(url, VocabPayload(title: "Adoptiert"))).StatusCode);
-        // Und die Änderung steht auch drin – sonst belegte der Test nur, dass der Admin nicht abgewiesen wird.
+        // And the change is really in there - otherwise the test would only prove that the admin is not rejected.
         Assert.Equal("Adoptiert", (await admin.GetFromJsonAsync<JsonElement>(url)).GetProperty("title").GetString());
     }
 
@@ -234,7 +234,7 @@ public class ExerciseGrantsTests(PuglingWebAppFactory factory) : IClassFixture<P
         var body = await created.Content.ReadFromJsonAsync<JsonElement>();
         Assert.Equal(1, body.GetProperty("grantCount").GetInt32());
 
-        // Gegenprobe über den Lesepfad: beide Sichten müssen sich einig sein.
+        // The counter-check through the read path: both views have to agree.
         var detail = await father.GetFromJsonAsync<JsonElement>(
             $"/api/v1/creator/exercises/{body.GetProperty("id").GetInt32()}");
         Assert.Equal(1, detail.GetProperty("grantCount").GetInt32());
@@ -249,7 +249,7 @@ public class ExerciseGrantsTests(PuglingWebAppFactory factory) : IClassFixture<P
         await f1.PostAsJsonAsync($"/api/v1/creator/exercises/{exerciseId}/grants", new { creatorId = id2, permission = "Write" });
 
         var detail = await f1.GetFromJsonAsync<JsonElement>($"/api/v1/creator/exercises/{exerciseId}");
-        // 1 Owner (Auto-Grant des Anlegers) + 1 Write = 2.
+        // 1 owner (the creator's auto grant) + 1 write = 2.
         Assert.Equal(2, detail.GetProperty("grantCount").GetInt32());
         Assert.True(detail.GetProperty("isOwner").GetBoolean());
     }
@@ -277,7 +277,7 @@ public class ExerciseGrantsTests(PuglingWebAppFactory factory) : IClassFixture<P
         Assert.Single(ownerOnlyBeforeGrant!);
         Assert.Equal(ownExerciseId, ownerOnlyBeforeGrant![0].GetProperty("id").GetInt32());
 
-        // Nach Write-Grant darf f1 auch die fremde Übung ändern (isOwn=true), bleibt aber kein Owner.
+        // After the write grant f1 may change the other creator's exercise too (isOwn=true) but stays no owner.
         var grant = await f2.PostAsJsonAsync($"/api/v1/creator/exercises/{foreignExerciseId}/grants",
             new { creatorId = ownCreatorId, permission = "Write" });
         Assert.Equal(HttpStatusCode.Created, grant.StatusCode);

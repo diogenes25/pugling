@@ -19,7 +19,7 @@ public class ExerciseTypeManifestTests(PuglingWebAppFactory factory) : IClassFix
         var registry = factory.Services.GetRequiredService<ExerciseTypeRegistry>();
         var manifests = registry.Manifests;
 
-        // Eindeutige Keys: genau ein Manifest je registriertem Typ, und der Manifest-Key == Typ-Key.
+        // Unique keys: exactly one manifest per registered type, and the manifest key == the type key.
         Assert.Equal(registry.All.Count, manifests.Count);
         Assert.Equal(manifests.Count, manifests.Select(m => m.Type).Distinct().Count());
         foreach (var t in registry.All)
@@ -32,7 +32,7 @@ public class ExerciseTypeManifestTests(PuglingWebAppFactory factory) : IClassFix
             Assert.False(string.IsNullOrWhiteSpace(m.AuthoringRoute));
             Assert.True(m.SchemaVersion >= 1);
 
-            // Study-Plan-Test ⇔ PlayRoute und Method gesetzt; jeder andere Modus hat beides null.
+            // Study plan test ⇔ PlayRoute and Method set; every other mode has both null.
             if (m.CheckMode == ExerciseCheckMode.StudyPlanTest)
             {
                 Assert.False(string.IsNullOrWhiteSpace(m.PlayRoute));
@@ -58,14 +58,14 @@ public class ExerciseTypeManifestTests(PuglingWebAppFactory factory) : IClassFix
         var registry = factory.Services.GetRequiredService<ExerciseTypeRegistry>();
         Assert.Equal(registry.All.Count, arr.GetArrayLength());
 
-        // Enums werden als Strings übertragen (globale Konvention, JsonStringEnumConverter).
+        // Enums are transferred as strings (a global convention, JsonStringEnumConverter).
         var cloze = arr.EnumerateArray().Single(e => e.GetProperty("type").GetString() == "Cloze");
         Assert.Equal("cloze", cloze.GetProperty("authoringRoute").GetString());
         Assert.Equal("StudyPlanTest", cloze.GetProperty("checkMode").GetString());
         Assert.Equal("tests", cloze.GetProperty("playRoute").GetString());
         Assert.Equal("Cloze", cloze.GetProperty("method").GetString());
 
-        // Das kindneutrale Manifest darf auch der Sohn lesen.
+        // The child-neutral manifest may be read by the child too.
         Assert.Equal(HttpStatusCode.OK, (await son.GetAsync("/api/v1/creator/exercise-types")).StatusCode);
     }
 
@@ -80,7 +80,7 @@ public class ExerciseTypeManifestTests(PuglingWebAppFactory factory) : IClassFix
         Assert.Equal("birkenbihl", body.GetProperty("renderer").GetString());
         Assert.Equal("None", body.GetProperty("checkMode").GetString());
 
-        // Unbekannter Typ-Schlüssel → der Controller-Guard liefert 404 (kein Enum-Model-Binding mehr).
+        // An unknown type key → the controller guard returns 404 (no enum model binding any more).
         var invalid = await father.GetAsync("/api/v1/creator/exercise-types/999");
         Assert.Equal(HttpStatusCode.NotFound, invalid.StatusCode);
     }

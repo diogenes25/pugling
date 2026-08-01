@@ -15,10 +15,10 @@ namespace Pugling.Api.Tests;
 /// </summary>
 public class MediaSelectionTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWebAppFactory>
 {
-    // Werte aus TestStage. Nicht getippt (Lösung ohnehin sichtbar) → Bild erlaubt: ShowBoth, SelfAssess.
+    // Values from TestStage. Not typed (the solution is visible anyway) → image allowed: ShowBoth, SelfAssess.
     private const int ShowBoth = 1;
     private const int SelfAssess = 2;
-    // Getippt → Bild verriete die Lösung.
+    // Typed → the image would give the solution away.
     private const int LetterBoxes = 3;
     private const int FreeText = 4;
     private const int MultipleChoice = 6;
@@ -32,7 +32,7 @@ public class MediaSelectionTests(PuglingWebAppFactory factory) : IClassFixture<P
         var father = await TestApi.FatherAsync(factory);
         var setup = await ScenarioAsync(father, "auswahl-interesse");
 
-        // Das Kind mag Einhörner, nicht Superhelden – von drei Darstellungen muss das Einhorn kommen.
+        // The child likes unicorns, not superheroes - of three renditions the unicorn has to come.
         await SetInterestsAsync(father, setup.ChildId, [("Einhorn", 3), ("Superhelden", 0)]);
 
         var card = await FirstCardAsync(father, setup, SelfAssess);
@@ -46,8 +46,8 @@ public class MediaSelectionTests(PuglingWebAppFactory factory) : IClassFixture<P
         var father = await TestApi.FatherAsync(factory);
         var setup = await ScenarioAsync(father, "auswahl-abneigung");
 
-        // „Comic" ist stark positiv, aber das Einhorn trägt zusätzlich einen abgelehnten Tag. Eine reine
-        // Punktesumme würde es trotzdem wählen – der harte Ausschluss darf sich davon nicht überstimmen lassen.
+        // "Comic" is strongly positive, but the unicorn additionally carries a rejected tag. A plain score sum
+        // would pick it anyway - the hard exclusion must not be outvoted by that.
         await SetInterestsAsync(father, setup.ChildId, [("Comic", 3), ("Einhorn", -3)]);
 
         var card = await FirstCardAsync(father, setup, SelfAssess);
@@ -60,7 +60,7 @@ public class MediaSelectionTests(PuglingWebAppFactory factory) : IClassFixture<P
         var father = await TestApi.FatherAsync(factory);
         var setup = await ScenarioAsync(father, "auswahl-rating", includeMature: true);
 
-        // Das Kind „mag" den Tag des nicht freigegebenen Bildes am stärksten – das Rating sticht trotzdem.
+        // The child "likes" the tag of the unreleased image most - the rating still wins.
         await SetInterestsAsync(father, setup.ChildId, [("Freizuegig", 3), ("Einhorn", 1)]);
 
         var card = await FirstCardAsync(father, setup, SelfAssess);
@@ -76,13 +76,13 @@ public class MediaSelectionTests(PuglingWebAppFactory factory) : IClassFixture<P
 
         var first = (await FirstCardAsync(father, setup, SelfAssess)).GetProperty("imageUrl").GetString();
 
-        // Ein Bild, das nach Punkten deutlich besser passt, kommt nachträglich dazu …
+        // An image that fits considerably better by score is added afterwards …
         await SetInterestsAsync(father, setup.ChildId, [("Einhorn", 1), ("Pixel-Art", 3)]);
         var late = await CreateAssetAsync(father, $"{setup.Marker}_pixel", "Laeufer in Pixel-Art", ["Pixel-Art"]);
         await father.PostAsJsonAsync($"/api/v1/creator/vocabulary/{setup.VocabularyId}/media",
             new { mediaAssetId = late });
 
-        // … darf die laufende Wahl aber nicht kippen: Wiedererkennung IST der Merkeffekt.
+        // … but must not tip the running choice: recognition IS the retention effect.
         var second = (await FirstCardAsync(father, setup, SelfAssess)).GetProperty("imageUrl").GetString();
         Assert.Equal(first, second);
     }
@@ -102,10 +102,10 @@ public class MediaSelectionTests(PuglingWebAppFactory factory) : IClassFixture<P
         var after = (await res.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("imageUrl").GetString();
         Assert.NotEqual(before, after);
 
-        // Die Karte folgt der neuen Wahl …
+        // The card follows the new choice …
         Assert.Equal(after, (await FirstCardAsync(father, setup, SelfAssess)).GetProperty("imageUrl").GetString());
 
-        // … und das abgelehnte Bild taucht auch nach weiterem Umwählen nicht wieder auf.
+        // … and the rejected image does not reappear even after further re-choosing.
         var seen = new List<string?> { before, after };
         while (true)
         {
@@ -117,7 +117,7 @@ public class MediaSelectionTests(PuglingWebAppFactory factory) : IClassFixture<P
             Assert.DoesNotContain(url, seen);
             seen.Add(url);
         }
-        Assert.Equal(3, seen.Count); // genau die drei Darstellungen des Szenarios
+        Assert.Equal(3, seen.Count); // exactly the three renditions of the scenario
     }
 
     [Fact]
@@ -133,7 +133,7 @@ public class MediaSelectionTests(PuglingWebAppFactory factory) : IClassFixture<P
         Assert.Equal(HttpStatusCode.Conflict, res.StatusCode);
         Assert.Equal("media_no_alternative", await CodeOf(res));
 
-        // Entscheidend: der einzige Kandidat wurde NICHT verbrannt – die Karte trägt weiter ihr Bild.
+        // The decisive part: the only candidate was NOT burned - the card still carries its image.
         Assert.Equal(before, (await FirstCardAsync(father, setup, SelfAssess)).GetProperty("imageUrl").GetString());
     }
 
@@ -154,8 +154,8 @@ public class MediaSelectionTests(PuglingWebAppFactory factory) : IClassFixture<P
         var father = await TestApi.FatherAsync(factory);
         var setup = await ScenarioAsync(father, "auswahl-gleichstand", assetCount: 0);
 
-        // Zwei Darstellungen ohne Tags und mit gleichem redaktionellem Rang: identische Punktzahl (0 –
-        // das Kind hat keine Interessen), identisches Gewicht. Damit hängt die Wahl allein am Tiebreak.
+        // Two renditions without tags and with the same editorial rank: identical score (0 - the child has no
+        // interests), identical weight. So the choice hangs on the tiebreak alone.
         foreach (var variant in new[] { "a", "b" })
         {
             var assetId = await CreateAssetAsync(father, $"{setup.Marker}_{variant}", $"Variante {variant}", []);
@@ -171,8 +171,8 @@ public class MediaSelectionTests(PuglingWebAppFactory factory) : IClassFixture<P
         }
         Assert.Single(seen.Distinct());
 
-        // Gegenprobe gegen einen vakuum-grünen Test: nur wenn wirklich BEIDE Bilder zur Wahl standen, hat
-        // der Tiebreak etwas entschieden. „Anderes Bild" muss also das zweite herausgeben.
+        // The counter-check against a vacuously green test: only if BOTH images really were up for choice did
+        // the tiebreak decide anything. So "another image" has to hand out the second one.
         var other = await father.PostAsJsonAsync($"/api/v1/student/children/{setup.ChildId}/media-picks/reshuffle",
             new { vocabularyId = setup.VocabularyId });
         other.EnsureSuccessStatusCode();
@@ -230,12 +230,12 @@ public class MediaSelectionTests(PuglingWebAppFactory factory) : IClassFixture<P
 
         Assert.Contains("unicorn", (await FirstCardAsync(father, setup, SelfAssess)).GetProperty("imageUrl").GetString());
 
-        // Das eingefrorene Motiv fällt aus der Auswahl – eine Abneigung schließt hart aus.
+        // The frozen motif drops out of the selection - a dislike excludes hard.
         await SetInterestsAsync(father, setup.ChildId, [("Einhorn", -3)]);
         var second = (await FirstCardAsync(father, setup, SelfAssess)).GetProperty("imageUrl").GetString();
         Assert.DoesNotContain("unicorn", second);
 
-        // Der eigentliche Regressionstest ist der dritte Abruf: er lief vorher in den Unique-Index.
+        // The actual regression test is the third request: it used to run into the unique index.
         Assert.Equal(second, (await FirstCardAsync(father, setup, SelfAssess)).GetProperty("imageUrl").GetString());
         Assert.Equal(second, (await FirstCardAsync(father, setup, SelfAssess)).GetProperty("imageUrl").GetString());
     }
@@ -254,13 +254,13 @@ public class MediaSelectionTests(PuglingWebAppFactory factory) : IClassFixture<P
         var sohn = await TestApi.ChildAsync(factory, setup.ChildId, ChildPin);
 
         var (typedSession, typedCard) = await SessionAsync(father, sohn, setup, LetterBoxes);
-        Assert.True(IsNull(typedCard, "imageUrl"), "Die Karte selbst zeigt auf dieser Stufe kein Bild.");
+        Assert.True(IsNull(typedCard, "imageUrl"), "The card itself shows no image on this stage.");
 
         var res = await sohn.PostAsync(ReshuffleUrl(setup, typedSession, CardIndex(typedCard)), null);
         Assert.Equal(HttpStatusCode.Conflict, res.StatusCode);
         Assert.Equal("media_not_on_card", await CodeOf(res));
 
-        // Auf der Selbsteinschätzung – wo das Bild seinen Zweck erfüllt – bleibt es möglich.
+        // On self-assessment - where the image serves its purpose - it stays possible.
         var (openSession, openCard) = await SessionAsync(father, sohn, setup, SelfAssess);
         (await sohn.PostAsync(ReshuffleUrl(setup, openSession, CardIndex(openCard)), null)).EnsureSuccessStatusCode();
     }
@@ -312,8 +312,8 @@ public class MediaSelectionTests(PuglingWebAppFactory factory) : IClassFixture<P
         var setup = await ScenarioAsync(father, "auswahl-anticheat");
         await SetInterestsAsync(father, setup.ChildId, [("Einhorn", 3)]);
 
-        // Anzeige- und Selbsteinschätzungsstufe decken die Lösung ohnehin auf – hier hilft das Bild beim
-        // Einprägen, und genau dafür ist es da.
+        // The display and self-assessment stages reveal the solution anyway - here the image helps with
+        // memorizing, and that is exactly what it is for.
         foreach (var openStage in new[] { ShowBoth, SelfAssess })
             Assert.False(IsNull(await FirstCardAsync(father, setup, openStage), "imageUrl"),
                 $"Stufe {openStage} sollte ein Bild tragen.");
@@ -321,8 +321,8 @@ public class MediaSelectionTests(PuglingWebAppFactory factory) : IClassFixture<P
         foreach (var typedStage in new[] { LetterBoxes, FreeText, MultipleChoice })
         {
             var card = await FirstCardAsync(father, setup, typedStage);
-            Assert.True(IsNull(card, "imageUrl"), $"Stufe {typedStage} darf kein Bild tragen.");
-            // Auch der Alt-Text muss weg – „Ein Einhorn laeuft" verriete dasselbe wie das Bild.
+            Assert.True(IsNull(card, "imageUrl"), $"Stage {typedStage} must not carry an image.");
+            // The alt text has to go too - "a unicorn is running" would give away the same as the image.
             Assert.True(IsNull(card, "imageAlt"), $"Stufe {typedStage} darf keinen Alt-Text tragen.");
         }
     }
@@ -340,8 +340,8 @@ public class MediaSelectionTests(PuglingWebAppFactory factory) : IClassFixture<P
             new { mediaAssetId = special });
         link.EnsureSuccessStatusCode();
 
-        // Trotz starkem Interesse am Einhorn gewinnt die übungslokale Übersteuerung – sie ist die
-        // genauere Aussage über genau diese Übung.
+        // Despite a strong interest in the unicorn, the exercise-local override wins - it is the more precise
+        // statement about this very exercise.
         var card = await FirstCardAsync(father, setup, SelfAssess);
         Assert.Equal("Nur in dieser Uebung", card.GetProperty("imageAlt").GetString());
     }
@@ -361,7 +361,7 @@ public class MediaSelectionTests(PuglingWebAppFactory factory) : IClassFixture<P
     {
         var father = await TestApi.FatherAsync(factory);
         var first = await ScenarioAsync(father, "auswahl-kind-a");
-        // Zweites Kind auf dieselbe Übung: gleicher Stoff, anderes Profil.
+        // A second child on the same exercise: the same material, a different profile.
         var second = await ScenarioAsync(father, "auswahl-kind-b", reuse: first);
 
         await SetInterestsAsync(father, first.ChildId, [("Einhorn", 3)]);
@@ -374,7 +374,7 @@ public class MediaSelectionTests(PuglingWebAppFactory factory) : IClassFixture<P
         Assert.Contains("flash", cardB.GetProperty("imageUrl").GetString());
     }
 
-    // ---- Szenario-Aufbau ----------------------------------------------------------------------------
+    // ---- Scenario setup ----------------------------------------------------------------------------
 
     private sealed record Scenario(string Marker, int ChildId, int PlanId, int PositionId,
         int ExerciseId, int ItemId, int VocabularyId);
@@ -411,8 +411,8 @@ public class MediaSelectionTests(PuglingWebAppFactory factory) : IClassFixture<P
                         direction = "front-to-back",
                         sourceLang = "en",
                         targetLang = "de",
-                        // Eigenes Wort je Szenario: der Vokabel-Store ist find-or-create, ein geteiltes
-                        // „run" würde die Bild-Zuordnungen aller Szenarien auf derselben Zeile sammeln.
+                        // A word of its own per scenario: the vocabulary store is find-or-create, and a shared
+                        // "run" would collect the image assignments of all scenarios on the same row.
                         items = new[] { new { front = $"run-{marker}", back = $"laufen-{marker}" } },
                     },
                 }));
@@ -445,16 +445,16 @@ public class MediaSelectionTests(PuglingWebAppFactory factory) : IClassFixture<P
             childId,
             title = $"{marker}-Plan",
             startDate = today.AddDays(-1).ToString("yyyy-MM-dd"),
-            // Der Plan soll laufen. Früher stand hier `endDate`/`active` – Felder, die es nur im
-            // Update-DTO gibt und die der Server beim Anlegen still verwarf; die Laufzeit ergab sich
-            // in Wahrheit aus dem Default. `durationDays` ist das Feld, das der Vertrag dafür vorsieht.
+            // The plan is meant to be running. This used to say `endDate`/`active` - fields that exist only in
+            // the update DTO and that the server silently discarded on create; the runtime in truth came from
+            // the default. `durationDays` is the field the contract provides for it.
             durationDays = 31,
         }));
         var positionId = await TestApi.IdAsync(await father.PostAsJsonAsync(
             $"/api/v1/supervisor/study-plans/{planId}/positions",
-            // `cadence`/`pointsGoalMet` – früher stand hier `goalCadence`/`goalPoints`. Beide Namen gibt
-            // es im Vertrag nicht; der Server verwarf sie still, die Position hatte also nie den
-            // Pflichtrhythmus und die Punkte, die dieser Aufbau vorgibt.
+            // `cadence`/`pointsGoalMet` - this used to say `goalCadence`/`goalPoints`. Neither name exists in
+            // the contract; the server discarded them silently, so the position never had the mandatory cadence
+            // and the points this setup prescribes.
             new { exerciseId, order = 1, cadence = "Daily", goalThreshold = 1, pointsGoalMet = 5 }));
 
         return new Scenario(marker, childId, planId, positionId, exerciseId, itemId, vocabularyId);
@@ -472,7 +472,7 @@ public class MediaSelectionTests(PuglingWebAppFactory factory) : IClassFixture<P
     private static async Task<(int SessionId, JsonElement Card)> SessionAsync(HttpClient father, HttpClient player,
         Scenario s, int stage)
     {
-        // Die Stufe kommt aus dem Fahrplan der Position (der Server erzwingt sie – nie der Client).
+        // The stage comes from the position's schedule (the server enforces it - never the client).
         var patch = await father.PatchAsJsonAsync(
             $"/api/v1/supervisor/study-plans/{s.PlanId}/positions/{s.PositionId}", new { stage });
         patch.EnsureSuccessStatusCode();

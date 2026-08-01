@@ -1,7 +1,7 @@
 namespace Pugling.Contracts.Supervisor;
 
-// Vertrag der Motivations-Ebene, die der Vater pflegt: Missionen (zeitgebundene, wiederholbare Ziele)
-// und Auszeichnungen (permanente Meilensteine). Beide messen dieselben Fortschritts-Metriken.
+// Contract of the motivation tier the supervisor maintains: missions (time-bound, repeatable goals) and
+// awards (permanent milestones). Both measure the same progress metrics.
 
 /// <summary>A mission of the child, defined by the supervisor.</summary>
 public record MissionDto(int Id, string Title, ProgressMetric Metric, int Target, MissionPeriod Period,

@@ -47,8 +47,8 @@ public class StudyPlansController(PuglingDbContext db, AuthAccess access) : Cont
         IQueryable<StudyPlan> scoped = db.StudyPlans.AsNoTracking();
         if (User.IsStudent())
         {
-            // Der Sohn sieht nur seinen einen spielbaren Plan (aktiv + in Laufzeit); inaktive/abgelaufene
-            // bleiben verborgen, damit er sich keinen leichten Plan zum Punktesammeln aussuchen kann.
+            // The child only sees its one playable plan (active + within its runtime); inactive/expired ones
+            // stay hidden so it cannot pick an easy plan to farm points.
             scoped = scoped.Where(p => p.ChildId == User.ChildId() && p.Active && p.StartDate <= today && p.EndDate >= today);
         }
         else
@@ -81,7 +81,7 @@ public class StudyPlansController(PuglingDbContext db, AuthAccess access) : Cont
     public async Task<ActionResult<PlanResponse>> Create(CreatePlanDto dto, CancellationToken ct = default)
     {
         if (string.IsNullOrWhiteSpace(dto.Title)) return this.ProblemWithCode(ApiErrors.ValidationError, "Title is required.");
-        // Eigentums-Prüfung zuerst: einheitlich 404 für "existiert nicht" und "nicht mein Kind".
+        // Ownership check first: a uniform 404 for "does not exist" and "not my child".
         if (!await access.SupervisorOwnsChildAsync(User, dto.ChildId, ct)) return this.ProblemWithCode(ApiErrors.NotFound, "Child not found.");
         if (dto.SubjectId is { } sid && !await db.Subjects.AnyAsync(s => s.Id == sid, ct)) return this.ProblemWithCode(ApiErrors.InvalidReference, "Subject not found.");
 
@@ -98,8 +98,8 @@ public class StudyPlansController(PuglingDbContext db, AuthAccess access) : Cont
         };
         db.StudyPlans.Add(plan);
         await db.SaveChangesAsync(ct);
-        // Invariante „höchstens ein aktiver Plan je Kind": ein neuer (per Default aktiver) Plan wird zum
-        // einzig spielbaren – die bisherigen des Kindes werden stillgelegt.
+        // Invariant "at most one active plan per child": a new plan (active by default) becomes the only
+        // playable one - the child's existing plans are deactivated.
         if (plan.Active) await DeactivateSiblingPlansAsync(plan.ChildId, plan.Id, ct);
         return CreatedAtAction(nameof(Get), new { planId = plan.Id }, Map(plan, DateOnly.FromDateTime(DateTime.UtcNow)));
     }
@@ -108,8 +108,7 @@ public class StudyPlansController(PuglingDbContext db, AuthAccess access) : Cont
     /// Enforces "at most one active plan per child": deactivates all other plans of the child.
     /// This way the child cannot choose the easiest among several active plans (anti-cheating).
     /// </summary>
-    // Kein Vorgabewert für `ct`: er ließe die Aufrufstelle korrekt aussehen, während der Abbruch des
-    // Clients verpufft.
+    // No default for `ct`: it would make the call site look correct while the client's cancellation fizzles out.
     private Task DeactivateSiblingPlansAsync(int childId, int keepPlanId, CancellationToken ct) =>
         db.StudyPlans.Where(p => p.ChildId == childId && p.Id != keepPlanId && p.Active)
             .ExecuteUpdateAsync(s => s.SetProperty(p => p.Active, false), ct);
@@ -122,11 +121,11 @@ public class StudyPlansController(PuglingDbContext db, AuthAccess access) : Cont
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<PlanResponse>> Update(int planId, UpdatePlanDto dto, CancellationToken ct = default)
     {
-        // Nur Skalarfelder werden geändert – die Positionen bleiben unangetastet und müssen nicht geladen/getrackt werden.
+        // Only scalar fields change - the positions stay untouched and need not be loaded/tracked.
         var plan = await db.StudyPlans.FirstOrDefaultAsync(p => p.Id == planId, ct);
         if (plan is null) return NotFound();
 
-        // Umzuweisung an ein anderes Kind: nur an ein eigenes Kind des Vaters (sonst 404, wie beim Anlegen).
+        // Reassigning to another child: only to a child of this supervisor (otherwise 404, as on create).
         if (dto.ChildId is { } newChildId && newChildId != plan.ChildId)
         {
             if (!await access.SupervisorOwnsChildAsync(User, newChildId, ct)) return this.ProblemWithCode(ApiErrors.NotFound, "Child not found.");
@@ -143,7 +142,7 @@ public class StudyPlansController(PuglingDbContext db, AuthAccess access) : Cont
         if (dto.EndDate is not null) plan.EndDate = dto.EndDate.Value;
         if (dto.Active is not null) plan.Active = dto.Active.Value;
         await db.SaveChangesAsync(ct);
-        // Nach Aktivierung oder Umzug die Invariante „ein aktiver Plan je Kind" wiederherstellen.
+        // After activating or moving, restore the invariant "one active plan per child".
         if (plan.Active) await DeactivateSiblingPlansAsync(plan.ChildId, plan.Id, ct);
         var positionCount = await db.PlanPositions.CountAsync(pp => pp.StudyPlanId == planId, ct);
         var today = DateOnly.FromDateTime(DateTime.UtcNow);

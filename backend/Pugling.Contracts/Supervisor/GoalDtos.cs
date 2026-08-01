@@ -1,9 +1,9 @@
 namespace Pugling.Contracts.Supervisor;
 
-// Vertrag der Ziel-Ebene über dem Lernstand: **Objectives** (OKR-Kern) – eine terminierte Klammer über
-// mehreren Etappen (KeyResults), bei jeder Abfrage live aus dem aggregierten Lernstand ausgewertet; kein Malus.
-// Die zweite Ebene (`LearnGoal`) ist entfallen: sie war strukturell dasselbe wie ein einzelnes KeyResult,
-// nur ohne Klammer und ohne Belohnungslog (siehe docs/lernziele-objectives-plan.md).
+// Contract of the goal tier above the learning state: **objectives** (the OKR core) - a dated bracket over
+// several milestones (KeyResults), evaluated live from the aggregated learning state on every request; no penalty.
+// The second tier (`LearnGoal`) is gone: structurally it was the same as a single KeyResult, only without
+// the bracket and without the reward log (see docs/lernziele-objectives-plan.md).
 
 /// <summary>Evaluated key result of an objective.</summary>
 public record KeyResultResponse(int Id, int ObjectiveId, int SubjectId, int? ChapterId, int? ExerciseId,

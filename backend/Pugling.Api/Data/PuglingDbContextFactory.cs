@@ -4,13 +4,13 @@ using Microsoft.EntityFrameworkCore.Design;
 namespace Pugling.Api.Data;
 
 /// <summary>
-/// Nur für die EF-Tools (<c>dotnet ef migrations/database</c>). Liefert den DbContext direkt,
-/// damit die Tools nicht den kompletten Web-Host samt Seed hochfahren müssen. Die Verbindung
-/// dient nur der Modell-/Migrations-Erzeugung, nicht der Laufzeit.
+/// For the EF tools only (<c>dotnet ef migrations/database</c>). It returns the DbContext directly so the
+/// tools do not have to spin up the whole web host including the seed. The connection only serves the
+/// model/migration generation, not the runtime.
 /// </summary>
 public sealed class PuglingDbContextFactory : IDesignTimeDbContextFactory<PuglingDbContext>
 {
-    /// <summary>Erstellt einen <see cref="PuglingDbContext"/> gegen die lokale SQLite-Datei, ausschließlich für die Design-Time-Werkzeuge.</summary>
+    /// <summary>Creates a <see cref="PuglingDbContext"/> against the local SQLite file, exclusively for the design-time tools.</summary>
     public PuglingDbContext CreateDbContext(string[] args)
     {
         var options = new DbContextOptionsBuilder<PuglingDbContext>()

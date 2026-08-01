@@ -47,7 +47,7 @@ public class MyObjectivesController(ObjectiveService objectives) : ControllerBas
         var cid = User.ChildId();
         if (cid is null) return Forbid();
 
-        // Nur aktive Ziele sind für den Sohn sichtbar (deckungsgleich zur Liste); ein deaktiviertes → 404.
+        // Only active goals are visible to the child (congruent with the list); a deactivated one → 404.
         return await objectives.GetAsync(cid.Value, objectiveId, ct) is { Active: true } o ? o : NotFound();
     }
 }

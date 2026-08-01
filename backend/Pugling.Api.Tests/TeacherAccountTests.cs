@@ -43,7 +43,7 @@ public class TeacherAccountTests(PuglingWebAppFactory factory) : IClassFixture<P
         var roles = account.GetProperty("roles").EnumerateArray().Select(r => r.GetString()).ToList();
         Assert.Equal(["Creator"], roles);
 
-        // Und das Token sagt dasselbe – die Rollen im JWT entstehen aus den Profilen, nicht aus einer Annahme.
+        // And the token says the same - the roles in the JWT come from the profiles, not from an assumption.
         var me = await client.GetFromJsonAsync<JsonElement>("/api/v1/auth/me");
         var tokenRoles = me.GetProperty("roles").EnumerateArray().Select(r => r.GetString()).ToList();
         Assert.Equal(["Creator"], tokenRoles);
@@ -64,13 +64,13 @@ public class TeacherAccountTests(PuglingWebAppFactory factory) : IClassFixture<P
         Assert.Equal("Creator",
             (await teacherLogin.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("role").GetString());
 
-        // Gegenprobe: der geseedete Vater bleibt Supervisor.
+        // The counter-check: the seeded father stays a supervisor.
         var fatherLogin = await _factory.CreateClient().PostAsJsonAsync("/api/v1/auth/adult",
             new { adultId = 1, pin = "0000" });
         Assert.Equal("Supervisor",
             (await fatherLogin.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("role").GetString());
 
-        // Auch der konto-zentrische Login urteilt gleich.
+        // The account-centric login judges the same way.
         var byAccount = await _factory.CreateClient().PostAsJsonAsync("/api/v1/auth/login",
             new { accountId = account.GetProperty("accountId").GetInt32(), pin = "2345" });
         Assert.Equal("Creator",
@@ -102,8 +102,8 @@ public class TeacherAccountTests(PuglingWebAppFactory factory) : IClassFixture<P
                 },
             }));
 
-        // Autorschaft und Owner-Recht hängen an derselben Id – darum funktionieren Rechtevergabe,
-        // Freigabe und Rücknahme unverändert.
+        // Authorship and the owner right hang on the same id - which is why granting, publishing and
+        // withdrawing work unchanged.
         var detail = await teacher.GetFromJsonAsync<JsonElement>($"/api/v1/creator/exercises/{exerciseId}");
         Assert.True(detail.GetProperty("isOwner").GetBoolean());
 
@@ -176,7 +176,7 @@ public class TeacherAccountTests(PuglingWebAppFactory factory) : IClassFixture<P
         }
 
         var again = await _factory.CreateClient().GetAsync($"/api/v1/creator/teacher-accounts/{creatorId}");
-        Assert.Equal(HttpStatusCode.Unauthorized, again.StatusCode);   // ohne Token kein Einblick
+        Assert.Equal(HttpStatusCode.Unauthorized, again.StatusCode);   // no insight without a token
     }
 
     [Fact]

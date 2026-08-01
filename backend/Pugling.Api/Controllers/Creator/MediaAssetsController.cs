@@ -79,7 +79,7 @@ public class MediaAssetsController(PuglingDbContext db, InterestTagService tags,
             query = query.Where(a => a.Description.Contains(search) || a.Key.Contains(search));
         if (kind is not null)
             query = query.Where(a => a.Kind == kind);
-        // Ordnender Vergleich – nur möglich, weil das Rating als int persistiert ist (siehe DbContext).
+        // An ordering comparison - only possible because the rating is persisted as an int (see DbContext).
         if (maxRating is not null)
             query = query.Where(a => a.Rating <= maxRating);
         if (origin is not null)
@@ -168,7 +168,7 @@ public class MediaAssetsController(PuglingDbContext db, InterestTagService tags,
             if (Validate(variant.Url, variant.Width, variant.Height, variant.Format) is { } error)
                 return this.ProblemWithCode(ApiErrors.ValidationError, error);
 
-        // Doppelte (Zweck, Format) würden erst am Unique-Index scheitern – vorher als klarer 409 melden.
+        // A duplicate (purpose, format) would only fail at the unique index - report it as a clear 409 first.
         var duplicate = (dto.Variants ?? [])
             .GroupBy(v => (v.Purpose, Format: v.Format.Trim().ToLowerInvariant()))
             .FirstOrDefault(g => g.Count() > 1);
@@ -244,7 +244,7 @@ public class MediaAssetsController(PuglingDbContext db, InterestTagService tags,
         }
         catch (ArgumentException e)
         {
-            // Nicht dekodierbar (falscher Typ, kaputte Datei) – Nutzerfehler, kein Serverfehler.
+            // Not decodable (wrong type, broken file) - a user error, not a server error.
             return this.ProblemWithCode(ApiErrors.MediaNotAnImage, e.Message);
         }
 
@@ -263,8 +263,8 @@ public class MediaAssetsController(PuglingDbContext db, InterestTagService tags,
         foreach (var tag in await tags.EnsureManyAsync(SplitTags(form.Tags), ct: ct))
             asset.TagLinks.Add(new MediaTagLink { MediaAsset = asset, InterestTag = tag });
 
-        // Erst speichern: der Ablage-Ordner heißt nach der Id. Die ist – anders als der Key – garantiert
-        // dateisystem-sicher und ändert sich nie, auch wenn der Key später einmal umbenennbar würde.
+        // Save first: the storage folder is named after the id. Unlike the key, that is guaranteed to be
+        // filesystem-safe and never changes, even if the key were to become renamable one day.
         await db.SaveChangesAsync(ct);
 
         foreach (var rendered in processed.Variants)
@@ -362,12 +362,12 @@ public class MediaAssetsController(PuglingDbContext db, InterestTagService tags,
         if (asset is null) return NotFound();
         db.MediaAssets.Remove(asset);
         await db.SaveChangesAsync(ct);
-        // Erst nach dem erfolgreichen Löschen in der DB die Dateien wegräumen: bricht die DB ab, sind die
-        // Dateien noch da (verwaiste Datei ist harmlos, ein Asset ohne Datei wäre eine kaputte Karte).
-        // Assets, die nur per URL eingetragen wurden, haben keinen eigenen Ordner – das Löschen läuft leer.
-        // Bewusst OHNE den Request-Token: der Löschvorgang ist committet, das Wegräumen ist der
-        // kompensierende Schritt. Ein Client-Abbruch darf nicht entscheiden, ob er läuft – sonst blieben
-        // die Varianten-Dateien ohne besitzende Zeile für immer liegen (es gibt keinen Aufräum-Job).
+        // Clean up the files only after the DB delete succeeded: if the DB aborts, the files are still there
+        // (an orphaned file is harmless, an asset without a file would be a broken card). Assets that were only
+        // entered by URL have no folder of their own - the delete then runs empty. Deliberately WITHOUT the
+        // request token: the delete is committed, cleaning up is the compensating step. A client abort must not
+        // decide whether it runs - otherwise the variant files would lie around forever without an owning row
+        // (there is no cleanup job).
         await storage.DeleteFolderAsync(asset.Id.ToString(), CancellationToken.None);
         return NoContent();
     }
@@ -403,7 +403,7 @@ public class MediaAssetsController(PuglingDbContext db, InterestTagService tags,
         return NoContent();
     }
 
-    // ---- Helfer -------------------------------------------------------------------------------------
+    // ---- Helpers -------------------------------------------------------------------------------------
 
     /// <summary>Attaches the named tags (expects loaded <c>TagLinks</c>); does not save.</summary>
     private async Task AttachAsync(MediaAsset asset, List<string>? names, CancellationToken ct)

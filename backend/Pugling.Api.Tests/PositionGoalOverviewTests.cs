@@ -24,12 +24,12 @@ public class PositionGoalOverviewTests(PuglingWebAppFactory factory) : IClassFix
         var child = await TestApi.ChildAsync(_factory);
         var testsUrl = $"/api/v1/student/study-plans/{planId}/positions/{positionId}/tests";
 
-        // Tagesmission vor dem Test: Ziel offen, Pflicht nicht erledigt.
+        // The daily mission before the test: the goal is open, the obligation not done.
         var before = await (await child.GetAsync($"/api/v1/student/study-plans/{planId}/overview"))
             .Content.ReadFromJsonAsync<JsonElement>();
         JsonAssert.False(before.GetProperty("today"), "dutyDone");
 
-        // Test starten, alle Antworten korrekt einreichen.
+        // Start the test, submit all answers correctly.
         var attemptId = await TestApi.IdWithKeyAsync(await child.PostAsJsonAsync(testsUrl, new { }), "attemptId");
         var answers = new[]
         {
@@ -41,7 +41,7 @@ public class PositionGoalOverviewTests(PuglingWebAppFactory factory) : IClassFix
             .Content.ReadFromJsonAsync<JsonElement>();
         JsonAssert.True(submit, "passed");
 
-        // Ziel-Punkte einmalig gebucht (positionId-skopiert, da die Klassen-DB mit anderen Tests geteilt wird).
+        // The goal points are booked once (scoped to positionId, since the class DB is shared with other tests).
         using (var scope = _factory.Services.CreateScope())
         {
             var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
@@ -53,22 +53,22 @@ public class PositionGoalOverviewTests(PuglingWebAppFactory factory) : IClassFix
             .Content.ReadFromJsonAsync<JsonElement>();
         JsonAssert.True(after.GetProperty("today"), "dutyDone");
 
-        // Zweiter bestandener Test am selben Tag → keine doppelten Ziel-Punkte (idempotent je Periode).
+        // A second passed test on the same day → no double goal points (idempotent per period).
         var attempt2 = await (await child.PostAsJsonAsync(testsUrl, new { }))
             .Content.ReadFromJsonAsync<JsonElement>();
         var attemptId2 = attempt2.GetProperty("attemptId").GetInt32();
-        // Der Status des zweiten Submits gehört geprüft, nicht verworfen: die Idempotenz hängt an ZWEI
-        // Dingen – der Existenzprüfung im Code und dem Unique-Index (PlanPositionId, Cadence, PeriodStart). Fällt die
-        // Prüfung aus, hält der Index die Anzahl unten, aber `EvaluateAndAwardAsync` hat kein
-        // `catch (DbUpdateException)` – der Verstoß wird zum **500**. Ohne diese Zeile blieb genau das
-        // unbemerkt (docs/testplan.md, Injektion D13): die Reward-Anzahl war weiter 1, der Fehler unsichtbar.
+        // The status of the second submit belongs checked, not discarded: idempotency hangs on TWO things - the
+        // existence check in the code and the unique index (PlanPositionId, Cadence, PeriodStart). If the check
+        // is gone, the index keeps the count down, but `EvaluateAndAwardAsync` has no `catch
+        // (DbUpdateException)` - the violation becomes a **500**. Without this line exactly that stayed
+        // unnoticed (docs/testplan.md, injection D13): the reward count was still 1, the error invisible.
         (await child.PostAsJsonAsync($"{testsUrl}/{attemptId2}/submit", new { answers }))
             .EnsureSuccessStatusCode();
 
         using (var scope = _factory.Services.CreateScope())
         {
             var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
-            // Idempotenz: trotz zweitem Versuch weiterhin nur 1 Belohnung für diese Position.
+            // Idempotency: despite the second attempt still only 1 reward for this position.
             Assert.Equal(1, db.PositionGoalRewards.Count(r => r.PlanPositionId == positionId));
         }
     }
@@ -103,8 +103,8 @@ public class PositionGoalOverviewTests(PuglingWebAppFactory factory) : IClassFix
         })).Content.ReadFromJsonAsync<JsonElement>();
         JsonAssert.True(submit, "passed");
 
-        // Die Pflicht ist erfüllt – ohne das wäre der Test vakuum-grün (er prüfte dann nur, dass ein nicht
-        // erreichtes Ziel nichts bucht).
+        // The obligation is met - without that the test would be vacuously green (it would then only check that
+        // an unreached goal books nothing).
         var after = await (await child.GetAsync($"/api/v1/student/study-plans/{planId}/overview"))
             .Content.ReadFromJsonAsync<JsonElement>();
         JsonAssert.True(after.GetProperty("today"), "dutyDone");
@@ -139,7 +139,7 @@ public class PositionGoalOverviewTests(PuglingWebAppFactory factory) : IClassFix
         var child = await TestApi.ChildAsync(_factory);
         var testsUrl = $"/api/v1/student/study-plans/{planId}/positions/{positionId}/tests";
 
-        // Der Gewinner: bestandener Test → Ziel erreicht, Ziel-Punkte festgeschrieben.
+        // The winner: a passed test → the goal is reached, the goal points are recorded.
         var attemptId = await TestApi.IdWithKeyAsync(await child.PostAsJsonAsync(testsUrl, new { }), "attemptId");
         var answers = new[]
         {
@@ -153,7 +153,7 @@ public class PositionGoalOverviewTests(PuglingWebAppFactory factory) : IClassFix
         var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
         var ledgerBefore = db.ChildPointsEntries.Count(p => p.Kind == PointKind.Goal);
 
-        // Der Verlierer: dieselbe Periode, Buchung steht im ChangeTracker und ist noch nicht geschrieben.
+        // The loser: the same period, the entry sits in the ChangeTracker and is not written yet.
         var plan = db.StudyPlans.First(p => p.Id == planId);
         db.PositionGoalRewards.Add(new PositionGoalReward
         {
@@ -171,14 +171,14 @@ public class PositionGoalOverviewTests(PuglingWebAppFactory factory) : IClassFix
             Reason = "[Rennen] Tagesziel erreicht",
         });
 
-        // Muss durchlaufen und den aktuellen Stand liefern – nicht werfen.
+        // It has to run through and return the current state - not throw.
         var overview = await scope.ServiceProvider.GetRequiredService<PositionProgressService>()
             .EvaluateAndAwardAsync(plan, today);
         Assert.True(overview.DutyDone);
 
         using var check = _factory.Services.CreateScope();
         var fresh = check.ServiceProvider.GetRequiredService<PuglingDbContext>();
-        // Weder halb noch doppelt gebucht: der Konflikt verwirft die ganze Transaktion des Verlierers.
+        // Neither half nor double booked: the conflict discards the loser's whole transaction.
         Assert.Equal(1, fresh.PositionGoalRewards.Count(r => r.PlanPositionId == positionId));
         Assert.Equal(ledgerBefore, fresh.ChildPointsEntries.Count(p => p.Kind == PointKind.Goal));
     }
@@ -198,7 +198,7 @@ public class PositionGoalOverviewTests(PuglingWebAppFactory factory) : IClassFix
         var child = await TestApi.ChildAsync(_factory);
         var testsUrl = $"/api/v1/student/study-plans/{planId}/positions/{positionId}/tests";
 
-        // Wochenziel per bestandenem Test erfüllen.
+        // Meet the weekly goal through a passed test.
         var attemptId = await TestApi.IdWithKeyAsync(await child.PostAsJsonAsync(testsUrl, new { }), "attemptId");
         var answers = new[]
         {
@@ -209,7 +209,7 @@ public class PositionGoalOverviewTests(PuglingWebAppFactory factory) : IClassFix
             .Content.ReadFromJsonAsync<JsonElement>();
         JsonAssert.True(submit, "passed");
 
-        // Für diese Position genau eine Belohnung über 20 (die Klassen-DB teilt sich mit anderen Tests → positions-skopiert prüfen).
+        // Exactly one reward of 20 for this position (the class DB is shared with other tests → check scoped to the position).
         using (var scope = _factory.Services.CreateScope())
         {
             var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
@@ -217,7 +217,7 @@ public class PositionGoalOverviewTests(PuglingWebAppFactory factory) : IClassFix
             Assert.Equal(20, db.PositionGoalRewards.Where(r => r.PlanPositionId == positionId).Sum(r => r.Points));
         }
 
-        // Verlauf über die gesamte Laufzeit: TotalPoints = 20 (nicht × Anzahl Wochentage im Plan).
+        // History over the whole runtime: TotalPoints = 20 (not × the number of weekdays in the plan).
         var progress = await (await child.GetAsync($"/api/v1/student/study-plans/{planId}/overview/progress"))
             .Content.ReadFromJsonAsync<JsonElement>();
         Assert.Equal(20, progress.GetProperty("totalPoints").GetInt32());
@@ -233,29 +233,29 @@ public class PositionGoalOverviewTests(PuglingWebAppFactory factory) : IClassFix
     {
         var father = await TestApi.FatherAsync(_factory);
         var exerciseId = await TestApi.CreateVocabExerciseAsync(father);
-        var (planId, _) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.FreeText); // Plan: today..today+5 = 6 Tage
+        var (planId, _) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.FreeText); // plan: today..today+5 = 6 days
         var child = await TestApi.ChildAsync(_factory);
         var baseUrl = $"/api/v1/student/study-plans/{planId}/overview/progress";
 
-        // Voller Verlauf: 6 Tage, X-Total-Count = 6.
+        // The full history: 6 days, X-Total-Count = 6.
         var full = await child.GetAsync(baseUrl);
         var fullBody = await full.Content.ReadFromJsonAsync<JsonElement>();
         Assert.Equal("6", full.Headers.GetValues("X-Total-Count").Single());
         Assert.Equal(6, fullBody.GetProperty("days").GetArrayLength());
 
-        // Paging: take=2 → 2 Tage im Body, Header zählt weiterhin alle 6.
+        // Paging: take=2 → 2 days in the body, the header still counts all 6.
         var paged = await child.GetAsync($"{baseUrl}?take=2");
         var pagedBody = await paged.Content.ReadFromJsonAsync<JsonElement>();
         Assert.Equal("6", paged.Headers.GetValues("X-Total-Count").Single());
         Assert.Equal(2, pagedBody.GetProperty("days").GetArrayLength());
 
-        // Sortierung -day: erster Tag ist das Enddatum des Plans.
+        // Sorting -day: the first day is the plan's end date.
         var desc = await (await child.GetAsync($"{baseUrl}?sort=-day"))
             .Content.ReadFromJsonAsync<JsonElement>();
         Assert.Equal(desc.GetProperty("endDate").GetString(),
             desc.GetProperty("days")[0].GetProperty("day").GetString());
 
-        // Filter from=Start+3 → nur die letzten 3 Tage; Kennzahlen bleiben über die volle Laufzeit.
+        // Filter from=start+3 → only the last 3 days; the figures stay over the full runtime.
         var start = DateOnly.Parse(fullBody.GetProperty("startDate").GetString()!);
         var filtered = await child.GetAsync($"{baseUrl}?from={start.AddDays(3):yyyy-MM-dd}");
         var filteredBody = await filtered.Content.ReadFromJsonAsync<JsonElement>();

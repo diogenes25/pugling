@@ -51,8 +51,8 @@ public class ExerciseCatalogController(PuglingDbContext db) : ControllerBase
         var isAdmin = User.IsAdmin();
         var query = db.Exercises.AsNoTracking().AsQueryable();
 
-        // „Nur meine": Übungen, die der Creator ändern darf (Owner- oder Write-Grant) – Verwaltung statt Entdeckung.
-        // Ohne bekannten fid bewusst leere Menge (fail-closed) statt aller autorlosen System-Übungen.
+        // "Mine only": exercises the creator may change (owner or write grant) - management, not discovery.
+        // Without a known fid deliberately an empty set (fail closed) instead of all authorless system exercises.
         if (mineOnly == true)
             query = query.Where(e => fid != null && e.Grants.Any(g => g.CreatorId == fid
                 && (g.Permission == GrantPermission.Owner || g.Permission == GrantPermission.Write)));
@@ -67,7 +67,7 @@ public class ExerciseCatalogController(PuglingDbContext db) : ControllerBase
             query = query.Where(e => (e.GradeMin == null || e.GradeMin <= g)
                 && (e.GradeMax == null || e.GradeMax >= g));
 
-        // Schulart-Filter: Übungen ohne Angabe (None) gelten für alle; sonst muss das Bit gesetzt sein.
+        // School type filter: exercises without a value (None) apply to all; otherwise the bit must be set.
         if (schoolType is SchoolTypes st && st != SchoolTypes.None)
             query = query.Where(e => e.SchoolTypes == SchoolTypes.None || (e.SchoolTypes & st) != 0);
 
@@ -88,7 +88,7 @@ public class ExerciseCatalogController(PuglingDbContext db) : ControllerBase
             .Select(e => new ExerciseSummary(e.Id, e.ChapterId, e.Chapter!.SubjectId, e.Type, e.Title,
                 e.GradeMin, e.GradeMax, e.SchoolTypes, e.Source, e.CategoryId, e.Category!.Name,
                 e.AuthorAdultId, e.Author!.Name,
-                // IsOwn = darf ändern (Owner/Write-Grant); IsOwner = darf verwalten (Owner-Grant). Admin sieht beides als true.
+                // IsOwn = may change (owner/write grant); IsOwner = may manage (owner grant). An admin sees both as true.
                 isAdmin || (fid != null && e.Grants.Any(g => g.CreatorId == fid
                     && (g.Permission == GrantPermission.Owner || g.Permission == GrantPermission.Write))),
                 isAdmin || (fid != null && e.Grants.Any(g => g.CreatorId == fid && g.Permission == GrantPermission.Owner)),
@@ -115,8 +115,8 @@ public class ExerciseCatalogController(PuglingDbContext db) : ControllerBase
             ("source", true) => q.OrderByDescending(e => e.Source).ThenBy(e => e.Id),
             ("created", false) => q.OrderBy(e => e.CreatedAt).ThenBy(e => e.Id),
             ("created", true) => q.OrderByDescending(e => e.CreatedAt).ThenBy(e => e.Id),
-            // Fachliche Standardreihenfolge (kein per-Spalte klickbarer Sortier-Key): bewusst immer aufsteigend –
-            // eine Richtungsumkehr des Katalog-Baums (Fach → Kapitel → Reihenfolge) wäre nicht sinnvoll.
+            // The domain default order (no per-column clickable sort key): ascending on purpose - reversing the
+            // catalog tree (subject → chapter → order) would make no sense.
             _ => q.OrderBy(e => e.Chapter!.SubjectId).ThenBy(e => e.ChapterId).ThenBy(e => e.OrderIndex).ThenBy(e => e.Id),
         };
 
@@ -203,7 +203,7 @@ public class ExerciseCatalogController(PuglingDbContext db) : ControllerBase
                 .ToListAsync(ct))
             .DistinctBy(u => u.PlanId).ToList();
 
-        // Klassenarbeit gilt als Nutzer, wenn die Übung direkt zugewiesen ist oder einen ihr zugeordneten Tag trägt.
+        // A class test counts as a user if the exercise is assigned directly or carries a tag assigned to it.
         var directTestIds = db.KlassenarbeitExercises.Where(x => x.ExerciseId == id).Select(x => x.KlassenarbeitId);
         var tagTestIds = db.KlassenarbeitTags
             .Where(kt => db.ExerciseTags.Any(et => et.ExerciseId == id && et.TagId == kt.TagId))
@@ -214,10 +214,9 @@ public class ExerciseCatalogController(PuglingDbContext db) : ControllerBase
             .Select(k => new ClassTestUsage(k.Id, k.Title, k.ChildId, k.Child!.Name))
             .ToListAsync(ct);
 
-        // Dieselbe Zählung, die auch das Löschen benutzt – eine Quelle, damit die beiden Auskünfte nicht
-        // wieder auseinanderlaufen können. Herausgegeben wird die Zahl der **Kinder**, nicht der Stellen:
-        // das ist die Antwort auf „wird mein Material benutzt", und Stellen wären für einen Creator ohne
-        // eigene Kinder eine Zahl ohne Bedeutung.
+        // The same count that deleting uses - one source, so the two answers cannot drift apart again. What we
+        // hand out is the number of **children**, not of places: that is the answer to "is my material being
+        // used", and places would be a meaningless number for a creator without children of their own.
         var blocking = await ExerciseUsageQueries.CountBlockingAsync(db, id, fid, ct);
         return new UsageResponse(plans, classTests, blocking.HiddenLearners);
     }

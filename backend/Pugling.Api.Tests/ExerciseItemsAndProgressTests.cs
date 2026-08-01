@@ -43,9 +43,9 @@ public class ExerciseItemsAndProgressTests(PuglingWebAppFactory factory) : IClas
             $"/api/v1/creator/subjects/{s}/chapters/{c}/vocabulary/{exerciseId}/items");
         var vocabularyId = items!.Single().GetProperty("vocabularyId").GetInt32();
 
-        // Dieselbe Store-Vokabel ein zweites Mal: zwei Items auf dasselbe Wort erzeugten zwei
-        // konkurrierende ItemProgress-Zeilen, und der Lernstand desselben Worts liefe innerhalb einer
-        // Übung auseinander. Die DB verbietet es (Unique), der Controller meldet es als 409.
+        // The same store entry a second time: two items on the same word would create two competing
+        // ItemProgress rows, and the progress of that same word would drift apart within one exercise.
+        // The DB forbids it (unique), the controller reports it as a 409.
         var again = await father.PostAsJsonAsync(
             $"/api/v1/creator/subjects/{s}/chapters/{c}/vocabulary/{exerciseId}/items",
             new { vocabularyId });
@@ -61,7 +61,7 @@ public class ExerciseItemsAndProgressTests(PuglingWebAppFactory factory) : IClas
         var (s, c, exerciseId) = await VocabWithItemsAsync(father, ("hello", "hallo"));
         var itemsUrl = $"/api/v1/creator/subjects/{s}/chapters/{c}/vocabulary/{exerciseId}/items";
 
-        // POST inline (Store-Anlage) + POST per bestehender Store-Id.
+        // POST inline (creating in the store) + POST with an existing store id.
         var (storeId, _) = await TestApi.CreateStoreVocabAsync(father, "dog", "Hund");
         var added = await (await father.PostAsJsonAsync(itemsUrl, new { front = "cat", back = "Katze", hint = "das Tier" }))
             .Content.ReadFromJsonAsync<JsonElement>();
@@ -75,7 +75,7 @@ public class ExerciseItemsAndProgressTests(PuglingWebAppFactory factory) : IClas
         Assert.Equal(3, list!.Count); // hello (inline seed) + cat + dog
         Assert.Contains(list!, i => i.GetProperty("front").GetString() == "dog");
 
-        // PATCH: Hinweis ändern; DELETE: Item entfernen.
+        // PATCH: change the hint; DELETE: remove the item.
         var catId = added.GetProperty("id").GetInt32();
         var patched = await (await father.PatchAsJsonAsync($"{itemsUrl}/{catId}", new { hint = "" })).Content.ReadFromJsonAsync<JsonElement>();
         Assert.True(patched.GetProperty("hint").ValueKind == JsonValueKind.Null);
@@ -101,7 +101,7 @@ public class ExerciseItemsAndProgressTests(PuglingWebAppFactory factory) : IClas
         var father = await TestApi.FatherAsync(_factory);
         var (s, c, exerciseId) = await VocabWithItemsAsync(father);
 
-        // Ein zweiter Vater (nicht der Autor) darf die Items der Übung nicht ändern.
+        // A second adult (not the author) must not change the exercise's items.
         int otherId;
         using (var scope = _factory.Services.CreateScope())
         {
@@ -118,23 +118,23 @@ public class ExerciseItemsAndProgressTests(PuglingWebAppFactory factory) : IClas
         Assert.Equal(HttpStatusCode.Forbidden, res.StatusCode);
     }
 
-    // ---- Kind-zentrischer Fortschritt + Historie + Wort-Rollup -------------------------------------
+    // ---- Child-centric progress + history + word rollup -------------------------------------
 
     [Fact]
     public async Task Practice_SchreibtItemFortschritt_UndHistorie_UndWortRollup()
     {
         var father = await TestApi.FatherAsync(_factory);
-        // Eindeutige Wörter, damit der pro-Kind geteilte Fortschritt/Store nicht mit anderen Tests kollidiert.
+        // Unique words, so that the per-child shared progress/store does not collide with other tests.
         var exerciseId = await TestApi.CreateVocabExerciseAsync(father, ("apple", "Apfel"), ("banana", "Banane"));
         var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.FreeText);
         var child = await TestApi.ChildAsync(_factory);
         var scoped = $"/api/v1/student/children/1/vocabulary-progress?exerciseId={exerciseId}";
 
         var sessionId = await TestApi.StartPositionSessionAsync(child, planId, positionId);
-        await TestApi.PositionReviewAsync(child, planId, positionId, sessionId, 0, givenAnswer: "Apfel");    // richtig
-        await TestApi.PositionReviewAsync(child, planId, positionId, sessionId, 1, givenAnswer: "falsch");   // falsch
+        await TestApi.PositionReviewAsync(child, planId, positionId, sessionId, 0, givenAnswer: "Apfel");    // correct
+        await TestApi.PositionReviewAsync(child, planId, positionId, sessionId, 1, givenAnswer: "falsch");   // wrong
 
-        // Vater-Sicht (auf diese Übung eingegrenzt): der Fortschritt hängt am Kind, schwächste zuerst.
+        // The supervisor view (narrowed to this exercise): the progress hangs on the child, weakest first.
         var progress = await father.GetFromJsonAsync<List<JsonElement>>(scoped);
         Assert.Equal(2, progress!.Count);
         var apple = progress!.First(p => p.GetProperty("front").GetString() == "apple");
@@ -144,33 +144,33 @@ public class ExerciseItemsAndProgressTests(PuglingWebAppFactory factory) : IClas
         Assert.True(apple.GetProperty("masteryPercent").GetInt32() > 0);
         JsonAssert.True(apple, "lastCorrect");
 
-        // onlyWeak: liefert nur Items mit Beherrschung < 50 % (hier beide: banana Box 1 = 0 %, apple Box 2 = 25 %).
+        // onlyWeak: returns only items with mastery < 50 % (here both: banana box 1 = 0 %, apple box 2 = 25 %).
         var weak = await father.GetFromJsonAsync<List<JsonElement>>($"{scoped}&onlyWeak=true");
         Assert.Contains(weak!, p => p.GetProperty("front").GetString() == "banana");
         Assert.All(weak!, p => Assert.True(p.GetProperty("masteryPercent").GetInt32() < 50));
 
-        // Einzelsicht je Item – dieselben Zahlen wie in der Liste, nur ohne Filter drumherum.
+        // The single view per item - the same numbers as in the list, only without the filters around it.
         var itemId = apple.GetProperty("itemId").GetInt32();
         var einzeln = await father.GetFromJsonAsync<JsonElement>($"/api/v1/student/children/1/vocabulary-progress/{itemId}");
         Assert.Equal(itemId, einzeln.GetProperty("itemId").GetInt32());
         Assert.Equal("apple", einzeln.GetProperty("front").GetString());
         Assert.Equal(apple.GetProperty("box").GetInt32(), einzeln.GetProperty("box").GetInt32());
-        // Ein Item ohne Lernstand für dieses Kind gibt es nicht – nicht etwa Nullwerte.
+        // An item without a learning state for this child does not exist - not even as null values.
         Assert.Equal(HttpStatusCode.NotFound,
             (await father.GetAsync("/api/v1/student/children/1/vocabulary-progress/999999")).StatusCode);
 
-        // Historie je Item (ItemId global eindeutig → nur diese Übung schrieb dorthin).
+        // History per item (the ItemId is globally unique → only this exercise wrote there).
         var history = await father.GetFromJsonAsync<List<JsonElement>>($"/api/v1/student/children/1/vocabulary-progress/{itemId}/history");
         Assert.Single(history!);
         JsonAssert.True(history![0], "wasCorrect");
         Assert.Equal("Practice", history![0].GetProperty("source").GetString());
 
-        // Wort-Rollup über alle Übungen: enthält die beiden Wörter dieser Übung (präsenzbasiert, kollisionsfest).
+        // The word rollup across all exercises: it contains both words of this exercise (presence-based, collision-safe).
         var vocabIds = progress!.Select(p => p.GetProperty("vocabularyId").GetInt32()).ToHashSet();
         var byWord = await father.GetFromJsonAsync<List<JsonElement>>("/api/v1/student/children/1/vocabulary-progress/by-word");
         Assert.All(vocabIds, id => Assert.Contains(byWord!, w => w.GetProperty("vocabularyId").GetInt32() == id));
 
-        // Der Sohn darf seinen eigenen Fortschritt lesen (Ownership = er selbst).
+        // The child may read its own progress (ownership = itself).
         var self = await child.GetFromJsonAsync<List<JsonElement>>(scoped);
         Assert.Equal(2, self!.Count);
     }
@@ -179,23 +179,23 @@ public class ExerciseItemsAndProgressTests(PuglingWebAppFactory factory) : IClas
     public async Task WiederholteAntwort_TreibtBeherrschungNichtHoch_HistorieLoggtTrotzdem()
     {
         var father = await TestApi.FatherAsync(_factory);
-        // Eindeutige Wörter (kein Kollidieren mit dem pro-Kind geteilten Fortschritt anderer Tests).
+        // Unique words (no collision with the per-child shared progress of other tests).
         var exerciseId = await TestApi.CreateVocabExerciseAsync(father, ("zebra", "Zebra"), ("tiger", "Tiger"));
         var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.FreeText);
         var child = await TestApi.ChildAsync(_factory);
         var sessionId = await TestApi.StartPositionSessionAsync(child, planId, positionId);
 
-        // Dieselbe Karte 3× richtig: nur die erste wird gewertet (Anti-Farming) – die Box darf nicht hochgefarmt werden.
+        // The same card 3× correct: only the first is graded (anti-farming) - the box must not be farmed up.
         for (var i = 0; i < 3; i++)
             await TestApi.PositionReviewAsync(child, planId, positionId, sessionId, 0, givenAnswer: "Zebra");
 
         var progress = await father.GetFromJsonAsync<List<JsonElement>>(
             $"/api/v1/student/children/1/vocabulary-progress?exerciseId={exerciseId}");
         var zebra = progress!.First(p => p.GetProperty("front").GetString() == "zebra");
-        Assert.Equal(1, zebra.GetProperty("seenCount").GetInt32()); // nur die gewertete Antwort zählt
-        Assert.Equal(2, zebra.GetProperty("box").GetInt32());        // Box 2, nicht hochgetrieben
+        Assert.Equal(1, zebra.GetProperty("seenCount").GetInt32()); // only the graded answer counts
+        Assert.Equal(2, zebra.GetProperty("box").GetInt32());        // box 2, not driven up
 
-        // Die Historie protokolliert dagegen alle drei Antworten (ItemId global eindeutig).
+        // The history, by contrast, records all three answers (the ItemId is globally unique).
         var itemId = zebra.GetProperty("itemId").GetInt32();
         var history = await father.GetFromJsonAsync<List<JsonElement>>($"/api/v1/student/children/1/vocabulary-progress/{itemId}/history");
         Assert.Equal(3, history!.Count);
@@ -209,13 +209,13 @@ public class ExerciseItemsAndProgressTests(PuglingWebAppFactory factory) : IClas
         var itemsUrl = $"/api/v1/creator/subjects/{s}/chapters/{c}/vocabulary/{exerciseId}/items";
         var firstId = (await father.GetFromJsonAsync<List<JsonElement>>(itemsUrl))![0].GetProperty("id").GetInt32();
 
-        // In einen Lehrplan aufnehmen → Fortschritt hängt an der Position/Item-Reihenfolge.
+        // Take it into a study plan → the progress hangs on the position/item order.
         TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.FreeText);
 
-        // Index-verschiebende Mutationen sind jetzt geblockt (409), nicht-verschiebende bleiben erlaubt.
+        // Index-shifting mutations are blocked now (409), non-shifting ones stay allowed.
         Assert.Equal(HttpStatusCode.Conflict, (await father.DeleteAsync($"{itemsUrl}/{firstId}")).StatusCode);
         Assert.Equal(HttpStatusCode.Conflict, (await father.PatchAsJsonAsync($"{itemsUrl}/{firstId}", new { orderIndex = 9 })).StatusCode);
-        Assert.Equal(HttpStatusCode.Created, (await father.PostAsJsonAsync(itemsUrl, new { front = "sun", back = "Sonne" })).StatusCode); // Anhängen ok
-        Assert.Equal(HttpStatusCode.OK, (await father.PatchAsJsonAsync($"{itemsUrl}/{firstId}", new { hint = "Gruß" })).StatusCode);      // Hinweis ok
+        Assert.Equal(HttpStatusCode.Created, (await father.PostAsJsonAsync(itemsUrl, new { front = "sun", back = "Sonne" })).StatusCode); // appending is ok
+        Assert.Equal(HttpStatusCode.OK, (await father.PatchAsJsonAsync($"{itemsUrl}/{firstId}", new { hint = "Gruß" })).StatusCode);      // the hint is ok
     }
 }

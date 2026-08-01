@@ -47,7 +47,7 @@ public class ShopController(PuglingDbContext db, ShopService shop) : ControllerB
             CanReject = r.Status == ActivationRequestStatus.Pending,
         };
 
-    // ─── Artikel-CRUD ────────────────────────────────────────────────────────
+    // ─── Article CRUD ────────────────────────────────────────────────────────
 
     /// <summary>Family shop articles of the logged-in father (without stock/price details).</summary>
     /// <param name="search">Free-text search in article number and title (substring, optional).</param>
@@ -164,7 +164,7 @@ public class ShopController(PuglingDbContext db, ShopService shop) : ControllerB
         return NoContent();
     }
 
-    // ─── Angebots-CRUD (Listings pro Artikel) ────────────────────────────────
+    // ─── Listing CRUD (listings per article) ─────────────────────────────────
 
     /// <summary>All listings for an article of the father.</summary>
     [HttpGet("articles/{articleId:int}/listings")]
@@ -188,10 +188,10 @@ public class ShopController(PuglingDbContext db, ShopService shop) : ControllerB
     public async Task<ActionResult<ShopListingDto>> Listing(int articleId, int listingId, CancellationToken ct = default)
     {
         var supervisorId = User.AdultId()!.Value;
-        // Nur DIESES Angebot laden (kein Voll-Scan aller Vater-Angebote). AsNoTracking + rein
-        // anzeigeseitige Auffüllung (ApplyDueRefill mutiert nur das nicht getrackte Objekt, kein
-        // SaveChanges) – ein GET darf keinen Schreib-Nebeneffekt haben. Persistiert wird die Auffüllung
-        // beim Listen-Abruf bzw. beim Kauf; die Darstellung hier ist dieselbe.
+        // Load only THIS listing (no full scan of all the adult's listings). AsNoTracking + a purely
+        // display-side refill (ApplyDueRefill mutates the untracked object only, no SaveChanges) - a GET must
+        // have no write side effect. The refill is persisted on the list call or on a purchase; what is shown
+        // here is the same.
         var listing = await db.ShopListings.AsNoTracking()
             .Include(l => l.ShopArticle)
             .FirstOrDefaultAsync(l => l.Id == listingId && l.ShopArticleId == articleId
@@ -299,7 +299,7 @@ public class ShopController(PuglingDbContext db, ShopService shop) : ControllerB
         return NoContent();
     }
 
-    // ─── Kind-Inventar ───────────────────────────────────────────────────────
+    // ─── Child inventory ─────────────────────────────────────────────────────
 
     /// <summary>Aggregated inventory of a child: the total available quantity per article type.</summary>
     /// <param name="childId">Id of the child.</param>
@@ -315,11 +315,11 @@ public class ShopController(PuglingDbContext db, ShopService shop) : ControllerB
         CancellationToken ct = default)
     {
         var fid = User.AdultId();
-        // Gefiltert und projiziert wird über die Momentaufnahme, nicht über die Navigation: der Artikel
-        // darf gelöscht sein (FK SetNull), der bezahlte Bestand bleibt. Über `ShopArticle.AdultId` fiele
-        // der Posten dann aus dieser Liste – unsichtbar ist für den Vater so gut wie gelöscht.
+        // Filtering and projecting go through the snapshot, not through the navigation: the article may be
+        // deleted (FK SetNull), the paid stock stays. Through `ShopArticle.AdultId` the position would then
+        // drop out of this list - and invisible is as good as deleted for the supervisor.
         var query = db.ChildInventories.AsNoTracking()
-            .Where(i => i.ChildId == childId && i.Quantity > 0 && i.SupervisorId == fid) // nur eigene Artikel
+            .Where(i => i.ChildId == childId && i.Quantity > 0 && i.SupervisorId == fid) // own articles only
             .OrderBy(i => i.ArticleNumber)
             .Select(i => new InventoryItemDto(
                 i.ShopArticleId, i.ArticleNumber, i.ArticleTitle,
@@ -327,7 +327,7 @@ public class ShopController(PuglingDbContext db, ShopService shop) : ControllerB
         return await query.ToPagedListAsync(Response, skip, take, ct);
     }
 
-    // ─── Kaufhistorie ────────────────────────────────────────────────────────
+    // ─── Purchase history ────────────────────────────────────────────────────
 
     /// <summary>Purchase history of a child, optionally filtered by status.</summary>
     [HttpGet("~/" + ApiRoutes.Supervisor + "/children/{childId:int}/shop/purchases")]
@@ -369,7 +369,7 @@ public class ShopController(PuglingDbContext db, ShopService shop) : ControllerB
         };
     }
 
-    // ─── Aktivierungsanfragen ────────────────────────────────────────────────
+    // ─── Activation requests ─────────────────────────────────────────────────
 
     /// <summary>Activation requests of a child, optionally filtered by status (open ones first).</summary>
     [HttpGet("~/" + ApiRoutes.Supervisor + "/children/{childId:int}/shop/activations")]
@@ -419,7 +419,7 @@ public class ShopController(PuglingDbContext db, ShopService shop) : ControllerB
         return ActivationResult(result);
     }
 
-    // ─── Hilfsmethoden ───────────────────────────────────────────────────────
+    // ─── Helpers ─────────────────────────────────────────────────────────────
 
     private ActionResult<ActivationRequestDto> ActivationResult(ShopService.Result<ActivationRequest> result) =>
         result.Error switch

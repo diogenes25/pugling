@@ -50,7 +50,7 @@ public class EmptyExerciseGuardTests(PuglingWebAppFactory factory) : IClassFixtu
         Assert.Equal(HttpStatusCode.BadRequest, res.StatusCode);
         var body = await res.Content.ReadFromJsonAsync<JsonElement>();
         Assert.Equal("exercise_empty", body.GetProperty("code").GetString());
-        // Und der Plan bleibt leer – die Position darf nicht halb entstanden sein.
+        // And the plan stays empty - the position must not have been half created.
         var positions = await father.GetFromJsonAsync<List<JsonElement>>(
             $"/api/v1/supervisor/study-plans/{planId}/positions");
         Assert.Empty(positions!);
@@ -84,18 +84,18 @@ public class EmptyExerciseGuardTests(PuglingWebAppFactory factory) : IClassFixtu
             $"/api/v1/creator/subjects/{s}/chapters/{c}/vocabulary",
             new { title = "Wird noch gefüllt", orderIndex = 1, rewardPoints = 10, config = new { direction = "front-to-back", sourceLang = "en", targetLang = "de" } }));
 
-        // Anlegen ohne Wörter ist erlaubt (kein 400) …
+        // Creating it without words is allowed (no 400) …
         var addRes = await father.PostAsJsonAsync(
             $"/api/v1/creator/subjects/{s}/chapters/{c}/vocabulary/{exerciseId}/items",
             new { front = "sun", back = "Sonne" });
         Assert.Equal(HttpStatusCode.Created, addRes.StatusCode);
 
-        // Das Wort ist wirklich drin – ein 201 auf den Item-POST sagt darüber nichts.
+        // The word is really in there - a 201 on the item POST says nothing about that.
         var items = await father.GetFromJsonAsync<List<JsonElement>>(
             $"/api/v1/creator/subjects/{s}/chapters/{c}/vocabulary/{exerciseId}/items");
         Assert.Contains(items!, i => i.GetProperty("front").GetString() == "sun");
 
-        // … und nach dem Füllen greift der Riegel nicht mehr.
+        // … and once it is filled the barrier no longer bites.
         var planId = await EmptyPlanAsync(father);
         var res = await father.PostAsJsonAsync($"/api/v1/supervisor/study-plans/{planId}/positions",
             new { exerciseId, cadence = "Daily" });
@@ -174,12 +174,12 @@ public class EmptyExerciseGuardTests(PuglingWebAppFactory factory) : IClassFixtu
             new { tags = new[] { "gibt-es-nicht" } });
 
         Assert.Equal(HttpStatusCode.BadRequest, res.StatusCode);
-        // Eigener Code: ein Aufrufer muss „deine Tags treffen nichts" von „du hast keinen Tag geschickt"
-        // unterscheiden können – dort hilft ein anderer Tag, hier ein Bugfix.
+        // Its own code: a caller has to tell "your tags match nothing" from "you sent no tag" - the former
+        // needs a different tag, the latter a bug fix.
         var body = await res.Content.ReadFromJsonAsync<JsonElement>();
         Assert.Equal("no_tag_matches", body.GetProperty("code").GetString());
         var items = await father.GetFromJsonAsync<List<JsonElement>>(itemsUrl);
-        Assert.Single(items!);   // das eine Wort steht weiterhin drin
+        Assert.Single(items!);   // the one word is still in there
     }
 
     [Fact]

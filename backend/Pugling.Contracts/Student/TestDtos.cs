@@ -1,7 +1,7 @@
 namespace Pugling.Contracts.Student;
 
-// Vertrag des Abschlusstests einer Lehrplan-Position. Strikt server-getrieben (Klausur-Modus):
-// eine Frage nach der anderen über den Attempt-Cursor, kein Zurück, Feedback erst beim Abschluss.
+// Contract of the final test of a study plan position. Strictly server-driven (class-test mode):
+// one question after another through the attempt cursor, no going back, feedback only on completion.
 
 /// <summary>An exam question – without the solution, except at stages that reveal it by design.</summary>
 public record TestItem(int ItemIndex, string Prompt, int Stage, string? Reveal, int? AnswerLength, string? Hint,

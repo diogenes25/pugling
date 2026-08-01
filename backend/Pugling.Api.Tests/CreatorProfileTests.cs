@@ -44,7 +44,7 @@ public class CreatorProfileTests(PuglingWebAppFactory factory) : IClassFixture<P
             vocabularyNotes = "to grow up, responsibility",
         }));
 
-        // Ohne orderIndex wird hinten angehängt – der Aufrufer muss die Reihenfolge nicht kennen.
+        // Without an orderIndex it is appended at the end - the caller need not know the order.
         var second = await (await creator.PostAsJsonAsync($"{SeriesRoot}/{seriesId}/units", new
         {
             label = "Unit 4 – School life",
@@ -59,7 +59,7 @@ public class CreatorProfileTests(PuglingWebAppFactory factory) : IClassFixture<P
         Assert.Equal(2, series.GetProperty("unitCount").GetInt32());
         Assert.True(series.GetProperty("isOwn").GetBoolean());
 
-        // Der Stoff der Unit ist der Grund für diese Tabelle – er muss unverändert zurückkommen.
+        // The unit's subject matter is the reason for this table - it has to come back unchanged.
         var unit = await creator.GetFromJsonAsync<JsonElement>($"{SeriesRoot}/{seriesId}/units/{unitId}");
         Assert.Equal("Present perfect", unit.GetProperty("grammar").GetString());
 
@@ -68,7 +68,7 @@ public class CreatorProfileTests(PuglingWebAppFactory factory) : IClassFixture<P
             grammar = "Present perfect vs. simple past",
         })).Content.ReadFromJsonAsync<JsonElement>();
         Assert.Equal("Present perfect vs. simple past", patched.GetProperty("grammar").GetString());
-        // Was nicht im Payload steht, bleibt stehen.
+        // What is not in the payload stays as it is.
         Assert.Equal("Familie, Freundschaft", patched.GetProperty("topics").GetString());
     }
 
@@ -139,12 +139,12 @@ public class CreatorProfileTests(PuglingWebAppFactory factory) : IClassFixture<P
 
         Assert.True(profile.GetProperty("isOwn").GetBoolean());
         Assert.True(profile.GetProperty("active").GetBoolean());
-        // Dubletten in den bevorzugten Typen werden verworfen.
+        // Duplicates in the preferred types are discarded.
         Assert.Equal(2, profile.GetProperty("defaultTypes").GetArrayLength());
-        // Der Reihenname kommt mit, damit ein UI die Zuordnung ohne Nachladen zeigen kann.
+        // The series name comes along so that a UI can show the assignment without a second load.
         Assert.False(string.IsNullOrEmpty(profile.GetProperty("seriesName").GetString()));
 
-        // Ins Leere zeigende Verweise werden abgewiesen – ein Profil ohne Reihe findet nie ein Kind.
+        // References pointing nowhere are rejected - a profile without a series never finds a child.
         var bad = await creator.PostAsJsonAsync(ProfileRoot, new { name = "Kaputt", seriesId = 999999 });
         Assert.Equal("invalid_reference", await CodeOfAsync(bad));
         var badSubject = await creator.PostAsJsonAsync(ProfileRoot, new { name = "Kaputt", subjectId = 999999 });
@@ -154,7 +154,7 @@ public class CreatorProfileTests(PuglingWebAppFactory factory) : IClassFixture<P
             new { name = "Verdreht", gradeMin = 9, gradeMax = 5 });
         Assert.Equal("validation_error", await CodeOfAsync(swapped));
 
-        // Stilllegen: das Profil verschwindet aus der Standard-Liste, bleibt aber abrufbar.
+        // Deactivating: the profile disappears from the default list but stays retrievable.
         await creator.PatchAsJsonAsync($"{ProfileRoot}/{profileId}", new { active = false });
         var listed = await creator.GetFromJsonAsync<JsonElement>(ProfileRoot);
         Assert.DoesNotContain(profileId, Ids(listed));
@@ -185,7 +185,7 @@ public class CreatorProfileTests(PuglingWebAppFactory factory) : IClassFixture<P
             grade = 8,
             schoolType = "Gymnasium",
         }));
-        // Das Kind arbeitet mit „Access" – genau das soll die Auswahl entscheiden.
+        // The child works with "Access" - that is exactly what should decide the selection.
         await creator.PostAsJsonAsync($"/api/v1/supervisor/children/{childId}/textbooks", new
         {
             title = "Access 8",
@@ -204,7 +204,7 @@ public class CreatorProfileTests(PuglingWebAppFactory factory) : IClassFixture<P
             $"{ProfileRoot}/match?childId={childId}&subjectId={subjectId}");
         var ranked = matches.EnumerateArray().ToList();
 
-        // Bestes zuerst: die gemeinsame Buchreihe.
+        // Best first: the shared textbook series.
         Assert.Equal(withSeries, ranked[0].GetProperty("profile").GetProperty("id").GetInt32());
         Assert.Contains("series_match",
             ranked[0].GetProperty("reasons").EnumerateArray().Select(r => r.GetString()));
@@ -213,7 +213,7 @@ public class CreatorProfileTests(PuglingWebAppFactory factory) : IClassFixture<P
 
         var ids = ranked.Select(m => m.GetProperty("profile").GetProperty("id").GetInt32()).ToList();
         Assert.Contains(otherSeries, ids);
-        // Harte Ausschlüsse: falsche Klassenstufe und stillgelegte Profile tauchen gar nicht auf.
+        // Hard exclusions: the wrong grade and deactivated profiles do not show up at all.
         Assert.DoesNotContain(wrongGrade, ids);
         Assert.DoesNotContain(inactive, ids);
     }
@@ -255,14 +255,14 @@ public class CreatorProfileTests(PuglingWebAppFactory factory) : IClassFixture<P
             seriesId,
         })).EnsureSuccessStatusCode();
 
-        // Fach + Klassenstufe + Schulart, aber die falsche Reihe: 4 + 2 + 1 = 7.
+        // Subject + grade + school type, but the wrong series: 4 + 2 + 1 = 7.
         var allesAusserReihe = await CreateWeightedProfileAsync(creator, "Fach+Stufe+Schulart",
             subjectId: subjectId, seriesId: null, gradeMin: 7, gradeMax: 9, schoolTypes: "Gymnasium");
-        // Nur die Reihe: 8. Muss trotzdem vorn stehen.
+        // The series alone: 8. It still has to come first.
         var nurReihe = await CreateWeightedProfileAsync(creator, "Nur Reihe",
             subjectId: null, seriesId: seriesId, gradeMin: null, gradeMax: null, schoolTypes: null);
 
-        // Klassenstufe (2) gegen Schulart (1) – dasselbe Muster eine Ebene tiefer.
+        // Grade (2) against school type (1) - the same pattern one level down.
         var nurSchulart = await CreateWeightedProfileAsync(creator, "Nur Schulart",
             subjectId: null, seriesId: null, gradeMin: null, gradeMax: null, schoolTypes: "Gymnasium");
         var nurStufe = await CreateWeightedProfileAsync(creator, "Nur Stufe",
@@ -278,7 +278,7 @@ public class CreatorProfileTests(PuglingWebAppFactory factory) : IClassFixture<P
         Assert.Equal(2, ScoreOf(nurStufe));
         Assert.Equal(1, ScoreOf(nurSchulart));
 
-        // Und die Punkte müssen die Sortierung auch tatsächlich tragen (die Liste kommt „bestes zuerst").
+        // And the points really have to carry the sorting (the list comes "best first").
         Assert.True(ids.IndexOf(nurReihe) < ids.IndexOf(allesAusserReihe));
         Assert.True(ids.IndexOf(nurStufe) < ids.IndexOf(nurSchulart));
     }
@@ -345,7 +345,7 @@ public class CreatorProfileTests(PuglingWebAppFactory factory) : IClassFixture<P
             new { title = "Access 8", seriesId, currentUnitId = foreignUnitId });
         Assert.Equal("validation_error", await CodeOfAsync(wrong));
 
-        // Eine Unit ohne Reihe wäre ebenso wenig auflösbar.
+        // A unit without a series would be just as unresolvable.
         var orphan = await creator.PostAsJsonAsync(books, new { title = "Access 8", currentUnitId = unitId });
         Assert.Equal("validation_error", await CodeOfAsync(orphan));
 
@@ -354,7 +354,7 @@ public class CreatorProfileTests(PuglingWebAppFactory factory) : IClassFixture<P
         Assert.Equal(unitId, created.GetProperty("currentUnitId").GetInt32());
         Assert.Equal("Unit 3", created.GetProperty("currentUnitLabel").GetString());
 
-        // Nur die Unit nachtragen: geprüft wird gegen den Zielzustand, nicht gegen den Payload.
+        // Adding only the unit: the check runs against the target state, not against the payload.
         var textbookId = created.GetProperty("id").GetInt32();
         var patched = await creator.PatchAsJsonAsync($"{books}/{textbookId}", new { currentUnitId = foreignUnitId });
         Assert.Equal("validation_error", await CodeOfAsync(patched));

@@ -46,9 +46,9 @@ public class VocabAgentApiTests(PuglingWebAppFactory factory) : IClassFixture<Pu
         var father = await TestApi.FatherAsync(_factory);
         const string sl = "flt";
 
-        // ohne Übersetzung → untranslated + incomplete
+        // without a translation → untranslated + incomplete
         await CreateAsync(father, new { sourceLanguage = sl, targetLanguage = "fb", word = "raw" });
-        // vollständig (Noun mit Details) → weder noch
+        // complete (a noun with details) → neither
         await CreateAsync(father, new
         {
             sourceLanguage = sl,
@@ -58,7 +58,7 @@ public class VocabAgentApiTests(PuglingWebAppFactory factory) : IClassFixture<Pu
             partOfSpeech = "Noun",
             noun = new { article = "das" },
         });
-        // übersetzt, aber Wortart Other → incomplete, nicht untranslated
+        // translated, but part of speech Other → incomplete, not untranslated
         await CreateAsync(father, new { sourceLanguage = sl, targetLanguage = "fb", word = "half", translation = "halb" });
 
         var untranslated = await KeysAsync(father, $"sourceLanguage={sl}&untranslated=true");
@@ -160,7 +160,7 @@ public class VocabAgentApiTests(PuglingWebAppFactory factory) : IClassFixture<Pu
         var went = await CreateAsync(father, new { sourceLanguage = sl, targetLanguage = "fb", word = "went", translation = "ging", baseFormKey = baseKey, baseFormRelation = "Präteritum" });
         await CreateAsync(father, new { sourceLanguage = sl, targetLanguage = "fb", word = "gone", translation = "gegangen", baseFormKey = baseKey, baseFormRelation = "Partizip II" });
 
-        // Abfrage über eine flektierte Form liefert die ganze Familie, Grundform zuerst.
+        // A query through an inflected form returns the whole family, base form first.
         var forms = await father.GetFromJsonAsync<JsonElement>($"/api/v1/creator/vocabulary/{went.GetProperty("id").GetInt32()}/forms");
         var list = forms.EnumerateArray().ToList();
         Assert.Equal(3, list.Count);
@@ -177,7 +177,7 @@ public class VocabAgentApiTests(PuglingWebAppFactory factory) : IClassFixture<Pu
         var k5 = Uri.EscapeDataString("Kapitel 5");
         var k7 = Uri.EscapeDataString("Klasse 7");
 
-        // Zwei Vokabeln taggen: eine mit beiden Tags, eine nur mit „Kapitel 5".
+        // Tag two entries: one with both tags, one with "Kapitel 5" only.
         var both = await CreateAsync(father, new { sourceLanguage = sl, targetLanguage = "fb", word = "both", translation = "beide", tags = new[] { "Kapitel 5", "Klasse 7" } });
         await CreateAsync(father, new { sourceLanguage = sl, targetLanguage = "fb", word = "one", translation = "eins", tags = new[] { "Kapitel 5" } });
 
@@ -187,12 +187,12 @@ public class VocabAgentApiTests(PuglingWebAppFactory factory) : IClassFixture<Pu
         Assert.Equal(2, kapitel5.Count);
 
         var orBoth = await KeysAsync(father, $"sourceLanguage={sl}&tag={k5}&tag={k7}");
-        Assert.Equal(2, orBoth.Count); // ODER
+        Assert.Equal(2, orBoth.Count); // OR
 
         var andBoth = await KeysAsync(father, $"sourceLanguage={sl}&tag={k5}&tag={k7}&matchAll=true");
-        Assert.Equal(["tag_both_fb_beide"], andBoth); // UND → nur die doppelt getaggte
+        Assert.Equal(["tag_both_fb_beide"], andBoth); // AND → only the doubly tagged one
 
-        // Tag löschen entfernt die Verknüpfungen.
+        // Deleting a tag removes the links.
         var tags = await father.GetFromJsonAsync<JsonElement>("/api/v1/creator/vocabulary/tags");
         var kapitelId = tags.EnumerateArray().Single(t => t.GetProperty("name").GetString() == "Kapitel 5").GetProperty("id").GetInt32();
         var del = await father.DeleteAsync($"/api/v1/creator/vocabulary/tags/{kapitelId}");

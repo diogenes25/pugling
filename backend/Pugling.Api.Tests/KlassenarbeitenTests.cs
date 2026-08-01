@@ -34,7 +34,7 @@ public class KlassenarbeitenTests(PuglingWebAppFactory factory) : IClassFixture<
     [Fact]
     public async Task Repeat_LiefertSchlechtBenoteteSeedArbeit()
     {
-        // Der Seed legt für Kind 1 eine geschriebene Arbeit mit Note 4,5 an – sie muss im Wiederholen-Endpunkt auftauchen.
+        // The seed creates a written test with grade 4.5 for child 1 - it has to show up in the repeat endpoint.
         var father = await TestApi.FatherAsync(factory);
 
         var repeat = await (await father.GetAsync("/api/v1/supervisor/class-tests/repeat?childId=1")).Content.ReadFromJsonAsync<JsonElement>();
@@ -45,8 +45,8 @@ public class KlassenarbeitenTests(PuglingWebAppFactory factory) : IClassFixture<
     [Fact]
     public async Task Uebung_Zuweisen_Note_Nachtragen_TauchtImVorbereitenUndWiederholenAuf()
     {
-        // Bildet den UI-Loop ab: Arbeit planen → Übung zuweisen → Note nachtragen (PATCH) →
-        // Übung ist im Vorbereiten sichtbar und (bei schlechter Note) im Wiederholen des Kindes.
+        // Mirrors the UI loop: plan a test → assign an exercise → enter the grade (PATCH) → the exercise is
+        // visible in preparation and (with a bad grade) in the child's repeat list.
         var father = await TestApi.FatherAsync(factory);
         var (_, _, exerciseId) = await TestApi.CreateArithmeticExerciseAsync(father);
 
@@ -57,22 +57,22 @@ public class KlassenarbeitenTests(PuglingWebAppFactory factory) : IClassFixture<
             scheduledDate = "2099-02-01",
         })).Content.ReadFromJsonAsync<JsonElement>()).GetProperty("klassenarbeit").GetProperty("id").GetInt32();
 
-        // Übung zuweisen
+        // Assign the exercise
         var assigned = await (await father.PostAsJsonAsync($"/api/v1/supervisor/class-tests/{id}/exercises",
             new { exerciseIds = new[] { exerciseId } })).Content.ReadFromJsonAsync<JsonElement>();
         Assert.Contains(exerciseId, assigned.GetProperty("assignedExercises").EnumerateArray()
             .Select(e => e.GetProperty("id").GetInt32()));
 
-        // Note nachtragen (schlecht: 5,0) – Status wird dabei auf geschrieben gesetzt
+        // Enter the grade (bad: 5.0) - the status is set to written along with it
         var patched = await (await father.PatchAsJsonAsync($"/api/v1/supervisor/class-tests/{id}",
             new { grade = 5.0m, status = "Written" })).Content.ReadFromJsonAsync<JsonElement>();
         Assert.Equal("Written", patched.GetProperty("status").GetString());
 
-        // Vorbereiten enthält die zugewiesene Übung
+        // Preparation contains the assigned exercise
         var practice = await (await father.GetAsync($"/api/v1/supervisor/class-tests/{id}/practice")).Content.ReadFromJsonAsync<JsonElement>();
         Assert.Contains(exerciseId, practice.GetProperty("exercises").EnumerateArray().Select(e => e.GetProperty("id").GetInt32()));
 
-        // Wiederholen (schwach benotet) listet diese Arbeit
+        // The repeat list (poorly graded) lists this test
         var repeat = await (await father.GetAsync("/api/v1/supervisor/class-tests/repeat?childId=1")).Content.ReadFromJsonAsync<JsonElement>();
         Assert.Contains(id, repeat.GetProperty("sources").EnumerateArray().Select(s => s.GetProperty("id").GetInt32()));
     }
@@ -82,13 +82,13 @@ public class KlassenarbeitenTests(PuglingWebAppFactory factory) : IClassFixture<
     {
         var father = await TestApi.FatherAsync(factory);
 
-        // childId 999 gehört keinem Kind dieses Vaters.
+        // childId 999 belongs to no child of this adult.
         var res = await father.PostAsJsonAsync("/api/v1/supervisor/class-tests", new { childId = 999, title = "X", scheduledDate = "2099-01-15" });
 
         Assert.Equal(HttpStatusCode.Forbidden, res.StatusCode);
     }
 
-    // ─────────────────────────────────────────── Zuordnungen lösen und löschen (C3-Abdeckungslücke)
+    // ─────────────────────────────────────────── Detaching and deleting assignments (a C3 coverage gap)
 
     /// <summary>Creates a class test for child 1 and returns its id.</summary>
     private static async Task<int> AnlegenAsync(HttpClient father, string title)
@@ -112,12 +112,12 @@ public class KlassenarbeitenTests(PuglingWebAppFactory factory) : IClassFixture<
         Assert.Equal(HttpStatusCode.NoContent,
             (await father.DeleteAsync($"/api/v1/supervisor/class-tests/{id}/exercises/{exerciseId}")).StatusCode);
 
-        // Nach dem Lösen ist die Übung nicht mehr relevant – sonst übte das Kind weiter für nichts.
+        // After detaching, the exercise is no longer relevant - otherwise the child would keep practicing for nothing.
         var practice = await (await father.GetAsync($"/api/v1/supervisor/class-tests/{id}/practice"))
             .Content.ReadFromJsonAsync<JsonElement>();
         Assert.DoesNotContain(exerciseId, practice.GetProperty("exercises").EnumerateArray().Select(e => e.GetProperty("id").GetInt32()));
 
-        // Ein zweites Lösen findet nichts mehr – das ist der Fehlerfall dieser Route.
+        // A second detach finds nothing - that is this route's error case.
         Assert.Equal(HttpStatusCode.NotFound,
             (await father.DeleteAsync($"/api/v1/supervisor/class-tests/{id}/exercises/{exerciseId}")).StatusCode);
     }
@@ -144,8 +144,8 @@ public class KlassenarbeitenTests(PuglingWebAppFactory factory) : IClassFixture<
     [Fact]
     public async Task Tag_Eines_Fremden_Kindes_Laesst_Sich_Nicht_Verknuepfen()
     {
-        // Der fachlich interessante Fehlerfall: ein Tag gehört immer *einem* Kind. Ließe er sich an die Arbeit
-        // eines anderen hängen, zöge „relevante Übungen" fremden Stoff herein.
+        // The interesting domain error case: a tag always belongs to *one* child. If it could be attached to
+        // another child's test, "relevant exercises" would drag in foreign material.
         var father = await TestApi.FatherAsync(factory);
         var id = await AnlegenAsync(father, "Fremder Tag");
         var anderesKind = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/supervisor/children",

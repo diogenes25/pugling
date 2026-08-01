@@ -32,7 +32,7 @@ namespace Pugling.Api.Tests;
 /// </summary>
 public class PatchSemanticsTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWebAppFactory>
 {
-    // ─────────────────────────────────────────────────────────────────── Die Fläche
+    // ─────────────────────────────────────────────────────────────────── The surface
 
     /// <summary>A <c>Clear…</c> switch and the field it clears (the mapping cannot be inferred:
     /// <c>clearSubject</c> clears <c>subjectId</c>, <c>clearUnit</c> clears <c>currentUnitId</c>).</summary>
@@ -54,9 +54,9 @@ public class PatchSemanticsTests(PuglingWebAppFactory factory) : IClassFixture<P
     /// </summary>
     private static readonly Dictionary<string, string> Ausnahmen = new(StringComparer.Ordinal)
     {
-        // Hat kein optionales Feld: `UpdateMediaLinkDto(int Weight)` verlangt das Gewicht. „Nicht
-        // angegeben" ist darin gar nicht ausdrückbar, es gibt also keine null-Semantik zu prüfen.
-        ["UpdateMediaLinkDto"] = "einziges Feld (Weight) ist Pflicht – null ist nicht ausdrückbar",
+        // It has no optional field: `UpdateMediaLinkDto(int Weight)` requires the weight. "Not specified" cannot
+        // be expressed in it at all, so there is no null semantics to check.
+        ["UpdateMediaLinkDto"] = "the only field (Weight) is required - null cannot be expressed",
     };
 
     private static Fall[] Faelle =>
@@ -158,7 +158,7 @@ public class PatchSemanticsTests(PuglingWebAppFactory factory) : IClassFixture<P
             var subject = await TestApi.IdAsync(await c.PostAsJsonAsync("/api/v1/creator/subjects", new { name = Eindeutig("Fach") }));
             var id = await TestApi.IdAsync(await c.PostAsJsonAsync("/api/v1/creator/profiles", new
             {
-                // Der Name ist je Creator eindeutig – zwei Fälle dieser Klasse legen sonst denselben an.
+                // The name is unique per creator - two cases of this class would otherwise create the same one.
                 name = Eindeutig("Frau"),
                 subjectId = subject,
                 subjectName = "Englisch",
@@ -189,18 +189,18 @@ public class PatchSemanticsTests(PuglingWebAppFactory factory) : IClassFixture<P
 
         new(typeof(UpdateAdultDto), "name", "Papa umbenannt", async f =>
         {
-            // Ein **eigener** Erwachsener: `Update` erlaubt nur den eigenen Datensatz, und ein Umbenennen
-            // des geseedeten Papas würde anderen Fällen dieser Klasse den Boden wegziehen.
+            // An adult of **our own**: `Update` allows the own record only, and renaming the seeded father
+            // would pull the ground from under the other cases of this class.
             var (client, id) = await NeuerErwachsenerAsync(f);
             return new Ziel(client, $"/api/v1/supervisor/adults/{id}");
         }, []),
 
         new(typeof(UpdateMyAccountDto), "name", "Selbst umbenannt", async f =>
         {
-            // Eindeutige Adresse: `Account.Email` trägt einen Unique-Index, und beide Theorien legen einen an.
+            // A unique address: `Account.Email` carries a unique index, and both theories create one.
             var (client, id) = await NeuerErwachsenerAsync(f, email: $"{Eindeutig("papa")}@example.test");
-            // `MeResponse` führt die E-Mail nicht – für `clearEmail` muss der Stand darum aus dem
-            // Erwachsenen-Datensatz kommen.
+            // `MeResponse` does not carry the e-mail - so for `clearEmail` the state has to come from the adult
+            // record.
             return new Ziel(client, "/api/v1/auth/me", $"/api/v1/supervisor/adults/{id}");
         }, [new("clearEmail", "email")]),
 
@@ -248,7 +248,7 @@ public class PatchSemanticsTests(PuglingWebAppFactory factory) : IClassFixture<P
         {
             var c = await TestApi.FatherAsync(f);
             var childId = await NeuesKindAsync(c);
-            // `Create` liefert `KlassenarbeitDetail` – die Id steckt eine Ebene tiefer als üblich.
+            // `Create` returns `KlassenarbeitDetail` - the id sits one level deeper than usual.
             var angelegt = await c.PostAsJsonAsync("/api/v1/supervisor/class-tests",
                 new { childId, title = "Vokabeltest", scheduledDate = "2026-09-01", grade = 2.0m });
             angelegt.EnsureSuccessStatusCode();
@@ -323,7 +323,7 @@ public class PatchSemanticsTests(PuglingWebAppFactory factory) : IClassFixture<P
                 parentRemarkId = parent,
                 context = new { route = "/sohn/lernen", appArea = "sohn", childId, exerciseId, studyPlanId = planId, planPositionId = positionId },
             }));
-            // Die Antwort setzt erst der Skill – für `clearAnswer` muss sie vorher stehen.
+            // Only the skill sets the answer - for `clearAnswer` it has to be there beforehand.
             (await c.PatchAsJsonAsync($"/api/v1/remarks/{id}", new { answer = "Kommt aus dem MediaSelector.", answeredBy = "Claude" }))
                 .EnsureSuccessStatusCode();
             return new Ziel(c, $"/api/v1/remarks/{id}");
@@ -332,7 +332,7 @@ public class PatchSemanticsTests(PuglingWebAppFactory factory) : IClassFixture<P
             new("clearPlanPosition", "context.planPositionId"), new("clearParent", "parentRemarkId")]),
     ];
 
-    // ─────────────────────────────────────────────────────────────────── Regel 1: null ändert nichts
+    // ─────────────────────────────────────────────────────────────────── Rule 1: null changes nothing
 
     public static TheoryData<string> FallNamen => [.. Faelle.Select(f => f.UpdateDto.Name)];
 
@@ -343,16 +343,16 @@ public class PatchSemanticsTests(PuglingWebAppFactory factory) : IClassFixture<P
         var fall = Faelle.Single(f => f.UpdateDto.Name == dto);
         var ziel = await fall.AnlegenAsync(factory);
 
-        // Setzen muss wirken – sonst prüfte der Rundlauf danach nur, dass sich nichts tut.
+        // Setting has to work - otherwise the round trip afterwards would only check that nothing happens.
         var gesetzt = await PatchAsync(ziel, new JsonObject { [fall.Feld] = fall.Wert.DeepClone() });
         Assert.Equal(fall.Wert.ToJsonString(), Lesen(gesetzt, fall.Feld)?.ToJsonString());
 
-        // Und jetzt die Regel: `null` heißt „nicht angegeben", nicht „leeren".
+        // And now the rule: `null` means "not specified", not "clear".
         var danach = await PatchAsync(ziel, new JsonObject { [fall.Feld] = null });
         Assert.Equal(fall.Wert.ToJsonString(), Lesen(danach, fall.Feld)?.ToJsonString());
     }
 
-    // ─────────────────────────────────────────────────────────────────── Regel 2: Clear leert und gewinnt
+    // ─────────────────────────────────────────────────────────────────── Rule 2: clear empties and wins
 
     public static TheoryData<string, string> SchalterNamen =>
         [.. Faelle.SelectMany(f => f.Schalter.Select(s => (f.UpdateDto.Name, s.Name)))];
@@ -363,35 +363,35 @@ public class PatchSemanticsTests(PuglingWebAppFactory factory) : IClassFixture<P
     {
         var fall = Faelle.Single(f => f.UpdateDto.Name == dto);
         var feld = fall.Schalter.Single(s => s.Name == schalter).Feld;
-        // Je Schalter eine **frische** Ressource: Schalter greifen ineinander (das Leeren der Reihe nimmt
-        // die Unit mit), und auf einer geteilten Ressource entschiede die Reihenfolge über das Ergebnis.
+        // A **fresh** resource per switch: switches interlock (clearing the series takes the unit with it), and
+        // on a shared resource the order would decide the outcome.
         var ziel = await fall.AnlegenAsync(factory);
 
         var stand = await PatchAsync(ziel, new JsonObject());
         var wert = Lesen(stand, feld);
         Assert.False(wert is null || wert.GetValueKind() == JsonValueKind.Null,
-            $"Die Anlage von {dto} setzt '{feld}' nicht – ohne Wert belegt der Schalter '{schalter}' nichts.");
+            $"Creating {dto} does not set '{feld}' - without a value the switch '{schalter}' proves nothing.");
 
-        // Trägt das Update-DTO ein gleichnamiges Eingabefeld? Nicht jeder Schalter hat eines: die
-        // Kontext-Bezüge einer Anmerkung (`context.childId`, `parentRemarkId`) lassen sich per PATCH nur
-        // **leeren**, nicht setzen. Wo es kein Eingabefeld gibt, gibt es auch kein `null` zu schicken –
-        // dann bleibt vom Schalter nur die eine Aussage „er leert", und genau die wird geprüft.
+        // Does the update DTO carry an input field of the same name? Not every switch has one: the context
+        // references of a remark (`context.childId`, `parentRemarkId`) can only be **cleared** through PATCH,
+        // not set. Where there is no input field there is no `null` to send either - then all that remains of
+        // the switch is the single statement "it clears", and that is what gets checked.
         var eingabefeld = Eingabefeld(fall.UpdateDto, feld);
         if (eingabefeld is not null)
         {
-            // Gegenprobe: das geräumte Formularfeld käme als `null` an und darf nichts leeren.
+            // The counter-check: a cleared form field would arrive as `null` and must clear nothing.
             var mitNull = await PatchAsync(ziel, new JsonObject { [eingabefeld] = null });
             Assert.Equal(wert!.ToJsonString(), Lesen(mitNull, feld)?.ToJsonString());
         }
 
-        // Der Schalter leert – und gewinnt gegen den gleichzeitig geschickten alten Wert.
+        // The switch clears - and wins against the old value sent at the same time.
         var body = new JsonObject { [schalter] = true };
         if (eingabefeld is not null) body[eingabefeld] = wert!.DeepClone();
         var geleert = await PatchAsync(ziel, body);
         Assert.Equal(JsonValueKind.Null, Lesen(geleert, feld)?.GetValueKind() ?? JsonValueKind.Null);
     }
 
-    // ─────────────────────────────────────────────────────────────────── Vollständigkeit (reflexiv)
+    // ─────────────────────────────────────────────────────────────────── Completeness (reflective)
 
     [Fact]
     public void Jedes_UpdateDto_Ist_Belegt()
@@ -399,22 +399,22 @@ public class PatchSemanticsTests(PuglingWebAppFactory factory) : IClassFixture<P
         var vertrag = UpdateDtos().Select(t => t.Name).ToHashSet(StringComparer.Ordinal);
         var belegt = Faelle.Select(f => f.UpdateDto.Name).ToHashSet(StringComparer.Ordinal);
 
-        // Selbstschutz: greift die Reflexion nicht, wäre die Prüfung inhaltsleer.
+        // Self-protection: if the reflection does not bite, the check would be vacuous.
         Assert.True(vertrag.Count >= 20, $"Zu wenige Update-DTOs gefunden ({vertrag.Count}) – falsche Assembly?");
         Assert.True(belegt.All(vertrag.Contains),
-            "Falltabelle nennt DTOs, die es im Vertrag nicht (mehr) gibt:\n"
+            "The case table names DTOs that do not (or no longer) exist in the contract:\n"
             + string.Join("\n", belegt.Except(vertrag)));
 
         var offen = vertrag.Except(belegt).Except(Ausnahmen.Keys).ToList();
         Assert.True(offen.Count == 0,
-            "Update-DTO ohne PATCH-Rundlauf – `null` könnte dort still überschreiben:\n"
+            "Update DTO without a PATCH round trip - `null` could silently overwrite there:\n"
             + string.Join("\n", offen));
     }
 
     [Fact]
     public void Jeder_ClearSchalter_Ist_Belegt()
     {
-        // Alle `bool Clear…`-Parameter der Update-DTOs – die vollständige Menge der löschbaren Felder.
+        // All `bool Clear…` parameters of the update DTOs - the complete set of clearable fields.
         var vertrag = UpdateDtos()
             .SelectMany(t => (t.GetConstructors().OrderByDescending(c => c.GetParameters().Length).First()).GetParameters()
                 .Where(p => p.ParameterType == typeof(bool) && p.Name!.StartsWith("Clear", StringComparison.Ordinal))
@@ -423,13 +423,13 @@ public class PatchSemanticsTests(PuglingWebAppFactory factory) : IClassFixture<P
         var belegt = Faelle.SelectMany(f => f.Schalter.Select(s => $"{f.UpdateDto.Name}/{s.Name}"))
             .ToHashSet(StringComparer.Ordinal);
 
-        Assert.True(vertrag.Count >= 15, $"Zu wenige Clear-Schalter gefunden ({vertrag.Count}) – Reflexion greift nicht.");
+        Assert.True(vertrag.Count >= 15, $"Too few clear switches found ({vertrag.Count}) - the reflection does not bite.");
         Assert.True(belegt.All(vertrag.Contains),
-            "Falltabelle nennt Schalter, die der Vertrag nicht hat:\n" + string.Join("\n", belegt.Except(vertrag)));
+            "The case table names switches the contract does not have:\n" + string.Join("\n", belegt.Except(vertrag)));
 
         var offen = vertrag.Except(belegt).ToList();
         Assert.True(offen.Count == 0,
-            "Clear-Schalter ohne Test – eine Oberfläche mit „– keine Angabe –“ könnte still nichts tun:\n"
+            "Clear switch without a test - a UI offering \"- not specified -\" could silently do nothing:\n"
             + string.Join("\n", offen));
     }
 
@@ -449,7 +449,7 @@ public class PatchSemanticsTests(PuglingWebAppFactory factory) : IClassFixture<P
                 && (t.Name.EndsWith("Dto", StringComparison.Ordinal)
                     || t.Name.EndsWith("Request", StringComparison.Ordinal)));
 
-    // ─────────────────────────────────────────────────────────────────── Hilfsmittel
+    // ─────────────────────────────────────────────────────────────────── Helpers
 
     /// <summary>
     /// Patches and returns the state afterwards. A <c>PATCH</c> with an empty body doubles as the
@@ -460,7 +460,7 @@ public class PatchSemanticsTests(PuglingWebAppFactory factory) : IClassFixture<P
         using var content = new StringContent(body.ToJsonString(), Encoding.UTF8, "application/json");
         var res = await ziel.Client.PatchAsync(ziel.PatchUrl, content);
         Assert.True(res.IsSuccessStatusCode,
-            $"PATCH {ziel.PatchUrl} mit {body.ToJsonString()} → {(int)res.StatusCode}: {await res.Content.ReadAsStringAsync()}");
+            $"PATCH {ziel.PatchUrl} with {body.ToJsonString()} → {(int)res.StatusCode}: {await res.Content.ReadAsStringAsync()}");
 
         if (ziel.LeseUrl is null)
             return await res.Content.ReadFromJsonAsync<JsonElement>();

@@ -11,7 +11,7 @@ namespace Pugling.Api.Services.Shared;
 /// </summary>
 public class GamificationService(PuglingDbContext db, MetricsService metrics, ILogger<GamificationService> logger)
 {
-    // MissionStatus/AchievementStatus leben im Vertrags-Projekt (Pugling.Contracts.Student).
+    // MissionStatus/AchievementStatus live in the contract project (Pugling.Contracts.Student).
 
     /// <summary>Evaluates all active missions and achievements and grants due rewards.</summary>
     public async Task EvaluateAndAwardAsync(int childId, DateOnly today, CancellationToken ct = default)
@@ -21,7 +21,7 @@ public class GamificationService(PuglingDbContext db, MetricsService metrics, IL
 
         foreach (var m in await db.Missions.Where(m => m.ChildId == childId && m.Active).ToListAsync(ct))
         {
-            // `from` IST der Perioden-Anfang (bzw. null bei OneOff) – ein eigener Schlüssel wird nicht gebraucht.
+            // `from` IS the period start (or null for OneOff) - no separate key is needed.
             var (from, to) = PeriodWindow(m.Period, today);
             var period = m.Period;
             var current = await metrics.ValueAsync(childId, m.Metric, from, to, today, ct);
@@ -81,7 +81,7 @@ public class GamificationService(PuglingDbContext db, MetricsService metrics, IL
             .OrderBy(m => m.Id)
             .ToListAsync(ct);
 
-        // Nur für die zurückgegebene Seite die (teure) Metrik berechnen – nicht für alle Missionen.
+        // Compute the (expensive) metric only for the page returned - not for every mission.
         var items = new List<MissionStatus>();
         foreach (var m in missions.Skip(skip).Take(take))
             items.Add(await MapMissionAsync(childId, m, today, ct));
@@ -102,8 +102,8 @@ public class GamificationService(PuglingDbContext db, MetricsService metrics, IL
         int childId, DateOnly today, int skip, int take, CancellationToken ct = default)
     {
         var achievements = await db.Achievements.AsNoTracking().Where(a => a.ChildId == childId && a.Active).ToListAsync(ct);
-        // Award-Lookup ist billig und wird sowohl für die Sortierung (erreichte zuerst) als auch den
-        // Earned-Status gebraucht – die teure Metrik berechnen wir erst für die Seite.
+        // The award lookup is cheap and needed both for the sorting (earned first) and for the earned status -
+        // the expensive metric is computed only for the page.
         var awards = await db.AchievementAwards
             .Where(x => achievements.Select(a => a.Id).Contains(x.AchievementId))
             .ToDictionaryAsync(x => x.AchievementId, x => x.EarnedAt, ct);
@@ -158,7 +158,7 @@ public class GamificationService(PuglingDbContext db, MetricsService metrics, IL
         period switch
         {
             MissionPeriod.Daily => (today, today),
-            // Montag der ISO-Woche (DayOfWeek: So=0 → 6 Tage zurück, Mo=1 → 0).
+            // Monday of the ISO week (DayOfWeek: Sun=0 → 6 days back, Mon=1 → 0).
             MissionPeriod.Weekly => WeekMonday(today) is var monday ? (monday, monday.AddDays(6)) : default,
             _ => (null, null),
         };
@@ -166,9 +166,9 @@ public class GamificationService(PuglingDbContext db, MetricsService metrics, IL
     private static DateOnly WeekMonday(DateOnly day) => day.AddDays(-(((int)day.DayOfWeek + 6) % 7));
 
     /// <summary>
-    /// Liegt die Belohnung dieser Mission für diesen Zeitraum schon? Die Zeitraum-Art gehört in die
-    /// Bedingung: sie ist auf der Buchung eine Momentaufnahme, und nach einem Wechsel täglich→wöchentlich
-    /// verweist derselbe Perioden-Anfang auf zwei verschiedene Zeiträume.
+    /// Is this mission's reward for this period already there? The period kind belongs in the condition: on
+    /// the entry it is a snapshot, and after a switch from daily to weekly the same period start points at
+    /// two different periods.
     /// </summary>
     private Task<bool> AlreadyAwardedAsync(int missionId, MissionPeriod period, DateOnly? periodStart,
         CancellationToken ct) =>
@@ -190,9 +190,9 @@ public class GamificationService(PuglingDbContext db, MetricsService metrics, IL
         }
         catch (DbUpdateException ex)
         {
-            // Nur den erwarteten Doppel-Request abfangen: taucht die Belohnung jetzt bereits auf, war es
-            // der Unique-Index-Race → gutartig. Sonst ein echter DB-Fehler (FK, NOT NULL, …) → durchreichen,
-            // damit legitime Punkte nicht stillschweigend verloren gehen.
+            // Catch only the expected double request: if the reward now already shows up, it was the unique
+            // index race → benign. Otherwise a real DB error (FK, NOT NULL, …) → rethrow, so that legitimate
+            // points are not lost silently.
             if (!await alreadyAwardedAsync()) throw;
             logger.LogWarning(ex, "Doppelte Gamification-Belohnung abgefangen (Unique-Index)");
             foreach (var entry in db.ChangeTracker.Entries().Where(e => e.State == EntityState.Added))

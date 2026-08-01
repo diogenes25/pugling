@@ -16,15 +16,15 @@ public class SecurityHardeningTests(PuglingWebAppFactory factory) : IClassFixtur
     public void PinHasher_HashUndVerify_RoundTrip()
     {
         var hash = PinHasher.Hash("1234");
-        Assert.NotEqual("1234", hash);                // nicht im Klartext gespeichert
-        Assert.True(PinHasher.Verify("1234", hash));  // richtige PIN
-        Assert.False(PinHasher.Verify("0000", hash)); // falsche PIN
+        Assert.NotEqual("1234", hash);                // not stored in clear text
+        Assert.True(PinHasher.Verify("1234", hash));  // the right PIN
+        Assert.False(PinHasher.Verify("0000", hash)); // the wrong PIN
     }
 
     [Fact]
     public void PinHasher_Verify_AkzeptiertAltKlartext()
     {
-        // Vor der Umstellung gespeicherte Klartext-PIN bleibt nutzbar (kein Aussperren).
+        // A plaintext PIN stored before the switch stays usable (nobody gets locked out).
         Assert.True(PinHasher.Verify("0000", "0000"));
         Assert.False(PinHasher.Verify("9999", "0000"));
     }
@@ -32,7 +32,7 @@ public class SecurityHardeningTests(PuglingWebAppFactory factory) : IClassFixtur
     [Fact]
     public async Task GeseederterLogin_FunktioniertMitGehashterPin()
     {
-        // Der Seed hasht die PIN "0000"; das Login muss weiterhin durchgehen.
+        // The seed hashes the PIN "0000"; the login must still go through.
         var father = await TestApi.FatherAsync(_factory);
         var res = await father.GetAsync("/api/v1/auth/me");
         Assert.Equal(HttpStatusCode.OK, res.StatusCode);
@@ -41,7 +41,7 @@ public class SecurityHardeningTests(PuglingWebAppFactory factory) : IClassFixtur
     [Fact]
     public async Task Login_UeberschreitetRateLimit_Liefert429()
     {
-        // Rate-Limit gezielt aktivieren (die Default-Factory schaltet es für die übrige Suite ab).
+        // Enable the rate limit deliberately (the default factory switches it off for the rest of the suite).
         using var limited = _factory.WithWebHostBuilder(b => b.UseSetting("RateLimiting:LoginEnabled", "true"));
         var client = limited.CreateClient();
 
@@ -52,7 +52,7 @@ public class SecurityHardeningTests(PuglingWebAppFactory factory) : IClassFixtur
             statuses.Add(res.StatusCode);
         }
 
-        Assert.Equal(HttpStatusCode.Unauthorized, statuses[0]);     // erste Versuche erlaubt (nur PIN falsch)
-        Assert.Contains(HttpStatusCode.TooManyRequests, statuses);  // die Brute-Force-Bremse greift
+        Assert.Equal(HttpStatusCode.Unauthorized, statuses[0]);     // the first attempts are allowed (only the PIN is wrong)
+        Assert.Contains(HttpStatusCode.TooManyRequests, statuses);  // the brute-force throttle bites
     }
 }

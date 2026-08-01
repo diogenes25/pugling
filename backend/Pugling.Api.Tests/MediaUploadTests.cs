@@ -26,23 +26,23 @@ public class MediaUploadTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
         var variants = asset.GetProperty("variants").EnumerateArray()
             .ToDictionary(v => v.GetProperty("purpose").GetString()!);
 
-        // Drei Zwecke aus einer Datei – ohne dass der Creator ein Grafikprogramm anfassen muss.
+        // Three purposes from one file - without the creator having to touch a graphics program.
         Assert.Equal(3, variants.Count);
         Assert.Equal(128, variants["Thumb"].GetProperty("width").GetInt32());
         Assert.Equal(512, variants["Card"].GetProperty("width").GetInt32());
-        Assert.Equal(1000, variants["Full"].GetProperty("width").GetInt32()); // nicht hochskaliert
+        Assert.Equal(1000, variants["Full"].GetProperty("width").GetInt32()); // not upscaled
 
-        // Seitenverhältnis bleibt erhalten (kein Beschnitt – ein Zuschnitt könnte das Motiv köpfen).
+        // The aspect ratio is preserved (no cropping - a crop could behead the motif).
         Assert.Equal(64, variants["Thumb"].GetProperty("height").GetInt32());
         Assert.Equal(256, variants["Card"].GetProperty("height").GetInt32());
 
         Assert.All(variants.Values, v => Assert.Equal("webp", v.GetProperty("format").GetString()));
         Assert.All(variants.Values, v => Assert.True(v.GetProperty("bytes").GetInt64() > 0));
 
-        // Platzhalterfarbe für ruckelfreies Nachladen – aus dem Bild gemittelt, nicht geraten.
+        // A placeholder color for stutter-free lazy loading - averaged from the image, not guessed.
         Assert.Matches("^#[0-9a-f]{6}$", asset.GetProperty("placeholder").GetString()!);
 
-        // Herkunft ohne Angabe = Upload; die Tags laufen durch dieselbe Taxonomie wie sonst.
+        // Origin with nothing given = upload; the tags run through the same taxonomy as everywhere else.
         Assert.Equal("Upload", asset.GetProperty("origin").GetString());
         Assert.Contains("stadt", asset.GetProperty("tags").EnumerateArray().Select(t => t.GetString()));
     }
@@ -57,10 +57,10 @@ public class MediaUploadTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
         var url = asset.GetProperty("variants").EnumerateArray()
             .First(v => v.GetProperty("purpose").GetString() == "Card").GetProperty("url").GetString()!;
 
-        // Die URL zeigt in den eigenen Medien-Ordner – nicht nach wwwroot, das der Deploy überschreibt.
+        // The URL points into our own media folder - not to wwwroot, which the deploy overwrites.
         Assert.StartsWith("/media/", url);
 
-        // Ohne Token abrufbar: die Sohn-App lädt Bilder als normale <img>-Quelle, ganz ohne Header.
+        // Retrievable without a token: the child's app loads images as an ordinary <img> source, with no headers.
         var anonymous = factory.CreateClient();
         var file = await anonymous.GetAsync(url);
         Assert.Equal(HttpStatusCode.OK, file.StatusCode);
@@ -75,8 +75,8 @@ public class MediaUploadTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
             .Content.ReadFromJsonAsync<JsonElement>();
 
         var variants = asset.GetProperty("variants").EnumerateArray().ToList();
-        // Thumb/Card/Full kämen alle bei 64px heraus – eine Datei genügt, die Auswahl fällt auf den
-        // nächstbesten Zweck zurück. Aufblasen würde nur unscharfe, größere Dateien erzeugen.
+        // Thumb/card/full would all come out at 64px - one file is enough, the selection falls back to the next
+        // best purpose. Blowing it up would only produce blurry, larger files.
         Assert.Single(variants);
         Assert.Equal(64, variants[0].GetProperty("width").GetInt32());
     }
@@ -115,7 +115,7 @@ public class MediaUploadTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
 
         Assert.Equal(HttpStatusCode.NoContent, (await father.DeleteAsync($"/api/v1/creator/media/{id}")).StatusCode);
 
-        // Sonst sammelte der Ordner mit jedem verworfenen Versuch Dateileichen an.
+        // Otherwise the folder would collect dead files with every discarded attempt.
         Assert.Equal(HttpStatusCode.NotFound, (await anonymous.GetAsync(url)).StatusCode);
     }
 
@@ -127,7 +127,7 @@ public class MediaUploadTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
         Assert.Equal(HttpStatusCode.Forbidden, res.StatusCode);
     }
 
-    // ---- Helfer -------------------------------------------------------------------------------------
+    // ---- Helpers -------------------------------------------------------------------------------------
 
     /// <summary>A real, decodable PNG – the processor should work on real bytes, not a dummy.</summary>
     private static byte[] Png(int width, int height, SKColor color)

@@ -52,7 +52,7 @@ public class RemarkTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWe
         Assert.Equal(HttpStatusCode.Created, res.StatusCode);
         var dto = await res.Content.ReadFromJsonAsync<JsonElement>();
 
-        // Die Id ist fachlich sichtbar – sie ist der Schlüssel für „Beantworte die Frage 123".
+        // The id is visible in the domain - it is the key for "answer question 123".
         Assert.True(dto.GetProperty("id").GetInt32() > 0);
         Assert.Equal("E-Mail-Adresse lässt sich nirgends ändern", dto.GetProperty("text").GetString());
         Assert.Equal("Question", dto.GetProperty("category").GetString());
@@ -75,7 +75,7 @@ public class RemarkTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWe
         var res = await father.PostAsJsonAsync(Url, new { text = "Nur schnell notiert" });
         var dto = await res.Content.ReadFromJsonAsync<JsonElement>();
 
-        // Beim Erfassen zu kategorisieren kostet mehr, als es bringt – das zieht der Skill später nach.
+        // Categorizing while capturing costs more than it yields - the skill fills that in later.
         Assert.Equal("Unspecified", dto.GetProperty("category").GetString());
     }
 
@@ -107,14 +107,14 @@ public class RemarkTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWe
         var supervisorId = await CreateAsync(father, "Interne Notiz mit Codebezug");
         var childId = await CreateAsync(child, "Die Karte lädt langsam");
 
-        // Der Sohn sieht ausschließlich seine eigene Anmerkung – Antworten des Vaters tragen
-        // Datei-/Zeilenverweise, die in einer Kinder-App nichts zu suchen haben.
+        // The child sees only its own remark - the supervisor's answers carry file/line references that have
+        // no business in a child's app.
         var list = await child.GetFromJsonAsync<JsonElement>(Url);
         var ids = list.EnumerateArray().Select(r => r.GetProperty("id").GetInt32()).ToList();
         Assert.Contains(childId, ids);
         Assert.DoesNotContain(supervisorId, ids);
 
-        // Auch der direkte Zugriff ist zu – und zwar als 404, nicht als 403 (kein Existenz-Leak).
+        // Direct access is closed too - and as a 404, not a 403 (no existence leak).
         var direct = await child.GetAsync($"{Url}/{supervisorId}");
         Assert.Equal(HttpStatusCode.NotFound, direct.StatusCode);
         var problem = await direct.Content.ReadFromJsonAsync<JsonElement>();
@@ -132,7 +132,7 @@ public class RemarkTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWe
         var seen = await father.GetFromJsonAsync<JsonElement>($"{Url}/{childRemark}");
         Assert.Equal(childRemark, seen.GetProperty("id").GetInt32());
         Assert.Equal("Student", seen.GetProperty("authorRole").GetString());
-        // Fremde Anmerkung: sichtbar, aber nicht „eigen" – das Widget blendet sie damit aus.
+        // Someone else's remark: visible, but not "own" - that is how the widget hides it.
         Assert.False(seen.GetProperty("isOwn").GetBoolean());
     }
 
@@ -141,23 +141,23 @@ public class RemarkTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWe
     {
         var father = await TestApi.FatherAsync(_factory);
         var child = await TestApi.ChildAsync(_factory);
-        // Vater 2 ist der geseedete Lehrer – er betreut kein Kind.
+        // Adult 2 is the seeded teacher - they supervise no child.
         var teacher = await TestApi.FatherAsync(_factory, id: 2, pin: "9999");
 
         var fatherRemark = await CreateAsync(father, "Nur für Papa");
         var childRemark = await CreateAsync(child, "Nur für den Sohn");
 
-        // Die **Vorgabe** bleibt eng: eigene plus betreute Konten. Daran hängt die Liste im Widget.
+        // The **default** stays narrow: own plus supervised accounts. The widget's list hangs on it.
         var list = await teacher.GetFromJsonAsync<JsonElement>(Url);
         var ids = list.EnumerateArray().Select(r => r.GetProperty("id").GetInt32()).ToList();
         Assert.DoesNotContain(fatherRemark, ids);
         Assert.DoesNotContain(childRemark, ids);
 
-        // Der gezielte Zugriff auf eine Id ist mit eingeschaltetem `GlobalRead` dagegen **offen** – genau
-        // dafür ist der Schalter da: Der Skill beantwortet Anmerkungen aus jedem Testkonto.
+        // Targeted access to one id, by contrast, is **open** with `GlobalRead` switched on - that is exactly
+        // what the switch is for: the skill answers remarks from every test account.
         (await teacher.GetAsync($"{Url}/{fatherRemark}")).EnsureSuccessStatusCode();
 
-        // Ohne den Schalter gilt die alte Welt: unsichtbar, und zwar als 404 statt 403 (kein Existenz-Leak).
+        // Without the switch the old world applies: invisible, and as a 404 instead of a 403 (no existence leak).
         var narrow = await FatherWithoutGlobalReadAsync(id: 2, pin: "9999");
         Assert.Equal(HttpStatusCode.NotFound, (await narrow.GetAsync($"{Url}/{fatherRemark}")).StatusCode);
         Assert.Equal(HttpStatusCode.NotFound, (await narrow.GetAsync($"{Url}/{childRemark}")).StatusCode);
@@ -172,13 +172,13 @@ public class RemarkTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWe
         var own = await CreateAsync(father, "Eigene Beobachtung");
         var childRemark = await CreateAsync(child, "Beobachtung des Kindes");
 
-        // Ohne Filter sieht der Vater beide …
+        // Without a filter the supervisor sees both …
         var all = await father.GetFromJsonAsync<JsonElement>(Url);
         var allIds = all.EnumerateArray().Select(r => r.GetProperty("id").GetInt32()).ToList();
         Assert.Contains(own, allIds);
         Assert.Contains(childRemark, allIds);
 
-        // … mit mine=true nur die eigenen. Das ist die Abfrage hinter der Liste im Widget.
+        // … with mine=true only their own. That is the query behind the widget's list.
         var mine = await father.GetFromJsonAsync<JsonElement>($"{Url}?mine=true");
         var mineIds = mine.EnumerateArray().Select(r => r.GetProperty("id").GetInt32()).ToList();
         Assert.Contains(own, mineIds);
@@ -205,7 +205,7 @@ public class RemarkTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWe
         Assert.Equal("claude-code", dto.GetProperty("answeredBy").GetString());
         Assert.NotEqual(JsonValueKind.Null, dto.GetProperty("answeredAt").ValueKind);
 
-        // Der Kern: Zurückgestellt heißt nicht „verworfen" – die Analyse bleibt als Vorarbeit stehen.
+        // The core: deferred does not mean "discarded" - the analysis stays as groundwork.
         var again = await father.GetFromJsonAsync<JsonElement>($"{Url}/{id}");
         Assert.Contains("VaterProfil.tsx", again.GetProperty("answer").GetString());
     }
@@ -217,7 +217,7 @@ public class RemarkTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWe
         var id = await CreateAsync(father, "Ursprungstext", new { route = "/vater/shop", appArea = "vater", childId = 1 });
         await father.PatchAsJsonAsync($"{Url}/{id}", new { answer = "Erste Antwort", answeredBy = "claude-code" });
 
-        // Nur den Status ändern: alles andere ist „nicht angegeben" und muss stehen bleiben.
+        // Change the status only: everything else is "not specified" and has to stay.
         var patched = await father.PatchAsJsonAsync($"{Url}/{id}", new { status = "Done" });
         var dto = await patched.Content.ReadFromJsonAsync<JsonElement>();
         Assert.Equal("Done", dto.GetProperty("status").GetString());
@@ -225,7 +225,7 @@ public class RemarkTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWe
         Assert.Equal("Erste Antwort", dto.GetProperty("answer").GetString());
         Assert.Equal(1, dto.GetProperty("context").GetProperty("childId").GetInt32());
 
-        // Geleert wird nur über die ausdrücklichen Schalter.
+        // Clearing happens only through the explicit switches.
         var cleared = await father.PatchAsJsonAsync($"{Url}/{id}", new { clearAnswer = true, clearChild = true });
         var after = await cleared.Content.ReadFromJsonAsync<JsonElement>();
         Assert.Equal(JsonValueKind.Null, after.GetProperty("answer").ValueKind);
@@ -271,7 +271,7 @@ public class RemarkTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWe
         var teacher = await TestApi.FatherAsync(_factory, id: 2, pin: "9999");
         var foreign = await CreateAsync(father, "Fremde Anmerkung");
 
-        // Sonst ließe sich über den Verweis auf die Existenz fremder Einträge schließen.
+        // Otherwise the reference would allow inferring the existence of other people's entries.
         var res = await teacher.PostAsJsonAsync(Url, new { text = "Angehängt", parentRemarkId = foreign });
         Assert.Equal(HttpStatusCode.BadRequest, res.StatusCode);
         var problem = await res.Content.ReadFromJsonAsync<JsonElement>();
@@ -295,9 +295,9 @@ public class RemarkTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWe
     {
         var father = await TestApi.FatherAsync(_factory);
 
-        // Das Widget schickt Kontext-IDs automatisch mit – auch aus der URL gelesene. Zeigt eine ins
-        // Leere (gelöschtes Kind, Tippfehler in `/vater/kind/999`), darf das den Text NICHT vernichten:
-        // Die Beobachtung ist der Wert, der Bezug ist Beiwerk.
+        // The widget sends context ids automatically - including ones read from the URL. If one points
+        // nowhere (a deleted child, a typo in `/vater/kind/999`), that must NOT destroy the text: the
+        // observation is the value, the reference is decoration.
         var res = await father.PostAsJsonAsync(Url, new
         {
             text = "Beobachtung mit veralteten Bezügen",
@@ -316,7 +316,7 @@ public class RemarkTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWe
         var dto = await res.Content.ReadFromJsonAsync<JsonElement>();
         Assert.Equal("Beobachtung mit veralteten Bezügen", dto.GetProperty("text").GetString());
 
-        // Die toten Bezüge sind still verworfen – Route und Text bleiben erhalten.
+        // The dead references are dropped silently - route and text are preserved.
         var ctx = dto.GetProperty("context");
         Assert.Equal("/vater/kind/999", ctx.GetProperty("route").GetString());
         Assert.Equal(JsonValueKind.Null, ctx.GetProperty("childId").ValueKind);
@@ -329,7 +329,7 @@ public class RemarkTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWe
     public async Task GueltigerKontext_BleibtErhalten()
     {
         var father = await TestApi.FatherAsync(_factory);
-        // Gegenprobe zum Test oben: Die Prüfung darf gültige Bezüge nicht mit wegwerfen.
+        // The counter-check to the test above: the validation must not throw away valid references with them.
         var id = await CreateAsync(father, "Mit echtem Kind-Bezug", new { route = "/vater/kind/1", appArea = "vater", childId = 1 });
 
         var dto = await father.GetFromJsonAsync<JsonElement>($"{Url}/{id}");
@@ -343,8 +343,8 @@ public class RemarkTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWe
         var id = await CreateAsync(father, "Frage mit zweistufiger Antwort");
         await father.PatchAsJsonAsync($"{Url}/{id}", new { answer = "Erste Fassung", answeredBy = "claude-code" });
 
-        // Nur den Wortlaut nachbessern: `answeredBy` ist „nicht angegeben", nicht „leeren" –
-        // sonst stünde im Export plötzlich „(unbekannt)".
+        // Only improve the wording: `answeredBy` is "not specified", not "clear" - otherwise the export would
+        // suddenly say "(unknown)".
         var res = await father.PatchAsJsonAsync($"{Url}/{id}", new { answer = "Zweite, genauere Fassung" });
         var dto = await res.Content.ReadFromJsonAsync<JsonElement>();
 
@@ -357,8 +357,8 @@ public class RemarkTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWe
     {
         var teacher = await TestApi.FatherAsync(_factory, id: 2, pin: "9999");
 
-        // Kind 1 existiert, gehört aber Vater 1. Käme die Id zurück, wäre die Antwort ein Auskunftsdienst
-        // darüber, welche Ids es gibt – fremde Kind-/Plan-Ids ließen sich durchprobieren.
+        // Child 1 exists but belongs to adult 1. If the id came back, the answer would be an oracle for which
+        // ids exist - other people's child/plan ids could be tried out.
         var res = await teacher.PostAsJsonAsync(Url, new
         {
             text = "Notiz mit fremdem Kind-Bezug",
@@ -383,16 +383,16 @@ public class RemarkTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWe
             answeredBy = "claude-code",
         });
 
-        // Der Vater sieht die Antwort …
+        // The supervisor sees the answer …
         var seenByFather = await father.GetFromJsonAsync<JsonElement>($"{Url}/{id}");
         Assert.Contains("SohnPractice.tsx", seenByFather.GetProperty("answer").GetString());
 
-        // … das Kind nicht: Antworten tragen Datei-/Zeilenverweise. Genau die Begründung, mit der auch
-        // der Export Supervisor-only ist – ohne diesen Filter widerspräche sich beides.
+        // … the child does not: answers carry file/line references. Exactly the rationale that also makes the
+        // export supervisor-only - without this filter the two would contradict each other.
         var seenByChild = await child.GetFromJsonAsync<JsonElement>($"{Url}/{id}");
         Assert.Equal(JsonValueKind.Null, seenByChild.GetProperty("answer").ValueKind);
         Assert.Equal(JsonValueKind.Null, seenByChild.GetProperty("answeredBy").ValueKind);
-        // Die eigene Anmerkung selbst bleibt sichtbar – nur die Antwort ist gefiltert.
+        // The own remark itself stays visible - only the answer is filtered.
         Assert.Equal("Die Karte laedt langsam", seenByChild.GetProperty("text").GetString());
     }
 
@@ -425,9 +425,9 @@ public class RemarkTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWe
         Assert.Contains("Export-Beobachtung zum Shop", md);
         Assert.Contains("`/vater/shop`", md);
         Assert.Contains("Kind 1", md);
-        // Der Fehlerpuffer geht roh mit – das Backend interpretiert ihn bewusst nirgends fachlich.
+        // The error buffer travels along raw - the backend deliberately never interprets it in domain terms.
         Assert.Contains("\"code\":\"conflict\"", md);
-        // Die Antwort ist der halbe Wert des Exports: Ein zurückgestellter Fall trägt seine Analyse mit.
+        // The answer is half the value of the export: a deferred case carries its analysis with it.
         Assert.Contains("Reproduziert in ShopService.cs:120.", md);
         Assert.Contains("claude-code", md);
     }
@@ -450,8 +450,8 @@ public class RemarkTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWe
     public async Task Export_UeberlebtBacktickImKontext()
     {
         var father = await TestApi.FatherAsync(_factory);
-        // Der Puffer kommt aus dem Frontend und lässt sich über die API frei befüllen. Ein eingebettetes
-        // ``` würde einen naiven Code-Block vorzeitig schließen und das Dokument ab da zerlegen.
+        // The buffer comes from the frontend and can be filled freely through the API. An embedded ``` would
+        // close a naive code block early and tear the document apart from there on.
         var id = await CreateAsync(father, "Mit Zaun im Kontext", new
         {
             route = "/vater",
@@ -461,10 +461,10 @@ public class RemarkTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWe
 
         var md = await (await father.GetAsync($"{Url}/export")).Content.ReadAsStringAsync();
 
-        // Der Zaun muss länger sein als die längste Backtick-Folge im Inhalt (CommonMark).
+        // The fence must be longer than the longest backtick run in the content (CommonMark).
         Assert.Contains("````json", md);
         Assert.Contains("``` fence ```", md);
-        // Und die nachfolgende Struktur steht noch: Der Eintrag ist vollständig gerendert.
+        // And the structure that follows still stands: the entry is rendered completely.
         Assert.Contains($"## #{id}", md);
         Assert.Contains("Mit Zaun im Kontext", md);
     }
@@ -473,7 +473,7 @@ public class RemarkTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWe
     public async Task Export_IstFuerDenSohnGesperrt()
     {
         var child = await TestApi.ChildAsync(_factory);
-        // Antworten tragen Datei-/Zeilenverweise – Code-Interna gehören nicht in eine Kinder-App.
+        // Answers carry file/line references - code internals do not belong in a child's app.
         var res = await child.GetAsync($"{Url}/export");
         Assert.Equal(HttpStatusCode.Forbidden, res.StatusCode);
     }
@@ -492,7 +492,7 @@ public class RemarkTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWe
         Assert.All(bugList.EnumerateArray(), r => Assert.Equal("Bug", r.GetProperty("category").GetString()));
         Assert.DoesNotContain(idea, bugList.EnumerateArray().Select(r => r.GetProperty("id").GetInt32()));
 
-        // Paging meldet die Gesamtzahl im Header, bevor der Body kommt.
+        // Paging reports the total in the header, before the body arrives.
         var paged = await father.GetAsync($"{Url}?mine=true&take=1");
         paged.EnsureSuccessStatusCode();
         Assert.True(paged.Headers.TryGetValues("X-Total-Count", out var totals));
@@ -501,7 +501,7 @@ public class RemarkTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWe
         Assert.Equal(1, pageList.GetArrayLength());
     }
 
-    // ── Verlauf ───────────────────────────────────────────────────────────────────────────────────────
+    // ── History ───────────────────────────────────────────────────────────────────────────────────────
 
     private static async Task<JsonElement> CommentAsync(HttpClient client, int remarkId, string body,
         string? author = null, string? label = null)
@@ -525,15 +525,15 @@ public class RemarkTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWe
 
         var thread = await father.GetFromJsonAsync<JsonElement>($"{Url}/{id}/comments");
         var bodies = thread.EnumerateArray().Select(c => c.GetProperty("body").GetString()).ToList();
-        // Älteste zuerst: Ein Vorgang liest sich chronologisch, anders als die Liste der Anmerkungen.
+        // Oldest first: a case reads chronologically, unlike the list of remarks.
         Assert.Equal(["Gemessen: die Tabelle braucht 868px.", "Passt, danke."], bodies);
         Assert.Equal("claude-code", thread[0].GetProperty("authorLabel").GetString());
         Assert.Equal("Assistant", thread[0].GetProperty("author").GetString());
-        // Ohne Label springt der Anzeigename des Kontos ein – sonst stünde im Export „Human".
+        // Without a label the account's display name steps in - otherwise the export would say "Human".
         Assert.Equal("Papa", thread[1].GetProperty("authorLabel").GetString());
         Assert.Equal("Human", thread[1].GetProperty("author").GetString());
 
-        // Die Zahl liegt an der Anmerkung, damit die Liste sie ohne Nachladen zeigt.
+        // The count sits on the remark so that the list can show it without a second load.
         var one = await father.GetFromJsonAsync<JsonElement>($"{Url}/{id}");
         Assert.Equal(2, one.GetProperty("commentCount").GetInt32());
         var list = await father.GetFromJsonAsync<JsonElement>($"{Url}?mine=true");
@@ -550,17 +550,17 @@ public class RemarkTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWe
         (await father.PatchAsJsonAsync($"{Url}/{id}", new { status = "Done", answer = "Belegt: keine Tag-Spalte." }))
             .EnsureSuccessStatusCode();
 
-        // Claude berichtet – das darf den Stand nicht aufreißen, sonst öffnete jede Umsetzungsnotiz
-        // die eigene Anmerkung wieder.
+        // Claude reports - that must not reopen the case, otherwise every implementation note would reopen
+        // its own remark.
         await CommentAsync(father, id, "Gebaut: Spalte ergänzt.", author: "Assistant");
         var afterAssistant = await father.GetFromJsonAsync<JsonElement>($"{Url}/{id}");
         Assert.Equal("Done", afterAssistant.GetProperty("status").GetString());
 
-        // Der Mensch hakt nach – das ist die Mechanik, die den Vorgang wieder auf den Tisch legt.
+        // The human follows up - that is the mechanic that puts the case back on the table.
         await CommentAsync(father, id, "Und die Kind-Tags?");
         var afterHuman = await father.GetFromJsonAsync<JsonElement>($"{Url}/{id}");
         Assert.Equal("Open", afterHuman.GetProperty("status").GetString());
-        // Die Auflösung bleibt stehen: Nachhaken ist keine Rücknahme der Vorarbeit.
+        // The resolution stays: following up is not a withdrawal of the groundwork.
         Assert.Equal("Belegt: keine Tag-Spalte.", afterHuman.GetProperty("answer").GetString());
     }
 
@@ -585,13 +585,13 @@ public class RemarkTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWe
         var comment = await CommentAsync(father, id, "Tippfehler-Beitrag");
         var commentId = comment.GetProperty("id").GetInt32();
 
-        // Der fremde Supervisor sieht die Anmerkung gar nicht.
+        // The other supervisor does not see the remark at all.
         Assert.Equal(HttpStatusCode.NotFound,
             (await teacher.DeleteAsync($"{Url}/{id}/comments/{commentId}")).StatusCode);
 
         Assert.Equal(HttpStatusCode.NoContent,
             (await father.DeleteAsync($"{Url}/{id}/comments/{commentId}")).StatusCode);
-        // Zweiter Versuch: weg ist weg.
+        // Second attempt: gone is gone.
         Assert.Equal(HttpStatusCode.NotFound,
             (await father.DeleteAsync($"{Url}/{id}/comments/{commentId}")).StatusCode);
     }
@@ -604,12 +604,12 @@ public class RemarkTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWe
         var own = await CreateAsync(child, "Die Übung war doof");
         await CommentAsync(father, own, "Notiert.", author: "Assistant");
 
-        // Beiträge tragen dieselben Code-Interna wie Antworten – dieselbe Schranke.
+        // Entries carry the same code internals as answers - the same barrier.
         Assert.Equal(HttpStatusCode.Forbidden, (await child.GetAsync($"{Url}/{own}/comments")).StatusCode);
         Assert.Equal(HttpStatusCode.Forbidden,
             (await child.PostAsJsonAsync($"{Url}/{own}/comments", new { body = "Warum?" })).StatusCode);
 
-        // Schon die Anzahl wäre eine Auskunft darüber, dass über die Anmerkung gesprochen wurde.
+        // Even the count would disclose that the remark has been discussed.
         var mine = await child.GetFromJsonAsync<JsonElement>($"{Url}?mine=true");
         var row = mine.EnumerateArray().First(r => r.GetProperty("id").GetInt32() == own);
         Assert.Equal(0, row.GetProperty("commentCount").GetInt32());
@@ -625,12 +625,12 @@ public class RemarkTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWe
         Assert.Equal(HttpStatusCode.BadRequest, res.StatusCode);
     }
 
-    // ── Kontenübergreifend lesen (scope=all) ──────────────────────────────────────────────────────────
+    // ── Reading across accounts (scope=all) ──────────────────────────────────────────────────────────
     //
-    // Die Berechtigung hängt am Schalter `Remarks:GlobalRead` (in der Entwicklung an), NICHT an einer Rolle.
-    // Grund: Beim Testen entstehen ständig Wegwerf-Konten, weil sich manche Fehler nur in einer bestimmten
-    // Konstellation zeigen (ein frischer Vater ohne Übungen deckt auf, was beim geseedeten Papa nie
-    // auffällt). Jedes solche Konto erst mit einem Flag zu versehen wäre Verwaltungsarbeit ohne Gegenwert.
+    // The permission hangs on the switch `Remarks:GlobalRead` (on in development), NOT on a role.
+    // Reason: testing constantly creates throwaway accounts, because some bugs only show up in a certain
+    // constellation (a fresh adult without exercises reveals what never surfaces with the seeded one).
+    // Flagging every such account first would be administration without any return.
 
     /// <summary>Registers a father and returns a client for it - a throwaway account with no special permissions.</summary>
     private async Task<HttpClient> FreshFatherAsync(string pin)
@@ -683,14 +683,14 @@ public class RemarkTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWe
         var father = await TestApi.FatherAsync(_factory);
         var foreign = await CreateAsync(father, "Beobachtung aus einem anderen Konto");
 
-        // Ein frisch registriertes Wegwerf-Konto: keine Kinder, keine Übungen, KEIN Admin-Flag.
+        // A freshly registered throwaway account: no children, no exercises, NO admin flag.
         var fresh = await FreshFatherAsync("6101");
 
-        // Ohne Parameter bleibt die Sicht eng – sonst zeigte die Liste im Widget fremde Einträge.
+        // Without the parameter the view stays narrow - otherwise the widget's list would show other people's entries.
         var narrow = await fresh.GetFromJsonAsync<JsonElement>(Url);
         Assert.DoesNotContain(foreign, narrow.EnumerateArray().Select(r => r.GetProperty("id").GetInt32()));
 
-        // Mit scope=all sieht es alles – das ist die Sicht, die der Nachbereitungs-Skill braucht.
+        // With scope=all it sees everything - that is the view the follow-up skill needs.
         var all = await fresh.GetFromJsonAsync<JsonElement>($"{Url}?scope=all");
         Assert.Contains(foreign, all.EnumerateArray().Select(r => r.GetProperty("id").GetInt32()));
     }
@@ -702,10 +702,10 @@ public class RemarkTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWe
         var foreign = await CreateAsync(father, "Frage aus einem anderen Testkonto");
         var fresh = await FreshFatherAsync("6102");
 
-        // Eine einzelne Id braucht den scope-Parameter nicht: Genau so löst der Skill „Beantworte 123" ein.
+        // A single id needs no scope parameter: that is exactly how the skill redeems "answer 123".
         var one = await fresh.GetFromJsonAsync<JsonElement>($"{Url}/{foreign}");
         Assert.Equal(foreign, one.GetProperty("id").GetInt32());
-        // Fremd, aber sichtbar – das Widget blendet sie damit aus seiner eigenen Liste aus.
+        // Someone else's, but visible - that is how the widget hides it from its own list.
         Assert.False(one.GetProperty("isOwn").GetBoolean());
 
         (await fresh.PatchAsJsonAsync($"{Url}/{foreign}",
@@ -713,7 +713,7 @@ public class RemarkTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWe
             .EnsureSuccessStatusCode();
         await CommentAsync(fresh, foreign, "Gebaut und geprüft.", author: "Assistant", label: "claude-code");
 
-        // Der Eigentümer sieht Auflösung und Verlauf in seiner eigenen Sicht.
+        // The owner sees the resolution and the history in their own view.
         var owner = await father.GetFromJsonAsync<JsonElement>($"{Url}/{foreign}");
         Assert.Equal("Belegt in VaterVocab.tsx:345.", owner.GetProperty("answer").GetString());
         var thread = await father.GetFromJsonAsync<JsonElement>($"{Url}/{foreign}/comments");
@@ -727,8 +727,8 @@ public class RemarkTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWe
         var child = await TestApi.ChildAsync(_factory);
         var foreign = await CreateAsync(father, "Interne Notiz mit Codebezug");
 
-        // Der Schalter öffnet die Sicht für Erwachsene, nie für ein Kind: Antworten und Verlauf tragen
-        // Datei- und Zeilenverweise.
+        // The switch opens the view for adults, never for a child: answers and history carry file and line
+        // references.
         var res = await child.GetAsync($"{Url}?scope=all");
         Assert.Equal(HttpStatusCode.Forbidden, res.StatusCode);
         Assert.Equal("remark_scope_forbidden",
@@ -750,7 +750,7 @@ public class RemarkTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWe
         Assert.Equal("remark_scope_forbidden",
             (await res.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("code").GetString());
 
-        // Ohne den Parameter arbeitet dieselbe Instanz normal weiter – der Schalter sperrt nicht das Feature.
+        // Without the parameter the same instance keeps working normally - the switch does not block the feature.
         var list = await narrow.GetFromJsonAsync<JsonElement>($"{Url}?mine=true");
         Assert.Contains(own, list.EnumerateArray().Select(r => r.GetProperty("id").GetInt32()));
     }
@@ -775,16 +775,16 @@ public class RemarkTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWe
         var id = await CreateAsync(father, "Export mit Verlauf");
         await CommentAsync(father, id, "Umsetzungsnotiz für den Export.", author: "Assistant", label: "claude-code");
 
-        // Der eigene Export trägt den Verlauf – deshalb weiß ein Schnappschuss von heute noch etwas über
-        // gestern; vorher überschrieb die Umsetzungsnotiz die Analyse.
+        // The own export carries the history - which is why a snapshot taken today still knows something about
+        // yesterday; before, the implementation note overwrote the analysis.
         var own = await father.GetAsync($"{Url}/export");
         own.EnsureSuccessStatusCode();
         var markdown = await own.Content.ReadAsStringAsync();
         Assert.Contains("**Verlauf**", markdown);
         Assert.Contains("> Umsetzungsnotiz für den Export.", markdown);
 
-        // Kontenübergreifend: erlaubt (Schalter an) und mit Konto-Angabe je Beitrag, damit im
-        // Repo-Schnappschuss erkennbar bleibt, wessen Beobachtung eine Zeile ist.
+        // Across accounts: allowed (switch on) and with the account named per entry, so that the repository
+        // snapshot still shows whose observation a line is.
         var across = await father.GetAsync($"{Url}/export?scope=all");
         across.EnsureSuccessStatusCode();
         Assert.Contains("Konto", await across.Content.ReadAsStringAsync());

@@ -118,8 +118,8 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
             type.Choices(items, item, stage),
             audioUrl,
             imageUrl,
-            // Der Alt-Text folgt dem Bild: ohne Bild kein Alt-Text, sonst leakte die Beschreibung
-            // („Ein Einhorn läuft") auf einer getippten Stufe genau das, was das Bild verrät hätte.
+            // The alt text follows the image: no image, no alt text - otherwise the description ("a unicorn is
+            // running") would leak on a typed stage exactly what the image would have given away.
             imageUrl is null ? null : item.ImageAlt);
     }
 
@@ -148,7 +148,7 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
     /// </summary>
     private static List<int> WeightedNewest(List<(int Index, PositionItemProgress? Prog)> items)
     {
-        // Rang nach Einführungsdatum absteigend (null = ganz neu = höchster Rang), dann Index als Tie-Breaker.
+        // Rank by introduction date descending (null = brand new = highest rank), then the index as a tiebreaker.
         var ranked = items
             .OrderByDescending(x => x.Prog?.IntroducedAt ?? DateOnly.MaxValue)
             .ThenBy(x => x.Index)
@@ -179,7 +179,7 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
         _ => true,
     };
 
-    // Fällig, wenn nie gesehen (kein Fortschritt) oder Fälligkeit erreicht.
+    // Due when never seen (no progress) or the due date has been reached.
     private static bool IsDue(PositionItemProgress? prog, DateOnly day) =>
         prog is null || prog.DueOn is null || prog.DueOn <= day;
 
@@ -215,7 +215,7 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
         else
         {
             prog.Box = 1;
-            prog.DueOn = today; // gleicher Tag: sofort erneut üben
+            prog.DueOn = today; // same day: practice again right away
         }
     }
 }

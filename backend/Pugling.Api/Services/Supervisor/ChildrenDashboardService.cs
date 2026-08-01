@@ -11,7 +11,7 @@ namespace Pugling.Api.Services.Supervisor;
 /// </summary>
 public class ChildrenDashboardService(PuglingDbContext db, PositionProgressService progress)
 {
-    // ChildDay/Dashboard leben im Vertrags-Projekt (Pugling.Contracts.Supervisor).
+    // ChildDay/Dashboard live in the contract project (Pugling.Contracts.Supervisor).
 
     /// <summary>Builds the daily overview for all of the supervisor's children on the given day.</summary>
     public async Task<Dashboard> BuildAsync(int supervisorId, DateOnly date, CancellationToken ct = default)
@@ -25,7 +25,7 @@ public class ChildrenDashboardService(PuglingDbContext db, PositionProgressServi
         var rows = new List<ChildDay>(children.Count);
         foreach (var child in children)
         {
-            // Nur an dem Tag laufende, aktive Pläne zählen zum Tagessoll.
+            // Only plans active and running on that day count towards the day's obligation.
             var plans = await db.StudyPlans.AsNoTracking()
                 .Where(p => p.ChildId == child.Id && p.Active && p.StartDate <= date && p.EndDate >= date)
                 .ToListAsync(ct);
@@ -40,7 +40,7 @@ public class ChildrenDashboardService(PuglingDbContext db, PositionProgressServi
                 if (day.GoalsTotal > 0) { plansWithDuty++; if (day.DutyDone) plansDone++; }
             }
 
-            // Pflicht erfüllt, wenn es ein Tagessoll gibt UND alle solchen Pläne es geschafft haben.
+            // Obligation met if there is a day's target AND all such plans reached it.
             var dutyDone = plansWithDuty > 0 && plansDone == plansWithDuty;
             rows.Add(new ChildDay(child.Id, child.Name, plans.Count, goalsTotal, goalsMet, points,
                 dutyDone, goalsMet > 0 || points > 0));

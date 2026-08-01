@@ -15,8 +15,8 @@ namespace Pugling.Api.Services.Supervisor;
 /// </summary>
 public class ObjectiveService(PuglingDbContext db, ObjectiveEvaluationService evaluation, ExerciseTypeRegistry registry)
 {
-    // Die Vertrags-Records (KeyResultResponse/ObjectiveResponse/Create-/Update-Requests) leben im
-    // Vertrags-Projekt (Pugling.Contracts.Supervisor); die Result-Paare bleiben hier (tragen ApiError).
+    // The contract records (KeyResultResponse/ObjectiveResponse/Create-/Update requests) live in the
+    // contract project (Pugling.Contracts.Supervisor); the result pairs stay here (they carry ApiError).
 
     /// <summary>Result with optional error code; both <c>null</c> = not found.</summary>
     public record ObjectiveResult(ObjectiveResponse? Value, ApiError? Error);
@@ -44,7 +44,7 @@ public class ObjectiveService(PuglingDbContext db, ObjectiveEvaluationService ev
             e.KeyResults.Select(MapKr).ToList(), o.CreatedAt);
     }
 
-    // Zielwert-/Scope-Regeln je Metrik; null = ok. ClassTestGrade: nur Fach-Scope, Note 1,0..6,0 (×10 = 10..60).
+    // Target value/scope rules per metric; null = ok. ClassTestGrade: subject scope only, grade 1.0..6.0 (×10 = 10..60).
     private async Task<ApiError?> ValidateKeyResultAsync(int subjectId, int? chapterId, int? exerciseId,
         KeyResultMetric metric, int targetValue, CancellationToken ct)
     {
@@ -54,15 +54,15 @@ public class ObjectiveService(PuglingDbContext db, ObjectiveEvaluationService ev
         if (metric == KeyResultMetric.ClassTestGrade)
         {
             if (chapterId is not null || exerciseId is not null)
-                return ApiErrors.ValidationError; // Noten hängen am Fach, nicht an Kapitel/Übung
+                return ApiErrors.ValidationError; // grades hang on the subject, not on a chapter/exercise
             if (targetValue is < 10 or > 60)
                 return ApiErrors.ValidationError;
         }
         else
         {
-            // MaxWeakItems ist ein „≤"-Ziel: 0 („gar keine schwachen Wörter") ist ein legitimer Zielwert.
-            // Die „≥"-Metriken (AvgMastery/MasteredPercent) brauchen dagegen eine echte Untergrenze > 0 –
-            // sonst wäre ein Zielwert 0 sofort vakuär erfüllt und löste eine Belohnung ohne Lernleistung aus.
+            // MaxWeakItems is a "≤" goal: 0 ("no weak words at all") is a legitimate target value.
+            // The "≥" metrics (AvgMastery/MasteredPercent) need a real lower bound > 0 instead - otherwise a
+            // target value of 0 would be vacuously met at once and trigger a reward without any learning.
             var (min, max) = metric == KeyResultMetric.MaxWeakItems ? (0, int.MaxValue) : (1, 100);
             if (targetValue < min || targetValue > max)
                 return ApiErrors.ValidationError;
@@ -75,11 +75,11 @@ public class ObjectiveService(PuglingDbContext db, ObjectiveEvaluationService ev
         if (exerciseId is { } exId)
         {
             if (chapterId is null)
-                return ApiErrors.ValidationError; // Übungs-Scope setzt ein Kapitel voraus
+                return ApiErrors.ValidationError; // an exercise scope requires a chapter
             var type = await db.Exercises.AsNoTracking()
                 .Where(e => e.Id == exId && e.ChapterId == chapterId).Select(e => e.Type).FirstOrDefaultAsync(ct);
             if (type is null || registry.ByKey(type)?.SupportsObjectives != true)
-                return ApiErrors.InvalidReference; // nur item-getrackte Typen (heute Vokabeln)
+                return ApiErrors.InvalidReference; // item-tracked types only (today vocabulary)
         }
         return null;
     }
@@ -88,8 +88,8 @@ public class ObjectiveService(PuglingDbContext db, ObjectiveEvaluationService ev
         string.IsNullOrWhiteSpace(title) || !Enum.IsDefined(kind) || rewardOnComplete < 0 || rewardPerKeyResult < 0
             ? ApiErrors.ValidationError : null;
 
-    // Ob der große Abschluss-Batzen bereits gebucht wurde (fürs Rewarded-Flag der Antwort). Die
-    // Abschluss-Buchung ist die ohne Etappe – `PaidKeyResultId is null` ist ihr Diskriminator.
+    // Whether the big completion chunk has already been booked (for the response's rewarded flag). The
+    // completion entry is the one without a milestone - `PaidKeyResultId is null` is its discriminator.
     private async Task<bool> IsRewardedAsync(int objectiveId, CancellationToken ct) =>
         await db.ObjectiveRewards.AsNoTracking()
             .AnyAsync(r => r.ObjectiveId == objectiveId && r.PaidKeyResultId == null, ct);
@@ -100,8 +100,8 @@ public class ObjectiveService(PuglingDbContext db, ObjectiveEvaluationService ev
         var evals = await evaluation.EvaluateAllAsync(childId, Today, ct: ct);
         if (evals.Count == 0) return [];
 
-        // Ids vorab materialisieren: eine stabile lokale Liste für die IN-Klausel (statt einer lazy
-        // Projektion im Query-Ausdruck), die EF eindeutig parametrisiert.
+        // Materialize the ids up front: a stable local list for the IN clause (instead of a lazy projection
+        // inside the query expression), which EF parameterizes unambiguously.
         var objectiveIds = evals.Select(e => e.Objective.Id).ToList();
         var rewardedIds = (await db.ObjectiveRewards.AsNoTracking()
             .Where(r => r.PaidKeyResultId == null && objectiveIds.Contains(r.ObjectiveId))
@@ -232,7 +232,7 @@ public class ObjectiveService(PuglingDbContext db, ObjectiveEvaluationService ev
 
         var metric = req.Metric ?? kr.Metric;
         var target = req.TargetValue ?? kr.TargetValue;
-        // Nur Metrik/Zielwert (bereichsabhängig) neu prüfen – der Scope bleibt unverändert gültig.
+        // Re-check metric/target value only (they depend on each other) - the scope stays valid unchanged.
         if (await ValidateKeyResultAsync(kr.SubjectId, kr.ChapterId, kr.ExerciseId, metric, target, ct) is { } err)
             return new KeyResultResult(null, err);
 
@@ -254,7 +254,7 @@ public class ObjectiveService(PuglingDbContext db, ObjectiveEvaluationService ev
         return true;
     }
 
-    // Wertet das Objective aus und pickt die eine Etappe heraus (für die KR-level Antworten).
+    // Evaluates the objective and picks out the one milestone (for the key-result level responses).
     private async Task<KeyResultResponse?> EvaluatedKrAsync(int childId, int objectiveId, int keyResultId, CancellationToken ct)
     {
         var eval = await evaluation.EvaluateOneAsync(childId, objectiveId, Today, ct);

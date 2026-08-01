@@ -25,23 +25,23 @@ public class PositionPracticeFlowTests(PuglingWebAppFactory factory) : IClassFix
         var child = await TestApi.ChildAsync(_factory);
         var baseUrl = $"/api/v1/student/study-plans/{planId}/positions/{positionId}/practice-sessions";
 
-        // Sitzung starten
+        // Start the session
         var sessionId = await TestApi.IdAsync(await child.PostAsJsonAsync(baseUrl, new { }));
 
-        // Karten: beide Items sind neu → fällig; getippte Stufe → keine Lösung mitgeliefert.
+        // Cards: both items are new → due; a typed stage → no solution included.
         var cards = await (await child.GetAsync($"{baseUrl}/{sessionId}/cards"))
             .Content.ReadFromJsonAsync<List<JsonElement>>();
         Assert.Equal(2, cards!.Count);
         Assert.Equal("hello", cards[0].GetProperty("prompt").GetString());
         Assert.Equal(JsonValueKind.Null, cards[0].GetProperty("reveal").ValueKind);
 
-        // Richtige Antwort auf Item 0 → gewertet
+        // A correct answer on item 0 → graded
         var review = await child.PostAsJsonAsync($"{baseUrl}/{sessionId}/review",
             new { itemIndex = 0, givenAnswer = "hallo" });
         var outcome = await review.Content.ReadFromJsonAsync<JsonElement>();
         JsonAssert.True(outcome, "wasCorrect");
         Assert.True(outcome.GetProperty("awarded").GetInt32() > 0);
-        Assert.Equal(2, outcome.GetProperty("box").GetInt32()); // Box 1 → 2
+        Assert.Equal(2, outcome.GetProperty("box").GetInt32()); // box 1 → 2
 
         using var scope = _factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
@@ -61,12 +61,12 @@ public class PositionPracticeFlowTests(PuglingWebAppFactory factory) : IClassFix
         var baseUrl = $"/api/v1/student/study-plans/{planId}/positions/{positionId}/practice-sessions";
         var sessionId = await TestApi.IdAsync(await child.PostAsJsonAsync(baseUrl, new { }));
 
-        // Erste Wertung: 200 + Ergebnis
+        // The first grading: 200 + a result
         var first = await child.PostAsJsonAsync($"{baseUrl}/{sessionId}/review", new { itemIndex = 0, givenAnswer = "hallo" });
         Assert.Equal(HttpStatusCode.OK, first.StatusCode);
 
-        // Zweite Wertung derselben Karte am selben Tag: nur protokolliert, keine weiteren Punkte (Anti-Farming).
-        // Der Cursor läuft weiter (200), aber es fließen keine Punkte.
+        // Grading the same card again on the same day: only recorded, no further points (anti-farming).
+        // The cursor moves on (200), but no points flow.
         var second = await child.PostAsJsonAsync($"{baseUrl}/{sessionId}/review", new { itemIndex = 0, givenAnswer = "hallo" });
         Assert.Equal(HttpStatusCode.OK, second.StatusCode);
         var secondOutcome = await second.Content.ReadFromJsonAsync<JsonElement>();
@@ -98,7 +98,7 @@ public class PositionPracticeFlowTests(PuglingWebAppFactory factory) : IClassFix
         var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.FreeText);
         var child = await TestApi.ChildAsync(_factory);
 
-        // Position, die es (in diesem Plan) nicht gibt → Start muss 404 liefern, nicht ins Leere spielen.
+        // A position that does not exist (in this plan) → the start must return 404, not play into the void.
         var res = await child.PostAsJsonAsync(
             $"/api/v1/student/study-plans/{planId}/positions/{positionId + 999}/practice-sessions", new { });
         Assert.Equal(HttpStatusCode.NotFound, res.StatusCode);
@@ -107,8 +107,8 @@ public class PositionPracticeFlowTests(PuglingWebAppFactory factory) : IClassFix
     [Fact]
     public async Task Sitzung_Wird_Einzeln_Gelesen()
     {
-        // Die Einzelansicht der Sitzung (C3-Abdeckungslücke): der Client holt sie nach einem Neuladen, um
-        // Cursor und Modus wiederzufinden, ohne eine zweite Sitzung zu starten.
+        // The single view of the session (a C3 coverage gap): the client fetches it after a reload to find
+        // cursor and mode again without starting a second session.
         var father = await TestApi.FatherAsync(_factory);
         var exerciseId = await TestApi.CreateVocabExerciseAsync(father);
         var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.FreeText);

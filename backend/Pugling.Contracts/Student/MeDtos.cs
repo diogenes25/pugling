@@ -1,8 +1,8 @@
 namespace Pugling.Contracts.Student;
 
-// Vertrag der Sohn-Selbstsicht (api/v1/student/me/…): Kontostand, Skins und der Familien-Shop
-// aus seiner Perspektive. Die „My…"-Namen grenzen die Sohn-Sicht bewusst von der gleichnamigen
-// Vater-Sicht ab – dieselbe Sache, anderer Ausschnitt (der Sohn sieht z. B. keine ChildId).
+// Contract of the child's self view (api/v1/student/me/…): balance, skins and the family shop from its
+// perspective. The "My…" names deliberately separate the child's view from the identically named
+// supervisor view - same thing, different cut (the child does not see the ChildId, for instance).
 
 /// <summary>A single points ledger entry (credit positive, deduction negative) with category.</summary>
 public record MyPointsEntryResponse(int Id, int Amount, PointKind Kind, string Reason, DateTime CreatedAt);

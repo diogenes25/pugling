@@ -55,8 +55,8 @@ public sealed class CodeStampingProblemDetailsFactory(IOptions<ApiBehaviorOption
             Instance = instance,
         };
         if (title is not null) problem.Title = title;
-        // Validierungsfehler sind ein SPEZIFISCHER Code (nicht der generische bad_request-Default), damit
-        // ein direkter ValidationProblem()-Aufruf denselben Code liefert wie der Model-Binding-Pfad.
+        // Validation errors get a SPECIFIC code (not the generic bad_request default) so that a direct
+        // ValidationProblem() call yields the same code as the model-binding path.
         ProblemDetailsStamping.StampSpecific(problem, ApiErrors.ValidationError);
         ApplyDefaults(httpContext, problem, statusCode.Value);
         return problem;

@@ -19,8 +19,8 @@ public sealed class PuglingTokenStore(IOptions<PuglingClientOptions> options) : 
     private readonly PuglingClientOptions _options = options.Value;
     private readonly SemaphoreSlim _gate = new(1, 1);
 
-    // Absolut, nicht relativ: Die Auflösung gegen HttpClient.BaseAddress passiert *vor* der
-    // Handler-Kette – ein hier erzeugter relativer Login-Request käme nie beim Server an.
+    // Absolute, not relative: resolution against HttpClient.BaseAddress happens *before* the handler
+    // chain - a relative login request created here would never reach the server.
     private readonly Uri _loginUri = new(new Uri(options.Value.BaseUrl.TrimEnd('/') + "/"), LoginPath);
 
     private string? _token;
@@ -37,7 +37,7 @@ public sealed class PuglingTokenStore(IOptions<PuglingClientOptions> options) : 
         await _gate.WaitAsync(ct);
         try
         {
-            // Zweite Prüfung im Lock: Bei parallelen Aufrufen hat u. U. schon jemand angemeldet.
+            // Second check inside the lock: on parallel calls someone may already have logged in.
             if (!force && IsFresh()) return _token!;
 
             var login = new HttpRequestMessage(HttpMethod.Post, _loginUri)

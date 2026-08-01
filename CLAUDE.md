@@ -91,11 +91,15 @@ Lernstand – positionsgebunden *und* plan-übergreifend je Vokabel-Item.
 
 ## Konventionen (an bestehendem Code orientieren!)
 
-- **XML-Doku auf Englisch.** Öffentliche Typen/Members tragen `/// <summary>` (fließt in Swagger) – der
-  Text darin ist **englisch**. Kommentare erklären das *Warum* (Geschäftsregel, Anti-Cheat), nicht das Was.
-  Inline-`//`-Kommentare und die Markdown-Doku bleiben (noch) deutsch; Glossar, Fortschritt und
-  Fallstricke der Umstellung stehen in [docs/translate.md](docs/translate.md) – dort auch die bewusst
-  ausgenommenen Pfade (`Pugling.Api/Models/`, `Data/`).
+- **Code-Doku auf Englisch – ausnahmslos.** Das gilt für `/// <summary>` (fließt in Swagger) **und** für
+  jeden `//`-Kommentar, in allen fünf Backend-Projekten inklusive `Pugling.Api/Models/`, `Data/` und den
+  Tests. Kommentare erklären das *Warum* (Geschäftsregel, Anti-Cheat), nicht das Was – knapp und so, dass
+  Mensch **und** Modell sie ohne Vorwissen lesen können: ein Gedanke je Kommentar, keine Umbau-Erzählung,
+  keine Wiederholung des Codes. **Englisch ist auch, was ein rotes Tor ausgibt** – die Meldungstexte der
+  reflexiven Wächter und ihrer Ausnahmelisten. Deutsch bleiben die **Markdown-Doku**, Strings mit
+  Produktinhalt (Seed-/Ledger-Texte, `Capture(…)`-Titel der `DocsCaptureTests`, Enum-Werte wie `Gymnasium`,
+  deutsche Beispielwörter und Testdaten) und die Laufzeit-Diagnose (Exception-/Log-Meldungen). Glossar und
+  Fallstricke: [docs/translate.md](docs/translate.md).
 - **Controller dünn**, Logik in Services. DTOs als `record` projizieren – nie EF-Entities zurückgeben.
 - **Vertrag im eigenen Projekt** ([backend/Pugling.Contracts/](backend/Pugling.Contracts/CLAUDE.md)): *alle*
   Request-/Response-`record`s und die geteilten Basistypen liegen dort – **nicht** als verschachtelte Typen

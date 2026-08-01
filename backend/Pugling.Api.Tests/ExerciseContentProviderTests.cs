@@ -6,7 +6,7 @@ namespace Pugling.Api.Tests;
 /// <summary>Unit tests of content extraction from the exercise config (stateless, without DB/HTTP).</summary>
 public class ExerciseContentProviderTests
 {
-    // Registry aus den eingebauten Typen – der Provider delegiert die Projektion an sie.
+    // A registry from the built-in types - the provider delegates the projection to them.
     private static readonly ExerciseTypeRegistry Registry = new(
     [
         new VocabularyExerciseType(), new ReadingExerciseType(), new ClozeExerciseType(),
@@ -20,17 +20,17 @@ public class ExerciseContentProviderTests
 
     private static string Json<T>(T config) => JsonSerializer.Serialize(config, JsonOptions);
 
-    // ---- Vokabeln ----
+    // ---- Vocabulary ---- ----
 
     /// <summary>
-    /// Der zustandslose Provider liefert für Vokabeln <b>bewusst nichts</b>: deren Inhalte liegen in der
-    /// <c>ExerciseItem</c>-Tabelle, und <c>VocabularyConfig.Items</c>/<c>.Refs</c> sind reine
-    /// <b>Eingabeform</b> (nach dem Anlegen leert <c>AfterSaveAsync</c> sie).
+    /// For vocabulary the stateless provider deliberately returns <b>nothing</b>: its contents live in the
+    /// <c>ExerciseItem</c> table, and <c>VocabularyConfig.Items</c>/<c>.Refs</c> are a pure <b>input shape</b>
+    /// (after creation <c>AfterSaveAsync</c> clears them).
     /// <para>
-    /// Vorher stand hier die Gegenprobe – dieser Test prüfte die Config-Projektion, also den <i>zweiten</i>
-    /// Inhaltsweg desselben Typs. Zwei Wege heißen zwei Wahrheiten: der eine trägt stabile ItemIds und damit
-    /// den plan-übergreifenden Lernstand, der andere nicht. Erreichbar war er längst nicht mehr; jetzt ist er
-    /// weg, und dieser Test hält ihn zu.
+    /// The counter-check used to sit here - this test checked the config projection, i.e. the <i>second</i>
+    /// content path of the same type. Two paths mean two truths: one carries stable ItemIds and with them the
+    /// cross-plan learning state, the other does not. It had long been unreachable; now it is gone, and this
+    /// test keeps it that way.
     /// </para>
     /// </summary>
     [Fact]
@@ -48,7 +48,7 @@ public class ExerciseContentProviderTests
         Assert.Empty(_provider.ItemsOf(ExerciseTypeKeys.Vocabulary, Json(config)));
     }
 
-    // ---- Lückentext ----
+    // ---- Cloze ---- ----
 
     [Fact]
     public void Cloze_EinItemJeLuecke_MitGapIndexUndAlternativen()
@@ -66,7 +66,7 @@ public class ExerciseContentProviderTests
         var items = _provider.ItemsOf(ExerciseTypeKeys.Cloze, Json(config));
 
         Assert.Equal(2, items.Count);
-        // Prompt ist der Trägertext, GapIndex die {{n}}-Nummer.
+        // The prompt is the carrier text, GapIndex the {{n}} number.
         Assert.Equal(config.Text, items[0].Prompt);
         Assert.Equal(1, items[0].GapIndex);
         Assert.Equal("Hello", items[0].Answer);
@@ -75,7 +75,7 @@ public class ExerciseContentProviderTests
         Assert.Equal(2, items[1].GapIndex);
     }
 
-    // ---- Zuordnung ----
+    // ---- Matching ---- ----
 
     [Fact]
     public void Matching_LinksIstPromptRechtsIstAntwort()
@@ -89,7 +89,7 @@ public class ExerciseContentProviderTests
         Assert.Equal("München", items[0].Answer);
     }
 
-    // ---- Liste ----
+    // ---- List ---- ----
 
     [Fact]
     public void List_NutztInstructionAlsPromptUndUebernimmtAlternativen()
@@ -107,7 +107,7 @@ public class ExerciseContentProviderTests
         Assert.Equal(["Bayern"], items[1].AcceptedAnswers);
     }
 
-    // ---- Rechnen (feste Aufgaben) ----
+    // ---- Arithmetic (fixed tasks) ---- ----
 
     [Fact]
     public void Arithmetic_AntwortAlsInvarianteDezimalzahl()
@@ -118,11 +118,11 @@ public class ExerciseContentProviderTests
 
         Assert.Equal("7 × 6", items[0].Prompt);
         Assert.Equal("42", items[0].Answer);
-        // Dezimaltrennzeichen bleibt kulturunabhängig ein Punkt (wie in ExerciseAnswerChecker).
+        // The decimal separator stays a dot regardless of culture (as in ExerciseAnswerChecker).
         Assert.Equal("2.5", items[1].Answer);
     }
 
-    // ---- Grammatik / Übersetzung / Fragen ----
+    // ---- Grammar / translation / questions ---- ----
 
     [Fact]
     public void Grammar_UebernimmtRegelHinweisAlsHint()
@@ -165,7 +165,7 @@ public class ExerciseContentProviderTests
         Assert.Equal("Tom", items[0].Answer);
     }
 
-    // ---- Birkenbihl (reine Inhaltsübung) ----
+    // ---- Birkenbihl (a pure content exercise) ---- ----
 
     [Fact]
     public void Birkenbihl_SatzIstPromptNatuerlicheUebersetzungIstAntwort()
@@ -185,18 +185,18 @@ public class ExerciseContentProviderTests
         Assert.Equal("Wie heißt du?", item.Answer);
     }
 
-    // ---- Typen ohne feste Items ----
+    // ---- Types without fixed items ---- ----
 
     [Theory]
     [InlineData(ExerciseTypeKeys.Essay)]
     [InlineData(ExerciseTypeKeys.ArithmeticDrill)]
     public void OhneFesteItems_LiefertLeereListe(string type)
     {
-        // Essay = freier Text; ArithmeticDrill = pro Abruf erzeugt – beide haben keine abzählbaren Inhalte.
+        // Essay = free text; ArithmeticDrill = generated per request - neither has countable contents.
         Assert.Empty(_provider.ItemsOf(type, "{}"));
     }
 
-    // ---- Robustheit ----
+    // ---- Robustness ---- ----
 
     [Theory]
     [InlineData("")]

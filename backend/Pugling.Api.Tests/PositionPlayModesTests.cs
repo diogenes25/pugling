@@ -18,7 +18,7 @@ public class PositionPlayModesTests(PuglingWebAppFactory factory) : IClassFixtur
 
     private static readonly (string, string)[] ThreeWords = [("a", "1"), ("b", "2"), ("c", "3")];
 
-    // ---- Lern-Modus: Server-Cursor + „nächste Karte" ----
+    // ---- Learn mode: server cursor + "next card" ---- ----
 
     [Fact]
     public async Task LernModus_LiefertKartenEinzelnUeberCursor_UndSchliesstAbMitDone()
@@ -34,14 +34,14 @@ public class PositionPlayModesTests(PuglingWebAppFactory factory) : IClassFixtur
         Assert.Equal(3, start.GetProperty("total").GetInt32());
         var sessionId = start.GetProperty("id").GetInt32();
 
-        // Erste Karte kommt server-geführt über /next (nicht als Batch).
+        // The first card comes server-driven through /next (not as a batch).
         var next = await child.GetFromJsonAsync<JsonElement>($"{baseUrl}/{sessionId}/next");
         JsonAssert.False(next, "done");
         Assert.Equal(0, next.GetProperty("cursor").GetInt32());
         var answers = new[] { "1", "2", "3" };
         var card = next.GetProperty("card");
 
-        // Der ganze Lauf über /review – jede Antwort trägt die nächste Karte bzw. das Abschluss-Signal.
+        // The whole run through /review - every answer carries the next card or the completion signal.
         for (var i = 0; i < 3; i++)
         {
             var idx = card.GetProperty("itemIndex").GetInt32();
@@ -52,23 +52,23 @@ public class PositionPlayModesTests(PuglingWebAppFactory factory) : IClassFixtur
             if (i < 2)
             {
                 Assert.False(done);
-                Assert.Equal(JsonValueKind.Object, outcome.GetProperty("next").ValueKind); // nächste Karte liegt bei
+                Assert.Equal(JsonValueKind.Object, outcome.GetProperty("next").ValueKind); // the next card is included
                 card = outcome.GetProperty("next");
             }
             else
             {
-                Assert.True(done); // letzte Karte → Lauf zu Ende
+                Assert.True(done); // last card → the run is over
                 Assert.Equal(JsonValueKind.Null, outcome.GetProperty("next").ValueKind);
             }
         }
 
-        // Cursor steht am Ende; /next meldet done.
+        // The cursor is at the end; /next reports done.
         var end = await child.GetFromJsonAsync<JsonElement>($"{baseUrl}/{sessionId}/next");
         JsonAssert.True(end, "done");
         Assert.Equal(JsonValueKind.Null, end.GetProperty("card").ValueKind);
     }
 
-    // ---- Info-Modus: freies Üben, kein Feedback ----
+    // ---- Info mode: free practice, no feedback ---- ----
 
     [Fact]
     public async Task InfoModus_LiefertAlleKartenAlsBatch_UndSchreibtKeinFeedback()
@@ -83,11 +83,11 @@ public class PositionPlayModesTests(PuglingWebAppFactory factory) : IClassFixtur
         Assert.Equal("Info", start.GetProperty("mode").GetString());
         var sessionId = start.GetProperty("id").GetInt32();
 
-        // Alle Karten am Stück abrufbar.
+        // All cards can be fetched in one go.
         var cards = await child.GetFromJsonAsync<JsonElement>($"{baseUrl}/{sessionId}/cards");
         Assert.Equal(3, cards.GetArrayLength());
 
-        // /review schreibt im Info-Modus nichts (204) – kein Fortschritt, keine Punkte.
+        // In info mode /review writes nothing (204) - no progress, no points.
         var res = await TestApi.PositionReviewAsync(child, planId, positionId, sessionId, 0, givenAnswer: "1");
         Assert.Equal(HttpStatusCode.NoContent, res.StatusCode);
 
@@ -101,7 +101,7 @@ public class PositionPlayModesTests(PuglingWebAppFactory factory) : IClassFixtur
     public async Task InfoModus_ErfuelltDasTagesziel_Nicht()
     {
         var father = await TestApi.FatherAsync(_factory);
-        // Reine Inhaltsübung (Leseverstehen) → Ziel „erledigt", sobald eine echte Lern-Sitzung existiert.
+        // A pure content exercise (reading comprehension) → the goal is "done" as soon as a real learn session exists.
         var subjectId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/subjects", new { name = "Info-Fach" }));
         var chapterId = await TestApi.IdAsync(await father.PostAsJsonAsync(
             $"/api/v1/creator/subjects/{subjectId}/chapters", new { name = "K1", orderIndex = 1 }));
@@ -112,11 +112,11 @@ public class PositionPlayModesTests(PuglingWebAppFactory factory) : IClassFixtur
         var child = await TestApi.ChildAsync(_factory);
         var baseUrl = TestApi.PracticeBase(planId, positionId);
 
-        // Info-Sitzung mit echter Aktivität (Heartbeat) → darf das Tagesziel NICHT erfüllen.
-        // Bildet mit LernModus_ReineInhaltsuebung_LeererPool_ErfuelltDieTagespflicht ein Paar: dieselbe
-        // (fragenlose) Übung, derselbe Ablauf, nur der Modus unterscheidet sich. Weil ein leerer Pool nach
-        // der Cursor-Regel als „gespielt" gilt, hängt das `false` hier ALLEIN am Mode-Filter – der Test
-        // prüft also wirklich den Info-Ausschluss und nicht nebenbei etwas anderes.
+        // An info session with real activity (a heartbeat) → must NOT fulfill the daily goal.
+        // Together with LernModus_ReineInhaltsuebung_LeererPool_ErfuelltDieTagespflicht it forms a pair: the
+        // same (question-less) exercise, the same flow, only the mode differs. Because an empty pool counts as
+        // "played" by the cursor rule, the `false` here hangs SOLELY on the mode filter - so the test really
+        // checks the info exclusion and not something else on the side.
         var sessionId = await TestApi.IdAsync(await child.PostAsJsonAsync(baseUrl, new { mode = "Info" }));
         await child.PostAsJsonAsync($"{baseUrl}/{sessionId}/heartbeat", new { seconds = 60, active = true });
         await child.PostAsJsonAsync($"{baseUrl}/{sessionId}/end", new { });
@@ -125,7 +125,7 @@ public class PositionPlayModesTests(PuglingWebAppFactory factory) : IClassFixtur
         JsonAssert.False(overview.GetProperty("today"), "dutyDone");
     }
 
-    // ---- Pflicht bei reinen Inhaltsübungen: gespielte Runde statt bloßer Anwesenheit ----
+    // ---- Obligation for pure content exercises: a played round instead of mere presence ---- ----
 
     /// <summary>
     /// Seeds a reading position (<see cref="ExerciseCheckMode.None"/>) with
@@ -162,8 +162,8 @@ public class PositionPlayModesTests(PuglingWebAppFactory factory) : IClassFixtur
         var child = await TestApi.ChildAsync(_factory);
         var baseUrl = TestApi.PracticeBase(planId, positionId);
 
-        // Lern-Sitzung mit echter Aktivität, aber KEINE gespielte Karte. Genau das erfüllte früher die
-        // Pflicht und löste die Ziel-Punkte aus: Runde öffnen, weglaufen, Münzen kassieren.
+        // A learn session with real activity but NO card played. That used to fulfill the obligation and
+        // trigger the goal points: open a round, walk away, collect coins.
         var sessionId = await TestApi.IdAsync(await child.PostAsJsonAsync(baseUrl, new { mode = "Lern" }));
         await child.PostAsJsonAsync($"{baseUrl}/{sessionId}/heartbeat", new { seconds = 60, active = true });
         await child.PostAsJsonAsync($"{baseUrl}/{sessionId}/end", new { });
@@ -185,7 +185,7 @@ public class PositionPlayModesTests(PuglingWebAppFactory factory) : IClassFixtur
         var baseUrl = TestApi.PracticeBase(planId, positionId);
 
         var sessionId = await TestApi.IdAsync(await child.PostAsJsonAsync(baseUrl, new { mode = "Lern" }));
-        // Beide Karten spielen (der Cursor rückt je beantworteter Karte vor, unabhängig von Leitner).
+        // Play both cards (the cursor advances per answered card, independent of Leitner).
         for (var i = 0; i < 2; i++)
             await TestApi.PositionReviewAsync(child, planId, positionId, sessionId, i, givenAnswer: $"A{i}");
         await child.PostAsJsonAsync($"{baseUrl}/{sessionId}/end", new { });
@@ -202,7 +202,7 @@ public class PositionPlayModesTests(PuglingWebAppFactory factory) : IClassFixtur
     public async Task LernModus_ReineInhaltsuebung_LeererPool_ErfuelltDieTagespflicht()
     {
         var father = await TestApi.FatherAsync(_factory);
-        // Nichts fällig (keine Fragen) → es gab nichts zu spielen, die Pflicht gilt als erfüllt.
+        // Nothing due (no questions) → there was nothing to play, the obligation counts as met.
         var (planId, positionId) = await SeedReadingPositionAsync(father, questions: 0);
         var child = await TestApi.ChildAsync(_factory);
         var baseUrl = TestApi.PracticeBase(planId, positionId);
@@ -214,7 +214,7 @@ public class PositionPlayModesTests(PuglingWebAppFactory factory) : IClassFixtur
         JsonAssert.True(overview.GetProperty("today"), "dutyDone");
     }
 
-    // ---- Klausur-Modus: strikt server-getrieben ----
+    // ---- Class-test mode: strictly server-driven ---- ----
 
     [Fact]
     public async Task KlausurModus_StartOhneAufgaben_FragenEinzelnOhneKorrektheit_AbschlussMitScorecard()
@@ -225,38 +225,38 @@ public class PositionPlayModesTests(PuglingWebAppFactory factory) : IClassFixtur
         var child = await TestApi.ChildAsync(_factory);
         var testsUrl = $"/api/v1/student/study-plans/{planId}/positions/{positionId}/tests";
 
-        // Start liefert NUR Metadaten – keine Aufgaben im Bulk (strikt server-getrieben).
+        // The start returns ONLY metadata - no tasks in bulk (strictly server-driven).
         var start = await (await child.PostAsJsonAsync(testsUrl, new { })).Content.ReadFromJsonAsync<JsonElement>();
         Assert.Equal(3, start.GetProperty("totalItems").GetInt32());
-        Assert.False(start.TryGetProperty("items", out _)); // keine Aufgaben vorab
+        Assert.False(start.TryGetProperty("items", out _)); // no tasks up front
         var attemptId = start.GetProperty("attemptId").GetInt32();
 
-        // Fragen einzeln holen, beantworten – die Antwort verrät NICHT, ob sie korrekt war.
+        // Fetch the questions one by one and answer them - the answer does NOT reveal whether it was correct.
         var answersByPrompt = new Dictionary<string, string> { ["a"] = "1", ["b"] = "2", ["c"] = "wrong" };
         for (var i = 0; i < 3; i++)
         {
             var next = await child.GetFromJsonAsync<JsonElement>($"{testsUrl}/{attemptId}/next");
             JsonAssert.False(next, "done");
             var prompt = next.GetProperty("item").GetProperty("prompt").GetString()!;
-            Assert.Equal(JsonValueKind.Null, next.GetProperty("item").GetProperty("reveal").ValueKind); // getippt: keine Lösung
+            Assert.Equal(JsonValueKind.Null, next.GetProperty("item").GetProperty("reveal").ValueKind); // typed: no solution
 
             var ack = await (await child.PostAsJsonAsync($"{testsUrl}/{attemptId}/answer",
                 new { givenAnswer = answersByPrompt[prompt] })).Content.ReadFromJsonAsync<JsonElement>();
-            Assert.False(ack.TryGetProperty("wasCorrect", out _)); // kein Feedback pro Frage
+            Assert.False(ack.TryGetProperty("wasCorrect", out _)); // no feedback per question
         }
 
-        // Nach der letzten Frage: /next ist am Ende.
+        // After the last question: /next is at the end.
         var end = await child.GetFromJsonAsync<JsonElement>($"{testsUrl}/{attemptId}/next");
         JsonAssert.True(end, "done");
 
-        // Abschluss: erst hier kommt die Auswertung (2 von 3 richtig).
+        // Submission: only here does the evaluation arrive (2 out of 3 correct).
         var submit = await (await child.PostAsJsonAsync($"{testsUrl}/{attemptId}/submit", new { }))
             .Content.ReadFromJsonAsync<JsonElement>();
         Assert.Equal(3, submit.GetProperty("totalItems").GetInt32());
         Assert.Equal(2, submit.GetProperty("correctItems").GetInt32());
     }
 
-    // ---- Reihenfolge-Strategien ----
+    // ---- Order strategies ---- ----
 
     [Fact]
     public async Task Strategie_Serial_SpieltStrengNachIndex()
@@ -274,7 +274,7 @@ public class PositionPlayModesTests(PuglingWebAppFactory factory) : IClassFixtur
         Assert.Equal(new[] { 0, 1, 2, 3, 4 }, order);
     }
 
-    // ---- Klausur: Aufzeichnung erst beim Abschluss (kein Leak/Doppelzähler durch Abbruch/Wiederholung) ----
+    // ---- Class test: recorded only on submission (no leak/double count through abort/repeat) ---- ----
 
     /// <summary>
     /// A left class test writes no learning progress until submitted – and re-entering does <b>not</b> start a
@@ -291,7 +291,7 @@ public class PositionPlayModesTests(PuglingWebAppFactory factory) : IClassFixtur
         var testsUrl = $"/api/v1/student/study-plans/{planId}/positions/{positionId}/tests";
         var ans = new Dictionary<string, string> { ["a"] = "1", ["b"] = "2", ["c"] = "3" };
 
-        // Versuch 1: eine Frage beantworten, dann VERLASSEN (kein Submit).
+        // Attempt 1: answer one question, then LEAVE (no submit).
         var a1 = await TestApi.IdWithKeyAsync(await child.PostAsJsonAsync(testsUrl, new { }), "attemptId");
         var first = await child.GetFromJsonAsync<JsonElement>($"{testsUrl}/{a1}/next");
         await child.PostAsJsonAsync($"{testsUrl}/{a1}/answer",
@@ -300,18 +300,18 @@ public class PositionPlayModesTests(PuglingWebAppFactory factory) : IClassFixtur
         using (var scope = _factory.Services.CreateScope())
         {
             var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
-            // Der verlassene Versuch darf den plan-übergreifenden Lernstand NICHT verändert haben.
+            // The abandoned attempt must NOT have changed the cross-plan learning state.
             Assert.Empty(db.ItemReviewEvents.Where(e => e.ExerciseId == exerciseId));
             Assert.Empty(db.ItemProgress.Where(p => p.ExerciseId == exerciseId));
         }
 
-        // Wieder rein: derselbe Versuch, der Cursor steht auf Frage 2 von 3.
+        // Back in: the same attempt, the cursor is on question 2 of 3.
         var again = await (await child.PostAsJsonAsync(testsUrl, new { })).Content.ReadFromJsonAsync<JsonElement>();
         Assert.Equal(a1, again.GetProperty("attemptId").GetInt32());
         var resumed = await child.GetFromJsonAsync<JsonElement>($"{testsUrl}/{a1}/next");
         Assert.Equal(1, resumed.GetProperty("cursor").GetInt32());
 
-        // Restliche Fragen beantworten und abgeben.
+        // Answer the remaining questions and submit.
         for (var i = 1; i < 3; i++)
         {
             var nx = await child.GetFromJsonAsync<JsonElement>($"{testsUrl}/{a1}/next");
@@ -323,9 +323,9 @@ public class PositionPlayModesTests(PuglingWebAppFactory factory) : IClassFixtur
         using (var scope = _factory.Services.CreateScope())
         {
             var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
-            // Genau EINE Aufzeichnung je Item (3) – geschrieben erst beim Abschluss, nicht je Zwischenantwort.
+            // Exactly ONE record per item (3) - written on submission, not per intermediate answer.
             Assert.Equal(3, db.ItemReviewEvents.Count(e => e.ExerciseId == exerciseId && e.Source == ItemReviewSource.Test));
-            // Und nur EIN Versuch, obwohl zweimal gestartet wurde.
+            // And only ONE attempt, although it was started twice.
             Assert.Equal(1, db.TestAttempts.Count(t => t.PlanPositionId == positionId));
         }
     }
@@ -339,25 +339,25 @@ public class PositionPlayModesTests(PuglingWebAppFactory factory) : IClassFixtur
         var child = await TestApi.ChildAsync(_factory);
         var testsUrl = $"/api/v1/student/study-plans/{planId}/positions/{positionId}/tests";
 
-        // Zwei Versuche verbrauchen: jeder wird abgegeben, damit nicht der Fortsetzen-Pfad greift.
+        // Consume two attempts: each is submitted so that the resume path does not kick in.
         for (var i = 0; i < 2; i++)
         {
             var id = await TestApi.IdWithKeyAsync(await child.PostAsJsonAsync(testsUrl, new { }), "attemptId");
             await child.PostAsJsonAsync($"{testsUrl}/{id}/submit", new { });
         }
 
-        // Der dritte Start ist Noten-Farming und wird abgewiesen.
+        // The third start is grade farming and is rejected.
         var third = await child.PostAsJsonAsync(testsUrl, new { });
         Assert.Equal(HttpStatusCode.Conflict, third.StatusCode);
         var problem = await third.Content.ReadFromJsonAsync<JsonElement>();
         Assert.Equal("test_attempts_exhausted", problem.GetProperty("code").GetString());
 
-        // Der Vater ist nicht gedeckelt (Vorschau/Nachtrag).
+        // The supervisor is not capped (preview/catch-up).
         var fathersTry = await father.PostAsJsonAsync(testsUrl, new { });
         Assert.Equal(HttpStatusCode.Created, fathersTry.StatusCode);
     }
 
-    // ---- Info-Modus serviert den ganzen Pool (auch nicht-fällige Karten), Lern nur die fälligen ----
+    // ---- Info mode serves the whole pool (cards not due too), learn mode only the due ones ---- ----
 
     [Fact]
     public async Task InfoModus_ServiertAuchNichtFaelligeKarten_ImGegensatzZuLern()
@@ -368,17 +368,17 @@ public class PositionPlayModesTests(PuglingWebAppFactory factory) : IClassFixtur
         var child = await TestApi.ChildAsync(_factory);
         var baseUrl = TestApi.PracticeBase(planId, positionId);
 
-        // Alle 3 Karten in einer Lern-Sitzung richtig → Box hoch, DueOn = später (heute nicht mehr fällig).
+        // All 3 cards correct in one learn session → box up, DueOn = later (no longer due today).
         var lern = await TestApi.IdAsync(await child.PostAsJsonAsync(baseUrl, new { mode = "Lern" }));
         foreach (var (idx, a) in new[] { (0, "1"), (1, "2"), (2, "3") })
             (await TestApi.PositionReviewAsync(child, planId, positionId, lern, idx, givenAnswer: a)).EnsureSuccessStatusCode();
 
-        // Neue Lern-Sitzung: nichts mehr fällig → leer.
+        // A new learn session: nothing due any more → empty.
         var lern2 = await TestApi.IdAsync(await child.PostAsJsonAsync(baseUrl, new { mode = "Lern" }));
         var lernCards = await child.GetFromJsonAsync<JsonElement>($"{baseUrl}/{lern2}/cards");
         Assert.Equal(0, lernCards.GetArrayLength());
 
-        // Info-Sitzung: der ganze Pool bleibt spielbar (freies Wiederholen), obwohl nichts fällig ist.
+        // An info session: the whole pool stays playable (free repetition), although nothing is due.
         var info = await TestApi.IdAsync(await child.PostAsJsonAsync(baseUrl, new { mode = "Info" }));
         var infoCards = await child.GetFromJsonAsync<JsonElement>($"{baseUrl}/{info}/cards");
         Assert.Equal(3, infoCards.GetArrayLength());
@@ -397,6 +397,6 @@ public class PositionPlayModesTests(PuglingWebAppFactory factory) : IClassFixtur
         var sessionId = await TestApi.IdAsync(await child.PostAsJsonAsync(baseUrl, new { }));
         var cards = await child.GetFromJsonAsync<JsonElement>($"{baseUrl}/{sessionId}/cards");
         var order = cards.EnumerateArray().Select(c => c.GetProperty("itemIndex").GetInt32()).ToList();
-        Assert.Equal(new[] { 0, 1, 2, 3, 4 }, order.OrderBy(i => i).ToArray()); // Permutation ohne Verlust/Dubletten
+        Assert.Equal(new[] { 0, 1, 2, 3, 4 }, order.OrderBy(i => i).ToArray()); // a permutation without loss/duplicates
     }
 }

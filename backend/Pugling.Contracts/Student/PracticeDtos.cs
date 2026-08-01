@@ -1,7 +1,7 @@
 namespace Pugling.Contracts.Student;
 
-// Vertrag der Übungsschleife (Leitner) einer Lehrplan-Position. Server-autoritativ: der Server
-// wählt die Karte, bewertet die Antwort und führt den Cursor – das Frontend rendert nur.
+// Contract of the practice loop (Leitner) of one study plan position. Server-authoritative: the server
+// picks the card, grades the answer and drives the cursor - the frontend only renders.
 
 /// <summary>A running or finished practice session on a position.</summary>
 public record SessionResponse(int Id, int PlanId, int PositionId, DateOnly Day,

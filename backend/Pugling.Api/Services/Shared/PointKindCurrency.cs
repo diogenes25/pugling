@@ -1,6 +1,6 @@
 namespace Pugling.Api.Services.Shared;
 
-// Currency lebt im Vertrags-Projekt (Pugling.Contracts).
+// Currency lives in the contract project (Pugling.Contracts).
 
 /// <summary>
 /// Maps each <see cref="PointKind"/> to exactly one <see cref="Currency"/>. Diligence for learning

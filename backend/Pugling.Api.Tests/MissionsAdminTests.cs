@@ -18,7 +18,7 @@ public class MissionsAdminTests(PuglingWebAppFactory factory) : IClassFixture<Pu
         var childId = await TestApi.IdAsync(
             await father.PostAsJsonAsync("/api/v1/supervisor/children", new { name = "Missions-Kind", pin = "8001" }));
 
-        // Anlegen
+        // Create
         var created = await (await father.PostAsJsonAsync($"/api/v1/supervisor/children/{childId}/missions", new
         {
             title = "Tagesziel: 10 richtig",
@@ -30,17 +30,17 @@ public class MissionsAdminTests(PuglingWebAppFactory factory) : IClassFixture<Pu
         var missionId = created.GetProperty("id").GetInt32();
         JsonAssert.True(created, "active");
 
-        // Liste enthält die Mission
+        // The list contains the mission
         var list = await (await father.GetAsync($"/api/v1/supervisor/children/{childId}/missions")).Content.ReadFromJsonAsync<JsonElement>();
         Assert.Contains(missionId, list.EnumerateArray().Select(m => m.GetProperty("id").GetInt32()));
 
-        // Deaktivieren (PATCH active=false)
+        // Deactivate (PATCH active=false)
         var patched = await (await father.PatchAsJsonAsync(
             $"/api/v1/supervisor/children/{childId}/missions/{missionId}", new { active = false }))
             .Content.ReadFromJsonAsync<JsonElement>();
         JsonAssert.False(patched, "active");
 
-        // Löschen → danach 404 beim erneuten Löschen
+        // Delete → afterwards a 404 on deleting again
         (await father.DeleteAsync($"/api/v1/supervisor/children/{childId}/missions/{missionId}")).EnsureSuccessStatusCode();
         var again = await father.DeleteAsync($"/api/v1/supervisor/children/{childId}/missions/{missionId}");
         Assert.Equal(HttpStatusCode.NotFound, again.StatusCode);
@@ -49,8 +49,8 @@ public class MissionsAdminTests(PuglingWebAppFactory factory) : IClassFixture<Pu
     [Fact]
     public async Task Vater_KommtNichtAnMissionenFremderKinder_403Oder404()
     {
-        // Der Ownership-Filter greift vor dem Controller: ein nicht (dem Vater) gehörendes Kind
-        // liefert weder Liste noch Anlage – hier über ein nicht existierendes Kind geprüft.
+        // The ownership filter bites before the controller: a child not belonging to the adult yields neither
+        // a list nor a creation - checked here through a non-existent child.
         var father = await TestApi.FatherAsync(factory);
 
         var res = await father.GetAsync("/api/v1/supervisor/children/999999/missions");
@@ -58,7 +58,7 @@ public class MissionsAdminTests(PuglingWebAppFactory factory) : IClassFixture<Pu
         Assert.True(res.StatusCode is HttpStatusCode.Forbidden or HttpStatusCode.NotFound);
     }
 
-    // ─────────────────────────────────── Auszeichnungen lesen und löschen (C3-Abdeckungslücke)
+    // ─────────────────────────────────── Reading and deleting awards (a C3 coverage gap)
 
     [Fact]
     public async Task Auszeichnungen_Liste_Und_Loeschen()

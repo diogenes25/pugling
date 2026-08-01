@@ -1,7 +1,7 @@
 namespace Pugling.Contracts.Supervisor;
 
-// Vertrag der Stamm- und Profildaten, die der Supervisor pflegt: der eigene Erwachsenen-Datensatz,
-// die Lehrbücher des Kindes und sein Stundenplan (beides übungsunabhängiges Profil).
+// Contract of the master and profile data the supervisor maintains: their own adult record, the child's
+// textbooks and its timetable (both exercise-independent profile).
 
 /// <summary>Adult without PIN (never delivered).</summary>
 public record AdultResponse(int Id, string Name, string? Email, DateTime CreatedAt, int ChildrenCount);

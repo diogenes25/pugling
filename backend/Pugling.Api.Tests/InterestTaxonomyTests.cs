@@ -22,7 +22,7 @@ public class InterestTaxonomyTests(PuglingWebAppFactory factory) : IClassFixture
         var created = await first.Content.ReadFromJsonAsync<JsonElement>();
         Assert.Equal("rocket-league", created.GetProperty("slug").GetString());
 
-        // Zweiter Aufruf: 200 statt 409 – ein Agent darf denselben Katalog-Aufbau wiederholen.
+        // A second call: 200 instead of 409 - an agent may repeat the same catalog setup.
         var again = await father.PostAsJsonAsync("/api/v1/creator/interest-tags", new { label = "Rocket League" });
         Assert.Equal(HttpStatusCode.OK, again.StatusCode);
         Assert.Equal(created.GetProperty("id").GetInt32(), await TestApi.IdAsync(again));
@@ -52,7 +52,7 @@ public class InterestTaxonomyTests(PuglingWebAppFactory factory) : IClassFixture
             synonyms = new[] { "Lego-Technik", "Technikbaukasten" },
         }));
 
-        // Der Supervisor tippt ein Synonym – es darf keinen zweiten Tag erzeugen.
+        // The supervisor types a synonym - it must not create a second tag.
         await SetInterestsAsync(father, new object[] { new { label = "Lego-Technik", weight = 2 } });
 
         var interests = await GetAsync(father, "/api/v1/supervisor/children/1/interests");
@@ -65,19 +65,19 @@ public class InterestTaxonomyTests(PuglingWebAppFactory factory) : IClassFixture
     {
         var father = await TestApi.FatherAsync(factory);
 
-        // Creator taggt ein Bild …
+        // The creator tags an image …
         await father.PostAsJsonAsync("/api/v1/creator/media", new
         {
             description = "Ein Dinosaurier rennt",
             tags = new[] { "Dinosaurier" },
         });
 
-        // … der Supervisor pflegt dasselbe Interesse am Kind, in anderer Schreibweise.
+        // … the supervisor maintains the same interest on the child, in a different spelling.
         await SetInterestsAsync(father, new object[] { new { label = "dinosaurier", weight = 3 } });
 
         var tags = await GetAsync(father, "/api/v1/creator/interest-tags?search=dinosaurier");
         Assert.Equal(1, tags.GetArrayLength());
-        // Beide Seiten hängen am selben Tag – genau das macht die Auswahl später berechenbar.
+        // Both sides hang on the same tag - that is exactly what makes the selection computable later.
         Assert.Equal(1, tags[0].GetProperty("mediaCount").GetInt32());
         Assert.Equal(1, tags[0].GetProperty("childCount").GetInt32());
     }
@@ -93,7 +93,7 @@ public class InterestTaxonomyTests(PuglingWebAppFactory factory) : IClassFixture
         });
 
         var interests = await GetAsync(father, "/api/v1/supervisor/children/1/interests");
-        // Sortierung: stärkste Vorliebe zuerst, Abneigung zuletzt.
+        // Sorting: the strongest preference first, the dislike last.
         Assert.Equal("weltraum", interests[0].GetProperty("slug").GetString());
         Assert.Equal(3, interests[0].GetProperty("weight").GetInt32());
         var last = interests[interests.GetArrayLength() - 1];
@@ -163,7 +163,7 @@ public class InterestTaxonomyTests(PuglingWebAppFactory factory) : IClassFixture
     [Fact]
     public async Task FremdesKind_BleibtVerschlossen()
     {
-        // Demo-Vater aus dem Seed (angelegt nach Papa und dem Lehrer, daher Id 3).
+        // The demo adult from the seed (created after the father and the teacher, hence id 3).
         var demoSupervisor = await TestApi.FatherAsync(factory, id: 3, pin: "0001");
         var res = await demoSupervisor.GetAsync("/api/v1/supervisor/children/1/interests");
         Assert.Equal(HttpStatusCode.NotFound, res.StatusCode);
@@ -177,7 +177,7 @@ public class InterestTaxonomyTests(PuglingWebAppFactory factory) : IClassFixture
     [Fact]
     public async Task Backfill_UebernimmtFreitextInteressenDerBestandskinder()
     {
-        // Demo-Vater aus dem Seed (angelegt nach Papa und dem Lehrer, daher Id 3).
+        // The demo adult from the seed (created after the father and the teacher, hence id 3).
         var demoSupervisor = await TestApi.FatherAsync(factory, id: 3, pin: "0001");
         var children = await GetAsync(demoSupervisor, "/api/v1/supervisor/children");
         var demoChildId = children.EnumerateArray()
@@ -188,10 +188,10 @@ public class InterestTaxonomyTests(PuglingWebAppFactory factory) : IClassFixture
 
         Assert.Contains("minecraft", slugs);
         Assert.Contains("basketball", slugs);
-        // Klare, aber nicht dominante Vorliebe – der Vater soll nachjustieren, nicht erst anlegen.
+        // A clear but not dominant preference - the supervisor should adjust it, not create it in the first place.
         Assert.All(interests.EnumerateArray(), i => Assert.Equal(2, i.GetProperty("weight").GetInt32()));
 
-        // Der Freitext bleibt erhalten: der KI-Creator lebt davon.
+        // The free text is preserved: the AI creator lives on it.
         var child = await GetAsync(demoSupervisor, $"/api/v1/supervisor/children/{demoChildId}");
         Assert.Contains("Minecraft", child.GetProperty("interests").EnumerateArray().Select(i => i.GetString()));
     }
@@ -210,8 +210,8 @@ public class InterestTaxonomyTests(PuglingWebAppFactory factory) : IClassFixture
         var childId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/supervisor/children",
             new { name = "Slug-Kollision", pin = "4711" }));
 
-        // Beide Schreibweisen fallen auf strassenhockey (ß → ss) – und der Tag ist hier wirklich neu
-        // (nicht wie „Fußball" schon vom Seed über den Backfill angelegt).
+        // Both spellings fall onto strassenhockey (ß → ss) - and the tag is really new here (unlike "Fußball",
+        // which the seed already created through the backfill).
         await SetInterestsAsync(father, [
             new { label = "Straßenhockey", weight = 3 },
             new { label = "Strassenhockey", weight = 1 },
@@ -220,15 +220,15 @@ public class InterestTaxonomyTests(PuglingWebAppFactory factory) : IClassFixture
         var interests = await GetAsync(father, $"/api/v1/supervisor/children/{childId}/interests");
         Assert.Equal(1, interests.GetArrayLength());
         Assert.Equal("strassenhockey", interests[0].GetProperty("slug").GetString());
-        // Dubletten in der Eingabe verhalten sich wie eine Zuweisung: der letzte Eintrag gewinnt.
+        // Duplicates in the input behave like an assignment: the last entry wins.
         Assert.Equal(1, interests[0].GetProperty("weight").GetInt32());
 
-        // Und es ist wirklich ein Tag im Katalog, keine zweite Zeile daneben.
+        // And it really is one tag in the catalog, not a second row beside it.
         var tags = await GetAsync(father, "/api/v1/creator/interest-tags?search=strassenhockey");
         Assert.Equal(1, tags.GetArrayLength());
     }
 
-    // ─────────────────────────────── Einzelnes Gewicht setzen, Interesse und Tag löschen (C3-Lücke)
+    // ─────────────────────────────── Setting a single weight, deleting an interest and a tag (C3 gap)
 
     [Fact]
     public async Task Gewicht_Einzeln_Setzen_Und_Interesse_Wieder_Entfernen()
@@ -240,16 +240,16 @@ public class InterestTaxonomyTests(PuglingWebAppFactory factory) : IClassFixture
             new { label = $"Skaten-{Guid.NewGuid():N}"[..14] }));
         var url = $"/api/v1/supervisor/children/{childId}/interests";
 
-        // Ein Gewicht außerhalb -3…3 ist der Fehlerfall der Route.
+        // A weight outside -3…3 is the route's error case.
         Assert.Equal(HttpStatusCode.BadRequest,
             (await father.PutAsJsonAsync($"{url}/{tagId}", new { weight = 4 })).StatusCode);
 
-        // Upsert: das einzelne Gewicht legt die Zuordnung an, wenn es sie noch nicht gibt.
+        // Upsert: the single weight creates the assignment if it does not exist yet.
         var gesetzt = await father.PutAsJsonAsync($"{url}/{tagId}", new { weight = 3 });
         gesetzt.EnsureSuccessStatusCode();
         Assert.Equal(3, (await gesetzt.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("weight").GetInt32());
 
-        // Und derselbe Aufruf ändert es, statt eine zweite Zeile anzulegen.
+        // And the same call changes it instead of creating a second row.
         (await father.PutAsJsonAsync($"{url}/{tagId}", new { weight = 2 })).EnsureSuccessStatusCode();
         var liste = await GetAsync(father, url);
         Assert.Equal(1, liste.GetArrayLength());

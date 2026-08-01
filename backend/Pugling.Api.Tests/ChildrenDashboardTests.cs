@@ -23,14 +23,14 @@ public class ChildrenDashboardTests(PuglingWebAppFactory factory) : IClassFixtur
         var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.FreeText);
         var child = await TestApi.ChildAsync(_factory);
 
-        // Vorher: Kind sichtbar, Tagessoll vorhanden aber offen.
+        // Before: the child is visible, the day's target exists but is open.
         var before = await (await father.GetAsync("/api/v1/supervisor/children/daily-overview"))
             .Content.ReadFromJsonAsync<JsonElement>();
         var rowBefore = ChildRow(before, 1);
         Assert.True(rowBefore.GetProperty("goalsTotal").GetInt32() >= 1);
         JsonAssert.False(rowBefore, "dutyDone");
 
-        // Positions-Test bestehen → Tagesziel erfüllt, Ziel-Punkte gebucht.
+        // Pass the position test → the daily goal is met, the goal points are booked.
         var testsUrl = $"/api/v1/student/study-plans/{planId}/positions/{positionId}/tests";
         var attemptId = await TestApi.IdWithKeyAsync(await child.PostAsJsonAsync(testsUrl, new { }), "attemptId");
         var answers = new[]
@@ -40,7 +40,7 @@ public class ChildrenDashboardTests(PuglingWebAppFactory factory) : IClassFixtur
         };
         await child.PostAsJsonAsync($"{testsUrl}/{attemptId}/submit", new { answers });
 
-        // Nachher: Pflicht erledigt, Punkte des Tages sichtbar, als „geübt" markiert.
+        // After: the obligation is done, the day's points are visible, marked as "practiced".
         var after = await (await father.GetAsync("/api/v1/supervisor/children/daily-overview"))
             .Content.ReadFromJsonAsync<JsonElement>();
         var rowAfter = ChildRow(after, 1);

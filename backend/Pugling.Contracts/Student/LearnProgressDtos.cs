@@ -1,9 +1,9 @@
 namespace Pugling.Contracts.Student;
 
-// Vertrag der katalog-hierarchischen Lernstand-Sicht (Fach → Kapitel → Übung → Item), abgeleitet aus
-// den Lehrplänen des Kindes. Ergänzt die flache Vokabel-Sicht in ProgressDtos.cs; das Item-DTO teilen
-// sich beide Sichten bewusst (identische Form). Dazu die Sohn-Sicht auf Missionen/Auszeichnungen
-// und der positionsgebundene Report.
+// Contract of the catalog-hierarchical progress view (subject → chapter → exercise → item), derived from
+// the child's study plans. It complements the flat vocabulary view in ProgressDtos.cs; both views
+// deliberately share the item DTO (identical shape). Plus the child's view on missions/awards and the
+// position-bound report.
 
 /// <summary>Aggregated learning progress across a set of vocabulary items (same shape at every level).</summary>
 public record MasteryRollup(

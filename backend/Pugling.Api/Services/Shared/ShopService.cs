@@ -135,7 +135,7 @@ public class ShopService(PuglingDbContext db, WalletService wallet)
         var child = await db.Children.FirstOrDefaultAsync(c => c.Id == childId, ct);
         if (child is null) return Result<ShopPurchase>.Fail(ShopError.NotFound);
 
-        // Der Student darf aus dem Shop JEDES seiner Supervisor kaufen (gemeinsames Wallet).
+        // The student may buy from the shop of ANY of their supervisors (a shared wallet).
         var listing = await db.ShopListings
             .Include(l => l.ShopArticle)
             .FirstOrDefaultAsync(l => l.Id == listingId
@@ -179,7 +179,7 @@ public class ShopService(PuglingDbContext db, WalletService wallet)
         {
             ChildId = childId,
             ShopListingId = listing.Id,
-            SupervisorId = article.AdultId, // Aussteller festhalten: nur er storniert.
+            SupervisorId = article.AdultId, // record the issuer: only they cancel.
             ArticleNumber = article.ArticleNumber,
             Title = title,
             Description = listing.Description,
@@ -191,7 +191,7 @@ public class ShopService(PuglingDbContext db, WalletService wallet)
         };
         db.ShopPurchases.Add(purchase);
 
-        // Aggregiertes Inventar erhöhen (Upsert)
+        // Increase the aggregated inventory (upsert)
         var inventory = await db.ChildInventories
             .FirstOrDefaultAsync(i => i.ChildId == childId && i.ShopArticleId == article.Id, ct);
         if (inventory is null)
@@ -199,8 +199,8 @@ public class ShopService(PuglingDbContext db, WalletService wallet)
             {
                 ChildId = childId,
                 ShopArticleId = article.Id,
-                // Momentaufnahme wie am Kaufbeleg: sie trägt Anzeige und Vater-Filter, nachdem der
-                // Artikel gelöscht ist (FK SetNull) – bezahlte Einheiten sind Geld.
+                // A snapshot as on the purchase record: it carries the display and the supervisor filter once
+                // the article is deleted (FK SetNull) - paid units are money.
                 SupervisorId = article.AdultId,
                 ArticleNumber = article.ArticleNumber,
                 ArticleTitle = article.Title,
@@ -214,10 +214,10 @@ public class ShopService(PuglingDbContext db, WalletService wallet)
             inventory.ConcurrencyStamp = Guid.NewGuid();
         }
 
-        // Saldo-Schutz wie bei Angeboten/Skins: Der Listing-Stamp serialisiert nur denselben Bestand –
-        // das Wallet ist über alle Kaufwege hinweg geteilt. Ein Bump des Kind-Tokens lässt einen parallel
-        // gestarteten Zweitkauf (anderes Listing, Angebot oder Skin) mit Conflict scheitern, sodass der
-        // Deckungs-Check nicht doppelt umgangen und der Saldo nicht negativ werden kann.
+        // Balance protection as with listings/skins: the listing stamp serializes the same stock only - the
+        // wallet is shared across all buying paths. Bumping the child token makes a second purchase started in
+        // parallel (another listing or a skin) fail with a conflict, so the funds check cannot be bypassed twice
+        // and the balance cannot go negative.
         child.ConcurrencyStamp = Guid.NewGuid();
 
         return await TrySaveAsync(ct)
@@ -258,7 +258,7 @@ public class ShopService(PuglingDbContext db, WalletService wallet)
                 CreatedAt = nowUtc,
             });
 
-        // Inventar um die stornierte Menge reduzieren (soweit noch vorhanden)
+        // Reduce the inventory by the cancelled quantity (as far as it is still there)
         if (purchase.ShopListingId is not null)
         {
             var listingArticleId = await db.ShopListings.AsNoTracking()
@@ -295,7 +295,7 @@ public class ShopService(PuglingDbContext db, WalletService wallet)
         var childExists = await db.Children.AsNoTracking().AnyAsync(c => c.Id == childId, ct);
         if (!childExists) return Result<ActivationRequest>.Fail(ShopError.NotFound);
 
-        // Aktivierung nur für einen Artikel eines betreuenden Supervisors möglich.
+        // Activation is only possible for an article of a supervising supervisor.
         var article = await db.ShopArticles.AsNoTracking()
             .FirstOrDefaultAsync(a => a.Id == articleId
                 && db.SupervisorLinks.Any(sl => sl.StudentId == childId && sl.SupervisorId == a.AdultId), ct);
@@ -310,7 +310,7 @@ public class ShopService(PuglingDbContext db, WalletService wallet)
         {
             ChildId = childId,
             ShopArticleId = articleId,
-            SupervisorId = article.AdultId, // Aussteller festhalten: nur er genehmigt/lehnt ab.
+            SupervisorId = article.AdultId, // record the issuer: only they approve/reject.
             RequestedQuantity = quantity,
             ArticleTitle = article.Title,
             UnitType = article.UnitType,
@@ -338,7 +338,7 @@ public class ShopService(PuglingDbContext db, WalletService wallet)
         var request = await LoadPendingActivationAsync(supervisorId, childId, requestId, ct);
         if (request is null) return await MissOrNotPendingAsync(supervisorId, childId, requestId, ct);
 
-        // Nur bei fehlendem Artikelbezug (Artikel nachträglich gelöscht) gibt es kein Inventar zu buchen.
+        // Only when the article reference is missing (the article was deleted later) is there no inventory to book.
         if (request.ShopArticleId is not null)
         {
             var inv = await db.ChildInventories
@@ -400,8 +400,8 @@ public class ShopService(PuglingDbContext db, WalletService wallet)
         _ => false,
     };
 
-    // Aussteller-gebunden: nur der Supervisor, der den Artikel/das Angebot ausgestellt hat (SupervisorId-Snapshot),
-    // sieht/bearbeitet den Kauf bzw. die Anfrage. Ein fremd ausgestellter Vorgang erscheint als NotFound.
+    // Bound to the issuer: only the supervisor who issued the article/listing (SupervisorId snapshot) sees or
+    // edits the purchase or the request. A case issued by someone else appears as NotFound.
     private Task<ShopPurchase?> LoadOpenPurchaseAsync(int supervisorId, int childId, int purchaseId, CancellationToken ct) =>
         db.ShopPurchases.FirstOrDefaultAsync(
             p => p.Id == purchaseId && p.ChildId == childId && p.SupervisorId == supervisorId && p.Status == ShopPurchaseStatus.Owned, ct);

@@ -27,13 +27,13 @@ public static class Roles
 /// <summary>Access to identity from the JWT.</summary>
 public static class ClaimsPrincipalExtensions
 {
-    // Entität-IDs aus dem Token: fid trägt sowohl das Creator- als auch das Supervisor-Profil
-    // (ein Erwachsener = ein Adult); cid trägt das Student-Profil. (Adult/Child sind die Fach-Entitäten,
-    // nicht die Rollen – die Rollen heißen Creator/Supervisor/Student.)
+    // Entity ids from the token: fid carries both the creator and the supervisor profile (one adult = one
+    // Adult); cid carries the student profile. (Adult/Child are the domain entities, not the roles - the
+    // roles are called Creator/Supervisor/Student.)
     //
-    // Der Claim heißt weiterhin `fid`, obwohl die Entität `Adult` heißt: er steht in bereits ausgestellten
-    // Tokens. Ihn umzubenennen würde jede offene Sitzung ungültig machen – für einen Namen, den niemand
-    // sieht. Der Zugriff heißt `AdultId()`, damit der Code die richtige Sprache spricht.
+    // The claim is still called `fid` although the entity is called `Adult`: it sits in already issued
+    // tokens. Renaming it would invalidate every open session - for a name nobody sees. The accessor is
+    // called `AdultId()` so that the code speaks the right language.
     /// <summary>The <c>Adult</c> id from the <c>fid</c> claim (Creator/Supervisor profile), if present.</summary>
     public static int? AdultId(this ClaimsPrincipal u) => int.TryParse(u.FindFirstValue("fid"), out var v) ? v : null;
     /// <summary>The <c>Child</c> id from the <c>cid</c> claim (Student profile), if present.</summary>
@@ -46,7 +46,7 @@ public static class ClaimsPrincipalExtensions
     /// </summary>
     public static int? AccountId(this ClaimsPrincipal u) => int.TryParse(u.FindFirstValue("aid"), out var v) ? v : null;
 
-    // Ebenen-Rollen und ihre Ziel-IDs.
+    // Tier roles and their target ids.
     /// <summary>Does the principal carry the tier role <see cref="Roles.Creator"/>?</summary>
     public static bool IsCreator(this ClaimsPrincipal u) => u.IsInRole(Roles.Creator);
     /// <summary>Does the principal carry the tier role <see cref="Roles.Supervisor"/>?</summary>
@@ -62,11 +62,10 @@ public static class ClaimsPrincipalExtensions
     /// <summary>The <c>Child</c> id of the Student profile (identical to <see cref="ChildId"/>).</summary>
     public static int? StudentId(this ClaimsPrincipal u) => u.ChildId();
 
-    // `Owns(this ClaimsPrincipal, Exercise)` wurde entfernt: Es behauptete, „die eine Stelle" der
-    // Autorschafts-Regel zu sein, war aber nach dem RWX-Umbau von niemandem mehr aufgerufen –
-    // durchgesetzt wird ausschließlich über die Grants (siehe ExercisePermissionService). Ein toter
-    // Helfer mit genau diesem Kommentar ist schlimmer als keiner: er lädt dazu ein, die Rechteprüfung
-    // an ihm statt an den Grants festzumachen.
+    // `Owns(this ClaimsPrincipal, Exercise)` was removed: it claimed to be "the one place" of the authorship
+    // rule but after the RWX rebuild nobody called it - enforcement runs exclusively through the grants (see
+    // ExercisePermissionService). A dead helper with exactly that comment is worse than none: it invites you
+    // to pin the rights check on it instead of on the grants.
 
     /// <summary>
     /// Pure ownership comparison (for hot paths/projections where the <c>fid</c> is determined once):
@@ -83,8 +82,8 @@ public static class ClaimsPrincipalExtensions
 /// </summary>
 public class AuthAccess(PuglingDbContext db)
 {
-    // OR-basiert statt if/else: ein Konto kann Student UND Supervisor sein (perspektivisch in verschiedenen
-    // Haushalten). Jede Rolle wird eigenständig geprüft; erfüllt eine, ist der Zugriff erlaubt.
+    // OR-based instead of if/else: an account can be student AND supervisor (in different households,
+    // eventually). Every role is checked on its own; if one holds, access is granted.
 
     /// <summary>Does the plan belong to the logged-in user (student = own plan, supervisor = plan of a supervised child)?</summary>
     public async Task<bool> OwnsPlanAsync(ClaimsPrincipal user, StudyPlan plan, CancellationToken ct = default)

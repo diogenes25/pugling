@@ -55,16 +55,16 @@ public class PflichtMalusTests(PuglingWebAppFactory factory) : IClassFixture<Pug
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
         var (_, positionId) = SeedPenaltyPlan(factory, childId, exerciseId, today.AddDays(-2), penaltyCoins: 50);
 
-        // 60 Münzen Startguthaben; nie geübt → die zwei geschlossenen Tage (heute-2, heute-1) sind gerissen.
+        // 60 coins starting balance; never practiced → the two closed days (today-2, today-1) are missed.
         (await father.PostAsJsonAsync($"/api/v1/supervisor/children/{childId}/points", new { amount = 60, reason = "Start" }))
             .EnsureSuccessStatusCode();
 
-        // Der Kind-Login rechnet nach: 2 × 50 = 100 Malus → 60 - 100 = -40 (Schuld erlaubt).
+        // The child's login settles it: 2 × 50 penalty → 60 - 100 = -40 (debt is allowed).
         var child = await TestApi.ChildAsync(factory, childId, "7001");
         var wallet = await JsonAsync(await child.GetAsync("/api/v1/student/me/points"));
         Assert.Equal(-40, wallet.GetProperty("coins").GetInt32());
 
-        // Genau zwei Malus-Buchungen à -50, Kategorie GoalPenalty.
+        // Exactly two penalty entries of -50, category GoalPenalty.
         var entries = await JsonAsync(await child.GetAsync("/api/v1/student/me/points/entries"));
         var penalties = entries.EnumerateArray()
             .Where(e => e.GetProperty("kind").GetString() == "GoalPenalty").ToList();
@@ -77,7 +77,7 @@ public class PflichtMalusTests(PuglingWebAppFactory factory) : IClassFixture<Pug
             Assert.Equal(2, db.PositionGoalPenalties.Count(p => p.PlanPositionId == positionId));
         }
 
-        // Zweiter Login → kein erneuter Abzug (Unique-Index + Existenz-Check).
+        // A second login → no further deduction (unique index + existence check).
         var childAgain = await TestApi.ChildAsync(factory, childId, "7001");
         var wallet2 = await JsonAsync(await childAgain.GetAsync("/api/v1/student/me/points"));
         Assert.Equal(-40, wallet2.GetProperty("coins").GetInt32());
@@ -102,8 +102,8 @@ public class PflichtMalusTests(PuglingWebAppFactory factory) : IClassFixture<Pug
 
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
         SeedPenaltyPlan(factory, childId, exerciseId, today.AddDays(-2), penaltyCoins: 5, title: "Tages-Plan");
-        // Eine Woche zählt erst als gerissen, wenn sie voll abgeschlossen ist (Sonntag < heute) – der Start
-        // liegt darum 14 Tage zurück, damit mindestens eine geschlossene Woche in der Laufzeit liegt.
+        // A week only counts as missed once it is fully closed (Sunday < today) - the start therefore lies 14
+        // days back, so that at least one closed week falls within the runtime.
         SeedPenaltyPlan(factory, childId, exerciseId, today.AddDays(-14), penaltyCoins: 7,
             cadence: GoalCadence.Weekly, title: "Wochen-Plan", durationDays: 20);
 
@@ -116,7 +116,7 @@ public class PflichtMalusTests(PuglingWebAppFactory factory) : IClassFixture<Pug
 
         Assert.All(reasons.Where(r => r.Contains("[Tages-Plan")), r => Assert.Contains("Tagesziel gerissen", r));
         Assert.All(reasons.Where(r => r.Contains("[Wochen-Plan")), r => Assert.Contains("Wochenziel gerissen", r));
-        // Nicht vakuum-grün: beide Rhythmen müssen überhaupt abgerechnet worden sein.
+        // Not vacuously green: both cadences must have been settled at all.
         Assert.Contains(reasons, r => r.Contains("[Tages-Plan"));
         Assert.Contains(reasons, r => r.Contains("[Wochen-Plan"));
     }
@@ -134,7 +134,7 @@ public class PflichtMalusTests(PuglingWebAppFactory factory) : IClassFixture<Pug
         (await father.PostAsJsonAsync($"/api/v1/supervisor/children/{childId}/points", new { amount = 60, reason = "Start" }))
             .EnsureSuccessStatusCode();
 
-        // Der Vater hatte den Plan aus – kein Malus für Tage, an denen nicht gelernt werden durfte.
+        // The supervisor had the plan switched off - no penalty for days on which learning was not allowed.
         var child = await TestApi.ChildAsync(factory, childId, "7003");
         var wallet = await JsonAsync(await child.GetAsync("/api/v1/student/me/points"));
         Assert.Equal(60, wallet.GetProperty("coins").GetInt32());
@@ -146,7 +146,7 @@ public class PflichtMalusTests(PuglingWebAppFactory factory) : IClassFixture<Pug
         var father = await TestApi.FatherAsync(factory);
         var childId = await FreshChildIdAsync(father, "7002");
 
-        // Münzen (Default-Währung) und – neu – Gems über denselben Endpunkt verschenken.
+        // Give away coins (the default currency) and - newly - gems through the same endpoint.
         (await father.PostAsJsonAsync($"/api/v1/supervisor/children/{childId}/points",
             new { amount = 25, reason = "Taschengeld", currency = "Coins" })).EnsureSuccessStatusCode();
         (await father.PostAsJsonAsync($"/api/v1/supervisor/children/{childId}/points",

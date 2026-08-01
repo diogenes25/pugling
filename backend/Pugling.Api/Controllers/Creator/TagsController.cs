@@ -20,8 +20,8 @@ namespace Pugling.Api.Controllers.Creator;
 [Authorize]
 public class TagsController(PuglingDbContext db, AuthAccess access) : ControllerBase
 {
-    // Attribution „wer hat getaggt": Student → Sohn, jeder Erwachsene (Creator und/oder Supervisor) → Vater.
-    // Nicht auf IsSupervisor allein prüfen – ein reiner Creator (künftige Lehrer-Konten) ist ebenfalls Erwachsener.
+    // Attribution of "who tagged": student → child, every adult (creator and/or supervisor) → supervisor.
+    // Do not check IsSupervisor alone - a pure creator (teacher accounts) is an adult as well.
     private TaggedBy CurrentRole() => User.IsStudent() ? TaggedBy.Sohn : TaggedBy.Vater;
 
     private static TagResponse Map(Tag t) =>
@@ -169,9 +169,9 @@ public class TagsController(PuglingDbContext db, AuthAccess access) : Controller
         var tag = await FindOwnedAsync(tagId, ct);
         if (tag is null) return NotFound();
 
-        // Von `Exercises` aus filtern, **nicht** von `ExerciseTags` über `.Select(x => x.Exercise!)`:
-        // EF Core lässt `Include` nur an einer Entity-Wurzel zu, nach einer Projektion wirft es zur Laufzeit.
-        // Die Route lieferte darum bei jedem Aufruf 500 – aufgefallen erst, als C3 sie zum ersten Mal aufrief.
+        // Filter from `Exercises`, **not** from `ExerciseTags` through `.Select(x => x.Exercise!)`:
+        // EF Core allows `Include` only on an entity root; after a projection it throws at runtime.
+        // The route therefore returned 500 on every call - noticed only when C3 called it for the first time.
         var exercises = await db.Exercises
             .Where(e => db.ExerciseTags.Any(x => x.TagId == tagId && x.ExerciseId == e.Id))
             .Include(e => e.Chapter!).ThenInclude(c => c.Subject)
@@ -193,7 +193,7 @@ public class TagsController(PuglingDbContext db, AuthAccess access) : Controller
             .OrderBy(t => t.Name)).ToListAsync(ct);
     }
 
-    // ---- Vokabeln taggen (kind-skopiert) -----------------------------------------------------------
+    // ---- Tagging vocabulary (child-scoped) -----------------------------------------------------------
 
     /// <summary>Marks one or more store vocabulary entries with this tag (already marked ones are skipped).</summary>
     [HttpPost("{tagId:int}/vocabulary")]

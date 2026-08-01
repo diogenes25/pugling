@@ -80,7 +80,7 @@ public class LocalMediaStorage(MediaOptions options, IWebHostEnvironment env, IL
     public Task DeleteFolderAsync(string folder, CancellationToken ct = default)
     {
         var full = Resolve(folder);
-        // Best effort: eine verwaiste Datei ist harmlos, ein Serverfehler beim Löschen des Assets nicht.
+        // Best effort: an orphaned file is harmless, a server error while deleting the asset is not.
         try { if (Directory.Exists(full)) Directory.Delete(full, recursive: true); }
         catch (IOException e) { logger.LogWarning(e, "Medien-Ordner {Folder} konnte nicht gelöscht werden", folder); }
         return Task.CompletedTask;

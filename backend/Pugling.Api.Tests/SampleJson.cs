@@ -39,18 +39,18 @@ internal static class SampleJson
         if (underlying == typeof(bool)) return JsonValue.Create(false);
         if (underlying == typeof(Guid)) return JsonValue.Create(Guid.Empty.ToString());
         if (underlying.IsEnum) return JsonValue.Create(Enum.GetNames(underlying).FirstOrDefault() ?? "");
-        // Datumstypen kommen als ISO-Zeichenkette; ein fester Wert hält die Nutzlast von der Wanduhr frei.
+        // Date types arrive as ISO strings; a fixed value keeps the payload free of the wall clock.
         if (underlying == typeof(DateOnly)) return JsonValue.Create("2026-01-01");
         if (underlying == typeof(DateTime) || underlying == typeof(DateTimeOffset)) return JsonValue.Create("2026-01-01T00:00:00Z");
         if (underlying == typeof(TimeOnly) || underlying == typeof(TimeSpan)) return JsonValue.Create("12:00:00");
         if (underlying.IsPrimitive || underlying == typeof(decimal)) return JsonValue.Create(1);
 
-        // Ein Datei-Upload lässt sich nicht als JSON bauen – der Aufrufer muss das erkennen.
+        // A file upload cannot be built as JSON - the caller has to recognize that.
         if (typeof(IFormFile).IsAssignableFrom(underlying) || typeof(IFormFileCollection).IsAssignableFrom(underlying))
             return null;
 
-        // Sammlungen leer: eine gefüllte Liste zöge die Validierung ihrer Elemente nach sich, und
-        // gebraucht wird hier nur ein bindbarer Rumpf.
+        // Collections empty: a filled list would drag the validation of its elements along, and all that is
+        // needed here is a bindable body.
         if (underlying != typeof(string) && typeof(IEnumerable).IsAssignableFrom(underlying))
             return new JsonArray();
 

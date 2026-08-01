@@ -12,7 +12,7 @@ public sealed class SupervisorApi(HttpClient http)
     /// <summary>The underlying HttpClient – an escape hatch for endpoints that don't (yet) have a wrapper.</summary>
     public HttpClient Http { get; } = http;
 
-    // ---------------------------------------------------------------- Kinder
+    // ---------------------------------------------------------------- Children
 
     /// <summary>All supervised children.</summary>
     public Task<IReadOnlyList<ChildResponse>> ListChildrenAsync(CancellationToken ct = default) =>
@@ -94,7 +94,7 @@ public sealed class SupervisorApi(HttpClient http)
     public Task<Dashboard> GetDailyOverviewAsync(DateOnly? date = null, CancellationToken ct = default) =>
         Http.GetAsync<Dashboard>($"{Root}/children/daily-overview" + PuglingHttp.Query(("date", date)), ct);
 
-    // ---------------------------------------------------------------- Lehrpläne & Positionen
+    // ---------------------------------------------------------------- Study plans & positions
 
     /// <summary>Study plans, optionally filtered by a child.</summary>
     public Task<IReadOnlyList<PlanResponse>> ListPlansAsync(int? childId = null, CancellationToken ct = default) =>
@@ -160,7 +160,7 @@ public sealed class SupervisorApi(HttpClient http)
         CancellationToken ct = default) =>
         Http.PostAsync<KeyResultResponse>($"{Root}/children/{childId}/objectives/{objectiveId}/key-results", request, ct);
 
-    // ---------------------------------------------------------------- Familien-Shop
+    // ---------------------------------------------------------------- Family shop
 
     /// <summary>The article catalog of the supervisor.</summary>
     public Task<IReadOnlyList<ShopArticleDto>> ListShopArticlesAsync(CancellationToken ct = default) =>
@@ -199,7 +199,7 @@ public sealed class SupervisorApi(HttpClient http)
     public Task<ActivationRequestDto> RejectActivationAsync(int childId, int requestId, CancellationToken ct = default) =>
         Http.PostAsync<ActivationRequestDto>($"{Root}/children/{childId}/shop/activations/{requestId}/reject", null, ct);
 
-    // ---------------------------------------------------------------- Missionen & Auszeichnungen
+    // ---------------------------------------------------------------- Missions & awards
 
     /// <summary>Missions of a child.</summary>
     public Task<IReadOnlyList<MissionDto>> ListMissionsAsync(int childId, CancellationToken ct = default) =>
@@ -217,7 +217,7 @@ public sealed class SupervisorApi(HttpClient http)
     public Task<AchievementDto> CreateAchievementAsync(int childId, CreateAchievementDto dto, CancellationToken ct = default) =>
         Http.PostAsync<AchievementDto>($"{Root}/children/{childId}/achievements", dto, ct);
 
-    // ---------------------------------------------------------------- Klassenarbeiten
+    // ---------------------------------------------------------------- Class tests
 
     /// <summary>Class tests, optionally filtered by a child.</summary>
     public Task<IReadOnlyList<KlassenarbeitResponse>> ListClassTestsAsync(int? childId = null, CancellationToken ct = default) =>

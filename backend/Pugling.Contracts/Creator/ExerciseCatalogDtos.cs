@@ -2,8 +2,8 @@ using System.Text.Json;
 
 namespace Pugling.Contracts.Creator;
 
-// Vertrag der typ-übergreifenden Katalogsicht: Suchen, Bearbeiten-Laden, Verwendungsnachweis.
-// Die typ-spezifische Konfiguration reist als rohes JSON (JsonElement) mit.
+// Contract of the type-agnostic catalog view: search, load-for-edit, usage report.
+// The type-specific configuration travels along as raw JSON (JsonElement).
 
 /// <summary>
 /// Lean hit row of the exercise search (child-neutral catalog). <c>AuthorAdultId</c>/<c>AuthorName</c> carry the

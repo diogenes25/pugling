@@ -15,7 +15,7 @@ public class PuglingClientTests : IClassFixture<PuglingWebAppFactory>
 
     public PuglingClientTests(PuglingWebAppFactory factory) => _factory = factory;
 
-    // Seed: Konto 2 = Herr Schmidt (Creator+Supervisor, PIN 9999), Konto 1 = Papa (PIN 0000, betreut Kind 1).
+    // Seed: account 2 = Herr Schmidt (creator+supervisor, PIN 9999), account 1 = the father (PIN 0000, supervises child 1).
     private HttpClient Authenticated(int accountId, string pin) =>
         _factory.CreateDefaultClient(AuthHandler.Standalone(new PuglingClientOptions
         {
@@ -28,7 +28,7 @@ public class PuglingClientTests : IClassFixture<PuglingWebAppFactory>
 
     private SupervisorApi Supervisor() => new(Authenticated(1, "0000"));
 
-    // Die Student-Lesesichten liest der Agent mit dem Supervisor-Konto (die Controller sind nur [Authorize]).
+    // The agent reads the student read views with the supervisor account (those controllers are only [Authorize]).
     private StudentApi ProgressOfChild() => new(Authenticated(1, "0000"));
 
     /// <summary>
@@ -52,13 +52,13 @@ public class PuglingClientTests : IClassFixture<PuglingWebAppFactory>
     {
         var creator = Creator();
 
-        // Kein manuelles Token: der AuthHandler holt es beim ersten Aufruf.
+        // No manual token: the AuthHandler fetches it on the first call.
         var types = await creator.GetExerciseTypesAsync();
 
         Assert.NotEmpty(types);
         var vocabulary = Assert.Single(types, t => t.Type == "Vocabulary");
         Assert.Equal("vocabulary", vocabulary.AuthoringRoute);
-        // Enum-Parität: der Server sendet "StudyPlanTest" als String – ohne den Converter bräche das still.
+        // Enum parity: the server sends "StudyPlanTest" as a string - without the converter that would break silently.
         Assert.Equal(ExerciseCheckMode.StudyPlanTest, vocabulary.CheckMode);
     }
 
@@ -83,13 +83,13 @@ public class PuglingClientTests : IClassFixture<PuglingWebAppFactory>
         Assert.True(exercise.IsOwn);
         Assert.True(exercise.IsOwner);
 
-        // Die Inline-Vokabeln müssen als eigene Item-Ebene materialisiert und im Store verlinkt sein.
+        // The inline vocabulary must be materialized as its own item tier and linked in the store.
         var items = await creator.ListItemsAsync(subject.Id, chapter.Id, exercise.Id);
         Assert.Equal(2, items.Count);
         Assert.All(items, i => Assert.True(i.VocabularyId > 0));
         Assert.Contains(items, i => i.Front == "the blackboard" && i.Back == "die Tafel");
 
-        // Und die Übung muss über die kindneutrale Katalogsuche auffindbar sein.
+        // And the exercise has to be findable through the child-neutral catalog search.
         var found = await creator.SearchExercisesAsync(subjectId: subject.Id);
         Assert.Contains(found, e => e.Id == exercise.Id);
     }
@@ -116,7 +116,7 @@ public class PuglingClientTests : IClassFixture<PuglingWebAppFactory>
         var creator = Creator();
         var supervisor = Supervisor();
 
-        // Inhalt beim Creator anlegen …
+        // Create the content as the creator …
         var subject = await creator.CreateSubjectAsync(new CreateSubjectDto("Client-Test Steuerung"));
         var chapter = await creator.CreateChapterAsync(subject.Id, new CreateChapterDto("Kapitel 1", 1));
         var exercise = await creator.CreateExerciseAsync(subject.Id, chapter.Id, "matching",
@@ -126,7 +126,7 @@ public class PuglingClientTests : IClassFixture<PuglingWebAppFactory>
                 Pairs = [new MatchPair("go", "went"), new MatchPair("buy", "bought")],
             }));
 
-        // … und vom Supervisor zuweisen.
+        // … and assign it as the supervisor.
         var child = Assert.Single(await supervisor.ListChildrenAsync(), c => c.Id == 1);
         var plan = await supervisor.CreatePlanAsync(
             new CreatePlanDto(child.Id, "Client-Test Plan", subject.Id, null, 14));
@@ -142,8 +142,8 @@ public class PuglingClientTests : IClassFixture<PuglingWebAppFactory>
         Assert.Equal(20, position.PointsGoalMet);
         Assert.Equal(5, position.PenaltyCoins);
 
-        // Das große Ziel samt Etappe in EINEM Aufruf – das war die Bedingung dafür, die frühere
-        // Lernziel-Ebene ersetzen zu können, ohne dass ein Ein-Satz-Ziel zu zwei Requests wird.
+        // The big goal including a milestone in ONE call - that was the condition for being able to replace the
+        // former learn-goal tier without turning a one-sentence goal into two requests.
         var objective = await supervisor.CreateObjectiveAsync(child.Id, new CreateObjectiveRequest(
             "Vokabeln sitzen", null, ObjectiveKind.Committed, null, null, 0, 0,
             [new CreateKeyResultRequest(subject.Id, null, null, KeyResultMetric.MasteredPercent, 80, "80 % beherrschen")]));
@@ -172,8 +172,8 @@ public class PuglingClientTests : IClassFixture<PuglingWebAppFactory>
     [Fact]
     public void Alle_Fassaden_lassen_sich_gemeinsam_registrieren()
     {
-        // Regression: eine geteilte AuthHandler-Instanz lehnt die HttpClientFactory beim zweiten
-        // benannten Client ab („InnerHandler must be null"). Geteilt wird deshalb nur das Token.
+        // Regression: the HttpClientFactory rejects a shared AuthHandler instance on the second named client
+        // ("InnerHandler must be null"). That is why only the token is shared.
         var services = new ServiceCollection();
         services.AddPuglingClient(options =>
         {
@@ -220,28 +220,28 @@ public class PuglingClientTests : IClassFixture<PuglingWebAppFactory>
         var unit = await creator.CreateUnitAsync(series.Id, new CreateSeriesUnitDto(
             "Unit 3 – Growing up", 8, 3, "Familie", "Present perfect", "to grow up, responsibility"));
 
-        // Klassenstufe und Schulart bleiben offen: das Seed-Kind 1 soll dieses Profil in jedem Fall
-        // treffen. Die Rangfolge selbst prüft CreatorProfileTests mit einem eigens angelegten Kind.
+        // Grade and school type stay open: the seed child 1 should match this profile in any case. The ranking
+        // itself is checked by CreatorProfileTests with a child created for the purpose.
         var profile = await creator.CreateProfileAsync(new CreateCreatorProfileDto(
             $"Englisch Access {Guid.NewGuid():N}", "Englisch", null, null,
             null, null, series.Id, "en", "de", "Du bist Englischlehrer.", "Kurze Sätze.", ["Vocabulary"], true));
 
-        // Erst die Reihe am Lehrbuch des Kindes macht den Treffer möglich.
+        // Only the series on the child's textbook makes the match possible.
         var book = await supervisor.CreateTextbookAsync(1,
             new CreateTextbookDto("Access 8", "Englisch", null, 8, "Cornelsen", null, null, series.Id, unit.Id));
         Assert.Equal(unit.Label, book.CurrentUnitLabel);
 
-        // Der Match-Endpunkt liest Kind-Daten: er braucht das betreuende Konto, nicht nur die Creator-Rolle.
+        // The match endpoint reads child data: it needs the supervising account, not just the creator role.
         var supervisingCreator = new CreatorApi(Authenticated(1, "0000"));
         var matches = await supervisingCreator.MatchProfilesAsync(1);
         var match = Assert.Single(matches, m => m.Profile.Id == profile.Id);
         Assert.Contains("series_match", match.Reasons);
 
-        // Dasselbe Kind mit einem fremden Konto: die Profil-Suche ist kein Seitenkanal auf Kind-Daten.
+        // The same child with another account: the profile search is not a side channel onto child data.
         var foreign = await Assert.ThrowsAsync<PuglingApiException>(() => creator.MatchProfilesAsync(1));
         Assert.Equal(HttpStatusCode.Forbidden, foreign.StatusCode);
 
-        // Die Units der Reihe liest der Agent, bevor er Stoff erfindet.
+        // The agent reads the units of the series before it invents subject matter.
         var units = await creator.ListUnitsAsync(series.Id, grade: 8);
         Assert.Contains(units, u => u.Grammar == "Present perfect");
 
@@ -254,7 +254,7 @@ public class PuglingClientTests : IClassFixture<PuglingWebAppFactory>
     {
         var progress = ProgressOfChild();
 
-        // Alle drei Sichten müssen dem Supervisor offenstehen – auf ihnen beruht die Schwächen-Analyse.
+        // All three views must be open to the supervisor - the weakness analysis rests on them.
         var items = await progress.ListVocabularyProgressAsync(1, take: 5);
         var weakWords = await progress.ListWordMasteryAsync(1, onlyWeak: true, take: 5);
         var subjects = await progress.ListSubjectProgressAsync(1);
@@ -267,7 +267,7 @@ public class PuglingClientTests : IClassFixture<PuglingWebAppFactory>
     [Fact]
     public async Task Fremdes_Kind_bleibt_auch_in_den_Student_Sichten_verschlossen()
     {
-        // Herr Schmidt betreut kein Kind – der Lernstand von Kind 1 geht ihn nichts an.
+        // Herr Schmidt supervises no child - child 1's progress is none of their business.
         var foreign = new StudentApi(Authenticated(2, "9999"));
 
         var error = await Assert.ThrowsAsync<PuglingApiException>(() => foreign.ListWordMasteryAsync(1));
@@ -280,12 +280,12 @@ public class PuglingClientTests : IClassFixture<PuglingWebAppFactory>
     {
         var creator = Creator();
 
-        // 404: es gibt kein Fach mit dieser Id.
+        // 404: there is no subject with this id.
         var notFound = await Assert.ThrowsAsync<PuglingApiException>(() => creator.GetSubjectAsync(999_999));
         Assert.Equal(HttpStatusCode.NotFound, notFound.StatusCode);
         Assert.False(string.IsNullOrWhiteSpace(notFound.Code));
 
-        // 400 mit Feldfehlern: Birkenbihl akzeptiert keine Sätze ohne Dekodierung.
+        // 400 with field errors: Birkenbihl accepts no sentences without a decoding.
         var subject = await creator.CreateSubjectAsync(new CreateSubjectDto("Client-Test Fehler"));
         var chapter = await creator.CreateChapterAsync(subject.Id, new CreateChapterDto("Kapitel", 1));
         var invalid = await Assert.ThrowsAsync<PuglingApiException>(() =>
@@ -305,7 +305,7 @@ public class PuglingClientTests : IClassFixture<PuglingWebAppFactory>
     [Fact]
     public async Task Falsche_Rolle_liefert_403_statt_stiller_Fehlfunktion()
     {
-        // Herr Schmidt ist reiner Lehrer – er betreut kein Kind, darf also dessen Punkte nicht lesen.
+        // Herr Schmidt is a pure teacher - they supervise no child and therefore must not read its points.
         var teacherAsSupervisor = new SupervisorApi(Authenticated(2, "9999"));
 
         var error = await Assert.ThrowsAsync<PuglingApiException>(() => teacherAsSupervisor.GetPointsAsync(1));
@@ -334,7 +334,7 @@ public class PuglingClientTests : IClassFixture<PuglingWebAppFactory>
 
         Assert.Equal(1, sentence.SentenceId);
         Assert.NotEmpty(sentence.Result);
-        // Wort-Ids sind übungsweit eindeutig und werden serverseitig vergeben.
+        // Word ids are unique across the exercise and are assigned server-side.
         Assert.Equal(sentence.Result.Select(w => w.WordId).Distinct().Count(), sentence.Result.Count);
         Assert.Contains(sentence.Result, w => w.LearningWord == "go");
     }
@@ -357,7 +357,7 @@ public class PuglingClientTests : IClassFixture<PuglingWebAppFactory>
             Tags: ["Weltraum", "Foto"],
             Variants: [new CreateMediaVariantDto(MediaPurpose.Card, "https://cdn.test/astro-512.webp", 512, 512)]));
 
-        // Enum-Parität in beide Richtungen (String über die Leitung, Enum im Vertrag).
+        // Enum parity in both directions (a string over the wire, an enum in the contract).
         Assert.Equal(ContentRating.Everyone, asset.Rating);
         Assert.Equal(MediaOrigin.Stock, asset.Origin);
         Assert.Equal(MediaPurpose.Card, Assert.Single(asset.Variants).Purpose);
@@ -368,10 +368,10 @@ public class PuglingClientTests : IClassFixture<PuglingWebAppFactory>
 
         var space = Assert.Single(interests, i => i.Slug == "weltraum");
         Assert.Equal(3, space.Weight);
-        // Negatives Gewicht = Abneigung; sie schließt passende Bilder später hart aus.
+        // A negative weight = a dislike; it excludes matching images hard later on.
         Assert.Equal(-2, Assert.Single(interests, i => i.Slug == "spinnen").Weight);
 
-        // Dieselbe Tag-Zeile trägt jetzt beide Seiten – das ist der Angelpunkt.
+        // The same tag row now carries both sides - that is the pivot.
         var tag = Assert.Single(await creator.ListInterestTagsAsync("weltraum"));
         Assert.Equal(space.TagId, tag.Id);
         Assert.Equal(1, tag.MediaCount);
@@ -396,10 +396,10 @@ public class PuglingClientTests : IClassFixture<PuglingWebAppFactory>
         var en = await creator.CreateVocabularyAsync(new CreateVocabularyDto(null, "en", "de", "run", "laufen"));
         var de = await creator.CreateVocabularyAsync(new CreateVocabularyDto(null, "de", "en", "laufen", "run"));
 
-        // Ein Wort, zwei Darstellungen – der Rang entscheidet nur bei Gleichstand der Interessen.
+        // One word, two renditions - the rank only decides on a tie of the interests.
         await creator.LinkVocabularyMediaAsync(en.Id, new AddMediaLinkDto(unicorn.Id, Weight: 5));
         await creator.LinkVocabularyMediaAsync(en.Id, new AddMediaLinkDto(Key: "client_run_flash"));
-        // Dasselbe Bild an einem zweiten Wort (getrennte Store-Zeile je Sprachrichtung).
+        // The same image on a second word (a separate store row per language direction).
         await creator.LinkVocabularyMediaAsync(de.Id, new AddMediaLinkDto(unicorn.Id));
 
         var forEnglish = await creator.ListVocabularyMediaAsync(en.Id);
@@ -410,7 +410,7 @@ public class PuglingClientTests : IClassFixture<PuglingWebAppFactory>
         Assert.Equal(2, usage.Count);
         Assert.All(usage, u => Assert.Equal("vocabulary", u.Carrier));
 
-        // Löschen ist nicht gesperrt: ohne Bild schrumpft nur die Auswahl, es bleibt kein Platzhalter.
+        // Deleting is not blocked: without an image the selection only shrinks, no placeholder remains.
         await creator.DeleteMediaAsync(flash.Id);
         Assert.Single(await creator.ListVocabularyMediaAsync(en.Id));
     }
@@ -425,13 +425,13 @@ public class PuglingClientTests : IClassFixture<PuglingWebAppFactory>
         var creator = Creator();
 
         var asset = await creator.UploadMediaAsync(TinyPng(600, 300), "generiert.png",
-            // Eigenes Schlagwort: die Tests dieser Klasse teilen sich eine DB, und ein Nachbartest zählt
-            // die Assets an „weltraum".
+            // A keyword of its own: the tests of this class share a DB, and a neighboring test counts the
+            // assets on "weltraum".
             "Ein generiertes Motiv", tags: ["Raumfahrt"], origin: MediaOrigin.Generated);
 
         Assert.Equal(MediaOrigin.Generated, asset.Origin);
         Assert.Contains("raumfahrt", asset.Tags);
-        // Thumb/Card aus einer Datei; Full bleibt bei der Quellbreite (kein Hochskalieren).
+        // Thumb/card from one file; full stays at the source width (no upscaling).
         Assert.Equal(3, asset.Variants.Count);
         Assert.Equal(128, Assert.Single(asset.Variants, v => v.Purpose == MediaPurpose.Thumb).Width);
         Assert.Equal(600, Assert.Single(asset.Variants, v => v.Purpose == MediaPurpose.Full).Width);

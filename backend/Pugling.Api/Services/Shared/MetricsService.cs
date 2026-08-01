@@ -74,7 +74,7 @@ public class MetricsService(PuglingDbContext db, PositionProgressService progres
         if (completeDays.Count == 0) return 0;
         var set = completeDays as HashSet<DateOnly> ?? completeDays.ToHashSet();
 
-        // Die Serie darf heute noch offen sein: zählt ab heute, wenn heute schon vollständig, sonst ab gestern.
+        // The streak may still be open today: count from today if today is already complete, otherwise from yesterday.
         var cursor = set.Contains(today) ? today : today.AddDays(-1);
         var streak = 0;
         while (set.Contains(cursor))

@@ -15,9 +15,9 @@ namespace Pugling.Api.Controllers.Supervisor;
 [Tags("Supervisor – Timetable")]
 [Produces("application/json")]
 [Authorize(Roles = Roles.Supervisor)]
-// Eigentum über den geteilten Filter statt inline je Action (CLAUDE.md: „nicht inline wiederholen").
-// Nebeneffekt und Absicht: der Filter antwortet auf ein fremdes Kind mit **404** statt 403 – so wie jeder
-// andere kindbezogene Controller, damit sich fremde Kind-Ids nicht durch die Statuscodes enumerieren lassen.
+// Ownership through the shared filter instead of inline per action (CLAUDE.md: "do not repeat it inline").
+// Side effect and intent: on someone else's child the filter answers **404** instead of 403 - like every
+// other child-scoped controller, so other people's child ids cannot be enumerated through status codes.
 [ServiceFilter(typeof(ChildOwnershipFilter))]
 public class TimetableController(PuglingDbContext db) : ControllerBase
 {

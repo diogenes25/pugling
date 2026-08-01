@@ -28,25 +28,25 @@ public class InterestTagService(PuglingDbContext db)
         var slug = InterestSlug.From(text);
         if (slug.Length == 0) return null;
 
-        // ZUERST der ChangeTracker, dann die DB: ein im selben Aufruf angelegter Tag ist noch nicht
-        // gespeichert und wäre für jede Abfrage unsichtbar. Zwei Eingaben, die auf denselben Slug fallen
-        // („Fußball"/„Fussball" – ß wird zu ss), legten sonst zwei Zeilen an und das Speichern risse den
-        // Unique-Index auf Slug. Genau darüber fiel im Zweifel der Start um, weil der
-        // <see cref="InterestTagBackfill"/> die Freitext-Interessen der Bestandskinder hier durchschickt.
+        // The ChangeTracker FIRST, then the DB: a tag created within the same call is not saved yet and would
+        // be invisible to every query. Two inputs falling onto the same slug ("Fußball"/"Fussball" - ß becomes
+        // ss) would otherwise create two rows and saving would violate the unique index on Slug. That is
+        // exactly what could take startup down, because the interest backfill pushes the free-text interests
+        // of the existing children through here.
         if (Pending(slug) is { } pending) return pending;
 
         var bySlug = await db.InterestTags.FirstOrDefaultAsync(t => t.Slug == slug, ct);
         if (bySlug is not null) return bySlug;
 
-        // Der Slug ist neu – bevor eine Dublette entsteht, gegen die Synonyme der bestehenden Tags prüfen.
-        // Getrackt geladen und über die lokale Sicht gesucht, damit auch hier die noch nicht gespeicherten
-        // Tags dieses Aufrufs mitzählen (Synonyme liegen als JSON-Spalte und sind nicht abfragbar).
+        // The slug is new - before a duplicate arises, check it against the synonyms of the existing tags.
+        // Loaded tracked and searched through the local view, so that the not yet saved tags of this call count
+        // here as well (synonyms sit in a JSON column and are not queryable).
         await db.InterestTags.LoadAsync(ct);
         var bySynonym = db.InterestTags.Local
             .FirstOrDefault(t => t.Synonyms.Any(s => InterestSlug.From(s) == slug));
         if (bySynonym is not null) return bySynonym;
 
-        // Neu anlegen. Achtung: der Tag hängt hier nur im ChangeTracker – der Aufrufer speichert.
+        // Create it. Careful: the tag only hangs in the ChangeTracker here - the caller saves.
         var created = new InterestTag
         {
             Slug = slug,
@@ -70,7 +70,7 @@ public class InterestTagService(PuglingDbContext db)
         foreach (var text in texts)
         {
             var tag = await EnsureAsync(text, facet: facet, ct: ct);
-            // Der Slug des Treffers zählt (nicht der der Eingabe): ein Synonym-Treffer trägt einen anderen.
+            // The hit's slug counts (not the input's): a synonym hit carries a different one.
             if (tag is not null && seen.Add(tag.Slug)) result.Add(tag);
         }
 

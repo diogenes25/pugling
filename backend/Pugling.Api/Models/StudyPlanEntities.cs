@@ -1,55 +1,54 @@
 namespace Pugling.Api.Models;
 
-// Lehrplan-Modell: Ein Lehrplan ist ein reiner Container aus referenzierten Katalog-Übungen
-// (siehe PlanPosition). Zeit-/Punkte-/Leitner-Steuerung, Stufen und Ziele hängen an der jeweiligen
-// Position, nicht mehr am Plan. Verfahrens-spezifisch sind nur der Inhalt (Übungs-Config) und die
-// Test-Mechanik/Stufen (siehe PositionPlayService / PositionTestsController).
+// Study plan model: a plan is a pure container of referenced catalog exercises (see PlanPosition). Time,
+// points, Leitner control, stages and goals hang on the individual position, no longer on the plan.
+// Method-specific are only the content (exercise config) and the test mechanics/stages (see
+// PositionPlayService / PositionTestsController).
 
-// LearningMethod lebt im Vertrags-Projekt (Pugling.Contracts).
+// LearningMethod lives in the contract project (Pugling.Contracts).
 
 /// <summary>
-/// Stufe des Zuordnungs-Verfahrens (steigende Schwierigkeit). Nutzt den Vokabel-Store.
+/// Stage of the matching method (increasing difficulty). It uses the vocabulary store.
 /// <para>
-/// <b>Achtung, halb umgesetzt:</b> <c>MatchingExerciseType</c> überschreibt weder <c>StageOptions</c> noch
-/// <c>IsTypedStage</c> noch <c>Choices</c> – es gibt also keinen Code, der auf diesen Enum verzweigt.
-/// <see cref="PlanPosition.Stage"/> wird für Zuordnungs-Positionen gespeichert und beim Ausspielen
-/// ignoriert. Die beiden Rückwärts-Stufen (<c>Reverse</c>, <c>ReverseDistractors</c>) sind entfallen, weil
-/// sie nirgends vorkamen; die verbleibenden zwei bleiben, weil <c>Direct</c> als <c>DefaultStage</c> und
-/// <c>Distractors</c> im Seed gesetzt werden. Den Enum wirklich wirksam zu machen ist ein
-/// Verhaltensumbau, kein Struktur-Schritt.
+/// <b>Careful, only half implemented:</b> <c>MatchingExerciseType</c> overrides neither <c>StageOptions</c>
+/// nor <c>IsTypedStage</c> nor <c>Choices</c> – so there is no code branching on this enum.
+/// <see cref="PlanPosition.Stage"/> is stored for matching positions and ignored during delivery.
+/// The two reverse stages (<c>Reverse</c>, <c>ReverseDistractors</c>) are gone because they appeared nowhere;
+/// the remaining two stay because <c>Direct</c> is used as <c>DefaultStage</c> and <c>Distractors</c> is set in
+/// the seed. Actually making the enum effective is a behavioral rebuild, not a structural step.
 /// </para>
 /// </summary>
 public enum MatchStage
 {
-    /// <summary>Wort → Übersetzung, keine Ablenker.</summary>
+    /// <summary>Word → translation, no distractors.</summary>
     Direct = 1,
-    /// <summary>Wort → Übersetzung, mit Zusatz-Ablenkern im Auswahl-Pool.</summary>
+    /// <summary>Word → translation, with additional distractors in the choice pool.</summary>
     Distractors = 2,
 }
 
-/// <summary>Teststufe des Vokabel-Lernkartentests (steigende Schwierigkeit).</summary>
+/// <summary>Test stage of the vocabulary flashcard test (increasing difficulty).</summary>
 public enum TestStage
 {
-    /// <summary>Vokabel + Übersetzung werden angezeigt (Kennenlernen).</summary>
+    /// <summary>Word and translation are both shown (getting acquainted).</summary>
     ShowBoth = 1,
-    /// <summary>Vokabel -> aufdecken -> Selbsteinschätzung "gewusst? Ja/Nein".</summary>
+    /// <summary>Word -> reveal -> self-assessment "did you know it? yes/no".</summary>
     SelfAssess = 2,
-    /// <summary>Übersetzung tippen; Länge bekannt (Buchstabenfelder), Buchstaben-Tipps möglich.</summary>
+    /// <summary>Type the translation; the length is known (letter boxes), letter hints are possible.</summary>
     LetterBoxes = 3,
-    /// <summary>Übersetzung frei eintippen.</summary>
+    /// <summary>Type the translation freely.</summary>
     FreeText = 4,
-    /// <summary>Vokabel wird vorgelesen -> Übersetzung frei eintippen.</summary>
+    /// <summary>The word is read out loud -> type the translation freely.</summary>
     Audio = 5,
-    /// <summary>Auswahl aus mehreren Möglichkeiten (eine richtig, Rest Ablenker aus der Übung).</summary>
+    /// <summary>Choice from several options (one correct, the rest distractors from the exercise).</summary>
     MultipleChoice = 6,
 }
 
-// StageStep lebt im Vertrags-Projekt (Pugling.Contracts).
+// StageStep lives in the contract project (Pugling.Contracts).
 
 /// <summary>
-/// Vom Vater erstellter Lehrplan für ein Kind: ein <b>Container</b>, der Katalog-Übungen als
-/// <see cref="PlanPosition"/>en bündelt. Titel, Kind und Laufzeit gehören hierher; alles Lern-Spezifische
-/// (Ziel, Punkte, Stufe, Leitner) trägt die einzelne Position.
+/// Study plan created by the supervisor for a child: a <b>container</b> that bundles catalog exercises as
+/// <see cref="PlanPosition"/>s. Title, child and runtime belong here; everything learning-specific
+/// (goal, points, stage, Leitner) is carried by the individual position.
 /// </summary>
 public class StudyPlan
 {
@@ -57,9 +56,9 @@ public class StudyPlan
     public int ChildId { get; set; }
     public Child? Child { get; set; }
     public string Title { get; set; } = "";
-    /// <summary>Freie Beschreibung des Plans (optional): Ziel/Umfang, damit er später gut erkennbar bleibt.</summary>
+    /// <summary>Free description of the plan (optional): goal/scope, so it stays recognizable later.</summary>
     public string? Description { get; set; }
-    /// <summary>Optionale Verknüpfung zum Katalog-Fach (nur zur Einordnung/Filterung).</summary>
+    /// <summary>Optional link to the catalog subject (for classification/filtering only).</summary>
     public int? SubjectId { get; set; }
     public Subject? Subject { get; set; }
     public DateOnly StartDate { get; set; }
@@ -67,49 +66,49 @@ public class StudyPlan
     public bool Active { get; set; } = true;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
-    /// <summary>Die Positionen des Plans: referenzierte Katalog-Übungen mit eigenem Ziel/Punkten/Leitner.</summary>
+    /// <summary>The plan's positions: referenced catalog exercises with their own goal/points/Leitner.</summary>
     public List<PlanPosition> Positions { get; set; } = new();
 }
 
-// PlayMode lebt im Vertrags-Projekt (Pugling.Contracts).
+// PlayMode lives in the contract project (Pugling.Contracts).
 
-/// <summary>Übungssitzung einer Lehrplan-Position: erfasst echte Übungszeit und was geübt wurde.</summary>
+/// <summary>Practice session of a study plan position: records real practice time and what was practiced.</summary>
 public class PracticeSession
 {
     public int Id { get; set; }
     public int StudyPlanId { get; set; }
     public StudyPlan? StudyPlan { get; set; }
-    /// <summary>Position (Übung), zu der die Sitzung gehört.</summary>
+    /// <summary>Position (exercise) the session belongs to.</summary>
     public int? PlanPositionId { get; set; }
     public PlanPosition? PlanPosition { get; set; }
     public DateOnly Day { get; set; }
     public DateTime StartedAt { get; set; } = DateTime.UtcNow;
     public DateTime? EndedAt { get; set; }
-    /// <summary>Aktiv geübte Sekunden (nur Zeit mit Interaktion).</summary>
+    /// <summary>Seconds actively practiced (only time with interaction).</summary>
     public int ActiveSeconds { get; set; }
 
-    /// <summary>Ausspiel-Modus (Info = frei, Lern = server-geführt mit Cursor).</summary>
+    /// <summary>Playback mode (Info = free, Lern = server-driven with a cursor).</summary>
     public PlayMode Mode { get; set; } = PlayMode.Lern;
     /// <summary>
-    /// Beim Start eingefrorene Ausspiel-Reihenfolge (Item-Indizes) gemäß <see cref="PlanPosition.OrderStrategy"/>.
-    /// Bleibt über den Lauf stabil, damit sich die Reihenfolge nicht durch Box-Änderungen verschiebt.
+    /// Play-out order (item indexes) frozen at the start according to <see cref="PlanPosition.OrderStrategy"/>.
+    /// It stays stable over the run so that the order does not shift because of box changes.
     /// </summary>
     public List<int> Order { get; set; } = new();
-    /// <summary>Aktuelle Position in <see cref="Order"/> (server-geführter Cursor im Lern-Modus).</summary>
+    /// <summary>Current position within <see cref="Order"/> (the server-driven cursor in learn mode).</summary>
     public int Cursor { get; set; }
 
     public List<ReviewEvent> Reviews { get; set; } = new();
 }
 
 /// <summary>
-/// Einzelne Wiederholung innerhalb einer Übungssitzung (verfahrensneutral). Bewusst schmal: gelesen
-/// werden nur <see cref="WasCorrect"/> und <see cref="At"/> – daraus entstehen die Combo-Serie und die
-/// Antwortzeit (siehe <c>PositionPracticeController.Review</c>) sowie die Metrik <c>CorrectReviews</c>.
+/// A single review within a practice session (type-agnostic). Deliberately narrow: only
+/// <see cref="WasCorrect"/> and <see cref="At"/> are read – from them come the combo streak and the answer
+/// time (see <c>PositionPracticeController.Review</c>) as well as the metric <c>CorrectReviews</c>.
 /// <para>
-/// Was das Atom war, steht <b>nicht</b> hier: dafür gibt es <see cref="ItemReviewEvent"/> mit der stabilen
-/// <c>ItemId</c>. Die früheren Felder <c>ContentId</c> (eine FK-lose Kopie von
-/// <see cref="PlanPosition.ExerciseId"/>), <c>ItemIndex</c> und <c>StageValue</c> wurden geschrieben und
-/// von niemandem gelesen – eine zweite, index-adressierte Wahrheit ohne Konsumenten.
+/// What the atom was is <b>not</b> recorded here: <see cref="ItemReviewEvent"/> with its stable <c>ItemId</c>
+/// exists for that. The former fields <c>ContentId</c> (an FK-less copy of
+/// <see cref="PlanPosition.ExerciseId"/>), <c>ItemIndex</c> and <c>StageValue</c> were written and read by
+/// nobody – a second, index-addressed truth without consumers.
 /// </para>
 /// </summary>
 public class ReviewEvent
@@ -121,19 +120,19 @@ public class ReviewEvent
     public DateTime At { get; set; } = DateTime.UtcNow;
 }
 
-/// <summary>Ein Abschlusstest-Versuch einer Position an einem Tag (verfahrensneutral).</summary>
+/// <summary>One final-test attempt of a position on a given day (type-agnostic).</summary>
 public class TestAttempt
 {
     public int Id { get; set; }
     public int StudyPlanId { get; set; }
     public StudyPlan? StudyPlan { get; set; }
-    /// <summary>Position (Übung), zu der der Test gehört.</summary>
+    /// <summary>Position (exercise) the test belongs to.</summary>
     public int? PlanPositionId { get; set; }
     public PlanPosition? PlanPosition { get; set; }
     public DateOnly Day { get; set; }
-    /// <summary>Stufe (je nach Verfahren TestStage bzw. ClozeStage).</summary>
+    /// <summary>Stage (TestStage or ClozeStage, depending on the method).</summary>
     public int StageValue { get; set; }
-    /// <summary>Gilt dieser Versuch als "gewertet" (getippt/Freitext)? Setzt der Controller.</summary>
+    /// <summary>Does this attempt count as "graded" (typed/free text)? Set by the controller.</summary>
     public bool Graded { get; set; }
     public DateTime StartedAt { get; set; } = DateTime.UtcNow;
     public DateTime? CompletedAt { get; set; }
@@ -143,32 +142,32 @@ public class TestAttempt
     public bool Passed { get; set; }
 
     /// <summary>
-    /// Beim Start eingefrorene Prüfungsreihenfolge (Item-Indizes) gemäß <see cref="PlanPosition.OrderStrategy"/>.
-    /// Der Klausur-Modus ist strikt server-getrieben: eine Frage nach der anderen, kein Zurück.
+    /// Examination order (item indexes) frozen at the start according to <see cref="PlanPosition.OrderStrategy"/>.
+    /// The class-test mode is strictly server-driven: one question after another, no going back.
     /// </summary>
     public List<int> Order { get; set; } = new();
-    /// <summary>Aktuelle Position in <see cref="Order"/> (server-geführter Cursor der Prüfung).</summary>
+    /// <summary>Current position within <see cref="Order"/> (the server-driven cursor of the examination).</summary>
     public int Cursor { get; set; }
 
     public List<TestItemResult> Results { get; set; } = new();
 }
 
-/// <summary>Ergebnis einer einzelnen Test-Position (ein Inhalts-Atom der Übung).</summary>
+/// <summary>Result of a single test position (one content atom of the exercise).</summary>
 public class TestItemResult
 {
     public int Id { get; set; }
     public int TestAttemptId { get; set; }
     public TestAttempt? TestAttempt { get; set; }
-    /// <summary>Index des Inhaltsatoms in der Übung der Position.</summary>
+    /// <summary>Index of the content atom within the position's exercise.</summary>
     public int? ItemIndex { get; set; }
     public int StageValue { get; set; }
     public string? GivenAnswer { get; set; }
     public bool WasCorrect { get; set; }
     /// <summary>
-    /// Genutzte Buchstaben-Tipps. <b>Wird von keinem Pfad gesetzt</b> und ist daher immer 0 – die Spalte
-    /// bleibt nur, weil sie über <c>ItemResultDto</c> im Vertrag steht; sie zu entfernen wäre ein
-    /// Vertragsbruch und gehört damit nicht in einen reinen Struktur-Umbau. Entweder befüllen (die Tipps
-    /// existieren in der Ausspielung) oder mit dem DTO gemeinsam streichen.
+    /// Letter hints used. <b>Set by no path</b> and therefore always 0 – the column only remains because it is
+    /// part of the contract through <c>ItemResultDto</c>; removing it would break the contract and therefore
+    /// does not belong in a purely structural rebuild. Either fill it (the hints do exist during delivery) or
+    /// drop it together with the DTO.
     /// </summary>
     public int HintsUsed { get; set; }
 }

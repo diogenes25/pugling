@@ -117,7 +117,7 @@ public class BirkenbihlExerciseTests(PuglingWebAppFactory factory) : IClassFixtu
         var father = await TestApi.FatherAsync(factory);
         var route = await CreateChapterAsync(father);
 
-        // Genau die Form, die das Vater-Formular schickt: keine sentenceId/wordId, keine Zähler.
+        // Exactly the shape the supervisor's form sends: no sentenceId/wordId, no counters.
         var payload = new
         {
             title = "Ohne IDs",
@@ -150,7 +150,7 @@ public class BirkenbihlExerciseTests(PuglingWebAppFactory factory) : IClassFixtu
         var config = (await (await father.GetAsync($"{route}/{exerciseId}")).Content.ReadFromJsonAsync<JsonElement>())
             .GetProperty("config");
         var sentence = config.GetProperty("sentences").EnumerateArray().Single();
-        // Satz-Text erhalten (nicht null) + eindeutige, positive IDs vergeben.
+        // The sentence text is preserved (not null) + unique, positive ids are assigned.
         Assert.Equal("What is your name?", sentence.GetProperty("learningSentence").GetString());
         Assert.True(sentence.GetProperty("sentenceId").GetInt32() > 0);
         var words = sentence.GetProperty("decoding").EnumerateArray()
@@ -158,7 +158,7 @@ public class BirkenbihlExerciseTests(PuglingWebAppFactory factory) : IClassFixtu
         Assert.All(words, id => Assert.True(id > 0));
         Assert.Equal(words.Length, words.Distinct().Count());
 
-        // Neuen Satz ergänzen – seine wordIds dürfen sich nicht mit den bestehenden überschneiden.
+        // Add a new sentence - its wordIds must not overlap with the existing ones.
         var addRes = await father.PostAsJsonAsync($"{route}/{exerciseId}/sentences",
             new { learningSentence = "Good morning", naturalTranslation = "Guten Morgen" });
         Assert.Equal(HttpStatusCode.Created, addRes.StatusCode);
@@ -199,13 +199,13 @@ public class BirkenbihlExerciseTests(PuglingWebAppFactory factory) : IClassFixtu
         Assert.Equal("bist", result[1].GetProperty("gloss").GetString());
         Assert.Equal(areId, result[1].GetProperty("vocabularyId").GetInt32());
 
-        // "you" ist nicht im Speicher → alles null.
+        // "you" is not in the store → everything null.
         Assert.Equal("you", result[2].GetProperty("learningWord").GetString());
         Assert.True(IsNull(result[2], "gloss"));
         Assert.True(IsNull(result[2], "vocabularyId"));
         Assert.True(IsNull(result[2], "_self"));
 
-        // Wort-Ids sind übungsweit eindeutig vergeben.
+        // Word ids are assigned uniquely across the exercise.
         Assert.Equal([1, 2, 3], result.Select(w => w.GetProperty("wordId").GetInt32()).ToArray());
     }
 
@@ -222,25 +222,25 @@ public class BirkenbihlExerciseTests(PuglingWebAppFactory factory) : IClassFixtu
         var bank = add.GetProperty("result").EnumerateArray().Single(w => w.GetProperty("learningWord").GetString() == "bank");
         var wordId = bank.GetProperty("wordId").GetInt32();
 
-        // Mehrdeutig → beide Karten als Kandidaten.
+        // Ambiguous → both cards as candidates.
         var candidates = bank.GetProperty("candidates").EnumerateArray().ToArray();
         Assert.Equal(2, candidates.Length);
         Assert.Contains(candidates, c => c.GetProperty("vocabularyId").GetInt32() == geldId);
         Assert.Contains(candidates, c => c.GetProperty("vocabularyId").GetInt32() == uferId);
 
-        // Auch der dedizierte Kandidaten-Endpunkt liefert beide.
+        // The dedicated candidate endpoint returns both as well.
         var epCandidates = await (await father.GetAsync($"{route}/{exerciseId}/words/{wordId}/candidates"))
             .Content.ReadFromJsonAsync<JsonElement>();
         Assert.Equal(2, epCandidates.EnumerateArray().Count());
 
-        // Falsche Bedeutung gezielt auf "Ufer" korrigieren.
+        // Correct the wrong meaning specifically to "Ufer".
         var put = await father.PutAsJsonAsync($"{route}/{exerciseId}/words/{wordId}", new { vocabularyId = uferId });
         Assert.Equal(HttpStatusCode.OK, put.StatusCode);
         var updated = await put.Content.ReadFromJsonAsync<JsonElement>();
         Assert.Equal("Ufer", updated.GetProperty("gloss").GetString());
         Assert.Equal(uferId, updated.GetProperty("vocabularyId").GetInt32());
 
-        // Persistiert: erneutes Lesen der Übung zeigt die Korrektur.
+        // Persisted: reading the exercise again shows the correction.
         var config = (await (await father.GetAsync($"{route}/{exerciseId}")).Content.ReadFromJsonAsync<JsonElement>())
             .GetProperty("config");
         var stored = config.GetProperty("sentences").EnumerateArray().Single()
@@ -267,7 +267,7 @@ public class BirkenbihlExerciseTests(PuglingWebAppFactory factory) : IClassFixtu
         var red2 = RedId(s2);
         Assert.NotEqual(red1, red2);
 
-        // Nur das "red" im zweiten Satz auf eine freie Glosse (ohne Karte) setzen.
+        // Set only the "red" in the second sentence to a free gloss (without a card).
         await father.PutAsJsonAsync($"{route}/{exerciseId}/words/{red2}", new { gloss = "ROT-FREI" });
 
         var config = (await (await father.GetAsync($"{route}/{exerciseId}")).Content.ReadFromJsonAsync<JsonElement>())
@@ -280,7 +280,7 @@ public class BirkenbihlExerciseTests(PuglingWebAppFactory factory) : IClassFixtu
         Assert.Equal("rot", w1.GetProperty("gloss").GetString());
         Assert.False(IsNull(w1, "vocabularyId"));
         Assert.Equal("ROT-FREI", w2.GetProperty("gloss").GetString());
-        // Freie Glosse wird jetzt automatisch im Store angelegt & verlinkt (eigener Eintrag, unabhängig von w1).
+        // A free gloss is now created in the store automatically & linked (its own entry, independent of w1).
         Assert.False(IsNull(w2, "vocabularyId"));
         Assert.NotEqual(w1.GetProperty("vocabularyId").GetInt32(), w2.GetProperty("vocabularyId").GetInt32());
     }
@@ -301,7 +301,7 @@ public class BirkenbihlExerciseTests(PuglingWebAppFactory factory) : IClassFixtu
         Assert.Equal(HttpStatusCode.OK, res.StatusCode);
         var body = await res.Content.ReadFromJsonAsync<JsonElement>();
 
-        // Ephemer: keine gespeicherten IDs.
+        // Ephemeral: no stored ids.
         Assert.Equal(0, body.GetProperty("sentenceId").GetInt32());
         var result = body.GetProperty("result").EnumerateArray().ToArray();
         Assert.All(result, w => Assert.Equal(0, w.GetProperty("wordId").GetInt32()));

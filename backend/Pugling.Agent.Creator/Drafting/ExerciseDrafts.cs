@@ -1,10 +1,9 @@
 namespace Pugling.Agent.Creator.Drafting;
 
-// Die Entwurfs-Formen, die das Sprachmodell füllt. Bewusst NICHT die Vertrags-Configs selbst:
-// die tragen technische Felder (Ids, Store-Verweise, HATEOAS-Links, Zähler), die kein Modell
-// erfinden darf. Die Entwürfe sind flach und minimal – je kleiner das JSON-Schema, desto
-// zuverlässiger liefern lokale Modelle gültige Antworten. Die Übersetzung Entwurf → Config
-// macht die jeweilige Strategie, nicht das Modell.
+// The draft shapes the language model fills in. Deliberately NOT the contract configs themselves:
+// those carry technical fields (ids, store references, HATEOAS links, counters) that no model may
+// invent. The drafts are flat and minimal - the smaller the JSON schema, the more reliably local
+// models return valid answers. Translating draft → config is each strategy's job, not the model's.
 
 /// <summary>Draft of a vocabulary exercise: title plus the word pairs.</summary>
 /// <param name="Title">Descriptive German title of the exercise.</param>

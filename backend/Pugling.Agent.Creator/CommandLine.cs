@@ -28,10 +28,9 @@ public sealed class CommandLine
         var verb = hasVerb ? args[0] : "help";
         var line = new CommandLine(verb);
 
-        // Optionen beginnen hinter dem Verb – und nur wenn gar keins dastand, ab 0. Die frühere Bedingung
-        // (`verb == "help" ? 0 : 1`) verwechselte „kein Verb angegeben" mit „Verb heißt help": ein
-        // getipptes `help` wurde danach erneut als Option gelesen und mit „Unerwartetes Argument 'help'"
-        // abgewiesen.
+        // Options start after the verb - and only from 0 if there was no verb at all. The earlier condition
+        // (`verb == "help" ? 0 : 1`) confused "no verb given" with "the verb is help": a typed `help` was
+        // then read as an option again and rejected as an unexpected argument.
         for (int i = hasVerb ? 1 : 0; i < args.Length; i++)
         {
             var arg = args[i];
@@ -39,7 +38,7 @@ public sealed class CommandLine
                 throw new AgentUsageException($"Unerwartetes Argument '{arg}' – Optionen beginnen mit '--'.");
 
             var name = arg[2..];
-            // Wert entweder als '--name=wert' oder als nächstes Argument; sonst ist es ein Schalter.
+            // The value comes either as '--name=value' or as the next argument; otherwise it is a flag.
             if (name.Contains('='))
             {
                 var split = name.Split('=', 2);

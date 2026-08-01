@@ -31,22 +31,22 @@ public class AuthTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWebA
     [Fact]
     public async Task LoginAdult_MitNichtNumerischerId_LiefertSauberesEnglischesProblem()
     {
-        // Regressionsschutz für die InvalidModelStateResponseFactory: Eine nicht in int konvertierbare
-        // adultId ("1a") darf (1) NICHT den internen DTO-Typnamen leaken, (2) NICHT das irreführende
-        // "The dto field is required." zeigen und (3) muss eine englische Meldung liefern.
+        // A regression guard for the InvalidModelStateResponseFactory: an adultId that cannot be converted to
+        // int ("1a") must (1) NOT leak the internal DTO type name, (2) NOT show the misleading "The dto field
+        // is required." and (3) has to return an English message.
         var client = factory.CreateClient();
         var res = await client.PostAsJsonAsync("/api/v1/auth/adult", new { adultId = "1a", pin = "0000" });
 
         Assert.Equal(HttpStatusCode.BadRequest, res.StatusCode);
 
         var raw = await res.Content.ReadAsStringAsync();
-        Assert.DoesNotContain("Pugling.Api", raw);          // kein Typnamen-Leak
-        Assert.DoesNotContain("could not be converted", raw); // keine rohe System.Text.Json-Meldung
+        Assert.DoesNotContain("Pugling.Api", raw);          // no type name leak
+        Assert.DoesNotContain("could not be converted", raw); // no raw System.Text.Json message
 
         var body = await res.Content.ReadFromJsonAsync<JsonElement>();
         Assert.Equal("Invalid request.", body.GetProperty("title").GetString());
         var errors = body.GetProperty("errors");
-        Assert.False(errors.TryGetProperty("dto", out _));  // kein irreführendes "field is required"
+        Assert.False(errors.TryGetProperty("dto", out _));  // no misleading "field is required"
         Assert.Equal("The value is not of the expected type.",
             errors.GetProperty("adultId")[0].GetString());
     }
@@ -54,7 +54,7 @@ public class AuthTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWebA
     [Fact]
     public async Task Me_OhneToken_Liefert401()
     {
-        // Regressionsschutz: /api/v1/auth/me war zwischenzeitlich durch [AllowAnonymous] auf Klassenebene offen.
+        // Regression guard: /api/v1/auth/me was open for a while through a class-level [AllowAnonymous].
         var client = factory.CreateClient();
         var res = await client.GetAsync("/api/v1/auth/me");
 

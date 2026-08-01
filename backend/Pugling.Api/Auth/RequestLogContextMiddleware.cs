@@ -13,7 +13,7 @@ public sealed class RequestLogContextMiddleware(RequestDelegate next)
     /// <summary>Enriches the request's log context and then calls the next middleware.</summary>
     public async Task InvokeAsync(HttpContext context)
     {
-        // Dieselbe TraceId, die AddProblemDetails in die Fehlerantwort schreibt.
+        // The same traceId that AddProblemDetails writes into the error response.
         var traceId = System.Diagnostics.Activity.Current?.Id ?? context.TraceIdentifier;
         var fid = context.User.FindFirst("fid")?.Value;
         var cid = context.User.FindFirst("cid")?.Value;

@@ -66,30 +66,30 @@ public class ExerciseSharingTests(PuglingWebAppFactory factory) : IClassFixture<
         var (creator, _) = await NewFatherAsync("Zurückzieher", "1111");
         var (_, _, exerciseId) = await PublishVocabAsync(creator);
 
-        // Familie A weist zu, WÄHREND die Übung öffentlich ist.
+        // Family A assigns it WHILE the exercise is public.
         var (planA, familyA) = await FamilyWithPlanAsync("Familie A", "2222");
         var posA = await familyA.PostAsJsonAsync($"/api/v1/supervisor/study-plans/{planA}/positions",
             new { exerciseId, cadence = "Daily" });
         Assert.Equal(HttpStatusCode.Created, posA.StatusCode);
 
-        // Der Owner zieht zurück.
+        // The owner withdraws it.
         var res = await creator.PatchAsJsonAsync($"/api/v1/creator/exercises/{exerciseId}/sharing",
             new { executePublic = false });
         Assert.Equal(HttpStatusCode.OK, res.StatusCode);
         var body = await res.Content.ReadFromJsonAsync<JsonElement>();
         Assert.False(body.GetProperty("executePublic").GetBoolean());
-        Assert.Equal(1, body.GetProperty("grantCount").GetInt32());   // nur noch der Owner darf zuweisen
+        Assert.Equal(1, body.GetProperty("grantCount").GetInt32());   // only the owner may assign it now
 
-        // Familie B kommt jetzt nicht mehr dran …
+        // Family B can no longer get at it …
         var (planB, familyB) = await FamilyWithPlanAsync("Familie B", "3333");
         var posB = await familyB.PostAsJsonAsync($"/api/v1/supervisor/study-plans/{planB}/positions",
             new { exerciseId, cadence = "Daily" });
-        // 403, nicht 400: die Ablehnung ist eine Rechtefrage (ApiErrors.ExerciseNotExecutable).
+        // 403, not 400: the rejection is a rights question (ApiErrors.ExerciseNotExecutable).
         Assert.Equal(HttpStatusCode.Forbidden, posB.StatusCode);
         Assert.Equal("exercise_not_executable",
             (await posB.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("code").GetString());
 
-        // … und die Zusage, auf die es ankommt: die laufende Position von Familie A bleibt bestehen.
+        // … and the promise that matters: family A's running position stays.
         var stillThere = await familyA.GetFromJsonAsync<List<JsonElement>>(
             $"/api/v1/supervisor/study-plans/{planA}/positions");
         Assert.Single(stillThere!);
@@ -145,7 +145,7 @@ public class ExerciseSharingTests(PuglingWebAppFactory factory) : IClassFixture<
         var (_, _, exerciseId) = await PublishVocabAsync(creator);
         var (stranger, strangerId) = await NewFatherAsync("Fremder", "9911");
 
-        // Auch ein Write-Grantee darf Inhalte pflegen, aber nicht über die Weitergabe entscheiden.
+        // A write grantee may maintain content too, but not decide about sharing.
         (await creator.PostAsJsonAsync($"/api/v1/creator/exercises/{exerciseId}/grants",
             new { creatorId = strangerId, permission = "Write" })).EnsureSuccessStatusCode();
 

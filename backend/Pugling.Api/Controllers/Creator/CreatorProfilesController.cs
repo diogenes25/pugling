@@ -140,8 +140,8 @@ public class CreatorProfilesController(PuglingDbContext db, CreatorProfileServic
             profile.Name = name;
         }
         if (dto.SubjectName is not null) profile.SubjectName = Trimmed(dto.SubjectName);
-        // Reihenfolge: erst der Wert, dann der Clear-Schalter – so gewinnt „leeren" auch, wenn ein Client
-        // (etwa ein Formular, das immer alle Felder schickt) beides mitsendet.
+        // Order: value first, then the clear switch - that way "clear" also wins when a client (a form that
+        // always sends every field, say) sends both.
         if (dto.SubjectId.HasValue) profile.SubjectId = dto.SubjectId;
         if (dto.ClearSubject) { profile.SubjectId = null; profile.SubjectName = null; }
         if (dto.SchoolTypes.HasValue) profile.SchoolTypes = dto.SchoolTypes.Value;
@@ -155,7 +155,7 @@ public class CreatorProfilesController(PuglingDbContext db, CreatorProfileServic
         if (Trimmed(dto.TargetLang) is { } tgt) profile.TargetLang = tgt;
         if (dto.Persona is not null) profile.Persona = Trimmed(dto.Persona);
         if (dto.Didactics is not null) profile.Didactics = Trimmed(dto.Didactics);
-        // Neue Liste zuweisen (kein In-Place-Mutieren – JSON-Spalten-Fallstrick).
+        // Assign a new list (no in-place mutation - the JSON column pitfall).
         if (dto.DefaultTypes is not null) profile.DefaultTypes = Clean(dto.DefaultTypes);
         if (dto.Active.HasValue) profile.Active = dto.Active.Value;
 
@@ -193,7 +193,7 @@ public class CreatorProfilesController(PuglingDbContext db, CreatorProfileServic
     /// </summary>
     private Task<bool> NameTakenAsync(string name, int? ownerAdultId, CancellationToken ct, int? exceptProfileId = null) =>
         ownerAdultId is null
-            ? Task.FromResult(false) // Ohne Owner greift der gefilterte Index nicht.
+            ? Task.FromResult(false) // without an owner the filtered index does not apply.
             : db.CreatorProfiles.AsNoTracking().AnyAsync(p => p.OwnerAdultId == ownerAdultId
                 && p.Name == name && p.Id != exceptProfileId, ct);
 

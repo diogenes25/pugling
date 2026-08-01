@@ -1,7 +1,7 @@
 namespace Pugling.Contracts.Auth;
 
-// Vertrag der Login-Ebene (api/v1/auth/…). Die Records sind reine Transportformen: kein Verhalten,
-// keine Abhängigkeit auf Entities – damit ein Client sie ohne die API-Assembly verwenden kann.
+// Contract of the login tier (api/v1/auth/…). The records are pure transport shapes: no behavior,
+// no dependency on entities - so a client can use them without the API assembly.
 
 /// <summary>Response of all login endpoints: JWT plus primary tier for UI routing.</summary>
 /// <param name="Token">The issued JWT (Bearer).</param>

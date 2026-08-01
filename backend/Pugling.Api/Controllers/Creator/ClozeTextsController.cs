@@ -90,7 +90,7 @@ public class ClozeTextsController(PuglingDbContext db) : ControllerBase
         if (dto.Title is not null) cloze.Title = dto.Title;
         if (dto.Text is not null) cloze.Text = dto.Text;
         if (dto.Gaps is not null) cloze.Gaps = dto.Gaps;
-        // Erst der Wert, dann der Lösch-Schalter: schickt ein Formular beides, gewinnt „leeren".
+        // Value first, clear switch second: if a form sends both, "clear" wins.
         if (dto.Translation is not null) cloze.Translation = dto.Translation;
         if (dto.ClearTranslation) cloze.Translation = null;
         if (dto.WordBank is not null) cloze.WordBank = dto.WordBank;

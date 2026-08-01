@@ -43,9 +43,9 @@ public class RemarkExportService
         sb.AppendLine(CultureInfo.InvariantCulture,
             $"Stand: {Iso(generatedAt)} · {remarks.Count} {(remarks.Count == 1 ? "Eintrag" : "Einträge")} · Filter: {filterNote}");
         sb.AppendLine();
-        // Der Hinweis steht bewusst im Dokument: Es landet im Repo und sieht dort aus wie eine
-        // bearbeitbare Datei. Der Stand kommt aber aus der Datenbank – Handänderungen wären beim
-        // nächsten Export weg.
+        // The notice deliberately sits inside the document: it lands in the repository and looks like an
+        // editable file there. The content comes from the database, though - hand edits would be gone on the
+        // next export.
         sb.AppendLine("> Erzeugt von `GET api/v1/remarks/export`. **Nicht von Hand bearbeiten** – die Quelle ist");
         sb.AppendLine("> die Datenbank. Status und Antworten ändert der Skill `anmerkungen` über die API.");
         sb.AppendLine();
@@ -77,8 +77,8 @@ public class RemarkExportService
             if (r.ParentRemarkId is { } parent) sb.AppendLine(CultureInfo.InvariantCulture, $"- **Folgt aus:** #{parent}");
 
             sb.AppendLine();
-            // Der Text steht als normaler Absatz, nicht in einem Code-Block: Er stammt vom Menschen und
-            // darf Markdown enthalten, ohne die Struktur zu sprengen.
+            // The text stands as a normal paragraph, not in a code block: it comes from a human and may contain
+            // Markdown without blowing up the structure.
             sb.AppendLine(r.Text.Trim());
             sb.AppendLine();
 
@@ -91,9 +91,9 @@ public class RemarkExportService
             if (!string.IsNullOrWhiteSpace(r.RecentErrorsJson))
             {
                 sb.AppendLine("**Letzte Fehler:**");
-                // Bewusst roh: Das Backend interpretiert den Puffer nirgends fachlich (deshalb ist er ein
-                // string und keine gemappte JSON-Spalte). Würde hier geparst, bräche der Export, sobald
-                // das Frontend ein Feld ergänzt – und ein Modell liest JSON ohnehin problemlos.
+                // Deliberately raw: the backend never interprets the buffer in domain terms (which is why it is
+                // a string and not a mapped JSON column). Parsing here would break the export as soon as the
+                // frontend adds a field - and a model reads JSON just fine anyway.
                 AppendFenced(sb, "json", r.RecentErrorsJson!);
             }
 
@@ -135,12 +135,12 @@ public class RemarkExportService
             var account = showAccounts && c.AuthorAccountId is { } a ? $", Konto {a}" : "";
             sb.AppendLine(CultureInfo.InvariantCulture, $"> **{who}** · {Iso(c.CreatedAt)}{account}");
             sb.AppendLine(">");
-            // Jede Zeile einzeln zitieren: Ein mehrzeiliger Beitrag bräche das Zitat sonst nach der ersten
-            // Zeile auf, und der Rest stünde als gewöhnlicher Absatz da.
+            // Quote every line individually: a multi-line entry would otherwise break the quote after the first
+            // line and the rest would stand there as an ordinary paragraph.
             foreach (var line in c.Body.Trim().ReplaceLineEndings("\n").Split('\n'))
                 sb.AppendLine(CultureInfo.InvariantCulture, $"> {line}");
-            // Trennzeile zwischen zwei Beiträgen bleibt Teil des Zitats (zitiertes "> "), nicht nackt –
-            // sonst liest das MD028-Regelwerk sie als Blockquote-Ende mitten im Verlauf (markdownlint).
+            // The separator line between two entries stays part of the quote (a quoted "> "), not bare -
+            // otherwise rule MD028 reads it as the end of the blockquote mid-history (markdownlint).
             if (i < ordered.Count - 1) sb.AppendLine(">");
         }
         sb.AppendLine();

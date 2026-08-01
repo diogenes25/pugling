@@ -1,7 +1,7 @@
 namespace Pugling.Contracts;
 
-// Geteilte Basistypen des Medien-Stores und der Interessen-Taxonomie (ebenen-neutral: der Creator
-// pflegt Assets/Tags, der Supervisor die Interessen des Kindes, der Student bekommt später das Bild).
+// Shared base types of the media store and the interest taxonomy (tier-neutral: the creator maintains
+// assets/tags, the supervisor the child's interests, the student later receives the image).
 
 /// <summary>Media kind of an asset. Today only images are delivered; the store is deliberately open-ended.</summary>
 public enum MediaKind

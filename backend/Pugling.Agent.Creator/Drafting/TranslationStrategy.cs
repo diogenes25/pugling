@@ -35,7 +35,7 @@ public sealed class TranslationStrategy(IChatClient chat, CreatorApi creator,
         GenerationRequest request)
     {
         var violations = new Violations();
-        // Fehlt 'items' im Modell-JSON, steht hier null – als leere Liste wird daraus ein Regelverstoß.
+        // If 'items' is missing from the model JSON this is null - as an empty list it becomes a rule violation.
         var items = draft.Items ?? [];
         DraftRules.Title(violations, draft.Title, briefing);
         DraftRules.Count(violations, items.Count, request);

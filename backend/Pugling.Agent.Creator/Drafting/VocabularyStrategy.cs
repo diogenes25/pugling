@@ -36,8 +36,8 @@ public sealed class VocabularyStrategy(IChatClient chat, CreatorApi creator,
         GenerationRequest request)
     {
         var violations = new Violations();
-        // Lässt das Modell 'items' weg, steht hier null. Zur leeren Liste gemacht wird daraus der
-        // Regelverstoß „zu wenige Aufgaben" – und damit eine Reparatur-Runde statt eines Absturzes.
+        // If the model omits 'items' this is null. Turned into an empty list it becomes the rule violation
+        // "too few tasks" - and thus a repair round instead of a crash.
         var items = draft.Items ?? [];
         DraftRules.Title(violations, draft.Title, briefing);
         DraftRules.Count(violations, items.Count, request);
@@ -72,7 +72,7 @@ public sealed class VocabularyStrategy(IChatClient chat, CreatorApi creator,
             Items =
             [
                 .. draft.Items.Select(item => known.TryGetValue(Key(item.Front, item.Back), out var vocabularyId)
-                    // Bekanntes Paar: nur verlinken – Front/Back kommen dann aus dem Speicher.
+                    // Known pair: just link it - front/back then come from the store.
                     ? new VocabItem(Hint: Blank(item.Hint), VocabularyId: vocabularyId)
                     : new VocabItem(item.Front.Trim(), item.Back.Trim(), Blank(item.Hint))),
             ],

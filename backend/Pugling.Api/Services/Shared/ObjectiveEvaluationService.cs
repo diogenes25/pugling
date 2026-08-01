@@ -20,12 +20,12 @@ public class ObjectiveEvaluationService(PuglingDbContext db, ChildLearnProgressS
     public record ObjectiveEval(Objective Objective, IReadOnlyList<KeyResultEval> KeyResults,
         int AchievedCount, int TotalCount, int ProgressPercent, string Status);
 
-    // Eine bewertete Klassenarbeit, auf das für die Noten-Metrik Nötige reduziert.
+    // A graded class test, reduced to what the grade metric needs.
     private record GradeRow(int SubjectId, decimal Grade, DateOnly ScheduledDate);
 
     private static int Pct(int part, int whole) => whole == 0 ? 0 : (int)Math.Round(100.0 * part / whole);
 
-    // Aktueller Wert einer Beherrschungs-Metrik aus dem Scope-Roll-up (ClassTestGrade wird getrennt behandelt).
+    // Current value of a mastery metric from the scope rollup (ClassTestGrade is handled separately).
     private static int MasteryCurrent(KeyResultMetric metric, MasteryRollup r) => metric switch
     {
         KeyResultMetric.AvgMastery => r.AvgMasteryPercent,
@@ -34,11 +34,11 @@ public class ObjectiveEvaluationService(PuglingDbContext db, ChildLearnProgressS
         _ => 0,
     };
 
-    // MaxWeakItems und ClassTestGrade sind „nicht mehr als"-Ziele (kleiner = besser), die anderen „mindestens".
+    // MaxWeakItems and ClassTestGrade are "no more than" goals (smaller = better), the others "at least".
     private static bool IsAchieved(KeyResultMetric metric, int current, int target) => metric switch
     {
         KeyResultMetric.MaxWeakItems => current <= target,
-        // Note nur erreicht, wenn überhaupt eine vorliegt (current > 0) UND sie mindestens so gut ist.
+        // The grade counts as reached only if there is one at all (current > 0) AND it is at least as good.
         KeyResultMetric.ClassTestGrade => current > 0 && current <= target,
         _ => current >= target,
     };
@@ -46,7 +46,7 @@ public class ObjectiveEvaluationService(PuglingDbContext db, ChildLearnProgressS
     private static int ProgressPercent(KeyResultMetric metric, int current, int target, bool achieved)
     {
         if (achieved) return 100;
-        // „Nicht mehr als"-Ziele sind faktisch binär (erreicht/offen) – bis dahin bewusst 0.
+        // "No more than" goals are effectively binary (reached/open) - until then deliberately 0.
         if (metric is KeyResultMetric.MaxWeakItems or KeyResultMetric.ClassTestGrade) return 0;
         return target <= 0 ? 100 : Math.Clamp((int)Math.Round(100.0 * current / target), 0, 99);
     }
@@ -78,14 +78,14 @@ public class ObjectiveEvaluationService(PuglingDbContext db, ChildLearnProgressS
         return (await EvaluateAsync(childId, [objective], today, ct))[0];
     }
 
-    // Kern: lädt den Lernstand-Snapshot + die Klassenarbeits-Noten einmal und wertet alle übergebenen Objectives aus.
+    // The core: loads the learning-state snapshot + the class test grades once and evaluates all objectives passed in.
     private async Task<List<ObjectiveEval>> EvaluateAsync(int childId, List<Objective> objectives, DateOnly today, CancellationToken ct)
     {
         if (objectives.Count == 0) return [];
 
         var eval = await progress.LoadScopeEvaluatorAsync(childId, ct);
-        // Alle bewerteten Klassenarbeiten des Kindes einmal laden; die beste (kleinste) Note je Fach wird pro
-        // Objective im Speicher gebildet (respektiert dessen Start-Datum). Die Menge je Kind ist klein.
+        // Load all graded class tests of the child once; the best (smallest) grade per subject is formed per
+        // objective in memory (respecting its start date). The set per child is small.
         var grades = (await db.Klassenarbeiten.AsNoTracking()
             .Where(k => k.ChildId == childId && k.Status == KlassenarbeitStatus.Written
                 && k.Grade != null && k.SubjectId != null)
@@ -113,13 +113,13 @@ public class ObjectiveEvaluationService(PuglingDbContext db, ChildLearnProgressS
 
         var total = krs.Count;
         var achievedCount = krs.Count(k => k.Achieved);
-        // Objective erreicht, sobald ALLE Etappen erreicht sind (und es überhaupt welche gibt).
+        // The objective is reached as soon as ALL milestones are reached (and there are any at all).
         var objectiveAchieved = total > 0 && achievedCount == total;
         return new ObjectiveEval(o, krs, achievedCount, total, Pct(achievedCount, total),
             StatusOf(objectiveAchieved, o.DueDate, today));
     }
 
-    // Beste (kleinste) Note im Fach ab dem Start-Datum, als Note×10 (z. B. 2,3 → 23). 0 = noch keine Note.
+    // Best (smallest) grade in the subject from the start date on, as grade×10 (e.g. 2.3 → 23). 0 = no grade yet.
     private static int BestGradeTimesTen(List<GradeRow> grades, int subjectId, DateOnly? start)
     {
         var relevant = grades.Where(g => g.SubjectId == subjectId && (start is null || g.ScheduledDate >= start)).ToList();

@@ -30,12 +30,12 @@ public class OwnershipTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
     [Fact]
     public async Task Vater_SiehtNurEigenenDatensatz()
     {
-        await RegisterFatherAsync("2222"); // es existiert nun ein zweiter Vater …
+        await RegisterFatherAsync("2222"); // a second adult now exists …
         var father1 = await TestApi.FatherAsync(factory);
 
         var list = await (await father1.GetAsync("/api/v1/supervisor/adults")).Content.ReadFromJsonAsync<JsonElement>();
 
-        // … die Liste zeigt trotzdem nur den eigenen Datensatz.
+        // … the list still shows only the own record.
         Assert.Equal(1, list.GetArrayLength());
         Assert.Equal(1, list[0].GetProperty("id").GetInt32());
     }
@@ -53,12 +53,12 @@ public class OwnershipTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
     [Fact]
     public async Task Vater_KannFremdesKind_NichtSehen_404()
     {
-        // Zweiter Vater legt ein Kind an …
+        // The second adult creates a child …
         var id2 = await RegisterFatherAsync("2222");
         var father2 = await TestApi.FatherAsync(factory, id2, "2222");
         var child2 = await TestApi.IdAsync(await father2.PostAsJsonAsync("/api/v1/supervisor/children", new { name = "Kind2" }));
 
-        // … der erste Vater darf es nicht sehen (ChildOwnershipFilter → 404, kein Enumerieren).
+        // … the first adult must not see it (ChildOwnershipFilter → 404, no enumeration).
         var father1 = await TestApi.FatherAsync(factory);
         Assert.Equal(HttpStatusCode.NotFound, (await father1.GetAsync($"/api/v1/supervisor/children/{child2}")).StatusCode);
     }
@@ -78,15 +78,15 @@ public class OwnershipTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
     [Fact]
     public async Task Sohn_KannPlanEinesAnderenKindes_NichtBenutzen_403()
     {
-        // Der Vater legt ein zweites Kind an und seedet ihm einen Positions-Plan …
+        // The adult creates a second child and seeds a position plan for it …
         var father = await TestApi.FatherAsync(factory);
         var otherChildId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/supervisor/children", new { name = "Bruder" }));
         var exerciseId = await TestApi.CreateVocabExerciseAsync(father);
         var (planId, positionId) = TestApi.SeedLeitnerPosition(factory, exerciseId, (int)TestStage.SelfAssess, childId: otherChildId);
 
-        // … der geseedete Sohn (id 1) ist ein FREMDES Kind für diesen Plan: der Kind-Zweig von
-        // AuthAccess.OwnsPlanAsync vergleicht plan.ChildId mit der eigenen cid → jeder Zugriff 403.
-        // Regressionsschutz gegen Cross-Child-IDOR (bislang nur Vater↔Vater/Kind abgedeckt).
+        // … the seeded son (id 1) is a FOREIGN child for this plan: the child branch of
+        // AuthAccess.OwnsPlanAsync compares plan.ChildId with the own cid → every access 403.
+        // A regression guard against cross-child IDOR (so far only adult↔adult/child was covered).
         var child1 = await TestApi.ChildAsync(factory);
         Assert.Equal(HttpStatusCode.Forbidden, (await child1.GetAsync($"/api/v1/supervisor/study-plans/{planId}")).StatusCode);
         Assert.Equal(HttpStatusCode.Forbidden,

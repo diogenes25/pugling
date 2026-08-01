@@ -30,26 +30,26 @@ public sealed class BriefingBuilder(CreatorApi creator, SupervisorApi supervisor
         var profile = await ResolveProfileAsync(request, ct);
         var (series, unit) = await ResolveMaterialAsync(request, profile, child, subject.Id, subject.Name, ct);
 
-        // Vorhandene Titel gehen als „nicht wiederholen" in den Prompt – das verhindert Beinahe-Dubletten.
+        // Existing titles go into the prompt as "do not repeat" - that prevents near-duplicates.
         var existing = await creator.SearchExercisesAsync(subjectId: request.SubjectId,
             chapterId: request.ChapterId, take: 50, ct: ct);
 
-        // Wortschatz-Priorität: ausdrücklich vorgegeben > schwache Wörter des Kindes > (leer, dann wählt das Modell).
+        // Vocabulary priority: explicitly given > the child's weak words > (empty, then the model picks).
         IReadOnlyList<string> requiredWords = request.Words.Count > 0
             ? request.Words
             : [.. (child?.WeakWords ?? []).Select(w => w.Word)];
 
         return new CreatorBriefing(
             Profile: profile is null ? null : Facts(profile, series, unit),
-            // `--general` behält Reihe und Unit des Kindes, lässt aber die Person weg: der Stoff stimmt,
-            // die Übung bleibt für den gemeinsamen Katalog brauchbar.
+            // `--general` keeps the child's series and unit but drops the person: the subject matter is
+            // right, the exercise stays usable for the shared catalog.
             Child: request.General ? null : child,
             SubjectId: subject.Id,
             SubjectName: subject.Name,
             ChapterId: chapter.Id,
             ChapterName: chapter.Name,
             Topic: request.Topic,
-            // Ausdrücklich gesetzte Sprachen schlagen das Profil; ohne beides die üblichen Vorgaben.
+            // Explicitly set languages beat the profile; without either, the usual defaults apply.
             SourceLang: request.SourceLang ?? profile?.SourceLang ?? "en",
             TargetLang: request.TargetLang ?? profile?.TargetLang ?? "de",
             ExistingExerciseTitles: [.. existing.Select(e => e.Title)],
@@ -109,8 +109,8 @@ public sealed class BriefingBuilder(CreatorApi creator, SupervisorApi supervisor
                                 $"Unit {wanted} gehört nicht zur Reihe '{series.Name}' – " +
                                 "'pugling-creator profiles' zeigt die Reihe des Profils."));
 
-        // Die Unit des Kindes zählt nur, wenn sie aus derselben Reihe kommt (Profil und Kind können auf
-        // verschiedene Werke zeigen).
+        // The child's unit only counts if it comes from the same series (profile and child may point at
+        // different works).
         var current = childBook is { SeriesId: { } bookSeries, CurrentUnitId: int currentId } && bookSeries == seriesId
             ? units.FirstOrDefault(u => u.Id == currentId)
             : null;
@@ -122,8 +122,8 @@ public sealed class BriefingBuilder(CreatorApi creator, SupervisorApi supervisor
         SeriesUnitResponse? unit) =>
         new(profile.Id, profile.Name, profile.SubjectName, profile.SchoolTypes, profile.GradeMin, profile.GradeMax,
             profile.SourceLang, profile.TargetLang, profile.Persona, profile.Didactics,
-            // Die Reihe steht am Profil; ist sie dort nicht gesetzt, stammt sie aus dem Buch des Kindes
-            // und wird trotzdem gemeldet – der Stoff zählt, nicht die Herkunft der Angabe.
+            // The series sits on the profile; if unset there it comes from the child's book and is reported
+            // anyway - the subject matter counts, not where the value came from.
             series?.Id ?? profile.SeriesId, series?.Name ?? profile.SeriesName, series?.Publisher, series?.Notes, unit);
 
     /// <summary>
@@ -159,8 +159,8 @@ public sealed class BriefingBuilder(CreatorApi creator, SupervisorApi supervisor
             Grade: child.Grade,
             SchoolType: child.SchoolType,
             Gender: child.Gender,
-            // Freitext und gewichtete Tags nebeneinander: der Freitext trägt Nuancen, die die Taxonomie
-            // nicht kennt, die Tags dafür die Rangfolge – und vor allem die Abneigungen.
+            // Free text and weighted tags side by side: the free text carries nuances the taxonomy does not
+            // know, the tags carry the ranking - and above all the dislikes.
             Interests: child.Interests,
             WeightedInterests: [.. weighted.Where(i => i.Weight > 0).OrderByDescending(i => i.Weight)],
             Dislikes: [.. weighted.Where(i => i.Weight < 0).OrderBy(i => i.Weight)],
@@ -194,7 +194,7 @@ public sealed class BriefingBuilder(CreatorApi creator, SupervisorApi supervisor
         }
         catch (PuglingApiException ex) when (ex.StatusCode is System.Net.HttpStatusCode.NotFound)
         {
-            // Ohne Lehrbuch lässt sich trotzdem generieren – dann trägt nur das Thema den Stoff.
+            // Generating works without a textbook too - then only the topic carries the subject matter.
             return [];
         }
     }

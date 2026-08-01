@@ -29,7 +29,7 @@ namespace Pugling.Api.Controllers.Creator;
 public class ExerciseMediaController(PuglingDbContext db, MediaLinkService links, ExercisePermissionService perms)
     : ControllerBase
 {
-    // ---- Titelbild der Übung -------------------------------------------------------------------------
+    // ---- Title image of the exercise -------------------------------------------------------------------------
 
     /// <summary>The title images of the exercise, best editorial rank first.</summary>
     [HttpGet("media")]
@@ -74,7 +74,7 @@ public class ExerciseMediaController(PuglingDbContext db, MediaLinkService links
         return NoContent();
     }
 
-    // ---- Übungslokale Übersteuerung je Item ----------------------------------------------------------
+    // ---- Exercise-local override per item ----------------------------------------------------------
 
     /// <summary>The images that override the store assignment for this item.</summary>
     [HttpGet("items/{itemId:int}/media")]
@@ -124,7 +124,7 @@ public class ExerciseMediaController(PuglingDbContext db, MediaLinkService links
         return NoContent();
     }
 
-    // ---- Helfer --------------------------------------------------------------------------------------
+    // ---- Helpers --------------------------------------------------------------------------------------
 
     /// <summary>Prevents a foreign item from being addressed via an arbitrary exercise route.</summary>
     private Task<bool> ItemBelongsAsync(int exerciseId, int itemId, CancellationToken ct) =>

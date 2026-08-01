@@ -37,9 +37,9 @@ public static class ServiceCollectionExtensions
 
     private static IServiceCollection AddPuglingClientCore(this IServiceCollection services)
     {
-        // Das Token liegt im Singleton-Speicher (eine Anmeldung für alle Fassaden), der Handler selbst
-        // wird je Client neu erzeugt: eine DelegatingHandler-Instanz darf nur in einer Kette hängen –
-        // eine geteilte Instanz lehnt die HttpClientFactory beim zweiten Client ab.
+        // The token lives in the singleton store (one login for all facades), the handler itself is
+        // created per client: a DelegatingHandler instance may only sit in one chain - the
+        // HttpClientFactory rejects a shared instance on the second client.
         services.AddSingleton<PuglingTokenStore>();
         services.AddTransient<AuthHandler>();
 
@@ -52,7 +52,7 @@ public static class ServiceCollectionExtensions
     private static void ConfigureClient(IServiceProvider provider, HttpClient client)
     {
         var options = provider.GetRequiredService<Microsoft.Extensions.Options.IOptions<PuglingClientOptions>>().Value;
-        // Abschließender Slash ist Pflicht: sonst schluckt Uri-Kombination das letzte Pfadsegment.
+        // The trailing slash is mandatory: without it Uri combination swallows the last path segment.
         client.BaseAddress = new Uri(options.BaseUrl.TrimEnd('/') + "/");
     }
 }

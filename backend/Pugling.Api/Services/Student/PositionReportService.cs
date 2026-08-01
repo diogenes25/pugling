@@ -12,7 +12,7 @@ namespace Pugling.Api.Services.Student;
 /// </summary>
 public class PositionReportService(PuglingDbContext db, PositionPlayService play)
 {
-    // ItemReport/Report leben im Vertrags-Projekt (Pugling.Contracts.Student).
+    // ItemReport/Report live in the contract project (Pugling.Contracts.Student).
 
     /// <summary>Mastery in percent from the Leitner box (box 1 = 0% … MaxBox = 100%).</summary>
     private static int MasteryOf(int box, int maxBox) =>
@@ -25,15 +25,15 @@ public class PositionReportService(PuglingDbContext db, PositionPlayService play
             .FirstOrDefaultAsync(p => p.Id == positionId && p.StudyPlanId == planId, ct);
         if (pos?.Exercise is null) return null;
 
-        // Inhalte der Übung (verfahrensneutral) – Reihenfolge = stabiler ItemIndex.
+        // Contents of the exercise (type-agnostic) - order = the stable ItemIndex.
         var items = await play.ItemsOfAsync(pos, ct: ct);
 
-        // Leitner-/Einführungsstand je Item (ein Plan = ein Kind), in der DB gefiltert.
+        // Leitner/introduction state per item (one plan = one child), filtered in the DB.
         var progress = await db.PositionItemProgress.AsNoTracking()
             .Where(p => p.PlanPositionId == positionId)
             .ToDictionaryAsync(p => p.ItemIndex, ct);
 
-        // Test-Trefferquote je Item aus abgeschlossenen Versuchen dieser Position.
+        // Test hit rate per item from completed attempts of this position.
         var testResults = await db.TestAttempts.AsNoTracking()
             .Where(a => a.PlanPositionId == positionId && a.CompletedAt != null)
             .SelectMany(a => a.Results)

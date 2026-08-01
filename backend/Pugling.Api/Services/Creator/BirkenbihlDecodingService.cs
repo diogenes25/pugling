@@ -26,7 +26,7 @@ public record TokenLookup(string Surface, VocabHit? Best, IReadOnlyList<VocabHit
 /// </summary>
 public partial class BirkenbihlDecodingService(PuglingDbContext db)
 {
-    // Wort-Token = Folgen aus Buchstaben/Ziffern samt Wort-innerem Apostroph (z. B. „don't"); Satzzeichen fallen weg.
+    // A word token is a run of letters/digits including a word-internal apostrophe (e.g. "don't"); punctuation drops out.
     [GeneratedRegex(@"\p{L}[\p{L}\p{N}']*", RegexOptions.CultureInvariant)]
     private static partial Regex WordToken();
 
@@ -52,8 +52,8 @@ public partial class BirkenbihlDecodingService(PuglingDbContext db)
             .Select(v => new VocabHit(v.Id, v.Word, v.Translation, v.PartOfSpeech))
             .ToListAsync(ct);
 
-        // Je Oberfläche alle Treffer (case-insensitiv). Erster Treffer = provisorische Wahl; bei mehreren
-        // liefern wir die Kandidaten mit, damit ein falsch geratenes Homonym gezielt getauscht werden kann.
+        // All hits per surface form (case-insensitive). The first hit is the provisional choice; where there
+        // are several we return the candidates too, so a wrongly guessed homonym can be swapped out.
         return surfaces.Select(surface =>
         {
             var hits = matches

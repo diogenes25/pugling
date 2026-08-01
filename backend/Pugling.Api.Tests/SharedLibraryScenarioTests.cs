@@ -57,7 +57,7 @@ public class SharedLibraryScenarioTests(PuglingWebAppFactory factory) : IClassFi
         var (teacherId, teacher) = await RegisterAndLoginAsync("Herr Schmidt", "7777");
         var (subjectId, _, exerciseId) = await CreateGrade9GymExerciseAsync(teacher);
 
-        // Katalog-Suche des Lehrers: Klasse 9 + Gymnasium + Fach → seine Übung mit Attribution + IsOwn.
+        // The teacher's catalog search: grade 9 + Gymnasium + subject → their exercise with attribution + IsOwn.
         var hits = await (await teacher.GetAsync(
                 $"/api/v1/creator/exercises?subjectId={subjectId}&grade=9&schoolType=Gymnasium"))
             .Content.ReadFromJsonAsync<JsonElement>();
@@ -71,16 +71,16 @@ public class SharedLibraryScenarioTests(PuglingWebAppFactory factory) : IClassFi
     [Fact]
     public async Task AndererVater_FindetUndUebernimmtUebung_KannSieAberNichtAendern()
     {
-        // 1) Lehrer erstellt die Übung.
+        // 1) The teacher creates the exercise.
         var (teacherId, teacher) = await RegisterAndLoginAsync("Frau Meier", "7777");
         var (subjectId, chapterId, exerciseId) = await CreateGrade9GymExerciseAsync(teacher);
 
-        // 2) Ein anderer Vater registriert sich, legt ein Kind an.
+        // 2) Another adult registers and creates a child.
         var (_, other) = await RegisterAndLoginAsync("Papa Müller", "8888");
         var childId = await TestApi.IdAsync(await other.PostAsJsonAsync("/api/v1/supervisor/children",
             new { name = "Tom", grade = 9, schoolType = "Gymnasium" }));
 
-        // 3) Der andere Vater findet die Lehrer-Übung im globalen Katalog – als fremd markiert.
+        // 3) The other adult finds the teacher's exercise in the global catalog - marked as someone else's.
         var hits = await (await other.GetAsync(
                 $"/api/v1/creator/exercises?subjectId={subjectId}&grade=9&schoolType=Gymnasium"))
             .Content.ReadFromJsonAsync<JsonElement>();
@@ -88,7 +88,7 @@ public class SharedLibraryScenarioTests(PuglingWebAppFactory factory) : IClassFi
         Assert.Equal("Frau Meier", found.GetProperty("authorName").GetString());
         JsonAssert.False(found, "isOwn");
 
-        // 4) Er darf sie NICHT ändern oder löschen (Schutz der fremden Autorenarbeit).
+        // 4) They must NOT change or delete it (protecting the other author's work).
         var putBody = new
         {
             title = "Gehackt",
@@ -104,7 +104,7 @@ public class SharedLibraryScenarioTests(PuglingWebAppFactory factory) : IClassFi
             $"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/vocabulary/{exerciseId}");
         Assert.Equal(HttpStatusCode.Forbidden, del.StatusCode);
 
-        // 5) Aber er darf sie in einen EIGENEN Lehrplan übernehmen (Katalog global nutzbar).
+        // 5) But they may take it into a study plan of their OWN (the catalog is globally usable).
         var planId = await TestApi.IdAsync(await other.PostAsJsonAsync("/api/v1/supervisor/study-plans",
             new { childId, title = "Toms Englisch-Plan", durationDays = 14 }));
         var posRes = await other.PostAsJsonAsync($"/api/v1/supervisor/study-plans/{planId}/positions",
@@ -113,12 +113,12 @@ public class SharedLibraryScenarioTests(PuglingWebAppFactory factory) : IClassFi
         var pos = await posRes.Content.ReadFromJsonAsync<JsonElement>();
         Assert.Equal(exerciseId, pos.GetProperty("exerciseId").GetInt32());
 
-        // 6) Und er richtet in seinem Familien-Shop ein Angebot für sein Kind ein.
+        // 6) And they set up a listing for their child in their family shop.
         var listingId = await TestApi.CreateShopListingAsync(other, "GAME-1", coinPrice: 300, unitsPerPurchase: 60,
             stock: 2, articleTitle: "Zockzeit", listingTitle: "1 Stunde Zocken", unitType: "Minute", actionType: "Zocken");
         Assert.True(listingId > 0);
 
-        // 7) Der Lehrer selbst darf seine Übung weiterhin ändern.
+        // 7) The teacher themselves may still change their exercise.
         var teacherPut = await teacher.PutAsJsonAsync(
             $"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/vocabulary/{exerciseId}",
             new
@@ -138,7 +138,7 @@ public class SharedLibraryScenarioTests(PuglingWebAppFactory factory) : IClassFi
     [Fact]
     public async Task GeseedeteSystemUebung_IstFuerNiemandenEditierbar()
     {
-        // Die geseedeten Katalog-Übungen (Englisch „Begrüßungen") haben keinen Autor → nicht editierbar.
+        // The seeded catalog exercises (English "Begrüßungen") have no author → not editable.
         var (_, father) = await RegisterAndLoginAsync("Irgendwer", "8888");
         var hits = await (await father.GetAsync("/api/v1/creator/exercises?search=Begrüßungen"))
             .Content.ReadFromJsonAsync<JsonElement>();

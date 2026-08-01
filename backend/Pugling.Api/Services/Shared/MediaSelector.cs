@@ -66,7 +66,7 @@ public class MediaSelector(PuglingDbContext db, ILogger<MediaSelector> logger)
         var frozen = new List<ChildMediaPick>();
         foreach (var (itemId, vocabularyId) in carriers)
         {
-            // Genauigkeits-Kaskade: hat das Item eigene Bilder, zählt ausschließlich diese Menge.
+            // Specificity cascade: if the item has images of its own, only that set counts.
             var itemLinks = context.LinksByItem.GetValueOrDefault(itemId);
             var (links, carrier, carrierId) = itemLinks is { Count: > 0 }
                 ? (itemLinks, Carrier.Item, itemId)
@@ -79,8 +79,8 @@ public class MediaSelector(PuglingDbContext db, ILogger<MediaSelector> logger)
             if (isNew) frozen.Add(NewPick(childId, carrier, carrierId, chosen.Value.Media.MediaAssetId));
         }
 
-        // Zwei Items derselben Übung dürfen auf dieselbe Vokabel zeigen – dann fiele die Wahl zweimal
-        // auf denselben Träger und der Unique-Index risse. Je Träger nur einmal einfrieren.
+        // Two items of the same exercise may point at the same vocabulary entry - the choice would then fall
+        // twice onto the same carrier and violate the unique index. Freeze once per carrier.
         if (frozen.Count > 0)
             db.ChildMediaPicks.AddRange(frozen
                 .GroupBy(p => (p.VocabularyId, p.ExerciseItemId, p.MediaAssetId))
@@ -111,14 +111,14 @@ public class MediaSelector(PuglingDbContext db, ILogger<MediaSelector> logger)
             : context.LinksByVocabulary.GetValueOrDefault(carrierId)) ?? [];
 
         var current = context.ActivePick(carrier, carrierId);
-        // Erst prüfen, ob es überhaupt eine Alternative gibt – sonst würde die Ablehnung den einzigen
-        // Kandidaten verbrennen und die Karte dauerhaft bildlos machen.
-        // Der Guard ist heute *nicht* die einzige Schranke: fällt er weg, findet die Neuwahl unten nichts
-        // mehr und steigt vor SaveFreezeAsync aus – die Ablehnung bleibt ungespeichert, das Verhalten also
-        // gleich. Genau darum blieb seine Entfernung in der Defektinjektion grün (docs/testplan.md, B02):
-        // API-seitig ist er nicht beobachtbar und darum auch nicht testbar. Er bleibt trotzdem stehen und
-        // ist Voraussetzung, nicht Zierde: wer unten ein SaveChanges vorzieht, verbrennt ohne ihn sofort
-        // den letzten Kandidaten – und dann führt kein API-Weg zurück.
+        // Check first whether an alternative exists at all - otherwise the rejection would burn the only
+        // candidate and leave the card without an image forever.
+        // Today the guard is *not* the only barrier: without it the re-selection below finds nothing and bails
+        // out before SaveFreezeAsync - the rejection stays unsaved, so the behavior is the same. That is exactly
+        // why removing it stayed green in the defect injection (docs/testplan.md, B02): it is not observable
+        // through the API and therefore not testable. It stays anyway and is a precondition, not decoration:
+        // whoever moves a SaveChanges further up below burns the last candidate at once without it - and then
+        // no API path leads back.
         var alternatives = links
             .Where(l => l.MediaAssetId != current?.MediaAssetId)
             .Where(l => Eligible(context, l, purpose))
@@ -128,8 +128,8 @@ public class MediaSelector(PuglingDbContext db, ILogger<MediaSelector> logger)
         if (current is not null)
         {
             current.Rejected = true;
-            // Auch im Ausschluss-Set vermerken: sonst zöge die gleich folgende Auswahl genau das Bild
-            // wieder, das eben abgelehnt wurde (das Set wird aus den Picks von vorhin gebaut).
+            // Note it in the exclusion set too: otherwise the selection right after would draw exactly the
+            // image that was just rejected (the set is built from the picks read earlier).
             context.RejectedAssets.Add((current.VocabularyId, current.ExerciseItemId, current.MediaAssetId));
         }
 
@@ -185,7 +185,7 @@ public class MediaSelector(PuglingDbContext db, ILogger<MediaSelector> logger)
             : await ReshuffleAsync(childId, vocabularyId, null, purpose, ct);
     }
 
-    // ---- Auswahl ------------------------------------------------------------------------------------
+    // ---- Selection ------------------------------------------------------------------------------------
 
     private enum Carrier { Vocabulary, Item }
 
@@ -197,17 +197,16 @@ public class MediaSelector(PuglingDbContext db, ILogger<MediaSelector> logger)
         var eligible = links.Where(l => Eligible(ctx, l, purpose)).ToList();
         if (eligible.Count == 0) return null;
 
-        // Eine Einfrierung, die nicht mehr ausspielbar ist (Freigabe gesenkt, Abneigung ergänzt,
-        // Zuordnung oder Variante gelöscht), wird ZURÜCKGEZOGEN und nicht bloß übergangen: sonst bliebe
-        // sie die aktive Wahl, die Neuwahl fiele bei jedem Abruf erneut und das zweite Einfrieren risse
-        // den Unique-Index – die Karte wäre dauerhaft nicht mehr abrufbar. Gelöscht statt abgelehnt:
-        // „abgelehnt" heißt „nie wieder", der Grund hier ist aber nur vorübergehend (der Vater kann die
-        // Freigabe wieder heben).
+        // A frozen choice that can no longer be played out (rating lowered, a dislike added, the assignment or
+        // the variant deleted) is WITHDRAWN and not merely skipped: otherwise it would remain the active choice,
+        // the re-selection would happen on every request and the second freeze would violate the unique index -
+        // the card would be unreachable for good. Deleted rather than rejected: "rejected" means "never again",
+        // but the reason here is only temporary (the supervisor can raise the rating again).
         foreach (var stale in ctx.ActivePicks(carrier, carrierId)
             .Where(p => eligible.All(l => l.MediaAssetId != p.MediaAssetId)).ToList())
             ctx.Supersede(stale);
 
-        // Die eingefrorene Wahl gewinnt, solange sie noch zulässig ist – daran hängt der Merkeffekt.
+        // The frozen choice wins as long as it is still allowed - the retention effect hangs on that.
         if (ctx.ActivePick(carrier, carrierId) is { } pick
             && eligible.FirstOrDefault(l => l.MediaAssetId == pick.MediaAssetId) is { } kept)
             return (Media(ctx, kept, purpose), kept);
@@ -289,7 +288,7 @@ public class MediaSelector(PuglingDbContext db, ILogger<MediaSelector> logger)
         MediaAssetId = assetId,
     };
 
-    // ---- Kontext-Ladung (ein Satz Queries statt N+1) --------------------------------------------------
+    // ---- Context loading (one set of queries instead of N+1) --------------------------------------------------
 
     /// <summary>Everything the selection needs – loaded in a single pass.</summary>
     private sealed class SelectionContext
@@ -338,8 +337,8 @@ public class MediaSelector(PuglingDbContext db, ILogger<MediaSelector> logger)
             .Where(i => i.ChildId == childId)
             .ToDictionaryAsync(i => i.InterestTagId, i => i.Weight, ct);
 
-        // Die Zuordnungen samt Asset-Graph (Varianten + Tags) – ohne sie könnte weder gefiltert
-        // (Rating/Abneigung/Variante) noch bewertet werden.
+        // The assignments including the asset graph (variants + tags) - without them neither filtering
+        // (rating/dislike/variant) nor scoring would be possible.
         var links = await db.MediaLinks.AsNoTracking()
             .Include(l => l.MediaAsset!).ThenInclude(a => a.Variants)
             .Include(l => l.MediaAsset!).ThenInclude(a => a.TagLinks).ThenInclude(t => t.InterestTag)
@@ -347,9 +346,9 @@ public class MediaSelector(PuglingDbContext db, ILogger<MediaSelector> logger)
                 || (l.ExerciseItemId != null && itemIds.Contains(l.ExerciseItemId.Value)))
             .ToListAsync(ct);
 
-        // Getrackt laden: das Reshuffle setzt Rejected auf einer dieser Zeilen. Nach Id sortiert, damit
-        // „die aktive Wahl" auch dann eindeutig dieselbe bleibt, wenn ein Träger (aus Altdaten) mehr als
-        // eine trägt – sonst entschiede die Laune der Abfrage über das Bild.
+        // Loaded tracked: the reshuffle sets Rejected on one of these rows. Ordered by id so that "the active
+        // choice" stays unambiguously the same even when a carrier (from legacy data) carries more than one -
+        // otherwise the query's mood would decide the image.
         var picks = await db.ChildMediaPicks
             .Where(p => p.ChildId == childId
                 && ((p.VocabularyId != null && vocabIds.Contains(p.VocabularyId.Value))

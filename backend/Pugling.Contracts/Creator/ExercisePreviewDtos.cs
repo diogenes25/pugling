@@ -1,7 +1,7 @@
 namespace Pugling.Contracts.Creator;
 
-// Vertrag des Testmodus („Ausprobieren"): Der Vater/Lehrer spielt eine Katalog-Übung nebenwirkungsfrei
-// durch. Bewusst eigene Records neben der Kind-Spielsicht – der Testmodus deckt die Lösung immer auf.
+// Contract of the preview mode ("try it out"): the supervisor/teacher plays a catalog exercise through
+// without side effects. Deliberately its own records next to the child's play view - preview always reveals the answer.
 
 /// <summary>
 /// A problem presented in test mode. <c>Reveal</c> carries the revealed solution for self-assessment

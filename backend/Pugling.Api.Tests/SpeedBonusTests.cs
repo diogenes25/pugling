@@ -24,11 +24,11 @@ public class SpeedBonusTests : IClassFixture<PuglingWebAppFactory>
     public SpeedBonusTests(PuglingWebAppFactory factory)
     {
         _factory = factory;
-        // Ab hier bewegt sich die Zeit dieses Hosts nur noch über Advance(...).
+        // From here on this host's time only moves through Advance(...).
         _factory.Clock.FreezeNow();
     }
 
-    // Combo bewusst aus (Schwelle 0), damit nur der Speed-Bonus wirkt.
+    // Combo deliberately off (threshold 0), so that only the speed bonus takes effect.
     private async Task<(int planId, int positionId, int sessionId)> SetupAsync(int thresholdSeconds, int bonus)
     {
         var father = await TestApi.FatherAsync(_factory);
@@ -50,11 +50,11 @@ public class SpeedBonusTests : IClassFixture<PuglingWebAppFactory>
         var (planId, positionId, sid) = await SetupAsync(thresholdSeconds: 60, bonus: 4);
         var child = await TestApi.ChildAsync(_factory);
 
-        // Erste Karte: kein Vorgänger → keine Messung → kein Speed-Bonus.
+        // The first card: no predecessor → no measurement → no speed bonus.
         var first = await ReviewAsync(child, planId, positionId, sid, 0);
         Assert.Equal(0, first.GetProperty("speedBonus").GetInt32());
 
-        // Über der Anti-Cheat-Untergrenze (1s), aber weit unter der Schwelle (60s) → Bonus.
+        // Above the anti-cheat lower bound (1s) but far below the threshold (60s) → a bonus.
         _factory.Clock.Advance(TimeSpan.FromSeconds(2));
         var second = await ReviewAsync(child, planId, positionId, sid, 1);
         Assert.Equal(4, second.GetProperty("speedBonus").GetInt32());

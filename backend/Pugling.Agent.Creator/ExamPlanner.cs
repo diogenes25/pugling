@@ -70,8 +70,8 @@ public sealed class ExamPlanner(CreatorPipeline pipeline, CreatorApi creator, Su
             {
                 TypeKey = typeKey,
                 ItemCount = request.PerType,
-                // Der Teil-Titel entsteht im Modell; die Zuordnung zur Klausur trägt die Quelle. Das Thema
-                // nennt sie ausdrücklich, damit die Aufgaben zum selben Stoff entstehen.
+                // The part title comes from the model; the link to the exam is carried by the source. The topic
+                // names it explicitly so that the tasks are created for the same subject matter.
                 Topic = $"{request.Base.Topic ?? title} (Übungsklausur, Teil {index + 1}: {typeKey})",
             };
 
@@ -82,7 +82,7 @@ public sealed class ExamPlanner(CreatorPipeline pipeline, CreatorApi creator, Su
             }
             catch (Exception ex) when (ex is AgentException or AgentUsageException or PuglingApiException)
             {
-                // Ein gescheiterter Typ kostet die Klausur einen Teil, nicht alle: die übrigen laufen weiter.
+                // A failed type costs the exam one part, not all of them: the others keep running.
                 parts.Add(new ExamPart(typeKey, null, ex.Message));
             }
         }
@@ -94,8 +94,8 @@ public sealed class ExamPlanner(CreatorPipeline pipeline, CreatorApi creator, Su
             .OfType<int>()
             .ToList();
 
-        // Ohne Kind gibt es keinen Tag und keine Klassenarbeit: Tags sind kind-skopiert, und eine
-        // Klassenarbeit ohne Kind wäre sinnlos. Das Bündel hält dann allein die Quelle zusammen.
+        // Without a child there is no tag and no class test: tags are child-scoped, and a class test without
+        // a child would be pointless. The bundle is then held together by the source alone.
         if (request.Base.ChildId is not int childId || request.Base.DryRun || exerciseIds.Count == 0)
             return new ExamOutcome(title, parts, exerciseIds, null, null);
 

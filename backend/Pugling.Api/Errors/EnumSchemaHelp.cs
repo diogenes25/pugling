@@ -37,10 +37,10 @@ public static class EnumSchemaHelp
 
     private static bool IsNonNullable(JsonPropertyInfo property, NullabilityInfoContext nullability)
     {
-        // Werttyp: Pflicht, sofern kein Nullable<T>. Referenztyp: über die NRT-Annotation entscheiden.
-        // Bei get-only/expression-bodied Membern ist WriteState = Unknown – daher ReadState ODER WriteState
-        // werten (sonst gälten nicht-nullbare, nur lesbare Referenz-Properties fälschlich als optional).
-        // Serialisierte Felder ([JsonInclude]) genauso behandeln, nicht nur Properties.
+        // Value type: required unless Nullable<T>. Reference type: decided by the NRT annotation.
+        // For get-only/expression-bodied members WriteState is Unknown - so evaluate ReadState OR WriteState
+        // (otherwise non-nullable, read-only reference properties would wrongly count as optional).
+        // Treat serialized fields ([JsonInclude]) the same way, not only properties.
         return property.AttributeProvider switch
         {
             PropertyInfo p => Nullable.GetUnderlyingType(p.PropertyType) is null
@@ -69,21 +69,21 @@ public static class EnumSchemaHelp
         return null;
     }
 
-    // Läuft die Pfadsegmente (nach dem führenden „$") ab und steigt Property für Property in den Typgraphen.
+    // Walks the path segments (after the leading "$") and descends the type graph property by property.
     private static Type? Resolve(Type rootType, string jsonPath)
     {
         if (!jsonPath.StartsWith('$')) return null;
         var current = rootType;
         foreach (var raw in jsonPath.Split('.', StringSplitOptions.RemoveEmptyEntries))
         {
-            // Array-Indexer abtrennen (z. B. „gaps[0]" → Property „gaps", danach Elementtyp).
+            // Strip the array indexer (e.g. "gaps[0]" → property "gaps", then the element type).
             var bracket = raw.IndexOf('[');
             var name = bracket >= 0 ? raw[..bracket] : raw;
 
-            // Wurzel („$", auch mit Indexer „$[0]"): keine Property; nur ein evtl. Element-Abstieg unten.
+            // Root ("$", also with an indexer "$[0]"): no property; only a possible element descent below.
             if (name is not "$" && name.Length > 0)
             {
-                // Ein Dictionary-Segment ist ein Schlüssel → auf den Werttyp absteigen (nicht als Property suchen).
+                // A dictionary segment is a key → descend into the value type (do not look it up as a property).
                 if (DictionaryValueType(current) is { } dictValue)
                     current = dictValue;
                 else if (FindProperty(current, name) is { } property)
@@ -98,8 +98,8 @@ public static class EnumSchemaHelp
         return current;
     }
 
-    // Property-Suche wie System.Text.Json im Web-Modus (PropertyNameCaseInsensitive): explizites
-    // [JsonPropertyName] zuerst (case-insensitiv), sonst der CLR-Name case-insensitiv.
+    // Property lookup as System.Text.Json does it in web mode (PropertyNameCaseInsensitive): an explicit
+    // [JsonPropertyName] first (case-insensitive), otherwise the CLR name case-insensitively.
     private static PropertyInfo? FindProperty(Type type, string jsonName)
     {
         var properties = type.GetProperties(BindingFlags.Public | BindingFlags.Instance);
@@ -108,13 +108,13 @@ public static class EnumSchemaHelp
                ?? Array.Find(properties, p => string.Equals(p.Name, jsonName, StringComparison.OrdinalIgnoreCase));
     }
 
-    // Werttyp eines Dictionary&lt;string, V&gt; (bzw. IDictionary&lt;string, V&gt;) – sonst null.
+    // Value type of a Dictionary<string, V> (or IDictionary<string, V>) - null otherwise.
     private static Type? DictionaryValueType(Type type) =>
         type.GetInterfaces().Prepend(type)
             .FirstOrDefault(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IDictionary<,>))
             ?.GetGenericArguments()[1];
 
-    // Elementtyp einer Sammlung (T[] bzw. IEnumerable<T>) – string ausgenommen (ist selbst IEnumerable<char>).
+    // Element type of a collection (T[] or IEnumerable<T>) - string excluded (it is an IEnumerable<char> itself).
     private static Type? ElementType(Type type)
     {
         if (type == typeof(string)) return null;

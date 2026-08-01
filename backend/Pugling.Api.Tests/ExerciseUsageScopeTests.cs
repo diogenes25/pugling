@@ -29,7 +29,7 @@ public class ExerciseUsageScopeTests(PuglingWebAppFactory factory) : IClassFixtu
     [Fact]
     public async Task FremdeVerwendung_WirdAlsZahlGenannt_UndBlocktDasLoeschen()
     {
-        // Vater A legt die Übung an (und ist damit ihr Owner).
+        // Adult A creates the exercise (and is thereby its owner).
         var ownerPin = "3141";
         var owner = await NewFatherAsync("Übungs-Owner", ownerPin);
         var subjectId = await TestApi.IdAsync(await owner.PostAsJsonAsync("/api/v1/creator/subjects", new { name = $"Scope-Fach {Guid.NewGuid():N}" }));
@@ -51,7 +51,7 @@ public class ExerciseUsageScopeTests(PuglingWebAppFactory factory) : IClassFixtu
                 },
             }));
 
-        // Vater B betreut ein eigenes Kind und nimmt die (öffentlich ausführbare) Übung in seinen Plan.
+        // Adult B supervises a child of their own and takes the (publicly executable) exercise into their plan.
         var other = await NewFatherAsync("Fremder Betreuer", "2718");
         var childId = await TestApi.IdAsync(await other.PostAsJsonAsync(
             "/api/v1/supervisor/children", new { name = "Fremdkind", pin = "4444" }));
@@ -60,13 +60,13 @@ public class ExerciseUsageScopeTests(PuglingWebAppFactory factory) : IClassFixtu
         (await other.PostAsJsonAsync($"/api/v1/supervisor/study-plans/{planId}/positions",
             new { exerciseId, cadence = "Daily" })).EnsureSuccessStatusCode();
 
-        // Aus Sicht des Owners: keine EIGENE Verwendung – aber die fremde wird als Zahl genannt.
+        // From the owner's perspective: no usage of their OWN - but the foreign one is named as a number.
         var usage = await owner.GetFromJsonAsync<JsonElement>($"/api/v1/creator/exercises/{exerciseId}/usage");
         Assert.Empty(usage.GetProperty("plans").EnumerateArray());
         Assert.Empty(usage.GetProperty("classTests").EnumerateArray());
         Assert.Equal(1, usage.GetProperty("otherLearnersCount").GetInt32());
 
-        // Und das Löschen scheitert – mit einer Meldung, die dieselbe Zahl nennt statt zu schweigen.
+        // And the delete fails - with a message that names the same number instead of staying silent.
         var del = await owner.DeleteAsync(
             $"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/vocabulary/{exerciseId}");
         Assert.Equal(HttpStatusCode.Conflict, del.StatusCode);
@@ -74,10 +74,10 @@ public class ExerciseUsageScopeTests(PuglingWebAppFactory factory) : IClassFixtu
         Assert.Equal("exercise_in_use", problem.GetProperty("code").GetString());
         var detail = problem.GetProperty("detail").GetString()!;
         Assert.Contains("1 usage outside your care", detail);
-        // Und die eigene Seite darf nicht mit auftauchen – der Owner hat hier keine eigene Verwendung.
+        // And their own side must not appear with it - the owner has no usage of their own here.
         Assert.DoesNotContain("of yours", detail);
 
-        // Gegenprobe aus Sicht von Vater B: für ihn ist es eine ganz normale, sichtbare Verwendung.
+        // The counter-check from adult B's perspective: for them it is a perfectly normal, visible usage.
         var otherUsage = await other.GetFromJsonAsync<JsonElement>($"/api/v1/creator/exercises/{exerciseId}/usage");
         Assert.Single(otherUsage.GetProperty("plans").EnumerateArray());
         Assert.Equal(0, otherUsage.GetProperty("otherLearnersCount").GetInt32());
@@ -96,7 +96,7 @@ public class ExerciseUsageScopeTests(PuglingWebAppFactory factory) : IClassFixtu
 
         var usage = await father.GetFromJsonAsync<JsonElement>($"/api/v1/creator/exercises/{exerciseId}/usage");
         Assert.Single(usage.GetProperty("plans").EnumerateArray());
-        // Der Kern der Trennung: die eigene Verwendung darf NICHT als „fremd" mitgezählt werden.
+        // The core of the separation: the own usage must NOT be counted as "foreign".
         Assert.Equal(0, usage.GetProperty("otherLearnersCount").GetInt32());
     }
 
@@ -127,10 +127,10 @@ public class ExerciseUsageScopeTests(PuglingWebAppFactory factory) : IClassFixtu
                     items = new[] { new { front = "island", back = "Insel" } },
                 },
             }));
-        // Er betreut niemanden – das ist die Voraussetzung, nicht ein Zwischenzustand.
+        // They supervise nobody - that is the precondition, not an intermediate state.
         Assert.Empty((await creator.GetFromJsonAsync<List<JsonElement>>("/api/v1/supervisor/children"))!);
 
-        // Eine Familie nimmt das Material in ZWEI Pläne desselben Kindes.
+        // One family takes the material into TWO plans of the same child.
         var family = await NewFatherAsync("Nutzende Familie", "2358");
         var childId = await TestApi.IdAsync(await family.PostAsJsonAsync(
             "/api/v1/supervisor/children", new { name = "Lernkind", pin = "5555" }));
@@ -144,10 +144,10 @@ public class ExerciseUsageScopeTests(PuglingWebAppFactory factory) : IClassFixtu
 
         var usage = await creator.GetFromJsonAsync<JsonElement>($"/api/v1/creator/exercises/{exerciseId}/usage");
         Assert.Empty(usage.GetProperty("plans").EnumerateArray());
-        // EIN Kind, obwohl es zwei Verwendungsstellen sind – sonst wäre die Zahl für ihn irreführend.
+        // ONE child, although there are two usage sites - otherwise the number would mislead them.
         Assert.Equal(1, usage.GetProperty("otherLearnersCount").GetInt32());
 
-        // Das Löschen bleibt gesperrt und nennt die *Stellen* – dort müsste jemand aufräumen.
+        // The delete stays blocked and names the *sites* - that is where somebody would have to clean up.
         var del = await creator.DeleteAsync(
             $"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/vocabulary/{exerciseId}");
         Assert.Equal(HttpStatusCode.Conflict, del.StatusCode);

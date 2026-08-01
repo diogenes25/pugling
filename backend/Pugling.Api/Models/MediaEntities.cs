@@ -1,68 +1,68 @@
 namespace Pugling.Api.Models;
 
-// Medien-Store: ein Motiv, viele Bilder. Zwei Achsen, die strikt getrennt bleiben müssen –
-//   MediaAsset   = eine *Darstellung*         („laufendes Einhorn, Comic")  → inhaltlich (Stil/Zielgruppe)
-//   MediaVariant = eine *technische Ausprägung* derselben Darstellung        → Auflösung/Format
-// Wie beim Vokabel-Store liegen keine Bytes in der DB, nur URLs (vgl. Vocabulary.PronunciationAudioUrl).
+// Media store: one motif, many images. Two axes that must stay strictly separate -
+//   MediaAsset   = one *rendition*            ("running unicorn, comic")  → content-wise (style/audience)
+//   MediaVariant = one *technical form* of that same rendition            → resolution/format
+// As in the vocabulary store, no bytes live in the DB, only URLs (cf. Vocabulary.PronunciationAudioUrl).
 //
-// Bewusst gibt es KEIN eigenes „Motiv"-Entity: die Menge „alle Bilder, die *laufen* meinen" ist genau die
-// Menge der MediaLinks auf dieselbe Vokabel – der Träger ist das Motiv.
+// There is deliberately NO "motif" entity: the set "all images meaning *to run*" is exactly the set of
+// MediaLinks on the same vocabulary entry - the carrier is the motif.
 //
-// MediaKind/ContentRating/MediaPurpose/MediaOrigin leben im Vertrags-Projekt (Pugling.Contracts).
+// MediaKind/ContentRating/MediaPurpose/MediaOrigin live in the contract project (Pugling.Contracts).
 
 /// <summary>
-/// Eine konkrete Darstellung eines Motivs – nicht „das Bild zu laufen", sondern „das laufende Einhorn
-/// im Comic-Stil". Trägt Bedeutung, Stil (über <see cref="TagLinks"/>) und Eignung
-/// (<see cref="Rating"/>); die Dateien selbst hängen als <see cref="Variants"/> daran.
+/// One concrete asset of a motif – not "the image for running" but "the running unicorn in comic style".
+/// It carries meaning, style (through <see cref="TagLinks"/>) and suitability (<see cref="Rating"/>);
+/// the files themselves hang off it as <see cref="Variants"/>.
 /// </summary>
 public class MediaAsset
 {
     public int Id { get; set; }
 
-    /// <summary>Stabiler, global eindeutiger Referenz-Key (z. B. "run_unicorn_comic") – wie <see cref="Vocabulary.Key"/>.</summary>
+    /// <summary>Stable, globally unique reference key (e.g. "run_unicorn_comic") – like <see cref="Vocabulary.Key"/>.</summary>
     public string Key { get; set; } = "";
 
     /// <summary>
-    /// Was zu sehen ist. Doppelrolle: <b>Alt-Text</b> für die Barrierefreiheit (er geht später mit der
-    /// Karte an den Client) und Suchtext für Creator und KI-Agenten.
+    /// What can be seen. Double duty: <b>alt text</b> for accessibility (it later goes to the client with
+    /// the card) and search text for creators and AI agents.
     /// </summary>
     public string Description { get; set; } = "";
 
     public MediaKind Kind { get; set; } = MediaKind.Image;
 
-    /// <summary>Eignung. Die Auswahl filtert später hart dagegen, bevor sie überhaupt nach Interessen sortiert.</summary>
+    /// <summary>Suitability. The selection later filters hard against it, before it even sorts by interests.</summary>
     public ContentRating Rating { get; set; } = ContentRating.Everyone;
 
-    /// <summary>Lizenz-Kurzbezeichnung (z. B. "CC-BY-4.0") – Pflicht bei fremden Quellen.</summary>
+    /// <summary>Short license identifier (e.g. "CC-BY-4.0") – mandatory for third-party sources.</summary>
     public string? License { get; set; }
 
-    /// <summary>Nennung des Urhebers, sofern die Lizenz sie verlangt.</summary>
+    /// <summary>Naming of the author, where the license requires it.</summary>
     public string? Attribution { get; set; }
 
     public MediaOrigin Origin { get; set; } = MediaOrigin.Unknown;
 
-    /// <summary>Herkunftsdetail: URL der Fremdquelle bzw. Modell + Prompt bei <see cref="MediaOrigin.Generated"/>.</summary>
+    /// <summary>Provenance detail: URL of the third-party source, or model + prompt for <see cref="MediaOrigin.Generated"/>.</summary>
     public string? Source { get; set; }
 
-    /// <summary>Dominante Farbe (Hex) oder winziger Blur-Hash – erlaubt ruckelfreies Nachladen im Client.</summary>
+    /// <summary>Dominant color (hex) or a tiny blur hash – allows stutter-free lazy loading in the client.</summary>
     public string? Placeholder { get; set; }
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
-    /// <summary>Dieselbe Darstellung in mehreren Auflösungen/Formaten.</summary>
+    /// <summary>The same asset in several resolutions/formats.</summary>
     public List<MediaVariant> Variants { get; set; } = [];
 
-    /// <summary>Themen- und Stil-Schlagworte aus der geteilten Taxonomie (<see cref="InterestTag"/>).</summary>
+    /// <summary>Topic and style keywords from the shared taxonomy (<see cref="InterestTag"/>).</summary>
     public List<MediaTagLink> TagLinks { get; set; } = [];
 
-    /// <summary>Wo dieses Bild zugeordnet ist (Vokabeln, Übungs-Items, Übungen).</summary>
+    /// <summary>Where this image is assigned (vocabulary entries, exercise items, exercises).</summary>
     public List<MediaLink> Links { get; set; } = [];
 }
 
 /// <summary>
-/// Eine technische Ausprägung eines <see cref="MediaAsset"/> – dieselbe Darstellung, andere Bytes.
-/// Adressiert wird über den semantischen <see cref="Purpose"/>, nicht über Pixelmaße: so kann die
-/// Auslieferung später auf andere Größen umstellen, ohne den Vertrag zu brechen.
+/// A technical rendition of a <see cref="MediaAsset"/> – the same asset, different bytes.
+/// It is addressed through the semantic <see cref="Purpose"/>, not through pixel dimensions: that way
+/// delivery can later switch to other sizes without breaking the contract.
 /// </summary>
 public class MediaVariant
 {
@@ -76,19 +76,19 @@ public class MediaVariant
     public int Width { get; set; }
     public int Height { get; set; }
 
-    /// <summary>Dateiformat ("webp", "avif", "png", "jpg"). Mehrere Formate je Zweck erlauben <c>&lt;picture&gt;</c>/srcset.</summary>
+    /// <summary>File format ("webp", "avif", "png", "jpg"). Several formats per purpose allow <c>&lt;picture&gt;</c>/srcset.</summary>
     public string Format { get; set; } = "webp";
 
-    /// <summary>URL zur Datei – kein Base64 im Payload (gleiche Regel wie bei der Aussprache-Audioquelle).</summary>
+    /// <summary>URL of the file – no base64 in the payload (the same rule as for the pronunciation audio source).</summary>
     public string Url { get; set; } = "";
 
-    /// <summary>Dateigröße in Bytes, falls bekannt (Budget-Entscheidungen im Client).</summary>
+    /// <summary>File size in bytes, if known (budget decisions in the client).</summary>
     public long? Bytes { get; set; }
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }
 
-/// <summary>Verknüpft ein <see cref="MediaAsset"/> mit einem <see cref="InterestTag"/> (n:m).</summary>
+/// <summary>Links a <see cref="MediaAsset"/> to an <see cref="InterestTag"/> (n:m).</summary>
 public class MediaTagLink
 {
     public int Id { get; set; }
@@ -101,17 +101,17 @@ public class MediaTagLink
 }
 
 /// <summary>
-/// Zuordnung eines <see cref="MediaAsset"/> zu dem, was es bebildert – <b>n:m in beide Richtungen</b>.
-/// Eine Vokabel trägt viele Darstellungen (genau der Punkt: das Kind bekommt die passende), und ein
-/// Asset dient vielen Vokabeln: „run" (en→de) und „laufen" (de→en) sind getrennte Store-Zeilen, das
-/// laufende Einhorn soll beiden dienen. Eine Spalte am Träger (wie
-/// <see cref="Vocabulary.PronunciationAudioUrl"/>) könnte das nicht – Audio ist 1:1, weil es eine
-/// korrekte Aussprache gibt; bei Bildern ist die Vielfalt die Anforderung.
+/// Assignment of a <see cref="MediaAsset"/> to whatever it illustrates – <b>n:m in both directions</b>.
+/// One vocabulary entry carries many assets (that is exactly the point: the child gets the fitting one), and
+/// one asset serves many vocabulary entries: "run" (en→de) and "laufen" (de→en) are separate store rows, and
+/// the running unicorn should serve both. A column on the carrier (like
+/// <see cref="Vocabulary.PronunciationAudioUrl"/>) could not do that – audio is 1:1 because there is one
+/// correct pronunciation; with images the variety is the requirement.
 /// <para>
-/// Genau <b>eine</b> der drei Träger-FKs ist gesetzt (Check-Constraint). Die drei bilden eine
-/// Genauigkeits-Kaskade, die der Resolver später von unten nach oben liest:
-/// <see cref="ExerciseItemId"/> (nur diese Übung) schlägt <see cref="VocabularyId"/> (gilt überall);
-/// <see cref="ExerciseId"/> ist das Titelbild einer Text-/Leseübung und steht daneben.
+/// Exactly <b>one</b> of the three carrier FKs is set (check constraint). The three form a specificity
+/// cascade that the resolver later reads from the bottom up:
+/// <see cref="ExerciseItemId"/> (this exercise only) beats <see cref="VocabularyId"/> (applies everywhere);
+/// <see cref="ExerciseId"/> is the title image of a text/reading exercise and stands beside them.
 /// </para>
 /// </summary>
 public class MediaLink
@@ -121,21 +121,21 @@ public class MediaLink
     public int MediaAssetId { get; set; }
     public MediaAsset? MediaAsset { get; set; }
 
-    /// <summary>Store-Zuordnung: gilt in <b>allen</b> Übungen, die diese Vokabel nutzen (der Regelfall).</summary>
+    /// <summary>Store assignment: applies in <b>all</b> exercises using this vocabulary entry (the normal case).</summary>
     public int? VocabularyId { get; set; }
     public Vocabulary? Vocabulary { get; set; }
 
-    /// <summary>Übungslokale Übersteuerung: gilt nur für dieses eine Item, ohne den Store zu verbiegen.</summary>
+    /// <summary>Exercise-local override: applies to this one item only, without bending the store.</summary>
     public int? ExerciseItemId { get; set; }
     public ExerciseItem? ExerciseItem { get; set; }
 
-    /// <summary>Titelbild einer Übung (Text/Satz/Lesen) – kein Item-Bezug.</summary>
+    /// <summary>Title image of an exercise (text/sentence/reading) – no item relation.</summary>
     public int? ExerciseId { get; set; }
     public Exercise? Exercise { get; set; }
 
     /// <summary>
-    /// Redaktioneller Rang. Er entscheidet erst <b>bei Gleichstand</b> der Interessens-Bewertung – der
-    /// Creator kann damit ein Lieblingsbild nach vorn ziehen, ohne die Auswahl je Kind auszuhebeln.
+    /// Editorial rank. It only decides <b>on a tie</b> of the interest scoring – with it the creator can pull
+    /// a favorite image forward without overriding the per-child selection.
     /// </summary>
     public int Weight { get; set; }
 
@@ -143,15 +143,15 @@ public class MediaLink
 }
 
 /// <summary>
-/// Die <b>eingefrorene</b> Bildwahl eines Kindes für einen Träger. Der nicht offensichtliche Teil des
-/// ganzen Entwurfs: beim Vokabellernen ist Bildkonstanz <i>gewollt</i> – das Kind soll bei jeder
-/// Wiederholung dasselbe Bild sehen, Wiedererkennung <b>ist</b> der Merkeffekt. Würde die Auswahl bei
-/// jedem Abruf neu rechnen, zerstörte ein nachträglich hinzugefügtes Bild genau ihn. Dasselbe Muster wie
-/// die eingefrorene Ausspiel-Reihenfolge einer Übungssitzung.
+/// A child's <b>frozen</b> image choice for one carrier. The non-obvious part of the whole design: when
+/// learning vocabulary, image constancy is <i>wanted</i> – the child should see the same image on every
+/// repetition, recognition <b>is</b> the retention effect. If the selection recomputed on every request, an
+/// image added later would destroy exactly that. The same pattern as the frozen play-out order of an
+/// exercise session.
 /// <para>
-/// Eine Zeile je <b>Kandidat</b>, nicht je Träger: die aktive Wahl ist die Zeile mit
-/// <see cref="Rejected"/> = <c>false</c>, abgelehnte Bilder bleiben als Zeile stehen und werden nie
-/// wieder gezogen. Damit ist „anderes Bild" zugleich das billigste Feedback-Signal, das wir bekommen können.
+/// One row per <b>candidate</b>, not per carrier: the active choice is the row with <see cref="Rejected"/> =
+/// <c>false</c>, rejected images remain as a row and are never drawn again. That makes "another image" at the
+/// same time the cheapest feedback signal we can get.
 /// </para>
 /// </summary>
 public class ChildMediaPick
@@ -161,7 +161,7 @@ public class ChildMediaPick
     public int ChildId { get; set; }
     public Child? Child { get; set; }
 
-    /// <summary>Träger der Wahl – genau eine der beiden ist gesetzt (wie bei <see cref="MediaLink"/>).</summary>
+    /// <summary>Carrier of the choice – exactly one of the two is set (as with <see cref="MediaLink"/>).</summary>
     public int? VocabularyId { get; set; }
     public Vocabulary? Vocabulary { get; set; }
 
@@ -171,7 +171,7 @@ public class ChildMediaPick
     public int MediaAssetId { get; set; }
     public MediaAsset? MediaAsset { get; set; }
 
-    /// <summary>Vom Kind/Vater abgelehnt („anderes Bild") – wird für diesen Träger nie wieder gezogen.</summary>
+    /// <summary>Rejected by the child/supervisor ("another image") – never drawn again for this carrier.</summary>
     public bool Rejected { get; set; }
 
     public DateTime PickedAt { get; set; } = DateTime.UtcNow;

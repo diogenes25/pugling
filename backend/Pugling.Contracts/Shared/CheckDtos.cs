@@ -1,7 +1,7 @@
 namespace Pugling.Contracts.Shared;
 
-// Ebenen-übergreifender Vertrag der Antwort-Auswertung: dieselbe Form beim zustandslosen
-// Katalog-Check (Creator) wie beim server-autoritativen Abschlusstest (Student).
+// Tier-spanning contract of answer evaluation: the same shape for the stateless catalog check (creator)
+// as for the server-authoritative final test (student).
 
 /// <summary>An answer submitted by the child, positional (index in the respective item list).</summary>
 public record GivenAnswer(int Index, string? Value);

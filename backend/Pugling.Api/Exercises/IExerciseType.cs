@@ -18,7 +18,7 @@ public enum StoreResolution
     VocabRefs = 2,
 }
 
-// StageOption lebt im Vertrags-Projekt (Pugling.Contracts).
+// StageOption lives in the contract project (Pugling.Contracts).
 
 /// <summary>
 /// An exercise type as a self-describing unit ("one type = one class"). Replaces the former closed

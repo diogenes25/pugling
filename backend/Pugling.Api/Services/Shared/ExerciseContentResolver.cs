@@ -28,7 +28,7 @@ public class ExerciseContentResolver(PuglingDbContext db, ExerciseContentProvide
     public async Task<IReadOnlyList<ContentItem>> ItemsOfAsync(Exercise exercise, int? childId = null,
         CancellationToken ct = default)
     {
-        // Die Verzweigung folgt der StoreResolution-Fähigkeit des Typs (enum-frei); die DB-Logik bleibt hier.
+        // The branch follows the type's StoreResolution capability (enum-free); the DB logic stays here.
         switch (registry.ByKey(exercise.Type)?.StoreResolution)
         {
             case StoreResolution.ItemTable:
@@ -41,13 +41,13 @@ public class ExerciseContentResolver(PuglingDbContext db, ExerciseContentProvide
                 var cloze = string.IsNullOrWhiteSpace(exercise.ConfigJson)
                     ? new ClozeConfig()
                     : JsonSerializer.Deserialize<ClozeConfig>(exercise.ConfigJson, JsonOptions) ?? new ClozeConfig();
-                // Nur wenn mindestens eine Lücke den Store referenziert – sonst reicht die Inline-Projektion.
+                // Only if at least one gap references the store - otherwise the inline projection is enough.
                 if (cloze.Gaps.Any(g => !string.IsNullOrWhiteSpace(g.VocabKey)))
                     return await ResolveClozeRefsAsync(cloze, ct);
                 break;
         }
 
-        // Inline-Typen (inkl. Legacy-Vokabeln/Lückentexte ohne Store-Bezug): zustandslose Projektion aus der Config.
+        // Inline types (including legacy vocabulary/cloze texts without a store reference): a stateless projection from the config.
         return provider.ItemsOf(exercise);
     }
 
@@ -87,8 +87,8 @@ public class ExerciseContentResolver(PuglingDbContext db, ExerciseContentProvide
             ? await media.SelectForItemsAsync(cid, [.. rows.Select(r => (r.Id, r.VocabularyId))], ct: ct)
             : new Dictionary<int, SelectedMedia>();
 
-        // Die Aussprache-Audioquelle gehört zum Wort und wird richtungsunabhängig mitgetragen (die Hör-Stufe
-        // liest sie); WithDirection dreht Wort ↔ Übersetzung und bewahrt dabei ItemId/VocabularyId.
+        // The pronunciation audio belongs to the word and is carried along direction-independently (the
+        // listening stage reads it); WithDirection swaps word ↔ translation and preserves ItemId/VocabularyId.
         return rows.Select((r, i) =>
         {
             if (!byId.TryGetValue(r.VocabularyId, out var v))
@@ -121,12 +121,12 @@ public class ExerciseContentResolver(PuglingDbContext db, ExerciseContentProvide
                 return new ContentItem(i, config.Text, g.Answer, Accepted(g.Answer, g.Alternatives), Hint: null, GapIndex: g.Index);
             if (byKey.TryGetValue(g.VocabKey, out var v))
                 return new ContentItem(i, config.Text, v.Word, Accepted(v.Word, g.Alternatives), v.Translation, g.Index);
-            // Fehlender Store-Key: Platzhalter auf gleichem Index (keine Lösung), damit sich nichts verschiebt.
+            // Missing store key: a placeholder at the same index (no solution) so that nothing shifts.
             return new ContentItem(i, config.Text, "", [""], $"(Vokabel '{g.VocabKey}' fehlt)", g.Index);
         }).ToList();
     }
 
-    // Lösung + Alternativen, roh (Normalisierung macht erst der AnswerGrader) – wie im Provider.
+    // Solution + alternatives, raw (normalizing is the AnswerGrader's job) - as in the provider.
     private static IReadOnlyList<string> Accepted(string answer, IEnumerable<string>? alternatives) =>
         alternatives is null ? [answer] : [answer, .. alternatives];
 }

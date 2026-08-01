@@ -33,7 +33,7 @@ public class ItemProgressService(PuglingDbContext db)
 
         var now = DateTime.UtcNow;
 
-        // Historie protokolliert jede Antwort – auch nicht gewertete Wiederholungen (das ist genuine Historie).
+        // The history records every answer - including ungraded repetitions (that is genuine history).
         db.ItemReviewEvents.Add(new ItemReviewEvent
         {
             ChildId = childId,
@@ -56,13 +56,13 @@ public class ItemProgressService(PuglingDbContext db)
             prog = new ItemProgress { ChildId = childId, ItemId = itemId, IntroducedAt = today };
             db.ItemProgress.Add(prog);
         }
-        // Denormalisierte Bezüge aktuell halten (das Item könnte einer anderen Vokabel zugeordnet worden sein).
+        // Keep the denormalized references current (the item may have been reassigned to another vocabulary entry).
         prog.ExerciseId = exerciseId;
         prog.VocabularyId = vocabId;
         prog.IntroducedAt ??= today;
         prog.SeenCount++;
         if (wasCorrect) prog.CorrectCount++;
-        // Leitner-Schritt: richtig → eine Box höher (gedeckelt), falsch → zurück auf Box 1 (wie der Positions-Motor).
+        // Leitner step: correct → one box up (capped), wrong → back to box 1 (as in the position engine).
         prog.Box = wasCorrect ? Math.Min(ItemProgress.MaxBox, Math.Max(1, prog.Box) + 1) : 1;
         prog.MasteryPercent = MasteryOf(prog.Box);
         prog.LastAnswerAt = now;

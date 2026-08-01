@@ -39,22 +39,22 @@ public class SeedContractTests(PuglingWebAppFactory factory) : IClassFixture<Pug
     {
         var c = factory.CreateClient();
 
-        // Adult 1 – der Vater. Default in tutorial-api.sh und TestApi.FatherAsync.
+        // Adult 1 - the father. The default in tutorial-api.sh and TestApi.FatherAsync.
         var papa = await LoginAsync(c, "adult", new { adultId = 1, pin = "0000" });
         Assert.Equal("Papa", papa.GetProperty("name").GetString());
         Assert.Equal("Supervisor", papa.GetProperty("role").GetString());
 
-        // Adult 2 – der Lehrer. Entsteht in SeedTeacherLibrary, also *nach* SeedAdmin; mehrere
-        // Bestandstests (MediaLinkTests, RemarkTests) setzen genau diese 2 voraus.
-        // Die Rolle ist jetzt zusicherbar: **Creator, nicht Supervisor**. Vorher rief der Start für jeden
-        // Adult `EnsureForAdultAsync`, und der Lehrer bekam die Supervisor-Rolle, obwohl
-        // `EnsureForTeacherAsync` genau für ihn existierte und nie erreicht wurde. Der Seed unterscheidet
-        // jetzt am Betreuungsauftrag – dieser Test ist die Zusage, dass es dabei bleibt.
+        // Adult 2 - the teacher. Created in SeedTeacherLibrary, i.e. *after* SeedAdmin; several existing tests
+        // (MediaLinkTests, RemarkTests) require exactly this 2.
+        // The role can now be asserted: **creator, not supervisor**. Before, startup called
+        // `EnsureForAdultAsync` for every adult, and the teacher got the supervisor role even though
+        // `EnsureForTeacherAsync` existed precisely for them and was never reached. The seed now distinguishes
+        // by the supervision assignment - this test is the promise that it stays that way.
         var lehrer = await LoginAsync(c, "adult", new { adultId = 2, pin = "9999" });
         Assert.Equal("Herr Schmidt (Englischlehrer)", lehrer.GetProperty("name").GetString());
         Assert.Equal("Creator", lehrer.GetProperty("role").GetString());
 
-        // Child 1 – der Sohn. Default in TestApi.ChildAsync und in der Playwright-Suite.
+        // Child 1 - the son. The default in TestApi.ChildAsync and in the Playwright suite.
         var sohn = await LoginAsync(c, "child", new { childId = 1, pin = "1111" });
         Assert.Equal("Sohn", sohn.GetProperty("name").GetString());
         Assert.Equal("Student", sohn.GetProperty("role").GetString());
@@ -66,29 +66,29 @@ public class SeedContractTests(PuglingWebAppFactory factory) : IClassFixture<Pug
         using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
 
-        // Fach 1 = Englisch: der Katalog entsteht in SeedCatalog, dessen erstes Fach.
+        // Subject 1 = English: the catalog is created in SeedCatalog, and this is its first subject.
         var first = await db.Subjects.AsNoTracking().OrderBy(s => s.Id).FirstAsync();
         Assert.Equal("Englisch", first.Name);
 
-        // Adult 2 ist der Lehrer – tutorial-api.sh und die Skills sprechen ihn über diese Id an.
+        // Adult 2 is the teacher - tutorial-api.sh and the skills address them through this id.
         var lehrer = await db.Adults.AsNoTracking().SingleAsync(a => a.Id == 2);
         Assert.Equal("englischlehrer@example.com", lehrer.Email);
 
-        // Selbstschutz: liefe der Seed gar nicht (oder nur halb), bestünde die Zusicherung oben zufällig,
-        // und jeder Test, der auf geseedete Inhalte baut, scheiterte an einer anderen Stelle.
-        Assert.True(await db.Subjects.CountAsync() >= 3, "Weniger als drei geseedete Fächer – lief SeedCatalog?");
+        // Self-protection: if the seed did not run (or only halfway), the assurance above would hold by
+        // accident, and every test building on seeded content would fail somewhere else.
+        Assert.True(await db.Subjects.CountAsync() >= 3, "Fewer than three seeded subjects - did SeedCatalog run?");
         Assert.True(await db.Vocabularies.CountAsync() >= 10, "Zu wenige geseedete Vokabeln – lief SeedVocabulary?");
         Assert.True(await db.StudyPlans.AnyAsync(), "Kein geseedeter Lehrplan – lief SeedDemoPlan?");
     }
 
     /// <summary>
-    /// <b>Der Seed muss ein zweites Mal laufen können, ohne etwas zu verdoppeln</b> – der Start ruft ihn
-    /// bei <i>jedem</i> Hochfahren. Genau das prüfte bisher nichts: die Idempotenz jeder Teilroutine war
-    /// zugesagt, aber nie gemessen. Ein vergessener „existiert schon?"-Wächter in einer neuen Routine
-    /// hätte sich nur dadurch gezeigt, dass die Demo-Daten nach einem Neustart doppelt dastehen.
+    /// <b>The seed must be able to run a second time without duplicating anything</b> - startup calls it on
+    /// <i>every</i> boot. Nothing checked exactly that so far: the idempotency of every sub-routine was
+    /// promised but never measured. A forgotten "does it exist already?" guard in a new routine would only
+    /// have shown up as demo data standing there twice after a restart.
     /// <para>
-    /// Verglichen werden die Zeilenzahlen <b>aller</b> Tabellen, nicht eine Auswahl: eine Auswahl wäre
-    /// genau dort blind, wo die nächste Routine hinzukommt.
+    /// The row counts of <b>all</b> tables are compared, not a selection: a selection would be blind exactly
+    /// where the next routine is added.
     /// </para>
     /// </summary>
     [Fact]
@@ -98,15 +98,15 @@ public class SeedContractTests(PuglingWebAppFactory factory) : IClassFixture<Pug
         var sp = scope.ServiceProvider;
         var db = sp.GetRequiredService<PuglingDbContext>();
 
-        // Erst einmal säen, dann messen, dann erneut säen: der Host hat beim Start zwar schon geseedet,
-        // aber die Test-Factory räumt danach die Zeitfenster ab (Wanduhr-Neutralisierung). Ohne diesen
-        // ersten Lauf wäre der Unterschied ihr Aufräumen und nicht ein Seed-Fehler.
+        // Seed once, then measure, then seed again: the host has already seeded at startup, but the test
+        // factory clears the time slots afterwards (neutralizing the wall clock). Without this first run the
+        // difference would be its cleanup and not a seed bug.
         await SeedAsync(sp, db);
         var vorher = await ZeilenzahlenAsync(db);
 
-        // Selbstschutz: läge die DB leer vor, verglich der Test zwei Nullen.
+        // Self-protection: if the DB were empty, the test would compare two zeros.
         Assert.True(vorher.Values.Sum() > 100,
-            $"Zu wenige geseedete Zeilen insgesamt ({vorher.Values.Sum()}) – lief der Seed überhaupt?");
+            $"Too few seeded rows in total ({vorher.Values.Sum()}) - did the seed run at all?");
 
         await SeedAsync(sp, db);
 
@@ -121,8 +121,8 @@ public class SeedContractTests(PuglingWebAppFactory factory) : IClassFixture<Pug
             CancellationToken.None);
 
     /// <summary>
-    /// Zeilenzahl je Tabelle. Über die rohe Verbindung statt über die DbSets, damit auch Tabellen ohne
-    /// DbSet mitgezählt werden – sonst wäre der Vergleich genau dort blind, wo eine Join-Tabelle wächst.
+    /// Row count per table. Through the raw connection instead of the DbSets, so that tables without a DbSet
+    /// are counted too - otherwise the comparison would be blind exactly where a join table grows.
     /// </summary>
     private static async Task<Dictionary<string, long>> ZeilenzahlenAsync(PuglingDbContext db)
     {
@@ -132,7 +132,7 @@ public class SeedContractTests(PuglingWebAppFactory factory) : IClassFixture<Pug
         foreach (var table in db.Model.GetRelationalModel().Tables)
         {
             using var cmd = connection.CreateCommand();
-            // Tabellennamen kommen aus dem EF-Modell, nicht von außen – hier gibt es nichts zu injizieren.
+            // Table names come from the EF model, not from outside - there is nothing to inject here.
             cmd.CommandText = $"SELECT COUNT(*) FROM \"{table.Name}\"";
             counts[table.Name] = Convert.ToInt64(await cmd.ExecuteScalarAsync(), CultureInfo.InvariantCulture);
         }
@@ -140,10 +140,9 @@ public class SeedContractTests(PuglingWebAppFactory factory) : IClassFixture<Pug
     }
 
     /// <summary>
-    /// Der geseedete Lehrer muss seine <b>eigenen</b> Übungen bearbeiten können. Vorher konnte er das
-    /// nicht: die Rechte laufen ausschließlich über <c>ExerciseGrant</c>, vergeben wurden sie aber nur von
-    /// einer Raw-SQL-Zeile in einer Migration – und die ist auf einer leeren DB ein No-op. Die Übungen
-    /// hatten also einen Autor, aber keinen Owner.
+    /// The seeded teacher must be able to edit their <b>own</b> exercises. Before, they could not: the rights
+    /// run exclusively through <c>ExerciseGrant</c>, but they were only granted by one raw SQL line in a
+    /// migration - and that is a no-op on an empty DB. So the exercises had an author but no owner.
     /// </summary>
     [Fact]
     public async Task Lehrer_Darf_Seine_Geseedete_Uebung_Bearbeiten()
@@ -157,10 +156,9 @@ public class SeedContractTests(PuglingWebAppFactory factory) : IClassFixture<Pug
             (subjectId, chapterId, exerciseId) = (uebung.Chapter!.SubjectId, uebung.ChapterId, uebung.Id);
         }
 
-        // Geprüft wird über einen *additiven* Schreibzugriff (ein Item anlegen), nicht über das
-        // vollständige PUT: derselbe Rechte-Pfad (`EnsureCanWrite` → Grant), aber ohne die geseedete
-        // Übung zu ersetzen. Genau dieser Aufruf liefert einem fremden Creator 403
-        // (ExerciseItemsAndProgressTests) – hier muss er gelingen.
+        // The check runs through an *additive* write (creating an item), not through the full PUT: the same
+        // rights path (`EnsureCanWrite` → grant), but without replacing the seeded exercise. That very call
+        // returns 403 for another creator (ExerciseItemsAndProgressTests) - here it has to succeed.
         var lehrer = await TestApi.FatherAsync(factory, id: 2, pin: "9999");
         var res = await lehrer.PostAsJsonAsync(
             $"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/vocabulary/{exerciseId}/items",

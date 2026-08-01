@@ -1,6 +1,6 @@
 namespace Pugling.Api.Models;
 
-/// <summary>Woher eine protokollierte Antwort stammt: freies Üben (Leitner) oder ein Abschlusstest.</summary>
+/// <summary>Where a recorded answer came from: free practice (Leitner) or a final test.</summary>
 public enum ItemReviewSource
 {
     Practice = 0,
@@ -8,11 +8,12 @@ public enum ItemReviewSource
 }
 
 /// <summary>
-/// Plan-übergreifender Lernstand eines Kindes zu einem einzelnen Übungs-Item (Vokabelpaar). Anders als
-/// <see cref="PositionItemProgress"/> (Leitner-Terminierung je Plan-Position) hängt dieser Stand an der stabilen
-/// <see cref="ExerciseItem.Id"/> (der „ItemId") und trägt die <see cref="VocabularyId"/> denormalisiert mit – so
-/// lässt sich der Fortschritt sowohl je Übungs-Item als auch je Wort (übungsübergreifend) auswerten. Genau eine
-/// Zeile je (Kind, Item); aus den protokollierten Antworten fortgeschrieben (siehe <see cref="ItemReviewEvent"/>).
+/// A child's cross-plan learning state for a single exercise item (vocabulary pair). Unlike
+/// <see cref="PositionItemProgress"/> (Leitner review scheduling per plan position), this state hangs on the
+/// stable <see cref="ExerciseItem.Id"/> (the "ItemId") and carries the <see cref="VocabularyId"/>
+/// denormalized alongside – so progress can be evaluated both per exercise item and per word (across
+/// exercises). Exactly one row per (child, item); rolled forward from the recorded answers (see
+/// <see cref="ItemReviewEvent"/>).
 /// </summary>
 public class ItemProgress
 {
@@ -21,41 +22,41 @@ public class ItemProgress
     public int ChildId { get; set; }
     public Child? Child { get; set; }
 
-    /// <summary>Das Übungs-Item; verschwindet mit ihm (Cascade).</summary>
+    /// <summary>The exercise item; disappears with it (cascade).</summary>
     public int ItemId { get; set; }
     public ExerciseItem? Item { get; set; }
 
-    /// <summary>Denormalisiert: Übung des Items (Filter „Fortschritt in dieser Übung").</summary>
+    /// <summary>Denormalized: the item's exercise (filter "progress within this exercise").</summary>
     public int ExerciseId { get; set; }
-    /// <summary>Denormalisiert: referenzierte Store-Vokabel (Rollup „wie sitzt dieses Wort über alle Übungen?").</summary>
+    /// <summary>Denormalized: the referenced store vocabulary entry (rollup "how well does this word sit across all exercises?").</summary>
     public int VocabularyId { get; set; }
 
-    /// <summary>Aktuelle Leitner-Box (1 = neu/schwer … <see cref="MaxBox"/> = sicher).</summary>
+    /// <summary>Current Leitner box (1 = new/hard … <see cref="MaxBox"/> = safe).</summary>
     public int Box { get; set; } = 1;
-    /// <summary>Höchste Box dieses aggregierten Stands (fest, plan-unabhängig).</summary>
+    /// <summary>Highest box of this aggregated state (fixed, independent of any plan).</summary>
     public const int MaxBox = 5;
-    /// <summary>Geteilte Auswertungs-Schwelle: unter dieser Beherrschung (Prozent) gilt ein Item/Wort als „schwach".</summary>
+    /// <summary>Shared evaluation threshold: below this mastery (percent) an item/word counts as "weak".</summary>
     public const int WeakBelowPercent = 50;
-    /// <summary>Beherrschung in Prozent, aus <see cref="Box"/> abgeleitet (für einfache Auswertung/Sortierung).</summary>
+    /// <summary>Mastery in percent, derived from <see cref="Box"/> (for simple evaluation/sorting).</summary>
     public int MasteryPercent { get; set; }
 
-    /// <summary>Wie oft das Item schon beantwortet wurde (Üben + Test).</summary>
+    /// <summary>How often the item has been answered so far (practice + test).</summary>
     public int SeenCount { get; set; }
-    /// <summary>Davon richtig beantwortet.</summary>
+    /// <summary>Of those, answered correctly.</summary>
     public int CorrectCount { get; set; }
 
-    /// <summary>Tag der ersten Beantwortung (erstmalige Einführung).</summary>
+    /// <summary>Day of the first answer (initial introduction).</summary>
     public DateOnly? IntroducedAt { get; set; }
-    /// <summary>Zeitpunkt der letzten Antwort.</summary>
+    /// <summary>Instant of the last answer.</summary>
     public DateTime? LastAnswerAt { get; set; }
-    /// <summary>Ob die letzte Antwort richtig war.</summary>
+    /// <summary>Whether the last answer was correct.</summary>
     public bool? LastCorrect { get; set; }
 }
 
 /// <summary>
-/// Eine einzelne protokollierte Antwort eines Kindes zu einem Item – die Historie hinter <see cref="ItemProgress"/>.
-/// Trägt <see cref="ExerciseId"/>/<see cref="VocabularyId"/> denormalisiert, damit die Wort-Historie auch dann
-/// erhalten bleibt, wenn das Item später gelöscht wird (<see cref="ItemId"/> wird dann auf <c>null</c> gesetzt).
+/// A single recorded answer of a child to an item – the history behind <see cref="ItemProgress"/>.
+/// Carries <see cref="ExerciseId"/>/<see cref="VocabularyId"/> denormalized so that the word history is
+/// preserved even when the item is deleted later (<see cref="ItemId"/> is then set to <c>null</c>).
 /// </summary>
 public class ItemReviewEvent
 {
@@ -64,24 +65,24 @@ public class ItemReviewEvent
     public int ChildId { get; set; }
     public Child? Child { get; set; }
 
-    /// <summary>Das Übungs-Item; <c>null</c>, wenn es nach der Antwort gelöscht wurde (Historie bleibt fürs Wort-Rollup).</summary>
+    /// <summary>The exercise item; <c>null</c> if it was deleted after the answer (the history stays for the word rollup).</summary>
     public int? ItemId { get; set; }
     public ExerciseItem? Item { get; set; }
 
-    /// <summary>Denormalisiert: Übung des Items.</summary>
+    /// <summary>Denormalized: the item's exercise.</summary>
     public int ExerciseId { get; set; }
-    /// <summary>Denormalisiert: referenzierte Store-Vokabel (Wort-Rollup, überlebt Item-Löschung).</summary>
+    /// <summary>Denormalized: the referenced store vocabulary entry (word rollup, survives item deletion).</summary>
     public int VocabularyId { get; set; }
-    /// <summary>Optionaler Kontext: die Lehrplan-Position, über die geübt/getestet wurde.</summary>
+    /// <summary>Optional context: the study plan position the item was practiced/tested through.</summary>
     public int? PlanPositionId { get; set; }
 
-    /// <summary>Herkunft der Antwort (Üben oder Test).</summary>
+    /// <summary>Origin of the answer (practice or test).</summary>
     public ItemReviewSource Source { get; set; }
-    /// <summary>Die serverseitig erzwungene Stufe, in der die Antwort gegeben wurde.</summary>
+    /// <summary>The server-enforced stage the answer was given on.</summary>
     public int StageValue { get; set; }
-    /// <summary>Die gegebene Antwort (bei getippten Stufen); <c>null</c> bei reiner Selbsteinschätzung.</summary>
+    /// <summary>The answer given (on typed stages); <c>null</c> for pure self-assessment.</summary>
     public string? GivenAnswer { get; set; }
-    /// <summary>Ob die Antwort richtig war.</summary>
+    /// <summary>Whether the answer was correct.</summary>
     public bool WasCorrect { get; set; }
 
     public DateTime At { get; set; } = DateTime.UtcNow;

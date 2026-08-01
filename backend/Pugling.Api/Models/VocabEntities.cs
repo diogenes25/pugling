@@ -1,69 +1,69 @@
 namespace Pugling.Api.Models;
 
-// Sprachlernen: atomarer Vokabel-Store als "Single Source of Truth".
-// Jede Form (auch konjugiert/flektiert) ist ein eigener Eintrag; konjugierte
-// Formen verweisen per BaseFormId auf ihre Grundform-Vokabel.
-// Sätze und Übungen referenzieren später Vokabeln über ihren Key (bzw. FK).
+// Language learning: the atomic vocabulary store as the single source of truth.
+// Every form (conjugated/inflected ones too) is its own entry; conjugated forms point at their base form
+// entry through BaseFormId.
+// Sentences and exercises later reference entries through their key (or FK).
 
-// PartOfSpeech/Genus/NounInfo/VerbInfo leben im Vertrags-Projekt (Pugling.Contracts).
+// PartOfSpeech/Genus/NounInfo/VerbInfo live in the contract project (Pugling.Contracts).
 
-/// <summary>Atomarer Vokabel-Eintrag (lexikalisches Rückgrat).</summary>
+/// <summary>Atomic vocabulary entry (the lexical backbone).</summary>
 public class Vocabulary
 {
     public int Id { get; set; }
-    /// <summary>Stabiler, eindeutiger Referenz-Key (z. B. "en_run_verb_laufen").</summary>
+    /// <summary>Stable, unique reference key (e.g. "en_run_verb_laufen").</summary>
     public string Key { get; set; } = "";
     public string Version { get; set; } = "1.0";
     public string SourceLanguage { get; set; } = "";
     public string TargetLanguage { get; set; } = "";
-    /// <summary>Wort in der Ausgangssprache.</summary>
+    /// <summary>Word in the source language.</summary>
     public string Word { get; set; } = "";
-    /// <summary>Übersetzung in der Zielsprache.</summary>
+    /// <summary>Translation into the target language.</summary>
     public string Translation { get; set; } = "";
     public PartOfSpeech PartOfSpeech { get; set; }
 
-    /// <summary>Nur bei Substantiven gesetzt (JSON-Spalte).</summary>
+    /// <summary>Only set for nouns (JSON column).</summary>
     public NounInfo? Noun { get; set; }
-    /// <summary>Nur bei Verben gesetzt (JSON-Spalte).</summary>
+    /// <summary>Only set for verbs (JSON column).</summary>
     public VerbInfo? Verb { get; set; }
 
-    /// <summary>Verweis auf die Grundform-Vokabel (bei flektierten Formen).</summary>
+    /// <summary>Reference to the base form entry (for inflected forms).</summary>
     public int? BaseFormId { get; set; }
     public Vocabulary? BaseForm { get; set; }
 
     /// <summary>
-    /// Erklärt die Beziehung zur Grundform (z. B. "Präteritum", "Partizip II", "Plural").
-    /// Nur zusammen mit <see cref="BaseFormId"/> sinnvoll; beschreibt die Kante flektierte Form → Grundform.
+    /// Explains the relation to the base form (e.g. "past tense", "past participle", "plural").
+    /// Only meaningful together with <see cref="BaseFormId"/>; it describes the edge inflected form → base form.
     /// </summary>
     public string? BaseFormRelation { get; set; }
 
-    /// <summary>URL zur Aussprache-Audiodatei (kein Base64 im Payload).</summary>
+    /// <summary>URL of the pronunciation audio file (no base64 in the payload).</summary>
     public string? PronunciationAudioUrl { get; set; }
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
-    /// <summary>Freie, kindneutrale Schlagworte (Kapitel/Klasse/Thema) zum Suchen und Gruppieren.</summary>
+    /// <summary>Free, child-neutral keywords (chapter/grade/topic) for searching and grouping.</summary>
     public List<VocabTagLink> TagLinks { get; set; } = new();
 }
 
 /// <summary>
-/// Kindneutrales Schlagwort für den gemeinsamen Vokabel-Katalog (z. B. "Kapitel 5", "Klasse 7",
-/// "unregelmäßige Verben"). Bewusst getrennt vom kind-skopierten <see cref="Tag"/> (Klassenarbeits-Relevanz),
-/// weil der Vokabel-Store – wie seine Tags – kindneutral ist.
+/// Child-neutral keyword for the shared vocabulary catalog (e.g. "Kapitel 5", "Klasse 7",
+/// "unregelmäßige Verben"). Deliberately separate from the child-scoped <see cref="Tag"/> (class test
+/// relevance), because the vocabulary store – like its tags – is child-neutral.
 /// </summary>
 public class VocabTag
 {
     public int Id { get; set; }
-    /// <summary>Global eindeutiger Name.</summary>
+    /// <summary>Globally unique name.</summary>
     public string Name { get; set; } = "";
-    /// <summary>Optionale Anzeigefarbe (Hex, z. B. "#3b82f6") für die UI.</summary>
+    /// <summary>Optional display color (hex, e.g. "#3b82f6") for the UI.</summary>
     public string? Color { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     public List<VocabTagLink> Links { get; set; } = new();
 }
 
-/// <summary>Verknüpft eine <see cref="Vocabulary"/> mit einem <see cref="VocabTag"/> (n:m).</summary>
+/// <summary>Links a <see cref="Vocabulary"/> entry to a <see cref="VocabTag"/> (n:m).</summary>
 public class VocabTagLink
 {
     public int Id { get; set; }

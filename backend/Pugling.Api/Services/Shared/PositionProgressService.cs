@@ -23,9 +23,9 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
     /// </summary>
     private const int MaxSettleLookbackDays = 14;
 
-    // PositionStatus/DayOverview/ProgressDay/ProgressView leben im Vertrags-Projekt (Pugling.Contracts.Shared).
+    // PositionStatus/DayOverview/ProgressDay/ProgressView live in the contract project (Pugling.Contracts.Shared).
 
-    // ---- Perioden ----
+    // ---- Periods ---- ----
 
     /// <summary>Monday of the week that <paramref name="day"/> falls in (week = Mon–Sun).</summary>
     private static DateOnly WeekMonday(DateOnly day) => day.AddDays(-(((int)day.DayOfWeek + 6) % 7));
@@ -49,7 +49,7 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
     private static DateOnly PeriodStart(GoalCadence cadence, DateOnly day) =>
         cadence == GoalCadence.Weekly ? WeekMonday(day) : day;
 
-    // ---- Erledigt-Regel je Prüfmodus ----
+    // ---- Done rule per check mode ---- ----
 
     /// <summary>Check mode of this position's exercise (default <see cref="ExerciseCheckMode.None"/>).</summary>
     private ExerciseCheckMode CheckModeOf(PlanPosition pos) =>
@@ -83,10 +83,10 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
         var (from, to) = PeriodRange(pos.Cadence, day);
         if (CheckModeOf(pos) == ExerciseCheckMode.None)
         {
-            // Nur echte Lern-Sitzungen zählen aufs Ziel – Info-Sitzungen (freies Üben ohne Feedback) nicht.
-            // Die Menge wird in der DB gefiltert; der Vergleich Cursor↔Order.Count läuft danach im Speicher,
-            // weil `Order` eine JSON-Spalte ist – `s.Order.Count` ist nicht übersetzbar und würde die Query
-            // still zur Client-Auswertung über ALLE Sitzungen zwingen.
+            // Only real learning sessions count towards the goal - info sessions (free practice without
+            // feedback) do not. The set is filtered in the DB; the comparison cursor↔Order.Count then runs in
+            // memory, because `Order` is a JSON column - `s.Order.Count` is not translatable and would silently
+            // force client-side evaluation over ALL sessions.
             var rounds = await db.PracticeSessions.AsNoTracking()
                 .Where(s => s.PlanPositionId == pos.Id && s.Day >= from && s.Day <= to && s.Mode == PlayMode.Lern)
                 .Select(s => new { s.Cursor, s.Order })
@@ -99,7 +99,7 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
             && t.CompletedAt != null && t.Passed && (!pos.RequireTypedTest || t.Graded), ct);
     }
 
-    // ---- Rollup + Punkte ----
+    // ---- Rollup + points ---- ----
 
     private Task<List<PlanPosition>> LoadPositionsAsync(int planId, CancellationToken ct) =>
         db.PlanPositions.Include(p => p.Exercise)
@@ -141,7 +141,7 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
                 checkMode != ExerciseCheckMode.None, goalMet, dueCount, poolSize, pos.PointsGoalMet));
         }
 
-        // Pflicht des Tages = alle Positionen mit Ziel (Tag heute / Woche in dieser Woche) erledigt.
+        // The day's obligation = every position with a goal (daily today / weekly this week) done.
         var obligations = statuses.Where(s => s.Cadence != GoalCadence.None).ToList();
         var met = obligations.Count(s => s.GoalMet);
         var dutyDone = obligations.Count > 0 && met == obligations.Count;
@@ -197,19 +197,18 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
         }
         catch (DbUpdateException)
         {
-            // Zwei gleichzeitige Zielabschlüsse derselben Periode (Doppeltipp auf „Abgeben", zwei offene
-            // Tabs, React-StrictMode-Doppelaufruf) laufen beide durch den Existenz-Check und der Verlierer
-            // in den Unique-Index. Fachlich ist nichts offen: die Belohnung liegt, sie ist je Periode
-            // einmalig, und der Betrag ist derselbe – der Konflikt heißt hier immer „schon gebucht".
-            // Ein durchgereichter Fehler hätte als einzige Wirkung einen 500 auf einen gelungenen Abschluss.
-            // Abhängen, damit ein späteres SaveChanges desselben Requests nicht erneut darüber stolpert;
-            // der Tages-Status unten wird ohnehin frisch aus der Datenbank gelesen.
+            // Two simultaneous goal completions of the same period (a double tap on "submit", two open tabs, a
+            // React StrictMode double call) both pass the existence check and the loser runs into the unique
+            // index. Nothing is open in domain terms: the reward is there, it is once per period, and the amount
+            // is the same - the conflict here always means "already booked". Rethrowing would only turn a
+            // successful completion into a 500. Detach it so that a later SaveChanges of the same request does
+            // not stumble over it again; the day status below is read fresh from the database anyway.
             db.ChangeTracker.Clear();
         }
         return await ComputeDayAsync(plan, day, ct);
     }
 
-    // ---- Malus fürs Nicht-Lernen (Lazy Settlement) ----
+    // ---- Penalty for not learning (lazy settlement) ---- ----
 
     /// <summary>Was the plan due in the period [<paramref name="from"/>,<paramref name="to"/>]? (fairness).</summary>
     /// <remarks>
@@ -230,7 +229,7 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
     {
         if (cadence == GoalCadence.Weekly)
         {
-            // Nur voll abgeschlossene Wochen (Sonntag < heute); Anfang = Wochen-Montag wie beim Reward.
+            // Only fully closed weeks (Sunday < today); the start is the week's Monday as with the reward.
             for (var monday = WeekMonday(windowStart); monday.AddDays(6) < today; monday = monday.AddDays(7))
                 yield return (monday, monday.AddDays(6));
         }
@@ -256,7 +255,7 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
         var child = await db.Children.FirstOrDefaultAsync(c => c.Id == childId, ct);
         if (child is null) return 0;
 
-        // Nur bestrafbare Positionen: echte Pflicht (Tag/Woche) mit gesetztem Malus, aus den Plänen des Kindes.
+        // Only punishable positions: a real obligation (daily/weekly) with a penalty set, from the child's plans.
         var positions = await db.PlanPositions.Include(p => p.Exercise).Include(p => p.StudyPlan)
             .Where(p => p.StudyPlan!.ChildId == childId && p.Cadence != GoalCadence.None && p.PenaltyCoins > 0)
             .ToListAsync(ct);
@@ -275,13 +274,13 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
             foreach (var (from, to) in ClosedPeriods(cadence, windowStart, today))
             {
                 if (!PlanDueForPeriod(plan, from, to)) continue;
-                // Ziel in der Periode belohnt (erreicht) oder bereits bestraft? → nichts nachzuholen.
+                // Goal rewarded (reached) in the period, or already punished? → nothing to catch up on.
                 if (await db.PositionGoalRewards.AnyAsync(r => r.PlanPositionId == pos.Id
                         && r.Cadence == cadence && r.PeriodStart == from, ct)) continue;
                 if (await db.PositionGoalPenalties.AnyAsync(r => r.PlanPositionId == pos.Id
                         && r.Cadence == cadence && r.PeriodStart == from, ct)) continue;
-                // Absicherung gegen ein Rennen mit dem Belohnungspfad (PointsGoalMet == 0 bucht keinen Reward,
-                // das Ziel kann trotzdem erfüllt sein): nur bei tatsächlich gerissener Periode bestrafen.
+                // Safeguard against a race with the reward path (PointsGoalMet == 0 books no reward, yet the
+                // goal can still be met): punish only when the period was actually missed.
                 if (await IsGoalMetAsync(pos, to, ct)) continue;
 
                 db.PositionGoalPenalties.Add(new PositionGoalPenalty
@@ -306,8 +305,8 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
 
         if (!changed) return 0;
 
-        // Wallet-Invariante: jeder abbuchende Pfad bumpt den Serialisierungspunkt des geteilten Saldos,
-        // damit ein parallel laufender Kauf/Malus den Deckungs-Check nicht doppelt umgeht.
+        // Wallet invariant: every debiting path bumps the serialization point of the shared balance, so that a
+        // purchase/penalty running in parallel cannot bypass the funds check twice.
         child.ConcurrencyStamp = Guid.NewGuid();
         try
         {
@@ -315,8 +314,8 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
         }
         catch (DbUpdateException)
         {
-            // Paralleles Settlement traf den Unique-Index bzw. den Kind-Concurrency-Token – gutartig: der Malus
-            // liegt bereits (bzw. wird beim nächsten Lauf idempotent nachgeholt). Nicht als Fehler durchreichen.
+            // A parallel settlement hit the unique index or the child concurrency token - benign: the penalty is
+            // already there (or is picked up idempotently on the next run). Do not rethrow as an error.
             db.ChangeTracker.Clear();
             return 0;
         }

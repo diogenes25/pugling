@@ -45,7 +45,7 @@ public static class PuglingResponse
             }
             catch (JsonException)
             {
-                // Kein ProblemDetails (z. B. HTML eines Reverse-Proxy) – der Rohtext bleibt als Detail erhalten.
+                // No ProblemDetails (e.g. HTML from a reverse proxy) - keep the raw text as the detail.
                 detail = Truncate(raw);
             }
         }
@@ -78,7 +78,7 @@ public static class PuglingResponse
         return map.Count > 0 ? map : null;
     }
 
-    // Spiegelt die Default-Codes der serverseitigen CodeStampingProblemDetailsFactory.
+    // Mirrors the default codes of the server-side CodeStampingProblemDetailsFactory.
     private static string FallbackCode(HttpStatusCode status) => status switch
     {
         HttpStatusCode.Unauthorized => "unauthorized",

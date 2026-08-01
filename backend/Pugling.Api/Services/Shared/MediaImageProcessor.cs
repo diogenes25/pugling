@@ -54,13 +54,13 @@ public class MediaImageProcessor
 
         foreach (var (purpose, edge) in Targets)
         {
-            // Nie hochskalieren: die Quelle ist die Obergrenze.
+            // Never upscale: the source is the upper bound.
             var scale = Math.Min(1.0, (double)edge / longest);
             var width = Math.Max(1, (int)Math.Round(original.Width * scale));
             var height = Math.Max(1, (int)Math.Round(original.Height * scale));
 
-            // Käme dieselbe Größe zweimal heraus (kleine Quelle), reicht eine Datei – die Auswahl fällt
-            // ohnehin auf den nächstbesten Zweck zurück, wenn der gefragte fehlt.
+            // If the same size came out twice (a small source), one file is enough - the selection falls back
+            // to the next best purpose anyway when the requested one is missing.
             if (!emittedSizes.Add((width, height))) continue;
 
             variants.Add(new RenderedVariant(purpose, width, height, Format, Encode(original, width, height)));

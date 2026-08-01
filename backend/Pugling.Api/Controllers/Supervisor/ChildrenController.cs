@@ -73,19 +73,19 @@ public class ChildrenController(PuglingDbContext db, WalletService wallet, Accou
             Gender = dto.Gender ?? Gender.None,
             Interests = dto.Interests ?? [],
             ProfileNotes = dto.ProfileNotes,
-            // Ohne Angabe die strengste Stufe – eine Bild-Freigabe muss der Supervisor bewusst setzen.
+            // With nothing given, the strictest level - releasing images must be a deliberate supervisor choice.
             AllowedContentRating = dto.AllowedContentRating ?? ContentRating.Everyone,
             Pin = string.IsNullOrEmpty(dto.Pin) ? "" : PinHasher.Hash(dto.Pin),
         };
         db.Children.Add(child);
-        // Betreuung durch den anlegenden Supervisor herstellen (ein Student kann später weitere bekommen)
-        // – im SELBEN Commit wie das Kind: bräche der Request zwischen zwei SaveChanges ab (Client weg,
-        // Verbindung tot), bliebe ein Kind ohne Link zurück, und das ist für niemanden mehr erreichbar
-        // (List filtert über die Links, jeder Einzelzugriff läuft über ChildOwnershipFilter → 404).
-        // Die StudentId füllt EF aus der Navigation, darum kein zweiter Durchgang für die Id.
+        // Establish supervision by the creating supervisor (a student can get more later) - in the SAME commit
+        // as the child: if the request broke between two SaveChanges (client gone, connection dead), a child
+        // without a link would remain, and that is reachable for nobody (List filters through the links, every
+        // single access runs through ChildOwnershipFilter → 404). EF fills the StudentId from the navigation,
+        // hence no second pass for the id.
         child.SupervisorLinks.Add(new SupervisorLink { SupervisorId = User.AdultId()!.Value });
         await db.SaveChangesAsync(ct);
-        // Login-Konto (Student) sofort anlegen, damit sich das neue Kind einloggen kann.
+        // Create the login account (student) right away so the new child can log in.
         await accounts.EnsureForChildAsync(child, ct);
 
         var response = new ChildResponse(child.Id, child.Name, child.BirthYear, child.Grade,
@@ -103,21 +103,21 @@ public class ChildrenController(PuglingDbContext db, WalletService wallet, Accou
         if (child is null) return NotFound();
 
         if (dto.Name is not null) child.Name = dto.Name.Trim();
-        // Wert zuerst, Clear-Schalter danach – „leeren" gewinnt, falls ein Client beides schickt.
+        // Value first, clear switch second - "clear" wins if a client sends both.
         if (dto.BirthYear.HasValue) child.BirthYear = dto.BirthYear;
         if (dto.ClearBirthYear) child.BirthYear = null;
         if (dto.Grade.HasValue) child.Grade = dto.Grade;
         if (dto.ClearGrade) child.Grade = null;
         if (dto.SchoolType.HasValue) child.SchoolType = dto.SchoolType.Value;
         if (dto.Gender.HasValue) child.Gender = dto.Gender.Value;
-        // Neue Liste zuweisen (kein In-Place-Mutieren – JSON-Spalten-Fallstrick).
+        // Assign a new list (no in-place mutation - the JSON column pitfall).
         if (dto.Interests is not null) child.Interests = [.. dto.Interests];
         if (dto.ProfileNotes is not null) child.ProfileNotes = dto.ProfileNotes;
         if (dto.AllowedContentRating.HasValue) child.AllowedContentRating = dto.AllowedContentRating.Value;
         if (dto.Pin is not null) child.Pin = string.IsNullOrEmpty(dto.Pin) ? "" : PinHasher.Hash(dto.Pin);
-        // Name und PIN-Hash aufs Login-Konto spiegeln – im SELBEN Commit. Vorher ging nur die PIN mit, und
-        // ein umbenanntes Kind wurde nach dem nächsten Anmelden weiter mit dem alten Namen begrüßt (der
-        // Anzeigename kommt vom Konto). Siehe AccountService.MirrorAsync.
+        // Mirror name and PIN hash onto the login account - in the SAME commit. Only the PIN used to travel
+        // along, and a renamed child was still greeted with the old name after the next login (the display
+        // name comes from the account). See AccountService.MirrorAsync.
         await accounts.MirrorAsync(child, ct);
         await db.SaveChangesAsync(ct);
 
@@ -137,7 +137,7 @@ public class ChildrenController(PuglingDbContext db, WalletService wallet, Accou
         return NoContent();
     }
 
-    // ---- Ko-Supervisoren (mehrere Betreuer je Student) ----
+    // ---- Co-supervisors (several supervisors per student) ----
 
     /// <summary>All supervisors of this student (the acting supervisor must be one themself).</summary>
     [HttpGet("{childId:int}/supervisors")]
@@ -189,7 +189,7 @@ public class ChildrenController(PuglingDbContext db, WalletService wallet, Accou
         return NoContent();
     }
 
-    // ---- Punkte des Kindes ----
+    // ---- The child's points ----
 
     /// <summary>Wallet balance of the child (coins + gems) with the latest ledger entries (newest first).</summary>
     /// <param name="childId">Child whose wallet balance is being read.</param>
@@ -202,9 +202,9 @@ public class ChildrenController(PuglingDbContext db, WalletService wallet, Accou
         int childId, [FromQuery] int skip = 0, [FromQuery] int take = PagingExtensions.DefaultTake,
         CancellationToken ct = default)
     {
-        // Saldo je Währung über ALLE Buchungen (in der DB summiert) – die Liste ist seitenweise (Default 100).
-        // Sonst wiche der angezeigte Kontostand von der Seite ab, sobald ein Kind mehr Buchungen hat als eine
-        // Seite fasst (Basis/Combo/Speed + Missionen/Auszeichnungen erzeugen viele kleine Zeilen pro Sitzung).
+        // Balance per currency over ALL entries (summed in the DB) - the list itself is paged (default 100).
+        // Otherwise the displayed balance would differ from the page as soon as a child has more entries than
+        // one page holds (base/combo/speed + missions/awards create many small rows per session).
         var (coins, gems) = await wallet.BalancesAsync(childId, ct);
 
         var entries = await db.ChildPointsEntries
@@ -227,7 +227,7 @@ public class ChildrenController(PuglingDbContext db, WalletService wallet, Accou
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<PointsEntryResponse>> AddPoints(int childId, PointsEntryDto dto, CancellationToken ct = default)
     {
-        // Währung → Buchungs-Kind: Gems über den Manual-Zwilling, sonst die klassische Münz-Manualbuchung.
+        // Currency → point kind: gems through the manual twin, otherwise the classic manual coin entry.
         var kind = dto.Currency == Currency.Gems ? PointKind.ManualGems : PointKind.Manual;
         var entry = new ChildPointsEntry { ChildId = childId, Kind = kind, Amount = dto.Amount, Reason = dto.Reason ?? "" };
         db.ChildPointsEntries.Add(entry);

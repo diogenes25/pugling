@@ -1,7 +1,7 @@
 namespace Pugling.Contracts.Creator;
 
-// Vertrag der Creator-Profile (Route api/v1/creator/profiles): der „Fachlehrer" – Fach, Schulzweig,
-// Klassenstufen, optional eine Buchreihe, dazu Persona und Didaktik für den KI-Creator.
+// Contract of the creator profiles (route api/v1/creator/profiles): the "subject teacher" - subject,
+// school branch, grades, optionally a textbook series, plus persona and didactics for the AI creator.
 
 /// <summary>
 /// A creator profile including its own permission view. <c>IsOwn</c> says whether the calling account

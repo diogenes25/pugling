@@ -192,9 +192,9 @@ public class MeController(PuglingDbContext db, GamificationService gamification,
             Kind = PointKind.SkinPurchase,
             Reason = $"Skin freigeschaltet: {skinId}",
         });
-        child.OwnedSkins = [.. child.OwnedSkins, skinId]; // Neuzuweisung: JSON-Spalte, kein In-Place-Mutieren
-        child.SelectedSkin = skinId;                       // gekaufter Skin wird direkt ausgerüstet
-        child.ConcurrencyStamp = Guid.NewGuid();           // Token bumpen → parallele Zweitbuchung scheitert
+        child.OwnedSkins = [.. child.OwnedSkins, skinId]; // reassign: JSON column, no in-place mutation
+        child.SelectedSkin = skinId;                       // a purchased skin is equipped right away
+        child.ConcurrencyStamp = Guid.NewGuid();           // bump the token → a parallel second entry fails
 
         if (!await TrySaveAsync(ct))
             return this.ProblemWithCode(ApiErrors.ConcurrencyConflict, "Purchase conflicted with a concurrent action — please try again.");
@@ -270,8 +270,8 @@ public class MeController(PuglingDbContext db, GamificationService gamification,
         var cid = User.ChildId();
         if (cid is null) return Forbid();
 
-        // Erst offene Pflicht-Perioden abrechnen: ein etwaiger Malus muss den Münz-Saldo mindern, BEVOR der
-        // Deckungs-Check greift – sonst könnte der Sohn den Stick durch schnelles Kaufen umgehen.
+        // Settle open mandatory periods first: any penalty must reduce the coin balance BEFORE the funds check
+        // applies - otherwise the child could dodge the stick by buying quickly.
         await progress.SettleClosedPeriodsAsync(cid.Value, DateOnly.FromDateTime(DateTime.UtcNow), ct);
 
         var result = await shop.PurchaseAsync(cid.Value, listingId, DateTime.UtcNow, ct);
@@ -306,9 +306,9 @@ public class MeController(PuglingDbContext db, GamificationService gamification,
         var cid = User.ChildId();
         if (cid is null) return Forbid();
 
-        // Aus der Momentaufnahme, nicht aus der Navigation: bezahlte Einheiten überleben das Löschen des
-        // Artikels (FK SetNull), und `ShopArticle!.ArticleNumber` wäre dann NULL – die Sortierung hätte
-        // den Posten stillschweigend nach vorne gezogen, die Anzeige wäre namenlos.
+        // From the snapshot, not from the navigation: paid units survive the deletion of the article (FK
+        // SetNull), and `ShopArticle!.ArticleNumber` would then be NULL - the sort would silently have pulled
+        // the position to the front and the display would be nameless.
         return await db.ChildInventories.AsNoTracking()
             .Where(i => i.ChildId == cid && i.Quantity > 0)
             .OrderBy(i => i.ArticleNumber)
@@ -380,7 +380,7 @@ public class MeController(PuglingDbContext db, GamificationService gamification,
         var balances = await wallet.BalancesAsync(childId, ct);
         var now = DateTime.UtcNow;
 
-        // Gemeinsame Shop-Sicht des Kindes: Angebote ALLER seiner Supervisor.
+        // The child's shared shop view: listings of ALL its supervisors.
         var listings = await shop.ListingsForStudentAsync(childId, activeOnly: true, now, ct);
         var available = listings
             .OrderBy(l => l.ShopArticle!.ArticleNumber).ThenBy(l => l.Id)
@@ -395,7 +395,7 @@ public class MeController(PuglingDbContext db, GamificationService gamification,
             })
             .ToList();
 
-        // Wie in `MyInventory`: die Momentaufnahme trägt die Anzeige, das `Include` ist damit hinfällig.
+        // As in `MyInventory`: the snapshot carries the display, which makes the `Include` obsolete.
         var inventory = await db.ChildInventories.AsNoTracking()
             .Where(i => i.ChildId == childId && i.Quantity > 0)
             .OrderBy(i => i.ArticleNumber)

@@ -31,8 +31,7 @@ public class PlanPositionsController(PuglingDbContext db, ExercisePermissionServ
     /// a math drill generates its tasks from rules. That's why this doesn't check for "checkable content"
     /// (that may legitimately be 0), but for the one form of emptiness that nobody intended.
     /// </summary>
-    // Kein Vorgabewert für `ct`: er ließe die Aufrufstelle korrekt aussehen, während der Abbruch des
-    // Clients verpufft.
+    // No default for `ct`: it would make the call site look correct while the client's cancellation fizzles out.
     private async Task<bool> IsUnfilledAsync(Exercise exercise, CancellationToken ct) =>
         types.ByKey(exercise.Type)?.StoreResolution == StoreResolution.ItemTable
         && !await db.ExerciseItems.AnyAsync(i => i.ExerciseId == exercise.Id, ct);
@@ -54,8 +53,8 @@ public class PlanPositionsController(PuglingDbContext db, ExercisePermissionServ
         return positions.Select(Map);
     }
 
-    // Kein Vorgabewert für `ct` (wie bei IsUnfilledAsync): er ließe die Aufrufstelle korrekt aussehen,
-    // während der Abbruch des Clients verpufft.
+    // No default for `ct` (as in IsUnfilledAsync): it would make the call site look correct while the
+    // client's cancellation fizzles out.
     private Task<PlanPosition?> FindAsync(int planId, int positionId, CancellationToken ct) =>
         db.PlanPositions.Include(p => p.Exercise)
             .FirstOrDefaultAsync(p => p.Id == positionId && p.StudyPlanId == planId, ct);
@@ -91,13 +90,13 @@ public class PlanPositionsController(PuglingDbContext db, ExercisePermissionServ
 
         var exercise = await db.Exercises.FirstOrDefaultAsync(e => e.Id == dto.ExerciseId, ct);
         if (exercise is null) return this.ProblemWithCode(ApiErrors.InvalidReference, $"Exercise {dto.ExerciseId} not found.");
-        // Execute-Gate: nicht öffentlich ausführbare Übungen darf nur zuweisen, wer ein Owner-/Write-/Execute-Recht hält.
+        // Execute gate: an exercise that is not publicly executable may only be assigned by someone holding an owner/write/execute right.
         if (!await perms.CanExecuteAsync(User, exercise, ct))
             return this.ProblemWithCode(ApiErrors.ExerciseNotExecutable, "This exercise is not publicly assignable; you need execute permission from its owner.");
-        // Eine ungefüllte Übung ist hier zu stoppen und nicht beim Anlegen: „erst anlegen, dann füllen" ist
-        // ein gewollter Weg (POST mit leeren refs, danach /items oder /refs-from-tags). Erst das Zuweisen
-        // macht die Lücke zum Problem – das Kind bekäme eine Pflicht, die es nicht spielen kann, und erfuhr
-        // es bisher erst im Test als „no_checkable_content".
+        // An unfilled exercise has to be stopped here, not at creation: "create first, fill later" is a wanted
+        // path (POST with empty refs, then /items or /refs-from-tags). Only assigning turns the gap into a
+        // problem - the child would get an obligation it cannot play, and used to learn about it only in the
+        // test as "no_checkable_content".
         if (await IsUnfilledAsync(exercise, ct))
             return this.ProblemWithCode(ApiErrors.ExerciseEmpty,
                 "This exercise has no items yet. Add its content before assigning it to a study plan.");
@@ -117,15 +116,15 @@ public class PlanPositionsController(PuglingDbContext db, ExercisePermissionServ
             Cadence = dto.Cadence ?? GoalCadence.None,
             OrderStrategy = dto.OrderStrategy ?? PracticeOrder.WeakestFirst,
             GoalThreshold = dto.GoalThreshold,
-            // Leitner/getippt erben ihren Standard von der Übung (Hybrid-Prinzip), solange die Position nichts vorgibt.
+            // Leitner/typed inherit their default from the exercise (hybrid principle) as long as the position says nothing.
             RequireTypedTest = dto.RequireTypedTest ?? exercise.DefaultRequireTypedTest,
             UseLeitner = dto.UseLeitner ?? exercise.DefaultUseLeitner,
             MaxBox = dto.MaxBox is > 0 ? dto.MaxBox.Value : 5,
             BoxIntervalDays = dto.BoxIntervalDays,
             StageSchedule = dto.StageSchedule,
-            // Punkte/Bonus: Position-Override → Übungs-Vorschlag → Modell-Default.
+            // Points/bonus: position override → exercise suggestion → model default.
             PointsGoalMet = dto.PointsGoalMet ?? 20,
-            // Malus ist opt-in pro Position (Default 0 = reine Belohnung, bisheriges Verhalten).
+            // The penalty is opt-in per position (default 0 = reward only, the previous behavior).
             PenaltyCoins = dto.PenaltyCoins ?? 0,
             NewContentPoints = dto.NewContentPoints ?? sb?.NewContentPoints ?? 10,
             ComboThreshold = dto.ComboThreshold ?? sb?.ComboThreshold ?? 5,

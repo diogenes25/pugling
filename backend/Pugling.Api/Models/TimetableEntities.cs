@@ -1,10 +1,9 @@
 namespace Pugling.Api.Models;
 
-// Stundenplan-Steuerung: der Lernplan richtet sich nach dem Schul-Stundenplan des Kindes.
-// Am Unterrichtstag eines Fachs wird NEUER Stoff gelernt, an den übrigen Tagen wiederholt
-// (der Tag direkt davor gilt als Vorbereitung).
+// Timetable control: the study plan follows the child's school timetable. On a subject's lesson day NEW
+// material is learned, on the other days it is reviewed (the day right before counts as preparation).
 
-/// <summary>Ein Stundenplan-Eintrag: an diesem Wochentag hat das Kind dieses Fach.</summary>
+/// <summary>One timetable entry: on this weekday the child has this subject.</summary>
 public class TimetableEntry
 {
     public int Id { get; set; }
@@ -13,7 +12,7 @@ public class TimetableEntry
     public int SubjectId { get; set; }
     public Subject? Subject { get; set; }
     public DayOfWeek DayOfWeek { get; set; }
-    /// <summary>Optionale Tageszeit als Freitext (z. B. "Nachmittag").</summary>
+    /// <summary>Optional time of day as free text (e.g. "Nachmittag").</summary>
     public string? TimeOfDay { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }

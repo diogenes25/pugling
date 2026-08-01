@@ -1,7 +1,7 @@
 namespace Pugling.Contracts.Supervisor;
 
-// Vertrag der gewichteten Kind-Interessen. Der Supervisor pflegt hier, was sein Kind mag – und vor
-// allem, was es NICHT mag: negative Gewichte sind Abneigungen und schließen passende Bilder hart aus.
+// Contract of the weighted child interests. Here the supervisor maintains what their child likes - and
+// above all what it does NOT like: negative weights are dislikes and exclude matching images hard.
 
 /// <summary>
 /// A weighted interest of the child in a taxonomy tag. <c>Weight</c> ranges from

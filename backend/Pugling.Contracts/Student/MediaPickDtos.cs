@@ -1,7 +1,7 @@
 namespace Pugling.Contracts.Student;
 
-// Vertrag der eingefrorenen Bildwahl. Sie ist bewusst *nicht* Teil der Karte: die Karte trägt nur das
-// fertige Bild, das Umwählen ist eine eigene, ausdrückliche Handlung des Kindes.
+// Contract of the frozen image choice. It is deliberately *not* part of the card: the card carries only
+// the finished image, re-choosing is a separate, explicit action of the child.
 
 /// <summary>
 /// "Different picture": rejects the currently chosen image of a carrier and draws a new one. Exactly one of

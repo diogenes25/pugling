@@ -21,10 +21,10 @@ namespace Pugling.Api.Tests;
 /// </summary>
 public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWebAppFactory>
 {
-    // `NewLine = "\n"`: ohne diese Angabe hängt der Zeilenumbruch der Einrückung an `Environment.NewLine`
-    // (CRLF unter Windows, LF unter Linux) – bei gleichem Inhalt zählt Windows dann mehr Bytes, und die
-    // feste 1500-Zeichen-Kürzung in `Truncate` schneidet auf beiden Plattformen an unterschiedlicher
-    // Stelle mitten im JSON ab (gemessen: D4-CI-Gate fand genau das als ersten echten Diff).
+    // `NewLine = "\n"`: without it the line break of the indentation follows `Environment.NewLine` (CRLF on
+    // Windows, LF on Linux) - for identical content Windows then counts more bytes, and the fixed
+    // 1500-character truncation in `Truncate` cuts the JSON at a different place on each platform (measured:
+    // the D4 CI gate found exactly that as its first real diff).
     private static readonly JsonSerializerOptions Indented = new(JsonSerializerDefaults.Web) { WriteIndented = true, NewLine = "\n" };
 
     /// <summary>
@@ -43,11 +43,11 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
     }
 
     private readonly List<Entry> _entries = [];
-    // code → (Gruppe, Titel) der ersten Aufzeichnung, die diesen Code verifiziert hat (Abdeckungs-Report).
+    // code → (group, title) of the first capture that verified this code (the coverage report).
     private readonly Dictionary<string, (string Group, string Title)> _codeHits = [];
 
     // ─────────────────────────────────────────────────────────────────────────────────────────────
-    //  Der eine Capture-Helfer: sendet, prüft Status (+ optional code), zeichnet auf, liefert den Body.
+    //  The one capture helper: sends, checks the status (+ optionally the code), records, returns the body.
     // ─────────────────────────────────────────────────────────────────────────────────────────────
     private async Task<JsonElement> Capture(HttpClient client, string group, string title, HttpMethod method,
         string path, object? body, HttpStatusCode expectedStatus, string? expectedCode = null)
@@ -78,11 +78,11 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
             }
         }
 
-        // CI-Gate: Status muss stimmen …
+        // CI gate: the status has to match …
         Assert.True(expectedStatus == res.StatusCode,
             $"[{group}] {title}: erwartet HTTP {(int)expectedStatus}, war {(int)res.StatusCode}. Body: {raw}");
 
-        // … und – falls gefordert – der maschinenlesbare code.
+        // … and - where required - the machine-readable code.
         if (expectedCode is not null)
         {
             var code = bodyEl.ValueKind == JsonValueKind.Object && bodyEl.TryGetProperty("code", out var c)
@@ -126,18 +126,18 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
     {
         var redacted = Regex.Replace(s, "(\"token\"\\s*:\\s*)\"[^\"]*\"", "$1\"<redacted-jwt>\"");
         redacted = Regex.Replace(redacted, "(\"traceId\"\\s*:\\s*)\"[^\"]*\"", "$1\"<trace-id>\"");
-        // Zeitstempel maskieren – mit **oder ohne** Zonenkennung: Die API serialisiert `DateTime`
-        // (UTC-Werte ohne `Z`), ein auf `Z` bestehendes Muster traf nie und ließ jeden Lauf sämtliche
-        // Zeitstempel in der eingecheckten Doku neu schreiben.
+        // Mask timestamps - with **or without** a zone marker: the API serializes `DateTime` (UTC values
+        // without a `Z`), and a pattern insisting on `Z` never matched and made every run rewrite all
+        // timestamps in the checked-in documentation.
         redacted = Regex.Replace(redacted,
             "\"\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?(?:Z|[+-]\\d{2}:\\d{2})?\"",
             "\"<timestamp>\"");
-        // Nicht-JSON-Antworten (Markdown-Export) tragen ihre Zeitstempel ohne Anführungszeichen im
-        // Fließtext („Stand: 2026-07-27 09:12 UTC") – ohne diese Regel wanderte der Export minütlich.
+        // Non-JSON responses (the markdown export) carry their timestamps without quotes in running text
+        // ("Stand: 2026-07-27 09:12 UTC") - without this rule the export would move every minute.
         redacted = Regex.Replace(redacted, @"\d{4}-\d{2}-\d{2} \d{2}:\d{2} UTC", "<timestamp>");
-        // Reine Datumswerte nur dann, wenn sie **lauf-relativ** sind (Plan-Start/-Ende, Verlaufstage
-        // wandern täglich). Feste Literale wie `2099-03-01` aus den Requests bleiben lesbar – sonst
-        // verlöre das Beispiel seine Aussage.
+        // Plain date values only where they are **run-relative** (plan start/end, history days move daily).
+        // Fixed literals such as `2099-03-01` from the requests stay readable - otherwise the example would
+        // lose its point.
         return Regex.Replace(redacted, "\"(\\d{4})-(\\d{2})-(\\d{2})\"",
             m => IsRunRelativeDate(m.Value.Trim('"')) ? "\"<date>\"" : m.Value);
     }
@@ -173,7 +173,7 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
         s is { Length: > 1500 } ? s[..1500] + "\n… (gekürzt)" : s;
 
     // ─────────────────────────────────────────────────────────────────────────────────────────────
-    //  Direkte DB-Manipulation (kein API-Weg): Gems (Achievement→Gems) bzw. Münzen (Base→Coins) gutschreiben.
+    //  Direct DB manipulation (no API path): credit gems (Achievement→gems) or coins (Base→coins).
     // ─────────────────────────────────────────────────────────────────────────────────────────────
     private async Task GrantAsync(int childId, int amount, PointKind kind, string reason)
     {
@@ -190,10 +190,10 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
         try
         {
             var anon = factory.CreateClient();
-            var father = await TestApi.FatherAsync(factory);       // Papa (id 1 / PIN 0000)
-            var child = await TestApi.ChildAsync(factory);         // Sohn (id 1 / PIN 1111)
+            var father = await TestApi.FatherAsync(factory);       // father (id 1 / PIN 0000)
+            var child = await TestApi.ChildAsync(factory);         // child (id 1 / PIN 1111)
 
-            // Zweiter Vater (anonyme Registrierung) für Cross-Ownership-404/403.
+            // A second adult (anonymous registration) for the cross-ownership 404/403.
             var father2Id = await TestApi.IdAsync(await anon.PostAsJsonAsync("/api/v1/supervisor/adults", new { name = "Zweiter Papa", pin = "2222" }));
             var father2 = await TestApi.FatherAsync(factory, father2Id, "2222");
             var foreignChildId = await TestApi.IdAsync(await father2.PostAsJsonAsync("/api/v1/supervisor/children", new { name = "Fremdes Kind", pin = "3333" }));
@@ -215,7 +215,7 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
         }
         finally
         {
-            // Auch bei Teil-Läufen schreiben (erleichtert das Debuggen); rote Assertions lassen den Test dennoch fehlschlagen.
+            // Write even on partial runs (that eases debugging); red assertions still fail the test.
             if (_entries.Count > 0) WriteMarkdown();
             if (completed) WriteOpenApiExamples();
         }
@@ -273,8 +273,8 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
             new { name = "Kapitel 1", orderIndex = 1 }, HttpStatusCode.Created);
         var chapterId = chapter.GetProperty("id").GetInt32();
 
-        // Die Übung wird als Hülle angelegt (nur Einstellungen); die Vokabelpaare kommen darunter über den
-        // Item-Endpunkt als eigene Sub-Ressource (Items sind eine eigene Ebene, siehe VocabularyController).
+        // The exercise is created as a shell (settings only); the vocabulary pairs come underneath through the
+        // item endpoint as their own sub-resource (items are a tier of their own, see VocabularyController).
         var exercise = await Capture(father, g, "Vokabel-Übung anlegen", HttpMethod.Post,
             $"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/vocabulary",
             new
@@ -286,12 +286,12 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
             }, HttpStatusCode.Created);
         var exerciseId = exercise.GetProperty("id").GetInt32();
 
-        // Vokabelpaar per Item-EP: inline über front/back – ohne vocabularyId wird die Vokabel im Store angelegt.
-        // (Mit vocabularyId genügt die ID; Front/Back kämen dann aus dem Store.) Front/Back sind optional.
+        // A vocabulary pair through the item endpoint: inline via front/back - without a vocabularyId the entry
+        // is created in the store. (With a vocabularyId the id suffices; front/back would come from the store.)
         await Capture(father, g, "Vokabelpaar hinzufügen", HttpMethod.Post,
             $"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/vocabulary/{exerciseId}/items",
             new { front = "hello", back = "hallo" }, HttpStatusCode.Created);
-        // Zweites Paar direkt anlegen (nicht als Beispiel), damit die Übung zwei Items für den Spielfluss trägt.
+        // Create a second pair directly (not as an example), so that the exercise carries two items for the play flow.
         (await father.PostAsJsonAsync(
             $"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/vocabulary/{exerciseId}/items",
             new { front = "goodbye", back = "tschüss" })).EnsureSuccessStatusCode();
@@ -304,13 +304,13 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
         await Capture(father, g, "Doppelte Art anlegen", HttpMethod.Post, $"/api/v1/creator/subjects/{subjectId}/categories",
             new { name = "Vokabeln" }, HttpStatusCode.Conflict, ApiErrors.Conflict.Code);
 
-        // Übung, die in einem Lehrplan steckt, lässt sich nicht löschen (Positions-Referenz → 409).
+        // An exercise sitting in a study plan cannot be deleted (position reference → 409).
         TestApi.SeedLeitnerPosition(factory, exerciseId, (int)TestStage.FreeText);
         await Capture(father, g, "Verwendete Übung löschen", HttpMethod.Delete,
             $"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/vocabulary/{exerciseId}",
             null, HttpStatusCode.Conflict, ApiErrors.ExerciseInUse.Code);
 
-        // Fremd-Autor-Übung (Lehrer-Bibliothek, AuthorAdultId = Lehrer) bearbeiten → 403 not_author.
+        // Editing an exercise of another author (teacher library, AuthorAdultId = teacher) → 403 not_author.
         var foreign = await FindForeignAuthoredExerciseAsync(father);
         if (foreign is { } ex)
             await Capture(father, g, "Fremd-Autor-Übung bearbeiten", HttpMethod.Put,
@@ -321,7 +321,7 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
         return (subjectId, chapterId, exerciseId);
     }
 
-    // ── exercise grants (RWX: Owner/Write/Execute + Execute-Gate) ─────────────────────────────────
+    // ── exercise grants (RWX: owner/write/execute + the execute gate) ─────────────────────────────────
     private async Task CaptureGrantsAsync(HttpClient father, HttpClient father2, int father2Id,
         int foreignChildId, int subjectId, int chapterId, int exerciseId)
     {
@@ -337,12 +337,12 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
             $"/api/v1/creator/exercises/{exerciseId}/grants",
             new { creatorId = father2Id, permission = "Write" }, HttpStatusCode.Created);
 
-        // Der Anleger ist einziger Owner (Auto-Grant, Vater-Id 1) – er lässt sich nicht als letzter entfernen.
+        // The creator is the only owner (auto grant, adult id 1) - they cannot be removed as the last one.
         await Capture(father, g, "Letzten Owner entfernen", HttpMethod.Delete,
             $"/api/v1/creator/exercises/{exerciseId}/grants/1/Owner",
             null, HttpStatusCode.Conflict, ApiErrors.LastOwner.Code);
 
-        // Execute-Gate: eine nicht öffentlich ausführbare Übung darf ein fremder Creator nicht zuweisen.
+        // Execute gate: another creator must not assign an exercise that is not publicly executable.
         var privateEx = await Capture(father, g, "Nicht öffentlich ausführbare Übung anlegen", HttpMethod.Post,
             $"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/vocabulary",
             new
@@ -365,9 +365,9 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
             new { exerciseId = privateExId }, HttpStatusCode.Forbidden, ApiErrors.ExerciseNotExecutable.Code);
     }
 
-    // ── exercise types (je Typ ein verifizierter Anlage-POST) ─────────────────────────────────────
-    // Vokabel ist bereits in CaptureCatalogAsync abgedeckt; hier die übrigen Typen, damit JEDER Typ-POST
-    // ein verifiziertes Request/Response-Beispiel in die OpenAPI-Spec (und damit die Bruno-Collection) trägt.
+    // ── exercise types (one verified create POST per type) ─────────────────────────────────────
+    // Vocabulary is already covered in CaptureCatalogAsync; here the remaining types, so that EVERY type POST
+    // carries a verified request/response example into the OpenAPI spec (and thus the Bruno collection).
     private async Task CaptureExerciseTypesAsync(HttpClient father, int subjectId, int chapterId)
     {
         const string g = "catalog";
@@ -555,15 +555,15 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
         return null;
     }
 
-    // ── me (Sohn) + Angebots-/Skin-Ökonomie ──────────────────────────────────────────────────────
+    // ── me (the child) + the listing/skin economy ──────────────────────────────────────────────────────
     private async Task CaptureMeAsync(HttpClient father, HttpClient child)
     {
         const string g = "me";
 
-        // Lese-Sichten des geseedeten Sohns (id 1) – realistische Daten (Missionen/Skins/Angebote geseedet).
+        // Read views of the seeded child (id 1) - realistic data (missions/skins/listings are seeded).
         await Capture(child, g, "Eigener Kontostand (Wallet)", HttpMethod.Get, "/api/v1/student/me/points", null, HttpStatusCode.OK);
 
-        // Buchungen liegen eine Ebene tiefer: Liste + Einzelansicht. Eine deterministische Buchung anlegen.
+        // Ledger entries sit one level deeper: list + single view. Create one deterministic entry.
         await GrantAsync(1, 15, PointKind.Base, "Doku-Buchung");
         var pointEntries = await Capture(child, g, "Eigene Buchungen (Liste)", HttpMethod.Get,
             "/api/v1/student/me/points/entries", null, HttpStatusCode.OK);
@@ -586,7 +586,7 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
         await Capture(child, g, "Bereits besessenen Skin kaufen", HttpMethod.Post, "/api/v1/student/me/skins/pug/purchase",
             new { }, HttpStatusCode.Conflict, ApiErrors.SkinAlreadyUnlocked.Code);
 
-        // Frisches Kind A: deterministische Salden für die Kauf-/Ausrüst-Fälle.
+        // A fresh child A: deterministic balances for the purchase/equip cases.
         var childAId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/supervisor/children", new { name = "Ökonomie-Kind A", pin = "5001" }));
         var childA = await TestApi.ChildAsync(factory, childAId, "5001");
 
@@ -625,8 +625,8 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
         await Capture(father, g, "Unbekannten Lehrplan lesen", HttpMethod.Get, "/api/v1/supervisor/study-plans/999999",
             null, HttpStatusCode.NotFound, ApiErrors.NotFound.Code);
 
-        // Sohn übt (Lern-Modus, server-geführt): Sitzung starten, eine Karte bewerten (serverseitige Prüfung –
-        // die Antwort trägt bereits die nächste Karte + Abschluss-Signal), optional die nächste Karte per /next holen.
+        // The child practices (learn mode, server-driven): start a session, grade one card (the check happens
+        // server-side - the answer already carries the next card + the completion signal), optionally fetch the next card through /next.
         var session = await Capture(child, g, "Übungssitzung starten (Lern-Modus)", HttpMethod.Post,
             $"/api/v1/student/study-plans/{planId}/positions/{positionId}/practice-sessions", new { mode = "Lern" }, HttpStatusCode.Created);
         var sessionId = session.GetProperty("id").GetInt32();
@@ -636,7 +636,7 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
             $"/api/v1/student/study-plans/{planId}/positions/{positionId}/practice-sessions/{sessionId}/review",
             new { itemIndex = 0, givenAnswer = "hallo" }, HttpStatusCode.OK);
 
-        // Info-Modus (freies Üben): alle Karten am Stück, aber /review schreibt kein Feedback (204).
+        // Info mode (free practice): all cards at once, but /review writes no feedback (204).
         var infoSession = await Capture(child, g, "Übungssitzung starten (Info-Modus, freies Üben)", HttpMethod.Post,
             $"/api/v1/student/study-plans/{planId}/positions/{positionId}/practice-sessions", new { mode = "Info" }, HttpStatusCode.Created);
         var infoSessionId = infoSession.GetProperty("id").GetInt32();
@@ -646,8 +646,8 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
             $"/api/v1/student/study-plans/{planId}/positions/{positionId}/practice-sessions/{infoSessionId}/review",
             new { itemIndex = 0, givenAnswer = "hallo" }, HttpStatusCode.NoContent);
 
-        // Abschlusstest = Klausur (strikt server-getrieben): starten (nur Metadaten), Frage einzeln holen,
-        // beantworten (ohne Korrektheit), abschließen (auswerten), erneut abgeben (→ test_already_submitted).
+        // The final test = a class test (strictly server-driven): start (metadata only), fetch a question,
+        // answer it (without correctness), submit (grade), submit again (→ test_already_submitted).
         var attempt = await Capture(child, g, "Test starten (Klausur, ohne Aufgaben-Bulk)", HttpMethod.Post,
             $"/api/v1/student/study-plans/{planId}/positions/{positionId}/tests", new { }, HttpStatusCode.Created);
         var attemptId = attempt.GetProperty("attemptId").GetInt32();
@@ -656,7 +656,7 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
         await Capture(child, g, "Prüfungsantwort abgeben (ohne Korrektheit)", HttpMethod.Post,
             $"/api/v1/student/study-plans/{planId}/positions/{positionId}/tests/{attemptId}/answer",
             new { givenAnswer = "hallo" }, HttpStatusCode.OK);
-        // Restliche Fragen beantworten (nicht abgebildet), damit der Versuch vollständig ist.
+        // Answer the remaining questions (not captured) so that the attempt is complete.
         await child.PostAsJsonAsync($"/api/v1/student/study-plans/{planId}/positions/{positionId}/tests/{attemptId}/answer",
             new { givenAnswer = "tschüss" });
         await Capture(child, g, "Test abgeben (auswerten)", HttpMethod.Post,
@@ -665,8 +665,8 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
             $"/api/v1/student/study-plans/{planId}/positions/{positionId}/tests/{attemptId}/submit", new { },
             HttpStatusCode.BadRequest, ApiErrors.TestAlreadySubmitted.Code);
 
-        // Tagesmission + Verlauf. Der Verlauf unterstützt Paging (skip/take, X-Total-Count),
-        // Sortierung (day/-day/points/-points) und Filter (from/to, dutyDone).
+        // Daily mission + history. The history supports paging (skip/take, X-Total-Count), sorting
+        // (day/-day/points/-points) and filters (from/to, dutyDone).
         await Capture(child, g, "Tagesmission (Overview)", HttpMethod.Get,
             $"/api/v1/student/study-plans/{planId}/overview", null, HttpStatusCode.OK);
         await Capture(child, g, "Verlauf – Paging & Sortierung (neueste zuerst)", HttpMethod.Get,
@@ -674,10 +674,10 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
         await Capture(child, g, "Verlauf – nur erledigte Tage", HttpMethod.Get,
             $"/api/v1/student/study-plans/{planId}/overview/progress?dutyDone=true", null, HttpStatusCode.OK);
 
-        // Versuchs-Deckel der Periode. Steht bewusst NACH den Overview-/Verlauf-Aufnahmen: der Aufbau
-        // verbraucht das Kontingent dieser Position, und ein zusätzlicher (nicht bestandener) Versuch würde
-        // sonst in deren Zahlen auftauchen. Ein Versuch ist oben schon abgegeben, der zweite hier – der
-        // dritte ist Noten-Farming und wird abgewiesen.
+        // The period's attempt cap. Deliberately AFTER the overview/history captures: setting it up consumes
+        // this position's allowance, and an additional (failed) attempt would otherwise show up in their
+        // numbers. One attempt has been submitted above, the second one here - the third is grade farming and
+        // is rejected.
         var secondAttempt = await child.PostAsJsonAsync(
             $"/api/v1/student/study-plans/{planId}/positions/{positionId}/tests", new { });
         secondAttempt.EnsureSuccessStatusCode();
@@ -688,7 +688,7 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
             $"/api/v1/student/study-plans/{planId}/positions/{positionId}/tests", new { },
             HttpStatusCode.Conflict, ApiErrors.TestAttemptsExhausted.Code);
 
-        // Test auf einer Leseübung ohne prüfbaren Inhalt → no_checkable_content.
+        // A test on a reading exercise without checkable content → no_checkable_content.
         var reading = await father.PostAsJsonAsync(
             $"/api/v1/creator/subjects/{docSubjectId}/chapters/{docChapterId}/reading",
             new { title = "Leseverstehen (leer)", orderIndex = 2, rewardPoints = 5, config = new { text = "A short text without questions.", questions = Array.Empty<object>() } });
@@ -702,8 +702,8 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
             $"/api/v1/student/study-plans/{planId}/positions/{readingPosId}/tests", new { },
             HttpStatusCode.BadRequest, ApiErrors.NoCheckableContent.Code);
 
-        // Eine noch nicht gefüllte Vokabelübung zuweisen → exercise_empty. Der Unterschied zum Fall darüber
-        // ist der Punkt: dort ist „nichts zu prüfen" eine Eigenschaft des Typs, hier ein unfertiger Stand.
+        // Assigning a vocabulary exercise that is not filled yet → exercise_empty. The difference to the case
+        // above is the point: there "nothing to check" is a property of the type, here it is an unfinished state.
         var emptyVocab = await father.PostAsJsonAsync(
             $"/api/v1/creator/subjects/{docSubjectId}/chapters/{docChapterId}/vocabulary",
             new { title = "Vokabeln (noch leer)", orderIndex = 3, rewardPoints = 5, config = new { direction = "front-to-back" } });
@@ -713,18 +713,18 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
             $"/api/v1/supervisor/study-plans/{planId}/positions", new { exerciseId = emptyVocabId, cadence = "Daily" },
             HttpStatusCode.BadRequest, ApiErrors.ExerciseEmpty.Code);
 
-        // Tag-Schnappschuss ohne Treffer → no_tag_matches (die Übung bleibt unverändert). Eigener Code, damit
-        // ein Aufrufer das von „gar keinen Tag geschickt" (validation_error) unterscheiden kann.
+        // A tag snapshot without hits → no_tag_matches (the exercise stays unchanged). Its own code, so that a
+        // caller can tell it apart from "no tag sent at all" (validation_error).
         await Capture(father, g, "Tag-Schnappschuss ohne Treffer", HttpMethod.Post,
             $"/api/v1/creator/subjects/{docSubjectId}/chapters/{docChapterId}/vocabulary/{emptyVocabId}/refs-from-tags",
             new { tags = new[] { "gibt-es-nicht" } }, HttpStatusCode.BadRequest, ApiErrors.NoTagMatches.Code);
 
-        // Bespielte Position löschen → position_has_data.
+        // Deleting a position that has been played → position_has_data.
         await Capture(father, g, "Bespielte Position löschen", HttpMethod.Delete,
             $"/api/v1/supervisor/study-plans/{planId}/positions/{positionId}", null,
             HttpStatusCode.Conflict, ApiErrors.PositionHasData.Code);
 
-        // Plan deaktivieren → der Sohn kann ihn nicht mehr spielen (plan_inactive).
+        // Deactivate the plan → the child can no longer play it (plan_inactive).
         (await father.PatchAsJsonAsync($"/api/v1/supervisor/study-plans/{planId}", new { active = false })).EnsureSuccessStatusCode();
         await Capture(child, g, "Deaktivierten Plan spielen", HttpMethod.Post,
             $"/api/v1/student/study-plans/{planId}/positions/{positionId}/practice-sessions", new { },
@@ -745,7 +745,7 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
             HttpStatusCode.BadRequest, ApiErrors.InvalidReference.Code);
     }
 
-    // ── vocabulary (Store) ──────────────────────────────────────────────────────────────────────────
+    // ── vocabulary (store) ──────────────────────────────────────────────────────────────────────────
     private async Task CaptureVocabularyAsync(HttpClient father)
     {
         const string g = "vocabulary";
@@ -754,7 +754,7 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
         await Capture(father, g, "Vokabel mit doppeltem Key", HttpMethod.Post, "/api/v1/creator/vocabulary", dto,
             HttpStatusCode.Conflict, ApiErrors.DuplicateKey.Code);
 
-        // Geseedete Grundform (Basis flektierter Formen) lässt sich nicht löschen → vocabulary_in_use.
+        // A seeded base form (the basis of inflected forms) cannot be deleted → vocabulary_in_use.
         var baseForm = await Capture(father, g, "Grundform-Vokabel lesen", HttpMethod.Get,
             "/api/v1/creator/vocabulary/by-key/en_go_de_gehen", null, HttpStatusCode.OK);
         var baseId = baseForm.GetProperty("id").GetInt32();
@@ -792,19 +792,19 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
         await Capture(father, g, "Gleiches Fach am selben Wochentag", HttpMethod.Post, "/api/v1/supervisor/children/1/timetable",
             new { subjectId = docSubjectId, dayOfWeek = "Tuesday", timeOfDay = "Vormittag" },
             HttpStatusCode.Conflict, ApiErrors.TimetableSlotTaken.Code);
-        // Unbekanntes Feld: der Server lehnt ab, statt es still zu verwerfen. Gehört in die
-        // Beispielsammlung, weil es jeden Endpunkt betrifft und generierte Clients davon abhängen.
+        // An unknown field: the server rejects it instead of dropping it silently. It belongs in the example
+        // collection because it concerns every endpoint and generated clients depend on it.
         await Capture(father, g, "Unbekanntes Feld im Body", HttpMethod.Post, "/api/v1/supervisor/children/1/timetable",
             new { subjectId = docSubjectId, dayOfWeek = "Wednesday", timeOfDay = "Vormittag", tageszeit = "Vormittag" },
             HttpStatusCode.BadRequest, ApiErrors.UnknownField.Code);
     }
 
-    // ── shop (Vater-Admin + Sohn-Seite) ──────────────────────────────────────────────────────────
+    // ── shop (supervisor admin + the child's side) ──────────────────────────────────────────────────────────
     private async Task CaptureShopAsync(HttpClient father, HttpClient child)
     {
         const string g = "shop";
 
-        // ── Artikel-CRUD ──────────────────────────────────────────────────────
+        // ── Article CRUD ──────────────────────────────────────────────────────
         var articleEl = await Capture(father, g, "Artikel anlegen", HttpMethod.Post, "/api/v1/supervisor/shop/articles",
             new
             {
@@ -830,7 +830,7 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
             new { title = "Fernsehzeit (30 Min)", description = "30 Minuten freie Bildschirmzeit" },
             HttpStatusCode.OK);
 
-        // ── Angebots-CRUD ─────────────────────────────────────────────────────
+        // ── Listing CRUD ─────────────────────────────────────────────────────
         var listingEl = await Capture(father, g, "Angebot anlegen", HttpMethod.Post,
             $"/api/v1/supervisor/shop/articles/{articleId}/listings",
             new
@@ -857,12 +857,12 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
             $"/api/v1/supervisor/shop/articles/{articleId}/listings/{listingId}",
             new { currentStock = 5, maxStock = 10 }, HttpStatusCode.OK);
 
-        // ── Sohn kauft + Aktivierungsanfrage ──────────────────────────────────
+        // ── The child buys + an activation request ──────────────────────────────────
         var shopChildId = await TestApi.IdAsync(
             await father.PostAsJsonAsync("/api/v1/supervisor/children", new { name = "Shop-Doku-Kind", pin = "7001" }));
         var shopChild = await TestApi.ChildAsync(factory, shopChildId, "7001");
 
-        // Münzen gutschreiben (über Points-Endpunkt des Vaters)
+        // Credit coins (through the supervisor's points endpoint)
         (await father.PostAsJsonAsync($"/api/v1/supervisor/children/{shopChildId}/points",
             new { amount = 300, reason = "Doku-Münzen" })).EnsureSuccessStatusCode();
 
@@ -873,7 +873,7 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
             $"/api/v1/student/me/shop/listings/{listingId}/purchase", new { }, HttpStatusCode.OK);
         var purchaseId = purchaseView.GetProperty("purchases").EnumerateArray().First().GetProperty("id").GetInt32();
 
-        // Leeres-Lager-Szenario: neues Listing mit stock=0 anlegen, dann kaufen → shop_insufficient_stock
+        // Empty stock scenario: create a new listing with stock=0, then buy → shop_insufficient_stock
         var emptyListingEl = await father.PostAsJsonAsync($"/api/v1/supervisor/shop/articles/{articleId}/listings",
             new { coinPrice = 50, gemPrice = 0, unitsPerPurchase = 10, currentStock = 0, maxStock = 1 });
         emptyListingEl.EnsureSuccessStatusCode();
@@ -882,14 +882,14 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
             $"/api/v1/student/me/shop/listings/{emptyListingId}/purchase", new { },
             HttpStatusCode.Conflict, ApiErrors.ShopInsufficientStock.Code);
 
-        // Deaktiviertes Listing → shop_listing_inactive
+        // A deactivated listing → shop_listing_inactive
         (await father.PatchAsJsonAsync($"/api/v1/supervisor/shop/articles/{articleId}/listings/{emptyListingId}",
             new { active = false })).EnsureSuccessStatusCode();
         await Capture(shopChild, g, "Shop-Angebot kaufen (deaktiviert)", HttpMethod.Post,
             $"/api/v1/student/me/shop/listings/{emptyListingId}/purchase", new { },
             HttpStatusCode.BadRequest, ApiErrors.ShopListingInactive.Code);
 
-        // Ohne Deckung: frisches Kind (0 Münzen) kauft ein aktives, vorrätiges Angebot → insufficient_coins.
+        // Without funds: a fresh child (0 coins) buys an active, in-stock listing → insufficient_coins.
         var brokeChildId = await TestApi.IdAsync(
             await father.PostAsJsonAsync("/api/v1/supervisor/children", new { name = "Shop-Doku-Kind (pleite)", pin = "7009" }));
         var brokeChild = await TestApi.ChildAsync(factory, brokeChildId, "7009");
@@ -897,33 +897,33 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
             $"/api/v1/student/me/shop/listings/{listingId}/purchase", new { },
             HttpStatusCode.BadRequest, ApiErrors.InsufficientCoins.Code);
 
-        // Aktivierungsanfragen: der Sohn beantragt Einheiten aus seinem Inventar (30 verfügbar).
+        // Activation requests: the child requests units from its inventory (30 available).
         var activation1El = await Capture(shopChild, g, "Aktivierungsanfrage stellen", HttpMethod.Post,
             $"/api/v1/student/me/shop/inventory/{articleId}/activate",
             new { quantity = 30 }, HttpStatusCode.OK);
         var activationId = activation1El.GetProperty("id").GetInt32();
 
-        // Zweite Anfrage (10 Einheiten) – zum Anfragezeitpunkt gegen das aggregierte Inventar geprüft (30 >= 10);
-        // die verbindliche Deckungsprüfung erfolgt erst bei der Genehmigung durch den Vater.
+        // A second request (10 units) - checked against the aggregated inventory at request time (30 >= 10);
+        // the binding funds check only happens when the supervisor approves.
         var act2Res = await shopChild.PostAsJsonAsync($"/api/v1/student/me/shop/inventory/{articleId}/activate",
             new { quantity = 10 });
         act2Res.EnsureSuccessStatusCode();
         var activation2Id = (await act2Res.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetInt32();
 
-        // Zu große Anfrage → insufficient_inventory (999 > 30)
+        // A request that is too large → insufficient_inventory (999 > 30)
         await Capture(shopChild, g, "Aktivierungsanfrage (Inventar erschöpft)", HttpMethod.Post,
             $"/api/v1/student/me/shop/inventory/{articleId}/activate",
             new { quantity = 999 }, HttpStatusCode.BadRequest, ApiErrors.InsufficientInventory.Code);
 
-        // Eigener Bestand des Sohns (Gegenstück zum activate-POST)
+        // The child's own stock (the counterpart to the activate POST)
         await Capture(shopChild, g, "Eigenes Inventar (Sohn)", HttpMethod.Get,
             "/api/v1/student/me/shop/inventory", null, HttpStatusCode.OK);
 
-        // Eigene Aktivierungen des Sohns
+        // The child's own activations
         await Capture(shopChild, g, "Eigene Aktivierungen (Sohn)", HttpMethod.Get,
             "/api/v1/student/me/shop/activations", null, HttpStatusCode.OK);
 
-        // ── Vater: Inventar / Käufe / Aktivierungen ───────────────────────────
+        // ── Supervisor: inventory / purchases / activations ───────────────────────────
         await Capture(father, g, "Kind-Inventar", HttpMethod.Get,
             $"/api/v1/supervisor/children/{shopChildId}/shop/inventory", null, HttpStatusCode.OK);
 
@@ -933,30 +933,30 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
         await Capture(father, g, "Kind-Aktivierungen", HttpMethod.Get,
             $"/api/v1/supervisor/children/{shopChildId}/shop/activations", null, HttpStatusCode.OK);
 
-        // Genehmigung reduziert das Inventar real (30 → 0); die Deckung wird zum Genehmigungszeitpunkt geprüft.
+        // Approval really reduces the inventory (30 → 0); the funds are checked at approval time.
         await Capture(father, g, "Aktivierung genehmigen", HttpMethod.Post,
             $"/api/v1/supervisor/children/{shopChildId}/shop/activations/{activationId}/approve", null, HttpStatusCode.OK);
 
-        // activation_not_pending: dieselbe Anfrage erneut genehmigen → 409
+        // activation_not_pending: approving the same request again → 409
         await Capture(father, g, "Aktivierung erneut genehmigen", HttpMethod.Post,
             $"/api/v1/supervisor/children/{shopChildId}/shop/activations/{activationId}/approve", null,
             HttpStatusCode.Conflict, ApiErrors.ActivationNotPending.Code);
 
-        // Inventar nun erschöpft (0): Genehmigung der zweiten offenen Anfrage scheitert → insufficient_inventory.
-        // Die Anfrage bleibt offen und kann weiterhin abgelehnt werden.
+        // The inventory is now exhausted (0): approving the second open request fails → insufficient_inventory.
+        // The request stays open and can still be rejected.
         await Capture(father, g, "Aktivierung genehmigen (Inventar erschöpft)", HttpMethod.Post,
             $"/api/v1/supervisor/children/{shopChildId}/shop/activations/{activation2Id}/approve", null,
             HttpStatusCode.BadRequest, ApiErrors.InsufficientInventory.Code);
 
-        // Zweite Anfrage ablehnen (trotz gescheiterter Genehmigung weiterhin möglich)
+        // Reject the second request (still possible despite the failed approval)
         await Capture(father, g, "Aktivierung ablehnen", HttpMethod.Post,
             $"/api/v1/supervisor/children/{shopChildId}/shop/activations/{activation2Id}/reject", null, HttpStatusCode.OK);
 
-        // Kauf stornieren erstattet Coins/Gems und reduziert das Inventar (max(0, 0 − 30) = 0).
+        // Cancelling a purchase refunds coins/gems and reduces the inventory (max(0, 0 − 30) = 0).
         await Capture(father, g, "Kauf stornieren (Vater)", HttpMethod.Post,
             $"/api/v1/supervisor/children/{shopChildId}/shop/purchases/{purchaseId}/cancel", null, HttpStatusCode.OK);
 
-        // ── Artikel/Listing löschen ────────────────────────────────────────────
+        // ── Delete article/listing ────────────────────────────────────────────
         await Capture(father, g, "Angebot löschen", HttpMethod.Delete,
             $"/api/v1/supervisor/shop/articles/{articleId}/listings/{listingId}", null, HttpStatusCode.NoContent);
 
@@ -964,10 +964,10 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
             $"/api/v1/supervisor/shop/articles/{articleId}", null, HttpStatusCode.NoContent);
     }
 
-    // ── remarks (Anmerkungen beim Testen – tier-neutrale Ressource) ───────────────────────────────
-    // Zeichnet den Kreis auf, der das Feature ausmacht: erfassen samt Kontext → Log-Id → Antwort
-    // zurückschreiben → Folgeanmerkung mit Verweis. Dazu die Sichtbarkeitswand (Student sieht nur
-    // Eigenes) und der Fehlerfall `remark_not_found`.
+    // ── remarks (captured while testing - a tier-neutral resource) ───────────────────────────────
+    // Captures the circle that makes up the feature: capture including context → log id → write the answer
+    // back → a follow-up remark with a reference. Plus the visibility wall (a student sees only their own)
+    // and the error case `remark_not_found`.
     private async Task CaptureRemarksAsync(HttpClient father, HttpClient child, int docExerciseId)
     {
         const string g = "remarks";
@@ -984,8 +984,8 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
                     childId = 1,
                     exerciseId = docExerciseId,
                     contextJson = """{"tab":"stammdaten"}""",
-                    // Ringpuffer: ausschließlich Metadaten – keine Bodies, Header oder Tokens.
-                    // Der Login-Request trägt die PIN im Body; ein roher Mitschnitt legte sie in die DB.
+                    // Ring buffer: metadata only - no bodies, headers or tokens.
+                    // The login request carries the PIN in its body; a raw capture would put it into the DB.
                     recentErrorsJson = """[{"method":"GET","path":"/api/v1/supervisor/adults/1","status":404,"code":"not_found","at":"2026-07-27T09:12:44Z"}]""",
                 },
             }, HttpStatusCode.Created);
@@ -1000,8 +1000,8 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
         await Capture(father, g, "Eigene Anmerkungen (Liste im Widget)", HttpMethod.Get,
             "/api/v1/remarks?mine=true&take=5", null, HttpStatusCode.OK);
 
-        // Der Rückkanal: Claude Code schreibt die Antwort zurück und schließt ab. Bei `Planned` bliebe die
-        // Antwort genauso erhalten – das macht aus dem offenen Zettel einen analysierten Backlog-Eintrag.
+        // The back channel: Claude Code writes the answer back and closes the case. At `Planned` the answer
+        // would be kept just the same - that turns the open note into an analyzed backlog entry.
         await Capture(father, g, "Antwort zurückschreiben und abschließen", HttpMethod.Patch, $"/api/v1/remarks/{remarkId}",
             new
             {
@@ -1010,9 +1010,9 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
                 status = "Done",
             }, HttpStatusCode.OK);
 
-        // Der Verlauf: Was nach der Auflösung passiert, überschreibt sie nicht mehr. Die Umsetzungsnotiz
-        // kommt von Claude (`Assistant`) und lässt den Stand bewusst unberührt – sonst riss jede eigene
-        // Notiz den Vorgang wieder auf.
+        // The history: what happens after the resolution no longer overwrites it. The implementation note comes
+        // from Claude (`Assistant`) and deliberately leaves the status untouched - otherwise every note of its
+        // own would reopen the case.
         await Capture(father, g, "Umsetzungsnotiz in den Verlauf schreiben", HttpMethod.Post,
             $"/api/v1/remarks/{remarkId}/comments",
             new
@@ -1041,28 +1041,28 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
             new { text = "Bezug ins Leere", parentRemarkId = 999999 },
             HttpStatusCode.BadRequest, ApiErrors.InvalidReference.Code);
 
-        // Sichtbarkeitswand: Der Student sieht ausschließlich eigene Anmerkungen. Deshalb ist die Antwort
-        // hier 404 und nicht 403 – ein 403 verriete, dass die Anmerkung existiert, und deren Antworten
-        // tragen Datei- und Zeilenverweise.
+        // The visibility wall: a student sees their own remarks only. That is why the answer here is 404 and
+        // not 403 - a 403 would disclose that the remark exists, and its answers carry file and line
+        // references.
         await Capture(child, g, "Fremde Anmerkung lesen (Sohn)", HttpMethod.Get, $"/api/v1/remarks/{remarkId}",
             null, HttpStatusCode.NotFound, ApiErrors.RemarkNotFound.Code);
 
         await Capture(father, g, "Unbekannte Anmerkung lesen", HttpMethod.Get, "/api/v1/remarks/999999",
             null, HttpStatusCode.NotFound, ApiErrors.RemarkNotFound.Code);
 
-        // Markdown-Export – die einzige Brücke zu den Test-Skills, die gegen eine Wegwerf-DB laufen und die
-        // echten Anmerkungen nur als Datei unter docs/anmerkungen/ sehen. Antwort ist `text/markdown`,
-        // nicht JSON; auf `status=Done` gefiltert, damit das Beispiel einen beantworteten Fall zeigt.
+        // The markdown export - the only bridge to the test skills, which run against a throwaway DB and see
+        // the real remarks only as a file under docs/anmerkungen/. The response is `text/markdown`, not JSON;
+        // filtered on `status=Done` so that the example shows an answered case.
         await Capture(father, g, "Anmerkungen als Markdown exportieren", HttpMethod.Get,
             "/api/v1/remarks/export?status=Done", null, HttpStatusCode.OK);
 
-        // Nur der Supervisor darf exportieren: Antworten tragen Datei- und Zeilenverweise, also Code-Interna.
+        // Only the supervisor may export: answers carry file and line references, i.e. code internals.
         await Capture(child, g, "Export als Sohn abrufen", HttpMethod.Get, "/api/v1/remarks/export",
             null, HttpStatusCode.Forbidden, ApiErrors.Forbidden.Code);
 
-        // Wiederaufnahme – steht bewusst *nach* dem Export, damit dessen Beispiel (`status=Done`) den
-        // abgeschlossenen Fall zeigt. Ein Beitrag des **Menschen** holt die Anmerkung zurück auf `Open`;
-        // das ist der Mechanismus, mit dem der Nachbereitungs-Skill sie beim nächsten Lauf wieder vorlegt.
+        // Reopening - deliberately *after* the export, so that its example (`status=Done`) shows the closed
+        // case. An entry by the **human** pulls the remark back to `Open`; that is the mechanism the follow-up
+        // skill uses to present it again on the next run.
         await Capture(father, g, "Nachhaken (holt die Anmerkung zurück auf offen)", HttpMethod.Post,
             $"/api/v1/remarks/{remarkId}/comments",
             new { body = "Und wie ändere ich die Adresse des Kindes?" }, HttpStatusCode.Created);
@@ -1070,26 +1070,26 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
         await Capture(father, g, "Anmerkung nach dem Nachhaken lesen", HttpMethod.Get,
             $"/api/v1/remarks/{remarkId}", null, HttpStatusCode.OK);
 
-        // Der kontenübergreifende Blick: die Sicht des Nachbereitungs-Skills. Sie hängt am Schalter
-        // `Remarks:GlobalRead` (in der Entwicklung an) und **nicht** an einer Rolle – beim Testen entstehen
-        // ständig Wegwerf-Konten, weil manche Fehler nur in einer bestimmten Konstellation auftreten, und
-        // jedes einzeln zu berechtigen wäre Verwaltungsarbeit ohne Gegenwert. Ist der Schalter aus (Vorgabe
-        // außerhalb der Entwicklung), antwortet derselbe Aufruf mit `403 remark_scope_forbidden`.
+        // The cross-account view: the follow-up skill's perspective. It hangs on the switch `Remarks:GlobalRead`
+        // (on in development) and **not** on a role - testing constantly creates throwaway accounts, because
+        // some bugs only appear in a certain constellation, and authorizing each one would be administration
+        // without any return. With the switch off (the default outside development), the same call answers
+        // `403 remark_scope_forbidden`.
         await Capture(father, g, "Anmerkungen aller Konten lesen (scope=all)", HttpMethod.Get,
             "/api/v1/remarks?scope=all&take=5", null, HttpStatusCode.OK);
 
-        // Ein Student bleibt in jedem Fall ausgeschlossen – auch mit eingeschaltetem Schalter: Antworten und
-        // Verlauf tragen Datei- und Zeilenverweise.
+        // A student stays excluded in any case - even with the switch on: answers and history carry file and
+        // line references.
         await Capture(child, g, "Alle Konten lesen als Sohn", HttpMethod.Get,
             "/api/v1/remarks?scope=all", null, HttpStatusCode.Forbidden, ApiErrors.RemarkScopeForbidden.Code);
 
-        // Zuletzt löschen – die Folgeanmerkung hängt per `SetNull` daran und bleibt bestehen.
+        // Delete last - the follow-up remark hangs on it through `SetNull` and survives.
         await Capture(father, g, "Anmerkung löschen", HttpMethod.Delete, $"/api/v1/remarks/{remarkId}",
             null, HttpStatusCode.NoContent);
     }
 
     // ─────────────────────────────────────────────────────────────────────────────────────────────
-    //  Markdown-Ausgabe: je Gruppe eine Datei + index.md (Übersicht, Abdeckung, „nicht erfassbar").
+    //  Markdown output: one file per group + index.md (overview, coverage, "not capturable").
     // ─────────────────────────────────────────────────────────────────────────────────────────────
     private void WriteMarkdown()
     {
@@ -1114,9 +1114,9 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
         File.WriteAllText(Path.Combine(outDir, "openapi-examples.generated.json"), json);
     }
 
-    // Nicht-JSON-Antworten gehen ohne Rumpf in den Katalog: Der Transformer parst den Wert
-    // (`JsonNode.Parse`) und hängt ihn an die JSON-Medientypen der Operation – ein Markdown-Rumpf hätte
-    // dort nichts zu suchen. Der Aufruf selbst bleibt dokumentiert (Pfad, Rolle, Status).
+    // Non-JSON responses go into the catalog without a body: the transformer parses the value
+    // (`JsonNode.Parse`) and attaches it to the operation's JSON media types - a markdown body would have no
+    // business there. The call itself stays documented (path, role, status).
     private static OpenApiExampleEntry ToOpenApiExample(Entry entry, HashSet<string> usedKeys) =>
         new(UniqueKey(entry, usedKeys), entry.ResourceGroup, entry.Title, entry.Method, entry.Path, entry.Role,
             entry.RequestBodyJson, entry.ExpectedStatus, entry.IsJsonResponse ? entry.ResponseBodyJson : null,
@@ -1189,8 +1189,8 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
             var mediaNote = e.IsJsonResponse ? "" : $" (`{e.ResponseMediaType}`)";
             sb.AppendLine($"Response — `HTTP {e.ActualStatus}`{mediaNote}:").AppendLine();
             var body = Truncate(e.ResponseBodyJson) ?? "(kein Inhalt)";
-            // Zaun und Sprache aus dem Antwort-Typ: Der Markdown-Export enthält selbst ```json-Blöcke,
-            // ein dreifacher Zaun würde vorzeitig schließen und die Seite zerlegen (CommonMark).
+            // Fence and language from the response type: the markdown export itself contains ```json blocks,
+            // and a triple fence would close early and tear the page apart (CommonMark).
             var fence = new string('`', Math.Max(3, LongestBacktickRun(body) + 1));
             sb.AppendLine(fence + LanguageOf(e)).AppendLine(body).AppendLine(fence).AppendLine();
         }
@@ -1210,7 +1210,7 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
             sb.AppendLine($"| {g.Key} | {g.Count()} | {g.Count(e => e.IsError)} | [`{g.Key}.md`](./{g.Key}.md) |");
         sb.AppendLine();
 
-        // Fehler-Code-Abdeckung gegen die zentrale Registry.
+        // Error code coverage against the central registry.
         sb.AppendLine("## Fehler-Code-Abdeckung").AppendLine();
         sb.AppendLine($"Verifiziert: **{_codeHits.Count} / {ApiErrors.AllCodes.Count}** Codes aus `ApiErrors`.").AppendLine();
         sb.AppendLine("| Code | Beispiel |");
@@ -1222,7 +1222,7 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
         }
         sb.AppendLine();
 
-        // Nicht automatisch erfassbare Codes mit Begründung.
+        // Codes that cannot be captured automatically, with a reason.
         var reasons = new Dictionary<string, string>(StringComparer.Ordinal)
         {
             ["bad_request"] = "Generischer 400-Default (`ForStatus`): nur Sicherheitsnetz für Framework-Antworten ohne spezifischen Code – alle regulären 400-Pfade tragen bereits einen fachlichen Code.",
@@ -1245,8 +1245,8 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
         return sb.ToString();
     }
 
-    // `AppendLine` am Ende jeder Sektion summiert sich zu mehreren Leerzeilen (MD012); markdownlint
-    // will außerdem genau einen abschließenden Zeilenumbruch (MD047), keinen zusätzlichen.
+    // An `AppendLine` at the end of every section adds up to several blank lines (MD012); markdownlint also
+    // wants exactly one trailing line break (MD047), not an extra one.
     private static string NormalizeTrailingNewline(string markdown) => markdown.TrimEnd() + "\n";
 
     /// <summary>Finds the repo root: upward from <see cref="AppContext.BaseDirectory"/> until <c>backend</c>+<c>docs</c> (or <c>.git</c>) are present.</summary>

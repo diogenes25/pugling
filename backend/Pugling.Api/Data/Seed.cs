@@ -6,28 +6,28 @@ using Pugling.Api.Models;
 namespace Pugling.Api.Data;
 
 /// <summary>
-/// Sät die Demo-/Entwicklungsdaten beim Start: Zeitfenster, Admin-Familie, Lern-Katalog (Englisch/Mathe/
-/// Erdkunde), Lehrbuch-Profil, Vokabel-Store, Französisch-Inhalte, Klassenarbeiten, Gamification, eine
-/// Lehrer-Bibliothek, den Familien-Shop und einen vollständigen Demo-Lehrplan. Jede Teilroutine ist
-/// additiv-idempotent, damit ein Neustart auf einer bereits befüllten DB nichts dupliziert.
+/// Seeds the demo/development data at startup: time slots, the admin family, the learning catalog
+/// (English/maths/geography), the textbook profile, the vocabulary store, French content, class tests,
+/// gamification, a teacher library, the family shop and one complete demo study plan. Every sub-routine is
+/// additive and idempotent so that a restart on an already populated DB duplicates nothing.
 /// </summary>
 public static class Seed
 {
     /// <summary>
-    /// Führt alle Seed-Routinen der Reihe nach aus. <b>Die Reihenfolge ist Vertrag</b> – die entstehenden
-    /// Ids sind außerhalb des Repos verdrahtet (Playwright, Skills, die eingecheckten API-Beispiele);
-    /// Neues kommt darum ans Ende.
+    /// Runs all seed routines one after another. <b>The order is part of the contract</b> – the resulting ids
+    /// are wired up outside this repository (Playwright, skills, the checked-in API examples); new things
+    /// therefore go to the end.
     /// <para>
-    /// Der zweite Block ist der <b>Nachlauf</b>: er braucht die oben gesäten Zeilen und je einen Service.
-    /// Diese vier Routinen hießen früher „Backfill" und hingen als eigene Klassen hinter <c>Seed.Run</c> im
-    /// <c>Program.cs</c>. Der Name war falsch: es gab keine Altdaten zu füllen – ohne sie hat eine
-    /// <i>frische</i> DB Adults ohne Login, Vokabelübungen ohne Items und Kinder ohne referenzierte
-    /// Interessen. Sie sind also Seed, und hier stehen sie an der Stelle, an der ihre Reihenfolge sichtbar ist.
+    /// The second block is the <b>follow-up</b>: it needs the rows seeded above plus one service each.
+    /// These four routines used to be called "backfill" and hung behind <c>Seed.Run</c> as their own classes in
+    /// <c>Program.cs</c>. The name was wrong: there was no legacy data to fill – without them a <i>fresh</i> DB
+    /// has adults without a login, vocabulary exercises without items and children without referenced
+    /// interests. So they are seed, and here they stand where their order is visible.
     /// </para>
     /// <para>
-    /// <b>Die Idempotenz jeder Routine ist Bedingung, nicht Beiwerk:</b> der Start ruft das bei <i>jedem</i>
-    /// Hochfahren. Die „hat das Kind schon Einträge?"- und „ist die Config schon reduziert?"-Prüfungen sind
-    /// keine Migrationsartefakte, sondern der Grund, warum ein Neustart nichts dupliziert.
+    /// <b>The idempotency of every routine is a condition, not decoration:</b> startup calls this on <i>every</i>
+    /// boot. The "does the child already have entries?" and "has the config already been reduced?" checks are
+    /// not migration artifacts but the reason why a restart duplicates nothing.
     /// </para>
     /// </summary>
     public static async Task RunAsync(PuglingDbContext db, ExerciseItemService items,
@@ -44,7 +44,7 @@ public static class Seed
         SeedShop(db);
         SeedDemoPlan(db);
 
-        // Nachlauf (siehe Doku oben). Reihenfolge: Rechte vor Inhalt, Inhalt vor Login.
+        // Follow-up (see the documentation above). Order: rights before content, content before login.
         await SeedExerciseGrantsAsync(db, ct);
         await SeedExerciseItemsAsync(db, items, ct);
         await SeedAccountsAsync(db, accounts, ct);
@@ -52,18 +52,17 @@ public static class Seed
     }
 
     /// <summary>
-    /// Gibt jeder Übung mit Autor einen <b>Owner-Grant</b> – genau das, was
-    /// <c>ExerciseControllerBase</c> beim Anlegen über die API tut.
+    /// Gives every exercise that has an author an <b>owner grant</b> – exactly what
+    /// <c>ExerciseControllerBase</c> does when creating one through the API.
     /// <para>
-    /// Das schließt eine echte Lücke: die Rechte laufen ausschließlich über <see cref="ExerciseGrant"/>
-    /// (<c>ExercisePermissionService</c>), vergeben wurden sie aber nur von einer Raw-SQL-Zeile in einer
-    /// Migration – und die ist auf einer leeren DB ein No-op. <b>Der geseedete Lehrer konnte seine eigenen
-    /// Übungen also nicht bearbeiten.</b>
+    /// This closes a real gap: the rights run exclusively through <see cref="ExerciseGrant"/>
+    /// (<c>ExercisePermissionService</c>), but they were only granted by one raw SQL line in a migration – and
+    /// that is a no-op on an empty DB. <b>So the seeded teacher could not edit their own exercises.</b>
     /// </para>
     /// <para>
-    /// Idempotent über „diese Übung hat <i>überhaupt keinen</i> Grant". Bewusst nicht über „hat keinen
-    /// Owner-Grant für ihren Autor": nach einer Eigentumsübertragung (Owner umgehängt) würde der Start dem
-    /// alten Autor sein Recht sonst bei jedem Hochfahren zurückgeben.
+    /// Idempotent through "this exercise has <i>no grant at all</i>". Deliberately not through "has no owner
+    /// grant for its author": after an ownership transfer (owner moved over), startup would otherwise give the
+    /// old author their right back on every boot.
     /// </para>
     /// </summary>
     private static async Task SeedExerciseGrantsAsync(PuglingDbContext db, CancellationToken ct)
@@ -86,13 +85,13 @@ public static class Seed
     }
 
     /// <summary>
-    /// Materialisiert die Items der Vokabelübungen aus ihrer <see cref="Exercise.ConfigJson"/> (inline
-    /// <c>Items</c> bzw. ID-<c>Refs</c>) in die <see cref="ExerciseItem"/>-Tabelle und reduziert die Config
-    /// danach auf reine Einstellungen (Richtung/Sprachen). Der Seed schreibt Items inline – ohne diesen
-    /// Schritt hätte eine frische DB Vokabelübungen <b>ohne Inhalt</b>.
+    /// Materializes the items of the vocabulary exercises out of their <see cref="Exercise.ConfigJson"/> (inline
+    /// <c>Items</c> or ID <c>Refs</c>) into the <see cref="ExerciseItem"/> table and afterwards reduces the
+    /// config to pure settings (direction/languages). The seed writes items inline – without this step a fresh
+    /// DB would have vocabulary exercises <b>without any content</b>.
     /// <para>
-    /// Idempotent über „trägt die Config noch Items/Refs?". Der Abgleich
-    /// (<see cref="ExerciseItemService"/>) bewahrt dabei vorhandene ItemIds.
+    /// Idempotent through "does the config still carry items/refs?". The reconciliation
+    /// (<see cref="ExerciseItemService"/>) preserves existing item ids while doing so.
     /// </para>
     /// </summary>
     private static async Task SeedExerciseItemsAsync(PuglingDbContext db, ExerciseItemService items,
@@ -104,7 +103,7 @@ public static class Seed
                 ? new VocabularyConfig()
                 : JsonSerializer.Deserialize<VocabularyConfig>(exercise.ConfigJson, SeedJson) ?? new VocabularyConfig();
             if (config.Items.Count == 0 && (config.Refs is null || config.Refs.Count == 0))
-                continue; // Config bereits auf Einstellungen reduziert – nichts zu tun.
+                continue; // config already reduced to settings - nothing to do.
 
             await items.SyncFromConfigAsync(exercise.Id, config, ct);
             config.Items = [];
@@ -115,20 +114,19 @@ public static class Seed
     }
 
     /// <summary>
-    /// Legt zu jedem Erwachsenen und jedem Kind ein Login-Konto mit den passenden Rollen an – ohne das
-    /// hätte eine frische DB Personen <b>ohne Login</b>.
+    /// Creates a login account with the matching roles for every adult and every child – without it a fresh DB
+    /// would have people <b>without a login</b>.
     /// <para>
-    /// Ein Erwachsener <b>ohne betreutes Kind ist ein Lehrer-Konto</b> und bekommt darum
-    /// <see cref="AccountService.EnsureForTeacherAsync"/> (Creator, <i>kein</i> Supervisor) – genau die
-    /// fachliche Unterscheidung aus docs/lehrer-konto-plan.md: ein Erwachsener ohne Betreuungsauftrag.
-    /// Vorher rief der Start hier für <i>jeden</i> Adult <c>EnsureForAdultAsync</c>, und der geseedete
-    /// Lehrer bekam die Supervisor-Rolle, obwohl die Creator-only-Variante genau für ihn existiert und
-    /// nie erreicht wurde.
+    /// An adult <b>without a supervised child is a teacher account</b> and therefore gets
+    /// <see cref="AccountService.EnsureForTeacherAsync"/> (creator, <i>not</i> supervisor) – exactly the domain
+    /// distinction from docs/lehrer-konto-plan.md: an adult without a supervision assignment.
+    /// Before, startup called <c>EnsureForAdultAsync</c> here for <i>every</i> adult, and the seeded teacher got
+    /// the supervisor role even though the creator-only variant exists precisely for them and was never reached.
     /// </para>
     /// <para>
-    /// Dass die Routine <b>am Ende</b> läuft, ist Teil der Regel: erst dann stehen die Betreuungen, die sie
-    /// abfragt. Ein Erwachsener, der sich über die API registriert, bekommt seine Rollen ohnehin dort
-    /// (und behält sie – das Ensure rüstet bewusst nicht nach).
+    /// That the routine runs <b>at the end</b> is part of the rule: only then do the supervision links it
+    /// queries exist. An adult who registers through the API gets their roles there anyway (and keeps them –
+    /// the ensure deliberately does not retrofit).
     /// </para>
     /// </summary>
     private static async Task SeedAccountsAsync(PuglingDbContext db, AccountService accounts, CancellationToken ct)
@@ -144,13 +142,13 @@ public static class Seed
     }
 
     /// <summary>
-    /// Überführt die <b>Freitext</b>-Interessen der Kinder in die referenzierte Taxonomie
-    /// (<see cref="ChildInterest"/>), damit die Bildauswahl sofort etwas zu rechnen hat. Verlustfrei:
-    /// <c>Child.Interests</c> bleibt unangetastet – es ist weiterhin die Sprache des KI-Creators.
+    /// Transfers the children's <b>free-text</b> interests into the referenced taxonomy
+    /// (<see cref="ChildInterest"/>) so that the image selection has something to compute right away. Lossless:
+    /// <c>Child.Interests</c> stays untouched – it remains the language of the AI creator.
     /// <para>
-    /// Idempotent über „hat das Kind schon Einträge?": ein Kind, dessen Interessen der Vater bereits
-    /// gepflegt hat, wird übersprungen. Sonst würde ein Neustart bewusst gelöschte Einträge wiederbeleben
-    /// oder Gewichte überschreiben.
+    /// Idempotent through "does the child already have entries?": a child whose interests the supervisor has
+    /// already maintained is skipped. Otherwise a restart would revive deliberately deleted entries or
+    /// overwrite weights.
     /// </para>
     /// </summary>
     private static async Task SeedChildInterestsAsync(PuglingDbContext db, InterestTagService tags,
@@ -166,10 +164,10 @@ public static class Seed
         {
             if (child.Interests.Count == 0) continue;
 
-            // Über den geteilten Service, damit „Pokémon" hier denselben Tag trifft wie später im UI.
+            // Through the shared service, so that "Pokémon" hits the same tag here as later in the UI.
             foreach (var tag in await tags.EnsureManyAsync(child.Interests, ct: ct))
             {
-                // Neu angelegte Tags haben noch keine Id – erst speichern, dann darauf verweisen.
+                // Newly created tags have no id yet - save first, then reference them.
                 if (tag.Id == 0) await db.SaveChangesAsync(ct);
                 db.ChildInterests.Add(new ChildInterest
                 {
@@ -183,17 +181,17 @@ public static class Seed
         await db.SaveChangesAsync(ct);
     }
 
-    /// <summary>Startgewicht der übernommenen Interessen: eine klare, aber nicht dominante Vorliebe.</summary>
+    /// <summary>Starting weight of the transferred interests: a clear but not dominant preference.</summary>
     private const int InterestStartWeight = 2;
 
     private static readonly JsonSerializerOptions SeedJson = new(JsonSerializerDefaults.Web);
 
     /// <summary>
-    /// Übungsunabhängiges Profil des Seed-Kindes: ein verwendetes Lehrbuch als Grundlage für einen späteren
-    /// Lehrplan-Generator („was ist gerade dran"). Titel + Kapitel decken sich bewusst mit dem
-    /// <see cref="Exercise.Source"/> der geseedeten Englisch-Übungen („Green Line 1, Unit 1"), damit ein
-    /// Agent vorhandene Übungen wiederfindet statt neu zu generieren. Die Interessen des Kindes werden bereits
-    /// in <see cref="SeedAdmin"/> gesetzt. Additiv-idempotent: legt das Buch nur an, wenn das Kind noch keins hat.
+    /// Exercise-independent profile of the seed child: one textbook in use as the basis for a later study plan
+    /// generator ("what is due right now"). Title + chapter deliberately match the
+    /// <see cref="Exercise.Source"/> of the seeded English exercises ("Green Line 1, Unit 1") so that an agent
+    /// finds existing exercises again instead of generating new ones. The child's interests are already set in
+    /// <see cref="SeedAdmin"/>. Additive and idempotent: it only creates the book if the child has none yet.
     /// </summary>
     private static void SeedStudentProfile(PuglingDbContext db)
     {
@@ -216,26 +214,26 @@ public static class Seed
     }
 
     /// <summary>
-    /// Ein <b>vollständiger</b> Demo-Lehrplan für den Seed-Sohn, der <b>jede</b> spielbare Lernart als eigene
-    /// Position sichtbar macht – gedacht als Echt-Datensatz für die Frontend-Entwicklung: alle Vokabel-Stufen
-    /// (Kennenlernen, Selbsteinschätzung/„Umdrehen", Multiple-Choice/„Auswahl", Buchstabenkästchen, Freitext,
-    /// Hören), die Lückentext- und Zuordnungs-Stufen, eine reine Inhaltsübung (Birkenbihl), feste und generierte
-    /// Rechen-Checks, eine Liste und eine Übersetzung. Deckt zusätzlich die Ziel-Varianten (Tag/Woche/frei),
-    /// den Münz-Malus, die Leitner-Terminierung und einen Stufen-Fahrplan ab, damit Tagesmission, Üben,
-    /// Abschlusstest und Auswertung im Frontend gegen realistische Daten laufen.
-    /// Hängt bewusst an einer <b>eigenen Demo-Familie</b> (Demo-Vater <c>demo-vater@example.com</c>/PIN 0001,
-    /// Demo-Kind „Demo-Kind"/PIN 2222), damit das primäre Seed-Kind „Sohn" ein sauberer Ausgangszustand bleibt.
-    /// Additiv-idempotent: legt Familie/Plan nur an, solange der Demo-Plan noch nicht existiert.
+    /// A <b>complete</b> demo study plan for the seed child that makes <b>every</b> playable learning method
+    /// visible as its own position – meant as a real data set for frontend development: all vocabulary stages
+    /// (getting acquainted, self-assessment/"flip", multiple choice, letter boxes, free text, listening), the
+    /// cloze and matching stages, one pure content exercise (Birkenbihl), fixed and generated arithmetic checks,
+    /// one list and one translation. It additionally covers the goal variants (daily/weekly/free), the coin
+    /// penalty, the Leitner scheduling and a stage schedule, so that the daily mission, practice, final test and
+    /// reporting in the frontend run against realistic data.
+    /// It deliberately hangs on its <b>own demo family</b> (demo father <c>demo-vater@example.com</c>/PIN 0001,
+    /// demo child "Demo-Kind"/PIN 2222) so that the primary seed child "Sohn" stays a clean initial state.
+    /// Additive and idempotent: it only creates the family/plan while the demo plan does not exist yet.
     /// </summary>
     private static void SeedDemoPlan(PuglingDbContext db)
     {
         const string planTitle = "Demo: Alle Lernarten (Frontend-Testdaten)";
         const string demoSupervisorEmail = "demo-vater@example.com";
 
-        // Bewusst eine EIGENE Demo-Familie statt des primären Seed-Kindes „Sohn": So bleibt „Sohn" ein
-        // sauberer Ausgangszustand (u. a. für die Tests, die dort ihre eigenen Pläne/Ziele aufbauen),
-        // während dieses reichhaltige Frontend-Testdaten-Set isoliert daneben liegt. Get-or-create,
-        // damit ein Nachlauf auf befüllter DB weder dupliziert noch fremde Accounts anfasst.
+        // Deliberately an OWN demo family instead of the primary seed child "Sohn": that keeps "Sohn" a clean
+        // initial state (for the tests that build their own plans/goals there, among others), while this rich
+        // frontend test data set sits isolated next to it. Get-or-create, so that a re-run on a populated DB
+        // neither duplicates anything nor touches other people's accounts.
         var demoSupervisor = db.Adults.FirstOrDefault(f => f.Email == demoSupervisorEmail);
         if (demoSupervisor is null)
         {
@@ -255,7 +253,7 @@ public static class Seed
                 Interests = ["Minecraft", "Basketball"],
                 ProfileNotes = "Frontend-Testkind: trägt den vollständigen Lernarten-Demoplan.",
                 Pin = Auth.PinHasher.Hash("2222"),
-                // Startguthaben, damit sich Shop/Skins sofort ausprobieren lassen.
+                // Starting balance, so that shop/skins can be tried out right away.
                 PointsEntries =
                 {
                     new ChildPointsEntry { Amount = 200, Kind = PointKind.Base, Reason = "Startguthaben (Münzen)" },
@@ -270,10 +268,10 @@ public static class Seed
 
         if (db.StudyPlans.Any(p => p.ChildId == child.Id && p.Title == planTitle)) return;
 
-        // Katalog-Übungen per Titel holen (im Seed stabil). Optionale bleiben null, wenn ihr Fach fehlt.
+        // Fetch catalog exercises by title (stable within the seed). Optional ones stay null if their subject is missing.
         Exercise? ByTitle(string title) => db.Exercises.FirstOrDefault(e => e.Title == title);
         var vocab = ByTitle("Begrüßungen");
-        if (vocab is null) return; // ohne die Kern-Vokabelübung ergibt der Demo-Plan keinen Sinn
+        if (vocab is null) return; // without the core vocabulary exercise the demo plan makes no sense
         int vocabId = vocab.Id;
 
         var cloze = ByTitle("Lückentext: A short dialogue");
@@ -290,9 +288,9 @@ public static class Seed
         var positions = new List<PlanPosition>();
         var order = 0;
 
-        // ── Vokabeln: jede Teststufe als eigene Position ────────────────────────
-        // Damit sich alle Vokabel-Lernarten sofort durchspielen lassen. Der Inhalt ist immer dieselbe
-        // Übung „Begrüßungen"; erst die Stufe (Stage) je Position bestimmt die Lernart.
+        // ── Vocabulary: every test stage as its own position ────────────────────────
+        // So that all vocabulary learning modes can be played through right away. The content is always the same
+        // exercise "Begrüßungen"; only the stage per position determines the learning mode.
         void Vocab(TestStage stage, GoalCadence cadence, bool leitner, int penalty = 0)
         {
             positions.Add(new PlanPosition
@@ -303,18 +301,18 @@ public static class Seed
                 Cadence = cadence,
                 PenaltyCoins = penalty,
                 UseLeitner = leitner,
-                // Getippte Stufen dürfen nur „gewertet" bestehen (kein bloßes Klicken/Aufdecken).
+                // Typed stages may only be passed "graded" (no mere clicking/revealing).
                 RequireTypedTest = stage is TestStage.FreeText or TestStage.Audio,
             });
         }
 
-        Vocab(TestStage.ShowBoth, GoalCadence.None, leitner: false); // Kennenlernen (Vorder-/Rückseite sichtbar)
-        Vocab(TestStage.SelfAssess, GoalCadence.Daily, leitner: true, penalty: 5); // „Umdrehen" + Selbsteinschätzung
-        Vocab(TestStage.MultipleChoice, GoalCadence.Daily, leitner: true); // „Auswahl" mit Ablenkern
-        Vocab(TestStage.LetterBoxes, GoalCadence.Weekly, leitner: true); // Buchstabenkästchen
-        Vocab(TestStage.Audio, GoalCadence.None, leitner: false); // Hören → tippen (Items ohne Audio → stumm, aber spielbar)
+        Vocab(TestStage.ShowBoth, GoalCadence.None, leitner: false); // getting acquainted (front/back visible)
+        Vocab(TestStage.SelfAssess, GoalCadence.Daily, leitner: true, penalty: 5); // "flip" + self-assessment
+        Vocab(TestStage.MultipleChoice, GoalCadence.Daily, leitner: true); // multiple choice with distractors
+        Vocab(TestStage.LetterBoxes, GoalCadence.Weekly, leitner: true); // letter boxes
+        Vocab(TestStage.Audio, GoalCadence.None, leitner: false); // listen → type (items without audio are mute but playable)
 
-        // Freitext-Stufe zusätzlich mit Schnell-Antwort-Bonus, um auch diesen Punkte-Pfad zu bespielen.
+        // The free-text stage additionally with a fast-answer bonus, to exercise that points path as well.
         positions.Add(new PlanPosition
         {
             ExerciseId = vocabId,
@@ -328,7 +326,7 @@ public static class Seed
             SpeedBonusPoints = 3,
         });
 
-        // Eine Position mit Stufen-Fahrplan: die Schwierigkeit steigt über die Laufzeit automatisch an.
+        // One position with a stage schedule: the difficulty rises automatically over the runtime.
         positions.Add(new PlanPosition
         {
             ExerciseId = vocabId,
@@ -345,7 +343,7 @@ public static class Seed
             ],
         });
 
-        // ── Lückentext: zwei Stufen (Wortbank vs. Freitext) ─────────────────────
+        // ── Cloze: two stages (word bank vs. free text) ─────────────────────
         if (cloze is not null)
         {
             positions.Add(new PlanPosition
@@ -367,7 +365,7 @@ public static class Seed
             });
         }
 
-        // ── Zuordnung: einfach vs. mit Ablenkern ────────────────────────────────
+        // ── Matching: plain vs. with distractors ────────────────────────────────
         if (matching is not null)
         {
             positions.Add(new PlanPosition
@@ -387,15 +385,15 @@ public static class Seed
             });
         }
 
-        // ── Reine Inhaltsübung (kein aktives Abfragen) ──────────────────────────
+        // ── Pure content exercise (no active questioning) ──────────────────────────
         if (birkenbihl is not null)
             positions.Add(new PlanPosition { ExerciseId = birkenbihl.Id, Order = order++, Cadence = GoalCadence.None });
 
-        // ── Katalog-Checks: feste Rechenaufgaben, generierter Drill, Liste ──────
-        // GoalThreshold ist eine PROZENT-Bestehensgrenze, auch hier (siehe PlanPosition.GoalThreshold) –
-        // vorher standen an dieser Stelle Trefferzahlen (3/8/16), die als Prozentwerte jeden Versuch
-        // bestehen ließen und damit ausgerechnet die Pflicht wirkungslos machten, die sie setzen sollten.
-        // Drei verschiedene Werte, damit die Testdaten auch eine abweichende Grenze zeigen.
+        // ── Catalog checks: fixed arithmetic tasks, generated drill, list ──────
+        // GoalThreshold is a PERCENT pass threshold here too (see PlanPosition.GoalThreshold) - this used to
+        // hold hit counts (3/8/16), which as percentages let every attempt pass and thereby made precisely the
+        // obligation toothless that they were meant to set. Three different values, so that the test data also
+        // shows a deviating threshold.
         if (arithmetic is not null)
             positions.Add(new PlanPosition { ExerciseId = arithmetic.Id, Order = order++, Cadence = GoalCadence.Daily, GoalThreshold = 80 });
         if (drill is not null)
@@ -403,7 +401,7 @@ public static class Seed
         if (list is not null)
             positions.Add(new PlanPosition { ExerciseId = list.Id, Order = order++, Cadence = GoalCadence.Weekly, GoalThreshold = 90 });
 
-        // ── Übersetzung (aus der Lehrer-Bibliothek, sofern vorhanden) ───────────
+        // ── Translation (from the teacher library, if present) ───────────
         if (translation is not null)
             positions.Add(new PlanPosition { ExerciseId = translation.Id, Order = order++, Cadence = GoalCadence.Weekly });
 
@@ -424,12 +422,12 @@ public static class Seed
     }
 
     /// <summary>
-    /// Macht das Kern-Szenario greifbar: ein <b>Englischlehrer</b> (eigener Vater-Account) legt Übungen auf
-    /// Niveau der 9. Klasse Gymnasium an – mit gesetztem <see cref="Exercise.AuthorAdultId"/>. Weil der Katalog
-    /// global ist, finden andere Väter diese Übungen über die Suche (Fach Englisch, Klasse 9, Gymnasium) und
-    /// übernehmen sie als Positionen in eigene Lehrpläne; ändern/löschen darf sie aber nur der Lehrer selbst.
-    /// Additiv-idempotent: der Lehrer-Account wird bei Bedarf angelegt, die Demo-Inhalte werden nur
-    /// ergänzt, solange das Demo-Kapitel noch fehlt (auch wenn der Account bereits anderweitig existiert).
+    /// Makes the core scenario tangible: an <b>English teacher</b> (with their own father account) creates
+    /// exercises at grade 9 Gymnasium level – with <see cref="Exercise.AuthorAdultId"/> set. Because the catalog
+    /// is global, other adults find these exercises through the search (subject English, grade 9, Gymnasium) and
+    /// take them into their own study plans as positions; changing/deleting them, however, is only allowed to the
+    /// teacher themselves. Additive and idempotent: the teacher account is created on demand, the demo content is
+    /// only added while the demo chapter is still missing (even if the account already exists for other reasons).
     /// </summary>
     private static void SeedTeacherLibrary(PuglingDbContext db)
     {
@@ -439,16 +437,16 @@ public static class Seed
         var englisch = db.Subjects.FirstOrDefault(s => s.Name == "Englisch");
         if (englisch is null) return;
 
-        // Idempotenz an den Inhalten festmachen, nicht nur am Account: Existiert das Demo-Kapitel
-        // bereits, ist nichts zu tun – sonst würde ein anderweitig angelegter Lehrer-Account den
-        // Katalog-Inhalt stillschweigend unterdrücken.
+        // Anchor idempotency on the content, not only on the account: if the demo chapter already exists there
+        // is nothing to do - otherwise a teacher account created elsewhere would silently suppress the catalog
+        // content.
         if (db.Chapters.Any(c => c.SubjectId == englisch.Id && c.Name == chapterName)) return;
 
         var options = new JsonSerializerOptions(JsonSerializerDefaults.Web);
         string Json<T>(T config) => JsonSerializer.Serialize(config, options);
 
-        // Der Lehrer-Account (Login mit dieser Id + PIN 9999). Ohne Kinder – er kuratiert nur den Katalog.
-        // Get-or-create, damit ein bereits vorhandener Account wiederverwendet statt dupliziert wird.
+        // The teacher account (login with this id + PIN 9999). Without children - they only curate the catalog.
+        // Get-or-create, so that an already existing account is reused instead of duplicated.
         var teacher = db.Adults.FirstOrDefault(f => f.Email == teacherEmail);
         if (teacher is null)
         {
@@ -457,7 +455,7 @@ public static class Seed
             db.SaveChanges();
         }
 
-        // Arten (Grammatik/Vokabeln) des Fachs wiederverwenden, falls vorhanden.
+        // Reuse the subject's categories (grammar/vocabulary) if they exist.
         var grammatik = db.ExerciseCategories.FirstOrDefault(c => c.SubjectId == englisch.Id && c.Name == "Grammatik");
         var vokabeln = db.ExerciseCategories.FirstOrDefault(c => c.SubjectId == englisch.Id && c.Name == "Vokabeln");
 
@@ -497,7 +495,7 @@ public static class Seed
             }),
         };
 
-        // Klassiker der 9. Klasse: if-clauses type II (Konditional). Lückentext mit Wortbank.
+        // A grade 9 classic: if-clauses type II (conditional). A cloze text with a word bank.
         var conditionals = new Exercise
         {
             ChapterId = chapter.Id,
@@ -553,17 +551,17 @@ public static class Seed
     }
 
     /// <summary>
-    /// Französisch-Inhalte für den typischen Einstieg „Sohn (14 J.) hat Probleme in Französisch":
-    /// ein Fach mit Kapitel + Katalog-Übungen (zum Stöbern/Filtern nach Klassenstufe) UND passende
-    /// Einträge im Vokabel-Store (Basis für einen Vokabel-Lehrplan). Additiv-idempotent: läuft auch
-    /// auf einer bereits befüllten DB nach (prüft gezielt auf das Fach bzw. je Vokabel-Key).
+    /// French content for the typical entry point "child (14 y/o) is struggling with French":
+    /// one subject with a chapter + catalog exercises (for browsing/filtering by grade) AND matching entries in
+    /// the vocabulary store (the basis for a vocabulary study plan). Additive and idempotent: it also runs on an
+    /// already populated DB (it checks specifically for the subject, and per vocabulary key).
     /// </summary>
     private static void SeedFrench(PuglingDbContext db)
     {
         var options = new JsonSerializerOptions(JsonSerializerDefaults.Web);
         string Json<T>(T config) => JsonSerializer.Serialize(config, options);
 
-        // (fr -> de) Grundwortschatz „En ville / Le quotidien" – 8./9. Klasse, Découvertes 1, Unité 2.
+        // (fr -> de) Core vocabulary "En ville / Le quotidien" - grade 8/9, Découvertes 1, Unité 2.
         (string Word, string De, PartOfSpeech Pos, string? Article)[] woerter =
         [
             ("la ville", "die Stadt", PartOfSpeech.Noun, "la"),
@@ -598,7 +596,7 @@ public static class Seed
         }
         db.SaveChanges();
 
-        // Katalog: nur anlegen, wenn das Fach noch fehlt (sonst nur Store-Vokabeln ergänzen, s. o.).
+        // Catalog: only create it if the subject is still missing (otherwise just add store entries, see above).
         if (db.Subjects.Any(s => s.Name == "Französisch")) return;
 
         var frVokabeln = new ExerciseCategory { Name = "Vokabeln" };
@@ -672,8 +670,8 @@ public static class Seed
     }
 
     /// <summary>
-    /// Vorlagen für Missionen (Tages-/Wochenziele) und Auszeichnungen (Duolingo-artige Badges) je Kind.
-    /// Der Vater kann sie frei editieren/löschen und eigene ergänzen (siehe Missions-/Achievements-Controller).
+    /// Templates for missions (daily/weekly goals) and awards (Duolingo-style badges) per child.
+    /// The supervisor can edit/delete them freely and add their own (see the missions/achievements controllers).
     /// </summary>
     private static void SeedGamification(PuglingDbContext db)
     {
@@ -704,14 +702,14 @@ public static class Seed
         if (db.Klassenarbeiten.Any()) return;
 
         var child = db.Children.OrderBy(c => c.Id).FirstOrDefault();
-        if (child is null) return; // ohne Kind keine kindbezogenen Daten
+        if (child is null) return; // without a child there is no child-scoped data
 
         var englisch = db.Subjects.FirstOrDefault(s => s.Name == "Englisch");
         var mathe = db.Subjects.FirstOrDefault(s => s.Name == "Mathe");
         var exEnglisch = db.Exercises.Where(e => e.Chapter!.Subject!.Name == "Englisch").OrderBy(e => e.Id).ToList();
         var exMathe = db.Exercises.Where(e => e.Chapter!.Subject!.Name == "Mathe").OrderBy(e => e.Id).ToList();
 
-        // Zwei Beispiel-Tags – einer vom Vater, einer vom Sohn gesetzt.
+        // Two example tags - one set by the supervisor, one by the child.
         var tagUnit1 = new Tag { ChildId = child.Id, Name = "Unit 1", Color = "#3b82f6", CreatedBy = TaggedBy.Vater };
         var tag1x1 = new Tag { ChildId = child.Id, Name = "Einmaleins", Color = "#f59e0b", CreatedBy = TaggedBy.Sohn };
         db.Tags.AddRange(tagUnit1, tag1x1);
@@ -725,7 +723,7 @@ public static class Seed
 
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
 
-        // Geplante Arbeit: relevante Übungen kommen über den verknüpften Tag „Unit 1".
+        // A planned test: the relevant exercises come in through the linked tag "Unit 1".
         var geplant = new Klassenarbeit
         {
             ChildId = child.Id,
@@ -737,7 +735,7 @@ public static class Seed
             Tags = { new KlassenarbeitTag { TagId = tagUnit1.Id } },
         };
 
-        // Geschriebene Arbeit mit schlechter Note: Übungen direkt zugewiesen → tauchen im Wiederholen-Endpunkt auf.
+        // A written test with a bad grade: exercises assigned directly → they show up in the repeat endpoint.
         var geschrieben = new Klassenarbeit
         {
             ChildId = child.Id,
@@ -759,7 +757,7 @@ public static class Seed
     {
         if (db.Vocabularies.Any()) return;
 
-        // Substantiv + Verb-Grundform
+        // Noun + verb base form
         db.Vocabularies.AddRange(
             new Vocabulary
             {
@@ -783,7 +781,7 @@ public static class Seed
             });
         db.SaveChanges();
 
-        // Flektierte Form, die auf die Grundform verweist
+        // An inflected form pointing at its base form
         var baseId = db.Vocabularies.Where(v => v.Key == "en_go_de_gehen").Select(v => v.Id).First();
         db.Vocabularies.Add(new Vocabulary
         {
@@ -800,11 +798,11 @@ public static class Seed
     }
 
     /// <summary>
-    /// Demo-Artikel und -Angebote des Familien-Shops. Zeigt alle zentralen Felder des Shop-Kreislaufs:
-    /// verschiedene <see cref="UnitType"/>s und <see cref="ActionType"/>s, Münzen- und Gem-Preise,
-    /// automatische Auffüllung (<see cref="ShopRefillKind"/>) und gemischte Stocks – damit neue Entwickler
-    /// sofort echte Objekte vorfinden, ohne erst über die Admin-API Artikel anlegen zu müssen.
-    /// Additiv-idempotent: läuft nur, solange noch keine Shop-Artikel existieren.
+    /// Demo articles and listings of the family shop. It shows all the central fields of the shop cycle:
+    /// different <see cref="UnitType"/>s and <see cref="ActionType"/>s, coin and gem prices, automatic refilling
+    /// (<see cref="ShopRefillKind"/>) and mixed stocks – so that new developers find real objects right away
+    /// without having to create articles through the admin API first.
+    /// Additive and idempotent: it only runs while no shop articles exist yet.
     /// </summary>
     private static void SeedShop(PuglingDbContext db)
     {
@@ -813,9 +811,9 @@ public static class Seed
         var father = db.Adults.OrderBy(f => f.Id).FirstOrDefault();
         if (father is null) return;
 
-        // ── Artikel 1: Fernsehzeit ──────────────────────────────────────────────
-        // Tägliches Kontingent: automatisch jeden Tag auf MaxStock aufgefüllt.
-        // Zwei Listings zeigen das „kleines Paket vs. Sparpaket"-Muster.
+        // ── Article 1: TV time ──────────────────────────────────────────────
+        // A daily allowance: refilled to MaxStock automatically every day.
+        // Two listings show the "small pack vs. bulk pack" pattern.
         var tv = new ShopArticle
         {
             AdultId = father.Id,
@@ -849,8 +847,8 @@ public static class Seed
             ],
         };
 
-        // ── Artikel 2: Spielzeit ───────────────────────────────────────────────
-        // Wöchentliches Kontingent (montags aufgefüllt), höhere Coinkosten.
+        // ── Article 2: play time ───────────────────────────────────────────────
+        // A weekly allowance (refilled on Mondays), higher coin cost.
         var gaming = new ShopArticle
         {
             AdultId = father.Id,
@@ -886,9 +884,9 @@ public static class Seed
             ],
         };
 
-        // ── Artikel 3: Süßigkeiten ─────────────────────────────────────────────
-        // Gramm-basiert; gemischter Preis (Coins + Gems), kein Auto-Refill.
-        // Zeigt, dass Gems einen Artikel exklusiver machen können.
+        // ── Article 3: sweets ─────────────────────────────────────────────
+        // Gram-based; a mixed price (coins + gems), no auto refill.
+        // Shows that gems can make an article more exclusive.
         var sweets = new ShopArticle
         {
             AdultId = father.Id,
@@ -912,8 +910,8 @@ public static class Seed
             ],
         };
 
-        // ── Artikel 4: Kino-Ausflug ────────────────────────────────────────────
-        // Stückzahl (Mal), kein Auto-Refill, hoher Preis → langfristiges Sparziel.
+        // ── Article 4: cinema trip ────────────────────────────────────────────
+        // A unit count (times), no auto refill, a high price → a long-term savings goal.
         var cinema = new ShopArticle
         {
             AdultId = father.Id,
@@ -949,14 +947,14 @@ public static class Seed
         {
             Name = "Sohn",
             BirthYear = 2015,
-            // Übungsunabhängiges Profil: Vorlieben, in die ein späterer Generator den (festen) Lernstoff
-            // einbettet, plus ein Freitext-Hinweis. Siehe wiki/09-llm-kochbuch.md.
+            // Exercise-independent profile: preferences a later generator embeds the (fixed) subject matter in,
+            // plus a free-text hint. See wiki/09-llm-kochbuch.md.
             Gender = Gender.Male,
             Interests = ["Brawl Stars", "Pokémon", "Fußball"],
             ProfileNotes = "Motiviert über Spiele-Themen; braucht klare kurze Aufgaben.",
             Pin = Auth.PinHasher.Hash("1111"),
-            // Start: ein paar Münzen (Base → Coins) für Angebote und ein paar Gems (Achievement → Gems),
-            // damit sich sofort ein Skin ausprobieren lässt.
+            // Start: a few coins (Base → coins) for listings and a few gems (Achievement → gems), so that a skin
+            // can be tried out right away.
             PointsEntries =
             {
                 new ChildPointsEntry { Amount = 50, Kind = PointKind.Base, Reason = "Startguthaben (Münzen)" },
@@ -966,7 +964,7 @@ public static class Seed
         db.Adults.Add(father);
         db.Children.Add(child);
         db.SaveChanges();
-        // Betreuung Papa → Sohn (ersetzt die frühere Child.AdultId-Bindung).
+        // Supervision father → child (replaces the former Child.AdultId binding).
         db.SupervisorLinks.Add(new SupervisorLink { SupervisorId = father.Id, StudentId = child.Id, Relation = SupervisorRelation.Father });
         db.SaveChanges();
     }
@@ -978,7 +976,7 @@ public static class Seed
         var options = new JsonSerializerOptions(JsonSerializerDefaults.Web);
         string Json<T>(T config) => JsonSerializer.Serialize(config, options);
 
-        // Fachabhängige Arten (kontrolliertes Vokabular) als Grundlage der Lehrplan-Vorfilterung.
+        // Subject-dependent categories (a controlled vocabulary) as the basis of the study plan pre-filtering.
         var enVokabeln = new ExerciseCategory { Name = "Vokabeln" };
         var enGrammatik = new ExerciseCategory { Name = "Grammatik" };
         var enLeseverstehen = new ExerciseCategory { Name = "Leseverstehen" };
@@ -1039,7 +1037,7 @@ public static class Seed
                                 WordBank = new List<string> { "Hello", "Hi", "fine", "good", "well" },
                             }),
                         },
-                        // Birkenbihl: Wort-für-Wort-Dekodierung (grammatik-unabhängig) + natürliche Übersetzung.
+                        // Birkenbihl: word-for-word decoding (grammar-independent) + the natural translation.
                         new Exercise
                         {
                             Type = ExerciseTypeKeys.Birkenbihl,
@@ -1087,7 +1085,7 @@ public static class Seed
                     OrderIndex = 1,
                     Exercises =
                     {
-                        // Feste Aufgaben: manuell gepflegte Liste (wie Vokabeln).
+                        // Fixed tasks: a manually maintained list (like vocabulary).
                         new Exercise
                         {
                             Type = ExerciseTypeKeys.Arithmetic,
@@ -1107,8 +1105,8 @@ public static class Seed
                                 }
                             }),
                         },
-                        // Zufallsaufgaben: gespeichert werden die Regeln, die Aufgaben
-                        // erzeugt POST …/arithmetic-drill/{id}/generate auf Abruf.
+                        // Random tasks: the rules are stored, the tasks are generated on demand by
+                        // POST …/arithmetic-drill/{id}/generate.
                         new Exercise
                         {
                             Type = ExerciseTypeKeys.ArithmeticDrill,
@@ -1132,7 +1130,7 @@ public static class Seed
             }
         };
 
-        // Bundesland -> Landeshauptstadt (Grundlage für Liste UND Zuordnungs-Paare).
+        // Federal state -> capital (the basis for the list AND the matching pairs).
         (string Land, string Hauptstadt)[] laender =
         [
             ("Baden-Württemberg", "Stuttgart"), ("Bayern", "München"), ("Berlin", "Berlin"),
@@ -1154,7 +1152,7 @@ public static class Seed
                     OrderIndex = 1,
                     Exercises =
                     {
-                        // Liste: alle Bundesländer aufzählen (Reihenfolge egal).
+                        // List: enumerate all federal states (order does not matter).
                         new Exercise
                         {
                             Type = ExerciseTypeKeys.List,
@@ -1167,7 +1165,7 @@ public static class Seed
                                 Items = laender.Select(l => new ListEntry(l.Land)).ToList(),
                             }),
                         },
-                        // Zuordnung nach Karteikasten-Prinzip: Bundesland -> Landeshauptstadt.
+                        // Matching by the flashcard principle: federal state -> capital.
                         new Exercise
                         {
                             Type = ExerciseTypeKeys.Matching,

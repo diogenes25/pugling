@@ -33,9 +33,9 @@ public class MediaLinkTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
 
         var links = await GetAsync(father, $"/api/v1/creator/vocabulary/{vocabId}/media");
         Assert.Equal(3, links.GetArrayLength());
-        // Bester redaktioneller Rang zuerst – er entscheidet später nur bei Gleichstand der Interessen.
+        // The best editorial rank first - it only decides later on a tie of the interests.
         Assert.Equal("link_run_flash", links[0].GetProperty("asset").GetProperty("key").GetString());
-        // Die Antwort trägt das Asset mit, damit eine Liste ohne Nachladen darstellbar ist.
+        // The response carries the asset along so that a list can be rendered without a second load.
         Assert.Equal("Der Superheld Flash rennt", links[0].GetProperty("asset").GetProperty("description").GetString());
     }
 
@@ -45,7 +45,7 @@ public class MediaLinkTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
         var father = await TestApi.FatherAsync(factory);
         var assetId = await CreateAssetAsync(father, "link_shared_running", "Laufendes Einhorn");
 
-        // „run" (en→de) und „laufen" (de→en) sind getrennte Store-Zeilen – dasselbe Bild dient beiden.
+        // "run" (en→de) and "laufen" (de→en) are separate store rows - the same image serves both.
         var (enId, _) = await TestApi.CreateStoreVocabAsync(father, "run", "laufen", "en", "de");
         var (deId, _) = await TestApi.CreateStoreVocabAsync(father, "laufen", "run", "de", "en");
 
@@ -116,8 +116,8 @@ public class MediaLinkTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
             new { mediaAssetId = itemAsset });
         Assert.Equal(HttpStatusCode.Created, itemLink.StatusCode);
 
-        // Beide Ebenen bleiben getrennt sichtbar – die Kaskade (Item schlägt Vokabel) zieht erst der
-        // Resolver in Etappe 4; hier darf nichts stillschweigend überschrieben werden.
+        // Both levels stay visible separately - the cascade (item beats vocabulary) is only applied by the
+        // resolver in stage 4; nothing may be overwritten silently here.
         var store = await GetAsync(father, $"/api/v1/creator/vocabulary/{vocabId}/media");
         var item = await GetAsync(father, $"/api/v1/creator/exercises/{exerciseId}/items/{itemId}/media");
         Assert.Equal("link_cat_store", Single(store).GetProperty("asset").GetProperty("key").GetString());
@@ -160,7 +160,7 @@ public class MediaLinkTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
     public async Task OhneSchreibrecht_BleibtDieUebungZu_DerStoreAberOffen()
     {
         var owner = await TestApi.FatherAsync(factory);
-        // Herr Schmidt (Seed-Konto 2) ist Creator, aber nicht Autor dieser Übung.
+        // Herr Schmidt (seed account 2) is a creator but not the author of this exercise.
         var stranger = await TestApi.FatherAsync(factory, id: 2, pin: "9999");
 
         var exerciseId = await TestApi.CreateVocabExerciseAsync(owner, ("locked", "gesperrt"));
@@ -171,7 +171,7 @@ public class MediaLinkTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
         Assert.Equal(HttpStatusCode.Forbidden, onExercise.StatusCode);
         Assert.Equal("not_author", await CodeOf(onExercise));
 
-        // Der Vokabel-Store ist dagegen kindneutral und gemeinsam – dort darf jeder Creator zuordnen.
+        // The vocabulary store, by contrast, is child-neutral and shared - there every creator may assign.
         var (vocabId, _) = await TestApi.CreateStoreVocabAsync(owner, "shared-word", "geteilt");
         var onStore = await stranger.PostAsJsonAsync($"/api/v1/creator/vocabulary/{vocabId}/media",
             new { mediaAssetId = assetId });
@@ -246,12 +246,12 @@ public class MediaLinkTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
 
         Assert.Equal(HttpStatusCode.NoContent, (await father.DeleteAsync($"/api/v1/creator/media/{assetId}")).StatusCode);
 
-        // Kein Platzhalter, keine Sperre: die Auswahl schrumpft, die Vokabel bleibt unversehrt.
+        // No placeholder, no barrier: the selection shrinks, the vocabulary entry stays intact.
         Assert.Empty((await GetAsync(father, $"/api/v1/creator/vocabulary/{vocabId}/media")).EnumerateArray());
         Assert.Equal(HttpStatusCode.OK, (await father.GetAsync($"/api/v1/creator/vocabulary/{vocabId}")).StatusCode);
     }
 
-    // ---- Helfer -------------------------------------------------------------------------------------
+    // ---- Helpers -------------------------------------------------------------------------------------
 
     private static async Task<int> CreateAssetAsync(HttpClient father, string key, string description) =>
         await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/media", new

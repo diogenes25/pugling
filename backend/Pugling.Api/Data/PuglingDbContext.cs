@@ -7,55 +7,55 @@ namespace Pugling.Api.Data;
 
 public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbContext(options)
 {
-    // Identität: Login-Konto mit einer/mehreren Rollen (Creator/Supervisor/Student), entkoppelt von Adult/Child.
+    // Identity: a login account with one or more roles (creator/supervisor/student), decoupled from Adult/Child.
     public DbSet<Account> Accounts => Set<Account>();
     public DbSet<AccountProfile> AccountProfiles => Set<AccountProfile>();
 
-    // Admin-Bereich: Personen (Supervisor >-< Student über SupervisorLink) + Punkte
+    // Admin area: people (supervisor >-< student through SupervisorLink) + points
     public DbSet<Adult> Adults => Set<Adult>();
     public DbSet<Child> Children => Set<Child>();
-    // Vom Kind verwendete Lehrbücher (übungsunabhängiges Profil, Grundlage für einen späteren Lehrplan-Generator).
+    // Textbooks used by the child (exercise-independent profile, the basis for a later study plan generator).
     public DbSet<Textbook> Textbooks => Set<Textbook>();
     public DbSet<SupervisorLink> SupervisorLinks => Set<SupervisorLink>();
     public DbSet<ChildPointsEntry> ChildPointsEntries => Set<ChildPointsEntry>();
 
-    // Unterrichts-Seite des Katalogs: Lehrwerk-Reihe -> Unit, dazu die Creator-Profile („Fachlehrer").
+    // The teaching side of the catalog: textbook series -> unit, plus the creator profiles ("subject teachers").
     public DbSet<TextbookSeries> TextbookSeries => Set<TextbookSeries>();
     public DbSet<SeriesUnit> SeriesUnits => Set<SeriesUnit>();
     public DbSet<CreatorProfile> CreatorProfiles => Set<CreatorProfile>();
 
-    // Lern-Katalog: Subject -> Chapter -> Exercise (typisiert)
+    // Learn catalog: Subject -> Chapter -> Exercise (typed)
     public DbSet<Subject> Subjects => Set<Subject>();
     public DbSet<Chapter> Chapters => Set<Chapter>();
     public DbSet<Exercise> Exercises => Set<Exercise>();
     public DbSet<ExerciseCategory> ExerciseCategories => Set<ExerciseCategory>();
-    // RWX-Rechte einzelner Creator auf eine Übung (Owner/Write/Execute).
+    // RWX rights of individual creators on an exercise (owner/write/execute).
     public DbSet<ExerciseGrant> ExerciseGrants => Set<ExerciseGrant>();
-    // Stabil identifizierte Items einer Vokabelübung (positionierte Referenz auf den Vokabel-Store).
+    // Stably identified items of a vocabulary exercise (a positioned reference into the vocabulary store).
     public DbSet<ExerciseItem> ExerciseItems => Set<ExerciseItem>();
 
-    // Sprachlernen: atomarer Vokabel-Store + Lückentext-Store
+    // Language learning: the atomic vocabulary store + the cloze store
     public DbSet<Vocabulary> Vocabularies => Set<Vocabulary>();
     public DbSet<ClozeText> ClozeTexts => Set<ClozeText>();
-    // Kindneutrale Schlagworte für den Vokabel-Katalog (Kapitel/Klasse/Thema)
+    // Child-neutral keywords for the vocabulary catalog (chapter/grade/topic)
     public DbSet<VocabTag> VocabTags => Set<VocabTag>();
     public DbSet<VocabTagLink> VocabTagLinks => Set<VocabTagLink>();
 
-    // Medien-Store: Asset = eine Darstellung eines Motivs, Variant = dieselbe Darstellung in einer
-    // Auflösung/einem Format. Getaggt mit derselben Taxonomie, die auch die Kind-Interessen nutzen.
+    // Media store: an asset is one rendition of a motif, a variant is that same rendition in one
+    // resolution/format. Tagged with the same taxonomy the child interests use.
     public DbSet<MediaAsset> MediaAssets => Set<MediaAsset>();
     public DbSet<MediaVariant> MediaVariants => Set<MediaVariant>();
     public DbSet<MediaTagLink> MediaTagLinks => Set<MediaTagLink>();
-    // Zuordnung Bild ⇢ Träger (Vokabel / Übungs-Item / Übung) – n:m in beide Richtungen.
+    // Image ⇢ carrier assignment (vocabulary / exercise item / exercise) - n:m in both directions.
     public DbSet<MediaLink> MediaLinks => Set<MediaLink>();
-    // Eingefrorene Bildwahl je (Kind, Träger) – Bildkonstanz ist beim Vokabellernen der Merkeffekt.
+    // Frozen image choice per (child, carrier) - image constancy is the retention effect when learning vocabulary.
     public DbSet<ChildMediaPick> ChildMediaPicks => Set<ChildMediaPick>();
 
-    // Geteilte Interessen-/Stil-Taxonomie (Kind ⇢ Tag ⇠ Bild) – Grundlage der individualisierten Bildauswahl.
+    // Shared interest/style taxonomy (child ⇢ tag ⇠ image) - the basis of the individualized image selection.
     public DbSet<InterestTag> InterestTags => Set<InterestTag>();
     public DbSet<ChildInterest> ChildInterests => Set<ChildInterest>();
 
-    // Lehrplan (Container) + Positionen auf Katalog-Übungen, Fortschritt/Ziel-Belohnung je Position
+    // Study plan (container) + positions on catalog exercises, progress/goal reward per position
     public DbSet<StudyPlan> StudyPlans => Set<StudyPlan>();
     public DbSet<PlanPosition> PlanPositions => Set<PlanPosition>();
     public DbSet<PositionItemProgress> PositionItemProgress => Set<PositionItemProgress>();
@@ -64,35 +64,35 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
     public DbSet<PracticeSession> PracticeSessions => Set<PracticeSession>();
     public DbSet<ReviewEvent> ReviewEvents => Set<ReviewEvent>();
     public DbSet<TestAttempt> TestAttempts => Set<TestAttempt>();
-    // Kein DbSet für TestItemResult: die Tabelle existiert (über die Beziehung unten), wird aber
-    // ausschließlich über TestAttempt.Results erreicht – ein eigenes Set wäre ein zweiter Zugang, den
-    // niemand nutzt und der zur Umgehung des Versuchs-Kontexts einlädt.
-    // Plan-übergreifender Lernstand je (Kind, Item) + Antwort-Historie (stabile ItemId, denormalisierte VocabularyId).
+    // No DbSet for TestItemResult: the table exists (through the relationship below) but is reached
+    // exclusively through TestAttempt.Results - a set of its own would be a second entrance that nobody uses
+    // and that invites bypassing the attempt context.
+    // Cross-plan learning state per (child, item) + answer history (stable ItemId, denormalized VocabularyId).
     public DbSet<ItemProgress> ItemProgress => Set<ItemProgress>();
     public DbSet<ItemReviewEvent> ItemReviewEvents => Set<ItemReviewEvent>();
-    // „Große Ziele" (OKR-Kern): Objective als Container über messbaren KeyResults + idempotenter Belohnungs-Log.
+    // "Big goals" (the OKR core): an objective as a container over measurable key results + an idempotent reward log.
     public DbSet<Objective> Objectives => Set<Objective>();
     public DbSet<KeyResult> KeyResults => Set<KeyResult>();
     public DbSet<ObjectiveReward> ObjectiveRewards => Set<ObjectiveReward>();
 
-    // Stundenplan-Steuerung
+    // Timetable control
     public DbSet<TimetableEntry> TimetableEntries => Set<TimetableEntry>();
 
-    // Gamification: Missionen (zeitgebundene Ziele) + Auszeichnungen (Badges) je Kind, mit Vergabe-Log
+    // Gamification: missions (time-bound goals) + awards (badges) per child, with an award log
     public DbSet<Mission> Missions => Set<Mission>();
     public DbSet<MissionAward> MissionAwards => Set<MissionAward>();
     public DbSet<Achievement> Achievements => Set<Achievement>();
     public DbSet<AchievementAward> AchievementAwards => Set<AchievementAward>();
 
-    // Familien-Shop: Vater-Katalog (Artikel + Angebote), kindbezogenes aggregiertes Inventar,
-    // Kaufhistorie und Aktivierungsanfragen
+    // Family shop: the supervisor's catalog (articles + listings), the child's aggregated inventory,
+    // purchase history and activation requests
     public DbSet<ShopArticle> ShopArticles => Set<ShopArticle>();
     public DbSet<ShopListing> ShopListings => Set<ShopListing>();
     public DbSet<ShopPurchase> ShopPurchases => Set<ShopPurchase>();
     public DbSet<ChildInventory> ChildInventories => Set<ChildInventory>();
     public DbSet<ActivationRequest> ActivationRequests => Set<ActivationRequest>();
 
-    // Tagging + Klassenarbeiten
+    // Tagging + class tests
     public DbSet<Tag> Tags => Set<Tag>();
     public DbSet<ExerciseTag> ExerciseTags => Set<ExerciseTag>();
     public DbSet<VocabularyTag> VocabularyTags => Set<VocabularyTag>();
@@ -100,7 +100,7 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
     public DbSet<KlassenarbeitExercise> KlassenarbeitExercises => Set<KlassenarbeitExercise>();
     public DbSet<KlassenarbeitTag> KlassenarbeitTags => Set<KlassenarbeitTag>();
 
-    // Anmerkungen beim Testen (Erfassung im UI-Widget, Beantwortung durch Claude Code)
+    // Remarks captured while testing (entered in the UI widget, answered by Claude Code)
     public DbSet<Remark> Remarks => Set<Remark>();
     public DbSet<RemarkComment> RemarkComments => Set<RemarkComment>();
 
@@ -110,13 +110,13 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
     {
         base.OnModelCreating(modelBuilder);
 
-        // Identität: Account -> AccountProfile(Rolle -> Adult/Child). Rolle als String (lesbar/stabil).
-        // Gefilterte Unique-Indizes verhindern doppelte Profile beim (wiederholten) Backfill.
+        // Identity: Account -> AccountProfile(role -> Adult/Child). The role as a string (readable/stable).
+        // Filtered unique indexes prevent duplicate profiles on a (repeated) backfill.
         modelBuilder.Entity<AccountProfile>(e =>
         {
-            // Genau eines von AdultId/ChildId – bisher nur als Kommentar an der Entity behauptet. Beide
-            // gesetzt wäre ein Login mit zwei Identitäten dahinter, keines eine Rolle, die auf nichts zeigt
-            // (AuthAccess prüfte dann stumm ins Leere). Gleiche Bauart wie bei MediaLink/ChildMediaPick.
+            // Exactly one of AdultId/ChildId - so far only claimed in a comment on the entity. Both set would
+            // be one login with two identities behind it, neither a role pointing at nothing (AuthAccess would
+            // then check silently into the void). Same construction as MediaLink/ChildMediaPick.
             e.ToTable(t => t.HasCheckConstraint("CK_AccountProfile_SingleProfile",
                 """
                 (CASE WHEN "AdultId" IS NULL THEN 0 ELSE 1 END
@@ -132,26 +132,26 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
                 .HasForeignKey(p => p.ChildId).OnDelete(DeleteBehavior.Cascade);
             e.HasIndex(p => new { p.Role, p.AdultId }).IsUnique().HasFilter("[AdultId] IS NOT NULL");
             e.HasIndex(p => new { p.Role, p.ChildId }).IsUnique().HasFilter("[ChildId] IS NOT NULL");
-            // Ein Konto trägt jede Rolle höchstens einmal. Die zwei Indizes oben verhindern nur, dass
-            // dasselbe *Profil* zweimal in einer Rolle hängt – nicht, dass ein Konto zwei Creator-Profile
-            // auf verschiedene Adults bekommt. Genau das wäre eine zweite Identität hinter einem Login.
+            // An account carries every role at most once. The two indexes above only prevent the same *profile*
+            // from hanging in one role twice - not an account getting two creator profiles on different adults.
+            // That would be exactly a second identity behind one login.
             e.HasIndex(p => new { p.AccountId, p.Role }).IsUnique();
         });
         modelBuilder.Entity<Account>()
             .HasIndex(a => a.Email).IsUnique().HasFilter("[Email] IS NOT NULL");
 
-        // Aussteller-Attribution der Ökonomie (Momentaufnahme): Filter „nur meine Vorgänge" je (Kind, Supervisor).
+        // Issuer attribution of the economy (a snapshot): the filter "my cases only" per (child, supervisor).
         modelBuilder.Entity<ShopPurchase>().HasIndex(p => new { p.ChildId, p.SupervisorId });
         modelBuilder.Entity<ActivationRequest>().HasIndex(r => new { r.ChildId, r.SupervisorId });
         modelBuilder.Entity<ChildPointsEntry>(e =>
         {
-            // Wallet-Summen und Buchungslisten: Filter nach Kind/Art sowie Paging „neueste zuerst".
+            // Wallet sums and ledger lists: filter by child/kind plus paging "newest first".
             e.HasIndex(p => new { p.ChildId, p.Kind });
             e.HasIndex(p => new { p.ChildId, p.CreatedAt, p.Id });
         });
 
-        // Betreuung Supervisor >-< Student. Ein Student kann mehrere Supervisor haben; ein Paar ist eindeutig.
-        // Leaf auf zwei unabhängige Roots (wie ItemProgress) – beide FKs Cascade, kein SQLite-Diamant.
+        // Supervision supervisor >-< student. A student can have several supervisors; a pair is unique.
+        // A leaf on two independent roots (like ItemProgress) - both FKs cascade, no SQLite diamond.
         modelBuilder.Entity<SupervisorLink>(e =>
         {
             e.Property(l => l.Relation).HasConversion<string>();
@@ -163,30 +163,30 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
             e.HasIndex(l => l.StudentId);
         });
 
-        // Freigeschaltete Skins des Kindes als JSON-Liste (Neuzuweisung im Controller, kein In-Place-Mutieren).
+        // The child's unlocked skins as a JSON list (reassign in the controller, no in-place mutation).
         modelBuilder.Entity<Child>(e =>
         {
             e.Property(c => c.OwnedSkins).HasConversion(
                 v => JsonSerializer.Serialize(v, JsonOptions),
                 s => JsonSerializer.Deserialize<List<string>>(s, JsonOptions) ?? new())
                 .Metadata.SetValueComparer(JsonValueComparer.For<List<string>>());
-            // Interessen des Kindes ebenfalls als JSON-Liste (gleicher ValueComparer-Fallstrick wie OwnedSkins).
+            // The child's interests as a JSON list too (the same ValueComparer pitfall as OwnedSkins).
             e.Property(c => c.Interests).HasConversion(
                 v => JsonSerializer.Serialize(v, JsonOptions),
                 s => JsonSerializer.Deserialize<List<string>>(s, JsonOptions) ?? new())
                 .Metadata.SetValueComparer(JsonValueComparer.For<List<string>>());
-            // Geschlecht als String (lesbar/stabil, wie SupervisorLink.Relation).
+            // Gender as a string (readable/stable, like SupervisorLink.Relation).
             e.Property(c => c.Gender).HasConversion<string>();
-            // Eignungsgrenze bewusst als int (NICHT als String wie die übrigen Enums): der Medien-Selektor
-            // vergleicht sie ordnend (Rating <= Erlaubtes). Als String liefe der Vergleich alphabetisch
-            // ("Everyone" < "Mature" < "Teen") und wäre schlicht falsch.
+            // The suitability bound deliberately as an int (NOT as a string like the other enums): the media
+            // selector compares it by order (rating <= allowed). As a string the comparison would run
+            // alphabetically ("Everyone" < "Mature" < "Teen") and simply be wrong.
             e.Property(c => c.AllowedContentRating).HasConversion<int>();
-            // Concurrency-Token: schützt Skin-Kauf/Ausrüsten vor parallelen Doppelbuchungen.
+            // Concurrency token: protects skin purchase/equip against parallel double bookings.
             e.Property(c => c.ConcurrencyStamp).IsConcurrencyToken();
         });
 
-        // Lehrbuch: gehört einem Kind (Cascade – verschwindet mit dem Kind). Der optionale Katalog-Link auf
-        // ein Fach nutzt SetNull, damit ein Fach-Löschen die Buch-Zuordnung nicht mitreißt (nur die FK leert).
+        // Textbook: belongs to a child (cascade - it disappears with the child). The optional catalog link to a
+        // subject uses SetNull so that deleting a subject does not tear the book assignment with it (it only clears the FK).
         modelBuilder.Entity<Textbook>(e =>
         {
             e.HasIndex(t => t.ChildId);
@@ -194,18 +194,18 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
                 .OnDelete(DeleteBehavior.Cascade);
             e.HasOne(t => t.Subject).WithMany().HasForeignKey(t => t.SubjectId)
                 .OnDelete(DeleteBehavior.SetNull);
-            // Reihe und Unit sind Verweise in den geteilten Katalog: eine gelöschte Reihe leert nur die
-            // Zuordnung (SetNull) – das Buch des Kindes bleibt mit Titel/Kapitel als Freitext bestehen.
+            // Series and unit are references into the shared catalog: a deleted series only clears the
+            // assignment (SetNull) - the child's book remains with its title/chapter as free text.
             e.HasOne(t => t.Series).WithMany().HasForeignKey(t => t.SeriesId)
                 .OnDelete(DeleteBehavior.SetNull);
             e.HasOne(t => t.CurrentUnit).WithMany().HasForeignKey(t => t.CurrentUnitId)
                 .OnDelete(DeleteBehavior.SetNull);
-            // Der heiße Weg des Profil-Matchings: „welche Reihe benutzt dieses Kind?"
+            // The hot path of the profile matching: "which series does this child use?"
             e.HasIndex(t => t.SeriesId);
         });
 
-        // Lehrwerk-Reihe: global eindeutiger Slug (kindneutral wie der Vokabel-Store, Muster InterestTag).
-        // Owner nur als Editier-/Löschrecht – ein gelöschter Vater leert die FK, die Reihe bleibt nutzbar.
+        // Textbook series: a globally unique slug (child-neutral like the vocabulary store, pattern InterestTag).
+        // The owner is only an edit/delete right - a deleted adult clears the FK, the series stays usable.
         modelBuilder.Entity<TextbookSeries>(e =>
         {
             e.HasIndex(s => s.Slug).IsUnique();
@@ -215,8 +215,8 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
                 .OnDelete(DeleteBehavior.SetNull);
         });
 
-        // Unit: gehört der Reihe (Cascade). Der Index bedient die einzige Sortierung, in der Units je
-        // gelesen werden – Band, dann Reihenfolge im Band.
+        // Unit: belongs to the series (cascade). The index serves the only ordering units are ever read in -
+        // volume, then order within the volume.
         modelBuilder.Entity<SeriesUnit>(e =>
         {
             e.HasIndex(u => new { u.SeriesId, u.Grade, u.OrderIndex });
@@ -224,8 +224,8 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
                 .OnDelete(DeleteBehavior.Cascade);
         });
 
-        // Creator-Profil: je Owner ein eindeutiger Name; Fach und Reihe sind die beiden Achsen, über die
-        // das Matching filtert. Die bevorzugten Übungstypen liegen als JSON-Liste (ValueComparer wie bei Child).
+        // Creator profile: a unique name per owner; subject and series are the two axes the matching filters
+        // on. The preferred exercise types sit in a JSON list (ValueComparer as with Child).
         modelBuilder.Entity<CreatorProfile>(e =>
         {
             e.HasIndex(p => new { p.OwnerAdultId, p.Name }).IsUnique().HasFilter("[OwnerAdultId] IS NOT NULL");
@@ -246,20 +246,20 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
         {
             e.HasIndex(v => v.Key).IsUnique();
 
-            // Wort/Übersetzung sind der heißeste Lesepfad des Katalogs (Dubletten-Lookup beim Anlegen,
-            // Freitextsuche) und hatten keinen Index. Ein Index allein hätte aber nichts gebracht: die
-            // Suche verglich `LOWER(Word)`, und über einen Ausdruck greift kein Spaltenindex. Erst die
-            // Collation NOCASE macht den Vergleich selbst groß-/kleinschreibungsunabhängig – dann darf
-            // das `ToLower()` im Query entfallen und der Index wird benutzt.
-            // Folge, die man wissen muss: `Word == "march"` findet ab jetzt auch „March". Für einen
-            // Vokabelspeicher ist das gewollt (Groß-/Kleinschreibung ist keine eigene Vokabel), und
-            // die Eindeutigkeit hängt ohnehin am `Key`, nicht am Wort.
+            // Word/translation are the hottest read path of the catalog (the duplicate lookup on create,
+            // free-text search) and had no index. An index alone would not have helped, though: the search
+            // compared `LOWER(Word)`, and no column index applies over an expression. Only the NOCASE collation
+            // makes the comparison itself case-insensitive - then the `ToLower()` in the query can go and the
+            // index is used.
+            // A consequence you need to know: `Word == "march"` now also finds "March". For a vocabulary store
+            // that is wanted (capitalization is not a separate word), and uniqueness hangs on the `Key` anyway,
+            // not on the word.
             e.Property(v => v.Word).UseCollation("NOCASE");
             e.Property(v => v.Translation).UseCollation("NOCASE");
             e.HasIndex(v => v.Word);
             e.HasIndex(v => v.Translation);
 
-            // noun/verb als JSON-Spalten (null bleibt DB-NULL, Converter läuft nur für Werte).
+            // noun/verb as JSON columns (null stays DB NULL, the converter runs for values only).
             e.Property(v => v.Noun).HasConversion(
                 v => JsonSerializer.Serialize(v, JsonOptions),
                 s => JsonSerializer.Deserialize<NounInfo>(s, JsonOptions))
@@ -269,18 +269,18 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
                 s => JsonSerializer.Deserialize<VerbInfo>(s, JsonOptions))
                 .Metadata.SetValueComparer(JsonValueComparer.For<VerbInfo?>());
 
-            // Selbst-Referenz auf die Grundform; Löschen einer referenzierten Grundform verhindern.
+            // Self-reference to the base form; prevent deleting a referenced base form.
             e.HasOne(v => v.BaseForm)
                 .WithMany()
                 .HasForeignKey(v => v.BaseFormId)
                 .OnDelete(DeleteBehavior.Restrict);
         });
 
-        // Vokabel-Tag: global eindeutiger Name (kindneutral, wie der Vokabel-Store).
+        // Vocabulary tag: a globally unique name (child-neutral, like the vocabulary store).
         modelBuilder.Entity<VocabTag>()
             .HasIndex(t => t.Name).IsUnique();
 
-        // Vokabel <-> Tag: jede Vokabel höchstens einmal je Tag; Links verschwinden mit Tag oder Vokabel.
+        // Vocabulary <-> tag: every entry at most once per tag; links disappear with the tag or the entry.
         modelBuilder.Entity<VocabTagLink>(e =>
         {
             e.HasIndex(x => new { x.VocabTagId, x.VocabularyId }).IsUnique();
@@ -288,8 +288,8 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
             e.HasOne(x => x.Vocabulary).WithMany(v => v.TagLinks).HasForeignKey(x => x.VocabularyId).OnDelete(DeleteBehavior.Cascade);
         });
 
-        // Geteilte Interessen-/Stil-Taxonomie: global eindeutiger Slug (kindneutral wie der Vokabel-Store).
-        // Die Facette bleibt als String lesbar – sie wird nur verglichen, nie geordnet.
+        // Shared interest/style taxonomy: a globally unique slug (child-neutral like the vocabulary store).
+        // The facet stays a readable string - it is only compared, never ordered.
         modelBuilder.Entity<InterestTag>(e =>
         {
             e.HasIndex(t => t.Slug).IsUnique();
@@ -300,8 +300,8 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
                 .Metadata.SetValueComparer(JsonValueComparer.For<List<string>>());
         });
 
-        // Kind <-> Interesse: höchstens ein Gewicht je (Kind, Tag). Leaf auf zwei unabhängige Roots
-        // (Child, InterestTag) – beide Cascade, kein SQLite-Diamant (Muster wie SupervisorLink).
+        // Child <-> interest: at most one weight per (child, tag). A leaf on two independent roots
+        // (Child, InterestTag) - both cascade, no SQLite diamond (the SupervisorLink pattern).
         modelBuilder.Entity<ChildInterest>(e =>
         {
             e.HasIndex(x => new { x.ChildId, x.InterestTagId }).IsUnique();
@@ -309,20 +309,20 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
             e.HasOne(x => x.InterestTag).WithMany(t => t.ChildInterests).HasForeignKey(x => x.InterestTagId).OnDelete(DeleteBehavior.Cascade);
         });
 
-        // Medien-Asset: eindeutiger Key (wie Vocabulary). Das Rating liegt – anders als Kind/Origin –
-        // als int in der DB, weil der Selektor ordnend darauf filtert (siehe Kommentar bei Child).
+        // Media asset: a unique key (like Vocabulary). Unlike kind/origin, the rating sits in the DB as an int,
+        // because the selector filters on it by order (see the comment on Child).
         modelBuilder.Entity<MediaAsset>(e =>
         {
             e.HasIndex(a => a.Key).IsUnique();
-            // Der Selektor filtert immer zuerst Art + Eignung, bevor er nach Interessen sortiert.
+            // The selector always filters kind + suitability first, before it sorts by interests.
             e.HasIndex(a => new { a.Kind, a.Rating });
             e.Property(a => a.Kind).HasConversion<string>();
             e.Property(a => a.Origin).HasConversion<string>();
             e.Property(a => a.Rating).HasConversion<int>();
         });
 
-        // Variante: gehört dem Asset (Cascade). Je Asset höchstens eine Datei pro (Zweck, Format) –
-        // sonst müsste die Auslieferung zwischen gleichwertigen Kandidaten willkürlich wählen.
+        // Variant: belongs to the asset (cascade). At most one file per (purpose, format) per asset -
+        // otherwise delivery would have to choose arbitrarily between equivalent candidates.
         modelBuilder.Entity<MediaVariant>(e =>
         {
             e.HasIndex(v => new { v.MediaAssetId, v.Purpose, v.Format }).IsUnique();
@@ -331,8 +331,8 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
                 .OnDelete(DeleteBehavior.Cascade);
         });
 
-        // Bild <-> Tag: jedes Asset höchstens einmal je Tag. Der zusätzliche Index auf den Tag bedient
-        // die heiße Richtung der späteren Auswahl („welche Assets tragen dieses Interesse?").
+        // Image <-> tag: every asset at most once per tag. The additional index on the tag serves the hot
+        // direction of the later selection ("which assets carry this interest?").
         modelBuilder.Entity<MediaTagLink>(e =>
         {
             e.HasIndex(x => new { x.MediaAssetId, x.InterestTagId }).IsUnique();
@@ -341,13 +341,13 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
             e.HasOne(x => x.InterestTag).WithMany(t => t.MediaLinks).HasForeignKey(x => x.InterestTagId).OnDelete(DeleteBehavior.Cascade);
         });
 
-        // Bild ⇢ Träger. Genau eine der drei FKs ist gesetzt – als Check-Constraint in der DB, nicht nur
-        // im Controller: eine Zeile ohne Träger wäre unsichtbar, eine mit zweien mehrdeutig auflösbar.
-        // Je Träger ein eigener gefilterter Unique-Index (dasselbe Bild nicht zweimal am selben Objekt)
-        // – ein gemeinsamer Index über alle drei Spalten griffe nicht, weil NULLs in SQLite als
-        // verschieden gelten. Alle FKs Cascade: ein gelöschtes Bild/Objekt lässt keine Zuordnung zurück.
-        // Kein Diamant trotz Exercise → ExerciseItem → MediaLink, weil eine Zeile per Constraint immer
-        // nur an EINEM Träger hängt (die anderen Spalten sind NULL und werden nie mitgelöscht).
+        // Image ⇢ carrier. Exactly one of the three FKs is set - as a check constraint in the DB, not only in
+        // the controller: a row without a carrier would be invisible, one with two ambiguously resolvable.
+        // One filtered unique index per carrier (the same image not twice on the same object) - a shared index
+        // over all three columns would not hold, because SQLite treats NULLs as distinct. All FKs cascade: a
+        // deleted image/object leaves no assignment behind. No diamond despite Exercise → ExerciseItem →
+        // MediaLink, because by constraint a row always hangs on just ONE carrier (the other columns are NULL
+        // and are never deleted along).
         modelBuilder.Entity<MediaLink>(e =>
         {
             e.ToTable(t => t.HasCheckConstraint("CK_MediaLink_SingleCarrier",
@@ -360,11 +360,11 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
             e.HasIndex(l => new { l.MediaAssetId, l.VocabularyId }).IsUnique().HasFilter("[VocabularyId] IS NOT NULL");
             e.HasIndex(l => new { l.MediaAssetId, l.ExerciseItemId }).IsUnique().HasFilter("[ExerciseItemId] IS NOT NULL");
             e.HasIndex(l => new { l.MediaAssetId, l.ExerciseId }).IsUnique().HasFilter("[ExerciseId] IS NOT NULL");
-            // Die Gegenrichtung: „welche Verknüpfungen hat dieses Asset?" (Aufräumen beim Löschen).
-            // Die drei gefilterten Uniques oben beginnen mit MediaAssetId, können diese Query aber
-            // nicht bedienen: ohne Einschränkung auf einen Träger ist ihr Filter nicht impliziert.
+            // The opposite direction: "which links does this asset have?" (cleaning up on delete).
+            // The three filtered uniques above start with MediaAssetId but cannot serve this query: without a
+            // restriction to one carrier their filter is not implied.
             e.HasIndex(l => l.MediaAssetId);
-            // Die heiße Richtung der Auswahl: „welche Bilder hängen an dieser Vokabel / diesem Item?"
+            // The hot direction of the selection: "which images hang on this entry / this item?"
             e.HasIndex(l => l.VocabularyId);
             e.HasIndex(l => l.ExerciseItemId);
             e.HasIndex(l => l.ExerciseId);
@@ -375,9 +375,9 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
             e.HasOne(l => l.Exercise).WithMany().HasForeignKey(l => l.ExerciseId).OnDelete(DeleteBehavior.Cascade);
         });
 
-        // Eingefrorene Bildwahl. Eine Zeile je Kandidat (nicht je Träger): die aktive Wahl ist die Zeile
-        // ohne Rejected, abgelehnte bleiben als Ausschluss stehen. Genau ein Träger je Zeile – gleiche
-        // Begründung und gleiche Bauart wie beim MediaLink (Check-Constraint + gefilterte Unique-Indizes).
+        // Frozen image choice. One row per candidate (not per carrier): the active choice is the row without
+        // Rejected, rejected ones remain as an exclusion. Exactly one carrier per row - same rationale and same
+        // construction as MediaLink (check constraint + filtered unique indexes).
         modelBuilder.Entity<ChildMediaPick>(e =>
         {
             e.ToTable(t => t.HasCheckConstraint("CK_ChildMediaPick_SingleCarrier",
@@ -388,10 +388,10 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
 
             e.HasIndex(p => new { p.ChildId, p.VocabularyId, p.MediaAssetId }).IsUnique().HasFilter("[VocabularyId] IS NOT NULL");
             e.HasIndex(p => new { p.ChildId, p.ExerciseItemId, p.MediaAssetId }).IsUnique().HasFilter("[ExerciseItemId] IS NOT NULL");
-            // Kein zusätzlicher Index auf (ChildId, VocabularyId)/(ChildId, ExerciseItemId): per
-            // EXPLAIN QUERY PLAN gemessen wählt SQLite für „was ist für dieses Kind an diesem Träger
-            // gewählt?" die gefilterten Unique-Indizes oben – eine Gleichheit auf der Trägerspalte
-            // impliziert deren `IS NOT NULL`-Filter. Die früheren Zusatzindizes wurden nie benutzt.
+            // No additional index on (ChildId, VocabularyId)/(ChildId, ExerciseItemId): measured with EXPLAIN
+            // QUERY PLAN, SQLite picks the filtered uniques above for "what is chosen for this child on this
+            // carrier?" - an equality on the carrier column implies their `IS NOT NULL` filter. The former
+            // extra indexes were never used.
 
             e.HasOne(p => p.Child).WithMany().HasForeignKey(p => p.ChildId).OnDelete(DeleteBehavior.Cascade);
             e.HasOne(p => p.Vocabulary).WithMany().HasForeignKey(p => p.VocabularyId).OnDelete(DeleteBehavior.Cascade);
@@ -401,32 +401,32 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
 
         ApplyExplicitCascades(modelBuilder);
 
-        // Kapitelnamen sind je Fach eindeutig: zwei „Unit 1" im selben Fach sind eine Dublette, und
-        // Auswahllisten wie die Zuordnung durch den Agenten hängen am Namen.
+        // Chapter names are unique per subject: two "Unit 1" in the same subject are a duplicate, and pick
+        // lists such as the agent's assignment hang on the name.
         modelBuilder.Entity<Chapter>().HasIndex(c => new { c.SubjectId, c.Name }).IsUnique();
-        // Immerhin ein Index auf den Fach-Namen: `Subjects` hatte außer dem Primärschlüssel keinen,
-        // obwohl jede Katalog-Ansicht danach sucht und sortiert.
+        // At least an index on the subject name: `Subjects` had none besides the primary key, although every
+        // catalog view searches and sorts by it.
         modelBuilder.Entity<Subject>().HasIndex(s => s.Name);
-        // BEWUSST NICHT eindeutig. Naheliegend wäre es – „Englisch" zweimal ist unschön. Aber `Subject`
-        // trägt keinen Owner: ein globaler Unique machte den wichtigsten Namensraum des Katalogs
-        // first-come-first-served über alle Creator hinweg, und jeder weitere Lehrer müsste seine Kapitel
-        // an ein Fach hängen, das ihm nicht gehört. Das ist eine Produktentscheidung über Katalog-Eigentum
-        // (und ein Vertragsbruch: POST /subjects antwortete dann 409), nicht das Schließen einer
-        // Strukturlücke. Erst entscheiden, wem ein Fach gehört – dann eindeutig machen.
+        // DELIBERATELY NOT unique. It would be the obvious thing - "English" twice is ugly. But `Subject`
+        // carries no owner: a global unique would make the catalog's most important namespace
+        // first-come-first-served across all creators, and every further teacher would have to hang their
+        // chapters on a subject they do not own. That is a product decision about catalog ownership (and a
+        // contract break: POST /subjects would then answer 409), not the closing of a structural gap. First
+        // decide who owns a subject - then make it unique.
 
-        // Die E-Mail des Erwachsenen ist ein Login-Merkmal und war frei duplizierbar, während der
-        // gefilterte Unique-Index nur am Konto hing. Gefiltert, weil die Adresse optional bleibt
-        // (ein Kind-betreuender Vater braucht keine).
+        // The adult's e-mail is a login attribute and was freely duplicable, while the filtered unique index
+        // hung on the account only. Filtered, because the address stays optional (an adult supervising a child
+        // needs none).
         modelBuilder.Entity<Adult>().HasIndex(a => a.Email).IsUnique().HasFilter("[Email] IS NOT NULL");
 
-        // Bonus-Vorschlag der Übung als JSON-Spalte (null bleibt DB-NULL; Converter läuft nur für Werte).
+        // The exercise's bonus suggestion as a JSON column (null stays DB NULL; the converter runs for values only).
         modelBuilder.Entity<Exercise>()
             .Property(e => e.SuggestedBonus).HasConversion(
                 v => JsonSerializer.Serialize(v, JsonOptions),
                 s => JsonSerializer.Deserialize<SuggestedBonus>(s, JsonOptions))
                 .Metadata.SetValueComparer(JsonValueComparer.For<SuggestedBonus?>());
 
-        // Fachabhängige Übungs-Arten: Name je Fach eindeutig, Löschen des Fachs entfernt die Arten.
+        // Subject-dependent exercise categories: the name is unique per subject, deleting the subject removes them.
         modelBuilder.Entity<ExerciseCategory>(e =>
         {
             e.HasIndex(c => new { c.SubjectId, c.Name }).IsUnique();
@@ -436,15 +436,15 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
                 .OnDelete(DeleteBehavior.Cascade);
         });
 
-        // Übung → Art (optional): Löschen einer Art setzt nur die FK auf null, löscht die Übung NICHT.
+        // Exercise → category (optional): deleting a category only sets the FK to null, it does NOT delete the exercise.
         modelBuilder.Entity<Exercise>()
             .HasOne(e => e.Category)
             .WithMany()
             .HasForeignKey(e => e.CategoryId)
             .OnDelete(DeleteBehavior.SetNull);
 
-        // Übung → Autor (optional): Der Katalog ist global; der Autor schützt nur das Editier-/Löschrecht.
-        // Löschen des Autors setzt die FK auf null (Übung bleibt für fremde Lehrpläne nutzbar), löscht sie NICHT.
+        // Exercise → author (optional): the catalog is global; the author only protects the edit/delete right.
+        // Deleting the author sets the FK to null (the exercise stays usable for other people's plans), it does NOT delete it.
         modelBuilder.Entity<Exercise>()
             .HasOne(e => e.Author)
             .WithMany()
@@ -462,13 +462,13 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
          */
         modelBuilder.Entity<Exercise>().Property(e => e.ExecutePublic).HasDefaultValue(true);
 
-        // Bislang gab es keinen Index auf den Autor; die neuen Grant-Joins und der `mineOnly`-Filter profitieren.
+        // There used to be no index on the author; the new grant joins and the `mineOnly` filter benefit from it.
         modelBuilder.Entity<Exercise>().HasIndex(e => e.AuthorAdultId);
-        // Der Übungstyp ist der häufigste Katalogfilter (Typ-Listen, ExerciseControllerBase).
+        // The exercise type is the most frequent catalog filter (type lists, ExerciseControllerBase).
         modelBuilder.Entity<Exercise>().HasIndex(e => e.Type);
 
-        // RWX-Grant: Recht eines Creator auf eine Übung. Leaf auf zwei unabhängige Roots (Exercise, Adult) –
-        // beide FKs Cascade, kein SQLite-Diamant (Muster wie SupervisorLink). Paar+Recht eindeutig (Idempotenz).
+        // RWX grant: a creator's right on an exercise. A leaf on two independent roots (Exercise, Adult) -
+        // both FKs cascade, no SQLite diamond (the SupervisorLink pattern). Pair+right unique (idempotency).
         modelBuilder.Entity<ExerciseGrant>(e =>
         {
             e.Property(g => g.Permission).HasConversion<string>();
@@ -480,23 +480,23 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
             e.HasIndex(g => g.CreatorId);
         });
 
-        // Vokabel-Item: gehört einer Übung (Cascade – verschwindet mit ihr) und referenziert eine Store-Vokabel.
-        // Die Vokabel darf nicht gelöscht werden, solange ein Item sie nutzt (Restrict, wie beim Übungs-Store-Bezug);
-        // der Controller fängt das vorher als sauberen 409 ab. OrderIndex ist reiner Sortierschlüssel (bewusst NICHT
-        // unique): der Lehrplan-Motor leitet den stabilen Item-Index aus der Listenposition (sortiert nach OrderIndex,
-        // Id) ab, sodass Umsortieren ohne transiente Unique-Kollisionen (SQLite prüft je Statement) auskommt.
+        // Vocabulary item: belongs to an exercise (cascade - it disappears with it) and references a store entry.
+        // The entry must not be deleted while an item uses it (Restrict, as with the exercise store reference);
+        // the controller catches that beforehand as a clean 409. OrderIndex is a pure sort key (deliberately NOT
+        // unique): the study plan engine derives the stable item index from the list position (ordered by
+        // OrderIndex, Id), so reordering works without transient unique collisions (SQLite checks per statement).
         modelBuilder.Entity<ExerciseItem>(e =>
         {
             e.HasIndex(i => new { i.ExerciseId, i.OrderIndex });
-            // Dieselbe Store-Vokabel darf in einer Übung nur einmal vorkommen. Ohne diese Zusicherung
-            // entstehen zwei Items für dasselbe Wort und damit zwei konkurrierende ItemProgress-Zeilen –
-            // der Lernstand desselben Worts liefe innerhalb einer Übung auseinander.
+            // The same store entry may appear only once per exercise. Without this assurance two items for the
+            // same word arise and with them two competing ItemProgress rows - the progress of that same word
+            // would drift apart within one exercise.
             e.HasIndex(i => new { i.ExerciseId, i.VocabularyId }).IsUnique();
             e.HasOne(i => i.Exercise).WithMany().HasForeignKey(i => i.ExerciseId).OnDelete(DeleteBehavior.Cascade);
             e.HasOne(i => i.Vocabulary).WithMany().HasForeignKey(i => i.VocabularyId).OnDelete(DeleteBehavior.Restrict);
         });
 
-        // Lückentext-Store: eindeutiger Key + Gaps/WordBank als JSON-Spalten.
+        // Cloze store: a unique key + gaps/word bank as JSON columns.
         modelBuilder.Entity<ClozeText>(e =>
         {
             e.HasIndex(c => c.Key).IsUnique();
@@ -510,17 +510,17 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
                 .Metadata.SetValueComparer(JsonValueComparer.For<List<string>?>());
         });
 
-        // Lehrplan optional an ein Katalog-Fach gekoppelt (für Stundenplan-Steuerung).
+        // The study plan is optionally coupled to a catalog subject (for timetable control).
         modelBuilder.Entity<StudyPlan>()
             .HasOne(p => p.Subject).WithMany().HasForeignKey(p => p.SubjectId)
             .OnDelete(DeleteBehavior.SetNull);
 
-        // Lehrplan-Position (neues Modell): gehört einem Plan (Cascade) und verweist auf eine Katalog-Übung.
-        // Die Übung darf nicht gelöscht werden, solange sie in einer Position steckt (Restrict, wie bei
-        // Vokabeln/Lückentexten). Leitner-Intervalle und Stufen-Fahrplan liegen als JSON-Spalten an der Position.
+        // Study plan position: belongs to a plan (cascade) and references a catalog exercise. The exercise must
+        // not be deleted while it sits in a position (Restrict, as with vocabulary/cloze texts). Leitner
+        // intervals and the stage schedule sit on the position as JSON columns.
         modelBuilder.Entity<PlanPosition>(e =>
         {
-            // Plan-Ladevorgänge filtern nach StudyPlanId und sortieren nach Order/Id.
+            // Plan loads filter by StudyPlanId and sort by Order/Id.
             e.HasIndex(p => new { p.StudyPlanId, p.Order, p.Id });
             e.HasOne(p => p.StudyPlan).WithMany(s => s.Positions).HasForeignKey(p => p.StudyPlanId)
                 .OnDelete(DeleteBehavior.Cascade);
@@ -536,8 +536,8 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
                 .Metadata.SetValueComparer(JsonValueComparer.For<List<StageStep>?>());
         });
 
-        // Fortschritt je Inhalts-Atom einer Position: verschwindet mit der Position (Cascade);
-        // je Position höchstens ein Fortschritts-Satz pro Item-Index.
+        // Progress per content atom of a position: disappears with the position (cascade);
+        // at most one progress row per item index per position.
         modelBuilder.Entity<PositionItemProgress>(e =>
         {
             e.HasIndex(p => new { p.PlanPositionId, p.ItemIndex }).IsUnique();
@@ -545,9 +545,9 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
                 .OnDelete(DeleteBehavior.Cascade);
         });
 
-        // Plan-übergreifender Lernstand je (Kind, Item): genau eine Zeile pro (Kind, Item); Index (Kind, Vokabel)
-        // für das Wort-Rollup. Verschwindet mit dem Kind ODER dem Item (beide Cascade; keine Diamant-Pfade, da
-        // Kind und Item unabhängige Wurzeln sind).
+        // Cross-plan learning state per (child, item): exactly one row per (child, item); index (child, entry)
+        // for the word rollup. Disappears with the child OR the item (both cascade; no diamond paths, since
+        // child and item are independent roots).
         modelBuilder.Entity<ItemProgress>(e =>
         {
             e.HasIndex(p => new { p.ChildId, p.ItemId }).IsUnique();
@@ -557,8 +557,8 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
             e.HasOne(p => p.Item).WithMany().HasForeignKey(p => p.ItemId).OnDelete(DeleteBehavior.Cascade);
         });
 
-        // Antwort-Historie je (Kind, Item): gehört dem Kind (Cascade). Die Item-Referenz wird beim Löschen des
-        // Items auf null gesetzt (SetNull), damit die Wort-Historie (VocabularyId denormalisiert) erhalten bleibt.
+        // Answer history per (child, item): belongs to the child (cascade). The item reference is set to null
+        // when the item is deleted (SetNull) so that the word history (denormalized VocabularyId) is preserved.
         modelBuilder.Entity<ItemReviewEvent>(e =>
         {
             e.HasIndex(x => new { x.ChildId, x.ItemId, x.At });
@@ -567,10 +567,10 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
             e.HasOne(x => x.Item).WithMany().HasForeignKey(x => x.ItemId).OnDelete(DeleteBehavior.SetNull);
         });
 
-        // Ziel-Belohnung je Position/Periode: höchstens eine Buchung pro (Position, Periode) – die
-        // Idempotenz-Garantie der Ziel-Punkte. Verschwindet mit der Position (Cascade).
-        // Die Taktung gehört in den Schlüssel: sie ist auf der Buchung eine Momentaufnahme, und nach einem
-        // Wechsel Tag→Woche bezeichnet derselbe Perioden-Anfang zwei verschiedene Perioden.
+        // Goal reward per position/period: at most one entry per (position, period) - the idempotency guarantee
+        // of the goal points. Disappears with the position (cascade).
+        // The cadence belongs in the key: on the entry it is a snapshot, and after a switch from daily to
+        // weekly the same period start denotes two different periods.
         modelBuilder.Entity<PositionGoalReward>(e =>
         {
             e.HasIndex(r => new { r.PlanPositionId, r.Cadence, r.PeriodStart }).IsUnique();
@@ -578,8 +578,8 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
                 .OnDelete(DeleteBehavior.Cascade);
         });
 
-        // Ziel-Malus je Position/Periode: höchstens ein Abzug pro (Position, Periode) – die Idempotenz-Garantie
-        // gegen doppelte Bestrafung, wenn das Lazy Settlement mehrfach über dieselbe Periode läuft. Cascade mit der Position.
+        // Goal penalty per position/period: at most one deduction per (position, period) - the idempotency
+        // guarantee against double punishment when the lazy settlement runs over the same period several times. Cascade with the position.
         modelBuilder.Entity<PositionGoalPenalty>(e =>
         {
             e.HasIndex(r => new { r.PlanPositionId, r.Cadence, r.PeriodStart }).IsUnique();
@@ -587,7 +587,7 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
                 .OnDelete(DeleteBehavior.Cascade);
         });
 
-        // Objective (großes Ziel) gehört einem Kind (Cascade); seine KeyResults hängen am Objective (Cascade).
+        // An objective (big goal) belongs to a child (cascade); its key results hang on the objective (cascade).
         modelBuilder.Entity<Objective>(e =>
         {
             e.HasOne(o => o.Child).WithMany().HasForeignKey(o => o.ChildId).OnDelete(DeleteBehavior.Cascade);
@@ -595,26 +595,26 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
                 .OnDelete(DeleteBehavior.Cascade);
         });
 
-        // Der Katalog-Scope einer Etappe ist jetzt ein ECHTER Fremdschlüssel. Vorher waren es nur Ids –
-        // `SubjectId` ein Pflichtfeld ohne Beziehung, also ein Zombie: nichts hinderte daran, auf ein
-        // gelöschtes Fach zu zeigen, und die Auswertung lieferte dann stumm 0 %.
+        // The catalog scope of a milestone is now a REAL foreign key. Before, they were only ids - `SubjectId` a
+        // required field without a relationship, i.e. a zombie: nothing stopped it from pointing at a deleted
+        // subject, and the evaluation then silently returned 0 %.
         //
-        // Fach = Cascade: ein Ziel auf einem gelöschten Fach ist bedeutungslos. (Zwei unabhängige Roots –
-        // Subject und Objective –, kein Diamant; gleiche Bauart wie ItemProgress.)
+        // Subject = cascade: a goal on a deleted subject is meaningless. (Two independent roots - Subject and
+        // Objective -, no diamond; the same construction as ItemProgress.)
         //
-        // Kapitel/Übung = **Restrict**, bewusst nicht SetNull: SetNull würde ein Kapitel-Ziel lautlos zum
-        // Fach-Ziel aufweiten, also die Messlatte heimlich verschieben. Restrict heißt: erst das Ziel
-        // wegnehmen, dann das Kapitel. Damit daraus kein nackter 500 wird, kennt `ExerciseUsageQueries` die
-        // Etappen – wie schon die Lehrplan-Positionen.
+        // Chapter/exercise = **Restrict**, deliberately not SetNull: SetNull would silently widen a chapter goal
+        // into a subject goal, i.e. secretly move the bar. Restrict means: remove the goal first, then the
+        // chapter. So that this does not become a bare 500, `ExerciseUsageQueries` knows about the milestones -
+        // as it already does about the study plan positions.
         modelBuilder.Entity<KeyResult>(e =>
         {
             e.HasOne<Subject>().WithMany().HasForeignKey(k => k.SubjectId).OnDelete(DeleteBehavior.Cascade);
             e.HasOne<Chapter>().WithMany().HasForeignKey(k => k.ChapterId).OnDelete(DeleteBehavior.Restrict);
             e.HasOne<Exercise>().WithMany().HasForeignKey(k => k.ExerciseId).OnDelete(DeleteBehavior.Restrict);
 
-            // Dieselbe Etappe zweimal im selben Ziel wäre eine Dublette – und `RewardPerKeyResult` zahlte
-            // doppelt. Drei GEFILTERTE Uniques, weil SQLite NULLs als verschieden behandelt (der Fallstrick
-            // aus E7): ein einzelner Index über die nullable Scope-Spalten hielte die Invariante nicht.
+            // The same milestone twice in the same goal would be a duplicate - and `RewardPerKeyResult` would pay
+            // twice. Three FILTERED uniques, because SQLite treats NULLs as distinct: a single index over the
+            // nullable scope columns would not hold the invariant.
             e.HasIndex(k => new { k.ObjectiveId, k.SubjectId, k.Metric }).IsUnique()
                 .HasFilter("[ChapterId] IS NULL AND [ExerciseId] IS NULL");
             e.HasIndex(k => new { k.ObjectiveId, k.ChapterId, k.Metric }).IsUnique()
@@ -623,33 +623,33 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
                 .HasFilter("[ExerciseId] IS NOT NULL");
         });
 
-        // Objective-Belohnungs-Log: höchstens eine Buchung je (Objective, Anlass) – die Idempotenz-Garantie
-        // gegen doppelte Auszahlung, wenn das Lazy Settlement mehrfach läuft. Cascade mit dem Objective.
-        // Zwei GEFILTERTE Uniques statt einem, weil der Anlass zwei Ausprägungen hat und SQLite NULLs als
-        // verschieden behandelt: ein einzelner Unique über die nullable Spalte ließe beliebig viele
-        // Abschluss-Buchungen zu – und das ist der große Batzen, also Geld.
+        // Objective reward log: at most one entry per (objective, occasion) - the idempotency guarantee against
+        // a double payout when the lazy settlement runs several times. Cascade with the objective.
+        // Two FILTERED uniques instead of one, because the occasion has two shapes and SQLite treats NULLs as
+        // distinct: a single unique over the nullable column would allow any number of completion entries - and
+        // that is the big chunk, i.e. money.
         modelBuilder.Entity<ObjectiveReward>(e =>
         {
             e.HasIndex(r => new { r.ObjectiveId, r.PaidKeyResultId }).IsUnique()
                 .HasFilter("[PaidKeyResultId] IS NOT NULL");
             e.HasIndex(r => r.ObjectiveId, "IX_ObjectiveRewards_ObjectiveId_Complete").IsUnique()
                 .HasFilter("[PaidKeyResultId] IS NULL");
-            // Der Fremdschlüssel-Index von Hand, weil die Konvention ihn nur anlegt, solange die Spalte
-            // *keinen* Index hat – die zwei gefilterten oben zählen für sie mit, taugen aber nicht: ein
-            // partieller Index bedient ein blankes `WHERE ObjectiveId IN (…)` nicht. Und genau das ist der
-            // heiße Lesepfad (ObjectiveRewardService lädt bei jedem Kind-Login die gebuchten Anlässe).
+            // The foreign key index by hand, because the convention only creates it while the column has *no*
+            // index - the two filtered ones above count for it but are no good: a partial index does not serve a
+            // plain `WHERE ObjectiveId IN (…)`. And that is exactly the hot read path (ObjectiveRewardService
+            // loads the booked occasions on every child login).
             e.HasIndex(r => r.ObjectiveId, "IX_ObjectiveRewards_ObjectiveId");
             e.HasOne(r => r.Objective).WithMany().HasForeignKey(r => r.ObjectiveId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
 
-        // Übungssitzung/Test optional an eine Position gekoppelt (neues Modell). Beide hängen bereits über
-        // StudyPlanId am Plan (Cascade); der Positions-Verweis nutzt daher SetNull, um in SQLite keine
-        // zweiten Cascade-Pfade (Plan → Position → Session/Test) neben Plan → Session/Test zu erzeugen.
-        // Die eingefrorene Ausspiel-Reihenfolge (Cursor-Modell) liegt als JSON-Spalte (Neuzuweisung im Controller).
+        // Practice session/test optionally coupled to a position. Both already hang on the plan through
+        // StudyPlanId (cascade); the position reference therefore uses SetNull, to avoid creating second cascade
+        // paths in SQLite (plan → position → session/test) next to plan → session/test.
+        // The frozen play-out order (the cursor model) sits in a JSON column (reassign in the controller).
         modelBuilder.Entity<PracticeSession>(e =>
         {
-            // Ziel-/Metrik-Queries: Position+Tag(+Modus) sowie Child-Rollups über StudyPlan+Tag.
+            // Goal/metric queries: position+day(+mode) as well as child rollups over StudyPlan+day.
             e.HasIndex(s => new { s.PlanPositionId, s.Day, s.Mode });
             e.HasIndex(s => new { s.StudyPlanId, s.Day });
             e.HasOne(s => s.PlanPosition).WithMany().HasForeignKey(s => s.PlanPositionId)
@@ -661,7 +661,7 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
         });
         modelBuilder.Entity<TestAttempt>(e =>
         {
-            // Ziel-/Metrik-Queries: Position+Tag mit Abschlussstatus sowie Child-Rollups über StudyPlan+Tag.
+            // Goal/metric queries: position+day with completion status as well as child rollups over StudyPlan+day.
             e.HasIndex(t => new { t.PlanPositionId, t.Day, t.CompletedAt, t.Passed });
             e.HasIndex(t => new { t.StudyPlanId, t.Day });
             e.HasOne(t => t.PlanPosition).WithMany().HasForeignKey(t => t.PlanPositionId)
@@ -672,7 +672,7 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
                 .Metadata.SetValueComparer(JsonValueComparer.For<List<int>>());
         });
 
-        // Stundenplan-Eintrag: Kind + Fach; ein Fach je Kind/Wochentag höchstens einmal.
+        // Timetable entry: child + subject; one subject at most once per child/weekday.
         modelBuilder.Entity<TimetableEntry>(e =>
         {
             e.HasIndex(t => new { t.ChildId, t.SubjectId, t.DayOfWeek }).IsUnique();
@@ -680,19 +680,19 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
             e.HasOne(t => t.Subject).WithMany().HasForeignKey(t => t.SubjectId).OnDelete(DeleteBehavior.Cascade);
         });
 
-        // Mission gehört einem Kind (Cascade); jede Mission wird je Zeitraum höchstens einmal belohnt.
-        // Der Lesepfad ist immer „die aktiven Missionen dieses Kindes". Bewusst *kein* Unique auf
-        // (ChildId, Metric): „20 Wörter täglich" und „100 Wörter wöchentlich" sind zwei legitime
-        // Missionen auf derselben Metrik.
+        // A mission belongs to a child (cascade); every mission is rewarded at most once per period.
+        // The read path is always "the active missions of this child". Deliberately *no* unique on
+        // (ChildId, Metric): "20 words daily" and "100 words weekly" are two legitimate missions on the same
+        // metric.
         modelBuilder.Entity<Mission>().HasIndex(m => new { m.ChildId, m.Active });
         modelBuilder.Entity<Mission>()
             .HasOne(m => m.Child).WithMany().HasForeignKey(m => m.ChildId).OnDelete(DeleteBehavior.Cascade);
-        // Zwei GEFILTERTE Uniques wie beim ObjectiveReward: `OneOff` hat keinen Zeitraum (PeriodStart NULL),
-        // und SQLite behandelt NULLs als verschieden – ein einzelner Unique über die nullable Spalte ließe
-        // beliebig viele Einmal-Belohnungen zu. Genau dieser Fallstrick machte den Text-Schlüssel attraktiv.
-        // Anders als dort braucht es hier KEINEN zusätzlichen Fremdschlüssel-Index: jede Abfrage auf
-        // MissionAwards nennt (MissionId, Period, PeriodStart) vollständig, es gibt keinen Lesepfad auf
-        // MissionId allein. Nur die Kaskade sucht so – auf einer Tabelle mit einer Handvoll Zeilen je Mission.
+        // Two FILTERED uniques as with ObjectiveReward: `OneOff` has no period (PeriodStart NULL), and SQLite
+        // treats NULLs as distinct - a single unique over the nullable column would allow any number of one-off
+        // rewards. Exactly that pitfall made the text key attractive.
+        // Unlike there, NO additional foreign key index is needed here: every query on MissionAwards names
+        // (MissionId, Period, PeriodStart) in full, there is no read path on MissionId alone. Only the cascade
+        // searches that way - on a table with a handful of rows per mission.
         modelBuilder.Entity<MissionAward>(e =>
         {
             e.HasIndex(a => new { a.MissionId, a.Period, a.PeriodStart }).IsUnique()
@@ -701,8 +701,8 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
             e.HasOne(a => a.Mission).WithMany().HasForeignKey(a => a.MissionId).OnDelete(DeleteBehavior.Cascade);
         });
 
-        // Auszeichnung gehört einem Kind (Cascade); wird genau einmal verliehen. Dieselbe Schwelle
-        // derselben Metrik zweimal anzulegen wäre eine Dublette – die Badge käme doppelt.
+        // An award belongs to a child (cascade); it is granted exactly once. Creating the same threshold of the
+        // same metric twice would be a duplicate - the badge would come twice.
         modelBuilder.Entity<Achievement>().HasIndex(a => new { a.ChildId, a.Metric, a.Threshold }).IsUnique();
         modelBuilder.Entity<Achievement>()
             .HasOne(a => a.Child).WithMany().HasForeignKey(a => a.ChildId).OnDelete(DeleteBehavior.Cascade);
@@ -712,12 +712,12 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
             e.HasOne(a => a.Achievement).WithMany().HasForeignKey(a => a.AchievementId).OnDelete(DeleteBehavior.Cascade);
         });
 
-        // Shop-Artikel: familieninterne Artikelnummer eindeutig; gehört zum Vater (Cascade).
-        // Angebote (ShopListing): gehören zum Artikel (Cascade).
-        // Käufe (ShopPurchase): gehören zum Kind (Cascade); Angebots-Referenz wird auf null gesetzt,
-        //   wenn das Angebot gelöscht wird, damit die Kaufhistorie erhalten bleibt.
-        // Inventar (ChildInventory): gehört zum Kind (Cascade); Artikel-Referenz SetNull (s. u.).
-        // Aktivierungsanfragen: gehören zum Kind (Cascade); Artikel-Referenz SetNull für Histor stabil.
+        // Shop article: a family-internal article number, unique; belongs to the adult (cascade).
+        // Listings (ShopListing): belong to the article (cascade).
+        // Purchases (ShopPurchase): belong to the child (cascade); the listing reference is set to null when the
+        //   listing is deleted, so that the purchase history is preserved.
+        // Inventory (ChildInventory): belongs to the child (cascade); the article reference SetNull (see below).
+        // Activation requests: belong to the child (cascade); the article reference SetNull to keep history stable.
         modelBuilder.Entity<ShopArticle>(e =>
         {
             e.HasIndex(a => new { a.AdultId, a.ArticleNumber }).IsUnique();
@@ -736,21 +736,21 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
         });
         modelBuilder.Entity<ChildInventory>(e =>
         {
-            // GEFILTERT eindeutig – und der Filter ist keine Kosmetik: SQLite behandelt NULLs als
-            // verschieden, ein Unique über die nullable Spalte hielte die Invariante also nur für Zeilen
-            // mit Artikel. Genau so ist es gewollt: je lebendem Artikel höchstens eine Zeile, während
-            // zwei verschiedene gelöschte Artikel zwei verwaiste Bestände hinterlassen dürfen, die nicht
-            // miteinander kollidieren (und die der Upsert-Lookup `== article.Id` nie wieder trifft).
+            // FILTERED unique - and the filter is not cosmetics: SQLite treats NULLs as distinct, so a unique
+            // over the nullable column would hold the invariant only for rows with an article. That is exactly
+            // what is wanted: at most one row per living article, while two different deleted articles may leave
+            // two orphaned stocks behind that do not collide with each other (and that the upsert lookup
+            // `== article.Id` never hits again).
             e.HasIndex(i => new { i.ChildId, i.ShopArticleId }).IsUnique()
                 .HasFilter("[ShopArticleId] IS NOT NULL");
-            // Der Vater-Filter läuft seit der Momentaufnahme über SupervisorId statt über die Navigation.
+            // Since the snapshot, the supervisor filter runs through SupervisorId instead of the navigation.
             e.HasIndex(i => new { i.ChildId, i.SupervisorId });
             e.Property(i => i.ConcurrencyStamp).IsConcurrencyToken();
             e.HasOne(i => i.Child).WithMany().HasForeignKey(i => i.ChildId).OnDelete(DeleteBehavior.Cascade);
-            // SetNull statt Cascade: bezahlte Einheiten sind Geld und dürfen nicht mit dem Katalogeintrag
-            // verschwinden. Die Kaufbelege standen schon so daneben – das Inventar nicht, sodass Löschen
-            // eines Artikels den Gegenwert vernichtete und nur den Beleg übrigließ. Der Artikel selbst
-            // bleibt bewusst Cascade unter dem Erwachsenen: ein Vater mit Artikeln muss sich löschen können.
+            // SetNull instead of cascade: paid units are money and must not disappear with the catalog entry.
+            // The purchase records already stood beside it that way - the inventory did not, so deleting an
+            // article destroyed the value and left only the receipt. The article itself deliberately stays
+            // cascade under the adult: an adult with articles must be able to delete themselves.
             e.HasOne(i => i.ShopArticle).WithMany().HasForeignKey(i => i.ShopArticleId)
                 .OnDelete(DeleteBehavior.SetNull);
         });
@@ -760,14 +760,14 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
             e.HasOne(r => r.ShopArticle).WithMany().HasForeignKey(r => r.ShopArticleId).OnDelete(DeleteBehavior.SetNull);
         });
 
-        // Tag: pro Kind eindeutiger Name; löscht das Kind, verschwinden seine Tags.
+        // Tag: a unique name per child; if the child is deleted, its tags disappear.
         modelBuilder.Entity<Tag>(e =>
         {
             e.HasIndex(t => new { t.ChildId, t.Name }).IsUnique();
             e.HasOne(t => t.Child).WithMany().HasForeignKey(t => t.ChildId).OnDelete(DeleteBehavior.Cascade);
         });
 
-        // Übung <-> Tag: jede Übung höchstens einmal je Tag; Links verschwinden mit Tag oder Übung.
+        // Exercise <-> tag: every exercise at most once per tag; links disappear with the tag or the exercise.
         modelBuilder.Entity<ExerciseTag>(e =>
         {
             e.HasIndex(x => new { x.TagId, x.ExerciseId }).IsUnique();
@@ -775,7 +775,7 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
             e.HasOne(x => x.Exercise).WithMany().HasForeignKey(x => x.ExerciseId).OnDelete(DeleteBehavior.Cascade);
         });
 
-        // Vokabel <-> Kind-Tag: jede Vokabel höchstens einmal je Tag; Links verschwinden mit Tag oder Vokabel.
+        // Vocabulary <-> child tag: every entry at most once per tag; links disappear with the tag or the entry.
         modelBuilder.Entity<VocabularyTag>(e =>
         {
             e.HasIndex(x => new { x.TagId, x.VocabularyId }).IsUnique();
@@ -783,7 +783,7 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
             e.HasOne(x => x.Vocabulary).WithMany().HasForeignKey(x => x.VocabularyId).OnDelete(DeleteBehavior.Cascade);
         });
 
-        // Klassenarbeit: gehört einem Kind (Cascade), optional an ein Fach gekoppelt (SetNull).
+        // Class test: belongs to a child (cascade), optionally coupled to a subject (SetNull).
         modelBuilder.Entity<Klassenarbeit>(e =>
         {
             e.HasOne(k => k.Child).WithMany().HasForeignKey(k => k.ChildId).OnDelete(DeleteBehavior.Cascade);
@@ -791,7 +791,7 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
             e.Property(k => k.Grade).HasPrecision(3, 1);
         });
 
-        // Klassenarbeit <-> Übung: jede Übung höchstens einmal je Arbeit.
+        // Class test <-> exercise: every exercise at most once per test.
         modelBuilder.Entity<KlassenarbeitExercise>(e =>
         {
             e.HasIndex(x => new { x.KlassenarbeitId, x.ExerciseId }).IsUnique();
@@ -799,7 +799,7 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
             e.HasOne(x => x.Exercise).WithMany().HasForeignKey(x => x.ExerciseId).OnDelete(DeleteBehavior.Cascade);
         });
 
-        // Klassenarbeit <-> Tag: jeder Tag höchstens einmal je Arbeit.
+        // Class test <-> tag: every tag at most once per test.
         modelBuilder.Entity<KlassenarbeitTag>(e =>
         {
             e.HasIndex(x => new { x.KlassenarbeitId, x.TagId }).IsUnique();
@@ -807,10 +807,10 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
             e.HasOne(x => x.Tag).WithMany().HasForeignKey(x => x.TagId).OnDelete(DeleteBehavior.Cascade);
         });
 
-        // Anmerkung: Der Autor bindet (Cascade – ohne Konto gibt es niemanden, dem die Notiz gehört).
-        // Jeder Kontext-Bezug dagegen SetNull: Ein gelöschtes Kind, eine gelöschte Übung oder eine
-        // gelöschte Vorgänger-Anmerkung darf das Löschen nicht blockieren – der Kontext darf verblassen,
-        // die Beobachtung bleibt. Rolle als String (lesbar/stabil, wie beim AccountProfile).
+        // Remark: the author binds it (cascade - without an account there is nobody the note belongs to).
+        // Every context reference, by contrast, is SetNull: a deleted child, a deleted exercise or a deleted
+        // parent remark must not block the delete - the context may fade, the observation stays.
+        // The role as a string (readable/stable, as on AccountProfile).
         modelBuilder.Entity<Remark>(e =>
         {
             e.Property(r => r.AuthorRole).HasConversion<string>();
@@ -820,23 +820,23 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
             e.HasOne(r => r.StudyPlan).WithMany().HasForeignKey(r => r.StudyPlanId).OnDelete(DeleteBehavior.SetNull);
             e.HasOne(r => r.PlanPosition).WithMany().HasForeignKey(r => r.PlanPositionId).OnDelete(DeleteBehavior.SetNull);
             e.HasOne(r => r.ParentRemark).WithMany().HasForeignKey(r => r.ParentRemarkId).OnDelete(DeleteBehavior.SetNull);
-            // Die beiden Wege, auf denen gelesen wird: die eigene Liste im Widget (neueste zuerst)
-            // und der Export/Nachbereitungs-Skill, der die offenen Anmerkungen holt.
+            // The two ways it is read: the own list in the widget (newest first) and the export/follow-up skill,
+            // which fetches the open remarks.
             e.HasIndex(r => new { r.AccountId, r.CreatedAt });
             e.HasIndex(r => r.Status);
         });
 
-        // Verlauf einer Anmerkung. Die Anmerkung bindet (Cascade): ein Beitrag ohne Vorgang ist sinnlos –
-        // anders als der Kontext, der verblassen darf. Das Autor-Konto dagegen SetNull, denn die fachliche
-        // Aussage des Beitrags gilt weiter, auch wenn das Konto verschwindet.
-        // Herkunft als String wie die `AuthorRole` daneben: An dieser Tabelle wird von Hand nachgesehen
-        // (Werkzeug für die Entwicklung), und „Assistant" liest sich dabei besser als „1".
+        // History of a remark. The remark binds it (cascade): an entry without its case is pointless - unlike
+        // the context, which may fade. The author account, by contrast, SetNull, because the entry's domain
+        // statement still holds even when the account disappears.
+        // The origin as a string like the `AuthorRole` next to it: this table is looked at by hand (a
+        // development tool), and "Assistant" reads better there than "1".
         modelBuilder.Entity<RemarkComment>(e =>
         {
             e.Property(c => c.Author).HasConversion<string>();
             e.HasOne(c => c.Remark).WithMany(r => r.Comments).HasForeignKey(c => c.RemarkId).OnDelete(DeleteBehavior.Cascade);
             e.HasOne(c => c.AuthorAccount).WithMany().HasForeignKey(c => c.AuthorAccountId).OnDelete(DeleteBehavior.SetNull);
-            // Der einzige Lesepfad: der Verlauf einer Anmerkung, chronologisch.
+            // The only read path: the history of one remark, chronologically.
             e.HasIndex(c => new { c.RemarkId, c.CreatedAt });
         });
 
@@ -845,25 +845,25 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
     }
 
     /// <summary>
-    /// Schreibt die Löschverhalten aus, die bisher nur aus der EF-<b>Konvention</b> kamen (Pflicht-FK ⇒
-    /// <c>Cascade</c>). Das Verhalten ändert sich dadurch nicht – sichtbar wird die <b>Absicht</b>.
+    /// Spells out the delete behaviors that so far only came from the EF <b>convention</b> (required FK ⇒
+    /// <c>Cascade</c>). The behavior does not change through this – what becomes visible is the <b>intent</b>.
     /// <para>
-    /// Warum das nicht kosmetisch ist: Reflexion kann „ausdrücklich gesetzt" nicht von „von der Konvention
-    /// geerbt" unterscheiden, ein Wächter kann die Regel also nicht am Modell prüfen. Erst wenn jede FK
-    /// eine Zeile hat, ist die Zusicherungs-Tabelle in <c>SchemaGuardTests</c> (G2) vollständig – und ein
-    /// Konventionswechsel in einer künftigen EF-Version verschiebt hier nichts mehr lautlos.
+    /// Why that is not cosmetic: reflection cannot tell "explicitly set" from "inherited from the convention",
+    /// so a guard cannot check the rule against the model. Only once every FK has its line is the assurance
+    /// table in <c>SchemaGuardTests</c> (G2) complete – and a change of convention in a future EF version
+    /// no longer shifts anything here silently.
     /// </para>
     /// <para>
-    /// Es sind Kompositions-Beziehungen: das Kind gehört dem Eltern-Datensatz und hat ohne ihn keine
-    /// Bedeutung (ein Kapitel ohne Fach, ein Testergebnis ohne Testversuch). Die Gegenprobe ist die Suite:
-    /// sie muss <b>unverändert</b> grün bleiben – jede Abweichung heißt, die ausgeschriebene Absicht war
-    /// nicht die gelebte.
+    /// These are composition relations: the child belongs to the parent record and has no meaning without it
+    /// (a chapter without a subject, a test result without a test attempt). The counter-check is the suite:
+    /// it must stay green <b>unchanged</b> – any deviation means the intent written out was not the one
+    /// actually lived.
     /// </para>
     /// </summary>
     private static void ApplyExplicitCascades(ModelBuilder modelBuilder)
     {
-        // Katalog: Fach ⇒ Kapitel ⇒ Übung. Löscht ein Fach, fällt der ganze Ast (der Restrict-Guard auf
-        // PlanPosition→Exercise fängt vorher ab, was noch in einem Lehrplan steckt).
+        // Catalog: subject ⇒ chapter ⇒ exercise. Deleting a subject drops the whole branch (the Restrict guard
+        // on PlanPosition→Exercise catches beforehand whatever still sits in a study plan).
         modelBuilder.Entity<Chapter>()
             .HasOne(c => c.Subject).WithMany(s => s.Chapters).HasForeignKey(c => c.SubjectId)
             .OnDelete(DeleteBehavior.Cascade);
@@ -871,19 +871,19 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
             .HasOne(x => x.Chapter).WithMany(c => c.Exercises).HasForeignKey(x => x.ChapterId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        // Alles, was am Kind hängt und ohne es sinnlos ist: Lehrpläne, das Kassenbuch, die Lernziele.
+        // Everything hanging on the child that is pointless without it: study plans, the ledger, the goals.
         modelBuilder.Entity<StudyPlan>()
             .HasOne(p => p.Child).WithMany().HasForeignKey(p => p.ChildId)
             .OnDelete(DeleteBehavior.Cascade);
-        // Die Gegen-Navigation MUSS benannt werden, wo sie existiert: `WithMany()` ohne sie lässt EF die
-        // vorhandene, per Konvention gefundene Beziehung nicht wiedererkennen und legt eine ZWEITE an –
-        // hier wuchs so eine Spalte `ChildId1` nach. Der Wächter G2 hat genau das gefangen.
+        // The inverse navigation MUST be named where it exists: `WithMany()` without it stops EF from
+        // recognizing the existing, convention-found relationship and it creates a SECOND one - a column
+        // `ChildId1` grew here that way. Guard G2 caught exactly that.
         modelBuilder.Entity<ChildPointsEntry>()
             .HasOne(p => p.Child).WithMany(c => c.PointsEntries).HasForeignKey(p => p.ChildId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        // Ausspiel-Historie: Sitzung/Test gehören dem Plan, ihre Einzelantworten der Sitzung bzw. dem
-        // Versuch. Der Positions-Verweis daneben ist bewusst SetNull (kein zweiter Cascade-Pfad in SQLite).
+        // Play-out history: session/test belong to the plan, their individual answers to the session or the
+        // attempt. The position reference next to it is deliberately SetNull (no second cascade path in SQLite).
         modelBuilder.Entity<PracticeSession>()
             .HasOne(s => s.StudyPlan).WithMany().HasForeignKey(s => s.StudyPlanId)
             .OnDelete(DeleteBehavior.Cascade);
@@ -899,40 +899,40 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
     }
 
     /// <summary>
-    /// Enums, die in einer Ausnahmeliste dieser Klasse stehen, bleiben <c>int</c> – jeweils mit Grund.
-    /// Der Schlüssel ist <c>Entity.Property</c>.
+    /// Enums listed in an exception list of this class stay <c>int</c> – each one with its reason.
+    /// The key has the form <c>Entity.Property</c>.
     /// </summary>
     private static readonly Dictionary<string, string> IntEnumsByDesign = new(StringComparer.Ordinal)
     {
         ["Child.AllowedContentRating"] =
-            "Wird ORDNEND verglichen (asset.Rating <= child.AllowedContentRating) – als Text wäre der "
-            + "Vergleich lexikografisch und die Altersfreigabe stillschweigend falsch.",
+            "Compared BY ORDER (asset.Rating <= child.AllowedContentRating) - as text the comparison would "
+            + "be lexicographic and the content rating silently wrong.",
         ["MediaAsset.Rating"] =
-            "Gegenstück zu Child.AllowedContentRating: dieselbe Ordnung, dieselbe Begründung.",
+            "Counterpart to Child.AllowedContentRating: same ordering, same reason.",
     };
 
     /// <summary>
-    /// Ob <paramref name="entityDotProperty"/> (Form <c>Entity.Property</c>) bewusst als <c>int</c>
-    /// gespeichert wird. Der Wächter <c>SchemaGuardTests</c> liest diese Liste, statt eine zweite zu
-    /// führen – sonst wären Regel und Ausnahme an zwei Orten zu pflegen.
+    /// Whether <paramref name="entityDotProperty"/> (form <c>Entity.Property</c>) is deliberately stored as
+    /// <c>int</c>. The guard <c>SchemaGuardTests</c> reads this list instead of keeping a second one –
+    /// otherwise rule and exception would have to be maintained in two places.
     /// </summary>
     public static bool IntEnumErlaubt(string entityDotProperty) =>
         IntEnumsByDesign.ContainsKey(entityDotProperty);
 
     /// <summary>
-    /// <b>Eine Regel statt 32 Einzelfällen:</b> jedes persistierte Enum wird als <b>String</b> gespeichert.
+    /// <b>One rule instead of 32 individual cases:</b> every persisted enum is stored as a <b>string</b>.
     /// <para>
-    /// Vorher waren 12 Enums per <c>HasConversion&lt;string&gt;()</c> konvertiert und ~20 implizit <c>int</c> –
-    /// ohne erkennbare Regel, in <c>Remarks</c> sogar beides in derselben Tabelle (<c>AuthorRole</c> als Text
-    /// neben <c>Status</c>/<c>Category</c> als Zahl). String ist die richtige Seite, weil der Vertrag nach
-    /// außen ohnehin Strings spricht (<c>JsonStringEnumConverter</c>): damit entfällt die Übersetzungsstufe
-    /// zwischen dem, was in der DB steht, und dem, was die API sagt – und der gespeicherte Wert wird
-    /// unabhängig von der Mitglieder-Reihenfolge, was das Entfernen toter Enum-Werte erst gefahrlos macht.
+    /// Before, 12 enums were converted through <c>HasConversion&lt;string&gt;()</c> and about 20 were
+    /// implicitly <c>int</c> – with no discernible rule, in <c>Remarks</c> even both within the same table
+    /// (<c>AuthorRole</c> as text next to <c>Status</c>/<c>Category</c> as a number). String is the right side
+    /// because the contract speaks strings to the outside anyway (<c>JsonStringEnumConverter</c>): that removes
+    /// the translation step between what is in the DB and what the API says – and the stored value becomes
+    /// independent of the member order, which is what makes removing dead enum values safe in the first place.
     /// </para>
     /// <para>
-    /// Zwei Arten von Ausnahmen: <see cref="IntEnumsByDesign"/> (ordnend verglichen) und <c>[Flags]</c>.
-    /// Eine Flags-Kombination hat keinen Namen – <c>HasConversion&lt;string&gt;</c> erzeugte
-    /// <c>"Gymnasium, Realschule"</c> und machte jede bitweise Mengenabfrage kaputt.
+    /// Two kinds of exception: <see cref="IntEnumsByDesign"/> (compared by order) and <c>[Flags]</c>.
+    /// A flags combination has no name – <c>HasConversion&lt;string&gt;</c> produced
+    /// <c>"Gymnasium, Realschule"</c> and broke every bitwise set query.
     /// </para>
     /// </summary>
     private static void ApplyEnumConvention(ModelBuilder modelBuilder)
@@ -941,14 +941,14 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
         {
             foreach (var property in entity.GetProperties())
             {
-                // Nullable entpacken: `GoalCadence?` ist so zu behandeln wie `GoalCadence`.
+                // Unwrap nullable: `GoalCadence?` is to be treated like `GoalCadence`.
                 var type = Nullable.GetUnderlyingType(property.ClrType) ?? property.ClrType;
                 if (!type.IsEnum) continue;
                 if (type.IsDefined(typeof(FlagsAttribute), inherit: false)) continue;
                 if (IntEnumsByDesign.ContainsKey($"{entity.ClrType.Name}.{property.Name}")) continue;
 
-                // Nur setzen, wo noch nichts steht: eine ausdrückliche Konfiguration weiter oben
-                // (oder ein eigener Converter) gewinnt gegen die Konvention.
+                // Only set it where nothing is set yet: an explicit configuration further up (or a converter of
+                // its own) beats the convention.
                 if (property.GetValueConverter() is not null) continue;
                 property.SetValueConverter(
                     typeof(EnumToStringConverter<>).MakeGenericType(type));
@@ -957,63 +957,62 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
     }
 
     /// <summary>
-    /// String-Spalten, die <b>absichtlich</b> unbegrenzt bleiben: Property → warum. Es sind ausnahmslos
-    /// serialisierte Strukturen (JSON) oder eingefrorene Reihenfolgen – ihre Länge folgt aus dem Inhalt,
-    /// nicht aus einer Eingabe, und eine Obergrenze wäre eine willkürliche Kappungsgrenze mitten im
-    /// Datenmodell.
+    /// String columns that stay unlimited <b>on purpose</b>: property → why. Without exception these are
+    /// serialized structures (JSON) or frozen orders – their length follows from the content, not from an
+    /// input, and an upper bound would be an arbitrary cut-off in the middle of the data model.
     /// </summary>
     private static readonly Dictionary<string, string> UnlimitedByDesign = new(StringComparer.Ordinal)
     {
-        ["Exercise.ConfigJson"] = "Typspezifische Übungs-Config als JSON – wächst mit dem Übungsinhalt.",
-        ["Exercise.SuggestedBonus"] = "Bonus-Vorschlag als JSON-Objekt.",
-        ["Remark.ContextJson"] = "Automatischer Kontext-Mitschnitt der Anmerkung – das IST das Feature.",
-        ["Remark.RecentErrorsJson"] = "Mitgeschnittene letzte Fehler; Länge folgt dem Vorfall.",
-        ["Vocabulary.Noun"] = "Substantiv-Formen als JSON-Objekt.",
-        ["Vocabulary.Verb"] = "Verb-Formen als JSON-Objekt.",
-        ["ClozeText.Gaps"] = "Lücken des Textes als JSON-Liste – wächst mit dem Text.",
-        ["ClozeText.WordBank"] = "Wortbank als JSON-Liste.",
-        ["Child.Interests"] = "Freitext-Interessen als JSON-Liste (Sprache des KI-Creators).",
-        ["Child.OwnedSkins"] = "Freigeschaltete Skins als JSON-Liste – wächst mit dem Spielstand.",
-        ["CreatorProfile.DefaultTypes"] = "Voreingestellte Übungstypen als JSON-Liste.",
-        ["PlanPosition.BoxIntervalDays"] = "Leitner-Intervalle als JSON-Liste.",
-        ["PlanPosition.StageSchedule"] = "Stufenplan als JSON-Liste.",
-        ["PracticeSession.Order"] = "Eingefrorene Ausspiel-Reihenfolge als JSON-Liste – so lang wie der Pool.",
-        ["TestAttempt.Order"] = "Eingefrorene Test-Reihenfolge als JSON-Liste – so lang wie der Pool.",
+        ["Exercise.ConfigJson"] = "Type-specific exercise config as JSON - grows with the exercise content.",
+        ["Exercise.SuggestedBonus"] = "Bonus suggestion as a JSON object.",
+        ["Remark.ContextJson"] = "Automatic context capture of the remark - that IS the feature.",
+        ["Remark.RecentErrorsJson"] = "Captured recent errors; the length follows the incident.",
+        ["Vocabulary.Noun"] = "Noun forms as a JSON object.",
+        ["Vocabulary.Verb"] = "Verb forms as a JSON object.",
+        ["ClozeText.Gaps"] = "Gaps of the text as a JSON list - grows with the text.",
+        ["ClozeText.WordBank"] = "Word bank as a JSON list.",
+        ["Child.Interests"] = "Free-text interests as a JSON list (the language of the AI creator).",
+        ["Child.OwnedSkins"] = "Unlocked skins as a JSON list - grows with the play state.",
+        ["CreatorProfile.DefaultTypes"] = "Preferred exercise types as a JSON list.",
+        ["PlanPosition.BoxIntervalDays"] = "Leitner intervals as a JSON list.",
+        ["PlanPosition.StageSchedule"] = "Stage schedule as a JSON list.",
+        ["PracticeSession.Order"] = "Frozen play-out order as a JSON list - as long as the pool.",
+        ["TestAttempt.Order"] = "Frozen test order as a JSON list - as long as the pool.",
     };
 
-    /// <summary>Ob die Spalte bewusst unbegrenzt bleibt. Der Wächter G3 liest diese Liste, statt eine zweite zu führen.</summary>
+    /// <summary>Whether the column deliberately stays unlimited. Guard G3 reads this list instead of keeping a second one.</summary>
     public static bool UnbegrenztErlaubt(string entityDotProperty) =>
         UnlimitedByDesign.ContainsKey(entityDotProperty);
 
-    /// <summary>Standard-Länge einer String-Spalte, wenn nichts anderes gesagt ist.</summary>
+    /// <summary>Default length of a string column unless something else is said.</summary>
     private const int DefaultLength = 200;
-    /// <summary>Länge für Freitext-Felder (Beschreibung, Notizen, Anmerkungstext).</summary>
+    /// <summary>Length for free-text fields (description, notes, remark text).</summary>
     private const int FreeTextLength = 2000;
-    /// <summary>Länge für Slugs/Schlüssel – kurz, weil sie in Unique-Indizes stehen.</summary>
+    /// <summary>Length for slugs/keys – short, because they appear in unique indexes.</summary>
     private const int KeyLength = 128;
 
-    /// <summary>Namens-Endungen, die ein Freitext-Feld verraten (großzügigere Länge).</summary>
+    /// <summary>Name suffixes that give away a free-text field (a more generous length).</summary>
     private static readonly string[] FreeTextSuffixes =
         ["Description", "Notes", "Text", "Reason", "Persona", "Didactics", "Comment", "Message", "Answer"];
 
-    /// <summary>Namens-Endungen, die einen Slug/Schlüssel verraten (kurze Länge, oft unique-indiziert).</summary>
+    /// <summary>Name suffixes that give away a slug/key (short length, often unique-indexed).</summary>
     private static readonly string[] KeySuffixes = ["Key", "Slug"];
 
     /// <summary>
-    /// <b>Eine Regel statt 143 Einzelentscheidungen:</b> jede String-Spalte bekommt eine Länge – Standard
-    /// 200, Freitext 2000, Slugs/Schlüssel 128. Vorher trug <b>keine einzige</b> Spalte im ganzen Modell ein
-    /// <c>HasMaxLength</c>.
+    /// <b>One rule instead of 143 individual decisions:</b> every string column gets a length – 200 by
+    /// default, 2000 for free text, 128 for slugs/keys. Before, <b>not a single</b> column in the whole model
+    /// carried a <c>HasMaxLength</c>.
     /// <para>
-    /// <b>Ehrlich dazugesagt:</b> SQLite setzt die Länge nicht durch, und EF validiert sie beim
-    /// <c>SaveChanges</c> auch nicht. Der Wert liegt woanders: bei einem Provider-Wechsel entstünde sonst
-    /// überall <c>NVARCHAR(MAX)</c> – und darauf lässt sich in SQL Server kein Unique-Index anlegen, was
-    /// genau die Spalten trifft, die die Idempotenz tragen. Deshalb gilt zusätzlich <b>hart</b>: eine
-    /// unique-indizierte String-Spalte MUSS begrenzt sein. Eingabe-Durchsetzung bleibt Sache der
-    /// DTO-Validierung und ist nicht Teil dieser Regel.
+    /// <b>Said honestly:</b> SQLite does not enforce the length, and EF does not validate it on
+    /// <c>SaveChanges</c> either. The value lies elsewhere: on a provider change, <c>NVARCHAR(MAX)</c> would
+    /// otherwise appear everywhere – and no unique index can be created on that in SQL Server, which hits
+    /// exactly those columns that carry the idempotency. That is why the following also holds <b>hard</b>: a
+    /// unique-indexed string column MUST be bounded. Enforcing the input stays the job of the DTO validation
+    /// and is not part of this rule.
     /// </para>
     /// <para>
-    /// Die Ausnahmen (<see cref="UnlimitedByDesign"/>) sind ausnahmslos serialisierte Strukturen: ihre Länge
-    /// folgt dem Inhalt, eine Obergrenze wäre eine willkürliche Kappung mitten im Datenmodell.
+    /// The exceptions (<see cref="UnlimitedByDesign"/>) are without exception serialized structures: their
+    /// length follows the content, an upper bound would be an arbitrary cut-off in the middle of the data model.
     /// </para>
     /// </summary>
     private static void ApplyStringLengthConvention(ModelBuilder modelBuilder)
@@ -1024,7 +1023,7 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
             {
                 if (property.ClrType != typeof(string)) continue;
                 if (UnlimitedByDesign.ContainsKey($"{entity.ClrType.Name}.{property.Name}")) continue;
-                // Eine ausdrückliche Länge weiter oben gewinnt gegen die Konvention.
+                // An explicit length further up beats the convention.
                 if (property.GetMaxLength() is not null) continue;
 
                 var name = property.Name;

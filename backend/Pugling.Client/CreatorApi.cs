@@ -13,7 +13,7 @@ public sealed class CreatorApi(HttpClient http)
     /// <summary>The underlying HttpClient – an escape hatch for endpoints that don't (yet) have a wrapper.</summary>
     public HttpClient Http { get; } = http;
 
-    // ---------------------------------------------------------------- Typ-Manifest
+    // ---------------------------------------------------------------- Type manifest
 
     /// <summary>
     /// The exercise-type manifest: which types exist, under which <c>authoringRoute</c> segment they
@@ -23,7 +23,7 @@ public sealed class CreatorApi(HttpClient http)
     public Task<IReadOnlyList<ExerciseTypeManifest>> GetExerciseTypesAsync(CancellationToken ct = default) =>
         Http.GetAsync<IReadOnlyList<ExerciseTypeManifest>>($"{Root}/exercise-types", ct);
 
-    // ---------------------------------------------------------------- Fächer
+    // ---------------------------------------------------------------- Subjects
 
     /// <summary>All subjects.</summary>
     public Task<IReadOnlyList<SubjectResponse>> ListSubjectsAsync(CancellationToken ct = default) =>
@@ -45,7 +45,7 @@ public sealed class CreatorApi(HttpClient http)
     public Task DeleteSubjectAsync(int subjectId, CancellationToken ct = default) =>
         Http.SendAsync(HttpMethod.Delete, $"{Root}/subjects/{subjectId}", null, ct);
 
-    // ---------------------------------------------------------------- Kapitel & Arten
+    // ---------------------------------------------------------------- Chapters & categories
 
     /// <summary>Chapters of a subject.</summary>
     public Task<IReadOnlyList<ChapterResponse>> ListChaptersAsync(int subjectId, CancellationToken ct = default) =>
@@ -71,7 +71,7 @@ public sealed class CreatorApi(HttpClient http)
     public Task<CategoryResponse> CreateCategoryAsync(int subjectId, CreateCategoryDto dto, CancellationToken ct = default) =>
         Http.PostAsync<CategoryResponse>($"{Root}/subjects/{subjectId}/categories", dto, ct);
 
-    // ---------------------------------------------------------------- Lehrwerk-Reihen & Units
+    // ---------------------------------------------------------------- Textbook series & units
 
     /// <summary>The textbook series of the shared catalog (all filters optional).</summary>
     public Task<IReadOnlyList<TextbookSeriesResponse>> ListSeriesAsync(string? search = null, int? subjectId = null,
@@ -122,7 +122,7 @@ public sealed class CreatorApi(HttpClient http)
     public Task DeleteUnitAsync(int seriesId, int unitId, CancellationToken ct = default) =>
         Http.SendAsync(HttpMethod.Delete, $"{Root}/textbook-series/{seriesId}/units/{unitId}", null, ct);
 
-    // ---------------------------------------------------------------- Creator-Profile
+    // ---------------------------------------------------------------- Creator profiles
 
     /// <summary>The creator profiles ("subject teacher"), optionally filtered.</summary>
     public Task<IReadOnlyList<CreatorProfileResponse>> ListProfilesAsync(int? subjectId = null, int? seriesId = null,
@@ -157,7 +157,7 @@ public sealed class CreatorApi(HttpClient http)
     public Task DeleteProfileAsync(int profileId, CancellationToken ct = default) =>
         Http.SendAsync(HttpMethod.Delete, $"{Root}/profiles/{profileId}", null, ct);
 
-    // ---------------------------------------------------------------- Kind-skopierte Tags
+    // ---------------------------------------------------------------- Child-scoped tags
 
     /// <summary>The tags of a child (child-scoped – unlike the child-neutral interest taxonomy).</summary>
     public Task<IReadOnlyList<TagResponse>> ListTagsAsync(int childId, CancellationToken ct = default) =>
@@ -171,7 +171,7 @@ public sealed class CreatorApi(HttpClient http)
     public Task<TagResponse> TagExercisesAsync(int tagId, TagExercisesDto dto, CancellationToken ct = default) =>
         Http.PostAsync<TagResponse>($"{Root}/tags/{tagId}/exercises", dto, ct);
 
-    // ---------------------------------------------------------------- Vokabelspeicher
+    // ---------------------------------------------------------------- Vocabulary store
 
     /// <summary>Searches the vocabulary store (all filters optional, AND-combined).</summary>
     public Task<IReadOnlyList<VocabularyResponse>> SearchVocabularyAsync(string? search = null, string? word = null,
@@ -207,7 +207,7 @@ public sealed class CreatorApi(HttpClient http)
     public Task<VocabularyResponse> UpdateVocabularyAsync(int vocabularyId, UpdateVocabularyDto dto, CancellationToken ct = default) =>
         Http.PatchAsync<VocabularyResponse>($"{Root}/vocabulary/{vocabularyId}", dto, ct);
 
-    // ---------------------------------------------------------------- Übungen anlegen (typisiert)
+    // ---------------------------------------------------------------- Create exercises (typed)
 
     /// <summary>
     /// Creates a typed exercise. <paramref name="authoringRoute"/> is the segment from the
@@ -233,7 +233,7 @@ public sealed class CreatorApi(HttpClient http)
         CancellationToken ct = default) =>
         Http.SendAsync(HttpMethod.Delete, $"{ExercisePath(subjectId, chapterId, authoringRoute)}/{exerciseId}", null, ct);
 
-    // ---------------------------------------------------------------- Vokabel-Items
+    // ---------------------------------------------------------------- Vocabulary items
 
     /// <summary>The materialized vocabulary pairs of a vocabulary exercise.</summary>
     public Task<IReadOnlyList<VocabItemResponse>> ListItemsAsync(int subjectId, int chapterId, int exerciseId,
@@ -275,7 +275,7 @@ public sealed class CreatorApi(HttpClient http)
         Http.PutAsync<DecodedWord>(
             $"{ExercisePath(subjectId, chapterId, "birkenbihl")}/{exerciseId}/words/{wordId}", input, ct);
 
-    // ---------------------------------------------------------------- Katalog, Vorschau, Rechte
+    // ---------------------------------------------------------------- Catalog, preview, rights
 
     /// <summary>Child-neutral catalog search over the metadata (all filters optional, AND-combined).</summary>
     public Task<IReadOnlyList<ExerciseSummary>> SearchExercisesAsync(int? subjectId = null, int? chapterId = null,
@@ -326,7 +326,7 @@ public sealed class CreatorApi(HttpClient http)
     public Task RemoveGrantAsync(int exerciseId, int creatorId, GrantPermission permission, CancellationToken ct = default) =>
         Http.SendAsync(HttpMethod.Delete, $"{Root}/exercises/{exerciseId}/grants/{creatorId}/{permission}", null, ct);
 
-    // ---------------------------------------------------------------- Interessen-Taxonomie
+    // ---------------------------------------------------------------- Interest taxonomy
 
     /// <summary>
     /// The shared interest/style taxonomy. An agent should <b>read it before tagging</b>: it is
@@ -349,7 +349,7 @@ public sealed class CreatorApi(HttpClient http)
     public Task DeleteInterestTagAsync(int tagId, CancellationToken ct = default) =>
         Http.SendAsync(HttpMethod.Delete, $"{Root}/interest-tags/{tagId}", null, ct);
 
-    // ---------------------------------------------------------------- Medien-Store
+    // ---------------------------------------------------------------- Media store
 
     /// <summary>
     /// Assets of the media store. <paramref name="maxRating"/> applies the same suitability cutoff that
@@ -357,7 +357,7 @@ public sealed class CreatorApi(HttpClient http)
     /// </summary>
     public Task<IReadOnlyList<MediaAssetResponse>> ListMediaAsync(string? search = null, string[]? tags = null,
         ContentRating? maxRating = null, MediaKind? kind = null, CancellationToken ct = default) =>
-        // Query() vervielfältigt Listen-Werte zu wiederholten Parametern (?tag=a&tag=b).
+        // Query() expands list values into repeated parameters (?tag=a&tag=b).
         Http.GetAsync<IReadOnlyList<MediaAssetResponse>>($"{Root}/media" + PuglingHttp.Query(
             ("search", search), ("tag", tags), ("maxRating", maxRating), ("kind", kind)), ct);
 
@@ -394,7 +394,7 @@ public sealed class CreatorApi(HttpClient http)
         file.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
         form.Add(file, "file", fileName);
         form.Add(new StringContent(description), "description");
-        // Multipart kennt keine Listen – der Server erwartet die Schlagworte als kommagetrennte Zeile.
+        // Multipart has no lists - the server expects the keywords as one comma-separated line.
         if (tags is not null) form.Add(new StringContent(string.Join(",", tags)), "tags");
         if (rating is { } r) form.Add(new StringContent(r.ToString()), "rating");
         if (origin is { } o) form.Add(new StringContent(o.ToString()), "origin");
@@ -439,7 +439,7 @@ public sealed class CreatorApi(HttpClient http)
     public Task<IReadOnlyList<MediaUsage>> GetMediaUsageAsync(int assetId, CancellationToken ct = default) =>
         Http.GetAsync<IReadOnlyList<MediaUsage>>($"{Root}/media/{assetId}/usage", ct);
 
-    // ---------------------------------------------------------------- Zuordnung Bild ⇢ Träger
+    // ---------------------------------------------------------------- Image ⇢ carrier assignment
 
     /// <summary>
     /// The images of a vocabulary-store entry – the default assignment, it applies in every exercise using this word.

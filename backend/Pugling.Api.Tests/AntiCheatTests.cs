@@ -28,7 +28,7 @@ public class AntiCheatTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
             $"{TestApi.PracticeBase(planId, positionId)}/{sid}/heartbeat", new { seconds = 1200, active = true });
         var session = await hb.Content.ReadFromJsonAsync<JsonElement>();
 
-        // 1200 s wären 20 min; pro Heartbeat sind höchstens 120 s anrechenbar.
+        // 1200 s would be 20 min; at most 120 s per heartbeat can be credited.
         Assert.Equal(120, session.GetProperty("activeSeconds").GetInt32());
     }
 
@@ -40,13 +40,13 @@ public class AntiCheatTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
         var sid = await TestApi.StartPositionSessionAsync(father, planId, positionId);
         var url = $"{TestApi.PracticeBase(planId, positionId)}/{sid}/heartbeat";
 
-        // Pausiert (active:false): die Sekunden dürfen trotz Angabe nicht anrechnen –
-        // sonst zählte weggeklickte/Hintergrund-Zeit als Übungszeit (Anti-Zeit-Cheat).
+        // Paused (active:false): the seconds must not count despite being sent - otherwise time spent clicked
+        // away/in the background would count as practice time (anti time cheat).
         var paused = await (await father.PostAsJsonAsync(url, new { seconds = 90, active = false }))
             .Content.ReadFromJsonAsync<JsonElement>();
         Assert.Equal(0, paused.GetProperty("activeSeconds").GetInt32());
 
-        // Ein nicht-positiver Heartbeat (0 s) ebenfalls nicht: die Bedingung Seconds > 0 verwirft ihn still.
+        // A non-positive heartbeat (0 s) does not either: the condition Seconds > 0 drops it silently.
         var zero = await (await father.PostAsJsonAsync(url, new { seconds = 0, active = true }))
             .Content.ReadFromJsonAsync<JsonElement>();
         Assert.Equal(0, zero.GetProperty("activeSeconds").GetInt32());
@@ -58,13 +58,13 @@ public class AntiCheatTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
         var (planId, positionId) = await SetupAsync(stage: (int)TestStage.SelfAssess);
         var child = await TestApi.ChildAsync(factory);
 
-        // Sohn fordert die Gratis-Anzeige-Stufe "ShowBoth" (1) an …
+        // The child requests the free display stage "ShowBoth" (1) …
         var res = await child.PostAsJsonAsync(
             $"/api/v1/student/study-plans/{planId}/positions/{positionId}/tests", new { stage = (int)TestStage.ShowBoth });
         res.EnsureSuccessStatusCode();
         var attempt = await res.Content.ReadFromJsonAsync<JsonElement>();
 
-        // … erzwungen wird aber die Positions-/Fahrplan-Stufe (SelfAssess = 2).
+        // … but the position/schedule stage is enforced (SelfAssess = 2).
         Assert.Equal((int)TestStage.SelfAssess, attempt.GetProperty("stage").GetInt32());
     }
 
@@ -93,10 +93,10 @@ public class AntiCheatTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
 
         Assert.Equal(HttpStatusCode.Created, res.StatusCode);
 
-        // Der Status allein war die Zusicherung – und damit zu wenig: `var day = dto.Day ?? today` zu
-        // `var day = today` zu verkürzen blieb grün (docs/testplan.md, Injektion D11). Der Nachtrag ist der
-        // Weg, eine gerissene Pflicht-Periode zu heilen; landete er auf „heute", bliebe der Malus für
-        // gestern stehen. Also muss der gebuchte Tag nachgelesen werden, nicht nur das Gelingen.
+        // The status alone was the assurance - and that was too little: shortening `var day = dto.Day ?? today`
+        // to `var day = today` stayed green (docs/testplan.md, injection D11). Catching up is the way to heal a
+        // missed mandatory period; if it landed on "today", yesterday's penalty would remain. So the booked day
+        // has to be read back, not just the success.
         var attempt = await res.Content.ReadFromJsonAsync<JsonElement>();
         Assert.Equal(yesterday, attempt.GetProperty("day").GetString());
     }
@@ -108,7 +108,7 @@ public class AntiCheatTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
         var father = await TestApi.FatherAsync(factory);
         (await father.PatchAsJsonAsync($"/api/v1/supervisor/study-plans/{planId}", new { active = false })).EnsureSuccessStatusCode();
 
-        // Kein Cherry-Picking: den deaktivierten Plan kann der Sohn nicht mehr üben.
+        // No cherry-picking: the child can no longer practice the deactivated plan.
         var child = await TestApi.ChildAsync(factory);
         var res = await child.PostAsJsonAsync(TestApi.PracticeBase(planId, positionId), new { });
 
@@ -126,7 +126,7 @@ public class AntiCheatTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
         var child = await TestApi.ChildAsync(factory);
         var baseUrl = TestApi.PracticeBase(planId, positionId);
 
-        // Sitzung starten, WÄHREND der Plan noch spielbar ist.
+        // Start the session WHILE the plan is still playable.
         var sessionId = await TestApi.IdAsync(await child.PostAsJsonAsync(baseUrl, new { }));
 
         var father = await TestApi.FatherAsync(factory);
@@ -160,14 +160,14 @@ public class AntiCheatTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
         var father = await TestApi.FatherAsync(factory);
         (await father.PatchAsJsonAsync($"/api/v1/supervisor/study-plans/{planId}", new { active = false })).EnsureSuccessStatusCode();
 
-        // Der Vater bleibt für Vorschau/Nachtrag ausgenommen – auch bei inaktivem Plan.
+        // The supervisor stays exempt for preview/catch-up - even with an inactive plan.
         var res = await father.PostAsJsonAsync(TestApi.PracticeBase(planId, positionId), new { });
 
         Assert.Equal(HttpStatusCode.Created, res.StatusCode);
 
-        // „Durchspielen" heißt Karten bekommen: der 201 allein belegt nur, dass die Sitzung angelegt wurde.
-        // Ohne diese Zeile blieb der Test grün, auch wenn die Plan-Sperre erst beim Ausspielen zuschlägt –
-        // dann wäre die Vorschau des Vaters eine leere Hülle (docs/testplan.md, Etappe 1a).
+        // "Playing through" means getting cards: the 201 alone only proves that the session was created.
+        // Without this line the test stayed green even if the plan barrier only bites during play - the
+        // supervisor's preview would then be an empty shell (docs/testplan.md, stage 1a).
         var sid = await TestApi.IdAsync(res);
         var next = await father.GetFromJsonAsync<JsonElement>(
             $"{TestApi.PracticeBase(planId, positionId)}/{sid}/next");
@@ -194,7 +194,7 @@ public class AntiCheatTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
         var (planId, _) = await SetupAsync();
         var child = await TestApi.ChildAsync(factory);
 
-        // Namensraum-treuer Discovery-Einstieg: der Sohn findet seinen spielbaren Plan unter student/.
+        // A namespace-faithful discovery entry: the child finds its playable plan under student/.
         var plans = await (await child.GetAsync("/api/v1/student/study-plans")).Content.ReadFromJsonAsync<JsonElement>();
         var plan = Assert.Single(plans.EnumerateArray(), p => p.GetProperty("id").GetInt32() == planId);
         JsonAssert.True(plan, "isPlayable");
@@ -207,7 +207,7 @@ public class AntiCheatTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
         var father = await TestApi.FatherAsync(factory);
         (await father.PatchAsJsonAsync($"/api/v1/supervisor/study-plans/{planId}", new { active = false })).EnsureSuccessStatusCode();
 
-        // Kein Cherry-Picking: der stillgelegte Plan taucht in der Sohn-Discovery nicht auf.
+        // No cherry-picking: the deactivated plan does not show up in the child's discovery.
         var child = await TestApi.ChildAsync(factory);
         var plans = await (await child.GetAsync("/api/v1/student/study-plans")).Content.ReadFromJsonAsync<JsonElement>();
 
@@ -220,7 +220,7 @@ public class AntiCheatTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
         await SetupAsync();
         var father = await TestApi.FatherAsync(factory);
 
-        // student/study-plans ist Sohn-only (Role-Gate); der Vater liest Pläne unter supervisor/.
+        // student/study-plans is child-only (a role gate); the supervisor reads plans under supervisor/.
         var res = await father.GetAsync("/api/v1/student/study-plans");
 
         Assert.Equal(HttpStatusCode.Forbidden, res.StatusCode);
@@ -234,7 +234,7 @@ public class AntiCheatTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
         var (planA, _) = TestApi.SeedLeitnerPosition(factory, exerciseId, (int)TestStage.SelfAssess);
         var (planB, _) = TestApi.SeedLeitnerPosition(factory, exerciseId, (int)TestStage.SelfAssess);
 
-        // Beide werden direkt aktiv geseedet; das Aktivieren von A muss B stilllegen (ein aktiver Plan je Kind).
+        // Both are seeded active directly; activating A must deactivate B (one active plan per child).
         (await father.PatchAsJsonAsync($"/api/v1/supervisor/study-plans/{planA}", new { active = true })).EnsureSuccessStatusCode();
 
         var b = await (await father.GetAsync($"/api/v1/supervisor/study-plans/{planB}")).Content.ReadFromJsonAsync<JsonElement>();
@@ -242,7 +242,7 @@ public class AntiCheatTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
         JsonAssert.False(b, "active");
         JsonAssert.True(a, "active");
 
-        // Affordance IsPlayable folgt der Anti-Cheat-Regel: nur der aktive (und in Laufzeit befindliche) Plan ist spielbar.
+        // The IsPlayable affordance follows the anti-cheat rule: only the active plan (within its runtime) is playable.
         JsonAssert.True(a, "isPlayable");
         JsonAssert.False(b, "isPlayable");
     }
@@ -251,7 +251,7 @@ public class AntiCheatTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
     public async Task IsPlayable_False_WennAktivAberNochNichtGestartet()
     {
         var father = await TestApi.FatherAsync(factory);
-        // Aktiver Plan, dessen Laufzeit erst in der Zukunft beginnt → heute (noch) nicht spielbar.
+        // An active plan whose runtime only starts in the future → not (yet) playable today.
         var future = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(7).ToString("yyyy-MM-dd");
         var planId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/supervisor/study-plans",
             new { childId = 1, title = "Zukunfts-Plan", startDate = future, durationDays = 5 }));
@@ -266,14 +266,14 @@ public class AntiCheatTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
     {
         var (planId, positionId) = await SetupAsync();
         var child = await TestApi.ChildAsync(factory);
-        // Session wird gestartet, solange der Plan noch aktiv ist …
+        // The session is started while the plan is still active …
         var sessionId = await TestApi.StartPositionSessionAsync(child, planId, positionId);
 
-        // … dann legt der Vater den Plan still (oder er läuft ab).
+        // … then the supervisor deactivates the plan (or it expires).
         var father = await TestApi.FatherAsync(factory);
         (await father.PatchAsJsonAsync($"/api/v1/supervisor/study-plans/{planId}", new { active = false })).EnsureSuccessStatusCode();
 
-        // Über die noch offene Session darf der Sohn nicht weiter bepunktet werden.
+        // Through the still open session the child must not keep scoring points.
         var res = await TestApi.PositionReviewAsync(child, planId, positionId, sessionId, 0, wasKnown: true);
         Assert.Equal(HttpStatusCode.Forbidden, res.StatusCode);
     }
@@ -283,17 +283,17 @@ public class AntiCheatTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
     {
         var (planId, positionId) = await SetupAsync();
         var child = await TestApi.ChildAsync(factory);
-        // Testversuch wird gestartet, solange der Plan aktiv ist …
+        // The test attempt is started while the plan is active …
         var start = await child.PostAsJsonAsync($"/api/v1/student/study-plans/{planId}/positions/{positionId}/tests", new { });
         start.EnsureSuccessStatusCode();
         var attempt = await start.Content.ReadFromJsonAsync<JsonElement>();
         var attemptId = attempt.GetProperty("attemptId").GetInt32();
 
-        // … dann wird der Plan stillgelegt.
+        // … then the plan is deactivated.
         var father = await TestApi.FatherAsync(factory);
         (await father.PatchAsJsonAsync($"/api/v1/supervisor/study-plans/{planId}", new { active = false })).EnsureSuccessStatusCode();
 
-        // Das Einreichen (und Bepunkten) des offenen Versuchs muss scheitern (der Plan-Check greift vor jeder Wertung).
+        // Submitting (and scoring) the open attempt must fail (the plan check runs before any grading).
         var res = await child.PostAsJsonAsync(
             $"/api/v1/student/study-plans/{planId}/positions/{positionId}/tests/{attemptId}/submit",
             new { answers = Array.Empty<object>() });
@@ -308,8 +308,8 @@ public class AntiCheatTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
         (await father.PatchAsJsonAsync($"/api/v1/creator/vocabulary/{id}",
             new { pronunciationAudioUrl = "https://example.test/hello.mp3" })).EnsureSuccessStatusCode();
 
-        // Rückwärts-Übung: nach dem Tausch ist das (vorgelesene) Wort die Lösung. Die Hör-Stufe darf die
-        // Audioquelle dann NICHT mitgeben, sonst spräche sie die Antwort vor.
+        // A reverse exercise: after the swap the (spoken) word is the solution. The listening stage must then
+        // NOT include the audio source, otherwise it would speak the answer.
         var subjectId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/subjects", new { name = "Audio-Ref" }));
         var chapterId = await TestApi.IdAsync(await father.PostAsJsonAsync(
             $"/api/v1/creator/subjects/{subjectId}/chapters", new { name = "U1", orderIndex = 1 }));

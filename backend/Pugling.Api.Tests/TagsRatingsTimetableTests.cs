@@ -37,12 +37,12 @@ public class TagsRatingsTimetableTests(PuglingWebAppFactory factory) : IClassFix
         var tagId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/tags",
             new { childId = 1, name = "Vokabeltest", color = "#22c55e" }));
 
-        // Markieren -> VocabularyCount steigt.
+        // Tagging -> VocabularyCount rises.
         var tagVoc = await father.PostAsJsonAsync($"/api/v1/creator/tags/{tagId}/vocabulary", new { vocabularyIds = new[] { vocabId } });
         Assert.Equal(HttpStatusCode.OK, tagVoc.StatusCode);
         Assert.Equal(1, (await tagVoc.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("vocabularyCount").GetInt32());
 
-        // for-vocabulary liefert den Tag; tags/{id}/vocabulary die Vokabel.
+        // for-vocabulary returns the tag; tags/{id}/vocabulary the entry.
         var forVoc = await father.GetAsync($"/api/v1/creator/tags/for-vocabulary/{vocabId}?childId=1");
         Assert.Equal(HttpStatusCode.OK, forVoc.StatusCode);
         Assert.True((await forVoc.Content.ReadFromJsonAsync<JsonElement>()).GetArrayLength() >= 1);
@@ -50,7 +50,7 @@ public class TagsRatingsTimetableTests(PuglingWebAppFactory factory) : IClassFix
         var vocs = await (await father.GetAsync($"/api/v1/creator/tags/{tagId}/vocabulary")).Content.ReadFromJsonAsync<JsonElement>();
         Assert.Contains(vocs.EnumerateArray(), v => v.GetProperty("id").GetInt32() == vocabId);
 
-        // Detach -> weg.
+        // Detach -> gone.
         Assert.Equal(HttpStatusCode.NoContent, (await father.DeleteAsync($"/api/v1/creator/tags/{tagId}/vocabulary/{vocabId}")).StatusCode);
         var after = await (await father.GetAsync($"/api/v1/creator/tags/for-vocabulary/{vocabId}?childId=1")).Content.ReadFromJsonAsync<JsonElement>();
         Assert.Equal(0, after.GetArrayLength());
@@ -64,7 +64,7 @@ public class TagsRatingsTimetableTests(PuglingWebAppFactory factory) : IClassFix
         var tagId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/tags",
             new { childId = 1, name = "Fremd", color = "#ef4444" }));
 
-        // Zweiter Vater darf weder das fremde Kind abfragen (403) noch dessen Tag bespielen (404, kein Enumerieren).
+        // A second adult may neither query the other child (403) nor play with its tag (404, no enumeration).
         var res = await factory.CreateClient().PostAsJsonAsync("/api/v1/supervisor/adults", new { name = "Papa2", pin = "2222" });
         res.EnsureSuccessStatusCode();
         var id2 = (await res.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetInt32();
@@ -89,7 +89,7 @@ public class TagsRatingsTimetableTests(PuglingWebAppFactory factory) : IClassFix
         Assert.True(list.GetArrayLength() >= 1);
     }
 
-    // ─────────────────────────────────── Löschpfade von Tag und Stundenplan (C3-Abdeckungslücke)
+    // ─────────────────────────────────── Delete paths of a tag and a timetable entry (a C3 coverage gap)
 
     [Fact]
     public async Task Tag_Uebungen_Lesen_Zuordnung_Loesen_Und_Tag_Loeschen()
@@ -101,7 +101,7 @@ public class TagsRatingsTimetableTests(PuglingWebAppFactory factory) : IClassFix
         (await father.PostAsJsonAsync($"/api/v1/creator/tags/{tagId}/exercises",
             new { exerciseIds = new[] { exerciseId } })).EnsureSuccessStatusCode();
 
-        // Die Übungen hinter dem Tag – die Sicht, aus der die Klassenarbeit ihren „relevanten Stoff" zieht.
+        // The exercises behind the tag - the view the class test draws its "relevant material" from.
         var gelesen = await father.GetAsync($"/api/v1/creator/tags/{tagId}/exercises");
         Assert.True(gelesen.IsSuccessStatusCode,
             $"GET tags/{tagId}/exercises → {(int)gelesen.StatusCode}: {await gelesen.Content.ReadAsStringAsync()}");
@@ -112,7 +112,7 @@ public class TagsRatingsTimetableTests(PuglingWebAppFactory factory) : IClassFix
             (await father.DeleteAsync($"/api/v1/creator/tags/{tagId}/exercises/{exerciseId}")).StatusCode);
         Assert.Empty((await (await father.GetAsync($"/api/v1/creator/tags/{tagId}/exercises"))
             .Content.ReadFromJsonAsync<JsonElement>()).EnumerateArray());
-        // Eine schon gelöste Zuordnung noch einmal lösen ist der Fehlerfall – nicht still erfolgreich.
+        // Detaching an already detached assignment is the error case - not silently successful.
         Assert.Equal(HttpStatusCode.NotFound,
             (await father.DeleteAsync($"/api/v1/creator/tags/{tagId}/exercises/{exerciseId}")).StatusCode);
 

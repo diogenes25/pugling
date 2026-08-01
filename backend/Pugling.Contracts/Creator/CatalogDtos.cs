@@ -1,7 +1,7 @@
 namespace Pugling.Contracts.Creator;
 
-// Vertrag des Autoren-Katalogs: Fach → Kapitel → (Übungs-)Kategorie.
-// Reine Transportformen ohne Entity-Bezug; die Projektion aus den Entities bleibt in der API.
+// Contract of the authoring catalog: subject → chapter → (exercise) category.
+// Pure transport shapes without any entity reference; projecting from the entities stays in the API.
 
 /// <summary>A school subject in the shared catalog.</summary>
 public record SubjectResponse(int Id, string Name, DateTime CreatedAt, int ChaptersCount);

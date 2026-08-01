@@ -23,31 +23,31 @@ public class MultiSupervisorTests(PuglingWebAppFactory factory) : IClassFixture<
     [Fact]
     public async Task ZweiSupervisor_GemeinsamesWallet_AberEinloesungAusstellergebunden()
     {
-        // Supervisor A = geseedeter Papa (id 1), Student = geseedeter Sohn (id 1, 50 Münzen Startguthaben).
+        // Supervisor A = the seeded father (id 1), student = the seeded son (id 1, 50 coins starting balance).
         var supA = await TestApi.FatherAsync(_factory);
 
-        // Supervisor B neu registrieren (anonym) und einloggen.
+        // Register supervisor B (anonymously) and log in.
         var reg = await _factory.CreateClient().PostAsJsonAsync("/api/v1/supervisor/adults",
             new { name = "Mama", email = (string?)null, pin = "2222" });
         var supBId = await TestApi.IdAsync(reg);
         var supB = await TestApi.FatherAsync(_factory, supBId, "2222");
 
-        // A macht B zum Ko-Supervisor des Studenten 1.
+        // A makes B a co-supervisor of student 1.
         (await supA.PostAsJsonAsync("/api/v1/supervisor/children/1/supervisors",
             new { supervisorId = supBId, relation = "Mother" })).EnsureSuccessStatusCode();
 
-        // Beide legen je ein Shop-Angebot für denselben Studenten an (Artikelnummer ist je Vater eindeutig).
+        // Both create one shop listing each for the same student (the article number is unique per adult).
         var listingA = await TestApi.CreateShopListingAsync(supA, "TEST-1", coinPrice: 10, unitsPerPurchase: 1, stock: 5, articleTitle: "Papas Artikel");
         var listingB = await TestApi.CreateShopListingAsync(supB, "TEST-1", coinPrice: 10, unitsPerPurchase: 1, stock: 5, articleTitle: "Mamas Artikel");
 
-        // Der Student kauft aus BEIDEN Shops – ein gemeinsames Wallet (50 → 30).
+        // The student buys from BOTH shops - one shared wallet (50 → 30).
         var child = await TestApi.ChildAsync(_factory);
         await BuyAsync(child, listingA);
         await BuyAsync(child, listingB);
         var wallet = await (await child.GetAsync("/api/v1/student/me/points")).Content.ReadFromJsonAsync<JsonElement>();
         Assert.Equal(30, wallet.GetProperty("coins").GetInt32());
 
-        // Jeder Supervisor sieht NUR seinen eigenen Kauf.
+        // Every supervisor sees ONLY their own purchase.
         var purchasesA = await (await supA.GetAsync("/api/v1/supervisor/children/1/shop/purchases"))
             .Content.ReadFromJsonAsync<JsonElement>();
         var purchasesB = await (await supB.GetAsync("/api/v1/supervisor/children/1/shop/purchases"))
@@ -58,17 +58,17 @@ public class MultiSupervisorTests(PuglingWebAppFactory factory) : IClassFixture<
         var purchaseBId = purchasesB.EnumerateArray().First().GetProperty("id").GetInt32();
         Assert.NotEqual(purchaseAId, purchaseBId);
 
-        // A darf B's Kauf NICHT stornieren (fremd ausgestellt → 404), seinen eigenen schon.
+        // A must NOT cancel B's purchase (issued by someone else → 404), their own one yes.
         Assert.Equal(HttpStatusCode.NotFound,
             (await supA.PostAsJsonAsync($"/api/v1/supervisor/children/1/shop/purchases/{purchaseBId}/cancel", new { })).StatusCode);
         (await supA.PostAsJsonAsync($"/api/v1/supervisor/children/1/shop/purchases/{purchaseAId}/cancel", new { }))
             .EnsureSuccessStatusCode();
-        // B storniert seinen eigenen.
+        // B cancels their own.
         (await supB.PostAsJsonAsync($"/api/v1/supervisor/children/1/shop/purchases/{purchaseBId}/cancel", new { }))
             .EnsureSuccessStatusCode();
     }
 
-    // ─────────────────────────────────── Betreuung lesen und lösen (C3-Abdeckungslücke)
+    // ─────────────────────────────────── Reading and removing supervision (a C3 coverage gap)
 
     [Fact]
     public async Task Betreuer_Liste_Und_Entfernen_Der_Letzte_Bleibt()
@@ -78,8 +78,8 @@ public class MultiSupervisorTests(PuglingWebAppFactory factory) : IClassFixture<
             new { name = "Betreutes Kind", pin = "6201" }));
         var url = $"/api/v1/supervisor/children/{childId}/supervisors";
 
-        // Mit nur einem Betreuer lässt sich dieser **nicht** entfernen – ein Student ohne jeden Supervisor
-        // wäre genau die Waise, die niemand mehr sehen oder verwalten kann.
+        // With only one supervisor, that one **cannot** be removed - a student without any supervisor would be
+        // exactly the orphan nobody can see or manage any more.
         var letzter = await supA.DeleteAsync($"{url}/1");
         Assert.Equal(HttpStatusCode.BadRequest, letzter.StatusCode);
         Assert.Equal("validation_error",
@@ -94,7 +94,7 @@ public class MultiSupervisorTests(PuglingWebAppFactory factory) : IClassFixture<
         Assert.Equal(2, liste.GetArrayLength());
         Assert.Contains(omaId, liste.EnumerateArray().Select(l => l.GetProperty("supervisorId").GetInt32()));
 
-        // Jetzt gibt es einen zweiten – die Oma darf gehen.
+        // Now there is a second one - the grandmother may go.
         Assert.Equal(HttpStatusCode.NoContent, (await supA.DeleteAsync($"{url}/{omaId}")).StatusCode);
         Assert.Equal(HttpStatusCode.NotFound, (await supA.DeleteAsync($"{url}/{omaId}")).StatusCode);
         Assert.Equal(1, (await (await supA.GetAsync(url)).Content.ReadFromJsonAsync<JsonElement>()).GetArrayLength());

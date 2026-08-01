@@ -12,7 +12,7 @@ public class PointKindCurrencyTests
     {
         foreach (var kind in Enum.GetValues<PointKind>())
         {
-            var currency = PointKindCurrency.Of(kind); // wirft, falls nicht gemappt
+            var currency = PointKindCurrency.Of(kind); // throws if it is not mapped
             Assert.True(currency is Currency.Coins or Currency.Gems);
         }
     }

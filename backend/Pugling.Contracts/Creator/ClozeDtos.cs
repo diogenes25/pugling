@@ -1,7 +1,7 @@
 namespace Pugling.Contracts.Creator;
 
-// Vertrag der Lückentext-Bausteine (ClozeText) im Autoren-Katalog. Die Lücken selbst (Gap)
-// sind ein geteilter Basistyp und liegen im Wurzel-Namespace des Vertrags-Projekts.
+// Contract of the cloze building blocks (ClozeText) in the authoring catalog. The gaps themselves (Gap)
+// are a shared base type and live in the root namespace of the contract project.
 
 /// <summary>A cloze building block of the catalog.</summary>
 public record ClozeResponse(int Id, string Key, string Title, string SourceLanguage, string TargetLanguage,

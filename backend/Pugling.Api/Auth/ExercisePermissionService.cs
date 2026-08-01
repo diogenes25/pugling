@@ -49,8 +49,8 @@ public class ExercisePermissionService(PuglingDbContext db)
             g.ExerciseId == exercise.Id && g.CreatorId == fid, ct);
     }
 
-    // ── In-Memory-Varianten für Projektionen mit bereits geladenen Grants (kein DB-Roundtrip pro Zeile) ──
-    // Der Admin-Bypass wird per isAdmin-Flag hereingereicht (die statische Methode kennt den Principal nicht).
+    // ── In-memory variants for projections with grants already loaded (no DB round trip per row) ─────────
+    // The admin bypass is passed in through the isAdmin flag (the static method does not know the principal).
 
     /// <summary>Write rule on a loaded grant set (for list/detail projections).</summary>
     public static bool CanWrite(IEnumerable<ExerciseGrant> grants, int? fid, bool isAdmin = false) =>

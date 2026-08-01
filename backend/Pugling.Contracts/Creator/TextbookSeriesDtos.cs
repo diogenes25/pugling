@@ -1,7 +1,7 @@
 namespace Pugling.Contracts.Creator;
 
-// Vertrag der Lehrwerk-Reihen (Route api/v1/creator/textbook-series): die Reihe selbst und ihre Units.
-// Kindneutral wie der übrige Katalog – gelesen von jedem Creator, geändert nur vom Owner.
+// Contract of the textbook series (route api/v1/creator/textbook-series): the series itself and its units.
+// Child-neutral like the rest of the catalog - read by every creator, changed only by the owner.
 
 /// <summary>
 /// A textbook series ("Access") including its own permission view. <c>Slug</c> is the normalized, globally

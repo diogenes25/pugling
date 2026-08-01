@@ -7,9 +7,9 @@ using Pugling.Api.Models;
 
 namespace Pugling.Api.Controllers.Creator;
 
-// Ein Controller je Übungstyp. Jeder erbt die gemeinsame CRUD-Logik aus
-// ExerciseControllerBase<TConfig> und legt nur Route, Tag und Type fest.
-// Dadurch bekommt jeder Typ einen eigenen Pfad und ein eigenes Config-Schema in Swagger.
+// One controller per exercise type. Each inherits the shared CRUD logic from
+// ExerciseControllerBase<TConfig> and only fixes route, tag and type.
+// That gives every type its own path and its own config schema in Swagger.
 
 /// <summary>Shared route prefix of all exercise types.</summary>
 internal static class ExerciseRoutes
@@ -47,8 +47,8 @@ public class VocabularyController(PuglingDbContext db, ExerciseTypeRegistry regi
             if (missing.Count > 0) return $"Unknown vocabulary item IDs: {string.Join(", ", missing)}";
         }
 
-        // Inline-Items tragen – wie der Item-Endpunkt – entweder eine (existierende) VocabularyId ODER Front + Back
-        // (die dann im Store angelegt werden). Front/Back sind optional, ohne VocabularyId aber beide Pflicht.
+        // Inline items carry - like the item endpoint - either an (existing) VocabularyId OR front + back
+        // (which are then created in the store). Front/back are optional, but without a VocabularyId both are required.
         if (config.Items.Any(i => i.VocabularyId is null
             && (string.IsNullOrWhiteSpace(i.Front) || string.IsNullOrWhiteSpace(i.Back))))
             return "Every inline item needs either a vocabularyId or both front and back.";
@@ -111,9 +111,9 @@ public class VocabularyController(PuglingDbContext db, ExerciseTypeRegistry regi
         else
             query = query.Where(v => v.TagLinks.Any(l => tags.Contains(l.VocabTag!.Name)));
         var hitIds = await query.OrderBy(v => v.Key).Select(v => v.Id).ToListAsync(ct);
-        // Ein Snapshot ohne Treffer würde die Übung **leeren** – und zwar lautlos: ein vertippter Tag
-        // (oder `baseFormsOnly` auf einer Liste rein flektierter Formen) sähe wie ein Erfolg aus und ließe
-        // eine Übung ohne Wörter zurück. Nichts ändern ist hier die einzige vertretbare Antwort.
+        // A snapshot without hits would **empty** the exercise - and silently: a mistyped tag (or
+        // `baseFormsOnly` on a list of purely inflected forms) would look like success and leave an exercise
+        // without words behind. Changing nothing is the only defensible answer here.
         if (hitIds.Count == 0)
             return this.ProblemWithCode(ApiErrors.NoTagMatches,
                 "No vocabulary matched these tags; the exercise was left unchanged.");
@@ -122,9 +122,9 @@ public class VocabularyController(PuglingDbContext db, ExerciseTypeRegistry regi
         return Map(exercise, User.AdultId());
     }
 
-    // ---- Einzel-Items (Vokabelpaare) als eigene Sub-Ressource -----------------------------------------
+    // ---- Single items (vocabulary pairs) as their own sub-resource -----------------------------------------
 
-    // Konkreter Pfad (wie VocabLink.Path); das Routen-Template ApiRoutes.Creator trägt den Versions-Platzhalter.
+    // A concrete path (like VocabLink.Path); the route template ApiRoutes.Creator carries the version placeholder.
     private static string ItemSelf(int subjectId, int chapterId, int exerciseId, int itemId) =>
         $"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/vocabulary/{exerciseId}/items/{itemId}";
 
@@ -176,14 +176,14 @@ public class VocabularyController(PuglingDbContext db, ExerciseTypeRegistry regi
         if (resolved is not { } vocabId) return this.ProblemWithCode(ApiErrors.ValidationError,
             "Provide an existing vocabularyId, or front and back (plus the exercise's sourceLang/targetLang) to create one.");
 
-        // Eine Vokabel darf je Übung nur ein Item haben (Unique in der DB): zwei Items auf dasselbe Wort
-        // erzeugten zwei konkurrierende ItemProgress-Zeilen, und der Lernstand desselben Worts liefe
-        // innerhalb einer Übung auseinander. Ohne diese Vorprüfung käme der Index als 500 durch.
+        // A vocabulary entry may have only one item per exercise (unique in the DB): two items on the same word
+        // would create two competing ItemProgress rows, and the progress of that same word would drift apart
+        // within one exercise. Without this pre-check the index would surface as a 500.
         if (await Db.ExerciseItems.AnyAsync(i => i.ExerciseId == exerciseId && i.VocabularyId == vocabId, ct))
             return this.ProblemWithCode(ApiErrors.DuplicateVocabularyInExercise,
                 "This vocabulary entry is already an item of the exercise.");
 
-        // Anfügen ans Ende verschiebt keine bestehenden Positionen (sicher); eine feste Einfügeposition schon.
+        // Appending at the end shifts no existing positions (safe); a fixed insert position would.
         if (body.OrderIndex is not null && await ExerciseInPlanAsync(exerciseId, ct)) return ShiftBlockedProblem();
         var nextOrder = body.OrderIndex ??
             (await Db.ExerciseItems.Where(i => i.ExerciseId == exerciseId).Select(i => (int?)i.OrderIndex).MaxAsync(ct) is { } max ? max + 1 : 0);
@@ -226,7 +226,7 @@ public class VocabularyController(PuglingDbContext db, ExerciseTypeRegistry regi
         if (body.Hint is not null) item.Hint = NormalizeHint(body.Hint);
         if (body.OrderIndex is { } order && order != item.OrderIndex)
         {
-            // Umsortieren verschiebt Positionen → bei in-Plan gespielter Übung blocken (siehe ExerciseInPlanAsync).
+            // Reordering shifts positions → block while the exercise is played in a plan (see ExerciseInPlanAsync).
             if (await ExerciseInPlanAsync(exerciseId, ct)) return ShiftBlockedProblem();
             item.OrderIndex = order;
         }
@@ -248,21 +248,21 @@ public class VocabularyController(PuglingDbContext db, ExerciseTypeRegistry regi
         if (EnsureCanWrite(exercise) is { } forbidden) return forbidden;
         var item = await FindItemAsync(exerciseId, itemId, ct);
         if (item is null) return this.ProblemWithCode(ApiErrors.ItemNotFound, "The exercise item does not exist in this exercise.");
-        // Löschen verschiebt Folgepositionen → bei in-Plan gespielter Übung blocken (Fortschritt bliebe fehl-verankert).
+        // Deleting shifts later positions → block while the exercise is played in a plan (progress would stay mis-anchored).
         if (await ExerciseInPlanAsync(exerciseId, ct)) return ShiftBlockedProblem();
         Db.ExerciseItems.Remove(item);
         await Db.SaveChangesAsync(ct);
         return NoContent();
     }
 
-    // Kein Vorgabewert für `ct` (hier wie in den übrigen Helfern): ein weggelassenes optionales Argument
-    // sieht weder CA2016 noch der Signatur-Wächter – ohne Default erzwingt der Compiler das Durchreichen.
+    // No default for `ct` (here as in the other helpers): neither CA2016 nor the signature guard sees an
+    // omitted optional argument - without a default the compiler forces you to pass it on.
     private Task<ExerciseItem?> FindItemAsync(int exerciseId, int itemId, CancellationToken ct) =>
         Db.ExerciseItems.Include(i => i.Vocabulary).FirstOrDefaultAsync(i => i.Id == itemId && i.ExerciseId == exerciseId, ct);
 
-    // Wird die Übung in einem Lehrplan gespielt? Dann verankert PositionItemProgress den Leitner-Fortschritt
-    // je Position auf der (positionalen) Item-Reihenfolge – index-verschiebende Item-Mutationen (Löschen,
-    // Umsortieren, Einfügen an fester Position) würden gespeicherten Fortschritt aufs falsche Wort umbiegen.
+    // Is the exercise played in a study plan? Then PositionItemProgress anchors the Leitner progress per
+    // position on the (positional) item order - index-shifting item mutations (delete, reorder, insert at a
+    // fixed position) would bend stored progress onto the wrong word.
     private Task<bool> ExerciseInPlanAsync(int exerciseId, CancellationToken ct) =>
         Db.PlanPositions.AnyAsync(p => p.ExerciseId == exerciseId, ct);
 
@@ -407,7 +407,7 @@ public class TranslationController(PuglingDbContext db, ExerciseTypeRegistry reg
 }
 
 // VocabCandidate/DecodedWord/DecodedSentence/BirkenbihlSentenceInput/WordOverride/DecodePreviewInput
-// leben im Vertrags-Projekt (Pugling.Contracts.Creator).
+// live in the contract project (Pugling.Contracts.Creator).
 
 
 /// <summary>
@@ -454,8 +454,8 @@ public class BirkenbihlController(PuglingDbContext db, ExerciseTypeRegistry regi
         config.NextWordId = wordId;
     }
 
-    // Nächste freie ID: berücksichtigt sowohl den Zähler als auch bereits vergebene IDs, damit auch per CRUD
-    // (ohne gepflegte Zähler) angelegte Configs kollisionsfrei bleiben. Mindestens 1 (0 = „noch keine").
+    // Next free id: takes both the counter and already used ids into account, so that configs created through
+    // CRUD (without a maintained counter) stay collision-free too. At least 1 (0 = "none yet").
     private static int NextSentenceSeed(BirkenbihlConfig c) =>
         Math.Max(Math.Max(c.NextSentenceId, 1), c.Sentences.Select(s => s.SentenceId).DefaultIfEmpty(0).Max() + 1);
 
@@ -465,7 +465,7 @@ public class BirkenbihlController(PuglingDbContext db, ExerciseTypeRegistry regi
     private static VocabCandidate ToCandidate(VocabHit h) =>
         new(h.Id, h.Word, h.Translation, h.PartOfSpeech.ToString(), VocabLink.Path + h.Id);
 
-    // Kandidaten nur bei echter Mehrdeutigkeit (mehr als ein Treffer) ausgeben – sonst rauscht die Antwort zu.
+    // Only emit candidates on real ambiguity (more than one hit) - otherwise the response gets noisy.
     private static IReadOnlyList<VocabCandidate>? CandidatesOf(TokenLookup t) =>
         t.Candidates.Count > 1 ? t.Candidates.Select(ToCandidate).ToList() : null;
 
@@ -539,7 +539,7 @@ public class BirkenbihlController(PuglingDbContext db, ExerciseTypeRegistry regi
         WordPair updated;
         if (body.VocabularyId is { } vocabId)
         {
-            // Karte muss existieren und zum Sprachpaar der Übung passen – sonst würde eine fremde Glosse gesetzt.
+            // The card must exist and match the exercise's language pair - otherwise a foreign gloss would be set.
             var card = await Db.Vocabularies.AsNoTracking()
                 .FirstOrDefaultAsync(v => v.Id == vocabId
                     && v.SourceLanguage == config.LearningLang && v.TargetLanguage == config.NativeLang, ct);
@@ -548,12 +548,12 @@ public class BirkenbihlController(PuglingDbContext db, ExerciseTypeRegistry regi
         }
         else if (string.IsNullOrWhiteSpace(body.Gloss))
         {
-            // Glosse entfernen; Wort bleibt undekodiert und ohne Karte.
+            // Remove the gloss; the word stays undecoded and without a card.
             updated = word with { Gloss = null, VocabularyId = null };
         }
         else
         {
-            // Freie Glosse: trotzdem im Store verankern, damit jede genutzte Vokabel dort liegt und verlinkt ist.
+            // Free gloss: anchor it in the store anyway, so every word in use sits there and is linked.
             var gloss = body.Gloss.Trim();
             var vocab = await store.GetOrCreateAsync(config.LearningLang, word.LearningWord, config.NativeLang, gloss, ct: ct);
             await Db.SaveChangesAsync(ct);
@@ -564,7 +564,7 @@ public class BirkenbihlController(PuglingDbContext db, ExerciseTypeRegistry regi
         SetConfig(exercise, config);
         await Db.SaveChangesAsync(ct);
 
-        // Kandidaten der aktuellen Schreibweise erneut ermitteln (nützlich, um direkt eine andere Bedeutung zu wählen).
+        // Re-determine the candidates for the current spelling (useful for picking another meaning right away).
         var lookups = await decoder.LookupAsync(config.LearningLang, config.NativeLang, updated.LearningWord, ct);
         return ToDecodedWord(updated, lookups.Count > 0 ? CandidatesOf(lookups[0]) : null);
     }
@@ -623,7 +623,7 @@ public class BirkenbihlController(PuglingDbContext db, ExerciseTypeRegistry regi
         return new DecodedSentence(0, body.LearningSentence.Trim(), (body.NaturalTranslation ?? "").Trim(), words);
     }
 
-    // Findet ein Wort übungsweit über seine wordId; liefert den Satz und den Index im Decoding (-1 = nicht gefunden).
+    // Finds a word across the exercise by its wordId; returns the sentence and the index in the decoding (-1 = not found).
     private static (BirkenbihlSentence Sentence, int Index) FindWord(BirkenbihlConfig config, int wordId)
     {
         foreach (var s in config.Sentences)

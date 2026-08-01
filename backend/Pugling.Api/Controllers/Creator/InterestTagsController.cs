@@ -121,7 +121,7 @@ public class InterestTagsController(PuglingDbContext db) : ControllerBase
             tag.Label = label;
         }
         if (dto.Facet.HasValue) tag.Facet = dto.Facet.Value;
-        // Neue Liste zuweisen (kein In-Place-Mutieren – JSON-Spalten-Fallstrick).
+        // Assign a new list (no in-place mutation - the JSON column pitfall).
         if (dto.Synonyms is not null) tag.Synonyms = Clean(dto.Synonyms);
         if (dto.Color is not null) tag.Color = dto.Color.Trim() is { Length: > 0 } c ? c : null;
 

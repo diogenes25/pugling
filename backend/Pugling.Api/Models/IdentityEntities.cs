@@ -1,24 +1,24 @@
 namespace Pugling.Api.Models;
 
-// Identitäts-Ebene: EIN Login-Konto (Account) kann MEHRERE Rollen tragen (Creator/Supervisor/Student),
-// entkoppelt von den fachlichen Profilen Adult/Child. So ist ein Vater zugleich Creator und Supervisor,
-// und ein Mensch kann perspektivisch in einem Haushalt Supervisor und in einem anderen Student sein.
-// Die IDs von Adult/Child bleiben unangetastet (jede Fach-FK hängt daran); der Account sitzt darüber.
-// Siehe docs/grundprinzip.md.
+// Identity tier: ONE login account (Account) can carry SEVERAL roles (creator/supervisor/student),
+// decoupled from the domain profiles Adult/Child. That way an adult is creator and supervisor at once, and
+// eventually one person can be supervisor in one household and student in another.
+// The ids of Adult/Child stay untouched (every domain FK hangs on them); the account sits above.
+// See docs/grundprinzip.md.
 
-// ProfileRole lebt im Vertrags-Projekt (Pugling.Contracts).
+// ProfileRole lives in the contract project (Pugling.Contracts).
 
 /// <summary>
-/// Login-Konto: hält die Zugangsdaten (PIN-Hash) einer Person. Über <see cref="Profiles"/> trägt es
-/// eine oder mehrere Rollen. Die Rollen zeigen auf die fachlichen Profile <see cref="Adult"/>/<see cref="Child"/>.
+/// Login account: holds a person's credentials (PIN hash). Through <see cref="Profiles"/> it carries one or
+/// more roles. The roles point at the domain profiles <see cref="Adult"/>/<see cref="Child"/>.
 /// </summary>
 public class Account
 {
     public int Id { get; set; }
     public string DisplayName { get; set; } = "";
-    /// <summary>Optional (Kinder haben heute keine E-Mail). Wenn gesetzt, eindeutig.</summary>
+    /// <summary>Optional (children have no e-mail today). Unique when set.</summary>
     public string? Email { get; set; }
-    /// <summary>PIN-Hash im Format von <see cref="Auth.PinHasher"/> (akzeptiert Alt-Klartext beim Verify).</summary>
+    /// <summary>PIN hash in the format of <see cref="Auth.PinHasher"/> (accepts legacy plaintext on verify).</summary>
     public string PinHash { get; set; } = "";
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
@@ -26,9 +26,9 @@ public class Account
 }
 
 /// <summary>
-/// Eine Rollen-Mitgliedschaft eines Kontos: (Konto, Rolle) → fachliches Profil. Genau eines von
-/// <see cref="AdultId"/>/<see cref="ChildId"/> ist gesetzt (Creator/Supervisor → Adult, Student → Child).
-/// Mehr Rollen = mehr Zeilen; die Multi-Supervisor-Erweiterung braucht dadurch kein Schema-Reshape.
+/// One role membership of an account: (account, role) → domain profile. Exactly one of
+/// <see cref="AdultId"/>/<see cref="ChildId"/> is set (Creator/Supervisor → Adult, Student → Child).
+/// More roles = more rows; that is why the multi-supervisor extension needs no schema reshape.
 /// </summary>
 public class AccountProfile
 {
@@ -36,10 +36,10 @@ public class AccountProfile
     public int AccountId { get; set; }
     public Account? Account { get; set; }
     public ProfileRole Role { get; set; }
-    /// <summary>Gesetzt für <see cref="ProfileRole.Creator"/>/<see cref="ProfileRole.Supervisor"/>.</summary>
+    /// <summary>Set for <see cref="ProfileRole.Creator"/>/<see cref="ProfileRole.Supervisor"/>.</summary>
     public int? AdultId { get; set; }
     public Adult? Adult { get; set; }
-    /// <summary>Gesetzt für <see cref="ProfileRole.Student"/>.</summary>
+    /// <summary>Set for <see cref="ProfileRole.Student"/>.</summary>
     public int? ChildId { get; set; }
     public Child? Child { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

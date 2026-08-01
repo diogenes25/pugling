@@ -13,8 +13,8 @@ namespace Pugling.Api.Services.Creator;
 /// </summary>
 public class CreatorProfileService(PuglingDbContext db)
 {
-    // Die Gewichte der Passung. Die Reihe wiegt am schwersten, weil nur sie verrät, ob der Creator das
-    // konkrete Material kennt – Fach und Klassenstufe treffen bloß das Regal, nicht das Buch.
+    // The weights of the match. The series weighs heaviest because only it reveals whether the creator knows
+    // the concrete material - subject and grade only hit the shelf, not the book.
     private const int WeightSeries = 8;
     private const int WeightSubject = 4;
     private const int WeightGrade = 2;
@@ -43,7 +43,7 @@ public class CreatorProfileService(PuglingDbContext db)
             .FirstOrDefaultAsync(ct);
         if (child is null) return [];
 
-        // Die Reihen, mit denen das Kind tatsächlich arbeitet – der stärkste Hinweis auf den richtigen Lehrer.
+        // The series the child actually works with - the strongest hint at the right teacher.
         var seriesIds = await db.Textbooks.AsNoTracking()
             .Where(t => t.ChildId == childId && t.SeriesId != null
                         && (subjectId == null || t.SubjectId == subjectId))
@@ -53,7 +53,7 @@ public class CreatorProfileService(PuglingDbContext db)
 
         var profiles = await db.CreatorProfiles.AsNoTracking()
             .Where(p => p.Active)
-            // Fachfilter in der DB: fachneutrale Profile (SubjectId == null) bleiben bewusst drin.
+            // Subject filter in the DB: subject-neutral profiles (SubjectId == null) deliberately stay in.
             .Where(p => subjectId == null || p.SubjectId == null || p.SubjectId == subjectId)
             .Include(p => p.Series)
             .OrderBy(p => p.Id)
@@ -77,8 +77,8 @@ public class CreatorProfileService(PuglingDbContext db)
                 score += WeightSubject;
                 reasons.Add(ReasonSubject);
             }
-            // Nur eine echte Eingrenzung zählt: ein Profil ohne Klassenstufen-Grenzen passt immer und
-            // verdient dafür keine Punkte, sonst schlüge der Generalist den Fachlehrer.
+            // Only a real narrowing counts: a profile without grade bounds always fits and earns no points
+            // for it, otherwise the generalist would beat the subject teacher.
             if (child.Grade is not null && (profile.GradeMin is not null || profile.GradeMax is not null))
             {
                 score += WeightGrade;
@@ -93,7 +93,7 @@ public class CreatorProfileService(PuglingDbContext db)
             matches.Add(new CreatorProfileMatch(Map(profile, supervisorId), score, reasons));
         }
 
-        // Punkte absteigend, danach die Id aufsteigend: die Reihenfolge ist reproduzierbar.
+        // Points descending, then the id ascending: the order is reproducible.
         return [.. matches.OrderByDescending(m => m.Score).ThenBy(m => m.Profile.Id)];
     }
 
@@ -104,7 +104,7 @@ public class CreatorProfileService(PuglingDbContext db)
     private static bool Fits(CreatorProfile profile, int? grade, SchoolTypes schoolType)
     {
         if (grade is int g && (profile.GradeMin > g || profile.GradeMax < g)) return false;
-        // None heißt auf beiden Seiten „keine Angabe" und schließt darum nichts aus.
+        // None means "not specified" on both sides and therefore excludes nothing.
         if (profile.SchoolTypes != SchoolTypes.None && schoolType != SchoolTypes.None
             && (profile.SchoolTypes & schoolType) == 0) return false;
         return true;

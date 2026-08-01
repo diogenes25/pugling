@@ -26,7 +26,7 @@ public class ChildVocabularyProgressController(PuglingDbContext db) : Controller
     /// <summary>The mastery (percent) below which an item/word counts as "weak" (filter <c>onlyWeak</c>); a shared threshold.</summary>
     private const int WeakBelowPercent = ItemProgress.WeakBelowPercent;
 
-    // EF-Projektion ohne den abgeleiteten Link (im Speicher ergänzt).
+    // EF projection without the derived link (added in memory).
     private record Row(int ItemId, int ExerciseId, int VocabularyId, string Front, string Back,
         int Box, int MasteryPercent, int SeenCount, int CorrectCount,
         DateOnly? IntroducedAt, DateTime? LastAnswerAt, bool? LastCorrect);

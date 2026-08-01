@@ -47,7 +47,7 @@ public class KlassenarbeitenController(PuglingDbContext db, AuthAccess access, E
     private static string? ValidateGrade(decimal? grade) =>
         grade is { } g && (g < 1.0m || g > 6.0m) ? "Grade must be between 1.0 and 6.0." : null;
 
-    // ---- Lesen ----
+    // ---- Read ----
 
     /// <summary>Class tests of a child, optionally filtered by status/subject (own only).</summary>
     /// <param name="childId">Child whose class tests are being read.</param>
@@ -85,7 +85,7 @@ public class KlassenarbeitenController(PuglingDbContext db, AuthAccess access, E
         return new KlassenarbeitDetail(Map(k), exercises);
     }
 
-    // ---- Anlegen / Ändern (nur Vater) ----
+    // ---- Create / change (supervisor only) ----
 
     /// <summary>Plans a class test (or records one already written). Father only, own children only.</summary>
     [HttpPost]
@@ -159,7 +159,7 @@ public class KlassenarbeitenController(PuglingDbContext db, AuthAccess access, E
             k.Grade = dto.Grade;
         }
 
-        // Eine nachgetragene Note bedeutet: geschrieben. Explizit gesetzter Status hat Vorrang.
+        // A grade entered afterwards means: written. An explicitly set status takes precedence.
         if (dto.Status is not null) k.Status = dto.Status.Value;
         else if (k.Grade is not null && k.Status == KlassenarbeitStatus.Planned) k.Status = KlassenarbeitStatus.Written;
 
@@ -181,7 +181,7 @@ public class KlassenarbeitenController(PuglingDbContext db, AuthAccess access, E
         return NoContent();
     }
 
-    // ---- Übungen zuweisen (nur Vater) ----
+    // ---- Assign exercises (supervisor only) ----
 
     /// <summary>Assigns exercises directly to the class test (already assigned ones are skipped). Father only.</summary>
     [HttpPost("{id:int}/exercises")]
@@ -251,7 +251,7 @@ public class KlassenarbeitenController(PuglingDbContext db, AuthAccess access, E
         return NoContent();
     }
 
-    // ---- Üben / Wiederholen ----
+    // ---- Practice / repeat ----
 
     /// <summary>
     /// All exercises relevant to the class test: directly assigned AND marked via linked tags
@@ -294,7 +294,7 @@ public class KlassenarbeitenController(PuglingDbContext db, AuthAccess access, E
         return new RepeatResponse(threshold, sources.Select(Map).ToList(), exercises);
     }
 
-    // ---- Helfer ----
+    // ---- Helpers ----
 
     /// <summary>Loads exercises by predicate incl. chapter/subject, sorted and without tracking.</summary>
     private async Task<List<ExerciseBrief>> LoadExercisesAsync(
@@ -336,7 +336,7 @@ public class KlassenarbeitenController(PuglingDbContext db, AuthAccess access, E
         var missing = ids.Except(known.Select(e => e.Id)).ToList();
         if (missing.Count > 0) return this.ProblemWithCode(ApiErrors.InvalidReference, $"Unknown exercise IDs: {string.Join(", ", missing)}");
 
-        // Execute-Gate: nur öffentlich ausführbare oder eigens freigegebene Übungen darf der Vater in die Arbeit aufnehmen.
+        // Execute gate: only publicly executable or specifically granted exercises may go into the test.
         foreach (var exercise in known)
             if (!await perms.CanExecuteAsync(User, exercise, ct))
                 return this.ProblemWithCode(ApiErrors.ExerciseNotExecutable,

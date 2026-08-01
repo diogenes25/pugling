@@ -1,40 +1,39 @@
 namespace Pugling.Api.Models;
 
-// Die Unterrichts-Seite des Katalogs: welches Werk ein Fach abdeckt (TextbookSeries -> SeriesUnit) und
-// wer es unterrichtet (CreatorProfile). Beides ist kindneutral und wird EINMAL gepflegt – das Kind
-// verweist über sein Textbook nur darauf. Eigentum ist wie bei der Übung geregelt: global lesbar,
-// schreiben darf nur der Owner; ein gelöschter Owner leert nur die FK (SetNull), damit fremde
-// Referenzen nicht brechen.
+// The teaching side of the catalog: which work covers a subject (TextbookSeries -> SeriesUnit) and who
+// teaches it (CreatorProfile). Both are child-neutral and maintained ONCE - the child only points at them
+// through its Textbook. Ownership works as with the exercise: globally readable, only the owner may write;
+// a deleted owner only clears the FK (SetNull) so that other people's references do not break.
 
 /// <summary>
-/// Eine Lehrwerk-Reihe („Access", „Green Line") als <b>geteilte</b> Größe. Erst dadurch ist die Frage
-/// „welcher Creator kennt das Material dieses Kindes?" maschinell beantwortbar: Kind-<see cref="Textbook"/>
-/// und <see cref="CreatorProfile"/> zeigen auf denselben Datensatz, statt Freitext-Titel zu vergleichen.
-/// Der <see cref="Slug"/> macht das Anlegen idempotent (Muster: <c>InterestTag</c>).
+/// A textbook series ("Access", "Green Line") as a <b>shared</b> entity. Only that makes the question
+/// "which creator knows this child's material?" answerable by machine: the child's <see cref="Textbook"/>
+/// and the <see cref="CreatorProfile"/> point at the same record instead of comparing free-text titles.
+/// The <see cref="Slug"/> makes creation idempotent (pattern: <c>InterestTag</c>).
 /// </summary>
 public class TextbookSeries
 {
     public int Id { get; set; }
-    /// <summary>Anzeigename der Reihe, z. B. „Access".</summary>
+    /// <summary>Display name of the series, e.g. "Access".</summary>
     public string Name { get; set; } = "";
-    /// <summary>Normalisierter, global eindeutiger Schlüssel der Reihe („access"). Unveränderlich.</summary>
+    /// <summary>Normalized, globally unique key of the series ("access"). Immutable.</summary>
     public string Slug { get; set; } = "";
-    /// <summary>Verlag, z. B. „Cornelsen".</summary>
+    /// <summary>Publisher, e.g. "Cornelsen".</summary>
     public string? Publisher { get; set; }
-    /// <summary>Fach als Freitext („Englisch") – das Fach muss nicht im Katalog existieren.</summary>
+    /// <summary>Subject as free text ("Englisch") – the subject need not exist in the catalog.</summary>
     public string? SubjectName { get; set; }
-    /// <summary>Optionaler Katalog-Link auf ein <see cref="Subject"/>, wo eine exakte Zuordnung möglich ist.</summary>
+    /// <summary>Optional catalog link to a <see cref="Subject"/> where an exact assignment is possible.</summary>
     public int? SubjectId { get; set; }
     public Subject? Subject { get; set; }
-    /// <summary>Schularten, für die die Reihe gedacht ist; <see cref="SchoolTypes.None"/> = für alle.</summary>
+    /// <summary>School types the series is meant for; <see cref="SchoolTypes.None"/> = for all of them.</summary>
     public SchoolTypes SchoolTypes { get; set; } = SchoolTypes.None;
-    /// <summary>Bei Sprachreihen die Lernsprache (Sprachcode, z. B. <c>en</c>).</summary>
+    /// <summary>For language series the language being learned (language code, e.g. <c>en</c>).</summary>
     public string? SourceLanguage { get; set; }
-    /// <summary>Bei Sprachreihen die Muttersprache (Sprachcode, z. B. <c>de</c>).</summary>
+    /// <summary>For language series the native language (language code, e.g. <c>de</c>).</summary>
     public string? TargetLanguage { get; set; }
-    /// <summary>Freie Notizen zum Werk (Aufbau, Besonderheiten) – Kontext für den KI-Creator.</summary>
+    /// <summary>Free-form notes on the work (structure, particularities) – context for the AI creator.</summary>
     public string? Notes { get; set; }
-    /// <summary>Wer die Reihe angelegt hat und sie ändern darf; <c>null</c> = geseedet, gehört niemandem.</summary>
+    /// <summary>Who created the series and may change it; <c>null</c> = seeded, owned by nobody.</summary>
     public int? OwnerAdultId { get; set; }
     public Adult? Owner { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
@@ -43,78 +42,78 @@ public class TextbookSeries
 }
 
 /// <summary>
-/// Eine Unit der Reihe, samt Band. Band und Unit liegen bewusst in <b>einer</b> Ebene
-/// (<see cref="Grade"/> = Band): „Access 8, Unit 3" ist eine Zeile, kein zweistufiger Baum.
-/// <see cref="Topics"/>, <see cref="Grammar"/> und <see cref="VocabularyNotes"/> sind der eigentliche
-/// Gewinn dieser Tabelle – sie machen den Creator <i>materialkundig</i>, statt ihn den Stoff der Unit
-/// erraten zu lassen.
+/// A unit of the series, including its volume. Volume and unit deliberately live on <b>one</b> level
+/// (<see cref="Grade"/> = volume): "Access 8, Unit 3" is one row, not a two-level tree.
+/// <see cref="Topics"/>, <see cref="Grammar"/> and <see cref="VocabularyNotes"/> are the actual gain of
+/// this table – they make the creator <i>familiar with the material</i> instead of letting it guess the
+/// unit's subject matter.
 /// </summary>
 public class SeriesUnit
 {
     public int Id { get; set; }
     public int SeriesId { get; set; }
     public TextbookSeries? Series { get; set; }
-    /// <summary>Band der Reihe, ausgedrückt als Klassenstufe (Access 8 → 8); null = bandlos.</summary>
+    /// <summary>Volume of the series, expressed as a grade (Access 8 → 8); null = no volume.</summary>
     public int? Grade { get; set; }
-    /// <summary>Reihenfolge innerhalb des Bandes.</summary>
+    /// <summary>Order within the volume.</summary>
     public int OrderIndex { get; set; }
-    /// <summary>Bezeichnung wie im Buch, z. B. „Unit 3 – Growing up".</summary>
+    /// <summary>Label as printed in the book, e.g. "Unit 3 – Growing up".</summary>
     public string Label { get; set; } = "";
-    /// <summary>Themen/Inhalte der Unit (Freitext, gern Stichpunkte).</summary>
+    /// <summary>Topics/contents of the unit (free text, bullet points welcome).</summary>
     public string? Topics { get; set; }
-    /// <summary>Grammatik, die die Unit einführt oder übt.</summary>
+    /// <summary>Grammar the unit introduces or practices.</summary>
     public string? Grammar { get; set; }
-    /// <summary>Wortschatz-Notiz der Unit (Wortfelder oder konkrete Wörter, kommagetrennt).</summary>
+    /// <summary>Vocabulary note of the unit (word fields or concrete words, comma-separated).</summary>
     public string? VocabularyNotes { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }
 
 /// <summary>
-/// Ein Creator-Profil ist der <b>Lehrer</b>: ein Fach, ein Schulzweig, ein Klassenstufen-Bereich und
-/// optional eine Buchreihe – dazu die didaktische Haltung, mit der Übungen entstehen
-/// (<see cref="Persona"/>/<see cref="Didactics"/> gehen in den System-Prompt des KI-Creators).
-/// Der Sinn ist die Passung: zu einem Kind lässt sich damit der fachkundige Creator <i>finden</i>
-/// (<c>CreatorProfileService</c>), statt jedes Mal denselben Generalisten zu befragen.
+/// A creator profile is the <b>teacher</b>: one subject, one school branch, one grade range and
+/// optionally one textbook series – plus the didactic stance exercises are created with
+/// (<see cref="Persona"/>/<see cref="Didactics"/> go into the AI creator's system prompt).
+/// Its purpose is the fit: for a given child the knowledgeable creator can be <i>found</i>
+/// (<c>CreatorProfileService</c>) instead of asking the same generalist every time.
 /// </summary>
 public class CreatorProfile
 {
     public int Id { get; set; }
-    /// <summary>Sprechender Name, z. B. „Englisch 8 Gymnasium – Access".</summary>
+    /// <summary>Descriptive name, e.g. "Englisch 8 Gymnasium – Access".</summary>
     public string Name { get; set; } = "";
-    /// <summary>Wer das Profil angelegt hat und es ändern darf; <c>null</c> = geseedet.</summary>
+    /// <summary>Who created the profile and may change it; <c>null</c> = seeded.</summary>
     public int? OwnerAdultId { get; set; }
     public Adult? Owner { get; set; }
-    /// <summary>Fach als Freitext („Englisch") – für Profile ohne Katalog-Fach.</summary>
+    /// <summary>Subject as free text ("Englisch") – for profiles without a catalog subject.</summary>
     public string? SubjectName { get; set; }
-    /// <summary>Optionaler Katalog-Link auf ein <see cref="Subject"/>.</summary>
+    /// <summary>Optional catalog link to a <see cref="Subject"/>.</summary>
     public int? SubjectId { get; set; }
     public Subject? Subject { get; set; }
-    /// <summary>Schularten, für die das Profil zuständig ist; <see cref="SchoolTypes.None"/> = für alle.</summary>
+    /// <summary>School types the profile is responsible for; <see cref="SchoolTypes.None"/> = for all of them.</summary>
     public SchoolTypes SchoolTypes { get; set; } = SchoolTypes.None;
-    /// <summary>Unterste unterrichtete Klassenstufe (inklusive); null = keine Untergrenze.</summary>
+    /// <summary>Lowest grade taught (inclusive); null = no lower bound.</summary>
     public int? GradeMin { get; set; }
-    /// <summary>Oberste unterrichtete Klassenstufe (inklusive); null = keine Obergrenze.</summary>
+    /// <summary>Highest grade taught (inclusive); null = no upper bound.</summary>
     public int? GradeMax { get; set; }
-    /// <summary>Die Reihe, auf die das Profil optimiert ist; null = werkunabhängig.</summary>
+    /// <summary>The series the profile is optimized for; null = independent of any work.</summary>
     public int? SeriesId { get; set; }
     public TextbookSeries? Series { get; set; }
-    /// <summary>Lernsprache (Sprachcode) für Sprachfächer.</summary>
+    /// <summary>Language being learned (language code) for language subjects.</summary>
     public string SourceLang { get; set; } = "en";
-    /// <summary>Muttersprache (Sprachcode).</summary>
+    /// <summary>Native language (language code).</summary>
     public string TargetLang { get; set; } = "de";
     /// <summary>
-    /// Rollenbeschreibung des Lehrers in eigenen Worten („Du bist Englischlehrer am Gymnasium …").
-    /// Wird dem festen Regelblock des Creators <b>vorangestellt</b>, ersetzt ihn nie.
+    /// The teacher's role description in their own words ("You are an English teacher at a Gymnasium …").
+    /// It is <b>prepended</b> to the creator's fixed rule block, it never replaces it.
     /// </summary>
     public string? Persona { get; set; }
-    /// <summary>Didaktische Vorgaben, die über einen Auftrag hinaus gelten (Satzlänge, Progression, Tabus).</summary>
+    /// <summary>Didactic requirements that hold beyond a single assignment (sentence length, progression, taboos).</summary>
     public string? Didactics { get; set; }
     /// <summary>
-    /// Übungstypen, die dieses Profil bevorzugt erzeugt (Schlüssel aus dem Typ-Manifest). Als JSON-Liste
-    /// gespeichert – im Controller <b>neu zuweisen</b>, nicht in-place mutieren (fehlender ValueComparer).
+    /// Exercise types this profile preferably creates (keys from the type manifest). Stored as a JSON list –
+    /// <b>reassign</b> it in the controller, do not mutate in place (missing ValueComparer).
     /// </summary>
     public List<string> DefaultTypes { get; set; } = [];
-    /// <summary>Inaktive Profile werden beim Matching nie vorgeschlagen.</summary>
+    /// <summary>Inactive profiles are never suggested during matching.</summary>
     public bool Active { get; set; } = true;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }

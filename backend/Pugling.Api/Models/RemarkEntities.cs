@@ -1,179 +1,179 @@
 namespace Pugling.Api.Models;
 
-// RemarkCategory/RemarkStatus leben im Vertrags-Projekt (Pugling.Contracts).
+// RemarkCategory/RemarkStatus live in the contract project (Pugling.Contracts).
 
 /// <summary>
-/// Eine beim Testen erfasste <b>Anmerkung</b>: Frage, Beobachtung oder Befund, festgehalten dort, wo sie
-/// aufgefallen ist. Der fachliche Wert steckt nicht im Text – den könnte auch ein Textdokument halten –,
-/// sondern im <b>mitgeschnittenen Kontext</b> (Route, Rolle, Kind/Übung, letzte Fehler): Genau das schreibt
-/// ein Mensch beim Testen nicht mit, und genau das kostet später die Zeit beim Nachstellen.
+/// A <b>remark</b> captured while testing: a question, an observation or a finding, recorded right where it
+/// showed up. Its domain value does not sit in the text – a text document could hold that too – but in the
+/// <b>captured context</b> (route, role, child/exercise, recent errors): exactly what a human does not write
+/// down while testing, and exactly what costs the time later when reproducing it.
 /// <para>
-/// Anmerkungen entstehen ausschließlich über das UI-Widget. Die Test-Skills (<c>creator</c>/<c>supervisor</c>/
-/// <c>student</c>, <c>/smoke-test</c>) <b>lesen</b> sie über den Markdown-Export, legen aber keine an – sie
-/// laufen gegen eine Wegwerf-DB, ein dort erzeugter Eintrag würde mit ihr gelöscht.
+/// Remarks are only ever created through the UI widget. The test skills (<c>creator</c>/<c>supervisor</c>/
+/// <c>student</c>, <c>/smoke-test</c>) <b>read</b> them through the markdown export but create none – they run
+/// against a throwaway DB, and an entry created there would be deleted with it.
 /// </para>
 /// </summary>
 public class Remark
 {
     /// <summary>
-    /// Fachlich sichtbare „Log-Id": Das Widget zeigt sie nach dem Speichern an, damit der Mensch sie
-    /// mitnehmen und in Claude Code einlösen kann („Beantworte die Frage 123").
+    /// The domain-visible "log id": the widget shows it after saving so the human can take it along and
+    /// redeem it in Claude Code ("answer question 123").
     /// </summary>
     public int Id { get; set; }
 
-    /// <summary>Der eigentliche Text – das einzige Pflicht-Eingabefeld.</summary>
+    /// <summary>The actual text – the only mandatory input field.</summary>
     public string Text { get; set; } = "";
 
     /// <summary>
-    /// Einordnung. Bleibt bewusst häufig <see cref="RemarkCategory.Unspecified"/>: Beim Erfassen zu
-    /// kategorisieren kostet mehr Zeit, als es einbringt – das Nachziehen erledigt der Skill aus dem Text.
+    /// Classification. Deliberately stays <see cref="RemarkCategory.Unspecified"/> quite often: categorizing
+    /// while capturing costs more time than it yields – the skill derives it from the text afterwards.
     /// </summary>
     public RemarkCategory Category { get; set; } = RemarkCategory.Unspecified;
 
-    /// <summary>Bearbeitungsstand. Ohne ihn legt der Nachbereitungs-Skill bei jedem Lauf dieselben Anmerkungen wieder vor.</summary>
+    /// <summary>Processing state. Without it the follow-up skill presents the same remarks again on every run.</summary>
     public RemarkStatus Status { get; set; } = RemarkStatus.Open;
 
-    // --- Antwort (Rückkanal aus Claude Code) ---
+    // --- Answer (the back channel from Claude Code) ---
 
     /// <summary>
-    /// Die Antwort auf eine Frage. Bleibt <b>auch bei <see cref="RemarkStatus.Planned"/> erhalten</b>: Ein
-    /// zurückgestellter Fall ist damit kein offener Zettel mehr, sondern ein bereits analysierter
-    /// Backlog-Eintrag – die Vorarbeit für die spätere Umsetzung ist getan.
+    /// The answer to a question. It is <b>kept even at <see cref="RemarkStatus.Planned"/></b>: a deferred case
+    /// is then no longer an open note but an already analyzed backlog entry – the groundwork for the later
+    /// implementation is done.
     /// </summary>
     public string? Answer { get; set; }
 
-    /// <summary>Zeitpunkt der Beantwortung (UTC).</summary>
+    /// <summary>Instant the answer was given (UTC).</summary>
     public DateTime? AnsweredAt { get; set; }
 
     /// <summary>
-    /// Wer geantwortet hat, z. B. <c>claude-code</c>. Bewusst ein Protokoll-<c>string</c> und kein Enum:
-    /// hier soll später auch ein Mensch stehen können, ohne dass das Schema wandert.
+    /// Who answered, e.g. <c>claude-code</c>. Deliberately a protocol <c>string</c> and not an enum:
+    /// a human should be able to stand here later without the schema moving.
     /// </summary>
     public string? AnsweredBy { get; set; }
 
     /// <summary>
-    /// Optionaler Verweis auf die Anmerkung, aus der diese hervorging – die Spur von der Frage zu der
-    /// daraus entstandenen Aufgabe. Gesetzt wird sie vom Skill, nicht vom Widget.
+    /// Optional reference to the remark this one grew out of – the trail from the question to the task that
+    /// came from it. It is set by the skill, not by the widget.
     /// <para>
-    /// Nicht zu verwechseln mit <see cref="Comments"/>: Der Verweis führt <b>zwischen</b> Vorgängen
-    /// (aus der Frage wurde eine Aufgabe), der Verlauf liegt <b>innerhalb</b> eines Vorgangs.
+    /// Not to be confused with <see cref="Comments"/>: the reference leads <b>between</b> cases
+    /// (the question became a task), the history lies <b>within</b> one case.
     /// </para>
     /// </summary>
     public int? ParentRemarkId { get; set; }
     public Remark? ParentRemark { get; set; }
 
     /// <summary>
-    /// Der Verlauf: Analyse-Nachträge, Rückfragen des Menschen, Umsetzungsnotizen. Ergänzt
-    /// <see cref="Answer"/>, ersetzt es nicht – die Antwort bleibt die *eine* belegte Auflösung, der Verlauf
-    /// trägt alles, was danach kommt.
+    /// The history: analysis addenda, follow-up questions from the human, implementation notes. It complements
+    /// <see cref="Answer"/>, it does not replace it – the answer stays the *one* substantiated resolution, the
+    /// history carries everything that comes afterwards.
     /// <para>
-    /// Der Verlauf ist der Grund, warum die Anmerkung einen Arbeitsgang übersteht: Vorher überschrieb eine
-    /// Umsetzungsnotiz die vorangegangene Analyse, und die Vorarbeit war verloren.
+    /// The history is the reason a remark survives a work step: before it, an implementation note overwrote the
+    /// preceding analysis and the groundwork was lost.
     /// </para>
     /// </summary>
     public ICollection<RemarkComment> Comments { get; set; } = [];
 
-    // --- Autor ---
+    // --- Author ---
 
-    /// <summary>Konto des Erfassers (Claim <c>aid</c>).</summary>
+    /// <summary>Account of the person capturing it (claim <c>aid</c>).</summary>
     public int AccountId { get; set; }
     public Account? Account { get; set; }
 
     /// <summary>
-    /// Rolle <b>zum Zeitpunkt der Erfassung</b> (Momentaufnahme wie <c>SupervisorId</c> auf
-    /// <see cref="ShopPurchase"/>). Ein Konto kann mehrere Rollen tragen; für die Einordnung zählt die,
-    /// in der gerade getestet wurde.
+    /// Role <b>at the time of capturing</b> (a snapshot like <c>SupervisorId</c> on
+    /// <see cref="ShopPurchase"/>). An account can carry several roles; for the classification the one that
+    /// was being tested in counts.
     /// </summary>
     public ProfileRole AuthorRole { get; set; }
 
-    // --- Kontext-Schnappschuss (das Herzstück) ---
+    // --- Context snapshot (the heart of it) ---
 
-    /// <summary>Pfad im SPA, z. B. <c>/vater/kind/3/lernstand</c>.</summary>
+    /// <summary>Path within the SPA, e.g. <c>/vater/kind/3/lernstand</c>.</summary>
     public string Route { get; set; } = "";
 
-    /// <summary>Anwendungsbereich (<c>vater</c>/<c>sohn</c>) – explizit statt aus der Route geraten.</summary>
+    /// <summary>Application area (<c>vater</c>/<c>sohn</c>) – explicit instead of guessed from the route.</summary>
     public string AppArea { get; set; } = "";
 
-    /// <summary>Kind, das beim Erfassen ausgewählt war. FK <c>SetNull</c>: Der Kontext darf verblassen, er darf nichts blockieren.</summary>
+    /// <summary>Child that was selected while capturing. FK <c>SetNull</c>: the context may fade, it must block nothing.</summary>
     public int? ChildId { get; set; }
     public Child? Child { get; set; }
 
-    /// <summary>Übung, die beim Erfassen offen war.</summary>
+    /// <summary>Exercise that was open while capturing.</summary>
     public int? ExerciseId { get; set; }
     public Exercise? Exercise { get; set; }
 
-    /// <summary>Lehrplan, der beim Erfassen offen war.</summary>
+    /// <summary>Study plan that was open while capturing.</summary>
     public int? StudyPlanId { get; set; }
     public StudyPlan? StudyPlan { get; set; }
 
-    /// <summary>Position, die beim Erfassen offen war.</summary>
+    /// <summary>Position that was open while capturing.</summary>
     public int? PlanPositionId { get; set; }
     public PlanPosition? PlanPosition { get; set; }
 
     /// <summary>
-    /// Zustands-Schnappschuss (Filter, offenes Modal, Auswahl) als rohes JSON. Bewusst <c>string</c> statt
-    /// typisierter Spalte: Das Backend liest ihn nie fachlich aus – nur der Nachbereitungs-Skill tut das.
-    /// So entfällt auch der <c>ValueComparer</c>, den eine gemappte JSON-Spalte bräuchte.
+    /// State snapshot (filters, open modal, selection) as raw JSON. Deliberately a <c>string</c> instead of a
+    /// typed column: the backend never reads it in a domain sense – only the follow-up skill does. That also
+    /// makes the <c>ValueComparer</c> unnecessary that a mapped JSON column would need.
     /// </summary>
     public string? ContextJson { get; set; }
 
     /// <summary>
-    /// Ringpuffer der letzten fehlgeschlagenen Requests und JS-Fehler, als rohes JSON (gleiche Begründung
-    /// wie <see cref="ContextJson"/>).
+    /// Ring buffer of the most recent failed requests and JS errors, as raw JSON (same rationale as
+    /// <see cref="ContextJson"/>).
     /// <para>
-    /// <b>Sicherheitsregel:</b> ausschließlich Metadaten – Methode, Pfad, Status, Fehler-<c>code</c>,
-    /// Zeitstempel. <b>Keine</b> Request-/Response-Bodies, <b>keine</b> Header, <b>keine</b> Tokens: Der
-    /// Login-Request trägt die PIN im Body, ein roher Mitschnitt legte sie im Klartext in die DB und trüge
-    /// sie über den Export ins Repo.
+    /// <b>Security rule:</b> metadata only – method, path, status, error <c>code</c>, timestamp. <b>No</b>
+    /// request/response bodies, <b>no</b> headers, <b>no</b> tokens: the login request carries the PIN in its
+    /// body, and a raw capture would put it into the DB in clear text and carry it into the repository through
+    /// the export.
     /// </para>
     /// </summary>
     public string? RecentErrorsJson { get; set; }
 
-    /// <summary>Browserkennung – trennt Handy-Beobachtungen von Desktop-Beobachtungen.</summary>
+    /// <summary>Browser identification – separates phone observations from desktop observations.</summary>
     public string? UserAgent { get; set; }
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }
 
 /// <summary>
-/// Ein Beitrag im Verlauf einer <see cref="Remark"/>: Analyse-Nachtrag, Rückfrage des Menschen,
-/// Umsetzungsnotiz.
+/// One entry in the history of a <see cref="Remark"/>: an analysis addendum, a follow-up question from the
+/// human, an implementation note.
 /// <para>
-/// <b>Warum es das gibt:</b> Mit nur einem <see cref="Remark.Answer"/>-Feld überschrieb jeder zweite
-/// Arbeitsgang den ersten – die belegte Analyse verschwand hinter dem „gebaut: …". Der Verlauf hält die
-/// Reihenfolge fest, die der Arbeitsweise entspricht: analysieren, zurückstellen, später umsetzen.
+/// <b>Why it exists:</b> with only one <see cref="Remark.Answer"/> field, every second work step overwrote the
+/// first – the substantiated analysis vanished behind the "built: …". The history records the order that
+/// matches how the work actually happens: analyze, defer, implement later.
 /// </para>
 /// <para>
-/// <b>Und was es nicht ist:</b> kein Chat. Es gibt keine Zustellung, keine Ungelesen-Marker und keine
-/// Erwartung, dass jemand wartet – gelesen wird beim nächsten Testen oder im nächsten Skill-Lauf.
+/// <b>And what it is not:</b> a chat. There is no delivery, no unread markers and no expectation that somebody
+/// is waiting – it is read during the next testing session or on the next skill run.
 /// </para>
 /// </summary>
 public class RemarkComment
 {
     public int Id { get; set; }
 
-    /// <summary>Die Anmerkung, zu der der Beitrag gehört. FK <b>Cascade</b>: Ein Verlauf ohne Vorgang ist sinnlos.</summary>
+    /// <summary>The remark the entry belongs to. FK <b>cascade</b>: a history without its case is pointless.</summary>
     public int RemarkId { get; set; }
     public Remark? Remark { get; set; }
 
-    /// <summary>Der Text – das einzige Pflichtfeld.</summary>
+    /// <summary>The text – the only mandatory field.</summary>
     public string Body { get; set; } = "";
 
     /// <summary>
-    /// Mensch oder Claude. Steuert die Wiederaufnahme: Ein <see cref="RemarkCommentAuthor.Human"/>-Beitrag
-    /// holt eine erledigte Anmerkung zurück auf <see cref="RemarkStatus.Open"/>.
+    /// Human or Claude. It drives the reopening: a <see cref="RemarkCommentAuthor.Human"/> entry pulls a
+    /// finished remark back to <see cref="RemarkStatus.Open"/>.
     /// </summary>
     public RemarkCommentAuthor Author { get; set; } = RemarkCommentAuthor.Human;
 
     /// <summary>
-    /// Anzeigename des Urhebers, z. B. <c>claude-code</c>. Bewusst ein Protokoll-<c>string</c> wie
-    /// <see cref="Remark.AnsweredBy"/> – so kann später ein weiterer Beteiligter dazukommen, ohne Schema-Umbau.
+    /// Display name of the author, e.g. <c>claude-code</c>. Deliberately a protocol <c>string</c> like
+    /// <see cref="Remark.AnsweredBy"/> – that way another participant can join later without a schema rebuild.
     /// </summary>
     public string? AuthorLabel { get; set; }
 
     /// <summary>
-    /// Konto des Schreibers. FK <c>SetNull</c>, denn ein gelöschtes Konto darf den Verlauf nicht mitnehmen –
-    /// die fachliche Aussage des Beitrags gilt weiter.
+    /// Account of the writer. FK <c>SetNull</c>, because a deleted account must not take the history with it –
+    /// the entry's domain statement still holds.
     /// </summary>
     public int? AuthorAccountId { get; set; }
     public Account? AuthorAccount { get; set; }

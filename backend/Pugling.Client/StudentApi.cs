@@ -14,7 +14,7 @@ public sealed class StudentApi(HttpClient http)
     /// <summary>The underlying HttpClient – an escape hatch for endpoints that don't (yet) have a wrapper.</summary>
     public HttpClient Http { get; } = http;
 
-    // ---------------------------------------------------------------- Vokabel-Lernstand (flach)
+    // ---------------------------------------------------------------- Vocabulary progress (flat)
 
     /// <summary>
     /// The item learning state of a child across all study plans. <paramref name="onlyWeak"/> returns the
@@ -42,7 +42,7 @@ public sealed class StudentApi(HttpClient http)
         Http.GetAsync<IReadOnlyList<HistoryResponse>>($"{Root}/children/{childId}/vocabulary-progress/{itemId}/history"
             + PuglingHttp.Query(("skip", skip), ("take", take)), ct);
 
-    // ---------------------------------------------------------------- Lernstand entlang des Katalogs
+    // ---------------------------------------------------------------- Progress along the catalog
 
     /// <summary>
     /// The subjects relevant to the child with aggregated progress. <paramref name="active"/> distinguishes

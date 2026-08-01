@@ -60,7 +60,7 @@ public class VocabularyMediaController(PuglingDbContext db, MediaLinkService lin
         link.Weight = dto.Weight;
         await db.SaveChangesAsync(ct);
 
-        // Nach dem Speichern neu projizieren, damit die Antwort das Asset samt Varianten/Tags trägt.
+        // Re-project after saving so that the response carries the asset including variants/tags.
         var refreshed = (await links.ListAsync(Carrier, vocabularyId, ct)).First(l => l.Id == linkId);
         return MediaLinkService.Map(refreshed);
     }

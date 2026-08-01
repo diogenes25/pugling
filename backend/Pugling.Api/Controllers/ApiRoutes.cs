@@ -9,10 +9,10 @@ public static class ApiRoutes
     /// <summary>Prefix of all versioned routes; <c>{version:apiVersion}</c> is replaced by Asp.Versioning.</summary>
     public const string V1 = "api/v{version:apiVersion}";
 
-    // Die drei fachlichen Ebenen (siehe docs/grundprinzip.md) sind der erste Pfadbaustein nach der Version.
-    // Das Präfix ist Ressourcen-Taxonomie, nicht die Auth-Wand: der eigentliche Zugriff bleibt die
-    // Method-Level-[Authorize]. Einzelne Routen (z. B. Reports) sind bewusst dual – ein Supervisor liest
-    // dann eine Student-getaggte Route und umgekehrt.
+    // The three domain tiers (see docs/grundprinzip.md) are the first path segment after the version.
+    // The prefix is resource taxonomy, not the auth wall: actual access stays the method-level [Authorize].
+    // Individual routes (e.g. reports) are dual on purpose - a supervisor then reads a student-tagged route
+    // and vice versa.
 
     /// <summary>Tier 1 – Creator: create content/exercises (subject → chapter → exercise, stores, tags).</summary>
     public const string Creator = V1 + "/creator";

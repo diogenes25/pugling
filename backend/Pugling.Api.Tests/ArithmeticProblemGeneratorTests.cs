@@ -30,7 +30,7 @@ public class ArithmeticProblemGeneratorTests
         var a = _gen.Generate(config, new Random(123));
         var b = _gen.Generate(config, new Random(123));
 
-        // Kern-Vertrag: derselbe Seed erzeugt exakt denselben Satz (sonst wäre serverseitiges Auswerten unmöglich).
+        // The core contract: the same seed produces exactly the same set (server-side grading would be impossible otherwise).
         Assert.Equal(a.Select(p => $"{p.Prompt}={p.Answer}"), b.Select(p => $"{p.Prompt}={p.Answer}"));
     }
 
@@ -43,7 +43,7 @@ public class ArithmeticProblemGeneratorTests
     [Fact]
     public void ErzeugteAntworten_WerdenVomCheck_AlsRichtigAkzeptiert()
     {
-        // Selbstkonsistenz über den echten Drill-Pfad: Generate → Check aus demselben Seed muss 100 % ergeben.
+        // Self-consistency through the real drill path: generate → check from the same seed must yield 100 %.
         var drill = new ArithmeticDrillExerciseType(_gen);
         var configJson = JsonSerializer.Serialize(Config(count: 40), new JsonSerializerOptions(JsonSerializerDefaults.Web));
         var (seed, problems) = drill.Generate(configJson, 555);

@@ -1,8 +1,8 @@
 namespace Pugling.Contracts.Supervisor;
 
-// Vertrag des Familien-Shops – der einzige Münz-Ausgabeweg. Der Vater pflegt Artikel (die Art) und
-// Angebote (Preis + Bestand); gekauft wird ins aggregierte Inventar, eingelöst per Aktivierungsanfrage.
-// Käufe und Aktivierungen sind ausstellergebunden (SupervisorId-Snapshot).
+// Contract of the family shop - the only way coins are spent. The supervisor maintains articles (the kind)
+// and listings (price + stock); a purchase goes into the aggregated inventory, redeemed by activation request.
+// Purchases and activations are bound to their issuer (SupervisorId snapshot).
 
 /// <summary>A basic catalog article of the supervisor: the <em>kind</em> of article (unit + category).</summary>
 public record ShopArticleDto(int Id, string ArticleNumber, string Title, string Description,

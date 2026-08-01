@@ -1,6 +1,6 @@
 namespace Pugling.Contracts.Creator;
 
-// Vertrag der RWX-Rechtevergabe an Übungen (mehrere Owner + Write/Execute je Creator).
+// Contract of granting RWX rights on exercises (several owners + write/execute per creator).
 
 /// <summary>A permission granted to a creator.</summary>
 public record GrantResponse(int CreatorId, string CreatorName, GrantPermission Permission,

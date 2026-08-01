@@ -1,7 +1,7 @@
 namespace Pugling.Contracts.Supervisor;
 
-// Vertrag rund um das betreute Kind: Stammdaten inkl. übungsunabhängigem Profil, die Ko-Supervisoren
-// (ein Student kann mehrere haben) und das gemeinsame Wallet samt manueller Vater-Buchung.
+// Contract around the supervised child: master data including the exercise-independent profile, the
+// co-supervisors (a student may have several) and the shared wallet including manual supervisor entries.
 
 /// <summary>
 /// A supervised child with profile and balance of both currencies. <c>Interests</c> is the <b>free-form</b>

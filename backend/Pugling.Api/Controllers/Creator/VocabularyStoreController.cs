@@ -178,7 +178,7 @@ public class VocabularyStoreController(PuglingDbContext db) : ControllerBase
             .Where(v => v.Id == baseId || v.BaseFormId == baseId)
             .ToListAsync(ct);
 
-        // Grundform zuerst, danach die flektierten Formen stabil nach Key.
+        // Base form first, then the inflected forms stably by key.
         return family
             .OrderByDescending(v => v.Id == baseId).ThenBy(v => v.Key, StringComparer.Ordinal)
             .Select(Map).ToList();
@@ -340,7 +340,7 @@ public class VocabularyStoreController(PuglingDbContext db) : ControllerBase
         if (await db.Vocabularies.AnyAsync(v => v.BaseFormId == id, ct))
             return this.ProblemWithCode(ApiErrors.VocabularyInUse, "The vocabulary item is the base form of other entries and cannot be deleted.");
 
-        // Verhindert stille „(Vokabel fehlt)"-Platzhalter in Übungen, die die Vokabel referenzieren.
+        // Prevents silent "(vocabulary missing)" placeholders in exercises that reference the entry.
         if ((await ReferencingExercisesAsync(vocab.Id, vocab.Key, ct)).Count > 0)
             return this.ProblemWithCode(ApiErrors.VocabularyInUse, "The vocabulary item is used in one or more exercises and cannot be deleted.");
 
@@ -368,7 +368,7 @@ public class VocabularyStoreController(PuglingDbContext db) : ControllerBase
     /// </summary>
     private async Task<List<VocabUsage>> ReferencingExercisesAsync(int id, string key, CancellationToken ct)
     {
-        // Vokabelübungen: Referenz lebt in der Item-Tabelle (nicht mehr in der ConfigJson).
+        // Vocabulary exercises: the reference lives in the item table (no longer in the ConfigJson).
         var viaItems = await db.ExerciseItems.AsNoTracking()
             .Where(i => i.VocabularyId == id)
             .Select(i => new
@@ -385,7 +385,7 @@ public class VocabularyStoreController(PuglingDbContext db) : ControllerBase
             .Select(e => new VocabUsage(e.Id, e.Title, e.Type.ToString(), e.ChapterId, e.SubjectId))
             .ToList();
 
-        // Lückentexte: Key-Referenz in der ConfigJson.
+        // Cloze texts: a key reference in the ConfigJson.
         var clozeCandidates = await db.Exercises.AsNoTracking().Include(e => e.Chapter)
             .Where(e => e.Type == ExerciseTypeKeys.Cloze && e.ConfigJson.Contains(key))
             .ToListAsync(ct);
@@ -398,7 +398,7 @@ public class VocabularyStoreController(PuglingDbContext db) : ControllerBase
         return used;
     }
 
-    // ---- Agenten-Primitive: Lookup (Dedup) + Batch-Anlegen/-Nachtragen ------------------------------
+    // ---- Agent primitives: lookup (dedup) + batch create/append ------------------------------
 
     /// <summary>
     /// Existence check for the text→vocabulary extraction (dedup before the agent creates). The comparison runs
@@ -415,10 +415,10 @@ public class VocabularyStoreController(PuglingDbContext db) : ControllerBase
         var results = new List<LookupResult>();
         if (words.Count > 0)
         {
-            // Kein ToLower(): die Spalte trägt die Collation NOCASE, der Vergleich ist also von sich aus
-            // groß-/kleinschreibungsunabhängig – und *nur* ohne den Ausdruck um die Spalte greift der
-            // Index auf Word. Vorher war das ein vollständiger Tabellendurchlauf über den größten Store,
-            // im heißesten Creator-Pfad (Dubletten-Lookup beim Anlegen).
+            // No ToLower(): the column carries the NOCASE collation, so the comparison is case-insensitive by
+            // itself - and *only* without an expression around the column does the index on Word apply. This
+            // used to be a full table scan over the largest store, in the hottest creator path (the duplicate
+            // lookup on create).
             var q = db.Vocabularies.AsNoTracking().Where(v => words.Contains(v.Word));
             if (!string.IsNullOrWhiteSpace(request.SourceLanguage))
                 q = q.Where(v => v.SourceLanguage == request.SourceLanguage);
@@ -464,7 +464,7 @@ public class VocabularyStoreController(PuglingDbContext db) : ControllerBase
                     results.Add(new(i, "created", outcome.Vocab!.Id, outcome.Vocab.Key, null));
                     break;
                 case CreateKind.Conflict:
-                    // Idempotent: der Eintrag mit diesem Key existiert bereits – zurückmelden statt Fehler.
+                    // Idempotent: an entry with this key already exists - report it back instead of failing.
                     var existingId = await db.Vocabularies.Where(v => v.Key == outcome.Key).Select(v => (int?)v.Id).FirstOrDefaultAsync(ct);
                     results.Add(new(i, "existing", existingId, outcome.Key, null));
                     break;
@@ -500,7 +500,7 @@ public class VocabularyStoreController(PuglingDbContext db) : ControllerBase
         return results;
     }
 
-    // ---- Helfer -------------------------------------------------------------------------------------
+    // ---- Helpers -------------------------------------------------------------------------------------
 
     /// <summary>Loads base form + tags of a tracked vocabulary entry for the response projection.</summary>
     private async Task LoadGraphAsync(Vocabulary vocab, CancellationToken ct)

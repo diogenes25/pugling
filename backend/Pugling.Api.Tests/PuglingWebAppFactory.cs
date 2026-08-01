@@ -11,8 +11,8 @@ namespace Pugling.Api.Tests;
 public sealed class PuglingWebAppFactory : WebApplicationFactory<Program>
 {
     private readonly string _dbPath = Path.Combine(Path.GetTempPath(), $"pugling_test_{Guid.NewGuid():N}.db");
-    // Auch die hochgeladenen Bilder in einen Wegwerf-Ordner: sonst schriebe jeder Testlauf in den
-    // Medien-Ordner des Entwicklungsbaums und ließe dort Dateien liegen.
+    // The uploaded images go into a throwaway folder as well: otherwise every test run would write into the
+    // media folder of the development tree and leave files behind there.
     private readonly string _mediaPath = Path.Combine(Path.GetTempPath(), $"pugling_media_{Guid.NewGuid():N}");
 
     /// <summary>
@@ -26,18 +26,18 @@ public sealed class PuglingWebAppFactory : WebApplicationFactory<Program>
         builder.UseEnvironment("Development");
         builder.UseSetting("ConnectionStrings:Default", $"Data Source={_dbPath}");
         builder.UseSetting("Media:RootPath", _mediaPath);
-        // Der In-Process-TestServer teilt sich eine IP-Partition; ohne Abschalten würden die vielen
-        // Test-Logins am Login-Rate-Limit (429) scheitern. Ein eigener Test aktiviert es gezielt.
+        // The in-process test server shares one IP partition; without switching it off the many test logins
+        // would fail at the login rate limit (429). A dedicated test enables it deliberately.
         builder.UseSetting("RateLimiting:LoginEnabled", "false");
-        // Wanduhr-Neutralisierung: die Zeitfenster gewichten die Punkte über den Tag (Vormittag ×1,5,
-        // Abend ×0,8). Damit hinge die Punktzahl derselben richtigen Antwort an der Uhrzeit des Testlaufs –
-        // ein Lauf um 9 Uhr buchte 15, einer um 19 Uhr 8. Für „> 0" harmlos, für die von
-        // DocsCaptureTests **eingecheckte** Doku nicht: das wäre Diff-Rauschen in docs/api-examples/.
-        // Bis E12 war das ein `db.TimeSlots.ExecuteDelete()` NACH dem Start – jetzt eine Einstellung
-        // VOR ihm, weil die Fenster Konfiguration sind und keine Tabelle mehr.
+        // Neutralizing the wall clock: the time slots weight the points over the day (morning ×1.5, evening
+        // ×0.8). The score of the same correct answer would then hang on the time of the test run - a run at
+        // 9 a.m. booked 15, one at 7 p.m. booked 8. Harmless for "> 0", not for the documentation **checked in**
+        // by DocsCaptureTests: that would be diff noise in docs/api-examples/. Until E12 this was a
+        // `db.TimeSlots.ExecuteDelete()` AFTER startup - now it is a setting BEFORE it, because the slots are
+        // configuration and no longer a table.
         builder.UseSetting("Scoring:TimeSlotsEnabled", "false");
-        // Zählt prozessweit mit, welche Actions erfolgreich bedient wurden – Datenquelle des
-        // Abdeckungs-Wächters (EndpointCoverageGuard). Rein beobachtend, ändert kein Verhalten.
+        // Counts process-wide which actions were served successfully - the data source of the coverage guard
+        // (EndpointCoverageGuard). Purely observing, it changes no behavior.
         builder.ConfigureServices(s =>
         {
             s.AddSingleton<IStartupFilter, EndpointCoverageStartupFilter>();

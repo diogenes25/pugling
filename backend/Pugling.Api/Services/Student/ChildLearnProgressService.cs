@@ -22,40 +22,40 @@ public class ChildLearnProgressService(PuglingDbContext db, ExerciseTypeRegistry
     /// <summary>The mastery threshold (percent) below which an item counts as "weak" – shared with the flat view.</summary>
     private const int WeakBelowPercent = ItemProgress.WeakBelowPercent;
 
-    // MasteryRollup/Subject-/Chapter-/ExerciseProgressResponse/ItemProgressResponse leben im
-    // Vertrags-Projekt (Pugling.Contracts.Student); das Item-DTO teilen sich flache und hierarchische Sicht.
+    // MasteryRollup/Subject-/Chapter-/ExerciseProgressResponse/ItemProgressResponse live in the contract
+    // project (Pugling.Contracts.Student); the flat and the hierarchical view share the item DTO.
 
-    // Eine für die Sicht relevante Vokabelübung (zugewiesen und/oder mit Fortschritt) samt Katalog-Koordinaten.
-    // Active = von mindestens einem AKTIVEN Plan des Kindes referenziert.
+    // One vocabulary exercise relevant to the view (assigned and/or with progress) plus its catalog coordinates.
+    // Active = referenced by at least one ACTIVE plan of the child.
     internal record RelevantExercise(int ExerciseId, string Title, int ExerciseOrder,
         int ChapterId, string ChapterName, int ChapterOrder, int SubjectId, bool Active);
 
-    // Roh-Aggregat einer Item-Menge: summierbar, damit sich Übung → Kapitel → Fach ohne erneute DB-Abfrage rollt.
+    // Raw aggregate of an item set: summable, so exercise → chapter → subject rolls up without another DB query.
     private record Agg(int TotalItems, int Introduced, int Mastered, int Weak,
         int Seen, int Correct, int MasterySum, DateTime? LastActivity);
 
-    // Pro-Übung aggregierte Fortschrittszeile aus ItemProgress (Introduced = Zeilen, also mind. einmal beantwortet).
+    // Per-exercise aggregated progress row from ItemProgress (Introduced = rows, i.e. answered at least once).
     internal record ProgRow(int Introduced, int Mastered, int Weak, int Seen, int Correct, int MasterySum, DateTime? LastActivity);
 
-    // EF-Projektion des Item-Blatts ohne den abgeleiteten Store-Link (im Speicher ergänzt).
+    // EF projection of the item leaf without the derived store link (added in memory).
     private record ItemRow(int ItemId, int ExerciseId, int VocabularyId, string Front, string Back,
         int Box, int MasteryPercent, int SeenCount, int CorrectCount,
         DateOnly? IntroducedAt, DateTime? LastAnswerAt, bool? LastCorrect);
 
-    // Alle für das Kind relevanten Vokabelübungen: (über irgendeinen Plan zugewiesen) ∪ (hat Fortschritt),
-    // je Übung eindeutig, mit Active-Flag (von einem aktiven Plan referenziert) und Katalog-Koordinaten.
-    // Bewusst in mehreren einfachen DB-Abfragen + im Speicher gemergt (Distinct/Filter über das Projektions-Tupel
-    // ist beim SQLite-Provider nicht übersetzbar); die relevante Menge je Kind ist klein.
+    // All vocabulary exercises relevant to the child: (assigned through any plan) ∪ (has progress), unique
+    // per exercise, with the active flag (referenced by an active plan) and the catalog coordinates.
+    // Deliberately several simple DB queries merged in memory (Distinct/filter over the projection tuple is
+    // not translatable by the SQLite provider); the relevant set per child is small.
     private async Task<List<RelevantExercise>> LoadRelevantAsync(int childId, CancellationToken ct)
     {
-        // Aus Plänen: Übungs-Ids + ob ein AKTIVER Plan sie referenziert.
+        // From the plans: exercise ids + whether an ACTIVE plan references them.
         var planRows = await (
             from pp in db.PlanPositions.AsNoTracking()
             where pp.StudyPlan!.ChildId == childId
             select new { pp.ExerciseId, pp.StudyPlan!.Active })
             .ToListAsync(ct);
 
-        // Aus Fortschritt: Übungen mit Lernstand (überleben das Abhängen – ItemProgress kann keine gelöschte Übung überdauern).
+        // From progress: exercises with a learning state (they survive being unassigned - ItemProgress cannot outlive a deleted exercise).
         var progressIds = await db.ItemProgress.AsNoTracking()
             .Where(p => p.ChildId == childId)
             .Select(p => p.ExerciseId).Distinct().ToListAsync(ct);
@@ -64,7 +64,7 @@ public class ChildLearnProgressService(PuglingDbContext db, ExerciseTypeRegistry
         var allIds = planRows.Select(r => r.ExerciseId).Concat(progressIds).Distinct().ToList();
         if (allIds.Count == 0) return [];
 
-        // Katalog-Koordinaten (nur item-getrackte Typen, heute Vokabeln).
+        // Catalog coordinates (item-tracked types only, today vocabulary).
         var itemProgressKeys = registry.KeysSupportingItemProgress;
         var coords = await (
             from ex in db.Exercises.AsNoTracking()
@@ -78,7 +78,7 @@ public class ChildLearnProgressService(PuglingDbContext db, ExerciseTypeRegistry
             .ToList();
     }
 
-    // Lädt Item-Gesamtzahl (inkl. ungeübter) und aggregierten Fortschritt je Übung für die gegebenen Übungs-Ids.
+    // Loads the total item count (including unpracticed ones) and aggregated progress per exercise for the given ids.
     private async Task<(Dictionary<int, int> Total, Dictionary<int, ProgRow> Prog)> LoadAggAsync(
         int childId, IReadOnlyList<int> exerciseIds, CancellationToken ct)
     {
@@ -88,8 +88,8 @@ public class ChildLearnProgressService(PuglingDbContext db, ExerciseTypeRegistry
             .Select(g => new { ExerciseId = g.Key, Count = g.Count() })
             .ToDictionaryAsync(x => x.ExerciseId, x => x.Count, ct);
 
-        // Aggregate als anonymen Typ ziehen (die direkte Projektion in einen Record-Konstruktor ist nicht übersetzbar),
-        // erst im Speicher in den ProgRow abbilden.
+        // Pull the aggregates as an anonymous type (projecting straight into a record constructor is not
+        // translatable), then map to ProgRow in memory.
         var progRows = await db.ItemProgress.AsNoTracking()
             .Where(p => p.ChildId == childId && exerciseIds.Contains(p.ExerciseId))
             .GroupBy(p => p.ExerciseId)
@@ -132,14 +132,14 @@ public class ChildLearnProgressService(PuglingDbContext db, ExerciseTypeRegistry
     /// <summary>Empty roll-up (scope without relevant exercises / without progress).</summary>
     public static readonly MasteryRollup EmptyRollup = new(0, 0, 0, 0, 0, 0, 0, 0, null);
 
-    // Ø-Beherrschung über die EINGEFÜHRTEN Items (nicht über alle), Trefferquote über gesehene Antworten.
+    // Average mastery over the INTRODUCED items (not over all), hit rate over the answers seen.
     private static MasteryRollup ToRollup(Agg a) =>
         new(a.TotalItems, a.Introduced, a.Mastered, a.Weak,
             a.Introduced == 0 ? 0 : (int)Math.Round((double)a.MasterySum / a.Introduced),
             a.Seen, a.Correct, a.Seen == 0 ? 0 : (int)Math.Round(100.0 * a.Correct / a.Seen),
             a.LastActivity);
 
-    // Abdeckung 0..1 für den Sortier-Key „coverage" (eingeführt / gesamt).
+    // Coverage 0..1 for the sort key "coverage" (introduced / total).
     private static double Coverage(MasteryRollup r) => r.TotalItems == 0 ? 0 : (double)r.IntroducedItems / r.TotalItems;
 
     private static IOrderedEnumerable<T> Order<T, TKey>(IEnumerable<T> src, Func<T, TKey> key, bool desc) =>
@@ -304,7 +304,7 @@ public class ChildLearnProgressService(PuglingDbContext db, ExerciseTypeRegistry
             ("seen", true) => joined.OrderByDescending(x => x.P.SeenCount).ThenBy(x => x.P.ItemId),
             ("activity", false) => joined.OrderBy(x => x.P.LastAnswerAt).ThenBy(x => x.P.ItemId),
             ("activity", true) => joined.OrderByDescending(x => x.P.LastAnswerAt).ThenBy(x => x.P.ItemId),
-            // Standard: schwächste zuerst (wie in der flachen Sicht).
+            // Default: weakest first (as in the flat view).
             _ => joined.OrderBy(x => x.P.MasteryPercent).ThenByDescending(x => x.P.SeenCount).ThenBy(x => x.P.ItemId),
         };
 
@@ -334,7 +334,7 @@ public class ChildLearnProgressService(PuglingDbContext db, ExerciseTypeRegistry
     /// <summary>Computes roll-ups for catalog scopes from a once-loaded learning-progress snapshot.</summary>
     public sealed class ScopeEvaluator
     {
-        // Private-Typen im Konstruktor → bewusst privater Ctor; nur die umschließende Klasse erzeugt den Evaluator.
+        // Private types in the constructor → deliberately a private ctor; only the enclosing class creates the evaluator.
         private readonly IReadOnlyList<RelevantExercise> _relevant;
         private readonly IReadOnlyDictionary<int, int> _total;
         private readonly IReadOnlyDictionary<int, ProgRow> _prog;

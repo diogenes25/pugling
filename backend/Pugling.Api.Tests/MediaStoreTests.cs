@@ -34,7 +34,7 @@ public class MediaStoreTests(PuglingWebAppFactory factory) : IClassFixture<Pugli
 
         var asset = await create.Content.ReadFromJsonAsync<JsonElement>();
         Assert.Equal(2, asset.GetProperty("variants").GetArrayLength());
-        // Tags kommen als Slugs zurück: die Taxonomie normalisiert, damit ein Kind-Interesse sie trifft.
+        // Tags come back as slugs: the taxonomy normalizes so that a child's interest can hit them.
         var tags = asset.GetProperty("tags").EnumerateArray().Select(t => t.GetString()).ToList();
         Assert.Contains("einhorn", tags);
         Assert.Contains("comic", tags);
@@ -95,7 +95,7 @@ public class MediaStoreTests(PuglingWebAppFactory factory) : IClassFixture<Pugli
         Assert.Equal(HttpStatusCode.Conflict, duplicate.StatusCode);
         Assert.Equal("media_variant_exists", await CodeOf(duplicate));
 
-        // Anderes Format zum selben Zweck ist dagegen erwünscht (<picture>/srcset).
+        // Another format for the same purpose, by contrast, is wanted (<picture>/srcset).
         var avif = await father.PostAsJsonAsync($"/api/v1/creator/media/{id}/variants",
             new { purpose = "Card", url = "https://cdn.test/dog.avif", width = 512, height = 512, format = "avif" });
         Assert.Equal(HttpStatusCode.Created, avif.StatusCode);
@@ -114,7 +114,7 @@ public class MediaStoreTests(PuglingWebAppFactory factory) : IClassFixture<Pugli
         var id = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/media",
             new { description = "Ein Fuchs springt" }));
 
-        // Bewusst in „falscher" Reihenfolge angelegt; die Zwecke sind zugleich alphabetisch verdreht.
+        // Deliberately created in the "wrong" order; the purposes are alphabetically twisted at the same time.
         foreach (var purpose in new[] { "Full", "Thumb", "Hero", "Card" })
             (await father.PostAsJsonAsync($"/api/v1/creator/media/{id}/variants", new
             {
@@ -128,7 +128,7 @@ public class MediaStoreTests(PuglingWebAppFactory factory) : IClassFixture<Pugli
         var listed = await GetAsync(father, $"/api/v1/creator/media/{id}/variants");
         Assert.Equal(expected, Purposes(listed));
 
-        // … und das Asset selbst liefert genau dieselbe Reihenfolge.
+        // … and the asset itself returns exactly the same order.
         var asset = await GetAsync(father, $"/api/v1/creator/media/{id}");
         Assert.Equal(expected, Purposes(asset.GetProperty("variants")));
 
@@ -165,7 +165,7 @@ public class MediaStoreTests(PuglingWebAppFactory factory) : IClassFixture<Pugli
         var all = await ListAsync(father, $"/api/v1/creator/media?search={marker}");
         Assert.Equal(2, all.GetArrayLength());
 
-        // Der Schnitt, den die spätere automatische Auswahl je Kind hart anwendet.
+        // The cut that the later automatic selection applies hard per child.
         var kidSafe = await ListAsync(father, $"/api/v1/creator/media?search={marker}&maxRating=Everyone");
         Assert.Equal(1, kidSafe.GetArrayLength());
         Assert.Equal("Everyone", kidSafe[0].GetProperty("rating").GetString());
@@ -188,14 +188,14 @@ public class MediaStoreTests(PuglingWebAppFactory factory) : IClassFixture<Pugli
             tags = new[] { "Comic" },
         });
 
-        // Diakritika/Großschreibung werden auf denselben Slug normalisiert.
+        // Diacritics/capitalization are normalized onto the same slug.
         var byFranchise = await ListAsync(father, $"/api/v1/creator/media?search={marker}&tag=pokemon");
         Assert.Equal(1, byFranchise.GetArrayLength());
 
         var byStyle = await ListAsync(father, $"/api/v1/creator/media?search={marker}&tag=comic");
         Assert.Equal(2, byStyle.GetArrayLength());
 
-        // matchAll = UND über beide Achsen (Thema + Stil).
+        // matchAll = AND over both axes (topic + style).
         var both = await ListAsync(father, $"/api/v1/creator/media?search={marker}&tag=pokemon&tag=comic&matchAll=true");
         Assert.Equal(1, both.GetArrayLength());
     }
@@ -216,7 +216,7 @@ public class MediaStoreTests(PuglingWebAppFactory factory) : IClassFixture<Pugli
         var asset = await GetAsync(father, $"/api/v1/creator/media/{id}");
         Assert.Empty(asset.GetProperty("tags").EnumerateArray());
 
-        // Der Tag selbst überlebt – er hängt womöglich an anderen Bildern und an Kind-Profilen.
+        // The tag itself survives - it may hang on other images and on child profiles.
         Assert.Equal(HttpStatusCode.OK, (await father.GetAsync($"/api/v1/creator/interest-tags/{tagId}")).StatusCode);
     }
 

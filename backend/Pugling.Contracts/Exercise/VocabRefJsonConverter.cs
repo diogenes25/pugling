@@ -14,7 +14,7 @@ public sealed class VocabRefJsonConverter : JsonConverter<VocabRef>
     /// <summary>Reads both forms: bare string (legacy form, key) or object <c>{ vocabularyId, key, _self }</c>.</summary>
     public override VocabRef Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
-        // Alt-Form: nackter String = Store-Key (ID noch unbekannt → 0; Resolver löst per Key auf).
+        // Legacy form: a bare string is the store key (ID still unknown → 0; the resolver resolves by key).
         if (reader.TokenType == JsonTokenType.String)
             return new VocabRef(0, reader.GetString());
 
@@ -36,7 +36,7 @@ public sealed class VocabRefJsonConverter : JsonConverter<VocabRef>
             else if (string.Equals(prop, "key", StringComparison.OrdinalIgnoreCase))
                 key = reader.TokenType == JsonTokenType.String ? reader.GetString() : null;
             else
-                reader.Skip(); // abgeleitete/unbekannte Felder (z. B. _self) ignorieren
+                reader.Skip(); // ignore derived/unknown fields (e.g. _self)
         }
         throw new JsonException("Unerwartetes Ende beim Lesen eines VocabRef.");
     }
@@ -48,7 +48,7 @@ public sealed class VocabRefJsonConverter : JsonConverter<VocabRef>
         writer.WriteNumber("vocabularyId", value.VocabularyId);
         if (value.Key is not null)
             writer.WriteString("key", value.Key);
-        // _self ist rein abgeleitet: nur in Antworten gesetzt, in gespeicherten Configs null → nicht ausgegeben.
+        // _self is purely derived: set in responses only, null in stored configs → not written out.
         if (value.Self is not null)
             writer.WriteString("_self", value.Self);
         writer.WriteEndObject();

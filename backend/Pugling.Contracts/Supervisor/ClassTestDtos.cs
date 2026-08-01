@@ -2,8 +2,8 @@ using Pugling.Contracts.Creator;
 
 namespace Pugling.Contracts.Supervisor;
 
-// Vertrag der Klassenarbeiten (Route api/v1/supervisor/class-tests; intern weiterhin „Klassenarbeit"):
-// planen, Übungen zuweisen (direkt oder über Tags), Note nachtragen, gezielt üben und wiederholen.
+// Contract of the class tests (route api/v1/supervisor/class-tests; internally still "Klassenarbeit"):
+// plan them, assign exercises (directly or through tags), enter the grade, practice and repeat targeted.
 
 /// <summary>A tag in short form, as attached to a class test.</summary>
 public record TagRef(int Id, string Name, string? Color);

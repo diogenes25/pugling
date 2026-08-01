@@ -1,7 +1,7 @@
 namespace Pugling.Contracts.Supervisor;
 
-// Vertrag des Lehrplans: der Plan ist ein reiner Container, alles Lern-Spezifische (Ziel, Punkte,
-// Stufe, Leitner) trägt die einzelne Position.
+// Contract of the study plan: the plan is a pure container, everything learning-specific (goal, points,
+// stage, Leitner) is carried by the individual position.
 
 /// <summary>A study plan container of a child.</summary>
 public record PlanResponse(int Id, int ChildId, string Title, int? SubjectId,

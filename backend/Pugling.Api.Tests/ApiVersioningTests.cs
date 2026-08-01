@@ -15,10 +15,10 @@ public class ApiVersioningTests(PuglingWebAppFactory factory) : IClassFixture<Pu
     {
         var father = await TestApi.FatherAsync(factory);
 
-        // Deklarierte Version funktioniert.
+        // A declared version works.
         Assert.Equal(HttpStatusCode.OK, (await father.GetAsync("/api/v1/creator/subjects")).StatusCode);
 
-        // Nicht deklarierte Version → wird abgewiesen (kein passender Controller → 404).
+        // An undeclared version → rejected (no matching controller → 404).
         var v2 = await father.GetAsync("/api/v2/learn/subjects");
         Assert.Equal(HttpStatusCode.NotFound, v2.StatusCode);
     }
@@ -28,7 +28,7 @@ public class ApiVersioningTests(PuglingWebAppFactory factory) : IClassFixture<Pu
     {
         var father = await TestApi.FatherAsync(factory);
 
-        // Leerer Name → 400 mit strukturiertem ProblemDetails-Body (nicht nacktem String).
+        // An empty name → 400 with a structured ProblemDetails body (not a bare string).
         var res = await father.PostAsJsonAsync("/api/v1/creator/subjects", new { name = "" });
 
         Assert.Equal(HttpStatusCode.BadRequest, res.StatusCode);

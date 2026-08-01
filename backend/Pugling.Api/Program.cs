@@ -16,9 +16,9 @@ using Serilog.Formatting.Compact;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Serilog als einziges Logging-Backend: Konsole (lesbar beim Entwickeln) + rollierende JSON-Datei
-// (maschinell auswertbar, 14 Tage Vorhalt). shared:true, weil bei den Integrationstests mehrere Hosts
-// parallel in dieselbe Datei schreiben. Level/Overrides kommen aus dem "Serilog"-Abschnitt der Konfiguration.
+// Serilog as the only logging backend: console (readable while developing) + a rolling JSON file
+// (machine-readable, kept for 14 days). shared:true because in the integration tests several hosts write
+// into the same file in parallel. Level/overrides come from the "Serilog" section of the configuration.
 builder.Host.UseSerilog((context, services, config) => config
     .ReadFrom.Configuration(context.Configuration)
     .ReadFrom.Services(services)
@@ -31,42 +31,42 @@ builder.Services.AddControllers()
     .AddJsonOptions(o =>
     {
         o.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
-        // **Unbekannte Felder werden abgelehnt, nicht verschluckt.** Der Default `Skip` machte aus einem
-        // vertippten oder veralteten Feld ein stilles Nichts: der Aufrufer bekam 201 Created und glaubte,
-        // sein Wert sei angekommen. Für ein API-First-Produkt, dessen Konsumenten generierte Clients und
-        // KI-Agenten sind, ist das die teuerste Voreinstellung überhaupt – sie verwandelt einen
-        // Vertragsfehler in stillen Datenverlust. Siehe docs/codequalitaet-gates-plan.md (L3/B3).
+        // **Unknown fields are rejected, not swallowed.** The default `Skip` turned a mistyped or outdated
+        // field into a silent nothing: the caller got 201 Created and believed their value had arrived. For an
+        // API-first product whose consumers are generated clients and AI agents, that is the most expensive
+        // default there is - it turns a contract error into silent data loss.
+        // See docs/codequalitaet-gates-plan.md (L3/B3).
         o.JsonSerializerOptions.UnmappedMemberHandling = System.Text.Json.Serialization.JsonUnmappedMemberHandling.Disallow;
     });
 
-// Modell-Validierungsfehler als sauberes, englisches ProblemDetails ausliefern. Zwei Probleme der
-// Voreinstellung werden hier behoben: (1) Schlägt die JSON-Deserialisierung fehl (z. B. String statt
-// int), leakt die Roh-Meldung von System.Text.Json den internen DTO-Typnamen; (2) der als null
-// gebundene Body-Parameter erzeugt zusätzlich ein irreführendes „field is required". Die API-Antworten
-// sind bewusst englisch (Internationalisierung) – die Lokalisierung übernimmt der Client.
+// Serve model validation errors as clean, English ProblemDetails. Two problems of the default are fixed
+// here: (1) if JSON deserialization fails (e.g. a string instead of an int), the raw System.Text.Json
+// message leaks the internal DTO type name; (2) the body parameter bound as null additionally produces a
+// misleading "field is required". The API responses are English on purpose (i18n) - localizing is the
+// client's job.
 builder.Services.Configure<ApiBehaviorOptions>(o =>
 {
     o.InvalidModelStateResponseFactory = context =>
     {
         var modelState = context.ModelState;
-        // JSON-Deserialisierungsfehler kommen mit „$"-Pfad-Keys (z. B. „$.adultId"). Existiert ein
-        // solcher, konnte der Body nicht geparst werden – der als null gebundene Body-Parameter erzeugt
-        // dann einen irreführenden „field is required"-Eintrag (ohne „$"). Nur DEN unterdrücken, nicht
-        // echte Route-/Query-/Feld-Fehler (die trotz Body-Parse-Fehler legitim sind).
+        // JSON deserialization errors come with "$" path keys (e.g. "$.adultId"). If one exists, the body
+        // could not be parsed - the body parameter bound as null then produces a misleading "field is
+        // required" entry (without "$"). Suppress only THAT one, not real route/query/field errors (which are
+        // legitimate despite a body parse error).
         var hasJsonError = modelState.Keys.Any(key => key.StartsWith('$'));
-        // Nur der als null gebundene Body-Parameter erzeugt das irreführende „field is required" – nicht
-        // ein echt fehlender Route-/Query-Parameter. Darum gezielt an den Body-Parameternamen knüpfen
-        // (statt „jeder nicht-$-Key"), sonst würden legitime fehlende Route-/Query-Pflichtfelder verschluckt.
+        // Only the body parameter bound as null produces that misleading "field is required" - not a genuinely
+        // missing route/query parameter. So tie it to the body parameter name (instead of "every non-$ key"),
+        // otherwise legitimate missing required route/query fields would be swallowed.
         var bodyParamNames = context.ActionDescriptor.Parameters
             .Where(p => p.BindingInfo?.BindingSource == BindingSource.Body)
             .Select(p => p.Name)
             .ToHashSet(StringComparer.Ordinal);
-        // Die (Body-)Parameter-Typen der Action, gegen die wir einen JSON-Pfad wie „$.unitType" auflösen,
-        // um bei ungültigen Enum-Werten die zulässigen Werte nennen zu können.
+        // The action's (body) parameter types, against which we resolve a JSON path like "$.unitType" in order
+        // to name the allowed values for an invalid enum value.
         var parameterTypes = context.ActionDescriptor.Parameters.Select(p => p.ParameterType);
         var errors = new Dictionary<string, string[]>();
-        // Ein unbekanntes Feld ist keine fehlgeschlagene Wertprüfung, sondern ein Vertragsfehler beim
-        // Aufrufer – es bekommt darum den eigenen Code `unknown_field` statt `validation_error`.
+        // An unknown field is not a failed value check but a contract error on the caller's side - so it gets
+        // its own code `unknown_field` instead of `validation_error`.
         var hasUnknownField = false;
         foreach (var (key, entry) in modelState)
         {
@@ -75,12 +75,12 @@ builder.Services.Configure<ApiBehaviorOptions>(o =>
                 && entry.Errors.All(e => e.ErrorMessage.Contains("is required", StringComparison.Ordinal)))
                 continue;
 
-            // Ist der Pfad ein Enum-Feld, kennen wir dessen erlaubte Werte – unabhängig von der Rohmeldung.
+            // If the path is an enum field we know its allowed values - independent of the raw message.
             var enumType = EnumSchemaHelp.EnumTypeForJsonPath(parameterTypes, key);
-            // Unbekanntes Feld (`UnmappedMemberHandling.Disallow`): Die Rohmeldung von System.Text.Json
-            // nennt den internen DTO-Typnamen und darf darum – wie bei den Konvertierungsfehlern – nicht
-            // nach außen. Erkannt wird sie am Meldungstext; das ist derselbe Weg wie beim bereits
-            // bestehenden „could not be converted" und von `UnknownFieldTests` festgenagelt.
+            // Unknown field (`UnmappedMemberHandling.Disallow`): the raw System.Text.Json message names the
+            // internal DTO type name and therefore must not reach the outside - as with the conversion errors.
+            // It is recognized by its message text; the same route as the existing "could not be converted",
+            // and pinned down by `UnknownFieldTests`.
             if (entry.Errors.Any(e => e.ErrorMessage.Contains("could not be mapped to any .NET member", StringComparison.Ordinal)))
                 hasUnknownField = true;
             var messages = entry.Errors
@@ -88,14 +88,14 @@ builder.Services.Configure<ApiBehaviorOptions>(o =>
                     ? "Unknown field. The request contract has no such field – remove it or check the API documentation."
                     : e.ErrorMessage.Contains("could not be converted", StringComparison.Ordinal)
                     ? enumType is not null
-                        // Ungültiger Enum-Wert: die zulässigen Werte nennen (statt „irgendwas stimmte nicht").
+                        // Invalid enum value: name the allowed values (instead of "something was wrong").
                         ? $"The value is not one of the allowed values: {string.Join(", ", EnumSchemaHelp.AllowedValues(enumType))}."
-                        // Sonstige Konvertierungsfehler (z. B. String statt int): Rohmeldung leakt den DTO-Typ.
+                        // Other conversion errors (e.g. string instead of int): the raw message leaks the DTO type.
                         : "The value is not of the expected type."
                     : e.ErrorMessage)
                 .ToArray();
-            // Nur das führende „$."-Token des JSON-Pfads entfernen (nicht per Zeichensatz, sonst wird
-            // ein Wurzel-Key „$" zum leeren String und innere Punkte verschwinden).
+            // Strip only the leading "$." token of the JSON path (not by character set, otherwise a root key
+            // "$" becomes the empty string and inner dots disappear).
             var name = key.StartsWith("$.", StringComparison.Ordinal) ? key[2..] : key;
             errors[name] = messages;
         }
@@ -107,16 +107,16 @@ builder.Services.Configure<ApiBehaviorOptions>(o =>
             Title = apiError.Title,
             Type = apiError.TypeUri,
         };
-        // Maschinenlesbarer Code + traceId – dieser Pfad baut das ProblemDetails selbst (umgeht die
-        // Factory), muss die traceId-Extension daher wie alle anderen Fehlerpfade selbst setzen.
+        // Machine-readable code + traceId - this path builds the ProblemDetails itself (bypassing the
+        // factory), so it has to set the traceId extension itself like every other error path.
         problem.Extensions["code"] = apiError.Code;
         ProblemDetailsStamping.ApplyTraceId(problem, context.HttpContext);
         return new BadRequestObjectResult(problem) { ContentTypes = { "application/problem+json" } };
     };
 });
 
-// API-Versionierung über URL-Segment (/api/v1/…). Default 1.0; das Versionssegment steckt zentral
-// in ApiRoutes.V1. Neue Brüche laufen künftig über eine parallele v2 statt über Abwärtskompatibilität.
+// API versioning through a URL segment (/api/v1/…). Default 1.0; the version segment sits centrally in
+// ApiRoutes.V1. Future breaking changes go through a parallel v2 instead of backwards compatibility.
 builder.Services.AddApiVersioning(o =>
     {
         o.DefaultApiVersion = new ApiVersion(1, 0);
@@ -128,122 +128,122 @@ builder.Services.AddApiVersioning(o =>
         o.GroupNameFormat = "'v'VVV";
         o.SubstituteApiVersionInUrl = true;
     });
-// Einheitliches Fehlerschema: alle Fehler (Validierung, Fach-Fehler, unbehandelte Exceptions) als
-// RFC-konforme application/problem+json statt nackter Strings. Der CustomizeProblemDetails-Hook läuft
-// für die Middleware-Pfade (UseExceptionHandler/UseStatusCodePages: leere 401/403/404/429, 500) und
-// stempelt dort einen status-basierten Fehler-Code, falls keiner gesetzt ist.
-// Vor dem ProblemDetails-Fallback: ein Client-Abbruch ist kein Serverfehler (siehe Handler).
+// One uniform error schema: all errors (validation, domain errors, unhandled exceptions) as RFC-compliant
+// application/problem+json instead of bare strings. The CustomizeProblemDetails hook runs for the
+// middleware paths (UseExceptionHandler/UseStatusCodePages: empty 401/403/404/429, 500) and stamps a
+// status-based error code there if none is set.
+// Before the ProblemDetails fallback: a client abort is not a server error (see the handler).
 builder.Services.AddExceptionHandler<ClientAbortExceptionHandler>();
 builder.Services.AddProblemDetails(o => o.CustomizeProblemDetails = ctx =>
 {
     var status = ctx.ProblemDetails.Status ?? ctx.HttpContext.Response.StatusCode;
-    if (status < 400) status = StatusCodes.Status500InternalServerError; // nie einen Erfolgsstatus stempeln
+    if (status < 400) status = StatusCodes.Status500InternalServerError; // never stamp a success status
     ProblemDetailsStamping.StampFallback(ctx.ProblemDetails, status);
 });
-// MVC-Fehlerergebnisse (Problem()/ValidationProblem() UND die [ApiController]-Auto-Wandlung von
-// NotFound()/Conflict()/… ) laufen NICHT über CustomizeProblemDetails, sondern über die
-// ProblemDetailsFactory. Diese hier ersetzen, damit auch dieser Pfad einen Code stempelt.
+// MVC error results (Problem()/ValidationProblem() AND the [ApiController] auto-conversion of
+// NotFound()/Conflict()/…) do NOT run through CustomizeProblemDetails but through the
+// ProblemDetailsFactory. Replace it here so that this path stamps a code as well.
 builder.Services.AddSingleton<Microsoft.AspNetCore.Mvc.Infrastructure.ProblemDetailsFactory,
     CodeStampingProblemDetailsFactory>();
 builder.Services.AddDbContext<PuglingDbContext>(o =>
     o.UseSqlite(builder.Configuration.GetConnectionString("Default") ?? "Data Source=pugling.db"));
-// Die Uhr als Abhängigkeit – bewusst nur dort genutzt, wo eine Regel im Sekunden-Bereich greift (die
-// Anti-Farming-Untergrenze des Schnelle-Antwort-Bonus). Tageslogik bleibt bei `DateTime.UtcNow`: sie ist
-// mit Kalendertagen prüfbar, die Antwortzeit nicht. Ohne diese Naht müsste ein Test zwei Requests binnen
-// einer Sekunde durchbringen und wäre auf einem ausgelasteten Runner ein Flake.
+// The clock as a dependency - deliberately used only where a rule works in the second range (the
+// anti-farming lower bound of the fast-answer bonus). Day logic stays on `DateTime.UtcNow`: it can be
+// tested with calendar days, the answer time cannot. Without this seam a test would have to push two
+// requests through within one second and would be a flake on a busy runner.
 builder.Services.AddSingleton(TimeProvider.System);
-// Die Zeitfenster des Punkte-Multiplikators sind Konfiguration, keine Tabelle (E12) – der Service ist
-// damit eine reine Funktion und braucht weder DB noch Abbruch-Token.
+// The time windows of the points multiplier are configuration, not a table (E12) - which makes the service
+// a pure function that needs neither a DB nor a cancellation token.
 builder.Services.Configure<ScoringOptions>(builder.Configuration.GetSection(ScoringOptions.SectionName));
 builder.Services.AddScoped<ScoringService>();
 builder.Services.AddScoped<WalletService>();
 builder.Services.AddScoped<ShopService>();
 builder.Services.AddScoped<MetricsService>();
 builder.Services.AddScoped<GamificationService>();
-// Positions-basierter Lern-Motor: Üben/Leitner pro Lehrplan-Position.
+// The position-based learning engine: practice/Leitner per study plan position.
 builder.Services.AddScoped<PositionPlayService>();
-// Ziel-/Punkte-Engine des Positions-Modells: Erledigt-Regel je CheckMode + idempotente Ziel-Punkte.
+// Goal/points engine of the position model: the done rule per check mode + idempotent goal points.
 builder.Services.AddScoped<PositionProgressService>();
-// Lern-Report je Position: „welche Vokabel sitzt/sitzt nicht" (Box/Beherrschung + Test-Trefferquote).
+// Learning report per position: "which word sits and which does not" (box/mastery + test hit rate).
 builder.Services.AddScoped<PositionReportService>();
-// Birkenbihl-Automatik: Satz tokenisieren + Wörter im Vokabelspeicher nachschlagen (Wort-für-Wort-Dekodierung).
+// Birkenbihl automation: tokenize a sentence + look the words up in the vocabulary store (word-for-word decoding).
 builder.Services.AddScoped<BirkenbihlDecodingService>();
-// Findet-sonst-legt-an: sichert, dass jede in einer Übung genutzte Vokabel im zentralen Store liegt.
+// Find-or-create: makes sure every word used in an exercise sits in the central store.
 builder.Services.AddScoped<VocabularyStoreService>();
-// Sucht zu einem Kind den fachkundigen Creator (Reihe > Fach > Klassenstufe > Schulart). Deterministisch,
-// damit derselbe Datenstand denselben Lehrer liefert – die Herkunft einer Übung bleibt nachvollziehbar.
+// Finds the knowledgeable creator for a child (series > subject > grade > school type). Deterministic, so
+// that the same data yields the same teacher - where an exercise came from stays traceable.
 builder.Services.AddScoped<CreatorProfileService>();
-// Findet-sonst-legt-an für die geteilte Interessen-Taxonomie – die eine Stelle, an der aus Text ein Tag
-// wird (Creator taggt Bilder, Supervisor pflegt Interessen, Backfill übernimmt Freitext). Getrennte
-// Wege würden Dubletten erzeugen und das Matching „Bild ↔ Kind" genau dort leerlaufen lassen.
+// Find-or-create for the shared interest taxonomy - the one place where text becomes a tag (the creator
+// tags images, the supervisor maintains interests, the backfill takes over free text). Separate paths would
+// create duplicates and make the "image ↔ child" matching run dry exactly there.
 builder.Services.AddScoped<InterestTagService>();
-// Markdown-Schnappschuss der Test-Anmerkungen: die einzige Brücke zu den Skills, die gegen eine
-// Wegwerf-DB laufen und die echten Anmerkungen nur als Datei im Repo sehen können.
+// Markdown snapshot of the test remarks: the only bridge to the skills, which run against a throwaway DB
+// and can only see the real remarks as a file in the repository.
 builder.Services.AddScoped<RemarkExportService>();
-// Zuordnung Bild ⇢ Träger (Vokabel/Item/Übung). Drei Träger, ein Ablauf – der Service hält ihn an einer
-// Stelle; die Controller unterscheiden sich nur in Route und Rechte-Prüfung.
+// Image ⇢ carrier assignment (vocabulary/item/exercise). Three carriers, one flow - the service keeps it in
+// one place; the controllers differ only in route and rights check.
 builder.Services.AddScoped<MediaLinkService>();
-// Die Stelle, an der Medien-Store und Kind-Profil zusammenkommen: aus „viele Darstellungen" wird EIN Bild
-// (hart filtern nach Eignung/Abneigung, dann nach Interessen bewerten) – und die Wahl wird eingefroren,
-// weil Bildkonstanz beim Vokabellernen der Merkeffekt ist.
+// The place where the media store and the child profile meet: "many renditions" become ONE image (filter
+// hard by suitability/dislikes, then score by interests) - and the choice is frozen, because image
+// constancy is the retention effect when learning vocabulary.
 builder.Services.AddScoped<MediaSelector>();
-// Bild-Upload: Ablage hinter einer Schnittstelle (heute lokales Dateisystem, später ggf. Blob-Storage)
-// plus die serverseitige Varianten-Erzeugung. Beide zustandslos → Singleton.
+// Image upload: storage behind an interface (today the local file system, later possibly blob storage)
+// plus the server-side variant generation. Both stateless → singleton.
 builder.Services.AddSingleton(builder.Configuration.GetSection("Media").Get<MediaOptions>() ?? new MediaOptions());
 builder.Services.AddSingleton<IMediaStorage, LocalMediaStorage>();
-// Test-Anmerkungen: Der kontenübergreifende Blick (`?scope=all`) ist in der **Entwicklung** offen und sonst
-// zu. Die Vorgabe steht hier und nicht in einer appsettings-Datei, damit sie einen frischen Clone ohne
-// Zusatzschritt richtig bedient; ein ausdrückliches `Remarks:GlobalRead` in der Konfiguration gewinnt.
+// Test remarks: the cross-account view (`?scope=all`) is open in **development** and closed otherwise. The
+// default lives here and not in an appsettings file so that a fresh clone is served correctly without an
+// extra step; an explicit `Remarks:GlobalRead` in the configuration wins.
 builder.Services.AddSingleton(builder.Configuration.GetSection("Remarks").Get<RemarkOptions>()
     ?? new RemarkOptions { GlobalRead = builder.Environment.IsDevelopment() });
 builder.Services.AddSingleton<MediaImageProcessor>();
-// Pflegt die stabil identifizierten Items einer Vokabelübung (ID-erhaltender Abgleich Config → Item-Tabelle).
+// Maintains the stably identified items of a vocabulary exercise (id-preserving sync config → item table).
 builder.Services.AddScoped<ExerciseItemService>();
-// Schreibt den plan-übergreifenden Lernstand je (Kind, Item) fort und protokolliert die Antwort-Historie.
+// Rolls the cross-plan learning state per (child, item) forward and records the answer history.
 builder.Services.AddScoped<ItemProgressService>();
-// Kind-zentrische Drill-down-Sicht auf den Vokabel-Lernstand entlang der Katalog-Hierarchie (Fach→Kapitel→Übung→Item).
+// Child-centric drill-down view on vocabulary progress along the catalog hierarchy (subject→chapter→exercise→item).
 builder.Services.AddScoped<ChildLearnProgressService>();
-// Ergebnis-/Beherrschungsziele je Kind auf einem Katalog-Scope; live gegen den Lernstand ausgewertet.
-// „Große Ziele" (OKR-Kern): Auswertung (Lernstand + Klassenarbeits-Note), Vater-CRUD und idempotente Belohnung.
+// Outcome/mastery goals per child on a catalog scope; evaluated live against the learning state.
+// "Big goals" (the OKR core): evaluation (learning state + class test grade), supervisor CRUD and idempotent rewards.
 builder.Services.AddScoped<ObjectiveEvaluationService>();
 builder.Services.AddScoped<ObjectiveService>();
 builder.Services.AddScoped<ObjectiveRewardService>();
-// Kindübergreifendes Tages-Dashboard des Vaters („wer hat heute was geschafft?").
+// The supervisor's cross-child daily dashboard ("who managed what today?").
 builder.Services.AddScoped<ChildrenDashboardService>();
 builder.Services.AddScoped<AuthAccess>();
 builder.Services.AddScoped<ExercisePermissionService>();
 builder.Services.AddScoped<AccountService>();
 builder.Services.AddScoped<PlanOwnershipFilter>();
 builder.Services.AddScoped<ChildOwnershipFilter>();
-// Betriebs-/Monitoring-Sonde: prüft, ob die API läuft UND die Datenbank erreichbar/migriert ist.
+// Operations/monitoring probe: checks whether the API is running AND the database is reachable/migrated.
 builder.Services.AddHealthChecks().AddDbContextCheck<PuglingDbContext>();
 builder.Services.AddSingleton<TokenService>();
 builder.Services.AddSingleton<ArithmeticProblemGenerator>();
 builder.Services.AddSingleton<AnswerGrader>();
-// Übungstypen als Plugin-Contract: jeder Typ eine Klasse (IExerciseType), aufgelöst über die Registry
-// (ersetzt das frühere ExerciseType-Enum + die verstreuten switch-/Checker-Stellen).
+// Exercise types as a plugin contract: one class per type (IExerciseType), resolved through the registry
+// (replaces the former ExerciseType enum and the switch/checker sites scattered around).
 builder.Services.AddExerciseTypes();
-// Extraktion der Übungs-Inhalte aus der ConfigJson (dünne Fassade über die Registry).
+// Extraction of the exercise contents from the ConfigJson (a thin facade over the registry).
 builder.Services.AddSingleton<ExerciseContentProvider>();
-// DB-gestützte Auflösung (u. a. Vokabel-Store-Refs → ContentItems); scoped wegen DbContext.
+// DB-backed resolution (vocabulary store refs → ContentItems, among others); scoped because of the DbContext.
 builder.Services.AddScoped<ExerciseContentResolver>();
-// Testmodus: Vater spielt eine Übung nebenwirkungsfrei durch (nutzt Resolver + AnswerGrader); scoped wegen Resolver.
+// Preview mode: the supervisor plays an exercise through without side effects (uses resolver + AnswerGrader); scoped because of the resolver.
 builder.Services.AddScoped<ExercisePreviewService>();
-// Erlaubte Origins aus der Konfiguration (`Cors:Origins`, kommagetrennt oder als Array); Default ist der
-// Vite-Dev-Server. Konfigurierbar, weil ein Prod-Deploy unter eigenem Namen läuft – dort wäre ein
-// fest verdrahtetes localhost der Grund, warum die App „ohne Fehlermeldung nichts lädt".
+// Allowed origins from the configuration (`Cors:Origins`, comma-separated or as an array); the default is
+// the Vite dev server. Configurable because a prod deploy runs under its own name - a hard-wired localhost
+// would be the reason the app "loads nothing without an error message" there.
 var corsOrigins = builder.Configuration.GetSection("Cors:Origins").Get<string[]>()
     ?? builder.Configuration.GetValue<string>("Cors:Origins")?.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
     ?? ["http://localhost:5173"];
 builder.Services.AddCors(o => o.AddDefaultPolicy(p =>
-    // WithExposedHeaders: sonst darf die Browser-App den Paging-Header X-Total-Count nicht lesen
-    // (AllowAnyHeader gilt nur für Request-Header, nicht für die Freigabe von Response-Headern).
+    // WithExposedHeaders: otherwise the browser app may not read the paging header X-Total-Count
+    // (AllowAnyHeader covers request headers only, not the release of response headers).
     p.WithOrigins(corsOrigins).AllowAnyHeader().AllowAnyMethod()
         .WithExposedHeaders("X-Total-Count")));
 
-// Login-Bremse gegen PIN-Brute-Force: pro IP nur wenige Versuche je Minute (Policy "login" auf den
-// Auth-Endpunkten). Per Konfiguration abschaltbar, weil der In-Process-TestServer sich sonst eine
-// IP-Partition teilt und die vielen Test-Logins fälschlich 429 bekämen.
+// Login throttle against PIN brute force: only a few attempts per IP per minute (policy "login" on the auth
+// endpoints). Switchable through configuration, because the in-process test server would otherwise share
+// one IP partition and its many test logins would wrongly get 429.
 var loginRateLimitEnabled = builder.Configuration.GetValue("RateLimiting:LoginEnabled", true);
 builder.Services.AddRateLimiter(options =>
 {
@@ -255,8 +255,8 @@ builder.Services.AddRateLimiter(options =>
         : RateLimitPartition.GetNoLimiter("disabled"));
 });
 
-// JWT-Authentifizierung (PIN-Login stellt die Tokens aus, siehe AuthController/TokenService).
-// Fail-fast: außerhalb der Entwicklung darf NICHT mit dem Dev-Fallback-Schlüssel signiert werden.
+// JWT authentication (the PIN login issues the tokens, see AuthController/TokenService).
+// Fail fast: outside development, signing with the dev fallback key is NOT allowed.
 if (!builder.Environment.IsDevelopment() && string.IsNullOrWhiteSpace(builder.Configuration["Jwt:Key"]))
     throw new InvalidOperationException("Konfiguration 'Jwt:Key' muss in Nicht-Dev-Umgebungen gesetzt sein.");
 var tokenService = new TokenService(builder.Configuration);
@@ -272,23 +272,23 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 builder.Services.AddAuthorization();
 
-// OpenAPI: Bearer-Sicherheitsschema, damit Swagger UI einen "Authorize"-Button zeigt.
+// OpenAPI: a bearer security scheme so that Swagger UI shows an "Authorize" button.
 builder.Services.AddOpenApi(o =>
 {
     o.AddOperationTransformer(new OpenApiExamplesOperationTransformer(
         OpenApiExampleCatalog.Load(builder.Environment.ContentRootPath)));
 
-    // Enum-Felder in der Doku ausweisen: Der JsonStringEnumConverter emittiert bereits die enum-Werte im
-    // Schema; hier zusätzlich die zulässigen Werte in die Beschreibung schreiben, damit Swagger/Scalar sie
-    // gut lesbar zeigen (und die 400-Fehlermeldung „allowed values: …" ihr Gegenstück in der Doku hat).
+    // Spell enum fields out in the documentation: the JsonStringEnumConverter already emits the enum values
+    // in the schema; here we additionally write the allowed values into the description so that Swagger/Scalar
+    // show them readably (and the 400 message "allowed values: …" has its counterpart in the docs).
     o.AddSchemaTransformer((schema, context, _) =>
     {
         if (context.JsonTypeInfo.Type.IsEnum)
         {
             var names = EnumSchemaHelp.AllowedValues(context.JsonTypeInfo.Type);
-            // Die API akzeptiert/liefert Enums als STRING (globaler JsonStringEnumConverter); der Generator
-            // annotiert sie sonst als integer ohne Werteliste – also die Realität ins Schema schreiben:
-            // string + explizite enum-Werte, plus die Werte in der Beschreibung für Swagger/Scalar.
+            // The API accepts/returns enums as STRINGS (the global JsonStringEnumConverter); otherwise the
+            // generator annotates them as integer without a value list - so write reality into the schema:
+            // string + explicit enum values, plus the values in the description for Swagger/Scalar.
             schema.Type = JsonSchemaType.String;
             schema.Enum = [.. names.Select(n => (JsonNode)JsonValue.Create(n))];
             var hint = $"Allowed values: {string.Join(", ", names)}.";
@@ -296,9 +296,9 @@ builder.Services.AddOpenApi(o =>
         }
         else if (schema.Properties is { Count: > 0 })
         {
-            // required korrekt setzen: Der Generator markiert JEDEN Record-Konstruktorparameter als required –
-            // auch nullbare (optionale) wie „string?"/„TEnum?". Neu berechnen anhand der Nullbarkeit, damit
-            // Swagger/Scalar Pflicht- vs. optionale Felder wahrheitsgemäß ausweisen (v. a. Partial-Update-DTOs).
+            // Set required correctly: the generator marks EVERY record constructor parameter as required -
+            // including nullable (optional) ones such as "string?"/"TEnum?". Recompute it from the nullability
+            // so that Swagger/Scalar report required vs. optional truthfully (partial-update DTOs above all).
             schema.Required = new HashSet<string>(EnumSchemaHelp.RequiredJsonPropertyNames(context.JsonTypeInfo));
         }
         return Task.CompletedTask;
@@ -325,9 +325,9 @@ builder.Services.AddOpenApi(o =>
         ];
         return Task.CompletedTask;
     });
-    // Tag-Reihenfolge in Swagger/Scalar steuern: Die Tags folgen der Ebene (Creator → Supervisor →
-    // Student, Auth zuerst), innerhalb einer Ebene alphabetisch. Ohne das zeigt die UI die Gruppen in
-    // zufälliger Controller-Ladereihenfolge. Rank nach Tag-Präfix, das die Rolle trägt.
+    // Control the tag order in Swagger/Scalar: the tags follow the tier (creator → supervisor → student, auth
+    // first), alphabetically within a tier. Without this the UI shows the groups in random controller load
+    // order. Rank by the tag prefix that carries the role.
     o.AddDocumentTransformer((doc, _, _) =>
     {
         if (doc.Tags is { Count: > 0 })
@@ -340,10 +340,9 @@ builder.Services.AddOpenApi(o =>
                 _ when name.StartsWith("Student – ", StringComparison.Ordinal) => 3,
                 _ => 9,
             };
-            // SortedSet statt HashSet: dessen Enumerations-Reihenfolge ist vertraglich die Comparer-
-            // Reihenfolge (HashSet garantiert keine), und der OpenAPI-Serializer emittiert die Tags in
-            // Enumerations-Reihenfolge. Comparer = (Rang, dann Name) – ein Total-Order über eindeutige
-            // Tag-Namen, sodass nichts dedupliziert wird.
+            // SortedSet instead of HashSet: its enumeration order is contractually the comparer order (HashSet
+            // guarantees none), and the OpenAPI serializer emits the tags in enumeration order. Comparer =
+            // (rank, then name) - a total order over unique tag names, so nothing gets deduplicated.
             var byRankThenName = Comparer<OpenApiTag>.Create((a, b) =>
                 Rank(a.Name ?? "").CompareTo(Rank(b.Name ?? "")) is var r and not 0
                     ? r
@@ -352,8 +351,8 @@ builder.Services.AddOpenApi(o =>
         }
         return Task.CompletedTask;
     });
-    // Fehler-Codes im Schema dokumentieren: die ProblemDetails-Schemata um die maschinenlesbare
-    // code-Property (mit enum aller bekannten Codes) erweitern, damit Swagger/Clients sie kennen.
+    // Document the error codes in the schema: extend the ProblemDetails schemas with the machine-readable
+    // code property (with an enum of all known codes) so that Swagger/clients know them.
     o.AddDocumentTransformer((doc, _, _) =>
     {
         if (doc.Components?.Schemas is { } schemas)
@@ -378,24 +377,24 @@ builder.Services.AddOpenApi(o =>
 
 var app = builder.Build();
 
-// Unbehandelte Exceptions → problem+json (500); leere Fehler-Antworten (z. B. 404/403/401) ebenso.
+// Unhandled exceptions → problem+json (500); empty error responses (e.g. 404/403/401) likewise.
 app.UseExceptionHandler();
 app.UseStatusCodePages();
 
-// Single-Host-Deploy: dieselbe App liefert die gebaute React-PWA (frontend/dist → wwwroot) aus und
-// bedient /api/* same-origin. Statische Assets sind öffentlich, daher vor der Authentifizierung.
-// Lokal ist wwwroot leer (Frontend läuft über Vite :5173 mit /api-Proxy) → hier passiert nichts.
+// Single-host deploy: the same app serves the built React PWA (frontend/dist → wwwroot) and serves /api/*
+// same-origin. Static assets are public, hence before authentication.
+// Locally wwwroot is empty (the frontend runs through Vite :5173 with an /api proxy) → nothing happens here.
 app.UseDefaultFiles();
 app.UseStaticFiles();
 
-// Hochgeladene Bilder aus einem EIGENEN Ordner ausliefern – bewusst nicht aus wwwroot: dorthin kopiert
-// der Deploy das gebaute Frontend, ein Redeploy würde die Bilder der Familie mitlöschen. Öffentlich wie
-// die übrigen statischen Assets (die URLs sind unratebar genug und stehen ohnehin in den Karten).
+// Serve uploaded images from their OWN folder - deliberately not from wwwroot: the deploy copies the built
+// frontend there, and a redeploy would delete the family's images with it. Public like the other static
+// assets (the URLs are unguessable enough and appear in the cards anyway).
 {
     var media = app.Services.GetRequiredService<MediaOptions>();
-    // Über die Schnittstelle, nicht per Cast auf die lokale Ablage: eine Ablage, die ihre Dateien selbst
-    // ausliefert (Blob-Storage), liefert keinen Anbieter – dann entfällt die Middleware still, statt den
-    // Start mit einer InvalidCastException zu sprengen.
+    // Through the interface, not by casting to the local storage: a storage that serves its files itself
+    // (blob storage) returns no provider - the middleware then quietly drops out instead of blowing up
+    // startup with an InvalidCastException.
     if (app.Services.GetRequiredService<IMediaStorage>().CreateContentProvider() is { } mediaFiles)
         app.UseStaticFiles(new StaticFileOptions
         {
@@ -404,8 +403,8 @@ app.UseStaticFiles();
         });
 }
 
-// Eine Zusammenfassungszeile je Request (Methode, Pfad, Status, Dauer) statt der lärmenden
-// Framework-Defaults; angereichert um Identität/TraceId, damit ein 4xx/5xx sofort zuordenbar ist.
+// One summary line per request (method, path, status, duration) instead of the noisy framework defaults;
+// enriched with identity/traceId so that a 4xx/5xx can be attributed immediately.
 app.UseSerilogRequestLogging(options =>
 {
     options.EnrichDiagnosticContext = (diag, http) =>
@@ -415,9 +414,9 @@ app.UseSerilogRequestLogging(options =>
         if (http.User.FindFirst("cid")?.Value is { } cid) diag.Set("Cid", cid);
         if (http.User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value is { } role) diag.Set("Role", role);
     };
-    // Diese Middleware liegt INNERHALB von UseExceptionHandler, sieht den Abbruch also noch als
-    // Exception – ohne diese Stufe protokollierte sie ihn auf Error, obwohl der Handler ihn danach als
-    // 499 abräumt. Ein weggenavigierter Nutzer soll die Fehlerliste nicht füllen.
+    // This middleware sits INSIDE UseExceptionHandler, so it still sees the abort as an exception - without
+    // this step it logged it at Error even though the handler clears it up as a 499 afterwards. A user who
+    // navigated away should not fill the error list.
     options.GetLevel = (http, _, ex) =>
         ex is OperationCanceledException && http.RequestAborted.IsCancellationRequested
             ? Serilog.Events.LogEventLevel.Debug
@@ -429,18 +428,17 @@ app.UseSerilogRequestLogging(options =>
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
-    // SQLite legt die DB-Datei selbst an, aber nicht deren Verzeichnis. Im Hosting (z. B. Azure App
-    // Service) liegt die DB bewusst außerhalb des Deploy-Verzeichnisses (Data Source=/home/data/…),
-    // damit sie Deployments überlebt – der Ordner muss vor Migrate existieren. Lokal ein No-op.
+    // SQLite creates the DB file itself, but not its directory. In hosting (e.g. Azure App Service) the DB
+    // deliberately sits outside the deploy directory (Data Source=/home/data/…) so that it survives
+    // deployments - the folder must exist before Migrate. Locally a no-op.
     var dataSource = new Microsoft.Data.Sqlite.SqliteConnectionStringBuilder(
         db.Database.GetConnectionString()).DataSource;
     if (Path.GetDirectoryName(Path.GetFullPath(dataSource)) is { Length: > 0 } dbDir)
         Directory.CreateDirectory(dbDir);
-    // Die Migrationskette wurde zu einer einzigen `InitialCreate` zusammengefaltet (Altdaten waren
-    // ausdrücklich verzichtbar). Eine DB, die noch Einträge der *alten* Kette trägt, hat damit ein
-    // vollständiges Schema, aber keine der bekannten Migrationen – `Migrate()` würde die InitialCreate
-    // anwenden wollen und mit `table "Adults" already exists` scheitern. Diese Meldung weist auf nichts
-    // hin, also wird sie hier abgefangen und durch eine ersetzt, aus der die Handlung folgt.
+    // The migration chain was folded into a single `InitialCreate` (legacy data was explicitly expendable). A
+    // DB still carrying entries of the *old* chain therefore has a complete schema but none of the known
+    // migrations - `Migrate()` would want to apply the InitialCreate and fail with `table "Adults" already
+    // exists`. That message points at nothing, so it is caught here and replaced by one an action follows from.
     if (await db.Database.CanConnectAsync())
     {
         var known = db.Database.GetMigrations().ToHashSet(StringComparer.Ordinal);
@@ -452,32 +450,32 @@ using (var scope = app.Services.CreateScope())
                 + "Die Kette wurde zu einer InitialCreate zusammengefaltet. Zeige den ConnectionString "
                 + "auf eine neue Datei oder lösche die vorhandene – ein Upgrade-Pfad existiert bewusst nicht.");
     }
-    // Durchgehend `await`: Top-Level-Statements dürfen das, und ein blockierendes
-    // `GetAwaiter().GetResult()` beim Start ist genau das Muster, das anderswo Deadlocks erzeugt.
-    await db.Database.MigrateAsync(); // wendet ausstehende EF-Migrationen an (Schema-Upgrade-Pfad)
+    // `await` throughout: top-level statements may do that, and a blocking `GetAwaiter().GetResult()` at
+    // startup is exactly the pattern that produces deadlocks elsewhere.
+    await db.Database.MigrateAsync(); // applies pending EF migrations (the schema upgrade path)
 
-    // Der Seed ist Demo-/Entwicklungsdaten und läuft darum vorgabemäßig nur in der Entwicklung – aber
-    // über eine Einstellung übersteuerbar, weil die Azure-Instanz in Production läuft und die
-    // Demo-Familie dort braucht (`Seed__Enabled=true`, siehe docs/db-struktur-umbau-plan.md).
-    // Die früheren drei „Backfills" stecken jetzt darin: sie waren kein Altdaten-Pfad, sondern
-    // Seed-Nachlauf – ohne sie hat eine frische DB Personen ohne Login und Vokabelübungen ohne Items.
+    // The seed is demo/development data and therefore runs by default in development only - but overridable
+    // through a setting, because the Azure instance runs in Production and needs the demo family there
+    // (`Seed__Enabled=true`, see docs/db-struktur-umbau-plan.md). The former three "backfills" now sit inside
+    // it: they were not a legacy-data path but seed follow-up - without them a fresh DB has people without a
+    // login and vocabulary exercises without items.
     if (app.Configuration.GetValue("Seed:Enabled", app.Environment.IsDevelopment()))
         await Seed.RunAsync(db,
             scope.ServiceProvider.GetRequiredService<ExerciseItemService>(),
             scope.ServiceProvider.GetRequiredService<AccountService>(),
             scope.ServiceProvider.GetRequiredService<InterestTagService>(),
-            // Bewusst None: das Säen beim Hochfahren hängt an keiner Anfrage, die abbrechen könnte.
+            // Deliberately None: seeding at startup hangs on no request that could be aborted.
             CancellationToken.None);
 }
 
-// OpenAPI-Dokument unter /openapi/v1.json + Swagger UI unter /swagger + Scalar UI unter /scalar/v1
+// The OpenAPI document at /openapi/v1.json + Swagger UI at /swagger + Scalar UI at /scalar/v1
 app.MapOpenApi();
 app.UseSwaggerUI(o =>
 {
     o.SwaggerEndpoint("/openapi/v1.json", "Pugling API v1");
     o.RoutePrefix = "swagger";
-    // Den per „Authorize" eingegebenen Bearer-Token im Browser (localStorage) halten, damit ein
-    // Reload beim Ausprobieren nicht sofort ein erneutes Authorisieren erzwingt.
+    // Keep the bearer token entered through "Authorize" in the browser (localStorage) so that a reload while
+    // trying things out does not immediately force authorizing again.
     o.EnablePersistAuthorization();
 });
 app.MapScalarApiReference(options =>
@@ -485,7 +483,7 @@ app.MapScalarApiReference(options =>
     options
         .WithTitle("Pugling API v1")
         .AddPreferredSecuritySchemes("bearer")
-        // Wie bei Swagger: eingegebene Authentifizierung über Reloads hinweg behalten.
+        // As with Swagger: keep the entered authentication across reloads.
         .EnablePersistentAuthentication();
 });
 
@@ -493,15 +491,15 @@ app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseRateLimiter();
-// Nach der Authentifizierung: Identität (Fid/Cid/Role) + TraceId in den Log-Kontext heben, damit
-// jede Log-Zeile aus Controllern/Services (v. a. die Punkte-Buchungen) sie mitträgt.
+// After authentication: lift identity (fid/cid/role) + traceId into the log context so that every log line
+// from controllers/services (the points entries above all) carries them.
 app.UseMiddleware<RequestLogContextMiddleware>();
-// Health-Endpunkt bewusst anonym (kein [Authorize]) – für Load-Balancer/Monitoring.
+// The health endpoint is deliberately anonymous (no [Authorize]) - for load balancers/monitoring.
 app.MapHealthChecks("/health");
 app.MapControllers();
-// Client-seitiges Routing: alle nicht von /api, /swagger, /health etc. bediente Pfade auf die SPA
-// zurückfallen lassen, damit Direktaufrufe von /sohn, /vater usw. index.html laden (React-Router
-// übernimmt). Greift nur, wenn wwwroot/index.html existiert (Prod-Build) – lokal 404 → egal.
+// Client-side routing: let every path not served by /api, /swagger, /health etc. fall back to the SPA, so
+// that direct calls to /sohn, /vater and so on load index.html (React Router takes over). Only applies if
+// wwwroot/index.html exists (the prod build) - locally a 404, which does not matter.
 app.MapFallbackToFile("index.html");
 app.Run();
 

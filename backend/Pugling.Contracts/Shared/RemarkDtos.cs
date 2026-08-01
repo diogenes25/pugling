@@ -1,7 +1,7 @@
 namespace Pugling.Contracts.Shared;
 
-// Ebenen-übergreifender Vertrag der Test-Anmerkungen: Supervisor wie Student erfassen über dieselbe
-// Ressource, die Trennung passiert über die Sichtbarkeit im Controller, nicht über zwei Verträge.
+// Tier-spanning contract of the test remarks: supervisor and student capture through the same resource,
+// the separation happens through visibility in the controller, not through two contracts.
 
 /// <summary>
 /// The context snapshot at the time of capture – the real value of a remark.

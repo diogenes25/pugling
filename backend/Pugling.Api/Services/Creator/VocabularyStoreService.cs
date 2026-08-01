@@ -22,7 +22,7 @@ public class VocabularyStoreService(PuglingDbContext db)
     {
         var key = VocabKey.Generate(sourceLanguage, word, targetLanguage, translation);
 
-        // Schon in dieser Unit-of-Work angelegt (mehrere Items derselben Vokabel in einer Übung)?
+        // Already created within this unit of work (several items of the same vocabulary entry in one exercise)?
         var local = db.Vocabularies.Local.FirstOrDefault(v => v.Key == key);
         if (local is not null) return local;
 

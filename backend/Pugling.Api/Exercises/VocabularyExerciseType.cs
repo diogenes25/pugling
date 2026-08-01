@@ -20,21 +20,21 @@ public sealed class VocabularyExerciseType : ExerciseTypeBase
         ["letterHints", "audio", "selfAssess", "multipleChoice"]);
 
     /// <summary>
-    /// <b>Immer leer</b> – und das ist der Punkt: die Inhalte dieses Typs liegen in der
-    /// <see cref="ExerciseItem"/>-Tabelle (<see cref="StoreResolution.ItemTable"/>), nicht in der Config.
-    /// <c>VocabularyConfig.Items</c>/<c>.Refs</c> sind reine <b>Eingabeform</b>; nach dem Anlegen leert
-    /// <c>VocabularyController.AfterSaveAsync</c> sie.
+    /// <b>Always empty</b> - and that is the point: the contents of this type live in the
+    /// <see cref="ExerciseItem"/> table (<see cref="StoreResolution.ItemTable"/>), not in the config.
+    /// <c>VocabularyConfig.Items</c>/<c>.Refs</c> are a pure <b>input shape</b>; after creation
+    /// <c>VocabularyController.AfterSaveAsync</c> clears them.
     /// <para>
-    /// Hier stand die Projektion aus der Config. Sie war der zweite Inhaltsweg desselben Typs und damit die
-    /// zweite Wahrheit – erreichbar nur über einen Datenstand, den es seit dem Materialisieren nicht mehr
-    /// gibt. Wer Vokabel-Inhalte braucht, geht über <c>ExerciseContentResolver.ItemsOfAsync</c>; der Weg
-    /// über die Config gibt bewusst nichts zurück, statt etwas Plausibles ohne ItemId zu erfinden
-    /// (das kostete den plan-übergreifenden Lernstand).
+    /// The projection from the config used to sit here. It was the second content path of the same type and
+    /// thus a second truth - reachable only through a data state that has not existed since the items were
+    /// materialized. Whoever needs vocabulary contents goes through <c>ExerciseContentResolver.ItemsOfAsync</c>;
+    /// the path through the config deliberately returns nothing instead of inventing something plausible
+    /// without an ItemId (which cost the cross-plan learning state).
     /// </para>
     /// </summary>
     public override IReadOnlyList<ContentItem> ItemsOf(string configJson) => [];
 
-    // Fürs Ausprobieren die getippte Freitext-Stufe (schwierigster, aussagekräftigster Test).
+    // For trying out, the typed free-text stage (the hardest, most telling test).
     /// <inheritdoc/>
     public override int PreviewStage => (int)TestStage.FreeText;
 

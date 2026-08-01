@@ -11,10 +11,10 @@ namespace Pugling.Api.Tests;
 /// <summary>Shared helpers for the integration tests: login (father/child) and plan creation.</summary>
 internal static class TestApi
 {
-    // Fach-Namen sind seit dem DB-Struktur-Umbau eindeutig (der Katalog ist geteilt: „Englisch" darf es
-    // nur einmal geben). Diese Helfer werden in derselben Testklasse – und damit gegen dieselbe DB –
-    // mehrfach gerufen; ohne eigene Namen kollidierte der zweite Aufruf mit 409. Ein Zähler statt einer
-    // GUID, damit die Namen innerhalb eines Laufs reproduzierbar bleiben.
+    // Subject names are unique since the DB structure rebuild (the catalog is shared: "Englisch" may exist
+    // only once). These helpers are called several times within the same test class - and thus against the
+    // same DB; without names of their own the second call would collide with a 409. A counter instead of a
+    // GUID, so that the names stay reproducible within one run.
     private static int _catalogSeq;
 
     private static string UniqueName(string prefix) =>

@@ -117,7 +117,7 @@ public abstract class ExerciseStrategy<TDraft, TConfig>(
         var rolledBack = false;
         if (percent != 100 && request.Strict)
         {
-            // Eine Übung, die ihren eigenen Lösungen widerspricht, darf nicht im Katalog stehen bleiben.
+            // An exercise that contradicts its own solutions must not stay in the catalog.
             await Creator.DeleteExerciseAsync(request.SubjectId, request.ChapterId, route, created.Id, ct);
             rolledBack = true;
         }
@@ -138,8 +138,8 @@ public abstract class ExerciseStrategy<TDraft, TConfig>(
 
         var chatOptions = new ChatOptions { Temperature = (float)options.Value.Temperature };
 
-        // Erst das strenge JSON-Schema; kann das Modell (oder die Ollama-Version) das nicht, bleibt der
-        // JSON-Modus mit ins Prompt eingebettetem Schema als Rückfallebene.
+        // The strict JSON schema first; if the model (or the Ollama version) cannot do that, JSON mode with
+        // the schema embedded in the prompt remains as the fallback.
         try
         {
             var response = await chat.GetResponseAsync<TDraft>(messages, chatOptions,

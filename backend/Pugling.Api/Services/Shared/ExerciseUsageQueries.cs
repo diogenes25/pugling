@@ -60,9 +60,9 @@ public static class ExerciseUsageQueries
     public static async Task<BlockingUsage> CountBlockingAsync(
         PuglingDbContext db, int exerciseId, int? fid, CancellationToken ct = default)
     {
-        // Vier schlichte Zählungen statt einer GroupBy-Projektion: SQLite gruppiert hier über einen
-        // Unterabfrage-Ausdruck, und der Gewinn wäre ein Roundtrip auf einem Pfad, der einmal pro
-        // Lösch-Versuch läuft. Lesbarkeit schlägt das.
+        // Four plain counts instead of one GroupBy projection: SQLite would group over a subquery expression
+        // here, and the gain would be one round trip on a path that runs once per delete attempt.
+        // Readability beats that.
         var planTotal = await db.PlanPositions.AsNoTracking()
             .CountAsync(p => p.ExerciseId == exerciseId, ct);
         var planMine = await db.PlanPositions.AsNoTracking()
@@ -73,17 +73,17 @@ public static class ExerciseUsageQueries
         var testMine = await db.KlassenarbeitExercises.AsNoTracking()
             .CountAsync(x => x.ExerciseId == exerciseId
                 && x.Klassenarbeit!.Child!.SupervisorLinks.Any(l => l.SupervisorId == fid), ct);
-        // Seit dem Scope-Fremdschlüssel (Restrict) hindert auch eine Ziel-Etappe das Löschen. Ohne diese
-        // Zählung wäre der 409 ein 500 – genau die Sorte Lücke, für die es diese Klasse gibt.
+        // Since the scope foreign key (Restrict), a goal milestone blocks the delete too. Without this count
+        // the 409 would be a 500 - exactly the kind of gap this class exists for.
         var goalTotal = await db.KeyResults.AsNoTracking()
             .CountAsync(k => k.ExerciseId == exerciseId, ct);
         var goalMine = await db.KeyResults.AsNoTracking()
             .CountAsync(k => k.ExerciseId == exerciseId
                 && k.Objective!.Child!.SupervisorLinks.Any(l => l.SupervisorId == fid), ct);
 
-        // Wie viele verschiedene KINDER hinter den verborgenen Verwendungen stehen – nicht wie viele
-        // Stellen. Drei Positionen in den Plänen desselben Kindes sind ein Nutzer, nicht drei; und für
-        // einen Creator ohne eigene Kinder ist das die einzige Zahl, die etwas aussagt.
+        // How many distinct CHILDREN are behind the hidden usages - not how many places. Three positions in the
+        // plans of the same child are one user, not three; and for a creator without children of their own it
+        // is the only number that says anything.
         var hiddenLearners = await db.PlanPositions.AsNoTracking()
             .Where(p => p.ExerciseId == exerciseId
                 && !p.StudyPlan!.Child!.SupervisorLinks.Any(l => l.SupervisorId == fid))
@@ -126,9 +126,9 @@ public static class ExerciseUsageQueries
         var chapterIds = chapterScope.Select(c => c.Id);
         return await db.PlanPositions.AsNoTracking().AnyAsync(p => ids.Contains(p.ExerciseId), ct)
             || await db.KlassenarbeitExercises.AsNoTracking().AnyAsync(x => ids.Contains(x.ExerciseId), ct)
-            // Ziel-Etappen zeigen auf die Übung ODER direkt auf das Kapitel – beide FKs sind Restrict, und
-            // ein Kapitel-Ziel hängt an keiner Übung. Wer nur den Übungs-Scope prüfte, ließe das Löschen
-            // eines Kapitels mit Kapitel-Ziel in die FK-Verletzung laufen.
+            // Goal milestones point at the exercise OR directly at the chapter - both FKs are Restrict, and a
+            // chapter goal hangs on no exercise. Checking only the exercise scope would let deleting a chapter
+            // with a chapter goal run into the FK violation.
             || await db.KeyResults.AsNoTracking().AnyAsync(k =>
                 (k.ExerciseId != null && ids.Contains(k.ExerciseId.Value))
                 || (k.ChapterId != null && chapterIds.Contains(k.ChapterId.Value)), ct);
@@ -141,8 +141,8 @@ public static class ExerciseUsageQueries
     /// </summary>
     public static string Explain(BlockingUsage usage)
     {
-        // Nur was tatsächlich vorkommt, und mit richtigem Plural: eine Meldung, die "0 class test(s)"
-        // aufzählt, wirkt maschinell und lenkt vom eigentlichen Hinweis ab.
+        // Only what actually occurs, and with the right plural: a message enumerating "0 class test(s)" reads
+        // like a machine and distracts from the actual hint.
         var own = new List<string>();
         if (usage.OwnPlans > 0) own.Add(Plural(usage.OwnPlans, "study plan"));
         if (usage.OwnClassTests > 0) own.Add(Plural(usage.OwnClassTests, "class test"));

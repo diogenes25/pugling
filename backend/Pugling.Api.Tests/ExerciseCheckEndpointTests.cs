@@ -39,15 +39,15 @@ public class ExerciseCheckEndpointTests(PuglingWebAppFactory factory) : IClassFi
             config = new { operations = new[] { "Addition" }, minOperand = 2, maxOperand = 9, problemCount = 4 },
         }));
 
-        // Der Drill speichert nur die *Regeln*; die Aufgaben entstehen pro Abruf. Damit Üben und Bewerten
-        // dieselbe Aufgabenmenge sehen, muss derselbe Seed dieselben Aufgaben liefern.
+        // The drill stores only the *rules*; the tasks are generated per request. For practice and grading to
+        // see the same set of tasks, the same seed has to yield the same tasks.
         var ersteAusspielung = await Json(await creator.PostAsJsonAsync($"{basis}/arithmetic-drill/{exerciseId}/generate?seed=4711", new { }));
         var zweiteAusspielung = await Json(await creator.PostAsJsonAsync($"{basis}/arithmetic-drill/{exerciseId}/generate?seed=4711", new { }));
         Assert.Equal(4, ersteAusspielung.GetProperty("problems").GetArrayLength());
         Assert.Equal(ersteAusspielung.GetProperty("problems").GetRawText(), zweiteAusspielung.GetProperty("problems").GetRawText());
         Assert.Equal(4711, ersteAusspielung.GetProperty("seed").GetInt32());
 
-        // Bewerten: die richtigen Antworten aus derselben Ausspielung müssen alle als richtig gelten.
+        // Grading: the correct answers from the same delivery must all count as correct.
         var antworten = ersteAusspielung.GetProperty("problems").EnumerateArray()
             .Select((p, i) => new { index = i, value = p.GetProperty("answer").GetRawText() })
             .ToList();
@@ -55,7 +55,7 @@ public class ExerciseCheckEndpointTests(PuglingWebAppFactory factory) : IClassFi
             new { answers = antworten, seed = 4711 }));
         Assert.Equal(4, alleRichtig.GetProperty("correct").GetInt32());
 
-        // Und eine falsche Antwort schlägt durch – sonst wäre die Bewertung ein Ja-Sager.
+        // And a wrong answer shows through - otherwise the grading would be a yes-man.
         var eineFalsch = await Json(await creator.PostAsJsonAsync($"{basis}/arithmetic-drill/{exerciseId}/check",
             new { answers = new[] { new { index = 0, value = "99999" } }, seed = 4711 }));
         Assert.Equal(0, eineFalsch.GetProperty("correct").GetInt32());
@@ -102,7 +102,7 @@ public class ExerciseCheckEndpointTests(PuglingWebAppFactory factory) : IClassFi
 
         Assert.Equal(HttpStatusCode.NoContent,
             (await creator.DeleteAsync($"{basis}/birkenbihl/{exerciseId}/sentences/{sentenceId}")).StatusCode);
-        // Zweimal löschen findet nichts mehr – der Fehlerfall der Route.
+        // Deleting twice finds nothing - the route's error case.
         Assert.Equal(HttpStatusCode.NotFound,
             (await creator.DeleteAsync($"{basis}/birkenbihl/{exerciseId}/sentences/{sentenceId}")).StatusCode);
     }

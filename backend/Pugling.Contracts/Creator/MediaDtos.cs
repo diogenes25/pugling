@@ -1,7 +1,7 @@
 namespace Pugling.Contracts.Creator;
 
-// Vertrag des Medien-Stores. Zwei Ebenen, die nicht verschmelzen dürfen: das Asset ist eine
-// *Darstellung* eines Motivs (Stil/Zielgruppe), die Variante eine *Auflösung* derselben Darstellung.
+// Contract of the media store. Two levels that must not merge: the asset is one *rendition* of a motif
+// (style/audience), the variant one *resolution* of that same rendition.
 
 /// <summary>
 /// An asset of the media store including its resolutions and tags. <c>Description</c> is at the same time
@@ -44,9 +44,9 @@ public record UpdateMediaVariantDto(MediaPurpose? Purpose = null, string? Url = 
 /// <summary>Links an asset with tags of the shared taxonomy (slugs, create-if-missing).</summary>
 public record TagMediaDto(List<string> Tags);
 
-// ---- Zuordnung Bild ⇢ Träger ------------------------------------------------------------------------
-// n:m in beide Richtungen: eine Vokabel trägt viele Darstellungen (damit je Kind gewählt werden kann),
-// ein Asset dient vielen Vokabeln/Items. Deshalb eine eigene Ressource statt einer Spalte am Träger.
+// ---- Image ⇢ carrier assignment ---------------------------------------------------------------------
+// n:m in both directions: one vocabulary entry carries many renditions (so a choice per child is possible),
+// one asset serves many entries/items. Hence its own resource instead of a column on the carrier.
 
 /// <summary>
 /// An image assignment including the assigned asset (the list should be renderable without an extra fetch).

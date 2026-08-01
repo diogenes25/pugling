@@ -22,7 +22,7 @@ public class ErrorCodeTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
     [Fact]
     public async Task Validierung_LiefertValidationErrorCode()
     {
-        // Pfad (b): der InvalidModelStateResponseFactory (nicht-int adultId → Parse-Fehler).
+        // Path (b): the InvalidModelStateResponseFactory (a non-int adultId → a parse error).
         var client = factory.CreateClient();
         var res = await client.PostAsJsonAsync("/api/v1/auth/adult", new { adultId = "1a", pin = "0000" });
 
@@ -30,14 +30,14 @@ public class ErrorCodeTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
         var body = await BodyAsync(res);
         Assert.Equal("validation_error", Code(body));
         Assert.True(body.TryGetProperty("errors", out _));
-        // Regression: Validierungs-400 müssen wie jeder andere Fehler eine traceId tragen.
+        // Regression: a validation 400 must carry a traceId like every other error.
         Assert.False(string.IsNullOrEmpty(body.GetProperty("traceId").GetString()));
     }
 
     [Fact]
     public async Task Validierung_ErzeugtKeineLeerenSchluessel()
     {
-        // Regression: ein Wurzel-Parse-Fehler (Pfad „$") darf nicht zu einem leeren errors-Schlüssel werden.
+        // Regression: a root parse error (path "$") must not turn into an empty errors key.
         var client = factory.CreateClient();
         var res = await client.PostAsync("/api/v1/auth/adult",
             new StringContent("{ not valid json", System.Text.Encoding.UTF8, "application/json"));
@@ -52,8 +52,8 @@ public class ErrorCodeTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
     [Fact]
     public void HttpError_FallbackCode_IstImKatalog()
     {
-        // Regression: der ForStatus-Auffangcode muss ein deklarierter Code sein (sonst fehlt er im
-        // OpenAPI-enum und im Drift-Test) – z. B. für 415 Unsupported Media Type.
+        // Regression: the ForStatus catch-all code must be a declared code (otherwise it is missing from the
+        // OpenAPI enum and from the drift test) - e.g. for 415 Unsupported Media Type.
         Assert.Equal("http_error", ApiErrors.ForStatus(415).Code);
         Assert.Contains("http_error", ApiErrors.AllCodes);
     }
@@ -61,7 +61,7 @@ public class ErrorCodeTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
     [Fact]
     public async Task FalschePin_LiefertInvalidCredentials_MitTypUndTraceId()
     {
-        // Pfad (a): fachliches ProblemWithCode; prüft zugleich type-URI-Form und traceId-Erhalt.
+        // Path (a): a domain ProblemWithCode; it also checks the type URI shape and that the traceId survives.
         var client = factory.CreateClient();
         var res = await client.PostAsJsonAsync("/api/v1/auth/adult", new { adultId = 1, pin = "9998" });
 
@@ -75,7 +75,7 @@ public class ErrorCodeTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
     [Fact]
     public async Task OhneToken_LiefertUnauthorized()
     {
-        // Pfad (c): leere 401 der JWT-Middleware, via UseStatusCodePages + CustomizeProblemDetails.
+        // Path (c): an empty 401 from the JWT middleware, via UseStatusCodePages + CustomizeProblemDetails.
         var client = factory.CreateClient();
         var res = await client.GetAsync("/api/v1/student/me/points");
 
@@ -86,7 +86,7 @@ public class ErrorCodeTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
     [Fact]
     public async Task FalscheRolle_LiefertForbidden()
     {
-        // Pfad (c): Vater-Token auf einer nur-Sohn-Route (me/*) → 403 forbidden.
+        // Path (c): a supervisor token on a child-only route (me/*) → 403 forbidden.
         var father = await TestApi.FatherAsync(factory);
         var res = await father.GetAsync("/api/v1/student/me/points");
 
@@ -97,7 +97,7 @@ public class ErrorCodeTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
     [Fact]
     public async Task UnbekannteRessource_LiefertNotFound()
     {
-        // Pfad: bare NotFound() eines Controllers → [ApiController]-Auto-Wandlung über die Factory.
+        // Path: a bare NotFound() from a controller → the [ApiController] auto-conversion through the factory.
         var father = await TestApi.FatherAsync(factory);
         var res = await father.GetAsync("/api/v1/creator/subjects/999999");
 
@@ -108,20 +108,20 @@ public class ErrorCodeTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
     [Fact]
     public async Task FremderPlan_OwnershipFilter_LiefertProblemDetailsMitCode()
     {
-        // Regressionsschutz: der PlanOwnershipFilter lieferte früher einen rohen deutschen String.
+        // Regression guard: the PlanOwnershipFilter used to return a raw German string.
         var father = await TestApi.FatherAsync(factory);
         var res = await father.GetAsync("/api/v1/supervisor/study-plans/999999/positions");
 
         Assert.Equal(HttpStatusCode.NotFound, res.StatusCode);
         var body = await BodyAsync(res);
         Assert.Equal("not_found", Code(body));
-        Assert.False(string.IsNullOrEmpty(body.GetProperty("detail").GetString())); // strukturierter Body, kein leerer/roher String
+        Assert.False(string.IsNullOrEmpty(body.GetProperty("detail").GetString())); // a structured body, not an empty/raw string
     }
 
     [Fact]
     public async Task SkinDoppeltKaufen_LiefertSkinAlreadyUnlocked()
     {
-        // Pfad (a): der Starter-Skin "pug" ist bereits freigeschaltet → erneuter Kauf 409.
+        // Path (a): the starter skin "pug" is already unlocked → buying it again gives 409.
         var father = await TestApi.FatherAsync(factory);
         var childId = await TestApi.IdAsync(
             await father.PostAsJsonAsync("/api/v1/supervisor/children", new { name = "Code-Kind", pin = "7401" }));
@@ -150,7 +150,7 @@ public class ErrorCodeTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
     [Fact]
     public async Task OpenApi_CodeEnum_DecktSichMitRegistry()
     {
-        // Drift-Schutz: das im OpenAPI-Dokument dokumentierte enum muss exakt ApiErrors.AllCodes sein.
+        // Drift guard: the enum documented in the OpenAPI document must be exactly ApiErrors.AllCodes.
         var client = factory.CreateClient();
         var doc = await client.GetFromJsonAsync<JsonElement>("/openapi/v1.json");
 
@@ -158,14 +158,14 @@ public class ErrorCodeTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
             .GetProperty("ProblemDetails").GetProperty("properties").GetProperty("code")
             .GetProperty("enum").EnumerateArray().Select(e => e.GetString()!).ToHashSet();
 
-        // Selbstschutz gegen falsch-grün – der einzige reflexive Wächter der Suite, dem er fehlte
-        // (docs/testplan.md, Etappe 1c): BEIDE Seiten des Vergleichs stammen aus ApiErrors.AllCodes. Greift
-        // die Reflexion dort nicht mehr (Felder umbenannt, Sichtbarkeit geändert), stünde nach Papierform
-        // `leer == leer` – und der Drift-Test bestünde inhaltsleer. Dass er es real nicht tut, ist Zufall:
-        // bei leerer Liste lässt der Generator die `enum`-Eigenschaft ganz weg, und erst der
-        // KeyNotFoundException darüber legt ihn um. Diese Zeile macht den Schutz absichtlich.
+        // Self-protection against a false green - the only reflective guard in the suite that lacked it
+        // (docs/testplan.md, stage 1c): BOTH sides of the comparison come from ApiErrors.AllCodes. If the
+        // reflection stops biting there (fields renamed, visibility changed), on paper it would read
+        // `empty == empty` - and the drift test would pass vacuously. That it does not in practice is an
+        // accident: with an empty list the generator omits the `enum` property entirely, and only the
+        // KeyNotFoundException above topples it. This line makes the protection deliberate.
         Assert.True(ApiErrors.AllCodes.Count >= 40,
-            $"Zu wenige Fehler-Codes gefunden ({ApiErrors.AllCodes.Count}) – die Reflexion in ApiErrors greift nicht.");
+            $"Too few error codes found ({ApiErrors.AllCodes.Count}) - the reflection in ApiErrors does not bite.");
         Assert.Equal(ApiErrors.AllCodes.ToHashSet(), enumValues);
     }
 }

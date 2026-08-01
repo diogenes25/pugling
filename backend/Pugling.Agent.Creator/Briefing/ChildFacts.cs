@@ -38,8 +38,8 @@ public sealed record ChildFacts(
         if (Grade is { } grade) text.AppendLine($"- Klassenstufe: {grade}");
         if (SchoolType != SchoolTypes.None) text.AppendLine($"- Schulart: {SchoolType}");
         if (Gender != Gender.None) text.AppendLine($"- Geschlecht: {Gender}");
-        // Gewichtete Tags zuerst (sie tragen die Rangfolge), Freitext als Ergänzung – zusammengeführt,
-        // damit im Prompt keine zwei konkurrierenden Interessens-Zeilen stehen.
+        // Weighted tags first (they carry the ranking), free text as a complement - merged, so that the
+        // prompt does not hold two competing interest lines.
         var likes = WeightedInterests.Select(i => i.Label)
             .Concat(Interests)
             .Distinct(StringComparer.OrdinalIgnoreCase)
@@ -47,8 +47,8 @@ public sealed record ChildFacts(
         text.AppendLine(likes.Count > 0
             ? $"- Interessen (wichtigste zuerst): {string.Join(", ", likes)}"
             : "- Interessen: keine hinterlegt (dann neutrale, altersgerechte Alltagssituationen wählen)");
-        // Die Abneigungen sind keine Feinheit: eine fachlich korrekte Aufgabe über Spinnen ist unbrauchbar,
-        // wenn das Kind Spinnen nicht erträgt. Deshalb als harte Verbotsliste, nicht als Vorliebe.
+        // The dislikes are not a nicety: a technically correct task about spiders is useless if the child
+        // cannot stand spiders. Hence a hard ban list, not a preference.
         if (Dislikes.Count > 0)
             text.AppendLine($"- Vermeide unbedingt (Abneigungen): {string.Join(", ", Dislikes.Select(i => i.Label))}");
         if (!string.IsNullOrWhiteSpace(ProfileNotes)) text.AppendLine($"- Hinweise: {ProfileNotes}");

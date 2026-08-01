@@ -10,7 +10,7 @@ namespace Pugling.Api.Tests;
 /// </summary>
 public class ExerciseMetadataTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWebAppFactory>
 {
-    // Legt Fach + Art an und liefert (subjectId, chapterId, categoryId).
+    // Creates a subject + a category and returns (subjectId, chapterId, categoryId).
     private static async Task<(int subjectId, int chapterId, int categoryId)> SetupAsync(HttpClient father, string subject)
     {
         var subjectId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/subjects", new { name = subject }));
@@ -41,7 +41,7 @@ public class ExerciseMetadataTests(PuglingWebAppFactory factory) : IClassFixture
         var (subjectId, chapterId, categoryId) = await SetupAsync(father, $"Meta-Fach-{Guid.NewGuid():N}");
         var basePath = $"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/arithmetic";
 
-        // Anlegen mit Metadaten: Klasse 5–7, Gymnasium.
+        // Create with metadata: grade 5-7, Gymnasium.
         var created = await father.PostAsJsonAsync(basePath, ArithmeticBody("Grammatik-Drill", categoryId, 5, 7, "Gymnasium"));
         Assert.Equal(HttpStatusCode.Created, created.StatusCode);
         var body = await created.Content.ReadFromJsonAsync<JsonElement>();
@@ -49,7 +49,7 @@ public class ExerciseMetadataTests(PuglingWebAppFactory factory) : IClassFixture
         Assert.Equal("Grammatik", body.GetProperty("categoryName").GetString());
         Assert.Equal("Gymnasium", body.GetProperty("schoolTypes").GetString());
 
-        // Vorfilterung: Fach + Klasse 6 + Gymnasium + Art → Treffer.
+        // Pre-filtering: subject + grade 6 + Gymnasium + category → a hit.
         var hit = await Search(father, subjectId, grade: 6, schoolType: "Gymnasium", categoryId: categoryId);
         Assert.Contains(hit.EnumerateArray(), e => e.GetProperty("title").GetString() == "Grammatik-Drill");
     }
@@ -62,15 +62,15 @@ public class ExerciseMetadataTests(PuglingWebAppFactory factory) : IClassFixture
         var basePath = $"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/arithmetic";
         await father.PostAsJsonAsync(basePath, ArithmeticBody("Nur-Gym-5bis7", categoryId, 5, 7, "Gymnasium"));
 
-        // Klasse 3 liegt unter GradeMin → kein Treffer.
+        // Grade 3 is below GradeMin → no hit.
         var tooYoung = await Search(father, subjectId, grade: 3);
         Assert.Empty(tooYoung.EnumerateArray());
 
-        // Realschule ist nicht gesetzt → kein Treffer.
+        // Realschule is not set → no hit.
         var wrongSchool = await Search(father, subjectId, schoolType: "Realschule");
         Assert.Empty(wrongSchool.EnumerateArray());
 
-        // Passende Klasse ohne weitere Filter → Treffer.
+        // A matching grade without further filters → a hit.
         var ok = await Search(father, subjectId, grade: 6);
         Assert.Single(ok.EnumerateArray());
     }
@@ -83,7 +83,7 @@ public class ExerciseMetadataTests(PuglingWebAppFactory factory) : IClassFixture
         var (_, _, fremdeArtId) = await SetupAsync(father, $"Anderes-Fach-{Guid.NewGuid():N}");
         var basePath = $"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/arithmetic";
 
-        // Art gehört zu einem anderen Fach → BadRequest.
+        // The category belongs to another subject → BadRequest.
         var res = await father.PostAsJsonAsync(basePath, ArithmeticBody("Falsche Art", fremdeArtId, 5, 7, "Gymnasium"));
         Assert.Equal(HttpStatusCode.BadRequest, res.StatusCode);
     }

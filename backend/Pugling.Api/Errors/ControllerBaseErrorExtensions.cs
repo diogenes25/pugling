@@ -22,8 +22,8 @@ public static class ControllerBaseErrorExtensions
     /// </summary>
     public static ObjectResult ProblemResult(HttpContext httpContext, ApiError error, string? detail = null)
     {
-        // Direkt bauen (kein Umweg über die Factory): der spezifische Code wird autoritativ gestempelt,
-        // traceId wie überall gesetzt. Kein Stamp-then-Repair mehr.
+        // Build directly (no detour through the factory): the specific code is stamped authoritatively and
+        // traceId is set as everywhere else. No more stamp-then-repair.
         var problem = new ProblemDetails { Detail = detail };
         ProblemDetailsStamping.StampSpecific(problem, error);
         ProblemDetailsStamping.ApplyTraceId(problem, httpContext);

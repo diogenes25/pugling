@@ -24,7 +24,7 @@ public sealed partial class ClozeStrategy(IChatClient chat, CreatorApi creator,
 
     /// <inheritdoc/>
     protected override string TaskInstruction(CreatorBriefing briefing, GenerationRequest request) =>
-        // Drei '$': so bleiben die Platzhalter {{1}} literal und nur {{{…}}} interpoliert.
+        // Three '$': that keeps the placeholders {{1}} literal and interpolates only {{{…}}}.
         $$$"""
         Entwirf einen Lückentext in {{{briefing.SourceLang}}}: einen zusammenhängenden, kurzen Text, in dem
         an den Lernstellen Platzhalter stehen – {{1}}, {{2}}, {{3}} … in aufsteigender Reihenfolge.
@@ -38,18 +38,17 @@ public sealed partial class ClozeStrategy(IChatClient chat, CreatorApi creator,
         GenerationRequest request)
     {
         var violations = new Violations();
-        // Fehlt 'gaps' im Modell-JSON, steht hier null – als leere Liste wird daraus ein Regelverstoß.
+        // If 'gaps' is missing from the model JSON this is null - as an empty list it becomes a rule violation.
         var gaps = draft.Gaps ?? [];
         DraftRules.Title(violations, draft.Title, briefing);
         DraftRules.NotBlank(violations, draft.Text, "Der Lückentext");
         DraftRules.Count(violations, gaps.Count, request);
         DraftRules.CoversRequiredWords(violations, briefing, gaps.Select(g => g?.Answer), exact: true);
 
-        // Platzhalter im Text und Lücken müssen sich eins zu eins entsprechen – sonst zeigt die Übung
-        // eine Lücke ohne Lösung (oder eine Lösung ohne Lücke). Verglichen wird die ANZAHL je Nummer,
-        // nicht die Mengendifferenz: ein Text mit zweimal {{3}} bestand die Except-Prüfung in beiden
-        // Richtungen, der Server rendert daraus aber ein Feld mehr als es Lösungen gibt – ein Kästchen,
-        // das das Kind nie richtig beantworten kann.
+        // Placeholders in the text and gaps must correspond one to one - otherwise the exercise shows a gap
+        // without a solution (or a solution without a gap). We compare the COUNT per number, not the set
+        // difference: a text with {{3}} twice passed the Except check in both directions, yet the server
+        // renders one field more than there are solutions - a box the child can never answer correctly.
         var inText = Placeholder().Matches(draft.Text ?? "")
             .GroupBy(m => int.Parse(m.Groups[1].Value))
             .ToDictionary(g => g.Key, g => g.Count());
@@ -60,8 +59,8 @@ public sealed partial class ClozeStrategy(IChatClient chat, CreatorApi creator,
         foreach (var index in inText.Keys.Union(asGap.Keys).Order())
         {
             var (texts, entries) = (inText.GetValueOrDefault(index), asGap.GetValueOrDefault(index));
-            // Genau einmal im Text und genau eine Lücke – Zahlengleichheit allein genügt nicht, sonst
-            // ginge „zweimal {{3}} plus zwei Lücken mit index 3" als in Ordnung durch.
+            // Exactly once in the text and exactly one gap - equal totals alone are not enough, otherwise
+            // "{{3}} twice plus two gaps with index 3" would pass as fine.
             if (texts == 1 && entries == 1) continue;
 
             violations.Add(
@@ -79,11 +78,11 @@ public sealed partial class ClozeStrategy(IChatClient chat, CreatorApi creator,
                 violations.Add($"Lücke {gap.Index}: die Lösung '{gap.Answer}' steht im Text und ist damit verraten.");
         }
 
-        // Die Standard-Abfrageform des Typs ist die Wortbank – ohne sie hätte das Kind keine Auswahl.
+        // The type's default question form is the word bank - without it the child would have no choice.
         var bank = draft.WordBank ?? [];
         violations.Require(bank.Count > 0, "Die Wortbank fehlt.");
-        // Früh trimmen statt im Vergleich: so bleibt `answer` durchgehend derselbe Wert (auch in der
-        // Meldung), und der Compiler sieht keine Dereferenzierung eines möglicherweise leeren Werts.
+        // Trim early instead of inside the comparison: `answer` then stays the same value throughout (in the
+        // message too), and the compiler sees no dereference of a possibly empty value.
         foreach (var answer in gaps.Select(g => g?.Answer?.Trim()).Where(a => !string.IsNullOrEmpty(a)))
             if (!bank.Any(w => string.Equals(w?.Trim(), answer, StringComparison.OrdinalIgnoreCase)))
                 violations.Add($"Die Wortbank enthält die Lösung '{answer}' nicht.");
@@ -93,7 +92,7 @@ public sealed partial class ClozeStrategy(IChatClient chat, CreatorApi creator,
 
     /// <inheritdoc/>
     protected override IReadOnlyList<string> ExpectedAnswers(ClozeDraft draft) =>
-        // Der Aufgaben-Index ist die Listenposition der Lücke (nicht ihre Nummer) – so liest sie der Server.
+        // The task index is the gap's list position (not its number) - that is how the server reads it.
         [.. draft.Gaps.Select(g => g.Answer.Trim())];
 
     /// <inheritdoc/>

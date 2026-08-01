@@ -31,7 +31,7 @@ public static class PinHasher
     {
         var parts = stored.Split('.');
         if (parts.Length != 4 || parts[0] != Prefix)
-            return stored == pin; // Alt-Klartext (vor Einführung des Hashings)
+            return stored == pin; // legacy plaintext (from before hashing was introduced)
 
         if (!int.TryParse(parts[1], out var iterations)) return false;
         var salt = Convert.FromBase64String(parts[2]);

@@ -1,19 +1,19 @@
 namespace Pugling.Api.Models;
 
-// Tagging + Klassenarbeiten:
-//   Tag (pro Kind) --< ExerciseTag >-- Exercise (gemeinsamer Katalog)
-//   Klassenarbeit (pro Kind) --< KlassenarbeitExercise >-- Exercise
-//   Klassenarbeit --< KlassenarbeitTag >-- Tag  (Übungen eines Tags gelten als relevant)
+// Tagging + class tests:
+//   Tag (per child) --< ExerciseTag >-- Exercise (shared catalog)
+//   Klassenarbeit (per child) --< KlassenarbeitExercise >-- Exercise
+//   Klassenarbeit --< KlassenarbeitTag >-- Tag  (exercises carrying a tag count as relevant)
 //
-// Der Lern-Katalog (Subject -> Chapter -> Exercise) bleibt kindneutral; die Zuordnung „welche
-// Übung ist für dieses Kind / diese Klassenarbeit relevant" passiert ausschließlich über diese
-// Verknüpfungstabellen. Tags dürfen Vater UND Sohn setzen, Klassenarbeiten pflegt nur der Vater.
+// The learn catalog (Subject -> Chapter -> Exercise) stays child-neutral; assigning "which exercise is
+// relevant for this child / this class test" happens exclusively through these join tables. Supervisor AND
+// child may set tags, class tests are maintained by the supervisor only.
 
-// TaggedBy lebt im Vertrags-Projekt (Pugling.Contracts).
+// TaggedBy lives in the contract project (Pugling.Contracts).
 
 /// <summary>
-/// Frei benanntes Schlagwort im Kontext eines Kindes (z. B. „Unit 5", „unregelmäßige Verben").
-/// Vater und Sohn markieren damit Katalog-Übungen, etwa als relevant für eine bestimmte Klassenarbeit.
+/// A freely named keyword in the context of one child (e.g. "Unit 5", "irregular verbs").
+/// Supervisor and child use it to mark catalog exercises, for instance as relevant for a certain class test.
 /// </summary>
 public class Tag
 {
@@ -21,9 +21,9 @@ public class Tag
     public int ChildId { get; set; }
     public Child? Child { get; set; }
     public string Name { get; set; } = "";
-    /// <summary>Optionale Anzeigefarbe (Hex, z. B. „#3b82f6") für die UI.</summary>
+    /// <summary>Optional display color (hex, e.g. "#3b82f6") for the UI.</summary>
     public string? Color { get; set; }
-    /// <summary>Wer das Schlagwort angelegt hat.</summary>
+    /// <summary>Who created the keyword.</summary>
     public TaggedBy CreatedBy { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
@@ -31,7 +31,7 @@ public class Tag
     public List<VocabularyTag> VocabularyTags { get; set; } = new();
 }
 
-/// <summary>Verknüpft eine Katalog-Übung mit einem <see cref="Tag"/> und hält fest, wer sie gesetzt hat.</summary>
+/// <summary>Links a catalog exercise to a <see cref="Tag"/> and records who set it.</summary>
 public class ExerciseTag
 {
     public int Id { get; set; }
@@ -43,10 +43,10 @@ public class ExerciseTag
 }
 
 /// <summary>
-/// Verknüpft eine Store-<see cref="Vocabulary"/> mit einem kind-skopierten <see cref="Tag"/> und hält fest,
-/// wer sie gesetzt hat. So markieren Vater/Sohn einzelne Vokabeln als relevant (z. B. für eine Klassenarbeit).
-/// <para>Nicht verwechseln mit dem globalen <see cref="VocabTag"/>/<see cref="VocabTagLink"/>: der ist
-/// kindneutral (Kapitel/Klasse/Thema), diese Verknüpfung trägt über den <see cref="Tag"/> den Kind-Kontext.</para>
+/// Links a store <see cref="Vocabulary"/> entry to a child-scoped <see cref="Tag"/> and records who set it.
+/// This is how supervisor/child mark single vocabulary entries as relevant (e.g. for a class test).
+/// <para>Not to be confused with the global <see cref="VocabTag"/>/<see cref="VocabTagLink"/>: that one is
+/// child-neutral (chapter/grade/topic), this link carries the child context through the <see cref="Tag"/>.</para>
 /// </summary>
 public class VocabularyTag
 {
@@ -58,29 +58,29 @@ public class VocabularyTag
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }
 
-// KlassenarbeitStatus lebt im Vertrags-Projekt (Pugling.Contracts).
+// KlassenarbeitStatus lives in the contract project (Pugling.Contracts).
 
 /// <summary>
-/// Eine geplante oder bereits geschriebene Klassenarbeit eines Kindes. Der Vater plant sie,
-/// weist relevante Übungen zu (direkt oder über Tags) und trägt nach dem Schreiben die Note nach.
+/// A planned or already written class test of a child. The supervisor plans it, assigns relevant exercises
+/// (directly or through tags) and enters the grade after it has been written.
 /// </summary>
 public class Klassenarbeit
 {
     public int Id { get; set; }
     public int ChildId { get; set; }
     public Child? Child { get; set; }
-    /// <summary>Optionale Verknüpfung zum Katalog-Fach.</summary>
+    /// <summary>Optional link to the catalog subject.</summary>
     public int? SubjectId { get; set; }
     public Subject? Subject { get; set; }
     public string Title { get; set; } = "";
-    /// <summary>Freitext-Thema/Stoff der Arbeit (z. B. „Simple Past, Unit 3–4").</summary>
+    /// <summary>Free-text topic/subject matter of the test (e.g. "Simple Past, Unit 3–4").</summary>
     public string? Topic { get; set; }
-    /// <summary>Termin: geplantes bzw. tatsächliches Schreibdatum.</summary>
+    /// <summary>Date: planned or actual day it is written.</summary>
     public DateOnly ScheduledDate { get; set; }
     public KlassenarbeitStatus Status { get; set; } = KlassenarbeitStatus.Planned;
-    /// <summary>Deutsche Schulnote 1,0 (sehr gut) … 6,0 (ungenügend). Null, solange nicht nachgetragen.</summary>
+    /// <summary>German school grade 1.0 (very good) … 6.0 (insufficient). Null while not yet entered.</summary>
     public decimal? Grade { get; set; }
-    /// <summary>Optionale Notiz zur Note (z. B. „Vokabeln saßen, Grammatik schwach").</summary>
+    /// <summary>Optional note on the grade (e.g. "vocabulary was solid, grammar weak").</summary>
     public string? GradeComment { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
@@ -88,7 +88,7 @@ public class Klassenarbeit
     public List<KlassenarbeitTag> Tags { get; set; } = new();
 }
 
-/// <summary>Direkte Zuordnung einer Übung zu einer Klassenarbeit.</summary>
+/// <summary>Direct assignment of an exercise to a class test.</summary>
 public class KlassenarbeitExercise
 {
     public int Id { get; set; }
@@ -100,8 +100,8 @@ public class KlassenarbeitExercise
 }
 
 /// <summary>
-/// Verknüpft eine Klassenarbeit mit einem <see cref="Tag"/>: alle mit diesem Tag markierten Übungen
-/// gelten (zusätzlich zu den direkt zugewiesenen) als relevant für die Arbeit.
+/// Links a class test to a <see cref="Tag"/>: every exercise marked with that tag counts (in addition to
+/// the directly assigned ones) as relevant for the test.
 /// </summary>
 public class KlassenarbeitTag
 {

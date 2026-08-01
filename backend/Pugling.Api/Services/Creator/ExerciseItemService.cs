@@ -19,10 +19,10 @@ public class ExerciseItemService(PuglingDbContext db, VocabularyStoreService sto
     /// <summary>Builds the desired item list from a vocabulary config and creates inline-used words in the store.</summary>
     public async Task<List<DesiredItem>> DesiredFromConfigAsync(VocabularyConfig config, CancellationToken ct = default)
     {
-        // Refs haben Vorrang (spiegelt die Auflösungspräzedenz des ExerciseContentResolver: Übung spielt aus
-        // Refs ODER inline Items, nicht beides gemischt). Refs tragen keinen eigenen Hinweis (fällt auf Store).
-        // Alt-Daten tragen die Referenz nur als Key (VocabularyId == 0) – diese Keys zu Ids auflösen, damit
-        // key-basierte Refs beim Materialisieren nicht verlorengehen (der frühere Resolver löste sie per Key auf).
+        // Refs take precedence (mirrors the resolution precedence of ExerciseContentResolver: an exercise plays
+        // refs OR inline items, never a mix). Refs carry no hint of their own (it falls back to the store).
+        // Legacy data carries the reference as a key only (VocabularyId == 0) - resolve those keys to ids so
+        // that key-based refs are not lost while materializing (the former resolver resolved them by key).
         if (config.Refs is { Count: > 0 } refs)
         {
             var keys = refs.Where(r => r.VocabularyId <= 0 && !string.IsNullOrEmpty(r.Key))
@@ -40,7 +40,7 @@ public class ExerciseItemService(PuglingDbContext db, VocabularyStoreService sto
             return fromRefs;
         }
 
-        // Inline-Items: vorhandene Store-Id direkt übernehmen, fehlende anlegen (Id materialisiert erst nach Save).
+        // Inline items: take an existing store id as is, create the missing ones (the id materializes only after save).
         var desired = new DesiredItem[config.Items.Count];
         var pending = new List<(int Index, Vocabulary Vocab)>();
         for (var i = 0; i < config.Items.Count; i++)
@@ -49,8 +49,8 @@ public class ExerciseItemService(PuglingDbContext db, VocabularyStoreService sto
             if (item.VocabularyId is { } id)
                 desired[i] = new DesiredItem(id, item.Hint);
             else
-                // Front/Back sind hier garantiert gesetzt: ValidateConfigAsync lehnt Items ohne VocabularyId
-                // und ohne beides (Front + Back) vorab ab; der Fallback verhindert nur die Nullable-Warnung.
+                // Front/back are guaranteed to be set here: ValidateConfigAsync rejects items without a
+                // VocabularyId and without both (front + back) up front; the fallback only silences the nullable warning.
                 pending.Add((i, await store.GetOrCreateAsync(config.SourceLang, item.Front ?? "", config.TargetLang, item.Back ?? "", ct: ct)));
         }
         if (pending.Count > 0)
@@ -77,7 +77,7 @@ public class ExerciseItemService(PuglingDbContext db, VocabularyStoreService sto
         for (var i = 0; i < desired.Count; i++)
         {
             var d = desired[i];
-            // Erste noch freie Zeile mit gleicher Vokabel wiederverwenden (bewahrt ItemId + Fortschritt).
+            // Reuse the first still-free row with the same vocabulary entry (preserves ItemId + progress).
             var match = pool.FirstOrDefault(r => r.VocabularyId == d.VocabularyId);
             if (match is not null)
             {
@@ -96,7 +96,7 @@ public class ExerciseItemService(PuglingDbContext db, VocabularyStoreService sto
                 });
             }
         }
-        if (pool.Count > 0) db.ExerciseItems.RemoveRange(pool); // nicht mehr enthaltene Wörter
+        if (pool.Count > 0) db.ExerciseItems.RemoveRange(pool); // words no longer contained
         await db.SaveChangesAsync(ct);
     }
 }

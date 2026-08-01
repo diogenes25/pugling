@@ -37,10 +37,10 @@ public class MediaVariantsController(PuglingDbContext db) : ControllerBase
             .Where(v => v.MediaAssetId == assetId)
             .ToListAsync(ct);
 
-        // Sortiert wird bewusst im Speicher: `Purpose` liegt als String in der DB, ein `OrderBy` in SQL
-        // ordnete daher alphabetisch (Card, Full, Hero, Thumb) statt in der semantischen Reihenfolge des
-        // Enums (Thumb → Card → Full → Hero) – und widerspräche damit derselben Liste, die
-        // <see cref="MediaAssetsController.Map"/> am Asset ausliefert.
+        // Sorting deliberately happens in memory: `Purpose` sits in the DB as a string, so an `OrderBy` in SQL
+        // would order alphabetically (Card, Full, Hero, Thumb) instead of in the enum's semantic order
+        // (Thumb → Card → Full → Hero) - and would contradict the very list that
+        // MediaAssetsController.Map hands out on the asset.
         return variants
             .OrderBy(v => v.Purpose).ThenBy(v => v.Format, StringComparer.Ordinal)
             .Select(Map)
@@ -88,8 +88,8 @@ public class MediaVariantsController(PuglingDbContext db) : ControllerBase
 
         var purpose = dto.Purpose ?? variant.Purpose;
         var format = dto.Format?.Trim().ToLowerInvariant() ?? variant.Format;
-        // Verschiebt der PATCH die Variante auf einen belegten Slot, wäre der Unique-Index ein 500 –
-        // deshalb vorher als klarer Konflikt melden.
+        // If the PATCH moves the variant onto an occupied slot, the unique index would be a 500 -
+        // so report it as a clear conflict first.
         if ((purpose != variant.Purpose || format != variant.Format)
             && await db.MediaVariants.AnyAsync(v => v.MediaAssetId == assetId && v.Id != variantId
                 && v.Purpose == purpose && v.Format == format, ct))

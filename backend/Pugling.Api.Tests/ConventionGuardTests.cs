@@ -18,23 +18,23 @@ namespace Pugling.Api.Tests;
 /// </summary>
 public class ConventionGuardTests
 {
-    // Fläche und Routen-Auflösung kommen aus `ApiSurface`, damit dieser Wächter, die Ownership-Matrix (C1)
-    // und der Abdeckungs-Wächter (C4) dieselbe Definition von „Action" und dieselbe Route sehen.
+    // The surface and the route resolution come from `ApiSurface`, so that this guard, the ownership matrix
+    // (C1) and the coverage guard (C4) see the same definition of "action" and the same route.
     private static IEnumerable<Type> Controllers() => ApiSurface.Controllers();
 
     private static IEnumerable<MethodInfo> Actions(Type controller) => ApiSurface.Actions(controller);
 
-    // ─────────────────────────────────────────────────────── (a) Fehler nur über ProblemWithCode
+    // ─────────────────────────────────────────────────────── (a) errors only through ProblemWithCode
 
     [Fact]
     public void Actions_Melden_Fehler_Nur_Ueber_ProblemWithCode()
     {
-        // Quell-Scan statt Reflexion: die Konvention betrifft den Methoden*körper*, den Reflexion nicht sieht.
+        // A source scan instead of reflection: the convention concerns the method *body*, which reflection does not see.
         var controllerDir = Path.Combine(RepoRoot(), "backend", "Pugling.Api", "Controllers");
         var files = Directory.GetFiles(controllerDir, "*.cs", SearchOption.AllDirectories);
 
-        // `BadRequest(` und ein *rohes* `Problem(`. Der negative Lookbehind trennt `ProblemWithCode(`
-        // und `ValidationProblem(` ab: dort folgt auf „Problem" kein „(" bzw. steht ein Wortzeichen davor.
+        // `BadRequest(` and a *raw* `Problem(`. The negative lookbehind separates `ProblemWithCode(` and
+        // `ValidationProblem(`: there "Problem" is not followed by "(", or a word character precedes it.
         var forbidden = new Regex(@"\bBadRequest\s*\(|(?<!\w)Problem\s*\(", RegexOptions.Compiled);
         var blessed = new Regex(@"\bProblemWithCode\s*\(", RegexOptions.Compiled);
 
@@ -48,7 +48,7 @@ public class ConventionGuardTests
                 lineNo++;
                 var line = raw.TrimStart();
                 if (line.StartsWith("//", StringComparison.Ordinal) || line.StartsWith('*'))
-                    continue; // Kommentare zitieren die Regel, sie verletzen sie nicht.
+                    continue; // comments quote the rule, they do not violate it.
                 if (blessed.IsMatch(line))
                     blessedHits++;
                 if (forbidden.IsMatch(line))
@@ -56,23 +56,23 @@ public class ConventionGuardTests
             }
         }
 
-        // Selbstschutz: der Scan muss den Ordner wirklich gelesen haben – es gibt reichlich Controller
-        // und dreistellig viele `ProblemWithCode`-Aufrufe.
+        // Self-protection: the scan must really have read the folder - there are plenty of controllers and
+        // three-digit numbers of `ProblemWithCode` calls.
         Assert.True(files.Length >= 30, $"Zu wenige Controller-Dateien gefunden ({files.Length}) – Pfad falsch?");
-        Assert.True(blessedHits >= 100, $"Zu wenige ProblemWithCode-Aufrufe gefunden ({blessedHits}) – Scan greift nicht.");
+        Assert.True(blessedHits >= 100, $"Too few ProblemWithCode calls found ({blessedHits}) - the scan does not bite.");
         Assert.True(offenders.Count == 0,
-            "Fehler müssen über this.ProblemWithCode(ApiErrors.…) laufen (RFC 7807 + maschinenlesbarer code):\n"
+            "Errors have to go through this.ProblemWithCode(ApiErrors.…) (RFC 7807 + a machine-readable code):\n"
             + string.Join("\n", offenders));
     }
 
-    // ─────────────────────────────────────────────────────── (c) Vertrag lebt in Pugling.Contracts
+    // ─────────────────────────────────────────────────────── (c) the contract lives in Pugling.Contracts
 
     [Fact]
     public void Vertragstypen_Sind_Global_Namens_Eindeutig()
     {
-        // Der OpenAPI-Generator schlüsselt Schemas über den *einfachen* Typnamen: zwei gleichnamige
-        // Records in verschiedenen Namespaces verschmelzen still zu einem Schema. Der Fehler ist im
-        // Vertrag unsichtbar und fällt erst beim generierten Client auf.
+        // The OpenAPI generator keys schemas by the *simple* type name: two identically named records in
+        // different namespaces merge silently into one schema. The bug is invisible in the contract and only
+        // surfaces in the generated client.
         var types = typeof(PointKind).Assembly.GetTypes()
             .Where(t => t.IsPublic && !t.IsNested)
             .ToList();
@@ -90,9 +90,9 @@ public class ConventionGuardTests
     [Fact]
     public void Actions_Geben_Nur_Vertragstypen_Zurueck()
     {
-        // „DTOs als record projizieren – nie EF-Entities zurückgeben" (CLAUDE.md), mechanisch gefasst:
-        // was eine Action als Nutzlast liefert, muss aus Pugling.Contracts kommen. Eine zurückgegebene
-        // Entity zöge Navigationen und interne Felder mit in die Antwort.
+        // "Project DTOs as records - never return EF entities" (CLAUDE.md), captured mechanically: whatever an
+        // action returns as a payload must come from Pugling.Contracts. A returned entity would drag
+        // navigations and internal fields into the response.
         var contracts = typeof(PointKind).Assembly;
         var apiAssembly = typeof(Program).Assembly;
         var offenders = new List<string>();
@@ -103,44 +103,44 @@ public class ConventionGuardTests
             {
                 var payload = PayloadType(action.ReturnType);
                 if (payload is null)
-                    continue; // IActionResult ohne Typparameter – nichts zu prüfen
+                    continue; // IActionResult without a type parameter - nothing to check
                 checkedActions++;
                 foreach (var leaf in LeafTypes(payload))
                     if (leaf.Assembly == apiAssembly)
-                        offenders.Add($"{controller.Name}.{action.Name} → {leaf.Name} (liegt in Pugling.Api, nicht im Vertrag)");
+                        offenders.Add($"{controller.Name}.{action.Name} → {leaf.Name} (lives in Pugling.Api, not in the contract)");
             }
 
-        Assert.True(checkedActions >= 100, $"Zu wenige typisierte Actions gefunden ({checkedActions}) – Reflexion greift nicht.");
+        Assert.True(checkedActions >= 100, $"Too few typed actions found ({checkedActions}) - the reflection does not bite.");
         Assert.True(contracts.GetTypes().Length > 0);
         Assert.True(offenders.Count == 0,
             "Antworttypen gehören ins Vertrags-Projekt (nie EF-Entities):\n" + string.Join("\n", offenders));
     }
 
-    // ─────────────────────────────────────────────────────── (d) CancellationToken durchreichen
+    // ─────────────────────────────────────────────────────── (d) pass the CancellationToken on
 
     [Fact]
     public void Async_Actions_Nehmen_Einen_CancellationToken()
     {
-        // „CancellationToken durchreichen" (CLAUDE.md) beginnt an der Action: ohne Parameter gibt es
-        // nichts weiterzureichen, und ein abgebrochener Request läuft serverseitig weiter.
+        // "Pass the CancellationToken on" (CLAUDE.md) starts at the action: without the parameter there is
+        // nothing to pass on, and an aborted request keeps running server-side.
         //
-        // War bis 2026-07-30 eine Zuwachs-Sperre mit Baseline, weil die Konvention im Bestand *nicht*
-        // befolgt war (189 von 337 async Actions ohne Token, gemessen am 2026-07-29) – eine harte Regel
-        // wäre damals nur abschaltbar gewesen. Die Altlast ist abgearbeitet, also gilt sie jetzt hart
-        // wie die übrigen drei dieser Klasse.
+        // It was a growth barrier with a baseline until 2026-07-30, because the convention was *not* followed
+        // in the existing code (189 of 337 async actions without a token, measured on 2026-07-29) - a hard rule
+        // would only have been switchable back then. The backlog is worked off, so it now holds hard like the
+        // other three of this class.
         //
-        // Was dieser Wächter *nicht* prüft: dass der Token auch ankommt. Er sieht die **Signatur** der
-        // Action, nicht die Kette dahinter. Ein Helfer ohne Token-Parameter verbirgt jeden Aufruf in
-        // seinem Rumpf vor CA2016, und in Lambdas schweigt der Analyzer ohnehin – beim Abarbeiten der
-        // Altlast war genau das die Fehlerklasse (ein Abbruch-Leak in `MediaAssetsController.Upload`
-        // saß hinter einer Action, die den Token längst hatte, und war darum hier nie sichtbar).
+        // What this guard does *not* check: that the token actually arrives. It sees the **signature** of the
+        // action, not the chain behind it. A helper without a token parameter hides every call in its body from
+        // CA2016, and in lambdas the analyzer stays silent anyway - while working off the backlog that was
+        // exactly the failure class (an abort leak in `MediaAssetsController.Upload` sat behind an action that
+        // had the token long since, and was therefore never visible here).
         var offenders = new List<string>();
         var checkedActions = 0;
 
         foreach (var controller in Controllers())
             foreach (var action in Actions(controller))
             {
-                // Nur asynchrone Actions: eine synchrone hat keine abbrechbare Arbeit.
+                // Async actions only: a synchronous one has no cancellable work.
                 if (!typeof(Task).IsAssignableFrom(action.ReturnType))
                     continue;
                 checkedActions++;
@@ -148,21 +148,21 @@ public class ConventionGuardTests
                     offenders.Add($"{controller.Name}.{action.Name}");
             }
 
-        Assert.True(checkedActions >= 150, $"Zu wenige async Actions gefunden ({checkedActions}) – Reflexion greift nicht.");
+        Assert.True(checkedActions >= 150, $"Too few async actions found ({checkedActions}) - the reflection does not bite.");
         Assert.True(offenders.Count == 0,
-            $"{offenders.Count} async Action(s) ohne CancellationToken. Der Token gehört als letzter "
-            + "Parameter an die Action (`CancellationToken ct = default` – der Vorgabewert ist nötig, "
-            + "weil C# keinen erforderlichen Parameter nach den optionalen `[FromQuery]`-Werten erlaubt) "
-            + "und von dort in jeden EF-/Service-Aufruf:\n" + string.Join("\n", offenders));
+            $"{offenders.Count} async action(s) without a CancellationToken. The token belongs as the last "
+            + "parameter on the action (`CancellationToken ct = default` - the default value is needed "
+            + "because C# allows no required parameter after the optional `[FromQuery]` values) "
+            + "and from there into every EF/service call:\n" + string.Join("\n", offenders));
     }
 
-    // ─────────────────────────────────────────────────────── (b) Eigentum über die geteilten Filter
+    // ─────────────────────────────────────────────────────── (b) ownership through the shared filters
 
     [Fact]
     public void Actions_Unter_ChildId_Oder_PlanId_Tragen_Den_Ownership_Filter()
     {
-        // „Für Endpunkte unter {planId} den PlanOwnershipFilter, unter {childId} den ChildOwnershipFilter
-        // nutzen (nicht inline wiederholen)" – CLAUDE.md. Eine neue Route ohne Filter ist eine IDOR-Lücke.
+        // "For endpoints under {planId} use the PlanOwnershipFilter, under {childId} the ChildOwnershipFilter
+        // (do not repeat it inline)" - CLAUDE.md. A new route without the filter is an IDOR hole.
         var offenders = new List<string>();
         var checkedActions = 0;
 
@@ -184,13 +184,13 @@ public class ConventionGuardTests
                     .Concat(ServiceFilterTypes(action.GetCustomAttributes<ServiceFilterAttribute>(inherit: false)))
                     .ToList();
                 if (needsChild && !filters.Contains(typeof(ChildOwnershipFilter)))
-                    offenders.Add($"{controller.Name}.{action.Name} ({route}) ohne ChildOwnershipFilter");
+                    offenders.Add($"{controller.Name}.{action.Name} ({route}) without ChildOwnershipFilter");
                 if (needsPlan && !filters.Contains(typeof(PlanOwnershipFilter)))
-                    offenders.Add($"{controller.Name}.{action.Name} ({route}) ohne PlanOwnershipFilter");
+                    offenders.Add($"{controller.Name}.{action.Name} ({route}) without PlanOwnershipFilter");
             }
         }
 
-        Assert.True(checkedActions >= 50, $"Zu wenige kindes-/plan-gebundene Actions gefunden ({checkedActions}) – Routen-Auflösung greift nicht.");
+        Assert.True(checkedActions >= 50, $"Too few child-/plan-bound actions found ({checkedActions}) - the route resolution does not bite.");
         Assert.True(offenders.Count == 0,
             "Kindes-/plan-gebundene Actions brauchen den geteilten Ownership-Filter:\n" + string.Join("\n", offenders));
     }
@@ -201,7 +201,7 @@ public class ConventionGuardTests
     /// </summary>
     private static readonly HashSet<string> OwnershipExceptions = [];
 
-    // ─────────────────────────────────────────────────────── Hilfsmittel
+    // ─────────────────────────────────────────────────────── Helpers
 
     /// <summary>The service filter types of an attribute set.</summary>
     private static IEnumerable<Type> ServiceFilterTypes(IEnumerable<ServiceFilterAttribute> attributes) =>
@@ -250,6 +250,6 @@ public class ConventionGuardTests
                 return dir.FullName;
             dir = dir.Parent;
         }
-        throw new InvalidOperationException("Repo-Wurzel (backend + docs bzw. .git) nicht gefunden.");
+        throw new InvalidOperationException("Repository root (backend + docs, or .git) not found.");
     }
 }

@@ -40,11 +40,11 @@ public class MediaLinkTeardownTests(PuglingWebAppFactory factory) : IClassFixtur
         var creator = await TestApi.FatherAsync(factory);
         var (assetId, key, _) = await MotivAsync(creator);
 
-        // Der Key ist der stabile fachliche Schlüssel eines Motivs (Autoren referenzieren ihn, nicht die Id).
+        // The key is the stable domain identifier of a motif (authors reference it, not the id).
         Assert.Equal(assetId, (await Json(await creator.GetAsync($"/api/v1/creator/media/by-key/{key}"))).GetProperty("id").GetInt32());
         Assert.Equal(HttpStatusCode.NotFound, (await creator.GetAsync("/api/v1/creator/media/by-key/gibt-es-nicht")).StatusCode);
 
-        // Interessen-Schlagworte entscheiden über die Bildauswahl je Kind – sie werden *ergänzt*, nicht ersetzt.
+        // Interest keywords decide the image selection per child - they are *added*, not replaced.
         var verschlagwortet = await Json(await creator.PostAsJsonAsync($"/api/v1/creator/media/{assetId}/tags",
             new { tags = new[] { "pferde", "tiere" } }));
         var tags = verschlagwortet.GetProperty("tags").EnumerateArray().Select(t => t.GetString()).ToList();
@@ -64,7 +64,7 @@ public class MediaLinkTeardownTests(PuglingWebAppFactory factory) : IClassFixtur
             + $"/chapters/{uebung.GetProperty("chapterId").GetInt32()}/vocabulary/{exerciseId}/items";
         var itemId = (await Json(await creator.GetAsync(itemsUrl)))[0].GetProperty("id").GetInt32();
 
-        // An der Übung …
+        // On the exercise …
         var uebungsMedien = $"/api/v1/creator/exercises/{exerciseId}/media";
         var linkId = await TestApi.IdAsync(await creator.PostAsJsonAsync(uebungsMedien, new { mediaAssetId = assetId, weight = 5 }));
         Assert.Contains(linkId, (await Json(await creator.GetAsync(uebungsMedien)))
@@ -74,7 +74,7 @@ public class MediaLinkTeardownTests(PuglingWebAppFactory factory) : IClassFixtur
         Assert.Empty((await Json(await creator.GetAsync(uebungsMedien))).EnumerateArray());
         Assert.Equal(HttpStatusCode.NotFound, (await creator.DeleteAsync($"{uebungsMedien}/{linkId}")).StatusCode);
 
-        // … und am einzelnen Item (dort hängt das Bild an *einem* Vokabelpaar, nicht an der ganzen Übung).
+        // … and on the single item (there the image hangs on *one* vocabulary pair, not on the whole exercise).
         var itemMedien = $"/api/v1/creator/exercises/{exerciseId}/items/{itemId}/media";
         var itemLinkId = await TestApi.IdAsync(await creator.PostAsJsonAsync(itemMedien, new { mediaAssetId = assetId }));
         Assert.Equal(HttpStatusCode.NoContent, (await creator.DeleteAsync($"{itemMedien}/{itemLinkId}")).StatusCode);
@@ -90,7 +90,7 @@ public class MediaLinkTeardownTests(PuglingWebAppFactory factory) : IClassFixtur
 
         Assert.Equal(HttpStatusCode.NoContent, (await creator.DeleteAsync($"{url}/{variantId}")).StatusCode);
         Assert.Empty((await Json(await creator.GetAsync(url))).EnumerateArray());
-        // Der Fehlerfall trägt einen eigenen Code – die Variante gehört zu *diesem* Asset oder gar nicht.
+        // The error case carries a code of its own - the variant belongs to *this* asset or to none.
         var nochmal = await creator.DeleteAsync($"{url}/{variantId}");
         Assert.Equal(HttpStatusCode.NotFound, nochmal.StatusCode);
         Assert.Equal("media_variant_not_found",

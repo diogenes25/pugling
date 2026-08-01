@@ -29,18 +29,18 @@ public class OwnershipMatrixTests(PuglingWebAppFactory factory) : IClassFixture<
     public async Task Fremder_Supervisor_Kommt_An_Keine_Kindes_Oder_Plan_Gebundene_Action()
     {
         var victim = await FremdeWeltAsync();
-        var attacker = await TestApi.FatherAsync(factory); // der geseedete Vater 1 – ihm gehört nichts davon
+        var attacker = await TestApi.FatherAsync(factory); // the seeded adult 1 - none of this belongs to them
         await PruefeMatrixAsync(attacker, victim, "fremder Supervisor");
     }
 
     [Fact]
     public async Task Fremdes_Kind_Kommt_An_Keine_Kindes_Oder_Plan_Gebundene_Action()
     {
-        // Zweiter Durchgang mit einem **Kind**-Token, und zwar nicht aus Symmetrie: ein fremder Supervisor
-        // scheitert an einer Student-Route womöglich schon an der Rolle, und ein Rollen-403 sähe genauso aus
-        // wie ein Eigentums-403. Das Kind trägt die Student-Rolle – es kommt bis zur Eigentumsprüfung.
+        // A second pass with a **child** token, and not out of symmetry: another supervisor may already fail a
+        // student route on the role, and a role 403 would look just like an ownership 403. The child carries
+        // the student role - it gets as far as the ownership check.
         var victim = await FremdeWeltAsync();
-        var attacker = await TestApi.ChildAsync(factory); // der geseedete Sohn 1
+        var attacker = await TestApi.ChildAsync(factory); // the seeded child 1
         await PruefeMatrixAsync(attacker, victim, "fremdes Kind");
     }
 
@@ -84,7 +84,7 @@ public class OwnershipMatrixTests(PuglingWebAppFactory factory) : IClassFixture<
                     request.Content = new StringContent(body.ToJsonString(), Encoding.UTF8, "application/json");
                 else if (BrauchtRumpf(method) && HatRumpfParameter(action))
                 {
-                    inconclusive.Add($"{key}: Rumpf nicht baubar (Datei-Upload?) – Ausnahme mit Grund eintragen");
+                    inconclusive.Add($"{key}: body not buildable (file upload?) - add an exception with a reason");
                     continue;
                 }
 
@@ -93,9 +93,8 @@ public class OwnershipMatrixTests(PuglingWebAppFactory factory) : IClassFixture<
                 if (IsRejection(response.StatusCode))
                     continue;
 
-                // 400 ist **kein** Beleg: es kann heißen „Rumpf unbindbar", und dann hat die
-                // Eigentumsprüfung nie gefeuert. Getrennt melden, sonst tarnt sich eine echte Lücke als
-                // Validierungsfehler.
+                // A 400 is **no** proof: it can mean "body not bindable", and then the ownership check never
+                // fired. Report it separately, otherwise a real hole disguises itself as a validation error.
                 var zeile = $"{key} [{method} {url}] → {(int)response.StatusCode}";
                 if (response.StatusCode == HttpStatusCode.BadRequest)
                     inconclusive.Add($"{zeile}: {await response.Content.ReadAsStringAsync()}");
@@ -103,11 +102,11 @@ public class OwnershipMatrixTests(PuglingWebAppFactory factory) : IClassFixture<
                     offenders.Add(zeile);
             }
 
-        // Selbstschutz: greift die Routen-Auflösung nicht, prüft die Matrix nichts und wäre grün.
+        // Self-protection: if the route resolution does not bite, the matrix checks nothing and would be green.
         Assert.True(checkedActions >= 60,
-            $"Zu wenige kindes-/plan-gebundene Actions geprüft ({checkedActions}) – Routen-Auflösung greift nicht.");
+            $"Too few child-/plan-bound actions checked ({checkedActions}) - the route resolution does not bite.");
         Assert.True(inconclusive.Count == 0,
-            $"Unentschieden ({wer}) – diese Actions ließen sich nicht bis zur Eigentumsprüfung treiben:\n"
+            $"Inconclusive ({wer}) - these actions could not be driven as far as the ownership check:\n"
             + string.Join("\n", inconclusive));
         Assert.True(offenders.Count == 0,
             $"IDOR: ein {wer} kommt an fremde Daten (erwartet 403/404):\n" + string.Join("\n", offenders));
@@ -128,8 +127,8 @@ public class OwnershipMatrixTests(PuglingWebAppFactory factory) : IClassFixture<
                 "childId" => victim.ChildId.ToString(),
                 "planId" => victim.PlanId.ToString(),
                 "positionId" => victim.PositionId.ToString(),
-                // Zeichenketten-Platzhalter (Schlüssel, Slugs) brauchen etwas Nicht-Numerisches, sonst
-                // scheitert schon die Route-Constraint und der Aufruf käme als 404 durch, ohne zu prüfen.
+                // String placeholders (keys, slugs) need something non-numeric, otherwise the route constraint
+                // already fails and the call would come through as a 404 without checking anything.
                 _ => IstZeichenkette(action, name) ? "x" : "1",
             };
         return werte;

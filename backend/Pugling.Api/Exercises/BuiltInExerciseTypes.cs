@@ -3,9 +3,9 @@ using Pugling.Api.Models;
 
 namespace Pugling.Api.Exercises;
 
-// Die übrigen eingebauten Übungstypen. Kurz, weil sie ihre Facetten-Defaults aus ExerciseTypeBase erben und
-// nur Key/Manifest/ItemsOf (+ ggf. Check/Stufen) tragen. Vokabeln stehen wegen ihres Umfangs separat
-// (VocabularyExerciseType). Geteilte Prüf-Primitive liegen in AnswerChecking (unten).
+// The remaining built-in exercise types. Short, because they inherit their facet defaults from
+// ExerciseTypeBase and only carry key/manifest/ItemsOf (+ check/stages where needed). Vocabulary sits
+// apart because of its size (VocabularyExerciseType). Shared check primitives live in AnswerChecking (below).
 
 /// <summary>Reading comprehension: text + comprehension questions (pure content exercise, no automatic check).</summary>
 public sealed class ReadingExerciseType : ExerciseTypeBase
@@ -94,7 +94,7 @@ public sealed class BirkenbihlExerciseType : ExerciseTypeBase
     /// <inheritdoc/>
     public override IReadOnlyList<ContentItem> ItemsOf(string configJson)
     {
-        // Prompt = Satz der Lernsprache, „Antwort" = natürliche Übersetzung (für Anzeige/Fortschritt, nicht zum Tippen).
+        // Prompt = sentence in the source language, "answer" = natural translation (for display/progress, not for typing).
         var c = Deserialize<BirkenbihlConfig>(configJson);
         return [.. c.Sentences.Select((s, i) => new ContentItem(i, s.LearningSentence, s.NaturalTranslation, [s.NaturalTranslation]))];
     }
@@ -223,7 +223,7 @@ public sealed class ArithmeticDrillExerciseType(ArithmeticProblemGenerator gener
         ExerciseTypeKeys.ArithmeticDrill, "Rechen-Drill", "arithmetic", 1, "arithmetic-drill",
         ExerciseCheckMode.CatalogGenerateCheck, null, null, ["generated", "seed"]);
 
-    // Aufgaben werden pro Abruf erzeugt – keine festen, einzeln abfragbaren Inhalte.
+    // Tasks are generated per request - no fixed, individually addressable contents.
     /// <inheritdoc/>
     public override IReadOnlyList<ContentItem> ItemsOf(string configJson) => [];
 
@@ -238,7 +238,7 @@ public sealed class ArithmeticDrillExerciseType(ArithmeticProblemGenerator gener
     public (int Seed, IReadOnlyList<GeneratedProblem> Problems) Generate(string configJson, int? seed)
     {
         var config = Deserialize<ArithmeticDrillConfig>(configJson);
-        // Seed fixieren (auch bei „echtem" Zufall), damit der Satz später auswertbar bleibt.
+        // Pin the seed (even for "real" randomness) so the set stays gradable later.
         int effectiveSeed = seed ?? config.Seed ?? Random.Shared.Next();
         return (effectiveSeed, generator.Generate(config, new Random(effectiveSeed)));
     }
@@ -284,14 +284,14 @@ public sealed class ListExerciseType : ExerciseTypeBase
             return AnswerChecking.Aggregate(items);
         }
 
-        // Ungeordnet: für jeden erwarteten Eintrag zählt, ob er (oder eine Alternative) irgendwo genannt wurde;
-        // jede Nennung wird nur einmal angerechnet.
+        // Unordered: for every expected entry it counts whether it (or an alternative) was named anywhere;
+        // each mention is credited only once.
         var remaining = answers.Select(a => StageMechanics.Normalize(a.Value)).ToList();
         var results = c.Items.Select((entry, i) =>
         {
             var hit = remaining.FindIndex(a => AnswerChecking.EntryMatches(entry, a));
             string? matched = hit >= 0 ? answers[hit].Value : null;
-            if (hit >= 0) remaining[hit] = " "; // verbraucht – verhindert Doppelanrechnung derselben Nennung
+            if (hit >= 0) remaining[hit] = " "; // consumed - prevents crediting the same mention twice
             return new ItemCheck(i, "", matched, entry.Value, hit >= 0);
         });
         return AnswerChecking.Aggregate(results);
@@ -310,7 +310,7 @@ internal static class AnswerChecking
     public static Dictionary<int, string?> ByIndex(IReadOnlyList<GivenAnswer> answers)
     {
         var map = new Dictionary<int, string?>();
-        foreach (var a in answers) map[a.Index] = a.Value; // spätere Nennung gewinnt
+        foreach (var a in answers) map[a.Index] = a.Value; // a later mention wins
         return map;
     }
 

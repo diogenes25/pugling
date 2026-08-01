@@ -19,7 +19,7 @@ public class CatalogManagementTests(PuglingWebAppFactory factory) : IClassFixtur
             .Content.ReadFromJsonAsync<JsonElement>();
 
         Assert.Equal("Vocabulary", detail.GetProperty("type").GetString());
-        // Die Vokabeln leben eine Ebene tiefer als eigene Items; die Config trägt nur noch Einstellungen.
+        // The vocabulary lives one level deeper as items of its own; the config only carries settings.
         Assert.Equal("front-to-back", detail.GetProperty("config").GetProperty("direction").GetString());
         Assert.False(string.IsNullOrEmpty(detail.GetProperty("subjectName").GetString()));
     }
@@ -35,15 +35,15 @@ public class CatalogManagementTests(PuglingWebAppFactory factory) : IClassFixtur
             $"/api/v1/creator/subjects/{subjectId}/chapters", new { name = "Unit 1", orderIndex = 1 });
         Assert.Equal(HttpStatusCode.Created, first.StatusCode);
 
-        // Zwei „Unit 1" im selben Fach sind eine Dublette. Ohne die Vorprüfung im Controller schlüge der
-        // Unique-Index als unbehandelter 500 durch – der Test hält beides fest: Status UND Code.
+        // Two "Unit 1" in the same subject are a duplicate. Without the pre-check in the controller the unique
+        // index would come through as an unhandled 500 - the test pins both down: status AND code.
         var second = await father.PostAsJsonAsync(
             $"/api/v1/creator/subjects/{subjectId}/chapters", new { name = "Unit 1", orderIndex = 2 });
         Assert.Equal(HttpStatusCode.Conflict, second.StatusCode);
         var problem = await second.Content.ReadFromJsonAsync<JsonElement>();
         Assert.Equal("duplicate_chapter_name", problem.GetProperty("code").GetString());
 
-        // Derselbe Name unter einem ANDEREN Fach bleibt erlaubt – eindeutig ist (Fach, Name), nicht der Name.
+        // The same name under a DIFFERENT subject stays allowed - unique is (subject, name), not the name.
         var otherSubject = await TestApi.IdAsync(await father.PostAsJsonAsync(
             "/api/v1/creator/subjects", new { name = $"Dublette-Fach-2 {Guid.NewGuid():N}" }));
         var elsewhere = await father.PostAsJsonAsync(
@@ -131,7 +131,7 @@ public class CatalogManagementTests(PuglingWebAppFactory factory) : IClassFixtur
             .Content.ReadFromJsonAsync<JsonElement>();
         var (subjectId, chapterId) = (detail.GetProperty("subjectId").GetInt32(), detail.GetProperty("chapterId").GetInt32());
 
-        // Der Schutz gilt nur für *verwendete* Übungen – die Kaskade auf unbenutzte bleibt erlaubt.
+        // The protection only applies to *used* exercises - the cascade onto unused ones stays allowed.
         Assert.Equal(HttpStatusCode.NoContent,
             (await father.DeleteAsync($"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}")).StatusCode);
         Assert.Equal(HttpStatusCode.NotFound,

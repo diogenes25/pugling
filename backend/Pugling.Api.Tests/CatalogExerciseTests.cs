@@ -22,7 +22,7 @@ public class CatalogExerciseTests(PuglingWebAppFactory factory) : IClassFixture<
         Assert.Equal(HttpStatusCode.OK, get.StatusCode);
         Assert.Equal("Arithmetic", (await get.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("type").GetString());
 
-        // Auswerten: richtige Lösung (7 × 6 = 42) → 100 %.
+        // Grading: the correct solution (7 × 6 = 42) → 100 %.
         var check = await father.PostAsJsonAsync($"{basePath}/{exerciseId}/check",
             new { answers = new[] { new { index = 0, value = "42" } } });
         Assert.Equal(HttpStatusCode.OK, check.StatusCode);
@@ -56,7 +56,7 @@ public class CatalogExerciseTests(PuglingWebAppFactory factory) : IClassFixture<
             },
         }));
 
-        // Ungeordnet: Reihenfolge egal, Alternative zählt → 100 %. Der Index in GivenAnswer ist hier belanglos.
+        // Unordered: the order does not matter, an alternative counts → 100 %. The index in GivenAnswer is irrelevant here.
         var check = await father.PostAsJsonAsync($"{basePath}/{id}/check", new
         {
             answers = new[]
@@ -91,7 +91,7 @@ public class CatalogExerciseTests(PuglingWebAppFactory factory) : IClassFixture<
             },
         }));
 
-        // Geordnet: die Bewertung greift den Wert je Index; hier sitzen Position 0 und 2, Position 1 ist falsch → 2/3.
+        // Ordered: the grading takes the value per index; here positions 0 and 2 sit, position 1 is wrong → 2/3.
         var check = await father.PostAsJsonAsync($"{basePath}/{id}/check", new
         {
             answers = new[]
@@ -149,8 +149,8 @@ public class CatalogExerciseTests(PuglingWebAppFactory factory) : IClassFixture<
         Assert.Equal(2, loaded.GetProperty("defaultItemCount").GetInt32());
     }
 
-    // Hinweis: Der Bonus-Vorschlag der Übung wird jetzt beim Anlegen einer Lehrplan-POSITION übernommen
-    // (siehe PlanPositionsController); der frühere „to-study-plan"-Kopierpfad entfiel mit dem Legacy-Modell.
+    // Note: the exercise's bonus suggestion is now taken over when a study plan POSITION is created (see
+    // PlanPositionsController); the former "to-study-plan" copy path went away with the legacy model.
 
     [Fact]
     public async Task Sohn_DarfKeineUebungAnlegen_403()

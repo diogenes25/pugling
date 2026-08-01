@@ -23,7 +23,7 @@ public sealed class AuthHandler(PuglingTokenStore tokens) : DelegatingHandler
     /// <inheritdoc />
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken ct)
     {
-        // Der Login selbst darf nicht authentifiziert werden – sonst Endlosschleife über sich selbst.
+        // The login call itself must not be authenticated - that would recurse into itself.
         if (IsLogin(request)) return await base.SendAsync(request, ct);
 
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer",
@@ -31,9 +31,8 @@ public sealed class AuthHandler(PuglingTokenStore tokens) : DelegatingHandler
         var response = await base.SendAsync(request, ct);
         if (response.StatusCode != HttpStatusCode.Unauthorized) return response;
 
-        // Einmalig neu anmelden und denselben Aufruf wiederholen. Der ursprüngliche Response wird
-        // verworfen (und entsorgt), der Request für den zweiten Versuch geklont – ein
-        // HttpRequestMessage darf nicht zweimal gesendet werden.
+        // Log in once more and repeat the same call. The original response is discarded (and disposed),
+        // the request is cloned for the second attempt - an HttpRequestMessage must not be sent twice.
         response.Dispose();
         var fresh = await tokens.GetTokenAsync(base.SendAsync, force: true, ct);
         var retry = await CloneAsync(request, ct);
@@ -52,7 +51,7 @@ public sealed class AuthHandler(PuglingTokenStore tokens) : DelegatingHandler
         request.RequestUri?.AbsolutePath is { } path
         && LoginPaths.Any(p => path.EndsWith(p, StringComparison.OrdinalIgnoreCase));
 
-    // Nur das, was der Client tatsächlich sendet: Methode, URI, Inhalt und Nicht-Auth-Header.
+    // Only what the client actually sends: method, URI, content and non-auth headers.
     private static async Task<HttpRequestMessage> CloneAsync(HttpRequestMessage request, CancellationToken ct)
     {
         var clone = new HttpRequestMessage(request.Method, request.RequestUri) { Version = request.Version };

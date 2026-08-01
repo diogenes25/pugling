@@ -51,7 +51,7 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
         await db.SaveChangesAsync();
     }
 
-    // ─── Kaufen ──────────────────────────────────────────────────────────────
+    // ─── Buying ──────────────────────────────────────────────────────────────
 
     [Fact]
     public async Task Kauf_MitCoinsUndGems_BuchtAbUndSenktBestand_ErhoehtInventar()
@@ -84,17 +84,17 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
         Assert.Equal(80, view.GetProperty("coins").GetInt32());
         Assert.Equal(20, view.GetProperty("gems").GetInt32());
 
-        // Bestand gesunken
+        // Stock has gone down
         var listing = view.GetProperty("available").EnumerateArray()
             .First(a => a.GetProperty("id").GetInt32() == listingId);
         Assert.Equal(1, listing.GetProperty("currentStock").GetInt32());
 
-        // Aggregiertes Inventar erhöht
+        // The aggregated inventory has gone up
         var inv = view.GetProperty("inventory").EnumerateArray()
             .First(i => i.GetProperty("shopArticleId").GetInt32() == articleId);
         Assert.Equal(30, inv.GetProperty("quantity").GetInt32());
 
-        // Wallet-Buchungen
+        // Wallet entries
         var wallet = await JsonAsync(await child.GetAsync("/api/v1/student/me/points"));
         Assert.Equal(80, wallet.GetProperty("coins").GetInt32());
         var entries = await JsonAsync(await child.GetAsync("/api/v1/student/me/points/entries"));
@@ -126,7 +126,7 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
             unitType = "Minute",
             actionType = "TV",
         });
-        // Ohne eigenen Titel – der Beleg muss „Fernsehen" erben.
+        // Without a title of its own - the record must inherit "Fernsehen".
         var untitled = await CreateListingAsync(father, articleId, new
         {
             coinPrice = 10,
@@ -134,7 +134,7 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
             currentStock = 1,
             maxStock = 1,
         });
-        // Mit eigenem Titel – er muss gewinnen.
+        // With a title of its own - it has to win.
         var titled = await CreateListingAsync(father, articleId, new
         {
             title = "30 Minuten Fernsehen",
@@ -182,7 +182,7 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
             maxStock = 2,
         });
 
-        // Vor dem Kauf: leerer Bestand.
+        // Before the purchase: empty stock.
         var empty = await child.GetAsync("/api/v1/student/me/shop/inventory");
         empty.EnsureSuccessStatusCode();
         Assert.Empty((await empty.Content.ReadFromJsonAsync<JsonElement>()).EnumerateArray());
@@ -278,7 +278,7 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
         var fatherA = await TestApi.FatherAsync(factory);
         var (_, child) = await FreshChildAsync(fatherA, "9305");
 
-        // Fremder Artikel/Angebot anlegen
+        // Create an article/listing owned by someone else
         using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
         var fremdVater = new Adult { Name = "Fremd-Vater", Pin = "unused" };
@@ -302,7 +302,7 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
             (await child.PostAsJsonAsync($"/api/v1/student/me/shop/listings/{fremdId}/purchase", new { })).StatusCode);
     }
 
-    // ─── Stornierung ─────────────────────────────────────────────────────────
+    // ─── Cancellation ─────────────────────────────────────────────────────────
 
     [Fact]
     public async Task Storno_ErstattetCoinsUndGems_ReduzuiertInventar()
@@ -341,7 +341,7 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
         Assert.Equal(300, wallet.GetProperty("coins").GetInt32());
         Assert.Equal(40, wallet.GetProperty("gems").GetInt32());
 
-        // Inventar muss wieder 0 sein
+        // The inventory must be back to 0
         var shopView = await JsonAsync(await child.GetAsync("/api/v1/student/me/shop"));
         var invItems = shopView.GetProperty("inventory").EnumerateArray().ToList();
         Assert.DoesNotContain(invItems, i => i.GetProperty("shopArticleId").GetInt32() == articleId && i.GetProperty("quantity").GetInt32() > 0);
@@ -381,14 +381,14 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
         var first = await svc1.CancelPurchaseAsync(1, childId, purchaseId, now);
         var second = await svc2.CancelPurchaseAsync(1, childId, purchaseId, now);
 
-        // Genau einer der beiden darf erfolgreich sein
+        // Exactly one of the two may succeed
         Assert.Contains(ShopService.ShopError.None, new[] { first.Error, second.Error });
         Assert.NotEqual(ShopService.ShopError.None, first.Error == ShopService.ShopError.None ? second.Error : first.Error);
         var wallet = await JsonAsync(await child.GetAsync("/api/v1/student/me/points"));
         Assert.Equal(300, wallet.GetProperty("coins").GetInt32());
     }
 
-    // ─── Aktivierungsflow ────────────────────────────────────────────────────
+    // ─── Activation flow ────────────────────────────────────────────────────
 
     [Fact]
     public async Task Aktivierung_SohnStellt_VaterGenehmigt_InventarSinkt()
@@ -413,23 +413,23 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
         (await father.PostAsJsonAsync($"/api/v1/supervisor/children/{childId}/points", new { amount = 200, reason = "Coins" }))
             .EnsureSuccessStatusCode();
 
-        // Kauf → 50 Min im Inventar
+        // Purchase → 50 min in the inventory
         await child.PostAsJsonAsync($"/api/v1/student/me/shop/listings/{listingId}/purchase", new { });
 
-        // Anfrage: nur 10 Min
+        // Request: only 10 min
         var req = await JsonAsync(await child.PostAsJsonAsync(
             $"/api/v1/student/me/shop/inventory/{articleId}/activate", new { quantity = 10 }));
         var requestId = req.GetProperty("id").GetInt32();
         Assert.Equal("Pending", req.GetProperty("status").GetString());
         Assert.Equal(10, req.GetProperty("requestedQuantity").GetInt32());
 
-        // Vater genehmigt
+        // The supervisor approves
         var approved = await JsonAsync(await father.PostAsJsonAsync(
             $"/api/v1/supervisor/children/{childId}/shop/activations/{requestId}/approve", new { }));
         Assert.Equal("Approved", approved.GetProperty("status").GetString());
         Assert.False(approved.GetProperty("closedAt").ValueKind == JsonValueKind.Null);
 
-        // Inventar: 50 - 10 = 40
+        // Inventory: 50 - 10 = 40
         var shopView = await JsonAsync(await child.GetAsync("/api/v1/student/me/shop"));
         var inv = shopView.GetProperty("inventory").EnumerateArray()
             .First(i => i.GetProperty("shopArticleId").GetInt32() == articleId);
@@ -468,7 +468,7 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
             $"/api/v1/supervisor/children/{childId}/shop/activations/{requestId}/reject", new { }));
         Assert.Equal("Rejected", rejected.GetProperty("status").GetString());
 
-        // Inventar noch 30 (unveränert)
+        // Inventory still 30 (unchanged)
         var shopView = await JsonAsync(await child.GetAsync("/api/v1/student/me/shop"));
         var inv = shopView.GetProperty("inventory").EnumerateArray()
             .First(i => i.GetProperty("shopArticleId").GetInt32() == articleId);
@@ -499,7 +499,7 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
             .EnsureSuccessStatusCode();
         await child.PostAsJsonAsync($"/api/v1/student/me/shop/listings/{listingId}/purchase", new { });
 
-        // 10 im Inventar, 20 beantragen → 400
+        // 10 in the inventory, 20 requested → 400
         var res = await child.PostAsJsonAsync(
             $"/api/v1/student/me/shop/inventory/{articleId}/activate", new { quantity = 20 });
         Assert.Equal(HttpStatusCode.BadRequest, res.StatusCode);
@@ -536,7 +536,7 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
         (await father.PostAsJsonAsync($"/api/v1/supervisor/children/{childId}/shop/activations/{requestId}/approve", new { }))
             .EnsureSuccessStatusCode();
 
-        // Erneute Genehmigung → 409
+        // Approving again → 409
         Assert.Equal(HttpStatusCode.Conflict,
             (await father.PostAsJsonAsync($"/api/v1/supervisor/children/{childId}/shop/activations/{requestId}/approve", new { })).StatusCode);
     }
@@ -571,13 +571,13 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
             $"/api/v1/student/me/shop/inventory/{articleId}/activate", new { quantity = 3 }));
         var requestId = req.GetProperty("id").GetInt32();
 
-        // Offen: beide Affordances
+        // Open: both affordances
         var queue = await JsonAsync(await father.GetAsync($"/api/v1/supervisor/children/{childId}/shop/activations"));
         var open = queue.EnumerateArray().First(r => r.GetProperty("id").GetInt32() == requestId);
         Assert.True(open.GetProperty("canApprove").GetBoolean());
         Assert.True(open.GetProperty("canReject").GetBoolean());
 
-        // Nach Genehmigung: keine Affordances mehr
+        // After approval: no affordances left
         (await father.PostAsJsonAsync($"/api/v1/supervisor/children/{childId}/shop/activations/{requestId}/approve", new { }))
             .EnsureSuccessStatusCode();
         var done = await JsonAsync(await father.GetAsync($"/api/v1/supervisor/children/{childId}/shop/activations"));
@@ -605,7 +605,7 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
         Assert.NotNull(listing.LastRefilledAtUtc);
     }
 
-    // ─── Artikel-CRUD ────────────────────────────────────────────────────────
+    // ─── Article CRUD ────────────────────────────────────────────────────────
 
     [Fact]
     public async Task ArtikelAnlegen_UndLesen_RoundTrip()
@@ -701,7 +701,7 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
         Assert.DoesNotContain(list.EnumerateArray(), a => a.GetProperty("id").GetInt32() == articleId);
     }
 
-    // ─── Listing-CRUD ────────────────────────────────────────────────────────
+    // ─── Listing CRUD ────────────────────────────────────────────────────────
 
     [Fact]
     public async Task ListingAnlegen_UndLesen_RoundTrip()
@@ -798,14 +798,14 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
         Assert.DoesNotContain(list.EnumerateArray(), l => l.GetProperty("id").GetInt32() == listingId);
     }
 
-    // ─── Kauf-Fehler ─────────────────────────────────────────────────────────
+    // ─── Purchase errors ─────────────────────────────────────────────────────────
 
     [Fact]
     public async Task Kauf_OhneCoins_400_KeineAbbuchung()
     {
         var father = await TestApi.FatherAsync(factory);
         var (childId, child) = await FreshChildAsync(father, "9350");
-        // Kein Guthaben
+        // No balance
 
         var articleId = await CreateArticleAsync(father, new
         {
@@ -839,7 +839,7 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
         var (childId, child) = await FreshChildAsync(father, "9351");
         (await father.PostAsJsonAsync($"/api/v1/supervisor/children/{childId}/points",
             new { amount = 500, reason = "Coins" })).EnsureSuccessStatusCode();
-        // Keine Gems
+        // No gems
 
         var articleId = await CreateArticleAsync(father, new
         {
@@ -895,7 +895,7 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
         Assert.Equal("shop_listing_inactive", body!.GetProperty("code").GetString());
     }
 
-    // ─── Kauf-Affordances ────────────────────────────────────────────────────
+    // ─── Purchase affordances ────────────────────────────────────────────────────
 
     [Fact]
     public async Task KaufAffordances_NurBeiFaelligemStatus()
@@ -925,12 +925,12 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
             $"/api/v1/student/me/shop/listings/{listingId}/purchase", new { }));
         var purchaseId = view.GetProperty("purchases").EnumerateArray().First().GetProperty("id").GetInt32();
 
-        // Kauf offen: canCancel = true
+        // Purchase open: canCancel = true
         var purchases = await JsonAsync(await father.GetAsync($"/api/v1/supervisor/children/{childId}/shop/purchases"));
         var open = purchases.EnumerateArray().First(p => p.GetProperty("id").GetInt32() == purchaseId);
         Assert.True(open.GetProperty("canCancel").GetBoolean());
 
-        // Nach Storno: canCancel = false
+        // After cancelling: canCancel = false
         (await father.PostAsJsonAsync(
             $"/api/v1/supervisor/children/{childId}/shop/purchases/{purchaseId}/cancel", new { })).EnsureSuccessStatusCode();
         var after = await JsonAsync(await father.GetAsync($"/api/v1/supervisor/children/{childId}/shop/purchases"));
@@ -997,7 +997,7 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
         });
         await child.PostAsJsonAsync($"/api/v1/student/me/shop/listings/{listingId}/purchase", new { });
 
-        // 3 Anfragen je 1 Einheit (Inventar hat 10)
+        // 3 requests of 1 unit each (the inventory holds 10)
         for (var i = 0; i < 3; i++)
             await child.PostAsJsonAsync($"/api/v1/student/me/shop/inventory/{articleId}/activate", new { quantity = 1 });
 
@@ -1006,15 +1006,15 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
         Assert.Equal("3", res.Headers.GetValues("X-Total-Count").First());
     }
 
-    // ─── Wallet-/Inventar-Integrität ───────────────────────────────────────────
+    // ─── Wallet/inventory integrity ───────────────────────────────────────────
 
     [Fact]
     public async Task Kauf_BumptChildConcurrencyStamp_SchuetztWalletVorParallelemDoppelkauf()
     {
-        // Wie Angebote/Skins muss ein Shop-Kauf das Concurrency-Token des Kindes erhöhen: nur so scheitert
-        // ein parallel gestarteter zweiter Wallet-Write (vgl. SkinPurchaseTests.ConcurrencyToken) und der
-        // Deckungs-Check kann nicht doppelt umgangen werden. Der Listing-Stamp allein schützt nur denselben
-        // Bestand – über verschiedene Listings/Angebote hinweg bliebe der Saldo sonst ungeschützt.
+        // As with listings/skins, a shop purchase must bump the child's concurrency token: only then does a
+        // second wallet write started in parallel fail (cf. SkinPurchaseTests.ConcurrencyToken) and the funds
+        // check cannot be bypassed twice. The listing stamp alone protects the same stock only - across
+        // different listings the balance would stay unprotected.
         var father = await TestApi.FatherAsync(factory);
         var (childId, child) = await FreshChildAsync(father, "9360");
         var articleId = await CreateArticleAsync(father, new
@@ -1052,9 +1052,9 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
     [Fact]
     public async Task Aktivierung_ZweiOffeneAnfragen_UebersteigenInventar_ZweiteGenehmigungScheitert()
     {
-        // Der Anfrage-Check ist nicht-transaktional: zwei offene Anfragen können in Summe das Inventar
-        // übersteigen. Verbindlich ist erst die Deckungsprüfung bei der Genehmigung – sie darf das Inventar
-        // nicht stillschweigend auf 0 klemmen, sondern muss die zweite Genehmigung ablehnen (kein Freibetrag).
+        // The request check is not transactional: two open requests can exceed the inventory in sum. Binding is
+        // only the funds check at approval time - it must not silently clamp the inventory to 0 but has to
+        // reject the second approval (no free allowance).
         var father = await TestApi.FatherAsync(factory);
         var (childId, child) = await FreshChildAsync(father, "9361");
         var articleId = await CreateArticleAsync(father, new
@@ -1074,18 +1074,18 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
         });
         (await father.PostAsJsonAsync($"/api/v1/supervisor/children/{childId}/points",
             new { amount = 200, reason = "Coins" })).EnsureSuccessStatusCode();
-        await child.PostAsJsonAsync($"/api/v1/student/me/shop/listings/{listingId}/purchase", new { }); // Inventar = 30
+        await child.PostAsJsonAsync($"/api/v1/student/me/shop/listings/{listingId}/purchase", new { }); // inventory = 30
 
         var req1 = (await JsonAsync(await child.PostAsJsonAsync(
             $"/api/v1/student/me/shop/inventory/{articleId}/activate", new { quantity = 30 }))).GetProperty("id").GetInt32();
         var req2 = (await JsonAsync(await child.PostAsJsonAsync(
             $"/api/v1/student/me/shop/inventory/{articleId}/activate", new { quantity = 10 }))).GetProperty("id").GetInt32();
 
-        // Erste Genehmigung zieht das gesamte Inventar ab (30 → 0).
+        // The first approval takes the whole inventory (30 → 0).
         (await father.PostAsJsonAsync($"/api/v1/supervisor/children/{childId}/shop/activations/{req1}/approve", new { }))
             .EnsureSuccessStatusCode();
 
-        // Zweite Genehmigung findet kein Inventar mehr → 400 insufficient_inventory, Anfrage bleibt offen.
+        // The second approval finds no inventory left → 400 insufficient_inventory, the request stays open.
         var overRes = await father.PostAsJsonAsync($"/api/v1/supervisor/children/{childId}/shop/activations/{req2}/approve", new { });
         Assert.Equal(HttpStatusCode.BadRequest, overRes.StatusCode);
         Assert.Equal("insufficient_inventory",
@@ -1095,7 +1095,7 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
         var stillOpen = queue.EnumerateArray().First(r => r.GetProperty("id").GetInt32() == req2);
         Assert.Equal("Pending", stillOpen.GetProperty("status").GetString());
 
-        // Die weiterhin offene Anfrage lässt sich ablehnen.
+        // The still open request can be rejected.
         (await father.PostAsJsonAsync($"/api/v1/supervisor/children/{childId}/shop/activations/{req2}/reject", new { }))
             .EnsureSuccessStatusCode();
     }
@@ -1124,7 +1124,7 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
     [Fact]
     public async Task Artikel_UndAngebot_LassenSichEinzelnLesen()
     {
-        // Symmetrie zu PATCH/DELETE: die Einzel-Ressource ist auch per GET abrufbar (Read-after-write).
+        // Symmetry with PATCH/DELETE: the single resource can be fetched by GET too (read-after-write).
         var father = await TestApi.FatherAsync(factory);
         var articleId = await CreateArticleAsync(father, new
         {
@@ -1151,7 +1151,7 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
         Assert.Equal(listingId, listing.GetProperty("id").GetInt32());
         Assert.Equal(articleId, listing.GetProperty("shopArticleId").GetInt32());
 
-        // Unbekannte IDs → 404 (kein 200 mit leerem Body).
+        // Unknown ids → 404 (not 200 with an empty body).
         Assert.Equal(HttpStatusCode.NotFound,
             (await father.GetAsync($"/api/v1/supervisor/shop/articles/{articleId}/listings/999999")).StatusCode);
         Assert.Equal(HttpStatusCode.NotFound,
@@ -1161,7 +1161,7 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
     [Fact]
     public async Task Artikel_EinzelabrufFremderVater_404()
     {
-        // Ownership: ein anderer Vater darf den Artikel nicht per Einzel-GET sehen.
+        // Ownership: another adult must not see the article through the single GET.
         var owner = await TestApi.FatherAsync(factory);
         var articleId = await CreateArticleAsync(owner, new
         {
@@ -1182,8 +1182,8 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
     [Fact]
     public async Task CreateArticle_MitUngueltigemEnum_NenntFeldUndErlaubteWerte()
     {
-        // Ein ungültiger Enum-Wert soll nicht nur „value is not of the expected type" liefern, sondern
-        // das fehlerhafte Feld benennen UND die zulässigen Werte auflisten (ohne den DTO-Typ zu leaken).
+        // An invalid enum value should not just yield "value is not of the expected type" but name the faulty
+        // field AND list the allowed values (without leaking the DTO type).
         var father = await TestApi.FatherAsync(factory);
         var res = await father.PostAsJsonAsync("/api/v1/supervisor/shop/articles", new
         {
@@ -1197,8 +1197,8 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
         Assert.Equal(HttpStatusCode.BadRequest, res.StatusCode);
 
         var raw = await res.Content.ReadAsStringAsync();
-        Assert.DoesNotContain("Pugling.Api", raw);          // kein Typnamen-Leak
-        Assert.DoesNotContain("could not be converted", raw); // keine rohe System.Text.Json-Meldung
+        Assert.DoesNotContain("Pugling.Api", raw);          // no type name leak
+        Assert.DoesNotContain("could not be converted", raw); // no raw System.Text.Json message
 
         var body = await res.Content.ReadFromJsonAsync<JsonElement>();
         Assert.Equal("validation_error", body.GetProperty("code").GetString());
@@ -1208,7 +1208,7 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
             Assert.Contains(name, message);
     }
 
-    // ─── Bezahltes Inventar überlebt Katalogpflege ────────────────────────────
+    // ─── Paid inventory survives catalog maintenance ────────────────────────────
 
     /// <summary>
     /// <b>Paid units are money – money survives catalog maintenance.</b> The article cascaded down into
@@ -1246,7 +1246,7 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
         Assert.Equal(HttpStatusCode.NoContent,
             (await father.DeleteAsync($"/api/v1/supervisor/shop/articles/{articleId}")).StatusCode);
 
-        // In der Datenbank: die Zeile lebt, nur der Katalog-Verweis ist leer.
+        // In the database: the row lives, only the catalog reference is empty.
         using (var scope = factory.Services.CreateScope())
         {
             var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
@@ -1256,9 +1256,9 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
             Assert.Null(inv.ShopArticleId);
         }
 
-        // Und in beiden Sichten, aus der Momentaufnahme statt aus dem gelöschten Artikel. Ohne sie fiele
-        // der Posten aus der Vater-Liste (die filtert auf `ShopArticle.AdultId`) und aus der Sohn-Liste
-        // (die sortiert nach `ShopArticle.ArticleNumber`) heraus – unsichtbar wäre so gut wie gelöscht.
+        // And in both views, from the snapshot instead of from the deleted article. Without it the position
+        // would drop out of the supervisor list (which filters on `ShopArticle.AdultId`) and out of the child's
+        // list (which sorts by `ShopArticle.ArticleNumber`) - invisible would be as good as deleted.
         var meins = await JsonAsync(await child.GetAsync("/api/v1/student/me/shop/inventory"));
         var posten = Assert.Single(meins.EnumerateArray());
         Assert.Equal(120, posten.GetProperty("quantity").GetInt32());

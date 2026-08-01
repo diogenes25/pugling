@@ -31,7 +31,7 @@ public class PatchClearFieldTests(PuglingWebAppFactory factory) : IClassFixture<
         var childId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/supervisor/children",
             new { name = $"Clear-Kind {Guid.NewGuid():N}", birthYear = 2013, grade = 6, pin = "1111" }));
 
-        // Gegenprobe: ein `null` allein ändert nichts (das ist die Semantik, auf der die Schalter aufsetzen).
+        // The counter-check: a `null` on its own changes nothing (that is the semantics the switches build on).
         var untouched = await JsonAsync(await father.PatchAsJsonAsync($"/api/v1/supervisor/children/{childId}",
             new { birthYear = (int?)null, grade = (int?)null }));
         Assert.Equal(2013, IntOrNull(untouched, "birthYear"));
@@ -42,7 +42,7 @@ public class PatchClearFieldTests(PuglingWebAppFactory factory) : IClassFixture<
         Assert.Null(IntOrNull(cleared, "birthYear"));
         Assert.Null(IntOrNull(cleared, "grade"));
 
-        // Setzen funktioniert weiterhin – der Schalter ist ein Zusatz, kein Ersatz.
+        // Setting still works - the switch is an addition, not a replacement.
         var reset = await JsonAsync(await father.PatchAsJsonAsync($"/api/v1/supervisor/children/{childId}",
             new { grade = 7 }));
         Assert.Equal(7, IntOrNull(reset, "grade"));
@@ -64,7 +64,7 @@ public class PatchClearFieldTests(PuglingWebAppFactory factory) : IClassFixture<
             wordBank = new[] { "morning", "evening" },
         }));
 
-        // Gegenprobe: das geräumte Formularfeld käme als `null` an – und ließe beides stehen.
+        // The counter-check: a cleared form field would arrive as `null` - and would leave both as they are.
         var untouched = await JsonAsync(await creator.PatchAsJsonAsync($"/api/v1/creator/cloze-texts/{id}",
             new { translation = (string?)null, wordBank = (string[]?)null }));
         Assert.Equal("Guten Morgen!", untouched.GetProperty("translation").GetString());
@@ -79,7 +79,7 @@ public class PatchClearFieldTests(PuglingWebAppFactory factory) : IClassFixture<
             $"/api/v1/creator/cloze-texts/{id}", new { translation = "Guten Abend!" })))
             .GetProperty("translation").GetString());
 
-        // Schickt eine Oberfläche Wert *und* Schalter, gewinnt „leeren" (Reihenfolge im Controller).
+        // If a UI sends a value *and* the switch, "clear" wins (by the order in the controller).
         var both = await JsonAsync(await creator.PatchAsJsonAsync($"/api/v1/creator/cloze-texts/{id}",
             new { translation = "Egal", clearTranslation = true }));
         Assert.Equal(JsonValueKind.Null, both.GetProperty("translation").ValueKind);
@@ -117,7 +117,7 @@ public class PatchClearFieldTests(PuglingWebAppFactory factory) : IClassFixture<
         Assert.Null(IntOrNull(cleared, "seriesId"));
         Assert.Null(IntOrNull(cleared, "gradeMin"));
         Assert.Null(IntOrNull(cleared, "gradeMax"));
-        // Der Fach-Name gehört zur Fach-Bindung und geht mit – sonst behauptete das Profil weiter ein Fach.
+        // The subject name belongs to the subject binding and goes with it - otherwise the profile would keep claiming a subject.
         Assert.Equal(JsonValueKind.Null, cleared.GetProperty("subjectName").ValueKind);
         Assert.Equal("None", cleared.GetProperty("schoolTypes").GetString());
     }
@@ -133,8 +133,8 @@ public class PatchClearFieldTests(PuglingWebAppFactory factory) : IClassFixture<
             new { name = $"Alt {Guid.NewGuid():N}", sourceLanguage = "en", targetLanguage = "de" }));
         var oldUnit = await TestApi.IdAsync(await father.PostAsJsonAsync(
             $"/api/v1/creator/textbook-series/{oldSeries}/units", new { label = "Unit 1", grade = 5 }));
-        // Die neue Reihe hat bewusst KEINE Units: genau dann war der Wechsel vorher unmöglich, weil die
-        // alte Unit gegen die neue Reihe geprüft wurde und dabei zwangsläufig durchfiel.
+        // The new series deliberately has NO units: that was exactly when the switch used to be impossible,
+        // because the old unit was checked against the new series and inevitably failed.
         var newSeries = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/textbook-series",
             new { name = $"Neu {Guid.NewGuid():N}", sourceLanguage = "en", targetLanguage = "de" }));
 
@@ -148,7 +148,7 @@ public class PatchClearFieldTests(PuglingWebAppFactory factory) : IClassFixture<
         Assert.Equal(newSeries, IntOrNull(switched, "seriesId"));
         Assert.Null(IntOrNull(switched, "currentUnitId"));
 
-        // Eine Unit aus einer fremden Reihe bleibt verboten – die Prüfung ist gelockert, nicht abgeschafft.
+        // A unit from another series stays forbidden - the check is relaxed, not abolished.
         var wrong = await father.PatchAsJsonAsync(
             $"/api/v1/supervisor/children/{childId}/textbooks/{bookId}", new { currentUnitId = oldUnit });
         Assert.Equal(HttpStatusCode.BadRequest, wrong.StatusCode);
@@ -175,7 +175,7 @@ public class PatchClearFieldTests(PuglingWebAppFactory factory) : IClassFixture<
             $"/api/v1/supervisor/children/{childId}/textbooks/{bookId}",
             new { clearSeries = true, clearSubject = true, clearGrade = true }));
         Assert.Null(IntOrNull(cleared, "seriesId"));
-        // Die Unit fällt mit der Reihe weg – ohne sie bezeichnet sie nichts.
+        // The unit falls away with the series - without it, it denotes nothing.
         Assert.Null(IntOrNull(cleared, "currentUnitId"));
         Assert.Null(IntOrNull(cleared, "subjectId"));
         Assert.Null(IntOrNull(cleared, "grade"));

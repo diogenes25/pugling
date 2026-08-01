@@ -15,7 +15,7 @@ namespace Pugling.Api.Tests;
 /// </summary>
 public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWebAppFactory>
 {
-    // Konto 1 = Papa: Creator (Katalog anlegen) UND Supervisor von Kind 1 (Profil/Lernstand lesen).
+    // Account 1 = the father: creator (creating catalog content) AND supervisor of child 1 (reading profile/progress).
     private HttpClient Authenticated() =>
         factory.CreateDefaultClient(AuthHandler.Standalone(new PuglingClientOptions
         {
@@ -84,13 +84,13 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
         Assert.Equal(1, chat.Calls);
         Assert.Equal("Tiere auf dem Bauernhof", outcome.Title);
 
-        // Die Wortpaare müssen als eigene Item-Ebene im Katalog stehen und im Vokabelspeicher verlinkt sein.
+        // The word pairs must sit in the catalog as their own item tier and be linked in the vocabulary store.
         var items = await creator.ListItemsAsync(subjectId, chapterId, outcome.ExerciseId!.Value);
         Assert.Equal(3, items.Count);
         Assert.All(items, i => Assert.True(i.VocabularyId > 0));
         Assert.Contains(items, i => i.Front == "the horse" && i.Back == "das Pferd");
 
-        // Die Metadaten kommen aus dem Briefing – daran findet der Supervisor die Übung später wieder.
+        // The metadata comes from the briefing - that is how the supervisor finds the exercise again later.
         var detail = await creator.GetExerciseDetailAsync(outcome.ExerciseId.Value);
         Assert.Equal(briefing.Grade, detail.GradeMin);
         Assert.Contains(briefing.Audience, detail.Description);
@@ -113,7 +113,7 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
     [Fact]
     public async Task Ein_fehlerhafter_Entwurf_geht_mit_den_Verstoessen_zurueck_ans_Modell()
     {
-        // Erster Versuch: eine Vokabel zu wenig und eine Dublette – beides deterministisch prüfbar.
+        // First attempt: one vocabulary entry too few and one duplicate - both deterministically checkable.
         const string broken = """
             {"title":"Tiere","items":[
               {"front":"the horse","back":"das Pferd","hint":null},
@@ -126,7 +126,7 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
 
         Assert.Equal(2, chat.Calls);
         Assert.True(outcome.Published);
-        // Die Reparatur-Runde muss die konkreten Verstöße genannt haben, nicht nur „nochmal".
+        // The repair round must have named the concrete violations, not just "again".
         Assert.Contains(chat.LastMessages, m => m.Text.Contains("doppelt vor"));
     }
 
@@ -151,8 +151,8 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
     [Fact]
     public async Task Der_Pflicht_Wortschatz_darf_nicht_ausgetauscht_werden()
     {
-        // Das „Modell" ersetzt zwei vorgegebene Wörter durch eigene – genau der Fall, den die
-        // Kernregel verbietet (Interessen kleiden ein, sie ändern den Stoff nicht).
+        // The "model" replaces two prescribed words with its own - exactly the case the core rule forbids
+        // (interests dress the material up, they do not change it).
         var (pipeline, creator, _) = BuildAgent(VocabularyJson);
         var (subjectId, chapterId) = await FreshChapterAsync(creator, "Wortschatz");
 
@@ -173,11 +173,10 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
         await creator.CreateVocabularyAsync(
             new CreateVocabularyDto(null, "en", "de", "the horse", "das Pferd", PartOfSpeech.Noun));
 
-        // Der Vokabelspeicher ist – anders als Fach und Kapitel – **klassenweit geteilt**: frühere Tests
-        // dieser Klasse spielen denselben `VocabularyJson` durch und haben „the horse" womöglich längst
-        // materialisiert. Die Aussage darf darum nicht „zeigt auf *meine* Zeile" sein (dann hängt der Test
-        // an der Ausführungsreihenfolge), sondern genau die, die der Name verspricht: **keine neue Zeile,
-        // Verweis auf eine bestehende.**
+        // Unlike subject and chapter, the vocabulary store is **shared across the class**: earlier tests of this
+        // class run the same `VocabularyJson` through and may long since have materialized "the horse". So the
+        // statement must not be "points at *my* row" (then the test hangs on the execution order) but exactly
+        // what its name promises: **no new row, a reference to an existing one.**
         var before = await KnownHorsesAsync(creator);
         Assert.NotEmpty(before);
 
@@ -216,7 +215,7 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
     [Fact]
     public async Task Ein_Lueckentext_ohne_passende_Platzhalter_wird_abgelehnt()
     {
-        // Lücke 3 hat keinen Platzhalter, Platzhalter {{4}} keine Lücke, und die Lösung steht im Text.
+        // Gap 3 has no placeholder, placeholder {{4}} has no gap, and the solution stands in the text.
         const string cloze = """
             {"title":"Kaputt","text":"Tom feeds the {{1}} and the horse. Then he cleans the {{4}}.",
              "gaps":[{"index":1,"answer":"horse","alternatives":null},
@@ -246,7 +245,7 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
     [Fact]
     public async Task Ein_Entwurf_mit_fehlenden_Feldern_wird_abgelehnt_statt_den_Agenten_zu_sprengen()
     {
-        // Erst fehlt die ganze Liste, dann fehlen in jedem Eintrag die Vorderseiten.
+        // First the whole list is missing, then the front sides are missing in every entry.
         var (pipeline, creator, _) = BuildAgent(
             """{"title":"Tiere"}""",
             """{"title":"Tiere","items":[{"back":"das Pferd"},{"back":"das Schaf"},{"back":"die Ziege"}]}""");
@@ -293,7 +292,7 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
     public async Task Ein_unbekanntes_Kapitel_wird_gemeldet_statt_still_ins_erste_zu_schreiben()
     {
         var (pipeline, creator, _) = BuildAgent(VocabularyJson);
-        // Es gibt Fächer mit Kapiteln – ohne die Prüfung würde genau eines davon stumm gewählt.
+        // There are subjects with chapters - without the check exactly one of them would be picked silently.
         await FreshChapterAsync(creator, "Kapitel-Wahl");
         var commands = Commands(creator, pipeline);
 
@@ -313,7 +312,7 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
     {
         Assert.Equal("help", CommandLine.Parse(["help"]).Verb);
 
-        // Ohne Verb gilt weiterhin help – und die Optionen werden ab dem ersten Argument gelesen.
+        // Without a verb, help still applies - and the options are read from the first argument on.
         var line = CommandLine.Parse(["--child", "7"]);
         Assert.Equal("help", line.Verb);
         Assert.Equal(7, line.Int("child", 0));
@@ -354,7 +353,7 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
             Interests: ["Fußball", "Minecraft"]));
         await supervisor.CreateTextbookAsync(1,
             new CreateTextbookDto("Green Line 1", "Englisch", null, 5, "Klett", null, "Unit 1"));
-        // Gewichtete Taxonomie neben dem Freitext – inklusive einer Abneigung.
+        // The weighted taxonomy next to the free text - including a dislike.
         await supervisor.SetInterestsAsync(1, new SetChildInterestsDto(
             [new ChildInterestInput(3, Label: "Weltraum"), new ChildInterestInput(-3, Label: "Spinnen")]));
 
@@ -367,9 +366,9 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
         Assert.Contains("Unit 1: Animals", prompt);
         Assert.Contains("Green Line 1", briefing.Source);
 
-        // Die stärkste Vorliebe steht vor dem Freitext …
+        // The strongest preference comes before the free text …
         Assert.Matches(@"Interessen \(wichtigste zuerst\): Weltraum", prompt);
-        // … und die Abneigung wird als Verbot geführt, nicht als weiteres Thema.
+        // … and the dislike is listed as a ban, not as another topic.
         Assert.Contains("Vermeide unbedingt (Abneigungen): Spinnen", prompt);
         Assert.DoesNotContain("Interessen (wichtigste zuerst): Weltraum, Spinnen", prompt);
     }
@@ -429,13 +428,13 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
         Assert.True(outcome.Published, $"Selbsttest: {outcome.SelfTestPercent} %");
         Assert.False(briefing.Individual);
 
-        // Der Prompt beschreibt den Lehrer und den Stoff, aber kein Kind.
+        // The prompt describes the teacher and the subject matter, but no child.
         var prompt = briefing.ToPromptText();
         Assert.DoesNotContain("## Das Kind", prompt);
         Assert.Contains("Kein bestimmtes Kind", prompt);
         Assert.Contains(profile.Name, prompt);
 
-        // Metadaten aus dem Profil: der ganze Klassenstufen-Bereich, die Schulart und die Quelle mit Unit.
+        // Metadata from the profile: the whole grade range, the school type and the source with its unit.
         var detail = await creator.GetExerciseDetailAsync(outcome.ExerciseId!.Value);
         Assert.Equal(7, detail.GradeMin);
         Assert.Equal(8, detail.GradeMax);
@@ -444,7 +443,7 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
         Assert.Contains(unit.Label, detail.Source);
         Assert.Contains("gemeinsamen Katalog", detail.Description);
 
-        // Die Persona des Profils steht im System-Prompt – vor den festen Regeln, die sie nicht aufweicht.
+        // The profile's persona sits in the system prompt - before the fixed rules, which it does not soften.
         var system = Assert.Single(chat.LastMessages, m => m.Role == ChatRole.System).Text;
         Assert.StartsWith("Du bist Englischlehrer", system);
         Assert.Contains("Kurze Sätze", system);
@@ -470,7 +469,7 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
         Assert.Contains("Unit 3 – Growing up", prompt);
         Assert.Contains("Present perfect vs. simple past", prompt);
         Assert.Contains("to grow up, responsibility, to argue", prompt);
-        // Die Sprachen des Profils gelten, wenn die Kommandozeile keine nennt.
+        // The profile's languages apply when the command line names none.
         Assert.Equal("en", briefing.SourceLang);
     }
 
@@ -519,7 +518,7 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
 
         Assert.True(outcome.Complete, string.Join(" | ", outcome.Parts.Select(p => p.Error ?? p.Outcome?.Title)));
         Assert.Equal(2, outcome.ExerciseIds.Count);
-        // Der Titel kommt aus der Unit – dieselbe Bezeichnung, die auch in der Quelle steht.
+        // The title comes from the unit - the same label that also appears in the source.
         Assert.Contains(unit.Label, outcome.Title);
 
         var classTest = await supervisor.GetClassTestAsync(outcome.ClassTestId!.Value);
@@ -527,7 +526,7 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
         Assert.Equal(KlassenarbeitStatus.Planned, classTest.Klassenarbeit.Status);
         Assert.Equal([.. outcome.ExerciseIds.Order()],
             [.. classTest.AssignedExercises.Select(e => e.Id).Order()]);
-        // Der kind-skopierte Tag hält das Bündel auch außerhalb der Klassenarbeit zusammen.
+        // The child-scoped tag holds the bundle together outside the class test too.
         Assert.Contains(outcome.TagName, classTest.Klassenarbeit.Tags.Select(t => t.Name));
     }
 
@@ -538,7 +537,7 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
     [Fact]
     public async Task Eine_Klausur_mit_einem_kaputten_Teil_bleibt_unvollstaendig()
     {
-        // Die eine vorbereitete Antwort passt nur zum Vokabel-Teil; der Lückentext-Teil scheitert an den Regeln.
+        // The one prepared answer only fits the vocabulary part; the cloze part fails the rules.
         var (pipeline, creator, _) = BuildAgent(ProfileVocabularyJson);
         var supervisor = new SupervisorApi(Authenticated());
         var (subjectId, chapterId) = await FreshChapterAsync(creator, "Klausur-kaputt");
@@ -552,7 +551,7 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
         Assert.False(outcome.Complete);
         Assert.Single(outcome.ExerciseIds);
         Assert.Contains(outcome.Parts, p => p.TypeKey == "Cloze" && p.Outcome is { DraftAccepted: false });
-        // Die gelungene Übung ist trotzdem angelegt und der Klassenarbeit zugewiesen.
+        // The successful exercise is created nonetheless and assigned to the class test.
         var classTest = await supervisor.GetClassTestAsync(outcome.ClassTestId!.Value);
         Assert.Single(classTest.AssignedExercises);
     }

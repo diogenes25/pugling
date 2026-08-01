@@ -31,7 +31,7 @@ public class ExercisePreviewTests(PuglingWebAppFactory factory) : IClassFixture<
 
         var before = Counts();
 
-        // GET preview: getippte Endstufe → Lösung wird NICHT aufgedeckt.
+        // GET preview: a typed final stage → the solution is NOT revealed.
         var data = await father.GetFromJsonAsync<JsonElement>($"/api/v1/creator/exercises/{exerciseId}/preview");
         JsonAssert.True(data, "typed");
         var items = data.GetProperty("items").EnumerateArray().ToList();
@@ -39,7 +39,7 @@ public class ExercisePreviewTests(PuglingWebAppFactory factory) : IClassFixture<
         Assert.Equal("hello", items[0].GetProperty("prompt").GetString());
         Assert.Equal(JsonValueKind.Null, items[0].GetProperty("reveal").ValueKind);
 
-        // POST check: erste Antwort richtig, zweite falsch → 50 %.
+        // POST check: the first answer correct, the second wrong → 50 %.
         var res = await father.PostAsJsonAsync($"/api/v1/creator/exercises/{exerciseId}/preview/check", new
         {
             answers = new[]
@@ -55,10 +55,10 @@ public class ExercisePreviewTests(PuglingWebAppFactory factory) : IClassFixture<
         Assert.Equal(50, result.GetProperty("scorePercent").GetInt32());
         var outItems = result.GetProperty("items").EnumerateArray().ToList();
         JsonAssert.True(outItems[0], "wasCorrect");
-        Assert.Equal("hallo", outItems[0].GetProperty("expected").GetString()); // im Ergebnis wird die Lösung offengelegt
+        Assert.Equal("hallo", outItems[0].GetProperty("expected").GetString()); // in the result the solution is disclosed
         JsonAssert.False(outItems[1], "wasCorrect");
 
-        // Kern der Zusicherung: nichts wurde persistiert – keine Punkte, kein Versuch, kein Fortschritt, keine Session.
+        // The core of the assurance: nothing was persisted - no points, no attempt, no progress, no session.
         Assert.Equal(before, Counts());
     }
 
@@ -106,18 +106,18 @@ public class ExercisePreviewTests(PuglingWebAppFactory factory) : IClassFixture<
         var father = await TestApi.FatherAsync(_factory);
         var exerciseId = await TestApi.CreateVocabExerciseAsync(father, ("hello", "hallo"), ("goodbye", "tschüss"), ("cat", "Katze"));
 
-        // stage=6 (Multiple-Choice): getippt, jede Aufgabe trägt Auswahlmöglichkeiten; die umschaltbaren Stufen kommen mit.
+        // stage=6 (multiple choice): typed, every task carries choices; the switchable stages come along.
         var data = await father.GetFromJsonAsync<JsonElement>($"/api/v1/creator/exercises/{exerciseId}/preview?stage=6");
         Assert.Equal(6, data.GetProperty("stage").GetInt32());
         JsonAssert.True(data, "typed");
         Assert.Equal("Vocabulary", data.GetProperty("type").GetString());
-        Assert.Contains(data.GetProperty("stages").EnumerateArray(), s => s.GetProperty("value").GetInt32() == 5); // Hör-Stufe wählbar
+        Assert.Contains(data.GetProperty("stages").EnumerateArray(), s => s.GetProperty("value").GetInt32() == 5); // the listening stage is selectable
         var items = data.GetProperty("items").EnumerateArray().ToList();
         var choices = items[0].GetProperty("choices").EnumerateArray().Select(c => c.GetString()).ToList();
-        Assert.Contains("hallo", choices); // die richtige Lösung ist unter der Auswahl
+        Assert.Contains("hallo", choices); // the correct solution is among the choices
         Assert.True(choices.Count > 1);
 
-        // Check mit derselben Stufe: richtige Auswahl → 100 % bei einem Item.
+        // A check with the same stage: the right choice → 100 % with one item.
         var res = await father.PostAsJsonAsync($"/api/v1/creator/exercises/{exerciseId}/preview/check", new
         {
             answers = new[] { new { itemIndex = 0, givenAnswer = "hallo", wasKnown = (bool?)null } },
@@ -133,13 +133,13 @@ public class ExercisePreviewTests(PuglingWebAppFactory factory) : IClassFixture<
     {
         var father = await TestApi.FatherAsync(_factory);
         var (id, key) = await TestApi.CreateStoreVocabAsync(father, "hello", "hallo");
-        // Aussprache-Audio nachtragen (PATCH) – erst dann kann die Hör-Stufe die Vokabel „vorlesen".
+        // Add pronunciation audio (PATCH) - only then can the listening stage "read out" the word.
         var patch = await father.PatchAsJsonAsync($"/api/v1/creator/vocabulary/{id}",
             new { pronunciationAudioUrl = "https://example.test/hello.mp3" });
         patch.EnsureSuccessStatusCode();
         var exerciseId = await TestApi.CreateVocabRefExerciseAsync(father, key);
 
-        // stage=5 (Hören): getippt, Lösung verborgen, aber die Audioquelle wird für den Client mitgegeben.
+        // stage=5 (listening): typed, the solution hidden, but the audio source is passed to the client.
         var data = await father.GetFromJsonAsync<JsonElement>($"/api/v1/creator/exercises/{exerciseId}/preview?stage=5");
         Assert.Equal(5, data.GetProperty("stage").GetInt32());
         JsonAssert.True(data, "typed");
@@ -147,7 +147,7 @@ public class ExercisePreviewTests(PuglingWebAppFactory factory) : IClassFixture<
         Assert.Equal("https://example.test/hello.mp3", item.GetProperty("audioUrl").GetString());
         Assert.Equal(JsonValueKind.Null, item.GetProperty("reveal").ValueKind);
 
-        // Freitext-Stufe (4) auf derselben Übung: keine Audioquelle (nur die Hör-Stufe liest vor).
+        // The free-text stage (4) on the same exercise: no audio source (only the listening stage reads out).
         var freeText = await father.GetFromJsonAsync<JsonElement>($"/api/v1/creator/exercises/{exerciseId}/preview?stage=4");
         Assert.Equal(JsonValueKind.Null, freeText.GetProperty("items").EnumerateArray().First().GetProperty("audioUrl").ValueKind);
     }

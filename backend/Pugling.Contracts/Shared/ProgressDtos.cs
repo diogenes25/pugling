@@ -1,7 +1,7 @@
 namespace Pugling.Contracts.Shared;
 
-// Ebenen-übergreifender Vertrag des Lehrplan-Fortschritts: der Sohn liest daraus seine Tagesmission,
-// der Vater denselben Rollup als Verlauf/Auswertung.
+// Tier-spanning contract of study plan progress: the child reads its daily mission from it,
+// the supervisor the same rollup as history/reporting.
 
 /// <summary>Status of a single position for one day – enough for the student client to render the right action.</summary>
 public record PositionStatus(

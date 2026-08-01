@@ -84,8 +84,8 @@ public static class Program
     /// </summary>
     private static IHost BuildHost()
     {
-        // Die Konfiguration steht *vor* dem Builder: sonst ist das Logging schon verdrahtet, wenn der
-        // Abschnitt "Logging" dazukommt – und die Konsole ertränkt die Ausgabe in HTTP-Protokoll.
+        // The configuration comes *before* the builder: otherwise logging is already wired up when the
+        // "Logging" section arrives - and the console drowns the output in HTTP logs.
         var configuration = new ConfigurationManager();
         configuration
             .AddJsonFile("appsettings.json", optional: true, reloadOnChange: false)

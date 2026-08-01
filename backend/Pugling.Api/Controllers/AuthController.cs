@@ -72,12 +72,12 @@ public class AuthController(PuglingDbContext db, TokenService tokens, AccountSer
         if (child is null || !PinHasher.Verify(dto.Pin, child.Pin)) return this.ProblemWithCode(ApiErrors.InvalidCredentials, "Invalid child ID or PIN.");
 
         var account = await accounts.EnsureForChildAsync(child, ct);
-        // Beim Einloggen offene Pflicht-Perioden nachrechnen: ein Malus fürs Nicht-Lernen landet so, bevor
-        // der Sohn seinen Kontostand sieht oder etwas ausgibt (es gibt keinen Scheduler; idempotent).
+        // Settle open mandatory periods on login: a penalty for not learning lands before the child sees its
+        // balance or spends anything (there is no scheduler; idempotent).
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
         await progress.SettleClosedPeriodsAsync(child.Id, today, ct);
-        // Ebenso die verdienten Belohnungen erreichter „großer Ziele" idempotent gutschreiben (Carrot),
-        // damit der Sohn sie direkt beim Login auf dem Konto hat.
+        // Likewise credit the earned rewards of reached big goals idempotently (the carrot), so the child has
+        // them on the account right at login.
         await objectiveRewards.SettleAsync(child.Id, today, ct);
         var (token, expires) = tokens.IssueForAccount(account, account.Profiles);
         return new LoginResponse(token, Roles.Student, child.Id, child.Name, expires);
@@ -97,7 +97,7 @@ public class AuthController(PuglingDbContext db, TokenService tokens, AccountSer
         var account = await accounts.FindWithProfilesAsync(dto.AccountId, ct);
         if (account is null || !PinHasher.Verify(dto.Pin, account.PinHash)) return this.ProblemWithCode(ApiErrors.InvalidCredentials, "Invalid account ID or PIN.");
 
-        // Break-Glass-Admin: gilt, wenn ein an das Konto gebundener Vater als Admin markiert ist.
+        // Break-glass admin: applies when an adult bound to this account is flagged as admin.
         var adultIds = account.Profiles.Where(p => p.AdultId is not null).Select(p => p.AdultId!.Value).ToList();
         var isAdmin = adultIds.Count > 0 && await db.Adults.AnyAsync(a => adultIds.Contains(a.Id) && a.IsAdmin, ct);
         var (token, expires) = tokens.IssueForAccount(account, account.Profiles, isAdmin);
@@ -110,9 +110,9 @@ public class AuthController(PuglingDbContext db, TokenService tokens, AccountSer
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public ActionResult<MeResponse> Me() => new MeResponse(
         AccountId: int.TryParse(User.FindFirstValue("aid"), out var aid) ? aid : null,
-        // Primäre Ebene fürs UI-Routing – dieselbe Rangfolge wie beim Login (Supervisor → Creator → Student).
-        // Vorher stand hier „jeder Erwachsene (auch reiner Creator) → Supervisor": ein Lehrer, der die Seite
-        // neu lädt, hätte damit trotz Creator-Token die Vater-Oberfläche bekommen.
+        // Primary tier for UI routing - the same precedence as on login (supervisor → creator → student).
+        // This used to read "every adult (even a pure creator) → supervisor": a teacher reloading the page
+        // would have got the supervisor UI despite holding a creator token.
         Role: User.IsSupervisor() ? Roles.Supervisor
             : User.IsCreator() ? Roles.Creator
             : User.IsStudent() ? Roles.Student : "?",
@@ -166,7 +166,7 @@ public class AuthController(PuglingDbContext db, TokenService tokens, AccountSer
             adult.Name = name;
         }
 
-        // Erst der Wert, dann der Schalter – so gewinnt „leeren", wenn ein Formular beides schickt.
+        // Value first, switch second - that way "clear" wins if a form sends both.
         if (dto.Email is not null)
         {
             var email = dto.Email.Trim();
@@ -178,14 +178,14 @@ public class AuthController(PuglingDbContext db, TokenService tokens, AccountSer
 
         if (dto.Pin is not null) adult.Pin = dto.Pin.Length == 0 ? "" : PinHasher.Hash(dto.Pin);
 
-        // Geschrieben wird nur die fachliche Zeile; das Konto ist ihre Spiegelung (AccountService.MirrorAsync)
-        // – dieselbe eine Stelle, die auch die beiden Supervisor-PATCHes benutzen. `account` ist dieselbe
-        // verfolgte Instanz, die Antwort unten sieht den gespiegelten Stand also schon.
+        // Only the domain row is written; the account mirrors it (AccountService.MirrorAsync) - the same one
+        // place both supervisor PATCHes use. `account` is the same tracked instance, so the response below
+        // already sees the mirrored state.
         await accounts.MirrorAsync(adult, ct);
         await db.SaveChangesAsync(ct);
 
-        // Der Name im Token ist jetzt veraltet – die Antwort nennt darum den **gespeicherten** Stand, damit
-        // die Oberfläche ihn ohne neues Token anzeigen kann.
+        // The name in the token is stale now - so the response names the **stored** state, letting the UI show
+        // it without a new token.
         return new MeResponse(account.Id, PrimaryRoleOf(account.Profiles),
             account.Profiles.Select(p => p.Role.ToString()).Distinct().ToList(),
             fid, User.ChildId(), account.DisplayName);

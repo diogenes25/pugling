@@ -100,19 +100,19 @@ public class ScoringService(IOptions<ScoringOptions> options)
     private int BasePoints(ScoreConfig cfg, int reviewCount, int box, DateTime nowLocal)
     {
         int basePoints = reviewCount == 0
-            ? cfg.NewContentPoints                // neuer Inhalt (konfigurierbar)
-            : Math.Max(2, 8 - box);               // Wiederholung: je höher die Box, desto weniger
+            ? cfg.NewContentPoints                // new content (configurable)
+            : Math.Max(2, 8 - box);               // repetition: the higher the box, the less
 
         return (int)Math.Round(basePoints * MultiplierAt(TimeOnly.FromDateTime(nowLocal)));
     }
 
     /// <summary>
-    /// Der Multiplikator zur Uhrzeit; 1,0 außerhalb aller Fenster oder wenn die Fenster abgeschaltet sind.
+    /// The multiplier for the time of day; 1.0 outside all slots or when the slots are switched off.
     /// <para>
-    /// Deterministisch geordnet: überlappende Fenster sind erlaubt (die Konfiguration verbietet sie nicht),
-    /// und ohne feste Ordnung entschiede die Reihenfolge in der Datei, welcher Multiplikator gilt – dieselbe
-    /// richtige Antwort brächte dann unterschiedlich viele Punkte. Das am spätesten beginnende (engste)
-    /// Fenster gewinnt, bei Gleichstand das früher endende.
+    /// Deterministically ordered: overlapping slots are allowed (the configuration does not forbid them), and
+    /// without a fixed ordering the order in the file would decide which multiplier applies - the same correct
+    /// answer would then yield a different number of points. The slot starting latest (the narrowest) wins, on
+    /// a tie the one ending earlier.
     /// </para>
     /// </summary>
     private double MultiplierAt(TimeOnly time)

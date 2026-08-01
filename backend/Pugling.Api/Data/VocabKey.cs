@@ -4,20 +4,20 @@ using System.Text;
 namespace Pugling.Api.Data;
 
 /// <summary>
-/// Erzeugt stabile, eindeutige Vokabel-Keys nach dem Muster <c>{src}_{wort}_{tgt}_{übersetzung}</c>.
-/// Zentral, damit Seed und der Vokabel-Store denselben Slug verwenden (die „einfache" Eingabe kommt
-/// ohne selbst getippten Key aus – der Server generiert ihn).
+/// Generates stable, unique vocabulary keys following the pattern <c>{src}_{word}_{tgt}_{translation}</c>.
+/// Central, so that the seed and the vocabulary store use the same slug (the "simple" input works without a
+/// hand-typed key – the server generates it).
 /// </summary>
 public static class VocabKey
 {
-    /// <summary>Kleinschreibung, ß→ss, Diakritika entfernt, Apostroph→Leerzeichen, getrimmt.</summary>
+    /// <summary>Lower case, ß→ss, diacritics removed, apostrophe→space, trimmed.</summary>
     public static string Slug(string s) =>
         s.ToLowerInvariant().Replace("ß", "ss").Normalize(NormalizationForm.FormD)
             .Where(ch => CharUnicodeInfo.GetUnicodeCategory(ch) != UnicodeCategory.NonSpacingMark)
             .Aggregate(new StringBuilder(), (sb, ch) => sb.Append(ch)).ToString()
             .Replace("'", " ").Trim();
 
-    /// <summary>Basiskey aus Sprachen + Wort/Übersetzung (Leerzeichen→Unterstrich, keine Doppel-Unterstriche).</summary>
+    /// <summary>Base key from the languages + word/translation (space→underscore, no double underscores).</summary>
     public static string Generate(string sourceLanguage, string word, string targetLanguage, string translation)
     {
         var src = Slug(sourceLanguage).Replace(' ', '_');

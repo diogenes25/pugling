@@ -1,6 +1,6 @@
 namespace Pugling.Api.Services.Shared;
 
-// GeneratedProblem lebt im Vertrags-Projekt (Pugling.Contracts.Shared).
+// GeneratedProblem lives in the contract project (Pugling.Contracts.Shared).
 
 /// <summary>
 /// Generates random arithmetic problems from the rules of an <see cref="ArithmeticDrillConfig"/>.
@@ -51,18 +51,18 @@ public class ArithmeticProblemGenerator
     {
         int a = Operand(c, r), b = Operand(c, r);
         if (!c.AllowNegativeResults && b > a)
-            (a, b) = (b, a);   // größere Zahl nach vorn – so bleibt das Ergebnis ≥ 0
+            (a, b) = (b, a);   // the larger number first - that keeps the result ≥ 0
         return new GeneratedProblem($"{a} − {b}", a - b);
     }
 
     private static GeneratedProblem Division(ArithmeticDrillConfig c, Random r)
     {
-        // Divisor immer ≥ 1, damit nie durch null geteilt wird.
+        // The divisor is always ≥ 1 so that nothing is ever divided by zero.
         int divisor = r.Next(Math.Max(1, c.MinOperand), Math.Max(1, c.MaxOperand) + 1);
 
         if (c.DivisionMustBeWhole)
         {
-            // Rückwärts konstruieren: Dividend = Divisor × Quotient garantiert ein glattes Ergebnis.
+            // Construct backwards: dividend = divisor × quotient guarantees a clean result.
             int quotient = Operand(c, r);
             return new GeneratedProblem($"{divisor * quotient} ÷ {divisor}", quotient);
         }

@@ -20,15 +20,15 @@ public sealed class FakeChatClient(params string[] responses) : IChatClient
         ChatOptions? options = null, CancellationToken cancellationToken = default)
     {
         LastMessages = [.. messages];
-        // Über die vorbereiteten Antworten hinaus wird die letzte wiederholt – so muss ein Test nur
-        // so viele Antworten liefern, wie sein Ablauf unterscheidet.
+        // Beyond the prepared answers the last one is repeated - so a test only has to supply as many answers
+        // as its flow distinguishes.
         var text = responses[Math.Min(Calls++, responses.Length - 1)];
         return Task.FromResult(new ChatResponse(new ChatMessage(ChatRole.Assistant, text)));
     }
 
     public IAsyncEnumerable<ChatResponseUpdate> GetStreamingResponseAsync(IEnumerable<ChatMessage> messages,
         ChatOptions? options = null, CancellationToken cancellationToken = default) =>
-        throw new NotSupportedException("Der Agent nutzt keine Streaming-Antworten.");
+        throw new NotSupportedException("The agent does not use streaming responses.");
 
     public object? GetService(Type serviceType, object? serviceKey = null) => null;
 

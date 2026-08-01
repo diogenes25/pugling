@@ -1,8 +1,8 @@
 namespace Pugling.Contracts.Creator;
 
-// Vertrag der geteilten Interessen-/Stil-Taxonomie. Sie ist absichtlich EIN Vokabular für zwei
-// Verbraucher: Bilder tragen sie als Eigenschaft, Kinder als Vorliebe/Abneigung. Nur deshalb lässt sich
-// „welches Bild passt zu diesem Kind" überhaupt rechnen.
+// Contract of the shared interest/style taxonomy. It is deliberately ONE vocabulary for two consumers:
+// images carry it as a property, children as a preference/dislike. Only that makes "which image fits
+// this child" computable at all.
 
 /// <summary>
 /// A tag of the taxonomy including usage counts on both sides: <c>MediaCount</c> counts the

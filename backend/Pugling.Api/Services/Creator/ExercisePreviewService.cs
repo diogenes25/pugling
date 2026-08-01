@@ -16,8 +16,8 @@ namespace Pugling.Api.Services.Creator;
 /// </summary>
 public class ExercisePreviewService(ExerciseContentResolver content, AnswerGrader grader, ExerciseTypeRegistry registry)
 {
-    // Die Vertrags-Records (PreviewItem/PreviewData/PreviewAnswer/PreviewItemOutcome/PreviewResult)
-    // leben im Vertrags-Projekt (Pugling.Contracts.Creator).
+    // The contract records (PreviewItem/PreviewData/PreviewAnswer/PreviewItemOutcome/PreviewResult)
+    // live in the contract project (Pugling.Contracts.Creator).
 
     /// <summary>
     /// Builds the playable state of an exercise. Returns <c>null</c> if the exercise has no gradable content
@@ -30,8 +30,8 @@ public class ExercisePreviewService(ExerciseContentResolver content, AnswerGrade
         if (items.Count == 0) return null;
 
         if (registry.ByKey(exercise.Type) is not { } type) return null;
-        // Der Vater darf im Testmodus jede Abfrageform durchprobieren (stageOverride); ohne Wahl bevorzugt die
-        // vom Ersteller gewählte Standard-Abfrageform der Übung, sonst die repräsentative Stufe.
+        // In preview mode the supervisor may try every question form (stageOverride); without a choice we prefer
+        // the exercise's default question form as picked by its author, otherwise the representative stage.
         var stage = stageOverride ?? exercise.DefaultStage ?? type.PreviewStage;
         var typed = type.IsTypedStage(stage);
         var presented = items.Select(i => Present(i, type, stage, typed, type.Choices(items, i, stage))).ToList();
@@ -49,10 +49,10 @@ public class ExercisePreviewService(ExerciseContentResolver content, AnswerGrade
         if (items.Count == 0) return null;
 
         if (registry.ByKey(exercise.Type) is not { } type) return null;
-        // Dieselbe Stufe wie beim Bauen (sonst driften „getippt" hier und im Client auseinander).
+        // The same stage as when building (otherwise "typed" drifts apart here and in the client).
         var typed = type.IsTypedStage(stageOverride ?? exercise.DefaultStage ?? type.PreviewStage);
 
-        // Letzte Nennung je Index gewinnt (robust gegen doppelte Indizes), wie im ExerciseAnswerChecker.
+        // The last mention per index wins (robust against duplicate indexes), as in ExerciseAnswerChecker.
         var byIndex = new Dictionary<int, PreviewAnswer>();
         foreach (var a in answers) byIndex[a.ItemIndex] = a;
 
@@ -70,13 +70,13 @@ public class ExercisePreviewService(ExerciseContentResolver content, AnswerGrade
         return new PreviewResult(outcomes.Count, correctCount, percent, outcomes);
     }
 
-    // Projektion einer Aufgabe für die Anzeige: getippte Stufen decken die Lösung NICHT auf, Selbsteinschätzung
-    // schon. Buchstabenkästchen (nur Vokabel) verraten die Länge, die Hör-Stufe die Audioquelle. Spiegelt
+    // Projection of one task for display: typed stages do NOT reveal the answer, self-assessment does.
+    // Letter boxes (vocabulary only) give away the length, the listening stage the audio source. Mirrors
     // PositionTestsController.ToItem.
     private static PreviewItem Present(ContentItem item, IExerciseType type, int stage, bool typed, IReadOnlyList<string>? choices)
     {
-        // Kein Bild im Testmodus: die Auswahl hängt am Profil eines Kindes, der Vater probiert hier aber
-        // kind-neutral aus. Ein beliebiges Bild wäre irreführend – es zeigte nicht, was sein Sohn sieht.
+        // No image in preview mode: the selection hangs on a child's profile, but here the supervisor tries
+        // things out child-neutrally. An arbitrary image would mislead - it would not show what their child sees.
         var (letterBoxLength, audioUrl, _) = type.StageFacets(item, stage);
         return new PreviewItem(item.Index, item.Prompt, item.GapIndex,
             typed ? item.Hint : null,

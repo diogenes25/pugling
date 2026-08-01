@@ -28,14 +28,14 @@ public class OpenApiExampleTests(PuglingWebAppFactory factory) : IClassFixture<P
         var doc = await client.GetFromJsonAsync<JsonElement>("/openapi/v1.json");
         var schemas = doc.GetProperty("components").GetProperty("schemas");
 
-        // Enums: als string mit der vollständigen Werteliste dokumentiert (nicht als nackter integer).
+        // Enums: documented as a string with the full value list (not as a bare integer).
         var unitType = schemas.GetProperty("UnitType");
         Assert.Equal("string", unitType.GetProperty("type").GetString());
         var allowed = unitType.GetProperty("enum").EnumerateArray().Select(v => v.GetString()).ToList();
         Assert.Equal(Enum.GetNames<UnitType>(), allowed);
 
-        // Pflicht vs. optional korrekt: Create nennt die nicht-nullbaren Felder als required, aber NICHT das
-        // optionale „description" (string?). Alle Properties bleiben trotzdem im Objekt beschrieben.
+        // Required vs. optional correctly: Create names the non-nullable fields as required, but NOT the
+        // optional "description" (string?). All properties are still described in the object.
         var create = schemas.GetProperty("CreateShopArticleDto");
         var createRequired = create.GetProperty("required").EnumerateArray().Select(v => v.GetString()).ToList();
         Assert.Contains("articleNumber", createRequired);
@@ -43,10 +43,10 @@ public class OpenApiExampleTests(PuglingWebAppFactory factory) : IClassFixture<P
         Assert.DoesNotContain("description", createRequired);
         Assert.Contains("description", create.GetProperty("properties").EnumerateObject().Select(p => p.Name));
 
-        // Partial-Update-DTO: alle Felder nullbar → gar kein required (der Generator hätte alle markiert).
+        // A partial-update DTO: all fields nullable → no required at all (the generator would have marked all).
         var update = schemas.GetProperty("UpdateShopArticleDto");
         Assert.False(update.TryGetProperty("required", out var upd) && upd.GetArrayLength() > 0,
-            "UpdateShopArticleDto darf keine Pflichtfelder ausweisen (alle Felder sind optional).");
+            "UpdateShopArticleDto must declare no required fields (all fields are optional).");
     }
 
     private static IReadOnlyList<string> RequestExampleKeys(JsonElement doc, string path, string method) =>

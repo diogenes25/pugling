@@ -29,7 +29,7 @@ public class PlanPositionCrudTests(PuglingWebAppFactory factory) : IClassFixture
         var exerciseId = await TestApi.CreateVocabRefExerciseAsync(father, k1, k2);
         var planId = await EmptyPlanAsync(father);
 
-        // Vater legt die Position auf die globale Übung an (Leitner, getippte Stufe).
+        // The supervisor creates the position on the global exercise (Leitner, typed stage).
         var posId = await TestApi.IdAsync(await father.PostAsJsonAsync(
             $"/api/v1/supervisor/study-plans/{planId}/positions",
             new { exerciseId, useLeitner = true, stage = (int)TestStage.FreeText, cadence = "Daily" }));
@@ -38,7 +38,7 @@ public class PlanPositionCrudTests(PuglingWebAppFactory factory) : IClassFixture
         Assert.Single(list!);
         Assert.Equal(exerciseId, list![0].GetProperty("exerciseId").GetInt32());
 
-        // Der Sohn spielt die Position → Inhalt kommt aus der referenzierten Übung/Store.
+        // The child plays the position → the content comes from the referenced exercise/store.
         var child = await TestApi.ChildAsync(_factory);
         var baseUrl = $"/api/v1/student/study-plans/{planId}/positions/{posId}/practice-sessions";
         var sessionId = await TestApi.IdAsync(await child.PostAsJsonAsync(baseUrl, new { }));
@@ -55,13 +55,13 @@ public class PlanPositionCrudTests(PuglingWebAppFactory factory) : IClassFixture
         var exerciseId = await TestApi.CreateVocabRefExerciseAsync(father, key);
         var planId = await EmptyPlanAsync(father);
 
-        // Ungespielt → löschbar.
+        // Unplayed → deletable.
         var posId = await TestApi.IdAsync(await father.PostAsJsonAsync(
             $"/api/v1/supervisor/study-plans/{planId}/positions", new { exerciseId, useLeitner = true, stage = (int)TestStage.FreeText }));
         var del = await father.DeleteAsync($"/api/v1/supervisor/study-plans/{planId}/positions/{posId}");
         Assert.Equal(HttpStatusCode.NoContent, del.StatusCode);
 
-        // Neue Position, diesmal gespielt → geschützt (409, kein Verlust der Lernhistorie).
+        // A new position, this time played → protected (409, no loss of the learning history).
         var posId2 = await TestApi.IdAsync(await father.PostAsJsonAsync(
             $"/api/v1/supervisor/study-plans/{planId}/positions", new { exerciseId, useLeitner = true, stage = (int)TestStage.FreeText }));
         var child = await TestApi.ChildAsync(_factory);
@@ -152,21 +152,21 @@ public class PlanPositionCrudTests(PuglingWebAppFactory factory) : IClassFixture
         var posId = await TestApi.IdAsync(await father.PostAsJsonAsync(
             $"/api/v1/supervisor/study-plans/{planId}/positions", new { exerciseId, useLeitner = true, stage = (int)TestStage.FreeText }));
 
-        // Position bespielen → Session/Progress vorhanden (blockiert Positions-DELETE, aber nicht Plan-DELETE).
+        // Play the position → a session/progress exists (blocks the position DELETE, but not the plan DELETE).
         var child = await TestApi.ChildAsync(_factory);
         var baseUrl = $"/api/v1/student/study-plans/{planId}/positions/{posId}/practice-sessions";
         var sessionId = await TestApi.IdAsync(await child.PostAsJsonAsync(baseUrl, new { }));
         await child.PostAsJsonAsync($"{baseUrl}/{sessionId}/review", new { itemIndex = 0, givenAnswer = "Sommer" });
 
-        // Der ganze Plan lässt sich löschen (kaskadiert Positionen/Fortschritt/Sitzungen).
+        // The whole plan can be deleted (cascading positions/progress/sessions).
         var del = await father.DeleteAsync($"/api/v1/supervisor/study-plans/{planId}");
         Assert.Equal(HttpStatusCode.NoContent, del.StatusCode);
 
-        // Danach ist der Plan (und damit die Positionsliste) weg → 404 über den Ownership-Filter.
+        // Afterwards the plan (and thus the position list) is gone → 404 through the ownership filter.
         var after = await father.GetAsync($"/api/v1/supervisor/study-plans/{planId}/positions");
         Assert.Equal(HttpStatusCode.NotFound, after.StatusCode);
 
-        // Die referenzierte Katalog-Übung bleibt erhalten.
+        // The referenced catalog exercise is preserved.
         Assert.Equal(HttpStatusCode.OK, (await father.GetAsync($"/api/v1/creator/exercises/{exerciseId}")).StatusCode);
     }
 
@@ -191,12 +191,12 @@ public class PlanPositionCrudTests(PuglingWebAppFactory factory) : IClassFixture
         Assert.Equal("validation_error",
             (await create.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("code").GetString());
 
-        // Auch nachträglich nicht: sonst ginge über PATCH genau das hinein, was POST abweist.
+        // Not afterwards either: otherwise PATCH would let in exactly what POST rejects.
         var posId = await TestApi.IdAsync(await father.PostAsJsonAsync(url, new { exerciseId, cadence = "Daily" }));
         var patch = await father.PatchAsJsonAsync($"{url}/{posId}", new { goalThreshold });
         Assert.Equal(HttpStatusCode.BadRequest, patch.StatusCode);
 
-        // Die gültige Grenze geht durch und kommt zurück.
+        // The valid bound goes through and comes back.
         var ok = await father.PatchAsJsonAsync($"{url}/{posId}", new { goalThreshold = 90 });
         Assert.Equal(HttpStatusCode.OK, ok.StatusCode);
         Assert.Equal(90, (await ok.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("goalThreshold").GetInt32());
@@ -205,7 +205,7 @@ public class PlanPositionCrudTests(PuglingWebAppFactory factory) : IClassFixture
     [Fact]
     public async Task Einzelne_Position_Wird_Gelesen_Eine_Fremde_Nicht()
     {
-        // Die Einzelansicht der Position (C3-Abdeckungslücke): bisher war nur die Liste belegt.
+        // The single view of the position (a C3 coverage gap): only the list was covered so far.
         var father = await TestApi.FatherAsync(_factory);
         var exerciseId = await TestApi.CreateVocabExerciseAsync(father);
         var planId = await EmptyPlanAsync(father);
@@ -217,8 +217,8 @@ public class PlanPositionCrudTests(PuglingWebAppFactory factory) : IClassFixture
         Assert.Equal(exerciseId, position.GetProperty("exerciseId").GetInt32());
         Assert.Equal(2, position.GetProperty("stage").GetInt32());
 
-        // Eine Position, die zu einem *anderen* Plan gehört, ist unter diesem Plan nicht zu finden – sonst
-        // ließe sich über einen eigenen Plan die Position eines fremden lesen.
+        // A position belonging to a *different* plan is not findable under this plan - otherwise the position
+        // of someone else's plan could be read through a plan of your own.
         var andererPlan = await EmptyPlanAsync(father);
         Assert.Equal(HttpStatusCode.NotFound,
             (await father.GetAsync($"/api/v1/supervisor/study-plans/{andererPlan}/positions/{posId}")).StatusCode);

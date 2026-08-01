@@ -38,7 +38,7 @@ public class ChildMediaPicksController(MediaSelector selector) : ControllerBase
     public async Task<ActionResult<SelectedMediaResponse>> Reshuffle(int childId, ReshuffleMediaDto dto,
         CancellationToken ct)
     {
-        // Genau ein Träger – dieselbe Regel wie an Zuordnung und Wahl selbst (dort als DB-Constraint).
+        // Exactly one carrier - the same rule as on the assignment and the choice itself (a DB constraint there).
         if ((dto.VocabularyId is null) == (dto.ExerciseItemId is null))
             return this.ProblemWithCode(ApiErrors.ValidationError,
                 "Provide exactly one of vocabularyId or exerciseItemId.");

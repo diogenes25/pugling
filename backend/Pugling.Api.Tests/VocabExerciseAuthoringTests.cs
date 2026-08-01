@@ -28,7 +28,7 @@ public class VocabExerciseAuthoringTests(PuglingWebAppFactory factory) : IClassF
         return await res.Content.ReadFromJsonAsync<JsonElement>();
     }
 
-    // ---- P1: Cloze-Lücke ↔ Vokabel-Store -----------------------------------------------------------
+    // ---- P1: cloze gap ↔ vocabulary store -----------------------------------------------------------
 
     [Fact]
     public async Task Cloze_MitVocabKey_LoestLoesungAusStoreAuf_UndReagiertAufAenderung()
@@ -49,7 +49,7 @@ public class VocabExerciseAuthoringTests(PuglingWebAppFactory factory) : IClassF
                 config = new { text = "The American Dream promises {{1}}.", gaps = new[] { new { index = 1, answer = "", vocabKey = key } } },
             }));
 
-        // Positions-Test auf FreeText-Stufe (getippt): die Lösung kommt aus dem Store-Wort.
+        // A position test on the free-text stage (typed): the solution comes from the store word.
         var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)ClozeStage.FreeText);
         var child = await TestApi.ChildAsync(_factory);
         var baseUrl = $"/api/v1/student/study-plans/{planId}/positions/{positionId}/practice-sessions";
@@ -59,8 +59,8 @@ public class VocabExerciseAuthoringTests(PuglingWebAppFactory factory) : IClassF
         JsonAssert.True(outcome, "wasCorrect");
         Assert.Equal("opportunity", outcome.GetProperty("expected").GetString());
 
-        // Zentrale Korrektur im Store schlägt in der Lücke durch. Frische Position, weil dasselbe Item
-        // am selben Tag nur einmal gewertet wird (Anti-Farming → sonst 204).
+        // A central correction in the store shows through in the gap. A fresh position, because the same item
+        // is graded only once per day (anti-farming → 204 otherwise).
         await father.PatchAsJsonAsync($"/api/v1/creator/vocabulary/{vocabId}", new { word = "chance" });
         var (planId2, positionId2) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)ClozeStage.FreeText);
         var base2 = $"/api/v1/student/study-plans/{planId2}/positions/{positionId2}/practice-sessions";
@@ -85,7 +85,7 @@ public class VocabExerciseAuthoringTests(PuglingWebAppFactory factory) : IClassF
         Assert.Equal(HttpStatusCode.BadRequest, res.StatusCode);
     }
 
-    // ---- P2: Refs aus Tags materialisieren ---------------------------------------------------------
+    // ---- P2: materialize refs from tags ---------------------------------------------------------
 
     [Fact]
     public async Task RefsFromTags_NurGrundformen_SchreibtSnapshotInRefs()
@@ -105,18 +105,18 @@ public class VocabExerciseAuthoringTests(PuglingWebAppFactory factory) : IClassF
             $"/api/v1/creator/subjects/{s}/chapters/{c}/vocabulary/{exerciseId}/refs-from-tags",
             new { tags = new[] { "UnitP2" }, baseFormsOnly = true })).EnsureSuccessStatusCode();
 
-        // Der Snapshot materialisiert die Wörter als Items (eine Ebene tiefer), nicht mehr in der Config.
+        // The snapshot materializes the words as items (one level deeper), no longer in the config.
         var items = await father.GetFromJsonAsync<List<JsonElement>>(
             $"/api/v1/creator/subjects/{s}/chapters/{c}/vocabulary/{exerciseId}/items");
         var fronts = items!.Select(i => i.GetProperty("front").GetString()).ToList();
-        Assert.Equal(2, fronts.Count); // walk + jump, NICHT walked (flektiert)
+        Assert.Equal(2, fronts.Count); // walk + jump, NOT walked (inflected)
         Assert.Contains("walk", fronts);
         Assert.Contains("jump", fronts);
         Assert.DoesNotContain("walked", fronts);
         _ = walkKey;
     }
 
-    // ---- P3: Ref-Validierung + Vokabel-Usage + Lösch-Schutz ----------------------------------------
+    // ---- P3: ref validation + vocabulary usage + delete protection ----------------------------------------
 
     [Fact]
     public async Task VocabExercise_MitUnbekanntemRef_Liefert400()
@@ -145,7 +145,7 @@ public class VocabExerciseAuthoringTests(PuglingWebAppFactory factory) : IClassF
         Assert.Equal(HttpStatusCode.Conflict, del.StatusCode);
     }
 
-    // ---- Inline-Vokabeln werden automatisch im Store angelegt und verlinkt --------------------------
+    // ---- Inline vocabulary is created in the store and linked automatically --------------------------
 
     [Fact]
     public async Task VocabExercise_InlineItemsOhneId_WerdenImStoreAngelegtUndVerlinkt()
@@ -168,7 +168,7 @@ public class VocabExerciseAuthoringTests(PuglingWebAppFactory factory) : IClassF
                 },
             }));
 
-        // Die Inline-Items werden als eigene Items (eine Ebene tiefer) materialisiert und mit dem Store verlinkt.
+        // The inline items are materialized as items of their own (one level deeper) and linked to the store.
         var items = await father.GetFromJsonAsync<List<JsonElement>>(
             $"/api/v1/creator/subjects/{s}/chapters/{c}/vocabulary/{exerciseId}/items");
         Assert.Equal(2, items!.Count);
@@ -179,12 +179,12 @@ public class VocabExerciseAuthoringTests(PuglingWebAppFactory factory) : IClassF
             Assert.Equal($"/api/v1/creator/vocabulary/{id}", it.GetProperty("vocabulary").GetString());
         }
 
-        // Und die Wörter liegen jetzt tatsächlich im Store (Store-Membership).
+        // And the words really sit in the store now (store membership).
         var berg = await father.GetFromJsonAsync<List<JsonElement>>("/api/v1/creator/vocabulary?word=mountain");
         Assert.Contains(berg!, v => v.GetProperty("translation").GetString() == "Berg");
     }
 
-    // ---- Item-Eingabe: VocabularyId-only (Front/Back aus dem Store) + Validierung -------------------
+    // ---- Item input: VocabularyId only (front/back from the store) + validation -------------------
 
     [Fact]
     public async Task InlineItem_NurVocabularyId_ZiehtFrontBackAusStore()
@@ -194,7 +194,7 @@ public class VocabExerciseAuthoringTests(PuglingWebAppFactory factory) : IClassF
         var vocabId = v.GetProperty("id").GetInt32();
         var (s, c) = await ChapterAsync(father, "Inline-IdOnly");
 
-        // Inline-Item ohne Front/Back – nur die Store-Id. Front/Back kommen aus dem verknüpften Store-Eintrag.
+        // An inline item without front/back - only the store id. Front/back come from the linked store entry.
         var exerciseId = await TestApi.IdAsync(await father.PostAsJsonAsync(
             $"/api/v1/creator/subjects/{s}/chapters/{c}/vocabulary", new
             {
@@ -223,7 +223,7 @@ public class VocabExerciseAuthoringTests(PuglingWebAppFactory factory) : IClassF
             $"/api/v1/creator/subjects/{s}/chapters/{c}/vocabulary",
             new { title = "Hülle", orderIndex = 1, rewardPoints = 10, config = new { direction = "front-to-back", sourceLang = "en", targetLang = "de" } }));
 
-        // Item per Item-EP mit ausschließlich der VocabularyId (Front/Back leer → aus dem Store).
+        // An item through the item endpoint with the VocabularyId only (front/back empty → from the store).
         var res = await father.PostAsJsonAsync(
             $"/api/v1/creator/subjects/{s}/chapters/{c}/vocabulary/{exerciseId}/items", new { vocabularyId = vocabId });
         Assert.Equal(HttpStatusCode.Created, res.StatusCode);
@@ -248,7 +248,7 @@ public class VocabExerciseAuthoringTests(PuglingWebAppFactory factory) : IClassF
         Assert.Equal(HttpStatusCode.BadRequest, res.StatusCode);
     }
 
-    // ---- Task 1: getrennte Suchparameter word/translation ------------------------------------------
+    // ---- Task 1: separate search parameters word/translation ------------------------------------------
 
     [Fact]
     public async Task VocabularyList_FiltertNachWordUndTranslation()

@@ -69,7 +69,7 @@ public class SkinPurchaseTests(PuglingWebAppFactory factory) : IClassFixture<Pug
         var father = await TestApi.FatherAsync(factory);
         var (childId, child) = await FreshChildAsync(father, "7003");
 
-        // Gems schaffen (2500), damit der Ninja (2000) bezahlbar ist.
+        // Provide gems (2500) so that the ninja (2000) is affordable.
         await GrantGemsAsync(childId, 2500);
 
         var res = await child.PostAsJsonAsync("/api/v1/student/me/skins/ninja/purchase", new { });
@@ -80,7 +80,7 @@ public class SkinPurchaseTests(PuglingWebAppFactory factory) : IClassFixture<Pug
         Assert.Contains("ninja", state.GetProperty("owned").EnumerateArray().Select(e => e.GetString()));
         Assert.Equal(500, state.GetProperty("gems").GetInt32()); // 2500 − 2000
 
-        // Die Abbuchung ist als negative Buchung mit eigener Kategorie im Wallet nachvollziehbar.
+        // The debit is traceable in the wallet as a negative entry with its own category.
         var wallet = await (await child.GetAsync("/api/v1/student/me/points")).Content.ReadFromJsonAsync<JsonElement>();
         Assert.Equal(500, wallet.GetProperty("gems").GetInt32());
         var entries = await (await child.GetAsync("/api/v1/student/me/points/entries")).Content.ReadFromJsonAsync<JsonElement>();
@@ -95,7 +95,7 @@ public class SkinPurchaseTests(PuglingWebAppFactory factory) : IClassFixture<Pug
         var father = await TestApi.FatherAsync(factory);
         var (childId, child) = await FreshChildAsync(father, "7007");
 
-        // Nur Münzen (Manual → Coins), keine Gems: der Skin-Kauf muss trotzdem an der Deckung scheitern.
+        // Coins only (Manual → coins), no gems: the skin purchase must still fail on the funds check.
         (await father.PostAsJsonAsync($"/api/v1/supervisor/children/{childId}/points",
             new { amount = 5000, reason = "Nur Münzen" })).EnsureSuccessStatusCode();
 
@@ -149,9 +149,9 @@ public class SkinPurchaseTests(PuglingWebAppFactory factory) : IClassFixture<Pug
     [Fact]
     public async Task ConcurrencyToken_LaesstZweitenParallelenWriteScheitern()
     {
-        // Beweist die Absicherung hinter dem 409 bei parallelen Käufen: laden zwei Kontexte dasselbe
-        // Kind und schreiben beide (Stamp bumpen), muss der zweite mit DbUpdateConcurrencyException
-        // scheitern – so kann keine Zweitbuchung den Deckungs-Check umgehen und doppelt abbuchen.
+        // Proves the safeguard behind the 409 on parallel purchases: if two contexts load the same child and
+        // both write (bumping the stamp), the second has to fail with a DbUpdateConcurrencyException - that way
+        // no second entry can bypass the funds check and debit twice.
         var father = await TestApi.FatherAsync(factory);
         var childId = await TestApi.IdAsync(
             await father.PostAsJsonAsync("/api/v1/supervisor/children", new { name = "Token-Kind", pin = "7100" }));

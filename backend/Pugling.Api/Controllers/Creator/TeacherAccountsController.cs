@@ -45,8 +45,8 @@ public class TeacherAccountsController(PuglingDbContext db, AccountService accou
     {
         if (string.IsNullOrWhiteSpace(dto.Name)) return this.ProblemWithCode(ApiErrors.ValidationError, "Name is required.");
 
-        // Die PIN wird gehasht (PinHasher) und auf das Konto gespiegelt – sonst liefe der konto-zentrische
-        // Login aus dem Takt. Genau dieselbe Regel wie bei Vater und Kind.
+        // The PIN is hashed (PinHasher) and mirrored onto the account - otherwise the account-centric login
+        // would run out of sync. Exactly the same rule as for adult and child.
         var teacher = new Adult
         {
             Name = dto.Name.Trim(),

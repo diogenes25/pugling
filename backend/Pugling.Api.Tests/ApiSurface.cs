@@ -78,9 +78,9 @@ internal static class ApiSurface
             return values.TryGetValue(name, out var value)
                 ? value
                 : throw new InvalidOperationException(
-                    $"Kein Wert für Route-Platzhalter '{name}' in '{template}'.");
+                    $"No value for route placeholder '{name}' in '{template}'.");
         });
-        // Doppelte und abschließende Schrägstriche entstehen, wo eine Action keine eigene Vorlage trägt.
+        // Double and trailing slashes arise where an action carries no template of its own.
         return Regex.Replace(url, "/{2,}", "/").TrimEnd('/');
     }
 
@@ -95,6 +95,6 @@ internal static class ApiSurface
                 return dir.FullName;
             dir = dir.Parent;
         }
-        throw new InvalidOperationException("Repo-Wurzel (backend + docs bzw. .git) nicht gefunden.");
+        throw new InvalidOperationException("Repository root (backend + docs, or .git) not found.");
     }
 }

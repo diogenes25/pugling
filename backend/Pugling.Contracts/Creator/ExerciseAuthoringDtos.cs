@@ -2,8 +2,8 @@ using System.Text.Json.Serialization;
 
 namespace Pugling.Contracts.Creator;
 
-// Vertrag der typisierten Übungs-CRUD (ein Controller je Übungstyp, gemeinsame generische Hülle),
-// der Vokabel-Items als eigener Ebene und der Birkenbihl-Dekodierung.
+// Contract of the typed exercise CRUD (one controller per exercise type, one shared generic envelope),
+// of the vocabulary items as their own tier, and of the Birkenbihl decoding.
 
 /// <summary>
 /// Exercise for creating/changing: shared fields + type-specific config + optional bonus suggestion.

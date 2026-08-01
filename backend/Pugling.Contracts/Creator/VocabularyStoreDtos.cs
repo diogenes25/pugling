@@ -1,7 +1,7 @@
 namespace Pugling.Contracts.Creator;
 
-// Vertrag des atomaren Vokabel-Stores („Single Source of Truth" für Wörter). Neben dem klassischen
-// CRUD stehen die Agenten-Primitive: Existenzprüfung (Lookup, gegen Dubletten) und Batch-Anlegen/-Nachtragen.
+// Contract of the atomic vocabulary store (the single source of truth for words). Next to the classic
+// CRUD stand the agent primitives: existence check (lookup, against duplicates) and batch create/append.
 
 /// <summary>A store entry with all lexical details and the linked tag names.</summary>
 public record VocabularyResponse(int Id, string Key, string Version, string SourceLanguage,

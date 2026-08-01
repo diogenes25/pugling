@@ -34,12 +34,12 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         new(s.Id, s.StudyPlanId, s.PlanPositionId ?? 0, s.Day, s.StartedAt, s.EndedAt, s.ActiveSeconds,
             s.Reviews.Count, s.Mode, s.Cursor, s.Order.Count);
 
-    // Kein Vorgabewert für `ct`: er ließe die Aufrufstelle korrekt aussehen, während der Abbruch des
-    // Clients verpufft – ein weggelassenes optionales Argument sieht weder CA2016 noch der Wächter.
+    // No default for `ct`: it would make the call site look correct while the client's cancellation fizzles
+    // out - neither CA2016 nor the guard sees an omitted optional argument.
     private Task<StudyPlan?> GetPlan(int planId, CancellationToken ct) =>
         db.StudyPlans.FirstOrDefaultAsync(p => p.Id == planId, ct);
 
-    // Der Plan kommt mit, weil die Bebilderung das Kind braucht (die Auswahl hängt an seinem Profil).
+    // The plan comes along because the imagery needs the child (the selection hangs on its profile).
     private Task<PlanPosition?> GetPosition(int planId, int positionId, CancellationToken ct) =>
         db.PlanPositions.Include(p => p.Exercise).Include(p => p.StudyPlan)
             .FirstOrDefaultAsync(p => p.Id == positionId && p.StudyPlanId == planId, ct);
@@ -59,18 +59,18 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         if (pos is null) return NotFound();
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
         if (dto.Day is { } d && d != today && !User.IsSupervisor())
-            return Forbid(); // Nachtragen anderer Tage nur für den Vater (Anti-Schummel).
-        // Anti-Schummel: der Sohn darf nur seinen aktiven, laufenden Plan spielen – kein Cherry-Picking
-        // leichter oder abgelaufener Pläne für bequeme Punkte. Der Vater darf jederzeit (Vorschau/Nachtrag).
+            return Forbid(); // catching up on other days is for the supervisor only (anti-cheat).
+        // Anti-cheat: the child may only play its active, running plan - no cherry-picking easy or expired
+        // plans for comfortable points. The supervisor may play any time (preview/catch-up).
         if (User.IsStudent() && await GetPlan(planId, ct) is { } plan && !PositionPlayService.PlanPlayableForChild(plan, today))
             return this.ProblemWithCode(ApiErrors.PlanInactive, "This study plan is not currently active. Ask your parent.");
 
         var day = dto.Day ?? today;
         var session = new PracticeSession { StudyPlanId = planId, PlanPositionId = positionId, Day = day, Mode = dto.Mode };
-        // Reihenfolge EINMAL einfrieren (gemäß Strategie der Position), damit sie sich im Lauf nicht
-        // verschiebt und Cursor (Lern) bzw. Batch (Info/Offline) dieselbe stabile Sequenz nutzen.
-        // Info = freies Üben: der ganze scope-gefilterte Pool (ohne Leitner-Fälligkeit), damit auch bereits
-        // gelernte Vokabeln wiederholbar sind. Lern = nur die heute fälligen Karten.
+        // Freeze the order ONCE (per the position's strategy) so that it does not shift during the run and
+        // cursor (learn) and batch (info/offline) use the same stable sequence.
+        // Info = free practice: the whole scope-filtered pool (no Leitner due date), so that already learned
+        // words can be repeated too. Learn = only the cards due today.
         session.Order = [.. await play.DueItemIndicesAsync(pos, day, pos.OrderStrategy, dueOnly: dto.Mode != PlayMode.Info, ct)];
         db.PracticeSessions.Add(session);
         await db.SaveChangesAsync(ct);
@@ -121,8 +121,8 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         var session = await GetSession(planId, positionId, sessionId, ct);
         if (session is null) return NotFound();
         var plan = (await GetPlan(planId, ct))!;
-        // Anti-Schummel: auch mit einer noch offenen Session darf der Sohn einen inzwischen deaktivierten
-        // oder abgelaufenen Plan nicht weiter beüben (der Vater bleibt für Vorschau/Nachtrag ausgenommen).
+        // Anti-cheat: even with a session still open, the child must not keep practicing a plan that has since
+        // been deactivated or expired (the supervisor stays exempt for preview/catch-up).
         if (User.IsStudent() && !PositionPlayService.PlanPlayableForChild(plan, DateOnly.FromDateTime(DateTime.UtcNow)))
             return this.ProblemWithCode(ApiErrors.PlanInactive, "This study plan is not currently active. Ask your parent.");
         var pos = await GetPosition(planId, positionId, ct);
@@ -134,7 +134,7 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         var stage = PositionPlayService.StageForDay(pos, plan, session.Day, type);
         var typed = type.IsTypedStage(stage);
 
-        // Eingefrorene Reihenfolge; seit dem Start entfernte Items (Item-CRUD) überspringen.
+        // The frozen order; skip items removed since the start (item CRUD).
         return session.Order.Where(i => i >= 0 && i < items.Count)
             .Select(i => BuildCard(type, stage, typed, items, i)).ToList();
     }
@@ -169,9 +169,9 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
             && !PositionPlayService.PlanPlayableForChild(pos.StudyPlan, DateOnly.FromDateTime(DateTime.UtcNow)))
             return this.ProblemWithCode(ApiErrors.PlanInactive, "This study plan is not currently active. Ask your parent.");
 
-        // Nur Karten dieser Sitzung: die beim Start eingefrorene Reihenfolge ist genau die Menge, die
-        // ausgeliefert wird (und liegt im Pool der Position). Ein freier Index könnte sonst die Motive der
-        // ganzen Übung durchzählen – auch die der Karten, die diese Sitzung nie zeigt.
+        // Cards of this session only: the order frozen at the start is exactly the set that is served (and it
+        // lies within the position's pool). A free index could otherwise enumerate the motifs of the whole
+        // exercise - including those of cards this session never shows.
         if (!session.Order.Contains(itemIndex)) return NotFound();
 
         var items = await play.ItemsOfAsync(pos, pos.StudyPlan.ChildId, ct);
@@ -181,8 +181,8 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         if (play.TypeOf(pos.Exercise) is not { } type)
             return this.ProblemWithCode(ApiErrors.UnknownExerciseType, "The exercise has an unknown type.");
 
-        // Umgewählt wird nur das Bild, das die Karte auch zeigt – die Stufe kommt dabei wie überall aus
-        // dem Fahrplan, nie vom Client.
+        // Only the image the card actually shows can be re-chosen - and the stage comes from the schedule as
+        // everywhere else, never from the client.
         var stage = PositionPlayService.StageForDay(pos, pos.StudyPlan, session.Day, type);
         if (PositionPlayService.CardFacets(items, item, type, stage, type.IsTypedStage(stage)).ImageUrl is null)
             return this.ProblemWithCode(ApiErrors.MediaNotOnCard, "This card does not show an image.");
@@ -241,14 +241,14 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         var session = await GetSession(planId, positionId, sessionId, ct);
         if (session is null) return NotFound();
         var plan = (await GetPlan(planId, ct))!;
-        // Anti-Schummel: auch mit einer noch offenen Session darf der Sohn einen inzwischen deaktivierten
-        // oder abgelaufenen Plan nicht weiter beüben (der Vater bleibt für Vorschau/Nachtrag ausgenommen).
+        // Anti-cheat: even with a session still open, the child must not keep practicing a plan that has since
+        // been deactivated or expired (the supervisor stays exempt for preview/catch-up).
         if (User.IsStudent() && !PositionPlayService.PlanPlayableForChild(plan, DateOnly.FromDateTime(DateTime.UtcNow)))
             return this.ProblemWithCode(ApiErrors.PlanInactive, "This study plan is not currently active. Ask your parent.");
         var pos = await GetPosition(planId, positionId, ct);
         if (pos?.Exercise is null) return NotFound();
 
-        // Info-Modus: freies Üben ohne jegliches Lernfeedback – nichts protokollieren, nichts bepunkten.
+        // Info mode: free practice without any learning feedback - record nothing, score nothing.
         if (session.Mode == PlayMode.Info) return NoContent();
 
         var items = await play.ItemsOfAsync(pos, pos.StudyPlan?.ChildId, ct);
@@ -256,7 +256,7 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
             return this.ProblemWithCode(ApiErrors.NotFound, "The content does not belong to this position.");
         var item = items[dto.ItemIndex];
 
-        // Stufe serverseitig erzwingen (nicht vom Client wählbar) und typ-neutral bewerten.
+        // Enforce the stage server-side (not selectable by the client) and grade type-agnostically.
         if (play.TypeOf(pos.Exercise) is not { } type)
             return this.ProblemWithCode(ApiErrors.UnknownExerciseType, "The exercise has an unknown type.");
         var stage = PositionPlayService.StageForDay(pos, plan, session.Day, type);
@@ -266,8 +266,8 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
             : dto.WasKnown ?? false;
 
         var prog = await play.ProgressForAsync(positionId, dto.ItemIndex, ct);
-        // Erstkontakt zählt als Einführung – sonst stünde IntroducedAt/DueOn bei rein übungsbasiertem
-        // Lernen still (Fälligkeit, Scope „neu/alt").
+        // First contact counts as the introduction - otherwise IntroducedAt/DueOn would stand still for purely
+        // practice-based learning (due dates, the "new/old" scope).
         if (prog.IntroducedAt is null)
         {
             prog.IntroducedAt = session.Day;
@@ -278,25 +278,25 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         var alreadyScoredToday = prog.LastReviewedAt is { } last && DateOnly.FromDateTime(last) == session.Day;
         var scored = (typed || !pos.RequireTypedTest) && due && !alreadyScoredToday;
 
-        // Combo/Antwortzeit VOR dem Hinzufügen des neuen Reviews (EF-Fixup würde es sonst mitzählen).
+        // Combo/answer time BEFORE adding the new review (EF fixup would otherwise count it in).
         var prevStreak = 0;
         foreach (var r in session.Reviews.OrderByDescending(r => r.At).ThenByDescending(r => r.Id))
         {
             if (r.WasCorrect) prevStreak++; else break;
         }
-        // Antwortzeit und Zeitstempel kommen aus DERSELBEN Uhr (<see cref="TimeProvider"/>): der Abstand
-        // zwischen zwei Antworten ist die Grundlage des Schnelle-Antwort-Bonus samt seiner
-        // Anti-Farming-Untergrenze von einer Sekunde. Eine Regel im Sekunden-Bereich lässt sich mit der
-        // Wanduhr nicht prüfen – ein Test müsste zwei Requests binnen einer Sekunde durchbringen und wird
-        // unter Last zum Flake, der wie ein Punkte-Regress aussieht (docs/testplan.md, Etappe 3). Mit der
-        // gemeinsamen, ersetzbaren Uhr ist die gemessene Zeit eine Eingabe statt einer Hoffnung.
+        // Answer time and timestamp come from the SAME clock (TimeProvider): the gap between two answers is the
+        // basis of the fast-answer bonus including its anti-farming lower bound of one second. A rule in the
+        // second range cannot be tested against the wall clock - a test would have to push two requests through
+        // within one second and becomes a flake under load that looks like a points regression
+        // (docs/testplan.md, stage 3). With the shared, replaceable clock the measured time is an input instead
+        // of a hope.
         var lastAt = session.Reviews.Count > 0 ? session.Reviews.Max(r => r.At) : (DateTime?)null;
         var now = time.GetUtcNow().UtcDateTime;
         double? elapsedSeconds = lastAt is { } la ? (now - la).TotalSeconds : null;
 
-        // Nur Korrektheit und Zeitpunkt: daraus entstehen Combo-Serie, Antwortzeit und die Metrik
-        // CorrectReviews. Welches Atom es war, protokolliert der ItemReviewEvent unten über die stabile
-        // ItemId – hier wäre es eine index-adressierte Zweitwahrheit ohne Leser.
+        // Correctness and timestamp only: from them come the combo streak, the answer time and the metric
+        // CorrectReviews. Which atom it was is recorded by the ItemReviewEvent below through the stable ItemId -
+        // here it would be an index-addressed second truth without a reader.
         db.ReviewEvents.Add(new ReviewEvent
         {
             PracticeSessionId = sessionId,
@@ -304,13 +304,13 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
             At = now,
         });
 
-        // Plan-übergreifenden Item-Fortschritt + Antwort-Historie mitschreiben (nur Vokabel-Items mit stabiler ItemId).
-        // Bewusst mit der tatsächlichen Korrektheit (nicht anti-farming-gedämpft) – dies ist eine Auswertungsebene,
-        // nicht die Punktequelle; persistiert wird über das SaveChanges unten.
+        // Also write the cross-plan item progress + answer history (vocabulary items with a stable ItemId only).
+        // Deliberately with the actual correctness (not anti-farming damped) - this is a reporting layer, not
+        // the points source; it is persisted through the SaveChanges below.
         await itemProgress.RecordAsync(plan.ChildId, pos.ExerciseId, item, wasCorrect, stage,
             typed ? dto.GivenAnswer : null, ItemReviewSource.Practice, positionId, session.Day, countsForMastery: scored, ct: ct);
 
-        // Punkte/Box nur bei Leitner-Positionen und nur für gewertete Karten (Anti-Farming). Sonst 0.
+        // Points/box only on Leitner positions and only for graded cards (anti-farming). Otherwise 0.
         int awarded = 0, comboBonus = 0, speedBonus = 0, combo = 0;
         var leitnerScored = pos.UseLeitner && scored;
         if (leitnerScored)
@@ -337,7 +337,7 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
                     score.ComboBonus, score.SpeedBonus);
         }
 
-        // Server-Cursor: auf die gerade beantwortete (gültige) Karte, eins weiter, dann entfernte überspringen.
+        // Server cursor: onto the card just answered (a valid one), one further, then skip removed ones.
         var cursor = PositionPlayService.SkipRemoved(session.Order, session.Cursor, items.Count);
         if (cursor < session.Order.Count) cursor++;
         session.Cursor = PositionPlayService.SkipRemoved(session.Order, cursor, items.Count);
@@ -362,19 +362,18 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         var session = await GetSession(planId, positionId, sessionId, ct);
         if (session is null) return NotFound();
         var plan = (await GetPlan(planId, ct))!;
-        // Anti-Schummel: dieselbe Wand wie Cards/Next/Review – und hier tut sie mehr, als den Zugriff zu
-        // sperren. Der Abschluss bucht unten Ziel-Punkte, und die prüfen selbst nicht auf `Active`: ohne
-        // diesen Wächter ließe sich ein mitten in der Runde deaktivierter Plan noch zu den Punkten der
-        // laufenden Periode bringen. Deshalb steht der Wächter VOR dem Schreiben von EndedAt.
+        // Anti-cheat: the same wall as in cards/next/review - and here it does more than block access. The
+        // completion below books goal points, and those do not check `Active` themselves: without this guard, a
+        // plan deactivated mid-round could still be driven to the points of the running period. Hence the guard
+        // sits BEFORE EndedAt is written.
         if (User.IsStudent() && !PositionPlayService.PlanPlayableForChild(plan, DateOnly.FromDateTime(DateTime.UtcNow)))
             return this.ProblemWithCode(ApiErrors.PlanInactive, "This study plan is not currently active. Ask your parent.");
 
         session.EndedAt = DateTime.UtcNow;
         await db.SaveChangesAsync(ct);
 
-        // Ziel-Punkte der Position (idempotent): erfasst v. a. reine Inhalts-/Leseübungen, deren Ziel mit
-        // einer ausreichend weit gespielten Runde erfüllt ist. VOR der Gamification, damit Missionen die
-        // Gutschrift sehen.
+        // The position's goal points (idempotent): this mainly covers pure content/reading exercises whose goal
+        // is met by a round played far enough. BEFORE the gamification, so that missions see the credit.
         await progress.EvaluateAndAwardAsync(plan, session.Day, ct);
         await gamification.EvaluateAndAwardAsync(plan.ChildId, session.Day, ct);
         return Map(session);

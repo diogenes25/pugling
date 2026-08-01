@@ -15,7 +15,7 @@ namespace Pugling.Api.Tests;
 /// </summary>
 public class ScoringTimeSlotTests
 {
-    // Neuer Inhalt (reviewCount 0) bringt genau NewContentPoints als Basis – bequem zum Nachrechnen.
+    // New content (reviewCount 0) yields exactly NewContentPoints as the base - convenient for checking the math.
     private static readonly ScoringService.ScoreConfig Cfg = new("Test", NewContentPoints: 10, 0, 0, 0, 0);
 
     private static ScoringService With(params ScoringTimeSlot[] slots) =>
@@ -46,19 +46,19 @@ public class ScoringTimeSlotTests
     [Fact]
     public void Bei_ueberlappenden_Fenstern_gewinnt_deterministisch_das_engste()
     {
-        // Absichtlich das WEITE Fenster zuerst: ohne die Ordnung läge es vorn und der Test sähe 30 statt 50.
+        // Deliberately the WIDE window first: without the ordering it would come first and the test would see 30 instead of 50.
         var scoring = With(
             Slot("Weit", new(4, 0), new(6, 0), 3.0),
             Slot("Eng", new(4, 30), new(5, 0), 5.0));
 
-        Assert.Equal(50, BasePointsAt(scoring, new(4, 45))); // in beiden → das engere gilt
-        Assert.Equal(30, BasePointsAt(scoring, new(4, 15))); // nur im weiten
+        Assert.Equal(50, BasePointsAt(scoring, new(4, 45))); // in both → the narrower one applies
+        Assert.Equal(30, BasePointsAt(scoring, new(4, 15))); // in the wide one only
     }
 
     /// <summary>
-    /// Der Abschalter (<c>Scoring:TimeSlotsEnabled=false</c>) ist kein Test-Kniff, sondern Vertrag: die
-    /// gesamte Suite fährt damit, weil die Punktzahl sonst an der Uhrzeit des Laufs hinge und die
-    /// eingecheckte Doku Diff-Rauschen bekäme. Also gehört er auch geprüft.
+    /// The kill switch (<c>Scoring:TimeSlotsEnabled=false</c>) is not a test trick but a contract: the whole
+    /// suite runs with it, because the score would otherwise hang on the time of the run and the checked-in
+    /// documentation would get diff noise. So it belongs under test as well.
     /// </summary>
     [Fact]
     public void Abgeschaltete_Fenster_Bedeuten_Faktor_Eins()
@@ -69,6 +69,6 @@ public class ScoringTimeSlotTests
             TimeSlots = [Slot("Nacht", new(2, 0), new(4, 0), 2.0)],
         }));
 
-        Assert.Equal(10, BasePointsAt(scoring, new(3, 0))); // mitten im 2×-Fenster – und trotzdem 10
+        Assert.Equal(10, BasePointsAt(scoring, new(3, 0))); // in the middle of the 2× window - and still 10
     }
 }

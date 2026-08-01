@@ -1,26 +1,29 @@
 ---
-tags: [typ/plan, bereich/doku, status/laufend]
+tags: [typ/plan, bereich/doku, status/abgeschlossen]
 aliases: [Übersetzung XML-Docs, Doku auf Englisch, Glossar Übersetzung]
 ---
 
-# XML-Doc-Kommentare im Backend auf Englisch übersetzen
+# Code-Dokumentation im Backend auf Englisch übersetzen
 
 > **Lebendes Nachschlagewerk, kein Wegwerf-Plan.** Diese Seite trägt Glossar und Fortschritt der gesamten
 > Übersetzungsarbeit. Jeder Übersetzungs-Agent bekommt den Abschnitt „Glossar" im Prompt mit; gepflegt wird
 > er **nur hier** und **nur von der steuernden Sitzung** (siehe Entscheidung 4).
 
-## Ausführung: eigener Branch, DB-Layer ausgeklammert
+## Ausführung: eigener Branch, DB-Layer nachgezogen
 
-Die Arbeit läuft auf Branch **`docs/xml-docs-englisch`** in einem eigenen Worktree
+Der Hauptteil lief auf Branch **`docs/xml-docs-englisch`** in einem eigenen Worktree
 (`.claude/worktrees/xml-docs-englisch`), abgezweigt vom damaligen `db-struktur-umbau`-HEAD. Grund: eine
-**parallele Sitzung arbeitet im Haupt-Worktree am DB-Layer** – ein Branch-Wechsel dort hätte ihr den Boden
+**parallele Sitzung arbeitete im Haupt-Worktree am DB-Layer** – ein Branch-Wechsel dort hätte ihr den Boden
 weggezogen.
 
-Daraus folgt der wichtigste Scope-Schnitt dieser Umsetzung: **`backend/Pugling.Api/Models/` und
-`backend/Pugling.Api/Data/` bleiben unübersetzt** (398 der 1266 `<summary>` in `Pugling.Api`), damit
-in den Dateien, die die parallele Sitzung umbaut, keine Merge-Konflikte entstehen. Beide Ordner sind von
-`CS1591` ohnehin freigestellt (`.editorconfig`) – sie fließen nicht in Swagger. **Sie sind damit eine
-offene Nachetappe**, sobald der DB-Umbau durch ist (siehe Fortschritts-Tabelle, Etappe 7).
+Daraus folgte der wichtigste Scope-Schnitt jenes Durchgangs: **`backend/Pugling.Api/Models/` und
+`backend/Pugling.Api/Data/` blieben unübersetzt** (398 der 1266 `<summary>` in `Pugling.Api`), damit
+in den Dateien, die die parallele Sitzung umbaute, keine Merge-Konflikte entstanden. Beide Ordner sind von
+`CS1591` ohnehin freigestellt (`.editorconfig`) – sie fließen nicht in Swagger.
+
+**Nachgeholt am 2026-08-01** (Etappe 7), nachdem der DB-Umbau abgeschlossen war: 24 Dateien, 398 `<summary>`,
+`Data/Migrations/` bleibt als Generat unangetastet (dort steht ohnehin kein `///`). Damit ist **kein
+deutsches XML-Doc mehr im Backend**.
 
 ## Warum
 
@@ -130,6 +133,27 @@ Im Verlauf entschieden (gemeldet von den Übersetzungs-Agenten, hier zentral fes
 | „Sammelbecken" | **catch-all** | |
 | „Selbstauskunft" (`/auth/me`) | **self-info lookup** | |
 
+Aus Etappe 7 (DB-Layer) hinzugekommen:
+
+| Deutsch | Englisch | Anmerkung |
+|---|---|---|
+| „Momentaufnahme" | **snapshot** | Durchgängig für die eingefrorenen Anzeige-/Aussteller-Felder (`ShopPurchase`, `ChildInventory`, `MissionAward`). |
+| „Nebenläufigkeits-Marke" | **concurrency stamp** | Deckt sich mit `ConcurrencyStamp`. |
+| „Deckungs-Check" | **funds check** | Wallet. |
+| „Wert-Vergleicher" | **value comparer** | Deckt sich mit EFs `ValueComparer`. |
+| „Nachlauf" (Seed) | **follow-up** | Der zweite Seed-Block, der Services braucht. |
+| „Zusicherungs-Tabelle" | **assurance table** | Die gepinnte Liste in `SchemaGuardTests`. |
+| „Kappungsgrenze" | **cut-off** | String-Längen-Konvention. |
+| „Ausspiel-Historie" | **delivery history** | Ergänzt „delivery". |
+| „ordnend verglichen" | **compared by order** | Begründung der Int-Enum-Ausnahmen. |
+| „Wortpool"/„Wortbank" | **word pool** / **word bank** | `WordBank`. |
+| „Lehrwerk-Reihe" | **textbook series** | Deckt sich mit `TextbookSeries`; „Reihe" allein bleibt **series**. |
+| „Inhalts-Atom" | **content atom** | Die kleinste spielbare Einheit einer Übung. |
+| „Verwandtschaftsangabe" | **kinship** | `SupervisorRelation`. |
+| „Betreuungs-Beziehung" | **supervision relation** | `SupervisorLink`. |
+| „Bestehensgrenze" | **pass threshold** | `GoalThreshold`. |
+| „Bruch"/„Vertragsbruch" | **break the contract** | |
+
 Weitere Begriffe entstehen im Verlauf und werden hier nachgetragen (Entscheidung 4).
 
 ## Entscheidungen (geklärt)
@@ -200,12 +224,61 @@ Jede Etappe = eigener Commit-Kandidat, nach Review stoppbar. Reihenfolge ist bew
 | 4 | `Pugling.Agent.Creator` | 127 summaries | **durch** | 21 Dateien; deutsche LLM-Prompt-Strings unangetastet |
 | 5 | `Pugling.Api.Tests` | 272 summaries | **durch** | 88 Dateien; −7 Zeilen = gekürzte Änderungshistorie in `TestApi.cs` (Entscheidung 2) |
 | 6 | Konventionszeile in den `CLAUDE.md` umstellen | 2 Stellen | **durch** | `CLAUDE.md` („XML-Doku auf Englisch") + `Pugling.Contracts/CLAUDE.md`; `Client`/`Agent.Creator` nennen keine Doku-Sprache |
-| 7 | **Nachetappe:** `Pugling.Api/Models/` + `Data/` | 398 summaries | zurückgestellt | bewusst ausgeklammert, solange die parallele Sitzung am DB-Layer arbeitet |
+| 7 | **Nachetappe:** `Pugling.Api/Models/` + `Data/` | 398 summaries | **durch** | 18 Modell- + 6 Data-Dateien; `<summary>`-Zahl je Datei unverändert, `Migrations/` (Generat) nicht angefasst |
+| 8 | **`//`-Kommentare, alle fünf Projekte** | ~2650 Voll-Zeilen + ~240 am Zeilenende | **durch** | 239 Dateien; zeilengenau gepatcht, Code beweisbar unverändert (siehe unten) |
+| 9 | **Meldungstexte der Wächter/Asserts** | 72 Zeilen | **durch** | 13 Test-Dateien; strenges Zeilen-Ersetzen mit zeichengenauem Alt-Abgleich |
 
-**Gesamtstand:** 278 `.cs`-Dateien, 4210 Zeilen ersetzt (Zeilenzahl netto unverändert). Verifiziert im Worktree:
-`dotnet build Pugling.sln -c Release` grün (0 Warnungen), `dotnet test Pugling.sln -c Release` **604/604 grün**,
-`dotnet format Pugling.sln --verify-no-changes` ohne Befund, und im gesamten Diff **keine einzige
-Nicht-`///`-Zeile**.
+**Gesamtstand:** Die Code-Dokumentation des Backends ist **vollständig englisch** – alle 2303 `<summary>`
+*und* jeder `//`-Kommentar in `Pugling.Api`, `Pugling.Contracts`, `Pugling.Client`, `Pugling.Agent.Creator`
+und `Pugling.Api.Tests`. Verifiziert: `dotnet build Pugling.sln -c Release` grün (0 Warnungen),
+`dotnet test Pugling.sln -c Release` **615/615 grün**, `dotnet format Pugling.sln --verify-no-changes` ohne
+Befund.
+
+Dazu sind in Etappe 9 die **Meldungstexte der reflexiven Wächter** englisch geworden – das ist der Text,
+den man liest, wenn ein Tor rot ist (`SchemaGuardTests` G1–G9, `ConventionGuardTests`,
+`EndpointCoverageGuard`, `OwnershipMatrixTests`, `PatchSemanticsTests`, `TagConventionTests`), samt der
+Begründungs-Einträge in ihren Ausnahmelisten.
+
+**Deutsch bleibt bewusst** (kein Versäumnis, sondern die Grenze der Umstellung):
+
+- die **Markdown-Doku** (`docs/`, `wiki/`, `CLAUDE.md`-Prosa) – eigener Plan;
+- **Produktinhalt in Strings**: Seed-Vokabeln und -Ledger-Texte, der Markdown-Kopf des
+  `RemarkExportService` (er landet als deutsches Dokument im Repo), Enum-Werte wie `Gymnasium`;
+- **die `Capture(…)`-Titel in `DocsCaptureTests`** – sie *sind* die Überschriften der eingecheckten
+  `docs/api-examples/*.md`; sie zu übersetzen hieße, die deutsche Doku umzuschreiben;
+- **Testdaten**: Namen, Anmerkungstexte, Vokabelpaare und Bildbeschreibungen, die der Test hin- und
+  zurückprüft (`RemarkTests`, `PuglingClientTests`, `MediaStoreTests` …);
+- **Laufzeit-Diagnose**: Exception- und Log-Meldungen im Produktivcode (`Program.cs`,
+  `ArithmeticProblemGenerator`, `MediaSelector`, `MediaStorage`, `PointKindCurrency`) – die gehen an den
+  Betreiber, nicht an den Leser des Codes;
+- **deutsche Bezeichner** (`vorher`, `ziel`, `ohneGrant`, Testmethodennamen): Umbenennen ist eine
+  Code-Änderung, keine Übersetzung – und hätte ohne Sprachregel für Namen nur halben Wert.
+
+## Etappen 8/9: zeilengenau statt per Agent
+
+Der Hauptteil (Etappen 1–7) lief über Übersetzungs-Agenten, die ganze Dateien anfassten. Für die
+`//`-Kommentare war das der falsche Schnitt: sie stehen **zwischen** Code, und genau dort ist ein
+versehentlich mitgeänderter Ausdruck teuer und im Diff schwer zu sehen. Stattdessen ein
+**zeilengenaues Patch-Werkzeug** (JSONL: Datei, Zeile, neuer Text), das per Zusicherung nur Zeilen
+anfasst, die getrimmt mit `//` beginnen; ein Kommentar am Zeilenende darf nur ersetzt werden, wenn der
+**Code-Teil vor dem ersten `//` zeichengenau gleich bleibt**. Bei jedem Verstoß bricht es ab, ohne zu
+schreiben.
+
+Daraus folgt der Beweis, den ein Diff-Blick nicht liefert: streicht man aus beiden Ständen alle
+Voll-Zeilen-Kommentare und schneidet jede übrige Zeile am ersten `//` ab, ist das Ergebnis über alle 239
+Dateien **byte-identisch zu `HEAD`** – mit genau einer beabsichtigten Ausnahme, den
+Begründungs-Strings in `PuglingDbContext.IntEnumsByDesign`/`UnlimitedByDesign` (Entwickler-Doku, die
+zufällig als String im Code steht; kein Test liest sie).
+
+Zwei Kosmetik-Fallstricke bei den Trenner-Zeilen (`// ──── Label ────`): der Strichlauf muss erhalten
+bleiben (das Werkzeug ersetzt nur das Label und rechnet die Länge nach), und ein im Label mitgelieferter
+Strichlauf verdoppelt ihn. Beides fiel erst beim Nachlesen des Diffs auf, nicht beim Build.
+
+Für die **Meldungs-Strings** (Etappe 9) greift dieselbe Haltung mit einem zweiten Werkzeug: dort steht die
+Übersetzung in einer echten Code-Zeile, also verlangt es die **alte Zeile zeichengenau** mit und bricht
+sonst ab. Damit ist auch dieser Schritt kein Suchen-und-Ersetzen über Textmuster, das versehentlich einen
+Payload-String trifft. Die Abgrenzung ist dabei die eigentliche Arbeit, nicht die Übersetzung: eine
+Assert-Meldung darf umgestellt werden, ein Payload, den derselbe Test zurückvergleicht, nicht.
 
 ## Fallstricke (beim Umsetzen aufgelaufen)
 

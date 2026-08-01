@@ -21,10 +21,9 @@ namespace Pugling.Api.Controllers.Creator;
 [Authorize(Roles = Roles.Creator)]
 public class ExerciseGrantsController(PuglingDbContext db, ExercisePermissionService perms) : ControllerBase
 {
-    // Prüft, dass die Übung existiert und der anfragende Creator sie verwalten darf (Owner). 404 vor 403,
-    // damit fremde Übungs-Ids nicht über den Statuscode enumerierbar sind.
-    // Kein Vorgabewert für `ct`: er ließe die Aufrufstelle korrekt aussehen, während der Abbruch des
-    // Clients verpufft.
+    // Checks that the exercise exists and that the requesting creator may manage it (owner). 404 before 403,
+    // so other people's exercise ids cannot be enumerated through the status code.
+    // No default for `ct`: it would make the call site look correct while the client's cancellation fizzles out.
     private async Task<ObjectResult?> EnsureOwnerAsync(int exerciseId, CancellationToken ct)
     {
         if (!await db.Exercises.AnyAsync(e => e.Id == exerciseId, ct))

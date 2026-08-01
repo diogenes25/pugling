@@ -87,7 +87,7 @@ public sealed record CreatorBriefing(
         text.AppendLine($"- Kapitel: {ChapterName}");
         if (!string.IsNullOrWhiteSpace(Topic)) text.AppendLine($"- Thema: {Topic}");
         if (Profile?.ToPromptText() is { Length: > 0 } material) text.Append(material);
-        // Ohne katalogisiertes Lehrwerk trägt das Freitext-Buch des Kindes den Stoff.
+        // Without a cataloged textbook, the child's free-text book carries the subject matter.
         else if (Child?.PrimaryTextbook(SubjectId, SubjectName) is { } book)
             text.AppendLine($"- Lehrbuch: {book.Title}"
                             + (book.CurrentChapter is { Length: > 0 } c ? $" (aktuell: {c})" : ""));
@@ -99,8 +99,8 @@ public sealed record CreatorBriefing(
         }
         else
         {
-            // Der allgemeine Modus braucht diese Ansage: sonst füllt das Modell die Leerstelle mit
-            // erfundenen Vorlieben und die Übung wäre für den geteilten Katalog unbrauchbar.
+            // The general mode needs this statement: otherwise the model fills the gap with invented
+            // preferences and the exercise would be useless for the shared catalog.
             text.AppendLine("## Kein bestimmtes Kind");
             text.AppendLine("- Diese Übung geht in den gemeinsamen Katalog: wähle neutrale, altersgerechte");
             text.AppendLine("  Alltagssituationen, keine persönliche Ansprache und keine erfundenen Vorlieben.");

@@ -27,8 +27,8 @@ public class ObjectiveRewardService(PuglingDbContext db, ObjectiveEvaluationServ
         if (evals.Count == 0) return 0;
 
         var objectiveIds = evals.Select(e => e.Objective.Id).ToList();
-        // Bereits gebuchte Anlässe je Objective einmal laden; verhindert doppelte Auszahlung schon vor dem Insert
-        // (der Unique-Index ist die harte Absicherung gegen parallele Läufe).
+        // Load the already booked occasions per objective once; that prevents a double payout before the insert
+        // (the unique index is the hard safeguard against parallel runs).
         var booked = (await db.ObjectiveRewards.AsNoTracking()
             .Where(r => objectiveIds.Contains(r.ObjectiveId))
             .Select(r => new { r.ObjectiveId, r.PaidKeyResultId })
@@ -41,7 +41,7 @@ public class ObjectiveRewardService(PuglingDbContext db, ObjectiveEvaluationServ
             var o = e.Objective;
             var kind = o.Kind == ObjectiveKind.Committed ? PointKind.ObjectiveCoins : PointKind.ObjectiveGems;
 
-            // Etappen-Häppchen je frisch erreichter Etappe.
+            // The milestone bite per freshly reached milestone.
             if (o.RewardPerKeyResult > 0)
                 foreach (var kr in e.KeyResults.Where(k => k.Achieved))
                 {
@@ -51,7 +51,7 @@ public class ObjectiveRewardService(PuglingDbContext db, ObjectiveEvaluationServ
                     awarded += o.RewardPerKeyResult;
                 }
 
-            // Voll-Abschluss, sobald ALLE Etappen erreicht sind – die Buchung ohne Etappe (null).
+            // Full completion as soon as ALL milestones are reached - the entry without a milestone (null).
             if (o.RewardOnComplete > 0 && e.TotalCount > 0 && e.AchievedCount == e.TotalCount
                 && booked.Add((o.Id, null)))
             {
@@ -60,8 +60,8 @@ public class ObjectiveRewardService(PuglingDbContext db, ObjectiveEvaluationServ
             }
         }
 
-        // Award() erhöht awarded synchron mit jedem Insert-Paar; awarded == 0 heißt also, wir haben nichts
-        // hinzugefügt – dann kein SaveChanges (und insbesondere kein Flush fremder, getrackter Änderungen).
+        // Award() increments awarded in step with every insert pair; awarded == 0 therefore means we added
+        // nothing - then no SaveChanges (and in particular no flush of other tracked changes).
         if (awarded == 0) return 0;
 
         try
@@ -70,16 +70,16 @@ public class ObjectiveRewardService(PuglingDbContext db, ObjectiveEvaluationServ
         }
         catch (DbUpdateException)
         {
-            // Paralleler Lauf traf den Unique-Index – gutartig: die Belohnung liegt bereits bzw. wird beim
-            // nächsten Lauf idempotent nachgeholt. Nur additive Buchungen (kein Wallet-Concurrency-Bump nötig,
-            // da nichts abgebucht wird und die Deckung eines Kaufs davon nicht abhängt).
+            // A parallel run hit the unique index - benign: the reward is already there (or is picked up
+            // idempotently on the next run). Additive entries only (no wallet concurrency bump needed, since
+            // nothing is debited and no purchase's funds check depends on it).
             db.ChangeTracker.Clear();
             return 0;
         }
         return awarded;
     }
 
-    // paidKeyResultId: die bezahlte Etappe, oder null für den Voll-Abschluss (der Diskriminator, s. Entity).
+    // paidKeyResultId: the milestone paid for, or null for the full completion (the discriminator, see the entity).
     private void Award(int childId, int objectiveId, int? paidKeyResultId, int points, PointKind kind, string reason)
     {
         db.ObjectiveRewards.Add(new ObjectiveReward

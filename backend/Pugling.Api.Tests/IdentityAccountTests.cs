@@ -34,11 +34,11 @@ public class IdentityAccountTests(PuglingWebAppFactory factory) : IClassFixture<
         var roles = me.GetProperty("roles").EnumerateArray().Select(r => r.GetString()).ToList();
         Assert.Contains("Creator", roles);
         Assert.Contains("Supervisor", roles);
-        Assert.DoesNotContain("Vater", roles); // Alias entfernt – nur noch Ebenen-Rollen
+        Assert.DoesNotContain("Vater", roles); // the alias is gone - tier roles only
         Assert.Equal(1, me.GetProperty("adultId").GetInt32());
         Assert.True(me.GetProperty("accountId").GetInt32() > 0);
 
-        // Ein und dasselbe Token erreicht die Creator-Ebene UND die Supervisor-Ebene.
+        // One and the same token reaches the creator tier AND the supervisor tier.
         Assert.Equal(HttpStatusCode.OK, (await father.GetAsync("/api/v1/creator/subjects")).StatusCode);
         Assert.Equal(HttpStatusCode.OK, (await father.GetAsync("/api/v1/supervisor/children")).StatusCode);
     }
@@ -50,7 +50,7 @@ public class IdentityAccountTests(PuglingWebAppFactory factory) : IClassFixture<
         var me = await MeAsync(child);
         var roles = me.GetProperty("roles").EnumerateArray().Select(r => r.GetString()).ToList();
         Assert.Contains("Student", roles);
-        Assert.DoesNotContain("Sohn", roles); // Alias entfernt – nur noch Ebenen-Rollen
+        Assert.DoesNotContain("Sohn", roles); // the alias is gone - tier roles only
         Assert.Equal(1, me.GetProperty("childId").GetInt32());
     }
 
@@ -87,14 +87,14 @@ public class IdentityAccountTests(PuglingWebAppFactory factory) : IClassFixture<
     {
         var first = (await MeAsync(await TestApi.FatherAsync(_factory))).GetProperty("accountId").GetInt32();
         var second = (await MeAsync(await TestApi.FatherAsync(_factory))).GetProperty("accountId").GetInt32();
-        Assert.Equal(first, second); // EnsureForAdultAsync ist idempotent
+        Assert.Equal(first, second); // EnsureForAdultAsync is idempotent
     }
 
     /// <summary>
-    /// Das Konto ist die <b>Spiegelung</b> der fachlichen Zeile, nicht ein zweiter Datenstand: benennt der
-    /// Vater sein Kind um, muss der Anzeigename des Logins mitgehen. Er ist das, was
-    /// <c>POST auth/login</c> zurückgibt und was als <c>ClaimTypes.Name</c> im Token landet – die
-    /// Sohn-Oberfläche hätte sonst nach dem nächsten Anmelden weiter den alten Namen begrüßt.
+    /// The account is the <b>mirror</b> of the domain row, not a second state: if the supervisor renames their
+    /// child, the login's display name has to go along. It is what <c>POST auth/login</c> returns and what
+    /// lands in the token as <c>ClaimTypes.Name</c> - the child's UI would otherwise have kept greeting the old
+    /// name after the next login.
     /// </summary>
     [Fact]
     public async Task UmbenanntesKind_MeldetSichMitDemNeuenNamenAn()
@@ -116,12 +116,11 @@ public class IdentityAccountTests(PuglingWebAppFactory factory) : IClassFixture<
     }
 
     /// <summary>
-    /// „Genau eines von <c>AdultId</c>/<c>ChildId</c>" behauptete der Kommentar an
-    /// <c>AccountProfile</c> seit immer, ohne dass es irgendwo durchgesetzt war – ein Profil mit
-    /// <b>beiden</b> Zielen wäre ein Login mit zwei Identitäten dahinter, eines mit <b>keinem</b> eine
-    /// Rolle, die auf nichts zeigt (und die <c>AuthAccess</c> stumm ins Leere prüfen lässt). Das Vorbild
-    /// steht direkt daneben: <c>MediaLink</c> und <c>ChildMediaPick</c> tragen dieselbe Frage längst als
-    /// Check-Constraint.
+    /// "Exactly one of <c>AdultId</c>/<c>ChildId</c>" is what the comment on <c>AccountProfile</c> always
+    /// claimed, without it being enforced anywhere - a profile with <b>both</b> targets would be one login with
+    /// two identities behind it, one with <b>neither</b> a role pointing at nothing (and letting
+    /// <c>AuthAccess</c> check silently into the void). The model stands right next to it: <c>MediaLink</c> and
+    /// <c>ChildMediaPick</c> have long carried the same question as a check constraint.
     /// </summary>
     [Fact]
     public async Task ProfilOhneGenauEinZiel_WeistDieDatenbankAb()
@@ -129,8 +128,8 @@ public class IdentityAccountTests(PuglingWebAppFactory factory) : IClassFixture<
         using var scope = _factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
 
-        // Frische Zeilen ohne Konto, damit nur die XOR-Regel im Weg steht und nicht die gefilterten
-        // Unique-Indizes auf (Rolle, Profil).
+        // Fresh rows without an account, so that only the XOR rule stands in the way and not the filtered
+        // unique indexes on (role, profile).
         var adult = new Adult { Name = "Zwitter-Adult", Pin = "" };
         var child = new Child { Name = "Zwitter-Child", Pin = "" };
         var konto = new Account { DisplayName = "Zwitter", PinHash = "" };
@@ -141,7 +140,7 @@ public class IdentityAccountTests(PuglingWebAppFactory factory) : IClassFixture<
         {
             db.AccountProfiles.Add(profil);
             await Assert.ThrowsAnyAsync<DbUpdateException>(() => db.SaveChangesAsync());
-            db.Entry(profil).State = EntityState.Detached; // sonst versucht der nächste Aufruf beide
+            db.Entry(profil).State = EntityState.Detached; // otherwise the next call tries both
         }
 
         await VerweigertAsync(new AccountProfile

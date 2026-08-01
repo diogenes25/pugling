@@ -35,7 +35,7 @@ public sealed class GrammarStrategy(IChatClient chat, CreatorApi creator,
         GenerationRequest request)
     {
         var violations = new Violations();
-        // Fehlt 'tasks' im Modell-JSON, steht hier null – als leere Liste wird daraus ein Regelverstoß.
+        // If 'tasks' is missing from the model JSON this is null - as an empty list it becomes a rule violation.
         var tasks = draft.Tasks ?? [];
         DraftRules.Title(violations, draft.Title, briefing);
         DraftRules.NotBlank(violations, draft.Instruction, "Die Arbeitsanweisung");

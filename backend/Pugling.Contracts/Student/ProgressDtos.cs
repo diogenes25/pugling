@@ -2,8 +2,8 @@ using Pugling.Contracts.Shared;
 
 namespace Pugling.Contracts.Student;
 
-// Vertrag der Sohn-Sichten auf den eigenen Lernstand: Tagesmission und Laufzeit-Verlauf eines Lehrplans
-// sowie der plan-übergreifende Vokabel-Lernstand (pro Item, pro Wort, mit Antwort-Historie).
+// Contract of the child's views on its own progress: daily mission and runtime history of a study plan,
+// plus the cross-plan vocabulary progress (per item, per word, with answer history).
 
 /// <summary>Daily mission: the plan overview plus today's rollup over its positions.</summary>
 public record OverviewResponse(int PlanId, string Title, DateOnly StartDate, DateOnly EndDate, bool Active,

@@ -1,15 +1,15 @@
 namespace Pugling.Api.Models;
 
 /// <summary>
-/// Baut den HATEOAS-Selbstlink auf einen Vokabel-Store-Eintrag. Eine Stelle für den Pfad, damit
-/// alle Übungstypen denselben <c>_self</c> liefern. Der Pfad ist bis zur Publikation stabil (v1);
-/// bewusst als String (kein <c>LinkGenerator</c>), da der Link rein aus der ID ableitbar ist.
+/// Builds the HATEOAS self link to a vocabulary store entry. One place for the path, so that all exercise
+/// types return the same <c>_self</c>. The path is stable until publication (v1); deliberately a string
+/// (no <c>LinkGenerator</c>) because the link is derivable from the ID alone.
 /// </summary>
 public static class VocabLink
 {
-    /// <summary>Basis-Pfad des Vokabel-Store-Eintrags.</summary>
+    /// <summary>Base path of the vocabulary store entry.</summary>
     public const string Path = "/api/v1/creator/vocabulary/";
 
-    /// <summary>Selbstlink zur ID; <c>null</c> für fehlende/unbekannte IDs (0 = Alt-Referenz ohne aufgelöste ID).</summary>
+    /// <summary>Self link for the ID; <c>null</c> for missing/unknown IDs (0 = legacy reference without a resolved ID).</summary>
     public static string? Self(int? id) => id is null or 0 ? null : Path + id;
 }
