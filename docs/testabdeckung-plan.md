@@ -134,10 +134,13 @@ B-26 muss dafür neu zugeschnitten werden: aus „einen CI-Lauf einrichten" (erl
 Unverändert im Inhalt, mit zwei Auflagen aus der Runde:
 
 - **Basisklasse statt zweiter Fabrik-Kopie.** Fehlt in einer Kopie
-  `UseSetting("ConnectionStrings:Default", …)` (`PuglingWebAppFactory.cs:27`), greift `appsettings.json` mit
+  `UseSetting("ConnectionStrings:Default", …)`, greift `appsettings.json` mit
   `Data Source=pugling.db` relativ zum ContentRoot – der Test migriert dann die **echte**
   `backend/Pugling.Api/pugling.db`. Das ist kein sichtbarer Testfehler, sondern eine kaputte
-  Entwicklerdatenbank. Dasselbe gilt für `Media:RootPath` (`:28`).
+  Entwicklerdatenbank. Dasselbe gilt für `Media:RootPath`. **Umgesetzt:** beide stehen einmal in
+  `PuglingWebAppFactoryBase`, und zwar **nach** dem Ableitungs-Hook (das spätere `UseSetting` gewinnt);
+  `ConfigureWebHost` ist `sealed`, sonst könnte eine neue Fabrik es überschreiben und den `base`-Aufruf
+  vergessen.
 - **Akzeptanzkriterium 4 (Alt-Ketten-Probe) bleibt** (Entscheidung 8), trägt aber im Kommentar sein
   Ablaufdatum: es stirbt mit der Regel, also mit der ersten Veröffentlichung. Zusatzbefund, der beim Bauen
   Zeit spart: der Fail-fast (`Program.cs:260`) wirft **vor** `builder.Build()`, der Alt-Ketten-Abbruch

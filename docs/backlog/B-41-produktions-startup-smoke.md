@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/qualitaet, bereich/tests]
+tags: [typ/story, status/abgenommen, bereich/qualitaet, bereich/tests]
 aliases: [Produktions-Startup-Smoke]
-status: geschaetzt
+status: abgenommen
 prio: P2
 art: Aufräumen
 groesse: S
@@ -182,6 +182,66 @@ Frage aus offenem Punkt 2 ist damit gegenstandslos. Für B-41 ändert das nichts
 Weg), wohl aber für [B-47](B-47-deploy-artefakt-smoke.md): dessen Ist-Stand-Annahme „ohne `/health` muss sich
 ein Smoke an einer fachlichen Route festmachen" trägt nicht mehr. Nachzuziehen beim Ausformulieren von B-47.
 
+## Verifikation
+
+Gebaut als [ProductionStartupTests](../../backend/Pugling.Api.Tests/ProductionStartupTests.cs) +
+[ProductionWebAppFactory](../../backend/Pugling.Api.Tests/ProductionWebAppFactory.cs); die geteilte
+Mechanik liegt in `PuglingWebAppFactoryBase`
+([PuglingWebAppFactory.cs](../../backend/Pugling.Api.Tests/PuglingWebAppFactory.cs)).
+
+| AK | Beleg |
+| --- | --- |
+| 1 | `FrischeProduktionsinstanz_IstOhneSeedInBetriebZuNehmen` – kein Seed-Login, leerer Katalog, anonyme Registrierung, Id 1, Login, `auth/me` mit Creator **und** Supervisor. |
+| 2 | `AnmerkungsBlick_UeberAlleKonten_IstInProduktionZu` – `?scope=all` → 403 `remark_scope_forbidden`, und im selben Test die Gegenrichtung (ohne `scope` → 200). |
+| 3 | `OhneJwtSchluessel_BrichtDerStartAb` – geprüft auf die **Meldung** in `thrown.ToString()`, nicht auf den Typ. |
+| 4 | `DatenbankAusDerAltenKette_MeldetKlartextStattEfFehler` – inkl. der Zusicherung, dass `already exists` **nicht** durchschlägt. |
+| 5 | Volle Suite **620/620 grün** (48 s bzw. 51 s in zwei Läufen); Abdeckung **263/263, 0 offen**; `FullRunTouchedActions` bleibt bei **263**. Zur Laufzeit siehe unten. |
+| 6 | Fünf Gegenproben, jede rot gesehen – Tabelle unten. |
+| 7 | Out-of-process nicht enthalten; liegt als [B-47](B-47-deploy-artefakt-smoke.md). |
+
+### Die Gegenproben
+
+| Probe | Manipulation | Was fiel |
+| --- | --- | --- |
+| A | `Seed:Enabled=true` | `#1/0000` meldet sich an → `Expected: Unauthorized, Actual: OK` |
+| B | `Remarks:GlobalRead=true` | `?scope=all` → `Expected: Forbidden, Actual: OK` |
+| C | `Jwt:Key` gesetzt | kein Abbruch → `Assert.NotNull() Failure` |
+| D | bekannte Migrations-Id statt fremder | Alt-Ketten-Zweig feuert nicht → `Assert.NotNull() Failure` |
+| E | Dev-Fallback **als** `Jwt:Key` | gefälschtes Token wird angenommen → `Expected: Unauthorized, Actual: OK` |
+
+### AK 5 ist präziser, als die Wanduhr hergibt
+
+Die Suite schwankt bei **identischem** Stand zwischen 41 s und 56 s; in paarweisen Läufen (mit/ohne die
+neue Klasse, direkt hintereinander, viermal) war die Variante *mit* den Tests zweimal die schnellere. Ein
+Fünf-Test-Effekt ist darin nicht auflösbar. Belastbar ist die **serielle Mehrarbeit** aus dem
+Testprotokoll: **6,85 s von 920 s** (0,7 %), längster neuer Test 3,42 s gegen 14,78 s für den längsten
+Test der Suite – die Klasse liegt also nicht auf dem kritischen Pfad. Die Zusicherung „unter fünf
+Sekunden" gilt damit **dem Sinn nach belegt, der Zahl nach unterhalb der Messgrenze**.
+
+### Zwei Funde beim Bauen, beide nicht in der Story vorhergesehen
+
+1. **Der Bootstrap-Test war reihenfolgeabhängig.** Beide Tests der Klasse teilten über `IClassFixture`
+   **eine** Datenbank und registrierten je einen Erwachsenen – lief der Anmerkungs-Test zuerst, bekam der
+   Bootstrap-Test Id 2. In Release grün, in Debug und unter jedem `--filter` rot; das Haupttor fährt
+   `-c Release` und hätte es verdeckt. Der Test hat jetzt seinen **eigenen** Host, und „kein Seed" steht auf
+   zwei Beinen (Login **und** leerer Katalog), weil ein 401 allein auch von einer falschen PIN käme.
+2. **Der ursprüngliche Schlüssel-Nachweis bewies nichts.** „Token wird akzeptiert" zeigt nur, dass
+   Ausstellen und Prüfen übereinstimmen – und das tun sie immer: beide Seiten hängen an derselben
+   `TokenService`-Instanz. Käme `Jwt:Key` nirgends an, fielen beide gemeinsam auf den Fallback zurück und
+   `auth/me` bliebe 200. Es gibt darum einen fünften Test: ein mit dem **Dev-Fallback** signiertes Token
+   muss 401 bekommen. Das ist die Aussage, um die es geht – der Fallback steht im Klartext im Quellbaum.
+
+### Nebenbefund: 14 GB Wegwerf-Datenbanken
+
+`PuglingWebAppFactoryBase.Dispose(bool)` lief für Klassen-Fixtures **nie**: xUnit entsorgt über
+`IAsyncDisposable`, und `WebApplicationFactory.DisposeAsync()` führt nicht durch `Dispose(bool)`. Zusätzlich
+hielt der SQLite-Verbindungspool die Datei offen, sodass `File.Delete` still im `catch` scheiterte. Stand am
+2026-08-01: **20 880 verwaiste `pugling_test_*.db`, 14 GB**, angesammelt seit dem 4. Juli. Behoben durch ein
+`DisposeAsync()`-Override plus `SqliteConnection.ClearPool` **auf die eigene** Verbindung; danach gemessen:
+Leck-Delta **0** je Lauf. Zwei Irrwege sind dabei ausgeschlossen worden und stehen als Begründung im Code:
+`Pooling=False` schob die Suite von ~1 auf **3 Minuten**, und das prozessweite `ClearAllPools` warf je Lauf
+drei bis vier fremde Tests um, weil xUnit Klassen parallel fährt. Die 20 880 Altlasten liegen noch da.
+
 ## Verlauf
 
 - **2026-07-31** — angelegt (Quelle: Nachmessung der Test-Abdeckung, [testplan.md](../testplan.md)).
@@ -200,3 +260,10 @@ ein Smoke an einer fachlichen Route festmachen" trägt nicht mehr. Nachzuziehen 
   `IsDevelopment()`-Zweige (die Static-Files-Zeilen sind umgebungsunabhängig registriert), und `/health`
   existiert seit dem 2026-07-04 – die zurückgestellte Frage aus Punkt 2 ist gegenstandslos und wandert als
   Korrektur zu [B-47](B-47-deploy-artefakt-smoke.md).
+- **2026-08-01** — gebaut als Etappe **E1**. `pugling-reviewer` hat einen Blocker und fünf Befunde
+  gebracht, alle übernommen: die Reihenfolge-Abhängigkeit (in Release unsichtbar), der Schlüssel-Nachweis
+  ohne Beweiskraft, `ConfigureWebHost` jetzt `sealed`, `MessageChain` durch `ToString()` ersetzt, die
+  Doku-Drift auf verschobene Zeilen, und das 14-GB-Leck in `Dispose`.
+- **2026-08-01** — **abgenommen**: 620/620 grün, Abdeckung 263/263 (0 offen), fünf Gegenproben je einmal
+  rot gesehen. `FullRunTouchedActions` bleibt bei 263 – **Naht 1 aus dem
+  [Paket-Plan](../testabdeckung-plan.md) ist damit erledigt, E2 muss nichts nachziehen.**

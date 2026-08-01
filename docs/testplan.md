@@ -671,12 +671,15 @@ Die drei Flächen, die dieser Befund nicht abdeckte:
    ([PuglingClientTests](../backend/Pugling.Api.Tests/PuglingClientTests.cs)). Kein Wächter hält die
    Routen-Strings gegen das OpenAPI-Dokument; ein Tippfehler in einer der nicht gefahrenen Methoden fällt erst
    dem Agenten zur Laufzeit auf. (`pugling-creator`: Zeilen 67,0 %, Zweige 51,5 %.)
-2. **Der Produktionspfad ist zu 0 % ausgeführt.**
-   [PuglingWebAppFactory.cs:26](../backend/Pugling.Api.Tests/PuglingWebAppFactory.cs) setzt
-   `UseEnvironment("Development")` und ist die **einzige** `UseEnvironment`-Stelle im Repo. Nie ausgeführt: der
-   Fail-Fast auf fehlenden `Jwt:Key` ([Program.cs:260](../backend/Pugling.Api/Program.cs)),
-   `RemarkOptions.GlobalRead = false` (:198), `Seed:Enabled` aus (:464), der Login-Rate-Limiter und
-   `Migrate()` gegen eine echte Datei.
+2. ~~**Der Produktionspfad ist zu 0 % ausgeführt.**~~ — **geschlossen am 2026-08-01** durch
+   [B-41](backlog/B-41-produktions-startup-smoke.md) (Etappe E1). Damals setzte die einzige
+   `UseEnvironment`-Stelle im Repo `"Development"`; nie ausgeführt waren der Fail-fast auf fehlenden
+   `Jwt:Key` ([Program.cs:260](../backend/Pugling.Api/Program.cs)), `RemarkOptions.GlobalRead = false`
+   (:198) und `Seed:Enabled` aus (:464). Heute fährt
+   [ProductionStartupTests](../backend/Pugling.Api.Tests/ProductionStartupTests.cs) alle drei plus den
+   Alt-Ketten-Abbruch; die Umgebung hängt an `PuglingWebAppFactoryBase.EnvironmentName`, die
+   Schutz-Einstellungen stehen dort genau einmal und `ConfigureWebHost` ist `sealed`. Offen bleibt der
+   **Out-of-process**-Teil (`publish` → `wwwroot` → Kestrel): [B-47](backlog/B-47-deploy-artefakt-smoke.md).
 3. **Frontend: 21 Vitest-Fälle über 83 Quelldateien**, ausschließlich für `lib/remarks.ts` und
    `vater/navigation.ts` – **keine** Komponententests (die DOM-Umgebung ist eingerichtet,
    `vitest.config.ts:13` setzt `environment: "happy-dom"`; es rendert nur niemand), und
