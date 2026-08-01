@@ -135,7 +135,7 @@ export function SohnTest() {
             Deshalb kein Server-Aufruf und keine Rückfrage – es geht nichts verloren, und ein versehentliches
             Verlassen verbraucht keinen der begrenzten Versuche.
           */}
-          <button type="button" className="pill toggle-pill" onClick={() => nav("/sohn")}>
+          <button type="button" className="pill toggle-pill exit-pill" onClick={() => nav("/sohn")}>
             Später weiter
           </button>
         </span>

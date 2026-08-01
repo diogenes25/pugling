@@ -28,9 +28,10 @@ export const FIELD_HELP = {
     title: "Bestehen ab %",
     text: "Ab wie viel Prozent das Ziel der Periode als erledigt gilt. Leer lassen heißt 80 %. Was gemessen "
       + "wird, hängt an der Übung: bei prüfbaren Übungen (mit Abschlusstest) sind es Prozent richtiger "
-      + "Antworten. Bei reinen Inhaltsübungen – Lesen, Hören, Aufsatz, Grammatik, Übersetzung, Birkenbihl – "
-      + "gibt es nichts automatisch zu bewerten; dort sind es Prozent der Runde, die durchgespielt wurde. "
-      + "Bloßes Öffnen der Übung erfüllt die Pflicht also nicht.",
+      + "Antworten. Bei Übungen ohne automatische Prüfung gibt es nichts zu bewerten; dort sind es Prozent "
+      + "der Runde, die durchgespielt wurde – bloßes Öffnen erfüllt die Pflicht also nicht. Hat eine Übung "
+      + "gar keine einzelnen Inhalte, etwa ein Aufsatz, greift der Wert nicht: dort zählt, dass eine Weile "
+      + "gearbeitet und die Runde bewusst beendet wurde.",
   },
   itemCount: {
     title: "Inhalte dauerhaft begrenzen",

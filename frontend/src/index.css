@@ -324,6 +324,17 @@ th.sortable[aria-sort="ascending"] .th-sort, th.sortable[aria-sort="descending"]
 @keyframes tempo-shrink { from { width: 100%; } to { width: 0%; } }
 .toggle-pill { cursor: pointer; border: none; font: inherit; }
 
+/* Der Ausweg aus einer laufenden Runde (B-37/E5). Eigene Klasse, weil eine nackte `.pill` zwei Dinge
+   gleichzeitig verfehlt: sie misst nur ~20 px (unter dem 24-px-Ziel der WCAG 2.2, in einer Arcade für
+   Daumen) und steht ohne Akzent neben rein dekorativen Pillen – dem primären Ausgang sieht man dann
+   nicht an, dass er ein Knopf ist. */
+.exit-pill {
+  padding: 8px 12px; background: rgba(38, 217, 255, .12); color: var(--cyan);
+  border: 1.5px solid var(--stroke);
+}
+.exit-pill:hover { border-color: var(--cyan); }
+.exit-pill:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+
 /* =========================================================================
    Landing / Produktseite – erklärt Pugling und führt in Vater- bzw. Sohn-Rolle.
    Dark-committed wie die Sohn-App, aber mit weiten, ruhigen Sektionen.

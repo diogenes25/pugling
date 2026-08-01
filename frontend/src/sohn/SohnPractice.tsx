@@ -71,8 +71,14 @@ export function SohnPractice() {
       clearInterval(iv);
       if (session.current) {
         const secs = Math.round((Date.now() - startedIso.current) / 1000) % 12;
-        api.heartbeat(planId, positionId, session.current.id, secs, true).catch(() => {});
-        api.endSession(planId, positionId, session.current.id).catch(() => {});
+        const sessionId = session.current.id;
+        // Erst die Rest-Sekunden, dann schließen: `end` wertet das Ziel sofort aus, und bei einer Übung
+        // ohne einzelne Inhalte hängt die Pflicht an der Verweildauer. Kämen die Sekunden danach an,
+        // stünde die Gutschrift bis zum Periodenschluss aus.
+        api.heartbeat(planId, positionId, sessionId, secs, true)
+          .catch(() => {})
+          .then(() => api.endSession(planId, positionId, sessionId))
+          .catch(() => {});
       }
     };
   }, [planId, positionId]);
@@ -183,12 +189,15 @@ export function SohnPractice() {
             ⚡ Tempo
           </button>
           {/*
-            Sichtbarer Ausweg aus der laufenden Runde. Ohne Rückfrage, weil das Verlassen folgenlos ist:
-            bereits gespielte Karten sind gewertet, der Rest wird nicht bestraft. Der Server-Aufruf (`end`)
-            gehört bewusst NICHT hierher – das Cleanup des Heartbeat-Effekts unten schickt die Rest-Sekunden
+            Sichtbarer Ausweg aus der laufenden Runde. Ohne Rückfrage, weil eine Rückfrage über eine
+            Aktion, deren Wort schon die Wahrheit sagt, zum Wegklicken erzieht. Der Server-Aufruf (`end`)
+            gehört bewusst NICHT hierher – das Cleanup des Heartbeat-Effekts oben schickt die Rest-Sekunden
             und beendet die Sitzung; ein zweiter Aufruf hier wäre eine Doppelquelle für dieselbe Sache.
+            Folgenlos ist das Verlassen nur beim Leitner-Üben (jede gespielte Karte ist schon gebucht):
+            bei einer Übung ohne automatische Prüfung misst die Pflicht EINE Sitzung gegen die Schwelle,
+            und die nächste Runde beginnt wieder bei null.
           */}
-          <button type="button" className="pill toggle-pill" onClick={() => nav("/sohn")}>
+          <button type="button" className="pill toggle-pill exit-pill" onClick={() => nav("/sohn")}>
             Runde beenden
           </button>
         </span>

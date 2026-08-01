@@ -81,6 +81,9 @@ const GERMAN_PROBLEM_TEXT: Record<string, string> = {
     "Diese Übung hat noch keine Inhalte. Füge erst Wörter hinzu – danach lässt sie sich durchspielen und zuweisen.",
   no_checkable_content: "Diese Übung hat keine einzeln prüfbaren Aufgaben.",
   no_tag_matches: "Zu diesen Tags gibt es keine Vokabeln. Die Übung wurde nicht verändert.",
+  // Der Deckel aus B-37 trifft ausschließlich das Kind in der Arcade – der einzige Ort, an dem eine rohe
+  // englische Zeile einen Elfjährigen erreicht. Der Satz sagt darum auch, wann es weitergeht.
+  test_attempts_exhausted: "Für heute sind deine Versuche aufgebraucht. Morgen kannst du es noch mal probieren.",
 };
 
 export function errorMessage(e: unknown): string {
