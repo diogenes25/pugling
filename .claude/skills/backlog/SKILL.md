@@ -99,8 +99,19 @@ React-Frontend nutzlos — nicht ziehen.)
 
 ### `/backlog <id> grillen` — die Entscheidungen beim Menschen abholen
 
-Ruf den Skill `grilling` und halte dich an seine Regel: **eine Frage, dann warten.** Fakten selbst
-nachsehen, nur Entscheidungen vorlegen, je mit Empfehlung.
+Ruf den Skill `grilling` **zusammen mit `domain-modeling`** und halte dich an die Regel von `grilling`:
+**eine Frage, dann warten.** Fakten selbst nachsehen, nur Entscheidungen vorlegen, je mit Empfehlung.
+
+`domain-modeling` trägt dabei genau seine *aktive* Hälfte bei: einen Begriff sofort anfechten, wenn er
+mit der Sprache des Projekts kollidiert („du sagst Vater — meinst du die Rolle `Supervisor` oder die
+Verwandtschaft?"), unscharfe Wörter durch den kanonischen ersetzen und die Behauptung gegen den Code
+halten. Das ist billig und fängt genau die Drift ab, die dieses Repo teuer bezahlt hat (`Father`→`Adult`,
+Lernziel→`KeyResult`, Vater/Sohn vs. Supervisor/Student).
+
+**Aber: keine neuen Dateien.** Der Skill legt von sich aus `CONTEXT.md` und `docs/adr/` an, sobald ein
+Begriff oder eine Entscheidung fällt — das ist hier **nicht** gewollt, solange darüber nicht entschieden
+ist. Das Ergebnis der Runde geht in die `## Entscheidungen` der Story; ein geschärfter Begriff, der über
+die Story hinaus gilt, wird als solcher benannt und dem Nutzer vorgelegt, nicht abgelegt.
 
 Danach in die Story schreiben: `## Entscheidungen`, nummeriert, jede mit **Begründung und Kosten**
 („Träger der Bildwahl ist die Vokabel. Folge: dasselbe Motiv wie auf der Karteikarte — gewollt. Kosten:
@@ -173,7 +184,9 @@ Regeln der Ernte:
   Story-Ids. Die dauerhafte Liste ist dieser Bereich.
 - **`anmerkungen`** beantwortet Beobachtungen aus dem Widget. Wo aus einer Beobachtung *Arbeit* wird, endet
   sie hier als Story.
-- **`grilling`** liefert die Entscheidungen für die Stufe `gegrillt`.
+- **`grilling`** liefert die Entscheidungen für die Stufe `gegrillt`, **`domain-modeling`** dabei die
+  Begriffsschärfe. Die beiden zusammen sind das, was anderswo `grill-with-docs` heißt — ohne dessen
+  Nebenprodukt-Dateien.
 - **`wayfinder`** ist dieselbe Stufe für ein Vorhaben, das nicht in eine Sitzung passt: Die Karte **ist**
   die Story, ihre Entscheidungs-Tickets liegen unter `docs/backlog/karten/B-<nn>/` und stehen nicht im
   Index. Er **ersetzt `grilling` nicht**, er ruft ihn — `grilling` ist sein Normalfall-Ticket-Typ. Die
@@ -181,3 +194,9 @@ Regeln der Ernte:
   `.scratch/`-Tracker gilt hier nicht.
 - **`pugling-reviewer`** (Backend) und **`frontend-reviewer`** (React) prüfen vor der Abnahme Korrektheit
   und Konventionen — welcher, sagt `wo`.
+
+**Bewusst nicht übernommen** (aus demselben Paket wie `wayfinder`, geprüft am 2026-08-01): `to-spec` und
+`to-tickets` schreiben Spec und Tickets in einen *externen* Tracker — das wäre der zweite Ablageort neben
+diesem Bereich, aus demselben Grund abgelehnt wie der `.scratch/`-Tracker des Wayfinders; ihre Arbeit
+leisten hier die Stufen `ausformuliert`/`geschaetzt` in der Story selbst. `implement` ist inhaltlich die
+Stufe `in-arbeit` plus die beiden Reviewer, nur ohne Eintrittsbedingung und ohne `## Verlauf`.
