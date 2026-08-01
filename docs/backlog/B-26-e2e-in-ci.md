@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/frontend, bereich/qualitaet]
+tags: [typ/story, status/abgenommen, bereich/frontend, bereich/qualitaet]
 aliases: [E2E in CI, roter Nachtlauf]
-status: in-arbeit
+status: abgenommen
 prio: P1
 art: Defekt
 groesse: S
@@ -111,9 +111,40 @@ kein Produktivcode und kein Vertrag. Der Grill-Teil liegt bereits im Paket-Dokum
 Stand muss rot sein), danach die volle Suite, danach ein echter Lauf des Workflows – AK 2 und 3 sind
 ausdrücklich **nicht** lokal belegbar.
 
+## Verifikation
+
+Belegt, nicht behauptet – je Kriterium die Gegenprobe:
+
+| AK | Beleg |
+| --- | --- |
+| 1 | `vater-von-null.spec.ts:275-315` legt die Etappe an und prüft Bereich, Messlatte und Status in der Zeile; der Lernziel-Abschnitt ist weg. **Gegenprobe:** derselbe Lauf auf dem alten Stand (`git stash`) ist rot an `:269` – `getByLabel("Fach")` läuft in den 60-s-Timeout. Neuer Stand grün, volle Suite **25/25 in 3,2 min**. |
+| 2 | Echter Lauf [30689948358](https://github.com/diogenes25/pugling/actions/runs/30689948358) auf `b-37-abgebrochene-runden` – **grün**, beide Jobs `success`. |
+| 3 | Echter Lauf [30689832578](https://github.com/diogenes25/pugling/actions/runs/30689832578) auf dem Wegwerf-Zweig `b-26-zustellung-probe` mit absichtlich rotem Spec → Issue [#1](https://github.com/diogenes25/pugling/issues/1) („E2E-Nachtlauf ist rot", Label `e2e-nightly`) mit Zweig, Ergebnis, Commit und Lauf-Link. Der grüne Lauf danach hat es selbst wieder **geschlossen** („Wieder grün: …"). Der Zweig ist gelöscht. |
+| 4 | `ci.yml` unverändert (`git diff main -- .github/workflows/ci.yml` leer); Playwright bleibt im eigenen Workflow. |
+
+**Zwei Dinge sind beim Bauen anders ausgegangen als geplant** – beide stehen als Risiko in der Schätzung:
+
+1. Die Zustellung ist ein **eigener Job** geworden, nicht zwei Schritte am Testjob. Ein
+   `timeout-minutes`-Abbruch löst weder `failure()` noch `success()` aus – ausgerechnet der Fall, für den
+   die Reißleine da ist, hätte als Einziger nichts zugestellt.
+2. Als Messlatte war `MaxWeakItems` vorgesehen, um die Gegenrichtung „höchstens" mitzunehmen. Der Lauf war
+   rot und hatte recht: ein Kind ohne Lernstand hat **null** schwache Wörter und erfüllt jede Obergrenze
+   sofort – die Etappe stand auf „erreicht/100 %", der Status wäre trivial statt geprüft. Jetzt
+   `AvgMastery` mit **90** (abseits der Vorbelegung 80); die Gegenrichtung ist im Spec als bewusst nicht
+   abgedeckt vermerkt.
+
+Abgefallen: [B-54](B-54-objectivecard-schreib-primitive.md) – `ObjectiveCard` geht an
+`useAction`/`StatusBanner` vorbei, deshalb hat die Etappe **keine Erfolgsmeldung**, auf die der Spec prüfen
+könnte (der alte Abschnitt konnte noch „Lernziel angelegt." abfragen).
+
 ## Verlauf
 
 - **2026-07-30** — geerntet (ungeprüft).
 - **2026-08-01** — ausformuliert **und neu zugeschnitten**: die Prämisse „in CI nie gelaufen" ist widerlegt
   (zwei Läufe, der zweite rot). `art` wird `Defekt`, `prio` steigt auf P1 – ein rotes Tor, das niemanden
   erreicht, entwertet jedes weitere Tor, das das Paket danach baut.
+- **2026-08-01** — geschätzt (S) und gebaut; Etappe **E0** des Pakets. `frontend-reviewer` hat vier
+  Befunde gebracht, alle übernommen: eigener Zustell-Job, Eingrenzung der Selektoren auf die Ziel-Karte,
+  tautologische Vorbelegung ersetzt, Doku-Drift in `VaterZiele.tsx`/`api.ts`/`frontend/CLAUDE.md` geheilt.
+- **2026-08-01** — **abgenommen**, alle vier Kriterien mit echten Läufen belegt (Tabelle oben).
+  Commits `99a3720` (E0) und `31b0707` (Wegwerf-Probe, Zweig danach gelöscht).
