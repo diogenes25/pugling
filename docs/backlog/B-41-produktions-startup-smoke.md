@@ -1,9 +1,13 @@
 ---
-tags: [typ/story, status/gegrillt, bereich/qualitaet, bereich/tests]
+tags: [typ/story, status/geschaetzt, bereich/qualitaet, bereich/tests]
 aliases: [Produktions-Startup-Smoke]
-status: gegrillt
+status: geschaetzt
 prio: P2
 art: Aufräumen
+groesse: S
+wo: backend
+migration: nein
+vertragsbruch: nein
 quelle: docs/testplan.md#nachmessung-2026-07-31-die-drei-unbeobachteten-flächen
 ---
 
@@ -42,9 +46,13 @@ Drei Randbedingungen, die die Sache erst zur Lücke machen:
 - **Eine ungeseedete Instanz ist trotzdem in Betrieb zu nehmen:** `POST api/v1/supervisor/adults` trägt
   `[AllowAnonymous]` („Creates a new father (registration, reachable without login)",
   `AdultsController.cs:49-51`), ebenso das Lehrer-Konto. Das ist der Bootstrap-Weg einer frischen Instanz.
-- **Es gibt keinen `/health`-Endpunkt**; gegen leeres `wwwroot` antwortet `MapFallbackToFile` mit 404. Das
-  Deploy hängt am **stillgelegten** `deploy-azure.yml` (`on:`-Block auskommentiert, Zeile 27 f.); der
-  Azure-Schlüssel ist als [B-33](B-33-azure-publish-profile.md) **bewusst verworfen**.
+- ~~**Es gibt keinen `/health`-Endpunkt**~~ — **falsch, beim Schätzen am 2026-08-01 korrigiert:**
+  `Program.cs:498` mappt `/health` (`AddHealthChecks().AddDbContextCheck<PuglingDbContext>()`,
+  `Program.cs:219`), anonym und seit dem 2026-07-04 im Baum (`105e2e1`). Kein Test ruft ihn auf — der
+  Abdeckungs-Wächter zählt nur Controller-Actions, ein `MapHealthChecks` steht in keinem Inventar. Gegen
+  leeres `wwwroot` antwortet `MapFallbackToFile` weiterhin mit 404. Das Deploy hängt am **stillgelegten**
+  `deploy-azure.yml` (`on:`-Block auskommentiert, Zeile 27 f.); der Azure-Schlüssel ist als
+  [B-33](B-33-azure-publish-profile.md) **bewusst verworfen**.
 
 ## Die echte Lücke
 
@@ -108,6 +116,72 @@ Alle im Grillen vom 2026-07-31 entschieden bzw. ausdrücklich zurückgestellt.
 7. Der Out-of-process-Teil ist **nicht** enthalten, sondern liegt als
    [B-47](B-47-deploy-artefakt-smoke.md) vor – samt der zurückgestellten `/health`-Frage.
 
+## Schätzung
+
+**Größe S** (Anker: „`childId` aus dem Test-Pfad ziehen", B-01) — kein Produktivcode, keine neue
+Abhängigkeit, keine Vertragsänderung. Über XS liegt es, weil nicht *eine* Testklasse entsteht, sondern
+**drei verschiedene Host-Konfigurationen**: Produktion mit Schlüssel, Produktion ohne Schlüssel (muss
+werfen), Produktion gegen eine vorbereitete Alt-Ketten-DB (muss werfen).
+
+`migration: nein` — nachgesehen: es ändert sich kein Entity und kein `DbContext`; die Alt-Ketten-Probe
+schreibt von Hand in die `__EFMigrationsHistory` einer **Wegwerf**-Datei, die Kette selbst bleibt bei
+`InitialCreate`. `vertragsbruch: nein` — `Pugling.Contracts` wird nicht angefasst.
+
+### Die Produktionsseite ist schmaler als gedacht
+
+Nachgezählt in `Program.cs` gibt es genau **drei** `IsDevelopment()`-Verzweigungen (`:198` `Remarks:GlobalRead`,
+`:260` Fail-fast auf `Jwt:Key`, `:462` `Seed:Enabled`) plus den Dev-Fallback in `TokenService.cs:15`. Die
+Zeilen `:387`/`:503` (`UseStaticFiles`/`MapFallbackToFile`) und `:445` (Alt-Kette) sind **nicht**
+umgebungsabhängig registriert — sie greifen nur nicht, weil `wwwroot` leer bzw. die Test-DB frisch ist. Das
+verkleinert Teil 1 gegenüber der Ausformulierung nicht, macht aber die Zusicherung ehrlich: geprüft wird die
+Produktions-**Konfiguration**, nicht ein anderer Ablauf.
+
+Ebenfalls nachgesehen und **entlastend**: es gibt kein `UseHttpsRedirection`/`UseHsts` außerhalb der
+Entwicklung. Der In-Process-Client redet weiter über HTTP, die Fabrik braucht keinen TLS-Umweg.
+
+### Angriffsplan
+
+Nur Backend, in dieser Reihenfolge (jede Stufe ist für sich grün):
+
+1. **`ProductionWebAppFactory`** neben `PuglingWebAppFactory` — dieselbe Wegwerf-DB-/Medienordner-Mechanik,
+   aber `UseEnvironment("Production")` und `Jwt:Key` als `UseSetting`. Den `EndpointCoverageStartupFilter`
+   mitnehmen, sonst zählt der Abdeckungs-Wächter die dort bedienten Actions nicht. `Seed:Enabled` **nicht**
+   setzen (Entscheidung 2: der Vorgabewert `false` ist der Prüfgegenstand).
+2. **`ProductionStartupTests`** — der Bootstrap-Ablauf in einem Test (AK 1) und `?scope=all` → 403 (AK 2).
+   Die 403 ist belegt, keine Vermutung: `RemarksController.cs:113`/`:231` hängt sie an
+   `RemarkOptions.GlobalRead`.
+3. **Fail-fast ohne `Jwt:Key`** (AK 3) — eigene Fabrik ohne die Einstellung, `Record.Exception(…)` beim
+   ersten `CreateClient()`.
+4. **Alt-Ketten-Probe** (AK 4) — SQLite-Datei anlegen, `__EFMigrationsHistory` mit einem Phantasienamen
+   füllen, Host darauf zeigen lassen, auf die Klartextmeldung aus `Program.cs:445` prüfen.
+5. **Gegenprobe und Messung** (AK 5, AK 6) — `Seed:Enabled=true` einschalten, rot sehen, zurücknehmen;
+   danach Gesamtlaufzeit und `TestResults/endpoint-coverage.txt` gegen den Stand davor halten.
+
+### Testweg
+
+Der Testweg **ist** hier das Ergebnis, deshalb konkret: neue Datei
+`backend/Pugling.Api.Tests/ProductionStartupTests.cs` plus `ProductionWebAppFactory.cs` im selben Projekt,
+gefahren vom Haupttor `dotnet test Pugling.sln -c Release` (Stop-Hook und CI). Kein E2E, kein
+`/smoke-test` — beide fahren die Entwicklungsumgebung und können die Zusicherung gar nicht treffen.
+Nachweis der Wirksamkeit ist die Gegenprobe aus AK 6, nicht der grüne Lauf.
+
+### Risiken
+
+| Risiko | Warum es hier greift | Gegenmittel |
+| --- | --- | --- |
+| Der Fail-fast kommt nicht als `InvalidOperationException` an | `WebApplicationFactory` fängt die Ausnahme des Einstiegspunkts ab und wirft sie verzögert – teils gekapselt, teils als „entry point exited without ever building an IHost" | Auf die **Meldung** prüfen (`Jwt:Key`), die Kette der `InnerException` mitnehmen, nicht auf den exakten Typ pinnen |
+| Der Abdeckungs-Wächter geht rot, obwohl nichts fehlt | `EndpointCoverageGuard.FullRunTouchedActions = 263` ist eine **obere** Schranke: berührt der neue Test eine bisher unberührte Action, verlangt der Wächter das Nachziehen der Zahl | Registrierung/Login/`auth/me` sind bereits abgedeckt, also erwartet unverändert – nach dem ersten Voll-Lauf den Bericht lesen und die Konstante ggf. setzen |
+| Login-Rate-Limit (10/min je IP) | Die Produktionsfabrik lässt `RateLimiting:LoginEnabled` bewusst an; alle Tests der Klasse teilen eine IP-Partition | Bei wenigen Logins unkritisch; wächst die Klasse, die Anmeldungen zählen statt den Schalter blind auszuschalten |
+| Kopplung an EF-Interna | Die Alt-Ketten-Probe schreibt in `__EFMigrationsHistory` (Kosten aus Entscheidung 3) | Bewusst getragen; die Regel hat ohnehin ein Ablaufdatum (erste Veröffentlichung) |
+| Laufzeit-Budget (< 5 s) | Drei zusätzliche Host-Starts, jeder mit `Migrate()` auf frischer SQLite-Datei | Messen statt hoffen; notfalls die beiden werfenden Fälle in **eine** Klasse legen und die Fabriken nicht cachen |
+
+### Fund beim Schätzen
+
+`/health` existiert (`Program.cs:498`, seit `105e2e1` vom 2026-07-04) — die im Grillen **zurückgestellte**
+Frage aus offenem Punkt 2 ist damit gegenstandslos. Für B-41 ändert das nichts (AK 1 fährt den fachlichen
+Weg), wohl aber für [B-47](B-47-deploy-artefakt-smoke.md): dessen Ist-Stand-Annahme „ohne `/health` muss sich
+ein Smoke an einer fachlichen Route festmachen" trägt nicht mehr. Nachzuziehen beim Ausformulieren von B-47.
+
 ## Verlauf
 
 - **2026-07-31** — angelegt (Quelle: Nachmessung der Test-Abdeckung, [testplan.md](../testplan.md)).
@@ -116,3 +190,8 @@ Alle im Grillen vom 2026-07-31 entschieden bzw. ausdrücklich zurückgestellt.
 - **2026-07-31** — gegrillt: vier Entscheidungen, `/health` zurückgestellt. Der Zuschnitt hat sich beim
   Nachsehen noch einmal verbessert: weil die Registrierung `[AllowAnonymous]` ist, braucht der Test **keinen**
   zweiten Host mit Seed, sondern fährt den echten Inbetriebnahme-Weg einer frischen Instanz.
+- **2026-08-01** — geschätzt: **S**, backend, keine Migration, kein Vertragsbruch; Angriffsplan in fünf
+  Schritten, fünf benannte Risiken. Zwei Belege haben den Ist-Stand berichtigt: es gibt nur **drei**
+  `IsDevelopment()`-Zweige (die Static-Files-Zeilen sind umgebungsunabhängig registriert), und `/health`
+  existiert seit dem 2026-07-04 – die zurückgestellte Frage aus Punkt 2 ist gegenstandslos und wandert als
+  Korrektur zu [B-47](B-47-deploy-artefakt-smoke.md).
