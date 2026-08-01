@@ -114,7 +114,7 @@ gegengeprüft, statt zweimal am Frontend-Job zu wackeln. Nachgesehen statt vermu
 
 ## Die Etappen
 
-### E0 · Der rote Nachtlauf (vorgezogen, Defekt)
+### E0 · Der rote Nachtlauf (vorgezogen, Defekt) — **abgenommen 2026-08-01, Commits `99a3720` + `86570aa`**
 
 Zwei Teile, und nur der erste ist Code: (a) `vater-von-null.spec.ts:265-275` wird **zur Etappe am Objective
 umgeschrieben** (Entscheidung 2), nicht gestrichen; (b) die eigentliche offene Frage aus `e2e.yml:7-15`: Wie
@@ -131,7 +131,7 @@ Ebene, die die gelöschte Lernziel-Ebene fachlich beerbt hat.
 B-26 muss dafür neu zugeschnitten werden: aus „einen CI-Lauf einrichten" (erledigt, nur nicht bemerkt) wird
 „einen roten Lauf auswerten und ihn zustellbar machen".
 
-### E1 · Produktions-Konfiguration ([B-41](backlog/B-41-produktions-startup-smoke.md), `geschaetzt`, S)
+### E1 · Produktions-Konfiguration ([B-41](backlog/B-41-produktions-startup-smoke.md), S) — **abgenommen 2026-08-01, Commit `8081362`**
 
 Unverändert im Inhalt, mit zwei Auflagen aus der Runde:
 
@@ -148,12 +148,12 @@ Unverändert im Inhalt, mit zwei Auflagen aus der Runde:
   Zeit spart: der Fail-fast (`Program.cs:260`) wirft **vor** `builder.Build()`, der Alt-Ketten-Abbruch
   (`:442-452`) **danach** – zwei verschiedene Wege durch `WebApplicationFactory`, nicht ein Risiko.
 
-### E2 · Client-Routen-Wächter ([B-40](backlog/B-40-client-routen-waechter.md), `gegrillt`)
+### E2 · Client-Routen-Wächter ([B-40](backlog/B-40-client-routen-waechter.md), XS) — **abgenommen 2026-08-01, Commits `b229b1c` + `a4be490`**
 
 Inhaltlich unverändert; die Reihenfolge nach E1 ist **nur** der Konstante aus Naht 1 geschuldet, nicht einer
 fachlichen Abhängigkeit. Aus Backend-Sicht die risikoärmste Etappe des Pakets: ein Ort, kein Produktivcode.
 
-### E3 · Vertragsreines Dokument + Tor (B-42 Schritt 1)
+### E3 · Vertragsreines Dokument + Tor (B-42 Schritt 1) — **abgenommen 2026-08-01, Commits `9aac8b1` + `7306f05`**
 
 Siehe Naht 2. Rein backendseitig, berührt `frontend/` mit keiner Zeile – kann parallel zu allem laufen.
 
@@ -499,3 +499,15 @@ eine Meinung.
 - **2026-08-01** — E4 erledigt (Nachweis oben in der Etappe). Beide Vorhersagen aus Naht 3 haben gehalten;
   die zum fehlenden Peer sogar schärfer als geschrieben. Entschieden gegen `globals: true`, für ein
   Setup-File mit eigenem bewachenden Test.
+- **2026-08-01** — E5 und E5' abgenommen (`7891485`, `1c90710`). Die Rot-Probe saß im Primitiv statt an einem
+  stellvertretenden Bildschirm; die „fünf Knöpfe ohne `disabled`" waren **sechzehn**, weil der frühere Griff am
+  `=>` einer `onClick`-Lambda abbrach. Fünf mutierende Knöpfe blieben bewusst offen (B-54).
+- **2026-08-01** — E6 abgenommen (`9f9c185`, `34f82b1`). Die verlangte Vorab-Messung hat die Etappe
+  umgeschrieben: die unvermessene Größe war nicht `required`/`nullable`, sondern `type: ["integer","string"]`
+  bei jeder Ganzzahl (158 von 169 Fehlern) – und der Generator legte **vier Mängel im Vertragsdokument selbst**
+  frei, darunter 167 Operationen ohne Erfolgsantwort. Damit war E3s Tor für Antwort-Formen halb blind gewesen.
+- **2026-08-01** — **Paket abgeschlossen.** Alle sieben Etappen (E0–E6, plus E5' und das nicht aus einer Story
+  entstandene E4) sind abgenommen und mit Commit belegt; die fünf Paket-Stories stehen auf `abgenommen`. Die
+  Sammel-Story [B-52](backlog/B-52-testabdeckung-paket.md) ist damit geschlossen. **B-27 und B-47 waren nie
+  Etappen** (siehe „Nicht im Paket") und bleiben offen. Erzeugt hat das Paket acht Folgestories: B-53 und B-54
+  (beide inzwischen abgenommen), dazu B-55…B-61 und das entblockte B-24.
