@@ -49,16 +49,16 @@ jobs:
     name: Build, Test, Format
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/setup-dotnet@v6
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
       # NuGet-Cache (A3): ohne ihn kostet `restore` den Großteil der Job-Laufzeit. Schlüssel über alle
       # csproj – eine neue PackageReference invalidiert den Cache, ein Codeedit nicht.
       - name: NuGet-Cache
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~/.nuget/packages
           key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', 'Directory.*.props', '.config/dotnet-tools.json') }}
@@ -145,7 +145,7 @@ jobs:
 
       - name: Testergebnisse hochladen
         if: ${{ !cancelled() }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: test-results
           path: |
@@ -167,9 +167,9 @@ jobs:
     name: Frontend – Typecheck, Build, Vitest
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: ${{ env.NODE_VERSION }}
           # Das Lockfile liegt nicht im Repo-Root, sondern unter frontend/ – ohne diesen Pfad findet
@@ -205,8 +205,8 @@ jobs:
     name: Markdown-Lint
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: ${{ env.NODE_VERSION }}
       - run: npx markdownlint-cli2

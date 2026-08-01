@@ -51,12 +51,12 @@ jobs:
       # **Fallstrick 2** (docs/deployment-azure.md): bei `workflow_run` checkt Actions per Default den
       # Default-Branch-HEAD aus, **nicht** den Commit, der geprüft wurde. Ohne dieses `ref` könnte ein
       # ungeprüfter Folge-Commit mitdeployen – und zwar mit grünem Häkchen daneben.
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: ${{ github.event.workflow_run.head_sha || github.ref }}
 
       # 1) Frontend bauen und in das wwwroot der API legen (same-origin: /api + SPA aus einer Domain)
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: ${{ env.NODE_VERSION }}
       # **Fallstrick 1** (docs/deployment-azure.md):
@@ -74,7 +74,7 @@ jobs:
         run: cp -r frontend/dist/. ${{ env.API_PROJECT }}/wwwroot/
 
       # 2) API veröffentlichen (inkl. wwwroot)
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/setup-dotnet@v6
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
       - name: API publish
