@@ -8,7 +8,7 @@ nicht in jede Backend-Sitzung. Der Rahmen (API-First, Ebenen, Konventionen) steh
 cd frontend && npm install        # einmalig
 cd frontend && npm run dev         # http://localhost:5173, /api-Proxy → :5200 (Backend muss laufen)
 cd frontend && npm run build       # tsc -b && vite build (Typecheck + Prod-Build)
-cd frontend && npm test            # Vitest (src/**/*.test.ts, happy-dom) – Logik unter src/lib/
+cd frontend && npm test            # Vitest (src/**/*.test.ts(x), happy-dom) – Logik + Komponenten/Hooks
 cd frontend && npm run test:e2e    # Playwright: startet Backend (Temp-DB) + Vite, fährt den Vater→Sohn-Loop
 ```
 
@@ -29,12 +29,20 @@ Der Hinweis-Knopf heißt `Erklärung zu „<Feldname>"` – **`getByLabel` in Te
 sonst trifft der Teilstring-Vergleich den Knopf statt das Eingabefeld.
 E2E: [e2e/feldhilfe.spec.ts](e2e/feldhilfe.spec.ts) prüft Feld → *richtiger* Text, nicht „irgendein Popover".
 
+**Komponenten/Hooks testet React Testing Library** (`render`, `renderHook`); der Test liegt beim Geprüften.
+Tragend: `setupFiles: ["src/test-setup.ts"]` räumt das DOM zwischen den Fällen ab – ohne `globals: true` tut
+RTL das **nicht** selbst. Begründung in [src/test-setup.ts](src/test-setup.ts), bewacht von
+`src/test-setup.test.tsx`.
+
 **Neue Abhängigkeiten bitte mit `--legacy-peer-deps` installieren:** `vite-plugin-pwa@0.21` deklariert
 Peer `vite@^3…^6`, installiert ist `vite@8` – jede Neuauflösung bricht sonst mit `ERESOLVE` ab
 (vorbestehend, der Build läuft trotzdem). **Das gilt auch für `npm ci`** und damit für jede frische
 Maschine: CI (`ci.yml`, Job `frontend`) und Deploy (`deploy-azure.yml`) installieren deshalb mit dem Flag.
 Ohne es scheiterte das Deploy von 2026-07-05 bis 2026-07-29 unbemerkt am Install – Hintergrund in
 [docs/codequalitaet-gates-plan.md](../docs/codequalitaet-gates-plan.md) (Etappe D1).
+**Preis des Flags: npm installiert fehlende Peers nicht** – jeder gebrauchte Peer muss selbst in den
+`devDependencies` stehen (darum `@testing-library/dom`; fehlt es, fällt der ganze Vitest-Lauf mit
+„Cannot find module").
 
 Rollen im SPA: `/` Produktseite, `/vater` Web-Admin (inkl. `/vater/wizard` Lehrplan-Assistent,
 `/vater/lehrwerke` Buchreihen + Units, `/vater/fachlehrer` Creator-Profile), `/sohn` Arcade-PWA.

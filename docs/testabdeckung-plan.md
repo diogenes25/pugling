@@ -155,10 +155,54 @@ fachlichen Abhängigkeit. Aus Backend-Sicht die risikoärmste Etappe des Pakets:
 
 Siehe Naht 2. Rein backendseitig, berührt `frontend/` mit keiner Zeile – kann parallel zu allem laufen.
 
-### E4 · Werkzeugkette Frontend (neu, nicht aus einer Story)
+### E4 · Werkzeugkette Frontend (neu, nicht aus einer Story) — **erledigt 2026-08-01**
 
 Siehe Naht 3. Eine Etappe, ein Lockfile-Commit, ein Nachweis: `npm ci --legacy-peer-deps` fehlerfrei,
 `npm test` weiterhin grün.
+
+Weil die Etappe keine Story hat, steht ihr Nachweis hier:
+
+| Nachweis | Ergebnis |
+|---|---|
+| Ein Lockfile-Schritt, drei Pakete | `@testing-library/react@16.3.2`, `@testing-library/dom@10.4.1`, `openapi-typescript@7.13.0` |
+| Lockfile-Diff | **416 hinzugefügt / 0 gelöscht**, 34 neue Einträge – alle `dev: true`, kein bestehendes Paket mitgehoben |
+| `npm ci --legacy-peer-deps` aus leerem `node_modules` | 427 Pakete, 20 s, Exit 0, **kein `ERESOLVE`** |
+| `npm test` | **24 grün** (Baseline 21 + 3), 2,7 s |
+| `npx tsc -b` | Exit 0 – die neuen Dateien liegen unter `src/` und werden mitgeprüft |
+| `openapi-typescript` läuft | `docs/openapi/v1.json` → 18 650 Zeilen, 744 ms, Exit 0 (das Artefakt selbst gehört E6) |
+
+Zwei Gegenproben, beide gesehen:
+
+- **`setupFiles` ausgehängt** → `test-setup.test.tsx` rot: der Text des Vorgängers steht noch im DOM.
+  Genau das Flake, das die Etappe verhindern soll – und ohne den Fall wäre es unsichtbar.
+- **`@testing-library/dom` aus `package.json` entfernt** → `Error: Cannot find module
+  '@testing-library/dom'`, und zwar in **allen drei** Testdateien, nicht nur in der rendernden: das
+  Setup-File zieht RTL, also fällt der ganze Lauf. Die Vorhersage aus Naht 3 trifft, ihre Wirkung ist
+  größer als dort geschrieben.
+
+Wie weit der Wächter trägt, hat der Review nachgemessen – beides gehört hierher, weil es sonst die nächste
+Runde noch einmal messen müsste:
+
+- **Gewürfelte Reihenfolge (`--sequence.shuffle.tests`) entwertet ihn nicht**: ohne Setup 4 von 4 Läufen rot,
+  mit Setup 3 von 3 grün. Der Grund steht nicht im Test und darum jetzt dort: läuft der zweite Fall zuerst,
+  kippt stattdessen der **erste** – `getByText` wirft bei zwei Treffern. Die zwei Fälle decken beide
+  Reihenfolgen ab.
+- **Ein einzeln ausgeführter Fall (`-t …`) bleibt vakuum-grün.** Inhärent, kein Mangel: ein `afterEach` ohne
+  Vorgänger ist nicht beobachtbar. Die Alternative wäre, die *Konfiguration* zu behaupten statt der
+  Eigenschaft – und die wäre schlechter, denn sie würde auch rot, wenn jemand später zu Recht auf
+  `globals: true` umstellt.
+
+Zwei Befunde, die beim Bauen dazukamen:
+
+- **`globals: true` wäre die schlechtere Hälfte der Wahl gewesen.** Es hätte RTL sein `cleanup` selbst
+  registrieren lassen, aber um den Preis von zwei Schreibweisen für denselben Test (die 21 bestehenden
+  importieren aus `vitest`) plus `types: ["vitest/globals"]` in der `tsconfig`. Das Setup-File tut eine
+  Sache und trägt ihre Begründung an der Stelle, an der man sie löschen würde.
+- **`npm audit` bekommt einen Eintrag dazu**: `brace-expansion` (hoch, DoS) unterhalb von
+  `@redocly/openapi-core`, dem Parser von `openapi-typescript`. Vorher standen dort schon vier Gruppen
+  (`fast-uri`, `postcss`, `react-router` ×2). Kein Tor prüft `npm audit`, und keines soll es hier tun:
+  es geht um ein Entwickler-Werkzeug, das eine eingecheckte Datei aus dem eigenen Repo liest.
+  Festgehalten, damit die Zahl beim nächsten Blick nicht als Neuigkeit gelesen wird.
 
 ### E5 · Sperre und Primitive-Tests ([B-43](backlog/B-43-frontend-komponententests.md), `gegrillt`, Defekt)
 
@@ -185,13 +229,33 @@ sondern nur ihren gut abgesicherten Teil:
 
 Gestrichen wird dagegen die Ausnahme aus B-43/Entscheidung 3 („einen Bildschirm stellvertretend rendern"):
 Der Defekt sitzt in `useAction`, nicht im Knopf; zwei synchrone `run()`-Aufrufe auf derselben Hook-Instanz
-(`renderHook`) zeigen ihn genauso rot – ohne `api.ts` und Router hereinzuziehen. Die Regel in
-`frontend/CLAUDE.md` wird damit sauber: **nur `components/` und `lib/`, ohne Sternchen.**
+(`renderHook`) zeigen ihn genauso rot – ohne `api.ts` und Router hereinzuziehen.
+
+Drei Dinge, die E4 für diese Etappe hinterlässt:
+
+- **Die Ortsregel kann nicht „nur `components/` und `lib/`, ohne Sternchen" lauten** – so stand es hier bis E4,
+  und es war schon damals falsch: `src/vater/navigation.test.ts` liegt seit langem daneben, und der
+  Werkzeugketten-Wächter aus E4 liegt neben der Datei, die er bewacht (`src/test-setup.ts`). Die tragfähige
+  Regel ist **„der Test liegt beim Geprüften"**, nicht eine Liste von zwei Ordnern.
+- **`@testing-library/jest-dom` fehlt bewusst** und wird beim ersten `toBeDisabled` gebraucht – also genau bei
+  den fünf Knöpfen aus Punkt 1. Es braucht kein `globals` (`import "@testing-library/jest-dom/vitest"` ruft
+  selbst `expect.extend`) und gehört dann in dasselbe Setup-File. Damit ist es **eine erwartete
+  Lockfile-Änderung in E5**, keine Überraschung – der Grund, warum es hier steht.
+- **Keine Fake-Timer mit `waitFor` kombinieren.** `@testing-library/dom` erkennt Fake-Timer über ein globales
+  `jest`, das vitest nicht definiert (auch nicht unter `globals: true`); die Kombination hängt dann im
+  Poll-Intervall statt zu timeouten. Der gegrillte Zuschnitt braucht sie nicht – das hier erspart nur das
+  Debuggen im Ernstfall.
 
 ### E6 · Generierte Vertragstypen (B-42 Schritt 2)
 
 Über den **Barrel** und in Scheiben (Katalog, Plan, Shop, Wallet, Medien …), jede Scheibe für sich
-`tsc -b`-grün – nicht „einmal am Stück". Drei Hand-Ausnahmen sind vorab bekannt, statt sie zu entdecken:
+`tsc -b`-grün – nicht „einmal am Stück".
+
+E4 hat das Werkzeug installiert und einmal von Hand laufen lassen. **Der Aufruf gehört in ein npm-Skript**
+(Quellpfad `../docs/openapi/v1.json` festgenagelt) – solange er nur in einer Doku-Tabelle steht, ist er nicht
+wiederholbar, und E6 ist die Etappe, die ihn ohnehin braucht.
+
+Drei Hand-Ausnahmen sind vorab bekannt, statt sie zu entdecken:
 
 - **Die Generika** `ExercisePayload<TConfig>`/`ExerciseResponse<TConfig>`: kein Benennungsproblem, sondern
   Absicht – die Oberfläche kollabiert sie bewusst zu einem `CreateExercisePayload` mit `config: unknown`
@@ -293,3 +357,6 @@ eine Meinung.
   zu streichen** (die KeyResult-Ebene ist im E2E gar nicht abgedeckt, das kam erst beim Grillen heraus), und
   die Sperre aus E5 bekommt keinen Schlüssel-Parameter, dafür wandert die Bibliothekssuche aus dem
   Schreib-Primitiv. Neu abgespalten: [B-53](backlog/B-53-wizard-doppelklick.md).
+- **2026-08-01** — E4 erledigt (Nachweis oben in der Etappe). Beide Vorhersagen aus Naht 3 haben gehalten;
+  die zum fehlenden Peer sogar schärfer als geschrieben. Entschieden gegen `globals: true`, für ein
+  Setup-File mit eigenem bewachenden Test.
