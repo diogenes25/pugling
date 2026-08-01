@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/backend, bereich/frontend, rolle/student]
+tags: [typ/story, status/abgenommen, bereich/backend, bereich/frontend, rolle/student]
 aliases: [Übung abbrechen, Unvollendete Übung, Inaktivitäts-Abbruch, Wann wird eine Übung abgebrochen]
-status: in-arbeit
+status: abgenommen
 prio: P1
 art: Defekt
 groesse: M
@@ -291,6 +291,18 @@ einen Test dagegen schreibt.
   Server, Wegwerf-DB, ganzer Vater→Sohn-Loop) und prüft zusätzlich den Fortsetzen-Pfad im Browser. Sie nutzt
   aber eine **Vokabel**-Übung: der `CheckMode.None`-Pfad aus E1 ist nur durch die Integrationstests belegt,
   nicht durch einen Browser-Lauf.
+- **Der Übungs-Ausstieg wird im E2E gesehen, nicht geklickt** (`full-flow.spec.ts:79-80`) – ein Klick
+  schnitte den restlichen Durchstich ab. Der Weg Knopf → Navigation → Cleanup → `end` ist damit nur durch
+  Integrationstests belegt. Als Punkt 3 in [B-62](B-62-reste-aus-dem-b37-review.md).
+- **Wer eine `CheckMode.None`-Runde zu früh verlässt, fängt bei null an.** `Start` legt dort immer eine
+  neue Sitzung an (kein Resume wie bei der Klausur), und die Erledigt-Regel misst **eine** Sitzung gegen die
+  Schwelle. Das ist die gewollte Härtung aus E1, steht aber nicht auf dem Knopf – der sagt nur „Runde
+  beenden". Bewusst ohne Rückfrage gelassen (E5); wenn es sich im Betrieb rächt, ist eine Unterzeile bei
+  `checkMode === "None"` der billigere Weg als ein `confirmAction`.
+- **Der Deckel ist im Ergebnisbildschirm nicht sichtbar:** „Nochmal versuchen" steht auch nach dem letzten
+  Versuch da und führt in die Fehlerbox (seit dem Frontend-Nachtrag wenigstens auf Deutsch). Den Knopf
+  auszublenden bräuchte die Versuchsnummer im Vertrag – als Punkt 2 in
+  [B-62](B-62-reste-aus-dem-b37-review.md).
 
 ## Schätzung
 
@@ -397,3 +409,23 @@ Benannt, nicht behauptet:
      eine Runde, die beim Ablaufen des Plans lief, war nie mehr zu schließen (das Frontend beendet sie aus
      einem Effekt-Cleanup und verschluckt den 403). Gesperrt ist jetzt nur noch die Buchung — die Gefahr war
      immer nur sie, denn die Erledigt-Regel liest Cursor und Order, nicht `EndedAt`.
+- **2026-08-01** — `in-arbeit` → **`abgenommen`**. Der zweite Reviewer fehlte noch: `wo: beides` verlangt
+  **beide**, und der Nachtrag oben war der `pugling-reviewer`. Der `frontend-reviewer`-Lauf fand vier echte
+  Befunde, alle behoben (Commit `2fbc384`):
+  1. Der neue 409 `test_attempts_exhausted` hatte **keine deutsche Fassung** — und er ist ausschließlich aus
+     der Sohn-Arcade erreichbar, das Kind las also die englische `detail`-Zeile.
+  2. Der Hilfetext zu `goalThreshold` versprach den Regler auch für den **Aufsatz**, wo `ItemsOf` immer `[]`
+     liefert und die Schwelle gar nicht wirkt — die zweite Lesart war da, aber mit falschem Beispiel: der
+     B-02-Defekt eine Ebene tiefer. Dazu war die Typenliste eine Handkopie der Server-Namen; jetzt steht dort
+     die Eigenschaft statt der Aufzählung.
+  3. Der Kommentar am Ausweg-Knopf behauptete „Verlassen ist folgenlos" — richtig fürs Leitner-Üben, falsch
+     für genau die sechs Typen, die diese Story anfasst.
+  4. `heartbeat` und `end` liefen im Cleanup unsortiert; seit dem Nachtrag hängt die Pflicht einer
+     inhaltslosen Übung an der Verweildauer, also muss die letzte Sekunde **vor** der Auswertung ankommen.
+     Dazu ein A11y-Fund: beide Ausweg-Knöpfe maßen als nackte `.pill` ~20 px.
+  **Verifikation** (nachgemessen, nicht abgeschrieben): `dotnet test Pugling.sln -c Release` → **628 grün**,
+  `npm run build` grün, Vitest **48/48**, Playwright `full-flow.spec.ts` + `feldhilfe.spec.ts` → **4 passed**.
+  **Commits:** `3b63d1d` (E1–E7), `600659f` (Backend-Review), `2fbc384` (Frontend-Review).
+  Drei Befunde wurden **nicht** mitgemacht und liegen als [B-62](B-62-reste-aus-dem-b37-review.md): ein
+  vorbestehendes fehlendes Ref-Gate, der Retry-Knopf nach verbrauchtem Versuch (braucht die Versuchsnummer
+  im Vertrag) und zwei E2E-Lücken.
