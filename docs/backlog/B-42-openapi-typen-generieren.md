@@ -151,6 +151,13 @@ Gebaut am **2026-08-01**. Das Dokument liegt als [`docs/openapi/v1.json`](../ope
 | Endpunkt-Abdeckung | 263/263, 0 offen – unverändert |
 | `dotnet format Pugling.sln --verify-no-changes` | sauber |
 | markdownlint | 0 Treffer |
+| **Das Tor auf dem Linux-Runner** | Lauf [30698390816](https://github.com/diogenes25/pugling/actions/runs/30698390816) (`workflow_dispatch` auf dem Zweig, weil `ci.yml` nur auf `main`/PR läuft): Schritt „Vertragsdokument prüfen (OpenAPI)" **success**, ebenso das erweiterte D4 |
+
+Der letzte Beleg ist der wichtigste und wäre fast liegen geblieben. Ein Tor, das nur auf der
+Entwicklermaschine grün war, hätte genau die Lehre aus [B-26](B-26-e2e-in-ci.md) wiederholt: dort lief ein
+Tor lange, ohne dass jemand hinsah. Hier ist es umgekehrt – und weil die ganze Behauptung „ohne die
+Zeilenenden-Normalisierung wäre es auf Linux an 185 Stellen rot" lautet, ist der eine grüne Linux-Lauf der
+Beweis, dass die Behauptung stimmt und die Gegenmaßnahme greift.
 
 ### Gegenproben
 
@@ -261,3 +268,6 @@ geschrieben).
   neue Dateien nicht) und einen Selbstwiderspruch der Datei (`HashSet` für `required`, während der
   Tag-Transformer vierzig Zeilen weiter `SortedSet` begründet). Abgespalten: [B-56](B-56-problemdetails-required-extensions.md),
   [B-57](B-57-beispielkatalog-schreib-lese-rennen.md). **Schritt 2 (E6) bleibt offen**, die Story deshalb `in-arbeit`.
+- **2026-08-01** — Schritt 1 in CI belegt: Lauf `30698390816` auf dem Linux-Runner grün, beide Tore
+  ausgeführt. Damit ist die Behauptung „ohne Normalisierung an 185 Stellen rot" nicht nur lokal gemessen,
+  sondern auf der Plattform geprüft, für die sie gilt. Commit `9aac8b1`.
