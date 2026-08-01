@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/qualitaet, bereich/frontend, bereich/tests]
+tags: [typ/story, status/abgenommen, bereich/qualitaet, bereich/frontend, bereich/tests]
 aliases: [Frontend-Komponententests, useAction-Sperre]
-status: in-arbeit
+status: abgenommen
 prio: P3
 art: Defekt
 quelle: docs/testplan.md#nachmessung-2026-07-31-die-drei-unbeobachteten-flächen
@@ -179,3 +179,10 @@ Alle im Grillen vom 2026-07-31 entschieden.
   Belegt: 48 Unit-Fälle grün (vorher 24), 25 E2E grün, `tsc -b` grün, ~0,6 s Zuwachs bei einem AK-6-Budget
   von 5 s. Die Grenze aus Entscheidung 3 steht in `frontend/CLAUDE.md` – zusammen mit der neuen Pflicht
   `disabled={busy}` an jedem mutierenden Knopf; dafür musste dort Erzählung weichen (8991 B von 9000).
+- **2026-08-01** — **abgenommen**, Commit `7891485`. 48 Unit-Fälle grün (24 davor), 25 Playwright grün,
+  `tsc -b` grün. Alle sieben Akzeptanzkriterien belegt, zwei davon abweichend erfüllt und das ist so
+  entschieden: AK 1 ohne stellvertretend gerenderten Bildschirm (`renderHook`, Streichung aus dem Plan) und
+  AK 5 für **23** statt 24 Aufrufer, weil `MediaPickers` das Primitiv in dieser Etappe verlassen hat.
+  Der `frontend-reviewer` fand einen Blocker – meine Zahl „genau zwei Knöpfe bleiben offen" war falsch, es
+  sind fünf – und eine Nachbesserung am Code: `MediaSearch` hatte die Live-Region bedingt eingehängt, also
+  genau das, was der neue `StatusBanner`-Test verbietet. Beides eingearbeitet, danach erneut 48/25 grün.

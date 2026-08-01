@@ -206,7 +206,7 @@ Zwei Befunde, die beim Bauen dazukamen:
   es geht um ein Entwickler-Werkzeug, das eine eingecheckte Datei aus dem eigenen Repo liest.
   Festgehalten, damit die Zahl beim nächsten Blick nicht als Neuigkeit gelesen wird.
 
-### E5 · Sperre und Primitive-Tests ([B-43](backlog/B-43-frontend-komponententests.md), `abgenommen`, Defekt) — **erledigt 2026-08-01**
+### E5 · Sperre und Primitive-Tests ([B-43](backlog/B-43-frontend-komponententests.md), Defekt) — **abgenommen 2026-08-01, Commit `7891485`**
 
 Der Umfang **wächst** gegenüber der Story – ohne die vier folgenden Punkte schließt sie die Fehlerklasse nicht,
 sondern nur ihren gut abgesicherten Teil:

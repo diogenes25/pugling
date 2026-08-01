@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/frontend, bereich/qualitaet]
+tags: [typ/story, status/abgenommen, bereich/frontend, bereich/qualitaet]
 aliases: [Wizard-Doppelklick, zwei Kinder zwei Pläne]
-status: in-arbeit
+status: abgenommen
 prio: P2
 art: Defekt
 quelle: docs/testabdeckung-plan.md
@@ -74,3 +74,7 @@ der `progress`-Ref ist schon da, er muss nur zusätzlich als Wiedereintritts-Spe
   **Neu gefunden und benannt:** kein E2E fährt den Assistenten zu Ende – die Verdrahtung des Bildschirms mit
   dem echten `api` hängt an `tsc`. Als [B-58](B-58-assistent-e2e.md) erfasst.
   Belegt: 7 neue Unit-Fälle (48 gesamt grün), 25 E2E grün, `tsc -b` grün.
+- **2026-08-01** — **abgenommen**, Commit `7891485` (mit E5). Alle vier Akzeptanzkriterien belegt, die
+  Rot-Probe zu AK 1 gemessen. Vom `frontend-reviewer` bestätigt: der frühe Ausstieg `if (progress.running)
+  return null` steht **vor** dem `try` und fasst das Flag darum nicht an, und `finish()` lässt `busy` auf dem
+  verworfenen Pfad absichtlich stehen – identisch mit dem Verhalten davor.
