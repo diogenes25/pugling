@@ -122,3 +122,20 @@ Alle im Grillen vom 2026-07-31 entschieden bzw. ausdrücklich zurückgestellt.
 - **2026-07-31** — gegrillt: sechs Entscheidungen, die Generika-Benennung zurückgestellt. Beim Nachsehen fiel
   auf, dass `openapi-examples.generated.json` zwar eingecheckt, aber **nicht vom D4-Tor gedeckt** ist – das
   geht als Entscheidung 3 mit.
+- **2026-08-01** — ins [Testabdeckungs-Paket](../testabdeckung-plan.md) aufgenommen, **an der eigenen Naht
+  geteilt**: Schritt 1 wird **E3** (Backend), Schritt 2 wird **E6** (Frontend, hinter E5). Drei Änderungen
+  aus der Dev-Runde, alle in der Story wirksam:
+  1. **Entscheidung 3 gekippt.** Das eingecheckte Dokument wird **vertragsrein** erzeugt (Beispielkatalog
+     übersprungen), weil es sonst nicht byte-stabil ist: `Program.cs:279` lädt den Katalog beim Hoststart aus
+     dem Quellbaum, `DocsCaptureTests.cs:1105` schreibt ihn im selben Lauf neu, und xUnit gibt keine
+     Reihenfolge her – **Akzeptanzkriterium 1 wäre heute unerfüllbar.** `openapi-examples.generated.json`
+     kommt stattdessen ins bestehende D4-Tor: zwei Tore, nicht drei.
+  2. **Der große Diff ist keiner.** `types.ts` hat null Laufzeit-Exporte, alle 54 Importe sind `import type`
+     – die Datei bleibt **Barrel**, die Deklarationen werden scheibenweise durch `S["…"]`-Aliase ersetzt, die
+     Konsumenten bleiben unberührt. Akzeptanzkriterium 5 bleibt damit Pflicht, aber teilbar.
+  3. **Drei Hand-Ausnahmen statt zwei**, und die teuerste war nicht bekannt: neben den Generika bricht
+     `[Flags] SchoolTypes` (`Contracts/Common/LearnBaseTypes.cs:8-9`; das Frontend führt es bewusst als
+     `string`, `ExerciseEditModal.tsx:102`/`:142`), und die **unvermessene** Größe ist `required`/`nullable`
+     (`Program.cs:297-303`) – vor E6 einmal generieren und `tsc`-Fehler zählen. Entlastend: Enums überleben
+     als String-Literal-Unions (`Program.cs:284-295`), und `openapi-typescript` hat mit dem Peer-Konflikt aus
+     [B-25](B-25-vite-pwa-peer-konflikt.md) nichts zu tun (Peer ist nur `typescript ^5.x`).

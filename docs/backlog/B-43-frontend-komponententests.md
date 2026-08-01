@@ -132,3 +132,23 @@ Alle im Grillen vom 2026-07-31 entschieden.
   wurde ein **Defekt**: `disabled={busy}` greift erst nach dem Re-Render, zwei Klicks im selben Tick schicken
   zwei Mutationen. Schwere belegt niedrig (Geldpfad des Sohnes läuft nicht über das Primitiv und ist dreifach
   abgesichert), Fläche 24 Masken.
+- **2026-08-01** — ins [Testabdeckungs-Paket](../testabdeckung-plan.md) als **E5** aufgenommen (hinter E4,
+  der gemeinsamen Werkzeugkette – und **vor** dem Typ-Umbau E6, nicht als Letzte: erst das Netz, dann der
+  Umbau, der durch dieselben Bausteine geht). Vier Änderungen aus der Dev-Runde:
+  1. **Der Ist-Stand war falsch:** „alle 24 Aufrufer haben `disabled={busy}`" stimmt nicht – **fünf Knöpfe
+     haben keins** (`VaterRewards.tsx:131,133,214,216`, `VaterShop.tsx:443` „Stornieren", ein Geldpfad auf
+     der **Vater**-Seite). Bei `toggle` ist der Doppelschuss zudem ein Flip-Flop: zweimal `active: !m.active`
+     endet im Ausgangszustand, das Banner meldet Erfolg. Die fünf bekommen `disabled` dazu; die Sperre ist
+     **additiv** – `disabled={busy}` bleibt überall, weil Playwrights Actionability daran ihren
+     Serialisierungspunkt hat.
+  2. **Die Bibliothekssuche verlässt das Primitiv vorher** (`MediaPickers.tsx:77-82` → `useAsync`): ein
+     Lesevorgang gehört nicht in den „Zustand einer **schreibenden** Aktion" (`useAction.ts:10`), und eine
+     still verworfene zweite Suche wäre für den Nutzer schlicht „es passiert nichts".
+  3. **Kein Schlüssel-Parameter am Primitiv.** Die Sperre wirkt je Hook-Instanz – in drei Bildschirmen ist
+     das listenweit (`PlanPositions.tsx:38→:58`, `VaterShop.tsx:47→:105`, `VaterZiele.tsx:164→:178`). Das ist
+     bewusst so und kommt als Satz in die Doku von `useAction`.
+  4. **Entscheidung 3 verliert ihre Ausnahme:** kein stellvertretend gerenderter Bildschirm. Der Defekt sitzt
+     in `useAction`, zwei synchrone `run()` auf derselben Hook-Instanz (`renderHook`) zeigen ihn genauso rot.
+     Die Regel in `frontend/CLAUDE.md` wird damit sauber – nur `components/` und `lib/`, ohne Sternchen.
+  Abgespalten: [B-53](B-53-wizard-doppelklick.md) (`VaterWizard`, zwei Kinder und zwei Pläne) – andere
+  Bauform, eigene Story, im selben Durchgang gebaut.

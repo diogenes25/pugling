@@ -190,6 +190,11 @@ ein Smoke an einer fachlichen Route festmachen" trägt nicht mehr. Nachzuziehen 
 - **2026-07-31** — gegrillt: vier Entscheidungen, `/health` zurückgestellt. Der Zuschnitt hat sich beim
   Nachsehen noch einmal verbessert: weil die Registrierung `[AllowAnonymous]` ist, braucht der Test **keinen**
   zweiten Host mit Seed, sondern fährt den echten Inbetriebnahme-Weg einer frischen Instanz.
+- **2026-08-01** — ins [Testabdeckungs-Paket](../testabdeckung-plan.md) als **E1** aufgenommen (erste
+  Etappe). Zwei Auflagen aus der Dev-Runde: **Basisklasse statt zweiter Fabrik-Kopie** – fehlt in der Kopie
+  `UseSetting("ConnectionStrings:Default", …)`, migriert der Test die **echte** `pugling.db`; und die Etappe
+  **besitzt** `EndpointCoverageGuard.FullRunTouchedActions` (Naht 1). Akzeptanzkriterium 4 (Alt-Kette)
+  **bleibt**, bekommt aber den Ablaufvermerk „stirbt mit der ersten Veröffentlichung" in den Test.
 - **2026-08-01** — geschätzt: **S**, backend, keine Migration, kein Vertragsbruch; Angriffsplan in fünf
   Schritten, fünf benannte Risiken. Zwei Belege haben den Ist-Stand berichtigt: es gibt nur **drei**
   `IsDevelopment()`-Zweige (die Static-Files-Zeilen sind umgebungsunabhängig registriert), und `/health`

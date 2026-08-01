@@ -122,3 +122,9 @@ Alle im Grillen vom 2026-07-31 entschieden, siehe unten.
 - **2026-07-31** — gegrillt: sechs Entscheidungen. Der Kern kam beim Nachsehen heraus – von den 11 Stellen
   sind **4 grundsätzlich nicht statisch** (Typ-Segment aus dem Manifest), und genau dafür gibt es mit dem
   Manifest eine mechanische Antwort statt eines protokollierten Übersprungs.
+- **2026-08-01** — ins [Testabdeckungs-Paket](../testabdeckung-plan.md) als **E2** aufgenommen, inhaltlich
+  unverändert. Zwei Zusätze aus der Dev-Runde: Die Reihenfolge nach E1 ist **nur** der geteilten Konstante
+  `EndpointCoverageGuard.FullRunTouchedActions` geschuldet, nicht einer fachlichen Abhängigkeit – und
+  Entscheidung 1 (lebend lesen) bleibt auch nach E3 richtig, wo dasselbe Dokument eingecheckt wird.
+  Positivbefund: `Program.cs:129` setzt `SubstituteApiVersionInUrl = true`, das Dokument trägt also
+  `/api/v1/…`; die naive Falle „Client schreibt `v1`, Doku schreibt `{version}`" gibt es nicht.
