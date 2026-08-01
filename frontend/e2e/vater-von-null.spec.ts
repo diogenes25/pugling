@@ -46,6 +46,33 @@ test("Vater legt sich selbst an und richtet ein Englisch-Szenario von Null ein",
   // ---------- 1. Konto anlegen ----------
   const fatherId = await registerFather(vater);
 
+  // ---------- 2a. Ein Fehler beim Anlegen erscheint ROT (B-54) ----------
+  /*
+   * Bis zum 2026-08-01 schrieben Erfolg und Fehler in *dieselbe* Variable, die fest als `banner ok`
+   * gerendert wurde: „Kind angelegt." und „Name schon vergeben" sahen identisch aus.
+   *
+   * Der Fehler wird abgefangen statt provoziert, weil der Server hier keinen hergibt: `ChildrenController`
+   * prüft nur den leeren Namen, und den fängt das Formular schon vorher ab.
+   */
+  await vater.route("**/api/v1/supervisor/children", async (route) => {
+    // Nur das Anlegen abfangen – **dieselbe** Adresse liefert per GET die Kinderliste, die die Seite
+    // unmittelbar danach wieder braucht.
+    if (route.request().method() !== "POST") return route.fallback();
+    await route.fulfill({
+      status: 409,
+      contentType: "application/problem+json",
+      body: JSON.stringify({ status: 409, title: "Conflict", detail: "Name schon vergeben" }),
+    });
+  });
+  await vater.locator("#new-child-name").fill(CHILD.name);
+  await vater.getByRole("button", { name: "Kind anlegen" }).click();
+  await expect(vater.locator(".banner.err")).toContainText("Name schon vergeben");
+  // Der Kern des Defekts: dieser Text stand vorher im grünen Kasten.
+  await expect(vater.locator(".banner.ok")).toHaveCount(0);
+  // Und die Eingabe steht noch da – geleert wird nur bei Erfolg, sonst wäre der zweite Anlauf Abtipparbeit.
+  await expect(vater.locator("#new-child-name")).toHaveValue(CHILD.name);
+  await vater.unroute("**/api/v1/supervisor/children");
+
   // ---------- 2. Kind mit PIN anlegen ----------
   // Die PIN ist der Login des Kindes; ohne sie kommt es nicht in seine App (Schritt 9 prüft genau das).
   await vater.locator("#new-child-name").fill(CHILD.name);
@@ -281,7 +308,7 @@ test("Vater legt sich selbst an und richtet ein Englisch-Szenario von Null ein",
    * statt gestrichen, sonst wäre mit dem Rot auch die Abdeckung weg.
    *
    * Nicht abgedeckt und bewusst offen: die Gegenrichtung „höchstens" (siehe unten, warum sie hier nicht
-   * prüfbar ist) und die Erfolgsmeldung — die Karte hat keine (B-54).
+   * prüfbar ist).
    */
   // Alles Weitere **innerhalb der Karte dieses Ziels**: der Scope-Wähler und das Etappen-Formular stehen
   // je Karte einmal und zusätzlich im Anlege-Formular. Ohne die Eingrenzung hinge die Strecke daran, dass
@@ -303,7 +330,33 @@ test("Vater legt sich selbst an und richtet ein Englisch-Szenario von Null ein",
   await ziel.getByLabel("Messlatte", { exact: true }).selectOption("AvgMastery");
   await ziel.getByLabel("Zielwert", { exact: true }).fill("90");
   await ziel.getByLabel("Titel (optional)", { exact: true }).fill("Unit 1 sitzt");
-  await ziel.getByRole("button", { name: "Etappe übernehmen" }).click();
+  /*
+   * **Doppelklick** statt Klick (B-54, AK 4). Bis zum 2026-08-01 ging die Karte am Schreib-Primitiv vorbei:
+   * kein Ref-Gate, kein `disabled` – und das Formular schließt erst *nach* dem `await`, also liefen beide
+   * Klicks los.
+   *
+   * Gezählt werden die **abgeschickten POSTs**, nicht die entstandenen Etappen. Das ist nicht dasselbe, und
+   * der Unterschied ist am 2026-08-01 gemessen worden: mit dem alten Stand gingen **zwei** POSTs hinaus, und
+   * trotzdem stand danach „0/1 Etappen" – der zweite Schreibvorgang verlor serverseitig das Rennen um die
+   * SQLite-Schreibsperre. Eine Zusicherung über die Etappen-Zahl wäre also **vor und nach** der Reparatur
+   * grün gewesen und hätte nichts bewiesen. Der Doppel-POST ist der Defekt; ihn zu zählen ist die Prüfung.
+   *
+   * Was den zweiten Klick hier abfängt, ist übrigens vor allem das `disabled`: React schreibt `busy` im
+   * `await`-Yield zwischen den beiden Klicks an den Knopf, und ein gesperrter Knopf feuert kein Ereignis.
+   * Das Ref-Gate ist das Netz für den Fall, dass beide Klicks *denselben* Tick treffen – geprüft wird es
+   * dort, wo es sitzt (`useAction.test.tsx`), nicht hier.
+   */
+  const krPosts: string[] = [];
+  vater.on("request", (r) => {
+    if (r.method() === "POST" && r.url().includes("/key-results")) krPosts.push(r.url());
+  });
+  await ziel.getByRole("button", { name: "Etappe übernehmen" }).dblclick();
+  // AK 3: die Erfolgsmeldung selbst. Vorher gab es keine – ein fehlgeschlagener Aufruf äußerte sich als
+  // Timeout auf die Zeile unten statt als lesbare Meldung. Sie ist zugleich der Wartepunkt für die
+  // POST-Zählung darunter: erst wenn sie steht, ist der Durchgang durch.
+  await expect(ziel.getByText("Etappe angelegt.")).toBeVisible();
+  // AK 4. Gemessen **nach** der Meldung, damit ein verspäteter zweiter POST noch mitgezählt würde.
+  expect(krPosts, "Ein Doppelklick darf genau einen Schreibvorgang auslösen").toHaveLength(1);
 
   const krRow = ziel.getByRole("row", { name: /Unit 1 sitzt/ });
   // Bereich: der Server liefert die *Ebene* („subject"), nicht den Fachnamen – ein Fach ohne Kapitel und

@@ -45,8 +45,8 @@ Regeln hier, Wege durch die App bei Playwright. Klicks per `fireEvent`, nie `nod
 Wiedereintritt selbst sperrt (`useRef`, synchron): es ist der Wartepunkt der Playwright-Actionability und der
 sichtbare Grund, warum eine verworfene zweite Aktion nicht wie „nichts passiert" aussieht. Die Sperre gilt je
 **Hook-Instanz**, in Listen mit *geteilter* `ActionState` also listenweit. Als **Regel**, nicht als Zustand:
-fünf Vater-Knöpfe (B-54) und
-die Sohn-Arcade (B-49) folgen ihr noch nicht.
+die Sohn-Arcade (B-49) folgt ihr noch nicht. **Erfolg darf stumm bleiben** (`run` ohne `okText`), wo die
+Änderung selbst die Rückmeldung ist – so der Tag-Editor im Vokabel-Store; ein Banner je Chip wäre Lärm.
 
 **Neue Abhängigkeiten bitte mit `--legacy-peer-deps` installieren:** `vite-plugin-pwa@0.21` deklariert
 Peer `vite@^3…^6`, installiert ist `vite@8` – jede Neuauflösung bricht sonst mit `ERESOLVE` ab
@@ -85,11 +85,9 @@ Drei Regeln beim Ergänzen: **eine Aktion bekommt keinen Nav-Eintrag** (deshalb 
 (`?childId=`, `?subjectId=&chapterId=`) – sonst steht im Zielformular wieder das erste Kind bzw. Fach.
 Anlegen und Verwalten sind getrennt: `/vater/exercises` verwaltet, `/vater/exercises/neu` legt an.
 Ein Vater entsteht **im UI**: `/vater` hat neben „Anmelden" den Modus „Neu registrieren" (anonymes
-`POST supervisor/adults`, meldet direkt an und nennt die neue Id — sie ist der Login-Name); das eigene Konto
-liegt unter `/vater/profil`. `/vater/kind/:id` ist der **Kind-Hub** (Stammdaten, PIN, Bild-Freigabe,
-Interessen) und verlinkt alles Kindbezogene per `?childId=`, darunter `…/lernstand` (schwache Wörter +
-Katalog-Drilldown) und `…/ziele` (Objectives/OKR mit ihren Etappen; die alte Ebene „Lernziel" ist gelöscht
-und vom Key Result beerbt).
+`POST supervisor/adults`; die neue Id ist der Login-Name); das eigene Konto liegt unter
+`/vater/profil`. `/vater/kind/:id` ist der **Kind-Hub** (Stammdaten, PIN, Bild, Interessen) und verlinkt alles Kindbezogene per `?childId=`, darunter `…/lernstand` (schwache Wörter +
+Katalog-Drilldown) und `…/ziele` (Objectives/OKR mit ihren Etappen).
 **Alle Übungstypen des Servers sind im UI anlegbar** — Anzeigename und Routen-Segment kommen aus dem
 Typ-Manifest (`GET creator/exercise-types`, gelesen über [src/lib/exerciseTypes.ts](src/lib/exerciseTypes.ts)),
 **nicht** aus einer Tabelle im Frontend: der Schlüssel weicht von der Route ab (Aufsatz → `essays`), und drei

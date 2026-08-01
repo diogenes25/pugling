@@ -95,6 +95,28 @@ test("Vater bebildert eine Vokabel, der Sohn sieht sein Bild und kann es wechsel
   await expect(row).toBeVisible();
   await row.getByRole("button", { name: /Bilder/ }).click();
 
+  /*
+   * Der Tag-Editor derselben Zeile – bis B-54 hatte er **keinen** Test, obwohl vier Schreibpfade darin
+   * hängen. Er steht hier und nicht in einer eigenen Strecke, weil die Store-Zeile schon offen ist; ein
+   * zweiter Anlauf mit Anmeldung, Bild und Vokabel kostete eine halbe Minute für zwei Klicks.
+   *
+   * Erfolg bleibt hier **absichtlich stumm** (Entscheidung 2 der Story): geprüft wird der Chip, nicht ein
+   * Banner. Bei mehreren Tags hintereinander wäre eine Meldung je Klick Lärm.
+   */
+  await row.getByRole("button", { name: /Tags/ }).click();
+  await vater.getByRole("textbox", { name: "+ globaler Tag" }).fill("e2e-thema");
+  // Der Knopf heißt nach seiner Eingabe: derselbe Baustein steht dreimal auf der Seite (Filter, globale
+  // Tags, Kind-Tags), und mit einem gemeinsamen Namen wäre nur die Position unterscheidbar.
+  await vater.getByRole("button", { name: "globaler Tag hinzufügen" }).click();
+  // Über den Entfernen-Knopf und nicht über den Text: derselbe Tag steht danach zweimal auf der Seite –
+  // als Chip in der Tag-Spalte der Zeile und als *entfernbarer* Chip im Editor. Nur letzterer ist gemeint.
+  const chip = vater.getByRole("button", { name: "Tag e2e-thema entfernen" });
+  await expect(chip).toBeVisible();
+  await chip.click();
+  await expect(chip).toHaveCount(0);
+  // Zuklappen, damit der Bild-Abschnitt darunter eindeutig bleibt.
+  await row.getByRole("button", { name: /Tags/ }).click();
+
   const panel = vater.getByRole("heading", { name: new RegExp(`Bilder für .${WORD}`) });
   await expect(panel).toBeVisible();
   for (const description of ["Stadt als Comic-Zeichnung", "Stadt als Foto"]) {

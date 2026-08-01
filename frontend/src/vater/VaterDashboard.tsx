@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { api, errorMessage } from "../lib/api";
+import { StatusBanner } from "../components/StatusBanner";
+import { api } from "../lib/api";
+import { useAction } from "../lib/useAction";
 import { useAsync } from "../lib/useAsync";
 import { useAuth } from "../lib/auth";
 import type { ChildResponse, ChildrenDashboard, PlanResponse } from "../lib/types";
@@ -17,21 +19,25 @@ export function VaterDashboard() {
   const [name, setName] = useState("");
   const [grade, setGrade] = useState("");
   const [pin, setPin] = useState("");
-  const [msg, setMsg] = useState<string | null>(null);
+  /*
+   * Der erste Bildschirm eines neuen Vaters – und bis B-54 der einzige mit einem eigenen `try/catch`. Zwei
+   * Dinge hingen daran: zwei Klicks im selben Tick legten **zwei Kinder** an (kein Ref-Gate, kein
+   * `disabled`), und Erfolg wie Fehler schrieben in *dieselbe* Variable, die fest als grüner Kasten
+   * gerendert wurde – „Kind angelegt." und „Name schon vergeben" sahen identisch aus.
+   */
+  const action = useAction();
 
   async function addChild(e: React.FormEvent) {
     e.preventDefault();
-    if (!name.trim()) return;
-    try {
-      // Ohne PIN legt der Server das Kind mit leerer PIN an – es kann sich dann nicht anmelden, bis der
-      // Vater sie auf der Kind-Seite nachträgt. Darauf weist der Hinweis unter dem Formular hin.
-      await api.createChild({ name: name.trim(), pin: pin.trim() || undefined, grade: grade ? Number(grade) : null });
-      setName(""); setGrade(""); setPin("");
-      setMsg("Kind angelegt.");
-      children.reload();
-    } catch (err) {
-      setMsg(errorMessage(err));
-    }
+    if (!name.trim()) { action.fail("Bitte einen Vornamen angeben."); return; }
+    // Ohne PIN legt der Server das Kind mit leerer PIN an – es kann sich dann nicht anmelden, bis der
+    // Vater sie auf der Kind-Seite nachträgt. Darauf weist der Hinweis unter dem Formular hin.
+    const ok = await action.run(() => api.createChild({
+      name: name.trim(), pin: pin.trim() || undefined, grade: grade ? Number(grade) : null,
+    }), "Kind angelegt.");
+    if (!ok) return;
+    setName(""); setGrade(""); setPin("");
+    children.reload();
   }
 
 
@@ -93,14 +99,16 @@ export function VaterDashboard() {
           <div className="field"><label htmlFor="new-child-name">Name</label><input id="new-child-name" name="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Vorname" /></div>
           <div className="field"><label htmlFor="new-child-grade">Klasse</label><input id="new-child-grade" name="grade" type="number" min={1} max={13} value={grade} onChange={(e) => setGrade(e.target.value)} placeholder="z.B. 8" /></div>
           <div className="field"><label htmlFor="new-child-pin">PIN</label><input id="new-child-pin" name="pin" value={pin} onChange={(e) => setPin(e.target.value)} placeholder="z.B. 1111" /></div>
-          <button type="submit" className="btn inline-btn" style={{ width: "auto" }}>Kind anlegen</button>
+          <button type="submit" className="btn inline-btn" style={{ width: "auto" }} disabled={action.busy}>
+            {action.busy ? "Lege an…" : "Kind anlegen"}
+          </button>
         </form>
         <p className="sub" style={{ marginTop: 8 }}>
           Die <strong>PIN ist der Login deines Kindes</strong> – ohne sie kommt es nicht in seine App
           (nachtragen kannst du sie auf der Kind-Seite). Der <strong>Lehrplan-Assistent</strong> führt
           danach Schritt für Schritt durch Problemfeld und passende Übungen.
         </p>
-        {msg && <div className="banner ok" style={{ marginTop: 10 }} role="status" aria-live="polite">{msg}</div>}
+        <StatusBanner message={action.message} style={{ marginTop: 10 }} />
       </section>
 
       {/*

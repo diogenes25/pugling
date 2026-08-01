@@ -2,7 +2,7 @@ import { useId, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { StatusBanner } from "../components/StatusBanner";
 import { FieldLabel } from "../components/InfoHint";
-import { api, errorMessage } from "../lib/api";
+import { api } from "../lib/api";
 import { useAction, type ActionState } from "../lib/useAction";
 import { confirmAction } from "../lib/ui";
 import { useAsync } from "../lib/useAsync";
@@ -196,7 +196,14 @@ function Objectives({ childId, subjects }: { childId: number; subjects: SubjectR
 
       <StatusBanner message={action.message} style={{ marginTop: 10 }} />
 
-      {objectives.loading ? <div className="loading">Lade…</div> : objectives.error ? <div className="banner err">{objectives.error}</div> : (
+      {/*
+        Der Platzhalter greift **nur ohne Daten**: `useAsync` behält `data` über ein `reload`, setzt aber
+        `loading` erneut. Als `{loading ? … : karten}` hängte jede Änderung sämtliche Karten aus – und mit
+        ihnen ihren Zustand: das offene Etappen-Formular, und seit B-54 auch die Erfolgsmeldung der Karte,
+        die genau ein `reload` auslöst. Die Falle steht so in frontend/CLAUDE.md.
+      */}
+      {objectives.loading && objectives.data === null ? <div className="loading">Lade…</div>
+        : objectives.error ? <div className="banner err">{objectives.error}</div> : (
         <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 10 }}>
           {objectives.data?.items.map((o) => (
             <ObjectiveCard key={o.id} objective={o} childId={childId} subjects={subjects} busy={action.busy}
@@ -225,12 +232,25 @@ function ObjectiveCard({ objective: o, childId, subjects, busy, onChanged, onTog
   onChanged: () => void; onToggleActive: () => void; onDelete: () => void;
 }) {
   const [addingKr, setAddingKr] = useState(false);
-  const [err, setErr] = useState<string | null>(null);
   const currency = o.kind === "Committed" ? "🪙" : "💎";
+  /*
+   * Eine **eigene** Instanz je Karte, nicht die der Liste: der `StatusBanner` der Liste steht über *allen*
+   * Karten, „Etappe angelegt." erschiene also am Seitenkopf statt an der Karte, die geklickt wurde. Die
+   * Karte trägt damit zwei `busy`-Quellen – `busy` (Liste: Stilllegen/Löschen) und dieses hier (Etappen).
+   */
+  const krAction = useAction();
+  /*
+   * Beide Quellen zusammen an *allen* Knöpfen der Karte. Getrennt gelesen blieben die Richtungen offen:
+   * „Löschen" (Ziel) und „Entfernen" (Etappe) gingen zugleich hinaus, das DELETE der Etappe liefe danach
+   * in ein 404 – ein rotes Banner in einer Karte, die im selben Moment verschwindet.
+   */
+  const gesperrt = busy || krAction.busy;
 
-  async function act(fn: () => Promise<unknown>) {
-    setErr(null);
-    try { await fn(); onChanged(); } catch (e) { setErr(errorMessage(e)); }
+  /** Der Rückgabewert trägt das Aufräumen des Aufrufers (Formular schließen) – nur bei Erfolg. */
+  async function act(fn: () => Promise<unknown>, okText: string): Promise<boolean> {
+    const ok = await krAction.run(fn, okText);
+    if (ok) onChanged();
+    return ok;
   }
 
   return (
@@ -255,11 +275,12 @@ function ObjectiveCard({ objective: o, childId, subjects, busy, onChanged, onTog
         <thead><tr><th>Etappe</th><th>Bereich</th><th>Messlatte</th><th>Stand</th><th>Status</th><th /></tr></thead>
         <tbody>
           {o.keyResults.map((kr) => (
-            <KeyResultRow key={kr.id} kr={kr}
-              onSave={(target) => act(() => api.updateKeyResult(childId, o.id, kr.id, { targetValue: target }))}
+            <KeyResultRow key={kr.id} kr={kr} busy={gesperrt}
+              onSave={(target) => act(
+                () => api.updateKeyResult(childId, o.id, kr.id, { targetValue: target }), "Zielwert gespeichert.")}
               onDelete={() => {
                 if (!confirmAction(`Etappe „${kr.title ?? kr.scope}" entfernen?`)) return;
-                act(() => api.deleteKeyResult(childId, o.id, kr.id));
+                act(() => api.deleteKeyResult(childId, o.id, kr.id), "Etappe entfernt.");
               }} />
           ))}
           {o.keyResults.length === 0 && (
@@ -268,7 +289,7 @@ function ObjectiveCard({ objective: o, childId, subjects, busy, onChanged, onTog
         </tbody>
       </table>
 
-      {err && <div className="banner err" style={{ marginTop: 8 }}>{err}</div>}
+      <StatusBanner message={krAction.message} />
 
       <div className="row" style={{ gap: 8, marginTop: 8 }}>
         <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }}
@@ -277,25 +298,28 @@ function ObjectiveCard({ objective: o, childId, subjects, busy, onChanged, onTog
         </button>
         <span style={{ marginLeft: "auto" }} />
         <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }}
-          disabled={busy} onClick={onToggleActive}>
+          disabled={gesperrt} onClick={onToggleActive}>
           {o.active ? "Stilllegen" : "Aktivieren"}
         </button>
         <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }}
-          disabled={busy} onClick={onDelete}>Löschen</button>
+          disabled={gesperrt} onClick={onDelete}>Löschen</button>
       </div>
 
       {addingKr && (
-        <KeyResultForm subjects={subjects}
+        <KeyResultForm subjects={subjects} busy={gesperrt}
           onSubmit={async (dto) => {
-            await act(() => api.createKeyResult(childId, o.id, dto));
-            setAddingKr(false);
+            // Nur bei Erfolg schließen: vorher verschwand das Formular auch nach einem Fehler, und mit ihm
+            // die eingegebene Messlatte – zu sehen war dann eine Fehlermeldung ohne die Eingabe dazu.
+            if (await act(() => api.createKeyResult(childId, o.id, dto), "Etappe angelegt.")) setAddingKr(false);
           }} />
       )}
     </div>
   );
 }
 
-function KeyResultRow({ kr, onSave, onDelete }: { kr: KeyResult; onSave: (target: number) => void; onDelete: () => void }) {
+function KeyResultRow({ kr, busy, onSave, onDelete }: {
+  kr: KeyResult; busy: boolean; onSave: (target: number) => void; onDelete: () => void;
+}) {
   const [target, setTarget] = useState(String(kr.targetValue));
   const meta = krMetric(kr.metric);
   const dirty = target.trim() !== "" && Number(target) !== kr.targetValue;
@@ -317,16 +341,23 @@ function KeyResultRow({ kr, onSave, onDelete }: { kr: KeyResult; onSave: (target
         <input aria-label={`Zielwert für ${kr.title ?? kr.scope}`} type="number" min={0} value={target}
           onChange={(e) => setTarget(e.target.value)} style={{ width: 70 }} />{" "}
         {dirty && <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }}
-          onClick={() => onSave(Number(target))}>OK</button>}{" "}
-        <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} onClick={onDelete}>Entfernen</button>
+          disabled={busy} onClick={() => onSave(Number(target))}>OK</button>}{" "}
+        <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }}
+          disabled={busy} onClick={onDelete}>Entfernen</button>
       </td>
     </tr>
   );
 }
 
 /** Formular einer Etappe – beim Anlegen des Ziels (erste Etappe) und später zum Nachtragen dasselbe. */
-function KeyResultForm({ subjects, onSubmit }: {
+function KeyResultForm({ subjects, busy = false, onSubmit }: {
   subjects: SubjectResponse[];
+  /**
+   * Läuft der Server-Aufruf, an den `onSubmit` hängt. **Optional**, weil das Formular an zwei Stellen steht:
+   * an der Karte schickt es die Etappe zum Server, im Anlege-Formular sammelt es nur in ein lokales Array –
+   * dort gibt es nichts zu sperren.
+   */
+  busy?: boolean;
   onSubmit: (dto: CreateKeyResultRequest) => void | Promise<void>;
 }) {
   const uid = useId();
@@ -359,8 +390,10 @@ function KeyResultForm({ subjects, onSubmit }: {
           <label htmlFor={`${uid}-kr-title`}>Titel <span className="muted">(optional)</span></label>
           <input id={`${uid}-kr-title`} value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Unit 1 sicher" />
         </div>
+        {/* Beides: die Eingabeprüfung (ohne Fach kein Scope) **und** `busy`. Bis B-54 hing hier nur die
+            Prüfung – ein Doppelklick lief darum ungebremst in zwei POSTs. */}
         <button type="button" className="btn inline-btn" style={{ width: "auto" }}
-          disabled={scope.subjectId === ""}
+          disabled={busy || scope.subjectId === ""}
           onClick={() => onSubmit({ ...scopeToDto(scope), metric, targetValue, title: title.trim() || null })}>
           Etappe übernehmen
         </button>

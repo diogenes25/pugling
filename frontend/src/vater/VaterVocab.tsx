@@ -216,8 +216,12 @@ export function VaterVocab() {
             {tagFilter.map((name) => (
               <TagChip key={name} label={name} onRemove={() => setTagFilter((cur) => cur.filter((t) => t !== name))} />
             ))}
+            {/* Reiner Filter: nichts wird geschrieben, das Übernehmen gelingt darum immer. */}
             <TagAdder placeholder="+ Tag-Filter" options={(globalTags.data ?? []).map((t) => t.name)}
-              onAdd={async (name) => { setTagFilter((cur) => (cur.includes(name) ? cur : [...cur, name])); }} />
+              onAdd={async (name) => {
+                setTagFilter((cur) => (cur.includes(name) ? cur : [...cur, name]));
+                return true;
+              }} />
             {tagFilter.length > 1 && (
               <label className="row" style={{ gap: 4, alignItems: "center" }}>
                 <input type="checkbox" checked={tagMatchAll} onChange={(e) => setTagMatchAll(e.target.checked)} /> alle
@@ -225,7 +229,14 @@ export function VaterVocab() {
             )}
           </span>
         </div>
-        {list.loading ? <div className="loading">Lade…</div> : list.error ? <div className="banner err">{list.error}</div> : (
+        {/*
+          Platzhalter **nur ohne Daten** – die Falle aus frontend/CLAUDE.md: `useAsync` behält `data` über
+          ein `reload`, setzt aber `loading` erneut. Als `{loading ? … : zeilen}` hängte jedes Speichern
+          sämtliche Zeilen aus und mit ihnen ihren Zustand: einen Tag hinzuzufügen schloss den Tag-Editor,
+          in dem man gerade stand, und den Bild-Abschnitt daneben.
+        */}
+        {list.loading && list.data === null ? <div className="loading">Lade…</div>
+          : list.error ? <div className="banner err">{list.error}</div> : (
           <div style={{ overflowX: "auto" }}>
             <table className="table">
               <thead><tr>
@@ -598,7 +609,16 @@ function TagEditor({ v, onGlobalChanged, childId, globalTags, childTagOptions, r
   childTagOptions: ChildTagResponse[];
   reloadChildTags: () => void;
 }) {
-  const [err, setErr] = useState<string | null>(null);
+  /*
+   * Alle vier Schreibpfade laufen über **eine** Instanz – sie teilten vorher schon einen `err`-State, und
+   * zwei Fehlerkanäle in einer Komponente wären schlechter als jeder Endzustand.
+   *
+   * **Bei Erfolg bleibt es stumm** (kein `okText`): der Chip erscheint bzw. verschwindet, das ist die
+   * Rückmeldung. Ein Banner je Chip-Klick wäre Lärm auf einem Bildschirm, auf dem man mehrere Tags
+   * hintereinander anfasst. Die übrige Mechanik der Regel greift vollständig – Ref-Gate, `busy` an den
+   * Knöpfen, und ein Fehler kommt rot statt in denselben Kasten wie ein Erfolg.
+   */
+  const action = useAction();
 
   // Kind-Tags dieser Vokabel werden lazy geladen (vermeidet N+1 über die ganze Store-Liste).
   const [childTags, setChildTags] = useState<ChildTagResponse[] | null>(null);
@@ -609,44 +629,51 @@ function TagEditor({ v, onGlobalChanged, childId, globalTags, childTagOptions, r
     setCtLoading(true);
     api.tagsForVocabulary(v.id, childId)
       .then((d) => { if (!cancelled) setChildTags(d); })
-      .catch((e) => { if (!cancelled) setErr(errorMessage(e)); })
+      // Ein **Lese**fehler, der denselben Kasten benutzt: `fail` setzt die Meldung, ohne etwas zu senden.
+      .catch((e) => { if (!cancelled) action.fail(errorMessage(e)); })
       .finally(() => { if (!cancelled) setCtLoading(false); });
     return () => { cancelled = true; };
-  }, [v.id, childId]);
+    // `action.fail` und nicht `action`: der Hook liefert je Render ein **neues** Objekt, als Abhängigkeit
+    // liefe der Effekt endlos. Die einzelnen Funktionen sind `useCallback`-stabil.
+  }, [v.id, childId, action.fail]);
 
   async function addGlobal(name: string) {
-    setErr(null);
-    try { await api.attachVocabTags(v.id, [name]); onGlobalChanged(); }
-    catch (e) { setErr(errorMessage(e)); }
+    return action.run(async () => { await api.attachVocabTags(v.id, [name]); onGlobalChanged(); });
   }
   async function removeGlobal(name: string) {
-    setErr(null);
-    const tag = globalTags.find((t) => t.name === name);
-    if (!tag) { setErr(`Tag „${name}" nicht auffindbar – bitte Seite neu laden.`); return; }
-    try { await api.detachVocabTag(v.id, tag.id); onGlobalChanged(); }
-    catch (e) { setErr(errorMessage(e)); }
+    await action.run(async () => {
+      /*
+       * Der Chip kommt aus der **Vokabel**-Liste, seine Id aus der **Tag**-Liste – und `onGlobalChanged`
+       * lädt beide *nebenläufig* neu. Ein frisch angelegter Tag ist darum sichtbar (und anklickbar),
+       * bevor er hier steht. Dann direkt nachfragen, statt den Nutzer mit „bitte neu laden" wegzuschicken:
+       * die Meldung unten ist so wieder das, was sie sein soll – unmöglich.
+       */
+      const tag = globalTags.find((t) => t.name === name)
+        ?? (await api.vocabTags()).find((t) => t.name === name);
+      if (!tag) throw new Error(`Tag „${name}" nicht auffindbar – bitte Seite neu laden.`);
+      await api.detachVocabTag(v.id, tag.id);
+      onGlobalChanged();
+    });
   }
 
   async function addChild(name: string) {
-    if (childId === null) return;
-    setErr(null);
-    try {
+    if (childId === null) return false;
+    return action.run(async () => {
       // Bestehenden Kind-Tag wiederverwenden, sonst neu anlegen (create-if-missing clientseitig).
       let tag = childTagOptions.find((t) => t.name === name) ?? childTags?.find((t) => t.name === name);
       if (!tag) tag = await api.createChildTag({ childId, name });
       await api.tagVocabulary(tag.id, [v.id]);
       setChildTags(await api.tagsForVocabulary(v.id, childId));
       reloadChildTags();
-    } catch (e) { setErr(errorMessage(e)); }
+    });
   }
   async function removeChild(tag: ChildTagResponse) {
     if (childId === null) return;
-    setErr(null);
-    try {
+    await action.run(async () => {
       await api.untagVocabulary(tag.id, v.id);
       setChildTags(await api.tagsForVocabulary(v.id, childId));
       reloadChildTags();
-    } catch (e) { setErr(errorMessage(e)); }
+    });
   }
 
   const childApplied = new Set((childTags ?? []).map((t) => t.name));
@@ -654,15 +681,16 @@ function TagEditor({ v, onGlobalChanged, childId, globalTags, childTagOptions, r
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 10, padding: "8px 2px" }}>
-      {err && <div className="banner err" style={{ margin: 0 }}>{err}</div>}
+      <StatusBanner message={action.message} style={{ margin: 0 }} />
 
       <div className="row" style={{ gap: 10, alignItems: "center", flexWrap: "wrap" }}>
         <span className="muted" style={{ minWidth: 96, fontSize: 12 }}>Globale Tags</span>
         {v.tags.map((name) => (
-          <TagChip key={name} label={name} onRemove={() => removeGlobal(name)} />
+          <TagChip key={name} label={name} disabled={action.busy} onRemove={() => removeGlobal(name)} />
         ))}
         {v.tags.length === 0 && <span className="muted" style={{ fontSize: 12 }}>keine</span>}
-        <TagAdder placeholder="+ globaler Tag" options={globalTags.map((t) => t.name)} onAdd={addGlobal} />
+        <TagAdder placeholder="+ globaler Tag" options={globalTags.map((t) => t.name)}
+          busy={action.busy} onAdd={addGlobal} />
       </div>
 
       <div className="row" style={{ gap: 10, alignItems: "center", flexWrap: "wrap" }}>
@@ -674,10 +702,11 @@ function TagEditor({ v, onGlobalChanged, childId, globalTags, childTagOptions, r
         ) : (
           <>
             {(childTags ?? []).map((t) => (
-              <TagChip key={t.id} label={t.name} color={t.color} onRemove={() => removeChild(t)} />
+              <TagChip key={t.id} label={t.name} color={t.color} disabled={action.busy}
+                onRemove={() => removeChild(t)} />
             ))}
             {(childTags ?? []).length === 0 && <span className="muted" style={{ fontSize: 12 }}>keine</span>}
-            <TagAdder placeholder="+ Kind-Tag" options={childSuggestions} onAdd={addChild} />
+            <TagAdder placeholder="+ Kind-Tag" options={childSuggestions} busy={action.busy} onAdd={addChild} />
           </>
         )}
       </div>
@@ -686,39 +715,73 @@ function TagEditor({ v, onGlobalChanged, childId, globalTags, childTagOptions, r
 }
 
 /** Chip mit Entfernen-Knopf; optionale Farbe färbt Rand + Text. */
-function TagChip({ label, color, onRemove }: { label: string; color?: string | null; onRemove: () => void }) {
+function TagChip({ label, color, disabled = false, onRemove }: {
+  label: string;
+  color?: string | null;
+  /** **Optional**: derselbe Chip steht oben als reiner Filter, der nichts schreibt und nie sperrt. */
+  disabled?: boolean;
+  onRemove: () => void;
+}) {
   const style = color ? { borderColor: color, color } : undefined;
   return (
     <span className="chip" style={style}>
       {label}
-      <button type="button" aria-label={`Tag ${label} entfernen`} onClick={onRemove}
+      <button type="button" aria-label={`Tag ${label} entfernen`} disabled={disabled} onClick={onRemove}
         style={{ background: "none", border: "none", color: "inherit", cursor: "pointer", padding: 0, fontSize: 14, lineHeight: 1 }}>×</button>
     </span>
   );
 }
 
 /** Eingabe zum Hinzufügen eines Tags (mit Vorschlagsliste); Enter oder „+" fügt hinzu. */
-function TagAdder({ placeholder, options, onAdd }: { placeholder: string; options: string[]; onAdd: (name: string) => Promise<void> }) {
+function TagAdder({ placeholder, options, busy = false, onAdd }: {
+  placeholder: string;
+  options: string[];
+  /**
+   * Läuft irgendein Schreibpfad des Editors. Nötig **zusätzlich** zum lokalen `busy`: die Sperre in
+   * `useAction` gilt je Instanz, ein „+" während einer laufenden Chip-Entfernung würde also verworfen –
+   * ohne `disabled` sähe das wie „nichts passiert" aus. **Optional**, weil dieselbe Eingabe oben als
+   * reiner Tag-*Filter* steht, der nichts schreibt.
+   */
+  busy?: boolean;
+  /** Liefert, ob es geklappt hat – nur dann wird das Eingabefeld geleert. */
+  onAdd: (name: string) => Promise<boolean>;
+}) {
   const [value, setValue] = useState("");
-  const [busy, setBusy] = useState(false);
+  const [local, setLocal] = useState(false);
   const listId = `tags-${placeholder}-${options.length}`;
+  const gesperrt = busy || local;
+  /*
+   * Der Knopf trägt seinen Zweck im Namen, nicht bloß „Tag hinzufügen": drei dieser Eingaben stehen
+   * gleichzeitig auf dem Bildschirm (Filter, globale Tags, Kind-Tags). Mit demselben Namen sind sie für
+   * einen Screenreader – und für einen Test – nur über ihre Position unterscheidbar.
+   */
+  const knopfName = `${placeholder.replace(/^\+\s*/, "")} hinzufügen`;
 
   async function submit() {
     const name = value.trim();
-    if (!name || busy) return;
-    setBusy(true);
-    try { await onAdd(name); setValue(""); }
-    finally { setBusy(false); }
+    if (!name || gesperrt) return;
+    setLocal(true);
+    // Nur bei Erfolg leeren: vorher war der getippte Text nach einem fehlgeschlagenen Add weg, und mit ihm
+    // die Vorlage für den zweiten Versuch.
+    try { if (await onAdd(name)) setValue(""); }
+    finally { setLocal(false); }
   }
 
   return (
     <span className="row" style={{ gap: 4, alignItems: "center" }}>
+      {/*
+        Nur das **eigene** Absenden sperrt die Eingabe, nicht `busy` der geteilten Instanz: ein
+        `disabled` gewordenes Feld gibt den Fokus an `<body>` ab und bekommt ihn nicht zurück – wer
+        mehrere Tags hintereinander tippt, müsste nach jedem fremden Schreibvorgang neu hineinklicken.
+        Sichtbar gesperrt ist das „+" daneben, und `submit` prüft ohnehin.
+      */}
       <input list={listId} value={value} placeholder={placeholder} aria-label={placeholder}
-        style={{ maxWidth: 150, fontSize: 13 }} disabled={busy}
+        style={{ maxWidth: 150, fontSize: 13 }} disabled={local}
         onChange={(e) => setValue(e.target.value)}
         onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); submit(); } }} />
       <datalist id={listId}>{options.map((o) => <option key={o} value={o} />)}</datalist>
-      <button type="button" className="btn ghost inline-btn" aria-label="Tag hinzufügen" style={{ width: "auto" }} disabled={busy || !value.trim()} onClick={submit}>+</button>
+      <button type="button" className="btn ghost inline-btn" aria-label={knopfName} style={{ width: "auto" }}
+        disabled={gesperrt || !value.trim()} onClick={submit}>+</button>
     </span>
   );
 }
