@@ -32,11 +32,8 @@ backend/Pugling.Api/wwwroot/*
 # reproduzierbar via tools/bruno/generate-bruno.mjs – daher nicht einchecken (Generator + README bleiben versioniert).
 tools/bruno/Pugling.Api/
 
-# Extern (per `npx skills`) installierte Agent-Skills: pro Entwickler optional, niemandem aufzwingen.
-# Die projekteigenen Skills (.claude/skills/{pm-loop,lehrplan-autor,lehrplan-lerner,creator,supervisor,student}) bleiben bewusst versioniert.
-.claude/skills/obsidian-cli/
-.claude/skills/obsidian-markdown/
-.claude/skills/obsidian-vault/
+# Extern (per `npx skills`) installierte Agent-Skills liegen user-global unter ~/.claude/skills und
+# gehoeren nicht hierher – .claude/skills/ traegt ausschliesslich die versionierten projekteigenen Skills.
 .agents/
 skills-lock.json
 # Hochgeladene Medien (Bilder) – Nutzerinhalte, gehören nicht ins Repo
