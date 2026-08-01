@@ -262,26 +262,59 @@ test("Vater legt sich selbst an und richtet ein Englisch-Szenario von Null ein",
   await vater.getByRole("button", { name: "Angebot anlegen" }).click();
   await expect(vater.getByText("Angebot angelegt.")).toBeVisible();
 
-  // ---------- 8. Lernziel auf Fach-Ebene ----------
-  await vater.goto(`/vater/kind/${childId}/ziele`);
-  // Über das Label statt eine feste Id: der Scope-Wähler steht mehrfach im DOM (Lernziel + Etappen)
-  // und vergibt seine Ids darum je Instanz.
-  await vater.getByLabel("Fach", { exact: true }).selectOption({ label: SUBJECT });
-  await vater.getByLabel("Titel (optional)").fill("Unit 1 sitzt");
-  await vater.getByRole("button", { name: "Lernziel anlegen" }).click();
-  await expect(vater.getByText("Lernziel angelegt.")).toBeVisible();
-  const goalRow = vater.getByRole("row", { name: /Unit 1 sitzt/ });
-  await expect(goalRow).toContainText("offen");
-  await expect(goalRow).toContainText("mindestens 80 %");
-
-  // ---------- 8a. Großes Ziel (OKR) – der Sohn muss es in Schritt 9 sehen ----------
+  // ---------- 8. Großes Ziel (OKR) – der Sohn muss es in Schritt 9 sehen ----------
   // Ziele setzt der Vater, das Kind sieht nur, woran es ist: die Sohn-Sicht ist bewusst rein lesend.
-  // `exact`, sonst trifft „Ziel anlegen" auch „Lernziel anlegen" und „+ Großes Ziel anlegen"
-  // (Playwright matcht den Namen als Teilzeichenkette).
+  await vater.goto(`/vater/kind/${childId}/ziele`);
+  // `exact`, sonst trifft „Ziel anlegen" auch „+ Großes Ziel anlegen" (Playwright matcht den Namen als
+  // Teilzeichenkette).
   await vater.getByRole("button", { name: "+ Großes Ziel anlegen", exact: true }).click();
   await vater.locator("#ob-title").fill(`Englisch aufholen ${RUN}`);
   await vater.getByRole("button", { name: "Ziel anlegen", exact: true }).click();
   await expect(vater.getByText("Großes Ziel angelegt.")).toBeVisible();
+
+  // ---------- 8a. Etappe (Key Result) am großen Ziel ----------
+  /*
+   * Ein Ziel ohne Etappe nennt die Oberfläche selbst unerreichbar („Noch keine Etappen – ohne sie kann das
+   * Ziel nicht erreicht werden"). Die Etappe trägt den Scope-Wähler, die Messlatte und den Status –
+   * **dieselbe Fläche**, die bis zum 2026-08-01 hier am *Lernziel* geprüft wurde. Die Lernziel-Ebene ist
+   * gelöscht (DB-Umbau E13), das Key Result hat ihre Rolle geerbt; der Abschnitt wurde darum umgeschrieben
+   * statt gestrichen, sonst wäre mit dem Rot auch die Abdeckung weg.
+   *
+   * Nicht abgedeckt und bewusst offen: die Gegenrichtung „höchstens" (siehe unten, warum sie hier nicht
+   * prüfbar ist) und die Erfolgsmeldung — die Karte hat keine (B-54).
+   */
+  // Alles Weitere **innerhalb der Karte dieses Ziels**: der Scope-Wähler und das Etappen-Formular stehen
+  // je Karte einmal und zusätzlich im Anlege-Formular. Ohne die Eingrenzung hinge die Strecke daran, dass
+  // es zufällig nur ein Ziel gibt – ein zweites machte jeden Label-Zugriff hier zur Strict-Mode-Verletzung.
+  const ziel = vater.locator(".card").filter({ hasText: `Englisch aufholen ${RUN}` });
+  await expect(ziel).toContainText("Noch keine Etappen");
+
+  await ziel.getByRole("button", { name: "+ Etappe", exact: true }).click();
+  // Über das Label statt eine feste Id: der Scope-Wähler vergibt seine Ids je Instanz (`useId`).
+  await ziel.getByLabel("Fach", { exact: true }).selectOption({ label: SUBJECT });
+  // Die Messlatte ausdrücklich wählen und einen **Zielwert abseits der Vorbelegung** (80) setzen: sonst
+  // bewiese die Zeile unten nur, dass das Formular vorbelegt ist, nicht dass die Eingabe im POST landet.
+  // `exact` bei jedem Label, sonst greift der Teilstring-Vergleich den „ⓘ"-Knopf daneben ab.
+  //
+  // Eine Obergrenz-Messlatte (`MaxWeakItems`) wäre die reizvollere Wahl – sie deckte die Gegenrichtung
+  // „höchstens" ab. Sie taugt hier aber nicht: ein Kind ohne jeden Lernstand hat **null** schwache Wörter
+  // und erfüllt jede Obergrenze sofort. Die Etappe stünde auf „erreicht/100 %", und der Status wäre
+  // trivial statt geprüft.
+  await ziel.getByLabel("Messlatte", { exact: true }).selectOption("AvgMastery");
+  await ziel.getByLabel("Zielwert", { exact: true }).fill("90");
+  await ziel.getByLabel("Titel (optional)", { exact: true }).fill("Unit 1 sitzt");
+  await ziel.getByRole("button", { name: "Etappe übernehmen" }).click();
+
+  const krRow = ziel.getByRole("row", { name: /Unit 1 sitzt/ });
+  // Bereich: der Server liefert die *Ebene* („subject"), nicht den Fachnamen – ein Fach ohne Kapitel und
+  // ohne Übung muss dort landen, sonst hat der Scope-Wähler still eingeengt.
+  await expect(krRow).toContainText("subject");
+  // Richtung **und** der eingetippte Wert – „mindestens 80 %" wäre die durchgereichte Vorbelegung.
+  await expect(krRow).toContainText("mindestens 90 %");
+  // Ohne jeden Lernstand ist die Etappe offen – der Status wird bei jeder Abfrage neu gerechnet.
+  await expect(krRow).toContainText("offen");
+  // Und die Karte hat die Etappe übernommen: ohne sie stünde hier weiter „0/0".
+  await expect(ziel).toContainText("0/1 Etappen");
 
   // ---------- 8b. Lernstand: beide Sichten laden (noch ohne Fortschritt) ----------
   // Sichert die Routen und die Lesezugriffe auf die student/-Endpunkte ab, die der Vater mitlesen darf.

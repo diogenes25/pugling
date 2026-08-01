@@ -26,6 +26,8 @@ on:
     - cron: "0 3 * * *"
   workflow_dispatch: {}
 
+# Nur Lesen – der Testjob führt `npm ci` und damit fremden Paketcode aus. Das Schreibrecht auf Issues
+# trägt allein der Job `zustellung` unten, der nichts installiert und nichts baut.
 permissions:
   contents: read
 
@@ -109,3 +111,71 @@ jobs:
           path: frontend/test-results/**
           if-no-files-found: warn
           retention-days: 14
+
+  # ── Zustellung ───────────────────────────────────────────────────────────────────────────────────
+  # Ein Tor ohne Zustellung ist kein Tor. Der Lauf vom 2026-07-31 fand einen echten Bruch (eine im
+  # Frontend gelöschte Ebene, die der Spec noch bediente) – und erreichte zwei Tage lang niemanden. GitHub
+  # benachrichtigt bei fehlgeschlagenen *scheduled* Läufen bestenfalls per persönlicher Mail-Einstellung;
+  # darauf kann sich niemand verlassen.
+  #
+  # Zugestellt wird als **Issue mit Zustand**: bei Rot angelegt bzw. – wenn schon eines offen ist –
+  # kommentiert, bei Grün geschlossen. Ein neues Issue je Nacht wäre nach einer Woche Rauschen; der
+  # Zustand offen/geschlossen ist die eigentliche Auskunft.
+  #
+  # **Warum ein eigener Job und nicht zwei Schritte am Ende von `e2e`** – drei Gründe, jeder für sich
+  # ausreichend:
+  #  1. `timeout-minutes: 30` **bricht ab**, es schlägt nicht fehl. Bei Abbruch läuft weder `failure()`
+  #     noch `success()` – der Fall, für den die Reißleine da ist, stellte sonst als Einziger nichts zu.
+  #     `always()` plus `needs.e2e.result` deckt ihn mit ab.
+  #  2. Fällt die Zustellung selbst (gh-5xx, Rate-Limit), färbte sie den **grünen** Testlauf rot. Als
+  #     eigener Job bleibt „Test rot" von „Meldung kaputt" unterscheidbar.
+  #  3. `issues: write` bleibt aus dem Job heraus, der `npm ci` und damit fremden Paketcode ausführt.
+  #
+  # **Nur ohne Pull Request** (B-26, Entscheidung 3): am PR ist der rote Check selbst die Zustellung, und
+  # ein Fork-PR bekommt ohnehin keinen Token mit Schreibrecht.
+  #
+  # Bekannte Grenze, gegen die hier nichts hilft: GitHub schaltet geplante Läufe in öffentlichen Repos
+  # nach 60 Tagen ohne Repo-Aktivität selbsttätig ab (es mailt vorher an die Verwaltung). Ein Nightly,
+  # das nicht läuft, meldet auch nichts.
+  zustellung:
+    name: Rot zustellen, Grün zurücknehmen
+    needs: e2e
+    if: ${{ always() && github.event_name != 'pull_request' }}
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+    steps:
+      # `!= 'success'` statt `== 'failure'`: ein abgebrochener oder übersprungener Testjob ist ebenfalls
+      # keine Auskunft „alles grün" und gehört zugestellt.
+      - name: Rotes Nightly zustellen
+        if: ${{ needs.e2e.result != 'success' }}
+        run: |
+          set -euo pipefail
+          # `gh issue create --label` bricht ab, wenn es das Label nicht gibt – idempotent anlegen.
+          gh label create e2e-nightly --color B60205 --description "Roter E2E-Nachtlauf" 2>/dev/null || true
+          body=$(printf '%s\n' \
+            "Der E2E-Lauf auf \`$GITHUB_REF_NAME\` ist nicht grün – Ergebnis \`${{ needs.e2e.result }}\`, Commit \`$GITHUB_SHA\`." \
+            "" \
+            "$RUN_URL" \
+            "" \
+            "Trace und Screenshots liegen als Artefakt \`playwright-artefakte\` am Lauf (14 Tage).")
+          open=$(gh issue list --label e2e-nightly --state open --limit 1 --json number --jq '.[0].number // empty')
+          if [ -n "$open" ]; then
+            gh issue comment "$open" --body "$body"
+          else
+            gh issue create --title "E2E-Nachtlauf ist rot" --label e2e-nightly --body "$body"
+          fi
+
+      # Das Gegenstück – sonst bliebe das Issue offen stehen und wäre nach der ersten Reparatur eine Lüge.
+      - name: Zustellung zurücknehmen, wenn wieder grün
+        if: ${{ needs.e2e.result == 'success' }}
+        run: |
+          set -euo pipefail
+          # Kein `gh label create` nötig: `gh issue list` mit unbekanntem Label liefert leer und Status 0.
+          for n in $(gh issue list --label e2e-nightly --state open --json number --jq '.[].number'); do
+            gh issue close "$n" --comment "Wieder grün: $RUN_URL"
+          done

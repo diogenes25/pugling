@@ -71,7 +71,8 @@ Ein Vater entsteht **im UI**: `/vater` hat neben „Anmelden" den Modus „Neu r
 Konto liegt unter `/vater/profil`. `/vater/kind/:id` ist der **Kind-Hub** (Stammdaten inkl. PIN, Bild-Freigabe,
 gewichtete Interessen) und verlinkt alles Kindbezogene per `?childId=`; darunter
 `/vater/kind/:id/lernstand` (plan-übergreifender Lernstand: schwache Wörter + Katalog-Drilldown) und
-`/vater/kind/:id/ziele` (Lernziele + Objectives/OKR).
+`/vater/kind/:id/ziele` (Objectives/OKR mit ihren Etappen – die frühere zweite Ebene „Lernziel" ist mit
+dem DB-Umbau E13 gelöscht und vom Key Result beerbt).
 **Alle Übungstypen des Servers sind im UI anlegbar** — Anzeigename und Routen-Segment kommen aus dem
 Typ-Manifest (`GET creator/exercise-types`, gelesen über [src/lib/exerciseTypes.ts](src/lib/exerciseTypes.ts)),
 **nicht** aus einer Tabelle im Frontend: der Schlüssel weicht von der Route ab (Aufsatz → `essays`), und drei

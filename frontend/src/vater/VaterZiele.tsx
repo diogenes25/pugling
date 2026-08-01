@@ -12,13 +12,17 @@ import type {
 } from "../lib/types";
 
 /**
- * Die zwei Ziel-Ebenen über dem Lernstand.
+ * Die Ziel-Ebene über dem Lernstand.
  *
- * * **Lernziele** sind einzelne Messlatten auf einem Stück Katalog („in Unit 1 sitzen 80 %").
- * * **Objectives** sind die Klammer darüber: ein benanntes Vorhaben mit Etappen (Key Results), einem
- *   Termin und einer Belohnung.
+ * Ein **Objective** ist ein benanntes Vorhaben mit einem Termin und einer Belohnung; seine **Etappen**
+ * (Key Results) sind die einzelnen Messlatten auf einem Stück Katalog („in Unit 1 sitzen 80 %"). Ohne
+ * mindestens eine Etappe ist ein Objective nicht erreichbar – deshalb sammelt schon das Anlege-Formular
+ * welche ein.
  *
- * Beide sind vom Pflichtziel einer Lehrplan-Position klar getrennt: hier gibt es **keinen Malus** und keinen
+ * Es war einmal eine zweite, gleichrangige Ebene „Lernziel" daneben; sie ist mit dem DB-Struktur-Umbau
+ * E13 gelöscht und vom Key Result beerbt worden. Wer sie hier noch sucht, sucht vergeblich.
+ *
+ * Ziele sind vom Pflichtziel einer Lehrplan-Position klar getrennt: hier gibt es **keinen Malus** und keinen
  * Tagesrhythmus. Ein Ziel ist eine Aussage über den Stand, keine Aufgabe für heute. Es wird bei jeder
  * Abfrage neu ausgewertet – „open/achieved/overdue" ist nie ein gespeicherter, veralteter Wert.
  */

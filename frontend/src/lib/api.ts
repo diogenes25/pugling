@@ -494,9 +494,11 @@ export const api = {
     http<ItemProgressResponse[]>(
       `${V1}/student/children/${childId}/learn/subjects/${subjectId}/chapters/${chapterId}/vocabulary/${exerciseId}/items`),
 
-  // ---- Ziele über dem Lernstand: Lernziele (einzeln) und Objectives (Klammer aus Etappen) ----
-  // Beide werden bei jeder Abfrage live aus dem Lernstand ausgewertet – deshalb keine „Fortschritt
+  // ---- Ziele über dem Lernstand: Objectives (Klammer) mit ihren Etappen (Key Results) ----
+  // Sie werden bei jeder Abfrage live aus dem Lernstand ausgewertet – deshalb keine „Fortschritt
   // aktualisieren"-Aktion: es gibt keinen gespeicherten Stand, der veralten könnte.
+  // Die frühere zweite Ebene „Lernziel" (`LearnGoal`) ist mit dem DB-Struktur-Umbau E13 gelöscht; ihre
+  // Rolle – eine einzelne Messlatte auf einem Stück Katalog – trägt heute das Key Result.
 
   objectives: (childId: number, p: { status?: GoalStatus; kind?: ObjectiveKind } = {}) => {
     const q = new URLSearchParams();
