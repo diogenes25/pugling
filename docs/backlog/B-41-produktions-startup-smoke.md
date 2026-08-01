@@ -240,7 +240,11 @@ hielt der SQLite-Verbindungspool die Datei offen, sodass `File.Delete` still im 
 `DisposeAsync()`-Override plus `SqliteConnection.ClearPool` **auf die eigene** Verbindung; danach gemessen:
 Leck-Delta **0** je Lauf. Zwei Irrwege sind dabei ausgeschlossen worden und stehen als Begründung im Code:
 `Pooling=False` schob die Suite von ~1 auf **3 Minuten**, und das prozessweite `ClearAllPools` warf je Lauf
-drei bis vier fremde Tests um, weil xUnit Klassen parallel fährt. Die 20 880 Altlasten liegen noch da.
+drei bis vier fremde Tests um, weil xUnit Klassen parallel fährt.
+
+Die Altlast (23 888 Dateien, 16,1 GB) ist am 2026-08-01 gelöscht. Beim Aufräumen kamen **zwei weitere
+Erzeuger** zum Vorschein, die dieselbe Sorgfalt vermissen lassen – `QueryPlanSmokeTests` und die
+Playwright-Konfiguration; sie liegen als [B-55](B-55-wegwerf-dateien-aufraeumen.md).
 
 ## Verlauf
 
