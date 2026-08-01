@@ -275,8 +275,13 @@ builder.Services.AddAuthorization();
 // OpenAPI: a bearer security scheme so that Swagger UI shows an "Authorize" button.
 builder.Services.AddOpenApi(o =>
 {
+    // `OpenApi:ExamplesEnabled=false` yields the **contract-pure** document: schemas, paths and status codes,
+    // without the verified examples. Only the test that checks in docs/openapi/v1.json switches it off - the
+    // examples are documentation, not contract, and they are not byte-stable (see OpenApiExampleCatalog.Empty).
     o.AddOperationTransformer(new OpenApiExamplesOperationTransformer(
-        OpenApiExampleCatalog.Load(builder.Environment.ContentRootPath)));
+        builder.Configuration.GetValue("OpenApi:ExamplesEnabled", true)
+            ? OpenApiExampleCatalog.Load(builder.Environment.ContentRootPath)
+            : OpenApiExampleCatalog.Empty));
 
     // Spell enum fields out in the documentation: the JsonStringEnumConverter already emits the enum values
     // in the schema; here we additionally write the allowed values into the description so that Swagger/Scalar
@@ -299,7 +304,13 @@ builder.Services.AddOpenApi(o =>
             // Set required correctly: the generator marks EVERY record constructor parameter as required -
             // including nullable (optional) ones such as "string?"/"TEnum?". Recompute it from the nullability
             // so that Swagger/Scalar report required vs. optional truthfully (partial-update DTOs above all).
-            schema.Required = new HashSet<string>(EnumSchemaHelp.RequiredJsonPropertyNames(context.JsonTypeInfo));
+            // SortedSet instead of HashSet - the same reason as with the tags below: only the sorted set
+            // promises an enumeration order, and the serializer emits `required` in that order. Since the
+            // document is checked in and diffed (docs/openapi/README.md), that order is now part of a gate;
+            // HashSet happened to enumerate in insertion order, which is an implementation detail, not a
+            // promise.
+            schema.Required = new SortedSet<string>(
+                EnumSchemaHelp.RequiredJsonPropertyNames(context.JsonTypeInfo), StringComparer.Ordinal);
         }
         return Task.CompletedTask;
     });

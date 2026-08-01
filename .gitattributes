@@ -4,3 +4,8 @@
 *.cs text
 *.json text
 *.md text
+
+# Erzeugte Artefakte: GitHub klappt sie in der PR-Ansicht zusammen, statt an 900 KB Diff zu ersticken.
+# `git diff` zeigt lokal weiter alles – und die CI-Tore lesen ohnehin den Exit-Code, nicht die Ansicht.
+docs/openapi/v1.json linguist-generated=true
+backend/Pugling.Api/OpenApi/openapi-examples.generated.json linguist-generated=true

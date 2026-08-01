@@ -1,13 +1,21 @@
 ---
-tags: [typ/story, status/gegrillt, bereich/qualitaet, bereich/frontend, bereich/tests]
+tags: [typ/story, status/in-arbeit, bereich/qualitaet, bereich/frontend, bereich/tests]
 aliases: [OpenAPI-Typen generieren, TS-Vertragstor]
-status: gegrillt
+status: in-arbeit
 prio: P2
 art: Aufräumen
+groesse: M
+wo: beides
+migration: nein
+vertragsbruch: nein
 quelle: docs/testplan.md#nachmessung-2026-07-31-die-drei-unbeobachteten-flächen
 ---
 
 # B-42 · TypeScript-Typen aus dem OpenAPI-Dokument erzeugen statt von Hand pflegen
+
+> **Schritt 1 (E3) ist gebaut und belegt** – das vertragsreine Dokument liegt unter
+> [`docs/openapi/v1.json`](../openapi/README.md), das CI-Tor steht. Siehe „Verifikation Schritt 1".
+> Offen ist **Schritt 2 (E6)**: die Typen im Frontend erzeugen. Die Story bleibt deshalb `in-arbeit`.
 
 `frontend/src/lib/types.ts` trägt **1950 handgeschriebene Zeilen** Vertrag – dieselben Felder, die
 `Pugling.Contracts` besitzt und die der OpenAPI-Generator ohnehin ausgibt. Solange beide Seiten von Hand
@@ -114,6 +122,111 @@ Alle im Grillen vom 2026-07-31 entschieden bzw. ausdrücklich zurückgestellt.
 6. `npm ci --legacy-peer-deps` bleibt fehlerfrei; der Übungstyp-Weg über das Server-Manifest bleibt unberührt.
 7. B-24 ist auf den neuen Zuschnitt gekürzt und verweist auf diese Story.
 
+## Schätzung
+
+**M**, `wo: beides`, geteilt an der eigenen Naht: **Schritt 1 (E3) = S, backend** – erledigt;
+**Schritt 2 (E6) = M, frontend** – offen und hinter E4/E5.
+
+- `migration: nein`, `vertragsbruch: nein`. Schritt 1 ändert **keinen** Vertrag, er schreibt ihn nur auf.
+- **Risiko Schritt 1 war die Byte-Stabilität**, nicht das Erzeugen. Zwei Quellen von Nichtdeterminismus
+  waren vorher benannt (Beispielkatalog, Naht 2) bzw. sind beim Bauen aufgetaucht (Zeilenenden in den
+  Werten, siehe Verifikation).
+- **Risiko Schritt 2 bleibt `required`/`nullable`** – die unvermessene Größe. Vor dem Schätzen von E6
+  einmal `openapi-typescript` über das jetzt vorhandene Dokument laufen lassen und `tsc -b` die Fehler
+  zählen lassen. Das ist ab sofort billig: die Datei liegt da.
+
+**Testweg:** Schritt 1 über `ContractDocumentTests` + den CI-Schritt; Schritt 2 über `npm run build`
+(`tsc -b`) und die Gegenprobe aus Akzeptanzkriterium 4.
+
+## Verifikation Schritt 1 (E3)
+
+Gebaut am **2026-08-01**. Das Dokument liegt als [`docs/openapi/v1.json`](../openapi/README.md)
+(197 Pfade, 246 Schemata, 888 KB, 32 874 Zeilen), geschrieben bei jedem Testlauf von
+[`ContractDocumentTests`](../../backend/Pugling.Api.Tests/ContractDocumentTests.cs).
+
+| Beleg | Ergebnis |
+| --- | --- |
+| `dotnet test Pugling.sln -c Release` | **623/623 grün** (vorher 622) |
+| **AK 1 – Byte-Stabilität** | **zwei volle Läufe, identischer SHA-256** (`856c014e…`); zusätzlich prüft der Test selbst zwei getrennte Hosts gegeneinander |
+| Endpunkt-Abdeckung | 263/263, 0 offen – unverändert |
+| `dotnet format Pugling.sln --verify-no-changes` | sauber |
+| markdownlint | 0 Treffer |
+
+### Gegenproben
+
+| # | Eingriff | Reaktion |
+| --- | --- | --- |
+| a | Feld `Description` → `Beschreibung` in `ShopArticleDto` | Dokument bewegt sich, Diff **exakt zwei Zeilen** (`"description"` → `"beschreibung"` in `required` und `properties`) – das CI-Tor wäre rot |
+| b | Zeilenenden-Normalisierung ausgebaut | **185 Zeilen mit 401 escaped `\r\n`** im Dokument (siehe unten) |
+| c | Beispiele im Dokument | `Assert.DoesNotContain("\"examples\"")` im Test selbst – bliebe der Schalter wirkungslos, wäre das Dokument sofort rot statt später flappend |
+
+### Der Fund, der das Tor bei seinem ersten CI-Lauf zerlegt hätte
+
+Die `summary`-Felder tragen die XML-Doc-Kommentare **wörtlich**, samt ihrer Umbrüche. Unter Windows sind
+das `\r\n` und landen als escaptes `\r\n` *innerhalb* der JSON-Zeichenketten; auf dem Linux-Runner checkt
+git dieselben Quellen mit `\n` aus. Das Dokument hätte sich an **185 Stellen** unterschieden – und der
+erste rote Lauf hätte wie eine Vertragsänderung ausgesehen, nicht wie ein Plattformunterschied.
+
+Bemerkenswert daran: die **In-Suite-Probe fängt das nicht**. Sie vergleicht zwei Hosts derselben Maschine,
+und beide haben `\r\n`. Eine Byte-Stabilitätsprobe belegt nur Stabilität *innerhalb* einer Plattform –
+den Rest muss man wissen. Dieselbe Fehlerklasse hatte D4 schon einmal (`Environment.NewLine` in
+`Truncate()`), was die Regel bestätigt: **Zeilenenden explizit, nie über die Plattform.**
+
+Derselbe Gedanke gilt für einen zweiten Vektor, den der Review benannt hat und den **nur** die zwei vollen
+Läufe schließen: die zwei Hosts der In-Suite-Probe teilen den **Prozess** und damit den Seed des
+randomisierten String-Hashings. Hinge irgendetwas im Dokument an einer Hash-Reihenfolge, wären zwei Hosts
+einer Meinung und zwei Prozesse nicht. Von den drei Belegen ist der prozessübergreifende also der tragende –
+die anderen zwei sind Bequemlichkeit.
+
+### Was der Review geändert hat
+
+Fünf Punkte übernommen, zwei begründet abgelehnt:
+
+- **Der Test schrieb erst nach der Stabilitätszusicherung.** Fiel sie, stand der Entwickler ohne Artefakt da
+  – und mit einem xUnit-String-Diff über 900 KB, der nichts zeigt. Jetzt wird zuerst geschrieben, und bei
+  Abweichung landet das zweite Dokument als `v1.second-host.json` daneben, damit `git diff` die Differenz
+  benennt.
+- **`git diff --exit-code` sieht neu angelegte Dateien nicht** – beide Tore (das neue **und** D4, wo die
+  Lücke seit immer bestand) prüfen jetzt `git status --porcelain`. Ein zusätzliches Artefakt hätte das Tor
+  **still grün** gelassen.
+- **`schema.Required` kam aus einem `HashSet`** – dessen Enumerationsreihenfolge ist ein
+  Implementierungsdetail, keine Zusage. Vierzig Zeilen weiter unten begründet dieselbe Datei beim
+  Tag-Transformer ausdrücklich das Gegenteil („SortedSet instead of HashSet: its enumeration order is
+  contractually the comparer order"). Jetzt `SortedSet` mit `StringComparer.Ordinal`; die einmalige
+  Neuerzeugung hat 482 `required`-Einträge umsortiert.
+- **`Seed:Enabled=false`** für den Vertragshost – das Dokument hängt an keiner Datenzeile.
+- **`linguist-generated=true`** für beide erzeugten Artefakte, damit die PR-Ansicht bei einer
+  Vertragsänderung benutzbar bleibt. Lokal zeigt `git diff` weiter alles.
+
+**Abgelehnt, mit Grund:**
+
+- **Pfade im Test umsortieren** (als Versicherung gegen einen künftigen Generator-Patch, der die
+  Entdeckungsreihenfolge ändert). Das Artefakt soll **spiegeln, was der Server ausliefert**; eine eigene
+  Sortierung wäre eine stille Abweichung. Ändert der Generator die Reihenfolge, ist genau **ein** roter Lauf
+  mit einer Neuerzeugung der richtige Preis – ein sichtbares Ereignis ist besser als eine verborgene
+  Umschreibung. (Bei `required` war es umgekehrt: dort hatte die Datei die Regel schon selbst aufgestellt.)
+- **Die Beispiele im Test aus dem JSON herausschneiden** statt eines Schalters im Produktivcode. Das wären
+  vier Zeilen weniger Produktivfläche, macht aber die Selbstprüfung „enthält keine Beispiele"
+  gegenstandslos – sie *verdeckte* die Beispiele, statt sie nicht zu erzeugen. Der Schalter ist zudem der
+  einzige Weg: `OpenApiOptions` legt die Transformer-Liste nicht offen, ein Transformer lässt sich von
+  außen nicht abmelden.
+
+**Zwei vorbestehende Befunde** sind als eigene Ideen abgelegt statt hier mitgenommen:
+[B-56](B-56-problemdetails-required-extensions.md) (`ProblemDetails` fordert `extensions`, ein Feld, das
+nicht in `properties` steht – ein Nebengewinn des Tors: solche Merkwürdigkeiten sind jetzt sichtbar) und
+[B-57](B-57-beispielkatalog-schreib-lese-rennen.md) (dieselbe Katalogdatei wird im selben Lauf gelesen und
+geschrieben).
+
+### Kosten, die bewusst in Kauf genommen sind
+
+- **888 KB generiertes JSON im Repo**, das sich bei jeder Vertragsänderung bewegt. Der Diff ist dafür
+  lesbar (eingerückt, eine Eigenschaft je Zeile) – eine Minified-Zeile über ein Megabyte hätte dem
+  Reviewer nichts gesagt.
+- **`servers` trägt `http://localhost/`**, die Adresse des Testhosts. Deterministisch, also unschädlich
+  fürs Tor, aber das Dokument taugt nicht als Client-Konfiguration ohne eigenen Server-Eintrag.
+- **Ein Schalter mehr im Produktivcode** (`OpenApi:ExamplesEnabled`, Vorgabe `true`). Er existiert nur für
+  dieses Artefakt; im Betrieb ändert sich nichts.
+
 ## Verlauf
 
 - **2026-07-31** — angelegt (Quelle: Nachmessung der Test-Abdeckung, [testplan.md](../testplan.md)).
@@ -139,3 +252,12 @@ Alle im Grillen vom 2026-07-31 entschieden bzw. ausdrücklich zurückgestellt.
      (`Program.cs:297-303`) – vor E6 einmal generieren und `tsc`-Fehler zählen. Entlastend: Enums überleben
      als String-Literal-Unions (`Program.cs:284-295`), und `openapi-typescript` hat mit dem Peer-Konflikt aus
      [B-25](B-25-vite-pwa-peer-konflikt.md) nichts zu tun (Peer ist nur `typescript ^5.x`).
+- **2026-08-01** — geschätzt (M, geteilt: S backend / M frontend) und **Schritt 1 gebaut**. Das vertragsreine
+  Dokument liegt unter [`docs/openapi/v1.json`](../openapi/README.md), zwei CI-Tore stehen. Der teuerste Fund
+  war keiner aus der Story: die `summary`-Felder tragen die XML-Docs wörtlich, also unter Windows mit `\r\n`
+  **innerhalb** der JSON-Zeichenketten – das Tor wäre bei seinem ersten Lauf auf dem Linux-Runner an 185
+  Stellen rot gewesen und hätte wie eine Vertragsänderung ausgesehen. Der `pugling-reviewer` hat danach fünf
+  Punkte beigetragen, darunter zwei echte Mängel (der Test schrieb erst nach der Zusicherung; `git diff` sieht
+  neue Dateien nicht) und einen Selbstwiderspruch der Datei (`HashSet` für `required`, während der
+  Tag-Transformer vierzig Zeilen weiter `SortedSet` begründet). Abgespalten: [B-56](B-56-problemdetails-required-extensions.md),
+  [B-57](B-57-beispielkatalog-schreib-lese-rennen.md). **Schritt 2 (E6) bleibt offen**, die Story deshalb `in-arbeit`.

@@ -89,11 +89,32 @@ jobs:
       # WebAppFactory neutralisiert, `TZ: UTC` oben) – die Behauptung "byte-stabil" war bis hierhin
       # nur eine Annahme, die niemand einfing. Ein Diff hier heißt: der Runner erzeugt einen anderen
       # Stand als zuletzt committet wurde (Zeitzone, Locale, Zeilenenden, Testreihenfolge).
+      # `openapi-examples.generated.json` schreibt derselbe Test, die Datei ist eingecheckt, wird zur
+      # Laufzeit gelesen (OpenApiExampleCatalog.Load) und beim Publish mitkopiert – gedeckt war sie
+      # bisher aber nicht. Sie konnte in CI still driften und damit die ausgelieferte Doku verändern.
+      # `git status --porcelain` und nicht `git diff --exit-code`: Letzteres sieht **neu angelegte**
+      # (untracked) Dateien nicht. Ein zusätzliches Artefakt – oder eine versehentlich ignorierte Datei –
+      # ließe das Tor still grün, und still grün ist schlimmer als rot.
       - name: Docs-Byte-Stabilität prüfen (D4)
         if: ${{ !cancelled() }}
         run: |
-          if ! git diff --exit-code -- docs/api-examples; then
-            echo "::error::docs/api-examples weicht nach DocsCaptureTests vom committeten Stand ab – neu erzeugen und committen (siehe docs/codequalitaet-gates-plan.md, D4)."
+          if [ -n "$(git status --porcelain -- docs/api-examples backend/Pugling.Api/OpenApi/openapi-examples.generated.json)" ]; then
+            git status --short -- docs/api-examples backend/Pugling.Api/OpenApi/openapi-examples.generated.json
+            echo "::error::docs/api-examples bzw. der Beispielkatalog weicht nach DocsCaptureTests vom committeten Stand ab – neu erzeugen und committen (siehe docs/codequalitaet-gates-plan.md, D4)."
+            exit 1
+          fi
+
+      # Das Vertragstor (B-42, Schritt 1). Eigener Schritt und nicht in D4 mit hinein, weil man dann am
+      # **Namen der Kachel** sieht, was passiert ist, ohne das Log zu öffnen – und weil die Handlung eine
+      # andere ist: hier hat sich **die API** geändert. Ein Diff ist kein Fehler, sondern die Frage, ob die
+      # Änderung beabsichtigt war. Genau die konnte bisher niemand stellen: ein umbenanntes Feld änderte
+      # einen Record, und sonst bewegte sich nichts im Repo.
+      - name: Vertragsdokument prüfen (OpenAPI)
+        if: ${{ !cancelled() }}
+        run: |
+          if [ -n "$(git status --porcelain -- docs/openapi)" ]; then
+            git status --short -- docs/openapi
+            echo "::error::Das OpenAPI-Vertragsdokument weicht vom committeten Stand ab. Ist die Vertragsänderung beabsichtigt? Dann docs/openapi/v1.json mit committen (erzeugt von ContractDocumentTests, siehe docs/backlog/B-42-openapi-typen-generieren.md)."
             exit 1
           fi
 

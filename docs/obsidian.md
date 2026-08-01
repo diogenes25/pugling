@@ -79,7 +79,8 @@ aliases: [Lernstand-Hierarchie]
   die **Kopie** des maschinell gelesenen `status:`-Feldes – weichen sie ab, gilt das Feld.
 
 Die **Evergreen-Doku** (`wiki/01–09` + die konzeptionellen/Referenz-Seiten in `docs/`) ist bereits getaggt.
-**Ausgenommen:** generierte Dateien (`docs/api-examples/*`, von `DocsCaptureTests` geschrieben) und
+**Ausgenommen:** generierte Dateien (`docs/api-examples/*` von `DocsCaptureTests`, `docs/openapi/v1.json`
+von `ContractDocumentTests` – die begleitende [README](openapi/README.md) ist dagegen getaggt) und
 Protokolle/Pläne (`pm-sitzung-*`, `e2e-protokoll`, `code-review`, `vokabeltraining-prozess`, `*-plan`) –
 Letztere bei Bedarf mit `typ/log` bzw. `typ/plan` nachziehbar.
 
