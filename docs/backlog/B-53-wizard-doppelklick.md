@@ -4,6 +4,10 @@ aliases: [Wizard-Doppelklick, zwei Kinder zwei Pläne]
 status: abgenommen
 prio: P2
 art: Defekt
+groesse: S
+wo: frontend
+migration: nein
+vertragsbruch: nein
 quelle: docs/testabdeckung-plan.md
 ---
 
@@ -56,6 +60,51 @@ der `progress`-Ref ist schon da, er muss nur zusätzlich als Wiedereintritts-Spe
    **herausgelöst** (siehe Verlauf). Die Ortsregel lautet ohnehin nicht „nur `components/` und `lib/`",
    sondern „der Test liegt beim Geprüften" – `wizardFinish.test.ts` liegt neben `wizardFinish.ts`.
 
+## Entscheidungen
+
+**Nachgetragen am 2026-08-01, nach der Abnahme.** Der Inhalt ist nicht neu – er stand im Verlauf und im
+einzigen offenen Punkt; er stand nur nicht unter dieser Überschrift, und der Backlog-Wächter hat das
+gemeldet. Die Story ist ohne die Stufe `gegrillt` gebaut worden, weil sie beim Grillen des
+[Testabdeckungs-Pakets](../testabdeckung-plan.md) von [B-43](B-43-frontend-komponententests.md) abgespalten
+und im selben Durchgang (E5) mitgebaut wurde.
+
+1. **Eigene Story statt Teil von B-43** (Entscheidung 6 beim Grillen des Pakets). Begründung: dieselbe
+   Fehlerklasse, aber eine andere **Bauform** – der Assistent benutzt das geteilte Primitiv gar nicht, die
+   Reparatur sitzt in seinem eigenen `progress`-Ref. *Kosten:* zwei Akten für eine Fehlerklasse; dafür bleibt
+   B-43 auf das Primitiv beschränkt und diese Story auf den teuersten Einzelfall.
+2. **`finish()` wird herausgelöst, der Bildschirm nicht gerendert** (vorher offener Punkt 1). Die drei
+   Schreibzugriffe kommen als `WizardWriter`-Parameter, der Test läuft ohne `api.ts` und Router. Begründung:
+   die Ortsregel des Projekts lautet nicht „nur `components/` und `lib/`", sondern **„der Test liegt beim
+   Geprüften"** – `wizardFinish.test.ts` liegt neben `wizardFinish.ts`. *Kosten:* eine zusätzliche Datei und
+   eine Naht zwischen Bildschirm und Ablauf; **der Preis ist benannt und offen** – die Verdrahtung des
+   Bildschirms mit dem echten `api` hängt seither allein an `tsc`, kein E2E fährt den Assistenten zu Ende
+   ([B-58](B-58-assistent-e2e.md)).
+3. **Der bestehende `progress`-Ref trägt beide Fälle, es kommt kein zweiter dazu.** Unterschieden wird am Typ:
+   `childId`/`planId`/`positions` die **Wiederaufnahme** (sequenziell), `running` den **Wiedereintritt**
+   (nebenläufig). Begründung: die Verwechslung dieser zwei war überhaupt der Grund, warum der Ref wie eine
+   Sperre aussah, ohne eine zu sein – ein zweites Feld daneben hätte sie fortgeschrieben. *Kosten:* ein Ref
+   trägt zwei Bedeutungen und braucht darum den Kommentar, der beide benennt.
+4. **`disabled={busy}` bleibt additiv** (= AK 3). Begründung: Playwrights Actionability hat daran ihren
+   Serialisierungspunkt, und ein gesperrter Knopf ist der *sichtbare* Grund, warum ein zweiter Klick nichts
+   tut. *Kosten:* zwei Mechanismen für eine Regel – bewusst.
+
+## Schätzung
+
+**Ebenfalls nachgetragen, ebenfalls gemessen statt geschätzt.**
+
+**S** · `wo: frontend` · keine Migration · kein Vertragsbruch.
+
+Anker für S ist „`childId` aus dem Test-Pfad ziehen": eine Funktion wird aus einem Bildschirm gelöst und
+bekommt ihre Schreibzugriffe als Parameter, dazu sieben Unit-Fälle. Kein Backend, kein Schema, kein Vertrag.
+
+**Testweg** (so gelaufen): `wizardFinish.test.ts` mit `Promise.all` zweier Durchgänge auf demselben
+`progress` – das ist der Doppelklick, ohne Bildschirm. Rot-Probe: Sperre entfernt → „expected […] length of 1
+but got **2**" (zwei Kinder), Datei danach byte-gleich zurückgelegt. Dazu die 25 Playwright-Tests als
+Nachweis, dass der Assistent weiter durchläuft.
+
+**Risiko, damals wie heute:** die Naht aus Entscheidung 2. Ein Umbau des Bildschirms kann `runWizardFinish`
+falsch verdrahten, ohne einen Test rot zu machen – deshalb B-58.
+
 ## Verlauf
 
 - **2026-08-01** — angelegt beim Grillen des Testabdeckungs-Pakets; Ist-Stand direkt am Code belegt (der
@@ -78,3 +127,6 @@ der `progress`-Ref ist schon da, er muss nur zusätzlich als Wiedereintritts-Spe
   Rot-Probe zu AK 1 gemessen. Vom `frontend-reviewer` bestätigt: der frühe Ausstieg `if (progress.running)
   return null` steht **vor** dem `try` und fasst das Flag darum nicht an, und `finish()` lässt `busy` auf dem
   verworfenen Pfad absichtlich stehen – identisch mit dem Verhalten davor.
+- **2026-08-01** — **Abschnitte „Entscheidungen" und „Schätzung" sowie die vier Felder nachgetragen**, vom
+  Backlog-Wächter angemahnt. Der Inhalt ist nicht neu: die vier Entscheidungen standen im Verlauf und im
+  offenen Punkt 1, sie standen nur unter keiner Überschrift, die der Wächter liest. Kein Code berührt.

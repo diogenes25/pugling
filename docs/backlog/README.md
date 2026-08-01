@@ -195,7 +195,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-37](B-37-uebung-abbruch-unvollendet.md) | Abgebrochene Runden: Pflicht härten, Klausur deckeln | Defekt | `in-arbeit` | P1 | M | beides | — |
 | [B-01](B-01-bildwahl-einfrieren.md) | Abschlusstest friert Bildwahlen ein, die er nie zeigt | Defekt | `geschaetzt` | P1 | S | backend | Vertrag |
 | [B-07](B-07-db-umbau-restetappen.md) | DB-Struktur-Umbau: der offene Betriebsschritt | Aufräumen | `geschaetzt` | P1 | XS | backend | — |
-| [B-60](B-60-flags-enum-im-dokument.md) | Das Vertragsdokument verbietet einen `SchoolTypes`-Wert, den Server und Frontend täglich austauschen | Defekt | `idee` | P2 | — | — | — |
+| [B-60](B-60-flags-enum-im-dokument.md) | Das Vertragsdokument verbietet einen `SchoolTypes`-Wert, den Server und Frontend täglich austauschen | Defekt | `ausformuliert` | P2 | — | — | — |
 | [B-24](B-24-frontend-unknown-field.md) | Frontend gegen `unknown_field` durchspielen | Frage | `idee` | P2 | — | — | — |
 | [B-31](B-31-geraete-vorbehalt-klang.md) | Geräte-Vorbehalt: Klang und Haptik am echten Handy gegenhören | Frage | `idee` | P2 | — | — | — |
 | [B-48](B-48-anonyme-registrierung-produktion.md) | Anonyme Registrierung ist auch in Produktion offen | Frage | `idee` | P2 | — | — | — |
@@ -253,24 +253,11 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-40](B-40-client-routen-waechter.md) | Routen aus `Pugling.Client` gegen das OpenAPI-Dokument halten | Aufräumen | `abgenommen` | P3 | XS | backend | — |
 | [B-41](B-41-produktions-startup-smoke.md) | Der Produktionspfad des Starts ist der einzige ohne Test | Aufräumen | `abgenommen` | P2 | S | backend | — |
 | [B-42](B-42-openapi-typen-generieren.md) | TypeScript-Typen aus dem OpenAPI-Dokument erzeugen statt von Hand pflegen | Aufräumen | `abgenommen` | P2 | M | beides | — |
-| [B-43](B-43-frontend-komponententests.md) | Die Doppelklick-Lücke in `useAction` – und die fehlende Ebene für unsichtbare Zusicherungen | Defekt | `abgenommen` | P3 | — | — | — |
-| [B-53](B-53-wizard-doppelklick.md) | Zwei Klicks im Lehrplan-Assistenten legen zwei Kinder und zwei Pläne an | Defekt | `abgenommen` | P2 | — | — | — |
+| [B-43](B-43-frontend-komponententests.md) | Die Doppelklick-Lücke in `useAction` – und die fehlende Ebene für unsichtbare Zusicherungen | Defekt | `abgenommen` | P3 | M | frontend | — |
+| [B-53](B-53-wizard-doppelklick.md) | Zwei Klicks im Lehrplan-Assistenten legen zwei Kinder und zwei Pläne an | Defekt | `abgenommen` | P2 | S | frontend | — |
 | [B-54](B-54-objectivecard-schreib-primitive.md) | Fünf Knöpfe im Vater-Web gehen an den Schreib-Primitiven vorbei | Defekt | `abgenommen` | P2 | S | frontend | — |
 
 </details>
-
-### ⚠ Stufe behauptet, Datei belegt nicht
-
-Diese Stories tragen einen `status`, dessen Eintrittsbedingung in der Datei nicht
-vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
-
-| Id | Stufe | Fehlt |
-| --- | --- | --- |
-| [B-43](B-43-frontend-komponententests.md) | `abgenommen` | Abschnitt „Schätzung", Feld `groesse`, Feld `wo`, Feld `migration`, Feld `vertragsbruch` |
-| [B-53](B-53-wizard-doppelklick.md) | `abgenommen` | Abschnitt „Entscheidungen", Abschnitt „Schätzung", Feld `groesse`, Feld `wo`, Feld `migration`, Feld `vertragsbruch` |
-| [B-56](B-56-problemdetails-required-extensions.md) | `idee` | Abschnitt „Verlauf" |
-| [B-57](B-57-beispielkatalog-schreib-lese-rennen.md) | `idee` | Abschnitt „Verlauf" |
-| [B-60](B-60-flags-enum-im-dokument.md) | `idee` | `unverifiziert: true` |
 
 <details>
 <summary>Verworfen (3)</summary>

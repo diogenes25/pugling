@@ -4,6 +4,10 @@ aliases: [Frontend-Komponententests, useAction-Sperre]
 status: abgenommen
 prio: P3
 art: Defekt
+groesse: M
+wo: frontend
+migration: nein
+vertragsbruch: nein
 quelle: docs/testplan.md#nachmessung-2026-07-31-die-drei-unbeobachteten-flächen
 ---
 
@@ -103,6 +107,30 @@ Alle im Grillen vom 2026-07-31 entschieden.
    neuer devDependency **und** Verhaltensänderung in 24 Masken. **Kosten:** der Defekt liegt am längsten
    offen – bewusst.
 
+## Schätzung
+
+**Nachgetragen am 2026-08-01, nach der Abnahme** – und darum kein Voranschlag, sondern der **gemessene**
+Umfang. Die Stufe `geschaetzt` ist bei dieser Story übersprungen worden: sie lief als Etappe E5 des
+[Testabdeckungs-Pakets](../testabdeckung-plan.md), dessen Plan Reihenfolge, Angriffsweg und Testweg schon
+trug. Der Backlog-Wächter hat die Lücke gemeldet; sie wird hier geschlossen, statt die Stufe zurückzunehmen.
+
+**M** · `wo: frontend` · keine Migration · kein Vertragsbruch.
+
+Was das M rechtfertigt (Anker: „vokabel-basierter Batch-Pfad im `MediaSelector`"): eine neue
+devDependency (`@testing-library/react` + `@testing-library/dom`), eine Verhaltensänderung in einem
+Baustein, an dem **23 Bildschirme** hängen, acht neue Unit-Fälle, **sechzehn** Knöpfe, die `disabled`
+nachbekamen, und drei Bauteile, die dafür einen `busy`-Parameter brauchten. Kein Backend-Anteil, kein
+Schema, kein Vertrag – deshalb beide Flags `nein`.
+
+**Testweg** (so gelaufen): `npm test` im vorhandenen CI-Job, Rot-zuerst am Primitiv (`renderHook`, zwei
+`run()` im selben Tick), danach `npm run test:e2e` als Beweis, dass die Sperre keinen bestehenden Ablauf
+bricht.
+
+**Das Risiko, das sich verwirklicht hat:** die Zählung der Knöpfe. Aus „fünf ohne `disabled`" wurden beim
+Messen sechzehn, und fünf weitere blieben offen, weil ihr Schreibpfad das Primitiv nicht benutzt
+([B-54](B-54-objectivecard-schreib-primitive.md), inzwischen abgenommen). Beide Fehlgriffe hatten dieselbe
+Ursache: gezählt wurde die *Anwesenheit* von `disabled`, nicht seine Bindung.
+
 ## Akzeptanzkriterien
 
 1. Ein Test fährt zwei Klicks im selben Tick gegen einen stellvertretend gerenderten Aufrufer und weist nach,
@@ -186,3 +214,7 @@ Alle im Grillen vom 2026-07-31 entschieden.
   Der `frontend-reviewer` fand einen Blocker – meine Zahl „genau zwei Knöpfe bleiben offen" war falsch, es
   sind fünf – und eine Nachbesserung am Code: `MediaSearch` hatte die Live-Region bedingt eingehängt, also
   genau das, was der neue `StatusBanner`-Test verbietet. Beides eingearbeitet, danach erneut 48/25 grün.
+- **2026-08-01** — **Abschnitt „Schätzung" und die vier Felder nachgetragen.** Der Backlog-Wächter hatte sie
+  als fehlende Eintrittsbedingung gemeldet: die Story ist als Etappe E5 eines Plandokuments gebaut worden und
+  hat die Stufe `geschaetzt` darum übersprungen. Nachgetragen sind **gemessene** Werte, kein Voranschlag – das
+  steht am Abschnitt dabei. Kein Code berührt.

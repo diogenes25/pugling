@@ -1,11 +1,10 @@
 ---
-tags: [typ/story, status/idee, bereich/backend, bereich/qualitaet]
+tags: [typ/story, status/ausformuliert, bereich/backend, bereich/qualitaet]
 aliases: [SchoolTypes im Dokument, Flags-Enum als Werteliste]
-status: idee
+status: ausformuliert
 prio: P2
 art: Defekt
 quelle: docs/testabdeckung-plan.md
-unverifiziert: false
 ---
 
 # B-60 · Das Vertragsdokument verbietet einen `SchoolTypes`-Wert, den Server und Frontend täglich austauschen
@@ -13,6 +12,12 @@ unverifiziert: false
 Gefunden vom `pugling-reviewer` beim Review von [B-42](B-42-openapi-typen-generieren.md) Schritt 2 (E6). Kein
 Mangel dieser Etappe, aber E6 macht ihn **scharf**: seit die Frontend-Typen aus dem Dokument kommen, steht die
 falsche Aussage als TypeScript-Union im Code.
+
+## User Story
+
+Als **Entwickler eines Clients**, der seine Typen aus dem Vertragsdokument erzeugt oder streng gegen das
+Schema validiert, möchte ich, dass das Dokument keinen Wert verbietet, den der Server täglich sendet – damit
+mein Generator keinen Typ baut, der gültige Antworten zurückweist.
 
 ## Ist-Stand am Code, belegt
 
@@ -44,6 +49,18 @@ Für `[Flags]`-Typen im Schema-Transformer die `enum`-Liste **weglassen** und `t
 Beschreibung versehen („comma-separated combination of: …"). Dann ist der generierte Typ `string` – exakt das,
 was das Frontend heute von Hand deklariert, und die Hand-Ausnahme in `uiTypes.ts` kann verschwinden.
 
+## Akzeptanzkriterien (Entwurf)
+
+1. `GET /api/v1/creator/exercises` liefert für eine Übung mit `Realschule | Gymnasium` einen Wert, den das
+   Schema **zulässt** – heute schließt es ihn aus.
+2. Das Schema von `SchoolTypes` führt keine `enum`-Liste der Einzelnamen mehr, sondern `type: string` mit einer
+   Beschreibung der zulässigen Kombination.
+3. Eine Zusicherung in `ContractDocumentTests` hält das fest: kein `[Flags]`-Enum im Dokument trägt eine
+   `enum`-Liste. Sie ist vor der Reparatur rot (heute trägt `SchoolTypes` eine).
+4. `contract.ts` führt `schoolTypes` danach als `string`; die Hand-Ausnahme in `uiTypes.ts` fällt weg (offener
+   Punkt 3) oder es steht begründet, warum nicht.
+5. Offener Punkt 1 ist beantwortet: die `[Flags]`-Typen im Vertrag sind **gezählt**, nicht geschätzt.
+
 ## Offene Punkte
 
 1. Gibt es weitere `[Flags]`-Enums im Vertrag, oder ist `SchoolTypes` das einzige? (Die Schema-Konvention im
@@ -59,3 +76,8 @@ was das Frontend heute von Hand deklariert, und die Hand-Ausnahme in `uiTypes.ts
 
 - **2026-08-01** — angelegt aus dem Review zu E6. Der Befund ist **verifiziert**: Seed-Daten, Antwortwert,
   Sende-Stelle im Frontend und die generierte Union sind je am Code belegt.
+- **2026-08-01** — **ausformuliert.** Der Backlog-Wächter hat die Stufe `idee` angemahnt, weil dort
+  `unverifiziert: true` stehen muss – hier stand `false`, und das war richtig: der Befund war schon bei der
+  Anlage am Code belegt. Statt die Eintrittsbedingung mit einer falschen Angabe zu erfüllen, ist die Stufe
+  nachgezogen; ergänzt wurden nur die zwei Abschnitte, die ihr noch fehlten (User Story, Entwurf der
+  Akzeptanzkriterien). Kein Code berührt.

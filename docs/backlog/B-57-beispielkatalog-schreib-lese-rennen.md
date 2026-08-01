@@ -31,3 +31,8 @@ Datei** nicht.
 Und was ist die richtige Antwort – tolerantes Öffnen (`FileShare.ReadWrite`), atomares Schreiben über eine
 temporäre Datei mit `File.Move`, oder den Katalog gar nicht mehr aus dem Quellbaum lesen? Die dritte Variante
 würde auch den Grund für den Schalter `OpenApi:ExamplesEnabled` entschärfen.
+
+## Verlauf
+
+- **2026-08-01** — geerntet aus dem Review zu [B-42](B-42-openapi-typen-generieren.md) Schritt 1 (E3),
+  ungeprüft: die `IOException` ist beobachtet, ihre Häufigkeit und die richtige Antwort sind offen.

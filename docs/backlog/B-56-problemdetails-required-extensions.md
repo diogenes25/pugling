@@ -28,3 +28,8 @@ Vertrag sind jetzt sichtbar, statt nur ausgeliefert zu werden.
 `extensions` überhaupt gewollt im Vertrag (das `code`-Feld daneben ist es ausdrücklich)? Und beißt es
 wirklich – oder ignoriert `openapi-typescript` ein `required` ohne zugehörige Property? Letzteres entscheidet,
 ob das vor oder nach [B-42](B-42-openapi-typen-generieren.md) Schritt 2 gehört.
+
+## Verlauf
+
+- **2026-08-01** — geerntet aus dem Review zu [B-42](B-42-openapi-typen-generieren.md) Schritt 1 (E3),
+  ungeprüft: der Befund am Schema steht, die Wirkung auf den Generator ist die offene Frage.
