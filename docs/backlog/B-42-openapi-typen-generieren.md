@@ -402,3 +402,7 @@ blind** – die Story hat sich also selbst im Nachhinein korrigiert.
   dokumentierten Zusage von `RequiredJsonPropertyNames` für explizit `required` markierte Member. Dazu ein
   vorbestehender Fund, den E6 scharf macht: [B-60](B-60-flags-enum-im-dokument.md).
   Belegt: 624/624 Backend, 48/48 Vitest, 25/25 Playwright, `tsc -b` grün, Gegenprobe zu AK 4 gemessen.
+- **2026-08-01** — **abgenommen**, Commit `9f9c185`. Alle sieben Akzeptanzkriterien belegt (siehe „Verifikation
+  Schritt 2"); die Gegenprobe zu AK 4 und die vier neuen Vertrags-Zusicherungen sind je rot geprobt. Damit ist
+  die Story vollständig – beide Schritte gebaut, das Dokument beschreibt die Leitung, und `tsc -b` ist das
+  Vertragstor des Frontends.

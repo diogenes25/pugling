@@ -317,7 +317,7 @@ der Grund, warum der Ref den Doppelklick nicht abfing, obwohl er aussah, als tä
 dieses Umbaus hängt damit an `wizardFinish.test.ts` und `tsc` – nicht an einem Durchstich, und das auf dem
 Weg, den B-53 selbst „der Einstiegsweg" nennt. Als [B-58](backlog/B-58-assistent-e2e.md) erfasst.
 
-### E6 · Generierte Vertragstypen ([B-42](backlog/B-42-openapi-typen-generieren.md) Schritt 2) — **abgenommen 2026-08-01**
+### E6 · Generierte Vertragstypen ([B-42](backlog/B-42-openapi-typen-generieren.md) Schritt 2) — **abgenommen 2026-08-01, Commit `9f9c185`**
 
 Über den **Barrel** und in Scheiben, `npm run gen:contract` als wiederholbarer Aufruf. Alle sieben
 Akzeptanzkriterien von B-42 sind belegt, die Gegenprobe zu AK 4 gemessen.
