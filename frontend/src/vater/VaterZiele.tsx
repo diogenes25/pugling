@@ -186,7 +186,7 @@ function Objectives({ childId, subjects }: { childId: number; subjects: SubjectR
       {objectives.loading ? <div className="loading">Lade…</div> : objectives.error ? <div className="banner err">{objectives.error}</div> : (
         <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 10 }}>
           {objectives.data?.items.map((o) => (
-            <ObjectiveCard key={o.id} objective={o} childId={childId} subjects={subjects}
+            <ObjectiveCard key={o.id} objective={o} childId={childId} subjects={subjects} busy={action.busy}
               onChanged={objectives.reload}
               onToggleActive={() => act(() => api.updateObjective(childId, o.id, { active: !o.active }),
                 o.active ? "Ziel stillgelegt." : "Ziel aktiviert.")}
@@ -202,8 +202,13 @@ function Objectives({ childId, subjects }: { childId: number; subjects: SubjectR
   );
 }
 
-function ObjectiveCard({ objective: o, childId, subjects, onChanged, onToggleActive, onDelete }: {
+function ObjectiveCard({ objective: o, childId, subjects, busy, onChanged, onToggleActive, onDelete }: {
   objective: Objective; childId: number; subjects: SubjectResponse[];
+  /**
+   * Läuft eine Aktion der Ziel-Liste. Sie teilt eine `useAction`-Instanz über alle Karten, dessen Sperre
+   * gilt also listenweit – ohne `disabled` wäre ein Klick auf der Nachbarkarte wirkungslos und stumm.
+   */
+  busy: boolean;
   onChanged: () => void; onToggleActive: () => void; onDelete: () => void;
 }) {
   const [addingKr, setAddingKr] = useState(false);
@@ -258,10 +263,12 @@ function ObjectiveCard({ objective: o, childId, subjects, onChanged, onToggleAct
           {addingKr ? "Schließen" : "+ Etappe"}
         </button>
         <span style={{ marginLeft: "auto" }} />
-        <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} onClick={onToggleActive}>
+        <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }}
+          disabled={busy} onClick={onToggleActive}>
           {o.active ? "Stilllegen" : "Aktivieren"}
         </button>
-        <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} onClick={onDelete}>Löschen</button>
+        <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }}
+          disabled={busy} onClick={onDelete}>Löschen</button>
       </div>
 
       {addingKr && (

@@ -7,8 +7,10 @@ import { SCHOOL_TYPES } from "../lib/labels";
 import { TruncationHint } from "../components/ListControls";
 import { FieldLabel, InfoHint } from "../components/InfoHint";
 import { authorText } from "./ExerciseAttribution";
+import { newWizardProgress, runWizardFinish } from "./wizardFinish";
+import type { WizardProgress } from "./wizardFinish";
 import type {
-  ChildResponse, CreatePlanDto, CreatePositionDto, ExerciseSummary, Paged, SchoolType, SubjectResponse,
+  ChildResponse, ExerciseSummary, Paged, SchoolType, SubjectResponse,
 } from "../lib/types";
 
 /*
@@ -87,13 +89,12 @@ export function VaterWizard() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   /*
-   * Was beim Abschluss schon geschrieben wurde. Ein Ref, nicht State: es wird mitten in `finish()` gelesen
-   * und geschrieben, und ein State-Update käme erst im nächsten Render an – der laufende Durchgang würde
-   * seinen eigenen Fortschritt nicht sehen und Positionen doppelt anlegen.
+   * Was beim Abschluss schon geschrieben wurde, plus die Wiedereintritts-Sperre. Ein Ref, nicht State: es
+   * wird mitten im Ablauf gelesen und geschrieben, und ein State-Update käme erst im nächsten Render an –
+   * der laufende Durchgang würde seinen eigenen Fortschritt nicht sehen und Positionen doppelt anlegen.
+   * Was daran welchen Fall abdeckt, steht bei `WizardProgress`.
    */
-  const progress = useRef<{ childId: number | null; planId: number | null; positions: number[] }>({
-    childId: null, planId: null, positions: [],
-  });
+  const progress = useRef<WizardProgress>(newWizardProgress());
 
   const selectedChild = children.data?.find((c) => c.id === childId);
   const effectiveGrade = mode === "new" ? (grade === "" ? undefined : Number(grade)) : selectedChild?.grade ?? undefined;
@@ -163,49 +164,31 @@ export function VaterWizard() {
   function back() { setError(null); setStep((s) => Math.max(s - 1, 0)); }
 
   /**
-   * Legt Kind (optional), Plan und je Übung eine Position an.
-   *
-   * Der Ablauf ist **wiederaufnehmbar**, weil er mehrere Schreibschritte umfasst und der erste (der Plan)
-   * bereits Wirkung hat, wenn ein späterer scheitert. Was gelungen ist, merkt sich `done`; ein zweiter
-   * Klick vervollständigt denselben Plan statt einen zweiten anzulegen.
+   * Sammelt die fünf Schritte zu einem Auftrag und lässt ihn schreiben; der Ablauf selbst steht in
+   * [wizardFinish.ts](wizardFinish.ts) – dort ist er ohne Router und Bildschirm prüfbar.
    */
   async function finish() {
     setError(null);
     setBusy(true);
     try {
-      const done = progress.current;
-      let targetChildId = done.childId ?? (mode === "existing" ? Number(childId) : 0);
-      if (mode === "new" && done.childId == null) {
-        const created = await api.createChild({
+      const planId = await runWizardFinish(progress.current, {
+        newChild: mode === "new" ? {
           name: newName.trim(),
           pin: newPin || undefined,
           birthYear: newBirthYear ? Number(newBirthYear) : null,
           grade: grade === "" ? null : Number(grade),
           schoolType,
-        });
-        targetChildId = created.id;
-        done.childId = created.id;
-      }
-
-      let planId = done.planId;
-      if (planId == null) {
-        const planDto: CreatePlanDto = {
-          childId: targetChildId,
+        } : null,
+        existingChildId: mode === "existing" ? Number(childId) : null,
+        plan: {
           title: title.trim() || "Neuer Lehrplan",
           subjectId: subjectId === "" ? null : Number(subjectId),
           durationDays,
           startDate,
-        };
-        planId = (await api.createPlan(planDto)).id;
-        done.planId = planId;
-      }
-
-      // Jede gewählte Übung als Tagesziel-Position mit den Feinschliff-Werten anlegen; schon angelegte
-      // überspringen (Wiederaufnahme nach einem Fehler).
-      for (const exerciseId of selected) {
-        if (done.positions.includes(exerciseId)) continue;
-        const posDto: CreatePositionDto = {
-          exerciseId,
+        },
+        exerciseIds: selected,
+        // Jede gewählte Übung wird ein Tagesziel mit den Feinschliff-Werten.
+        position: {
           cadence: "Daily",
           stage: defaultStage,
           goalThreshold: passPercent,
@@ -215,22 +198,12 @@ export function VaterWizard() {
           penaltyCoins,
           comboThreshold,
           comboBonusPoints,
-        };
-        try {
-          await api.addPosition(planId, posDto);
-        } catch (err) {
-          /*
-           * Den Titel mitgeben: der Plan ist an dieser Stelle **schon angelegt**, und die Server-Meldung
-           * spricht von „dieser Übung", ohne zu sagen welcher. Bei zehn gewählten Übungen wäre der Nutzer
-           * damit allein – am häufigsten trifft es eine noch nicht gefüllte Vokabelübung (`exercise_empty`).
-           * Der Plan bleibt bestehen; `done` lässt einen zweiten Versuch dort weitermachen, wo es hakte.
-           */
-          const title = filteredExercises.find((x) => x.id === exerciseId)?.title ?? `#${exerciseId}`;
-          throw new Error(`„${title}": ${errorMessage(err)} Der Plan ist angelegt – nimm die Übung ab und versuche es erneut.`);
-        }
-        // Sofort vermerken – sonst wüsste ein Wiederholungsversuch nach dem nächsten Fehler nichts davon.
-        done.positions.push(exerciseId);
-      }
+        },
+        titleOf: (id) => filteredExercises.find((x) => x.id === id)?.title ?? `#${id}`,
+      }, api);
+      // `null` heißt: es läuft schon ein Durchgang (zweiter Klick). Der erste besitzt das Ergebnis und
+      // navigiert – `busy` bleibt absichtlich stehen.
+      if (planId === null) return;
       nav(`/vater/plan/${planId}`);
     } catch (err) {
       setError(errorMessage(err));

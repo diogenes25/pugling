@@ -128,9 +128,11 @@ function MissionManager({ childId }: { childId: number }) {
                   <td>💎 {m.rewardPoints}</td>
                   <td>{m.active ? <span className="pill lime">aktiv</span> : <span className="pill">inaktiv</span>}</td>
                   <td style={{ whiteSpace: "nowrap" }}>
-                    <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} onClick={() => toggle(m)}>
+                    <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }}
+                      disabled={action.busy} onClick={() => toggle(m)}>
                       {m.active ? "Deaktivieren" : "Aktivieren"}</button>{" "}
-                    <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} onClick={() => remove(m)}>Löschen</button>
+                    <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }}
+                      disabled={action.busy} onClick={() => remove(m)}>Löschen</button>
                   </td>
                 </tr>
               ))}
@@ -211,9 +213,11 @@ function AchievementManager({ childId }: { childId: number }) {
                   <td>💎 {a.rewardPoints}</td>
                   <td>{a.active ? <span className="pill lime">aktiv</span> : <span className="pill">inaktiv</span>}</td>
                   <td style={{ whiteSpace: "nowrap" }}>
-                    <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} onClick={() => toggle(a)}>
+                    <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }}
+                      disabled={action.busy} onClick={() => toggle(a)}>
                       {a.active ? "Deaktivieren" : "Aktivieren"}</button>{" "}
-                    <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} onClick={() => remove(a)}>Löschen</button>
+                    <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }}
+                      disabled={action.busy} onClick={() => remove(a)}>Löschen</button>
                   </td>
                 </tr>
               ))}

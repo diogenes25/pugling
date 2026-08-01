@@ -68,7 +68,7 @@ export function CatalogAdmin({ subjects, onCatalogChanged }: {
         </select>
       </div>
       <NewName fieldId="ca-new-subject" label="Neues Fach" placeholder="z. B. Französisch"
-        onCreate={createSubject} />
+        busy={action.busy} onCreate={createSubject} />
 
       {subject && (
         <>
@@ -102,7 +102,7 @@ export function CatalogAdmin({ subjects, onCatalogChanged }: {
           {chapters.data?.length === 0 && <p className="muted">Noch keine Kapitel.</p>}
           {/* `orderIndex` ans Ende: das Kapitel folgt dem Stoff, und die Reihenfolge trägt Bedeutung. */}
           <NewName fieldId="ca-new-chapter" label="Neues Kapitel" placeholder="z. B. Unit 1"
-            onCreate={(name) => act(
+            busy={action.busy} onCreate={(name) => act(
               () => api.createChapter(subject.id, name, (chapters.data?.length ?? 0) + 1),
               "Kapitel angelegt.", chapters.reload)} />
 
@@ -123,7 +123,7 @@ export function CatalogAdmin({ subjects, onCatalogChanged }: {
               }} />
           ))}
           <NewName fieldId="ca-new-category" label="Neue Art" placeholder="z. B. Grammatik"
-            onCreate={(name) => act(() => api.createCategory(subject.id, name), "Art angelegt.", categories.reload)} />
+            busy={action.busy} onCreate={(name) => act(() => api.createCategory(subject.id, name), "Art angelegt.", categories.reload)} />
         </>
       )}
 
@@ -168,8 +168,11 @@ function NameRow({ fieldId, label, srName, value, busy, onSave, onDelete }: {
  * `fieldId` kommt von außen, weil es diese Zeile inzwischen **dreimal** auf der Seite gibt (Fach, Kapitel,
  * Art): eine feste DOM-`id` wäre dreifach vergeben, und jedes `label` zeigte auf dasselbe – das erste – Feld.
  */
-function NewName({ fieldId, label, placeholder, onCreate }: {
-  fieldId: string; label: string; placeholder: string; onCreate: (name: string) => void;
+function NewName({ fieldId, label, placeholder, busy, onCreate }: {
+  fieldId: string; label: string; placeholder: string;
+  /** Läuft schon eine Mutation? Dann sperren – wie in `NameRow`, hier fehlte es. */
+  busy: boolean;
+  onCreate: (name: string) => void;
 }) {
   const [name, setName] = useState("");
   return (
@@ -181,7 +184,7 @@ function NewName({ fieldId, label, placeholder, onCreate }: {
       </div>
       {/* „Anlegen" steht dreimal auf der Seite (Fach, Kapitel, Art). Der sichtbare Text bleibt kurz, der
           zugängliche Name nennt die Sache – sonst sagt Sprachsteuerung „Anlegen" und trifft irgendeinen. */}
-      <button type="submit" className="btn ghost inline-btn" style={{ width: "auto" }}
+      <button type="submit" className="btn ghost inline-btn" style={{ width: "auto" }} disabled={busy}
         aria-label={`${label} anlegen`}>Anlegen</button>
     </form>
   );

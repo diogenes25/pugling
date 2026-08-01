@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { StatusBanner } from "../components/StatusBanner";
 import { api } from "../lib/api";
-import { useAction } from "../lib/useAction";
+import { useAsync } from "../lib/useAsync";
 import type { MediaAssetResponse, MediaPurpose } from "../lib/types";
 
 /*
@@ -63,6 +63,10 @@ export function AssetThumb({ asset, size = 96, purpose = "Card", action }: {
  * Die Bibliothekssuche: Treffer zeigen und einen davon zuordnen. Gesucht wird **auf Absenden**, nicht bei
  * jedem Tastendruck – die Bibliothek kann groß sein, und ein Treffer, der unter dem Finger wegwandert,
  * lässt sich nicht anklicken.
+ *
+ * Der Ladezustand kommt aus `useAsync`, dem **lesenden** Primitiv. Vorher stand hier `useAction` – das
+ * schreibende: es hielt zwar denselben Zustand, verwirft seit der Wiedereintritts-Sperre aber eine zweite
+ * Aktion. Für ein Speichern ist das richtig, für eine Suche wäre es „ich suche neu, es passiert nichts".
  */
 export function MediaSearch({ busy, linkedIds, onPick, take = 12 }: {
   /** Sperrt die Treffer, solange die *äußere* Zuordnung läuft. */
@@ -73,12 +77,23 @@ export function MediaSearch({ busy, linkedIds, onPick, take = 12 }: {
   take?: number;
 }) {
   const [search, setSearch] = useState("");
-  const [hits, setHits] = useState<MediaAssetResponse[] | null>(null);
-  const action = useAction();
+  /*
+   * Was **abgeschickt** wurde – und wie oft. `useAsync` löst über seine Deps aus, und ein Objekt je
+   * Absenden macht dieselbe Suche wiederholbar: mit einem bloßen String wäre „Suchen" bei unverändertem
+   * Text keine Dep-Änderung und täte nichts. `null` heißt „noch nicht gesucht" (kein Aufruf beim Anzeigen).
+   */
+  const [query, setQuery] = useState<{ text: string; nr: number } | null>(null);
+  const found = useAsync<MediaAssetResponse[] | null>(
+    () => (query === null ? Promise.resolve(null) : api.media({ search: query.text || undefined, take })),
+    [query],
+  );
+  const hits = found.data;
+  // `useAsync` startet mit `loading: true`, bevor überhaupt gesucht wurde – ohne `query` ist das kein Laden.
+  const searching = found.loading && query !== null;
 
-  async function find(e: React.FormEvent) {
+  function find(e: React.FormEvent) {
     e.preventDefault();
-    await action.run(async () => setHits(await api.media({ search: search.trim() || undefined, take })));
+    setQuery((q) => ({ text: search.trim(), nr: (q?.nr ?? 0) + 1 }));
   }
 
   return (
@@ -87,8 +102,8 @@ export function MediaSearch({ busy, linkedIds, onPick, take = 12 }: {
         <input aria-label="Bild suchen" autoComplete="off" value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Bild in der Bibliothek suchen" style={{ maxWidth: 280 }} />
-        <button type="submit" className="btn ghost small" style={{ width: "auto" }} disabled={action.busy}>
-          {action.busy ? "Suche…" : "Suchen"}
+        <button type="submit" className="btn ghost small" style={{ width: "auto" }} disabled={searching}>
+          {searching ? "Suche…" : "Suchen"}
         </button>
       </form>
 
@@ -101,14 +116,19 @@ export function MediaSearch({ busy, linkedIds, onPick, take = 12 }: {
               return (
                 <AssetThumb key={a.id} asset={a} purpose="Thumb" action={{
                   label: already ? "schon dabei" : "+ Zuordnen",
-                  disabled: busy || already || action.busy,
+                  disabled: busy || already || searching,
                   onClick: () => onPick(a.id),
                 }} />
               );
             })}
           </div>
         ))}
-      <StatusBanner message={action.message} />
+      {/*
+        Über `StatusBanner`, nicht als bedingter Kasten: die Live-Region muss **dauerhaft** im DOM stehen,
+        sonst entstehen Region und Text gleichzeitig und die Ansage bleibt aus (begründet in
+        `StatusBanner.tsx`, gepinnt von seinem Test).
+      */}
+      <StatusBanner message={found.error ? { ok: false, text: found.error } : null} />
     </>
   );
 }

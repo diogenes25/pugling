@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/ausformuliert, bereich/frontend, bereich/qualitaet]
+tags: [typ/story, status/in-arbeit, bereich/frontend, bereich/qualitaet]
 aliases: [Wizard-Doppelklick, zwei Kinder zwei Pläne]
-status: ausformuliert
+status: in-arbeit
 prio: P2
 art: Defekt
 quelle: docs/testabdeckung-plan.md
@@ -52,11 +52,25 @@ der `progress`-Ref ist schon da, er muss nur zusätzlich als Wiedereintritts-Spe
 
 ## Offene Punkte
 
-1. Rendert der Regressionstest den Assistenten (er hängt an `api.ts` und am Router) oder wird `finish()`
-   testbar herausgelöst? **Empfehlung:** herauslösen – die Grenze aus B-43/Entscheidung 3 („nur
-   `components/` und `lib/`") soll nicht gleich wieder eine Ausnahme bekommen.
+1. ~~Rendert der Regressionstest den Assistenten oder wird `finish()` testbar herausgelöst?~~ →
+   **herausgelöst** (siehe Verlauf). Die Ortsregel lautet ohnehin nicht „nur `components/` und `lib/`",
+   sondern „der Test liegt beim Geprüften" – `wizardFinish.test.ts` liegt neben `wizardFinish.ts`.
 
 ## Verlauf
 
 - **2026-08-01** — angelegt beim Grillen des Testabdeckungs-Pakets; Ist-Stand direkt am Code belegt (der
   Kommentar bei `progress` sagt selbst, wogegen der Ref gebaut wurde – und wogegen eben nicht).
+- **2026-08-01** — gebaut, im Durchgang von E5. `finish()` liegt jetzt als `runWizardFinish` in
+  [wizardFinish.ts](../../frontend/src/vater/wizardFinish.ts); die drei Schreibzugriffe kommen als Parameter
+  (`WizardWriter`), damit der Test ohne `api.ts` und Router läuft. Der `progress`-Ref trägt beide Fälle, und
+  der Unterschied steht am Typ: `childId`/`planId`/`positions` die **Wiederaufnahme** (sequenziell),
+  `running` den **Wiedereintritt** (nebenläufig) – die Verwechslung dieser zwei war der Grund, warum der Ref
+  wie eine Sperre aussah, ohne eine zu sein.
+  Rot-Probe zu AK 1: Sperre entfernt → „expected […] to have a length of 1 but got **2**" (zwei Kinder),
+  Datei danach byte-gleich zurückgelegt. AK 2 hat einen eigenen Fall (Plan scheitert → zweiter Anlauf legt
+  **kein** zweites Kind an und hängt den Plan an `childId` 101) und einen für die Positionen (Abbruch bei
+  Nr. 2 → der zweite Anlauf schickt nur noch 12 und 13). AK 3: `disabled={busy}` unverändert. AK 4: die 25
+  Playwright-Tests grün, `vater-von-null.spec.ts` darunter.
+  **Neu gefunden und benannt:** kein E2E fährt den Assistenten zu Ende – die Verdrahtung des Bildschirms mit
+  dem echten `api` hängt an `tsc`. Als [B-58](B-58-assistent-e2e.md) erfasst.
+  Belegt: 7 neue Unit-Fälle (48 gesamt grün), 25 E2E grün, `tsc -b` grün.

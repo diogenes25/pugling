@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/gegrillt, bereich/qualitaet, bereich/frontend, bereich/tests]
+tags: [typ/story, status/in-arbeit, bereich/qualitaet, bereich/frontend, bereich/tests]
 aliases: [Frontend-Komponententests, useAction-Sperre]
-status: gegrillt
+status: in-arbeit
 prio: P3
 art: Defekt
 quelle: docs/testplan.md#nachmessung-2026-07-31-die-drei-unbeobachteten-flächen
@@ -152,3 +152,30 @@ Alle im Grillen vom 2026-07-31 entschieden.
      Die Regel in `frontend/CLAUDE.md` wird damit sauber – nur `components/` und `lib/`, ohne Sternchen.
   Abgespalten: [B-53](B-53-wizard-doppelklick.md) (`VaterWizard`, zwei Kinder und zwei Pläne) – andere
   Bauform, eigene Story, im selben Durchgang gebaut.
+- **2026-08-01** — gebaut. Der Ablauf war Rot-zuerst: der Test mit zwei `run()`-Aufrufen im selben Tick
+  meldete **`aufrufe` 2 statt 1** (zweimal, auch quer über `run`/`runFor`), danach kam der `useRef`. Sechs der
+  acht Fälle waren dabei **schon grün** – die dokumentierten Zusicherungen des Primitivs hielten, es fehlte
+  allein die Sperre. Gegenprobe zu AK 3: `if (!message) return null;` in `StatusBanner` → „Unable to find an
+  accessible element with the role `status`".
+  Vier Abweichungen von der Vorlage, alle nach oben:
+  1. **AK 1 ohne stellvertretenden Bildschirm** (Streichung aus dem Plan, E5): der Defekt sitzt im Hook, also
+     prüft ihn `renderHook` – ohne `api.ts` und Router.
+  2. **Die „fünf Knöpfe ohne `disabled`" waren sechzehn** (18 gerenderte). Der frühere Griff hatte ein
+     `<button …>` bis zum ersten `>` gelesen und war am `=>` einer `onClick`-Lambda abgebrochen; ein `disabled`
+     dahinter galt als vorhanden. Aufstellung im
+     [Testabdeckungs-Plan](../testabdeckung-plan.md#der-zählfehler-nicht-fünf-knöpfe-sondern-sechzehn).
+     Drei Bauteile bekamen dafür einen `busy`-Parameter (`ListingRow`, `ObjectiveCard`, `NewName`).
+  3. **`@testing-library/jest-dom` blieb weg.** E4 hatte es beim ersten `toBeDisabled` erwartet – gebraucht
+     wurde es nie: die Knopf-Zustände prüft kein Test (kein Bildschirm wird gerendert), und `aria-sort` liest
+     `getAttribute` direkt. **Keine Lockfile-Änderung in dieser Etappe.**
+  4. **Fünf mutierende Knöpfe bleiben ohne `disabled`**, weil ihr Schreibpfad das Primitiv nicht benutzt →
+     [B-54](B-54-objectivecard-schreib-primitive.md), dort mit `Datei:Zeile`. Ich hatte „zwei" gemeldet; der
+     `frontend-reviewer` fand fünf, weil meine Zählung nur die **Anwesenheit** eines `disabled` prüfte und
+     nicht seine Bindung (`VaterZiele.tsx:349` hat eines – an einer Eingabeprüfung). Darunter mit
+     `VaterDashboard.addChild` ein Doppelklick-Defekt auf der Startseite, den keine Story kannte.
+  5. **AK 5 sagt „alle 24 Aufrufer" – es sind jetzt 23.** `MediaPickers` hat das Primitiv in dieser Etappe
+     absichtlich verlassen (Punkt 2 oben). Verhaltensgleichheit gilt für die 23 verbliebenen; für
+     `MediaSearch` ist die Änderung gewollt und unten benannt.
+  Belegt: 48 Unit-Fälle grün (vorher 24), 25 E2E grün, `tsc -b` grün, ~0,6 s Zuwachs bei einem AK-6-Budget
+  von 5 s. Die Grenze aus Entscheidung 3 steht in `frontend/CLAUDE.md` – zusammen mit der neuen Pflicht
+  `disabled={busy}` an jedem mutierenden Knopf; dafür musste dort Erzählung weichen (8991 B von 9000).

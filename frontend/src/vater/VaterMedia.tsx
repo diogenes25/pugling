@@ -136,7 +136,7 @@ function AssetRow({ asset, onChanged }: { asset: MediaAssetResponse; onChanged: 
                 onChange={(e) => setTagInput(e.target.value)} placeholder="Schlagworte, kommagetrennt"
                 style={{ maxWidth: 320 }}
               />
-              <button type="submit" className="btn ghost small" style={{ width: "auto" }}>Ergänzen</button>
+              <button type="submit" className="btn ghost small" style={{ width: "auto" }} disabled={action.busy}>Ergänzen</button>
             </form>
           </td>
         </tr>

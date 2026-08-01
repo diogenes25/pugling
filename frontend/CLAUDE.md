@@ -12,51 +12,57 @@ cd frontend && npm test            # Vitest (src/**/*.test.ts(x), happy-dom) –
 cd frontend && npm run test:e2e    # Playwright: startet Backend (Temp-DB) + Vite, fährt den Vater→Sohn-Loop
 ```
 
-**Anmerkungs-Widget** (`src/components/RemarkWidget.tsx`, Alt+A, unten rechts im Vater-Web **und** in der
-Sohn-Arcade — dort mit `bottomOffset={96}`, sonst überdeckt es die klebende `.sohn-nav`): erfasst
-Beobachtungen beim Testen samt Kontext-Schnappschuss und Fehler-Ringpuffer, zeigt die Log-Id fürs
-Einlösen in Claude Code. Nur `import.meta.env.DEV` – im Prod-Bundle ist es wegoptimiert. Für E2E über
-`localStorage["pugling.remarks.off"]="1"` abgeschaltet (gesetzt in `playwright.config.ts` via
-`use.storageState`); `e2e/anmerkungen.spec.ts` hebt das für sich auf. Plan: [docs/anmerkungen-plan.md](../docs/anmerkungen-plan.md).
+**Anmerkungs-Widget** (`src/components/RemarkWidget.tsx`, Alt+A, im Vater-Web **und** in der Sohn-Arcade —
+dort mit `bottomOffset={96}`, sonst überdeckt es die klebende `.sohn-nav`): erfasst Beobachtungen beim Testen
+samt Kontext-Schnappschuss und Fehler-Ringpuffer, zeigt die Log-Id fürs Einlösen in Claude Code. Nur
+`import.meta.env.DEV`. Für E2E über `localStorage["pugling.remarks.off"]="1"` abgeschaltet (gesetzt in
+`playwright.config.ts`); `e2e/anmerkungen.spec.ts` hebt das für sich auf.
+Plan: [docs/anmerkungen-plan.md](../docs/anmerkungen-plan.md).
 
 **Feld-Erklärungen** (`src/components/InfoHint.tsx` + `src/lib/fieldHelp.ts`): Erklärungsbedürftige
 Eingabefelder tragen statt `<label>` ein `<FieldLabel htmlFor=… topic="…">`, das ein „ⓘ" mit Popover
 anhängt (Checkbox-Zeilen: `<span className="label-row">` um `<label className="checkline">` + `<InfoHint>`).
 **Der Text steht nie am Feld, sondern in `fieldHelp.ts`** – dieselbe Größe wird an mehreren Stellen
-eingestellt (der Assistent stellt dieselbe Position ein wie die Plan-Seite), und zwei Formulierungen
-desselben Begriffs werden zwei Bedeutungen; `HelpTopic` lässt einen Tippfehler beim Übersetzen auffallen.
+eingestellt (Assistent wie Plan-Seite), und zwei Formulierungen desselben Begriffs werden zwei Bedeutungen;
+`HelpTopic` lässt einen Tippfehler beim Übersetzen auffallen.
 Der Hinweis-Knopf heißt `Erklärung zu „<Feldname>"` – **`getByLabel` in Tests darum mit `{ exact: true }`**,
 sonst trifft der Teilstring-Vergleich den Knopf statt das Eingabefeld.
 E2E: [e2e/feldhilfe.spec.ts](e2e/feldhilfe.spec.ts) prüft Feld → *richtiger* Text, nicht „irgendein Popover".
 
 **Komponenten/Hooks testet React Testing Library** (`render`, `renderHook`); der Test liegt beim Geprüften.
 Tragend: `setupFiles: ["src/test-setup.ts"]` räumt das DOM zwischen den Fällen ab – ohne `globals: true` tut
-RTL das **nicht** selbst. Begründung in [src/test-setup.ts](src/test-setup.ts), bewacht von
-`src/test-setup.test.tsx`.
+RTL das **nicht** selbst (Begründung in [src/test-setup.ts](src/test-setup.ts), bewacht von
+`src/test-setup.test.tsx`). **Grenze: kein nachgebauter Bildschirm mit gefälschtem `fetch`** – Bausteine und
+Regeln hier, Wege durch die App bei Playwright. Klicks per `fireEvent`, nie `node.click()`.
+
+**Jeder Knopf, der eine Mutation auslöst, trägt `disabled={busy}`** – auch wenn `useAction` seinen
+Wiedereintritt selbst sperrt (`useRef`, synchron): es ist der Wartepunkt der Playwright-Actionability und der
+sichtbare Grund, warum eine verworfene zweite Aktion nicht wie „nichts passiert" aussieht. Die Sperre gilt je
+**Hook-Instanz**, in Listen mit geteilter `ActionState` also listenweit. Als **Regel**, nicht als Zustand:
+fünf Vater-Knöpfe (B-54) und die Sohn-Arcade (B-49) folgen ihr noch nicht.
 
 **Neue Abhängigkeiten bitte mit `--legacy-peer-deps` installieren:** `vite-plugin-pwa@0.21` deklariert
 Peer `vite@^3…^6`, installiert ist `vite@8` – jede Neuauflösung bricht sonst mit `ERESOLVE` ab
 (vorbestehend, der Build läuft trotzdem). **Das gilt auch für `npm ci`** und damit für jede frische
 Maschine: CI (`ci.yml`, Job `frontend`) und Deploy (`deploy-azure.yml`) installieren deshalb mit dem Flag.
-Ohne es scheiterte das Deploy von 2026-07-05 bis 2026-07-29 unbemerkt am Install – Hintergrund in
-[docs/codequalitaet-gates-plan.md](../docs/codequalitaet-gates-plan.md) (Etappe D1).
+Ohne es scheiterte ein Deploy drei Wochen unbemerkt am Install –
+[docs/codequalitaet-gates-plan.md](../docs/codequalitaet-gates-plan.md) (D1).
 **Preis des Flags: npm installiert fehlende Peers nicht** – jeder gebrauchte Peer muss selbst in den
 `devDependencies` stehen (darum `@testing-library/dom`; fehlt es, fällt der ganze Vitest-Lauf mit
 „Cannot find module").
 
-Rollen im SPA: `/` Produktseite, `/vater` Web-Admin (inkl. `/vater/wizard` Lehrplan-Assistent,
-`/vater/lehrwerke` Buchreihen + Units, `/vater/fachlehrer` Creator-Profile), `/sohn` Arcade-PWA.
+Rollen im SPA: `/` Produktseite, `/vater` Web-Admin, `/sohn` Arcade-PWA. API-Client + Types unter
+[src/lib/](src/lib/), kein HTTP daneben.
 
 **Zwei Konto-Arten** ([docs/lehrer-konto-plan.md](../docs/lehrer-konto-plan.md)): ein **Vater**-Konto trägt
 die Rollen Creator + Supervisor, ein **Lehrer**-Konto nur Creator. `session.role` (`Supervisor` | `Creator` |
 `Student`) entscheidet, was die Oberfläche zeigt: ein Lehrer sieht nur die Erstellen-Perspektive, keinen
-Umschalter, keinen Profil-Link (der zeigt auf einen Supervisor-Endpunkt). Wer eine neue Seite ergänzt, muss
+Umschalter und keinen Profil-Link. Wer eine neue Seite ergänzt, muss
 sie einer Perspektive zuordnen oder in `NEUTRAL_PREFIXES` eintragen – sonst leitet die Schranke ein
 Lehrer-Konto von ihr weg. Die Rechteprüfung bleibt beim Server; das Frontend zeigt nur keine Türen, die
 verschlossen sind.
 
-**Informationsarchitektur des Vater-Webs** ([docs/vater-perspektiven-plan.md](../docs/vater-perspektiven-plan.md),
-Vorgänger: [docs/vater-informationsarchitektur-plan.md](../docs/vater-informationsarchitektur-plan.md)):
+**Informationsarchitektur des Vater-Webs** ([docs/vater-perspektiven-plan.md](../docs/vater-perspektiven-plan.md)):
 Das Vater-Web hat **drei Perspektiven** – 👀 Betreuen (`/vater`), 🎯 Zuweisen (`/vater/plaene`),
 ✏️ Erstellen (`/vater/inhalte`). Sie folgen den Ebenen des Produkts (Supervisor / Brücke / Creator) und
 sind **keine Rechte**, sondern eine Antwort auf „woran arbeite ich gerade".
@@ -73,7 +79,6 @@ den sie erweitern); **ein Bereich, der mehrere Übungen trägt, ist ein eigener 
 und Lückentexte neben dem Anlegen statt eingeklappt darin); und **eine Auswahl reist als Query mit**
 (`?childId=`, `?subjectId=&chapterId=`) – sonst steht im Zielformular wieder das erste Kind bzw. Fach.
 Anlegen und Verwalten sind getrennt: `/vater/exercises` verwaltet, `/vater/exercises/neu` legt an.
-API-Client + Types zentral unter [src/lib/](src/lib/).
 Ein Vater entsteht **im UI**: `/vater` hat neben „Anmelden" den Modus „Neu registrieren" (gegen das anonyme
 `POST supervisor/adults`, meldet direkt an und nennt die neue Id — sie ist der Login-Name); das eigene
 Konto liegt unter `/vater/profil`. `/vater/kind/:id` ist der **Kind-Hub** (Stammdaten inkl. PIN, Bild-Freigabe,
@@ -89,19 +94,17 @@ Kopien liefen zwangsläufig auseinander. Die Formulare je Typ stehen in
 [wiki/08-erweitern.md](../wiki/08-erweitern.md)); `e2e/uebungstypen.spec.ts` vergleicht das
 Typ-Pulldown gegen das Manifest und schlägt fehl, sobald ein Server-Typ kein UI hat.
 **Material zurückziehen** (`PATCH creator/exercises/{id}/sharing`, nur Owner): der einzige Weg, eine Übung
-aus dem Verkehr zu nehmen – Löschen verweigert eine benutzte Übung, und das zu Recht (laufende Pflichten
-dürfen nicht unter dem Kind wegbrechen). Zurückziehen stoppt nur **neue** Zuweisungen. Der Schalter sitzt in
-der Verwendungs-Anzeige, nicht in der Zeile: eine seltene Verwaltungs-Entscheidung neben der Auskunft, die
-sie begründet. Der Zustand steht als Pille „zurückgezogen" in der Zeile, für jeden sichtbar.
+aus dem Verkehr zu nehmen – Löschen verweigert eine benutzte Übung zu Recht (laufende Pflichten dürfen nicht
+unter dem Kind wegbrechen). Zurückziehen stoppt nur **neue** Zuweisungen. Der Schalter sitzt in der
+Verwendungs-Anzeige neben der Auskunft, die ihn begründet; der Zustand steht als Pille in der Zeile.
 
 **Wiederkehrende Falle bei Listen mit aufklappbaren Zeilen:** `useAsync` behält `data` über ein `reload`,
 setzt aber `loading` erneut. Wer `{loading ? "Lade…" : rows}` schreibt, hängt bei **jeder** Änderung alle
 Zeilen aus – aufgeklappte Bereiche und ihr Zustand sind weg. Der Platzhalter darf nur greifen, solange es
-noch keine Daten gibt (`loading && data === null`); getroffen hat es schon `VaterKatalog` und `VaterExercises`.
+noch keine Daten gibt (`loading && data === null`).
 
 Übungen sind über `/vater/exercises` **bearbeitbar**
 (Metadaten per PUT — den geladenen `config`/`suggestedBonus`/`executePublic` mitschicken, sonst löscht der
 Vollersatz sie; Vokabelpaare einzeln über `…/vocabulary/{id}/items`, damit die Item-Ids und der Lernstand
-des Kindes erhalten bleiben). Das **Anlege**-Formular liegt daneben auf `/vater/exercises/neu`
-([src/vater/VaterExerciseCreate.tsx](src/vater/VaterExerciseCreate.tsx)) — wer einen neuen Typ ergänzt,
-braucht beide Wege: dort das Formular, im Dialog den Rückweg.
+des Kindes erhalten bleiben). Das **Anlege**-Formular liegt daneben auf `/vater/exercises/neu` — wer einen
+neuen Typ ergänzt, braucht beide Wege: dort das Formular, im Dialog den Rückweg.

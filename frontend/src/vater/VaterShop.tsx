@@ -178,7 +178,8 @@ function ArticleRow({ article, selected, action, onToggleListings, onSaved, onRe
         <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} onClick={onToggleListings}>
           {selected ? "Angebote \u25b2" : "Angebote \u25bc"}</button>{" "}
         <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} onClick={() => setEditing(true)}>Bearbeiten</button>{" "}
-        <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} onClick={onRemove}>Löschen</button>
+        <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }}
+          disabled={action.busy} onClick={onRemove}>Löschen</button>
       </td>
     </tr>
   );
@@ -256,7 +257,7 @@ function ListingManager({ article }: { article: ShopArticle }) {
             <thead><tr><th>Angebot</th><th>Menge</th><th>Preis</th><th>Bestand</th><th>Auffüllen</th><th>Status</th><th></th></tr></thead>
             <tbody>
               {list.data?.map((l) => (
-                <ListingRow key={l.id} listing={l} unitType={article.unitType}
+                <ListingRow key={l.id} listing={l} unitType={article.unitType} busy={action.busy}
                   onSave={(dto) => save(l, dto)} onRefill={() => refill(l)} onToggle={() => toggle(l)} onRemove={() => remove(l)} />
               ))}
               {list.data?.length === 0 && <tr><td colSpan={7} className="muted">Noch keine Angebote – lege oben eins an.</td></tr>}
@@ -269,8 +270,14 @@ function ListingManager({ article }: { article: ShopArticle }) {
 }
 
 /** Eine Angebots-Zeile; im Bearbeiten-Modus sind Preis, Menge und Bestandsgrenzen änderbar. */
-function ListingRow({ listing, unitType, onSave, onRefill, onToggle, onRemove }: {
+function ListingRow({ listing, unitType, busy, onSave, onRefill, onToggle, onRemove }: {
   listing: ShopListing; unitType: UnitType;
+  /**
+   * Läuft eine Aktion des Angebots-Panels. Die Zeile hält keinen eigenen Zustand: das Panel teilt eine
+   * `useAction`-Instanz über alle Zeilen, und dessen Sperre gilt darum listenweit. Ohne das `disabled`
+   * wäre ein Klick in Zeile 7 während Zeile 3 speichert wirkungslos – **ohne** sichtbaren Grund.
+   */
+  busy: boolean;
   onSave: (dto: UpdateShopListingDto) => void;
   onRefill: () => void; onToggle: () => void; onRemove: () => void;
 }) {
@@ -303,7 +310,7 @@ function ListingRow({ listing, unitType, onSave, onRefill, onToggle, onRemove }:
               <select id={`${uid}-r`} value={form.refillKind} onChange={(e) => setForm((f) => ({ ...f, refillKind: e.target.value as ShopRefillKind }))}>
                 {REFILL_KINDS.map((k) => <option key={k} value={k}>{REFILL_LABEL[k]}</option>)}
               </select></div>
-            <button type="button" className="btn inline-btn" style={{ width: "auto" }}
+            <button type="button" className="btn inline-btn" style={{ width: "auto" }} disabled={busy}
               onClick={() => { onSave({ ...form, title: form.title.trim() || null }); setEditing(false); }}>OK</button>
             <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} onClick={() => setEditing(false)}>Abbrechen</button>
           </div>
@@ -321,11 +328,13 @@ function ListingRow({ listing, unitType, onSave, onRefill, onToggle, onRemove }:
       <td className="muted">{REFILL_LABEL[listing.refillKind]}</td>
       <td>{listing.active ? <span className="pill lime">aktiv</span> : <span className="pill">inaktiv</span>}</td>
       <td style={{ whiteSpace: "nowrap" }}>
-        <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} onClick={onRefill}>Bestand füllen</button>{" "}
+        <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }}
+          disabled={busy} onClick={onRefill}>Bestand füllen</button>{" "}
         <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} onClick={() => setEditing(true)}>Bearbeiten</button>{" "}
-        <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} onClick={onToggle}>
+        <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} disabled={busy} onClick={onToggle}>
           {listing.active ? "Deaktivieren" : "Aktivieren"}</button>{" "}
-        <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} onClick={onRemove}>Löschen</button>
+        <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }}
+          disabled={busy} onClick={onRemove}>Löschen</button>
       </td>
     </tr>
   );
@@ -396,8 +405,10 @@ function ChildShopView({ childId }: { childId: number }) {
                   <td className="muted">{new Date(r.requestedAt).toLocaleDateString()}</td>
                   <td>{activationPill(r.status)}</td>
                   <td style={{ whiteSpace: "nowrap" }}>
-                    {r.canApprove && <><button type="button" className="btn lime inline-btn" style={{ width: "auto" }} onClick={() => decide(r, true)}>Freigeben</button>{" "}</>}
-                    {r.canReject && <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} onClick={() => decide(r, false)}>Ablehnen</button>}
+                    {r.canApprove && <><button type="button" className="btn lime inline-btn" style={{ width: "auto" }}
+                      disabled={action.busy} onClick={() => decide(r, true)}>Freigeben</button>{" "}</>}
+                    {r.canReject && <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }}
+                      disabled={action.busy} onClick={() => decide(r, false)}>Ablehnen</button>}
                   </td>
                 </tr>
               ))}
@@ -440,7 +451,9 @@ function ChildShopView({ childId }: { childId: number }) {
                   <td className="muted">{new Date(p.purchasedAt).toLocaleDateString()}</td>
                   <td>{p.status === "Owned" ? <span className="pill lime">aktiv</span> : <span className="pill">storniert</span>}</td>
                   <td style={{ whiteSpace: "nowrap" }}>
-                    {p.canCancel && <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} onClick={() => cancel(p)}>Stornieren</button>}
+                    {/* Ein Geldpfad auf der Vater-Seite: das Stornieren erstattet Münzen bzw. Gems. */}
+                    {p.canCancel && <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }}
+                      disabled={action.busy} onClick={() => cancel(p)}>Stornieren</button>}
                   </td>
                 </tr>
               ))}

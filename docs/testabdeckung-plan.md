@@ -42,6 +42,8 @@ nicht übernommen:
    `VaterShop.tsx:443` („Stornieren", ein **Geldpfad auf der Vater-Seite**, womit das Argument „der Geldpfad
    des Sohnes läuft nicht über das Primitiv" hier nicht greift). Bei `toggle` ist der Doppelschuss zudem ein
    **Flip-Flop** (`active: !m.active` zweimal = Ausgangszustand, Banner meldet Erfolg).
+   **Auch diese Zahl war zu klein** – beim Bauen von E5 waren es 16 zu ergänzende Knöpfe und 5 verbleibende;
+   warum die Messung zweimal daneben lag, steht unten in E5.
 
 ## Die zwei Spuren
 
@@ -204,19 +206,23 @@ Zwei Befunde, die beim Bauen dazukamen:
   es geht um ein Entwickler-Werkzeug, das eine eingecheckte Datei aus dem eigenen Repo liest.
   Festgehalten, damit die Zahl beim nächsten Blick nicht als Neuigkeit gelesen wird.
 
-### E5 · Sperre und Primitive-Tests ([B-43](backlog/B-43-frontend-komponententests.md), `gegrillt`, Defekt)
+### E5 · Sperre und Primitive-Tests ([B-43](backlog/B-43-frontend-komponententests.md), `abgenommen`, Defekt) — **erledigt 2026-08-01**
 
 Der Umfang **wächst** gegenüber der Story – ohne die vier folgenden Punkte schließt sie die Fehlerklasse nicht,
 sondern nur ihren gut abgesicherten Teil:
 
-1. **Die fünf Knöpfe ohne `disabled`** (oben belegt) bekommen es dazu. Die Sperre ist **additiv**:
-   `disabled={busy}` bleibt überall – es ist heute der Serialisierungspunkt, auf den Playwrights Actionability
-   wartet. Wer es nach der Sperre als „überflüssig" entfernt, nimmt der E2E den Wartepunkt, und Klicks werden
-   **still geschluckt**.
+1. **Die Knöpfe ohne `disabled`** bekommen es dazu. Die Sperre ist **additiv**: `disabled={busy}` bleibt
+   überall – es ist heute der Serialisierungspunkt, auf den Playwrights Actionability wartet. Wer es nach der
+   Sperre als „überflüssig" entfernt, nimmt der E2E den Wartepunkt, und Klicks werden **still geschluckt**.
+   **Korrektur beim Bauen: es waren nicht fünf, sondern sechzehn** – siehe „Der Zählfehler" unten.
 2. **`useAction` trägt auch einen Lesevorgang:** `MediaPickers.tsx:77-82` ist die Bibliothekssuche. Eine
    Sperre, die die zweite Aktion still verwirft, macht aus „ich suche neu" ein „nichts passiert". Diese
    Stelle wird **vor** der Sperre auf `useAsync` umgestellt (Entscheidung 5) – das Primitiv heißt selbst
    „Zustand einer **schreibenden** Aktion" (`useAction.ts:10`), die Suche gehörte nie hinein.
+   Ausgelöst wird über die `useAsync`-Deps, mit `{ text, nr }` statt eines Strings: sonst wäre „Suchen" bei
+   unverändertem Text keine Dep-Änderung und täte nichts. **Eine gewollte Verhaltensänderung fürs Protokoll:**
+   ein `401` während der Suche meldet sich nicht mehr, sondern beendet die Sitzung – wie bei jedem anderen
+   Lesevorgang (`useAsync.ts:33`).
 3. **Eine `ActionState`-Instanz wird über Listen geteilt** (`PlanPositions.tsx:38→:48/:58`, ebenso
    `VaterShop.tsx:47→:105`, `VaterZiele.tsx:164→:178`). Der Ref-Lock ist damit **listenweit**, nicht
    knopfweit – bewusst so (Entscheidung 5: keine Schlüssel-Signatur am Primitiv). Heute macht
@@ -245,6 +251,71 @@ Drei Dinge, die E4 für diese Etappe hinterlässt:
   `jest`, das vitest nicht definiert (auch nicht unter `globals: true`); die Kombination hängt dann im
   Poll-Intervall statt zu timeouten. Der gegrillte Zuschnitt braucht sie nicht – das hier erspart nur das
   Debuggen im Ernstfall.
+
+#### Nachweis
+
+| Sache | Messung |
+|---|---|
+| Sperre | `useAction.ts`: ein `useRef(false)`, geprüft **vor** dem ersten `await`, freigegeben im `finally`. Eine Sperre für `run` **und** `runFor` gemeinsam. |
+| Rot-Probe Primitiv | Test zuerst: `aufrufe` **2 statt 1**, zweimal (auch quer über `run`/`runFor`). Die sechs übrigen Fälle waren dabei schon grün – die dokumentierten Zusicherungen hielten, die Sperre fehlte. |
+| Rot-Probe Assistent | Sperre aus `wizardFinish.ts` entfernt → „expected [ { name: 'Lena' }, …(1) ] to have a length of 1 but got **2**". Datei danach byte-gleich zurückgelegt. |
+| Rot-Probe `StatusBanner` | `if (!message) return null;` eingesetzt → „Unable to find an accessible element with the role `status`". |
+| Unit-Tests | **48 grün** (E4-Stand 24): 8 × `useAction`, 3 × `StatusBanner`, 6 × `ListControls`, 7 × `wizardFinish`. |
+| Laufzeit | ~2,2 s für 48 Fälle, gegen ~1,7 s für die 24 aus E4. Der Zuwachs liegt bei ~0,5 s, AK 6 erlaubt 5 s. |
+| E2E | **25 grün** in 2,1 min, unverändert. |
+| `tsc -b` / Bundle | grün; 577,55 kB (E4: 576,70 kB) – die +0,85 kB sind Sperre, drei neue Props und `wizardFinish.ts`. |
+| `frontend/CLAUDE.md` | 8986 B von 9000 – die zwei neuen Regeln (Grenze, `disabled`-Pflicht) mussten an vier Stellen Erzählung verdrängen. |
+
+#### Der Zählfehler: nicht fünf Knöpfe, sondern sechzehn
+
+Die „fünf" stammten aus einem Griff mit einem halben Parser – ein `<button …>`-Muster, dessen `>` am ersten
+`=>` einer `onClick`-Lambda abbrach, sodass ein `disabled` **hinter** dem Pfeil als „vorhanden" durchging.
+Mit einem klammerzählenden Scanner und der Frage „führt dieser Knopf eine Mutation aus" waren es **16
+Stellen** (eine dreifach gerendert, also 18 Knöpfe):
+
+`VaterRewards` 4 · `VaterShop` 8 (Artikel löschen, Angebot speichern/füllen/umschalten/löschen, Anfrage
+freigeben/ablehnen, Kauf stornieren) · `VaterZiele` 2 · `CatalogAdmin` 1 (`NewName`, dreifach) ·
+`VaterMedia` 1. Drei Bauteile brauchten dafür einen neuen `busy`-Parameter (`ListingRow`, `ObjectiveCard`,
+`NewName`) – jeweils mit dem Satz, **warum** die Sperre listenweit gilt.
+
+Das ist die zweite Korrektur derselben Zahl (die Story sagte „alle 24 haben `disabled`", der Plan „fünf
+fehlen"). Beide Male war die Messung zu großzügig. Wer sie erneut braucht: der Scanner liegt nicht im Repo,
+weil sein Ergebnis mechanisch nur so gut ist wie die Frage „ist das eine Mutation" – und die beantwortet
+kein Regex.
+
+#### Fünf Stellen bleiben offen, und zwar richtigerweise
+
+Nach dem Durchgang tragen **fünf** mutierende Knöpfe kein `disabled={busy}`, alle aus demselben Grund: ihr
+Schreibpfad benutzt `useAction` gar nicht und hat darum kein `busy`. Sie stehen mit `Datei:Zeile` in
+[B-54](backlog/B-54-objectivecard-schreib-primitive.md) – drei in `VaterZiele` (`ObjectiveCard.act`), einer in
+`VaterVocab` (`TagChip`), einer in `VaterDashboard` (`addChild`).
+
+**Zweimal falsch gezählt, beide Male aus demselben Grund.** Erst hieß es „fünf Knöpfe fehlen", nach meinem
+Durchgang „genau zwei bleiben" – der `frontend-reviewer` fand fünf. Der Fehler war jedes Mal, dass die
+Messung nur prüfte, ob am Knopf das Wort `disabled` **steht**, nicht woran es hängt: `VaterZiele.tsx:349`
+(„Etappe übernehmen") trägt eines, aber an einer Eingabeprüfung (`scope.subjectId === ""`). Ein
+klammerzählender Scanner hat das nicht behoben, weil das Problem nicht die Klammern waren. **Wer diese Zahl
+noch einmal braucht, muss die Bindung lesen** – und die Frage „ist das eine Mutation" beantwortet ohnehin nur
+ein Mensch.
+
+Dazu ein Befund, der die Priorität von B-54 hebt: `VaterDashboard.addChild` ist **derselbe Defekt wie B-53**,
+auf dem Bildschirm, auf dem ein neuer Vater zuerst landet – zwei Klicks, zwei Kinder – und dort erscheint der
+Fehler zusätzlich **grün** (`:103` rendert fest `banner ok`, `:33` schreibt `errorMessage(err)` in dieselbe
+Variable). B-53 hielt den Assistenten für den teuersten Fall der Klasse; er legt mehr an, aber dieser Weg
+wird häufiger gegangen.
+
+#### Was der Assistent hergab (E5' / B-53)
+
+`finish()` ist nach `src/vater/wizardFinish.ts` ausgelagert – die drei Schreibzugriffe kommen als Parameter
+(`WizardWriter`), damit die Prüfung ohne `api.ts` und Router läuft. Der vorhandene `progress`-Ref trägt nun
+**beide** Fälle, und der Unterschied steht am Typ: `childId`/`planId`/`positions` die **Wiederaufnahme** nach
+einem Fehler (sequenziell), `running` den **Wiedereintritt** (nebenläufig). Die Verwechslung dieser zwei war
+der Grund, warum der Ref den Doppelklick nicht abfing, obwohl er aussah, als täte er es.
+
+**Offen und benannt:** kein Playwright-Test fährt den Assistenten zu Ende. `feldhilfe.spec.ts` öffnet
+`/vater/wizard` nur für einen Feldhinweis, `vater-von-null.spec.ts` geht den manuellen Weg. Der Produktivcode
+dieses Umbaus hängt damit an `wizardFinish.test.ts` und `tsc` – nicht an einem Durchstich, und das auf dem
+Weg, den B-53 selbst „der Einstiegsweg" nennt. Als [B-58](backlog/B-58-assistent-e2e.md) erfasst.
 
 ### E6 · Generierte Vertragstypen (B-42 Schritt 2)
 
