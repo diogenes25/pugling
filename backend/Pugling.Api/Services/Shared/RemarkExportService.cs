@@ -53,7 +53,7 @@ public class RemarkExportService
         if (remarks.Count == 0)
         {
             sb.AppendLine("_Keine Anmerkungen für diesen Filter._");
-            return sb.ToString();
+            return Finish(sb);
         }
 
         foreach (var r in remarks)
@@ -110,8 +110,15 @@ public class RemarkExportService
             AppendComments(sb, r, showAccounts);
         }
 
-        return sb.ToString();
+        return Finish(sb);
     }
+
+    /// <summary>
+    /// Closes the document with exactly one trailing newline. Every section ends with a blank separator
+    /// line, so the last one would leave a stray blank line at the end of the file - which a Markdown
+    /// linter reports on the snapshot committed to the repository.
+    /// </summary>
+    private static string Finish(StringBuilder sb) => sb.ToString().TrimEnd() + "\n";
 
     /// <summary>
     /// The history, chronological, below the answer. Set as a blockquote so that when reading it stays

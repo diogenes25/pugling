@@ -273,18 +273,22 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 <!-- backlog-index:start -->
 <!-- Erzeugt von .claude/scripts/backlog-index.sh — nicht von Hand pflegen. -->
 
-### Offen (49)
+### Offen (56)
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | [B-01](B-01-bildwahl-einfrieren.md) | Abschlusstest friert Bildwahlen ein, die er nie zeigt | Defekt | `geschaetzt` | P1 | S | backend | Vertrag |
+| [B-65](B-65-vokabel-mehrere-uebersetzungen.md) | Eine Vokabel mit zwei richtigen Übersetzungen wertet eine davon falsch | Defekt | `gegrillt` | P1 | — | beides | — |
 | [B-07](B-07-db-umbau-restetappen.md) | DB-Struktur-Umbau: der offene Betriebsschritt | Aufräumen | `geschaetzt` | P1 | XS | backend | — |
 | [B-60](B-60-flags-enum-im-dokument.md) | Das Vertragsdokument verbietet einen `SchoolTypes`-Wert, den Server und Frontend täglich austauschen | Defekt | `ausformuliert` | P2 | — | — | — |
+| [B-66](B-66-buchstabenkaestchen-trennzeichen.md) | Das Buchstabenkästchen lässt Leer- und Satzzeichen tippen, die schon feststehen | Defekt | `ausformuliert` | P2 | — | — | — |
 | [B-24](B-24-frontend-unknown-field.md) | Frontend gegen `unknown_field` durchspielen | Frage | `idee` | P2 | — | — | — |
 | [B-31](B-31-geraete-vorbehalt-klang.md) | Geräte-Vorbehalt: Klang und Haptik am echten Handy gegenhören | Frage | `idee` | P2 | — | — | — |
 | [B-48](B-48-anonyme-registrierung-produktion.md) | Anonyme Registrierung ist auch in Produktion offen | Frage | `idee` | P2 | — | — | — |
 | [B-10](B-10-zeitfenster-pro-kind.md) | Zeitfenster (Punkte-Faktor) je Pflicht statt global | Wunsch | `geschaetzt` | P2 | M | beides | Migration |
 | [B-50](B-50-kind-beschreibt-sich-selbst.md) | Das Kind beschreibt sich selbst: Interessen in einem geführten Prozess | Wunsch | `ausformuliert` | P2 | — | — | — |
+| [B-63](B-63-lehrwerk-hierarchie.md) | Das Lehrwerk ist eine Ebene aus Freitext, gebraucht wird eine Hierarchie mit Listen | Wunsch | `ausformuliert` | P2 | — | — | — |
+| [B-67](B-67-fachlehrer-aus-lehrwerk.md) | Der Fachlehrer fragt nach Fach und Sprachen, die im gewählten Lehrwerk längst stehen | Wunsch | `ausformuliert` | P2 | — | — | — |
 | [B-11](B-11-uebungen-veroeffentlichen.md) | Übungen ausdrücklich veröffentlichen | Wunsch | `idee` | P2 | — | — | — |
 | [B-13](B-13-fach-kapitel-eigentum.md) | Fach- und Kapitel-Eigentum | Wunsch | `idee` | P2 | — | — | — |
 | [B-18](B-18-auto-lehrplan-generator.md) | Lehrplan automatisch aus gefilterten Übungen bauen | Wunsch | `idee` | P2 | — | — | — |
@@ -299,11 +303,14 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-57](B-57-beispielkatalog-schreib-lese-rennen.md) | Im Testlauf lesen und schreiben zwei Stellen gleichzeitig dieselbe Katalogdatei | Defekt | `idee` | P3 | — | — | — |
 | [B-61](B-61-reste-der-schreib-primitiven-runde.md) | Zwei Reste aus der Schreib-Primitiven-Runde | Defekt | `idee` | P3 | — | — | — |
 | [B-62](B-62-reste-aus-dem-b37-review.md) | Drei Reste aus dem B-37-Review (Sohn-Arcade) | Defekt | `idee` | P3 | — | — | — |
+| [B-69](B-69-wiederhol-felder-alternativen.md) | Drei Editoren tragen Alternativen als Komma-Feld — eine Alternative mit Komma geht verloren | Defekt | `idee` | P3 | — | — | — |
 | [B-16](B-16-positions-formular-umfang.md) | Prüfauftrag: deckt das Positions-Edit-Formular alle Felder ab? | Frage | `idee` | P3 | — | — | — |
 | [B-17](B-17-birkenbihl-sprachcodes.md) | Sprachcode-Normalisierung bei der Vokabel-Dekodierung | Frage | `idee` | P3 | — | — | — |
 | [B-29](B-29-altmigration-transaktional.md) | Prüfauftrag: nicht-transaktionale Altmigration | Frage | `idee` | P3 | — | — | — |
 | [B-03](B-03-lueckensaetze-mit-bild.md) | Lückensätze mit Bild als Vokabel-Vertiefung | Wunsch | `geschaetzt` | P3 | M | backend | — |
 | [B-09](B-09-lehrer-hausaufgaben.md) | Lehrer erteilt Hausaufgaben: zuweisen mit Frist, ohne Betreuungsauftrag | Wunsch | `ausformuliert` | P3 | — | — | — |
+| [B-64](B-64-textbook-vs-series.md) | Das Lehrwerk gibt es zweimal: einmal als Freitext am Kind, einmal katalogisiert | Wunsch | `ausformuliert` | P3 | — | — | — |
+| [B-68](B-68-vater-web-responsive.md) | Das Vater-Web hat keinen einzigen eigenen Breakpoint | Wunsch | `ausformuliert` | P3 | — | — | — |
 | [B-12](B-12-uebungen-kuratieren.md) | Geteilte Übungen bewerten und kuratieren | Wunsch | `idee` | P3 | — | — | — |
 | [B-15](B-15-testmodus-weitere-typen.md) | Vorschau für die nicht-prüfbaren Übungstypen | Wunsch | `idee` | P3 | — | — | — |
 | [B-20](B-20-ki-supervisor-agent.md) | KI-Supervisor-Agent (Teil D) | Wunsch | `idee` | P3 | — | — | — |
@@ -344,6 +351,15 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-54](B-54-objectivecard-schreib-primitive.md) | Fünf Knöpfe im Vater-Web gehen an den Schreib-Primitiven vorbei | Defekt | `abgenommen` | P2 | S | frontend | — |
 
 </details>
+
+### ⚠ Stufe behauptet, Datei belegt nicht
+
+Diese Stories tragen einen `status`, dessen Eintrittsbedingung in der Datei nicht
+vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
+
+| Id | Stufe | Fehlt |
+| --- | --- | --- |
+| [B-69](B-69-wiederhol-felder-alternativen.md) | `idee` | `unverifiziert: true` |
 
 <details>
 <summary>Verworfen (3)</summary>

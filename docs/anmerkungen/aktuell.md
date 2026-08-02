@@ -1,204 +1,345 @@
 # Anmerkungen – Export
 
-Stand: 2026-07-28 21:03 UTC · 12 Einträge · Filter: alle
+Stand: 2026-08-02 15:43 UTC · 13 Einträge · Filter: alle
 
 > Erzeugt von `GET api/v1/remarks/export`. **Nicht von Hand bearbeiten** – die Quelle ist
 > die Datenbank. Status und Antworten ändert der Skill `anmerkungen` über die API.
 
-## #1 · Question · erledigt
+## #1 · Ui · eingeplant
 
-- **Erfasst:** 2026-07-27 21:16 UTC von Konto 11 (Supervisor)
-- **Wo:** `/vater/exercises` (vater)
+- **Erfasst:** 2026-08-02 13:54 UTC von Konto 6 (Supervisor)
+- **Wo:** `/vater/kind/3` (vater)
+- **Bezug:** Kind 3
 
-Wie kann ich vorhandene Übungen bearbeiten? Ich möchte z. B. neue Vokabeln hinzufügen bzw. entfernen.
-
-**Antwort** (claude-code, 2026-07-27 22:08 UTC):
-
-Bearbeiten gibt es: Knopf "Bearbeiten" an der Uebungszeile (VaterExercises.tsx:543) oeffnet ExerciseEditModal; bei Vokabeluebungen pflegt der ItemEditor (ExerciseEditModal.tsx:319) die Wortpaare - hinzufuegen per Store-Suche oder freier Eingabe (:413, :458), entfernen ueber api.deleteExerciseItem (:351). KORREKTUR meiner ersten Antwort (im Browser nachgemessen): Der Grund war nicht fremdes Eigentum. Die Liste "Uebungen in diesem Kapitel" erscheint erst, wenn Fach UND Kapitel gewaehlt sind (VaterExercises.tsx:315) - vorher sieht man nur das Anlege-Formular. Und sie zeigt standardmaessig nur EIGENE Uebungen (Checkbox "geteilte Uebungen anderer Vaeter anzeigen", :320-322, Standard aus); Vater 7 besitzt genau eine (Id 27), die mit funktionierendem Bearbeiten-Knopf erscheint. Gebaut: Mit eingeschalteter Checkbox trugen die 10 fremden Uebungen des Kapitels keinen Grund fuer das fehlende Bearbeiten - jetzt steht dort "kein Schreibrecht - nur ausprobieren & zuweisen" (VaterExercises.tsx, ExerciseRow). Verifiziert: Hinweis an allen 10 fremden, Bearbeiten nur an der eigenen.
-
-## #2 · Idea · erledigt
-
-- **Erfasst:** 2026-07-27 21:17 UTC von Konto 11 (Supervisor)
-- **Wo:** `/vater/exercises` (vater)
-
-Wie kann ich Vokqbeln bearbeiten? hIER SOLL EIN lINK DER vOKABELN ZUM ENTSPRECHENDEN Seite eingefügt werden
-
-**Antwort** (claude-code, 2026-07-27 22:08 UTC):
-
-Gebaut. Jedes Wortpaar im Bearbeiten-Dialog ist jetzt ein Link auf den Store-Eintrag: ExerciseEditModal.tsx ItemEditor.storeHref() erzeugt /vater/vocab mit search=<Wort> plus Sprachpaar aus der Uebung (src/tgt), ItemRow rendert das Wort als <a target=_blank>. Neues Tab bewusst: der Dialog haelt ungespeicherte Eingaben, ein Wechsel im gleichen Tab wuerde sie verwerfen. Empfangsseite ergaenzt: VaterVocab liest search/src/tgt als STARTWERT (useSearchParams), damit die Zielseite gefiltert und mit richtiger Sprachkombination oeffnet. Verifiziert im Browser: Link auf hello ergibt /vater/vocab mit search=hello, src=en, tgt=de; Zielseite filtert auf 1 Treffer.
-
-## #3 · Idea · erledigt
-
-- **Erfasst:** 2026-07-27 21:19 UTC von Konto 11 (Supervisor)
-- **Wo:** `/vater/vocab` (vater)
-
-Die Bilder sollen hier ebenfalls hochgeladen und bearbeitet werden können
-
-**Antwort** (claude-code, 2026-07-27 22:08 UTC):
-
-Gebaut. Das Bilder-Panel je Vokabelzeile kann jetzt auch hochladen: VocabMediaPanel.tsx hat eine Komponente UploadAndLink (Dateifeld accept=image/*, Beschreibung mit dem Wort vorbelegt) und MediaLinkEditor.uploadAndLink() ruft api.uploadMedia und ordnet das Ergebnis in einem Zug zu. Die Beschreibung ist Pflicht, weil der Server sie als Alt-Text nutzt (MediaAssetsController.cs:215-216). Der Upload landet in derselben Bibliothek wie ueber /vater/media - keine zweite Ablage. Gilt fuer beide Ebenen (Vokabel und uebungslokales Item). Verifiziert mit einem echten Upload an der Vokabel goes: Asset angelegt, auf Thumb/Card/Full skaliert, sofort verlinkt; Testbild danach wieder entfernt (Bibliothek und Zuordnung sind wie vorher leer).
-
-## #4 · Ui · erledigt
-
-- **Erfasst:** 2026-07-27 21:20 UTC von Konto 11 (Supervisor)
-- **Wo:** `/vater/vocab` (vater)
-
-Der löschen-button ist nicht zu sehen
-
-**Antwort** (claude-code, 2026-07-27 22:08 UTC):
-
-Bestaetigt und behoben - im Browser nachgemessen. Der Knopf war da (VaterVocab.tsx:345), aber die Aktionsspalte stand in EINER Zeile: die Tabelle brauchte 868px Container-Breite, darunter rutschte "Loeschen" als letzter Knopf in den horizontalen Ueberlauf (bei 380px Container 478px ausserhalb) - sichtbar nur fuer den, der seitwaerts scrollt. Fix: die Aktionszelle darf umbrechen (flexWrap) und hat eine Untergrenze (minWidth 230), damit die Spalte nicht auf einen Knopf zusammenschrumpft und jeder Knopf auf eigener Zeile landet; Stil liegt als geteilte Konstante actionCell in VaterVocab.tsx. Ergebnis: min-content faellt auf 772px, obwohl die neue Tags-Spalte (Anmerkung 5) dazugekommen ist; Loeschen ist auf normalen Breiten immer sichtbar. Anlass war uebrigens meine eigene Aenderung: die Tags-Spalte schnitt "Loeschen" bei 1456px ab.
-
-## #5 · Bug · erledigt
-
-- **Erfasst:** 2026-07-27 21:20 UTC von Konto 11 (Supervisor)
-- **Wo:** `/vater/vocab` (vater)
-
-Die Tags sollten gesehen werden.
-
-**Antwort** (claude-code, 2026-07-27 22:08 UTC):
-
-Gebaut. Die Store-Tabelle hat jetzt eine Spalte "Tags": die Namen der globalen Tags stehen als Chips in der Zeile (Komponente TagsCell in VaterVocab.tsx), nicht mehr nur die Anzahl am Aufklapp-Knopf. Daten kosteten nichts - v.tags war mit der Liste schon geladen. Geaendert wird weiterhin im Tag-Editor hinter dem Knopf (dort liegen auch die kind-skopierten Tags, die je Zeile einzeln nachgeladen werden muessten). Detail: whiteSpace nowrap je Chip, sonst bricht ein zweiteiliger Name wie "Englisch 101-1000" mitten im Wort um. Die zusaetzliche Spalte hat "Loeschen" abgeschnitten - deshalb gleich mit erledigt, siehe Anmerkung 4.
-
-**Verlauf** (1):
-
-> **claude-code** · 2026-07-27 22:52 UTC, Konto 11
->
-> Gebaut am 2026-07-28: Tag-Spalte in der Store-Zeile (TagsCell in VaterVocab.tsx), Namen als Chips mit nowrap. Die neue Spalte schnitt "Loeschen" ab - deshalb dort gleich flexWrap + minWidth, siehe #4.
-
-## #6 · Bug · erledigt
-
-- **Erfasst:** 2026-07-27 21:21 UTC von Konto 11 (Supervisor)
-- **Wo:** `/vater/vocab` (vater)
-
-Der "Grundform-Key" soll generiert werden nicht eingegeben.
-
-**Antwort** (claude-code, 2026-07-27 22:08 UTC):
-
-Gebaut - mit der Klarstellung, dass zwei Keys im Spiel sind. Der EIGENE Key der Vokabel wird schon generiert (VocabKey.Generate, Data/VocabKey.cs:21; VocabularyStoreService.cs:23, VocabularyStoreController.cs:236) und ist kein Eingabefeld. Das Feld "Grundform-Key" war ein Verweis auf eine ANDERE Vokabel (BaseFormKey, z. B. went -> go); generieren geht dort nicht, der Server verlangt einen existierenden Key und lehnt den Selbstverweis ab (VocabularyStoreController.cs:229-231, :312-315). Berechtigt war der Kern: man musste einen Fremdschluessel abtippen. Ersetzt durch BaseFormPicker (VaterVocab.tsx): man tippt das WORT, sucht im Store (Sprachpaar der Vokabel, eigene Id herausgefiltert) und waehlt den Treffer - gespeichert wird der Key. Gesetzte Grundform steht als Key mit Loesen-Knopf. Verifiziert an goes: 7 Treffer fuer go (goes selbst ausgeschlossen), Auswahl setzt en_go_de_gehen, Speichern durchlaeuft ohne Fehler.
-
-## #7 · Ui · erledigt
-
-- **Erfasst:** 2026-07-27 21:22 UTC von Konto 11 (Supervisor)
-- **Wo:** `/vater/vocab` (vater)
-
-DAs Widget soll ein{x] haben wenn man doch nichts Anmerken will (Abbruch)
-
-**Antwort** (claude-code, 2026-07-27 21:37 UTC):
-
-Gibt es schon: der Abbruch-Knopf sitzt im Widget-Kopf als "?" mit aria-label=Schliessen (RemarkWidget.tsx:191-192). Zusaetzlich schliesst Escape (:159) und Alt+A togglet (:76-79). Vermutlich uebersehen, weil er als "btn ghost small" direkt neben "Meine" steht. Zu bauen ist nichts; wenn er zu unauffaellig bleibt, waere die Aufgabe reines Styling.
-
-## #10 · Ui · erledigt
-
-- **Erfasst:** 2026-07-28 11:56 UTC von Konto 1 (Supervisor)
-- **Wo:** `/vater/exercises` (vater)
-
-Die Button in Übersicht sind nicht schön angeordnet. Es ist auch keine "Übersicht"sondern mehr eine Navigation
+Das VAterdesign könnte als responsive website einen "polish" vertragen.
 
 **Letzte Fehler:**
 
 ```json
-[{"kind":"http","method":"GET","path":"/api/v1/creator/exercises/24/preview","status":400,"code":"no_checkable_content","at":"2026-07-28T11:16:12.500Z"},{"kind":"http","method":"GET","path":"/api/v1/creator/exercises/24/preview","status":400,"code":"no_checkable_content","at":"2026-07-28T11:16:12.509Z"},{"kind":"http","method":"GET","path":"/api/v1/creator/exercises/25/preview","status":400,"code":"no_checkable_content","at":"2026-07-28T11:16:23.057Z"},{"kind":"http","method":"GET","path":"/api/v1/creator/exercises/25/preview","status":400,"code":"no_checkable_content","at":"2026-07-28T11:16:23.070Z"}]
+[{"kind":"http","method":"POST","path":"/api/v1/auth/adult","status":401,"code":"invalid_credentials","at":"2026-08-02T13:48:33.750Z"}]
 ```
 
-**Antwort** (claude-code, 2026-07-28 12:27 UTC):
+**Antwort** (claude-code, 2026-08-02 15:29 UTC):
 
-KORRIGIERT (die erste Fassung bezog sich auf /vater; gemeint war die Kopfzeilen-Navigation). Beobachtung trifft zu: VaterApp.tsx:32-47 rendert 13 NavLinks als EINE flache Reihe - display:flex, gap:6px, flex-wrap:wrap (index.css:204); jeder Link ist pill-formig (padding 8px/12px, border-radius 10px, :205), der aktive traegt Karten-Hintergrund (:206) - darum lesen sie sich als Knoepfe. Konkret unaufgeraeumt ist: (a) KEINE GRUPPIERUNG - Inhalte (Uebungen, Lehrwerke, Fachlehrer, Vokabeln, Bilder), Steuerung (Neuer Plan, Klassenarbeiten) und Oekonomie (Belohnungen, Shop, Kontostand) stehen gleichrangig nebeneinander; (b) 'Neuer Plan' (:44) ist eine AKTION zwischen Orten und doppelt vorhanden (auch VaterDashboard.tsx:113); (c) uneinheitliche Beschriftung - 10 Eintraege mit Emoji, 3 ohne ('Uebersicht' :33, 'Vokabeln' :38, 'Neuer Plan' :44), und 'Klassenarbeiten' (:43) wie 'Anmerkungen' (:46) tragen dasselbe Symbol; (d) bei dieser Breite bricht die Reihe um, und weil sie im selben flex-Container wie Marke, Profil-Link und Abmelden liegt (:30-51, index.css:202), verschiebt der Umbruch den rechten Block mit. Zum zweiten Satz: 'Uebersicht' fuehrt auf /vater (VaterDashboard.tsx); dort sind Kinder und Plaene ueberwiegend Links in andere Bereiche (:78, :84, :121), echte Uebersichtsdaten traegt nur der Abschnitt 'Heute' (:43-66) - als Landeplatz ist es also tatsaechlich mehr Verteiler als Uebersicht. NEBENBEFUND aus dem Fehler-Mitschnitt dieser Anmerkung (nicht Teil des Textes): 4x 400 no_checkable_content auf creator/exercises/24|25/preview. Beide sind Vokabel-Uebungen 'Einfach Vokabeln' (Autor Vater 6) mit NULL Items (GET .../vocabulary/24/items -> []). Die Fehlerantwort ist korrekt (ExercisePreviewController.cs:42); die Ursache liegt davor: VocabularyExercisesController.ValidateConfigAsync (ExerciseControllers.cs:39-61) prueft die Inhalte von refs/items, verlangt aber NICHT mindestens eines - leere Vokabel-Uebungen sind per API anlegbar. Das UI blockt das (exerciseConfig.tsx:560), die API nicht.
-
-**Verlauf** (3):
-
-> **claude-code** · 2026-07-28 12:27 UTC, Konto 1
->
-> Analyse zu 10 korrigiert: erste Fassung bezog sich auf die Seite /vater, gemeint war die Kopfzeilen-Navigation (VaterApp.tsx:32-47). Nachgezogen: fehlende Gruppierung, 'Neuer Plan' als Aktion zwischen Orten, uneinheitliche Emoji-Beschriftung, Umbruch im geteilten Header-Flex.
->
-> **claude-code** · 2026-07-28 12:30 UTC, Konto 1
->
-> Eingeplant in docs/vater-informationsarchitektur-plan.md (10+11+12 sind ein Thema: das Vater-Web hat keine Informationsarchitektur). Etappe 1: Nav in Gruppen Inhalte/Steuern/Belohnen (entlang der drei Ebenen), 'Uebersicht' -> 'Kinder & Plaene', 'Neuer Plan' raus (Aktion, doppelt), Beschriftung einheitlich, nav aus dem geteilten Header-Flex. Keine Dropdowns - flache Reihe mit role=group.
->
-> **claude-code** · 2026-07-28 13:12 UTC, Konto 1
->
-> Gebaut (Etappe 1 des Plans docs/vater-informationsarchitektur-plan.md): Nav in Gruppen Inhalte / Steuern / Belohnen / Entwicklung (neue Komponente NavGroup mit role=group + aria-label, sichtbare Beschriftung aria-hidden, sonst doppelte Ansage); Kopfzeile und Navigation in getrennten Zeilen, damit der Umbruch nicht mehr den rechten Block schiebt; 'Uebersicht' -> 'Kinder & Plaene' (mit Haus-Symbol); 'Neuer Plan' aus der Nav entfernt (Aktion, steht am Abschnitt Lehrplaene); alle Eintraege mit Symbol, Anmerkungen auf ein eigenes Zeichen (vorher zweimal dasselbe wie Klassenarbeiten). Sieben Textstellen mit dem alten Seitennamen mitgezogen (VaterKind, VaterPlanDetail, VaterWizard, VaterClassTests, VaterKonto, VaterRewards, VaterShop). E2E full-flow.spec.ts:39 und bilder.spec.ts:119 auf den Dashboard-Knopf umgestellt. Geprueft: npm run build + npm test gruen, im Dev-Server nachgesehen (12 Nav-Links, Umbruch faellt zwischen die Gruppen, Gruppennamen nicht als eigene Vorlesestelle im Accessibility-Baum). NICHT geprueft: Playwright - Port 5200 war von der echten Instanz belegt, die Suite verlangt eine eigene Wegwerf-DB.
-
-## #11 · Ui · erledigt
-
-- **Erfasst:** 2026-07-28 12:00 UTC von Konto 1 (Supervisor)
-- **Wo:** `/vater/exercises` (vater)
-
-"Neues Fach" und "Neues Kapitel" sind prominent angeordnet. Diese FEatures werden aber wahrscheinlich sehr selten genutzt.
-Mir sind das zu viele Features (Anlegen, bearbeiten, zuweisen,..) auf dieser Seite. Das ist mir zu unaufgeräumt. Das erstellen ist für mich ein abgeschlossener Bereich und das Bearbeiten und Zuweisen ebenfalls.
-
-**Antwort** (claude-code, 2026-07-28 12:11 UTC):
-
-Bestaetigt, mit einer Einschraenkung. /vater/exercises traegt vier Anliegen in einer Route: (1) 'Katalog verwalten' (VaterExercises.tsx:195), (2) Lueckentext-Store (:200), (3) das Anlege-Formular mit den Karten 'Fach & Kapitel' (:206), 'Typ & Metadaten' (:241) und 'Inhalt' (:292), (4) die Liste der vorhandenen Uebungen mit Ausprobieren/Bearbeiten/Verwendung/Loeschen (:316-346, ExerciseManageRow ab :502). 'Neues Fach'/'Neues Kapitel' sind zwei von vier Feldern der ERSTEN Karte (:216-236) - im gleichen form-grid und mit gleichem Gewicht wie die zwei Auswahl-Pulldowns, die man jedes Mal braucht. EINSCHRAENKUNG: 'Zuweisen' ist nicht auf dieser Seite. Das passiert im Plan (VaterPlanDetail.tsx / PlanPositions.tsx) bzw. im Assistenten (VaterWizard.tsx); von hier gibt es nur den Lese-Blick 'Verwendung' (VaterExercises.tsx:546, Ausgabe :566-571). Die gewuenschte Trennung ist also 'Erstellen' vs. 'Bearbeiten' - und die beiden stecken heute sogar in EINEM <form> (:202), weil die Bestandsliste innerhalb des Anlege-Formulars gerendert wird (:316).
-
-**Verlauf** (2):
-
-> **claude-code** · 2026-07-28 12:30 UTC, Konto 1
->
-> Eingeplant in docs/vater-informationsarchitektur-plan.md (10+11+12 sind ein Thema: das Vater-Web hat keine Informationsarchitektur). Etappe 3: /vater/exercises wird die Verwaltung, /vater/exercises/neu das Anlegen; 'Neues Fach'/'Neues Kapitel' verlieren die Buehne und verweisen auf den Katalog. Noch nicht angefasst.
->
-> **claude-code** · 2026-07-28 13:47 UTC, Konto 1
->
-> Gebaut (Etappe 3 des Plans docs/vater-informationsarchitektur-plan.md): Anlegen und Verwalten sind getrennt. /vater/exercises verwaltet (Filter, Liste, Ausprobieren/Bearbeiten/Verwendung/Loeschen, Sortierung, Paging), /vater/exercises/neu legt an (VaterExerciseCreate.tsx mit VocabRefPicker). Die 575-Zeilen-Datei mit vier Anliegen in EINEM form ist damit aufgeloest. Die Anlege-Route traegt bewusst keinen Nav-Eintrag - sie ist eine Aktion, erreichbar ueber '+ Neue Uebung' (dieselbe Regel wie bei 'Neuer Plan'). 'Neues Fach' und 'Neues Kapitel' sind aus dem Formular verschwunden; an ihrer Stelle steht ein Satz mit Link auf den Katalog, der das seit Etappe 2 selbst kann. Zwei Dinge kamen beim Schneiden dazu: die Auswahl reist als ?subjectId=&chapterId= in beide Richtungen mit (sonst muesste man Fach und Kapitel nach jedem Wechsel neu einstellen), und Fach/Kapitel sind in der Verwaltung ein FILTER statt Pflicht - die Liste erscheint jetzt, sobald ein Fach gewaehlt ist. Zur Notiz in der Anmerkung: 'Zuweisen' war auf dieser Seite gar nicht vorhanden (das passiert in PlanPositions.tsx bzw. im Assistenten), von hier gab es nur den Lese-Blick 'Verwendung' - die dritte Trennung war schon da. Geprueft: npm run build, npm test und 14/14 Playwright gruen (uebungstypen und vater-von-null fahren den neuen Schnitt vollstaendig durch).
-
-## #12 · Content · erledigt
-
-- **Erfasst:** 2026-07-28 12:03 UTC von Konto 1 (Supervisor)
-- **Wo:** `/vater/exercises` (vater)
-
-Was bringt mir "Katalog verwalten"?
-Warum ist es in "Übungen" versteckt?
-
-**Antwort** (claude-code, 2026-07-28 12:11 UTC):
-
-Nutzen: 'Katalog verwalten' (CatalogAdmin.tsx) ist die einzige Stelle, an der Fach und Kapitel UMBENANNT und GELOESCHT werden koennen und an der die 'Arten' (Kategorien) gepflegt werden. Anlegen ging schon vorher ueber die '+'-Knoepfe im Formular (VaterExercises.tsx:220 und :234) - korrigieren nicht. Das zaehlt, weil der Katalog GLOBAL ist: Faecher und Kapitel teilen sich alle Vaeter, ein Tippfehler bleibt fuer alle sichtbar (CatalogAdmin.tsx:56-58); darum nennt das Loeschen die Kaskade (:79-96). 'Arten' sind freie Ordnungsbegriffe innerhalb des Fachs und filtern die Uebungssuche beim Planbau (:103-106). Warum unter 'Uebungen': der Katalog IST die Behaelter-Hierarchie der Uebungen (Subject -> Chapter -> Exercise), und der Bereich pflegt genau die zwei Pulldowns dieser Seite - die Begruendung steht als Kommentar in VaterExercises.tsx:191-194. 'Versteckt' trifft aber zu: er liegt eingeklappt hinter einem Ghost-Button (CatalogAdmin.tsx:42-47) und hat keinen eigenen Nav-Eintrag (VaterApp.tsx:32-47).
-
-**Verlauf** (2):
-
-> **claude-code** · 2026-07-28 12:30 UTC, Konto 1
->
-> Eingeplant in docs/vater-informationsarchitektur-plan.md (10+11+12 sind ein Thema: das Vater-Web hat keine Informationsarchitektur). Etappe 2: Katalog bekommt die eigene Route /vater/katalog (samt Nav-Eintrag unter 'Inhalte'), der Einklapper entfaellt; Lueckentexte analog /vater/lueckentexte. Die Frage nach dem Nutzen ist beantwortet, das 'versteckt' wird behoben.
->
-> **claude-code** · 2026-07-28 13:47 UTC, Konto 1
->
-> Gebaut (Etappe 2 des Plans docs/vater-informationsarchitektur-plan.md): Der Katalog hat eine eigene Route /vater/katalog (VaterKatalog.tsx, laedt die Faecher selbst) samt Nav-Eintrag in der Gruppe 'Inhalte'; der Einklapper samt 'Schliessen' ist entfallen - eine eigene Seite muss sich nicht aufklappen. Der Lueckentext-Store analog unter /vater/lueckentexte. Auf der Uebungen-Seite stehen zwei Links dorthin, damit man sie bei fehlendem Kapitel nicht in der Navigation suchen muss. Ueber den Plan hinaus noetig: Fach und Kapitel lassen sich im Katalog jetzt auch ANLEGEN (ein neues Fach wird gleich ausgewaehlt) - sonst waere es eine Seite, auf der man nur umbenennen und loeschen kann, und Etappe 3 haette die Anlege-Felder nicht wegnehmen koennen. Dabei bekam NewName ein fieldId von aussen: mit drei Instanzen war die feste DOM-id dreifach vergeben und jedes label zeigte auf dasselbe Feld; die drei 'Anlegen'-Knoepfe tragen jetzt unterscheidbare zugaengliche Namen. Ein Fund aus dem Test hat die Umsetzung geaendert: der erste Wurf tauschte CatalogAdmin bei jeder Aenderung gegen 'Lade...', weil onCatalogChanged ein reload ausloest und das loading erneut auf true setzt (useAsync.ts:27) - die Fach-Auswahl sprang zurueck und die Erfolgsmeldung erschien nie. Geprueft: npm run build, npm test und 14/14 Playwright gruen.
-
-## #13 · Bug · erledigt
-
-- **Erfasst:** 2026-07-28 13:04 UTC von Konto 1 (Supervisor)
-- **Wo:** _(keine Route)_ (?)
-- **Folgt aus:** #10
-
-Leere Vokabel-Uebung ist per API anlegbar - Preview/Test scheitern erst spaeter mit no_checkable_content. VocabularyExercisesController.ValidateConfigAsync (ExerciseControllers.cs:39-61) prueft die Inhalte von refs/items, verlangt aber nicht mindestens eines. Belegt an den Uebungen 24 und 25 ('Einfach Vokabeln', Autor Vater 6, GET .../vocabulary/24/items -> []): GET creator/exercises/24/preview antwortet 400 no_checkable_content (ExercisePreviewController.cs:42 - korrekt, aber zu spaet). Das UI blockt den Fall (exerciseConfig.tsx:560), die API nicht; ueber Agent/REST/Edit entstehen so Uebungen, die ein Kind nicht spielen kann. Vorschlag: in ValidateConfigAsync mindestens ein ref/item verlangen (validation_error) und pruefen, ob das Leeren per PUT/Item-DELETE denselben Riegel braucht.
-
-**Antwort** (claude-code, 2026-07-28 14:05 UTC):
-
-KORRIGIERT. Der Befund stimmt (leere Vokabel-Uebungen existieren und scheitern erst spaet), der von mir vorgeschlagene Fix war FALSCH: 'in ValidateConfigAsync mindestens ein ref/item verlangen' laeuft laut ExerciseControllerBase.cs:230 und :302 auf POST UND PUT - und beim PUT traegt die Config berechtigterweise keine Items, weil die Items seit dem Item-Umbau in der Tabelle liegen (leerer Payload = reiner Einstellungs-PUT). Schwerer noch: 'erst leer anlegen, dann fuellen' ist ein GEWOLLTER, getesteter Ablauf - VocabExerciseAuthoringTests.cs:100-106 legt die Uebung mit refs=[] an und fuellt sie danach per refs-from-tags. Eine Schranke am POST haette das zerstoert. Zu den beiden Nachfragen: (1) PUT kann die Item-Menge gar nicht leeren - AfterSaveAsync synchronisiert nur, wenn der Payload Items/Refs traegt (ExerciseControllers.cs:76-88); ein Riegel ist dort unnoetig. (2) Item-DELETE kann leeren, aber nur bei einer Uebung, die in keinem Lehrplan steckt (in-Plan ist ueber ExerciseInPlanAsync schon blockiert, ExerciseControllers.cs:240) - und das Leeren ist dort ein legitimer Zwischenschritt beim Bearbeiten (das einzige Wort austauschen). Ein Riegel kostete dort mehr als er brachte. (3) Die eigentliche Luecke lag woanders: refs-from-tags hat bei Tags ohne Treffer auf NULL Items reconciled und die Uebung damit LAUTLOS geleert - ein Tippfehler im Tag sah wie ein Erfolg aus. Der Schaden entsteht nicht beim Anlegen, sondern beim ZUWEISEN: dort bekommt ein Kind eine Pflicht, die es nicht spielen kann. Dort sitzt der Riegel jetzt.
+Trifft zu, belegt: das Vater-Web hat KEINEN eigenen Breakpoint. Die einzige max-width-Media-Query in
+frontend/src/index.css:399 gilt der Produktseite (.lp-*). .vater-main ist fest max-width 1000px (index.css:227),
+.form-grid fliesst immerhin per auto-fit minmax(180px,1fr) (index.css:259) - aber .table ist width:100% ohne
+overflow-Container (index.css:237), breite Listen wie /vater/lehrwerke (5 Spalten) laufen auf schmalen Schirmen
+also ueber. Wunsch, kein Defekt.
 
 **Verlauf** (1):
 
-> **claude-code** · 2026-07-28 14:05 UTC, Konto 1
+> **claude-code** · 2026-08-02 15:41 UTC, Konto 1
 >
-> Gebaut. Drei Aenderungen, alle Backend: (1) Neuer Fehlercode exercise_empty (ApiErrors.cs) - bewusst getrennt von no_checkable_content, weil dort 'nichts zu pruefen' eine Eigenschaft des Typs ist (Aufsatz) und hier ein unfertiger Datenstand. (2) PlanPositionsController lehnt das Zuweisen einer ungefuellten Uebung ab (400 exercise_empty). 'Ungefuellt' ist registry-getrieben definiert: nur Typen mit StoreResolution.ItemTable und null Items - ein Aufsatz hat typbedingt nie Items und bleibt zuweisbar (eigener Regressionstest). (3) refs-from-tags weist einen leeren Treffersatz ab und laesst die Items unberuehrt, statt die Uebung lautlos zu leeren. Dazu: die Vorschau nennt jetzt den Grund (exercise_empty statt des allgemeinen no_checkable_content), damit ein leeres 'Ausprobieren' nicht wie ein Fehler der App aussieht - genau der Fall aus dem Mitschnitt von Anmerkung 10. NICHT gebaut, mit Begruendung in der korrigierten Antwort: keine Schranke am POST (zerstoerte 'erst anlegen, dann fuellen') und keine am Item-DELETE. Geprueft: 464/464 Tests gruen (6 neue in EmptyExerciseGuardTests.cs, darunter der Regressionsschutz fuer Aufsatz und fuer 'erst anlegen, dann fuellen'), dotnet format sauber, und docs/api-examples traegt ein verifiziertes Beispiel (Abdeckung 31/48 Codes).
+> Eingeplant als Story B-68 (Vater-Web responsive, art: Wunsch, P3). Analyse ist als Ist-Stand mitgewandert.
 
-## #14 · Bug · erledigt
+## #2 · Content · eingeplant
 
-- **Erfasst:** 2026-07-28 20:12 UTC von Konto 1 (Supervisor)
-- **Wo:** _(keine Route)_ (?)
-- **Folgt aus:** #13
+- **Erfasst:** 2026-08-02 14:09 UTC von Konto 6 (Supervisor)
+- **Wo:** `/vater/lehrwerke` (vater)
 
-'Verwendung' sagt 'nirgends', Loeschen sagt '409 exercise_in_use' - und der Autor kann nicht herausfinden, wo. Die beiden Pruefungen haben unterschiedliche Sichtbarkeitsbereiche: ExerciseCatalogController.Usage (Zeile 156-180) filtert auf die eigenen Kinder (SupervisorLinks.Any(l => l.SupervisorId == fid), Zeile 164 und 176; die Zusage steht so auch am DTO, ExerciseCatalogDtos.cs:37), die Loeschpruefung in ExerciseControllerBase.cs:343-345 schaut dagegen GLOBAL ueber alle PlanPositions und KlassenarbeitExercises. Steckt die Uebung im Plan eines Kindes, das der Aufrufer nicht betreut, meldet die Verwendungs-Anzeige leer und das Loeschen scheitert trotzdem. Belegt am 2026-07-28 an Uebung 24 ('Einfach Vokabeln'): usage lieferte fuer Vater 1 UND fuer den Owner Vater 6 jeweils {plans:[],classTests:[]}, DELETE antwortete 409. Tatsaechlich lag sie in Position 24 von Plan 11 ('Englisch - Unit 1', aktiv) fuer Kind 6 - betreut von Vater 7. Aufloesen liess sich das nur, indem Vater 7 die Position entfernte; ueber die API allein war die Ursache nicht auffindbar. Das trifft die geteilte Bibliothek im Kern: je mehr Vaeter eine Uebung uebernehmen, desto haeufiger liegt die Verwendung ausserhalb der eigenen Sicht. Der Autor bekommt dann eine Uebung, die er nicht loeschen und deren Grund er nicht sehen kann. Moegliche Richtungen (nicht entschieden): (a) die 409-Meldung nennt die ANZAHL fremder Verwendungen ohne Namen zu verraten ('in 1 Lehrplan eines anderen Betreuers') - loest das Raetsel, ohne fremde Kinder offenzulegen; (b) usage bekommt ein Feld othersCount in derselben Absicht; (c) die Loeschpruefung wird auf den eigenen Bereich verengt - halte ich fuer falsch, sie schuetzt einen FK mit Restrict und muss global bleiben. Vorzug: (a), weil die Meldung genau dort steht, wo der Nutzer haengt.
+Die Reihenfolge beim hinzufügen von Lehrwerke:
+Fach, Schulart, Verlag, Reihe
+Wenn FAch ein Sprachfach ist, soll die Lernsprache ausgewählt werden.
+Muttersprache und Lernsprache sollen Pull-Down-Auswahl sein, kein Freitext.
+REihe und Verlag sollten ebenfalls Pulldown-Felder sein die auseinander aufbauen. Wird also das FAch ausgewählt, erscheinen nur Verläge die auch Englisch als Fach anbieten. Es gibt immer die Auswahl "default".
+Die Suche nach Lehrwerke soll über div. PArameter möglich sein.
+Das Thema geht über die UI hinaus und ist eine change des gesamten Models, da viele Freitexte durch feste Werte ersetzt wird. Dies macht aber die wiederverwendung von Lernwerken einfacher.
 
-**Antwort** (claude-code, 2026-07-28 20:42 UTC):
+**Antwort** (claude-code, 2026-08-02 15:29 UTC):
 
-Bestaetigt und behoben. Die Ursache war nicht eine falsche Pruefung, sondern dass es die Frage 'wo wird diese Uebung verwendet' ZWEIMAL gab: ExerciseCatalogController.Usage filterte auf die eigenen Kinder, die Loeschpruefung in ExerciseControllerBase.Delete zaehlte global. Zwei Implementierungen derselben Frage laufen zwangslaeufig auseinander. Es gibt jetzt eine gemeinsame Quelle: Services/Shared/ExerciseUsageQueries.CountBlockingAsync liefert die Verwendungen getrennt nach 'sichtbar fuer diesen Aufrufer' und 'verborgen', und beide Stellen benutzen sie. Die verborgenen Faelle werden als ZAHL genannt, ohne Namen: UsageResponse traegt otherCarersCount, und die 409-Meldung sagt 'Cannot delete: the exercise is still used - 1 usage outside your care (children you do not supervise, so they are not listed under usage). Remove it there first.' Fremde Kinder gehoeren einem anderen Betreuer und duerfen nicht offengelegt werden - die Zahl genuegt, um das Raetsel aufzuloesen. Bewusst NICHT gemacht: die Loeschpruefung auf den eigenen Bereich verengen (Variante c des Vorschlags). Sie schuetzt einen FK mit Restrict und muss global bleiben, sonst gaebe es statt eines klaren 409 einen 500. Ueber den Vorschlag hinaus: die Zahl steht nicht nur im Fehlerfall, sondern auch in der Verwendungs-Anzeige selbst. Dort schaut der Autor zuerst hin, und dort stand die falsche Auskunft - eine Korrektur erst beim Loeschversuch haette die eigentliche Luege stehen gelassen. Eine Praezisierung, die beim Bauen auffiel: gezaehlt werden nur die FK-relevanten Verwendungen (Lehrplan-Positionen und DIREKT zugewiesene Klassenarbeiten). Eine Klassenarbeit, die die Uebung nur ueber einen gemeinsamen Tag einsammelt, verweist nicht auf sie und hindert das Loeschen darum nicht; sie gehoert in die Liste, aber nicht in diese Zaehlung. Wer beides vermischt, baut den naechsten Widerspruch derselben Art.
+Trifft zu, und deine Einschaetzung "geht ueber die UI hinaus" stimmt.
+Ist-Stand Formular (frontend/src/vater/VaterLehrwerke.tsx:352-384): Reihenfolge ist Reihe, Verlag, Fach, Schulart,
+Lernsprache, Muttersprache, Notiz. Fach (:361) und Schulart (:368) sind bereits Pulldowns; Verlag (:357),
+Lernsprache (:375) und Muttersprache (:379) sind Freitext.
+Ist-Stand Modell: TextbookSeries.Publisher/SourceLanguage/TargetLanguage sind string?
+(backend/Pugling.Api/Models/CurriculumEntities.cs:22,31,33) - es gibt weder eine Verlag-Entitaet noch eine
+Sprachcode-Liste, also nichts, worauf abhaengige Pulldowns aufsetzen koennten.
+Ist-Stand Suche: der Endpunkt kennt nur search (Name/Verlag), subjectId und mineOnly
+(Controllers/Creator/TextbookSeriesController.cs:48-50). Schulart, Verlag oder Band sind nicht filterbar.
 
-**Verlauf** (2):
+**Verlauf** (1):
 
-> **claude-code** · 2026-07-28 20:42 UTC, Konto 1
+> **claude-code** · 2026-08-02 15:41 UTC, Konto 1
 >
-> Gebaut. Backend: neue gemeinsame Quelle ExerciseUsageQueries (BlockingUsage mit Own/Hidden + Explain), genutzt von ExerciseCatalogController.Usage und ExerciseControllerBase.Delete; UsageResponse um otherCarersCount erweitert; CancellationToken in Usage und Delete durchgereicht. Frontend: ExerciseUsage-Typ ergaenzt, die Verwendungs-Anzeige nennt 'Ausserdem N x bei Kindern, die du nicht betreust - darum laesst sich diese Uebung nicht loeschen.' Geprueft: 468/468 Backend-Tests (3 neue in ExerciseUsageScopeTests: zwei Vaeter, fremd betreutes Kind, plus die Gegenproben 'eigene Verwendung zaehlt nicht als fremd' und 'unbenutzt laesst sich loeschen'), 21 Vitest, 20 Playwright, dotnet format sauber. Zusaetzlich an den ECHTEN Daten nachgewiesen: Uebung 18 (Owner Vater 1) steckt in Plan 11 eines von Vater 7 betreuten Kindes - usage liefert jetzt otherCarersCount=1 statt zu schweigen, das 409 nennt denselben Grund, und die Anzeige im Browser zeigt den Satz. Das docs/api-examples-Beispiel zum 409 ist neu erzeugt.
+> Eingeplant als Story B-63 (Lehrwerk-Hierarchie, art: Wunsch, P2) - gemeinsam mit #3, #4, #5, #6 und #7, weil alle sechs denselben Schnitt betreffen. Dieser Punkt steckt dort in den offenen Punkten 2 und 5 (Verlag als Entitaet, Sprachen als Liste) und im Akzeptanzkriterium 5 (Suchparameter).
+
+## #3 · Content · eingeplant
+
+- **Erfasst:** 2026-08-02 14:22 UTC von Konto 6 (Supervisor)
+- **Wo:** `/vater/lehrwerke` (vater)
+
+"Themen der Unit" soll ein Array sein.
+Entsprechend können
+Beispiel für Englisch, Unit 1:
+- Talking about holidays
+- Reading in a street map
+- Reading a Tube map
+
+**Antwort** (claude-code, 2026-08-02 15:29 UTC):
+
+Trifft zu: SeriesUnit.Topics ist ein einzelnes string? (backend/Pugling.Api/Models/CurriculumEntities.cs:63),
+im UI ein einzeiliges Textfeld (frontend/src/vater/VaterLehrwerke.tsx:273-277). Mehrere Themen gehen heute nur
+als Komma-Liste in einem Freitext - such- und verknuepfbar ist das nicht.
+
+**Verlauf** (1):
+
+> **claude-code** · 2026-08-02 15:41 UTC, Konto 1
 >
-> **claude-code** · 2026-07-28 21:03 UTC, Konto 1
+> Eingeplant als Story B-63 (Lehrwerk-Hierarchie, art: Wunsch, P2), offener Punkt 4 (Themen als Freitext-Array) und Akzeptanzkriterium 3.
+
+## #4 · Content · eingeplant
+
+- **Erfasst:** 2026-08-02 14:24 UTC von Konto 6 (Supervisor)
+- **Wo:** `/vater/lehrwerke` (vater)
+
+Grammatik der Unit soll ebenfalls ein Array sein. Am besten verknüpft um diese Werte Buchübergreifend zu nutzen, da Grammatik ein Sprachübergreifendes Thema ist.
+
+**Antwort** (claude-code, 2026-08-02 15:29 UTC):
+
+Trifft zu: SeriesUnit.Grammar ist string? (backend/Pugling.Api/Models/CurriculumEntities.cs:65), im UI ein
+einzeiliges Feld (frontend/src/vater/VaterLehrwerke.tsx:280-284). Eine Grammatik-Entitaet gibt es NICHT - die
+Suche nach "class Grammar*" im Backend trifft nur den Uebungstyp (Exercises/BuiltInExerciseTypes.cs:52,
+Contracts/Exercise/ExerciseConfigs.cs:112, Controllers/Creator/ExerciseControllers.cs:343), nicht den Stoff.
+Vorbild fuer eine geteilte, slug-idempotente Taxonomie waere VocabTag bzw. InterestTag.
+
+**Verlauf** (1):
+
+> **claude-code** · 2026-08-02 15:41 UTC, Konto 1
 >
-> Nachgezogen fuer die Creator-Sicht. Auslegung vom Nutzer: dass ein Vater die Uebungen eines anderen nutzt, ist gewollt - es gibt Lehrer/Creator praktisch ohne Kinder, und diesen Part sollen KI-Creator-Apps uebernehmen. Damit kippt die Bedeutung der Zahl: fuer so ein Konto sind die beiden Listen DAUERHAFT leer, und 'Ausserdem N x bei Kindern, die du nicht betreust' unterstellt Kinder, die es nicht gibt. Belegt am geseedeten Vater 2 'Herr Schmidt (Englischlehrer)': keine Kinder, 4 eigene Uebungen, und fuer Uebung 12 liefert usage plans=0, classTests=0, otherLearnersCount=1. Zwei Aenderungen: (1) Gezaehlt werden jetzt KINDER, nicht Verwendungsstellen - das Feld hiess otherCarersCount, hielt aber eine Stellenzahl (eigener Fehler von vorher). Zwei Positionen im Plan desselben Kindes sind ein Nutzer; das 409 nennt weiterhin die Stellen, weil dort jemand aufraeumen muss. Feld heisst jetzt OtherLearnersCount. (2) Hat der Aufrufer keine eigene Verwendung, ERSETZT die Zahl die zwei leeren Listen statt sie zu ergaenzen: 'Im Einsatz bei 1 Kind - nicht von dir betreut, darum ohne Namen und ohne Plan-Titel. Loeschen ist deshalb gesperrt.' Zwei '-'-Zeilen lasen sich fuer einen Lehrer wie 'wird nicht benutzt' - genau die Falschaussage dieser Anmerkung. Dabei aufgefallen und NICHT behauptet: einen Satz 'zurueckziehen kannst du sie trotzdem' hatte ich geschrieben und wieder gestrichen - executePublic wird im Bearbeiten-Dialog nur durchgereicht (ExerciseEditModal.tsx:112), es gibt kein Bedienelement dafuer. Die Ruecknahme von Material ist also nur ueber die API moeglich; das bleibt offen. Geprueft: 469/469 Backend-Tests (neu: CreatorOhneKinder_ZaehltNutzendeKinder_NichtVerwendungsstellen - zwei Plaene desselben Kindes ergeben 1, nicht 2), 21 Vitest, 20 Playwright, dotnet format sauber, und im Browser an Uebung 18 nachgesehen.
+> Eingeplant als Story B-63 (Lehrwerk-Hierarchie, art: Wunsch, P2), offener Punkt 3 (Grammatik als geteilte, slug-idempotente Taxonomie) und Akzeptanzkriterium 3.
+
+## #5 · Content · eingeplant
+
+- **Erfasst:** 2026-08-02 14:27 UTC von Konto 6 (Supervisor)
+- **Wo:** `/vater/lehrwerke` (vater)
+
+Bei der Grammatik soll entsprechend ein Such oder auswahl-berech sein um bereits vorhandene Grammatik-Werte zu übernehmen.
+Es gibt oft auch weitere Unterlagen aus der gleichen Buchreihe die gleiche Themen unterschiedlich aufbereiten. Es gibt neben dem Hauptbuch, noch Lernbücher und Übungsbücher die zusätzliche Aufgben zum selben Bereich anbieten. Damit diese Verknüpfung zweifelsfrei erfolgt müssen die Krammatik-Werte eindeutig sein (id).
+Evtl. kann mach diese Querverseise zu Übungen und/oder Büchern ebenfalls festhalten/ermöglichen
+
+**Antwort** (claude-code, 2026-08-02 15:29 UTC):
+
+Haengt an #4 und trifft zu: ohne eigene Entitaet gibt es keine Auswahlliste, keine Suche und vor allem keine
+stabile Id, an der ein Querverweis haengen koennte (SeriesUnit.Grammar ist Freitext,
+backend/Pugling.Api/Models/CurriculumEntities.cs:65).
+Zweiter Punkt ebenfalls offen: weitere Buecher derselben Reihe (Lernbuch, Uebungsbuch) kennt das Modell nicht -
+TextbookSeries -> SeriesUnit ist genau zweistufig (CurriculumEntities.cs:41,51), ein Buchtyp-Feld existiert nicht.
+
+**Verlauf** (1):
+
+> **claude-code** · 2026-08-02 15:41 UTC, Konto 1
+>
+> Eingeplant als Story B-63 (Lehrwerk-Hierarchie, art: Wunsch, P2), offene Punkte 3 (Grammatik-Ids) und 6 (weitere Buchtypen derselben Reihe).
+
+## #6 · Ui · eingeplant
+
+- **Erfasst:** 2026-08-02 14:29 UTC von Konto 6 (Supervisor)
+- **Wo:** `/vater/lehrwerke` (vater)
+
+In der Übersicht der Lehrwerke muss auch das Band erscheinen.
+
+**Antwort** (claude-code, 2026-08-02 15:29 UTC):
+
+Trifft zu: die Uebersicht zeigt Reihe, Fach, Schulart, Units (frontend/src/vater/VaterLehrwerke.tsx:56); der
+Band steht nur in der aufgeklappten Unit-Tabelle (:152 Spaltenkopf, :158 Wert).
+Abhaengigkeit, die vor dem Bauen zu klaeren ist: der Band haengt heute an der Unit
+(SeriesUnit.Grade, backend/Pugling.Api/Models/CurriculumEntities.cs:57), eine Reihe kann also mehrere Baende
+tragen. Eine Spalte muesste heute aggregieren ("Baende 7-9"). Eindeutig wird sie erst nach dem Umbau aus #7.
+
+**Verlauf** (1):
+
+> **claude-code** · 2026-08-02 15:41 UTC, Konto 1
+>
+> Eingeplant als Story B-63 (Lehrwerk-Hierarchie, art: Wunsch, P2), Akzeptanzkriterium 4. Bewusst dort und nicht als Einzelfix: solange der Band an der Unit haengt, muesste die Spalte aggregieren - eindeutig wird sie erst nach dem Umbau aus #7.
+
+## #7 · Content · eingeplant
+
+- **Erfasst:** 2026-08-02 14:32 UTC von Konto 6 (Supervisor)
+- **Wo:** `/vater/lehrwerke` (vater)
+
+Band muss aus Unit raus und in Lehrwerk ziehen. 
+Verbindung:
+Verlag 1:n Fach 1:n Reihe 1:n Band 1:n Units
+
+**Antwort** (claude-code, 2026-08-02 15:29 UTC):
+
+Der Ist-Stand ist hier eine bewusste Entscheidung, keine Luecke: "Band und Unit liegen bewusst in EINER
+Ebene (Grade = Band)" - backend/Pugling.Api/Models/CurriculumEntities.cs:44-47, dieselbe Aussage in
+backend/Pugling.Api/CLAUDE.md unter "Unterrichtsmaterial & Creator-Profile". Der Verlag ist heute gar keine Ebene,
+sondern ein string? an der Reihe (CurriculumEntities.cs:22).
+Was an deinem Umbau haengt (Verlag 1:n Fach 1:n Reihe 1:n Band 1:n Unit):
+- Textbook.SeriesId/CurrentUnitId am Kind zeigt heute auf Reihe + Unit (Models/AdminEntities.cs:168-175) -
+  eine Band-Ebene dazwischen bricht diesen Vertrag.
+- CreatorProfile.SeriesId (CurriculumEntities.cs:98) und das Matching-Gewicht "Reihe 8" haengen ebenfalls an
+  der Reihe.
+- Fach 1:n Reihe ist heute nur eine optionale Verknuepfung (SubjectId nullable, CurriculumEntities.cs:26).
+Bemerkenswert: den Band gibt es bereits - aber auf der KIND-Seite (Textbook.Grade, AdminEntities.cs:161), nicht
+im geteilten Katalog.
+
+**Verlauf** (1):
+
+> **claude-code** · 2026-08-02 15:41 UTC, Konto 1
+>
+> Eingeplant als Story B-63 (Lehrwerk-Hierarchie, art: Wunsch, P2). Diese Anmerkung ist der TRAEGER der Story - offener Punkt 1 ist die Frage, ob die dokumentierte Ein-Ebenen-Entscheidung umgekehrt wird; faellt sie negativ aus, sind die uebrigen sechs Punkte gegenstandslos. Empfehlung in der Story: ja.
+
+## #8 · Content · eingeplant
+
+- **Erfasst:** 2026-08-02 14:36 UTC von Konto 6 (Supervisor)
+- **Wo:** `/vater/fachlehrer` (vater)
+
+Wenn beim anlegen des Fachlehrer ein Lehrwerk angegeben wird, ist das Fach schon bekannt. Die Lern- und Muttersprache eigentlich auch.
+
+**Antwort** (claude-code, 2026-08-02 15:29 UTC):
+
+Trifft zu, und es ist reine UI-Arbeit. Im Formular sind Fach (frontend/src/vater/VaterFachlehrer.tsx:221),
+Lehrwerk (:249), Lernsprache (:258) und Muttersprache (:262) vier voneinander unabhaengige Eingaben; die beiden
+Sprachfelder sind Freitext mit Vorgabe en/de (:140-141).
+Die Daten zum Ableiten liegen bereits vor: TextbookSeries traegt SubjectId/SubjectName und
+SourceLanguage/TargetLanguage (backend/Pugling.Api/Models/CurriculumEntities.cs:24-33). Das Modell muss also
+nicht geaendert werden - es fehlt nur das Vorbelegen beim Waehlen der Reihe. Die Felder muessen dabei
+beschreibbar bleiben: ein Profil ohne Reihe (SeriesId ist nullable) braucht sein Fach weiter selbst.
+
+**Verlauf** (1):
+
+> **claude-code** · 2026-08-02 15:41 UTC, Konto 1
+>
+> Eingeplant als Story B-67 (Fachlehrer aus Lehrwerk vorbelegen, art: Wunsch, P2, wo: frontend). Analyse ist als Ist-Stand mitgewandert; das Modell muss nicht geaendert werden.
+
+## #9 · Content · eingeplant
+
+- **Erfasst:** 2026-08-02 14:40 UTC von Konto 6 (Supervisor)
+- **Wo:** `/vater/katalog` (vater)
+
+Fächer und Lehrwerke scheint mir doppelt zu sein. Eigentlich kann ein Vater ein indivuelles Lehrwerk erstellen und somit seinen Katalog erstellen. Hier sind die Arten auch schon als Liste enthalten die ich im Lehrwerk vermisse.
+
+**Antwort** (claude-code, 2026-08-02 15:29 UTC):
+
+Teils - und die echte Dopplung liegt woanders als vermutet.
+Im Modell sind Fach und Lehrwerk zwei verschiedene Dinge: Subject -> Chapter -> Exercise traegt die UEBUNGEN
+(Exercise.ChapterId, backend/Pugling.Api/Models/LearnEntities.cs:54), TextbookSeries -> SeriesUnit traegt den
+STOFF (Topics/Grammar/VocabularyNotes, Models/CurriculumEntities.cs:62-67) und keine einzige Uebung. Verbunden
+sind beide ueber TextbookSeries.SubjectId (CurriculumEntities.cs:26). Ein Vater kann also NICHT ueber ein
+Lehrwerk seinen Katalog erstellen - an einer Unit haengt kein Inhalt, nur eine Notiz.
+Doppelt ist dagegen: Textbook (das Buch AM KIND, Models/AdminEntities.cs:146-175 mit Title, Publisher, Grade,
+CurrentChapter als Freitext) neben TextbookSeries/SeriesUnit (katalogisiert, geteilt). Dieselbe Sache zweimal.
+Die vermissten "Arten" sind ExerciseCategory je Fach (LearnEntities.cs:25-32), verwaltet unter /vater/katalog -
+sie sind eine kontrollierte Liste, genau das, was du in #3/#4 fuer Themen und Grammatik willst.
+
+**Verlauf** (1):
+
+> **claude-code** · 2026-08-02 15:41 UTC, Konto 1
+>
+> Eingeplant als Story B-64 (Textbook vs. TextbookSeries aufloesen, art: Wunsch, P3). Die Story haelt fest, dass Fach und Lehrwerk NICHT doppelt sind - die Dopplung liegt zwischen dem Freitext-Buch am Kind und der katalogisierten Reihe.
+
+## #10 · Content · eingeplant
+
+- **Erfasst:** 2026-08-02 14:45 UTC von Konto 6 (Supervisor)
+- **Wo:** `/vater/exercises/neu?subjectId=1` (vater)
+
+Übungen sollen zu einem Kapitel hinzugefügt werden. Damit gehören Übungen immer zu einem Kapitel. Diese Abhängigkeit kann gut im REST abgebildet werden.
+Damit sind viele Werte der Übung hinfällig (Klasse von, Klasse bis, Quelle, Schulart, etc.)
+
+**Antwort** (claude-code, 2026-08-02 15:29 UTC):
+
+Der erste Satz ist bereits umgesetzt: Exercise.ChapterId ist nicht nullable
+(backend/Pugling.Api/Models/LearnEntities.cs:54), die Route lautet api/v1/creator/subjects/{}/chapters/{}/<typ>,
+und das Formular verlangt beides, bevor es sendet (frontend/src/vater/VaterExerciseCreate.tsx:103-104,
+Anlegen :135). Eine Uebung ohne Kapitel kann nicht entstehen.
+Der zweite Satz trifft heute NICHT zu: Klasse von/bis, Schulart und Quelle sind nicht redundant, weil das
+Kapitel nur Name und OrderIndex traegt (LearnEntities.cs:35-44) und das Fach nur den Namen (:8-18) - es gibt
+oben nichts, was diese Angaben ersetzen koennte. Sie liegen an der Uebung (LearnEntities.cs:86-93). Redundant
+wuerden sie erst, wenn Klassenstufe/Schulart ans Kapitel wandern; das waere der eigentliche Vorschlag und ein
+Modellumbau.
+
+**Verlauf** (1):
+
+> **claude-code** · 2026-08-02 15:41 UTC, Konto 1
+>
+> Erste Haelfte ist beantwortet (Uebungen haengen bereits zwingend am Kapitel) - dafuer entsteht keine Story. Die zweite Haelfte (Klassenstufe/Schulart ans Kapitel ziehen) steht als offener Punkt 7 in Story B-63 (Lehrwerk-Hierarchie), mit der Empfehlung, sie zurueckzustellen: es ist ein eigener Umbau am Uebungs-Katalog.
+
+## #11 · Content · eingeplant
+
+- **Erfasst:** 2026-08-02 15:05 UTC von Konto 6 (Supervisor)
+- **Wo:** `/vater/exercises/neu?subjectId=1` (vater)
+
+Bei Vokabeln gibt es oft mehrfachdeutungen. Bei einer Rückwärtssuche würden die Werte nicht passen.
+Beispiel:
+en: huge -> de: riesig
+en: huge -> de: riesig
+
+**Antwort** (claude-code, 2026-08-02 15:29 UTC):
+
+Trifft zu. Eine Vocabulary-Zeile ist genau EIN Paar Word -> Translation
+(backend/Pugling.Api/Models/VocabEntities.cs:19-22); ein Alternatives-Feld gibt es nur an der Luecke, nicht an
+der Vokabel (Services/Shared/AnswerGrader.cs:19-24 gegenueber :12-16). Bewertet wird auf exakte Gleichheit nach
+Normalisierung gegen die EINE gespeicherte Loesung (AnswerGrader.cs:12-16).
+Ausfuehrliche Antwort samt Richtungsanalyse steht an #12.
+
+**Verlauf** (1):
+
+> **claude-code** · 2026-08-02 15:41 UTC, Konto 1
+>
+> Eingeplant als Story B-65 (Vokabel 1:n Uebersetzung, art: DEFEKT, P1) - zusammen mit #12. Hoechste Prio im Stapel, weil hier eine RICHTIGE Antwort als falsch gewertet wird und der Muenz-Malus daran haengt.
+
+## #12 · Content · eingeplant
+
+- **Erfasst:** 2026-08-02 15:08 UTC von Konto 6 (Supervisor)
+- **Wo:** `/vater/exercises/neu?subjectId=1` (vater)
+
+zu Frage 11:
+en: huge -> de: riesig
+en: huge -> de: sehr groß
+Gegenprobe müsste dann sein:
+de: riesig -> en: huge
+de: sehr groß -> en: huge
+
+Es müsste entweder ein Entrag pro Kombination geben oder die Übersetzung müsste ein Array sein: en 1:n de
+bzw:
+src 1:n target
+
+**Antwort** (claude-code, 2026-08-02 15:29 UTC):
+
+Trifft zu, und deine Gegenprobe zeigt genau die Asymmetrie.
+"Ein Eintrag pro Kombination" ist der IST-Zustand: zwei Vocabulary-Zeilen huge->riesig und huge->sehr gross
+(Models/VocabEntities.cs:19-22).
+Rueckwaerts funktioniert das: der Richtungstausch vertauscht Frage und Antwort je Item
+(Services/Shared/ExerciseContentProvider.cs:50-55), riesig->huge und "sehr gross"->huge sind beide richtig.
+Vorwaerts nicht: das Kind sieht "huge" zweimal, und der Vergleich laeuft auf exakte Gleichheit gegen die eine
+Loesung des jeweiligen Items (Services/Shared/AnswerGrader.cs:12-16) - eine der beiden korrekten Antworten wird
+als falsch gewertet. Es gibt kein Alternatives an der Vokabel (nur an der Luecke, AnswerGrader.cs:19-24).
+Der Fix ist damit deine zweite Variante (1:n Uebersetzung bzw. Alternatives an der Vokabel), nicht mehr Zeilen.
+Nebenwirkung, die dabei zu klaeren ist: der Richtungstausch verwirft Alternativen ausdruecklich, weil sie zur
+alten Antwort gehoerten (ExerciseContentProvider.cs:57).
+
+**Verlauf** (1):
+
+> **claude-code** · 2026-08-02 15:41 UTC, Konto 1
+>
+> Eingeplant als Story B-65 (Vokabel 1:n Uebersetzung, art: DEFEKT, P1) - zusammen mit #11. Deine Gegenprobe steht dort in der Lueckenbeschreibung; die Nebenwirkung beim Richtungstausch ist als offener Punkt 3 festgehalten.
+
+## #13 · Content · eingeplant
+
+- **Erfasst:** 2026-08-02 15:16 UTC von Konto 6 (Supervisor)
+- **Wo:** `/vater/exercises?subjectId=1` (vater)
+
+Beim Vokabel Buchstabeneingabe sollen Leer- und Satzzeichen nicht eingegeben werden. Die sind schon da. Wenn eine Vokabel mehrere Übersetzungen hat und diese die gleiche Anzahl an Buchstaben, soll die ÜBerprüfung dies erkennen und die richtige Übersetzung bewerten auch wenn die Worte in einer anderen Reihenfolge eingegeben wurde
+
+**Antwort** (claude-code, 2026-08-02 15:29 UTC):
+
+Drei Punkte, alle drei bestaetigt.
+1. Leer- und Satzzeichen: die Zahl der Kaestchen ist item.Answer.Length
+   (backend/Pugling.Api/Exercises/VocabularyExerciseType.cs:80), und LetterBoxes rendert genau so viele
+   gleichartige Einzelfelder (frontend/src/components/LetterBoxes.tsx:15,32-48). Die Komponente kennt keine
+   Trennzeichen - das Kind muss das Leerzeichen selbst in ein Kaestchen tippen.
+2. Mehrere Uebersetzungen gleicher Laenge: haengt an #11/#12. Solange nur eine Loesung gespeichert ist, wird die
+   andere richtige als falsch gewertet - die Laenge aendert daran nichts.
+3. Wortreihenfolge: Normalize trimmt, senkt Gross-/Kleinschreibung und faltet Mehrfach-Leerzeichen, sortiert die
+   Woerter aber NICHT (Services/Shared/StageMechanics.cs:25-26). "gross sehr" gilt als falsch.
+
+**Verlauf** (1):
+
+> **claude-code** · 2026-08-02 15:41 UTC, Konto 1
+>
+> Eingeplant, aufgeteilt auf zwei Stories: Punkt 1 (Leer-/Satzzeichen) und Punkt 3 (Wortreihenfolge) als B-66 (Buchstabenkaestchen Trennzeichen, art: Defekt, P2); Punkt 2 (mehrere Uebersetzungen) gehoert zu B-65, weil er an der fehlenden Gleichwertigkeit haengt, nicht an der Laenge. Punkt 3 ist in B-66 als offene Entscheidung notiert, nicht als Defekt - bei einem Satz darf die Reihenfolge nicht egal sein.
+

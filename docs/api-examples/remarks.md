@@ -446,7 +446,6 @@ Die API kann das über PATCH api/v1/supervisor/adults/{id} (AdultsController.Upd
 >
 > Gebaut: Formular unter /vater/profil ergänzt (VaterProfil.tsx), PATCH über api.updateAdult.
 
-
 ````
 
 ### Export als Sohn abrufen — Fehlerfall
