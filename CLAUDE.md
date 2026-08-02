@@ -158,8 +158,9 @@ Lernstand – positionsgebunden *und* plan-übergreifend je Vokabel-Item.
   löschbar zu machen braucht darum einen ausdrücklichen `bool Clear<Feld>`-Schalter im Update-DTO (Muster:
   `UpdateChildDto.ClearBirthYear`). Im Controller **erst den Wert, dann den Schalter** anwenden, damit
   „leeren" gewinnt, wenn ein Formular beides schickt. Ohne den Schalter meldet eine Oberfläche mit
-  „– keine Angabe –" fröhlich „Gespeichert." und der alte Wert steht weiter da (reflexiv geprüft von
-  `PatchClearFieldTests` gegen *alle* `Update…Dto`/`Update…Request`).
+  „– keine Angabe –" fröhlich „Gespeichert." und der alte Wert steht weiter da. `PatchSemanticsTests`
+  prüft reflexiv über *alle* `Update…Dto`/`Update…Request`, dass **jeder** Schalter einen Fall in seiner
+  Tabelle hat – ein neuer macht das Tor also erst rot (Einzelfälle: `PatchClearFieldTests`).
 - **Eigentum**: Für Endpunkte unter `{planId}` den `[ServiceFilter(typeof(PlanOwnershipFilter))]`,
   für Endpunkte unter `{childId}` den `[ServiceFilter(typeof(ChildOwnershipFilter))]` nutzen
   (nicht inline wiederholen). Sonst `AuthAccess` explizit. Kindbezogene Ressourcen leben unter
