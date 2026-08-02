@@ -202,6 +202,56 @@ public class PositionTestFlowTests(PuglingWebAppFactory factory) : IClassFixture
     }
 
     /// <summary>
+    /// The alternatives belong to the <b>target</b> side only – hence the name
+    /// <c>TranslationAlternatives</c>. After the direction swap the translation is the question, so they
+    /// answer nothing and are dropped (<c>ExerciseContentProvider.Swap</c>). Pinned down because it is the
+    /// rule, not a side effect: asked backwards, only the word itself counts.
+    /// </summary>
+    [Fact]
+    public async Task Test_Rueckwaerts_AkzeptiertDieAlternativeNicht()
+    {
+        var father = await TestApi.FatherAsync(_factory);
+        var (id, key) = await TestApi.CreateStoreVocabAsync(father, "vast", "weit",
+            translationAlternatives: ["ausgedehnt"]);
+        var exerciseId = await TestApi.CreateVocabRefExerciseAsync(father, key);
+        // Backwards: the card asks "weit → ?", the expected answer is "vast".
+        await SetDirectionAsync(father, exerciseId, "back-to-front");
+        var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.FreeText);
+        var child = await TestApi.ChildAsync(_factory);
+        var baseUrl = $"/api/v1/student/study-plans/{planId}/positions/{positionId}/tests";
+
+        var attemptId = await TestApi.IdWithKeyAsync(await child.PostAsJsonAsync(baseUrl, new { }), "attemptId");
+        var submit = await child.PostAsJsonAsync($"{baseUrl}/{attemptId}/submit", new
+        {
+            answers = new[] { new { itemIndex = 0, givenAnswer = "ausgedehnt" } },
+        });
+
+        var res = await submit.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal(0, res.GetProperty("correctItems").GetInt32());
+        // Self-protection against a vacuous green: the entry must really carry the alternative. (That the
+        // direction really flipped is proven by the assertion above - forwards "ausgedehnt" would count.)
+        var stored = await father.GetFromJsonAsync<JsonElement>($"/api/v1/creator/vocabulary/{id}");
+        Assert.Equal(1, stored.GetProperty("translationAlternatives").GetArrayLength());
+    }
+
+    /// <summary>Switches the query direction of a vocabulary exercise (the config is a full replacement).</summary>
+    private static async Task SetDirectionAsync(HttpClient father, int exerciseId, string direction)
+    {
+        var ex = await father.GetFromJsonAsync<JsonElement>($"/api/v1/creator/exercises/{exerciseId}");
+        var subjectId = ex.GetProperty("subjectId").GetInt32();
+        var chapterId = ex.GetProperty("chapterId").GetInt32();
+        var res = await father.PutAsJsonAsync(
+            $"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/vocabulary/{exerciseId}", new
+            {
+                title = ex.GetProperty("title").GetString(),
+                orderIndex = 1,
+                rewardPoints = 10,
+                config = new { direction },
+            });
+        res.EnsureSuccessStatusCode();
+    }
+
+    /// <summary>
     /// The counter-test to <see cref="Test_GleichwertigeUebersetzung_WirdAlsRichtigGewertet"/>, and the reason
     /// equivalence has to be <b>declared</b>: two entries sharing the same word are homonyms
     /// (<c>bank → Bank</c> / <c>bank → Ufer</c>), not synonyms. Deriving equivalence from the shared word

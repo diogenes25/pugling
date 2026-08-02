@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/katalog, bereich/training, bereich/frontend, lerntechnik/vokabeln, rolle/student, rolle/creator]
+tags: [typ/story, status/abgenommen, bereich/katalog, bereich/training, bereich/frontend, lerntechnik/vokabeln, rolle/student, rolle/creator]
 aliases: [Vokabel 1:n Übersetzung, Mehrfachdeutung, TranslationAlternatives]
-status: geschaetzt
+status: abgenommen
 prio: P1
 art: Defekt
 groesse: M
@@ -241,3 +241,50 @@ und **alle vier** Auswertungsstellen fragen sie schon so ab
   (Gleichwertigkeit wird erklärt, nicht aus gleichem Wort abgeleitet) — sie verhindert, dass der Fix
   Homonyme gegenseitig als richtig wertet. Entscheidung 7 (ein Feld je Variante) hat
   [B-69](B-69-wiederhol-felder-alternativen.md) abgeworfen.
+- **2026-08-02** — `geschaetzt → in-arbeit`. Backend zuerst, nach dem Angriffsplan; der Kern war die
+  vorhergesagte **eine Zeile** (`ExerciseContentResolver.cs:97`), teuer waren wie geschätzt die Ränder.
+  **Rot-Probe gefahren:** mit der alten Zeile fällt `Test_GleichwertigeUebersetzung_WirdAlsRichtigGewertet`
+  (`correctItems 0` statt 1) — der Defekt ist belegt, nicht behauptet; der Homonym-Gegentest bleibt unter
+  beiden Regeln grün, wie es sein soll. Zwei Abweichungen vom Angriffsplan, beide klein:
+  1. **`TranslationAlternatives` ist nullable** (`List<string>?`, Muster `ClozeText.WordBank` statt einer
+     stets vorhandenen Liste). Grund: nur so hat „keine erklärt" **eine** Schreibweise — `[]` und `null`
+     wären zwei —, und nur so passt der Clear-Schalter in die Tabelle von `PatchSemanticsTests`, die nach
+     dem Leeren einen `null`-Wert liest. Der Controller normalisiert eine leer gewordene Liste darum auf
+     `null` (`CleanAlternatives`).
+  2. **Die Multiple-Choice-Entdopplung prüft beide Seiten**, nicht nur die eigenen Alternativen: erklärt
+     allein die Gegenkarte die Gleichwertigkeit, wäre ihre Primärantwort sonst weiter ein Ablenker. Ein
+     Kandidat fällt darum, sobald **irgendeine** seiner akzeptierten Antworten schon gesehen ist.
+- **2026-08-02** — `in-arbeit → abgenommen`. **636 Tests grün** (Basis 628, +8), Vitest **54 grün** in
+  8 Dateien, `dotnet build Pugling.sln` und `npm run build` sauber, `markdownlint-cli2` 0 Befunde,
+  `/smoke-test` vollständig grün (13 Checks) und das neue Feld zusätzlich per `curl` gegen die laufende
+  Instanz geprüft: `null` lässt stehen, `clearTranslationAlternatives` leert, `lookup` findet die Dublette
+  groß-/kleinschreibungsunabhängig. Alle neun Akzeptanzkriterien erfüllt. Zwei davon ruhten zunächst nur
+  auf bestehendem Verhalten und haben jetzt einen eigenen Test: **AK5** (Buchstabenkästchen, auf Anstoß des
+  Reviews — `TestStage.LetterBoxes` mit gleich langer Alternative, `nice → nett` gegen `lieb`) und **AK3**
+  (rückwärts wird die Alternative *nicht* angenommen). Der AK3-Test ist zugleich nicht leer zu bekommen:
+  vorwärts *wäre* dieselbe Antwort richtig, er beweist den Richtungstausch also mit.
+
+  **`pugling-reviewer`**: Kern bestätigt (G3, G7, Kettenlänge 1, Snapshot-Diff genau drei Zeilen,
+  Entscheidung 1 gehalten, Alternativen verlassen den Server nirgends). Behoben: `CleanAlternatives`
+  entfernt jetzt auch die **primäre** Übersetzung aus der Liste (sonst „auch: riesig" neben „riesig"), und
+  der Vertrag sagt, dass eine ausdrücklich leere Liste ebenfalls leert. Stehen geblieben, bewusst: dass
+  `BatchUpdateItem` nicht ins Raster von `PatchSemanticsTests.UpdateDtos()` fällt (`Update…Dto`/`…Request`)
+  — heute durch `VocabularyStoreTests` ausdrücklich abgedeckt, das Raster zu weiten ist eine eigene
+  Aufräum-Entscheidung.
+
+  **`frontend-reviewer`**: Vertragstreue, PATCH-Semantik, Schreib-Primitive und der Rückweg bestätigt.
+  Behoben: gleichnamige Felder bei zwei offenen Store-Editoren (`scope` durchgereicht), der zugängliche
+  Name des Hinzufügen-Knopfs enthält jetzt seinen sichtbaren Text (WCAG 2.5.3, und `addLabel` schlägt
+  wieder durch), der Dublettenhinweis trägt das **nachgeschlagene** Wort mit sich (er behauptete sonst
+  beim Weitertippen etwas Ungeprüftes) und schreibt nicht mehr auf eine inzwischen verschobene Zeile, die
+  Live-Region steht dauerhaft im DOM, Enter setzt den Fokus ins neue Feld und stapelt keine leeren mehr,
+  und die doppelte Formulierung ist zu einem `HelpTopic` (`translationAlternatives`) zusammengezogen.
+  Dazu ein Knopf „Eintrag unten zeigen", der die Store-Suche auf das Wort stellt.
+
+  Zwei Nebenbefunde sind **nicht** hier eingebaut, sondern als Ideen abgelegt:
+  [B-70](B-70-selbsteinschaetzung-nur-primaerloesung.md) (die Selbsteinschätzung deckt weiter nur die
+  primäre Übersetzung auf) und [B-71](B-71-inline-vokabelliste-ohne-varianten.md) (die Inline-Liste im
+  Übungs-Editor kann keine Varianten anlegen).
+
+  Commits: `189fdbe` (Backend inkl. Review-Nachlauf), `0ca8e7b` (Frontend inkl. Review-Nachlauf), dazu
+  dieser Doku-Commit mit der Abnahme und den zwei abgeleiteten Ideen.
