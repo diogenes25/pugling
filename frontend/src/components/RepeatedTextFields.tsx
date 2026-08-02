@@ -3,18 +3,18 @@ import { useEffect, useRef, useState } from "react";
 /**
  * Eine Liste gleichartiger Textwerte – **ein Eingabefeld je Wert**, mit „+ …" und Entfernen.
  *
- * Der Gegenentwurf ist das kommagetrennte Sammelfeld, wie es die drei Übungs-Editoren in
- * `vater/exerciseConfig.tsx` noch benutzen. Das hat einen echten Fehler und nicht bloß einen Stil:
- * ein Wert, der **selbst ein Komma enthält** („groß, wirklich groß"), ist dort nicht eintragbar –
- * beim Senden zerreißt ihn `splitList` stillschweigend in zwei. Für die gleichwertigen
- * Übersetzungen einer Vokabel ist genau das ein realistischer Fall.
+ * Der Gegenentwurf ist das kommagetrennte Sammelfeld. Das hatte einen echten Fehler und nicht bloß
+ * einen Stil: Ein Wert, der **selbst ein Komma enthält** („groß, wirklich groß"), war nicht eintragbar –
+ * beim Senden zerriss ihn die Zerlegung stillschweigend in zwei. Für die Alternativen einer Vokabel oder
+ * eines übersetzten Satzes ist genau das ein realistischer Fall.
  *
  * Die **Daten** liegen im aufrufenden Formular, nicht hier – damit Abbrechen dort zurücksetzen kann;
  * eigener State ist nur der Fokus-Zeiger. Leere Felder sind erlaubt (man tippt ja gerade) – aussortiert
  * wird beim Absenden, siehe {@link nonEmpty}.
  *
- * Nachzuziehen sind die drei Komma-Felder in
- * [B-69](../../../docs/backlog/B-69-wiederhol-felder-alternativen.md).
+ * Seit B-69 tragen alle Listenfelder des Vater-Webs diese Form; das letzte Sammelfeld mit Trennzeichen
+ * ist die Birkenbihl-Dekodierung, die Paare führt und darum eine eigene Form braucht
+ * ([B-72](../../../docs/backlog/B-72-birkenbihl-dekodierung-paarfelder.md)).
  */
 export function RepeatedTextFields({ label, values, onChange, addLabel, scope, placeholder, disabled = false }: {
   /** Fachlicher Name **im Singular** – er trägt die Namen aller Knöpfe („Variante 2 entfernen"). */

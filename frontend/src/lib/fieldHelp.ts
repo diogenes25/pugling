@@ -127,9 +127,32 @@ export const FIELD_HELP = {
       + "Übungen sucht darin.",
   },
 
+  /*
+   * Zwei Texte für ein Wort, und das ist Absicht (B-69, Entscheidung 3): Die Beschriftung heißt überall
+   * „Auch richtig", aber nur an der Vokabel gibt es die zweite Zeile mit demselben Wort — die
+   * Homonym-Regel wäre bei Lücke, Liste und Übersetzung sinnloses Rauschen.
+   *
+   * Der gleiche `title` in beiden ist ebenfalls Absicht: Er ist die sichtbare Feldbezeichnung, und die
+   * SOLL überall dieselbe sein. Er trägt zwar auch den Namen des Hinweis-Knopfs, aber die zwei Topics
+   * begegnen sich auf keinem Bildschirm — der eine gehört dem Vokabel-Store, der andere dem Übungs- und
+   * Lückentext-Editor. Käme das je zusammen, wäre `getByRole` dort mehrdeutig.
+   */
+  alsoCorrect: {
+    title: "Auch richtig",
+    text: "Weitere Lösungen, die genauso als richtig zählen wie die eigentliche. Ohne sie wird eine "
+      + "richtige Antwort als Fehler gewertet, und das kostet über die Zielerreichung Münzen. Ein Feld "
+      + "je Lösung — ein Wert darf selbst ein Komma enthalten.",
+  },
+
+  questionChoices: {
+    title: "Auswahl",
+    text: "Antwortmöglichkeiten zur Frage, die richtige eingeschlossen — anders als bei „Auch richtig“ "
+      + "stehen hier also auch die falschen. Bleibt das Feld leer, wird die Frage frei beantwortet.",
+  },
+
   // ---- Vokabel-Store ----
   translationAlternatives: {
-    title: "Gleichwertige Übersetzungen",
+    title: "Auch richtig",
     text: "Weitere Wörter, die für dieselbe Vokabel als richtig zählen – „huge“ etwa mit „riesig“ und "
       + "„sehr groß“. Ohne sie wird die zweite richtige Antwort als Fehler gewertet, und das kostet über "
       + "die Zielerreichung Münzen. Sie gelten nur in dieser Richtung (Wort → Übersetzung). Lege dafür "

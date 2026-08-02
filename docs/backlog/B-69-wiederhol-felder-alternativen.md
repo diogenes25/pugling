@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/frontend, rolle/creator]
+tags: [typ/story, status/abgenommen, bereich/frontend, rolle/creator]
 aliases: [Komma-Feld ablösen, Wiederhol-Felder]
-status: geschaetzt
+status: abgenommen
 prio: P2
 art: Defekt
 groesse: M
@@ -319,3 +319,33 @@ Serververhalten — ein HTTP-Durchgang bewiese hier nichts, was der E2E nicht sc
   bleibt die Lücken-Tabelle in `ClozeTexts.tsx`: gestapelte Felder in einer 220px-Zelle. Testweg sind zwei
   neue Vitest-Dateien plus die Anpassung von `uebungstypen.spec.ts`; `/smoke-test` entfällt begründet, weil
   sich am Server nichts ändert.
+- **2026-08-02** — gebaut und **abgenommen** (in-arbeit und Abnahme in einer Sitzung). Der Plan hat
+  getragen, mit sechs Abweichungen, alle nach oben:
+
+  **Der Regressionstest war vorher rot** (5 von 5 Fällen), danach grün. `splitList` früh zu löschen hat
+  wie vorgesehen gewirkt: Der Compiler nannte genau die fünf vergessenen Bauwege, keiner blieb übrig.
+  **`joinList` überlebte anders als geschätzt nicht** — die Birkenbihl-Dekodierung ruft `.join(", ")`
+  direkt auf, der Helfer hatte also gar keinen Aufrufer mehr und ist ebenfalls weg.
+
+  **Das Design-Risiko ist gemessen, nicht geraten:** eine Wegwerf-Playwright-Probe hat die Lücken-Tabelle
+  mit drei Lücken à zwei Alternativen gerendert — **0 px** waagerechter Überlauf, 425 px hoch. Dabei fiel
+  auf, dass die Alternativen-Spalte schmaler war als die Werte, die dort hineingehören; sie steht jetzt
+  auf 320 statt 240 px.
+
+  Aus dem `frontend-reviewer` kamen fünf Befunde, alle behoben: Die Doku von `RepeatedTextFields` beschrieb
+  noch die gelöschte Funktion und eine erledigte Aufgabe; `FieldLabel` erzeugte für eine Feld**gruppe** ein
+  `<label>` ohne Ziel (auch an den zwei Stellen aus B-65 — jetzt `span` + `InfoHint`); der Hinweis-Knopf
+  stand in *jeder* Zeile statt nur in der ersten; das Auswahl-Feld hatte nach dem Streichen seines
+  Zusatzes gar keine Erklärung mehr (**dritter** `HelpTopic` `questionChoices` statt der geplanten zwei —
+  B-73 hat damit einen Ort zum Korrigieren); und eine Zusicherung war grün, ohne etwas zu beweisen
+  (`?? null` sieht „richtig weggelassen" und „verloren" gleich an — jetzt mit Gegenprobe).
+
+  Zwei Lücken, die der Review zusätzlich fand, sind geschlossen: Der Sendeweg mit dem
+  `clearWordBank`-Schalter ist als reine Funktion `listsForSave` herausgezogen und geprüft (vorher von
+  keinem Test berührt), und der E2E liest die Auswahl jetzt **zurück** — vorher war für dieses Feld nur
+  Editor↔Editor belegt, nicht der Weg über den Server. Nebenbei heißen die Vokabel-Felder statt „Variante"
+  ebenfalls „Auch richtig", damit Überschrift und Feldname überall zusammenpassen.
+
+  Belege: **73 Vitest** in 10 Dateien (vorher 54, +19), **25 E2E** grün, `tsc -b` und `npm run build`
+  sauber. Kein Backend berührt — `git diff --name-only -- '*.cs'` ist leer, `migration`/`vertragsbruch`
+  bleiben bei nein wie geschätzt.

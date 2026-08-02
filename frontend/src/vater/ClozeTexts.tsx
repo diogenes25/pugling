@@ -1,5 +1,7 @@
 import { useState } from "react";
+import { InfoHint } from "../components/InfoHint";
 import { PAGE_SIZE, Pager } from "../components/ListControls";
+import { RepeatedTextFields, nonEmpty } from "../components/RepeatedTextFields";
 import { StatusBanner } from "../components/StatusBanner";
 import { api } from "../lib/api";
 import { LANGUAGES } from "../lib/languages";
@@ -26,6 +28,22 @@ import type { ClozeResponse, Gap, Paged } from "../lib/types";
 function placeholderIndices(text: string): number[] {
   const found = [...text.matchAll(/\{\{(\d+)\}\}/g)].map((m) => Number(m[1]));
   return [...new Set(found)];
+}
+
+/**
+ * Die beiden Listen für den Sendeweg: getrimmt, ohne Leerfelder, und „keine" als `null` statt als leere
+ * Liste – sonst gäbe es zwei Schreibweisen für denselben Zustand.
+ *
+ * Eigene Funktion, weil daran der `clearWordBank`-Schalter hängt: `null` heißt serverseitig „nicht
+ * angegeben", ein geräumtes Feld löschte also nichts, und „Gespeichert." wäre eine Lüge. Hier ist die
+ * Regel prüfbar, ohne einen Netzaufruf zu fälschen.
+ */
+export function listsForSave(gaps: Gap[], wordBank: string[]) {
+  return {
+    gaps: gaps.map((g) => ({ ...g, alternatives: nonEmpty(g.alternatives ?? []) ?? null })),
+    wordBank: nonEmpty(wordBank) ?? null,
+    clearWordBank: nonEmpty(wordBank) === undefined,
+  };
 }
 
 /** Sagt, was am Verhältnis Text ↔ Lücken nicht stimmt – oder `null`, wenn es passt. */
@@ -117,14 +135,14 @@ export function ClozeTexts() {
  * Anlegen und Bearbeiten in **einem** Formular – die Felder sind dieselben, und zwei Kopien liefen
  * auseinander. Einziger Unterschied: der `key` ist beim Bearbeiten fest (stabile Referenz).
  */
-function ClozeForm({ existing, onDone }: { existing?: ClozeResponse; onDone: () => void }) {
+export function ClozeForm({ existing, onDone }: { existing?: ClozeResponse; onDone: () => void }) {
   const [key, setKey] = useState(existing?.key ?? "");
   const [title, setTitle] = useState(existing?.title ?? "");
   const [sourceLanguage, setSourceLanguage] = useState(existing?.sourceLanguage ?? "en");
   const [targetLanguage, setTargetLanguage] = useState(existing?.targetLanguage ?? "de");
   const [text, setText] = useState(existing?.text ?? "");
   const [translation, setTranslation] = useState(existing?.translation ?? "");
-  const [wordBank, setWordBank] = useState((existing?.wordBank ?? []).join(", "));
+  const [wordBank, setWordBank] = useState<string[]>([...(existing?.wordBank ?? [])]);
   const [gaps, setGaps] = useState<Gap[]>(existing?.gaps ?? []);
   const action = useAction();
 
@@ -139,8 +157,9 @@ function ClozeForm({ existing, onDone }: { existing?: ClozeResponse; onDone: () 
   function setAnswer(index: number, answer: string) {
     setGaps((gs) => gs.map((g) => (g.index === index ? { ...g, answer } : g)));
   }
-  function setAlternatives(index: number, raw: string) {
-    const alternatives = raw.split(",").map((s) => s.trim()).filter(Boolean);
+  // Die getippten Werte bleiben stehen, wie sie sind – auch leere und ungetrimmte. Aussortiert wird erst
+  // beim Absenden (`nonEmpty`); wer währenddessen zusammenzieht, nimmt dem Tippenden das Zeichen weg.
+  function setAlternatives(index: number, alternatives: string[]) {
     setGaps((gs) => gs.map((g) => (g.index === index ? { ...g, alternatives } : g)));
   }
 
@@ -150,23 +169,23 @@ function ClozeForm({ existing, onDone }: { existing?: ClozeResponse; onDone: () 
     if (!existing && !key.trim()) { action.fail("Der Key fehlt – er ist die stabile Referenz."); return; }
     if (problem) { action.fail(problem); return; }
 
-    const bank = wordBank.split(",").map((s) => s.trim()).filter(Boolean);
+    const { gaps: cleanedGaps, wordBank: bank, clearWordBank } = listsForSave(gaps, wordBank);
     const ok = await action.run(() => (existing
       // Der Key fehlt im PATCH bewusst: er bleibt, was er ist. Die beiden `clear`-Schalter sind Pflicht,
       // weil `null` serverseitig „nicht angegeben" heißt – ein geräumtes Feld allein löschte nichts,
       // und „Gespeichert." wäre eine Lüge.
       ? api.updateClozeText(existing.id, {
           title: title.trim(), text: text.trim(), translation: translation.trim() || null,
-          gaps, wordBank: bank.length > 0 ? bank : null,
-          clearTranslation: translation.trim() === "", clearWordBank: bank.length === 0,
+          gaps: cleanedGaps, wordBank: bank,
+          clearTranslation: translation.trim() === "", clearWordBank,
         })
       : api.createClozeText({
           key: key.trim(), title: title.trim(), sourceLanguage, targetLanguage,
-          text: text.trim(), gaps, translation: translation.trim() || null,
-          wordBank: bank.length > 0 ? bank : null,
+          text: text.trim(), gaps: cleanedGaps, translation: translation.trim() || null,
+          wordBank: bank,
         })), existing ? "Gespeichert." : `Trägertext „${title.trim()}" angelegt.`);
     if (!ok) return;
-    if (!existing) { setKey(""); setTitle(""); setText(""); setTranslation(""); setWordBank(""); setGaps([]); }
+    if (!existing) { setKey(""); setTitle(""); setText(""); setTranslation(""); setWordBank([]); setGaps([]); }
     onDone();
   }
 
@@ -223,7 +242,12 @@ function ClozeForm({ existing, onDone }: { existing?: ClozeResponse; onDone: () 
       {gaps.length > 0 && (
         <div style={{ overflowX: "auto" }}>
           <table className="table">
-            <thead><tr><th>Lücke</th><th>Lösung</th><th>Auch gültig <span className="muted">(Komma)</span></th></tr></thead>
+            {/* Spaltenkopf, kein `label`: Er gehört zu N Feldern, nicht zu einem – ein `<label>` ohne
+                Ziel täte beim Anklicken nichts. */}
+            <thead><tr><th>Lücke</th><th>Lösung</th>
+              <th><span className="label-row">Auch richtig <span className="muted">(optional)</span>
+                <InfoHint topic="alsoCorrect" /></span></th>
+            </tr></thead>
             <tbody>
               {gaps.map((g) => (
                 <tr key={g.index}>
@@ -232,10 +256,14 @@ function ClozeForm({ existing, onDone }: { existing?: ClozeResponse; onDone: () 
                     <input aria-label={`Lösung für Lücke ${g.index}`} value={g.answer}
                       onChange={(e) => setAnswer(g.index, e.target.value)} style={{ maxWidth: 180 }} />
                   </td>
-                  <td>
-                    <input aria-label={`Alternativen für Lücke ${g.index}`}
-                      value={(g.alternatives ?? []).join(", ")}
-                      onChange={(e) => setAlternatives(g.index, e.target.value)} style={{ maxWidth: 220 }} />
+                  {/* `scope`: mehrere Lücken tragen dieselbe Komponente – sonst hießen alle Felder
+                      „Auch richtig 1". */}
+                  {/* Breiter als die Lösungs-Spalte: Hier stehen typischerweise die längeren Werte –
+                      eine Umschreibung oder ein ganzer Satzteil, nicht ein einzelnes Wort. */}
+                  <td style={{ minWidth: 320 }}>
+                    <RepeatedTextFields label="Auch richtig" scope={`Lücke ${g.index}`}
+                      placeholder="zählt auch als richtig"
+                      values={g.alternatives ?? []} onChange={(v) => setAlternatives(g.index, v)} />
                   </td>
                 </tr>
               ))}
@@ -245,9 +273,9 @@ function ClozeForm({ existing, onDone }: { existing?: ClozeResponse; onDone: () 
       )}
 
       <div className="field">
-        <label htmlFor="cz-bank">Wortpool <span className="muted">(optional, Auswahl auf Stufe 1/2)</span></label>
-        <input id="cz-bank" value={wordBank} onChange={(e) => setWordBank(e.target.value)}
-          placeholder="morning, are, evening" />
+        <span className="label-row">Wortpool <span className="muted">(optional, Auswahl auf Stufe 1/2)</span></span>
+        {/* Ohne `scope`: Den Wortpool gibt es je Formular genau einmal, „Wort 1" kollidiert mit nichts. */}
+        <RepeatedTextFields label="Wort" placeholder="morning" values={wordBank} onChange={setWordBank} />
       </div>
 
       {/* Der Hinweis steht vor dem Knopf, nicht als Fehler danach: so sieht der Vater beim Tippen,

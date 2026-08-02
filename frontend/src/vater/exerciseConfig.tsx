@@ -1,4 +1,7 @@
 import { useId } from "react";
+import { InfoHint } from "../components/InfoHint";
+import { RepeatedTextFields, nonEmpty } from "../components/RepeatedTextFields";
+import type { HelpTopic } from "../lib/fieldHelp";
 import { LANGUAGES } from "../lib/languages";
 import type { ArithmeticOperation, ExerciseTypeKey } from "../lib/types";
 
@@ -64,13 +67,12 @@ export const ARITHMETIC_OPERATIONS: { value: ArithmeticOperation; label: string 
   { value: "Division", label: "÷ Division" },
 ];
 
-/** Kommaseparierten Text in eine getrimmte Liste (oder undefined) wandeln – für Alternativen/Wortpool. */
-export function splitList(s: string): string[] | undefined {
-  const list = s.split(",").map((x) => x.trim()).filter(Boolean);
-  return list.length > 0 ? list : undefined;
-}
+/**
+ * Eine geladene Liste als Zeilen-Wert. Der Editor führt sie seit B-69 als **Liste**, nicht mehr als
+ * kommagetrennten Text – ein Wert, der selbst ein Komma enthält, wurde sonst beim Senden zerrissen.
+ */
+const strList = (l: unknown): string[] => (Array.isArray(l) ? l.map((x) => String(x ?? "")) : []);
 
-const joinList = (l: unknown): string => (Array.isArray(l) ? l.join(", ") : "");
 const numOr = (v: unknown, fallback: number): number => (v === "" || v == null ? fallback : Number(v));
 const numOrNull = (v: unknown): number | null => (v === "" || v == null ? null : Number(v));
 
@@ -80,15 +82,15 @@ export function emptyRow(type: ExerciseTypeKey): Row {
     case "Vocabulary": return { front: "", back: "", hint: "" };
     case "Arithmetic": return { prompt: "", answer: "", tolerance: "0" };
     case "ArithmeticDrill": return {};
-    case "Cloze": return { index: 1, answer: "", alternatives: "", vocabKey: null };
+    case "Cloze": return { index: 1, answer: "", alternatives: [], vocabKey: null };
     case "Matching": return { left: "", right: "" };
-    case "List": return { value: "", alternatives: "" };
+    case "List": return { value: "", alternatives: [] };
     case "Birkenbihl": return { text: "", decoding: "", naturalTranslation: "" };
     case "Reading":
-    case "Listening": return { prompt: "", choices: "", answer: "" };
+    case "Listening": return { prompt: "", choices: [], answer: "" };
     case "Essay": return { criterion: "", maxScore: "5" };
     case "Grammar": return { prompt: "", answer: "", ruleHint: "" };
-    case "Translation": return { source: "", target: "", alternatives: "", vocabularyId: null };
+    case "Translation": return { source: "", target: "", alternatives: [], vocabularyId: null };
   }
 }
 
@@ -147,16 +149,16 @@ export function buildTypeConfig(
         seed: numOrNull(extra.seed),
       };
     case "Cloze":
-      return { text: extra.text ?? "", wordBank: splitList(extra.wordBank ?? ""),
+      return { text: extra.text ?? "", wordBank: nonEmpty(strList(extra.wordBank)),
         // `vocabKey` unverändert durchreichen: ist er gesetzt, kommt die Lösung aus dem Vokabel-Store und
         // folgt dessen Pflege. Ein Weglassen machte aus der Store-Lücke stillschweigend eine Inline-Lücke.
         gaps: rows.map((r) => ({ index: Number(r.index), answer: r.answer,
-          alternatives: splitList(r.alternatives ?? ""), vocabKey: r.vocabKey ?? null })) };
+          alternatives: nonEmpty(strList(r.alternatives)), vocabKey: r.vocabKey ?? null })) };
     case "Matching":
       return { instruction: extra.instruction?.trim() || null, pairs: rows.map((r) => ({ left: r.left, right: r.right })) };
     case "List":
       return { instruction: extra.instruction?.trim() || null, ordered: !!extra.ordered,
-        items: rows.map((r) => ({ value: r.value, alternatives: splitList(r.alternatives ?? "") })) };
+        items: rows.map((r) => ({ value: r.value, alternatives: nonEmpty(strList(r.alternatives)) })) };
     case "Reading":
       return { text: extra.text ?? "", questions: rows.map(toQuestion) };
     case "Listening":
@@ -185,7 +187,7 @@ export function buildTypeConfig(
       return {
         sourceLang: extra.sourceLang || "", targetLang: extra.targetLang || "",
         items: rows.map((r) => ({
-          source: r.source, target: r.target, alternatives: splitList(r.alternatives ?? ""),
+          source: r.source, target: r.target, alternatives: nonEmpty(strList(r.alternatives)),
           /*
            * Die Store-Bindung nur behalten, solange der Text unverändert ist. Wurde er bearbeitet, meint
            * das Paar ein anderes Wort – dann muss der Server neu auflösen (er legt es an bzw. findet es),
@@ -208,11 +210,11 @@ export function buildTypeConfig(
 
 /** Verständnisfrage: leere Auswahl heißt Freitext-Antwort, gefüllte heißt Multiple-Choice. */
 const toQuestion = (r: Row) => ({
-  prompt: r.prompt, answer: r.answer, choices: splitList(r.choices ?? "") ?? null,
+  prompt: r.prompt, answer: r.answer, choices: nonEmpty(strList(r.choices)) ?? null,
 });
 
 const fromQuestion = (q: Row): Row => ({
-  prompt: q.prompt ?? "", answer: q.answer ?? "", choices: joinList(q.choices),
+  prompt: q.prompt ?? "", answer: q.answer ?? "", choices: strList(q.choices),
 });
 
 /**
@@ -255,15 +257,15 @@ export function configToEditorState(type: ExerciseTypeKey, config: unknown): { r
       return fallback(
         // `vocabKey` wird nicht bearbeitet, aber mitgeführt (siehe buildTypeConfig).
         list(c.gaps).map((g) => ({ index: g.index ?? 1, answer: g.answer ?? "",
-          alternatives: joinList(g.alternatives), vocabKey: g.vocabKey ?? null })),
-        { text: str(c.text), wordBank: joinList(c.wordBank) });
+          alternatives: strList(g.alternatives), vocabKey: g.vocabKey ?? null })),
+        { text: str(c.text), wordBank: strList(c.wordBank) });
     case "Matching":
       return fallback(
         list(c.pairs).map((p) => ({ left: p.left ?? "", right: p.right ?? "" })),
         { instruction: str(c.instruction) });
     case "List":
       return fallback(
-        list(c.items).map((i) => ({ value: i.value ?? "", alternatives: joinList(i.alternatives) })),
+        list(c.items).map((i) => ({ value: i.value ?? "", alternatives: strList(i.alternatives) })),
         { instruction: str(c.instruction), ordered: !!c.ordered });
     case "Reading":
       return fallback(list(c.questions).map(fromQuestion), { text: str(c.text) });
@@ -283,7 +285,7 @@ export function configToEditorState(type: ExerciseTypeKey, config: unknown): { r
         // origSource/origTarget merken sich den geladenen Wortlaut: nur solange er steht, darf die
         // Store-Bindung (vocabularyId) mitwandern.
         list(c.items).map((i) => ({
-          source: i.source ?? "", target: i.target ?? "", alternatives: joinList(i.alternatives),
+          source: i.source ?? "", target: i.target ?? "", alternatives: strList(i.alternatives),
           vocabularyId: i.vocabularyId ?? null, origSource: i.source ?? "", origTarget: i.target ?? "",
         })),
         { sourceLang: str(c.sourceLang) || "en", targetLang: str(c.targetLang) || "de" });
@@ -335,8 +337,10 @@ export function ConfigEditor({ type, rows, extra, setExtra, patchRow, addRow, re
         <>
           <div className="field"><label>Text (Lücken als {"{{1}}"}, {"{{2}}"} …)</label>
             <input value={extra.text ?? ""} onChange={(e) => ex({ text: e.target.value })} placeholder="Je {{1}} du pain à la {{2}}." /></div>
-          <div className="field"><label>Wortpool (optional, kommagetrennt)</label>
-            <input value={extra.wordBank ?? ""} onChange={(e) => ex({ wordBank: e.target.value })} placeholder="mange, achète, boulangerie" /></div>
+          <div className="field"><span className="label-row">Wortpool <span className="muted">(optional)</span></span>
+            <RepeatedTextFields label="Wort" placeholder="achète"
+              values={Array.isArray(extra.wordBank) ? extra.wordBank : []}
+              onChange={(v) => ex({ wordBank: v })} /></div>
         </>
       )}
       {(type === "Matching" || type === "List" || type === "Grammar") && (
@@ -490,7 +494,9 @@ export function ConfigEditor({ type, rows, extra, setExtra, patchRow, addRow, re
           {type === "Cloze" && <>
             <RowField label="Lücke-Nr." value={r.index} onChange={(v) => patchRow(i, { index: v })} type="number" width={80} />
             <RowField label="Lösung" value={r.answer} onChange={(v) => patchRow(i, { answer: v })} />
-            <RowField label="Alternativen (kommagetrennt)" value={r.alternatives} onChange={(v) => patchRow(i, { alternatives: v })} optional />
+            <RowRepeatedField label="Auch richtig" values={r.alternatives} scope={`Zeile ${i + 1}`}
+              placeholder="zählt auch als richtig" optional topic={i === 0 ? "alsoCorrect" : undefined}
+              onChange={(v) => patchRow(i, { alternatives: v })} />
           </>}
           {type === "Matching" && <>
             <RowField label="Links" value={r.left} onChange={(v) => patchRow(i, { left: v })} />
@@ -498,13 +504,18 @@ export function ConfigEditor({ type, rows, extra, setExtra, patchRow, addRow, re
           </>}
           {type === "List" && <>
             <RowField label="Eintrag" value={r.value} onChange={(v) => patchRow(i, { value: v })} />
-            <RowField label="Alternativen (kommagetrennt)" value={r.alternatives} onChange={(v) => patchRow(i, { alternatives: v })} optional />
+            <RowRepeatedField label="Auch richtig" values={r.alternatives} scope={`Zeile ${i + 1}`}
+              placeholder="zählt auch als richtig" optional topic={i === 0 ? "alsoCorrect" : undefined}
+              onChange={(v) => patchRow(i, { alternatives: v })} />
           </>}
           {(type === "Reading" || type === "Listening") && <>
             <RowField label="Frage" value={r.prompt} onChange={(v) => patchRow(i, { prompt: v })} placeholder="Wohin fährt Tom?" />
             <RowField label="Antwort" value={r.answer} onChange={(v) => patchRow(i, { answer: v })} />
-            <RowField label="Auswahl (kommagetrennt = Multiple-Choice)" value={r.choices}
-              onChange={(v) => patchRow(i, { choices: v })} optional />
+            {/* Kein Zusatz „= Multiple-Choice" mehr: die Ausspielung wirft die Optionen heute weg
+                (B-73) – das Feld darf nichts versprechen, was das Kind nie zu sehen bekommt. */}
+            <RowRepeatedField label="Auswahl" values={r.choices} scope={`Zeile ${i + 1}`}
+              placeholder="eine Antwortmöglichkeit" optional topic={i === 0 ? "questionChoices" : undefined}
+              onChange={(v) => patchRow(i, { choices: v })} />
           </>}
           {type === "Essay" && <>
             <RowField label="Kriterium" value={r.criterion} onChange={(v) => patchRow(i, { criterion: v })} placeholder="Aufbau" />
@@ -518,7 +529,9 @@ export function ConfigEditor({ type, rows, extra, setExtra, patchRow, addRow, re
           {type === "Translation" && <>
             <RowField label="Satz (Ausgangssprache)" value={r.source} onChange={(v) => patchRow(i, { source: v })} placeholder="Where do you live?" />
             <RowField label="Übersetzung" value={r.target} onChange={(v) => patchRow(i, { target: v })} placeholder="Wo wohnst du?" />
-            <RowField label="Alternativen (kommagetrennt)" value={r.alternatives} onChange={(v) => patchRow(i, { alternatives: v })} optional />
+            <RowRepeatedField label="Auch richtig" values={r.alternatives} scope={`Zeile ${i + 1}`}
+              placeholder="zählt auch als richtig" optional topic={i === 0 ? "alsoCorrect" : undefined}
+              onChange={(v) => patchRow(i, { alternatives: v })} />
           </>}
           {type === "Birkenbihl" && <>
             <RowField label="Satz (Lernsprache)" value={r.text} onChange={(v) => patchRow(i, { text: v })} />
@@ -546,6 +559,39 @@ export function RowField({ label, value, onChange, type = "text", placeholder, o
     <div className="field" style={{ flex: width ? "none" : 1, minWidth: width ?? 120, width }}>
       <label htmlFor={uid}>{label}{optional && <span className="muted"> (optional)</span>}</label>
       <input id={uid} type={type} value={String(value ?? "")} placeholder={placeholder} onChange={(e) => onChange(e.target.value)} />
+    </div>
+  );
+}
+
+/**
+ * Wie {@link RowField}, aber für eine **Liste** gleichartiger Werte – ein Eingabefeld je Wert.
+ *
+ * Das abgelöste kommagetrennte Sammelfeld zerriss jeden Wert, der selbst ein Komma enthält (B-69); bei
+ * einer Übersetzung („Wo wohnst du, Tom?") ist das der Normalfall, nicht der Rand.
+ *
+ * Die Überschrift ist ein `span` und **kein** `label` – auch mit Erklärung: Es gibt kein einzelnes Feld,
+ * auf das sie zeigen könnte, und ein `<label>` ohne Ziel tut beim Anklicken nichts. Die Namen tragen die
+ * Felder selbst, unterschieden über `scope`.
+ */
+export function RowRepeatedField({ label, values, onChange, scope, placeholder, optional, topic }: {
+  label: string; values: unknown; onChange: (v: string[]) => void;
+  /** Unterscheidet die Zeilen voneinander, z. B. „Zeile 2" – sonst heißen alle Felder „Auch richtig 1". */
+  scope: string;
+  placeholder?: string; optional?: boolean;
+  /**
+   * Feld-Erklärung. Bewusst **nur an der ersten Zeile** setzen: Der Hinweis-Knopf heißt nach dem Feld,
+   * und acht Zeilen ergäben acht gleichnamige Knöpfe (Muster wie im Vokabel-Store).
+   */
+  topic?: HelpTopic;
+}) {
+  return (
+    <div className="field" style={{ flex: 1, minWidth: 160 }}>
+      <span className="label-row">
+        {label}{optional && <span className="muted"> (optional)</span>}
+        {topic && <InfoHint topic={topic} />}
+      </span>
+      <RepeatedTextFields label={label} scope={scope} placeholder={placeholder}
+        values={Array.isArray(values) ? values : []} onChange={onChange} />
     </div>
   );
 }

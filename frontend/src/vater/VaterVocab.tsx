@@ -14,7 +14,7 @@ import { confirmAction } from "../lib/ui";
 import { PAGE_SIZE, Pager, SortableTh } from "../components/ListControls";
 import { RepeatedTextFields, nonEmpty } from "../components/RepeatedTextFields";
 import { VocabMediaPanel } from "./VocabMediaPanel";
-import { FieldLabel } from "../components/InfoHint";
+import { InfoHint } from "../components/InfoHint";
 
 /**
  * Das Ergebnis der Dublettenprüfung **samt dem nachgeschlagenen Wort**. Ohne das Wort daneben zeigte der
@@ -26,7 +26,7 @@ interface DuplicateLookup { word: string; hits: VocabularyResponse[]; }
 interface PairRow {
   word: string;
   translation: string;
-  /** Gleichwertige Übersetzungen – jede zählt beim Abfragen als richtig. */
+  /** Weitere Übersetzungen, die beim Abfragen genauso als richtig zählen („Auch richtig"). */
   alternatives: string[];
   /** Treffer der Dublettenprüfung; `null` = nichts anzuzeigen (nicht nachgesehen oder nichts gefunden). */
   duplicates: DuplicateLookup | null;
@@ -218,16 +218,17 @@ export function VaterVocab() {
                       placeholder={tgt === "de" ? "Haus" : "…"} />
                   </div>
                   <div className="field" style={{ flex: 1 }}>
+                    {/* Kein `label`: Die Überschrift gehört zu N Feldern, nicht zu einem. Und nur an der
+                        ersten Zeile, sonst stünde in jeder Zeile derselbe Hinweis-Knopf. */}
                     {i === 0 && (
                       <span className="label-row">
-                        <FieldLabel topic="translationAlternatives">
-                          Gleichwertige Übersetzungen <span className="muted">(optional)</span>
-                        </FieldLabel>
+                        Auch richtig <span className="muted">(optional)</span>
+                        <InfoHint topic="translationAlternatives" />
                       </span>
                     )}
                     {/* `scope`: drei Anlege-Zeilen tragen dieselbe Komponente – ohne ihn hießen alle
-                        Varianten-Felder „Variante 1". */}
-                    <RepeatedTextFields label="Variante" placeholder="zählt auch als richtig" scope={`Zeile ${i + 1}`}
+                        Felder „Auch richtig 1". */}
+                    <RepeatedTextFields label="Auch richtig" placeholder="zählt auch als richtig" scope={`Zeile ${i + 1}`}
                       values={r.alternatives} onChange={(alternatives) => patchRow(i, { alternatives })} />
                   </div>
                   <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }}
@@ -592,15 +593,15 @@ function VocabDetailsEditor({ pos, noun, setNoun, verb, setVerb, alternatives, s
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 10, padding: "8px 2px" }}>
       <div className="row" style={{ gap: 8, alignItems: "flex-start", flexWrap: "wrap" }}>
-        <span className="muted" style={{ minWidth: 96, fontSize: 12, paddingTop: 6 }}>Gleichwertig</span>
+        <span className="muted" style={{ minWidth: 96, fontSize: 12, paddingTop: 6 }}>Auch richtig</span>
         <div className="field" style={{ maxWidth: 320 }}>
           {/* Dieselbe Größe wie oben im Anlege-Formular – darum derselbe Wortlaut und derselbe Hilfetext.
               Zwei Formulierungen desselben Begriffs werden zwei Bedeutungen. */}
           <span className="label-row">
-            <FieldLabel topic="translationAlternatives">Gleichwertige Übersetzungen</FieldLabel>
+            Auch richtig <InfoHint topic="translationAlternatives" />
           </span>
-          {/* `scope`: zwei gleichzeitig aufgeklappte Store-Zeilen trügen sonst beide „Variante 1". */}
-          <RepeatedTextFields label="Variante" placeholder="zählt auch als richtig" scope={word || vocabKey}
+          {/* `scope`: zwei gleichzeitig aufgeklappte Store-Zeilen trügen sonst beide „Auch richtig 1". */}
+          <RepeatedTextFields label="Auch richtig" placeholder="zählt auch als richtig" scope={word || vocabKey}
             values={alternatives} onChange={setAlternatives} />
         </div>
       </div>

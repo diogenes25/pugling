@@ -66,7 +66,12 @@ test("Jeder Übungstyp des Manifests lässt sich im UI anlegen", async ({ page }
     await page.locator("#cfg-transcript").fill("A: Where are you from? B: I'm from Leeds.");
     await page.getByLabel("Frage").fill("Where is B from?");
     await page.getByLabel("Antwort", { exact: false }).first().fill("Leeds");
-    await page.getByLabel("Auswahl", { exact: false }).fill("Leeds, York, Hull");
+    // Ein Feld je Antwortmöglichkeit (B-69) – „Leeds, York, Hull" in einem Feld wären seit dem Umbau
+    // EINE Möglichkeit mit Kommas darin, nicht drei.
+    for (const [i, ort] of ["Leeds", "York", "Hull"].entries()) {
+      await page.getByRole("button", { name: "+ Auswahl (Zeile 1)" }).click();
+      await page.getByLabel(`Auswahl ${i + 1} (Zeile 1)`, { exact: true }).fill(ort);
+    }
   });
 
   // ---------- Aufsatz (mit Bewertungskriterium) ----------
@@ -146,6 +151,18 @@ test("Jeder Übungstyp des Manifests lässt sich im UI anlegen", async ({ page }
   await grammarRow.getByRole("button", { name: /Bearbeiten/ }).click();
   await expect(dialog.getByLabel("Aufgabe").nth(1)).toHaveValue("She ___ (have) a dog.");
   await dialog.getByRole("button", { name: "Schließen" }).click();
+
+  /*
+   * Und das Listenfeld über denselben Weg: Die Auswahl wurde als drei Werte angelegt, sie muss als drei
+   * Felder zurückkommen. Der Vitest-Rundlauf beweist nur Editor↔Editor – hier war der Server dazwischen.
+   */
+  const listeningRow = page.locator("div", { hasText: `Hören ${RUN}` }).last();
+  await listeningRow.getByRole("button", { name: /Bearbeiten/ }).click();
+  const hoeren = page.getByRole("dialog", { name: new RegExp(`Hören ${RUN}`) });
+  for (const [i, ort] of ["Leeds", "York", "Hull"].entries()) {
+    await expect(hoeren.getByLabel(`Auswahl ${i + 1} (Zeile 1)`, { exact: true })).toHaveValue(ort);
+  }
+  await hoeren.getByRole("button", { name: "Schließen" }).click();
 
   // ---------- Testmodus: durchspielbar, wo es Aufgaben gibt ----------
   // Grammatik hat prüfbare Einzelaufgaben → der Testmodus spielt sie aus.

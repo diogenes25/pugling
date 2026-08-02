@@ -5,8 +5,8 @@ import { RepeatedTextFields, nonEmpty } from "./RepeatedTextFields";
 
 /**
  * Das Wiederhol-Feld ersetzt das kommagetrennte Sammelfeld – und der Test hält genau den Grund fest:
- * ein Wert **mit Komma** muss unverändert wieder herauskommen. Im Komma-Feld zerreißt ihn `splitList`
- * stillschweigend in zwei, und der Nutzer sieht davon nichts.
+ * ein Wert **mit Komma** muss unverändert wieder herauskommen. Das Sammelfeld zerriss ihn beim Senden
+ * stillschweigend in zwei, und der Nutzer sah davon nichts.
  */
 function Harness({ start = [] as string[] }) {
   const [values, setValues] = useState<string[]>(start);
