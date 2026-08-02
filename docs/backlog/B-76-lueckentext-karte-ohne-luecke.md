@@ -1,9 +1,13 @@
 ---
-tags: [typ/story, status/gegrillt, bereich/backend, bereich/frontend, rolle/student]
+tags: [typ/story, status/geschaetzt, bereich/backend, bereich/frontend, rolle/student]
 aliases: [Lückentext ohne Lücke, Welche Lücke ist gemeint, Wortbank kommt nie an]
-status: gegrillt
+status: geschaetzt
 prio: P1
 art: Defekt
+groesse: M
+wo: beides
+migration: nein
+vertragsbruch: nein
 quelle: B-75 (Grill-Runde, Entscheidung 2)
 ---
 
@@ -196,6 +200,90 @@ entfernt hat. Kein Widerspruch: jene waren **immer** `null`, dieses ist es nur b
 - Regressionstest, der vorher rot ist: eine gespielte Position mit **zwei** Lücken, geprüft darauf, dass
   die Karten sich unterscheiden — heute wären sie zeichengleich.
 
+## Schätzung
+
+**M · beides · keine Migration · kein Vertragsbruch.**
+
+Kein Schema fasst das an: `GapIndex` liegt schon am `ContentItem` (ein Laufzeit-Record, keine Entität),
+die Wortbank schon in der `ConfigJson`. Und beide neuen Vertragsfelder sind **additiv** und nullable —
+`unknown_field` betrifft ohnehin nur Requests, diese beiden sind Response-DTOs.
+
+Größer als [B-01](B-01-bildwahl-einfrieren.md) (S, ein Backend-Pfad), kleiner als eine Umbau-Etappe: zwei
+Verträge, ein Typ-Override, ein neues Frontend-Bauteil in **zwei** Ansichten, und eine Stufe, die ihre
+Bedeutung ändert (R1).
+
+### Risiken
+
+**R1 · Die Wortbank-Stufe ist heute gar nicht getippt — E4 läuft ins Leere.**
+`StageMechanics.IsTyped(ClozeStage)` kennt nur `TranslationFreeText` und `FreeText`
+([StageMechanics.cs:21-22](../../backend/Pugling.Api/Services/Shared/StageMechanics.cs)). Auf
+`TranslationWordBank` ist `typed` also `false`, und daran hängen zwei Dinge: `CardFacets` liefert die
+**Lösung** als `reveal` (`PositionPlayService.cs:120`), und beide Sohn-Ansichten rendern die Auswahl nur
+im Zweig `typed && card.choices` ([SohnPractice.tsx:236](../../frontend/src/sohn/SohnPractice.tsx),
+[SohnTest.tsx:153](../../frontend/src/sohn/SohnTest.tsx)). Eine Wortbank auf dieser Stufe wäre damit
+doppelt wirkungslos: unsichtbar, und neben der schon sichtbaren Lösung sinnlos.
+
+*Empfehlung:* `TranslationWordBank` wird **getippt** — dann verschwindet `reveal`, die Auswahl erscheint,
+und die Stufe tut, was ihr Name verspricht. *Kosten:* Die geseedete Position (`Seed.cs:353`,
+Wochenpflicht) wechselt von „Umdreh-Karte mit Selbsteinschätzung" zu „Wort auswählen" — die Antwort kommt
+dann als `GivenAnswer` statt `WasKnown`, und der Server bewertet sie. Das ist eine Verhaltensänderung an
+laufenden Daten, und sie ist in der Grill-Runde **nicht** gefallen: E4 setzt voraus, dass es eine
+Wortbank-Stufe gibt, auf der eine Auswahl ankommt, und die gibt es noch nicht. Abgeleitet, nicht bestätigt
+— vor dem Bauen zu klären, wie E5.
+
+**R2 · `GapIndex` ist nur beim Lückentext gefüllt.** Bei allen anderen Typen steht `null` — kurz nachdem
+B-01 zwei immer-`null`-Felder aus `TestItem` entfernt hat. Der Unterschied ist echt (dieses Feld trägt bei
+genau dem Typ, der es braucht), aber der Name ist lückentext-eigen. Sollte [B-77](B-77-liste-menge-als-folge.md)
+später ebenfalls eine Adressierung brauchen, ist zu entscheiden, ob sie sich das Feld teilen — **nicht**
+vorsorglich verallgemeinern.
+
+**R3 · Alte Daten können die Vorlage verletzen.** Der Editor prüft beim Anlegen, dass Platzhalter und
+Lücken zueinander passen (`gapProblem`, [ClozeTexts.tsx:49](../../frontend/src/vater/ClozeTexts.tsx)) —
+für bereits gespeicherte Übungen gilt das nicht. Der Renderer braucht darum einen Rückfall: findet er
+`{{n}}` zum gefragten `GapIndex` nicht, zeigt er den Text unverändert statt gar nichts.
+
+**R4 · Kein Test spielt heute einen Lückentext.** Die Cloze-Abdeckung liegt vollständig beim Anlegen und
+beim Auflösen (`ExerciseContentProviderTests`, `CatalogReadDeleteTests`, `ExerciseTypeManifestTests`);
+eine gespielte Position gibt es nirgends. Der Regressionstest wird also mit angelegt, nicht erweitert.
+
+### Angriffsplan
+
+Backend zuerst — das Frontend hängt an der API.
+
+1. **Vertrag** (`Pugling.Contracts`): `int? GapIndex` additiv an `PracticeCard` und `TestItem`, je mit
+   `/// <summary>` auf Englisch. Bei `PracticeCard` **hinter** die vorhandenen Vorgabewerte, sonst brechen
+   die positionalen Aufrufe.
+2. **Durchreichen**: `PositionPlayService.CardFacets` nimmt `GapIndex` in ihr Ergebnis-Tupel; die beiden
+   Bauplätze ([PositionPracticeController.cs:108](../../backend/Pugling.Api/Controllers/Student/PositionPracticeController.cs),
+   [PositionTestsController.cs:74](../../backend/Pugling.Api/Controllers/Student/PositionTestsController.cs))
+   reichen es weiter. Eine Stelle, zwei Verbraucher — dieselbe Naht wie beim Bild.
+3. **R1 entscheiden**, dann `ClozeExerciseType.Choices` überschreiben: auf der Wortbank-Stufe der volle
+   Pool aus `ClozeConfig.WordBank`, sonst `null` (E4). Vorbild ist `VocabularyExerciseType.Choices`, nur
+   ohne dessen Ablenker-Auswahl — hier wird nichts beschnitten.
+4. **Artefakte** neu erzeugen: `docs/openapi/v1.json`, `openapi-examples.generated.json`,
+   `docs/api-examples/` (die `DocsCaptureTests` schreiben sie im Lauf) und `frontend/src/lib/contract.ts`
+   über `npm run gen:contract`.
+5. **Frontend**: `placeholderIndices` von `ClozeTexts.tsx:28` nach `lib/` ziehen (der Editor benutzt es
+   weiter), darauf ein Bauteil, das den Text mit hervorgehobener `gapIndex`-Lücke rendert. Eingesetzt in
+   **beiden** Ansichten, `SohnPractice` und `SohnTest`, an der Stelle des heutigen
+   `<div className="word">{card.prompt}</div>`. Die Wortbank-Knöpfe entstehen dabei von selbst — der
+   `choices`-Zweig steht in beiden Dateien schon.
+
+### Testweg
+
+- **Regressionstest, vorher rot** (`Pugling.Api.Tests`, neue Klasse `ClozePlayTests` — R4): eine gespielte
+  Position auf der geseedeten Übung mit **zwei** Lücken; geprüft wird, dass die beiden Karten sich in
+  `gapIndex` unterscheiden. Heute sind sie zeichengleich, der Test fällt also am Ist-Stand.
+- **Zweiter Fall in derselben Klasse:** die Wortbank-Stufe liefert `choices` mit allen fünf Einträgen aus
+  `Seed.cs:1037`; die Freitext-Stufe liefert `null`.
+- **Klausur (E5):** derselbe Durchlauf über `…/tests/{attemptId}/next` — die geseedete Freitext-Position
+  trägt `RequireTypedTest = true`.
+- **Frontend:** Komponententest (Vitest ist da, siehe `lib/useAction.test.tsx`) auf den Renderer: die
+  gefragte Lücke hervorgehoben, die übrigen neutral, `{{n}}` nirgends sichtbar — dazu der Rückfall aus R3.
+- **E2E:** `uebungstypen.spec.ts` ist der passende Ort, falls der Durchstich bis in die Sohn-Ansicht
+  gewünscht ist; nicht zwingend, der Komponententest deckt die Darstellung ab.
+- Kein `/smoke-test` nötig: Es entsteht kein neuer Endpunkt, nur ein Feld auf zwei bestehenden.
+
 ## Verlauf
 
 - **2026-08-02** — angelegt aus der Grill-Runde zu B-75. Der Befund war schon dort am laufenden System
@@ -216,3 +304,11 @@ entfernt hat. Kein Widerspruch: jene waren **immer** `null`, dieses ist es nur b
   — seine Dekodierung ist strukturiert und passt in keine der beiden vorhandenen Formen.
   Nebenbei fiel eine Begriffskollision auf, die ich selbst gebaut hatte: „Trägertext" ist im Repo längst
   der Store-Eintrag `ClozeText`, nicht „irgendein Text, auf den sich eine Frage bezieht" (E3).
+- **2026-08-02** — geschätzt: **M · beides · keine Migration · kein Vertragsbruch** (beide Felder additiv,
+  `GapIndex` liegt schon am `ContentItem`). Die Schätzung hat eine Lücke in der Grill-Runde freigelegt und
+  als **R1** festgehalten: `TranslationWordBank` ist gar keine getippte Stufe, also liefert die Karte dort
+  heute die Lösung als `reveal`, und beide Sohn-Ansichten rendern `choices` nur im `typed`-Zweig. E4 setzt
+  eine Stufe voraus, auf der eine Auswahl ankommt — die gibt es noch nicht. Empfohlen ist, die Stufe
+  getippt zu machen; das ändert aber das Verhalten der geseedeten Wochenpflicht und ist vor dem Bauen zu
+  bestätigen. Nebenbefund **R4**: Kein Test spielt heute einen Lückentext, die Abdeckung endet beim
+  Anlegen und Auflösen.
