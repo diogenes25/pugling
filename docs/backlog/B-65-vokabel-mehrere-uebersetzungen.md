@@ -1,10 +1,13 @@
 ---
-tags: [typ/story, status/gegrillt, bereich/katalog, bereich/training, bereich/frontend, lerntechnik/vokabeln, rolle/student, rolle/creator]
+tags: [typ/story, status/geschaetzt, bereich/katalog, bereich/training, bereich/frontend, lerntechnik/vokabeln, rolle/student, rolle/creator]
 aliases: [Vokabel 1:n Übersetzung, Mehrfachdeutung, TranslationAlternatives]
-status: gegrillt
+status: geschaetzt
 prio: P1
 art: Defekt
+groesse: M
 wo: beides
+migration: ja
+vertragsbruch: nein
 quelle: remark #11, #12, #13 (Punkt 2)
 ---
 
@@ -154,10 +157,86 @@ Neu aufgeworfen und ebenfalls geschlossen: die Kästchen-Stufe (Entscheidung 4),
    angenommen. Dazu ein Test, der belegt, dass ein Homonym-Paar sich **nicht** gegenseitig akzeptiert.
 9. Der Lernstand je Item (`ItemProgress`) bleibt stabil — die Item-Ids ändern sich nicht.
 
+## Schätzung
+
+**Größe: M** — vergleichbar mit [B-03](B-03-lueckensaetze-mit-bild.md) (vokabel-basierter Batch-Pfad im
+`MediaSelector`). Nicht S, weil Schema, Vertrag, vier Controller-Stellen und eine neue Frontend-Komponente
+zusammenkommen; nicht L, weil an keiner Stelle Bestandsdaten umgezogen werden.
+
+**Beim Messen kam der Ausschlag nach unten:** die Bewertungsstrecke kann längst mehrere Antworten.
+`ContentItem` trägt bereits `AcceptedAnswers` als Liste
+([ExerciseContentProvider.cs:17-28](../../backend/Pugling.Api/Services/Shared/ExerciseContentProvider.cs)),
+und **alle vier** Auswertungsstellen fragen sie schon so ab
+(`PositionPracticeController.cs:265`, `PositionTestsController.cs:229,301`,
+`ExercisePreviewService.cs:63`). Für Lückentext, Liste und Übersetzung wird sie über den Helfer
+`Accepted(answer, alternatives)` befüllt — nur die Vokabel setzt hart `[v.Translation]`
+([ExerciseContentResolver.cs:97](../../backend/Pugling.Api/Services/Shared/ExerciseContentResolver.cs)).
+
+**Zwei Entscheidungen kosten dadurch nichts:**
+
+- Entscheidung 3 (Alternativen fallen beim Richtungstausch weg) ist bereits so gebaut:
+  `Swap` setzt `AcceptedAnswers = [it.Prompt]` (`ExerciseContentProvider.cs:64`).
+- Entscheidung 4 (Kästchenzahl aus der primären Übersetzung) ebenfalls: `StageFacets` rechnet auf
+  `item.Answer.Length` (`VocabularyExerciseType.cs:80`), und `Answer` bleibt die primäre.
+
+### Angriffsplan — Backend zuerst
+
+1. **Modell.** `Vocabulary.TranslationAlternatives` als `List<string>` (JSON-Spalte). Dabei **beide Tore
+   bedienen**: Eintrag in `UnlimitedByDesign` (**G3**, `PuglingDbContext.cs:964-981` — sonst greift die
+   Längen-Konvention und schneidet die Liste bei 200 Zeichen ab) und ein `ValueComparer` (**G7**,
+   `Data/JsonValueComparer.cs`). Danach die Migrationskette **neu falten**.
+2. **Ausspielung.** Eine Zeile: `ExerciseContentResolver.cs:97` von `[v.Translation]` auf
+   `Accepted(v.Translation, v.TranslationAlternatives)` (der Helfer steht direkt darunter, `:130`).
+3. **Multiple-Choice.** `VocabularyExerciseType.Choices` dedupliziert über `other.Answer`
+   (`:52-57`) — auf `other.AcceptedAnswers` umstellen und die Alternativen des *eigenen* Items in `seen`
+   aufnehmen, damit keine gleichwertige Antwort als Distraktor erscheint.
+4. **Vertrag.** Drei Records in `Creator/VocabularyStoreDtos.cs`: `VocabularyResponse` (Feld ergänzen),
+   `CreateVocabularyDto` (optionaler Parameter), `UpdateVocabularyDto` (Feld **plus**
+   `ClearTranslationAlternatives`). Die neuen Parameter **mit Vorgabewert** anhängen — `UpdateVocabularyDto`
+   hat heute keine Vorgaben, ohne sie bräche jeder positionelle Aufruf in Client und Tests.
+5. **Controller.** `VocabularyStoreController`: Projektion plus vier Schreibstellen — `POST` (`:188`),
+   `PATCH` (`:272`), `POST batch` (`:451`), `PATCH batch` (`:480`).
+6. **Frontend.** Wiederhol-Feld-Komponente (ein Feld je Variante, „+ Variante", Entfernen), eingebaut an
+   beiden Stellen in `VaterVocab.tsx`: Anlege-Zeilen (`:122`, `createVocabularyBatch`) und Bearbeiten
+   (`:323`, `updateVocabulary`). Dazu der Dublettenhinweis über den vorhandenen
+   `vocabulary/lookup`. Vorher `npm run gen:contract` — die Typen kommen aus dem Dokument, nicht aus der Hand.
+
+### Risiken
+
+- **G3 und G7 werden beim ersten Lauf rot** — das ist ihr Zweck, nicht ein Fehler. Wer G3 übersieht,
+  bekommt eine stillschweigend abgeschnittene Liste; wer G7 übersieht, verliert Änderungen, solange
+  niemand die Liste neu zuweist.
+- **`ClearTranslationAlternatives` zieht einen Test nach.** Der reflexive Wächter in
+  `PatchSemanticsTests.cs:425-449` verlangt zu **jedem** Clear-Schalter im Vertrag einen Fall in seiner
+  Tabelle und wird sonst rot („Clear switch without a test"). Vorbild: `ClearWordBank`.
+- **Der Store ist eigentümerlos** (Entscheidung 2) — es gibt keine Rechteprüfung nachzuziehen, aber auch
+  keine, die einen Missbrauch bremst. Bewusst so.
+- Kein Bestandsrisiko: alte Zeilen bekommen eine leere Liste und verhalten sich exakt wie heute.
+
+### Testweg
+
+- **Regression (muss vorher rot sein):** `PositionTestFlowTests` — Vokabel mit
+  `TranslationAlternatives`, die zweite Antwort wird angenommen. Dazu der Gegen-Test, dass zwei Zeilen mit
+  gleichem `Word` sich **nicht** gegenseitig akzeptieren (Homonym, Entscheidung 1).
+- **Multiple-Choice:** `PositionPlayChoicesTests` — eine gleichwertige Alternative taucht nie als Option
+  derselben Frage auf.
+- **Store-CRUD und Batch:** `VocabularyStoreTests` (Anlegen, PATCH, beide Batch-Wege) und
+  `VocabAgentApiTests` für den Client-Pfad.
+- **PATCH-Semantik:** Fall in der Tabelle von `PatchSemanticsTests` (siehe Risiken).
+- **Frontend:** Vitest/RTL für die Wiederhol-Feld-Komponente — Variante hinzufügen, entfernen, und eine
+  Übersetzung **mit Komma** kommt unverändert zurück (das ist der Fehler, den das Komma-Feld hat).
+- Zum Schluss `/smoke-test` und `pugling-reviewer` **plus** `frontend-reviewer` (`wo: beides`).
+
 ## Verlauf
 
 - **2026-08-02** — angelegt aus den Anmerkungen #11, #12 und #13 (Punkt 2); Ist-Stand am Code belegt,
   Befund: [befund-2026-08-02.md](../anmerkungen/befund-2026-08-02.md#c--vokabel-mehrdeutigkeit-11-12-13-punkt-2).
+- **2026-08-02** — `gegrillt → geschaetzt`. **M**, `migration: ja`, `vertragsbruch: nein`. Das Messen hat
+  die Story kleiner gemacht als gedacht: `ContentItem.AcceptedAnswers` ist längst eine Liste und alle vier
+  Auswertungsstellen fragen sie so ab — die Ausspielung ist **eine Zeile**
+  (`ExerciseContentResolver.cs:97`), und die Entscheidungen 3 und 4 sind bereits gebaut. Teuer sind
+  stattdessen die Ränder: zwei Schema-Tore (G3, G7), der Clear-Schalter samt Wächter-Fall und die
+  Frontend-Komponente.
 - **2026-08-02** — `ausformuliert → gegrillt`. Sieben Entscheidungen; tragend ist Entscheidung 1
   (Gleichwertigkeit wird erklärt, nicht aus gleichem Wort abgeleitet) — sie verhindert, dass der Fix
   Homonyme gegenseitig als richtig wertet. Entscheidung 7 (ein Feld je Variante) hat
