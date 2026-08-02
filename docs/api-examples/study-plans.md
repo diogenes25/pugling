@@ -369,9 +369,7 @@ Response — `HTTP 200`:
     "answerLength": null,
     "hint": null,
     "choices": null,
-    "audioUrl": null,
-    "imageUrl": null,
-    "imageAlt": null
+    "audioUrl": null
   },
   "done": false,
   "cursor": 0,

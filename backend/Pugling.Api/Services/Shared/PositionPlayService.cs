@@ -32,8 +32,10 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
 
     /// <summary>
     /// The content items of this position's exercise (store-resolved for referenced vocabulary items).
-    /// <paramref name="childId"/> unlocks image selection – only the playing paths (practice card,
-    /// test item) pass it; evaluation and goal calculation don't need an image and skip the selection.
+    /// <paramref name="childId"/> unlocks image selection – only the practice card passes it, because only
+    /// it shows an image. Everything else skips the selection, and not merely to save a query: selecting
+    /// <b>freezes</b> the child's motif for good (see <c>MediaSelector</c>), so a path that renders no image
+    /// would silently decide what the child sees later.
     /// </summary>
     public async Task<IReadOnlyList<ContentItem>> ItemsOfAsync(PlanPosition pos, int? childId = null,
         CancellationToken ct = default) =>
@@ -104,7 +106,8 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
     /// The representation of a content atom permitted per stage as a card/test item (anti-cheat in one place):
     /// typed stages withhold the solution (<c>Reveal</c>), display/self-assessment reveals it;
     /// letter boxes give the length, the listening stage the audio source, multiple choice the options.
-    /// Shared by practice card (<c>PracticeCard</c>) and test item (<c>TestItem</c>).
+    /// Shared by practice card (<c>PracticeCard</c>) and test item (<c>TestItem</c>) – the latter drops the
+    /// image facets, it renders no image.
     /// </summary>
     public static (string? Hint, int? AnswerLength, string? Reveal, IReadOnlyList<string>? Choices,
         string? AudioUrl, string? ImageUrl, string? ImageAlt)

@@ -34409,21 +34409,9 @@
               "null",
               "string"
             ]
-          },
-          "imageUrl": {
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "imageAlt": {
-            "type": [
-              "null",
-              "string"
-            ]
           }
         },
-        "description": "An exam question \u2013 without the solution, except at stages that reveal it by design."
+        "description": "An exam question \u2013 without the solution, except at stages that reveal it by design. Deliberately\n\u003Cb\u003Ewithout\u003C/b\u003E an image: the exam shows none, and a field that is always null is the kind of silent lie\nthe API otherwise rejects with \u0060unknown_field\u0060."
       },
       "TestNextResponse": {
         "required": [

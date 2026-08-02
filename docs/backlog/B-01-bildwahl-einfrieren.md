@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/medien, bereich/training, rolle/student]
+tags: [typ/story, status/abgenommen, bereich/medien, bereich/training, rolle/student]
 aliases: [Bildwahl einfrieren, Fund 1]
-status: geschaetzt
+status: abgenommen
 prio: P1
 art: Defekt
 groesse: S
@@ -56,3 +56,31 @@ Kern, belegt: `MediaSelector.SelectForItemsAsync` schreibt die Wahl fest (`Media
 
 - **2026-07-30** — geerntet aus dem Grill-Protokoll vom selben Tag; Stufe `geschaetzt` übernommen, weil
   dort schon gegrillt und mit Größe versehen.
+- **2026-08-02** — umgesetzt und abgenommen. Die Schätzung hat getragen: vier Durchreichungen entfernt,
+  zwei Vertragsfelder gestrichen, alle vier Akzeptanzkriterien erfüllt.
+
+  **Erst rot.** Der Regressionstest `Abschlusstest_SchreibtKeineBildwahlFest` (in `MediaSelectionTests`,
+  wie im Testweg vorgesehen) fiel vor der Reparatur mit
+  `Assert.Empty() Failure: Collection was not empty · [ChildMediaPick { ChildId = 3, Id = 1, … }]` —
+  ein Testlauf schrieb also belegbar eine Bildwahl fest.
+
+  **Ein Fund über die Schätzung hinaus:** `pos.StudyPlan` wurde ausschließlich für dieses `childId`
+  gebraucht, also fiel auch das `Include(p => p.StudyPlan)` in `GetPosition` weg — ein Join weniger auf
+  allen vier Test-Endpunkten. Geprüft, dass kein Dienst am `PlanPosition` hängend darauf zugreift: die
+  Auswertungen nehmen `plan.ChildId` aus `GetPlan`, und `PositionProgressService` lädt seinen eigenen
+  `Include`.
+
+  Der Grund für den Defekt steht jetzt dort, wo er wirkt: Am `childId`-Parameter von
+  `PositionPlayService.ItemsOfAsync` erklärt der Kommentar, dass die Auswahl **einfriert** — dass sie also
+  nicht bloß eine Abfrage kostet, sondern entscheidet. Vorher stand da nur „braucht kein Bild".
+
+  Belege: **638 Tests** grün (`dotnet test Pugling.sln -c Release`), `/smoke-test` 13 von 13 grün (inkl.
+  Positions-Test starten und einreichen), `dotnet format --verify-no-changes` sauber, `tsc --noEmit` im
+  Frontend sauber nach neu erzeugtem `contract.ts`. `SohnTest.tsx` liest die gestrichenen Felder
+  nachweislich nicht (`grep imageUrl|imageAlt` leer) — das benannte Risiko der Schätzung hielt.
+  Der Review lief in dieser Sitzung **von Hand statt über `pugling-reviewer`** (Agenten waren
+  abgeschaltet); geprüft wurden gezielt die zwei Stellen, an denen dieser Umbau schiefgehen konnte: die
+  entfallene Navigation und der Frontend-Lesezugriff.
+
+  Commits: `e8cbe47` (Reparatur samt Regressionstest und neu erzeugtem Vertragsdokument), dazu dieser
+  Nachtrag mit der Abnahme.
