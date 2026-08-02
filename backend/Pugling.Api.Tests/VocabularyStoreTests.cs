@@ -98,6 +98,23 @@ public class VocabularyStoreTests(PuglingWebAppFactory factory) : IClassFixture<
         Assert.Equal(new[] { "sehr klein" }, await VariantenAsync(father, neu));
     }
 
+    /// <summary>
+    /// A PATCH that only moves the translation onto one of its own alternatives must not leave that word
+    /// listed twice - the entry would read "riesig, also: riesig".
+    /// </summary>
+    [Fact]
+    public async Task Uebersetzung_AufEineVarianteGesetzt_LaesstSieNichtDoppeltStehen()
+    {
+        var father = await TestApi.FatherAsync(factory);
+        var (id, _) = await TestApi.CreateStoreVocabAsync(father, "enormous", "riesig",
+            translationAlternatives: ["sehr groß"]);
+
+        (await father.PatchAsJsonAsync($"/api/v1/creator/vocabulary/{id}",
+            new { translation = "sehr groß" })).EnsureSuccessStatusCode();
+
+        Assert.Null(await VariantenAsync(father, id));
+    }
+
     /// <summary>Reads the equally valid translations of an entry back (<c>null</c> = none declared).</summary>
     private static async Task<string[]?> VariantenAsync(HttpClient father, int id)
     {

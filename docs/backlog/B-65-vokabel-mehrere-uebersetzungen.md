@@ -288,3 +288,11 @@ und **alle vier** Auswertungsstellen fragen sie schon so ab
 
   Commits: `189fdbe` (Backend inkl. Review-Nachlauf), `0ca8e7b` (Frontend inkl. Review-Nachlauf), dazu
   dieser Doku-Commit mit der Abnahme und den zwei abgeleiteten Ideen.
+
+- 2026-08-02 – **Nachlauf aus einem zweiten Review-Durchgang.** Ein Befund war echt: `CleanAlternatives`
+  lief nur, wenn der PATCH die Varianten *mitschickte*. Ein PATCH, der allein die Übersetzung auf ein Wort
+  setzt, das schon als Variante steht (`riesig` → `sehr groß`), ließ sie doppelt stehen – über die
+  Oberfläche unsichtbar, weil der Editor die Liste immer mitsendet, über API und Agent aber nicht. Die
+  Reinigung läuft jetzt **unbedingt** und gegen die Übersetzung *nach* dem PATCH; der Wert-vor-Schalter-
+  Ablauf bleibt. Der Regressionstest dazu ist vorher rot (`["sehr groß"]` statt `null`).
+  Suite 637 grün, Vitest 54, `npm run build` und markdownlint sauber.

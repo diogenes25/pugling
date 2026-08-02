@@ -353,7 +353,7 @@ function DuplicateHint({ found, onShowExisting }: {
     <p className="muted" role="status" style={{ margin: "0 0 0 2px", fontSize: 12 }}>
       {found && (
         <>
-          „{found.word}" gibt es schon: {found.hits.map((h) => h.translation || "(ohne Übersetzung)").join(" · ")}.
+          „{found.word}“ gibt es schon: {found.hits.map((h) => h.translation || "(ohne Übersetzung)").join(" · ")}.
           {" "}Andere Bedeutung? Dann ist eine zweite Zeile richtig. Dasselbe gemeint? Dann besser am
           bestehenden Eintrag als Variante eintragen.{" "}
           <button type="button" className="btn ghost inline-btn" style={{ width: "auto", fontSize: 12 }}

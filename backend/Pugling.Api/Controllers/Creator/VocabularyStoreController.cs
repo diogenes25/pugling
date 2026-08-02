@@ -301,10 +301,13 @@ public class VocabularyStoreController(PuglingDbContext db) : ControllerBase
         if (dto.Translation is not null) vocab.Translation = dto.Translation;
         // Value first, switch second: a form sending both "- no alternatives -" and the old list must end up
         // empty (see the PATCH semantics in CLAUDE.md).
-        // `vocab.Translation`, not `dto.Translation`: a translation changed in the same PATCH already stands
-        // here, and that is the one to deduplicate against.
-        if (dto.TranslationAlternatives is not null) vocab.TranslationAlternatives = CleanAlternatives(dto.TranslationAlternatives, vocab.Translation);
+        if (dto.TranslationAlternatives is not null) vocab.TranslationAlternatives = dto.TranslationAlternatives;
         if (dto.ClearTranslationAlternatives) vocab.TranslationAlternatives = null;
+        // Cleaned against the translation that stands AFTER this PATCH, and unconditionally: a PATCH that only
+        // moves the translation onto a word already listed as an alternative would otherwise leave it there
+        // twice ("also: sehr groß" under "sehr groß"). Reassigning an unchanged list costs no UPDATE - the
+        // JSON value comparer compares by content.
+        vocab.TranslationAlternatives = CleanAlternatives(vocab.TranslationAlternatives, vocab.Translation);
         if (dto.PartOfSpeech is not null) vocab.PartOfSpeech = dto.PartOfSpeech.Value;
         if (dto.Noun is not null) vocab.Noun = dto.Noun;
         if (dto.Verb is not null) vocab.Verb = dto.Verb;
