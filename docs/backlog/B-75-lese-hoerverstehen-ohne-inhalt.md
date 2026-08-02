@@ -1,6 +1,6 @@
 ---
 tags: [typ/story, status/gegrillt, bereich/backend, bereich/frontend, rolle/student]
-aliases: [Trägertext erreicht das Kind nicht, Hörverstehen ohne Audio]
+aliases: [Lesetext erreicht das Kind nicht, Hörverstehen ohne Audio]
 status: gegrillt
 prio: P1
 art: Defekt
@@ -34,7 +34,7 @@ steht nur die Frage — über `/cards` **und** über `/next`, in beiden Fällen 
 
 Warum, Stelle für Stelle:
 
-- **Der Trägertext wird beim Aufbereiten fallengelassen.** `AnswerChecking.FromQuestions` baut je Frage
+- **Der Lesetext wird beim Aufbereiten fallengelassen.** `AnswerChecking.FromQuestions` baut je Frage
   `new ContentItem(i, q.Prompt, q.Answer, [q.Answer])`
   ([BuiltInExerciseTypes.cs:19-20, 33-34](../../backend/Pugling.Api/Exercises/BuiltInExerciseTypes.cs));
   `ReadingConfig.Text` ([ExerciseConfigs.cs:57-59](../../backend/Pugling.Contracts/Exercise/ExerciseConfigs.cs))
@@ -42,7 +42,7 @@ Warum, Stelle für Stelle:
 - **Die Karte hätte auch kein Feld dafür.** `PracticeCard` trägt `Prompt`, `Hint`, `AnswerLength`,
   `Reveal`, `Choices`, `AudioUrl`, `ImageUrl`, `ImageAlt`
   ([PracticeDtos.cs:27-29](../../backend/Pugling.Contracts/Student/PracticeDtos.cs)) — für einen
-  Trägertext ist nichts vorgesehen. Auch `ContentItem` hat keins
+  Lesetext ist nichts vorgesehen. Auch `ContentItem` hat keins
   ([ExerciseContentProvider.cs:17-28](../../backend/Pugling.Api/Services/Shared/ExerciseContentProvider.cs)).
 - **Das Audio fällt an einer anderen Stelle aus.** Die Audio-Quelle einer Karte kommt aus `StageFacets`
   ([PositionPlayService.cs:113](../../backend/Pugling.Api/Services/Shared/PositionPlayService.cs) →
@@ -86,7 +86,7 @@ Es sind **zwei** Lücken mit unterschiedlichem Preis, und sie werden leicht als 
 1. **Hörverstehen ist billig zu reparieren.** `ContentItem` *hat* bereits ein `AudioUrl`-Feld, und
    `PracticeCard` auch. Es fehlt nur die Verdrahtung: `ItemsOf` müsste `AudioUrl` aus der Config an jedes
    Item hängen und `StageFacets` es durchreichen — kein Vertragsbruch, kein neues Feld.
-2. **Leseverstehen braucht eine Vertragsentscheidung.** Für den Trägertext gibt es **nirgends** ein Feld.
+2. **Leseverstehen braucht eine Vertragsentscheidung.** Für den Lesetext gibt es **nirgends** ein Feld.
    Er ist außerdem der einzige Inhalt, der zur *Übung* gehört und nicht zur *Karte* — er wiederholte sich
    sonst auf jeder Frage.
 
@@ -99,7 +99,7 @@ zwölf Typen.
 
 ## Offene Punkte
 
-1. ~~**Wie kommt der Trägertext zum Kind?**~~ → **E1**
+1. ~~**Wie kommt der Lesetext zum Kind?**~~ → **E1**
 2. ~~**Karte oder Runde?**~~ → **E1**
 3. ~~**Hörverstehen: `ItemsOf` oder `StageFacets`?**~~ — keine Entscheidung, sondern ein Faktum:
    `StageFacets(item, stage)` bekommt die Config gar nicht zu sehen
@@ -136,6 +136,18 @@ Sohn-Ansicht. Der Text wiederholt sich auf jeder Frage — bewusst: der Server b
 und die Offline-Reserve über `/cards` funktioniert unverändert. Die Variante „einmal je Runde" wäre
 sparsamer, müsste aber von drei Wegen (Info/Lern/Klausur) **plus** `/cards` getragen werden.
 Additiv ⇒ für sich genommen **kein** Vertragsbruch.
+
+**Die Grammatik kommt mit** (nachgetragen aus der Grill-Runde zu
+[B-76](B-76-lueckentext-karte-ohne-luecke.md), Entscheidung 1). `GrammarConfig.Instruction` — „die
+übergreifende Anweisung, etwa *Setze das Verb ins Simple Past*" — wird von `ItemsOf` verworfen
+([BuiltInExerciseTypes.cs:64](../../backend/Pugling.Api/Exercises/BuiltInExerciseTypes.cs)); am laufenden
+System kam die Karte nur mit „He (go) to school.". Das ist derselbe Defekt wie beim Lesetext, nur milder
+(der Einzel-Prompt trägt für sich) — und **dieselbe** Reparatur: übungsweiter Text auf der Karte, also
+E1. Kein neuer offener Punkt, nur ein dritter Typ, der dasselbe Feld füllt.
+
+Der Begriff dafür ist übrigens **nicht** „Trägertext": Das Wort ist im Repo schon der Store-Eintrag
+`ClozeText` (Entscheidung 3 in B-76). Diese Story sagt darum „Lesetext" bzw. „Text der Übung"; das Feld
+heißt `Passage`.
 
 ### E2 · Der Lückentext wird eine eigene Story und geht vor
 
@@ -210,3 +222,9 @@ Typen auf einen, und eine widerlegte Behauptung bleibt nicht als Arbeitsvorrat s
   Vokabel-Hörstufe selbst — eine Anti-Cheat-Regel im Renderer, direkt unter dem Kommentar, der das
   Gegenteil behauptet. Sie wandert zum Server, und dafür wird `Prompt` nullable: aus `vertragsbruch`
   wird damit **ja**. Punkt 5 bleibt ausdrücklich bei B-73.
+- **2026-08-02** — nachgetragen aus der Grill-Runde zu
+  [B-76](B-76-lueckentext-karte-ohne-luecke.md): Die **Grammatik** kommt unter E1 dazu (ihre übergreifende
+  Anweisung fällt genauso weg wie der Lesetext, gleiche Reparatur), und der Begriff **„Trägertext" ist
+  hier durchgehend falsch** — er bezeichnet im Repo den Store-Eintrag `ClozeText`. Die Prosa sagt jetzt
+  „Lesetext", das Feld heißt `Passage`. Die Stufe bleibt `gegrillt`: kein neuer offener Punkt, ein dritter
+  Typ am selben Feld und eine Wortkorrektur.

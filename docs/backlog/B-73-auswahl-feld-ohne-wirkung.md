@@ -74,9 +74,9 @@ durchzureichen genügt darum nicht — es braucht eine Aussage darüber, **wie**
 
 ### Ein Nachbarbefund, der beim Grillen zum Hauptbefund wurde
 
-`FromQuestions` baut den Prompt aus `q.Prompt` — der **Trägertext** (`ReadingConfig.Text`) bzw. das Audio
+`FromQuestions` baut den Prompt aus `q.Prompt` — der **Lesetext** (`ReadingConfig.Text`) bzw. das Audio
 kommt in keinem `ContentItem` vor. Beim Grillen bestätigt: `PracticeCard` hat gar **kein Feld** für einen
-Trägertext ([PracticeDtos.cs:27-29](../../backend/Pugling.Contracts/Student/PracticeDtos.cs)), die
+Lesetext ([PracticeDtos.cs:27-29](../../backend/Pugling.Contracts/Student/PracticeDtos.cs)), die
 Audio-Quelle käme aus `StageFacets` (`ExerciseTypeBase.cs:41`, von `ListeningExerciseType` nicht
 überschrieben), und `SohnPractice.tsx` lädt die Übung nie nach. Das Kind bekommt die Frage ohne den Text
 und ohne die Aufnahme.
@@ -108,17 +108,29 @@ Inhalts-Übungen bleiben.
    *Empfehlung: je Item entscheiden — wo `Choices` steht, erscheinen sie; wo nicht, bleibt es bei der
    Selbsteinschätzung.* Das ist genau das Muster von `Choices(items, item, stage)`, das die Signatur schon
    vorsieht. Kosten: eine Runde kann gemischt aussehen; das ist verständlich, weil die Frage es hergibt.
-4. ~~**Der Trägertext erreicht das Kind offenbar nicht**~~ → **E1.** (siehe oben). *Empfehlung: eigene Story, nicht
+4. ~~**Der Lesetext erreicht das Kind offenbar nicht**~~ → **E1.** (siehe oben). *Empfehlung: eigene Story, nicht
    hier* — und vorher am laufenden System nachspielen, statt es aus dem Code zu schließen. Wäre der Befund
    echt, änderte er die Prio dieser Story: Optionen zu einer Frage, deren Text fehlt, helfen wenig.
 5. **Braucht das Feld eine Sperre, solange nichts ausgespielt wird?** *Empfehlung: nein.* Nach B-69 trägt
    es einen Hilfetext (`questionChoices`), und die Story hier ist der Weg, das Versprechen einzulösen —
    eine Warnung im Editor wäre eine dritte Stelle, die später wieder zurückgebaut werden müsste.
+6. **Die Zuordnung gehört dazu** — aufgenommen aus der Grill-Runde zu
+   [B-76](B-76-lueckentext-karte-ohne-luecke.md) (Entscheidung 1), weil es dasselbe Muster ist: eine
+   Stufe verspricht eine Auswahl und liefert Freitext. `MatchStage` kennt `Direct` und `Distractors`
+   ([StudyPlanEntities.cs:21-27](../../backend/Pugling.Api/Models/StudyPlanEntities.cs)) — am laufenden
+   System liefern **beide** identische Karten mit `choices: null`, weil `MatchingExerciseType`
+   `Choices` nicht überschreibt
+   ([BuiltInExerciseTypes.cs:140-174](../../backend/Pugling.Api/Exercises/BuiltInExerciseTypes.cs)).
+   Die Ablenker müssten hier aus den *anderen* Paaren kommen, nicht aus einem gepflegten Pool.
+   *Empfehlung: mitnehmen* — es ist derselbe Griff (`Choices` überschreiben) an derselben Stelle, und die
+   Zuordnung liegt zweimal als Position im Seed (`Seed.cs:369-385`). Kosten: die Story wächst um einen
+   Typ, und die Frage aus Punkt 2 (`IsTypedStage` für die Auswahl-Stufe) muss dann für `MatchStage`
+   mitbeantwortet werden.
 
 ## Entscheidungen
 
-**E1 · Diese Story wartet; der fehlende Trägertext geht vor.** Die Grill-Runde vom 2026-08-02 hat Punkt 4
-zuerst aufgerufen und ihn dabei **belegt**: `PracticeCard` hat gar kein Feld für einen Trägertext
+**E1 · Diese Story wartet; der fehlende Lesetext geht vor.** Die Grill-Runde vom 2026-08-02 hat Punkt 4
+zuerst aufgerufen und ihn dabei **belegt**: `PracticeCard` hat gar kein Feld für einen Lesetext
 ([PracticeDtos.cs:27-29](../../backend/Pugling.Contracts/Student/PracticeDtos.cs)), `StageFacets` liefert
 für Hörverstehen keine Audio-Quelle ([ExerciseTypeBase.cs:41](../../backend/Pugling.Api/Exercises/ExerciseTypeBase.cs),
 von `ListeningExerciseType` nicht überschrieben), und `SohnPractice.tsx` lädt die Übung nie nach. Das Kind
@@ -159,3 +171,10 @@ Stufe `ausformuliert` und wird **nicht** auf `gegrillt` gesetzt.
   fehlende Inhalt wird [B-75](B-75-lese-hoerverstehen-ohne-inhalt.md) und geht mit **P1** vor. Die
   übrigen vier Punkte bleiben offen; die Stufe bleibt `ausformuliert`, weil `gegrillt` verlangt, dass
   jeder Punkt entschieden oder ausdrücklich zurückgestellt ist.
+- **2026-08-02** — ein sechster offener Punkt aus der Grill-Runde zu
+  [B-76](B-76-lueckentext-karte-ohne-luecke.md): Die **Zuordnung** hat dasselbe Muster — `MatchStage`
+  kennt eine Stufe `Distractors`, aber beide Stufen liefern am laufenden System identische Karten mit
+  `choices: null`. Sie wurde dieser Story zugeschlagen, weil es derselbe Griff an derselben Stelle ist.
+  Im Rumpf ist außerdem „Trägertext" durch „Lesetext" ersetzt: Das Wort bezeichnet im Repo den
+  Store-Eintrag `ClozeText` (B-76, Entscheidung 3). Die Einträge oberhalb bleiben, wie sie geschrieben
+  wurden.
