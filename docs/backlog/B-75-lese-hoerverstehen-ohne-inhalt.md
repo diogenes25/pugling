@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/ausformuliert, bereich/backend, bereich/frontend, rolle/student]
+tags: [typ/story, status/gegrillt, bereich/backend, bereich/frontend, rolle/student]
 aliases: [Trägertext erreicht das Kind nicht, Hörverstehen ohne Audio]
-status: ausformuliert
+status: gegrillt
 prio: P1
 art: Defekt
 quelle: B-73 (Grill-Runde, Entscheidung 1)
@@ -99,40 +99,99 @@ zwölf Typen.
 
 ## Offene Punkte
 
-1. **Wie kommt der Trägertext zum Kind?** Neues additives Feld auf `PracticeCard` (z. B. `Passage`) oder
-   in den `Prompt` gefaltet? — *Empfehlung: eigenes Feld.* `Prompt` ist die Frage; er landet in der
-   Historie (`HistoryResponse`), in `PreviewItemOutcome` und in den Auswertungen. Ein Absatz Fließtext
-   davor würde diese Ansichten unlesbar machen. Additiv ⇒ kein Vertragsbruch.
-2. **Karte oder Runde?** Der Text gehört zur Übung, nicht zur Frage. — *Empfehlung: trotzdem auf der
-   Karte.* Der Server bleibt Herr der Ausspielung, die Offline-Reserve über `/cards` funktioniert
-   unverändert, und die Wiederholung kostet nur Bytes. Ein Feld auf `SessionResponse` wäre sparsamer, aber
-   die Info-/Lern-/Klausur-Wege müssten es alle drei tragen.
-3. **Hörverstehen: `ItemsOf` oder `StageFacets`?** Beides zusammen (`AudioUrl` ans Item, `StageFacets`
-   überschrieben) ist der Weg, den `VocabularyExerciseType` schon geht. — *Empfehlung: diesem Muster
-   folgen*, kein neuer Mechanismus.
-4. **Was zeigt die Sohn-Ansicht beim Hörverstehen?** — *Empfehlung: Aufnahme **und** Frage.* Das
-   Entweder-oder in `SohnPractice.tsx:226` stammt von der Vokabel-Hörstufe, wo das Zeigen des Wortes die
-   Aufgabe zerstören würde; beim Hörverstehen ist die Frage kein Verrat.
+1. ~~**Wie kommt der Trägertext zum Kind?**~~ → **E1**
+2. ~~**Karte oder Runde?**~~ → **E1**
+3. ~~**Hörverstehen: `ItemsOf` oder `StageFacets`?**~~ — keine Entscheidung, sondern ein Faktum:
+   `StageFacets(item, stage)` bekommt die Config gar nicht zu sehen
+   ([ExerciseTypeBase.cs:41](../../backend/Pugling.Api/Exercises/ExerciseTypeBase.cs)). Die Aufnahme
+   **muss** also über `ContentItem.AudioUrl` gehen, so wie beim Vokabel-Typ. Es gibt keinen zweiten Weg.
+4. ~~**Was zeigt die Sohn-Ansicht beim Hörverstehen?**~~ → **E3**
 5. **Bleibt der erzwungene Freitext?** `IsTypedStage => true` macht jede eingestellte Stufe wirkungslos.
-   — *Empfehlung: hier nicht entscheiden*, das ist der Kern von
-   [B-73](B-73-auswahl-feld-ohne-wirkung.md), die ausdrücklich auf diese Story wartet.
-6. **Die irreführende Typ-Zeile korrigieren?** „pure content exercise, no automatic check" ist am
-   Verhalten gemessen falsch. — *Empfehlung: ja, mitnehmen* — ein Satz, und er hat diese Story eine
-   Runde lang in die falsche Richtung gelenkt.
-7. **Vater-Testmodus mitreparieren?** Er zeigt dieselbe Leere. — *Empfehlung: ja.* Er läuft über
-   denselben `ItemsOf`-Weg; für den Trägertext braucht `PreviewItem` dasselbe additive Feld. Sonst prüft
-   der Vater etwas anderes, als das Kind spielt. Abzugrenzen von
-   [B-15](B-15-testmodus-weitere-typen.md) (Vorschau für die *nicht* prüfbaren Typen) — hier geht es um
-   zwei Typen, die belegt **doch** prüfen.
+   — **Ausdrücklich zurückgestellt:** das ist der Kern von
+   [B-73](B-73-auswahl-feld-ohne-wirkung.md), die auf diese Story wartet. Hier zu entscheiden hieße, jener
+   Story ihre einzige Frage wegzunehmen.
+6. ~~**Die irreführende Typ-Zeile korrigieren?**~~ — ja, ohne Gegenrede: ein Satz Doku, der diese Story
+   eine Runde lang in die falsche Richtung gelenkt hat. Er wird mit der Reparatur richtiggestellt.
+7. ~~**Vater-Testmodus mitreparieren?**~~ → **E4**
 
-## Akzeptanzkriterien (Entwurf)
+## Entscheidungen
 
-- Eine Lese-Position liefert dem Kind auf jeder Karte den Text der Übung.
-- Eine Hörverstehen-Position liefert eine abspielbare Aufnahme; das Transkript bleibt draußen.
-- Die Sohn-Ansicht zeigt beim Hörverstehen Aufnahme **und** Frage.
-- Der Testmodus des Vaters zeigt dasselbe wie die Karte des Kindes.
-- Regressionstest, der vorher rot ist: eine gespielte Lese- und Hörverstehen-Position, geprüft **auf den
-  Karteninhalt** — die Zusicherung, die `PositionPlayModesTests` fünfmal ausgelassen hat.
+Aus der Grill-Runde vom 2026-08-02. Zwei Befunde aus der Runde selbst stehen darin: der Lückentext taugt
+**nicht** als Vorbild (E2), und das Frontend trägt heute eine Anti-Cheat-Regel, die dem Server gehört (E3).
+
+### E1 · Der Text kommt als eigenes Feld auf die Karte, nicht in den `Prompt`
+
+`PracticeCard`, `TestItem` und `PreviewItem` bekommen ein additives `Passage`; `ContentItem` trägt es
+mit. In der Oberfläche heißt es schlicht „Text".
+
+*Begründung.* Der `Prompt` ist die **Frage** und wird als solche weiterverwendet — in `ItemOutcome`, in
+`PreviewItemOutcome`, in der Historie. Ein Absatz Fließtext davor macht jede dieser Zeilen unlesbar, und
+zwar in jeder Zeile neu. Der naheliegende Gegenvorschlag — falten wie beim Lückentext, der seinen ganzen
+Text als `Prompt` führt (`BuiltInExerciseTypes.cs:118`) — fällt weg, weil dieser Präzedenzfall in der
+Runde selbst als defekt entlarvt wurde (siehe E2). Beim Lückentext *ist* der Text außerdem die Aufgabe;
+beim Leseverstehen sind es zwei Dinge, und ein Feld kann nur eines tragen.
+
+*Kosten.* Vier Felder (`ContentItem`, `PracticeCard`, `TestItem`, `PreviewItem`) und ein Zweig in der
+Sohn-Ansicht. Der Text wiederholt sich auf jeder Frage — bewusst: der Server bleibt Herr der Ausspielung,
+und die Offline-Reserve über `/cards` funktioniert unverändert. Die Variante „einmal je Runde" wäre
+sparsamer, müsste aber von drei Wegen (Info/Lern/Klausur) **plus** `/cards` getragen werden.
+Additiv ⇒ für sich genommen **kein** Vertragsbruch.
+
+### E2 · Der Lückentext wird eine eigene Story und geht vor
+
+Der Befund aus der Runde ist [B-76](B-76-lueckentext-karte-ohne-luecke.md), P1.
+
+*Begründung.* Beim Suchen nach einem Vorbild stellte sich heraus, dass der Lückentext denselben Defekt
+hat, nur gefährlicher: zwei Lücken liefern zweimal dieselbe Karte, die Wortbank kommt nicht an, und die
+Vorlagensyntax `{{1}}` steht sichtbar im Text. Er liegt außerdem als Position **im Seed** — er wirkt
+heute, Lese- und Hörverstehen nicht.
+
+*Kosten.* Zwei Vertragsänderungen statt einer. Dafür bleibt keine der beiden Stories größer als L, und
+sie widersprechen sich nicht: E1 ist additiv, ein Feld für den Text und eines für die Lückennummer
+vertragen sich. B-75 **wartet nicht** auf B-76 — nur die Bau-Reihenfolge steht fest.
+
+### E3 · Der Server lässt den `Prompt` weg, wo die Aufnahme ihn ersetzen muss
+
+Auf der Vokabel-Hörstufe liefert die Karte künftig keinen `Prompt` mehr. Das Frontend rendert schlicht,
+was da ist — Aufnahme und Frage nebeneinander, wo beides ankommt.
+
+*Begründung.* Heute schickt die Karte auf dieser Stufe **beides**, und `SohnPractice.tsx:226` versteckt
+den Prompt von sich aus. Damit liegt eine Anti-Cheat-Entscheidung im Frontend — direkt unter einem
+Kommentar, der das Gegenteil behauptet („das Frontend rendert nur, was da ist"). Ein Zweig auf
+`card.type` würde diese Regel dort festschreiben und jeden künftigen Audio-Typ zwingen, sich im Frontend
+einzutragen.
+
+*Kosten.* `PracticeCard.Prompt` wird nullable — das ist ein **Vertragsbruch**: `Pugling.Client`, die
+Frontend-Typen und die Beispieldateien ziehen nach. Damit steht B-75 auf `vertragsbruch: ja`.
+
+### E4 · Der Testmodus des Vaters wird mitrepariert, B-15 auf ihren Rest eingegrenzt
+
+`PreviewItem` bekommt dasselbe Feld wie die Karte. Zusätzlich wird
+[B-15](B-15-testmodus-weitere-typen.md) richtiggestellt.
+
+*Begründung.* Der Testmodus läuft über denselben `ItemsOf`-Weg und zeigt belegt dieselbe Leere. Wer die
+Übung vor dem Zuweisen ausprobiert, muss sehen, was sein Kind spielt — sonst ist die Vorschau eine
+Beruhigung statt einer Prüfung. Nebenbei fiel auf, dass B-15 („Vorschau für die nicht-prüfbaren Typen")
+fünf Typen nennt und bei vieren falsch liegt: Reading, Listening, Grammar und Birkenbihl bauen alle
+Inhalts-Atome und haben damit eine Vorschau — Reading und Listening werden dort sogar **bewertet**
+(`scorePercent: 100` im Lauf). Ohne Vorschau ist einzig **Essay** (`ItemsOf` gibt `[]` zurück,
+`ExercisePreviewService:30,49` steigt bei leer aus).
+
+*Kosten.* Ein Vertragsfeld mehr und eine fremde Story angefasst. Der Gegenwert: B-15 schrumpft von fünf
+Typen auf einen, und eine widerlegte Behauptung bleibt nicht als Arbeitsvorrat stehen.
+
+## Akzeptanzkriterien
+
+1. Eine Lese-Position liefert dem Kind auf jeder Karte den Text der Übung — in `passage`, nicht im
+   `prompt`.
+2. Eine Hörverstehen-Position liefert eine abspielbare Aufnahme **und** die Frage; das Transkript bleibt
+   draußen.
+3. Auf der Vokabel-Hörstufe kommt kein `prompt` mehr an, und die Sohn-Ansicht enthält keine
+   typabhängige Verzweigung mehr.
+4. Der Testmodus des Vaters zeigt dieselben Inhalte wie die Karte des Kindes.
+5. Regressionstest, der vorher rot ist: eine gespielte Lese- und Hörverstehen-Position, geprüft **auf den
+   Karteninhalt** — die Zusicherung, die `PositionPlayModesTests` fünfmal ausgelassen hat.
+6. B-15 nennt nur noch die Typen, die belegt keine Vorschau haben.
 
 ## Verlauf
 
@@ -143,3 +202,11 @@ zwölf Typen.
   sehr wohl, `CheckMode` meint die Abschlusstest-Fläche), dafür kamen drei ungeplante Befunde dazu — die
   eingestellte Stufe ist bei diesen Typen wirkungslos, der Testmodus des Vaters zeigt dieselbe Leere, und
   die bestehenden Tests spielen Lese-Positionen fünfmal durch, ohne je in die Karte zu sehen.
+- **2026-08-02** — gegrillt, vier Entscheidungen. Die Suche nach einem Vorbild hat die Runde zweimal
+  gedreht: Der Lückentext führt seinen Text schon im `Prompt` — sprach also zunächst *gegen* ein eigenes
+  Feld —, bis das Nachspielen zeigte, dass er selbst kaputt ist (zwei Lücken, zweimal dieselbe Karte;
+  daraus wurde [B-76](B-76-lueckentext-karte-ohne-luecke.md), P1, mit Vorrang). Und die Frage „was zeigt
+  die Sohn-Ansicht?" entpuppte sich als Zuständigkeitsfrage: Das Frontend versteckt heute den Prompt der
+  Vokabel-Hörstufe selbst — eine Anti-Cheat-Regel im Renderer, direkt unter dem Kommentar, der das
+  Gegenteil behauptet. Sie wandert zum Server, und dafür wird `Prompt` nullable: aus `vertragsbruch`
+  wird damit **ja**. Punkt 5 bleibt ausdrücklich bei B-73.
