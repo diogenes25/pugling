@@ -5,6 +5,7 @@ using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Pugling.Api.Data;
+using Pugling.Api.Models;
 
 namespace Pugling.Api.Tests;
 
@@ -195,12 +196,46 @@ public class MediaSelectionTests(PuglingWebAppFactory factory) : IClassFixture<P
         Assert.Equal(3601875931u, Tiebreak(7, 42, 99));
     }
 
+    /// <summary>
+    /// B-01: A final test must not decide which image the child later sees while practising. It renders
+    /// no image at all – so freezing one is a pure side effect, and a lasting one: the frozen pick is
+    /// the choice from then on, and a superseded one is deleted along the way.
+    /// </summary>
+    [Fact]
+    public async Task Abschlusstest_SchreibtKeineBildwahlFest()
+    {
+        var father = await TestApi.FatherAsync(factory);
+        var setup = await ScenarioAsync(father, "klausur-keine-wahl");
+        await SetInterestsAsync(father, setup.ChildId, [("Einhorn", 3)]);
+        // A blank slate: whatever picks exist after the run were written by the run.
+        ClearPicks(setup.ChildId);
+
+        var testUrl = $"/api/v1/student/study-plans/{setup.PlanId}/positions/{setup.PositionId}/tests";
+        var start = await father.PostAsJsonAsync(testUrl, new { stage = SelfAssess });
+        start.EnsureSuccessStatusCode();
+        var attemptId = (await start.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("attemptId").GetInt32();
+
+        // Both paths of the exam: the start (order freeze) and fetching a question.
+        var question = (await GetAsync(father, $"{testUrl}/{attemptId}/next")).GetProperty("item");
+        Assert.False(IsNull(question, "prompt"));
+
+        Assert.Empty(PicksOf(setup.ChildId));
+    }
+
     /// <summary>Clears a child's frozen image picks so the selection recalculates.</summary>
     private void ClearPicks(int childId)
     {
         using var scope = factory.Services.CreateScope();
         scope.ServiceProvider.GetRequiredService<PuglingDbContext>()
             .ChildMediaPicks.Where(p => p.ChildId == childId).ExecuteDelete();
+    }
+
+    /// <summary>The child's frozen image picks – the row that must stay untouched by a test run.</summary>
+    private List<ChildMediaPick> PicksOf(int childId)
+    {
+        using var scope = factory.Services.CreateScope();
+        return [.. scope.ServiceProvider.GetRequiredService<PuglingDbContext>()
+            .ChildMediaPicks.Where(p => p.ChildId == childId)];
     }
 
     /// <summary>

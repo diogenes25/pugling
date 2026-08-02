@@ -57,9 +57,8 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
     private Task<StudyPlan?> GetPlan(int planId, CancellationToken ct) =>
         db.StudyPlans.FirstOrDefaultAsync(p => p.Id == planId, ct);
 
-    // The plan comes along because the imagery needs the child (the selection hangs on its profile).
     private Task<PlanPosition?> GetPosition(int planId, int positionId, CancellationToken ct) =>
-        db.PlanPositions.Include(p => p.Exercise).Include(p => p.StudyPlan)
+        db.PlanPositions.Include(p => p.Exercise)
             .FirstOrDefaultAsync(p => p.Id == positionId && p.StudyPlanId == planId, ct);
 
     private Task<TestAttempt?> LoadAttempt(int planId, int positionId, int attemptId, CancellationToken ct) =>
@@ -68,10 +67,11 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
 
     private static TestItem ToItem(IReadOnlyList<ContentItem> items, ContentItem item, IExerciseType type, int stage, bool typed)
     {
-        // Shared anti-cheat projection (reveal/length/hint/choices/audio/image per stage) - the same rule as the practice card.
+        // Shared anti-cheat projection (reveal/length/hint/choices/audio per stage) - the same rule as the
+        // practice card. The image is deliberately left out: the exam renders none, and asking for one would
+        // freeze the child's motif choice as a side effect of taking a test (see MediaSelector).
         var f = PositionPlayService.CardFacets(items, item, type, stage, typed);
-        return new TestItem(item.Index, item.Prompt, stage, f.Reveal, f.AnswerLength, f.Hint, f.Choices, f.AudioUrl,
-            f.ImageUrl, f.ImageAlt);
+        return new TestItem(item.Index, item.Prompt, stage, f.Reveal, f.AnswerLength, f.Hint, f.Choices, f.AudioUrl);
     }
 
     /// <summary>
@@ -92,7 +92,7 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
         var pos = await GetPosition(planId, positionId, ct);
         if (pos?.Exercise is null) return NotFound();
 
-        var items = await play.ItemsOfAsync(pos, pos.StudyPlan?.ChildId, ct);
+        var items = await play.ItemsOfAsync(pos, ct: ct);
         var poolSize = play.PoolSize(pos, items.Count);
         if (poolSize == 0) return this.ProblemWithCode(ApiErrors.NoCheckableContent, "The exercise contains no checkable content.");
 
@@ -182,7 +182,7 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
         var pos = await GetPosition(planId, positionId, ct);
         if (pos?.Exercise is null) return NotFound();
 
-        var items = await play.ItemsOfAsync(pos, pos.StudyPlan?.ChildId, ct);
+        var items = await play.ItemsOfAsync(pos, ct: ct);
         if (play.TypeOf(pos.Exercise) is not { } type)
             return this.ProblemWithCode(ApiErrors.UnknownExerciseType, "The exercise has an unknown type.");
         var typed = type.IsTypedStage(attempt.StageValue);
@@ -215,7 +215,7 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
         var pos = await GetPosition(planId, positionId, ct);
         if (pos?.Exercise is null) return NotFound();
 
-        var items = await play.ItemsOfAsync(pos, pos.StudyPlan?.ChildId, ct);
+        var items = await play.ItemsOfAsync(pos, ct: ct);
         if (play.TypeOf(pos.Exercise) is not { } type)
             return this.ProblemWithCode(ApiErrors.UnknownExerciseType, "The exercise has an unknown type.");
         var typed = type.IsTypedStage(attempt.StageValue);
@@ -278,7 +278,7 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
         var pos = await GetPosition(planId, positionId, ct);
         if (pos?.Exercise is null) return NotFound();
 
-        var items = await play.ItemsOfAsync(pos, pos.StudyPlan?.ChildId, ct);
+        var items = await play.ItemsOfAsync(pos, ct: ct);
         if (play.TypeOf(pos.Exercise) is not { } type)
             return this.ProblemWithCode(ApiErrors.UnknownExerciseType, "The exercise has an unknown type.");
         var typed = type.IsTypedStage(attempt.StageValue);

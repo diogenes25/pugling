@@ -3,9 +3,13 @@ namespace Pugling.Contracts.Student;
 // Contract of the final test of a study plan position. Strictly server-driven (class-test mode):
 // one question after another through the attempt cursor, no going back, feedback only on completion.
 
-/// <summary>An exam question – without the solution, except at stages that reveal it by design.</summary>
+/// <summary>
+/// An exam question – without the solution, except at stages that reveal it by design. Deliberately
+/// <b>without</b> an image: the exam shows none, and a field that is always null is the kind of silent lie
+/// the API otherwise rejects with <c>unknown_field</c>.
+/// </summary>
 public record TestItem(int ItemIndex, string Prompt, int Stage, string? Reveal, int? AnswerLength, string? Hint,
-    IReadOnlyList<string>? Choices, string? AudioUrl, string? ImageUrl = null, string? ImageAlt = null);
+    IReadOnlyList<string>? Choices, string? AudioUrl);
 
 /// <summary>
 /// Response of the test start. Class-test mode is strictly server-driven: <b>no</b> questions are sent
