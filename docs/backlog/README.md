@@ -299,11 +299,11 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-27](B-27-testsuite-grenzfaelle.md) | Die Grenzen des `ScoringService` als Tabelle statt als Flow | Aufräumen | `ausformuliert` | P2 | — | — | — |
 | [B-58](B-58-assistent-e2e.md) | Der Lehrplan-Assistent hat keinen Durchstich | Aufräumen | `ausformuliert` | P2 | — | — | — |
 | [B-44](B-44-grundprinzip-rollennamen.md) | Grundprinzip auf Supervisor/Student umschreiben — „Vater" ist keine Ebene | Aufräumen | `idee` | P2 | — | — | — |
+| [B-69](B-69-wiederhol-felder-alternativen.md) | Kommagetrennte Sammelfelder: einer davon nimmt gar keine zweite Alternative an | Defekt | `ausformuliert` | P3 | — | — | — |
 | [B-56](B-56-problemdetails-required-extensions.md) | `ProblemDetails` fordert im Schema ein Feld, das es nicht beschreibt | Defekt | `idee` | P3 | — | — | — |
 | [B-57](B-57-beispielkatalog-schreib-lese-rennen.md) | Im Testlauf lesen und schreiben zwei Stellen gleichzeitig dieselbe Katalogdatei | Defekt | `idee` | P3 | — | — | — |
 | [B-61](B-61-reste-der-schreib-primitiven-runde.md) | Zwei Reste aus der Schreib-Primitiven-Runde | Defekt | `idee` | P3 | — | — | — |
 | [B-62](B-62-reste-aus-dem-b37-review.md) | Drei Reste aus dem B-37-Review (Sohn-Arcade) | Defekt | `idee` | P3 | — | — | — |
-| [B-69](B-69-wiederhol-felder-alternativen.md) | Drei Editoren tragen Alternativen als Komma-Feld — eine Alternative mit Komma geht verloren | Defekt | `idee` | P3 | — | — | — |
 | [B-16](B-16-positions-formular-umfang.md) | Prüfauftrag: deckt das Positions-Edit-Formular alle Felder ab? | Frage | `idee` | P3 | — | — | — |
 | [B-17](B-17-birkenbihl-sprachcodes.md) | Sprachcode-Normalisierung bei der Vokabel-Dekodierung | Frage | `idee` | P3 | — | — | — |
 | [B-29](B-29-altmigration-transaktional.md) | Prüfauftrag: nicht-transaktionale Altmigration | Frage | `idee` | P3 | — | — | — |
@@ -353,15 +353,6 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-65](B-65-vokabel-mehrere-uebersetzungen.md) | Eine Vokabel mit zwei richtigen Übersetzungen wertet eine davon falsch | Defekt | `abgenommen` | P1 | M | beides | Migration |
 
 </details>
-
-### ⚠ Stufe behauptet, Datei belegt nicht
-
-Diese Stories tragen einen `status`, dessen Eintrittsbedingung in der Datei nicht
-vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
-
-| Id | Stufe | Fehlt |
-| --- | --- | --- |
-| [B-69](B-69-wiederhol-felder-alternativen.md) | `idee` | `unverifiziert: true` |
 
 <details>
 <summary>Verworfen (3)</summary>
