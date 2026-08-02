@@ -370,6 +370,9 @@ export type VocabBatchResult = S["BatchItemResult"];
 
 export type CreateVocabularyDto = S["CreateVocabularyDto"];
 
+/** Antwort der Dublettenprüfung (POST creator/vocabulary/lookup): je gesuchtem Wort die Treffer. */
+export type VocabLookupResponse = S["LookupResponse"];
+
 // ---- Katalog: Übungen anlegen (Authoring) ----
 
 /**

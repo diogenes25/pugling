@@ -127,6 +127,16 @@ export const FIELD_HELP = {
       + "Übungen sucht darin.",
   },
 
+  // ---- Vokabel-Store ----
+  translationAlternatives: {
+    title: "Gleichwertige Übersetzungen",
+    text: "Weitere Wörter, die für dieselbe Vokabel als richtig zählen – „huge“ etwa mit „riesig“ und "
+      + "„sehr groß“. Ohne sie wird die zweite richtige Antwort als Fehler gewertet, und das kostet über "
+      + "die Zielerreichung Münzen. Sie gelten nur in dieser Richtung (Wort → Übersetzung). Lege dafür "
+      + "keine zweite Zeile mit demselben Wort an: zwei Zeilen heißen „zwei Bedeutungen“ (bank → Bank, "
+      + "bank → Ufer), und die dürfen sich gerade nicht gegenseitig gelten lassen.",
+  },
+
   // ---- Familien-Shop ----
   shopArticleNumber: {
     title: "Artikelnummer",

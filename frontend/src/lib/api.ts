@@ -14,7 +14,7 @@ import type {
   SkinState, SubjectResponse,
   TestAttemptResponse, TestNextResponse, TestAnswerAck, TestSubmitResponse, UpdateKlassenarbeitDto, UpdatePlanDto, UpdateVocabularyDto,
   VocabBatchResult, VocabularyResponse, VocabTagResponse, ChildTagResponse, Wallet, WalletBalance, WalletEntry, ChildPointsEntry, Currency,
-  Paged, VocabularySearchParams, VocabItemInput, VocabItemResponse,
+  Paged, VocabularySearchParams, VocabItemInput, VocabItemResponse, VocabLookupResponse,
   ChapterProgress, ExerciseProgress, ItemHistoryEntry, ItemProgressResponse, SubjectProgress, WordMastery,
   CreateKeyResultRequest, CreateObjectiveRequest, GoalStatus, KeyResult,
   Objective, ObjectiveKind, UpdateKeyResultRequest, UpdateObjectiveRequest,
@@ -418,6 +418,11 @@ export const api = {
   updateVocabulary: (id: number, patch: UpdateVocabularyDto) =>
     http<VocabularyResponse>(`${V1}/creator/vocabulary/${id}`, "PATCH", patch),
   deleteVocabulary: (id: number) => http<void>(`${V1}/creator/vocabulary/${id}`, "DELETE"),
+  // Dublettenprüfung vor dem Anlegen: gibt es das Wort im Sprachpaar schon? Der Server vergleicht
+  // ohne Rücksicht auf Groß-/Kleinschreibung (NOCASE-Kollation).
+  vocabularyLookup: (sourceLanguage: string, targetLanguage: string, words: string[]) =>
+    http<VocabLookupResponse>(`${V1}/creator/vocabulary/lookup`, "POST",
+      { sourceLanguage, targetLanguage, words }),
 
   // ---- Globale (kindneutrale) Vokabel-Tags ----
   vocabTags: () => http<VocabTagResponse[]>(`${V1}/creator/vocabulary/tags`),

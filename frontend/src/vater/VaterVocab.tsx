@@ -12,10 +12,26 @@ import type {
 import { GENUS, GENUS_LABEL, POS, POS_LABEL } from "../lib/vocab";
 import { confirmAction } from "../lib/ui";
 import { PAGE_SIZE, Pager, SortableTh } from "../components/ListControls";
+import { RepeatedTextFields, nonEmpty } from "../components/RepeatedTextFields";
 import { VocabMediaPanel } from "./VocabMediaPanel";
+import { FieldLabel } from "../components/InfoHint";
 
-interface PairRow { word: string; translation: string; }
-const emptyPair = (): PairRow => ({ word: "", translation: "" });
+/**
+ * Das Ergebnis der Dublettenprüfung **samt dem nachgeschlagenen Wort**. Ohne das Wort daneben zeigte der
+ * Hinweis das *aktuelle* Wort zu den *alten* Treffern: „bank" eintippen, Feld verlassen, weitertippen zu
+ * „banking" – und der Kasten behauptete, „banking" gebe es schon.
+ */
+interface DuplicateLookup { word: string; hits: VocabularyResponse[]; }
+
+interface PairRow {
+  word: string;
+  translation: string;
+  /** Gleichwertige Übersetzungen – jede zählt beim Abfragen als richtig. */
+  alternatives: string[];
+  /** Treffer der Dublettenprüfung; `null` = nichts anzuzeigen (nicht nachgesehen oder nichts gefunden). */
+  duplicates: DuplicateLookup | null;
+}
+const emptyPair = (): PairRow => ({ word: "", translation: "", alternatives: [], duplicates: null });
 
 /**
  * Stil der Aktionsspalte einer Store-Zeile – geteilt von Ansicht und Bearbeiten-Modus.
@@ -105,6 +121,36 @@ export function VaterVocab() {
   function addRow() { setRows((rs) => [...rs, emptyPair()]); }
   function removeRow(i: number) { setRows((rs) => (rs.length > 1 ? rs.filter((_, idx) => idx !== i) : rs)); }
 
+  /*
+   * Dublettenhinweis beim Anlegen (B-65, Entscheidung 6). Er **verbietet nichts**: zwei Zeilen mit
+   * demselben Wort sind der richtige Weg für ein Homonym („bank → Bank" / „bank → Ufer"). Er zeigt nur,
+   * dass es das Wort schon gibt – denn für ein *Synonym* ist die zweite Zeile der bequeme, aber falsche
+   * Weg, und sie erzeugt den Defekt immer wieder neu (die zweite richtige Antwort gilt als falsch).
+   *
+   * Beim Verlassen des Feldes, nicht bei jedem Tastendruck: die Prüfung ist ein Netzaufruf, und
+   * halbgetippte Wörter treffen ohnehin nichts. Ein Fehlschlag bleibt still – der Hinweis ist Beiwerk,
+   * kein Tor.
+   */
+  async function checkDuplicates(i: number, word: string) {
+    const w = word.trim();
+    if (!w) return;
+    let hits: VocabularyResponse[] = [];
+    try {
+      const res = await api.vocabularyLookup(src, tgt, [w]);
+      hits = [...(res.words.find((r) => r.word.toLowerCase() === w.toLowerCase())?.matches ?? [])];
+    } catch { return; }
+    if (hits.length === 0) return;
+    /*
+     * Die Antwort trifft erst nach dem `await` ein – bis dahin kann eine Zeile darüber entfernt oder das
+     * Formular nach dem Speichern zurückgesetzt worden sein. Darum nicht blind auf den Index schreiben,
+     * sondern nur, wenn dort **noch dasselbe Wort** steht.
+     */
+    setRows((rs) => rs.map((row, idx) =>
+      idx === i && row.word.trim().toLowerCase() === w.toLowerCase()
+        ? { ...row, duplicates: { word: w, hits } }
+        : row));
+  }
+
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (src === tgt) { action.fail("Quell- und Zielsprache müssen sich unterscheiden."); return; }
@@ -115,6 +161,7 @@ export function VaterVocab() {
 
     const items: CreateVocabularyDto[] = filled.map((r) => ({
       sourceLanguage: src, targetLanguage: tgt, word: r.word.trim(), translation: r.translation.trim(),
+      translationAlternatives: nonEmpty(r.alternatives),
     }));
 
     // `runFor`, weil der Stapel **teilweise** scheitern kann: die Meldung ist erst aus den Einzelergebnissen
@@ -154,21 +201,39 @@ export function VaterVocab() {
           {/* Zeilenweise Wort-Paare (Punkt 2) */}
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {rows.map((r, i) => (
-              <div key={i} className="row" style={{ gap: 8, alignItems: "flex-end" }}>
-                <div className="field" style={{ flex: 1 }}>
-                  {i === 0 && <label>{srcLang?.flag} Wort ({srcLang?.label ?? src})</label>}
-                  <input aria-label={`Wort ${i + 1}`} value={r.word}
-                    onChange={(e) => patchRow(i, { word: e.target.value })}
-                    placeholder={src === "en" ? "house" : src === "fr" ? "maison" : "…"} />
+              <div key={i} style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                <div className="row" style={{ gap: 8, alignItems: "flex-end" }}>
+                  <div className="field" style={{ flex: 1 }}>
+                    {i === 0 && <label>{srcLang?.flag} Wort ({srcLang?.label ?? src})</label>}
+                    <input aria-label={`Wort ${i + 1}`} value={r.word}
+                      // Beim Tippen den Hinweis fallen lassen: er gehört zum alten Wort.
+                      onChange={(e) => patchRow(i, { word: e.target.value, duplicates: null })}
+                      onBlur={(e) => void checkDuplicates(i, e.target.value)}
+                      placeholder={src === "en" ? "house" : src === "fr" ? "maison" : "…"} />
+                  </div>
+                  <div className="field" style={{ flex: 1 }}>
+                    {i === 0 && <label>{tgtLang?.flag} Übersetzung ({tgtLang?.label ?? tgt})</label>}
+                    <input aria-label={`Übersetzung ${i + 1}`} value={r.translation}
+                      onChange={(e) => patchRow(i, { translation: e.target.value })}
+                      placeholder={tgt === "de" ? "Haus" : "…"} />
+                  </div>
+                  <div className="field" style={{ flex: 1 }}>
+                    {i === 0 && (
+                      <span className="label-row">
+                        <FieldLabel topic="translationAlternatives">
+                          Gleichwertige Übersetzungen <span className="muted">(optional)</span>
+                        </FieldLabel>
+                      </span>
+                    )}
+                    {/* `scope`: drei Anlege-Zeilen tragen dieselbe Komponente – ohne ihn hießen alle
+                        Varianten-Felder „Variante 1". */}
+                    <RepeatedTextFields label="Variante" placeholder="zählt auch als richtig" scope={`Zeile ${i + 1}`}
+                      values={r.alternatives} onChange={(alternatives) => patchRow(i, { alternatives })} />
+                  </div>
+                  <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }}
+                    disabled={rows.length === 1} onClick={() => removeRow(i)} aria-label={`Zeile ${i + 1} entfernen`}>×</button>
                 </div>
-                <div className="field" style={{ flex: 1 }}>
-                  {i === 0 && <label>{tgtLang?.flag} Übersetzung ({tgtLang?.label ?? tgt})</label>}
-                  <input aria-label={`Übersetzung ${i + 1}`} value={r.translation}
-                    onChange={(e) => patchRow(i, { translation: e.target.value })}
-                    placeholder={tgt === "de" ? "Haus" : "…"} />
-                </div>
-                <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }}
-                  disabled={rows.length === 1} onClick={() => removeRow(i)} aria-label={`Zeile ${i + 1} entfernen`}>×</button>
+                <DuplicateHint found={r.duplicates} onShowExisting={setSearch} />
               </div>
             ))}
           </div>
@@ -266,6 +331,39 @@ export function VaterVocab() {
   );
 }
 
+/**
+ * „Gibt es schon" beim Anlegen – ein Hinweis, keine Sperre.
+ *
+ * Die Unterscheidung, die er dem Menschen überlässt: Zwei Zeilen mit demselben Wort sind entweder ein
+ * **Homonym** (verschiedene Bedeutungen, zwei Zeilen sind richtig) oder ein **Synonym** (eine Bedeutung,
+ * zwei Wörter – dann gehört die zweite Übersetzung als Variante an die bestehende Zeile, sonst wird sie
+ * beim Abfragen als falsch gewertet). Am Datenbestand sehen beide gleich aus; darum entscheidet das
+ * niemand automatisch.
+ */
+function DuplicateHint({ found, onShowExisting }: {
+  found: DuplicateLookup | null;
+  /** Setzt die Suche des Stores unten auf das Wort – der Eintrag ist sonst weggefiltert oder weggeblättert. */
+  onShowExisting: (word: string) => void;
+}) {
+  /*
+   * Der Kasten steht IMMER im DOM, nur sein Inhalt wechselt. Eine Live-Region, die erst mit ihrem Text
+   * entsteht, sagt in den meisten Screenreadern gar nichts an – sie muss vor der Änderung da sein.
+   */
+  return (
+    <p className="muted" role="status" style={{ margin: "0 0 0 2px", fontSize: 12 }}>
+      {found && (
+        <>
+          „{found.word}" gibt es schon: {found.hits.map((h) => h.translation || "(ohne Übersetzung)").join(" · ")}.
+          {" "}Andere Bedeutung? Dann ist eine zweite Zeile richtig. Dasselbe gemeint? Dann besser am
+          bestehenden Eintrag als Variante eintragen.{" "}
+          <button type="button" className="btn ghost inline-btn" style={{ width: "auto", fontSize: 12 }}
+            onClick={() => onShowExisting(found.word)}>Eintrag unten zeigen</button>
+        </>
+      )}
+    </p>
+  );
+}
+
 /** Sprach-Auswahl aus der festen Liste, mit Flagge im Eintrag (Punkte 1 & 3). */
 function LangSelect({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
   return (
@@ -293,6 +391,7 @@ function VocabRow({ v, onChanged, childId, globalTags, reloadGlobalTags, childTa
   const [editing, setEditing] = useState(false);
   const [word, setWord] = useState(v.word);
   const [translation, setTranslation] = useState(v.translation);
+  const [alternatives, setAlternatives] = useState<string[]>(v.translationAlternatives ?? []);
   const [pos, setPos] = useState<PartOfSpeech>(v.partOfSpeech);
   // Komplexer Datensatz: Substantiv-/Verb-Details, Grundform-Verknüpfung und Aussprache-Audio.
   const [noun, setNoun] = useState<NounInfo>(v.noun ?? {});
@@ -305,8 +404,13 @@ function VocabRow({ v, onChanged, childId, globalTags, reloadGlobalTags, childTa
   const [showMedia, setShowMedia] = useState(false);
 
   async function save() {
+    // Alle Varianten entfernt heißt „leeren", nicht „unverändert" – und `null` allein sagt im Vertrag das
+    // Zweite. Darum der Schalter; der Server wendet erst den Wert an, dann ihn.
+    const alts = nonEmpty(alternatives);
     const patch: UpdateVocabularyDto = {
       word, translation, partOfSpeech: pos,
+      translationAlternatives: alts ?? null,
+      clearTranslationAlternatives: alts === undefined,
       // "" hebt eine Grundform-Verknüpfung auf; ein Key setzt sie (Server prüft Existenz).
       baseFormKey: baseFormKey.trim(),
       baseFormRelation: baseFormRelation.trim() || null,
@@ -327,6 +431,7 @@ function VocabRow({ v, onChanged, childId, globalTags, reloadGlobalTags, childTa
   // Abbrechen: Änderungen verwerfen und wieder auf die gespeicherten Werte zurücksetzen (Punkt 5).
   function cancel() {
     setWord(v.word); setTranslation(v.translation); setPos(v.partOfSpeech);
+    setAlternatives(v.translationAlternatives ?? []);
     setNoun(v.noun ?? {}); setVerb(v.verb ?? { isBaseForm: false });
     setBaseFormKey(v.baseFormKey ?? ""); setBaseFormRelation(v.baseFormRelation ?? "");
     setAudioUrl(v.pronunciationAudioUrl ?? "");
@@ -365,7 +470,17 @@ function VocabRow({ v, onChanged, childId, globalTags, reloadGlobalTags, childTa
           </>
         ) : (
           <>
-            <td>{v.word}</td><td>{v.translation}</td>
+            <td>{v.word}</td>
+            <td>
+              {v.translation}
+              {/* Die Varianten stehen hier und nicht hinter dem Bearbeiten-Knopf: beim Durchsehen ist
+                  „was gilt sonst noch als richtig" die gesuchte Information. */}
+              {v.translationAlternatives && v.translationAlternatives.length > 0 && (
+                <div className="muted" style={{ fontSize: 11 }}>
+                  auch: {v.translationAlternatives.join(" · ")}
+                </div>
+              )}
+            </td>
             <td>{POS_LABEL[v.partOfSpeech]}{detailSummary(v) && <div className="muted" style={{ fontSize: 11 }}>{detailSummary(v)}</div>}</td>
             <TagsCell tags={v.tags} />
             <td className="row" style={actionCell}>
@@ -391,6 +506,7 @@ function VocabRow({ v, onChanged, childId, globalTags, reloadGlobalTags, childTa
         <tr>
           <td colSpan={6} style={{ background: "rgba(255,255,255,.02)" }}>
             <VocabDetailsEditor pos={pos} noun={noun} setNoun={setNoun} verb={verb} setVerb={setVerb}
+              alternatives={alternatives} setAlternatives={setAlternatives} word={word} vocabKey={v.key}
               baseFormKey={baseFormKey} setBaseFormKey={setBaseFormKey}
               baseFormRelation={baseFormRelation} setBaseFormRelation={setBaseFormRelation}
               audioUrl={audioUrl} setAudioUrl={setAudioUrl}
@@ -457,11 +573,14 @@ function TagsCell({ tags }: { tags: string[] }) {
 }
 
 /** Editor für den komplexen Vokabel-Datensatz: Substantiv-/Verb-Details, Grundform-Kante, Aussprache-Audio. */
-function VocabDetailsEditor({ pos, noun, setNoun, verb, setVerb, baseFormKey, setBaseFormKey,
+function VocabDetailsEditor({ pos, noun, setNoun, verb, setVerb, alternatives, setAlternatives, word, vocabKey, baseFormKey, setBaseFormKey,
   baseFormRelation, setBaseFormRelation, audioUrl, setAudioUrl, selfId, sourceLanguage, targetLanguage }: {
   pos: PartOfSpeech;
   noun: NounInfo; setNoun: (updater: (n: NounInfo) => NounInfo) => void;
   verb: VerbInfo; setVerb: (updater: (v: VerbInfo) => VerbInfo) => void;
+  alternatives: string[]; setAlternatives: (values: string[]) => void;
+  /** Wort und Key der bearbeiteten Vokabel – sie unterscheiden mehrere offene Editoren in den Feldnamen. */
+  word: string; vocabKey: string;
   baseFormKey: string; setBaseFormKey: (v: string) => void;
   baseFormRelation: string; setBaseFormRelation: (v: string) => void;
   audioUrl: string; setAudioUrl: (v: string) => void;
@@ -472,6 +591,19 @@ function VocabDetailsEditor({ pos, noun, setNoun, verb, setVerb, baseFormKey, se
 }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 10, padding: "8px 2px" }}>
+      <div className="row" style={{ gap: 8, alignItems: "flex-start", flexWrap: "wrap" }}>
+        <span className="muted" style={{ minWidth: 96, fontSize: 12, paddingTop: 6 }}>Gleichwertig</span>
+        <div className="field" style={{ maxWidth: 320 }}>
+          {/* Dieselbe Größe wie oben im Anlege-Formular – darum derselbe Wortlaut und derselbe Hilfetext.
+              Zwei Formulierungen desselben Begriffs werden zwei Bedeutungen. */}
+          <span className="label-row">
+            <FieldLabel topic="translationAlternatives">Gleichwertige Übersetzungen</FieldLabel>
+          </span>
+          {/* `scope`: zwei gleichzeitig aufgeklappte Store-Zeilen trügen sonst beide „Variante 1". */}
+          <RepeatedTextFields label="Variante" placeholder="zählt auch als richtig" scope={word || vocabKey}
+            values={alternatives} onChange={setAlternatives} />
+        </div>
+      </div>
       {pos === "Noun" && (
         <div className="row" style={{ gap: 8, alignItems: "flex-end", flexWrap: "wrap" }}>
           <span className="muted" style={{ minWidth: 96, fontSize: 12 }}>Substantiv</span>
