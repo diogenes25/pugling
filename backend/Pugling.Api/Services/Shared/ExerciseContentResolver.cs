@@ -94,7 +94,9 @@ public class ExerciseContentResolver(PuglingDbContext db, ExerciseContentProvide
             if (!byId.TryGetValue(r.VocabularyId, out var v))
                 return new ContentItem(i, $"(Vokabel #{r.VocabularyId} fehlt)", "", [""], ItemId: r.Id, VocabularyId: r.VocabularyId);
             var picked = images.GetValueOrDefault(r.Id);
-            var item = new ContentItem(i, v.Word, v.Translation, [v.Translation],
+            // Every declared equivalent translation counts as correct - a child who knows "sehr groß" for
+            // "huge" must not lose the goal (and its coins) to the row that happens to store "riesig".
+            var item = new ContentItem(i, v.Word, v.Translation, Accepted(v.Translation, v.TranslationAlternatives),
                 r.Hint ?? v.Noun?.Article, AudioUrl: v.PronunciationAudioUrl, ItemId: r.Id, VocabularyId: r.VocabularyId,
                 ImageUrl: picked?.Url, ImageAlt: picked?.Alt);
             return ExerciseContentProvider.WithDirection(item, direction);

@@ -20,6 +20,19 @@ public class Vocabulary
     public string Word { get; set; } = "";
     /// <summary>Translation into the target language.</summary>
     public string Translation { get; set; } = "";
+
+    /// <summary>
+    /// Further translations that count as <b>equally correct</b> for <see cref="Translation"/> (JSON column).
+    /// Only the target side: they answer the question "word → ?", never the reverse (the direction swap drops
+    /// them, see <c>ExerciseContentProvider.WithDirection</c>).
+    /// <para>
+    /// Equivalence is <b>declared here, never derived</b> from two entries sharing the same <see cref="Word"/>:
+    /// those are homonyms (<c>bank → Bank</c> / <c>bank → Ufer</c>), and accepting them for one another would
+    /// turn a visible defect ("right answer marked wrong") into an invisible one.
+    /// </para>
+    /// </summary>
+    public List<string>? TranslationAlternatives { get; set; }
+
     public PartOfSpeech PartOfSpeech { get; set; }
 
     /// <summary>Only set for nouns (JSON column).</summary>

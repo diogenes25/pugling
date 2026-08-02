@@ -44,17 +44,30 @@ public sealed class VocabularyExerciseType : ExerciseTypeBase
     /// <summary>
     /// Multiple-choice options: correct answer plus up to three distractors from the remaining items (deduplicated,
     /// normalized). Deterministic rotation per index, so the solution isn't always at the front (no randomness).
+    /// <para>
+    /// Deduplication runs over the whole <see cref="ContentItem.AcceptedAnswers"/> set on both sides, not just
+    /// over the primary answer: an answer declared equally valid must never show up as the <i>wrong</i> option
+    /// of the same question. That holds even when only one of the two rows declares the equivalence – so a
+    /// candidate is dropped as soon as <b>any</b> of its accepted answers has been seen.
+    /// </para>
     /// </summary>
     public override IReadOnlyList<string>? Choices(IReadOnlyList<ContentItem> items, ContentItem item, int stage)
     {
         if ((TestStage)stage != TestStage.MultipleChoice || string.IsNullOrWhiteSpace(item.Answer)) return null;
 
-        var seen = new HashSet<string>(StringComparer.Ordinal) { StageMechanics.Normalize(item.Answer) };
+        var seen = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var accepted in item.AcceptedAnswers) seen.Add(StageMechanics.Normalize(accepted));
+        seen.Add(StageMechanics.Normalize(item.Answer));
+
         var distractors = new List<string>();
         foreach (var other in items)
         {
             if (other.Index == item.Index || string.IsNullOrWhiteSpace(other.Answer)) continue;
-            if (seen.Add(StageMechanics.Normalize(other.Answer))) distractors.Add(other.Answer);
+            var candidate = other.AcceptedAnswers.Append(other.Answer)
+                .Select(StageMechanics.Normalize).ToList();
+            if (candidate.Any(seen.Contains)) continue;
+            foreach (var normalized in candidate) seen.Add(normalized);
+            distractors.Add(other.Answer);
             if (distractors.Count >= 3) break;
         }
 

@@ -171,6 +171,7 @@ namespace Pugling.Api.Data.Migrations
                     TargetLanguage = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
                     Word = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false, collation: "NOCASE"),
                     Translation = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false, collation: "NOCASE"),
+                    TranslationAlternatives = table.Column<string>(type: "TEXT", nullable: true),
                     PartOfSpeech = table.Column<string>(type: "TEXT", nullable: false),
                     Noun = table.Column<string>(type: "TEXT", nullable: true),
                     Verb = table.Column<string>(type: "TEXT", nullable: true),

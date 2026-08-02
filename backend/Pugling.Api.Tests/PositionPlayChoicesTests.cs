@@ -55,6 +55,46 @@ public class PositionPlayChoicesTests
         Assert.Equal(new[] { "gehen", "Haus" }, choices);
     }
 
+    /// <summary>
+    /// B-65: an answer declared equally valid must never appear as a <b>wrong</b> option of the same question.
+    /// Otherwise multiple choice would contradict the free-text stage – there "sehr groß" counts, here it
+    /// would be the trap.
+    /// </summary>
+    [Fact]
+    public void MultipleChoice_GleichwertigeAntwort_IstNieAblenker()
+    {
+        IReadOnlyList<ContentItem> items =
+        [
+            new(0, "huge", "riesig", ["riesig", "sehr groß"]),
+            Item(1, "sehr groß"),
+            Item(2, "klein"),
+        ];
+
+        var choices = Choices(items, 0, TestStage.MultipleChoice)!;
+        Assert.Contains("riesig", choices);
+        Assert.DoesNotContain("sehr groß", choices);
+    }
+
+    /// <summary>
+    /// The same, but declared from the other side only: the <i>other</i> card knows the equivalence, the
+    /// asked one does not. Deduplication therefore looks at the accepted answers of the candidate too –
+    /// otherwise "riesig" would be offered as the wrong option for a card whose solution "sehr groß" that very
+    /// entry declares as valid.
+    /// </summary>
+    [Fact]
+    public void MultipleChoice_GleichwertigkeitNurAufDerGegenkarte_ZaehltAuch()
+    {
+        IReadOnlyList<ContentItem> items =
+        [
+            Item(0, "sehr groß"),
+            new(1, "huge", "riesig", ["riesig", "sehr groß"]),
+            Item(2, "klein"),
+        ];
+
+        var choices = Choices(items, 0, TestStage.MultipleChoice)!;
+        Assert.Equal(new[] { "sehr groß", "klein" }, choices);
+    }
+
     [Fact]
     public void NichtMultipleChoice_LiefertKeineAuswahl()
     {

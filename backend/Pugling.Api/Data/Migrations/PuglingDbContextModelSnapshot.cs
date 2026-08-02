@@ -2493,6 +2493,9 @@ namespace Pugling.Api.Data.Migrations
                         .HasColumnType("TEXT")
                         .UseCollation("NOCASE");
 
+                    b.Property<string>("TranslationAlternatives")
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("Verb")
                         .HasColumnType("TEXT");
 

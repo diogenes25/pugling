@@ -162,6 +162,79 @@ public class PositionTestFlowTests(PuglingWebAppFactory factory) : IClassFixture
         Assert.Equal(1, db.PositionGoalRewards.Count(r => r.PlanPositionId == positionId));
     }
 
+    /// <summary>
+    /// B-65: a vocabulary entry may carry several equally valid translations, and <b>each</b> of them counts
+    /// as correct. Before that, an entry held exactly one translation – a child answering "sehr groß" for
+    /// "huge" was marked wrong although the father had entered that very wording as valid. The damage was not
+    /// cosmetic: the score decides the goal, and a missed goal costs coins (<c>PenaltyCoins</c>).
+    /// <para>
+    /// Both typed stages, because they differ in one respect: the letter boxes take their box count from the
+    /// <b>primary</b> translation (<c>VocabularyExerciseType.StageFacets</c>). An equally long alternative is
+    /// therefore typeable there – exactly the case reported in remark #13 – while a longer one only counts on
+    /// free text and listening.
+    /// </para>
+    /// </summary>
+    [Theory]
+    [InlineData((int)TestStage.FreeText, "huge", "riesig", "sehr groß")]
+    [InlineData((int)TestStage.LetterBoxes, "nice", "nett", "lieb")]
+    public async Task Test_GleichwertigeUebersetzung_WirdAlsRichtigGewertet(
+        int stage, string word, string translation, string alternative)
+    {
+        var father = await TestApi.FatherAsync(_factory);
+        var (_, key) = await TestApi.CreateStoreVocabAsync(father, word, translation,
+            translationAlternatives: [alternative]);
+        var exerciseId = await TestApi.CreateVocabRefExerciseAsync(father, key);
+        var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, stage);
+        var child = await TestApi.ChildAsync(_factory);
+        var baseUrl = $"/api/v1/student/study-plans/{planId}/positions/{positionId}/tests";
+
+        var attemptId = await TestApi.IdWithKeyAsync(await child.PostAsJsonAsync(baseUrl, new { }), "attemptId");
+        var submit = await child.PostAsJsonAsync($"{baseUrl}/{attemptId}/submit", new
+        {
+            // Not the primary translation - the second declared one.
+            answers = new[] { new { itemIndex = 0, givenAnswer = alternative } },
+        });
+
+        var res = await submit.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal(1, res.GetProperty("correctItems").GetInt32());
+        Assert.Equal(100, res.GetProperty("scorePercent").GetInt32());
+        JsonAssert.True(res, "passed");
+    }
+
+    /// <summary>
+    /// The counter-test to <see cref="Test_GleichwertigeUebersetzung_WirdAlsRichtigGewertet"/>, and the reason
+    /// equivalence has to be <b>declared</b>: two entries sharing the same word are homonyms
+    /// (<c>bank → Bank</c> / <c>bank → Ufer</c>), not synonyms. Deriving equivalence from the shared word
+    /// would have turned the visible defect ("right answer marked wrong") into an invisible one – the child
+    /// gets credit for a meaning that does not fit the chapter, and nobody sees it.
+    /// </summary>
+    [Fact]
+    public async Task Test_HomonymeAkzeptierenSichNichtGegenseitig()
+    {
+        var father = await TestApi.FatherAsync(_factory);
+        var (_, geld) = await TestApi.CreateStoreVocabAsync(father, "bank", "Bank");
+        var (_, ufer) = await TestApi.CreateStoreVocabAsync(father, "bank", "Ufer");
+        var exerciseId = await TestApi.CreateVocabRefExerciseAsync(father, geld, ufer);
+        var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.FreeText);
+        var child = await TestApi.ChildAsync(_factory);
+        var baseUrl = $"/api/v1/student/study-plans/{planId}/positions/{positionId}/tests";
+
+        var attemptId = await TestApi.IdWithKeyAsync(await child.PostAsJsonAsync(baseUrl, new { }), "attemptId");
+        var submit = await child.PostAsJsonAsync($"{baseUrl}/{attemptId}/submit", new
+        {
+            // "Ufer" is the other entry's translation - for this card it stays wrong.
+            answers = new[]
+            {
+                new { itemIndex = 0, givenAnswer = "Ufer" },
+                new { itemIndex = 1, givenAnswer = "Ufer" },
+            },
+        });
+
+        var res = await submit.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal(1, res.GetProperty("correctItems").GetInt32());
+        Assert.Equal(50, res.GetProperty("scorePercent").GetInt32());
+    }
+
     [Fact]
     public async Task Versuch_Wird_Einzeln_Mit_Ergebnissen_Gelesen()
     {

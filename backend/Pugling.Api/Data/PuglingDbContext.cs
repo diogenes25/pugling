@@ -268,6 +268,12 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
                 v => JsonSerializer.Serialize(v, JsonOptions),
                 s => JsonSerializer.Deserialize<VerbInfo>(s, JsonOptions))
                 .Metadata.SetValueComparer(JsonValueComparer.For<VerbInfo?>());
+            // Equally valid translations as a JSON list (null stays DB NULL - "none declared", the state of
+            // every pre-existing row).
+            e.Property(v => v.TranslationAlternatives).HasConversion(
+                v => JsonSerializer.Serialize(v, JsonOptions),
+                s => JsonSerializer.Deserialize<List<string>>(s, JsonOptions))
+                .Metadata.SetValueComparer(JsonValueComparer.For<List<string>?>());
 
             // Self-reference to the base form; prevent deleting a referenced base form.
             e.HasOne(v => v.BaseForm)
@@ -969,6 +975,7 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
         ["Remark.RecentErrorsJson"] = "Captured recent errors; the length follows the incident.",
         ["Vocabulary.Noun"] = "Noun forms as a JSON object.",
         ["Vocabulary.Verb"] = "Verb forms as a JSON object.",
+        ["Vocabulary.TranslationAlternatives"] = "Equally valid translations as a JSON list.",
         ["ClozeText.Gaps"] = "Gaps of the text as a JSON list - grows with the text.",
         ["ClozeText.WordBank"] = "Word bank as a JSON list.",
         ["Child.Interests"] = "Free-text interests as a JSON list (the language of the AI creator).",

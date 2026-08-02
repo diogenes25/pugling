@@ -131,9 +131,12 @@ public class PatchSemanticsTests(PuglingWebAppFactory factory) : IClassFixture<P
         new(typeof(UpdateVocabularyDto), "translation", "die Kuh", async f =>
         {
             var c = await TestApi.FatherAsync(f);
-            var (id, _) = await TestApi.CreateStoreVocabAsync(c, Eindeutig("cow"), "das Rind");
+            // With alternatives from the start - `clearTranslationAlternatives` proves nothing on an entry
+            // that has none.
+            var (id, _) = await TestApi.CreateStoreVocabAsync(c, Eindeutig("cow"), "das Rind",
+                translationAlternatives: ["die Kuh"]);
             return new Ziel(c, $"/api/v1/creator/vocabulary/{id}");
-        }, []),
+        }, [new("clearTranslationAlternatives", "translationAlternatives")]),
 
         new(typeof(UpdateTextbookSeriesDto), "name", "Reihe neu", async f =>
         {

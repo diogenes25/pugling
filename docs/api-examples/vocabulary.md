@@ -32,6 +32,7 @@ Response — `HTTP 201`:
   "targetLanguage": "de",
   "word": "example",
   "translation": "Beispiel",
+  "translationAlternatives": null,
   "partOfSpeech": "Noun",
   "noun": null,
   "verb": null,
@@ -93,6 +94,7 @@ Response — `HTTP 200`:
   "targetLanguage": "de",
   "word": "go",
   "translation": "gehen",
+  "translationAlternatives": null,
   "partOfSpeech": "Verb",
   "noun": null,
   "verb": {

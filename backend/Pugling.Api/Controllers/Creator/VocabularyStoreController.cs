@@ -28,6 +28,7 @@ public class VocabularyStoreController(PuglingDbContext db) : ControllerBase
 
     static VocabularyResponse Map(Vocabulary v) =>
         new(v.Id, v.Key, v.Version, v.SourceLanguage, v.TargetLanguage, v.Word, v.Translation,
+            v.TranslationAlternatives,
             v.PartOfSpeech, v.Noun, v.Verb, v.BaseFormId, v.BaseForm?.Key, v.BaseFormRelation,
             v.PronunciationAudioUrl,
             v.TagLinks.Select(l => l.VocabTag!.Name).OrderBy(n => n, StringComparer.Ordinal).ToList(),
@@ -241,6 +242,7 @@ public class VocabularyStoreController(PuglingDbContext db) : ControllerBase
             TargetLanguage = dto.TargetLanguage,
             Word = dto.Word,
             Translation = dto.Translation ?? "",
+            TranslationAlternatives = CleanAlternatives(dto.TranslationAlternatives, dto.Translation ?? ""),
             PartOfSpeech = dto.PartOfSpeech ?? Contracts.PartOfSpeech.Other,
             Noun = dto.Noun,
             Verb = dto.Verb,
@@ -297,6 +299,12 @@ public class VocabularyStoreController(PuglingDbContext db) : ControllerBase
         if (dto.TargetLanguage is not null) vocab.TargetLanguage = dto.TargetLanguage;
         if (dto.Word is not null) vocab.Word = dto.Word;
         if (dto.Translation is not null) vocab.Translation = dto.Translation;
+        // Value first, switch second: a form sending both "- no alternatives -" and the old list must end up
+        // empty (see the PATCH semantics in CLAUDE.md).
+        // `vocab.Translation`, not `dto.Translation`: a translation changed in the same PATCH already stands
+        // here, and that is the one to deduplicate against.
+        if (dto.TranslationAlternatives is not null) vocab.TranslationAlternatives = CleanAlternatives(dto.TranslationAlternatives, vocab.Translation);
+        if (dto.ClearTranslationAlternatives) vocab.TranslationAlternatives = null;
         if (dto.PartOfSpeech is not null) vocab.PartOfSpeech = dto.PartOfSpeech.Value;
         if (dto.Noun is not null) vocab.Noun = dto.Noun;
         if (dto.Verb is not null) vocab.Verb = dto.Verb;
@@ -489,7 +497,8 @@ public class VocabularyStoreController(PuglingDbContext db) : ControllerBase
             var it = items[i];
             var (status, vocab, error) = await UpdateCoreAsync(it.Id, new UpdateVocabularyDto(
                 it.Version, it.SourceLanguage, it.TargetLanguage, it.Word, it.Translation, it.PartOfSpeech,
-                it.Noun, it.Verb, it.BaseFormKey, it.BaseFormRelation, it.PronunciationAudioUrl, it.Tags), ct);
+                it.Noun, it.Verb, it.BaseFormKey, it.BaseFormRelation, it.PronunciationAudioUrl, it.Tags,
+                it.TranslationAlternatives, it.ClearTranslationAlternatives), ct);
             results.Add(status switch
             {
                 UpdateStatus.Ok => new(i, "updated", vocab!.Id, vocab.Key, null),
@@ -501,6 +510,23 @@ public class VocabularyStoreController(PuglingDbContext db) : ControllerBase
     }
 
     // ---- Helpers -------------------------------------------------------------------------------------
+
+    /// <summary>
+    /// Trims the equally valid translations and drops blanks, duplicates and the primary
+    /// <paramref name="translation"/> itself – it already counts, listing it again would show up as a
+    /// redundant "also: riesig" in the UI. An empty result becomes <c>null</c>, so "none declared" has
+    /// exactly one representation in the store – otherwise <c>[]</c> and <c>null</c> would be two ways of
+    /// saying the same thing, and only one of them would answer "does this entry have alternatives?" the
+    /// way a reader expects.
+    /// </summary>
+    private static List<string>? CleanAlternatives(List<string>? values, string translation)
+    {
+        if (values is null) return null;
+        var cleaned = values.Select(v => v.Trim())
+            .Where(v => v.Length > 0 && !string.Equals(v, translation.Trim(), StringComparison.OrdinalIgnoreCase))
+            .Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+        return cleaned.Count > 0 ? cleaned : null;
+    }
 
     /// <summary>Loads base form + tags of a tracked vocabulary entry for the response projection.</summary>
     private async Task LoadGraphAsync(Vocabulary vocab, CancellationToken ct)

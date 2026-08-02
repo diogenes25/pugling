@@ -124,12 +124,15 @@ internal static class TestApi
             new { title = listingTitle, coinPrice, gemPrice, unitsPerPurchase, currentStock = stock, maxStock = stock }));
     }
 
-    /// <summary>Creates (as the supervisor) a store vocabulary entry "simply" (auto key) and returns (id, key).</summary>
+    /// <summary>
+    /// Creates (as the supervisor) a store vocabulary entry "simply" (auto key) and returns (id, key).
+    /// <paramref name="translationAlternatives"/> declares further equally valid translations.
+    /// </summary>
     public static async Task<(int id, string key)> CreateStoreVocabAsync(HttpClient father, string word, string translation,
-        string src = "en", string tgt = "de")
+        string src = "en", string tgt = "de", string[]? translationAlternatives = null)
     {
         var res = await father.PostAsJsonAsync("/api/v1/creator/vocabulary",
-            new { sourceLanguage = src, targetLanguage = tgt, word, translation });
+            new { sourceLanguage = src, targetLanguage = tgt, word, translation, translationAlternatives });
         res.EnsureSuccessStatusCode();
         var v = await res.Content.ReadFromJsonAsync<JsonElement>();
         return (v.GetProperty("id").GetInt32(), v.GetProperty("key").GetString()!);

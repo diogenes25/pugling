@@ -22127,6 +22127,19 @@
             "items": {
               "type": "string"
             }
+          },
+          "translationAlternatives": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "clearTranslationAlternatives": {
+            "type": "boolean",
+            "default": false
           }
         },
         "description": "A batch change element: the target id plus the same partial fields as the single PATCH."
@@ -24433,9 +24446,18 @@
             "items": {
               "type": "string"
             }
+          },
+          "translationAlternatives": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string"
+            }
           }
         },
-        "description": "Creating a vocabulary entry. \u0022Simple\u0022 only needs \u0060Word\u0060 (\u002B languages): \u0060Key\u0060 may stay\nempty (the server generates a unique slug), \u0060Translation\u0060 may be omitted\n(stays empty and is findable via \u0060?untranslated=true\u0060) and \u0060PartOfSpeech\u0060 may be\nomitted (default PartOfSpeech.Other). \u0022Complex\u0022 additionally fills in\nnoun/verb/base form/audio; missing details can be supplied later via PATCH.\n\u0060Tags\u0060 (names) are linked create-if-missing."
+        "description": "Creating a vocabulary entry. \u0022Simple\u0022 only needs \u0060Word\u0060 (\u002B languages): \u0060Key\u0060 may stay\nempty (the server generates a unique slug), \u0060Translation\u0060 may be omitted\n(stays empty and is findable via \u0060?untranslated=true\u0060) and \u0060PartOfSpeech\u0060 may be\nomitted (default PartOfSpeech.Other). \u0022Complex\u0022 additionally fills in\nnoun/verb/base form/audio; missing details can be supplied later via PATCH.\n\u0060Tags\u0060 (names) are linked create-if-missing. \u0060TranslationAlternatives\u0060 declares further\nequally valid translations \u2013 equivalence is never derived from two entries sharing a word (those are\nhomonyms)."
       },
       "CreatorProfileMatch": {
         "required": [
@@ -36289,9 +36311,22 @@
             "items": {
               "type": "string"
             }
+          },
+          "translationAlternatives": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "clearTranslationAlternatives": {
+            "type": "boolean",
+            "default": false
           }
         },
-        "description": "Only fields that are set are changed. BaseFormKey = \u0022\u0022 removes the link (and its label); tags are appended (not replaced)."
+        "description": "Only fields that are set are changed. BaseFormKey = \u0022\u0022 removes the link (and its label); tags are\nappended (not replaced). \u0060null\u0060 means \u0022not specified\u0022 (the value remains), so the alternatives are\ndropped via bool UpdateVocabularyDto.ClearTranslationAlternatives \u2013 a list emptied in a form would arrive as\n\u0060null\u0060 and would otherwise be indistinguishable from \u0022unchanged\u0022. An explicitly empty list clears\nthem too; the switch exists for the case the client cannot tell the two apart."
       },
       "UsageResponse": {
         "required": [
@@ -36672,6 +36707,15 @@
           "translation": {
             "type": "string"
           },
+          "translationAlternatives": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
           "partOfSpeech": {
             "$ref": "#/components/schemas/PartOfSpeech"
           },
@@ -36733,7 +36777,7 @@
             "format": "date-time"
           }
         },
-        "description": "A store entry with all lexical details and the linked tag names."
+        "description": "A store entry with all lexical details and the linked tag names.\n\u0060TranslationAlternatives\u0060 are further translations that count as equally correct for\n\u0060Translation\u0060 when answering \u0022word \u2192 ?\u0022."
       },
       "VocabUsage": {
         "required": [

@@ -11,7 +11,7 @@ using Pugling.Api.Data;
 namespace Pugling.Api.Data.Migrations
 {
     [DbContext(typeof(PuglingDbContext))]
-    [Migration("20260801193914_InitialCreate")]
+    [Migration("20260802165132_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -2495,6 +2495,9 @@ namespace Pugling.Api.Data.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("TEXT")
                         .UseCollation("NOCASE");
+
+                    b.Property<string>("TranslationAlternatives")
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("Verb")
                         .HasColumnType("TEXT");
