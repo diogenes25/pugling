@@ -80,4 +80,7 @@ Kern, belegt: `MediaSelector.SelectForItemsAsync` schreibt die Wahl fest (`Media
   nachweislich nicht (`grep imageUrl|imageAlt` leer) — das benannte Risiko der Schätzung hielt.
   Der Review lief in dieser Sitzung **von Hand statt über `pugling-reviewer`** (Agenten waren
   abgeschaltet); geprüft wurden gezielt die zwei Stellen, an denen dieser Umbau schiefgehen konnte: die
-  entfallene Navigation und der Frontend-Lesezugriff. Commit siehe unten.
+  entfallene Navigation und der Frontend-Lesezugriff.
+
+  Commits: `e8cbe47` (Reparatur samt Regressionstest und neu erzeugtem Vertragsdokument), dazu dieser
+  Nachtrag mit der Abnahme.
