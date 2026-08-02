@@ -1,9 +1,13 @@
 ---
-tags: [typ/story, status/gegrillt, bereich/frontend, rolle/creator]
+tags: [typ/story, status/geschaetzt, bereich/frontend, rolle/creator]
 aliases: [Komma-Feld ablösen, Wiederhol-Felder]
-status: gegrillt
+status: geschaetzt
 prio: P2
 art: Defekt
+groesse: M
+wo: frontend
+migration: nein
+vertragsbruch: nein
 quelle: B-65 (Entscheidung 7)
 ---
 
@@ -216,6 +220,79 @@ weiter beides prüfen.
 9. `splitList` ist gelöscht und hat keinen Aufrufer mehr.
 10. Vitest und `npm run build` grün, `frontend-reviewer` durch.
 
+## Schätzung
+
+**M · `wo: frontend` · `migration: nein` · `vertragsbruch: nein`**
+
+Beide Flags sind nachgesehen, nicht vermutet: Der Angriffsplan fasst **keine** `.cs`-Datei an. Die fünf
+Felder liegen im Vertrag längst als `List<string>?` vor (`Gap.Alternatives`, `ListEntry.Alternatives`,
+`TranslationItem.Alternatives`, `Question.Choices`, `ClozeConfig.WordBank`) — das Komma war immer nur
+Oberfläche. Also kein Schema, keine Migration, kein Vertragsbruch, kein `Pugling.Client`.
+
+**M** gegen den Anker (vokabel-basierter Batch-Pfad im `MediaSelector`): kein neues Bauteil —
+`RepeatedTextFields` steht seit B-65 —, aber sieben Aufrufstellen in zwei Dateien, zehn Bau- und
+Rückwege, vier `emptyRow`-Vorgaben, drei Beschriftungen, zwei `HelpTopic`s, rund sieben neue Testfälle
+und ein E2E. Kein L: keine Backend-Arbeit und keine neue Komponente.
+
+### Angriffsplan
+
+„Backend zuerst" entfällt — es gibt keins. Die Reihenfolge folgt stattdessen dem Defekt: erst der Test,
+der rot ist, dann der Umbau, der ihn grün macht.
+
+1. **Regressionstest, rot** (`ClozeTexts.test.tsx`, neu): In das Alternativen-Feld einer Lücke `a`, `,`,
+   `b` tippen und zwei Werte erwarten. Er scheitert heute am verschluckten Komma.
+2. **`ClozeTexts.tsx`**: Feld auf `RepeatedTextFields` (`:236-238`), `setAlternatives` (`:142-145`) nimmt
+   die Liste direkt entgegen. Der State hält dort schon das Array — nur die Zerlegung fällt weg.
+3. **`ClozeTexts.tsx` Wortpool** (`:127`, `:153`, `:248-249`). **Achtung:** `clearWordBank: bank.length === 0`
+   (`:161`) muss bleiben — der PATCH braucht den Schalter, sonst löscht das geräumte Feld nichts.
+4. **`exerciseConfig.tsx`**: ein kleiner Wrapper neben `RowField` (`:540`) für die Zeilen-Felder, dann die
+   fünf Stellen — Wortpool (`:338`), Lücke (`:493`), Liste (`:501`), Auswahl (`:506`), Übersetzung (`:521`)
+   — und die vier `emptyRow`-Vorgaben von `""` auf `[]` (`:83,85,88,91`).
+5. **`splitList` löschen** (`:68-71`). Bewusst *vor* dem Aufräumen der Bauwege: Ohne die Funktion wird
+   jede vergessene Aufrufstelle (`:150,154,159,188,211`) zum Compilerfehler statt zu einem Laufzeitfehler
+   — das ist die Gegenmaßnahme zum untypisierten `Row`.
+6. **Rückweg**: `joinList` an den fünf Lesestellen (`:215,258,259,266,286`) entfernen; für die
+   zurückgestellte Dekodierung (`:295`) bleibt es stehen.
+7. **Rundlauf-Vitests** (`exerciseConfig.test.ts`, neu): je Typ (Cloze, List, Reading, Listening,
+   Translation) `buildTypeConfig` → `configToEditorState` → dieselben Werte, mit einem Komma-Wert darin.
+8. **Beschriftungen und Hilfe**: „Auch richtig" an den drei Orten inklusive `VaterVocab.tsx` aus B-65,
+   dazu der zweite, allgemeine `HelpTopic`. Das **Auswahl**-Feld heißt weiter „Auswahl", verliert aber den
+   Zusatz „(kommagetrennt = Multiple-Choice)" — beide Hälften sind falsch, die zweite laut
+   [B-73](B-73-auswahl-feld-ohne-wirkung.md).
+9. **E2E nachziehen**: `uebungstypen.spec.ts:69` füllt heute ein Feld mit `"Leeds, York, Hull"`.
+10. `npm run build`, Vitest, `frontend-reviewer`.
+
+### Risiken
+
+- **Die Lücken-Tabelle wird hoch.** Das Alternativen-Feld in `ClozeTexts.tsx` sitzt in einer
+  Tabellenzelle (`maxWidth: 220`); gestapelte Einzelfelder plus „+"-Knopf je Zeile machen aus einer
+  kompakten Tabelle eine lange. *Das ist die einzige echte Design-Frage der Story* — im Browser ansehen,
+  bevor die Form feststeht; notfalls bekommt die Spalte mehr Breite.
+- **`Row = Record<string, any>` schweigt.** Ein vergessener Bauweg schickt einen String, wo eine Liste
+  erwartet wird. Entschärft durch Schritt 5 (löschen erzeugt Compilerfehler) und Schritt 7
+  (Rundlauf-Tests) — aber nur so weit, wie die Testfälle reichen.
+- **Die Falle mit `getByLabel`.** Ein `FieldLabel` hängt ein „ⓘ" an, dessen Name den Feldnamen enthält;
+  Tests brauchen darum `{ exact: true }` (siehe `frontend/CLAUDE.md`). Betrifft die neuen Vitests und die
+  E2E-Anpassung.
+- **B-65 wird angefasst.** „Gleichwertige Übersetzungen" steht an *zwei* Stellen in `VaterVocab.tsx`
+  (Anlege-Zeilen und Bearbeiten-Editor) plus im `HelpTopic`-Titel. Eine übersehene Stelle stellt die
+  Drift wieder her, die E3 gerade beseitigt.
+- **Was nicht droht:** `contentProblem` (`:557`) prüft keines der fünf Felder — die Pflichtprüfung bleibt
+  unberührt. Und `emptyExtra` (`:96`) führt den Wortpool gar nicht, `extra.wordBank ?? ""` fängt das ab.
+
+### Testweg
+
+| Was | Wo |
+| --- | --- |
+| Regression (Komma tippbar) | `frontend/src/vater/ClozeTexts.test.tsx` — **neu**, vorher rot |
+| Rundlauf je Übungstyp | `frontend/src/vater/exerciseConfig.test.ts` — **neu**, fünf Fälle |
+| Komponente selbst | `frontend/src/components/RepeatedTextFields.test.tsx` — bestehend, unverändert |
+| Durchstich | `frontend/e2e/uebungstypen.spec.ts` — angepasst (Auswahl-Feld) |
+| Abnahme | `npm run build`, `npm test`, Agent `frontend-reviewer` |
+
+**Kein `/smoke-test` und kein Backend-Test**: Es ändert sich keine Route, kein DTO und kein
+Serververhalten — ein HTTP-Durchgang bewiese hier nichts, was der E2E nicht schon zeigt.
+
 ## Verlauf
 
 - **2026-08-02** — angelegt als Folge von B-65, Entscheidung 7.
@@ -234,3 +311,11 @@ weiter beides prüfen.
   `AnswerChecking.FromQuestions` seine Optionen verwirft. Drei abgeleitete Stories: [B-72](B-72-birkenbihl-dekodierung-paarfelder.md)
   (Dekodierung als Paar-Form), [B-73](B-73-auswahl-feld-ohne-wirkung.md) (der tote Pfad) und
   [B-74](B-74-editor-zeilen-typisieren.md) (`Row` typisieren).
+- **2026-08-02** — geschätzt: **M**, `wo: frontend`, **migration: nein**, **vertragsbruch: nein** — beides
+  nachgesehen: Der Angriffsplan fasst keine `.cs`-Datei an, die fünf Felder sind im Vertrag längst
+  `List<string>?`. Zehn Schritte, beginnend mit dem roten Regressionstest; `splitList` wird bewusst
+  **früh** gelöscht, damit jede vergessene Aufrufstelle ein Compilerfehler wird statt eines
+  Laufzeitfehlers — das ist die Gegenmaßnahme zum untypisierten `Row`. Als einziges echtes Design-Risiko
+  bleibt die Lücken-Tabelle in `ClozeTexts.tsx`: gestapelte Felder in einer 220px-Zelle. Testweg sind zwei
+  neue Vitest-Dateien plus die Anpassung von `uebungstypen.spec.ts`; `/smoke-test` entfällt begründet, weil
+  sich am Server nichts ändert.
