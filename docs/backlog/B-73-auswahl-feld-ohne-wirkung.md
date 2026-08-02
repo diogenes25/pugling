@@ -72,13 +72,18 @@ durchzureichen genügt darum nicht — es braucht eine Aussage darüber, **wie**
   Multiple-Choice zu keiner falschen Note — anders als bei [B-65](B-65-vokabel-mehrere-uebersetzungen.md).
   Der Schaden ist vergeudete Creator-Arbeit und ein Versprechen, das die Oberfläche nicht hält.
 
-### Ein Nachbarbefund, nicht belegt
+### Ein Nachbarbefund, der beim Grillen zum Hauptbefund wurde
 
 `FromQuestions` baut den Prompt aus `q.Prompt` — der **Trägertext** (`ReadingConfig.Text`) bzw. das Audio
-kommt in keinem `ContentItem` vor, und in `SohnPractice.tsx` habe ich keine Stelle gefunden, die ihn
-nachlädt. Sieht danach aus, als sähe das Kind beim Spielen die Frage ohne den Text, zu dem sie gehört.
-**Nicht nachgespielt** — es kann sein, dass Lese-/Hörverstehen praktisch nie als Position zugewiesen wird.
-Gehört ohnehin in eine eigene Story (siehe offener Punkt 4).
+kommt in keinem `ContentItem` vor. Beim Grillen bestätigt: `PracticeCard` hat gar **kein Feld** für einen
+Trägertext ([PracticeDtos.cs:27-29](../../backend/Pugling.Contracts/Student/PracticeDtos.cs)), die
+Audio-Quelle käme aus `StageFacets` (`ExerciseTypeBase.cs:41`, von `ListeningExerciseType` nicht
+überschrieben), und `SohnPractice.tsx` lädt die Übung nie nach. Das Kind bekommt die Frage ohne den Text
+und ohne die Aufnahme.
+
+Das ist der größere Defekt und liegt jetzt als [B-75](B-75-lese-hoerverstehen-ohne-inhalt.md) mit **P1**
+vor dieser Story (E1). Am *laufenden System* nachgespielt ist es weiterhin nicht — das ist der erste
+Schritt beim Ausformulieren von B-75.
 
 ## Die echte Lücke
 
@@ -103,12 +108,28 @@ Inhalts-Übungen bleiben.
    *Empfehlung: je Item entscheiden — wo `Choices` steht, erscheinen sie; wo nicht, bleibt es bei der
    Selbsteinschätzung.* Das ist genau das Muster von `Choices(items, item, stage)`, das die Signatur schon
    vorsieht. Kosten: eine Runde kann gemischt aussehen; das ist verständlich, weil die Frage es hergibt.
-4. **Der Trägertext erreicht das Kind offenbar nicht** (siehe oben). *Empfehlung: eigene Story, nicht
+4. ~~**Der Trägertext erreicht das Kind offenbar nicht**~~ → **E1.** (siehe oben). *Empfehlung: eigene Story, nicht
    hier* — und vorher am laufenden System nachspielen, statt es aus dem Code zu schließen. Wäre der Befund
    echt, änderte er die Prio dieser Story: Optionen zu einer Frage, deren Text fehlt, helfen wenig.
 5. **Braucht das Feld eine Sperre, solange nichts ausgespielt wird?** *Empfehlung: nein.* Nach B-69 trägt
    es einen Hilfetext (`questionChoices`), und die Story hier ist der Weg, das Versprechen einzulösen —
    eine Warnung im Editor wäre eine dritte Stelle, die später wieder zurückgebaut werden müsste.
+
+## Entscheidungen
+
+**E1 · Diese Story wartet; der fehlende Trägertext geht vor.** Die Grill-Runde vom 2026-08-02 hat Punkt 4
+zuerst aufgerufen und ihn dabei **belegt**: `PracticeCard` hat gar kein Feld für einen Trägertext
+([PracticeDtos.cs:27-29](../../backend/Pugling.Contracts/Student/PracticeDtos.cs)), `StageFacets` liefert
+für Hörverstehen keine Audio-Quelle ([ExerciseTypeBase.cs:41](../../backend/Pugling.Api/Exercises/ExerciseTypeBase.cs),
+von `ListeningExerciseType` nicht überschrieben), und `SohnPractice.tsx` lädt die Übung nie nach. Das Kind
+bekommt also die Frage ohne den Text und ohne die Aufnahme.
+
+*Begründung:* Antwortmöglichkeiten zu einer Frage, deren Inhalt nicht ankommt, sind Politur an etwas
+Kaputtem — und die Antwort auf die Punkte 1 bis 3 hängt daran, wie diese Typen künftig überhaupt gespielt
+werden. Beide Reparaturen fassen dieselben Stellen an (`FromQuestions`, `PracticeCard`).
+*Kosten:* Diese Story liegt still, obwohl sie ausformuliert ist; die Punkte 1, 2, 3 und 5 bleiben **offen**
+und werden erst entschieden, wenn [B-75](B-75-lese-hoerverstehen-ohne-inhalt.md) steht. Darum bleibt die
+Stufe `ausformuliert` und wird **nicht** auf `gegrillt` gesetzt.
 
 ## Akzeptanzkriterien (Entwurf)
 
@@ -131,3 +152,10 @@ Inhalts-Übungen bleiben.
   Lösung auf, `StageOptions` ist leer — Optionen anzubieten verlangt eine Aussage darüber, wie diese Typen
   abgefragt werden. Nebenbei aufgefallen und **nicht belegt**: Der Trägertext scheint das Kind gar nicht
   zu erreichen (Punkt 4).
+- **2026-08-02** — gegrillt, aber **bewusst nicht abgeschlossen**. Die Runde begann mit Punkt 4, weil er
+  die Antwort auf Punkt 1 verschieben konnte — und genau das ist eingetreten: Der Befund ist am Vertrag
+  belegt (`PracticeCard` hat kein Feld für den Trägertext, das Audio fehlt ebenso), also wiegt er
+  schwerer als das Auswahl-Feld. Entschieden wurde deshalb **eine** Sache: Diese Story wartet, der
+  fehlende Inhalt wird [B-75](B-75-lese-hoerverstehen-ohne-inhalt.md) und geht mit **P1** vor. Die
+  übrigen vier Punkte bleiben offen; die Stufe bleibt `ausformuliert`, weil `gegrillt` verlangt, dass
+  jeder Punkt entschieden oder ausdrücklich zurückgestellt ist.
