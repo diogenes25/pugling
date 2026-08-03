@@ -59,8 +59,11 @@ Gegen die **Wegwerf-Instanz** (Port 5280, Temp-DB) über `.claude/scripts/tutori
      (Metrik-Enum `NewWords|CorrectReviews|TestsPassed|MinutesPracticed|DaysComplete|StreakDays`; Periode
      `Daily|Weekly|OneOff`). Analog `…/achievements`.
    - **Kontrolle über die dual-lesbaren Student-Routen** (ein Vater-Token darf mitlesen): `GET
-     /api/v1/student/study-plans/{planId}/overview` (Tagesmission/`outstanding`), `…/positions/{positionId}/report`
-     (Box/Beherrschung), `GET /api/v1/student/children/{childId}/vocabulary-progress?onlyWeak=true`.
+     /api/v1/student/study-plans/{planId}/overview` (Tagesmission/`outstanding`),
+     `GET /api/v1/student/children/{childId}/vocabulary-progress?onlyWeak=true`.
+   - **Vater-only** dagegen der Positions-Report: `GET
+     /api/v1/supervisor/study-plans/{planId}/positions/{positionId}/report` (Box/Beherrschung **plus die
+     Lösung** je Item — darum rollen-gegated, ein Kind-Token bekommt `403`).
    - `POST /api/v1/supervisor/children/{childId}/points` `{"amount":30,"reason":"…"}` → manuelle Buchung
      (`kind:"Manual"`).
    - Optional: `POST /api/v1/supervisor/class-tests` (Klassenarbeit planen/benoten) und die

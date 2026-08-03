@@ -37,6 +37,9 @@ Authorization: Bearer {{authToken}}
 ### planId aus dem ersten (spielbaren) Plan ziehen
 @planId = {{plans.response.body.$[0].id}}
 
+### childId gleich mit – die Plan-Antwort trägt sie, also nicht aus dem Token raten
+@childId = {{plans.response.body.$[0].childId}}
+
 
 # @name overview
 GET {{baseUrl}}/student/study-plans/{{planId}}/overview
@@ -123,9 +126,9 @@ Content-Type: application/json
   ]
 }
 
-### Positions-Report lesen (Box/Beherrschung/Trefferquote)
-# @name report
-GET {{baseUrl}}/student/study-plans/{{planId}}/positions/{{positionId}}/report
+### Eigener Vokabel-Lernstand (der Positions-Report ist Vater-only → Supervisor.http)
+# @name progress
+GET {{baseUrl}}/student/children/{{childId}}/vocabulary-progress?onlyWeak=true
 Authorization: Bearer {{authToken}}
 ### Wallet (Münzen/Gems) lesen
 # @name wallet

@@ -300,39 +300,25 @@ setzt denselben Versuch fort (kein Neustart).
 
 ---
 
-## 5. Positionsreport — was sitzt, was nicht
+## 5. Eigener Lernstand — was sitzt, was nicht
 
-Nach dem Üben/Testen zeigt der Report je Inhalts-Atom Mastery, Leitner-Zustand und Testhistorie:
+Der **Positionsreport** gehört nicht hierher: er liegt unter
+`GET /api/v1/supervisor/study-plans/{planId}/positions/{positionId}/report` und ist **Vater-only**, weil er
+je Zeile die `answer` des Inhalts trägt — auch für Karten, die noch nie gezeigt wurden. Ein Sohn-Token
+bekommt dort `403`. Siehe [tutorial-supervisor.md](tutorial-supervisor.md).
+
+Der eigene Lernstand kommt stattdessen aus den kindzentrischen Sichten — sie nennen **keine** Lösung, nur
+Kasten und Beherrschung:
 
 ```http
-GET /api/v1/student/study-plans/1/positions/1/report
-→ {
-  "totalItems": 3,
-  "introducedItems": 1,
-  "masteredItems": 0,
-  "items": [
-    {
-      "itemIndex": 0,
-      "prompt": "hello",
-      "answer": "hallo",
-      "introduced": true,
-      "box": 1,
-      "masteryPercent": 0,
-      "testsSeen": 2,
-      "testsCorrect": 1
-    }
-    // … weitere Items
-  ]
-}
+GET /api/v1/student/children/1/vocabulary-progress
+GET /api/v1/student/children/1/vocabulary-progress?onlyWeak=true
+GET /api/v1/student/children/1/vocabulary-progress/by-word
 ```
 
-- `totalItems` — alle Inhalte der Position; `introducedItems` — davon schon eingeführt (deckt sich mit
-  `totalItems` des Tests, siehe 4.1); `masteredItems` — als beherrscht gewertet.
-- Je Item: aktueller `box`-Kasten, `masteryPercent` und die Testbilanz (`testsSeen` / `testsCorrect`).
-
-Plan-übergreifend (nur Vokabeln) liegt der Wortschatz-Lernstand unter
-`GET /api/v1/student/children/1/vocabulary-progress` (mit `?onlyWeak=true`, `/by-word`-Rollup für
-„schlecht gelernte Wörter" usw.) — die kindzentrische Sicht über alle Pläne hinweg.
+Plan-übergreifend (nur Vokabeln), über alle Pläne hinweg; `/by-word` ist der Rollup für „schlecht gelernte
+Wörter". Hierarchisch (Fach→Kapitel→Übung→Item) liegt derselbe Stand unter
+`GET /api/v1/student/children/1/learn/subjects`.
 
 ---
 

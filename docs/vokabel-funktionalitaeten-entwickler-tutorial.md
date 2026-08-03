@@ -146,7 +146,7 @@ Es gibt zwei Fortschritts-Sichten:
 Nützliche Endpunkte:
 
 ```http
-GET /api/v1/student/study-plans/{planId}/positions/{positionId}/report
+GET /api/v1/supervisor/study-plans/{planId}/positions/{positionId}/report
 GET /api/v1/student/children/{childId}/vocabulary-progress?onlyWeak=true
 GET /api/v1/student/children/{childId}/vocabulary-progress/{itemId}
 GET /api/v1/student/children/{childId}/vocabulary-progress/{itemId}/history

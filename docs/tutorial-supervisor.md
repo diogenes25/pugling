@@ -452,10 +452,13 @@ zeigen den Tagesstand, `outstanding` nennt die offenen Punkte. Verlauf: `GET …
 ### b) Pro Position (Leitner-/Teststand im Plan-Kontext)
 
 ```http
-GET /api/v1/student/study-plans/1/positions/1/report
+GET /api/v1/supervisor/study-plans/1/positions/1/report
 ```
 
 Beantwortet „wie steht **diese eine Position** da?" — liest die positionsgebundene Spur `PositionItemProgress`.
+**Vater-only** (`Roles.Supervisor`): jede Zeile trägt die `answer` des Inhalts, auch für noch nicht gezeigte
+Karten. Ein Sohn-Token bekommt hier `403` und liest seinen Stand über
+`student/children/{childId}/vocabulary-progress`.
 
 ### c) Kind-zentrisch, plan-übergreifend („schlecht gelernte Wörter")
 
@@ -556,9 +559,9 @@ POST /api/v1/supervisor/shop/articles/5/listings
 POST /api/v1/supervisor/children/1/missions
 { "title": "Täglich üben", "metric": "CorrectReviews", "target": 10, "period": "Daily", "rewardPoints": 15 }
 
-# 7) Kontrolle (Vater-Token liest die student/-Routen)
+# 7) Kontrolle (Vater-Token liest die dual-lesbaren student/-Routen, der Report ist Vater-only)
 GET  /api/v1/student/study-plans/1/overview
-GET  /api/v1/student/study-plans/1/positions/1/report
+GET  /api/v1/supervisor/study-plans/1/positions/1/report
 GET  /api/v1/student/children/1/vocabulary-progress?onlyWeak=true
 
 # 8) Manuelle Punkte / Verschenken (Münzen bzw. Gems)

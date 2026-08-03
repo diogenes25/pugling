@@ -345,7 +345,7 @@ Reviews/Tests geändert. `pointsAwarded: 20` kommt aus dem Positionsziel, nicht 
 #### 7) Vater liest dieselbe Entwicklung aus anderen Blickwinkeln
 
 ```http
-GET /api/v1/student/study-plans/2/positions/7/report
+GET /api/v1/supervisor/study-plans/2/positions/7/report
 Authorization: Bearer <father-token>
 ```
 
@@ -390,7 +390,7 @@ Daraus ergeben sich **drei Auswertungs-Blickwinkel**:
 | Endpunkt | Wohin |
 | --- | --- |
 | `GET /study-plans/{planId}/overview` · `…/overview/progress` | [PlanOverviewController](../backend/Pugling.Api/Controllers/Student/PlanOverviewController.cs) → [PositionProgressService](../backend/Pugling.Api/Services/PositionProgressService.cs) |
-| `GET /study-plans/{planId}/positions/{positionId}/report` | [PositionReportController](../backend/Pugling.Api/Controllers/Student/PositionReportController.cs) → [PositionReportService](../backend/Pugling.Api/Services/PositionReportService.cs) |
+| `GET /study-plans/{planId}/positions/{positionId}/report` (Vater-only) | [PositionReportController](../backend/Pugling.Api/Controllers/Supervisor/PositionReportController.cs) → [PositionReportService](../backend/Pugling.Api/Services/Supervisor/PositionReportService.cs) |
 
 Antwort auf „welche Vokabel dieser **Position** sitzt?" plus Tagesmission/Streak. Liest `PositionItemProgress`.
 

@@ -2,8 +2,10 @@ namespace Pugling.Contracts.Student;
 
 // Contract of the catalog-hierarchical progress view (subject → chapter → exercise → item), derived from
 // the child's study plans. It complements the flat vocabulary view in ProgressDtos.cs; both views
-// deliberately share the item DTO (identical shape). Plus the child's view on missions/awards and the
-// position-bound report.
+// deliberately share the item DTO (identical shape). Plus the child's view on missions/awards.
+//
+// The position-bound report used to live here too and moved to Pugling.Contracts.Supervisor: it names the
+// solution of every item, so it is not child-readable and the tier folder has to say so.
 
 /// <summary>Aggregated learning progress across a set of vocabulary items (same shape at every level).</summary>
 public record MasteryRollup(
@@ -26,12 +28,3 @@ public record MissionStatus(int Id, string Title, ProgressMetric Metric, Mission
 /// <summary>Status of an award from the child's perspective: threshold, current value, earned?</summary>
 public record AchievementStatus(int Id, string Title, string? Icon, ProgressMetric Metric,
     int Threshold, int Current, bool Earned, DateTime? EarnedAt, int RewardPoints);
-
-/// <summary>Report row for a single content item.</summary>
-public record ItemReport(int ItemIndex, string Prompt, string Answer, bool Introduced,
-    int Box, int MasteryPercent, int ReviewCount, DateOnly? DueOn, DateTime? LastReviewedAt,
-    int TestsSeen, int TestsCorrect);
-
-/// <summary>Report of a position including headline metrics (introduced/mastered).</summary>
-public record Report(int PositionId, int ExerciseId, string ExerciseTitle, string ExerciseType,
-    int MaxBox, int TotalItems, int IntroducedItems, int MasteredItems, IReadOnlyList<ItemReport> Items);

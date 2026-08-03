@@ -1,8 +1,8 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/backend, rolle/student]
+tags: [typ/story, status/in-arbeit, bereich/backend, rolle/student]
 aliases: [Positions-Report gibt die Lösungen preis, ItemReport trägt Answer,
   Kind liest die Lösung jeder Karte im Report, Tür C]
-status: geschaetzt
+status: in-arbeit
 prio: P1
 art: Defekt
 groesse: M
@@ -166,6 +166,11 @@ ohnehin an, ein Teil der Kosten ist also schon bezahlt.
 
 ### E3 · Ein reflexives Tor erzwingt die Rollenreichweite eines Lese-DTOs
 
+> **Beim Bauen am 2026-08-03 auf einer widerlegten Messung ertappt und daraufhin neu geschnitten** — die
+> Fassung unten ist der ursprüngliche Beschluss, **E3′** direkt danach ist die gebaute. Der Beschluss bleibt
+> stehen, weil seine Begründung („die echte Lücke ist die wachsende Kandidatenmenge") trägt; nur sein
+> *Geltungsbereich* war auf einer Zahl gebaut, die nicht stimmte.
+
 Neuer Wächter in `ConventionGuardTests`: **jede Action, die ein DTO aus `Pugling.Contracts.Supervisor`
 zurückgibt, trägt `[Authorize(Roles = Roles.Supervisor)]`** — an der Klasse oder an der Action. Mit einer
 namentlichen Ausnahmeliste, je mit englischer Begründung.
@@ -183,7 +188,41 @@ alle vier sind durch **B-80/E5 ausdrücklich gewollt**. Es braucht also eine Aus
 begründeten Einträgen, und eine Liste verrottet: wird einer dieser Endpunkte umbenannt, meldet das Tor eine
 Ausnahme, die es nicht mehr gibt. Dazu treibt E3 die Größe voraussichtlich von S nach M.
 
+### E3′ · Das Tor folgt dem Geheimnis, nicht dem Ordner (gebaut)
+
+`ConventionGuardTests.Actions_Mit_Loesungsfeld_Sind_Vor_Dem_Studenten_Gegated`: **gibt eine Action in ihrem
+Nutzlast-Graphen ein Feld namens `Answer`/`Solution`/`CorrectAnswer` heraus, muss sie auf eine Rollenmenge
+**ohne** `Student` gegated sein** — `Roles.Creator` genügt also ebenso wie `Roles.Supervisor`. Der Graph wird
+über Properties, Sammlungen und Verschachtelung abgelaufen (tiefenbegrenzt, zyklensicher), damit ein
+Lösungsfeld auch aus einem Unter-DTO gefunden wird — `ItemReport` hängt genau so unter `Report`.
+
+*Begründung.* Am 2026-08-03 gemessen, und die Messung hat E3 umgeworfen: namespace-basiert ist das Tor an
+**zehn** Stellen rot, nicht an vier. Sechs davon zählen den **Normalfall** auf — `PlanResponse` und
+`ObjectiveResponse` sind *als Typen* dual gelesen (ein Kind muss seinen eigenen Plan und seine eigenen Ziele
+sehen), und `StudentPlansController.List` trägt sogar `[Authorize(Roles = Roles.Student)]`, ist also bewusst
+kind-only und gibt trotzdem ein `Contracts.Supervisor`-DTO heraus. Damit ist die Prämisse von E3 („ein Record
+unter `Contracts.Supervisor` ist für die Auswertung des Erwachsenen geschrieben") für zwei der acht
+DTO-Dateien falsch — und **E4s eigenes Argument greift dann gegen E3**: eine Ausnahmeliste, die den Normalfall
+aufzählt, beweist nichts mehr. Der Ordner ist ein Näherungswert; das Lösungsfeld *ist* die Sache.
+Die Rollenbedingung heißt „ohne Student" statt „mit Supervisor", weil das die wahre Zusicherung ist: ein Autor
+**muss** die Lösung der Übung sehen, die er schreibt (`ClozeTextsController` gibt `Gap.Answer` heraus und ist
+`Roles.Creator`-gegated — das Tor lässt es durch, statt eine Ausnahme zu brauchen).
+
+*Kosten.* **Vier Ausnahmen, eine Gruppe, ein Grund** (gemessen: 10 Actions im Geltungsbereich, 6 davon
+korrekt gegated): `RemarksController.Create/GetOne/List/Update`, wo `RemarkDto.Answer` die *Antwort auf eine
+Entwickler-Notiz* ist und nicht die Lösung einer Karte. Das ist die ehrliche Grenze einer namensbasierten
+Regel — sie kann zwei Bedeutungen eines Wortes nicht unterscheiden, also stehen sie namentlich da.
+`Expected` ist **bewusst nicht** in der Namensliste: das ist der Reveal *nachdem* das Kind geantwortet hat
+(`ItemOutcome`, `ReviewOutcome`, `ItemCheck`) und damit der Zweck der Rückmeldung, kein Leck — mit `Expected`
+in der Liste wären es 16 Ausnahmen statt 4. **E4 wird dadurch gegenstandslos**: der Geltungsbereich ist
+ordner-unabhängig, ein künftiges *Creator*-DTO mit Lösungsfeld fängt das Tor jetzt mit — die bewusste Lücke,
+die E4 in Kauf nahm, ist zu.
+
 ### E4 · Das Tor greift nur `Contracts.Supervisor`, nicht `Contracts.Creator`
+
+> **Durch E3′ gegenstandslos** (2026-08-03): das gebaute Tor unterscheidet keine Ordner mehr, sondern fragt
+> nach dem Lösungsfeld. Die unten in Kauf genommene Lücke („ein künftiges Creator-DTO mit einem Geheimnis
+> fängt das Tor nicht") ist damit geschlossen, ohne die zwölf Ausnahmen zu kosten, die sie rechtfertigte.
 
 *Begründung.* Der Creator-Bereich ist genau die Fläche, die **bewusst** kind-lesbar ist: `TagsController`
 trägt klassenweit nur `[Authorize]` und gibt an acht Stellen Creator-DTOs an ein Kind heraus (`TagResponse`
@@ -205,8 +244,8 @@ vergessene.
   Weiterleiten, kein Parallelbetrieb — vor der Publikation wird gebrochen, nicht überbrückt).
 - Kein Verbraucher bleibt zurück: `frontend/src/lib/api.ts` zeigt auf die neue Route, und die kind-adressierte
   Doku nennt den Report nicht mehr als Student-Aufruf.
-- Das Tor aus E3 ist scharf und **grün**, mit genau den vier begründeten Ausnahmen; ein neuer Endpunkt, der
-  ein Supervisor-DTO ungegated herausgibt, macht es rot.
+- Das Tor aus E3′ ist scharf und **grün**, mit genau vier begründeten Ausnahmen; eine neue Action, die ein
+  Lösungsfeld an ein Student-Token herausgibt, macht es rot.
 - **Regressionstest, vorher rot**: Kind-Token liest den Report seiner **eigenen** Position → `403`; heute
   liefert derselbe Aufruf `200` mit `answer`.
 
@@ -404,3 +443,52 @@ Backend zuerst; das Frontend hängt an der API und wird eine Zeile.
   (also keine Änderung unter `docs/api-examples/`, anders als bei B-80), `Pugling.Client` kennt ihn nicht, kein
   E2E fährt ihn, und der Abdeckungs-Wächter sieht keinen neuen Endpunkt (`PositionReportController.Get` behält
   seinen Namen).
+- **2026-08-03** — in Arbeit: **E1 und E2 gebaut wie beschlossen, E3 neu geschnitten (E3′), E4 dadurch
+  gegenstandslos.** 668 Tests grün, `markdownlint` sauber, Frontend baut.
+  Der Angriffsplan lief wie geschrieben durch, ohne Überraschung in den ersten vier Schritten: `Report`/
+  `ItemReport` liegen in `Contracts/Supervisor/PositionReportDtos.cs`, Controller und Service in den
+  `Supervisor`-Ordnern, `[Authorize(Roles = Roles.Supervisor)]` sitzt, der `PlanOwnershipFilter` bleibt und
+  trägt die Erwachsenen-Prüfung jetzt allein. Der `ApiRoutes.cs`-Kommentar aus **R1** ist umgeschrieben: die
+  Regel bleibt, das Beispiel ist jetzt die Klassenarbeit (eine *wirklich* dual gelesene Ressource), und ein
+  Satz sagt ausdrücklich, dass Dualität keine Entschuldigung für ein rollen-gegatetes Fremdpräfix ist.
+  **R2 ist umgesetzt** und war die richtige Sorge: die Report-Zusicherung ist aus
+  `Sohn_KannPlanEinesAnderenKindes_NichtBenutzen_403` heraus- und in `FremderVater_KannPlanNichtSehen_403`
+  hineingewandert (fremder Supervisor ohne Betreuungsauftrag → `403` über den Filter). Am alten Ort steht
+  jetzt ein Kommentar, warum die Zeile dort nichts mehr bewiesen hätte.
+  **Drei Tore gegen sich selbst geprüft, jedes einzeln rot gesehen** — ohne das wäre keins belegt: `Roles`
+  am Controller entfernt → Regressionstest **und** neues Tor rot; ein erfundener fünfter Ausnahme-Eintrag
+  (`ErfundenerController.Gibtsnicht`) → die R4-Prüfung rot. **R3 ist gemessen statt geraten**: 64 Actions
+  geben ein `Contracts.Supervisor`-DTO zurück, die Untergrenze steht bei 55.
+  Am laufenden System nachgespielt (Wegwerf-DB auf `:5280`, echte `pugling.db` unangetastet), also derselbe
+  Weg wie im Ist-Stand 3: Kind-Token auf `supervisor/…/report` → **403** (`code: forbidden`, kein `answer` im
+  Rumpf); Vater-Token auf dieselbe URL → **200** mit `answer='gehen'`/`'geht'` bei `introduced=false`; die
+  alte `student/…`-Route → **404** für beide Rollen. Dazu `/smoke-test` vollständig grün (13 Checks).
+  Der **Vertragsbruch traf genau wie geschätzt**: `docs/openapi/v1.json` zeigt Pfadschlüssel plus
+  `Tags`-Namen, das Schema heißt weiter `Report`/`ItemReport` — darum blieben `contract.ts` **und**
+  `types.ts` nach `npm run gen:contract` byte-gleich, und im Frontend änderte sich die eine vorhergesagte
+  Zeile (`api.ts`). **R6 hält**: `docs/api-examples/` ist inhaltlich unverändert (die zwei Dateien zeigten
+  nur CRLF-Rauschen und sind zurückgesetzt).
+  Doku: 11 Stellen nachgezogen, die drei kind-adressierten **inhaltlich** ersetzt statt nur umgebogen — in
+  `tutorial-student.md` ist aus Abschnitt 5 „Positionsreport" ein „Eigener Lernstand" geworden, der auf die
+  `vocabulary-progress`-Sichten zeigt und den `403` benennt; derselbe Schnitt im Skill `student` und in
+  `docs/REST/Student.http`, wo der Aufruf nach `Supervisor.http` umgezogen ist.
+  **E3 ist beim Bauen umgeworfen worden, und zwar von seiner eigenen Kostenmessung.** Namespace-basiert
+  aufgesetzt war das Tor nicht an vier, sondern an **zehn** Stellen rot; die sechs ungemessenen
+  (`StudyPlansController.Get`, `ObjectivesController.List/Get`, `MyObjectivesController.List/Get`,
+  `StudentPlansController.List`) zählen den **Normalfall** auf, weil `PlanResponse`/`ObjectiveResponse` *als
+  Typen* dual gelesen sind — `StudentPlansController.List` ist sogar `[Authorize(Roles = Roles.Student)]`,
+  also bewusst kind-only, und gibt trotzdem ein `Contracts.Supervisor`-DTO heraus. Damit greift **E4s eigenes
+  Argument gegen E3**. Nach Vorlage beim Nutzer neu geschnitten als **E3′**: das Tor folgt dem Geheimnis statt
+  dem Ordner — Lösungsfeld (`Answer`/`Solution`/`CorrectAnswer`) im Nutzlast-Graphen ⇒ Rollenmenge **ohne**
+  `Student`. Ergebnis **4 Ausnahmen in einer Gruppe** (`RemarksController.*`, wo `Answer` die Antwort auf eine
+  Notiz ist), und der Geltungsbereich ist ordner-unabhängig, womit **E4 gegenstandslos** wird: ein künftiges
+  *Creator*-DTO mit Lösungsfeld fängt das Tor jetzt mit.
+  Zwei Zwischenmessungen, die den Schnitt getragen haben und darum notiert sind: mit `Expected` in der
+  Namensliste wären es **16** Ausnahmen statt 4 — `Expected` ist der Reveal *nach* der Antwort
+  (`ItemOutcome`/`ReviewOutcome`/`ItemCheck`) und gehört nicht dazu. Und „ohne Student" statt „mit Supervisor"
+  spart die Creator-Ausnahmen: `ClozeTextsController` gibt `Gap.Answer` heraus, ist `Roles.Creator`-gegated und
+  läuft glatt durch — ein Autor **muss** die Lösung seiner Übung sehen. Beim Prüfen der Kandidaten fiel auch
+  `ArithmeticDrillController.Generate → GeneratedProblem.Answer` auf; **keine vierte Tür**, die Basisklasse
+  `ExerciseControllerBase` trägt `[Authorize(Roles = Roles.Creator)]` (nachgesehen, nicht vermutet).
+  Das neue Tor ist ebenfalls **beide Zusicherungen einzeln rot gesehen** (Offender und Stale-Prüfung getrennt,
+  weil die eine sonst die andere verdeckt), Untergrenze gemessen: 10 im Geltungsbereich, Grenze bei 8.

@@ -2,7 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Pugling.Api.Data;
 using Pugling.Api.Models;
 
-namespace Pugling.Api.Services.Student;
+namespace Pugling.Api.Services.Supervisor;
 
 /// <summary>
 /// Builds the learning report of a study plan position: for each content atom (e.g. vocabulary item) the
@@ -12,7 +12,7 @@ namespace Pugling.Api.Services.Student;
 /// </summary>
 public class PositionReportService(PuglingDbContext db, PositionPlayService play)
 {
-    // ItemReport/Report live in the contract project (Pugling.Contracts.Student).
+    // ItemReport/Report live in the contract project (Pugling.Contracts.Supervisor).
 
     /// <summary>Mastery in percent from the Leitner box (box 1 = 0% … MaxBox = 100%).</summary>
     private static int MasteryOf(int box, int maxBox) =>

@@ -153,6 +153,21 @@ test("Vater erstellt Plan mit Position, Sohn arbeitet ihn ab, Punkte fließen", 
   await expect(totalCard).toContainText("Punkte gesamt");
   expect(Number((await totalCard.textContent())!.replace(/\D/g, ""))).toBeGreaterThan(0);
 
+  // ---------- VATER liest den Positions-Report (Vater-only) ----------
+  // Der Report liegt unter `supervisor/…` und ist rollen-gegated, weil jede Zeile die Lösung trägt – auch
+  // für Karten, die das Kind nie gesehen hat. Ohne diesen Klick prüft *nichts* im Frontend den Pfad: er ist
+  // ein Template-String, ein falsches Ebenen-Präfix ginge durch `tsc` und `vite build` still hindurch.
+  await vater.getByRole("row", { name: new RegExp(EXERCISE) }).getByRole("button", { name: /Report/ }).click();
+  // Die Kopfzeile rendert nur bei 200 – bei 403/404 stünde hier stattdessen ein `.banner err`.
+  await expect(vater.getByText(/eingeführt · .* sitzen sicher/)).toBeVisible();
+  // Spalte „Lösung" gefüllt: der Vater darf sie sehen (Akzeptanzkriterium „sein UI verliert keine Spalte").
+  // Erst auf die Report-Tabelle einengen: sie steht *innerhalb* der Positionszeile, und ohne die Einengung
+  // trifft `row` auch die umschließende Zeile – deren einzige Zelle die ganze Tabelle enthält, womit `nth(1)`
+  // eine Spalte zu weit links landet. Die Zeile wird über ihren Inhalt gewählt, nie über einen Index.
+  const report = vater.locator("table table");
+  await expect(report.getByRole("columnheader", { name: "Lösung" })).toBeVisible();
+  await expect(report.getByRole("row", { name: /la ville/ }).getByRole("cell").nth(1)).toHaveText("die Stadt");
+
   // ---------- VATER sieht den plan-übergreifenden Lernstand ----------
   // Die Gegenprobe zum Positions-Report: hier zählt das *Wort* über alle Übungen, nicht die Position.
   // Nur nach echtem Üben gefüllt – deshalb steht die Prüfung am Ende dieses Durchstichs.

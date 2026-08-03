@@ -86,7 +86,7 @@ Kompakter Überblick über alle Routen. **Autoritative Quelle bleibt Swagger** (
 | V | `GET/POST /study-plans/{id}/positions` · `GET/PATCH/DELETE …/{positionId}` | Übungen als PlanPositionen verwalten |
 | A | `GET /study-plans/{id}/overview` | Tagesmission und aktueller Status |
 | A | `GET /study-plans/{id}/overview/progress?from=&to=&dutyDone=&sort=&skip=&take=` | Tag-für-Tag-Fortschritt (Filter/Sort/Paging) |
-| A | `GET /study-plans/{id}/positions/{positionId}/report` | Mastery und Testhistorie pro Position |
+| V | `GET /study-plans/{id}/positions/{positionId}/report` | Mastery und Testhistorie pro Position — **Vater-only**, jede Zeile trägt die Lösung |
 
 ### Üben (Practice)
 

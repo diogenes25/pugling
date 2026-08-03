@@ -378,6 +378,32 @@ public class AntiCheatTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
     }
 
     [Fact]
+    public async Task Kind_LiestPositionsReport_NichtDieLoesungen()
+    {
+        // The third door into the same room as the two above (B-82): the position report names the solution of
+        // every item as its own field (`ItemReport.Answer`) - also for cards with `introduced: false`, which the
+        // child has never been shown. No ownership check catches that, the plan really is the child's own; the
+        // report simply is the supervisor's evaluation, so the tier role is the wall.
+        var father = await TestApi.FatherAsync(factory);
+        var exerciseId = await TestApi.CreateVocabExerciseAsync(father); // hello→hallo, goodbye→tschüss
+        var (planId, positionId) = TestApi.SeedLeitnerPosition(factory, exerciseId, (int)TestStage.FreeText);
+        var child = await TestApi.ChildAsync(factory);
+        var reportUrl = $"/api/v1/supervisor/study-plans/{planId}/positions/{positionId}/report";
+
+        // The child has never played a card here, so every row would arrive with introduced=false - and used to
+        // arrive with its answer anyway.
+        var forbidden = await child.GetAsync(reportUrl);
+        Assert.Equal(HttpStatusCode.Forbidden, forbidden.StatusCode);
+        Assert.DoesNotContain("hallo", await forbidden.Content.ReadAsStringAsync(), StringComparison.Ordinal);
+
+        // The counter-proof, so this is not a green from a broken route: the father reads the same URL and does
+        // get the solution. Without it a typo in the path would satisfy the assertion above.
+        var allowed = await father.GetAsync(reportUrl);
+        allowed.EnsureSuccessStatusCode();
+        Assert.Contains("hallo", await allowed.Content.ReadAsStringAsync(), StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task Kind_LiestUeberTagsUndKlassenarbeit_KeineUebungskonfiguration()
     {
         var father = await TestApi.FatherAsync(factory);

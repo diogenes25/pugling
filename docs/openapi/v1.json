@@ -3786,6 +3786,68 @@
         }
       }
     },
+    "/api/v1/supervisor/study-plans/{planId}/positions/{positionId}/report": {
+      "get": {
+        "tags": [
+          "Supervisor \u2013 Position Report"
+        ],
+        "summary": "Report of the position: per content item box/mastery, introduction/due date and test hit rate.",
+        "parameters": [
+          {
+            "name": "planId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "positionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Report"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/supervisor/shop/articles": {
       "get": {
         "tags": [
@@ -8127,58 +8189,6 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/SessionResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/student/study-plans/{planId}/positions/{positionId}/report": {
-      "get": {
-        "tags": [
-          "Student \u2013 Position Report"
-        ],
-        "summary": "Report of the position: per content item box/mastery, introduction/due date and test hit rate.",
-        "parameters": [
-          {
-            "name": "planId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "pattern": "^-?(?:0|[1-9]\\d*)$",
-              "type": "integer",
-              "format": "int32"
-            }
-          },
-          {
-            "name": "positionId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "pattern": "^-?(?:0|[1-9]\\d*)$",
-              "type": "integer",
-              "format": "int32"
-            }
-          }
-        ],
-        "responses": {
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Report"
                 }
               }
             }
@@ -29816,7 +29826,7 @@
             "format": "int32"
           }
         },
-        "description": "Report row for a single content item."
+        "description": "Report row for a single content item, including its solution."
       },
       "ItemResultDto": {
         "required": [
@@ -37203,6 +37213,9 @@
       "name": "Supervisor \u2013 Plans"
     },
     {
+      "name": "Supervisor \u2013 Position Report"
+    },
+    {
       "name": "Supervisor \u2013 Shop"
     },
     {
@@ -37237,9 +37250,6 @@
     },
     {
       "name": "Student \u2013 Position Practice"
-    },
-    {
-      "name": "Student \u2013 Position Report"
     },
     {
       "name": "Student \u2013 Position Tests"

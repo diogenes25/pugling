@@ -62,7 +62,9 @@ Gegen die **Wegwerf-Instanz** (Port 5280, Temp-DB) über `.claude/scripts/tutori
        → `scorePercent`, `passed`, `passPercent`. (Bei getippten Stufen stattdessen `/next` → `/answer`
        `{"itemIndex","givenAnswer"}` → `/submit`.) **Nicht** `givenAnswer` bei Selbsteinschätzung schicken —
        das wertet als 0.
-   - `GET …/positions/{positionId}/report` → Box/Beherrschung je Item (`introduced`, `box`, `testsCorrect`).
+   - Eigener Lernstand: `GET /api/v1/student/children/{childId}/vocabulary-progress` (flach, `?onlyWeak=true`,
+     `/by-word`-Rollup) bzw. `…/children/{childId}/learn/subjects` (hierarchisch). **Nicht** der
+     Positions-Report — der liegt unter `supervisor/…` und ist Vater-only, weil er die Lösungen trägt (`403`).
    - `GET /api/v1/student/me/points | missions | achievements | skins` → eigener Kontostand, Ziele, Badges,
      Skin-Zustand (`selected`, `owned`).
    - **Shop/Einlösen** (der **einzige** Münz-Ausgabeweg): `GET /api/v1/student/me/shop` (Wallet + kaufbare

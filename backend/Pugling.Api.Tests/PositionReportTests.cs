@@ -21,7 +21,7 @@ public class PositionReportTests(PuglingWebAppFactory factory) : IClassFixture<P
         var exerciseId = await TestApi.CreateVocabExerciseAsync(father); // hello→hallo, goodbye→tschüss
         var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.FreeText);
         var child = await TestApi.ChildAsync(_factory);
-        var reportUrl = $"/api/v1/student/study-plans/{planId}/positions/{positionId}/report";
+        var reportUrl = $"/api/v1/supervisor/study-plans/{planId}/positions/{positionId}/report";
 
         // Practice: both contents correct once → one box up each and introduced.
         var sessionId = await TestApi.StartPositionSessionAsync(child, planId, positionId);
@@ -67,7 +67,7 @@ public class PositionReportTests(PuglingWebAppFactory factory) : IClassFixture<P
         var exerciseId = await TestApi.CreateVocabExerciseAsync(father);
         var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.FreeText);
 
-        var res = await father.GetAsync($"/api/v1/student/study-plans/{planId}/positions/{positionId + 999}/report");
+        var res = await father.GetAsync($"/api/v1/supervisor/study-plans/{planId}/positions/{positionId + 999}/report");
         Assert.Equal(HttpStatusCode.NotFound, res.StatusCode);
     }
 }

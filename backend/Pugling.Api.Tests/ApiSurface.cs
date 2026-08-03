@@ -23,6 +23,24 @@ internal static class ApiSurface
         controller.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly)
             .Where(m => !m.IsSpecialName && m.GetCustomAttributes<HttpMethodAttribute>().Any());
 
+    /// <summary>
+    /// The public actions of a controller <b>including inherited ones</b>. Use this where a guard judges what
+    /// an endpoint returns or who may call it: the thirteen exercise controllers declare no CRUD action of
+    /// their own, they inherit <c>List/Get/Create/Update</c> from <c>ExerciseControllerBase</c> – and those
+    /// carry the sharpest solution fields of the API (<c>Gap.Answer</c>, <c>Question.Answer</c>). A guard built
+    /// on <see cref="Actions"/> alone leaves roughly fifty endpoints outside its scope, the same blind spot
+    /// <c>EndpointCoverage</c> documents for itself.
+    /// <para>
+    /// Deduplicated by name and signature: a <c>new</c>-hidden action would otherwise appear twice, once per
+    /// declaring type, and every count built on it would be inflated.
+    /// </para>
+    /// </summary>
+    public static IEnumerable<MethodInfo> ActionsIncludingInherited(Type controller) =>
+        controller.GetMethods(BindingFlags.Public | BindingFlags.Instance)
+            .Where(m => !m.IsSpecialName && m.GetCustomAttributes<HttpMethodAttribute>().Any())
+            .GroupBy(m => (m.Name, Signature: string.Join(",", m.GetParameters().Select(p => p.ParameterType.FullName))))
+            .Select(g => g.First());
+
     /// <summary>Key of an action – <c>Controller.Action</c>, the language of all guard messages.</summary>
     public static string Key(string controller, string action) => $"{controller}.{action}";
 

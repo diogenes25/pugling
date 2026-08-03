@@ -1,5 +1,6 @@
 using System.Reflection;
 using System.Text.RegularExpressions;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Pugling.Api.Auth;
 
@@ -200,6 +201,152 @@ public class ConventionGuardTests
     /// grows, the reason belongs with it, otherwise it hollows out the gate.
     /// </summary>
     private static readonly HashSet<string> OwnershipExceptions = [];
+
+    // ─────────────────────────────────────────────────────── (e) a solution never travels to a student
+
+    [Fact]
+    public void Actions_Mit_Loesungsfeld_Sind_Vor_Dem_Studenten_Gegated()
+    {
+        // The reach of a *read* DTO is a property of its type, not of the endpoint that happens to return it
+        // (B-80/E1). The sharpest case of that is a named solution: `ItemReport.Answer` carried the answer of
+        // every card - also of cards the child had never been shown - and no ownership check catches it,
+        // because the plan really is the child's own (B-82).
+        //
+        // So the rule follows the secret, not the folder: whatever names a solution anywhere in its payload
+        // graph has to be gated to a role set *without* Student. Creator-gated satisfies it just as well as
+        // supervisor-gated - an author must see the answer of the exercise they are writing.
+        //
+        // Why not "DTO under Contracts.Supervisor ⇒ Roles.Supervisor", which was the original plan (B-82/E3):
+        // measured, that takes ten exceptions, and six of them enumerate the normal case - a child reads its
+        // own study plan and its own big goals, so `PlanResponse`/`ObjectiveResponse` are dual-read *as types*
+        // (`StudentPlansController` is even Student-only by design). By E4's own argument an exception list
+        // that lists the normal case proves nothing. The tier folder is a proxy; the solution field is the thing.
+        var offenders = new List<string>();
+        var inScope = new List<string>();
+        // Those a student token could actually reach - the set an exception has to be justified against.
+        var reachable = new List<string>();
+
+        foreach (var controller in Controllers())
+        {
+            var classGated = HidesFromStudent(controller.GetCustomAttributes<AuthorizeAttribute>(inherit: true));
+            // Inherited actions on purpose (not the shared `Actions()`): the exercise CRUD lives on
+            // `ExerciseControllerBase` and returns `ExerciseResponse<TConfig>` - the sharpest solution fields
+            // of the API sit there, and `DeclaredOnly` would hide all of them from this gate.
+            foreach (var action in ApiSurface.ActionsIncludingInherited(controller))
+            {
+                var payload = PayloadType(action.ReturnType);
+                if (payload is null)
+                    continue; // IActionResult without a type parameter - no payload to judge
+                if (SolutionFieldIn(payload, [], depth: 0) is not { } field)
+                    continue;
+
+                var key = ApiSurface.Key(controller, action);
+                inScope.Add(key);
+                // `[AllowAnonymous]` wins over any [Authorize] above it, so an action carrying it is open to
+                // everyone - worse than open to a child. Judging the roles alone would call that gated.
+                var open = action.GetCustomAttributes<AllowAnonymousAttribute>(inherit: false).Any();
+                if (!open && (classGated || HidesFromStudent(action.GetCustomAttributes<AuthorizeAttribute>(inherit: false))))
+                    continue;
+                reachable.Add(key);
+                if (!SolutionFieldExceptions.ContainsKey(key))
+                    offenders.Add($"{key} ({RouteOf(controller, action)}) hands out {field} to a student token");
+            }
+        }
+
+        // Self-protection against an empty green, measured on 2026-08-03 (30 actions in scope, 26 of them
+        // properly gated) and set just below it - a hand-guessed bound is either a red gate without a defect
+        // or one that never bites. The number is this high only because the scope includes inherited actions:
+        // declared-only it was 10 and left the whole exercise CRUD outside.
+        Assert.True(inScope.Count >= 25,
+            $"Too few actions with a solution field found ({inScope.Count}) - the reflection does not bite.");
+
+        // The exception list points at actions by `Controller.Action`. Rename one and the entry aims at
+        // nothing: the endpoint would be ungated *and* unnoticed. So every entry has to hit an action that is
+        // in scope *and* actually reachable by a student - an entry that has since been gated is dead weight
+        // that reads like a permitted leak (pattern: PatchSemanticsTests holds every switch against its table).
+        var stale = SolutionFieldExceptions.Keys.Where(k => !reachable.Contains(k)).ToList();
+        Assert.True(stale.Count == 0,
+            "Ausnahmen zeigen auf keine Action, die ein Lösungsfeld ungegated herausgibt (umbenannt oder erledigt?):\n"
+            + string.Join("\n", stale));
+
+        Assert.True(offenders.Count == 0,
+            "Ein Lösungsfeld darf kein Student-Token erreichen – die Action braucht [Authorize(Roles = …)] ohne Student:\n"
+            + string.Join("\n", offenders));
+    }
+
+    /// <summary>
+    /// Property names that mean "the solution" – deliberately short, and the shortness is measured, not
+    /// guessed. <c>Expected</c> is <b>not</b> among them: it is the reveal *after* the child answered
+    /// (<c>ItemOutcome</c>, <c>ReviewOutcome</c>, <c>ItemCheck</c>), which is the point of the feedback rather
+    /// than a leak – with it in the list the exception list grows from 4 to 16.
+    /// <para>
+    /// <b>The known limit of a name-based rule.</b> Measured on 2026-08-03: adding <c>Translation</c>,
+    /// <c>Back</c>, <c>Target</c> and <c>Reveal</c> raises the scope from 30 to 68 actions and costs
+    /// <b>10 further exceptions</b> – and they are the normal case, which is exactly the argument that
+    /// discarded the namespace-based draft of this gate: <c>PracticeCard.Reveal</c> and <c>TestItem.Reveal</c>
+    /// are what a card is *for*, <c>MissionStatus.Target</c> is a target count and not a translation, and
+    /// <c>ItemProgressResponse.Back</c> / <c>WordMasteryResponse.Translation</c> are the child's progress on
+    /// words it has already answered. The eleventh is a genuine open defect
+    /// (<c>TagsController.GetVocabulary</c> hands <c>TaggedVocabularyDto.Translation</c> to a child token,
+    /// backlog B-81) – so widening the list belongs to that story, where the gate can go green instead of
+    /// red on a defect nobody is fixing in this run. This is a deliberate hole in the net, not a forgotten one.
+    /// </para>
+    /// </summary>
+    private static readonly string[] SolutionPropertyNames = ["Answer", "Solution", "CorrectAnswer"];
+
+    /// <summary>
+    /// Deliberate exceptions to (e), each with its reason – the list is the decision, not a bypass. All four
+    /// are the same collision: on a remark, <c>Answer</c> is the reply text of a dev note, not the solution of
+    /// a card. A name-based rule cannot tell two meanings of one word apart, so they are named here.
+    /// <para>
+    /// The collision alone would also excuse handing a real solution to a child, so the second half matters:
+    /// the controller blanks the field for a student token at runtime (<c>MaySeeAnswers</c>). Both reasons are
+    /// written out, because an exception justified only by the name would survive the field turning into a
+    /// real secret.
+    /// </para>
+    /// </summary>
+    private static readonly Dictionary<string, string> SolutionFieldExceptions = new()
+    {
+        ["RemarksController.Create"] = "RemarkDto.Answer is a dev note's reply, and MaySeeAnswers blanks it for a student.",
+        ["RemarksController.GetOne"] = "RemarkDto.Answer is a dev note's reply, and MaySeeAnswers blanks it for a student.",
+        ["RemarksController.List"] = "RemarkDto.Answer is a dev note's reply, and MaySeeAnswers blanks it for a student.",
+        ["RemarksController.Update"] = "RemarkDto.Answer is a dev note's reply, and MaySeeAnswers blanks it for a student.",
+    };
+
+    /// <summary>
+    /// Does an attribute set restrict access to roles that exclude <see cref="Roles.Student"/>? A bare
+    /// <c>[Authorize]</c> does not: it only asks for *any* logged-in user, and a child is one.
+    /// </summary>
+    private static bool HidesFromStudent(IEnumerable<AuthorizeAttribute> attributes) =>
+        attributes.Any(a => a.Roles is { Length: > 0 } roles
+            && !roles.Split(',').Select(r => r.Trim()).Contains(Roles.Student, StringComparer.Ordinal));
+
+    /// <summary>
+    /// Walks the contract types of a payload (properties, collections, nesting) and returns the first
+    /// solution-named field as <c>Type.Property</c>, or <c>null</c>. Depth-bounded and cycle-safe, so a
+    /// self-referencing DTO cannot hang the guard.
+    /// </summary>
+    private static string? SolutionFieldIn(Type type, HashSet<Type> seen, int depth)
+    {
+        if (depth > 6)
+            return null;
+        foreach (var leaf in LeafTypes(type))
+        {
+            // Only our own contract types - walking into string/DateTime internals finds nothing and costs time.
+            if (leaf.Namespace?.StartsWith("Pugling.Contracts", StringComparison.Ordinal) != true)
+                continue;
+            if (!seen.Add(leaf))
+                continue;
+            foreach (var property in leaf.GetProperties())
+            {
+                if (SolutionPropertyNames.Contains(property.Name, StringComparer.Ordinal))
+                    return $"{leaf.Name}.{property.Name}";
+                if (SolutionFieldIn(property.PropertyType, seen, depth + 1) is { } nested)
+                    return nested;
+            }
+        }
+        return null;
+    }
 
     // ─────────────────────────────────────────────────────── Helpers
 

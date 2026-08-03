@@ -10,9 +10,12 @@ public static class ApiRoutes
     public const string V1 = "api/v{version:apiVersion}";
 
     // The three domain tiers (see docs/grundprinzip.md) are the first path segment after the version.
-    // The prefix is resource taxonomy, not the auth wall: actual access stays the method-level [Authorize].
-    // Individual routes (e.g. reports) are dual on purpose - a supervisor then reads a student-tagged route
-    // and vice versa.
+    // The prefix is resource taxonomy, not the auth wall: actual access stays the [Authorize] on the
+    // controller or action. Individual routes are dual on purpose where the resource itself is read by two
+    // tiers - the class test for instance, which the supervisor plans and the student practises on, so its
+    // reading actions sit under `supervisor/` and are open to the child.
+    // Dual is *not* an excuse for a tier-gated route on a foreign prefix: once only one tier may call it, the
+    // prefix has to follow (B-82).
 
     /// <summary>Tier 1 – Creator: create content/exercises (subject → chapter → exercise, stores, tags).</summary>
     public const string Creator = V1 + "/creator";

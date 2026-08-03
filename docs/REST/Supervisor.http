@@ -157,3 +157,9 @@ Content-Type: application/json
 # @name overview
 GET {{baseUrl}}/student/study-plans/{{planId}}/overview
 Authorization: Bearer {{authToken}}
+
+### Positions-Report lesen (Box/Beherrschung/Trefferquote — und die Lösung je Item)
+# Vater-only: jede Zeile trägt `answer`, auch für nie gezeigte Karten. Mit einem Sohn-Token → 403.
+# @name report
+GET {{baseUrl}}/supervisor/study-plans/{{planId}}/positions/{{positionId}}/report
+Authorization: Bearer {{authToken}}

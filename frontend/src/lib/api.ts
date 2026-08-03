@@ -464,8 +464,11 @@ export const api = {
   deletePosition: (planId: number, positionId: number) =>
     http<void>(`${V1}/supervisor/study-plans/${planId}/positions/${positionId}`, "DELETE"),
   // Lern-Report der Position: je Inhalt Box/Beherrschung + Test-Trefferquote („sitzt/sitzt nicht").
+  // Liegt unter `supervisor/…` und ist `[Authorize(Roles = Supervisor)]` + PlanOwnershipFilter: jede Zeile
+  // trägt die Lösung des Inhalts, auch für Karten, die das Kind noch nie gesehen hat. Ein Kind-Token bekommt
+  // darum 403 – das ist die Auswertung des Vaters, kein kind-lesbarer Lernstand (der steht darunter).
   positionReport: (planId: number, positionId: number) =>
-    http<PositionReport>(`${V1}/student/study-plans/${planId}/positions/${positionId}/report`),
+    http<PositionReport>(`${V1}/supervisor/study-plans/${planId}/positions/${positionId}/report`),
 
   // ---- Lernstand eines Kindes (plan-übergreifend) ----
   // Liegt unter `student/…`, ist aber für beide Rollen gedacht: die Controller sind nur `[Authorize]` +

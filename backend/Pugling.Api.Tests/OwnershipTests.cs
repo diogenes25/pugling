@@ -68,11 +68,19 @@ public class OwnershipTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
     {
         var father1 = await TestApi.FatherAsync(factory);
         var planId = await TestApi.CreateEmptyPlanAsync(father1);
+        var exerciseId = await TestApi.CreateVocabExerciseAsync(father1);
+        var (reportPlanId, positionId) = TestApi.SeedLeitnerPosition(factory, exerciseId, (int)TestStage.SelfAssess);
 
         var id2 = await RegisterFatherAsync("2222");
         var father2 = await TestApi.FatherAsync(factory, id2, "2222");
 
         Assert.Equal(HttpStatusCode.Forbidden, (await father2.GetAsync($"/api/v1/supervisor/study-plans/{planId}")).StatusCode);
+
+        // The position report moved here from the cross-child case below (B-82/R2): it is now gated to the
+        // supervisor role, so a *child* token is refused by the role wall before ownership is ever consulted.
+        // Only a supervisor without a supervision link for this plan still proves the PlanOwnershipFilter.
+        Assert.Equal(HttpStatusCode.Forbidden,
+            (await father2.GetAsync($"/api/v1/supervisor/study-plans/{reportPlanId}/positions/{positionId}/report")).StatusCode);
     }
 
     [Fact]
@@ -91,7 +99,8 @@ public class OwnershipTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
         Assert.Equal(HttpStatusCode.Forbidden, (await child1.GetAsync($"/api/v1/supervisor/study-plans/{planId}")).StatusCode);
         Assert.Equal(HttpStatusCode.Forbidden,
             (await child1.PostAsJsonAsync(TestApi.PracticeBase(planId, positionId), new { })).StatusCode);
-        Assert.Equal(HttpStatusCode.Forbidden,
-            (await child1.GetAsync($"/api/v1/student/study-plans/{planId}/positions/{positionId}/report")).StatusCode);
+        // The position report used to be checked here as a third route. It moved to
+        // FremderVater_KannPlanNichtSehen_403 (B-82/R2): gated to the supervisor role it answers *every* child
+        // with 403, so it would have stayed green while proving nothing about cross-child ownership.
     }
 }
