@@ -1,11 +1,15 @@
 ---
-tags: [typ/story, status/gegrillt, bereich/backend, rolle/student]
+tags: [typ/story, status/geschaetzt, bereich/backend, rolle/student]
 aliases: [Über die Tags kann ein Kind jede Übungs-Konfiguration lesen,
   Tag-Endpunkt gibt Lösungen preis, ConfigJson über Tags lesbar, Transkript erreichbar,
   ExerciseBrief traegt die rohe Config, Klausur gibt Loesungen preis]
-status: gegrillt
+status: geschaetzt
 prio: P1
 art: Defekt
+groesse: S
+wo: backend
+migration: nein
+vertragsbruch: ja
 quelle: B-75 (Review pugling-reviewer, Befund außerhalb des Diffs)
 ---
 
@@ -255,6 +259,96 @@ Begründung statt einer Leerstelle.
 - **Regressionstest, vorher rot**: ein Kind-Client taggt eine fremde Übung und liest die Liste; die Antwort
   enthält keine Lösung. Dazu derselbe Nachweis für die Klausur-Endpunkte.
 
+## Schätzung
+
+**S · backend · keine Migration · Vertragsbruch: ja.**
+
+**Größe S**, am Anker gemessen: der Umfang ist „`childId` aus dem Test-Pfad ziehen" (B-01) — zwei
+Vertragszeilen, ein Mapping, eine Query, ein Fehlercode, vier Testfälle. Kein `M`: es entsteht kein neuer
+Pfad wie der vokabel-basierte Batch im `MediaSelector`, und die Artefakte schreiben sich im Testlauf selbst.
+Kein `XS`: es ist ein Vertragsbruch mit Artefakt-Neubau, kein Textzusatz.
+
+**Keine Migration**, und das ist nachgesehen: **kein Entity wird angefasst.** E1 entfernt ein Feld aus einem
+Response-Record, E2 fügt eine Leseabfrage hinzu — `Exercise`, `Tag`, `ExerciseTag` und `PlanPosition` bleiben
+unverändert, `SchemaGuardTests` hat also nichts zu melden und die Kette bleibt bei 1.
+
+**Vertragsbruch: ja**, an einer Stelle, aber nicht additiv: `ExerciseBrief.Config` **verschwindet**. Der
+Bruch ist billiger als er klingt, weil er nachgezählt ist — kein Verbraucher liest das Feld (Ist-Stand 5).
+Betroffen sind vier Schemata im Dokument, weil drei DTOs das Record einbetten
+(`KlassenarbeitDetail`, `PracticeResponse`, `RepeatResponse`). Der zweite Vertragsteil ist **additiv**: der
+Code `exercise_not_assigned`.
+
+**`wo: backend`** — und das ist die Prüfung, nicht die Vermutung: das Frontend liest `config` an dieser
+Stelle nirgends (`VaterClassTests.tsx:205-209` nimmt `id`/`title`/`type`/`subjectName`), also ändert sich
+**keine** Frontend-Quelle. `contract.ts` wird neu erzeugt und muss durch `tsc` — das ist Artefakt, nicht
+Arbeit. Reviewer vor der Abnahme: `pugling-reviewer`.
+
+### Risiken
+
+**R1 · „Zugewiesen" darf nicht über die Tags definiert werden — sonst ist E2 zirkulär.**
+`LoadRelevantExercisesAsync`
+([KlassenarbeitenController.cs:320-326](../../backend/Pugling.Api/Controllers/Supervisor/KlassenarbeitenController.cs))
+löst die Übungen einer Klausur aus **direkten** Zuweisungen **und** aus verknüpften Tags auf. Nimmt die
+Prüfung aus E2 diese Menge, dann macht Markieren eine Übung zugewiesen, und zugewiesen macht sie markierbar
+— die Schranke fällt in sich zusammen. Gemeint sind **Plan-Positionen des Kindes plus direkte
+`KlassenarbeitExercise`-Zeilen**. Mechanisch klein, aber genau die Sorte Fehler, die grün testet, solange
+niemand den Rundweg probiert: der Testfall muss ihn ausdrücklich fahren.
+
+**R2 · Der Endpunkt ist zweitrollig, die Schranke gilt nur für eine.**
+`POST tags/{tagId}/exercises` wird von **Vater und Kind** benutzt (`CurrentRole()`, `TagsController.cs:25`).
+Eine Prüfung ohne `User.IsStudent()`-Zweig nähme dem Vater das Markieren fremden Materials — das er darf und
+im Web auch tut. Umgekehrt ist ein Lehrer-Konto (Creator ohne Betreuungsauftrag) hier gar nicht
+zugriffsberechtigt, weil `OwnsChildAsync` für ihn falsch ist; der Zweig ist also „Student vs. Supervisor",
+nicht „Kind vs. jeder andere".
+
+**R3 · Vier Schemata im Dokument, ein Record.** Weil `ExerciseBrief` in drei weiteren DTOs eingebettet ist,
+schlägt E1 an vier Stellen in `docs/openapi/v1.json` durch. Der `ContractDocumentTests`-Wächter und der
+`ClientRouteGuard` müssen mitziehen; der Client selbst ist nicht betroffen (`CreatorApi.cs:172` bekommt
+`TagResponse`).
+
+**R4 · `DocsCaptureTests` schreibt die Beispiele um.** `:782` schneidet den Tag-Endpunkt mit („Unbekannte
+Übungen taggen", der Fehlerfall). Nach E2 kommt ein zweiter Fehlerfall dazu, und die Beispiele unter
+`docs/api-examples/` ändern sich im Lauf — kein Fehler, aber ein Diff, den man erwarten muss statt ihn zu
+untersuchen.
+
+**R5 · Der Endpunkt-Abdeckungs-Wächter sieht keinen neuen Endpunkt**, also warnt er nicht. Es entsteht
+keine neue Action; die Abdeckung wächst nur um Fälle an vorhandenen. Wer sich auf das Tor verlässt, bekommt
+hier kein Signal.
+
+### Angriffsplan
+
+Backend zuerst; das Frontend hat an dieser Änderung nichts zu tun.
+
+1. **Vertrag**: `JsonElement Config` aus `ExerciseBrief` entfernen
+   ([Pugling.Contracts/Creator/ExerciseBrief.cs](../../backend/Pugling.Contracts/Creator/ExerciseBrief.cs)),
+   `ExerciseBriefMapping.From` um das Argument kürzen (`:27-28`) — damit ist `System.Text.Json` dort nicht
+   mehr nötig. Ein positionaler Record: das letzte Argument fällt weg, der Compiler zeigt jeden Aufrufer.
+2. **Fehlercode** additiv in `ApiErrors`: `exercise_not_assigned` (403).
+3. **Schranke** in `TagsController.TagExercises` (`:124-141`), **nur im Student-Zweig** (R2) und **ohne die
+   tag-verknüpften Klausur-Übungen** (R1).
+4. **Tests** (siehe Testweg), inklusive des Rundwegs aus R1.
+5. **Artefakte**: `docs/openapi/v1.json`, `openapi-examples.generated.json` und `docs/api-examples/`
+   schreiben die `DocsCaptureTests` im Lauf; `frontend/src/lib/contract.ts` über `npm run gen:contract`,
+   danach `npm run build` als Gegenprobe (es darf sich **keine** Frontend-Quelle ändern müssen).
+
+### Testweg
+
+- **Regressionstest, vorher rot** — in `AntiCheatTests` (dort liegen die serverseitigen Zusicherungen):
+  ein Kind-Client (`TestApi.ChildAsync(factory)`, existiert schon) taggt eine Übung und liest die Liste; die
+  Antwort trägt **kein** `config`-Feld. Heute trägt sie es.
+- **Beide Türen**, damit die Reparatur nicht halb belegt ist: derselbe Nachweis für
+  `GET class-tests/{id}`, `…/{id}/practice` und `…/repeat` — die drei laufen über dasselbe DTO, aber ein
+  Test, der nur den Tag-Weg prüft, würde einen Rückbau an den Klausur-Endpunkten nicht merken.
+- **E2 in `TagsRatingsTimetableTests`** (dort liegen die vorhandenen Tag-Fälle): Kind taggt eine **nicht**
+  zugewiesene Übung → `403 exercise_not_assigned`; Kind taggt seine **zugewiesene** → `200`; **Vater** taggt
+  dieselbe fremde Übung → `200` (R2).
+- **Der Rundweg aus R1**: eine Übung, die *nur* über einen tag-verknüpften Klausur-Eintrag „relevant" ist,
+  gilt **nicht** als zugewiesen.
+- **`/smoke-test`** plus der Live-Durchgang, der diese Story belegt hat (Rezept im Ist-Stand 3): Kind-Token,
+  fremde Übung taggen, Liste lesen — und diesmal steht keine Lösung darin. Das Transkript ist der Fall, auf
+  den es ankommt.
+- **E2E**: nicht nötig. Es ändert sich keine Oberfläche; `full-flow.spec.ts` muss grün bleiben.
+
 ## Offene Punkte
 
 Alle fünf sind in der Runde vom 2026-08-03 erledigt — durchgestrichen statt gelöscht, damit die Frage
@@ -308,3 +402,20 @@ nachlesbar bleibt.
   P3-Idee anzulegen, die in jeder Sichtung Aufmerksamkeit kostet. Ein offener Punkt wurde **aufgelöst statt
   beantwortet**: die Frage „`403` oder still weglassen" hat mit E1 keinen Gegenstand mehr.
   Abgeleitet und unwidersprochen: ein additiver Fehlercode `exercise_not_assigned` (403) für E2.
+- **2026-08-03** — geschätzt: **S · backend · keine Migration · Vertragsbruch ja**. Keine Migration, weil
+  **kein Entity angefasst wird** — E1 nimmt ein Feld aus einem Response-Record, E2 fügt eine Leseabfrage
+  hinzu. Der Bruch ist nachgezählt statt befürchtet: kein Verbraucher liest `Config`, betroffen sind aber
+  **vier** Schemata im Dokument, weil drei DTOs das Record einbetten (R3). `wo: backend` ist geprüft, nicht
+  vermutet: es ändert sich **keine** Frontend-Quelle, `contract.ts` ist Artefakt.
+  Die Schätzung hat zwei Dinge freigelegt, die im Grillen nicht sichtbar waren. **R1**: „zugewiesen" darf
+  nicht über die tag-verknüpften Klausur-Übungen definiert werden, sonst ist E2 **zirkulär** — Markieren
+  machte zugewiesen, zugewiesen machte markierbar, und die Schranke fiele in sich zusammen; gemeint sind
+  Plan-Positionen plus *direkte* Klausur-Zuweisungen, und der Rundweg braucht einen eigenen Testfall.
+  **R2**: der Endpunkt ist zweitrollig (Vater *und* Kind, `CurrentRole()`), die Schranke gilt also nur im
+  Student-Zweig — ohne ihn nähme sie dem Vater das Markieren fremden Materials, das er darf und im Web tut.
+  Beim Messen fiel ein Befund **außerhalb des Schnitts** auf: `POST tags/{tagId}/vocabulary` prüft ebenfalls
+  nur die Existenz, und `GET tags/{tagId}/vocabulary` gibt `Word` **und** `Translation` heraus — die Antwort
+  einer Vokabelkarte, die der Spielpfad auf getippten Stufen zurückhält. Von E1 (anderes DTO) und E2
+  (anderer Endpunkt) **nicht** gedeckt. Bewusst nicht eingefaltet, weil `gegrillt` abgeschlossen und die
+  Akzeptanzkriterien final sind: liegt als [B-81](B-81-vokabel-tags-geben-uebersetzungen-preis.md) auf
+  `idee` (Handhabung wie B-76 → B-79).
