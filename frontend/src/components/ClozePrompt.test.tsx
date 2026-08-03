@@ -14,10 +14,19 @@ describe("ClozePrompt", () => {
   it("hebt die gefragte Lücke hervor und lässt die übrigen neutral", () => {
     render(<ClozePrompt text={text} gapIndex={2} />);
 
+    // Genau eine ist die gefragte - sonst hätte das Kind wieder die Wahl. Die Zählung steht vorn:
+    // `getByLabelText` würde bei Mehrfachtreffer schon werfen und die Zusicherung damit verdecken.
+    expect(screen.queryAllByLabelText("gesuchte Lücke")).toHaveLength(1);
     expect(screen.getByLabelText("gesuchte Lücke").textContent).toBe("?");
     expect(screen.getByLabelText("Lücke 1").textContent).toBe("…");
-    // Genau eine ist die gefragte - sonst hätte das Kind wieder die Wahl.
-    expect(screen.queryAllByLabelText("gesuchte Lücke")).toHaveLength(1);
+  });
+
+  it("benennt die Lücken über eine Rolle, die Benennung erlaubt", () => {
+    render(<ClozePrompt text={text} gapIndex={1} />);
+
+    // Auf `role="generic"` (ein nacktes <span>) ist `aria-label` unzulässig; die Hilfstechnik verwürfe es,
+    // während der Test es über die Namensberechnung trotzdem fände. Darum die Rolle festnageln.
+    expect(screen.getAllByRole("img")).toHaveLength(2);
   });
 
   it("zeigt die rohe Vorlagensyntax nirgends", () => {
@@ -32,6 +41,9 @@ describe("ClozePrompt", () => {
 
     expect(container.textContent).toBe("to run – laufen");
     expect(screen.queryByLabelText("gesuchte Lücke")).toBeNull();
+    // Ohne Lücke darf die Lückentext-Typografie nicht greifen, sonst schrumpft jede Vokabelkarte mit.
+    expect(container.querySelector(".cloze-prompt")).toBeNull();
+    expect(container.querySelector(".word")).not.toBeNull();
   });
 
   it("fällt auf den unveränderten Text zurück, wenn der Platzhalter fehlt (Altbestand)", () => {
@@ -39,6 +51,23 @@ describe("ClozePrompt", () => {
     const { container } = render(<ClozePrompt text="Ein Satz ganz ohne Lücke." gapIndex={1} />);
 
     expect(container.textContent).toBe("Ein Satz ganz ohne Lücke.");
+  });
+
+  it("fällt auch zurück, wenn die gefragte Lücke im Text nicht vorkommt", () => {
+    // Der gefährlichere Altbestands-Fall: Platzhalter da, aber umnummeriert. Alle Lücken neutral zu
+    // zeichnen wäre schlimmer als die rohe Vorlage – dann rät das Kind ohne jeden Anhalt.
+    const { container } = render(<ClozePrompt text={text} gapIndex={7} />);
+
+    expect(container.textContent).toBe(text);
+    expect(screen.queryByLabelText("gesuchte Lücke")).toBeNull();
+  });
+
+  it("hebt einen doppelt gesetzten Platzhalter an beiden Stellen hervor", () => {
+    // `{{1}}` darf zweimal im Text stehen – `placeholderIndices` dedupliziert bewusst. Beide Stellen
+    // meinen dieselbe Lücke, also werden auch beide markiert.
+    render(<ClozePrompt text="{{1}} und nochmal {{1}}" gapIndex={1} />);
+
+    expect(screen.getAllByLabelText("gesuchte Lücke")).toHaveLength(2);
   });
 
   it("zerlegt den Text in Stücke und Lücken", () => {

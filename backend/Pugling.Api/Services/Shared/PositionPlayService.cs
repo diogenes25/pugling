@@ -103,11 +103,12 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
     }
 
     /// <summary>
-    /// The raw exercise config behind a position – what a type needs for facets it cannot derive from the
-    /// atoms (the cloze word bank). Empty when the navigation was not loaded; every type deserializes
-    /// defensively, so a missing config costs the facet and never an exception.
+    /// The raw exercise config – what a type needs for facets it cannot derive from the atoms (the cloze
+    /// word bank). Takes the <see cref="Exercise"/> itself, not the position: a <c>pos.Exercise?.…</c> would
+    /// swallow a forgotten <c>Include</c> and cost the word bank in silence, the same failure mode the
+    /// imagery rules forbid for <c>childId</c>. This way the compiler asks the question.
     /// </summary>
-    public static string ConfigOf(PlanPosition pos) => pos.Exercise?.ConfigJson ?? "";
+    public static string ConfigOf(Exercise exercise) => exercise.ConfigJson;
 
     /// <summary>
     /// The representation of a content atom permitted per stage as a card/test item (anti-cheat in one place):

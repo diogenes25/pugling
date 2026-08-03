@@ -29599,9 +29599,18 @@
           },
           "wasCorrect": {
             "type": "boolean"
+          },
+          "gapIndex": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
           }
         },
-        "description": "Evaluation of a single exam question \u2013 here the solution is disclosed."
+        "description": "Evaluation of a single exam question \u2013 here the solution is disclosed. Carries \u0060GapIndex\u0060 for the\nsame reason the question does: without it the review screen lists one identical line per gap, which is\nthe very confusion the exam just resolved."
       },
       "ItemProgressResponse": {
         "required": [

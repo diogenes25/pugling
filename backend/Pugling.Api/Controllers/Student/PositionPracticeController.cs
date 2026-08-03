@@ -100,11 +100,11 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
     /// (the server grades, never the frontend); display/self-assessment and the listening stage reveal
     /// it by design, or supply the audio source.
     /// </summary>
-    private static PracticeCard BuildCard(PlanPosition pos, IExerciseType type, int stage, bool typed,
+    private static PracticeCard BuildCard(Exercise exercise, IExerciseType type, int stage, bool typed,
         IReadOnlyList<ContentItem> items, int index)
     {
         var item = items[index];
-        var f = PositionPlayService.CardFacets(PositionPlayService.ConfigOf(pos), items, item, type, stage, typed);
+        var f = PositionPlayService.CardFacets(PositionPlayService.ConfigOf(exercise), items, item, type, stage, typed);
         return new PracticeCard(index, stage, type.Key, item.Prompt,
             f.Hint, f.AnswerLength, f.Reveal, f.Choices, f.AudioUrl, f.ImageUrl, f.ImageAlt, f.GapIndex);
     }
@@ -136,7 +136,7 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
 
         // The frozen order; skip items removed since the start (item CRUD).
         return session.Order.Where(i => i >= 0 && i < items.Count)
-            .Select(i => BuildCard(pos, type, stage, typed, items, i)).ToList();
+            .Select(i => BuildCard(pos.Exercise, type, stage, typed, items, i)).ToList();
     }
 
     /// <summary>
@@ -184,7 +184,7 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         // Only the image the card actually shows can be re-chosen - and the stage comes from the schedule as
         // everywhere else, never from the client.
         var stage = PositionPlayService.StageForDay(pos, pos.StudyPlan, session.Day, type);
-        if (PositionPlayService.CardFacets(PositionPlayService.ConfigOf(pos), items, item, type, stage, type.IsTypedStage(stage)).ImageUrl is null)
+        if (PositionPlayService.CardFacets(PositionPlayService.ConfigOf(pos.Exercise), items, item, type, stage, type.IsTypedStage(stage)).ImageUrl is null)
             return this.ProblemWithCode(ApiErrors.MediaNotOnCard, "This card does not show an image.");
 
         var picked = await selector.ReshuffleForItemAsync(pos.StudyPlan.ChildId, itemId, vocabId, ct: ct);
@@ -220,7 +220,7 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         if (cursor != session.Cursor) { session.Cursor = cursor; await db.SaveChangesAsync(ct); }
         if (cursor >= session.Order.Count) return new NextResponse(null, true, cursor, session.Order.Count);
 
-        var card = BuildCard(pos, type, stage, typed, items, session.Order[cursor]);
+        var card = BuildCard(pos.Exercise, type, stage, typed, items, session.Order[cursor]);
         return new NextResponse(card, false, cursor, session.Order.Count);
     }
 
@@ -348,7 +348,7 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
             await gamification.EvaluateAndAwardAsync(plan.ChildId, session.Day, ct);
 
         var done = session.Cursor >= session.Order.Count;
-        var next = done ? null : BuildCard(pos, type, stage, typed, items, session.Order[session.Cursor]);
+        var next = done ? null : BuildCard(pos.Exercise, type, stage, typed, items, session.Order[session.Cursor]);
         return new ReviewOutcome(wasCorrect, item.Answer, awarded, prog.Box, prog.DueOn, combo,
             comboBonus, speedBonus, next, done);
     }

@@ -57,3 +57,11 @@ Freeze-Verhalten.
 ## Verlauf
 
 - **2026-07-30** — geerntet aus dem Grill-Protokoll vom selben Tag, Stufe `geschaetzt` übernommen.
+- **2026-08-02** — **die Schätzung trägt nicht mehr.** [B-76](B-76-lueckentext-karte-ohne-luecke.md)
+  (Entscheidung E6, Commit `1125ee6`) hat `TranslationWordBank` zu einer **getippten** Stufe gemacht, damit
+  die Wortbank überhaupt ankommt. Damit ist **keine** Cloze-Stufe mehr untypisiert — und die Anti-Cheat-Regel
+  „Bild nur auf nicht-getippten Stufen" lässt für den Lückentext keine bebilderbare Stufe übrig. Die
+  „Nebenbedingung" oben (Bild auf genau einer Stufe) ist damit gegenstandslos, die Story in dieser Form
+  unbaubar. Vor dem Bauen neu zu entscheiden: entweder eine eigene Bild-Stufe für den Lückentext, oder die
+  Regel für Lückensätze begründet lockern (das Motiv zeigt dort den *Satz*, nicht die einzelne Lösung) —
+  oder verwerfen. Gefunden vom `pugling-reviewer` beim Review zu B-76, nicht vom Nutzer entschieden.

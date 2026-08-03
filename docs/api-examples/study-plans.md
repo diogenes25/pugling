@@ -435,7 +435,8 @@ Response — `HTTP 200`:
       "prompt": "hello",
       "expected": "hallo",
       "givenAnswer": "hallo",
-      "wasCorrect": true
+      "wasCorrect": true,
+      "gapIndex": null
     }
   ]
 }

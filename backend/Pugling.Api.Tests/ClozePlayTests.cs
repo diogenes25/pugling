@@ -27,7 +27,9 @@ public class ClozePlayTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
         return await TestApi.IdAsync(await father.PostAsJsonAsync(
             $"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/cloze", new
             {
-                title = "Lückentext: A short dialogue",
+                // Deliberately NOT the seeded title: the seed test below looks its exercise up by name, and
+                // a fixture sharing that name would make the lookup depend on the query plan.
+                title = TestApi.UniqueName("Lückentext (Fixture)"),
                 orderIndex = 1,
                 rewardPoints = 15,
                 config = new
@@ -84,8 +86,9 @@ public class ClozePlayTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
         foreach (var card in withBank.EnumerateArray())
         {
             var choices = card.GetProperty("choices").EnumerateArray().Select(c => c.GetString()).ToList();
-            // The whole pool, unshortened (E4): a shrinking pool would give away the remaining gaps.
-            Assert.Equal(["Hello", "Hi", "fine", "good"], choices);
+            // The whole pool, unshortened (E4) - but sorted, so the authoring order (gap by gap) cannot
+            // give the mapping away through position alone.
+            Assert.Equal(["fine", "good", "Hello", "Hi"], choices);
             // R1: the stage is typed, so the solution stays behind - otherwise the buttons would be decoration.
             JsonAssert.Null(card, "reveal");
         }
@@ -93,6 +96,40 @@ public class ClozePlayTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
         var (freePlan, freePos) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)ClozeStage.FreeText);
         var freeText = await CardsAsync(child, freePlan, freePos);
         Assert.All(freeText.EnumerateArray(), card => JsonAssert.Null(card, "choices"));
+    }
+
+    // ---- E6: the word-bank stage is graded by the server ---- ----
+
+    /// <summary>
+    /// The behaviour change behind the visible one: the word-bank stage used to be self-assessment, so a
+    /// child clicking "I knew it" advanced without ever matching a word. Now the pick is an answer and the
+    /// server judges it. That is what the seeded daily duty hangs on – and what no test watched before.
+    /// </summary>
+    [Fact]
+    public async Task Wortbankstufe_WirdVomServerBewertet_NichtSelbstEingeschaetzt()
+    {
+        var father = await TestApi.FatherAsync(_factory);
+        var exerciseId = await CreateClozeAsync(father);
+        var (planId, positionId) =
+            TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)ClozeStage.TranslationWordBank);
+        var child = await TestApi.ChildAsync(_factory);
+        var sessionId = await TestApi.StartPositionSessionAsync(child, planId, positionId);
+
+        // The right word out of the bank counts, and the alternative counts too (B-65).
+        var right = await (await TestApi.PositionReviewAsync(child, planId, positionId, sessionId, 0, givenAnswer: "Hi"))
+            .Content.ReadFromJsonAsync<JsonElement>();
+        JsonAssert.True(right, "wasCorrect");
+        Assert.Equal(2, right.GetProperty("box").GetInt32());   // graded => the Leitner box moves
+
+        var wrong = await (await TestApi.PositionReviewAsync(child, planId, positionId, sessionId, 1, givenAnswer: "Hello"))
+            .Content.ReadFromJsonAsync<JsonElement>();
+        JsonAssert.False(wrong, "wasCorrect");                   // "Hello" belongs to gap 1, not gap 2
+        Assert.Equal("fine", wrong.GetProperty("expected").GetString());
+
+        // And self-assessment no longer buys anything: without a typed answer the stage grades it wrong.
+        var claimed = await (await TestApi.PositionReviewAsync(child, planId, positionId, sessionId, 1, wasKnown: true))
+            .Content.ReadFromJsonAsync<JsonElement>();
+        JsonAssert.False(claimed, "wasCorrect");
     }
 
     // ---- E5: the exam pulls along ---- ----
@@ -166,7 +203,7 @@ public class ClozePlayTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
         Assert.Equal(2, cards.GetArrayLength());
         Assert.Equal([1, 2], cards.EnumerateArray().Select(c => c.GetProperty("gapIndex").GetInt32()).Order());
         Assert.All(cards.EnumerateArray(), c =>
-            Assert.Equal(["Hello", "Hi", "fine", "good", "well"],
+            Assert.Equal(["fine", "good", "Hello", "Hi", "well"],
                 c.GetProperty("choices").EnumerateArray().Select(x => x.GetString())));
     }
 }

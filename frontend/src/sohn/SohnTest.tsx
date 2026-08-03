@@ -222,7 +222,9 @@ function TestResult({ result, skin, onHome, onRetry }: {
           {result.items.map((o) => (
             <div className="row" key={o.itemIndex} style={{ padding: "4px 0" }}>
               <span>{o.wasCorrect ? "✅" : "❌"}</span>
-              <b>{o.prompt}</b>
+              {/* Auch hier die Lücke ausweisen: sonst stehen beim Lückentext lauter gleiche Zeilen –
+                  ausgerechnet auf dem Bildschirm, auf dem das Kind seine Fehler nachliest. */}
+              <ClozePrompt text={o.prompt} gapIndex={o.gapIndex} className="test-prompt" />
               <span className="sub" style={{ marginLeft: "auto" }}>{o.expected}</span>
             </div>
           ))}

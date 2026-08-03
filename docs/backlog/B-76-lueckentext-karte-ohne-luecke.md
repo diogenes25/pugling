@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/backend, bereich/frontend, rolle/student]
+tags: [typ/story, status/abgenommen, bereich/backend, bereich/frontend, rolle/student]
 aliases: [Lückentext ohne Lücke, Welche Lücke ist gemeint, Wortbank kommt nie an]
-status: in-arbeit
+status: abgenommen
 prio: P1
 art: Defekt
 groesse: M
@@ -200,9 +200,22 @@ bewertet die Antwort.
 entschieden, am 2026-08-02, nachdem die Schätzung die Lücke als R1 sichtbar gemacht hatte. Fachlich ist es
 dieselbe Begründung wie beim Multiple-Choice der Vokabel: Auswählen **ist** eine prüfbare Antwort.
 
-*Kosten.* Die geseedete Wochenpflicht wechselt von „umdrehen und selbst bewerten" zu „Wort auswählen" —
+*Kosten.* Die geseedete **Tagespflicht** wechselt von „umdrehen und selbst bewerten" zu „Wort auswählen" —
 eine Verhaltensänderung an laufenden Daten. Kein Test hat sie bemerkt (643 grün vor wie nach), was R4
 bestätigt: den Lückentext hat nie jemand gespielt.
+(Die Wortbank-Position ist `Cadence.Daily`, `Seed.cs:349-355`; die Wochenpflicht daneben ist die
+Freitext-Position und war schon vorher getippt. Erst im Review richtiggestellt.)
+
+*Nebenwirkung, die niemand geplant hat und die gut ist:* Eine Wortbank-Position mit
+`RequireTypedTest = true` kann ihr Pflichtziel jetzt überhaupt erreichen. Vorher schloss
+`PositionProgressService.cs:119` das dauerhaft aus, weil die Stufe nicht als bewertet galt.
+
+**Nachtrag zur Reihenfolge (Review, 2026-08-02).** E4 sagt „unverändert" und meinte den **Inhalt** — nicht
+kürzen, nicht schrumpfen. Über die *Reihenfolge* war damit nichts entschieden, und die verrät: Autoren
+pflegen die Bank lückenweise, im Seed stehen zu Lücke 1 deren eigene Lösungen auf Platz 1–2. Die Bank kommt
+darum **alphabetisch** (case-insensitiv), stabil über alle Karten einer Übung. Eine Rotation wie beim
+Vokabeltyp wurde verworfen: Sie verschiebt bei Lücke 1 um 0 und ließe die Undichtigkeit genau dort stehen,
+wo sie am meisten hilft. Vom Nutzer entschieden.
 
 ## Akzeptanzkriterien
 
@@ -338,3 +351,28 @@ Backend zuerst — das Frontend hängt an der API.
   `gapIndex: 1` bzw. `2`, `choices` mit allen fünf Wörtern, `reveal: null`.
   **Offen für die Abnahme:** der `pugling-reviewer` — die Sitzungsregel „keine Agenten ohne Auftrag" steht
   dem entgegen, also von Hand gegengelesen und hier vermerkt statt still übergangen.
+- **2026-08-02** — `pugling-reviewer` **und** `frontend-reviewer` gelaufen (`wo: beides`), beide mit
+  Befunden. Der schwerste war meiner: **jede Vokabelkarte im Sohn-Web schrumpfte von 30 px auf 22 px.**
+  `ClozePrompt` hängte die Lückentext-Klasse **immer** an, und da `.word` seit dem Commit keinen anderen
+  Verwender mehr hatte, war `.fcard .word` bei gleicher Spezifität vollständig unerreichbar — die Absicht
+  stand nur im CSS-Kommentar. Die Klasse kommt jetzt nur noch, wenn wirklich eine Lücke gerendert wird; ein
+  Testfall nagelt das fest, weil die Suite es nicht sehen konnte.
+  Weiter behoben: `aria-label` auf einem nackten `<span>` ist laut ARIA unzulässig und wird von
+  Screenreadern verworfen (jetzt `role="img"`, mit eigenem Test — der alte Fall war grün, ohne dass eine
+  Hilfstechnik etwas gehört hätte); ein `gapIndex` **ohne** passenden Platzhalter hob gar nichts hervor
+  statt zurückzufallen; `{{n}}` stand weiter in der Klausur-Auswertung, dem Bildschirm, auf dem das Kind
+  seine Fehler nachliest (`ItemOutcome` trägt jetzt additiv `GapIndex`); der Testmodus des Vaters zeigte
+  die rohe Vorlage; die Fixture trug den **Seed-Titel**, wodurch der Seed-Test vom Query-Plan abhing;
+  `ConfigOf` nimmt jetzt die `Exercise` statt der Position, damit ein vergessenes `Include` nicht still die
+  Wortbank kostet. Dazu der Test, der fehlte: dass auf der Wortbank-Stufe wirklich der **Server** bewertet
+  (E6) — geprüft war bis dahin nur die Ansicht.
+  Zwei Befunde gingen nach außen: die Reihenfolge der Wortbank (siehe Nachtrag zu E6) und die Erkenntnis,
+  dass E6 den Stories [B-03](B-03-lueckensaetze-mit-bild.md) und [B-06](B-06-cloze-preview-bild.md) den
+  Boden entzieht — dort je als Verlaufszeile vermerkt.
+  Stand danach: **644 Backend-Tests grün** (6 in `ClozePlayTests`), **81 Frontend-Tests grün**
+  (8 in `ClozePrompt.test.tsx`), `full-flow.spec.ts` grün, `tsc --noEmit` und `dotnet format` sauber.
+- **2026-08-02** — **abgenommen.** Alle fünf Akzeptanzkriterien belegt, beide Reviewer gelaufen und ihre
+  Befunde entweder behoben oder als eigene Story bzw. Verlaufszeile ausgelagert
+  ([B-79](B-79-position-stufe-unvalidiert.md), B-03, B-06). Commits `1125ee6` (Bau) und der Review-Nachlauf.
+  Verifikation: 644 Backend- und 81 Frontend-Tests grün, `full-flow.spec.ts` grün, `/smoke-test` grün, der
+  geseedete Lückentext live gegen `localhost:5280` gespielt.

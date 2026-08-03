@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { ApiError, api, errorMessage } from "../lib/api";
 import { LetterBoxes } from "../components/LetterBoxes";
 import { AudioButton } from "../components/AudioButton";
+import { ClozePrompt } from "../components/ClozePrompt";
 import { Modal } from "../components/Modal";
 import type { ExercisePreviewAnswer, ExercisePreviewData, ExercisePreviewResult } from "../lib/types";
 
@@ -97,7 +98,14 @@ export function ExercisePreviewModal({ exerciseId, title, onClose }: {
 
         {data && !result && (
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            {isCloze && <div className="card" style={{ background: "var(--surface-2, transparent)" }}><b>{data.items[0].prompt}</b></div>}
+            {/* Der Trägertext einmal oben – ohne die rohe Vorlagensyntax, der Vater soll sehen, was das
+                Kind sieht. Ohne `gapIndex` bleiben alle Lücken neutral; welche gefragt ist, sagt die Zeile
+                darunter je Aufgabe. */}
+            {isCloze && (
+              <div className="card" style={{ background: "var(--surface-2, transparent)" }}>
+                <ClozePrompt text={data.items[0].prompt} className="test-prompt" />
+              </div>
+            )}
             <p className="muted" style={{ margin: 0 }}>
               {data.typed ? "Tippe deine Antwort – bewertet wird wie beim Kind." : "Überlege, dann aufdecken und ehrlich bewerten."}
             </p>

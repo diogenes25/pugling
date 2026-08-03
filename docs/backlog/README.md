@@ -277,7 +277,6 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| [B-76](B-76-lueckentext-karte-ohne-luecke.md) | Der Lückentext sagt dem Kind nicht, welche Lücke gemeint ist | Defekt | `in-arbeit` | P1 | M | beides | — |
 | [B-75](B-75-lese-hoerverstehen-ohne-inhalt.md) | Lese- und Hörverstehen kommen ohne ihren Inhalt beim Kind an | Defekt | `geschaetzt` | P1 | M | beides | Vertrag |
 | [B-77](B-77-liste-menge-als-folge.md) | Der Übungs-Pfad bewertet eine ungeordnete Liste als Folge | Defekt | `idee` | P1 | — | — | — |
 | [B-07](B-07-db-umbau-restetappen.md) | DB-Struktur-Umbau: der offene Betriebsschritt | Aufräumen | `geschaetzt` | P1 | XS | backend | — |
@@ -286,6 +285,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-73](B-73-auswahl-feld-ohne-wirkung.md) | Das Auswahl-Feld verspricht Multiple-Choice, das Kind bekommt Freitext | Defekt | `ausformuliert` | P2 | — | — | — |
 | [B-70](B-70-selbsteinschaetzung-nur-primaerloesung.md) | Die Selbsteinschätzung zeigt nur die primäre Übersetzung | Defekt | `idee` | P2 | — | — | — |
 | [B-78](B-78-birkenbihl-dekodierung-erreicht-kind-nicht.md) | Die Birkenbihl-Dekodierung erreicht das Kind nicht | Defekt | `idee` | P2 | — | — | — |
+| [B-79](B-79-position-stufe-unvalidiert.md) | Die Stufe einer Position wird gegen nichts geprüft | Defekt | `idee` | P2 | — | — | — |
 | [B-24](B-24-frontend-unknown-field.md) | Frontend gegen `unknown_field` durchspielen | Frage | `idee` | P2 | — | — | — |
 | [B-31](B-31-geraete-vorbehalt-klang.md) | Geräte-Vorbehalt: Klang und Haptik am echten Handy gegenhören | Frage | `idee` | P2 | — | — | — |
 | [B-48](B-48-anonyme-registrierung-produktion.md) | Anonyme Registrierung ist auch in Produktion offen | Frage | `idee` | P2 | — | — | — |
@@ -341,7 +341,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-06](B-06-cloze-preview-bild.md) | Cloze-Vorschau kann kein Bild zeigen | Wunsch | `geschaetzt` | P6 | XS | backend | — |
 
 <details>
-<summary>Abgenommen (13)</summary>
+<summary>Abgenommen (14)</summary>
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -358,6 +358,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-54](B-54-objectivecard-schreib-primitive.md) | Fünf Knöpfe im Vater-Web gehen an den Schreib-Primitiven vorbei | Defekt | `abgenommen` | P2 | S | frontend | — |
 | [B-65](B-65-vokabel-mehrere-uebersetzungen.md) | Eine Vokabel mit zwei richtigen Übersetzungen wertet eine davon falsch | Defekt | `abgenommen` | P1 | M | beides | Migration |
 | [B-69](B-69-wiederhol-felder-alternativen.md) | Kommagetrennte Sammelfelder: einer davon nimmt gar keine zweite Alternative an | Defekt | `abgenommen` | P2 | M | frontend | — |
+| [B-76](B-76-lueckentext-karte-ohne-luecke.md) | Der Lückentext sagt dem Kind nicht, welche Lücke gemeint ist | Defekt | `abgenommen` | P1 | M | beides | — |
 
 </details>
 

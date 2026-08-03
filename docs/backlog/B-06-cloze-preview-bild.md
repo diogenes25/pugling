@@ -43,3 +43,9 @@ B-03 ergänzte Bild also nie zu sehen.
 ## Verlauf
 
 - **2026-07-30** — geerntet aus dem Grill-Protokoll vom selben Tag, Stufe `geschaetzt` übernommen.
+- **2026-08-02** — **Akzeptanzkriterium 1 ist unerfüllbar geworden.** Es verlangt eine „nicht-getippte Stufe
+  (`TranslationWordBank`)"; [B-76](B-76-lueckentext-karte-ohne-luecke.md) hat genau die getippt gemacht
+  (Entscheidung E6, Commit `1125ee6`), damit die Wortbank ankommt. Der Lückentext hat jetzt **keine**
+  untypisierte Stufe mehr. Die Story hängt damit an derselben Entscheidung wie
+  [B-03](B-03-lueckensaetze-mit-bild.md) und wird mit ihr zusammen neu bewertet — sie war ohnehin nur deren
+  Sichtbarmachung für den Vater. Gefunden vom `pugling-reviewer` beim Review zu B-76.

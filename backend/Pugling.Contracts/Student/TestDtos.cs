@@ -14,7 +14,7 @@ namespace Pugling.Contracts.Student;
 /// </para>
 /// </summary>
 public record TestItem(int ItemIndex, string Prompt, int Stage, string? Reveal, int? AnswerLength, string? Hint,
-    IReadOnlyList<string>? Choices, string? AudioUrl, int? GapIndex);
+    IReadOnlyList<string>? Choices, string? AudioUrl, int? GapIndex = null);
 
 /// <summary>
 /// Response of the test start. Class-test mode is strictly server-driven: <b>no</b> questions are sent
@@ -45,8 +45,13 @@ public record AnswerDto(int ItemIndex, string? GivenAnswer, bool? WasKnown);
 /// <summary>Bulk submission of the test (alternative to individual submission via the <c>answer</c> endpoint).</summary>
 public record SubmitDto(List<AnswerDto>? Answers);
 
-/// <summary>Evaluation of a single exam question – here the solution is disclosed.</summary>
-public record ItemOutcome(int ItemIndex, string Prompt, string Expected, string? GivenAnswer, bool WasCorrect);
+/// <summary>
+/// Evaluation of a single exam question – here the solution is disclosed. Carries <c>GapIndex</c> for the
+/// same reason the question does: without it the review screen lists one identical line per gap, which is
+/// the very confusion the exam just resolved.
+/// </summary>
+public record ItemOutcome(int ItemIndex, string Prompt, string Expected, string? GivenAnswer, bool WasCorrect,
+    int? GapIndex = null);
 
 /// <summary>Overall result of the class test incl. pass threshold.</summary>
 public record SubmitResponse(int AttemptId, int Stage, int TotalItems, int CorrectItems,

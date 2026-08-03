@@ -132,12 +132,19 @@ public sealed class ClozeExerciseType : ExerciseTypeBase
     /// the vocabulary pattern of "solution plus three distractors": the pool is curated by the author, and
     /// trimming it would silently discard that work. Nor does it shrink as gaps get filled – tracking
     /// consumption would need session state <b>and</b> give the last gap away for free.
+    /// <para>
+    /// Sorted, though. Authors maintain the bank gap by gap, so its natural order puts the first gap's
+    /// solutions at the front – the <i>position</i> would then give away the mapping the stage is meant to
+    /// ask about. Alphabetical rather than rotated: it is deterministic, it is the same on every card of the
+    /// exercise (a pool that reshuffles per card is unreadable), and unlike a rotation it also breaks the
+    /// correlation for the very first gap.
+    /// </para>
     /// </summary>
     public override IReadOnlyList<string>? Choices(string configJson, IReadOnlyList<ContentItem> items, ContentItem item, int stage)
     {
         if ((ClozeStage)stage != ClozeStage.TranslationWordBank) return null;
         var bank = Deserialize<ClozeConfig>(configJson).WordBank;
-        return bank is { Count: > 0 } ? bank : null;
+        return bank is { Count: > 0 } ? [.. bank.OrderBy(w => w, StringComparer.OrdinalIgnoreCase)] : null;
     }
 
     /// <inheritdoc/>
