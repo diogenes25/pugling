@@ -1,10 +1,14 @@
 ---
-tags: [typ/story, status/ausformuliert, bereich/backend, rolle/student]
+tags: [typ/story, status/geschaetzt, bereich/backend, rolle/student]
 aliases: [Vokabel-Tag gibt Übersetzungen preis, TaggedVocabularyDto trägt die Lösung,
   Kind liest jede Übersetzung des Stores, Tür D]
-status: ausformuliert
+status: geschaetzt
 prio: P1
 art: Defekt
+groesse: S
+wo: backend
+migration: nein
+vertragsbruch: nein
 quelle: B-80 (Schätzung, Befund außerhalb des Schnitts)
 ---
 
@@ -127,8 +131,21 @@ beschränkt den *Übungs*-Schreibpfad (andere Aktion, `:166`). Nicht durch B-82 
 
 ## Offene Punkte
 
-Fünf Fragen, jede mit Empfehlung. Die ersten drei sind die eigentliche Grill-Runde; 4 und 5 sind
-Folgeentscheidungen.
+Alle fünf sind in der Runde vom 2026-08-03 erledigt — durchgestrichen statt gelöscht, damit die Frage
+nachlesbar bleibt. Jede Empfehlung wurde übernommen; **eine Frage ist dabei weggefallen**, weil ein Fakt sie
+entschieden hat (Punkt 2), und **eine ist dazugekommen** (E2, der Begriff „zugewiesene Vokabel").
+
+1. ~~**Welcher Schnitt: Lesepfad gaten, Schreibpfad begrenzen — oder beides?**~~ → **E1**, beides.
+2. ~~**Heben oder `Translation` aus dem DTO nehmen?**~~ → **entschieden durch einen Fakt statt durch eine
+   Abwägung**: `Key` ist `{quelle}_{wort}_{ziel}_{übersetzung}` als Slug (`VocabKey.cs:21-27`), enthält die
+   Übersetzung also ein zweites Mal. Feld-Entfernen schließt nichts, solange `Key` bleibt — und ohne `Key`
+   bliebe vom DTO die `Id`. Also **heben** (E3).
+3. ~~**Zieht das Ebenen-Präfix mit?**~~ → **E4**, nein.
+4. ~~**Namensliste des Tors um `Translation` erweitern?**~~ → **E6**, ja; die Kosten sind für `Translation`
+   **allein** neu gemessen (eine Ausnahme), nicht aus der Vier-Namen-Messung übernommen.
+5. ~~**Bekommt das Aufzählungs-Orakel eine eigene Zeile?**~~ → **E5**, ja, als Reihenfolge-Anforderung.
+
+Die ursprüngliche Fassung der fünf Fragen, mit den Empfehlungen, die in die Runde gingen:
 
 1. **Welcher Schnitt: Lesepfad gaten, Schreibpfad begrenzen — oder beides?**
    *Empfehlung: **beides**, und zwar in dieser Reihenfolge der Begründung.* Der Schreibpfad ist die
@@ -159,20 +176,257 @@ Folgeentscheidungen.
    markieren), wird aber zu einem, sobald Punkt 1 umgesetzt ist. Ohne die Zeile baut jemand die Prüfung
    hinter die Existenzprüfung und tauscht ein Leck gegen ein Orakel — B-80s Reviewer hat genau das gefunden.
 
-## Akzeptanzkriterien (Entwurf)
+## Entscheidungen
+
+Aus der Grill-Runde vom 2026-08-03. Sechs Entscheidungen; **E2 ist im Gespräch entstanden** (der Begriff war
+vorher nicht definiert), **E3 hat ein Fakt entschieden** statt eine Abwägung.
+
+### E1 · Beide Pfade werden geschlossen, nicht einer
+
+Der Schreibpfad begrenzt einen Studenten auf zugewiesenes Material (E2), **und** der Lesepfad wird
+rollen-gegatet (E3).
+
+*Begründung.* Jeder Pfad allein genügte theoretisch — gate man das Lesen, ist das Markieren fremder Vokabeln
+harmlos; begrenzt man das Markieren, ist das Lesen harmlos. Beide zu nehmen ist trotzdem richtig, weil die
+Einzel-Varianten je eine *stille* Abhängigkeit hätten: nur-Schreibpfad hängt daran, dass der Lesepfad nie mehr
+zeigt als das Tag enthält — und der Vater darf fremdes Material ins Tag des Kindes legen (B-80/E3), das Kind
+läse also genau das. Nur-Lesepfad hängt daran, dass niemand eine dritte Sicht auf `VocabularyTag` baut; schon
+`TagResponse.VocabularyCount` ist eine.
+
+*Kosten.* Zwei Änderungen statt einer, ein neuer Fehlercode (E5), zwei Regressionstests statt einem.
+
+### E2 · „Dem Kind zugewiesene Vokabel" heißt: über `ExerciseItem` einer zugewiesenen Übung
+
+Die Kette ist `Vocabulary ← ExerciseItem → Exercise → (PlanPosition | Klassenarbeit) des Kindes`.
+Umgesetzt wird das als **ein Join vor** `AssignedExerciseIdsAsync`
+([TagsController.cs:129](../../backend/Pugling.Api/Controllers/Creator/TagsController.cs)), nicht als zweiter
+Helfer.
+
+*Begründung.* Eine Vokabel ist einem Kind **nie direkt** zugewiesen — die Beziehung existiert im Modell nicht,
+sie ist abgeleitet, und darum musste der Begriff überhaupt entschieden werden. Dieselbe Definition von
+„zugewiesen" wie B-80/E2 zu benutzen ist der Kern: zwei Definitionen desselben Wortes laufen auseinander, und
+dann gilt die veraltete (die Erfahrung dieses Repos mit `Father`/`Adult` und Lernziel/`KeyResult`). Die
+Alternativen sind ausdrücklich verworfen: „zusätzlich alles schon Beantwortete" macht die erlaubte Menge zu
+einer *wachsenden* Funktion von `ItemProgress`, „nur schon Beantwortetes" verhindert genau den sinnvollen Fall
+(ein Kind merkt sich ein schwieriges Wort **vor** der Antwort vor) und wäre die zweite Definition.
+
+*Kosten.* Eine **benannte Lücke**: Birkenbihls `DecodedWord.VocabularyId`
+([ExerciseAuthoringDtos.cs:76](../../backend/Pugling.Contracts/Creator/ExerciseAuthoringDtos.cs)) verweist aus
+der **Config** auf den Store, ohne `ExerciseItem`-Zeile — per SQL nicht joinbar. Ein Kind könnte ein
+dekodiertes Wort nicht markieren. Inert, solange keine Sohn-Oberfläche Vokabeln markiert (heute keine, siehe
+Ist-Stand 5); wird sie gebaut, ist das eine eigene Zeile, keine Änderung an dieser Regel.
+
+### E3 · Das Lese-Gate ist ein **Attribut** mit beiden Erwachsenen-Rollen
+
+`[Authorize(Roles = Roles.AnyAdult)]` an der `GetVocabulary`-Action, mit einer neuen Konstante
+`AnyAdult = "Creator,Supervisor"` in [AuthAccess.cs](../../backend/Pugling.Api/Auth/AuthAccess.cs). `Translation`
+bleibt unverändert im Vertrag.
+
+*Begründung.* Zwei Fakten haben das entschieden, nicht eine Abwägung. **Erstens**: `Key` ist
+`{quelle}_{wort}_{ziel}_{übersetzung}` als Slug (`VocabKey.cs:21-27`) — nur `Translation` zu entfernen
+(B-80/E1-Stil) schließt nichts, und ohne `Key` bliebe vom DTO die `Id`. **Zweitens**: das in B-82 gebaute
+Lösungsfeld-Tor liest **Attribute**, nicht Rumpf-Logik — eine Inline-Prüfung `if (User.IsStudent())` (das
+Muster der Student-Endpunkte) machte es rot und kostete eine namentliche Ausnahme, also genau die Verrottung,
+gegen die es gebaut wurde. Beide Erwachsenen-Arten behalten den Zugriff, weil der Controller unter `creator/`
+liegt und bewusst *jeden* Erwachsenen taggen lässt; `Roles.Supervisor` allein hätte diese eine Action anders
+verhalten lassen als ihre Nachbarn POST und DELETE.
+
+*Kosten.* Die **erste mehrrollige Autorisierung im Repo** (50 Verwendungen, alle einrollig) — darum als
+Konstante, nicht als Freitext-String an der Action.
+
+### E4 · Kein Präfix-Umzug: das Tag bleibt eine dual gelesene Ressource
+
+Der Controller bleibt unter `creator/tags`; nur die eine Action trägt das Rollen-Attribut.
+
+*Begründung.* Das grenzt an B-82/E2, geht aber ausdrücklich anders aus, und der Unterschied ist der Grund:
+Dort durfte nach dem Gaten **kein** Student die Route mehr aufrufen, das Präfix war also nachweislich falsch.
+Hier bleiben nach E2 POST und DELETE kind-aufrufbar — B-80/E3 hat entschieden, dass das Kind selbst markieren
+darf. Es wird also nicht die **Route** einrollig, sondern ein **Fenster** darin geschlossen; der Satz in
+`ApiRoutes.cs:17-18` („Dualität ist keine Entschuldigung für ein rollen-gegatetes Fremdpräfix") greift nicht,
+er redet über Routen, die nur eine Ebene noch aufrufen darf. Die Alternativen kosten mehr, als sie bringen:
+nur die Lese-Action zu verschieben verteilt eine Ressource über zwei Präfixe, den ganzen Controller zu
+verschieben wäre sachlich falsche Taxonomie (Tags markieren Katalog-*Inhalt*) und bräche vier Routen mit
+echten Verbrauchern.
+
+*Kosten.* Eine Action verhält sich anders als ihre unmittelbaren Nachbarn. Das braucht **an der Stelle** einen
+Kommentar mit dem Grund, sonst liest es sich wie ein Versehen — und der nächste Umbau macht es „konsistent".
+
+### E5 · Neuer Code `vocabulary_not_assigned`, und die Prüfung sitzt **vor** der Existenzprüfung
+
+Additiv in [ApiErrors.cs](../../backend/Pugling.Api/Errors/ApiErrors.cs):
+`vocabulary_not_assigned`, `403`, „Vocabulary is not assigned to this child." — parallel zum vorhandenen
+`exercise_not_assigned` (`:117`).
+
+*Begründung.* Der Code ist stabiler Vertragsbestandteil, also darf er nicht über seinen Gegenstand lügen:
+`exercise_not_assigned` wiederzuverwenden benennt eine Übung, wo eine Vokabel gemeint ist, und beide auf ein
+generisches `not_assigned` zusammenzuführen bräche den frisch aus B-80 verifizierten Code. Eine Oberfläche kann
+die Fälle so unterscheiden („die Übung gehört dir nicht" vs. „dieses Wort kommt in deinem Material nicht vor").
+**Die Reihenfolge** ist keine Stilfrage: steht die Existenzprüfung vorn, antwortet eine unbekannte Id `400` und
+eine fremde `403` — per Binärsuche liest ein Kind daran ab, wo der Store endet (Ist-Stand 4, heute schon
+messbar). Erwachsene behalten ihren `400`, sie durchlaufen die Zuweisungsprüfung nicht.
+
+*Kosten.* Ein Registry-Eintrag. Und der `400`-Pfad ist für ein Kind danach unerreichbar — ein Test, der ihn
+mit einem Kind-Token prüft, wäre falsch.
+
+### E6 · Die Namensliste des Lösungsfeld-Tors bekommt `Translation`
+
+In `ConventionGuardTests.SolutionPropertyNames`, als **letzter** Schritt des Baus.
+
+*Begründung.* Erst das macht die Reihe B-75/B-77/B-80/B-82/B-81 mechanisch dicht: eine künftige Sicht, die eine
+Übersetzung an ein Student-Token gibt, ist dann ein rotes Tor und keine sechste Story. **Für `Translation`
+allein neu gemessen** statt die Vier-Namen-Zahl zu übernehmen: es gibt genau **zwei** Treffer — diesen Defekt
+selbst und `ChildVocabularyProgressController.ByWord`. Nach der Reparatur bleibt also **eine** begründete
+Ausnahme (`WordMasteryResponse.Translation` ist der eigene Stand des Kindes über schon beantwortete Wörter).
+`Back`, `Target` und `Reveal` bleiben **draußen**: zusammen kosten sie gemessen 10 Ausnahmen, die den
+Normalfall aufzählen — dasselbe Argument, das E3 in B-82 umgeworfen hat.
+
+*Kosten.* Ein Ausnahme-Eintrag plus eine **neu gemessene** Untergrenze des Selbstschutzes. Und eine
+Reihenfolge-Abhängigkeit im Bau: vor der Reparatur geschärft, ist die Suite zwischendurch rot.
+
+### Zwei Anforderungen, die mitkommen, ohne eine Entscheidung zu sein
+
+Beide sind Erträge aus B-80s Abnahme und gelten hier wörtlich:
+
+1. **Geprüft wird nur, was wirklich hinzukommt.** Ein Auswahlformular schickt die volle Menge zurück, und im
+   Tag des Kindes darf fremdes Material liegen, das der **Vater** hineingelegt hat — die ganze gesendete Menge
+   zu prüfen gäbe dem Kind `403` für eine Nulloperation. Das Muster steht in `TagExercises` (`:151-156`).
+2. **Der Löschweg bleibt unbeschränkt**, symmetrisch zu `UntagExercise` (`:190`): ein entferntes Häkchen
+   verrät nichts.
+
+## Akzeptanzkriterien
 
 - Ein Kind-Token kann eine Store-Vokabel, die in **keiner ihm zugewiesenen Übung** vorkommt, **nicht**
-  markieren; der Versuch endet mit einem eigenen `ApiErrors`-Code, und „existiert nicht" ist von „nicht
-  zugewiesen" **nicht unterscheidbar** (kein Orakel).
-- Ein Kind-Token liest über `GET tags/{tagId}/vocabulary` **keine** Übersetzung — nach dem Gaten antwortet der
-  Endpunkt ihm mit `403`.
-- Der Vater verliert nichts: er markiert und entmarkiert weiter beliebiges Store-Material (der Fall aus
+  markieren; der Versuch endet mit `403 vocabulary_not_assigned`, und „existiert nicht" ist von „nicht
+  zugewiesen" **nicht unterscheidbar** (kein Orakel — die unbekannte Id liefert denselben `403`).
+- Ein Kind-Token darf eine Vokabel aus **zugewiesenem** Material weiter markieren, und ein erneutes Senden
+  einer schon markierten Vokabel bleibt eine Nulloperation mit `200` — auch wenn der Vater sie dort
+  hineingelegt hat.
+- Ein Kind-Token liest über `GET tags/{tagId}/vocabulary` **keine** Übersetzung: der Endpunkt antwortet ihm
+  mit `403`.
+- Der Vater verliert nichts: er markiert, liest und entmarkiert weiter beliebiges Store-Material (der Fall aus
   `TagsRatingsTimetableTests.cs:41-55` bleibt unverändert grün), und der Vokabel-Editor in `VaterVocab.tsx`
-  funktioniert unverändert.
+  funktioniert unverändert. Ein **Lehrer-Konto** (Creator-only) darf den Lesepfad ebenfalls aufrufen.
 - **Regressionstest, vorher rot**: der Durchgang aus Ist-Stand 3 mit einem Kind-Token — Tag anlegen, fremde
-  Vokabel-Ids markieren, Liste lesen — endet nicht mehr mit zwölf Paaren.
+  Vokabel-Ids markieren, Liste lesen — endet nicht mehr mit zwölf Paaren, sondern schon am Markieren.
 - Die Gegenproben aus Ist-Stand 6 bleiben, wie sie sind: Store und kindneutrale Tags `403`, der eigene
   `vocabulary-progress` `200`.
+- Das Lösungsfeld-Tor ist mit `Translation` in der Namensliste **grün**, mit genau einer begründeten Ausnahme;
+  seine Untergrenze ist neu gemessen.
+
+## Schätzung
+
+**S · backend · keine Migration · kein Vertragsbruch.**
+
+**Größe S**, an den Ankern gemessen: der Umfang ist „`childId` aus dem Test-Pfad ziehen" (B-01, der S-Anker) —
+ein Helfer mit *einem* Join, ein `if (User.IsStudent())`-Block als Zwilling des vorhandenen (`:166`), eine
+Registry-Zeile, eine Rollen-Konstante, ein Attribut, ein Listeneintrag im Tor.
+
+**Kein M**, und der Vergleich ist B-82: dort war es M **allein wegen des Tors**, weil ein *neuer Mechanismus*
+dazukam (reflexiver Wächter samt Ausnahmeliste und Selbstschutz). Hier existiert der Mechanismus — E6 ist ein
+Name in einer Liste, ein Ausnahme-Eintrag und eine neu gemessene Zahl. Kein neues Werkzeug, kein Löschverhalten,
+kein bezahltes Inventar, keine Etappe eines Umbaus.
+
+**Keine Migration**, nachgesehen: **kein Entity wird angefasst.** `ApiErrors` ist eine statische Klasse, `Roles`
+sind Konstanten, E2 ist eine *Query* über die vorhandene Beziehung `ExerciseItem`
+(`PuglingDbContext.cs:35` hat den `DbSet` schon). `SchemaGuardTests` hat nichts zu melden, die Kette bleibt
+bei 1.
+
+**Kein Vertragsbruch**, und das ist der Unterschied zu B-82: `Pugling.Contracts` ändert sich **nicht** —
+`TaggedVocabularyDto` behält seine vier Felder (E3 hebt die Rolle, statt das Feld zu schneiden), die Route
+bleibt liegen (E4). Was sich am **Vertragsdokument** ändert, ist additiv: ein Wert in der Fehlercode-Aufzählung
+und eine `403`-Antwort. Weder `Pugling.Client` (kennt den Endpunkt nicht) noch das Frontend (kein Verbraucher
+des Lesepfads) müssen nachziehen.
+
+**`wo: backend`**, und das ist geprüft, nicht vermutet: **keine** Frontend-Quelle ändert sich. Der Lesepfad hat
+keinen Aufrufer (Ist-Stand 5), und der Schreibpfad wird nur aus `VaterVocab.tsx:798` mit einem *Vater*-Token
+gerufen — der durchläuft die neue Prüfung nicht. Anders als bei B-82, wo eine Routen-Zeichenkette in `api.ts`
+zog. Reviewer: `pugling-reviewer` vollständig, **kein** `frontend-reviewer`.
+
+### Risiken
+
+**R1 · Die Untergrenze des Tors muss neu gemessen werden, nicht angepasst.** `Actions_Mit_Loesungsfeld_…`
+trägt `inScope.Count >= 25`, gemessen am 2026-08-03 mit drei Namen (30 im Geltungsbereich). `Translation`
+hinzuzunehmen hebt den Geltungsbereich, um wie viel ist **nicht** erhoben — nur die Zahl der *Offender* ist
+gemessen (zwei, nach der Reparatur einer). Die Grenze wird also beim Bauen gelesen und knapp unter den Istwert
+gesetzt; feste Untergrenzen verrotten ohnehin (B-40).
+
+**R2 · Die Reihenfolge ist eine echte Abhängigkeit, kein Stil.** Wird das Tor vor der Reparatur geschärft, ist
+die Suite zwischendurch rot — `TagsController.GetVocabulary` wäre dann Offender. Also: erst E2/E3/E5, dann E6.
+Wer die Etappen anders schneidet, hält einen roten Zwischenstand für einen Fehler.
+
+**R3 · Ein neuer Fehlercode zieht zwei eingecheckte Artefakte nach.** `ErrorCodeTests:153-169` ist ein
+Drift-Wächter: die im OpenAPI dokumentierte Code-Aufzählung muss **exakt** `ApiErrors.AllCodes` sein (beide
+Seiten reflexiv). Also ändert sich `docs/openapi/v1.json` (ein Enum-Wert plus die `403`-Antwort), und
+`docs/api-examples/index.md` bekommt eine Zeile in der Liste „über HTTP im In-Process-Test nicht erreichbar"
+samt neuem `Verifiziert: X / Y`-Zähler. Beides **mitcommitten**, sonst ist CI rot. Der Selbstschutz
+`AllCodes.Count >= 40` ist nicht betroffen (die Zahl wächst).
+
+**R4 · Die Idempotenz-Falle aus B-80s Abnahme wiederholt sich hier wörtlich.** Prüft der neue Block die *ganze*
+gesendete Menge statt nur des Zuwachses, bekommt das Kind `403` für eine Nulloperation — denn im Tag des Kindes
+darf fremdes Material liegen, das der **Vater** hineingelegt hat (B-80/E3), und ein Auswahlformular schickt die
+volle Menge zurück. Der heutige `TagVocabulary` berechnet `already` erst **nach** der Existenzprüfung
+(`:256`); die neue Prüfung braucht das `fresh` also **vor** sich, anders als der Code heute gebaut ist. Das ist
+die einzige Stelle, an der E2/E5 den vorhandenen Ablauf umstellen statt zu ergänzen.
+
+**R5 · `Roles.AnyAdult` ist die erste mehrrollige Autorisierung — nachgesehen, dass es niemanden stört.** Kein
+Wächter außer dem neuen Tor liest `AuthorizeAttribute`, und dessen `HidesFromStudent` zerlegt den Wert an `,`
+(`ConventionGuardTests.cs:322`), trifft also zu. Ein Vater trägt beide Ebenen-Claims, ein Lehrer-Konto nur
+`Creator` — die OR-Semantik des Attributs lässt beide durch, ein Kind nicht.
+
+**R6 · Was *nicht* betroffen ist**, damit niemand danach sucht: **kein E2E** (es ändert sich keine Oberfläche;
+`frontend/e2e/` fährt die Tag-Vokabeln nicht). **`/smoke-test` prüft keine Tags** (kein Treffer in
+`smoke-checks.sh`) — er ist hier also *kein* Beleg, der Beleg ist die Integrations-Suite plus ein
+Live-Durchgang. `DocsCaptureTests` schneidet nur `tags/{id}/exercises` mit (`:782`), **nicht** den
+Vokabel-Zweig — also keine neue Beispieldatei unter `docs/api-examples/`. `Pugling.Client` hat nichts
+nachzuziehen, und der Endpunkt-Abdeckungs-Wächter sieht keinen neuen Endpunkt (die Actions behalten ihre Namen).
+
+### Angriffsplan
+
+Backend zuerst; es gibt kein Frontend zu ziehen. **Die Reihenfolge ist bindend** (R2).
+
+1. **Fehlercode** (E5): `vocabulary_not_assigned` additiv in
+   [ApiErrors.cs](../../backend/Pugling.Api/Errors/ApiErrors.cs) neben `exercise_not_assigned` (`:117`).
+2. **Rollen-Konstante** (E3): `AnyAdult = Creator + "," + Supervisor` in
+   [AuthAccess.cs](../../backend/Pugling.Api/Auth/AuthAccess.cs), mit einem Satz Begründung — sie ist die erste
+   ihrer Art und muss erklären, warum nicht zwei Attribute.
+3. **Lese-Gate** (E3/E4): `[Authorize(Roles = Roles.AnyAdult)]` an `GetVocabulary` (`:286`), dazu
+   `[ProducesResponseType(403)]` und **der Kommentar**, warum diese eine Action anders ist als POST/DELETE
+   daneben (E4s Kosten — ohne ihn macht der nächste Umbau sie „konsistent").
+4. **Schreibpfad** (E2/E5), und hier wird umgestellt statt ergänzt (R4): `already`/`fresh` **vor** die
+   Prüfungen ziehen, dann für `User.IsStudent()` die Zuweisungsprüfung über einen neuen Helfer
+   `AssignedVocabularyIdsAsync(childId, fresh, ct)` — `db.ExerciseItems` auf `VocabularyId` gefiltert, join auf
+   die Übungs-Ids aus `AssignedExerciseIdsAsync` (`:129`) —, **danach** die Existenzprüfung.
+5. **Tests** (siehe Testweg).
+6. **Tor** (E6): `Translation` in `SolutionPropertyNames`, der Ausnahme-Eintrag für
+   `ChildVocabularyProgressController.ByWord` mit englischer Begründung, Untergrenze **messen** (R1).
+7. **Artefakte**: `docs/openapi/v1.json` und `docs/api-examples/index.md` schreibt der Testlauf, mitcommitten
+   (R3).
+
+### Testweg
+
+- **Regressionstest, vorher rot** — in `AntiCheatTests` (dort liegen die serverseitigen Zusicherungen, wie bei
+  B-80 und B-82): Kind-Client (`TestApi.ChildAsync(factory)`) legt ein Tag an und markiert eine **nicht
+  zugewiesene** Store-Vokabel → `403 vocabulary_not_assigned`. Heute liefert derselbe Aufruf `200`.
+- **Zweiter Regressionstest**: dasselbe Kind liest `GET tags/{tagId}/vocabulary` → `403`. Mit
+  **Gegenprobe Vater** auf derselben URL → `200` und die Übersetzung im Rumpf, sonst erfüllt ein Tippfehler im
+  Pfad den Test (die Lehre aus B-82).
+- **Kein Orakel** (E5): dasselbe Kind sendet eine **unbekannte** Id → ebenfalls `403 vocabulary_not_assigned`,
+  ausdrücklich **nicht** `400 invalid_reference`. Das ist der Fall, der die Reihenfolge festnagelt.
+- **Erlaubter Fall**: das Kind markiert eine Vokabel aus einer ihm über eine Plan-Position zugewiesenen
+  Vokabelübung → `200`. Ohne diesen Fall beweist die Reparatur nur, dass sie *etwas* verbietet.
+- **Idempotenz** (R4): der Vater legt eine fremde Vokabel ins Tag des Kindes, das Kind sendet die volle Menge
+  erneut → `200`, keine Änderung. Genau der Fall, den B-80s Reviewer für Übungen gefunden hat.
+- **`TagsRatingsTimetableTests.cs:41-55,73-75`** muss **unverändert** grün bleiben — der Nachweis „der Vater
+  verliert nichts", inklusive des fremden Vaters mit `403`.
+- **Ein Lehrer-Konto** (Creator-only, Seed „Herr Schmidt") auf dem Lesepfad: nicht `403` wegen der Rolle. Ob
+  `404` (kein eigenes Tag) oder `200` (mit Betreuung) — der Fall belegt, dass E3 die richtige Rollenmenge
+  gewählt hat und nicht `Roles.Supervisor`.
+- **Das Tor gegen sich selbst prüfen** (E6): `[Authorize]` an `GetVocabulary` probehalber auf einen Wert *mit*
+  Student setzen — der Wächter muss rot werden. Ein Tor, das nie rot gesehen wurde, ist unbelegt.
+- **`ErrorCodeTests`** läuft mit und erzwingt den Gleichstand von `ApiErrors.AllCodes` und der OpenAPI-Enum
+  (R3).
+- **Live-Durchgang** gegen eine Wegwerf-DB auf `:5280`: der Ablauf aus Ist-Stand 3 endet jetzt am Markieren.
+  **Nicht** `/smoke-test` — der fährt keine Tags (R6).
 
 ## Verlauf
 
@@ -209,3 +463,64 @@ Folgeentscheidungen.
   `ConventionGuardTests.cs:291` und nennt B-81 als den Ort für die Erweiterung der Namensliste.
   **Nächste Stufe `gegrillt`** — die fünf offenen Punkte liegen je mit Empfehlung vor, tragend ist Punkt 1
   (nur Schreibpfad, nur Lesepfad, oder beides).
+- **2026-08-03** — gegrillt, **sechs** Entscheidungen. Tragend ist **E1**: es werden **beide** Pfade
+  geschlossen, obwohl jeder allein genügte. Der Grund ist, dass die Einzel-Varianten je eine *stille*
+  Abhängigkeit hätten — nur-Schreibpfad hängt daran, dass der Lesepfad nie mehr zeigt als das Tag enthält, und
+  der Vater darf dort fremdes Material hineinlegen (B-80/E3); nur-Lesepfad hängt daran, dass niemand eine
+  dritte Sicht auf `VocabularyTag` baut, und `TagResponse.VocabularyCount` ist schon eine.
+  **E2 ist erst im Gespräch entstanden**, und das war der Wertbeitrag der Runde: „dem Kind zugewiesene
+  Vokabel" war **kein definierter Begriff** — die Beziehung existiert im Modell nicht, sie ist abgeleitet über
+  `Vocabulary ← ExerciseItem → Exercise → (PlanPosition | Klassenarbeit)`. Entschieden wurde die Fassung, die
+  **dieselbe** Definition von „zugewiesen" benutzt wie B-80/E2 (ein Join vor `AssignedExerciseIdsAsync`), weil
+  zwei Definitionen desselben Wortes auseinanderlaufen und dann die veraltete gilt. Verworfen: „zusätzlich alles
+  schon Beantwortete" (macht die erlaubte Menge zu einer wachsenden Funktion von `ItemProgress`) und „nur schon
+  Beantwortetes" (verhindert das Vormerken eines schwierigen Wortes *vor* der Antwort).
+  **Zwei Entscheidungen hat ein Fakt getroffen, keine Abwägung.** `Key` ist
+  `{quelle}_{wort}_{ziel}_{übersetzung}` als Slug (`VocabKey.cs:21-27`) — damit fiel „`Translation` aus dem DTO
+  nehmen" (B-80/E1-Stil) als Option weg, es schließt nichts, solange `Key` bleibt. Und das in B-82 gebaute
+  Lösungsfeld-Tor liest **Attribute**, nicht Rumpf-Logik — damit fiel die Inline-Prüfung weg, sie hätte das Tor
+  rot gemacht und eine namentliche Ausnahme gekostet. Ergebnis **E3**: `[Authorize(Roles = Roles.AnyAdult)]`
+  mit einer neuen Konstante `"Creator,Supervisor"`, die erste mehrrollige Autorisierung im Repo (50
+  Verwendungen, alle einrollig).
+  **E4 grenzt bewusst an B-82/E2 und geht anders aus**: dort wanderte das Präfix, weil nach dem Gaten **kein**
+  Student die Route mehr aufrufen durfte. Hier bleiben POST und DELETE kind-aufrufbar, das Tag ist also eine
+  *wirklich* dual gelesene Ressource — es wird nicht die Route einrollig, sondern ein Fenster darin
+  geschlossen. Der Satz, den ich in B-82 in `ApiRoutes.cs` geschrieben habe, greift hier nicht; er redet über
+  Routen, die nur eine Ebene noch aufruft. Kosten: eine Action verhält sich anders als ihre Nachbarn und
+  braucht **dort** einen Kommentar, sonst macht der nächste Umbau sie „konsistent".
+  **E5** nimmt einen eigenen Code `vocabulary_not_assigned` (403) statt `exercise_not_assigned`
+  wiederzuverwenden — der `code` ist stabiler Vertragsbestandteil und darf nicht über seinen Gegenstand lügen —
+  und schreibt die **Reihenfolge** fest: Zuweisungsprüfung vor Existenzprüfung, sonst bleibt das
+  Aufzählungs-Orakel aus Ist-Stand 4.
+  **E6** erweitert die Namensliste des Tors um `Translation`, und die Kosten sind für diesen einen Namen
+  **neu gemessen** statt aus der Vier-Namen-Messung übernommen: genau zwei Treffer, nach der Reparatur bleibt
+  **eine** Ausnahme. `Back`/`Target`/`Reveal` bleiben draußen (zusammen 10 Ausnahmen, die den Normalfall
+  aufzählen).
+  Zwei Dinge sind **keine** Entscheidung, sondern Erträge aus B-80s Abnahme, die wörtlich mitkommen: geprüft
+  wird nur, was wirklich hinzukommt (sonst `403` für eine Nulloperation), und der Löschweg bleibt
+  unbeschränkt — symmetrisch zu `UntagExercise` (`:190`), nachgesehen statt vermutet.
+- **2026-08-03** — geschätzt: **S · backend · keine Migration · kein Vertragsbruch**. Damit ist es die
+  **kleinste** Story dieser Reihe, und der Vergleich ist B-82: dort war es M *allein wegen des Tors*, weil ein
+  neuer Mechanismus dazukam. Hier existiert er — E6 ist ein Name in einer Liste. Der Rest ist der S-Anker
+  (B-01): ein Helfer mit einem Join, ein `if`-Block als Zwilling des vorhandenen, eine Registry-Zeile, eine
+  Konstante, ein Attribut.
+  **`wo: backend` ist geprüft, nicht vermutet**: keine Frontend-Quelle ändert sich. Der Lesepfad hat keinen
+  Aufrufer, und der Schreibpfad wird nur mit einem *Vater*-Token gerufen — der durchläuft die neue Prüfung
+  nicht. Also **kein** `frontend-reviewer`, anders als bei B-82.
+  **Kein Vertragsbruch**, und das ist der zweite Unterschied zu B-82: `TaggedVocabularyDto` behält seine vier
+  Felder (E3 hebt die Rolle statt das Feld zu schneiden) und die Route bleibt liegen (E4). Am Vertragsdokument
+  ändert sich nur Additives.
+  Die Schätzung hat **drei Dinge freigelegt, die im Grillen nicht sichtbar waren.** **R3**: ein neuer
+  Fehlercode zieht zwei *eingecheckte* Artefakte nach — `ErrorCodeTests:153-169` erzwingt, dass die
+  OpenAPI-Fehlercode-Aufzählung exakt `ApiErrors.AllCodes` ist, und `docs/api-examples/index.md` führt eine
+  Liste der nie ausgelösten Codes samt Zähler. Nicht mitcommittet ⇒ CI rot. **R4**: die Idempotenz-Falle aus
+  B-80s Abnahme wiederholt sich wörtlich, und schlimmer — der heutige `TagVocabulary` berechnet `already` erst
+  **nach** der Existenzprüfung (`:256`), die neue Prüfung braucht `fresh` aber davor. Das ist die einzige
+  Stelle, an der der Bau den vorhandenen Ablauf **umstellt** statt ihn zu ergänzen. **R1**: die Untergrenze des
+  Tors ist für drei Namen gemessen (30); wie weit `Translation` den Geltungsbereich hebt, ist **nicht** erhoben
+  — nur die Offender-Zahl ist es. Also beim Bauen lesen, nicht anpassen.
+  Gegenprobe zum Umfang, damit niemand danach sucht: **kein E2E** (keine Oberfläche ändert sich),
+  **`/smoke-test` ist hier kein Beleg** (er fährt keine Tags — nachgesehen in `smoke-checks.sh`),
+  `DocsCaptureTests` schneidet nur den Übungs-Zweig mit (`:782`), `Pugling.Client` kennt den Endpunkt nicht,
+  und der Abdeckungs-Wächter sieht keinen neuen Endpunkt. Der Beleg ist die Integrations-Suite plus ein
+  Live-Durchgang.
