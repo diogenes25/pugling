@@ -1,9 +1,13 @@
 ---
-tags: [typ/story, status/gegrillt, bereich/backend, bereich/frontend, rolle/student]
+tags: [typ/story, status/geschaetzt, bereich/backend, bereich/frontend, rolle/student]
 aliases: [Lesetext erreicht das Kind nicht, Hörverstehen ohne Audio]
-status: gegrillt
+status: geschaetzt
 prio: P1
 art: Defekt
+groesse: M
+wo: beides
+migration: nein
+vertragsbruch: ja
 quelle: B-73 (Grill-Runde, Entscheidung 1)
 ---
 
@@ -205,6 +209,104 @@ Typen auf einen, und eine widerlegte Behauptung bleibt nicht als Arbeitsvorrat s
    Karteninhalt** — die Zusicherung, die `PositionPlayModesTests` fünfmal ausgelassen hat.
 6. B-15 nennt nur noch die Typen, die belegt keine Vorschau haben.
 
+## Schätzung
+
+**M (oberes Ende) · beides · keine Migration · Vertragsbruch ja.**
+
+Der Bruch ist E3 und nur E3: `PracticeCard.Prompt` wird nullable. Alles andere ist additiv — `Passage` auf
+vier Records, `AudioUrl` an ein Feld, das es schon gibt.
+
+Kein Schema, keine Migration: Alles liegt in der `ConfigJson` oder im Laufzeit-Record `ContentItem`.
+
+Rund 20 Bearbeitungsstellen, in derselben Größenordnung wie [B-76](B-76-lueckentext-karte-ohne-luecke.md)
+(M, ~14) und breiter: vier Verträge statt zwei, drei Typen statt einem, dazu ein Hook, den die Runde nicht
+benannt hat (R1). Zu **L** kippt es, wenn dieser Hook eine Umgestaltung von `StageFacets` erzwingt.
+
+### Was die Schätzung an den Entscheidungen korrigiert hat
+
+**E3s Kostenzeile nennt einen Betroffenen zu viel.** Dort steht, `Pugling.Client` ziehe nach. Tut er
+nicht: `StudentApi` kennt nur Lernstands- und Medien-Endpunkte, keinen einzigen Spielpfad
+([StudentApi.cs](../../backend/Pugling.Client/StudentApi.cs) — sieben Methoden, keine davon
+`practice-sessions` oder `tests`). `PracticeCard` und `TestItem` kommen im ganzen Client nicht vor. Der
+Bruch trifft also `Pugling.Contracts`, das Frontend, `contract.ts` und die Beispieldateien — sonst nichts.
+Die `unknown_field`-Wächter sind ebenfalls unbeteiligt: die prüfen Requests, das hier sind Antworten.
+
+### Risiken
+
+**R1 · E3 braucht einen Typ-Hook, den die Runde nicht benannt hat.** „Der Server lässt den `Prompt` weg,
+wo die Aufnahme ihn ersetzen muss" ist keine Regel, die sich ableiten lässt: Die naheliegende Fassung
+(„Audio da ⇒ kein Prompt") ist genau falsch, denn beim **Hörverstehen** müssen Aufnahme *und* Frage
+ankommen — das ist Akzeptanzkriterium 2. Es unterscheidet also der Typ, nicht die Karte. Heute kann er das
+nicht sagen: `StageFacets` liefert `(LetterBoxLength, AudioUrl, ImageUrl)`
+([IExerciseType.cs:70](../../backend/Pugling.Api/Exercises/IExerciseType.cs)), und `Prompt` läuft ohnehin
+an `CardFacets` vorbei — die Controller lesen `item.Prompt` direkt.
+
+*Empfehlung:* ein eigener Hook `bool AudioReplacesPrompt(int stage)` (Vorgabe `false`, überschrieben nur
+von `VocabularyExerciseType`), und `CardFacets` liefert den `Prompt` künftig mit. Ein viertes Tupel-Element
+an `StageFacets` wäre billiger zu schreiben und teurer zu lesen — drei gleichartige Fassetten plus ein
+Schalter in einem namenlosen Tupel. Nicht vom Nutzer bestätigt.
+
+**R2 · B-76 hat den Rendering-Zweig gerade besetzt.** Beide Sohn-Ansichten geben den Prompt seit
+`1125ee6` an `ClozePrompt({ text: string })`
+([SohnPractice.tsx:229](../../frontend/src/sohn/SohnPractice.tsx),
+[SohnTest.tsx:150](../../frontend/src/sohn/SohnTest.tsx)). Ein nullable `prompt` bricht dort zuerst den
+Typecheck — gewollt, es ist die Stelle, die eine Entscheidung braucht: nichts rendern, wenn nichts da ist.
+Kein Konflikt mit B-76, aber die Reihenfolge steht damit fest.
+
+**R3 · Kein Seed, kein Nutzer betroffen.** Weder Lese- noch Hörverstehen liegen als Position im Seed
+(`Seed.cs` kennt keine `ReadingConfig`/`ListeningConfig`) — anders als B-76 wirkt dieser Defekt heute an
+niemandem. Das ändert die Dringlichkeit nicht (P1 steht), wohl aber die Beweisführung: Der
+Regressionstest muss seine Übung selbst anlegen, und ein Live-Beleg braucht ebenfalls erst eine.
+
+**R4 · `Question.Choices` fällt an derselben Stelle mit.** `Question(string Prompt, List<string>? Choices,
+string Answer)` ([ExerciseConfigs.cs:14](../../backend/Pugling.Contracts/Exercise/ExerciseConfigs.cs)) hat
+ein Auswahlfeld, und `AnswerChecking.FromQuestions` liest es nicht — dieselbe Wegwerf-Bewegung wie beim
+Lesetext, ein Feld weiter. Das gehört nach [B-73](B-73-auswahl-feld-ohne-wirkung.md) (dort offener Punkt
+zum Auswahl-Feld), **nicht** in diese Story: `Choices` hat mit `Choices` einen eigenen Weg, seit B-76 sogar
+mit Zugriff auf die Config. Hier nur festgehalten, damit es nicht ein zweites Mal überrascht.
+
+### Angriffsplan
+
+Backend zuerst. Punkt 0, weil die Runde ihn offen gelassen hat.
+
+0. **R1 entscheiden** — ohne den Hook lässt sich E3 nicht bauen.
+1. **`ContentItem`** bekommt `Passage`; gefüllt wird es von `ReadingExerciseType` aus `ReadingConfig.Text`
+   und von `GrammarExerciseType` aus `GrammarConfig.Instruction`. **Hörverstehen füllt es nicht** — es hat
+   keinen Text, es hat eine Aufnahme, und das Transkript ist laut Vertrag für das Kind gesperrt.
+   `AnswerChecking.FromQuestions` nimmt den Text als Parameter mit, es baut für Lese- **und**
+   Hörverstehen (bei letzterem bleibt er leer).
+2. **Hörverstehen**: `ListeningExerciseType.ItemsOf` hängt `ListeningConfig.AudioUrl` an jedes
+   `ContentItem` — der einzige Weg, `StageFacets` sieht die Config nicht (offener Punkt 3). Das Transkript
+   bleibt draußen.
+3. **Vertrag**: `Passage` additiv auf `PracticeCard`, `TestItem`, `PreviewItem`; `Prompt` auf
+   `PracticeCard` nullable (E3). `CardFacets` reicht beides durch — sie ist seit B-76 die Stelle, an der
+   die Karte entsteht.
+4. **Die irreführende Typ-Zeile** richtigstellen (offener Punkt 6): „pure content exercise, no automatic
+   check" an `ReadingExerciseType` ([BuiltInExerciseTypes.cs:10](../../backend/Pugling.Api/Exercises/BuiltInExerciseTypes.cs))
+   — bewertet wird sehr wohl, `CheckMode` meint die Abschlusstest-Fläche.
+5. **Artefakte**: `docs/openapi/v1.json`, `openapi-examples.generated.json`, `docs/api-examples/`
+   (schreiben die `DocsCaptureTests` im Lauf), `npm run gen:contract`.
+6. **Frontend**: ein Textblock über der Frage, in **beiden** Sohn-Ansichten; `ClozePrompt` nimmt einen
+   optionalen Text (R2); der Entweder-oder-Zweig `audioUrl ? Audio : Prompt` wird zum Nebeneinander, und
+   der Kommentar darüber stimmt dann wieder.
+
+### Testweg
+
+- **Regressionstest, vorher rot** (`Pugling.Api.Tests`, neue Klasse `ContentExercisePlayTests`): je eine
+  gespielte Lese-, Hörverstehen- und Grammatik-Position, geprüft auf `passage` bzw. `audioUrl` **auf der
+  Karte** — die Zusicherung, die `PositionPlayModesTests` an seiner eigenen Lese-Position fünfmal
+  ausgelassen hat (`SeedReadingPositionAsync`, [:134-155](../../backend/Pugling.Api.Tests/PositionPlayModesTests.cs)).
+- **Anti-Cheat, derselbe Lauf:** das Transkript kommt **nicht** auf der Karte an. Eine Zusicherung, die
+  billig ist und deren Bruch teuer wäre.
+- **E3:** die Vokabel-Hörstufe liefert `prompt: null`, jede andere Stufe einen Prompt.
+- **Klausur:** derselbe Durchlauf über `…/tests/{attemptId}/next`, wie bei B-76.
+- **Testmodus des Vaters** (E4): `ExercisePreviewTests` um `passage`/`audioUrl` erweitern — es ist derselbe
+  `ItemsOf`-Weg, aber ein eigener Projektionspfad (`ExercisePreviewService:80`).
+- **Frontend:** Komponententest auf den Textblock und auf „Aufnahme **und** Frage" (Vitest, Muster
+  `ClozePrompt.test.tsx`).
+- Kein `/smoke-test` zwingend: kein neuer Endpunkt. Ein Live-Beleg braucht wegen R3 erst eine selbst
+  angelegte Übung — lohnt sich trotzdem, weil `Prompt` nullable wird und das die Sohn-Ansicht trifft.
+
 ## Verlauf
 
 - **2026-08-02** — angelegt aus der Grill-Runde zu B-73. P1 vom Nutzer gesetzt: Zwei von zwölf
@@ -228,3 +330,11 @@ Typen auf einen, und eine widerlegte Behauptung bleibt nicht als Arbeitsvorrat s
   hier durchgehend falsch** — er bezeichnet im Repo den Store-Eintrag `ClozeText`. Die Prosa sagt jetzt
   „Lesetext", das Feld heißt `Passage`. Die Stufe bleibt `gegrillt`: kein neuer offener Punkt, ein dritter
   Typ am selben Feld und eine Wortkorrektur.
+- **2026-08-02** — geschätzt: **M (oberes Ende) · beides · keine Migration · Vertragsbruch ja**. Zwei
+  Korrekturen an den Entscheidungen: E3s Kostenzeile nennt `Pugling.Client` als Betroffenen, der aber gar
+  keinen Spielpfad kennt (`StudentApi` hat sieben Methoden, keine davon `practice-sessions`) — der Bruch
+  ist kleiner als angenommen. Und E3 verlangt einen **Typ-Hook, den die Runde nicht benannt hat** (R1):
+  „Audio ersetzt den Prompt" lässt sich nicht aus der Karte ableiten, weil beim Hörverstehen genau das
+  Gegenteil gilt; das entscheidet der Typ, und heute kann er es nicht sagen. Empfehlung steht mit
+  Begründung in der Schätzung, nicht bestätigt. Dazu R4 als Fund am Rande: `Question.Choices` fällt an
+  derselben Stelle mit weg — das gehört nach B-73 und wurde bewusst **nicht** in diese Story gezogen.
