@@ -1,14 +1,15 @@
 ---
-tags: [typ/story, status/ausformuliert, bereich/backend, rolle/student]
-aliases: [Tag-Endpunkt gibt Lösungen preis, ConfigJson über Tags lesbar, Transkript erreichbar,
+tags: [typ/story, status/gegrillt, bereich/backend, rolle/student]
+aliases: [Über die Tags kann ein Kind jede Übungs-Konfiguration lesen,
+  Tag-Endpunkt gibt Lösungen preis, ConfigJson über Tags lesbar, Transkript erreichbar,
   ExerciseBrief traegt die rohe Config, Klausur gibt Loesungen preis]
-status: ausformuliert
+status: gegrillt
 prio: P1
 art: Defekt
 quelle: B-75 (Review pugling-reviewer, Befund außerhalb des Diffs)
 ---
 
-# B-80 · Über die Tags kann ein Kind jede Übungs-Konfiguration lesen
+# B-80 · Das Kind kann die Lösungen jeder Übung lesen
 
 ## User Story
 
@@ -159,45 +160,115 @@ Deshalb ist es kein Ownership-Fehler (die Prüfungen sind richtig) und kein Roll
 `Config` an `ExerciseBrief` steht, ist jeder künftige Endpunkt, der Übungen auflistet, ein neuer Kandidat —
 die Lücke wächst also mit dem Produkt, ohne dass jemand einen Fehler macht.
 
-## Akzeptanzkriterien (Entwurf)
+## Entscheidungen
+
+Aus der Grill-Runde vom 2026-08-03. Eine Entscheidung hat einen offenen Punkt **aufgelöst** statt ihn zu
+beantworten (E1 → Punkt 3), und zwei eigene Empfehlungen der Ausformulierung sind dabei korrigiert worden
+(E2 und E4).
+
+### E1 · `Config` fällt aus `ExerciseBrief` ganz weg
+
+Nicht rollenabhängig geleert, nicht durch einen Zwilling ersetzt: das Feld verschwindet aus dem Vertrag.
+
+*Begründung.* Niemand liest es (Ist-Stand 5), und damit wird die Zusicherung eine Eigenschaft des **Typs**
+statt einer Pflicht jedes Endpunkts — auch jeder Listen-Endpunkt, den es noch nicht gibt, ist danach sicher.
+Genau das ist der Kern der Lücke: die Zusicherung hing an der Ausspielung, nicht an den Daten. Ein
+rollenabhängig geleertes Feld hätte sie in jeden Endpunkt zurückverlagert und wäre durch Lesen des Vertrags
+nicht mehr prüfbar („`JsonElement Config`" im Dokument, Inhalt abhängig vom Token). Der Zwilling war beim
+Nachsehen gegenstandslos: es gibt **keinen** Creator-gegateten Verbraucher von `ExerciseBrief`, der Zwilling
+hätte das Original also überall ersetzt und einen toten Typ hinterlassen.
+
+*Kosten.* Vertragsbruch, nicht additiv — plus Artefakt-Neubau (`docs/openapi/v1.json`,
+`openapi-examples.generated.json`, `docs/api-examples/`, `frontend/src/lib/contract.ts`). Wer die
+Konfiguration wirklich braucht, holt sie über das Creator-gegatete Typ-Detail. **Beide Türen schließen sich
+in einem Zug**, weil beide dasselbe DTO ausgeben.
+
+### E2 · Ein Kind darf nur Zugewiesenes taggen
+
+`POST tags/{tagId}/exercises` beschränkt für ein **Student**-Token auf Übungen, die dem Kind zugewiesen sind
+(Plan-Position oder eigene Klausur). Der Erwachsene behält die volle Reichweite.
+
+*Begründung.* Es ist, was der Controller ohnehin behauptet („Tags per child for marking catalog exercises",
+`TagsController.cs:11-13`) — heute prüft der Pfad nur die Existenz der Ids. Und es **nimmt nichts weg**: das
+Kind bekommt auf jeden Katalog-Weg `403` (Ist-Stand 4), kann von einer fremden Übung also gar nicht legitim
+erfahren. Damit fällt zugleich die Metadaten-Reichweite (Titel, Kapitel, Fach) und der Datenmüll-Weg. Die
+Ausformulierung hatte das als „eigene, kleinere Entscheidung" abgetun — das war zu vorsichtig.
+
+*Verworfen:* der fertige Haken `perms.CanExecuteAsync`. Er gibt für jede `ExecutePublic`-Übung `true`
+zurück, unabhängig vom Aufrufer ([ExercisePermissionService.cs:46](../../backend/Pugling.Api/Auth/ExercisePermissionService.cs)),
+und `ExecutePublic` ist der Standard — er hätte also nur *zurückgezogenes* Material ausgesperrt. Dazu dehnte
+er „ausführen/zuweisen" auf „markieren" aus, während Zurückziehen ausdrücklich nur neue **Zuweisungen**
+stoppen soll.
+
+*Kosten.* Eine Query plus ein Testfall. **Abgeleitet, nicht erfragt** (vorgelegt und unwidersprochen
+geblieben): ein neuer additiver Fehlercode `exercise_not_assigned` (403) — das vorhandene `forbidden` wäre
+vom Eigentumsfehler nicht unterscheidbar.
+
+### E3 · Der Lesepfad bleibt ungefiltert
+
+`GET tags/{tagId}/exercises` zeigt dem Kind weiter alles, was in seinem Tag steht.
+
+*Begründung.* Nach E1 steckt dort kein Geheimnis mehr, und hineinlegen kann nur noch das Kind selbst
+(Zugewiesenes, E2) oder der Vater. Einen Tag zu filtern hieße, dem Kind zu verbergen, was sein Vater ihm
+ausdrücklich markiert hat — das ist der Zweck eines Tags. Es hätte außerdem eine stille Diskrepanz erzeugt:
+`TagResponse.exerciseCount` zählt die Verknüpfungen, die Liste hätte weniger geliefert.
+
+*Kosten.* Keine. Der Gewinn ist die Zahl der Stellen: die Zusicherung hängt an **zwei** (Typ ohne Config,
+Schreibpfad) statt an jedem Endpunkt, der Übungen auflistet.
+
+### E4 · Die Story heißt „Das Kind kann die Lösungen jeder Übung lesen"
+
+Der alte Wortlaut bleibt als Alias.
+
+*Begründung.* „Über die Tags" benennt nach diesem Durchgang die **kleinere** Hälfte — Tür B braucht keinen
+Tag und keinen Trick; wer nur den Index liest, hielte die Klausur für nicht betroffen (dieselbe Erwägung wie
+B-77/E9). Die eigene Empfehlung der Ausformulierung („Ein Listen-DTO gibt jedem Kind die Lösungen preis")
+ist dabei **korrigiert**: sie benennt die Ursache, während die Titel dieses Repos durchweg den Produktfehler
+aus Rollensicht benennen — und ein Titel, der ein DTO nennt, altert mit dem Typnamen.
+
+*Kosten.* Eine Zeile im Index; die Verweise aus [B-75](B-75-lese-hoerverstehen-ohne-inhalt.md) tragen über
+den Alias.
+
+### E5 · Das Ebenen-Präfix bleibt, wie es ist (Nicht-Ziel)
+
+Dass ein Kind `api/v1/supervisor/class-tests/…` liest, wird **nicht** geändert — weder hier noch als eigene
+Story.
+
+*Begründung.* Nach E1 hat es keine Sicherheitsfolge, und das Muster „Klasse offen, Schreib-Actions gegated"
+funktioniert korrekt (die schreibenden Actions tragen `[Authorize(Roles = Roles.Supervisor)]`). Fachlich ist
+die Klausur eine **geteilte** Ressource: der Vater plant sie, das Kind übt darauf. Als eigene Idee hätte der
+Punkt in jeder künftigen Sichtung Aufmerksamkeit gekostet, ohne dass ein Nutzer etwas davon merkt.
+
+*Kosten.* Ein dokumentierter Geruch statt einer offenen Frage: das Ebenen-Präfix ist laut Root-`CLAUDE.md`
+die Taxonomie, und hier deckt es sich nicht mit dem Leser. Wer das später begradigen will, findet hier die
+Begründung statt einer Leerstelle.
+
+## Akzeptanzkriterien
 
 - Ein Kind-Token bekommt über **keinen** Endpunkt die Konfiguration einer Übung — geprüft an beiden Türen
   (Tag-Liste, Klausur-Detail/`practice`/`repeat`).
 - Insbesondere ist das **Transkript** eines Hörverstehens für das Kind auf keinem Weg lesbar.
-- Das Kind kann seine Übungen **weiterhin markieren** (Tag anlegen, taggen, Liste lesen) — die Reparatur
-  nimmt ihm keine Funktion.
+- Das Kind kann die ihm **zugewiesenen** Übungen weiterhin markieren (Tag anlegen, taggen, Liste lesen) —
+  die Reparatur nimmt ihm keine Funktion, die es heute sinnvoll nutzen kann.
+- Eine **nicht** zugewiesene Übung kann ein Kind nicht mehr taggen (E2); der Erwachsene kann es weiterhin.
 - Der Vater/Creator verliert nichts, was er heute nutzt.
 - **Regressionstest, vorher rot**: ein Kind-Client taggt eine fremde Übung und liest die Liste; die Antwort
   enthält keine Lösung. Dazu derselbe Nachweis für die Klausur-Endpunkte.
 
 ## Offene Punkte
 
-Jeder Punkt mit meiner Empfehlung — Material für die Grill-Runde.
+Alle fünf sind in der Runde vom 2026-08-03 erledigt — durchgestrichen statt gelöscht, damit die Frage
+nachlesbar bleibt.
 
-1. **Wird `Config` aus `ExerciseBrief` ganz entfernt oder nur für Nicht-Creator geleert?**
-   *Empfehlung: ganz entfernen.* Niemand liest es (Abschnitt 5), und ein Feld, das je nach Rolle etwas
-   anderes enthält, ist die Sorte Vertrag, die man beim Lesen nicht mehr prüfen kann. Ein rollenabhängig
-   geleertes Feld verlagert die Zusicherung außerdem wieder in jeden Endpunkt — genau die Verteilung, die
-   diese Story beseitigen soll. Kosten: Vertragsbruch (additiv ist es nicht), Artefakt-Neubau, und wer die
-   Konfiguration wirklich braucht, holt sie über das Typ-Detail.
-2. **Braucht es daneben trotzdem eine Schranke im Tag-Schreibpfad?**
-   *Empfehlung: ja, aber als eigene, kleinere Entscheidung.* Dass ein Kind **jede** Übung des Katalogs an
-   seinen Tag hängen kann, ist auch ohne Lösungspreisgabe falsch: es leckt Titel, Fach und Kapitel fremder
-   Übungen und lädt einen Datenmüll-Weg ein. Nur reicht es als Reparatur nicht (Tür B), und es darf dem
-   Kind das Markieren des Zugewiesenen nicht nehmen.
-3. **Bleibt es bei `403`/`404` oder wird das Feld still weggelassen?**
-   *Empfehlung: still weglassen* — die Endpunkte sollen für das Kind ja weiter funktionieren. Eine
-   Fehlerantwort wäre die falsche Sprache für „du darfst die Liste sehen, nur nicht ihren Inhalt".
-4. **Ist der Titel noch richtig?**
-   *Empfehlung: umbenennen*, etwa „Ein Listen-DTO gibt jedem Kind die Lösungen preis". „Über die Tags"
-   benennt nach diesem Durchgang die **kleinere** Hälfte — Tür B braucht keinen Tag und keinen Trick. Wer
-   nur den Index liest, hielte die Klausur für nicht betroffen. Dieselbe Erwägung wie B-77/E9; der alte
-   Wortlaut bleibt als Alias.
-5. **Zurückgestellt: gehört `[Authorize]` an `KlassenarbeitenController` überhaupt auf Klassenebene?**
-   Das Muster „Klasse offen, Schreib-Actions gegated" funktioniert hier korrekt und ist bei den
-   Student-Endpunkten ausdrücklich gewollt (Root-`CLAUDE.md`). Auffällig ist nur, dass der Controller unter
-   dem *Supervisor*-Präfix liegt und trotzdem vom Kind gelesen wird. Das ist eine Taxonomie-Frage, nicht
-   diese Lücke — *Empfehlung: hier nicht mitbehandeln*, sondern bei Bedarf als eigene Idee.
+1. ~~**Wird `Config` aus `ExerciseBrief` ganz entfernt oder nur für Nicht-Creator geleert?**~~ → **E1**
+2. ~~**Braucht es daneben trotzdem eine Schranke im Tag-Schreibpfad?**~~ → **E2**, und die Empfehlung
+   („eigene, kleinere Entscheidung") war zu vorsichtig: die Schranke gehört in diese Story.
+3. ~~**Bleibt es bei `403`/`404` oder wird das Feld still weggelassen?**~~ → **aufgelöst durch E1**: es gibt
+   kein Feld mehr zurückzuhalten. An seiner Stelle stand die Frage, ob auch der *Lesepfad* filtern muss →
+   **E3**.
+4. ~~**Ist der Titel noch richtig?**~~ → **E4**, mit korrigierter Empfehlung.
+5. ~~**Gehört `[Authorize]` an `KlassenarbeitenController` auf Klassenebene?**~~ → **E5**, ausdrücklich als
+   Nicht-Ziel festgehalten statt als eigene Idee abgelegt.
 
 ## Verlauf
 
@@ -220,3 +291,20 @@ Jeder Punkt mit meiner Empfehlung — Material für die Grill-Runde.
   nachgesehen statt vermutet: **niemand liest `ExerciseBrief.Config`** — nicht das Frontend (der Tag-Endpunkt
   wird gar nicht aufgerufen), nicht die Client-Bibliothek, nicht die Tests. Kein Test deckt die Lücke ab;
   der vorhandene Tag-Test fährt den Weg als Vater.
+- **2026-08-03** — gegrillt, fünf Entscheidungen. Tragend ist **E1**: `Config` fällt aus `ExerciseBrief`
+  **ganz** weg, statt rollenabhängig geleert zu werden — damit wird die Zusicherung eine Eigenschaft des
+  *Typs*, und beide Türen schließen sich in einem Zug, auch für jeden Listen-Endpunkt, den es noch nicht
+  gibt. Der in der Idee erwogene „Config-freie Zwilling" war beim Nachsehen gegenstandslos: es gibt keinen
+  Creator-gegateten Verbraucher des DTOs, der Zwilling hätte das Original überall ersetzt.
+  Die Runde hat zwei eigene Empfehlungen korrigiert. **E2**: die Schranke im Tag-Schreibpfad ist *nicht* eine
+  spätere Kleinigkeit, sondern gehört hierher — ein Kind darf nur Zugewiesenes taggen, und das nimmt ihm
+  nichts, weil es von fremden Übungen ohnehin nicht legitim erfahren kann (überall `403`). Dabei ist der
+  fertige Haken `CanExecuteAsync` **verworfen**: er gibt für jede `ExecutePublic`-Übung `true` zurück, hätte
+  also nur zurückgezogenes Material ausgesperrt, und hätte „zuweisen" auf „markieren" gedehnt. **E4**: der
+  vorgeschlagene Titel benannte die Ursache statt des Produktfehlers — die Story heißt jetzt „Das Kind kann
+  die Lösungen jeder Übung lesen", der alte Wortlaut bleibt Alias.
+  **E3** hält den Lesepfad ungefiltert (einen Tag zu filtern verbärge dem Kind, was sein Vater ihm markiert
+  hat — der Zweck eines Tags), **E5** hält das Ebenen-Präfix als ausdrückliches Nicht-Ziel fest, statt eine
+  P3-Idee anzulegen, die in jeder Sichtung Aufmerksamkeit kostet. Ein offener Punkt wurde **aufgelöst statt
+  beantwortet**: die Frage „`403` oder still weglassen" hat mit E1 keinen Gegenstand mehr.
+  Abgeleitet und unwidersprochen: ein additiver Fehlercode `exercise_not_assigned` (403) für E2.

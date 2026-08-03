@@ -277,7 +277,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| [B-80](B-80-tags-geben-fremde-konfiguration-preis.md) | Über die Tags kann ein Kind jede Übungs-Konfiguration lesen | Defekt | `ausformuliert` | P1 | — | — | — |
+| [B-80](B-80-tags-geben-fremde-konfiguration-preis.md) | Das Kind kann die Lösungen jeder Übung lesen | Defekt | `gegrillt` | P1 | — | — | — |
 | [B-07](B-07-db-umbau-restetappen.md) | DB-Struktur-Umbau: der offene Betriebsschritt | Aufräumen | `geschaetzt` | P1 | XS | backend | — |
 | [B-60](B-60-flags-enum-im-dokument.md) | Das Vertragsdokument verbietet einen `SchoolTypes`-Wert, den Server und Frontend täglich austauschen | Defekt | `ausformuliert` | P2 | — | — | — |
 | [B-66](B-66-buchstabenkaestchen-trennzeichen.md) | Das Buchstabenkästchen lässt Leer- und Satzzeichen tippen, die schon feststehen | Defekt | `ausformuliert` | P2 | — | — | — |
