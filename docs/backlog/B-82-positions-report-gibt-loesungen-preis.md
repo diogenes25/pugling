@@ -1,10 +1,14 @@
 ---
-tags: [typ/story, status/ausformuliert, bereich/backend, rolle/student]
+tags: [typ/story, status/geschaetzt, bereich/backend, rolle/student]
 aliases: [Positions-Report gibt die Lösungen preis, ItemReport trägt Answer,
   Kind liest die Lösung jeder Karte im Report, Tür C]
-status: ausformuliert
+status: geschaetzt
 prio: P1
 art: Defekt
+groesse: M
+wo: beides
+migration: nein
+vertragsbruch: ja
 quelle: B-80 (pugling-reviewer, Befund außerhalb des Diffs)
 ---
 
@@ -67,6 +71,26 @@ Absicht steht also im Code; nur die Wand fehlt.
 vorbei, dieselbe Klasse „Regel getestet, Grenzfall offen" wie bei B-77 und B-80
 ([docs/testplan.md](../testplan.md)).
 
+### 6 · Die Verbraucher, nachgezählt (Grill-Runde 2026-08-03)
+
+Wie B-80s Ist-Stand 5, weil davon der Schnitt abhängt: **genau ein Verbraucher von `answer`, und der ist der
+Vater.**
+
+| Wo | Befund |
+|---|---|
+| Frontend Vater | `frontend/src/vater/PlanPositions.tsx:406` (`<td>{it.answer}</td>`, Spalte „Lösung") — der einzige Aufruf von `api.positionReport` (`lib/api.ts:467`) |
+| Frontend Sohn | **kein** Aufruf; `SohnProgress.tsx:12-13` liest `overview`/`overviewProgress`, das Kind hat seinen eigenen Lernstand-Pfad |
+| `Pugling.Client` | **keine** Methode für den Report (einziger `report`-Treffer ist ein Kommentar in `CreatorApi.cs:201`) |
+| Tests | `PositionReportTests.cs:24-70` fährt den Endpunkt durchweg mit dem **Vater**-Client; `OwnershipTests.cs:95` mit einem fremden Kind |
+
+Damit ist auch der offene Punkt 5 beantwortet: `ChildLearnProgressController.Items` (`:81-92`) gibt
+`ItemProgressResponse` heraus ([ProgressDtos.cs:17](../../backend/Pugling.Contracts/Student/ProgressDtos.cs),
+mit `Front`/`Back`), gespeist aus `db.ItemProgress`
+([ChildLearnProgressService.cs:284](../../backend/Pugling.Api/Services/Student/ChildLearnProgressService.cs))
+— dort gibt es nur Zeilen für Items, die das Kind **schon beantwortet** hat. Also **nicht** dieselbe Bauart,
+sondern die Familie von `ChildVocabularyProgress` und damit nahe
+[B-81](B-81-vokabel-tags-geben-uebersetzungen-preis.md).
+
 ## Die echte Lücke
 
 Derselbe Defekttyp wie B-80s Tür B, aber **nicht** dieselbe Stelle: die Ownership-Prüfung ist richtig
@@ -75,39 +99,250 @@ Zusicherung für `ExerciseBrief` zu einer Eigenschaft des *Typs* gemacht — die
 betroffen, weil er die Lösung nicht als rohe Config trägt, sondern als benanntes Feld. Solange ein DTO unter
 `student/…` ein `Answer` führt, ist jede künftige Auswertungssicht ein neuer Kandidat.
 
-## Entwurf der Akzeptanzkriterien
-
-- Ein Kind-Token bekommt über den Positions-Report **keine** Lösung — insbesondere nicht für Karten mit
-  `introduced: false`.
-- Der Vater sieht den Report unverändert vollständig; sein UI verliert keine Spalte.
-- **Regressionstest, vorher rot**: Kind-Token liest den Report seiner eigenen Position; die Antwort trägt
-  keine Lösung.
-
 ## Offene Punkte
 
-Jeder mit Empfehlung — das ist das Material der Grill-Runde.
+Alle fünf sind in der Runde vom 2026-08-03 erledigt — durchgestrichen statt gelöscht, damit die Frage
+nachlesbar bleibt. Zwei Empfehlungen sind dabei **korrigiert** worden (Punkt 3), zwei Punkte **aufgelöst**
+statt beantwortet (4 und 5).
 
-1. **Welcher Schnitt: Feld leeren oder Route gaten?** `Answer` für ein Student-Token weglassen (nullable,
-   die Rolle entscheidet) **oder** den Endpunkt auf `[Authorize(Roles = Roles.Supervisor)]` heben.
-   *Empfehlung:* **erst zählen, dann entscheiden** (siehe Punkt 2). Gaten ist billiger und deckt sich mit dem
-   Kommentar; ein leeres Feld verlagert die Zusicherung dagegen wieder in den Endpunkt — genau das, was
-   B-80/E1 abgeschafft hat. Wenn ein Sohn-UI den Report zeigt, ist Gaten aber ausgeschlossen.
-2. **Hat `answer` überhaupt einen Verbraucher?** Bei B-80 hatte das entsprechende Feld **keinen**, und das
-   machte die Reparatur dort billig. Hier ist ein Vater-UI wahrscheinlich (der Report ist für ihn gedacht).
-   *Empfehlung:* `frontend/src/` und `Pugling.Client` zählen, bevor über Punkt 1 entschieden wird — nicht
-   vermuten.
-3. **Zieht das Ebenen-Präfix mit?** Liegt die Route falsch unter `student/…`?
-   *Empfehlung:* **nicht anfassen**, wie B-80/E5 es für die Klausur entschieden hat — mit dem Unterschied,
-   dass hier der Kommentar den Vater als Leser benennt. Als dokumentierter Geruch festhalten, nicht als
-   eigene Story.
-4. **Sagen weitere Felder zu viel?** `prompt` ist unkritisch (es steht auf der Karte), `box`/`dueOn`/
-   `testsCorrect` sind Lernstand, den das Kind lesen darf.
-   *Empfehlung:* nur `answer` schneiden.
-5. **Hat der Nachbar `ChildLearnProgressController` dieselbe Bauart?**
-   *Empfehlung:* beim Ausformulieren mitprüfen. Der Reviewer hat `ChildVocabularyProgressController` geprüft:
-   der gibt Wort/Übersetzung nur zu **bereits beantworteten** Items heraus, ist also eine andere Familie —
-   nahe an [B-81](B-81-vokabel-tags-geben-uebersetzungen-preis.md). `ChildLearnProgress` ist **nicht**
-   einzeln geprüft.
+1. ~~**Welcher Schnitt: Feld leeren oder Route gaten?**~~ → **E1**, Gaten.
+2. ~~**Hat `answer` überhaupt einen Verbraucher?**~~ → nachgezählt, **genau einer, und der ist der Vater**
+   (Ist-Stand 6). Damit war Punkt 1 entscheidbar.
+3. ~~**Zieht das Ebenen-Präfix mit?**~~ → **E2**, und die eigene Empfehlung („nicht anfassen, wie B-80/E5")
+   ist **korrigiert**: nach E1 darf kein Student die Route aufrufen, das Präfix wäre dann nachweislich falsch
+   statt nur schief.
+4. ~~**Sagen weitere Felder zu viel?**~~ → **aufgelöst durch E1**: es wird kein Feld geschnitten, der ganze
+   Endpunkt gehört dem Vater. `prompt`, `box`, `dueOn`, `testsCorrect` bleiben unangetastet.
+5. ~~**Hat der Nachbar `ChildLearnProgressController` dieselbe Bauart?**~~ → **nein**, am Code beantwortet
+   (Ist-Stand 6): andere Familie, nahe [B-81](B-81-vokabel-tags-geben-uebersetzungen-preis.md). Keine eigene
+   Entscheidung nötig.
+
+## Entscheidungen
+
+Aus der Grill-Runde vom 2026-08-03. Vier Entscheidungen; **E2 korrigiert die eigene Empfehlung** der
+Ausformulierung, **E3** geht über den ursprünglichen Schnitt hinaus.
+
+### E1 · Die Route wird auf `Roles.Supervisor` gehoben
+
+`[Authorize(Roles = Roles.Supervisor)]` an den `PositionReportController`. `ItemReport.Answer` bleibt
+unverändert im Vertrag — nicht nullable, nicht rollenabhängig geleert.
+
+*Begründung.* Der Report **ist** die Auswertung des Vaters; das sagen beide Kommentare bereits („Answers the
+supervisor's question", „shows the father"), nur die Wand fehlte. Und es nimmt nachgezählt nichts weg
+(Ist-Stand 6): kein Sohn-UI ruft ihn auf, die Client-Bibliothek kennt ihn nicht, kein Test fährt ihn mit
+einem Kind-Token. Ein rollenabhängig geleertes Feld hätte dagegen genau das getan, was B-80/E1 abgeschafft
+hat — die Zusicherung in den Endpunkt zurückverlagern und durch Lesen des Vertrags unprüfbar machen
+(„`string Answer`, Inhalt abhängig vom Token"). Die Variante „`answer` nur für beantwortete Items" (die
+`ChildVocabularyProgress`-Familie) ist verworfen: eine Regel mehr in einem Endpunkt, den kein Kind aufruft.
+
+*Kosten.* Der Vater behält seine Spalte unverändert, aber **drei kind-adressierte Doku-Stellen werden falsch**
+und ziehen mit: `docs/tutorial-student.md:308`, `.claude/skills/student/SKILL.md:65`,
+`docs/REST/Student.http:128`. Die Zusicherung hängt danach am **Endpunkt**, nicht am Typ — genau darum kommt
+E3 dazu.
+
+### E2 · Route und DTOs wandern in die Supervisor-Ebene
+
+Neue Route `api/v1/supervisor/study-plans/{planId}/positions/{positionId}/report`; `Report` und `ItemReport`
+verlassen `Contracts/Student/LearnProgressDtos.cs` und ziehen in eine eigene `Contracts/Supervisor`-Datei.
+Der Controller wandert nach `Controllers/Supervisor/`.
+
+*Begründung.* Das **korrigiert die Empfehlung der Ausformulierung** („nicht anfassen, wie B-80/E5"). B-80/E5
+ließ `supervisor/class-tests` beim Kind, weil die Klausur eine **geteilte** Ressource ist — der Vater plant
+sie, das Kind übt darauf. Hier ist es das Gegenteil: nach E1 darf **kein** Student die Route mehr aufrufen,
+also widerspricht das `student/`-Präfix dem Leser nicht mehr weich, sondern hart — und das Präfix ist laut
+Root-`CLAUDE.md` die Taxonomie, mit der sich die Auth-Wand deckt, wo gegated wird. Der Zielort existiert
+bereits (`supervisor/study-plans/{planId}/…`, dort liegt der `PlanOwnershipFilter` ohnehin). Dass die beiden
+Records heute neben den echt kind-lesbaren `SubjectProgressResponse` & Co. stehen, ist derselbe Fehler eine
+Ebene tiefer.
+
+*Kosten.* Vertragsbruch an der Route, ausgezählt statt geschätzt: 1 Routen-Zeile, 1 Frontend-Zeile
+(`frontend/src/lib/api.ts:468`), 3 Test-Zeilen (`PositionReportTests.cs:24,70`, `OwnershipTests.cs:95`), 8
+Doku-Stellen (`wiki/07-api-referenz.md:89`, `docs/endpunkt-beziehungen.md:59,348,393,685`,
+`docs/vokabel-funktionalitaeten-entwickler-tutorial.md:149`, `docs/tutorial-supervisor.md:455,561`,
+`.claude/skills/supervisor/SKILL.md:62`) plus Artefakt-Neubau (`docs/openapi/v1.json`, `docs/api-examples/`,
+`frontend/src/lib/contract.ts`). Die Namespace-Verschiebung selbst ist frei — alle sechs
+`Pugling.Contracts.*` sind per csproj-`<Using>` projektweit sichtbar. Die drei Doku-Stellen aus E1 fallen
+ohnehin an, ein Teil der Kosten ist also schon bezahlt.
+
+### E3 · Ein reflexives Tor erzwingt die Rollenreichweite eines Lese-DTOs
+
+Neuer Wächter in `ConventionGuardTests`: **jede Action, die ein DTO aus `Pugling.Contracts.Supervisor`
+zurückgibt, trägt `[Authorize(Roles = Roles.Supervisor)]`** — an der Klasse oder an der Action. Mit einer
+namentlichen Ausnahmeliste, je mit englischer Begründung.
+
+*Begründung.* E1 und E2 reparieren **diesen** Endpunkt; die „echte Lücke" dieser Story ist aber, dass jede
+künftige Auswertungssicht ein neuer Kandidat ist. Ohne Tor hängt die Zusicherung wieder an Disziplin — und
+B-80 und B-82 sind zusammen der Beweis, dass genau diese Disziplin in diesem Repo **zweimal** gerissen ist,
+ohne dass jemand einen Fehler gemacht hat. Das Repo hat für diesen Fall eine gelebte Antwort („mechanische
+Tore statt Disziplin"), und der Wächter passt ins bestehende Muster (`Actions_Geben_Nur_Vertragstypen_Zurueck`,
+`Actions_Unter_ChildId_Oder_PlanId_Tragen_Den_Ownership_Filter`).
+
+*Kosten.* **Gemessen, bevor entschieden wurde: das Tor ist heute an vier Stellen rot** —
+`KlassenarbeitenController.List/Get/Practice/Repeat` (`:59,76,260,276`, klassenweit nur `[Authorize]`), und
+alle vier sind durch **B-80/E5 ausdrücklich gewollt**. Es braucht also eine Ausnahmeliste mit vier
+begründeten Einträgen, und eine Liste verrottet: wird einer dieser Endpunkte umbenannt, meldet das Tor eine
+Ausnahme, die es nicht mehr gibt. Dazu treibt E3 die Größe voraussichtlich von S nach M.
+
+### E4 · Das Tor greift nur `Contracts.Supervisor`, nicht `Contracts.Creator`
+
+*Begründung.* Der Creator-Bereich ist genau die Fläche, die **bewusst** kind-lesbar ist: `TagsController`
+trägt klassenweit nur `[Authorize]` und gibt an acht Stellen Creator-DTOs an ein Kind heraus (`TagResponse`
+sechsmal, `ExerciseBrief` `:206`, `TaggedVocabularyDto` `:284`) — durch B-80/E3 entschieden, weil das Kind
+seine Übungen selbst markieren darf. Zwölf Ausnahmen statt vier machen die Ausnahmeliste zur Regel, und eine
+Liste, die den Normalfall aufzählt, beweist nichts mehr.
+
+*Kosten.* Ein künftiges **Creator**-DTO mit einem Geheimnis fängt das Tor nicht. Dafür bleibt B-80/E1s Weg
+zuständig: ein Geheimnis gehört nicht in ein Listen-DTO. Das ist eine bewusste Lücke im Netz, keine
+vergessene.
+
+## Akzeptanzkriterien
+
+- Ein Kind-Token bekommt über den Positions-Report **keine** Lösung — insbesondere nicht für Karten mit
+  `introduced: false`. Nach E1 antwortet der Endpunkt ihm mit `403`.
+- Der Vater sieht den Report unverändert vollständig; sein UI verliert **keine** Spalte (die Spalte „Lösung"
+  in `PlanPositions.tsx:406` bleibt gefüllt).
+- Die Route liegt unter `api/v1/supervisor/…`; die alte `student/…`-Route existiert **nicht** mehr (kein
+  Weiterleiten, kein Parallelbetrieb — vor der Publikation wird gebrochen, nicht überbrückt).
+- Kein Verbraucher bleibt zurück: `frontend/src/lib/api.ts` zeigt auf die neue Route, und die kind-adressierte
+  Doku nennt den Report nicht mehr als Student-Aufruf.
+- Das Tor aus E3 ist scharf und **grün**, mit genau den vier begründeten Ausnahmen; ein neuer Endpunkt, der
+  ein Supervisor-DTO ungegated herausgibt, macht es rot.
+- **Regressionstest, vorher rot**: Kind-Token liest den Report seiner **eigenen** Position → `403`; heute
+  liefert derselbe Aufruf `200` mit `answer`.
+
+## Schätzung
+
+**M · beides · keine Migration · Vertragsbruch: ja.**
+
+**Größe M**, an den Ankern gemessen. **Ohne E3 wäre es S** — der Umfang von E1+E2 ist „`childId` aus dem
+Test-Pfad ziehen" (B-01): ein Attribut, eine Routen-Konstante, zwei Records in eine neue Datei, drei
+Test-Zeilen, eine Frontend-Zeile. **E3 hebt es auf M**, weil ein *neuer Mechanismus* dazukommt, nicht nur
+eine geänderte Zeile: ein reflexiver Wächter samt gemessener Ausnahmeliste und Selbstschutz — derselbe
+Charakter wie der neue Batch-Pfad im `MediaSelector` (B-03, der M-Anker). Kein L: es wird keine Etappe eines
+Umbaus, kein Löschverhalten und kein bezahltes Inventar berührt.
+
+Was E3 **billig** macht und darum gemessen ist: die Maschinerie existiert vollständig.
+`ApiSurface.Controllers()/Actions()/RouteOf()` und die Helfer `PayloadType`/`LeafTypes`
+([ConventionGuardTests.cs:213,224](../../backend/Pugling.Api.Tests/ConventionGuardTests.cs)) entpacken
+`Task<ActionResult<T>>` und Sammlungen schon; das Muster „Ausnahmeliste mit Begründung" steht als
+`OwnershipExceptions` (`:202`, heute leer) daneben, samt der Warnung „if this list grows, the reason belongs
+with it". Der Wächter ist damit ein Fact von ~40 Zeilen, nicht ein Werkzeug.
+
+**Keine Migration**, nachgesehen: **kein Entity wird angefasst.** E1 setzt ein Attribut, E2 verschiebt
+Dateien und Namespaces, E3 fügt einen Test hinzu. `SchemaGuardTests` hat nichts zu melden, die Kette bleibt
+bei 1.
+
+**Vertragsbruch: ja**, und zwar an der **Route**, nicht am Schema: der Pfad
+`api/v1/student/study-plans/{planId}/positions/{positionId}/report` verschwindet und entsteht unter
+`supervisor/…` neu. Die **Schemanamen bleiben** `Report`/`ItemReport` — der OpenAPI-Generator schlüsselt über
+den *einfachen* Typnamen (`Vertragstypen_Sind_Global_Namens_Eindeutig`, `ConventionGuardTests.cs:71`), die
+Namespace-Verschiebung ist im Dokument also unsichtbar. Folge: `frontend/src/lib/types.ts:428-431`
+(`S["ItemReport"]`, `S["Report"]`) bleibt gültig, und `MasteryPill.tsx` ebenfalls. Kein Parallelbetrieb, kein
+Weiterleiten — bis zur Publikation wird gebrochen (`CLAUDE.md`, API-Versionierung).
+
+**`wo: beides`**, und das ist die Prüfung, nicht die Vermutung: genau **eine** Frontend-Quelle ändert sich,
+`frontend/src/lib/api.ts:468` (die Routen-Zeichenkette). Das ist kein UI-Durchgang — aber `wo: backend` wäre
+falsch, und B-80 durfte es nur behaupten, weil dort *keine* Frontend-Quelle anzufassen war. Reviewer:
+`pugling-reviewer` vollständig, `frontend-reviewer` als Stichprobe über die eine Zeile.
+
+### Risiken
+
+**R1 · `ApiRoutes.cs` behauptet das Gegenteil von E2 — und nennt den Report als Beispiel.** Der Kommentar
+([ApiRoutes.cs:13-16](../../backend/Pugling.Api/Controllers/ApiRoutes.cs)) lautet: „The prefix is resource
+taxonomy, not the auth wall … Individual routes (e.g. reports) are dual on purpose - a supervisor then reads
+a student-tagged route and vice versa." E2 bleibt tragfähig — der Satz rechtfertigt duale Routen für **dual
+gelesene** Ressourcen, und genau das hört der Report mit E1 auf zu sein —, aber der **Kommentar wird durch
+E2 falsch** und muss mit: er ist die einzige Stelle im Code, die die Dualität als Absicht festhält, und wer
+ihn stehen lässt, hinterlässt zwei widersprechende Quellen der Wahrheit. Beim Bauen also umschreiben, nicht
+löschen: die Regel bleibt („Präfix ist Taxonomie"), das Beispiel wird ein anderes. Aufgefallen erst beim
+Schätzen, nicht beim Grillen.
+
+**R2 · Die Ownership-Zusicherung wird zu einem stillen Grün.** `OwnershipTests.cs:95` prüft heute, dass ein
+**fremdes** Kind `403` bekommt. Nach E1 bekommt **jedes** Kind `403`, weil die Rollenschranke zuerst
+antwortet — die Zeile bleibt grün und beweist die Kreuz-Kind-IDOR-Regel nicht mehr. Genau die Fehlerklasse,
+die diese Story-Reihe verfolgt („Regel getestet, Grenzfall offen", [docs/testplan.md](../testplan.md)). Der
+Fall muss auf einen **fremden Erwachsenen** umgestellt werden (Supervisor ohne Betreuungsauftrag für diesen
+Plan → `403` über den `PlanOwnershipFilter`), sonst tauscht die Reparatur eine echte Zusicherung gegen eine
+scheinbare.
+
+**R3 · Die Untergrenze des Selbstschutzes darf nicht geraten werden.** Jeder Wächter dieser Klasse trägt ein
+`Assert.True(checkedActions >= N)` gegen ein leeres Grün. Wie viele Actions ein `Contracts.Supervisor`-DTO
+zurückgeben, ist **nicht** gezählt (acht DTO-Dateien unter `Contracts/Supervisor/`, die Zahl der Actions
+darüber ist nicht erhoben) — die Grenze wird beim Bauen **gemessen** und knapp unter den Istwert gesetzt.
+Eine zu hoch geratene Grenze ist ein rotes Tor ohne Fehler, eine zu tiefe ein Tor, das nicht beißt; feste
+Untergrenzen verrotten ohnehin (Erfahrung des Client-Routen-Wächters, B-40).
+
+**R4 · Die Ausnahmeliste ist eine Liste.** Die vier Klausur-Einträge (`KlassenarbeitenController.List/Get/
+Practice/Repeat`) sind über `Controller.Action`-Schlüssel notiert. Wird eine dieser Actions umbenannt, zeigt
+das Tor auf eine Ausnahme, die es nicht mehr gibt — und dann ist der Endpunkt ungegated *und* unbemerkt. Der
+Wächter braucht darum eine zweite Zusicherung: **jeder Eintrag der Ausnahmeliste muss auf eine existierende
+Action zeigen** (dasselbe Muster wie `PatchSemanticsTests`, das jeden Schalter gegen seine Tabelle hält).
+
+**R5 · Das Vertragsdokument ist eingecheckt.** `ContractDocumentTests` schreibt `docs/openapi/v1.json` bei
+**jedem** Lauf; der Pfadschlüssel wandert von `student` nach `supervisor`, dazu der Swagger-`Tags`-Name. Der
+Diff ist erwartet, muss aber **mitcommittet** werden, sonst ist CI rot. Der Selbstschutz des Tests hängt an
+`"/api/v1/supervisor/children"` (`:52`) und ist nicht betroffen.
+
+**R6 · Was *nicht* betroffen ist**, damit niemand danach sucht: `DocsCaptureTests` schneidet diesen Endpunkt
+**nicht** mit (kein Treffer in der Datei) — `docs/api-examples/` und `openapi-examples.generated.json` bleiben
+also unverändert, anders als bei B-80. `Pugling.Client` kennt den Report nicht (keine Methode), der
+`ClientRouteGuard` hat nichts nachzuziehen. **Kein E2E** fährt die Route (`frontend/e2e/` ohne Treffer). Und
+der Endpunkt-Abdeckungs-Wächter sieht keinen neuen Endpunkt: `ApiSurface.Key` ist
+`PositionReportController.Get`, der Name bleibt.
+
+### Angriffsplan
+
+Backend zuerst; das Frontend hängt an der API und wird eine Zeile.
+
+1. **Vertrag**: `Report` und `ItemReport` aus
+   [Contracts/Student/LearnProgressDtos.cs:30-37](../../backend/Pugling.Contracts/Student/LearnProgressDtos.cs)
+   in eine neue `Contracts/Supervisor/PositionReportDtos.cs` (Namespace `Pugling.Contracts.Supervisor`). Keine
+   `using`-Änderung nötig — alle sechs Vertrags-Namespaces sind per csproj-`<Using>` projektweit sichtbar.
+2. **Controller** nach `Controllers/Supervisor/PositionReportController.cs`: Namespace, `ApiRoutes.Supervisor`
+   statt `.Student`, `[Authorize(Roles = Roles.Supervisor)]` (E1, `Roles` liegt in
+   [AuthAccess.cs:18](../../backend/Pugling.Api/Auth/AuthAccess.cs)), `[Tags("Supervisor – Position Report")]`.
+   Der `[ServiceFilter(typeof(PlanOwnershipFilter))]` **bleibt** — er ist für `{planId}`-Routen Pflicht
+   (Wächter (b)) und trägt jetzt die Erwachsenen-Prüfung allein.
+3. **Service** nach `Services/Supervisor/PositionReportService.cs` (Namespace-Wechsel; die
+   DI-Registrierung in [Program.cs:170](../../backend/Pugling.Api/Program.cs) bleibt unverändert). Den
+   Kommentar „Answers the supervisor's question" behalten — er stimmt jetzt auch für die Route.
+4. **`ApiRoutes.cs`-Kommentar** umschreiben (R1): die Regel bleibt, das Beispiel „reports" fällt weg.
+5. **Tor** (E3/E4) in `ConventionGuardTests`: neuer Fact über `Controllers()`/`Actions()` +
+   `PayloadType`/`LeafTypes`, Bedingung „Leaf-Namespace `Pugling.Contracts.Supervisor` ⇒ `AuthorizeAttribute`
+   mit `Roles` enthält `Supervisor`, an Action **oder** Klasse". Dazu die vier begründeten Ausnahmen, der
+   gemessene Selbstschutz (R3) und die Prüfung, dass jede Ausnahme existiert (R4).
+6. **Tests** (siehe Testweg), inklusive der Umstellung aus R2.
+7. **Doku**, 11 Stellen: `wiki/07-api-referenz.md:89`, `docs/endpunkt-beziehungen.md:59,348,393,685` (`:393`
+   verlinkt den Service zusätzlich noch unter `Services/PositionReportService.cs` statt `Services/Student/` —
+   beim Verschieben gleich richtig setzen), `docs/vokabel-funktionalitaeten-entwickler-tutorial.md:149`,
+   `docs/tutorial-supervisor.md:455,561`, `.claude/skills/supervisor/SKILL.md:62`. Und die drei
+   kind-adressierten, die den Report **nicht mehr nennen** dürfen: `docs/tutorial-student.md:308`,
+   `.claude/skills/student/SKILL.md:65`, `docs/REST/Student.http:128` — der Aufruf wandert aus
+   `Student.http` nach `docs/REST/Supervisor.http` (existiert).
+8. **Frontend**: `frontend/src/lib/api.ts:468` auf `supervisor/…` umstellen, `npm run gen:contract`, dann
+   `npm run build` als Gegenprobe (es darf sich **keine** weitere Quelle ändern müssen).
+9. **Artefakte**: `docs/openapi/v1.json` schreibt der Testlauf, mitcommitten (R5).
+
+### Testweg
+
+- **Regressionstest, vorher rot** — in `AntiCheatTests` (dort liegen die serverseitigen Zusicherungen, wie
+  bei B-80): Kind-Client (`TestApi.ChildAsync(factory)`) liest den Report **seiner eigenen** Position →
+  `403`. Heute liefert derselbe Aufruf `200` mit `answer` für eine Karte mit `introduced: false` — der Fall
+  aus Ist-Stand 3.
+- **`PositionReportTests.cs:24,70`**: Routen-Zeichenketten nachziehen; die vorhandenen Zusicherungen des
+  Vaters (`totalItems`, `introducedItems`, Box-Fortschritt, `404` bei fremder Position) müssen **unverändert**
+  grün bleiben — das ist der Nachweis „der Vater verliert nichts".
+- **`OwnershipTests.cs:95` umstellen** (R2): statt des fremden Kindes ein **fremder Erwachsener** → `403`.
+  Ohne diese Umstellung bleibt die Zeile grün, ohne noch etwas zu beweisen.
+- **Das neue Tor gegen sich selbst prüfen**: `[Authorize(Roles = …)]` am Report-Controller probehalber
+  entfernen — der Wächter muss rot werden. Und ein erfundener fünfter Ausnahme-Eintrag muss die Prüfung aus
+  R4 rot machen. Ein Tor, das nie rot gesehen wurde, ist unbelegt.
+- **`ContractDocumentTests`** läuft mit und schreibt das Dokument; der erwartete Diff ist der Pfadschlüssel
+  plus `Tags`-Name (R5).
+- **`/smoke-test`** plus der Live-Durchgang aus Ist-Stand 3 gegen eine Wegwerf-DB: Kind-Token auf den Report
+  → jetzt `403`, Vater-Token auf die **neue** Route → `200` mit gefüllter Lösung.
+- **E2E**: nicht nötig, es ändert sich keine Oberfläche (`frontend/e2e/` fährt die Route nicht);
+  `full-flow.spec.ts` muss grün bleiben.
 
 ## Verlauf
 
@@ -122,3 +357,50 @@ Jeder mit Empfehlung — das ist das Material der Grill-Runde.
   und wörtlich erfüllt; hier trägt ein **anderes** DTO die Lösung als eigenes Feld, an einem anderen
   Endpunkt, mit einer eigenen Entscheidung (Feld leeren vs. Route gaten). Handhabung wie B-76 → B-79 und
   B-80 → B-81.
+- **2026-08-03** — gegrillt, vier Entscheidungen. Tragend ist **E1**: die Route wird auf `Roles.Supervisor`
+  gehoben, statt `answer` rollenabhängig zu leeren — der Report **ist** die Auswertung des Vaters, und das
+  Leeren hätte die Zusicherung genau dorthin zurückverlagert, wo B-80/E1 sie weggeholt hat (im Vertrag nicht
+  mehr lesbar). Entscheidbar wurde das erst durch das Nachzählen (Ist-Stand 6): **genau ein Verbraucher, und
+  der ist der Vater** — kein Sohn-UI, keine Client-Methode, kein Kind-Test.
+  Die Runde hat eine eigene Empfehlung **korrigiert**. **E2**: Route *und* die beiden DTOs wandern in die
+  Supervisor-Ebene, entgegen dem „nicht anfassen" der Ausformulierung. B-80/E5 ließ die Klausur beim Kind,
+  weil sie eine *geteilte* Ressource ist; hier darf nach E1 **kein** Student die Route mehr aufrufen, also
+  widerspricht das `student/`-Präfix dem Leser hart statt weich. Die Kosten sind ausgezählt statt geschätzt
+  (15 Stellen plus Artefakte), und drei davon — die kind-adressierte Doku — fallen durch E1 ohnehin an.
+  **E3 geht über den ursprünglichen Schnitt hinaus**: ein reflexives Tor in `ConventionGuardTests` („Action mit
+  `Contracts.Supervisor`-DTO ⇒ `Roles.Supervisor`"), weil E1/E2 allein nur *diesen* Endpunkt reparieren,
+  während die „echte Lücke" die wachsende Kandidatenmenge ist. Vor der Entscheidung gemessen: das Tor ist
+  heute an **vier** Stellen rot (`KlassenarbeitenController.List/Get/Practice/Repeat`), und alle vier sind
+  durch B-80/E5 gewollt — es braucht also eine Ausnahmeliste mit vier Einträgen und treibt die Größe
+  voraussichtlich von S nach M. **E4** hält das Tor bei `Contracts.Supervisor`: auf `Contracts.Creator`
+  ausgedehnt wären es mindestens zwölf Ausnahmen (acht davon Tag-Actions, durch B-80/E3 gewollt), und eine
+  Ausnahmeliste, die den Normalfall aufzählt, beweist nichts mehr.
+  Zwei offene Punkte wurden **aufgelöst statt beantwortet**: Punkt 4 („sagen weitere Felder zu viel?") hat
+  nach E1 keinen Gegenstand, weil kein Feld geschnitten wird; Punkt 5 ist am Code beantwortet —
+  `ChildLearnProgress` liest aus `db.ItemProgress`, also nur **beantwortete** Items, und ist damit die Familie
+  von B-81, nicht diese. Abgeleitet und unwidersprochen geblieben: die drei kind-adressierten Doku-Stellen
+  ziehen mit, und der Titel bleibt (er benennt den Produktfehler aus Rollensicht, nicht das DTO).
+- **2026-08-03** — geschätzt: **M · beides · keine Migration · Vertragsbruch ja**. **M statt S allein wegen
+  E3**: E1+E2 sind mechanisch (ein Attribut, eine Routen-Konstante, zwei verschobene Records, drei Test-Zeilen,
+  eine Frontend-Zeile), aber das Tor bringt einen *neuen Mechanismus* mit Ausnahmeliste und Selbstschutz.
+  Billig ist es, weil die Maschinerie nachgesehen ist statt vermutet: `ApiSurface` plus die Helfer
+  `PayloadType`/`LeafTypes` entpacken `Task<ActionResult<T>>` schon, und `OwnershipExceptions` ist das fertige
+  Muster für eine begründete Ausnahmeliste. **Keine Migration**, weil kein Entity angefasst wird. Der
+  **Vertragsbruch sitzt an der Route, nicht am Schema**: `Report`/`ItemReport` behalten ihre Namen, weil der
+  Generator über den *einfachen* Typnamen schlüsselt — `types.ts:428-431` und `MasteryPill.tsx` bleiben also
+  gültig. `wo: beides` ist geprüft: genau **eine** Frontend-Quelle ändert sich (`api.ts:468`), womit das
+  `backend` aus B-80 hier nicht wiederholbar ist.
+  Die Schätzung hat drei Dinge freigelegt, die im Grillen nicht sichtbar waren. **R1**: `ApiRoutes.cs:13-16`
+  hält die Dualität als **Absicht** fest und nennt „reports" als Beispiel — E2 bleibt tragfähig (der Satz gilt
+  für *dual gelesene* Ressourcen, und das hört der Report mit E1 auf zu sein), aber der Kommentar wird falsch
+  und muss umgeschrieben werden, sonst stehen zwei Quellen der Wahrheit gegeneinander. **R2**: `OwnershipTests.cs:95`
+  wird durch E1 zu einem **stillen Grün** — nach dem Gaten bekommt *jedes* Kind `403`, die Kreuz-Kind-IDOR-Regel
+  ist damit nicht mehr bewiesen; der Fall muss auf einen fremden **Erwachsenen** umgestellt werden. Genau die
+  Fehlerklasse, die diese Story-Reihe verfolgt. **R4**: die Ausnahmeliste des Tors zeigt über
+  `Controller.Action`-Schlüssel auf vier Actions — wird eine umbenannt, ist der Endpunkt ungegated *und*
+  unbemerkt; der Wächter braucht deshalb eine zweite Zusicherung, dass jede Ausnahme existiert (Muster
+  `PatchSemanticsTests`).
+  Gegenprobe zum Umfang, damit niemand danach sucht: `DocsCaptureTests` schneidet den Endpunkt **nicht** mit
+  (also keine Änderung unter `docs/api-examples/`, anders als bei B-80), `Pugling.Client` kennt ihn nicht, kein
+  E2E fährt ihn, und der Abdeckungs-Wächter sieht keinen neuen Endpunkt (`PositionReportController.Get` behält
+  seinen Namen).
