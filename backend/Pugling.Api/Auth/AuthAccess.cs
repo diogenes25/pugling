@@ -18,6 +18,14 @@ public static class Roles
     public const string Supervisor = "Supervisor";
     /// <summary>Tier role for learning: plays exercises and tests.</summary>
     public const string Student = "Student";
+    /// <summary>
+    /// Both adult tiers for one <c>[Authorize(Roles = …)]</c> – "any adult, but no student". Comma-separated
+    /// because the attribute reads its value that way (OR), and a single attribute is the only form that
+    /// works: two <c>[Authorize]</c> attributes would be AND-ed and lock out a teacher account, which
+    /// carries <see cref="Creator"/> alone. Use it where an endpoint hands out material a student must not
+    /// see, yet sits below a route prefix that a student legitimately calls for other actions.
+    /// </summary>
+    public const string AnyAdult = Creator + "," + Supervisor;
     /// <summary>Platform superuser (break-glass). Bypasses the RWX permission check on exercises – e.g. to
     /// edit orphaned (ownerless) exercises in an emergency. Not granted via the API but set through
     /// the <see cref="Adult.IsAdmin"/> flag (DB/seed) and issued as a role claim at login.</summary>

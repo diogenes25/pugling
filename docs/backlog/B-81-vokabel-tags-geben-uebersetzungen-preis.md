@@ -1,8 +1,8 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/backend, rolle/student]
+tags: [typ/story, status/in-arbeit, bereich/backend, rolle/student]
 aliases: [Vokabel-Tag gibt Übersetzungen preis, TaggedVocabularyDto trägt die Lösung,
   Kind liest jede Übersetzung des Stores, Tür D]
-status: geschaetzt
+status: in-arbeit
 prio: P1
 art: Defekt
 groesse: S
@@ -524,3 +524,34 @@ Backend zuerst; es gibt kein Frontend zu ziehen. **Die Reihenfolge ist bindend**
   `DocsCaptureTests` schneidet nur den Übungs-Zweig mit (`:782`), `Pugling.Client` kennt den Endpunkt nicht,
   und der Abdeckungs-Wächter sieht keinen neuen Endpunkt. Der Beleg ist die Integrations-Suite plus ein
   Live-Durchgang.
+- **2026-08-03** — **in Arbeit**: alle sechs Entscheidungen gebaut, in der bindenden Reihenfolge (E5 → E3 →
+  E2 → Tests → E6). **670 Tests grün**, `dotnet format --verify-no-changes` sauber.
+  **Der Live-Durchgang aus Ist-Stand 3 endet jetzt am Markieren.** Wörtlich derselbe Ablauf auf einer
+  Wegwerf-DB (`:5280`, die echte `pugling.db` unangetastet): das Kind legt sein Tag an (`200`), sendet
+  `[1..12]` → **`403 vocabulary_not_assigned`** mit allen zwölf Ids im `detail`, sendet `[9999]` →
+  **derselbe** `403` mit derselben Satzform (kein Orakel), liest die Liste → `403`. Gegenprobe: der Vater
+  markiert dieselben Ids in *diesem* Tag (`200`, `vocabularyCount: 3`) und liest sie mit Übersetzung
+  (`200`) — und das Kind sendet danach die volle Menge erneut und bekommt `200`, keine Änderung. Das ist
+  **R4 live**, nicht nur im Test.
+  **R1 war berechtigt, und die Zahl war größer als vermutet**: `Translation` hebt den Geltungsbereich des
+  Tors von 30 auf **42** Actions (die Schätzung hatte „nicht erhoben" stehen). Die Untergrenze ist darum
+  **neu gemessen** und von 25 auf 38 gehoben — die alte hätte ein Drittel der Fläche wegfallen lassen und
+  wäre grün geblieben. **E6s Vorhersage traf exakt**: genau zwei Treffer, nach der Reparatur bleibt **eine**
+  Ausnahme (`ChildVocabularyProgressController.ByWord`).
+  **Beide Tore wurden rot gesehen, bevor sie grün genannt wurden.** Die zwei neuen Tests ohne die Reparatur:
+  genau zwei rot, neun grün. Und das Lösungsfeld-Tor mit `Student` probehalber im Rollenwert: rot, mit
+  namentlicher Nennung von `TagsController.GetVocabulary`.
+  **R3 traf ein wie beschrieben**: `docs/openapi/v1.json` (Enum-Wert + `403`-Antwort) und
+  `docs/api-examples/index.md` (`34 / 56` → `34 / 57` plus die Zeile „nicht erreichbar") sind mitcommittet.
+  Der neue Code steht dort in derselben Liste wie sein Zwilling `exercise_not_assigned` — nachgesehen, kein
+  Ausrutscher. Zwei weitere `api-examples`-Dateien wurden nur in den Zeilenenden angefasst (CRLF) und
+  zurückgesetzt; `git diff --ignore-cr-at-eol` war leer.
+  **Zwei bewusste Abweichungen vom Plan.** Erstens: der Testweg nannte `AntiCheatTests` „wie bei B-80" — das
+  war **falsch erinnert**, B-80s Fall liegt in `TagsRatingsTimetableTests` direkt neben den Übungs-Fällen.
+  Die neuen Fälle liegen darum dort, denn die beiden Schreibpfade sind Zwillinge bis in die Reihenfolge ihrer
+  Prüfungen, und wer den einen ändert muss den anderen sehen. Zweitens: E2 sagte „ein Join **vor**
+  `AssignedExerciseIdsAsync`, nicht als zweiter Helfer", der Angriffsplan dagegen „ein neuer Helfer". Gebaut
+  ist die Fassung, die E2s *Zweck* erfüllt: `AssignedVocabularyIdsAsync` **delegiert** an
+  `AssignedExerciseIdsAsync` statt dessen Query zu wiederholen — es gibt weiterhin genau **eine** Definition
+  von „zugewiesen".
+  Offen für die Abnahme: `pugling-reviewer`.

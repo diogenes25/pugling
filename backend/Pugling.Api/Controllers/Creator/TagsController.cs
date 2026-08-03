@@ -238,9 +238,37 @@ public class TagsController(PuglingDbContext db, AuthAccess access) : Controller
 
     // ---- Tagging vocabulary (child-scoped) -----------------------------------------------------------
 
+    /// <summary>
+    /// Which of the given store vocabulary entries are assigned to this child. A word is never assigned
+    /// directly – the relation is derived: <c>Vocabulary ← ExerciseItem → Exercise → (plan position | class test)</c>.
+    /// <para>
+    /// The exercise leg deliberately runs through <see cref="AssignedExerciseIdsAsync"/> instead of repeating
+    /// its query: two definitions of "assigned" drift apart, and then the stale one applies.
+    /// </para>
+    /// <para>
+    /// Known gap: a Birkenbihl decoded word points at the store from the exercise <i>config</i>
+    /// (<c>DecodedWord.VocabularyId</c>) without an <c>ExerciseItem</c> row, so it is not joinable here and
+    /// counts as unassigned. Inert while no student surface marks vocabulary at all.
+    /// </para>
+    /// </summary>
+    private async Task<HashSet<int>> AssignedVocabularyIdsAsync(int childId, List<int> ids, CancellationToken ct)
+    {
+        var pairs = await db.ExerciseItems
+            .Where(i => ids.Contains(i.VocabularyId))
+            .Select(i => new { i.VocabularyId, i.ExerciseId })
+            .Distinct()
+            .ToListAsync(ct);
+        if (pairs.Count == 0) return [];
+
+        var assignedExercises = await AssignedExerciseIdsAsync(
+            childId, pairs.Select(p => p.ExerciseId).Distinct().ToList(), ct);
+        return pairs.Where(p => assignedExercises.Contains(p.ExerciseId)).Select(p => p.VocabularyId).ToHashSet();
+    }
+
     /// <summary>Marks one or more store vocabulary entries with this tag (already marked ones are skipped).</summary>
     [HttpPost("{tagId:int}/vocabulary")]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<TagResponse>> TagVocabulary(int tagId, TagVocabularyDto dto, CancellationToken ct = default)
     {
@@ -248,13 +276,36 @@ public class TagsController(PuglingDbContext db, AuthAccess access) : Controller
         if (tag is null) return NotFound();
         if (dto.VocabularyIds is not { Count: > 0 }) return this.ProblemWithCode(ApiErrors.ValidationError, "At least one vocabulary item is required.");
 
-        var ids = dto.VocabularyIds.Distinct().ToList();
-        var existing = await db.Vocabularies.Where(v => ids.Contains(v.Id)).Select(v => v.Id).ToListAsync(ct);
-        var missing = ids.Except(existing).ToList();
+        // Only what is actually new is checked - and that is why `fresh` is computed BEFORE both checks and
+        // not, as before, after the existence check: a tag of the child may legitimately contain foreign
+        // material that its SUPERVISOR put there, and a selection form resends the whole set. Checking the
+        // full set would answer a no-op with 403. (Same shape as TagExercises above.)
+        var already = tag.VocabularyTags.Select(x => x.VocabularyId).ToHashSet();
+        var fresh = dto.VocabularyIds.Distinct().Where(id => !already.Contains(id)).ToList();
+        if (fresh.Count == 0) return Map(tag);
+
+        // A student may only mark words that occur in material assigned to it. Vocabulary ids are consecutive
+        // numbers, so an existence check alone turned this endpoint into a dictionary: two calls read every
+        // word/translation pair of the store across all subjects. Adults keep the full reach - a supervisor
+        // marks foreign material on purpose when planning.
+        //
+        // Deliberately BEFORE the existence check, exactly as in TagExercises: the other order answers 400
+        // for an unknown id and 403 for an existing one, which tells the child by binary search where the
+        // store ends. "Does not exist" and "not yours" must be indistinguishable.
+        if (User.IsStudent())
+        {
+            var assigned = await AssignedVocabularyIdsAsync(tag.ChildId, fresh, ct);
+            var unassigned = fresh.Where(id => !assigned.Contains(id)).ToList();
+            if (unassigned.Count > 0)
+                return this.ProblemWithCode(ApiErrors.VocabularyNotAssigned,
+                    $"Vocabulary items not assigned to this child: {string.Join(", ", unassigned)}");
+        }
+
+        var existing = await db.Vocabularies.Where(v => fresh.Contains(v.Id)).Select(v => v.Id).ToListAsync(ct);
+        var missing = fresh.Except(existing).ToList();
         if (missing.Count > 0) return this.ProblemWithCode(ApiErrors.InvalidReference, $"Unknown vocabulary item IDs: {string.Join(", ", missing)}");
 
-        var already = tag.VocabularyTags.Select(x => x.VocabularyId).ToHashSet();
-        foreach (var id in ids.Where(id => !already.Contains(id)))
+        foreach (var id in fresh)
             tag.VocabularyTags.Add(new VocabularyTag { VocabularyId = id });
 
         await db.SaveChangesAsync(ct);
@@ -276,12 +327,19 @@ public class TagsController(PuglingDbContext db, AuthAccess access) : Controller
         return NoContent();
     }
 
-    /// <summary>All vocabulary entries marked with this tag (alphabetically by key).</summary>
+    /// <summary>All vocabulary entries marked with this tag (alphabetically by key). Adults only.</summary>
     /// <param name="tagId">Tag whose vocabulary entries are read.</param>
     /// <param name="skip">Number of entries to skip (paging).</param>
     /// <param name="take">Maximum number of hits (1..500). Total count in the <c>X-Total-Count</c> header.</param>
     /// <param name="ct">Cancellation token.</param>
+    // Adults only, deliberately unlike its immediate neighbours POST and DELETE, which a student may call:
+    // every row names Word AND Translation, and Key repeats the pair a second time (it is built from both).
+    // A student marking a word does not need to read back its translation - it has vocabulary-progress for
+    // its own learning state. The route stays under `creator/` because the tag itself is genuinely dual: it
+    // is not the resource that becomes adult-only, only this one window into it.
     [HttpGet("{tagId:int}/vocabulary")]
+    [Authorize(Roles = Roles.AnyAdult)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<IEnumerable<TaggedVocabularyDto>>> GetVocabulary(
         int tagId, [FromQuery] int skip = 0, [FromQuery] int take = PagingExtensions.DefaultTake,

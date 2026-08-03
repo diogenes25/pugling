@@ -19407,6 +19407,16 @@
               }
             }
           },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
           "404": {
             "description": "Not Found",
             "content": {
@@ -19433,7 +19443,7 @@
         "tags": [
           "Creator \u2013 Tags"
         ],
-        "summary": "All vocabulary entries marked with this tag (alphabetically by key).",
+        "summary": "All vocabulary entries marked with this tag (alphabetically by key). Adults only.",
         "parameters": [
           {
             "name": "tagId",
@@ -19476,6 +19486,16 @@
           }
         ],
         "responses": {
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
           "404": {
             "description": "Not Found",
             "content": {
@@ -32356,7 +32376,8 @@
               "unknown_exercise_type",
               "unknown_field",
               "validation_error",
-              "vocabulary_in_use"
+              "vocabulary_in_use",
+              "vocabulary_not_assigned"
             ],
             "type": "string",
             "description": "Stabiler, maschinenlesbarer Fehler-Code (Client-Verzweigung/-Lokalisierung)."

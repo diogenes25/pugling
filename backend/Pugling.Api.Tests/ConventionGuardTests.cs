@@ -253,11 +253,13 @@ public class ConventionGuardTests
             }
         }
 
-        // Self-protection against an empty green, measured on 2026-08-03 (30 actions in scope, 26 of them
-        // properly gated) and set just below it - a hand-guessed bound is either a red gate without a defect
-        // or one that never bites. The number is this high only because the scope includes inherited actions:
-        // declared-only it was 10 and left the whole exercise CRUD outside.
-        Assert.True(inScope.Count >= 25,
+        // Self-protection against an empty green, re-measured on 2026-08-03 after `Translation` joined the name
+        // list (42 actions in scope) and set just below it - a hand-guessed bound is either a red gate without a
+        // defect or one that never bites. Re-measured rather than nudged: the earlier bound of 25 came from a
+        // 30-action scope and would have stayed green through a third of the surface falling out of it. The
+        // number is this high only because the scope includes inherited actions: declared-only it was 10 and
+        // left the whole exercise CRUD outside.
+        Assert.True(inScope.Count >= 38,
             $"Too few actions with a solution field found ({inScope.Count}) - the reflection does not bite.");
 
         // The exception list points at actions by `Controller.Action`. Rename one and the entry aims at
@@ -280,29 +282,37 @@ public class ConventionGuardTests
     /// (<c>ItemOutcome</c>, <c>ReviewOutcome</c>, <c>ItemCheck</c>), which is the point of the feedback rather
     /// than a leak – with it in the list the exception list grows from 4 to 16.
     /// <para>
-    /// <b>The known limit of a name-based rule.</b> Measured on 2026-08-03: adding <c>Translation</c>,
-    /// <c>Back</c>, <c>Target</c> and <c>Reveal</c> raises the scope from 30 to 68 actions and costs
-    /// <b>10 further exceptions</b> – and they are the normal case, which is exactly the argument that
-    /// discarded the namespace-based draft of this gate: <c>PracticeCard.Reveal</c> and <c>TestItem.Reveal</c>
-    /// are what a card is *for*, <c>MissionStatus.Target</c> is a target count and not a translation, and
-    /// <c>ItemProgressResponse.Back</c> / <c>WordMasteryResponse.Translation</c> are the child's progress on
-    /// words it has already answered. The eleventh is a genuine open defect
-    /// (<c>TagsController.GetVocabulary</c> hands <c>TaggedVocabularyDto.Translation</c> to a child token,
-    /// backlog B-81) – so widening the list belongs to that story, where the gate can go green instead of
-    /// red on a defect nobody is fixing in this run. This is a deliberate hole in the net, not a forgotten one.
+    /// <c>Translation</c> joined the list with B-81, and the cost was measured for that one name alone rather
+    /// than taken from the four-name figure below: it raises the scope from 30 to 42 actions and costs exactly
+    /// <b>one</b> further exception, because the only other hit was a real defect
+    /// (<c>TagsController.GetVocabulary</c> handed <c>TaggedVocabularyDto.Translation</c> to a child token).
+    /// </para>
+    /// <para>
+    /// <b>The known limit of a name-based rule.</b> <c>Back</c>, <c>Target</c> and <c>Reveal</c> stay out.
+    /// Measured on 2026-08-03: together with <c>Translation</c> they raise the scope from 30 to 68 actions and
+    /// cost <b>10 further exceptions</b> – and those enumerate the normal case, which is exactly the argument
+    /// that discarded the namespace-based draft of this gate: <c>PracticeCard.Reveal</c> and
+    /// <c>TestItem.Reveal</c> are what a card is *for*, <c>MissionStatus.Target</c> is a target count and not a
+    /// translation, and <c>ItemProgressResponse.Back</c> is the child's progress on words it has already
+    /// answered. This is a deliberate hole in the net, not a forgotten one.
     /// </para>
     /// </summary>
-    private static readonly string[] SolutionPropertyNames = ["Answer", "Solution", "CorrectAnswer"];
+    private static readonly string[] SolutionPropertyNames = ["Answer", "Solution", "CorrectAnswer", "Translation"];
 
     /// <summary>
-    /// Deliberate exceptions to (e), each with its reason – the list is the decision, not a bypass. All four
-    /// are the same collision: on a remark, <c>Answer</c> is the reply text of a dev note, not the solution of
-    /// a card. A name-based rule cannot tell two meanings of one word apart, so they are named here.
+    /// Deliberate exceptions to (e), each with its reason – the list is the decision, not a bypass. The four
+    /// remark entries are the same collision: on a remark, <c>Answer</c> is the reply text of a dev note, not
+    /// the solution of a card. A name-based rule cannot tell two meanings of one word apart, so they are
+    /// named here.
     /// <para>
     /// The collision alone would also excuse handing a real solution to a child, so the second half matters:
     /// the controller blanks the field for a student token at runtime (<c>MaySeeAnswers</c>). Both reasons are
     /// written out, because an exception justified only by the name would survive the field turning into a
     /// real secret.
+    /// </para>
+    /// <para>
+    /// The fifth entry is a different kind: the field really is a translation, but it is the child's <i>own</i>
+    /// learning state over words it has already answered – so it reveals nothing it has not seen.
     /// </para>
     /// </summary>
     private static readonly Dictionary<string, string> SolutionFieldExceptions = new()
@@ -311,6 +321,9 @@ public class ConventionGuardTests
         ["RemarksController.GetOne"] = "RemarkDto.Answer is a dev note's reply, and MaySeeAnswers blanks it for a student.",
         ["RemarksController.List"] = "RemarkDto.Answer is a dev note's reply, and MaySeeAnswers blanks it for a student.",
         ["RemarksController.Update"] = "RemarkDto.Answer is a dev note's reply, and MaySeeAnswers blanks it for a student.",
+        ["ChildVocabularyProgressController.ByWord"] =
+            "WordMasteryResponse.Translation is the child's own progress; the query reads ItemProgress filtered "
+            + "by ChildId, so a row exists only for a word the child has already answered.",
     };
 
     /// <summary>

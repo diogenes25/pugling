@@ -115,6 +115,12 @@ public static class ApiErrors
     /// <see cref="Forbidden"/> on purpose: the caller does own the tag, only the exercise is out of reach.
     /// </summary>
     public static readonly ApiError ExerciseNotAssigned = new("exercise_not_assigned", 403, "Exercise is not assigned to this child.");
+    /// <summary>
+    /// A student tried to mark a store vocabulary item that does not occur in any assigned exercise (403).
+    /// Its own code rather than reusing <see cref="ExerciseNotAssigned"/>: the code is a stable part of the
+    /// contract and must not name an exercise where a word is meant, so a UI can tell the two cases apart.
+    /// </summary>
+    public static readonly ApiError VocabularyNotAssigned = new("vocabulary_not_assigned", 403, "Vocabulary is not assigned to this child.");
     /// <summary>The last owner of an exercise cannot be removed (409).</summary>
     public static readonly ApiError LastOwner = new("last_owner", 409, "Cannot remove the last owner.");
     /// <summary>Exercise item (vocabulary pair) does not exist / does not belong to this exercise (404).</summary>

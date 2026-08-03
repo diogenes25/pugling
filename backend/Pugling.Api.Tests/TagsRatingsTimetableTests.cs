@@ -178,6 +178,90 @@ public class TagsRatingsTimetableTests(PuglingWebAppFactory factory) : IClassFix
             (await res.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("code").GetString());
     }
 
+    // ───────────────────────── The same barrier for store vocabulary, and the read path (B-81/E1)
+    //
+    // Deliberately here next to the exercise cases rather than in AntiCheatTests: the two write paths are
+    // twins down to the order of their checks, and whoever changes one has to see the other.
+
+    [Fact]
+    public async Task Kind_MarkiertNurZugewieseneVokabeln_SonstVocabularyNotAssigned()
+    {
+        var father = await TestApi.FatherAsync(factory);
+        var (fremd, _) = await TestApi.CreateStoreVocabAsync(father, TestApi.UniqueName("cathedral"), "die Kathedrale");
+        var (zugewiesen, zugewiesenKey) = await TestApi.CreateStoreVocabAsync(father, TestApi.UniqueName("bridge"), "die Brücke");
+        // Assigned means: the word occurs in an exercise that a plan position gives the child - the word
+        // itself is never assigned directly, that relation does not exist in the model.
+        TestApi.SeedLeitnerPosition(factory, await TestApi.CreateVocabRefExerciseAsync(father, zugewiesenKey), stage: 1);
+
+        var tagId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/tags",
+            new { childId = 1, name = TestApi.UniqueName("Spickzettel") }));
+        var child = await TestApi.ChildAsync(factory);
+
+        // Vocabulary ids are consecutive numbers, so without this barrier two calls turned the tag into a
+        // dictionary: mark 1..n, then read back every word/translation pair of the store.
+        var abgelehnt = await child.PostAsJsonAsync($"/api/v1/creator/tags/{tagId}/vocabulary",
+            new { vocabularyIds = new[] { fremd } });
+        Assert.Equal(HttpStatusCode.Forbidden, abgelehnt.StatusCode);
+        // Its own code, not `exercise_not_assigned`: a UI must be able to say "this word does not occur in
+        // your material" rather than name an exercise.
+        Assert.Equal("vocabulary_not_assigned",
+            (await abgelehnt.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("code").GetString());
+
+        // Its own material stays markable - otherwise the fix only proves that it forbids *something*.
+        Assert.Equal(HttpStatusCode.OK, (await child.PostAsJsonAsync($"/api/v1/creator/tags/{tagId}/vocabulary",
+            new { vocabularyIds = new[] { zugewiesen } })).StatusCode);
+
+        // The adult keeps the full reach on the very same endpoint: he marks foreign material on purpose.
+        Assert.Equal(HttpStatusCode.OK, (await father.PostAsJsonAsync($"/api/v1/creator/tags/{tagId}/vocabulary",
+            new { vocabularyIds = new[] { fremd } })).StatusCode);
+
+        // And what the father just put there must not make the child's next save fail: a selection form
+        // resends the whole set, and only genuinely new ids are checked.
+        Assert.Equal(HttpStatusCode.OK, (await child.PostAsJsonAsync($"/api/v1/creator/tags/{tagId}/vocabulary",
+            new { vocabularyIds = new[] { fremd, zugewiesen } })).StatusCode);
+
+        // No enumeration oracle: an unknown id answers exactly like a foreign one. With the checks in the
+        // other order the child read the size of the store off the status code. The adult keeps his 400.
+        var unbekannt = await child.PostAsJsonAsync($"/api/v1/creator/tags/{tagId}/vocabulary",
+            new { vocabularyIds = new[] { 999_999 } });
+        Assert.Equal(HttpStatusCode.Forbidden, unbekannt.StatusCode);
+        Assert.Equal("vocabulary_not_assigned",
+            (await unbekannt.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("code").GetString());
+        Assert.Equal(HttpStatusCode.BadRequest, (await father.PostAsJsonAsync($"/api/v1/creator/tags/{tagId}/vocabulary",
+            new { vocabularyIds = new[] { 999_999 } })).StatusCode);
+    }
+
+    [Fact]
+    public async Task Kind_LiestUeberDenTagKeineUebersetzung_VaterUndLehrerSchon()
+    {
+        var father = await TestApi.FatherAsync(factory);
+        var (vocabId, _) = await TestApi.CreateStoreVocabAsync(father, TestApi.UniqueName("library"), "die Bibliothek");
+        var tagId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/tags",
+            new { childId = 1, name = TestApi.UniqueName("Leseprobe") }));
+        (await father.PostAsJsonAsync($"/api/v1/creator/tags/{tagId}/vocabulary", new { vocabularyIds = new[] { vocabId } }))
+            .EnsureSuccessStatusCode();
+
+        // Every row names word AND translation, and `key` repeats the pair - so the tag it owns must not be a
+        // window into the store for the child.
+        var child = await TestApi.ChildAsync(factory);
+        Assert.Equal(HttpStatusCode.Forbidden, (await child.GetAsync($"/api/v1/creator/tags/{tagId}/vocabulary")).StatusCode);
+
+        // Counter-check on the SAME url, otherwise a typo in the path would satisfy the assertion above.
+        var vaterSicht = await father.GetAsync($"/api/v1/creator/tags/{tagId}/vocabulary");
+        Assert.Equal(HttpStatusCode.OK, vaterSicht.StatusCode);
+        Assert.Contains((await vaterSicht.Content.ReadFromJsonAsync<JsonElement>()).EnumerateArray(),
+            v => v.GetProperty("translation").GetString() == "die Bibliothek");
+
+        // A teacher account carries Creator alone: it must pass the role gate (404 - not its child - instead
+        // of 403). That is what makes `AnyAdult` the right role set and not `Roles.Supervisor`.
+        var teacher = await factory.CreateClient().PostAsJsonAsync("/api/v1/creator/teacher-accounts",
+            new { name = TestApi.UniqueName("Frau Klee"), email = (string?)null, pin = "4242" });
+        teacher.EnsureSuccessStatusCode();
+        var lehrer = await TestApi.FatherAsync(factory,
+            (await teacher.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("creatorId").GetInt32(), "4242");
+        Assert.Equal(HttpStatusCode.NotFound, (await lehrer.GetAsync($"/api/v1/creator/tags/{tagId}/vocabulary")).StatusCode);
+    }
+
     [Fact]
     public async Task Timetable_EintragAnlegen_Auflisten()
     {
