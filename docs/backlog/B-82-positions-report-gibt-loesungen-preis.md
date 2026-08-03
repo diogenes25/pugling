@@ -1,8 +1,8 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/backend, rolle/student]
+tags: [typ/story, status/abgenommen, bereich/backend, rolle/student]
 aliases: [Positions-Report gibt die Lösungen preis, ItemReport trägt Answer,
   Kind liest die Lösung jeder Karte im Report, Tür C]
-status: in-arbeit
+status: abgenommen
 prio: P1
 art: Defekt
 groesse: M
@@ -492,3 +492,58 @@ Backend zuerst; das Frontend hängt an der API und wird eine Zeile.
   `ExerciseControllerBase` trägt `[Authorize(Roles = Roles.Creator)]` (nachgesehen, nicht vermutet).
   Das neue Tor ist ebenfalls **beide Zusicherungen einzeln rot gesehen** (Offender und Stale-Prüfung getrennt,
   weil die eine sonst die andere verdeckt), Untergrenze gemessen: 10 im Geltungsbereich, Grenze bei 8.
+- **2026-08-03** — **abgenommen**, Commit `dc14b3d`. Beide Reviewer sind gelaufen (`wo: beides`), keiner meldete
+  einen Blocker — aber der Backend-Reviewer hat **zwei Löcher im neuen Tor selbst** gefunden, und das Tor *ist*
+  ein Akzeptanzkriterium. Belegt: **668 Tests grün**, `full-flow`-E2E grün, `/smoke-test` 13 Checks,
+  `dotnet build` ohne Warnung.
+  **Zuerst eine Korrektur an meinem eigenen Eintrag von vorhin:** „`contract.ts` **und** `types.ts` blieben
+  byte-gleich" war falsch. `types.ts` ist byte-gleich (es aliast `S["Report"]`/`S["ItemReport"]`, und die
+  Schemanamen sind unverändert) — `contract.ts` **nicht**: darin wandert der Pfadschlüssel mit. Folgenlos, weil
+  die Datei generiert und gitignored ist und niemand `paths[…]` liest; aber der Grund dafür ist die eigentliche
+  Lücke, und die hat den E2E unten erzwungen: der Pfad ist ein Template-String, **`tsc` kann ein falsches
+  Ebenen-Präfix nicht sehen**.
+  **Loch 1 im Tor: `DeclaredOnly`.** `ApiSurface.Actions()` zählt nur *deklarierte* Actions — die dreizehn
+  Übungs-Controller deklarieren aber keine eigene CRUD-Action, sie erben `List/Get/Create/Update` aus
+  `ExerciseControllerBase`, und dort hängen die **schärfsten** Lösungsfelder der API (`Gap.Answer`,
+  `Question.Answer`, `GrammarTask.Answer`). Das Tor sah sie nicht, und damit war seine gemessene Untergrenze auf
+  einer Fläche erhoben, die den Normalfall ausließ. Genau diese Blindstelle steht für den Abdeckungs-Wächter
+  schon schriftlich in `EndpointCoverage.cs` — beim neuen Tor nicht. Neue Überladung
+  `ApiSurface.ActionsIncludingInherited()` (dedupliziert über Name + Signatur, sonst zählte eine `new`-verdeckte
+  Action doppelt); **gemessen: der Geltungsbereich wächst von 10 auf 30**, Untergrenze jetzt 25.
+  **Loch 2: `[AllowAnonymous]`.** Das Tor urteilte nur über `AuthorizeAttribute` — eine Action mit
+  klassenweitem Supervisor-Gate **plus** `[AllowAnonymous]` galt ihm als gegated, ist aber für *jeden* offen,
+  also schlimmer als für ein Kind. Das Muster ist im Repo real (fünf Stellen, keine mit Lösungsfeld), das Grün
+  war also ehrlich — aber blind. Zwei Zeilen, und **einzeln rot gesehen**: `[AllowAnonymous]` an den
+  Report-Endpunkt gehängt → Tor rot.
+  **Die dritte Namensfrage habe ich gemessen statt entschieden** — und das Ergebnis ist ein bewusstes Nein:
+  `Translation`, `Back`, `Target` und `Reveal` mit in die Namensliste hebt den Geltungsbereich auf 68 und
+  kostet **10 weitere Ausnahmen**, die den Normalfall aufzählen (`PracticeCard.Reveal` ist der Zweck einer
+  Karte, `MissionStatus.Target` eine Zielzahl, `ItemProgressResponse.Back` der Stand über schon beantwortete
+  Wörter). Das ist dasselbe Argument, das E3 umgeworfen hat. Der **elfte** Treffer ist ein echter offener
+  Defekt — `TagsController.GetVocabulary` gibt `TaggedVocabularyDto.Translation` an ein Kind-Token, das ist
+  [B-81](B-81-vokabel-tags-geben-uebersetzungen-preis.md). Die Liste dort zu erweitern gehört also **in jene
+  Story**, wo das Tor grün werden kann, statt hier auf einem Defekt rot zu stehen, den niemand in diesem Lauf
+  behebt. Die Grenze steht jetzt samt Zahlen in der `<summary>` — eine bewusste Lücke im Netz, keine vergessene.
+  **Die Stale-Prüfung sagte mehr, als sie prüfte:** ihr Kommentar versprach „in scope **and would otherwise
+  fail**", geprüft wurde nur „in scope". Eine Ausnahme, die inzwischen gegated ist, wäre stillschweigend liegen
+  geblieben und läse sich wie ein erlaubtes Leck. Sie prüft jetzt gegen die *erreichbaren* Actions —
+  **rot gesehen** mit einem Probe-Eintrag (`ClozeController.Get`, im Geltungsbereich, aber Creator-gegated).
+  Und die vier Remarks-Ausnahmen tragen jetzt **beide** Gründe: die Namenskollision *und* dass
+  `MaySeeAnswers` das Feld für ein Kind-Token zur Laufzeit leert. Die Kollision allein hätte auch das
+  Herausgeben einer echten Lösung entschuldigt.
+  **Der E2E ist neu und war der Befund des Frontend-Reviewers**, nicht mein Plan (der sagte „nicht nötig, es
+  ändert sich keine Oberfläche" — richtig, aber am Punkt vorbei): `full-flow.spec.ts` klappt den Report jetzt
+  auf und prüft die Spalte „Lösung" (`la ville → die Stadt`). Damit ist das Akzeptanzkriterium „der Vater
+  verliert keine Spalte" mechanisch belegt statt handgeklickt, und der Pfad ist dort gepinnt, wo B-82 ihn
+  hingelegt hat. Der erste Anlauf war rot, und zwar zu Recht: der Report ist eine Tabelle **innerhalb** der
+  Positionszeile, `getByRole("row")` traf darum auch die umschließende Zeile, deren einzige Zelle die ganze
+  Tabelle enthält — die Spaltenposition landete eine zu weit links. Erst auf die Report-Tabelle einengen.
+  Drei Kleinigkeiten mitgenommen: `CancellationToken ct = default` (die Zeile war unverändert aus der
+  gelöschten Fassung übernommen, aber die Datei ist neu), `[ProducesResponseType(403)]` — der 403 ist die
+  *zentrale* neue Antwort und die OpenAPI ist das Produkt —, und im `ApiRoutes.cs`-Kommentar „method-level
+  `[Authorize]`" → „on the controller or action" (der neue Report gatet an der Klasse) plus die Umbau-Erzählung
+  gestrichen.
+  **Zwei Beobachtungen außerhalb des Schnitts**, ausdrücklich nicht hier abgelegt, sondern als Story-Kandidaten
+  benannt: `RemarksController` leert `Answer` **pro Rolle zur Laufzeit** — genau das Muster, das B-80/E1
+  abgeschafft hat —, und sein Kommentar behauptet dabei das Gegenteil des Codes; dazu nennt
+  `docs/vokabeltraining-prozess.md:60` einen längst entfallenen Endpunkt (vorbestehende Doku-Fäulnis).
