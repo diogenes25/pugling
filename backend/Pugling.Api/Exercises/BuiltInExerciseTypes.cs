@@ -82,7 +82,8 @@ public sealed class GrammarExerciseType : ExerciseTypeBase
     {
         var c = Deserialize<GrammarConfig>(configJson);
         return [.. c.Tasks.Select((t, i) =>
-            new ContentItem(i, t.Prompt, t.Answer, [t.Answer], t.RuleHint, Passage: c.Instruction))];
+            new ContentItem(i, t.Prompt, t.Answer, [t.Answer], t.RuleHint,
+                Passage: AnswerChecking.Blank(c.Instruction)))];
     }
 }
 
@@ -348,10 +349,15 @@ internal static class AnswerChecking
     // `passage`/`audioUrl` are what the questions are ABOUT and belong to the exercise, so they ride along on
     // every atom. Reading passes a text, listening a recording - never both, and listening never its
     // transcript (that one is the creator's, handing it to the child would answer the question).
+    // Both configs default their string to "", so blank is normalized to null here: a third state ("present
+    // but empty") would reach the card as a field that is set and useless.
     public static IReadOnlyList<ContentItem> FromQuestions(IReadOnlyList<Question> questions,
         string? passage = null, string? audioUrl = null) =>
         [.. questions.Select((q, i) => new ContentItem(i, q.Prompt, q.Answer, [q.Answer],
-            AudioUrl: audioUrl, Passage: passage))];
+            AudioUrl: Blank(audioUrl), Passage: Blank(passage)))];
+
+    /// <summary>Blank-as-absent: an empty or whitespace-only config string is no content.</summary>
+    public static string? Blank(string? value) => string.IsNullOrWhiteSpace(value) ? null : value;
 
     public static Dictionary<int, string?> ByIndex(IReadOnlyList<GivenAnswer> answers)
     {

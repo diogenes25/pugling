@@ -45,7 +45,7 @@ public class ContentExercisePlayTests(PuglingWebAppFactory factory) : IClassFixt
         return await CardsAsync(child, planId, positionId);
     }
 
-    // ---- Reading: the text belongs on the card, not in the question ---- ----
+    // ---- Reading: the text belongs on the card, not in the question ----
 
     [Fact]
     public async Task Leseverstehen_LiefertDenTextZuJederFrage()
@@ -70,7 +70,7 @@ public class ContentExercisePlayTests(PuglingWebAppFactory factory) : IClassFixt
         }
     }
 
-    // ---- Listening: the recording, and NOT the transcript ---- ----
+    // ---- Listening: the recording, and NOT the transcript ----
 
     [Fact]
     public async Task Hoerverstehen_LiefertDieAufnahme_AberNichtDasTranskript()
@@ -78,7 +78,9 @@ public class ContentExercisePlayTests(PuglingWebAppFactory factory) : IClassFixt
         var cards = await PlayAsync("listening", new
         {
             audioUrl = Audio,
-            transcript = "A: Where are you from? B: I'm from Leeds.",
+            // The marker appears ONLY in the transcript - not in the question and not in the answer, so a
+            // hit really means "transcript leaked" and not "solution leaked".
+            transcript = "A: Nice weather today, isn't it? B: I'm from Leeds.",
             questions = new[] { new { prompt = "Where is B from?", answer = "Leeds" } },
         });
 
@@ -87,11 +89,11 @@ public class ContentExercisePlayTests(PuglingWebAppFactory factory) : IClassFixt
         // The child needs BOTH here: without the question the recording is just noise.
         Assert.Equal("Where is B from?", card.GetProperty("prompt").GetString());
         // Anti-cheat: the transcript is for the creator. It must not arrive anywhere on the card.
-        Assert.DoesNotContain("Leeds", JsonSerializer.Serialize(card).Replace("\"answer\"", ""));
+        Assert.DoesNotContain("Nice weather", JsonSerializer.Serialize(card));
         JsonAssert.Null(card, "passage");
     }
 
-    // ---- Grammar: the instruction covering all tasks ---- ----
+    // ---- Grammar: the instruction covering all tasks ----
 
     [Fact]
     public async Task Grammatik_LiefertDieUebergreifendeAnweisung()
@@ -107,7 +109,7 @@ public class ContentExercisePlayTests(PuglingWebAppFactory factory) : IClassFixt
         Assert.Equal("He ___ (go) to school.", card.GetProperty("prompt").GetString());
     }
 
-    // ---- E3: the anti-cheat rule moves from the frontend to the server ---- ----
+    // ---- E3: the anti-cheat rule moves from the frontend to the server ----
 
     [Fact]
     public async Task VokabelHoerstufe_LiefertKeinenPrompt_AndereStufenSchon()
@@ -130,7 +132,7 @@ public class ContentExercisePlayTests(PuglingWebAppFactory factory) : IClassFixt
 
         var (typePlan, typePos) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.FreeText);
         var typing = (await CardsAsync(child, typePlan, typePos)).EnumerateArray().Single();
-        Assert.False(IsNull(typing, "prompt"));
+        JsonAssert.NotNull(typing, "prompt");
     }
 
     /// <summary>
@@ -151,10 +153,41 @@ public class ContentExercisePlayTests(PuglingWebAppFactory factory) : IClassFixt
         Assert.Equal("silent", card.GetProperty("prompt").GetString());
     }
 
-    private static bool IsNull(JsonElement el, string property) =>
-        el.GetProperty(property).ValueKind == JsonValueKind.Null;
+    /// <summary>
+    /// Same net, the case that <c>is not null</c> would have let through: the audio URL is free text, so an
+    /// empty string is storable and would satisfy a null check while playing nothing.
+    /// </summary>
+    [Fact]
+    public async Task Hoerstufe_MitLeererAufnahme_BehaeltDenPromptEbenfalls()
+    {
+        var father = await TestApi.FatherAsync(_factory);
+        var (_, key) = await TestApi.CreateStoreVocabAsync(father, TestApi.UniqueName("blank"), "leer");
+        var vocabId = await TestApi.ResolveVocabIdAsync(father, key);
+        (await father.PatchAsJsonAsync($"/api/v1/creator/vocabulary/{vocabId}",
+            new { pronunciationAudioUrl = "   " })).EnsureSuccessStatusCode();
+        var exerciseId = await TestApi.CreateVocabRefExerciseAsync(father, key);
+        var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.Audio);
+        var child = await TestApi.ChildAsync(_factory);
 
-    // ---- E4: the supervisor's preview shows what the child sees ---- ----
+        var card = (await CardsAsync(child, planId, positionId)).EnumerateArray().Single();
+
+        JsonAssert.NotNull(card, "prompt");
+    }
+
+    /// <summary>A reading exercise whose text was left blank must not deliver an empty passage box.</summary>
+    [Fact]
+    public async Task LeereKonfigurationswerte_KommenAlsNullAn_NichtAlsLeerstring()
+    {
+        var cards = await PlayAsync("reading", new
+        {
+            text = "   ",
+            questions = new[] { new { prompt = "Frage ohne Text?", answer = "ja" } },
+        });
+
+        JsonAssert.Null(cards.EnumerateArray().Single(), "passage");
+    }
+
+    // ---- E4: the supervisor's preview shows what the child sees ----
 
     [Fact]
     public async Task Testmodus_ZeigtDenselbenInhaltWieDieKarte()
@@ -170,9 +203,34 @@ public class ContentExercisePlayTests(PuglingWebAppFactory factory) : IClassFixt
         var item = preview.GetProperty("items").EnumerateArray().Single();
 
         Assert.Equal(Text, item.GetProperty("passage").GetString());
+        // The question survives too - the preview runs through the same projection as the card, so a copy
+        // cannot fall behind it (it did: the hand-rolled one kept showing the word on the listening stage).
+        Assert.Equal("Where does Tom go?", item.GetProperty("prompt").GetString());
     }
 
-    // ---- The exam pulls along ---- ----
+    /// <summary>
+    /// The preview withholds exactly what the card withholds. A supervisor who reads the word while the
+    /// child only hears it cannot notice a silent recording – the one thing this stage depends on.
+    /// </summary>
+    [Fact]
+    public async Task Testmodus_VerschweigtDasWortAufDerHoerstufe_WieDieKarte()
+    {
+        var father = await TestApi.FatherAsync(_factory);
+        var (_, key) = await TestApi.CreateStoreVocabAsync(father, TestApi.UniqueName("audio"), "ton");
+        var vocabId = await TestApi.ResolveVocabIdAsync(father, key);
+        (await father.PatchAsJsonAsync($"/api/v1/creator/vocabulary/{vocabId}",
+            new { pronunciationAudioUrl = Audio })).EnsureSuccessStatusCode();
+        var exerciseId = await TestApi.CreateVocabRefExerciseAsync(father, key);
+
+        var preview = await father.GetFromJsonAsync<JsonElement>(
+            $"/api/v1/creator/exercises/{exerciseId}/preview?stage={(int)TestStage.Audio}");
+        var item = preview.GetProperty("items").EnumerateArray().Single();
+
+        Assert.Equal(Audio, item.GetProperty("audioUrl").GetString());
+        JsonAssert.Null(item, "prompt");
+    }
+
+    // ---- The exam pulls along ----
 
     [Fact]
     public async Task Klausur_LiefertDenTextEbenfalls()

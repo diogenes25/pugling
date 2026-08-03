@@ -23,4 +23,8 @@ internal static class JsonAssert
     /// </summary>
     public static void Null(JsonElement el, string property) =>
         Assert.Equal(JsonValueKind.Null, el.GetProperty(property).ValueKind);
+
+    /// <summary>Expects that <paramref name="property"/> exists and carries a value.</summary>
+    public static void NotNull(JsonElement el, string property) =>
+        Assert.NotEqual(JsonValueKind.Null, el.GetProperty(property).ValueKind);
 }

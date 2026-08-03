@@ -169,7 +169,25 @@ test("Jeder Übungstyp des Manifests lässt sich im UI anlegen", async ({ page }
   await grammarRow.getByRole("button", { name: /Ausprobieren/ }).click();
   const preview = page.getByRole("dialog", { name: new RegExp(`Testmodus: Grammatik ${RUN}`) });
   await expect(preview.getByText("He ___ (go) to school.")).toBeVisible();
+  // B-75/E4: Die übergreifende Anweisung gehört dazu. Ohne sie ist „He ___ (go) to school." keine
+  // Aufgabe, sondern ein Satzfragment – und der Vater sähe weniger als sein Kind.
+  await expect(preview.getByRole("group", { name: "Text zur Aufgabe" }))
+    .toHaveText("Setze die richtige Form ein.");
   await preview.getByRole("button", { name: "Schließen" }).click();
+
+  /*
+   * Hörverstehen im Testmodus: Hier verschwand die Frage einmal spurlos, weil die Aufnahme sie im
+   * Entweder-oder verdrängte – jedes Item eines Hörverstehens trägt sie, also lief der Frage-Zweig nie.
+   * Geprüft wird darum beides zugleich: die Frage steht da, und die Aufnahme liegt EINMAL oben (fünf
+   * Fragen hatten sonst fünf Abspieler auf derselben Quelle).
+   */
+  await listeningRow.getByRole("button", { name: /Ausprobieren/ }).click();
+  const hoerPreview = page.getByRole("dialog", { name: new RegExp(`Testmodus: Hören ${RUN}`) });
+  await expect(hoerPreview.getByText("Where is B from?")).toBeVisible();
+  await expect(hoerPreview.getByLabel("Aufnahme der Übung")).toHaveCount(1);
+  // Das Transkript ist Sache des Creators und darf in keiner Ausspielung auftauchen.
+  await expect(hoerPreview.getByText(/Where are you from/)).toHaveCount(0);
+  await hoerPreview.getByRole("button", { name: "Schließen" }).click();
 
   // Ein Aufsatz hat keine – das muss als Eigenschaft des Typs erklärt werden, nicht als Fehler aussehen.
   const essayRow = page.locator("div", { hasText: `Aufsatz ${RUN}` }).last();

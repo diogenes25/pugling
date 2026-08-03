@@ -5,6 +5,7 @@ import { useSohn } from "./SohnApp";
 import { LetterBoxes } from "../components/LetterBoxes";
 import { AudioButton } from "../components/AudioButton";
 import { ClozePrompt } from "../components/ClozePrompt";
+import { Passage } from "../components/Passage";
 import type { PracticeCard, PositionSession, ReviewOutcome } from "../lib/types";
 
 // Kleine Anerkennung bei jedem Treffer – Variation sorgt für Abwechslung (Daumen, Stern, Feuer, Muskel).
@@ -223,15 +224,20 @@ export function SohnPractice() {
               onReshuffle={reshuffleImage}
             />
           )}
-          {/* Der Stoff, auf den sich die Frage bezieht: Lesetext, Anweisung der Übung. Er steht über der
-              Frage, weil man ihn zuerst liest. */}
-          {card.passage && <div className="passage">{card.passage}</div>}
+          <Passage text={card.passage} />
           {/*
             Aufnahme und Frage nebeneinander, nicht entweder-oder: Beim Hörverstehen braucht das Kind
             beides. Dass die Vokabel-Hörstufe ihr Wort verschweigt, entscheidet der Server – er schickt
             dort keinen `prompt`. Eine Regel, die hier stünde, müsste jeder neue Audio-Typ nachtragen.
+
+            Fehlt der Text, IST die Aufnahme die Aufgabe: kurz, also anspielen und der Knopf genügt. Steht
+            eine Frage daneben, ist sie das Material und kann lang sein – dann die Bedienelemente, sonst
+            könnte das Kind sie nicht anhalten. Die Unterscheidung liest sich aus den gelieferten Feldern,
+            nicht aus dem Übungstyp.
           */}
-          {card.audioUrl && <AudioButton url={card.audioUrl} label="🔊 Anhören" />}
+          {card.audioUrl && (
+            <AudioButton url={card.audioUrl} autoPlay={!card.prompt} withControls={!!card.prompt} />
+          )}
           <ClozePrompt text={card.prompt} gapIndex={card.gapIndex} />
           {card.hint && typed && (
             hintShown

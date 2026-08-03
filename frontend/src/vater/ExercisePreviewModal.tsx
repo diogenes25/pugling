@@ -3,6 +3,7 @@ import { ApiError, api, errorMessage } from "../lib/api";
 import { LetterBoxes } from "../components/LetterBoxes";
 import { AudioButton } from "../components/AudioButton";
 import { ClozePrompt } from "../components/ClozePrompt";
+import { Passage } from "../components/Passage";
 import { Modal } from "../components/Modal";
 import type { ExercisePreviewAnswer, ExercisePreviewData, ExercisePreviewResult } from "../lib/types";
 
@@ -71,6 +72,16 @@ export function ExercisePreviewModal({ exerciseId, title, onClose }: {
   // Lückentext: alle Items teilen denselben Trägertext – einmal oben zeigen, dann pro Lücke ein Feld.
   const isCloze = !!data && data.items.some((it) => it.gapIndex != null);
 
+  /*
+   * Die Aufnahme einer Hörverstehen-Übung gehört der Übung: Sie hängt an jedem Item, ist aber überall
+   * dieselbe. Erkennbar genau daran – eine Vokabel-Hörstufe trägt je Item eine *eigene* Aussprache, und
+   * dort bleibt der Knopf an der Zeile. Kein Verzweigen auf den Übungstyp, nur auf die Daten.
+   */
+  const audioOfExercise = data?.items.length
+    && data.items.every((it) => it.audioUrl && it.audioUrl === data.items[0].audioUrl)
+    && data.items.some((it) => it.prompt)
+    ? data.items[0].audioUrl : null;
+
   return (
     <Modal label={`Testmodus: ${title}`} onClose={onClose}>
         <div className="row" style={{ alignItems: "center", gap: 8 }}>
@@ -98,17 +109,24 @@ export function ExercisePreviewModal({ exerciseId, title, onClose }: {
 
         {data && !result && (
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {/* Lesetext bzw. Anweisung der Übung – dasselbe Material, das die Karte des Kindes trägt.
+                Eine Vorschau, die weniger zeigt, ist eine Beruhigung statt einer Prüfung. Steht oben, wie
+                beim Kind. */}
+            <Passage text={data.items[0]?.passage} />
             {/* Der Trägertext einmal oben – ohne die rohe Vorlagensyntax, der Vater soll sehen, was das
                 Kind sieht. Ohne `gapIndex` bleiben alle Lücken neutral; welche gefragt ist, sagt die Zeile
                 darunter je Aufgabe. */}
             {isCloze && (
               <div className="card" style={{ background: "var(--surface-2, transparent)" }}>
-                <ClozePrompt text={data.items[0].prompt} className="test-prompt" />
+                <ClozePrompt text={data.items[0]?.prompt} className="test-prompt" />
               </div>
             )}
-            {/* Lesetext bzw. Anweisung der Übung – dasselbe Material, das die Karte des Kindes trägt.
-                Eine Vorschau, die weniger zeigt, ist eine Beruhigung statt einer Prüfung. */}
-            {data.items[0].passage && <div className="passage">{data.items[0].passage}</div>}
+            {/* Die Aufnahme gehört der Übung, nicht der einzelnen Frage: einmal oben, nicht je Zeile –
+                sonst mounten fünf Fragen fünf <audio> auf dieselbe Quelle und spielen beim Öffnen des
+                Dialogs alle zugleich los. Nicht automatisch: der Vater öffnet den Dialog zum Prüfen. */}
+            {audioOfExercise && (
+              <AudioButton url={audioOfExercise} autoPlay={false} withControls label="Aufnahme der Übung" />
+            )}
             <p className="muted" style={{ margin: 0 }}>
               {data.typed ? "Tippe deine Antwort – bewertet wird wie beim Kind." : "Überlege, dann aufdecken und ehrlich bewerten."}
             </p>
@@ -118,10 +136,12 @@ export function ExercisePreviewModal({ exerciseId, title, onClose }: {
               return (
                 <div className="card" key={it.itemIndex}>
                   <div className="row" style={{ alignItems: "center", gap: 8 }}>
-                    {/* Hör-Stufe: Wort vorlesen statt zeigen; sonst Prompt (bzw. Lücken-Nr. beim Lückentext). */}
-                    {it.audioUrl
-                      ? <AudioButton url={it.audioUrl} label="🔊 Vokabel anhören" />
-                      : <b>{isCloze ? `Lücke ${it.gapIndex}` : it.prompt}</b>}
+                    {/* Die Frage steht immer da, wo der Server eine schickt. Sie war hier eine Zeit lang
+                        unsichtbar, weil das Audio sie im Entweder-oder verdrängte – bei einem Hörverstehen
+                        trägt jedes Item die Aufnahme, also lief der Frage-Zweig nie. Verschwiegen wird die
+                        Frage nur, wo der Server sie weglässt (Vokabel-Hörstufe). */}
+                    {it.audioUrl && !it.prompt && <AudioButton url={it.audioUrl} label="🔊 Anhören" />}
+                    {(it.prompt || isCloze) && <b>{isCloze ? `Lücke ${it.gapIndex}` : it.prompt}</b>}
                     {it.hint && <span className="muted" style={{ fontSize: 13 }}>💡 {it.hint}</span>}
                   </div>
 

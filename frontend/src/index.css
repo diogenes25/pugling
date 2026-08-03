@@ -135,6 +135,8 @@ a { color: var(--cyan); }
   font-size: 15px; line-height: 1.55; text-align: left; color: var(--ink);
   background: #0c0e2c; border: 1.5px solid var(--stroke); border-radius: 12px;
   padding: 10px 12px; margin-bottom: 10px; max-height: 34vh; overflow-y: auto; white-space: pre-wrap;
+  /* Am Ende des Textes nicht die ganze Seite mitscrollen – der Kasten liegt in einer Seite, die selbst scrollt. */
+  overscroll-behavior: contain;
 }
 
 /* Lückentext: ein Satz mit Lücken. Die gefragte trägt ein Fragezeichen, die übrigen Punkte – die Form

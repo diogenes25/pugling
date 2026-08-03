@@ -138,8 +138,9 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
             item.GapIndex,
             // The prompt is withheld exactly where the recording replaces it (the type decides, see
             // IExerciseType.AudioReplacesPrompt) - and only when a recording actually arrived, so a missing
-            // audio source never leaves the card blank on both counts.
-            type.AudioReplacesPrompt(stage) && audioUrl is not null ? null : item.Prompt,
+            // audio source never leaves the card blank on both counts. Whitespace counts as missing: the
+            // audio URL is a free-text field, and "" would satisfy a null check while playing nothing.
+            type.AudioReplacesPrompt(stage) && !string.IsNullOrWhiteSpace(audioUrl) ? null : item.Prompt,
             // What the question is about, unabridged: reading text, grammar instruction. No anti-cheat rule
             // applies - it is the material, not the solution.
             item.Passage);

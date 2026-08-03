@@ -32087,8 +32087,7 @@
       },
       "PreviewItem": {
         "required": [
-          "itemIndex",
-          "prompt"
+          "itemIndex"
         ],
         "type": "object",
         "properties": {
@@ -32101,7 +32100,10 @@
             "format": "int32"
           },
           "prompt": {
-            "type": "string"
+            "type": [
+              "null",
+              "string"
+            ]
           },
           "gapIndex": {
             "pattern": "^-?(?:0|[1-9]\\d*)$",
@@ -32155,7 +32157,7 @@
             ]
           }
         },
-        "description": "A problem presented in test mode. \u0060Reveal\u0060 carries the revealed solution for self-assessment\n(\u0060null\u0060 for typed stages); \u0060AnswerLength\u0060 is only set for vocabulary letter boxes.\n\u0060Passage\u0060 is the exercise-wide material the question is about (reading text, grammar instruction) \u2013\nthe same field the child\u0027s card carries, because a preview that shows less than the child gets is a\nreassurance rather than a check."
+        "description": "A problem presented in test mode. \u0060Reveal\u0060 carries the revealed solution for self-assessment\n(\u0060null\u0060 for typed stages); \u0060AnswerLength\u0060 is only set for vocabulary letter boxes.\n\u0060Passage\u0060 is the exercise-wide material the question is about (reading text, grammar instruction) \u2013\nthe same field the child\u0027s card carries, because a preview that shows less than the child gets is a\nreassurance rather than a check. \u0060Prompt\u0060 is nullable for the same reason in reverse: where the\nchild hears the word instead of reading it, the supervisor must too, or they cannot notice a silent\nrecording."
       },
       "PreviewItemOutcome": {
         "required": [

@@ -8,9 +8,11 @@ namespace Pugling.Contracts.Creator;
 /// (<c>null</c> for typed stages); <c>AnswerLength</c> is only set for vocabulary letter boxes.
 /// <c>Passage</c> is the exercise-wide material the question is about (reading text, grammar instruction) –
 /// the same field the child's card carries, because a preview that shows less than the child gets is a
-/// reassurance rather than a check.
+/// reassurance rather than a check. <c>Prompt</c> is nullable for the same reason in reverse: where the
+/// child hears the word instead of reading it, the supervisor must too, or they cannot notice a silent
+/// recording.
 /// </summary>
-public record PreviewItem(int ItemIndex, string Prompt, int? GapIndex, string? Hint, int? AnswerLength, string? Reveal,
+public record PreviewItem(int ItemIndex, string? Prompt, int? GapIndex, string? Hint, int? AnswerLength, string? Reveal,
     IReadOnlyList<string>? Choices, string? AudioUrl, string? Passage = null);
 
 /// <summary>

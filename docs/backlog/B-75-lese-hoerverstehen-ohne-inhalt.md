@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/backend, bereich/frontend, rolle/student]
+tags: [typ/story, status/abgenommen, bereich/backend, bereich/frontend, rolle/student]
 aliases: [Lesetext erreicht das Kind nicht, Hörverstehen ohne Audio]
-status: in-arbeit
+status: abgenommen
 prio: P1
 art: Defekt
 groesse: M
@@ -358,3 +358,35 @@ Backend zuerst. Punkt 0, weil die Runde ihn offen gelassen hat.
   Hören → `audioUrl` gesetzt, `passage: null`, das Transkript nirgends.
   Akzeptanzkriterium 6 war schon erfüllt: B-15 wurde am 2026-08-02 auf `Essay` eingegrenzt.
   **Offen für die Abnahme:** beide Reviewer (`wo: beides`).
+- **2026-08-02** — beide Reviewer gelaufen, sieben Befunde behoben. **Der schwerste war wieder einer, den
+  dieser Commit erst scharf gemacht hat:** Im Testmodus des Vaters stand der Entweder-oder-Zweig
+  `audioUrl ? Audio : Frage` noch — und seit `ListeningExerciseType` seine Aufnahme an *jedes* Item hängt,
+  trug jedes Item ein `audioUrl`, also lief der Frage-Zweig **nie**. Die Verständnisfrage war unsichtbar,
+  drei Zeilen unter dem Kommentar, der E4 zitiert. Dazu mountete die Vorschau je Frage einen Abspieler auf
+  dieselbe Quelle, die beim Öffnen alle zugleich lossprangen; die Aufnahme steht jetzt **einmal** oben.
+  Weiter behoben:
+  **(a)** Das Sicherheitsnetz hatte ein Loch — `audioUrl is not null` ließ den Leerstring durch, und
+  `PronunciationAudioUrl` ist unvalidiertes Freitext. Jetzt `!string.IsNullOrWhiteSpace`, dazu werden
+  leere Config-Strings in `ItemsOf` zu `null` normalisiert (beide Fälle mit eigenem Test).
+  **(b)** Der Vorschau-Pfad war eine **zweite** Anti-Cheat-Stelle: eine handgeschriebene Kopie mit dem
+  Kommentar „mirrors PositionTestsController.ToItem", die genau dann zurückfiel, als das Original das
+  Verschweigen lernte. `Present` läuft jetzt durch `CardFacets`, `PreviewItem.Prompt` ist nullable.
+  **(c)** Die Transkript-Zusicherung prüfte auf „Leeds" — zugleich die **Lösung**, konnte also „Transkript
+  geleakt" nicht von „Antwort geleakt" unterscheiden; das `.Replace` daneben war ein No-op.
+  **(d)** `AudioButton` trug ein festes `aria-label="Vokabel anhören"`, während sichtbar „Anhören" stand
+  (WCAG 2.5.3) — und konnte eine minutenlange Aufnahme nur neu starten, nicht anhalten. Der sichtbare Text
+  ist jetzt der Name; wo die Aufnahme *Material* neben einer Frage ist, kommen die Bedienelemente dazu.
+  **(e)** Der Textblock war ein Scroll-Bereich ohne Tastaturzugang und ohne Namen — und stand dreimal von
+  Hand da. Beides löst das neue Bauteil `Passage` (`tabIndex`, `role="group"`, eigener Test).
+  Zwei Befunde gingen nach außen: [B-80](B-80-tags-geben-fremde-konfiguration-preis.md) (neu, P1 — über die
+  Tags ist jede fremde `ConfigJson` für ein Kind lesbar, **inklusive** der Transkripte, die diese Story
+  gerade von der Karte fernhält) und zwei Nachträge an [B-73](B-73-auswahl-feld-ohne-wirkung.md)
+  (`Question.Choices` und `MatchingConfig.Instruction` fallen an denselben Griffen weg).
+  Der E2E hatte die Vorschau-Regression nicht sehen können, weil er nur die Grammatik ausspielte; er prüft
+  jetzt auch das Hörverstehen. **Gegenprobe gemacht:** die neue Zusicherung absichtlich falsch gesetzt, Lauf
+  war rot, dann zurück — sie läuft wirklich.
+- **2026-08-02** — **abgenommen.** Alle sechs Akzeptanzkriterien belegt, beide Reviewer gelaufen, ihre
+  Befunde behoben oder ausgelagert. Commits `dab72e3` (Bau) und der Review-Nachlauf.
+  **654 Backend-Tests grün** (10 in `ContentExercisePlayTests`), **86 Frontend-Tests grün**,
+  `uebungstypen.spec.ts` und `full-flow.spec.ts` grün, `/smoke-test` grün, live gegen `localhost:5280`
+  belegt.

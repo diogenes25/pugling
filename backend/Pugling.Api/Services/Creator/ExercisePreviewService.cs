@@ -34,7 +34,7 @@ public class ExercisePreviewService(ExerciseContentResolver content, AnswerGrade
         // the exercise's default question form as picked by its author, otherwise the representative stage.
         var stage = stageOverride ?? exercise.DefaultStage ?? type.PreviewStage;
         var typed = type.IsTypedStage(stage);
-        var presented = items.Select(i => Present(i, type, stage, typed, type.Choices(exercise.ConfigJson, items, i, stage))).ToList();
+        var presented = items.Select(i => Present(exercise.ConfigJson, items, i, type, stage, typed)).ToList();
         return new PreviewData(exercise.Type, stage, typed, type.StageOptions, presented);
     }
 
@@ -70,20 +70,18 @@ public class ExercisePreviewService(ExerciseContentResolver content, AnswerGrade
         return new PreviewResult(outcomes.Count, correctCount, percent, outcomes);
     }
 
-    // Projection of one task for display: typed stages do NOT reveal the answer, self-assessment does.
-    // Letter boxes (vocabulary only) give away the length, the listening stage the audio source. Mirrors
-    // PositionTestsController.ToItem.
-    private static PreviewItem Present(ContentItem item, IExerciseType type, int stage, bool typed, IReadOnlyList<string>? choices)
+    // Projection of one task for display - through the SAME projection the child's card uses
+    // (PositionPlayService.CardFacets), not a parallel one. It used to be a hand-rolled copy with the comment
+    // "mirrors PositionTestsController.ToItem", and the copy fell behind the moment the original learned to
+    // withhold the prompt: the supervisor then saw the word AND heard the recording on the listening stage,
+    // so the one stage where the audio carries the whole task was the one they could not check.
+    private static PreviewItem Present(string configJson, IReadOnlyList<ContentItem> items, ContentItem item,
+        IExerciseType type, int stage, bool typed)
     {
+        var f = PositionPlayService.CardFacets(configJson, items, item, type, stage, typed);
         // No image in preview mode: the selection hangs on a child's profile, but here the supervisor tries
         // things out child-neutrally. An arbitrary image would mislead - it would not show what their child sees.
-        var (letterBoxLength, audioUrl, _) = type.StageFacets(item, stage);
-        return new PreviewItem(item.Index, item.Prompt, item.GapIndex,
-            typed ? item.Hint : null,
-            letterBoxLength,
-            typed ? null : item.Answer,
-            choices,
-            audioUrl,
-            item.Passage);
+        return new PreviewItem(item.Index, f.Prompt, f.GapIndex, f.Hint, f.AnswerLength, f.Reveal,
+            f.Choices, f.AudioUrl, f.Passage);
     }
 }

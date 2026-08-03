@@ -6,6 +6,7 @@ import { Mascot } from "../components/Mascot";
 import { LetterBoxes } from "../components/LetterBoxes";
 import { AudioButton } from "../components/AudioButton";
 import { ClozePrompt } from "../components/ClozePrompt";
+import { Passage } from "../components/Passage";
 import type { AnswerDto, TestItem, TestSubmitResponse } from "../lib/types";
 
 // Vokabel-Teststufen (numerisch, serverseitig erzwungen): 1 Zeigen … 5 Hören.
@@ -146,9 +147,12 @@ export function SohnTest() {
       <div className="card">
         {/* Der Stoff, auf den sich die Frage bezieht – wie beim Üben, sonst wäre die Klausur die härtere
             Aufgabe bei weniger Material. */}
-        {item.passage && <div className="passage">{item.passage}</div>}
-        {/* Aufnahme und Frage nebeneinander; ob das Wort verschwiegen wird, entscheidet der Server. */}
-        {item.audioUrl && <AudioButton url={item.audioUrl} label="🔊 Anhören" />}
+        <Passage text={item.passage} />
+        {/* Aufnahme und Frage nebeneinander; ob das Wort verschwiegen wird, entscheidet der Server.
+            Bedienelemente, wo die Aufnahme Material neben einer Frage ist (siehe SohnPractice). */}
+        {item.audioUrl && (
+          <AudioButton url={item.audioUrl} autoPlay={!item.prompt} withControls={!!item.prompt} />
+        )}
         <ClozePrompt text={item.prompt} gapIndex={item.gapIndex} className="test-prompt" />
         {item.hint && typed && <div className="sub" style={{ marginTop: 6 }}>💡 {item.hint}</div>}
 

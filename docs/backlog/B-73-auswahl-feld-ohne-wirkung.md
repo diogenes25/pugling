@@ -178,3 +178,12 @@ Stufe `ausformuliert` und wird **nicht** auf `gegrillt` gesetzt.
   Im Rumpf ist außerdem „Trägertext" durch „Lesetext" ersetzt: Das Wort bezeichnet im Repo den
   Store-Eintrag `ClozeText` (B-76, Entscheidung 3). Die Einträge oberhalb bleiben, wie sie geschrieben
   wurden.
+- **2026-08-02** — zwei Nachträge aus dem Review zu [B-75](B-75-lese-hoerverstehen-ohne-inhalt.md), beide
+  am **selben Griff** wie der bestehende Zuordnungs-Punkt und darum hier statt in einer neuen Story:
+  `Question.Choices` ([ExerciseConfigs.cs:14](../../backend/Pugling.Contracts/Exercise/ExerciseConfigs.cs))
+  wird von `AnswerChecking.FromQuestions` nicht gelesen — Lese- und Hörverstehen können also
+  Antwortmöglichkeiten führen, die das Kind nie sieht (der E2E legt genau das an: „Leeds, York, Hull").
+  Und `MatchingConfig.Instruction` wird von `ItemsOf` verworfen
+  ([BuiltInExerciseTypes.cs:200](../../backend/Pugling.Api/Exercises/BuiltInExerciseTypes.cs)) — dieselbe
+  Reparatur wie E1 in B-75, das Feld `Passage` steht seit `dab72e3` bereit. Beides ist ein Weg über
+  `IExerciseType.Choices` bzw. `ContentItem.Passage`; keiner braucht eine neue Naht.
