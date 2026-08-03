@@ -1,8 +1,8 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/backend, rolle/student]
+tags: [typ/story, status/abgenommen, bereich/backend, rolle/student]
 aliases: [Vokabel-Tag gibt Übersetzungen preis, TaggedVocabularyDto trägt die Lösung,
   Kind liest jede Übersetzung des Stores, Tür D]
-status: in-arbeit
+status: abgenommen
 prio: P1
 art: Defekt
 groesse: S
@@ -555,3 +555,48 @@ Backend zuerst; es gibt kein Frontend zu ziehen. **Die Reihenfolge ist bindend**
   `AssignedExerciseIdsAsync` statt dessen Query zu wiederholen — es gibt weiterhin genau **eine** Definition
   von „zugewiesen".
   Offen für die Abnahme: `pugling-reviewer`.
+- **2026-08-03** — **abgenommen**. `pugling-reviewer` gelaufen: **kein Blocker**, ein 🟡 und vier 🟢.
+  Belege: **671 Tests grün**, `dotnet format --verify-no-changes` sauber, Live-Durchgang (siehe voriger
+  Eintrag), Commits `1aaa8a3` (Bau) und der Abnahme-Commit dieser Zeile. Kein E2E und kein `/smoke-test` —
+  das war R6 und bleibt richtig: keine Oberfläche ändert sich, und `smoke-checks.sh` fährt keine Tags.
+  **Der 🟡 war eine echte Testlücke und ist behoben.** Klausur-Zweig und Zirkularität waren nur für den
+  *Übungs*-Pfad abgedeckt; für Vokabeln hingen sie allein an der Delegation — und weil E2 wörtlich „ein Join
+  **vor** `AssignedExerciseIdsAsync`" verlangte, hätte ein späterer Umbau in genau diese Richtung eine grüne
+  Suite als Beleg gelesen, während der Rundweg für Wörter wieder offen ist. Neuer Test
+  `Kind_MarkiertKlausurVokabel_AberNichtDieUeberEinenVerknuepftenTag`: die Vokabel einer *direkt*
+  zugewiesenen Klausur-Übung ist markierbar (`200`), die einer nur **über einen verknüpften Tag** relevanten
+  nicht (`403 vocabulary_not_assigned`). **Und er wurde rot gesehen**: die Zirkularität probehalber in
+  `AssignedExerciseIdsAsync` eingebaut (tag-verknüpfte Klausur-Übungen mitgezählt) → **beide**
+  Zirkularitäts-Tests rot, der Übungs- und der neue Vokabel-Fall. Er deckt also den Rundweg, nicht bloß
+  „irgendetwas verboten".
+  **Zwei 🟢 waren Belege, die ich nicht hatte — nachgesehen und übernommen.** Erstens: der „Known
+  gap"-Kommentar nannte nur Birkenbihl, es gibt eine **zweite** Stelle derselben Bauart (Lückentext-Gaps
+  verweisen über `Gap.VocabKey` aus der Config auf den Store, `ExerciseContentResolver.cs:113-127`) — beide
+  sind jetzt genannt, beide sind fail-closed. Zweitens: `Roles.AnyAdult` ist **heute funktional gleich**
+  `Roles.Creator`, weil jeder Adult-Account ein Creator-Profil bekommt und Supervisor nur *zusätzlich*
+  (`AccountService.cs:46-47`) — nachgeprüft, stimmt. Der Wert bleibt trotzdem so, denn die ausgedrückte
+  Regel ist „jeder Erwachsene"; der Konstante steht jetzt ein „nicht vereinfachen"-Satz mit diesem Grund
+  bei, sonst kürzt der nächste Umbau sie auf `Creator` und ein Supervisor-only-Konto verliert am Tag seiner
+  Entstehung lautlos den Zugriff.
+  **Eine Reviewer-Empfehlung habe ich zur Hälfte anders umgesetzt, weil ihr naheliegender Fix schlimmer war
+  als der Befund.** Die Begründung für die abweichende Rolle stand als `//` zwischen den `<param>`-Docs und
+  den Attributen. Sie in das `<summary>` zu heben — der erste Versuch — schob fünf Zeilen interne Begründung
+  als Endpunkt-Einzeiler ins **Vertragsdokument** (`docs/openapi/v1.json` zeigte es sofort). Sie sitzt jetzt
+  als `//`-Block direkt über dem Attributblock, mit einem Satz dazu, *warum* sie nicht in der `<summary>`
+  steht. Das OpenAPI-Dokument ist dadurch in dieser Runde unverändert.
+  **Drei Befunde bleiben bewusst offen**, alle außerhalb des Schnitts und keiner ein Leck: (1)
+  `docs/api-examples/index.md` behauptet für den neuen Code „über HTTP im In-Process-Test nicht erreichbar",
+  was nachweislich falsch ist — es ist die **Generator-Vorgabe** für jeden von `DocsCaptureTests` nicht
+  erfassten Code (`DocsCaptureTests.cs:1242`) und betrifft rund zwanzig Zeilen; die richtige Formulierung
+  wäre „nicht von `DocsCaptureTests` erfasst". Das ist eine eigene Story, kein Nebenbei-Fix am Generator.
+  (2) `vocabularyIds` ist unbegrenzt lang und ein Student kann eine sehr große `IN`-Liste erzwingen —
+  vorbestehend und beim Übungs-Zwilling identisch. (3) `GET tags/{tagId}/exercises` bleibt kind-aufrufbar und
+  zeigt Titel/Kapitel/Fach fremder Übungen, die der Vater ins Tag gelegt hat; seit B-80/E1 trägt
+  `ExerciseBrief` aber kein `Config` und damit kein Geheimnis.
+  **Was der Reviewer unabhängig bestätigt hat**, und das ist der eigentliche Abnahme-Beleg:
+  `TaggedVocabularyDto` hat genau **einen** Produzenten (kein zweites Fenster), **kein**
+  student-erreichbares DTO trägt einen Vokabel-`Key` (der die Übersetzung ja mitführt), ein Token kann nicht
+  Student *und* Creator tragen (`AccountService.cs:46-47,63`), der `400`-Zweig ist für einen Studenten
+  **prinzipiell** unerreichbar (was zugewiesen ist, existiert — `VocabularyId` ist ein FK), und `already`
+  kann nur überspringen, nie einfügen. Dazu fünf Mutationen, von denen jede mindestens eine Assertion
+  bricht.

@@ -232,7 +232,52 @@ public class TagsRatingsTimetableTests(PuglingWebAppFactory factory) : IClassFix
     }
 
     [Fact]
-    public async Task Kind_LiestUeberDenTagKeineUebersetzung_VaterUndLehrerSchon()
+    public async Task Kind_MarkiertKlausurVokabel_AberNichtDieUeberEinenVerknuepftenTag()
+    {
+        // Both halves of "assigned" for the vocabulary path, which the exercise cases above cover only for
+        // exercises. Today they hold through the delegation to AssignedExerciseIdsAsync alone - and E2 was
+        // originally written as "a join BEFORE that helper, not a second helper", so whoever rebuilds it that
+        // way would read a green suite as proof while the circular path is open again for words.
+        var father = await TestApi.FatherAsync(factory);
+        var (klausurVokabel, klausurKey) = await TestApi.CreateStoreVocabAsync(father, TestApi.UniqueName("castle"), "die Burg");
+        var (rundwegVokabel, rundwegKey) = await TestApi.CreateStoreVocabAsync(father, TestApi.UniqueName("harbour"), "der Hafen");
+
+        var klausurId = (await (await father.PostAsJsonAsync("/api/v1/supervisor/class-tests",
+            new { childId = 1, title = "Vokabelarbeit", scheduledDate = "2099-07-01" }))
+            .Content.ReadFromJsonAsync<JsonElement>()).GetProperty("klassenarbeit").GetProperty("id").GetInt32();
+
+        // Directly assigned exercise -> its words count as assigned.
+        (await father.PostAsJsonAsync($"/api/v1/supervisor/class-tests/{klausurId}/exercises",
+            new { exerciseIds = new[] { await TestApi.CreateVocabRefExerciseAsync(father, klausurKey) } }))
+            .EnsureSuccessStatusCode();
+
+        // Only *linked* through a tag -> "relevant" for the class test, but NOT assigned. Were it counted,
+        // marking would be what makes a word assigned and the barrier would collapse into itself.
+        var verknuepfterTag = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/tags",
+            new { childId = 1, name = TestApi.UniqueName("Rundweg-Vokabeln") }));
+        (await father.PostAsJsonAsync($"/api/v1/supervisor/class-tests/{klausurId}/tags/{verknuepfterTag}", new { }))
+            .EnsureSuccessStatusCode();
+        (await father.PostAsJsonAsync($"/api/v1/creator/tags/{verknuepfterTag}/exercises",
+            new { exerciseIds = new[] { await TestApi.CreateVocabRefExerciseAsync(father, rundwegKey) } }))
+            .EnsureSuccessStatusCode();
+
+        var eigenerTag = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/tags",
+            new { childId = 1, name = TestApi.UniqueName("Eigene Vokabeln") }));
+        var child = await TestApi.ChildAsync(factory);
+
+        Assert.Equal(HttpStatusCode.OK, (await child.PostAsJsonAsync($"/api/v1/creator/tags/{eigenerTag}/vocabulary",
+            new { vocabularyIds = new[] { klausurVokabel } })).StatusCode);
+
+        var rundweg = await child.PostAsJsonAsync($"/api/v1/creator/tags/{eigenerTag}/vocabulary",
+            new { vocabularyIds = new[] { rundwegVokabel } });
+        Assert.Equal(HttpStatusCode.Forbidden, rundweg.StatusCode);
+        // The code, not just the status: another 403 must not pass as proof that the loop stayed closed.
+        Assert.Equal("vocabulary_not_assigned",
+            (await rundweg.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("code").GetString());
+    }
+
+    [Fact]
+    public async Task Kind_LiestUeberDenTagKeineUebersetzung_VaterLiestSieUndDerLehrerScheitertNichtAnDerRolle()
     {
         var father = await TestApi.FatherAsync(factory);
         var (vocabId, _) = await TestApi.CreateStoreVocabAsync(father, TestApi.UniqueName("library"), "die Bibliothek");

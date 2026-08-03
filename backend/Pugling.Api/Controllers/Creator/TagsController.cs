@@ -246,9 +246,10 @@ public class TagsController(PuglingDbContext db, AuthAccess access) : Controller
     /// its query: two definitions of "assigned" drift apart, and then the stale one applies.
     /// </para>
     /// <para>
-    /// Known gap: a Birkenbihl decoded word points at the store from the exercise <i>config</i>
-    /// (<c>DecodedWord.VocabularyId</c>) without an <c>ExerciseItem</c> row, so it is not joinable here and
-    /// counts as unassigned. Inert while no student surface marks vocabulary at all.
+    /// Known gap: config-level store references have no <c>ExerciseItem</c> row and are therefore not
+    /// joinable here, so they count as unassigned – a Birkenbihl decoded word (<c>DecodedWord.VocabularyId</c>)
+    /// and a cloze gap (<c>Gap.VocabKey</c>, resolved by key in <c>ExerciseContentResolver</c>). That fails
+    /// closed, and it is inert while no student surface marks vocabulary at all.
     /// </para>
     /// </summary>
     private async Task<HashSet<int>> AssignedVocabularyIdsAsync(int childId, List<int> ids, CancellationToken ct)
@@ -332,11 +333,13 @@ public class TagsController(PuglingDbContext db, AuthAccess access) : Controller
     /// <param name="skip">Number of entries to skip (paging).</param>
     /// <param name="take">Maximum number of hits (1..500). Total count in the <c>X-Total-Count</c> header.</param>
     /// <param name="ct">Cancellation token.</param>
-    // Adults only, deliberately unlike its immediate neighbours POST and DELETE, which a student may call:
-    // every row names Word AND Translation, and Key repeats the pair a second time (it is built from both).
-    // A student marking a word does not need to read back its translation - it has vocabulary-progress for
-    // its own learning state. The route stays under `creator/` because the tag itself is genuinely dual: it
-    // is not the resource that becomes adult-only, only this one window into it.
+    //
+    // Why this one action is adult-only while its immediate neighbours POST and DELETE stay callable by a
+    // student: every row names word AND translation, and Key repeats the pair a second time (it is built from
+    // both). A student marking a word does not need to read back its translation - it has vocabulary-progress
+    // for its own learning state. The route stays under `creator/` because the tag itself is genuinely dual;
+    // it is not the resource that becomes adult-only, only this one window into it. Kept out of the <summary>
+    // deliberately: that string is the endpoint's one-liner in the OpenAPI document, not a place for rationale.
     [HttpGet("{tagId:int}/vocabulary")]
     [Authorize(Roles = Roles.AnyAdult)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]

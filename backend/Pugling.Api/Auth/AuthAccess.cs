@@ -24,6 +24,12 @@ public static class Roles
     /// works: two <c>[Authorize]</c> attributes would be AND-ed and lock out a teacher account, which
     /// carries <see cref="Creator"/> alone. Use it where an endpoint hands out material a student must not
     /// see, yet sits below a route prefix that a student legitimately calls for other actions.
+    /// <para>
+    /// Do <b>not</b> "simplify" this to <see cref="Creator"/>: today every adult account gets a Creator
+    /// profile and a Supervisor one only in addition (<c>AccountService.EnsureForAdultAsync</c>), so the
+    /// second half happens to be redundant – but the rule being expressed is "any adult", and a
+    /// supervisor-only account would silently lose access the day it exists.
+    /// </para>
     /// </summary>
     public const string AnyAdult = Creator + "," + Supervisor;
     /// <summary>Platform superuser (break-glass). Bypasses the RWX permission check on exercises – e.g. to
