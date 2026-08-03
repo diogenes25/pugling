@@ -19138,6 +19138,16 @@
               }
             }
           },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
           "404": {
             "description": "Not Found",
             "content": {
@@ -24912,7 +24922,6 @@
         "required": [
           "chapterId",
           "chapterName",
-          "config",
           "id",
           "rewardPoints",
           "subjectName",
@@ -24965,12 +24974,9 @@
               "string"
             ],
             "format": "int32"
-          },
-          "config": {
-            "$ref": "#/components/schemas/JsonElement"
           }
         },
-        "description": "Lean, type-spanning view of a catalog exercise \u2013 for lists in which exercises of\ndifferent types appear together (tagged exercises, exercises of a class test).\nThe type-specific configuration is passed through as raw JSON."
+        "description": "            Lean, type-spanning view of a catalog exercise \u2013 for lists in which exercises of\n            different types appear together (tagged exercises, exercises of a class test).\n            Deliberately WITHOUT the type-specific configuration: it carries the solutions, alternatives and\nthe listening transcript. Endpoints listing exercises are reachable for a student token (tags, class\ntests), so a config field here would hand the child the answer to every assigned exercise \u2013 the very\nassurance the play path upholds by withholding reveal. Whoever needs the configuration reads\nthe creator-gated type detail (creator/subjects/{}/chapters/{}/\u0026lt;type\u0026gt;/{id})."
       },
       "ExerciseCheckMode": {
         "enum": [
@@ -32297,6 +32303,7 @@
               "duplicate_vocabulary_in_exercise",
               "exercise_empty",
               "exercise_in_use",
+              "exercise_not_assigned",
               "exercise_not_executable",
               "forbidden",
               "http_error",

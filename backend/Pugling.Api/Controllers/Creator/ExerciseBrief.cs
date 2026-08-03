@@ -1,4 +1,3 @@
-using System.Text.Json;
 using Pugling.Api.Models;
 
 namespace Pugling.Api.Controllers.Creator;
@@ -9,11 +8,13 @@ namespace Pugling.Api.Controllers.Creator;
 /// </summary>
 public static class ExerciseBriefMapping
 {
-    private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
-
     /// <summary>
     /// Maps an exercise. Expects <see cref="Exercise.Chapter"/> and its
     /// <see cref="Chapter.Subject"/> to be loaded (Include), otherwise the names stay empty.
+    /// <para>
+    /// <see cref="Exercise.ConfigJson"/> is deliberately NOT mapped – see <see cref="ExerciseBrief"/>
+    /// for why. Do not add it back here; the brief is read by student tokens.
+    /// </para>
     /// </summary>
     public static ExerciseBrief From(Exercise e) => new(
         e.Id,
@@ -23,7 +24,5 @@ public static class ExerciseBriefMapping
         e.Chapter?.Subject?.Name ?? "",
         e.Type.ToString(),
         e.Title,
-        e.RewardPoints,
-        JsonSerializer.Deserialize<JsonElement>(
-            string.IsNullOrWhiteSpace(e.ConfigJson) ? "{}" : e.ConfigJson, JsonOptions));
+        e.RewardPoints);
 }

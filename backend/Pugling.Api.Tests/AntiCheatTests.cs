@@ -330,4 +330,88 @@ public class AntiCheatTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
         var item = data.GetProperty("items").EnumerateArray().First();
         Assert.Equal(JsonValueKind.Null, item.GetProperty("audioUrl").ValueKind);
     }
+
+    // ───────────────────────────────────────────── The exercise brief must not carry the solution (B-80)
+
+    /// <summary>Transcript of the listening exercise below – recognizable, so it can be searched for in a raw response.</summary>
+    private const string Geheim = "GEHEIM: Tomorrow will be rainy in the north and sunny in the south.";
+
+    /// <summary>Creates a listening exercise whose configuration carries a transcript and an answer.</summary>
+    private static async Task<int> HoerverstehenMitTranskriptAsync(HttpClient father)
+    {
+        var subjectId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/subjects",
+            new { name = TestApi.UniqueName("Hoerverstehen") }));
+        var chapterId = await TestApi.IdAsync(await father.PostAsJsonAsync(
+            $"/api/v1/creator/subjects/{subjectId}/chapters", new { name = "Unit 1", orderIndex = 1 }));
+        return await TestApi.IdAsync(await father.PostAsJsonAsync(
+            $"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/listening", new
+            {
+                title = "Wettervorhersage",
+                orderIndex = 1,
+                rewardPoints = 10,
+                config = new
+                {
+                    audioUrl = "https://example.test/weather.mp3",
+                    transcript = Geheim,
+                    questions = new[] { new { prompt = "Where is it sunny?", choices = (string[]?)null, answer = "in the south" } },
+                },
+            }));
+    }
+
+    /// <summary>
+    /// Asserts that a response listing <c>ExerciseBrief</c>s contains the exercise but neither a
+    /// <c>config</c> field nor the transcript. <paramref name="property"/> is null for a bare array.
+    /// </summary>
+    private static async Task KeineKonfigurationAsync(HttpResponseMessage res, int exerciseId, string? property = null)
+    {
+        var raw = await res.Content.ReadAsStringAsync();
+        Assert.True(res.IsSuccessStatusCode, $"{res.RequestMessage?.RequestUri} → {(int)res.StatusCode}: {raw}");
+        // The transcript is the load-bearing case: it is the one field the contract marks "never for the child".
+        Assert.DoesNotContain(Geheim, raw, StringComparison.Ordinal);
+
+        using var doc = JsonDocument.Parse(raw);
+        var briefs = property is null ? doc.RootElement : doc.RootElement.GetProperty(property);
+        // Without this the test would pass vacuously on an empty list - and an empty list proves nothing.
+        Assert.Contains(exerciseId, briefs.EnumerateArray().Select(b => b.GetProperty("id").GetInt32()));
+        foreach (var brief in briefs.EnumerateArray())
+            Assert.False(brief.TryGetProperty("config", out _), $"ExerciseBrief carries `config`: {brief}");
+    }
+
+    [Fact]
+    public async Task Kind_LiestUeberTagsUndKlassenarbeit_KeineUebungskonfiguration()
+    {
+        var father = await TestApi.FatherAsync(factory);
+        var exerciseId = await HoerverstehenMitTranskriptAsync(father);
+        var child = await TestApi.ChildAsync(factory);
+
+        // The father marks the exercise in a tag of his child - that stays allowed, it is what a tag is for.
+        // What must not survive the trip is the configuration behind the brief.
+        var tagId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/tags",
+            new { childId = 1, name = TestApi.UniqueName("Spickzettel") }));
+        (await father.PostAsJsonAsync($"/api/v1/creator/tags/{tagId}/exercises",
+            new { exerciseIds = new[] { exerciseId } })).EnsureSuccessStatusCode();
+
+        // Door A: the tag list.
+        await KeineKonfigurationAsync(await child.GetAsync($"/api/v1/creator/tags/{tagId}/exercises"), exerciseId);
+
+        // Door B: the class test needs no trick at all. Its reading endpoints are open to the child by design
+        // (it practices on them); only the writing actions are supervisor-gated. Three of them answer with the
+        // same record, so all three are checked - a test on the tag path alone would miss a relapse here.
+        var klassenarbeitId = (await (await father.PostAsJsonAsync("/api/v1/supervisor/class-tests",
+            new { childId = 1, title = "Hoerprobe", scheduledDate = "2099-04-01" }))
+            .Content.ReadFromJsonAsync<JsonElement>()).GetProperty("klassenarbeit").GetProperty("id").GetInt32();
+        (await father.PostAsJsonAsync($"/api/v1/supervisor/class-tests/{klassenarbeitId}/exercises",
+            new { exerciseIds = new[] { exerciseId } })).EnsureSuccessStatusCode();
+
+        await KeineKonfigurationAsync(
+            await child.GetAsync($"/api/v1/supervisor/class-tests/{klassenarbeitId}"), exerciseId, "assignedExercises");
+        await KeineKonfigurationAsync(
+            await child.GetAsync($"/api/v1/supervisor/class-tests/{klassenarbeitId}/practice"), exerciseId, "exercises");
+
+        // The repeat list only carries poorly graded tests - hence the grade first.
+        (await father.PatchAsJsonAsync($"/api/v1/supervisor/class-tests/{klassenarbeitId}",
+            new { grade = 5.0m, status = "Written" })).EnsureSuccessStatusCode();
+        await KeineKonfigurationAsync(
+            await child.GetAsync("/api/v1/supervisor/class-tests/repeat?childId=1"), exerciseId, "exercises");
+    }
 }

@@ -1,9 +1,9 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/backend, rolle/student]
+tags: [typ/story, status/in-arbeit, bereich/backend, rolle/student]
 aliases: [Über die Tags kann ein Kind jede Übungs-Konfiguration lesen,
   Tag-Endpunkt gibt Lösungen preis, ConfigJson über Tags lesbar, Transkript erreichbar,
   ExerciseBrief traegt die rohe Config, Klausur gibt Loesungen preis]
-status: geschaetzt
+status: in-arbeit
 prio: P1
 art: Defekt
 groesse: S
@@ -419,3 +419,27 @@ nachlesbar bleibt.
   (anderer Endpunkt) **nicht** gedeckt. Bewusst nicht eingefaltet, weil `gegrillt` abgeschlossen und die
   Akzeptanzkriterien final sind: liegt als [B-81](B-81-vokabel-tags-geben-uebersetzungen-preis.md) auf
   `idee` (Handhabung wie B-76 → B-79).
+- **2026-08-03** — gebaut, nach dem Angriffsplan und ohne Abweichung von den Entscheidungen. **E1**:
+  `ExerciseBrief` trägt kein `Config` mehr, `ExerciseBriefMapping` mappt `ConfigJson` nicht mehr (das
+  `using System.Text.Json` fällt in beiden Dateien weg). Beide Aufrufer waren die vorhergesagten zwei.
+  **E2**: die Schranke sitzt in `TagsController.TagExercises`, hinter `User.IsStudent()` (R2) und über einen
+  eigenen Helfer `AssignedExerciseIdsAsync`, der **Plan-Positionen plus direkte `KlassenarbeitExercise`-Zeilen**
+  nimmt und die tag-verknüpften ausdrücklich **nicht** (R1, im Code begründet). Dazu der additive Code
+  `exercise_not_assigned` (403).
+  **Verifikation, belegt statt behauptet.** Drei neue Tests, und alle drei sind **vor der Reparatur rot
+  gelaufen** (die drei Produktionsdateien dafür weggestasht): `AntiCheatTests` prüft beide Türen — die
+  Tag-Liste und die drei Klausur-Endpunkte `{id}`/`practice`/`repeat` — gegen ein selbst angelegtes
+  Hörverstehen; sie fiel mit `Assert.DoesNotContain() Sub-string found`, also **auf dem Transkript selbst**.
+  In `TagsRatingsTimetableTests` liegen die drei E2-Fälle (nicht zugewiesen → `403 exercise_not_assigned`,
+  zugewiesen → `200`, Vater auf derselben Route → `200`) und der **Rundweg aus R1**: eine Übung, die nur über
+  einen verknüpften Tag „relevant" ist, gilt nicht als zugewiesen. Suite: **665 grün** (`dotnet test
+  Pugling.sln -c Release`), `dotnet format Pugling.sln` ohne Änderung.
+  Der Live-Durchgang gegen eine Wegwerf-DB auf `:5280` spielt genau die Aufrufe nach, die die Story belegt
+  haben: das Kind bekommt beim Taggen fremder Übungen jetzt `403 exercise_not_assigned`, der Vater darf
+  weiterhin, und alle vier Lesewege liefern Briefs ohne `config` und ohne Transkript. Die Standard-Smoke-Checks
+  sind grün. Artefakte wie vorhergesagt: `docs/openapi/v1.json` verliert `config` an **einem** Schema (die
+  drei einbettenden DTOs referenzieren es, R3 überschätzte den Diff also), gewinnt die `403`-Antwort am
+  Tag-Endpunkt und den neuen Code in der `enum`; `docs/api-examples/index.md` zählt jetzt 56 Codes.
+  `openapi-examples.generated.json` blieb unverändert. Das Frontend musste **keine** Quelle ändern:
+  `npm run build` (mit neu erzeugter `contract.ts`) läuft durch — `wo: backend` hat gehalten.
+  **Offen für `abgenommen`**: der `pugling-reviewer`.

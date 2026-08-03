@@ -117,9 +117,30 @@ public class TagsController(PuglingDbContext db, AuthAccess access) : Controller
         return NoContent();
     }
 
+    /// <summary>
+    /// Which of the given exercises are assigned to this child – as a plan position or as a *directly*
+    /// assigned exercise of one of its class tests.
+    /// <para>
+    /// The tag-linked exercises of a class test are deliberately left out, although
+    /// <c>LoadRelevantExercisesAsync</c> counts them as relevant: taking them would make the check
+    /// circular, because marking would be what makes an exercise assigned.
+    /// </para>
+    /// </summary>
+    private async Task<HashSet<int>> AssignedExerciseIdsAsync(int childId, List<int> ids, CancellationToken ct)
+    {
+        var fromPlans = await db.PlanPositions
+            .Where(p => p.StudyPlan!.ChildId == childId && ids.Contains(p.ExerciseId))
+            .Select(p => p.ExerciseId).ToListAsync(ct);
+        var fromClassTests = await db.KlassenarbeitExercises
+            .Where(x => x.Klassenarbeit!.ChildId == childId && ids.Contains(x.ExerciseId))
+            .Select(x => x.ExerciseId).ToListAsync(ct);
+        return fromPlans.Concat(fromClassTests).ToHashSet();
+    }
+
     /// <summary>Marks one or more catalog exercises with this tag (already marked ones are skipped).</summary>
     [HttpPost("{tagId:int}/exercises")]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<TagResponse>> TagExercises(int tagId, TagExercisesDto dto, CancellationToken ct = default)
     {
@@ -131,6 +152,19 @@ public class TagsController(PuglingDbContext db, AuthAccess access) : Controller
         var existing = await db.Exercises.Where(e => ids.Contains(e.Id)).Select(e => e.Id).ToListAsync(ct);
         var missing = ids.Except(existing).ToList();
         if (missing.Count > 0) return this.ProblemWithCode(ApiErrors.InvalidReference, $"Unknown exercise IDs: {string.Join(", ", missing)}");
+
+        // A student may only mark what it has been assigned. Exercise ids are consecutive numbers, so an
+        // existence check alone let the child reach every exercise of the catalog - and the tag list then
+        // named title, chapter and subject of material it must not even know about. Adults keep the full
+        // reach: a supervisor marks foreign material on purpose when planning a class test.
+        if (User.IsStudent())
+        {
+            var assigned = await AssignedExerciseIdsAsync(tag.ChildId, ids, ct);
+            var unassigned = ids.Where(id => !assigned.Contains(id)).ToList();
+            if (unassigned.Count > 0)
+                return this.ProblemWithCode(ApiErrors.ExerciseNotAssigned,
+                    $"Exercises not assigned to this child: {string.Join(", ", unassigned)}");
+        }
 
         var already = tag.ExerciseTags.Select(x => x.ExerciseId).ToHashSet();
         foreach (var id in ids.Where(id => !already.Contains(id)))

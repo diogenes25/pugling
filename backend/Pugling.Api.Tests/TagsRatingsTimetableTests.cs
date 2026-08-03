@@ -75,6 +75,68 @@ public class TagsRatingsTimetableTests(PuglingWebAppFactory factory) : IClassFix
             (await father2.PostAsJsonAsync($"/api/v1/creator/tags/{tagId}/vocabulary", new { vocabularyIds = new[] { vocabId } })).StatusCode);
     }
 
+    // ───────────────────────────────── A child may only mark what it has been assigned (B-80/E2)
+
+    [Fact]
+    public async Task Kind_MarkiertNurZugewieseneUebungen_SonstExerciseNotAssigned()
+    {
+        var father = await TestApi.FatherAsync(factory);
+        var nichtZugewiesen = await TestApi.CreateVocabExerciseAsync(father);
+        var zugewiesen = await TestApi.CreateVocabExerciseAsync(father);
+        TestApi.SeedLeitnerPosition(factory, zugewiesen, stage: 1);
+
+        var tagId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/tags",
+            new { childId = 1, name = TestApi.UniqueName("Eigen") }));
+        var child = await TestApi.ChildAsync(factory);
+
+        // Exercise ids are consecutive numbers, so without this barrier the child reached the whole catalog -
+        // and the tag list then named title, chapter and subject of material it must not even know about.
+        var abgelehnt = await child.PostAsJsonAsync($"/api/v1/creator/tags/{tagId}/exercises",
+            new { exerciseIds = new[] { nichtZugewiesen } });
+        Assert.Equal(HttpStatusCode.Forbidden, abgelehnt.StatusCode);
+        // Its own code, not `forbidden`: the child does own the tag, only the exercise is out of reach.
+        Assert.Equal("exercise_not_assigned",
+            (await abgelehnt.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("code").GetString());
+
+        // Assigned through a plan position - the child keeps marking its own material.
+        Assert.Equal(HttpStatusCode.OK, (await child.PostAsJsonAsync($"/api/v1/creator/tags/{tagId}/exercises",
+            new { exerciseIds = new[] { zugewiesen } })).StatusCode);
+
+        // The very same endpoint is dual-role: the adult keeps the full reach, which he needs when planning.
+        Assert.Equal(HttpStatusCode.OK, (await father.PostAsJsonAsync($"/api/v1/creator/tags/{tagId}/exercises",
+            new { exerciseIds = new[] { nichtZugewiesen } })).StatusCode);
+    }
+
+    [Fact]
+    public async Task Kind_MachtUebungNichtUeberEinenVerknuepftenTag_Zugewiesen()
+    {
+        // The circular path: a class test counts the exercises of a linked tag as relevant material. Were
+        // "assigned" read from that set, marking would be what makes an exercise assigned - and the barrier
+        // would collapse into itself. It tests green until someone actually walks the loop.
+        var father = await TestApi.FatherAsync(factory);
+        var nichtZugewiesen = await TestApi.CreateVocabExerciseAsync(father);
+
+        var verknuepfterTag = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/tags",
+            new { childId = 1, name = TestApi.UniqueName("Rundweg") }));
+        var klassenarbeitId = (await (await father.PostAsJsonAsync("/api/v1/supervisor/class-tests",
+            new { childId = 1, title = "Rundweg", scheduledDate = "2099-05-01" }))
+            .Content.ReadFromJsonAsync<JsonElement>()).GetProperty("klassenarbeit").GetProperty("id").GetInt32();
+        (await father.PostAsJsonAsync($"/api/v1/supervisor/class-tests/{klassenarbeitId}/tags/{verknuepfterTag}", new { }))
+            .EnsureSuccessStatusCode();
+        (await father.PostAsJsonAsync($"/api/v1/creator/tags/{verknuepfterTag}/exercises",
+            new { exerciseIds = new[] { nichtZugewiesen } })).EnsureSuccessStatusCode();
+
+        // The exercise is now "relevant" for the class test - but it is not assigned, and a second tag of the
+        // child must not reach it either.
+        var zweiterTag = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/tags",
+            new { childId = 1, name = TestApi.UniqueName("Rundweg-2") }));
+        var child = await TestApi.ChildAsync(factory);
+
+        var res = await child.PostAsJsonAsync($"/api/v1/creator/tags/{zweiterTag}/exercises",
+            new { exerciseIds = new[] { nichtZugewiesen } });
+        Assert.Equal(HttpStatusCode.Forbidden, res.StatusCode);
+    }
+
     [Fact]
     public async Task Timetable_EintragAnlegen_Auflisten()
     {

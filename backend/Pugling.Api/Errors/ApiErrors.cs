@@ -110,6 +110,11 @@ public static class ApiErrors
     public static readonly ApiError ExerciseInUse = new("exercise_in_use", 409, "Exercise is in use.");
     /// <summary>Exercise is not publicly executable and may not be assigned without an execute/write/owner permission (403).</summary>
     public static readonly ApiError ExerciseNotExecutable = new("exercise_not_executable", 403, "Exercise cannot be assigned.");
+    /// <summary>
+    /// A student tried to mark an exercise that is not assigned to them (403). Distinct from
+    /// <see cref="Forbidden"/> on purpose: the caller does own the tag, only the exercise is out of reach.
+    /// </summary>
+    public static readonly ApiError ExerciseNotAssigned = new("exercise_not_assigned", 403, "Exercise is not assigned to this child.");
     /// <summary>The last owner of an exercise cannot be removed (409).</summary>
     public static readonly ApiError LastOwner = new("last_owner", 409, "Cannot remove the last owner.");
     /// <summary>Exercise item (vocabulary pair) does not exist / does not belong to this exercise (404).</summary>

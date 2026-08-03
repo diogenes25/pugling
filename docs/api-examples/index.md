@@ -19,7 +19,7 @@ Automatisch erzeugt von `backend/Pugling.Api.Tests/DocsCaptureTests.cs`. Insgesa
 
 ## Fehler-Code-Abdeckung
 
-Verifiziert: **34 / 55** Codes aus `ApiErrors`.
+Verifiziert: **34 / 56** Codes aus `ApiErrors`.
 
 | Code | Beispiel |
 | --- | --- |
@@ -66,6 +66,7 @@ Verifiziert: **34 / 55** Codes aus `ApiErrors`.
 - `duplicate_email` — Über HTTP im In-Process-Test nicht erreichbar.
 - `duplicate_profile_name` — Über HTTP im In-Process-Test nicht erreichbar.
 - `duplicate_vocabulary_in_exercise` — Über HTTP im In-Process-Test nicht erreichbar.
+- `exercise_not_assigned` — Über HTTP im In-Process-Test nicht erreichbar.
 - `http_error` — Über HTTP im In-Process-Test nicht erreichbar.
 - `internal_error` — 500-Fallback für unbehandelte Ausnahmen – kein sicherer, gezielter Auslöser über die öffentliche API.
 - `item_not_found` — Über HTTP im In-Process-Test nicht erreichbar.
