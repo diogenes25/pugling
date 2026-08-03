@@ -44,6 +44,14 @@ public interface IExerciseType
     /// </summary>
     CheckResult? Check(string configJson, IReadOnlyList<GivenAnswer> answers, int? seed);
 
+    /// <summary>
+    /// Is the exercise a <b>set</b> rather than a sequence – does any answer not yet named count, no matter
+    /// which card asked for it? Takes <paramref name="configJson"/> because it is a property of the concrete
+    /// exercise, not of the type: a list grades as a set exactly while <c>Ordered</c> is off. Default
+    /// <c>false</c> – every other type addresses its atoms individually.
+    /// </summary>
+    bool GradesAsSet(string configJson);
+
     /// <summary>Procedure default stage, when neither the study plan nor a position/exercise override specifies a stage.</summary>
     int DefaultStage { get; }
 

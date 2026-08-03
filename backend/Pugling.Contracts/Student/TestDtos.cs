@@ -12,9 +12,20 @@ namespace Pugling.Contracts.Student;
 /// only for types whose atoms already stand on their own. The exam needs it just as much as the practice
 /// card – it is where a child gets stuck for good, because there is no going back.
 /// </para>
+/// <para>
+/// <c>AnyOrder</c> likewise: it says that any entry not yet named counts (a set instead of a sequence). The
+/// exam is where that matters most – there is no second try, so a card whose rule the child has to guess is
+/// lost for good.
+/// </para>
+/// <para>
+/// <c>Type</c> is the exercise type key, as the practice card has carried all along: the renderer needs it to
+/// tell an <b>ordered</b> list (where "entry 8" is the address of the card) from a vocabulary card, and both
+/// arrive with the same fields otherwise.
+/// </para>
 /// </summary>
 public record TestItem(int ItemIndex, string? Prompt, int Stage, string? Reveal, int? AnswerLength, string? Hint,
-    IReadOnlyList<string>? Choices, string? AudioUrl, int? GapIndex = null, string? Passage = null);
+    IReadOnlyList<string>? Choices, string? AudioUrl, int? GapIndex = null, string? Passage = null,
+    bool AnyOrder = false, string? Type = null);
 
 /// <summary>
 /// Response of the test start. Class-test mode is strictly server-driven: <b>no</b> questions are sent
@@ -53,6 +64,15 @@ public record SubmitDto(List<AnswerDto>? Answers);
 public record ItemOutcome(int ItemIndex, string Prompt, string Expected, string? GivenAnswer, bool WasCorrect,
     int? GapIndex = null);
 
-/// <summary>Overall result of the class test incl. pass threshold.</summary>
+/// <summary>
+/// Overall result of the class test incl. pass threshold.
+/// <para>
+/// <see cref="WrongMentions"/> only fills up for the set-graded types (an unordered list): an answer that
+/// matched no open entry belongs to no <see cref="ItemOutcome"/>, because the outcomes are keyed by entry
+/// there. Without this list the review screen would show what the child <i>forgot</i> but silently drop what
+/// it actually typed.
+/// </para>
+/// </summary>
 public record SubmitResponse(int AttemptId, int Stage, int TotalItems, int CorrectItems,
-    int ScorePercent, bool Passed, int PassPercent, IReadOnlyList<ItemOutcome> Items);
+    int ScorePercent, bool Passed, int PassPercent, IReadOnlyList<ItemOutcome> Items,
+    IReadOnlyList<string>? WrongMentions = null);

@@ -344,7 +344,10 @@ export function ConfigEditor({ type, rows, extra, setExtra, patchRow, addRow, re
         </>
       )}
       {(type === "Matching" || type === "List" || type === "Grammar") && (
-        <div className="field"><label>Anweisung (optional)</label>
+        // Bei der Liste ist die Anweisung Pflicht, und das steht am Feld: sie ist der einzige Text, den die Karte
+        // trägt – alle Einträge teilen sich einen Prompt (B-77/E7). Der Server weist es ohnehin ab; ohne das Wort
+        // hier liefe der Vater erst nach sechzehn getippten Einträgen in eine englische Serverantwort.
+        <div className="field"><label>Anweisung{type === "List" ? "" : " (optional)"}</label>
           <input aria-label="Anweisung" value={extra.instruction ?? ""} onChange={(e) => ex({ instruction: e.target.value })}
             placeholder={type === "Grammar" ? "Setze ins Passiv." : type === "List" ? "Nenne alle …" : "Ordne zu."} /></div>
       )}
@@ -613,7 +616,11 @@ export function contentProblem(type: ExerciseTypeKey, rows: Row[], extra: Row, v
     }
     case "Cloze": return !extra.text ? "Bitte den Trägertext angeben." : !r.answer ? "Bitte mindestens eine Lücke mit Lösung angeben." : null;
     case "Matching": return !r.left || !r.right ? "Bitte mindestens ein Paar angeben." : null;
-    case "List": return !r.value ? "Bitte mindestens einen Eintrag angeben." : null;
+    // Die Anweisung zuerst: sie ist der einzige Text auf der Karte, weil alle Einträge sich einen Prompt teilen
+    // (B-77/E7). Der Server weist sie auf POST und PUT ab – hier steht sie deutsch und vor dem Abschicken.
+    case "List":
+      if (!extra.instruction) return "Bitte die Anweisung angeben – sie ist der einzige Text auf der Karte.";
+      return !r.value ? "Bitte mindestens einen Eintrag angeben." : null;
     case "Reading": return !extra.text ? "Bitte den Lesetext angeben." : !r.prompt || !r.answer ? "Bitte mindestens eine Frage mit Antwort angeben." : null;
     case "Listening": return !extra.audioUrl ? "Bitte die Audio-URL angeben." : !r.prompt || !r.answer ? "Bitte mindestens eine Frage mit Antwort angeben." : null;
     case "Essay": return !extra.prompt ? "Bitte den Schreibauftrag angeben." : null;

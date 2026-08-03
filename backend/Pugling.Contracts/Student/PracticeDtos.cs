@@ -38,10 +38,17 @@ public record HeartbeatDto(int Seconds, bool Active);
 /// showing the word next to it would turn "listen, then type" into a reading task. That is an anti-cheat
 /// decision, so the server makes it; the frontend renders whatever arrives.
 /// </para>
+/// <para>
+/// <c>AnyOrder</c> says that <b>any</b> answer not yet named counts, because the exercise is a set rather
+/// than a sequence (an unordered list). The child has to be told: the <c>Ordered</c> setting lives in the
+/// exercise config and never reaches it, so an ordered and an unordered list would arrive as identical cards
+/// while the grading works the opposite way.
+/// </para>
 /// </summary>
 public record PracticeCard(int ItemIndex, int Stage, string Type, string? Prompt,
     string? Hint, int? AnswerLength, string? Reveal, IReadOnlyList<string>? Choices, string? AudioUrl,
-    string? ImageUrl = null, string? ImageAlt = null, int? GapIndex = null, string? Passage = null);
+    string? ImageUrl = null, string? ImageAlt = null, int? GapIndex = null, string? Passage = null,
+    bool AnyOrder = false);
 
 /// <summary>The next card in learn mode (or <c>Done</c>), server-driven via the session cursor.</summary>
 public record NextResponse(PracticeCard? Card, bool Done, int Cursor, int Total);
@@ -58,6 +65,12 @@ public record ReviewDto(int ItemIndex, string? GivenAnswer, bool? WasKnown);
 /// carries the next card directly in learn mode (no separate roundtrip needed); <see cref="Done"/> signals
 /// the end of the run. For cards that are not graded (not due / already graded today / not Leitner-based),
 /// the points fields are 0, but grading and cursor still advance.
+/// <para>
+/// <see cref="Expected"/> is nullable for the set-graded types: an answer that matches no open entry hits no
+/// atom at all, and naming one particular entry as "the" solution would be arbitrary while a dozen are still
+/// open – it would also give away an entry the child is about to be asked for. <see cref="Box"/> is 0 and
+/// <see cref="DueOn"/> null in that case for the same reason: nothing was reviewed, so nothing moved.
+/// </para>
 /// </summary>
-public record ReviewOutcome(bool WasCorrect, string Expected, int Awarded, int Box,
+public record ReviewOutcome(bool WasCorrect, string? Expected, int Awarded, int Box,
     DateOnly? DueOn, int Combo, int ComboBonus, int SpeedBonus, PracticeCard? Next, bool Done);

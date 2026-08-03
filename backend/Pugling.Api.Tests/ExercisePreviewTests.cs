@@ -81,6 +81,55 @@ public class ExercisePreviewTests(PuglingWebAppFactory factory) : IClassFixture<
         Assert.Equal(before, Counts());
     }
 
+    /// <summary>
+    /// B-77/R5: the trial run is what the supervisor assigns an exercise on, so it must grade an unordered
+    /// list as a <b>set</b> just like the child's exam – and say so on the card. If it graded card by card,
+    /// the supervisor would see a broken exercise and "fix" a list that is fine.
+    /// </summary>
+    [Fact]
+    public async Task Liste_Preview_BewertetAlsMenge_UndWeistDieRegelAus()
+    {
+        var father = await TestApi.FatherAsync(_factory);
+        var subjectId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/subjects",
+            new { name = TestApi.UniqueName("Vorschau-Liste") }));
+        var chapterId = await TestApi.IdAsync(await father.PostAsJsonAsync(
+            $"/api/v1/creator/subjects/{subjectId}/chapters", new { name = "Kapitel", orderIndex = 1 }));
+        var exerciseId = await TestApi.IdAsync(await father.PostAsJsonAsync(
+            $"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/list", new
+            {
+                title = TestApi.UniqueName("Drei Bundesländer (Vorschau)"),
+                orderIndex = 1,
+                rewardPoints = 10,
+                config = new
+                {
+                    instruction = "Nenne drei Bundesländer.",
+                    ordered = false,
+                    items = new object[] { new { value = "Bayern" }, new { value = "Hessen" }, new { value = "Berlin" } },
+                },
+            }));
+
+        var before = Counts();
+
+        var data = await father.GetFromJsonAsync<JsonElement>($"/api/v1/creator/exercises/{exerciseId}/preview");
+        Assert.All(data.GetProperty("items").EnumerateArray(), i => JsonAssert.True(i, "anyOrder"));
+
+        // Answered in reverse - under a per-card grading this would be 1 of 3.
+        var res = await father.PostAsJsonAsync($"/api/v1/creator/exercises/{exerciseId}/preview/check", new
+        {
+            answers = new[]
+            {
+                new { itemIndex = 0, givenAnswer = "Berlin", wasKnown = (bool?)null },
+                new { itemIndex = 1, givenAnswer = "Hessen", wasKnown = (bool?)null },
+                new { itemIndex = 2, givenAnswer = "Bayern", wasKnown = (bool?)null },
+            },
+        });
+        res.EnsureSuccessStatusCode();
+        var result = await res.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal(100, result.GetProperty("scorePercent").GetInt32());
+
+        Assert.Equal(before, Counts());
+    }
+
     [Fact]
     public async Task Preview_UnbekannteUebung_Liefert404()
     {

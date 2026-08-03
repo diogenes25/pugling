@@ -86,6 +86,8 @@ public class CatalogExerciseTests(PuglingWebAppFactory factory) : IClassFixture<
             rewardPoints = 10,
             config = new
             {
+                // Mandatory since B-77/E7: the instruction is the only text a list card can show.
+                instruction = "Nenne das Treppchen von oben nach unten.",
                 ordered = true,
                 items = new object[] { new { value = "Gold" }, new { value = "Silber" }, new { value = "Bronze" } },
             },
@@ -105,6 +107,39 @@ public class CatalogExerciseTests(PuglingWebAppFactory factory) : IClassFixture<
         var body = await check.Content.ReadFromJsonAsync<JsonElement>();
         Assert.Equal(2, body.GetProperty("correct").GetInt32());
         Assert.Equal(3, body.GetProperty("total").GetInt32());
+    }
+
+    /// <summary>
+    /// B-77/E7: a list without an instruction is rejected – on creating <b>and</b> on updating. Its entries are
+    /// the solutions, so the instruction is the only question the card can carry; without it the child is asked
+    /// to name something without being told what.
+    /// </summary>
+    [Fact]
+    public async Task Liste_OhneAnweisung_WirdAbgewiesen_BeimAnlegenUndBeimAendern()
+    {
+        var father = await TestApi.FatherAsync(factory);
+        var subjectId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/subjects",
+            new { name = TestApi.UniqueName("Liste-Pflicht") }));
+        var chapterId = await TestApi.IdAsync(await father.PostAsJsonAsync(
+            $"/api/v1/creator/subjects/{subjectId}/chapters", new { name = "Kapitel", orderIndex = 1 }));
+        var basePath = $"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/list";
+        object Payload(string? instruction) => new
+        {
+            title = "Ohne Anweisung",
+            orderIndex = 1,
+            rewardPoints = 10,
+            config = new { instruction, ordered = false, items = new object[] { new { value = "Bayern" } } },
+        };
+
+        var created = await father.PostAsJsonAsync(basePath, Payload("   "));
+        Assert.Equal(HttpStatusCode.BadRequest, created.StatusCode);
+        Assert.Equal("validation_error",
+            (await created.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("code").GetString());
+
+        // The same guard on the update path - otherwise the instruction could be emptied after the fact.
+        var id = await TestApi.IdAsync(await father.PostAsJsonAsync(basePath, Payload("Nenne ein Bundesland.")));
+        var updated = await father.PutAsJsonAsync($"{basePath}/{id}", Payload(null));
+        Assert.Equal(HttpStatusCode.BadRequest, updated.StatusCode);
     }
 
     [Fact]

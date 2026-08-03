@@ -106,7 +106,50 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         var item = items[index];
         var f = PositionPlayService.CardFacets(PositionPlayService.ConfigOf(exercise), items, item, type, stage, typed);
         return new PracticeCard(index, stage, type.Key, f.Prompt,
-            f.Hint, f.AnswerLength, f.Reveal, f.Choices, f.AudioUrl, f.ImageUrl, f.ImageAlt, f.GapIndex, f.Passage);
+            f.Hint, f.AnswerLength, f.Reveal, f.Choices, f.AudioUrl, f.ImageUrl, f.ImageAlt, f.GapIndex, f.Passage,
+            f.AnyOrder);
+    }
+
+    /// <summary>
+    /// The entries already named in a set-graded exercise within the round's period – the progress rows
+    /// stamped on that day. There is no session state for this and none is needed: in set mode a review only
+    /// ever touches a row on a hit (see <see cref="Review"/>), so a stamp from that day means "this entry was
+    /// named".
+    /// <para>
+    /// Two windows, not one span: the session's day <b>and</b> the current one. Normally they are the same;
+    /// they part when a round runs past UTC midnight or when the supervisor backdates one
+    /// (<c>StartPracticeDto.Day</c>) – the stamp then carries the wall clock while the round belongs to
+    /// another day. Covering both is the safe direction, because a missed stamp does not merely lose a
+    /// detail: every remaining card would accept the same answer again. A single span across both days would
+    /// be worse than two windows – a round backdated by a week would swallow every entry practised in
+    /// between and reject answers that are right.
+    /// </para>
+    /// <para>
+    /// Compared as UTC ranges rather than by casting the column to a date: the cast does not translate, and
+    /// EF rejects the query instead of grading it – correct, but only at runtime.
+    /// </para>
+    /// <para>
+    /// Consequence, deliberate: a <b>second round on the same day</b> has every entry named already, so each
+    /// answer is a wrong mention – on the day, nothing counts twice, and a repeat is a wrong mention no matter
+    /// which round it arrives in. Reporting it as "not correct" rather than as its own third state is the price;
+    /// there are only right and wrong, and a milder practice rule than the exam's would teach a rule that does
+    /// not hold in the exam. It stays invisible on a Leitner position (a credited entry is no longer due and
+    /// never enters the next round's order) and reachable only through the API otherwise, because the child's
+    /// app offers no practice button for a testable position without Leitner.
+    /// </para>
+    /// </summary>
+    private async Task<HashSet<int>> NamedInRoundAsync(int positionId, DateOnly day, CancellationToken ct)
+    {
+        var dayFrom = day.ToDateTime(TimeOnly.MinValue);
+        var dayTo = dayFrom.AddDays(1);
+        var todayFrom = DateOnly.FromDateTime(time.GetUtcNow().UtcDateTime).ToDateTime(TimeOnly.MinValue);
+        var todayTo = todayFrom.AddDays(1);
+        return [.. await db.PositionItemProgress.AsNoTracking()
+            .Where(p => p.PlanPositionId == positionId
+                && ((p.LastReviewedAt >= dayFrom && p.LastReviewedAt < dayTo)
+                    || (p.LastReviewedAt >= todayFrom && p.LastReviewedAt < todayTo)))
+            .Select(p => p.ItemIndex)
+            .ToListAsync(ct)];
     }
 
     /// <summary>
@@ -261,22 +304,37 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
             return this.ProblemWithCode(ApiErrors.UnknownExerciseType, "The exercise has an unknown type.");
         var stage = PositionPlayService.StageForDay(pos, plan, session.Day, type);
         var typed = type.IsTypedStage(stage);
-        var wasCorrect = typed
-            ? item.AcceptedAnswers.Any(a => grader.Matches(dto.GivenAnswer, a))
+
+        // A set-graded exercise (an unordered list) is not answered card by card: any entry not yet named today
+        // counts, and the ANSWER decides which entry it credits - not the card it arrived on. A miss credits
+        // nothing, because there is no atom to attribute it to: naming one of a dozen open entries as "the"
+        // solution would be arbitrary, and demoting it would punish an entry the child never claimed.
+        var setMode = typed && type.GradesAsSet(PositionPlayService.ConfigOf(pos.Exercise));
+        int? creditedIndex = dto.ItemIndex;
+        if (setMode)
+        {
+            var named = await NamedInRoundAsync(positionId, session.Day, ct);
+            creditedIndex = PositionPlayService.MatchOpenEntry(items,
+                session.Order.Where(i => !named.Contains(i)), dto.GivenAnswer, grader);
+        }
+
+        var wasCorrect = setMode ? creditedIndex is not null
+            : typed ? item.AcceptedAnswers.Any(a => grader.Matches(dto.GivenAnswer, a))
             : dto.WasKnown ?? false;
 
-        var prog = await play.ProgressForAsync(positionId, dto.ItemIndex, ct);
+        // Outside set mode the credited atom is always the card's own, so `prog` is never null there.
+        var prog = creditedIndex is { } credited ? await play.ProgressForAsync(positionId, credited, ct) : null;
         // First contact counts as the introduction - otherwise IntroducedAt/DueOn would stand still for purely
         // practice-based learning (due dates, the "new/old" scope).
-        if (prog.IntroducedAt is null)
+        if (prog is not null && prog.IntroducedAt is null)
         {
             prog.IntroducedAt = session.Day;
             prog.DueOn ??= session.Day;
         }
 
-        var due = prog.DueOn is null || prog.DueOn <= session.Day;
-        var alreadyScoredToday = prog.LastReviewedAt is { } last && DateOnly.FromDateTime(last) == session.Day;
-        var scored = (typed || !pos.RequireTypedTest) && due && !alreadyScoredToday;
+        var due = prog is null || prog.DueOn is null || prog.DueOn <= session.Day;
+        var alreadyScoredToday = prog?.LastReviewedAt is { } last && DateOnly.FromDateTime(last) == session.Day;
+        var scored = prog is not null && (typed || !pos.RequireTypedTest) && due && !alreadyScoredToday;
 
         // Combo/answer time BEFORE adding the new review (EF fixup would otherwise count it in).
         var prevStreak = 0;
@@ -294,6 +352,12 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         var now = time.GetUtcNow().UtcDateTime;
         double? elapsedSeconds = lastAt is { } la ? (now - la).TotalSeconds : null;
 
+        // In set mode the progress row IS the "already named" marker (see NamedInRoundAsync), so a hit stamps
+        // it even on a position without Leitner (where ApplyReview below never runs) - otherwise the same
+        // answer would be accepted again on the very next card. Stamped from the same clock as the review
+        // below, not a second reading of it.
+        if (setMode && wasCorrect && prog is not null) prog.LastReviewedAt = now;
+
         // Correctness and timestamp only: from them come the combo streak, the answer time and the metric
         // CorrectReviews. Which atom it was is recorded by the ItemReviewEvent below through the stable ItemId -
         // here it would be an index-addressed second truth without a reader.
@@ -307,17 +371,27 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         // Also write the cross-plan item progress + answer history (vocabulary items with a stable ItemId only).
         // Deliberately with the actual correctness (not anti-farming damped) - this is a reporting layer, not
         // the points source; it is persisted through the SaveChanges below.
-        await itemProgress.RecordAsync(plan.ChildId, pos.ExerciseId, item, wasCorrect, stage,
-            typed ? dto.GivenAnswer : null, ItemReviewSource.Practice, positionId, session.Day, countsForMastery: scored, ct: ct);
+        // In set mode the credited entry is the subject of the record - and a miss is recorded for NOBODY:
+        // booking it against the card's own entry would claim the child got that particular one wrong, which is
+        // exactly the false attribution this story removes.
+        if (creditedIndex is { } recorded)
+        {
+            await itemProgress.RecordAsync(plan.ChildId, pos.ExerciseId, items[recorded], wasCorrect, stage,
+                typed ? dto.GivenAnswer : null, ItemReviewSource.Practice, positionId, session.Day, countsForMastery: scored, ct: ct);
+        }
 
         // Points/box only on Leitner positions and only for graded cards (anti-farming). Otherwise 0.
         int awarded = 0, comboBonus = 0, speedBonus = 0, combo = 0;
         var leitnerScored = pos.UseLeitner && scored;
-        if (leitnerScored)
+        // `scored` already implies a credited atom; the null check is the compiler's proof, not a second rule.
+        if (leitnerScored && prog is not null)
         {
             combo = wasCorrect ? prevStreak + 1 : 0;
             var (preBox, preReviewCount) = (prog.Box, prog.ReviewCount);
-            play.ApplyReview(pos, prog, wasCorrect, session.Day, DateTime.UtcNow);
+            // The shared clock, not the wall one: ApplyReview stamps LastReviewedAt, which in set mode is the
+            // "already named" marker read back above. A second reading would put the stamp outside the window
+            // a frozen test clock defines, and then every remaining card would accept the same answer again.
+            play.ApplyReview(pos, prog, wasCorrect, session.Day, now);
 
             var cfg = new ScoringService.ScoreConfig($"{plan.Title} · {pos.Exercise.Title}", pos.NewContentPoints,
                 pos.ComboThreshold, pos.ComboBonusPoints, pos.SpeedThresholdSeconds, pos.SpeedBonusPoints);
@@ -330,10 +404,12 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
             speedBonus = score.SpeedBonus;
 
             if (score.Total > 0)
+                // The CREDITED entry, not the card it arrived on: in set mode those differ, and the card index is
+                // the one value the booking has nothing to do with.
                 logger.LogInformation(
                     "Positions-Wiederholung gewertet: Kind {ChildId} Plan {PlanId} Position {PositionId} Item {ItemIndex} " +
                     "→ +{Total} Punkte (Basis {Base}, Combo ×{Combo} +{ComboBonus}, Speed +{SpeedBonus})",
-                    plan.ChildId, planId, positionId, dto.ItemIndex, score.Total, score.BasePoints, combo,
+                    plan.ChildId, planId, positionId, prog.ItemIndex, score.Total, score.BasePoints, combo,
                     score.ComboBonus, score.SpeedBonus);
         }
 
@@ -349,8 +425,11 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
 
         var done = session.Cursor >= session.Order.Count;
         var next = done ? null : BuildCard(pos.Exercise, type, stage, typed, items, session.Order[session.Cursor]);
-        return new ReviewOutcome(wasCorrect, item.Answer, awarded, prog.Box, prog.DueOn, combo,
-            comboBonus, speedBonus, next, done);
+        // Without a credited atom there is no solution to name and no box that moved (set mode, wrong answer):
+        // the feedback stays empty instead of pointing at the card's own entry, which would both be arbitrary
+        // and give away an entry that is still to be asked for.
+        return new ReviewOutcome(wasCorrect, creditedIndex is { } shown ? items[shown].Answer : null,
+            awarded, prog?.Box ?? 0, prog?.DueOn, combo, comboBonus, speedBonus, next, done);
     }
 
     /// <summary>

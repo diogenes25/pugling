@@ -159,13 +159,21 @@ public class TestAttempt
     public List<TestItemResult> Results { get; set; } = new();
 }
 
-/// <summary>Result of a single test position (one content atom of the exercise).</summary>
+/// <summary>One result line of a test attempt – usually one content atom of the exercise.</summary>
 public class TestItemResult
 {
     public int Id { get; set; }
     public int TestAttemptId { get; set; }
     public TestAttempt? TestAttempt { get; set; }
-    /// <summary>Index of the content atom within the position's exercise.</summary>
+    /// <summary>
+    /// Index of the content atom within the position's exercise – or <c>null</c> for a <b>wrong mention</b>:
+    /// in a set-graded exercise (an unordered list) an answer that matches no open entry belongs to no atom.
+    /// <para>
+    /// That state carries meaning, so it must never be coalesced away: a <c>?? 0</c> would turn such a line
+    /// into an answer to the first entry and let it score against it. Every reader filters on
+    /// <c>ItemIndex is not null</c> instead.
+    /// </para>
+    /// </summary>
     public int? ItemIndex { get; set; }
     public int StageValue { get; set; }
     public string? GivenAnswer { get; set; }

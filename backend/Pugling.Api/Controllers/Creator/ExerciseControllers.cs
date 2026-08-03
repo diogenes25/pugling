@@ -708,6 +708,17 @@ public class ListController(PuglingDbContext db, ExerciseTypeRegistry registry)
     /// <inheritdoc/>
     protected override string TypeKey => ExerciseTypeKeys.List;
 
+    /// <summary>
+    /// The instruction is mandatory here, unlike in the other types that offer one. It is the <b>only</b> text
+    /// on the card: the entries are the solutions, so a list without an instruction asks the child to name
+    /// something without saying what. The play path can supply the rule ("one that has not come up yet") but
+    /// never the subject, and <c>ItemsOf</c> sees only the config – not even the exercise title is reachable there.
+    /// </summary>
+    protected override Task<string?> ValidateConfigAsync(int subjectId, ListConfig config, CancellationToken ct = default) =>
+        Task.FromResult(string.IsNullOrWhiteSpace(config.Instruction)
+            ? "Instruction is required for a list: it is the only question the card can show."
+            : null);
+
     /// <summary>Evaluates the given entries – as a set, or position-exact with <c>Ordered</c>.</summary>
     [HttpPost("{exerciseId:int}/check")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

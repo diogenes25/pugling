@@ -52,11 +52,27 @@ public class ExercisePreviewService(ExerciseContentResolver content, AnswerGrade
         // The same stage as when building (otherwise "typed" drifts apart here and in the client).
         var typed = type.IsTypedStage(stageOverride ?? exercise.DefaultStage ?? type.PreviewStage);
 
-        // The last mention per index wins (robust against duplicate indexes), as in ExerciseAnswerChecker.
+        // A set-graded exercise (an unordered list) is graded the way the child's exam grades it: each answer
+        // credits the first entry still open, in the order the answers were given. Without this the supervisor's
+        // trial run would contradict the exam - and the trial run is what they assign the exercise on.
+        var outcomes = typed && type.GradesAsSet(exercise.ConfigJson)
+            ? GradeAsSet(items, answers)
+            : GradeByIndex(items, answers, typed);
+
+        var correctCount = outcomes.Count(o => o.WasCorrect);
+        var percent = outcomes.Count == 0 ? 0 : (int)Math.Round(100.0 * correctCount / outcomes.Count);
+        return new PreviewResult(outcomes.Count, correctCount, percent, outcomes);
+    }
+
+    // One outcome per atom, addressed by index. The last mention per index wins (robust against duplicate
+    // indexes), as in ExerciseAnswerChecker.
+    private List<PreviewItemOutcome> GradeByIndex(IReadOnlyList<ContentItem> items,
+        IReadOnlyList<PreviewAnswer> answers, bool typed)
+    {
         var byIndex = new Dictionary<int, PreviewAnswer>();
         foreach (var a in answers) byIndex[a.ItemIndex] = a;
 
-        var outcomes = items.Select(item =>
+        return items.Select(item =>
         {
             byIndex.TryGetValue(item.Index, out var answer);
             var correct = typed
@@ -64,10 +80,24 @@ public class ExercisePreviewService(ExerciseContentResolver content, AnswerGrade
                 : answer?.WasKnown ?? false;
             return new PreviewItemOutcome(item.Index, item.Prompt, item.Answer, answer?.GivenAnswer, correct);
         }).ToList();
+    }
 
-        var correctCount = outcomes.Count(o => o.WasCorrect);
-        var percent = outcomes.Count == 0 ? 0 : (int)Math.Round(100.0 * correctCount / outcomes.Count);
-        return new PreviewResult(outcomes.Count, correctCount, percent, outcomes);
+    // One outcome per ENTRY: an answer credits the entry it hits, a repeat hits nothing. Unlike the exam this
+    // keeps no wrong mentions - the preview has no result row to hang them on, and the supervisor is checking
+    // the exercise, not their own spelling.
+    private List<PreviewItemOutcome> GradeAsSet(IReadOnlyList<ContentItem> items,
+        IReadOnlyList<PreviewAnswer> answers)
+    {
+        var credited = new Dictionary<int, string?>();
+        foreach (var answer in answers)
+        {
+            var open = items.Select(i => i.Index).Where(i => !credited.ContainsKey(i));
+            if (PositionPlayService.MatchOpenEntry(items, open, answer.GivenAnswer, grader) is { } hit)
+                credited[hit] = answer.GivenAnswer;
+        }
+
+        return [.. items.Select(item => new PreviewItemOutcome(item.Index, item.Prompt, item.Answer,
+            credited.GetValueOrDefault(item.Index), credited.ContainsKey(item.Index)))];
     }
 
     // Projection of one task for display - through the SAME projection the child's card uses
@@ -82,6 +112,6 @@ public class ExercisePreviewService(ExerciseContentResolver content, AnswerGrade
         // No image in preview mode: the selection hangs on a child's profile, but here the supervisor tries
         // things out child-neutrally. An arbitrary image would mislead - it would not show what their child sees.
         return new PreviewItem(item.Index, f.Prompt, f.GapIndex, f.Hint, f.AnswerLength, f.Reveal,
-            f.Choices, f.AudioUrl, f.Passage);
+            f.Choices, f.AudioUrl, f.Passage, f.AnyOrder);
     }
 }

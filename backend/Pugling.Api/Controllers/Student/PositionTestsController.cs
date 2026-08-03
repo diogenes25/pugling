@@ -73,7 +73,44 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
         // freeze the child's motif choice as a side effect of taking a test (see MediaSelector).
         var f = PositionPlayService.CardFacets(PositionPlayService.ConfigOf(exercise), items, item, type, stage, typed);
         return new TestItem(item.Index, f.Prompt, stage, f.Reveal, f.AnswerLength, f.Hint, f.Choices, f.AudioUrl,
-            f.GapIndex, f.Passage);
+            f.GapIndex, f.Passage, f.AnyOrder, type.Key);
+    }
+
+    /// <summary>
+    /// The entries already credited within this attempt – the rows that carry an atom and were answered
+    /// correctly. This is the set-mode counterpart to the practice path's "named today": inside one exam the
+    /// attempt itself is the period, and its results already record every answer, so no extra state is needed.
+    /// </summary>
+    private static HashSet<int> CreditedEntries(TestAttempt attempt) =>
+        [.. attempt.Results.Where(r => r.WasCorrect && r.ItemIndex is not null).Select(r => r.ItemIndex!.Value)];
+
+    /// <summary>
+    /// Books one answer of a set-graded exercise: it credits the first entry still open (and
+    /// <paramref name="credited"/> grows by it), or – matching nothing – becomes a <b>wrong mention</b>, a
+    /// result row without an atom (<see cref="TestItemResult.ItemIndex"/> is nullable for exactly this). A
+    /// wrong mention must never be attributed to the card that carried it: that row still stands for an entry
+    /// the child may yet name.
+    /// <para>
+    /// Shared by the step-wise <see cref="Answer"/> and the bulk <see cref="Submit"/>, because a second copy of
+    /// this rule is how the two paths would drift apart.
+    /// </para>
+    /// </summary>
+    private static void CreditSetAnswer(TestAttempt attempt, IReadOnlyList<ContentItem> items,
+        HashSet<int> credited, string? given, AnswerGrader grader)
+    {
+        if (PositionPlayService.MatchOpenEntry(items, attempt.Order.Where(i => !credited.Contains(i)), given, grader)
+                is { } hit
+            && attempt.Results.FirstOrDefault(r => r.ItemIndex == hit) is { } hitRow)
+        {
+            hitRow.GivenAnswer = given;
+            hitRow.WasCorrect = true;
+            credited.Add(hit);
+            return;
+        }
+        // A blank answer is a skipped card, not a mention: it names nothing, the result screen would drop it
+        // again, and a child clicking through a 16-entry list would leave sixteen empty rows behind.
+        if (string.IsNullOrWhiteSpace(given)) return;
+        attempt.Results.Add(new TestItemResult { ItemIndex = null, StageValue = attempt.StageValue, GivenAnswer = given });
     }
 
     /// <summary>
@@ -226,14 +263,24 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
         {
             var index = attempt.Order[cursor];
             var item = items[index];
-            var result = attempt.Results.FirstOrDefault(r => r.ItemIndex == index);
-            var correct = typed
-                ? item.AcceptedAnswers.Any(a => grader.Matches(dto.GivenAnswer, a))
-                : dto.WasKnown ?? false;
-            if (result is not null)
+            // Set-graded exercise (an unordered list): the answer decides which entry it credits, not the card
+            // it arrived on - any entry not yet credited in this attempt counts. A repeat therefore matches
+            // nothing and is a wrong mention, exactly as the catalog check consumes a mention (B-77/E1, E2, E4).
+            if (typed && type.GradesAsSet(PositionPlayService.ConfigOf(pos.Exercise)))
             {
-                result.GivenAnswer = dto.GivenAnswer;
-                result.WasCorrect = correct;
+                CreditSetAnswer(attempt, items, CreditedEntries(attempt), dto.GivenAnswer, grader);
+            }
+            else
+            {
+                var result = attempt.Results.FirstOrDefault(r => r.ItemIndex == index);
+                var correct = typed
+                    ? item.AcceptedAnswers.Any(a => grader.Matches(dto.GivenAnswer, a))
+                    : dto.WasKnown ?? false;
+                if (result is not null)
+                {
+                    result.GivenAnswer = dto.GivenAnswer;
+                    result.WasCorrect = correct;
+                }
             }
             // Deliberately NO cross-plan recording here: item progress and history are written ONCE on
             // completion (submit), so that aborted/repeated attempts do not distort the learning state
@@ -253,9 +300,13 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
     {
         var a = await LoadAttempt(planId, positionId, attemptId, ct);
         if (a is null) return NotFound();
+        // Only rows that carry an atom: a set-mode wrong mention has none, and `?? 0` would report it as an
+        // answer to the first entry. The mentions themselves belong to the child's result screen
+        // (SubmitResponse), not to this per-item view.
         return new AttemptDetail(a.Id, a.StudyPlanId, positionId, a.Day, a.StageValue, a.StartedAt, a.CompletedAt,
             a.TotalItems, a.CorrectItems, a.ScorePercent, a.Passed,
-            a.Results.OrderBy(r => r.ItemIndex).Select(r => new ItemResultDto(r.ItemIndex ?? 0, r.GivenAnswer, r.WasCorrect, r.HintsUsed)).ToList());
+            a.Results.Where(r => r.ItemIndex is not null).OrderBy(r => r.ItemIndex)
+                .Select(r => new ItemResultDto(r.ItemIndex!.Value, r.GivenAnswer, r.WasCorrect, r.HintsUsed)).ToList());
     }
 
 
@@ -285,30 +336,58 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
             return this.ProblemWithCode(ApiErrors.UnknownExerciseType, "The exercise has an unknown type.");
         var typed = type.IsTypedStage(attempt.StageValue);
 
+        var setMode = typed && type.GradesAsSet(PositionPlayService.ConfigOf(pos.Exercise));
+
         // Bulk submission (legacy/fallback): only GRADE the answers passed in (recording follows once below).
         // In the class-test flow the list is empty - the results already stand from the step-wise /answer calls.
         if (dto.Answers is { Count: > 0 } bulk)
         {
-            var answers = bulk.ToDictionary(a => a.ItemIndex);
-            foreach (var result in attempt.Results)
+            if (setMode)
             {
-                var index = result.ItemIndex ?? 0;
-                // The item may have been removed/reordered since the test started (item CRUD); skip indexes that
-                // no longer exist instead of running out of range or grading the wrong word.
-                if (index < 0 || index >= items.Count) continue;
-                if (!answers.TryGetValue(index, out var answer)) continue;
-                var item = items[index];
-                result.GivenAnswer = answer.GivenAnswer;
-                result.WasCorrect = typed
-                    ? item.AcceptedAnswers.Any(a => grader.Matches(answer.GivenAnswer, a))
-                    : answer.WasKnown ?? false;
+                // A set in one go: the answers are walked in the order they were given, each crediting the first
+                // entry still open. Same rule as the step-wise path - the index they carry is meaningless here.
+                // Capped at the number of cards: every answer beyond that could only ever be a wrong mention,
+                // and each one writes a row. The step-wise path is bounded by the cursor; this one is bounded
+                // by nothing but the request body, so a client could turn one submission into a hundred
+                // thousand rows.
+                var credited = CreditedEntries(attempt);
+                foreach (var answer in bulk.Take(attempt.Order.Count))
+                    CreditSetAnswer(attempt, items, credited, answer.GivenAnswer, grader);
+            }
+            else
+            {
+                // Indexed assignment, not ToDictionary: a duplicate itemIndex in the body is a client mistake
+                // worth a 400 at most, and ToDictionary answered it with an unhandled 500. The last mention
+                // wins, as everywhere else answers are folded by index.
+                var answers = new Dictionary<int, AnswerDto>();
+                foreach (var a in bulk) answers[a.ItemIndex] = a;
+                foreach (var result in attempt.Results)
+                {
+                    // The item may have been removed/reordered since the test started (item CRUD); skip indexes that
+                    // no longer exist instead of running out of range or grading the wrong word. A row without an
+                    // index is skipped too: it can only be a wrong mention from a set-mode answer (the exercise's
+                    // `Ordered` flag can be flipped mid-attempt), and it belongs to no entry.
+                    if (result.ItemIndex is not { } index || index < 0 || index >= items.Count) continue;
+                    if (!answers.TryGetValue(index, out var answer)) continue;
+                    var item = items[index];
+                    result.GivenAnswer = answer.GivenAnswer;
+                    result.WasCorrect = typed
+                        ? item.AcceptedAnswers.Any(a => grader.Matches(answer.GivenAnswer, a))
+                        : answer.WasKnown ?? false;
+                }
             }
         }
 
-        // Only items that still exist (not deleted mid-test) count - for result cards, recording AND the score.
+        // Only rows that carry an item which still exists (not deleted mid-test) count - for result cards,
+        // recording AND the score. A row WITHOUT an item is a wrong mention (set mode): it must not become
+        // "entry 0" here, or it would score against the first entry and depress the percentage twice.
         var scorable = attempt.Results
-            .Where(r => (r.ItemIndex ?? 0) >= 0 && (r.ItemIndex ?? 0) < items.Count)
+            .Where(r => r.ItemIndex is { } i && i >= 0 && i < items.Count)
             .OrderBy(r => r.ItemIndex)
+            .ToList();
+        var wrongMentions = attempt.Results
+            .Where(r => r.ItemIndex is null && !string.IsNullOrWhiteSpace(r.GivenAnswer))
+            .Select(r => r.GivenAnswer!)
             .ToList();
 
         // Build the result cards and write the cross-plan item progress/history exactly ONCE per completed
@@ -316,7 +395,9 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
         var outcomes = new List<ItemOutcome>(scorable.Count);
         foreach (var r in scorable)
         {
-            var index = r.ItemIndex ?? 0;
+            // Non-null by the filter above - the coalescing that used to stand here would have hidden a wrong
+            // mention as an answer to entry 0.
+            var index = r.ItemIndex!.Value;
             var item = items[index];
             outcomes.Add(new ItemOutcome(index, item.Prompt, item.Answer, r.GivenAnswer, r.WasCorrect, item.GapIndex));
             await itemProgress.RecordAsync(plan.ChildId, pos.ExerciseId, item, r.WasCorrect, attempt.StageValue,
@@ -340,7 +421,10 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
         // Also evaluate metric-based missions/awards (e.g. "tests passed") on test completion.
         await gamification.EvaluateAndAwardAsync(plan.ChildId, attempt.Day, ct);
 
+        // The wrong mentions ride along only where they exist: in set mode the outcomes above name what the
+        // child FORGOT, and without this list what it actually typed would silently disappear.
         return new SubmitResponse(attempt.Id, attempt.StageValue, attempt.TotalItems, attempt.CorrectItems,
-            attempt.ScorePercent, attempt.Passed, passPercent, outcomes);
+            attempt.ScorePercent, attempt.Passed, passPercent, outcomes,
+            wrongMentions.Count > 0 ? wrongMentions : null);
     }
 }

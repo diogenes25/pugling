@@ -304,6 +304,12 @@ public sealed class ListExerciseType : ExerciseTypeBase
         ExerciseTypeKeys.List, "Liste", "list", 1, "list",
         ExerciseCheckMode.CatalogCheck, null, null, ["orderedOptional", "alternatives"]);
 
+    // Without `Ordered` the entries are a set: naming them in any sequence is right, so the play path must not
+    // demand entry N on card N. The catalog check has always graded it that way (see Check below); this hook is
+    // what carries the same rule into practice and exam.
+    /// <inheritdoc/>
+    public override bool GradesAsSet(string configJson) => !Deserialize<ListConfig>(configJson).Ordered;
+
     /// <inheritdoc/>
     public override IReadOnlyList<ContentItem> ItemsOf(string configJson)
     {

@@ -145,6 +145,12 @@ a { color: var(--cyan); }
 .fcard .cloze-prompt { font-size: 22px; line-height: 1.5; }
 .cloze-gap { display: inline-block; min-width: 2.2em; padding: 0 .25em; border-bottom: 2px solid var(--stroke); color: var(--muted); }
 .cloze-gap.asked { border-bottom-color: var(--gold); color: var(--gold); font-weight: 800; }
+/* Die Spielregel einer Listen-Karte (B-77): dicht am Aufgabentext, zu dem sie gehört – ohne die Regel würde
+   der UA-Vorgabe-Abstand von <p> sie vom Prompt weg und den Tipp darunter fort drücken. Im geordneten Fall ist
+   „Eintrag 8" das EINZIGE Unterscheidungsmerkmal von sonst gleichen Karten, darum ausgezeichnet wie die
+   gefragte Lücke: Gold und fett, nicht nur klein und grau. */
+.list-rule { margin: 4px 0 0; }
+.list-rule.position { color: var(--gold); font-weight: 800; }
 .fcard .boxtag { position: absolute; top: 12px; right: 12px; }
 .judge { display: flex; gap: 10px; }
 

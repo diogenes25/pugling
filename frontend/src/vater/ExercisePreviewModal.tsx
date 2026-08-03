@@ -71,6 +71,14 @@ export function ExercisePreviewModal({ exerciseId, title, onClose }: {
 
   // Lückentext: alle Items teilen denselben Trägertext – einmal oben zeigen, dann pro Lücke ein Feld.
   const isCloze = !!data && data.items.some((it) => it.gapIndex != null);
+  // Mengen-Bewertung: alle Aufgaben teilen ihre Anweisung, und die Reihenfolge der Eingaben bedeutet nichts.
+  const isSet = !!data && data.items.some((it) => it.anyOrder);
+  // Die GEORDNETE Liste teilt ihre Anweisung genauso – nur zählt dort der Platz. Zwei Fälle, zwei Gründe, wie
+  // bei `ListRule` in der Sohn-App: die Menge hängt am Feld (für jeden mengenweise bewerteten Typ richtig), der
+  // geordnete Fall am Typ (nur bei einer Liste teilen sich die Zeilen ihren Text).
+  const isOrderedList = !!data && !isSet && data.type === "List";
+  // Beide Listenfälle: Anweisung einmal oben, die Zeilen tragen ihre Nummer.
+  const listShared = isSet || isOrderedList;
 
   /*
    * Die Aufnahme einer Hörverstehen-Übung gehört der Übung: Sie hängt an jedem Item, ist aber überall
@@ -127,6 +135,21 @@ export function ExercisePreviewModal({ exerciseId, title, onClose }: {
             {audioOfExercise && (
               <AudioButton url={audioOfExercise} autoPlay={false} withControls label="Aufnahme der Übung" />
             )}
+            {/* Eine Liste teilt ihre Anweisung über alle Einträge: sie steht einmal oben, weil die Vorschau alle
+                Aufgaben zugleich zeigt – sonst stünde 16-mal derselbe fette Satz, also genau die
+                Ununterscheidbarkeit, die es beim Kind nicht mehr gibt. Die Regel darunter nennt beide Fälle
+                (B-77/R5, E6): ungeordnet bewertet der Server als Menge, geordnet positionsgenau. Fehlte der
+                geordnete Zweig, sagte die Vorschau dem Vater etwas anderes als die Klausur dem Kind. */}
+            {listShared && (
+              <div className="card" style={{ background: "var(--surface-2, transparent)" }}>
+                <div className="test-prompt">{data.items[0]?.prompt}</div>
+                <p className="muted" style={{ margin: "4px 0 0" }}>
+                  {isSet
+                    ? "Reihenfolge egal – jede Antwort zählt einmal, eine Wiederholung zählt nicht."
+                    : "Die Reihenfolge zählt – jedes Feld fragt seinen Eintrag."}
+                </p>
+              </div>
+            )}
             <p className="muted" style={{ margin: 0 }}>
               {data.typed ? "Tippe deine Antwort – bewertet wird wie beim Kind." : "Überlege, dann aufdecken und ehrlich bewerten."}
             </p>
@@ -141,7 +164,12 @@ export function ExercisePreviewModal({ exerciseId, title, onClose }: {
                         trägt jedes Item die Aufnahme, also lief der Frage-Zweig nie. Verschwiegen wird die
                         Frage nur, wo der Server sie weglässt (Vokabel-Hörstufe). */}
                     {it.audioUrl && !it.prompt && <AudioButton url={it.audioUrl} label="🔊 Anhören" />}
-                    {(it.prompt || isCloze) && <b>{isCloze ? `Lücke ${it.gapIndex}` : it.prompt}</b>}
+                    {/* Bei einer Liste steht die Anweisung oben, hier bleibt die Nummer: bei der Menge die des
+                        Antwortfeldes (die Reihenfolge bedeutet nichts), bei der geordneten Liste die des
+                        Eintrags – dieselbe Adressierung, die das Kind auf der Karte liest. */}
+                    {isSet ? <b>Antwort {it.itemIndex + 1}</b>
+                      : isOrderedList ? <b>Eintrag {it.itemIndex + 1}</b>
+                      : (it.prompt || isCloze) && <b>{isCloze ? `Lücke ${it.gapIndex}` : it.prompt}</b>}
                     {it.hint && <span className="muted" style={{ fontSize: 13 }}>💡 {it.hint}</span>}
                   </div>
 
@@ -164,7 +192,10 @@ export function ExercisePreviewModal({ exerciseId, title, onClose }: {
                   ) : data.typed ? (
                     <input
                       style={{ marginTop: 8, width: "100%" }}
-                      aria-label="Antwort"
+                      // Bei einer Liste ist die Nummer die einzige Unterscheidung der Felder – sie steht sichtbar
+                      // darüber und muss darum auch im Namen des Feldes stehen, sonst heißen alle sechzehn gleich.
+                      aria-label={isSet ? `Antwort ${it.itemIndex + 1}`
+                        : isOrderedList ? `Eintrag ${it.itemIndex + 1}` : "Antwort"}
                       placeholder="Antwort…"
                       value={a?.givenAnswer ?? ""}
                       onChange={(e) => setText(it.itemIndex, e.target.value)}
@@ -201,10 +232,19 @@ export function ExercisePreviewModal({ exerciseId, title, onClose }: {
               Ergebnis: <b>{result.scorePercent}%</b> · {result.correct} / {result.total} richtig
             </div>
             <div className="card" style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+              {/* Auch im ERGEBNIS teilt die Liste ihre Anweisung – ohne diese Zeile stünde sie sechzehnmal, also
+                  wieder das Bild, das B-77 als Defekt beschreibt. Anders als in der Sohn-App wird hier nicht
+                  geraten: die Vorschau hält die Aufgaben noch und weiß, dass es eine Liste ist. */}
+              {listShared && <p className="muted" style={{ margin: "0 0 2px" }}>{data.items[0]?.prompt}</p>}
               {result.items.map((o) => (
                 <div className="row" key={o.itemIndex} style={{ alignItems: "center", gap: 8, padding: "3px 0" }}>
-                  <span>{o.wasCorrect ? "✅" : "❌"}</span>
-                  <span>{o.prompt}</span>
+                  <span aria-hidden="true">{o.wasCorrect ? "✅" : "❌"}</span>
+                  {/* Bei der Menge trägt das Zeichen eine andere Bedeutung als sonst: nicht „falsch geantwortet",
+                      sondern „nicht genannt" – und das ist die Lehre der Übung (B-77/E2). */}
+                  <span className="sr-only">
+                    {isSet ? (o.wasCorrect ? "Genannt" : "Nicht genannt") : (o.wasCorrect ? "Richtig" : "Falsch")}
+                  </span>
+                  {!isSet && <span>{isOrderedList ? `Eintrag ${o.itemIndex + 1}` : o.prompt}</span>}
                   <span className="muted" style={{ marginLeft: "auto" }}>
                     {o.givenAnswer ? `„${o.givenAnswer}" → ` : ""}<b>{o.expected}</b>
                   </span>

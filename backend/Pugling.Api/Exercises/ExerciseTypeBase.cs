@@ -26,6 +26,9 @@ public abstract class ExerciseTypeBase : IExerciseType
     public virtual CheckResult? Check(string configJson, IReadOnlyList<GivenAnswer> answers, int? seed) => null;
 
     /// <inheritdoc/>
+    public virtual bool GradesAsSet(string configJson) => false;
+
+    /// <inheritdoc/>
     public virtual int DefaultStage => (int)TestStage.SelfAssess;
 
     /// <inheritdoc/>

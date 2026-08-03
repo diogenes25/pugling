@@ -5,6 +5,7 @@ import { useSohn } from "./SohnApp";
 import { LetterBoxes } from "../components/LetterBoxes";
 import { AudioButton } from "../components/AudioButton";
 import { ClozePrompt } from "../components/ClozePrompt";
+import { ListRule } from "../components/ListRule";
 import { Passage } from "../components/Passage";
 import type { PracticeCard, PositionSession, ReviewOutcome } from "../lib/types";
 
@@ -109,7 +110,10 @@ export function SohnPractice() {
           }
           refreshWallet();
         } else {
-          setToast(`Lösung: ${outcome.expected}`);
+          // Ohne getroffenen Eintrag gibt es keine Lösung zu nennen: bei einer Menge (ungeordnete Liste) wäre
+          // „Lösung: Hessen" willkürlich, solange ein Dutzend Einträge offen ist – und verriete einen, der noch
+          // gefragt wird. Der Server liefert dann `null`, und hier bleibt es bei der schlichten Absage.
+          setToast(outcome.expected ? `Lösung: ${outcome.expected}` : "Leider nicht.");
           setTimeout(() => setToast(null), 1600);
         }
       }
@@ -239,6 +243,7 @@ export function SohnPractice() {
             <AudioButton url={card.audioUrl} autoPlay={!card.prompt} withControls={!!card.prompt} />
           )}
           <ClozePrompt text={card.prompt} gapIndex={card.gapIndex} />
+          <ListRule type={card.type} anyOrder={card.anyOrder} itemIndex={card.itemIndex} />
           {card.hint && typed && (
             hintShown
               ? <div className="sub">💡 {card.hint}</div>

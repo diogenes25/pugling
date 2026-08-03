@@ -6,6 +6,7 @@ import { Mascot } from "../components/Mascot";
 import { LetterBoxes } from "../components/LetterBoxes";
 import { AudioButton } from "../components/AudioButton";
 import { ClozePrompt } from "../components/ClozePrompt";
+import { ListRule } from "../components/ListRule";
 import { Passage } from "../components/Passage";
 import type { AnswerDto, TestItem, TestSubmitResponse } from "../lib/types";
 
@@ -154,6 +155,7 @@ export function SohnTest() {
           <AudioButton url={item.audioUrl} autoPlay={!item.prompt} withControls={!!item.prompt} />
         )}
         <ClozePrompt text={item.prompt} gapIndex={item.gapIndex} className="test-prompt" />
+        <ListRule type={item.type} anyOrder={item.anyOrder} itemIndex={item.itemIndex} />
         {item.hint && typed && <div className="sub" style={{ marginTop: 6 }}>💡 {item.hint}</div>}
 
         {typed ? (
@@ -208,11 +210,24 @@ export function SohnTest() {
   );
 }
 
-function TestResult({ result, skin, onHome, onRetry }: {
+/**
+ * Der Auswertungsschirm der Klausur. **Exportiert, damit er prüfbar ist**: er ist eine reine
+ * Props-Komponente (kein Laden, kein `fetch`), und genau die Regeln, die hier hängen – teilen alle Zeilen
+ * ihren Aufgabentext? gibt es Fehlnennungen? – sind die, die man sonst nur von Hand ansehen könnte.
+ */
+export function TestResult({ result, skin, onHome, onRetry }: {
   result: TestSubmitResponse; skin: import("../lib/skins").Skin; onHome: () => void; onRetry: () => void;
 }) {
   const pct = result.scorePercent;
   const ring = { background: `conic-gradient(${result.passed ? "var(--lime)" : "var(--red)"} 0 ${pct}%, #0c0e2c ${pct}% 100%)` };
+  // Teilen alle Zeilen ihren Aufgabentext (eine Menge – jede Zeile trägt dieselbe Anweisung), steht er EINMAL
+  // oben, und groß gesetzt wird die Lösung. Sonst schreit 16-mal derselbe Auftrag und die Antwort, die das Kind
+  // lernen soll, flüstert daneben. Lückentexte sind ausgenommen: dort unterscheidet `gapIndex` die Zeilen, und
+  // ihr Text gehört in jede (B-76).
+  const sharedPrompt = result.items.length > 1
+    && result.items.every((o) => o.prompt === result.items[0].prompt && o.gapIndex == null)
+    ? result.items[0].prompt
+    : null;
   return (
     <div className="sohn-body">
       <div className="victory">
@@ -225,16 +240,45 @@ function TestResult({ result, skin, onHome, onRetry }: {
         <p className="sub">Bestehensgrenze {result.passPercent}%</p>
 
         <div className="card" style={{ width: "100%", marginTop: 4, textAlign: "left" }}>
+          {sharedPrompt && <p className="sub" style={{ marginTop: 0 }}>{sharedPrompt}</p>}
           {result.items.map((o) => (
             <div className="row" key={o.itemIndex} style={{ padding: "4px 0" }}>
-              <span>{o.wasCorrect ? "✅" : "❌"}</span>
-              {/* Auch hier die Lücke ausweisen: sonst stehen beim Lückentext lauter gleiche Zeilen –
-                  ausgerechnet auf dem Bildschirm, auf dem das Kind seine Fehler nachliest. */}
-              <ClozePrompt text={o.prompt} gapIndex={o.gapIndex} className="test-prompt" />
-              <span className="sub" style={{ marginLeft: "auto" }}>{o.expected}</span>
+              {/* Das Zeichen ist die Optik, das Wort die Bedeutung: allein gelesen heißt „❌ Berlin" für das Kind
+                  „Berlin war falsch", während der Server „Berlin hast du nicht genannt" meint – und genau das ist
+                  bei einer Menge die Lehre der Übung (B-77/E2). */}
+              <span aria-hidden="true">{o.wasCorrect ? "✅" : "❌"}</span>
+              {!sharedPrompt && <span className="sr-only">{o.wasCorrect ? "Richtig" : "Falsch"}</span>}
+              {sharedPrompt
+                // Die Lösung ist hier die Lehre – sie steht groß, wo der Aufgabentext oben schon steht.
+                ? <>
+                    <span className="test-prompt">{o.expected}</span>
+                    <span className="sub" style={{ marginLeft: "auto" }}>{o.wasCorrect ? "genannt" : "nicht genannt"}</span>
+                  </>
+                : <>
+                    {/* Auch hier die Lücke ausweisen: sonst stehen beim Lückentext lauter gleiche Zeilen –
+                        ausgerechnet auf dem Bildschirm, auf dem das Kind seine Fehler nachliest. */}
+                    <ClozePrompt text={o.prompt} gapIndex={o.gapIndex} className="test-prompt" />
+                    <span className="sub" style={{ marginLeft: "auto" }}>{o.expected}</span>
+                  </>}
             </div>
           ))}
         </div>
+
+        {/* Bei einer Menge zählt die Zeile darüber, was das Kind VERGESSEN hat – ohne diese Liste
+            verschwände lautlos, was es tatsächlich getippt hat (B-77/E2). */}
+        {result.wrongMentions && result.wrongMentions.length > 0 && (
+          <div className="card" style={{ width: "100%", marginTop: 4, textAlign: "left" }}>
+            <p className="sub" style={{ marginTop: 0 }}>Das zählte nicht:</p>
+            {result.wrongMentions.map((m, i) => (
+              // Bewusst leiser als die Lösung oben: was das Kind fälschlich getippt hat, ist die Nebensache –
+              // die Lehre ist der Eintrag, den es vergessen hat.
+              <div className="row" key={`${m}-${i}`} style={{ padding: "4px 0" }}>
+                <span aria-hidden="true">❌</span>
+                <span className="sub">{m}</span>
+              </div>
+            ))}
+          </div>
+        )}
 
         {!result.passed && <button type="button" className="btn gold" onClick={onRetry}>Nochmal versuchen</button>}
         <button type="button" className="btn ghost" onClick={onHome}>Zur Basis</button>

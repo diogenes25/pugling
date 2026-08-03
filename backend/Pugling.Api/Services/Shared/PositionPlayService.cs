@@ -111,6 +111,26 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
     public static string ConfigOf(Exercise exercise) => exercise.ConfigJson;
 
     /// <summary>
+    /// The entry a given answer credits in a <b>set-graded</b> exercise: the first candidate whose accepted
+    /// answers match, or <c>null</c> if none does (a wrong answer, or one already credited – the caller keeps
+    /// those out of <paramref name="candidates"/>). Candidates are walked in ascending index order, so two
+    /// entries accepting the same text always credit the same one; a set must still grade deterministically.
+    /// <para>
+    /// Lives here rather than in a controller because both play paths need it, and the plain per-index
+    /// comparison it replaces already stands written out four times.
+    /// </para>
+    /// </summary>
+    public static int? MatchOpenEntry(IReadOnlyList<ContentItem> items, IEnumerable<int> candidates,
+        string? given, AnswerGrader grader)
+    {
+        foreach (var index in candidates.Where(i => i >= 0 && i < items.Count).Order())
+        {
+            if (items[index].AcceptedAnswers.Any(a => grader.Matches(given, a))) return index;
+        }
+        return null;
+    }
+
+    /// <summary>
     /// The representation of a content atom permitted per stage as a card/test item (anti-cheat in one place):
     /// typed stages withhold the solution (<c>Reveal</c>), display/self-assessment reveals it;
     /// letter boxes give the length, the listening stage the audio source, multiple choice the options.
@@ -118,7 +138,8 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
     /// image facets, it renders no image.
     /// </summary>
     public static (string? Hint, int? AnswerLength, string? Reveal, IReadOnlyList<string>? Choices,
-        string? AudioUrl, string? ImageUrl, string? ImageAlt, int? GapIndex, string? Prompt, string? Passage)
+        string? AudioUrl, string? ImageUrl, string? ImageAlt, int? GapIndex, string? Prompt, string? Passage,
+        bool AnyOrder)
         CardFacets(string configJson, IReadOnlyList<ContentItem> items, ContentItem item, IExerciseType type,
             int stage, bool typed)
     {
@@ -143,7 +164,12 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
             type.AudioReplacesPrompt(stage) && !string.IsNullOrWhiteSpace(audioUrl) ? null : item.Prompt,
             // What the question is about, unabridged: reading text, grammar instruction. No anti-cheat rule
             // applies - it is the material, not the solution.
-            item.Passage);
+            item.Passage,
+            // Whether any not-yet-named answer counts. Like the gap index this is an address, not a secret:
+            // the rule lives in the config the child never sees, so withholding it makes the card a guess.
+            // The `typed` proviso is the one both graders apply - it must not promise a rule on a stage that
+            // is self-assessed and therefore still graded card by card.
+            typed && type.GradesAsSet(configJson));
     }
 
     /// <summary>

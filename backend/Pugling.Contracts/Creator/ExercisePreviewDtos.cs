@@ -10,10 +10,12 @@ namespace Pugling.Contracts.Creator;
 /// the same field the child's card carries, because a preview that shows less than the child gets is a
 /// reassurance rather than a check. <c>Prompt</c> is nullable for the same reason in reverse: where the
 /// child hears the word instead of reading it, the supervisor must too, or they cannot notice a silent
-/// recording.
+/// recording. <c>AnyOrder</c> follows from the same principle: the preview grades an unordered list as a set,
+/// so it must also <i>say</i> so – otherwise the supervisor sees identical prompts, blames the exercise, and
+/// the trial run they assign on contradicts the exam.
 /// </summary>
 public record PreviewItem(int ItemIndex, string? Prompt, int? GapIndex, string? Hint, int? AnswerLength, string? Reveal,
-    IReadOnlyList<string>? Choices, string? AudioUrl, string? Passage = null);
+    IReadOnlyList<string>? Choices, string? AudioUrl, string? Passage = null, bool AnyOrder = false);
 
 /// <summary>
 /// The playable state of an exercise in test mode: type, chosen stage, whether typed, the problems and
