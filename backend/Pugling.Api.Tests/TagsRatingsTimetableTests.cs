@@ -105,6 +105,43 @@ public class TagsRatingsTimetableTests(PuglingWebAppFactory factory) : IClassFix
         // The very same endpoint is dual-role: the adult keeps the full reach, which he needs when planning.
         Assert.Equal(HttpStatusCode.OK, (await father.PostAsJsonAsync($"/api/v1/creator/tags/{tagId}/exercises",
             new { exerciseIds = new[] { nichtZugewiesen } })).StatusCode);
+
+        // The exercise the father just put there stays markable for the child: resending the whole selection
+        // must not turn a no-op into a 403 - only genuinely new ids are checked.
+        Assert.Equal(HttpStatusCode.OK, (await child.PostAsJsonAsync($"/api/v1/creator/tags/{tagId}/exercises",
+            new { exerciseIds = new[] { nichtZugewiesen, zugewiesen } })).StatusCode);
+
+        // An unknown id must not be distinguishable from a foreign one, otherwise the child reads the size of
+        // the catalog off the status code. For the adult it stays the 400 it always was.
+        var unbekannt = await child.PostAsJsonAsync($"/api/v1/creator/tags/{tagId}/exercises",
+            new { exerciseIds = new[] { 999_999 } });
+        Assert.Equal(HttpStatusCode.Forbidden, unbekannt.StatusCode);
+        Assert.Equal("exercise_not_assigned",
+            (await unbekannt.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("code").GetString());
+        Assert.Equal(HttpStatusCode.BadRequest, (await father.PostAsJsonAsync($"/api/v1/creator/tags/{tagId}/exercises",
+            new { exerciseIds = new[] { 999_999 } })).StatusCode);
+    }
+
+    [Fact]
+    public async Task Kind_MarkiertEineDirektZugewieseneKlausurUebung()
+    {
+        // The second half of "assigned": a direct KlassenarbeitExercise row. Without its own case, deleting
+        // that query would leave the suite green while the child loses half of what the story grants it.
+        var father = await TestApi.FatherAsync(factory);
+        var exerciseId = await TestApi.CreateVocabExerciseAsync(father);
+        var klassenarbeitId = (await (await father.PostAsJsonAsync("/api/v1/supervisor/class-tests",
+            new { childId = 1, title = "Direkt zugewiesen", scheduledDate = "2099-06-01" }))
+            .Content.ReadFromJsonAsync<JsonElement>()).GetProperty("klassenarbeit").GetProperty("id").GetInt32();
+        // Directly, NOT through a tag - the tag route is the circular one (see the round-trip test below).
+        (await father.PostAsJsonAsync($"/api/v1/supervisor/class-tests/{klassenarbeitId}/exercises",
+            new { exerciseIds = new[] { exerciseId } })).EnsureSuccessStatusCode();
+
+        var tagId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/tags",
+            new { childId = 1, name = TestApi.UniqueName("Klausurstoff") }));
+        var child = await TestApi.ChildAsync(factory);
+
+        Assert.Equal(HttpStatusCode.OK, (await child.PostAsJsonAsync($"/api/v1/creator/tags/{tagId}/exercises",
+            new { exerciseIds = new[] { exerciseId } })).StatusCode);
     }
 
     [Fact]
@@ -135,6 +172,10 @@ public class TagsRatingsTimetableTests(PuglingWebAppFactory factory) : IClassFix
         var res = await child.PostAsJsonAsync($"/api/v1/creator/tags/{zweiterTag}/exercises",
             new { exerciseIds = new[] { nichtZugewiesen } });
         Assert.Equal(HttpStatusCode.Forbidden, res.StatusCode);
+        // The code, not just the status: another 403 (a future grant check, say) must not pass as proof that
+        // the circular path stayed closed.
+        Assert.Equal("exercise_not_assigned",
+            (await res.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("code").GetString());
     }
 
     [Fact]

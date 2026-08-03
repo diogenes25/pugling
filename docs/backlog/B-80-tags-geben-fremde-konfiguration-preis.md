@@ -1,9 +1,9 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/backend, rolle/student]
+tags: [typ/story, status/abgenommen, bereich/backend, rolle/student]
 aliases: [Über die Tags kann ein Kind jede Übungs-Konfiguration lesen,
   Tag-Endpunkt gibt Lösungen preis, ConfigJson über Tags lesbar, Transkript erreichbar,
   ExerciseBrief traegt die rohe Config, Klausur gibt Loesungen preis]
-status: in-arbeit
+status: abgenommen
 prio: P1
 art: Defekt
 groesse: S
@@ -443,3 +443,30 @@ nachlesbar bleibt.
   `openapi-examples.generated.json` blieb unverändert. Das Frontend musste **keine** Quelle ändern:
   `npm run build` (mit neu erzeugter `contract.ts`) läuft durch — `wo: backend` hat gehalten.
   **Offen für `abgenommen`**: der `pugling-reviewer`.
+- **2026-08-03** — **abgenommen**, Commits `230af06` (Bau) und der Review-Nachlauf. Der `pugling-reviewer`
+  hat sieben Befunde gemeldet; vier sind behoben, zwei bewusst abgelehnt, einer liegt außerhalb des Schnitts.
+  Suite **666 grün**, `dotnet format` ohne Änderung.
+  **Behoben, und zwei davon waren echte Löcher in der neuen Schranke selbst:**
+  (a) *Aufzählungs-Orakel* — die Existenzprüfung lief **vor** der Schranke, also antwortete eine unbekannte
+  Id mit `400` und eine fremde mit `403`; per Binärsuche las ein Kind daran ab, wo der Katalog endet. Die
+  Prüfung steht jetzt davor, „existiert nicht" und „nicht meins" sind für den Student ununterscheidbar (wie
+  in `FindOwnedAsync`). (b) *keine Idempotenz* — geprüft wurde die ganze gesendete Menge, nicht nur das
+  Neue. Nach **E3** darf im Tag des Kindes fremdes Material stehen, das der **Vater** hineingelegt hat; ein
+  Auswahl-Formular schickt die volle Menge zurück, und das Kind hätte `403` für eine Nulloperation bekommen.
+  Jetzt zählt nur, was wirklich hinzukommt. (c) Der **Klausur-Zweig** der Zuweisungs-Query hatte keinen
+  eigenen Testfall — löschte ihn jemand, blieb die Suite grün, während dem Kind die Hälfte der Definition von
+  „zugewiesen" fehlt; er hat jetzt einen. (d) Der Rundweg-Test prüfte nur den Status, nicht den `code`.
+  **Abgelehnt, mit Grund:** `KeyResult.ExerciseId` als dritte Art der Zuweisung aufzunehmen — E2 hat
+  „zugewiesen" ausdrücklich als *Plan-Position oder eigene Klausur* entschieden, und der Fall ist über keine
+  Oberfläche herstellbar; das Kriterium „nimmt keine Funktion, die es heute sinnvoll nutzen kann" ist erfüllt,
+  weil **keine** Oberfläche diesen Endpunkt aufruft. Wer es anders will, grillt eine Zeile nach.
+  Ebenso abgelehnt: `User.IsStudent()` zu `IsStudent() && !IsSupervisor()` zu verschärfen für ein
+  Doppelrollen-Konto. `CurrentRole()` (`:25`) hat dieselbe Vorrangregel mit derselben Begründung; nur den
+  einen Zweig zu ändern machte die beiden inkonsistent, und über die API ist so ein Token heute nicht
+  herstellbar. Wenn, dann beide gemeinsam — und dann als eigene Entscheidung.
+  **Außerhalb des Schnitts: eine dritte Tür**, die der Titel dieser Story mitbehauptet, ihre
+  Akzeptanzkriterien aber nicht (sie sind auf die *Konfiguration* geschnitten, und die ist weg).
+  `ItemReport.Answer` trägt die Lösung als **eigenes Feld** — anderes DTO, anderer Endpunkt
+  (`student/…/report`). Selbst nachgespielt statt dem Reviewer geglaubt: ein Kind-Token bekommt `answer` für
+  eine Karte mit `introduced: false`. Liegt als [B-82](B-82-positions-report-gibt-loesungen-preis.md) auf
+  `idee` (Handhabung wie B-76 → B-79 und B-80 → B-81).

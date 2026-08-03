@@ -148,26 +148,35 @@ public class TagsController(PuglingDbContext db, AuthAccess access) : Controller
         if (tag is null) return NotFound();
         if (dto.ExerciseIds is not { Count: > 0 }) return this.ProblemWithCode(ApiErrors.ValidationError, "At least one exercise is required.");
 
-        var ids = dto.ExerciseIds.Distinct().ToList();
-        var existing = await db.Exercises.Where(e => ids.Contains(e.Id)).Select(e => e.Id).ToListAsync(ct);
-        var missing = ids.Except(existing).ToList();
-        if (missing.Count > 0) return this.ProblemWithCode(ApiErrors.InvalidReference, $"Unknown exercise IDs: {string.Join(", ", missing)}");
+        // Only what is actually new is checked. An already marked exercise must not fail the request: after
+        // E3 a tag of the child may legitimately contain foreign material that its SUPERVISOR put there, and
+        // a selection form resends the whole set - the child would then get a 403 for a no-op.
+        var already = tag.ExerciseTags.Select(x => x.ExerciseId).ToHashSet();
+        var fresh = dto.ExerciseIds.Distinct().Where(id => !already.Contains(id)).ToList();
+        if (fresh.Count == 0) return Map(tag);
 
         // A student may only mark what it has been assigned. Exercise ids are consecutive numbers, so an
         // existence check alone let the child reach every exercise of the catalog - and the tag list then
         // named title, chapter and subject of material it must not even know about. Adults keep the full
         // reach: a supervisor marks foreign material on purpose when planning a class test.
+        //
+        // Deliberately BEFORE the existence check: the other order answers 400 for an unknown id and 403 for
+        // an existing one, which tells the child by binary search where the catalog ends. "Does not exist"
+        // and "not yours" must be indistinguishable, as they are in FindOwnedAsync above.
         if (User.IsStudent())
         {
-            var assigned = await AssignedExerciseIdsAsync(tag.ChildId, ids, ct);
-            var unassigned = ids.Where(id => !assigned.Contains(id)).ToList();
+            var assigned = await AssignedExerciseIdsAsync(tag.ChildId, fresh, ct);
+            var unassigned = fresh.Where(id => !assigned.Contains(id)).ToList();
             if (unassigned.Count > 0)
                 return this.ProblemWithCode(ApiErrors.ExerciseNotAssigned,
                     $"Exercises not assigned to this child: {string.Join(", ", unassigned)}");
         }
 
-        var already = tag.ExerciseTags.Select(x => x.ExerciseId).ToHashSet();
-        foreach (var id in ids.Where(id => !already.Contains(id)))
+        var existing = await db.Exercises.Where(e => fresh.Contains(e.Id)).Select(e => e.Id).ToListAsync(ct);
+        var missing = fresh.Except(existing).ToList();
+        if (missing.Count > 0) return this.ProblemWithCode(ApiErrors.InvalidReference, $"Unknown exercise IDs: {string.Join(", ", missing)}");
+
+        foreach (var id in fresh)
             tag.ExerciseTags.Add(new ExerciseTag { ExerciseId = id });
 
         await db.SaveChangesAsync(ct);
