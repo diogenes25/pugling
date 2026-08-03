@@ -223,10 +223,16 @@ export function SohnPractice() {
               onReshuffle={reshuffleImage}
             />
           )}
-          {/* Hör-Stufe: Wort vorlesen statt zeigen (sonst wäre „Hören → tippen" keine Höraufgabe). */}
-          {card.audioUrl
-            ? <AudioButton url={card.audioUrl} label="🔊 Vokabel anhören" />
-            : <ClozePrompt text={card.prompt} gapIndex={card.gapIndex} />}
+          {/* Der Stoff, auf den sich die Frage bezieht: Lesetext, Anweisung der Übung. Er steht über der
+              Frage, weil man ihn zuerst liest. */}
+          {card.passage && <div className="passage">{card.passage}</div>}
+          {/*
+            Aufnahme und Frage nebeneinander, nicht entweder-oder: Beim Hörverstehen braucht das Kind
+            beides. Dass die Vokabel-Hörstufe ihr Wort verschweigt, entscheidet der Server – er schickt
+            dort keinen `prompt`. Eine Regel, die hier stünde, müsste jeder neue Audio-Typ nachtragen.
+          */}
+          {card.audioUrl && <AudioButton url={card.audioUrl} label="🔊 Anhören" />}
+          <ClozePrompt text={card.prompt} gapIndex={card.gapIndex} />
           {card.hint && typed && (
             hintShown
               ? <div className="sub">💡 {card.hint}</div>

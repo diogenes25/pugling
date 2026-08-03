@@ -118,7 +118,7 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
     /// image facets, it renders no image.
     /// </summary>
     public static (string? Hint, int? AnswerLength, string? Reveal, IReadOnlyList<string>? Choices,
-        string? AudioUrl, string? ImageUrl, string? ImageAlt, int? GapIndex)
+        string? AudioUrl, string? ImageUrl, string? ImageAlt, int? GapIndex, string? Prompt, string? Passage)
         CardFacets(string configJson, IReadOnlyList<ContentItem> items, ContentItem item, IExerciseType type,
             int stage, bool typed)
     {
@@ -135,7 +135,14 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
             imageUrl is null ? null : item.ImageAlt,
             // Which placeholder of a shared text is being asked. Unlike the facets above this is no anti-cheat
             // decision - it is the address of the atom, and withholding it makes the card unanswerable.
-            item.GapIndex);
+            item.GapIndex,
+            // The prompt is withheld exactly where the recording replaces it (the type decides, see
+            // IExerciseType.AudioReplacesPrompt) - and only when a recording actually arrived, so a missing
+            // audio source never leaves the card blank on both counts.
+            type.AudioReplacesPrompt(stage) && audioUrl is not null ? null : item.Prompt,
+            // What the question is about, unabridged: reading text, grammar instruction. No anti-cheat rule
+            // applies - it is the material, not the solution.
+            item.Passage);
     }
 
     /// <summary>

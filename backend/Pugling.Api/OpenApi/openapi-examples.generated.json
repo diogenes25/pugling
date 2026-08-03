@@ -801,7 +801,7 @@
     "role": "child",
     "requestBodyJson": null,
     "expectedStatus": 200,
-    "responseBodyJson": "{\n  \u0022card\u0022: {\n    \u0022itemIndex\u0022: 0,\n    \u0022stage\u0022: 4,\n    \u0022type\u0022: \u0022Vocabulary\u0022,\n    \u0022prompt\u0022: \u0022hello\u0022,\n    \u0022hint\u0022: null,\n    \u0022answerLength\u0022: null,\n    \u0022reveal\u0022: null,\n    \u0022choices\u0022: null,\n    \u0022audioUrl\u0022: null,\n    \u0022imageUrl\u0022: null,\n    \u0022imageAlt\u0022: null,\n    \u0022gapIndex\u0022: null\n  },\n  \u0022done\u0022: false,\n  \u0022cursor\u0022: 0,\n  \u0022total\u0022: 2\n}",
+    "responseBodyJson": "{\n  \u0022card\u0022: {\n    \u0022itemIndex\u0022: 0,\n    \u0022stage\u0022: 4,\n    \u0022type\u0022: \u0022Vocabulary\u0022,\n    \u0022prompt\u0022: \u0022hello\u0022,\n    \u0022hint\u0022: null,\n    \u0022answerLength\u0022: null,\n    \u0022reveal\u0022: null,\n    \u0022choices\u0022: null,\n    \u0022audioUrl\u0022: null,\n    \u0022imageUrl\u0022: null,\n    \u0022imageAlt\u0022: null,\n    \u0022gapIndex\u0022: null,\n    \u0022passage\u0022: null\n  },\n  \u0022done\u0022: false,\n  \u0022cursor\u0022: 0,\n  \u0022total\u0022: 2\n}",
     "isError": false,
     "expectedCode": null
   },
@@ -814,7 +814,7 @@
     "role": "child",
     "requestBodyJson": "{\n  \u0022itemIndex\u0022: 0,\n  \u0022givenAnswer\u0022: \u0022hallo\u0022\n}",
     "expectedStatus": 200,
-    "responseBodyJson": "{\n  \u0022wasCorrect\u0022: true,\n  \u0022expected\u0022: \u0022hallo\u0022,\n  \u0022awarded\u0022: 10,\n  \u0022box\u0022: 2,\n  \u0022dueOn\u0022: \u0022\u003Cdate\u003E\u0022,\n  \u0022combo\u0022: 1,\n  \u0022comboBonus\u0022: 0,\n  \u0022speedBonus\u0022: 0,\n  \u0022next\u0022: {\n    \u0022itemIndex\u0022: 1,\n    \u0022stage\u0022: 4,\n    \u0022type\u0022: \u0022Vocabulary\u0022,\n    \u0022prompt\u0022: \u0022goodbye\u0022,\n    \u0022hint\u0022: null,\n    \u0022answerLength\u0022: null,\n    \u0022reveal\u0022: null,\n    \u0022choices\u0022: null,\n    \u0022audioUrl\u0022: null,\n    \u0022imageUrl\u0022: null,\n    \u0022imageAlt\u0022: null,\n    \u0022gapIndex\u0022: null\n  },\n  \u0022done\u0022: false\n}",
+    "responseBodyJson": "{\n  \u0022wasCorrect\u0022: true,\n  \u0022expected\u0022: \u0022hallo\u0022,\n  \u0022awarded\u0022: 10,\n  \u0022box\u0022: 2,\n  \u0022dueOn\u0022: \u0022\u003Cdate\u003E\u0022,\n  \u0022combo\u0022: 1,\n  \u0022comboBonus\u0022: 0,\n  \u0022speedBonus\u0022: 0,\n  \u0022next\u0022: {\n    \u0022itemIndex\u0022: 1,\n    \u0022stage\u0022: 4,\n    \u0022type\u0022: \u0022Vocabulary\u0022,\n    \u0022prompt\u0022: \u0022goodbye\u0022,\n    \u0022hint\u0022: null,\n    \u0022answerLength\u0022: null,\n    \u0022reveal\u0022: null,\n    \u0022choices\u0022: null,\n    \u0022audioUrl\u0022: null,\n    \u0022imageUrl\u0022: null,\n    \u0022imageAlt\u0022: null,\n    \u0022gapIndex\u0022: null,\n    \u0022passage\u0022: null\n  },\n  \u0022done\u0022: false\n}",
     "isError": false,
     "expectedCode": null
   },
@@ -840,7 +840,7 @@
     "role": "child",
     "requestBodyJson": null,
     "expectedStatus": 200,
-    "responseBodyJson": "[\n  {\n    \u0022itemIndex\u0022: 1,\n    \u0022stage\u0022: 4,\n    \u0022type\u0022: \u0022Vocabulary\u0022,\n    \u0022prompt\u0022: \u0022goodbye\u0022,\n    \u0022hint\u0022: null,\n    \u0022answerLength\u0022: null,\n    \u0022reveal\u0022: null,\n    \u0022choices\u0022: null,\n    \u0022audioUrl\u0022: null,\n    \u0022imageUrl\u0022: null,\n    \u0022imageAlt\u0022: null,\n    \u0022gapIndex\u0022: null\n  },\n  {\n    \u0022itemIndex\u0022: 0,\n    \u0022stage\u0022: 4,\n    \u0022type\u0022: \u0022Vocabulary\u0022,\n    \u0022prompt\u0022: \u0022hello\u0022,\n    \u0022hint\u0022: null,\n    \u0022answerLength\u0022: null,\n    \u0022reveal\u0022: null,\n    \u0022choices\u0022: null,\n    \u0022audioUrl\u0022: null,\n    \u0022imageUrl\u0022: null,\n    \u0022imageAlt\u0022: null,\n    \u0022gapIndex\u0022: null\n  }\n]",
+    "responseBodyJson": "[\n  {\n    \u0022itemIndex\u0022: 1,\n    \u0022stage\u0022: 4,\n    \u0022type\u0022: \u0022Vocabulary\u0022,\n    \u0022prompt\u0022: \u0022goodbye\u0022,\n    \u0022hint\u0022: null,\n    \u0022answerLength\u0022: null,\n    \u0022reveal\u0022: null,\n    \u0022choices\u0022: null,\n    \u0022audioUrl\u0022: null,\n    \u0022imageUrl\u0022: null,\n    \u0022imageAlt\u0022: null,\n    \u0022gapIndex\u0022: null,\n    \u0022passage\u0022: null\n  },\n  {\n    \u0022itemIndex\u0022: 0,\n    \u0022stage\u0022: 4,\n    \u0022type\u0022: \u0022Vocabulary\u0022,\n    \u0022prompt\u0022: \u0022hello\u0022,\n    \u0022hint\u0022: null,\n    \u0022answerLength\u0022: null,\n    \u0022reveal\u0022: null,\n    \u0022choices\u0022: null,\n    \u0022audioUrl\u0022: null,\n    \u0022imageUrl\u0022: null,\n    \u0022imageAlt\u0022: null,\n    \u0022gapIndex\u0022: null,\n    \u0022passage\u0022: null\n  }\n]",
     "isError": false,
     "expectedCode": null
   },
@@ -879,7 +879,7 @@
     "role": "child",
     "requestBodyJson": null,
     "expectedStatus": 200,
-    "responseBodyJson": "{\n  \u0022item\u0022: {\n    \u0022itemIndex\u0022: 0,\n    \u0022prompt\u0022: \u0022hello\u0022,\n    \u0022stage\u0022: 4,\n    \u0022reveal\u0022: null,\n    \u0022answerLength\u0022: null,\n    \u0022hint\u0022: null,\n    \u0022choices\u0022: null,\n    \u0022audioUrl\u0022: null,\n    \u0022gapIndex\u0022: null\n  },\n  \u0022done\u0022: false,\n  \u0022cursor\u0022: 0,\n  \u0022total\u0022: 1\n}",
+    "responseBodyJson": "{\n  \u0022item\u0022: {\n    \u0022itemIndex\u0022: 0,\n    \u0022prompt\u0022: \u0022hello\u0022,\n    \u0022stage\u0022: 4,\n    \u0022reveal\u0022: null,\n    \u0022answerLength\u0022: null,\n    \u0022hint\u0022: null,\n    \u0022choices\u0022: null,\n    \u0022audioUrl\u0022: null,\n    \u0022gapIndex\u0022: null,\n    \u0022passage\u0022: null\n  },\n  \u0022done\u0022: false,\n  \u0022cursor\u0022: 0,\n  \u0022total\u0022: 1\n}",
     "isError": false,
     "expectedCode": null
   },

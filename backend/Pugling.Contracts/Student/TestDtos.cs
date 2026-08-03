@@ -13,8 +13,8 @@ namespace Pugling.Contracts.Student;
 /// card – it is where a child gets stuck for good, because there is no going back.
 /// </para>
 /// </summary>
-public record TestItem(int ItemIndex, string Prompt, int Stage, string? Reveal, int? AnswerLength, string? Hint,
-    IReadOnlyList<string>? Choices, string? AudioUrl, int? GapIndex = null);
+public record TestItem(int ItemIndex, string? Prompt, int Stage, string? Reveal, int? AnswerLength, string? Hint,
+    IReadOnlyList<string>? Choices, string? AudioUrl, int? GapIndex = null, string? Passage = null);
 
 /// <summary>
 /// Response of the test start. Class-test mode is strictly server-driven: <b>no</b> questions are sent

@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/backend, bereich/frontend, rolle/student]
+tags: [typ/story, status/in-arbeit, bereich/backend, bereich/frontend, rolle/student]
 aliases: [Lesetext erreicht das Kind nicht, Hörverstehen ohne Audio]
-status: geschaetzt
+status: in-arbeit
 prio: P1
 art: Defekt
 groesse: M
@@ -338,3 +338,23 @@ Backend zuerst. Punkt 0, weil die Runde ihn offen gelassen hat.
   Gegenteil gilt; das entscheidet der Typ, und heute kann er es nicht sagen. Empfehlung steht mit
   Begründung in der Schätzung, nicht bestätigt. Dazu R4 als Fund am Rande: `Question.Choices` fällt an
   derselben Stelle mit weg — das gehört nach B-73 und wurde bewusst **nicht** in diese Story gezogen.
+- **2026-08-02** — gebaut. **R1 selbst entschieden** statt vorgelegt: Die Runde hatte die *Produkt*-Frage
+  schon beantwortet (E3, der Server lässt den Prompt weg); offen war nur die Form des internen Hooks, und
+  beide Varianten liefern dasselbe Verhalten. Es wurde ein eigener `IExerciseType.AudioReplacesPrompt(int
+  stage)` (Vorgabe `false`, überschrieben nur von `VocabularyExerciseType`) statt eines vierten
+  Tupel-Elements an `StageFacets` — drei gleichartige Fassetten plus ein Schalter in einem namenlosen Tupel
+  wären billiger zu schreiben und teurer zu lesen gewesen.
+  **Ein Sicherheitsnetz kam dazu, das die Schätzung nicht hatte:** Der Prompt fällt nur weg, wenn wirklich
+  eine Aufnahme ankommt. Eine Vokabel ohne `PronunciationAudioUrl` auf der Hörstufe ergäbe sonst eine
+  Karte, die auf beiden Wegen leer ist — nichts zu lesen und nichts zu hören. Der erste Testlauf ist genau
+  darüber gestolpert, weil die Fixture kein Audio hatte; beide Fälle sind jetzt festgenagelt.
+  R2 traf ein wie beschrieben: Der nullable `prompt` brach den Typecheck an genau den zwei Stellen, die
+  B-76 besetzt hatte (`SohnPractice.tsx:229`, `SohnTest.tsx:150`) — `ClozePrompt` nimmt jetzt einen
+  fehlenden Text an und rendert dann **nichts** statt eines leeren Kastens.
+  Verifikation: **651 Backend-Tests grün** (7 neu in `ContentExercisePlayTests`, alle 7 vorher rot),
+  **82 Frontend-Tests grün**, `full-flow.spec.ts` und `uebungstypen.spec.ts` grün, `/smoke-test` grün.
+  Live gegen `localhost:5280`, weil es (R3) keine geseedete Position gibt:
+  Lesen → `passage: "Tom goes to Brighton in July."` auf **beiden** Karten, `prompt` bleibt die Frage;
+  Hören → `audioUrl` gesetzt, `passage: null`, das Transkript nirgends.
+  Akzeptanzkriterium 6 war schon erfüllt: B-15 wurde am 2026-08-02 auf `Essay` eingegrenzt.
+  **Offen für die Abnahme:** beide Reviewer (`wo: beides`).

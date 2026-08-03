@@ -94,6 +94,12 @@ public sealed class VocabularyExerciseType : ExerciseTypeBase
          (TestStage)stage == TestStage.Audio ? item.AudioUrl : null,
          IsTypedStage(stage) ? null : item.ImageUrl);
 
+    /// <summary>
+    /// At the listening stage the recording <b>is</b> the question: showing the word next to it would make
+    /// "listen, then type" a reading task. The card therefore arrives without a prompt.
+    /// </summary>
+    public override bool AudioReplacesPrompt(int stage) => (TestStage)stage == TestStage.Audio;
+
     /// <inheritdoc/>
     public override IReadOnlyList<StageOption> StageOptions { get; } =
     [

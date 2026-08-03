@@ -83,6 +83,7 @@ public class ExercisePreviewService(ExerciseContentResolver content, AnswerGrade
             letterBoxLength,
             typed ? null : item.Answer,
             choices,
-            audioUrl);
+            audioUrl,
+            item.Passage);
     }
 }

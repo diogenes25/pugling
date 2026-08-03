@@ -70,6 +70,14 @@ describe("ClozePrompt", () => {
     expect(screen.getAllByLabelText("gesuchte Lücke")).toHaveLength(2);
   });
 
+  it("rendert nichts, wenn der Server keinen Text schickt", () => {
+    // Vokabel-Hörstufe (B-75/E3): dort verschweigt der Server das Wort. Ein leerer Kasten wäre schlimmer
+    // als keiner - er sähe aus wie ein Ladefehler.
+    const { container } = render(<ClozePrompt text={null} />);
+
+    expect(container.firstChild).toBeNull();
+  });
+
   it("zerlegt den Text in Stücke und Lücken", () => {
     expect(clozeParts("a {{1}} b")).toEqual([{ text: "a " }, { gap: 1 }, { text: " b" }]);
     // Eine Lücke ganz am Anfang erzeugt kein leeres Textstück davor.

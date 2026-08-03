@@ -13,14 +13,18 @@ import { clozeParts } from "../lib/cloze";
  * Zusatzklasse wird nur gesetzt, wenn wirklich ein Platzhalter gerendert wird – sonst überschriebe die
  * Lückentext-Typografie die der Vokabelkarte, und jedes Wort im Sohn-Web würde kleiner.
  *
+ * Fehlt der Text ganz, kommt **nichts** – auf der Vokabel-Hörstufe lässt der Server ihn bewusst weg, damit
+ * aus „hören und tippen" keine Leseaufgabe wird. Das Bauteil rendert dann keinen leeren Kasten.
+ *
  * `className` bleibt beim Aufrufer: Übungsrunde und Klausur setzen den Aufgabentext unterschiedlich groß,
  * und das ist ihre Entscheidung, nicht die dieses Bauteils.
  */
 export function ClozePrompt({ text, gapIndex, className = "word" }: {
-  text: string;
+  text?: string | null;
   gapIndex?: number | null;
   className?: string;
 }) {
+  if (!text) return null;
   const parts = clozeParts(text);
   const gaps = parts.filter((p) => "gap" in p);
 

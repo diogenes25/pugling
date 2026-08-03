@@ -7,7 +7,11 @@ namespace Pugling.Api.Services.Shared;
 /// <paramref name="Index"/> is the stable position reference (→ <see cref="PositionItemProgress.ItemIndex"/>).
 /// <paramref name="AcceptedAnswers"/> contains the expected solution plus permitted alternatives (raw, the
 /// text comparison normalizes later via <see cref="AnswerGrader"/>). <paramref name="GapIndex"/> is only
-/// set for cloze texts (the {{n}} number of the gap). <paramref name="ItemId"/> and
+/// set for cloze texts (the {{n}} number of the gap). <paramref name="Passage"/> carries the content the
+/// question is <i>about</i> and that belongs to the whole exercise, not to this atom – the reading text, the
+/// instruction covering all grammar tasks. It repeats on every atom on purpose: the card is the unit the
+/// server hands out, and a "once per run" delivery would have to be carried by three playback paths plus
+/// the offline batch. <paramref name="ItemId"/> and
 /// <paramref name="VocabularyId"/> carry (only for vocabulary exercises) the stable item resp. store identity –
 /// the basis for the learning progress logged per child/item; <c>null</c> for all other types.
 /// <paramref name="ImageUrl"/>/<paramref name="ImageAlt"/> are the image selected for <b>this child</b>
@@ -22,6 +26,7 @@ public record ContentItem(
     string? Hint = null,
     int? GapIndex = null,
     string? AudioUrl = null,
+    string? Passage = null,
     int? ItemId = null,
     int? VocabularyId = null,
     string? ImageUrl = null,

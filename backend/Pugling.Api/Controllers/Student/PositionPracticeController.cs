@@ -105,8 +105,8 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
     {
         var item = items[index];
         var f = PositionPlayService.CardFacets(PositionPlayService.ConfigOf(exercise), items, item, type, stage, typed);
-        return new PracticeCard(index, stage, type.Key, item.Prompt,
-            f.Hint, f.AnswerLength, f.Reveal, f.Choices, f.AudioUrl, f.ImageUrl, f.ImageAlt, f.GapIndex);
+        return new PracticeCard(index, stage, type.Key, f.Prompt,
+            f.Hint, f.AnswerLength, f.Reveal, f.Choices, f.AudioUrl, f.ImageUrl, f.ImageAlt, f.GapIndex, f.Passage);
     }
 
     /// <summary>

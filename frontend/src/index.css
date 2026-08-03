@@ -129,6 +129,14 @@ a { color: var(--cyan); }
 /* Aufgabentext der Klausur – wie zuvor das <b> an dieser Stelle. */
 .test-prompt { font-size: 17px; font-weight: 700; }
 
+/* Der Stoff, auf den sich eine Frage bezieht (Lesetext, Anweisung der Übung). Ruhiger gesetzt als die
+   Frage: er ist Material, nicht die Aufgabe – und bei einem längeren Text scrollbar statt abgeschnitten. */
+.passage {
+  font-size: 15px; line-height: 1.55; text-align: left; color: var(--ink);
+  background: #0c0e2c; border: 1.5px solid var(--stroke); border-radius: 12px;
+  padding: 10px 12px; margin-bottom: 10px; max-height: 34vh; overflow-y: auto; white-space: pre-wrap;
+}
+
 /* Lückentext: ein Satz mit Lücken. Die gefragte trägt ein Fragezeichen, die übrigen Punkte – die Form
    unterscheidet sie, nicht die Farbe allein. In der Übungsrunde kleiner als eine Vokabel (30px), es ist
    ein ganzer Satz; die Klausur behält ihre eigene Größe. */

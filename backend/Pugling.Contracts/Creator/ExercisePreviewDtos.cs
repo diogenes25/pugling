@@ -6,9 +6,12 @@ namespace Pugling.Contracts.Creator;
 /// <summary>
 /// A problem presented in test mode. <c>Reveal</c> carries the revealed solution for self-assessment
 /// (<c>null</c> for typed stages); <c>AnswerLength</c> is only set for vocabulary letter boxes.
+/// <c>Passage</c> is the exercise-wide material the question is about (reading text, grammar instruction) –
+/// the same field the child's card carries, because a preview that shows less than the child gets is a
+/// reassurance rather than a check.
 /// </summary>
 public record PreviewItem(int ItemIndex, string Prompt, int? GapIndex, string? Hint, int? AnswerLength, string? Reveal,
-    IReadOnlyList<string>? Choices, string? AudioUrl);
+    IReadOnlyList<string>? Choices, string? AudioUrl, string? Passage = null);
 
 /// <summary>
 /// The playable state of an exercise in test mode: type, chosen stage, whether typed, the problems and

@@ -106,6 +106,9 @@ export function ExercisePreviewModal({ exerciseId, title, onClose }: {
                 <ClozePrompt text={data.items[0].prompt} className="test-prompt" />
               </div>
             )}
+            {/* Lesetext bzw. Anweisung der Übung – dasselbe Material, das die Karte des Kindes trägt.
+                Eine Vorschau, die weniger zeigt, ist eine Beruhigung statt einer Prüfung. */}
+            {data.items[0].passage && <div className="passage">{data.items[0].passage}</div>}
             <p className="muted" style={{ margin: 0 }}>
               {data.typed ? "Tippe deine Antwort – bewertet wird wie beim Kind." : "Überlege, dann aufdecken und ehrlich bewerten."}
             </p>

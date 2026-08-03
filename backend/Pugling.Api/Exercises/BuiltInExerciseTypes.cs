@@ -7,7 +7,12 @@ namespace Pugling.Api.Exercises;
 // ExerciseTypeBase and only carry key/manifest/ItemsOf (+ check/stages where needed). Vocabulary sits
 // apart because of its size (VocabularyExerciseType). Shared check primitives live in AnswerChecking (below).
 
-/// <summary>Reading comprehension: text + comprehension questions (pure content exercise, no automatic check).</summary>
+/// <summary>
+/// Reading comprehension: text + comprehension questions. The questions ARE graded against their solution -
+/// <see cref="ExerciseCheckMode.None"/> only says the type has no final-test surface, not that nothing is
+/// checked. (That sentence used to read "pure content exercise, no automatic check" and sent a whole
+/// investigation down the wrong path.)
+/// </summary>
 public sealed class ReadingExerciseType : ExerciseTypeBase
 {
     /// <inheritdoc/>
@@ -17,8 +22,11 @@ public sealed class ReadingExerciseType : ExerciseTypeBase
         ExerciseTypeKeys.Reading, "Leseverständnis", "reading", 1, "reading",
         ExerciseCheckMode.None, null, null, []);
     /// <inheritdoc/>
-    public override IReadOnlyList<ContentItem> ItemsOf(string configJson) =>
-        AnswerChecking.FromQuestions(Deserialize<ReadingConfig>(configJson).Questions);
+    public override IReadOnlyList<ContentItem> ItemsOf(string configJson)
+    {
+        var c = Deserialize<ReadingConfig>(configJson);
+        return AnswerChecking.FromQuestions(c.Questions, passage: c.Text);
+    }
 }
 
 /// <summary>Listening comprehension: audio source + comprehension questions.</summary>
@@ -31,8 +39,20 @@ public sealed class ListeningExerciseType : ExerciseTypeBase
         ExerciseTypeKeys.Listening, "Hörverständnis", "listening", 1, "listening",
         ExerciseCheckMode.None, null, null, ["audio", "transcript"]);
     /// <inheritdoc/>
-    public override IReadOnlyList<ContentItem> ItemsOf(string configJson) =>
-        AnswerChecking.FromQuestions(Deserialize<ListeningConfig>(configJson).Questions);
+    public override IReadOnlyList<ContentItem> ItemsOf(string configJson)
+    {
+        var c = Deserialize<ListeningConfig>(configJson);
+        // No passage: the transcript is the creator's and would answer the question outright.
+        return AnswerChecking.FromQuestions(c.Questions, audioUrl: c.AudioUrl);
+    }
+
+    /// <summary>
+    /// The recording, on every stage. Unlike the vocabulary listening stage this is not a question form the
+    /// supervisor picks - it is what the exercise IS, and a listening comprehension without its audio is an
+    /// unanswerable question.
+    /// </summary>
+    public override (int? LetterBoxLength, string? AudioUrl, string? ImageUrl) StageFacets(ContentItem item, int stage) =>
+        (null, item.AudioUrl, null);
 }
 
 /// <summary>Essay: free text, no item-by-item comparison – hence no checkable content.</summary>
@@ -61,7 +81,8 @@ public sealed class GrammarExerciseType : ExerciseTypeBase
     public override IReadOnlyList<ContentItem> ItemsOf(string configJson)
     {
         var c = Deserialize<GrammarConfig>(configJson);
-        return [.. c.Tasks.Select((t, i) => new ContentItem(i, t.Prompt, t.Answer, [t.Answer], t.RuleHint))];
+        return [.. c.Tasks.Select((t, i) =>
+            new ContentItem(i, t.Prompt, t.Answer, [t.Answer], t.RuleHint, Passage: c.Instruction))];
     }
 }
 
@@ -324,8 +345,13 @@ public sealed class ListExerciseType : ExerciseTypeBase
 /// </summary>
 internal static class AnswerChecking
 {
-    public static IReadOnlyList<ContentItem> FromQuestions(IReadOnlyList<Question> questions) =>
-        [.. questions.Select((q, i) => new ContentItem(i, q.Prompt, q.Answer, [q.Answer]))];
+    // `passage`/`audioUrl` are what the questions are ABOUT and belong to the exercise, so they ride along on
+    // every atom. Reading passes a text, listening a recording - never both, and listening never its
+    // transcript (that one is the creator's, handing it to the child would answer the question).
+    public static IReadOnlyList<ContentItem> FromQuestions(IReadOnlyList<Question> questions,
+        string? passage = null, string? audioUrl = null) =>
+        [.. questions.Select((q, i) => new ContentItem(i, q.Prompt, q.Answer, [q.Answer],
+            AudioUrl: audioUrl, Passage: passage))];
 
     public static Dictionary<int, string?> ByIndex(IReadOnlyList<GivenAnswer> answers)
     {

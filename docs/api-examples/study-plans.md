@@ -183,7 +183,8 @@ Response — `HTTP 200`:
     "audioUrl": null,
     "imageUrl": null,
     "imageAlt": null,
-    "gapIndex": null
+    "gapIndex": null,
+    "passage": null
   },
   "done": false,
   "cursor": 0,
@@ -230,7 +231,8 @@ Response — `HTTP 200`:
     "audioUrl": null,
     "imageUrl": null,
     "imageAlt": null,
-    "gapIndex": null
+    "gapIndex": null,
+    "passage": null
   },
   "done": false
 }
@@ -290,7 +292,8 @@ Response — `HTTP 200`:
     "audioUrl": null,
     "imageUrl": null,
     "imageAlt": null,
-    "gapIndex": null
+    "gapIndex": null,
+    "passage": null
   },
   {
     "itemIndex": 0,
@@ -304,7 +307,8 @@ Response — `HTTP 200`:
     "audioUrl": null,
     "imageUrl": null,
     "imageAlt": null,
-    "gapIndex": null
+    "gapIndex": null,
+    "passage": null
   }
 ]
 ```
@@ -374,7 +378,8 @@ Response — `HTTP 200`:
     "hint": null,
     "choices": null,
     "audioUrl": null,
-    "gapIndex": null
+    "gapIndex": null,
+    "passage": null
   },
   "done": false,
   "cursor": 0,

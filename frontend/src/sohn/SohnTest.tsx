@@ -144,10 +144,12 @@ export function SohnTest() {
       <p className="sub">{typed ? "Tippe die Lösung – zurück geht nicht." : "Denk nach, dann aufdecken und ehrlich bewerten."}</p>
 
       <div className="card">
-        {/* Hör-Stufe: Wort vorlesen statt zeigen (sonst wäre „Hören → tippen" keine Höraufgabe). */}
-        {item.audioUrl
-          ? <AudioButton url={item.audioUrl} label="🔊 Vokabel anhören" />
-          : <ClozePrompt text={item.prompt} gapIndex={item.gapIndex} className="test-prompt" />}
+        {/* Der Stoff, auf den sich die Frage bezieht – wie beim Üben, sonst wäre die Klausur die härtere
+            Aufgabe bei weniger Material. */}
+        {item.passage && <div className="passage">{item.passage}</div>}
+        {/* Aufnahme und Frage nebeneinander; ob das Wort verschwiegen wird, entscheidet der Server. */}
+        {item.audioUrl && <AudioButton url={item.audioUrl} label="🔊 Anhören" />}
+        <ClozePrompt text={item.prompt} gapIndex={item.gapIndex} className="test-prompt" />
         {item.hint && typed && <div className="sub" style={{ marginTop: 6 }}>💡 {item.hint}</div>}
 
         {typed ? (

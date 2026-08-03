@@ -28,10 +28,20 @@ public record HeartbeatDto(int Seconds, bool Active);
 /// by types whose atoms share one text (the cloze); without it two gaps of the same text would arrive as
 /// byte-identical cards and the child could not tell which one to fill.
 /// </para>
+/// <para>
+/// <c>Passage</c> is what the question is <b>about</b> and belongs to the whole exercise – the reading text,
+/// the instruction covering all grammar tasks. Deliberately its own field rather than folded into
+/// <c>Prompt</c>: the prompt is the question and is reused as such in every evaluation line.
+/// </para>
+/// <para>
+/// <c>Prompt</c> is nullable because at the vocabulary listening stage the recording <b>is</b> the question –
+/// showing the word next to it would turn "listen, then type" into a reading task. That is an anti-cheat
+/// decision, so the server makes it; the frontend renders whatever arrives.
+/// </para>
 /// </summary>
-public record PracticeCard(int ItemIndex, int Stage, string Type, string Prompt,
+public record PracticeCard(int ItemIndex, int Stage, string Type, string? Prompt,
     string? Hint, int? AnswerLength, string? Reveal, IReadOnlyList<string>? Choices, string? AudioUrl,
-    string? ImageUrl = null, string? ImageAlt = null, int? GapIndex = null);
+    string? ImageUrl = null, string? ImageAlt = null, int? GapIndex = null, string? Passage = null);
 
 /// <summary>The next card in learn mode (or <c>Done</c>), server-driven via the session cursor.</summary>
 public record NextResponse(PracticeCard? Card, bool Done, int Cursor, int Total);

@@ -69,6 +69,15 @@ public interface IExerciseType
     /// </summary>
     (int? LetterBoxLength, string? AudioUrl, string? ImageUrl) StageFacets(ContentItem item, int stage);
 
+    /// <summary>
+    /// Does the recording <b>replace</b> the prompt at this stage, instead of accompanying it? Only the type
+    /// can answer that, and it cannot be derived from the card: at the vocabulary listening stage showing the
+    /// word alongside would turn "listen, then type" into a reading task, while a listening comprehension
+    /// needs recording <b>and</b> question or the child has nothing to answer. Withholding it is an anti-cheat
+    /// decision and therefore belongs to the server, not to a branch in the renderer.
+    /// </summary>
+    bool AudioReplacesPrompt(int stage);
+
     /// <summary>The query forms switchable in test mode (empty if the type only has one form).</summary>
     IReadOnlyList<StageOption> StageOptions { get; }
 
