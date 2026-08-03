@@ -4,6 +4,7 @@ import { PAGE_SIZE, Pager } from "../components/ListControls";
 import { RepeatedTextFields, nonEmpty } from "../components/RepeatedTextFields";
 import { StatusBanner } from "../components/StatusBanner";
 import { api } from "../lib/api";
+import { placeholderIndices } from "../lib/cloze";
 import { LANGUAGES } from "../lib/languages";
 import { confirmAction } from "../lib/ui";
 import { useAction } from "../lib/useAction";
@@ -21,14 +22,9 @@ import type { ClozeResponse, Gap, Paged } from "../lib/types";
  *
  * Die Lücken sind über den Platzhalter an den Text gebunden: `{{1}}` im Text gehört zur Lücke mit
  * `index` 1. Deshalb liest diese Oberfläche die Platzhalter aus dem Text und führt die Lücken-Zeilen
- * daran nach – eine Lücke ohne Platzhalter würde beim Spielen nie erscheinen.
+ * daran nach – eine Lücke ohne Platzhalter würde beim Spielen nie erscheinen. Der Parser dafür liegt in
+ * `lib/cloze`, weil die Sohn-Ansicht dieselbe Syntax lesen muss.
  */
-
-/** Die Platzhalter-Nummern in Reihenfolge ihres Auftretens; Dubletten zählen einmal. */
-function placeholderIndices(text: string): number[] {
-  const found = [...text.matchAll(/\{\{(\d+)\}\}/g)].map((m) => Number(m[1]));
-  return [...new Set(found)];
-}
 
 /**
  * Die beiden Listen für den Sendeweg: getrimmt, ohne Leerfelder, und „keine" als `null` statt als leere

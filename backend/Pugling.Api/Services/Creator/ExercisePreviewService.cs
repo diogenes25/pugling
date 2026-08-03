@@ -34,7 +34,7 @@ public class ExercisePreviewService(ExerciseContentResolver content, AnswerGrade
         // the exercise's default question form as picked by its author, otherwise the representative stage.
         var stage = stageOverride ?? exercise.DefaultStage ?? type.PreviewStage;
         var typed = type.IsTypedStage(stage);
-        var presented = items.Select(i => Present(i, type, stage, typed, type.Choices(items, i, stage))).ToList();
+        var presented = items.Select(i => Present(i, type, stage, typed, type.Choices(exercise.ConfigJson, items, i, stage))).ToList();
         return new PreviewData(exercise.Type, stage, typed, type.StageOptions, presented);
     }
 

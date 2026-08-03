@@ -51,7 +51,7 @@ public sealed class VocabularyExerciseType : ExerciseTypeBase
     /// candidate is dropped as soon as <b>any</b> of its accepted answers has been seen.
     /// </para>
     /// </summary>
-    public override IReadOnlyList<string>? Choices(IReadOnlyList<ContentItem> items, ContentItem item, int stage)
+    public override IReadOnlyList<string>? Choices(string configJson, IReadOnlyList<ContentItem> items, ContentItem item, int stage)
     {
         if ((TestStage)stage != TestStage.MultipleChoice || string.IsNullOrWhiteSpace(item.Answer)) return null;
 

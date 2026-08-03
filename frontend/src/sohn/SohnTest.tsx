@@ -5,6 +5,7 @@ import { useSohn } from "./SohnApp";
 import { Mascot } from "../components/Mascot";
 import { LetterBoxes } from "../components/LetterBoxes";
 import { AudioButton } from "../components/AudioButton";
+import { ClozePrompt } from "../components/ClozePrompt";
 import type { AnswerDto, TestItem, TestSubmitResponse } from "../lib/types";
 
 // Vokabel-Teststufen (numerisch, serverseitig erzwungen): 1 Zeigen … 5 Hören.
@@ -146,7 +147,7 @@ export function SohnTest() {
         {/* Hör-Stufe: Wort vorlesen statt zeigen (sonst wäre „Hören → tippen" keine Höraufgabe). */}
         {item.audioUrl
           ? <AudioButton url={item.audioUrl} label="🔊 Vokabel anhören" />
-          : <b style={{ fontSize: 17 }}>{item.prompt}</b>}
+          : <ClozePrompt text={item.prompt} gapIndex={item.gapIndex} className="test-prompt" />}
         {item.hint && typed && <div className="sub" style={{ marginTop: 6 }}>💡 {item.hint}</div>}
 
         {typed ? (

@@ -16,4 +16,11 @@ internal static class JsonAssert
     /// <summary>Expects that the bool property <paramref name="property"/> of <paramref name="el"/> is false.</summary>
     public static void False(JsonElement el, string property) =>
         Assert.False(el.GetProperty(property).GetBoolean(), $"'{property}' sollte false sein – JSON: {el}");
+
+    /// <summary>
+    /// Expects that <paramref name="property"/> exists and is JSON <c>null</c>. Deliberately not
+    /// "missing or null": a facet the contract promises must be present and empty, not absent.
+    /// </summary>
+    public static void Null(JsonElement el, string property) =>
+        Assert.Equal(JsonValueKind.Null, el.GetProperty(property).ValueKind);
 }

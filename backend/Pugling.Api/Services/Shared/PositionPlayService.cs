@@ -103,6 +103,13 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
     }
 
     /// <summary>
+    /// The raw exercise config behind a position – what a type needs for facets it cannot derive from the
+    /// atoms (the cloze word bank). Empty when the navigation was not loaded; every type deserializes
+    /// defensively, so a missing config costs the facet and never an exception.
+    /// </summary>
+    public static string ConfigOf(PlanPosition pos) => pos.Exercise?.ConfigJson ?? "";
+
+    /// <summary>
     /// The representation of a content atom permitted per stage as a card/test item (anti-cheat in one place):
     /// typed stages withhold the solution (<c>Reveal</c>), display/self-assessment reveals it;
     /// letter boxes give the length, the listening stage the audio source, multiple choice the options.
@@ -110,20 +117,24 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
     /// image facets, it renders no image.
     /// </summary>
     public static (string? Hint, int? AnswerLength, string? Reveal, IReadOnlyList<string>? Choices,
-        string? AudioUrl, string? ImageUrl, string? ImageAlt)
-        CardFacets(IReadOnlyList<ContentItem> items, ContentItem item, IExerciseType type, int stage, bool typed)
+        string? AudioUrl, string? ImageUrl, string? ImageAlt, int? GapIndex)
+        CardFacets(string configJson, IReadOnlyList<ContentItem> items, ContentItem item, IExerciseType type,
+            int stage, bool typed)
     {
         var (letterBoxLength, audioUrl, imageUrl) = type.StageFacets(item, stage);
         return (
             typed ? item.Hint : null,
             letterBoxLength,
             typed ? null : item.Answer,
-            type.Choices(items, item, stage),
+            type.Choices(configJson, items, item, stage),
             audioUrl,
             imageUrl,
             // The alt text follows the image: no image, no alt text - otherwise the description ("a unicorn is
             // running") would leak on a typed stage exactly what the image would have given away.
-            imageUrl is null ? null : item.ImageAlt);
+            imageUrl is null ? null : item.ImageAlt,
+            // Which placeholder of a shared text is being asked. Unlike the facets above this is no anti-cheat
+            // decision - it is the address of the atom, and withholding it makes the card unanswerable.
+            item.GapIndex);
     }
 
     /// <summary>

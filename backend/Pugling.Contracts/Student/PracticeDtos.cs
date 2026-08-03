@@ -23,10 +23,15 @@ public record HeartbeatDto(int Seconds, bool Active);
 /// reveal the solution by design (the server grades, never the frontend).
 /// <c>ImageUrl</c>/<c>ImageAlt</c> carry the image <b>selected for this child</b>; they are only set at
 /// stages where a motif cannot give away the solution, and are absent otherwise.
+/// <para>
+/// <c>GapIndex</c> names the placeholder <c>{{n}}</c> of <c>Prompt</c> that is being asked. It is set only
+/// by types whose atoms share one text (the cloze); without it two gaps of the same text would arrive as
+/// byte-identical cards and the child could not tell which one to fill.
+/// </para>
 /// </summary>
 public record PracticeCard(int ItemIndex, int Stage, string Type, string Prompt,
     string? Hint, int? AnswerLength, string? Reveal, IReadOnlyList<string>? Choices, string? AudioUrl,
-    string? ImageUrl = null, string? ImageAlt = null);
+    string? ImageUrl = null, string? ImageAlt = null, int? GapIndex = null);
 
 /// <summary>The next card in learn mode (or <c>Done</c>), server-driven via the session cursor.</summary>
 public record NextResponse(PracticeCard? Card, bool Done, int Cursor, int Total);

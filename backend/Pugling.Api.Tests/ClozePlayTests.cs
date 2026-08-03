@@ -1,0 +1,172 @@
+using System.Net.Http.Json;
+using System.Text.Json;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Pugling.Api.Data;
+using Pugling.Api.Exercises;
+using Pugling.Api.Models;
+
+namespace Pugling.Api.Tests;
+
+/// <summary>
+/// Playing a cloze position (B-76). Until now the cloze was only covered while authoring and while
+/// resolving its content – nobody had ever played one, and that is exactly where it was broken: every gap
+/// of the same text produced a byte-identical card, so the child could not tell which gap was being asked.
+/// </summary>
+public class ClozePlayTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWebAppFactory>
+{
+    private readonly PuglingWebAppFactory _factory = factory;
+
+    /// <summary>A two-gap cloze with a word bank – the smallest shape in which the defect is visible.</summary>
+    private static async Task<int> CreateClozeAsync(HttpClient father)
+    {
+        var subjectId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/subjects",
+            new { name = TestApi.UniqueName("Englisch-Cloze") }));
+        var chapterId = await TestApi.IdAsync(await father.PostAsJsonAsync(
+            $"/api/v1/creator/subjects/{subjectId}/chapters", new { name = "Unit 1", orderIndex = 1 }));
+        return await TestApi.IdAsync(await father.PostAsJsonAsync(
+            $"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/cloze", new
+            {
+                title = "Lückentext: A short dialogue",
+                orderIndex = 1,
+                rewardPoints = 15,
+                config = new
+                {
+                    text = "A: {{1}}, how are you? B: I'm {{2}}, thank you.",
+                    gaps = new[]
+                    {
+                        new { index = 1, answer = "Hello", alternatives = new[] { "Hi" } },
+                        new { index = 2, answer = "fine", alternatives = new[] { "good" } },
+                    },
+                    wordBank = new[] { "Hello", "Hi", "fine", "good" },
+                },
+            }));
+    }
+
+    private static async Task<JsonElement> CardsAsync(HttpClient child, int planId, int positionId)
+    {
+        var baseUrl = TestApi.PracticeBase(planId, positionId);
+        var sessionId = await TestApi.IdAsync(await child.PostAsJsonAsync(baseUrl, new { mode = "Info" }));
+        return await child.GetFromJsonAsync<JsonElement>($"{baseUrl}/{sessionId}/cards");
+    }
+
+    // ---- The defect: two gaps, two indistinguishable cards ---- ----
+
+    [Fact]
+    public async Task Lueckentext_KartenWeisenIhreLueckeAus()
+    {
+        var father = await TestApi.FatherAsync(_factory);
+        var exerciseId = await CreateClozeAsync(father);
+        var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)ClozeStage.FreeText);
+        var child = await TestApi.ChildAsync(_factory);
+
+        var cards = await CardsAsync(child, planId, positionId);
+
+        Assert.Equal(2, cards.GetArrayLength());
+        // Both cards carry the whole text as their prompt - that is by design, it is one text. What must
+        // differ is which gap of it is being asked.
+        var gapIndices = cards.EnumerateArray().Select(c => c.GetProperty("gapIndex").GetInt32()).ToList();
+        Assert.Equal([1, 2], gapIndices.Order());
+    }
+
+    // ---- E4: the word-bank stage delivers its word bank ---- ----
+
+    [Fact]
+    public async Task Wortbankstufe_LiefertDieGanzeWortbank_FreitextstufeKeine()
+    {
+        var father = await TestApi.FatherAsync(_factory);
+        var exerciseId = await CreateClozeAsync(father);
+        var child = await TestApi.ChildAsync(_factory);
+
+        var (wordBankPlan, wordBankPos) =
+            TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)ClozeStage.TranslationWordBank);
+        var withBank = await CardsAsync(child, wordBankPlan, wordBankPos);
+        foreach (var card in withBank.EnumerateArray())
+        {
+            var choices = card.GetProperty("choices").EnumerateArray().Select(c => c.GetString()).ToList();
+            // The whole pool, unshortened (E4): a shrinking pool would give away the remaining gaps.
+            Assert.Equal(["Hello", "Hi", "fine", "good"], choices);
+            // R1: the stage is typed, so the solution stays behind - otherwise the buttons would be decoration.
+            JsonAssert.Null(card, "reveal");
+        }
+
+        var (freePlan, freePos) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)ClozeStage.FreeText);
+        var freeText = await CardsAsync(child, freePlan, freePos);
+        Assert.All(freeText.EnumerateArray(), card => JsonAssert.Null(card, "choices"));
+    }
+
+    // ---- E5: the exam pulls along ---- ----
+
+    [Fact]
+    public async Task Klausur_WeistDieLueckeGenauSoAus()
+    {
+        var father = await TestApi.FatherAsync(_factory);
+        var exerciseId = await CreateClozeAsync(father);
+        var (planId, positionId) = TestApi.SeedLeitnerPosition(
+            _factory, exerciseId, (int)ClozeStage.FreeText, requireTypedTest: true);
+        var child = await TestApi.ChildAsync(_factory);
+
+        var testUrl = $"/api/v1/student/study-plans/{planId}/positions/{positionId}/tests";
+        var attemptId = await TestApi.IdWithKeyAsync(
+            await child.PostAsJsonAsync(testUrl, new { stage = (int)ClozeStage.FreeText }), "attemptId");
+
+        // One at a time through the attempt cursor - and each question names its gap.
+        var seen = new List<int>();
+        for (var i = 0; i < 2; i++)
+        {
+            var next = await child.GetFromJsonAsync<JsonElement>($"{testUrl}/{attemptId}/next");
+            var item = next.GetProperty("item");
+            seen.Add(item.GetProperty("gapIndex").GetInt32());
+            await child.PostAsJsonAsync($"{testUrl}/{attemptId}/answer",
+                new { itemIndex = item.GetProperty("itemIndex").GetInt32(), givenAnswer = "x", wasKnown = (bool?)null });
+        }
+
+        Assert.Equal([1, 2], seen.Order());
+    }
+
+    // ---- A type without gaps says so, instead of inventing one ---- ----
+
+    [Fact]
+    public async Task Vokabelkarte_TraegtKeineLueckennummer()
+    {
+        var father = await TestApi.FatherAsync(_factory);
+        var exerciseId = await TestApi.CreateVocabExerciseAsync(father, ("a", "1"));
+        var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.FreeText);
+        var child = await TestApi.ChildAsync(_factory);
+
+        var cards = await CardsAsync(child, planId, positionId);
+
+        Assert.All(cards.EnumerateArray(), card => JsonAssert.Null(card, "gapIndex"));
+    }
+
+    /// <summary>
+    /// The seeded exercise is the case that motivated the story – the real dialogue with its two gaps and
+    /// its five-word bank, not only a fixture written for this test. Played on an own position, because the
+    /// seeded plan's ownership is the seed's business and would make this test fail for another reason.
+    /// </summary>
+    [Fact]
+    public async Task GeseedeterLueckentext_SpieltMitLueckeUndWortbank()
+    {
+        int exerciseId;
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
+            var seeded = await db.Exercises.AsNoTracking().FirstOrDefaultAsync(e =>
+                e.Type == ExerciseTypeKeys.Cloze && e.Title == "Lückentext: A short dialogue");
+            Assert.NotNull(seeded);
+            exerciseId = seeded.Id;
+        }
+
+        var (planId, positionId) =
+            TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)ClozeStage.TranslationWordBank);
+        var child = await TestApi.ChildAsync(_factory);
+
+        var cards = await CardsAsync(child, planId, positionId);
+
+        Assert.Equal(2, cards.GetArrayLength());
+        Assert.Equal([1, 2], cards.EnumerateArray().Select(c => c.GetProperty("gapIndex").GetInt32()).Order());
+        Assert.All(cards.EnumerateArray(), c =>
+            Assert.Equal(["Hello", "Hi", "fine", "good", "well"],
+                c.GetProperty("choices").EnumerateArray().Select(x => x.GetString())));
+    }
+}

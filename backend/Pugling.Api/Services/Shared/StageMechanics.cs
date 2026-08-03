@@ -17,9 +17,14 @@ public static class StageMechanics
     public static bool IsTyped(TestStage stage) =>
         stage is TestStage.LetterBoxes or TestStage.FreeText or TestStage.Audio or TestStage.MultipleChoice;
 
-    /// <summary>Free-text stages of the cloze (actual writing instead of selection).</summary>
+    /// <summary>
+    /// Objectively checkable cloze stages – every one of them, including the word bank. Picking from a pool
+    /// is an answer like any other (same reasoning as multiple choice above): the server compares it against
+    /// the gap's solution. Counting the word-bank stage as self-assessment would hand the child the solution
+    /// as <c>Reveal</c> and turn the pool into decoration next to it.
+    /// </summary>
     public static bool IsTyped(ClozeStage stage) =>
-        stage is ClozeStage.TranslationFreeText or ClozeStage.FreeText;
+        stage is ClozeStage.TranslationWordBank or ClozeStage.TranslationFreeText or ClozeStage.FreeText;
 
     /// <summary>Normalizes an answer for comparison (trim, lowercase, collapse repeated spaces).</summary>
     public static string Normalize(string? s) =>

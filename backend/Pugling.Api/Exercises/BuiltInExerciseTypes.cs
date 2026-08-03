@@ -127,6 +127,19 @@ public sealed class ClozeExerciseType : ExerciseTypeBase
     /// <inheritdoc/>
     public override StoreResolution StoreResolution => StoreResolution.VocabRefs;
 
+    /// <summary>
+    /// The word bank of the exercise, whole and unshortened, on the stage named after it. Deliberately not
+    /// the vocabulary pattern of "solution plus three distractors": the pool is curated by the author, and
+    /// trimming it would silently discard that work. Nor does it shrink as gaps get filled – tracking
+    /// consumption would need session state <b>and</b> give the last gap away for free.
+    /// </summary>
+    public override IReadOnlyList<string>? Choices(string configJson, IReadOnlyList<ContentItem> items, ContentItem item, int stage)
+    {
+        if ((ClozeStage)stage != ClozeStage.TranslationWordBank) return null;
+        var bank = Deserialize<ClozeConfig>(configJson).WordBank;
+        return bank is { Count: > 0 } ? bank : null;
+    }
+
     /// <inheritdoc/>
     public override IReadOnlyList<StageOption> StageOptions { get; } =
     [

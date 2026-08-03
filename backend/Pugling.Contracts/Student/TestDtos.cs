@@ -7,9 +7,14 @@ namespace Pugling.Contracts.Student;
 /// An exam question – without the solution, except at stages that reveal it by design. Deliberately
 /// <b>without</b> an image: the exam shows none, and a field that is always null is the kind of silent lie
 /// the API otherwise rejects with <c>unknown_field</c>.
+/// <para>
+/// <c>GapIndex</c> is no such lie: it names the asked placeholder <c>{{n}}</c> of <c>Prompt</c> and is null
+/// only for types whose atoms already stand on their own. The exam needs it just as much as the practice
+/// card – it is where a child gets stuck for good, because there is no going back.
+/// </para>
 /// </summary>
 public record TestItem(int ItemIndex, string Prompt, int Stage, string? Reveal, int? AnswerLength, string? Hint,
-    IReadOnlyList<string>? Choices, string? AudioUrl);
+    IReadOnlyList<string>? Choices, string? AudioUrl, int? GapIndex);
 
 /// <summary>
 /// Response of the test start. Class-test mode is strictly server-driven: <b>no</b> questions are sent

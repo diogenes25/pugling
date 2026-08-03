@@ -125,6 +125,16 @@ a { color: var(--cyan); }
 .fcard .lang { font: 800 10px/1 var(--font-body); letter-spacing: .2em; text-transform: uppercase; color: var(--muted); }
 .fcard .word { font-family: var(--font-display); font-size: 30px; margin: 10px 0 4px; text-wrap: balance; }
 .fcard .rev { color: var(--cyan); font-size: 20px; font-weight: 800; }
+
+/* Aufgabentext der Klausur – wie zuvor das <b> an dieser Stelle. */
+.test-prompt { font-size: 17px; font-weight: 700; }
+
+/* Lückentext: ein Satz mit Lücken. Die gefragte trägt ein Fragezeichen, die übrigen Punkte – die Form
+   unterscheidet sie, nicht die Farbe allein. In der Übungsrunde kleiner als eine Vokabel (30px), es ist
+   ein ganzer Satz; die Klausur behält ihre eigene Größe. */
+.fcard .cloze-prompt { font-size: 22px; line-height: 1.5; }
+.cloze-gap { display: inline-block; min-width: 2.2em; padding: 0 .25em; border-bottom: 2px solid var(--stroke); color: var(--muted); }
+.cloze-gap.asked { border-bottom-color: var(--gold); color: var(--gold); font-weight: 800; }
 .fcard .boxtag { position: absolute; top: 12px; right: 12px; }
 .judge { display: flex; gap: 10px; }
 

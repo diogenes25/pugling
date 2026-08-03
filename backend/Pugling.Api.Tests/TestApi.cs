@@ -17,7 +17,8 @@ internal static class TestApi
     // GUID, so that the names stay reproducible within one run.
     private static int _catalogSeq;
 
-    private static string UniqueName(string prefix) =>
+    /// <summary>A catalog name unique within the run – shared with tests that build their own exercise.</summary>
+    public static string UniqueName(string prefix) =>
         $"{prefix} {Interlocked.Increment(ref _catalogSeq)}";
 
     private static async Task<string> TokenAsync(HttpClient c, string role, object dto)

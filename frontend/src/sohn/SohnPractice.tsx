@@ -4,6 +4,7 @@ import { ApiError, api, errorMessage } from "../lib/api";
 import { useSohn } from "./SohnApp";
 import { LetterBoxes } from "../components/LetterBoxes";
 import { AudioButton } from "../components/AudioButton";
+import { ClozePrompt } from "../components/ClozePrompt";
 import type { PracticeCard, PositionSession, ReviewOutcome } from "../lib/types";
 
 // Kleine Anerkennung bei jedem Treffer – Variation sorgt für Abwechslung (Daumen, Stern, Feuer, Muskel).
@@ -225,7 +226,7 @@ export function SohnPractice() {
           {/* Hör-Stufe: Wort vorlesen statt zeigen (sonst wäre „Hören → tippen" keine Höraufgabe). */}
           {card.audioUrl
             ? <AudioButton url={card.audioUrl} label="🔊 Vokabel anhören" />
-            : <div className="word">{card.prompt}</div>}
+            : <ClozePrompt text={card.prompt} gapIndex={card.gapIndex} />}
           {card.hint && typed && (
             hintShown
               ? <div className="sub">💡 {card.hint}</div>

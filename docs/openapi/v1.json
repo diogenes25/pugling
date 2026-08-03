@@ -7845,7 +7845,7 @@
         "tags": [
           "Student \u2013 Position Practice"
         ],
-        "summary": "    \u0022Different image\u0022 for a card. Deliberately addressed here and not at the child: which carrier\n    holds the pick \u2013 the exercise-local override or the store vocabulary \u2013 only follows from the\n    specificity cascade that only the server knows. The client only has the card in front of it.\n    The rejected image never comes up again for this carrier. If there is no alternative, everything\nstays unchanged (409 media_no_alternative) instead of leaving the card without an image.\n    The endpoint hands out an image and therefore carries the same guards as the playback\nitself: only the playable plan, only cards of this session, and only where the card actually shows an\nimage. Without the last guard it would be the hole in the anti-cheat rule \u2013 on a typed\nstage it would deliver image and alt text and thereby the meaning of exactly the word that is\nsupposed to be typed ((string? Hint, int? AnswerLength, string? Reveal, IReadOnlyList\u0026lt;string\u0026gt;? Choices, string? AudioUrl, string? ImageUrl, string? ImageAlt) PositionPlayService.CardFacets(IReadOnlyList\u0026lt;ContentItem\u0026gt; items, ContentItem item, IExerciseType type, int stage, bool typed) deliberately withholds both there).",
+        "summary": "    \u0022Different image\u0022 for a card. Deliberately addressed here and not at the child: which carrier\n    holds the pick \u2013 the exercise-local override or the store vocabulary \u2013 only follows from the\n    specificity cascade that only the server knows. The client only has the card in front of it.\n    The rejected image never comes up again for this carrier. If there is no alternative, everything\nstays unchanged (409 media_no_alternative) instead of leaving the card without an image.\n    The endpoint hands out an image and therefore carries the same guards as the playback\nitself: only the playable plan, only cards of this session, and only where the card actually shows an\nimage. Without the last guard it would be the hole in the anti-cheat rule \u2013 on a typed\nstage it would deliver image and alt text and thereby the meaning of exactly the word that is\nsupposed to be typed ((string? Hint, int? AnswerLength, string? Reveal, IReadOnlyList\u0026lt;string\u0026gt;? Choices, string? AudioUrl, string? ImageUrl, string? ImageAlt, int? GapIndex) PositionPlayService.CardFacets(string configJson, IReadOnlyList\u0026lt;ContentItem\u0026gt; items, ContentItem item, IExerciseType type, int stage, bool typed) deliberately withholds both there).",
         "parameters": [
           {
             "name": "planId",
@@ -31911,9 +31911,18 @@
               "null",
               "string"
             ]
+          },
+          "gapIndex": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
           }
         },
-        "description": "A practice card \u2013 deliberately WITHOUT the solution, except at display/self-assessment stages that\nreveal the solution by design (the server grades, never the frontend).\n\u0060ImageUrl\u0060/\u0060ImageAlt\u0060 carry the image \u003Cb\u003Eselected for this child\u003C/b\u003E; they are only set at\nstages where a motif cannot give away the solution, and are absent otherwise."
+        "description": "A practice card \u2013 deliberately WITHOUT the solution, except at display/self-assessment stages that\nreveal the solution by design (the server grades, never the frontend).\n\u0060ImageUrl\u0060/\u0060ImageAlt\u0060 carry the image \u003Cb\u003Eselected for this child\u003C/b\u003E; they are only set at\nstages where a motif cannot give away the solution, and are absent otherwise.\nGapIndex names the placeholder {{n}} of Prompt that is being asked. It is set only\nby types whose atoms share one text (the cloze); without it two gaps of the same text would arrive as\nbyte-identical cards and the child could not tell which one to fill."
       },
       "PracticeOrder": {
         "enum": [
@@ -34409,9 +34418,18 @@
               "null",
               "string"
             ]
+          },
+          "gapIndex": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
           }
         },
-        "description": "An exam question \u2013 without the solution, except at stages that reveal it by design. Deliberately\n\u003Cb\u003Ewithout\u003C/b\u003E an image: the exam shows none, and a field that is always null is the kind of silent lie\nthe API otherwise rejects with \u0060unknown_field\u0060."
+        "description": "An exam question \u2013 without the solution, except at stages that reveal it by design. Deliberately\n\u003Cb\u003Ewithout\u003C/b\u003E an image: the exam shows none, and a field that is always null is the kind of silent lie\nthe API otherwise rejects with \u0060unknown_field\u0060.\nGapIndex is no such lie: it names the asked placeholder {{n}} of Prompt and is null\nonly for types whose atoms already stand on their own. The exam needs it just as much as the practice\ncard \u2013 it is where a child gets stuck for good, because there is no going back."
       },
       "TestNextResponse": {
         "required": [

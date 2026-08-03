@@ -65,13 +65,15 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
         db.TestAttempts.Include(t => t.Results)
             .FirstOrDefaultAsync(t => t.Id == attemptId && t.StudyPlanId == planId && t.PlanPositionId == positionId, ct);
 
-    private static TestItem ToItem(IReadOnlyList<ContentItem> items, ContentItem item, IExerciseType type, int stage, bool typed)
+    private static TestItem ToItem(PlanPosition pos, IReadOnlyList<ContentItem> items, ContentItem item,
+        IExerciseType type, int stage, bool typed)
     {
         // Shared anti-cheat projection (reveal/length/hint/choices/audio per stage) - the same rule as the
         // practice card. The image is deliberately left out: the exam renders none, and asking for one would
         // freeze the child's motif choice as a side effect of taking a test (see MediaSelector).
-        var f = PositionPlayService.CardFacets(items, item, type, stage, typed);
-        return new TestItem(item.Index, item.Prompt, stage, f.Reveal, f.AnswerLength, f.Hint, f.Choices, f.AudioUrl);
+        var f = PositionPlayService.CardFacets(PositionPlayService.ConfigOf(pos), items, item, type, stage, typed);
+        return new TestItem(item.Index, item.Prompt, stage, f.Reveal, f.AnswerLength, f.Hint, f.Choices, f.AudioUrl,
+            f.GapIndex);
     }
 
     /// <summary>
@@ -190,7 +192,7 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
         if (cursor != attempt.Cursor) { attempt.Cursor = cursor; await db.SaveChangesAsync(ct); }
         if (cursor >= attempt.Order.Count) return new TestNextResponse(null, true, cursor, attempt.TotalItems);
 
-        var item = ToItem(items, items[attempt.Order[cursor]], type, attempt.StageValue, typed);
+        var item = ToItem(pos, items, items[attempt.Order[cursor]], type, attempt.StageValue, typed);
         return new TestNextResponse(item, false, cursor, attempt.TotalItems);
     }
 

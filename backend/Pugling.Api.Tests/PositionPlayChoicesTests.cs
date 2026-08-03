@@ -21,7 +21,7 @@ public class PositionPlayChoicesTests
     ];
 
     private static IReadOnlyList<string>? Choices(IReadOnlyList<ContentItem> items, int index, TestStage stage) =>
-        VocabType.Choices(items, items[index], (int)stage);
+        VocabType.Choices("", items, items[index], (int)stage);
 
     [Fact]
     public void MultipleChoice_LiefertLoesungPlusDreiDistinkteAblenker()
@@ -100,6 +100,6 @@ public class PositionPlayChoicesTests
     {
         Assert.Null(Choices(Vocab, 0, TestStage.SelfAssess)); // a different stage
         // A different method: arithmetic knows no multiple choice (the base default is null).
-        Assert.Null(new ArithmeticExerciseType().Choices(Vocab, Vocab[0], (int)TestStage.MultipleChoice));
+        Assert.Null(new ArithmeticExerciseType().Choices("", Vocab, Vocab[0], (int)TestStage.MultipleChoice));
     }
 }

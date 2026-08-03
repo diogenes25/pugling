@@ -35,7 +35,7 @@ public abstract class ExerciseTypeBase : IExerciseType
     public virtual bool IsTypedStage(int stage) => true;
 
     /// <inheritdoc/>
-    public virtual IReadOnlyList<string>? Choices(IReadOnlyList<ContentItem> items, ContentItem item, int stage) => null;
+    public virtual IReadOnlyList<string>? Choices(string configJson, IReadOnlyList<ContentItem> items, ContentItem item, int stage) => null;
 
     /// <inheritdoc/>
     public virtual (int? LetterBoxLength, string? AudioUrl, string? ImageUrl) StageFacets(ContentItem item, int stage) => (null, null, null);

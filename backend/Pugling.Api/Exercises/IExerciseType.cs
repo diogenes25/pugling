@@ -53,8 +53,13 @@ public interface IExerciseType
     /// <summary>Is the stage "typed"/objective (checkable server-side against the solution) instead of pure self-assessment?</summary>
     bool IsTypedStage(int stage);
 
-    /// <summary>Multiple-choice options for the task (correct answer + distractors), or <c>null</c> if the type/stage has no choices.</summary>
-    IReadOnlyList<string>? Choices(IReadOnlyList<ContentItem> items, ContentItem item, int stage);
+    /// <summary>
+    /// The options offered for the task, or <c>null</c> if the type/stage has none. Takes
+    /// <paramref name="configJson"/> like <see cref="Check"/> does, because a pool need not be derivable from
+    /// the atoms: vocabulary builds distractors out of the sibling items, the cloze reads the word bank the
+    /// author curated.
+    /// </summary>
+    IReadOnlyList<string>? Choices(string configJson, IReadOnlyList<ContentItem> items, ContentItem item, int stage);
 
     /// <summary>
     /// Type-specific card facets per stage: letter-box length, audio source, and/or image

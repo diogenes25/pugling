@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/backend, bereich/frontend, rolle/student]
+tags: [typ/story, status/in-arbeit, bereich/backend, bereich/frontend, rolle/student]
 aliases: [Lückentext ohne Lücke, Welche Lücke ist gemeint, Wortbank kommt nie an]
-status: geschaetzt
+status: in-arbeit
 prio: P1
 art: Defekt
 groesse: M
@@ -190,6 +190,20 @@ unwichtigere Hälfte zu reparieren.
 *Kosten.* `TestItem` bekommt ein Feld zurück, kurz nachdem [B-01](B-01-bildwahl-einfrieren.md) zwei
 entfernt hat. Kein Widerspruch: jene waren **immer** `null`, dieses ist es nur bei Typen ohne Lücken.
 
+### E6 · Die Wortbank-Stufe wird getippt (Auflösung von R1)
+
+`StageMechanics.IsTyped(ClozeStage)` nimmt `TranslationWordBank` auf. Damit verschwindet dort die Lösung
+aus `Reveal`, die Auswahl erscheint (beide Sohn-Ansichten rendern sie im `typed`-Zweig), und der Server
+bewertet die Antwort.
+
+*Begründung.* E4 setzte eine Stufe voraus, auf der eine Auswahl ankommt — die gab es nicht. Vom Nutzer
+entschieden, am 2026-08-02, nachdem die Schätzung die Lücke als R1 sichtbar gemacht hatte. Fachlich ist es
+dieselbe Begründung wie beim Multiple-Choice der Vokabel: Auswählen **ist** eine prüfbare Antwort.
+
+*Kosten.* Die geseedete Wochenpflicht wechselt von „umdrehen und selbst bewerten" zu „Wort auswählen" —
+eine Verhaltensänderung an laufenden Daten. Kein Test hat sie bemerkt (643 grün vor wie nach), was R4
+bestätigt: den Lückentext hat nie jemand gespielt.
+
 ## Akzeptanzkriterien
 
 - Zwei Lücken eines Lückentexts liefern zwei **unterscheidbare** Karten; das Kind sieht, welche gefragt
@@ -312,3 +326,15 @@ Backend zuerst — das Frontend hängt an der API.
   getippt zu machen; das ändert aber das Verhalten der geseedeten Wochenpflicht und ist vor dem Bauen zu
   bestätigen. Nebenbefund **R4**: Kein Test spielt heute einen Lückentext, die Abdeckung endet beim
   Anlegen und Auflösen.
+- **2026-08-02** — gebaut. R1 vom Nutzer entschieden (Stufe wird getippt) und als **E6** nachgetragen.
+  Ablauf wie geplant, mit **einer** Abweichung: `IExerciseType.Choices` konnte die Wortbank gar nicht sehen.
+  Der Haken bekam nur `items` und war damit auf Pools beschränkt, die sich aus den Atomen ableiten lassen —
+  für die Vokabel reicht das, für eine vom Autor gepflegte Bank nicht. `Choices` nimmt jetzt wie `Check`
+  den `configJson` als ersten Parameter; das zieht `ExerciseTypeBase`, `VocabularyExerciseType`,
+  `ExercisePreviewService` und `CardFacets` nach (rein intern, kein Vertragsfeld).
+  Verifikation: **643 grün** (5 neu in `ClozePlayTests`, davon 4 vorher rot — `gapIndex` gab es nicht),
+  **78 Frontend-Tests grün** (5 neu in `ClozePrompt.test.tsx`), `dotnet format` und `tsc --noEmit` sauber,
+  `/smoke-test` grün, und der geseedete Lückentext live gegen `localhost:5280` gespielt:
+  `gapIndex: 1` bzw. `2`, `choices` mit allen fünf Wörtern, `reveal: null`.
+  **Offen für die Abnahme:** der `pugling-reviewer` — die Sitzungsregel „keine Agenten ohne Auftrag" steht
+  dem entgegen, also von Hand gegengelesen und hier vermerkt statt still übergangen.
