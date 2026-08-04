@@ -239,6 +239,29 @@ zusammen mit `domain-modeling`) und `task` — Handarbeit, die eine Entscheidung
 `grilling`- und ein `prototype`-Ticket fallen **nur im Gespräch**; der Agent beantwortet sie nicht
 selbst.
 
+### Autonomer Modus (Opt-in je Vorhaben)
+
+Die Regeln „nur im Gespräch" und „ein Ticket je Sitzung" sind der **Standard**, kein Naturgesetz. Auf
+**ausdrücklichen Wunsch des Nutzers, je Vorhaben neu erteilt**, kann eine Karte den gesamten Zyklus
+ohne Dialog-Gate durchlaufen: der PM (`pm-loop`) grillt jedes Ticket selbst — mit Begründung und Kosten
+wie sonst auch, nur ohne Rückfrage —, schätzt, baut, lässt `pugling-reviewer`/`frontend-reviewer`
+laufen, prüft gegen die drei Rollen (`creator`/`supervisor`/`student`-Skills gegen die echte laufende
+App) und wiederholt das, bis alle drei Rollen zufrieden sind oder auf einem benannten
+Mensch-/Geräte-Check ruhen (dieselbe Abnahme-Regel wie in `pm-loop` Step 6). Mehrere kurze,
+risikoarme Tickets (insbesondere solche, die sich als „bleibt wie es ist, kein Code nötig"
+entscheiden) dürfen dabei in einer Sitzung fallen — die Ein-Ticket-Regel schützt vor unbedachten
+Entscheidungen, nicht vor schnellen.
+
+Vorbild/Muster: [B-106](B-106-lehrwerkgetriebener-katalog.md) — Protokoll des vollständigen Ablaufs
+(Story-Findung mit allen drei Rollen → autonomes Grillen → Entwickler-Brief → Bauen → Review →
+Rollen-Re-Review → Rückfluss → Commit → nächste Runde) steht in
+`docs/pm-sitzung-2026-08-04.md` ab dem Abschnitt „Runde: Lehrwerkgetriebener Katalog".
+
+**Was der autonome Modus nicht ändert:** die Eintrittsbedingungen der Stufenkette bleiben gleich
+scharf (Begründung **und** Kosten je Entscheidung, echte Testzahlen, genannte Commits für
+`abgenommen`); nur *wer* die Entscheidung trifft und *wie oft* pro Sitzung ändert sich. Ohne diese
+ausdrückliche Freigabe gilt wieder der Standard — die Erlaubnis gehört zum Vorhaben, nicht zum Repo.
+
 ## Hygiene: der Bereich darf nicht nur wachsen
 
 Ein Backlog, der nur wächst, ist der Zettelberg, den er ersetzen sollte — nur mit YAML davor. Darum meldet
@@ -347,7 +370,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-06](B-06-cloze-preview-bild.md) | Cloze-Vorschau kann kein Bild zeigen | Wunsch | `geschaetzt` | P6 | XS | backend | — |
 
 <details>
-<summary>Abgenommen (26)</summary>
+<summary>Abgenommen (28)</summary>
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -355,6 +378,8 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-02](B-02-itemcount-hilfetext.md) | Der Hilfetext erklärt `ItemCount` falsch herum | Defekt | `abgenommen` | P2 | XS | frontend | — |
 | [B-08](B-08-xml-docs-englisch.md) | XML-Doc-Kommentare im Backend auf Englisch übersetzen | Aufräumen | `abgenommen` | P3 | S | doku | — |
 | [B-10](B-10-zeitfenster-pro-kind.md) | Zeitfenster (Punkte-Faktor) je Pflicht statt global | Wunsch | `abgenommen` | P2 | M | beides | Migration |
+| [B-105](B-105-taegliche-belohnungsbox.md) | Tägliche Belohnungsbox: Loot-Box + Streak als positives Gegenstück zum Stick | Wunsch | `abgenommen` | P4 | S | backend | Migration |
+| [B-106](B-106-lehrwerkgetriebener-katalog.md) | Übungen hängen künftig am Lehrwerk, nicht am Kapitel | Wunsch | `abgenommen` | P1 | L | beides | — |
 | [B-26](B-26-e2e-in-ci.md) | Der E2E-Nachtlauf ist rot – und niemand erfährt es | Defekt | `abgenommen` | P1 | S | frontend | — |
 | [B-37](B-37-uebung-abbruch-unvollendet.md) | Abgebrochene Runden: Pflicht härten, Klausur deckeln | Defekt | `abgenommen` | P1 | M | beides | — |
 | [B-40](B-40-client-routen-waechter.md) | Routen aus `Pugling.Client` gegen das OpenAPI-Dokument halten | Aufräumen | `abgenommen` | P3 | XS | backend | — |

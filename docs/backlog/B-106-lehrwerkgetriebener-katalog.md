@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/katalog, bereich/training, rolle/creator, rolle/supervisor, rolle/student]
+tags: [typ/story, status/abgenommen, bereich/katalog, bereich/training, rolle/creator, rolle/supervisor, rolle/student]
 aliases: [Lehrwerk-getriebener Katalog, Exercise an SeriesUnit, Kapitel-Verschmelzung]
-status: in-arbeit
+status: abgenommen
 prio: P1
 art: Wunsch
 groesse: L
@@ -156,6 +156,19 @@ Vorläufig — die Karte ist Planung, wird pro Sprint geschärft:
 3. Ein Kind ohne katalogisiertes Lehrwerk bekommt eine handlungsfähige Fehlermeldung statt eines
    stillen 500ers.
 
+## Schätzung
+
+`groesse: L`, `wo: beides` (Backend zuerst, siehe Angriffsplan im Verlauf) — größte Karte des
+Bereichs bislang: Migrationskette neu gefaltet (`20260804214041_InitialCreate`), Vertragsbruch
+(`ChaptersController` entfernt, Exercise-Routen auf `textbook-series/{}/units/{}`,
+`ExerciseSummary`/`Detail` um `SeriesId` erweitert, KeyResult-Scope `chapterId`→`seriesUnitId`) —
+zieht `Pugling.Client`, Frontend und die `unknown_field`-Guards nach.
+
+Testweg: `dotnet test Pugling.sln -c Release` (Backend 706/706, Endpunkt-Abdeckung 258/258),
+Frontend-Vitest (122/122), Playwright-E2E (24/25 — der eine Rest ein bestätigter Alt-Flake in der
+Sohn-seitigen Klausur-Animation ohne Bezug zu diesem Diff), plus `pugling-reviewer` und
+`frontend-reviewer` (je ohne Blocker, Kleinfunde eingearbeitet).
+
 ## Verlauf
 
 - **2026-08-04** — angelegt aus der PM-Loop-Recherche (Katalog-Modell, Lehrwerk-Modell,
@@ -213,3 +226,10 @@ Vorläufig — die Karte ist Planung, wird pro Sprint geschärft:
   Sprint-1-Commit** — kein dritter Sprint mit neuem Code nötig. Einzig offen: die in Sprint 1 benannte
   menschliche Browser-Prüfung der neuen Kaskaden-Picker (Chrome-Anbindung war beide Male nicht
   verfügbar). Status bleibt bewusst `in-arbeit`, nicht `abgenommen`, bis diese Prüfung erfolgt ist.
+- **2026-08-05** — Abnahme: Nutzer entscheidet, den benannten Browser-Check der Kaskaden-Picker
+  **nicht** abzuwarten und die vorliegende Verifikation (Testzahlen + drei Rollen-Signoffs, siehe
+  oben) als ausreichend zu akzeptieren — die Chrome-Anbindung war weiterhin nicht verfügbar.
+  Bewusster Risikoabtausch, nicht mechanisch geprüft: der Kaskaden-Picker-Klick bleibt eine
+  offene, aber nicht mehr blockierende Nachprüfung. Commits: `c803986` (Sprint 1: Schema-Slice +
+  Frontend-Notfall-Fix), `f1c1282` (Sprint 2: T-02/T-04/T-05 gegrillt, kein Code). Status →
+  `abgenommen`.

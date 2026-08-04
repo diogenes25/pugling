@@ -128,6 +128,16 @@ now goes there as a story via `/backlog` (stage `idee`, `quelle: docs/pm-sitzung
 snapshot cites the story ids. Items that already have a story get their id noted instead of being
 restated — two durable lists drift, and the stale one is the one someone reads.
 
+**A story that doesn't fit one sitting runs as a Karte** (`docs/backlog/README.md`, "Karten") — its
+open questions become Ticket-Frontier entries the PM works through one sitting at a time. By default
+those tickets fall *only in dialogue with the user*, never decided by the agent alone
+(`docs/backlog/README.md:239`). If — and only if — the user has explicitly authorized a fully
+autonomous run for this specific initiative (see `docs/backlog/README.md`, "Autonomer Modus"), the PM
+may grill tickets itself (reasoned, with cost, exactly as in dialogue — just without the round-trip)
+and loop Steps 3–6 across sprints without a human gate between them. B-106 is the worked example;
+its full trace lives in `docs/pm-sitzung-2026-08-04.md`. Never assume this authorization from a
+single past session — it must be granted per initiative.
+
 ## Step 4 — Brief the developer and build it, API-First
 
 For the top item, write a short **Entwickler-Brief**: the goal, the server-side source of truth,
