@@ -153,6 +153,15 @@ Gems → `PointKind.ManualGems`) – Belohnung außerhalb der App und Druckventi
 > **Invariante – Wallet & Nebenläufigkeit:** Jeder Pfad, der das Wallet **abbucht**, MUSS
 > `child.ConcurrencyStamp` bumpen. Der Stamp ist der geteilte Serialisierungspunkt des Saldos; ohne Bump
 > führen parallele Käufe zu Doppelspend bzw. negativem Saldo.
+>
+> **Der Stamp ist *nur* das – kein ETag.** `ApiErrors.ConcurrencyConflict` (`concurrency_conflict`) ist für
+> Clients darum **bewusst unerreichbar**: es gibt kein `ETag`/`If-Match`, und für zwei Erwachsene am
+> Küchentisch ist „wer zuletzt schreibt, gewinnt" die richtige Semantik. Den Stamp als Ressourcen-Version
+> auszugeben wäre ein Fehler, kein Fortschritt – er ändert sich, sobald das Kind eine Karte richtig
+> beantwortet, und der Vater bekäme beim Patchen des Kindnamens ein 412, weil das Kind *gelernt* hat.
+> Saldo-Serialisierung und Ressourcen-Version sind zwei Bedeutungen für einen Wert.
+> Gemessen und entschieden in [B-103](../../docs/backlog/B-103-idempotenzschluessel-und-etag.md) – der Code
+> ist also kein toter Code, sondern eine dokumentierte Reserve.
 
 ## Medien & Interessen
 

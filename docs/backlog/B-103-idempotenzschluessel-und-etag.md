@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/ausformuliert, bereich/backend, bereich/api]
+tags: [typ/story, status/verworfen, bereich/backend, bereich/api]
 aliases: [Idempotency-Key, ETag, If-Match, optimistische Sperre in der API]
-status: ausformuliert
+status: verworfen
 prio: P3
 art: Frage
 groesse: ""
@@ -9,7 +9,7 @@ wo: ""
 migration: ""
 vertragsbruch: ""
 quelle: docs/api-design-bewertung.md (Vorschläge B1, B2) — Arbeitsrunde PM/API-Designer/Entwickler am 2026-08-04
-grund: ""
+grund: "gemessen in der Arbeitsrunde 2026-08-04 — beim Idempotenz-Schlüssel bleibt ein betroffener Endpunkt von vier übrig und der Rückweg (POST children/{}/points) existiert als Produktverhalten; der ETag-Vorschlag ist gegen den Code unausführbar (StudyPlan/PlanPosition tragen keinen ConcurrencyStamp) und mit der Wallet-Invariante unverträglich. Kein Bau, Entscheidung dokumentiert in backend/Pugling.Api/CLAUDE.md."
 ersetzt_durch: []
 ---
 
@@ -20,8 +20,10 @@ der höchsten Stufe. Die Arbeitsrunde hat beide gemessen und kommt zu **nein** �
 Bequemlichkeit. Diese Story existiert, damit die Antwort auffindbar ist: sonst kommen zwei
 Lehrbuch-Bausteine in einem halben Jahr als frische Idee zurück und kosten wieder eine Runde.
 
-**Empfehlung: `verworfen` mit dem Grund unten.** Die Entscheidung gehört dem Menschen — und für eine
-`Frage` ist `verworfen` das Erfolgsergebnis, kein Scheitern.
+**Erledigt: `verworfen` am 2026-08-04.** Für eine `Frage` ist das das Erfolgsergebnis, kein Scheitern — die
+Antwort steht unten, der Grund im Feld `grund`, und die Entscheidung als Absatz in
+[backend/Pugling.Api/CLAUDE.md](../../backend/Pugling.Api/CLAUDE.md) („Der Stamp ist *nur* das – kein ETag"),
+damit `concurrency_conflict` nicht beim nächsten Durchgang als toter Code gemeldet wird.
 
 ## User Story
 
@@ -96,17 +98,15 @@ Die Lücke ist damit keine Aufgabe, sondern eine **zu dokumentierende Entscheidu
 
 ## Akzeptanzkriterien
 
-Diese Story ist erledigt, wenn eine **belegte Antwort** steht — nicht, wenn etwas gebaut ist:
+Diese Story ist erledigt, wenn eine **belegte Antwort** steht — nicht, wenn etwas gebaut ist. Alle vier sind
+am 2026-08-04 erfüllt:
 
-1. Der Mensch hat entschieden: `verworfen` (Empfehlung) oder eine der beiden Teilfragen bleibt offen, mit
-   Begründung.
-2. Bei `verworfen` steht das Feld `grund` gesetzt. Vorschlag: „gemessen in der Arbeitsrunde 2026-08-04 — ein
-   betroffener Endpunkt statt vier, Rückweg existiert; der ETag-Vorschlag ist gegen den Code unausführbar und
-   mit der Wallet-Invariante unverträglich."
-3. **Ein Satz steht in `backend/Pugling.Api/CLAUDE.md`**, warum `concurrency_conflict` bewusst für Clients
-   unerreichbar bleibt — ohne ihn ist der Code in einem Jahr wieder ein „toter Code"-Befund und die Frage neu
-   offen.
-4. Es wurde **nichts** gebaut: keine Tabelle, keine Spalte, kein Header, keine Migration.
+1. ✔ Entschieden: `verworfen`, beide Teilfragen.
+2. ✔ Das Feld `grund` ist gesetzt (Frontmatter).
+3. ✔ Der Absatz steht in [backend/Pugling.Api/CLAUDE.md](../../backend/Pugling.Api/CLAUDE.md) direkt unter der
+   Wallet-Invariante — dort, wo der Stamp definiert wird, nicht an einer dritten Stelle: wer ihn künftig als
+   ETag ausgeben will, liest zwei Zeilen weiter, warum das ein Fehler wäre.
+4. ✔ Nichts gebaut: keine Tabelle, keine Spalte, kein Header, keine Migration.
 
 ## Verlauf
 
@@ -115,3 +115,8 @@ Diese Story ist erledigt, wenn eine **belegte Antwort** steht — nicht, wenn et
   API-Designer hat Teil 1 von vier auf einen betroffenen Endpunkt korrigiert und Teil 2 vollständig
   zurückgezogen, der Entwickler hat die tabellenfreie Ersatzidee widerlegt. Als `art: Frage` angelegt statt
   direkt als `verworfen`, weil das Verwerfen laut [README](README.md) dem Menschen gehört.
+- **2026-08-04** — **verworfen** (autonom getroffen, Nutzerauftrag „fahre gemäß deiner eigenen Einschätzung
+  fort"). `grund` gesetzt, und die Entscheidung als Absatz unter der Wallet-Invariante in
+  `backend/Pugling.Api/CLAUDE.md` verankert — ohne diesen Absatz wäre `concurrency_conflict` beim nächsten
+  Katalog-Durchgang ein „toter Code"-Befund und die Frage neu offen. Gebaut wurde nichts; das ist bei einer
+  `Frage` das Ergebnis, nicht ein Ausbleiben.
