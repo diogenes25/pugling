@@ -113,18 +113,28 @@ Base  = round(basis × Zeitfenster-Multiplikator)
 - `reviewCount`/`box` sind der Zustand **vor** dem Aufstieg (neuer Inhalt zählt voll).
 - Wiederholungs-Staffel `max(2, 8−box)`: Box 1→7, Box 2→6, Box 3→5, Box 4→4, Box 5→3, ab Box 6→2.
 
-### Zeitfenster-Multiplikator (`TimeSlotRule`)
+### Zeitfenster-Multiplikator
 
-Der Multiplikator hängt an der **Server-Uhrzeit** der Antwort. Geseedete Fenster (vom Vater änderbar):
+Der Multiplikator hängt an der **Server-Uhrzeit** der Antwort. Fenster kommen aus **zwei** Quellen:
 
-| Fenster | Zeit | Multiplikator |
-| --- | --- | --- |
-| Vormittag | 08:00–12:00 | ×1.5 |
-| Nachmittag | 12:00–18:00 | ×1.0 |
-| Abend | 18:00–21:00 | ×0.8 |
+1. **global** aus der Konfiguration (`Scoring:TimeSlots` in `appsettings.json` — seit dem DB-Umbau keine
+   Tabelle mehr):
 
-Außerhalb aller Fenster: ×1.0. **Hinweis:** Zeitfenster sind **global**, nicht pro Kind (bewusster
-offener Punkt — ein „13–15-Uhr-Faktor pro Kind" wäre eine Schema-Änderung).
+   | Fenster | Zeit | Multiplikator |
+   | --- | --- | --- |
+   | Vormittag | 08:00–12:00 | ×1.5 |
+   | Nachmittag | 12:00–18:00 | ×1.0 |
+   | Abend | 18:00–21:00 | ×0.8 |
+
+2. **je Pflicht** an der `PlanPosition` (`timeSlots`, vom Vater im Positions-Formular gesetzt) — der
+   „Hausaufgaben-Faktor 13–15 Uhr". Träger ist die **Position**, nicht das Kind: „zwischen 13 und 15" ist
+   eine Aussage über *diese* Aufgabe, abendliches Vokabelüben bleibt unberührt.
+
+Beide Quellen bilden **eine** Liste; ein Positions-Fenster ersetzt die globalen also nicht, und Faktoren
+werden **nie** multipliziert. Überlappung ist erlaubt, die Auswahl trotzdem bestimmt: das **engste**
+(am spätesten beginnende) Fenster gewinnt, bei Gleichstand das früher endende. Außerhalb aller Fenster: ×1.0.
+`Scoring:TimeSlotsEnabled=false` liefert ×1.0 — und schaltet damit auch die Positions-Fenster ab (die
+Test-Suite läuft so, sonst hinge die eingecheckte Doku an der Uhrzeit des Laufs).
 
 ---
 
@@ -340,7 +350,7 @@ zu hohe Schulden töten die Motivation, also kann der Vater sie gezielt ausgleic
 
 ## 8. Bewusst offen
 
-- **Zeitfenster pro Kind** (der „Hausaufgaben-Faktor 13–15 Uhr") — aktuell global.
+- **Mehrere Zeitfenster je Position** — die Ablage ist eine Liste, das Formular stellt eines ein (§3).
 - **Dauer-Bonus** (`PointKind.Duration`) als eskalierender Sitzungs-Bonus — reserviert, heute über
   `MinutesPracticed`-Missionen abgebildet.
 

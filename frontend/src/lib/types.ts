@@ -415,6 +415,12 @@ export type PracticeOrder = S["PracticeOrder"];
 /** Stufen-Fahrplan-Eintrag (Tag → Stufe) einer Leitner-Position. */
 export type StageStep = S["StageStep"];
 
+/**
+ * Ein Zeitfenster mit Punkte-Faktor. Dieselbe Form trägt der Server global (Konfiguration) und je Position –
+ * beide werden zusammen betrachtet, das engste Fenster gewinnt.
+ */
+export type ScoringTimeSlot = S["ScoringTimeSlot"];
+
 /** Eine Position eines Lehrplans: Verweis auf eine Katalog-Übung + eigene Ziele/Punkte/Leitner. */
 export type PositionResponse = S["PositionResponse"];
 

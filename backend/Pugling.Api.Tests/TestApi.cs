@@ -171,7 +171,7 @@ internal static class TestApi
         int stage, int childId = 1, GoalCadence cadence = GoalCadence.Daily, int? goalThreshold = null,
         bool useLeitner = true, bool requireTypedTest = false, int pointsGoalMet = 20,
         int comboThreshold = 5, int comboBonusPoints = 5, int speedThresholdSeconds = 0, int speedBonusPoints = 0,
-        PracticeOrder orderStrategy = PracticeOrder.WeakestFirst)
+        PracticeOrder orderStrategy = PracticeOrder.WeakestFirst, List<ScoringTimeSlot>? timeSlots = null)
     {
         using var scope = f.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
@@ -193,6 +193,7 @@ internal static class TestApi
             SpeedThresholdSeconds = speedThresholdSeconds,
             SpeedBonusPoints = speedBonusPoints,
             OrderStrategy = orderStrategy,
+            TimeSlots = timeSlots,
         };
         plan.Positions.Add(pos);
         db.StudyPlans.Add(plan);

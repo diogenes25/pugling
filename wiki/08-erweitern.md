@@ -213,7 +213,8 @@ Vieles ist reine **Datenpflege über die API** — kein Code nötig. Ideal für 
 - **Neue Fächer/Kapitel/Übungen** im Katalog anlegen ([03](03-uebungstypen.md)).
 - **Neue Study-Pläne** für Kinder bauen ([04](04-lernplan-bauen.md), [09 · Kochbuch](09-llm-kochbuch.md)).
 - **Missionen & Auszeichnungen** je Kind definieren ([05 §5](05-punkte-und-bonus.md#5-missionen--auszeichnungen)).
-- **Zeitfenster-Multiplikatoren** anpassen (`TimeSlotRule`).
+- **Zeitfenster-Multiplikatoren je Pflicht** setzen (`timeSlots` an der Position) — die globalen liegen in
+  `appsettings.json` (`Scoring:TimeSlots`) und sind damit *keine* Datenpflege.
 - **Bonus je Position** feintunen (`PATCH /study-plans/{planId}/positions/{positionId}`).
 
 ---

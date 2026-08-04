@@ -49,7 +49,11 @@ test("Positions-Formular: jedes erklärungsbedürftige Feld hat den passenden Hi
     ["Combo-Bonuspunkte", /wenn sie zuschlägt/],
     ["Leitner-Kasten", /wandert bei richtiger Antwort ein Fach weiter/],
     ["Nur getippte Tests zählen", /Gegen Raten/],
+    ["Zeitfenster (Punkte-Faktor)", /gewinnt das engste/],
   ];
+
+  // Das Zeitfenster liegt in einem eingeklappten Block – zugeklappt ist sein „ⓘ" nicht sichtbar.
+  await page.locator("summary").filter({ hasText: "Zeitfenster (Punkte-Faktor)" }).first().click();
 
   for (const [feld, text] of erwartet) {
     // Das Positions-Formular ist die erste Maske mit diesen Feldern; `.first()`, weil eine bereits

@@ -25,26 +25,9 @@ public class ScoringOptions
     /// </summary>
     public bool TimeSlotsEnabled { get; set; } = true;
 
-    /// <summary>Time slots with a points multiplier; overlap is allowed (see <see cref="ScoringTimeSlot"/>).</summary>
+    /// <summary>
+    /// Global time slots with a points multiplier; overlap is allowed (see <see cref="ScoringTimeSlot"/>).
+    /// A study plan position may add its own slots to this list (<c>PlanPosition.TimeSlots</c>).
+    /// </summary>
     public List<ScoringTimeSlot> TimeSlots { get; set; } = [];
-}
-
-/// <summary>
-/// A time slot with a points multiplier: learning in the morning yields more than late in the evening.
-/// <para>
-/// Overlapping slots are <b>allowed</b> - the choice is fixed nonetheless: the slot starting latest (i.e. the
-/// narrowest) wins, on a tie the one ending earlier. Without that ordering the same correct answer would
-/// yield a different number of points depending on the order.
-/// </para>
-/// </summary>
-public class ScoringTimeSlot
-{
-    /// <summary>Descriptive name, purely for the readability of the configuration ("Vormittag").</summary>
-    public string Name { get; set; } = "";
-    /// <summary>Start (inclusive).</summary>
-    public TimeOnly Start { get; set; }
-    /// <summary>End (exclusive).</summary>
-    public TimeOnly End { get; set; }
-    /// <summary>Factor applied to the base points.</summary>
-    public double Multiplier { get; set; } = 1.0;
 }

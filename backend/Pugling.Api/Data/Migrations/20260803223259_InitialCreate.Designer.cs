@@ -11,7 +11,7 @@ using Pugling.Api.Data;
 namespace Pugling.Api.Data.Migrations
 {
     [DbContext(typeof(PuglingDbContext))]
-    [Migration("20260802165132_InitialCreate")]
+    [Migration("20260803223259_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -1512,6 +1512,9 @@ namespace Pugling.Api.Data.Migrations
 
                     b.Property<int>("StudyPlanId")
                         .HasColumnType("INTEGER");
+
+                    b.Property<string>("TimeSlots")
+                        .HasColumnType("TEXT");
 
                     b.Property<bool>("UseLeitner")
                         .HasColumnType("INTEGER");

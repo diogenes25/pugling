@@ -394,7 +394,8 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
             play.ApplyReview(pos, prog, wasCorrect, session.Day, now);
 
             var cfg = new ScoringService.ScoreConfig($"{plan.Title} · {pos.Exercise.Title}", pos.NewContentPoints,
-                pos.ComboThreshold, pos.ComboBonusPoints, pos.SpeedThresholdSeconds, pos.SpeedBonusPoints);
+                pos.ComboThreshold, pos.ComboBonusPoints, pos.SpeedThresholdSeconds, pos.SpeedBonusPoints,
+                pos.TimeSlots);
             var score = scoring.ScoreReview(cfg, preReviewCount, preBox, prog.Box, wasCorrect, combo,
                 DateTime.Now, elapsedSeconds);
             foreach (var c in score.Contributions)

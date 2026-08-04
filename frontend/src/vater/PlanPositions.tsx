@@ -9,7 +9,8 @@ import { TruncationHint } from "../components/ListControls";
 import { MasteryPill } from "../components/MasteryPill";
 import { FieldLabel, InfoHint } from "../components/InfoHint";
 import type {
-  CreatePositionDto, ExerciseSummary, GoalCadence, PositionReport, PositionResponse, Paged, PracticeOrder, SubjectResponse,
+  CreatePositionDto, ExerciseSummary, GoalCadence, PositionReport, PositionResponse, Paged, PracticeOrder,
+  ScoringTimeSlot, SubjectResponse, UpdatePositionDto,
 } from "../lib/types";
 import { ExerciseFilterBar, type ExerciseFilter } from "./ExerciseFilterBar";
 
@@ -75,7 +76,7 @@ export function PlanPositions({ planId }: { planId: number }) {
  * `goalThreshold`/`itemCount` sind Strings, weil "" hier eine eigene Bedeutung hat: "Standard des
  * Verfahrens" bzw. „alle Inhalte" – eine 0 wäre eine Aussage, ein leeres Feld ist keine.
  */
-interface PositionSettings {
+export interface PositionSettings {
   cadence: GoalCadence;
   goalThreshold: string;
   itemCount: string;
@@ -92,6 +93,58 @@ interface PositionSettings {
   comboBonusPoints: string;
   useLeitner: boolean;
   requireTypedTest: boolean;
+  /*
+   * Das Zeitfenster als drei Strings; alle drei leer heißt „kein eigenes Fenster" – dann gelten nur die
+   * globalen Fenster des Servers. Gespeichert wird eine einelementige Liste: die Ablage bleibt listenfähig,
+   * mehrere Fenster kosten später nur UI.
+   */
+  timeSlotStart: string;
+  timeSlotEnd: string;
+  timeSlotMultiplier: string;
+  /*
+   * Der Name des Fensters wird nicht abgefragt, aber mitgeführt: ein per API (KI-Creator) gesetztes
+   * „Hausaufgaben" wäre nach einem beliebigen Positions-Edit sonst durch unseren Vorgabenamen ersetzt.
+   */
+  timeSlotName: string;
+}
+
+/** Vorgabename, wenn das Fenster hier im Formular entsteht – der Server nutzt ihn nur zur Lesbarkeit. */
+const TIME_SLOT_NAME = "Zeitfenster der Pflicht";
+
+/** Obergrenze des Faktors – dieselbe Zahl bewacht der Server (`MaxMultiplier`). */
+const MAX_MULTIPLIER = 10;
+
+/** „13:00:00" → „13:00" – das Eingabefeld für Uhrzeiten arbeitet ohne Sekunden. */
+const hhmm = (t: string) => t.slice(0, 5);
+
+/** Trägt die Position ein eigenes Zeitfenster? (Alle drei Felder gefüllt.) */
+const hasTimeSlot = (s: PositionSettings) =>
+  s.timeSlotStart !== "" && s.timeSlotEnd !== "" && s.timeSlotMultiplier.trim() !== "";
+
+/** Das Fenster in Vertragsform – `null` heißt „keins" und leert es beim Speichern. */
+function timeSlotOf(s: PositionSettings): ScoringTimeSlot[] | null {
+  return hasTimeSlot(s)
+    ? [{
+      name: s.timeSlotName || TIME_SLOT_NAME,
+      start: s.timeSlotStart, end: s.timeSlotEnd, multiplier: Number(s.timeSlotMultiplier),
+    }]
+    : null;
+}
+
+/*
+ * Warum das hier und nicht erst am Server scheitert: Halb gefüllt ist kein Fenster, sondern ein Versehen –
+ * und „13 bis 13 Uhr" wäre ein Fenster, das nie zutrifft. Beides sähe nach „gespeichert" aus und würde
+ * nichts tun. Der Server lehnt dieselben Fälle ab (validation_error); das hier ist die freundliche Fassung.
+ */
+export function timeSlotProblem(s: PositionSettings): string | null {
+  const filled = [s.timeSlotStart, s.timeSlotEnd, s.timeSlotMultiplier.trim()].filter((v) => v !== "").length;
+  if (filled === 0) return null;
+  if (filled < 3) return "Zeitfenster: bitte von, bis und Faktor ausfüllen – oder alle drei leer lassen.";
+  if (s.timeSlotStart >= s.timeSlotEnd) return "Zeitfenster: „von“ muss vor „bis“ liegen.";
+  if (!(Number(s.timeSlotMultiplier) > 0)) return "Zeitfenster: der Faktor muss größer als 0 sein.";
+  // Dieselbe Grenze wie am Server – ohne sie käme hier die englische Server-Meldung an.
+  if (Number(s.timeSlotMultiplier) > MAX_MULTIPLIER) return `Zeitfenster: der Faktor darf höchstens ${MAX_MULTIPLIER} sein.`;
+  return null;
 }
 
 /** Startwerte einer neuen Position; die Übung bringt ihre Lern-Standards als Vorschlag mit. */
@@ -102,11 +155,13 @@ function defaultSettings(ex?: ExerciseSummary): PositionSettings {
     // Leer = Vorschlag der Übung übernehmen (siehe PositionSettings).
     newContentPoints: "", comboThreshold: "", comboBonusPoints: "",
     useLeitner: ex?.defaultUseLeitner ?? false, requireTypedTest: ex?.defaultRequireTypedTest ?? false,
+    // Kein Fenster: eine Tageszeit ist eine Aussage über den Familienalltag, kein Vorschlag der Übung.
+    timeSlotStart: "", timeSlotEnd: "", timeSlotMultiplier: "", timeSlotName: "",
   };
 }
 
 /** Der gespeicherte Stand einer Position als Formular-Zustand. */
-function settingsFrom(pos: PositionResponse): PositionSettings {
+export function settingsFrom(pos: PositionResponse): PositionSettings {
   return {
     cadence: pos.cadence,
     goalThreshold: pos.goalThreshold?.toString() ?? "",
@@ -120,14 +175,25 @@ function settingsFrom(pos: PositionResponse): PositionSettings {
     comboBonusPoints: pos.comboBonusPoints.toString(),
     useLeitner: pos.useLeitner,
     requireTypedTest: pos.requireTypedTest,
+    // Nur das erste Fenster: der Server speichert eine Liste, das Formular stellt (bisher) eines ein.
+    timeSlotStart: hhmm(pos.timeSlots?.[0]?.start ?? ""),
+    timeSlotEnd: hhmm(pos.timeSlots?.[0]?.end ?? ""),
+    timeSlotMultiplier: pos.timeSlots?.[0]?.multiplier?.toString() ?? "",
+    timeSlotName: pos.timeSlots?.[0]?.name ?? "",
   };
 }
 
 /** Leeres Feld = `null` = „Standard bzw. Vorschlag der Übung übernehmen". */
 const numOrNull = (v: string): number | null => (v.trim() === "" ? null : Number(v));
 
-/** Formular-Zustand in die Vertragsform (leere Felder werden zu `null` = Standard). */
-function settingsToDto(s: PositionSettings) {
+/*
+ * Formular-Zustand in die Vertragsform (leere Felder werden zu `null` = Standard).
+ *
+ * Die Rückgabe ist ANNOTIERT, und das ist der Punkt: TypeScript prüft überzählige Eigenschaften nicht über
+ * einen Spread. Ohne die Annotation fiele ein Tippfehler im Feldnamen erst zur Laufzeit als
+ * `400 unknown_field` auf – hier fällt er im Typecheck.
+ */
+export function settingsToDto(s: PositionSettings): Omit<CreatePositionDto, "exerciseId"> {
   return {
     cadence: s.cadence,
     goalThreshold: s.goalThreshold.trim() === "" ? null : Number(s.goalThreshold),
@@ -140,13 +206,30 @@ function settingsToDto(s: PositionSettings) {
     comboBonusPoints: numOrNull(s.comboBonusPoints),
     useLeitner: s.useLeitner,
     requireTypedTest: s.requireTypedTest,
+    timeSlots: timeSlotOf(s),
   };
+}
+
+/*
+ * Beim Ändern braucht das geleerte Fenster einen ausdrücklichen Schalter: `null` heißt im Vertrag „nicht
+ * angegeben" (der alte Wert bliebe stehen), und dann meldete das Formular „Gespeichert." während weiter
+ * verdoppelt wird. Nur der PATCH kennt den Schalter – `CreatePositionDto` hat ihn nicht, und ein unbekanntes
+ * Feld lehnt der Server mit `unknown_field` ab.
+ */
+export function settingsToUpdateDto(s: PositionSettings): UpdatePositionDto {
+  return { ...settingsToDto(s), clearTimeSlots: timeSlotOf(s) === null };
 }
 
 /** Die Felder selbst. Präsentational: den Zustand hält der Aufrufer (Anlegen bzw. Zeile im Edit-Modus). */
 function PositionFields({ value, onChange }: { value: PositionSettings; onChange: (next: PositionSettings) => void }) {
   const uid = useId();
   const up = <K extends keyof PositionSettings>(k: K, v: PositionSettings[K]) => onChange({ ...value, [k]: v });
+  /*
+   * Der Zustand des Aufklapp-Blocks liegt hier und nicht am Wert: `open={hasTimeSlot(value)}` würde den Block
+   * beim ersten Tippen wieder zuklappen, weil das erste gefüllte Feld noch kein vollständiges Fenster ist.
+   * Offen startet er nur, wenn schon eines gespeichert ist.
+   */
+  const [slotOpen, setSlotOpen] = useState(() => hasTimeSlot(value));
 
   return (
     <div className="row" style={{ gap: 12, alignItems: "flex-end", flexWrap: "wrap" }}>
@@ -214,6 +297,42 @@ function PositionFields({ value, onChange }: { value: PositionSettings; onChange
         </label>
         <InfoHint topic="requireTypedTest" />
       </span>
+      {/* Eingeklappt, damit die Felder nicht ein zwölftes Mal in die Zeile drängen – die meisten Pflichten
+          brauchen kein eigenes Fenster. */}
+      <details open={slotOpen} onToggle={(e) => setSlotOpen((e.currentTarget as HTMLDetailsElement).open)}
+        style={{ width: "100%" }}>
+        {/* Die Zusammenfassung nennt auch den halb gefüllten Zustand: „keins" wäre dort eine Lüge, und die
+            Fehlermeldung verlangte dann Felder, die zugeklappt niemand sieht. */}
+        <summary style={{ cursor: "pointer" }}>
+          Zeitfenster (Punkte-Faktor)
+          <span className="muted">
+            {" · "}
+            {hasTimeSlot(value) ? `${value.timeSlotStart}–${value.timeSlotEnd} ×${value.timeSlotMultiplier}`
+              : timeSlotProblem(value) ? "unvollständig" : "keins"}
+          </span>
+        </summary>
+        <div className="row" style={{ gap: 12, alignItems: "flex-end", flexWrap: "wrap", marginTop: 8 }}>
+          <div className="field" style={{ maxWidth: 150 }}>
+            <FieldLabel htmlFor={`${uid}-slot-from`} topic="positionTimeSlot">von</FieldLabel>
+            <input id={`${uid}-slot-from`} aria-label="Zeitfenster von" type="time"
+              value={value.timeSlotStart} onChange={(e) => up("timeSlotStart", e.target.value)} />
+          </div>
+          <div className="field" style={{ maxWidth: 150 }}>
+            <label htmlFor={`${uid}-slot-to`}>bis</label>
+            <input id={`${uid}-slot-to`} aria-label="Zeitfenster bis" type="time"
+              value={value.timeSlotEnd} onChange={(e) => up("timeSlotEnd", e.target.value)} />
+          </div>
+          <div className="field" style={{ maxWidth: 130 }}>
+            <label htmlFor={`${uid}-slot-factor`}>Faktor</label>
+            {/* `step="any"` statt einer Schrittweite: mit `step={0.1}` wies der Browser im Anlegen-Formular
+                (ein `<form>`) „1,25" ab, während dieselbe Zahl beim Bearbeiten durchging – ein Wert, der je
+                Maske gültig oder ungültig ist. Die Regel steht in `timeSlotProblem` und am Server. */}
+            <input id={`${uid}-slot-factor`} aria-label="Zeitfenster-Faktor" type="number" min={0} max={MAX_MULTIPLIER} step="any"
+              placeholder="z. B. 2" value={value.timeSlotMultiplier}
+              onChange={(e) => up("timeSlotMultiplier", e.target.value)} />
+          </div>
+        </div>
+      </details>
     </div>
   );
 }
@@ -234,6 +353,8 @@ function AddPosition({ planId, action, onAdded }: { planId: number; action: Acti
   async function add(e: React.FormEvent) {
     e.preventDefault();
     if (exerciseId === "") { action.fail("Bitte eine Übung aus der Liste wählen."); return; }
+    const slotProblem = timeSlotProblem(settings);
+    if (slotProblem) { action.fail(slotProblem); return; }
     const dto: CreatePositionDto = { exerciseId: Number(exerciseId), ...settingsToDto(settings) };
     if (!await action.run(() => api.addPosition(planId, dto), "Übung als Position hinzugefügt.")) return;
     setExerciseId("");
@@ -318,7 +439,9 @@ function PositionRow({ planId, pos, onChanged, action }: {
   }
 
   async function save() {
-    if (!await action.run(() => api.updatePosition(planId, pos.id, settingsToDto(settings)), "Position gespeichert.")) return;
+    const slotProblem = timeSlotProblem(settings);
+    if (slotProblem) { action.fail(slotProblem); return; }
+    if (!await action.run(() => api.updatePosition(planId, pos.id, settingsToUpdateDto(settings)), "Position gespeichert.")) return;
     setEditing(false);
     onChanged();
   }
@@ -346,6 +469,11 @@ function PositionRow({ planId, pos, onChanged, action }: {
           <td className="num">Ziel {pos.pointsGoalMet} · neu {pos.newContentPoints}
             {pos.penaltyCoins > 0 && <span className="pill amber"> · Malus −{pos.penaltyCoins}🪙</span>}
             {pos.comboThreshold > 0 && pos.comboBonusPoints > 0 && <span className="muted"> · Combo +{pos.comboBonusPoints}</span>}
+            {pos.timeSlots?.map((s) => (
+              <span key={`${s.start}-${s.end}`} className="muted">
+                {" · "}{hhmm(s.start)}–{hhmm(s.end)} ×{s.multiplier.toLocaleString("de-DE")}
+              </span>
+            ))}
           </td>
           <td>{pos.useLeitner ? <span className="pill lime">an · max {pos.maxBox}</span> : <span className="muted">aus</span>}</td>
           <td className="row" style={{ gap: 6, justifyContent: "flex-end" }}>

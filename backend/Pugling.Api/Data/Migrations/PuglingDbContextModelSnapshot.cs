@@ -1510,6 +1510,9 @@ namespace Pugling.Api.Data.Migrations
                     b.Property<int>("StudyPlanId")
                         .HasColumnType("INTEGER");
 
+                    b.Property<string>("TimeSlots")
+                        .HasColumnType("TEXT");
+
                     b.Property<bool>("UseLeitner")
                         .HasColumnType("INTEGER");
 

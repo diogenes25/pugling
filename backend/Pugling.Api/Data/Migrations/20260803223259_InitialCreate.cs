@@ -1238,6 +1238,7 @@ namespace Pugling.Api.Data.Migrations
                     ComboBonusPoints = table.Column<int>(type: "INTEGER", nullable: false),
                     SpeedThresholdSeconds = table.Column<int>(type: "INTEGER", nullable: false),
                     SpeedBonusPoints = table.Column<int>(type: "INTEGER", nullable: false),
+                    TimeSlots = table.Column<string>(type: "TEXT", nullable: true),
                     UseLeitner = table.Column<bool>(type: "INTEGER", nullable: false),
                     MaxBox = table.Column<int>(type: "INTEGER", nullable: false),
                     BoxIntervalDays = table.Column<string>(type: "TEXT", nullable: true),

@@ -64,11 +64,17 @@ public record UpdatePlanDto(string? Title, int? SubjectId, DateOnly? StartDate, 
 /// <param name="ComboBonusPoints">Points per combo reached.</param>
 /// <param name="SpeedThresholdSeconds">Up to how many seconds an answer counts as "fast"; <c>0</c> = off.</param>
 /// <param name="SpeedBonusPoints">Points per fast answer.</param>
+/// <param name="TimeSlots">
+/// Time slots with their own points multiplier for this obligation; <c>null</c> = only the server's global
+/// slots apply. They are considered <b>together with</b> the global ones, the narrowest window winning – a
+/// position slot neither replaces the global ones nor multiplies with them.
+/// </param>
 public record PositionResponse(int Id, int StudyPlanId, int ExerciseId, string ExerciseTitle,
     string ExerciseType, int Order, int? Stage, int? ItemCount, ItemScope Scope, GoalCadence Cadence,
     PracticeOrder OrderStrategy, int? GoalThreshold, bool RequireTypedTest, bool UseLeitner, int MaxBox,
     List<int>? BoxIntervalDays, List<StageStep>? StageSchedule, int PointsGoalMet, int PenaltyCoins,
-    int NewContentPoints, int ComboThreshold, int ComboBonusPoints, int SpeedThresholdSeconds, int SpeedBonusPoints);
+    int NewContentPoints, int ComboThreshold, int ComboBonusPoints, int SpeedThresholdSeconds, int SpeedBonusPoints,
+    List<ScoringTimeSlot>? TimeSlots);
 
 /// <summary>
 /// Creating a position. Empty override fields inherit the exercise's suggestion (hybrid principle):
@@ -97,19 +103,24 @@ public record PositionResponse(int Id, int StudyPlanId, int ExerciseId, string E
 /// <param name="ComboBonusPoints">Combo bonus; <c>null</c> = the exercise's bonus suggestion, otherwise 5.</param>
 /// <param name="SpeedThresholdSeconds">Time limit for "fast"; <c>null</c> = the exercise's bonus suggestion, otherwise 0 (off).</param>
 /// <param name="SpeedBonusPoints">Bonus per fast answer; <c>null</c> = the exercise's bonus suggestion, otherwise 0.</param>
+/// <param name="TimeSlots">
+/// Own points time slots of this obligation (see <see cref="PositionResponse"/>); <c>null</c> = none, only the
+/// global slots apply. Each slot needs <c>start &lt; end</c> and a multiplier above 0.
+/// </param>
 public record CreatePositionDto(int ExerciseId, int? Order, int? Stage, int? ItemCount, ItemScope? Scope,
     GoalCadence? Cadence, PracticeOrder? OrderStrategy, int? GoalThreshold, bool? RequireTypedTest,
     bool? UseLeitner, int? MaxBox, List<int>? BoxIntervalDays, List<StageStep>? StageSchedule,
     int? PointsGoalMet, int? PenaltyCoins, int? NewContentPoints, int? ComboThreshold, int? ComboBonusPoints,
-    int? SpeedThresholdSeconds, int? SpeedBonusPoints);
+    int? SpeedThresholdSeconds, int? SpeedBonusPoints, List<ScoringTimeSlot>? TimeSlots = null);
 
 /// <summary>
 /// Partial change to the overrides/goals/points. The referenced exercise is immutable
 /// (progress indices).
 /// <para>
 /// <b>PATCH semantics:</b> <c>null</c> means "not specified" for <i>every</i> field – the previous
-/// value stays. It does <b>not</b> mean "reset to default"; that would need its own
-/// <c>Clear</c> switch, which this DTO deliberately does not have.
+/// value stays. It does <b>not</b> mean "reset to default"; that needs an explicit <c>Clear</c> switch, and
+/// exactly one field has one: <see cref="ClearTimeSlots"/>. All the other fields cannot be emptied at all –
+/// they are either mandatory or already carry "inherit" as a value of their own.
 /// </para>
 /// </summary>
 /// <param name="Order">New position within the plan.</param>
@@ -133,8 +144,19 @@ public record CreatePositionDto(int ExerciseId, int? Order, int? Stage, int? Ite
 /// <param name="ComboBonusPoints">Combo bonus.</param>
 /// <param name="SpeedThresholdSeconds">Time limit for "fast"; <c>0</c> = off.</param>
 /// <param name="SpeedBonusPoints">Bonus per fast answer.</param>
+/// <param name="TimeSlots">
+/// Own points time slots of this obligation (see <see cref="PositionResponse"/>). Sending a list
+/// <b>replaces</b> the stored one, an <b>empty</b> list removes it (like <c>clearTimeSlots</c>);
+/// <c>null</c> leaves it untouched.
+/// </param>
+/// <param name="ClearTimeSlots">
+/// Removes the position's own time slots, so only the global ones apply again. Needed because <c>null</c>
+/// means "not specified": without the switch a form with an emptied window would report "saved" while the old
+/// window kept doubling the points. Wins over <c>timeSlots</c> if both arrive together.
+/// </param>
 public record UpdatePositionDto(int? Order, int? Stage, int? ItemCount, ItemScope? Scope,
     GoalCadence? Cadence, PracticeOrder? OrderStrategy, int? GoalThreshold, bool? RequireTypedTest,
     bool? UseLeitner, int? MaxBox, List<int>? BoxIntervalDays, List<StageStep>? StageSchedule,
     int? PointsGoalMet, int? PenaltyCoins, int? NewContentPoints, int? ComboThreshold, int? ComboBonusPoints,
-    int? SpeedThresholdSeconds, int? SpeedBonusPoints);
+    int? SpeedThresholdSeconds, int? SpeedBonusPoints, List<ScoringTimeSlot>? TimeSlots = null,
+    bool ClearTimeSlots = false);

@@ -39,9 +39,19 @@ public class ScoringService(IOptions<ScoringOptions> options)
     /// <summary>
     /// Procedure-neutral point settings for a review – comes from the <see cref="PlanPosition"/>
     /// (per exercise). <paramref name="Label"/> goes into the ledger entry text.
+    /// <para>
+    /// <paramref name="TimeSlots"/> are the position's <b>own</b> time slots ("homework counts double between
+    /// 13:00 and 15:00"); they are considered together with the global ones from
+    /// <see cref="ScoringOptions"/>, never instead of them.
+    /// </para>
     /// </summary>
+    /// <remarks>
+    /// <paramref name="TimeSlots"/> deliberately has <b>no default value</b> - same reason the project forbids
+    /// one on a helper's cancellation token: an omitted argument would silently drop the position's windows,
+    /// and the compiler would not say a word.
+    /// </remarks>
     public record ScoreConfig(string Label, int NewContentPoints, int ComboThreshold, int ComboBonusPoints,
-        int SpeedThresholdSeconds, int SpeedBonusPoints);
+        int SpeedThresholdSeconds, int SpeedBonusPoints, IReadOnlyList<ScoringTimeSlot>? TimeSlots);
 
     /// <summary>
     /// Scores a review and returns all due point contributions. Call BEFORE the box promotion
@@ -103,24 +113,35 @@ public class ScoringService(IOptions<ScoringOptions> options)
             ? cfg.NewContentPoints                // new content (configurable)
             : Math.Max(2, 8 - box);               // repetition: the higher the box, the less
 
-        return (int)Math.Round(basePoints * MultiplierAt(TimeOnly.FromDateTime(nowLocal)));
+        return (int)Math.Round(basePoints * MultiplierAt(TimeOnly.FromDateTime(nowLocal), cfg.TimeSlots));
     }
 
     /// <summary>
     /// The multiplier for the time of day; 1.0 outside all slots or when the slots are switched off.
     /// <para>
+    /// The position's own slots (<paramref name="positionSlots"/>) and the global ones form <b>one</b> list -
+    /// they do not replace each other. A position slot therefore cannot silently drop the evening malus, and
+    /// no factors get multiplied: predictability is the point of a server-authoritative score.
+    /// </para>
+    /// <para>
     /// Deterministically ordered: overlapping slots are allowed (the configuration does not forbid them), and
     /// without a fixed ordering the order in the file would decide which multiplier applies - the same correct
     /// answer would then yield a different number of points. The slot starting latest (the narrowest) wins, on
-    /// a tie the one ending earlier.
+    /// a tie the one ending earlier - and on the same start <i>and</i> end the <b>global</b> one, because it
+    /// enters the list first and the sort is stable. Which one wins there matters less than that it is fixed.
+    /// </para>
+    /// <para>
+    /// The kill switch <c>Scoring:TimeSlotsEnabled=false</c> returns early and thus switches off the
+    /// position's slots as well. That is not an oversight: otherwise the documentation checked in by
+    /// <c>DocsCaptureTests</c> would again hang on the time of the run.
     /// </para>
     /// </summary>
-    private double MultiplierAt(TimeOnly time)
+    private double MultiplierAt(TimeOnly time, IReadOnlyList<ScoringTimeSlot>? positionSlots)
     {
-        var cfg = options.Value;
-        if (!cfg.TimeSlotsEnabled) return 1.0;
+        var global = options.Value;
+        if (!global.TimeSlotsEnabled) return 1.0;
 
-        return cfg.TimeSlots
+        return global.TimeSlots.Concat(positionSlots ?? [])
             .Where(s => s.Start <= time && time < s.End)
             .OrderByDescending(s => s.Start).ThenBy(s => s.End)
             .Select(s => s.Multiplier)

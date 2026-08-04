@@ -80,6 +80,14 @@ export const FIELD_HELP = {
       + "erst nach längerer Pause wieder dran; ein Fehler wirft ihn zurück. Aus heißt: jede Sitzung "
       + "zeigt wieder alles. An ist für Vokabeln fast immer die bessere Wahl.",
   },
+  positionTimeSlot: {
+    title: "Zeitfenster (Punkte-Faktor)",
+    text: "Ein Zeitraum am Tag, in dem diese Pflicht mehr (oder weniger) einbringt – etwa „13–15 Uhr, "
+      + "Faktor 2“ für die Hausaufgaben. Der Faktor gilt für die Punkte jeder richtigen Antwort, nicht für "
+      + "die Ziel-Punkte. Leer lassen heißt: es gelten nur die Zeitfenster des Servers (vormittags mehr, "
+      + "spätabends weniger). Beide werden zusammen betrachtet – liegt ein Zeitpunkt in mehreren Fenstern, "
+      + "gewinnt das engste, und Faktoren werden nie multipliziert.",
+  },
   requireTypedTest: {
     title: "Nur getippte Tests zählen",
     text: "Gegen Raten: Ein Test erfüllt die Pflicht nur, wenn das Kind die Lösung getippt hat – Anzeigen "

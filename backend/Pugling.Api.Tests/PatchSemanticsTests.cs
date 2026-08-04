@@ -274,10 +274,16 @@ public class PatchSemanticsTests(PuglingWebAppFactory factory) : IClassFixture<P
             var childId = await NeuesKindAsync(c);
             var planId = await TestApi.CreateEmptyPlanAsync(c, childId);
             var exerciseId = await TestApi.CreateVocabExerciseAsync(c);
+            // With a time slot from the start - `clearTimeSlots` proves nothing on a position that has none.
             var id = await TestApi.IdAsync(await c.PostAsJsonAsync(
-                $"/api/v1/supervisor/study-plans/{planId}/positions", new { exerciseId, stage = 1 }));
+                $"/api/v1/supervisor/study-plans/{planId}/positions", new
+                {
+                    exerciseId,
+                    stage = 1,
+                    timeSlots = new[] { new { name = "Hausaufgaben", start = "13:00", end = "15:00", multiplier = 2.0 } },
+                }));
             return new Ziel(c, $"/api/v1/supervisor/study-plans/{planId}/positions/{id}");
-        }, []),
+        }, [new("clearTimeSlots", "timeSlots")]),
 
         new(typeof(UpdateShopArticleDto), "title", "Artikel neu", async f =>
         {

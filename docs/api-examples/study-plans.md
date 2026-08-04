@@ -79,7 +79,8 @@ Response — `HTTP 201`:
   "comboThreshold": 5,
   "comboBonusPoints": 5,
   "speedThresholdSeconds": 0,
-  "speedBonusPoints": 0
+  "speedBonusPoints": 0,
+  "timeSlots": null
 }
 ```
 

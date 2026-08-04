@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/punkte, bereich/gamification, rolle/supervisor]
+tags: [typ/story, status/in-arbeit, bereich/punkte, bereich/gamification, rolle/supervisor]
 aliases: [Zeitfenster pro Pflicht, Zeitfenster pro Kind, Hausaufgaben-Faktor]
-status: geschaetzt
+status: in-arbeit
 prio: P2
 art: Wunsch
 groesse: M
@@ -130,3 +130,28 @@ Signatur, drei DTOs und ein Formularblock.
 - **2026-07-30** — gegrillt: fünf offene Punkte aufgelöst, drei im Dialog entschieden, zwei von den Fakten
   erzwungen. Der Zuschnitt wanderte dabei von „pro Kind" zu „je Pflicht".
 - **2026-07-30** — geschätzt: **M**, `migration: ja`, `vertragsbruch: nein`. Nicht umgesetzt.
+- **2026-08-03** — **gebaut**, Backend zuerst, nach dem Angriffsplan. Alle sechs Akzeptanzkriterien
+  umgesetzt; die Schätzung trug (M, keine Überraschung).
+  - **Vertrag:** `ScoringTimeSlot` ist von `Services/Shared/ScoringOptions.cs` nach
+    `Pugling.Contracts/Common/PlanPositionBaseTypes.cs` gewandert — **ein** Typ für Konfiguration,
+    JSON-Spalte und DTO (Muster `StageStep`). Additiv in `PositionResponse`/`CreatePositionDto`/
+    `UpdatePositionDto`, dazu der Schalter `ClearTimeSlots` (K1/K4).
+  - **Punkte:** `MultiplierAt(TimeOnly, IReadOnlyList<ScoringTimeSlot>?)` bildet die Vereinigung, Ordnung
+    unverändert (K2); der Kill-Switch kehrt weiter **vor** dem Zusammenwerfen zurück (K3).
+  - **Schema:** JSON-Spalte an `PlanPosition` mit `ValueComparer` und Eintrag in `UnlimitedByDesign` (K5),
+    Migrationskette **neu gefaltet** und weiter bei Länge 1 — der Snapshot-Diff ist genau die eine
+    Spalte, keine neue Tabelle (K6).
+  - **Formular:** eingeklappter `<details>`-Block „Zeitfenster (Punkte-Faktor)" mit von/bis/Faktor im
+    Positions-Formular (Anlegen **und** Bearbeiten, eine Komponente) plus `fieldHelp`-Eintrag
+    `positionTimeSlot` (K4).
+  - **Nicht im Plan, aber nötig:** eine Validierung gegen die *stille Wirkungslosigkeit* (Fenster mit
+    `start >= end`, Faktor ≤ 0 oder > 10) — dieselbe Klasse wie die Prozent-Schwelle, im Formular
+    freundlich und im Controller als `validation_error`. Überlappung bleibt bewusst ungeprüft
+    (Entscheidung 5).
+  - **Verifikation:** `dotnet test Pugling.sln -c Release` → **686 grün, 0 rot** (davon neu:
+    `PositionTimeSlotTests` samt `PositionTimeSlotScoringTests` mit eigenem Host, weil der Standard-Host die
+    Fenster abschaltet, und vier Fälle in `ScoringTimeSlotTests`); `npm test` → **105 grün** (neu:
+    `PlanPositions.test.ts`, prüft die *Bindung* Formular→Vertrag, vor allem `clearTimeSlots`);
+    `npm run build` grün; `dotnet format Pugling.sln` ohne Befund.
+  - **Offen für `abgenommen`:** die beiden Reviewer (`wo: beides` ⇒ `pugling-reviewer` **und**
+    `frontend-reviewer`) und der Commit.

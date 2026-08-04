@@ -23935,6 +23935,16 @@
             ],
             "description": "Bonus per fast answer; \u0060null\u0060 = the exercise\u0027s bonus suggestion, otherwise 0.",
             "format": "int32"
+          },
+          "timeSlots": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/ScoringTimeSlot"
+            },
+            "description": "Own points time slots of this obligation (see PositionResponse); \u0060null\u0060 = none, only the\nglobal slots apply. Each slot needs \u0060start \u0026lt; end\u0060 and a multiplier above 0."
           }
         },
         "description": "Creating a position. Empty override fields inherit the exercise\u0027s suggestion (hybrid principle):\nstage/item count then stay \u0060null\u0060 and are resolved from the exercise defaults only when played;\nthe points/bonus fields are prefilled from the exercise\u0027s bonus suggestion."
@@ -31780,6 +31790,16 @@
             ],
             "description": "Points per fast answer.",
             "format": "int32"
+          },
+          "timeSlots": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/ScoringTimeSlot"
+            },
+            "description": "Time slots with their own points multiplier for this obligation; \u0060null\u0060 = only the server\u0027s global\nslots apply. They are considered \u003Cb\u003Etogether with\u003C/b\u003E the global ones, the narrowest window winning \u2013 a\nposition slot neither replaces the global ones nor multiplies with them."
           }
         },
         "description": "A position in the study plan: the referenced exercise together with its own goal, points, stage, and Leitner settings."
@@ -33152,6 +33172,41 @@
         ],
         "type": "string",
         "description": "School types for which an exercise is suitable. A \u0060[Flags]\u0060 enum so that an exercise\ncan be assigned to multiple school types (e.g. Realschule | Gymnasium).\nSchoolTypes.None means \u0022for all school types\u0022 (no filter exclusion).\n\nAllowed values: None, Grundschule, Hauptschule, Realschule, Gymnasium, Gesamtschule, Berufsschule."
+      },
+      "ScoringTimeSlot": {
+        "required": [
+          "end",
+          "multiplier",
+          "name",
+          "start"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Descriptive name, purely for the readability of the configuration (\u0022Vormittag\u0022)."
+          },
+          "start": {
+            "type": "string",
+            "description": "Start (inclusive).",
+            "format": "time"
+          },
+          "end": {
+            "type": "string",
+            "description": "End (exclusive).",
+            "format": "time"
+          },
+          "multiplier": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d\u002B)?(?:[eE][\u002B-]?\\d\u002B)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "description": "Factor applied to the base points.",
+            "format": "double"
+          }
+        },
+        "description": "            A time slot with a points multiplier: learning in the morning yields more than late in the evening.\n            The same type serves two carriers, deliberately so: the global slots of the configuration\n(section Scoring) and the slots of a single study plan position (\u0022homework counts double between\n13:00 and 15:00\u0022). Both flow into the one ordered list the score is read from, so a second type\nwould only be a second place to get the ordering wrong.Overlapping slots are allowed - the choice is fixed nonetheless: the slot starting latest (i.e. the\nnarrowest) wins, on a tie the one ending earlier. Without that ordering the same correct answer would\nyield a different number of points depending on the order.A mutable class with settable properties, because that is the shape the configuration binder has always\nfilled from appsettings.json - the type moved here unchanged rather than being reshaped on the way."
       },
       "SelectedMediaResponse": {
         "required": [
@@ -35860,9 +35915,24 @@
             ],
             "description": "Bonus per fast answer.",
             "format": "int32"
+          },
+          "timeSlots": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/ScoringTimeSlot"
+            },
+            "description": "Own points time slots of this obligation (see PositionResponse). Sending a list\n\u003Cb\u003Ereplaces\u003C/b\u003E the stored one, an \u003Cb\u003Eempty\u003C/b\u003E list removes it (like \u0060clearTimeSlots\u0060);\n\u0060null\u0060 leaves it untouched."
+          },
+          "clearTimeSlots": {
+            "type": "boolean",
+            "description": "Removes the position\u0027s own time slots, so only the global ones apply again. Needed because \u0060null\u0060\nmeans \u0022not specified\u0022: without the switch a form with an emptied window would report \u0022saved\u0022 while the old\nwindow kept doubling the points. Wins over \u0060timeSlots\u0060 if both arrive together.",
+            "default": false
           }
         },
-        "description": "Partial change to the overrides/goals/points. The referenced exercise is immutable\n(progress indices).\nPATCH semantics:null means \u0022not specified\u0022 for every field \u2013 the previous\nvalue stays. It does not mean \u0022reset to default\u0022; that would need its own\nClear switch, which this DTO deliberately does not have."
+        "description": "Partial change to the overrides/goals/points. The referenced exercise is immutable\n(progress indices).\nPATCH semantics:null means \u0022not specified\u0022 for every field \u2013 the previous\nvalue stays. It does not mean \u0022reset to default\u0022; that needs an explicit Clear switch, and\nexactly one field has one: bool UpdatePositionDto.ClearTimeSlots. All the other fields cannot be emptied at all \u2013\nthey are either mandatory or already carry \u0022inherit\u0022 as a value of their own."
       },
       "UpdateRemarkDto": {
         "type": "object",

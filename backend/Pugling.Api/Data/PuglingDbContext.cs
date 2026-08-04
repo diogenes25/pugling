@@ -540,6 +540,10 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
                 v => JsonSerializer.Serialize(v, JsonOptions),
                 s => JsonSerializer.Deserialize<List<StageStep>>(s, JsonOptions))
                 .Metadata.SetValueComparer(JsonValueComparer.For<List<StageStep>?>());
+            e.Property(p => p.TimeSlots).HasConversion(
+                v => JsonSerializer.Serialize(v, JsonOptions),
+                s => JsonSerializer.Deserialize<List<ScoringTimeSlot>>(s, JsonOptions))
+                .Metadata.SetValueComparer(JsonValueComparer.For<List<ScoringTimeSlot>?>());
         });
 
         // Progress per content atom of a position: disappears with the position (cascade);
@@ -983,6 +987,7 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
         ["CreatorProfile.DefaultTypes"] = "Preferred exercise types as a JSON list.",
         ["PlanPosition.BoxIntervalDays"] = "Leitner intervals as a JSON list.",
         ["PlanPosition.StageSchedule"] = "Stage schedule as a JSON list.",
+        ["PlanPosition.TimeSlots"] = "Points time slots of this obligation as a JSON list.",
         ["PracticeSession.Order"] = "Frozen play-out order as a JSON list - as long as the pool.",
         ["TestAttempt.Order"] = "Frozen test order as a JSON list - as long as the pool.",
     };

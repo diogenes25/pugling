@@ -93,6 +93,24 @@ public class PlanPosition
     public int SpeedThresholdSeconds { get; set; }
     /// <summary>Bonus points for a fast answer. 0 = off.</summary>
     public int SpeedBonusPoints { get; set; }
+    /// <summary>
+    /// Time slots with their own points multiplier for <b>this</b> obligation ("homework counts double between
+    /// 13:00 and 15:00"); <c>null</c> = only the global slots from the configuration apply.
+    /// <para>
+    /// The carrier is the position and not the child, and that is the statement: a window is an assertion about
+    /// <i>this</i> task, not about the child around the clock - evening vocabulary practice stays untouched.
+    /// </para>
+    /// <para>
+    /// The slots are considered <b>together with</b> the global ones and follow the existing ordering (the
+    /// narrowest wins); they neither replace them nor multiply with them. <c>Scoring:TimeSlotsEnabled=false</c>
+    /// switches these off as well.
+    /// </para>
+    /// <para>
+    /// A list even though the form currently only offers one window: the storage stays list-capable, so a later
+    /// extension to several windows costs UI only and <b>no</b> migration.
+    /// </para>
+    /// </summary>
+    public List<ScoringTimeSlot>? TimeSlots { get; set; }
 
     // --- Leitner review (only for drillable methods such as vocabulary/cloze/matching) ---
     /// <summary>Enables the Leitner box scheduling of this position.</summary>

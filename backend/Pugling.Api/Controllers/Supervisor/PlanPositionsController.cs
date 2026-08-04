@@ -40,7 +40,7 @@ public class PlanPositionsController(PuglingDbContext db, ExercisePermissionServ
         new(p.Id, p.StudyPlanId, p.ExerciseId, p.Exercise?.Title ?? "", p.Exercise?.Type.ToString() ?? "",
             p.Order, p.Stage, p.ItemCount, p.Scope, p.Cadence, p.OrderStrategy, p.GoalThreshold, p.RequireTypedTest,
             p.UseLeitner, p.MaxBox, p.BoxIntervalDays, p.StageSchedule, p.PointsGoalMet, p.PenaltyCoins, p.NewContentPoints,
-            p.ComboThreshold, p.ComboBonusPoints, p.SpeedThresholdSeconds, p.SpeedBonusPoints);
+            p.ComboThreshold, p.ComboBonusPoints, p.SpeedThresholdSeconds, p.SpeedBonusPoints, p.TimeSlots);
 
     /// <summary>All positions of the study plan in their order.</summary>
     [HttpGet]
@@ -70,6 +70,38 @@ public class PlanPositionsController(PuglingDbContext db, ExercisePermissionServ
             ? null
             : "goalThreshold is a pass percentage and must be between 1 and 100 (omit it for the default of 80).";
 
+    /// <summary>Upper bound of a time-slot factor - beyond this it is a typo, not a setting.</summary>
+    private const double MaxMultiplier = 10.0;
+
+    /// <summary>
+    /// Upper bound on the number of windows per position: a day has 24 hours, and the column is deliberately
+    /// unbounded (JSON) - without a limit a client could store an arbitrarily long list there.
+    /// </summary>
+    private const int MaxTimeSlots = 24;
+
+    /*
+     * Both checks catch the same failure mode as the percentage threshold above - the setting that looks valid
+     * and does NOTHING: a slot with start >= end never applies, and a factor of 0 takes the points away from
+     * every correct answer inside it.
+     *
+     * OVERLAP is deliberately not checked: it is explicitly allowed and the choice stays deterministic anyway
+     * (the narrowest slot wins). Forbidding it would add a validation case to a place that has none on purpose.
+     */
+    private static string? TimeSlotProblem(List<ScoringTimeSlot>? slots)
+    {
+        if (slots is null) return null;
+        if (slots.Count > MaxTimeSlots)
+            return $"A position takes at most {MaxTimeSlots} time slots (got {slots.Count}).";
+        foreach (var slot in slots)
+        {
+            if (slot.Start >= slot.End)
+                return $"A time slot needs start < end (got {slot.Start:HH\\:mm}–{slot.End:HH\\:mm}); a slot ending before it starts never applies.";
+            if (slot.Multiplier <= 0 || slot.Multiplier > MaxMultiplier)
+                return $"A time slot multiplier must be above 0 and at most {MaxMultiplier:0.#} (got {slot.Multiplier:0.##}).";
+        }
+        return null;
+    }
+
     /// <summary>A single position.</summary>
     [HttpGet("{positionId:int}")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -85,7 +117,7 @@ public class PlanPositionsController(PuglingDbContext db, ExercisePermissionServ
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<PositionResponse>> Create(int planId, CreatePositionDto dto, CancellationToken ct)
     {
-        if (ThresholdProblem(dto.GoalThreshold) is { } problem)
+        if ((ThresholdProblem(dto.GoalThreshold) ?? TimeSlotProblem(dto.TimeSlots)) is { } problem)
             return this.ProblemWithCode(ApiErrors.ValidationError, problem);
 
         var exercise = await db.Exercises.FirstOrDefaultAsync(e => e.Id == dto.ExerciseId, ct);
@@ -131,6 +163,9 @@ public class PlanPositionsController(PuglingDbContext db, ExercisePermissionServ
             ComboBonusPoints = dto.ComboBonusPoints ?? sb?.ComboBonusPoints ?? 5,
             SpeedThresholdSeconds = dto.SpeedThresholdSeconds ?? sb?.SpeedThresholdSeconds ?? 0,
             SpeedBonusPoints = dto.SpeedBonusPoints ?? sb?.SpeedBonusPoints ?? 0,
+            // No exercise suggestion behind it: a time of day is a statement about the family's day, not about
+            // the teaching material. An empty list is stored as null, so "no window" has one spelling only.
+            TimeSlots = dto.TimeSlots is { Count: > 0 } ? dto.TimeSlots : null,
         };
         db.PlanPositions.Add(pos);
         await db.SaveChangesAsync(ct);
@@ -145,7 +180,7 @@ public class PlanPositionsController(PuglingDbContext db, ExercisePermissionServ
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<PositionResponse>> Update(int planId, int positionId, UpdatePositionDto dto, CancellationToken ct = default)
     {
-        if (ThresholdProblem(dto.GoalThreshold) is { } problem)
+        if ((ThresholdProblem(dto.GoalThreshold) ?? TimeSlotProblem(dto.TimeSlots)) is { } problem)
             return this.ProblemWithCode(ApiErrors.ValidationError, problem);
 
         var pos = await FindAsync(planId, positionId, ct);
@@ -170,6 +205,11 @@ public class PlanPositionsController(PuglingDbContext db, ExercisePermissionServ
         if (dto.ComboBonusPoints is not null) pos.ComboBonusPoints = dto.ComboBonusPoints.Value;
         if (dto.SpeedThresholdSeconds is not null) pos.SpeedThresholdSeconds = dto.SpeedThresholdSeconds.Value;
         if (dto.SpeedBonusPoints is not null) pos.SpeedBonusPoints = dto.SpeedBonusPoints.Value;
+        // Value first, switch second: if a form sends both, "clear" has to win (see UpdatePositionDto). An
+        // explicitly sent empty list means "no windows" - reading it as "not specified" would make it a silent
+        // no-op, which is the very failure the switch exists against.
+        if (dto.TimeSlots is not null) pos.TimeSlots = dto.TimeSlots.Count > 0 ? dto.TimeSlots : null;
+        if (dto.ClearTimeSlots) pos.TimeSlots = null;
 
         await db.SaveChangesAsync(ct);
         return Map(pos);
