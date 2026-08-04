@@ -95,8 +95,7 @@ export interface PositionSettings {
   requireTypedTest: boolean;
   /*
    * Das Zeitfenster als drei Strings; alle drei leer heißt „kein eigenes Fenster" – dann gelten nur die
-   * globalen Fenster des Servers. Gespeichert wird eine einelementige Liste: die Ablage bleibt listenfähig,
-   * mehrere Fenster kosten später nur UI.
+   * globalen Fenster des Servers. Das Formular stellt genau EIN Fenster ein, die Ablage ist eine Liste.
    */
   timeSlotStart: string;
   timeSlotEnd: string;
@@ -106,6 +105,16 @@ export interface PositionSettings {
    * „Hausaufgaben" wäre nach einem beliebigen Positions-Edit sonst durch unseren Vorgabenamen ersetzt.
    */
   timeSlotName: string;
+  /*
+   * Die gespeicherte Liste im Wortlaut – aus zwei Gründen, die beide lautlos zuschlugen, weil das Formular
+   * `timeSlots` bei JEDEM Speichern mitschickt (anders als `boxIntervalDays` & Co., die es weglässt):
+   * 1. Der Server nimmt bis zu 24 Fenster, und API/KI-Creator setzen mehrere. Ohne die Liste ersetzte auch
+   *    eine reine Punkte-Änderung sie durch das eine bearbeitete Fenster – Fenster 2..n waren weg.
+   * 2. `<input type="time">` kennt keine Sekunden: ein gespeichertes „23:59:59.9999999" käme als „23:59"
+   *    zurück und schrumpfte das Fenster beim Speichern um bis zu eine Minute.
+   * `null` = die Position hat noch keine (Anlegen).
+   */
+  timeSlotStored: ScoringTimeSlot[] | null;
 }
 
 /** Vorgabename, wenn das Fenster hier im Formular entsteht – der Server nutzt ihn nur zur Lesbarkeit. */
@@ -121,14 +130,30 @@ const hhmm = (t: string) => t.slice(0, 5);
 const hasTimeSlot = (s: PositionSettings) =>
   s.timeSlotStart !== "" && s.timeSlotEnd !== "" && s.timeSlotMultiplier.trim() !== "";
 
-/** Das Fenster in Vertragsform – `null` heißt „keins" und leert es beim Speichern. */
+/** Die gespeicherten Fenster jenseits des ersten: hier nicht bearbeitbar, aber unangetastet mitgeschrieben. */
+const restSlots = (s: PositionSettings): ScoringTimeSlot[] => s.timeSlotStored?.slice(1) ?? [];
+
+/*
+ * „13:00" bleibt „13:00:00", solange die Anzeige den gespeicherten Wert nur gekürzt hat – nur ein wirklich
+ * geänderter Wert überschreibt ihn. Sonst schnitte jedes Speichern die Sekunden ab (siehe `timeSlotStored`).
+ */
+const keptTime = (stored: string | undefined, shown: string) =>
+  stored !== undefined && hhmm(stored) === shown ? stored : shown;
+
+/*
+ * Das Fenster in Vertragsform: das bearbeitete voran, dahinter die unberührten. `null` heißt „keins" und
+ * leert die Liste beim Speichern – aber nur, wenn auch kein unberührtes mehr übrig ist.
+ */
 function timeSlotOf(s: PositionSettings): ScoringTimeSlot[] | null {
-  return hasTimeSlot(s)
-    ? [{
-      name: s.timeSlotName || TIME_SLOT_NAME,
-      start: s.timeSlotStart, end: s.timeSlotEnd, multiplier: Number(s.timeSlotMultiplier),
-    }]
-    : null;
+  const rest = restSlots(s);
+  if (!hasTimeSlot(s)) return rest.length > 0 ? rest : null;
+  const stored = s.timeSlotStored?.[0];
+  return [{
+    name: s.timeSlotName || TIME_SLOT_NAME,
+    start: keptTime(stored?.start, s.timeSlotStart),
+    end: keptTime(stored?.end, s.timeSlotEnd),
+    multiplier: Number(s.timeSlotMultiplier),
+  }, ...rest];
 }
 
 /*
@@ -156,7 +181,7 @@ function defaultSettings(ex?: ExerciseSummary): PositionSettings {
     newContentPoints: "", comboThreshold: "", comboBonusPoints: "",
     useLeitner: ex?.defaultUseLeitner ?? false, requireTypedTest: ex?.defaultRequireTypedTest ?? false,
     // Kein Fenster: eine Tageszeit ist eine Aussage über den Familienalltag, kein Vorschlag der Übung.
-    timeSlotStart: "", timeSlotEnd: "", timeSlotMultiplier: "", timeSlotName: "",
+    timeSlotStart: "", timeSlotEnd: "", timeSlotMultiplier: "", timeSlotName: "", timeSlotStored: null,
   };
 }
 
@@ -175,11 +200,13 @@ export function settingsFrom(pos: PositionResponse): PositionSettings {
     comboBonusPoints: pos.comboBonusPoints.toString(),
     useLeitner: pos.useLeitner,
     requireTypedTest: pos.requireTypedTest,
-    // Nur das erste Fenster: der Server speichert eine Liste, das Formular stellt (bisher) eines ein.
+    // Bearbeitet wird nur das erste Fenster; die ganze Liste reist mit, damit das Speichern die übrigen
+    // nicht verwirft und die Sekunden nicht abschneidet (siehe `timeSlotStored`).
     timeSlotStart: hhmm(pos.timeSlots?.[0]?.start ?? ""),
     timeSlotEnd: hhmm(pos.timeSlots?.[0]?.end ?? ""),
     timeSlotMultiplier: pos.timeSlots?.[0]?.multiplier?.toString() ?? "",
     timeSlotName: pos.timeSlots?.[0]?.name ?? "",
+    timeSlotStored: pos.timeSlots ?? null,
   };
 }
 
@@ -309,6 +336,9 @@ function PositionFields({ value, onChange }: { value: PositionSettings; onChange
             {" · "}
             {hasTimeSlot(value) ? `${value.timeSlotStart}–${value.timeSlotEnd} ×${value.timeSlotMultiplier}`
               : timeSlotProblem(value) ? "unvollständig" : "keins"}
+            {/* Die weiteren Fenster gehören in die Zusammenfassung: „13:00–15:00 ×2" allein läse sich als
+                „das ist alles", und der Vater stellte einen Faktor ein, den ein späteres Fenster überstimmt. */}
+            {restSlots(value).length > 0 ? ` (+${restSlots(value).length} weitere)` : ""}
           </span>
         </summary>
         <div className="row" style={{ gap: 12, alignItems: "flex-end", flexWrap: "wrap", marginTop: 8 }}>
@@ -331,6 +361,12 @@ function PositionFields({ value, onChange }: { value: PositionSettings; onChange
               placeholder="z. B. 2" value={value.timeSlotMultiplier}
               onChange={(e) => up("timeSlotMultiplier", e.target.value)} />
           </div>
+          {restSlots(value).length > 0 && (
+            <p className="muted" style={{ width: "100%", margin: 0 }}>
+              Diese Position hat {restSlots(value).length} weitere Zeitfenster (per API gesetzt). Sie bleiben beim
+              Speichern erhalten – hier bearbeitest du nur das erste.
+            </p>
+          )}
         </div>
       </details>
     </div>

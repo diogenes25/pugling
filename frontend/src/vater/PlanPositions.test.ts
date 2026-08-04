@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { settingsFrom, settingsToDto, settingsToUpdateDto, timeSlotProblem, type PositionSettings } from "./PlanPositions";
-import type { PositionResponse } from "../lib/types";
+import type { PositionResponse, ScoringTimeSlot } from "../lib/types";
 
 /*
  * Das Zeitfenster einer Position (Punkte-Faktor je Pflicht) – geprüft wird die **Bindung** zwischen Formular
@@ -10,6 +10,9 @@ import type { PositionResponse } from "../lib/types";
  *    den Schalter meldete das Formular „Gespeichert." und der alte Faktor verdoppelte weiter.
  * 2. Ein halb gefülltes oder rückwärts laufendes Fenster wird hier abgefangen – es sähe sonst nach einer
  *    gültigen Einstellung aus und täte nichts.
+ * 3. Das Formular stellt EIN Fenster ein, der Server hält eine Liste (bis 24) und das Formular schickt
+ *    `timeSlots` bei jedem Speichern mit: die per API gesetzten Fenster 2..n und die Sekunden im
+ *    gespeicherten Wert müssen eine reine Punkte-Änderung überleben.
  */
 
 const LEER: PositionSettings = {
@@ -17,12 +20,20 @@ const LEER: PositionSettings = {
   pointsGoalMet: 20, penaltyCoins: 0,
   newContentPoints: "", comboThreshold: "", comboBonusPoints: "",
   useLeitner: true, requireTypedTest: false,
-  timeSlotStart: "", timeSlotEnd: "", timeSlotMultiplier: "", timeSlotName: "",
+  timeSlotStart: "", timeSlotEnd: "", timeSlotMultiplier: "", timeSlotName: "", timeSlotStored: null,
 };
 
 const MIT_FENSTER: PositionSettings = {
   ...LEER, timeSlotStart: "13:00", timeSlotEnd: "15:00", timeSlotMultiplier: "2",
 };
+
+/** Ein gespeicherter Stand als Formular-Zustand – der Weg, den ein Positions-Edit wirklich nimmt. */
+const gespeichert = (...timeSlots: ScoringTimeSlot[]) =>
+  settingsFrom({
+    timeSlots, cadence: "Daily", goalThreshold: null, itemCount: null, orderStrategy: "WeakestFirst",
+    pointsGoalMet: 20, penaltyCoins: 0, newContentPoints: 10, comboThreshold: 5, comboBonusPoints: 5,
+    useLeitner: true, requireTypedTest: false,
+  } as unknown as PositionResponse);
 
 describe("Zeitfenster einer Position", () => {
   it("schickt das Fenster als einelementige Liste – die Ablage bleibt listenfähig", () => {
@@ -54,18 +65,53 @@ describe("Zeitfenster einer Position", () => {
   });
 
   it("liest den gespeicherten Stand ohne Sekunden zurück", () => {
-    const pos = {
-      timeSlots: [{ name: "Hausaufgaben", start: "13:00:00", end: "15:00:00", multiplier: 2 }],
-      cadence: "Daily", goalThreshold: null, itemCount: null, orderStrategy: "WeakestFirst",
-      pointsGoalMet: 20, penaltyCoins: 0, newContentPoints: 10, comboThreshold: 5, comboBonusPoints: 5,
-      useLeitner: true, requireTypedTest: false,
-    } as unknown as PositionResponse;
-
-    const s = settingsFrom(pos);
+    const s = gespeichert({ name: "Hausaufgaben", start: "13:00:00", end: "15:00:00", multiplier: 2 });
 
     expect(s.timeSlotStart).toBe("13:00");
     expect(s.timeSlotEnd).toBe("15:00");
     expect(s.timeSlotMultiplier).toBe("2");
+  });
+
+  /*
+   * Der Kern beider Fälle: `timeSlots` geht bei JEDEM Speichern mit (anders als `boxIntervalDays` & Co., die
+   * das DTO weglässt). Was das Formular nicht zeigt, muss es darum tragen – sonst löscht eine Punkte-Änderung
+   * fremde Einstellungen und meldet „Position gespeichert.".
+   */
+  it("behält die per API gesetzten weiteren Fenster beim Speichern", () => {
+    const s = gespeichert(
+      { name: "Hausaufgaben", start: "13:00:00", end: "15:00:00", multiplier: 2 },
+      { name: "Abend", start: "19:00:00", end: "20:00:00", multiplier: 3 },
+      { name: "Wochenende", start: "09:00:00", end: "11:00:00", multiplier: 1.5 },
+    );
+
+    // Nur die Punkte geändert – das Zeitfenster hat der Vater nicht angesehen.
+    const dto = settingsToUpdateDto({ ...s, pointsGoalMet: 30 });
+
+    expect(dto.timeSlots).toHaveLength(3);
+    expect(dto.timeSlots?.map((t) => t.name)).toEqual(["Hausaufgaben", "Abend", "Wochenende"]);
+    expect(dto.clearTimeSlots).toBe(false);
+  });
+
+  it("schneidet die Sekunden des gespeicherten Fensters nicht ab", () => {
+    // `TimeOnly.MaxValue` am Server – „bis Mitternacht" schrumpfte sonst auf „bis 23:59" zusammen.
+    const s = gespeichert({ name: "Ganztags", start: "00:00:00", end: "23:59:59.9999999", multiplier: 2 });
+
+    expect(settingsToUpdateDto(s).timeSlots?.[0].end).toBe("23:59:59.9999999");
+    // Eine echte Änderung gewinnt dagegen – der gespeicherte Wert gilt nur für die unveränderte Anzeige.
+    expect(settingsToUpdateDto({ ...s, timeSlotEnd: "22:00" }).timeSlots?.[0].end).toBe("22:00");
+  });
+
+  it("löscht beim Leeren des ersten Fensters nicht die übrigen", () => {
+    const s = gespeichert(
+      { name: "Hausaufgaben", start: "13:00:00", end: "15:00:00", multiplier: 2 },
+      { name: "Abend", start: "19:00:00", end: "20:00:00", multiplier: 3 },
+    );
+
+    const dto = settingsToUpdateDto({ ...s, timeSlotStart: "", timeSlotEnd: "", timeSlotMultiplier: "" });
+
+    expect(dto.timeSlots?.map((t) => t.name)).toEqual(["Abend"]);
+    // Nichts zu leeren, solange ein Fenster übrig bleibt – der Schalter würde die Liste wegwerfen.
+    expect(dto.clearTimeSlots).toBe(false);
   });
 
   it.each([
