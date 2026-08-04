@@ -28,6 +28,27 @@ public class ObjectiveService(PuglingDbContext db, ObjectiveEvaluationService ev
     private static string KrScope(KeyResult k) =>
         k.ExerciseId is not null ? "exercise" : k.SeriesUnitId is not null ? "seriesUnit" : "subject";
 
+    // Mirrors the three filtered unique indexes on KeyResult exactly (PuglingDbContext.cs): which of the
+    // three catalog scopes applies decides the collision, not a flat tuple of all three id columns.
+    private static (string Scope, int Id, KeyResultMetric Metric) KrScopeKey(
+        int subjectId, int? seriesUnitId, int? exerciseId, KeyResultMetric metric) =>
+        exerciseId is { } exId ? ("exercise", exId, metric)
+        : seriesUnitId is { } unitId ? ("seriesUnit", unitId, metric)
+        : ("subject", subjectId, metric);
+
+    // Same-goal duplicate check against ALREADY PERSISTED milestones - the second line of defense in front
+    // of the unique index (B-104). excludeKeyResultId lets an update re-check without colliding with itself.
+    private async Task<bool> KeyResultDuplicateAsync(int objectiveId, int subjectId, int? seriesUnitId,
+        int? exerciseId, KeyResultMetric metric, int? excludeKeyResultId, CancellationToken ct)
+    {
+        var q = db.KeyResults.AsNoTracking().Where(k => k.ObjectiveId == objectiveId && k.Metric == metric);
+        q = exerciseId is { } exId ? q.Where(k => k.ExerciseId == exId)
+            : seriesUnitId is { } unitId ? q.Where(k => k.SeriesUnitId == unitId && k.ExerciseId == null)
+            : q.Where(k => k.SubjectId == subjectId && k.SeriesUnitId == null && k.ExerciseId == null);
+        if (excludeKeyResultId is { } id) q = q.Where(k => k.Id != id);
+        return await q.AnyAsync(ct);
+    }
+
     private static KeyResultResponse MapKr(ObjectiveEvaluationService.KeyResultEval e)
     {
         var k = e.KeyResult;
@@ -132,10 +153,16 @@ public class ObjectiveService(PuglingDbContext db, ObjectiveEvaluationService ev
             return new ObjectiveResult(null, fieldErr);
 
         var keyResults = new List<KeyResult>();
+        // Fall 1 (B-104): duplicate milestones within the SAME request. Checked in-memory against the
+        // not-yet-saved set, before anything is stored - a catch after the first SaveChanges would leave
+        // the goal with half its milestones.
+        var seenScopes = new HashSet<(string Scope, int Id, KeyResultMetric Metric)>();
         foreach (var kr in req.KeyResults ?? [])
         {
             if (await ValidateKeyResultAsync(kr.SubjectId, kr.SeriesUnitId, kr.ExerciseId, kr.Metric, kr.TargetValue, ct) is { } err)
                 return new ObjectiveResult(null, err);
+            if (!seenScopes.Add(KrScopeKey(kr.SubjectId, kr.SeriesUnitId, kr.ExerciseId, kr.Metric)))
+                return new ObjectiveResult(null, ApiErrors.DuplicateKeyResult);
             keyResults.Add(new KeyResult
             {
                 SubjectId = kr.SubjectId,
@@ -211,6 +238,8 @@ public class ObjectiveService(PuglingDbContext db, ObjectiveEvaluationService ev
 
         if (await ValidateKeyResultAsync(req.SubjectId, req.SeriesUnitId, req.ExerciseId, req.Metric, req.TargetValue, ct) is { } err)
             return new KeyResultResult(null, err);
+        if (await KeyResultDuplicateAsync(objectiveId, req.SubjectId, req.SeriesUnitId, req.ExerciseId, req.Metric, null, ct))
+            return new KeyResultResult(null, ApiErrors.DuplicateKeyResult);
 
         var kr = new KeyResult
         {
@@ -239,6 +268,10 @@ public class ObjectiveService(PuglingDbContext db, ObjectiveEvaluationService ev
         // Re-check metric/target value only (they depend on each other) - the scope stays valid unchanged.
         if (await ValidateKeyResultAsync(kr.SubjectId, kr.SeriesUnitId, kr.ExerciseId, metric, target, ct) is { } err)
             return new KeyResultResult(null, err);
+        // Self-exclusion via the id, not via the old metric value: a milestone keeping its own metric must
+        // pass through unchanged (acceptance criterion 4).
+        if (await KeyResultDuplicateAsync(objectiveId, kr.SubjectId, kr.SeriesUnitId, kr.ExerciseId, metric, kr.Id, ct))
+            return new KeyResultResult(null, ApiErrors.DuplicateKeyResult);
 
         kr.Metric = metric;
         kr.TargetValue = target;

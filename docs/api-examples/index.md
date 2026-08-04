@@ -19,7 +19,7 @@ Automatisch erzeugt von `backend/Pugling.Api.Tests/DocsCaptureTests.cs`. Insgesa
 
 ## Fehler-Code-Abdeckung
 
-Verifiziert: **34 / 58** Codes aus `ApiErrors`.
+Verifiziert: **34 / 59** Codes aus `ApiErrors`.
 
 | Code | Beispiel |
 | --- | --- |
@@ -64,6 +64,7 @@ Verifiziert: **34 / 58** Codes aus `ApiErrors`.
 - `concurrency_conflict` — Erfordert eine echte Schreib-Kollision (Doppelklick/Retry) über das Concurrency-Token; in-process nicht deterministisch per HTTP auslösbar (siehe SkinPurchaseTests, direkt über DbContext).
 - `duplicate_achievement` — Über HTTP im In-Process-Test nicht erreichbar.
 - `duplicate_email` — Über HTTP im In-Process-Test nicht erreichbar.
+- `duplicate_key_result` — Über HTTP im In-Process-Test nicht erreichbar.
 - `duplicate_profile_name` — Über HTTP im In-Process-Test nicht erreichbar.
 - `duplicate_vocabulary_in_exercise` — Über HTTP im In-Process-Test nicht erreichbar.
 - `exercise_not_assigned` — Über HTTP im In-Process-Test nicht erreichbar.

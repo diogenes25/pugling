@@ -1,13 +1,13 @@
 ---
-tags: [typ/story, status/ausformuliert, bereich/backend, bereich/api, bereich/gamification]
+tags: [typ/story, status/abgenommen, bereich/backend, bereich/api, bereich/gamification]
 aliases: [KeyResult-Dublette, duplicate_key_result, Meilenstein zweimal, RewardPerKeyResult zahlt doppelt]
-status: ausformuliert
+status: abgenommen
 prio: P2
 art: Defekt
-groesse: ""
-wo: ""
-migration: ""
-vertragsbruch: ""
+groesse: S
+wo: backend
+migration: nein
+vertragsbruch: nein
 quelle: pugling-reviewer zum B-97-Bau, Befund 2 (2026-08-04)
 grund: ""
 ersetzt_durch: []
@@ -57,22 +57,39 @@ ein Weg denkbar, auf dem die Dublette doch entsteht (etwa wenn die Filter-Beding
 Geltungsbereichs-Wechsel nicht mehr greifen) — und dann zahlt die Prämie zweimal. Die Prüfung im Dienst ist
 also nicht nur Kosmetik am Statuscode, sie ist die zweite Verteidigungslinie vor der Auszahlung.
 
-## Offene Punkte
+## Offene Punkte (gegrillt)
 
-1. **Ein Code oder drei?** Empfehlung: **einer** — `duplicate_key_result`, additiv in `ApiErrors`. Die drei
+1. **Ein Code oder drei?** Entscheidung: **einer** — `duplicate_key_result`, additiv in `ApiErrors`. Die drei
    Indizes sind eine Regel in drei Ausprägungen (der Geltungsbereich hat drei Formen); drei Codes wären drei
-   Namen für denselben Fehler des Aufrufers.
-2. **Fall 1 (Dublette innerhalb eines POST):** gegen die eingehende Liste prüfen (in-memory) **oder** erst
-   speichern und den DB-Fehler fangen? Empfehlung: in-memory prüfen, bevor irgendetwas gespeichert wird — ein
-   `catch` nach dem ersten `SaveChanges` hinterlässt ein Ziel mit halber Meilenstein-Menge, und das ist genau
-   der Zustand, den die Guard-Clause-Regel verhindern soll.
-3. **Gilt die Prüfung auch, wenn der Geltungsbereich `null` ist** (Ziel ohne Fach/Kapitel/Übung)? Der erste
-   Index deckt genau diesen Fall über seinen Filter ab; die Prüfung muss die drei Formen darum
-   **gleich unterscheiden wie die Filter**, sonst prüft sie zu streng (falsches 409) oder zu lasch (weiter
-   500). Empfehlung: die Prüfung genau an den drei Filter-Bedingungen entlang schreiben und das im Kommentar
-   an den Index binden.
+   Namen für denselben Fehler des Aufrufers. Kosten: eine Zeile in `ApiErrors.cs`, kein Vertragsbruch (additiv).
+2. **Fall 1 (Dublette innerhalb eines POST):** Entscheidung: **in-memory** gegen die eingehende Liste prüfen,
+   bevor irgendetwas gespeichert wird — ein `catch` nach dem ersten `SaveChanges` hinterlässt ein Ziel mit
+   halber Meilenstein-Menge, und das ist genau der Zustand, den die Guard-Clause-Regel verhindern soll.
+   Kosten: ein `HashSet` über den Scope-Schlüssel in `CreateAsync`, keine zusätzliche DB-Rundreise.
+3. **Gilt die Prüfung auch, wenn der Geltungsbereich `null` ist** (Ziel ohne Fach/Kapitel/Übung)? Entschieden:
+   ja — die Prüfung ist **exakt entlang der drei Filter-Bedingungen** geschrieben (Exercise > SeriesUnit >
+   Subject, dieselbe Rangfolge wie `KrScope`), nicht als flacher Tupel-Vergleich. `ValidateKeyResultAsync`
+   erzwingt bereits, dass ein Exercise-Scope eine SeriesUnit voraussetzt — die einzige denkbare Mehrdeutigkeit
+   (Exercise gesetzt, SeriesUnit `null`) kann darum gar nicht entstehen. Kosten: ein gemeinsamer
+   `KrScopeKey`-Helfer statt duplizierter Bedingungen an drei Stellen.
 4. **Nicht in ein Tor gießen** — dieselbe Entscheidung wie in B-97, Entscheidung 3: die Zuordnung
    Index → Schreibpfad ist nicht reflexiv ableitbar (47 `IsUnique`, viele ohne jeden Schreib-Endpunkt).
+   Zurückgestellt, kein neues Tor.
+5. **Bewusst zurückgestellt, kein Blocker:** Check-then-write ist nicht atomar — zwei exakt parallele
+   Schreibversuche auf dieselbe Objective+Scope+Metric könnten beide die Vorprüfung passieren und einer
+   träfe doch den rohen `DbUpdateException`. Dieselbe Entscheidung wie in B-97: kein globaler
+   `DbUpdateException`→409-Handler, das Race gilt als hinnehmbar (Elternteil tippt nicht parallel auf zwei
+   Geräten). Vom `pugling-reviewer` beim Bau bestätigt, kein neuer Befund.
+
+## Schätzung
+
+`groesse: S`, `wo: backend`, `migration: nein` (die drei Indizes existieren bereits seit dem Schema-Umbau),
+`vertragsbruch: nein` (rein additiv: ein neuer Fehlercode, drei neue `409`-Antworttypen). Angriffsplan: ein
+gemeinsamer `KrScopeKey`-Helfer plus `KeyResultDuplicateAsync`-Prüfung, dann die drei Schreibpfade in
+`ObjectiveService.cs` (Create inline/in-memory, AddKeyResult/UpdateKeyResult DB-gestützt), zuletzt die
+`ProducesResponseType(409)`-Annotationen. Testweg: vier neue Integrationstests in `ObjectiveTests.cs`
+(einer je Akzeptanzkriterium), rot verifiziert gegen den Vorzustand (`500 InternalServerError` statt `409`)
+per `git stash` der Implementierung, dann grün nach dem Bau.
 
 ## Akzeptanzkriterien
 
@@ -95,3 +112,13 @@ also nicht nur Kosmetik am Statuscode, sie ist die zweite Verteidigungslinie vor
   erfüllt, es sind drei andere Endpunkte in einem Dienst statt zwei Controller-Actions, und die
   In-Request-Dublette (Fall 1) hat eine eigene Form. `prio: P2` wie B-97 — kein Kind ist betroffen, aber die
   Prämie ist es potenziell.
+- **2026-08-05** — im Autonomen Modus (siehe `docs/backlog/README.md` → „Autonomer Modus") gegrillt, geschätzt
+  und gebaut, ohne Rückfrage je Ticket: `duplicate_key_result` additiv in `ApiErrors`, ein `KrScopeKey`-Helfer
+  entlang der drei Filter-Bedingungen, In-Memory-Prüfung in `CreateAsync` (Fall 1), DB-gestützte Prüfung in
+  `AddKeyResultAsync`/`UpdateKeyResultAsync` (Selbstausschluss über die Id). Rote Probe zuerst: vier neue
+  Tests in `ObjectiveTests.cs` scheiterten gegen den Vorzustand mit `500 InternalServerError` statt `409`
+  (per `git stash` der Implementierung verifiziert), danach grün. `dotnet test Pugling.sln -c Release` →
+  **710/710 grün** (706 + 4 neue). `pugling-reviewer` lief ohne Blocker (Scope-Key-Logik deckungsgleich mit
+  den drei DB-Indizes verifiziert, Konventionen eingehalten, einzige bekannte Lücke — Check-then-write nicht
+  atomar — dieselbe akzeptierte Entscheidung wie in B-97). Commit: siehe Verlauf des Repos (B-104-Commit).
+  Status → `abgenommen`.

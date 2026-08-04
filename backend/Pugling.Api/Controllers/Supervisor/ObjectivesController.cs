@@ -41,12 +41,16 @@ public class ObjectivesController(ObjectiveService objectives) : ControllerBase
     public async Task<ActionResult<ObjectiveResponse>> Get(int childId, int objectiveId, CancellationToken ct = default) =>
         await objectives.GetAsync(childId, objectiveId, ct) is { } o ? o : NotFound();
 
-    /// <summary>Creates a big goal (supervisor only); key results can be supplied inline. 400 on an invalid scope/target value.</summary>
+    /// <summary>
+    /// Creates a big goal (supervisor only); key results can be supplied inline. 400 on an invalid
+    /// scope/target value, 409 if two inline key results share the same scope and metric.
+    /// </summary>
     [HttpPost]
     [Authorize(Roles = Roles.Supervisor)]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<ActionResult<ObjectiveResponse>> Create(
         int childId, [FromBody] CreateObjectiveRequest request, CancellationToken ct = default)
     {

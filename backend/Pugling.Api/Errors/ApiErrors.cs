@@ -75,6 +75,11 @@ public static class ApiErrors
     public static readonly ApiError DuplicateAchievement = new("duplicate_achievement", 409, "The child already has an award for this metric and threshold.");
     /// <summary>This vocabulary entry is already an item of the exercise – a word may have only one item per exercise (409).</summary>
     public static readonly ApiError DuplicateVocabularyInExercise = new("duplicate_vocabulary_in_exercise", 409, "This vocabulary entry is already an item of the exercise.");
+    /// <summary>
+    /// The goal already has a key result with this scope and metric (409) – <c>RewardPerKeyResult</c> would
+    /// otherwise pay twice for the same milestone.
+    /// </summary>
+    public static readonly ApiError DuplicateKeyResult = new("duplicate_key_result", 409, "This goal already has a key result with this scope and metric.");
     /// <summary>Image variant does not exist / does not belong to this asset (404).</summary>
     public static readonly ApiError MediaVariantNotFound = new("media_variant_not_found", 404, "Media variant not found.");
     /// <summary>The asset already has a variant for this purpose and format (409).</summary>

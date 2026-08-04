@@ -241,6 +241,113 @@ public class ObjectiveTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
         Assert.Equal(0, afterDelete.GetProperty("totalCount").GetInt32());
     }
 
+    // ─────────────────────────────────── B-104: same-milestone duplicate reports 409, not a bare 500
+
+    [Fact]
+    public async Task Dublette_InnerhalbEinesPosts_Meldet409_UndLegtKeinZielAn()
+    {
+        var father = await TestApi.FatherAsync(factory);
+        var subjectId = await SubjectAsync(father, "Obj-Dublette-Inline");
+        var childId = await FreshChildIdAsync(father, "7401");
+
+        var res = await father.PostAsJsonAsync(Url(childId), new
+        {
+            title = "Zwei gleiche Etappen",
+            kind = "Committed",
+            keyResults = new[]
+            {
+                new { subjectId, metric = "MaxWeakItems", targetValue = 0 },
+                new { subjectId, metric = "MaxWeakItems", targetValue = 0 },
+            },
+        });
+        Assert.Equal(HttpStatusCode.Conflict, res.StatusCode);
+        Assert.Equal("duplicate_key_result", (await res.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("code").GetString());
+
+        // No half-written goal: the list stays empty.
+        Assert.Equal(0, (await JsonAsync(await father.GetAsync(Url(childId)))).GetArrayLength());
+    }
+
+    [Fact]
+    public async Task Dublette_AlsZweiterKeyResultPost_Meldet409()
+    {
+        var father = await TestApi.FatherAsync(factory);
+        var subjectId = await SubjectAsync(father, "Obj-Dublette-Post");
+        var childId = await FreshChildIdAsync(father, "7402");
+
+        var objectiveId = (await JsonAsync(await father.PostAsJsonAsync(Url(childId), new
+        {
+            title = "Ziel",
+            kind = "Committed",
+            keyResults = new[] { new { subjectId, metric = "MaxWeakItems", targetValue = 0 } },
+        }))).GetProperty("id").GetInt32();
+
+        var res = await father.PostAsJsonAsync($"{Url(childId)}/{objectiveId}/key-results",
+            new { subjectId, metric = "MaxWeakItems", targetValue = 0 });
+        Assert.Equal(HttpStatusCode.Conflict, res.StatusCode);
+        Assert.Equal("duplicate_key_result", (await res.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("code").GetString());
+
+        // Still exactly one milestone - the conflicting POST did not get stored.
+        var objective = await father.GetFromJsonAsync<JsonElement>($"{Url(childId)}/{objectiveId}");
+        Assert.Equal(1, objective.GetProperty("totalCount").GetInt32());
+    }
+
+    [Fact]
+    public async Task Dublette_UeberPatchAufBestehendenMeilenstein_Meldet409_UndLaesstIhnUnveraendert()
+    {
+        var father = await TestApi.FatherAsync(factory);
+        var subjectId = await SubjectAsync(father, "Obj-Dublette-Patch");
+        var childId = await FreshChildIdAsync(father, "7403");
+
+        var objectiveId = (await JsonAsync(await father.PostAsJsonAsync(Url(childId), new
+        {
+            title = "Ziel",
+            kind = "Committed",
+            keyResults = new[]
+            {
+                new { subjectId, metric = "MaxWeakItems", targetValue = 0 },
+                new { subjectId, metric = "MasteredPercent", targetValue = 80 },
+            },
+        }))).GetProperty("id").GetInt32();
+        var krUrl = $"{Url(childId)}/{objectiveId}/key-results";
+        var listBefore = await father.GetFromJsonAsync<JsonElement>($"{Url(childId)}/{objectiveId}");
+        var targetKr = listBefore.GetProperty("keyResults").EnumerateArray()
+            .Single(k => k.GetProperty("metric").GetString() == "MasteredPercent");
+        var targetKrId = targetKr.GetProperty("id").GetInt32();
+
+        // Shifting the second milestone's metric onto the first milestone's metric collides (same scope).
+        var res = await father.PatchAsJsonAsync($"{krUrl}/{targetKrId}", new { metric = "MaxWeakItems", targetValue = 0 });
+        Assert.Equal(HttpStatusCode.Conflict, res.StatusCode);
+        Assert.Equal("duplicate_key_result", (await res.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("code").GetString());
+
+        // Unchanged: still MasteredPercent, not MaxWeakItems.
+        var unchanged = await father.GetFromJsonAsync<JsonElement>($"{Url(childId)}/{objectiveId}");
+        var stillThere = unchanged.GetProperty("keyResults").EnumerateArray().Single(k => k.GetProperty("id").GetInt32() == targetKrId);
+        Assert.Equal("MasteredPercent", stillThere.GetProperty("metric").GetString());
+    }
+
+    [Fact]
+    public async Task Meilenstein_BehaeltEigeneMetrik_KeineSelbstkollision()
+    {
+        var father = await TestApi.FatherAsync(factory);
+        var subjectId = await SubjectAsync(father, "Obj-KeineSelbstkollision");
+        var childId = await FreshChildIdAsync(father, "7404");
+
+        var objectiveId = (await JsonAsync(await father.PostAsJsonAsync(Url(childId), new
+        {
+            title = "Ziel",
+            kind = "Committed",
+            keyResults = new[] { new { subjectId, metric = "MaxWeakItems", targetValue = 0 } },
+        }))).GetProperty("id").GetInt32();
+        var krUrl = $"{Url(childId)}/{objectiveId}/key-results";
+        var keyResultId = (await father.GetFromJsonAsync<JsonElement>($"{Url(childId)}/{objectiveId}"))
+            .GetProperty("keyResults")[0].GetProperty("id").GetInt32();
+
+        // Re-sending its own metric/scope (only the target value changes) must not collide with itself.
+        var res = await father.PatchAsJsonAsync($"{krUrl}/{keyResultId}", new { metric = "MaxWeakItems", targetValue = 1 });
+        res.EnsureSuccessStatusCode();
+        Assert.Equal(1, (await res.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("targetValue").GetInt32());
+    }
+
     // ─────────────────────────────────── List, delete, the child's single view (C3 coverage gap)
 
     /// <summary>Creates an objective with one key result and returns its id.</summary>

@@ -1850,7 +1850,7 @@
         "tags": [
           "Supervisor \u2013 Objectives"
         ],
-        "summary": "Adds a key result to the goal (supervisor only). 400 on an invalid scope/target value, 404 if the goal is missing.",
+        "summary": "Adds a key result to the goal (supervisor only). 400 on an invalid scope/target value, 404 if the\ngoal is missing, 409 if the goal already has a key result with this scope and metric.",
         "parameters": [
           {
             "name": "childId",
@@ -1923,6 +1923,16 @@
                 }
               }
             }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           }
         }
       }
@@ -1932,7 +1942,7 @@
         "tags": [
           "Supervisor \u2013 Objectives"
         ],
-        "summary": "Changes metric/target value/title of a key result (supervisor only); the scope stays fixed.",
+        "summary": "Changes metric/target value/title of a key result (supervisor only); the scope stays fixed. 409 if\nthe new metric collides with another key result of the same scope.",
         "parameters": [
           {
             "name": "childId",
@@ -1998,6 +2008,16 @@
           },
           "404": {
             "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
             "content": {
               "application/json": {
                 "schema": {
@@ -3278,7 +3298,7 @@
         "tags": [
           "Supervisor \u2013 Objectives"
         ],
-        "summary": "Creates a big goal (supervisor only); key results can be supplied inline. 400 on an invalid scope/target value.",
+        "summary": "Creates a big goal (supervisor only); key results can be supplied inline. 400 on an invalid\nscope/target value, 409 if two inline key results share the same scope and metric.",
         "parameters": [
           {
             "name": "childId",
@@ -3334,6 +3354,16 @@
           },
           "404": {
             "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
             "content": {
               "application/json": {
                 "schema": {
@@ -32068,6 +32098,7 @@
               "duplicate_achievement",
               "duplicate_email",
               "duplicate_key",
+              "duplicate_key_result",
               "duplicate_profile_name",
               "duplicate_tag_name",
               "duplicate_vocabulary_in_exercise",
