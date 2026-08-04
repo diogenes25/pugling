@@ -124,7 +124,6 @@ export function SohnTest() {
   // Getippte Stufe: Server liefert keine aufgedeckte Lösung (reveal === null) → Eingabefeld.
   const typed = item.reveal === null;
   const submitTyped = () => { if (typedAnswer.trim()) answerAndAdvance({ itemIndex: item.itemIndex, givenAnswer: typedAnswer }); };
-  const showSolution = revealed || item.reveal !== null;
 
   return (
     <div className="sohn-body">
@@ -193,23 +192,52 @@ export function SohnTest() {
             </div>
           )
         ) : (
-          <div style={{ marginTop: 10 }}>
-            {showSolution ? (
-              <>
-                <div className="rev" style={{ color: "var(--cyan)", fontWeight: 800, marginBottom: 8 }}>→ {item.reveal ?? "(aufgedeckt)"}</div>
-                <RevealAlternatives alternatives={item.revealAlternatives} />
-              </>
-            ) : (
-              <button type="button" className="btn ghost small" onClick={() => setRevealed(true)}>Aufdecken 🔄</button>
-            )}
-            {showSolution && (
-              <div className="judge" style={{ marginTop: 8 }}>
-                <button type="button" className="btn red small" disabled={busy} onClick={() => answerAndAdvance({ itemIndex: item.itemIndex, wasKnown: false })}>Nicht gewusst</button>
-                <button type="button" className="btn lime small" disabled={busy} onClick={() => answerAndAdvance({ itemIndex: item.itemIndex, wasKnown: true })}>Gewusst</button>
-              </div>
-            )}
-          </div>
+          <SelfAssessAnswer
+            reveal={item.reveal}
+            alternatives={item.revealAlternatives}
+            revealed={revealed}
+            busy={busy}
+            onReveal={() => setRevealed(true)}
+            onJudge={(wasKnown) => answerAndAdvance({ itemIndex: item.itemIndex, wasKnown })}
+          />
         )}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Die Selbsteinschätzung einer Klausurfrage: erst denken, dann aufdecken, dann ehrlich urteilen.
+ *
+ * **Die Reihenfolge IST die Prüfung.** Stünde die Lösung sofort neben „Gewusst / Nicht gewusst", läse das Kind
+ * sie und trüge sich „Gewusst" ein – der Test wäre ein Formular, keine Prüfung. Der Zustand `revealed` ist
+ * darum die einzige Bedingung: `item.reveal` ist auf einer nicht-getippten Stufe **immer** gesetzt (der Server
+ * schickt die Lösung mit der Frage), ein zusätzliches `|| reveal !== null` machte das Aufdecken zu totem Code.
+ *
+ * **Exportiert, damit die Reihenfolge prüfbar ist** (Muster `TestResult`): eine reine Props-Komponente, kein
+ * Laden, kein `fetch` – der Fehler war unsichtbar, weil ihn niemand ohne den Server ansehen konnte.
+ */
+export function SelfAssessAnswer({ reveal, alternatives, revealed, busy, onReveal, onJudge }: {
+  // Wie `alternatives` optional: ein nullable Feld darf im Vertrag auch fehlen (siehe `?? null` in `start`).
+  reveal?: string | null;
+  alternatives?: readonly string[] | null;
+  revealed: boolean;
+  busy: boolean;
+  onReveal: () => void;
+  onJudge: (wasKnown: boolean) => void;
+}) {
+  if (!revealed) return (
+    <div style={{ marginTop: 10 }}>
+      <button type="button" className="btn ghost small" onClick={onReveal}>Aufdecken 🔄</button>
+    </div>
+  );
+  return (
+    <div style={{ marginTop: 10 }}>
+      <div className="rev" style={{ color: "var(--cyan)", fontWeight: 800, marginBottom: 8 }}>→ {reveal ?? "(aufgedeckt)"}</div>
+      <RevealAlternatives alternatives={alternatives} />
+      <div className="judge" style={{ marginTop: 8 }}>
+        <button type="button" className="btn red small" disabled={busy} onClick={() => onJudge(false)}>Nicht gewusst</button>
+        <button type="button" className="btn lime small" disabled={busy} onClick={() => onJudge(true)}>Gewusst</button>
       </div>
     </div>
   );
