@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/training, lerntechnik/vokabeln, rolle/student]
+tags: [typ/story, status/abgenommen, bereich/training, lerntechnik/vokabeln, rolle/student]
 aliases: [Selbsteinschätzung Alternativen, Reveal zeigt nur eine Lösung]
-status: geschaetzt
+status: abgenommen
 prio: P2
 art: Defekt
 groesse: S
@@ -208,3 +208,33 @@ sind additive Trailing-Parameter mit Vorgabewert `null`.
 - **2026-08-03** — geschätzt: Größe **S**, `wo: beides`, kein Migrations- und kein Vertragsbruch-Risiko;
   Testweg ist eine Erweiterung an bestehenden Tests (`ReviewGradingTests`/`PositionPracticeFlowTests`,
   `PositionTestFlowTests`) plus `/smoke-test` (autonom getroffen, Nutzerauftrag 2026-08-04).
+- **2026-08-04** — **gebaut**, genau nach Angriffsplan: `CardFacets` liefert `RevealAlternatives`
+  (`typed || AcceptedAnswers.Count <= 1 ? null : Skip(1)`), additive Trailing-Parameter an `PracticeCard`,
+  `TestItem` und `PreviewItem`, alle drei Aufrufer verdrahtet.
+  - **Abweichung vom Plan (Schritt 4), bewusst:** statt drei Render-Stellen einzeln zu ergänzen gibt es **eine**
+    Komponente `RevealAlternatives` (Muster `ListRule`) — dieselbe Zeile in Übung, Klausur und Vater-Vorschau
+    wäre sonst dreimal gepflegt worden.
+  - **Tests:** `PositionPracticeFlowTests.Selbsteinschaetzung_DecktJedeGleichwertigeUebersetzungAuf`
+    (Alternative auf der Selbsteinschätzung da, auf der getippten Stufe `reveal` **und**
+    `revealAlternatives` `null`), `PositionTestFlowTests.Rueckwaerts_DecktKeineAlternativeAuf`
+    (Akzeptanzkriterium 3), `RevealAlternatives.test.tsx` (Anzeige + die drei leeren Vertragsformen).
+    Die Rot-Probe ist trivial erfüllt: das Feld existierte vorher nicht, der Test hätte es nicht lesen können.
+  - **Verifikation:** Backend **708/708 grün**, Frontend **116/116** (Vitest) und `tsc -b`/Vite-Build sauber.
+    `ConventionGuardTests` grün **ohne** neuen Eintrag in `SolutionFieldExceptions` (Akzeptanzkriterium 7,
+    Entscheidung 4 bestätigt). **Nicht** live nachgespielt: der Demo-Datenstand trägt keine Vokabel mit
+    erklärten Alternativen, und dafür welche anzulegen hätte Testdaten in den Demo-Bestand geschrieben — der
+    Beleg ist stattdessen der Integrationstest an der echten Card-Antwort. Offen für die Abnahme: Commit.
+- **2026-08-04** — **Reviews (`pugling-reviewer` + `frontend-reviewer`), Befunde eingearbeitet:** beide ohne
+  Blocker. Der Backend-Reviewer bestätigt die Anti-Cheat-Grenze ausdrücklich nachgeprüft (Index 0 ist in allen
+  drei Bauwegen die Primärantwort, alle Cloze-Stufen und MC/Buchstaben/Audio sind getippt → kein neues
+  Preisgeben, auch nicht in der Klausur) und `ConventionGuardTests` grün ohne neue Ausnahme. Aus dem
+  Frontend-Review übernommen: der Abstand steht jetzt in `.reveal-alternatives` (index.css) statt als
+  `marginBottom`-Prop an zwei Aufrufern — die UA-Vorgabe eines `<p>` hätte sonst ein Loch zwischen Lösung und
+  „auch richtig" gerissen; dazu der `card.reveal`-Guard in `SohnPractice`, damit „auch richtig" nie ohne die
+  Antwort steht, zu der es gehört.
+  **Verifikation nach dem Review:** Backend **709/709 grün**, Frontend **118/118** (Vitest), Build sauber.
+- **2026-08-04** — **abgenommen.** Verifikation belegt: Backend **709/709 grün**, Frontend **118/118**
+  (Vitest) und `tsc -b`/Vite-Build sauber; `pugling-reviewer` **und** `frontend-reviewer` ohne Blocker, ihre
+  „Sollte"-Befunde eingearbeitet. Kein `/smoke-test`: der Beleg ist der Integrationstest an der echten
+  Card-Antwort (im Demo-Datenstand trägt keine Vokabel erklärte Alternativen, siehe Eintrag oben).
+  Commit `88ca9e8`.

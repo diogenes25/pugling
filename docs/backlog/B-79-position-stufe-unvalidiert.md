@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/backend, rolle/supervisor]
+tags: [typ/story, status/abgenommen, bereich/backend, rolle/supervisor]
 aliases: [Stufe ohne Validierung, Stage 99, Unbekannte Stufe deckt die Lösung auf]
-status: geschaetzt
+status: abgenommen
 prio: P2
 art: Defekt
 groesse: S
@@ -194,3 +194,50 @@ verlorengeht.
   getroffen, Nutzerauftrag 2026-08-04).
 - **2026-08-03** — geschätzt: Größe S, Angriffsplan eine Prüf-Hilfsfunktion analog `ThresholdProblem` an
   zwei Schreibstellen, Testweg `PlanPositionCrudTests.cs` (autonom getroffen, Nutzerauftrag 2026-08-04).
+- **2026-08-04** — **gebaut.** Prüfung `StageProblem` in `PlanPositionsController` (Create + Update, vor dem
+  ersten Schreiben), `stage` **und** jeder `stageSchedule`-Schritt gegen `IExerciseType.StageOptions`,
+  `ApiErrors.ValidationError` wie bei `ThresholdProblem` (Entscheidung 1), leere Liste = keine Prüfung
+  (Entscheidung 2).
+  - **Entscheidung 6 (beim Bauen nötig geworden):** `TestStage.ShowBoth` **fehlte in `StageOptions`**, obwohl
+    der Seed die Stufe zweimal setzt (`Seed.cs:309` als `Stage`, `:339` im `StageSchedule`) und
+    [vokabeltraining-prozess.md](../vokabeltraining-prozess.md) sie als Stufe 1 führt. Die Prüfung nach
+    Entscheidung 1 hätte damit eine legitime, benutzte Stufe abgewiesen — Akzeptanzkriterium 5 wäre rot
+    gewesen. Statt die Regel aufzuweichen ist die Liste vervollständigt (`ShowBoth` = „Beide zeigen
+    (Kennenlernen)"): `StageOptions` ist jetzt *die* Stufenmenge des Typs, nicht nur ein Vorschau-Menü.
+    **Kosten:** die Vater-Vorschau bietet die Stufe zusätzlich an (richtig — zuweisen ließ sie sich immer) und
+    der Ist-Stand-Satz „nur zwei Typen überschreiben sie" bekommt einen fünften Wert bei den Vokabeln.
+    Die Alternative (ein zweites Feld „bekannte Stufen" neben `StageOptions`) wäre eine zweite Liste zum
+    Synchronhalten gewesen — genau die Fehlerklasse, die hier gerade behoben wird.
+  - **Neues Tor:** `ExerciseTypeManifestTests.StageOptions_Enthalten_JedenWert_DesZugehoerigenStufenEnums`
+    mit gepinnter Zuordnung (Vokabel→`TestStage`, Cloze→`ClozeStage`) plus Gegenprobe, dass jeder andere Typ
+    seine leere Liste behält. Ohne dieses Tor wäre eine künftig ergänzte Stufe lautlos unsetzbar.
+  - **Bestandsdaten (Entscheidung 3):** einmalig geprüft — die geseedeten Vokabel-Positionen benutzen die
+    Stufen 1–6, also genau die jetzt vollständige Liste; kein Bestandstreffer, kein Backfill.
+  - **Tests:** `PlanPositionCrudTests.Position_UnbekannteStufe_WirdAbgewiesen_GueltigeGehtDurch` (POST 400,
+    `stageSchedule` 400, PATCH 400 **und** Position unverändert, `ShowBoth` geht durch) +
+    `Position_TypOhneStufenwahl_NimmtJedeStufeAn` (Matching mit `stage: 99` → 201, Akzeptanzkriterium 4).
+  - **Verifikation:** `dotnet test Pugling.sln -c Release` → **708/708 grün**, 0 Warnungen. Live am laufenden
+    Server: `PATCH …/study-plans/1/positions/3 {"stage":99}` → **400 `validation_error`** samt Liste der
+    erlaubten Stufen, `{"stage":6}` → **200**. Offen für die Abnahme: Commit.
+- **2026-08-04** — **Review (`pugling-reviewer`), Befund eingearbeitet:** kein Blocker, aber ein echter
+  **zweiter Weg zum selben Schaden**, den der Ist-Stand dieser Story übersehen hatte: `Exercise.DefaultStage`
+  wird von `ExerciseControllerBase` (Create *und* Update) ungeprüft geschrieben, und
+  `PositionPlayService.StageForDay` fällt darauf zurück, sobald die Position keine Stufe nennt — für die
+  meisten Typen der Normalfall. Ein Creator-Vertipper `defaultStage: 99` erzeugte damit weiterhin genau die
+  aufgedeckte Karte.
+  - **Entscheidung 7:** Die Prüfung liegt jetzt als geteilter Helfer `StageValidation.ProblemText` neben den
+    Übungstypen und wird von **beiden** Schreibpfaden benutzt (Position und Übungs-Standard). Begründung: die
+    Regel gehört zum Stufen-Begriff des Übungstyps, nicht zu einem Controller; zwei Kopien wären dieselbe
+    Fehlerklasse, die die Story behebt. Entscheidung 1 (Ort: privater Helfer im Controller) ist damit
+    überholt — der Controller-Helfer bleibt als einzeilige Hülle bestehen. **Kosten:** eine neue Datei und ein
+    Schreibpfad mehr, der 400 liefern kann; der Name endet auf `ProblemText`, weil `…Problem(` den
+    Wächter `Actions_Melden_Fehler_Nur_Ueber_ProblemWithCode` traf (er sieht `.Problem(` wie ein rohes
+    `Problem(` der Basisklasse).
+  - Neuer Test `CatalogExerciseTests.Uebung_UnbekannteStandardStufe_WirdAbgewiesen` (POST 400, PUT 400,
+    `null` bleibt gültig).
+  - **Verifikation nach dem Review:** `dotnet test Pugling.sln -c Release` → **709/709 grün**, 0 Warnungen.
+- **2026-08-04** — **abgenommen.** Verifikation belegt: `dotnet test Pugling.sln -c Release` →
+  **709/709 grün**, 0 Warnungen; `pugling-reviewer` ohne Blocker (sein Befund zum zweiten Schreibpfad ist als
+  Entscheidung 7 eingearbeitet, nicht offengelassen); statt `/smoke-test` die Live-Probe am laufenden Server
+  gegen die geseedete Demo-Position (`{"stage":99}` → 400 mit der Liste der erlaubten Stufen, `{"stage":6}` →
+  200, Position anschließend nachgeprüft). Commit `3be7409`; die Abnahme-Zeile selbst in `HEAD`.

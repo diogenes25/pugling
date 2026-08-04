@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/backend, bereich/frontend, rolle/student]
+tags: [typ/story, status/abgenommen, bereich/backend, bereich/frontend, rolle/student]
 aliases: [Birkenbihl ohne Dekodierung, Wort-für-Wort kommt nicht an]
-status: geschaetzt
+status: abgenommen
 prio: P2
 art: Defekt
 groesse: M
@@ -274,3 +274,54 @@ Abnahme: `pugling-reviewer` **und** `frontend-reviewer` (`wo: beides`).
   Item-Fortschritt (Entscheidung 3); Testweg über erweiterten `ExerciseContentProviderTests`,
   einen Integrationstest über `PositionPracticeController`, einen Frontend-Komponententest und
   `/smoke-test` (autonom getroffen, Nutzerauftrag 2026-08-04).
+- **2026-08-04** — **gebaut**, Kette in der geplanten Reihenfolge: `ContentItem.Decoding` (additiv) →
+  `BirkenbihlExerciseType.ItemsOf` liest `s.Decoding` → `IsTypedStage => false` → `CardFacets` reicht die
+  Dekodierung **unbedingt** durch (Material, keine Lösung — wie `Passage`) → `PracticeCard`/`PreviewItem`
+  additiv, beide Aufrufer verdrahtet (`TestItem` bleibt außen vor, Entscheidung 4).
+  - **Frontend:** neue Komponente `BirkenbihlDecoding` — je Wortpaar eine Spalte (Lernwort über Gloss), die
+    **Spalte** ist die umbrechende Einheit; fiele sie auseinander, zeigte die Ausrichtung auf das falsche Wort.
+    Ein Wort ohne Store-Eintrag behält seine Spalte, erfindet aber keine Bedeutung. Eingebunden auf der
+    **Vorderseite** der Sohn-Karte und in der Vater-Vorschau, CSS in `index.css`.
+  - **Tests:** die fehlende Assertion in `ExerciseContentProviderTests` nachgezogen (der Test trug die
+    Wortpaare längst in seinen Daten und prüfte sie nicht — Akzeptanzkriterium 5),
+    `BirkenbihlExerciseTests.Dekodierung_ErreichtKindUndVorschau_OhneTippen` (Karte des Kindes **und**
+    Vorschau tragen die Paare in Satzreihenfolge, `answerLength` ist weg, `reveal` steht),
+    `BirkenbihlDecoding.test.tsx` (drei Fälle). Fallstrick beim Bauen: der Test musste eigene Store-Wörter
+    anlegen — mit „How"/„are" kollidierte er über den geteilten Store mit
+    `AddSentence_VerlinktBekannteWoerter_LaesstUnbekannteLeer`, das eine konkrete `vocabularyId` erwartet.
+  - **Verifikation:** Backend **708/708 grün**, Frontend **116/116** und Build sauber. **Live** am laufenden
+    Server (geseedete Position 12): die Karte trägt jetzt `decoding` mit `What→Was`, `is→ist`, `your→dein`,
+    `name→Name` und `reveal: "Wie heißt du?"` statt einer Tipp-Aufforderung — vorher kam ausschließlich
+    `prompt` an (im PM-Protokoll vom 2026-08-04 als Ausgangsbefund festgehalten).
+    Der Selbsteinschätzungs-Pfad ohne Item-Fortschritt (Risiko aus Entscheidung 3) läuft im Integrationstest
+    fehlerfrei. Offen für die Abnahme: Commit.
+- **2026-08-04** — **Reviews (`pugling-reviewer` + `frontend-reviewer`), Befunde eingearbeitet:** kein
+  Blocker. Nachgezogen:
+  - **Testlücke geschlossen** (Backend-Befund 3): der neue Test spielt die Position jetzt auch *durch*
+    (`review` mit `wasKnown`) und belegt das Risiko aus Entscheidung 3 — 0 Punkte, Box bleibt bei 1, kein
+    Fehler. Vorher war nur die Karten-Form geprüft.
+  - **Kopplung dokumentiert:** der Kommentar an `IsTypedStage` sagt jetzt, dass die unbedingte Durchreichung
+    der Dekodierung an dieser Konstante hängt — wer eine Stufe dieses Typs getippt macht, muss dort neu
+    entscheiden.
+  - **A11y** (Frontend-Befund 2): Wort und Bedeutung waren nur *visuell* ein Paar; die Gruppe las sich als
+    „HowWiearebist". Jetzt trägt jedes Paar einen vorgelesenen Trenner (`.sr-only`), ein Wort ohne Gloss
+    bekommt keinen — „How –" verspräche eine Bedeutung, die nicht kommt. Test entsprechend erweitert (plus ein
+    Fall für dasselbe Wort zweimal im Satz, den der Kommentar behauptete, aber nichts prüfte).
+  - **Ausrichtung** (Frontend-Befund 3): `justify-content: center` gilt nur noch in der Sohn-Karte
+    (`.fcard .decoding`); im linksbündigen Vater-Testmodus begann die Dekodierung sonst mittig unter einem
+    linksbündigen Satz — genau die Ausrichtung, die ihr Zweck ist, war dort verloren.
+  - Eine **falsch platzierte XML-Doku** (der `<summary>` von `SetDirectionAsync` stand nach dem Einfügen über
+    dem neuen Test) ist zurückgeschoben; die drei neuen `/* */`-Blöcke in den Tests sind ins Englische
+    gezogen, wie CLAUDE.md es für Code-Doku verlangt.
+  - **Als eigene Story ausgelagert:** [B-93](B-93-birkenbihl-einstellungen-ohne-wirkung.md) — `RequireTypedTest`
+    ist für diesen Typ jetzt unerfüllbar, und im Positions-Test deckt die Karte auf, ohne die Dekodierung zu
+    tragen (Entscheidung 4 hatte nur die fehlende `/check`-Oberfläche bedacht, nicht den Positions-Test).
+  **Verifikation nach dem Review:** Backend **709/709 grün**, Frontend **118/118**, Build sauber.
+- **2026-08-04** — **abgenommen.** Verifikation belegt: Backend **709/709 grün**, Frontend **118/118**,
+  Build sauber; `pugling-reviewer` **und** `frontend-reviewer` ohne Blocker, ihre Befunde eingearbeitet bzw.
+  als [B-93](B-93-birkenbihl-einstellungen-ohne-wirkung.md) ausgelagert. Statt `/smoke-test` die Live-Probe am
+  laufenden Server: die Karte der geseedeten Position 12 trägt die Dekodierung und `reveal` statt einer
+  Tipp-Aufforderung, die Vater-Vorschau dasselbe. **Offen bleibt eine benannte menschliche Prüfung** (kein
+  Maschinentest kann sie leisten): wie die Wort-für-Wort-Spalten am Bildschirm sitzen — Umbruch bei langen
+  Sätzen, Lesbarkeit der Gloss. Läuft mit [B-31](B-31-geraete-vorbehalt-klang.md) weiter.
+  Commit `88ca9e8`; Protokoll [pm-sitzung-2026-08-04.md](../pm-sitzung-2026-08-04.md).
