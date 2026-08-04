@@ -50,6 +50,8 @@ function auftrag(ueber: Partial<WizardFinishInput> = {}): WizardFinishInput {
     exerciseIds: [11, 12],
     position: POSITION,
     titleOf: (id) => `Übung ${id}`,
+    // Vorgabe „alles Vokabeln": die Stufen-Weiche prüfen die Fälle unten ausdrücklich.
+    typeOf: () => "Vocabulary",
     ...ueber,
   };
 }
@@ -152,5 +154,27 @@ describe("runWizardFinish – der Auftrag", () => {
     expect(s.positionen.map((p) => p.planId)).toEqual([201, 201]);
     expect(s.positionen[0].dto).toEqual({ ...POSITION, exerciseId: 11 });
     expect(s.positionen[1].dto).toEqual({ ...POSITION, exerciseId: 12 });
+  });
+
+  /*
+   * Die „Test-Stufe" des Feinschliffs ist die Vokabel-Skala, und jeder Typ liest die Zahl anders: 2 heißt
+   * bei der Vokabel „Selbstcheck", bei der Zuordnung „mit Ablenkern". Ungefiltert verwandelte das Ziel
+   * „Rückstand aufholen" (Stufe 2) jede gewählte Zuordnung in Multiple-Choice – unsichtbar, weil der
+   * Testmodus des Vaters weiter Freitext zeigte.
+   */
+  it("schickt die Stufe nur an Vokabelübungen", async () => {
+    const s = schreiber();
+
+    await runWizardFinish(newWizardProgress(), auftrag({
+      exerciseIds: [11, 12],
+      typeOf: (id) => (id === 11 ? "Vocabulary" : "Matching"),
+    }), s.writer);
+
+    expect(s.positionen[0].dto).toEqual({ ...POSITION, exerciseId: 11 });
+    // Ohne `stage` entscheidet der Server: Übungs-Vorgabe, sonst Typ-Vorgabe.
+    expect(s.positionen[1].dto).not.toHaveProperty("stage");
+    // Alles andere aus dem Feinschliff gilt weiter – gefiltert wird genau ein Feld.
+    expect(s.positionen[1].dto.goalThreshold).toBe(80);
+    expect(s.positionen[1].dto.pointsGoalMet).toBe(20);
   });
 });

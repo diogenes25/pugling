@@ -10,12 +10,19 @@ namespace Pugling.Api.Models;
 /// <summary>
 /// Stage of the matching method (increasing difficulty). It uses the vocabulary store.
 /// <para>
-/// <b>Careful, only half implemented:</b> <c>MatchingExerciseType</c> overrides neither <c>StageOptions</c>
-/// nor <c>IsTypedStage</c> nor <c>Choices</c> – so there is no code branching on this enum.
-/// <see cref="PlanPosition.Stage"/> is stored for matching positions and ignored during delivery.
-/// The two reverse stages (<c>Reverse</c>, <c>ReverseDistractors</c>) are gone because they appeared nowhere;
-/// the remaining two stay because <c>Direct</c> is used as <c>DefaultStage</c> and <c>Distractors</c> is set in
-/// the seed. Actually making the enum effective is a behavioral rebuild, not a structural step.
+/// The enum is effective as of B-73: <c>MatchingExerciseType.Choices</c> branches on it and offers a pool of
+/// counterparts on <see cref="Distractors"/>, nothing on <see cref="Direct"/>. <c>IsTypedStage</c> stays
+/// unoverridden on purpose – matching is checked against the pair on either stage, so the base class already
+/// answers <c>true</c> for both.
+/// The two reverse stages (<c>Reverse</c>, <c>ReverseDistractors</c>) are gone because they appeared nowhere.
+/// </para>
+/// <para>
+/// <b>Still missing a way in:</b> <c>StageOptions</c> remains empty, so no stage picker offers
+/// <see cref="Distractors"/> by name. Four sources feed the value nonetheless, in the order
+/// <c>PositionPlayService.StageForDay</c> applies them: <see cref="PlanPosition.StageSchedule"/> →
+/// <see cref="PlanPosition.Stage"/> → <c>Exercise.DefaultStage</c> → the type default. The first three are
+/// settable per request and none of them is validated against <c>StageOptions</c> (B-79), so a plain "2"
+/// meant for a vocabulary position turns a matching position into multiple choice.
 /// </para>
 /// </summary>
 public enum MatchStage

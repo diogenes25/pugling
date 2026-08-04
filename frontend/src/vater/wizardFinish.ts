@@ -46,6 +46,13 @@ export interface WizardFinishInput {
   position: Omit<CreatePositionDto, "exerciseId">;
   /** Titel einer Übung für die Fehlermeldung – die Server-Meldung sagt nicht, *welche* Übung es traf. */
   titleOf: (exerciseId: number) => string;
+  /**
+   * Typ einer Übung. Nötig, weil die „Test-Stufe" des Feinschliffs die **Vokabel-Skala** ist (`TestStage`)
+   * und jeder Typ die Zahl anders liest: eine 2 heißt bei der Vokabel „Selbstcheck", bei der Zuordnung
+   * „mit Ablenkern". Ungefiltert verwandelte das Ziel „Rückstand aufholen" (Stufe 2) jede gewählte
+   * Zuordnung in Multiple-Choice, ohne dass die Oberfläche es zeigte.
+   */
+  typeOf: (exerciseId: number) => string;
 }
 
 /** Die drei Schreibzugriffe. Als Parameter, damit die Prüfung ohne `api.ts` und ohne `fetch` auskommt. */
@@ -94,7 +101,16 @@ export async function runWizardFinish(
     for (const exerciseId of input.exerciseIds) {
       if (progress.positions.includes(exerciseId)) continue;
       try {
-        await writer.addPosition(planId, { ...input.position, exerciseId });
+        /*
+         * Die Stufe nur dort mitschicken, wo sie definiert ist – dasselbe Gate wie in
+         * `VaterExerciseCreate`/`ExerciseEditModal` (`type === "Vocabulary"`). Weggelassen entscheidet der
+         * Server (Übungs-Vorgabe, sonst Typ-Vorgabe), statt eine fremde Skala falsch zu deuten.
+         */
+        const { stage, ...withoutStage } = input.position;
+        const dto = input.typeOf(exerciseId) === "Vocabulary"
+          ? { ...input.position, exerciseId }
+          : { ...withoutStage, exerciseId };
+        await writer.addPosition(planId, dto);
       } catch (err) {
         /*
          * Den Titel mitgeben: der Plan ist an dieser Stelle **schon angelegt**, und die Server-Meldung

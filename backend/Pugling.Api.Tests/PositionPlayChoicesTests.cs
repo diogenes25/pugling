@@ -95,6 +95,37 @@ public class PositionPlayChoicesTests
         Assert.Equal(new[] { "sehr groß", "klein" }, choices);
     }
 
+    /// <summary>
+    /// No pool without a distractor (B-73): a single-atom exercise would otherwise offer one option, and
+    /// that option is the solution. Unreachable over HTTP for vocabulary today (an exercise needs items to
+    /// be assignable), but the shared helper is the place where the rule lives.
+    /// </summary>
+    [Fact]
+    public void EinzigesItem_LiefertKeineAuswahl()
+    {
+        IReadOnlyList<ContentItem> items = [Item(0, "Haus")];
+
+        Assert.Null(Choices(items, 0, TestStage.MultipleChoice));
+        Assert.Null(StageMechanics.DistractorPool(items, items[0], maxDistractors: 3));
+    }
+
+    /// <summary>
+    /// The two guard clauses of the shared helper and of the comprehension types – defensive code that the
+    /// HTTP paths cannot reach today, and therefore has no witness anywhere else.
+    /// </summary>
+    [Fact]
+    public void Schutzklauseln_LeereAntwort_UndIndexAusserhalb()
+    {
+        // Blank solution: nothing to build a pool around.
+        Assert.Null(StageMechanics.DistractorPool(Vocab, new ContentItem(0, "Frage", "   ", []), maxDistractors: 3));
+
+        // An atom whose index is past the question list (a config edited between projection and delivery).
+        var reading = new ReadingExerciseType();
+        var config = """{"text":"B lives in York.","questions":[{"prompt":"Where?","choices":["York"],"answer":"York"}]}""";
+        var stray = new ContentItem(7, "Frage", "York", ["York"]);
+        Assert.Null(reading.Choices(config, [stray], stray, (int)TestStage.FreeText));
+    }
+
     [Fact]
     public void NichtMultipleChoice_LiefertKeineAuswahl()
     {

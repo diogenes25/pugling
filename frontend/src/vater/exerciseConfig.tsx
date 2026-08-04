@@ -73,6 +73,21 @@ export const ARITHMETIC_OPERATIONS: { value: ArithmeticOperation; label: string 
  */
 const strList = (l: unknown): string[] => (Array.isArray(l) ? l.map((x) => String(x ?? "")) : []);
 
+/** Wie der Server vergleicht (`StageMechanics.Normalize`): trimmen, klein, Mehrfach-Leerzeichen zusammen. */
+const normalizeAnswer = (s: string) => s.trim().toLowerCase().split(/\s+/).filter(Boolean).join(" ");
+
+/**
+ * Auswahl gefüllt, aber die Lösung steht nicht darin. Seit B-73 spielt der Server die Möglichkeiten aus:
+ * Das Kind bekommt dann **nur** diese Knöpfe und kein Eingabefeld – jede Antwort ist falsch, der
+ * Leitner-Kasten kommt nie vorwärts und der Malus greift. Nur ein Hinweis, keine Sperre: eine halbfertige
+ * Übung darf man speichern (die Auswahl selbst ist optional).
+ */
+const choicesMissAnswer = (r: Row): boolean => {
+  const choices = strList(r.choices).map(normalizeAnswer).filter((c) => c !== "");
+  const answer = normalizeAnswer(String(r.answer ?? ""));
+  return choices.length > 0 && answer !== "" && !choices.includes(answer);
+};
+
 const numOr = (v: unknown, fallback: number): number => (v === "" || v == null ? fallback : Number(v));
 const numOrNull = (v: unknown): number | null => (v === "" || v == null ? null : Number(v));
 
@@ -514,11 +529,14 @@ export function ConfigEditor({ type, rows, extra, setExtra, patchRow, addRow, re
           {(type === "Reading" || type === "Listening") && <>
             <RowField label="Frage" value={r.prompt} onChange={(v) => patchRow(i, { prompt: v })} placeholder="Wohin fährt Tom?" />
             <RowField label="Antwort" value={r.answer} onChange={(v) => patchRow(i, { answer: v })} />
-            {/* Kein Zusatz „= Multiple-Choice" mehr: die Ausspielung wirft die Optionen heute weg
-                (B-73) – das Feld darf nichts versprechen, was das Kind nie zu sehen bekommt. */}
             <RowRepeatedField label="Auswahl" values={r.choices} scope={`Zeile ${i + 1}`}
               placeholder="eine Antwortmöglichkeit" optional topic={i === 0 ? "questionChoices" : undefined}
               onChange={(v) => patchRow(i, { choices: v })} />
+            {choicesMissAnswer(r) && (
+              <span className="error-box" role="status">
+                Die Antwort steht nicht in der Auswahl – das Kind bekommt nur diese Knöpfe und kann nicht richtig antworten.
+              </span>
+            )}
           </>}
           {type === "Essay" && <>
             <RowField label="Kriterium" value={r.criterion} onChange={(v) => patchRow(i, { criterion: v })} placeholder="Aufbau" />

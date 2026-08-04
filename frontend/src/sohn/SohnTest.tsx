@@ -160,9 +160,10 @@ export function SohnTest() {
 
         {typed ? (
           item.choices ? (
-            <div className="row" style={{ marginTop: 10, gap: 8, flexWrap: "wrap" }}>
-              {item.choices.map((c) => (
-                <button type="button" key={c} className="btn ghost small" disabled={busy}
+            <div className="row" style={{ marginTop: 10, gap: 8, flexWrap: "wrap" }}
+              role="group" aria-label="Antwortmöglichkeiten">
+              {item.choices.map((c, i) => (
+                <button type="button" key={`${i}-${c}`} className="btn ghost small" disabled={busy}
                   onClick={() => answerAndAdvance({ itemIndex: item.itemIndex, givenAnswer: c })}>{c}</button>
               ))}
             </div>

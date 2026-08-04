@@ -47,6 +47,11 @@ a { color: var(--cyan); }
 }
 .btn:active { transform: translateY(4px); box-shadow: 0 2px 0 0 #1550b8; }
 .btn:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+/* Wie bei Eingabefeldern und Navigation: der Standard-Ring verschwindet auf der farbigen Fläche. Solange ein
+   Knopf je Bildschirm stand, fiel das nicht auf – bei einer Reihe Antwortmöglichkeiten ist „welcher ist
+   fokussiert" die ganze Bedienbarkeit per Tastatur. Hier `--ink` statt des sonst üblichen `--cyan`: ein
+   cyaner Ring auf dem cyanen Vollknopf wäre genau da unsichtbar, wo er am nötigsten ist. */
+.btn:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
 .btn.gold { color: #3a2400; background: linear-gradient(180deg, var(--gold), var(--gold-2)); box-shadow: 0 6px 0 0 #b56a12, 0 12px 18px -6px rgba(255, 158, 44, .55); }
 .btn.gold:active { box-shadow: 0 2px 0 0 #b56a12; }
 .btn.lime { color: #04220f; background: linear-gradient(180deg, var(--lime), #1f9c3a); box-shadow: 0 6px 0 0 #14722a; }

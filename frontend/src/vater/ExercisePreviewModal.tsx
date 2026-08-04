@@ -175,9 +175,12 @@ export function ExercisePreviewModal({ exerciseId, title, onClose }: {
 
                   {data.typed && it.choices ? (
                     // Multiple-Choice: gewählte Option deutlich gefüllt (nicht nur Rahmen), damit die Auswahl sichtbar ist.
-                    <div className="row" style={{ marginTop: 8, gap: 6, flexWrap: "wrap" }}>
-                      {it.choices.map((c) => (
-                        <button type="button" key={c}
+                    <div className="row" style={{ marginTop: 8, gap: 6, flexWrap: "wrap" }}
+                      role="group" aria-label="Antwortmöglichkeiten">
+                      {/* Index im Key: derselbe Text darf zweimal in der Auswahl stehen, und `aria-pressed`
+                          markierte sonst beide Knöpfe als gewählt. */}
+                      {it.choices.map((c, i) => (
+                        <button type="button" key={`${i}-${c}`}
                           className={`btn ${a?.givenAnswer === c ? "" : "ghost"} small`} style={{ width: "auto" }}
                           aria-pressed={a?.givenAnswer === c}
                           onClick={() => setText(it.itemIndex, c)}>{a?.givenAnswer === c ? "✓ " : ""}{c}</button>

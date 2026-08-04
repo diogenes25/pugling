@@ -148,7 +148,11 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
             typed ? item.Hint : null,
             letterBoxLength,
             typed ? null : item.Answer,
-            type.Choices(configJson, items, item, stage),
+            // Options only where the solution is withheld. Today every type that offers a pool does so on a
+            // typed stage anyway, so this changes nothing - but it makes the rule structural instead of a
+            // coincidence of three unrelated types. Without it, one added display stage would put the answer
+            // next to the options and no test would notice.
+            typed ? type.Choices(configJson, items, item, stage) : null,
             audioUrl,
             imageUrl,
             // The alt text follows the image: no image, no alt text - otherwise the description ("a unicorn is

@@ -187,6 +187,14 @@ test("Jeder Übungstyp des Manifests lässt sich im UI anlegen", async ({ page }
   await expect(hoerPreview.getByLabel("Aufnahme der Übung")).toHaveCount(1);
   // Das Transkript ist Sache des Creators und darf in keiner Ausspielung auftauchen.
   await expect(hoerPreview.getByText(/Where are you from/)).toHaveCount(0);
+  /*
+   * Die drei Möglichkeiten von oben müssen hier ankommen (B-73). Der Spec legte sie schon vorher an, und
+   * genau das war die Lücke: die Ausspielung warf sie weg, und kein Test im Frontend-Bestand hätte es
+   * gemerkt. Die Vorschau ist die Stelle, an der es zuerst wieder brechen würde.
+   */
+  const optionen = hoerPreview.getByRole("group", { name: "Antwortmöglichkeiten" });
+  await expect(optionen.getByRole("button", { name: "York" })).toBeVisible();
+  await expect(optionen.getByRole("button")).toHaveCount(3);
   await hoerPreview.getByRole("button", { name: "Schließen" }).click();
 
   // Ein Aufsatz hat keine – das muss als Eigenschaft des Typs erklärt werden, nicht als Fehler aussehen.

@@ -27,6 +27,10 @@ public sealed class ReadingExerciseType : ExerciseTypeBase
         var c = Deserialize<ReadingConfig>(configJson);
         return AnswerChecking.FromQuestions(c.Questions, passage: c.Text);
     }
+
+    /// <inheritdoc cref="AnswerChecking.ChoicesOf"/>
+    public override IReadOnlyList<string>? Choices(string configJson, IReadOnlyList<ContentItem> items, ContentItem item, int stage) =>
+        AnswerChecking.ChoicesOf(Deserialize<ReadingConfig>(configJson).Questions, item);
 }
 
 /// <summary>Listening comprehension: audio source + comprehension questions.</summary>
@@ -53,6 +57,10 @@ public sealed class ListeningExerciseType : ExerciseTypeBase
     /// </summary>
     public override (int? LetterBoxLength, string? AudioUrl, string? ImageUrl) StageFacets(ContentItem item, int stage) =>
         (null, item.AudioUrl, null);
+
+    /// <inheritdoc cref="AnswerChecking.ChoicesOf"/>
+    public override IReadOnlyList<string>? Choices(string configJson, IReadOnlyList<ContentItem> items, ContentItem item, int stage) =>
+        AnswerChecking.ChoicesOf(Deserialize<ListeningConfig>(configJson).Questions, item);
 }
 
 /// <summary>Essay: free text, no item-by-item comparison – hence no checkable content.</summary>
@@ -200,6 +208,19 @@ public sealed class MatchingExerciseType : ExerciseTypeBase
         var c = Deserialize<MatchingConfig>(configJson);
         return [.. c.Pairs.Select((p, i) => new ContentItem(i, p.Left, p.Right, [p.Right]))];
     }
+
+    /// <summary>
+    /// Distractors on the stage named after them: the pair's own counterpart plus up to three counterparts of
+    /// the <i>other</i> pairs (<see cref="StageMechanics.DistractorPool"/> – the same pool the vocabulary
+    /// multiple-choice stage offers). <see cref="MatchStage.Direct"/> stays free text.
+    /// <para>
+    /// No curated distractor list in the config: the plausible wrong options of a matching exercise are
+    /// exactly the other entries of its right-hand column, so asking the author for them again would be busy
+    /// work that can also contradict the pairs.
+    /// </para>
+    /// </summary>
+    public override IReadOnlyList<string>? Choices(string configJson, IReadOnlyList<ContentItem> items, ContentItem item, int stage) =>
+        (MatchStage)stage == MatchStage.Distractors ? StageMechanics.DistractorPool(items, item, maxDistractors: 3) : null;
 
     /// <inheritdoc/>
     public override CheckResult Check(string configJson, IReadOnlyList<GivenAnswer> answers, int? seed)
@@ -364,6 +385,30 @@ internal static class AnswerChecking
 
     /// <summary>Blank-as-absent: an empty or whitespace-only config string is no content.</summary>
     public static string? Blank(string? value) => string.IsNullOrWhiteSpace(value) ? null : value;
+
+    /// <summary>
+    /// The answer choices the creator typed for the question this atom stands for – unchanged and in their
+    /// order; <c>null</c> when the list is empty. Curated content, not a generated pool: it is deliberately
+    /// not reordered, because the author's order can carry meaning (a timeline, a "none of these" at the end)
+    /// and there is no cross-item correlation to break – every question owns its own list.
+    /// <para>
+    /// Decided per item, not per exercise: one run may mix questions with options and questions without.
+    /// Blank entries drop out (same stance as <see cref="Blank"/>) – an empty option would arrive as an
+    /// unlabelled button.
+    /// </para>
+    /// <para>
+    /// The stage plays no part here, unlike in every sibling type: the comprehension types have no stage
+    /// selection (<c>StageOptions</c> is empty) and are typed on every stage, so there is nothing to gate on.
+    /// </para>
+    /// </summary>
+    public static IReadOnlyList<string>? ChoicesOf(IReadOnlyList<Question> questions, ContentItem item)
+    {
+        if (item.Index < 0 || item.Index >= questions.Count) return null;
+        var choices = questions[item.Index].Choices;
+        if (choices is null) return null;
+        var usable = choices.Where(c => !string.IsNullOrWhiteSpace(c)).ToList();
+        return usable.Count > 0 ? usable : null;
+    }
 
     public static Dictionary<int, string?> ByIndex(IReadOnlyList<GivenAnswer> answers)
     {

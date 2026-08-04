@@ -41,6 +41,8 @@ export function SohnPractice() {
     });
   }
 
+  const [busy, setBusy] = useState(false);
+  const judging = useRef(false);
   const session = useRef<PositionSession | null>(null);
   const startedIso = useRef<number>(Date.now());
 
@@ -86,8 +88,16 @@ export function SohnPractice() {
     };
   }, [planId, positionId]);
 
+  /*
+   * Eine Bewertung je Karte, und die Sperre sitzt im `useRef` **vor** dem ersten `await`: `busy` als State
+   * steht erst nach dem Re-Render am Knopf. Seit die Auswahl ausgespielt wird (B-73), stehen hier drei
+   * Knöpfe nebeneinander statt einer – zwei schnelle Tipper schickten sonst zwei `review` auf denselben
+   * `itemIndex` **und** zwei `next()`, der Zähler sprang von 1/5 auf 3/5 und Karte 2 kam nie.
+   */
   async function judge(card: PracticeCard, payload: { wasKnown?: boolean; givenAnswer?: string }) {
-    if (!planId || !session.current) return;
+    if (!planId || !session.current || judging.current) return;
+    judging.current = true;
+    setBusy(true);
     try {
       const outcome = await api.review(planId, positionId, session.current.id, { itemIndex: card.itemIndex, ...payload });
       if (!outcome) {
@@ -119,6 +129,8 @@ export function SohnPractice() {
       }
     } catch { /* Bewertung ist idempotent genug; UI läuft weiter */ }
     next();
+    judging.current = false;
+    setBusy(false);
   }
 
   function next() {
@@ -252,10 +264,13 @@ export function SohnPractice() {
           {phase === "back" && card.reveal && <div className="rev">→ {card.reveal}</div>}
         </div>
 
+        {/* Gruppe statt loser Knöpfe: ein Screenreader liest sonst „Leeds, Schaltfläche" ohne Bezug zur
+            Frage. Der Key trägt den Index mit – der Autor darf dieselbe Option zweimal eintragen. */}
         {typed && card.choices ? (
-          <div className="row" style={{ gap: 8, flexWrap: "wrap" }}>
-            {card.choices.map((c) => (
-              <button type="button" key={c} className="btn ghost" onClick={() => judge(card, { givenAnswer: c })}>{c}</button>
+          <div className="row" style={{ gap: 8, flexWrap: "wrap" }} role="group" aria-label="Antwortmöglichkeiten">
+            {card.choices.map((c, i) => (
+              <button type="button" key={`${i}-${c}`} className="btn ghost" disabled={busy}
+                onClick={() => judge(card, { givenAnswer: c })}>{c}</button>
             ))}
           </div>
         ) : typed ? (

@@ -200,6 +200,7 @@ export function VaterWizard() {
           comboBonusPoints,
         },
         titleOf: (id) => filteredExercises.find((x) => x.id === id)?.title ?? `#${id}`,
+        typeOf: (id) => filteredExercises.find((x) => x.id === id)?.type ?? "",
       }, api);
       // `null` heißt: es läuft schon ein Durchgang (zweiter Klick). Der erste besitzt das Ergebnis und
       // navigiert – `busy` bleibt absichtlich stehen.
@@ -348,7 +349,9 @@ export function VaterWizard() {
             <div className="field"><FieldLabel htmlFor="wiz-penalty" topic="penaltyCoins">Münz-Malus bei Versäumnis</FieldLabel><input id="wiz-penalty" title="Münz-Malus bei gerissener Pflicht" type="number" min={0} value={penaltyCoins} onChange={(e) => setPenaltyCoins(Number(e.target.value))} /></div>
             <div className="field"><FieldLabel htmlFor="wiz-combo-threshold" topic="comboThreshold">Combo alle … Treffer</FieldLabel><input id="wiz-combo-threshold" title="Combo-Schwelle" type="number" min={0} value={comboThreshold} onChange={(e) => setComboThreshold(Number(e.target.value))} /></div>
             <div className="field"><FieldLabel htmlFor="wiz-combo-bonus" topic="comboBonusPoints">Combo-Bonuspunkte</FieldLabel><input id="wiz-combo-bonus" title="Combo-Bonuspunkte" type="number" min={0} value={comboBonusPoints} onChange={(e) => setComboBonusPoints(Number(e.target.value))} /></div>
-            <div className="field"><FieldLabel topic="defaultStage">Test-Stufe</FieldLabel>
+            {/* Nur Vokabelübungen kennen diese Skala; für alle anderen Typen wird die Stufe weggelassen
+                (siehe `wizardFinish.typeOf`) – darum sagt es hier auch dran, statt still zu wirken. */}
+            <div className="field"><FieldLabel topic="defaultStage">Test-Stufe <span className="muted">(nur Vokabelübungen)</span></FieldLabel>
               <select aria-label="Test-Stufe" value={defaultStage} onChange={(e) => setDefaultStage(Number(e.target.value))}>
                 <option value={1}>1 · Zeigen</option>
                 <option value={2}>2 · Selbstcheck</option>
