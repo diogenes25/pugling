@@ -44,11 +44,21 @@ public record HeartbeatDto(int Seconds, bool Active);
 /// exercise config and never reaches it, so an ordered and an unordered list would arrive as identical cards
 /// while the grading works the opposite way.
 /// </para>
+/// <para>
+/// <c>RevealAlternatives</c> carries the <b>equally valid</b> answers beside <c>Reveal</c> and is set exactly
+/// where <c>Reveal</c> is. Its own field rather than a merged comma list, so the interface can separate "the
+/// answer" from "also correct": whoever thought of an alternative must not grade themselves wrong.
+/// </para>
+/// <para>
+/// <c>Decoding</c> is the word-for-word decoding of the sentence (Birkenbihl) – the method itself, so it belongs
+/// on the <b>front</b> of the card next to <c>Prompt</c>, not behind the reveal. <c>null</c> for every other type.
+/// </para>
 /// </summary>
 public record PracticeCard(int ItemIndex, int Stage, string Type, string? Prompt,
     string? Hint, int? AnswerLength, string? Reveal, IReadOnlyList<string>? Choices, string? AudioUrl,
     string? ImageUrl = null, string? ImageAlt = null, int? GapIndex = null, string? Passage = null,
-    bool AnyOrder = false);
+    bool AnyOrder = false, IReadOnlyList<string>? RevealAlternatives = null,
+    IReadOnlyList<WordPair>? Decoding = null);
 
 /// <summary>The next card in learn mode (or <c>Done</c>), server-driven via the session cursor.</summary>
 public record NextResponse(PracticeCard? Card, bool Done, int Cursor, int Total);

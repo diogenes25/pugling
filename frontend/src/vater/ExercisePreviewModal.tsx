@@ -4,6 +4,8 @@ import { LetterBoxes } from "../components/LetterBoxes";
 import { AudioButton } from "../components/AudioButton";
 import { ClozePrompt } from "../components/ClozePrompt";
 import { Passage } from "../components/Passage";
+import { RevealAlternatives } from "../components/RevealAlternatives";
+import { BirkenbihlDecoding } from "../components/BirkenbihlDecoding";
 import { Modal } from "../components/Modal";
 import type { ExercisePreviewAnswer, ExercisePreviewData, ExercisePreviewResult } from "../lib/types";
 
@@ -172,6 +174,9 @@ export function ExercisePreviewModal({ exerciseId, title, onClose }: {
                       : (it.prompt || isCloze) && <b>{isCloze ? `Lücke ${it.gapIndex}` : it.prompt}</b>}
                     {it.hint && <span className="muted" style={{ fontSize: 13 }}>💡 {it.hint}</span>}
                   </div>
+                  {/* Dieselbe Wort-für-Wort-Ansicht wie beim Kind: wer die Dekodierung pflegt, muss sie so
+                      prüfen können, wie sie ankommt (B-78). */}
+                  <BirkenbihlDecoding decoding={it.decoding} />
 
                   {data.typed && it.choices ? (
                     // Multiple-Choice: gewählte Option deutlich gefüllt (nicht nur Rahmen), damit die Auswahl sichtbar ist.
@@ -206,7 +211,12 @@ export function ExercisePreviewModal({ exerciseId, title, onClose }: {
                   ) : (
                     <div style={{ marginTop: 8 }}>
                       {revealed.has(it.itemIndex)
-                        ? <div style={{ color: "var(--accent, #2563eb)", fontWeight: 700, marginBottom: 6 }}>→ {it.reveal ?? "(aufgedeckt)"}</div>
+                        ? <>
+                            <div style={{ color: "var(--accent, #2563eb)", fontWeight: 700, marginBottom: 6 }}>→ {it.reveal ?? "(aufgedeckt)"}</div>
+                            {/* Der Autor sieht hier, was beim Kind als „auch richtig" ankommt – sonst prüft
+                                er eine Karte, die es so nie zu sehen bekommt. */}
+                            <RevealAlternatives alternatives={it.revealAlternatives} />
+                          </>
                         : <button type="button" className="btn ghost small" style={{ width: "auto" }} onClick={() => setRevealed((r) => new Set(r).add(it.itemIndex))}>Aufdecken</button>}
                       {revealed.has(it.itemIndex) && (
                         // Selbsteinschätzung: die geklickte Bewertung gefüllt hervorheben (bisher blieb sie unsichtbar).

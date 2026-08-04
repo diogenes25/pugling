@@ -17,6 +17,8 @@ namespace Pugling.Api.Services.Shared;
 /// <paramref name="ImageUrl"/>/<paramref name="ImageAlt"/> are the image selected for <b>this child</b>
 /// (see <see cref="MediaSelector"/>) – only populated when the resolver was called with a child;
 /// child-neutral paths (preview, evaluation) leave them empty.
+/// <paramref name="Decoding"/> is the word-for-word decoding of the atom (Birkenbihl): the method itself, not a
+/// solution, and therefore material like <paramref name="Passage"/>. <c>null</c> for every other type.
 /// </summary>
 public record ContentItem(
     int Index,
@@ -30,7 +32,8 @@ public record ContentItem(
     int? ItemId = null,
     int? VocabularyId = null,
     string? ImageUrl = null,
-    string? ImageAlt = null);
+    string? ImageAlt = null,
+    IReadOnlyList<WordPair>? Decoding = null);
 
 /// <summary>
 /// Thin facade over the <see cref="ExerciseTypeRegistry"/>: projects the contents of a catalog <see cref="Exercise"/>

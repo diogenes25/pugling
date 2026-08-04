@@ -51,6 +51,44 @@ public class PositionPracticeFlowTests(PuglingWebAppFactory factory) : IClassFix
         Assert.True(db.ChildPointsEntries.Where(e => e.ChildId == 1 && e.Kind == PointKind.Base).Sum(e => e.Amount) > 0);
     }
 
+    /*
+     * Since B-65 every declared translation counts on the typed stages. On self-assessment the CHILD decides,
+     * though - and whoever thought of "sehr groß" and is shown only "riesig" marks themselves wrong. The same
+     * damage as the original defect, this time self-inflicted (B-70).
+     * The direction swap is covered by `PositionTestFlowTests.Rueckwaerts_DecktKeineAlternativeAuf` - the helper
+     * that flips the direction lives there.
+     */
+    [Fact]
+    public async Task Selbsteinschaetzung_DecktJedeGleichwertigeUebersetzungAuf()
+    {
+        var father = await TestApi.FatherAsync(_factory);
+        var (_, key) = await TestApi.CreateStoreVocabAsync(father, "huge", "riesig",
+            translationAlternatives: ["sehr groß"]);
+        var exerciseId = await TestApi.CreateVocabRefExerciseAsync(father, key);
+        var child = await TestApi.ChildAsync(_factory);
+
+        var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.SelfAssess);
+        var karte = await ErsteKarteAsync(child, planId, positionId);
+        Assert.Equal("riesig", karte.GetProperty("reveal").GetString());
+        Assert.Equal(new[] { "sehr groß" },
+            karte.GetProperty("revealAlternatives").EnumerateArray().Select(a => a.GetString()).ToArray());
+
+        // The typed stage keeps withholding both - the alternative is no side door into the solution.
+        var (typedPlanId, typedPositionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.FreeText);
+        var getippt = await ErsteKarteAsync(child, typedPlanId, typedPositionId);
+        Assert.Equal(JsonValueKind.Null, getippt.GetProperty("reveal").ValueKind);
+        Assert.Equal(JsonValueKind.Null, getippt.GetProperty("revealAlternatives").ValueKind);
+    }
+
+    /// <summary>The first card of a fresh practice session – shared by the reveal tests.</summary>
+    private static async Task<JsonElement> ErsteKarteAsync(HttpClient child, int planId, int positionId)
+    {
+        var baseUrl = $"/api/v1/student/study-plans/{planId}/positions/{positionId}/practice-sessions";
+        var sessionId = await TestApi.IdAsync(await child.PostAsJsonAsync(baseUrl, new { }));
+        var cards = await child.GetFromJsonAsync<List<JsonElement>>($"{baseUrl}/{sessionId}/cards");
+        return cards![0];
+    }
+
     [Fact]
     public async Task Vokabel_Position_ZweiteWertungAmSelbenTag_WirdNichtGewertet()
     {

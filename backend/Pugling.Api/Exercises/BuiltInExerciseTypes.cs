@@ -125,9 +125,25 @@ public sealed class BirkenbihlExerciseType : ExerciseTypeBase
     public override IReadOnlyList<ContentItem> ItemsOf(string configJson)
     {
         // Prompt = sentence in the source language, "answer" = natural translation (for display/progress, not for typing).
+        // The decoding travels along: it IS the method (word above word), and without it the card is an ordinary
+        // translation card - the author maintained a word list nobody got to see.
         var c = Deserialize<BirkenbihlConfig>(configJson);
-        return [.. c.Sentences.Select((s, i) => new ContentItem(i, s.LearningSentence, s.NaturalTranslation, [s.NaturalTranslation]))];
+        return [.. c.Sentences.Select((s, i) => new ContentItem(i, s.LearningSentence, s.NaturalTranslation,
+            [s.NaturalTranslation], Decoding: s.Decoding))];
     }
+
+    /// <summary>
+    /// Never typed: the method learns by reading/listening to the decoding and deliberately forgoes active
+    /// querying (hence no <c>/check</c> for this type, see <see cref="BirkenbihlConfig"/>). The inherited
+    /// default <c>true</c> put a text field next to the decoding and demanded the sentence be typed - the one
+    /// thing this method does not ask for.
+    /// <para>
+    /// The decoding hangs on this: <c>CardFacets</c> passes it through unconditionally, which is only safe
+    /// because this type - the only one that fills it - is never typed. Whoever makes a stage of this type typed
+    /// has to decide there whether the decoding may still travel with it.
+    /// </para>
+    /// </summary>
+    public override bool IsTypedStage(int stage) => false;
 }
 
 /// <summary>Cloze: one item per gap; store-backed (the solution can come from the vocabulary store).</summary>

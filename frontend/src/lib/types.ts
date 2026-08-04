@@ -474,6 +474,9 @@ export type PositionSession = S["SessionResponse"];
  */
 export type PracticeCard = S["PracticeCard"];
 
+/** Ein Wortpaar der Birkenbihl-Dekodierung: Wort der Lernsprache + wörtliche Bedeutung (`gloss`). */
+export type WordPair = S["WordPair"];
+
 /** Antwort zu einer Übungskarte: getippt (`givenAnswer`) oder Selbsteinschätzung (`wasKnown`). */
 export type ReviewInput = S["ReviewDto"];
 

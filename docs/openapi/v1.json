@@ -7907,7 +7907,7 @@
         "tags": [
           "Student \u2013 Position Practice"
         ],
-        "summary": "    \u0022Different image\u0022 for a card. Deliberately addressed here and not at the child: which carrier\n    holds the pick \u2013 the exercise-local override or the store vocabulary \u2013 only follows from the\n    specificity cascade that only the server knows. The client only has the card in front of it.\n    The rejected image never comes up again for this carrier. If there is no alternative, everything\nstays unchanged (409 media_no_alternative) instead of leaving the card without an image.\n    The endpoint hands out an image and therefore carries the same guards as the playback\nitself: only the playable plan, only cards of this session, and only where the card actually shows an\nimage. Without the last guard it would be the hole in the anti-cheat rule \u2013 on a typed\nstage it would deliver image and alt text and thereby the meaning of exactly the word that is\nsupposed to be typed ((string? Hint, int? AnswerLength, string? Reveal, IReadOnlyList\u0026lt;string\u0026gt;? Choices, string? AudioUrl, string? ImageUrl, string? ImageAlt, int? GapIndex, string? Prompt, string? Passage, bool AnyOrder) PositionPlayService.CardFacets(string configJson, IReadOnlyList\u0026lt;ContentItem\u0026gt; items, ContentItem item, IExerciseType type, int stage, bool typed) deliberately withholds both there).",
+        "summary": "    \u0022Different image\u0022 for a card. Deliberately addressed here and not at the child: which carrier\n    holds the pick \u2013 the exercise-local override or the store vocabulary \u2013 only follows from the\n    specificity cascade that only the server knows. The client only has the card in front of it.\n    The rejected image never comes up again for this carrier. If there is no alternative, everything\nstays unchanged (409 media_no_alternative) instead of leaving the card without an image.\n    The endpoint hands out an image and therefore carries the same guards as the playback\nitself: only the playable plan, only cards of this session, and only where the card actually shows an\nimage. Without the last guard it would be the hole in the anti-cheat rule \u2013 on a typed\nstage it would deliver image and alt text and thereby the meaning of exactly the word that is\nsupposed to be typed ((string? Hint, int? AnswerLength, string? Reveal, IReadOnlyList\u0026lt;string\u0026gt;? Choices, string? AudioUrl, string? ImageUrl, string? ImageAlt, int? GapIndex, string? Prompt, string? Passage, bool AnyOrder, IReadOnlyList\u0026lt;string\u0026gt;? RevealAlternatives, IReadOnlyList\u0026lt;WordPair\u0026gt;? Decoding) PositionPlayService.CardFacets(string configJson, IReadOnlyList\u0026lt;ContentItem\u0026gt; items, ContentItem item, IExerciseType type, int stage, bool typed) deliberately withholds both there).",
         "parameters": [
           {
             "name": "planId",
@@ -31997,9 +31997,27 @@
           "anyOrder": {
             "type": "boolean",
             "default": false
+          },
+          "revealAlternatives": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "decoding": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/WordPair"
+            }
           }
         },
-        "description": "A practice card \u2013 deliberately WITHOUT the solution, except at display/self-assessment stages that\nreveal the solution by design (the server grades, never the frontend).\n\u0060ImageUrl\u0060/\u0060ImageAlt\u0060 carry the image \u003Cb\u003Eselected for this child\u003C/b\u003E; they are only set at\nstages where a motif cannot give away the solution, and are absent otherwise.\nGapIndex names the placeholder {{n}} of Prompt that is being asked. It is set only\nby types whose atoms share one text (the cloze); without it two gaps of the same text would arrive as\nbyte-identical cards and the child could not tell which one to fill.Passage is what the question is about and belongs to the whole exercise \u2013 the reading text,\nthe instruction covering all grammar tasks. Deliberately its own field rather than folded into\nPrompt: the prompt is the question and is reused as such in every evaluation line.Prompt is nullable because at the vocabulary listening stage the recording is the question \u2013\nshowing the word next to it would turn \u0022listen, then type\u0022 into a reading task. That is an anti-cheat\ndecision, so the server makes it; the frontend renders whatever arrives.AnyOrder says that any answer not yet named counts, because the exercise is a set rather\nthan a sequence (an unordered list). The child has to be told: the Ordered setting lives in the\nexercise config and never reaches it, so an ordered and an unordered list would arrive as identical cards\nwhile the grading works the opposite way."
+        "description": "A practice card \u2013 deliberately WITHOUT the solution, except at display/self-assessment stages that\nreveal the solution by design (the server grades, never the frontend).\n\u0060ImageUrl\u0060/\u0060ImageAlt\u0060 carry the image \u003Cb\u003Eselected for this child\u003C/b\u003E; they are only set at\nstages where a motif cannot give away the solution, and are absent otherwise.\nGapIndex names the placeholder {{n}} of Prompt that is being asked. It is set only\nby types whose atoms share one text (the cloze); without it two gaps of the same text would arrive as\nbyte-identical cards and the child could not tell which one to fill.Passage is what the question is about and belongs to the whole exercise \u2013 the reading text,\nthe instruction covering all grammar tasks. Deliberately its own field rather than folded into\nPrompt: the prompt is the question and is reused as such in every evaluation line.Prompt is nullable because at the vocabulary listening stage the recording is the question \u2013\nshowing the word next to it would turn \u0022listen, then type\u0022 into a reading task. That is an anti-cheat\ndecision, so the server makes it; the frontend renders whatever arrives.AnyOrder says that any answer not yet named counts, because the exercise is a set rather\nthan a sequence (an unordered list). The child has to be told: the Ordered setting lives in the\nexercise config and never reaches it, so an ordered and an unordered list would arrive as identical cards\nwhile the grading works the opposite way.RevealAlternatives carries the equally valid answers beside Reveal and is set exactly\nwhere Reveal is. Its own field rather than a merged comma list, so the interface can separate \u0022the\nanswer\u0022 from \u0022also correct\u0022: whoever thought of an alternative must not grade themselves wrong.Decoding is the word-for-word decoding of the sentence (Birkenbihl) \u2013 the method itself, so it belongs\non the front of the card next to Prompt, not behind the reveal. null for every other type."
       },
       "PracticeOrder": {
         "enum": [
@@ -32219,9 +32237,27 @@
           "anyOrder": {
             "type": "boolean",
             "default": false
+          },
+          "revealAlternatives": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "decoding": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/WordPair"
+            }
           }
         },
-        "description": "A problem presented in test mode. \u0060Reveal\u0060 carries the revealed solution for self-assessment\n(\u0060null\u0060 for typed stages); \u0060AnswerLength\u0060 is only set for vocabulary letter boxes.\n\u0060Passage\u0060 is the exercise-wide material the question is about (reading text, grammar instruction) \u2013\nthe same field the child\u0027s card carries, because a preview that shows less than the child gets is a\nreassurance rather than a check. \u0060Prompt\u0060 is nullable for the same reason in reverse: where the\nchild hears the word instead of reading it, the supervisor must too, or they cannot notice a silent\nrecording. \u0060AnyOrder\u0060 follows from the same principle: the preview grades an unordered list as a set,\nso it must also \u003Ci\u003Esay\u003C/i\u003E so \u2013 otherwise the supervisor sees identical prompts, blames the exercise, and\nthe trial run they assign on contradicts the exam."
+        "description": "A problem presented in test mode. \u0060Reveal\u0060 carries the revealed solution for self-assessment\n(\u0060null\u0060 for typed stages); \u0060AnswerLength\u0060 is only set for vocabulary letter boxes.\n\u0060Passage\u0060 is the exercise-wide material the question is about (reading text, grammar instruction) \u2013\nthe same field the child\u0027s card carries, because a preview that shows less than the child gets is a\nreassurance rather than a check. \u0060Prompt\u0060 is nullable for the same reason in reverse: where the\nchild hears the word instead of reading it, the supervisor must too, or they cannot notice a silent\nrecording. \u0060AnyOrder\u0060 follows from the same principle: the preview grades an unordered list as a set,\nso it must also \u003Ci\u003Esay\u003C/i\u003E so \u2013 otherwise the supervisor sees identical prompts, blames the exercise, and\nthe trial run they assign on contradicts the exam. \u0060RevealAlternatives\u0060 holds the equally valid answers\nbeside \u0060Reveal\u0060, so the author sees what the child will be shown as \u0022also correct\u0022. \u0060Decoding\u0060 is\nthe word-for-word decoding (Birkenbihl) for the same reason: whoever maintains it has to be able to check it\nthe way the child receives it."
       },
       "PreviewItemOutcome": {
         "required": [
@@ -34582,9 +34618,18 @@
               "null",
               "string"
             ]
+          },
+          "revealAlternatives": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string"
+            }
           }
         },
-        "description": "An exam question \u2013 without the solution, except at stages that reveal it by design. Deliberately\n\u003Cb\u003Ewithout\u003C/b\u003E an image: the exam shows none, and a field that is always null is the kind of silent lie\nthe API otherwise rejects with \u0060unknown_field\u0060.\nGapIndex is no such lie: it names the asked placeholder {{n}} of Prompt and is null\nonly for types whose atoms already stand on their own. The exam needs it just as much as the practice\ncard \u2013 it is where a child gets stuck for good, because there is no going back.AnyOrder likewise: it says that any entry not yet named counts (a set instead of a sequence). The\nexam is where that matters most \u2013 there is no second try, so a card whose rule the child has to guess is\nlost for good.Type is the exercise type key, as the practice card has carried all along: the renderer needs it to\ntell an ordered list (where \u0022entry 8\u0022 is the address of the card) from a vocabulary card, and both\narrive with the same fields otherwise."
+        "description": "An exam question \u2013 without the solution, except at stages that reveal it by design. Deliberately\n\u003Cb\u003Ewithout\u003C/b\u003E an image: the exam shows none, and a field that is always null is the kind of silent lie\nthe API otherwise rejects with \u0060unknown_field\u0060.\nGapIndex is no such lie: it names the asked placeholder {{n}} of Prompt and is null\nonly for types whose atoms already stand on their own. The exam needs it just as much as the practice\ncard \u2013 it is where a child gets stuck for good, because there is no going back.AnyOrder likewise: it says that any entry not yet named counts (a set instead of a sequence). The\nexam is where that matters most \u2013 there is no second try, so a card whose rule the child has to guess is\nlost for good.Type is the exercise type key, as the practice card has carried all along: the renderer needs it to\ntell an ordered list (where \u0022entry 8\u0022 is the address of the card) from a vocabulary card, and both\narrive with the same fields otherwise.RevealAlternatives lists the equally valid answers beside Reveal and is set exactly where\nReveal is \u2013 see PracticeCard."
       },
       "TestNextResponse": {
         "required": [

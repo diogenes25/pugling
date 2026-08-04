@@ -22,10 +22,14 @@ namespace Pugling.Contracts.Student;
 /// tell an <b>ordered</b> list (where "entry 8" is the address of the card) from a vocabulary card, and both
 /// arrive with the same fields otherwise.
 /// </para>
+/// <para>
+/// <c>RevealAlternatives</c> lists the equally valid answers beside <c>Reveal</c> and is set exactly where
+/// <c>Reveal</c> is – see <see cref="PracticeCard"/>.
+/// </para>
 /// </summary>
 public record TestItem(int ItemIndex, string? Prompt, int Stage, string? Reveal, int? AnswerLength, string? Hint,
     IReadOnlyList<string>? Choices, string? AudioUrl, int? GapIndex = null, string? Passage = null,
-    bool AnyOrder = false, string? Type = null);
+    bool AnyOrder = false, string? Type = null, IReadOnlyList<string>? RevealAlternatives = null);
 
 /// <summary>
 /// Response of the test start. Class-test mode is strictly server-driven: <b>no</b> questions are sent

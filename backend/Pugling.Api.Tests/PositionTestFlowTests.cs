@@ -234,6 +234,31 @@ public class PositionTestFlowTests(PuglingWebAppFactory factory) : IClassFixture
         Assert.Equal(1, stored.GetProperty("translationAlternatives").GetArrayLength());
     }
 
+    /// <summary>
+    /// The display side of <see cref="Test_Rueckwaerts_AkzeptiertDieAlternativeNicht"/>: what is not accepted
+    /// backwards must not be revealed as "also correct" either, otherwise the revealed card would promise a
+    /// credit the grading refuses. Nothing does that explicitly – it follows from the swap dropping the
+    /// alternatives; pinned here so the reveal (B-70) cannot re-introduce them behind the swap's back.
+    /// </summary>
+    [Fact]
+    public async Task Rueckwaerts_DecktKeineAlternativeAuf()
+    {
+        var father = await TestApi.FatherAsync(_factory);
+        var (_, key) = await TestApi.CreateStoreVocabAsync(father, "vast", "weit",
+            translationAlternatives: ["ausgedehnt"]);
+        var exerciseId = await TestApi.CreateVocabRefExerciseAsync(father, key);
+        await SetDirectionAsync(father, exerciseId, "back-to-front");
+        var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.SelfAssess);
+        var child = await TestApi.ChildAsync(_factory);
+        var baseUrl = $"/api/v1/student/study-plans/{planId}/positions/{positionId}/practice-sessions";
+
+        var sessionId = await TestApi.IdAsync(await child.PostAsJsonAsync(baseUrl, new { }));
+        var cards = await child.GetFromJsonAsync<List<JsonElement>>($"{baseUrl}/{sessionId}/cards");
+
+        Assert.Equal("vast", cards![0].GetProperty("reveal").GetString());
+        Assert.Equal(JsonValueKind.Null, cards[0].GetProperty("revealAlternatives").ValueKind);
+    }
+
     /// <summary>Switches the query direction of a vocabulary exercise (the config is a full replacement).</summary>
     private static async Task SetDirectionAsync(HttpClient father, int exerciseId, string direction)
     {

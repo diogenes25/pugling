@@ -186,7 +186,9 @@ Response — `HTTP 200`:
     "imageAlt": null,
     "gapIndex": null,
     "passage": null,
-    "anyOrder": false
+    "anyOrder": false,
+    "revealAlternatives": null,
+    "decoding": null
   },
   "done": false,
   "cursor": 0,
@@ -235,7 +237,9 @@ Response — `HTTP 200`:
     "imageAlt": null,
     "gapIndex": null,
     "passage": null,
-    "anyOrder": false
+    "anyOrder": false,
+    "revealAlternatives": null,
+    "decoding": null
   },
   "done": false
 }
@@ -297,7 +301,9 @@ Response — `HTTP 200`:
     "imageAlt": null,
     "gapIndex": null,
     "passage": null,
-    "anyOrder": false
+    "anyOrder": false,
+    "revealAlternatives": null,
+    "decoding": null
   },
   {
     "itemIndex": 0,
@@ -313,7 +319,9 @@ Response — `HTTP 200`:
     "imageAlt": null,
     "gapIndex": null,
     "passage": null,
-    "anyOrder": false
+    "anyOrder": false,
+    "revealAlternatives": null,
+    "decoding": null
   }
 ]
 ```
@@ -386,7 +394,8 @@ Response — `HTTP 200`:
     "gapIndex": null,
     "passage": null,
     "anyOrder": false,
-    "type": "Vocabulary"
+    "type": "Vocabulary",
+    "revealAlternatives": null
   },
   "done": false,
   "cursor": 0,

@@ -144,12 +144,27 @@ a { color: var(--cyan); }
   overscroll-behavior: contain;
 }
 
+/* Birkenbihl-Dekodierung (B-78): je Wort eine Spalte – Lernwort oben, wörtliche Bedeutung darunter. Die Spalte
+   ist die Einheit, die umbricht (`inline-flex`): fielen Wort und Gloss auf zwei Zeilen, zeigte die Ausrichtung
+   auf das falsche Wort. Ruhiger als der Aufgabentext, denn sie ist Material – und die Gloss noch ruhiger als
+   das Wort, das sie erklärt. */
+.decoding { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 8px 0 4px; }
+/* Zentriert nur auf der Sohn-Karte, die selbst zentriert setzt. Im Vater-Testmodus steht der Satz linksbündig –
+   dort muss die Dekodierung an seinem Anfang beginnen, sonst zeigt sie unter dem Satz auf nichts. */
+.fcard .decoding { justify-content: center; }
+.decoding-pair { display: inline-flex; flex-direction: column; align-items: center; line-height: 1.25; }
+.decoding-word { font-size: 17px; font-weight: 700; }
+.decoding-gloss { font-size: 13px; color: var(--muted); min-height: 1em; }
+
 /* Lückentext: ein Satz mit Lücken. Die gefragte trägt ein Fragezeichen, die übrigen Punkte – die Form
    unterscheidet sie, nicht die Farbe allein. In der Übungsrunde kleiner als eine Vokabel (30px), es ist
    ein ganzer Satz; die Klausur behält ihre eigene Größe. */
 .fcard .cloze-prompt { font-size: 22px; line-height: 1.5; }
 .cloze-gap { display: inline-block; min-width: 2.2em; padding: 0 .25em; border-bottom: 2px solid var(--stroke); color: var(--muted); }
 .cloze-gap.asked { border-bottom-color: var(--gold); color: var(--gold); font-weight: 800; }
+/* Die gleichwertigen Antworten unter der aufgedeckten Lösung (B-70): dicht an der Lösung, zu der sie gehören –
+   die UA-Vorgabe eines <p> (je ~1em) hätte ein Loch zwischen „→ riesig" und „auch richtig: …" gerissen. */
+.reveal-alternatives { margin: 2px 0 8px; }
 /* Die Spielregel einer Listen-Karte (B-77): dicht am Aufgabentext, zu dem sie gehört – ohne die Regel würde
    der UA-Vorgabe-Abstand von <p> sie vom Prompt weg und den Tipp darunter fort drücken. Im geordneten Fall ist
    „Eintrag 8" das EINZIGE Unterscheidungsmerkmal von sonst gleichen Karten, darum ausgezeichnet wie die

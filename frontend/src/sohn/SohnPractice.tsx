@@ -7,6 +7,8 @@ import { AudioButton } from "../components/AudioButton";
 import { ClozePrompt } from "../components/ClozePrompt";
 import { ListRule } from "../components/ListRule";
 import { Passage } from "../components/Passage";
+import { RevealAlternatives } from "../components/RevealAlternatives";
+import { BirkenbihlDecoding } from "../components/BirkenbihlDecoding";
 import type { PracticeCard, PositionSession, ReviewOutcome } from "../lib/types";
 
 // Kleine Anerkennung bei jedem Treffer – Variation sorgt für Abwechslung (Daumen, Stern, Feuer, Muskel).
@@ -255,6 +257,9 @@ export function SohnPractice() {
             <AudioButton url={card.audioUrl} autoPlay={!card.prompt} withControls={!!card.prompt} />
           )}
           <ClozePrompt text={card.prompt} gapIndex={card.gapIndex} />
+          {/* Die Dekodierung steht auf der VORDERSEITE, direkt unter dem Satz: sie ist die Methode, nicht die
+              Lösung – man liest den Satz und seine Entschlüsselung zusammen (B-78). */}
+          <BirkenbihlDecoding decoding={card.decoding} />
           <ListRule type={card.type} anyOrder={card.anyOrder} itemIndex={card.itemIndex} />
           {card.hint && typed && (
             hintShown
@@ -262,6 +267,7 @@ export function SohnPractice() {
               : <button type="button" className="btn ghost small" style={{ marginTop: 6 }} onClick={() => setHintShown(true)}>💡 Tipp</button>
           )}
           {phase === "back" && card.reveal && <div className="rev">→ {card.reveal}</div>}
+          {phase === "back" && card.reveal && <RevealAlternatives alternatives={card.revealAlternatives} />}
         </div>
 
         {/* Gruppe statt loser Knöpfe: ein Screenreader liest sonst „Leeds, Schaltfläche" ohne Bezug zur

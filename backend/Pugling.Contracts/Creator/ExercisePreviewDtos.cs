@@ -12,10 +12,14 @@ namespace Pugling.Contracts.Creator;
 /// child hears the word instead of reading it, the supervisor must too, or they cannot notice a silent
 /// recording. <c>AnyOrder</c> follows from the same principle: the preview grades an unordered list as a set,
 /// so it must also <i>say</i> so – otherwise the supervisor sees identical prompts, blames the exercise, and
-/// the trial run they assign on contradicts the exam.
+/// the trial run they assign on contradicts the exam. <c>RevealAlternatives</c> holds the equally valid answers
+/// beside <c>Reveal</c>, so the author sees what the child will be shown as "also correct". <c>Decoding</c> is
+/// the word-for-word decoding (Birkenbihl) for the same reason: whoever maintains it has to be able to check it
+/// the way the child receives it.
 /// </summary>
 public record PreviewItem(int ItemIndex, string? Prompt, int? GapIndex, string? Hint, int? AnswerLength, string? Reveal,
-    IReadOnlyList<string>? Choices, string? AudioUrl, string? Passage = null, bool AnyOrder = false);
+    IReadOnlyList<string>? Choices, string? AudioUrl, string? Passage = null, bool AnyOrder = false,
+    IReadOnlyList<string>? RevealAlternatives = null, IReadOnlyList<WordPair>? Decoding = null);
 
 /// <summary>
 /// The playable state of an exercise in test mode: type, chosen stage, whether typed, the problems and

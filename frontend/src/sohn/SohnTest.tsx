@@ -8,6 +8,7 @@ import { AudioButton } from "../components/AudioButton";
 import { ClozePrompt } from "../components/ClozePrompt";
 import { ListRule } from "../components/ListRule";
 import { Passage } from "../components/Passage";
+import { RevealAlternatives } from "../components/RevealAlternatives";
 import type { AnswerDto, TestItem, TestSubmitResponse } from "../lib/types";
 
 // Vokabel-Teststufen (numerisch, serverseitig erzwungen): 1 Zeigen … 5 Hören.
@@ -194,7 +195,10 @@ export function SohnTest() {
         ) : (
           <div style={{ marginTop: 10 }}>
             {showSolution ? (
-              <div className="rev" style={{ color: "var(--cyan)", fontWeight: 800, marginBottom: 8 }}>→ {item.reveal ?? "(aufgedeckt)"}</div>
+              <>
+                <div className="rev" style={{ color: "var(--cyan)", fontWeight: 800, marginBottom: 8 }}>→ {item.reveal ?? "(aufgedeckt)"}</div>
+                <RevealAlternatives alternatives={item.revealAlternatives} />
+              </>
             ) : (
               <button type="button" className="btn ghost small" onClick={() => setRevealed(true)}>Aufdecken 🔄</button>
             )}

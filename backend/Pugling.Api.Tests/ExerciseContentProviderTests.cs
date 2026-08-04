@@ -183,6 +183,11 @@ public class ExerciseContentProviderTests
 
         Assert.Equal("What is your name?", item.Prompt);
         Assert.Equal("Wie heißt du?", item.Answer);
+        // The decoding IS the method - without it the same card is an ordinary translation card, and this test
+        // passed for exactly that state: it carried two word pairs in the fixture and asserted nothing about
+        // them (B-78).
+        Assert.Equal([("What", "Was"), ("is", "ist")],
+            item.Decoding!.Select(w => (w.LearningWord, w.Gloss)).ToArray());
     }
 
     // ---- Types without fixed items ---- ----

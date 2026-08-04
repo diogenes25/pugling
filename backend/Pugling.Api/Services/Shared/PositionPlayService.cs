@@ -132,14 +132,15 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
 
     /// <summary>
     /// The representation of a content atom permitted per stage as a card/test item (anti-cheat in one place):
-    /// typed stages withhold the solution (<c>Reveal</c>), display/self-assessment reveals it;
+    /// typed stages withhold the solution (<c>Reveal</c>), display/self-assessment reveals it - together with
+    /// every equally valid alternative (<c>RevealAlternatives</c>), so the child does not mark itself wrong;
     /// letter boxes give the length, the listening stage the audio source, multiple choice the options.
     /// Shared by practice card (<c>PracticeCard</c>) and test item (<c>TestItem</c>) – the latter drops the
     /// image facets, it renders no image.
     /// </summary>
     public static (string? Hint, int? AnswerLength, string? Reveal, IReadOnlyList<string>? Choices,
         string? AudioUrl, string? ImageUrl, string? ImageAlt, int? GapIndex, string? Prompt, string? Passage,
-        bool AnyOrder)
+        bool AnyOrder, IReadOnlyList<string>? RevealAlternatives, IReadOnlyList<WordPair>? Decoding)
         CardFacets(string configJson, IReadOnlyList<ContentItem> items, ContentItem item, IExerciseType type,
             int stage, bool typed)
     {
@@ -173,7 +174,16 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
             // the rule lives in the config the child never sees, so withholding it makes the card a guess.
             // The `typed` proviso is the one both graders apply - it must not promise a rule on a stage that
             // is self-assessed and therefore still graded card by card.
-            typed && type.GradesAsSet(configJson));
+            typed && type.GradesAsSet(configJson),
+            // The equally valid answers next to the revealed one - same anti-cheat boundary as `Reveal`, because
+            // an alternative is no bigger secret than the primary answer on a stage that shows it anyway.
+            // Without them the child grades ITSELF as wrong for a correct answer ("sehr groß" against a revealed
+            // "riesig"), which is the very damage B-65 fixed for the typed stages.
+            // Index 0 is the primary answer by contract of the `Accepted(...)` helper that builds the list.
+            typed || item.AcceptedAnswers.Count <= 1 ? null : item.AcceptedAnswers.Skip(1).ToList(),
+            // The word-for-word decoding, unconditional like the passage: it is the method the exercise is named
+            // after, not the solution to withhold. Without it a Birkenbihl card is an ordinary translation card.
+            item.Decoding);
     }
 
     /// <summary>
