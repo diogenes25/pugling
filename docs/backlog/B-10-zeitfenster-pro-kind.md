@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/punkte, bereich/gamification, rolle/supervisor]
+tags: [typ/story, status/abgenommen, bereich/punkte, bereich/gamification, rolle/supervisor]
 aliases: [Zeitfenster pro Pflicht, Zeitfenster pro Kind, Hausaufgaben-Faktor]
-status: in-arbeit
+status: abgenommen
 prio: P2
 art: Wunsch
 groesse: M
@@ -153,5 +153,27 @@ Signatur, drei DTOs und ein Formularblock.
     Fenster abschaltet, und vier Fälle in `ScoringTimeSlotTests`); `npm test` → **105 grün** (neu:
     `PlanPositions.test.ts`, prüft die *Bindung* Formular→Vertrag, vor allem `clearTimeSlots`);
     `npm run build` grün; `dotnet format Pugling.sln` ohne Befund.
-  - **Offen für `abgenommen`:** die beiden Reviewer (`wo: beides` ⇒ `pugling-reviewer` **und**
-    `frontend-reviewer`) und der Commit.
+- **2026-08-04** — **abgenommen.** Beide Reviewer gelaufen (`wo: beides`), keiner mit Blocker; Commit
+  `0d801d8`, Abnahme-Eintrag in einem zweiten Commit (Muster wie B-81).
+  - **Eingearbeitet aus dem `pugling-reviewer`:** Ganztags-Testfenster auf `TimeOnly.MaxValue` (das Ende ist
+    exklusiv — 23:59:59 ließ eine Sekunde pro Tag flakig); ein Selbstschutz-Test, der prüft, dass im
+    Testhost **kein** globales Fenster aktiv ist (die neutralisierten zehn waren eine handgesetzte Grenze,
+    die stumm gerissen wäre); `ScoreConfig.TimeSlots` **ohne** Vorgabewert, damit kein künftiger Aufrufer die
+    Positions-Fenster durch Weglassen verliert; Obergrenze von 24 Fenstern je Position (die JSON-Spalte ist
+    bewusst unbegrenzt); Gleichstand in Start *und* Ende dokumentiert; „leere Liste löscht auch" steht jetzt
+    im Vertrag.
+  - **Eingearbeitet aus dem `frontend-reviewer`:** die Faktor-Obergrenze 10 auch im Formular (sonst kam die
+    englische Server-Meldung an); `step="any"` statt `0.1`, weil die native Prüfung „1,25" nur im
+    Anlegen-Formular abwies und beim Bearbeiten durchließ — derselbe Wert war je Maske gültig oder nicht;
+    die Zusammenfassung des zugeklappten Blocks sagt „unvollständig" statt „keins" zu lügen; annotierte
+    Rückgabetypen, weil TypeScript überzählige Felder **über einen Spread nicht** prüft (ein Tippfehler wäre
+    erst als `400 unknown_field` aufgefallen); ein per API gesetzter Fenster-Name überlebt das Speichern;
+    zwei Testfälle und eine Zeile in `e2e/feldhilfe.spec.ts`.
+  - **Bewusst nicht hier erledigt, als Story abgelegt:** [B-88](B-88-scoring-uhrzeit-am-timeprovider.md)
+    (die Punkte-Uhrzeit hängt an `DateTime.Now` statt am `TimeProvider` — deshalb braucht der End-to-End-Test
+    überhaupt einen eigenen Host) und [B-89](B-89-positionsliste-haengt-report-aus.md) (vorbestehende
+    `useAsync`-Falle in derselben Datei). Offen geblieben ist außerdem, dass `ScoringTimeSlot` im
+    OpenAPI-Dokument `name` als `required` führt, obwohl der Server es kosmetisch behandelt — nicht schädlich,
+    aber generierte Clients müssen es mitschicken.
+  - **Verifikation der Nacharbeit:** 687 Backend-Tests grün, 107 Frontend-Tests grün, `npm run build` grün,
+    `npx playwright test feldhilfe.spec.ts` → 3 grün, `dotnet format Pugling.sln` ohne Befund.
