@@ -19,7 +19,7 @@ Automatisch erzeugt von `backend/Pugling.Api.Tests/DocsCaptureTests.cs`. Insgesa
 
 ## Fehler-Code-Abdeckung
 
-Verifiziert: **34 / 57** Codes aus `ApiErrors`.
+Verifiziert: **34 / 58** Codes aus `ApiErrors`.
 
 | Code | Beispiel |
 | --- | --- |
@@ -62,6 +62,7 @@ Verifiziert: **34 / 57** Codes aus `ApiErrors`.
 
 - `bad_request` — Generischer 400-Default (`ForStatus`): nur Sicherheitsnetz für Framework-Antworten ohne spezifischen Code – alle regulären 400-Pfade tragen bereits einen fachlichen Code.
 - `concurrency_conflict` — Erfordert eine echte Schreib-Kollision (Doppelklick/Retry) über das Concurrency-Token; in-process nicht deterministisch per HTTP auslösbar (siehe SkinPurchaseTests, direkt über DbContext).
+- `duplicate_achievement` — Über HTTP im In-Process-Test nicht erreichbar.
 - `duplicate_chapter_name` — Über HTTP im In-Process-Test nicht erreichbar.
 - `duplicate_email` — Über HTTP im In-Process-Test nicht erreichbar.
 - `duplicate_profile_name` — Über HTTP im In-Process-Test nicht erreichbar.

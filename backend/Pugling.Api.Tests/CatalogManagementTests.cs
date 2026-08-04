@@ -43,6 +43,39 @@ public class CatalogManagementTests(PuglingWebAppFactory factory) : IClassFixtur
         var problem = await second.Content.ReadFromJsonAsync<JsonElement>();
         Assert.Equal("duplicate_chapter_name", problem.GetProperty("code").GetString());
 
+        // B-97: the SAME conflict via PATCH. Without a pre-check the rename runs straight into the unique
+        // index, and the caller gets a 500 with a half-written state instead of the code that already exists.
+        var thirdId = await TestApi.IdAsync(await father.PostAsJsonAsync(
+            $"/api/v1/creator/subjects/{subjectId}/chapters", new { name = "Unit 2", orderIndex = 3 }));
+        var renamed = await father.PatchAsJsonAsync(
+            $"/api/v1/creator/subjects/{subjectId}/chapters/{thirdId}", new { name = "Unit 1" });
+        Assert.Equal(HttpStatusCode.Conflict, renamed.StatusCode);
+        Assert.Equal("duplicate_chapter_name",
+            (await renamed.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("code").GetString());
+
+        // The rejected PATCH must leave the chapter untouched - a 409 that already renamed would be worse
+        // than the 500 it replaces.
+        var unchanged = await (await father.GetAsync(
+            $"/api/v1/creator/subjects/{subjectId}/chapters/{thirdId}")).Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal("Unit 2", unchanged.GetProperty("name").GetString());
+
+        // Renaming to its OWN name stays legal: the row must not collide with itself.
+        var selfRename = await father.PatchAsJsonAsync(
+            $"/api/v1/creator/subjects/{subjectId}/chapters/{thirdId}", new { name = "Unit 2", orderIndex = 4 });
+        Assert.Equal(HttpStatusCode.OK, selfRename.StatusCode);
+
+        // A whitespace name is rejected like an empty one - what Create forbids, PATCH must not allow. Without
+        // this the name would be written as "", and the SECOND empty name would hit the unique index as a 500:
+        // the duplicate check alone does not close the path it was added to.
+        var blank = await father.PatchAsJsonAsync(
+            $"/api/v1/creator/subjects/{subjectId}/chapters/{thirdId}", new { name = "   " });
+        Assert.Equal(HttpStatusCode.BadRequest, blank.StatusCode);
+        Assert.Equal("validation_error",
+            (await blank.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("code").GetString());
+        var stillNamed = await (await father.GetAsync(
+            $"/api/v1/creator/subjects/{subjectId}/chapters/{thirdId}")).Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal("Unit 2", stillNamed.GetProperty("name").GetString());
+
         // The same name under a DIFFERENT subject stays allowed - unique is (subject, name), not the name.
         var otherSubject = await TestApi.IdAsync(await father.PostAsJsonAsync(
             "/api/v1/creator/subjects", new { name = $"Dublette-Fach-2 {Guid.NewGuid():N}" }));

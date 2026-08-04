@@ -71,6 +71,8 @@ public static class ApiErrors
     public static readonly ApiError DuplicateKey = new("duplicate_key", 409, "Key already exists.");
     /// <summary>The subject already has a chapter with this name (409).</summary>
     public static readonly ApiError DuplicateChapterName = new("duplicate_chapter_name", 409, "The subject already has a chapter with this name.");
+    /// <summary>The child already has an award for this metric and threshold (409).</summary>
+    public static readonly ApiError DuplicateAchievement = new("duplicate_achievement", 409, "The child already has an award for this metric and threshold.");
     /// <summary>This vocabulary entry is already an item of the exercise – a word may have only one item per exercise (409).</summary>
     public static readonly ApiError DuplicateVocabularyInExercise = new("duplicate_vocabulary_in_exercise", 409, "This vocabulary entry is already an item of the exercise.");
     /// <summary>Image variant does not exist / does not belong to this asset (404).</summary>

@@ -103,6 +103,18 @@ public class AchievementsController(PuglingDbContext db) : ControllerBase
     static AchievementDto Map(Achievement a) =>
         new(a.Id, a.Title, a.Icon, a.Metric, a.Threshold, a.RewardPoints, a.Active);
 
+    /// <summary>
+    /// Is that threshold already taken for this metric? An award is unique per
+    /// <c>(ChildId, Metric, Threshold)</c>; without this pre-check both write paths run into the unique index
+    /// and answer 500 instead of a conflict the supervisor can act on. <paramref name="exceptId"/> excludes the
+    /// row itself on the PATCH path - keeping its own threshold must stay legal; the create path passes
+    /// <c>0</c>, which excludes nothing because ids are positive.
+    /// </summary>
+    // No default for `ct`: an omitted optional argument is what CA2016 does not see.
+    private Task<bool> ThresholdTakenAsync(int childId, ProgressMetric metric, int threshold, int exceptId, CancellationToken ct) =>
+        db.Achievements.AnyAsync(
+            a => a.ChildId == childId && a.Metric == metric && a.Threshold == threshold && a.Id != exceptId, ct);
+
     /// <summary>All awards of the child (definitions for management).</summary>
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -116,10 +128,14 @@ public class AchievementsController(PuglingDbContext db) : ControllerBase
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<ActionResult<AchievementDto>> Create(int childId, CreateAchievementDto dto, CancellationToken ct = default)
     {
         if (string.IsNullOrWhiteSpace(dto.Title)) return this.ProblemWithCode(ApiErrors.ValidationError, "Title is required.");
         if (dto.Threshold <= 0) return this.ProblemWithCode(ApiErrors.ValidationError, "Threshold must be positive.");
+        if (await ThresholdTakenAsync(childId, dto.Metric, dto.Threshold, exceptId: 0, ct))
+            return this.ProblemWithCode(ApiErrors.DuplicateAchievement,
+                $"An award for {dto.Metric} at {dto.Threshold} already exists for this child.");
 
         var achievement = new Achievement
         {
@@ -138,10 +154,18 @@ public class AchievementsController(PuglingDbContext db) : ControllerBase
     /// <summary>Changes an award (partial).</summary>
     [HttpPatch("{achievementId:int}")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<ActionResult<AchievementDto>> Update(int childId, int achievementId, UpdateAchievementDto dto, CancellationToken ct = default)
     {
         var achievement = await db.Achievements.FirstOrDefaultAsync(a => a.Id == achievementId && a.ChildId == childId, ct);
         if (achievement is null) return NotFound();
+
+        // Before the first assignment: a rejected PATCH must leave the award untouched. The metric is immutable
+        // (it is not in the DTO), so the collision is only reachable by moving the threshold onto another award
+        // of the same metric - narrower than on POST, but just as open.
+        if (dto.Threshold is > 0 && await ThresholdTakenAsync(childId, achievement.Metric, dto.Threshold.Value, achievementId, ct))
+            return this.ProblemWithCode(ApiErrors.DuplicateAchievement,
+                $"An award for {achievement.Metric} at {dto.Threshold} already exists for this child.");
 
         if (dto.Title is not null) achievement.Title = dto.Title.Trim();
         if (dto.Icon is not null) achievement.Icon = dto.Icon;

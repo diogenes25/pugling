@@ -71,13 +71,28 @@ public class ChaptersController(PuglingDbContext db) : ControllerBase
 
     /// <summary>Changes a chapter (partial).</summary>
     [HttpPatch("{chapterId:int}")]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<ActionResult<ChapterResponse>> Update(int subjectId, int chapterId, UpdateChapterDto dto, CancellationToken ct = default)
     {
         var chapter = await db.Chapters.FirstOrDefaultAsync(c => c.Id == chapterId && c.SubjectId == subjectId, ct);
         if (chapter is null) return NotFound();
 
-        if (dto.Name is not null) chapter.Name = dto.Name.Trim();
+        // Both checks BEFORE the first assignment, in the shape the sibling controller uses
+        // (ExerciseCategoriesController.Update): a rejected PATCH must leave the chapter untouched.
+        // Emptiness first - a whitespace name would otherwise slip past the duplicate check and be written as
+        // "", which Create forbids and the unique index turns into a 500 on the second attempt.
+        // The duplicate check excludes the row itself by ID, not by name: renaming a chapter to its own name
+        // must stay legal, and an ID comparison survives a collation change on the column.
+        if (dto.Name is not null)
+        {
+            var name = dto.Name.Trim();
+            if (name.Length == 0) return this.ProblemWithCode(ApiErrors.ValidationError, "Name must not be empty.");
+            if (await db.Chapters.AnyAsync(c => c.SubjectId == subjectId && c.Id != chapterId && c.Name == name, ct))
+                return this.ProblemWithCode(ApiErrors.DuplicateChapterName, $"Chapter '{name}' already exists in this subject.");
+            chapter.Name = name;
+        }
         if (dto.OrderIndex.HasValue) chapter.OrderIndex = dto.OrderIndex.Value;
         await db.SaveChangesAsync(ct);
 

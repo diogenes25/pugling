@@ -155,6 +155,66 @@ public class GamificationTests(PuglingWebAppFactory factory) : IClassFixture<Pug
         Assert.Equal(1, await CountPointReasonAsync(child, $"Auszeichnung erreicht: {title}"));
     }
 
+    /// <summary>
+    /// B-97: An award is unique per (child, metric, threshold). Without a pre-check both write paths run
+    /// straight into the unique index, and the supervisor gets a 500 with a half-written state instead of a
+    /// conflict he can act on - the metric and the threshold are exactly what he would change.
+    /// </summary>
+    [Fact]
+    public async Task Auszeichnung_MitVorhandenerSchwelle_Liefert409_AufBeidenSchreibwegen()
+    {
+        var father = await TestApi.FatherAsync(factory);
+        var url = "/api/v1/supervisor/children/1/achievements";
+        var metric = "MinutesPracticed";
+        var threshold = 4711; // outside the seeded thresholds, so the case stands on its own
+
+        var first = await father.PostAsJsonAsync(url, new
+        {
+            title = $"TEST B-97 erste {Guid.NewGuid():N}",
+            icon = "⭐",
+            metric,
+            threshold,
+            rewardPoints = 5,
+        });
+        Assert.Equal(HttpStatusCode.Created, first.StatusCode);
+
+        // Same metric, same threshold, different title - the title is not part of the index.
+        var duplicate = await father.PostAsJsonAsync(url, new
+        {
+            title = $"TEST B-97 zweite {Guid.NewGuid():N}",
+            icon = "🏆",
+            metric,
+            threshold,
+            rewardPoints = 9,
+        });
+        Assert.Equal(HttpStatusCode.Conflict, duplicate.StatusCode);
+        Assert.Equal("duplicate_achievement",
+            (await duplicate.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("code").GetString());
+
+        // The PATCH path is narrower - `UpdateAchievementDto` carries no metric, so the collision is only
+        // reachable by moving the threshold onto another award of the SAME metric - but it is just as open.
+        var other = await TestApi.IdAsync(await father.PostAsJsonAsync(url, new
+        {
+            title = $"TEST B-97 dritte {Guid.NewGuid():N}",
+            icon = "🥇",
+            metric,
+            threshold = threshold + 1,
+            rewardPoints = 5,
+        }));
+        var moved = await father.PatchAsJsonAsync($"{url}/{other}", new { threshold });
+        Assert.Equal(HttpStatusCode.Conflict, moved.StatusCode);
+        Assert.Equal("duplicate_achievement",
+            (await moved.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("code").GetString());
+
+        // The rejected PATCH leaves the award untouched, and a PATCH that keeps its own threshold stays legal
+        // (the row must not collide with itself).
+        var list = await (await father.GetAsync(url)).Content.ReadFromJsonAsync<JsonElement>();
+        var unchanged = list.EnumerateArray().First(a => a.GetProperty("id").GetInt32() == other);
+        Assert.Equal(threshold + 1, unchanged.GetProperty("threshold").GetInt32());
+        Assert.Equal(HttpStatusCode.OK,
+            (await father.PatchAsJsonAsync($"{url}/{other}", new { threshold = threshold + 1, rewardPoints = 7 })).StatusCode);
+    }
+
     [Fact]
     public async Task Mission_NeueWoerter_ZaehltErstmalsEingefuehrteInhalte()
     {
